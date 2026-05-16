@@ -11,7 +11,7 @@
 
 *English version below / Version française ci-dessous.*
 <br>
-*Note de l'humain: Ce projet etant entierement fais par IA et tres personel, je le partage en cas de morceau de code ou idée pouvant servire. Le projet est en déveuloppement, l'interface est pas belle, mais j ai les infos, les actions et une bonne partie de la colométrie sous condition que je souhaitai dans mes rêves les plus fous.*
+Note de l'humain: Ce projet etant entierement fais par IA et tres personel, je le partage en cas de morceau de code ou idée pouvant servire. Le projet est en déveuloppement, l'interface est pas belle, mais j ai les infos, les actions et une bonne partie de la colométrie sous condition que je souhaitai dans mes rêves les plus fous.
 ---
 
 ## 🇺🇸 English Version
