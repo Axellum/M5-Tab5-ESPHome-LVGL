@@ -9,13 +9,13 @@ tab5_volet_action:
           sequence:
             - action: cover.stop_cover
               target:
-                entity_id: cover.volet_serre_rideau
+                entity_id: cover.VOTRE_VOLET
             - action: input_boolean.turn_off
               target:
-                entity_id: input_boolean.volet_serre_mouvement
+                entity_id: input_boolean.VOTRE_VOLET_MOUVEMENT
             - action: input_text.set_value
               target:
-                entity_id: input_text.volet_serre_etat
+                entity_id: input_text.VOTRE_VOLET_ETAT
               data:
                 value: "Partiel"
         - conditions:
@@ -24,23 +24,23 @@ tab5_volet_action:
           sequence:
             - action: cover.open_cover
               target:
-                entity_id: cover.volet_serre_rideau
+                entity_id: cover.VOTRE_VOLET
             - action: input_boolean.turn_on
               target:
-                entity_id: input_boolean.volet_serre_mouvement
+                entity_id: input_boolean.VOTRE_VOLET_MOUVEMENT
             - action: input_text.set_value
               target:
-                entity_id: input_text.volet_serre_etat
+                entity_id: input_text.VOTRE_VOLET_ETAT
               data:
                 value: "En_mouvement"
             - delay:
                 seconds: 26
             - action: input_boolean.turn_off
               target:
-                entity_id: input_boolean.volet_serre_mouvement
+                entity_id: input_boolean.VOTRE_VOLET_MOUVEMENT
             - action: input_text.set_value
               target:
-                entity_id: input_text.volet_serre_etat
+                entity_id: input_text.VOTRE_VOLET_ETAT
               data:
                 value: "Ouvert"
         - conditions:
@@ -49,23 +49,23 @@ tab5_volet_action:
           sequence:
             - action: cover.close_cover
               target:
-                entity_id: cover.volet_serre_rideau
+                entity_id: cover.VOTRE_VOLET
             - action: input_boolean.turn_on
               target:
-                entity_id: input_boolean.volet_serre_mouvement
+                entity_id: input_boolean.VOTRE_VOLET_MOUVEMENT
             - action: input_text.set_value
               target:
-                entity_id: input_text.volet_serre_etat
+                entity_id: input_text.VOTRE_VOLET_ETAT
               data:
                 value: "En_mouvement"
             - delay:
                 seconds: 26
             - action: input_boolean.turn_off
               target:
-                entity_id: input_boolean.volet_serre_mouvement
+                entity_id: input_boolean.VOTRE_VOLET_MOUVEMENT
             - action: input_text.set_value
               target:
-                entity_id: input_text.volet_serre_etat
+                entity_id: input_text.VOTRE_VOLET_ETAT
               data:
                 value: "Ferme"
 

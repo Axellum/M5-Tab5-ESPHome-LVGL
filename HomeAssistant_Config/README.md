@@ -20,5 +20,10 @@ Ce dossier contient les fichiers de configuration nécessaires côté **Home Ass
 ## ⚙️ Comment utiliser ces fichiers ?
 
 1. Copiez les blocs de code dont vous avez besoin dans vos propres fichiers `automations.yaml`, `scripts.yaml` et `template.yaml`.
-2. **Rechercher et remplacer :** Assurez-vous de remplacer `saint_vincent_de_tyrosse` par le nom de votre propre ville issue de l'intégration Météo-France, et de remplacer `40_weather_alert` par votre numéro de département !
+2. **Rechercher et remplacer :** Assurez-vous de remplacer les valeurs génériques dans le code par vos propres entités Home Assistant :
+   - `VOTRE_VILLE` : nom de votre ville issue de l'intégration Météo-France.
+   - `VOTRE_DEPARTEMENT` : votre numéro de département (ex: `40`).
+   - `VOTRE_CLIMATISATION` : l'entité de votre climatisation (`climate.votre_climatisation`).
+   - `VOTRE_EMAIL_gmail_com` : votre entité de calendrier Google.
+   - `VOTRE_VOLET` : vos propres entités pour les scripts.
 3. Rechargez vos configurations YAML depuis Home Assistant ou redémarrez-le.

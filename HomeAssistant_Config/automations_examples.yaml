@@ -3,11 +3,11 @@
   id: tab5_ha_hmi_updater
   trigger:
     - platform: state
-      entity_id: weather.saint_vincent_de_tyrosse
+      entity_id: weather.VOTRE_VILLE
     - platform: state
-      entity_id: climate.daikinap71273_room_temperature
+      entity_id: climate.VOTRE_CLIMATISATION
     - platform: state
-      entity_id: sensor.saint_vincent_de_tyrosse_next_rain
+      entity_id: sensor.VOTRE_VILLE_next_rain
     - platform: state
       entity_id: sensor.phrase_prochaine_pluie
     - platform: time_pattern
@@ -15,23 +15,23 @@
     - platform: event
       event_type: esphome.tab5_connected
     - platform: state
-      entity_id: calendar.axxxums_gmail_com
+      entity_id: calendar.VOTRE_EMAIL_gmail_com
 
   action:
     # ====== 1. MISE A JOUR MINUTE PAR MINUTE DE LA PHRASE PLUIE ET ALERTES ======
     - action: esphome.tab5_ha_hmi_tab5_maj_alerte_meteo_france
       data:
         phrase_pluie: "{{ states('sensor.phrase_prochaine_pluie') }}"
-        globale: "{{ states('sensor.40_weather_alert') | capitalize }}"
-        vent: "{{ state_attr('sensor.40_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}"
-        inondation: "{{ state_attr('sensor.40_weather_alert', 'Crues') | default('Vert', true) | capitalize }}"
-        orages: "{{ state_attr('sensor.40_weather_alert', 'Orages') | default('Vert', true) | capitalize }}"
-        pluie_inondation: "{{ state_attr('sensor.40_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}"
-        neige_verglas: "{{ state_attr('sensor.40_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}"
-        grand_froid: "{{ state_attr('sensor.40_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}"
-        vagues_submersion: "{{ state_attr('sensor.40_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}"
-        canicule: "{{ state_attr('sensor.40_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}"
-        avalanches: "{{ state_attr('sensor.40_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}"
+        globale: "{{ states('sensor.VOTRE_DEPARTEMENT_weather_alert') | capitalize }}"
+        vent: "{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}"
+        inondation: "{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Crues') | default('Vert', true) | capitalize }}"
+        orages: "{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Orages') | default('Vert', true) | capitalize }}"
+        pluie_inondation: "{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}"
+        neige_verglas: "{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}"
+        grand_froid: "{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}"
+        vagues_submersion: "{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}"
+        canicule: "{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}"
+        avalanches: "{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}"
 
     - delay: "00:00:00.05"
 
@@ -43,18 +43,18 @@
     # ====== 3. METEO ACTUELLE ======
     - action: esphome.tab5_ha_hmi_tab5_maj_meteo_actuelle
       data:
-        condition: "{{ states('weather.saint_vincent_de_tyrosse') }}"
-        temperature: "{{ state_attr('weather.saint_vincent_de_tyrosse', 'temperature') | float(0) }}"
-        humidite: "{{ state_attr('weather.saint_vincent_de_tyrosse', 'humidity') | float(0) }}"
+        condition: "{{ states('weather.VOTRE_VILLE') }}"
+        temperature: "{{ state_attr('weather.VOTRE_VILLE', 'temperature') | float(0) }}"
+        humidite: "{{ state_attr('weather.VOTRE_VILLE', 'humidity') | float(0) }}"
 
     - delay: "00:00:00.05"
     
     # ====== 4. PROBABILITES ======
     - action: esphome.tab5_ha_hmi_tab5_maj_probabilites
       data:
-        uv: "{{ states('sensor.saint_vincent_de_tyrosse_uv') | int(0) }}"
-        gel: "{{ states('sensor.saint_vincent_de_tyrosse_freeze_chance') | int(0) }}"
-        neige: "{{ states('sensor.saint_vincent_de_tyrosse_snow_chance') | int(0) }}"
+        uv: "{{ states('sensor.VOTRE_VILLE_uv') | int(0) }}"
+        gel: "{{ states('sensor.VOTRE_VILLE_freeze_chance') | int(0) }}"
+        neige: "{{ states('sensor.VOTRE_VILLE_snow_chance') | int(0) }}"
 
     - delay: "00:00:00.05"
     # ====== 4. METEO PLUIE 1H (9 barres : 0,5,10,15,20,25 puis 35,45,55) ======
@@ -65,7 +65,7 @@
             data:
               index_5mn: "{{ repeat.index - 1 }}"
               intensite: >
-                {% set fc = state_attr('sensor.saint_vincent_de_tyrosse_next_rain', '1_hour_forecast') %}
+                {% set fc = state_attr('sensor.VOTRE_VILLE_next_rain', '1_hour_forecast') %}
                 {% set keys = ['0 min', '5 min', '10 min', '15 min', '20 min', '25 min', '35 min', '45 min', '55 min'] %}
                 {% set k = keys[repeat.index - 1] %}
                 {{ fc.get(k, 'Inconnu') if fc is not none else 'Inconnu' }}
@@ -79,13 +79,13 @@
         start_date_time: "{{ now().strftime('%Y-%m-%d 00:00:00') }}"
         end_date_time: "{{ (now() + timedelta(days=15)).strftime('%Y-%m-%d 23:59:59') }}"
       target:
-        entity_id: calendar.axxxums_gmail_com
+        entity_id: calendar.VOTRE_EMAIL_gmail_com
       response_variable: agenda_events
     - action: weather.get_forecasts
       data:
         type: daily
       target:
-        entity_id: weather.saint_vincent_de_tyrosse
+        entity_id: weather.VOTRE_VILLE
       response_variable: daily_var
     - repeat:
         count: 15
@@ -102,22 +102,22 @@
                   {{ days[target_dt.strftime('%w') | int] }} {{ target_dt.strftime('%d') }}
                 {% endif %}
               condition: >
-                {% set fcasts = daily_var['weather.saint_vincent_de_tyrosse'].forecast %}
+                {% set fcasts = daily_var['weather.VOTRE_VILLE'].forecast %}
                 {{ fcasts[repeat.index - 1].condition | default('unknown') if (repeat.index - 1) < fcasts|length else 'unknown' }}
               tmin: >
-                {% set fcasts = daily_var['weather.saint_vincent_de_tyrosse'].forecast %}
+                {% set fcasts = daily_var['weather.VOTRE_VILLE'].forecast %}
                 {{ fcasts[repeat.index - 1].templow | float(0) if (repeat.index - 1) < fcasts|length else 0 }}
               tmax: >
-                {% set fcasts = daily_var['weather.saint_vincent_de_tyrosse'].forecast %}
+                {% set fcasts = daily_var['weather.VOTRE_VILLE'].forecast %}
                 {{ fcasts[repeat.index - 1].temperature | float(0) if (repeat.index - 1) < fcasts|length else 0 }}
               est_passe: >
-                {% set fcasts = daily_var['weather.saint_vincent_de_tyrosse'].forecast %}
+                {% set fcasts = daily_var['weather.VOTRE_VILLE'].forecast %}
                 {{ 'false' if (repeat.index - 1) < fcasts|length else 'true' }}
               est_repos: >
                 {% set target_date = (now() + timedelta(days=repeat.index - 1)).strftime('%Y-%m-%d') %}
                 {% set ns = namespace(travail=false) %}
-                {% if agenda_events['calendar.axxxums_gmail_com'] is defined %}
-                  {% for event in agenda_events['calendar.axxxums_gmail_com'].events %}
+                {% if agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
+                  {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
                     {% set ev_start = event.start | default(event.start_time, '') | string %}
                     {% set ev_end = event.end | default(event.end_time, '') | string %}
                     {% set ev_msg = event.summary | default(event.message, '') | string %}
@@ -135,8 +135,8 @@
               heures_ouverture: >
                 {% set target_date = (now() + timedelta(days=repeat.index - 1)).strftime('%Y-%m-%d') %}
                 {% set ns = namespace(heures="") %}
-                {% if agenda_events['calendar.axxxums_gmail_com'] is defined %}
-                  {% for event in agenda_events['calendar.axxxums_gmail_com'].events %}
+                {% if agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
+                  {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
                     {% set ev_start = event.start | default(event.start_time, '') | string %}
                     {% set ev_end = event.end | default(event.end_time, '') | string %}
                     {% set ev_msg = event.summary | default(event.message, '') | string %}
@@ -158,12 +158,12 @@
     # ====== 6. CLIMATISATION ======
     - action: esphome.tab5_ha_hmi_tab5_maj_clim
       data:
-        target: "{{ state_attr('climate.daikinap71273_room_temperature', 'temperature') | float(20) }}"
-        current: "{{ state_attr('climate.daikinap71273_room_temperature', 'current_temperature') | float(20) }}"
-        mode: "{{ states('climate.daikinap71273_room_temperature') }}"
-        preset: "{{ state_attr('climate.daikinap71273_room_temperature', 'preset_mode') | default('none', true) }}"
-        fan: "{{ state_attr('climate.daikinap71273_room_temperature', 'fan_mode') | default('auto', true) }}"
-        swing: "{{ state_attr('climate.daikinap71273_room_temperature', 'swing_mode') | default('off', true) }}"
+        target: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'temperature') | float(20) }}"
+        current: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'current_temperature') | float(20) }}"
+        mode: "{{ states('climate.VOTRE_CLIMATISATION') }}"
+        preset: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'preset_mode') | default('none', true) }}"
+        fan: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'fan_mode') | default('auto', true) }}"
+        swing: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'swing_mode') | default('off', true) }}"
         
     - delay: "00:00:00.05"
     # ====== X. ETAT VOLET ======
@@ -183,8 +183,8 @@
         ligne1: >
           {% set ns = namespace(lignes=[]) %}
           {% set now_dt = now() %}
-          {% if agenda_events['calendar.axxxums_gmail_com'] is defined %}
-            {% for event in agenda_events['calendar.axxxums_gmail_com'].events %}
+          {% if agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
+            {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
               {% if 'Travail' in event.summary|default(event.message, '') %}
                 {% set start_dt = event.start | as_datetime %}
                 {% set end_dt = event.end | as_datetime %}
@@ -227,8 +227,8 @@
         ligne2: >
           {% set ns = namespace(lignes=[]) %}
           {% set now_dt = now() %}
-          {% if agenda_events['calendar.axxxums_gmail_com'] is defined %}
-            {% for event in agenda_events['calendar.axxxums_gmail_com'].events %}
+          {% if agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
+            {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
               {% if 'Travail' in event.summary|default(event.message, '') %}
                 {% set start_dt = event.start | as_datetime %}
                 {% set end_dt = event.end | as_datetime %}
@@ -274,7 +274,7 @@
     - action: esphome.tab5_ha_hmi_tab5_maj_info_texte
       data:
         texte: >
-          {% set alerte = states('sensor.40_weather_alert') %}
+          {% set alerte = states('sensor.VOTRE_DEPARTEMENT_weather_alert') %}
           {% if alerte == 'Rouge' or alerte == 'Orange' %}
              Alerte Météo {{ alerte }} en cours ! Restez prudent.
           {% else %}
@@ -288,8 +288,8 @@
                {% set travail = false %}
                {% set em = "" %}
                {% set de = "" %}
-               {% if agenda_events['calendar.axxxums_gmail_com'] is defined %}
-                 {% for event in agenda_events['calendar.axxxums_gmail_com'].events %}
+               {% if agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
+                 {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
                    {% set ev_start = event.start | default(event.start_time, '') | string %}
                    {% set ev_end = event.end | default(event.end_time, '') | string %}
                    {% set ev_msg = event.summary | default(event.message, '') | string %}
@@ -326,7 +326,7 @@
             {{ ns.texte }}
           {% endif %}
         couleur: >
-          {% set alerte = states('sensor.40_weather_alert') %}
+          {% set alerte = states('sensor.VOTRE_DEPARTEMENT_weather_alert') %}
           {% if alerte == 'Rouge' %} Rouge
           {% elif alerte == 'Orange' %} Orange
           {% else %} Blanc {% endif %}
@@ -337,7 +337,7 @@
       data:
         type: hourly
       target:
-        entity_id: weather.saint_vincent_de_tyrosse
+        entity_id: weather.VOTRE_VILLE
       response_variable: hourly_var_tab5
     - repeat:
         count: 15
@@ -346,7 +346,7 @@
             data:
               heure_index: "{{ repeat.index - 1 }}"
               heure_texte: >
-                {% set fcasts = hourly_var_tab5['weather.saint_vincent_de_tyrosse'].forecast %}
+                {% set fcasts = hourly_var_tab5['weather.VOTRE_VILLE'].forecast %}
                 {% if repeat.index - 1 < fcasts|length %}
                   {% set dt = fcasts[repeat.index - 1].datetime | as_datetime %}
                   {{ dt.strftime('%H:00') if dt else '00:00' }}
@@ -354,13 +354,13 @@
                   00:00
                 {% endif %}
               condition: >
-                {% set fcasts = hourly_var_tab5['weather.saint_vincent_de_tyrosse'].forecast %}
+                {% set fcasts = hourly_var_tab5['weather.VOTRE_VILLE'].forecast %}
                 {{ fcasts[repeat.index - 1].condition | default('unknown') if repeat.index - 1 < fcasts|length else 'unknown' }}
               temp: >
-                {% set fcasts = hourly_var_tab5['weather.saint_vincent_de_tyrosse'].forecast %}
+                {% set fcasts = hourly_var_tab5['weather.VOTRE_VILLE'].forecast %}
                 {{ fcasts[repeat.index - 1].temperature | float(0) if repeat.index - 1 < fcasts|length else 0 }}
               pluvio: >
-                {% set fcasts = hourly_var_tab5['weather.saint_vincent_de_tyrosse'].forecast %}
+                {% set fcasts = hourly_var_tab5['weather.VOTRE_VILLE'].forecast %}
                 {{ fcasts[repeat.index - 1].precipitation | float(0) if (repeat.index - 1) < fcasts|length else 0 }}
           - delay:
               milliseconds: 50
