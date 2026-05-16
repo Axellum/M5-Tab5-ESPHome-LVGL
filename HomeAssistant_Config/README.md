@@ -1,8 +1,36 @@
-# Configuration Home Assistant pour Tab5 HMI / Home Assistant Configuration for Tab5 HMI
+# Home Assistant Configuration for Tab5 HMI / Configuration Home Assistant pour Tab5 HMI
 
-*(English translation below)*
+*(Traduction en français ci-dessous)*
 
-Ce dossier contient les fichiers de configuration nécessaires côté **Home Assistant** pour que votre M5Stack Tab5 puisse recevoir les données météorologiques, les alertes, le calendrier et gérer vos équipements.
+This folder contains the necessary **Home Assistant** configuration files so that your M5Stack Tab5 can receive weather data, alerts, calendar events, and manage your devices.
+
+## 🇬🇧 🛠️ Prerequisites
+
+1. **Météo-France Integration:** 
+   This project is designed to work with the highly accurate data from the official Météo-France integration (for French users). Install it from the Home Assistant integrations page.
+   You will get entities like `weather.your_city`, `sensor.your_city_next_rain` and `sensor.XX_weather_alert`. *(Note: If you are outside France, you will need to adapt the automation sensors to your own local weather integration).*
+   
+2. **Google Calendar:**
+   For the "Planning" feature, you will need the Google Calendar integration (`calendar.your_email_gmail_com`).
+
+## 🇬🇧 📁 Folder Contents
+
+* `automations_examples.yaml` : Contains the large "Push" automation that dynamically synchronizes the screen without overloading it with requests. It updates weather, rain forecasts, calendar, and climate.
+* `scripts_examples.yaml` : Contains scripts called *by* the screen (e.g., controlling a roller shutter or lights).
+* `template_sensors_examples.yaml` : **Very important!** Contains the "Template Sensor" that generates the short weather sentence displayed on the screen (e.g., "Showers in 10 min"). Add this to your `configuration.yaml` or `template.yaml` file.
+
+## 🇬🇧 ⚙️ How to use these files?
+
+1. Copy the necessary code blocks into your own `automations.yaml`, `scripts.yaml`, and `template.yaml` files.
+2. **Find and Replace:** Make sure to replace the generic values in the code with your own Home Assistant entities:
+   - `VOTRE_VILLE` : your city name from the Météo-France integration.
+   - `VOTRE_DEPARTEMENT` : your department number (e.g., `40`).
+   - `VOTRE_CLIMATISATION` : your climate entity (`climate.your_climate`).
+   - `VOTRE_EMAIL_gmail_com` : your Google calendar entity.
+   - `VOTRE_VOLET` : your own entities for the scripts.
+3. Reload your YAML configurations from Home Assistant or restart it.
+
+---
 
 ## 🇫🇷 🛠️ Prérequis
 
@@ -29,31 +57,3 @@ Ce dossier contient les fichiers de configuration nécessaires côté **Home Ass
    - `VOTRE_EMAIL_gmail_com` : votre entité de calendrier Google.
    - `VOTRE_VOLET` : vos propres entités pour les scripts.
 3. Rechargez vos configurations YAML depuis Home Assistant ou redémarrez-le.
-
----
-
-## 🇬🇧 🛠️ Prerequisites
-
-1. **Météo-France Integration :** 
-   This project is designed to work with the highly accurate data from the official Météo-France integration (for French users). Install it from the Home Assistant integrations page.
-   You will get entities like `weather.your_city`, `sensor.your_city_next_rain` and `sensor.XX_weather_alert`. *(Note: If you are outside France, you will need to adapt the automation sensors to your own local weather integration).*
-   
-2. **Google Calendar :**
-   For the "Planning" feature, you will need the Google Calendar integration (`calendar.your_email_gmail_com`).
-
-## 🇬🇧 📁 Folder Contents
-
-* `automations_examples.yaml` : Contains the large "Push" automation that dynamically synchronizes the screen without overloading it with requests. It updates weather, rain forecasts, calendar, and climate.
-* `scripts_examples.yaml` : Contains scripts called *by* the screen (e.g., controlling a roller shutter or lights).
-* `template_sensors_examples.yaml` : **Very important!** Contains the "Template Sensor" that generates the short weather sentence displayed on the screen (e.g., "Showers in 10 min"). Add this to your `configuration.yaml` or `template.yaml` file.
-
-## 🇬🇧 ⚙️ How to use these files?
-
-1. Copy the necessary code blocks into your own `automations.yaml`, `scripts.yaml`, and `template.yaml` files.
-2. **Find and Replace:** Make sure to replace the generic values in the code with your own Home Assistant entities:
-   - `VOTRE_VILLE` : your city name from the Météo-France integration.
-   - `VOTRE_DEPARTEMENT` : your department number (e.g., `40`).
-   - `VOTRE_CLIMATISATION` : your climate entity (`climate.your_climate`).
-   - `VOTRE_EMAIL_gmail_com` : your Google calendar entity.
-   - `VOTRE_VOLET` : your own entities for the scripts.
-3. Reload your YAML configurations from Home Assistant or restart it.
