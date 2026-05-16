@@ -283,7 +283,7 @@ text_sensor:
     id: light_salon_state
 
 
-    entity_id: light.salon
+    entity_id: ${entity_light_salon}
 
 
     on_value:
@@ -328,7 +328,7 @@ text_sensor:
     id: light_led_state
 
 
-    entity_id: light.sonoff_1001700057
+    entity_id: ${entity_light_bureau}
 
 
     on_value:
@@ -451,7 +451,7 @@ sensor:
     id: temp_serre
 
 
-    entity_id: sensor.plant_sensor_8184_temperature
+    entity_id: ${entity_temp_plante}
 
 
     on_value:
@@ -502,7 +502,7 @@ sensor:
     id: temp_salon
 
 
-    entity_id: sensor.sonoff_a48003dbc9_temperature
+    entity_id: ${entity_temp_salon}
 
 
     on_value:
@@ -559,7 +559,7 @@ sensor:
     id: temp_chambre
 
 
-    entity_id: sensor.sonoff_a48003ea51_temperature
+    entity_id: ${entity_temp_chambre}
 
 
     on_value:
@@ -616,7 +616,7 @@ sensor:
     id: hum_salon
 
 
-    entity_id: sensor.sonoff_a48003dbc9_humidity
+    entity_id: ${entity_hum_salon}
 
 
     on_value:
@@ -649,7 +649,7 @@ sensor:
     id: hum_chambre
 
 
-    entity_id: sensor.sonoff_a48003ea51_humidity
+    entity_id: ${entity_hum_chambre}
 
 
     on_value:
@@ -682,7 +682,7 @@ sensor:
     id: moisture_1
 
 
-    entity_id: sensor.plant_sensor_8184_moisture
+    entity_id: ${entity_plante_1}
 
 
     on_value:
@@ -793,7 +793,7 @@ sensor:
     id: moisture_2
 
 
-    entity_id: sensor.plant_sensor_81b8_moisture
+    entity_id: ${entity_plante_2}
 
 
     on_value:
@@ -904,7 +904,7 @@ sensor:
     id: moisture_3
 
 
-    entity_id: sensor.plant_sensor_817a_moisture
+    entity_id: ${entity_plante_3}
 
 
     on_value:
@@ -1015,7 +1015,7 @@ sensor:
     id: moisture_4
 
 
-    entity_id: sensor.plant_sensor_8189_moisture
+    entity_id: ${entity_plante_4}
 
 
     on_value:
@@ -1126,7 +1126,7 @@ sensor:
     id: moisture_5
 
 
-    entity_id: sensor.plant_sensor_8173_moisture
+    entity_id: ${entity_plante_5}
 
 
     on_value:
@@ -1654,5 +1654,6 @@ interval:
 
 
           }
+
 
 

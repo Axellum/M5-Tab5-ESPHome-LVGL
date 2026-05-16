@@ -334,7 +334,7 @@ obj:
 
                     data:
 
-                      entity_id: light.h6008_2
+                      entity_id: ${entity_light_chambre}
 
           - label: { id: j2_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
 
@@ -431,7 +431,7 @@ obj:
 
                     data:
 
-                      entity_id: light.salon
+                      entity_id: ${entity_light_salon}
 
           - label: { id: j3_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
 
@@ -589,4 +589,5 @@ obj:
                     }
 
 # --- °CK 2: J5 to J9 ---
+
 
