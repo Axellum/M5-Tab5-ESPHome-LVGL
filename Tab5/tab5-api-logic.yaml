@@ -1,0 +1,1046 @@
+api:
+
+  encryption:
+
+    key: !secret api_encryption_key
+
+  reboot_timeout: 0s
+
+  services:
+
+    - service: tab5_maj_previsions_heures_bulk
+      variables:
+        payload: string
+      then:
+        - lambda: |-
+            std::string s = payload;
+            size_t pos = 0;
+            auto get_c = [](float t) -> uint32_t {
+                if (t <= -12) return 0xFF0000;
+                else if (t <= 0) { float r = floor((t + 12)/2.0)*2.0/12.0; return (255<<16)|(0<<8)|(int)(255*r); }
+                else if (t <= 14) { float r = floor(t/2.0)*2.0/14.0; return ((int)(255*r)<<16)|((int)(255*r)<<8)|255; }
+                else if (t <= 24) { float r = floor((t - 14)/2.0)*2.0/10.0; return (255<<16)|((int)(255-(255*r))<<8)|255; }
+                else { float x = floor((t - 24)/2.0)*2.0; if(x>11) x=11; return (255<<16)|(0<<8)|(int)(255-(255*(x/11.0))); }
+            };
+            auto apply_weather_icon = [](lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card) {
+                update_meteo_icon(l1_obj, l2_obj, state, is_card, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
+            };
+
+            lv_obj_t* pt_time[] = {id(h0_time), id(h1_time), id(h2_time), id(h3_time), id(h4_time), id(h5_time), id(h6_time), id(h7_time), id(h8_time), id(h9_time), id(h10_time), id(h11_time), id(h12_time), id(h13_time), id(h14_time)};
+            lv_obj_t* pt_temp[] = {id(h0_temp), id(h1_temp), id(h2_temp), id(h3_temp), id(h4_temp), id(h5_temp), id(h6_temp), id(h7_temp), id(h8_temp), id(h9_temp), id(h10_temp), id(h11_temp), id(h12_temp), id(h13_temp), id(h14_temp)};
+            lv_obj_t* pt_prob[]  = {id(h0_prob), id(h1_prob), id(h2_prob), id(h3_prob), id(h4_prob), id(h5_prob), id(h6_prob), id(h7_prob), id(h8_prob), id(h9_prob), id(h10_prob), id(h11_prob), id(h12_prob), id(h13_prob), id(h14_prob)};
+            lv_obj_t* pt_l1[]   = {id(h0_icon_layer1), id(h1_icon_layer1), id(h2_icon_layer1), id(h3_icon_layer1), id(h4_icon_layer1), id(h5_icon_layer1), id(h6_icon_layer1), id(h7_icon_layer1), id(h8_icon_layer1), id(h9_icon_layer1), id(h10_icon_layer1), id(h11_icon_layer1), id(h12_icon_layer1), id(h13_icon_layer1), id(h14_icon_layer1)};
+            lv_obj_t* pt_l2[]   = {id(h0_icon_layer2), id(h1_icon_layer2), id(h2_icon_layer2), id(h3_icon_layer2), id(h4_icon_layer2), id(h5_icon_layer2), id(h6_icon_layer2), id(h7_icon_layer2), id(h8_icon_layer2), id(h9_icon_layer2), id(h10_icon_layer2), id(h11_icon_layer2), id(h12_icon_layer2), id(h13_icon_layer2), id(h14_icon_layer2)};
+
+            while((pos = s.find(";")) != std::string::npos) {
+                std::string token = s.substr(0, pos);
+                s.erase(0, pos + 1);
+
+                std::vector<std::string> parts;
+                size_t ppos = 0;
+                while(true) {
+                    size_t np = token.find("|", ppos);
+                    if(np == std::string::npos) { parts.push_back(token.substr(ppos)); break; }
+                    parts.push_back(token.substr(ppos, np - ppos));
+                    ppos = np + 1;
+                }
+
+                if(parts.size() >= 5) {
+                    int heure_index = std::atoi(parts[0].c_str());
+                    if(heure_index < 0 || heure_index > 14) continue;
+                    std::string heure_texte = parts[1];
+                    std::string condition = parts[2];
+                    float temp = std::atof(parts[3].c_str());
+                    float pluvio = std::atof(parts[4].c_str());
+
+                    lv_obj_t* time_lbl = pt_time[heure_index];
+                    lv_obj_t* temp_lbl = pt_temp[heure_index];
+                    lv_obj_t* pop_lbl = pt_prob[heure_index];
+                    lv_obj_t* l1 = pt_l1[heure_index];
+                    lv_obj_t* l2 = pt_l2[heure_index];
+
+                    if(time_lbl) {
+                        lv_label_set_text(time_lbl, heure_texte.c_str());
+                        uint32_t c_t = get_c(temp);
+                        char b_t[32]; sprintf(b_t, "#%06x %.0f#°", c_t, temp);
+                        lv_label_set_text(temp_lbl, b_t);
+                        
+                        char b_p[32];
+                        if (pluvio > 0) {
+                            sprintf(b_p, "%.1fmm", pluvio);
+                            lv_label_set_text(pop_lbl, b_p);
+                            lv_obj_set_style_text_color(pop_lbl, lv_color_hex(0x8AB4FF), LV_PART_MAIN);
+                        } else {
+                            lv_label_set_text(pop_lbl, "-");
+                            lv_obj_set_style_text_color(pop_lbl, lv_color_hex(0x4A596E), LV_PART_MAIN);
+                        }
+                        
+                        apply_weather_icon(l1, l2, condition, true);
+                    }
+                }
+            }
+
+
+    - service: tab5_maj_previsions_jours_bulk
+      variables:
+        payload: string
+      then:
+        - lambda: |-
+            std::string s = payload;
+            size_t pos = 0;
+            
+            // Re-utilisation des lambdas de couleurs
+            auto apply_weather_icon = [](lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card) {
+                update_meteo_icon(l1_obj, l2_obj, state, is_card, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
+            };
+            auto get_c = [](float t) -> uint32_t {
+                if (t <= -12) return 0xFF0000;
+                else if (t <= 0) { float r = floor((t + 12)/2.0)*2.0/12.0; return (255<<16)|(0<<8)|(int)(255*r); }
+                else if (t <= 14) { float r = floor(t/2.0)*2.0/14.0; return ((int)(255*r)<<16)|((int)(255*r)<<8)|255; }
+                else if (t <= 24) { float r = floor((t - 14)/2.0)*2.0/10.0; return (255<<16)|((int)(255-(255*r))<<8)|255; }
+                else { float x = floor((t - 24)/2.0)*2.0; if(x>11) x=11; return (255<<16)|(0<<8)|(int)(255-(255*(x/11.0))); }
+            };
+
+            lv_obj_t* pt_day[] = {id(j0_day), id(j1_day), id(j2_day), id(j3_day), id(j4_day), id(j5_day), id(j6_day), id(j7_day), id(j8_day), id(j9_day), id(j10_day), id(j11_day), id(j12_day), id(j13_day), id(j14_day)};
+            lv_obj_t* pt_max[] = {id(j0_max), id(j1_max), id(j2_max), id(j3_max), id(j4_max), id(j5_max), id(j6_max), id(j7_max), id(j8_max), id(j9_max), id(j10_max), id(j11_max), id(j12_max), id(j13_max), id(j14_max)};
+            lv_obj_t* pt_min[] = {id(j0_min), id(j1_min), id(j2_min), id(j3_min), id(j4_min), id(j5_min), id(j6_min), id(j7_min), id(j8_min), id(j9_min), id(j10_min), id(j11_min), id(j12_min), id(j13_min), id(j14_min)};
+            lv_obj_t* pt_l1[]  = {id(j0_icon_layer1), id(j1_icon_layer1), id(j2_icon_layer1), id(j3_icon_layer1), id(j4_icon_layer1), id(j5_icon_layer1), id(j6_icon_layer1), id(j7_icon_layer1), id(j8_icon_layer1), id(j9_icon_layer1), id(j10_icon_layer1), id(j11_icon_layer1), id(j12_icon_layer1), id(j13_icon_layer1), id(j14_icon_layer1)};
+            lv_obj_t* pt_l2[]  = {id(j0_icon_layer2), id(j1_icon_layer2), id(j2_icon_layer2), id(j3_icon_layer2), id(j4_icon_layer2), id(j5_icon_layer2), id(j6_icon_layer2), id(j7_icon_layer2), id(j8_icon_layer2), id(j9_icon_layer2), id(j10_icon_layer2), id(j11_icon_layer2), id(j12_icon_layer2), id(j13_icon_layer2), id(j14_icon_layer2)};
+
+            while((pos = s.find(";")) != std::string::npos) {
+                std::string token = s.substr(0, pos);
+                s.erase(0, pos + 1);
+
+                std::vector<std::string> parts;
+                size_t ppos = 0;
+                while(true) {
+                    size_t np = token.find("|", ppos);
+                    if(np == std::string::npos) { parts.push_back(token.substr(ppos)); break; }
+                    parts.push_back(token.substr(ppos, np - ppos));
+                    ppos = np + 1;
+                }
+
+                if(parts.size() >= 9) {
+                    int jour = std::atoi(parts[0].c_str());
+                    if(jour < 0 || jour > 14) continue;
+                    std::string nom_jour = parts[1];
+                    std::string condition = parts[2];
+                    float tmin = std::atof(parts[3].c_str());
+                    float tmax = std::atof(parts[4].c_str());
+                    bool est_repos = (parts[5] == "1" || parts[5] == "true");
+                    bool est_dimanche = (parts[6] == "1" || parts[6] == "true");
+                    bool est_passe = (parts[7] == "1" || parts[7] == "true");
+                    std::string heures_ouverture = parts[8];
+
+                    cal_jour_nom[jour] = nom_jour;
+                    cal_heures[jour] = heures_ouverture;
+                    bool is_early = false;
+                    if (!est_repos && heures_ouverture.length() >= 5) {
+                        int hour = atoi(heures_ouverture.substr(0, 2).c_str());
+                        int minute = atoi(heures_ouverture.substr(3, 2).c_str());
+                        if (hour < 9 || (hour == 9 && minute == 0)) is_early = true;
+                    }
+
+                    uint32_t cmax = get_c(tmax);
+                    uint32_t cmin = get_c(tmin);
+                    char buftx[64]; sprintf(buftx, "#%06x %.0f# / ", cmax, tmax);
+                    char buftn[64]; sprintf(buftn, " #%06x %.0f# °C", cmin, tmin);
+
+                    lv_obj_t* day_label = pt_day[jour];
+                    lv_obj_t* max_lbl = pt_max[jour];
+                    lv_obj_t* min_lbl = pt_min[jour];
+                    lv_obj_t* l1 = pt_l1[jour];
+                    lv_obj_t* l2 = pt_l2[jour];
+
+                    if(day_label) {
+                        lv_label_set_text(day_label, cal_toggled[jour] ? cal_heures[jour].c_str() : nom_jour.c_str());
+                        lv_label_set_text(max_lbl, est_passe ? "-- / " : buftx);
+                        lv_label_set_text(min_lbl, est_passe ? "-- °C" : buftn);
+                        apply_weather_icon(l1, l2, condition, true);
+
+                        if(cal_toggled[jour]) {
+                            lv_obj_add_flag(max_lbl, LV_OBJ_FLAG_HIDDEN);
+                            lv_obj_add_flag(min_lbl, LV_OBJ_FLAG_HIDDEN);
+                        } else {
+                            lv_obj_clear_flag(max_lbl, LV_OBJ_FLAG_HIDDEN);
+                            lv_obj_clear_flag(min_lbl, LV_OBJ_FLAG_HIDDEN);
+                        }
+
+                        uint8_t opa = est_passe ? 100 : 255;
+                        uint32_t col = 0xFFFFFF;
+                        if(jour == 0) col = 0x4D94FF;
+                        else if(est_dimanche) col = est_repos ? 0xFFA500 : 0xFF4D4D;
+                        else if(est_repos) col = 0x4CD964;
+                        else if(is_early) col = 0xFF8888;
+                        if(est_passe) col = 0x6A7B92;
+
+                        lv_obj_set_style_text_color(day_label, lv_color_hex(col), LV_PART_MAIN);
+                        lv_obj_set_style_text_opa(day_label, opa, LV_PART_MAIN);
+                        lv_obj_set_style_text_opa(l1, opa, LV_PART_MAIN);
+                        lv_obj_set_style_text_opa(l2, opa, LV_PART_MAIN);
+                        lv_obj_set_style_text_opa(max_lbl, opa, LV_PART_MAIN);
+                        lv_obj_set_style_text_opa(min_lbl, opa, LV_PART_MAIN);
+                        lv_label_set_recolor(max_lbl, true);
+                        lv_label_set_recolor(min_lbl, true);
+                        lv_obj_set_style_text_color(max_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+                        lv_obj_set_style_text_color(min_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+                    }
+                }
+            }
+
+
+
+
+    - service: tab5_maj_volet_etat
+
+      variables:
+
+        etat_physique: string
+
+      then:
+
+        - lambda: |-
+
+            if (etat_physique == "En_mouvement") {
+
+              id(volet_en_mouvement) = true;
+
+              lv_label_set_text(id(icon_card_shutter_arrow), "\U000F03E4");
+
+              lv_obj_set_style_text_color(id(icon_card_shutter_arrow), lv_color_hex(0x4D94FF), LV_PART_MAIN);
+
+            } else {
+
+              id(volet_en_mouvement) = false;
+
+              if (id(volet_target_open)) {
+
+                lv_label_set_text(id(icon_card_shutter_arrow), "\U000F005D");
+
+              } else {
+
+                lv_label_set_text(id(icon_card_shutter_arrow), "\U000F0045");
+
+              }
+
+              lv_obj_set_style_text_color(id(icon_card_shutter_arrow), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
+
+              
+
+              if (etat_physique == "Ouvert" || etat_physique == "Partiel" || etat_physique == "open") {
+
+                lv_label_set_text(id(icon_card_shutter1), "\U000F111E");
+
+                lv_obj_set_style_text_color(id(icon_card_shutter1), lv_color_hex(0x4CD964), LV_PART_MAIN);
+
+              } else if (etat_physique == "Ferme" || etat_physique == "closed") {
+
+                lv_label_set_text(id(icon_card_shutter1), "\U000F111C");
+
+                lv_obj_set_style_text_color(id(icon_card_shutter1), lv_color_hex(0xFF4D4D), LV_PART_MAIN);
+
+              }
+
+            }
+
+    - service: tab5_maj_clim
+
+      variables:
+
+        target: float
+
+        current: float
+
+        mode: string
+
+        preset: string
+
+        fan: string
+
+        swing: string
+
+      then:
+
+        - lambda: |-
+
+            id(clim_target_temp) = target;
+
+            char buf_target[16];
+
+            sprintf(buf_target, "%.1f", target);
+
+            lv_label_set_text(id(clim_target), buf_target);
+
+            
+
+            id(clim_preset_mode) = preset;
+
+            id(clim_fan_mode) = fan;
+
+            id(clim_swing_mode) = swing;
+
+            uint32_t c_cool_active   = 0x4D94FF; // Bleu vif
+
+            uint32_t c_cool_inactive = 0x60748F; // Bleu grisâtre inactif
+
+            uint32_t c_heat_active   = 0xFF4D4D; // Rouge vif
+
+            uint32_t c_heat_inactive = 0x8F6060; // Rouge grisâtre inactif
+
+            uint32_t c_off_active    = 0xFFA500; // Orange
+
+            uint32_t c_off_inactive  = 0xB48154; // Orange grisé
+
+            uint32_t c_inactive = 0x4A596E; // Gris barre
+
+            uint32_t c_eco = 0x4CD964; // Vert standard
+
+            // Mode (Cool/Heat/Dry/Fan/Off)
+
+            lv_obj_set_style_text_color(id(icon_clim_cool), lv_color_hex(c_cool_inactive), LV_PART_MAIN);
+
+            lv_obj_set_style_text_color(id(icon_clim_heat), lv_color_hex(c_heat_inactive), LV_PART_MAIN);
+
+            lv_obj_set_style_text_color(id(icon_clim_dry), lv_color_hex(c_cool_inactive), LV_PART_MAIN);
+
+            lv_obj_set_style_text_color(id(icon_clim_fan), lv_color_hex(c_inactive), LV_PART_MAIN);
+
+            lv_obj_set_style_text_color(id(icon_clim_off), lv_color_hex(c_off_inactive), LV_PART_MAIN);
+
+            if(mode == "cool") {
+
+              lv_obj_set_style_text_color(id(icon_clim_cool), lv_color_hex(c_cool_active), LV_PART_MAIN);
+
+            } else if(mode == "heat") {
+
+              lv_obj_set_style_text_color(id(icon_clim_heat), lv_color_hex(c_heat_active), LV_PART_MAIN);
+
+            } else if(mode == "dry") {
+
+              lv_obj_set_style_text_color(id(icon_clim_dry), lv_color_hex(c_cool_active), LV_PART_MAIN);
+
+            } else if(mode == "fan_only") {
+
+              lv_obj_set_style_text_color(id(icon_clim_fan), lv_color_hex(c_eco), LV_PART_MAIN);
+
+            } else {
+
+              lv_obj_set_style_text_color(id(icon_clim_off), lv_color_hex(c_off_active), LV_PART_MAIN);
+
+            }
+
+            
+
+            // Eco
+
+            if(preset == "eco") {
+
+              lv_obj_set_style_text_color(id(icon_clim_eco), lv_color_hex(c_eco), LV_PART_MAIN);
+
+            } else {
+
+              lv_obj_set_style_text_color(id(icon_clim_eco), lv_color_hex(c_inactive), LV_PART_MAIN);
+
+            }
+
+            // Boost
+
+            if(preset == "boost") {
+
+              lv_obj_set_style_text_color(id(icon_clim_boost), lv_color_hex(c_heat_active), LV_PART_MAIN);
+
+            } else {
+
+              lv_obj_set_style_text_color(id(icon_clim_boost), lv_color_hex(c_inactive), LV_PART_MAIN);
+
+            }
+
+            // Quiet / Auto 
+
+            if(fan == "low" || fan == "quiet" || fan == "Silence") {
+
+              lv_obj_set_style_text_color(id(icon_clim_quiet), lv_color_hex(c_cool_active), LV_PART_MAIN); 
+
+            } else {
+
+              lv_obj_set_style_text_color(id(icon_clim_quiet), lv_color_hex(c_inactive), LV_PART_MAIN);
+
+            }
+
+            // Swing
+
+            if(swing == "vertical" || swing == "horizontal" || swing == "both" || swing == "on" || swing == "3d") {
+
+              lv_obj_set_style_text_color(id(icon_clim_swing), lv_color_hex(c_cool_active), LV_PART_MAIN);
+
+            } else {
+
+              lv_obj_set_style_text_color(id(icon_clim_swing), lv_color_hex(c_inactive), LV_PART_MAIN);
+
+            }
+
+    - service: tab5_maj_alerte_meteo_france
+
+      variables:
+
+        phrase_pluie: string
+
+        globale: string
+
+        vent: string
+
+        inondation: string
+
+        orages: string
+
+        pluie_inondation: string
+
+        neige_verglas: string
+
+        grand_froid: string
+
+        vagues_submersion: string
+
+        canicule: string
+
+        avalanches: string
+
+      then:
+
+        - lambda: |-
+
+            lv_label_set_text(id(lbl_proc_pluie), phrase_pluie.c_str());
+
+            lv_obj_add_flag(id(lbl_pluie_val), LV_OBJ_FLAG_HIDDEN);
+
+            lv_obj_add_flag(id(lbl_pluie_unit), LV_OBJ_FLAG_HIDDEN);
+
+            auto set_alert_vis = [](lv_obj_t* obj, std::string state) {
+
+              lv_obj_clear_flag(obj, LV_OBJ_FLAG_HIDDEN);
+
+              if (state == "Vert") {
+
+                lv_obj_set_style_text_color(obj, lv_color_hex(0x6A7B92), LV_PART_MAIN);
+
+                lv_obj_set_style_text_opa(obj, 200, LV_PART_MAIN);
+
+              } else {
+
+                uint32_t col = 0xFFFF00; // Jaune
+
+                if (state == "Orange") col = 0xFFA500;
+
+                if (state == "Rouge") col = 0xFF0000;
+
+                lv_obj_set_style_text_color(obj, lv_color_hex(col), LV_PART_MAIN);
+
+                lv_obj_set_style_text_opa(obj, 255, LV_PART_MAIN);
+
+              }
+
+            };
+
+            uint32_t col_date = 0x4CD964; // Vert Vif (Succès)
+
+            if (globale == "Jaune") col_date = 0xFCF3CF;
+
+            else if (globale == "Orange") col_date = 0xF8C471;
+
+            else if (globale == "Rouge") col_date = 0xF1948A;
+
+            lv_obj_set_style_text_color(id(lbl_date), lv_color_hex(col_date), LV_PART_MAIN);
+
+            set_alert_vis(id(alerte_vent), vent);
+
+            set_alert_vis(id(alerte_inon), inondation);
+
+            set_alert_vis(id(alerte_orage), orages);
+
+            set_alert_vis(id(alerte_pluie_inon), pluie_inondation);
+
+            set_alert_vis(id(alerte_neige_verg), neige_verglas);
+
+            set_alert_vis(id(alerte_grand_froid), grand_froid);
+
+            set_alert_vis(id(alerte_vagues), vagues_submersion);
+
+            set_alert_vis(id(alerte_canicule), canicule);
+
+            // alerte_avalanche removed
+
+    - service: tab5_maj_probabilites
+
+      variables:
+
+        uv: int
+
+        gel: int
+
+        neige: int
+
+      then:
+
+        - lambda: |-
+
+            // Frost risk makes the exterior thermometer orange
+
+            if (gel >= 5) {
+
+              lv_obj_set_style_text_color(id(icon_temp), lv_color_hex(0xFFA500), LV_PART_MAIN);
+
+            } else {
+
+              lv_obj_set_style_text_color(id(icon_temp), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
+
+            }
+
+            // Snow risk changes the 5min rain predict icon
+
+            id(global_neige) = neige;
+
+            if (neige >= 5) {
+
+              lv_label_set_text(id(icon_rain_predict), "\U000F0598");
+
+              lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(0xFFA500), LV_PART_MAIN);
+
+            } else {
+
+              lv_label_set_text(id(icon_rain_predict), "\U000F0597");
+
+              uint32_t c_hydro; int val = (int)id(global_humidite);
+
+              if(val <= 14) c_hydro = 0xFF0000; else if(val >= 80) c_hydro = 0x0000CC; else if(val >= 30) { float step = floor((val - 30) / 3.0) * 3.0; float ratio = step / 50.0; int r = 255 - (255 * ratio); int g = 255 - (255 * ratio); int b = 255 - ((255 - 204) * ratio); c_hydro = (r << 16) | (g << 8) | b; } else if(val >= 22) { float ratio = (val - 22) / 8.0; int b = 255 * ratio; c_hydro = (255 << 16) | (255 << 8) | b; } else { float ratio = (val - 14) / 8.0; int g = 255 * ratio; c_hydro = (255 << 16) | (g << 8) | 0; }
+
+              lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(c_hydro), LV_PART_MAIN);
+
+            }
+
+    - service: tab5_maj_meteo_actuelle
+
+      variables:
+
+        condition: string
+
+        temperature: float
+
+        humidite: float
+
+      then:
+
+        - lambda: |-
+
+            id(global_humidite) = humidite;
+
+            if (id(global_neige) < 5) {
+
+              uint32_t c_hydro; int val = (int)id(global_humidite);
+
+              if(val <= 14) c_hydro = 0xFF0000; else if(val >= 80) c_hydro = 0x0000CC; else if(val >= 30) { float step = floor((val - 30) / 3.0) * 3.0; float ratio = step / 50.0; int r = 255 - (255 * ratio); int g = 255 - (255 * ratio); int b = 255 - ((255 - 204) * ratio); c_hydro = (r << 16) | (g << 8) | b; } else if(val >= 22) { float ratio = (val - 22) / 8.0; int b = 255 * ratio; c_hydro = (255 << 16) | (255 << 8) | b; } else { float ratio = (val - 14) / 8.0; int g = 255 * ratio; c_hydro = (255 << 16) | (g << 8) | 0; }
+
+              lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(c_hydro), LV_PART_MAIN);
+
+            }
+
+            char buf_t[32]; sprintf(buf_t, "%.0f °C", temperature);
+
+            lv_label_set_text(id(current_temp), buf_t);
+
+            float t = temperature;
+
+            uint32_t c_temp;
+
+            if (t <= -12) {
+
+                c_temp = 0xFF0000;
+
+            } else if (t <= 0) {
+
+                float step = floor((t + 12) / 2.0) * 2.0;
+
+                float ratio = step / 12.0;
+
+                int b = 255 * ratio;
+
+                c_temp = (255 << 16) | (0 << 8) | b;
+
+            } else if (t <= 14) {
+
+                float step = floor(t / 2.0) * 2.0;
+
+                float ratio = step / 14.0;
+
+                int r = 255 * ratio;
+
+                int g = 255 * ratio;
+
+                c_temp = (r << 16) | (g << 8) | 255;
+
+            } else if (t <= 24) {
+
+                float step = floor((t - 14) / 2.0) * 2.0;
+
+                float ratio = step / 10.0;
+
+                int g = 255 - (255 * ratio);
+
+                c_temp = (255 << 16) | (g << 8) | 255;
+
+            } else {
+
+                float step = floor((t - 24) / 2.0) * 2.0;
+
+                if (step > 11) step = 11;
+
+                float ratio = step / 11.0;
+
+                int b = 255 - (255 * ratio);
+
+                c_temp = (255 << 16) | (0 << 8) | b;
+
+            }
+
+            lv_obj_set_style_text_color(id(current_temp), lv_color_hex(c_temp), LV_PART_MAIN);
+
+            auto apply_weather_icon = [](lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card) {
+                update_meteo_icon(l1_obj, l2_obj, state, is_card, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
+            };
+            apply_weather_icon(id(icon_actuel_layer1), id(icon_actuel_layer2), condition, false);
+
+    - service: tab5_maj_pluie_1h
+
+      variables:
+
+        index_5mn: int
+
+        intensite: string
+
+      then:
+
+        - lambda: |-
+
+            uint32_t c_empty = 0x4A596E;
+
+            uint32_t c_faible = 0x81D4FA;      // Bleu clair
+
+            uint32_t c_modere = 0x29B6F6;      // Bleu moyen
+
+            uint32_t c_forte = 0x0277BD;       // Bleu foncé
+
+            uint32_t c_tres_forte = 0x01579B;  // Bleu très foncé
+
+            uint32_t c = c_empty;
+
+            int h = 0;
+
+            if (intensite == "Pluie faible") { c = c_faible; h = 13; } // ~1/4 hauteur
+
+            else if (intensite == "Pluie modérée") { c = c_modere; h = 25; } // 1/2 hauteur
+
+            else if (intensite == "Pluie forte") { c = c_forte; h = 38; } // 3/4 hauteur
+
+            else if (intensite == "Pluie très forte" || intensite == "Pluie trés forte") { c = c_tres_forte; h = 50; } // hauteur max
+
+            lv_obj_t* target = NULL;
+
+            switch(index_5mn) {
+
+              case 0: target = id(rb_0_in); break;
+
+              case 1: target = id(rb_1_in); break;
+
+              case 2: target = id(rb_2_in); break;
+
+              case 3: target = id(rb_3_in); break;
+
+              case 4: target = id(rb_4_in); break;
+
+              case 5: target = id(rb_5_in); break;
+
+              case 6: target = id(rb_6_in); break;
+
+              case 7: target = id(rb_7_in); break;
+
+              case 8: target = id(rb_8_in); break;
+
+            }
+
+            if(target != NULL) {
+
+              lv_obj_set_style_bg_color(target, lv_color_hex(c), LV_PART_MAIN);
+
+              lv_obj_set_height(target, h);
+
+            }
+
+    - service: tab5_maj_info_texte
+
+      variables:
+
+        texte: string
+
+        couleur: string
+
+      then:
+
+        - lambda: |-
+
+            // Conteneur conservé, on laisse la méthode vide en attendant d'y mettre les alertes
+
+    - service: tab5_maj_planning
+
+      variables:
+
+        ligne1: string
+
+        ligne2: string
+
+      then:
+
+        - lambda: |-
+
+            id(plan_ligne_1) = ligne1;
+
+            id(plan_ligne_2) = ligne2;
+
+            id(plan_cycle_counter) = 0;
+
+            lv_label_set_recolor(id(lbl_planning_text), true);
+
+            lv_label_set_text(id(lbl_planning_text), id(plan_ligne_1).c_str());
+
+    - service: tab5_maj_previsions_jours
+
+      variables:
+
+        jour: int
+
+        nom_jour: string
+
+        condition: string
+
+        tmin: float
+
+        tmax: float
+
+        est_repos: bool
+
+        est_dimanche: bool
+
+        est_passe: bool
+
+        heures_ouverture: string
+
+      then:
+
+        - lambda: |-
+
+            cal_jour_nom[jour] = nom_jour;
+
+            cal_heures[jour] = heures_ouverture;
+
+            bool is_early = false;
+
+            if (!est_repos && heures_ouverture.length() >= 5) {
+
+               int hour = atoi(heures_ouverture.substr(0, 2).c_str());
+
+               int minute = atoi(heures_ouverture.substr(3, 2).c_str());
+
+               if (hour < 9 || (hour == 9 && minute == 0)) {
+
+                  is_early = true;
+
+               }
+
+            }
+
+            std::string sched_str;
+
+            if(est_repos) sched_str = "Repos";
+
+            else {
+
+              sched_str = heures_ouverture.c_str();
+
+              size_t dash = sched_str.find('-');
+
+              if(dash != std::string::npos) sched_str.erase(dash);
+
+            }
+
+            std::string nom_court = nom_jour;
+
+            size_t space_pos = nom_court.find(' ');
+
+            if (space_pos != std::string::npos) nom_court = nom_court.substr(0, space_pos);
+
+            uint32_t scr_col = 0xFFFFFF;
+
+            if(est_repos) scr_col = 0x4CD964;
+
+            else if(is_early) scr_col = 0xFF8888;
+
+            // Labels lbl_sched retirés de la vue
+
+            auto apply_weather_icon = [](lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card) {
+                update_meteo_icon(l1_obj, l2_obj, state, is_card, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
+            };
+
+            auto get_c = [](float t) -> uint32_t {
+
+                if (t <= -12) return 0xFF0000;
+
+                else if (t <= 0) { float r = floor((t + 12)/2.0)*2.0/12.0; return (255<<16)|(0<<8)|(int)(255*r); }
+
+                else if (t <= 14) { float r = floor(t/2.0)*2.0/14.0; return ((int)(255*r)<<16)|((int)(255*r)<<8)|255; }
+
+                else if (t <= 24) { float r = floor((t - 14)/2.0)*2.0/10.0; return (255<<16)|((int)(255-(255*r))<<8)|255; }
+
+                else { float s = floor((t - 24)/2.0)*2.0; if(s>11) s=11; return (255<<16)|(0<<8)|(int)(255-(255*(s/11.0))); }
+
+            };
+
+            uint32_t cmax = get_c(tmax);
+
+            uint32_t cmin = get_c(tmin);
+
+            char buftx[64]; sprintf(buftx, "#%06x %.0f# / ", cmax, tmax);
+
+            char buftn[64]; sprintf(buftn, " #%06x %.0f# °C", cmin, tmin);
+
+            char bufmax[32]; sprintf(bufmax, "%.0f°", tmax); // Pour la card calendrier
+
+            // Mise à jour de la page d'accueil (Slider 15 jours: J0 à J14)
+
+            if (jour >= 0 && jour <= 14) {
+              lv_obj_t* pt_day[] = {id(j0_day), id(j1_day), id(j2_day), id(j3_day), id(j4_day), id(j5_day), id(j6_day), id(j7_day), id(j8_day), id(j9_day), id(j10_day), id(j11_day), id(j12_day), id(j13_day), id(j14_day)};
+              lv_obj_t* pt_max[] = {id(j0_max), id(j1_max), id(j2_max), id(j3_max), id(j4_max), id(j5_max), id(j6_max), id(j7_max), id(j8_max), id(j9_max), id(j10_max), id(j11_max), id(j12_max), id(j13_max), id(j14_max)};
+              lv_obj_t* pt_min[] = {id(j0_min), id(j1_min), id(j2_min), id(j3_min), id(j4_min), id(j5_min), id(j6_min), id(j7_min), id(j8_min), id(j9_min), id(j10_min), id(j11_min), id(j12_min), id(j13_min), id(j14_min)};
+              lv_obj_t* pt_l1[] = {id(j0_icon_layer1), id(j1_icon_layer1), id(j2_icon_layer1), id(j3_icon_layer1), id(j4_icon_layer1), id(j5_icon_layer1), id(j6_icon_layer1), id(j7_icon_layer1), id(j8_icon_layer1), id(j9_icon_layer1), id(j10_icon_layer1), id(j11_icon_layer1), id(j12_icon_layer1), id(j13_icon_layer1), id(j14_icon_layer1)};
+              lv_obj_t* pt_l2[] = {id(j0_icon_layer2), id(j1_icon_layer2), id(j2_icon_layer2), id(j3_icon_layer2), id(j4_icon_layer2), id(j5_icon_layer2), id(j6_icon_layer2), id(j7_icon_layer2), id(j8_icon_layer2), id(j9_icon_layer2), id(j10_icon_layer2), id(j11_icon_layer2), id(j12_icon_layer2), id(j13_icon_layer2), id(j14_icon_layer2)};
+
+              lv_obj_t* day_label = pt_day[jour];
+              lv_obj_t* max_lbl = pt_max[jour];
+              lv_obj_t* min_lbl = pt_min[jour];
+              lv_obj_t* l1 = pt_l1[jour];
+              lv_obj_t* l2 = pt_l2[jour];
+
+              if (day_label != NULL) {
+
+                lv_label_set_text(day_label, cal_toggled[jour] ? cal_heures[jour].c_str() : nom_jour.c_str());
+
+                lv_label_set_text(max_lbl, est_passe ? "-- / " : buftx);
+
+                lv_label_set_text(min_lbl, est_passe ? "-- °C" : buftn);
+
+                apply_weather_icon(l1, l2, condition, true);
+
+                
+
+                if (cal_toggled[jour]) {
+
+                   lv_obj_add_flag(max_lbl, LV_OBJ_FLAG_HIDDEN);
+
+                   lv_obj_add_flag(min_lbl, LV_OBJ_FLAG_HIDDEN);
+
+                } else {
+
+                   lv_obj_clear_flag(max_lbl, LV_OBJ_FLAG_HIDDEN);
+
+                   lv_obj_clear_flag(min_lbl, LV_OBJ_FLAG_HIDDEN);
+
+                }
+
+                
+
+                uint8_t opa = est_passe ? 100 : 255;
+
+                uint32_t col = 0xFFFFFF; // Blanc (Défaut)
+
+                
+
+                if(jour == 0) {
+
+                  col = 0x4D94FF; // Bleu pour Aujourd'hui
+
+                } else if(est_dimanche) {
+
+                  col = est_repos ? 0xFFA500 : 0xFF4D4D;
+
+                } else if(est_repos) {
+
+                  col = 0x4CD964;
+
+                } else if(is_early) {
+
+                  col = 0xFF8888;
+
+                }
+
+                
+
+                if (est_passe) col = 0x6A7B92; // Gris
+
+                lv_obj_set_style_text_color(day_label, lv_color_hex(col), LV_PART_MAIN);
+
+                lv_obj_set_style_text_opa(day_label, opa, LV_PART_MAIN);
+
+                lv_obj_set_style_text_opa(l1, opa, LV_PART_MAIN);
+                lv_obj_set_style_text_opa(l2, opa, LV_PART_MAIN);
+
+                lv_obj_set_style_text_opa(max_lbl, opa, LV_PART_MAIN);
+
+                lv_obj_set_style_text_opa(min_lbl, opa, LV_PART_MAIN);
+
+                lv_label_set_recolor(max_lbl, true);
+
+                lv_label_set_recolor(min_lbl, true);
+
+                lv_obj_set_style_text_color(max_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+
+                lv_obj_set_style_text_color(min_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+
+              }
+
+            }
+
+    - service: tab5_maj_previsions_heures
+
+      variables:
+
+        heure_index: int
+
+        heure_texte: string
+
+        condition: string
+
+        temp: float
+
+        pluvio: float
+
+      then:
+
+        - lambda: |-
+
+            if (heure_index >= 0 && heure_index <= 14) {
+
+              lv_obj_t* time_lbl = NULL;
+
+              lv_obj_t* l1 = NULL;
+              lv_obj_t* l2 = NULL;
+
+              lv_obj_t* p_icon = NULL;
+
+              lv_obj_t* prob_lbl = NULL;
+
+              lv_obj_t* temp_lbl = NULL;
+
+              
+
+              if(heure_index == 0) { time_lbl = id(h0_time); l1 = id(h0_icon_layer1); l2 = id(h0_icon_layer2); p_icon = id(h0_p_icon); prob_lbl = id(h0_prob); temp_lbl = id(h0_temp); }
+
+              else if(heure_index == 1) { time_lbl = id(h1_time); l1 = id(h1_icon_layer1); l2 = id(h1_icon_layer2); p_icon = id(h1_p_icon); prob_lbl = id(h1_prob); temp_lbl = id(h1_temp); }
+
+              else if(heure_index == 2) { time_lbl = id(h2_time); l1 = id(h2_icon_layer1); l2 = id(h2_icon_layer2); p_icon = id(h2_p_icon); prob_lbl = id(h2_prob); temp_lbl = id(h2_temp); }
+
+              else if(heure_index == 3) { time_lbl = id(h3_time); l1 = id(h3_icon_layer1); l2 = id(h3_icon_layer2); p_icon = id(h3_p_icon); prob_lbl = id(h3_prob); temp_lbl = id(h3_temp); }
+
+              else if(heure_index == 4) { time_lbl = id(h4_time); l1 = id(h4_icon_layer1); l2 = id(h4_icon_layer2); p_icon = id(h4_p_icon); prob_lbl = id(h4_prob); temp_lbl = id(h4_temp); }
+
+              else if(heure_index == 5) { time_lbl = id(h5_time); l1 = id(h5_icon_layer1); l2 = id(h5_icon_layer2); p_icon = id(h5_p_icon); prob_lbl = id(h5_prob); temp_lbl = id(h5_temp); }
+
+              else if(heure_index == 6) { time_lbl = id(h6_time); l1 = id(h6_icon_layer1); l2 = id(h6_icon_layer2); p_icon = id(h6_p_icon); prob_lbl = id(h6_prob); temp_lbl = id(h6_temp); }
+
+              else if(heure_index == 7) { time_lbl = id(h7_time); l1 = id(h7_icon_layer1); l2 = id(h7_icon_layer2); p_icon = id(h7_p_icon); prob_lbl = id(h7_prob); temp_lbl = id(h7_temp); }
+
+              else if(heure_index == 8) { time_lbl = id(h8_time); l1 = id(h8_icon_layer1); l2 = id(h8_icon_layer2); p_icon = id(h8_p_icon); prob_lbl = id(h8_prob); temp_lbl = id(h8_temp); }
+
+              else if(heure_index == 9) { time_lbl = id(h9_time); l1 = id(h9_icon_layer1); l2 = id(h9_icon_layer2); p_icon = id(h9_p_icon); prob_lbl = id(h9_prob); temp_lbl = id(h9_temp); }
+
+              else if(heure_index == 10) { time_lbl = id(h10_time); l1 = id(h10_icon_layer1); l2 = id(h10_icon_layer2); p_icon = id(h10_p_icon); prob_lbl = id(h10_prob); temp_lbl = id(h10_temp); }
+
+              else if(heure_index == 11) { time_lbl = id(h11_time); l1 = id(h11_icon_layer1); l2 = id(h11_icon_layer2); p_icon = id(h11_p_icon); prob_lbl = id(h11_prob); temp_lbl = id(h11_temp); }
+
+              else if(heure_index == 12) { time_lbl = id(h12_time); l1 = id(h12_icon_layer1); l2 = id(h12_icon_layer2); p_icon = id(h12_p_icon); prob_lbl = id(h12_prob); temp_lbl = id(h12_temp); }
+
+              else if(heure_index == 13) { time_lbl = id(h13_time); l1 = id(h13_icon_layer1); l2 = id(h13_icon_layer2); p_icon = id(h13_p_icon); prob_lbl = id(h13_prob); temp_lbl = id(h13_temp); }
+
+              else if(heure_index == 14) { time_lbl = id(h14_time); l1 = id(h14_icon_layer1); l2 = id(h14_icon_layer2); p_icon = id(h14_p_icon); prob_lbl = id(h14_prob); temp_lbl = id(h14_temp); }
+
+              
+
+              if(time_lbl) {
+
+                 lv_label_set_text(time_lbl, heure_texte.c_str());
+
+                 
+
+                 auto get_c = [](float t) -> uint32_t {
+
+                    if (t <= -12) return 0xFF0000;
+
+                    else if (t <= 0) { float r = floor((t + 12)/2.0)*2.0/12.0; return (255<<16)|(0<<8)|(int)(255*r); }
+
+                    else if (t <= 14) { float r = floor(t/2.0)*2.0/14.0; return ((int)(255*r)<<16)|((int)(255*r)<<8)|255; }
+
+                    else if (t <= 24) { float r = floor((t - 14)/2.0)*2.0/10.0; return (255<<16)|((int)(255-(255*r))<<8)|255; }
+
+                    else { float s = floor((t - 24)/2.0)*2.0; if(s>11) s=11; return (255<<16)|(0<<8)|(int)(255-(255*(s/11.0))); }
+
+                 };
+
+                 char b_temp[32];
+
+                 sprintf(b_temp, "#%06x %.0f# °C", get_c(temp), temp);
+
+                 lv_label_set_recolor(temp_lbl, true);
+
+                 lv_obj_set_style_text_color(temp_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+
+                 lv_label_set_text(temp_lbl, b_temp);
+
+                 
+
+                 char b_prob[16];
+
+                 sprintf(b_prob, "%.0f %%", pluvio);
+
+                 lv_label_set_text(prob_lbl, b_prob);
+
+                 
+
+                 uint32_t c_prob;
+
+                 if(pluvio <= 10) c_prob = 0x81D4FA; // Bleu tres clair
+
+                 else if(pluvio <= 40) c_prob = 0x29B6F6;
+
+                 else if(pluvio <= 70) c_prob = 0x0277BD;
+
+                 else c_prob = 0x01579B; // Bleu tres sombre
+
+                 lv_obj_set_style_text_color(p_icon, lv_color_hex(c_prob), LV_PART_MAIN);
+
+                 if(pluvio >= 40) {
+
+                     lv_obj_set_style_text_color(prob_lbl, lv_color_hex(c_prob), LV_PART_MAIN);
+
+                 } else {
+
+                     lv_obj_set_style_text_color(prob_lbl, lv_color_hex(0x6A7B92), LV_PART_MAIN); // gris clair si proba faible
+
+                 }
+
+            auto apply_weather_icon = [](lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card) {
+                update_meteo_icon(l1_obj, l2_obj, state, is_card, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
+            };
+                 
+
+                 apply_weather_icon(l1, l2, condition, true);
+
+              }
+
+            }
+

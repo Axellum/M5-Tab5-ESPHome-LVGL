@@ -1,0 +1,5 @@
+script:
+  # Fichier vierge, prêt à accueillir la logique d'interface
+  - id: dummy_script
+    then:
+      - logger.log: "Scripts LVGL initialisés."

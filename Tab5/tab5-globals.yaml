@@ -1,0 +1,56 @@
+globals:
+  # Variables globales (vide, prêt à l'emploi)
+  - id: active_page
+    type: int
+    initial_value: '0'
+    restore_value: false
+  - id: clim_target_temp
+    type: float
+    initial_value: '20.0'
+  - id: volet_target_open
+    type: bool
+    initial_value: 'true'
+  - id: volet_en_mouvement
+    type: bool
+    initial_value: 'false'
+  - id: clim_preset_mode
+    type: std::string
+    initial_value: '"none"'
+  - id: clim_fan_mode
+    type: std::string
+    initial_value: '"auto"'
+  - id: clim_swing_mode
+    type: std::string
+    initial_value: '"off"'
+  - id: global_neige
+    type: int
+    initial_value: '0'
+  - id: global_humidite
+    type: float
+    initial_value: '50.0'
+  
+  - id: plan_ligne_1
+    type: std::string
+    initial_value: '""'
+  - id: plan_ligne_2
+    type: std::string
+    initial_value: '""'
+  - id: plan_cycle_counter
+    type: int
+    initial_value: '0'
+
+interval:
+  - interval: 5s
+    then:
+      - lambda: |-
+          if(id(plan_ligne_2) != "") {
+            id(plan_cycle_counter)++;
+            if(id(plan_cycle_counter) >= 7) {
+              id(plan_cycle_counter) = 0;
+            }
+            if(id(plan_cycle_counter) < 6) {
+              lv_label_set_text(id(lbl_planning_text), id(plan_ligne_1).c_str());
+            } else {
+              lv_label_set_text(id(lbl_planning_text), id(plan_ligne_2).c_str());
+            }
+          }

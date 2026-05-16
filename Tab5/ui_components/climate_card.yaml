@@ -1,0 +1,436 @@
+obj:
+
+  id: climate_card
+
+  x: 347
+
+  y: 10
+
+  width: 413
+
+  height: 280
+
+  bg_opa: 0
+
+  border_width: 0
+
+  border_color: color_border
+
+  radius: 0
+
+  scrollbar_mode: "OFF"
+
+  pad_all: 0
+
+  widgets:
+
+    # Salon
+
+    - label: { id: icon_salon, text: "\U000F04B9", align: TOP_LEFT, x: 20, y: 5, text_font: mdi_font_45, text_color: color_text_dim }
+
+    - label: { id: val_temp_salon, text: "-- °C", align: TOP_LEFT, x: 75, y: 10, text_font: roboto_36_b, text_color: color_temp_max }
+
+    # Chambre
+
+    - label: { id: icon_chambre, text: "\U000F02E3", align: TOP_RIGHT, x: -156, y: 5, text_font: mdi_font_45, text_color: color_text_dim }
+
+    - label: { id: val_temp_chambre, text: "-- °C", align: TOP_RIGHT, x: -25, y: 10, text_font: roboto_36_b, text_color: color_temp_max }
+
+    - label: { id: clim_target, text: "--", align: BOTTOM_MID, x: 0, y: -78, text_font: roboto_48_b, text_color: color_text }
+
+    - button:
+
+        id: btn_clim_minus
+
+        align: BOTTOM_MID
+
+        x: -100
+
+        y: -83
+
+        width: 60
+
+        height: 60
+
+        styles: style_clim_btn
+
+        on_short_click:
+
+          - homeassistant.service:
+
+              service: climate.set_temperature
+
+              data:
+
+                entity_id: climate.daikinap71273_room_temperature
+
+                temperature: !lambda "return id(clim_target_temp) - 0.5;"
+
+        widgets:
+
+          - label: { text: "\U000F0374", align: CENTER, text_font: mdi_font_56, text_color: color_text }
+
+    - button:
+
+        id: btn_clim_plus
+
+        align: BOTTOM_MID
+
+        x: 100
+
+        y: -83
+
+        width: 60
+
+        height: 60
+
+        styles: style_clim_btn
+
+        on_short_click:
+
+          - homeassistant.service:
+
+              service: climate.set_temperature
+
+              data:
+
+                entity_id: climate.daikinap71273_room_temperature
+
+                temperature: !lambda "return id(clim_target_temp) + 0.5;"
+
+        widgets:
+
+          - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56, text_color: color_text }
+
+    # --- LIGNE 1 : MODES (y: -143) ---
+
+    - button:
+
+        id: btn_clim_cool
+
+        align: BOTTOM_MID
+
+        x: -140
+
+        y: -143
+
+        width: 65
+
+        height: 65
+
+        styles: style_clim_btn
+
+        on_short_click:
+
+          - homeassistant.service:
+
+              service: climate.set_hvac_mode
+
+              data:
+
+                entity_id: climate.daikinap71273_room_temperature
+
+                hvac_mode: "cool"
+
+        widgets:
+
+          - label: { id: icon_clim_cool, text: "\U000F0717", align: CENTER, text_font: mdi_font_56, text_color: color_text_dim }
+
+    - button:
+
+        id: btn_clim_heat
+
+        align: BOTTOM_MID
+
+        x: -70
+
+        y: -143
+
+        width: 65
+
+        height: 65
+
+        styles: style_clim_btn
+
+        on_short_click:
+
+          - homeassistant.service:
+
+              service: climate.set_hvac_mode
+
+              data:
+
+                entity_id: climate.daikinap71273_room_temperature
+
+                hvac_mode: "heat"
+
+        widgets:
+
+          - label: { id: icon_clim_heat, text: "\U000F0238", align: CENTER, text_font: mdi_font_56, text_color: color_text_dim }
+
+    - button:
+
+        id: btn_clim_dry
+
+        align: BOTTOM_MID
+
+        x: 0
+
+        y: -143
+
+        width: 65
+
+        height: 65
+
+        styles: style_clim_btn
+
+        on_short_click:
+
+          - homeassistant.service:
+
+              service: climate.set_hvac_mode
+
+              data:
+
+                entity_id: climate.daikinap71273_room_temperature
+
+                hvac_mode: "dry"
+
+        widgets:
+
+          - label: { id: icon_clim_dry, text: "\U000F058E", align: CENTER, text_font: mdi_font_56, text_color: color_text_dim }
+
+    - button:
+
+        id: btn_clim_fan_only
+
+        align: BOTTOM_MID
+
+        x: 70
+
+        y: -143
+
+        width: 65
+
+        height: 65
+
+        styles: style_clim_btn
+
+        on_short_click:
+
+          - homeassistant.service:
+
+              service: climate.set_hvac_mode
+
+              data:
+
+                entity_id: climate.daikinap71273_room_temperature
+
+                hvac_mode: "fan_only"
+
+        widgets:
+
+          - label: { id: icon_clim_fan, text: "\U000F0210", align: CENTER, text_font: mdi_font_56, text_color: color_text_dim }
+
+    - button:
+
+        id: btn_clim_off
+
+        align: BOTTOM_MID
+
+        x: 140
+
+        y: -143
+
+        width: 65
+
+        height: 65
+
+        styles: style_clim_btn
+
+        on_short_click:
+
+          - homeassistant.service:
+
+              service: climate.turn_off
+
+              data:
+
+                entity_id: climate.daikinap71273_room_temperature
+
+        widgets:
+
+          - label: { id: icon_clim_off, text: "\U000F0425", align: CENTER, text_font: mdi_font_56, text_color: color_text_dim }
+
+    # --- LIGNE 3 : PRESETS & FAN ---
+
+    - button:
+
+        id: btn_clim_eco
+
+        align: BOTTOM_MID
+
+        x: -105
+
+        y: -12
+
+        width: 65
+
+        height: 65
+
+        styles: style_clim_btn
+
+        on_short_click:
+
+          - homeassistant.service:
+
+              service: climate.set_preset_mode
+
+              data:
+
+                entity_id: climate.daikinap71273_room_temperature
+
+                preset_mode: !lambda |-
+
+                  if(id(clim_preset_mode) == "eco") {
+
+                    return std::string("none");
+
+                  } else {
+
+                    return std::string("eco");
+
+                  }
+
+        widgets:
+
+          - label: { id: icon_clim_eco, text: "\U000F032A", align: CENTER, text_font: mdi_font_56, text_color: color_text_dim }
+
+    - button:
+
+        id: btn_clim_boost
+
+        align: BOTTOM_MID
+
+        x: -35
+
+        y: -12
+
+        width: 65
+
+        height: 65
+
+        styles: style_clim_btn
+
+        on_short_click:
+
+          - homeassistant.service:
+
+              service: climate.set_preset_mode
+
+              data:
+
+                entity_id: climate.daikinap71273_room_temperature
+
+                preset_mode: !lambda |-
+
+                  if(id(clim_preset_mode) == "boost") {
+
+                    return std::string("none");
+
+                  } else {
+
+                    return std::string("boost");
+
+                  }
+
+        widgets:
+
+          - label: { id: icon_clim_boost, text: "\U000F14DE", align: CENTER, text_font: mdi_font_56, text_color: color_text_dim }
+
+    - button:
+
+        id: btn_clim_quiet
+
+        align: BOTTOM_MID
+
+        x: 35
+
+        y: -12
+
+        width: 65
+
+        height: 65
+
+        styles: style_clim_btn
+
+        on_short_click:
+
+          - homeassistant.service:
+
+              service: climate.set_fan_mode
+
+              data:
+
+                entity_id: climate.daikinap71273_room_temperature
+
+                fan_mode: !lambda |-
+
+                  if(id(clim_fan_mode) == "low" || id(clim_fan_mode) == "quiet" || id(clim_fan_mode) == "Silence") {
+
+                    return std::string("auto");
+
+                  } else {
+
+                    return std::string("low");
+
+                  }
+
+        widgets:
+
+          - label: { id: icon_clim_quiet, text: "\U000F146D", align: CENTER, text_font: mdi_font_56, text_color: color_text_dim }
+
+    - button:
+
+        id: btn_clim_swing
+
+        align: BOTTOM_MID
+
+        x: 105
+
+        y: -12
+
+        width: 65
+
+        height: 65
+
+        styles: style_clim_btn
+
+        on_short_click:
+
+          - homeassistant.service:
+
+              service: climate.set_swing_mode
+
+              data:
+
+                entity_id: climate.daikinap71273_room_temperature
+
+                swing_mode: !lambda |-
+
+                  if(id(clim_swing_mode) == "off") {
+
+                    return std::string("vertical");
+
+                  } else {
+
+                    return std::string("off");
+
+                  }
+
+        widgets:
+
+          - label: { id: icon_clim_swing, text: "\U000F0E79", align: CENTER, text_font: mdi_font_56, text_color: color_text_dim }
+
+# ==================== MIDDLE STRIP (RAIN & ALERTS) ====================
+

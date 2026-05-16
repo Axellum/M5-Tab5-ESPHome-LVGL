@@ -1,0 +1,497 @@
+lvgl:
+
+  pages:
+
+    - id: page_main
+      scrollbar_mode: "OFF"
+
+      on_gesture:
+
+        then:
+
+          - lambda: |-
+
+              lv_indev_t * indev = lv_indev_get_act();
+
+              if (indev) {
+
+                  lv_point_t pt;
+
+                  lv_indev_get_point(indev, &pt);
+
+                  lv_dir_t d = lv_indev_get_gesture_dir(indev);
+
+                  if (d == LV_DIR_TOP) {
+                      lv_obj_clear_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
+                      lv_obj_move_foreground(id(layer_console_sys));
+                  } else if (d == LV_DIR_BOTTOM) {
+                      lv_obj_add_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
+                  } else if (pt.y > 400) {
+
+                      // Raccourcis pour verifier l'etat
+
+                      bool l1 = !lv_obj_has_flag(id(layer_forecast_1), LV_OBJ_FLAG_HIDDEN);
+
+                      bool l2 = !lv_obj_has_flag(id(layer_forecast_2), LV_OBJ_FLAG_HIDDEN);
+
+                      bool l3 = !lv_obj_has_flag(id(layer_forecast_3), LV_OBJ_FLAG_HIDDEN);
+
+                      bool h1 = !lv_obj_has_flag(id(layer_forecast_hourly_1), LV_OBJ_FLAG_HIDDEN);
+
+                      bool h2 = !lv_obj_has_flag(id(layer_forecast_hourly_2), LV_OBJ_FLAG_HIDDEN);
+
+                      bool h3 = !lv_obj_has_flag(id(layer_forecast_hourly_3), LV_OBJ_FLAG_HIDDEN);
+
+                      // Si on est dans un etat incoherent (rien d'affiche), on reset.
+
+                      if(!l1 && !l2 && !l3 && !h1 && !h2 && !h3) l1 = true;
+
+                      auto hide_all = [&]() {
+
+                         lv_obj_add_flag(id(layer_forecast_1), LV_OBJ_FLAG_HIDDEN);
+
+                         lv_obj_add_flag(id(layer_forecast_2), LV_OBJ_FLAG_HIDDEN);
+
+                         lv_obj_add_flag(id(layer_forecast_3), LV_OBJ_FLAG_HIDDEN);
+
+                         lv_obj_add_flag(id(layer_forecast_hourly_1), LV_OBJ_FLAG_HIDDEN);
+
+                         lv_obj_add_flag(id(layer_forecast_hourly_2), LV_OBJ_FLAG_HIDDEN);
+
+                         lv_obj_add_flag(id(layer_forecast_hourly_3), LV_OBJ_FLAG_HIDDEN);
+
+                      };
+
+                      if (d == LV_DIR_LEFT) {
+
+                          hide_all();
+
+                          if(h3) lv_obj_clear_flag(id(layer_forecast_hourly_2), LV_OBJ_FLAG_HIDDEN);
+
+                          else if(h2) lv_obj_clear_flag(id(layer_forecast_hourly_1), LV_OBJ_FLAG_HIDDEN);
+
+                          else if(h1) lv_obj_clear_flag(id(layer_forecast_1), LV_OBJ_FLAG_HIDDEN);
+
+                          else if(l1) lv_obj_clear_flag(id(layer_forecast_2), LV_OBJ_FLAG_HIDDEN);
+
+                          else if(l2) lv_obj_clear_flag(id(layer_forecast_3), LV_OBJ_FLAG_HIDDEN);
+
+                          else if(l3) lv_obj_clear_flag(id(layer_forecast_1), LV_OBJ_FLAG_HIDDEN); // Retour accueil
+
+                      } else if (d == LV_DIR_RIGHT) {
+
+                          hide_all();
+
+                          if(l3) lv_obj_clear_flag(id(layer_forecast_2), LV_OBJ_FLAG_HIDDEN);
+
+                          else if(l2) lv_obj_clear_flag(id(layer_forecast_1), LV_OBJ_FLAG_HIDDEN);
+
+                          else if(l1) lv_obj_clear_flag(id(layer_forecast_hourly_1), LV_OBJ_FLAG_HIDDEN);
+
+                          else if(h1) lv_obj_clear_flag(id(layer_forecast_hourly_2), LV_OBJ_FLAG_HIDDEN);
+
+                          else if(h2) lv_obj_clear_flag(id(layer_forecast_hourly_3), LV_OBJ_FLAG_HIDDEN);
+
+                          else if(h3) lv_obj_clear_flag(id(layer_forecast_1), LV_OBJ_FLAG_HIDDEN); // Retour accueil
+
+                      }
+
+                  }
+
+              }
+
+      widgets:
+
+        # ==================== TOP ROW (Floating) ====================
+
+        - obj:
+            x: 35
+            y: 10
+            width: 270
+            height: 270
+            styles: style_transparent
+            scrollbar_mode: "OFF"
+            widgets:
+              - label: { id: icon_actuel_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_main, text_color: color_text }
+              - label: { id: icon_actuel_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_main, text_color: color_text }
+
+        - label: { id: icon_mic_status, text: "\U000F036C", x: 10, y: 5, align: TOP_LEFT, text_font: mdi_font_60, text_color: color_text_dim }
+
+        - button:
+
+            id: btn_assist_trigger
+
+            x: 0
+
+            y: 0
+
+            width: 250
+
+            height: 250
+
+            styles: style_invisible
+
+            on_short_click:
+
+              - voice_assistant.start:
+
+                  id: va
+
+        # --- °Current Temp / Hum ---
+
+        - obj:
+
+            x: 20
+
+            y: 302
+
+            width: 380
+
+            height: 50
+
+            styles: style_transparent
+            scrollbar_mode: "OFF"
+
+            widgets:
+
+              - label: { id: icon_temp, text: "\U000F050F", x: 0, y: 0, text_font: mdi_font_45, text_color: color_text_dim }
+
+              - label: { id: current_temp, text: "-- °C", x: 50, y: 0, text_font: roboto_48_b, text_color: color_temp_max }
+
+              - label: { id: icon_serre, text: "\U000F002D", x: 190, y: 0, text_font: mdi_font_45, text_color: color_text_dim }
+
+              - label: { id: current_serre, text: "-- °C", x: 240, y: 0, text_font: roboto_48_b, text_color: color_temp_max }
+
+        # --- PLANNING (Dynamique) ---
+
+        - obj:
+
+            x: 400
+
+            y: 305
+
+            width: 380
+
+            height: 55
+
+            styles: style_transparent
+            scrollbar_mode: "OFF"
+
+            widgets:
+
+              - label: { id: lbl_planning_text, text: "", align: CENTER, text_font: roboto_36_b, text_color: color_text }
+
+        # --- Top Right: Date, Time & Status Icons ---
+
+        - label: { id: icon_pc, text: "\U000F0379", x: 790, y: 78, text_font: mdi_font_45, text_color: color_text_dim }
+
+        - label: { id: icon_phone, text: "\U000F011E", x: 790, y: 138, text_font: mdi_font_45, text_color: color_text_dim }
+
+        - obj:
+
+            x: 830
+
+            y: 68
+
+            width: 380
+
+            height: 130
+
+            styles: style_transparent
+            scrollbar_mode: "OFF"
+
+            widgets:
+
+              - label: { id: lbl_time, text: "19:50", align: CENTER, text_font: roboto_120_b, text_color: color_text }
+
+        - obj:
+
+            x: 795
+
+            y: 12
+
+            width: 450
+
+            height: 60
+
+            styles: style_transparent
+            scrollbar_mode: "OFF"
+
+            widgets:
+
+              - label: { id: lbl_date, text: "Jeu 02 Avr", align: CENTER, text_font: roboto_48_b, text_color: color_text }
+
+        # ==================== MOISTURE SENSORS ====================
+
+        - !include ui_components/moisture_sensors.yaml
+        - label: { id: icon_wifi, text: "\U000F05A9", x: 1215, y: 78, text_font: mdi_font_45, text_color: color_text_dim }
+
+        - label: { id: icon_ha, text: "\U000F07D0", x: 1215, y: 138, text_font: mdi_font_45, text_color: color_text_dim }
+
+        # ==================== CLIMATE CONTROL (MIDDLE RIGHT) ====================
+
+        - !include ui_components/climate_card.yaml
+        - label: { id: icon_rain_predict, text: "\U000F0597", x: 20, y: 356, text_font: mdi_font_alert, text_color: color_temp_min }
+
+        # 9 Rain bars (width: 25/55, height 50)
+
+        - obj:
+
+            id: rb_0
+
+            x: 100
+
+            y: 361
+
+            width: 25
+
+            height: 50
+
+            bg_color: color_bar_inactive
+
+            border_width: 0
+
+            pad_all: 0
+
+            widgets:
+
+              - obj: { id: rb_0_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+
+        - obj:
+
+            id: rb_1
+
+            x: 130
+
+            y: 361
+
+            width: 25
+
+            height: 50
+
+            bg_color: color_bar_inactive
+
+            border_width: 0
+
+            pad_all: 0
+
+            widgets:
+
+              - obj: { id: rb_1_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+
+        - obj:
+
+            id: rb_2
+
+            x: 160
+
+            y: 361
+
+            width: 25
+
+            height: 50
+
+            bg_color: color_bar_inactive
+
+            border_width: 0
+
+            pad_all: 0
+
+            widgets:
+
+              - obj: { id: rb_2_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+
+        - obj:
+
+            id: rb_3
+
+            x: 205
+
+            y: 361
+
+            width: 25
+
+            height: 50
+
+            bg_color: color_bar_inactive
+
+            border_width: 0
+
+            pad_all: 0
+
+            widgets:
+
+              - obj: { id: rb_3_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+
+        - obj:
+
+            id: rb_4
+
+            x: 235
+
+            y: 361
+
+            width: 25
+
+            height: 50
+
+            bg_color: color_bar_inactive
+
+            border_width: 0
+
+            pad_all: 0
+
+            widgets:
+
+              - obj: { id: rb_4_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+
+        - obj:
+
+            id: rb_5
+
+            x: 265
+
+            y: 361
+
+            width: 25
+
+            height: 50
+
+            bg_color: color_bar_inactive
+
+            border_width: 0
+
+            pad_all: 0
+
+            widgets:
+
+              - obj: { id: rb_5_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+
+        - obj:
+
+            id: rb_6
+
+            x: 310
+
+            y: 361
+
+            width: 55
+
+            height: 50
+
+            bg_color: color_bar_inactive
+
+            border_width: 0
+
+            pad_all: 0
+
+            widgets:
+
+              - obj: { id: rb_6_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+
+        - obj:
+
+            id: rb_7
+
+            x: 370
+
+            y: 361
+
+            width: 55
+
+            height: 50
+
+            bg_color: color_bar_inactive
+
+            border_width: 0
+
+            pad_all: 0
+
+            widgets:
+
+              - obj: { id: rb_7_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+
+        - obj:
+
+            id: rb_8
+
+            x: 430
+
+            y: 361
+
+            width: 55
+
+            height: 50
+
+            bg_color: color_bar_inactive
+
+            border_width: 0
+
+            pad_all: 0
+
+            widgets:
+
+              - obj: { id: rb_8_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+
+        - obj:
+
+            x: 500
+
+            y: 369
+
+            width: 270
+
+            height: 60
+
+            styles: style_transparent
+            scrollbar_mode: "OFF"
+
+            layout:
+
+              type: FLEX
+
+              flex_flow: ROW
+
+              flex_align_main: CENTER
+
+              flex_align_cross: END
+
+              pad_column: 6
+
+            widgets:
+
+              - label: { id: lbl_proc_pluie, text: "Synchronisation...", text_font: roboto_36_b, text_color: color_text, pad_bottom: 4 }
+
+              - label: { id: lbl_pluie_val, text: "", text_font: roboto_48_b, text_color: color_orange_vif }
+
+              - label: { id: lbl_pluie_unit, text: "", text_font: roboto_36_b, text_color: color_text, pad_bottom: 4 }
+
+        # Alerts (8 icons restants, espacement de 60, alignés sur la droite => fin à 1200)
+
+        - label: { id: alerte_vent, text: "\U000F059D", x: 780, y: 356, text_font: mdi_font_alert, text_color: color_text }
+
+        - label: { id: alerte_inon, text: "\U000F0EFA", x: 840, y: 356, text_font: mdi_font_alert, text_color: color_text }
+
+        - label: { id: alerte_orage, text: "\U000F0593", x: 900, y: 356, text_font: mdi_font_alert, text_color: color_text }
+
+        - label: { id: alerte_pluie_inon, text: "\U000F0596", x: 960, y: 356, text_font: mdi_font_alert, text_color: color_text }
+
+        - label: { id: alerte_neige_verg, text: "\U000F0F36", x: 1020, y: 356, text_font: mdi_font_alert, text_color: color_text }
+
+        - label: { id: alerte_grand_froid, text: "\U000F0F29", x: 1080, y: 356, text_font: mdi_font_alert, text_color: color_text }
+
+        - label: { id: alerte_vagues, text: "\U000F078D", x: 1140, y: 356, text_font: mdi_font_alert, text_color: color_text }
+
+        - label: { id: alerte_canicule, text: "\U000F0E01", x: 1200, y: 356, text_font: mdi_font_alert, text_color: color_text }
+
+        # ==================== BOTTOM CARDS (FORECAST) ====================
+
+        # --- °CK 1: J0 to J4 ---
+
+        - !include ui_components/forecast_1.yaml
+        - !include ui_components/forecast_2.yaml
+        - !include ui_components/forecast_3.yaml
+        - !include ui_components/forecast_hourly_1.yaml
+        - !include ui_components/forecast_hourly_2.yaml
+        - !include ui_components/forecast_hourly_3.yaml
+        - !include ui_components/console_sys.yaml

@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   data-name="Layer 1"
+   id="Layer_1"
+   viewBox="0 0 64 64"
+   version="1.1"
+   sodipodi:docname="snowy-6.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <metadata
+     id="metadata75">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1607"
+     inkscape:window-height="1173"
+     id="namedview73"
+     showgrid="false"
+     inkscape:zoom="12.64036"
+     inkscape:cx="32.000671"
+     inkscape:cy="32.119338"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="Layer_1"
+     inkscape:document-rotation="0"
+     inkscape:showpageshadow="2"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1" />
+  <defs
+     id="defs14">
+    <style
+       id="style2">.cls-1{fill:#efcc00;}.cls-2,.cls-5{fill:none;stroke-linecap:round;stroke-miterlimit:10;}.cls-2{stroke:#efcc00;stroke-width:3px;}.cls-3{fill:url(#linear-gradient);}.cls-4{fill:url(#linear-gradient-2);}.cls-5{stroke:#9c9fa0;stroke-width:2px;}.cls-6{fill:#c4c4c4;}.cls-7{fill:#e0e0e0;}.cls-8{fill:#fff;}</style>
+    <linearGradient
+       gradientTransform="matrix(-1.155469,0,0,1.2006428,-614.40342,-14.052484)"
+       gradientUnits="userSpaceOnUse"
+       id="linear-gradient"
+       x1="-545.28"
+       x2="-566.37"
+       y1="52.39"
+       y2="25.08">
+      <stop
+         offset="0"
+         stop-color="#f2f2f2"
+         id="stop4" />
+      <stop
+         offset="1"
+         stop-color="#cfcfcf"
+         id="stop6" />
+    </linearGradient>
+    <linearGradient
+       gradientTransform="matrix(0,-1.1587992,-1.1974291,0,-52.727282,-668.81713)"
+       gradientUnits="userSpaceOnUse"
+       id="linear-gradient-2"
+       x1="-626.95"
+       x2="-615.34"
+       y1="-36.67"
+       y2="-19.02">
+      <stop
+         offset="0.02"
+         stop-color="#fff"
+         id="stop9" />
+      <stop
+         offset="1"
+         stop-color="#fff"
+         stop-opacity="0"
+         id="stop11" />
+    </linearGradient>
+  </defs>
+  <line
+     class="cls-5"
+     x1="30.729601"
+     x2="30.729601"
+     y1="24.488146"
+     y2="36.650654"
+     id="line40" />
+  <polyline
+     class="cls-5"
+     points="33.3 30.79 32.13 32.26 30.95 30.79"
+     id="polyline42"
+     transform="matrix(1.155469,0,0,1.2006428,-6.3956198,-14.052485)" />
+  <polyline
+     class="cls-5"
+     points="30.95 43.55 32.13 42.08 33.3 43.55"
+     id="polyline44"
+     transform="matrix(1.155469,0,0,1.2006428,-6.3956198,-14.052485)" />
+  <line
+     class="cls-5"
+     x1="35.790558"
+     x2="25.657089"
+     y1="27.525774"
+     y2="33.613033"
+     id="line46" />
+  <polyline
+     class="cls-5"
+     points="38.24 35 36.38 34.71 37.06 32.96"
+     id="polyline48"
+     transform="matrix(1.155469,0,0,1.2006428,-6.3956198,-14.052485)" />
+  <polyline
+     class="cls-5"
+     points="26.01 39.34 27.87 39.62 27.19 41.38"
+     id="polyline50"
+     transform="matrix(1.155469,0,0,1.2006428,-6.3956198,-14.052485)" />
+  <line
+     class="cls-5"
+     x1="35.790558"
+     x2="25.657089"
+     y1="33.613033"
+     y2="27.525774"
+     id="line52" />
+  <polyline
+     class="cls-5"
+     points="37.06 41.38 36.38 39.62 38.24 39.34"
+     id="polyline54"
+     transform="matrix(1.155469,0,0,1.2006428,-6.3956198,-14.052485)" />
+  <polyline
+     class="cls-5"
+     points="27.19 32.96 27.87 34.71 26.01 35"
+     id="polyline56"
+     transform="matrix(1.155469,0,0,1.2006428,-6.3956198,-14.052485)" />
+  <ellipse
+     class="cls-6"
+     cx="24.224312"
+     cy="55.140553"
+     id="circle58"
+     style="stroke-width:1.17784"
+     rx="2.3109379"
+     ry="2.4012854" />
+  <ellipse
+     class="cls-7"
+     cx="35.778992"
+     cy="58.742481"
+     id="circle60"
+     style="stroke-width:1.17784"
+     rx="1.7332035"
+     ry="1.8009641" />
+  <ellipse
+     class="cls-7"
+     cx="14.980556"
+     cy="50.337982"
+     id="circle62"
+     style="stroke-width:1.17784"
+     rx="1.7332035"
+     ry="1.8009641" />
+  <ellipse
+     class="cls-8"
+     cx="31.157127"
+     cy="50.337982"
+     id="circle64"
+     style="stroke-width:1.17784"
+     rx="1.1554689"
+     ry="1.2006427" />
+  <ellipse
+     class="cls-8"
+     cx="47.333694"
+     cy="58.742481"
+     id="circle66"
+     style="stroke-width:1.17784"
+     rx="1.1554689"
+     ry="1.2006427" />
+  <ellipse
+     class="cls-8"
+     cx="13.825087"
+     cy="58.742481"
+     id="circle68"
+     style="stroke-width:1.17784"
+     rx="1.1554689"
+     ry="1.2006427" />
+  <ellipse
+     class="cls-6"
+     cx="42.711811"
+     cy="51.538624"
+     id="circle70"
+     style="stroke-width:1.17784"
+     rx="2.3109379"
+     ry="2.4012854" />
+</svg>

@@ -1,0 +1,53 @@
+substitutions:
+  # L'utilisateur de GitHub n'aura qu'à modifier cette zone !
+  entity_tracker_pc: device_tracker.pc_fix_3
+  entity_light_chambre: light.h6008_2
+  entity_phone_battery: sensor.pixel_6_pro_battery_level
+
+esphome:
+  name: tab5-ha-hmi
+  friendly_name: M5Stack Tab5 Home Assistant HMI
+  min_version: 2025.9.3
+  includes:
+    - Tab5/tab5_custom.h
+    - Tab5/tab5_custom.cpp
+
+  on_boot:
+    priority: -10
+    then:
+      - switch.turn_on: speaker_enable
+      - delay: 3s
+      - lambda: |-
+          update_meteo_icon(id(icon_actuel_layer1), id(icon_actuel_layer2), "partlycloudy", false, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
+          
+          std::string w[] = {"sunny", "partlycloudy", "cloudy", "rainy", "pouring", "lightning", "snowy", "fog"};
+          lv_obj_t* j1[] = {id(j0_icon_layer1), id(j1_icon_layer1), id(j2_icon_layer1), id(j3_icon_layer1), id(j4_icon_layer1), id(j5_icon_layer1), id(j6_icon_layer1), id(j7_icon_layer1), id(j8_icon_layer1), id(j9_icon_layer1), id(j10_icon_layer1), id(j11_icon_layer1), id(j12_icon_layer1), id(j13_icon_layer1), id(j14_icon_layer1)};
+          lv_obj_t* j2[] = {id(j0_icon_layer2), id(j1_icon_layer2), id(j2_icon_layer2), id(j3_icon_layer2), id(j4_icon_layer2), id(j5_icon_layer2), id(j6_icon_layer2), id(j7_icon_layer2), id(j8_icon_layer2), id(j9_icon_layer2), id(j10_icon_layer2), id(j11_icon_layer2), id(j12_icon_layer2), id(j13_icon_layer2), id(j14_icon_layer2)};
+          lv_obj_t* h1[] = {id(h0_icon_layer1), id(h1_icon_layer1), id(h2_icon_layer1), id(h3_icon_layer1), id(h4_icon_layer1), id(h5_icon_layer1), id(h6_icon_layer1), id(h7_icon_layer1), id(h8_icon_layer1), id(h9_icon_layer1), id(h10_icon_layer1), id(h11_icon_layer1), id(h12_icon_layer1), id(h13_icon_layer1), id(h14_icon_layer1)};
+          lv_obj_t* h2[] = {id(h0_icon_layer2), id(h1_icon_layer2), id(h2_icon_layer2), id(h3_icon_layer2), id(h4_icon_layer2), id(h5_icon_layer2), id(h6_icon_layer2), id(h7_icon_layer2), id(h8_icon_layer2), id(h9_icon_layer2), id(h10_icon_layer2), id(h11_icon_layer2), id(h12_icon_layer2), id(h13_icon_layer2), id(h14_icon_layer2)};
+
+          for(int i=0; i<15; i++) {
+              update_meteo_icon(j1[i], j2[i], w[i%8], true, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
+              update_meteo_icon(h1[i], h2[i], w[(i+3)%8], true, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
+          }
+      - media_player.volume_set:
+          id: speaker_player
+          volume: 1.0
+      - wait_until:
+          api.connected:
+      - delay: 2s
+      - homeassistant.event:
+          event: esphome.tab5_connected
+
+# Plus d'images! image: !include supprimé au profit des polices C++ vectorielles LVGL
+
+packages:
+  tab5_hardware: !include Tab5/tab5-hardware.yaml
+  tab5_sensors: !include Tab5/tab5-sensors.yaml
+  tab5_api_logic: !include Tab5/tab5-api-logic.yaml
+  tab5_styles: !include Tab5/tab5-styles.yaml
+  tab5_globals: !include Tab5/tab5-globals.yaml
+  tab5_scripts: !include Tab5/tab5-scripts.yaml
+  tab5_lvgl: !include Tab5/tab5-lvgl.yaml
+
+captive_portal:

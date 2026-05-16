@@ -1,0 +1,11 @@
+# Gitignore settings for ESPHome
+# This is an example and may include too much for your use-case.
+# You can modify this file to suit your needs.
+/.esphome/
+secrets.yaml
+
+# Ignorer les scripts de l'IA et tests locaux
+/ia_tools_scripts/
+/archives/
+config_out.txt
+test_*.yaml

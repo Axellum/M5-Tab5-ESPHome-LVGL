@@ -1,0 +1,193 @@
+external_components:
+  - source:
+      type: local
+      path: Tab5/my_components
+
+esp32:
+  board: esp32-p4-evboard
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    advanced:
+      enable_idf_experimental_features: true
+    sdkconfig_options:
+      CONFIG_LWIP_TCP_WND_DEFAULT: "16384"
+      CONFIG_SPI_FLASH_YIELD_DURING_ERASE: "y"
+      CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_360: "y"
+      CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ: "360"
+
+esp32_hosted:
+  variant: esp32c6
+  active_high: true
+  clk_pin: GPIO12
+  cmd_pin: GPIO13
+  d0_pin: GPIO11
+  d1_pin: GPIO10
+  d2_pin: GPIO9
+  d3_pin: GPIO8
+  reset_pin: GPIO15
+  slot: 1
+
+logger:
+  level: DEBUG
+  baud_rate: 115200
+  hardware_uart: USB_SERIAL_JTAG
+  tx_buffer_size: 2048
+
+psram:
+  mode: hex
+  speed: 200MHz
+
+ota:
+  platform: esphome
+  password: !secret ota_password
+
+i2c:
+  - id: bsp_bus
+    sda: GPIO31
+    scl: GPIO32
+    frequency: 400kHz
+
+pi4ioe5v6408:
+  - id: pi4ioe1
+    address: 0x43
+  - id: pi4ioe2
+    address: 0x44
+
+esp_ldo:
+  - voltage: 2.5V
+    channel: 3
+
+display:
+  - platform: mipi_dsi
+    dimensions:
+      height: 1280
+      width: 720
+    model: M5STACK-TAB5-V2
+    reset_pin:
+      pi4ioe5v6408: pi4ioe1
+      number: 4
+    pixel_mode: 16bit
+    color_order: RGB
+    update_interval: never
+    auto_clear_enabled: false
+
+touchscreen:
+  - platform: st7123
+    interrupt_pin: GPIO23
+    reset_pin:
+      pi4ioe5v6408: pi4ioe1
+      number: 5
+    update_interval: never
+    calibration:
+      x_min: 0
+      x_max: 720
+      y_min: 0
+      y_max: 1280
+    id: touch
+
+output:
+  - platform: ledc
+    pin: GPIO22
+    id: backlight_pwm
+    frequency: 1000Hz
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Display Backlight"
+    id: backlight
+    restore_mode: RESTORE_DEFAULT_ON
+    default_transition_length: 250ms
+
+
+i2s_audio:
+  - id: mic_bus
+    i2s_lrclk_pin: GPIO29
+    i2s_bclk_pin: GPIO27
+    i2s_mclk_pin: GPIO30
+
+audio_adc:
+  - platform: es7210
+    id: es7210_adc
+    bits_per_sample: 16bit
+    sample_rate: 16000
+
+microphone:
+  - platform: i2s_audio
+    id: tab5_microphone
+    i2s_din_pin: GPIO28
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    adc_type: external
+
+audio_dac:
+  - platform: es8388
+    id: es8388_dac
+
+speaker:
+  - platform: i2s_audio
+    id: tab5_speaker
+    i2s_dout_pin: GPIO26
+    audio_dac: es8388_dac
+    dac_type: external
+    channel: mono
+    buffer_duration: 100ms
+    timeout: 2000ms
+    bits_per_sample: 16bit
+    sample_rate: 48000
+
+select:
+  - platform: es8388
+    dac_output:
+      id: es8388_dac_output
+      internal: true
+  - platform: template
+    name: "Tab5 DAC Output"
+    id: tab5_dac_output_template
+    options:
+      - "LINE1"
+      - "LINE2"
+      - "BOTH"
+    restore_value: true
+    optimistic: true
+    on_value:
+      then:
+        - select.set:
+            id: es8388_dac_output
+            option: !lambda "return x;"
+
+media_player:
+  - platform: speaker
+    name: tab5_media_player
+    id: speaker_player
+    announcement_pipeline:
+      speaker: tab5_speaker
+      format: WAV
+      sample_rate: 16000
+      num_channels: 1
+
+voice_assistant:
+  id: va
+  microphone: tab5_microphone
+  media_player: speaker_player
+  on_listening:
+    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0x4CD964), LV_PART_MAIN);' # Vert (Parlez)
+  on_stt_end:
+    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0xFFA500), LV_PART_MAIN);' # Orange (Analyse)
+  on_tts_start:
+    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0x4D94FF), LV_PART_MAIN);' # Bleu clair (Réponse)
+  on_end:
+    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0xA3A8B5), LV_PART_MAIN);' # Gris (Repos)
+  on_error:
+    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0xFF4D4D), LV_PART_MAIN);' # Rouge (Erreur)
+    - delay: 2s
+    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0xA3A8B5), LV_PART_MAIN);' # Retour gris
+
+button:
+  - platform: restart
+    id: btn_restart
+    name: "Redémarrage Système"
+
+debug:
+
