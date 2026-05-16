@@ -1,0 +1,45 @@
+- name: "Phrase Prochaine Pluie"
+  unique_id: phrase_prochaine_pluie
+  icon: mdi:weather-rainy
+  state: >
+    {% set ent = 'sensor.VOTRE_VILLE_next_rain' %}
+    {% if not has_value(ent) %}
+      Temps sec
+    {% else %}
+      {% set next_rain = states(ent) | as_timestamp(default=0) %}
+      {% set ref = state_attr(ent, 'forecast_time_ref') | as_timestamp(default=0) %}
+      {% set fc = state_attr(ent, '1_hour_forecast') %}
+      
+      {% if next_rain > 0 and ref > 0 and fc is not none %}
+        {% set act_state = fc.get('0 min', 'Temps sec') %}
+        
+        {# On raccourcit les termes trop longs et on corrige l'orthographe #}
+        {% set map_int = {
+          'Pluie forte': 'Averses',
+          'Pluie très forte': 'Averses',
+          'Pluie trés forte': 'Averses',
+          'Temps sec': 'Temps sec'
+        } %}
+        
+        {% if act_state != 'Temps sec' %}
+          {# S'il pleut déjà (à l'heure de référence), on ignore le délai résiduel #}
+          {{ map_int.get(act_state, act_state) }}
+        {% else %}
+          {# Il ne pleut pas encore, on calcule la prévision #}
+          {% set slot_min = ((next_rain - ref) / 60) | int(0) %}
+          {% set slot_key = slot_min ~ ' min' %}
+          {% set raw_intensity = fc.get(slot_key, 'Pluie') %}
+          {% set intensity = map_int.get(raw_intensity, raw_intensity) %}
+          
+          {% set delai_actuel = ((next_rain - now().timestamp()) / 60) | int(0) %}
+          
+          {% if delai_actuel <= 0 %}
+            {{ intensity }}
+          {% else %}
+            {{ intensity }} dans {{ delai_actuel }} mn
+          {% endif %}
+        {% endif %}
+      {% else %}
+        Pas de données
+      {% endif %}
+    {% endif %}
