@@ -36,6 +36,13 @@ The result is a highly responsive, native ESPHome interface using **C++ and LVGL
 * 🛡️ **Autonomous:** If Wi-Fi drops, the interface doesn't crash or show a browser error.
 * 🤖 **100% AI Generated:** Proof that you don't need to be a senior developer to build cool stuff for Home Assistant.
 
+### 📚 Documentation
+For a deep dive into how this project works, check out our wiki / documentation folder:
+* [⚙️ Hardware & Wiring](docs/hardware.md)
+* [💻 Installation & Météo-France](docs/installation.md)
+* [🏗️ Architecture & Code Structure](docs/architecture.md)
+* [🎨 UI Design & LVGL](docs/ui_design.md)
+
 ### How to use it
 1. **Clone/Download** this repository.
 2. **Configuration:** Open `tab5-ha-hmi.yaml` and look at the `substitutions:` block at the top. Replace the generic names with your own Home Assistant entities.
@@ -65,6 +72,13 @@ Le résultat est une interface ESPHome native en **C++ et LVGL**, ultra fluide e
 * 💾 **Optimisation :** L'IA a remplacé les lourdes images par des polices vectorielles (`mdi_font_45`) pour économiser la RAM.
 * 🛡️ **Autonome :** Si le Wi-Fi coupe, l'écran ne plante pas sur une page d'erreur internet.
 * 🤖 **100% IA :** La preuve qu'on n'a plus besoin d'être développeur pour créer des interfaces sympas sur Home Assistant.
+
+### 📚 Documentation
+Pour tout comprendre du projet (logique, câblage, design), consultez notre Wiki / dossier de documentation :
+* [⚙️ Matériel & Câblage](docs/hardware.md)
+* [💻 Installation & Météo-France](docs/installation.md)
+* [🏗️ Architecture & Structure du Code](docs/architecture.md)
+* [🎨 Conception d'Interface & LVGL](docs/ui_design.md)
 
 ### Comment l'utiliser ?
 1. **Téléchargez** ce dépôt.
