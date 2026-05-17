@@ -40,9 +40,10 @@ esphome:
     priority: -10
     then:
       - switch.turn_on: speaker_enable
+      - light.turn_on: backlight
       - delay: 3s
       - lambda: |-
-          update_meteo_icon(id(icon_actuel_layer1), id(icon_actuel_layer2), "partlycloudy", false, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
+          update_meteo_icon(id(icon_actuel_layer1), id(icon_actuel_layer2), "partlycloudy", false, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
           
           std::string w[] = {"sunny", "partlycloudy", "cloudy", "rainy", "pouring", "lightning", "snowy", "fog"};
           lv_obj_t* j1[] = {id(j0_icon_layer1), id(j1_icon_layer1), id(j2_icon_layer1), id(j3_icon_layer1), id(j4_icon_layer1), id(j5_icon_layer1), id(j6_icon_layer1), id(j7_icon_layer1), id(j8_icon_layer1), id(j9_icon_layer1), id(j10_icon_layer1), id(j11_icon_layer1), id(j12_icon_layer1), id(j13_icon_layer1), id(j14_icon_layer1)};
@@ -51,8 +52,8 @@ esphome:
           lv_obj_t* h2[] = {id(h0_icon_layer2), id(h1_icon_layer2), id(h2_icon_layer2), id(h3_icon_layer2), id(h4_icon_layer2), id(h5_icon_layer2), id(h6_icon_layer2), id(h7_icon_layer2), id(h8_icon_layer2), id(h9_icon_layer2), id(h10_icon_layer2), id(h11_icon_layer2), id(h12_icon_layer2), id(h13_icon_layer2), id(h14_icon_layer2)};
 
           for(int i=0; i<15; i++) {
-              update_meteo_icon(j1[i], j2[i], w[i%8], true, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
-              update_meteo_icon(h1[i], h2[i], w[(i+3)%8], true, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
+              update_meteo_icon(j1[i], j2[i], w[i%8], true, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+              update_meteo_icon(h1[i], h2[i], w[(i+3)%8], true, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
           }
       - media_player.volume_set:
           id: speaker_player

@@ -495,3 +495,4 @@ lvgl:
         - !include ui_components/forecast_hourly_2.yaml
         - !include ui_components/forecast_hourly_3.yaml
         - !include ui_components/console_sys.yaml
+        - !include ui_components/climate_popup.yaml

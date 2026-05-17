@@ -264,12 +264,15 @@ api:
         - lambda: |-
 
             id(clim_target_temp) = target;
-
             char buf_target[16];
-
             sprintf(buf_target, "%.1f", target);
-
             lv_label_set_text(id(clim_target), buf_target);
+            lv_label_set_text(id(clim_target_popup), buf_target);
+            lv_arc_set_value(id(arc_temp_popup), (int)target);
+
+            char buf_curr[16];
+            sprintf(buf_curr, "%.1f \xC2\xB0""C", current);
+            lv_label_set_text(id(val_temp_int_popup), buf_curr);
 
             
 
@@ -298,35 +301,27 @@ api:
             // Mode (Cool/Heat/Dry/Fan/Off)
 
             lv_obj_set_style_text_color(id(icon_clim_cool), lv_color_hex(c_cool_inactive), LV_PART_MAIN);
-
             lv_obj_set_style_text_color(id(icon_clim_heat), lv_color_hex(c_heat_inactive), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(icon_clim_dry), lv_color_hex(c_cool_inactive), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(icon_clim_fan), lv_color_hex(c_inactive), LV_PART_MAIN);
-
             lv_obj_set_style_text_color(id(icon_clim_off), lv_color_hex(c_off_inactive), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(popup_icon_clim_cool), lv_color_hex(c_cool_inactive), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(popup_icon_clim_heat), lv_color_hex(c_heat_inactive), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(popup_icon_clim_dry), lv_color_hex(c_cool_inactive), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(popup_icon_clim_fan), lv_color_hex(c_inactive), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(popup_icon_clim_off), lv_color_hex(c_off_inactive), LV_PART_MAIN);
 
             if(mode == "cool") {
-
               lv_obj_set_style_text_color(id(icon_clim_cool), lv_color_hex(c_cool_active), LV_PART_MAIN);
-
+              lv_obj_set_style_text_color(id(popup_icon_clim_cool), lv_color_hex(c_cool_active), LV_PART_MAIN);
             } else if(mode == "heat") {
-
               lv_obj_set_style_text_color(id(icon_clim_heat), lv_color_hex(c_heat_active), LV_PART_MAIN);
-
+              lv_obj_set_style_text_color(id(popup_icon_clim_heat), lv_color_hex(c_heat_active), LV_PART_MAIN);
             } else if(mode == "dry") {
-
-              lv_obj_set_style_text_color(id(icon_clim_dry), lv_color_hex(c_cool_active), LV_PART_MAIN);
-
+              lv_obj_set_style_text_color(id(popup_icon_clim_dry), lv_color_hex(c_cool_active), LV_PART_MAIN);
             } else if(mode == "fan_only") {
-
-              lv_obj_set_style_text_color(id(icon_clim_fan), lv_color_hex(c_eco), LV_PART_MAIN);
-
+              lv_obj_set_style_text_color(id(popup_icon_clim_fan), lv_color_hex(c_eco), LV_PART_MAIN);
             } else {
-
               lv_obj_set_style_text_color(id(icon_clim_off), lv_color_hex(c_off_active), LV_PART_MAIN);
-
+              lv_obj_set_style_text_color(id(popup_icon_clim_off), lv_color_hex(c_off_active), LV_PART_MAIN);
             }
 
             
@@ -334,49 +329,33 @@ api:
             // Eco
 
             if(preset == "eco") {
-
-              lv_obj_set_style_text_color(id(icon_clim_eco), lv_color_hex(c_eco), LV_PART_MAIN);
-
+              lv_obj_set_style_text_color(id(popup_icon_clim_eco), lv_color_hex(c_eco), LV_PART_MAIN);
             } else {
-
-              lv_obj_set_style_text_color(id(icon_clim_eco), lv_color_hex(c_inactive), LV_PART_MAIN);
-
+              lv_obj_set_style_text_color(id(popup_icon_clim_eco), lv_color_hex(c_inactive), LV_PART_MAIN);
             }
 
             // Boost
 
             if(preset == "boost") {
-
-              lv_obj_set_style_text_color(id(icon_clim_boost), lv_color_hex(c_heat_active), LV_PART_MAIN);
-
+              lv_obj_set_style_text_color(id(popup_icon_clim_boost), lv_color_hex(c_heat_active), LV_PART_MAIN);
             } else {
-
-              lv_obj_set_style_text_color(id(icon_clim_boost), lv_color_hex(c_inactive), LV_PART_MAIN);
-
+              lv_obj_set_style_text_color(id(popup_icon_clim_boost), lv_color_hex(c_inactive), LV_PART_MAIN);
             }
 
             // Quiet / Auto 
 
             if(fan == "low" || fan == "quiet" || fan == "Silence") {
-
-              lv_obj_set_style_text_color(id(icon_clim_quiet), lv_color_hex(c_cool_active), LV_PART_MAIN); 
-
+              lv_obj_set_style_text_color(id(popup_icon_clim_quiet), lv_color_hex(c_cool_active), LV_PART_MAIN); 
             } else {
-
-              lv_obj_set_style_text_color(id(icon_clim_quiet), lv_color_hex(c_inactive), LV_PART_MAIN);
-
+              lv_obj_set_style_text_color(id(popup_icon_clim_quiet), lv_color_hex(c_inactive), LV_PART_MAIN);
             }
 
             // Swing
 
             if(swing == "vertical" || swing == "horizontal" || swing == "both" || swing == "on" || swing == "3d") {
-
-              lv_obj_set_style_text_color(id(icon_clim_swing), lv_color_hex(c_cool_active), LV_PART_MAIN);
-
+              lv_obj_set_style_text_color(id(popup_icon_clim_swing), lv_color_hex(c_cool_active), LV_PART_MAIN);
             } else {
-
-              lv_obj_set_style_text_color(id(icon_clim_swing), lv_color_hex(c_inactive), LV_PART_MAIN);
-
+              lv_obj_set_style_text_color(id(popup_icon_clim_swing), lv_color_hex(c_inactive), LV_PART_MAIN);
             }
 
     - service: tab5_maj_alerte_meteo_france

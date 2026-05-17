@@ -76,7 +76,7 @@ font:
     id: mdi_font_32
     size: 32
     bpp: 1
-    glyphs: "\U000F0379\U000F111C\U000F111E\U000F0597\U000F0045\U000F005D\U000F03E4\U000F0335\U000F06E8\U000F08B2\U000F0596\U000F07C0\U000F04B9\U000F1B29\U000F1051\U000F036C\U000F0156\U000F0450\U000F04E6\U000F02E3"
+    glyphs: "\U000F0379\U000F111C\U000F111E\U000F0597\U000F0045\U000F005D\U000F03E4\U000F0335\U000F06E8\U000F08B2\U000F0596\U000F07C0\U000F04B9\U000F1B29\U000F1051\U000F036C\U000F0156\U000F0450\U000F0717\U000F0238\U000F0425\U000F0210\U000F058E\U000F0E79\U000F032A\U000F14DE\U000F146D"
 
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_120
@@ -155,3 +155,13 @@ lvgl:
       border_width: 0
       shadow_width: 0
       outline_width: 0
+    - id: style_modal_overlay
+      bg_color: 0x000000
+      bg_opa: 60%
+      border_width: 0
+    - id: style_modal_card
+      bg_color: 0x222222
+      bg_opa: 100%
+      border_width: 2
+      border_color: 0x444444
+      radius: 20
