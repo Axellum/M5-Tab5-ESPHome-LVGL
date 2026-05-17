@@ -9,6 +9,16 @@
 
 <br>
 
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=Wd6ROEF_6pc">
+    <img src="https://img.youtube.com/vi/Wd6ROEF_6pc/maxresdefault.jpg" width="800" alt="Présentation Vidéo">
+  </a>
+  <br>
+  <p>🎥 <i>Cliquez pour voir la vidéo de présentation sur YouTube / Click to watch the video presentation</i></p>
+</div>
+
+<br>
+
 *English version below / Version française ci-dessous.*
 
 ---
