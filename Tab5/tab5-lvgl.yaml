@@ -132,39 +132,21 @@ lvgl:
 
       widgets:
 
-        # ==================== TOP ROW (Floating) ====================
+        # Icônes météo (cachées — mises à jour par API pour usage interne)
+        - label: { id: icon_actuel_layer1, text: "", hidden: true, x: 0, y: 0, text_font: font_meteo_main, text_color: color_text }
+        - label: { id: icon_actuel_layer2, text: "", hidden: true, x: 0, y: 0, text_font: font_meteo_main, text_color: color_text }
 
-        - obj:
-            x: 35
-            y: 10
-            width: 270
-            height: 270
-            styles: style_transparent
-            scrollbar_mode: "OFF"
-            widgets:
-              - label: { id: icon_actuel_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_main, text_color: color_text }
-              - label: { id: icon_actuel_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_main, text_color: color_text }
-
+        # Micro Voice Assistant (bouton sur l'icône)
         - label: { id: icon_mic_status, text: "\U000F036C", x: 10, y: 5, align: TOP_LEFT, text_font: mdi_font_60, text_color: color_text_dim }
-
         - button:
-
             id: btn_assist_trigger
-
-            x: 0
-
+            x: 5
             y: 0
-
-            width: 250
-
-            height: 250
-
+            width: 70
+            height: 70
             styles: style_invisible
-
             on_short_click:
-
               - voice_assistant.start:
-
                   id: va
 
         # --- °Current Temp / Hum ---

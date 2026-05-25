@@ -193,11 +193,13 @@ api:
 
             
 
-            // Eco
+            // Eco (carte + popup)
 
             if(preset == "eco") {
+              lv_obj_set_style_text_color(id(icon_clim_eco), lv_color_hex(c_eco), LV_PART_MAIN);
               lv_obj_set_style_text_color(id(popup_icon_clim_eco), lv_color_hex(c_eco), LV_PART_MAIN);
             } else {
+              lv_obj_set_style_text_color(id(icon_clim_eco), lv_color_hex(c_inactive), LV_PART_MAIN);
               lv_obj_set_style_text_color(id(popup_icon_clim_eco), lv_color_hex(c_inactive), LV_PART_MAIN);
             }
 
