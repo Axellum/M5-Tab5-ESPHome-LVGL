@@ -1,4 +1,4 @@
-api:
+﻿api:
 
   encryption:
 
@@ -15,13 +15,7 @@ api:
         - lambda: |-
             std::string s = payload;
             size_t pos = 0;
-            auto get_c = [](float t) -> uint32_t {
-                if (t <= -12) return 0xFF0000;
-                else if (t <= 0) { float r = floor((t + 12)/2.0)*2.0/12.0; return (255<<16)|(0<<8)|(int)(255*r); }
-                else if (t <= 14) { float r = floor(t/2.0)*2.0/14.0; return ((int)(255*r)<<16)|((int)(255*r)<<8)|255; }
-                else if (t <= 24) { float r = floor((t - 14)/2.0)*2.0/10.0; return (255<<16)|((int)(255-(255*r))<<8)|255; }
-                else { float x = floor((t - 24)/2.0)*2.0; if(x>11) x=11; return (255<<16)|(0<<8)|(int)(255-(255*(x/11.0))); }
-            };
+            // AXE1: get_temperature_color() definie dans tab5_custom.cpp
             auto apply_weather_icon = [](lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card) {
                 update_meteo_icon(l1_obj, l2_obj, state, is_card, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
             };
@@ -61,7 +55,7 @@ api:
 
                     if(time_lbl) {
                         lv_label_set_text(time_lbl, heure_texte.c_str());
-                        uint32_t c_t = get_c(temp);
+                        uint32_t c_t = get_temperature_color(temp);
                         char b_t[32]; sprintf(b_t, "#%06x %.0f#°", c_t, temp);
                         lv_label_set_text(temp_lbl, b_t);
                         
@@ -93,13 +87,7 @@ api:
             auto apply_weather_icon = [](lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card) {
                 update_meteo_icon(l1_obj, l2_obj, state, is_card, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
             };
-            auto get_c = [](float t) -> uint32_t {
-                if (t <= -12) return 0xFF0000;
-                else if (t <= 0) { float r = floor((t + 12)/2.0)*2.0/12.0; return (255<<16)|(0<<8)|(int)(255*r); }
-                else if (t <= 14) { float r = floor(t/2.0)*2.0/14.0; return ((int)(255*r)<<16)|((int)(255*r)<<8)|255; }
-                else if (t <= 24) { float r = floor((t - 14)/2.0)*2.0/10.0; return (255<<16)|((int)(255-(255*r))<<8)|255; }
-                else { float x = floor((t - 24)/2.0)*2.0; if(x>11) x=11; return (255<<16)|(0<<8)|(int)(255-(255*(x/11.0))); }
-            };
+            // AXE1: get_temperature_color() definie dans tab5_custom.cpp
 
             lv_obj_t* pt_day[] = {id(j0_day), id(j1_day), id(j2_day), id(j3_day), id(j4_day), id(j5_day), id(j6_day), id(j7_day), id(j8_day), id(j9_day), id(j10_day), id(j11_day), id(j12_day), id(j13_day), id(j14_day)};
             lv_obj_t* pt_max[] = {id(j0_max), id(j1_max), id(j2_max), id(j3_max), id(j4_max), id(j5_max), id(j6_max), id(j7_max), id(j8_max), id(j9_max), id(j10_max), id(j11_max), id(j12_max), id(j13_max), id(j14_max)};
@@ -141,8 +129,8 @@ api:
                         if (hour < 9 || (hour == 9 && minute == 0)) is_early = true;
                     }
 
-                    uint32_t cmax = get_c(tmax);
-                    uint32_t cmin = get_c(tmin);
+                    uint32_t cmax = get_temperature_color(tmax);
+                    uint32_t cmin = get_temperature_color(tmin);
                     char buftx[64]; sprintf(buftx, "#%06x %.0f# / ", cmax, tmax);
                     char buftn[64]; sprintf(buftn, " #%06x %.0f# °C", cmin, tmin);
 
@@ -488,9 +476,7 @@ api:
 
               lv_label_set_text(id(icon_rain_predict), "\U000F0597");
 
-              uint32_t c_hydro; int val = (int)id(global_humidite);
-
-              if(val <= 14) c_hydro = 0xFF0000; else if(val >= 80) c_hydro = 0x0000CC; else if(val >= 30) { float step = floor((val - 30) / 3.0) * 3.0; float ratio = step / 50.0; int r = 255 - (255 * ratio); int g = 255 - (255 * ratio); int b = 255 - ((255 - 204) * ratio); c_hydro = (r << 16) | (g << 8) | b; } else if(val >= 22) { float ratio = (val - 22) / 8.0; int b = 255 * ratio; c_hydro = (255 << 16) | (255 << 8) | b; } else { float ratio = (val - 14) / 8.0; int g = 255 * ratio; c_hydro = (255 << 16) | (g << 8) | 0; }
+              uint32_t c_hydro = get_humidity_color((float)id(global_humidite)); // AXE2: factorisation
 
               lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(c_hydro), LV_PART_MAIN);
 
@@ -514,9 +500,7 @@ api:
 
             if (id(global_neige) < 5) {
 
-              uint32_t c_hydro; int val = (int)id(global_humidite);
-
-              if(val <= 14) c_hydro = 0xFF0000; else if(val >= 80) c_hydro = 0x0000CC; else if(val >= 30) { float step = floor((val - 30) / 3.0) * 3.0; float ratio = step / 50.0; int r = 255 - (255 * ratio); int g = 255 - (255 * ratio); int b = 255 - ((255 - 204) * ratio); c_hydro = (r << 16) | (g << 8) | b; } else if(val >= 22) { float ratio = (val - 22) / 8.0; int b = 255 * ratio; c_hydro = (255 << 16) | (255 << 8) | b; } else { float ratio = (val - 14) / 8.0; int g = 255 * ratio; c_hydro = (255 << 16) | (g << 8) | 0; }
+              uint32_t c_hydro = get_humidity_color((float)id(global_humidite)); // AXE2: factorisation
 
               lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(c_hydro), LV_PART_MAIN);
 
@@ -767,23 +751,11 @@ api:
                 update_meteo_icon(l1_obj, l2_obj, state, is_card, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
             };
 
-            auto get_c = [](float t) -> uint32_t {
+            // AXE1: get_temperature_color() utilisee a la place de get_c()
 
-                if (t <= -12) return 0xFF0000;
+            uint32_t cmax = get_temperature_color(tmax);
 
-                else if (t <= 0) { float r = floor((t + 12)/2.0)*2.0/12.0; return (255<<16)|(0<<8)|(int)(255*r); }
-
-                else if (t <= 14) { float r = floor(t/2.0)*2.0/14.0; return ((int)(255*r)<<16)|((int)(255*r)<<8)|255; }
-
-                else if (t <= 24) { float r = floor((t - 14)/2.0)*2.0/10.0; return (255<<16)|((int)(255-(255*r))<<8)|255; }
-
-                else { float s = floor((t - 24)/2.0)*2.0; if(s>11) s=11; return (255<<16)|(0<<8)|(int)(255-(255*(s/11.0))); }
-
-            };
-
-            uint32_t cmax = get_c(tmax);
-
-            uint32_t cmin = get_c(tmin);
+            uint32_t cmin = get_temperature_color(tmin);
 
             char buftx[64]; sprintf(buftx, "#%06x %.0f# / ", cmax, tmax);
 
@@ -956,23 +928,11 @@ api:
 
                  
 
-                 auto get_c = [](float t) -> uint32_t {
-
-                    if (t <= -12) return 0xFF0000;
-
-                    else if (t <= 0) { float r = floor((t + 12)/2.0)*2.0/12.0; return (255<<16)|(0<<8)|(int)(255*r); }
-
-                    else if (t <= 14) { float r = floor(t/2.0)*2.0/14.0; return ((int)(255*r)<<16)|((int)(255*r)<<8)|255; }
-
-                    else if (t <= 24) { float r = floor((t - 14)/2.0)*2.0/10.0; return (255<<16)|((int)(255-(255*r))<<8)|255; }
-
-                    else { float s = floor((t - 24)/2.0)*2.0; if(s>11) s=11; return (255<<16)|(0<<8)|(int)(255-(255*(s/11.0))); }
-
-                 };
+                 // AXE1: get_temperature_color() utilisee a la place de get_c()
 
                  char b_temp[32];
 
-                 sprintf(b_temp, "#%06x %.0f# °C", get_c(temp), temp);
+                 sprintf(b_temp, "#%06x %.0f# °C", get_temperature_color(temp), temp);
 
                  lv_label_set_recolor(temp_lbl, true);
 

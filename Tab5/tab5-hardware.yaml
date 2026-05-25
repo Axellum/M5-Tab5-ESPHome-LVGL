@@ -11,10 +11,11 @@ esp32:
     advanced:
       enable_idf_experimental_features: true
     sdkconfig_options:
-      CONFIG_LWIP_TCP_WND_DEFAULT: "16384"
-      CONFIG_SPI_FLASH_YIELD_DURING_ERASE: "y"
+      CONFIG_LWIP_TCP_WND_DEFAULT: "16384"        # AXE7: Fenetre TCP 16Ko pour OTA stable
+      CONFIG_SPI_FLASH_YIELD_DURING_ERASE: "y"   # AXE7: Evite gel CPU pendant effacement flash OTA
       CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_360: "y"
       CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ: "360"
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "15"         # AXE7: WDT 15s (boot long possible si reseau lent)
 
 esp32_hosted:
   variant: esp32c6
@@ -221,7 +222,7 @@ voice_assistant:
     - wait_until:
         condition:
           - media_player.is_announcing:
-        timeout: 0.5s
+        timeout: 3s    # AXE9: Augmente de 0.5s a 3s pour eviter coupure TTS longues
     - wait_until:
         - and:
             - not:

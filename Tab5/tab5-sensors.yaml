@@ -1,131 +1,84 @@
 wifi:
 
-
   ssid: !secret wifi_ssid
-
 
   password: !secret wifi_password
 
-
   power_save_mode: NONE
-
-
-
-
 
   # Point d'accès de secours
 
-
   ap:
-
 
     ssid: "Tab5 Fallback AP"
 
-
     password: !secret wifi_ap_password
-
-
-
-
 
 switch:
 
-
   - platform: gpio
-
 
     id: wifi_power
 
-
     name: "WiFi Power"
-
 
     pin:
 
-
       pi4ioe5v6408: pi4ioe2
-
 
       number: 0
 
-
     restore_mode: ALWAYS_ON
 
-
   - platform: gpio
-
 
     id: usb_5v_power
 
-
     name: "USB Power"
 
-
     pin:
-
 
       pi4ioe5v6408: pi4ioe2
 
-
       number: 3
-
 
     restore_mode: ALWAYS_ON
 
-
   - platform: gpio
-
 
     id: wifi_antenna_int_ext
 
-
     pin:
 
-
       pi4ioe5v6408: pi4ioe1
-
 
       number: 0
 
-
   - platform: gpio
-
 
     id: speaker_enable
 
-
     name: "Speaker Enable"
-
 
     pin:
 
-
       pi4ioe5v6408: pi4ioe1
-
 
       number: 1
 
-
     restore_mode: ALWAYS_ON
-
 
   - platform: gpio
 
-
     id: external_5v_power
-
 
     name: "External 5V Power"
 
-
     pin:
-
 
       pi4ioe5v6408: pi4ioe1
 
-
       number: 2
-
 
     restore_mode: ALWAYS_ON
   - platform: template
@@ -147,1419 +100,688 @@ switch:
           then:
             - micro_wake_word.stop:
 
-
-
-
 binary_sensor:
-
 
   - platform: gpio
 
-
     id: headphone_detect
-
 
     name: "Headphone Detect"
 
-
     pin:
-
 
       pi4ioe5v6408: pi4ioe1
 
-
       number: 7
-
-
-
-
 
   - platform: status
 
-
     name: "HA API Status"
-
 
     id: status_ha
 
-
     on_state:
 
-
       - lambda: |-
-
 
           if(x) {
 
-
             lv_obj_set_style_text_color(id(icon_ha), lv_color_hex(0x4D94FF), LV_PART_MAIN);
 
-
           } else {
-
 
             lv_obj_set_style_text_color(id(icon_ha), lv_color_hex(0x404552), LV_PART_MAIN);
 
-
           }
-
-
-
-
 
 text_sensor:
 
-
   - platform: homeassistant
-
 
     id: pc_status
 
-
     entity_id: ${entity_tracker_pc}
-
 
     on_value:
 
-
       - lambda: |-
-
 
           if(x == "home") {
 
-
             lv_obj_set_style_text_color(id(icon_pc), lv_color_hex(0x4CD964), LV_PART_MAIN);
-
 
             lv_obj_set_style_text_color(id(icon_card_pc), lv_color_hex(0x4CD964), LV_PART_MAIN);
 
-
           } else {
-
 
             lv_obj_set_style_text_color(id(icon_pc), lv_color_hex(0xFFFFFF), LV_PART_MAIN);
 
-
             lv_obj_set_style_text_color(id(icon_card_pc), lv_color_hex(0xFFFFFF), LV_PART_MAIN);
-
 
           }
 
-
-
-
-
   - platform: homeassistant
-
 
     id: light_chambre_state
 
-
     entity_id: ${entity_light_chambre}
-
 
     on_value:
 
-
       - lambda: |-
 
-
           if(x == "on") {
-
 
             lv_obj_set_style_text_color(id(icon_card_lit_j2), lv_color_hex(0xFFA500), LV_PART_MAIN);
 
-
             lv_obj_set_style_text_color(id(icon_card_light_j2), lv_color_hex(0xFFA500), LV_PART_MAIN);
-
 
             lv_label_set_text(id(icon_card_light_j2), "\U000F06E8");
 
-
           } else {
-
 
             lv_obj_set_style_text_color(id(icon_card_lit_j2), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
 
-
             lv_obj_set_style_text_color(id(icon_card_light_j2), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
-
 
             lv_label_set_text(id(icon_card_light_j2), "\U000F0335");
 
-
           }
 
-
-
-
-
   - platform: homeassistant
-
 
     id: light_salon_state
 
-
     entity_id: ${entity_light_salon}
-
 
     on_value:
 
-
       - lambda: |-
 
-
           if(x == "on") {
-
 
             lv_obj_set_style_text_color(id(icon_card_salon_j3), lv_color_hex(0xFFA500), LV_PART_MAIN);
 
-
             lv_obj_set_style_text_color(id(icon_card_light_j3), lv_color_hex(0xFFA500), LV_PART_MAIN);
-
 
             lv_label_set_text(id(icon_card_light_j3), "\U000F06E8");
 
-
           } else {
-
 
             lv_obj_set_style_text_color(id(icon_card_salon_j3), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
 
-
             lv_obj_set_style_text_color(id(icon_card_light_j3), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
-
 
             lv_label_set_text(id(icon_card_light_j3), "\U000F0335");
 
-
           }
 
-
-
-
-
   - platform: homeassistant
-
 
     id: light_led_state
 
-
     entity_id: ${entity_light_bureau}
-
 
     on_value:
 
-
       - lambda: |-
-
 
           if(x == "on") {
 
-
             lv_obj_set_style_text_color(id(icon_card_led_j4), lv_color_hex(0xFFA500), LV_PART_MAIN);
-
 
             lv_obj_set_style_text_color(id(icon_card_light_j4), lv_color_hex(0xFFA500), LV_PART_MAIN);
 
-
             lv_label_set_text(id(icon_card_light_j4), "\U000F06E8");
 
-
           } else {
-
 
             lv_obj_set_style_text_color(id(icon_card_led_j4), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
 
-
             lv_obj_set_style_text_color(id(icon_card_light_j4), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
-
 
             lv_label_set_text(id(icon_card_light_j4), "\U000F0335");
 
-
           }
-
-
-
-
 
   - platform: wifi_info
 
-
     ip_address:
-
 
       id: sys_wifi_ip
 
-
       name: "Tab5 IP"
-
 
     ssid:
 
-
       id: sys_wifi_ssid
-
 
       name: "Tab5 SSID"
 
-
-
-
-
 sensor:
 
-
   - platform: homeassistant
-
 
     id: phone_battery
 
-
     entity_id: ${entity_phone_battery}
-
 
     on_value:
 
-
       - lambda: |-
 
-
           if(isnan(x)) {
-
 
             lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(0x404552), LV_PART_MAIN);
 
-
           } else if(x > 80.0) {
-
 
             lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(0x4CD964), LV_PART_MAIN);
 
-
           } else if(x > 40.0) {
-
 
             lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(0x4D94FF), LV_PART_MAIN);
 
-
           } else if(x >= 20.0) {
-
 
             lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(0xFFA500), LV_PART_MAIN);
 
-
           } else {
-
 
             lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(0xFF4D4D), LV_PART_MAIN);
 
-
           }
 
-
-
-
-
   - platform: homeassistant
-
 
     id: temp_serre
 
-
     entity_id: ${entity_temp_plante}
-
 
     on_value:
 
-
       - lambda: |-
 
-
           if(isnan(x)) {
-
 
             lv_label_set_text(id(current_serre), "-- °C");
 
-
             lv_obj_set_style_text_color(id(current_serre), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
-
 
           } else {
 
-
             char buf[32];
 
-
             sprintf(buf, "%.1f °C", x);
-
 
             lv_label_set_text(id(current_serre), buf);
 
-
-            float t = x; uint32_t c_int;
-
-
-            if (t <= -12) c_int = 0xFF0000; else if (t <= 0) { float r = floor((t + 12)/2.0)*2.0/12.0; c_int = (255<<16)|(0<<8)|(int)(255*r); } else if (t <= 14) { float r = floor(t/2.0)*2.0/14.0; c_int = ((int)(255*r)<<16)|((int)(255*r)<<8)|255; } else if (t <= 24) { float r = floor((t - 14)/2.0)*2.0/10.0; c_int = (255<<16)|((int)(255-(255*r))<<8)|255; } else { float s = floor((t - 24)/2.0)*2.0; if(s>11) s=11; c_int = (255<<16)|(0<<8)|(int)(255-(255*(s/11.0))); }
-
+            uint32_t c_int = get_temperature_color(x); // AXE1: appel fonction C++ centralisee
 
             lv_obj_set_style_text_color(id(current_serre), lv_color_hex(c_int), LV_PART_MAIN);
 
-
           }
 
-
-
-
-
   - platform: homeassistant
-
 
     id: temp_salon
 
-
     entity_id: ${entity_temp_salon}
-
 
     on_value:
 
-
       - lambda: |-
 
-
           if(isnan(x)) {
-
 
             lv_label_set_text(id(val_temp_salon), "-- °C");
 
-
             lv_obj_set_style_text_color(id(val_temp_salon), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
-
 
           } else {
 
-
             char buf[32];
 
-
             sprintf(buf, "%.1f °C", x);
-
 
             lv_label_set_text(id(val_temp_salon), buf);
 
-
             uint32_t c_int;
-
 
             if(x < 18) c_int = 0x4D94FF;
 
-
             else if(x <= 22) c_int = 0x4CD964;
 
-
             else c_int = 0xFF66B2;
-
 
             lv_obj_set_style_text_color(id(val_temp_salon), lv_color_hex(c_int), LV_PART_MAIN);
 
-
           }
 
-
-
-
-
   - platform: homeassistant
-
 
     id: temp_chambre
 
-
     entity_id: ${entity_temp_chambre}
-
 
     on_value:
 
-
       - lambda: |-
 
-
           if(isnan(x)) {
-
 
             lv_label_set_text(id(val_temp_chambre), "-- °C");
 
-
             lv_obj_set_style_text_color(id(val_temp_chambre), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
-
 
           } else {
 
-
             char buf[32];
 
-
             sprintf(buf, "%.1f °C", x);
-
 
             lv_label_set_text(id(val_temp_chambre), buf);
 
-
             uint32_t c_int;
-
 
             if(x < 18) c_int = 0x4D94FF;
 
-
             else if(x <= 22) c_int = 0x4CD964;
-
 
             else c_int = 0xFF66B2;
 
-
             lv_obj_set_style_text_color(id(val_temp_chambre), lv_color_hex(c_int), LV_PART_MAIN);
-
 
           }
 
-
-
-
-
   - platform: homeassistant
-
 
     id: hum_salon
 
-
     entity_id: ${entity_hum_salon}
-
 
     on_value:
 
-
       - lambda: |-
 
-
           if(!isnan(x)) {
-
-
-            uint32_t c; int val = (int)x;
-
-
-            if(val <= 14) c = 0xFF0000; else if(val >= 80) c = 0x0000CC; else if(val >= 30) { float step = floor((val - 30) / 3.0) * 3.0; float ratio = step / 50.0; int r = 255 - (255 * ratio); int g = 255 - (255 * ratio); int b = 255 - ((255 - 204) * ratio); c = (r << 16) | (g << 8) | b; } else if(val >= 22) { float ratio = (val - 22) / 8.0; int b = 255 * ratio; c = (255 << 16) | (255 << 8) | b; } else { float ratio = (val - 14) / 8.0; int g = 255 * ratio; c = (255 << 16) | (g << 8) | 0; }
-
-
+            uint32_t c = get_humidity_color(x);
             lv_obj_set_style_text_color(id(icon_salon), lv_color_hex(c), LV_PART_MAIN);
-
-
           }
 
-
-
-
-
   - platform: homeassistant
-
 
     id: hum_chambre
 
-
     entity_id: ${entity_hum_chambre}
-
 
     on_value:
 
-
       - lambda: |-
 
-
           if(!isnan(x)) {
-
-
-            uint32_t c; int val = (int)x;
-
-
-            if(val <= 14) c = 0xFF0000; else if(val >= 80) c = 0x0000CC; else if(val >= 30) { float step = floor((val - 30) / 3.0) * 3.0; float ratio = step / 50.0; int r = 255 - (255 * ratio); int g = 255 - (255 * ratio); int b = 255 - ((255 - 204) * ratio); c = (r << 16) | (g << 8) | b; } else if(val >= 22) { float ratio = (val - 22) / 8.0; int b = 255 * ratio; c = (255 << 16) | (255 << 8) | b; } else { float ratio = (val - 14) / 8.0; int g = 255 * ratio; c = (255 << 16) | (g << 8) | 0; }
-
-
+            uint32_t c = get_humidity_color(x);
             lv_obj_set_style_text_color(id(icon_chambre), lv_color_hex(c), LV_PART_MAIN);
-
-
           }
 
-
-
-
-
   - platform: homeassistant
-
 
     id: moisture_1
 
-
     entity_id: ${entity_plante_1}
-
 
     on_value:
 
-
       - lambda: |-
 
-
           if(isnan(x)) {
-
 
             lv_label_set_text(id(val_plant_1), "--%");
 
-
             lv_obj_set_style_text_color(id(icon_plant_1), lv_color_hex(0x404552), LV_PART_MAIN);
-
 
             lv_obj_set_style_text_color(id(val_plant_1), lv_color_hex(0x404552), LV_PART_MAIN);
 
-
           } else {
-
 
             char buf[16];
 
-
             sprintf(buf, "%.0f%%", x);
-
 
             lv_label_set_text(id(val_plant_1), buf);
 
-
-            uint32_t c;
-
-
-            int val = (int)x;
-
-
-            if(val <= 14) c = 0xFF0000;
-
-
-            else if(val >= 80) c = 0x0000CC;
-
-
-            else if(val >= 30) {
-
-
-               float step = floor((val - 30) / 3.0) * 3.0;
-
-
-               float ratio = step / 50.0;
-
-
-               int r = 255 - (255 * ratio);
-
-
-               int g = 255 - (255 * ratio);
-
-
-               int b = 255 - ((255 - 204) * ratio);
-
-
-               c = (r << 16) | (g << 8) | b;
-
-
-            } else if(val >= 22) {
-
-
-               float ratio = (val - 22) / 8.0;
-
-
-               int b = 255 * ratio;
-
-
-               c = (255 << 16) | (255 << 8) | b;
-
-
-            } else {
-
-
-               float ratio = (val - 14) / 8.0;
-
-
-               int g = 255 * ratio;
-
-
-               c = (255 << 16) | (g << 8) | 0;
-
-
-            }
-
+            uint32_t c = get_humidity_color(x);
 
             lv_obj_set_style_text_color(id(icon_plant_1), lv_color_hex(c), LV_PART_MAIN);
 
-
             lv_obj_set_style_text_color(id(val_plant_1), lv_color_hex(c), LV_PART_MAIN);
-
 
           }
 
-
-
-
-
   - platform: homeassistant
-
 
     id: moisture_2
 
-
     entity_id: ${entity_plante_2}
-
 
     on_value:
 
-
       - lambda: |-
 
-
           if(isnan(x)) {
-
 
             lv_label_set_text(id(val_plant_2), "--%");
 
-
             lv_obj_set_style_text_color(id(icon_plant_2), lv_color_hex(0x404552), LV_PART_MAIN);
-
 
             lv_obj_set_style_text_color(id(val_plant_2), lv_color_hex(0x404552), LV_PART_MAIN);
 
-
           } else {
-
 
             char buf[16];
 
-
             sprintf(buf, "%.0f%%", x);
-
 
             lv_label_set_text(id(val_plant_2), buf);
 
-
-            uint32_t c;
-
-
-            int val = (int)x;
-
-
-            if(val <= 14) c = 0xFF0000;
-
-
-            else if(val >= 80) c = 0x0000CC;
-
-
-            else if(val >= 30) {
-
-
-               float step = floor((val - 30) / 3.0) * 3.0;
-
-
-               float ratio = step / 50.0;
-
-
-               int r = 255 - (255 * ratio);
-
-
-               int g = 255 - (255 * ratio);
-
-
-               int b = 255 - ((255 - 204) * ratio);
-
-
-               c = (r << 16) | (g << 8) | b;
-
-
-            } else if(val >= 22) {
-
-
-               float ratio = (val - 22) / 8.0;
-
-
-               int b = 255 * ratio;
-
-
-               c = (255 << 16) | (255 << 8) | b;
-
-
-            } else {
-
-
-               float ratio = (val - 14) / 8.0;
-
-
-               int g = 255 * ratio;
-
-
-               c = (255 << 16) | (g << 8) | 0;
-
-
-            }
-
+            uint32_t c = get_humidity_color(x);
 
             lv_obj_set_style_text_color(id(icon_plant_2), lv_color_hex(c), LV_PART_MAIN);
 
-
             lv_obj_set_style_text_color(id(val_plant_2), lv_color_hex(c), LV_PART_MAIN);
-
 
           }
 
-
-
-
-
   - platform: homeassistant
-
 
     id: moisture_3
 
-
     entity_id: ${entity_plante_3}
-
 
     on_value:
 
-
       - lambda: |-
 
-
           if(isnan(x)) {
-
 
             lv_label_set_text(id(val_plant_3), "--%");
 
-
             lv_obj_set_style_text_color(id(icon_plant_3), lv_color_hex(0x404552), LV_PART_MAIN);
-
 
             lv_obj_set_style_text_color(id(val_plant_3), lv_color_hex(0x404552), LV_PART_MAIN);
 
-
           } else {
-
 
             char buf[16];
 
-
             sprintf(buf, "%.0f%%", x);
-
 
             lv_label_set_text(id(val_plant_3), buf);
 
-
-            uint32_t c;
-
-
-            int val = (int)x;
-
-
-            if(val <= 14) c = 0xFF0000;
-
-
-            else if(val >= 80) c = 0x0000CC;
-
-
-            else if(val >= 30) {
-
-
-               float step = floor((val - 30) / 3.0) * 3.0;
-
-
-               float ratio = step / 50.0;
-
-
-               int r = 255 - (255 * ratio);
-
-
-               int g = 255 - (255 * ratio);
-
-
-               int b = 255 - ((255 - 204) * ratio);
-
-
-               c = (r << 16) | (g << 8) | b;
-
-
-            } else if(val >= 22) {
-
-
-               float ratio = (val - 22) / 8.0;
-
-
-               int b = 255 * ratio;
-
-
-               c = (255 << 16) | (255 << 8) | b;
-
-
-            } else {
-
-
-               float ratio = (val - 14) / 8.0;
-
-
-               int g = 255 * ratio;
-
-
-               c = (255 << 16) | (g << 8) | 0;
-
-
-            }
-
+            uint32_t c = get_humidity_color(x);
 
             lv_obj_set_style_text_color(id(icon_plant_3), lv_color_hex(c), LV_PART_MAIN);
 
-
             lv_obj_set_style_text_color(id(val_plant_3), lv_color_hex(c), LV_PART_MAIN);
-
 
           }
 
-
-
-
-
   - platform: homeassistant
-
 
     id: moisture_4
 
-
     entity_id: ${entity_plante_4}
-
 
     on_value:
 
-
       - lambda: |-
 
-
           if(isnan(x)) {
-
 
             lv_label_set_text(id(val_plant_4), "--%");
 
-
             lv_obj_set_style_text_color(id(icon_plant_4), lv_color_hex(0x404552), LV_PART_MAIN);
-
 
             lv_obj_set_style_text_color(id(val_plant_4), lv_color_hex(0x404552), LV_PART_MAIN);
 
-
           } else {
-
 
             char buf[16];
 
-
             sprintf(buf, "%.0f%%", x);
-
 
             lv_label_set_text(id(val_plant_4), buf);
 
-
-            uint32_t c;
-
-
-            int val = (int)x;
-
-
-            if(val <= 14) c = 0xFF0000;
-
-
-            else if(val >= 80) c = 0x0000CC;
-
-
-            else if(val >= 30) {
-
-
-               float step = floor((val - 30) / 3.0) * 3.0;
-
-
-               float ratio = step / 50.0;
-
-
-               int r = 255 - (255 * ratio);
-
-
-               int g = 255 - (255 * ratio);
-
-
-               int b = 255 - ((255 - 204) * ratio);
-
-
-               c = (r << 16) | (g << 8) | b;
-
-
-            } else if(val >= 22) {
-
-
-               float ratio = (val - 22) / 8.0;
-
-
-               int b = 255 * ratio;
-
-
-               c = (255 << 16) | (255 << 8) | b;
-
-
-            } else {
-
-
-               float ratio = (val - 14) / 8.0;
-
-
-               int g = 255 * ratio;
-
-
-               c = (255 << 16) | (g << 8) | 0;
-
-
-            }
-
+            uint32_t c = get_humidity_color(x);
 
             lv_obj_set_style_text_color(id(icon_plant_4), lv_color_hex(c), LV_PART_MAIN);
 
-
             lv_obj_set_style_text_color(id(val_plant_4), lv_color_hex(c), LV_PART_MAIN);
 
-
           }
-
-
-
-
 
   - platform: homeassistant
 
-
     id: moisture_5
-
 
     entity_id: ${entity_plante_5}
 
-
     on_value:
 
-
       - lambda: |-
-
 
           if(isnan(x)) {
 
-
             lv_label_set_text(id(val_plant_5), "--%");
-
 
             lv_obj_set_style_text_color(id(icon_plant_5), lv_color_hex(0x404552), LV_PART_MAIN);
 
-
             lv_obj_set_style_text_color(id(val_plant_5), lv_color_hex(0x404552), LV_PART_MAIN);
-
 
           } else {
 
-
             char buf[16];
-
 
             sprintf(buf, "%.0f%%", x);
 
-
             lv_label_set_text(id(val_plant_5), buf);
 
-
-            uint32_t c;
-
-
-            int val = (int)x;
-
-
-            if(val <= 14) c = 0xFF0000;
-
-
-            else if(val >= 80) c = 0x0000CC;
-
-
-            else if(val >= 30) {
-
-
-               float step = floor((val - 30) / 3.0) * 3.0;
-
-
-               float ratio = step / 50.0;
-
-
-               int r = 255 - (255 * ratio);
-
-
-               int g = 255 - (255 * ratio);
-
-
-               int b = 255 - ((255 - 204) * ratio);
-
-
-               c = (r << 16) | (g << 8) | b;
-
-
-            } else if(val >= 22) {
-
-
-               float ratio = (val - 22) / 8.0;
-
-
-               int b = 255 * ratio;
-
-
-               c = (255 << 16) | (255 << 8) | b;
-
-
-            } else {
-
-
-               float ratio = (val - 14) / 8.0;
-
-
-               int g = 255 * ratio;
-
-
-               c = (255 << 16) | (g << 8) | 0;
-
-
-            }
-
+            uint32_t c = get_humidity_color(x);
 
             lv_obj_set_style_text_color(id(icon_plant_5), lv_color_hex(c), LV_PART_MAIN);
 
-
             lv_obj_set_style_text_color(id(val_plant_5), lv_color_hex(c), LV_PART_MAIN);
 
-
           }
-
-
-
-
 
   - platform: uptime
 
-
     id: sys_uptime
-
 
     name: "Tab5 Uptime"
 
-
     update_interval: 60s
-
 
     on_value:
 
-
       - lambda: |-
-
 
           if (id(lbl_sys_uptime_val) != nullptr) {
 
-
             int days = x / 86400;
-
 
             int hours = ((int)x % 86400) / 3600;
 
-
             int mins = ((int)x % 3600) / 60;
-
 
             char buf[32];
 
-
             if(days > 0) sprintf(buf, "%dj %02dh%02d", days, hours, mins);
-
 
             else sprintf(buf, "%02dh%02d", hours, mins);
 
-
             lv_label_set_text(id(lbl_sys_uptime_val), buf);
 
-
           }
-
-
-
-
 
   - platform: wifi_signal
 
-
     id: sys_wifi_rssi
-
 
     name: "Tab5 WiFi Signal"
 
-
     update_interval: 60s
-
 
     on_value:
 
-
       - lambda: |-
-
 
           if (id(lbl_sys_rssi_val) != nullptr) {
 
-
             char buf[16];
-
 
             sprintf(buf, "%.0f dBm", x);
 
-
             lv_label_set_text(id(lbl_sys_rssi_val), buf);
 
-
           }
-
-
-
-
 
   - platform: internal_temperature
 
-
     id: sys_core_temp
-
 
     name: "Tab5 Core Temp"
 
-
     update_interval: 60s
-
 
     on_value:
 
-
       - lambda: |-
-
 
           if (id(lbl_sys_temp_val) != nullptr) {
 
-
             char buf[16];
-
 
             sprintf(buf, "%.1f °C", x);
 
-
             lv_label_set_text(id(lbl_sys_temp_val), buf);
-
 
           }
 
-
-
-
-
   - platform: debug
-
 
     free:
 
-
       id: sys_free_heap
-
 
       name: "Tab5 Free Ram"
 
-
     loop_time:
-
 
       id: sys_loop_time
 
-
       name: "Tab5 Loop Time"
-
-
-
-
-
-
-
-
-
-
 
 select:
   - platform: template
 
-
     id: wifi_antenna_select
-
 
     name: "WiFi Antenna"
 
-
     options:
-
 
       - "Internal"
 
-
       - "External"
-
 
     optimistic: true
 
-
     on_value:
-
 
       - if:
 
-
           condition:
-
 
             lambda: return i == 0;
 
-
           then:
-
 
             - switch.turn_off: wifi_antenna_int_ext
 
-
           else:
-
 
             - switch.turn_on: wifi_antenna_int_ext
 
-
-
-
-
 time:
-
 
   - platform: sntp
 
-
     id: sntp_time
-
 
     timezone: Europe/Paris
 
-
     on_time:
-
 
       - seconds: 0
 
-
         minutes: "*"
-
 
         then:
 
-
           - lambda: |-
-
 
               auto t_now = id(sntp_time).now();
 
-
               if (t_now.is_valid()) {
-
 
                 char buf_time[16];
 
-
                 sprintf(buf_time, "%02d:%02d", t_now.hour, t_now.minute);
-
 
                 lv_label_set_text(id(lbl_time), buf_time);
 
-
                 
-
 
                 const char* days[] = {"Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"};
 
-
                 const char* months[] = {"Janv", "Fevr", "Mars", "Avril", "Mai", "Juin", "Juil", "Aout", "Sept", "Oct", "Nov", "Dec"};
-
 
                 char buf_date[64];
 
-
                 sprintf(buf_date, "%s %02d %s", days[t_now.day_of_week - 1], t_now.day_of_month, months[t_now.month - 1]);
-
 
                 lv_label_set_text(id(lbl_date), buf_date);
 
-
               }
-
-
-
-
 
 interval:
 
-
   - interval: 5s
 
-
     then:
-
 
       - if:
 
-
           condition:
-
 
             wifi.connected:
 
-
           then:
-
 
             - lambda: 'lv_obj_set_style_text_color(id(icon_wifi), lv_color_hex(0x4CD964), LV_PART_MAIN);'
 
-
           else:
-
 
             - lambda: 'lv_obj_set_style_text_color(id(icon_wifi), lv_color_hex(0x404552), LV_PART_MAIN);'
 
-
-
-
-
-
-
-
   - interval: 2s
-
 
     then:
 
-
       - lambda: |-
 
-
           if (id(layer_console_sys) != nullptr && !lv_obj_has_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN)) {
-
 
              // Update SRAM, PSRAM, Frag & Flash
 
@@ -1621,56 +843,37 @@ interval:
 
              }
 
-
              // Update Loop Time
-
 
              if (id(sys_loop_time).has_state() && id(lbl_sys_loop_val) != nullptr) {
 
-
                 float ltime = id(sys_loop_time).state; // usually in ms
-
 
                 char buf[32];
 
-
                 sprintf(buf, "%.0f ms", ltime);
-
 
                 lv_label_set_text(id(lbl_sys_loop_val), buf);
 
-
              }
-
 
              // Update IP & SSID
 
-
              if (id(sys_wifi_ip).has_state() && id(lbl_sys_ip_val) != nullptr) {
-
 
                 std::string ip = id(sys_wifi_ip).state;
 
-
                 lv_label_set_text(id(lbl_sys_ip_val), ip.c_str());
 
-
              }
-
 
              if (id(sys_wifi_ssid).has_state() && id(lbl_sys_ssid_val) != nullptr) {
 
-
                 std::string ssid = id(sys_wifi_ssid).state;
-
 
                 lv_label_set_text(id(lbl_sys_ssid_val), ssid.c_str());
 
-
              }
 
-
           }
-
-
 
