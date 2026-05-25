@@ -1,65 +1,76 @@
+# ═══════════════════════════════════════════════════════
+# CARTE CLIMATISATION — Zone milieu-droit (413×280px)
+# Layout : Haut=Températures | Centre=Cible+/- | Bas=Modes
+# ═══════════════════════════════════════════════════════
 obj:
-
   id: climate_card
-
   x: 347
-
   y: 10
-
   width: 413
-
   height: 280
-
   bg_opa: 0
-
   border_width: 0
-
-  border_color: color_border
-
   radius: 0
-
   scrollbar_mode: "OFF"
-
   pad_all: 0
-
   widgets:
 
-    # Salon
+    # ═══ HAUT : Températures pièces ═══
+    - label: { id: icon_salon, text: "\U000F04B9", align: TOP_LEFT, x: 15, y: 5, text_font: mdi_font_45, text_color: color_text_dim }
+    - label: { id: val_temp_salon, text: "-- C", align: TOP_LEFT, x: 68, y: 10, text_font: roboto_32_b, text_color: color_temp_max }
+    - label: { id: icon_chambre, text: "\U000F02E3", align: TOP_RIGHT, x: -150, y: 5, text_font: mdi_font_45, text_color: color_text_dim }
+    - label: { id: val_temp_chambre, text: "-- C", align: TOP_RIGHT, x: -20, y: 10, text_font: roboto_32_b, text_color: color_temp_max }
 
-    - label: { id: icon_salon, text: "\U000F04B9", align: TOP_LEFT, x: 20, y: 5, text_font: mdi_font_45, text_color: color_text_dim }
+    # ═══ CENTRE : Température cible (cliquable) ═══
 
-    - label: { id: val_temp_salon, text: "-- C", align: TOP_LEFT, x: 75, y: 10, text_font: roboto_32_b, text_color: color_temp_max }
+    # Fond subtil indiquant la zone cliquable
+    - obj:
+        align: CENTER
+        y: -15
+        width: 170
+        height: 68
+        bg_color: 0x1E2128
+        bg_opa: 100%
+        border_width: 1
+        border_color: color_border
+        radius: 14
+        widgets:
+          - label:
+              id: clim_target
+              text: "--"
+              align: CENTER
+              x: -12
+              text_font: roboto_55_b
+              text_color: color_text
+          - label:
+              text: "°C"
+              align: RIGHT_MID
+              x: -12
+              text_font: roboto_22
+              text_color: color_text_dim
 
-    # Chambre
-
-    - label: { id: icon_chambre, text: "\U000F02E3", align: TOP_RIGHT, x: -156, y: 5, text_font: mdi_font_45, text_color: color_text_dim }
-
-    - label: { id: val_temp_chambre, text: "-- C", align: TOP_RIGHT, x: -25, y: 10, text_font: roboto_32_b, text_color: color_temp_max }
-
-    - label: { id: clim_target, text: "--", align: BOTTOM_MID, x: 0, y: -78, text_font: roboto_45_b, text_color: color_text }
-    
-    # Invisible button to trigger popup
+    # Bouton invisible superposé pour ouvrir la popup
     - button:
         id: btn_clim_target_click
-        align: BOTTOM_MID
-        x: 0
-        y: -78
-        width: 100
-        height: 60
-        bg_opa: 0
+        align: CENTER
+        y: -15
+        width: 170
+        height: 68
         styles: style_invisible
         on_short_click:
           - lambda: |-
               lv_obj_clear_flag(id(clim_options_popup), LV_OBJ_FLAG_HIDDEN);
               lv_obj_move_foreground(id(clim_options_popup));
 
+    # Bouton -
     - button:
         id: btn_clim_minus
-        align: BOTTOM_MID
-        x: -100
-        y: -83
-        width: 60
-        height: 60
+        align: CENTER
+        x: -145
+        y: -15
+        width: 62
+        height: 62
+        radius: 12
         styles: style_clim_btn
         on_short_click:
           - homeassistant.service:
@@ -69,13 +80,16 @@ obj:
                 temperature: !lambda "return id(clim_target_temp) - 0.5;"
         widgets:
           - label: { text: "\U000F0374", align: CENTER, text_font: mdi_font_56, text_color: color_text }
+
+    # Bouton +
     - button:
         id: btn_clim_plus
-        align: BOTTOM_MID
-        x: 100
-        y: -83
-        width: 60
-        height: 60
+        align: CENTER
+        x: 145
+        y: -15
+        width: 62
+        height: 62
+        radius: 12
         styles: style_clim_btn
         on_short_click:
           - homeassistant.service:
@@ -86,57 +100,63 @@ obj:
         widgets:
           - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56, text_color: color_text }
 
-    # --- LIGNE 1 : MODES (y: -143) ---
-
-    - button:
-        id: btn_clim_cool
+    # ═══ BAS : 3 boutons de mode (FLEX row) ═══
+    - obj:
         align: BOTTOM_MID
-        x: -100
-        y: -143
-        width: 65
-        height: 65
-        styles: style_clim_btn
-        on_short_click:
-          - homeassistant.service:
-              service: climate.set_hvac_mode
-              data:
-                entity_id: ${entity_climate_salon}
-                hvac_mode: "cool"
+        y: -5
+        width: 395
+        height: 62
+        styles: style_transparent
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_main: SPACE_EVENLY
+          flex_align_cross: CENTER
         widgets:
-          - label: { id: icon_clim_cool, text: "\U000F0717", align: CENTER, text_font: mdi_font_56, text_color: color_text_dim }
-    - button:
-        id: btn_clim_heat
-        align: BOTTOM_MID
-        x: 0
-        y: -143
-        width: 65
-        height: 65
-        styles: style_clim_btn
-        on_short_click:
-          - homeassistant.service:
-              service: climate.set_hvac_mode
-              data:
-                entity_id: ${entity_climate_salon}
-                hvac_mode: "heat"
-        widgets:
-          - label: { id: icon_clim_heat, text: "\U000F0238", align: CENTER, text_font: mdi_font_56, text_color: color_text_dim }
-    - button:
-        id: btn_clim_off
-        align: BOTTOM_MID
-        x: 100
-        y: -143
-        width: 65
-        height: 65
-        styles: style_clim_btn
-        on_short_click:
-          - homeassistant.service:
-              service: climate.turn_off
-              data:
-                entity_id: ${entity_climate_salon}
-        widgets:
-          - label: { id: icon_clim_off, text: "\U000F0425", align: CENTER, text_font: mdi_font_56, text_color: color_text_dim }
-
-    # --- LIGNE 3 : PRESETS & FAN ---
-
-    # (Other buttons moved to popup)
-
+          # Froid
+          - button:
+              id: btn_clim_cool
+              width: 118
+              height: 52
+              radius: 10
+              styles: style_clim_btn
+              on_short_click:
+                - homeassistant.service:
+                    service: climate.set_hvac_mode
+                    data:
+                      entity_id: ${entity_climate_salon}
+                      hvac_mode: "cool"
+              widgets:
+                - label: { id: icon_clim_cool, text: "\U000F0717", align: LEFT_MID, x: 8, text_font: mdi_font_32, text_color: color_text_dim }
+                - label: { text: "Froid", align: RIGHT_MID, x: -8, text_font: roboto_22, text_color: color_text_dim }
+          # Chaud
+          - button:
+              id: btn_clim_heat
+              width: 118
+              height: 52
+              radius: 10
+              styles: style_clim_btn
+              on_short_click:
+                - homeassistant.service:
+                    service: climate.set_hvac_mode
+                    data:
+                      entity_id: ${entity_climate_salon}
+                      hvac_mode: "heat"
+              widgets:
+                - label: { id: icon_clim_heat, text: "\U000F0238", align: LEFT_MID, x: 8, text_font: mdi_font_32, text_color: color_text_dim }
+                - label: { text: "Chaud", align: RIGHT_MID, x: -5, text_font: roboto_22, text_color: color_text_dim }
+          # Off
+          - button:
+              id: btn_clim_off
+              width: 118
+              height: 52
+              radius: 10
+              styles: style_clim_btn
+              on_short_click:
+                - homeassistant.service:
+                    service: climate.turn_off
+                    data:
+                      entity_id: ${entity_climate_salon}
+              widgets:
+                - label: { id: icon_clim_off, text: "\U000F0425", align: LEFT_MID, x: 8, text_font: mdi_font_32, text_color: color_text_dim }
+                - label: { text: "Off", align: RIGHT_MID, x: -15, text_font: roboto_22, text_color: color_text_dim }
