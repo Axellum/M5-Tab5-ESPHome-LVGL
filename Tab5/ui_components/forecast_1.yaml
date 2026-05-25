@@ -1,4 +1,4 @@
-﻿obj:
+obj:
 
   id: layer_forecast_1
 
@@ -31,7 +31,7 @@
 
         widgets:
 
-          - label: { id: j0_day, text: "JournÃ©e", align: TOP_MID, y: 0, text_font: roboto_36_b, text_color: color_text }
+          - label: { id: j0_day, text: "Journee", align: TOP_MID, y: 0, text_font: roboto_36_b, text_color: color_text }
 
           - label: { id: icon_card_pc, text: "\U000F07C0", x: 2, y: 2, align: TOP_LEFT, text_font: mdi_font_32, text_color: color_text_dim }
 
@@ -62,7 +62,7 @@
 
           - label: { id: j0_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
 
-          - label: { id: j0_min, text: "-- Â°C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j0_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
 
           - button:
 
@@ -236,7 +236,7 @@
 
           - label: { id: j1_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
 
-          - label: { id: j1_min, text: "-- Â°C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j1_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
 
           - button:
 
@@ -338,7 +338,7 @@
 
           - label: { id: j2_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
 
-          - label: { id: j2_min, text: "-- Â°C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j2_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
 
           - button:
 
@@ -440,7 +440,7 @@
           - label: { id: j3_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
           - label: { id: j3_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
 
-          - label: { id: j3_min, text: "-- Â°C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j3_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
 
           - button:
 
@@ -538,7 +538,7 @@
           - label: { id: j4_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
           - label: { id: j4_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
 
-          - label: { id: j4_min, text: "-- Â°C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j4_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
 
           - button:
 
@@ -588,5 +588,5 @@
 
                     }
 
-# --- Â°CK 2: J5 to J9 ---
+# --- CK 2: J5 to J9 ---
 

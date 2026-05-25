@@ -1,4 +1,4 @@
-﻿external_components:
+external_components:
   - source:
       type: local
       path: Tab5/my_components
@@ -112,6 +112,7 @@ light:
     on_turn_off:
       - lvgl.pause:
 
+
 i2s_audio:
   - id: mic_bus
     i2s_lrclk_pin: GPIO29
@@ -215,7 +216,7 @@ voice_assistant:
   on_stt_end:
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0xFFA500), LV_PART_MAIN);' # Orange (Analyse)
   on_tts_start:
-    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0x4D94FF), LV_PART_MAIN);' # Bleu clair (RÃ©ponse)
+    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0x4D94FF), LV_PART_MAIN);' # Bleu clair (Réponse)
   on_end:
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0xA3A8B5), LV_PART_MAIN);' # Gris (Repos)
     - wait_until:
@@ -246,7 +247,7 @@ voice_assistant:
 button:
   - platform: restart
     id: btn_restart
-    name: "RedÃ©marrage SystÃ¨me"
+    name: "Redémarrage Système"
 
 debug:
 

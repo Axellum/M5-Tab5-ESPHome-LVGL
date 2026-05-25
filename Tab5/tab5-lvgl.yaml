@@ -1,4 +1,4 @@
-﻿lvgl:
+lvgl:
 
   pages:
 
@@ -137,7 +137,7 @@
 
                   id: va
 
-        # --- Â°Current Temp / Hum ---
+        # --- °Current Temp / Hum ---
 
         - obj:
 
@@ -156,11 +156,11 @@
 
               - label: { id: icon_temp, text: "\U000F050F", x: 0, y: 0, text_font: mdi_font_45, text_color: color_text_dim }
 
-              - label: { id: current_temp, text: "-- Â°C", x: 50, y: 0, text_font: roboto_48_b, text_color: color_temp_max }
+              - label: { id: current_temp, text: "-- C", x: 50, y: 0, text_font: roboto_48_b, text_color: color_temp_max }
 
               - label: { id: icon_serre, text: "\U000F002D", x: 190, y: 0, text_font: mdi_font_45, text_color: color_text_dim }
 
-              - label: { id: current_serre, text: "-- Â°C", x: 240, y: 0, text_font: roboto_48_b, text_color: color_temp_max }
+              - label: { id: current_serre, text: "-- C", x: 240, y: 0, text_font: roboto_48_b, text_color: color_temp_max }
 
         # --- PLANNING (Dynamique) ---
 
@@ -466,7 +466,7 @@
 
               - label: { id: lbl_pluie_unit, text: "", text_font: roboto_36_b, text_color: color_text, pad_bottom: 4 }
 
-        # Alerts (8 icons restants, espacement de 60, alignÃ©s sur la droite => fin Ã  1200)
+        # Alerts (8 icons restants, espacement de 60, alignés sur la droite => fin à 1200)
 
         - label: { id: alerte_vent, text: "\U000F059D", x: 780, y: 356, text_font: mdi_font_alert, text_color: color_text }
 
@@ -486,7 +486,7 @@
 
         # ==================== BOTTOM CARDS (FORECAST) ====================
 
-        # --- Â°CK 1: J0 to J4 ---
+        # --- °CK 1: J0 to J4 ---
 
         - !include ui_components/forecast_1.yaml
         - !include ui_components/forecast_2.yaml

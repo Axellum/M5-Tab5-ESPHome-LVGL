@@ -151,15 +151,15 @@ api:
 
             uint32_t c_cool_active   = 0x4D94FF; // Bleu vif
 
-            uint32_t c_cool_inactive = 0x60748F; // Bleu grisÃ¢tre inactif
+            uint32_t c_cool_inactive = 0x60748F; // Bleu grisatre inactif
 
             uint32_t c_heat_active   = 0xFF4D4D; // Rouge vif
 
-            uint32_t c_heat_inactive = 0x8F6060; // Rouge grisÃ¢tre inactif
+            uint32_t c_heat_inactive = 0x8F6060; // Rouge grisatre inactif
 
             uint32_t c_off_active    = 0xFFA500; // Orange
 
-            uint32_t c_off_inactive  = 0xB48154; // Orange grisÃ©
+            uint32_t c_off_inactive  = 0xB48154; // Orange grise
 
             uint32_t c_inactive = 0x4A596E; // Gris barre
 
@@ -287,7 +287,7 @@ api:
 
             };
 
-            uint32_t col_date = 0x4CD964; // Vert Vif (SuccÃ¨s)
+            uint32_t col_date = 0x4CD964; // Vert Vif (Succes)
 
             if (globale == "Jaune") col_date = 0xFCF3CF;
 
@@ -416,9 +416,9 @@ api:
 
             uint32_t c_modere = 0x29B6F6;      // Bleu moyen
 
-            uint32_t c_forte = 0x0277BD;       // Bleu foncÃ©
+            uint32_t c_forte = 0x0277BD;       // Bleu fonce
 
-            uint32_t c_tres_forte = 0x01579B;  // Bleu trÃ¨s foncÃ©
+            uint32_t c_tres_forte = 0x01579B;  // Bleu tres fonce
 
             uint32_t c = c_empty;
 
@@ -426,11 +426,11 @@ api:
 
             if (intensite == "Pluie faible") { c = c_faible; h = 13; } // ~1/4 hauteur
 
-            else if (intensite == "Pluie modÃ©rÃ©e") { c = c_modere; h = 25; } // 1/2 hauteur
+            else if (intensite == "Pluie modérée") { c = c_modere; h = 25; } // 1/2 hauteur
 
             else if (intensite == "Pluie forte") { c = c_forte; h = 38; } // 3/4 hauteur
 
-            else if (intensite == "Pluie trÃ¨s forte" || intensite == "Pluie trÃ©s forte") { c = c_tres_forte; h = 50; } // hauteur max
+            else if (intensite == "Pluie très forte" || intensite == "Pluie trés forte") { c = c_tres_forte; h = 50; } // hauteur max
 
             lv_obj_t* target = NULL;
 
@@ -476,7 +476,7 @@ api:
 
         - lambda: |-
 
-            // Conteneur conservÃ©, on laisse la mÃ©thode vide en attendant d'y mettre les alertes
+            // Conteneur conserve, on laisse la methode vide en attendant d'y mettre les alertes
 
     - service: tab5_maj_planning
 
