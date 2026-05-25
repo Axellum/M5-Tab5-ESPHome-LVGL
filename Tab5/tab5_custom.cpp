@@ -11,7 +11,7 @@ bool cal_toggled[15] = {false, false, false, false, false, false, false, false, 
 // Better way: write the toggle inside the ESPHome lambda!
 
 void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card, esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
-    std::string l1_text = "\xEF\x80\x95"; // Nuage par defaut
+    std::string l1_text = MeteoIcon::CLOUD; // Nuage par defaut
     uint32_t l1_color = 0xFFFFFF;
     std::string l2_text = "";
     uint32_t l2_color = 0xFFFFFF;
@@ -19,22 +19,22 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bo
     bool l2_small = false; bool l2_behind = false;
 
     // Dictionnaire type Classe CSS avec position de base (Grosse icone)
-    if (state == "clear-night") { l1_text = "\xEF\x80\x8B"; l1_color = 0xFFD700; }
-    else if (state == "cloudy") { l1_text = "\xEF\x80\x95"; }
-    else if (state == "fog") { l1_text = "\xEF\x80\x8E"; }
-    else if (state == "Clear" || state == "sunny") { l1_text = "\xEF\x80\x8F"; l1_color = 0xFFD700; }
+    if (state == "clear-night") { l1_text = MeteoIcon::MOON; l1_color = 0xFFD700; }
+    else if (state == "cloudy") { l1_text = MeteoIcon::CLOUD; }
+    else if (state == "fog") { l1_text = MeteoIcon::FOG; }
+    else if (state == "Clear" || state == "sunny") { l1_text = MeteoIcon::SUNNY; l1_color = 0xFFD700; }
     else if (state == "partlycloudy" || state == "partlycloudy-night" || state == "partlycloudy_night") {
-        l1_text = "\xEF\x80\x95"; 
-        l2_text = (state == "partlycloudy") ? "\xEF\x80\x8F" : "\xEF\x80\x8B";
+        l1_text = MeteoIcon::CLOUD; 
+        l2_text = (state == "partlycloudy") ? MeteoIcon::SUNNY : MeteoIcon::MOON;
         l2_small = true; l2_color = 0xFFD700; l2_behind = true;
         l2_x = -45; l2_y = -45;
     }
-    else if (state == "hail" || state == "snowy-rainy") { l2_text = "\xEF\x80\x81"; l2_color = 0x8AB4FF; l2_behind = true; l1_y = -30; }
-    else if (state == "lightning" || state == "thunder" || state == "lightning-rainy") { l2_text = "\xEF\x80\x87"; l2_color = 0xFF6600; l2_behind = true; l1_y = -30; }
-    else if (state == "pouring") { l2_text = "\xEF\x80\x85"; l2_color = 0x8AB4FF; l2_behind = true; l1_y = -30; }
-    else if (state == "rainy") { l2_text = "\xEF\x80\x86"; l2_color = 0x8AB4FF; l2_behind = true; l1_y = -30; }
-    else if (state == "snowy") { l2_text = "\xEF\x80\x82"; l2_color = 0x8AB4FF; l2_behind = true; l1_y = -30; }
-    else if (state == "windy" || state == "windy-variant") { l1_text = "\xEF\x80\x80"; }
+    else if (state == "hail" || state == "snowy-rainy") { l2_text = MeteoIcon::HAIL; l2_color = 0x8AB4FF; l2_behind = true; l1_y = -30; }
+    else if (state == "lightning" || state == "thunder" || state == "lightning-rainy") { l2_text = MeteoIcon::THUNDER; l2_color = 0xFF6600; l2_behind = true; l1_y = -30; }
+    else if (state == "pouring") { l2_text = MeteoIcon::HEAVY_RAIN; l2_color = 0x8AB4FF; l2_behind = true; l1_y = -30; }
+    else if (state == "rainy") { l2_text = MeteoIcon::RAIN; l2_color = 0x8AB4FF; l2_behind = true; l1_y = -30; }
+    else if (state == "snowy") { l2_text = MeteoIcon::SNOW; l2_color = 0x8AB4FF; l2_behind = true; l1_y = -30; }
+    else if (state == "windy" || state == "windy-variant") { l1_text = MeteoIcon::WIND; }
 
     // Systeme de Ratio automatique pour avoir une justesse pixel perfect !
     // Grosse icone = 270px, Petite = 150px. Ratio exact = 150/270 = 0.5555...
