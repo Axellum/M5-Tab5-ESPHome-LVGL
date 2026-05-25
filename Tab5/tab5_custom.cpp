@@ -107,3 +107,143 @@ uint32_t get_temperature_color(float t) {
     if (s > 11) s = 11;
     return (255 << 16) | (0 << 8) | (int)(255 - (255 * (s / 11.0)));
 }
+
+// =============================================================================
+// AXE8 (Phase 4) : Helpers de parsing bulk pour previsions meteo
+// Centralise le parsing du payload serialise et la mise a jour LVGL
+// =============================================================================
+
+// Fonction utilitaire interne : decoupe un token par separateur
+static std::vector<std::string> split_token(const std::string& token, char sep) {
+    std::vector<std::string> parts;
+    size_t ppos = 0;
+    while(true) {
+        size_t np = token.find(sep, ppos);
+        if(np == std::string::npos) { parts.push_back(token.substr(ppos)); break; }
+        parts.push_back(token.substr(ppos, np - ppos));
+        ppos = np + 1;
+    }
+    return parts;
+}
+
+void parse_and_update_heures_bulk(const std::string& payload, WeatherHourSlot slots[], int count,
+    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
+
+    std::string s = payload;
+    size_t pos = 0;
+
+    while((pos = s.find(";")) != std::string::npos) {
+        std::string token = s.substr(0, pos);
+        s.erase(0, pos + 1);
+
+        std::vector<std::string> parts = split_token(token, '|');
+
+        if(parts.size() >= 5) {
+            int idx = std::atoi(parts[0].c_str());
+            if(idx < 0 || idx >= count) continue;
+            std::string heure_texte = parts[1];
+            std::string condition = parts[2];
+            float temp = std::atof(parts[3].c_str());
+            float pluvio = std::atof(parts[4].c_str());
+
+            WeatherHourSlot& slot = slots[idx];
+            if(slot.time_lbl) {
+                lv_label_set_text(slot.time_lbl, heure_texte.c_str());
+                uint32_t c_t = get_temperature_color(temp);
+                char b_t[32]; sprintf(b_t, "#%06x %.0f#\xC2\xB0", c_t, temp);
+                lv_label_set_text(slot.temp_lbl, b_t);
+
+                char b_p[32];
+                if (pluvio > 0) {
+                    sprintf(b_p, "%.1fmm", pluvio);
+                    lv_label_set_text(slot.prob_lbl, b_p);
+                    lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(0x8AB4FF), LV_PART_MAIN);
+                } else {
+                    lv_label_set_text(slot.prob_lbl, "-");
+                    lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(0x4A596E), LV_PART_MAIN);
+                }
+
+                update_meteo_icon(slot.icon_l1, slot.icon_l2, condition, true, f_main, f_card, f_main_s, f_card_s);
+            }
+        }
+    }
+}
+
+void parse_and_update_jours_bulk(const std::string& payload, WeatherDaySlot slots[], int count,
+    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
+
+    std::string s = payload;
+    size_t pos = 0;
+
+    while((pos = s.find(";")) != std::string::npos) {
+        std::string token = s.substr(0, pos);
+        s.erase(0, pos + 1);
+
+        std::vector<std::string> parts = split_token(token, '|');
+
+        if(parts.size() >= 9) {
+            int jour = std::atoi(parts[0].c_str());
+            if(jour < 0 || jour >= count) continue;
+            std::string nom_jour = parts[1];
+            std::string condition = parts[2];
+            float tmin = std::atof(parts[3].c_str());
+            float tmax = std::atof(parts[4].c_str());
+            bool est_repos = (parts[5] == "1" || parts[5] == "true");
+            bool est_dimanche = (parts[6] == "1" || parts[6] == "true");
+            bool est_passe = (parts[7] == "1" || parts[7] == "true");
+            std::string heures_ouverture = parts[8];
+
+            // Mise a jour des donnees calendrier globales
+            cal_jour_nom[jour] = nom_jour;
+            cal_heures[jour] = heures_ouverture;
+            bool is_early = false;
+            if (!est_repos && heures_ouverture.length() >= 5) {
+                int hour = atoi(heures_ouverture.substr(0, 2).c_str());
+                int minute = atoi(heures_ouverture.substr(3, 2).c_str());
+                if (hour < 9 || (hour == 9 && minute == 0)) is_early = true;
+            }
+
+            // Couleurs temperature
+            uint32_t cmax = get_temperature_color(tmax);
+            uint32_t cmin = get_temperature_color(tmin);
+            char buftx[64]; sprintf(buftx, "#%06x %.0f# / ", cmax, tmax);
+            char buftn[64]; sprintf(buftn, " #%06x %.0f# \xC2\xB0""C", cmin, tmin);
+
+            WeatherDaySlot& slot = slots[jour];
+            if(slot.day_lbl) {
+                lv_label_set_text(slot.day_lbl, cal_toggled[jour] ? cal_heures[jour].c_str() : nom_jour.c_str());
+                lv_label_set_text(slot.max_lbl, est_passe ? "-- / " : buftx);
+                lv_label_set_text(slot.min_lbl, est_passe ? "-- \xC2\xB0""C" : buftn);
+                update_meteo_icon(slot.icon_l1, slot.icon_l2, condition, true, f_main, f_card, f_main_s, f_card_s);
+
+                if(cal_toggled[jour]) {
+                    lv_obj_add_flag(slot.max_lbl, LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_add_flag(slot.min_lbl, LV_OBJ_FLAG_HIDDEN);
+                } else {
+                    lv_obj_clear_flag(slot.max_lbl, LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_clear_flag(slot.min_lbl, LV_OBJ_FLAG_HIDDEN);
+                }
+
+                // Couleur du jour selon type (aujourd'hui, dimanche, repos, matinee)
+                uint8_t opa = est_passe ? 100 : 255;
+                uint32_t col = 0xFFFFFF;
+                if(jour == 0) col = 0x4D94FF;
+                else if(est_dimanche) col = est_repos ? 0xFFA500 : 0xFF4D4D;
+                else if(est_repos) col = 0x4CD964;
+                else if(is_early) col = 0xFF8888;
+                if(est_passe) col = 0x6A7B92;
+
+                lv_obj_set_style_text_color(slot.day_lbl, lv_color_hex(col), LV_PART_MAIN);
+                lv_obj_set_style_text_opa(slot.day_lbl, opa, LV_PART_MAIN);
+                lv_obj_set_style_text_opa(slot.icon_l1, opa, LV_PART_MAIN);
+                lv_obj_set_style_text_opa(slot.icon_l2, opa, LV_PART_MAIN);
+                lv_obj_set_style_text_opa(slot.max_lbl, opa, LV_PART_MAIN);
+                lv_obj_set_style_text_opa(slot.min_lbl, opa, LV_PART_MAIN);
+                lv_label_set_recolor(slot.max_lbl, true);
+                lv_label_set_recolor(slot.min_lbl, true);
+                lv_obj_set_style_text_color(slot.max_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+                lv_obj_set_style_text_color(slot.min_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+            }
+        }
+    }
+}

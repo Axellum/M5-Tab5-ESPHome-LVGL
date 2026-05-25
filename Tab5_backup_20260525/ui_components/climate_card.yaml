@@ -1,4 +1,4 @@
-﻿obj:
+obj:
 
   id: climate_card
 
@@ -28,13 +28,13 @@
 
     - label: { id: icon_salon, text: "\U000F04B9", align: TOP_LEFT, x: 20, y: 5, text_font: mdi_font_45, text_color: color_text_dim }
 
-    - label: { id: val_temp_salon, text: "-- Â°C", align: TOP_LEFT, x: 75, y: 10, text_font: roboto_36_b, text_color: color_temp_max }
+    - label: { id: val_temp_salon, text: "-- °C", align: TOP_LEFT, x: 75, y: 10, text_font: roboto_36_b, text_color: color_temp_max }
 
     # Chambre
 
     - label: { id: icon_chambre, text: "\U000F02E3", align: TOP_RIGHT, x: -156, y: 5, text_font: mdi_font_45, text_color: color_text_dim }
 
-    - label: { id: val_temp_chambre, text: "-- Â°C", align: TOP_RIGHT, x: -25, y: 10, text_font: roboto_36_b, text_color: color_temp_max }
+    - label: { id: val_temp_chambre, text: "-- °C", align: TOP_RIGHT, x: -25, y: 10, text_font: roboto_36_b, text_color: color_temp_max }
 
     - label: { id: clim_target, text: "--", align: BOTTOM_MID, x: 0, y: -78, text_font: roboto_48_b, text_color: color_text }
     
@@ -139,4 +139,5 @@
     # --- LIGNE 3 : PRESETS & FAN ---
 
     # (Other buttons moved to popup)
+
 

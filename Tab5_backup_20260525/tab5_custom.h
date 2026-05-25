@@ -13,31 +13,6 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bo
 uint32_t get_humidity_color(float x);
 uint32_t get_temperature_color(float t);
 
-// AXE8 : Structures pour les slots previsions (Phase 4)
-// Permettent de passer des tableaux de pointeurs LVGL aux helpers C++
-struct WeatherHourSlot {
-    lv_obj_t* time_lbl;
-    lv_obj_t* temp_lbl;
-    lv_obj_t* prob_lbl;
-    lv_obj_t* icon_l1;
-    lv_obj_t* icon_l2;
-};
-
-struct WeatherDaySlot {
-    lv_obj_t* day_lbl;
-    lv_obj_t* max_lbl;
-    lv_obj_t* min_lbl;
-    lv_obj_t* icon_l1;
-    lv_obj_t* icon_l2;
-};
-
-// Helpers de parsing bulk + mise a jour LVGL
-// Les pointeurs de polices sont passes par la lambda YAML (seul endroit ou id() fonctionne)
-void parse_and_update_heures_bulk(const std::string& payload, WeatherHourSlot slots[], int count,
-    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
-void parse_and_update_jours_bulk(const std::string& payload, WeatherDaySlot slots[], int count,
-    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
-
 // AXE5 : Constantes nommees pour les icones meteo (UTF-8 de la police IconeMeteo.ttf)
 // Evite les bytes bruts non-documentés, facilite la maintenance si la police change
 namespace MeteoIcon {
