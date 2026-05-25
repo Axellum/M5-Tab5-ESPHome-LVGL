@@ -128,7 +128,24 @@ switch:
 
 
     restore_mode: ALWAYS_ON
-
+  - platform: template
+    name: "Tab5 Wake Word Active"
+    id: tab5_wake_word_active
+    icon: mdi:microphone-outline
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - if:
+          condition:
+            lambda: 'return id(boot_complete);'
+          then:
+            - micro_wake_word.start:
+    on_turn_off:
+      - if:
+          condition:
+            lambda: 'return id(boot_complete);'
+          then:
+            - micro_wake_word.stop:
 
 
 

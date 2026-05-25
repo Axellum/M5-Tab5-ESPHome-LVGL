@@ -85,6 +85,13 @@ touchscreen:
       y_min: 0
       y_max: 1280
     id: touch
+    on_release:
+      then:
+        - if:
+            condition:
+              light.is_off: backlight
+            then:
+              - light.turn_on: backlight
 
 output:
   - platform: ledc
@@ -99,6 +106,10 @@ light:
     id: backlight
     restore_mode: RESTORE_DEFAULT_ON
     default_transition_length: 250ms
+    on_turn_on:
+      - lvgl.resume:
+    on_turn_off:
+      - lvgl.pause:
 
 
 i2s_audio:
@@ -166,11 +177,39 @@ media_player:
       format: WAV
       sample_rate: 16000
       num_channels: 1
+    on_announcement:
+      - if:
+          condition:
+            - microphone.is_capturing: tab5_microphone
+          then:
+            - micro_wake_word.stop:
+    on_idle:
+      - if:
+          condition:
+            - and:
+                - not:
+                    voice_assistant.is_running:
+                - switch.is_on: tab5_wake_word_active
+          then:
+            - micro_wake_word.start:
+
+micro_wake_word:
+  id: mww
+  models:
+    - okay_nabu
+  on_wake_word_detected:
+    - if:
+        condition:
+          - switch.is_on: tab5_wake_word_active
+        then:
+          - voice_assistant.start:
+              wake_word: !lambda return wake_word;
 
 voice_assistant:
   id: va
   microphone: tab5_microphone
   media_player: speaker_player
+  micro_wake_word: mww
   on_listening:
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0x4CD964), LV_PART_MAIN);' # Vert (Parlez)
   on_stt_end:
@@ -179,10 +218,30 @@ voice_assistant:
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0x4D94FF), LV_PART_MAIN);' # Bleu clair (Réponse)
   on_end:
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0xA3A8B5), LV_PART_MAIN);' # Gris (Repos)
+    - wait_until:
+        condition:
+          - media_player.is_announcing:
+        timeout: 0.5s
+    - wait_until:
+        - and:
+            - not:
+                media_player.is_announcing:
+            - not:
+                speaker.is_playing: tab5_speaker
+    - if:
+        condition:
+          - switch.is_on: tab5_wake_word_active
+        then:
+          - micro_wake_word.start:
   on_error:
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0xFF4D4D), LV_PART_MAIN);' # Rouge (Erreur)
     - delay: 2s
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0xA3A8B5), LV_PART_MAIN);' # Retour gris
+    - if:
+        condition:
+          - switch.is_on: tab5_wake_word_active
+        then:
+          - micro_wake_word.start:
 
 button:
   - platform: restart

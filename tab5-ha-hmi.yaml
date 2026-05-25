@@ -63,6 +63,16 @@ esphome:
       - delay: 2s
       - homeassistant.event:
           event: esphome.tab5_connected
+      - globals.set:
+          id: boot_complete
+          value: 'true'
+      - if:
+          condition:
+            - switch.is_on: tab5_wake_word_active
+          then:
+            - micro_wake_word.start:
+          else:
+            - micro_wake_word.stop:
 
 # Plus d'images! image: !include supprimé au profit des polices C++ vectorielles LVGL
 

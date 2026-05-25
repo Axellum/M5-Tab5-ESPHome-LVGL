@@ -38,6 +38,10 @@ globals:
   - id: plan_cycle_counter
     type: int
     initial_value: '0'
+  - id: boot_complete
+    type: bool
+    initial_value: 'false'
+    restore_value: false
 
 interval:
   - interval: 5s
