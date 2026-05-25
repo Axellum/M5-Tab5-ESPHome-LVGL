@@ -74,7 +74,7 @@ api:
 
               lv_label_set_text(id(icon_card_shutter_arrow), "\U000F03E4");
 
-              lv_obj_set_style_text_color(id(icon_card_shutter_arrow), lv_color_hex(0x4D94FF), LV_PART_MAIN);
+              lv_obj_set_style_text_color(id(icon_card_shutter_arrow), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
 
             } else {
 
@@ -90,7 +90,7 @@ api:
 
               }
 
-              lv_obj_set_style_text_color(id(icon_card_shutter_arrow), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
+              lv_obj_set_style_text_color(id(icon_card_shutter_arrow), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
               
 
@@ -98,13 +98,13 @@ api:
 
                 lv_label_set_text(id(icon_card_shutter1), "\U000F111E");
 
-                lv_obj_set_style_text_color(id(icon_card_shutter1), lv_color_hex(0x4CD964), LV_PART_MAIN);
+                lv_obj_set_style_text_color(id(icon_card_shutter1), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
 
               } else if (etat_physique == "Ferme" || etat_physique == "closed") {
 
                 lv_label_set_text(id(icon_card_shutter1), "\U000F111C");
 
-                lv_obj_set_style_text_color(id(icon_card_shutter1), lv_color_hex(0xFF4D4D), LV_PART_MAIN);
+                lv_obj_set_style_text_color(id(icon_card_shutter1), lv_color_hex(UIColor::ERROR), LV_PART_MAIN);
 
               }
 
@@ -273,11 +273,11 @@ api:
 
               } else {
 
-                uint32_t col = 0xFFFF00; // Jaune
+                uint32_t col = UIColor::ALERT_YELLOW; // Jaune
 
-                if (state == "Orange") col = 0xFFA500;
+                if (state == "Orange") col = UIColor::WARNING;
 
-                if (state == "Rouge") col = 0xFF0000;
+                if (state == "Rouge") col = UIColor::ALERT_RED;
 
                 lv_obj_set_style_text_color(obj, lv_color_hex(col), LV_PART_MAIN);
 
@@ -287,7 +287,7 @@ api:
 
             };
 
-            uint32_t col_date = 0x4CD964; // Vert Vif (Succes)
+            uint32_t col_date = UIColor::SUCCESS; // Vert Vif (Succes)
 
             if (globale == "Jaune") col_date = 0xFCF3CF;
 
@@ -333,11 +333,11 @@ api:
 
             if (gel >= 5) {
 
-              lv_obj_set_style_text_color(id(icon_temp), lv_color_hex(0xFFA500), LV_PART_MAIN);
+              lv_obj_set_style_text_color(id(icon_temp), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
 
             } else {
 
-              lv_obj_set_style_text_color(id(icon_temp), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
+              lv_obj_set_style_text_color(id(icon_temp), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
             }
 
@@ -349,7 +349,7 @@ api:
 
               lv_label_set_text(id(icon_rain_predict), "\U000F0598");
 
-              lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(0xFFA500), LV_PART_MAIN);
+              lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
 
             } else {
 

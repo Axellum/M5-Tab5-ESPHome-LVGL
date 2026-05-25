@@ -53,3 +53,18 @@ namespace MeteoIcon {
     static constexpr const char* CLOUD        = "\xEF\x80\x95"; // cloudy / default
 }
 
+// Couleurs semantiques centralisees (miroir des tokens YAML color:)
+// Utiliser dans les lambdas C++ au lieu des hex bruts
+namespace UIColor {
+    static constexpr uint32_t SUCCESS      = 0x4CD964;  // Vert vif (actif, OK)
+    static constexpr uint32_t WARNING      = 0xFFA500;  // Orange (attention)
+    static constexpr uint32_t ERROR        = 0xFF4D4D;  // Rouge (erreur, critique)
+    static constexpr uint32_t INFO         = 0x4D94FF;  // Bleu vif (info, connecte)
+    static constexpr uint32_t GOLD         = 0xFFD700;  // Or (soleil, lune)
+    static constexpr uint32_t TEXT_DIM     = 0xA3A8B5;  // Texte secondaire / repos
+    static constexpr uint32_t INACTIVE     = 0x404552;  // Hors ligne / NaN
+    static constexpr uint32_t WARM_PINK    = 0xFF66B2;  // Temperature interieure chaude
+    static constexpr uint32_t ALERT_YELLOW = 0xFFFF00;  // Vigilance jaune MF
+    static constexpr uint32_t ALERT_RED    = 0xFF0000;  // Vigilance rouge MF
+}
+

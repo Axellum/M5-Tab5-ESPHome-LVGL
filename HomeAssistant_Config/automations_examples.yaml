@@ -33,7 +33,6 @@
         canicule: "{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}"
         avalanches: "{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}"
 
-    - delay: "00:00:00.05"
 
     # ====== 2. INTERRUPTION SI C'EST JUSTE LE REBOURS MINUTE ======
     - condition: template
@@ -47,8 +46,6 @@
         temperature: "{{ state_attr('weather.VOTRE_VILLE', 'temperature') | float(0) }}"
         humidite: "{{ state_attr('weather.VOTRE_VILLE', 'humidity') | float(0) }}"
 
-    - delay: "00:00:00.05"
-    
     # ====== 4. PROBABILITES ======
     - action: esphome.tab5_ha_hmi_tab5_maj_probabilites
       data:
@@ -56,8 +53,7 @@
         gel: "{{ states('sensor.VOTRE_VILLE_freeze_chance') | int(0) }}"
         neige: "{{ states('sensor.VOTRE_VILLE_snow_chance') | int(0) }}"
 
-    - delay: "00:00:00.05"
-    # ====== 4. METEO PLUIE 1H (9 barres : 0,5,10,15,20,25 puis 35,45,55) ======
+    # ====== 4b. METEO PLUIE 1H (9 barres : 0,5,10,15,20,25 puis 35,45,55) ======
     - repeat:
         count: 9
         sequence:
@@ -72,8 +68,7 @@
           - delay:
               milliseconds: 50
 
-    - delay: "00:00:00.05"
-    # ====== 5. 5 JOURS DE PREVISIONS METEO & CALENDRIER ======
+    # ====== 5. PREVISIONS JOURS (BULK - 1 seul appel au lieu de 15) ======
     - action: calendar.get_events
       data:
         start_date_time: "{{ now().strftime('%Y-%m-%d 00:00:00') }}"
@@ -87,73 +82,47 @@
       target:
         entity_id: weather.VOTRE_VILLE
       response_variable: daily_var
-    - repeat:
-        count: 15
-        sequence:
-          - action: esphome.tab5_ha_hmi_tab5_maj_previsions_jours
-            data:
-              jour: "{{ repeat.index - 1 }}"
-              nom_jour: >
-                {% set target_dt = now() + timedelta(days=repeat.index - 1) %}
-                {% set days = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"] %}
-                {% if repeat.index == 1 %}
-                  Auj {{ target_dt.strftime('%d') }}
-                {% else %}
-                  {{ days[target_dt.strftime('%w') | int] }} {{ target_dt.strftime('%d') }}
-                {% endif %}
-              condition: >
-                {% set fcasts = daily_var['weather.VOTRE_VILLE'].forecast %}
-                {{ fcasts[repeat.index - 1].condition | default('unknown') if (repeat.index - 1) < fcasts|length else 'unknown' }}
-              tmin: >
-                {% set fcasts = daily_var['weather.VOTRE_VILLE'].forecast %}
-                {{ fcasts[repeat.index - 1].templow | float(0) if (repeat.index - 1) < fcasts|length else 0 }}
-              tmax: >
-                {% set fcasts = daily_var['weather.VOTRE_VILLE'].forecast %}
-                {{ fcasts[repeat.index - 1].temperature | float(0) if (repeat.index - 1) < fcasts|length else 0 }}
-              est_passe: >
-                {% set fcasts = daily_var['weather.VOTRE_VILLE'].forecast %}
-                {{ 'false' if (repeat.index - 1) < fcasts|length else 'true' }}
-              est_repos: >
-                {% set target_date = (now() + timedelta(days=repeat.index - 1)).strftime('%Y-%m-%d') %}
-                {% set ns = namespace(travail=false) %}
-                {% if agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
-                  {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
-                    {% set ev_start = event.start | default(event.start_time, '') | string %}
-                    {% set ev_end = event.end | default(event.end_time, '') | string %}
-                    {% set ev_msg = event.summary | default(event.message, '') | string %}
-                    {% if target_date in ev_start or target_date in ev_end %}
-                      {% if 'Travail' in ev_msg %}
-                        {% set ns.travail = true %}
-                      {% endif %}
-                    {% endif %}
-                  {% endfor %}
-                {% endif %}
-                {{ not ns.travail }}
-              est_dimanche: >
-                {% set target_date = now() + timedelta(days=repeat.index - 1) %}
-                {{ target_date.strftime('%w') == '0' }}
-              heures_ouverture: >
-                {% set target_date = (now() + timedelta(days=repeat.index - 1)).strftime('%Y-%m-%d') %}
-                {% set ns = namespace(heures="") %}
-                {% if agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
-                  {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
-                    {% set ev_start = event.start | default(event.start_time, '') | string %}
-                    {% set ev_end = event.end | default(event.end_time, '') | string %}
-                    {% set ev_msg = event.summary | default(event.message, '') | string %}
+    - action: esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk
+      data:
+        payload: >
+          {% set fcasts = daily_var['weather.VOTRE_VILLE'].forecast %}
+          {% set days_names = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"] %}
+          {% set ns = namespace(result="") %}
+          {% for i in range(15) %}
+            {% set target_dt = now() + timedelta(days=i) %}
+            {% set target_date = target_dt.strftime('%Y-%m-%d') %}
+            {% if i == 0 %}
+              {% set nom_jour = "Auj " ~ target_dt.strftime('%d') %}
+            {% else %}
+              {% set nom_jour = days_names[target_dt.strftime('%w') | int] ~ " " ~ target_dt.strftime('%d') %}
+            {% endif %}
+            {% set condition = fcasts[i].condition | default('unknown') if i < fcasts|length else 'unknown' %}
+            {% set tmin = fcasts[i].templow | float(0) if i < fcasts|length else 0 %}
+            {% set tmax = fcasts[i].temperature | float(0) if i < fcasts|length else 0 %}
+            {% set est_passe = 'false' if i < fcasts|length else 'true' %}
+            {% set est_dimanche = target_dt.strftime('%w') == '0' %}
+            {% set ns_travail = namespace(found=false, heures="") %}
+            {% if agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
+              {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
+                {% set ev_start = event.start | default(event.start_time, '') | string %}
+                {% set ev_end = event.end | default(event.end_time, '') | string %}
+                {% set ev_msg = event.summary | default(event.message, '') | string %}
+                {% if target_date in ev_start or target_date in ev_end %}
+                  {% if 'Travail' in ev_msg %}
+                    {% set ns_travail.found = true %}
                     {% if target_date in ev_start %}
-                      {% if 'Travail' in ev_msg %}
-                        {% set start_dt = ev_start | as_datetime %}
-                        {% set end_dt = ev_end | as_datetime %}
-                        {% set em = start_dt.strftime('%H:%M') if start_dt else '??' %}
-                        {% set de = end_dt.strftime('%H:%M') if end_dt else '??' %}
-                        {% set ns.heures = em ~ "-" ~ de %}
-                      {% endif %}
+                      {% set start_dt = ev_start | as_datetime %}
+                      {% set end_dt = ev_end | as_datetime %}
+                      {% set ns_travail.heures = start_dt.strftime('%H:%M') ~ "-" ~ end_dt.strftime('%H:%M') %}
                     {% endif %}
-                  {% endfor %}
+                  {% endif %}
                 {% endif %}
-                {{ ns.heures }}
-          - delay:
-              milliseconds: 50
+              {% endfor %}
+            {% endif %}
+            {% set est_repos = not ns_travail.found %}
+            {% set ns.result = ns.result ~ i ~ "|" ~ nom_jour ~ "|" ~ condition ~ "|" ~ tmin ~ "|" ~ tmax ~ "|" ~ ("1" if est_repos else "0") ~ "|" ~ ("1" if est_dimanche else "0") ~ "|" ~ ("1" if est_passe == 'true' else "0") ~ "|" ~ ns_travail.heures ~ ";" %}
+          {% endfor %}
+          {{ ns.result }}
 
     # ====== 6. CLIMATISATION ======
     - action: esphome.tab5_ha_hmi_tab5_maj_clim
@@ -164,8 +133,7 @@
         preset: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'preset_mode') | default('none', true) }}"
         fan: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'fan_mode') | default('auto', true) }}"
         swing: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'swing_mode') | default('off', true) }}"
-        
-    - delay: "00:00:00.05"
+
     # ====== X. ETAT VOLET ======
     - action: esphome.tab5_ha_hmi_tab5_maj_volet_etat
       data:
@@ -176,7 +144,6 @@
             {{ states('input_text.volet_serre_etat') }}
           {% endif %}
 
-    - delay: "00:00:00.05"
     # ====== Y. PLANNING HORAIRE (TEXTE TAB5) ======
     - action: esphome.tab5_ha_hmi_tab5_maj_planning
       data:
@@ -268,8 +235,7 @@
             {% endfor %}
           {% endif %}
           {{ ns.lignes[1] if ns.lignes|length > 1 else "" }}
-        
-    - delay: "00:00:00.05"
+
     # ====== 7. ZONE D'INFO (CALENDRIER ET ALERTES) ======
     - action: esphome.tab5_ha_hmi_tab5_maj_info_texte
       data:
@@ -331,39 +297,34 @@
           {% elif alerte == 'Orange' %} Orange
           {% else %} Blanc {% endif %}
 
-    - delay: "00:00:00.05"
-    # ====== 8. PREVISIONS HORAIRES (15 HEURES) ======
+    # ====== 8. PREVISIONS HORAIRES (BULK - 1 seul appel au lieu de 15) ======
     - action: weather.get_forecasts
       data:
         type: hourly
       target:
         entity_id: weather.VOTRE_VILLE
       response_variable: hourly_var_tab5
-    - repeat:
-        count: 15
-        sequence:
-          - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures
-            data:
-              heure_index: "{{ repeat.index - 1 }}"
-              heure_texte: >
-                {% set fcasts = hourly_var_tab5['weather.VOTRE_VILLE'].forecast %}
-                {% if repeat.index - 1 < fcasts|length %}
-                  {% set dt = fcasts[repeat.index - 1].datetime | as_datetime %}
-                  {{ dt.strftime('%H:00') if dt else '00:00' }}
-                {% else %}
-                  00:00
-                {% endif %}
-              condition: >
-                {% set fcasts = hourly_var_tab5['weather.VOTRE_VILLE'].forecast %}
-                {{ fcasts[repeat.index - 1].condition | default('unknown') if repeat.index - 1 < fcasts|length else 'unknown' }}
-              temp: >
-                {% set fcasts = hourly_var_tab5['weather.VOTRE_VILLE'].forecast %}
-                {{ fcasts[repeat.index - 1].temperature | float(0) if repeat.index - 1 < fcasts|length else 0 }}
-              pluvio: >
-                {% set fcasts = hourly_var_tab5['weather.VOTRE_VILLE'].forecast %}
-                {{ fcasts[repeat.index - 1].precipitation | float(0) if (repeat.index - 1) < fcasts|length else 0 }}
-          - delay:
-              milliseconds: 50
+    - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk
+      data:
+        payload: >
+          {% set fcasts = hourly_var_tab5['weather.VOTRE_VILLE'].forecast %}
+          {% set ns = namespace(result="") %}
+          {% for i in range(15) %}
+            {% if i < fcasts|length %}
+              {% set dt = fcasts[i].datetime | as_datetime %}
+              {% set heure_texte = dt.strftime('%H:00') if dt else '00:00' %}
+              {% set condition = fcasts[i].condition | default('unknown') %}
+              {% set temp = fcasts[i].temperature | float(0) %}
+              {% set pluvio = fcasts[i].precipitation | float(0) %}
+            {% else %}
+              {% set heure_texte = '00:00' %}
+              {% set condition = 'unknown' %}
+              {% set temp = 0 %}
+              {% set pluvio = 0 %}
+            {% endif %}
+            {% set ns.result = ns.result ~ i ~ "|" ~ heure_texte ~ "|" ~ condition ~ "|" ~ temp ~ "|" ~ pluvio ~ ";" %}
+          {% endfor %}
+          {{ ns.result }}
 
 
 - id: tab5_volet_updater

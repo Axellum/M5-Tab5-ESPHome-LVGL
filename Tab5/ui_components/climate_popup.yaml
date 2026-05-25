@@ -29,7 +29,7 @@ obj:
               align: TOP_LEFT
               x: 20
               y: 20
-              text_font: roboto_24
+              text_font: roboto_22
               text_color: color_text_dim
               
           # Bouton fermer (X)
@@ -51,7 +51,7 @@ obj:
               align: TOP_RIGHT
               x: -20
               y: 20
-              text_font: roboto_24
+              text_font: roboto_22
               text_color: color_text_dim
           - label:
               id: val_temp_int_popup
@@ -59,7 +59,7 @@ obj:
               align: TOP_RIGHT
               x: -20
               y: 50
-              text_font: roboto_36_b
+              text_font: roboto_32_b
               text_color: color_text
 
           # --- JAUGE (ARC) CENTRALE ---
@@ -78,7 +78,7 @@ obj:
               text: "--"
               align: TOP_MID
               y: 150
-              text_font: roboto_60_b
+              text_font: roboto_55_b
               text_color: color_text
               
           # Boutons - et + supprimés de la popup selon la demande
@@ -115,7 +115,7 @@ obj:
                             hvac_mode: "cool"
                     widgets:
                       - label: { id: popup_icon_clim_cool, text: "\U000F0717", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Froid", align: LEFT_MID, x: 70, text_font: roboto_24, text_color: color_text_dim }
+                      - label: { text: "Froid", align: LEFT_MID, x: 70, text_font: roboto_22, text_color: color_text_dim }
                 - button:
                     id: popup_btn_clim_heat
                     width: 280
@@ -130,7 +130,7 @@ obj:
                             hvac_mode: "heat"
                     widgets:
                       - label: { id: popup_icon_clim_heat, text: "\U000F0238", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Chaud", align: LEFT_MID, x: 70, text_font: roboto_24, text_color: color_text_dim }
+                      - label: { text: "Chaud", align: LEFT_MID, x: 70, text_font: roboto_22, text_color: color_text_dim }
                 - button:
                     id: popup_btn_clim_off
                     width: 280
@@ -144,7 +144,7 @@ obj:
                             entity_id: ${entity_climate_salon}
                     widgets:
                       - label: { id: popup_icon_clim_off, text: "\U000F0425", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Eteint", align: LEFT_MID, x: 70, text_font: roboto_24, text_color: color_text_dim }
+                      - label: { text: "Eteint", align: LEFT_MID, x: 70, text_font: roboto_22, text_color: color_text_dim }
 
                 # Ligne 2
                 - button:
@@ -161,7 +161,7 @@ obj:
                             hvac_mode: "fan_only"
                     widgets:
                       - label: { id: popup_icon_clim_fan, text: "\U000F0210", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Ventilation", align: LEFT_MID, x: 70, text_font: roboto_24, text_color: color_text_dim }
+                      - label: { text: "Ventilation", align: LEFT_MID, x: 70, text_font: roboto_22, text_color: color_text_dim }
                 - button:
                     id: popup_btn_clim_dry
                     width: 280
@@ -176,7 +176,7 @@ obj:
                             hvac_mode: "dry"
                     widgets:
                       - label: { id: popup_icon_clim_dry, text: "\U000F058E", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Sec", align: LEFT_MID, x: 70, text_font: roboto_24, text_color: color_text_dim }
+                      - label: { text: "Sec", align: LEFT_MID, x: 70, text_font: roboto_22, text_color: color_text_dim }
                 - button:
                     id: popup_btn_clim_swing
                     width: 280
@@ -191,7 +191,7 @@ obj:
                             swing_mode: !lambda 'return id(clim_swing_mode) == "off" ? std::string("vertical") : std::string("off");'
                     widgets:
                       - label: { id: popup_icon_clim_swing, text: "\U000F0E79", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Oscillation", align: LEFT_MID, x: 70, text_font: roboto_24, text_color: color_text_dim }
+                      - label: { text: "Oscillation", align: LEFT_MID, x: 70, text_font: roboto_22, text_color: color_text_dim }
 
                 # Ligne 3
                 - button:
@@ -208,7 +208,7 @@ obj:
                             preset_mode: !lambda 'return id(clim_preset_mode) == "eco" ? std::string("none") : std::string("eco");'
                     widgets:
                       - label: { id: popup_icon_clim_eco, text: "\U000F032A", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Mode Eco", align: LEFT_MID, x: 70, text_font: roboto_24, text_color: color_text_dim }
+                      - label: { text: "Mode Eco", align: LEFT_MID, x: 70, text_font: roboto_22, text_color: color_text_dim }
                 - button:
                     id: popup_btn_clim_boost
                     width: 280
@@ -223,7 +223,7 @@ obj:
                             preset_mode: !lambda 'return id(clim_preset_mode) == "boost" ? std::string("none") : std::string("boost");'
                     widgets:
                       - label: { id: popup_icon_clim_boost, text: "\U000F14DE", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Boost", align: LEFT_MID, x: 70, text_font: roboto_24, text_color: color_text_dim }
+                      - label: { text: "Boost", align: LEFT_MID, x: 70, text_font: roboto_22, text_color: color_text_dim }
                 - button:
                     id: popup_btn_clim_quiet
                     width: 280
@@ -238,4 +238,4 @@ obj:
                             fan_mode: !lambda 'return (id(clim_fan_mode) == "low" || id(clim_fan_mode) == "quiet" || id(clim_fan_mode) == "Silence") ? std::string("auto") : std::string("low");'
                     widgets:
                       - label: { id: popup_icon_clim_quiet, text: "\U000F146D", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Silence", align: LEFT_MID, x: 70, text_font: roboto_24, text_color: color_text_dim }
+                      - label: { text: "Silence", align: LEFT_MID, x: 70, text_font: roboto_22, text_color: color_text_dim }

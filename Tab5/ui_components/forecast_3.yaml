@@ -31,16 +31,16 @@ obj:
 
         widgets:
 
-          - label: { id: j10_day, text: "10 Jours", align: TOP_MID, y: 0, text_font: roboto_36_b, text_color: color_text }
+          - label: { id: j10_day, text: "10 Jours", align: TOP_MID, y: 0, text_font: roboto_32_b, text_color: color_text }
 
           - label: { id: j10_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
 
           - label: { id: j10_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
 
           - label: { id: j10_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
-          - label: { id: j10_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
+          - label: { id: j10_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_32_b, text_color: color_temp_max }
 
-          - label: { id: j10_min, text: "-- °C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j10_min, text: "-- °C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_32_b, text_color: color_temp_min }
 
           - button:
 
@@ -105,16 +105,16 @@ obj:
 
         widgets:
 
-          - label: { id: j11_day, text: "11 Jours", align: TOP_MID, y: 0, text_font: roboto_36_b, text_color: color_text }
+          - label: { id: j11_day, text: "11 Jours", align: TOP_MID, y: 0, text_font: roboto_32_b, text_color: color_text }
 
           - label: { id: j11_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
 
           - label: { id: j11_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
 
           - label: { id: j11_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
-          - label: { id: j11_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
+          - label: { id: j11_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_32_b, text_color: color_temp_max }
 
-          - label: { id: j11_min, text: "-- °C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j11_min, text: "-- °C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_32_b, text_color: color_temp_min }
 
           - button:
 
@@ -179,16 +179,16 @@ obj:
 
         widgets:
 
-          - label: { id: j12_day, text: "12 Jours", align: TOP_MID, y: 0, text_font: roboto_36_b, text_color: color_text }
+          - label: { id: j12_day, text: "12 Jours", align: TOP_MID, y: 0, text_font: roboto_32_b, text_color: color_text }
 
           - label: { id: j12_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
 
           - label: { id: j12_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
 
           - label: { id: j12_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
-          - label: { id: j12_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
+          - label: { id: j12_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_32_b, text_color: color_temp_max }
 
-          - label: { id: j12_min, text: "-- °C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j12_min, text: "-- °C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_32_b, text_color: color_temp_min }
 
           - button:
 
@@ -253,16 +253,16 @@ obj:
 
         widgets:
 
-          - label: { id: j13_day, text: "13 Jours", align: TOP_MID, y: 0, text_font: roboto_36_b, text_color: color_text }
+          - label: { id: j13_day, text: "13 Jours", align: TOP_MID, y: 0, text_font: roboto_32_b, text_color: color_text }
 
           - label: { id: j13_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
 
           - label: { id: j13_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
 
           - label: { id: j13_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
-          - label: { id: j13_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
+          - label: { id: j13_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_32_b, text_color: color_temp_max }
 
-          - label: { id: j13_min, text: "-- °C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j13_min, text: "-- °C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_32_b, text_color: color_temp_min }
 
           - button:
 
@@ -327,16 +327,16 @@ obj:
 
         widgets:
 
-          - label: { id: j14_day, text: "14 Jours", align: TOP_MID, y: 0, text_font: roboto_36_b, text_color: color_text }
+          - label: { id: j14_day, text: "14 Jours", align: TOP_MID, y: 0, text_font: roboto_32_b, text_color: color_text }
 
           - label: { id: j14_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
 
           - label: { id: j14_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
 
           - label: { id: j14_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
-          - label: { id: j14_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
+          - label: { id: j14_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_32_b, text_color: color_temp_max }
 
-          - label: { id: j14_min, text: "-- °C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j14_min, text: "-- °C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_32_b, text_color: color_temp_min }
 
           - button:
 

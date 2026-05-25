@@ -5,10 +5,10 @@ obj:
   width: 1280
   height: 520
   hidden: true
-  bg_color: 0x111111
+  bg_color: color_console_bg
   bg_opa: 90%
   border_width: 2
-  border_color: 0x333333
+  border_color: color_console_border
   radius: 12
   clickable: true
   scrollable: true
@@ -18,8 +18,8 @@ obj:
         text: "\U000F0579 CONSOLE DIAGNOSTIQUE"
         align: TOP_MID
         y: 20
-        text_font: roboto_36_b
-        text_color: 0xFFFFFF
+        text_font: roboto_32_b
+        text_color: color_text
 
     # ROW 1 (y:80)
     - obj:
@@ -30,10 +30,10 @@ obj:
         bg_opa: 0
         border_width: 0
         widgets:
-          - label: { text: "Temps Actif:", x: 100, align: LEFT_MID, text_font: roboto_36_b, text_color: 0xAAAAAA }
-          - label: { id: lbl_sys_uptime_val, text: "--", x: 320, align: LEFT_MID, text_font: roboto_36_b, text_color: 0x4CD964 }
-          - label: { text: "Temp. CPU:", x: 650, align: LEFT_MID, text_font: roboto_36_b, text_color: 0xAAAAAA }
-          - label: { id: lbl_sys_temp_val, text: "-- C", x: 880, align: LEFT_MID, text_font: roboto_36_b, text_color: 0x4CD964 }
+          - label: { text: "Temps Actif:", x: 100, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+          - label: { id: lbl_sys_uptime_val, text: "--", x: 320, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
+          - label: { text: "Temp. CPU:", x: 650, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+          - label: { id: lbl_sys_temp_val, text: "-- C", x: 880, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
 
     # ROW 2 (y:140)
     - obj:
@@ -44,8 +44,8 @@ obj:
         bg_opa: 0
         border_width: 0
         widgets:
-          - label: { text: "SRAM Utilisée:", x: 100, align: LEFT_MID, text_font: roboto_36_b, text_color: 0xAAAAAA, y: -10 }
-          - label: { id: lbl_sys_sram_val, text: "--", x: 380, align: LEFT_MID, text_font: roboto_24, text_color: 0xFFFFFF, y: -15 }
+          - label: { text: "SRAM Utilisée:", x: 100, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label, y: -10 }
+          - label: { id: lbl_sys_sram_val, text: "--", x: 380, align: LEFT_MID, text_font: roboto_22, text_color: 0xFFFFFF, y: -15 }
           - bar:
               id: bar_sys_sram
               x: 350
@@ -56,8 +56,8 @@ obj:
               min_value: 0
               max_value: 100
               value: 0
-          - label: { text: "PSRAM Utilisée:", x: 650, align: LEFT_MID, text_font: roboto_36_b, text_color: 0xAAAAAA, y: -10 }
-          - label: { id: lbl_sys_psram_val, text: "--", x: 930, align: LEFT_MID, text_font: roboto_24, text_color: 0xFFFFFF, y: -15 }
+          - label: { text: "PSRAM Utilisée:", x: 650, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label, y: -10 }
+          - label: { id: lbl_sys_psram_val, text: "--", x: 930, align: LEFT_MID, text_font: roboto_22, text_color: 0xFFFFFF, y: -15 }
           - bar:
               id: bar_sys_psram
               x: 900
@@ -78,10 +78,10 @@ obj:
         bg_opa: 0
         border_width: 0
         widgets:
-          - label: { text: "Bloc Max:", x: 100, align: LEFT_MID, text_font: roboto_36_b, text_color: 0xAAAAAA }
-          - label: { id: lbl_sys_frag_val, text: "--", x: 320, align: LEFT_MID, text_font: roboto_36_b, text_color: 0x4CD964 }
-          - label: { text: "Taille Flash:", x: 650, align: LEFT_MID, text_font: roboto_36_b, text_color: 0xAAAAAA }
-          - label: { id: lbl_sys_flash_val, text: "--", x: 880, align: LEFT_MID, text_font: roboto_36_b, text_color: 0x4CD964 }
+          - label: { text: "Bloc Max:", x: 100, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+          - label: { id: lbl_sys_frag_val, text: "--", x: 320, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
+          - label: { text: "Taille Flash:", x: 650, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+          - label: { id: lbl_sys_flash_val, text: "--", x: 880, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
 
     # ROW 4 (y:260)
     - obj:
@@ -92,10 +92,10 @@ obj:
         bg_opa: 0
         border_width: 0
         widgets:
-          - label: { text: "Signal Wi-Fi:", x: 100, align: LEFT_MID, text_font: roboto_36_b, text_color: 0xAAAAAA }
-          - label: { id: lbl_sys_rssi_val, text: "-- dBm", x: 320, align: LEFT_MID, text_font: roboto_36_b, text_color: 0x4CD964 }
-          - label: { text: "IP:", x: 650, align: LEFT_MID, text_font: roboto_36_b, text_color: 0xAAAAAA }
-          - label: { id: lbl_sys_ip_val, text: "--", x: 880, align: LEFT_MID, text_font: roboto_36_b, text_color: 0x4CD964 }
+          - label: { text: "Signal Wi-Fi:", x: 100, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+          - label: { id: lbl_sys_rssi_val, text: "-- dBm", x: 320, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
+          - label: { text: "IP:", x: 650, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+          - label: { id: lbl_sys_ip_val, text: "--", x: 880, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
 
     # ROW 5 (y:320)
     - obj:
@@ -106,10 +106,10 @@ obj:
         bg_opa: 0
         border_width: 0
         widgets:
-          - label: { text: "SSID:", x: 100, align: LEFT_MID, text_font: roboto_36_b, text_color: 0xAAAAAA }
-          - label: { id: lbl_sys_ssid_val, text: "--", x: 320, align: LEFT_MID, text_font: roboto_36_b, text_color: 0x4CD964 }
-          - label: { text: "Temps Boucle:", x: 650, align: LEFT_MID, text_font: roboto_36_b, text_color: 0xAAAAAA }
-          - label: { id: lbl_sys_loop_val, text: "-- ms", x: 880, align: LEFT_MID, text_font: roboto_36_b, text_color: 0x4CD964 }
+          - label: { text: "SSID:", x: 100, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+          - label: { id: lbl_sys_ssid_val, text: "--", x: 320, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
+          - label: { text: "Temps Boucle:", x: 650, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+          - label: { id: lbl_sys_loop_val, text: "-- ms", x: 880, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
 
     # FERMER BUTTON
     - button:
@@ -119,7 +119,7 @@ obj:
         y: -30
         width: 250
         height: 80
-        bg_color: 0x333333
+        bg_color: color_console_border
         radius: 8
         widgets:
           - label:
@@ -127,17 +127,17 @@ obj:
               align: LEFT_MID
               x: 20
               text_font: mdi_font_45
-              text_color: 0xFFFFFF
+              text_color: color_text
           - label:
               text: "FERMER"
               align: CENTER
               x: 20
-              text_font: roboto_36_b
-              text_color: 0xFFFFFF
+              text_font: roboto_32_b
+              text_color: color_text
         on_click:
           - lambda: 'lv_obj_add_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);'
 
-    # REBOOT BUTTON
+    # REBOOT BUTTON — Double tap requis
     - button:
         id: btn_reboot_sys
         align: BOTTOM_MID
@@ -145,18 +145,38 @@ obj:
         y: -30
         width: 250
         height: 80
-        bg_color: 0xCC0000
+        bg_color: color_console_border
         radius: 8
         widgets:
           - label:
+              id: lbl_reboot_icon
               text: "\U000F0450"
               align: LEFT_MID
               x: 20
               text_font: mdi_font_45
-              text_color: 0xFFFFFF
+              text_color: color_text
           - label:
+              id: lbl_reboot_text
               text: "REBOOT"
               align: CENTER
               x: 20
-              text_font: roboto_36_b
-              text_color: 0xFFFFFF
+              text_font: roboto_32_b
+              text_color: color_text
+        on_short_click:
+          - lambda: |-
+              static bool armed = false;
+              if(!armed) {
+                armed = true;
+                lv_obj_set_style_bg_color(id(btn_reboot_sys), lv_color_hex(UIColor::ERROR), LV_PART_MAIN);
+                lv_label_set_text(id(lbl_reboot_text), "CONFIRMER");
+              } else {
+                armed = false;
+                id(btn_restart).press();
+              }
+        on_long_press:
+          - lambda: |-
+              static bool& armed = *reinterpret_cast<bool*>(lv_obj_get_user_data(id(btn_reboot_sys)));
+              armed = false;
+              lv_obj_set_style_bg_color(id(btn_reboot_sys), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
+              lv_label_set_text(id(lbl_reboot_text), "REBOOT");
+

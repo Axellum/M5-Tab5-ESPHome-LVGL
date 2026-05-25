@@ -41,7 +41,7 @@ obj:
 
               y: 0
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_text
 
@@ -79,7 +79,7 @@ obj:
 
               y: -1
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_temp_min
 
@@ -95,7 +95,7 @@ obj:
 
               y: -1
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_temp_max
 
@@ -124,7 +124,7 @@ obj:
 
               y: 0
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_text
 
@@ -162,7 +162,7 @@ obj:
 
               y: -1
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_temp_min
 
@@ -178,7 +178,7 @@ obj:
 
               y: -1
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_temp_max
 
@@ -207,7 +207,7 @@ obj:
 
               y: 0
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_text
 
@@ -245,7 +245,7 @@ obj:
 
               y: -1
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_temp_min
 
@@ -261,7 +261,7 @@ obj:
 
               y: -1
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_temp_max
 
@@ -290,7 +290,7 @@ obj:
 
               y: 0
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_text
 
@@ -328,7 +328,7 @@ obj:
 
               y: -1
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_temp_min
 
@@ -344,7 +344,7 @@ obj:
 
               y: -1
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_temp_max
 
@@ -373,7 +373,7 @@ obj:
 
               y: 0
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_text
 
@@ -411,7 +411,7 @@ obj:
 
               y: -1
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_temp_min
 
@@ -427,7 +427,7 @@ obj:
 
               y: -1
 
-              text_font: roboto_36_b
+              text_font: roboto_32_b
 
               text_color: color_temp_max
 

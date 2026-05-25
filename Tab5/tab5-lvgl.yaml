@@ -65,34 +65,64 @@ lvgl:
                       if (d == LV_DIR_LEFT) {
 
                           hide_all();
+                          int page = -1;
 
-                          if(h3) lv_obj_clear_flag(id(layer_forecast_hourly_2), LV_OBJ_FLAG_HIDDEN);
+                          if(h3) { lv_obj_clear_flag(id(layer_forecast_hourly_2), LV_OBJ_FLAG_HIDDEN); page = 4; }
 
-                          else if(h2) lv_obj_clear_flag(id(layer_forecast_hourly_1), LV_OBJ_FLAG_HIDDEN);
+                          else if(h2) { lv_obj_clear_flag(id(layer_forecast_hourly_1), LV_OBJ_FLAG_HIDDEN); page = 3; }
 
-                          else if(h1) lv_obj_clear_flag(id(layer_forecast_1), LV_OBJ_FLAG_HIDDEN);
+                          else if(h1) { lv_obj_clear_flag(id(layer_forecast_1), LV_OBJ_FLAG_HIDDEN); page = 0; }
 
-                          else if(l1) lv_obj_clear_flag(id(layer_forecast_2), LV_OBJ_FLAG_HIDDEN);
+                          else if(l1) { lv_obj_clear_flag(id(layer_forecast_2), LV_OBJ_FLAG_HIDDEN); page = 1; }
 
-                          else if(l2) lv_obj_clear_flag(id(layer_forecast_3), LV_OBJ_FLAG_HIDDEN);
+                          else if(l2) { lv_obj_clear_flag(id(layer_forecast_3), LV_OBJ_FLAG_HIDDEN); page = 2; }
 
-                          else if(l3) lv_obj_clear_flag(id(layer_forecast_1), LV_OBJ_FLAG_HIDDEN); // Retour accueil
+                          else if(l3) { lv_obj_clear_flag(id(layer_forecast_1), LV_OBJ_FLAG_HIDDEN); page = 0; }
+
+                          if(page >= 0) {
+                            id(forecast_page_index) = page;
+                            lv_obj_t* bars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4), id(pbar_5)};
+                            for(int i = 0; i < 6; i++) {
+                              if(i == page) {
+                                lv_obj_set_width(bars[i], 30);
+                                lv_obj_set_style_bg_opa(bars[i], 255, LV_PART_MAIN);
+                              } else {
+                                lv_obj_set_width(bars[i], 16);
+                                lv_obj_set_style_bg_opa(bars[i], 100, LV_PART_MAIN);
+                              }
+                            }
+                          }
 
                       } else if (d == LV_DIR_RIGHT) {
 
                           hide_all();
+                          int page = -1;
 
-                          if(l3) lv_obj_clear_flag(id(layer_forecast_2), LV_OBJ_FLAG_HIDDEN);
+                          if(l3) { lv_obj_clear_flag(id(layer_forecast_2), LV_OBJ_FLAG_HIDDEN); page = 1; }
 
-                          else if(l2) lv_obj_clear_flag(id(layer_forecast_1), LV_OBJ_FLAG_HIDDEN);
+                          else if(l2) { lv_obj_clear_flag(id(layer_forecast_1), LV_OBJ_FLAG_HIDDEN); page = 0; }
 
-                          else if(l1) lv_obj_clear_flag(id(layer_forecast_hourly_1), LV_OBJ_FLAG_HIDDEN);
+                          else if(l1) { lv_obj_clear_flag(id(layer_forecast_hourly_1), LV_OBJ_FLAG_HIDDEN); page = 3; }
 
-                          else if(h1) lv_obj_clear_flag(id(layer_forecast_hourly_2), LV_OBJ_FLAG_HIDDEN);
+                          else if(h1) { lv_obj_clear_flag(id(layer_forecast_hourly_2), LV_OBJ_FLAG_HIDDEN); page = 4; }
 
-                          else if(h2) lv_obj_clear_flag(id(layer_forecast_hourly_3), LV_OBJ_FLAG_HIDDEN);
+                          else if(h2) { lv_obj_clear_flag(id(layer_forecast_hourly_3), LV_OBJ_FLAG_HIDDEN); page = 5; }
 
-                          else if(h3) lv_obj_clear_flag(id(layer_forecast_1), LV_OBJ_FLAG_HIDDEN); // Retour accueil
+                          else if(h3) { lv_obj_clear_flag(id(layer_forecast_1), LV_OBJ_FLAG_HIDDEN); page = 0; }
+
+                          if(page >= 0) {
+                            id(forecast_page_index) = page;
+                            lv_obj_t* bars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4), id(pbar_5)};
+                            for(int i = 0; i < 6; i++) {
+                              if(i == page) {
+                                lv_obj_set_width(bars[i], 30);
+                                lv_obj_set_style_bg_opa(bars[i], 255, LV_PART_MAIN);
+                              } else {
+                                lv_obj_set_width(bars[i], 16);
+                                lv_obj_set_style_bg_opa(bars[i], 100, LV_PART_MAIN);
+                              }
+                            }
+                          }
 
                       }
 
@@ -156,11 +186,11 @@ lvgl:
 
               - label: { id: icon_temp, text: "\U000F050F", x: 0, y: 0, text_font: mdi_font_45, text_color: color_text_dim }
 
-              - label: { id: current_temp, text: "-- C", x: 50, y: 0, text_font: roboto_48_b, text_color: color_temp_max }
+              - label: { id: current_temp, text: "-- C", x: 50, y: 0, text_font: roboto_45_b, text_color: color_temp_max }
 
               - label: { id: icon_serre, text: "\U000F002D", x: 190, y: 0, text_font: mdi_font_45, text_color: color_text_dim }
 
-              - label: { id: current_serre, text: "-- C", x: 240, y: 0, text_font: roboto_48_b, text_color: color_temp_max }
+              - label: { id: current_serre, text: "-- C", x: 240, y: 0, text_font: roboto_45_b, text_color: color_temp_max }
 
         # --- PLANNING (Dynamique) ---
 
@@ -179,7 +209,7 @@ lvgl:
 
             widgets:
 
-              - label: { id: lbl_planning_text, text: "", align: CENTER, text_font: roboto_36_b, text_color: color_text }
+              - label: { id: lbl_planning_text, text: "", align: CENTER, text_font: roboto_32_b, text_color: color_text }
 
         # --- Top Right: Date, Time & Status Icons ---
 
@@ -202,7 +232,7 @@ lvgl:
 
             widgets:
 
-              - label: { id: lbl_time, text: "19:50", align: CENTER, text_font: roboto_120_b, text_color: color_text }
+              - label: { id: lbl_time, text: "19:50", align: CENTER, text_font: roboto_130_b, text_color: color_text }
 
         - obj:
 
@@ -219,7 +249,7 @@ lvgl:
 
             widgets:
 
-              - label: { id: lbl_date, text: "Jeu 02 Avr", align: CENTER, text_font: roboto_48_b, text_color: color_text }
+              - label: { id: lbl_date, text: "Jeu 02 Avr", align: CENTER, text_font: roboto_45_b, text_color: color_text }
 
         # ==================== MOISTURE SENSORS ====================
 
@@ -233,205 +263,104 @@ lvgl:
         - !include ui_components/climate_card.yaml
         - label: { id: icon_rain_predict, text: "\U000F0597", x: 20, y: 356, text_font: mdi_font_alert, text_color: color_temp_min }
 
-        # 9 Rain bars (width: 25/55, height 50)
-
+        # 9 Rain bars - FLEX container (Phase 5)
         - obj:
-
-            id: rb_0
-
+            id: rain_bar_container
             x: 100
-
             y: 361
-
-            width: 25
-
+            width: 385
             height: 50
-
-            bg_color: color_bar_inactive
-
-            border_width: 0
-
-            pad_all: 0
-
+            styles: style_transparent
+            scrollbar_mode: "OFF"
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_main: SPACE_BETWEEN
+              flex_align_cross: END
             widgets:
-
-              - obj: { id: rb_0_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
-
-        - obj:
-
-            id: rb_1
-
-            x: 130
-
-            y: 361
-
-            width: 25
-
-            height: 50
-
-            bg_color: color_bar_inactive
-
-            border_width: 0
-
-            pad_all: 0
-
-            widgets:
-
-              - obj: { id: rb_1_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
-
-        - obj:
-
-            id: rb_2
-
-            x: 160
-
-            y: 361
-
-            width: 25
-
-            height: 50
-
-            bg_color: color_bar_inactive
-
-            border_width: 0
-
-            pad_all: 0
-
-            widgets:
-
-              - obj: { id: rb_2_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
-
-        - obj:
-
-            id: rb_3
-
-            x: 205
-
-            y: 361
-
-            width: 25
-
-            height: 50
-
-            bg_color: color_bar_inactive
-
-            border_width: 0
-
-            pad_all: 0
-
-            widgets:
-
-              - obj: { id: rb_3_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
-
-        - obj:
-
-            id: rb_4
-
-            x: 235
-
-            y: 361
-
-            width: 25
-
-            height: 50
-
-            bg_color: color_bar_inactive
-
-            border_width: 0
-
-            pad_all: 0
-
-            widgets:
-
-              - obj: { id: rb_4_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
-
-        - obj:
-
-            id: rb_5
-
-            x: 265
-
-            y: 361
-
-            width: 25
-
-            height: 50
-
-            bg_color: color_bar_inactive
-
-            border_width: 0
-
-            pad_all: 0
-
-            widgets:
-
-              - obj: { id: rb_5_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
-
-        - obj:
-
-            id: rb_6
-
-            x: 310
-
-            y: 361
-
-            width: 55
-
-            height: 50
-
-            bg_color: color_bar_inactive
-
-            border_width: 0
-
-            pad_all: 0
-
-            widgets:
-
-              - obj: { id: rb_6_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
-
-        - obj:
-
-            id: rb_7
-
-            x: 370
-
-            y: 361
-
-            width: 55
-
-            height: 50
-
-            bg_color: color_bar_inactive
-
-            border_width: 0
-
-            pad_all: 0
-
-            widgets:
-
-              - obj: { id: rb_7_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
-
-        - obj:
-
-            id: rb_8
-
-            x: 430
-
-            y: 361
-
-            width: 55
-
-            height: 50
-
-            bg_color: color_bar_inactive
-
-            border_width: 0
-
-            pad_all: 0
-
-            widgets:
-
-              - obj: { id: rb_8_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+              # 6 barres fines (5min chacune = 30min)
+              - obj:
+                  id: rb_0
+                  width: 25
+                  height: 50
+                  bg_color: color_bar_inactive
+                  border_width: 0
+                  pad_all: 0
+                  widgets:
+                    - obj: { id: rb_0_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+              - obj:
+                  id: rb_1
+                  width: 25
+                  height: 50
+                  bg_color: color_bar_inactive
+                  border_width: 0
+                  pad_all: 0
+                  widgets:
+                    - obj: { id: rb_1_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+              - obj:
+                  id: rb_2
+                  width: 25
+                  height: 50
+                  bg_color: color_bar_inactive
+                  border_width: 0
+                  pad_all: 0
+                  widgets:
+                    - obj: { id: rb_2_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+              - obj:
+                  id: rb_3
+                  width: 25
+                  height: 50
+                  bg_color: color_bar_inactive
+                  border_width: 0
+                  pad_all: 0
+                  widgets:
+                    - obj: { id: rb_3_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+              - obj:
+                  id: rb_4
+                  width: 25
+                  height: 50
+                  bg_color: color_bar_inactive
+                  border_width: 0
+                  pad_all: 0
+                  widgets:
+                    - obj: { id: rb_4_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+              - obj:
+                  id: rb_5
+                  width: 25
+                  height: 50
+                  bg_color: color_bar_inactive
+                  border_width: 0
+                  pad_all: 0
+                  widgets:
+                    - obj: { id: rb_5_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+              # 3 barres larges (10min chacune = 30min)
+              - obj:
+                  id: rb_6
+                  width: 55
+                  height: 50
+                  bg_color: color_bar_inactive
+                  border_width: 0
+                  pad_all: 0
+                  widgets:
+                    - obj: { id: rb_6_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+              - obj:
+                  id: rb_7
+                  width: 55
+                  height: 50
+                  bg_color: color_bar_inactive
+                  border_width: 0
+                  pad_all: 0
+                  widgets:
+                    - obj: { id: rb_7_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
+              - obj:
+                  id: rb_8
+                  width: 55
+                  height: 50
+                  bg_color: color_bar_inactive
+                  border_width: 0
+                  pad_all: 0
+                  widgets:
+                    - obj: { id: rb_8_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 }
 
         - obj:
 
@@ -460,11 +389,11 @@ lvgl:
 
             widgets:
 
-              - label: { id: lbl_proc_pluie, text: "Synchronisation...", text_font: roboto_36_b, text_color: color_text, pad_bottom: 4 }
+              - label: { id: lbl_proc_pluie, text: "Synchronisation...", text_font: roboto_32_b, text_color: color_text, pad_bottom: 4 }
 
-              - label: { id: lbl_pluie_val, text: "", text_font: roboto_48_b, text_color: color_orange_vif }
+              - label: { id: lbl_pluie_val, text: "", text_font: roboto_45_b, text_color: color_orange_vif }
 
-              - label: { id: lbl_pluie_unit, text: "", text_font: roboto_36_b, text_color: color_text, pad_bottom: 4 }
+              - label: { id: lbl_pluie_unit, text: "", text_font: roboto_32_b, text_color: color_text, pad_bottom: 4 }
 
         # Alerts (8 icons restants, espacement de 60, alignés sur la droite => fin à 1200)
 
@@ -483,6 +412,29 @@ lvgl:
         - label: { id: alerte_vagues, text: "\U000F078D", x: 1140, y: 356, text_font: mdi_font_alert, text_color: color_text }
 
         - label: { id: alerte_canicule, text: "\U000F0E01", x: 1200, y: 356, text_font: mdi_font_alert, text_color: color_text }
+
+        # ==================== PAGINATION BARS ====================
+        - obj:
+            id: pagination_container
+            x: 480
+            y: 420
+            width: 310
+            height: 10
+            styles: style_transparent
+            scrollbar_mode: "OFF"
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_main: CENTER
+              flex_align_cross: CENTER
+              pad_column: 8
+            widgets:
+              - obj: { id: pbar_0, width: 30, height: 4, radius: 2, bg_color: color_text, bg_opa: 100%, border_width: 0 }
+              - obj: { id: pbar_1, width: 16, height: 4, radius: 2, bg_color: color_text_dim, bg_opa: 40%, border_width: 0 }
+              - obj: { id: pbar_2, width: 16, height: 4, radius: 2, bg_color: color_text_dim, bg_opa: 40%, border_width: 0 }
+              - obj: { id: pbar_3, width: 16, height: 4, radius: 2, bg_color: color_text_dim, bg_opa: 40%, border_width: 0 }
+              - obj: { id: pbar_4, width: 16, height: 4, radius: 2, bg_color: color_text_dim, bg_opa: 40%, border_width: 0 }
+              - obj: { id: pbar_5, width: 16, height: 4, radius: 2, bg_color: color_text_dim, bg_opa: 40%, border_width: 0 }
 
         # ==================== BOTTOM CARDS (FORECAST) ====================
 

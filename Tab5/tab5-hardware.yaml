@@ -43,6 +43,10 @@ ota:
   platform: esphome
   password: !secret ota_password
 
+safe_mode:
+  num_attempts: 10
+  boot_is_good_after: 30s
+
 i2c:
   - id: bsp_bus
     sda: GPIO31
@@ -212,13 +216,13 @@ voice_assistant:
   media_player: speaker_player
   micro_wake_word: mww
   on_listening:
-    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0x4CD964), LV_PART_MAIN);' # Vert (Parlez)
+    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);' # Vert (Parlez)
   on_stt_end:
-    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0xFFA500), LV_PART_MAIN);' # Orange (Analyse)
+    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);' # Orange (Analyse)
   on_tts_start:
-    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0x4D94FF), LV_PART_MAIN);' # Bleu clair (Réponse)
+    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::INFO), LV_PART_MAIN);' # Bleu clair (Réponse)
   on_end:
-    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0xA3A8B5), LV_PART_MAIN);' # Gris (Repos)
+    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);' # Gris (Repos)
     - wait_until:
         condition:
           - media_player.is_announcing:
@@ -235,9 +239,9 @@ voice_assistant:
         then:
           - micro_wake_word.start:
   on_error:
-    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0xFF4D4D), LV_PART_MAIN);' # Rouge (Erreur)
+    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::ERROR), LV_PART_MAIN);' # Rouge (Erreur)
     - delay: 2s
-    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(0xA3A8B5), LV_PART_MAIN);' # Retour gris
+    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);' # Retour gris
     - if:
         condition:
           - switch.is_on: tab5_wake_word_active

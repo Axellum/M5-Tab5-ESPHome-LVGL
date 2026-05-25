@@ -31,7 +31,7 @@ obj:
 
         widgets:
 
-          - label: { id: j0_day, text: "Journee", align: TOP_MID, y: 0, text_font: roboto_36_b, text_color: color_text }
+          - label: { id: j0_day, text: "Journee", align: TOP_MID, y: 0, text_font: roboto_32_b, text_color: color_text }
 
           - label: { id: icon_card_pc, text: "\U000F07C0", x: 2, y: 2, align: TOP_LEFT, text_font: mdi_font_32, text_color: color_text_dim }
 
@@ -60,9 +60,9 @@ obj:
 
                     service: script.allumer_pc_tv
 
-          - label: { id: j0_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
+          - label: { id: j0_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_32_b, text_color: color_temp_max }
 
-          - label: { id: j0_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j0_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_32_b, text_color: color_temp_min }
 
           - button:
 
@@ -127,7 +127,7 @@ obj:
 
         widgets:
 
-          - label: { id: j1_day, text: "Demain", align: TOP_MID, y: 0, text_font: roboto_36_b, text_color: color_text }
+          - label: { id: j1_day, text: "Demain", align: TOP_MID, y: 0, text_font: roboto_32_b, text_color: color_text }
 
           - label: { id: icon_card_shutter1, text: "\U000F111E", x: 2, y: 2, align: TOP_LEFT, text_font: mdi_font_32, text_color: color_text_dim }
 
@@ -234,9 +234,9 @@ obj:
 
                                   action: "close"
 
-          - label: { id: j1_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
+          - label: { id: j1_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_32_b, text_color: color_temp_max }
 
-          - label: { id: j1_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j1_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_32_b, text_color: color_temp_min }
 
           - button:
 
@@ -301,7 +301,7 @@ obj:
 
         widgets:
 
-          - label: { id: j2_day, text: "2 Jours", align: TOP_MID, y: 0, text_font: roboto_36_b, text_color: color_text }
+          - label: { id: j2_day, text: "2 Jours", align: TOP_MID, y: 0, text_font: roboto_32_b, text_color: color_text }
 
           - label: { id: icon_card_lit_j2, text: "\U000F02E3", x: 2, y: 2, align: TOP_LEFT, text_font: mdi_font_45, text_color: color_text_dim }
 
@@ -336,9 +336,9 @@ obj:
 
                       entity_id: ${entity_light_chambre}
 
-          - label: { id: j2_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
+          - label: { id: j2_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_32_b, text_color: color_temp_max }
 
-          - label: { id: j2_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j2_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_32_b, text_color: color_temp_min }
 
           - button:
 
@@ -403,7 +403,7 @@ obj:
 
         widgets:
 
-          - label: { id: j3_day, text: "3 Jours", align: TOP_MID, y: 0, text_font: roboto_36_b, text_color: color_text }
+          - label: { id: j3_day, text: "3 Jours", align: TOP_MID, y: 0, text_font: roboto_32_b, text_color: color_text }
 
           - label: { id: icon_card_salon_j3, text: "\U000F04B9", x: 2, y: 2, align: TOP_LEFT, text_font: mdi_font_45, text_color: color_text_dim }
 
@@ -438,9 +438,9 @@ obj:
           - label: { id: j3_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
 
           - label: { id: j3_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
-          - label: { id: j3_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
+          - label: { id: j3_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_32_b, text_color: color_temp_max }
 
-          - label: { id: j3_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j3_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_32_b, text_color: color_temp_min }
 
           - button:
 
@@ -505,7 +505,7 @@ obj:
 
         widgets:
 
-          - label: { id: j4_day, text: "4 Jours", align: TOP_MID, y: 0, text_font: roboto_36_b, text_color: color_text }
+          - label: { id: j4_day, text: "4 Jours", align: TOP_MID, y: 0, text_font: roboto_32_b, text_color: color_text }
 
           - label: { id: icon_card_led_j4, text: "\U000F1051", x: 2, y: 2, align: TOP_LEFT, text_font: mdi_font_32, text_color: color_text_dim }
 
@@ -536,9 +536,9 @@ obj:
           - label: { id: j4_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
 
           - label: { id: j4_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
-          - label: { id: j4_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_36_b, text_color: color_temp_max }
+          - label: { id: j4_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -1, text_font: roboto_32_b, text_color: color_temp_max }
 
-          - label: { id: j4_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_36_b, text_color: color_temp_min }
+          - label: { id: j4_min, text: "-- C", align: BOTTOM_MID, x: 35, y: -1, text_font: roboto_32_b, text_color: color_temp_min }
 
           - button:
 

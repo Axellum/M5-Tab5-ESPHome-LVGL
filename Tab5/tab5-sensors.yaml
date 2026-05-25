@@ -66,7 +66,7 @@ switch:
 
       number: 1
 
-    restore_mode: ALWAYS_ON
+    restore_mode: DISABLED
 
   - platform: gpio
 
@@ -126,11 +126,11 @@ binary_sensor:
 
           if(x) {
 
-            lv_obj_set_style_text_color(id(icon_ha), lv_color_hex(0x4D94FF), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_ha), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
 
           } else {
 
-            lv_obj_set_style_text_color(id(icon_ha), lv_color_hex(0x404552), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_ha), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
 
           }
 
@@ -148,9 +148,9 @@ text_sensor:
 
           if(x == "home") {
 
-            lv_obj_set_style_text_color(id(icon_pc), lv_color_hex(0x4CD964), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_pc), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
 
-            lv_obj_set_style_text_color(id(icon_card_pc), lv_color_hex(0x4CD964), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_card_pc), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
 
           } else {
 
@@ -172,17 +172,17 @@ text_sensor:
 
           if(x == "on") {
 
-            lv_obj_set_style_text_color(id(icon_card_lit_j2), lv_color_hex(0xFFA500), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_card_lit_j2), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
 
-            lv_obj_set_style_text_color(id(icon_card_light_j2), lv_color_hex(0xFFA500), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_card_light_j2), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
 
             lv_label_set_text(id(icon_card_light_j2), "\U000F06E8");
 
           } else {
 
-            lv_obj_set_style_text_color(id(icon_card_lit_j2), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_card_lit_j2), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
-            lv_obj_set_style_text_color(id(icon_card_light_j2), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_card_light_j2), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
             lv_label_set_text(id(icon_card_light_j2), "\U000F0335");
 
@@ -200,17 +200,17 @@ text_sensor:
 
           if(x == "on") {
 
-            lv_obj_set_style_text_color(id(icon_card_salon_j3), lv_color_hex(0xFFA500), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_card_salon_j3), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
 
-            lv_obj_set_style_text_color(id(icon_card_light_j3), lv_color_hex(0xFFA500), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_card_light_j3), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
 
             lv_label_set_text(id(icon_card_light_j3), "\U000F06E8");
 
           } else {
 
-            lv_obj_set_style_text_color(id(icon_card_salon_j3), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_card_salon_j3), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
-            lv_obj_set_style_text_color(id(icon_card_light_j3), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_card_light_j3), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
             lv_label_set_text(id(icon_card_light_j3), "\U000F0335");
 
@@ -228,17 +228,17 @@ text_sensor:
 
           if(x == "on") {
 
-            lv_obj_set_style_text_color(id(icon_card_led_j4), lv_color_hex(0xFFA500), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_card_led_j4), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
 
-            lv_obj_set_style_text_color(id(icon_card_light_j4), lv_color_hex(0xFFA500), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_card_light_j4), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
 
             lv_label_set_text(id(icon_card_light_j4), "\U000F06E8");
 
           } else {
 
-            lv_obj_set_style_text_color(id(icon_card_led_j4), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_card_led_j4), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
-            lv_obj_set_style_text_color(id(icon_card_light_j4), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_card_light_j4), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
             lv_label_set_text(id(icon_card_light_j4), "\U000F0335");
 
@@ -272,23 +272,23 @@ sensor:
 
           if(isnan(x)) {
 
-            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(0x404552), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
 
           } else if(x > 80.0) {
 
-            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(0x4CD964), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
 
           } else if(x > 40.0) {
 
-            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(0x4D94FF), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
 
           } else if(x >= 20.0) {
 
-            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(0xFFA500), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
 
           } else {
 
-            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(0xFF4D4D), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(UIColor::ERROR), LV_PART_MAIN);
 
           }
 
@@ -306,7 +306,7 @@ sensor:
 
             lv_label_set_text(id(current_serre), "-- °C");
 
-            lv_obj_set_style_text_color(id(current_serre), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(current_serre), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
           } else {
 
@@ -336,7 +336,7 @@ sensor:
 
             lv_label_set_text(id(val_temp_salon), "-- °C");
 
-            lv_obj_set_style_text_color(id(val_temp_salon), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(val_temp_salon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
           } else {
 
@@ -348,11 +348,11 @@ sensor:
 
             uint32_t c_int;
 
-            if(x < 18) c_int = 0x4D94FF;
+            if(x < 18) c_int = UIColor::INFO;
 
-            else if(x <= 22) c_int = 0x4CD964;
+            else if(x <= 22) c_int = UIColor::SUCCESS;
 
-            else c_int = 0xFF66B2;
+            else c_int = UIColor::WARM_PINK;
 
             lv_obj_set_style_text_color(id(val_temp_salon), lv_color_hex(c_int), LV_PART_MAIN);
 
@@ -372,7 +372,7 @@ sensor:
 
             lv_label_set_text(id(val_temp_chambre), "-- °C");
 
-            lv_obj_set_style_text_color(id(val_temp_chambre), lv_color_hex(0xA3A8B5), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(val_temp_chambre), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
           } else {
 
@@ -384,11 +384,11 @@ sensor:
 
             uint32_t c_int;
 
-            if(x < 18) c_int = 0x4D94FF;
+            if(x < 18) c_int = UIColor::INFO;
 
-            else if(x <= 22) c_int = 0x4CD964;
+            else if(x <= 22) c_int = UIColor::SUCCESS;
 
-            else c_int = 0xFF66B2;
+            else c_int = UIColor::WARM_PINK;
 
             lv_obj_set_style_text_color(id(val_temp_chambre), lv_color_hex(c_int), LV_PART_MAIN);
 
@@ -438,9 +438,9 @@ sensor:
 
             lv_label_set_text(id(val_plant_1), "--%");
 
-            lv_obj_set_style_text_color(id(icon_plant_1), lv_color_hex(0x404552), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_plant_1), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
 
-            lv_obj_set_style_text_color(id(val_plant_1), lv_color_hex(0x404552), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(val_plant_1), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
 
           } else {
 
@@ -472,9 +472,9 @@ sensor:
 
             lv_label_set_text(id(val_plant_2), "--%");
 
-            lv_obj_set_style_text_color(id(icon_plant_2), lv_color_hex(0x404552), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_plant_2), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
 
-            lv_obj_set_style_text_color(id(val_plant_2), lv_color_hex(0x404552), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(val_plant_2), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
 
           } else {
 
@@ -506,9 +506,9 @@ sensor:
 
             lv_label_set_text(id(val_plant_3), "--%");
 
-            lv_obj_set_style_text_color(id(icon_plant_3), lv_color_hex(0x404552), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_plant_3), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
 
-            lv_obj_set_style_text_color(id(val_plant_3), lv_color_hex(0x404552), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(val_plant_3), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
 
           } else {
 
@@ -540,9 +540,9 @@ sensor:
 
             lv_label_set_text(id(val_plant_4), "--%");
 
-            lv_obj_set_style_text_color(id(icon_plant_4), lv_color_hex(0x404552), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_plant_4), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
 
-            lv_obj_set_style_text_color(id(val_plant_4), lv_color_hex(0x404552), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(val_plant_4), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
 
           } else {
 
@@ -574,9 +574,9 @@ sensor:
 
             lv_label_set_text(id(val_plant_5), "--%");
 
-            lv_obj_set_style_text_color(id(icon_plant_5), lv_color_hex(0x404552), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_plant_5), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
 
-            lv_obj_set_style_text_color(id(val_plant_5), lv_color_hex(0x404552), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(val_plant_5), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
 
           } else {
 
@@ -769,11 +769,11 @@ interval:
 
           then:
 
-            - lambda: 'lv_obj_set_style_text_color(id(icon_wifi), lv_color_hex(0x4CD964), LV_PART_MAIN);'
+            - lambda: 'lv_obj_set_style_text_color(id(icon_wifi), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);'
 
           else:
 
-            - lambda: 'lv_obj_set_style_text_color(id(icon_wifi), lv_color_hex(0x404552), LV_PART_MAIN);'
+            - lambda: 'lv_obj_set_style_text_color(id(icon_wifi), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);'
 
   - interval: 2s
 
@@ -826,10 +826,10 @@ interval:
                 lv_bar_set_value(id(bar_sys_psram), psram_pct, LV_ANIM_ON);
                 
                 auto set_bar_color = [](lv_obj_t* bar, int pct) {
-                    lv_color_t color = lv_color_hex(0x4CD964); // Vert (Normal)
-                    if(pct > 50) color = lv_color_hex(0x4D94FF); // Bleu (Bien-Rempli)
-                    if(pct > 75) color = lv_color_hex(0xFFA500); // Orange (Attention)
-                    if(pct > 90) color = lv_color_hex(0xFF4D4D); // Rouge (Critique)
+                    lv_color_t color = lv_color_hex(UIColor::SUCCESS); // Vert (Normal)
+                    if(pct > 50) color = lv_color_hex(UIColor::INFO); // Bleu (Bien-Rempli)
+                    if(pct > 75) color = lv_color_hex(UIColor::WARNING); // Orange (Attention)
+                    if(pct > 90) color = lv_color_hex(UIColor::ERROR); // Rouge (Critique)
                     lv_obj_set_style_bg_color(bar, color, LV_PART_INDICATOR);
                 };
                 set_bar_color(id(bar_sys_sram), sram_pct);

@@ -19,31 +19,53 @@ color:
     hex: "4A596E"
   - id: color_orange_vif
     hex: "FF6600"
+  # --- Couleurs sémantiques (états) ---
+  - id: color_success
+    hex: "4CD964"
+  - id: color_warning
+    hex: "FFA500"
+  - id: color_error
+    hex: "FF4D4D"
+  - id: color_info
+    hex: "4D94FF"
+  - id: color_gold
+    hex: "FFD700"
+  - id: color_inactive
+    hex: "404552"
+  # --- Couleurs console ---
+  - id: color_console_bg
+    hex: "111111"
+  - id: color_console_border
+    hex: "333333"
+  - id: color_console_label
+    hex: "AAAAAA"
+  - id: color_reboot
+    hex: "CC0000"
 
 font:
   - file: gfonts://Roboto@700
-    id: roboto_36_b
+    id: roboto_32_b
     size: 32
     bpp: 4
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
   - file: gfonts://Roboto@700
-    id: roboto_120_b
+    id: roboto_130_b
     size: 130
     bpp: 4
     glyphs: '0123456789:'
   - file: gfonts://Roboto@700
-    id: roboto_60_b
+    id: roboto_55_b
     size: 55
     bpp: 4
     glyphs: '0123456789: °C.%'
   - file: gfonts://Roboto@700
-    id: roboto_48_b
+    id: roboto_45_b
     size: 45
     bpp: 4
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
 
   - file: gfonts://Roboto@700
-    id: roboto_24
+    id: roboto_22
     size: 22
     bpp: 4
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
