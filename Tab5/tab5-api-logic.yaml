@@ -263,59 +263,48 @@ api:
 
             lv_obj_add_flag(id(lbl_pluie_unit), LV_OBJ_FLAG_HIDDEN);
 
-            auto set_alert_vis = [](lv_obj_t* obj, std::string state) {
-
-              lv_obj_clear_flag(obj, LV_OBJ_FLAG_HIDDEN);
-
-              if (state == "Vert") {
-
-                lv_obj_set_style_text_color(obj, lv_color_hex(0x6A7B92), LV_PART_MAIN);
-
-                lv_obj_set_style_text_opa(obj, 200, LV_PART_MAIN);
-
-              } else {
-
-                uint32_t col = UIColor::ALERT_YELLOW; // Jaune
-
-                if (state == "Orange") col = UIColor::WARNING;
-
-                if (state == "Rouge") col = UIColor::ALERT_RED;
-
-                lv_obj_set_style_text_color(obj, lv_color_hex(col), LV_PART_MAIN);
-
-                lv_obj_set_style_text_opa(obj, 255, LV_PART_MAIN);
-
-              }
-
-            };
-
-            uint32_t col_date = UIColor::SUCCESS; // Vert Vif (Succes)
-
+            // Couleur de la date selon vigilance globale
+            uint32_t col_date = UIColor::SUCCESS;
             if (globale == "Jaune") col_date = 0xFCF3CF;
-
             else if (globale == "Orange") col_date = 0xF8C471;
-
             else if (globale == "Rouge") col_date = 0xF1948A;
-
             lv_obj_set_style_text_color(id(lbl_date), lv_color_hex(col_date), LV_PART_MAIN);
 
-            set_alert_vis(id(alerte_vent), vent);
+            // Filtrage dynamique : ne garder que les alertes non-vertes (max 4 slots)
+            struct AlertEntry { const char* icon; std::string level; };
+            std::vector<AlertEntry> actives;
 
-            set_alert_vis(id(alerte_inon), inondation);
+            auto check_alert = [&](const std::string& state, const char* icon_code) {
+              if (state != "Vert" && state != "" && state != "unknown") {
+                actives.push_back({icon_code, state});
+              }
+            };
 
-            set_alert_vis(id(alerte_orage), orages);
+            check_alert(vent, "\U000F059D");
+            check_alert(inondation, "\U000F0EFA");
+            check_alert(orages, "\U000F0593");
+            check_alert(pluie_inondation, "\U000F0596");
+            check_alert(neige_verglas, "\U000F0F36");
+            check_alert(grand_froid, "\U000F0F29");
+            check_alert(vagues_submersion, "\U000F078D");
+            check_alert(canicule, "\U000F0E01");
 
-            set_alert_vis(id(alerte_pluie_inon), pluie_inondation);
+            // Remplir les 4 slots (priorite : ordre d'arrivee, max 4)
+            lv_obj_t* slots[] = {id(alerte_slot_0), id(alerte_slot_1), id(alerte_slot_2), id(alerte_slot_3)};
+            for (int i = 0; i < 4; i++) {
+              if (i < (int)actives.size()) {
+                lv_label_set_text(slots[i], actives[i].icon);
+                uint32_t c = UIColor::ALERT_YELLOW;
+                if (actives[i].level == "Orange") c = UIColor::WARNING;
+                else if (actives[i].level == "Rouge") c = UIColor::ALERT_RED;
+                lv_obj_set_style_text_color(slots[i], lv_color_hex(c), LV_PART_MAIN);
+                lv_obj_set_style_text_opa(slots[i], 255, LV_PART_MAIN);
+                lv_obj_clear_flag(slots[i], LV_OBJ_FLAG_HIDDEN);
+              } else {
+                lv_obj_add_flag(slots[i], LV_OBJ_FLAG_HIDDEN);
+              }
+            }
 
-            set_alert_vis(id(alerte_neige_verg), neige_verglas);
-
-            set_alert_vis(id(alerte_grand_froid), grand_froid);
-
-            set_alert_vis(id(alerte_vagues), vagues_submersion);
-
-            set_alert_vis(id(alerte_canicule), canicule);
-
-            // alerte_avalanche removed
 
     - service: tab5_maj_probabilites
 
@@ -398,7 +387,7 @@ api:
             auto apply_weather_icon = [](lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card) {
                 update_meteo_icon(l1_obj, l2_obj, state, is_card, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
             };
-            apply_weather_icon(id(icon_actuel_layer1), id(icon_actuel_layer2), condition, false);
+            apply_weather_icon(id(icon_actuel_layer1), id(icon_actuel_layer2), condition, true);
 
     - service: tab5_maj_pluie_1h
 

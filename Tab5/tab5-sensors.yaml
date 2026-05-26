@@ -346,13 +346,7 @@ sensor:
 
             lv_label_set_text(id(val_temp_salon), buf);
 
-            uint32_t c_int;
-
-            if(x < 18) c_int = UIColor::INFO;
-
-            else if(x <= 22) c_int = UIColor::SUCCESS;
-
-            else c_int = UIColor::WARM_PINK;
+            uint32_t c_int = get_temperature_color(x);  // Gradient continu colorimetrique
 
             lv_obj_set_style_text_color(id(val_temp_salon), lv_color_hex(c_int), LV_PART_MAIN);
 
@@ -364,35 +358,7 @@ sensor:
 
     entity_id: ${entity_temp_chambre}
 
-    on_value:
-
-      - lambda: |-
-
-          if(isnan(x)) {
-
-            lv_label_set_text(id(val_temp_chambre), "-- °C");
-
-            lv_obj_set_style_text_color(id(val_temp_chambre), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-
-          } else {
-
-            char buf[32];
-
-            sprintf(buf, "%.1f °C", x);
-
-            lv_label_set_text(id(val_temp_chambre), buf);
-
-            uint32_t c_int;
-
-            if(x < 18) c_int = UIColor::INFO;
-
-            else if(x <= 22) c_int = UIColor::SUCCESS;
-
-            else c_int = UIColor::WARM_PINK;
-
-            lv_obj_set_style_text_color(id(val_temp_chambre), lv_color_hex(c_int), LV_PART_MAIN);
-
-          }
+    # Capteur conserve pour la console systeme mais plus affiche dans la climate card
 
   - platform: homeassistant
 
@@ -407,6 +373,11 @@ sensor:
           if(!isnan(x)) {
             uint32_t c = get_humidity_color(x);
             lv_obj_set_style_text_color(id(icon_salon), lv_color_hex(c), LV_PART_MAIN);
+            // Afficher la valeur dans la climate card
+            char buf[16];
+            sprintf(buf, "%.0f%%", x);
+            lv_label_set_text(id(val_hum_salon_card), buf);
+            lv_obj_set_style_text_color(id(val_hum_salon_card), lv_color_hex(c), LV_PART_MAIN);
           }
 
   - platform: homeassistant
@@ -415,184 +386,84 @@ sensor:
 
     entity_id: ${entity_hum_chambre}
 
-    on_value:
-
-      - lambda: |-
-
-          if(!isnan(x)) {
-            uint32_t c = get_humidity_color(x);
-            lv_obj_set_style_text_color(id(icon_chambre), lv_color_hex(c), LV_PART_MAIN);
-          }
+    # Capteur conserve pour HA mais icon_chambre supprime de la climate card
 
   - platform: homeassistant
-
     id: moisture_1
-
     entity_id: ${entity_plante_1}
-
     on_value:
-
       - lambda: |-
-
-          if(isnan(x)) {
-
-            lv_label_set_text(id(val_plant_1), "--%");
-
-            lv_obj_set_style_text_color(id(icon_plant_1), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(val_plant_1), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-
-          } else {
-
-            char buf[16];
-
-            sprintf(buf, "%.0f%%", x);
-
-            lv_label_set_text(id(val_plant_1), buf);
-
-            uint32_t c = get_humidity_color(x);
-
-            lv_obj_set_style_text_color(id(icon_plant_1), lv_color_hex(c), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(val_plant_1), lv_color_hex(c), LV_PART_MAIN);
-
-          }
+          // Tri dynamique des 4 slots plantes a chaque mise a jour
+          float vals[5] = {id(moisture_1).state, id(moisture_2).state, id(moisture_3).state, id(moisture_4).state, id(moisture_5).state};
+          const char* icons[5] = {"\U000F0E66", "\U000F09F1", "\U000F0D08", "\U000F024A", "\U000F02E5"};
+          MoistureSlotUI slots[4] = {
+              {id(icon_pot_s0), id(val_pot_s0)},
+              {id(icon_pot_s1), id(val_pot_s1)},
+              {id(icon_pot_s2), id(val_pot_s2)},
+              {id(icon_pot_s3), id(val_pot_s3)}
+          };
+          sort_and_update_moisture_slots(vals, icons, slots);
 
   - platform: homeassistant
-
     id: moisture_2
-
     entity_id: ${entity_plante_2}
-
     on_value:
-
       - lambda: |-
-
-          if(isnan(x)) {
-
-            lv_label_set_text(id(val_plant_2), "--%");
-
-            lv_obj_set_style_text_color(id(icon_plant_2), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(val_plant_2), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-
-          } else {
-
-            char buf[16];
-
-            sprintf(buf, "%.0f%%", x);
-
-            lv_label_set_text(id(val_plant_2), buf);
-
-            uint32_t c = get_humidity_color(x);
-
-            lv_obj_set_style_text_color(id(icon_plant_2), lv_color_hex(c), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(val_plant_2), lv_color_hex(c), LV_PART_MAIN);
-
-          }
+          float vals[5] = {id(moisture_1).state, id(moisture_2).state, id(moisture_3).state, id(moisture_4).state, id(moisture_5).state};
+          const char* icons[5] = {"\U000F0E66", "\U000F09F1", "\U000F0D08", "\U000F024A", "\U000F02E5"};
+          MoistureSlotUI slots[4] = {
+              {id(icon_pot_s0), id(val_pot_s0)},
+              {id(icon_pot_s1), id(val_pot_s1)},
+              {id(icon_pot_s2), id(val_pot_s2)},
+              {id(icon_pot_s3), id(val_pot_s3)}
+          };
+          sort_and_update_moisture_slots(vals, icons, slots);
 
   - platform: homeassistant
-
     id: moisture_3
-
     entity_id: ${entity_plante_3}
-
     on_value:
-
       - lambda: |-
-
-          if(isnan(x)) {
-
-            lv_label_set_text(id(val_plant_3), "--%");
-
-            lv_obj_set_style_text_color(id(icon_plant_3), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(val_plant_3), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-
-          } else {
-
-            char buf[16];
-
-            sprintf(buf, "%.0f%%", x);
-
-            lv_label_set_text(id(val_plant_3), buf);
-
-            uint32_t c = get_humidity_color(x);
-
-            lv_obj_set_style_text_color(id(icon_plant_3), lv_color_hex(c), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(val_plant_3), lv_color_hex(c), LV_PART_MAIN);
-
-          }
+          float vals[5] = {id(moisture_1).state, id(moisture_2).state, id(moisture_3).state, id(moisture_4).state, id(moisture_5).state};
+          const char* icons[5] = {"\U000F0E66", "\U000F09F1", "\U000F0D08", "\U000F024A", "\U000F02E5"};
+          MoistureSlotUI slots[4] = {
+              {id(icon_pot_s0), id(val_pot_s0)},
+              {id(icon_pot_s1), id(val_pot_s1)},
+              {id(icon_pot_s2), id(val_pot_s2)},
+              {id(icon_pot_s3), id(val_pot_s3)}
+          };
+          sort_and_update_moisture_slots(vals, icons, slots);
 
   - platform: homeassistant
-
     id: moisture_4
-
     entity_id: ${entity_plante_4}
-
     on_value:
-
       - lambda: |-
-
-          if(isnan(x)) {
-
-            lv_label_set_text(id(val_plant_4), "--%");
-
-            lv_obj_set_style_text_color(id(icon_plant_4), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(val_plant_4), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-
-          } else {
-
-            char buf[16];
-
-            sprintf(buf, "%.0f%%", x);
-
-            lv_label_set_text(id(val_plant_4), buf);
-
-            uint32_t c = get_humidity_color(x);
-
-            lv_obj_set_style_text_color(id(icon_plant_4), lv_color_hex(c), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(val_plant_4), lv_color_hex(c), LV_PART_MAIN);
-
-          }
+          float vals[5] = {id(moisture_1).state, id(moisture_2).state, id(moisture_3).state, id(moisture_4).state, id(moisture_5).state};
+          const char* icons[5] = {"\U000F0E66", "\U000F09F1", "\U000F0D08", "\U000F024A", "\U000F02E5"};
+          MoistureSlotUI slots[4] = {
+              {id(icon_pot_s0), id(val_pot_s0)},
+              {id(icon_pot_s1), id(val_pot_s1)},
+              {id(icon_pot_s2), id(val_pot_s2)},
+              {id(icon_pot_s3), id(val_pot_s3)}
+          };
+          sort_and_update_moisture_slots(vals, icons, slots);
 
   - platform: homeassistant
-
     id: moisture_5
-
     entity_id: ${entity_plante_5}
-
     on_value:
-
       - lambda: |-
+          float vals[5] = {id(moisture_1).state, id(moisture_2).state, id(moisture_3).state, id(moisture_4).state, id(moisture_5).state};
+          const char* icons[5] = {"\U000F0E66", "\U000F09F1", "\U000F0D08", "\U000F024A", "\U000F02E5"};
+          MoistureSlotUI slots[4] = {
+              {id(icon_pot_s0), id(val_pot_s0)},
+              {id(icon_pot_s1), id(val_pot_s1)},
+              {id(icon_pot_s2), id(val_pot_s2)},
+              {id(icon_pot_s3), id(val_pot_s3)}
+          };
+          sort_and_update_moisture_slots(vals, icons, slots);
 
-          if(isnan(x)) {
-
-            lv_label_set_text(id(val_plant_5), "--%");
-
-            lv_obj_set_style_text_color(id(icon_plant_5), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(val_plant_5), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-
-          } else {
-
-            char buf[16];
-
-            sprintf(buf, "%.0f%%", x);
-
-            lv_label_set_text(id(val_plant_5), buf);
-
-            uint32_t c = get_humidity_color(x);
-
-            lv_obj_set_style_text_color(id(icon_plant_5), lv_color_hex(c), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(val_plant_5), lv_color_hex(c), LV_PART_MAIN);
-
-          }
 
   - platform: uptime
 

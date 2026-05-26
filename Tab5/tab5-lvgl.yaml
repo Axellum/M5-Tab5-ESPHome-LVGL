@@ -132,47 +132,36 @@ lvgl:
 
       widgets:
 
-        # Icônes météo (cachées — mises à jour par API pour usage interne)
-        - label: { id: icon_actuel_layer1, text: "", hidden: true, x: 0, y: 0, text_font: font_meteo_main, text_color: color_text }
-        - label: { id: icon_actuel_layer2, text: "", hidden: true, x: 0, y: 0, text_font: font_meteo_main, text_color: color_text }
+        # Icône météo inline (150px, positionnée à gauche — remplace l'ancienne 270px)
+        - label: { id: icon_actuel_layer1, text: "", hidden: true, x: 20, y: 100, text_font: font_meteo_card, text_color: color_text }
+        - label: { id: icon_actuel_layer2, text: "", hidden: true, x: 20, y: 100, text_font: font_meteo_card, text_color: color_text }
 
-        # Micro Voice Assistant (bouton sur l'icône)
-        - label: { id: icon_mic_status, text: "\U000F036C", x: 10, y: 5, align: TOP_LEFT, text_font: mdi_font_60, text_color: color_text_dim }
+        # Micro Voice Assistant (icône réduite 32px + zone touch compacte)
+        - label: { id: icon_mic_status, text: "\U000F036C", x: 12, y: 10, align: TOP_LEFT, text_font: mdi_font_32, text_color: color_text_dim }
         - button:
             id: btn_assist_trigger
             x: 5
-            y: 0
-            width: 70
-            height: 70
+            y: 2
+            width: 45
+            height: 45
             styles: style_invisible
             on_short_click:
               - voice_assistant.start:
                   id: va
 
-        # --- °Current Temp / Hum ---
-
+        # --- Temp ext (55px, colorimétrique) + Serre (45px) ---
         - obj:
-
-            x: 20
-
-            y: 302
-
-            width: 380
-
-            height: 50
-
+            x: 190
+            y: 100
+            width: 560
+            height: 120
             styles: style_transparent
             scrollbar_mode: "OFF"
-
             widgets:
-
               - label: { id: icon_temp, text: "\U000F050F", x: 0, y: 0, text_font: mdi_font_45, text_color: color_text_dim }
-
-              - label: { id: current_temp, text: "-- C", x: 50, y: 0, text_font: roboto_45_b, text_color: color_temp_max }
-
-              - label: { id: icon_serre, text: "\U000F002D", x: 190, y: 0, text_font: mdi_font_45, text_color: color_text_dim }
-
-              - label: { id: current_serre, text: "-- C", x: 240, y: 0, text_font: roboto_45_b, text_color: color_temp_max }
+              - label: { id: current_temp, text: "-- °C", x: 50, y: -5, text_font: roboto_55_b, text_color: color_temp_max }
+              - label: { id: icon_serre, text: "\U000F002D", x: 0, y: 60, text_font: mdi_font_45, text_color: color_text_dim }
+              - label: { id: current_serre, text: "-- °C", x: 50, y: 60, text_font: roboto_45_b, text_color: color_temp_max }
 
         # --- PLANNING (Dynamique) ---
 
@@ -377,23 +366,26 @@ lvgl:
 
               - label: { id: lbl_pluie_unit, text: "", text_font: roboto_32_b, text_color: color_text, pad_bottom: 4 }
 
-        # Alerts (8 icons restants, espacement de 60, alignés sur la droite => fin à 1200)
-
-        - label: { id: alerte_vent, text: "\U000F059D", x: 780, y: 356, text_font: mdi_font_alert, text_color: color_text }
-
-        - label: { id: alerte_inon, text: "\U000F0EFA", x: 840, y: 356, text_font: mdi_font_alert, text_color: color_text }
-
-        - label: { id: alerte_orage, text: "\U000F0593", x: 900, y: 356, text_font: mdi_font_alert, text_color: color_text }
-
-        - label: { id: alerte_pluie_inon, text: "\U000F0596", x: 960, y: 356, text_font: mdi_font_alert, text_color: color_text }
-
-        - label: { id: alerte_neige_verg, text: "\U000F0F36", x: 1020, y: 356, text_font: mdi_font_alert, text_color: color_text }
-
-        - label: { id: alerte_grand_froid, text: "\U000F0F29", x: 1080, y: 356, text_font: mdi_font_alert, text_color: color_text }
-
-        - label: { id: alerte_vagues, text: "\U000F078D", x: 1140, y: 356, text_font: mdi_font_alert, text_color: color_text }
-
-        - label: { id: alerte_canicule, text: "\U000F0E01", x: 1200, y: 356, text_font: mdi_font_alert, text_color: color_text }
+        # Alertes météo dynamiques (max 4, FLEX, masquées quand tout est vert)
+        - obj:
+            id: alert_container
+            x: 780
+            y: 356
+            width: 480
+            height: 60
+            styles: style_transparent
+            scrollbar_mode: "OFF"
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_main: END
+              flex_align_cross: CENTER
+              pad_column: 12
+            widgets:
+              - label: { id: alerte_slot_0, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
+              - label: { id: alerte_slot_1, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
+              - label: { id: alerte_slot_2, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
+              - label: { id: alerte_slot_3, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
 
         # ==================== PAGINATION BARS ====================
         - obj:

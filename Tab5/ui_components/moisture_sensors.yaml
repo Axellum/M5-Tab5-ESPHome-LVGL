@@ -1,64 +1,51 @@
 obj:
-
   x: 786
-
   y: 199
-
   width: 488
-
-  height: 151
-
+  height: 120
   bg_opa: 0
-
   border_width: 0
-
-  border_color: color_border
-
-  radius: 0
-
   pad_all: 0
-
   scrollbar_mode: "OFF"
+  layout:
+    type: FLEX
+    flex_flow: ROW
+    flex_align_main: SPACE_EVENLY
+    flex_align_cross: CENTER
 
   widgets:
+    # Slot 0 : Plus sec (rempli dynamiquement par sort_and_update_moisture_slots)
+    - obj:
+        width: 110
+        height: 100
+        styles: style_transparent
+        widgets:
+          - label: { id: icon_pot_s0, text: "\U000F024A", align: TOP_MID, text_font: mdi_font_45, text_color: color_text_dim }
+          - label: { id: val_pot_s0, text: "--%", align: BOTTOM_MID, y: -5, text_font: roboto_32_b, text_color: color_text_dim }
 
-    # Row 1, Col 1 - Pot 2 (8189)
+    # Slot 1 : 2e plus sec
+    - obj:
+        width: 110
+        height: 100
+        styles: style_transparent
+        widgets:
+          - label: { id: icon_pot_s1, text: "\U000F0E66", align: TOP_MID, text_font: mdi_font_45, text_color: color_text_dim }
+          - label: { id: val_pot_s1, text: "--%", align: BOTTOM_MID, y: -5, text_font: roboto_32_b, text_color: color_text_dim }
 
-    - label: { id: icon_plant_4, text: "\U000F024A", x: 10, y: 5, text_font: mdi_font_45, text_color: color_text_dim }
+    # Slot 2 : Mediane
+    - obj:
+        width: 110
+        height: 100
+        styles: style_transparent
+        widgets:
+          - label: { id: icon_pot_s2, text: "\U000F02E5", align: TOP_MID, text_font: mdi_font_45, text_color: color_text_dim }
+          - label: { id: val_pot_s2, text: "--%", align: BOTTOM_MID, y: -5, text_font: roboto_32_b, text_color: color_text_dim }
 
-    - label: { id: val_plant_4, text: "--%", x: 55, y: 5, text_font: roboto_45_b, text_color: color_text_dim }
-
-    - label: { id: name_plant_4, text: "Pot N°2", x: 10, y: 50, text_font: roboto_22, text_color: color_text_dim }
-
-    # Row 1, Col 2 - Pot 3 (8184)
-
-    - label: { id: icon_plant_1, text: "\U000F0E66", x: 175, y: 5, text_font: mdi_font_45, text_color: color_text_dim }
-
-    - label: { id: val_plant_1, text: "--%", x: 220, y: 5, text_font: roboto_45_b, text_color: color_text_dim }
-
-    - label: { id: name_plant_1, text: "Pot N°3", x: 175, y: 50, text_font: roboto_22, text_color: color_text_dim }
-
-    # Row 1, Col 3 - Pot 4 (8173)
-
-    - label: { id: icon_plant_5, text: "\U000F02E5", x: 340, y: 5, text_font: mdi_font_45, text_color: color_text_dim }
-
-    - label: { id: val_plant_5, text: "--%", x: 385, y: 5, text_font: roboto_45_b, text_color: color_text_dim }
-
-    - label: { id: name_plant_5, text: "Pot N°4", x: 340, y: 50, text_font: roboto_22, text_color: color_text_dim }
-
-    # Row 2, Col 1 - Pot 5 (81b8)
-
-    - label: { id: icon_plant_2, text: "\U000F09F1", x: 10, y: 75, text_font: mdi_font_45, text_color: color_text_dim }
-
-    - label: { id: val_plant_2, text: "--%", x: 55, y: 75, text_font: roboto_45_b, text_color: color_text_dim }
-
-    - label: { id: name_plant_2, text: "Pot N°5", x: 10, y: 120, text_font: roboto_22, text_color: color_text_dim }
-
-    # Row 2, Col 2 - Pot 6 (817a)
-
-    - label: { id: icon_plant_3, text: "\U000F0D08", x: 175, y: 75, text_font: mdi_font_45, text_color: color_text_dim }
-
-    - label: { id: val_plant_3, text: "--%", x: 220, y: 75, text_font: roboto_45_b, text_color: color_text_dim }
-
-    - label: { id: name_plant_3, text: "Pot N°6", x: 175, y: 120, text_font: roboto_22, text_color: color_text_dim }
-
+    # Slot 3 : Plus humide
+    - obj:
+        width: 110
+        height: 100
+        styles: style_transparent
+        widgets:
+          - label: { id: icon_pot_s3, text: "\U000F09F1", align: TOP_MID, text_font: mdi_font_45, text_color: color_text_dim }
+          - label: { id: val_pot_s3, text: "--%", align: BOTTOM_MID, y: -5, text_font: roboto_32_b, text_color: color_text_dim }

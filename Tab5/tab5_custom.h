@@ -53,6 +53,17 @@ namespace MeteoIcon {
     static constexpr const char* CLOUD        = "\xEF\x80\x95"; // cloudy / default
 }
 
+// Structure pour les 4 slots UI d'humidite plantes (triés dynamiquement)
+struct MoistureSlotUI {
+    lv_obj_t* icon_lbl;
+    lv_obj_t* val_lbl;
+};
+
+// Tri dynamique : prend 5 valeurs, affiche les 2 plus secs + médiane + plus humide
+// icons_utf8[5] = codes MDI pour chaque capteur, slots[4] = widgets LVGL de destination
+void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
+    MoistureSlotUI slots[4]);
+
 // Couleurs semantiques centralisees (miroir des tokens YAML color:)
 // Utiliser dans les lambdas C++ au lieu des hex bruts
 namespace UIColor {

@@ -247,3 +247,78 @@ void parse_and_update_jours_bulk(const std::string& payload, WeatherDaySlot slot
         }
     }
 }
+
+// =============================================================================
+// Tri dynamique plantes : 5 capteurs -> 4 slots (2 secs + mediane + humide)
+// =============================================================================
+
+void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
+    MoistureSlotUI slots[4]) {
+
+    // 1) Construire un tableau d'indices valides (pas NaN)
+    struct Entry { int idx; float val; };
+    Entry valid[5];
+    int n_valid = 0;
+
+    for (int i = 0; i < 5; i++) {
+        if (!isnan(values[i])) {
+            valid[n_valid++] = {i, values[i]};
+        }
+    }
+
+    // 2) Tri par valeur croissante (bubble sort, max 5 elements)
+    for (int i = 0; i < n_valid - 1; i++) {
+        for (int j = 0; j < n_valid - i - 1; j++) {
+            if (valid[j].val > valid[j+1].val) {
+                Entry tmp = valid[j];
+                valid[j] = valid[j+1];
+                valid[j+1] = tmp;
+            }
+        }
+    }
+
+    // 3) Selectionner les 4 indices a afficher :
+    //    - slot 0 : le plus sec (valid[0])
+    //    - slot 1 : le 2e plus sec (valid[1])
+    //    - slot 2 : la mediane (valid[n_valid/2])
+    //    - slot 3 : le plus humide (valid[n_valid-1])
+    int selected[4] = {-1, -1, -1, -1};
+    if (n_valid >= 4) {
+        selected[0] = 0;
+        selected[1] = 1;
+        selected[2] = n_valid / 2;
+        selected[3] = n_valid - 1;
+        // Eviter les doublons si mediane == slot 1 ou slot 3
+        if (selected[2] <= selected[1]) selected[2] = selected[1] + 1;
+        if (selected[2] >= selected[3] && selected[3] > 0) selected[2] = selected[3] - 1;
+    } else if (n_valid == 3) {
+        selected[0] = 0; selected[1] = 1; selected[2] = 1; selected[3] = 2;
+    } else if (n_valid == 2) {
+        selected[0] = 0; selected[1] = 0; selected[2] = 1; selected[3] = 1;
+    } else if (n_valid == 1) {
+        selected[0] = 0; selected[1] = 0; selected[2] = 0; selected[3] = 0;
+    }
+
+    // 4) Mise a jour des 4 slots LVGL
+    for (int s = 0; s < 4; s++) {
+        if (selected[s] < 0 || selected[s] >= n_valid) {
+            // Slot vide (pas assez de capteurs)
+            lv_label_set_text(slots[s].val_lbl, "--%");
+            lv_obj_set_style_text_color(slots[s].icon_lbl, lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
+            lv_obj_set_style_text_color(slots[s].val_lbl, lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
+            continue;
+        }
+
+        Entry& e = valid[selected[s]];
+        // Icone du capteur d'origine
+        lv_label_set_text(slots[s].icon_lbl, icons_utf8[e.idx]);
+        // Valeur
+        char buf[16];
+        sprintf(buf, "%.0f%%", e.val);
+        lv_label_set_text(slots[s].val_lbl, buf);
+        // Couleur colorimetrique
+        uint32_t c = get_humidity_color(e.val);
+        lv_obj_set_style_text_color(slots[s].icon_lbl, lv_color_hex(c), LV_PART_MAIN);
+        lv_obj_set_style_text_color(slots[s].val_lbl, lv_color_hex(c), LV_PART_MAIN);
+    }
+}

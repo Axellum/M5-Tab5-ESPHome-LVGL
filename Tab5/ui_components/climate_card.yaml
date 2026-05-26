@@ -21,8 +21,9 @@ obj:
     # ═══ HAUT : Températures pièces ═══
     - label: { id: icon_salon, text: "\U000F04B9", align: TOP_LEFT, x: 18, y: 12, text_font: mdi_font_45, text_color: color_text_dim }
     - label: { id: val_temp_salon, text: "-- C", align: TOP_LEFT, x: 70, y: 17, text_font: roboto_32_b, text_color: color_temp_max }
-    - label: { id: icon_chambre, text: "\U000F02E3", align: TOP_RIGHT, x: -148, y: 12, text_font: mdi_font_45, text_color: color_text_dim }
-    - label: { id: val_temp_chambre, text: "-- C", align: TOP_RIGHT, x: -18, y: 17, text_font: roboto_32_b, text_color: color_temp_max }
+    # Humidite salon (remplace l'ancienne temp chambre)
+    - label: { text: "\U000F058E", align: TOP_RIGHT, x: -130, y: 14, text_font: mdi_font_32, text_color: color_text_dim }
+    - label: { id: val_hum_salon_card, text: "--%", align: TOP_RIGHT, x: -18, y: 17, text_font: roboto_32_b, text_color: color_text_dim }
 
     # ═══ CENTRE : Température cible (cliquable) ═══
 
