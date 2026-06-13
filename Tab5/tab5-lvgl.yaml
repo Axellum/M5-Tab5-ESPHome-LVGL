@@ -241,18 +241,19 @@ lvgl:
         - obj:
             id: central_card
             x: 20
-            y: 345
+            y: 333
             width: 1240
-            height: 72
+            height: 84
             styles: style_meteo_card
             scrollbar_mode: "OFF"
+            pad_left: 20
+            pad_right: 20
             layout:
               type: FLEX
               flex_flow: ROW
-              flex_align_main: SPACE_BETWEEN
+              flex_align_main: CENTER
               flex_align_cross: CENTER
-              pad_left: 20
-              pad_right: 20
+              pad_column: 30
             widgets:
               # Alertes météo dynamiques
               - obj:
@@ -332,7 +333,7 @@ lvgl:
                   layout:
                     type: FLEX
                     flex_flow: ROW
-                    flex_align_main: END
+                    flex_align_main: CENTER
                     flex_align_cross: CENTER
                   widgets:
                     - label: { id: lbl_planning_text, text: "", text_font: roboto_45_b, text_color: color_text }
