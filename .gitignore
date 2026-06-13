@@ -9,3 +9,7 @@ secrets.yaml
 /archives/
 config_out.txt
 test_*.yaml
+
+# Logs
+*.log
+home-assistant_*.log
