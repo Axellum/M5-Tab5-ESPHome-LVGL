@@ -255,11 +255,10 @@ lvgl:
               flex_align_cross: CENTER
               pad_column: 30
             widgets:
-              # Alertes météo dynamiques
               - obj:
                   id: alert_container
                   width: SIZE_CONTENT
-                  height: 100%
+                  height: SIZE_CONTENT
                   styles: style_transparent
                   hidden: true
                   layout:
@@ -278,7 +277,7 @@ lvgl:
               - obj:
                   id: rain_wrapper
                   width: SIZE_CONTENT
-                  height: 100%
+                  height: SIZE_CONTENT
                   styles: style_transparent
                   hidden: true
                   layout:
@@ -328,7 +327,7 @@ lvgl:
               - obj:
                   id: planning_wrapper
                   width: SIZE_CONTENT
-                  height: 100%
+                  height: SIZE_CONTENT
                   styles: style_transparent
                   layout:
                     type: FLEX
