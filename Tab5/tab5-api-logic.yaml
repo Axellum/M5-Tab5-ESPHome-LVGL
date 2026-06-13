@@ -300,11 +300,7 @@ api:
             check_alert(canicule, "\U000F0E01");
 
             // Remplir les 4 slots (priorite : ordre d'arrivee, max 4)
-            if (actives.empty()) {
-                lv_obj_add_flag(id(alert_container), LV_OBJ_FLAG_HIDDEN);
-            } else {
-                lv_obj_clear_flag(id(alert_container), LV_OBJ_FLAG_HIDDEN);
-            }
+            id(has_alerts) = !actives.empty();
             
             lv_obj_t* slots[] = {id(alerte_slot_0), id(alerte_slot_1), id(alerte_slot_2), id(alerte_slot_3)};
             for (int i = 0; i < 4; i++) {
@@ -467,11 +463,7 @@ api:
             for(int i=0; i<9; i++) {
                if (lv_obj_get_height(targets[i]) > 0) is_raining = true;
             }
-            if (is_raining) {
-               lv_obj_clear_flag(id(rain_wrapper), LV_OBJ_FLAG_HIDDEN);
-            } else {
-               lv_obj_add_flag(id(rain_wrapper), LV_OBJ_FLAG_HIDDEN);
-            }
+            id(has_rain) = is_raining;
 
     - service: tab5_maj_info_texte
 

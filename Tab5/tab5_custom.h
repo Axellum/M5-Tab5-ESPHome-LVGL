@@ -63,6 +63,7 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
     esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
 void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
     esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
+void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj);
 
 // AXE5 : Constantes nommees pour les icones meteo (UTF-8 de la police IconeMeteo.ttf)
 // Evite les bytes bruts non-documentés, facilite la maintenance si la police change

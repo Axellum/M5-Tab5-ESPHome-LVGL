@@ -248,15 +248,10 @@ lvgl:
             scrollbar_mode: "OFF"
             pad_left: 20
             pad_right: 20
-            layout:
-              type: FLEX
-              flex_flow: ROW
-              flex_align_main: CENTER
-              flex_align_cross: CENTER
-              pad_column: 30
             widgets:
               - obj:
                   id: alert_container
+                  align: CENTER
                   width: SIZE_CONTENT
                   height: SIZE_CONTENT
                   styles: style_transparent
@@ -264,7 +259,7 @@ lvgl:
                   layout:
                     type: FLEX
                     flex_flow: ROW
-                    flex_align_main: START
+                    flex_align_main: CENTER
                     flex_align_cross: CENTER
                     pad_column: 15
                   widgets:
@@ -276,6 +271,7 @@ lvgl:
               # Pluie Wrapper
               - obj:
                   id: rain_wrapper
+                  align: CENTER
                   width: SIZE_CONTENT
                   height: SIZE_CONTENT
                   styles: style_transparent
@@ -326,6 +322,7 @@ lvgl:
               # Planning Wrapper
               - obj:
                   id: planning_wrapper
+                  align: CENTER
                   width: SIZE_CONTENT
                   height: 100%
                   styles: style_transparent

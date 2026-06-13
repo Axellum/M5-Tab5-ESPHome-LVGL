@@ -383,3 +383,33 @@ void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
         lv_obj_set_style_text_color(slots[s].val_lbl, lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
     }
 }
+
+void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
+    if (out_obj == in_obj) return;
+    
+    if (out_obj) {
+        lv_anim_t a_out;
+        lv_anim_init(&a_out);
+        lv_anim_set_var(&a_out, out_obj);
+        lv_anim_set_values(&a_out, 0, 84);
+        lv_anim_set_time(&a_out, 400);
+        lv_anim_set_exec_cb(&a_out, (lv_anim_exec_xcb_t)lv_obj_set_y);
+        lv_anim_set_ready_cb(&a_out, [](lv_anim_t* a) {
+            lv_obj_add_flag((lv_obj_t*)a->var, LV_OBJ_FLAG_HIDDEN);
+        });
+        lv_anim_start(&a_out);
+    }
+    
+    if (in_obj) {
+        lv_obj_clear_flag(in_obj, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_y(in_obj, -84);
+        
+        lv_anim_t a_in;
+        lv_anim_init(&a_in);
+        lv_anim_set_var(&a_in, in_obj);
+        lv_anim_set_values(&a_in, -84, 0);
+        lv_anim_set_time(&a_in, 400);
+        lv_anim_set_exec_cb(&a_in, (lv_anim_exec_xcb_t)lv_obj_set_y);
+        lv_anim_start(&a_in);
+    }
+}
