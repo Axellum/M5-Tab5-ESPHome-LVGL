@@ -330,7 +330,7 @@ lvgl:
                   height: 100%
                   styles: style_transparent
                   widgets:
-                    - label: { id: lbl_planning_text, text: "", align: CENTER, y: 6, text_font: roboto_45_b, text_color: color_text }
+                    - label: { id: lbl_planning_text, text: "", align: CENTER, y: 4, text_font: roboto_45_b, text_color: color_text }
 
         # ==================== PAGINATION BARS ====================
         - obj:
