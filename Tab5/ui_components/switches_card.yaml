@@ -1,0 +1,264 @@
+obj:
+  id: layer_switches
+  x: 0
+  y: 430
+  width: 1280
+  height: 290
+  styles: style_transparent
+  scrollbar_mode: "OFF"
+  hidden: true
+
+  widgets:
+    # Card 0 : PC Bureau
+    - obj:
+        x: 25
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 40
+              styles: style_meteo_tab
+              widgets:
+                - label: { text: "PC Bureau", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          # Onglet État
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 130
+              height: 45
+              styles: style_meteo_tab
+              widgets:
+                - label: { id: lbl_sw0_state, text: "Éteint", align: CENTER, text_font: roboto_32_b, text_color: color_text_dim }
+          # Corps Sombre (chevauche les onglets)
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              widgets:
+                - label: { id: icon_sw0, text: "\U000F0379", align: CENTER, text_font: mdi_font_80, text_color: color_text_dim }
+                - button:
+                    id: btn_sw0_action
+                    align: CENTER
+                    y: 0
+                    width: 130
+                    height: 130
+                    styles: style_invisible
+                    on_short_click:
+                      - homeassistant.service:
+                          service: script.allumer_pc_tv
+
+    # Card 1 : Volet
+    - obj:
+        x: 275
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 40
+              styles: style_meteo_tab
+              widgets:
+                - label: { text: "Volet", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          # Onglet État
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 130
+              height: 45
+              styles: style_meteo_tab
+              widgets:
+                - label: { id: lbl_sw1_state, text: "Fermé", align: CENTER, text_font: roboto_32_b, text_color: color_text_dim }
+          # Corps Sombre
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              widgets:
+                - label: { id: icon_sw1, text: "\U000F111E", align: CENTER, text_font: mdi_font_80, text_color: color_text_dim }
+                - button:
+                    id: btn_sw1_action
+                    align: CENTER
+                    y: 0
+                    width: 130
+                    height: 130
+                    styles: style_invisible
+                    on_short_click:
+                      - if:
+                          condition:
+                            lambda: 'return id(volet_en_mouvement);'
+                          then:
+                            - homeassistant.service:
+                                service: script.tab5_volet_action
+                                data:
+                                  action: "stop"
+                          else:
+                            - if:
+                                condition:
+                                  lambda: 'return id(volet_target_open);'
+                                then:
+                                  - homeassistant.service:
+                                      service: script.tab5_volet_action
+                                      data:
+                                        action: "open"
+                                else:
+                                  - homeassistant.service:
+                                      service: script.tab5_volet_action
+                                      data:
+                                        action: "close"
+
+    # Card 2 : Chambre
+    - obj:
+        x: 525
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 40
+              styles: style_meteo_tab
+              widgets:
+                - label: { text: "Chambre", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          # Onglet État
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 130
+              height: 45
+              styles: style_meteo_tab
+              widgets:
+                - label: { id: lbl_sw2_state, text: "Éteint", align: CENTER, text_font: roboto_32_b, text_color: color_text_dim }
+          # Corps Sombre
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              widgets:
+                - label: { id: icon_sw2, text: "\U000F02E3", align: CENTER, text_font: mdi_font_80, text_color: color_text_dim }
+                - button:
+                    id: btn_sw2_action
+                    align: CENTER
+                    y: 0
+                    width: 130
+                    height: 130
+                    styles: style_invisible
+                    on_short_click:
+                      - homeassistant.service:
+                          service: light.toggle
+                          data:
+                            entity_id: ${entity_light_chambre}
+
+    # Card 3 : Salon
+    - obj:
+        x: 775
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 40
+              styles: style_meteo_tab
+              widgets:
+                - label: { text: "Salon", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          # Onglet État
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 130
+              height: 45
+              styles: style_meteo_tab
+              widgets:
+                - label: { id: lbl_sw3_state, text: "Éteint", align: CENTER, text_font: roboto_32_b, text_color: color_text_dim }
+          # Corps Sombre
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              widgets:
+                - label: { id: icon_sw3, text: "\U000F04B9", align: CENTER, text_font: mdi_font_80, text_color: color_text_dim }
+                - button:
+                    id: btn_sw3_action
+                    align: CENTER
+                    y: 0
+                    width: 130
+                    height: 130
+                    styles: style_invisible
+                    on_short_click:
+                      - homeassistant.service:
+                          service: light.toggle
+                          data:
+                            entity_id: ${entity_light_salon}
+
+    # Card 4 : LEDs Bureau
+    - obj:
+        x: 1025
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 40
+              styles: style_meteo_tab
+              widgets:
+                - label: { text: "LEDs", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          # Onglet État
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 130
+              height: 45
+              styles: style_meteo_tab
+              widgets:
+                - label: { id: lbl_sw4_state, text: "Éteint", align: CENTER, text_font: roboto_32_b, text_color: color_text_dim }
+          # Corps Sombre
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              widgets:
+                - label: { id: icon_sw4, text: "\U000F1051", align: CENTER, text_font: mdi_font_80, text_color: color_text_dim }
+                - button:
+                    id: btn_sw4_action
+                    align: CENTER
+                    y: 0
+                    width: 130
+                    height: 130
+                    styles: style_invisible
+                    on_short_click:
+                      - homeassistant.service:
+                          service: script.allumer_leds

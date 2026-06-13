@@ -1,0 +1,486 @@
+obj:
+  id: layer_forecast_daily
+  x: 0
+  y: 430
+  width: 1280
+  height: 290
+  styles: style_transparent
+  scrollbar_mode: "OFF"
+  hidden: false
+
+  widgets:
+    # Card 0
+    - obj:
+        x: 25
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Corps Sombre (recouvre les onglets)
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j0_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
+                - label: { id: j0_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
+                - label: { id: j0_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
+                - button:
+                    id: btn_j0_action
+                    align: CENTER
+                    y: 0
+                    width: 140
+                    height: 130
+                    styles: style_invisible
+                    on_short_click:
+                      - homeassistant.service:
+                          service: script.allumer_pc_tv
+
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 46
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j0_day, text: "Journee", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          # Onglet Température
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 140
+              height: 51
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j0_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -7, text_font: roboto_32_b, text_color: color_temp_max }
+                - label: { id: j0_min, text: "-- °", align: BOTTOM_MID, x: 35, y: -7, text_font: roboto_32_b, text_color: color_temp_min }
+                - button:
+                    id: btn_tj0_toggle
+                    align: CENTER
+                    y: 0
+                    width: 140
+                    height: 51
+                    bg_opa: 0
+                    border_width: 0
+                    outline_width: 0
+                    shadow_width: 0
+                    on_short_click:
+                      - lambda: |-
+                          int jour = id(forecast_page_index) * 5 + 0;
+                          tab5_calendar_toggle(jour);
+                          WeatherDaySlot slots[] = {
+                              {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
+                              {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
+                              {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
+                              {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
+                              {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
+                          };
+                          refresh_daily_forecast(slots, id(forecast_page_index), id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+          # Icône latérale gauche (épaule)
+          - label: { id: icon_card_pc, text: "\U000F07C0", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
+    # Card 1
+    - obj:
+        x: 275
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Corps Sombre
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j1_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
+                - label: { id: j1_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
+                - label: { id: j1_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
+                - button:
+                    id: btn_j1_action
+                    align: CENTER
+                    y: 0
+                    width: 140
+                    height: 130
+                    styles: style_invisible
+                    on_short_click:
+                      - if:
+                          condition:
+                            lambda: 'return id(volet_en_mouvement);'
+                          then:
+                            - homeassistant.service:
+                                service: script.tab5_volet_action
+                                data:
+                                  action: "stop"
+                          else:
+                            - if:
+                                condition:
+                                  lambda: 'return id(volet_target_open);'
+                                then:
+                                  - homeassistant.service:
+                                      service: script.tab5_volet_action
+                                      data:
+                                        action: "open"
+                                else:
+                                  - homeassistant.service:
+                                      service: script.tab5_volet_action
+                                      data:
+                                        action: "close"
+
+          # Icônes latérales (épaules)
+          - label: { id: icon_card_shutter1, text: "\U000F111E", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
+          - label: { id: icon_card_shutter_arrow, text: "\U000F005D", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
+          - button:
+              id: btn_j1_dir
+              align: TOP_RIGHT
+              x: -10
+              y: 12
+              width: 50
+              height: 40
+              styles: style_invisible
+              pad_all: 0
+              on_short_click:
+                - lambda: |-
+                    id(volet_target_open) = !id(volet_target_open);
+                    if (!id(volet_en_mouvement)) {
+                      if (id(volet_target_open)) {
+                        lv_label_set_text(id(icon_card_shutter_arrow), "\U000F005D");
+                      } else {
+                        lv_label_set_text(id(icon_card_shutter_arrow), "\U000F0045");
+                      }
+                    }
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 46
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j1_day, text: "Demain", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          # Onglet Température
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 140
+              height: 51
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j1_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -7, text_font: roboto_32_b, text_color: color_temp_max }
+                - label: { id: j1_min, text: "-- °", align: BOTTOM_MID, x: 35, y: -7, text_font: roboto_32_b, text_color: color_temp_min }
+                - button:
+                    id: btn_tj1_toggle
+                    align: CENTER
+                    y: 0
+                    width: 130
+                    height: 51
+                    bg_opa: 0
+                    border_width: 0
+                    outline_width: 0
+                    shadow_width: 0
+                    on_short_click:
+                      - lambda: |-
+                          int jour = id(forecast_page_index) * 5 + 1;
+                          tab5_calendar_toggle(jour);
+                          WeatherDaySlot slots[] = {
+                              {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
+                              {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
+                              {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
+                              {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
+                              {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
+                          };
+                          refresh_daily_forecast(slots, id(forecast_page_index), id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+    # Card 2
+    - obj:
+        x: 525
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Corps Sombre
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j2_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
+                - label: { id: j2_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
+                - label: { id: j2_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
+                - button:
+                    id: btn_j2_action
+                    align: CENTER
+                    y: 0
+                    width: 140
+                    height: 130
+                    styles: style_invisible
+                    on_short_click:
+                      - homeassistant.service:
+                          service: light.toggle
+                          data:
+                            entity_id: ${entity_light_chambre}
+                    on_long_press:
+                      - globals.set:
+                          id: current_light_entity
+                          value: '"${entity_light_chambre}"'
+                      - lambda: |-
+                          lv_label_set_text(id(popup_light_title), "Ampoule Chambre");
+                          if (id(light_chambre_state).state == "on") {
+                            lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+                          } else {
+                            lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+                          }
+                          lv_obj_clear_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);
+                          lv_obj_move_foreground(id(light_options_popup));
+
+          # Icônes latérales (épaules)
+          - label: { id: icon_card_lit_j2, text: "\U000F02E3", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
+          - label: { id: icon_card_light_j2, text: "\U000F0335", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 46
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j2_day, text: "2 Jours", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          # Onglet Température
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 140
+              height: 51
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j2_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -7, text_font: roboto_32_b, text_color: color_temp_max }
+                - label: { id: j2_min, text: "-- °", align: BOTTOM_MID, x: 35, y: -7, text_font: roboto_32_b, text_color: color_temp_min }
+                - button:
+                    id: btn_tj2_toggle
+                    align: CENTER
+                    y: 0
+                    width: 130
+                    height: 51
+                    bg_opa: 0
+                    border_width: 0
+                    outline_width: 0
+                    shadow_width: 0
+                    on_short_click:
+                      - lambda: |-
+                          int jour = id(forecast_page_index) * 5 + 2;
+                          tab5_calendar_toggle(jour);
+                          WeatherDaySlot slots[] = {
+                              {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
+                              {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
+                              {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
+                              {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
+                              {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
+                          };
+                          refresh_daily_forecast(slots, id(forecast_page_index), id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+    # Card 3
+    - obj:
+        x: 775
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Corps Sombre
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j3_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
+                - label: { id: j3_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
+                - label: { id: j3_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
+                - button:
+                    id: btn_j3_action
+                    align: CENTER
+                    y: 0
+                    width: 140
+                    height: 130
+                    styles: style_invisible
+                    on_short_click:
+                      - homeassistant.service:
+                          service: light.toggle
+                          data:
+                            entity_id: ${entity_light_salon}
+                    on_long_press:
+                      - globals.set:
+                          id: current_light_entity
+                          value: '"${entity_light_salon}"'
+                      - lambda: |-
+                          lv_label_set_text(id(popup_light_title), "Ampoule Salon");
+                          if (id(light_salon_state).state == "on") {
+                            lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+                          } else {
+                            lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+                          }
+                          lv_obj_clear_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);
+                          lv_obj_move_foreground(id(light_options_popup));
+
+          # Icônes latérales (épaules)
+          - label: { id: icon_card_salon_j3, text: "\U000F04B9", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
+          - label: { id: icon_card_light_j3, text: "\U000F0335", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 46
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j3_day, text: "3 Jours", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          # Onglet Température
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 140
+              height: 51
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j3_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -7, text_font: roboto_32_b, text_color: color_temp_max }
+                - label: { id: j3_min, text: "-- °", align: BOTTOM_MID, x: 35, y: -7, text_font: roboto_32_b, text_color: color_temp_min }
+                - button:
+                    id: btn_tj3_toggle
+                    align: CENTER
+                    y: 0
+                    width: 130
+                    height: 51
+                    bg_opa: 0
+                    border_width: 0
+                    outline_width: 0
+                    shadow_width: 0
+                    on_short_click:
+                      - lambda: |-
+                          int jour = id(forecast_page_index) * 5 + 3;
+                          tab5_calendar_toggle(jour);
+                          WeatherDaySlot slots[] = {
+                              {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
+                              {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
+                              {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
+                              {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
+                              {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
+                          };
+                          refresh_daily_forecast(slots, id(forecast_page_index), id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+    # Card 4
+    - obj:
+        x: 1025
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Corps Sombre
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j4_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
+                - label: { id: j4_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
+                - label: { id: j4_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
+                - button:
+                    id: btn_j4_action
+                    align: CENTER
+                    y: 0
+                    width: 130
+                    height: 130
+                    styles: style_invisible
+                    on_short_click:
+                      - homeassistant.service:
+                          service: script.allumer_leds
+                    on_long_press:
+                      - globals.set:
+                          id: current_light_entity
+                          value: '"${entity_light_bureau}"'
+                      - lambda: |-
+                          lv_label_set_text(id(popup_light_title), "Ampoule LEDs");
+                          if (id(light_led_state).state == "on") {
+                            lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+                          } else {
+                            lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+                          }
+                          lv_obj_clear_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);
+                          lv_obj_move_foreground(id(light_options_popup));
+          # Icônes latérales (épaules)
+          - label: { id: icon_card_led_j4, text: "\U000F1051", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
+          - label: { id: icon_card_light_j4, text: "\U000F0335", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 46
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j4_day, text: "4 Jours", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          # Onglet Température
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 140
+              height: 51
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: j4_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -7, text_font: roboto_32_b, text_color: color_temp_max }
+                - label: { id: j4_min, text: "-- °", align: BOTTOM_MID, x: 35, y: -7, text_font: roboto_32_b, text_color: color_temp_min }
+                - button:
+                    id: btn_tj4_toggle
+                    align: CENTER
+                    y: 0
+                    width: 130
+                    height: 51
+                    bg_opa: 0
+                    border_width: 0
+                    outline_width: 0
+                    shadow_width: 0
+                    on_short_click:
+                      - lambda: |-
+                          int jour = id(forecast_page_index) * 5 + 4;
+                          tab5_calendar_toggle(jour);
+                          WeatherDaySlot slots[] = {
+                              {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
+                              {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
+                              {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
+                              {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
+                              {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
+                          };
+                          refresh_daily_forecast(slots, id(forecast_page_index), id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));

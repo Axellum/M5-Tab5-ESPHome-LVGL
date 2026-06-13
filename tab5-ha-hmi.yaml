@@ -13,6 +13,9 @@ substitutions:
   
   # --- Climatisation ---
   entity_climate_salon: climate.daikinap71273_room_temperature
+
+  # --- Sélections Assistant Vocal ---
+  entity_tab5_pipeline_select: select.m5stack_tab5_home_assistant_hmi_assistant
   
   # --- Température & Humidité ---
   entity_temp_salon: sensor.sonoff_a48003dbc9_temperature
@@ -27,6 +30,11 @@ substitutions:
   entity_plante_3: sensor.plant_sensor_817a_moisture
   entity_plante_4: sensor.plant_sensor_8189_moisture
   entity_plante_5: sensor.plant_sensor_8173_moisture
+
+  # --- Dimensions et Positions Communes Météo Bas ---
+  meteo_cell_width: "230"
+  meteo_cell_height: "275"
+  meteo_cell_y: "5"
 
 esphome:
   name: tab5-ha-hmi
@@ -61,6 +69,15 @@ esphome:
             - micro_wake_word.start:
           else:
             - micro_wake_word.stop:
+      # Synchronisation visuelle de l'icône du mode d'assistant vocal (Domotique vs Discussion)
+      - lambda: |-
+          if (id(conversation_mode)) {
+            lv_label_set_text(id(icon_mode_status), "\U000F0450"); // Robot
+            lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
+          } else {
+            lv_label_set_text(id(icon_mode_status), "\U000F07D0"); // Home Assistant
+            lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+          }
 
 # Plus d'images! image: !include supprimé au profit des polices C++ vectorielles LVGL
 

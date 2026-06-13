@@ -44,21 +44,19 @@ globals:
     restore_value: false
   - id: forecast_page_index
     type: int
-    initial_value: '0'
+    initial_value: '2'
+    restore_value: false
+  - id: conversation_mode
+    type: bool
+    initial_value: 'false'
+    restore_value: true
+  - id: show_switches
+    type: bool
+    initial_value: 'false'
     restore_value: false
 
-interval:
-  - interval: 5s
-    then:
-      - lambda: |-
-          if(id(plan_ligne_2) != "") {
-            id(plan_cycle_counter)++;
-            if(id(plan_cycle_counter) >= 7) {
-              id(plan_cycle_counter) = 0;
-            }
-            if(id(plan_cycle_counter) < 6) {
-              lv_label_set_text(id(lbl_planning_text), id(plan_ligne_1).c_str());
-            } else {
-              lv_label_set_text(id(lbl_planning_text), id(plan_ligne_2).c_str());
-            }
-          }
+  - id: current_light_entity
+    type: std::string
+    initial_value: '""'
+
+

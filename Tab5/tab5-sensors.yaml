@@ -93,12 +93,22 @@ switch:
             lambda: 'return id(boot_complete);'
           then:
             - micro_wake_word.start:
+      - lambda: |-
+          if (id(lbl_ok_nabu) != nullptr) {
+            lv_label_set_text(id(lbl_ok_nabu), "Ok Nabu: ON");
+            lv_obj_set_style_text_color(id(lbl_ok_nabu), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
+          }
     on_turn_off:
       - if:
           condition:
             lambda: 'return id(boot_complete);'
           then:
             - micro_wake_word.stop:
+      - lambda: |-
+          if (id(lbl_ok_nabu) != nullptr) {
+            lv_label_set_text(id(lbl_ok_nabu), "Ok Nabu: OFF");
+            lv_obj_set_style_text_color(id(lbl_ok_nabu), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+          }
 
 binary_sensor:
 
@@ -124,6 +134,8 @@ binary_sensor:
 
       - lambda: |-
 
+          if (id(icon_ha) == nullptr) return;
+
           if(x) {
 
             lv_obj_set_style_text_color(id(icon_ha), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
@@ -146,17 +158,31 @@ text_sensor:
 
       - lambda: |-
 
+          if (id(icon_pc) == nullptr || id(icon_card_pc) == nullptr) return;
+
           if(x == "home") {
 
             lv_obj_set_style_text_color(id(icon_pc), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
 
             lv_obj_set_style_text_color(id(icon_card_pc), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
 
+            if (id(icon_sw0) != nullptr && id(lbl_sw0_state) != nullptr) {
+              lv_obj_set_style_text_color(id(icon_sw0), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
+              lv_label_set_text(id(lbl_sw0_state), "Allumé");
+              lv_obj_set_style_text_color(id(lbl_sw0_state), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
+            }
+
           } else {
 
             lv_obj_set_style_text_color(id(icon_pc), lv_color_hex(0xFFFFFF), LV_PART_MAIN);
 
             lv_obj_set_style_text_color(id(icon_card_pc), lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+
+            if (id(icon_sw0) != nullptr && id(lbl_sw0_state) != nullptr) {
+              lv_obj_set_style_text_color(id(icon_sw0), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+              lv_label_set_text(id(lbl_sw0_state), "Éteint");
+              lv_obj_set_style_text_color(id(lbl_sw0_state), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+            }
 
           }
 
@@ -170,6 +196,8 @@ text_sensor:
 
       - lambda: |-
 
+          if (id(icon_card_lit_j2) == nullptr || id(icon_card_light_j2) == nullptr) return;
+
           if(x == "on") {
 
             lv_obj_set_style_text_color(id(icon_card_lit_j2), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
@@ -178,6 +206,15 @@ text_sensor:
 
             lv_label_set_text(id(icon_card_light_j2), "\U000F06E8");
 
+            if (id(icon_sw2) != nullptr && id(lbl_sw2_state) != nullptr) {
+              lv_obj_set_style_text_color(id(icon_sw2), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+              lv_label_set_text(id(lbl_sw2_state), "Allumé");
+              lv_obj_set_style_text_color(id(lbl_sw2_state), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+            }
+            if (id(btn_light_power_icon) != nullptr && id(current_light_entity) == "${entity_light_chambre}") {
+              lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+            }
+
           } else {
 
             lv_obj_set_style_text_color(id(icon_card_lit_j2), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
@@ -185,6 +222,15 @@ text_sensor:
             lv_obj_set_style_text_color(id(icon_card_light_j2), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
             lv_label_set_text(id(icon_card_light_j2), "\U000F0335");
+
+            if (id(icon_sw2) != nullptr && id(lbl_sw2_state) != nullptr) {
+              lv_obj_set_style_text_color(id(icon_sw2), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+              lv_label_set_text(id(lbl_sw2_state), "Éteint");
+              lv_obj_set_style_text_color(id(lbl_sw2_state), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+            }
+            if (id(btn_light_power_icon) != nullptr && id(current_light_entity) == "${entity_light_chambre}") {
+              lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+            }
 
           }
 
@@ -198,6 +244,8 @@ text_sensor:
 
       - lambda: |-
 
+          if (id(icon_card_salon_j3) == nullptr || id(icon_card_light_j3) == nullptr) return;
+
           if(x == "on") {
 
             lv_obj_set_style_text_color(id(icon_card_salon_j3), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
@@ -206,6 +254,15 @@ text_sensor:
 
             lv_label_set_text(id(icon_card_light_j3), "\U000F06E8");
 
+            if (id(icon_sw3) != nullptr && id(lbl_sw3_state) != nullptr) {
+              lv_obj_set_style_text_color(id(icon_sw3), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+              lv_label_set_text(id(lbl_sw3_state), "Allumé");
+              lv_obj_set_style_text_color(id(lbl_sw3_state), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+            }
+            if (id(btn_light_power_icon) != nullptr && id(current_light_entity) == "${entity_light_salon}") {
+              lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+            }
+
           } else {
 
             lv_obj_set_style_text_color(id(icon_card_salon_j3), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
@@ -213,6 +270,15 @@ text_sensor:
             lv_obj_set_style_text_color(id(icon_card_light_j3), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
             lv_label_set_text(id(icon_card_light_j3), "\U000F0335");
+
+            if (id(icon_sw3) != nullptr && id(lbl_sw3_state) != nullptr) {
+              lv_obj_set_style_text_color(id(icon_sw3), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+              lv_label_set_text(id(lbl_sw3_state), "Éteint");
+              lv_obj_set_style_text_color(id(lbl_sw3_state), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+            }
+            if (id(btn_light_power_icon) != nullptr && id(current_light_entity) == "${entity_light_salon}") {
+              lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+            }
 
           }
 
@@ -226,6 +292,8 @@ text_sensor:
 
       - lambda: |-
 
+          if (id(icon_card_led_j4) == nullptr || id(icon_card_light_j4) == nullptr) return;
+
           if(x == "on") {
 
             lv_obj_set_style_text_color(id(icon_card_led_j4), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
@@ -234,6 +302,15 @@ text_sensor:
 
             lv_label_set_text(id(icon_card_light_j4), "\U000F06E8");
 
+            if (id(icon_sw4) != nullptr && id(lbl_sw4_state) != nullptr) {
+              lv_obj_set_style_text_color(id(icon_sw4), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+              lv_label_set_text(id(lbl_sw4_state), "Allumé");
+              lv_obj_set_style_text_color(id(lbl_sw4_state), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+            }
+            if (id(btn_light_power_icon) != nullptr && id(current_light_entity) == "${entity_light_bureau}") {
+              lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+            }
+
           } else {
 
             lv_obj_set_style_text_color(id(icon_card_led_j4), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
@@ -241,6 +318,15 @@ text_sensor:
             lv_obj_set_style_text_color(id(icon_card_light_j4), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
             lv_label_set_text(id(icon_card_light_j4), "\U000F0335");
+
+            if (id(icon_sw4) != nullptr && id(lbl_sw4_state) != nullptr) {
+              lv_obj_set_style_text_color(id(icon_sw4), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+              lv_label_set_text(id(lbl_sw4_state), "Éteint");
+              lv_obj_set_style_text_color(id(lbl_sw4_state), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+            }
+            if (id(btn_light_power_icon) != nullptr && id(current_light_entity) == "${entity_light_bureau}") {
+              lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+            }
 
           }
 
@@ -270,6 +356,8 @@ sensor:
 
       - lambda: |-
 
+          if (id(icon_phone) == nullptr) return;
+
           if(isnan(x)) {
 
             lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
@@ -295,31 +383,20 @@ sensor:
   - platform: homeassistant
 
     id: temp_serre
-
     entity_id: ${entity_temp_plante}
 
     on_value:
-
       - lambda: |-
-
+          if (id(current_serre) == nullptr) return;
           if(isnan(x)) {
-
-            lv_label_set_text(id(current_serre), "-- °C");
-
+            lv_label_set_text(id(current_serre), "-- \xC2\xB0");
             lv_obj_set_style_text_color(id(current_serre), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-
           } else {
-
             char buf[32];
-
-            sprintf(buf, "%.1f °C", x);
-
+            sprintf(buf, "%.1f \xC2\xB0", x);
             lv_label_set_text(id(current_serre), buf);
-
             uint32_t c_int = get_temperature_color(x); // AXE1: appel fonction C++ centralisee
-
             lv_obj_set_style_text_color(id(current_serre), lv_color_hex(c_int), LV_PART_MAIN);
-
           }
 
   - platform: homeassistant
@@ -332,9 +409,11 @@ sensor:
 
       - lambda: |-
 
+          if (id(val_temp_salon) == nullptr) return;
+
           if(isnan(x)) {
 
-            lv_label_set_text(id(val_temp_salon), "-- °C");
+            lv_label_set_text(id(val_temp_salon), "-- \xC2\xB0");
 
             lv_obj_set_style_text_color(id(val_temp_salon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
 
@@ -342,7 +421,7 @@ sensor:
 
             char buf[32];
 
-            sprintf(buf, "%.1f °C", x);
+            sprintf(buf, "%.1f \xC2\xB0", x);
 
             lv_label_set_text(id(val_temp_salon), buf);
 
@@ -370,14 +449,16 @@ sensor:
 
       - lambda: |-
 
+          if (id(icon_salon) == nullptr) return;
+
           if(!isnan(x)) {
             uint32_t c = get_humidity_color(x);
             lv_obj_set_style_text_color(id(icon_salon), lv_color_hex(c), LV_PART_MAIN);
-            // Afficher la valeur dans la climate card
-            char buf[16];
-            sprintf(buf, "%.0f%%", x);
-            lv_label_set_text(id(val_hum_salon_card), buf);
-            lv_obj_set_style_text_color(id(val_hum_salon_card), lv_color_hex(c), LV_PART_MAIN);
+            // Afficher la valeur dans la climate card (Desactive car supprime au profit de la serre)
+            // char buf[16];
+            // sprintf(buf, "%.0f%%", x);
+            // lv_label_set_text(id(val_hum_salon_card), buf);
+            // lv_obj_set_style_text_color(id(val_hum_salon_card), lv_color_hex(c), LV_PART_MAIN);
           }
 
   - platform: homeassistant
@@ -533,7 +614,7 @@ sensor:
 
             char buf[16];
 
-            sprintf(buf, "%.1f °C", x);
+            sprintf(buf, "%.1f \xC2\xB0", x);
 
             lv_label_set_text(id(lbl_sys_temp_val), buf);
 
@@ -614,10 +695,8 @@ time:
 
                 
 
-                const char* days[] = {"Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"};
-
-                const char* months[] = {"Janv", "Fevr", "Mars", "Avril", "Mai", "Juin", "Juil", "Aout", "Sept", "Oct", "Nov", "Dec"};
-
+                const char* days[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
+                const char* months[] = {"Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"};
                 char buf_date[64];
 
                 sprintf(buf_date, "%s %02d %s", days[t_now.day_of_week - 1], t_now.day_of_month, months[t_now.month - 1]);

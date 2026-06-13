@@ -1,10 +1,32 @@
 #pragma once
 #include "esphome.h"
 #include <string>
+#include <vector>
 
 extern std::string cal_jour_nom[15];
 extern std::string cal_heures[15];
 extern bool cal_toggled[15];
+
+struct DayForecastData {
+    std::string nom_jour;
+    std::string condition;
+    float tmin = 0.0f;
+    float tmax = 0.0f;
+    bool est_repos = false;
+    bool est_dimanche = false;
+    bool est_passe = false;
+    std::string heures_ouverture;
+};
+
+struct HourForecastData {
+    std::string heure_texte;
+    std::string condition;
+    float temp = 0.0f;
+    float pluvio = 0.0f;
+};
+
+extern DayForecastData cal_jours_data[15];
+extern HourForecastData cal_heures_data[15];
 
 void tab5_calendar_toggle(int jour);
 namespace esphome { namespace font { class Font; } }
@@ -13,8 +35,6 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bo
 uint32_t get_humidity_color(float x);
 uint32_t get_temperature_color(float t);
 
-// AXE8 : Structures pour les slots previsions (Phase 4)
-// Permettent de passer des tableaux de pointeurs LVGL aux helpers C++
 struct WeatherHourSlot {
     lv_obj_t* time_lbl;
     lv_obj_t* temp_lbl;
@@ -29,13 +49,19 @@ struct WeatherDaySlot {
     lv_obj_t* min_lbl;
     lv_obj_t* icon_l1;
     lv_obj_t* icon_l2;
+    // Pointers for action widgets
+    lv_obj_t* action_btn;
+    lv_obj_t* action_icon1;
+    lv_obj_t* action_icon2;
+    lv_obj_t* extra_btn; // e.g. direction shutter button
 };
 
-// Helpers de parsing bulk + mise a jour LVGL
-// Les pointeurs de polices sont passes par la lambda YAML (seul endroit ou id() fonctionne)
-void parse_and_update_heures_bulk(const std::string& payload, WeatherHourSlot slots[], int count,
+void parse_and_update_heures_bulk(const std::string& payload);
+void parse_and_update_jours_bulk(const std::string& payload);
+
+void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
     esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
-void parse_and_update_jours_bulk(const std::string& payload, WeatherDaySlot slots[], int count,
+void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
     esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
 
 // AXE5 : Constantes nommees pour les icones meteo (UTF-8 de la police IconeMeteo.ttf)

@@ -13,50 +13,34 @@ api:
         payload: string
       then:
         - lambda: |-
-            // AXE8 (Phase 4) : construction des slots puis delegation au helper C++
+            parse_and_update_heures_bulk(payload);
             WeatherHourSlot slots[] = {
-                {id(h0_time), id(h0_temp), id(h0_prob), id(h0_icon_layer1), id(h0_icon_layer2)},
-                {id(h1_time), id(h1_temp), id(h1_prob), id(h1_icon_layer1), id(h1_icon_layer2)},
-                {id(h2_time), id(h2_temp), id(h2_prob), id(h2_icon_layer1), id(h2_icon_layer2)},
-                {id(h3_time), id(h3_temp), id(h3_prob), id(h3_icon_layer1), id(h3_icon_layer2)},
                 {id(h4_time), id(h4_temp), id(h4_prob), id(h4_icon_layer1), id(h4_icon_layer2)},
-                {id(h5_time), id(h5_temp), id(h5_prob), id(h5_icon_layer1), id(h5_icon_layer2)},
-                {id(h6_time), id(h6_temp), id(h6_prob), id(h6_icon_layer1), id(h6_icon_layer2)},
-                {id(h7_time), id(h7_temp), id(h7_prob), id(h7_icon_layer1), id(h7_icon_layer2)},
-                {id(h8_time), id(h8_temp), id(h8_prob), id(h8_icon_layer1), id(h8_icon_layer2)},
-                {id(h9_time), id(h9_temp), id(h9_prob), id(h9_icon_layer1), id(h9_icon_layer2)},
-                {id(h10_time), id(h10_temp), id(h10_prob), id(h10_icon_layer1), id(h10_icon_layer2)},
-                {id(h11_time), id(h11_temp), id(h11_prob), id(h11_icon_layer1), id(h11_icon_layer2)},
-                {id(h12_time), id(h12_temp), id(h12_prob), id(h12_icon_layer1), id(h12_icon_layer2)},
-                {id(h13_time), id(h13_temp), id(h13_prob), id(h13_icon_layer1), id(h13_icon_layer2)},
-                {id(h14_time), id(h14_temp), id(h14_prob), id(h14_icon_layer1), id(h14_icon_layer2)}
+                {id(h3_time), id(h3_temp), id(h3_prob), id(h3_icon_layer1), id(h3_icon_layer2)},
+                {id(h2_time), id(h2_temp), id(h2_prob), id(h2_icon_layer1), id(h2_icon_layer2)},
+                {id(h1_time), id(h1_temp), id(h1_prob), id(h1_icon_layer1), id(h1_icon_layer2)},
+                {id(h0_time), id(h0_temp), id(h0_prob), id(h0_icon_layer1), id(h0_icon_layer2)}
             };
-            parse_and_update_heures_bulk(payload, slots, 15, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+            if (id(forecast_page_index) < 2) {
+                refresh_hourly_forecast(slots, 1 - id(forecast_page_index), id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+            }
 
     - service: tab5_maj_previsions_jours_bulk
       variables:
         payload: string
       then:
         - lambda: |-
-            // AXE8 (Phase 4) : construction des slots puis delegation au helper C++
+            parse_and_update_jours_bulk(payload);
             WeatherDaySlot slots[] = {
-                {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2)},
-                {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2)},
-                {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2)},
-                {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2)},
-                {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2)},
-                {id(j5_day), id(j5_max), id(j5_min), id(j5_icon_layer1), id(j5_icon_layer2)},
-                {id(j6_day), id(j6_max), id(j6_min), id(j6_icon_layer1), id(j6_icon_layer2)},
-                {id(j7_day), id(j7_max), id(j7_min), id(j7_icon_layer1), id(j7_icon_layer2)},
-                {id(j8_day), id(j8_max), id(j8_min), id(j8_icon_layer1), id(j8_icon_layer2)},
-                {id(j9_day), id(j9_max), id(j9_min), id(j9_icon_layer1), id(j9_icon_layer2)},
-                {id(j10_day), id(j10_max), id(j10_min), id(j10_icon_layer1), id(j10_icon_layer2)},
-                {id(j11_day), id(j11_max), id(j11_min), id(j11_icon_layer1), id(j11_icon_layer2)},
-                {id(j12_day), id(j12_max), id(j12_min), id(j12_icon_layer1), id(j12_icon_layer2)},
-                {id(j13_day), id(j13_max), id(j13_min), id(j13_icon_layer1), id(j13_icon_layer2)},
-                {id(j14_day), id(j14_max), id(j14_min), id(j14_icon_layer1), id(j14_icon_layer2)}
+                {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
+                {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
+                {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
+                {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
+                {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
             };
-            parse_and_update_jours_bulk(payload, slots, 15, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+            if (id(forecast_page_index) >= 2) {
+                refresh_daily_forecast(slots, id(forecast_page_index) - 2, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+            }
 
     - service: tab5_maj_volet_etat
 
@@ -75,6 +59,12 @@ api:
               lv_label_set_text(id(icon_card_shutter_arrow), "\U000F03E4");
 
               lv_obj_set_style_text_color(id(icon_card_shutter_arrow), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
+
+              if (id(icon_sw1) != nullptr && id(lbl_sw1_state) != nullptr) {
+                lv_obj_set_style_text_color(id(icon_sw1), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
+                lv_label_set_text(id(lbl_sw1_state), "Mouvement");
+                lv_obj_set_style_text_color(id(lbl_sw1_state), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
+              }
 
             } else {
 
@@ -100,11 +90,23 @@ api:
 
                 lv_obj_set_style_text_color(id(icon_card_shutter1), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
 
+                if (id(icon_sw1) != nullptr && id(lbl_sw1_state) != nullptr) {
+                  lv_obj_set_style_text_color(id(icon_sw1), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
+                  lv_label_set_text(id(lbl_sw1_state), "Ouvert");
+                  lv_obj_set_style_text_color(id(lbl_sw1_state), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
+                }
+
               } else if (etat_physique == "Ferme" || etat_physique == "closed") {
 
                 lv_label_set_text(id(icon_card_shutter1), "\U000F111C");
 
                 lv_obj_set_style_text_color(id(icon_card_shutter1), lv_color_hex(UIColor::ERROR), LV_PART_MAIN);
+
+                if (id(icon_sw1) != nullptr && id(lbl_sw1_state) != nullptr) {
+                  lv_obj_set_style_text_color(id(icon_sw1), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+                  lv_label_set_text(id(lbl_sw1_state), "Fermé");
+                  lv_obj_set_style_text_color(id(lbl_sw1_state), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+                }
 
               }
 
@@ -165,11 +167,21 @@ api:
 
             uint32_t c_eco = 0x4CD964; // Vert standard
 
+            // Couleur de la temperature cible (Bleu si froid, Rouge si chaud, Blanc si off/autre)
+            uint32_t c_target_color = 0xFFFFFF; // Blanc par defaut
+            if(mode == "cool") {
+              c_target_color = 0x4D94FF; // Bleu
+            } else if(mode == "heat") {
+              c_target_color = 0xFF4D4D; // Rouge
+            }
+            lv_obj_set_style_text_color(id(clim_target), lv_color_hex(c_target_color), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(clim_target_popup), lv_color_hex(c_target_color), LV_PART_MAIN);
+
             // Mode (Cool/Heat/Dry/Fan/Off)
 
-            lv_obj_set_style_text_color(id(icon_clim_cool), lv_color_hex(c_cool_inactive), LV_PART_MAIN);
-            lv_obj_set_style_text_color(id(icon_clim_heat), lv_color_hex(c_heat_inactive), LV_PART_MAIN);
-            lv_obj_set_style_text_color(id(icon_clim_off), lv_color_hex(c_off_inactive), LV_PART_MAIN);
+            // lv_obj_set_style_text_color(id(icon_clim_cool), lv_color_hex(c_cool_inactive), LV_PART_MAIN);
+            // lv_obj_set_style_text_color(id(icon_clim_heat), lv_color_hex(c_heat_inactive), LV_PART_MAIN);
+            // lv_obj_set_style_text_color(id(icon_clim_off), lv_color_hex(c_off_inactive), LV_PART_MAIN);
             lv_obj_set_style_text_color(id(popup_icon_clim_cool), lv_color_hex(c_cool_inactive), LV_PART_MAIN);
             lv_obj_set_style_text_color(id(popup_icon_clim_heat), lv_color_hex(c_heat_inactive), LV_PART_MAIN);
             lv_obj_set_style_text_color(id(popup_icon_clim_dry), lv_color_hex(c_cool_inactive), LV_PART_MAIN);
@@ -177,29 +189,27 @@ api:
             lv_obj_set_style_text_color(id(popup_icon_clim_off), lv_color_hex(c_off_inactive), LV_PART_MAIN);
 
             if(mode == "cool") {
-              lv_obj_set_style_text_color(id(icon_clim_cool), lv_color_hex(c_cool_active), LV_PART_MAIN);
+              // lv_obj_set_style_text_color(id(icon_clim_cool), lv_color_hex(c_cool_active), LV_PART_MAIN);
               lv_obj_set_style_text_color(id(popup_icon_clim_cool), lv_color_hex(c_cool_active), LV_PART_MAIN);
             } else if(mode == "heat") {
-              lv_obj_set_style_text_color(id(icon_clim_heat), lv_color_hex(c_heat_active), LV_PART_MAIN);
+              // lv_obj_set_style_text_color(id(icon_clim_heat), lv_color_hex(c_heat_active), LV_PART_MAIN);
               lv_obj_set_style_text_color(id(popup_icon_clim_heat), lv_color_hex(c_heat_active), LV_PART_MAIN);
             } else if(mode == "dry") {
               lv_obj_set_style_text_color(id(popup_icon_clim_dry), lv_color_hex(c_cool_active), LV_PART_MAIN);
             } else if(mode == "fan_only") {
               lv_obj_set_style_text_color(id(popup_icon_clim_fan), lv_color_hex(c_eco), LV_PART_MAIN);
             } else {
-              lv_obj_set_style_text_color(id(icon_clim_off), lv_color_hex(c_off_active), LV_PART_MAIN);
+              // lv_obj_set_style_text_color(id(icon_clim_off), lv_color_hex(c_off_active), LV_PART_MAIN);
               lv_obj_set_style_text_color(id(popup_icon_clim_off), lv_color_hex(c_off_active), LV_PART_MAIN);
             }
-
-            
 
             // Eco (carte + popup)
 
             if(preset == "eco") {
-              lv_obj_set_style_text_color(id(icon_clim_eco), lv_color_hex(c_eco), LV_PART_MAIN);
+              // lv_obj_set_style_text_color(id(icon_clim_eco), lv_color_hex(c_eco), LV_PART_MAIN);
               lv_obj_set_style_text_color(id(popup_icon_clim_eco), lv_color_hex(c_eco), LV_PART_MAIN);
             } else {
-              lv_obj_set_style_text_color(id(icon_clim_eco), lv_color_hex(c_inactive), LV_PART_MAIN);
+              // lv_obj_set_style_text_color(id(icon_clim_eco), lv_color_hex(c_inactive), LV_PART_MAIN);
               lv_obj_set_style_text_color(id(popup_icon_clim_eco), lv_color_hex(c_inactive), LV_PART_MAIN);
             }
 
@@ -290,6 +300,12 @@ api:
             check_alert(canicule, "\U000F0E01");
 
             // Remplir les 4 slots (priorite : ordre d'arrivee, max 4)
+            if (actives.empty()) {
+                lv_obj_add_flag(id(alert_container), LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_clear_flag(id(alert_container), LV_OBJ_FLAG_HIDDEN);
+            }
+            
             lv_obj_t* slots[] = {id(alerte_slot_0), id(alerte_slot_1), id(alerte_slot_2), id(alerte_slot_3)};
             for (int i = 0; i < 4; i++) {
               if (i < (int)actives.size()) {
@@ -320,17 +336,12 @@ api:
 
         - lambda: |-
 
-            // Frost risk makes the exterior thermometer orange
-
-            if (gel >= 5) {
-
-              lv_obj_set_style_text_color(id(icon_temp), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-
-            } else {
-
-              lv_obj_set_style_text_color(id(icon_temp), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-
-            }
+            // Frost risk makes the exterior thermometer orange (Desactive car temperature exterieure supprimee)
+            // if (gel >= 5) {
+            //   lv_obj_set_style_text_color(id(icon_temp), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+            // } else {
+            //   lv_obj_set_style_text_color(id(icon_temp), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+            // }
 
             // Snow risk changes the 5min rain predict icon
 
@@ -376,18 +387,17 @@ api:
 
             }
 
-            char buf_t[32]; sprintf(buf_t, "%.0f Â°C", temperature);
-
-            lv_label_set_text(id(current_temp), buf_t);
-
-            // AXE1: factorisation couleur temperature via tab5_custom.cpp
-            uint32_t c_temp = get_temperature_color(temperature);
-            lv_obj_set_style_text_color(id(current_temp), lv_color_hex(c_temp), LV_PART_MAIN);
+            // Desactive : la temperature exterieure a ete retiree
+            // char buf_t[32]; sprintf(buf_t, "%.0f \xC2\xB0", temperature);
+            // lv_label_set_text(id(current_temp), buf_t);
+            // // AXE1: factorisation couleur temperature via tab5_custom.cpp
+            // uint32_t c_temp = get_temperature_color(temperature);
+            // lv_obj_set_style_text_color(id(current_temp), lv_color_hex(c_temp), LV_PART_MAIN);
 
             auto apply_weather_icon = [](lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card) {
                 update_meteo_icon(l1_obj, l2_obj, state, is_card, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
             };
-            apply_weather_icon(id(icon_actuel_layer1), id(icon_actuel_layer2), condition, true);
+            apply_weather_icon(nullptr, nullptr, condition, true);
 
     - service: tab5_maj_pluie_1h
 
@@ -448,11 +458,19 @@ api:
             }
 
             if(target != NULL) {
-
               lv_obj_set_style_bg_color(target, lv_color_hex(c), LV_PART_MAIN);
-
               lv_obj_set_height(target, h);
-
+            }
+            
+            bool is_raining = false;
+            lv_obj_t* targets[] = {id(rb_0_in), id(rb_1_in), id(rb_2_in), id(rb_3_in), id(rb_4_in), id(rb_5_in), id(rb_6_in), id(rb_7_in), id(rb_8_in)};
+            for(int i=0; i<9; i++) {
+               if (lv_obj_get_height(targets[i]) > 0) is_raining = true;
+            }
+            if (is_raining) {
+               lv_obj_clear_flag(id(rain_wrapper), LV_OBJ_FLAG_HIDDEN);
+            } else {
+               lv_obj_add_flag(id(rain_wrapper), LV_OBJ_FLAG_HIDDEN);
             }
 
     - service: tab5_maj_info_texte
@@ -482,12 +500,11 @@ api:
         - lambda: |-
 
             id(plan_ligne_1) = ligne1;
-
             id(plan_ligne_2) = ligne2;
-
-            id(plan_cycle_counter) = 0;
-
+            std::string combined = ligne1;
+            if (ligne2 != "") {
+                combined += "   |   " + ligne2;
+            }
             lv_label_set_recolor(id(lbl_planning_text), true);
-
-            lv_label_set_text(id(lbl_planning_text), id(plan_ligne_1).c_str());
+            lv_label_set_text(id(lbl_planning_text), combined.c_str());
 

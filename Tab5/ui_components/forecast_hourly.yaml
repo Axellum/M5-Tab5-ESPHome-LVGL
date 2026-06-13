@@ -1,0 +1,365 @@
+obj:
+  id: layer_forecast_hourly
+  x: 0
+  y: 430
+  width: 1280
+  height: 290
+  styles: style_transparent
+  scrollbar_mode: "OFF"
+  hidden: true
+
+  widgets:
+    # Card 0 (left-most, index 4 in data page)
+    - obj:
+        x: 25
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Corps Sombre
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: h4_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
+                - label: { id: h4_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
+                - label: { id: h4_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
+
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 46
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label:
+                    id: h4_time
+                    text: "--:--"
+                    align: CENTER
+                    text_font: roboto_32_b
+                    text_color: color_text
+          # Onglet Température & Pluie
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 140
+              height: 51
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label:
+                    id: h4_p_icon
+                    text: "\U000F0596"
+                    align: BOTTOM_LEFT
+                    x: 5
+                    y: -14
+                    text_font: mdi_font_26
+                    text_color: color_temp_min
+                - label:
+                    id: h4_prob
+                    text: "-- %"
+                    align: BOTTOM_LEFT
+                    x: 34
+                    y: -7
+                    text_font: roboto_32_b
+                    text_color: color_temp_min
+                - label:
+                    id: h4_temp
+                    text: "-- °"
+                    align: BOTTOM_RIGHT
+                    x: -5
+                    y: -7
+                    text_font: roboto_32_b
+                    text_color: color_temp_max
+    # Card 1 (index 3 in data page)
+    - obj:
+        x: 275
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Corps Sombre
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: h3_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
+                - label: { id: h3_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
+                - label: { id: h3_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
+
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 46
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label:
+                    id: h3_time
+                    text: "--:--"
+                    align: CENTER
+                    text_font: roboto_32_b
+                    text_color: color_text
+          # Onglet Température & Pluie
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 140
+              height: 51
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label:
+                    id: h3_p_icon
+                    text: "\U000F0596"
+                    align: BOTTOM_LEFT
+                    x: 5
+                    y: -14
+                    text_font: mdi_font_26
+                    text_color: color_temp_min
+                - label:
+                    id: h3_prob
+                    text: "-- %"
+                    align: BOTTOM_LEFT
+                    x: 34
+                    y: -7
+                    text_font: roboto_32_b
+                    text_color: color_temp_min
+                - label:
+                    id: h3_temp
+                    text: "-- °"
+                    align: BOTTOM_RIGHT
+                    x: -5
+                    y: -7
+                    text_font: roboto_32_b
+                    text_color: color_temp_max
+    # Card 2 (index 2 in data page)
+    - obj:
+        x: 525
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Corps Sombre
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: h2_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
+                - label: { id: h2_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
+                - label: { id: h2_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
+
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 46
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label:
+                    id: h2_time
+                    text: "--:--"
+                    align: CENTER
+                    text_font: roboto_32_b
+                    text_color: color_text
+          # Onglet Température & Pluie
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 140
+              height: 51
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label:
+                    id: h2_p_icon
+                    text: "\U000F0596"
+                    align: BOTTOM_LEFT
+                    x: 5
+                    y: -14
+                    text_font: mdi_font_26
+                    text_color: color_temp_min
+                - label:
+                    id: h2_prob
+                    text: "-- %"
+                    align: BOTTOM_LEFT
+                    x: 34
+                    y: -7
+                    text_font: roboto_32_b
+                    text_color: color_temp_min
+                - label:
+                    id: h2_temp
+                    text: "-- °"
+                    align: BOTTOM_RIGHT
+                    x: -5
+                    y: -7
+                    text_font: roboto_32_b
+                    text_color: color_temp_max
+    # Card 3 (index 1 in data page)
+    - obj:
+        x: 775
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Corps Sombre
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: h1_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
+                - label: { id: h1_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
+                - label: { id: h1_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
+
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 46
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label:
+                    id: h1_time
+                    text: "--:--"
+                    align: CENTER
+                    text_font: roboto_32_b
+                    text_color: color_text
+          # Onglet Température & Pluie
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 140
+              height: 51
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label:
+                    id: h1_p_icon
+                    text: "\U000F0596"
+                    align: BOTTOM_LEFT
+                    x: 5
+                    y: -14
+                    text_font: mdi_font_26
+                    text_color: color_temp_min
+                - label:
+                    id: h1_prob
+                    text: "-- %"
+                    align: BOTTOM_LEFT
+                    x: 34
+                    y: -7
+                    text_font: roboto_32_b
+                    text_color: color_temp_min
+                - label:
+                    id: h1_temp
+                    text: "-- °"
+                    align: BOTTOM_RIGHT
+                    x: -5
+                    y: -7
+                    text_font: roboto_32_b
+                    text_color: color_temp_max
+    # Card 4 (right-most, index 0 in data page)
+    - obj:
+        x: 1025
+        y: ${meteo_cell_y}
+        width: ${meteo_cell_width}
+        height: ${meteo_cell_height}
+        styles: style_transparent
+        scrollbar_mode: "OFF"
+        widgets:
+          # Corps Sombre
+          - obj:
+              y: 35
+              width: 230
+              height: 205
+              styles: style_meteo_card
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: h0_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
+                - label: { id: h0_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
+                - label: { id: h0_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: 0x555555 }
+          # Onglet Titre
+          - obj:
+              align: TOP_MID
+              y: 7
+              width: 130
+              height: 46
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label:
+                    id: h0_time
+                    text: "--:--"
+                    align: CENTER
+                    text_font: roboto_32_b
+                    text_color: color_text
+          # Onglet Température & Pluie
+          - obj:
+              align: BOTTOM_MID
+              y: 0
+              width: 140
+              height: 51
+              border_width: 0
+              styles: style_meteo_tab
+              scrollbar_mode: "OFF"
+              widgets:
+                - label:
+                    id: h0_p_icon
+                    text: "\U000F0596"
+                    align: BOTTOM_LEFT
+                    x: 5
+                    y: -14
+                    text_font: mdi_font_26
+                    text_color: color_temp_min
+                - label:
+                    id: h0_prob
+                    text: "-- %"
+                    align: BOTTOM_LEFT
+                    x: 34
+                    y: -7
+                    text_font: roboto_32_b
+                    text_color: color_temp_min
+                - label:
+                    id: h0_temp
+                    text: "-- °"
+                    align: BOTTOM_RIGHT
+                    x: -5
+                    y: -7
+                    text_font: roboto_32_b
+                    text_color: color_temp_max

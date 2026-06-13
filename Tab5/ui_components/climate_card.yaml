@@ -1,14 +1,13 @@
 # ═══════════════════════════════════════════════════════
 # CARTE CLIMATISATION — Style modal_card premium
-# Layout : Haut=Températures | Centre=Cible cliquable+/- | Bas=4 modes
-# Boutons : Froid, Chaud, Off, Éco (toggle)
+# Layout : Haut=Températures (Salon & Serre) | Centre/Bas=Cible cliquable +/-
 # ═══════════════════════════════════════════════════════
 obj:
   id: climate_card
-  x: 347
-  y: 10
+  x: 855
+  y: 125
   width: 413
-  height: 280
+  height: 180
   bg_color: 0x222222
   bg_opa: 100%
   border_width: 2
@@ -20,44 +19,35 @@ obj:
 
     # ═══ HAUT : Températures pièces ═══
     - label: { id: icon_salon, text: "\U000F04B9", align: TOP_LEFT, x: 18, y: 12, text_font: mdi_font_45, text_color: color_text_dim }
-    - label: { id: val_temp_salon, text: "-- C", align: TOP_LEFT, x: 70, y: 17, text_font: roboto_32_b, text_color: color_temp_max }
-    # Humidite salon (remplace l'ancienne temp chambre)
-    - label: { text: "\U000F058E", align: TOP_RIGHT, x: -130, y: 14, text_font: mdi_font_32, text_color: color_text_dim }
-    - label: { id: val_hum_salon_card, text: "--%", align: TOP_RIGHT, x: -18, y: 17, text_font: roboto_32_b, text_color: color_text_dim }
+    - label: { id: val_temp_salon, text: "-- °", align: TOP_LEFT, x: 70, y: 17, text_font: roboto_32_b, text_color: color_temp_max }
+    # Serre (remplace l'humidité du salon)
+    - label: { id: icon_serre, text: "\U000F002D", align: TOP_RIGHT, x: -130, y: 12, text_font: mdi_font_45, text_color: color_text_dim }
+    - label: { id: current_serre, text: "-- °", align: TOP_RIGHT, x: -18, y: 17, text_font: roboto_32_b, text_color: color_temp_max }
 
-    # ═══ CENTRE : Température cible (cliquable) ═══
+    # ═══ CENTRE/BAS : Température cible (cliquable) ═══
 
     # Fond subtil zone cliquable
     - obj:
-        align: CENTER
-        y: -10
+        align: BOTTOM_MID
+        y: -20
         width: 170
         height: 68
-        bg_color: 0x1A1D24
-        bg_opa: 100%
-        border_width: 1
-        border_color: 0x555555
-        radius: 14
+        radius: 12
+        styles: style_meteo_tab
         widgets:
           - label:
               id: clim_target
-              text: "--"
+              text: ""
               align: CENTER
-              x: -12
+              x: 0
               text_font: roboto_55_b
               text_color: color_text
-          - label:
-              text: "°C"
-              align: RIGHT_MID
-              x: -12
-              text_font: roboto_22
-              text_color: color_text_dim
 
     # Bouton invisible pour ouvrir la popup
     - button:
         id: btn_clim_target_click
-        align: CENTER
-        y: -10
+        align: BOTTOM_MID
+        y: -20
         width: 170
         height: 68
         styles: style_invisible
@@ -69,9 +59,9 @@ obj:
     # Bouton -
     - button:
         id: btn_clim_minus
-        align: CENTER
-        x: -145
-        y: -10
+        align: BOTTOM_MID
+        x: -130
+        y: -23
         width: 62
         height: 62
         radius: 12
@@ -88,9 +78,9 @@ obj:
     # Bouton +
     - button:
         id: btn_clim_plus
-        align: CENTER
-        x: 145
-        y: -10
+        align: BOTTOM_MID
+        x: 130
+        y: -23
         width: 62
         height: 62
         radius: 12
@@ -103,80 +93,3 @@ obj:
                 temperature: !lambda "return id(clim_target_temp) + 0.5;"
         widgets:
           - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56, text_color: color_text }
-
-    # ═══ BAS : 4 boutons de mode (FLEX row) ═══
-    - obj:
-        align: BOTTOM_MID
-        y: -10
-        width: 395
-        height: 62
-        styles: style_transparent
-        layout:
-          type: FLEX
-          flex_flow: ROW
-          flex_align_main: SPACE_EVENLY
-          flex_align_cross: CENTER
-        widgets:
-          # Froid
-          - button:
-              id: btn_clim_cool
-              width: 88
-              height: 50
-              radius: 10
-              styles: style_clim_btn
-              on_short_click:
-                - homeassistant.service:
-                    service: climate.set_hvac_mode
-                    data:
-                      entity_id: ${entity_climate_salon}
-                      hvac_mode: "cool"
-              widgets:
-                - label: { id: icon_clim_cool, text: "\U000F0717", align: LEFT_MID, x: 5, text_font: mdi_font_32, text_color: color_text_dim }
-                - label: { text: "Froid", align: RIGHT_MID, x: -3, text_font: roboto_22, text_color: color_text_dim }
-          # Chaud
-          - button:
-              id: btn_clim_heat
-              width: 92
-              height: 50
-              radius: 10
-              styles: style_clim_btn
-              on_short_click:
-                - homeassistant.service:
-                    service: climate.set_hvac_mode
-                    data:
-                      entity_id: ${entity_climate_salon}
-                      hvac_mode: "heat"
-              widgets:
-                - label: { id: icon_clim_heat, text: "\U000F0238", align: LEFT_MID, x: 5, text_font: mdi_font_32, text_color: color_text_dim }
-                - label: { text: "Chaud", align: RIGHT_MID, x: -3, text_font: roboto_22, text_color: color_text_dim }
-          # Off
-          - button:
-              id: btn_clim_off
-              width: 75
-              height: 50
-              radius: 10
-              styles: style_clim_btn
-              on_short_click:
-                - homeassistant.service:
-                    service: climate.turn_off
-                    data:
-                      entity_id: ${entity_climate_salon}
-              widgets:
-                - label: { id: icon_clim_off, text: "\U000F0425", align: LEFT_MID, x: 5, text_font: mdi_font_32, text_color: color_text_dim }
-                - label: { text: "Off", align: RIGHT_MID, x: -8, text_font: roboto_22, text_color: color_text_dim }
-          # Éco (toggle on/off)
-          - button:
-              id: btn_clim_eco
-              width: 80
-              height: 50
-              radius: 10
-              styles: style_clim_btn
-              on_short_click:
-                - homeassistant.service:
-                    service: climate.set_preset_mode
-                    data:
-                      entity_id: ${entity_climate_salon}
-                      preset_mode: !lambda 'return id(clim_preset_mode) == "eco" ? std::string("none") : std::string("eco");'
-              widgets:
-                - label: { id: icon_clim_eco, text: "\U000F032A", align: LEFT_MID, x: 5, text_font: mdi_font_32, text_color: color_text_dim }
-                - label: { text: "Éco", align: RIGHT_MID, x: -5, text_font: roboto_22, text_color: color_text_dim }

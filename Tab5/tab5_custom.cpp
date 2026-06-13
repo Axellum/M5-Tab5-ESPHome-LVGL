@@ -7,8 +7,15 @@
 std::string cal_jour_nom[15] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "", ""};
 std::string cal_heures[15] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "", ""};
 bool cal_toggled[15] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}; 
-// Actually ESPHome compiles everything. We can just use id() but id() is ESPHome macro.
-// Better way: write the toggle inside the ESPHome lambda!
+
+DayForecastData cal_jours_data[15];
+HourForecastData cal_heures_data[15];
+
+void tab5_calendar_toggle(int jour) {
+    if (jour >= 0 && jour < 15) {
+        cal_toggled[jour] = !cal_toggled[jour];
+    }
+}
 
 void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card, esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
     std::string l1_text = MeteoIcon::CLOUD; // Nuage par defaut
@@ -37,8 +44,8 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bo
     else if (state == "windy" || state == "windy-variant") { l1_text = MeteoIcon::WIND; }
 
     // Systeme de Ratio automatique pour avoir une justesse pixel perfect !
-    // Grosse icone = 270px, Petite = 150px. Ratio exact = 150/270 = 0.5555...
-    float ratio = is_card ? 0.5555f : 1.0f;
+    // Grosse icone = 270px, Petite = 120px. Ratio exact = 120/270 = 0.4444...
+    float ratio = is_card ? 0.4444f : 1.0f;
     l2_x = (int)(l2_x * ratio);
     l2_y = (int)(l2_y * ratio);
     l1_y = (int)(l1_y * ratio);
@@ -126,9 +133,7 @@ static std::vector<std::string> split_token(const std::string& token, char sep) 
     return parts;
 }
 
-void parse_and_update_heures_bulk(const std::string& payload, WeatherHourSlot slots[], int count,
-    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
-
+void parse_and_update_heures_bulk(const std::string& payload) {
     std::string s = payload;
     size_t pos = 0;
 
@@ -140,38 +145,16 @@ void parse_and_update_heures_bulk(const std::string& payload, WeatherHourSlot sl
 
         if(parts.size() >= 5) {
             int idx = std::atoi(parts[0].c_str());
-            if(idx < 0 || idx >= count) continue;
-            std::string heure_texte = parts[1];
-            std::string condition = parts[2];
-            float temp = std::atof(parts[3].c_str());
-            float pluvio = std::atof(parts[4].c_str());
-
-            WeatherHourSlot& slot = slots[idx];
-            if(slot.time_lbl) {
-                lv_label_set_text(slot.time_lbl, heure_texte.c_str());
-                uint32_t c_t = get_temperature_color(temp);
-                char b_t[32]; sprintf(b_t, "#%06x %.0f#\xC2\xB0", c_t, temp);
-                lv_label_set_text(slot.temp_lbl, b_t);
-
-                char b_p[32];
-                if (pluvio > 0) {
-                    sprintf(b_p, "%.1fmm", pluvio);
-                    lv_label_set_text(slot.prob_lbl, b_p);
-                    lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(0x8AB4FF), LV_PART_MAIN);
-                } else {
-                    lv_label_set_text(slot.prob_lbl, "-");
-                    lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(0x4A596E), LV_PART_MAIN);
-                }
-
-                update_meteo_icon(slot.icon_l1, slot.icon_l2, condition, true, f_main, f_card, f_main_s, f_card_s);
-            }
+            if(idx < 0 || idx >= 15) continue;
+            cal_heures_data[idx].heure_texte = parts[1];
+            cal_heures_data[idx].condition = parts[2];
+            cal_heures_data[idx].temp = std::atof(parts[3].c_str());
+            cal_heures_data[idx].pluvio = std::atof(parts[4].c_str());
         }
     }
 }
 
-void parse_and_update_jours_bulk(const std::string& payload, WeatherDaySlot slots[], int count,
-    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
-
+void parse_and_update_jours_bulk(const std::string& payload) {
     std::string s = payload;
     size_t pos = 0;
 
@@ -183,68 +166,133 @@ void parse_and_update_jours_bulk(const std::string& payload, WeatherDaySlot slot
 
         if(parts.size() >= 9) {
             int jour = std::atoi(parts[0].c_str());
-            if(jour < 0 || jour >= count) continue;
-            std::string nom_jour = parts[1];
-            std::string condition = parts[2];
-            float tmin = std::atof(parts[3].c_str());
-            float tmax = std::atof(parts[4].c_str());
-            bool est_repos = (parts[5] == "1" || parts[5] == "true");
-            bool est_dimanche = (parts[6] == "1" || parts[6] == "true");
-            bool est_passe = (parts[7] == "1" || parts[7] == "true");
-            std::string heures_ouverture = parts[8];
+            if(jour < 0 || jour >= 15) continue;
+            cal_jours_data[jour].nom_jour = parts[1];
+            cal_jours_data[jour].condition = parts[2];
+            cal_jours_data[jour].tmin = std::atof(parts[3].c_str());
+            cal_jours_data[jour].tmax = std::atof(parts[4].c_str());
+            cal_jours_data[jour].est_repos = (parts[5] == "1" || parts[5] == "true");
+            cal_jours_data[jour].est_dimanche = (parts[6] == "1" || parts[6] == "true");
+            cal_jours_data[jour].est_passe = (parts[7] == "1" || parts[7] == "true");
+            cal_jours_data[jour].heures_ouverture = parts[8];
 
-            // Mise a jour des donnees calendrier globales
-            cal_jour_nom[jour] = nom_jour;
-            cal_heures[jour] = heures_ouverture;
-            bool is_early = false;
-            if (!est_repos && heures_ouverture.length() >= 5) {
-                int hour = atoi(heures_ouverture.substr(0, 2).c_str());
-                int minute = atoi(heures_ouverture.substr(3, 2).c_str());
-                if (hour < 9 || (hour == 9 && minute == 0)) is_early = true;
-            }
+            // Backward compatibility
+            cal_jour_nom[jour] = parts[1];
+            cal_heures[jour] = parts[8];
+        }
+    }
+}
 
-            // Couleurs temperature
-            uint32_t cmax = get_temperature_color(tmax);
-            uint32_t cmin = get_temperature_color(tmin);
-            char buftx[64]; sprintf(buftx, "#%06x %.0f# / ", cmax, tmax);
-            char buftn[64]; sprintf(buftn, " #%06x %.0f# \xC2\xB0""C", cmin, tmin);
+void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
+    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
+    
+    if (page_index < 0 || page_index > 2) return;
 
-            WeatherDaySlot& slot = slots[jour];
-            if(slot.day_lbl) {
-                lv_label_set_text(slot.day_lbl, cal_toggled[jour] ? cal_heures[jour].c_str() : nom_jour.c_str());
-                lv_label_set_text(slot.max_lbl, est_passe ? "-- / " : buftx);
-                lv_label_set_text(slot.min_lbl, est_passe ? "-- \xC2\xB0""C" : buftn);
-                update_meteo_icon(slot.icon_l1, slot.icon_l2, condition, true, f_main, f_card, f_main_s, f_card_s);
+    for (int i = 0; i < 5; i++) {
+        int jour = page_index * 5 + i;
+        WeatherDaySlot& slot = slots[i];
+        if (!slot.day_lbl) continue;
 
-                if(cal_toggled[jour]) {
-                    lv_obj_add_flag(slot.max_lbl, LV_OBJ_FLAG_HIDDEN);
-                    lv_obj_add_flag(slot.min_lbl, LV_OBJ_FLAG_HIDDEN);
-                } else {
-                    lv_obj_clear_flag(slot.max_lbl, LV_OBJ_FLAG_HIDDEN);
-                    lv_obj_clear_flag(slot.min_lbl, LV_OBJ_FLAG_HIDDEN);
-                }
+        DayForecastData& data = cal_jours_data[jour];
 
-                // Couleur du jour selon type (aujourd'hui, dimanche, repos, matinee)
-                uint8_t opa = est_passe ? 100 : 255;
-                uint32_t col = 0xFFFFFF;
-                if(jour == 0) col = 0x4D94FF;
-                else if(est_dimanche) col = est_repos ? 0xFFA500 : 0xFF4D4D;
-                else if(est_repos) col = 0x4CD964;
-                else if(is_early) col = 0xFF8888;
-                if(est_passe) col = 0x6A7B92;
+        // Toggle calendar / day name
+        lv_label_set_text(slot.day_lbl, cal_toggled[jour] ? cal_heures[jour].c_str() : data.nom_jour.c_str());
 
-                lv_obj_set_style_text_color(slot.day_lbl, lv_color_hex(col), LV_PART_MAIN);
-                lv_obj_set_style_text_opa(slot.day_lbl, opa, LV_PART_MAIN);
-                lv_obj_set_style_text_opa(slot.icon_l1, opa, LV_PART_MAIN);
-                lv_obj_set_style_text_opa(slot.icon_l2, opa, LV_PART_MAIN);
-                lv_obj_set_style_text_opa(slot.max_lbl, opa, LV_PART_MAIN);
-                lv_obj_set_style_text_opa(slot.min_lbl, opa, LV_PART_MAIN);
-                lv_label_set_recolor(slot.max_lbl, true);
-                lv_label_set_recolor(slot.min_lbl, true);
-                lv_obj_set_style_text_color(slot.max_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
-                lv_obj_set_style_text_color(slot.min_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+        if(cal_toggled[jour]) {
+            lv_obj_add_flag(slot.max_lbl, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(slot.min_lbl, LV_OBJ_FLAG_HIDDEN);
+        } else {
+            lv_obj_clear_flag(slot.max_lbl, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(slot.min_lbl, LV_OBJ_FLAG_HIDDEN);
+        }
+
+        // Tmin / Tmax colors
+        uint32_t cmax = get_temperature_color(data.tmax);
+        uint32_t cmin = get_temperature_color(data.tmin);
+        char buftx[64]; sprintf(buftx, "#%06x %.0f# / ", cmax, data.tmax);
+        char buftn[64]; sprintf(buftn, " #%06x %.0f# \xC2\xB0", cmin, data.tmin);
+
+        lv_label_set_text(slot.max_lbl, data.est_passe ? "-- / " : buftx);
+        lv_label_set_text(slot.min_lbl, data.est_passe ? "-- \xC2\xB0" : buftn);
+        update_meteo_icon(slot.icon_l1, slot.icon_l2, data.condition, true, f_main, f_card, f_main_s, f_card_s);
+
+        // Coloring day names
+        uint8_t opa = data.est_passe ? 100 : 255;
+        uint32_t col = 0xFFFFFF;
+        bool is_early = false;
+        if (!data.est_repos && data.heures_ouverture.length() >= 5) {
+            int hour = atoi(data.heures_ouverture.substr(0, 2).c_str());
+            int minute = atoi(data.heures_ouverture.substr(3, 2).c_str());
+            if (hour < 9 || (hour == 9 && minute == 0)) is_early = true;
+        }
+
+        if (jour == 0) col = 0x4D94FF;
+        else if (data.est_dimanche) col = data.est_repos ? 0xFFA500 : 0xFF4D4D;
+        else if (data.est_repos) col = 0x4CD964;
+        else if (is_early) col = 0xFF8888;
+        if (data.est_passe) col = 0x6A7B92;
+
+        lv_obj_set_style_text_color(slot.day_lbl, lv_color_hex(col), LV_PART_MAIN);
+        lv_obj_set_style_text_opa(slot.day_lbl, opa, LV_PART_MAIN);
+        lv_obj_set_style_text_opa(slot.icon_l1, opa, LV_PART_MAIN);
+        lv_obj_set_style_text_opa(slot.icon_l2, opa, LV_PART_MAIN);
+        lv_obj_set_style_text_opa(slot.max_lbl, opa, LV_PART_MAIN);
+        lv_obj_set_style_text_opa(slot.min_lbl, opa, LV_PART_MAIN);
+        
+        lv_label_set_recolor(slot.max_lbl, true);
+        lv_label_set_recolor(slot.min_lbl, true);
+        lv_obj_set_style_text_color(slot.max_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+        lv_obj_set_style_text_color(slot.min_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+
+        // Show/hide action elements depending on page_index (only show actions on page 0)
+        if (slot.action_btn) {
+            if (page_index == 0) {
+                lv_obj_clear_flag(slot.action_btn, LV_OBJ_FLAG_HIDDEN);
+                if (slot.action_icon1) lv_obj_clear_flag(slot.action_icon1, LV_OBJ_FLAG_HIDDEN);
+                if (slot.action_icon2) lv_obj_clear_flag(slot.action_icon2, LV_OBJ_FLAG_HIDDEN);
+                if (slot.extra_btn) lv_obj_clear_flag(slot.extra_btn, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_add_flag(slot.action_btn, LV_OBJ_FLAG_HIDDEN);
+                if (slot.action_icon1) lv_obj_add_flag(slot.action_icon1, LV_OBJ_FLAG_HIDDEN);
+                if (slot.action_icon2) lv_obj_add_flag(slot.action_icon2, LV_OBJ_FLAG_HIDDEN);
+                if (slot.extra_btn) lv_obj_add_flag(slot.extra_btn, LV_OBJ_FLAG_HIDDEN);
             }
         }
+    }
+}
+
+void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
+    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
+    
+    if (page_index < 0 || page_index > 2) return;
+
+    for (int i = 0; i < 5; i++) {
+        // Slot i on screen (left-to-right) corresponds to time index: page_index * 5 + (4 - i)
+        int idx = page_index * 5 + (4 - i);
+        WeatherHourSlot& slot = slots[i];
+        if (!slot.time_lbl) continue;
+
+        HourForecastData& data = cal_heures_data[idx];
+
+        lv_label_set_text(slot.time_lbl, data.heure_texte.c_str());
+        
+        uint32_t c_t = get_temperature_color(data.temp);
+        char b_t[32]; sprintf(b_t, "#%06x %.0f#\xC2\xB0", c_t, data.temp);
+        lv_label_set_text(slot.temp_lbl, b_t);
+        lv_label_set_recolor(slot.temp_lbl, true);
+        lv_obj_set_style_text_color(slot.temp_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+
+        char b_p[32];
+        if (data.pluvio > 0) {
+            sprintf(b_p, "%.1fmm", data.pluvio);
+            lv_label_set_text(slot.prob_lbl, b_p);
+            lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(0x8AB4FF), LV_PART_MAIN);
+        } else {
+            lv_label_set_text(slot.prob_lbl, "-");
+            lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(0x4A596E), LV_PART_MAIN);
+        }
+
+        update_meteo_icon(slot.icon_l1, slot.icon_l2, data.condition, true, f_main, f_card, f_main_s, f_card_s);
     }
 }
 
@@ -254,6 +302,13 @@ void parse_and_update_jours_bulk(const std::string& payload, WeatherDaySlot slot
 
 void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
     MoistureSlotUI slots[4]) {
+
+    // Garde de securite contre les pointeurs nuls si LVGL n'est pas encore initialise
+    for (int s = 0; s < 4; s++) {
+        if (slots[s].icon_lbl == nullptr || slots[s].val_lbl == nullptr) {
+            return;
+        }
+    }
 
     // 1) Construire un tableau d'indices valides (pas NaN)
     struct Entry { int idx; float val; };
@@ -303,7 +358,7 @@ void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
     for (int s = 0; s < 4; s++) {
         if (selected[s] < 0 || selected[s] >= n_valid) {
             // Slot vide (pas assez de capteurs)
-            lv_label_set_text(slots[s].val_lbl, "--%");
+            lv_label_set_text(slots[s].val_lbl, "");
             lv_obj_set_style_text_color(slots[s].icon_lbl, lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
             lv_obj_set_style_text_color(slots[s].val_lbl, lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
             continue;
@@ -312,13 +367,19 @@ void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
         Entry& e = valid[selected[s]];
         // Icone du capteur d'origine
         lv_label_set_text(slots[s].icon_lbl, icons_utf8[e.idx]);
-        // Valeur
-        char buf[16];
-        sprintf(buf, "%.0f%%", e.val);
-        lv_label_set_text(slots[s].val_lbl, buf);
+
+        // Texte sous l'icone : "Pot X" ou "Moy:"
+        if (s == 2) {
+            lv_label_set_text(slots[s].val_lbl, "Moy:");
+        } else {
+            char buf[16];
+            sprintf(buf, "Pot %d", e.idx + 1);
+            lv_label_set_text(slots[s].val_lbl, buf);
+        }
+
         // Couleur colorimetrique
         uint32_t c = get_humidity_color(e.val);
         lv_obj_set_style_text_color(slots[s].icon_lbl, lv_color_hex(c), LV_PART_MAIN);
-        lv_obj_set_style_text_color(slots[s].val_lbl, lv_color_hex(c), LV_PART_MAIN);
+        lv_obj_set_style_text_color(slots[s].val_lbl, lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
     }
 }

@@ -68,7 +68,7 @@ obj:
                     text_color: color_text_dim
                 - label:
                     id: val_temp_int_popup
-                    text: "-- °C"
+                    text: "-- °"
                     align: TOP_MID
                     y: 28
                     text_font: roboto_32_b
@@ -102,7 +102,7 @@ obj:
                     text_font: roboto_55_b
                     text_color: color_text
                 - label:
-                    text: "°C"
+                    text: "°"
                     align: CENTER
                     y: 20
                     text_font: roboto_22
