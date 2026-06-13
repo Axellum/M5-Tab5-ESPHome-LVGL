@@ -1,100 +1,150 @@
-# M5Stack Tab5 - "Sans les mains" (AI-Generated Dashboard)
+# M5Stack Tab5 - "Sans les mains" (AI-Powered High-Performance HMI & Local Voice Assistant)
 
 <div align="center">
-  <img src="https://img.shields.io/badge/ESPHome-Native-blue.svg" alt="ESPHome Native" />
-  <img src="https://img.shields.io/badge/LVGL-C++_Interface-green.svg" alt="LVGL" />
-  <img src="https://img.shields.io/badge/100%25-AI_Generated-orange.svg" alt="AI Generated" />
-  <img src="https://img.shields.io/badge/License-MIT-purple.svg" alt="MIT License" />
+  <img src="https://img.shields.io/badge/ESPHome-Native_C++-blue.svg" alt="ESPHome Native" />
+  <img src="https://img.shields.io/badge/LVGL_8.4-HMI_Graphics-green.svg" alt="LVGL" />
+  <img src="https://img.shields.io/badge/HA_Failover-Double_Instance-red.svg" alt="HA Failover" />
+  <img src="https://img.shields.io/badge/Local_Voice-Wyoming_&_LLM_Agent-orange.svg" alt="Local Voice" />
+  <img src="https://img.shields.io/badge/100%25-AI_Generated-purple.svg" alt="AI Generated" />
+  <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License" />
 </div>
 
 <br>
-
-<div align="center">
-  <a href="https://www.youtube.com/watch?v=Wd6ROEF_6pc">
-    <img src="https://img.youtube.com/vi/Wd6ROEF_6pc/maxresdefault.jpg" width="800" alt="Présentation Vidéo">
-  </a>
-  <br>
-  <p>🎥 <i>Cliquez pour voir la vidéo de présentation sur YouTube / Click to watch the video presentation</i></p>
-</div>
-
-<br>
-
-*English version below / Version française ci-dessous.*
 
 ---
-Note de l'humain: Ce projet etant entierement fais par IA et tres personel, je le partage en cas de morceau de code ou idée pouvant servire. Le projet est en déveuloppement, l'interface est pas belle, mais j ai les infos, les actions et une bonne partie de la colométrie sous condition que je souhaitai dans mes rêves les plus fous.
 
-## 🇺🇸 English Version
+## 📸 Aperçu du Nouveau Design Premium / UI Preview
 
-### What is this project?
-This repository is the result of a personal experiment: **can a complete "noob" create a fully functional, high-performance smart home dashboard using only Artificial Intelligence?** 
+Voici l'interface HMI fluide et optimisée conçue par l'IA et l'utilisateur, fonctionnant nativement sur l'écran tactile **M5Stack Tab5 V2** :
 
-The answer is yes! After hitting the limits of my old Nextion screen, I decided to try the [M5Stack Tab5](https://m5stack.com/) and let an AI (Antigravity / Gemini) handle all the coding. I didn't write a single line of code myself—just a lot of messy prompts! 
-
-The result is a highly responsive, native ESPHome interface using **C++ and LVGL**, totally independent of heavy web browsers. I'm sharing it here so others can use it, learn from it, or just copy the parts they need for their own Home Assistant setup.
-
-### Project Goals
-* **Clock & Date:** A clean, easy-to-read main screen.
-* **Weather & Rain Forecast:** Essential for me since I walk to work (relies on Météo-France data).
-* **Schedule Integration:** Visual indicators for work days vs. rest days.
-* **Smart Home Controls:** Simple buttons for shutters, AC, PC, and TV.
-* **Sensors:** Live data from my phone, plants, etc.
-
-### Key Features
-* 🚀 **Zero Latency:** Everything runs natively on the ESP32-P4 processor. No slow web dashboards.
-* 💾 **Optimized:** Uses vector fonts (`mdi_font_45`) instead of heavy images to save RAM.
-* 🛡️ **Autonomous:** If Wi-Fi drops, the interface doesn't crash or show a browser error.
-* 🤖 **100% AI Generated:** Proof that you don't need to be a senior developer to build cool stuff for Home Assistant.
-
-### 📚 Documentation
-For a deep dive into how this project works, check out our wiki / documentation folder:
-* [⚙️ Hardware & Wiring](docs/hardware.md)
-* [💻 Installation & Météo-France](docs/installation.md)
-* [🏗️ Architecture & Code Structure](docs/architecture.md)
-* [🎨 UI Design & LVGL](docs/ui_design.md)
-
-### How to use it
-1. **Clone/Download** this repository.
-2. **Configuration:** Open `tab5-ha-hmi.yaml` and look at the `substitutions:` block at the top. Replace the generic names with your own Home Assistant entities.
-3. **Home Assistant Side:** Check the `HomeAssistant_Config/` folder. It contains the automations and scripts you need to add to your Home Assistant so it can send data to the screen.
-4. **Flash:** Use ESPHome to compile and flash via USB-C for the first time.
+| Écran d'Accueil / Main Dashboard | Contrôle des Lumières / Light Control | Contrôle Climatisation / Climate Control |
+| :---: | :---: | :---: |
+| ![Écran Principal](docs/images/tab5_design_main.jpg) | ![Contrôle Lumière](docs/images/tab5_design_light.jpg) | ![Contrôle Climatisation](docs/images/tab5_design_climate.jpg) |
 
 ---
 
 ## 🇫🇷 Version Française
 
-### L'histoire de ce projet
-Ce dépôt est le résultat d'une expérience personnelle : **un "noob" en code peut-il créer une interface domotique complète et ultra-réactive en utilisant uniquement l'Intelligence Artificielle ?**
+### 📖 L'histoire de ce projet
+Ce dépôt est le résultat d'une expérience technologique personnelle : **un amateur en programmation peut-il concevoir une interface domotique complète, réactive à 60 FPS et intégrant un assistant vocal local intelligent en utilisant uniquement l'Intelligence Artificielle ?**
 
-La réponse est oui ! Ayant atteint les limites de mon vieil écran Nextion, j'ai décidé de passer sur le [M5Stack Tab5](https://m5stack.com/) et de laisser une IA (Antigravity / Gemini) s'occuper de toute la programmation. Je n'ai pas tapé une seule ligne de code, juste des prompts souvent approximatifs avec une orthographe désastreuse ! ^^
+La réponse est **oui**. Ayant atteint les limites techniques d'un écran Nextion série, j'ai migré vers le **M5Stack Tab5 V2** (ESP32-P4) en laissant l'IA (Antigravity / Gemini / Claude) générer l'intégralité du code C++ custom, de l'interface LVGL et des automatisations Home Assistant. Je n'ai pas tapé une seule ligne de code moi-même !
 
-Le résultat est une interface ESPHome native en **C++ et LVGL**, ultra fluide et sans les lenteurs d'un navigateur web. Je le partage ici pour la communauté : servez-vous, modifiez-le, ou copiez juste les morceaux qui vous intéressent pour votre propre Home Assistant.
-
-### Objectifs de l'écran
-* **Horloge et date :** Simple et lisible.
-* **Prévisions météo et averses :** Indispensable car je vais bosser à pied (utilise l'intégration Météo-France).
-* **Planning :** Illustration colorimétrique de mes jours de repos et des jours où je fais l'ouverture au travail.
-* **Commandes diverses :** Volets, clim, ordi, TV.
-* **Capteurs :** Humidité de mes plantes, état du téléphone, etc.
-
-### Pourquoi cette approche ?
-* 🚀 **Réactivité :** Le rendu est calculé directement par le processeur ESP32-P4. Fini les temps de chargement des pages web.
-* 💾 **Optimisation :** L'IA a remplacé les lourdes images par des polices vectorielles (`mdi_font_45`) pour économiser la RAM.
-* 🛡️ **Autonome :** Si le Wi-Fi coupe, l'écran ne plante pas sur une page d'erreur internet.
-* 🤖 **100% IA :** La preuve qu'on n'a plus besoin d'être développeur pour créer des interfaces sympas sur Home Assistant.
-
-### 📚 Documentation
-Pour tout comprendre du projet (logique, câblage, design), consultez notre Wiki / dossier de documentation :
-* [⚙️ Matériel & Câblage](docs/hardware.md)
-* [💻 Installation & Météo-France](docs/installation.md)
-* [🏗️ Architecture & Structure du Code](docs/architecture.md)
-* [🎨 Conception d'Interface & LVGL](docs/ui_design.md)
-
-### Comment l'utiliser ?
-1. **Téléchargez** ce dépôt.
-2. **Configuration :** Ouvrez `tab5-ha-hmi.yaml` et modifiez le bloc `substitutions:` tout en haut avec vos propres entités Home Assistant.
-3. **Côté Home Assistant :** Regardez dans le dossier `HomeAssistant_Config/`. Il contient les automatisations et scripts à ajouter à votre Home Assistant pour qu'il puisse discuter avec l'écran.
-4. **Flashage :** Utilisez ESPHome pour compiler et flasher l'écran via USB-C la première fois.
+Je partage ce projet avec la communauté domotique (HACF/GitHub) pour qu'il puisse servir d'inspiration, de boîte à outils ou d'exemples d'optimisations matérielles pour ESP32-P4 et LVGL.
 
 ---
-*Projet né sur le forum [Home Assistant Communauté Francophone (HACF)](https://forum.hacf.fr/). N'hésitez pas à proposer des améliorations !*
+
+### 🏗️ Architecture Globale & Philosophie Système
+Le projet ne se limite pas à un simple écran. C'est une architecture résiliente structurée en **3 couches (3-Layers)** pour contourner les limites matérielles et garantir une fiabilité absolue.
+
+```mermaid
+graph TD
+    %% Les Éléments
+    Tab5[M5Stack Tab5 V2<br/>ESPHome + LVGL]
+    Freebox[Instance HA Principale<br/>VM Freebox Delta - Prod]
+    Deck[Instance HA Secondaire<br/>Steam Deck OLED - Secours]
+    Moteur[Moteur d'Agents IA V7<br/>FastAPI/asyncio - Steam Deck]
+    Wyoming[Serveur Vocal Wyoming<br/>Whisper & Piper - Steam Deck]
+
+    %% Les Liaisons
+    Tab5 -- 1. Audio brute & tactile --> Freebox
+    Freebox -- 2. Délestage Audio --> Wyoming
+    Wyoming -- 3. Texte transcrit --> Moteur
+    Moteur -- 4. Décision & Action --> Freebox
+    Freebox -- 5. Push d'état ➔ delay 150ms --> Tab5
+    
+    %% Failover & Sync
+    Freebox ↔|Heartbeat 5 min & Sync HA| Deck
+    Tab5 -.->|Fallback si Prod Hors-ligne| Deck
+
+    %% Style
+    style Tab5 fill:#1a365d,stroke:#3182ce,stroke-width:2px,color:#fff
+    style Freebox fill:#2d3748,stroke:#4a5568,stroke-width:2px,color:#fff
+    style Deck fill:#2c5282,stroke:#4299e1,stroke-width:2px,color:#fff
+    style Moteur fill:#276749,stroke:#48bb78,stroke-width:2px,color:#fff
+    style Wyoming fill:#744210,stroke:#dd6b20,stroke-width:2px,color:#fff
+```
+
+---
+
+### 💡 Les 3 Piliers du Projet : Ce qui le rend intéressant et unique
+
+#### 1. L'Écran Tactile M5Stack Tab5 V2 (ESPHome & LVGL)
+* 🚀 **Fluidité Graphique Absolue (60 FPS) :** L'allocation de mémoire du frame buffer de LVGL est poussée à 100% (~1.8 Mo) directement dans la PSRAM de l'ESP32-P4. La commutation de page se fait instantanément en arrière-plan puis est transmise au bus MIPI-DSI 16 bits en mode DMA (Direct Memory Access).
+* 💾 **Optimisation CPU et RAM Extrême :**
+  * **Abolition de la transparence Alpha** sur les PNG ( little-endian complexe de l'ESP32-P4). Les images météo subissent un pré-calcul (*pre-baking*) sur fond opaque uni via un script Python local avant d'être téléversées.
+  * **Rendu vectoriel ultra-léger :** Utilisation intensive de la police vectorielle *Material Design Icons (MDI)* avec antialiasing matériel désactivé (`bpp: 1`) pour un calcul CPU quasi instantané par l'ESP32.
+  * **Radius et ombres proscrits** sur les objets transparents pour économiser les calculs de fondu du processeur.
+* ⚡ **Architecture Push (Passivité HMI) :** L'écran ne requête jamais Home Assistant. C'est HA qui pousse les changements d'états (météo, clim, planning, volets) via des appels de services ESPHome, en espaçant les paquets de 150 ms pour ne pas saturer le buffer réseau de l'écran.
+
+#### 2. La Haute Disponibilité par Double Instance Home Assistant (Failover)
+* **Le Problème :** La VM Home Assistant OS hébergée sur la Freebox Delta a des ressources CPU/RAM critiques et ne peut pas faire tourner d'IA ou de vocal lourd sans planter.
+* **La Solution Coexistence/Secours :**
+  * Une instance secondaire de Home Assistant tourne sous Podman sur un **Steam Deck OLED** (machine puissante).
+  * **Heartbeat & Failover :** Le Steam Deck ping la Freebox Delta toutes les 30 secondes. Si elle est hors-ligne pendant 5 minutes, le Deck bascule son état logique `is_primary_active` à `on` et prend le relais des automatisations physiques.
+  * **Boot Délesté en 20s (contre 120s) :** Le script de synchronisation `sync_ha.sh` copie la configuration de la Freebox vers le Deck. Immédiatement après, un script de post-traitement `post_sync.py` désactive à chaud les intégrations lourdes ou physiques (freebox, onedrive, bluetooth local, esphome de production) pour que l'instance de secours démarre en 20 secondes en cas de crise.
+
+#### 3. Le Vocal Local Déporté (Wyoming) & Moteur d'Agents IA
+* **Délestage Réseau Vocal :** Le traitement de la voix (STT Whisper & TTS Piper) s'exécute localement sur le Steam Deck. La Freebox Delta n'est qu'un simple relais réseau pour les flux audio du Tab5.
+* **Moteur d'Agents IA :** Un serveur multi-agents asynchrone (FastAPI / Python asyncio) tourne sur le Steam Deck, interfacé en tant que "Conversation Engine" de Home Assistant sous l'intégration `moteur_ia_conversation`.
+* **Routage Intelligent :** L'assistant vocal propose deux modes commutables sur l'écran :
+  * **Mode Domotique (Assist local) :** Traite les commandes physiques de la maison en local de façon déterministe.
+  * **Mode Discussion (Moteur V7) :** Envoie la voix à notre moteur d'agents qui orchestre la cascade de modèles IA (Mistral, Gemini, DeepSeek R1 local) pour tenir une discussion et répondre intelligemment sur le haut-parleur de l'écran.
+
+---
+
+### 📚 Documentation Détaillée
+Pour reproduire tout ou partie de l'installation, explorez les sous-dossiers du wiki :
+* [⚙️ Matériel & Câblage Tab5](docs/hardware.md) — Spécifications, branchements GPIO et bus I2C.
+* [🏗️ Structure & Code ESPHome](docs/architecture.md) — Détails des lambdas C++, packages et inclusions LVGL.
+* [💻 Intégration double instance HA & Failover](contexte_ia/03_Software/06_DOUBLE_INSTANCE_HA.md) — Stratégie réseau et scripts d'automatisation.
+
+---
+
+## 🇺🇸 English Version
+
+### 📖 The Story Behind
+This repository is the result of a personal tech experiment: **can a complete beginner build a fully functional, high-performance smart home dashboard with a local AI voice assistant using only Artificial Intelligence?**
+
+The answer is **yes**. After reaching the limits of a serial Nextion screen, I migrated to the **M5Stack Tab5 V2** (ESP32-P4) and let an AI (Antigravity / Gemini / Claude) generate all the custom C++ code, the LVGL interface, and the Home Assistant automations. I didn't write a single line of code myself!
+
+I'm sharing it here for the smart home community to use as a toolkit, an inspiration source, or for hardware optimization examples on ESP32-P4 and LVGL.
+
+---
+
+### 🏗️ Global Architecture & System Philosophy
+This project is not just a screen. It's a resilient architecture structured into **3 layers** to bypass hardware limits and ensure absolute reliability.
+
+1. **Hardware Layer (M5Stack Tab5 V2):** Rendered natively in C++ using ESPHome and LVGL.
+2. **Software Layer (HA Failover Cluster):** Actively synchronized double instances (Freebox Delta VM ↔ Steam Deck OLED Podman HA Core).
+3. **Logic/API Layer (Local AI & Voice):** Local Wyoming Whisper/Piper services coupled with an asyncio multi-agent engine running on the Steam Deck.
+
+---
+
+### 💡 Key Features: What Makes It Unique
+
+#### 1. M5Stack Tab5 V2 Touchscreen (ESPHome & LVGL)
+* 🚀 **Smooth 60 FPS Graphics:** LVGL frame buffer is allocated 100% (~1.8 MB) in the ESP32-P4 PSRAM. Page transitions are computed in the background and pushed to the MIPI-DSI 16-bit bus using DMA.
+* 💾 **Extreme CPU/RAM Optimizations:**
+  * **Zero Alpha Transparency** on PNGs (due to ESP32-P4 little-endian rendering overhead). Weather images are pre-baked on solid color backgrounds using a Python script.
+  * **Vector Fonts:** Uses Material Design Icons (MDI) vector fonts with antialiasing disabled (`bpp: 1`) for near-zero rendering time.
+  * **No complex radius/shadows** on transparent objects.
+* ⚡ **Event-Driven Push Architecture:** The screen is passive. Home Assistant pushes weather, climate, and schedule updates to the screen, pacing updates 150 ms apart to prevent network buffer overflows.
+
+#### 2. High Availability via Double HA Instance (Failover)
+* **The Problem:** The primary HA OS on the Freebox VM has very low resources (2 cores, 4 GB RAM) and cannot run local voice/LLMs.
+* **The Solution:**
+  * A secondary HA instance runs on a **Steam Deck OLED** (powerful CPU/GPU).
+  * **Heartbeat & Failover:** The Deck pings the Freebox Delta. If it is offline for 5 minutes, it activates the `is_primary_active` flag to take over automations.
+  * **20s Fast Boot (down from 120s):** The `sync_ha.sh` script syncs configs. Immediately after, a `post_sync.py` script disables heavy/conflicting integrations (local bluetooth, onedrive, production esphome) on the backup instance so it boots up in just 20 seconds.
+
+#### 3. Offloaded Local Voice (Wyoming) & AI Agent Engine
+* **Voice Offloading:** Voice processing (STT Whisper & TTS Piper) runs on the Steam Deck. The Freebox VM only relays raw audio packages.
+* **AI Agent Engine:** A multi-agent FastAPI server runs on the Steam Deck, configured as a custom "Conversation Engine" in HA.
+* **Smart Routing:** The screen allows switching between:
+  * **Home Automation Mode:** Local HA Assist for fast, deterministic control.
+  * **Discussion Mode:** Relays voice to the multi-agent engine (V7) to chat with LLMs (Mistral, Gemini, DeepSeek R1) and outputs the response to the screen speaker.
+
+---
+
+*Project born on the French Home Assistant Community forum (HACF). Feel free to submit pull requests or suggest improvements!*
