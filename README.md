@@ -3,6 +3,7 @@
 <div align="center">
   <img src="https://img.shields.io/badge/ESPHome-Native_C++-blue.svg" alt="ESPHome Native" />
   <img src="https://img.shields.io/badge/LVGL_8.4-HMI_Graphics-green.svg" alt="LVGL" />
+  <img src="https://img.shields.io/badge/Wake_Word-Ok_Nabu-red.svg" alt="Ok Nabu Wake Word" />
   <img src="https://img.shields.io/badge/Home_Assistant-Push_Integration-orange.svg" alt="HA Push Integration" />
   <img src="https://img.shields.io/badge/100%25-AI_Generated-purple.svg" alt="AI Generated" />
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License" />
@@ -25,11 +26,23 @@ Voici l'interface graphique HMI fluide et réactive conçue par l'IA et l'utilis
 ## 🇫🇷 Version Française
 
 ### 📖 L'histoire de ce projet
-Ce dépôt est le résultat d'une expérience technologique personnelle : **un amateur en programmation peut-il concevoir une interface domotique complète, réactive à 60 FPS sur un écran tactile dédié, en utilisant uniquement l'Intelligence Artificielle ?**
+Ce dépôt est le résultat d'une expérience technologique personnelle : **un amateur en programmation peut-il concevoir une interface domotique complète, réactive à 60 FPS sur un écran tactile dédié et pilotable entièrement à la voix, en utilisant uniquement l'Intelligence Artificielle ?**
 
 La réponse est **oui**. Ayant atteint les limites techniques d'un écran Nextion série, j'ai migré vers le **M5Stack Tab5 V2** (ESP32-P4) en laissant l'IA (Antigravity / Gemini / Claude) générer l'intégralité du code C++ custom, de l'interface LVGL 8.4 et des automatisations Home Assistant. Je n'ai pas tapé une seule ligne de code moi-même !
 
 Je partage ce projet avec la communauté domotique pour qu'il puisse servir d'inspiration, de boîte à outils ou d'exemples d'optimisations matérielles pour ESP32-P4 et LVGL sous ESPHome.
+
+---
+
+### 🎙️ Assistant Vocal Intégré & Wake Word "Ok Nabu"
+L'un des plus grands défis techniques de ce projet a été la mise en place d'un assistant vocal local réactif directement sur l'appareil. Le Tab5 fonctionne désormais comme un satellite vocal totalement autonome intégré à Home Assistant :
+
+* 🧠 **Détection Locale du Wake Word (Mot d'activation) :** L'écran fait tourner localement sur son processeur ESP32-P4 le modèle de réseau de neurones TensorFlow Lite `micro_wake_word` (modèle `okay_nabu`). L'écoute se fait hors-ligne sur l'appareil : aucun flux audio n'est envoyé en continu sur le réseau, protégeant ainsi la vie privée et limitant la bande passante.
+* 🎙️ **Chaîne d'Acquisition Audio & Micro I2S :** L'audio est capturé en 16 kHz / 16 bits par le microphone matériel I2S via les broches dédiées (`GPIO28` DIN, `GPIO27` BCLK, `GPIO29` LRCLK). Dès que "Ok Nabu" est détecté, l'audio est streamé en temps réel vers Home Assistant.
+* 🔊 **Sortie Audio & Haut-Parleur via DAC ES8388 :** Le retour sonore de l'assistant (synthèse vocale) est géré par le convertisseur DAC ES8388 connecté en I2C (`GPIO31`/`GPIO32`) et I2S (`GPIO26` DOUT). Une séquence de démarrage spécifique dans `on_boot` active l'amplificateur après l'initialisation du lecteur pour éviter tout "pop" électrique désagréable dans le haut-parleur.
+* 🎛️ **Contrôle & Retours Visuels LVGL :** 
+  * Un bouton physique sur l'interface permet d'activer ou de désactiver à la volée l'écoute automatique ("Ok Nabu: ON/OFF") en commutant le switch `tab5_wake_word_active`.
+  * L'icône de microphone de l'interface graphique LVGL change dynamiquement de couleur selon l'état du pipeline vocal : **Gris** (En veille), **Vert** (Écoute active après wake-word), **Orange** (Analyse de la commande par HA), **Bleu** (TTS en cours de lecture), ou **Rouge** (Erreur/Non compris).
 
 ---
 
@@ -40,7 +53,7 @@ Pour libérer le processeur ESP32 et la mémoire de l'écran, le Tab5 **ne deman
 
 ---
 
-### 💡 Optimisations Matérielles & LVGL : Ce qui rend ce projet unique
+### 💡 Optimisations Graphiques & LVGL : Ce qui rend ce projet unique
 
 * 🚀 **Fluidité Graphique Absolue (60 FPS) :** L'allocation de mémoire du frame buffer de LVGL est poussée à 100% (~1.8 Mo) directement dans la PSRAM de l'ESP32-P4. La commutation de page se fait instantanément en arrière-plan puis est transmise au bus MIPI-DSI 16 bits en mode DMA (Direct Memory Access), supprimant tout lag visuel ("rideau de balayage").
 * 💾 **Optimisation CPU et RAM Extrême :**
@@ -52,7 +65,7 @@ Pour libérer le processeur ESP32 et la mémoire de l'écran, le Tab5 **ne deman
 ---
 
 ### 📚 Structure du Projet & Configuration
-* [⚙️ Matériel & Câblage Tab5](docs/hardware.md) — Spécifications, branchements GPIO et bus I2C (APIs audio DAC ES8388, puce tactile ST7123, expanders).
+* [⚙️ Matériel & Câblage Tab5](docs/hardware.md) — Spécifications, branchements GPIO, bus I2C et configuration DAC.
 * [🏗️ Code ESPHome & Lambdas C++](docs/architecture.md) — Organisation des fichiers `.yaml` (packages), inclusion de `tab5_custom.cpp` / `.h`.
 * [🎨 UI Design & LVGL](docs/ui_design.md) — Structuration des cartes d'interface, polices et mise en page à 6 tuiles.
 * `HomeAssistant_Config/` — Contient les automatisations YAML et scripts nécessaires côté serveur pour pousser les informations météo, de climatisation et de planning à l'écran.
@@ -62,11 +75,23 @@ Pour libérer le processeur ESP32 et la mémoire de l'écran, le Tab5 **ne deman
 ## 🇺🇸 English Version
 
 ### 📖 Project Background
-This repository is the result of a personal experiment: **can a programming novice create a fully functional, 60 FPS native smart home dashboard using only Artificial Intelligence?**
+This repository is the result of a personal experiment: **can a programming novice create a fully functional, 60 FPS native smart home dashboard controlled entirely by voice, using only Artificial Intelligence?**
 
 The answer is **yes**. After hitting the technical limits of an old serial Nextion screen, I migrated to the **M5Stack Tab5 V2** (ESP32-P4) and let an AI (Antigravity / Gemini / Claude) handle all the C++ coding, the LVGL 8.4 interface, and the Home Assistant automations. I didn't write a single line of code myself!
 
 I am sharing this with the community as a toolbox, inspiration source, or for hardware optimization examples on ESP32-P4 and LVGL under ESPHome.
+
+---
+
+### 🎙️ Integrated Voice Assistant & "Ok Nabu" Wake Word
+One of the biggest technical challenges of this project was setting up a responsive local voice assistant directly on the hardware. The Tab5 now acts as a fully standalone voice satellite integrated with Home Assistant:
+
+* 🧠 **Local Wake Word Detection:** The screen runs the TensorFlow Lite neural network model `micro_wake_word` (model `okay_nabu`) locally on its ESP32-P4 processor. Listening is offline: no audio stream is continuously sent over the network, protecting privacy and saving bandwidth.
+* 🎙️ **Audio Acquisition & I2S Microphone:** Audio is captured in 16 kHz / 16 bits by the hardware I2S microphone via dedicated pins (`GPIO28` DIN, `GPIO27` BCLK, `GPIO29` LRCLK). Once "Ok Nabu" is heard, audio is streamed in real-time to Home Assistant.
+* 🔊 **Audio Output & Speaker via ES8388 DAC:** Sound feedback (TTS) is managed by the ES8388 DAC converter connected via I2C (`GPIO31`/`GPIO32`) and I2S (`GPIO26` DOUT). A custom `on_boot` sequence enables the amplifier after player initialization to prevent annoying electrical pops in the speaker.
+* 🎛️ **LVGL Visual Feedback & Control:**
+  * A dedicated physical button toggles automatic listening ("Ok Nabu: ON/OFF") on the fly via the `tab5_wake_word_active` switch.
+  * The microphone icon on the LVGL interface changes color based on the voice pipeline state: **Grey** (Idle), **Green** (Active listening after wake word), **Orange** (Command being processed by HA), **Blue** (TTS playing), or **Red** (Error/Not understood).
 
 ---
 
