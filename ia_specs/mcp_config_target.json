@@ -1,0 +1,28 @@
+{
+  "description": "Serveurs MCP nécessaires au fonctionnement du script Python orchestrateur",
+  "mcp_servers": {
+    "filesystem": {
+      "role": "Permet aux agents d'accéder aux fichiers locaux de l'espace de travail (lecture du code, lecture de contexte_ia, écriture du nouveau code).",
+      "required_tools": ["read_file", "write_file", "list_directory", "search_files"],
+      "target_workspace": "e:\\AuxFilsDesIdees"
+    },
+    "sqlite-ha": {
+      "role": "Permet potentiellement d'accéder à la base de données locale de Home Assistant pour récupérer des historiques d'états (si la base SQLite est accessible en local) afin de débugger une entité.",
+      "required_tools": ["query", "get_table_schema"],
+      "optional": true
+    },
+    "github": {
+      "role": "Permet de versionner automatiquement le code une fois validé par l'utilisateur (commit/push sur l'espace secondaire 00 Git Auto).",
+      "required_tools": ["create_or_update_file", "push_files"],
+      "target_workspace": "d:\\Documents\\00 Git Auto"
+    }
+  },
+  "workflow_integration": {
+    "note": "Les agents (particulièrement le superviseur local) devront pouvoir invoquer les commandes slash suivantes :",
+    "commands": [
+      "/yaml-linter : Vérification de syntaxe HA",
+      "/m5stack : Appel aux configurations spécifiques M5Stack",
+      "/api_parser : Pour lire les retours de l'API HA"
+    ]
+  }
+}
