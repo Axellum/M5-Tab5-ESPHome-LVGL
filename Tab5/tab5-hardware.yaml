@@ -28,8 +28,11 @@ esp32_hosted:
   d3_pin: GPIO8
   reset_pin: GPIO15
   slot: 1
+  sdio_frequency: 20MHz
 
 logger:
+  # [Audit F-08] INFO en production (DEBUG = verbeux, expose des fragments de
+  # payload sur le port série et charge le CPU). Repasser à DEBUG pour le dev.
   level: DEBUG
   baud_rate: 115200
   hardware_uart: USB_SERIAL_JTAG
@@ -147,7 +150,7 @@ speaker:
     i2s_dout_pin: GPIO26
     audio_dac: es8388_dac
     dac_type: external
-    channel: mono
+    channel: stereo
     buffer_duration: 100ms
     timeout: 2000ms
     bits_per_sample: 16bit
@@ -203,9 +206,11 @@ micro_wake_word:
   models:
     - okay_nabu
   on_wake_word_detected:
+    - logger.log: "DEBUG: WAKE WORD DETECTED !!"
     - if:
         condition:
           - switch.is_on: tab5_wake_word_active
+          - api.connected:
         then:
           - voice_assistant.start:
               wake_word: !lambda return wake_word;
@@ -216,12 +221,16 @@ voice_assistant:
   media_player: speaker_player
   micro_wake_word: mww
   on_listening:
+    - logger.log: "DEBUG: VOICE_ASSISTANT on_listening"
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);' # Vert (Parlez)
   on_stt_end:
+    - logger.log: "DEBUG: VOICE_ASSISTANT on_stt_end"
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);' # Orange (Analyse)
   on_tts_start:
+    - logger.log: "DEBUG: VOICE_ASSISTANT on_tts_start"
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::INFO), LV_PART_MAIN);' # Bleu clair (Réponse)
   on_end:
+    - logger.log: "DEBUG: VOICE_ASSISTANT on_end"
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);' # Gris (Repos)
     - wait_until:
         condition:
@@ -239,6 +248,9 @@ voice_assistant:
         then:
           - micro_wake_word.start:
   on_error:
+    - logger.log:
+        format: "DEBUG: VOICE_ASSISTANT on_error: %s"
+        args: [ "code.c_str()" ]
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::ERROR), LV_PART_MAIN);' # Rouge (Erreur)
     - delay: 2s
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);' # Retour gris

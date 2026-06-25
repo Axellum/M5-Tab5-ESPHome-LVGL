@@ -84,6 +84,7 @@ lvgl:
             height: 120
             styles: style_invisible
             on_short_click:
+              - logger.log: "DEBUG: BOUTON MICRO CLIQUE !"
               - voice_assistant.start:
                   id: va
         

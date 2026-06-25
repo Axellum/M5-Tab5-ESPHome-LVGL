@@ -13,3 +13,13 @@ test_*.yaml
 # Logs
 *.log
 home-assistant_*.log
+
+# Configurations et logs locaux ESPHome
+config_dump.yaml
+esphome_live_logs.txt
+HomeAssistant_Config/automations_examples.yaml.example
+HomeAssistant_Config/automations_tab5.yaml
+HomeAssistant_Config/scripts_tab5.yaml
+HomeAssistant_Config/template_sensors_meteo_tab5.yaml
+Tab5/tts_library/
+Tab5/tts_library_v2/

@@ -3,7 +3,7 @@
 ## Introduction & Contexte
 Le projet **Tab5 V2** consiste à concevoir et déployer un écran domotique premium basé sur l'**ESP32-P4** (carte de développement `esp32-p4-evboard`) pour piloter et afficher en temps réel l'état d'une installation **Home Assistant (HA)**. Ce système intègre des fonctionnalités de contrôle local et distant, d'automatisation avancée et d'interface utilisateur haut de gamme.
 
-Cette analyse s'appuie sur l'exploration de la mémoire et de l'historique du projet situés dans `e:\AuxFilsDesIdees\contexte_ia\` ainsi que sur l'architecture du moteur d'agents V5 (`e:\AuxFilsDesIdees\moteur_agents`).
+Cette analyse s'appuie sur l'exploration de la mémoire et de l'historique du projet situés dans `e:\AuxFilsDesIdees\contexte_ia\` ainsi que sur l'architecture du Moteur IA (`e:\AuxFilsDesIdees\moteur_agents`).
 
 ---
 
@@ -40,10 +40,10 @@ Cette analyse s'appuie sur l'exploration de la mémoire et de l'historique du pr
 
 ---
 
-## 2. Analyse du Moteur d'Agents V5
+## 2. Analyse du Moteur IA
 
 ### 2.1 Architecture et Fonctionnement
-Le moteur d'agents V5 (`e:\AuxFilsDesIdees\moteur_agents`) repose sur une architecture moderne utilisant le **Model Context Protocol (MCP)**.
+Le Moteur IA (`e:\AuxFilsDesIdees\moteur_agents`) repose sur une architecture moderne utilisant le **Model Context Protocol (MCP)**.
 *   **Structure** : Organisation claire autour d'un répertoire `agents/` contenant les définitions, les invites de système (system prompts) et les configurations des outils.
 *   **Outils et Capacités** : Intégration d'outils de lecture/écriture de fichiers, d'exécution de commandes système et d'appels d'API pour permettre aux agents d'agir de manière autonome et précise sur l'environnement de développement.
 
@@ -57,4 +57,4 @@ Si nous utilisons activement ce moteur d'agents pour le projet Tab5 V2, voici pl
 ---
 
 ## Conclusion
-Le projet Tab5 V2 est sur une excellente trajectoire avec des choix d'architecture robustes (ESP32-P4, paradigme Push, intégration HA propre). L'utilisation conjointe du moteur d'agents V5 et d'une base de connaissances bien structurée garantit un développement rapide, sécurisé et accessible, tout en offrant des perspectives d'automatisation et d'optimisation très prometteuses.
+Le projet Tab5 V2 est sur une excellente trajectoire avec des choix d'architecture robustes (ESP32-P4, paradigme Push, intégration HA propre). L'utilisation conjointe du Moteur IA et d'une base de connaissances bien structurée garantit un développement rapide, sécurisé et accessible, tout en offrant des perspectives d'automatisation et d'optimisation très prometteuses.

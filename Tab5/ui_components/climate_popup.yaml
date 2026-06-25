@@ -122,7 +122,7 @@ obj:
                           service: climate.set_temperature
                           data:
                             entity_id: ${entity_climate_salon}
-                            temperature: !lambda "return id(clim_target_temp) - 0.5;"
+                            temperature: !lambda "return to_string(id(clim_target_temp) - 0.5);"
                     widgets:
                       - label: { text: "\U000F0374", align: CENTER, text_font: mdi_font_56, text_color: color_text }
                 - button:
@@ -138,7 +138,7 @@ obj:
                           service: climate.set_temperature
                           data:
                             entity_id: ${entity_climate_salon}
-                            temperature: !lambda "return id(clim_target_temp) + 0.5;"
+                            temperature: !lambda "return to_string(id(clim_target_temp) + 0.5);"
                     widgets:
                       - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56, text_color: color_text }
 

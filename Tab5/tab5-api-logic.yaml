@@ -4,7 +4,10 @@ api:
 
     key: !secret api_encryption_key
 
-  reboot_timeout: 0s
+  # [Audit F-04] 0s = jamais de reboot si HA injoignable → état "zombie"
+  # déconnecté indéfiniment. 15min force un redémarrage propre après perte
+  # durable de la connexion API (sans gêner les MAJ courtes de HA).
+  reboot_timeout: 15min
 
   services:
 
@@ -238,56 +241,53 @@ api:
             }
 
     - service: tab5_maj_alerte_meteo_france
-
       variables:
-
-        phrase_pluie: string
-
-        globale: string
-
-        vent: string
-
-        inondation: string
-
-        orages: string
-
-        pluie_inondation: string
-
-        neige_verglas: string
-
-        grand_froid: string
-
-        vagues_submersion: string
-
-        canicule: string
-
-        avalanches: string
-
+        payload: string
       then:
-
         - lambda: |-
+            if (id(lbl_proc_pluie) == nullptr) return;
+            char buf[512];
+            strncpy(buf, payload.c_str(), sizeof(buf)-1);
+            buf[sizeof(buf)-1] = '\0';
+            char* saveptr;
+            char* phrase_pluie = strtok_r(buf, "|", &saveptr);
+            char* globale = strtok_r(NULL, "|", &saveptr);
+            char* vent = strtok_r(NULL, "|", &saveptr);
+            char* inondation = strtok_r(NULL, "|", &saveptr);
+            char* orages = strtok_r(NULL, "|", &saveptr);
+            char* pluie_inondation = strtok_r(NULL, "|", &saveptr);
+            char* neige_verglas = strtok_r(NULL, "|", &saveptr);
+            char* grand_froid = strtok_r(NULL, "|", &saveptr);
+            char* vagues_submersion = strtok_r(NULL, "|", &saveptr);
+            char* canicule = strtok_r(NULL, "|", &saveptr);
+            char* avalanches = strtok_r(NULL, "|", &saveptr);
 
-            lv_label_set_text(id(lbl_proc_pluie), phrase_pluie.c_str());
-
+            if (!phrase_pluie) phrase_pluie = (char*)"";
+            if (!globale) globale = (char*)"";
+            
+            lv_label_set_text(id(lbl_proc_pluie), phrase_pluie);
             lv_obj_add_flag(id(lbl_pluie_val), LV_OBJ_FLAG_HIDDEN);
-
             lv_obj_add_flag(id(lbl_pluie_unit), LV_OBJ_FLAG_HIDDEN);
 
             // Couleur de la date selon vigilance globale
             uint32_t col_date = UIColor::SUCCESS;
-            if (globale == "Jaune") col_date = 0xFCF3CF;
-            else if (globale == "Orange") col_date = 0xF8C471;
-            else if (globale == "Rouge") col_date = 0xF1948A;
+            if (strcmp(globale, "Jaune") == 0) col_date = 0xFCF3CF;
+            else if (strcmp(globale, "Orange") == 0) col_date = 0xF8C471;
+            else if (strcmp(globale, "Rouge") == 0) col_date = 0xF1948A;
             lv_obj_set_style_text_color(id(lbl_date), lv_color_hex(col_date), LV_PART_MAIN);
 
-            // Filtrage dynamique : ne garder que les alertes non-vertes (max 4 slots)
-            struct AlertEntry { const char* icon; std::string level; };
-            std::vector<AlertEntry> actives;
+            // Filtrage statique
+            struct AlertEntry { const char* icon; const char* level; };
+            constexpr size_t MAX_ALERTES = 4;
+            AlertEntry actives[MAX_ALERTES];
+            size_t active_count = 0;
 
-            auto check_alert = [&](const std::string& state, const char* icon_code) {
-              if (state != "Vert" && state != "" && state != "unknown") {
-                actives.push_back({icon_code, state});
-              }
+            auto check_alert = [&](const char* state, const char* icon_code) {
+              if (active_count >= MAX_ALERTES) return;
+              if (!state || strcmp(state, "Vert") == 0 || strlen(state) == 0 || strcmp(state, "unknown") == 0) return;
+              actives[active_count].icon  = icon_code;
+              actives[active_count].level = state;
+              ++active_count;
             };
 
             check_alert(vent, "\U000F059D");
@@ -299,16 +299,15 @@ api:
             check_alert(vagues_submersion, "\U000F078D");
             check_alert(canicule, "\U000F0E01");
 
-            // Remplir les 4 slots (priorite : ordre d'arrivee, max 4)
-            id(has_alerts) = !actives.empty();
+            id(has_alerts) = (active_count > 0);
             
             lv_obj_t* slots[] = {id(alerte_slot_0), id(alerte_slot_1), id(alerte_slot_2), id(alerte_slot_3)};
-            for (int i = 0; i < 4; i++) {
-              if (i < (int)actives.size()) {
+            for (size_t i = 0; i < 4; i++) {
+              if (i < active_count) {
                 lv_label_set_text(slots[i], actives[i].icon);
                 uint32_t c = UIColor::ALERT_YELLOW;
-                if (actives[i].level == "Orange") c = UIColor::WARNING;
-                else if (actives[i].level == "Rouge") c = UIColor::ALERT_RED;
+                if (strcmp(actives[i].level, "Orange") == 0) c = UIColor::WARNING;
+                else if (strcmp(actives[i].level, "Rouge") == 0) c = UIColor::ALERT_RED;
                 lv_obj_set_style_text_color(slots[i], lv_color_hex(c), LV_PART_MAIN);
                 lv_obj_set_style_text_opa(slots[i], 255, LV_PART_MAIN);
                 lv_obj_clear_flag(slots[i], LV_OBJ_FLAG_HIDDEN);
