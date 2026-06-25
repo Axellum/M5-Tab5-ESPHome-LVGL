@@ -17,7 +17,7 @@ void tab5_calendar_toggle(int jour) {
     }
 }
 
-void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card, esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
+void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, bool is_card, esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
     std::string l1_text = MeteoIcon::CLOUD; // Nuage par defaut
     uint32_t l1_color = 0xFFFFFF;
     std::string l2_text = "";
@@ -120,66 +120,97 @@ uint32_t get_temperature_color(float t) {
 // Centralise le parsing du payload serialise et la mise a jour LVGL
 // =============================================================================
 
-// Fonction utilitaire interne : decoupe un token par separateur
-static std::vector<std::string> split_token(const std::string& token, char sep) {
-    std::vector<std::string> parts;
-    size_t ppos = 0;
-    while(true) {
-        size_t np = token.find(sep, ppos);
-        if(np == std::string::npos) { parts.push_back(token.substr(ppos)); break; }
-        parts.push_back(token.substr(ppos, np - ppos));
-        ppos = np + 1;
-    }
-    return parts;
-}
-
+// Remplacement de split_token par un parsing in-place avec strtok_r pour éviter la fragmentation de la SRAM.
 void parse_and_update_heures_bulk(const std::string& payload) {
+    if (payload.empty()) return;
+    if (payload.length() > 2048) {
+        ESP_LOGE("TAB5", "Payload heures trop long (%d octets). Rejeté pour éviter OOM.", payload.length());
+        return;
+    }
+    ESP_LOGI("TAB5", "Received heures bulk payload length: %d", payload.length());
     std::string s = payload;
-    size_t pos = 0;
+    char* str_ptr = &s[0];
+    char* saveptr1 = nullptr;
 
-    while((pos = s.find(";")) != std::string::npos) {
-        std::string token = s.substr(0, pos);
-        s.erase(0, pos + 1);
+    char* token = strtok_r(str_ptr, ";", &saveptr1);
+    while (token != nullptr) {
+        char* parts[6];
+        int num_parts = 0;
 
-        std::vector<std::string> parts = split_token(token, '|');
-
-        if(parts.size() >= 5) {
-            int idx = std::atoi(parts[0].c_str());
-            if(idx < 0 || idx >= 15) continue;
-            cal_heures_data[idx].heure_texte = parts[1];
-            cal_heures_data[idx].condition = parts[2];
-            cal_heures_data[idx].temp = std::atof(parts[3].c_str());
-            cal_heures_data[idx].pluvio = std::atof(parts[4].c_str());
+        char* p = token;
+        while (true) {
+            if (num_parts >= 6) break;
+            parts[num_parts++] = p;
+            char* next = strchr(p, '|');
+            if (next) {
+                *next = '\0';
+                p = next + 1;
+            } else {
+                break;
+            }
         }
+
+        if (num_parts >= 5) {
+            int idx = std::atoi(parts[0]);
+            if (idx >= 0 && idx < 15) {
+                cal_heures_data[idx].heure_texte = parts[1];
+                cal_heures_data[idx].condition = parts[2];
+                cal_heures_data[idx].temp = std::atof(parts[3]);
+                cal_heures_data[idx].pluvio = std::atof(parts[4]);
+            }
+        }
+        token = strtok_r(nullptr, ";", &saveptr1);
     }
 }
 
 void parse_and_update_jours_bulk(const std::string& payload) {
+    if (payload.empty()) return;
+    if (payload.length() > 2048) {
+        ESP_LOGE("TAB5", "Payload jours trop long (%d octets). Rejeté pour éviter OOM.", payload.length());
+        return;
+    }
+    ESP_LOGI("TAB5", "Received jours bulk payload length: %d", payload.length());
     std::string s = payload;
-    size_t pos = 0;
+    char* str_ptr = &s[0];
+    char* saveptr1 = nullptr;
 
-    while((pos = s.find(";")) != std::string::npos) {
-        std::string token = s.substr(0, pos);
-        s.erase(0, pos + 1);
+    char* token = strtok_r(str_ptr, ";", &saveptr1);
+    while (token != nullptr) {
+        // Découper chaque token par '|' — in-place, pas de std::vector
+        char* parts[10];  // 9 champs attendus + marge
+        int num_parts = 0;
 
-        std::vector<std::string> parts = split_token(token, '|');
-
-        if(parts.size() >= 9) {
-            int jour = std::atoi(parts[0].c_str());
-            if(jour < 0 || jour >= 15) continue;
-            cal_jours_data[jour].nom_jour = parts[1];
-            cal_jours_data[jour].condition = parts[2];
-            cal_jours_data[jour].tmin = std::atof(parts[3].c_str());
-            cal_jours_data[jour].tmax = std::atof(parts[4].c_str());
-            cal_jours_data[jour].est_repos = (parts[5] == "1" || parts[5] == "true");
-            cal_jours_data[jour].est_dimanche = (parts[6] == "1" || parts[6] == "true");
-            cal_jours_data[jour].est_passe = (parts[7] == "1" || parts[7] == "true");
-            cal_jours_data[jour].heures_ouverture = parts[8];
-
-            // Backward compatibility
-            cal_jour_nom[jour] = parts[1];
-            cal_heures[jour] = parts[8];
+        char* p = token;
+        while (true) {
+            if (num_parts >= 10) break;
+            parts[num_parts++] = p;
+            char* next = strchr(p, '|');
+            if (next) {
+                *next = '\0';
+                p = next + 1;
+            } else {
+                break;
+            }
         }
+
+        if (num_parts >= 9) {
+            int jour = std::atoi(parts[0]);
+            if (jour >= 0 && jour < 15) {
+                cal_jours_data[jour].nom_jour = parts[1];
+                cal_jours_data[jour].condition = parts[2];
+                cal_jours_data[jour].tmin = std::atof(parts[3]);
+                cal_jours_data[jour].tmax = std::atof(parts[4]);
+                cal_jours_data[jour].est_repos = (parts[5][0] == '1');
+                cal_jours_data[jour].est_dimanche = (parts[6][0] == '1');
+                cal_jours_data[jour].est_passe = (parts[7][0] == '1');
+                cal_jours_data[jour].heures_ouverture = parts[8];
+
+                // Rétrocompatibilité : remplir les anciens tableaux
+                cal_jour_nom[jour] = parts[1];
+                cal_heures[jour] = parts[8];
+            }
+        }
+        token = strtok_r(nullptr, ";", &saveptr1);
     }
 }
 
@@ -226,11 +257,11 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
             if (hour < 9 || (hour == 9 && minute == 0)) is_early = true;
         }
 
-        if (jour == 0) col = 0x4D94FF;
-        else if (data.est_dimanche) col = data.est_repos ? 0xFFA500 : 0xFF4D4D;
-        else if (data.est_repos) col = 0x4CD964;
-        else if (is_early) col = 0xFF8888;
-        if (data.est_passe) col = 0x6A7B92;
+        if (jour == 0) col = UIColor::INFO;                                              // Aujourd'hui : cyan info
+        else if (data.est_dimanche) col = data.est_repos ? UIColor::WARNING : UIColor::ERROR;
+        else if (data.est_repos) col = UIColor::SUCCESS;                                 // Jour de repos : emeraude
+        else if (is_early) col = UIColor::EARLY;                                         // Debauche matinale : rose
+        if (data.est_passe) col = UIColor::PAST;                                         // Jour passe : ardoise estompee
 
         lv_obj_set_style_text_color(slot.day_lbl, lv_color_hex(col), LV_PART_MAIN);
         lv_obj_set_style_text_opa(slot.day_lbl, opa, LV_PART_MAIN);
@@ -384,32 +415,75 @@ void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
     }
 }
 
+// Callback d'animation d'opacite : signature compatible lv_anim_exec_xcb_t (void*, int32_t).
+// lv_obj_set_style_opa() prend 3 arguments et ne peut donc pas etre castee directement.
+static void anim_opa_cb(void* obj, int32_t v) {
+    lv_obj_set_style_opa((lv_obj_t*)obj, (lv_opa_t)v, LV_PART_MAIN);
+}
+
+// Transition "verre depoli" : glissement vertical + fondu croise.
+//   - Sortie : descend en accelerant (ease_in) tout en s'effacant.
+//   - Entree : arrive du haut en decelerant (ease_out) tout en apparaissant.
+// Duree allongee a 450ms pour une sensation plus fluide/posee.
 void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
     if (out_obj == in_obj) return;
-    
+
+    const uint32_t DUR    = 450;  // ms
+    const int32_t  OFFSET = 84;   // px de glissement
+
     if (out_obj) {
-        lv_anim_t a_out;
-        lv_anim_init(&a_out);
-        lv_anim_set_var(&a_out, out_obj);
-        lv_anim_set_values(&a_out, 0, 84);
-        lv_anim_set_time(&a_out, 400);
-        lv_anim_set_exec_cb(&a_out, (lv_anim_exec_xcb_t)lv_obj_set_y);
-        lv_anim_set_ready_cb(&a_out, [](lv_anim_t* a) {
-            lv_obj_add_flag((lv_obj_t*)a->var, LV_OBJ_FLAG_HIDDEN);
+        // Glissement vertical sortant (ease_in : accelere en quittant l'ecran)
+        lv_anim_t a_out_y;
+        lv_anim_init(&a_out_y);
+        lv_anim_set_var(&a_out_y, out_obj);
+        lv_anim_set_values(&a_out_y, 0, OFFSET);
+        lv_anim_set_time(&a_out_y, DUR);
+        lv_anim_set_path_cb(&a_out_y, lv_anim_path_ease_in);
+        lv_anim_set_exec_cb(&a_out_y, (lv_anim_exec_xcb_t)lv_obj_set_y);
+        lv_anim_set_ready_cb(&a_out_y, [](lv_anim_t* a) {
+            // Masque puis remet l'objet a son etat neutre pour sa prochaine apparition
+            lv_obj_t* o = (lv_obj_t*)a->var;
+            lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_set_y(o, 0);
+            lv_obj_set_style_opa(o, LV_OPA_COVER, LV_PART_MAIN);
         });
-        lv_anim_start(&a_out);
+        lv_anim_start(&a_out_y);
+
+        // Fondu sortant synchronise
+        lv_anim_t a_out_o;
+        lv_anim_init(&a_out_o);
+        lv_anim_set_var(&a_out_o, out_obj);
+        lv_anim_set_values(&a_out_o, LV_OPA_COVER, LV_OPA_TRANSP);
+        lv_anim_set_time(&a_out_o, DUR);
+        lv_anim_set_path_cb(&a_out_o, lv_anim_path_ease_in);
+        lv_anim_set_exec_cb(&a_out_o, anim_opa_cb);
+        lv_anim_start(&a_out_o);
     }
-    
+
     if (in_obj) {
+        // Etat de depart : au-dessus et transparent
         lv_obj_clear_flag(in_obj, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_set_y(in_obj, -84);
-        
-        lv_anim_t a_in;
-        lv_anim_init(&a_in);
-        lv_anim_set_var(&a_in, in_obj);
-        lv_anim_set_values(&a_in, -84, 0);
-        lv_anim_set_time(&a_in, 400);
-        lv_anim_set_exec_cb(&a_in, (lv_anim_exec_xcb_t)lv_obj_set_y);
-        lv_anim_start(&a_in);
+        lv_obj_set_y(in_obj, -OFFSET);
+        lv_obj_set_style_opa(in_obj, LV_OPA_TRANSP, LV_PART_MAIN);
+
+        // Glissement vertical entrant (ease_out : decelere en se posant -> fluide)
+        lv_anim_t a_in_y;
+        lv_anim_init(&a_in_y);
+        lv_anim_set_var(&a_in_y, in_obj);
+        lv_anim_set_values(&a_in_y, -OFFSET, 0);
+        lv_anim_set_time(&a_in_y, DUR);
+        lv_anim_set_path_cb(&a_in_y, lv_anim_path_ease_out);
+        lv_anim_set_exec_cb(&a_in_y, (lv_anim_exec_xcb_t)lv_obj_set_y);
+        lv_anim_start(&a_in_y);
+
+        // Fondu entrant synchronise
+        lv_anim_t a_in_o;
+        lv_anim_init(&a_in_o);
+        lv_anim_set_var(&a_in_o, in_obj);
+        lv_anim_set_values(&a_in_o, LV_OPA_TRANSP, LV_OPA_COVER);
+        lv_anim_set_time(&a_in_o, DUR);
+        lv_anim_set_path_cb(&a_in_o, lv_anim_path_ease_out);
+        lv_anim_set_exec_cb(&a_in_o, anim_opa_cb);
+        lv_anim_start(&a_in_o);
     }
 }
