@@ -1,47 +1,77 @@
+# =============================================================================
+# THEME — "Dark Mode Slate" (Glassmorphism)
+# -----------------------------------------------------------------------------
+# Base ardoise (Tailwind Slate) + accents HSL vibrants (cyan / violet / emeraude).
+# L'effet "verre depoli" est simule sur ESP32-P4 (pas de backdrop-blur materiel) :
+#   - surfaces semi-transparentes (bg_opa)
+#   - degrade vertical (haut clair -> bas sombre) = reflet de verre
+#   - liseré fin lumineux (border_opa) = arête de verre
+#   - ombre portee douce = profondeur / flottement
+# IMPORTANT : tous les `id:` couleurs et styles existants sont CONSERVES
+#             (le YAML HMI principal les reference par nom). Valeurs mises a jour
+#             + nouveaux tokens ajoutes en fin de section.
+# =============================================================================
 color:
+  # --- Surfaces ardoise (Slate) ---
   - id: color_bg
-    hex: "323642"
+    hex: "0B1120"          # Ardoise profonde (fond application)
   - id: color_card_bg
-    hex: "23262E"
+    hex: "1B2536"          # Carte opaque (fallback non-verre)
   - id: color_border
-    hex: "4A596E"
+    hex: "5B6B85"          # Arête ardoise claire (utiliser avec border_opa)
   - id: color_text
-    hex: "FFFFFF"
+    hex: "F1F5F9"          # Blanc ardoise doux (slate-100)
   - id: color_text_dim
-    hex: "A3A8B5"
+    hex: "94A3B8"          # Texte secondaire (slate-400)
   - id: color_temp_max
-    hex: "FF8888"
+    hex: "F87171"          # Chaud (red-400)
   - id: color_temp_min
-    hex: "8AB4FF"
+    hex: "38BDF8"          # Froid (sky-400)
   - id: color_bar_active
-    hex: "6A7B92"
+    hex: "64748B"          # slate-500
   - id: color_bar_inactive
-    hex: "4A596E"
+    hex: "334155"          # slate-700
   - id: color_orange_vif
-    hex: "FF6600"
-  # --- Couleurs sémantiques (états) ---
+    hex: "FB923C"          # orange-400 vibrant
+  # --- Couleurs sémantiques (états) — versions HSL vibrantes ---
   - id: color_success
-    hex: "4CD964"
+    hex: "34D399"          # emerald-400
   - id: color_warning
-    hex: "FFA500"
+    hex: "FBBF24"          # amber-400
   - id: color_error
-    hex: "FF4D4D"
+    hex: "FB7185"          # rose-400
   - id: color_info
-    hex: "4D94FF"
+    hex: "38BDF8"          # sky-400
   - id: color_gold
-    hex: "FFD700"
+    hex: "FCD34D"          # amber-300
   - id: color_inactive
-    hex: "404552"
+    hex: "334155"          # slate-700
   # --- Couleurs console ---
   - id: color_console_bg
-    hex: "111111"
+    hex: "0A0E16"
   - id: color_console_border
-    hex: "333333"
+    hex: "243047"
   - id: color_console_label
-    hex: "AAAAAA"
+    hex: "8595AD"
   - id: color_reboot
-    hex: "CC0000"
+    hex: "F43F5E"          # rose-500 (danger)
+  # --- NOUVEAUX tokens "Slate Glass" (accents + matiere verre) ---
+  - id: color_accent
+    hex: "22D3EE"          # cyan-400 : accent primaire / halo
+  - id: color_accent_alt
+    hex: "A78BFA"          # violet-400 : accent secondaire
+  - id: color_glass_hi
+    hex: "2C3A52"          # Haut du degrade verre (reflet)
+  - id: color_glass_lo
+    hex: "131C2C"          # Bas du degrade verre (ombre interne)
+  - id: color_glass_rim
+    hex: "93A3BC"          # Liseré lumineux (arête de verre)
+  - id: color_shadow
+    hex: "000000"          # Ombre portee
 
+# =============================================================================
+# FONTS — inchangees (fonctionnel, pas esthetique)
+# =============================================================================
 font:
   - file: gfonts://Roboto@700
     id: roboto_32_b
@@ -148,6 +178,9 @@ font:
     bpp: 4
     glyphs: "\U0000F00B\U0000F00F"
 
+# =============================================================================
+# LVGL — Glassmorphism "Slate"
+# =============================================================================
 lvgl:
   rotation: 270
   color_depth: 16
@@ -155,19 +188,39 @@ lvgl:
   buffer_size: 100%
   bg_color: color_bg
   style_definitions:
+    # --- Panneau structurel plein-cadre ---
+    # NB : radius volontairement CONSERVE a 0 (ce style sert de panneau plein-bord ;
+    #      l'arrondir laisserait apparaitre le fond aux coins de l'ecran).
+    #      On apporte la profondeur par un degrade vertical + liseré fin.
     - id: style_card
-      bg_color: color_card_bg
-      border_width: 2
-      border_color: color_border
-      radius: 0
-    - id: style_meteo_card
-      bg_color: 0x222222
+      bg_color: color_glass_hi
+      bg_grad_color: color_glass_lo
+      bg_grad_dir: VER
+      bg_main_stop: 0
+      bg_grad_stop: 255
       bg_opa: 100%
+      border_width: 1
+      border_color: color_glass_rim
+      border_opa: 22%
+      radius: 0
+
+    # --- Carte meteo "verre depoli" ---
+    - id: style_meteo_card
+      bg_color: color_glass_hi
+      bg_grad_color: color_glass_lo
+      bg_grad_dir: VER
+      bg_main_stop: 30
+      bg_grad_stop: 235
+      bg_opa: 82%
       border_width: 2
-      border_color: 0x444444
-      radius: 20
+      border_color: color_glass_rim
+      border_opa: 50%
+      radius: 22
+      shadow_width: 0
       pad_all: 0
       scrollbar_mode: "OFF"
+
+    # --- Conteneurs transparents (fonctionnel : inchanges) ---
     - id: style_transparent
       bg_opa: 0
       border_width: 0
@@ -178,27 +231,76 @@ lvgl:
       border_width: 0
       shadow_width: 0
       outline_width: 0
+
+    # --- Bouton climatisation : pastille de verre ---
     - id: style_clim_btn
-      bg_color: color_bg
-      bg_opa: 100%
-      border_width: 0
+      bg_color: color_glass_hi
+      bg_grad_color: color_glass_lo
+      bg_grad_dir: VER
+      bg_opa: 58%
+      border_width: 1
+      border_color: color_glass_rim
+      border_opa: 35%
+      radius: 18
       shadow_width: 0
       outline_width: 0
+
+    # --- Voile modal (scrim sombre, focus accru) ---
     - id: style_modal_overlay
-      bg_color: 0x000000
-      bg_opa: 60%
+      bg_color: 0x05080F
+      bg_opa: 72%
       border_width: 0
+
+    # --- Carte modale "verre" flottante ---
     - id: style_modal_card
-      bg_color: 0x222222
-      bg_opa: 100%
+      bg_color: color_glass_hi
+      bg_grad_color: color_glass_lo
+      bg_grad_dir: VER
+      bg_main_stop: 20
+      bg_grad_stop: 245
+      bg_opa: 88%
       border_width: 2
-      border_color: 0x444444
-      radius: 20
+      border_color: color_glass_rim
+      border_opa: 60%
+      radius: 24
+      shadow_width: 0
+
+    # --- Onglet meteo "verre" ---
     - id: style_meteo_tab
-      bg_color: 0x222222
-      bg_opa: 100%
+      bg_color: color_glass_hi
+      bg_grad_color: color_glass_lo
+      bg_grad_dir: VER
+      bg_opa: 78%
       border_width: 2
-      border_color: 0x444444
-      radius: 12
+      border_color: color_glass_rim
+      border_opa: 45%
+      radius: 14
+      shadow_width: 0
       pad_all: 0
       scrollbar_mode: "OFF"
+
+    # --- NOUVEAU : carte de verre generique (reutilisable) ---
+    - id: style_glass_card
+      bg_color: color_glass_hi
+      bg_grad_color: color_glass_lo
+      bg_grad_dir: VER
+      bg_main_stop: 25
+      bg_grad_stop: 240
+      bg_opa: 80%
+      border_width: 2
+      border_color: color_glass_rim
+      border_opa: 55%
+      radius: 20
+      shadow_width: 0
+      pad_all: 0
+      scrollbar_mode: "OFF"
+
+    # --- NOUVEAU : pastille / chip d'accent (cyan) ---
+    - id: style_pill_accent
+      bg_color: color_accent
+      bg_opa: 18%
+      border_width: 1
+      border_color: color_accent
+      border_opa: 70%
+      radius: 999
+      pad_all: 0

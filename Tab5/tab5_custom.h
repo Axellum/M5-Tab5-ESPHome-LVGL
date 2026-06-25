@@ -30,7 +30,7 @@ extern HourForecastData cal_heures_data[15];
 
 void tab5_calendar_toggle(int jour);
 namespace esphome { namespace font { class Font; } }
-void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card, esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
+void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, bool is_card, esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
 
 uint32_t get_humidity_color(float x);
 uint32_t get_temperature_color(float t);
@@ -93,15 +93,24 @@ void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
 
 // Couleurs semantiques centralisees (miroir des tokens YAML color:)
 // Utiliser dans les lambdas C++ au lieu des hex bruts
+// Palette "Dark Mode Slate" : miroir EXACT des tokens YAML color: (les garder synchro).
 namespace UIColor {
-    static constexpr uint32_t SUCCESS      = 0x4CD964;  // Vert vif (actif, OK)
-    static constexpr uint32_t WARNING      = 0xFFA500;  // Orange (attention)
-    static constexpr uint32_t ERROR        = 0xFF4D4D;  // Rouge (erreur, critique)
-    static constexpr uint32_t INFO         = 0x4D94FF;  // Bleu vif (info, connecte)
-    static constexpr uint32_t GOLD         = 0xFFD700;  // Or (soleil, lune)
-    static constexpr uint32_t TEXT_DIM     = 0xA3A8B5;  // Texte secondaire / repos
-    static constexpr uint32_t INACTIVE     = 0x404552;  // Hors ligne / NaN
-    static constexpr uint32_t WARM_PINK    = 0xFF66B2;  // Temperature interieure chaude
+    // --- Semantiques HSL vibrantes ---
+    static constexpr uint32_t SUCCESS      = 0x34D399;  // emerald-400 (actif, OK)
+    static constexpr uint32_t WARNING      = 0xFBBF24;  // amber-400 (attention)
+    static constexpr uint32_t ERROR        = 0xFB7185;  // rose-400 (erreur, critique)
+    static constexpr uint32_t INFO         = 0x38BDF8;  // sky-400 (info, connecte / aujourd'hui)
+    static constexpr uint32_t GOLD         = 0xFCD34D;  // amber-300 (soleil, lune)
+    static constexpr uint32_t TEXT_DIM     = 0x94A3B8;  // slate-400 (texte secondaire / repos)
+    static constexpr uint32_t INACTIVE     = 0x334155;  // slate-700 (hors ligne / NaN)
+    static constexpr uint32_t WARM_PINK    = 0xF472B6;  // pink-400 (temperature interieure chaude)
+    // --- Accents "verre" ---
+    static constexpr uint32_t ACCENT       = 0x22D3EE;  // cyan-400 (accent primaire / halo)
+    static constexpr uint32_t ACCENT_ALT   = 0xA78BFA;  // violet-400 (accent secondaire)
+    static constexpr uint32_t GLASS_RIM    = 0x93A3BC;  // Liseré lumineux (arête de verre)
+    static constexpr uint32_t EARLY        = 0xFB7185;  // rose-400 (journee a debauche matinale)
+    static constexpr uint32_t PAST         = 0x64748B;  // slate-500 (jour passe, estompe)
+    // --- Vigilance Meteo-France : NE PAS modifier (semantique officielle) ---
     static constexpr uint32_t ALERT_YELLOW = 0xFFFF00;  // Vigilance jaune MF
     static constexpr uint32_t ALERT_RED    = 0xFF0000;  // Vigilance rouge MF
 }
