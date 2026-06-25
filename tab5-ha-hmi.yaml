@@ -51,7 +51,7 @@ esphome:
       - delay: 1s
       - media_player.volume_set:
           id: speaker_player
-          volume: 0.7
+          volume: 1.0
       # Allumer l'ampli APRES le media_player pour eviter le bruit I2S
       - switch.turn_on: speaker_enable
       - wait_until:
