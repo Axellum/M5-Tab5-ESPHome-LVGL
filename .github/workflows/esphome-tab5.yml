@@ -1,0 +1,25 @@
+name: ESPHome Tab5 Compilation
+
+on:
+  push:
+    paths:
+      - '**'
+  pull_request:
+    paths:
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build ESPHome Firmware
+        uses: esphome/build-action@v7.3.0
+        with:
+          yaml-file: tab5-ha-hmi.yaml
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tab5-firmware
+          path: .esphome/build/tab5-ha-hmi/.pioenvs/tab5-ha-hmi/firmware.bin
