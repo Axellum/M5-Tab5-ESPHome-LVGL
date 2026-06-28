@@ -33,7 +33,7 @@ esp32_hosted:
 logger:
   # [Audit F-08] INFO en production (DEBUG = verbeux, expose des fragments de
   # payload sur le port série et charge le CPU). Repasser à DEBUG pour le dev.
-  level: DEBUG
+  level: INFO
   baud_rate: 115200
   hardware_uart: USB_SERIAL_JTAG
   tx_buffer_size: 2048
@@ -45,6 +45,11 @@ psram:
 ota:
   platform: esphome
   password: !secret ota_password
+  on_end:
+    then:
+      - delay: 2s
+      - lambda: |-
+          esp_restart();
 
 safe_mode:
   num_attempts: 10
