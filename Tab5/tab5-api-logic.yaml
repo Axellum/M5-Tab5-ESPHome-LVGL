@@ -16,6 +16,7 @@ api:
         payload: string
       then:
         - lambda: |-
+            if (id(h4_time) == nullptr) return;
             parse_and_update_heures_bulk(payload);
             WeatherHourSlot slots[] = {
                 {id(h4_time), id(h4_temp), id(h4_prob), id(h4_icon_layer1), id(h4_icon_layer2)},
@@ -33,6 +34,7 @@ api:
         payload: string
       then:
         - lambda: |-
+            if (id(j0_day) == nullptr) return;
             parse_and_update_jours_bulk(payload);
             WeatherDaySlot slots[] = {
                 {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
@@ -54,6 +56,8 @@ api:
       then:
 
         - lambda: |-
+
+            if (id(icon_card_shutter_arrow) == nullptr) return;
 
             if (etat_physique == "En_mouvement") {
 
@@ -134,6 +138,8 @@ api:
       then:
 
         - lambda: |-
+
+            if (id(clim_target) == nullptr || id(clim_target_popup) == nullptr) return;
 
             id(clim_target_temp) = target;
             char buf_target[16];
@@ -331,6 +337,8 @@ api:
 
         - lambda: |-
 
+            if (id(icon_rain_predict) == nullptr) return;
+
             // Frost risk makes the exterior thermometer orange (Desactive car temperature exterieure supprimee)
             // if (gel >= 5) {
             //   lv_obj_set_style_text_color(id(icon_temp), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
@@ -372,6 +380,8 @@ api:
 
         - lambda: |-
 
+            if (id(icon_rain_predict) == nullptr) return;
+
             id(global_humidite) = humidite;
 
             if (id(global_neige) < 5) {
@@ -405,6 +415,8 @@ api:
       then:
 
         - lambda: |-
+
+            if (id(rb_0_in) == nullptr) return;
 
             uint32_t c_empty = 0x4A596E;
 
@@ -489,6 +501,8 @@ api:
       then:
 
         - lambda: |-
+
+            if (id(lbl_planning_text) == nullptr) return;
 
             id(plan_ligne_1) = ligne1;
             id(plan_ligne_2) = ligne2;
