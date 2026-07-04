@@ -120,39 +120,30 @@ api:
             }
 
     - service: tab5_maj_clim
-
       variables:
-
-        target: float
-
-        current: float
-
+        target: string
+        current: string
         mode: string
-
         preset: string
-
         fan: string
-
         swing: string
-
       then:
-
         - lambda: |-
-
             if (id(clim_target) == nullptr || id(clim_target_popup) == nullptr) return;
 
-            id(clim_target_temp) = target;
+            float f_target = atof(target.c_str());
+            float f_current = atof(current.c_str());
+
+            id(clim_target_temp) = f_target;
             char buf_target[16];
-            sprintf(buf_target, "%.1f", target);
+            sprintf(buf_target, "%.1f", f_target);
             lv_label_set_text(id(clim_target), buf_target);
             lv_label_set_text(id(clim_target_popup), buf_target);
-            lv_arc_set_value(id(arc_temp_popup), (int)target);
+            lv_arc_set_value(id(arc_temp_popup), (int)f_target);
 
             char buf_curr[16];
-            sprintf(buf_curr, "%.1f \xC2\xB0""C", current);
+            sprintf(buf_curr, "%.1f \xC2\xB0""C", f_current);
             lv_label_set_text(id(val_temp_int_popup), buf_curr);
-
-            
 
             id(clim_preset_mode) = preset;
 
@@ -324,79 +315,50 @@ api:
 
 
     - service: tab5_maj_probabilites
-
       variables:
-
-        uv: int
-
-        gel: int
-
-        neige: int
-
+        uv: string
+        gel: string
+        neige: string
       then:
-
         - lambda: |-
-
-            if (id(icon_rain_predict) == nullptr) return;
-
-            // Frost risk makes the exterior thermometer orange (Desactive car temperature exterieure supprimee)
-            // if (gel >= 5) {
-            //   lv_obj_set_style_text_color(id(icon_temp), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-            // } else {
-            //   lv_obj_set_style_text_color(id(icon_temp), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-            // }
-
-            // Snow risk changes the 5min rain predict icon
-
-            id(global_neige) = neige;
-
-            if (neige >= 5) {
-
+            if (id(j0_day) == nullptr) return;
+            
+            int i_uv = atoi(uv.c_str());
+            int i_gel = atoi(gel.c_str());
+            int i_neige = atoi(neige.c_str());
+            
+            id(global_neige) = i_neige;
+            
+            if(i_neige >= 5) {
               lv_label_set_text(id(icon_rain_predict), "\U000F0598");
-
               lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-
             } else {
-
               lv_label_set_text(id(icon_rain_predict), "\U000F0597");
-
-              uint32_t c_hydro = get_humidity_color((float)id(global_humidite)); // AXE2: factorisation
-
+              uint32_t c_hydro = get_humidity_color((float)id(global_humidite));
               lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(c_hydro), LV_PART_MAIN);
-
             }
 
     - service: tab5_maj_meteo_actuelle
-
       variables:
-
         condition: string
-
-        temperature: float
-
-        humidite: float
-
+        temperature: string
+        humidite: string
       then:
-
         - lambda: |-
-
             if (id(icon_rain_predict) == nullptr) return;
 
-            id(global_humidite) = humidite;
+            id(global_humidite) = atof(humidite.c_str());
 
             if (id(global_neige) < 5) {
-
               uint32_t c_hydro = get_humidity_color((float)id(global_humidite)); // AXE2: factorisation
-
               lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(c_hydro), LV_PART_MAIN);
-
             }
 
             // Desactive : la temperature exterieure a ete retiree
-            // char buf_t[32]; sprintf(buf_t, "%.0f \xC2\xB0", temperature);
+            // char buf_t[32]; sprintf(buf_t, "%.0f \xC2\xB0", atof(temperature.c_str()));
             // lv_label_set_text(id(current_temp), buf_t);
             // // AXE1: factorisation couleur temperature via tab5_custom.cpp
-            // uint32_t c_temp = get_temperature_color(temperature);
+            // uint32_t c_temp = get_temperature_color(atof(temperature.c_str()));
             // lv_obj_set_style_text_color(id(current_temp), lv_color_hex(c_temp), LV_PART_MAIN);
 
             auto apply_weather_icon = [](lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card) {
@@ -405,63 +367,40 @@ api:
             apply_weather_icon(nullptr, nullptr, condition, true);
 
     - service: tab5_maj_pluie_1h
-
       variables:
-
-        index_5mn: int
-
+        index_5mn: string
         intensite: string
-
       then:
-
         - lambda: |-
-
             if (id(rb_0_in) == nullptr) return;
+            int idx = atoi(index_5mn.c_str());
 
             uint32_t c_empty = 0x4A596E;
-
             uint32_t c_faible = 0x81D4FA;      // Bleu clair
-
             uint32_t c_modere = 0x29B6F6;      // Bleu moyen
-
-            uint32_t c_forte = 0x0277BD;       // Bleu fonce
-
-            uint32_t c_tres_forte = 0x01579B;  // Bleu tres fonce
+            uint32_t c_forte = 0x0277BD;       // Bleu foncé
+            uint32_t c_tres_forte = 0x01579B;  // Bleu très foncé
 
             uint32_t c = c_empty;
-
             int h = 0;
 
             if (intensite == "Pluie faible") { c = c_faible; h = 13; } // ~1/4 hauteur
-
             else if (intensite == "Pluie modérée") { c = c_modere; h = 25; } // 1/2 hauteur
-
             else if (intensite == "Pluie forte") { c = c_forte; h = 38; } // 3/4 hauteur
-
             else if (intensite == "Pluie très forte" || intensite == "Pluie trés forte") { c = c_tres_forte; h = 50; } // hauteur max
 
             lv_obj_t* target = NULL;
 
-            switch(index_5mn) {
-
+            switch(idx) {
               case 0: target = id(rb_0_in); break;
-
               case 1: target = id(rb_1_in); break;
-
               case 2: target = id(rb_2_in); break;
-
               case 3: target = id(rb_3_in); break;
-
               case 4: target = id(rb_4_in); break;
-
               case 5: target = id(rb_5_in); break;
-
               case 6: target = id(rb_6_in); break;
-
               case 7: target = id(rb_7_in); break;
-
               case 8: target = id(rb_8_in); break;
-
             }
 
             if(target != NULL) {
