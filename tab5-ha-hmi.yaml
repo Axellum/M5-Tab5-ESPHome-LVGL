@@ -15,7 +15,12 @@ substitutions:
   entity_light_bureau: light.sonoff_1001700057
   
   # --- Climatisation ---
-  entity_climate_salon: climate.daikinap71273_room_temperature
+  # entity_climate_salon corrige le 05/07/2026 : l'ancienne valeur
+  # (climate.daikinap71273_room_temperature) n'existe plus dans HA - entite
+  # renommee, seul un residu "_2" "unavailable" subsistait (probable sequelle
+  # de la duplication remote_homeassistant deja documentee). Vraie entite
+  # verifiee en direct (get_state, state=cool) : climate.salon_daikinap71273_clim
+  entity_climate_salon: climate.salon_daikinap71273_clim
 
   # --- Sélections Assistant Vocal ---
   entity_tab5_pipeline_select: select.m5stack_tab5_home_assistant_hmi_assistant
@@ -50,6 +55,16 @@ esphome:
   on_boot:
     priority: 600
     then:
+      # lvgl.resume explicite (05/07/2026) : ajoute comme premiere piste pour
+      # le bug "ecran noir apres reboot logiciel" (le light backlight a
+      # restore_mode: RESTORE_DEFAULT_ON, qui ne declenche pas on_turn_on/
+      # lvgl.resume au boot car pas de vraie transition d'etat). TESTE SEUL
+      # -> N'A PAS SUFFI (ecran reste noir). La vraie piste qui a marche est
+      # le logger: level: VERY_VERBOSE dans tab5-hardware.yaml (cf. son gros
+      # commentaire). Cette ligne est gardee car harmless et pourrait aider
+      # en combinaison, mais NE PAS CROIRE qu'elle suffit a elle seule -
+      # c'est le logger verbeux qui est le vrai garde-fou actuellement actif.
+      - lvgl.resume:
       - light.turn_on: backlight
       - delay: 1s
       - media_player.volume_set:

@@ -31,9 +31,53 @@ esp32_hosted:
   sdio_frequency: 20MHz
 
 logger:
-  # [Audit F-08] INFO en production (DEBUG = verbeux, expose des fragments de
-  # payload sur le port série et charge le CPU). Repasser à DEBUG pour le dev.
-  level: INFO
+  # ═══════════════════════════════════════════════════════════════════════
+  # [05/07/2026] NE PAS REPASSER EN INFO SANS RELIRE CE COMMENTAIRE EN ENTIER.
+  # ═══════════════════════════════════════════════════════════════════════
+  # Bug historique (recurrent, plusieurs sessions, jamais diagnostique avant
+  # ce jour) : apres un redemarrage LOGICIEL (OTA, bouton HA, esp_restart),
+  # l'ecran reste NOIR alors que TOUT le reste fonctionne parfaitement
+  # (WiFi connecte, API HA connectee, donnees meteo/planning recues, uptime
+  # stable, aucun crash/watchdog/rollback). Seul un vrai debranchement
+  # electrique (power cycle complet du GPIO expander PI4IOE5V6408, qui NE
+  # SE RESET PAS avec l'ESP32 lui-meme) ramenait l'ecran de facon fiable.
+  #
+  # Diagnostic fait le 05/07/2026 (logs serie USB captures en direct
+  # pendant plusieurs reboots reels, cf. historique de session) :
+  #   - level: INFO (ou meme le niveau normal de prod)  -> ecran NOIR,
+  #     reproduit 2 fois de suite ce soir-la.
+  #   - level: VERY_VERBOSE                              -> ecran OK,
+  #     reproduit 2 fois de suite juste apres.
+  #   Dans les DEUX cas, le firmware rapporte un succes complet : "MIPI DSI
+  #   setup complete", sequence d'init du panneau envoyee integralement
+  #   (~25 commandes), LVGL flush_cb qui envoie bien une image 1280x720.
+  #   Donc le firmware CROIT avoir reussi dans les deux cas — la difference
+  #   observable n'est QUE le niveau de log.
+  #
+  # Hypothese la plus probable (NON CONFIRMEE, pas de certitude absolue) :
+  #   le reset_pin de l'ecran (display: mipi_dsi:) passe par le GPIO
+  #   expander I2C PI4IOE5V6408 (pas un GPIO natif ESP32) — chaque
+  #   digital_write() dessus est une transaction I2C, plus lente et moins
+  #   deterministe qu'un GPIO natif. Le composant ESPHome mipi_dsi.cpp fait
+  #   bien un delai base sur millis() (120ms apres reset avant SLEEP_OUT),
+  #   donc en theorie il ne devrait PAS dependre de la vitesse des logs —
+  #   mais en pratique, le supplement de temps qu'ajoute VERY_VERBOSE
+  #   (formatage + envoi UART de centaines de lignes par boot) semble
+  #   laisser le bus I2C partage (touch, DAC ES8388, GPIO expander) se
+  #   stabiliser suffisamment avant/pendant la sequence de reset ecran.
+  #   A confirmer un jour avec un vrai oscilloscope sur le bus I2C ou en
+  #   ouvrant un ticket upstream ESPHome/M5Stack — pas verifiable a distance.
+  #
+  # DONC : level: VERY_VERBOSE est laisse ACTIF EN PERMANENCE comme
+  # garde-fou, pas comme reglage de debug temporaire. Inconvenients connus
+  # et acceptes : plus lent, plus de trafic serie, expose plus de details
+  # internes sur le port USB (pas un risque reseau, USB seulement).
+  # Si vous voulez un jour repasser a INFO/DEBUG pour la proprete des logs :
+  # ne le faites qu'apres AU MOINS 10 redemarrages logiciels consecutifs
+  # (OTA + bouton HA + esp_restart) confirmes visuellement par un humain
+  # regardant l'ecran a chaque fois - pas juste via les capteurs HA
+  # (ha_api_status/uptime), qui restent "sains" meme quand l'ecran est noir.
+  level: VERY_VERBOSE
   baud_rate: 115200
   hardware_uart: USB_SERIAL_JTAG
   tx_buffer_size: 2048
