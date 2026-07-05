@@ -333,6 +333,32 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
 }
 
 // =============================================================================
+// Carte lumiere (epaule j2/j3/j4 + switch associe + popup power) : factorise depuis
+// light_chambre_state/light_salon_state/light_led_state (tab5-sensors.yaml, #T164)
+// =============================================================================
+
+void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* icon_switch,
+    lv_obj_t* lbl_switch_state, lv_obj_t* btn_power_icon,
+    const std::string& current_light_entity, const std::string& this_entity, bool is_on) {
+
+    if (icon_room == nullptr || icon_light == nullptr) return;
+
+    uint32_t color = is_on ? UIColor::WARNING : UIColor::TEXT_DIM;
+    lv_obj_set_style_text_color(icon_room, lv_color_hex(color), LV_PART_MAIN);
+    lv_obj_set_style_text_color(icon_light, lv_color_hex(color), LV_PART_MAIN);
+    lv_label_set_text(icon_light, is_on ? "\U000F06E8" : "\U000F0335");
+
+    if (icon_switch != nullptr && lbl_switch_state != nullptr) {
+        lv_obj_set_style_text_color(icon_switch, lv_color_hex(color), LV_PART_MAIN);
+        lv_label_set_text(lbl_switch_state, is_on ? "Allumé" : "Éteint");
+        lv_obj_set_style_text_color(lbl_switch_state, lv_color_hex(color), LV_PART_MAIN);
+    }
+    if (btn_power_icon != nullptr && current_light_entity == this_entity) {
+        lv_obj_set_style_text_color(btn_power_icon, lv_color_hex(color), LV_PART_MAIN);
+    }
+}
+
+// =============================================================================
 // Tri dynamique plantes : 5 capteurs -> 4 slots (2 secs + mediane + humide)
 // =============================================================================
 

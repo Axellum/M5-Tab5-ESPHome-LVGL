@@ -187,148 +187,29 @@ text_sensor:
           }
 
   - platform: homeassistant
-
     id: light_chambre_state
-
     entity_id: ${entity_light_chambre}
-
     on_value:
-
+      # Bloc factorise dans update_light_card_ui() (#T164, ex-triplique chambre/salon/led)
       - lambda: |-
-
-          if (id(icon_card_lit_j2) == nullptr || id(icon_card_light_j2) == nullptr) return;
-
-          if(x == "on") {
-
-            lv_obj_set_style_text_color(id(icon_card_lit_j2), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(icon_card_light_j2), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-
-            lv_label_set_text(id(icon_card_light_j2), "\U000F06E8");
-
-            if (id(icon_sw2) != nullptr && id(lbl_sw2_state) != nullptr) {
-              lv_obj_set_style_text_color(id(icon_sw2), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-              lv_label_set_text(id(lbl_sw2_state), "Allumé");
-              lv_obj_set_style_text_color(id(lbl_sw2_state), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-            }
-            if (id(btn_light_power_icon) != nullptr && id(current_light_entity) == "${entity_light_chambre}") {
-              lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-            }
-
-          } else {
-
-            lv_obj_set_style_text_color(id(icon_card_lit_j2), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(icon_card_light_j2), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-
-            lv_label_set_text(id(icon_card_light_j2), "\U000F0335");
-
-            if (id(icon_sw2) != nullptr && id(lbl_sw2_state) != nullptr) {
-              lv_obj_set_style_text_color(id(icon_sw2), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-              lv_label_set_text(id(lbl_sw2_state), "Éteint");
-              lv_obj_set_style_text_color(id(lbl_sw2_state), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-            }
-            if (id(btn_light_power_icon) != nullptr && id(current_light_entity) == "${entity_light_chambre}") {
-              lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-            }
-
-          }
+          update_light_card_ui(id(icon_card_lit_j2), id(icon_card_light_j2), id(icon_sw2), id(lbl_sw2_state),
+              id(btn_light_power_icon), id(current_light_entity), "${entity_light_chambre}", x == "on");
 
   - platform: homeassistant
-
     id: light_salon_state
-
     entity_id: ${entity_light_salon}
-
     on_value:
-
       - lambda: |-
-
-          if (id(icon_card_salon_j3) == nullptr || id(icon_card_light_j3) == nullptr) return;
-
-          if(x == "on") {
-
-            lv_obj_set_style_text_color(id(icon_card_salon_j3), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(icon_card_light_j3), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-
-            lv_label_set_text(id(icon_card_light_j3), "\U000F06E8");
-
-            if (id(icon_sw3) != nullptr && id(lbl_sw3_state) != nullptr) {
-              lv_obj_set_style_text_color(id(icon_sw3), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-              lv_label_set_text(id(lbl_sw3_state), "Allumé");
-              lv_obj_set_style_text_color(id(lbl_sw3_state), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-            }
-            if (id(btn_light_power_icon) != nullptr && id(current_light_entity) == "${entity_light_salon}") {
-              lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-            }
-
-          } else {
-
-            lv_obj_set_style_text_color(id(icon_card_salon_j3), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(icon_card_light_j3), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-
-            lv_label_set_text(id(icon_card_light_j3), "\U000F0335");
-
-            if (id(icon_sw3) != nullptr && id(lbl_sw3_state) != nullptr) {
-              lv_obj_set_style_text_color(id(icon_sw3), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-              lv_label_set_text(id(lbl_sw3_state), "Éteint");
-              lv_obj_set_style_text_color(id(lbl_sw3_state), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-            }
-            if (id(btn_light_power_icon) != nullptr && id(current_light_entity) == "${entity_light_salon}") {
-              lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-            }
-
-          }
+          update_light_card_ui(id(icon_card_salon_j3), id(icon_card_light_j3), id(icon_sw3), id(lbl_sw3_state),
+              id(btn_light_power_icon), id(current_light_entity), "${entity_light_salon}", x == "on");
 
   - platform: homeassistant
-
     id: light_led_state
-
     entity_id: ${entity_light_bureau}
-
     on_value:
-
       - lambda: |-
-
-          if (id(icon_card_led_j4) == nullptr || id(icon_card_light_j4) == nullptr) return;
-
-          if(x == "on") {
-
-            lv_obj_set_style_text_color(id(icon_card_led_j4), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(icon_card_light_j4), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-
-            lv_label_set_text(id(icon_card_light_j4), "\U000F06E8");
-
-            if (id(icon_sw4) != nullptr && id(lbl_sw4_state) != nullptr) {
-              lv_obj_set_style_text_color(id(icon_sw4), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-              lv_label_set_text(id(lbl_sw4_state), "Allumé");
-              lv_obj_set_style_text_color(id(lbl_sw4_state), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-            }
-            if (id(btn_light_power_icon) != nullptr && id(current_light_entity) == "${entity_light_bureau}") {
-              lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-            }
-
-          } else {
-
-            lv_obj_set_style_text_color(id(icon_card_led_j4), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(icon_card_light_j4), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-
-            lv_label_set_text(id(icon_card_light_j4), "\U000F0335");
-
-            if (id(icon_sw4) != nullptr && id(lbl_sw4_state) != nullptr) {
-              lv_obj_set_style_text_color(id(icon_sw4), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-              lv_label_set_text(id(lbl_sw4_state), "Éteint");
-              lv_obj_set_style_text_color(id(lbl_sw4_state), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-            }
-            if (id(btn_light_power_icon) != nullptr && id(current_light_entity) == "${entity_light_bureau}") {
-              lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-            }
-
-          }
+          update_light_card_ui(id(icon_card_led_j4), id(icon_card_light_j4), id(icon_sw4), id(lbl_sw4_state),
+              id(btn_light_power_icon), id(current_light_entity), "${entity_light_bureau}", x == "on");
 
   - platform: wifi_info
 
@@ -472,9 +353,9 @@ sensor:
   - platform: homeassistant
     id: moisture_1
     entity_id: ${entity_plante_1}
-    on_value:
+    on_value: &moisture_on_value
+      # Tri dynamique des 4 slots plantes a chaque mise a jour (bloc partage via ancre YAML, cf. #T164)
       - lambda: |-
-          // Tri dynamique des 4 slots plantes a chaque mise a jour
           float vals[5] = {id(moisture_1).state, id(moisture_2).state, id(moisture_3).state, id(moisture_4).state, id(moisture_5).state};
           const char* icons[5] = {"\U000F0E66", "\U000F09F1", "\U000F0D08", "\U000F024A", "\U000F02E5"};
           MoistureSlotUI slots[4] = {
@@ -488,62 +369,22 @@ sensor:
   - platform: homeassistant
     id: moisture_2
     entity_id: ${entity_plante_2}
-    on_value:
-      - lambda: |-
-          float vals[5] = {id(moisture_1).state, id(moisture_2).state, id(moisture_3).state, id(moisture_4).state, id(moisture_5).state};
-          const char* icons[5] = {"\U000F0E66", "\U000F09F1", "\U000F0D08", "\U000F024A", "\U000F02E5"};
-          MoistureSlotUI slots[4] = {
-              {id(icon_pot_s0), id(val_pot_s0)},
-              {id(icon_pot_s1), id(val_pot_s1)},
-              {id(icon_pot_s2), id(val_pot_s2)},
-              {id(icon_pot_s3), id(val_pot_s3)}
-          };
-          sort_and_update_moisture_slots(vals, icons, slots);
+    on_value: *moisture_on_value
 
   - platform: homeassistant
     id: moisture_3
     entity_id: ${entity_plante_3}
-    on_value:
-      - lambda: |-
-          float vals[5] = {id(moisture_1).state, id(moisture_2).state, id(moisture_3).state, id(moisture_4).state, id(moisture_5).state};
-          const char* icons[5] = {"\U000F0E66", "\U000F09F1", "\U000F0D08", "\U000F024A", "\U000F02E5"};
-          MoistureSlotUI slots[4] = {
-              {id(icon_pot_s0), id(val_pot_s0)},
-              {id(icon_pot_s1), id(val_pot_s1)},
-              {id(icon_pot_s2), id(val_pot_s2)},
-              {id(icon_pot_s3), id(val_pot_s3)}
-          };
-          sort_and_update_moisture_slots(vals, icons, slots);
+    on_value: *moisture_on_value
 
   - platform: homeassistant
     id: moisture_4
     entity_id: ${entity_plante_4}
-    on_value:
-      - lambda: |-
-          float vals[5] = {id(moisture_1).state, id(moisture_2).state, id(moisture_3).state, id(moisture_4).state, id(moisture_5).state};
-          const char* icons[5] = {"\U000F0E66", "\U000F09F1", "\U000F0D08", "\U000F024A", "\U000F02E5"};
-          MoistureSlotUI slots[4] = {
-              {id(icon_pot_s0), id(val_pot_s0)},
-              {id(icon_pot_s1), id(val_pot_s1)},
-              {id(icon_pot_s2), id(val_pot_s2)},
-              {id(icon_pot_s3), id(val_pot_s3)}
-          };
-          sort_and_update_moisture_slots(vals, icons, slots);
+    on_value: *moisture_on_value
 
   - platform: homeassistant
     id: moisture_5
     entity_id: ${entity_plante_5}
-    on_value:
-      - lambda: |-
-          float vals[5] = {id(moisture_1).state, id(moisture_2).state, id(moisture_3).state, id(moisture_4).state, id(moisture_5).state};
-          const char* icons[5] = {"\U000F0E66", "\U000F09F1", "\U000F0D08", "\U000F024A", "\U000F02E5"};
-          MoistureSlotUI slots[4] = {
-              {id(icon_pot_s0), id(val_pot_s0)},
-              {id(icon_pot_s1), id(val_pot_s1)},
-              {id(icon_pot_s2), id(val_pot_s2)},
-              {id(icon_pot_s3), id(val_pot_s3)}
-          };
-          sort_and_update_moisture_slots(vals, icons, slots);
+    on_value: *moisture_on_value
 
 
   - platform: uptime

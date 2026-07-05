@@ -95,6 +95,13 @@ struct MoistureSlotUI {
 void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
     MoistureSlotUI slots[4]);
 
+// Met a jour l'icone carte (epaule j2/j3/j4), l'icone/label du switch associe et le
+// bouton popup power si c'est la lampe actuellement affichee. Factorise depuis les 3
+// blocs identiques light_chambre_state/light_salon_state/light_led_state (#T164).
+void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* icon_switch,
+    lv_obj_t* lbl_switch_state, lv_obj_t* btn_power_icon,
+    const std::string& current_light_entity, const std::string& this_entity, bool is_on);
+
 // Couleurs semantiques centralisees (miroir des tokens YAML color:)
 // Utiliser dans les lambdas C++ au lieu des hex bruts
 // Palette "Dark Mode Slate" : miroir EXACT des tokens YAML color: (les garder synchro).
