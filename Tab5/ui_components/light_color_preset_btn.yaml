@@ -1,0 +1,24 @@
+button:
+  width: 170
+  height: 60
+  radius: 12
+  styles: style_clim_btn
+  on_short_click:
+    - homeassistant.service:
+        service: light.turn_on
+        data:
+          entity_id: !lambda 'return id(current_light_entity);'
+          color_name: "${color_name}"
+  widgets:
+    - label:
+        text: "\U000F0335"
+        align: LEFT_MID
+        x: 10
+        text_font: mdi_font_45
+        text_color: ${icon_color}
+    - label:
+        text: "${label_text}"
+        align: LEFT_MID
+        x: 60
+        text_font: roboto_22
+        text_color: color_text_dim
