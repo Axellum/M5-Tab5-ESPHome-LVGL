@@ -14,6 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Générer un secrets.yaml factice pour la CI
+        run: |
+          cat > secrets.yaml << 'EOF'
+          wifi_ssid: "ci_dummy_ssid"
+          wifi_password: "ci_dummy_password"
+          wifi_ap_password: "ci_dummy_ap_password"
+          api_encryption_key: "26IVe/bZ/aI+T8G96D7aYZlM2EH8QUG8JtsZ50HxaCE="
+          ota_password: "ci_dummy_ota_password"
+          EOF
       - name: Build ESPHome Firmware
         uses: esphome/build-action@v7.3.0
         with:
