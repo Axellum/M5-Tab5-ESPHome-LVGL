@@ -1,3 +1,8 @@
+// tab5_custom.cpp — Implementation : mise a jour LVGL (update_meteo_icon,
+// sort_and_update_moisture_slots, transition_widgets), mappeurs de couleur
+// (get_temperature_color, get_humidity_color), parsing des payloads bulk
+// (parse_and_update_heures_bulk, parse_and_update_jours_bulk). Toutes les
+// fonctions ici gardent contre les lv_obj_t* nuls (LVGL pas encore init).
 #include "tab5_custom.h"
 #include "lvgl.h" // Needed for lv_label_set_text etc
 #include "esphome/components/lvgl/lvgl_esphome.h"

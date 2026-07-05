@@ -4,243 +4,88 @@
 
 ---
 
+> ⚠️ This README was rewritten on 2026-07-05 to match the current codebase after the previous version was found describing an unrelated, outdated iteration of the project (different service names, a 6-page layout that no longer exists). If you find another mismatch, it's the code that's right — please fix this file, not the other way around.
+
 This folder contains the ESPHome configuration packages and the C++ source files for the Tab5 firmware.
 
-The entry point is `../tab5-ha-hmi.yaml` at the repository root. That file imports everything here via `!include`.
+The entry point is `../tab5-ha-hmi.yaml` at the repository root. It declares `substitutions` (your HA entity IDs), the `on_boot` sequence, `ota:`/`api:` config, and the `packages:` import list for everything in this folder.
+
+**Screen layout:** a single 1280×720 page (`page_main` in `tab5-lvgl.yaml`), not multiple pages. Navigation is by touch (clim/light popups, console) and swipe gestures (top = console, bottom = close console, left/right on the bottom half = cycle 5 forecast pages: 2 hourly + 3 daily windows).
 
 ---
 
 ## File descriptions
 
-### `tab5-ha-hmi.yaml` *(root, not in this folder)*
-Entry point. Declares the `substitutions` block (your entity IDs), the `on_boot` sequence, and the `packages:` import list. The only file to edit when adapting the project to a different Home Assistant setup.
-
----
-
 ### `tab5-hardware.yaml`
-Low-level hardware configuration. Everything that touches physical pins lives here.
-
-- **Display:** SPI bus, RGB framebuffer configuration, backlight PWM
-- **Touch:** I2C controller, touch calibration
-- **I2C buses:** two buses — one for the display/touch, one for the ES8388 DAC
-- **ES8388 DAC:** I2C register initialization sequence on boot (`i2c.write_bytes` to register `0x04`), I2S output bus
-- **Microphone:** I2S input bus at 16 kHz / 16-bit mono
-- **Ambient light sensor:** ADC reading for auto-brightness
-- **Speaker enable:** GPIO switch for the amplifier
-
-**What to change:** usually nothing, unless you are adapting this to a different hardware variant. GPIO numbers match Tab5 V2.
-
----
+Low-level hardware: display/touch buses, ES8388 DAC I2C init, speaker/mic I2S, PI4IOE5V6408 GPIO expander (Wi-Fi power/antenna switches), `ota:` (password-protected, see `secrets.yaml`).
 
 ### `tab5-sensors.yaml`
-All sensor entities exposed to Home Assistant over the ESPHome API.
-
-Includes:
-- Internal ESP32-P4 temperature (°C)
-- Ambient light level (lux)
-- Wi-Fi signal strength (dBm) and uptime
-- Plant moisture sensors (BLE, up to 5 devices)
-- Room temperature and humidity (linked to HA entities via `homeassistant` sensor platform)
-
-**What to change:** BLE sensor MAC addresses if you use plant monitors, and the `homeassistant` sensor entity IDs (these are in the substitutions block of the root file, not here directly).
-
----
+All `sensor`/`text_sensor`/`binary_sensor`/`switch` entities exposed over the ESPHome API: system diagnostics (RAM/PSRAM/uptime/Wi-Fi), plant moisture (5×), light/PC/volet state mirrors, volume slider wiring.
 
 ### `tab5-api-logic.yaml`
-The API layer. This is where Home Assistant connects to the screen.
-
-Two types of things live here:
-
-**`api: services:`** — ESPHome service endpoints that HA calls to push data. Each service has a named payload parameter (typically a semicolon-delimited string) and a `lambda:` block that calls a C++ function to parse and apply it.
-
-Examples of declared services:
-- `tab5_update_meteo_7j` — 7-day weather forecast (7 × icon + max/min temp + condition code)
-- `tab5_update_pluie_heure` — hourly rain chart (60 values, 0–100)
-- `tab5_update_calendrier` — calendar events (4 slots × title + time + color tag)
-- `tab5_update_clim` — climate state (mode, target temp, current temp)
-- `tab5_update_plantes` — plant moisture values (5 sensors)
-- `tab5_update_alerte_meteo` — weather alert text + severity level
-
-**`lambda:` blocks** — C++ logic for state management, conditional UI updates, and anything that requires branching logic not expressible cleanly in YAML action sequences.
-
-**What to change:** nothing structurally, but if you add a new screen or data source, new service endpoints are declared here.
-
----
-
-### `tab5-styles.yaml`
-Global LVGL style definitions. All style objects are declared here and referenced by ID in `tab5-lvgl.yaml`.
-
-Style categories:
-- `style_panel_base` — transparent container, no border, no padding
-- `style_card` — dark rounded card for content panels
-- `style_text_title` — large white bold text
-- `style_text_value` — large accent-color numeric value
-- `style_text_dim` — small grey secondary text
-- `style_btn_normal` / `style_btn_pressed` / `style_btn_active` — button states
-- `style_arc_indicator` — colored fill for thermostat arc
-- `style_progress_moisture` — plant moisture bar style
-- Color constants via `UIColor` namespace in C++
-
-**What to change:** color palette (hex values in the C++ header) to match your preferred theme.
-
----
+The `api: services:` block — the actual contract with Home Assistant. Each `tab5_maj_*` service receives a payload from an HA automation and calls into `tab5_custom.cpp` (via lambdas) to update the LVGL widgets. See the service table below.
 
 ### `tab5-globals.yaml`
-Global variables shared across all packages.
-
-| Variable | Type | Description |
-|----------|------|-------------|
-| `boot_complete` | `bool` | Gate: true after HA API connects and boot sequence finishes |
-| `conversation_mode` | `bool` | false = HA mode, true = conversation/LLM mode |
-| `voice_state` | `int` | Current pipeline state (0=idle, 1=listening, 2=processing, 3=speaking, 4=error) |
-| `last_temp_salon` | `float` | Cached last temperature value (prevents NaN display on reconnect) |
-| `clim_target_temp` | `float` | Cached climate target temperature |
-| `clim_mode` | `std::string` | Cached climate mode string |
-
-**What to change:** if you add new cached state variables, declare them here with explicit types and initial values.
-
----
-
-### `tab5-lvgl.yaml`
-The complete UI layout. All screens, all widgets, all icons.
-
-Screen structure:
-```
-main_screen
-├── tab_bar              ← bottom navigation bar (6 tabs)
-├── page_accueil         ← home: time, date, room temp/humidity, alerts, mic icon, mode button
-├── page_meteo           ← weather: 7-day forecast cards + hourly rain bar chart
-├── page_clim            ← climate: arc thermostat, mode selector, room temp
-├── page_plantes         ← plants: 5 moisture gauges + temperature
-├── page_console         ← debug: scrollable log output
-└── page_planning        ← calendar: 4 event slots with color tags
-```
-
-All widgets reference style IDs from `tab5-styles.yaml`. No inline style properties.
-
-**What to change:** widget positions (`x`, `y`, `width`, `height`) if you want to adjust layout. Icon glyphs (MDI Unicode code points) if you want different icons.
-
----
+All `globals:` (shared state read/written across files) + the 6s central-panel rotator (planning/rain/alerts). See the globals table below.
 
 ### `tab5-scripts.yaml`
-Short reusable ESPHome script blocks. Called from lambdas in `tab5-api-logic.yaml` or directly from HA automations.
+Reusable ESPHome `script:` blocks (debounced actions, timed sequences). Small and growing — prefer adding a script here over duplicating a `delay` + action pattern inline.
 
-Currently minimal — used mainly for brightness adjustment sequences and reconnection handling.
+### `tab5-styles.yaml`
+All LVGL `style_definitions` (glassmorphism "Slate" theme) + font declarations (Roboto sizes, MDI icon sizes, weather icon font). Color tokens live in `UIColor::` (`tab5_custom.h`) — **never hardcode a hex color in a YAML lambda**, add a token instead.
 
----
+### `tab5-lvgl.yaml`
+The single-page layout: clock/date, status icons, quick-action buttons, climate card, moisture card, central rotating card, 5 forecast cards (daily/hourly), swipe gesture handling.
 
-### `tab5_custom.h`
-C++ header. Declares all functions used from YAML `lambda:` blocks.
+### `ui_components/*.yaml`
+Included by `tab5-lvgl.yaml`: `climate_card.yaml`/`climate_popup.yaml`, `light_popup.yaml`, `console_sys.yaml` (diagnostics + reboot), `forecast_daily.yaml`/`forecast_hourly.yaml`, `moisture_sensors.yaml`, `switches_card.yaml`.
 
-Functions declared here must have their implementations in `tab5_custom.cpp`. The header is included first by ESPHome's build system.
-
----
-
-### `tab5_custom.cpp`
-C++ implementation file. The bulk of the non-trivial logic.
-
-Main function groups:
-- **String tokenizers** — `parse_meteo_7j()`, `parse_pluie_heure()`, `parse_calendrier()` — split semicolon-delimited payloads into typed arrays, then update LVGL widgets
-- **LVGL update helpers** — safe wrappers that check `boot_complete` before calling any `lv_*` function
-- **Color mappers** — `condition_to_color()`, `moisture_to_color()`, `temp_to_color()` — map sensor values to LVGL `lv_color_hex()` values
-- **Voice state machine** — `set_voice_state(int state)` — updates the mic icon color and status text
+### `tab5_custom.h` / `tab5_custom.cpp`
+All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get_humidity_color()`, `parse_and_update_heures_bulk()`/`parse_and_update_jours_bulk()`, `sort_and_update_moisture_slots()`, `transition_widgets()`. **Rule: sensors/services should only read HA state and call these C++ functions — never manipulate `lv_obj_*` directly from a `sensor:`/`text_sensor:` lambda** (keeps LVGL logic in one place, testable and greppable).
 
 ---
 
-## Font files
+## Services HA exposés (`api: services:`)
 
-| File | Contents |
-|------|----------|
-| `materialdesignicons-webfont.ttf` | Material Design Icons (v7) — 7000+ icons for all UI elements |
-| `IconeMeteo.ttf` | Custom weather icon font — covers condition symbols not in MDI |
+| Service | Payload | Rôle |
+|---|---|---|
+| `tab5_maj_clim` | target/current/mode (strings) | État climatisation (couleurs, cible, mode) |
+| `tab5_maj_volet_etat` | string | État volet (ouvert/fermé/en mouvement) |
+| `tab5_maj_planning` | ligne1, ligne2 (strings) | Texte planning affiché dans la carte centrale |
+| `tab5_maj_alerte_meteo_france` | payload (string, `\|`-delimited) | Alertes météo France (vent, inondation, orages...) |
+| `tab5_maj_meteo_actuelle` | condition, temperature, humidite | Icône pluie prédictive + hygrométrie (l'ancienne grosse icône météo centrale a été retirée de l'UI) |
+| `tab5_maj_pluie_1h` | — | Prévision de pluie à 1h |
+| `tab5_maj_previsions_heures_bulk` | payload (string) | 5 cartes prévisions horaires |
+| `tab5_maj_previsions_jours_bulk` | payload (string) | 5 cartes prévisions journalières (fenêtre glissante selon `forecast_page_index`) |
 
-These are referenced in `tab5-styles.yaml` via ESPHome's `font:` component with specific Unicode ranges to limit flash usage.
+## Globals principaux (`tab5-globals.yaml`)
 
----
+| Global | Type | Rôle |
+|---|---|---|
+| `boot_complete` | bool | true une fois le `on_boot` terminé |
+| `conversation_mode` | bool | mode assistant vocal (persiste au reboot) |
+| `reboot_armed` | bool | armement double-tap du bouton reboot (console) |
+| `forecast_page_index` | int (0-4) | page prévisions active — 0-1 horaire, 2-4 journalier |
+| `clim_target_temp`, `clim_preset_mode`, `clim_fan_mode`, `clim_swing_mode` | float/string | état climatisation |
+| `volet_target_open`, `volet_en_mouvement` | bool | état volet |
+| `plan_ligne_1`, `plan_ligne_2` | string | texte planning brut |
+| `has_alerts`, `has_rain`, `current_central_panel` | bool/int | rotateur carte centrale (6s) |
+| `system_volume`, `system_muted` | float/bool | volume haut-parleur |
 
-## Subdirectories
+## Règles de code à respecter (issues de l'audit du 05/07/2026)
 
-### `my_components/st7123/`
-A custom ESPHome component for the ST7123 display controller variant found in some Tab5 V2 batches. Only needed if the standard `ili9xxx` or `st7789` components produce incorrect output on your unit.
-
-### `tts_library/` and `tts_library_v2/`
-Experimental TTS audio files (MP3/WAV) for local offline TTS — an earlier approach before the Home Assistant Voice pipeline integration was stable. Kept for reference. Not used in the current main configuration.
-
-### `ui_components/`
-Experimental reusable LVGL component definitions. Work in progress.
-
----
+1. **Pas de couleur en dur** (`0xFFAABB`) dans un YAML/lambda — ajouter un token dans `UIColor::` (`tab5_custom.h`) et l'utiliser partout.
+2. **Les `sensor:`/`text_sensor:` ne manipulent pas LVGL directement** — ils appellent une fonction C++ dans `tab5_custom.cpp` (ex: `update_light_ui()`, pas de `lv_obj_set_style_*` inline).
+3. **Pas de `static` dans une lambda pour de l'état partagé entre deux handlers différents** (`on_short_click`/`on_long_press`) — utiliser un `globals:` (cf. bug `reboot_armed` corrigé le 05/07).
+4. **Pas de `std::string` par valeur ni de `to_string()` dans un hot-path** (sliders, `on_value` fréquents) — `const std::string&` ou buffer `snprintf` statique.
+5. **Toute nouvelle carte/widget répété ≥3 fois** (météo, switches...) doit passer par une fonction C++ builder paramétrée plutôt qu'un copier-coller YAML (cf. refacto architecture en cours).
+6. Avant de committer : `python -m esphome compile tab5-ha-hmi.yaml` doit réussir (toolchain déjà en cache localement, ~20-45s).
 
 ---
 
 ## Version Française
 
----
-
-Ce dossier contient les packages de configuration ESPHome et les fichiers source C++ pour le firmware du Tab5.
-
-Le point d'entrée est `../tab5-ha-hmi.yaml` à la racine du dépôt. Ce fichier importe tout ce qui se trouve ici via `!include`.
-
----
-
-## Description des fichiers
-
-### `tab5-hardware.yaml`
-Configuration matérielle bas niveau. Tout ce qui touche les broches physiques est ici.
-
-- **Affichage :** bus SPI, configuration framebuffer RGB, PWM rétroéclairage
-- **Tactile :** contrôleur I2C, calibration
-- **Bus I2C :** deux bus — un pour l'affichage/tactile, un pour le DAC ES8388
-- **DAC ES8388 :** séquence d'initialisation registres I2C au boot, bus I2S sortie
-- **Microphone :** bus I2S entrée à 16 kHz / 16-bit mono
-- **Capteur de luminosité ambiante :** lecture ADC pour auto-luminosité
-- **Activation haut-parleur :** switch GPIO pour l'amplificateur
-
-**Ce qu'il faut changer :** généralement rien, sauf adaptation à un autre variant hardware. Les numéros GPIO correspondent au Tab5 V2.
-
----
-
-### `tab5-sensors.yaml`
-Toutes les entités capteurs exposées à Home Assistant via l'API ESPHome.
-
-**Ce qu'il faut changer :** adresses MAC BLE des capteurs plantes, et les entity IDs des capteurs `homeassistant` (définis dans le bloc substitutions du fichier racine).
-
----
-
-### `tab5-api-logic.yaml`
-La couche API. C'est ici que Home Assistant se connecte à l'écran.
-
-**Services ESPHome (`api: services:`)** — les endpoints que HA appelle pour pousser des données. Chaque service a un paramètre payload nommé (typiquement une chaîne délimitée par des points-virgules) et un bloc `lambda:` qui appelle une fonction C++ pour la parser et l'appliquer.
-
-**Blocs `lambda:`** — logique C++ pour la gestion d'état, les mises à jour UI conditionnelles, et tout ce qui nécessite une logique de branchement non exprimable proprement en séquences d'actions YAML.
-
-**Ce qu'il faut changer :** rien structurellement, mais si vous ajoutez un nouvel écran ou source de données, les nouveaux endpoints de service se déclarent ici.
-
----
-
-### `tab5-styles.yaml`
-Définitions globales de styles LVGL. Tous les objets style sont déclarés ici et référencés par ID dans `tab5-lvgl.yaml`.
-
-**Ce qu'il faut changer :** la palette de couleurs (valeurs hex dans le header C++) pour correspondre à votre thème préféré.
-
----
-
-### `tab5-globals.yaml`
-Variables globales partagées entre tous les packages. Incluent le booléen de gate `boot_complete`, le mode assistant `conversation_mode`, l'état du pipeline vocal `voice_state`, et les snapshots de valeurs courantes.
-
-**Ce qu'il faut changer :** si vous ajoutez de nouvelles variables d'état cachées, déclarez-les ici avec des types explicites et des valeurs initiales.
-
----
-
-### `tab5-lvgl.yaml`
-La mise en page UI complète. Tous les écrans, tous les widgets, toutes les icônes. Structure en 6 pages (accueil, météo, clim, plantes, console, planning). Toutes les références de style pointent vers des IDs définis dans `tab5-styles.yaml`.
-
-**Ce qu'il faut changer :** positions des widgets si vous ajustez la mise en page. Code points Unicode MDI pour les icônes.
-
----
-
-### `tab5_custom.h` / `tab5_custom.cpp`
-Header et implémentation C++. Contiennent les tokenizers de chaînes, les helpers de mise à jour LVGL sécurisés (avec vérification `boot_complete`), les mappeurs de couleurs, et la machine d'états du pipeline vocal.
+Ce dossier contient les packages de configuration ESPHome et les fichiers source C++ du firmware Tab5. Point d'entrée : `../tab5-ha-hmi.yaml`. Voir la section anglaise ci-dessus pour le détail par fichier, la table des services HA, la table des globals et les règles de code — tout est vérifié contre le code réel au 05/07/2026 (l'ancienne version de ce README décrivait un projet différent, obsolète).
 
 ---
 
@@ -248,18 +93,13 @@ Header et implémentation C++. Contiennent les tokenizers de chaînes, les helpe
 
 | Fichier | Contenu |
 |---------|---------|
-| `materialdesignicons-webfont.ttf` | Material Design Icons (v7) — 7000+ icônes |
+| `materialdesignicons-webfont.ttf` | Material Design Icons — plusieurs tailles chargées séparément (26/32/45/56/60/80/120px) |
 | `IconeMeteo.ttf` | Police d'icônes météo personnalisée |
-
----
 
 ## Sous-répertoires
 
 ### `my_components/st7123/`
-Composant ESPHome personnalisé pour le contrôleur d'affichage ST7123 trouvé dans certains lots Tab5 V2. Nécessaire uniquement si les composants standard produisent un rendu incorrect sur votre unité.
+Composant ESPHome personnalisé pour le contrôleur d'affichage ST7123 (certains lots Tab5 V2).
 
-### `tts_library/` et `tts_library_v2/`
-Fichiers audio TTS expérimentaux pour une approche TTS hors-ligne — antérieure à l'intégration stable du pipeline Voice HA. Conservés pour référence, non utilisés dans la configuration principale actuelle.
-
-### `ui_components/`
-Définitions de composants LVGL réutilisables expérimentales. Travail en cours.
+### `tts_library/`, `tts_library_v2/`
+Fichiers audio TTS expérimentaux, antérieurs à l'intégration Voice HA. Non utilisés dans la config actuelle.

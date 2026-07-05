@@ -1,3 +1,7 @@
+// tab5_custom.h — Declarations des fonctions C++ appelees depuis les lambdas
+// YAML (tab5-api-logic.yaml, tab5-sensors.yaml, ui_components/*.yaml). Regle :
+// les fichiers YAML ne manipulent pas lv_obj_* directement pour de la logique
+// non-triviale, ils appellent une fonction d'ici. Voir Tab5/README.md.
 #pragma once
 #include "esphome.h"
 #include <string>

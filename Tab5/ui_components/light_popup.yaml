@@ -22,8 +22,8 @@ obj:
     # Carte modale principale
     - obj:
         align: CENTER
-        width: 960
-        height: 520
+        width: 1130
+        height: 650
         styles: style_modal_card
         scrollbar_mode: "OFF"
         widgets:
@@ -43,9 +43,9 @@ obj:
               align: TOP_RIGHT
               x: -15
               y: 12
-              width: 50
-              height: 50
-              styles: style_invisible
+              width: 80
+              height: 80
+              styles: style_transparent
               on_short_click:
                 - lambda: 'lv_obj_add_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);'
               widgets:
@@ -89,7 +89,7 @@ obj:
                       pad_all: 5
                     on_value:
                       - homeassistant.service:
-                          service: script.tab5_set_light
+                          service: light.turn_on
                           data:
                             entity_id: !lambda 'return id(current_light_entity);'
                             brightness: !lambda 'return to_string((int)x);'

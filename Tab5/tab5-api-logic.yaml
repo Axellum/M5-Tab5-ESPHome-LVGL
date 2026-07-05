@@ -1,3 +1,6 @@
+# tab5-api-logic.yaml — Contrat API avec Home Assistant (api: services:). Chaque
+# service tab5_maj_* recoit un payload d'une automation HA et appelle une
+# fonction de tab5_custom.cpp — voir table des services dans Tab5/README.md.
 api:
 
   encryption:
@@ -354,17 +357,12 @@ api:
               lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(c_hydro), LV_PART_MAIN);
             }
 
-            // Desactive : la temperature exterieure a ete retiree
+            // Desactive : la temperature exterieure et la grosse icone meteo centrale
+            // ont ete retirees de l'UI (widgets icon_actuel_layer1/2 n'existent plus).
             // char buf_t[32]; sprintf(buf_t, "%.0f \xC2\xB0", atof(temperature.c_str()));
             // lv_label_set_text(id(current_temp), buf_t);
-            // // AXE1: factorisation couleur temperature via tab5_custom.cpp
             // uint32_t c_temp = get_temperature_color(atof(temperature.c_str()));
             // lv_obj_set_style_text_color(id(current_temp), lv_color_hex(c_temp), LV_PART_MAIN);
-
-            auto apply_weather_icon = [](lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card) {
-                update_meteo_icon(l1_obj, l2_obj, state, is_card, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
-            };
-            apply_weather_icon(nullptr, nullptr, condition, true);
 
     - service: tab5_maj_pluie_1h
       variables:
@@ -443,11 +441,22 @@ api:
 
             if (id(lbl_planning_text) == nullptr) return;
 
-            id(plan_ligne_1) = ligne1;
-            id(plan_ligne_2) = ligne2;
-            std::string combined = ligne1;
-            if (ligne2 != "") {
-                combined += "   |   " + ligne2;
+            auto strip_prefix = [](std::string s) {
+                if (s.rfind("1/ ", 0) == 0) return s.substr(3);
+                if (s.rfind("2/ ", 0) == 0) return s.substr(3);
+                if (s.rfind("1/", 0) == 0) return s.substr(2);
+                if (s.rfind("2/", 0) == 0) return s.substr(2);
+                return s;
+            };
+
+            std::string l1 = strip_prefix(ligne1);
+            std::string l2 = strip_prefix(ligne2);
+
+            id(plan_ligne_1) = l1;
+            id(plan_ligne_2) = l2;
+            std::string combined = l1;
+            if (l2 != "") {
+                combined += "   |   " + l2;
             }
             lv_label_set_recolor(id(lbl_planning_text), true);
             lv_label_set_text(id(lbl_planning_text), combined.c_str());

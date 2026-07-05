@@ -8,20 +8,16 @@ obj:
   y: 125
   width: 413
   height: 180
-  bg_color: 0x222222
-  bg_opa: 100%
-  border_width: 2
-  border_color: 0x444444
-  radius: 20
+  styles: style_meteo_card
   scrollbar_mode: "OFF"
   pad_all: 0
   widgets:
 
     # ═══ HAUT : Températures pièces ═══
     - label: { id: icon_salon, text: "\U000F04B9", align: TOP_LEFT, x: 18, y: 12, text_font: mdi_font_45, text_color: color_text_dim }
-    - label: { id: val_temp_salon, text: "-- °", align: TOP_LEFT, x: 70, y: 17, text_font: roboto_32_b, text_color: color_temp_max }
+    - label: { id: val_temp_salon, text: "-- °", align: TOP_LEFT, x: 85, y: 17, text_font: roboto_32_b, text_color: color_temp_max }
     # Serre (remplace l'humidité du salon)
-    - label: { id: icon_serre, text: "\U000F002D", align: TOP_RIGHT, x: -130, y: 12, text_font: mdi_font_45, text_color: color_text_dim }
+    - label: { id: icon_serre, text: "\U000F002D", align: TOP_RIGHT, x: -124, y: 12, text_font: mdi_font_45, text_color: color_text_dim }
     - label: { id: current_serre, text: "-- °", align: TOP_RIGHT, x: -18, y: 17, text_font: roboto_32_b, text_color: color_temp_max }
 
     # ═══ CENTRE/BAS : Température cible (cliquable) ═══
