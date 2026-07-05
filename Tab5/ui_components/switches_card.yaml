@@ -18,24 +18,9 @@ obj:
         styles: style_transparent
         scrollbar_mode: "OFF"
         widgets:
-          # Onglet Titre
-          - obj:
-              align: TOP_MID
-              y: 7
-              width: 130
-              height: 40
-              styles: style_meteo_tab
-              widgets:
-                - label: { text: "PC Bureau", align: CENTER, text_font: roboto_32_b, text_color: color_text }
-          # Onglet État
-          - obj:
-              align: BOTTOM_MID
-              y: 0
-              width: 130
-              height: 45
-              styles: style_meteo_tab
-              widgets:
-                - label: { id: lbl_sw0_state, text: "Éteint", align: CENTER, text_font: roboto_32_b, text_color: color_text_dim }
+          # Onglet Titre + Onglet État : factorises (#T164), action du bouton laissee en override ci-dessous
+          - !include { file: switch_card_title_tab.yaml, vars: { title: "PC Bureau" } }
+          - !include { file: switch_card_state_tab.yaml, vars: { idx: "0", state_text: "Éteint" } }
           # Corps Sombre (chevauche les onglets)
           - obj:
               y: 35
@@ -64,24 +49,9 @@ obj:
         styles: style_transparent
         scrollbar_mode: "OFF"
         widgets:
-          # Onglet Titre
-          - obj:
-              align: TOP_MID
-              y: 7
-              width: 130
-              height: 40
-              styles: style_meteo_tab
-              widgets:
-                - label: { text: "Volet", align: CENTER, text_font: roboto_32_b, text_color: color_text }
-          # Onglet État
-          - obj:
-              align: BOTTOM_MID
-              y: 0
-              width: 130
-              height: 45
-              styles: style_meteo_tab
-              widgets:
-                - label: { id: lbl_sw1_state, text: "Fermé", align: CENTER, text_font: roboto_32_b, text_color: color_text_dim }
+          # Onglet Titre + Onglet État : factorises (#T164), action du bouton laissee en override ci-dessous
+          - !include { file: switch_card_title_tab.yaml, vars: { title: "Volet" } }
+          - !include { file: switch_card_state_tab.yaml, vars: { idx: "1", state_text: "Fermé" } }
           # Corps Sombre
           - obj:
               y: 35
@@ -130,24 +100,9 @@ obj:
         styles: style_transparent
         scrollbar_mode: "OFF"
         widgets:
-          # Onglet Titre
-          - obj:
-              align: TOP_MID
-              y: 7
-              width: 130
-              height: 40
-              styles: style_meteo_tab
-              widgets:
-                - label: { text: "Chambre", align: CENTER, text_font: roboto_32_b, text_color: color_text }
-          # Onglet État
-          - obj:
-              align: BOTTOM_MID
-              y: 0
-              width: 130
-              height: 45
-              styles: style_meteo_tab
-              widgets:
-                - label: { id: lbl_sw2_state, text: "Éteint", align: CENTER, text_font: roboto_32_b, text_color: color_text_dim }
+          # Onglet Titre + Onglet État : factorises (#T164), action du bouton laissee en override ci-dessous
+          - !include { file: switch_card_title_tab.yaml, vars: { title: "Chambre" } }
+          - !include { file: switch_card_state_tab.yaml, vars: { idx: "2", state_text: "Éteint" } }
           # Corps Sombre
           - obj:
               y: 35
@@ -178,24 +133,9 @@ obj:
         styles: style_transparent
         scrollbar_mode: "OFF"
         widgets:
-          # Onglet Titre
-          - obj:
-              align: TOP_MID
-              y: 7
-              width: 130
-              height: 40
-              styles: style_meteo_tab
-              widgets:
-                - label: { text: "Salon", align: CENTER, text_font: roboto_32_b, text_color: color_text }
-          # Onglet État
-          - obj:
-              align: BOTTOM_MID
-              y: 0
-              width: 130
-              height: 45
-              styles: style_meteo_tab
-              widgets:
-                - label: { id: lbl_sw3_state, text: "Éteint", align: CENTER, text_font: roboto_32_b, text_color: color_text_dim }
+          # Onglet Titre + Onglet État : factorises (#T164), action du bouton laissee en override ci-dessous
+          - !include { file: switch_card_title_tab.yaml, vars: { title: "Salon" } }
+          - !include { file: switch_card_state_tab.yaml, vars: { idx: "3", state_text: "Éteint" } }
           # Corps Sombre
           - obj:
               y: 35
@@ -226,24 +166,9 @@ obj:
         styles: style_transparent
         scrollbar_mode: "OFF"
         widgets:
-          # Onglet Titre
-          - obj:
-              align: TOP_MID
-              y: 7
-              width: 130
-              height: 40
-              styles: style_meteo_tab
-              widgets:
-                - label: { text: "LEDs", align: CENTER, text_font: roboto_32_b, text_color: color_text }
-          # Onglet État
-          - obj:
-              align: BOTTOM_MID
-              y: 0
-              width: 130
-              height: 45
-              styles: style_meteo_tab
-              widgets:
-                - label: { id: lbl_sw4_state, text: "Éteint", align: CENTER, text_font: roboto_32_b, text_color: color_text_dim }
+          # Onglet Titre + Onglet État : factorises (#T164), action du bouton laissee en override ci-dessous
+          - !include { file: switch_card_title_tab.yaml, vars: { title: "LEDs" } }
+          - !include { file: switch_card_state_tab.yaml, vars: { idx: "4", state_text: "Éteint" } }
           # Corps Sombre
           - obj:
               y: 35

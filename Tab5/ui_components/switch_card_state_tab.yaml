@@ -1,0 +1,8 @@
+obj:
+  align: BOTTOM_MID
+  y: 0
+  width: 130
+  height: 45
+  styles: style_meteo_tab
+  widgets:
+    - label: { id: "lbl_sw${idx}_state", text: "${state_text}", align: CENTER, text_font: roboto_32_b, text_color: color_text_dim }

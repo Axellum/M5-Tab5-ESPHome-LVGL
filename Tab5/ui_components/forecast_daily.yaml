@@ -40,44 +40,9 @@ obj:
                       - homeassistant.service:
                           service: script.allumer_pc_tv
 
-          # Onglet Titre
-          - obj:
-              align: TOP_MID
-              y: 7
-              width: 130
-              height: 46
-              border_width: 0
-              styles: style_meteo_tab
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j0_day, text: "Journee", align: CENTER, text_font: roboto_32_b, text_color: color_text }
-          # Onglet Température
-          - obj:
-              align: BOTTOM_MID
-              y: 0
-              width: 140
-              height: 51
-              border_width: 0
-              styles: style_meteo_tab
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j0_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -7, text_font: roboto_32_b, text_color: color_temp_max }
-                - label: { id: j0_min, text: "-- °", align: BOTTOM_MID, x: 35, y: -7, text_font: roboto_32_b, text_color: color_temp_min }
-                - button:
-                    id: btn_tj0_toggle
-                    align: CENTER
-                    y: 0
-                    width: 140
-                    height: 51
-                    bg_opa: 0
-                    border_width: 0
-                    outline_width: 0
-                    shadow_width: 0
-                    on_short_click:
-                      - lambda: |-
-                          int jour = id(forecast_page_index) * 5 + 0;
-                          id(temp_planning_text) = cal_heures[jour];
-                      - script.execute: tab5_show_planning_temp
+          # Onglet Titre + Onglet Température : factorises (#T164), meme motif sur les 5 cartes
+          - !include { file: forecast_day_title_tab.yaml, vars: { idx: "0", day_label: "Journee" } }
+          - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "0", toggle_width: "140" } }
           # Icône latérale gauche (épaule)
           - label: { id: icon_card_pc, text: "\U000F07C0", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
     # Card 1
@@ -134,44 +99,9 @@ obj:
           # Icônes latérales (épaules)
           - label: { id: icon_card_shutter1, text: "\U000F111E", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
           - label: { id: icon_card_shutter_arrow, text: "\U000F005D", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
-          # Onglet Titre
-          - obj:
-              align: TOP_MID
-              y: 7
-              width: 130
-              height: 46
-              border_width: 0
-              styles: style_meteo_tab
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j1_day, text: "Demain", align: CENTER, text_font: roboto_32_b, text_color: color_text }
-          # Onglet Température
-          - obj:
-              align: BOTTOM_MID
-              y: 0
-              width: 140
-              height: 51
-              border_width: 0
-              styles: style_meteo_tab
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j1_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -7, text_font: roboto_32_b, text_color: color_temp_max }
-                - label: { id: j1_min, text: "-- °", align: BOTTOM_MID, x: 35, y: -7, text_font: roboto_32_b, text_color: color_temp_min }
-                - button:
-                    id: btn_tj1_toggle
-                    align: CENTER
-                    y: 0
-                    width: 130
-                    height: 51
-                    bg_opa: 0
-                    border_width: 0
-                    outline_width: 0
-                    shadow_width: 0
-                    on_short_click:
-                      - lambda: |-
-                          int jour = id(forecast_page_index) * 5 + 1;
-                          id(temp_planning_text) = cal_heures[jour];
-                      - script.execute: tab5_show_planning_temp
+          # Onglet Titre + Onglet Température : factorises (#T164), meme motif sur les 5 cartes
+          - !include { file: forecast_day_title_tab.yaml, vars: { idx: "1", day_label: "Demain" } }
+          - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "1", toggle_width: "130" } }
           - button:
               id: btn_j1_dir
               align: TOP_MID
@@ -240,44 +170,9 @@ obj:
           # Icônes latérales (épaules)
           - label: { id: icon_card_lit_j2, text: "\U000F02E3", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
           - label: { id: icon_card_light_j2, text: "\U000F0335", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
-          # Onglet Titre
-          - obj:
-              align: TOP_MID
-              y: 7
-              width: 130
-              height: 46
-              border_width: 0
-              styles: style_meteo_tab
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j2_day, text: "2 Jours", align: CENTER, text_font: roboto_32_b, text_color: color_text }
-          # Onglet Température
-          - obj:
-              align: BOTTOM_MID
-              y: 0
-              width: 140
-              height: 51
-              border_width: 0
-              styles: style_meteo_tab
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j2_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -7, text_font: roboto_32_b, text_color: color_temp_max }
-                - label: { id: j2_min, text: "-- °", align: BOTTOM_MID, x: 35, y: -7, text_font: roboto_32_b, text_color: color_temp_min }
-                - button:
-                    id: btn_tj2_toggle
-                    align: CENTER
-                    y: 0
-                    width: 130
-                    height: 51
-                    bg_opa: 0
-                    border_width: 0
-                    outline_width: 0
-                    shadow_width: 0
-                    on_short_click:
-                      - lambda: |-
-                          int jour = id(forecast_page_index) * 5 + 2;
-                          id(temp_planning_text) = cal_heures[jour];
-                      - script.execute: tab5_show_planning_temp
+          # Onglet Titre + Onglet Température : factorises (#T164), meme motif sur les 5 cartes
+          - !include { file: forecast_day_title_tab.yaml, vars: { idx: "2", day_label: "2 Jours" } }
+          - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "2", toggle_width: "130" } }
     # Card 3
     - obj:
         x: 775
@@ -327,44 +222,9 @@ obj:
           # Icônes latérales (épaules)
           - label: { id: icon_card_salon_j3, text: "\U000F04B9", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
           - label: { id: icon_card_light_j3, text: "\U000F0335", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
-          # Onglet Titre
-          - obj:
-              align: TOP_MID
-              y: 7
-              width: 130
-              height: 46
-              border_width: 0
-              styles: style_meteo_tab
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j3_day, text: "3 Jours", align: CENTER, text_font: roboto_32_b, text_color: color_text }
-          # Onglet Température
-          - obj:
-              align: BOTTOM_MID
-              y: 0
-              width: 140
-              height: 51
-              border_width: 0
-              styles: style_meteo_tab
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j3_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -7, text_font: roboto_32_b, text_color: color_temp_max }
-                - label: { id: j3_min, text: "-- °", align: BOTTOM_MID, x: 35, y: -7, text_font: roboto_32_b, text_color: color_temp_min }
-                - button:
-                    id: btn_tj3_toggle
-                    align: CENTER
-                    y: 0
-                    width: 130
-                    height: 51
-                    bg_opa: 0
-                    border_width: 0
-                    outline_width: 0
-                    shadow_width: 0
-                    on_short_click:
-                      - lambda: |-
-                          int jour = id(forecast_page_index) * 5 + 3;
-                          id(temp_planning_text) = cal_heures[jour];
-                      - script.execute: tab5_show_planning_temp
+          # Onglet Titre + Onglet Température : factorises (#T164), meme motif sur les 5 cartes
+          - !include { file: forecast_day_title_tab.yaml, vars: { idx: "3", day_label: "3 Jours" } }
+          - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "3", toggle_width: "130" } }
     # Card 4
     - obj:
         x: 1025
@@ -411,41 +271,6 @@ obj:
           # Icônes latérales (épaules)
           - label: { id: icon_card_led_j4, text: "\U000F1051", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
           - label: { id: icon_card_light_j4, text: "\U000F0335", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
-          # Onglet Titre
-          - obj:
-              align: TOP_MID
-              y: 7
-              width: 130
-              height: 46
-              border_width: 0
-              styles: style_meteo_tab
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j4_day, text: "4 Jours", align: CENTER, text_font: roboto_32_b, text_color: color_text }
-          # Onglet Température
-          - obj:
-              align: BOTTOM_MID
-              y: 0
-              width: 140
-              height: 51
-              border_width: 0
-              styles: style_meteo_tab
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j4_max, text: "-- / ", align: BOTTOM_MID, x: -25, y: -7, text_font: roboto_32_b, text_color: color_temp_max }
-                - label: { id: j4_min, text: "-- °", align: BOTTOM_MID, x: 35, y: -7, text_font: roboto_32_b, text_color: color_temp_min }
-                - button:
-                    id: btn_tj4_toggle
-                    align: CENTER
-                    y: 0
-                    width: 130
-                    height: 51
-                    bg_opa: 0
-                    border_width: 0
-                    outline_width: 0
-                    shadow_width: 0
-                    on_short_click:
-                      - lambda: |-
-                          int jour = id(forecast_page_index) * 5 + 4;
-                          id(temp_planning_text) = cal_heures[jour];
-                      - script.execute: tab5_show_planning_temp
+          # Onglet Titre + Onglet Température : factorises (#T164), meme motif sur les 5 cartes
+          - !include { file: forecast_day_title_tab.yaml, vars: { idx: "4", day_label: "4 Jours" } }
+          - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "4", toggle_width: "130" } }

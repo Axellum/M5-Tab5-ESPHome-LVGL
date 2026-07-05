@@ -1,0 +1,10 @@
+obj:
+  align: TOP_MID
+  y: 7
+  width: 130
+  height: 46
+  border_width: 0
+  styles: style_meteo_tab
+  scrollbar_mode: "OFF"
+  widgets:
+    - label: { id: "j${idx}_day", text: "${day_label}", align: CENTER, text_font: roboto_32_b, text_color: color_text }
