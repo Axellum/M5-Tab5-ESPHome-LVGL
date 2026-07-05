@@ -1,39 +1,183 @@
-# ⚙️ Hardware & Wiring / Matériel & Câblage
+# Hardware Reference
 
-*English version below / Version française ci-dessous*
-
----
-
-## 🇫🇷 Version Française
-
-### Le Coeur du Projet : M5Stack Tab5
-Ce projet repose sur le [M5Stack Tab5](https://m5stack.com/), un écran tactile de 5 pouces alimenté par le processeur ESP32-P4 (ou S3 dans certaines variantes). 
-L'ESP32-P4 est particulièrement adapté pour ce projet grâce à :
-* **Sa puissance de calcul brute**, permettant de faire tourner LVGL nativement sans latence.
-* **Sa PSRAM généreuse (16 MB)**, qui nous permet de stocker le buffer graphique (environ 1.8 MB) entièrement en mémoire pour un affichage "Zero-Lag" (sans effet de déchirement ou tearing).
-
-### Gestion de l'Audio (DAC I2S)
-Le Tab5 dispose d'une puce audio I2S pour restituer les alertes sonores ou de la musique depuis Home Assistant (via Media Player Pipeline).
-* **Communication :** Le flux audio est décodé nativement par l'ESP32 sans avoir besoin de certificats SSL externes complexes, directement en passant par le réseau local vers le proxy Home Assistant.
-* **Limitations Réseau :** Si l'interface LVGL effectue trop de requêtes simultanées en plus du lecteur I2S, le processeur peut manquer de sockets libres (`TCP Socket Starvation`). La configuration actuelle dans le code ESPHome ("Traffic Pacing") évite ce problème en limitant le flux de requêtes.
-
-### Recommandations d'Alimentation
-* Utilisez toujours le port USB-C intégré au Tab5 avec un chargeur de qualité (minimum 5V/2A) pour éviter les coupures de l'écran lors des pics de consommation (ex: Wi-Fi + Rétroéclairage à 100% + Audio).
+## English · [Français](#version-française)
 
 ---
 
-## 🇺🇸 English Version
+## M5Stack Tab5 V2
 
-### The Core of the Project: M5Stack Tab5
-This project relies on the [M5Stack Tab5](https://m5stack.com/), a 5-inch touch screen powered by the ESP32-P4 processor (or S3 in some variants).
-The ESP32-P4 is particularly suited for this project because of:
-* **Its raw computing power**, allowing LVGL to run natively without latency.
-* **Its generous PSRAM (16 MB)**, which allows us to store the graphic buffer (around 1.8 MB) entirely in memory for a "Zero-Lag" display (no tearing).
+The Tab5 is a 5-inch touch-screen panel from M5Stack. The V2 revision uses an **ESP32-P4** as the main application processor, with a separate **ESP32-C6** co-processor handling Wi-Fi and Bluetooth connectivity.
 
-### Audio Management (I2S DAC)
-The Tab5 has an I2S audio chip to play sound alerts or music from Home Assistant (via Media Player Pipeline).
-* **Communication:** The audio stream is natively decoded by the ESP32 without needing complex external SSL certificates, routing directly through the local network to the Home Assistant proxy.
-* **Network Limitations:** If the LVGL interface makes too many simultaneous requests alongside the I2S player, the processor can run out of free sockets (`TCP Socket Starvation`). The current configuration in the ESPHome code ("Traffic Pacing") prevents this issue by throttling the request flow.
+### ESP32-P4 (main processor)
 
-### Power Recommendations
-* Always use the integrated USB-C port of the Tab5 with a high-quality charger (minimum 5V/2A) to prevent screen reboots during peak power consumption (e.g., Wi-Fi + 100% Backlight + Audio).
+| Spec | Value |
+|------|-------|
+| Architecture | RISC-V, dual-core, up to 400 MHz |
+| Internal SRAM | 768 KB |
+| External PSRAM | 16 MB (OCT-SPI) |
+| Flash | 16 MB |
+| Display interface | RGB565 parallel |
+| Touch controller | I2C |
+
+The PSRAM is critical for this project. LVGL requires a framebuffer sized to the display resolution — at 1024 × 600 px in RGB565, that's 1.2 MB just for the framebuffer. The ESP32-P4's internal SRAM alone would not be enough. With 16 MB of PSRAM, the framebuffer stays entirely in external memory, and LVGL can operate at 60 FPS without tearing.
+
+### ESP32-C6 (co-processor)
+
+Handles all radio communication: Wi-Fi 6 (802.11ax) and BLE 5. The main ESP32-P4 communicates with it over a UART bridge. From the ESPHome/LVGL code perspective, this is transparent — standard ESPHome Wi-Fi and BLE components work normally.
+
+---
+
+## Display
+
+- **Size:** 5 inches
+- **Resolution:** 1024 × 600 px
+- **Interface:** 16-bit RGB parallel (connected to the ESP32-P4's LCD peripheral)
+- **Touch:** Capacitive, multi-touch, connected via I2C
+
+The display driver is initialized by ESPHome's built-in `ili9xxx` component (or equivalent ST7xxx depending on the batch). No custom driver code is needed.
+
+---
+
+## Audio — ES8388 DAC
+
+The Tab5 integrates an **ES8388** audio codec chip. It handles both ADC (microphone input) and DAC (speaker output), though in this project only the DAC path is used — the microphone is captured directly by the ESP32-P4 via I2S.
+
+### Connections
+
+| Signal | GPIO |
+|--------|------|
+| I2C SDA (DAC control) | GPIO 31 |
+| I2C SCL (DAC control) | GPIO 32 |
+| I2S BCLK (audio clock) | GPIO 26 (shared) |
+| I2S LRCLK (word select) | GPIO 29 (shared) |
+| I2S DOUT (data to DAC) | GPIO 26 |
+| Amplifier enable | GPIO (software-controlled switch) |
+
+### Boot sequence issue
+
+The ES8388 requires a specific initialization sequence over I2C to come out of reset and route audio correctly. If the amplifier enable line fires before the I2S clock is stable, a loud pop occurs through the speaker.
+
+The ESPHome `on_boot` block addresses this by sequencing:
+1. Set media player volume
+2. Wait for HA API connection
+3. Only then enable the amplifier switch
+
+This order ensures the I2S bus is active before the amplifier opens the speaker path.
+
+### I2C register initialization
+
+The chip also requires writing to register `0x04` on boot to properly set the input/output routing. This is handled in `tab5-hardware.yaml` via `i2c.write_bytes` on boot.
+
+---
+
+## Microphone — I2S PDM
+
+The onboard microphone is a digital PDM microphone connected to the ESP32-P4 via I2S.
+
+| Signal | GPIO |
+|--------|------|
+| I2S DIN (data from mic) | GPIO 28 |
+| I2S BCLK | GPIO 27 |
+| I2S LRCLK | GPIO 29 |
+
+Capture parameters: **16 kHz, 16-bit mono**. This matches the input format expected by the `micro_wake_word` component and by Home Assistant's voice pipeline.
+
+---
+
+## Power
+
+The Tab5 is USB-C powered. Peak consumption (Wi-Fi active + 100% backlight + audio playing) can exceed 1.5 A at 5V. A charger rated for at least **5V / 2A** is required to avoid brownout resets.
+
+Backlight brightness is software-controlled via PWM and can be dimmed to reduce power draw. The project includes an ambient light sensor reading used to adjust brightness automatically.
+
+---
+
+---
+
+## Version Française
+
+---
+
+## M5Stack Tab5 V2
+
+Le Tab5 est un panneau tactile de 5 pouces de M5Stack. La révision V2 utilise un **ESP32-P4** comme processeur applicatif principal, avec un co-processeur **ESP32-C6** séparé gérant la connectivité Wi-Fi et Bluetooth.
+
+### ESP32-P4 (processeur principal)
+
+| Spec | Valeur |
+|------|--------|
+| Architecture | RISC-V, dual-core, jusqu'à 400 MHz |
+| SRAM interne | 768 KB |
+| PSRAM externe | 16 MB (OCT-SPI) |
+| Flash | 16 MB |
+| Interface affichage | RGB565 parallèle |
+| Contrôleur tactile | I2C |
+
+La PSRAM est critique pour ce projet. LVGL nécessite un framebuffer dimensionné à la résolution de l'affichage — à 1024 × 600 px en RGB565, ça fait 1,2 MB rien que pour le framebuffer. La SRAM interne de l'ESP32-P4 seule ne suffirait pas. Avec 16 MB de PSRAM, le framebuffer reste entièrement en mémoire externe, et LVGL peut fonctionner à 60 FPS sans tearing.
+
+### ESP32-C6 (co-processeur)
+
+Gère toute la communication radio : Wi-Fi 6 (802.11ax) et BLE 5. Le ESP32-P4 principal communique avec lui via un pont UART. Du point de vue du code ESPHome/LVGL, c'est transparent — les composants Wi-Fi et BLE standards d'ESPHome fonctionnent normalement.
+
+---
+
+## Affichage
+
+- **Taille :** 5 pouces
+- **Résolution :** 1024 × 600 px
+- **Interface :** RGB parallèle 16 bits (connecté au périphérique LCD de l'ESP32-P4)
+- **Tactile :** Capacitif, multi-touch, connecté via I2C
+
+---
+
+## Audio — DAC ES8388
+
+Le Tab5 intègre un codec audio **ES8388**. Il gère l'ADC (entrée microphone) et le DAC (sortie haut-parleur), bien que dans ce projet seul le chemin DAC soit utilisé — le microphone est capturé directement par l'ESP32-P4 via I2S.
+
+### Connexions
+
+| Signal | GPIO |
+|--------|------|
+| I2C SDA (contrôle DAC) | GPIO 31 |
+| I2C SCL (contrôle DAC) | GPIO 32 |
+| I2S BCLK (horloge audio) | GPIO 26 (partagé) |
+| I2S LRCLK (word select) | GPIO 29 (partagé) |
+| I2S DOUT (données vers DAC) | GPIO 26 |
+| Activation ampli | GPIO (switch logiciel) |
+
+### Problème de séquence au boot
+
+L'ES8388 nécessite une séquence d'initialisation spécifique sur I2C pour sortir du reset et router correctement l'audio. Si la ligne d'activation de l'amplificateur passe avant que l'horloge I2S soit stable, un fort pop se produit dans le haut-parleur.
+
+Le bloc `on_boot` d'ESPHome règle ça en séquençant :
+1. Régler le volume du media player
+2. Attendre la connexion API HA
+3. Seulement alors activer le switch ampli
+
+Cet ordre garantit que le bus I2S est actif avant que l'ampli ouvre le chemin vers le haut-parleur.
+
+### Initialisation des registres I2C
+
+Le chip nécessite aussi d'écrire dans le registre `0x04` au boot pour correctement configurer le routage entrée/sortie. C'est géré dans `tab5-hardware.yaml` via `i2c.write_bytes` au démarrage.
+
+---
+
+## Microphone — I2S PDM
+
+Le microphone intégré est un microphone numérique PDM connecté à l'ESP32-P4 via I2S.
+
+| Signal | GPIO |
+|--------|------|
+| I2S DIN (données du micro) | GPIO 28 |
+| I2S BCLK | GPIO 27 |
+| I2S LRCLK | GPIO 29 |
+
+Paramètres de capture : **16 kHz, 16-bit mono**. Correspond au format d'entrée attendu par le composant `micro_wake_word` et par le pipeline vocal de Home Assistant.
+
+---
+
+## Alimentation
+
+Le Tab5 est alimenté en USB-C. La consommation en pointe (Wi-Fi actif + rétroéclairage 100% + audio en lecture) peut dépasser 1,5 A à 5V. Un chargeur d'au moins **5V / 2A** est nécessaire pour éviter les resets par sous-tension.
+
+La luminosité du rétroéclairage est contrôlée logiciellement via PWM et peut être réduite. Le projet inclut une lecture du capteur de luminosité ambiante pour ajuster la luminosité automatiquement.

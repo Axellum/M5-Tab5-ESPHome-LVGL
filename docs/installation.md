@@ -1,67 +1,244 @@
-# 💻 Installation & Météo-France Setup / Installation & Configuration Météo-France
+# Installation & Configuration
 
-*English version below / Version française ci-dessous*
+## English · [Français](#version-française)
 
 ---
 
-## 🇫🇷 Version Française
+## Prerequisites
 
-### 1. Prérequis
-* Un serveur **Home Assistant** fonctionnel.
-* L'add-on **ESPHome** installé sur votre Home Assistant (ou en local).
-* L'intégration **Météo-France** installée et configurée dans Home Assistant (Requis pour le tableau de bord principal).
+- A working **Home Assistant** instance (any installation method)
+- The **ESPHome** add-on or standalone ESPHome CLI (`pip install esphome`)
+- ESPHome version **≥ 2025.9.3** (the project uses features not available in older versions)
+- A M5Stack Tab5 V2 (ESP32-P4 variant)
 
-### 2. Configuration des Entités Home Assistant
-Dans le fichier principal `tab5-ha-hmi.yaml`, tout en haut, vous trouverez un bloc `substitutions:`. Ce bloc est crucial car il fait l'abstraction entre le code de l'écran et **vos propres entités** Home Assistant.
-Modifiez ces valeurs pour correspondre à vos noms d'entités (ex: vos lumières, votre media player, etc.).
+Optional but used by the default configuration:
+- **Météo-France** integration (for weather data — replace with your own weather integration if outside France)
+- **Google Calendar** integration (for the planning screen)
+- A configured **Home Assistant Voice pipeline** (for voice assistant features)
 
-### 3. Les Fichiers Secrets
-Ne mettez **jamais** vos mots de passe en clair dans le code. 
-Créez un fichier `secrets.yaml` à la racine de votre dossier ESPHome et ajoutez-y :
+---
+
+## Step 1 — Clone and locate the entry point
+
+```bash
+git clone https://github.com/Axellum/M5-Tab5-ESPHome-LVGL.git
+cd M5-Tab5-ESPHome-LVGL
+```
+
+The main file is `tab5-ha-hmi.yaml` at the repository root. All other YAML files in `Tab5/` are included as packages by this entry point.
+
+---
+
+## Step 2 — Edit the substitutions block
+
+Open `tab5-ha-hmi.yaml`. At the top, there is a `substitutions:` block:
+
 ```yaml
-wifi_ssid: "VOTRE_WIFI"
+substitutions:
+  # === USER CONFIGURATION ZONE ===
+  # Replace these with your own Home Assistant entity IDs
+
+  entity_tracker_pc: device_tracker.pc_fix_3
+  entity_phone_battery: sensor.pixel_6_pro_battery_level
+
+  # --- Lights ---
+  entity_light_chambre: light.h6008_2
+  entity_light_salon: light.salon
+  entity_light_bureau: light.sonoff_1001700057
+
+  # --- Climate ---
+  entity_climate_salon: climate.daikinap71273_room_temperature
+
+  # --- Voice assistant ---
+  entity_tab5_pipeline_select: select.m5stack_tab5_home_assistant_hmi_assistant
+
+  # --- Temperature & Humidity ---
+  entity_temp_salon: sensor.thermometre_salon_temperature
+  entity_hum_salon: sensor.thermometre_salon_humidity
+  ...
+```
+
+Replace each value with your own entity IDs. These substitutions propagate throughout all packages — you do not need to edit any other YAML file to adapt the project to your setup.
+
+---
+
+## Step 3 — Create your secrets file
+
+Create a `secrets.yaml` file at the repository root (already in `.gitignore`):
+
+```yaml
+wifi_ssid: "YOUR_WIFI_NETWORK"
+wifi_password: "YOUR_WIFI_PASSWORD"
+api_encryption_key: "BASE64_32_BYTES_KEY"
+ota_password: "YOUR_OTA_PASSWORD"
+```
+
+To generate a valid `api_encryption_key`:
+
+```bash
+python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"
+```
+
+---
+
+## Step 4 — Set up Home Assistant automations
+
+Copy the files from `HomeAssistant_Config/` into your Home Assistant configuration:
+
+| File | Where to add it |
+|------|-----------------|
+| `automations_tab5.yaml` | Include in your `automations:` section or merge with your `automations.yaml` |
+| `scripts_tab5.yaml` | Include in your `scripts:` section |
+| `template_sensors_meteo_tab5.yaml` | Include in your `template:` section in `configuration.yaml` |
+
+Then search-and-replace the placeholder entity names in those files. See [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) for the full list.
+
+---
+
+## Step 5 — First flash (USB)
+
+Connect the Tab5 to your computer via USB-C. Then:
+
+```bash
+# Via CLI
+esphome run tab5-ha-hmi.yaml
+
+# Or via ESPHome Dashboard
+# Add the device, point it at tab5-ha-hmi.yaml, click Install
+```
+
+The first flash must be done over USB. After that, all updates can be done via OTA over Wi-Fi (the device will appear in your ESPHome dashboard once it connects).
+
+---
+
+## OTA updates
+
+After the initial flash, the device registers with ESPHome's OTA server. Subsequent compilations can be pushed wirelessly:
+
+```bash
+esphome run tab5-ha-hmi.yaml --device 192.168.x.x
+```
+
+Or just click **Install → Wirelessly** in the ESPHome dashboard.
+
+---
+
+## Météo-France specifics
+
+The weather screen is built around Météo-France's data structure. If you are in France:
+
+1. Install the **Météo-France** integration from the HA integrations page
+2. You will get entities: `weather.your_city`, `sensor.your_city_next_rain`, `sensor.XX_weather_alert`
+3. The automation in `automations_tab5.yaml` queries `v1/vision/rain` and `v1/forecast` from Météo-France's API and formats the response into the semicolon-delimited payload the device expects
+
+If you are outside France, the weather screen requires adaptation. The push automation will need to be rewritten to query your local weather integration and produce the same payload format. The payload format is documented in the automation file comments.
+
+---
+
+---
+
+## Version Française
+
+---
+
+## Prérequis
+
+- Une instance **Home Assistant** fonctionnelle (toute méthode d'installation)
+- L'add-on **ESPHome** ou la CLI ESPHome standalone (`pip install esphome`)
+- ESPHome version **≥ 2025.9.3** (le projet utilise des fonctionnalités absentes des versions plus anciennes)
+- Un M5Stack Tab5 V2 (variante ESP32-P4)
+
+Optionnel mais utilisé par la configuration par défaut :
+- Intégration **Météo-France** (pour les données météo — remplacez par votre propre intégration si vous êtes hors de France)
+- Intégration **Google Calendar** (pour l'écran planning)
+- Un **pipeline Voice Home Assistant** configuré (pour les fonctions assistant vocal)
+
+---
+
+## Étape 1 — Cloner et localiser le point d'entrée
+
+```bash
+git clone https://github.com/Axellum/M5-Tab5-ESPHome-LVGL.git
+cd M5-Tab5-ESPHome-LVGL
+```
+
+Le fichier principal est `tab5-ha-hmi.yaml` à la racine du dépôt. Tous les autres fichiers YAML dans `Tab5/` sont inclus comme packages par ce point d'entrée.
+
+---
+
+## Étape 2 — Éditer le bloc substitutions
+
+Ouvrez `tab5-ha-hmi.yaml`. En haut, il y a un bloc `substitutions:` — remplacez chaque valeur par vos propres entity IDs Home Assistant. Ces substitutions se propagent dans tous les packages, vous n'avez pas besoin d'éditer d'autres fichiers YAML.
+
+---
+
+## Étape 3 — Créer votre fichier secrets
+
+Créez un fichier `secrets.yaml` à la racine du dépôt (déjà dans `.gitignore`) :
+
+```yaml
+wifi_ssid: "VOTRE_RESEAU_WIFI"
 wifi_password: "VOTRE_MOT_DE_PASSE"
-api_password: "MOT_DE_PASSE_API_ESPHOME"
+api_encryption_key: "CLE_BASE64_32_OCTETS"
+ota_password: "VOTRE_MOT_DE_PASSE_OTA"
 ```
 
-### 4. Intégration Météo-France (Spécifique Tab5)
-Le Tab5 est conçu pour afficher les prévisions de pluie dans l'heure avec une grande précision. Pour cela, vous devez configurer Home Assistant pour envoyer ces données spécifiques à l'écran.
-1. Allez dans le dossier `HomeAssistant_Config/` de ce dépôt.
-2. Vous y trouverez des scripts et des automatisations. Copiez-les dans vos propres fichiers `automations.yaml` et `scripts.yaml` de Home Assistant.
-3. **Logique Météo :** Home Assistant interroge l'API Météo-France (`v1/vision/rain` et `v1/forecast`). Ensuite, l'automatisation "Pousse" (Push) massivement ces données vers l'écran Tab5 via un appel de service natif ESPHome (ex: `esphome.nom_device_tab5_maj_previsions_heures`). 
-4. L'astuce réside dans la sérialisation : Home Assistant envoie une longue chaîne de caractères séparée par des `;` et c'est l'écran (en C++) qui découpe cette chaîne pour l'afficher instantanément.
+Pour générer une `api_encryption_key` valide :
 
-### 5. Flashage
-Connectez votre Tab5 en USB-C à votre PC/Serveur et compilez le projet via le tableau de bord ESPHome. Les mises à jour suivantes pourront se faire en OTA (Wi-Fi).
+```bash
+python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"
+```
 
 ---
 
-## 🇺🇸 English Version
+## Étape 4 — Configurer les automations Home Assistant
 
-### 1. Prerequisites
-* A working **Home Assistant** server.
-* The **ESPHome** add-on installed on your Home Assistant (or locally).
-* The **Météo-France** integration installed and configured in Home Assistant (Required for the main dashboard).
+Copiez les fichiers de `HomeAssistant_Config/` dans votre configuration Home Assistant :
 
-### 2. Home Assistant Entities Configuration
-In the main `tab5-ha-hmi.yaml` file, right at the top, you will find a `substitutions:` block. This block is critical because it abstracts the screen's code from **your own** Home Assistant entities.
-Change these values to match your entity names (e.g., your lights, your media player, etc.).
+| Fichier | Où l'ajouter |
+|---------|-------------|
+| `automations_tab5.yaml` | Inclure dans votre section `automations:` ou fusionner avec votre `automations.yaml` |
+| `scripts_tab5.yaml` | Inclure dans votre section `scripts:` |
+| `template_sensors_meteo_tab5.yaml` | Inclure dans votre section `template:` dans `configuration.yaml` |
 
-### 3. Secrets File
-**Never** put your passwords in plain text in the code.
-Create a `secrets.yaml` file at the root of your ESPHome folder and add:
-```yaml
-wifi_ssid: "YOUR_WIFI"
-wifi_password: "YOUR_PASSWORD"
-api_password: "ESPHOME_API_PASSWORD"
+Puis recherchez-remplacez les noms d'entités placeholder dans ces fichiers. Voir [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) pour la liste complète.
+
+---
+
+## Étape 5 — Premier flash (USB)
+
+Connectez le Tab5 à votre ordinateur via USB-C. Ensuite :
+
+```bash
+# Via CLI
+esphome run tab5-ha-hmi.yaml
+
+# Ou via le Dashboard ESPHome
+# Ajoutez l'appareil, pointez-le vers tab5-ha-hmi.yaml, cliquez Installer
 ```
 
-### 4. Météo-France Integration (Tab5 Specific)
-The Tab5 is designed to display rain forecasts within the hour with high precision. To do this, you must configure Home Assistant to send this specific data to the screen.
-1. Go to the `HomeAssistant_Config/` folder of this repository.
-2. You will find scripts and automations there. Copy them into your own `automations.yaml` and `scripts.yaml` Home Assistant files.
-3. **Weather Logic:** Home Assistant queries the Météo-France API (`v1/vision/rain` and `v1/forecast`). Then, the automation massively "Pushes" this data to the Tab5 screen via a native ESPHome service call (e.g., `esphome.device_name_tab5_update_hourly_forecast`).
-4. The trick is in the serialization: Home Assistant sends a long string separated by `;` and it's the screen (in C++) that splits this string to display it instantly.
+Le premier flash doit se faire en USB. Ensuite, toutes les mises à jour peuvent se faire en OTA via Wi-Fi.
 
-### 5. Flashing
-Connect your Tab5 via USB-C to your PC/Server and compile the project via the ESPHome dashboard. Subsequent updates can be done via OTA (Wi-Fi).
+---
+
+## Mises à jour OTA
+
+Après le flash initial, l'appareil s'enregistre auprès du serveur OTA d'ESPHome. Les compilations suivantes peuvent être poussées sans fil :
+
+```bash
+esphome run tab5-ha-hmi.yaml --device 192.168.x.x
+```
+
+Ou cliquez simplement **Installer → Sans fil** dans le dashboard ESPHome.
+
+---
+
+## Spécificités Météo-France
+
+L'écran météo est construit autour de la structure de données de Météo-France. Si vous êtes en France :
+
+1. Installez l'intégration **Météo-France** depuis la page des intégrations HA
+2. Vous obtiendrez des entités : `weather.votre_ville`, `sensor.votre_ville_next_rain`, `sensor.XX_alerte_meteo`
+3. L'automatisation dans `automations_tab5.yaml` interroge `v1/vision/rain` et `v1/forecast` de l'API Météo-France et formate la réponse en payload délimité par des points-virgules attendu par l'appareil
+
+Si vous êtes hors de France, l'écran météo nécessite une adaptation. L'automatisation push devra être réécrite pour interroger votre intégration météo locale et produire le même format de payload. Le format du payload est documenté dans les commentaires du fichier d'automatisation.
