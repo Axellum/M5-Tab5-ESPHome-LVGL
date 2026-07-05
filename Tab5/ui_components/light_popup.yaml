@@ -111,35 +111,9 @@ obj:
                 pad_row: 12
                 pad_column: 10
               widgets:
-                # Ligne 1 : Blancs
-                - button:
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            color_name: "white"
-                    widgets:
-                      - label: { text: "\U000F0335", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: 0xFFFFFF }
-                      - label: { text: "Blanc", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
-                - button:
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            color_name: "warmwhite"
-                    widgets:
-                      - label: { text: "\U000F0335", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: 0xFFC864 }
-                      - label: { text: "Chaud", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
+                # Ligne 1 : Blancs (2 premiers boutons factorises, #T164) + On/Off (action differente, laisse tel quel)
+                - !include { file: light_color_preset_btn.yaml, vars: { color_name: "white", icon_color: "0xFFFFFF", label_text: "Blanc" } }
+                - !include { file: light_color_preset_btn.yaml, vars: { color_name: "warmwhite", icon_color: "0xFFC864", label_text: "Chaud" } }
                 - button:
                     width: 170
                     height: 60
@@ -154,90 +128,12 @@ obj:
                       - label: { id: btn_light_power_icon, text: "\U000F0425", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
                       - label: { text: "On / Off", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
 
-                # Ligne 2 : Couleurs 1
-                - button:
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            color_name: "red"
-                    widgets:
-                      - label: { text: "\U000F0335", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: 0xFF0000 }
-                      - label: { text: "Rouge", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
-                - button:
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            color_name: "green"
-                    widgets:
-                      - label: { text: "\U000F0335", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: 0x00FF00 }
-                      - label: { text: "Vert", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
-                - button:
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            color_name: "blue"
-                    widgets:
-                      - label: { text: "\U000F0335", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: 0x0000FF }
-                      - label: { text: "Bleu", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
+                # Ligne 2 : Couleurs 1 (factorises, #T164)
+                - !include { file: light_color_preset_btn.yaml, vars: { color_name: "red", icon_color: "0xFF0000", label_text: "Rouge" } }
+                - !include { file: light_color_preset_btn.yaml, vars: { color_name: "green", icon_color: "0x00FF00", label_text: "Vert" } }
+                - !include { file: light_color_preset_btn.yaml, vars: { color_name: "blue", icon_color: "0x0000FF", label_text: "Bleu" } }
 
-                # Ligne 3 : Couleurs 2
-                - button:
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            color_name: "magenta"
-                    widgets:
-                      - label: { text: "\U000F0335", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: 0xFF00FF }
-                      - label: { text: "Rose", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
-                - button:
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            color_name: "orange"
-                    widgets:
-                      - label: { text: "\U000F0335", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: 0xFFA500 }
-                      - label: { text: "Orange", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
-                - button:
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            color_name: "cyan"
-                    widgets:
-                      - label: { text: "\U000F0335", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: 0x00FFFF }
-                      - label: { text: "Cyan", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
+                # Ligne 3 : Couleurs 2 (factorises, #T164)
+                - !include { file: light_color_preset_btn.yaml, vars: { color_name: "magenta", icon_color: "0xFF00FF", label_text: "Rose" } }
+                - !include { file: light_color_preset_btn.yaml, vars: { color_name: "orange", icon_color: "0xFFA500", label_text: "Orange" } }
+                - !include { file: light_color_preset_btn.yaml, vars: { color_name: "cyan", icon_color: "0x00FFFF", label_text: "Cyan" } }
