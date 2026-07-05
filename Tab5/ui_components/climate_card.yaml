@@ -62,6 +62,8 @@ obj:
         height: 62
         radius: 12
         styles: style_clim_btn
+        pressed:
+          bg_opa: 30%
         on_short_click:
           - homeassistant.service:
               service: climate.set_temperature
@@ -81,6 +83,8 @@ obj:
         height: 62
         radius: 12
         styles: style_clim_btn
+        pressed:
+          bg_opa: 30%
         on_short_click:
           - homeassistant.service:
               service: climate.set_temperature

@@ -125,6 +125,8 @@ obj:
                     height: 60
                     radius: 12
                     styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
                           service: climate.set_temperature
@@ -141,6 +143,8 @@ obj:
                     height: 60
                     radius: 12
                     styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
                           service: climate.set_temperature
@@ -174,6 +178,8 @@ obj:
                     height: 60
                     radius: 12
                     styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
                           service: climate.set_hvac_mode
@@ -189,6 +195,8 @@ obj:
                     height: 60
                     radius: 12
                     styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
                           service: climate.set_hvac_mode
@@ -204,6 +212,8 @@ obj:
                     height: 60
                     radius: 12
                     styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
                           service: climate.turn_off
@@ -220,6 +230,8 @@ obj:
                     height: 60
                     radius: 12
                     styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
                           service: climate.set_hvac_mode
@@ -235,6 +247,8 @@ obj:
                     height: 60
                     radius: 12
                     styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
                           service: climate.set_hvac_mode
@@ -250,6 +264,8 @@ obj:
                     height: 60
                     radius: 12
                     styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
                           service: climate.set_swing_mode
@@ -267,6 +283,8 @@ obj:
                     height: 60
                     radius: 12
                     styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
                           service: climate.set_preset_mode
@@ -282,6 +300,8 @@ obj:
                     height: 60
                     radius: 12
                     styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
                           service: climate.set_preset_mode
@@ -297,6 +317,8 @@ obj:
                     height: 60
                     radius: 12
                     styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
                           service: climate.set_fan_mode
