@@ -89,7 +89,7 @@ globals:
     restore_value: false
 
 interval:
-  - interval: 6s
+  - interval: 8s
     then:
       - if:
           condition:

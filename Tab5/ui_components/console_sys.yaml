@@ -177,6 +177,8 @@ obj:
               width: 85
               height: 50
               styles: style_clim_btn
+              pressed:
+                bg_opa: 30%
               widgets:
                 - label:
                     text: "\U000F0156"
@@ -195,6 +197,8 @@ obj:
               width: 85
               height: 50
               styles: style_clim_btn
+              pressed:
+                bg_opa: 30%
               widgets:
                 - label:
                     id: lbl_reboot_icon
