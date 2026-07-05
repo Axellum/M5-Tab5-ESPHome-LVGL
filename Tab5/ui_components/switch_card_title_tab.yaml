@@ -1,0 +1,8 @@
+obj:
+  align: TOP_MID
+  y: 7
+  width: 130
+  height: 40
+  styles: style_meteo_tab
+  widgets:
+    - label: { text: "${title}", align: CENTER, text_font: roboto_32_b, text_color: color_text }

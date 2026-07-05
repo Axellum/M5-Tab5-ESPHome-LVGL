@@ -1,0 +1,26 @@
+obj:
+  align: BOTTOM_MID
+  y: 0
+  width: 140
+  height: 51
+  border_width: 0
+  styles: style_meteo_tab
+  scrollbar_mode: "OFF"
+  widgets:
+    - label: { id: "j${idx}_max", text: "-- / ", align: BOTTOM_MID, x: -25, y: -7, text_font: roboto_32_b, text_color: color_temp_max }
+    - label: { id: "j${idx}_min", text: "-- °", align: BOTTOM_MID, x: 35, y: -7, text_font: roboto_32_b, text_color: color_temp_min }
+    - button:
+        id: "btn_tj${idx}_toggle"
+        align: CENTER
+        y: 0
+        width: ${toggle_width}
+        height: 51
+        bg_opa: 0
+        border_width: 0
+        outline_width: 0
+        shadow_width: 0
+        on_short_click:
+          - lambda: |-
+              int jour = id(forecast_page_index) * 5 + ${idx};
+              id(temp_planning_text) = cal_heures[jour];
+          - script.execute: tab5_show_planning_temp
