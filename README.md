@@ -31,6 +31,25 @@ The interface is compiled in C++ and embedded in the device firmware. It does no
 
 ---
 
+## What it does
+
+Six screens, all driven by Home Assistant push events:
+
+- **Home** — time, indoor temp/humidity, short weather summary line, active weather alert indicator, microphone icon with pipeline state
+- **Weather** — 7-day daily forecast (Météo-France), hyperlocal rain chart for the next 60 minutes at 1-minute resolution, departmental weather alert banner (yellow / orange / red) shown only when an alert is active
+- **Climate** — arc thermostat to set target temperature, mode selector (heat / cool / fan / auto / off), current room temperature; controls are dimmed (not hidden) when the AC is off
+- **Plants** — soil moisture gauge for up to 5 BLE plant sensors, color-coded by level (red = dry, green = optimal, blue = too wet), area temperature
+- **Planning** — next 4 Google Calendar events with title, time, and event color tag
+- **Console** — scrollable debug log for incoming payloads, API events, and pipeline state transitions
+
+**Voice assistant** — runs `okay_nabu` wake-word detection locally on the ESP32-P4. The microphone icon changes color to show the pipeline state in real time: grey (idle) → green (listening) → orange (processing) → blue (speaking) → red (error). Wake-word detection can be toggled on/off from the UI; tapping the mic icon triggers push-to-talk. Two modes selectable from the UI: standard Home Assistant agent or a free-form LLM conversation pipeline.
+
+**Roller shutters** — script buttons on the home screen send open/close/position commands to Home Assistant cover entities.
+
+→ Full screen-by-screen description: [`docs/screens.md`](docs/screens.md)
+
+---
+
 ## Key design decisions
 
 - **Push-only, zero polling.** The device never requests state from Home Assistant. Automations on the HA side detect changes and push data to the screen via native ESPHome service calls. CPU stays near zero when nothing changes.
@@ -55,6 +74,7 @@ Sound output goes through the ES8388 DAC chip (I2C + I2S). Boot sequencing is ca
 
 | Page | Contents |
 |------|----------|
+| [`docs/screens.md`](docs/screens.md) | Screen-by-screen feature description |
 | [`docs/architecture.md`](docs/architecture.md) | Modular YAML structure, push paradigm, data packing, boot guards |
 | [`docs/hardware.md`](docs/hardware.md) | ESP32-P4 specs, GPIO mapping, ES8388 DAC, PSRAM, power |
 | [`docs/ui_design.md`](docs/ui_design.md) | LVGL rendering, vector fonts, dynamic color, CPU optimizations |
@@ -136,6 +156,25 @@ L'interface est compilée en C++ et embarquée dans le firmware de l'appareil. E
 
 ---
 
+## Ce que ça fait
+
+Six écrans, tous alimentés par des événements push Home Assistant :
+
+- **Accueil** — heure, temp/humidité intérieure, ligne résumé météo, indicateur d'alerte active, icône microphone avec état du pipeline
+- **Météo** — prévisions journalières 7 jours (Météo-France), graphique de pluie hyperlocal pour les 60 prochaines minutes à la résolution d'une minute, bandeau d'alerte météo départementale (jaune / orange / rouge) affiché uniquement quand une alerte est active
+- **Clim** — arc thermostat pour la température cible, sélecteur de mode (chaud / froid / ventilation / auto / arrêt), température ambiante actuelle ; les contrôles sont estompés (non cachés) quand le clim est éteint
+- **Plantes** — jauge d'humidité du sol pour jusqu'à 5 capteurs BLE, code couleur par niveau (rouge = sec, vert = optimal, bleu = trop humide), température de zone
+- **Planning** — 4 prochains événements Google Calendar avec titre, heure et tag couleur de l'événement
+- **Console** — log de débogage défilant pour les payloads entrants, événements API et transitions d'état du pipeline
+
+**Assistant vocal** — fait tourner la détection wake-word `okay_nabu` localement sur l'ESP32-P4. L'icône microphone change de couleur pour montrer l'état du pipeline en temps réel : gris (repos) → vert (écoute) → orange (traitement) → bleu (synthèse) → rouge (erreur). La détection wake-word peut être activée/désactivée depuis l'UI ; taper sur l'icône micro déclenche le push-to-talk. Deux modes sélectionnables depuis l'UI : agent Home Assistant standard ou pipeline de conversation LLM libre.
+
+**Volets roulants** — des boutons de script sur l'écran d'accueil envoient des commandes ouvrir/fermer/position aux entités cover de Home Assistant.
+
+→ Description écran par écran : [`docs/screens.md`](docs/screens.md)
+
+---
+
 ## Assistant vocal
 
 L'appareil fait tourner un modèle de wake-word local (`okay_nabu` via micro_wake_word / TensorFlow Lite) directement sur l'ESP32-P4. L'audio est capturé en 16 kHz / 16-bit sur I2S et streamé vers Home Assistant uniquement après la détection du wake-word — rien ne passe sur le réseau avant ça.
@@ -150,6 +189,7 @@ La sortie sonore passe par le chip DAC ES8388 (I2C + I2S). Le séquencement au d
 
 | Page | Contenu |
 |------|---------|
+| [`docs/screens.md`](docs/screens.md) | Description fonctionnelle écran par écran |
 | [`docs/architecture.md`](docs/architecture.md) | Structure YAML modulaire, paradigme push, data packing, boot guards |
 | [`docs/hardware.md`](docs/hardware.md) | Specs ESP32-P4, mapping GPIO, DAC ES8388, PSRAM, alimentation |
 | [`docs/ui_design.md`](docs/ui_design.md) | Rendu LVGL, polices vectorielles, couleur dynamique, optimisations CPU |
