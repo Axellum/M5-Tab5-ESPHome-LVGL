@@ -36,7 +36,7 @@ The interface is compiled in C++ and embedded in the device firmware. It does no
 Six screens, all driven by Home Assistant push events:
 
 - **Home** — time, indoor temp/humidity, short weather summary line, active weather alert indicator, microphone icon with pipeline state
-- **Weather** — 7-day daily forecast (Météo-France), hyperlocal rain chart for the next 60 minutes at 1-minute resolution, departmental weather alert banner (yellow / orange / red) shown only when an alert is active
+- **Weather** — **5-slide swipeable forecast**: slides 1–2 show hourly weather for the next 15 time slots (time, temperature color-coded, rainfall in mm, condition icon); slides 3–5 show the **15-day daily forecast** (5 days/slide) with color-coded day names, dual-layer condition icons, and max/min temperatures; departmental weather alert banner (yellow/orange/red) shown only when an alert is active
 - **Climate** — arc thermostat to set target temperature, mode selector (heat / cool / fan / auto / off), current room temperature; controls are dimmed (not hidden) when the AC is off
 - **Plants** — soil moisture gauge for up to 5 BLE plant sensors, color-coded by level (red = dry, green = optimal, blue = too wet), area temperature
 - **Planning** — next 4 Google Calendar events with title, time, and event color tag
@@ -161,7 +161,7 @@ L'interface est compilée en C++ et embarquée dans le firmware de l'appareil. E
 Six écrans, tous alimentés par des événements push Home Assistant :
 
 - **Accueil** — heure, temp/humidité intérieure, ligne résumé météo, indicateur d'alerte active, icône microphone avec état du pipeline
-- **Météo** — prévisions journalières 7 jours (Météo-France), graphique de pluie hyperlocal pour les 60 prochaines minutes à la résolution d'une minute, bandeau d'alerte météo départementale (jaune / orange / rouge) affiché uniquement quand une alerte est active
+- **Météo** — **prévisions par swipe en 5 slides** : slides 1–2 affichent la météo horaire pour les 15 prochaines tranches (heure, température avec code couleur, pluie en mm, icône condition) ; slides 3–5 affichent les **prévisions journalières 15 jours** (5 jours/slide) avec noms de jours en code couleur, icônes double couche, temp max/min ; bandeau d'alerte météo départementale (jaune/orange/rouge) affiché uniquement quand une alerte est active
 - **Clim** — arc thermostat pour la température cible, sélecteur de mode (chaud / froid / ventilation / auto / arrêt), température ambiante actuelle ; les contrôles sont estompés (non cachés) quand le clim est éteint
 - **Plantes** — jauge d'humidité du sol pour jusqu'à 5 capteurs BLE, code couleur par niveau (rouge = sec, vert = optimal, bleu = trop humide), température de zone
 - **Planning** — 4 prochains événements Google Calendar avec titre, heure et tag couleur de l'événement

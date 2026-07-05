@@ -39,38 +39,37 @@ The default screen shown at startup. Gives a quick overview of the house state.
 
 ## Weather screen
 
-The main weather screen is split into two parts: a 7-day daily forecast and an hourly rain chart.
+The weather section is a single screen navigated by **horizontal swipe**, with a **5-slide pagination system** (indicated by 5 dots at the bottom of the screen). All slides share the same 5-card layout — 5 cards displayed side by side in the lower portion of the screen.
 
-### 7-day daily forecast
+### Slides 1–2: Hourly forecast (15 time slots)
 
-Seven cards displayed side by side across the screen. Each card shows:
-- Day label (Mon, Tue, Wed...)
-- Weather condition icon (from the `IconeMeteo.ttf` font — sun, cloud, rain, storm, snow, etc.)
-- Maximum temperature
-- Minimum temperature
+The first two slides cover **hourly weather** for the next 15 time slots, 5 slots per slide (slide 1 = slots 1–5, slide 2 = slots 6–10... up to slot 15).
 
-Data source: **Météo-France** integration in Home Assistant. The integration provides `weather.your_city` with a daily forecast array. Home Assistant serializes the 7-day data into a single push payload sent to the device when the weather entity updates.
+Each card shows:
+- **Time label** (e.g., `14:00`, `15:00`)
+- **Weather condition icon** — layered dual-icon system: main condition (cloud, sun, moon, fog, wind) + precipitation overlay (rain, heavy rain, snow, hail, thunder) composited from the `IconeMeteo.ttf` font
+- **Temperature** — color-coded: blue (cold) → green → orange → red (hot)
+- **Rainfall** — precipitation in mm if > 0, `-` if dry
 
-### Hourly rain chart
+### Slides 3–5: 15-day daily forecast
 
-Below the 7-day cards, a bar chart shows rain probability for the next **60 minutes**, with one bar per minute. This is the "pluie dans l'heure" feature from Météo-France's `v1/vision/rain` API — it provides hyperlocal rain probability at 1-minute resolution.
+The last three slides cover the **15-day daily forecast**, 5 days per slide.
 
-The bars are colored:
-- **Blue** — rain expected (probability > threshold)
-- **Dark grey** — no rain expected
-- **Gradient** — probability proportional to bar height
+Each card shows:
+- **Day name** — color-coded by type:
+  - Cyan = today
+  - Green = day off / rest day
+  - Amber/Red = Sunday (worked or off)
+  - Rose = early shift (start before 09:00)
+  - Dim slate = past day (greyed out opacity)
+- **Weather condition icon** (same dual-layer system as hourly)
+- **Max / Min temperatures** — both color-coded individually
 
-This chart updates whenever Home Assistant detects a change on the `sensor.your_city_next_rain` entity.
+Tapping a day card **toggles** between weather view and an opening-hours detail view (configured per day in the HA push payload).
 
-### Weather alert banner
+**On slide 3 only (today + next 4 days):** each card also shows a shortcut action button (PC/TV, roller shutter, lights) — these disappear on slides 4 and 5 to keep the cards clean.
 
-Météo-France publishes departmental weather alerts (thunderstorm, flooding, snow, wind, etc.) with a severity level (green / yellow / orange / red).
-
-When an active alert exists, a colored banner appears on the weather screen (and a smaller indicator on the home screen) showing:
-- Alert type and description text
-- Severity color (matches Météo-France's official color scale)
-
-When there is no active alert, the banner is hidden — no empty space, no "all clear" clutter.
+**Data source:** Météo-France integration in Home Assistant. HA serializes the full 15-day array into a single semicolon-delimited push payload per update.
 
 ---
 
@@ -204,40 +203,39 @@ L'écran par défaut affiché au démarrage. Donne une vue rapide de l'état de 
 
 ---
 
-## Écran météo
+## Weather screen (French)
 
-L'écran météo principal est divisé en deux parties : prévisions journalières 7 jours et graphique de pluie horaire.
+L'écran météo est navigué par **swipe horizontal**, avec un **système de pagination à 5 slides** (indiqué par 5 points en bas de l'écran). Toutes les slides partagent la même mise en page : 5 cartes affichées côte à côte dans la partie basse de l'écran.
 
-### Prévisions journalières 7 jours
+### Slides 1–2 : Prévisions horaires (15 tranches)
 
-Sept cartes affichées côte à côte sur l'écran. Chaque carte montre :
-- Label du jour (Lun, Mar, Mer...)
-- Icône de condition météo (depuis la police `IconeMeteo.ttf` — soleil, nuage, pluie, orage, neige, etc.)
-- Température maximale
-- Température minimale
+Les deux premières slides couvrent la **météo heure par heure** pour les 15 prochaines tranches, 5 par slide.
 
-Source de données : intégration **Météo-France** dans Home Assistant. L'intégration fournit `weather.votre_ville` avec un tableau de prévisions journalières. Home Assistant sérialise les données 7 jours en un seul payload push envoyé à l'appareil quand l'entité météo se met à jour.
+Chaque carte affiche :
+- **Heure** (ex: `14:00`, `15:00`)
+- **Icône de condition météo** — système d'icônes double couche : condition principale (nuage, soleil, lune, brouillard, vent) + superposition précipitation (pluie, fortes pluies, neige, grêle, orage) composited depuis la police `IconeMeteo.ttf`
+- **Température** — avec code couleur : bleu (froid) → vert → orange → rouge (chaud)
+- **Pluie** — précipitations en mm si > 0, `-` si sec
 
-### Graphique de pluie dans l'heure
+### Slides 3–5 : Prévisions journalières 15 jours
 
-Sous les cartes 7 jours, un graphique à barres montre la probabilité de pluie pour les **60 prochaines minutes**, avec une barre par minute. C'est la fonctionnalité "pluie dans l'heure" de l'API `v1/vision/rain` de Météo-France — elle fournit une probabilité de pluie hyperlocale à la résolution d'une minute.
+Les trois dernières slides couvrent les **prévisions sur 15 jours**, 5 jours par slide.
 
-Les barres sont colorées :
-- **Bleu** — pluie attendue (probabilité > seuil)
-- **Gris foncé** — pas de pluie attendue
-- Hauteur de barre proportionnelle à la probabilité
+Chaque carte affiche :
+- **Nom du jour** — code couleur selon le type :
+  - Cyan = aujourd'hui
+  - Vert = jour de repos
+  - Ambre/Rouge = dimanche (travaillé ou pas)
+  - Rose = prise de service matinale (départ avant 09:00)
+  - Ardoise estompée = jour passé (opacité réduite)
+- **Icône de condition météo** (même système double couche qu'horaire)
+- **Températures max / min** — toutes deux avec code couleur individuel
 
-Ce graphique se met à jour quand Home Assistant détecte un changement sur l'entité `sensor.votre_ville_next_rain`.
+Taper sur une carte jour **bascule** entre la vue météo et une vue détail des horaires d'ouverture (configuré par jour dans le payload push HA).
 
-### Bandeau d'alerte météo
+**Sur la slide 3 seulement (aujourd'hui + 4 prochains jours) :** chaque carte affiche aussi un bouton d'action raccourci (PC/TV, volet roulant, lumières) — ces boutons disparaissent sur les slides 4 et 5 pour garder les cartes lisibles.
 
-Météo-France publie des alertes météo départementales (orage, inondation, neige, vent, etc.) avec un niveau de sévérité (vert / jaune / orange / rouge).
-
-Quand une alerte active existe, un bandeau coloré apparaît sur l'écran météo (et un indicateur plus petit sur l'écran d'accueil) montrant :
-- Type d'alerte et texte descriptif
-- Couleur de sévérité (correspond à l'échelle de couleurs officielle Météo-France)
-
-Quand il n'y a pas d'alerte active, le bandeau est masqué — aucun espace vide, aucun encombrement "tout va bien".
+**Source de données :** intégration Météo-France dans Home Assistant. HA sérialise le tableau complet 15 jours en un seul payload délimité par des points-virgules par mise à jour.
 
 ---
 
