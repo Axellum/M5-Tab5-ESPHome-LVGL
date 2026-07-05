@@ -48,8 +48,7 @@ ota:
   on_end:
     then:
       - delay: 2s
-      - lambda: |-
-          esp_restart();
+      - button.press: btn_restart
 
 safe_mode:
   num_attempts: 10

@@ -18,8 +18,8 @@ substitutions:
   entity_tab5_pipeline_select: select.m5stack_tab5_home_assistant_hmi_assistant
   
   # --- Température & Humidité ---
-  entity_temp_salon: sensor.sonoff_a48003dbc9_temperature
-  entity_hum_salon: sensor.sonoff_a48003dbc9_humidity
+  entity_temp_salon: sensor.thermometre_salon_temperature
+  entity_hum_salon: sensor.thermometre_salon_humidity
   entity_temp_chambre: sensor.sonoff_a48003ea51_temperature
   entity_hum_chambre: sensor.sonoff_a48003ea51_humidity
   entity_temp_plante: sensor.plant_sensor_8184_temperature
