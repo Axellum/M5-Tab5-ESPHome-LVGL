@@ -76,15 +76,8 @@ obj:
                     on_short_click:
                       - lambda: |-
                           int jour = id(forecast_page_index) * 5 + 0;
-                          tab5_calendar_toggle(jour);
-                          WeatherDaySlot slots[] = {
-                              {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
-                              {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
-                              {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
-                              {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
-                              {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
-                          };
-                          refresh_daily_forecast(slots, id(forecast_page_index), id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+                          id(temp_planning_text) = cal_heures[jour];
+                      - script.execute: tab5_show_planning_temp
           # Icône latérale gauche (épaule)
           - label: { id: icon_card_pc, text: "\U000F07C0", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
     # Card 1
@@ -141,25 +134,6 @@ obj:
           # Icônes latérales (épaules)
           - label: { id: icon_card_shutter1, text: "\U000F111E", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
           - label: { id: icon_card_shutter_arrow, text: "\U000F005D", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
-          - button:
-              id: btn_j1_dir
-              align: TOP_RIGHT
-              x: -10
-              y: 12
-              width: 50
-              height: 40
-              styles: style_invisible
-              pad_all: 0
-              on_short_click:
-                - lambda: |-
-                    id(volet_target_open) = !id(volet_target_open);
-                    if (!id(volet_en_mouvement)) {
-                      if (id(volet_target_open)) {
-                        lv_label_set_text(id(icon_card_shutter_arrow), "\U000F005D");
-                      } else {
-                        lv_label_set_text(id(icon_card_shutter_arrow), "\U000F0045");
-                      }
-                    }
           # Onglet Titre
           - obj:
               align: TOP_MID
@@ -196,15 +170,27 @@ obj:
                     on_short_click:
                       - lambda: |-
                           int jour = id(forecast_page_index) * 5 + 1;
-                          tab5_calendar_toggle(jour);
-                          WeatherDaySlot slots[] = {
-                              {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
-                              {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
-                              {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
-                              {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
-                              {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
-                          };
-                          refresh_daily_forecast(slots, id(forecast_page_index), id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+                          id(temp_planning_text) = cal_heures[jour];
+                      - script.execute: tab5_show_planning_temp
+          - button:
+              id: btn_j1_dir
+              align: TOP_MID
+              x: 0
+              y: 0
+              width: 230
+              height: 60
+              styles: style_invisible
+              pad_all: 0
+              on_short_click:
+                - lambda: |-
+                    id(volet_target_open) = !id(volet_target_open);
+                    if (!id(volet_en_mouvement)) {
+                      if (id(volet_target_open)) {
+                        lv_label_set_text(id(icon_card_shutter_arrow), "\U000F005D");
+                      } else {
+                        lv_label_set_text(id(icon_card_shutter_arrow), "\U000F0045");
+                      }
+                    }
     # Card 2
     - obj:
         x: 525
@@ -290,15 +276,8 @@ obj:
                     on_short_click:
                       - lambda: |-
                           int jour = id(forecast_page_index) * 5 + 2;
-                          tab5_calendar_toggle(jour);
-                          WeatherDaySlot slots[] = {
-                              {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
-                              {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
-                              {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
-                              {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
-                              {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
-                          };
-                          refresh_daily_forecast(slots, id(forecast_page_index), id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+                          id(temp_planning_text) = cal_heures[jour];
+                      - script.execute: tab5_show_planning_temp
     # Card 3
     - obj:
         x: 775
@@ -384,15 +363,8 @@ obj:
                     on_short_click:
                       - lambda: |-
                           int jour = id(forecast_page_index) * 5 + 3;
-                          tab5_calendar_toggle(jour);
-                          WeatherDaySlot slots[] = {
-                              {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
-                              {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
-                              {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
-                              {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
-                              {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
-                          };
-                          refresh_daily_forecast(slots, id(forecast_page_index), id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+                          id(temp_planning_text) = cal_heures[jour];
+                      - script.execute: tab5_show_planning_temp
     # Card 4
     - obj:
         x: 1025
@@ -475,12 +447,5 @@ obj:
                     on_short_click:
                       - lambda: |-
                           int jour = id(forecast_page_index) * 5 + 4;
-                          tab5_calendar_toggle(jour);
-                          WeatherDaySlot slots[] = {
-                              {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
-                              {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
-                              {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
-                              {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
-                              {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
-                          };
-                          refresh_daily_forecast(slots, id(forecast_page_index), id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+                          id(temp_planning_text) = cal_heures[jour];
+                      - script.execute: tab5_show_planning_temp

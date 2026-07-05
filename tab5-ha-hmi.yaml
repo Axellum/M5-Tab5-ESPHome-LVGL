@@ -45,7 +45,7 @@ esphome:
     - Tab5/tab5_custom.cpp
 
   on_boot:
-    priority: -10
+    priority: 600
     then:
       - light.turn_on: backlight
       - delay: 1s
@@ -57,6 +57,7 @@ esphome:
       - wait_until:
           api.connected:
       - delay: 500ms
+      - light.turn_on: backlight
       - homeassistant.event:
           event: esphome.tab5_connected
       - globals.set:
@@ -78,6 +79,12 @@ esphome:
             lv_label_set_text(id(icon_mode_status), "\U000F07D0"); // Home Assistant
             lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
           }
+
+interval:
+  - interval: 5min
+    then:
+      - homeassistant.event:
+          event: esphome.tab5_connected
 
 # Plus d'images! image: !include supprimé au profit des polices C++ vectorielles LVGL
 

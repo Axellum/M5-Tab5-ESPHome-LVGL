@@ -443,11 +443,22 @@ api:
 
             if (id(lbl_planning_text) == nullptr) return;
 
-            id(plan_ligne_1) = ligne1;
-            id(plan_ligne_2) = ligne2;
-            std::string combined = ligne1;
-            if (ligne2 != "") {
-                combined += "   |   " + ligne2;
+            auto strip_prefix = [](std::string s) {
+                if (s.rfind("1/ ", 0) == 0) return s.substr(3);
+                if (s.rfind("2/ ", 0) == 0) return s.substr(3);
+                if (s.rfind("1/", 0) == 0) return s.substr(2);
+                if (s.rfind("2/", 0) == 0) return s.substr(2);
+                return s;
+            };
+
+            std::string l1 = strip_prefix(ligne1);
+            std::string l2 = strip_prefix(ligne2);
+
+            id(plan_ligne_1) = l1;
+            id(plan_ligne_2) = l2;
+            std::string combined = l1;
+            if (l2 != "") {
+                combined += "   |   " + l2;
             }
             lv_label_set_recolor(id(lbl_planning_text), true);
             lv_label_set_text(id(lbl_planning_text), combined.c_str());

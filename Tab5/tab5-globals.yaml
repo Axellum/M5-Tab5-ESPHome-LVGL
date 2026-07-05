@@ -67,6 +67,18 @@ globals:
   - id: current_central_panel
     type: int
     initial_value: '0'
+  - id: system_volume
+    type: float
+    initial_value: '1.0'
+  - id: system_muted
+    type: bool
+    initial_value: 'false'
+  - id: temp_planning_text
+    type: std::string
+    initial_value: '""'
+  - id: is_showing_temp_planning
+    type: bool
+    initial_value: 'false'
 
 interval:
   - interval: 6s
@@ -76,6 +88,7 @@ interval:
             light.is_on: backlight
           then:
             - lambda: |-
+                if (id(is_showing_temp_planning)) return;
                 int next_panel = id(current_central_panel);
                 int attempts = 0;
                 while (attempts < 3) {

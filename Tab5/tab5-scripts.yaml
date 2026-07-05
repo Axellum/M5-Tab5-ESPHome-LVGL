@@ -1,5 +1,17 @@
 script:
-  # Fichier vierge, prêt à accueillir la logique d'interface
-  - id: dummy_script
+  - id: tab5_show_planning_temp
+    mode: restart
     then:
-      - logger.log: "Scripts LVGL initialisés."
+      - lambda: |-
+          id(is_showing_temp_planning) = true;
+          lv_label_set_text(id(lbl_planning_text), id(temp_planning_text).c_str());
+          lv_obj_clear_flag(id(planning_wrapper), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(alert_container), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(rain_wrapper), LV_OBJ_FLAG_HIDDEN);
+          id(current_central_panel) = 0;
+      - delay: 6s
+      - lambda: |-
+          id(is_showing_temp_planning) = false;
+          std::string combined = id(plan_ligne_1);
+          if (id(plan_ligne_2) != "") combined += "   |   " + id(plan_ligne_2);
+          lv_label_set_text(id(lbl_planning_text), combined.c_str());

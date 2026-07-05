@@ -22,8 +22,8 @@ obj:
     # Carte modale principale
     - obj:
         align: CENTER
-        width: 960
-        height: 520
+        width: 1130
+        height: 650
         styles: style_modal_card
         scrollbar_mode: "OFF"
         widgets:
@@ -42,9 +42,9 @@ obj:
               align: TOP_RIGHT
               x: -15
               y: 12
-              width: 50
-              height: 50
-              styles: style_invisible
+              width: 80
+              height: 80
+              styles: style_transparent
               on_short_click:
                 - lambda: 'lv_obj_add_flag(id(clim_options_popup), LV_OBJ_FLAG_HIDDEN);'
               widgets:
@@ -90,8 +90,16 @@ obj:
                       arc_color: color_info
                       arc_width: 16
                     knob:
-                      bg_opa: 0%
-                    adjustable: false
+                      bg_opa: 100%
+                      bg_color: color_text
+                      pad_all: 5
+                    adjustable: true
+                    on_value:
+                      - homeassistant.service:
+                          service: climate.set_temperature
+                          data:
+                            entity_id: ${entity_climate_salon}
+                            temperature: !lambda 'return to_string((int)x);'
 
                 # Température cible (superposée au centre de l'arc)
                 - label:

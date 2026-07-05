@@ -138,6 +138,38 @@ lvgl:
               - label: { text: "\U000F0450", align: CENTER, y: -10, text_font: mdi_font_32, text_color: color_text }
               - label: { text: "Discu", align: CENTER, y: 15, text_font: roboto_22, text_color: color_text }
 
+        # Bouton Mute
+        - button:
+            id: btn_mute
+            align: TOP_LEFT
+            x: 30
+            y: 220
+            width: 85
+            height: 50
+            styles: style_clim_btn
+            on_short_click:
+              - if:
+                  condition:
+                    lambda: 'return id(system_muted);'
+                  then:
+                    - globals.set:
+                        id: system_muted
+                        value: 'false'
+                    - media_player.volume_set:
+                        id: speaker_player
+                        volume: !lambda 'return id(system_volume);'
+                    - lambda: 'lv_label_set_text(id(icon_mute), "\U000F057E"); lv_obj_set_style_text_color(id(icon_mute), lv_color_hex(0xF1F5F9), LV_PART_MAIN);'
+                  else:
+                    - globals.set:
+                        id: system_muted
+                        value: 'true'
+                    - media_player.volume_set:
+                        id: speaker_player
+                        volume: 0.0
+                    - lambda: 'lv_label_set_text(id(icon_mute), "\U000F0581"); lv_obj_set_style_text_color(id(icon_mute), lv_color_hex(UIColor::ERROR), LV_PART_MAIN);'
+            widgets:
+              - label: { id: icon_mute, text: "\U000F057E", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+
         # Bouton OK Nabu
         - button:
             id: btn_ok_nabu
