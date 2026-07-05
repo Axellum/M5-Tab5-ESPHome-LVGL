@@ -156,15 +156,83 @@ This screen is not intended for regular use — it's a debugging tool. The text 
 
 ---
 
+## Switches & actions panel
+
+A button in the top-right area of the home screen (Home Assistant icon) swaps the bottom weather/forecast section for a **quick-action panel** of 5 cards:
+
+| Card | Action |
+|------|--------|
+| PC Bureau | Calls `script.allumer_pc_tv` (PC + TV toggle) |
+| Volet | Open / close / stop the roller shutter — smart: if the shutter is moving, the tap stops it; otherwise it opens or closes based on current target state |
+| Chambre | Toggle bedroom light (`light.toggle`) |
+| Salon | Toggle living room light (`light.toggle`) |
+| LEDs Bureau | Calls `script.allumer_leds` (office LEDs) |
+
+Tapping the same button again restores the forecast panel. The switch is stateful — the last active forecast slide (hourly or daily, and which page) is remembered and restored.
+
+---
+
+## Long press — detail popups
+
+Some cards on the forecast slides support two interaction levels:
+
+- **Short tap** — quick action (e.g., toggle the light directly)
+- **Long press** — opens a **fullscreen modal** with detailed controls
+
+Currently implemented for light entities on slide 3:
+
+**Light popup (960×520 modal):**
+- Left column: **brightness arc** (0–255) — drag to adjust, calls `script.tab5_set_light` in real time
+- Right column: **9 color presets** in a 3×3 grid (Blanc, Chaud, On/Off / Rouge, Vert, Bleu / Rose, Orange, Cyan) — each sends a `light.turn_on` with the corresponding `color_name`
+- The power button in the grid reflects the current light state (amber = on, dim = off)
+- Tapping the dark overlay or the × button closes the modal
+
+The popup is context-aware: the entity it controls is set dynamically at open time (`current_light_entity` global), so the same popup component handles multiple light entities without duplication.
+
+---
+
+## Color coding for readability
+
+Color is used consistently throughout the interface as a primary information channel — not for decoration, but to let you read state at a glance without reading labels:
+
+**Temperatures (all screens):** mapped to a continuous scale via `get_temperature_color()`
+- Blue (cold) → green (comfortable) → orange (warm) → red (hot)
+- Applied identically to indoor sensors, hourly forecast temperatures, and daily max/min
+
+**Day names on daily forecast:**
+- Cyan — today
+- Green — rest day / day off
+- Amber — Sunday (rest)
+- Red — Sunday (worked)
+- Rose — early shift (start before 09:00)
+- Dim slate — past day (reduced opacity)
+
+**Plant moisture bars:**
+- Red — very dry (< 14%)
+- Orange — dry
+- Green — optimal (30–80%)
+- Blue — too wet (> 80%)
+
+**Microphone icon:**
+- Grey (dim) — wake word off
+- Grey — idle listening
+- Green — recording
+- Orange — processing
+- Blue — speaking
+- Red — error
+
+**Rainfall in hourly forecast:** blue if precipitation > 0 mm, dim grey otherwise.
+
+All color constants live in the `UIColor` namespace in `tab5_custom.h` and their YAML counterparts in `tab5-styles.yaml`. Changing a color in one place updates it everywhere it's used.
+
+---
+
 ## Roller shutter control
 
-Roller shutter control is not a dedicated screen — it's accessible via script buttons that can be placed on any screen. The current setup has buttons on the home screen that call Home Assistant scripts (`scripts_tab5.yaml`) to move the shutters to predefined positions (open / close / specific %).
-
-The device sends the button press → HA receives it → the script executes the cover action. No position feedback is displayed in the current version (this is a planned addition).
+The roller shutter is accessible both from the action panel (quick open/close/stop) and via the dedicated card on forecast slide 3. The volet card has smart toggle logic: a `volet_en_mouvement` global tracks whether the shutter is currently moving. A tap while it moves sends `stop`; a tap while stopped sends `open` or `close` based on the `volet_target_open` global (which HA keeps updated via push).
 
 ---
 
----
 
 ## Version Française
 
@@ -322,8 +390,78 @@ Cet écran n'est pas destiné à un usage régulier — c'est un outil de débog
 
 ---
 
-## Contrôle des volets roulants
+## Panel interrupteurs & actions
 
-Le contrôle des volets roulants n'est pas un écran dédié — il est accessible via des boutons de script qui peuvent être placés sur n'importe quel écran. Le setup actuel a des boutons sur l'écran d'accueil qui appellent des scripts Home Assistant (`scripts_tab5.yaml`) pour déplacer les volets vers des positions prédéfinies (ouvert / fermé / % spécifique).
+Un bouton en haut à droite de l'écran d'accueil (icône Home Assistant) **remplace le bas de l'écran météo/prévisions par un panel d'actions rapides** de 5 cartes :
 
-L'appareil envoie le bouton appuyé → HA le reçoit → le script exécute l'action cover. Aucun retour de position n'est affiché dans la version actuelle (ajout prévu).
+| Carte | Action |
+|-------|--------|
+| PC Bureau | Appelle `script.allumer_pc_tv` (toggle PC + TV) |
+| Volet | Ouvrir / fermer / stopper le volet — smart : si le volet est en mouvement, le tap l'arrête ; sinon il ouvre ou ferme selon l'état cible courant |
+| Chambre | Bascule la lumière chambre (`light.toggle`) |
+| Salon | Bascule la lumière salon (`light.toggle`) |
+| LEDs Bureau | Appelle `script.allumer_leds` |
+
+Retouch sur le même bouton restaure le panel prévisions. Le basculement est étaté — la dernière slide active (horaire ou journalière, et quelle page) est mémorisée et restaurée.
+
+---
+
+## Appui long — popups de détail
+
+Certaines cartes des slides prévisions supportent deux niveaux d'interaction :
+
+- **Appui court** — action rapide (ex: bascule la lumière directement)
+- **Appui long** — ouvre un **popup modal plein écran** avec contrôles détaillés
+
+Actuellement implémenté pour les entités lumière sur la slide 3 :
+
+**Popup lumière (modal 960×520) :**
+- Colonne gauche : **arc de luminosité** (0–255) — à glisser pour ajuster, appelle `script.tab5_set_light` en temps réel
+- Colonne droite : **9 couleurs prédéfinies** en grille 3×3 (Blanc, Chaud, On/Off / Rouge, Vert, Bleu / Rose, Orange, Cyan) — chacune envoie un `light.turn_on` avec le `color_name` correspondant
+- Le bouton On/Off dans la grille reflète l'état courant de la lumière (ambre = allumée, gris = éteinte)
+- Taper l'overlay sombre ou le bouton × ferme le modal
+
+Le popup est contextuel : l'entité qu'il contrôle est définie dynamiquement à l'ouverture (globale `current_light_entity`), donc le même composant popup gère plusieurs entités lumière sans duplication.
+
+---
+
+## Coloration sémantique des capteurs
+
+La couleur est utilisée de façon systématique dans toute l'interface comme canal d'information primaire — pas pour la décoration, mais pour lire l'état d'un coup d'œil sans lire les labels :
+
+**Températures (tous les écrans)** : mappées sur une échelle continue via `get_temperature_color()`
+- Bleu (froid) → vert (confortable) → orange (chaud) → rouge (très chaud)
+- Appliqué identiquement aux capteurs intérieurs, températures des prévisions horaires, et max/min journaliers
+
+**Noms des jours (prévisions journalières) :**
+- Cyan — aujourd'hui
+- Vert — jour de repos
+- Ambre — dimanche (repos)
+- Rouge — dimanche (travaillé)
+- Rose — prise de service matinale (départ avant 09:00)
+- Ardoise estompée — jour passé (opacité réduite)
+
+**Barres d'humidité des plantes :**
+- Rouge — très sec (< 14%)
+- Orange — sec
+- Vert — optimal (30–80%)
+- Bleu — trop humide (> 80%)
+
+**Icône microphone :**
+- Gris sombre — wake word désactivé
+- Gris — écoute passive
+- Vert — enregistrement
+- Orange — traitement
+- Bleu — synthèse vocale
+- Rouge — erreur
+
+**Pluie (prévisions horaires) :** bleu si précipitation > 0 mm, gris estompé sinon.
+
+Toutes les constantes de couleur vivent dans le namespace `UIColor` dans `tab5_custom.h` et leurs équivalents YAML dans `tab5-styles.yaml`. Changer une couleur à un endroit la met à jour partout où elle est utilisée.
+
+---
+
+## Contrôle du volet roulant
+
+Le volet est accessible à la fois depuis le panel d'actions (ouvrir/fermer/stopper en un tap) et via la carte dédiée sur la slide 3 des prévisions. La carte volet a une logique de toggle intelligente : une globale `volet_en_mouvement` suit si le volet est en mouvement. Un tap pendant le mouvement envoie `stop` ; un tap à l'arrêt envoie `open` ou `close` selon la globale `volet_target_open` (maintenue à jour par HA via push).
+
