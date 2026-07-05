@@ -1,3 +1,5 @@
+# tab5-scripts.yaml — Scripts ESPHome reutilisables (sequences temporisees,
+# debounce). Preferer un script ici a un delay:+action duplique inline.
 script:
   - id: tab5_show_planning_temp
     mode: restart
@@ -15,3 +17,13 @@ script:
           std::string combined = id(plan_ligne_1);
           if (id(plan_ligne_2) != "") combined += "   |   " + id(plan_ligne_2);
           lv_label_set_text(id(lbl_planning_text), combined.c_str());
+
+  # Debounce du slider volume : chaque glissement redémarre le délai, un seul
+  # media_player.volume_set part réellement une fois le doigt immobile.
+  - id: tab5_debounce_volume_set
+    mode: restart
+    then:
+      - delay: 150ms
+      - media_player.volume_set:
+          id: speaker_player
+          volume: !lambda 'return id(system_volume);'

@@ -1,3 +1,6 @@
+# tab5-ha-hmi.yaml — Point d'entree ESPHome. Substitutions (entites HA a adapter
+# ci-dessous), on_boot, ota:/api:, puis packages: qui importe tout Tab5/*.yaml.
+# Voir Tab5/README.md pour l'architecture complete (services, globals, regles).
 substitutions:
   # =======================================================
   # ZONE DE CONFIGURATION UTILISATEUR
@@ -55,11 +58,18 @@ esphome:
       # Allumer l'ampli APRES le media_player pour eviter le bruit I2S
       - switch.turn_on: speaker_enable
       - wait_until:
-          api.connected:
+          condition:
+            api.connected:
+          timeout: 30s
       - delay: 500ms
-      - light.turn_on: backlight
-      - homeassistant.event:
-          event: esphome.tab5_connected
+      - if:
+          condition:
+            api.connected:
+          then:
+            - homeassistant.event:
+                event: esphome.tab5_connected
+          else:
+            - logger.log: "HA injoignable au boot (timeout 30s) - interface locale disponible quand meme"
       - globals.set:
           id: boot_complete
           value: 'true'
@@ -72,6 +82,7 @@ esphome:
             - micro_wake_word.stop:
       # Synchronisation visuelle de l'icône du mode d'assistant vocal (Domotique vs Discussion)
       - lambda: |-
+          if (id(icon_mode_status) == nullptr) return;
           if (id(conversation_mode)) {
             lv_label_set_text(id(icon_mode_status), "\U000F0450"); // Robot
             lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
@@ -83,8 +94,12 @@ esphome:
 interval:
   - interval: 5min
     then:
-      - homeassistant.event:
-          event: esphome.tab5_connected
+      - if:
+          condition:
+            api.connected:
+          then:
+            - homeassistant.event:
+                event: esphome.tab5_connected
 
 # Plus d'images! image: !include supprimé au profit des polices C++ vectorielles LVGL
 

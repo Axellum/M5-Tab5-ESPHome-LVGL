@@ -1,3 +1,6 @@
+# tab5-api-logic.yaml — Contrat API avec Home Assistant (api: services:). Chaque
+# service tab5_maj_* recoit un payload d'une automation HA et appelle une
+# fonction de tab5_custom.cpp — voir table des services dans Tab5/README.md.
 api:
 
   encryption:
@@ -354,17 +357,12 @@ api:
               lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(c_hydro), LV_PART_MAIN);
             }
 
-            // Desactive : la temperature exterieure a ete retiree
+            // Desactive : la temperature exterieure et la grosse icone meteo centrale
+            // ont ete retirees de l'UI (widgets icon_actuel_layer1/2 n'existent plus).
             // char buf_t[32]; sprintf(buf_t, "%.0f \xC2\xB0", atof(temperature.c_str()));
             // lv_label_set_text(id(current_temp), buf_t);
-            // // AXE1: factorisation couleur temperature via tab5_custom.cpp
             // uint32_t c_temp = get_temperature_color(atof(temperature.c_str()));
             // lv_obj_set_style_text_color(id(current_temp), lv_color_hex(c_temp), LV_PART_MAIN);
-
-            auto apply_weather_icon = [](lv_obj_t* l1_obj, lv_obj_t* l2_obj, std::string state, bool is_card) {
-                update_meteo_icon(l1_obj, l2_obj, state, is_card, font_meteo_main, font_meteo_card, font_meteo_main_small, font_meteo_card_small);
-            };
-            apply_weather_icon(nullptr, nullptr, condition, true);
 
     - service: tab5_maj_pluie_1h
       variables:

@@ -1,6 +1,6 @@
-# ═══════════════════════════════════════════════════════
-# POPUP CONSOLE SYS — Fullscreen modal (960×520)
-# ═══════════════════════════════════════════════════════
+# console_sys.yaml — Popup diagnostic (RAM/PSRAM/uptime/Wi-Fi) + volume + reboot.
+# Le double-tap reboot utilise le global `reboot_armed` (tab5-globals.yaml),
+# jamais de `static` en lambda partagee entre on_short_click/on_long_press.
 obj:
   id: layer_console_sys
   align: CENTER
@@ -154,10 +154,10 @@ obj:
                 - slider:
                     id: slider_volume
                     x: 270
-                    y: 10
+                    y: 0
                     align: LEFT_MID
                     width: 480
-                    height: 15
+                    height: 40
                     min_value: 0
                     max_value: 100
                     value: 100
@@ -165,9 +165,7 @@ obj:
                       - lambda: |-
                           float vol = x / 100.0;
                           id(system_volume) = vol;
-                      - media_player.volume_set:
-                          id: speaker_player
-                          volume: !lambda 'return id(system_volume);'
+                      - script.execute: tab5_debounce_volume_set
                 - label: { text: "\U000F0580", x: 770, align: LEFT_MID, text_font: mdi_font_32, text_color: color_console_label }
 
           # FERMER BUTTON
@@ -206,16 +204,14 @@ obj:
                     text_color: color_text
               on_short_click:
                 - lambda: |-
-                    static bool armed = false;
-                    if(!armed) {
-                      armed = true;
+                    if (!id(reboot_armed)) {
+                      id(reboot_armed) = true;
                       lv_obj_set_style_bg_color(id(btn_reboot_sys), lv_color_hex(UIColor::ERROR), LV_PART_MAIN);
                     } else {
-                      armed = false;
+                      id(reboot_armed) = false;
                       id(btn_restart).press();
                     }
               on_long_press:
                 - lambda: |-
-                    static bool& armed = *reinterpret_cast<bool*>(lv_obj_get_user_data(id(btn_reboot_sys)));
-                    armed = false;
+                    id(reboot_armed) = false;
                     lv_obj_set_style_bg_color(id(btn_reboot_sys), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
