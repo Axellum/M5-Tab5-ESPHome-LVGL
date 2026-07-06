@@ -1,6 +1,16 @@
 # ═══════════════════════════════════════════════════════
-# POPUP AMPOULE — Fullscreen modal (960×520)
-# Layout : Gauche=Luminosité (Arc) | Droite=Colorwheel
+# [AI-CONTEXT]
+# @file light_popup.yaml
+# @role Popup fullscreen contrôle lumière (960×520). Gauche=Luminosité (arc), Droite=Presets
+#       couleur (8 boutons) + On/Off. Ouvert par un `on_long_press` sur une des cartes lumière
+#       (forecast_daily.yaml j2/j3/j4) qui définit le global `current_light_entity`.
+# @architecture_constraint Toutes les actions (`arc_light_brightness`, presets couleur, on/off)
+#                          ciblent `id(current_light_entity)` — PAS une entité en dur — car ce
+#                          popup est partagé par les 3 lumières (chambre/salon/bureau).
+# @ai_instruction Les 8 presets couleur sont factorisés via `light_color_preset_btn.yaml`
+#                 (#T164) : pour ajouter une couleur, ajouter un `!include` de plus, ne pas
+#                 dupliquer le bloc bouton. Le bouton On/Off garde une action différente
+#                 (`light.toggle`) donc reste en clair, non factorisé.
 # ═══════════════════════════════════════════════════════
 obj:
   id: light_options_popup

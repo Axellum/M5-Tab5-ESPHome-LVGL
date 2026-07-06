@@ -1,3 +1,7 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par forecast_daily.yaml
+# (j0..j4). Vars: idx, toggle_width (largeur du bouton toggle, varie car le texte
+# tmax/tmin change de largeur). Le bouton toggle affiche les heures d'ouverture
+# (cal_heures[jour], tab5_custom.cpp) via script.tab5_show_planning_temp — pas une action HA.
 obj:
   align: BOTTOM_MID
   y: 0

@@ -1,3 +1,6 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par forecast_daily.yaml
+# (j0..j4). Vars: idx, day_label. id `j${idx}_day` recoloré dynamiquement par
+# refresh_daily_forecast() (tab5_custom.cpp) — le day_label ici n'est qu'un texte initial.
 obj:
   align: TOP_MID
   y: 7

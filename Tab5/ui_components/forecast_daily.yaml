@@ -1,3 +1,19 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file forecast_daily.yaml
+# @role 5 cartes prévisions journalières (fenêtre glissante sur 15 jours, cf.
+#       `cal_jours_data[15]`/`refresh_daily_forecast()` dans tab5_custom.cpp). Visible quand
+#       `forecast_page_index` (tab5-globals.yaml) est >= 2, piloté par `handle_swipe_gesture()`.
+# @architecture_constraint Onglet Titre (`forecast_day_title_tab.yaml`) et Onglet Température
+#                          (`forecast_day_temp_tab.yaml`) sont factorisés (#T164, même motif x5).
+#                          Le "Corps Sombre" (icônes météo + bouton action j0-j4) N'EST PAS
+#                          factorisé : chaque carte a une action Home Assistant DIFFÉRENTE
+#                          (PC bureau / volet serre / lumière chambre / lumière salon / LEDs
+#                          bureau) — décision explicite (#T164, cf. etat_tab5.md), pas un oubli.
+# @ai_instruction Les icônes météo (`jN_icon_layer1/2/3`) sont mises à jour par
+#                 `update_meteo_icon()`/`refresh_daily_forecast()` (tab5_custom.cpp) — ne jamais
+#                 leur assigner de texte/couleur directement ici.
+# ============================================================================
 obj:
   id: layer_forecast_daily
   x: 0

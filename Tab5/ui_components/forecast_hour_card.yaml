@@ -1,3 +1,6 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par forecast_hourly.yaml.
+# Vars: x_pos, idx. `hN_*` mis à jour par refresh_hourly_forecast() (tab5_custom.cpp) —
+# attention, l'ordre visuel gauche->droite est l'INVERSE de idx (cf. forecast_hourly.yaml).
 obj:
   x: ${x_pos}
   y: ${meteo_cell_y}

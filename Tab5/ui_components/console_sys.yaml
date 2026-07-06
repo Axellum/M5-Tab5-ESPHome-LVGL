@@ -1,6 +1,19 @@
-# console_sys.yaml — Popup diagnostic (RAM/PSRAM/uptime/Wi-Fi) + volume + reboot.
-# Le double-tap reboot utilise le global `reboot_armed` (tab5-globals.yaml),
-# jamais de `static` en lambda partagee entre on_short_click/on_long_press.
+# ============================================================================
+# [AI-CONTEXT]
+# @file console_sys.yaml
+# @role Popup diagnostic overlay (RAM/PSRAM/frag/uptime/Wi-Fi/loop time) + slider volume
+#       + reboot par double-tap. Tous les labels (`lbl_sys_*`) sont remplis par
+#       `update_console_diagnostics_ui()` (tab5_custom.cpp), appelée depuis l'interval 2s
+#       de tab5-sensors.yaml — ce fichier ne fait QUE déclarer les widgets, aucun calcul ici.
+# @ai_instruction Le double-tap reboot (`btn_reboot_sys`) utilise le global `reboot_armed`
+#                 (tab5-globals.yaml) partagé entre `on_short_click`/`on_long_press`. NE PAS
+#                 remplacer par une variable `static bool` locale à une des deux lambdas :
+#                 c'était un bug réel (armement jamais désarmé, cf. audit #B1 du 05/07/2026,
+#                 `audit_tab5/audit_global_synthese_2026-07-05.md`), déjà corrigé via ce global.
+# @architecture_constraint `slider_volume` passe par `script.tab5_debounce_volume_set`
+#                          (tab5-scripts.yaml) — ne pas appeler `media_player.volume_set`
+#                          directement dans `on_value` (saturation I2S à chaque tick de glissement).
+# ============================================================================
 obj:
   id: layer_console_sys
   align: CENTER

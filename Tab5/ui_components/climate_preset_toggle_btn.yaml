@@ -1,3 +1,6 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 2x par climate_popup.yaml
+# (eco/boost). Vars: suffix, preset_name, icon, label_text. Toggle : si le preset
+# courant == preset_name, on repasse à "none" (clic à bascule), ne pas simplifier.
 button:
   id: popup_btn_clim_${suffix}
   width: 170

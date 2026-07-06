@@ -1,3 +1,6 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 8x par light_popup.yaml.
+# Vars: color_name (payload HA color_name:), icon_color (hex affichage), label_text.
+# Cible id(current_light_entity) (global partagé, pas une entité en dur).
 button:
   width: 170
   height: 60

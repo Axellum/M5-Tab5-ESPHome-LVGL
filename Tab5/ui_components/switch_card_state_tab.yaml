@@ -1,3 +1,6 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par switches_card.yaml.
+# Vars: idx, state_text (texte initial seulement). `lbl_swN_state` recoloré/retexté
+# dynamiquement par les lambdas C++ (update_light_card_ui, etc.) — ne pas dupliquer.
 obj:
   align: BOTTOM_MID
   y: 0
