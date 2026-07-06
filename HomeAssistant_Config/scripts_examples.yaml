@@ -1,3 +1,12 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file scripts_examples.yaml (généré depuis scripts_tab5.yaml)
+# @role Scripts déclenchés PAR le Tab5 (appelés depuis un `homeassistant.service:` dans
+#       00ProjetTab/Tab5/tab5-api-logic.yaml ou un `on_short_click:` LVGL), pas l'inverse.
+#       Pass-through simple : le device envoie un événement, le script exécute l'action HA
+#       correspondante — garde le C++ firmware léger.
+# ============================================================================
+
 tab5_volet_action:
   alias: "Action Volet Serre depuis Tab5"
   mode: restart

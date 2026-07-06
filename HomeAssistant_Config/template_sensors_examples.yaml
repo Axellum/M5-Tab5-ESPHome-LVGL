@@ -1,3 +1,14 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file template_sensors_examples.yaml (généré depuis template_sensors_meteo_tab5.yaml)
+# @role Capteurs spécifiques pour écran M5Stack Tab5 (Prévisions Météo France). Pré-traite
+#       les données Météo-France en chaînes courtes côté HA, PAS sur le device, pour garder
+#       le C++ firmware simple (contrainte SRAM) et contourner la limite de 255 caractères
+#       de l'API native ESPHome.
+# @ai_instruction Ajouter ce fichier au bloc `template:` de configuration.yaml (ou un
+#       template.yaml dédié), pas dans automations_examples.yaml.example.
+# ============================================================================
+
 - name: "Phrase Prochaine Pluie"
   unique_id: phrase_prochaine_pluie
   icon: mdi:weather-rainy

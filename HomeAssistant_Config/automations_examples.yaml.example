@@ -1,3 +1,27 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file automations_examples.yaml.example (généré depuis automations_tab5.yaml)
+# @role Automatisations HA qui poussent les données vers le Tab5 (push-only, cf.
+#       Tab5/README.md côté firmware).
+# @architecture_constraint Chaque `action: esphome.tab5_ha_hmi_tab5_maj_*` correspond à
+#       un service `api: services:` déclaré dans 00ProjetTab/Tab5/tab5-api-logic.yaml.
+#       Ne JAMAIS renommer un service ici sans renommer le pendant firmware (et
+#       vice-versa) — sinon la poussée échoue silencieusement (pas d'erreur HA visible).
+# @payload_contract Les payloads bulk (jours/heures/pluie 1h/alerte météo) sont des
+#       chaînes délimitées par `;`/`|` — le format doit matcher EXACTEMENT ce que
+#       parse_and_update_*_bulk() (tab5_custom.cpp) attend en nombre de champs.
+# @ai_instruction `delay: 1s` entre les blocs + `delay: 150ms`/`50ms` dans les boucles
+#       ne sont PAS du remplissage : ils évitent de saturer le socket TCP de l'ESP32-P4
+#       en même temps que le flux audio I2S actif. Ne pas les retirer pour "accélérer".
+# @ai_warning `now()` ne doit JAMAIS être passé brut à un service HA (`{{ now() }}`) —
+#       toujours via `.strftime(...)` explicite. Un datetime brut (microsecondes
+#       incluses) peut casser silencieusement toute la suite de l'automation.
+# @ai_instruction `continue_on_error: true` + les gardes `is defined else []` sur
+#       `daily_var`/`hourly_var_tab5` évitent qu'un échec ponctuel de `calendar.get_events`
+#       ou `weather.get_forecasts` (API externe temporairement indisponible) ne bloque
+#       tout le reste de la poussée écran.
+# ============================================================================
+
 - alias: "MAJ Ecran Tab5 ESPHome Push"
   mode: single
   id: tab5_ha_hmi_updater
@@ -20,6 +44,7 @@
   action:
     # ====== 1. MISE A JOUR MINUTE PAR MINUTE DE LA PHRASE PLUIE ET ALERTES ======
     - action: esphome.tab5_ha_hmi_tab5_maj_alerte_meteo_france
+      continue_on_error: true
       data:
         payload: >
           {{ states('sensor.phrase_prochaine_pluie') }}|{{ states('sensor.40_weather_alert') | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Crues') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
@@ -32,6 +57,7 @@
 
     # ====== 3. METEO ACTUELLE ======
     - action: esphome.tab5_ha_hmi_tab5_maj_meteo_actuelle
+      continue_on_error: true
       data:
         condition: "{{ states('weather.VOTRE_VILLE') }}"
         temperature: "{{ state_attr('weather.VOTRE_VILLE', 'temperature') | float(0) }}"
@@ -40,6 +66,7 @@
 
     # ====== 4. PROBABILITES ======
     - action: esphome.tab5_ha_hmi_tab5_maj_probabilites
+      continue_on_error: true
       data:
         uv: "{{ states('sensor.VOTRE_VILLE_uv') | int(0) }}"
         gel: "{{ states('sensor.VOTRE_VILLE_freeze_chance') | int(0) }}"
@@ -50,6 +77,7 @@
         count: 9
         sequence:
           - action: esphome.tab5_ha_hmi_tab5_maj_pluie_1h
+            continue_on_error: true
             data:
               index_5mn: "{{ repeat.index - 1 }}"
               intensite: >
@@ -62,6 +90,7 @@
 
     # ====== 5. PREVISIONS JOURS (BULK - 1 seul appel au lieu de 15) ======
     - action: calendar.get_events
+      continue_on_error: true
       data:
         start_date_time: "{{ now().strftime('%Y-%m-%d 00:00:00') }}"
         end_date_time: "{{ (now() + timedelta(days=15)).strftime('%Y-%m-%d 23:59:59') }}"
@@ -69,15 +98,17 @@
         entity_id: calendar.VOTRE_EMAIL_gmail_com
       response_variable: agenda_events
     - action: weather.get_forecasts
+      continue_on_error: true
       data:
         type: daily
       target:
         entity_id: weather.VOTRE_VILLE
       response_variable: daily_var
     - action: esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk
+      continue_on_error: true
       data:
         payload: >
-          {% set fcasts = daily_var['weather.VOTRE_VILLE'].forecast %}
+          {% set fcasts = daily_var.get('weather.VOTRE_VILLE', {}).get('forecast', []) if daily_var is defined else [] %}
           {% set days_names = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"] %}
           {% set ns = namespace(result="") %}
           {% for i in range(15) %}
@@ -118,6 +149,7 @@
 
     # ====== 6. CLIMATISATION ======
     - action: esphome.tab5_ha_hmi_tab5_maj_clim
+      continue_on_error: true
       data:
         target: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'temperature') | float(20) }}"
         current: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'current_temperature') | float(20) }}"
@@ -128,6 +160,7 @@
 
     # ====== X. ETAT VOLET ======
     - action: esphome.tab5_ha_hmi_tab5_maj_volet_etat
+      continue_on_error: true
       data:
         etat_physique: >
           {% if is_state('input_boolean.volet_serre_mouvement', 'on') %}
@@ -138,6 +171,7 @@
 
     # ====== Y. PLANNING HORAIRE (TEXTE TAB5) ======
     - action: esphome.tab5_ha_hmi_tab5_maj_planning
+      continue_on_error: true
       data:
         ligne1: >
           {% set ns = namespace(lignes=[]) %}
@@ -230,6 +264,7 @@
 
     # ====== 7. ZONE D'INFO (CALENDRIER ET ALERTES) ======
     - action: esphome.tab5_ha_hmi_tab5_maj_info_texte
+      continue_on_error: true
       data:
         texte: >
           {% set alerte = states('sensor.VOTRE_DEPARTEMENT_weather_alert') %}
@@ -291,15 +326,17 @@
 
     # ====== 8. PREVISIONS HORAIRES (BULK - 3 chunks au lieu de 1) ======
     - action: weather.get_forecasts
+      continue_on_error: true
       data:
         type: hourly
       target:
         entity_id: weather.VOTRE_VILLE
       response_variable: hourly_var_tab5
     - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk
+      continue_on_error: true
       data:
         payload: >
-          {% set fcasts = hourly_var_tab5['weather.VOTRE_VILLE'].forecast %}
+          {% set fcasts = hourly_var_tab5.get('weather.VOTRE_VILLE', {}).get('forecast', []) if hourly_var_tab5 is defined else [] %}
           {% set ns = namespace(result="") %}
           {% for i in range(0, 5) %}
             {% if i < fcasts|length %}
@@ -319,9 +356,10 @@
           {{ ns.result }}
     - delay: "00:00:01"
     - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk
+      continue_on_error: true
       data:
         payload: >
-          {% set fcasts = hourly_var_tab5['weather.VOTRE_VILLE'].forecast %}
+          {% set fcasts = hourly_var_tab5.get('weather.VOTRE_VILLE', {}).get('forecast', []) if hourly_var_tab5 is defined else [] %}
           {% set ns = namespace(result="") %}
           {% for i in range(5, 10) %}
             {% if i < fcasts|length %}
@@ -341,9 +379,10 @@
           {{ ns.result }}
     - delay: "00:00:01"
     - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk
+      continue_on_error: true
       data:
         payload: >
-          {% set fcasts = hourly_var_tab5['weather.VOTRE_VILLE'].forecast %}
+          {% set fcasts = hourly_var_tab5.get('weather.VOTRE_VILLE', {}).get('forecast', []) if hourly_var_tab5 is defined else [] %}
           {% set ns = namespace(result="") %}
           {% for i in range(10, 15) %}
             {% if i < fcasts|length %}
@@ -373,6 +412,7 @@
       entity_id: input_boolean.volet_serre_mouvement
   action:
     - action: esphome.tab5_ha_hmi_tab5_maj_volet_etat
+      continue_on_error: true
       data:
         etat_physique: >
           {% if is_state('input_boolean.volet_serre_mouvement', 'on') %}
