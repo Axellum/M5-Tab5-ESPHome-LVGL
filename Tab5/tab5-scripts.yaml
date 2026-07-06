@@ -1,3 +1,8 @@
+﻿# [AI-CONTEXT]
+# @file tab5-scripts.yaml
+# @role Scripts ESPHome pour actions complexes (ex: toggle de lampes avec debounce).
+# @ai_instruction Garder les scripts simples. La logique d'affichage pure doit aller dans le C++.
+# ============================================================================
 # tab5-scripts.yaml — Scripts ESPHome reutilisables (sequences temporisees,
 # debounce). Preferer un script ici a un delay:+action duplique inline.
 script:
@@ -27,3 +32,4 @@ script:
       - media_player.volume_set:
           id: speaker_player
           volume: !lambda 'return id(system_volume);'
+

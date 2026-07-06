@@ -1,6 +1,12 @@
-# tab5-lvgl.yaml — Layout complet, page unique 1280x720 (page_main). Inclut les
-# ui_components/*.yaml (cartes/popups). Swipe: haut=console, bas=fermer console,
-# gauche/droite (moitie basse)=pagination previsions (forecast_page_index 0-4).
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-lvgl.yaml
+# @role Layout complet de l'interface LVGL (pages, widgets statiques, grille).
+# @architecture_constraint Ne jamais créer de tableaux C++ ou de logique métier complexe 
+#                         (comme le calcul de pagination) dans ce fichier YAML.
+# @ai_instruction Ce fichier doit rester purement déclaratif (UI). Toute logique de swipe 
+#                 doit être déléguée au C++.
+# ============================================================================
 lvgl:
 
   pages:
@@ -10,6 +16,12 @@ lvgl:
 
       on_gesture:
         then:
+          # [AI-CONTEXT] Logique de pagination/console deplacee en C++ dans
+          # handle_swipe_gesture() (tab5_custom.cpp, Phase 3, #T164). Ce bloc ne
+          # fait plus que recuperer l'etat LVGL (indev/geste) et les pointeurs de
+          # widgets, puis delegue toute la decision au C++. Comportement IDENTIQUE
+          # a l'ancienne lambda (LEFT boucle 2/3/4, RIGHT traverse vers le bas :
+          # VOLONTAIRE, validé par Axel — ne pas "corriger").
           - lambda: |-
               lv_indev_t * indev = lv_indev_get_act();
               if (indev) {
@@ -17,67 +29,27 @@ lvgl:
                   lv_indev_get_point(indev, &pt);
                   lv_dir_t d = lv_indev_get_gesture_dir(indev);
 
-                  if (d == LV_DIR_TOP) {
-                      lv_obj_clear_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
-                      lv_obj_move_foreground(id(layer_console_sys));
-                  } else if (d == LV_DIR_BOTTOM) {
-                      lv_obj_add_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
-                  } else if (pt.y > 400) {
-                      int page = id(forecast_page_index);
-                      // NE PAS "corriger" en wrap 0<->4 : comportement volontaire,
-                      // deja teste et valide par Axel (revert du 05/07/2026 d'un
-                      // changement fait a tort suite a un audit LLM qui l'avait
-                      // signale comme un bug de pagination "confuse"). Pages 0-1 =
-                      // horaire, 2-4 = journalier. LEFT boucle sur 2/3/4 une fois
-                      // dans le journalier (ne revient pas seul vers l'horaire) ;
-                      // RIGHT traverse tout vers le bas et boucle 0->2 (retour au
-                      // debut du journalier, pas un tour complet vers 4).
-                      if (d == LV_DIR_LEFT) {
-                          if (page >= 4) page = 2;
-                          else page = page + 1;
-                      } else if (d == LV_DIR_RIGHT) {
-                          if (page <= 0) page = 2;
-                          else page = page - 1;
-                      }
-                      id(forecast_page_index) = page;
+                  WeatherDaySlot day_slots[] = {
+                      {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
+                      {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
+                      {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
+                      {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
+                      {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
+                  };
+                  WeatherHourSlot hour_slots[] = {
+                      {id(h4_time), id(h4_temp), id(h4_prob), id(h4_icon_layer1), id(h4_icon_layer2)},
+                      {id(h3_time), id(h3_temp), id(h3_prob), id(h3_icon_layer1), id(h3_icon_layer2)},
+                      {id(h2_time), id(h2_temp), id(h2_prob), id(h2_icon_layer1), id(h2_icon_layer2)},
+                      {id(h1_time), id(h1_temp), id(h1_prob), id(h1_icon_layer1), id(h1_icon_layer2)},
+                      {id(h0_time), id(h0_temp), id(h0_prob), id(h0_icon_layer1), id(h0_icon_layer2)}
+                  };
+                  lv_obj_t* pbars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4)};
 
-                      if (page >= 2) {
-                          lv_obj_clear_flag(id(layer_forecast_daily), LV_OBJ_FLAG_HIDDEN);
-                          lv_obj_add_flag(id(layer_forecast_hourly), LV_OBJ_FLAG_HIDDEN);
-                          
-                          WeatherDaySlot slots[] = {
-                              {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
-                              {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
-                              {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
-                              {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
-                              {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
-                          };
-                          refresh_daily_forecast(slots, page - 2, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
-                      } else {
-                          lv_obj_add_flag(id(layer_forecast_daily), LV_OBJ_FLAG_HIDDEN);
-                          lv_obj_clear_flag(id(layer_forecast_hourly), LV_OBJ_FLAG_HIDDEN);
-
-                          WeatherHourSlot slots[] = {
-                              {id(h4_time), id(h4_temp), id(h4_prob), id(h4_icon_layer1), id(h4_icon_layer2)},
-                              {id(h3_time), id(h3_temp), id(h3_prob), id(h3_icon_layer1), id(h3_icon_layer2)},
-                              {id(h2_time), id(h2_temp), id(h2_prob), id(h2_icon_layer1), id(h2_icon_layer2)},
-                              {id(h1_time), id(h1_temp), id(h1_prob), id(h1_icon_layer1), id(h1_icon_layer2)},
-                              {id(h0_time), id(h0_temp), id(h0_prob), id(h0_icon_layer1), id(h0_icon_layer2)}
-                          };
-                          refresh_hourly_forecast(slots, 1 - page, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
-                      }
-
-                      lv_obj_t* bars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4)};
-                      for(int i = 0; i < 5; i++) {
-                        if(i == page) {
-                          lv_obj_set_width(bars[i], 30);
-                          lv_obj_set_style_bg_opa(bars[i], 255, LV_PART_MAIN);
-                        } else {
-                          lv_obj_set_width(bars[i], 16);
-                          lv_obj_set_style_bg_opa(bars[i], 100, LV_PART_MAIN);
-                        }
-                      }
-                  }
+                  handle_swipe_gesture(d, pt.y, id(forecast_page_index),
+                      id(layer_console_sys), id(layer_forecast_daily), id(layer_forecast_hourly),
+                      day_slots, hour_slots,
+                      id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small),
+                      pbars);
               }
 
       widgets:

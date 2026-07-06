@@ -1,7 +1,11 @@
-// tab5_custom.h — Declarations des fonctions C++ appelees depuis les lambdas
-// YAML (tab5-api-logic.yaml, tab5-sensors.yaml, ui_components/*.yaml). Regle :
-// les fichiers YAML ne manipulent pas lv_obj_* directement pour de la logique
-// non-triviale, ils appellent une fonction d'ici. Voir Tab5/README.md.
+/**
+ * [AI-CONTEXT]
+ * @file tab5_custom.h
+ * @role Déclarations des fonctions C++ et du dictionnaire de couleurs.
+ * @architecture_constraint C'est ici que se trouve le namespace UIColor qui contient 
+ *                          toutes les constantes de couleurs sémantiques.
+ * @ai_instruction Ne JAMAIS recréer des constantes de couleurs ailleurs. Utiliser UIColor::*.
+ */
 #pragma once
 #include "esphome.h"
 #include <string>
@@ -67,6 +71,28 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
 void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
     esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
 void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj);
+
+// Gestion du geste de swipe (page_main.on_gesture) : pagination previsions
+// horaires/journalieres (0-4) + overlay console. Deplacee depuis tab5-lvgl.yaml
+// (Phase 3, #T164) - comportement IDENTIQUE, ne pas "corriger" la logique de
+// boucle LEFT/RIGHT (validee par Axel, cf. commentaires dans l'implementation).
+void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_index,
+    lv_obj_t* layer_console_sys, lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
+    WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
+    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
+    lv_obj_t* pbars[5]);
+
+// Met a jour un label de temperature (texte + couleur gradient). Factorise
+// depuis temp_serre/temp_salon (tab5-sensors.yaml, Phase 3, #T164).
+void update_temp_ui(lv_obj_t* label, float x);
+
+// Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).
+// Factorise depuis l'interval 2s de tab5-sensors.yaml (Phase 3, #T164).
+void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
+    lv_obj_t* lbl_psram, lv_obj_t* bar_psram, lv_obj_t* lbl_frag, lv_obj_t* lbl_flash,
+    bool loop_time_has_state, float loop_time, lv_obj_t* lbl_loop,
+    bool wifi_ip_has_state, const char* wifi_ip, lv_obj_t* lbl_ip,
+    bool wifi_ssid_has_state, const char* wifi_ssid, lv_obj_t* lbl_ssid);
 
 // AXE5 : Constantes nommees pour les icones meteo (UTF-8 de la police IconeMeteo.ttf)
 // Evite les bytes bruts non-documentés, facilite la maintenance si la police change

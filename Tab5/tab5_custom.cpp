@@ -1,3 +1,16 @@
+/**
+ * [AI-CONTEXT]
+ * @file tab5_custom.cpp
+ * @role Couche logique centrale et unique point de contact avec l'API LVGL.
+ * @regle_absolue Aucune autre partie du code (YAML ou autre) ne doit appeler lv_obj_set_* directement. 
+ *                Tout widget LVGL doit être mis à jour via une fonction helper définie ici.
+ * @memory_constraint Éviter std::string dans les boucles parsing. Utiliser char* et strtok_r.
+ *                    La SRAM est critique (768KB), privilégier le stack (char buf[32]).
+ * @data_flow Réceptionne les payloads bulk (jours/heures) depuis tab5-api-logic.yaml,
+ *            parse en place, et met à jour les structs DayForecastData/HourForecastData.
+ * @ai_instruction Si tu dois ajouter un nouveau capteur, crée ici une fonction `update_mon_capteur_ui(lv_obj_t* label, float val)` 
+ *                 et appelle-la depuis le YAML. Ne génère pas de code LVGL dans le YAML.
+ */
 // tab5_custom.cpp — Implementation : mise a jour LVGL (update_meteo_icon,
 // sort_and_update_moisture_slots, transition_widgets), mappeurs de couleur
 // (get_temperature_color, get_humidity_color), parsing des payloads bulk
@@ -132,11 +145,14 @@ void parse_and_update_heures_bulk(const std::string& payload) {
         return;
     }
     ESP_LOGI("TAB5", "Received heures bulk payload length: %d", payload.length());
-    std::string s = payload;
-    char* str_ptr = &s[0];
+    // Buffer stack plutot que "std::string s = payload;" (copie heap evitable
+    // jusqu'a 2048 octets) - mirroir du fix deja applique a tab5_maj_alerte_meteo_france.
+    char buf[2049];
+    strncpy(buf, payload.c_str(), sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
     char* saveptr1 = nullptr;
 
-    char* token = strtok_r(str_ptr, ";", &saveptr1);
+    char* token = strtok_r(buf, ";", &saveptr1);
     while (token != nullptr) {
         char* parts[6];
         int num_parts = 0;
@@ -174,11 +190,14 @@ void parse_and_update_jours_bulk(const std::string& payload) {
         return;
     }
     ESP_LOGI("TAB5", "Received jours bulk payload length: %d", payload.length());
-    std::string s = payload;
-    char* str_ptr = &s[0];
+    // Buffer stack plutot que "std::string s = payload;" (copie heap evitable
+    // jusqu'a 2048 octets) - mirroir du fix deja applique a tab5_maj_alerte_meteo_france.
+    char buf[2049];
+    strncpy(buf, payload.c_str(), sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
     char* saveptr1 = nullptr;
 
-    char* token = strtok_r(str_ptr, ";", &saveptr1);
+    char* token = strtok_r(buf, ";", &saveptr1);
     while (token != nullptr) {
         // Découper chaque token par '|' — in-place, pas de std::vector
         char* parts[10];  // 9 champs attendus + marge
@@ -325,10 +344,66 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
             lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(0x8AB4FF), LV_PART_MAIN);
         } else {
             lv_label_set_text(slot.prob_lbl, "-");
-            lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(0x4A596E), LV_PART_MAIN);
+            lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(UIColor::CLIM_TRACK_INACTIVE), LV_PART_MAIN);
         }
 
         update_meteo_icon(slot.icon_l1, slot.icon_l2, data.condition, true, f_main, f_card, f_main_s, f_card_s);
+    }
+}
+
+// =============================================================================
+// Geste de swipe (page_main.on_gesture) : deplace depuis tab5-lvgl.yaml (Phase 3,
+// #T164). Comportement IDENTIQUE a l'original - seul l'emplacement change.
+// =============================================================================
+
+void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_index,
+    lv_obj_t* layer_console_sys, lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
+    WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
+    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
+    lv_obj_t* pbars[5]) {
+
+    if (dir == LV_DIR_TOP) {
+        lv_obj_clear_flag(layer_console_sys, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_move_foreground(layer_console_sys);
+    } else if (dir == LV_DIR_BOTTOM) {
+        lv_obj_add_flag(layer_console_sys, LV_OBJ_FLAG_HIDDEN);
+    } else if (pt_y > 400) {
+        int page = forecast_page_index;
+        // NE PAS "corriger" en wrap 0<->4 : comportement volontaire, deja teste et
+        // valide par Axel (revert du 05/07/2026 d'un changement fait a tort suite a
+        // un audit LLM qui l'avait signale comme un bug de pagination "confuse").
+        // Pages 0-1 = horaire, 2-4 = journalier. LEFT boucle sur 2/3/4 une fois
+        // dans le journalier (ne revient pas seul vers l'horaire) ; RIGHT traverse
+        // tout vers le bas et boucle 0->2 (retour au debut du journalier, pas un
+        // tour complet vers 4).
+        if (dir == LV_DIR_LEFT) {
+            if (page >= 4) page = 2;
+            else page = page + 1;
+        } else if (dir == LV_DIR_RIGHT) {
+            if (page <= 0) page = 2;
+            else page = page - 1;
+        }
+        forecast_page_index = page;
+
+        if (page >= 2) {
+            lv_obj_clear_flag(layer_forecast_daily, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(layer_forecast_hourly, LV_OBJ_FLAG_HIDDEN);
+            refresh_daily_forecast(day_slots, page - 2, f_main, f_card, f_main_s, f_card_s);
+        } else {
+            lv_obj_add_flag(layer_forecast_daily, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(layer_forecast_hourly, LV_OBJ_FLAG_HIDDEN);
+            refresh_hourly_forecast(hour_slots, 1 - page, f_main, f_card, f_main_s, f_card_s);
+        }
+
+        for (int i = 0; i < 5; i++) {
+            if (i == page) {
+                lv_obj_set_width(pbars[i], 30);
+                lv_obj_set_style_bg_opa(pbars[i], 255, LV_PART_MAIN);
+            } else {
+                lv_obj_set_width(pbars[i], 16);
+                lv_obj_set_style_bg_opa(pbars[i], 100, LV_PART_MAIN);
+            }
+        }
     }
 }
 
@@ -443,6 +518,92 @@ void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
         uint32_t c = get_humidity_color(e.val);
         lv_obj_set_style_text_color(slots[s].icon_lbl, lv_color_hex(c), LV_PART_MAIN);
         lv_obj_set_style_text_color(slots[s].val_lbl, lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+    }
+}
+
+// Met a jour un label de temperature (texte + couleur gradient). Factorise
+// depuis temp_serre/temp_salon (tab5-sensors.yaml, Phase 3, #T164).
+void update_temp_ui(lv_obj_t* label, float x) {
+    if (label == nullptr) return;
+    if (isnan(x)) {
+        lv_label_set_text(label, "-- \xC2\xB0");
+        lv_obj_set_style_text_color(label, lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+    } else {
+        char buf[32];
+        sprintf(buf, "%.1f \xC2\xB0", x);
+        lv_label_set_text(label, buf);
+        uint32_t c_int = get_temperature_color(x);
+        lv_obj_set_style_text_color(label, lv_color_hex(c_int), LV_PART_MAIN);
+    }
+}
+
+// Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).
+// Factorise depuis l'interval 2s de tab5-sensors.yaml (Phase 3, #T164). Le garde
+// "console visible ?" reste dans le YAML (evite de passer layer_console_sys ici).
+void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
+    lv_obj_t* lbl_psram, lv_obj_t* bar_psram, lv_obj_t* lbl_frag, lv_obj_t* lbl_flash,
+    bool loop_time_has_state, float loop_time, lv_obj_t* lbl_loop,
+    bool wifi_ip_has_state, const char* wifi_ip, lv_obj_t* lbl_ip,
+    bool wifi_ssid_has_state, const char* wifi_ssid, lv_obj_t* lbl_ssid) {
+
+    if (lbl_sram != nullptr) {
+        #ifdef USE_ESP_IDF
+        float sram_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024.0f;
+        float sram_total = heap_caps_get_total_size(MALLOC_CAP_INTERNAL) / 1024.0f;
+        float psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024.0f / 1024.0f;
+        float psram_total = heap_caps_get_total_size(MALLOC_CAP_SPIRAM) / 1024.0f / 1024.0f;
+        float frag = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL) / 1024.0f;
+        #else
+        float sram_free = ESP.getFreeHeap() / 1024.0f;
+        float sram_total = ESP.getHeapSize() / 1024.0f;
+        float psram_free = ESP.getFreePsram() / (1024.0f * 1024.0f);
+        float psram_total = ESP.getPsramSize() / (1024.0f * 1024.0f);
+        float frag = ESP.getMaxAllocHeap() / 1024.0f;
+        #endif
+
+        float sram_used = sram_total - sram_free;
+        if (sram_used < 0) sram_used = 0;
+        float psram_used = psram_total - psram_free;
+        if (psram_used < 0) psram_used = 0;
+
+        int sram_pct = (int)((sram_used / sram_total) * 100.0f);
+        int psram_pct = (int)((psram_used / psram_total) * 100.0f);
+
+        char b_sram[32]; sprintf(b_sram, "%d%% (%.1f KB)", sram_pct, sram_used);
+        lv_label_set_text(lbl_sram, b_sram);
+        lv_bar_set_value(bar_sram, sram_pct, LV_ANIM_ON);
+
+        char b_psram[32]; sprintf(b_psram, "%d%% (%.2f MB)", psram_pct, psram_used);
+        lv_label_set_text(lbl_psram, b_psram);
+        lv_bar_set_value(bar_psram, psram_pct, LV_ANIM_ON);
+
+        auto set_bar_color = [](lv_obj_t* bar, int pct) {
+            lv_color_t color = lv_color_hex(UIColor::SUCCESS); // Vert (Normal)
+            if (pct > 50) color = lv_color_hex(UIColor::INFO); // Bleu (Bien-Rempli)
+            if (pct > 75) color = lv_color_hex(UIColor::WARNING); // Orange (Attention)
+            if (pct > 90) color = lv_color_hex(UIColor::ERROR); // Rouge (Critique)
+            lv_obj_set_style_bg_color(bar, color, LV_PART_INDICATOR);
+        };
+        set_bar_color(bar_sram, sram_pct);
+        set_bar_color(bar_psram, psram_pct);
+
+        char b_frag[32]; sprintf(b_frag, "%.1f KB", frag);
+        lv_label_set_text(lbl_frag, b_frag);
+        lv_label_set_text(lbl_flash, "16.0 MB");
+    }
+
+    if (loop_time_has_state && lbl_loop != nullptr) {
+        char buf[32];
+        sprintf(buf, "%.0f ms", loop_time);
+        lv_label_set_text(lbl_loop, buf);
+    }
+
+    if (wifi_ip_has_state && lbl_ip != nullptr) {
+        lv_label_set_text(lbl_ip, wifi_ip);
+    }
+
+    if (wifi_ssid_has_state && lbl_ssid != nullptr) {
+        lv_label_set_text(lbl_ssid, wifi_ssid);
     }
 }
 

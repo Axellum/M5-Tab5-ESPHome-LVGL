@@ -1,3 +1,15 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-sensors.yaml
+# @role Déclaration des entités ESPHome (HA sensors, system sensors).
+# @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
+#                         Les blocs on_value: doivent se contenter d'appeler des fonctions 
+#                         C++ depuis tab5_custom.cpp (ex: update_light_card_ui(...) ).
+# @anti_pattern_evité Ne pas utiliser std::string ou to_string() ici (hot-path).
+# @ai_instruction Si l'utilisateur demande d'ajouter un nouveau capteur de température, 
+#                 génère l'entité platform: homeassistant, et dans on_value, appelle 
+#                 simplement update_temp_ui(id(mon_label), x); Ne génère pas de lv_label_set_text ici.
+# ============================================================================
 wifi:
 
   ssid: !secret wifi_ssid
@@ -268,17 +280,7 @@ sensor:
 
     on_value:
       - lambda: |-
-          if (id(current_serre) == nullptr) return;
-          if(isnan(x)) {
-            lv_label_set_text(id(current_serre), "-- \xC2\xB0");
-            lv_obj_set_style_text_color(id(current_serre), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-          } else {
-            char buf[32];
-            sprintf(buf, "%.1f \xC2\xB0", x);
-            lv_label_set_text(id(current_serre), buf);
-            uint32_t c_int = get_temperature_color(x); // AXE1: appel fonction C++ centralisee
-            lv_obj_set_style_text_color(id(current_serre), lv_color_hex(c_int), LV_PART_MAIN);
-          }
+          update_temp_ui(id(current_serre), x); // AXE1/Phase 3 : helper centralise
 
   - platform: homeassistant
 
@@ -290,27 +292,7 @@ sensor:
 
       - lambda: |-
 
-          if (id(val_temp_salon) == nullptr) return;
-
-          if(isnan(x)) {
-
-            lv_label_set_text(id(val_temp_salon), "-- \xC2\xB0");
-
-            lv_obj_set_style_text_color(id(val_temp_salon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-
-          } else {
-
-            char buf[32];
-
-            sprintf(buf, "%.1f \xC2\xB0", x);
-
-            lv_label_set_text(id(val_temp_salon), buf);
-
-            uint32_t c_int = get_temperature_color(x);  // Gradient continu colorimetrique
-
-            lv_obj_set_style_text_color(id(val_temp_salon), lv_color_hex(c_int), LV_PART_MAIN);
-
-          }
+          update_temp_ui(id(val_temp_salon), x); // Gradient continu colorimetrique (helper centralise)
 
   - platform: homeassistant
 
@@ -572,99 +554,14 @@ interval:
 
       - lambda: |-
 
+          // Garde "console visible ?" conservee ici (evite de passer layer_console_sys
+          // au helper). Tout le detail (SRAM/PSRAM/frag/loop/IP/SSID) est factorise
+          // dans update_console_diagnostics_ui() (tab5_custom.cpp, Phase 3, #T164).
           if (id(layer_console_sys) != nullptr && !lv_obj_has_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN)) {
-
-             // Update SRAM, PSRAM, Frag & Flash
-
-             if (id(lbl_sys_sram_val) != nullptr) {
-
-                #ifdef USE_ESP_IDF
-
-                float sram_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024.0f;
-                float sram_total = heap_caps_get_total_size(MALLOC_CAP_INTERNAL) / 1024.0f;
-                float psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024.0f / 1024.0f;
-                float psram_total = heap_caps_get_total_size(MALLOC_CAP_SPIRAM) / 1024.0f / 1024.0f;
-
-                float frag = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL) / 1024.0f;
-
-                #else
-
-                float sram_free = ESP.getFreeHeap() / 1024.0f;
-                float sram_total = ESP.getHeapSize() / 1024.0f;
-                float psram_free = ESP.getFreePsram() / (1024.0f * 1024.0f);
-                float psram_total = ESP.getPsramSize() / (1024.0f * 1024.0f);
-
-                float frag = ESP.getMaxAllocHeap() / 1024.0f;
-
-                #endif
-
-                float sram_used = sram_total - sram_free;
-                if(sram_used < 0) sram_used = 0;
-                float psram_used = psram_total - psram_free;
-                if(psram_used < 0) psram_used = 0;
-
-                int sram_pct = (int)((sram_used / sram_total) * 100.0f);
-                int psram_pct = (int)((psram_used / psram_total) * 100.0f);
-
-                char b_sram[32]; sprintf(b_sram, "%d%% (%.1f KB)", sram_pct, sram_used);
-
-                lv_label_set_text(id(lbl_sys_sram_val), b_sram);
-                lv_bar_set_value(id(bar_sys_sram), sram_pct, LV_ANIM_ON);
-
-                char b_psram[32]; sprintf(b_psram, "%d%% (%.2f MB)", psram_pct, psram_used);
-
-                lv_label_set_text(id(lbl_sys_psram_val), b_psram);
-                lv_bar_set_value(id(bar_sys_psram), psram_pct, LV_ANIM_ON);
-                
-                auto set_bar_color = [](lv_obj_t* bar, int pct) {
-                    lv_color_t color = lv_color_hex(UIColor::SUCCESS); // Vert (Normal)
-                    if(pct > 50) color = lv_color_hex(UIColor::INFO); // Bleu (Bien-Rempli)
-                    if(pct > 75) color = lv_color_hex(UIColor::WARNING); // Orange (Attention)
-                    if(pct > 90) color = lv_color_hex(UIColor::ERROR); // Rouge (Critique)
-                    lv_obj_set_style_bg_color(bar, color, LV_PART_INDICATOR);
-                };
-                set_bar_color(id(bar_sys_sram), sram_pct);
-                set_bar_color(id(bar_sys_psram), psram_pct);
-
-                char b_frag[32]; sprintf(b_frag, "%.1f KB", frag);
-
-                lv_label_set_text(id(lbl_sys_frag_val), b_frag);
-
-                lv_label_set_text(id(lbl_sys_flash_val), "16.0 MB");
-
-             }
-
-             // Update Loop Time
-
-             if (id(sys_loop_time).has_state() && id(lbl_sys_loop_val) != nullptr) {
-
-                float ltime = id(sys_loop_time).state; // usually in ms
-
-                char buf[32];
-
-                sprintf(buf, "%.0f ms", ltime);
-
-                lv_label_set_text(id(lbl_sys_loop_val), buf);
-
-             }
-
-             // Update IP & SSID
-
-             if (id(sys_wifi_ip).has_state() && id(lbl_sys_ip_val) != nullptr) {
-
-                std::string ip = id(sys_wifi_ip).state;
-
-                lv_label_set_text(id(lbl_sys_ip_val), ip.c_str());
-
-             }
-
-             if (id(sys_wifi_ssid).has_state() && id(lbl_sys_ssid_val) != nullptr) {
-
-                std::string ssid = id(sys_wifi_ssid).state;
-
-                lv_label_set_text(id(lbl_sys_ssid_val), ssid.c_str());
-
-             }
-
+             update_console_diagnostics_ui(id(lbl_sys_sram_val), id(bar_sys_sram),
+                 id(lbl_sys_psram_val), id(bar_sys_psram), id(lbl_sys_frag_val), id(lbl_sys_flash_val),
+                 id(sys_loop_time).has_state(), id(sys_loop_time).state, id(lbl_sys_loop_val),
+                 id(sys_wifi_ip).has_state(), id(sys_wifi_ip).state.c_str(), id(lbl_sys_ip_val),
+                 id(sys_wifi_ssid).has_state(), id(sys_wifi_ssid).state.c_str(), id(lbl_sys_ssid_val));
           }
 
