@@ -172,40 +172,8 @@ obj:
                 pad_column: 10
               widgets:
                 # ── Ligne 1 : Modes principaux ──
-                - button:
-                    id: popup_btn_clim_cool
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: climate.set_hvac_mode
-                          data:
-                            entity_id: ${entity_climate_salon}
-                            hvac_mode: "cool"
-                    widgets:
-                      - label: { id: popup_icon_clim_cool, text: "\U000F0717", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Froid", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
-                - button:
-                    id: popup_btn_clim_heat
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: climate.set_hvac_mode
-                          data:
-                            entity_id: ${entity_climate_salon}
-                            hvac_mode: "heat"
-                    widgets:
-                      - label: { id: popup_icon_clim_heat, text: "\U000F0238", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Chaud", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
+                - !include { file: climate_hvac_mode_btn.yaml, vars: { suffix: "cool", hvac_mode: "cool", icon: "\U000F0717", label_text: "Froid" } }
+                - !include { file: climate_hvac_mode_btn.yaml, vars: { suffix: "heat", hvac_mode: "heat", icon: "\U000F0238", label_text: "Chaud" } }
                 - button:
                     id: popup_btn_clim_off
                     width: 170
@@ -224,40 +192,8 @@ obj:
                       - label: { text: "Éteint", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
 
                 # ── Ligne 2 : Modes secondaires ──
-                - button:
-                    id: popup_btn_clim_fan
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: climate.set_hvac_mode
-                          data:
-                            entity_id: ${entity_climate_salon}
-                            hvac_mode: "fan_only"
-                    widgets:
-                      - label: { id: popup_icon_clim_fan, text: "\U000F0210", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Ventil.", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
-                - button:
-                    id: popup_btn_clim_dry
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: climate.set_hvac_mode
-                          data:
-                            entity_id: ${entity_climate_salon}
-                            hvac_mode: "dry"
-                    widgets:
-                      - label: { id: popup_icon_clim_dry, text: "\U000F058E", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Sec", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
+                - !include { file: climate_hvac_mode_btn.yaml, vars: { suffix: "fan", hvac_mode: "fan_only", icon: "\U000F0210", label_text: "Ventil." } }
+                - !include { file: climate_hvac_mode_btn.yaml, vars: { suffix: "dry", hvac_mode: "dry", icon: "\U000F058E", label_text: "Sec" } }
                 - button:
                     id: popup_btn_clim_swing
                     width: 170
@@ -277,40 +213,8 @@ obj:
                       - label: { text: "Oscill.", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
 
                 # ── Ligne 3 : Presets ──
-                - button:
-                    id: popup_btn_clim_eco
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: climate.set_preset_mode
-                          data:
-                            entity_id: ${entity_climate_salon}
-                            preset_mode: !lambda 'return id(clim_preset_mode) == "eco" ? std::string("none") : std::string("eco");'
-                    widgets:
-                      - label: { id: popup_icon_clim_eco, text: "\U000F032A", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Éco", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
-                - button:
-                    id: popup_btn_clim_boost
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: climate.set_preset_mode
-                          data:
-                            entity_id: ${entity_climate_salon}
-                            preset_mode: !lambda 'return id(clim_preset_mode) == "boost" ? std::string("none") : std::string("boost");'
-                    widgets:
-                      - label: { id: popup_icon_clim_boost, text: "\U000F14DE", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Boost", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
+                - !include { file: climate_preset_toggle_btn.yaml, vars: { suffix: "eco", preset_name: "eco", icon: "\U000F032A", label_text: "Éco" } }
+                - !include { file: climate_preset_toggle_btn.yaml, vars: { suffix: "boost", preset_name: "boost", icon: "\U000F14DE", label_text: "Boost" } }
                 - button:
                     id: popup_btn_clim_quiet
                     width: 170
