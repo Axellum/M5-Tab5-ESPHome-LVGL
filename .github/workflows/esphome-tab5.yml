@@ -28,7 +28,7 @@ jobs:
         with:
           yaml-file: tab5-ha-hmi.yaml
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tab5-firmware
           path: .esphome/build/tab5-ha-hmi/.pioenvs/tab5-ha-hmi/firmware.bin
