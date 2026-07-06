@@ -1,0 +1,17 @@
+button:
+  id: popup_btn_clim_${suffix}
+  width: 170
+  height: 60
+  radius: 12
+  styles: style_clim_btn
+  pressed:
+    bg_opa: 30%
+  on_short_click:
+    - homeassistant.service:
+        service: climate.set_hvac_mode
+        data:
+          entity_id: ${entity_climate_salon}
+          hvac_mode: "${hvac_mode}"
+  widgets:
+    - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
+    - label: { text: "${label_text}", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
