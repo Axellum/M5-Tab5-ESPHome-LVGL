@@ -1,6 +1,22 @@
 # ═══════════════════════════════════════════════════════
-# POPUP CLIMATISATION — Fullscreen modal (960×520)
-# Layout : Gauche=Jauge+Contrôles | Droite=Grille 3×3
+# [AI-CONTEXT]
+# @file climate_popup.yaml
+# @role Popup fullscreen clim (960×520). Gauche=Jauge/Contrôles, Droite=Grille 3×3
+#       (mode HVAC + off + swing / preset eco+boost + quiet).
+# @architecture_constraint NON factorisable au-delà de ce qui l'est déjà (décision explicite,
+#                          #T164, cf. contexte_ia/04_Projets/etat_tab5.md) : chaque bouton de la
+#                          grille appelle un service Home Assistant DIFFÉRENT
+#                          (climate.set_hvac_mode / set_preset_mode / set_swing_mode / set_fan_mode
+#                          / turn_off) avec une logique lambda propre — pas de partie purement
+#                          cosmétique séparable de l'action. Seuls 6/9 boutons ont un template
+#                          commun (climate_hvac_mode_btn.yaml/climate_preset_toggle_btn.yaml) car
+#                          leur service+payload sont réellement identiques (seul le paramètre change).
+# @ai_instruction Les couleurs des icônes (popup_icon_clim_*) sont pilotées par le service
+#                 `tab5_maj_clim` (tab5-api-logic.yaml) via les globals clim_preset_mode/
+#                 clim_fan_mode/clim_swing_mode — ne pas essayer de les dériver localement ici.
+#                 `pressed: bg_opa: 30%` est répété sur chaque bouton (pas dans style_definitions)
+#                 car ESPHome rejette `pressed:` dans un style partagé — contrainte du framework,
+#                 pas un oubli.
 # ═══════════════════════════════════════════════════════
 obj:
   id: clim_options_popup

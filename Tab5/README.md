@@ -14,6 +14,16 @@ The entry point is `../tab5-ha-hmi.yaml` at the repository root. It declares `su
 
 ---
 
+## `[AI-CONTEXT]` / `[AI-WARNING]` convention (read this before editing)
+
+Most files in this folder (and every file in `ui_components/`) start with a comment block tagged `[AI-CONTEXT]` — a short "system prompt" local to that file: its role, its architectural constraints, and explicit `@ai_instruction`s for common edits. Non-obvious decisions (a bug fix that looks removable, a duplication kept on purpose, a `!include` that must not be inlined) are documented **inside the file itself**, not only in the external knowledge base (`contexte_ia/` in the parent workspace) — a session that only has access to this repo (no cross-repo context) must still be able to find them.
+
+A `[AI-WARNING]` (sometimes `[AI-WARNING-CRITICAL]`) marks something that looks like a bug/anti-pattern but is a deliberate, validated fix — e.g. the boot `delay(1000)` in `tab5-hardware.yaml`, or the pagination wrap logic in `handle_swipe_gesture()` (`tab5_custom.cpp`). **Read the warning before "fixing" it** — at least one of these was already reverted once after being "corrected" by an LLM audit that hadn't read it.
+
+If you add a genuinely new architectural constraint or a non-obvious decision while editing a file, add or extend its `[AI-CONTEXT]` block rather than leaving the reasoning only in a commit message or an external doc.
+
+---
+
 ## File descriptions
 
 ### `tab5-hardware.yaml`

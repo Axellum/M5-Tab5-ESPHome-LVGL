@@ -1,3 +1,16 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file moisture_sensors.yaml
+# @role 4 slots UI fixes affichant un sous-ensemble dynamique de 5 capteurs d'humidité BLE
+#       (plantes). Slot 0 = le plus sec, 1 = 2e plus sec, 2 = médiane ("Moy:"), 3 = le plus
+#       humide — PAS un mapping fixe capteur→slot.
+# @architecture_constraint Les 4 slots (`icon_pot_sN`/`val_pot_sN`) sont remplis par
+#                          `sort_and_update_moisture_slots()` (tab5_custom.cpp), appelée à
+#                          chaque mise à jour de n'importe lequel des 5 capteurs
+#                          (`moisture_1`..`moisture_5`, ancre YAML `&moisture_on_value` dans
+#                          tab5-sensors.yaml). Ne jamais assigner icône/texte/couleur ici :
+#                          quel capteur physique tombe dans quel slot change à chaque update.
+# ============================================================================
 obj:
   id: moisture_sensors_card
   align: TOP_MID

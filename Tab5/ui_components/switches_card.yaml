@@ -1,3 +1,18 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file switches_card.yaml
+# @role 5 cartes switches (PC bureau, volet, lumière chambre/salon, LEDs bureau). Alterne
+#       avec forecast_daily.yaml/forecast_hourly.yaml via `btn_control_ha` (tab5-lvgl.yaml,
+#       global `show_switches`).
+# @architecture_constraint Onglet Titre (`switch_card_title_tab.yaml`) et Onglet État
+#                          (`switch_card_state_tab.yaml`) sont factorisés (#T164, même motif x5).
+#                          Le bouton d'action (`btn_swN_action`) N'EST PAS factorisé : chaque
+#                          carte appelle un service Home Assistant différent — même décision
+#                          que forecast_daily.yaml (cartes j0-j4), voir etat_tab5.md.
+# @ai_instruction `lbl_swN_state`/`icon_swN` sont mis à jour par les fonctions C++ (ex:
+#                 `update_light_card_ui()`) ou les lambdas de tab5-sensors.yaml/tab5-api-logic.yaml
+#                 — ne pas leur assigner de texte/couleur directement ici.
+# ============================================================================
 obj:
   id: layer_switches
   x: 0

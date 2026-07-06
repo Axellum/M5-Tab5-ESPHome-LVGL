@@ -1,3 +1,6 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 4x par climate_popup.yaml
+# (cool/heat/fan/dry). Vars: suffix, hvac_mode, icon, label_text. Ne pas dupliquer
+# manuellement — ajouter un !include supplémentaire pour un nouveau mode HVAC.
 button:
   id: popup_btn_clim_${suffix}
   width: 170

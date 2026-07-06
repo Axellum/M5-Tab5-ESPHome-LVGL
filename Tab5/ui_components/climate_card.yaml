@@ -1,6 +1,15 @@
 # ═══════════════════════════════════════════════════════
-# CARTE CLIMATISATION — Style modal_card premium
-# Layout : Haut=Températures (Salon & Serre) | Centre/Bas=Cible cliquable +/-
+# [AI-CONTEXT]
+# @file climate_card.yaml
+# @role Carte compacte clim toujours visible (dashboard principal). Layout :
+#       Haut=Températures (Salon & Serre) | Centre/Bas=Cible cliquable +/-.
+# @architecture_constraint `clim_target`/`current_serre`/`val_temp_salon` sont mis à jour
+#                          par les services `tab5_maj_clim`/helpers C++ (tab5-api-logic.yaml,
+#                          tab5-sensors.yaml) — jamais localement ici.
+# @ai_instruction Les boutons +/- et le clic sur la cible dupliquent volontairement ceux de
+#                 climate_popup.yaml (même service `climate.set_temperature`/ouverture popup) :
+#                 duplication acceptée, chaque bouton ne fait qu'un appel de service en 1 ligne,
+#                 pas de logique à factoriser.
 # ═══════════════════════════════════════════════════════
 obj:
   id: climate_card

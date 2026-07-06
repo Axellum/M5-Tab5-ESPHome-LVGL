@@ -1,3 +1,5 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par switches_card.yaml.
+# Var: title (texte statique, pas d'id — ce titre ne change jamais après le boot).
 obj:
   align: TOP_MID
   y: 7
