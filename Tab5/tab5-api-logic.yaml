@@ -375,7 +375,7 @@ api:
             if (id(rb_0_in) == nullptr) return;
             int idx = atoi(index_5mn.c_str());
 
-            uint32_t c_empty = 0x4A596E;
+            uint32_t c_empty = UIColor::CLIM_TRACK_INACTIVE;
             uint32_t c_faible = 0x81D4FA;      // Bleu clair
             uint32_t c_modere = 0x29B6F6;      // Bleu moyen
             uint32_t c_forte = 0x0277BD;       // Bleu foncé
