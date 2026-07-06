@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-extern std::string cal_jour_nom[15];
 extern std::string cal_heures[15];
 extern bool cal_toggled[15];
 
@@ -124,5 +123,15 @@ namespace UIColor {
     // --- Vigilance Meteo-France : NE PAS modifier (semantique officielle) ---
     static constexpr uint32_t ALERT_YELLOW = 0xFFFF00;  // Vigilance jaune MF
     static constexpr uint32_t ALERT_RED    = 0xFF0000;  // Vigilance rouge MF
+    // --- Climatisation (popup grille 3x3, tab5_maj_clim) : valeurs inchangees,
+    // seulement nommees pour sortir des hex en dur de tab5-api-logic.yaml ---
+    static constexpr uint32_t CLIM_COOL_ACTIVE     = 0x4D94FF;  // Bleu vif
+    static constexpr uint32_t CLIM_COOL_INACTIVE   = 0x60748F;  // Bleu grisatre inactif
+    static constexpr uint32_t CLIM_HEAT_ACTIVE     = 0xFF4D4D;  // Rouge vif
+    static constexpr uint32_t CLIM_HEAT_INACTIVE   = 0x8F6060;  // Rouge grisatre inactif
+    static constexpr uint32_t CLIM_OFF_ACTIVE      = 0xFFA500;  // Orange
+    static constexpr uint32_t CLIM_OFF_INACTIVE    = 0xB48154;  // Orange grise
+    static constexpr uint32_t CLIM_TRACK_INACTIVE  = 0x4A596E;  // Gris (fan/swing/quiet inactifs)
+    static constexpr uint32_t CLIM_ECO             = 0x4CD964;  // Vert standard
 }
 

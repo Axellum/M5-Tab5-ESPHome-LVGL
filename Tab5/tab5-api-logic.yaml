@@ -154,37 +154,34 @@ api:
 
             id(clim_swing_mode) = swing;
 
-            uint32_t c_cool_active   = 0x4D94FF; // Bleu vif
+            uint32_t c_cool_active   = UIColor::CLIM_COOL_ACTIVE; // Bleu vif
 
-            uint32_t c_cool_inactive = 0x60748F; // Bleu grisatre inactif
+            uint32_t c_cool_inactive = UIColor::CLIM_COOL_INACTIVE; // Bleu grisatre inactif
 
-            uint32_t c_heat_active   = 0xFF4D4D; // Rouge vif
+            uint32_t c_heat_active   = UIColor::CLIM_HEAT_ACTIVE; // Rouge vif
 
-            uint32_t c_heat_inactive = 0x8F6060; // Rouge grisatre inactif
+            uint32_t c_heat_inactive = UIColor::CLIM_HEAT_INACTIVE; // Rouge grisatre inactif
 
-            uint32_t c_off_active    = 0xFFA500; // Orange
+            uint32_t c_off_active    = UIColor::CLIM_OFF_ACTIVE; // Orange
 
-            uint32_t c_off_inactive  = 0xB48154; // Orange grise
+            uint32_t c_off_inactive  = UIColor::CLIM_OFF_INACTIVE; // Orange grise
 
-            uint32_t c_inactive = 0x4A596E; // Gris barre
+            uint32_t c_inactive = UIColor::CLIM_TRACK_INACTIVE; // Gris barre
 
-            uint32_t c_eco = 0x4CD964; // Vert standard
+            uint32_t c_eco = UIColor::CLIM_ECO; // Vert standard
 
             // Couleur de la temperature cible (Bleu si froid, Rouge si chaud, Blanc si off/autre)
             uint32_t c_target_color = 0xFFFFFF; // Blanc par defaut
             if(mode == "cool") {
-              c_target_color = 0x4D94FF; // Bleu
+              c_target_color = UIColor::CLIM_COOL_ACTIVE; // Bleu
             } else if(mode == "heat") {
-              c_target_color = 0xFF4D4D; // Rouge
+              c_target_color = UIColor::CLIM_HEAT_ACTIVE; // Rouge
             }
             lv_obj_set_style_text_color(id(clim_target), lv_color_hex(c_target_color), LV_PART_MAIN);
             lv_obj_set_style_text_color(id(clim_target_popup), lv_color_hex(c_target_color), LV_PART_MAIN);
 
             // Mode (Cool/Heat/Dry/Fan/Off)
 
-            // lv_obj_set_style_text_color(id(icon_clim_cool), lv_color_hex(c_cool_inactive), LV_PART_MAIN);
-            // lv_obj_set_style_text_color(id(icon_clim_heat), lv_color_hex(c_heat_inactive), LV_PART_MAIN);
-            // lv_obj_set_style_text_color(id(icon_clim_off), lv_color_hex(c_off_inactive), LV_PART_MAIN);
             lv_obj_set_style_text_color(id(popup_icon_clim_cool), lv_color_hex(c_cool_inactive), LV_PART_MAIN);
             lv_obj_set_style_text_color(id(popup_icon_clim_heat), lv_color_hex(c_heat_inactive), LV_PART_MAIN);
             lv_obj_set_style_text_color(id(popup_icon_clim_dry), lv_color_hex(c_cool_inactive), LV_PART_MAIN);
@@ -192,27 +189,22 @@ api:
             lv_obj_set_style_text_color(id(popup_icon_clim_off), lv_color_hex(c_off_inactive), LV_PART_MAIN);
 
             if(mode == "cool") {
-              // lv_obj_set_style_text_color(id(icon_clim_cool), lv_color_hex(c_cool_active), LV_PART_MAIN);
               lv_obj_set_style_text_color(id(popup_icon_clim_cool), lv_color_hex(c_cool_active), LV_PART_MAIN);
             } else if(mode == "heat") {
-              // lv_obj_set_style_text_color(id(icon_clim_heat), lv_color_hex(c_heat_active), LV_PART_MAIN);
               lv_obj_set_style_text_color(id(popup_icon_clim_heat), lv_color_hex(c_heat_active), LV_PART_MAIN);
             } else if(mode == "dry") {
               lv_obj_set_style_text_color(id(popup_icon_clim_dry), lv_color_hex(c_cool_active), LV_PART_MAIN);
             } else if(mode == "fan_only") {
               lv_obj_set_style_text_color(id(popup_icon_clim_fan), lv_color_hex(c_eco), LV_PART_MAIN);
             } else {
-              // lv_obj_set_style_text_color(id(icon_clim_off), lv_color_hex(c_off_active), LV_PART_MAIN);
               lv_obj_set_style_text_color(id(popup_icon_clim_off), lv_color_hex(c_off_active), LV_PART_MAIN);
             }
 
             // Eco (carte + popup)
 
             if(preset == "eco") {
-              // lv_obj_set_style_text_color(id(icon_clim_eco), lv_color_hex(c_eco), LV_PART_MAIN);
               lv_obj_set_style_text_color(id(popup_icon_clim_eco), lv_color_hex(c_eco), LV_PART_MAIN);
             } else {
-              // lv_obj_set_style_text_color(id(icon_clim_eco), lv_color_hex(c_inactive), LV_PART_MAIN);
               lv_obj_set_style_text_color(id(popup_icon_clim_eco), lv_color_hex(c_inactive), LV_PART_MAIN);
             }
 
