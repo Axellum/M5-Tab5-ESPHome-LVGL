@@ -4,8 +4,7 @@
 /.esphome/
 secrets.yaml
 
-# Ignorer les scripts de l'IA et tests locaux
-/ia_tools_scripts/
+# Ignorer les tests locaux (scripts IA maintenant trackés)
 /archives/
 config_out.txt
 test_*.yaml
