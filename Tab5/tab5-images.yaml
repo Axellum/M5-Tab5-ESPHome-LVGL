@@ -1,4 +1,0 @@
-# TOUTES LES ANCIENNES IMAGES PNG ONT ÉTÉ SUPPRIMÉES
-# Le remplacement se fait par l'utilisation de polices vectorielles C++
-# gérées nativement dans tab5-styles.yaml et dans tab5-lvgl.yaml.
-# Fichier conservé vide pour compatibilité au cas où l'utilisateur voudrait un jour ajouter d'autres images sans crasher.

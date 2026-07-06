@@ -8,8 +8,7 @@
 #include "esphome/components/lvgl/lvgl_esphome.h"
 
 
-// we can declare references to ESPHome LVGL objects but we can't easily include main.h 
-std::string cal_jour_nom[15] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "", ""};
+// we can declare references to ESPHome LVGL objects but we can't easily include main.h
 std::string cal_heures[15] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "", ""};
 bool cal_toggled[15] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}; 
 
@@ -210,8 +209,9 @@ void parse_and_update_jours_bulk(const std::string& payload) {
                 cal_jours_data[jour].est_passe = (parts[7][0] == '1');
                 cal_jours_data[jour].heures_ouverture = parts[8];
 
-                // Rétrocompatibilité : remplir les anciens tableaux
-                cal_jour_nom[jour] = parts[1];
+                // cal_heures[] reste utilise (toggle jour/heure sur tap, cf. refresh_daily_forecast()
+                // et forecast_day_temp_tab.yaml) — cal_jour_nom[] jumeau retire le 06/07/2026 (write-only,
+                // jamais lu, cf. cartographie CARTOGRAPHIE_TAB5.md §4.2)
                 cal_heures[jour] = parts[8];
             }
         }
