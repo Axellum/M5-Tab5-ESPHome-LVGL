@@ -1,3 +1,8 @@
+﻿# [AI-CONTEXT]
+# @file tab5-globals.yaml
+# @role Variables globales de l'interface (état des volets, page courante, mode vocal).
+# @ai_instruction Ne déclarer ici que les variables globales pures.
+# ============================================================================
 # tab5-globals.yaml — État partagé entre tous les packages (voir table complète
 # dans Tab5/README.md). Règle : tout état lu/écrit par plus d'un fichier ou par
 # deux handlers différents (ex: on_short_click + on_long_press) vit ici, jamais
@@ -125,5 +130,6 @@ interval:
                     transition_widgets(out_obj, in_obj);
                     id(current_central_panel) = next_panel;
                 }
+
 
 

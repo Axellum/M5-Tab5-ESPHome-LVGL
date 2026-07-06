@@ -1,3 +1,8 @@
+﻿# [AI-CONTEXT]
+# @file tab5-styles.yaml
+# @role Définition des styles LVGL (polices, thèmes, bordures).
+# @ai_instruction Interdiction d'utiliser des codes couleurs hexadécimaux en dur. Utiliser UIColor.
+# ============================================================================
 # =============================================================================
 # THEME — "Dark Mode Slate" (Glassmorphism)
 # -----------------------------------------------------------------------------
@@ -302,3 +307,4 @@ lvgl:
       border_opa: 70%
       radius: 999
       pad_all: 0
+

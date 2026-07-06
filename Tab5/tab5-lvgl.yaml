@@ -1,6 +1,12 @@
-# tab5-lvgl.yaml — Layout complet, page unique 1280x720 (page_main). Inclut les
-# ui_components/*.yaml (cartes/popups). Swipe: haut=console, bas=fermer console,
-# gauche/droite (moitie basse)=pagination previsions (forecast_page_index 0-4).
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-lvgl.yaml
+# @role Layout complet de l'interface LVGL (pages, widgets statiques, grille).
+# @architecture_constraint Ne jamais créer de tableaux C++ ou de logique métier complexe 
+#                         (comme le calcul de pagination) dans ce fichier YAML.
+# @ai_instruction Ce fichier doit rester purement déclaratif (UI). Toute logique de swipe 
+#                 doit être déléguée au C++.
+# ============================================================================
 lvgl:
 
   pages:
@@ -10,6 +16,11 @@ lvgl:
 
       on_gesture:
         then:
+          # [AI-WARNING-CRITICAL] LOGIQUE DE SWIPE COMPLEXE ET VIOLATION SoC
+          # Cette lambda gère la pagination (index 0 à 4) entre les vues horaires et journalières.
+          # Le comportement (LEFT boucle 2/3/4, RIGHT traverse vers le bas) est VOLONTAIRE (validé par Axel).
+          # NE PAS TENTER de "corriger" cette logique ici.
+          # TODO (Phase 3): Déplacer cette lambda de 70 lignes vers handle_swipe_gesture() en C++.
           - lambda: |-
               lv_indev_t * indev = lv_indev_get_act();
               if (indev) {

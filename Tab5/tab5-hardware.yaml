@@ -1,3 +1,8 @@
+﻿# [AI-CONTEXT]
+# @file tab5-hardware.yaml
+# @role Configuration bas niveau (I2C, I2S, DSI Display, Audio, DAC).
+# @ai_instruction FICHIER CRITIQUE. Ne modifier AUCUNE broche GPIO ou fréquence I2C sans l'accord d'Axel.
+# ============================================================================
 external_components:
   - source:
       type: local
@@ -303,4 +308,5 @@ button:
     name: "Redémarrage Système"
 
 debug:
+
 

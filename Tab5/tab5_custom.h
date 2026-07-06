@@ -1,7 +1,11 @@
-// tab5_custom.h — Declarations des fonctions C++ appelees depuis les lambdas
-// YAML (tab5-api-logic.yaml, tab5-sensors.yaml, ui_components/*.yaml). Regle :
-// les fichiers YAML ne manipulent pas lv_obj_* directement pour de la logique
-// non-triviale, ils appellent une fonction d'ici. Voir Tab5/README.md.
+/**
+ * [AI-CONTEXT]
+ * @file tab5_custom.h
+ * @role Déclarations des fonctions C++ et du dictionnaire de couleurs.
+ * @architecture_constraint C'est ici que se trouve le namespace UIColor qui contient 
+ *                          toutes les constantes de couleurs sémantiques.
+ * @ai_instruction Ne JAMAIS recréer des constantes de couleurs ailleurs. Utiliser UIColor::*.
+ */
 #pragma once
 #include "esphome.h"
 #include <string>
