@@ -107,18 +107,23 @@ The UI layout. Declares the single page, panels, labels, buttons, arcs, and icon
 ```
 page_main (1280×720, single page)
 ├── home content always visible   (clock, indoor temp/humidity, quick actions,
-│                                   climate card, moisture card, forecast card)
+│                                   climate card, moisture card)
 ├── central rotating card          (planning / rain / alerts — auto-cycles every 8s,
 │                                   tab5-globals.yaml `interval:`)
+├── bottom card region — one of two, toggled by `btn_control_ha` (house icon, top right):
+│   ├── switches card   (`layer_switches` — PC/volet/light switches, 5 tabs)
+│   └── forecast card   (`layer_forecast_daily` / `layer_forecast_hourly` — weather, 5 tabs)
 ├── climate_popup (fullscreen overlay, opened by tapping the climate card)
 ├── light_popup   (fullscreen overlay, opened by tapping a light switch card)
 └── console_sys   (diagnostics overlay, opened by swipe from the top)
 ```
 
-Navigation is by touch (opening/closing the climate/light popups and the console) and by swipe gesture, handled in C++ (`handle_swipe_gesture()` in `tab5_custom.cpp`):
+Navigation is by touch (opening/closing the climate/light popups and the console, and toggling the bottom card region between switches and weather) and by swipe gesture, handled in C++ (`handle_swipe_gesture()` in `tab5_custom.cpp`):
 - swipe down from the top → open the console overlay
 - swipe up from the bottom half → close the console overlay
-- swipe left/right on the bottom half → cycle through the 5 forecast pages (2 hourly windows + 3 daily windows, non-wrapping 0↔4)
+- swipe left/right on the bottom half → cycle through the 5 forecast pages (2 hourly windows + 3 daily windows, non-wrapping 0↔4) — only when the bottom region is in forecast mode; the switches card doesn't paginate via swipe
+
+The `show_switches` global (`tab5-globals.yaml`) tracks which of the two is currently visible; the other is hidden via `LV_OBJ_FLAG_HIDDEN` rather than removed, so the toggle button (`tab5-lvgl.yaml`, `btn_control_ha`) just flips which layer is shown/hidden — see the `[AI-CONTEXT]` header in `ui_components/switches_card.yaml` for the source-level note.
 
 All style references point to IDs defined in `tab5-styles.yaml`. No inline style properties.
 
@@ -262,19 +267,24 @@ La mise en page UI. Déclare la page unique, panneaux, labels, boutons, arcs et 
 page_main (1280×720, page unique)
 ├── contenu accueil toujours visible   (horloge, temp/humidité intérieure,
 │                                        actions rapides, carte clim, carte
-│                                        humidité, carte prévisions)
+│                                        humidité)
 ├── carte centrale rotative            (planning / pluie / alertes — cycle
 │                                        auto toutes les 8s, `interval:` de
 │                                        tab5-globals.yaml)
+├── zone carte du bas — l'une des deux, basculée par `btn_control_ha` (icône maison, en haut à droite) :
+│   ├── carte switches   (`layer_switches` — switches PC/volet/lumières, 5 onglets)
+│   └── carte prévisions (`layer_forecast_daily` / `layer_forecast_hourly` — météo, 5 onglets)
 ├── climate_popup (overlay plein écran, ouvert au tap sur la carte clim)
 ├── light_popup   (overlay plein écran, ouvert au tap sur une carte switch lumière)
 └── console_sys   (overlay diagnostics, ouvert par swipe depuis le haut)
 ```
 
-La navigation se fait au tactile (ouverture/fermeture des popups clim/lumière et de la console) et par geste swipe, géré en C++ (`handle_swipe_gesture()` dans `tab5_custom.cpp`) :
+La navigation se fait au tactile (ouverture/fermeture des popups clim/lumière et de la console, et bascule de la zone du bas entre switches et météo) et par geste swipe, géré en C++ (`handle_swipe_gesture()` dans `tab5_custom.cpp`) :
 - swipe vers le bas depuis le haut → ouvre l'overlay console
 - swipe vers le haut depuis la moitié basse → ferme l'overlay console
-- swipe gauche/droite sur la moitié basse → cycle les 5 pages de prévisions (2 fenêtres horaires + 3 fenêtres journalières, sans bouclage 0↔4)
+- swipe gauche/droite sur la moitié basse → cycle les 5 pages de prévisions (2 fenêtres horaires + 3 fenêtres journalières, sans bouclage 0↔4) — uniquement quand la zone du bas est en mode météo ; la carte switches ne se pagine pas au swipe
+
+Le global `show_switches` (`tab5-globals.yaml`) suit laquelle des deux est actuellement visible ; l'autre est cachée via `LV_OBJ_FLAG_HIDDEN` plutôt que retirée, donc le bouton de bascule (`tab5-lvgl.yaml`, `btn_control_ha`) ne fait que basculer quel layer est affiché/caché — voir le bloc `[AI-CONTEXT]` de `ui_components/switches_card.yaml` pour la note au niveau du code source.
 
 Toutes les références de style pointent vers des IDs définis dans `tab5-styles.yaml`. Aucune propriété de style inline.
 
