@@ -246,7 +246,10 @@ api:
       then:
         - lambda: |-
             if (id(lbl_proc_pluie) == nullptr) return;
-            char buf[512];
+            // 1024 (etait 512) : la phrase de vigilance Meteo-France peut etre longue,
+            // un payload complet (11 champs pipe-delimited) depassait parfois 512 et
+            // tronquait silencieusement les derniers champs (#T165).
+            char buf[1024];
             strncpy(buf, payload.c_str(), sizeof(buf)-1);
             buf[sizeof(buf)-1] = '\0';
             char* saveptr;
@@ -441,7 +444,7 @@ api:
 
             if (id(lbl_planning_text) == nullptr) return;
 
-            auto strip_prefix = [](std::string s) {
+            auto strip_prefix = [](const std::string& s) -> std::string {
                 if (s.rfind("1/ ", 0) == 0) return s.substr(3);
                 if (s.rfind("2/ ", 0) == 0) return s.substr(3);
                 if (s.rfind("1/", 0) == 0) return s.substr(2);
