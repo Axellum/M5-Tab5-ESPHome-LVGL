@@ -4,38 +4,50 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
-### Added
-- `AGENTS.md` — entry-point instructions for AI coding agents (build/verify commands, read order, boundaries).
-- `.github/PULL_REQUEST_TEMPLATE.md` — checklist covering compile verification, OTA testing, `[AI-WARNING]` review, and doc upkeep.
-- `docs/troubleshooting.md` — symptom → root cause → fix log for incidents already diagnosed on this device.
-- `docs/decisions/` — retroactive architecture decision records (push-only design, single-page navigation, data packing, boot delay, etc.).
-- `docs/debugging.md` and the `[AI-DEBUG]` tag convention (alongside `[AI-CONTEXT]`/`[AI-WARNING]`) in `Tab5/README.md`.
-### Fixed
-- `docs/architecture.md` described a multi-page tab-bar layout (`page_accueil`/`page_meteo`/.../`tab_bar`) that no longer matches the shipped firmware (single `page_main` + popups + swipe). Corrected in both language versions.
+Nothing yet.
 
-## [2026-07-06]
-- `docs(ai)`: AI-CONTEXT headers + `continue_on_error` resilience added to the HA-side example scripts ([#20](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/20)); cartography integration and IA-scripts cleanup ([#21](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/21)).
-- `chore`: deep cleanup of technical debt identified by the new cartography — removed a tracked backup snapshot, an orphaned `tab5-images.yaml`, dead `st7123` button code, and hardcoded hex colors in `tab5_maj_clim` ([#15](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/15)).
-- `fix`: confirmed root cause of the "black screen after software reboot" bug — GPIO expander reset timing — and applied the boot-delay fix ([#13](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/13)).
-- `refactor`: factorized 6 of the 9 climate popup grid buttons into parametrized templates (task #T164, [#12](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/12)).
-- `fix`: weather-alert payload buffer widened 512→1024 bytes to prevent silent truncation; `strip_prefix` passed by reference (task #T165, [#11](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/11)).
-- `feat`: pressed-state visual feedback added to "glass" buttons; central-panel carousel slowed 6s→8s (task #T166, [#10](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/10)).
+## [1.0.0] — 2026-07-06 — first tagged release
 
-## [2026-07-05]
-- `refactor`: factorized the light popup's 8 color preset buttons ([#9](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/9)).
-- `refactor`: factorized `forecast_daily.yaml` and `switches_card.yaml` (task #T164, [#8](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/8)).
-- `fix`: black-screen-after-reboot mitigation, dead climate entity fix, sensor deduplication ([#7](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/7)).
+This is the first version tagged in git. It was cut here rather than retroactively at the earlier "v1 stable" checkpoint (PR #6) because everything since has made the project strictly more stable and more complete: a confirmed (not just worked-around) fix for the black-screen-after-reboot bug, several rounds of factorization, technical-debt cleanup, and — in this same release — the addition of `AGENTS.md`, `docs/decisions/`, `docs/troubleshooting.md`, `docs/debugging.md`, and this changelog itself.
 
-## [1.0.0] — 2026-07-05 — "v1 stable"
-- `fix(tab5)`: critical audit fixes and network robustness hardening, documentation brought up to date ([#6](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/6)). This PR fixed a critical reboot crash (uninitialized `reinterpret_cast`), removed dead weather code, added volume slider debounce, hardened network boot (timeout, conditional heartbeat), fixed a phantom climate entity, and fully rewrote `Tab5/README.md` (the previous version described an unrelated, outdated project iteration). Treated as the first stable checkpoint of the project — not tagged in git at the time; see the note below.
+This is a personal, "100% AI-generated" project (see the README's "Note on AI"): stable and in daily use, but not aesthetically polished, not manually code-reviewed line-by-line, and with known open items — see [`CARTOGRAPHIE_TAB5.md`](CARTOGRAPHIE_TAB5.md) §4 for the current, honestly-tracked technical debt. Tagging `1.0.0` here means "stable enough to be a reference point," not "finished" or "audited to a professional standard."
 
-## [0.x] — pre-1.0
-- `fix(tab5)`: OTA reboot fix on ESP32-P4, automation examples updated ([#5](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/5)).
-- `fix(ci)`: generate a dummy `secrets.yaml` before the ESPHome CI build, unblocking CI ([#4](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/4)).
-- `fix(hmi)`: service API params switched to string+`atof`/`atoi` to tolerate non-numeric Jinja values ([#3](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/3)).
-- `fix(hmi)`: systematic nullptr guards added across API services, fixing a reboot loop caused by HA pushing data before LVGL widgets existed ([#2](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/2)).
-- `feat(tab5)`: initial audio/image asset libraries and ESPHome configuration (styles, climate card, OOM buffer guards) ([#1](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/1)).
+### 2026-07-06 — AI-agent documentation layer ([#22](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/22))
+- Added `AGENTS.md` — entry-point instructions for AI coding agents (build/verify commands, read order, boundaries).
+- Added `.github/PULL_REQUEST_TEMPLATE.md` — checklist covering compile verification, OTA testing, `[AI-WARNING]` review, and doc upkeep.
+- Added `docs/troubleshooting.md` — symptom → root cause → fix log for incidents already diagnosed on this device.
+- Added `docs/decisions/` — retroactive architecture decision records (push-only design, single-page navigation, data packing, boot delay, etc.).
+- Added `docs/debugging.md` and the `[AI-DEBUG]` tag convention (alongside `[AI-CONTEXT]`/`[AI-WARNING]`) in `Tab5/README.md`.
+- Fixed `docs/architecture.md`, which still described a multi-page tab-bar layout (`page_accueil`/`page_meteo`/.../`tab_bar`) that no longer matched the shipped firmware (single `page_main` + popups + swipe). Corrected in both language versions.
 
----
+### 2026-07-06 — scripts & cartography ([#20](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/20), [#21](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/21))
+- AI-CONTEXT headers and `continue_on_error` resilience added to the HA-side example scripts.
+- Added `CARTOGRAPHIE_TAB5.md`, the full dependency-graph/file-inventory reference; cleaned up leftover IA scripts and drafts.
 
-**Note on the `1.0.0` label:** no git tag was created at the time PR #6 merged. The version above is assigned retroactively from this repo's own PR history to give this changelog a stable reference point. If you want an actual `git tag v1.0.0` pointing at `aa97858` (the PR #6 merge commit) for GitHub Releases, that's a manual step for the repo owner, not done as part of adding this file.
+### 2026-07-06 — technical debt cleanup ([#15](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/15))
+- Removed a tracked backup snapshot (`Tab5_backup_20260525/`, including committed `.pyc` files) and an orphaned `tab5-images.yaml`.
+- Removed dead code (`my_components/st7123/binary_sensor/`, a write-only array) and hardcoded hex colors in `tab5_maj_clim`, replaced with `UIColor::` tokens.
+
+### 2026-07-06 — black screen root cause confirmed ([#13](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/13))
+- Confirmed root cause of the "black screen after software reboot" bug (the display reset pin runs through an I2C GPIO expander that needs a settle delay after boot) and applied the real fix, superseding the earlier `VERY_VERBOSE`-logging workaround.
+
+### 2026-07-06 — climate popup factorization ([#12](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/12))
+- Factorized 6 of the 9 climate popup grid buttons into parametrized templates (task #T164). The remaining 3 + the two temperature +/- buttons were deliberately left as-is — see [ADR-0007](docs/decisions/0007-climate-popup-not-factorized.md).
+
+### 2026-07-06 — buffer fix & UI polish ([#10](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/10), [#11](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/11))
+- Weather-alert payload buffer widened 512→1024 bytes to prevent silent truncation of long alert text; `strip_prefix` passed by reference.
+- Pressed-state visual feedback added to "glass" buttons; central-panel carousel slowed 6s→8s.
+
+### 2026-07-05 — dedup pass ([#7](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/7), [#8](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/8), [#9](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/9))
+- Recovered an orphaned commit fixing the black-screen mitigation and a dead climate entity; deduplicated moisture/light-state sensors.
+- Factorized `forecast_daily.yaml`, `switches_card.yaml`, and the light popup's 8 color preset buttons.
+
+### 2026-07-05 — "v1 stable" checkpoint ([#6](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/6))
+- Fixed a critical reboot crash (uninitialized `reinterpret_cast`), removed dead weather code, added volume slider debounce, hardened network boot (timeout, conditional heartbeat), fixed a phantom climate entity, and fully rewrote `Tab5/README.md` (the previous version described an unrelated, outdated project iteration). This was the project's own internal "v1 stable" milestone at the time, ahead of an actual git tag.
+
+### Earlier — initial build-out ([#1](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/1)–[#5](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/5))
+- Initial audio/image asset libraries and ESPHome configuration (styles, climate card, OOM buffer guards).
+- Systematic nullptr guards across API services (fixed a reboot loop caused by HA pushing data before LVGL widgets existed).
+- Service API params switched to string+`atof`/`atoi` to tolerate non-numeric Jinja values.
+- CI fixed by generating a dummy `secrets.yaml` before the ESPHome build.
+- OTA reboot fix on ESP32-P4, automation examples updated.
