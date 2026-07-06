@@ -101,21 +101,28 @@ Variables here are typed and initialized. Uninitialized globals on ESP32 are und
 ---
 
 ### `tab5-lvgl.yaml`
-The UI layout. Declares all screens, panels, labels, buttons, arcs, and icons.
+The UI layout. Declares the single page, panels, labels, buttons, arcs, and icons, plus swipe gesture handling. Includes the 16 `ui_components/*.yaml` files (climate card/popup, light popup, console overlay, forecast cards, moisture gauges, switches card).
 
-Structure follows the screen hierarchy:
+**There is a single LVGL page, not a multi-page tab-bar layout.** Everything lives on one 1280×720 `page_main`:
 ```
-lv_screen (main)
-├── tab_bar (bottom navigation)
-├── page_accueil    (home — temperature, time, alerts)
-├── page_meteo      (7-day weather + hourly rain chart)
-├── page_clim       (climate control — arc thermostat)
-├── page_plantes    (plant moisture gauges)
-├── page_console    (log output, debug)
-└── page_planning   (calendar events)
+page_main (1280×720, single page)
+├── home content always visible   (clock, indoor temp/humidity, quick actions,
+│                                   climate card, moisture card, forecast card)
+├── central rotating card          (planning / rain / alerts — auto-cycles every 8s,
+│                                   tab5-globals.yaml `interval:`)
+├── climate_popup (fullscreen overlay, opened by tapping the climate card)
+├── light_popup   (fullscreen overlay, opened by tapping a light switch card)
+└── console_sys   (diagnostics overlay, opened by swipe from the top)
 ```
+
+Navigation is by touch (opening/closing the climate/light popups and the console) and by swipe gesture, handled in C++ (`handle_swipe_gesture()` in `tab5_custom.cpp`):
+- swipe down from the top → open the console overlay
+- swipe up from the bottom half → close the console overlay
+- swipe left/right on the bottom half → cycle through the 5 forecast pages (2 hourly windows + 3 daily windows, non-wrapping 0↔4)
 
 All style references point to IDs defined in `tab5-styles.yaml`. No inline style properties.
+
+→ Full file-by-file inventory and dependency graph: [`../CARTOGRAPHIE_TAB5.md`](../CARTOGRAPHIE_TAB5.md)
 
 ---
 
@@ -248,21 +255,30 @@ Les variables ici sont typées et initialisées. Les globales non initialisées 
 ---
 
 ### `tab5-lvgl.yaml`
-La mise en page UI. Déclare tous les écrans, panneaux, labels, boutons, arcs et icônes.
+La mise en page UI. Déclare la page unique, panneaux, labels, boutons, arcs et icônes, ainsi que la gestion des gestes swipe. Inclut les 16 fichiers `ui_components/*.yaml` (carte/popup clim, popup lumière, overlay console, cartes prévisions, jauges humidité, carte switches).
 
-La structure suit la hiérarchie des écrans :
+**Il y a une seule page LVGL, pas une navigation multi-pages par onglets.** Tout tient sur un `page_main` unique en 1280×720 :
 ```
-lv_screen (main)
-├── tab_bar (navigation bas)
-├── page_accueil    (accueil — température, heure, alertes)
-├── page_meteo      (météo 7j + graphique pluie horaire)
-├── page_clim       (contrôle clim — arc thermostat)
-├── page_plantes    (jauges humidité plantes)
-├── page_console    (sortie logs, debug)
-└── page_planning   (événements calendrier)
+page_main (1280×720, page unique)
+├── contenu accueil toujours visible   (horloge, temp/humidité intérieure,
+│                                        actions rapides, carte clim, carte
+│                                        humidité, carte prévisions)
+├── carte centrale rotative            (planning / pluie / alertes — cycle
+│                                        auto toutes les 8s, `interval:` de
+│                                        tab5-globals.yaml)
+├── climate_popup (overlay plein écran, ouvert au tap sur la carte clim)
+├── light_popup   (overlay plein écran, ouvert au tap sur une carte switch lumière)
+└── console_sys   (overlay diagnostics, ouvert par swipe depuis le haut)
 ```
+
+La navigation se fait au tactile (ouverture/fermeture des popups clim/lumière et de la console) et par geste swipe, géré en C++ (`handle_swipe_gesture()` dans `tab5_custom.cpp`) :
+- swipe vers le bas depuis le haut → ouvre l'overlay console
+- swipe vers le haut depuis la moitié basse → ferme l'overlay console
+- swipe gauche/droite sur la moitié basse → cycle les 5 pages de prévisions (2 fenêtres horaires + 3 fenêtres journalières, sans bouclage 0↔4)
 
 Toutes les références de style pointent vers des IDs définis dans `tab5-styles.yaml`. Aucune propriété de style inline.
+
+→ Inventaire fichier par fichier et graphe de dépendances complet : [`../CARTOGRAPHIE_TAB5.md`](../CARTOGRAPHIE_TAB5.md)
 
 ---
 
