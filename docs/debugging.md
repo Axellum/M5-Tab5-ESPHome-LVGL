@@ -10,6 +10,9 @@ This is a short methodology note, not an incident log — see [`docs/troubleshoo
 
 - **Live ESPHome logs** (`esphome logs tab5-ha-hmi.yaml`, or the ESPHome dashboard's log view) — the primary source of truth for boot sequence issues, API connection state, and any `ESP_LOG*` line in the C++ code. Close the session when you're done; a leaked `esphome logs` process holds an API connection open indefinitely (see the "API connections exhausted" entry in `troubleshooting.md`).
 - **The on-screen console overlay** (`console_sys.yaml`, opened by swiping down from the top) — shows live diagnostics (RAM/PSRAM, uptime, Wi-Fi signal, loop time) and a scrolling log of incoming API payloads/events, directly on the device. Useful when you don't have a laptop connected but can see the screen.
+
+  ![Console overlay on the real device](images/tab5_photo_console_diag.jpg)
+
 - **Home Assistant's own logs** for anything upstream of the device — automation trigger/condition evaluation, template rendering errors, service call rejections.
 
 ## Marking a spot for later, in code
@@ -40,6 +43,9 @@ Note de méthodologie, pas un journal d'incidents — voir [`docs/troubleshootin
 
 - **Logs ESPHome en direct** (`esphome logs tab5-ha-hmi.yaml`, ou la vue logs du dashboard ESPHome) — source de vérité principale pour les problèmes de séquence de boot, l'état des connexions API, et toute ligne `ESP_LOG*` du code C++. Fermer la session une fois terminée ; un process `esphome logs` oublié occupe une connexion API indéfiniment (voir "connexions API épuisées" dans `troubleshooting.md`).
 - **L'overlay console à l'écran** (`console_sys.yaml`, ouvert par swipe depuis le haut) — diagnostics en direct (RAM/PSRAM, uptime, signal Wi-Fi, temps de boucle) et log défilant des payloads/événements API entrants, directement sur l'appareil.
+
+  ![Overlay console sur l'appareil réel](images/tab5_photo_console_diag.jpg)
+
 - **Les logs Home Assistant** pour tout ce qui est en amont de l'appareil — évaluation trigger/condition d'automation, erreurs de rendu de template, rejets d'appel de service.
 
 ## Marquer un point d'observation dans le code
