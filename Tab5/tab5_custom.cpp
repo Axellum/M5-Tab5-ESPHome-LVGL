@@ -1,3 +1,16 @@
+/**
+ * [AI-CONTEXT]
+ * @file tab5_custom.cpp
+ * @role Couche logique centrale et unique point de contact avec l'API LVGL.
+ * @regle_absolue Aucune autre partie du code (YAML ou autre) ne doit appeler lv_obj_set_* directement. 
+ *                Tout widget LVGL doit être mis à jour via une fonction helper définie ici.
+ * @memory_constraint Éviter std::string dans les boucles parsing. Utiliser char* et strtok_r.
+ *                    La SRAM est critique (768KB), privilégier le stack (char buf[32]).
+ * @data_flow Réceptionne les payloads bulk (jours/heures) depuis tab5-api-logic.yaml,
+ *            parse en place, et met à jour les structs DayForecastData/HourForecastData.
+ * @ai_instruction Si tu dois ajouter un nouveau capteur, crée ici une fonction `update_mon_capteur_ui(lv_obj_t* label, float val)` 
+ *                 et appelle-la depuis le YAML. Ne génère pas de code LVGL dans le YAML.
+ */
 // tab5_custom.cpp — Implementation : mise a jour LVGL (update_meteo_icon,
 // sort_and_update_moisture_slots, transition_widgets), mappeurs de couleur
 // (get_temperature_color, get_humidity_color), parsing des payloads bulk

@@ -1,3 +1,15 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-sensors.yaml
+# @role Déclaration des entités ESPHome (HA sensors, system sensors).
+# @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
+#                         Les blocs on_value: doivent se contenter d'appeler des fonctions 
+#                         C++ depuis tab5_custom.cpp (ex: update_light_card_ui(...) ).
+# @anti_pattern_evité Ne pas utiliser std::string ou to_string() ici (hot-path).
+# @ai_instruction Si l'utilisateur demande d'ajouter un nouveau capteur de température, 
+#                 génère l'entité platform: homeassistant, et dans on_value, appelle 
+#                 simplement update_temp_ui(id(mon_label), x); Ne génère pas de lv_label_set_text ici.
+# ============================================================================
 wifi:
 
   ssid: !secret wifi_ssid

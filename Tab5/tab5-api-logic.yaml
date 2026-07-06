@@ -1,6 +1,13 @@
-# tab5-api-logic.yaml — Contrat API avec Home Assistant (api: services:). Chaque
-# service tab5_maj_* recoit un payload d'une automation HA et appelle une
-# fonction de tab5_custom.cpp — voir table des services dans Tab5/README.md.
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-api-logic.yaml
+# @role Contrat API avec Home Assistant (api: services:).
+# @payload_contract Chaque service tab5_maj_* reçoit un payload d'une automation HA et doit
+#                   appeler une fonction de tab5_custom.cpp pour traiter la donnée.
+# @ui_mapping Les services mettent à jour l'UI en cascade via les fonctions C++.
+# @ai_instruction Ne change pas les noms des services sans mettre à jour les automations 
+#                 HomeAssistant_Config/automations_tab5.yaml. Ne mets pas de logique LVGL directe ici.
+# ============================================================================
 api:
 
   encryption:
