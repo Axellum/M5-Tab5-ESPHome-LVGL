@@ -27,15 +27,15 @@ The interface is compiled in C++ and embedded in the device firmware. It does no
 **Screens:**
 | Main Dashboard | Light Control | Climate Control |
 |:-:|:-:|:-:|
-| ![Main](docs/images/tab5_photo_dashboard_switches.jpg) | ![Light](docs/images/tab5_design_light.jpg) | ![Climate](docs/images/tab5_photo_climate_popup.jpg) |
+| ![Main](docs/images/tab5_photo_console_diag.jpg) | ![Light](docs/images/tab5_design_light.jpg) | ![Climate](docs/images/tab5_photo_climate_popup.jpg) |
 
 *Main and Climate are real photos of the running device (2026-07-06). Light Control still shows the earlier design reference — no fresh photo of that popup yet.*
 
 More real photos: the same bottom card region toggled to weather view, and the diagnostics console (swipe down from the top, see [`docs/debugging.md`](docs/debugging.md)).
 
-| Weather view (switches↔weather toggle) | Diagnostics console |
+| Domo view (switches↔weather toggle) | Diagnostics console |
 |:-:|:-:|
-| ![Weather](docs/images/tab5_photo_dashboard_weather.jpg) | ![Console](docs/images/tab5_photo_console_diag.jpg) |
+| ![Weather](docs/images/tab5_photo_dashboard_switches.jpg) | ![Console](docs/images/tab5_photo_dashboard_weather.jpg) |
 
 ---
 
