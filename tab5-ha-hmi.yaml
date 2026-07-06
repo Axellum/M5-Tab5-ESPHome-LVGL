@@ -53,17 +53,34 @@ esphome:
     - Tab5/tab5_custom.cpp
 
   on_boot:
-    priority: 600
-    then:
+    - priority: 700
+      then:
+        # [06/07/2026] FIX CONFIRME pour le bug "ecran noir apres reboot
+        # logiciel" (detail complet dans logger: de tab5-hardware.yaml).
+        # Delai bloquant entre l'init du GPIO expander PI4IOE5V6408
+        # (setup_priority::IO=900, deja termine a ce stade) et l'init de
+        # l'ecran mipi_dsi (setup_priority::DATA=600, pas encore lance) —
+        # le reset_pin ecran passe par ce GPIO expander I2C, qui a besoin
+        # de temps pour se stabiliser apres boot. Doit rester un `lambda`
+        # avec delay() C bloquant, PAS une action `delay:` (celle-ci est
+        # non-bloquante via le scheduler ESPHome, ne retarde pas les autres
+        # composants — verifie experimentalement, 2 essais avec `delay:`
+        # ecran noir, 3 essais avec ce lambda ecran allume). Reproduit 3/3
+        # avec Axel presence physique confirmant l'ecran a chaque reboot.
+        # NE PAS RETIRER sans re-tester a fond (voir garde-fou dans logger:).
+        - lambda: |-
+            delay(1000);
+    - priority: 600
+      then:
       # lvgl.resume explicite (05/07/2026) : ajoute comme premiere piste pour
       # le bug "ecran noir apres reboot logiciel" (le light backlight a
       # restore_mode: RESTORE_DEFAULT_ON, qui ne declenche pas on_turn_on/
       # lvgl.resume au boot car pas de vraie transition d'etat). TESTE SEUL
-      # -> N'A PAS SUFFI (ecran reste noir). La vraie piste qui a marche est
-      # le logger: level: VERY_VERBOSE dans tab5-hardware.yaml (cf. son gros
-      # commentaire). Cette ligne est gardee car harmless et pourrait aider
-      # en combinaison, mais NE PAS CROIRE qu'elle suffit a elle seule -
-      # c'est le logger verbeux qui est le vrai garde-fou actuellement actif.
+      # -> N'A PAS SUFFI (ecran reste noir). La vraie cause/fix (confirme le
+      # 06/07/2026) est le delai bloquant a priority:700 ci-dessus — voir le
+      # gros commentaire dans logger: de tab5-hardware.yaml pour le detail.
+      # Cette ligne lvgl.resume est gardee car harmless, mais ne sert a rien
+      # a elle seule.
       - lvgl.resume:
       - light.turn_on: backlight
       - delay: 1s
