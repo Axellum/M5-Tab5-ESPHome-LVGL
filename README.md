@@ -74,12 +74,18 @@ Sound output goes through the ES8388 DAC chip (I2C + I2S). Boot sequencing is ca
 
 | Page | Contents |
 |------|----------|
+| [`AGENTS.md`](AGENTS.md) | Entry point for AI coding agents — read order, build/verify commands, boundaries |
+| [`CARTOGRAPHIE_TAB5.md`](CARTOGRAPHIE_TAB5.md) | Full dependency graph and file-by-file inventory, with known technical debt |
 | [`docs/screens.md`](docs/screens.md) | Screen-by-screen feature description |
 | [`docs/architecture.md`](docs/architecture.md) | Modular YAML structure, push paradigm, data packing, boot guards |
 | [`docs/hardware.md`](docs/hardware.md) | ESP32-P4 specs, GPIO mapping, ES8388 DAC, PSRAM, power |
 | [`docs/ui_design.md`](docs/ui_design.md) | LVGL rendering, vector fonts, dynamic color, CPU optimizations |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Wake word pipeline, audio chain, visual feedback states |
 | [`docs/installation.md`](docs/installation.md) | Prerequisites, substitutions block, secrets, flash & OTA |
+| [`docs/troubleshooting.md`](docs/troubleshooting.md) | Symptom → root cause → fix log for incidents already diagnosed |
+| [`docs/debugging.md`](docs/debugging.md) | How to observe/diagnose the device (logs, console overlay, marker technique) |
+| [`docs/decisions/`](docs/decisions/README.md) | Architecture decision records — the "why" behind non-obvious choices |
+| [`CHANGELOG.md`](CHANGELOG.md) | Version history |
 | [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | HA automations, scripts, template sensors |
 | [`Tab5/README.md`](Tab5/README.md) | ESPHome file-by-file description |
 | [`docs/related_projects.md`](docs/related_projects.md) | Linked projects, AI experiment context |
@@ -189,12 +195,18 @@ La sortie sonore passe par le chip DAC ES8388 (I2C + I2S). Le séquencement au d
 
 | Page | Contenu |
 |------|---------|
+| [`AGENTS.md`](AGENTS.md) | Point d'entrée pour les agents IA — ordre de lecture, commandes build/vérif, frontières (en anglais) |
+| [`CARTOGRAPHIE_TAB5.md`](CARTOGRAPHIE_TAB5.md) | Graphe de dépendances complet et inventaire fichier par fichier, dette technique connue |
 | [`docs/screens.md`](docs/screens.md) | Description fonctionnelle écran par écran |
 | [`docs/architecture.md`](docs/architecture.md) | Structure YAML modulaire, paradigme push, data packing, boot guards |
 | [`docs/hardware.md`](docs/hardware.md) | Specs ESP32-P4, mapping GPIO, DAC ES8388, PSRAM, alimentation |
 | [`docs/ui_design.md`](docs/ui_design.md) | Rendu LVGL, polices vectorielles, couleur dynamique, optimisations CPU |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Pipeline wake-word, chaîne audio, états de retour visuel |
 | [`docs/installation.md`](docs/installation.md) | Prérequis, bloc substitutions, secrets, flash & OTA |
+| [`docs/troubleshooting.md`](docs/troubleshooting.md) | Journal symptôme → cause racine → correctif des incidents déjà diagnostiqués |
+| [`docs/debugging.md`](docs/debugging.md) | Comment observer/diagnostiquer l'appareil (logs, overlay console, technique des marqueurs) |
+| [`docs/decisions/`](docs/decisions/README.md) | Décisions d'architecture (ADR) — le "pourquoi" des choix non-évidents (en anglais) |
+| [`CHANGELOG.md`](CHANGELOG.md) | Historique des versions |
 | [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | Automations HA, scripts, template sensors |
 | [`Tab5/README.md`](Tab5/README.md) | Description fichier par fichier ESPHome |
 | [`docs/related_projects.md`](docs/related_projects.md) | Projets liés, contexte expérimentation IA |
