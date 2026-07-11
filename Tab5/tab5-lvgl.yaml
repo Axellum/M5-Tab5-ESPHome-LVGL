@@ -9,7 +9,6 @@
 # ============================================================================
 lvgl:
   buffer_size: "15%"
-  buffer_allocator: PSRAM
   full_refresh: false
   pages:
 
