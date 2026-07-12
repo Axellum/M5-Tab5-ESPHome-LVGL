@@ -3,6 +3,7 @@
 <div align="center">
 
 [![ESPHome](https://img.shields.io/badge/ESPHome-≥2025.9.3-blue)](https://esphome.io)
+[![Build](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/workflows/esphome-tab5.yml/badge.svg)](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/workflows/esphome-tab5.yml)
 [![LVGL](https://img.shields.io/badge/LVGL-8.4-green)](https://lvgl.io)
 [![Home Assistant](https://img.shields.io/badge/Home_Assistant-Push_Events-orange)](https://www.home-assistant.io)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey)](LICENSE)
@@ -93,6 +94,7 @@ Sound output goes through the ES8388 DAC chip (I2C + I2S). Boot sequencing is ca
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Symptom → root cause → fix log for incidents already diagnosed |
 | [`docs/debugging.md`](docs/debugging.md) | How to observe/diagnose the device (logs, console overlay, marker technique) |
 | [`docs/decisions/`](docs/decisions/README.md) | Architecture decision records — the "why" behind non-obvious choices |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | PR workflow, compile gate, files never to commit |
 | [`CHANGELOG.md`](CHANGELOG.md) | Version history |
 | [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | HA automations, scripts, template sensors |
 | [`Tab5/README.md`](Tab5/README.md) | ESPHome file-by-file description |

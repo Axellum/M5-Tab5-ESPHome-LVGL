@@ -8,13 +8,19 @@
 
 The ESPHome configuration is split into seven YAML packages imported by a single entry-point file. This avoids a monolithic file that becomes impossible to navigate once you're past 1000 lines. Each package has a clearly defined responsibility and can be edited, tested, or replaced in isolation.
 
+### Push-only data flow
+
+Home Assistant never waits for the Tab5 to poll. Automations detect changes and call ESPHome API services (`tab5_maj_*`); the firmware parses the payload and updates LVGL in one pass.
+
+![Push-only architecture](images/push_only_architecture_diagram.png)
+
 ---
 
 ## 1. Entry point: `tab5-ha-hmi.yaml`
 
 The root file does three things:
 
-1. **Declares substitutions** — a single block at the top where you map the project's generic variable names (`entity_light_salon`, `entity_climate_salon`, etc.) to your actual Home Assistant entity IDs. This is the only file you need to edit to adapt the project to a different home.
+1. **Loads entity substitutions** — `substitutions: !include Tab5/user_entities.yaml` (gitignored local file, same pattern as `secrets.yaml`). Copy `Tab5/user_entities.example.yaml` to `user_entities.yaml` and edit your HA entity IDs — the only per-home config step besides secrets.
 
 2. **Defines the boot sequence** — the `on_boot` block handles the startup order carefully: backlight on → media player volume set → amplifier enable (in that order, to avoid the ES8388 pop) → wait for HA API → fire a `tab5_connected` event on the HA event bus → start wake-word detection if enabled.
 
@@ -191,13 +197,19 @@ Same pattern applies to: hourly rain chart (60 values), calendar events (title +
 
 La configuration ESPHome est découpée en sept packages YAML importés par un fichier d'entrée unique. Cela évite un fichier monolithique qui devient impossible à naviguer au-delà de 1000 lignes. Chaque package a une responsabilité clairement définie et peut être édité, testé, ou remplacé de façon isolée.
 
+### Flux push-only
+
+Home Assistant ne laisse jamais le Tab5 interroger l'état. Les automations détectent les changements et appellent les services API ESPHome (`tab5_maj_*`) ; le firmware parse le payload et met à jour LVGL en une passe.
+
+![Architecture push-only](images/push_only_architecture_diagram.png)
+
 ---
 
 ## 1. Point d'entrée : `tab5-ha-hmi.yaml`
 
 Le fichier racine fait trois choses :
 
-1. **Déclare les substitutions** — un bloc unique en haut où on mappe les noms de variables génériques du projet (`entity_light_salon`, `entity_climate_salon`, etc.) vers les vrais entity IDs de Home Assistant. C'est le seul fichier à éditer pour adapter le projet à une autre maison.
+1. **Charge les substitutions d'entités** — `substitutions: !include Tab5/user_entities.yaml` (fichier local gitignoré, même modèle que `secrets.yaml`). Copier `Tab5/user_entities.example.yaml` vers `user_entities.yaml` et éditer vos entity IDs HA.
 
 2. **Définit la séquence de boot** — le bloc `on_boot` gère l'ordre de démarrage soigneusement : rétroéclairage → volume media player → activation ampli (dans cet ordre, pour éviter le pop ES8388) → attente de l'API HA → envoi d'un événement `tab5_connected` sur le bus HA → démarrage de la détection wake-word si activée.
 

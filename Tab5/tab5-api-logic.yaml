@@ -415,20 +415,6 @@ api:
             }
             id(has_rain) = is_raining;
 
-    - service: tab5_maj_info_texte
-
-      variables:
-
-        texte: string
-
-        couleur: string
-
-      then:
-
-        - lambda: |-
-
-            // Conteneur conserve, on laisse la methode vide en attendant d'y mettre les alertes
-
     - service: tab5_maj_planning
 
       variables:

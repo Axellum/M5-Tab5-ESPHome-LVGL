@@ -30,11 +30,13 @@ Handles all radio communication: Wi-Fi 6 (802.11ax) and BLE 5. The main ESP32-P4
 ## Display
 
 - **Size:** 5 inches
-- **Resolution:** 1024 × 600 px
-- **Interface:** 16-bit RGB parallel (connected to the ESP32-P4's LCD peripheral)
-- **Touch:** Capacitive, multi-touch, connected via I2C
+- **Resolution:** 1280 × 720 px (M5Stack Tab5 V2 batch used in this project)
+- **Interface:** MIPI-DSI 16-bit RGB565 (ESP32-P4 LCD peripheral)
+- **Touch:** Capacitive multi-touch via custom ST7123 I2C driver (`my_components/st7123`)
 
-The display driver is initialized by ESPHome's built-in `ili9xxx` component (or equivalent ST7xxx depending on the batch). No custom driver code is needed.
+GPIO pinout reference (display, touch, audio, expanders):
+
+![GPIO pinout table](images/gpio_pinout_table.png)
 
 ---
 
