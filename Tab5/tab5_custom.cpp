@@ -189,7 +189,7 @@ void parse_and_update_jours_bulk(const std::string& payload) {
         ESP_LOGE("TAB5", "Payload jours trop long (%d octets). Rejeté pour éviter OOM.", payload.length());
         return;
     }
-    ESP_LOGI("TAB5", "Received jours bulk payload length: %d, content: %s", payload.length(), payload.c_str());
+    ESP_LOGI("TAB5", "Received jours bulk payload length: %d", payload.length());
     // Buffer stack plutot que "std::string s = payload;" (copie heap evitable
     // jusqu'a 2048 octets) - mirroir du fix deja applique a tab5_maj_alerte_meteo_france.
     char buf[2049];
@@ -408,6 +408,75 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
 }
 
 // =============================================================================
+// Planning jour au tap sur tuile météo (carte centrale 6s)
+// =============================================================================
+
+std::string get_day_planning_display_text(int jour) {
+    if (jour < 0 || jour >= 15) return "Jour hors plage";
+    if (!cal_heures[jour].empty()) return cal_heures[jour];
+    const DayForecastData& d = cal_jours_data[jour];
+    if (!d.heures_ouverture.empty()) {
+        if (!d.nom_jour.empty()) return d.nom_jour + " : " + d.heures_ouverture;
+        return d.heures_ouverture;
+    }
+    if (!d.nom_jour.empty()) return d.nom_jour + " : pas d'horaire";
+    return "Pas de planning pour ce jour";
+}
+
+static lv_timer_t* planning_restore_timer = nullptr;
+static std::string static_plan_l1;
+static std::string static_plan_l2;
+static lv_obj_t* static_lbl_planning = nullptr;
+static bool* static_is_showing_temp = nullptr;
+
+static void planning_restore_timer_cb(lv_timer_t* timer) {
+    if (static_is_showing_temp) {
+        *static_is_showing_temp = false;
+    }
+    if (static_lbl_planning) {
+        std::string combined = static_plan_l1;
+        if (!static_plan_l2.empty()) {
+            combined += "   |   " + static_plan_l2;
+        }
+        lv_label_set_text(static_lbl_planning, combined.c_str());
+    }
+    lv_timer_del(timer);
+    planning_restore_timer = nullptr;
+}
+
+void show_temporary_planning(int jour, lv_obj_t* lbl_planning, lv_obj_t* planning_wrap, lv_obj_t* alert_cont, lv_obj_t* rain_wrap,
+                             const std::string& plan_l1, const std::string& plan_l2, bool& is_showing_temp, int& current_panel) {
+    if (!lbl_planning) return;
+
+    is_showing_temp = true;
+    current_panel = 0;
+
+    std::string text = get_day_planning_display_text(jour);
+    lv_label_set_text(lbl_planning, text.c_str());
+
+    // Stoppe les animations LVGL en cours sur les panneaux centraux (evite conflit avec le rotateur 8s).
+    if (planning_wrap) lv_anim_del(planning_wrap, nullptr);
+    if (alert_cont) lv_anim_del(alert_cont, nullptr);
+    if (rain_wrap) lv_anim_del(rain_wrap, nullptr);
+
+    if (planning_wrap) lv_obj_clear_flag(planning_wrap, LV_OBJ_FLAG_HIDDEN);
+    if (alert_cont) lv_obj_add_flag(alert_cont, LV_OBJ_FLAG_HIDDEN);
+    if (rain_wrap) lv_obj_add_flag(rain_wrap, LV_OBJ_FLAG_HIDDEN);
+
+    static_plan_l1 = plan_l1;
+    static_plan_l2 = plan_l2;
+    static_lbl_planning = lbl_planning;
+    static_is_showing_temp = &is_showing_temp;
+
+    if (planning_restore_timer != nullptr) {
+        lv_timer_del(planning_restore_timer);
+        planning_restore_timer = nullptr;
+    }
+
+    planning_restore_timer = lv_timer_create(planning_restore_timer_cb, 6000, nullptr);
+}
+
+// =============================================================================
 // Carte lumiere (epaule j2/j3/j4 + switch associe + popup power) : factorise depuis
 // light_chambre_state/light_salon_state/light_led_state (tab5-sensors.yaml, #T164)
 // =============================================================================
@@ -613,18 +682,12 @@ static void anim_opa_cb(void* obj, int32_t v) {
     lv_obj_set_style_opa((lv_obj_t*)obj, (lv_opa_t)v, LV_PART_MAIN);
 }
 
-// Callback d'animation de position Y pour eviter les problemes d'ABI avec le cast de lv_obj_set_y.
-static void anim_y_cb(void* obj, int32_t v) {
-    lv_obj_set_y((lv_obj_t*)obj, (lv_coord_t)v);
-}
-
 // Transition "verre depoli" : glissement vertical + fondu croise.
 //   - Sortie : descend en accelerant (ease_in) tout en s'effacant.
 //   - Entree : arrive du haut en decelerant (ease_out) tout en apparaissant.
 // Duree allongee a 450ms pour une sensation plus fluide/posee.
 void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
     if (out_obj == in_obj) return;
-    ESP_LOGI("TAB5", "transition_widgets: out=%p, in=%p", out_obj, in_obj);
 
     const uint32_t DUR    = 450;  // ms
     const int32_t  OFFSET = 84;   // px de glissement
@@ -637,7 +700,7 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
         lv_anim_set_values(&a_out_y, 0, OFFSET);
         lv_anim_set_time(&a_out_y, DUR);
         lv_anim_set_path_cb(&a_out_y, lv_anim_path_ease_in);
-        lv_anim_set_exec_cb(&a_out_y, anim_y_cb);
+        lv_anim_set_exec_cb(&a_out_y, (lv_anim_exec_xcb_t)lv_obj_set_y);
         lv_anim_set_ready_cb(&a_out_y, [](lv_anim_t* a) {
             // Masque puis remet l'objet a son etat neutre pour sa prochaine apparition
             lv_obj_t* o = (lv_obj_t*)a->var;
@@ -671,7 +734,7 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
         lv_anim_set_values(&a_in_y, -OFFSET, 0);
         lv_anim_set_time(&a_in_y, DUR);
         lv_anim_set_path_cb(&a_in_y, lv_anim_path_ease_out);
-        lv_anim_set_exec_cb(&a_in_y, anim_y_cb);
+        lv_anim_set_exec_cb(&a_in_y, (lv_anim_exec_xcb_t)lv_obj_set_y);
         lv_anim_start(&a_in_y);
 
         // Fondu entrant synchronise
@@ -685,69 +748,3 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
         lv_anim_start(&a_in_o);
     }
 }
-
-// Variables statiques pour la restauration du planning
-static lv_timer_t* planning_restore_timer = nullptr;
-static std::string static_plan_l1 = "";
-static std::string static_plan_l2 = "";
-static lv_obj_t* static_lbl_planning = nullptr;
-static bool* static_is_showing_temp = nullptr;
-
-void show_temporary_planning(int jour, lv_obj_t* lbl_planning, lv_obj_t* planning_wrap, lv_obj_t* alert_cont, lv_obj_t* rain_wrap,
-                             const std::string& plan_l1, const std::string& plan_l2, bool& is_showing_temp, int& current_panel) {
-    if (!lbl_planning) return;
-
-    is_showing_temp = true;
-    current_panel = 0;
-
-    // Affichage temporaire du planning du jour
-    std::string text = get_day_planning_display_text(jour);
-    lv_label_set_text(lbl_planning, text.c_str());
-
-    if (planning_wrap) lv_obj_clear_flag(planning_wrap, LV_OBJ_FLAG_HIDDEN);
-    if (alert_cont) lv_obj_add_flag(alert_cont, LV_OBJ_FLAG_HIDDEN);
-    if (rain_wrap) lv_obj_add_flag(rain_wrap, LV_OBJ_FLAG_HIDDEN);
-
-    // Sauvegarde des états pour le callback du timer
-    static_plan_l1 = plan_l1;
-    static_plan_l2 = plan_l2;
-    static_lbl_planning = lbl_planning;
-    static_is_showing_temp = &is_showing_temp;
-
-    // Debounce du timer : si un timer tourne déjà, on l'annule
-    if (planning_restore_timer != nullptr) {
-        lv_timer_del(planning_restore_timer);
-        planning_restore_timer = nullptr;
-    }
-
-    // Création du timer de restauration (6 secondes)
-    planning_restore_timer = lv_timer_create([](lv_timer_t* timer) {
-        if (static_is_showing_temp) {
-            *static_is_showing_temp = false;
-        }
-        if (static_lbl_planning) {
-            std::string combined = static_plan_l1;
-            if (!static_plan_l2.empty()) {
-                combined += "   |   " + static_plan_l2;
-            }
-            lv_label_set_text(static_lbl_planning, combined.c_str());
-        }
-        
-        lv_timer_del(timer);
-        planning_restore_timer = nullptr;
-    }, 6000, nullptr);
-}
-
-std::string get_day_planning_display_text(int jour) {
-    if (jour < 0 || jour >= 15) return "Jour hors plage";
-    if (!cal_heures[jour].empty()) return cal_heures[jour];
-    const DayForecastData& d = cal_jours_data[jour];
-    if (!d.heures_ouverture.empty()) {
-        if (!d.nom_jour.empty()) return d.nom_jour + " : " + d.heures_ouverture;
-        return d.heures_ouverture;
-    }
-    if (!d.nom_jour.empty()) return d.nom_jour + " : pas d'horaire";
-    return "Pas de planning pour ce jour";
-}
-
-

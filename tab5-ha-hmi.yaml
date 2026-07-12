@@ -61,7 +61,6 @@ esphome:
       - globals.set:
           id: boot_complete
           value: 'true'
-      - delay: 15s
       - if:
           condition:
             - switch.is_on: tab5_wake_word_active

@@ -8,8 +8,7 @@
 #                 doit être déléguée au C++.
 # ============================================================================
 lvgl:
-  buffer_size: "15%"
-  full_refresh: false
+
   pages:
 
     - id: page_main

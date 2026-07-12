@@ -6,7 +6,6 @@
 # tab5-scripts.yaml — Scripts ESPHome reutilisables (sequences temporisees,
 # debounce). Preferer un script ici a un delay:+action duplique inline.
 script:
-
   # Debounce du slider volume : chaque glissement redémarre le délai, un seul
   # media_player.volume_set part réellement une fois le doigt immobile.
   - id: tab5_debounce_volume_set
