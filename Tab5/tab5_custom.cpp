@@ -360,11 +360,15 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
     lv_obj_t* layer_console_sys, lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
-    lv_obj_t* pbars[5]) {
+    lv_obj_t* pbars[5],
+    lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_obj_t* lbl_temp,
+    bool has_uptime, float uptime_s, bool has_rssi, float rssi_dbm, bool has_temp, float core_temp_c) {
 
     if (dir == LV_DIR_TOP) {
         lv_obj_clear_flag(layer_console_sys, LV_OBJ_FLAG_HIDDEN);
         lv_obj_move_foreground(layer_console_sys);
+        refresh_console_status_row_ui(lbl_uptime, lbl_rssi, lbl_temp,
+            has_uptime, uptime_s, has_rssi, rssi_dbm, has_temp, core_temp_c);
     } else if (dir == LV_DIR_BOTTOM) {
         lv_obj_add_flag(layer_console_sys, LV_OBJ_FLAG_HIDDEN);
     } else if (pt_y > 400) {
@@ -606,6 +610,50 @@ void update_temp_ui(lv_obj_t* label, float x) {
     }
 }
 
+// =============================================================================
+// Console diagnostic — ligne status (uptime / Wi-Fi / temp CPU), garde #T222
+// =============================================================================
+
+bool is_console_layer_visible(lv_obj_t* layer_console) {
+    return layer_console != nullptr && !lv_obj_has_flag(layer_console, LV_OBJ_FLAG_HIDDEN);
+}
+
+void update_console_uptime_label(lv_obj_t* label, float uptime_s) {
+    if (label == nullptr) return;
+    int total = (int)uptime_s;
+    int days = total / 86400;
+    int hours = (total % 86400) / 3600;
+    int mins = (total % 3600) / 60;
+    char buf[32];
+    if (days > 0) {
+        sprintf(buf, "%dj %02dh%02d", days, hours, mins);
+    } else {
+        sprintf(buf, "%02dh%02d", hours, mins);
+    }
+    lv_label_set_text(label, buf);
+}
+
+void update_console_rssi_label(lv_obj_t* label, float rssi_dbm) {
+    if (label == nullptr) return;
+    char buf[16];
+    sprintf(buf, "%.0f dBm", rssi_dbm);
+    lv_label_set_text(label, buf);
+}
+
+void update_console_temp_label(lv_obj_t* label, float core_temp_c) {
+    if (label == nullptr) return;
+    char buf[16];
+    sprintf(buf, "%.1f \xC2\xB0", core_temp_c);
+    lv_label_set_text(label, buf);
+}
+
+void refresh_console_status_row_ui(lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_obj_t* lbl_temp,
+    bool has_uptime, float uptime_s, bool has_rssi, float rssi_dbm, bool has_temp, float core_temp_c) {
+    if (has_uptime) update_console_uptime_label(lbl_uptime, uptime_s);
+    if (has_rssi) update_console_rssi_label(lbl_rssi, rssi_dbm);
+    if (has_temp) update_console_temp_label(lbl_temp, core_temp_c);
+}
+
 // Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).
 // Factorise depuis l'interval 2s de tab5-sensors.yaml (Phase 3, #T164). Le garde
 // "console visible ?" reste dans le YAML (evite de passer layer_console_sys ici).
@@ -676,6 +724,18 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
     }
 }
 
+// Callback d'animation de position Y (#T225 : evite cast ABI lv_obj_set_y).
+static void anim_y_cb(void* obj, int32_t v) {
+    lv_obj_set_y((lv_obj_t*)obj, (lv_coord_t)v);
+}
+
+static void anim_out_y_ready_cb(lv_anim_t* a) {
+    lv_obj_t* o = (lv_obj_t*)a->var;
+    lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_y(o, 0);
+    lv_obj_set_style_opa(o, LV_OPA_COVER, LV_PART_MAIN);
+}
+
 // Callback d'animation d'opacite : signature compatible lv_anim_exec_xcb_t (void*, int32_t).
 // lv_obj_set_style_opa() prend 3 arguments et ne peut donc pas etre castee directement.
 static void anim_opa_cb(void* obj, int32_t v) {
@@ -700,14 +760,8 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
         lv_anim_set_values(&a_out_y, 0, OFFSET);
         lv_anim_set_time(&a_out_y, DUR);
         lv_anim_set_path_cb(&a_out_y, lv_anim_path_ease_in);
-        lv_anim_set_exec_cb(&a_out_y, (lv_anim_exec_xcb_t)lv_obj_set_y);
-        lv_anim_set_ready_cb(&a_out_y, [](lv_anim_t* a) {
-            // Masque puis remet l'objet a son etat neutre pour sa prochaine apparition
-            lv_obj_t* o = (lv_obj_t*)a->var;
-            lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_set_y(o, 0);
-            lv_obj_set_style_opa(o, LV_OPA_COVER, LV_PART_MAIN);
-        });
+        lv_anim_set_exec_cb(&a_out_y, anim_y_cb);
+        lv_anim_set_ready_cb(&a_out_y, anim_out_y_ready_cb);
         lv_anim_start(&a_out_y);
 
         // Fondu sortant synchronise
@@ -734,7 +788,7 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
         lv_anim_set_values(&a_in_y, -OFFSET, 0);
         lv_anim_set_time(&a_in_y, DUR);
         lv_anim_set_path_cb(&a_in_y, lv_anim_path_ease_out);
-        lv_anim_set_exec_cb(&a_in_y, (lv_anim_exec_xcb_t)lv_obj_set_y);
+        lv_anim_set_exec_cb(&a_in_y, anim_y_cb);
         lv_anim_start(&a_in_y);
 
         // Fondu entrant synchronise

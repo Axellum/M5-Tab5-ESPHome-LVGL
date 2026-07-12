@@ -178,7 +178,7 @@ api:
             uint32_t c_eco = UIColor::CLIM_ECO; // Vert standard
 
             // Couleur de la temperature cible (Bleu si froid, Rouge si chaud, Blanc si off/autre)
-            uint32_t c_target_color = 0xFFFFFF; // Blanc par defaut
+            uint32_t c_target_color = UIColor::TEXT_PRIMARY; // Blanc par defaut
             if(mode == "cool") {
               c_target_color = UIColor::CLIM_COOL_ACTIVE; // Bleu
             } else if(mode == "heat") {
@@ -273,9 +273,9 @@ api:
 
             // Couleur de la date selon vigilance globale
             uint32_t col_date = UIColor::SUCCESS;
-            if (strcmp(globale, "Jaune") == 0) col_date = 0xFCF3CF;
-            else if (strcmp(globale, "Orange") == 0) col_date = 0xF8C471;
-            else if (strcmp(globale, "Rouge") == 0) col_date = 0xF1948A;
+            if (strcmp(globale, "Jaune") == 0) col_date = UIColor::ALERT_DATE_YELLOW;
+            else if (strcmp(globale, "Orange") == 0) col_date = UIColor::ALERT_DATE_ORANGE;
+            else if (strcmp(globale, "Rouge") == 0) col_date = UIColor::ALERT_DATE_RED;
             lv_obj_set_style_text_color(id(lbl_date), lv_color_hex(col_date), LV_PART_MAIN);
 
             // Filtrage statique
@@ -376,10 +376,10 @@ api:
             int idx = atoi(index_5mn.c_str());
 
             uint32_t c_empty = UIColor::CLIM_TRACK_INACTIVE;
-            uint32_t c_faible = 0x81D4FA;      // Bleu clair
-            uint32_t c_modere = 0x29B6F6;      // Bleu moyen
-            uint32_t c_forte = 0x0277BD;       // Bleu foncé
-            uint32_t c_tres_forte = 0x01579B;  // Bleu très foncé
+            uint32_t c_faible = UIColor::RAIN_LIGHT;
+            uint32_t c_modere = UIColor::RAIN_MODERATE;
+            uint32_t c_forte = UIColor::RAIN_HEAVY;
+            uint32_t c_tres_forte = UIColor::RAIN_EXTREME;
 
             uint32_t c = c_empty;
             int h = 0;

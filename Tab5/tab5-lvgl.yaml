@@ -49,7 +49,11 @@ lvgl:
                       id(layer_console_sys), id(layer_forecast_daily), id(layer_forecast_hourly),
                       day_slots, hour_slots,
                       id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small),
-                      pbars);
+                      pbars,
+                      id(lbl_sys_uptime_val), id(lbl_sys_rssi_val), id(lbl_sys_temp_val),
+                      id(sys_uptime).has_state(), id(sys_uptime).state,
+                      id(sys_wifi_rssi).has_state(), id(sys_wifi_rssi).state,
+                      id(sys_core_temp).has_state(), id(sys_core_temp).state);
               }
 
       widgets:
@@ -232,6 +236,10 @@ lvgl:
               - lambda: |-
                   lv_obj_clear_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
                   lv_obj_move_foreground(id(layer_console_sys));
+                  refresh_console_status_row_ui(id(lbl_sys_uptime_val), id(lbl_sys_rssi_val), id(lbl_sys_temp_val),
+                      id(sys_uptime).has_state(), id(sys_uptime).state,
+                      id(sys_wifi_rssi).has_state(), id(sys_wifi_rssi).state,
+                      id(sys_core_temp).has_state(), id(sys_core_temp).state);
             widgets:
               - label: { text: "\U000F0717", align: CENTER, text_font: mdi_font_56, text_color: color_text }
 
