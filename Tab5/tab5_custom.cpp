@@ -724,6 +724,18 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
     }
 }
 
+// Callback d'animation de position Y (#T225 : evite cast ABI lv_obj_set_y).
+static void anim_y_cb(void* obj, int32_t v) {
+    lv_obj_set_y((lv_obj_t*)obj, (lv_coord_t)v);
+}
+
+static void anim_out_y_ready_cb(lv_anim_t* a) {
+    lv_obj_t* o = (lv_obj_t*)a->var;
+    lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_y(o, 0);
+    lv_obj_set_style_opa(o, LV_OPA_COVER, LV_PART_MAIN);
+}
+
 // Callback d'animation d'opacite : signature compatible lv_anim_exec_xcb_t (void*, int32_t).
 // lv_obj_set_style_opa() prend 3 arguments et ne peut donc pas etre castee directement.
 static void anim_opa_cb(void* obj, int32_t v) {
@@ -748,14 +760,8 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
         lv_anim_set_values(&a_out_y, 0, OFFSET);
         lv_anim_set_time(&a_out_y, DUR);
         lv_anim_set_path_cb(&a_out_y, lv_anim_path_ease_in);
-        lv_anim_set_exec_cb(&a_out_y, (lv_anim_exec_xcb_t)lv_obj_set_y);
-        lv_anim_set_ready_cb(&a_out_y, [](lv_anim_t* a) {
-            // Masque puis remet l'objet a son etat neutre pour sa prochaine apparition
-            lv_obj_t* o = (lv_obj_t*)a->var;
-            lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_set_y(o, 0);
-            lv_obj_set_style_opa(o, LV_OPA_COVER, LV_PART_MAIN);
-        });
+        lv_anim_set_exec_cb(&a_out_y, anim_y_cb);
+        lv_anim_set_ready_cb(&a_out_y, anim_out_y_ready_cb);
         lv_anim_start(&a_out_y);
 
         // Fondu sortant synchronise
@@ -782,7 +788,7 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
         lv_anim_set_values(&a_in_y, -OFFSET, 0);
         lv_anim_set_time(&a_in_y, DUR);
         lv_anim_set_path_cb(&a_in_y, lv_anim_path_ease_out);
-        lv_anim_set_exec_cb(&a_in_y, (lv_anim_exec_xcb_t)lv_obj_set_y);
+        lv_anim_set_exec_cb(&a_in_y, anim_y_cb);
         lv_anim_start(&a_in_y);
 
         // Fondu entrant synchronise
