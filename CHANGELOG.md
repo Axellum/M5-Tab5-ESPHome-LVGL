@@ -15,6 +15,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 - Added `docs/images/gpio_pinout_table.png` and `push_only_architecture_diagram.png` to architecture/hardware docs.
 - README CI badge, `CONTRIBUTING.md`, `docs/architecture.md` updated for `user_entities.yaml`.
 
+### 2026-07-12 — UIColor tokens (météo, pluie, vigilance)
+- Extended `UIColor::` in `tab5_custom.h` for weather icons, rain bars, alert date pastels.
+- Migrated remaining hardcoded hex in `tab5_custom.cpp` and `tab5-api-logic.yaml`.
+- Removed dead commented block in `tab5_maj_meteo_actuelle`.
+
 ## [1.0.0] — 2026-07-06 — first tagged release
 
 This is the first version tagged in git. It was cut here rather than retroactively at the earlier "v1 stable" checkpoint (PR #6) because everything since has made the project strictly more stable and more complete: a confirmed (not just worked-around) fix for the black-screen-after-reboot bug, several rounds of factorization, technical-debt cleanup, and — in this same release — the addition of `AGENTS.md`, `docs/decisions/`, `docs/troubleshooting.md`, `docs/debugging.md`, and this changelog itself.

@@ -220,7 +220,7 @@ Tous ces fichiers sont **gitignorés** (`.gitignore:20-23`) — ce sont les vrai
 
 ### 4.3 Règles du projet — état actuel
 
-- ~~**Hex en dur dans `tab5_maj_clim`**~~ — **RÉSOLU** (PR #15) : tokens `UIColor::CLIM_*`. Reste : quelques hex dans `tab5_custom.cpp` (icônes météo, barres pluie) hors namespace `UIColor::` — P3.
+- ~~**Hex en dur dans `tab5_custom.cpp` / `tab5-api-logic.yaml`**~~ — **RÉSOLU** (07/12/2026) : tokens `UIColor::METEO_*`, `RAIN_*`, `ALERT_DATE_*` ajoutés. Reste : hex dans YAML UI (`light_popup` presets, `tab5-styles`) — choix délibéré (couleurs preset lumière = valeurs HA `color_name`).
 - **`pressed: bg_opa: 30%` répété sur les boutons verre** — contrainte ESPHome (`pressed:` non supporté dans `style_definitions:`), documenté dans `etat_tab5.md`.
 - ~~**`tab5-images.yaml` fantôme**~~ — **RÉSOLU** (PR #15, fichier supprimé). Architecture effective = 6 packages + point d'entrée (plus de fichier `images`).
 
