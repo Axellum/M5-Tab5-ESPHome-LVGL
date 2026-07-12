@@ -4,6 +4,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-12 — Stabilite reboot 60s + reintegration progressive (#T220–#T226)
+- Fix reboot ~60s : retrait `buffer_size` LVGL, planning au tap en C++ (`show_temporary_planning`), stub `tab5_maj_info_texte`.
+- Garde visibilite capteurs console (#T222) : pas de MAJ LVGL si overlay masque.
+- Durcissement ABI animation rotateur (#T225) : `anim_y_cb` statique.
+- Migration complete `UIColor::` / tokens YAML (#T226) : API, meteo, console, popups ; hex restants limites aux presets couleur lumiere HA.
+
 ### 2026-07-12 — Entity substitutions split (user_entities.yaml)
 - Home Assistant entity IDs moved out of `tab5-ha-hmi.yaml` into a local `Tab5/user_entities.yaml` (gitignored, same pattern as `secrets.yaml`).
 - Added tracked template `Tab5/user_entities.example.yaml` with generic placeholder entity IDs for public repo and CI.

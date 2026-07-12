@@ -186,9 +186,9 @@ text_sensor:
 
           } else {
 
-            lv_obj_set_style_text_color(id(icon_pc), lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_pc), lv_color_hex(UIColor::TEXT_PRIMARY), LV_PART_MAIN);
 
-            lv_obj_set_style_text_color(id(icon_card_pc), lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_card_pc), lv_color_hex(UIColor::TEXT_PRIMARY), LV_PART_MAIN);
 
             if (id(icon_sw0) != nullptr && id(lbl_sw0_state) != nullptr) {
               lv_obj_set_style_text_color(id(icon_sw0), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);

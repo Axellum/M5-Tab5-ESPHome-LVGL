@@ -100,7 +100,7 @@ obj:
                     min_value: 16
                     max_value: 30
                     value: 22
-                    arc_color: 0x2A2D35
+                    arc_color: color_arc_track
                     arc_width: 16
                     indicator:
                       arc_color: color_info

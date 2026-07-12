@@ -90,7 +90,7 @@ obj:
               styles: style_transparent
               widgets:
                 - label: { text: "SRAM Utilisée:", x: 60, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label, y: -10 }
-                - label: { id: lbl_sys_sram_val, text: "--", x: 300, align: LEFT_MID, text_font: roboto_22, text_color: 0xFFFFFF, y: -15 }
+                - label: { id: lbl_sys_sram_val, text: "--", x: 300, align: LEFT_MID, text_font: roboto_22, text_color: color_console_value, y: -15 }
                 - bar:
                     id: bar_sys_sram
                     x: 270
@@ -102,7 +102,7 @@ obj:
                     max_value: 100
                     value: 0
                 - label: { text: "PSRAM Utilisée:", x: 550, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label, y: -10 }
-                - label: { id: lbl_sys_psram_val, text: "--", x: 790, align: LEFT_MID, text_font: roboto_22, text_color: 0xFFFFFF, y: -15 }
+                - label: { id: lbl_sys_psram_val, text: "--", x: 790, align: LEFT_MID, text_font: roboto_22, text_color: color_console_value, y: -15 }
                 - bar:
                     id: bar_sys_psram
                     x: 760

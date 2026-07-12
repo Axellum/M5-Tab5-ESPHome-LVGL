@@ -87,7 +87,7 @@ obj:
                     min_value: 0
                     max_value: 255
                     value: 128
-                    arc_color: 0x2A2D35
+                    arc_color: color_arc_track
                     arc_width: 16
                     adjustable: true
                     indicator:
