@@ -381,23 +381,9 @@ sensor:
 
       - lambda: |-
 
-          if (id(lbl_sys_uptime_val) != nullptr) {
+          if (!is_console_layer_visible(id(layer_console_sys))) return;
 
-            int days = x / 86400;
-
-            int hours = ((int)x % 86400) / 3600;
-
-            int mins = ((int)x % 3600) / 60;
-
-            char buf[32];
-
-            if(days > 0) sprintf(buf, "%dj %02dh%02d", days, hours, mins);
-
-            else sprintf(buf, "%02dh%02d", hours, mins);
-
-            lv_label_set_text(id(lbl_sys_uptime_val), buf);
-
-          }
+          update_console_uptime_label(id(lbl_sys_uptime_val), x);
 
   - platform: wifi_signal
 
@@ -411,15 +397,9 @@ sensor:
 
       - lambda: |-
 
-          if (id(lbl_sys_rssi_val) != nullptr) {
+          if (!is_console_layer_visible(id(layer_console_sys))) return;
 
-            char buf[16];
-
-            sprintf(buf, "%.0f dBm", x);
-
-            lv_label_set_text(id(lbl_sys_rssi_val), buf);
-
-          }
+          update_console_rssi_label(id(lbl_sys_rssi_val), x);
 
   - platform: internal_temperature
 
@@ -433,15 +413,9 @@ sensor:
 
       - lambda: |-
 
-          if (id(lbl_sys_temp_val) != nullptr) {
+          if (!is_console_layer_visible(id(layer_console_sys))) return;
 
-            char buf[16];
-
-            sprintf(buf, "%.1f \xC2\xB0", x);
-
-            lv_label_set_text(id(lbl_sys_temp_val), buf);
-
-          }
+          update_console_temp_label(id(lbl_sys_temp_val), x);
 
   - platform: debug
 
@@ -554,10 +528,8 @@ interval:
 
       - lambda: |-
 
-          // Garde "console visible ?" conservee ici (evite de passer layer_console_sys
-          // au helper). Tout le detail (SRAM/PSRAM/frag/loop/IP/SSID) est factorise
-          // dans update_console_diagnostics_ui() (tab5_custom.cpp, Phase 3, #T164).
-          if (id(layer_console_sys) != nullptr && !lv_obj_has_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN)) {
+          // Garde #T222 : pas de LVGL si la console est masquee.
+          if (is_console_layer_visible(id(layer_console_sys))) {
              update_console_diagnostics_ui(id(lbl_sys_sram_val), id(bar_sys_sram),
                  id(lbl_sys_psram_val), id(bar_sys_psram), id(lbl_sys_frag_val), id(lbl_sys_flash_val),
                  id(sys_loop_time).has_state(), id(sys_loop_time).state, id(lbl_sys_loop_val),

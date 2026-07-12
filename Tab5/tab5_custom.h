@@ -80,11 +80,23 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
     lv_obj_t* layer_console_sys, lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
-    lv_obj_t* pbars[5]);
+    lv_obj_t* pbars[5],
+    lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_obj_t* lbl_temp,
+    bool has_uptime, float uptime_s, bool has_rssi, float rssi_dbm, bool has_temp, float core_temp_c);
 
 // Met a jour un label de temperature (texte + couleur gradient). Factorise
 // depuis temp_serre/temp_salon (tab5-sensors.yaml, Phase 3, #T164).
 void update_temp_ui(lv_obj_t* label, float x);
+
+// Garde #T222 : ne touche LVGL que si l'overlay console est affiche.
+bool is_console_layer_visible(lv_obj_t* layer_console);
+
+// Ligne 1 console (uptime / RSSI / temp CPU) — capteurs 60s, refresh a l'ouverture.
+void update_console_uptime_label(lv_obj_t* label, float uptime_s);
+void update_console_rssi_label(lv_obj_t* label, float rssi_dbm);
+void update_console_temp_label(lv_obj_t* label, float core_temp_c);
+void refresh_console_status_row_ui(lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_obj_t* lbl_temp,
+    bool has_uptime, float uptime_s, bool has_rssi, float rssi_dbm, bool has_temp, float core_temp_c);
 
 // Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).
 // Factorise depuis l'interval 2s de tab5-sensors.yaml (Phase 3, #T164).

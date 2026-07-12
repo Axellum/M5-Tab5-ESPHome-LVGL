@@ -360,11 +360,15 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
     lv_obj_t* layer_console_sys, lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
-    lv_obj_t* pbars[5]) {
+    lv_obj_t* pbars[5],
+    lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_obj_t* lbl_temp,
+    bool has_uptime, float uptime_s, bool has_rssi, float rssi_dbm, bool has_temp, float core_temp_c) {
 
     if (dir == LV_DIR_TOP) {
         lv_obj_clear_flag(layer_console_sys, LV_OBJ_FLAG_HIDDEN);
         lv_obj_move_foreground(layer_console_sys);
+        refresh_console_status_row_ui(lbl_uptime, lbl_rssi, lbl_temp,
+            has_uptime, uptime_s, has_rssi, rssi_dbm, has_temp, core_temp_c);
     } else if (dir == LV_DIR_BOTTOM) {
         lv_obj_add_flag(layer_console_sys, LV_OBJ_FLAG_HIDDEN);
     } else if (pt_y > 400) {
@@ -604,6 +608,50 @@ void update_temp_ui(lv_obj_t* label, float x) {
         uint32_t c_int = get_temperature_color(x);
         lv_obj_set_style_text_color(label, lv_color_hex(c_int), LV_PART_MAIN);
     }
+}
+
+// =============================================================================
+// Console diagnostic — ligne status (uptime / Wi-Fi / temp CPU), garde #T222
+// =============================================================================
+
+bool is_console_layer_visible(lv_obj_t* layer_console) {
+    return layer_console != nullptr && !lv_obj_has_flag(layer_console, LV_OBJ_FLAG_HIDDEN);
+}
+
+void update_console_uptime_label(lv_obj_t* label, float uptime_s) {
+    if (label == nullptr) return;
+    int total = (int)uptime_s;
+    int days = total / 86400;
+    int hours = (total % 86400) / 3600;
+    int mins = (total % 3600) / 60;
+    char buf[32];
+    if (days > 0) {
+        sprintf(buf, "%dj %02dh%02d", days, hours, mins);
+    } else {
+        sprintf(buf, "%02dh%02d", hours, mins);
+    }
+    lv_label_set_text(label, buf);
+}
+
+void update_console_rssi_label(lv_obj_t* label, float rssi_dbm) {
+    if (label == nullptr) return;
+    char buf[16];
+    sprintf(buf, "%.0f dBm", rssi_dbm);
+    lv_label_set_text(label, buf);
+}
+
+void update_console_temp_label(lv_obj_t* label, float core_temp_c) {
+    if (label == nullptr) return;
+    char buf[16];
+    sprintf(buf, "%.1f \xC2\xB0", core_temp_c);
+    lv_label_set_text(label, buf);
+}
+
+void refresh_console_status_row_ui(lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_obj_t* lbl_temp,
+    bool has_uptime, float uptime_s, bool has_rssi, float rssi_dbm, bool has_temp, float core_temp_c) {
+    if (has_uptime) update_console_uptime_label(lbl_uptime, uptime_s);
+    if (has_rssi) update_console_rssi_label(lbl_rssi, rssi_dbm);
+    if (has_temp) update_console_temp_label(lbl_temp, core_temp_c);
 }
 
 // Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).
