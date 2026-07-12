@@ -73,6 +73,14 @@ color:
     hex: "93A3BC"          # Liseré lumineux (arête de verre)
   - id: color_shadow
     hex: "000000"          # Ombre portee
+  - id: color_console_value
+    hex: "FFFFFF"          # Valeurs numeriques console
+  - id: color_icon_muted
+    hex: "555555"          # Icone desactivee / placeholder
+  - id: color_arc_track
+    hex: "2A2D35"          # Fond arcslider clim / lumiere
+  - id: color_modal_scrim
+    hex: "05080F"          # Voile modal sombre
 
 # =============================================================================
 # FONTS — inchangees (fonctionnel, pas esthetique)
@@ -252,7 +260,7 @@ lvgl:
 
     # --- Voile modal (scrim sombre, focus accru) ---
     - id: style_modal_overlay
-      bg_color: 0x05080F
+      bg_color: color_modal_scrim
       bg_opa: 72%
       border_width: 0
 

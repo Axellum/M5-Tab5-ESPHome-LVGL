@@ -185,5 +185,16 @@ namespace UIColor {
     static constexpr uint32_t RAIN_MODERATE        = 0x29B6F6;
     static constexpr uint32_t RAIN_HEAVY           = 0x0277BD;
     static constexpr uint32_t RAIN_EXTREME         = 0x01579B;
+    // --- Icones meteo / humidite / arc (miroir YAML + algorithmes) ---
+    static constexpr uint32_t METEO_CELESTIAL      = 0xFFD700;  // Soleil / lune (IconeMeteo)
+    static constexpr uint32_t METEO_PRECIP         = 0x8AB4FF;  // Pluie / neige / grele
+    static constexpr uint32_t METEO_THUNDER        = 0xFF6600;  // Orage
+    static constexpr uint32_t MOISTURE_NAN         = 0x404552;  // Humidite plante indisponible
+    static constexpr uint32_t HUMIDITY_WET         = 0x0000CC;  // Air tres humide
+    static constexpr uint32_t TEMP_NAN             = 0xA3A8B5;  // Temperature indisponible
+    static constexpr uint32_t TEXT_SOFT            = 0xF1F5F9;  // Miroir color_text
+    static constexpr uint32_t ICON_MUTED           = 0x555555;  // Miroir color_icon_muted
+    static constexpr uint32_t ARC_TRACK            = 0x2A2D35;  // Miroir color_arc_track
+    static constexpr uint32_t MODAL_SCRIM          = 0x05080F;  // Miroir color_modal_scrim
 }
 
