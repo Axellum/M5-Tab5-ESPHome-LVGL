@@ -29,36 +29,38 @@ The main file is `tab5-ha-hmi.yaml` at the repository root. All other YAML files
 
 ---
 
-## Step 2 — Edit the substitutions block
+## Step 2 — Create your entity substitutions file
 
-Open `tab5-ha-hmi.yaml`. At the top, there is a `substitutions:` block:
+Copy the example file and edit it with your Home Assistant entity IDs:
 
-```yaml
-substitutions:
-  # === USER CONFIGURATION ZONE ===
-  # Replace these with your own Home Assistant entity IDs
-
-  entity_tracker_pc: device_tracker.pc_fix_3
-  entity_phone_battery: sensor.pixel_6_pro_battery_level
-
-  # --- Lights ---
-  entity_light_chambre: light.h6008_2
-  entity_light_salon: light.salon
-  entity_light_bureau: light.sonoff_1001700057
-
-  # --- Climate ---
-  entity_climate_salon: climate.daikinap71273_room_temperature
-
-  # --- Voice assistant ---
-  entity_tab5_pipeline_select: select.m5stack_tab5_home_assistant_hmi_assistant
-
-  # --- Temperature & Humidity ---
-  entity_temp_salon: sensor.thermometre_salon_temperature
-  entity_hum_salon: sensor.thermometre_salon_humidity
-  ...
+```bash
+cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 ```
 
-Replace each value with your own entity IDs. These substitutions propagate throughout all packages — you do not need to edit any other YAML file to adapt the project to your setup.
+Open `Tab5/user_entities.yaml` (gitignored — never committed, same pattern as `secrets.yaml`):
+
+```yaml
+entity_tracker_pc: device_tracker.your_pc
+entity_phone_battery: sensor.your_phone_battery
+
+# --- Lights ---
+entity_light_chambre: light.your_bedroom_light
+entity_light_salon: light.your_living_room_light
+entity_light_bureau: light.your_office_light
+
+# --- Climate ---
+entity_climate_salon: climate.your_living_room_climate
+
+# --- Voice assistant ---
+entity_tab5_pipeline_select: select.your_tab5_assistant_pipeline
+
+# --- Temperature & Humidity ---
+entity_temp_salon: sensor.your_living_room_temperature
+entity_hum_salon: sensor.your_living_room_humidity
+...
+```
+
+Replace each value with your own entity IDs. These substitutions propagate throughout all packages — you do not need to edit any other YAML file to adapt the project to your setup. The entry point `tab5-ha-hmi.yaml` includes this file via `substitutions: !include Tab5/user_entities.yaml`.
 
 ---
 
@@ -166,9 +168,15 @@ Le fichier principal est `tab5-ha-hmi.yaml` à la racine du dépôt. Tous les au
 
 ---
 
-## Étape 2 — Éditer le bloc substitutions
+## Étape 2 — Créer votre fichier d'entités HA
 
-Ouvrez `tab5-ha-hmi.yaml`. En haut, il y a un bloc `substitutions:` — remplacez chaque valeur par vos propres entity IDs Home Assistant. Ces substitutions se propagent dans tous les packages, vous n'avez pas besoin d'éditer d'autres fichiers YAML.
+Copiez le modèle puis adaptez-le à vos entity IDs Home Assistant :
+
+```bash
+cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
+```
+
+Ouvrez `Tab5/user_entities.yaml` (gitignoré — ne jamais committer, même principe que `secrets.yaml`) et remplacez chaque valeur. Ces substitutions se propagent dans tous les packages ; le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`.
 
 ---
 

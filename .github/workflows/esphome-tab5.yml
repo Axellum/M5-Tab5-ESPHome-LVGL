@@ -14,8 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Générer un secrets.yaml factice pour la CI
+      - name: Générer user_entities.yaml et secrets.yaml factices pour la CI
         run: |
+          cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
           cat > secrets.yaml << 'EOF'
           wifi_ssid: "ci_dummy_ssid"
           wifi_password: "ci_dummy_password"

@@ -1,0 +1,44 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file user_entities.example.yaml
+# @role Modèle public des entity IDs Home Assistant (substitutions ESPHome).
+# @ai_instruction Copier vers Tab5/user_entities.yaml puis adapter à votre HA.
+#   Ne jamais committer user_entities.yaml (gitignoré, comme secrets.yaml).
+# ============================================================================
+#
+# Setup (une fois après clone) :
+#   cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
+# Puis remplacez chaque valeur par vos entity IDs (Réglages → Entités dans HA).
+
+entity_tracker_pc: device_tracker.your_pc
+entity_phone_battery: sensor.your_phone_battery
+
+# --- Lumières ---
+entity_light_chambre: light.your_bedroom_light
+entity_light_salon: light.your_living_room_light
+entity_light_bureau: light.your_office_light
+
+# --- Climatisation ---
+entity_climate_salon: climate.your_living_room_climate
+
+# --- Assistant vocal ---
+entity_tab5_pipeline_select: select.your_tab5_assistant_pipeline
+
+# --- Température & humidité ---
+entity_temp_salon: sensor.your_living_room_temperature
+entity_hum_salon: sensor.your_living_room_humidity
+entity_temp_chambre: sensor.your_bedroom_temperature
+entity_hum_chambre: sensor.your_bedroom_humidity
+entity_temp_plante: sensor.your_plant_area_temperature
+
+# --- Plantes (humidité du sol, jusqu'à 5 capteurs) ---
+entity_plante_1: sensor.your_plant_1_moisture
+entity_plante_2: sensor.your_plant_2_moisture
+entity_plante_3: sensor.your_plant_3_moisture
+entity_plante_4: sensor.your_plant_4_moisture
+entity_plante_5: sensor.your_plant_5_moisture
+
+# --- Layout météo (généralement inchangé) ---
+meteo_cell_width: "230"
+meteo_cell_height: "275"
+meteo_cell_y: "5"
