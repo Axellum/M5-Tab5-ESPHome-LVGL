@@ -4,7 +4,7 @@
 > Ce fichier est la cartographie officielle du projet Tab5. Il a été créé **spécifiquement pour guider les agents IA** (Claude, Gemini, etc.) dans leur compréhension de l'architecture du firmware.
 > Au lieu de lire et d'analyser à l'aveugle les dizaines de fichiers YAML et C++, **l'IA doit lire cette cartographie en premier**. Elle y trouvera l'arbre des dépendances (7-YAML), la répartition des rôles entre le YAML et le C++, ainsi que l'historique des bugs résolus et de la dette technique. Cela évite les hallucinations et le temps perdu en rétro-ingénierie.
 
-`Généré le 2026-07-06` · Sources vérifiées directement dans le code (`00ProjetTab/`), croisées avec `Tab5/README.md` (réécrit le 05/07/2026 contre le firmware réel), `contexte_ia/04_Projets/etat_tab5.md` et `contexte_ia/02_Hardware/rules_esphome.md`. Aucun fait ci-dessous n'est tiré d'une supposition — chaque ligne cite le fichier source lu.
+`Généré le 2026-07-06` · `maj: 2026-07-12` · Sources vérifiées directement dans le code (`00ProjetTab/`), croisées avec `Tab5/README.md` (réécrit le 05/07/2026 contre le firmware réel), `contexte_ia/04_Projets/etat_tab5.md` et `contexte_ia/02_Hardware/rules_esphome.md`. Aucun fait ci-dessous n'est tiré d'une supposition — chaque ligne cite le fichier source lu.
 
 Repo Git distinct : `Axellum/M5-Tab5-ESPHome-LVGL` (dossier local `00ProjetTab/`), branche `main`.
 
@@ -125,7 +125,7 @@ graph TD
 
 | Fichier | Rôle exact | Gère | Dépend de |
 |---|---|---|---|
-| `tab5-ha-hmi.yaml` (146L) | Point d'entrée ESPHome. Bloc `substitutions:` (entités HA à adapter), séquence `on_boot:` en 2 priorités (700 puis 600), `packages:` qui importe les 7 fichiers `Tab5/*.yaml`, `esphome: includes:` pour le C++. | Boot, substitutions utilisateur, orchestration des packages | `Tab5/tab5_custom.h/.cpp`, tous les `Tab5/*.yaml` |
+| `tab5-ha-hmi.yaml` (146L) | Point d'entrée ESPHome. `substitutions: !include Tab5/user_entities.yaml` (gitignoré, modèle `user_entities.example.yaml`), séquence `on_boot:` en 2 priorités (700 puis 600), `packages:` qui importe les 7 fichiers `Tab5/*.yaml`, `esphome: includes:` pour le C++. | Boot, orchestration des packages | `Tab5/user_entities.yaml`, `Tab5/tab5_custom.h/.cpp`, tous les `Tab5/*.yaml` |
 
 Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700: lambda: delay(1000);` est la **cause racine confirmée** (06/07/2026, 5 tests OTA avec Axel présent) du bug historique « écran noir après reboot logiciel » — le `reset_pin` de l'écran passe par le GPIO expander I2C `PI4IOE5V6408`, qui a besoin de temps pour se stabiliser après boot avant que le reset ait un effet fiable. Documenté en détail dans `tab5-hardware.yaml:33-69`.
 
@@ -202,43 +202,47 @@ Tous ces fichiers sont **gitignorés** (`.gitignore:20-23`) — ce sont les vrai
 
 ## 4. Points de friction / dette technique
 
-Classés par impact décroissant. Chaque point est vérifié contre le code ou la documentation d'état — aucun n'est une supposition.
+`maj: 2026-07-12` · Classés par impact décroissant. Points résolus depuis la rédaction initiale (06/07) sont barrés ou déplacés en §4.6.
 
-### 4.1 Dette de repository (poids mort versionné)
+### 4.1 Dette de repository
 
-- **`Tab5_backup_20260525/` est trackée en Git** (31 fichiers, 1,5 Mo) — un snapshot complet de l'ancienne architecture (avant factorisation #T164), y compris des fichiers `.pyc` compilés (`__pycache__/__init__.cpython-313.pyc`) qui n'ont strictement rien à faire dans un dépôt Git. Ce dossier référence même l'ancienne version obsolète du composant `st7123` (avec `binary_sensor` actif). Candidat de suppression immédiate — c'est un backup, pas une release taggée.
-- **4 fichiers cruft à la racine, non gitignorés au moment de l'écriture** : `config_dump.yaml`, `esphome_live_logs.txt` sont dans `.gitignore` mais `home-assistant_2026-06-07T*.log` (2 fichiers) matchent le pattern `home-assistant_*.log` du `.gitignore` — à vérifier qu'ils ne sont pas déjà trackés depuis avant l'ajout de la règle (`git ls-files` n'en a pas remonté, donc priorité basse, mais à surveiller).
-- **`archives/` (4,2 Mo, gitignoré)** : dossier de travail avec des images scramblées (`Png_card_scrambled/`, `Png_main_scrambled/`) et anciens YAML Nextion-like — hors Git donc pas un problème de repo, mais pollue le contexte si un outil d'IA scanne le dossier localement sans respecter le `.gitignore`.
+- ~~**`Tab5_backup_20260525/` trackée en Git**~~ — **RÉSOLU** (PR [#15](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/15), 06/07/2026).
+- ~~**`__pycache__/*.pyc` trackés**~~ — **RÉSOLU** (PR [#30](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/30), 07/12/2026) : retirés du dépôt + ajoutés au `.gitignore`.
+- **`archives/` (gitignoré, ~4 Mo local)** — hors Git ; peut polluer le contexte si un outil IA scanne sans respecter `.gitignore`.
+- **Entités HA personnelles** — **RÉSOLU** (PR #30) : déplacées vers `Tab5/user_entities.yaml` (gitignoré) ; le dépôt public ne contient que `user_entities.example.yaml`.
 
-### 4.2 Code mort confirmé
+### 4.2 Code mort / API incomplète
 
-- **`my_components/st7123/binary_sensor/st7123_button.cpp/.h` n'est jamais instancié.** Vérifié par `grep -r "st7123" *.yaml` : aucun `binary_sensor: platform: st7123` dans la config active. Le composant existe, compile probablement (fait partie du `external_components:` local), mais ne sert à rien dans le firmware actuellement flashé. Soit un bouton physique prévu puis abandonné, soit un reliquat de portage.
-- **Doublon `cal_jour_nom[15]`/`cal_heures[15]` dans `tab5_custom.cpp`** : `parse_and_update_jours_bulk()` remplit à la fois les nouveaux tableaux `cal_jours_data[]`/`cal_heures_data[]` (structs) ET les anciens tableaux legacy `cal_jour_nom[]`/`cal_heures[]`, commentés explicitement `// Rétrocompatibilité`. Aucun appelant de `cal_jour_nom`/`cal_heures` n'a été trouvé en dehors de `refresh_daily_forecast()` (qui les utilise pour le toggle calendrier `cal_toggled[]`) — à vérifier si les deux structures sont réellement encore nécessaires ou si c'est une v1→v2 jamais nettoyée.
-- **Blocs commentés dans `tab5-api-logic.yaml`** (`tab5_maj_clim`, lignes ~185-224) : plusieurs `lv_obj_set_style_text_color(id(icon_clim_cool)...)` etc. sont laissés en commentaire (widgets `icon_clim_*` de l'ancienne carte compacte, remplacés par `popup_icon_clim_*`). Ce sont des vestiges d'une UI antérieure, à nettoyer une fois confirmé qu'`icon_clim_cool` etc. n'existent plus dans `tab5-lvgl.yaml`/`climate_card.yaml`.
-- **`tab5_maj_info_texte` (service API, `tab5-api-logic.yaml:419-431`) a un corps de lambda vide** avec le commentaire `// Conteneur conserve, on laisse la methode vide en attendant d'y mettre les alertes` — service API exposé côté HA mais no-op côté firmware.
+- ~~**`my_components/st7123/binary_sensor/` jamais instancié**~~ — **RÉSOLU** (PR #15).
+- ~~**`tab5_maj_info_texte` (lambda vide)**~~ — **RÉSOLU** (07/12/2026) : service retiré (jamais appelé côté HA, aucun widget LVGL cible).
+- **Doublon `cal_jour_nom[15]`/`cal_heures[15]`** dans `tab5_custom.cpp` — legacy `// Rétrocompatibilité`, encore utilisé par `refresh_daily_forecast()` pour le toggle calendrier. Nettoyage possible si confirmé redondant avec `cal_jours_data[]`.
+- **Blocs commentés** dans `tab5-api-logic.yaml` (`tab5_maj_clim`) — vestiges `icon_clim_*` de l'ancienne carte compacte ; à supprimer après grep confirmant l'absence des IDs dans `climate_card.yaml`/`tab5-lvgl.yaml`.
 
-### 4.3 Violations documentées des propres règles du projet
+### 4.3 Règles du projet — état actuel
 
-Le fichier `Tab5/README.md` liste 6 règles issues de l'audit du 05/07/2026. Vérification croisée :
+- ~~**Hex en dur dans `tab5_custom.cpp` / `tab5-api-logic.yaml`**~~ — **RÉSOLU** (07/12/2026) : tokens `UIColor::METEO_*`, `RAIN_*`, `ALERT_DATE_*` ajoutés. Reste : hex dans YAML UI (`light_popup` presets, `tab5-styles`) — choix délibéré (couleurs preset lumière = valeurs HA `color_name`).
+- **`pressed: bg_opa: 30%` répété sur les boutons verre** — contrainte ESPHome (`pressed:` non supporté dans `style_definitions:`), documenté dans `etat_tab5.md`.
+- ~~**`tab5-images.yaml` fantôme**~~ — **RÉSOLU** (PR #15, fichier supprimé). Architecture effective = 6 packages + point d'entrée (plus de fichier `images`).
 
-- **Règle "pas de couleur en dur"** : `tab5-api-logic.yaml` contient de nombreuses couleurs hexadécimales en dur dans le service `tab5_maj_clim` (`c_cool_active = 0x4D94FF`, `c_heat_active = 0xFF4D4D`, etc., lignes 157-171) — définies localement dans la lambda au lieu d'utiliser des tokens `UIColor::`. C'est exactement le pattern que la règle 1 du README interdit. Friction confirmée, pas juste théorique.
-- **`climate_popup.yaml` a `pressed: bg_opa: 30%` répété sur ~10 boutons individuels** — découverte documentée dans `etat_tab5.md` (06/07) : `pressed:` ne peut *pas* être mis dans un `style_definitions:` partagé (rejeté par le validateur ESPHome). C'est une contrainte du framework, pas un choix de code — mais ça reste 10 répétitions identiques qui grossiront à chaque nouveau bouton "verre".
-- **`rules_esphome.md` §1 impose une architecture "7-YAML"** (`hardware, sensors, api-logic, styles, images, globals, main`) — le fichier `tab5-images.yaml` existe encore (4 lignes) mais le README confirme qu'il est vide de facto (« Plus d'images! image: !include supprimé au profit des polices C++ vectorielles LVGL », `tab5-ha-hmi.yaml:136`). Fichier fantôme gardé pour coller au nombre "7" historique — à assumer explicitement ou supprimer.
+### 4.4 Fichiers volumineux
 
-### 4.4 Fichiers volumineux (candidats de découpe)
+- **`tab5-sensors.yaml` (~567 lignes)** — repassé sous le seuil ~600 après factorisations ; candidat de scission diagnostics/domotique si #T164 reprend.
+- **`tab5_custom.cpp` (~681 lignes)** — plusieurs responsabilités ; surveiller si découpage en unités de compilation devient nécessaire.
+- **`climate_popup.yaml` (~234 lignes)** — non factorisé au-delà de 6/9 boutons (ADR-0007, choix assumé).
 
-Le README revendique "chaque fichier reste sous ~600 lignes". Vérifié :
+### 4.5 Volontairement non corrigé (ne pas « auditer » à nouveau)
 
-- **`tab5-sensors.yaml` (670 lignes) dépasse déjà ce seuil.** Mélange 5 domaines différents dans un seul fichier : `wifi:`, `switch:` (6 entités hardware + 1 template wake-word), `binary_sensor:` (2), `text_sensor:` (4, dont 3 quasi-identiques pour les 3 lumières), `sensor:` (11, dont 5 quasi-identiques pour les plantes via ancre YAML), `select:`, `time:`, deux blocs `interval:`. Candidat naturel de scission en `tab5-sensors-diagnostics.yaml` (RAM/uptime/wifi) + `tab5-sensors-domotique.yaml` (lumières/plantes/temp) si le refacto #T164 se poursuit.
-- **`tab5_custom.cpp` (520 lignes)** commence à mélanger plusieurs responsabilités indépendantes (parsing bulk, rendu météo, tri plantes, animations, cartes lumière) dans un seul fichier sans découpage en unités de compilation — pas bloquant à ce stade mais à surveiller si le fichier continue de grossir.
-- **`climate_popup.yaml` (234 lignes) reste le plus gros `ui_component` non factorisable** selon la décision documentée dans `etat_tab5.md` — chaque bouton a un service HA + logique lambda propres. C'est un choix assumé et argumenté, pas un oubli, mais reste le point chaud si un refacto plus profond (dispatch C++ par index évoqué dans "Prochaine étape" de `etat_tab5.md`) est un jour entrepris.
+- `atoi`/`atof` sans validation (~13 sites) — P3, sans symptôme (décision Axel 06/07).
+- Délai bloquant `delay(1000)` à `on_boot:priority:700` — correctif confirmé écran noir, pas de la dette.
+- Pagination prévisions sans wrap 0↔4 — comportement voulu (déjà reverté après faux positif audit LLM).
 
-### 4.5 Risques déjà identifiés mais volontairement non corrigés (traçabilité, pas nouveauté)
+### 4.6 Résolu récemment (historique)
 
-Pour éviter de re-signaler du bruit déjà tranché par Axel (cf. `etat_tab5.md`) :
-- `atoi`/`atof` sans validation (~13 sites) : réel, sans symptôme rapporté, laissé tel quel sur décision explicite (P3, sweep disproportionné).
-- Garde-fou `logger: level: INFO` + délai bloquant 1s à `on_boot:priority:700` : ce n'est pas de la dette, c'est un vrai correctif vérifié expérimentalement 3/3 — à ne pas "nettoyer" sans retester à fond (le README et `tab5-hardware.yaml` le disent explicitement en gros commentaire).
-- Non-wrap intentionnel de la pagination prévisions (0↔4) : déjà "corrigé à tort" une fois suite à un faux positif d'audit LLM, puis reverté — ne pas re-signaler comme bug.
+| Date | Item | PR |
+|------|------|-----|
+| 06/07 | Backup `Tab5_backup_20260525/`, binary_sensor st7123, hex clim → `UIColor::` | #15 |
+| 06/07 | Cause racine écran noir (délai GPIO expander) | #13 |
+| 07/12 | Split `user_entities.yaml`, retrait `tab5_maj_info_texte`, docs/images | #30+ |
 
 ---
 

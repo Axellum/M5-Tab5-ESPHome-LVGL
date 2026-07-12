@@ -3,6 +3,7 @@
 <div align="center">
 
 [![ESPHome](https://img.shields.io/badge/ESPHome-≥2025.9.3-blue)](https://esphome.io)
+[![Build](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/workflows/esphome-tab5.yml/badge.svg)](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/workflows/esphome-tab5.yml)
 [![LVGL](https://img.shields.io/badge/LVGL-8.4-green)](https://lvgl.io)
 [![Home Assistant](https://img.shields.io/badge/Home_Assistant-Push_Events-orange)](https://www.home-assistant.io)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey)](LICENSE)
@@ -93,6 +94,7 @@ Sound output goes through the ES8388 DAC chip (I2C + I2S). Boot sequencing is ca
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Symptom → root cause → fix log for incidents already diagnosed |
 | [`docs/debugging.md`](docs/debugging.md) | How to observe/diagnose the device (logs, console overlay, marker technique) |
 | [`docs/decisions/`](docs/decisions/README.md) | Architecture decision records — the "why" behind non-obvious choices |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | PR workflow, compile gate, files never to commit |
 | [`CHANGELOG.md`](CHANGELOG.md) | Version history |
 | [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | HA automations, scripts, template sensors |
 | [`Tab5/README.md`](Tab5/README.md) | ESPHome file-by-file description |
@@ -214,10 +216,11 @@ La sortie sonore passe par le chip DAC ES8388 (I2C + I2S). Le séquencement au d
 | [`docs/hardware.md`](docs/hardware.md) | Specs ESP32-P4, mapping GPIO, DAC ES8388, PSRAM, alimentation |
 | [`docs/ui_design.md`](docs/ui_design.md) | Rendu LVGL, polices vectorielles, couleur dynamique, optimisations CPU |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Pipeline wake-word, chaîne audio, états de retour visuel |
-| [`docs/installation.md`](docs/installation.md) | Prérequis, bloc substitutions, secrets, flash & OTA |
+| [`docs/installation.md`](docs/installation.md) | Prérequis, `user_entities.yaml`, secrets, flash & OTA |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Journal symptôme → cause racine → correctif des incidents déjà diagnostiqués |
 | [`docs/debugging.md`](docs/debugging.md) | Comment observer/diagnostiquer l'appareil (logs, overlay console, technique des marqueurs) |
 | [`docs/decisions/`](docs/decisions/README.md) | Décisions d'architecture (ADR) — le "pourquoi" des choix non-évidents (en anglais) |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Workflow PR, gate compile, fichiers à ne jamais committer |
 | [`CHANGELOG.md`](CHANGELOG.md) | Historique des versions |
 | [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | Automations HA, scripts, template sensors |
 | [`Tab5/README.md`](Tab5/README.md) | Description fichier par fichier ESPHome |
