@@ -8,7 +8,7 @@
 
 This folder contains the ESPHome configuration packages and the C++ source files for the Tab5 firmware.
 
-The entry point is `../tab5-ha-hmi.yaml` at the repository root. It declares `substitutions` (your HA entity IDs), the `on_boot` sequence, `ota:`/`api:` config, and the `packages:` import list for everything in this folder.
+The entry point is `../tab5-ha-hmi.yaml` at the repository root. It includes `Tab5/user_entities.yaml` (your HA entity IDs, gitignored), the `on_boot` sequence, `ota:`/`api:` config, and the `packages:` import list for everything in this folder.
 
 **Screen layout:** a single 1280×720 page (`page_main` in `tab5-lvgl.yaml`), not multiple pages. Navigation is by touch (clim/light popups, console) and swipe gestures (top = console, bottom = close console, left/right on the bottom half = cycle 5 forecast pages: 2 hourly + 3 daily windows).
 
