@@ -40,22 +40,21 @@ obj:
         scrollbar_mode: "OFF"
         widgets:
 
-          # ═══ EN-TÊTE (icône + titre centrés, sans chevauchement) ═══
-          - obj:
+          # ═══ EN-TÊTE ═══
+          - label:
+              text: "\U000F050F"
               align: TOP_MID
-              y: 10
-              width: 900
-              height: 56
-              styles: style_transparent
-              layout:
-                type: FLEX
-                flex_flow: ROW
-                flex_align_main: CENTER
-                flex_align_cross: CENTER
-                pad_column: 14
-              widgets:
-                - label: { text: "\U000F1534", text_font: mdi_font_45, text_color: color_accent }
-                - label: { text: "Réglages & diagnostic", text_font: roboto_32_b, text_color: color_text }
+              x: -180
+              y: 15
+              text_font: mdi_font_45
+              text_color: color_text
+          - label:
+              text: "CONSOLE DIAGNOSTIQUE"
+              align: TOP_MID
+              x: 20
+              y: 20
+              text_font: roboto_32_b
+              text_color: color_text
 
           # Bouton fermer (X)
           - button:
@@ -70,117 +69,108 @@ obj:
               widgets:
                 - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_45, text_color: color_console_label }
 
-          # ROW 1 — Infos système (y:78)
+          # ROW 1 (y:80)
           - obj:
               align: TOP_MID
-              y: 78
-              width: 1000
-              height: 44
+              y: 80
+              width: 100%
+              height: 50
               styles: style_transparent
               widgets:
-                - label: { text: "Temps actif", x: 40, align: LEFT_MID, text_font: roboto_22, text_color: color_console_label }
-                - label: { id: lbl_sys_uptime_val, text: "--", x: 200, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
-                - label: { text: "Temp. CPU", x: 520, align: LEFT_MID, text_font: roboto_22, text_color: color_console_label }
-                - label: { id: lbl_sys_temp_val, text: "-- C", x: 680, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
+                - label: { text: "Temps Actif:", x: 60, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+                - label: { id: lbl_sys_uptime_val, text: "--", x: 280, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
+                - label: { text: "Temp. CPU:", x: 550, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+                - label: { id: lbl_sys_temp_val, text: "-- C", x: 780, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
 
-          # ROW 2 — SRAM (y:132)
+          # ROW 2 (y:140)
           - obj:
               align: TOP_MID
-              y: 132
-              width: 1000
-              height: 58
+              y: 140
+              width: 100%
+              height: 50
               styles: style_transparent
               widgets:
-                - label: { text: "SRAM utilisée", x: 40, y: 0, align: TOP_LEFT, text_font: roboto_22, text_color: color_console_label }
-                - label: { id: lbl_sys_sram_val, text: "--", x: 40, y: 26, align: TOP_LEFT, text_font: roboto_22, text_color: color_text }
+                - label: { text: "SRAM Utilisée:", x: 60, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label, y: -10 }
+                - label: { id: lbl_sys_sram_val, text: "--", x: 300, align: LEFT_MID, text_font: roboto_22, text_color: 0xFFFFFF, y: -15 }
                 - bar:
                     id: bar_sys_sram
-                    x: 40
-                    y: 46
-                    align: TOP_LEFT
-                    width: 420
-                    height: 10
+                    x: 270
+                    y: 10
+                    align: LEFT_MID
+                    width: 200
+                    height: 15
+                    min_value: 0
+                    max_value: 100
+                    value: 0
+                - label: { text: "PSRAM Utilisée:", x: 550, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label, y: -10 }
+                - label: { id: lbl_sys_psram_val, text: "--", x: 790, align: LEFT_MID, text_font: roboto_22, text_color: 0xFFFFFF, y: -15 }
+                - bar:
+                    id: bar_sys_psram
+                    x: 760
+                    y: 10
+                    align: LEFT_MID
+                    width: 200
+                    height: 15
                     min_value: 0
                     max_value: 100
                     value: 0
 
-          # ROW 3 — PSRAM (y:200)
+          # ROW 3 (y:200)
           - obj:
               align: TOP_MID
               y: 200
-              width: 1000
-              height: 58
+              width: 100%
+              height: 50
               styles: style_transparent
               widgets:
-                - label: { text: "PSRAM utilisée", x: 40, y: 0, align: TOP_LEFT, text_font: roboto_22, text_color: color_console_label }
-                - label: { id: lbl_sys_psram_val, text: "--", x: 40, y: 26, align: TOP_LEFT, text_font: roboto_22, text_color: color_text }
-                - bar:
-                    id: bar_sys_psram
-                    x: 40
-                    y: 46
-                    align: TOP_LEFT
-                    width: 420
-                    height: 10
-                    min_value: 0
-                    max_value: 100
-                    value: 0
+                - label: { text: "Bloc Max:", x: 60, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+                - label: { id: lbl_sys_frag_val, text: "--", x: 280, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
+                - label: { text: "Taille Flash:", x: 550, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+                - label: { id: lbl_sys_flash_val, text: "--", x: 780, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
 
-          # ROW 4 — Mémoire flash / fragmentation (y:268)
+          # ROW 4 (y:260)
           - obj:
               align: TOP_MID
-              y: 268
-              width: 1000
-              height: 44
+              y: 260
+              width: 100%
+              height: 50
               styles: style_transparent
               widgets:
-                - label: { text: "Bloc max libre", x: 40, align: LEFT_MID, text_font: roboto_22, text_color: color_console_label }
-                - label: { id: lbl_sys_frag_val, text: "--", x: 240, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
-                - label: { text: "Flash", x: 520, align: LEFT_MID, text_font: roboto_22, text_color: color_console_label }
-                - label: { id: lbl_sys_flash_val, text: "--", x: 620, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
+                - label: { text: "Signal Wi-Fi:", x: 60, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+                - label: { id: lbl_sys_rssi_val, text: "-- dBm", x: 280, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
+                - label: { text: "IP:", x: 550, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+                - label: { id: lbl_sys_ip_val, text: "--", x: 780, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
 
-          # ROW 5 — Réseau (y:322)
+          # ROW 5 (y:320)
           - obj:
               align: TOP_MID
-              y: 322
-              width: 1000
-              height: 44
+              y: 320
+              width: 100%
+              height: 50
               styles: style_transparent
               widgets:
-                - label: { text: "Wi-Fi", x: 40, align: LEFT_MID, text_font: roboto_22, text_color: color_console_label }
-                - label: { id: lbl_sys_rssi_val, text: "-- dBm", x: 140, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
-                - label: { text: "IP", x: 320, align: LEFT_MID, text_font: roboto_22, text_color: color_console_label }
-                - label: { id: lbl_sys_ip_val, text: "--", x: 380, align: LEFT_MID, text_font: roboto_22, text_color: color_success }
-                - label: { text: "SSID", x: 620, align: LEFT_MID, text_font: roboto_22, text_color: color_console_label }
-                - label: { id: lbl_sys_ssid_val, text: "--", x: 700, align: LEFT_MID, text_font: roboto_22, text_color: color_success, width: 280, long_mode: DOT }
+                - label: { text: "SSID:", x: 60, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+                - label: { id: lbl_sys_ssid_val, text: "--", x: 280, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
+                - label: { text: "Temps Boucle:", x: 550, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+                - label: { id: lbl_sys_loop_val, text: "-- ms", x: 780, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
 
-          # ROW 6 — Boucle LVGL (y:376)
+          # ROW 6 (y:380) - Volume
           - obj:
               align: TOP_MID
-              y: 376
-              width: 1000
-              height: 44
+              y: 380
+              width: 100%
+              height: 50
               styles: style_transparent
               widgets:
-                - label: { text: "Temps boucle LVGL", x: 40, align: LEFT_MID, text_font: roboto_22, text_color: color_console_label }
-                - label: { id: lbl_sys_loop_val, text: "-- ms", x: 280, align: LEFT_MID, text_font: roboto_32_b, text_color: color_success }
-
-          # ROW 7 — Volume (y:430)
-          - obj:
-              align: TOP_MID
-              y: 430
-              width: 1000
-              height: 56
-              styles: style_transparent
-              widgets:
-                - label: { text: "Volume", x: 40, align: LEFT_MID, text_font: roboto_22, text_color: color_console_label }
-                - label: { text: "\U000F057E", x: 150, align: LEFT_MID, text_font: mdi_font_32, text_color: color_console_label }
+                - label: { text: "Volume:", x: 60, align: LEFT_MID, text_font: roboto_32_b, text_color: color_console_label }
+                - label: { text: "\U000F057E", x: 230, align: LEFT_MID, text_font: mdi_font_32, text_color: color_console_label }
                 - slider:
                     id: slider_volume
-                    x: 200
+                    x: 270
                     y: 0
                     align: LEFT_MID
-                    width: 520
-                    height: 36
+                    width: 480
+                    height: 40
                     min_value: 0
                     max_value: 100
                     value: 100
@@ -189,7 +179,7 @@ obj:
                           float vol = x / 100.0;
                           id(system_volume) = vol;
                       - script.execute: tab5_debounce_volume_set
-                - label: { text: "\U000F0580", x: 740, align: LEFT_MID, text_font: mdi_font_32, text_color: color_console_label }
+                - label: { text: "\U000F0580", x: 770, align: LEFT_MID, text_font: mdi_font_32, text_color: color_console_label }
 
           # FERMER BUTTON
           - button:

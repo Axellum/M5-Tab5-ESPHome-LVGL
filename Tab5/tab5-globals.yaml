@@ -1,4 +1,4 @@
-﻿# [AI-CONTEXT]
+# [AI-CONTEXT]
 # @file tab5-globals.yaml
 # @role Variables globales de l'interface (état des volets, page courante, mode vocal).
 # @ai_instruction Ne déclarer ici que les variables globales pures.
@@ -102,6 +102,7 @@ interval:
           then:
             - lambda: |-
                 if (id(is_showing_temp_planning)) return;
+                ESP_LOGI("TAB5", "Rotator tick: current=%d, has_rain=%d, has_alerts=%d", id(current_central_panel), id(has_rain), id(has_alerts));
                 int next_panel = id(current_central_panel);
                 int attempts = 0;
                 while (attempts < 3) {
@@ -116,6 +117,7 @@ interval:
                     attempts++;
                 }
                 if (next_panel != id(current_central_panel)) {
+                    ESP_LOGI("TAB5", "Transitioning from %d to %d", id(current_central_panel), next_panel);
                     lv_obj_t* out_obj = nullptr;
                     lv_obj_t* in_obj = nullptr;
                     
