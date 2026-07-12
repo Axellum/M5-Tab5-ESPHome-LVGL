@@ -127,6 +127,10 @@ void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* i
     lv_obj_t* lbl_switch_state, lv_obj_t* btn_power_icon,
     const std::string& current_light_entity, const std::string& this_entity, bool is_on);
 
+// Texte planning/horaires pour la carte centrale (tap min/max sur tuile météo).
+// Index jour 0..14 aligné sur refresh_daily_forecast(page_index = forecast_page_index - 2).
+std::string get_day_planning_display_text(int jour);
+
 // Couleurs semantiques centralisees (miroir des tokens YAML color:)
 // Utiliser dans les lambdas C++ au lieu des hex bruts
 // Palette "Dark Mode Slate" : miroir EXACT des tokens YAML color: (les garder synchro).

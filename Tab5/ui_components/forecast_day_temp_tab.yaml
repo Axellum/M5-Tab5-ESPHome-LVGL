@@ -1,7 +1,8 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par forecast_daily.yaml
 # (j0..j4). Vars: idx, toggle_width (largeur du bouton toggle, varie car le texte
-# tmax/tmin change de largeur). Le bouton toggle affiche les heures d'ouverture
-# (cal_heures[jour], tab5_custom.cpp) via script.tab5_show_planning_temp — pas une action HA.
+# tmax/tmin change de largeur). Tap min/max → planning/horaires du jour dans la
+# carte centrale (6s) via get_day_planning_display_text() — index jour =
+# (forecast_page_index - 2) * 5 + idx (aligné sur refresh_daily_forecast).
 obj:
   align: BOTTOM_MID
   y: 0
@@ -25,6 +26,9 @@ obj:
         shadow_width: 0
         on_short_click:
           - lambda: |-
-              int jour = id(forecast_page_index) * 5 + ${idx};
-              id(temp_planning_text) = cal_heures[jour];
+              int page = id(forecast_page_index);
+              if (page < 2) page = 2;
+              if (page > 4) page = 4;
+              int jour = (page - 2) * 5 + ${idx};
+              id(temp_planning_text) = get_day_planning_display_text(jour);
           - script.execute: tab5_show_planning_temp

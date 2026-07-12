@@ -15,7 +15,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 - Added `docs/images/gpio_pinout_table.png` and `push_only_architecture_diagram.png` to architecture/hardware docs.
 - README CI badge, `CONTRIBUTING.md`, `docs/architecture.md` updated for `user_entities.yaml`.
 
-### 2026-07-12 — UIColor tokens (météo, pluie, vigilance)
+### 2026-07-12 — Bug planning tuiles météo + console diagnostic
+- Fixed wrong day index on min/max temperature tap (`(forecast_page_index - 2) * 5 + idx`).
+- Added `get_day_planning_display_text()` with fallback when opening hours are empty.
+- Console overlay: new header icon (`mdi-console-line`), layout rework (SRAM/PSRAM bars, aligned labels).
 - Extended `UIColor::` in `tab5_custom.h` for weather icons, rain bars, alert date pastels.
 - Migrated remaining hardcoded hex in `tab5_custom.cpp` and `tab5-api-logic.yaml`.
 - Removed dead commented block in `tab5_maj_meteo_actuelle`.

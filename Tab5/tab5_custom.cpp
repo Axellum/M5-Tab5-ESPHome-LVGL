@@ -407,6 +407,18 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
     }
 }
 
+std::string get_day_planning_display_text(int jour) {
+    if (jour < 0 || jour >= 15) return "Jour hors plage";
+    if (!cal_heures[jour].empty()) return cal_heures[jour];
+    const DayForecastData& d = cal_jours_data[jour];
+    if (!d.heures_ouverture.empty()) {
+        if (!d.nom_jour.empty()) return d.nom_jour + " : " + d.heures_ouverture;
+        return d.heures_ouverture;
+    }
+    if (!d.nom_jour.empty()) return d.nom_jour + " : pas d'horaire";
+    return "Pas de planning pour ce jour";
+}
+
 // =============================================================================
 // Carte lumiere (epaule j2/j3/j4 + switch associe + popup power) : factorise depuis
 // light_chambre_state/light_salon_state/light_led_state (tab5-sensors.yaml, #T164)
