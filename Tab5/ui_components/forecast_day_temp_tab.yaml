@@ -1,7 +1,7 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par forecast_daily.yaml
 # (j0..j4). Vars: idx, toggle_width (largeur du bouton toggle, varie car le texte
 # tmax/tmin change de largeur). Tap min/max → planning/horaires du jour dans la
-# carte centrale (6s) via get_day_planning_display_text() — index jour =
+# carte centrale (6s) via show_temporary_planning() — index jour =
 # (forecast_page_index - 2) * 5 + idx (aligné sur refresh_daily_forecast).
 obj:
   align: BOTTOM_MID
@@ -30,5 +30,5 @@ obj:
               if (page < 2) page = 2;
               if (page > 4) page = 4;
               int jour = (page - 2) * 5 + ${idx};
-              id(temp_planning_text) = get_day_planning_display_text(jour);
-          - script.execute: tab5_show_planning_temp
+              show_temporary_planning(jour, id(lbl_planning_text), id(planning_wrapper), id(alert_container), id(rain_wrapper),
+                                      id(plan_ligne_1), id(plan_ligne_2), id(is_showing_temp_planning), id(current_central_panel));

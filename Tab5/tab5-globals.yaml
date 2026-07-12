@@ -1,4 +1,4 @@
-﻿# [AI-CONTEXT]
+# [AI-CONTEXT]
 # @file tab5-globals.yaml
 # @role Variables globales de l'interface (état des volets, page courante, mode vocal).
 # @ai_instruction Ne déclarer ici que les variables globales pures.

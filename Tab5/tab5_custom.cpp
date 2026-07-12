@@ -36,28 +36,28 @@ void tab5_calendar_toggle(int jour) {
 
 void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, bool is_card, esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
     std::string l1_text = MeteoIcon::CLOUD; // Nuage par defaut
-    uint32_t l1_color = UIColor::TEXT_PRIMARY;
+    uint32_t l1_color = 0xFFFFFF;
     std::string l2_text = "";
-    uint32_t l2_color = UIColor::TEXT_PRIMARY;
+    uint32_t l2_color = 0xFFFFFF;
     int l2_x = 0; int l2_y = 0; int l1_y = 0;
     bool l2_small = false; bool l2_behind = false;
 
     // Dictionnaire type Classe CSS avec position de base (Grosse icone)
-    if (state == "clear-night") { l1_text = MeteoIcon::MOON; l1_color = UIColor::METEO_CELESTIAL; }
+    if (state == "clear-night") { l1_text = MeteoIcon::MOON; l1_color = 0xFFD700; }
     else if (state == "cloudy") { l1_text = MeteoIcon::CLOUD; }
     else if (state == "fog") { l1_text = MeteoIcon::FOG; }
-    else if (state == "Clear" || state == "sunny") { l1_text = MeteoIcon::SUNNY; l1_color = UIColor::METEO_CELESTIAL; }
+    else if (state == "Clear" || state == "sunny") { l1_text = MeteoIcon::SUNNY; l1_color = 0xFFD700; }
     else if (state == "partlycloudy" || state == "partlycloudy-night" || state == "partlycloudy_night") {
         l1_text = MeteoIcon::CLOUD; 
         l2_text = (state == "partlycloudy") ? MeteoIcon::SUNNY : MeteoIcon::MOON;
-        l2_small = true; l2_color = UIColor::METEO_CELESTIAL; l2_behind = true;
+        l2_small = true; l2_color = 0xFFD700; l2_behind = true;
         l2_x = -45; l2_y = -45;
     }
-    else if (state == "hail" || state == "snowy-rainy") { l2_text = MeteoIcon::HAIL; l2_color = UIColor::METEO_PRECIP; l2_behind = true; l1_y = -30; }
-    else if (state == "lightning" || state == "thunder" || state == "lightning-rainy") { l2_text = MeteoIcon::THUNDER; l2_color = UIColor::METEO_THUNDER; l2_behind = true; l1_y = -30; }
-    else if (state == "pouring") { l2_text = MeteoIcon::HEAVY_RAIN; l2_color = UIColor::METEO_PRECIP; l2_behind = true; l1_y = -30; }
-    else if (state == "rainy") { l2_text = MeteoIcon::RAIN; l2_color = UIColor::METEO_PRECIP; l2_behind = true; l1_y = -30; }
-    else if (state == "snowy") { l2_text = MeteoIcon::SNOW; l2_color = UIColor::METEO_PRECIP; l2_behind = true; l1_y = -30; }
+    else if (state == "hail" || state == "snowy-rainy") { l2_text = MeteoIcon::HAIL; l2_color = 0x8AB4FF; l2_behind = true; l1_y = -30; }
+    else if (state == "lightning" || state == "thunder" || state == "lightning-rainy") { l2_text = MeteoIcon::THUNDER; l2_color = 0xFF6600; l2_behind = true; l1_y = -30; }
+    else if (state == "pouring") { l2_text = MeteoIcon::HEAVY_RAIN; l2_color = 0x8AB4FF; l2_behind = true; l1_y = -30; }
+    else if (state == "rainy") { l2_text = MeteoIcon::RAIN; l2_color = 0x8AB4FF; l2_behind = true; l1_y = -30; }
+    else if (state == "snowy") { l2_text = MeteoIcon::SNOW; l2_color = 0x8AB4FF; l2_behind = true; l1_y = -30; }
     else if (state == "windy" || state == "windy-variant") { l1_text = MeteoIcon::WIND; }
 
     // Systeme de Ratio automatique pour avoir une justesse pixel perfect !
@@ -90,10 +90,10 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& st
 }
 
 uint32_t get_humidity_color(float x) {
-    if (isnan(x)) return UIColor::MOISTURE_NAN;
+    if (isnan(x)) return 0x404552;
     int val = (int)x;
-    if (val <= 14) return UIColor::ALERT_RED;
-    if (val >= 80) return UIColor::HUMIDITY_WET;
+    if (val <= 14) return 0xFF0000;
+    if (val >= 80) return 0x0000CC;
     if (val >= 30) {
         float step = floor((val - 30) / 3.0) * 3.0;
         float ratio = step / 50.0;
@@ -113,8 +113,8 @@ uint32_t get_humidity_color(float x) {
 }
 
 uint32_t get_temperature_color(float t) {
-    if (isnan(t)) return UIColor::TEMP_NAN;
-    if (t <= -12) return UIColor::ALERT_RED;
+    if (isnan(t)) return 0xA3A8B5;
+    if (t <= -12) return 0xFF0000;
     if (t <= 0) {
         float r = floor((t + 12) / 2.0) * 2.0 / 12.0;
         return (255 << 16) | (0 << 8) | (int)(255 * r);
@@ -273,7 +273,7 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
 
         // Coloring day names
         uint8_t opa = data.est_passe ? 100 : 255;
-        uint32_t col = UIColor::TEXT_PRIMARY;
+        uint32_t col = 0xFFFFFF;
         bool is_early = false;
         if (!data.est_repos && data.heures_ouverture.length() >= 5) {
             int hour = atoi(data.heures_ouverture.substr(0, 2).c_str());
@@ -296,8 +296,8 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
         
         lv_label_set_recolor(slot.max_lbl, true);
         lv_label_set_recolor(slot.min_lbl, true);
-        lv_obj_set_style_text_color(slot.max_lbl, lv_color_hex(UIColor::TEXT_PRIMARY), LV_PART_MAIN);
-        lv_obj_set_style_text_color(slot.min_lbl, lv_color_hex(UIColor::TEXT_PRIMARY), LV_PART_MAIN);
+        lv_obj_set_style_text_color(slot.max_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+        lv_obj_set_style_text_color(slot.min_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
 
         // Show/hide action elements depending on page_index (only show actions on page 0)
         if (slot.action_btn) {
@@ -335,13 +335,13 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
         char b_t[32]; sprintf(b_t, "#%06x %.0f#\xC2\xB0", c_t, data.temp);
         lv_label_set_text(slot.temp_lbl, b_t);
         lv_label_set_recolor(slot.temp_lbl, true);
-        lv_obj_set_style_text_color(slot.temp_lbl, lv_color_hex(UIColor::TEXT_PRIMARY), LV_PART_MAIN);
+        lv_obj_set_style_text_color(slot.temp_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
 
         char b_p[32];
         if (data.pluvio > 0) {
             sprintf(b_p, "%.1fmm", data.pluvio);
             lv_label_set_text(slot.prob_lbl, b_p);
-            lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(UIColor::METEO_PRECIP), LV_PART_MAIN);
+            lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(0x8AB4FF), LV_PART_MAIN);
         } else {
             lv_label_set_text(slot.prob_lbl, "-");
             lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(UIColor::CLIM_TRACK_INACTIVE), LV_PART_MAIN);
@@ -407,6 +407,10 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
     }
 }
 
+// =============================================================================
+// Planning jour au tap sur tuile météo (carte centrale 6s)
+// =============================================================================
+
 std::string get_day_planning_display_text(int jour) {
     if (jour < 0 || jour >= 15) return "Jour hors plage";
     if (!cal_heures[jour].empty()) return cal_heures[jour];
@@ -417,6 +421,59 @@ std::string get_day_planning_display_text(int jour) {
     }
     if (!d.nom_jour.empty()) return d.nom_jour + " : pas d'horaire";
     return "Pas de planning pour ce jour";
+}
+
+static lv_timer_t* planning_restore_timer = nullptr;
+static std::string static_plan_l1;
+static std::string static_plan_l2;
+static lv_obj_t* static_lbl_planning = nullptr;
+static bool* static_is_showing_temp = nullptr;
+
+static void planning_restore_timer_cb(lv_timer_t* timer) {
+    if (static_is_showing_temp) {
+        *static_is_showing_temp = false;
+    }
+    if (static_lbl_planning) {
+        std::string combined = static_plan_l1;
+        if (!static_plan_l2.empty()) {
+            combined += "   |   " + static_plan_l2;
+        }
+        lv_label_set_text(static_lbl_planning, combined.c_str());
+    }
+    lv_timer_del(timer);
+    planning_restore_timer = nullptr;
+}
+
+void show_temporary_planning(int jour, lv_obj_t* lbl_planning, lv_obj_t* planning_wrap, lv_obj_t* alert_cont, lv_obj_t* rain_wrap,
+                             const std::string& plan_l1, const std::string& plan_l2, bool& is_showing_temp, int& current_panel) {
+    if (!lbl_planning) return;
+
+    is_showing_temp = true;
+    current_panel = 0;
+
+    std::string text = get_day_planning_display_text(jour);
+    lv_label_set_text(lbl_planning, text.c_str());
+
+    // Stoppe les animations LVGL en cours sur les panneaux centraux (evite conflit avec le rotateur 8s).
+    if (planning_wrap) lv_anim_del(planning_wrap, nullptr);
+    if (alert_cont) lv_anim_del(alert_cont, nullptr);
+    if (rain_wrap) lv_anim_del(rain_wrap, nullptr);
+
+    if (planning_wrap) lv_obj_clear_flag(planning_wrap, LV_OBJ_FLAG_HIDDEN);
+    if (alert_cont) lv_obj_add_flag(alert_cont, LV_OBJ_FLAG_HIDDEN);
+    if (rain_wrap) lv_obj_add_flag(rain_wrap, LV_OBJ_FLAG_HIDDEN);
+
+    static_plan_l1 = plan_l1;
+    static_plan_l2 = plan_l2;
+    static_lbl_planning = lbl_planning;
+    static_is_showing_temp = &is_showing_temp;
+
+    if (planning_restore_timer != nullptr) {
+        lv_timer_del(planning_restore_timer);
+        planning_restore_timer = nullptr;
+    }
+
+    planning_restore_timer = lv_timer_create(planning_restore_timer_cb, 6000, nullptr);
 }
 
 // =============================================================================

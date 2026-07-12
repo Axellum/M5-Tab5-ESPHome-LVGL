@@ -127,9 +127,10 @@ void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* i
     lv_obj_t* lbl_switch_state, lv_obj_t* btn_power_icon,
     const std::string& current_light_entity, const std::string& this_entity, bool is_on);
 
-// Texte planning/horaires pour la carte centrale (tap min/max sur tuile météo).
-// Index jour 0..14 aligné sur refresh_daily_forecast(page_index = forecast_page_index - 2).
+// Tap tuile météo : affiche le planning/horaires du jour dans la carte centrale (6s).
 std::string get_day_planning_display_text(int jour);
+void show_temporary_planning(int jour, lv_obj_t* lbl_planning, lv_obj_t* planning_wrap, lv_obj_t* alert_cont, lv_obj_t* rain_wrap,
+                             const std::string& plan_l1, const std::string& plan_l2, bool& is_showing_temp, int& current_panel);
 
 // Couleurs semantiques centralisees (miroir des tokens YAML color:)
 // Utiliser dans les lambdas C++ au lieu des hex bruts
@@ -163,23 +164,5 @@ namespace UIColor {
     static constexpr uint32_t CLIM_OFF_INACTIVE    = 0xB48154;  // Orange grise
     static constexpr uint32_t CLIM_TRACK_INACTIVE  = 0x4A596E;  // Gris (fan/swing/quiet inactifs)
     static constexpr uint32_t CLIM_ECO             = 0x4CD964;  // Vert standard
-    // --- Texte & icones meteo ---
-    static constexpr uint32_t TEXT_PRIMARY         = 0xFFFFFF;  // Blanc labels forecast
-    static constexpr uint32_t METEO_CELESTIAL      = 0xFFD700;  // Soleil / lune (IconeMeteo)
-    static constexpr uint32_t METEO_PRECIP         = 0x8AB4FF;  // Pluie / neige / grele
-    static constexpr uint32_t METEO_THUNDER        = 0xFF6600;  // Orage
-    // --- Gradients capteurs ---
-    static constexpr uint32_t MOISTURE_NAN         = 0x404552;  // Humidite plante indisponible
-    static constexpr uint32_t HUMIDITY_WET         = 0x0000CC;  // Air tres humide
-    static constexpr uint32_t TEMP_NAN             = 0xA3A8B5;  // Temperature indisponible
-    // --- Date vigilance (fond pastel label, distinct des bannieres MF) ---
-    static constexpr uint32_t ALERT_DATE_YELLOW    = 0xFCF3CF;
-    static constexpr uint32_t ALERT_DATE_ORANGE    = 0xF8C471;
-    static constexpr uint32_t ALERT_DATE_RED       = 0xF1948A;
-    // --- Intensite pluie horaire (barres rb_*) ---
-    static constexpr uint32_t RAIN_LIGHT           = 0x81D4FA;
-    static constexpr uint32_t RAIN_MODERATE        = 0x29B6F6;
-    static constexpr uint32_t RAIN_HEAVY           = 0x0277BD;
-    static constexpr uint32_t RAIN_EXTREME         = 0x01579B;
 }
 
