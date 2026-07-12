@@ -176,5 +176,14 @@ namespace UIColor {
     static constexpr uint32_t CLIM_OFF_INACTIVE    = 0xB48154;  // Orange grise
     static constexpr uint32_t CLIM_TRACK_INACTIVE  = 0x4A596E;  // Gris (fan/swing/quiet inactifs)
     static constexpr uint32_t CLIM_ECO             = 0x4CD964;  // Vert standard
+    // --- Forecast / alertes / pluie (tab5-api-logic.yaml) ---
+    static constexpr uint32_t TEXT_PRIMARY         = 0xFFFFFF;  // Blanc labels forecast
+    static constexpr uint32_t ALERT_DATE_YELLOW    = 0xFCF3CF;
+    static constexpr uint32_t ALERT_DATE_ORANGE    = 0xF8C471;
+    static constexpr uint32_t ALERT_DATE_RED       = 0xF1948A;
+    static constexpr uint32_t RAIN_LIGHT           = 0x81D4FA;
+    static constexpr uint32_t RAIN_MODERATE        = 0x29B6F6;
+    static constexpr uint32_t RAIN_HEAVY           = 0x0277BD;
+    static constexpr uint32_t RAIN_EXTREME         = 0x01579B;
 }
 
