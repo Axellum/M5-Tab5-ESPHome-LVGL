@@ -49,6 +49,7 @@ python -m esphome compile tab5-ha-hmi.yaml
 ## Boundaries — do not
 
 - Do not read or write `secrets.yaml` / `Tab5/secrets.yaml` (gitignored, never tracked — verified against full git history).
+- Do not read or write `Tab5/user_entities.yaml` (gitignored — your real HA entity IDs). Edit `Tab5/user_entities.example.yaml` only when changing the public template or adding a new substitution key.
 - Do not confuse the gitignored real HA config (`HomeAssistant_Config/automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml` — Axel's actual production files) with the tracked `*_examples.yaml*` placeholders. If you change logic in one, mirror the change in the other.
 - Do not leave more than a couple of ESPHome CLI processes running against the device at once — the API only has 8 connection slots; a past session's leaked `esphome` processes silently starved the real device of connections.
 - Do not "clean up" code flagged `[AI-WARNING]` without reading the warning and checking `docs/decisions/`.

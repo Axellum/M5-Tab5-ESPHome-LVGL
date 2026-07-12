@@ -89,7 +89,7 @@ Sound output goes through the ES8388 DAC chip (I2C + I2S). Boot sequencing is ca
 | [`docs/hardware.md`](docs/hardware.md) | ESP32-P4 specs, GPIO mapping, ES8388 DAC, PSRAM, power |
 | [`docs/ui_design.md`](docs/ui_design.md) | LVGL rendering, vector fonts, dynamic color, CPU optimizations |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Wake word pipeline, audio chain, visual feedback states |
-| [`docs/installation.md`](docs/installation.md) | Prerequisites, substitutions block, secrets, flash & OTA |
+| [`docs/installation.md`](docs/installation.md) | Prerequisites, `user_entities.yaml`, secrets, flash & OTA |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Symptom → root cause → fix log for incidents already diagnosed |
 | [`docs/debugging.md`](docs/debugging.md) | How to observe/diagnose the device (logs, console overlay, marker technique) |
 | [`docs/decisions/`](docs/decisions/README.md) | Architecture decision records — the "why" behind non-obvious choices |
@@ -106,9 +106,12 @@ Sound output goes through the ES8388 DAC chip (I2C + I2S). Boot sequencing is ca
 # Clone the repo
 git clone https://github.com/Axellum/M5-Tab5-ESPHome-LVGL.git
 
-# Edit the substitutions block at the top of tab5-ha-hmi.yaml
-# to match your own HA entities, then compile via the ESPHome dashboard
-# or CLI: esphome run tab5-ha-hmi.yaml
+# Copy local config files (gitignored), then edit with your values
+cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
+# Create secrets.yaml — see docs/installation.md
+
+# Compile via ESPHome dashboard or CLI:
+# esphome run tab5-ha-hmi.yaml
 ```
 
 Full step-by-step: [`docs/installation.md`](docs/installation.md)
@@ -119,8 +122,9 @@ Full step-by-step: [`docs/installation.md`](docs/installation.md)
 
 ```
 .
-├── tab5-ha-hmi.yaml          # Entry point — substitutions + package imports
-├── Tab5/                     # ESPHome YAML packages + C++ source
+├── tab5-ha-hmi.yaml          # Entry point — includes user_entities + packages
+├── Tab5/
+│   ├── user_entities.example.yaml  # Public template (copy → user_entities.yaml)
 │   ├── tab5-hardware.yaml    # Display, touch, I2C, SPI, DAC
 │   ├── tab5-sensors.yaml     # Physical sensors (temp, brightness, plant moisture)
 │   ├── tab5-api-logic.yaml   # HA service handlers + C++ lambdas

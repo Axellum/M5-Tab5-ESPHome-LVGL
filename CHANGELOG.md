@@ -4,7 +4,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
-Nothing yet.
+### 2026-07-12 — Entity substitutions split (user_entities.yaml)
+- Home Assistant entity IDs moved out of `tab5-ha-hmi.yaml` into a local `Tab5/user_entities.yaml` (gitignored, same pattern as `secrets.yaml`).
+- Added tracked template `Tab5/user_entities.example.yaml` with generic placeholder entity IDs for public repo and CI.
+- CI workflow copies the example file before compile. `.gitignore` extended for `__pycache__/` / `*.pyc`.
 
 ## [1.0.0] — 2026-07-06 — first tagged release
 

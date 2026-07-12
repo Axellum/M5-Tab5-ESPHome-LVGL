@@ -3,6 +3,11 @@
 # You can modify this file to suit your needs.
 /.esphome/
 secrets.yaml
+Tab5/user_entities.yaml
+
+# Bytecode Python (composants ESPHome custom)
+__pycache__/
+*.pyc
 
 # Ignorer les scripts de l'IA et tests locaux
 /ia_tools_scripts/
