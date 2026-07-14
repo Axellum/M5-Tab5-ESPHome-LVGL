@@ -16,12 +16,8 @@ lvgl:
 
       on_gesture:
         then:
-          # [AI-CONTEXT] Logique de pagination/console deplacee en C++ dans
-          # handle_swipe_gesture() (tab5_custom.cpp, Phase 3, #T164). Ce bloc ne
-          # fait plus que recuperer l'etat LVGL (indev/geste) et les pointeurs de
-          # widgets, puis delegue toute la decision au C++. Comportement IDENTIQUE
-          # a l'ancienne lambda (LEFT boucle 2/3/4, RIGHT traverse vers le bas :
-          # VOLONTAIRE, validé par Axel — ne pas "corriger").
+          # [AI-CONTEXT] Pagination previsions (swipe gauche/droite, y>=333 carte centrale)
+          # deleguee a handle_swipe_gesture(). Console diag : btn_control_console uniquement.
           - lambda: |-
               lv_indev_t * indev = lv_indev_get_act();
               if (indev) {
@@ -46,14 +42,13 @@ lvgl:
                   lv_obj_t* pbars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4)};
 
                   handle_swipe_gesture(d, pt.y, id(forecast_page_index),
-                      id(layer_console_sys), id(layer_forecast_daily), id(layer_forecast_hourly),
+                      id(layer_forecast_daily), id(layer_forecast_hourly),
                       day_slots, hour_slots,
                       id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small),
                       pbars,
-                      id(lbl_sys_uptime_val), id(lbl_sys_rssi_val), id(lbl_sys_temp_val),
-                      id(sys_uptime).has_state(), id(sys_uptime).state,
-                      id(sys_wifi_rssi).has_state(), id(sys_wifi_rssi).state,
-                      id(sys_core_temp).has_state(), id(sys_core_temp).state);
+                      id(page_title_wrapper), id(lbl_page_title),
+                      id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
+                      id(current_central_panel));
               }
 
       widgets:
@@ -352,6 +347,29 @@ lvgl:
                   styles: style_transparent
                   widgets:
                     - label: { id: lbl_planning_text, text: "", align: CENTER, y: 4, text_font: roboto_45_b, text_color: color_text }
+
+              # Titre de page previsions (pages horaires / journalieres 2-3, masque sur accueil)
+              - obj:
+                  id: page_title_wrapper
+                  align: CENTER
+                  width: SIZE_CONTENT
+                  height: 100%
+                  styles: style_transparent
+                  hidden: true
+                  widgets:
+                    - label: { id: lbl_page_title, text: "", align: CENTER, y: 4, text_font: roboto_45_b, text_color: color_text }
+
+              # Info Wrapper (zone d'info : récap calendrier 3 jours ou alerte météo,
+              # alimenté par le service HA tab5_maj_info_texte — panneau 3 du rotateur)
+              - obj:
+                  id: info_wrapper
+                  align: CENTER
+                  width: SIZE_CONTENT
+                  height: 100%
+                  styles: style_transparent
+                  hidden: true
+                  widgets:
+                    - label: { id: lbl_info_text, text: "", align: CENTER, text_font: roboto_22, text_color: color_text }
 
         # ==================== PAGINATION BARS ====================
         - obj:

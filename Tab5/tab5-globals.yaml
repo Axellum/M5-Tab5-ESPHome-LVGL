@@ -73,6 +73,9 @@ globals:
   - id: has_rain
     type: bool
     initial_value: 'false'
+  - id: has_info
+    type: bool
+    initial_value: 'false'
   - id: current_central_panel
     type: int
     initial_value: '0'
@@ -102,15 +105,18 @@ interval:
           then:
             - lambda: |-
                 if (id(is_showing_temp_planning)) return;
+                if (id(forecast_page_index) != 2) return;
                 int next_panel = id(current_central_panel);
                 int attempts = 0;
-                while (attempts < 3) {
-                    next_panel = (next_panel + 1) % 3;
+                while (attempts < 4) {
+                    next_panel = (next_panel + 1) % 4;
                     if (next_panel == 0) {
                         break; // Planning is always active
                     } else if (next_panel == 1 && id(has_rain)) {
                         break;
                     } else if (next_panel == 2 && id(has_alerts)) {
+                        break;
+                    } else if (next_panel == 3 && id(has_info)) {
                         break;
                     }
                     attempts++;
@@ -118,15 +124,17 @@ interval:
                 if (next_panel != id(current_central_panel)) {
                     lv_obj_t* out_obj = nullptr;
                     lv_obj_t* in_obj = nullptr;
-                    
+
                     if (id(current_central_panel) == 0) out_obj = id(planning_wrapper);
                     else if (id(current_central_panel) == 1) out_obj = id(rain_wrapper);
                     else if (id(current_central_panel) == 2) out_obj = id(alert_container);
-                    
+                    else if (id(current_central_panel) == 3) out_obj = id(info_wrapper);
+
                     if (next_panel == 0) in_obj = id(planning_wrapper);
                     else if (next_panel == 1) in_obj = id(rain_wrapper);
                     else if (next_panel == 2) in_obj = id(alert_container);
-                    
+                    else if (next_panel == 3) in_obj = id(info_wrapper);
+
                     transition_widgets(out_obj, in_obj);
                     id(current_central_panel) = next_panel;
                 }

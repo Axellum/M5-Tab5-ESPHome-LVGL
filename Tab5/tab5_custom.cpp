@@ -19,7 +19,88 @@
 #include "tab5_custom.h"
 #include "lvgl.h" // Needed for lv_label_set_text etc
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <ctime>
+#include <cstring>
 
+
+// =============================================================================
+// UTF-8 : normalisation des textes HA (Latin-1 / mojibake) avant affichage LVGL
+// =============================================================================
+
+static bool is_valid_utf8(const std::string& s) {
+    for (size_t i = 0; i < s.size(); ) {
+        unsigned char c = static_cast<unsigned char>(s[i]);
+        if (c < 0x80) {
+            i++;
+            continue;
+        }
+        size_t need = 0;
+        if ((c & 0xE0) == 0xC0) need = 1;
+        else if ((c & 0xF0) == 0xE0) need = 2;
+        else if ((c & 0xF8) == 0xF0) need = 3;
+        else return false;
+        if (i + need >= s.size()) return false;
+        for (size_t j = 1; j <= need; j++) {
+            if ((static_cast<unsigned char>(s[i + j]) & 0xC0) != 0x80) return false;
+        }
+        i += need + 1;
+    }
+    return true;
+}
+
+static std::string latin1_to_utf8(const std::string& in) {
+    std::string out;
+    out.reserve(in.size() * 2);
+    for (unsigned char c : in) {
+        if (c < 0x80) {
+            out.push_back(static_cast<char>(c));
+        } else {
+            uint32_t cp = c;
+            out.push_back(static_cast<char>(0xC0 | (cp >> 6)));
+            out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+        }
+    }
+    return out;
+}
+
+static std::string fix_utf8_mojibake(std::string s) {
+    struct Rep { const char* bad; const char* good; };
+    static const Rep reps[] = {
+        {"\xC3\x83\xC2\xA9", "\xC3\xA9"},  // Ã© -> é
+        {"\xC3\x83\xC2\xA8", "\xC3\xA8"},  // Ã¨ -> è
+        {"\xC3\x83\xC2\xAA", "\xC3\xAA"},  // Ãª -> ê
+        {"\xC3\x83\xC2\xA0", "\xC3\xA0"},  // Ã  -> à
+        {"\xC3\x83\xC2\xB4", "\xC3\xB4"},  // Ã´ -> ô
+        {"\xC3\x83\xC2\xBB", "\xC3\xBB"},  // Ã» -> û
+        {"\xC3\x83\xC2\xA7", "\xC3\xA7"},  // Ã§ -> ç
+    };
+    for (const auto& r : reps) {
+        const size_t bad_len = strlen(r.bad);
+        const size_t good_len = strlen(r.good);
+        size_t pos = 0;
+        while ((pos = s.find(r.bad, pos)) != std::string::npos) {
+            s.replace(pos, bad_len, r.good);
+            pos += good_len;
+        }
+    }
+    return s;
+}
+
+static std::string normalize_text_utf8(const std::string& in) {
+    if (in.empty()) return in;
+    std::string t = is_valid_utf8(in) ? in : latin1_to_utf8(in);
+    return fix_utf8_mojibake(std::move(t));
+}
+
+static const char* vigilance_alert_banner_utf8(const std::string& couleur) {
+    if (couleur.find("Rouge") != std::string::npos) {
+        return "Alerte M\xC3\xA9t\xC3\xA9o Rouge en cours ! Restez prudent.";
+    }
+    if (couleur.find("Orange") != std::string::npos) {
+        return "Alerte M\xC3\xA9t\xC3\xA9o Orange en cours ! Restez prudent.";
+    }
+    return nullptr;
+}
 
 // we can declare references to ESPHome LVGL objects but we can't easily include main.h
 std::string cal_heures[15] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "", ""};
@@ -32,6 +113,20 @@ void tab5_calendar_toggle(int jour) {
     if (jour >= 0 && jour < 15) {
         cal_toggled[jour] = !cal_toggled[jour];
     }
+}
+
+// Titre court "Lun 16" pour les pages journalieres 2 et 3 (page_index 1/2).
+// Utilise l'heure systeme SNTP (timezone Europe/Paris configuree dans tab5-sensors.yaml).
+static std::string format_short_day_label(int jour_offset) {
+    static const char* days[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
+    time_t raw = time(nullptr);
+    if (raw <= 0 || jour_offset < 0 || jour_offset >= 15) return "";
+    raw += static_cast<time_t>(jour_offset) * 86400;
+    struct tm t;
+    if (localtime_r(&raw, &t) == nullptr) return "";
+    char buf[12];
+    snprintf(buf, sizeof(buf), "%s %02d", days[t.tm_wday], t.tm_mday);
+    return std::string(buf);
 }
 
 void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, bool is_card, esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
@@ -250,8 +345,15 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
 
         DayForecastData& data = cal_jours_data[jour];
 
-        // Toggle calendar / day name
-        lv_label_set_text(slot.day_lbl, cal_toggled[jour] ? cal_heures[jour].c_str() : data.nom_jour.c_str());
+        // Titre : page accueil (0) = nom_jour HA ; pages 2-3 = "Lun 16" via SNTP
+        if (cal_toggled[jour]) {
+            lv_label_set_text(slot.day_lbl, cal_heures[jour].c_str());
+        } else if (page_index > 0) {
+            std::string date_lbl = format_short_day_label(jour);
+            lv_label_set_text(slot.day_lbl, date_lbl.empty() ? data.nom_jour.c_str() : date_lbl.c_str());
+        } else {
+            lv_label_set_text(slot.day_lbl, data.nom_jour.c_str());
+        }
 
         if(cal_toggled[jour]) {
             lv_obj_add_flag(slot.max_lbl, LV_OBJ_FLAG_HIDDEN);
@@ -352,27 +454,188 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
 }
 
 // =============================================================================
-// Geste de swipe (page_main.on_gesture) : deplace depuis tab5-lvgl.yaml (Phase 3,
-// #T164). Comportement IDENTIQUE a l'original - seul l'emplacement change.
+// Geste de swipe (page_main.on_gesture) : pagination previsions (y >= carte centrale)
 // =============================================================================
 
+static constexpr lv_coord_t FORECAST_SWIPE_Y_MIN = 333;  // haut de central_card (tab5-lvgl.yaml)
+
+// Recolor LVGL : vrai seulement si markup #RRGGBB (évite faux positifs sur '#' isolé).
+static bool has_lvgl_recolor_markup(const std::string& t) {
+    for (size_t i = 0; i + 7 < t.size(); ++i) {
+        if (t[i] != '#') continue;
+        bool hex6 = true;
+        for (int j = 1; j <= 6; ++j) {
+            char c = t[i + static_cast<size_t>(j)];
+            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
+                hex6 = false;
+                break;
+            }
+        }
+        if (hex6) return true;
+    }
+    return false;
+}
+
+static void set_label_text_utf8(lv_obj_t* label, const char* text) {
+    if (!label || !text) return;
+    std::string t(text);
+    lv_label_set_recolor(label, has_lvgl_recolor_markup(t));
+    lv_label_set_text(label, text);
+}
+
+static const char* clock_month_short_utf8(int month) {
+    static const char* months[] = {
+        "Janv", "F\xC3\xA9vr", "Mars", "Avr", "Mai", "Juin", "Juil",
+        "Ao\xC3\xBBt", "Sept", "Oct", "Nov", "D\xC3\xA9" "c"
+    };
+    if (month < 1 || month > 12) return "";
+    return months[month - 1];
+}
+
+static const char* forecast_page_title_text(int page) {
+    switch (page) {
+        // forecast_page_index 0/1 utilisent refresh_hourly(..., 1-page) : données
+        // inversées par rapport à l'index UI — titres alignés sur le contenu réel.
+        // UTF-8 explicite (\xC3\xA9 = é, \xC3\xA8 = è) — pas Latin-1 (\xE9).
+        case 0: return "Pr\xC3\xA9visions horaires 2";
+        case 1: return "Pr\xC3\xA9visions horaires 1";
+        case 3: return "Pr\xC3\xA9visions journali\xC3\xA8res 2";
+        case 4: return "Pr\xC3\xA9visions journali\xC3\xA8res 3";
+        default: return nullptr;
+    }
+}
+
+void update_central_forecast_page_ui(int forecast_page,
+    lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
+    lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont, lv_obj_t* info_wrap,
+    int current_panel) {
+
+    if (!page_title_wrap || !lbl_page_title) return;
+
+    if (planning_wrap) lv_obj_add_flag(planning_wrap, LV_OBJ_FLAG_HIDDEN);
+    if (rain_wrap) lv_obj_add_flag(rain_wrap, LV_OBJ_FLAG_HIDDEN);
+    if (alert_cont) lv_obj_add_flag(alert_cont, LV_OBJ_FLAG_HIDDEN);
+    if (info_wrap) lv_obj_add_flag(info_wrap, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
+
+    if (forecast_page == 2) {
+        lv_obj_t* active = planning_wrap;
+        if (current_panel == 1) active = rain_wrap;
+        else if (current_panel == 2) active = alert_cont;
+        else if (current_panel == 3) active = info_wrap;
+        if (active) lv_obj_clear_flag(active, LV_OBJ_FLAG_HIDDEN);
+        return;
+    }
+
+    const char* title = forecast_page_title_text(forecast_page);
+    if (!title) return;
+    lv_label_set_text(lbl_page_title, title);
+    lv_obj_clear_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
+}
+
+void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
+    const std::string& texte, const std::string& couleur, bool& has_info, int& current_panel,
+    esphome::font::Font* font_small, esphome::font::Font* font_large) {
+
+    if (!lbl_info) return;
+
+    std::string t = texte;
+    const char* ws = " \t\r\n";
+    size_t deb = t.find_first_not_of(ws);
+    t = (deb == std::string::npos) ? "" : t.substr(deb, t.find_last_not_of(ws) - deb + 1);
+
+    // Banniere vigilance : texte fixe UTF-8 cote firmware (HA ne fournit que la couleur).
+    if (const char* banner = vigilance_alert_banner_utf8(couleur)) {
+        t = banner;
+    } else if (!t.empty()) {
+        t = normalize_text_utf8(t);
+    }
+
+    has_info = !t.empty();
+    if (t.empty()) {
+        lv_label_set_text(lbl_info, "");
+        if (current_panel == 3 && info_wrap && planning_wrap) {
+            transition_widgets(info_wrap, planning_wrap);
+            current_panel = 0;
+        }
+        return;
+    }
+
+    bool multi_ligne = t.find('\n') != std::string::npos;
+    bool has_recolor_markup = has_lvgl_recolor_markup(t);
+    esphome::font::Font* font = multi_ligne ? font_small : font_large;
+    if (font) {
+        esphome::lvgl::lv_obj_set_style_text_font(lbl_info, font, LV_PART_MAIN);
+    }
+
+    uint32_t c = UIColor::TEXT_PRIMARY;
+    if (couleur.find("Rouge") != std::string::npos) c = UIColor::ALERT_RED;
+    else if (couleur.find("Orange") != std::string::npos) c = UIColor::WARNING;
+    lv_obj_set_style_text_color(lbl_info, lv_color_hex(c), LV_PART_MAIN);
+
+    lv_label_set_recolor(lbl_info, has_recolor_markup);
+    lv_label_set_text(lbl_info, t.c_str());
+}
+
+void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase) {
+    if (!lbl) return;
+    std::string t = normalize_text_utf8(phrase);
+    lv_label_set_recolor(lbl, false);
+    lv_label_set_text(lbl, t.c_str());
+}
+
+void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::string& l2,
+    std::string& plan_ligne_1, std::string& plan_ligne_2) {
+    if (!lbl) return;
+    auto strip_prefix = [](const std::string& s) -> std::string {
+        if (s.rfind("1/ ", 0) == 0) return s.substr(3);
+        if (s.rfind("2/ ", 0) == 0) return s.substr(3);
+        if (s.rfind("1/", 0) == 0) return s.substr(2);
+        if (s.rfind("2/", 0) == 0) return s.substr(2);
+        return s;
+    };
+    std::string line1 = strip_prefix(l1);
+    std::string line2 = strip_prefix(l2);
+    plan_ligne_1 = line1;
+    plan_ligne_2 = line2;
+    std::string combined = line1;
+    if (!line2.empty()) {
+        combined += "   |   " + line2;
+    }
+    combined = normalize_text_utf8(combined);
+    set_label_text_utf8(lbl, combined.c_str());
+}
+
+void update_clock_date_ui(lv_obj_t* lbl_time, lv_obj_t* lbl_date,
+    int hour, int minute, int day_of_week, int day_of_month, int month) {
+    if (lbl_time) {
+        char buf_time[16];
+        snprintf(buf_time, sizeof(buf_time), "%02d:%02d", hour, minute);
+        lv_label_set_text(lbl_time, buf_time);
+    }
+    if (lbl_date) {
+        static const char* days[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
+        const char* day = (day_of_week >= 1 && day_of_week <= 7) ? days[day_of_week - 1] : "";
+        char buf_date[64];
+        snprintf(buf_date, sizeof(buf_date), "%s %02d %s", day, day_of_month, clock_month_short_utf8(month));
+        lv_label_set_recolor(lbl_date, false);
+        lv_label_set_text(lbl_date, buf_date);
+    }
+}
+
 void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_index,
-    lv_obj_t* layer_console_sys, lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
+    lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
     lv_obj_t* pbars[5],
-    lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_obj_t* lbl_temp,
-    bool has_uptime, float uptime_s, bool has_rssi, float rssi_dbm, bool has_temp, float core_temp_c) {
+    lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
+    lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont, lv_obj_t* info_wrap,
+    int current_panel) {
 
-    if (dir == LV_DIR_TOP) {
-        lv_obj_clear_flag(layer_console_sys, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_move_foreground(layer_console_sys);
-        refresh_console_status_row_ui(lbl_uptime, lbl_rssi, lbl_temp,
-            has_uptime, uptime_s, has_rssi, rssi_dbm, has_temp, core_temp_c);
-    } else if (dir == LV_DIR_BOTTOM) {
-        lv_obj_add_flag(layer_console_sys, LV_OBJ_FLAG_HIDDEN);
-    } else if (pt_y > 400) {
-        int page = forecast_page_index;
+    if (pt_y < FORECAST_SWIPE_Y_MIN) return;
+    if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;
+
+    int page = forecast_page_index;
         // NE PAS "corriger" en wrap 0<->4 : comportement volontaire, deja teste et
         // valide par Axel (revert du 05/07/2026 d'un changement fait a tort suite a
         // un audit LLM qui l'avait signale comme un bug de pagination "confuse").
@@ -408,7 +671,9 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
                 lv_obj_set_style_bg_opa(pbars[i], 100, LV_PART_MAIN);
             }
         }
-    }
+
+        update_central_forecast_page_ui(page, page_title_wrap, lbl_page_title,
+            planning_wrap, rain_wrap, alert_cont, info_wrap, current_panel);
 }
 
 // =============================================================================
@@ -432,12 +697,25 @@ static std::string static_plan_l1;
 static std::string static_plan_l2;
 static lv_obj_t* static_lbl_planning = nullptr;
 static bool* static_is_showing_temp = nullptr;
+static int static_forecast_page_restore = 2;
+static lv_obj_t* static_page_title_wrap = nullptr;
+static lv_obj_t* static_lbl_page_title = nullptr;
+static lv_obj_t* static_planning_wrap = nullptr;
+static lv_obj_t* static_rain_wrap = nullptr;
+static lv_obj_t* static_alert_cont = nullptr;
+static lv_obj_t* static_info_wrap = nullptr;
+static int static_central_panel_restore = 0;
 
 static void planning_restore_timer_cb(lv_timer_t* timer) {
     if (static_is_showing_temp) {
         *static_is_showing_temp = false;
     }
-    if (static_lbl_planning) {
+    if (static_forecast_page_restore != 2) {
+        update_central_forecast_page_ui(static_forecast_page_restore,
+            static_page_title_wrap, static_lbl_page_title,
+            static_planning_wrap, static_rain_wrap, static_alert_cont, static_info_wrap,
+            static_central_panel_restore);
+    } else if (static_lbl_planning) {
         std::string combined = static_plan_l1;
         if (!static_plan_l2.empty()) {
             combined += "   |   " + static_plan_l2;
@@ -449,9 +727,11 @@ static void planning_restore_timer_cb(lv_timer_t* timer) {
 }
 
 void show_temporary_planning(int jour, lv_obj_t* lbl_planning, lv_obj_t* planning_wrap, lv_obj_t* alert_cont, lv_obj_t* rain_wrap,
+                             lv_obj_t* info_wrap, lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, int forecast_page,
                              const std::string& plan_l1, const std::string& plan_l2, bool& is_showing_temp, int& current_panel) {
     if (!lbl_planning) return;
 
+    static_central_panel_restore = current_panel;
     is_showing_temp = true;
     current_panel = 0;
 
@@ -462,15 +742,26 @@ void show_temporary_planning(int jour, lv_obj_t* lbl_planning, lv_obj_t* plannin
     if (planning_wrap) lv_anim_del(planning_wrap, nullptr);
     if (alert_cont) lv_anim_del(alert_cont, nullptr);
     if (rain_wrap) lv_anim_del(rain_wrap, nullptr);
+    if (info_wrap) lv_anim_del(info_wrap, nullptr);
+    if (page_title_wrap) lv_anim_del(page_title_wrap, nullptr);
 
+    if (page_title_wrap) lv_obj_add_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
     if (planning_wrap) lv_obj_clear_flag(planning_wrap, LV_OBJ_FLAG_HIDDEN);
     if (alert_cont) lv_obj_add_flag(alert_cont, LV_OBJ_FLAG_HIDDEN);
     if (rain_wrap) lv_obj_add_flag(rain_wrap, LV_OBJ_FLAG_HIDDEN);
+    if (info_wrap) lv_obj_add_flag(info_wrap, LV_OBJ_FLAG_HIDDEN);
 
     static_plan_l1 = plan_l1;
     static_plan_l2 = plan_l2;
     static_lbl_planning = lbl_planning;
     static_is_showing_temp = &is_showing_temp;
+    static_forecast_page_restore = forecast_page;
+    static_page_title_wrap = page_title_wrap;
+    static_lbl_page_title = lbl_page_title;
+    static_planning_wrap = planning_wrap;
+    static_rain_wrap = rain_wrap;
+    static_alert_cont = alert_cont;
+    static_info_wrap = info_wrap;
 
     if (planning_restore_timer != nullptr) {
         lv_timer_del(planning_restore_timer);

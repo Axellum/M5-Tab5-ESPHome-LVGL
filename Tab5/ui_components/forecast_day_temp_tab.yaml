@@ -31,4 +31,5 @@ obj:
               if (page > 4) page = 4;
               int jour = (page - 2) * 5 + ${idx};
               show_temporary_planning(jour, id(lbl_planning_text), id(planning_wrapper), id(alert_container), id(rain_wrapper),
+                                      id(info_wrapper), id(page_title_wrapper), id(lbl_page_title), id(forecast_page_index),
                                       id(plan_ligne_1), id(plan_ligne_2), id(is_showing_temp_planning), id(current_central_panel));
