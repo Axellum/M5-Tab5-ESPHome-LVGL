@@ -8,6 +8,15 @@ This folder contains the Home Assistant side of the Tab5 integration: automation
 
 These are **example files** — they reflect the author's own Home Assistant setup. You will need to adapt entity names to match your own installation.
 
+> **Production Freebox (Axel) — ne pas copier tel quel dans `packages/`**
+>
+> Si `configuration.yaml` charge déjà `automation: !include automations.yaml`, `script: !include scripts.yaml` et `template: … !include_dir_merge_list template_sensors`, ces trois fichiers doivent être **fusionnés / inclus à la racine**, pas déposés dans `packages/tab5/`.
+>
+> Un package HA (`!include_dir_named packages`) exige un **dictionnaire** avec des clés d'intégration (`automation:`, `script:`, `template:`). Copier une liste d'automations ou des scripts « nus » dans `packages/` provoque exactement les avertissements :
+> `expected a dictionary` et `Integration 'tab5_volet_action' not found`.
+>
+> Seul `packages/tab5_health.yaml` est au format package valide. Le script `scripts/tab5_ha_sync/sync_to_freebox.ps1` ne copie vers `packages/tab5/` **que** avec `-CopyPackages` (déconseillé en prod).
+
 ---
 
 ## Files
@@ -58,6 +67,30 @@ This runs on the HA side rather than on the device to keep the C++ code simple. 
 
 ### `template_sensors_examples.yaml`
 Generic placeholder version.
+
+---
+
+### `packages/tab5_health.yaml`
+Health-monitoring package: three guard automations that alert when the push pipeline silently degrades. Because the Tab5 is push-only (see `docs/decisions/0001-push-only-zero-polling.md`), a stale screen raises no error on its own — these automations are the HA-side safety net.
+
+What it watches:
+- **`input_boolean.is_primary_active` OFF for more than 5 min** — this boolean gates every push automation; stuck OFF means the screen silently freezes (a real incident, see `docs/troubleshooting.md`)
+- **`sensor.tab5_uptime` decreasing** — unexpected device reboot (brownout, firmware crash, power cut); a plain Wi-Fi drop without reboot does *not* trigger it
+- **`HA API Status` off/unavailable for more than 2 min** — device unreachable, every push fails during the outage
+
+Design notes:
+- Every notification action carries `continue_on_error: true` so one failing channel doesn't block the others
+- No template uses raw `now()` — detection relies on trigger `for:` windows and `trigger.from_state` / `trigger.to_state`
+- Numeric comparisons use `| float(0)` defaults (boot safety)
+
+It's a self-contained HA *package*; enable packages in `configuration.yaml` first:
+
+```yaml
+homeassistant:
+  packages: !include_dir_named packages
+```
+
+Then adapt the entity names at the top of the file (`notify.notify`, the `tab5_ha_hmi` entity prefix, and uncomment the `input_boolean` block if the helper doesn't exist in your setup).
 
 ---
 
@@ -152,6 +185,30 @@ Le principal génère une courte phrase météo depuis les prévisions de pluie 
 - `"Averses possibles"` pour les conditions incertaines
 
 Ça tourne côté HA plutôt que sur l'appareil pour garder le code C++ simple. Ajoutez-le à votre bloc `template:` dans `configuration.yaml` ou dans un fichier `template.yaml` dédié.
+
+---
+
+### `packages/tab5_health.yaml`
+Package de surveillance santé : trois automations de garde qui alertent quand le pipeline de push se dégrade silencieusement. Le Tab5 étant push-only (voir `docs/decisions/0001-push-only-zero-polling.md`), un écran figé ne lève aucune erreur par lui-même — ces automations sont le filet de sécurité côté HA.
+
+Ce qui est surveillé :
+- **`input_boolean.is_primary_active` OFF depuis plus de 5 min** — ce booléen conditionne toutes les automations de push ; bloqué sur OFF, l'écran se fige silencieusement (incident réel, voir `docs/troubleshooting.md`)
+- **`sensor.tab5_uptime` qui redescend** — reboot inattendu de l'appareil (brownout, crash firmware, coupure d'alimentation) ; une simple coupure Wi-Fi sans reboot ne déclenche *pas*
+- **`HA API Status` off/unavailable depuis plus de 2 min** — appareil injoignable, toutes les poussées échouent pendant la coupure
+
+Notes de conception :
+- Chaque action de notification porte `continue_on_error: true` : un canal en échec ne bloque pas les autres
+- Aucun template n'utilise `now()` brut — la détection repose sur les fenêtres `for:` des déclencheurs et sur `trigger.from_state` / `trigger.to_state`
+- Les comparaisons numériques utilisent des défauts `| float(0)` (sécurité au boot)
+
+C'est un *package* HA autonome ; activez d'abord les packages dans `configuration.yaml` :
+
+```yaml
+homeassistant:
+  packages: !include_dir_named packages
+```
+
+Puis adaptez les noms d'entités en tête de fichier (`notify.notify`, le préfixe d'entité `tab5_ha_hmi`, et décommentez le bloc `input_boolean` si le helper n'existe pas chez vous).
 
 ---
 

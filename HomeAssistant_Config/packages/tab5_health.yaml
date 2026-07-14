@@ -1,0 +1,168 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_health.yaml
+# @role Package HA de surveillance santé du Tab5 (exemple public — adapter les
+#       noms d'entités à votre installation). Trois gardes : instance primaire
+#       bloquée OFF, reboot inattendu (uptime qui redescend), API ESPHome
+#       déconnectée.
+# @architecture_constraint L'écran est push-only (cf. docs/decisions/0001) : si
+#       les poussées s'arrêtent, l'écran se fige SILENCIEUSEMENT, sans erreur HA
+#       visible. Ces automations sont le filet de sécurité côté HA — il n'y a
+#       volontairement AUCUN fallback pull côté firmware.
+# @ai_warning Jamais de now() brut dans les templates (cf. l'en-tête
+#       d'automations_tab5.yaml) : toute la détection repose sur les fenêtres
+#       `for:` des déclencheurs et sur trigger.from_state / trigger.to_state.
+# @ai_instruction Chaque action de notification porte continue_on_error: true :
+#       l'échec d'un canal (téléphone hors ligne, service notify mal nommé) ne
+#       doit pas empêcher les autres canaux de partir.
+# @install Nécessite l'activation des packages dans configuration.yaml :
+#         homeassistant:
+#           packages: !include_dir_named packages
+# ============================================================================
+#
+# À adapter chez vous :
+#   - notify.notify → votre service réel (ex : notify.mobile_app_votre_telephone)
+#   - binary_sensor.tab5_ha_hmi_ha_api_status et sensor.tab5_uptime → vérifier
+#     l'entity_id exact dans Outils de développement → États (le préfixe dépend
+#     du nom d'appareil ESPHome, ici `tab5-ha-hmi`)
+#   - input_boolean.is_primary_active : décommenter le bloc ci-dessous si le
+#     helper n'existe pas déjà dans votre installation.
+
+# input_boolean:
+#   is_primary_active:
+#     name: "Instance HA primaire active"
+#     icon: mdi:home-assistant
+
+automation:
+  # ==========================================================================
+  # (a) Instance primaire inactive — is_primary_active OFF depuis plus de 5 min
+  # --------------------------------------------------------------------------
+  # Ce booléen conditionne toutes les automations de poussée vers l'écran.
+  # S'il reste OFF, plus rien n'est envoyé et l'écran se fige sans erreur
+  # (incident réel documenté dans docs/troubleshooting.md).
+  # NB : le compteur `for:` repart de zéro si HA redémarre pendant la fenêtre —
+  # limitation acceptée pour garder l'exemple événementiel (pas de polling).
+  # ==========================================================================
+  - id: tab5_health_primary_off_5min
+    alias: "Tab5 Santé — is_primary_active OFF depuis 5 min"
+    description: >-
+      Alerte si le booléen qui autorise les poussées vers le Tab5 reste OFF
+      plus de 5 minutes : l'écran ne reçoit plus aucune donnée.
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: input_boolean.is_primary_active
+        to: "off"
+        for: "00:05:00"
+    action:
+      - action: persistent_notification.create
+        continue_on_error: true
+        data:
+          notification_id: tab5_health_primary
+          title: "⚠️ Tab5 : instance primaire inactive"
+          message: >-
+            `input_boolean.is_primary_active` est OFF depuis plus de 5 minutes :
+            plus aucune donnée n'est poussée vers l'écran (météo, planning et
+            capteurs figés). Le remettre sur ON, ou vérifier l'automation qui
+            le pilote.
+      - action: notify.notify
+        continue_on_error: true
+        data:
+          title: "⚠️ Tab5 : instance primaire inactive"
+          message: >-
+            is_primary_active OFF depuis plus de 5 min — l'écran Tab5 ne reçoit
+            plus rien.
+
+  # ==========================================================================
+  # (b) Reboot inattendu — sensor.tab5_uptime redescend
+  # --------------------------------------------------------------------------
+  # Détection sans now() ni polling, via trigger.from_state / to_state :
+  #   1. l'uptime numérique diminue (reboot rapide, sans passage par
+  #      `unavailable`) ;
+  #   2. retour d'`unavailable`/`unknown` avec un uptime < 5 min (reboot
+  #      pendant la coupure). Un simple retour Wi-Fi SANS reboot revient avec
+  #      un uptime élevé et ne déclenche donc pas.
+  # Les `| float(0)` sont obligatoires (sécurité au boot, capteur pas encore
+  # initialisé — cf. règles HA du projet).
+  # ==========================================================================
+  - id: tab5_health_unexpected_reboot
+    alias: "Tab5 Santé — reboot inattendu (uptime en baisse)"
+    description: >-
+      Alerte quand l'uptime du Tab5 redescend : l'appareil a redémarré de
+      manière inattendue (brownout, crash firmware, coupure d'alimentation).
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.tab5_uptime
+    condition:
+      - condition: template
+        value_template: >-
+          {% set to_num = trigger.to_state is not none
+             and trigger.to_state.state not in ['unavailable', 'unknown'] %}
+          {% set from_num = trigger.from_state is not none
+             and trigger.from_state.state not in ['unavailable', 'unknown'] %}
+          {{ to_num and (
+               (from_num and trigger.to_state.state | float(0)
+                            < trigger.from_state.state | float(0))
+               or (not from_num and trigger.to_state.state | float(0) < 300)
+             ) }}
+    action:
+      - action: persistent_notification.create
+        continue_on_error: true
+        data:
+          notification_id: tab5_health_reboot
+          title: "⚠️ Tab5 : reboot inattendu détecté"
+          message: >-
+            L'uptime du Tab5 est retombé à
+            {{ trigger.to_state.state | float(0) | round(0) }} s
+            (précédent : {{ trigger.from_state.state
+                            if trigger.from_state is not none else 'inconnu' }}).
+            L'appareil a redémarré — vérifier l'alimentation et les logs ESPHome.
+      - action: notify.notify
+        continue_on_error: true
+        data:
+          title: "⚠️ Tab5 : reboot inattendu"
+          message: >-
+            Uptime retombé à
+            {{ trigger.to_state.state | float(0) | round(0) }} s — vérifier
+            alimentation / logs ESPHome.
+
+  # ==========================================================================
+  # (c) API ESPHome déconnectée — HA API Status off/unavailable > 2 min
+  # --------------------------------------------------------------------------
+  # Le capteur `platform: status` passe à `off` quand la connexion API native
+  # tombe ; selon les versions/configurations, l'intégration ESPHome peut
+  # aussi marquer l'entité `unavailable` quand l'appareil disparaît du réseau.
+  # Le déclencheur couvre les deux cas.
+  # ==========================================================================
+  - id: tab5_health_api_off_2min
+    alias: "Tab5 Santé — API ESPHome déconnectée depuis 2 min"
+    description: >-
+      Alerte si le Tab5 est déconnecté de l'API native Home Assistant depuis
+      plus de 2 minutes : toutes les poussées échouent pendant ce temps.
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.tab5_ha_hmi_ha_api_status
+        to:
+          - "off"
+          - "unavailable"
+        for: "00:02:00"
+    action:
+      - action: persistent_notification.create
+        continue_on_error: true
+        data:
+          notification_id: tab5_health_api
+          title: "⚠️ Tab5 : API Home Assistant déconnectée"
+          message: >-
+            Le Tab5 est déconnecté de l'API native depuis plus de 2 minutes
+            (état : {{ trigger.to_state.state }}). Vérifier le Wi-Fi,
+            l'alimentation, ou si l'appareil a planté. Toutes les poussées
+            vers l'écran échouent pendant la coupure.
+      - action: notify.notify
+        continue_on_error: true
+        data:
+          title: "⚠️ Tab5 : API déconnectée"
+          message: >-
+            Tab5 hors ligne (API ESPHome) depuis plus de 2 min — vérifier
+            Wi-Fi / alimentation.
