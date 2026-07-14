@@ -128,7 +128,8 @@ Full step-by-step: [`docs/installation.md`](docs/installation.md)
 ├── Tab5/
 │   ├── user_entities.example.yaml  # Public template (copy → user_entities.yaml)
 │   ├── tab5-hardware.yaml    # Display, touch, I2C, SPI, DAC
-│   ├── tab5-sensors.yaml     # Physical sensors (temp, brightness, plant moisture)
+│   ├── tab5-sensors-diagnostics.yaml  # System entities (Wi-Fi, power, uptime, RAM)
+│   ├── tab5-sensors-domotique.yaml    # HA entities (plants, lights, temps, audio)
 │   ├── tab5-api-logic.yaml   # HA service handlers + C++ lambdas
 │   ├── tab5-styles.yaml      # Global LVGL style definitions
 │   ├── tab5-lvgl.yaml        # UI layout — screens, widgets, icons

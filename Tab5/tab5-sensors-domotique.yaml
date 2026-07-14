@@ -1,7 +1,9 @@
 # ============================================================================
 # [AI-CONTEXT]
-# @file tab5-sensors.yaml
-# @role Déclaration des entités ESPHome (HA sensors, system sensors).
+# @file tab5-sensors-domotique.yaml
+# @role Entités domotique poussées par HA : plantes (moisture), lumières,
+#       températures/humidité, batterie téléphone, présence PC, audio
+#       (ampli, jack, wake word).
 # @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
 #                         Les blocs on_value: doivent se contenter d'appeler des fonctions 
 #                         C++ depuis tab5_custom.cpp (ex: update_light_card_ui(...) ).
@@ -9,62 +11,10 @@
 # @ai_instruction Si l'utilisateur demande d'ajouter un nouveau capteur de température, 
 #                 génère l'entité platform: homeassistant, et dans on_value, appelle 
 #                 simplement update_temp_ui(id(mon_label), x); Ne génère pas de lv_label_set_text ici.
+#                 (Scission de tab5-sensors.yaml le 14/07/2026 ; entités
+#                 système dans tab5-sensors-diagnostics.yaml.)
 # ============================================================================
-wifi:
-
-  ssid: !secret wifi_ssid
-
-  password: !secret wifi_password
-
-  power_save_mode: NONE
-
-  # Point d'accès de secours
-
-  ap:
-
-    ssid: "Tab5 Fallback AP"
-
-    password: !secret wifi_ap_password
-
 switch:
-
-  - platform: gpio
-
-    id: wifi_power
-
-    name: "WiFi Power"
-
-    pin:
-
-      pi4ioe5v6408: pi4ioe2
-
-      number: 0
-
-    restore_mode: ALWAYS_ON
-
-  - platform: gpio
-
-    id: usb_5v_power
-
-    name: "USB Power"
-
-    pin:
-
-      pi4ioe5v6408: pi4ioe2
-
-      number: 3
-
-    restore_mode: ALWAYS_ON
-
-  - platform: gpio
-
-    id: wifi_antenna_int_ext
-
-    pin:
-
-      pi4ioe5v6408: pi4ioe1
-
-      number: 0
 
   - platform: gpio
 
@@ -80,19 +30,6 @@ switch:
 
     restore_mode: DISABLED
 
-  - platform: gpio
-
-    id: external_5v_power
-
-    name: "External 5V Power"
-
-    pin:
-
-      pi4ioe5v6408: pi4ioe1
-
-      number: 2
-
-    restore_mode: ALWAYS_ON
   - platform: template
     name: "Tab5 Wake Word Active"
     id: tab5_wake_word_active
@@ -135,28 +72,6 @@ binary_sensor:
       pi4ioe5v6408: pi4ioe1
 
       number: 7
-
-  - platform: status
-
-    name: "HA API Status"
-
-    id: status_ha
-
-    on_state:
-
-      - lambda: |-
-
-          if (id(icon_ha) == nullptr) return;
-
-          if(x) {
-
-            lv_obj_set_style_text_color(id(icon_ha), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-
-          } else {
-
-            lv_obj_set_style_text_color(id(icon_ha), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-
-          }
 
 text_sensor:
 
@@ -222,20 +137,6 @@ text_sensor:
       - lambda: |-
           update_light_card_ui(id(icon_card_led_j4), id(icon_card_light_j4), id(icon_sw4), id(lbl_sw4_state),
               id(btn_light_power_icon), id(current_light_entity), "${entity_light_bureau}", x == "on");
-
-  - platform: wifi_info
-
-    ip_address:
-
-      id: sys_wifi_ip
-
-      name: "Tab5 IP"
-
-    ssid:
-
-      id: sys_wifi_ssid
-
-      name: "Tab5 SSID"
 
 sensor:
 
@@ -367,156 +268,3 @@ sensor:
     id: moisture_5
     entity_id: ${entity_plante_5}
     on_value: *moisture_on_value
-
-
-  - platform: uptime
-
-    id: sys_uptime
-
-    name: "Tab5 Uptime"
-
-    update_interval: 60s
-
-    on_value:
-
-      - lambda: |-
-
-          if (!is_console_layer_visible(id(layer_console_sys))) return;
-
-          update_console_uptime_label(id(lbl_sys_uptime_val), x);
-
-  - platform: wifi_signal
-
-    id: sys_wifi_rssi
-
-    name: "Tab5 WiFi Signal"
-
-    update_interval: 60s
-
-    on_value:
-
-      - lambda: |-
-
-          if (!is_console_layer_visible(id(layer_console_sys))) return;
-
-          update_console_rssi_label(id(lbl_sys_rssi_val), x);
-
-  - platform: internal_temperature
-
-    id: sys_core_temp
-
-    name: "Tab5 Core Temp"
-
-    update_interval: 60s
-
-    on_value:
-
-      - lambda: |-
-
-          if (!is_console_layer_visible(id(layer_console_sys))) return;
-
-          update_console_temp_label(id(lbl_sys_temp_val), x);
-
-  - platform: debug
-
-    free:
-
-      id: sys_free_heap
-
-      name: "Tab5 Free Ram"
-
-    loop_time:
-
-      id: sys_loop_time
-
-      name: "Tab5 Loop Time"
-
-select:
-  - platform: template
-
-    id: wifi_antenna_select
-
-    name: "WiFi Antenna"
-
-    options:
-
-      - "Internal"
-
-      - "External"
-
-    optimistic: true
-
-    on_value:
-
-      - if:
-
-          condition:
-
-            lambda: return i == 0;
-
-          then:
-
-            - switch.turn_off: wifi_antenna_int_ext
-
-          else:
-
-            - switch.turn_on: wifi_antenna_int_ext
-
-time:
-
-  - platform: sntp
-
-    id: sntp_time
-
-    timezone: Europe/Paris
-
-    on_time:
-
-      - seconds: 0
-
-        minutes: "*"
-
-        then:
-
-          - lambda: |-
-              auto t_now = id(sntp_time).now();
-              if (t_now.is_valid()) {
-                update_clock_date_ui(id(lbl_time), id(lbl_date),
-                    t_now.hour, t_now.minute, t_now.day_of_week, t_now.day_of_month, t_now.month);
-              }
-
-interval:
-
-  - interval: 5s
-
-    then:
-
-      - if:
-
-          condition:
-
-            wifi.connected:
-
-          then:
-
-            - lambda: 'lv_obj_set_style_text_color(id(icon_wifi), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);'
-
-          else:
-
-            - lambda: 'lv_obj_set_style_text_color(id(icon_wifi), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);'
-
-  - interval: 2s
-
-    then:
-
-      - lambda: |-
-
-          // Garde #T222 : pas de LVGL si la console est masquee.
-          if (is_console_layer_visible(id(layer_console_sys))) {
-             update_console_diagnostics_ui(id(lbl_sys_sram_val), id(bar_sys_sram),
-                 id(lbl_sys_psram_val), id(bar_sys_psram), id(lbl_sys_frag_val), id(lbl_sys_flash_val),
-                 id(sys_loop_time).has_state(), id(sys_loop_time).state, id(lbl_sys_loop_val),
-                 id(sys_wifi_ip).has_state(), id(sys_wifi_ip).state.c_str(), id(lbl_sys_ip_val),
-                 id(sys_wifi_ssid).has_state(), id(sys_wifi_ssid).state.c_str(), id(lbl_sys_ssid_val));
-          }
-

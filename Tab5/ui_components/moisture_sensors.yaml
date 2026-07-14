@@ -8,7 +8,7 @@
 #                          `sort_and_update_moisture_slots()` (tab5_custom.cpp), appelée à
 #                          chaque mise à jour de n'importe lequel des 5 capteurs
 #                          (`moisture_1`..`moisture_5`, ancre YAML `&moisture_on_value` dans
-#                          tab5-sensors.yaml). Ne jamais assigner icône/texte/couleur ici :
+#                          tab5-sensors-domotique.yaml). Ne jamais assigner icône/texte/couleur ici :
 #                          quel capteur physique tombe dans quel slot change à chaque update.
 # ============================================================================
 obj:

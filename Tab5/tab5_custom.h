@@ -105,7 +105,7 @@ void update_clock_date_ui(lv_obj_t* lbl_time, lv_obj_t* lbl_date,
     int hour, int minute, int day_of_week, int day_of_month, int month);
 
 // Met a jour un label de temperature (texte + couleur gradient). Factorise
-// depuis temp_serre/temp_salon (tab5-sensors.yaml, Phase 3, #T164).
+// depuis temp_serre/temp_salon (tab5-sensors-domotique.yaml, Phase 3, #T164).
 void update_temp_ui(lv_obj_t* label, float x);
 
 // Garde #T222 : ne touche LVGL que si l'overlay console est affiche.
@@ -119,7 +119,7 @@ void refresh_console_status_row_ui(lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_
     bool has_uptime, float uptime_s, bool has_rssi, float rssi_dbm, bool has_temp, float core_temp_c);
 
 // Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).
-// Factorise depuis l'interval 2s de tab5-sensors.yaml (Phase 3, #T164).
+// Factorise depuis l'interval 2s de tab5-sensors-diagnostics.yaml (Phase 3, #T164).
 void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
     lv_obj_t* lbl_psram, lv_obj_t* bar_psram, lv_obj_t* lbl_frag, lv_obj_t* lbl_flash,
     bool loop_time_has_state, float loop_time, lv_obj_t* lbl_loop,

@@ -93,7 +93,8 @@ interval:
 
 packages:
   tab5_hardware: !include Tab5/tab5-hardware.yaml
-  tab5_sensors: !include Tab5/tab5-sensors.yaml
+  tab5_sensors_diagnostics: !include Tab5/tab5-sensors-diagnostics.yaml
+  tab5_sensors_domotique: !include Tab5/tab5-sensors-domotique.yaml
   tab5_api_logic: !include Tab5/tab5-api-logic.yaml
   tab5_styles: !include Tab5/tab5-styles.yaml
   tab5_globals: !include Tab5/tab5-globals.yaml

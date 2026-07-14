@@ -29,7 +29,8 @@ The root file does three things:
 ```yaml
 packages:
   tab5_hardware:   !include Tab5/tab5-hardware.yaml
-  tab5_sensors:    !include Tab5/tab5-sensors.yaml
+  tab5_sensors_diagnostics: !include Tab5/tab5-sensors-diagnostics.yaml
+  tab5_sensors_domotique: !include Tab5/tab5-sensors-domotique.yaml
   tab5_api_logic:  !include Tab5/tab5-api-logic.yaml
   tab5_styles:     !include Tab5/tab5-styles.yaml
   tab5_globals:    !include Tab5/tab5-globals.yaml
@@ -53,15 +54,21 @@ Low-level hardware configuration:
 
 ---
 
-### `tab5-sensors.yaml`
-All sensor entities exposed to Home Assistant:
+### `tab5-sensors-diagnostics.yaml`
+System and network entities:
+- `wifi:` block, antenna select, GPIO power switches (Wi-Fi/USB/external 5V)
 - Internal ESP32-P4 temperature
-- Ambient light level (for auto-brightness)
-- Plant moisture sensors (up to 5 BLE plant monitors)
-- Room temperature & humidity sensors
-- Uptime, Wi-Fi signal strength
+- Uptime, Wi-Fi signal strength, IP/SSID, HA API status
+- Free RAM / loop time (`debug`), SNTP clock, console refresh intervals
 
-This file only declares sensors. No UI logic lives here.
+### `tab5-sensors-domotique.yaml`
+Home-automation entities pushed by Home Assistant:
+- Plant moisture sensors (up to 5 BLE plant monitors)
+- Room & greenhouse temperature/humidity sensors
+- Light/PC state mirrors, phone battery
+- Audio: speaker amp switch, headphone jack, wake-word toggle
+
+These files only declare entities. No UI logic lives here.
 
 ---
 
@@ -231,15 +238,21 @@ Configuration matérielle bas niveau :
 
 ---
 
-### `tab5-sensors.yaml`
-Toutes les entités capteurs exposées à Home Assistant :
+### `tab5-sensors-diagnostics.yaml`
+Entités système et réseau :
+- Bloc `wifi:`, select antenne, switchs d'alimentation GPIO (Wi-Fi/USB/5V externe)
 - Température interne ESP32-P4
-- Niveau de luminosité ambiante (pour auto-luminosité)
-- Capteurs humidité plantes (jusqu'à 5 moniteurs BLE)
-- Température & humidité des pièces
-- Uptime, signal Wi-Fi
+- Uptime, signal Wi-Fi, IP/SSID, statut API HA
+- RAM libre / loop time (`debug`), horloge SNTP, intervals de la console
 
-Ce fichier ne déclare que des capteurs. Aucune logique UI ici.
+### `tab5-sensors-domotique.yaml`
+Entités domotique poussées par Home Assistant :
+- Capteurs humidité plantes (jusqu'à 5 moniteurs BLE)
+- Température & humidité des pièces et de la serre
+- Miroirs d'état lumières/PC, batterie téléphone
+- Audio : ampli, détection jack, switch wake word
+
+Ces fichiers ne déclarent que des entités. Aucune logique UI ici.
 
 ---
 

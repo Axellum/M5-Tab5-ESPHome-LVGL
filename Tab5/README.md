@@ -31,8 +31,11 @@ If you add a genuinely new architectural constraint or a non-obvious decision wh
 ### `tab5-hardware.yaml`
 Low-level hardware: display/touch buses, ES8388 DAC I2C init, speaker/mic I2S, PI4IOE5V6408 GPIO expander (Wi-Fi power/antenna switches), `ota:` (password-protected, see `secrets.yaml`).
 
-### `tab5-sensors.yaml`
-All `sensor`/`text_sensor`/`binary_sensor`/`switch` entities exposed over the ESPHome API: system diagnostics (RAM/PSRAM/uptime/Wi-Fi), plant moisture (5×), light/PC/volet state mirrors, volume slider wiring.
+### `tab5-sensors-diagnostics.yaml`
+System/network entities: the `wifi:` block, GPIO power switches (Wi-Fi, USB, external 5V, antenna select), HA API status, IP/SSID, uptime, Wi-Fi RSSI, core temperature, free RAM/loop time (`debug`), SNTP clock and the status-bar/console refresh `interval:`s.
+
+### `tab5-sensors-domotique.yaml`
+Home-automation entities pushed by HA over the ESPHome API: plant moisture (5×, dynamically sorted), light/PC state mirrors, phone battery, room & greenhouse temperature/humidity, audio (speaker amp, headphone jack, wake-word switch).
 
 ### `tab5-api-logic.yaml`
 The `api: services:` block — the actual contract with Home Assistant. Each `tab5_maj_*` service receives a payload from an HA automation and calls into `tab5_custom.cpp` (via lambdas) to update the LVGL widgets. See the service table below.
