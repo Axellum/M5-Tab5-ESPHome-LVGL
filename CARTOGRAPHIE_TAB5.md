@@ -12,7 +12,7 @@ Repo Git distinct : `Axellum/M5-Tab5-ESPHome-LVGL` (dossier local `00ProjetTab/`
 
 ## 1. Vue d'ensemble en une phrase
 
-Un tableau de bord domotique 60 FPS + satellite vocal local tournant **entièrement en firmware C++/LVGL** sur un M5Stack Tab5 V2 (ESP32-P4), architecture **YAML modulaire par domaine** (7 packages + `ui_components/`), **push-only** depuis Home Assistant (zéro polling), avec toute la logique non-triviale centralisée dans deux fichiers C++ (`tab5_custom.h/.cpp`).
+Un tableau de bord domotique 60 FPS + satellite vocal local tournant **entièrement en firmware C++/LVGL** sur un M5Stack Tab5 V2 (ESP32-P4), architecture **YAML modulaire par domaine** (8 packages + `ui_components/`), **push-only** depuis Home Assistant (zéro polling), avec toute la logique non-triviale centralisée dans deux fichiers C++ (`tab5_custom.h/.cpp`).
 
 ---
 
@@ -24,7 +24,8 @@ graph TD
 
     subgraph PKG["Packages ESPHome (Tab5/*.yaml)"]
         HW["tab5-hardware.yaml<br/>306 lignes<br/>display/touch/i2c/audio/esp32_hosted"]
-        SENS["tab5-sensors.yaml<br/>670 lignes (LE PLUS GROS)<br/>wifi:/switch:/sensor:/text_sensor:/select:/time:"]
+        SENSD["tab5-sensors-diagnostics.yaml<br/>278 lignes<br/>wifi:/alim GPIO/status_ha/uptime/RAM/loop time/select:/time:/interval:"]
+        SENSO["tab5-sensors-domotique.yaml<br/>270 lignes<br/>plantes/lumières/PC/températures/batterie/audio"]
         API["tab5-api-logic.yaml<br/>466 lignes<br/>api: services: (contrat HA)"]
         STY["tab5-styles.yaml<br/>304 lignes<br/>color:/font:/lvgl: style_definitions"]
         GLOB["tab5-globals.yaml<br/>129 lignes<br/>globals: + rotateur carte centrale (8s)"]
@@ -71,7 +72,8 @@ graph TD
     end
 
     ENTRY -->|packages:| HW
-    ENTRY -->|packages:| SENS
+    ENTRY -->|packages:| SENSD
+    ENTRY -->|packages:| SENSO
     ENTRY -->|packages:| API
     ENTRY -->|packages:| STY
     ENTRY -->|packages:| GLOB
@@ -109,7 +111,8 @@ graph TD
 
     LVGL -->|lambdas appellent| CFILE
     API -->|lambdas appellent| CFILE
-    SENS -->|lambdas appellent| CFILE
+    SENSD -->|lambdas appellent| CFILE
+    SENSO -->|lambdas appellent| CFILE
     UI -->|lambdas appellent| CFILE
     GLOB -->|lambda transition_widgets| CFILE
 
@@ -125,7 +128,7 @@ graph TD
 
 | Fichier | Rôle exact | Gère | Dépend de |
 |---|---|---|---|
-| `tab5-ha-hmi.yaml` (146L) | Point d'entrée ESPHome. `substitutions: !include Tab5/user_entities.yaml` (gitignoré, modèle `user_entities.example.yaml`), séquence `on_boot:` en 2 priorités (700 puis 600), `packages:` qui importe les 7 fichiers `Tab5/*.yaml`, `esphome: includes:` pour le C++. | Boot, orchestration des packages | `Tab5/user_entities.yaml`, `Tab5/tab5_custom.h/.cpp`, tous les `Tab5/*.yaml` |
+| `tab5-ha-hmi.yaml` (146L) | Point d'entrée ESPHome. `substitutions: !include Tab5/user_entities.yaml` (gitignoré, modèle `user_entities.example.yaml`), séquence `on_boot:` en 2 priorités (700 puis 600), `packages:` qui importe les 8 fichiers `Tab5/*.yaml`, `esphome: includes:` pour le C++. | Boot, orchestration des packages | `Tab5/user_entities.yaml`, `Tab5/tab5_custom.h/.cpp`, tous les `Tab5/*.yaml` |
 
 Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700: lambda: delay(1000);` est la **cause racine confirmée** (06/07/2026, 5 tests OTA avec Axel présent) du bug historique « écran noir après reboot logiciel » — le `reset_pin` de l'écran passe par le GPIO expander I2C `PI4IOE5V6408`, qui a besoin de temps pour se stabiliser après boot avant que le reset ait un effet fiable. Documenté en détail dans `tab5-hardware.yaml:33-69`.
 
@@ -134,7 +137,8 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 | Fichier | Lignes | Rôle exact | Gère | Dépend de |
 |---|---|---|---|---|
 | `tab5-hardware.yaml` | 306 | Bas niveau : bus display/touch, init I2C DAC ES8388, I2S haut-parleur/micro, expander GPIO PI4IOE5V6408, `esp32_hosted` (co-proc WiFi ESP32-C6 via SPI), `micro_wake_word`/`voice_assistant`, `ota:` | Hardware, audio, wake-word, OTA | `external_components: my_components/st7123` |
-| `tab5-sensors.yaml` | 670 (**le plus gros fichier du projet**) | `wifi:`, tous les `sensor:`/`text_sensor:`/`binary_sensor:`/`switch:`/`select:` exposés à l'API : diagnostics système (RAM/PSRAM/uptime/WiFi), humidité 5 plantes (triées dynamiquement), miroirs d'état lumière/PC/volet, wiring volume | Réseau WiFi, capteurs physiques et miroirs d'entités HA | `tab5_custom.h` (fonctions `get_temperature_color`, `get_humidity_color`, `sort_and_update_moisture_slots`, `update_light_card_ui`) |
+| `tab5-sensors-diagnostics.yaml` | 278 | `wifi:`, switchs d'alim GPIO (WiFi/USB/5V ext/antenne), statut API HA, IP/SSID, uptime, RSSI, température coeur, RAM libre/loop time (`debug`), select antenne, horloge SNTP, `interval:` icône WiFi 5s + console 2s | Réseau WiFi, alimentation, diagnostics système | `tab5_custom.h` (`update_console_*`, `update_clock_date_ui`, `is_console_layer_visible`) |
+| `tab5-sensors-domotique.yaml` | 270 | Miroirs d'entités HA : humidité 5 plantes (triées dynamiquement), lumières chambre/salon/LED, présence PC, batterie téléphone, températures/humidité salon/chambre/serre, audio (ampli, jack, wake word) | Capteurs domotique et miroirs d'entités HA | `tab5_custom.h` (`get_temperature_color`, `get_humidity_color`, `sort_and_update_moisture_slots`, `update_light_card_ui`, `update_temp_ui`) |
 | `tab5-api-logic.yaml` | 466 | Le contrat réel avec HA : bloc `api: services:`. Chaque service `tab5_maj_*` reçoit un payload d'une automation HA et appelle une fonction `tab5_custom.cpp` via lambda | Contrat API HA↔Tab5 (clim, volet, planning, alertes météo France, prévisions bulk, pluie 1h) | `tab5_custom.h/.cpp`, IDs LVGL définis dans `tab5-lvgl.yaml`/`ui_components/*.yaml` |
 | `tab5-styles.yaml` | 304 | Thème "Dark Mode Slate" (glassmorphism) : tokens `color:`, déclarations `font:` (Roboto + MDI + police météo custom), `lvgl: style_definitions:` | Palette visuelle, typographie, styles réutilisables | Polices `Tab5/materialdesignicons-webfont.ttf`, `Tab5/IconeMeteo.ttf` |
 | `tab5-globals.yaml` | 129 | Tout l'état partagé entre fichiers (`globals:`) + l'`interval: 8s` qui fait tourner la carte centrale (planning/pluie/alertes) | État global partagé, rotateur carte centrale | `tab5_custom.cpp` (`transition_widgets()`) |
@@ -148,7 +152,7 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 | `tab5_custom.h` | 128 | Déclarations, structs (`DayForecastData`, `HourForecastData`, `WeatherHourSlot`, `WeatherDaySlot`, `MoistureSlotUI`), namespace `MeteoIcon::` (codes UTF-8 police météo), namespace `UIColor::` (palette sémantique — **miroir exact des tokens `color:` YAML, à garder synchro manuellement**) | — |
 | `tab5_custom.cpp` | 520 | Toute la logique LVGL non-triviale, gardée contre les `lv_obj_t*` nuls (LVGL pas encore initialisé) | `update_meteo_icon()` (icônes météo double-couche), `get_humidity_color()`/`get_temperature_color()` (gradients colorimétriques continus), `parse_and_update_heures_bulk()`/`parse_and_update_jours_bulk()` (parsing `strtok_r` in-place, garde OOM à 2048 octets), `refresh_daily_forecast()`/`refresh_hourly_forecast()`, `update_light_card_ui()` (factorisée #T164, ex-triplée), `sort_and_update_moisture_slots()` (tri bubble 5→4 slots), `transition_widgets()` (animation glissement+fondu 450ms) |
 
-**Règle d'architecture vérifiée et respectée dans le code** (`Tab5/README.md:44`) : les `sensor:`/`text_sensor:` YAML ne manipulent jamais `lv_obj_*` directement — ils appellent toujours une fonction `tab5_custom.cpp`. Confirmé par lecture de `tab5-sensors.yaml` (tous les `on_value:` appellent une fonction C++ nommée, sauf les cas triviaux de couleur d'icône à 2-3 lignes qui restent inline).
+**Règle d'architecture vérifiée et respectée dans le code** (`Tab5/README.md:44`) : les `sensor:`/`text_sensor:` YAML ne manipulent jamais `lv_obj_*` directement — ils appellent toujours une fonction `tab5_custom.cpp`. Confirmé par lecture de `tab5-sensors-diagnostics.yaml`/`tab5-sensors-domotique.yaml` (tous les `on_value:` appellent une fonction C++ nommée, sauf les cas triviaux de couleur d'icône à 2-3 lignes qui restent inline).
 
 ### 3.4 Composants UI (`ui_components/*.yaml`, 16 fichiers inclus par `tab5-lvgl.yaml`)
 
@@ -177,7 +181,7 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 |---|---|---|---|
 | `st7123/__init__.py` | 6 | Déclaration du namespace ESPHome + dépendance `i2c` | Actif |
 | `st7123/touchscreen/st7123_touchscreen.cpp/.h` | 100 + 59 | Pilote tactile custom pour le contrôleur I2C ST7123 (jusqu'à 10 points de touche simultanés, registres `REG_GET_TOUCH_INFO`/`REG_GET_TOUCH`) | **Utilisé** — instancié dans `tab5-hardware.yaml:121` (`touchscreen: platform: st7123`) |
-| `st7123/binary_sensor/st7123_button.cpp/.h` | 27 + 28 | Pilote pour un bouton physique lié au même contrôleur | **CODE MORT confirmé par grep** — aucun `binary_sensor: platform: st7123` nulle part dans le YAML actif (`tab5-hardware.yaml`, `tab5-sensors.yaml`). Seule la version obsolète `Tab5_backup_20260525/tab5-hardware.yaml` le référence |
+| `st7123/binary_sensor/st7123_button.cpp/.h` | 27 + 28 | Pilote pour un bouton physique lié au même contrôleur | **CODE MORT confirmé par grep** — aucun `binary_sensor: platform: st7123` nulle part dans le YAML actif (`tab5-hardware.yaml`, `tab5-sensors-*.yaml`). Seule la version obsolète `Tab5_backup_20260525/tab5-hardware.yaml` le référence |
 
 ### 3.6 Côté Home Assistant (`HomeAssistant_Config/`)
 
@@ -222,11 +226,11 @@ Tous ces fichiers sont **gitignorés** (`.gitignore:20-23`) — ce sont les vrai
 
 - ~~**Hex en dur dans `tab5_custom.cpp` / `tab5-api-logic.yaml`**~~ — **RÉSOLU** (07/12/2026) : tokens `UIColor::METEO_*`, `RAIN_*`, `ALERT_DATE_*` ajoutés. Reste : hex dans YAML UI (`light_popup` presets, `tab5-styles`) — choix délibéré (couleurs preset lumière = valeurs HA `color_name`).
 - **`pressed: bg_opa: 30%` répété sur les boutons verre** — contrainte ESPHome (`pressed:` non supporté dans `style_definitions:`), documenté dans `etat_tab5.md`.
-- ~~**`tab5-images.yaml` fantôme**~~ — **RÉSOLU** (PR #15, fichier supprimé). Architecture effective = 6 packages + point d'entrée (plus de fichier `images`).
+- ~~**`tab5-images.yaml` fantôme**~~ — **RÉSOLU** (PR #15, fichier supprimé). Architecture effective = 8 packages + point d'entrée (plus de fichier `images` ; `sensors` scindé en 2 le 14/07/2026).
 
 ### 4.4 Fichiers volumineux
 
-- **`tab5-sensors.yaml` (~567 lignes)** — repassé sous le seuil ~600 après factorisations ; candidat de scission diagnostics/domotique si #T164 reprend.
+- ~~**`tab5-sensors.yaml`**~~ — **SCINDÉ** (14/07/2026) en `tab5-sensors-diagnostics.yaml` (278L) + `tab5-sensors-domotique.yaml` (270L), blocs copiés à l'identique, config fusionnée sémantiquement inchangée.
 - **`tab5_custom.cpp` (~681 lignes)** — plusieurs responsabilités ; surveiller si découpage en unités de compilation devient nécessaire.
 - **`climate_popup.yaml` (~234 lignes)** — non factorisé au-delà de 6/9 boutons (ADR-0007, choix assumé).
 

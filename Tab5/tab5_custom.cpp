@@ -116,7 +116,7 @@ void tab5_calendar_toggle(int jour) {
 }
 
 // Titre court "Lun 16" pour les pages journalieres 2 et 3 (page_index 1/2).
-// Utilise l'heure systeme SNTP (timezone Europe/Paris configuree dans tab5-sensors.yaml).
+// Utilise l'heure systeme SNTP (timezone Europe/Paris configuree dans tab5-sensors-diagnostics.yaml).
 static std::string format_short_day_label(int jour_offset) {
     static const char* days[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
     time_t raw = time(nullptr);
@@ -773,7 +773,7 @@ void show_temporary_planning(int jour, lv_obj_t* lbl_planning, lv_obj_t* plannin
 
 // =============================================================================
 // Carte lumiere (epaule j2/j3/j4 + switch associe + popup power) : factorise depuis
-// light_chambre_state/light_salon_state/light_led_state (tab5-sensors.yaml, #T164)
+// light_chambre_state/light_salon_state/light_led_state (tab5-sensors-domotique.yaml, #T164)
 // =============================================================================
 
 void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* icon_switch,
@@ -886,7 +886,7 @@ void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
 }
 
 // Met a jour un label de temperature (texte + couleur gradient). Factorise
-// depuis temp_serre/temp_salon (tab5-sensors.yaml, Phase 3, #T164).
+// depuis temp_serre/temp_salon (tab5-sensors-domotique.yaml, Phase 3, #T164).
 void update_temp_ui(lv_obj_t* label, float x) {
     if (label == nullptr) return;
     if (isnan(x)) {
@@ -946,7 +946,7 @@ void refresh_console_status_row_ui(lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_
 }
 
 // Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).
-// Factorise depuis l'interval 2s de tab5-sensors.yaml (Phase 3, #T164). Le garde
+// Factorise depuis l'interval 2s de tab5-sensors-diagnostics.yaml (Phase 3, #T164). Le garde
 // "console visible ?" reste dans le YAML (evite de passer layer_console_sys ici).
 void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
     lv_obj_t* lbl_psram, lv_obj_t* bar_psram, lv_obj_t* lbl_frag, lv_obj_t* lbl_flash,

@@ -4,7 +4,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
-### 2026-07-14 — Central card info panel (`tab5_maj_info_texte`) + forecast swipe rework
+### 2026-07-14 — Split `tab5-sensors.yaml` into diagnostics / domotique packages
+- `Tab5/tab5-sensors.yaml` (522 lines) split into `Tab5/tab5-sensors-diagnostics.yaml` (`wifi:` block, GPIO power switches, HA API status, IP/SSID, uptime, RSSI, core temp, free RAM/loop time, antenna select, SNTP clock, console intervals) and `Tab5/tab5-sensors-domotique.yaml` (plant moisture ×5, lights, PC presence, phone battery, temperatures/humidity, audio amp/jack/wake-word). Blocks copied byte-identical, no functional change.
+- `packages:` updated in `tab5-ha-hmi.yaml`; docs and `[AI-CONTEXT]` pointers updated (`CARTOGRAPHIE_TAB5.md`, `Tab5/README.md`, `docs/architecture.md`, repo `README.md`, C++ comments).
 - Implemented the `tab5_maj_info_texte` API service (empty stub since April): new `info_wrapper`/`lbl_info_text` 4th panel in the central card rotator, showing the 3-day calendar recap (recolor markup, `roboto_22`) or a Rouge/Orange weather-alert banner (`roboto_32_b`, colored by the `couleur` variable) sent by `automations_tab5.yaml` section 7. LVGL updates factored into `update_info_text_ui()` (per `tab5_custom.cpp` rule).
 - `show_temporary_planning()` now restores the previously active panel (4-state static helper) and also hides the info panel during the 6 s temporary display.
 - Forecast swipe rework: swipe zone limited to the central card band (`y >= 333`), console overlay now opened via `btn_control_console` only (no more up/down swipe); page title overlay (`page_title_wrapper`) shown on non-home forecast pages, day tiles titled "Lun 16" via SNTP on daily pages 2-3.

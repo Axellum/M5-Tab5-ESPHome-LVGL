@@ -10,7 +10,7 @@
 #                          carte appelle un service Home Assistant différent — même décision
 #                          que forecast_daily.yaml (cartes j0-j4), voir etat_tab5.md.
 # @ai_instruction `lbl_swN_state`/`icon_swN` sont mis à jour par les fonctions C++ (ex:
-#                 `update_light_card_ui()`) ou les lambdas de tab5-sensors.yaml/tab5-api-logic.yaml
+#                 `update_light_card_ui()`) ou les lambdas de tab5-sensors-domotique.yaml/tab5-api-logic.yaml
 #                 — ne pas leur assigner de texte/couleur directement ici.
 # ============================================================================
 obj:

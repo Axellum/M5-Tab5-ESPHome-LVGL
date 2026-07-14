@@ -3,7 +3,7 @@
 # @file console_sys.yaml
 # @role Popup diagnostic overlay (RAM/PSRAM/frag/uptime/Wi-Fi/loop time) + slider volume
 #       + reboot par double-tap. Tous les labels (`lbl_sys_*`) sont remplis par
-#       de tab5-sensors.yaml (interval 2s + capteurs 60s, garde #T222) — ce fichier ne fait QUE déclarer les widgets, aucun calcul ici.
+#       de tab5-sensors-diagnostics.yaml (interval 2s + capteurs 60s, garde #T222) — ce fichier ne fait QUE déclarer les widgets, aucun calcul ici.
 # @ai_instruction Le double-tap reboot (`btn_reboot_sys`) utilise le global `reboot_armed`
 #                 (tab5-globals.yaml) partagé entre `on_short_click`/`on_long_press`. NE PAS
 #                 remplacer par une variable `static bool` locale à une des deux lambdas :
