@@ -6,7 +6,7 @@
 
 ## Overview
 
-The ESPHome configuration is split into seven YAML packages imported by a single entry-point file. This avoids a monolithic file that becomes impossible to navigate once you're past 1000 lines. Each package has a clearly defined responsibility and can be edited, tested, or replaced in isolation.
+The ESPHome configuration is split into eight YAML packages imported by a single entry-point file. This avoids a monolithic file that becomes impossible to navigate once you're past 1000 lines. Each package has a clearly defined responsibility and can be edited, tested, or replaced in isolation.
 
 ### Push-only data flow
 
@@ -44,11 +44,11 @@ packages:
 
 ### `tab5-hardware.yaml`
 Low-level hardware configuration:
-- Display driver (SPI), touch controller (I2C)
-- I2C buses, SPI bus, UART
-- ES8388 DAC initialization (I2C register writes)
-- Backlight PWM, ambient light sensor
-- I2S bus for microphone and speaker
+- Display driver (MIPI-DSI, `M5STACK-TAB5-V2`), touch controller (custom ST7123 component, I2C)
+- I2C bus, PI4IOE5V6408 GPIO expanders (display/touch reset lines)
+- ES8388 DAC (`audio_dac:` platform) and ES7210 microphone ADC (`audio_adc:`)
+- `esp32_hosted` — ESP32-C6 Wi-Fi co-processor over SDIO
+- Backlight PWM (LEDC), I2S bus for microphone and speaker, `micro_wake_word`/`voice_assistant`, `ota:`
 
 → Details: [`docs/hardware.md`](hardware.md)
 
@@ -80,12 +80,12 @@ The most important package. Two things live here:
 ```yaml
 api:
   services:
-    - service: tab5_update_meteo_7j   # 7-day forecast push
+    - service: tab5_maj_previsions_jours_bulk   # daily forecast push (bulk)
       variables:
         payload: string
       then:
         - lambda: |-
-            parse_meteo_7j(payload.c_str());
+            parse_and_update_jours_bulk(payload);
 ```
 
 **C++ lambdas** — for logic that doesn't fit cleanly in YAML (state machine transitions, string parsing, conditional LVGL updates).
@@ -121,20 +121,20 @@ The UI layout. Declares the single page, panels, labels, buttons, arcs, and icon
 page_main (1280×720, single page)
 ├── home content always visible   (clock, indoor temp/humidity, quick actions,
 │                                   climate card, moisture card)
-├── central rotating card          (planning / rain / alerts — auto-cycles every 8s,
-│                                   tab5-globals.yaml `interval:`)
+├── central rotating card          (planning / rain / alerts / info — auto-cycles
+│                                   every 8s, tab5-globals.yaml `interval:`; paused
+│                                   while off the default forecast window)
 ├── bottom card region — one of two, toggled by `btn_control_ha` (house icon, top right):
 │   ├── switches card   (`layer_switches` — PC/volet/light switches, 5 tabs)
 │   └── forecast card   (`layer_forecast_daily` / `layer_forecast_hourly` — weather, 5 tabs)
 ├── climate_popup (fullscreen overlay, opened by tapping the climate card)
 ├── light_popup   (fullscreen overlay, opened by tapping a light switch card)
-└── console_sys   (diagnostics overlay, opened by swipe from the top)
+└── console_sys   (diagnostics overlay, opened by the console button `btn_control_console`, top right)
 ```
 
-Navigation is by touch (opening/closing the climate/light popups and the console, and toggling the bottom card region between switches and weather) and by swipe gesture, handled in C++ (`handle_swipe_gesture()` in `tab5_custom.cpp`):
-- swipe down from the top → open the console overlay
-- swipe up from the bottom half → close the console overlay
-- swipe left/right on the bottom half → cycle through the 5 forecast pages (2 hourly windows + 3 daily windows, non-wrapping 0↔4) — only when the bottom region is in forecast mode; the switches card doesn't paginate via swipe
+Navigation is by touch (opening/closing the climate/light popups and the console button, and toggling the bottom card region between switches and weather) and by swipe gesture, handled in C++ (`handle_swipe_gesture()` in `tab5_custom.cpp`):
+- swipe left/right on the lower band of the screen (`y ≥ 333`) → cycle through the 5 forecast pages (2 hourly windows + 3 daily windows, non-wrapping 0↔4) — only when the bottom region is in forecast mode; the switches card doesn't paginate via swipe
+- since the 14/07/2026 rework there is **no** up/down swipe anymore — the console opens via its dedicated button only
 
 The `show_switches` global (`tab5-globals.yaml`) tracks which of the two is currently visible; the other is hidden via `LV_OBJ_FLAG_HIDDEN` rather than removed, so the toggle button (`tab5-lvgl.yaml`, `btn_control_ha`) just flips which layer is shown/hidden — see the `[AI-CONTEXT]` header in `ui_components/switches_card.yaml` for the source-level note.
 
@@ -154,10 +154,12 @@ Short ESPHome script blocks for reusable multi-step actions called from lambdas 
 The `.h` file declares all functions used from YAML lambdas. The `.cpp` file implements them.
 
 Main responsibilities:
-- **String tokenizer** — splits semicolon-delimited payload strings into arrays. Used for every multi-value push (weather, calendar, rain chart).
-- **LVGL helpers** — wrappers around `lv_label_set_text`, `lv_arc_set_value`, `lv_bar_set_value` that include the boot-guard check.
-- **Color logic** — maps weather condition codes or plant moisture levels to LVGL color values.
-- **Voice state machine** — updates the microphone icon color based on the pipeline state (idle → listening → processing → speaking → error).
+- **String tokenizer** — splits semicolon-delimited payload strings in place (`strtok_r`). Used for the bulk weather pushes (`parse_and_update_heures_bulk()` / `parse_and_update_jours_bulk()`).
+- **LVGL helpers** — null-guarded update functions (`update_*_ui()`, `refresh_*_forecast()`) so a push arriving before LVGL is initialized can't crash the UI.
+- **Color logic** — maps temperatures and plant moisture levels to continuous color gradients (`get_temperature_color()` / `get_humidity_color()`).
+- **Gestures & central card** — `handle_swipe_gesture()` (forecast pagination), `transition_widgets()` (panel animations), `show_temporary_planning()` (6 s override then restore), `update_info_text_ui()` (info panel), `normalize_text_utf8()` (accent fixing for dynamic HA strings).
+
+(The microphone icon colors are set directly in the `voice_assistant:` callbacks of `tab5-hardware.yaml`, not in the C++ layer.)
 
 ---
 
@@ -170,9 +172,9 @@ Home Assistant                       Tab5 (ESP32-P4)
 ──────────────                       ───────────────
 State change detected
   → automation triggered
-    → service call: esphome.tab5_update_meteo_7j(payload)
+    → service call: esphome.tab5_maj_previsions_jours_bulk(payload)
       → API handler receives payload ──────────────────────→
-                                       parse_meteo_7j() runs
+                                       parse_and_update_jours_bulk() runs
                                        LVGL labels updated
 ```
 
@@ -182,7 +184,7 @@ State change detected
 
 ## 5. Data packing
 
-For the 7-day weather forecast, 7 × 4 data points (icon, max temp, min temp, condition code) would be 28 separate service calls. Instead, HA builds one string:
+For the 15-day daily forecast, 15 × 4+ data points (day, condition, max temp, min temp…) would be dozens of separate service calls. Instead, HA builds one string:
 
 ```
 "0;Soleil;27;14;1;Nuageux;24;12;2;Pluie;19;11;..."
@@ -190,7 +192,7 @@ For the 7-day weather forecast, 7 × 4 data points (icon, max temp, min temp, co
 
 The C++ tokenizer splits on `;` in a single pass — O(n) on string length, not O(n) on call count. The LVGL update then happens once, atomically, without intermediate redraws.
 
-Same pattern applies to: hourly rain chart (60 values), calendar events (title + time + color tag × 4 slots).
+Same pattern applies to the hourly forecast (`tab5_maj_previsions_heures_bulk`) and the Météo-France vigilance payload (`tab5_maj_alerte_meteo_france`, 11 `|`-delimited fields).
 
 ---
 
@@ -202,7 +204,7 @@ Same pattern applies to: hourly rain chart (60 values), calendar events (title +
 
 ## Vue d'ensemble
 
-La configuration ESPHome est découpée en sept packages YAML importés par un fichier d'entrée unique. Cela évite un fichier monolithique qui devient impossible à naviguer au-delà de 1000 lignes. Chaque package a une responsabilité clairement définie et peut être édité, testé, ou remplacé de façon isolée.
+La configuration ESPHome est découpée en huit packages YAML importés par un fichier d'entrée unique. Cela évite un fichier monolithique qui devient impossible à naviguer au-delà de 1000 lignes. Chaque package a une responsabilité clairement définie et peut être édité, testé, ou remplacé de façon isolée.
 
 ### Flux push-only
 
@@ -228,11 +230,11 @@ Le fichier racine fait trois choses :
 
 ### `tab5-hardware.yaml`
 Configuration matérielle bas niveau :
-- Driver affichage (SPI), contrôleur tactile (I2C)
-- Bus I2C, bus SPI, UART
-- Initialisation DAC ES8388 (écritures registres I2C)
-- PWM rétroéclairage, capteur luminosité ambiante
-- Bus I2S pour microphone et haut-parleur
+- Driver affichage (MIPI-DSI, `M5STACK-TAB5-V2`), contrôleur tactile (composant custom ST7123, I2C)
+- Bus I2C, expanders GPIO PI4IOE5V6408 (lignes de reset écran/tactile)
+- DAC ES8388 (plateforme `audio_dac:`) et ADC micro ES7210 (`audio_adc:`)
+- `esp32_hosted` — co-processeur Wi-Fi ESP32-C6 via SDIO
+- PWM rétroéclairage (LEDC), bus I2S micro/haut-parleur, `micro_wake_word`/`voice_assistant`, `ota:`
 
 → Détails : [`docs/hardware.md`](hardware.md)
 
@@ -293,21 +295,21 @@ page_main (1280×720, page unique)
 ├── contenu accueil toujours visible   (horloge, temp/humidité intérieure,
 │                                        actions rapides, carte clim, carte
 │                                        humidité)
-├── carte centrale rotative            (planning / pluie / alertes — cycle
-│                                        auto toutes les 8s, `interval:` de
-│                                        tab5-globals.yaml)
+├── carte centrale rotative            (planning / pluie / alertes / info —
+│                                        cycle auto toutes les 8s, `interval:`
+│                                        de tab5-globals.yaml ; en pause hors
+│                                        de la fenêtre prévisions par défaut)
 ├── zone carte du bas — l'une des deux, basculée par `btn_control_ha` (icône maison, en haut à droite) :
 │   ├── carte switches   (`layer_switches` — switches PC/volet/lumières, 5 onglets)
 │   └── carte prévisions (`layer_forecast_daily` / `layer_forecast_hourly` — météo, 5 onglets)
 ├── climate_popup (overlay plein écran, ouvert au tap sur la carte clim)
 ├── light_popup   (overlay plein écran, ouvert au tap sur une carte switch lumière)
-└── console_sys   (overlay diagnostics, ouvert par swipe depuis le haut)
+└── console_sys   (overlay diagnostics, ouvert par le bouton console `btn_control_console`, en haut à droite)
 ```
 
-La navigation se fait au tactile (ouverture/fermeture des popups clim/lumière et de la console, et bascule de la zone du bas entre switches et météo) et par geste swipe, géré en C++ (`handle_swipe_gesture()` dans `tab5_custom.cpp`) :
-- swipe vers le bas depuis le haut → ouvre l'overlay console
-- swipe vers le haut depuis la moitié basse → ferme l'overlay console
-- swipe gauche/droite sur la moitié basse → cycle les 5 pages de prévisions (2 fenêtres horaires + 3 fenêtres journalières, sans bouclage 0↔4) — uniquement quand la zone du bas est en mode météo ; la carte switches ne se pagine pas au swipe
+La navigation se fait au tactile (ouverture/fermeture des popups clim/lumière et du bouton console, et bascule de la zone du bas entre switches et météo) et par geste swipe, géré en C++ (`handle_swipe_gesture()` dans `tab5_custom.cpp`) :
+- swipe gauche/droite sur la bande basse de l'écran (`y ≥ 333`) → cycle les 5 pages de prévisions (2 fenêtres horaires + 3 fenêtres journalières, sans bouclage 0↔4) — uniquement quand la zone du bas est en mode météo ; la carte switches ne se pagine pas au swipe
+- depuis la refonte du 14/07/2026 il n'y a **plus** de swipe haut/bas — la console s'ouvre uniquement par son bouton dédié
 
 Le global `show_switches` (`tab5-globals.yaml`) suit laquelle des deux est actuellement visible ; l'autre est cachée via `LV_OBJ_FLAG_HIDDEN` plutôt que retirée, donc le bouton de bascule (`tab5-lvgl.yaml`, `btn_control_ha`) ne fait que basculer quel layer est affiché/caché — voir le bloc `[AI-CONTEXT]` de `ui_components/switches_card.yaml` pour la note au niveau du code source.
 
@@ -322,10 +324,12 @@ Toutes les références de style pointent vers des IDs définis dans `tab5-style
 Le `.h` déclare toutes les fonctions utilisées depuis les lambdas YAML. Le `.cpp` les implémente.
 
 Responsabilités principales :
-- **Tokenizer de chaînes** — découpe les chaînes de payload délimitées par des points-virgules en tableaux. Utilisé pour chaque push multi-valeurs (météo, calendrier, graphique pluie).
-- **Helpers LVGL** — wrappers autour de `lv_label_set_text`, `lv_arc_set_value`, `lv_bar_set_value` qui incluent la vérification boot-guard.
-- **Logique couleur** — mappe les codes de condition météo ou les niveaux d'humidité des plantes en valeurs de couleur LVGL.
-- **Machine d'états vocale** — met à jour la couleur de l'icône microphone selon l'état du pipeline (veille → écoute → traitement → synthèse → erreur).
+- **Tokenizer de chaînes** — découpe in-place (`strtok_r`) des payloads délimités par des points-virgules. Utilisé pour les push bulk météo (`parse_and_update_heures_bulk()` / `parse_and_update_jours_bulk()`).
+- **Helpers LVGL** — fonctions de mise à jour gardées contre les pointeurs nuls (`update_*_ui()`, `refresh_*_forecast()`) pour qu'un push arrivant avant l'init LVGL ne crashe pas l'UI.
+- **Logique couleur** — mappe températures et humidité des plantes sur des gradients continus (`get_temperature_color()` / `get_humidity_color()`).
+- **Gestes & carte centrale** — `handle_swipe_gesture()` (pagination prévisions), `transition_widgets()` (animations de panneaux), `show_temporary_planning()` (affichage 6 s puis restauration), `update_info_text_ui()` (panneau info), `normalize_text_utf8()` (correction d'accents des textes HA dynamiques).
+
+(Les couleurs de l'icône microphone sont réglées directement dans les callbacks `voice_assistant:` de `tab5-hardware.yaml`, pas dans la couche C++.)
 
 ---
 
@@ -338,9 +342,9 @@ Home Assistant                       Tab5 (ESP32-P4)
 ──────────────                       ───────────────
 Changement d'état détecté
   → automatisation déclenchée
-    → appel service : esphome.tab5_update_meteo_7j(payload)
+    → appel service : esphome.tab5_maj_previsions_jours_bulk(payload)
       → gestionnaire API reçoit payload ────────────────────→
-                                           parse_meteo_7j() s'exécute
+                                           parse_and_update_jours_bulk() s'exécute
                                            labels LVGL mis à jour
 ```
 
@@ -350,7 +354,7 @@ Changement d'état détecté
 
 ## 5. Compression de données
 
-Pour les prévisions météo 7 jours, 7 × 4 points de données (icône, temp max, temp min, code condition) représenteraient 28 appels de service séparés. À la place, HA construit une chaîne :
+Pour les prévisions journalières sur 15 jours, 15 × 4+ points de données (jour, condition, temp max, temp min…) représenteraient des dizaines d'appels de service séparés. À la place, HA construit une chaîne :
 
 ```
 "0;Soleil;27;14;1;Nuageux;24;12;2;Pluie;19;11;..."
@@ -358,4 +362,4 @@ Pour les prévisions météo 7 jours, 7 × 4 points de données (icône, temp ma
 
 Le tokenizer C++ découpe sur `;` en un seul passage — O(n) sur la longueur de chaîne, pas O(n) sur le nombre d'appels. La mise à jour LVGL se fait ensuite une seule fois, de façon atomique, sans redraws intermédiaires.
 
-Même schéma pour : graphique pluie horaire (60 valeurs), événements calendrier (titre + heure + tag couleur × 4 slots).
+Même schéma pour les prévisions horaires (`tab5_maj_previsions_heures_bulk`) et le payload de vigilance Météo-France (`tab5_maj_alerte_meteo_france`, 11 champs délimités par `|`).
