@@ -479,27 +479,10 @@ time:
         then:
 
           - lambda: |-
-
               auto t_now = id(sntp_time).now();
-
               if (t_now.is_valid()) {
-
-                char buf_time[16];
-
-                sprintf(buf_time, "%02d:%02d", t_now.hour, t_now.minute);
-
-                lv_label_set_text(id(lbl_time), buf_time);
-
-                
-
-                const char* days[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
-                const char* months[] = {"Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"};
-                char buf_date[64];
-
-                sprintf(buf_date, "%s %02d %s", days[t_now.day_of_week - 1], t_now.day_of_month, months[t_now.month - 1]);
-
-                lv_label_set_text(id(lbl_date), buf_date);
-
+                update_clock_date_ui(id(lbl_time), id(lbl_date),
+                    t_now.hour, t_now.minute, t_now.day_of_week, t_now.day_of_month, t_now.month);
               }
 
 interval:

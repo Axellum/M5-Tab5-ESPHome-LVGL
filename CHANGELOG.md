@@ -8,6 +8,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 - Implemented the `tab5_maj_info_texte` API service (empty stub since April): new `info_wrapper`/`lbl_info_text` 4th panel in the central card rotator, showing the 3-day calendar recap (recolor markup, `roboto_22`) or a Rouge/Orange weather-alert banner (`roboto_32_b`, colored by the `couleur` variable) sent by `automations_tab5.yaml` section 7. LVGL updates factored into `update_info_text_ui()` (per `tab5_custom.cpp` rule).
 - `show_temporary_planning()` now restores the previously active panel (4-state static helper) and also hides the info panel during the 6 s temporary display.
 - Forecast swipe rework: swipe zone limited to the central card band (`y >= 333`), console overlay now opened via `btn_control_console` only (no more up/down swipe); page title overlay (`page_title_wrapper`) shown on non-home forecast pages, day tiles titled "Lun 16" via SNTP on daily pages 2-3.
+- UTF-8 accent fix: static strings use proper UTF-8 escapes (`\xC3\xA9` not Latin-1 `\xE9`); vigilance alert banner generated in firmware; `normalize_text_utf8()` for dynamic HA strings (Latin-1/mojibake); helpers `update_clock_date_ui()`, `update_rain_phrase_ui()`, `update_planning_text_ui()`.
 - Correction of the 2026-07-12 note below: the service **is** called from HA (Tab5 automation section 7); its removal had already been reverted as a stub by the reboot fix.
 
 ### 2026-07-12 — Stabilite reboot 60s + reintegration progressive (#T220–#T226)

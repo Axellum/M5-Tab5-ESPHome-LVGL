@@ -96,6 +96,14 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
     const std::string& texte, const std::string& couleur, bool& has_info, int& current_panel,
     esphome::font::Font* font_small, esphome::font::Font* font_large);
 
+void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase);
+
+void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::string& l2,
+    std::string& plan_ligne_1, std::string& plan_ligne_2);
+
+void update_clock_date_ui(lv_obj_t* lbl_time, lv_obj_t* lbl_date,
+    int hour, int minute, int day_of_week, int day_of_month, int month);
+
 // Met a jour un label de temperature (texte + couleur gradient). Factorise
 // depuis temp_serre/temp_salon (tab5-sensors.yaml, Phase 3, #T164).
 void update_temp_ui(lv_obj_t* label, float x);

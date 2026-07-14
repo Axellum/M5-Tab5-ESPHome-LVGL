@@ -267,8 +267,7 @@ api:
             if (!phrase_pluie) phrase_pluie = (char*)"";
             if (!globale) globale = (char*)"";
             
-            lv_label_set_recolor(id(lbl_proc_pluie), false);
-            lv_label_set_text(id(lbl_proc_pluie), phrase_pluie);
+            update_rain_phrase_ui(id(lbl_proc_pluie), std::string(phrase_pluie));
             lv_obj_add_flag(id(lbl_pluie_val), LV_OBJ_FLAG_HIDDEN);
             lv_obj_add_flag(id(lbl_pluie_unit), LV_OBJ_FLAG_HIDDEN);
 
@@ -440,27 +439,7 @@ api:
       then:
 
         - lambda: |-
-
             if (id(lbl_planning_text) == nullptr) return;
-
-            auto strip_prefix = [](const std::string& s) -> std::string {
-                if (s.rfind("1/ ", 0) == 0) return s.substr(3);
-                if (s.rfind("2/ ", 0) == 0) return s.substr(3);
-                if (s.rfind("1/", 0) == 0) return s.substr(2);
-                if (s.rfind("2/", 0) == 0) return s.substr(2);
-                return s;
-            };
-
-            std::string l1 = strip_prefix(ligne1);
-            std::string l2 = strip_prefix(ligne2);
-
-            id(plan_ligne_1) = l1;
-            id(plan_ligne_2) = l2;
-            std::string combined = l1;
-            if (l2 != "") {
-                combined += "   |   " + l2;
-            }
-            bool plan_recolor = combined.find('#') != std::string::npos;
-            lv_label_set_recolor(id(lbl_planning_text), plan_recolor);
-            lv_label_set_text(id(lbl_planning_text), combined.c_str());
+            update_planning_text_ui(id(lbl_planning_text), ligne1, ligne2,
+                id(plan_ligne_1), id(plan_ligne_2));
 

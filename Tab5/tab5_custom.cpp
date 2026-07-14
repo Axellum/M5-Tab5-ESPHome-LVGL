@@ -20,7 +20,87 @@
 #include "lvgl.h" // Needed for lv_label_set_text etc
 #include "esphome/components/lvgl/lvgl_esphome.h"
 #include <ctime>
+#include <cstring>
 
+
+// =============================================================================
+// UTF-8 : normalisation des textes HA (Latin-1 / mojibake) avant affichage LVGL
+// =============================================================================
+
+static bool is_valid_utf8(const std::string& s) {
+    for (size_t i = 0; i < s.size(); ) {
+        unsigned char c = static_cast<unsigned char>(s[i]);
+        if (c < 0x80) {
+            i++;
+            continue;
+        }
+        size_t need = 0;
+        if ((c & 0xE0) == 0xC0) need = 1;
+        else if ((c & 0xF0) == 0xE0) need = 2;
+        else if ((c & 0xF8) == 0xF0) need = 3;
+        else return false;
+        if (i + need >= s.size()) return false;
+        for (size_t j = 1; j <= need; j++) {
+            if ((static_cast<unsigned char>(s[i + j]) & 0xC0) != 0x80) return false;
+        }
+        i += need + 1;
+    }
+    return true;
+}
+
+static std::string latin1_to_utf8(const std::string& in) {
+    std::string out;
+    out.reserve(in.size() * 2);
+    for (unsigned char c : in) {
+        if (c < 0x80) {
+            out.push_back(static_cast<char>(c));
+        } else {
+            uint32_t cp = c;
+            out.push_back(static_cast<char>(0xC0 | (cp >> 6)));
+            out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+        }
+    }
+    return out;
+}
+
+static std::string fix_utf8_mojibake(std::string s) {
+    struct Rep { const char* bad; const char* good; };
+    static const Rep reps[] = {
+        {"\xC3\x83\xC2\xA9", "\xC3\xA9"},  // Ã© -> é
+        {"\xC3\x83\xC2\xA8", "\xC3\xA8"},  // Ã¨ -> è
+        {"\xC3\x83\xC2\xAA", "\xC3\xAA"},  // Ãª -> ê
+        {"\xC3\x83\xC2\xA0", "\xC3\xA0"},  // Ã  -> à
+        {"\xC3\x83\xC2\xB4", "\xC3\xB4"},  // Ã´ -> ô
+        {"\xC3\x83\xC2\xBB", "\xC3\xBB"},  // Ã» -> û
+        {"\xC3\x83\xC2\xA7", "\xC3\xA7"},  // Ã§ -> ç
+    };
+    for (const auto& r : reps) {
+        const size_t bad_len = strlen(r.bad);
+        const size_t good_len = strlen(r.good);
+        size_t pos = 0;
+        while ((pos = s.find(r.bad, pos)) != std::string::npos) {
+            s.replace(pos, bad_len, r.good);
+            pos += good_len;
+        }
+    }
+    return s;
+}
+
+static std::string normalize_text_utf8(const std::string& in) {
+    if (in.empty()) return in;
+    std::string t = is_valid_utf8(in) ? in : latin1_to_utf8(in);
+    return fix_utf8_mojibake(std::move(t));
+}
+
+static const char* vigilance_alert_banner_utf8(const std::string& couleur) {
+    if (couleur.find("Rouge") != std::string::npos) {
+        return "Alerte M\xC3\xA9t\xC3\xA9o Rouge en cours ! Restez prudent.";
+    }
+    if (couleur.find("Orange") != std::string::npos) {
+        return "Alerte M\xC3\xA9t\xC3\xA9o Orange en cours ! Restez prudent.";
+    }
+    return nullptr;
+}
 
 // we can declare references to ESPHome LVGL objects but we can't easily include main.h
 std::string cal_heures[15] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "", ""};
@@ -379,15 +459,48 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
 
 static constexpr lv_coord_t FORECAST_SWIPE_Y_MIN = 333;  // haut de central_card (tab5-lvgl.yaml)
 
+// Recolor LVGL : vrai seulement si markup #RRGGBB (évite faux positifs sur '#' isolé).
+static bool has_lvgl_recolor_markup(const std::string& t) {
+    for (size_t i = 0; i + 7 < t.size(); ++i) {
+        if (t[i] != '#') continue;
+        bool hex6 = true;
+        for (int j = 1; j <= 6; ++j) {
+            char c = t[i + static_cast<size_t>(j)];
+            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
+                hex6 = false;
+                break;
+            }
+        }
+        if (hex6) return true;
+    }
+    return false;
+}
+
+static void set_label_text_utf8(lv_obj_t* label, const char* text) {
+    if (!label || !text) return;
+    std::string t(text);
+    lv_label_set_recolor(label, has_lvgl_recolor_markup(t));
+    lv_label_set_text(label, text);
+}
+
+static const char* clock_month_short_utf8(int month) {
+    static const char* months[] = {
+        "Janv", "F\xC3\xA9vr", "Mars", "Avr", "Mai", "Juin", "Juil",
+        "Ao\xC3\xBBt", "Sept", "Oct", "Nov", "D\xC3\xA9" "c"
+    };
+    if (month < 1 || month > 12) return "";
+    return months[month - 1];
+}
+
 static const char* forecast_page_title_text(int page) {
     switch (page) {
         // forecast_page_index 0/1 utilisent refresh_hourly(..., 1-page) : données
         // inversées par rapport à l'index UI — titres alignés sur le contenu réel.
-        // UTF-8 explicite (évite soucis d'encodage source MSVC).
-        case 0: return "Pr\xe9visions horaires 2";
-        case 1: return "Pr\xe9visions horaires 1";
-        case 3: return "Pr\xe9visions journali\xe8res 2";
-        case 4: return "Pr\xe9visions journali\xe8res 3";
+        // UTF-8 explicite (\xC3\xA9 = é, \xC3\xA8 = è) — pas Latin-1 (\xE9).
+        case 0: return "Pr\xC3\xA9visions horaires 2";
+        case 1: return "Pr\xC3\xA9visions horaires 1";
+        case 3: return "Pr\xC3\xA9visions journali\xC3\xA8res 2";
+        case 4: return "Pr\xC3\xA9visions journali\xC3\xA8res 3";
         default: return nullptr;
     }
 }
@@ -431,6 +544,13 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
     size_t deb = t.find_first_not_of(ws);
     t = (deb == std::string::npos) ? "" : t.substr(deb, t.find_last_not_of(ws) - deb + 1);
 
+    // Banniere vigilance : texte fixe UTF-8 cote firmware (HA ne fournit que la couleur).
+    if (const char* banner = vigilance_alert_banner_utf8(couleur)) {
+        t = banner;
+    } else if (!t.empty()) {
+        t = normalize_text_utf8(t);
+    }
+
     has_info = !t.empty();
     if (t.empty()) {
         lv_label_set_text(lbl_info, "");
@@ -442,7 +562,7 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
     }
 
     bool multi_ligne = t.find('\n') != std::string::npos;
-    bool has_recolor_markup = t.find('#') != std::string::npos;
+    bool has_recolor_markup = has_lvgl_recolor_markup(t);
     esphome::font::Font* font = multi_ligne ? font_small : font_large;
     if (font) {
         esphome::lvgl::lv_obj_set_style_text_font(lbl_info, font, LV_PART_MAIN);
@@ -455,6 +575,52 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
 
     lv_label_set_recolor(lbl_info, has_recolor_markup);
     lv_label_set_text(lbl_info, t.c_str());
+}
+
+void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase) {
+    if (!lbl) return;
+    std::string t = normalize_text_utf8(phrase);
+    lv_label_set_recolor(lbl, false);
+    lv_label_set_text(lbl, t.c_str());
+}
+
+void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::string& l2,
+    std::string& plan_ligne_1, std::string& plan_ligne_2) {
+    if (!lbl) return;
+    auto strip_prefix = [](const std::string& s) -> std::string {
+        if (s.rfind("1/ ", 0) == 0) return s.substr(3);
+        if (s.rfind("2/ ", 0) == 0) return s.substr(3);
+        if (s.rfind("1/", 0) == 0) return s.substr(2);
+        if (s.rfind("2/", 0) == 0) return s.substr(2);
+        return s;
+    };
+    std::string line1 = strip_prefix(l1);
+    std::string line2 = strip_prefix(l2);
+    plan_ligne_1 = line1;
+    plan_ligne_2 = line2;
+    std::string combined = line1;
+    if (!line2.empty()) {
+        combined += "   |   " + line2;
+    }
+    combined = normalize_text_utf8(combined);
+    set_label_text_utf8(lbl, combined.c_str());
+}
+
+void update_clock_date_ui(lv_obj_t* lbl_time, lv_obj_t* lbl_date,
+    int hour, int minute, int day_of_week, int day_of_month, int month) {
+    if (lbl_time) {
+        char buf_time[16];
+        snprintf(buf_time, sizeof(buf_time), "%02d:%02d", hour, minute);
+        lv_label_set_text(lbl_time, buf_time);
+    }
+    if (lbl_date) {
+        static const char* days[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
+        const char* day = (day_of_week >= 1 && day_of_week <= 7) ? days[day_of_week - 1] : "";
+        char buf_date[64];
+        snprintf(buf_date, sizeof(buf_date), "%s %02d %s", day, day_of_month, clock_month_short_utf8(month));
+        lv_label_set_recolor(lbl_date, false);
+        lv_label_set_text(lbl_date, buf_date);
+    }
 }
 
 void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_index,
