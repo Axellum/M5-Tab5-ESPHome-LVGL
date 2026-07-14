@@ -35,9 +35,9 @@ api:
                 {id(h1_time), id(h1_temp), id(h1_prob), id(h1_icon_layer1), id(h1_icon_layer2)},
                 {id(h0_time), id(h0_temp), id(h0_prob), id(h0_icon_layer1), id(h0_icon_layer2)}
             };
-            if (id(forecast_page_index) < 2) {
-                refresh_hourly_forecast(slots, 1 - id(forecast_page_index), id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
-            }
+            int fp = id(forecast_page_index);
+            int hourly_pi = (fp < 2) ? (1 - fp) : 0;
+            refresh_hourly_forecast(slots, hourly_pi, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
 
     - service: tab5_maj_previsions_jours_bulk
       variables:
@@ -53,9 +53,9 @@ api:
                 {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
                 {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
             };
-            if (id(forecast_page_index) >= 2) {
-                refresh_daily_forecast(slots, id(forecast_page_index) - 2, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
-            }
+            int fp = id(forecast_page_index);
+            int daily_pi = (fp >= 2) ? (fp - 2) : 0;
+            refresh_daily_forecast(slots, daily_pi, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
 
     - service: tab5_maj_volet_etat
 
@@ -267,6 +267,7 @@ api:
             if (!phrase_pluie) phrase_pluie = (char*)"";
             if (!globale) globale = (char*)"";
             
+            lv_label_set_recolor(id(lbl_proc_pluie), false);
             lv_label_set_text(id(lbl_proc_pluie), phrase_pluie);
             lv_obj_add_flag(id(lbl_pluie_val), LV_OBJ_FLAG_HIDDEN);
             lv_obj_add_flag(id(lbl_pluie_unit), LV_OBJ_FLAG_HIDDEN);
@@ -415,19 +416,18 @@ api:
             }
             id(has_rain) = is_raining;
 
+    # Zone d'info de la carte centrale (panneau 3 du rotateur, cf. tab5-globals.yaml) :
+    # récap calendrier 3 jours (multi-lignes avec recolor #hex ...#) ou alerte météo
+    # (1 ligne). Alimenté par automations_tab5.yaml section 7 (texte + couleur Rouge/Orange/Blanc).
     - service: tab5_maj_info_texte
-
       variables:
-
         texte: string
-
         couleur: string
-
       then:
-
         - lambda: |-
-
-            // Conteneur conserve, on laisse la methode vide en attendant d'y mettre les alertes
+            update_info_text_ui(id(lbl_info_text), id(info_wrapper), id(planning_wrapper),
+                texte, couleur, id(has_info), id(current_central_panel),
+                id(roboto_22), id(roboto_32_b));
 
     - service: tab5_maj_planning
 
@@ -460,6 +460,7 @@ api:
             if (l2 != "") {
                 combined += "   |   " + l2;
             }
-            lv_label_set_recolor(id(lbl_planning_text), true);
+            bool plan_recolor = combined.find('#') != std::string::npos;
+            lv_label_set_recolor(id(lbl_planning_text), plan_recolor);
             lv_label_set_text(id(lbl_planning_text), combined.c_str());
 

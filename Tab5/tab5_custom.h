@@ -73,16 +73,28 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
 void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj);
 
 // Gestion du geste de swipe (page_main.on_gesture) : pagination previsions
-// horaires/journalieres (0-4) + overlay console. Deplacee depuis tab5-lvgl.yaml
-// (Phase 3, #T164) - comportement IDENTIQUE, ne pas "corriger" la logique de
-// boucle LEFT/RIGHT (validee par Axel, cf. commentaires dans l'implementation).
+// horaires/journalieres (0-4) dans la bande centrale+basse (y >= 333). Console diag :
+// uniquement via btn_control_console (plus de swipe haut/bas).
 void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_index,
-    lv_obj_t* layer_console_sys, lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
+    lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
     lv_obj_t* pbars[5],
-    lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_obj_t* lbl_temp,
-    bool has_uptime, float uptime_s, bool has_rssi, float rssi_dbm, bool has_temp, float core_temp_c);
+    lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
+    lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont, lv_obj_t* info_wrap,
+    int current_panel);
+
+// Carte centrale : rotateur planning/pluie/alertes (page 2) ou titre de page (autres).
+void update_central_forecast_page_ui(int forecast_page,
+    lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
+    lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont, lv_obj_t* info_wrap,
+    int current_panel);
+
+// Panneau info central (récap calendrier ou bannière alerte) — logique déplacée
+// depuis tab5-api-logic.yaml pour fiabiliser polices LVGL et accents UTF-8.
+void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
+    const std::string& texte, const std::string& couleur, bool& has_info, int& current_panel,
+    esphome::font::Font* font_small, esphome::font::Font* font_large);
 
 // Met a jour un label de temperature (texte + couleur gradient). Factorise
 // depuis temp_serre/temp_salon (tab5-sensors.yaml, Phase 3, #T164).
@@ -142,6 +154,7 @@ void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* i
 // Tap tuile météo : affiche le planning/horaires du jour dans la carte centrale (6s).
 std::string get_day_planning_display_text(int jour);
 void show_temporary_planning(int jour, lv_obj_t* lbl_planning, lv_obj_t* planning_wrap, lv_obj_t* alert_cont, lv_obj_t* rain_wrap,
+                             lv_obj_t* info_wrap, lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, int forecast_page,
                              const std::string& plan_l1, const std::string& plan_l2, bool& is_showing_temp, int& current_panel);
 
 // Couleurs semantiques centralisees (miroir des tokens YAML color:)
