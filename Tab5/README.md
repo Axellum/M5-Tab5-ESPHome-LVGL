@@ -8,9 +8,9 @@
 
 This folder contains the ESPHome configuration packages and the C++ source files for the Tab5 firmware.
 
-The entry point is `../tab5-ha-hmi.yaml` at the repository root. It declares `substitutions` (your HA entity IDs), the `on_boot` sequence, `ota:`/`api:` config, and the `packages:` import list for everything in this folder.
+The entry point is `../tab5-ha-hmi.yaml` at the repository root. It loads `substitutions` from `Tab5/user_entities.yaml` (gitignored — copy `user_entities.example.yaml` and edit your HA entity IDs), declares the `on_boot` sequence, and the `packages:` import list for everything in this folder.
 
-**Screen layout:** a single 1280×720 page (`page_main` in `tab5-lvgl.yaml`), not multiple pages. Navigation is by touch (clim/light popups, console) and swipe gestures (top = console, bottom = close console, left/right on the bottom half = cycle 5 forecast pages: 2 hourly + 3 daily windows).
+**Screen layout:** a single 1280×720 page (`page_main` in `tab5-lvgl.yaml`), not multiple pages. Navigation is by touch (clim/light popups, diagnostics console via the `btn_control_console` button, top right) and left/right swipes on the lower band of the screen (`y ≥ 333`) to cycle the 5 forecast pages (2 hourly + 3 daily windows). Since the 14/07/2026 swipe rework, the console is **not** opened by swipe anymore.
 
 ---
 
@@ -18,7 +18,7 @@ The entry point is `../tab5-ha-hmi.yaml` at the repository root. It declares `su
 
 Most files in this folder (and every file in `ui_components/`) start with a comment block tagged `[AI-CONTEXT]` — a short "system prompt" local to that file: its role, its architectural constraints, and explicit `@ai_instruction`s for common edits. Non-obvious decisions (a bug fix that looks removable, a duplication kept on purpose, a `!include` that must not be inlined) are documented **inside the file itself**, not only in the external knowledge base (`contexte_ia/` in the parent workspace) — a session that only has access to this repo (no cross-repo context) must still be able to find them.
 
-A `[AI-WARNING]` (sometimes `[AI-WARNING-CRITICAL]`) marks something that looks like a bug/anti-pattern but is a deliberate, validated fix — e.g. the boot `delay(1000)` in `tab5-hardware.yaml`, or the pagination wrap logic in `handle_swipe_gesture()` (`tab5_custom.cpp`). **Read the warning before "fixing" it** — at least one of these was already reverted once after being "corrected" by an LLM audit that hadn't read it. See [`../docs/decisions/`](../docs/decisions/README.md) for the full reasoning behind each one.
+A `[AI-WARNING]` (sometimes `[AI-WARNING-CRITICAL]`) marks something that looks like a bug/anti-pattern but is a deliberate, validated fix — e.g. the boot `delay(1000)` in `tab5-ha-hmi.yaml` (documented at length in the `logger:` block of `tab5-hardware.yaml`), or the pagination wrap logic in `handle_swipe_gesture()` (`tab5_custom.cpp`). **Read the warning before "fixing" it** — at least one of these was already reverted once after being "corrected" by an LLM audit that hadn't read it. See [`../docs/decisions/`](../docs/decisions/README.md) for the full reasoning behind each one.
 
 A `[AI-DEBUG]` marks a good observation point when diagnosing a runtime issue — a log line worth watching, a diagnostics entity/overlay, or a technique already proven to work on this device (e.g. inserting a temporary marker directly into the real HA automation rather than reproducing its logic in an isolated test script, which can pass while masking the actual bug). See [`../docs/debugging.md`](../docs/debugging.md).
 
@@ -41,10 +41,10 @@ Home-automation entities pushed by HA over the ESPHome API: plant moisture (5×,
 The `api: services:` block — the actual contract with Home Assistant. Each `tab5_maj_*` service receives a payload from an HA automation and calls into `tab5_custom.cpp` (via lambdas) to update the LVGL widgets. See the service table below.
 
 ### `tab5-globals.yaml`
-All `globals:` (shared state read/written across files) + the 6s central-panel rotator (planning/rain/alerts). See the globals table below.
+All `globals:` (shared state read/written across files) + the 8s central-panel rotator (planning/rain/alerts/info — 4 panels, paused while off the default forecast window). See the globals table below.
 
 ### `tab5-scripts.yaml`
-Reusable ESPHome `script:` blocks (debounced actions, timed sequences). Small and growing — prefer adding a script here over duplicating a `delay` + action pattern inline.
+Reusable ESPHome `script:` blocks. Currently a single one: the 150 ms volume-slider debounce (`tab5_debounce_volume_set`). The temporary planning display moved to C++ (`show_temporary_planning()`, `tab5_custom.cpp`). Prefer adding a script here over duplicating a `delay` + action pattern inline.
 
 ### `tab5-styles.yaml`
 All LVGL `style_definitions` (glassmorphism "Slate" theme) + font declarations (Roboto sizes, MDI icon sizes, weather icon font). Color tokens live in `UIColor::` (`tab5_custom.h`) — **never hardcode a hex color in a YAML lambda**, add a token instead.
@@ -64,12 +64,14 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 
 | Service | Payload | Rôle |
 |---|---|---|
-| `tab5_maj_clim` | target/current/mode (strings) | État climatisation (couleurs, cible, mode) |
-| `tab5_maj_volet_etat` | string | État volet (ouvert/fermé/en mouvement) |
+| `tab5_maj_clim` | target, current, mode, preset, fan, swing (strings) | État climatisation (couleurs, cible, mode, presets) |
+| `tab5_maj_volet_etat` | etat_physique (string) | État volet (ouvert/fermé/en mouvement) |
 | `tab5_maj_planning` | ligne1, ligne2 (strings) | Texte planning affiché dans la carte centrale |
-| `tab5_maj_alerte_meteo_france` | payload (string, `\|`-delimited) | Alertes météo France (vent, inondation, orages...) |
+| `tab5_maj_alerte_meteo_france` | payload (string, 11 champs `\|`-delimited) | Alertes météo France (vent, inondation, orages...) + recoloration de la date |
 | `tab5_maj_meteo_actuelle` | condition, temperature, humidite | Icône pluie prédictive + hygrométrie (l'ancienne grosse icône météo centrale a été retirée de l'UI) |
-| `tab5_maj_pluie_1h` | — | Prévision de pluie à 1h |
+| `tab5_maj_probabilites` | uv, gel, neige (strings) | Bascule l'icône pluie prédictive en flocon si probabilité de neige ≥ 5 |
+| `tab5_maj_pluie_1h` | index_5mn, intensite (strings) | Une barre du graphe pluie 1h (9 barres) ; met à jour `has_rain` |
+| `tab5_maj_info_texte` | texte, couleur (strings) | 4ᵉ panneau du rotateur : récap calendrier 3 jours ou alerte météo (`update_info_text_ui()`) |
 | `tab5_maj_previsions_heures_bulk` | payload (string) | 5 cartes prévisions horaires |
 | `tab5_maj_previsions_jours_bulk` | payload (string) | 5 cartes prévisions journalières (fenêtre glissante selon `forecast_page_index`) |
 
@@ -84,7 +86,7 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 | `clim_target_temp`, `clim_preset_mode`, `clim_fan_mode`, `clim_swing_mode` | float/string | état climatisation |
 | `volet_target_open`, `volet_en_mouvement` | bool | état volet |
 | `plan_ligne_1`, `plan_ligne_2` | string | texte planning brut |
-| `has_alerts`, `has_rain`, `current_central_panel` | bool/int | rotateur carte centrale (6s) |
+| `has_alerts`, `has_rain`, `has_info`, `current_central_panel` | bool/int (0-3) | rotateur carte centrale (8s, 4 panneaux : planning/pluie/alertes/info) |
 | `system_volume`, `system_muted` | float/bool | volume haut-parleur |
 
 ## Règles de code à respecter (issues de l'audit du 05/07/2026)
@@ -100,7 +102,7 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 
 ## Version Française
 
-Ce dossier contient les packages de configuration ESPHome et les fichiers source C++ du firmware Tab5. Point d'entrée : `../tab5-ha-hmi.yaml`. Voir la section anglaise ci-dessus pour le détail par fichier, la table des services HA, la table des globals et les règles de code — tout est vérifié contre le code réel au 05/07/2026 (l'ancienne version de ce README décrivait un projet différent, obsolète).
+Ce dossier contient les packages de configuration ESPHome et les fichiers source C++ du firmware Tab5. Point d'entrée : `../tab5-ha-hmi.yaml`. Voir la section anglaise ci-dessus pour le détail par fichier, la table des services HA, la table des globals et les règles de code — écrit contre le code réel le 05/07/2026, re-vérifié ligne à ligne le 14/07/2026 (rotateur 8s/4 panneaux, services `tab5_maj_probabilites`/`tab5_maj_info_texte`, console via bouton, scission sensors).
 
 ---
 
@@ -108,13 +110,13 @@ Ce dossier contient les packages de configuration ESPHome et les fichiers source
 
 | Fichier | Contenu |
 |---------|---------|
-| `materialdesignicons-webfont.ttf` | Material Design Icons — plusieurs tailles chargées séparément (26/32/45/56/60/80/120px) |
+| `materialdesignicons-webfont.ttf` | Material Design Icons — plusieurs tailles chargées séparément (26/32/45/56/60/70/120 px — l'id `mdi_font_80` charge en réalité du 70) |
 | `IconeMeteo.ttf` | Police d'icônes météo personnalisée |
 
 ## Sous-répertoires
 
 ### `my_components/st7123/`
-Composant ESPHome personnalisé pour le contrôleur d'affichage ST7123 (certains lots Tab5 V2).
+Composant ESPHome personnalisé pour le contrôleur tactile I2C ST7123 (certains lots Tab5 V2).
 
 ### `tts_library/`, `tts_library_v2/`
 Fichiers audio TTS expérimentaux, antérieurs à l'intégration Voice HA. Non utilisés dans la config actuelle.
