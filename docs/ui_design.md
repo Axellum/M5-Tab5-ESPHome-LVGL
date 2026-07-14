@@ -31,7 +31,7 @@ The difference in practice:
 
 A second icon font (`IconeMeteo.ttf`) covers weather-specific symbols not present in the MDI set.
 
-**Anti-aliasing note:** fonts are configured at `bpp: 1` (1 bit per pixel) rather than the default 4 bpp. This halves the font's RAM footprint and significantly reduces the CPU cost of rendering on each frame. At 45 px on a 1024 × 600 display, the visual difference between 1 bpp and 4 bpp is negligible at normal viewing distance.
+**Anti-aliasing note:** fonts are configured at `bpp: 1` (1 bit per pixel) rather than the default 4 bpp. This halves the font's RAM footprint and significantly reduces the CPU cost of rendering on each frame. At 45 px on a 1280 × 720 display, the visual difference between 1 bpp and 4 bpp is negligible at normal viewing distance.
 
 ---
 
@@ -127,7 +127,7 @@ La différence en pratique :
 
 Une seconde police d'icônes (`IconeMeteo.ttf`) couvre les symboles météo spécifiques absents du set MDI.
 
-**Note anti-aliasing :** les polices sont configurées à `bpp: 1` (1 bit par pixel) plutôt que les 4 bpp par défaut. Ça divise par deux l'empreinte RAM de la police et réduit significativement le coût CPU du rendu à chaque frame. À 45 px sur un affichage 1024 × 600, la différence visuelle entre 1 bpp et 4 bpp est négligeable à la distance de visionnage normale.
+**Note anti-aliasing :** les polices sont configurées à `bpp: 1` (1 bit par pixel) plutôt que les 4 bpp par défaut. Ça divise par deux l'empreinte RAM de la police et réduit significativement le coût CPU du rendu à chaque frame. À 45 px sur un affichage 1280 × 720, la différence visuelle entre 1 bpp et 4 bpp est négligeable à la distance de visionnage normale.
 
 ---
 

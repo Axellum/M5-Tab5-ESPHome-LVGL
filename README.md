@@ -32,7 +32,7 @@ The interface is compiled in C++ and embedded in the device firmware. It does no
 
 *Main and Climate are real photos of the running device (2026-07-06). Light Control still shows the earlier design reference — no fresh photo of that popup yet.*
 
-More real photos: the same bottom card region toggled to weather view, and the diagnostics console (swipe down from the top, see [`docs/debugging.md`](docs/debugging.md)).
+More real photos: the same bottom card region toggled to the switches view, and the diagnostics console (opened via the console button, see [`docs/debugging.md`](docs/debugging.md)).
 
 | Domo view (switches↔weather toggle) | Diagnostics console |
 |:-:|:-:|
@@ -42,14 +42,14 @@ More real photos: the same bottom card region toggled to weather view, and the d
 
 ## What it does
 
-Six screens, all driven by Home Assistant push events:
+A single 1280×720 page with six functional areas, all driven by Home Assistant push events (see [ADR-0002](docs/decisions/0002-single-page-swipe-navigation.md) — there is no multi-screen tab bar):
 
-- **Home** — time, indoor temp/humidity, short weather summary line, active weather alert indicator, microphone icon with pipeline state
-- **Weather** — **5-slide swipeable forecast**: slides 1–2 show hourly weather for the next 15 time slots (time, temperature color-coded, rainfall in mm, condition icon); slides 3–5 show the **15-day daily forecast** (5 days/slide) with color-coded day names, dual-layer condition icons, and max/min temperatures; departmental weather alert banner (yellow/orange/red) shown only when an alert is active
-- **Climate** — arc thermostat to set target temperature, mode selector (heat / cool / fan / auto / off), current room temperature; controls are dimmed (not hidden) when the AC is off
-- **Plants** — soil moisture gauge for up to 5 BLE plant sensors, color-coded by level (red = dry, green = optimal, blue = too wet), area temperature
-- **Planning** — next 4 Google Calendar events with title, time, and event color tag
-- **Console** — scrollable debug log for incoming payloads, API events, and pipeline state transitions
+- **Home area** — time, indoor temp/humidity, quick-action buttons, microphone icon with pipeline state; the date recolors with the active weather-alert level
+- **Weather** — **5-window swipeable forecast** in the bottom region: windows 1–2 show hourly weather for the next 15 time slots (time, temperature color-coded, rainfall in mm, condition icon); windows 3–5 show the **15-day daily forecast** (5 days/window) with color-coded day names, dual-layer condition icons, and max/min temperatures
+- **Central rotating card** — cycles every 8 s between planning, short-term rain graph, Météo-France vigilance icons, and an info panel (3-day calendar recap or alert banner)
+- **Climate** — compact card + fullscreen popup: arc thermostat, mode grid (cool / heat / off / fan / dry / swing) and presets (eco / boost / quiet); controls are dimmed (not hidden) when the AC is off
+- **Plants** — soil moisture card for up to 5 BLE plant sensors, dynamically sorted, color-coded by level (red = dry, green = optimal, blue = too wet)
+- **Console** — diagnostics overlay (RAM/PSRAM, Wi-Fi, uptime, loop time, volume slider, double-tap reboot), opened via its dedicated button
 
 **Voice assistant** — runs `okay_nabu` wake-word detection locally on the ESP32-P4. The microphone icon changes color to show the pipeline state in real time: grey (idle) → green (listening) → orange (processing) → blue (speaking) → red (error). Wake-word detection can be toggled on/off from the UI; tapping the mic icon triggers push-to-talk. Two modes selectable from the UI: standard Home Assistant agent or a free-form LLM conversation pipeline.
 
@@ -62,9 +62,9 @@ Six screens, all driven by Home Assistant push events:
 ## Key design decisions
 
 - **Push-only, zero polling.** The device never requests state from Home Assistant. Automations on the HA side detect changes and push data to the screen via native ESPHome service calls. CPU stays near zero when nothing changes.
-- **Modular YAML.** The ESPHome configuration is split across seven files by concern (hardware, sensors, API logic, styles, UI, globals, scripts). Each file stays under ~600 lines and is independently readable.
+- **Modular YAML.** The ESPHome configuration is split across eight files by concern (hardware, diagnostics sensors, home-automation sensors, API logic, styles, UI, globals, scripts). Each file stays under ~600 lines and is independently readable.
 - **Native LVGL, no web stack.** Rendering runs at 60 FPS directly in the ESP32-P4's PSRAM. Vector fonts (Material Design Icons) replace image files entirely.
-- **Data packing.** Complex payloads (7-day forecast, hourly rain, calendar events) are serialized as semicolon-delimited strings on the HA side and parsed in C++ on the device — one network call, zero subsequent requests.
+- **Data packing.** Complex payloads (15-day forecast, hourly forecast, weather alerts) are serialized as delimited strings on the HA side and parsed in C++ on the device — one network call, zero subsequent requests.
 - **Offline resilience.** All C++ lambdas check `api.connected()` and `has_state()` before touching the UI. If HA restarts, the last known state stays on screen.
 
 ---
@@ -127,7 +127,7 @@ Full step-by-step: [`docs/installation.md`](docs/installation.md)
 ├── tab5-ha-hmi.yaml          # Entry point — includes user_entities + packages
 ├── Tab5/
 │   ├── user_entities.example.yaml  # Public template (copy → user_entities.yaml)
-│   ├── tab5-hardware.yaml    # Display, touch, I2C, SPI, DAC
+│   ├── tab5-hardware.yaml    # Display (MIPI-DSI), touch, I2C, audio, OTA
 │   ├── tab5-sensors-diagnostics.yaml  # System entities (Wi-Fi, power, uptime, RAM)
 │   ├── tab5-sensors-domotique.yaml    # HA entities (plants, lights, temps, audio)
 │   ├── tab5-api-logic.yaml   # HA service handlers + C++ lambdas
@@ -170,23 +170,23 @@ L'interface est compilée en C++ et embarquée dans le firmware de l'appareil. E
 ## Choix de conception
 
 - **Push uniquement, zéro polling.** L'appareil ne demande jamais son état à Home Assistant. Les automations côté HA détectent les changements et poussent les données vers l'écran via des appels de service ESPHome natifs. Le CPU reste proche de zéro quand rien ne change.
-- **YAML modulaire.** La configuration ESPHome est découpée en sept fichiers par domaine (hardware, capteurs, logique API, styles, UI, globales, scripts). Chaque fichier reste sous ~600 lignes et est lisible indépendamment.
+- **YAML modulaire.** La configuration ESPHome est découpée en huit fichiers par domaine (hardware, capteurs diagnostics, capteurs domotique, logique API, styles, UI, globales, scripts). Chaque fichier reste sous ~600 lignes et est lisible indépendamment.
 - **LVGL natif, pas de stack web.** Le rendu tourne à 60 FPS directement dans la PSRAM de l'ESP32-P4. Les polices vectorielles (Material Design Icons) remplacent complètement les fichiers image.
-- **Compression de données.** Les payloads complexes (prévisions 7 jours, pluie horaire, événements calendrier) sont sérialisés en chaînes séparées par des points-virgules côté HA et parsés en C++ sur l'appareil — un seul appel réseau, zéro requête suivante.
+- **Compression de données.** Les payloads complexes (prévisions 15 jours, prévisions horaires, alertes météo) sont sérialisés en chaînes délimitées côté HA et parsés en C++ sur l'appareil — un seul appel réseau, zéro requête suivante.
 - **Résilience hors-ligne.** Toutes les lambdas C++ vérifient `api.connected()` et `has_state()` avant de toucher l'UI. Si HA redémarre, le dernier état connu reste affiché.
 
 ---
 
 ## Ce que ça fait
 
-Six écrans, tous alimentés par des événements push Home Assistant :
+Une page unique 1280×720 avec six zones fonctionnelles, toutes alimentées par des événements push Home Assistant (voir [ADR-0002](docs/decisions/0002-single-page-swipe-navigation.md) — il n'y a pas de barre d'onglets multi-écrans) :
 
-- **Accueil** — heure, temp/humidité intérieure, ligne résumé météo, indicateur d'alerte active, icône microphone avec état du pipeline
-- **Météo** — **prévisions par swipe en 5 slides** : slides 1–2 affichent la météo horaire pour les 15 prochaines tranches (heure, température avec code couleur, pluie en mm, icône condition) ; slides 3–5 affichent les **prévisions journalières 15 jours** (5 jours/slide) avec noms de jours en code couleur, icônes double couche, temp max/min ; bandeau d'alerte météo départementale (jaune/orange/rouge) affiché uniquement quand une alerte est active
-- **Clim** — arc thermostat pour la température cible, sélecteur de mode (chaud / froid / ventilation / auto / arrêt), température ambiante actuelle ; les contrôles sont estompés (non cachés) quand le clim est éteint
-- **Plantes** — jauge d'humidité du sol pour jusqu'à 5 capteurs BLE, code couleur par niveau (rouge = sec, vert = optimal, bleu = trop humide), température de zone
-- **Planning** — 4 prochains événements Google Calendar avec titre, heure et tag couleur de l'événement
-- **Console** — log de débogage défilant pour les payloads entrants, événements API et transitions d'état du pipeline
+- **Zone d'accueil** — heure, temp/humidité intérieure, boutons d'action rapide, icône microphone avec état du pipeline ; la date se recolore selon le niveau d'alerte météo actif
+- **Météo** — **prévisions par swipe en 5 fenêtres** dans la zone du bas : fenêtres 1–2 = météo horaire pour les 15 prochaines tranches (heure, température avec code couleur, pluie en mm, icône condition) ; fenêtres 3–5 = **prévisions journalières 15 jours** (5 jours/fenêtre) avec noms de jours en code couleur, icônes double couche, temp max/min
+- **Carte centrale rotative** — alterne toutes les 8 s entre planning, graphe de pluie court terme, icônes de vigilance Météo-France, et un panneau info (récap calendrier 3 jours ou bannière d'alerte)
+- **Clim** — carte compacte + popup plein écran : arc thermostat, grille de modes (froid / chaud / arrêt / ventilation / sec / oscillation) et presets (éco / boost / silence) ; les contrôles sont estompés (non cachés) quand la clim est éteinte
+- **Plantes** — carte d'humidité du sol pour jusqu'à 5 capteurs BLE, triés dynamiquement, code couleur par niveau (rouge = sec, vert = optimal, bleu = trop humide)
+- **Console** — overlay diagnostics (RAM/PSRAM, Wi-Fi, uptime, temps de boucle, slider volume, reboot double-tap), ouvert via son bouton dédié
 
 **Assistant vocal** — fait tourner la détection wake-word `okay_nabu` localement sur l'ESP32-P4. L'icône microphone change de couleur pour montrer l'état du pipeline en temps réel : gris (repos) → vert (écoute) → orange (traitement) → bleu (synthèse) → rouge (erreur). La détection wake-word peut être activée/désactivée depuis l'UI ; taper sur l'icône micro déclenche le push-to-talk. Deux modes sélectionnables depuis l'UI : agent Home Assistant standard ou pipeline de conversation LLM libre.
 

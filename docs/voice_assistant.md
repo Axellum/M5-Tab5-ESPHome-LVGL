@@ -46,7 +46,7 @@ Once the wake-word fires, audio is streamed in real time over the existing Wi-Fi
 
 TTS responses play through the ES8388 DAC → amplifier → built-in speaker. The media player entity on the Tab5 is a standard ESPHome I2S media player component.
 
-**Boot sequence:** the amplifier enable switch is activated *after* the `media_player` component has fully initialized and the HA API connection is established. Enabling the amplifier before the I2S clock is stable produces an audible pop. The `on_boot` sequence in `tab5-ha-hmi.yaml` enforces this order.
+**Boot sequence:** the amplifier enable switch is activated *after* the backlight and the `media_player` volume have been set (and only then does the device wait for the HA API connection). Enabling the amplifier before the I2S clock is stable produces an audible pop. The `on_boot` sequence in `tab5-ha-hmi.yaml` enforces this order.
 
 **Interaction with LVGL traffic pacing:** when TTS is playing, the I2S DMA is actively consuming CPU cycles and memory bandwidth. The traffic pacing delays (1 s between push service blocks, 150 ms within forecast loops) prevent simultaneous large payload pushes from colliding with the active audio stream.
 
@@ -65,7 +65,7 @@ The microphone icon in the UI changes color to reflect the current pipeline stat
 | Error / not understood | Red | Pipeline returned no result |
 | Wake word disabled | Dim grey | Detection switched off |
 
-The state machine runs in `tab5_custom.cpp`. ESPHome's voice assistant component fires callbacks (`on_listening`, `on_stt_end`, `on_tts_start`, `on_end`, `on_error`) which update a `voice_state` global variable. The LVGL icon update is done inside each callback via `lv_obj_set_style_text_color`.
+ESPHome's voice assistant component fires callbacks (`on_listening`, `on_stt_end`, `on_tts_start`, `on_end`, `on_error`) declared in `tab5-hardware.yaml`; each callback sets the icon color directly via `lv_obj_set_style_text_color` with a `UIColor::` token. There is no separate state variable — the icon color *is* the state indicator.
 
 ---
 
@@ -128,7 +128,7 @@ Une fois le wake-word déclenché, l'audio est streamé en temps réel via la co
 
 Les réponses TTS sont jouées via le DAC ES8388 → amplificateur → haut-parleur intégré. L'entité media player du Tab5 est un composant media player I2S ESPHome standard.
 
-**Séquence de boot :** le switch d'activation de l'amplificateur est activé *après* que le composant `media_player` s'est complètement initialisé et que la connexion API HA est établie. Activer l'ampli avant que l'horloge I2S soit stable produit un pop audible. La séquence `on_boot` dans `tab5-ha-hmi.yaml` enforce cet ordre.
+**Séquence de boot :** le switch d'activation de l'amplificateur est activé *après* le rétroéclairage et le réglage du volume du `media_player` (et c'est seulement ensuite que l'appareil attend la connexion API HA). Activer l'ampli avant que l'horloge I2S soit stable produit un pop audible. La séquence `on_boot` dans `tab5-ha-hmi.yaml` garantit cet ordre.
 
 **Interaction avec le traffic pacing LVGL :** quand le TTS joue, le DMA I2S consomme activement des cycles CPU et de la bande passante mémoire. Les délais de traffic pacing (1 s entre les blocs de service push, 150 ms dans les boucles de prévisions) empêchent les push de gros payloads simultanés d'entrer en collision avec le flux audio actif.
 
@@ -147,7 +147,7 @@ L'icône microphone dans l'UI change de couleur pour refléter l'état courant d
 | Erreur / non compris | Rouge | Pipeline n'a retourné aucun résultat |
 | Wake word désactivé | Gris sombre | Détection coupée |
 
-La machine d'états tourne dans `tab5_custom.cpp`. Les callbacks du composant assistant vocal ESPHome (`on_listening`, `on_stt_end`, `on_tts_start`, `on_end`, `on_error`) mettent à jour une variable globale `voice_state`. La mise à jour de l'icône LVGL se fait dans chaque callback via `lv_obj_set_style_text_color`.
+Les callbacks du composant assistant vocal ESPHome (`on_listening`, `on_stt_end`, `on_tts_start`, `on_end`, `on_error`) sont déclarés dans `tab5-hardware.yaml` ; chaque callback règle directement la couleur de l'icône via `lv_obj_set_style_text_color` avec un token `UIColor::`. Il n'y a pas de variable d'état séparée — la couleur de l'icône *est* l'indicateur d'état.
 
 ---
 

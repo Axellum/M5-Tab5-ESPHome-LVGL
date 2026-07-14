@@ -4,6 +4,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-14 — Documentation coherence pass (docs vs. real code)
+- Audited `Tab5/README.md`, `docs/*.md` and `CARTOGRAPHIE_TAB5.md` line-by-line against the firmware. Doc-only change, no code touched.
+- `Tab5/README.md`: central-card rotator corrected 6 s → 8 s and 3 → 4 panels; `tab5_maj_probabilites` and `tab5_maj_info_texte` added to the API service table (10 services total) and `tab5_maj_pluie_1h`/`tab5_maj_clim`/`tab5_maj_volet_etat` payloads corrected; `has_info` added to the globals table; navigation description updated (console via `btn_control_console`, swipe = forecast pagination only, `y ≥ 333`); entry-point description updated for `user_entities.yaml`; MDI font sizes corrected; ST7123 described as the touch (not display) controller.
+- `docs/architecture.md`: "seven packages" → eight (EN+FR); fictional `tab5_update_meteo_7j`/`parse_meteo_7j` examples replaced with the real `tab5_maj_previsions_jours_bulk`/`parse_and_update_jours_bulk`; hardware bullets aligned with the code (MIPI-DSI, no SPI/UART, ES7210, SDIO co-processor); C++ layer description refreshed (no "voice state machine" in C++ — mic icon colors are set in `tab5-hardware.yaml` callbacks); info panel and console button integrated.
+- `docs/hardware.md`: FR display section corrected (1024×600/RGB parallel → 1280×720/MIPI-DSI); framebuffer math updated (~1.8 MB); ESP32-C6 link corrected (UART → SDIO via `esp32_hosted`); microphone path corrected (PDM → ES7210 ADC, + MCLK GPIO 30); removed the obsolete `i2c.write_bytes` register-0x04 claim and the nonexistent ambient light sensor; boot order fixed (amp enabled before the HA API wait).
+- `docs/screens.md`, `docs/debugging.md`: 4th info panel documented; console described as it is (diagnostics + volume + reboot, opened by button, not a log viewer, not swipe); `debugging.md` now shows the actual console photo (`tab5_photo_dashboard_weather.jpg` — the filenames of the two photos are historically swapped); temporary planning override attributed to `show_temporary_planning()` (C++) instead of the removed ESPHome script.
+- `docs/ui_design.md`: leftover 1024×600 references → 1280×720.
+- `docs/voice_assistant.md`: boot order and icon-state mechanism corrected (no `voice_state` global).
+- `README.md` (root): "Six screens" reframed as the real single-page layout with six functional areas; "seven files" → eight; climate modes/presets corrected; console description fixed; data-packing example updated (EN+FR).
+- `CARTOGRAPHIE_TAB5.md`: line counts refreshed (incl. `tab5_custom.cpp` 1095 L, `tab5-ha-hmi.yaml` 103 L); deleted `st7123/binary_sensor/` no longer listed as present dead code; `esp32_hosted` SPI → SDIO; `docs/*.md` inventory updated (audit reports removed, troubleshooting/debugging/decisions added); ambiguous `07/12` dates normalized to `12/07`; §4.6 completed with the 14/07 PRs.
+- ADR-0002 amended with the 14/07 gesture rework (info panel, swipe zone, console button).
+
 ### 2026-07-14 — Split `tab5-sensors.yaml` into diagnostics / domotique packages
 - `Tab5/tab5-sensors.yaml` (522 lines) split into `Tab5/tab5-sensors-diagnostics.yaml` (`wifi:` block, GPIO power switches, HA API status, IP/SSID, uptime, RSSI, core temp, free RAM/loop time, antenna select, SNTP clock, console intervals) and `Tab5/tab5-sensors-domotique.yaml` (plant moisture ×5, lights, PC presence, phone battery, temperatures/humidity, audio amp/jack/wake-word). Blocks copied byte-identical, no functional change.
 - `packages:` updated in `tab5-ha-hmi.yaml`; docs and `[AI-CONTEXT]` pointers updated (`CARTOGRAPHIE_TAB5.md`, `Tab5/README.md`, `docs/architecture.md`, repo `README.md`, C++ comments).

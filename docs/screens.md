@@ -4,7 +4,7 @@
 
 ---
 
-This page describes what the Tab5 actually shows and does — verified against the firmware (`tab5-lvgl.yaml`, `ui_components/*.yaml`, `tab5_custom.cpp`) on 2026-07-06. The previous version of this page described a 6-tab, multi-screen navigation bar that no longer exists (and may never have shipped) — see [ADR-0002](decisions/0002-single-page-swipe-navigation.md) for why. If anything below stops matching the running firmware, the firmware is right — fix this page.
+This page describes what the Tab5 actually shows and does — verified against the firmware (`tab5-lvgl.yaml`, `ui_components/*.yaml`, `tab5_custom.cpp`) on 2026-07-06, re-checked 2026-07-14 (info panel, console button, swipe zones). The previous version of this page described a 6-tab, multi-screen navigation bar that no longer exists (and may never have shipped) — see [ADR-0002](decisions/0002-single-page-swipe-navigation.md) for why. If anything below stops matching the running firmware, the firmware is right — fix this page.
 
 ---
 
@@ -13,10 +13,10 @@ This page describes what the Tab5 actually shows and does — verified against t
 There is a **single 1280×720 page** (`page_main`), not a tab-navigated set of screens. Three regions:
 
 1. **Home area** — always visible: clock, indoor sensors, quick actions, compact climate card, plant moisture card.
-2. **Central card** — a small area that automatically rotates between planning, rain forecast, and weather alerts.
+2. **Central card** — a small area that automatically rotates between planning, rain forecast, weather alerts and an info panel (calendar recap / alert text).
 3. **Bottom card region** — either the 5-card weather forecast, or 5 quick-action switch cards, whichever is currently selected.
 
-Two overlays open fullscreen on top of this: the **climate popup** (tap the compact climate card) and the **light popup** (long-press a light shortcut). A **diagnostics console** opens by swiping down from the top of the screen.
+Two overlays open fullscreen on top of this: the **climate popup** (tap the compact climate card) and the **light popup** (long-press a light shortcut). A **diagnostics console** opens via the console button (`btn_control_console`, top right) — not by swipe since the 14/07/2026 gesture rework.
 
 ---
 
@@ -31,9 +31,9 @@ Always-visible content at the top of the screen:
 
 ---
 
-## Central card — planning / rain / alerts
+## Central card — planning / rain / alerts / info
 
-A single card rotates automatically every 8 seconds (`tab5-globals.yaml`, `interval: 8s`) between up to three panels. Tapping a forecast card's temperature (see below) can also interrupt the rotation for a few seconds to show a specific day's schedule.
+A single card rotates automatically every 8 seconds (`tab5-globals.yaml`, `interval: 8s`) between up to four panels. The rotation only runs on the default forecast window — swiping to another forecast window replaces the central card with a page-title overlay (`page_title_wrapper`) and pauses the rotation until you swipe back. Tapping a forecast card's temperature (see below) can also interrupt the rotation for a few seconds to show a specific day's schedule.
 
 - **Planning** — always part of the rotation. Shows the day's schedule.
 - **Rain forecast** — only rotated in if `has_rain` is true. A short-term rain graph: one data point every 5 minutes for the first 30 minutes, then every 10 minutes for the following 30 minutes (9 points total, 1-hour window), sourced from Météo-France via the `tab5_maj_pluie_1h` API service.
@@ -41,9 +41,11 @@ A single card rotates automatically every 8 seconds (`tab5-globals.yaml`, `inter
 
 **The date, not "a day", changes color with the current overall alert level:** independently of the rotation above, the date text under the clock in the home area (`lbl_date`, e.g. "Lun 06 Juil") is recolored every time an alert payload is received, based on the *overall* vigilance level for the day (green/default if none, pale yellow/orange/pale red for jaune/orange/rouge) — see `tab5-api-logic.yaml` in the `tab5_maj_alerte_meteo_france` service. This is separate from the per-type icon coloring in the alert panel above, which uses each alert type's own individual level rather than the overall one.
 
-If neither rain nor alerts are active, the rotation just keeps planning on screen.
+- **Info panel** — only rotated in if `has_info` is true. Shows either a 3-day calendar recap (multi-line, with inline color markup) or a Météo-France alert banner (single line, colored by severity), pushed by HA via the `tab5_maj_info_texte` service (`update_info_text_ui()`, `tab5_custom.cpp`).
 
-**Temporary override:** tapping the max/min temperature on any of the 5 bottom forecast cards interrupts the rotation for **6 seconds** to show that specific day's opening-hours text in the central card, then automatically returns to the normal rotation (`tab5-scripts.yaml`, `tab5_show_planning_temp`).
+If neither rain, alerts nor info are active, the rotation just keeps planning on screen.
+
+**Temporary override:** tapping the max/min temperature on any of the 5 bottom forecast cards interrupts the rotation for **6 seconds** to show that specific day's opening-hours text in the central card, then automatically restores the previously active panel (`show_temporary_planning()`, `tab5_custom.cpp` — this used to be an ESPHome script in `tab5-scripts.yaml`, moved to C++ in the 12/07 reboot fix).
 
 ---
 
@@ -124,7 +126,7 @@ The mode is saved across reboots via the HA `select` entity (`select.m5stack_tab
 
 ## Console (diagnostics overlay)
 
-Opened by swiping down from the top of the screen (not a tab). A scrollable text area showing the device's internal log output — incoming push payloads, API connection events, parse errors, and voice pipeline state transitions in real time. See [`docs/debugging.md`](debugging.md) for a screenshot and more on using it to diagnose issues.
+Opened via the console button (`btn_control_console`, top right of the home area). A modal card showing live diagnostics — SRAM/PSRAM usage bars, max free block, flash size, uptime, Wi-Fi signal/SSID/IP, CPU temperature, loop time — plus a volume slider and a double-tap reboot button. It is **not** a log viewer (use `esphome logs` for payloads and events). See [`docs/debugging.md`](debugging.md) for a screenshot and more on using it to diagnose issues.
 
 ---
 
@@ -178,7 +180,7 @@ A `volet_en_mouvement` global tracks whether the shutter is currently moving (a 
 
 ---
 
-Cette page décrit ce que le Tab5 affiche et fait réellement — vérifié contre le firmware (`tab5-lvgl.yaml`, `ui_components/*.yaml`, `tab5_custom.cpp`) le 06/07/2026. L'ancienne version de cette page décrivait une navigation par barre d'onglets à 6 écrans qui n'existe plus (et n'a peut-être jamais été livrée telle quelle) — voir [ADR-0002](decisions/0002-single-page-swipe-navigation.md). Si quelque chose ci-dessous ne correspond plus au firmware réel, c'est le firmware qui a raison — corrigez cette page.
+Cette page décrit ce que le Tab5 affiche et fait réellement — vérifié contre le firmware (`tab5-lvgl.yaml`, `ui_components/*.yaml`, `tab5_custom.cpp`) le 06/07/2026, re-vérifié le 14/07/2026 (panneau info, bouton console, zones de swipe). L'ancienne version de cette page décrivait une navigation par barre d'onglets à 6 écrans qui n'existe plus (et n'a peut-être jamais été livrée telle quelle) — voir [ADR-0002](decisions/0002-single-page-swipe-navigation.md). Si quelque chose ci-dessous ne correspond plus au firmware réel, c'est le firmware qui a raison — corrigez cette page.
 
 ---
 
@@ -187,10 +189,10 @@ Cette page décrit ce que le Tab5 affiche et fait réellement — vérifié cont
 Il y a une **page unique 1280×720** (`page_main`), pas un jeu d'écrans navigués par onglets. Trois zones :
 
 1. **Zone d'accueil** — toujours visible : horloge, capteurs intérieurs, actions rapides, carte clim compacte, carte humidité plantes.
-2. **Carte centrale** — une petite zone qui alterne automatiquement entre planning, prévision de pluie et alertes météo.
+2. **Carte centrale** — une petite zone qui alterne automatiquement entre planning, prévision de pluie, alertes météo et un panneau info (récap calendrier / texte d'alerte).
 3. **Zone de cartes du bas** — soit les 5 cartes prévisions météo, soit 5 cartes d'action rapide, selon ce qui est sélectionné.
 
-Deux overlays s'ouvrent en plein écran par-dessus : le **popup clim** (tap sur la carte clim compacte) et le **popup lumière** (appui long sur un raccourci lumière). Une **console diagnostics** s'ouvre par swipe vers le bas depuis le haut de l'écran.
+Deux overlays s'ouvrent en plein écran par-dessus : le **popup clim** (tap sur la carte clim compacte) et le **popup lumière** (appui long sur un raccourci lumière). Une **console diagnostics** s'ouvre via le bouton console (`btn_control_console`, en haut à droite) — plus par swipe depuis la refonte gestuelle du 14/07/2026.
 
 ---
 
@@ -205,9 +207,9 @@ Contenu toujours visible en haut de l'écran :
 
 ---
 
-## Carte centrale — planning / pluie / alertes
+## Carte centrale — planning / pluie / alertes / info
 
-Une seule carte alterne automatiquement toutes les 8 secondes (`tab5-globals.yaml`, `interval: 8s`) entre jusqu'à trois panneaux. Taper sur la température d'une carte prévision (voir plus bas) peut aussi interrompre la rotation quelques secondes pour montrer le planning d'un jour précis.
+Une seule carte alterne automatiquement toutes les 8 secondes (`tab5-globals.yaml`, `interval: 8s`) entre jusqu'à quatre panneaux. La rotation ne tourne que sur la fenêtre prévisions par défaut — swiper vers une autre fenêtre remplace la carte centrale par un overlay de titre de page (`page_title_wrapper`) et met la rotation en pause. Taper sur la température d'une carte prévision (voir plus bas) peut aussi interrompre la rotation quelques secondes pour montrer le planning d'un jour précis.
 
 - **Planning** — toujours dans la rotation. Affiche le planning du jour.
 - **Prévision de pluie** — intégrée à la rotation seulement si `has_rain` est vrai. Un graphique de pluie à court terme : un point toutes les 5 minutes pour la première demi-heure, puis toutes les 10 minutes pour la demi-heure suivante (9 points au total, fenêtre d'1 heure), fourni par Météo-France via le service API `tab5_maj_pluie_1h`.
@@ -215,9 +217,11 @@ Une seule carte alterne automatiquement toutes les 8 secondes (`tab5-globals.yam
 
 **C'est la date, pas "un jour", qui prend la couleur du niveau d'alerte global en cours :** indépendamment de la rotation ci-dessus, le texte de la date sous l'horloge en zone d'accueil (`lbl_date`, ex. "Lun 06 Juil") est recoloré à chaque réception d'un payload d'alerte, selon le niveau de vigilance *global* du jour (vert/défaut si aucune, jaune pâle/orange/rouge pâle pour jaune/orange/rouge) — voir `tab5-api-logic.yaml` dans le service `tab5_maj_alerte_meteo_france`. C'est distinct de la coloration par icône du panneau d'alerte ci-dessus, qui utilise le niveau propre à chaque type d'alerte plutôt que le niveau global.
 
-Si ni pluie ni alerte ne sont actives, la rotation garde simplement le planning à l'écran.
+- **Panneau info** — intégré à la rotation seulement si `has_info` est vrai. Affiche soit un récap calendrier 3 jours (multi-lignes, avec balisage couleur inline), soit une bannière d'alerte Météo-France (une ligne, colorée selon la sévérité), poussé par HA via le service `tab5_maj_info_texte` (`update_info_text_ui()`, `tab5_custom.cpp`).
 
-**Bascule temporaire :** taper sur la température max/min de l'une des 5 cartes prévisions du bas interrompt la rotation pendant **6 secondes** pour afficher le texte des horaires de ce jour précis dans la carte centrale, puis revient automatiquement à la rotation normale (`tab5-scripts.yaml`, `tab5_show_planning_temp`).
+Si ni pluie, ni alerte, ni info ne sont actives, la rotation garde simplement le planning à l'écran.
+
+**Bascule temporaire :** taper sur la température max/min de l'une des 5 cartes prévisions du bas interrompt la rotation pendant **6 secondes** pour afficher le texte des horaires de ce jour précis dans la carte centrale, puis restaure automatiquement le panneau qui était actif (`show_temporary_planning()`, `tab5_custom.cpp` — anciennement un script ESPHome de `tab5-scripts.yaml`, passé en C++ lors du fix reboot du 12/07).
 
 ---
 
@@ -298,7 +302,7 @@ Le mode est sauvegardé entre les redémarrages via l'entité HA `select` (`sele
 
 ## Console (overlay diagnostics)
 
-Ouvert par swipe vers le bas depuis le haut de l'écran (pas un onglet). Une zone de texte défilable montrant la sortie log interne de l'appareil — payloads push entrants, événements de connexion API, erreurs de parsing, et transitions d'état du pipeline vocal en temps réel. Voir [`docs/debugging.md`](debugging.md) pour une capture d'écran et plus de détails sur son usage en debug.
+Ouvert via le bouton console (`btn_control_console`, en haut à droite de la zone d'accueil). Une carte modale montrant les diagnostics en direct — barres SRAM/PSRAM, bloc max, taille flash, uptime, signal Wi-Fi/SSID/IP, température CPU, temps de boucle — plus un slider volume et un reboot par double-tap. Ce n'est **pas** un visualiseur de logs (utiliser `esphome logs` pour les payloads et événements). Voir [`docs/debugging.md`](debugging.md) pour une capture d'écran et plus de détails sur son usage en debug.
 
 ---
 
