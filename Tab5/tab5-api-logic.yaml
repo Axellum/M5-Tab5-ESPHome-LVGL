@@ -129,6 +129,16 @@ api:
 
             }
 
+        - if:
+            condition:
+              lambda: 'return etat_physique == "En_mouvement";'
+            then:
+              - micro_wake_word.enable_model:
+                  id: stop
+            else:
+              - micro_wake_word.disable_model:
+                  id: stop
+
     - service: tab5_maj_clim
       variables:
         target: string
