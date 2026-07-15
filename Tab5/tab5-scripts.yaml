@@ -59,7 +59,7 @@ script:
                   - micro_wake_word.disable_model:
                       id: stop
 
-  # Interruption Discussion : « Stop » pendant orange (LLM) ou TTS.
+  # Interruption : coupe pipeline local + satellite HA + TTS (sans relancer l'écoute).
   - id: tab5_vocal_interrupt
     mode: restart
     then:
@@ -71,6 +71,10 @@ script:
       - media_player.stop:
           id: speaker_player
       - homeassistant.service:
+          service: assist_satellite.stop
+          data:
+            entity_id: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
+      - homeassistant.service:
           service: media_player.media_stop
           data:
             entity_id: media_player.m5stack_tab5_home_assistant_hmi_media_player
@@ -80,10 +84,19 @@ script:
             entity_id: media_player.m5stack_tab5_home_assistant_hmi_tab5_media_player
       - lambda: |-
           if (id(icon_mic_status) != nullptr) {
-            lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
           }
 
-  # Tap micro : coupe si assistant actif, sinon démarre (pattern ESPHome « Click to Converse »).
+  # Interruption puis ré-écoute immédiate (tap micro / barge-in Discussion).
+  - id: tab5_vocal_interrupt_and_listen
+    mode: restart
+    then:
+      - script.execute: tab5_vocal_interrupt
+      - delay: 500ms
+      - voice_assistant.start:
+          id: va
+
+  # Tap micro : coupe si assistant actif puis ré-écoute, sinon démarre (Click to Converse).
   - id: tab5_assist_toggle
     mode: restart
     then:
@@ -97,8 +110,8 @@ script:
               - media_player.is_announcing:
                   id: speaker_player
           then:
-            - logger.log: "Tap micro -> interrupt vocal"
-            - script.execute: tab5_vocal_interrupt
+            - logger.log: "Tap micro -> interrupt + re-ecoute"
+            - script.execute: tab5_vocal_interrupt_and_listen
           else:
             - logger.log: "Tap micro -> start vocal"
             - voice_assistant.start:

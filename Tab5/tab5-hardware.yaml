@@ -277,21 +277,35 @@ micro_wake_word:
               else:
                 - if:
                     condition:
-                      lambda: 'return id(va_stop_armed);'
+                      and:
+                        - lambda: 'return id(va_stop_armed);'
+                        - or:
+                            - speaker.is_playing:
+                                id: tab5_speaker
+                            - media_player.is_announcing:
+                                id: speaker_player
+                            - not:
+                                voice_assistant.is_running:
                     then:
-                      - logger.log: "STOP vocal (interrupt assistant va_stop_armed)"
-                      - script.execute: tab5_vocal_interrupt
+                      - logger.log: "STOP vocal (interrupt TTS/responding va_stop_armed)"
+                      - script.execute: tab5_vocal_interrupt_and_listen
                     else:
                       - logger.log: "STOP wake ignoré (volet immobile, va_stop_armed=false)"
         else:
           - if:
               condition:
-                or:
-                  - voice_assistant.is_running
+                and:
                   - lambda: 'return id(va_stop_armed);'
+                  - or:
+                      - speaker.is_playing:
+                          id: tab5_speaker
+                      - media_player.is_announcing:
+                          id: speaker_player
+                      - not:
+                          voice_assistant.is_running:
               then:
-                - logger.log: "Okay Nabu -> interrupt session en cours"
-                - script.execute: tab5_vocal_interrupt
+                - logger.log: "Okay Nabu -> interrupt TTS/responding + re-ecoute"
+                - script.execute: tab5_vocal_interrupt_and_listen
               else:
                 - if:
                     condition:
