@@ -91,6 +91,7 @@ Sound output goes through the ES8388 DAC chip (I2C + I2S). Boot sequencing is ca
 | [`docs/ui_design.md`](docs/ui_design.md) | LVGL rendering, vector fonts, dynamic color, CPU optimizations |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Wake word pipeline, audio chain, visual feedback states |
 | [`docs/installation.md`](docs/installation.md) | Prerequisites, `user_entities.yaml`, secrets, flash & OTA |
+| [`docs/demo_mode.md`](docs/demo_mode.md) | Try it in minutes, no Home Assistant required |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Symptom → root cause → fix log for incidents already diagnosed |
 | [`docs/debugging.md`](docs/debugging.md) | How to observe/diagnose the device (logs, console overlay, marker technique) |
 | [`docs/decisions/`](docs/decisions/README.md) | Architecture decision records — the "why" behind non-obvious choices |
@@ -117,6 +118,8 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 ```
 
 Full step-by-step: [`docs/installation.md`](docs/installation.md)
+
+Just want to see it running before setting up Home Assistant? → [`docs/demo_mode.md`](docs/demo_mode.md) pushes synthetic data to a flashed device with a small standalone script — no HA install, nothing left to clean up.
 
 ---
 
@@ -218,6 +221,7 @@ La sortie sonore passe par le chip DAC ES8388 (I2C + I2S). Le séquencement au d
 | [`docs/ui_design.md`](docs/ui_design.md) | Rendu LVGL, polices vectorielles, couleur dynamique, optimisations CPU |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Pipeline wake-word, chaîne audio, états de retour visuel |
 | [`docs/installation.md`](docs/installation.md) | Prérequis, `user_entities.yaml`, secrets, flash & OTA |
+| [`docs/demo_mode.md`](docs/demo_mode.md) | Tester en quelques minutes, sans Home Assistant |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Journal symptôme → cause racine → correctif des incidents déjà diagnostiqués |
 | [`docs/debugging.md`](docs/debugging.md) | Comment observer/diagnostiquer l'appareil (logs, overlay console, technique des marqueurs) |
 | [`docs/decisions/`](docs/decisions/README.md) | Décisions d'architecture (ADR) — le "pourquoi" des choix non-évidents (en anglais) |
