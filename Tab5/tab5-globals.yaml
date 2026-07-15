@@ -22,6 +22,10 @@ globals:
   - id: volet_en_mouvement
     type: bool
     initial_value: 'false'
+  - id: va_stop_armed
+    type: bool
+    initial_value: 'false'
+    restore_value: false
   - id: clim_preset_mode
     type: std::string
     initial_value: '"none"'

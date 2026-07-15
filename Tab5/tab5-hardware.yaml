@@ -275,16 +275,46 @@ micro_wake_word:
                       lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
                     }
               else:
-                - logger.log: "STOP wake ignoré (volet immobile)"
+                - if:
+                    condition:
+                      and:
+                        - lambda: 'return id(va_stop_armed);'
+                        - or:
+                            - speaker.is_playing:
+                                id: tab5_speaker
+                            - media_player.is_announcing:
+                                id: speaker_player
+                            - not:
+                                voice_assistant.is_running:
+                    then:
+                      - logger.log: "STOP vocal (interrupt TTS/responding va_stop_armed)"
+                      - script.execute: tab5_vocal_interrupt_and_listen
+                    else:
+                      - logger.log: "STOP wake ignoré (volet immobile, va_stop_armed=false)"
         else:
           - if:
               condition:
                 and:
-                  - switch.is_on: tab5_wake_word_active
-                  - api.connected:
+                  - lambda: 'return id(va_stop_armed);'
+                  - or:
+                      - speaker.is_playing:
+                          id: tab5_speaker
+                      - media_player.is_announcing:
+                          id: speaker_player
+                      - not:
+                          voice_assistant.is_running:
               then:
-                - voice_assistant.start:
-                    wake_word: !lambda return wake_word;
+                - logger.log: "Okay Nabu -> interrupt TTS/responding + re-ecoute"
+                - script.execute: tab5_vocal_interrupt_and_listen
+              else:
+                - if:
+                    condition:
+                      and:
+                        - switch.is_on: tab5_wake_word_active
+                        - api.connected:
+                    then:
+                      - voice_assistant.start:
+                          wake_word: !lambda return wake_word;
 
 voice_assistant:
   id: va
@@ -294,12 +324,15 @@ voice_assistant:
   on_listening:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_listening"
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);' # Vert (Parlez)
+    - script.execute: tab5_vocal_arm_stop
   on_stt_end:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_stt_end"
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);' # Orange (Analyse)
+    - script.execute: tab5_vocal_arm_stop
   on_tts_start:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_tts_start"
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::INFO), LV_PART_MAIN);' # Bleu clair (Réponse)
+    - script.execute: tab5_vocal_arm_stop
   on_end:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_end"
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);' # Gris (Repos)
@@ -318,6 +351,7 @@ voice_assistant:
           - switch.is_on: tab5_wake_word_active
         then:
           - micro_wake_word.start:
+    - script.execute: tab5_vocal_disarm_stop
   on_error:
     - logger.log:
         format: "DEBUG: VOICE_ASSISTANT on_error: %s"
@@ -330,6 +364,7 @@ voice_assistant:
           - switch.is_on: tab5_wake_word_active
         then:
           - micro_wake_word.start:
+    - script.execute: tab5_vocal_disarm_stop
 
 button:
   - platform: restart

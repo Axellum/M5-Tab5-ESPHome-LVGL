@@ -67,8 +67,7 @@ lvgl:
             styles: style_invisible
             on_short_click:
               - logger.log: "DEBUG: BOUTON MICRO CLIQUE !"
-              - voice_assistant.start:
-                  id: va
+              - script.execute: tab5_assist_toggle
         
         # Bouton Domo
         - button:
