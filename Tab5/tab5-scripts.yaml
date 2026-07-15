@@ -14,8 +14,12 @@ script:
       - globals.set:
           id: volet_en_mouvement
           value: 'false'
-      - micro_wake_word.disable_model:
-          id: stop
+      - if:
+          condition:
+            lambda: 'return !id(va_stop_armed);'
+          then:
+            - micro_wake_word.disable_model:
+                id: stop
 
   # Stop vocal local : annule un pipeline Okay Nabu en cours + TTS court (évite « aucune réponse reçue »).
   - id: tab5_volet_stop_voice_feedback
@@ -28,6 +32,77 @@ script:
           data:
             entity_id: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
             message: "Volet arrêté."
+
+  # Arme le flag d'interruption (Stop vocal local ne reçoit pas le micro pendant pipeline HA).
+  - id: tab5_vocal_arm_stop
+    mode: restart
+    then:
+      - globals.set:
+          id: va_stop_armed
+          value: 'true'
+
+  - id: tab5_vocal_disarm_stop
+    mode: restart
+    then:
+      - globals.set:
+          id: va_stop_armed
+          value: 'false'
+      - if:
+          condition:
+            not:
+              voice_assistant.is_running:
+          then:
+            - if:
+                condition:
+                  lambda: 'return !id(volet_en_mouvement);'
+                then:
+                  - micro_wake_word.disable_model:
+                      id: stop
+
+  # Interruption Discussion : « Stop » pendant orange (LLM) ou TTS.
+  - id: tab5_vocal_interrupt
+    mode: restart
+    then:
+      - globals.set:
+          id: va_stop_armed
+          value: 'false'
+      - voice_assistant.stop:
+          id: va
+      - media_player.stop:
+          id: speaker_player
+      - homeassistant.service:
+          service: media_player.media_stop
+          data:
+            entity_id: media_player.m5stack_tab5_home_assistant_hmi_media_player
+      - homeassistant.service:
+          service: media_player.media_stop
+          data:
+            entity_id: media_player.m5stack_tab5_home_assistant_hmi_tab5_media_player
+      - lambda: |-
+          if (id(icon_mic_status) != nullptr) {
+            lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
+          }
+
+  # Tap micro : coupe si assistant actif, sinon démarre (pattern ESPHome « Click to Converse »).
+  - id: tab5_assist_toggle
+    mode: restart
+    then:
+      - if:
+          condition:
+            or:
+              - voice_assistant.is_running
+              - lambda: 'return id(va_stop_armed);'
+              - speaker.is_playing:
+                  id: tab5_speaker
+              - media_player.is_announcing:
+                  id: speaker_player
+          then:
+            - logger.log: "Tap micro -> interrupt vocal"
+            - script.execute: tab5_vocal_interrupt
+          else:
+            - logger.log: "Tap micro -> start vocal"
+            - voice_assistant.start:
+                id: va
 
   # Debounce du slider volume : chaque glissement redémarre le délai, un seul
   # media_player.volume_set part réellement une fois le doigt immobile.
