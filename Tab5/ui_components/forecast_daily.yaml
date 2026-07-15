@@ -93,6 +93,7 @@ obj:
                           condition:
                             lambda: 'return id(volet_en_mouvement);'
                           then:
+                            - script.execute: tab5_volet_end_movement
                             - homeassistant.service:
                                 service: script.tab5_volet_action
                                 data:

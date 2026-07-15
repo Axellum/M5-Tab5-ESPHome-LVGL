@@ -1,0 +1,11 @@
+# Suivi volet serre (moteur aveugle Tuya) — helpers + sync Tab5
+# Helpers : input_boolean.volet_serre_mouvement, input_text.volet_serre_etat
+# Script central : script.tab5_volet_action (open/close/stop + chrono 26s)
+# Sync écran : automation tab5_volet_updater (déjà dans automations Tab5)
+
+# Exemple : remplacer les automations sunrise/sunset cover direct par :
+#   action: script.tab5_volet_action
+#   data: { action: open | close }
+
+# Intercepter les appels cover directs (UI HA, intégrations) pour mettre à jour l'écran :
+# Voir automation volet_serre_track_direct_cover dans automations.yaml Freebox live.

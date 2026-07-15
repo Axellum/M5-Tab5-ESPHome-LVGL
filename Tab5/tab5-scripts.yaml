@@ -6,6 +6,29 @@
 # tab5-scripts.yaml — Scripts ESPHome reutilisables (sequences temporisees,
 # debounce). Preferer un script ici a un delay:+action duplique inline.
 script:
+  # Active le wake word interne « Stop » (désactivé par défaut par ESPHome, 2e modèle).
+  # Uniquement via tab5_maj_volet_etat (push HA) — pas d'état optimiste au tap écran.
+  - id: tab5_volet_end_movement
+    mode: restart
+    then:
+      - globals.set:
+          id: volet_en_mouvement
+          value: 'false'
+      - micro_wake_word.disable_model:
+          id: stop
+
+  # Stop vocal local : annule un pipeline Okay Nabu en cours + TTS court (évite « aucune réponse reçue »).
+  - id: tab5_volet_stop_voice_feedback
+    mode: restart
+    then:
+      - voice_assistant.stop:
+          id: va
+      - homeassistant.service:
+          service: assist_satellite.announce
+          data:
+            entity_id: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
+            message: "Volet arrêté."
+
   # Debounce du slider volume : chaque glissement redémarre le délai, un seul
   # media_player.volume_set part réellement une fois le doigt immobile.
   - id: tab5_debounce_volume_set

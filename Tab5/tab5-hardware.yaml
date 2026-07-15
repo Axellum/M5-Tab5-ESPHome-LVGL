@@ -245,17 +245,46 @@ media_player:
 
 micro_wake_word:
   id: mww
+  stop_after_detection: false
   models:
     - okay_nabu
+    - model: https://github.com/kahrendt/microWakeWord/releases/download/stop/stop.json
+      id: stop
+      internal: true
   on_wake_word_detected:
-    - logger.log: "DEBUG: WAKE WORD DETECTED !!"
+    - logger.log:
+        format: "DEBUG: WAKE WORD DETECTED (%s)"
+        args: ['!lambda return wake_word;']
     - if:
         condition:
-          - switch.is_on: tab5_wake_word_active
-          - api.connected:
+          lambda: 'return wake_word == "Stop";'
         then:
-          - voice_assistant.start:
-              wake_word: !lambda return wake_word;
+          - if:
+              condition:
+                lambda: 'return id(volet_en_mouvement);'
+              then:
+                - logger.log: "STOP volet local (wake Stop + mouvement)"
+                - script.execute: tab5_volet_end_movement
+                - homeassistant.service:
+                    service: script.tab5_volet_action
+                    data:
+                      action: stop
+                - script.execute: tab5_volet_stop_voice_feedback
+                - lambda: |-
+                    if (id(icon_mic_status) != nullptr) {
+                      lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+                    }
+              else:
+                - logger.log: "STOP wake ignoré (volet immobile)"
+        else:
+          - if:
+              condition:
+                and:
+                  - switch.is_on: tab5_wake_word_active
+                  - api.connected:
+              then:
+                - voice_assistant.start:
+                    wake_word: !lambda return wake_word;
 
 voice_assistant:
   id: va
