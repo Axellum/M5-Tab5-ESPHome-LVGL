@@ -1,0 +1,3 @@
+# Dépendance unique du mode démo (tools/demo/demo_pusher.py).
+# Même librairie que l'intégration ESPHome de Home Assistant — aucun HA requis ici.
+aioesphomeapi

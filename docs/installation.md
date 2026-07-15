@@ -4,6 +4,8 @@
 
 ---
 
+> **Just want to try it first?** [`docs/demo_mode.md`](demo_mode.md) shows the full dashboard on a flashed device in a few minutes, with no Home Assistant install at all. Come back here when you're ready for the real install.
+
 ## Prerequisites
 
 - A working **Home Assistant** instance (any installation method)
@@ -142,6 +144,8 @@ If you are outside France, the weather screen requires adaptation. The push auto
 ## Version Française
 
 ---
+
+> **Envie de tester d'abord ?** [`docs/demo_mode.md`](demo_mode.md) montre le tableau de bord complet sur un appareil flashé en quelques minutes, sans aucune installation Home Assistant. Revenez ici quand vous êtes prêt pour l'installation réelle.
 
 ## Prérequis
 
