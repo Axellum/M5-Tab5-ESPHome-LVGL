@@ -48,6 +48,7 @@ lvgl:
                       pbars,
                       id(page_title_wrapper), id(lbl_page_title),
                       id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
+                      id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3),
                       id(current_central_panel));
               }
 
@@ -274,17 +275,31 @@ lvgl:
                   height: SIZE_CONTENT
                   styles: style_transparent
                   hidden: true
-                  layout:
-                    type: FLEX
-                    flex_flow: ROW
-                    flex_align_main: CENTER
-                    flex_align_cross: CENTER
-                    pad_column: 15
                   widgets:
-                    - label: { id: alerte_slot_0, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
-                    - label: { id: alerte_slot_1, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
-                    - label: { id: alerte_slot_2, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
-                    - label: { id: alerte_slot_3, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
+                    - obj:
+                        align: CENTER
+                        width: SIZE_CONTENT
+                        height: SIZE_CONTENT
+                        styles: style_transparent
+                        layout:
+                          type: FLEX
+                          flex_flow: ROW
+                          flex_align_main: CENTER
+                          flex_align_cross: CENTER
+                          pad_column: 15
+                        widgets:
+                          - label: { id: alerte_slot_0, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
+                          - label: { id: alerte_slot_1, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
+                          - label: { id: alerte_slot_2, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
+                          - label: { id: alerte_slot_3, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
+                    - button:
+                        id: btn_alerts_mf_tap
+                        align: CENTER
+                        width: 1180
+                        height: 80
+                        styles: style_invisible
+                        on_short_click:
+                          - script.execute: tab5_central_panel_next
 
               # Pluie Wrapper
               - obj:
@@ -294,48 +309,80 @@ lvgl:
                   height: SIZE_CONTENT
                   styles: style_transparent
                   hidden: true
-                  layout:
-                    type: FLEX
-                    flex_flow: ROW
-                    flex_align_main: CENTER
-                    flex_align_cross: CENTER
-                    pad_column: 15
                   widgets:
-                    - label: { id: icon_rain_predict, text: "\U000F0597", text_font: mdi_font_alert, text_color: color_temp_min }
                     - obj:
-                        id: rain_bar_container
+                        align: CENTER
                         width: SIZE_CONTENT
-                        height: 50
+                        height: SIZE_CONTENT
                         styles: style_transparent
                         layout:
                           type: FLEX
                           flex_flow: ROW
                           flex_align_main: CENTER
-                          flex_align_cross: END
+                          flex_align_cross: CENTER
+                          pad_column: 15
                         widgets:
-                          - obj: { id: rb_0, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_0_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                          - obj: { id: rb_1, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_1_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                          - obj: { id: rb_2, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_2_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                          - obj: { id: rb_3, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_3_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                          - obj: { id: rb_4, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_4_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                          - obj: { id: rb_5, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_5_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                          - obj: { id: rb_6, width: 55, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_6_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                          - obj: { id: rb_7, width: 55, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_7_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                          - obj: { id: rb_8, width: 55, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_8_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                    - obj:
-                        width: SIZE_CONTENT
-                        height: 100%
-                        styles: style_transparent
-                        layout:
-                          type: FLEX
-                          flex_flow: ROW
-                          flex_align_main: CENTER
-                          flex_align_cross: END
-                          pad_column: 6
-                        widgets:
-                          - label: { id: lbl_proc_pluie, text: "Synchronisation...", text_font: roboto_32_b, text_color: color_text, pad_bottom: 15 }
-                          - label: { id: lbl_pluie_val, text: "", text_font: roboto_45_b, text_color: color_orange_vif, pad_bottom: 10 }
-                          - label: { id: lbl_pluie_unit, text: "", text_font: roboto_32_b, text_color: color_text, pad_bottom: 15 }
+                          - label: { id: icon_rain_predict, text: "\U000F0597", text_font: mdi_font_alert, text_color: color_temp_min }
+                          - obj:
+                              id: rain_bar_container
+                              width: SIZE_CONTENT
+                              height: 50
+                              styles: style_transparent
+                              layout:
+                                type: FLEX
+                                flex_flow: ROW
+                                flex_align_main: CENTER
+                                flex_align_cross: END
+                              widgets:
+                                - obj: { id: rb_0, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_0_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
+                                - obj: { id: rb_1, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_1_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
+                                - obj: { id: rb_2, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_2_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
+                                - obj: { id: rb_3, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_3_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
+                                - obj: { id: rb_4, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_4_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
+                                - obj: { id: rb_5, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_5_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
+                                - obj: { id: rb_6, width: 55, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_6_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
+                                - obj: { id: rb_7, width: 55, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_7_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
+                                - obj: { id: rb_8, width: 55, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_8_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
+                          - obj:
+                              width: SIZE_CONTENT
+                              height: 100%
+                              styles: style_transparent
+                              layout:
+                                type: FLEX
+                                flex_flow: ROW
+                                flex_align_main: CENTER
+                                flex_align_cross: END
+                                pad_column: 6
+                              widgets:
+                                - label: { id: lbl_proc_pluie, text: "Synchronisation...", text_font: roboto_45_b, text_color: color_text, pad_bottom: 15 }
+                                - label: { id: lbl_pluie_val, text: "", text_font: roboto_45_b, text_color: color_orange_vif, pad_bottom: 10 }
+                                - label: { id: lbl_pluie_unit, text: "", text_font: roboto_45_b, text_color: color_text, pad_bottom: 15 }
+                    - button:
+                        id: btn_rain_tap
+                        align: CENTER
+                        width: 1180
+                        height: 80
+                        styles: style_invisible
+                        on_short_click:
+                          - script.execute: tab5_central_panel_next
+
+              # Réponse vocale IA (remplace le rotateur 8s le temps de l'affichage)
+              - obj:
+                  id: vocal_wrapper
+                  align: CENTER
+                  width: SIZE_CONTENT
+                  height: 100%
+                  styles: style_transparent
+                  hidden: true
+                  widgets:
+                    - label:
+                        id: lbl_vocal_text
+                        align: CENTER
+                        y: 0
+                        width: 1180
+                        text: ""
+                        text_font: roboto_45_b
+                        text_color: color_text
 
               # Planning Wrapper
               - obj:
@@ -345,7 +392,15 @@ lvgl:
                   height: 100%
                   styles: style_transparent
                   widgets:
-                    - label: { id: lbl_planning_text, text: "", align: CENTER, y: 4, text_font: roboto_45_b, text_color: color_text }
+                    - label: { id: lbl_planning_text, text: "", align: CENTER, y: 0, text_font: roboto_45_b, text_color: color_text }
+                    - button:
+                        id: btn_planning_tap
+                        align: CENTER
+                        width: 1180
+                        height: 80
+                        styles: style_invisible
+                        on_short_click:
+                          - script.execute: tab5_central_panel_next
 
               # Titre de page previsions (pages horaires / journalieres 2-3, masque sur accueil)
               - obj:
@@ -358,8 +413,7 @@ lvgl:
                   widgets:
                     - label: { id: lbl_page_title, text: "", align: CENTER, y: 4, text_font: roboto_45_b, text_color: color_text }
 
-              # Info Wrapper (zone d'info : récap calendrier 3 jours ou alerte météo,
-              # alimenté par le service HA tab5_maj_info_texte — panneau 3 du rotateur)
+              # Info Wrapper (résumé test — panneau 3, tap météo = dismiss définitif)
               - obj:
                   id: info_wrapper
                   align: CENTER
@@ -368,7 +422,92 @@ lvgl:
                   styles: style_transparent
                   hidden: true
                   widgets:
-                    - label: { id: lbl_info_text, text: "", align: CENTER, text_font: roboto_22, text_color: color_text }
+                    - label: { id: lbl_info_text, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
+                    - button:
+                        id: btn_info_tap
+                        align: CENTER
+                        width: 1180
+                        height: 80
+                        styles: style_invisible
+                        on_short_click:
+                          - script.execute: tab5_dismiss_info_tap
+
+              # Alertes HA individuelles (panneaux 4-7, tap = lu définitif + ligne suivante)
+              - obj:
+                  id: ha_alert_wrapper_0
+                  align: CENTER
+                  width: SIZE_CONTENT
+                  height: 100%
+                  styles: style_transparent
+                  hidden: true
+                  widgets:
+                    - button:
+                        id: btn_ha_alert_tap_0
+                        align: CENTER
+                        width: 1180
+                        height: 80
+                        styles: style_invisible
+                        on_short_click:
+                          - script.execute: tab5_dismiss_ha_alert_0
+                        widgets:
+                          - label: { id: lbl_ha_alert_0, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
+
+              - obj:
+                  id: ha_alert_wrapper_1
+                  align: CENTER
+                  width: SIZE_CONTENT
+                  height: 100%
+                  styles: style_transparent
+                  hidden: true
+                  widgets:
+                    - button:
+                        id: btn_ha_alert_tap_1
+                        align: CENTER
+                        width: 1180
+                        height: 80
+                        styles: style_invisible
+                        on_short_click:
+                          - script.execute: tab5_dismiss_ha_alert_1
+                        widgets:
+                          - label: { id: lbl_ha_alert_1, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
+
+              - obj:
+                  id: ha_alert_wrapper_2
+                  align: CENTER
+                  width: SIZE_CONTENT
+                  height: 100%
+                  styles: style_transparent
+                  hidden: true
+                  widgets:
+                    - button:
+                        id: btn_ha_alert_tap_2
+                        align: CENTER
+                        width: 1180
+                        height: 80
+                        styles: style_invisible
+                        on_short_click:
+                          - script.execute: tab5_dismiss_ha_alert_2
+                        widgets:
+                          - label: { id: lbl_ha_alert_2, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
+
+              - obj:
+                  id: ha_alert_wrapper_3
+                  align: CENTER
+                  width: SIZE_CONTENT
+                  height: 100%
+                  styles: style_transparent
+                  hidden: true
+                  widgets:
+                    - button:
+                        id: btn_ha_alert_tap_3
+                        align: CENTER
+                        width: 1180
+                        height: 80
+                        styles: style_invisible
+                        on_short_click:
+                          - script.execute: tab5_dismiss_ha_alert_3
+                        widgets:
+                          - label: { id: lbl_ha_alert_3, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
 
         # ==================== PAGINATION BARS ====================
         - obj:

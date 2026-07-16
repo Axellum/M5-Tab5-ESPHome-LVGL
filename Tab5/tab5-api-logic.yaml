@@ -432,11 +432,38 @@ api:
       variables:
         texte: string
         couleur: string
+        meteo_id: string
       then:
         - lambda: |-
+            id(info_meteo_dismiss_id) = meteo_id;
             update_info_text_ui(id(lbl_info_text), id(info_wrapper), id(planning_wrapper),
-                texte, couleur, id(has_info), id(current_central_panel),
-                id(roboto_22), id(roboto_32_b));
+                texte, couleur, meteo_id, id(tab5_dismissed_local), id(has_info), id(current_central_panel),
+                id(roboto_32_b), id(roboto_45_b));
+
+    - service: tab5_maj_reponse_vocale
+      variables:
+        texte: string
+      then:
+        - script.execute:
+            id: tab5_show_vocal_response
+            texte: !lambda 'return texte;'
+
+    - service: tab5_maj_alertes_ha_bulk
+      variables:
+        payload: string
+      then:
+        - lambda: |-
+            HaAlertSlotUI slots[4] = {
+              {id(ha_alert_wrapper_0), id(lbl_ha_alert_0), &id(has_ha_alert_0), &id(ha_alert_id_0)},
+              {id(ha_alert_wrapper_1), id(lbl_ha_alert_1), &id(has_ha_alert_1), &id(ha_alert_id_1)},
+              {id(ha_alert_wrapper_2), id(lbl_ha_alert_2), &id(has_ha_alert_2), &id(ha_alert_id_2)},
+              {id(ha_alert_wrapper_3), id(lbl_ha_alert_3), &id(has_ha_alert_3), &id(ha_alert_id_3)},
+            };
+            parse_and_update_ha_alerts_bulk(payload, slots, id(current_central_panel),
+                id(has_rain), id(has_alerts), id(has_info),
+                id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
+                id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3),
+                id(roboto_45_b), id(tab5_dismissed_local));
 
     - service: tab5_maj_planning
 
