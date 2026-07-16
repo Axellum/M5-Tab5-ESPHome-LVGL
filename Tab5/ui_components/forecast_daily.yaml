@@ -171,18 +171,8 @@ obj:
                           data:
                             entity_id: ${entity_light_chambre}
                     on_long_press:
-                      - globals.set:
-                          id: current_light_entity
-                          value: '"${entity_light_chambre}"'
-                      - lambda: |-
-                          lv_label_set_text(id(popup_light_title), "Ampoule Chambre");
-                          if (id(light_chambre_state).state == "on") {
-                            lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-                          } else {
-                            lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-                          }
-                          lv_obj_clear_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);
-                          lv_obj_move_foreground(id(light_options_popup));
+                      # Synchro complète (titre, sélecteur, power, arc) déléguée au script partagé
+                      - script.execute: { id: tab5_light_popup_show, light_idx: 0 }
 
           # Icônes latérales (épaules)
           - label: { id: icon_card_lit_j2, text: "\U000F02E3", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
@@ -223,18 +213,7 @@ obj:
                           data:
                             entity_id: ${entity_light_salon}
                     on_long_press:
-                      - globals.set:
-                          id: current_light_entity
-                          value: '"${entity_light_salon}"'
-                      - lambda: |-
-                          lv_label_set_text(id(popup_light_title), "Ampoule Salon");
-                          if (id(light_salon_state).state == "on") {
-                            lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-                          } else {
-                            lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-                          }
-                          lv_obj_clear_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);
-                          lv_obj_move_foreground(id(light_options_popup));
+                      - script.execute: { id: tab5_light_popup_show, light_idx: 1 }
 
           # Icônes latérales (épaules)
           - label: { id: icon_card_salon_j3, text: "\U000F04B9", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
@@ -273,18 +252,7 @@ obj:
                       - homeassistant.service:
                           service: script.allumer_leds
                     on_long_press:
-                      - globals.set:
-                          id: current_light_entity
-                          value: '"${entity_light_bureau}"'
-                      - lambda: |-
-                          lv_label_set_text(id(popup_light_title), "Ampoule LEDs");
-                          if (id(light_led_state).state == "on") {
-                            lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-                          } else {
-                            lv_obj_set_style_text_color(id(btn_light_power_icon), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-                          }
-                          lv_obj_clear_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);
-                          lv_obj_move_foreground(id(light_options_popup));
+                      - script.execute: { id: tab5_light_popup_show, light_idx: 2 }
           # Icônes latérales (épaules)
           - label: { id: icon_card_led_j4, text: "\U000F1051", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
           - label: { id: icon_card_light_j4, text: "\U000F0335", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }

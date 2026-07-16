@@ -127,6 +127,19 @@ script:
           id: speaker_player
           volume: !lambda 'return id(system_volume);'
 
+  # Debounce de l'arc luminosité du popup lumière : chaque tick de glissement
+  # redémarre le délai, un seul light.turn_on part une fois le doigt immobile
+  # (même contrainte que le volume — ne pas spammer HA à chaque tick).
+  - id: tab5_debounce_light_brightness
+    mode: restart
+    then:
+      - delay: 200ms
+      - homeassistant.service:
+          service: light.turn_on
+          data:
+            entity_id: !lambda 'return id(current_light_entity);'
+            brightness: !lambda 'return to_string(lv_arc_get_value(id(arc_light_brightness)));'
+
   # Rotateur central auto (8s) — mode restart : tout tap/advance remet le délai à zéro.
   - id: tab5_central_rotator_auto
     mode: restart
@@ -300,6 +313,32 @@ script:
                 data:
                   alert_id: !lambda 'return id(temp_dismiss_alert_id);'
             - script.execute: tab5_central_rotator_auto
+
+  # Popup lumière : sélection + synchro complète (titre, surbrillance sélecteur, icônes
+  # d'état, icône power, arc luminosité depuis l'attribut brightness HA) puis affichage.
+  # Appelé par forecast_daily.yaml (long_press cartes j2/j3/j4) et par les 3 boutons du
+  # sélecteur interne du popup. light_idx : 0=Chambre, 1=Salon, 2=LEDs.
+  - id: tab5_light_popup_show
+    mode: restart
+    parameters:
+      light_idx: int
+    then:
+      - lambda: |-
+          if (light_idx < 0 || light_idx > 2) return;
+          static const char* const kTitles[3] = {"Ampoule Chambre", "Ampoule Salon", "Ampoule LEDs"};
+          static const char* const kEntities[3] = {"${entity_light_chambre}", "${entity_light_salon}", "${entity_light_bureau}"};
+          id(current_light_entity) = kEntities[light_idx];
+          const bool is_on[3] = { id(light_chambre_state).state == "on",
+                                  id(light_salon_state).state == "on",
+                                  id(light_led_state).state == "on" };
+          const float brightness[3] = { id(light_chambre_brightness).state,
+                                        id(light_salon_brightness).state,
+                                        id(light_led_brightness).state };
+          show_light_popup_ui(light_idx, kTitles, is_on, brightness,
+              id(light_options_popup), id(popup_light_title),
+              id(btn_light_sel_0), id(btn_light_sel_1), id(btn_light_sel_2),
+              id(icon_light_sel_0), id(icon_light_sel_1), id(icon_light_sel_2),
+              id(btn_light_power_icon), id(arc_light_brightness), id(lbl_light_brightness_val));
 
   - id: tab5_dismiss_ha_alert_3
     mode: restart

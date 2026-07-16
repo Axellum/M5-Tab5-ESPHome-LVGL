@@ -133,6 +133,7 @@ text_sensor:
       - lambda: |-
           update_light_card_ui(id(icon_card_lit_j2), id(icon_card_light_j2), id(icon_sw2), id(lbl_sw2_state),
               id(btn_light_power_icon), id(current_light_entity), "${entity_light_chambre}", x == "on");
+          update_light_selector_icon(id(icon_light_sel_0), x == "on");
 
   - platform: homeassistant
     id: light_salon_state
@@ -141,6 +142,7 @@ text_sensor:
       - lambda: |-
           update_light_card_ui(id(icon_card_salon_j3), id(icon_card_light_j3), id(icon_sw3), id(lbl_sw3_state),
               id(btn_light_power_icon), id(current_light_entity), "${entity_light_salon}", x == "on");
+          update_light_selector_icon(id(icon_light_sel_1), x == "on");
 
   - platform: homeassistant
     id: light_led_state
@@ -149,8 +151,42 @@ text_sensor:
       - lambda: |-
           update_light_card_ui(id(icon_card_led_j4), id(icon_card_light_j4), id(icon_sw4), id(lbl_sw4_state),
               id(btn_light_power_icon), id(current_light_entity), "${entity_light_bureau}", x == "on");
+          update_light_selector_icon(id(icon_light_sel_2), x == "on");
 
 sensor:
+
+  # Luminosité (attribut brightness 0-255) des 3 lumières — synchronise l'arc du popup
+  # lumière quand il est ouvert sur cette entité (helper inerte popup fermé / pendant
+  # un drag utilisateur — voir sync_light_popup_brightness, tab5_custom.cpp).
+  - platform: homeassistant
+    id: light_chambre_brightness
+    entity_id: ${entity_light_chambre}
+    attribute: brightness
+    on_value:
+      - lambda: |-
+          if (id(current_light_entity) == "${entity_light_chambre}")
+            sync_light_popup_brightness(id(light_options_popup), id(arc_light_brightness),
+                id(lbl_light_brightness_val), x);
+
+  - platform: homeassistant
+    id: light_salon_brightness
+    entity_id: ${entity_light_salon}
+    attribute: brightness
+    on_value:
+      - lambda: |-
+          if (id(current_light_entity) == "${entity_light_salon}")
+            sync_light_popup_brightness(id(light_options_popup), id(arc_light_brightness),
+                id(lbl_light_brightness_val), x);
+
+  - platform: homeassistant
+    id: light_led_brightness
+    entity_id: ${entity_light_bureau}
+    attribute: brightness
+    on_value:
+      - lambda: |-
+          if (id(current_light_entity) == "${entity_light_bureau}")
+            sync_light_popup_brightness(id(light_options_popup), id(arc_light_brightness),
+                id(lbl_light_brightness_val), x);
 
   - platform: homeassistant
 

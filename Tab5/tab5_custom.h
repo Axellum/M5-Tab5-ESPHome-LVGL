@@ -220,6 +220,24 @@ void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* i
     lv_obj_t* lbl_switch_state, lv_obj_t* btn_power_icon,
     const std::string& current_light_entity, const std::string& this_entity, bool is_on);
 
+// Icone du selecteur du popup lumiere (lit/canape/ruban LED) : doree si allumee.
+void update_light_selector_icon(lv_obj_t* icon, bool is_on);
+
+// Reflete l'attribut brightness HA (0-255, NAN si eteinte) sur l'arc + le label %
+// du popup lumiere. Inerte si le popup est ferme ou pendant un drag utilisateur.
+void sync_light_popup_brightness(lv_obj_t* popup, lv_obj_t* arc, lv_obj_t* pct_lbl,
+    float brightness);
+
+// Ouvre/resynchronise le popup lumiere sur light_idx (0=Chambre 1=Salon 2=LEDs) :
+// titre, bordure cyan du selecteur, icones d'etat, icone power, arc + % depuis
+// l'etat HA reel. Appele par script tab5_light_popup_show (tab5-scripts.yaml).
+void show_light_popup_ui(int light_idx, const char* const titles[3],
+    const bool is_on[3], const float brightness[3],
+    lv_obj_t* popup, lv_obj_t* title_lbl,
+    lv_obj_t* btn0, lv_obj_t* btn1, lv_obj_t* btn2,
+    lv_obj_t* icon0, lv_obj_t* icon1, lv_obj_t* icon2,
+    lv_obj_t* power_icon, lv_obj_t* arc, lv_obj_t* pct_lbl);
+
 // Tap tuile météo : affiche le planning/horaires du jour dans la carte centrale (6s).
 std::string get_day_planning_display_text(int jour);
 void show_temporary_planning(int jour, lv_obj_t* lbl_planning, lv_obj_t* planning_wrap, lv_obj_t* alert_cont, lv_obj_t* rain_wrap,

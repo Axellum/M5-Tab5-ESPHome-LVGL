@@ -1,29 +1,25 @@
-# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 8x par light_popup.yaml.
-# Vars: color_name (payload HA color_name:), icon_color (hex affichage), label_text.
+# [AI-CONTEXT] Pastille couleur ronde (78 px), template paramétré (!include+vars),
+# réutilisé 12x par la grille COULEURS de light_popup.yaml (#T164).
+# Vars: color_name (payload HA color_name:), icon_color (hex de la pastille affichée —
+# peut différer du CSS exact pour rester lisible sur fond sombre, ex. purple → 0xA855F7).
 # Cible id(current_light_entity) (global partagé, pas une entité en dur).
 button:
-  width: 170
-  height: 60
-  radius: 12
-  styles: style_clim_btn
+  width: 78
+  height: 78
+  radius: 39
+  bg_color: ${icon_color}
+  bg_opa: 100%
+  border_width: 2
+  border_color: color_glass_rim
+  border_opa: 45%
+  shadow_width: 0
   pressed:
-    bg_opa: 30%
+    bg_opa: 55%
+    border_color: color_text
+    border_opa: 100%
   on_short_click:
     - homeassistant.service:
         service: light.turn_on
         data:
           entity_id: !lambda 'return id(current_light_entity);'
           color_name: "${color_name}"
-  widgets:
-    - label:
-        text: "\U000F0335"
-        align: LEFT_MID
-        x: 10
-        text_font: mdi_font_45
-        text_color: ${icon_color}
-    - label:
-        text: "${label_text}"
-        align: LEFT_MID
-        x: 60
-        text_font: roboto_22
-        text_color: color_text_dim
