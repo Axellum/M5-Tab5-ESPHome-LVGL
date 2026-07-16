@@ -1,11 +1,12 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 4x par climate_popup.yaml
-# (cool/heat/fan/dry). Vars: suffix, hvac_mode, icon, label_text. Ne pas dupliquer
-# manuellement — ajouter un !include supplémentaire pour un nouveau mode HVAC.
+# (cool/heat/dry/fan — pile flex de la carte MODE, 342×88). Vars: suffix, hvac_mode, icon,
+# label_text. Ne pas dupliquer manuellement — ajouter un !include supplémentaire pour un
+# nouveau mode HVAC. L'icône popup_icon_clim_${suffix} est recolorée par tab5_maj_clim.
 button:
   id: popup_btn_clim_${suffix}
-  width: 170
-  height: 60
-  radius: 12
+  width: 342
+  height: 88
+  radius: 18
   styles: style_clim_btn
   pressed:
     bg_opa: 30%
@@ -16,5 +17,5 @@ button:
           entity_id: ${entity_climate_salon}
           hvac_mode: "${hvac_mode}"
   widgets:
-    - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-    - label: { text: "${label_text}", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
+    - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
+    - label: { text: "${label_text}", align: LEFT_MID, x: 88, text_font: roboto_32_b, text_color: color_text }

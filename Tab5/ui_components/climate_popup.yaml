@@ -1,22 +1,27 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file climate_popup.yaml
-# @role Popup fullscreen clim (960×520). Gauche=Jauge/Contrôles, Droite=Grille 3×3
-#       (mode HVAC + off + swing / preset eco+boost + quiet).
+# @role Popup plein écran clim (carte 1250×690, 15 px des bords écran 1280×720).
+#       3 cartes de verre : MODE (Froid/Chaud/Sec/Ventil./Éteint), TEMPÉRATURE
+#       (arc 320 px + cible au centre + boutons ± + température pièce) et OPTIONS
+#       (presets Éco/Boost, Silence, flux d'air Oscillation/Brise).
+#       Ouvert en tapant la cible de la carte clim compacte (climate_card.yaml).
 # @architecture_constraint NON factorisable au-delà de ce qui l'est déjà (décision explicite,
-#                          #T164, cf. contexte_ia/04_Projets/etat_tab5.md) : chaque bouton de la
-#                          grille appelle un service Home Assistant DIFFÉRENT
-#                          (climate.set_hvac_mode / set_preset_mode / set_swing_mode / set_fan_mode
-#                          / turn_off) avec une logique lambda propre — pas de partie purement
-#                          cosmétique séparable de l'action. Seuls 6/9 boutons ont un template
-#                          commun (climate_hvac_mode_btn.yaml/climate_preset_toggle_btn.yaml) car
-#                          leur service+payload sont réellement identiques (seul le paramètre change).
-# @ai_instruction Les couleurs des icônes (popup_icon_clim_*) sont pilotées par le service
-#                 `tab5_maj_clim` (tab5-api-logic.yaml) via les globals clim_preset_mode/
-#                 clim_fan_mode/clim_swing_mode — ne pas essayer de les dériver localement ici.
-#                 `pressed: bg_opa: 30%` est répété sur chaque bouton (pas dans style_definitions)
-#                 car ESPHome rejette `pressed:` dans un style partagé — contrainte du framework,
-#                 pas un oubli.
+#                          #T164, ADR-0007) : chaque bouton restant appelle un service Home
+#                          Assistant DIFFÉRENT (set_swing_mode / set_fan_mode / turn_off) avec
+#                          une logique lambda propre. Seuls 6/10 boutons ont un template commun
+#                          (climate_hvac_mode_btn.yaml ×4, climate_preset_toggle_btn.yaml ×2).
+#                          Ne pas renommer arc_temp_popup / clim_target_popup / val_temp_int_popup
+#                          / popup_icon_clim_* : pilotés par le service `tab5_maj_clim`
+#                          (tab5-api-logic.yaml) via les globals clim_* — ne pas essayer de
+#                          dériver les couleurs localement ici.
+# @ai_instruction `scrollable: false` est posé sur la carte modale et toutes les sous-cartes :
+#       un appui légèrement glissé (ex. sur la croix de fermeture) faisait défiler la carte
+#       et laissait le contenu décalé — NE PAS retirer ces flags. La cible (arc et boutons ±)
+#       est affichée de façon optimiste via update_clim_target_ui() (tab5_custom.cpp) et
+#       l'appel HA passe par le débounce tab5_debounce_clim_temp (tab5-scripts.yaml) — un seul
+#       climate.set_temperature par geste, pas un par tick. `pressed: bg_opa: 30%` est répété
+#       sur chaque bouton car ESPHome rejette `pressed:` dans un style partagé.
 # ═══════════════════════════════════════════════════════
 obj:
   id: clim_options_popup
@@ -24,223 +29,247 @@ obj:
   width: 100%
   height: 100%
   hidden: true
+  scrollable: false
   styles: style_invisible
   widgets:
-    # Overlay fond sombre (cliquable pour fermer)
+    # Voile sombre (tap = fermer) — opacité renforcée comme tv_remote_popup
     - button:
         align: CENTER
         width: 100%
         height: 100%
-        styles: style_modal_overlay
+        bg_color: color_modal_scrim
+        bg_opa: 85%
+        border_width: 0
         on_short_click:
           - lambda: 'lv_obj_add_flag(id(clim_options_popup), LV_OBJ_FLAG_HIDDEN);'
 
-    # Carte modale principale
+    # Carte modale — 15 px des bords écran (1280×720)
     - obj:
         align: CENTER
-        width: 1130
-        height: 650
+        width: 1250
+        height: 690
         styles: style_modal_card
+        scrollable: false
         scrollbar_mode: "OFF"
         widgets:
 
           # ═══ EN-TÊTE ═══
+          - label: { text: "\U000F0717", align: TOP_LEFT, x: 28, y: 26, text_font: mdi_font_45, text_color: color_info }
           - label:
               text: "Climatisation Salon"
               align: TOP_LEFT
-              x: 30
-              y: 20
-              text_font: roboto_32_b
+              x: 92
+              y: 26
+              text_font: roboto_45_b
               text_color: color_text
 
-          # Bouton fermer (X)
+          # Croix de fermeture — vrai bouton de verre 96×64 (cible tactile large, anti-décalage)
           - button:
               align: TOP_RIGHT
-              x: -15
-              y: 12
-              width: 80
-              height: 80
-              styles: style_transparent
+              x: -20
+              y: 16
+              width: 96
+              height: 64
+              styles: style_clim_btn
+              pressed:
+                bg_opa: 30%
               on_short_click:
                 - lambda: 'lv_obj_add_flag(id(clim_options_popup), LV_OBJ_FLAG_HIDDEN);'
               widgets:
-                - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_45, text_color: color_console_label }
+                - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_45, text_color: color_text }
 
-          # ═══ COLONNE GAUCHE : Jauge + Contrôles (340px) ═══
+          # ═══ CARTE MODE (gauche) : 5 modes HVAC empilés ═══
           - obj:
-              align: LEFT_MID
-              x: 20
-              y: 15
-              width: 340
-              height: 440
-              styles: style_transparent
+              align: TOP_LEFT
+              x: 24
+              y: 100
+              width: 386
+              height: 566
+              styles: style_glass_card
+              scrollable: false
               widgets:
-                # Température actuelle
-                - label:
-                    text: "Actuelle"
-                    align: TOP_MID
-                    y: 0
-                    text_font: roboto_22
-                    text_color: color_text_dim
-                - label:
-                    id: val_temp_int_popup
-                    text: "-- °"
-                    align: TOP_MID
-                    y: 28
-                    text_font: roboto_32_b
-                    text_color: color_text
+                - label: { text: "MODE", align: TOP_LEFT, x: 22, y: 14, text_font: roboto_22, text_color: color_accent }
 
-                # Arc jauge (indicateur visuel de la cible)
+                # Pile flex : 4 modes via template + Éteint (climate.turn_off, service différent)
+                - obj:
+                    align: TOP_LEFT
+                    x: 22
+                    y: 50
+                    width: 342
+                    height: 506
+                    styles: style_transparent
+                    scrollable: false
+                    layout:
+                      type: FLEX
+                      flex_flow: COLUMN
+                      flex_align_main: START
+                      flex_align_cross: CENTER
+                      pad_row: 10
+                    widgets:
+                      - !include { file: climate_hvac_mode_btn.yaml, vars: { suffix: "cool", hvac_mode: "cool", icon: "\U000F0717", label_text: "Froid" } }
+                      - !include { file: climate_hvac_mode_btn.yaml, vars: { suffix: "heat", hvac_mode: "heat", icon: "\U000F0238", label_text: "Chaud" } }
+                      - !include { file: climate_hvac_mode_btn.yaml, vars: { suffix: "dry", hvac_mode: "dry", icon: "\U000F058E", label_text: "Sec" } }
+                      - !include { file: climate_hvac_mode_btn.yaml, vars: { suffix: "fan", hvac_mode: "fan_only", icon: "\U000F0210", label_text: "Ventilation" } }
+                      - button:
+                          id: popup_btn_clim_off
+                          width: 342
+                          height: 88
+                          radius: 18
+                          styles: style_clim_btn
+                          pressed:
+                            bg_opa: 30%
+                          on_short_click:
+                            - homeassistant.service:
+                                service: climate.turn_off
+                                data:
+                                  entity_id: ${entity_climate_salon}
+                          widgets:
+                            - label: { id: popup_icon_clim_off, text: "\U000F0425", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
+                            - label: { text: "Éteint", align: LEFT_MID, x: 88, text_font: roboto_32_b, text_color: color_text }
+
+          # ═══ CARTE TEMPÉRATURE (centre) : arc + cible + ± + pièce ═══
+          - obj:
+              align: TOP_LEFT
+              x: 426
+              y: 100
+              width: 398
+              height: 566
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                - label: { text: "TEMPÉRATURE", align: TOP_LEFT, x: 22, y: 14, text_font: roboto_22, text_color: color_accent }
+
+                # Arc thermostat (16-30 °C) — cible optimiste + appel HA débouncé
                 - arc:
                     id: arc_temp_popup
-                    align: CENTER
-                    y: -10
-                    width: 220
-                    height: 220
+                    align: TOP_MID
+                    y: 52
+                    width: 320
+                    height: 320
                     min_value: 16
                     max_value: 30
                     value: 22
                     arc_color: color_arc_track
-                    arc_width: 16
+                    arc_width: 22
+                    adjustable: true
                     indicator:
                       arc_color: color_info
-                      arc_width: 16
+                      arc_width: 22
                     knob:
                       bg_opa: 100%
                       bg_color: color_text
-                      pad_all: 5
-                    adjustable: true
+                      pad_all: 6
                     on_value:
-                      - homeassistant.service:
-                          service: climate.set_temperature
-                          data:
-                            entity_id: ${entity_climate_salon}
-                            hvac_mode: !lambda 'return (id(clim_hvac_mode) == "off" || id(clim_hvac_mode).empty()) ? std::string("cool") : id(clim_hvac_mode);'
-                            temperature: !lambda 'return to_string((int)x);'
+                      - lambda: |-
+                          id(clim_target_temp) = x;
+                          update_clim_target_ui(id(clim_target_popup), id(arc_temp_popup), x);
+                      - script.execute: tab5_debounce_clim_temp
 
-                # Température cible (superposée au centre de l'arc)
+                # Cible au centre de l'arc (couleur pilotée par tab5_maj_clim : bleu/rouge/blanc)
                 - label:
                     id: clim_target_popup
                     text: "--"
-                    align: CENTER
-                    y: -20
+                    align: TOP_MID
+                    y: 184
                     text_font: roboto_55_b
                     text_color: color_text
-                - label:
-                    text: "°"
-                    align: CENTER
-                    y: 20
-                    text_font: roboto_22
-                    text_color: color_text_dim
+                - label: { text: "°C", align: TOP_MID, y: 248, text_font: roboto_22, text_color: color_text_dim }
 
-                # Boutons +/- sous l'arc
+                # Boutons − / + (pas de 0,5°, groupés par le débounce si taps rapides)
                 - button:
-                    align: BOTTOM_MID
-                    x: -80
-                    y: -10
-                    width: 110
-                    height: 60
-                    radius: 12
+                    align: TOP_LEFT
+                    x: 22
+                    y: 396
+                    width: 160
+                    height: 84
+                    radius: 18
                     styles: style_clim_btn
                     pressed:
                       bg_opa: 30%
                     on_short_click:
-                      - homeassistant.service:
-                          service: climate.set_temperature
-                          data:
-                            entity_id: ${entity_climate_salon}
-                            hvac_mode: !lambda 'return (id(clim_hvac_mode) == "off" || id(clim_hvac_mode).empty()) ? std::string("cool") : id(clim_hvac_mode);'
-                            temperature: !lambda "return to_string(id(clim_target_temp) - 0.5);"
+                      - lambda: |-
+                          float t = id(clim_target_temp) - 0.5f;
+                          if (t < 16.0f) t = 16.0f;
+                          id(clim_target_temp) = t;
+                          update_clim_target_ui(id(clim_target_popup), id(arc_temp_popup), t);
+                      - script.execute: tab5_debounce_clim_temp
                     widgets:
                       - label: { text: "\U000F0374", align: CENTER, text_font: mdi_font_56, text_color: color_text }
                 - button:
-                    align: BOTTOM_MID
-                    x: 80
-                    y: -10
-                    width: 110
-                    height: 60
-                    radius: 12
+                    align: TOP_LEFT
+                    x: 216
+                    y: 396
+                    width: 160
+                    height: 84
+                    radius: 18
                     styles: style_clim_btn
                     pressed:
                       bg_opa: 30%
                     on_short_click:
-                      - homeassistant.service:
-                          service: climate.set_temperature
-                          data:
-                            entity_id: ${entity_climate_salon}
-                            hvac_mode: !lambda 'return (id(clim_hvac_mode) == "off" || id(clim_hvac_mode).empty()) ? std::string("cool") : id(clim_hvac_mode);'
-                            temperature: !lambda "return to_string(id(clim_target_temp) + 0.5);"
+                      - lambda: |-
+                          float t = id(clim_target_temp) + 0.5f;
+                          if (t > 30.0f) t = 30.0f;
+                          id(clim_target_temp) = t;
+                          update_clim_target_ui(id(clim_target_popup), id(arc_temp_popup), t);
+                      - script.execute: tab5_debounce_clim_temp
                     widgets:
                       - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56, text_color: color_text }
 
-          # ═══ COLONNE DROITE : Grille d'options 3×3 (560px) ═══
+                # Température réelle de la pièce (poussée par tab5_maj_clim)
+                - label: { text: "\U000F050F", align: BOTTOM_MID, x: -135, y: -18, text_font: mdi_font_32, text_color: color_text_dim }
+                - label: { text: "Pièce", align: BOTTOM_MID, x: -70, y: -24, text_font: roboto_22, text_color: color_text_dim }
+                - label:
+                    id: val_temp_int_popup
+                    text: "-- °C"
+                    align: BOTTOM_MID
+                    x: 55
+                    y: -20
+                    text_font: roboto_32_b
+                    text_color: color_text
+
+          # ═══ CARTE OPTIONS (droite) : presets + ventilation + flux d'air ═══
           - obj:
-              align: RIGHT_MID
-              x: -20
-              y: 15
-              width: 560
-              height: 440
-              styles: style_transparent
-              layout:
-                type: FLEX
-                flex_flow: ROW_WRAP
-                flex_align_main: SPACE_EVENLY
-                flex_align_cross: CENTER
-                flex_align_track: SPACE_EVENLY
-                pad_row: 12
-                pad_column: 10
+              align: TOP_LEFT
+              x: 840
+              y: 100
+              width: 386
+              height: 566
+              styles: style_glass_card
+              scrollable: false
               widgets:
-                # ── Ligne 1 : Modes principaux ──
-                - !include { file: climate_hvac_mode_btn.yaml, vars: { suffix: "cool", hvac_mode: "cool", icon: "\U000F0717", label_text: "Froid" } }
-                - !include { file: climate_hvac_mode_btn.yaml, vars: { suffix: "heat", hvac_mode: "heat", icon: "\U000F0238", label_text: "Chaud" } }
-                - button:
-                    id: popup_btn_clim_off
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: climate.turn_off
-                          data:
-                            entity_id: ${entity_climate_salon}
-                    widgets:
-                      - label: { id: popup_icon_clim_off, text: "\U000F0425", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Éteint", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "OPTIONS", align: TOP_LEFT, x: 22, y: 14, text_font: roboto_22, text_color: color_accent }
 
-                # ── Ligne 2 : Modes secondaires ──
-                - !include { file: climate_hvac_mode_btn.yaml, vars: { suffix: "fan", hvac_mode: "fan_only", icon: "\U000F0210", label_text: "Ventil." } }
-                - !include { file: climate_hvac_mode_btn.yaml, vars: { suffix: "dry", hvac_mode: "dry", icon: "\U000F058E", label_text: "Sec" } }
-                - button:
-                    id: popup_btn_clim_swing
-                    width: 170
-                    height: 60
-                    radius: 12
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: climate.set_swing_mode
-                          data:
-                            entity_id: ${entity_climate_salon}
-                            # Daikin Onecta : modes réels = stop / swing / windnice (pas off/vertical)
-                            swing_mode: !lambda 'return id(clim_swing_mode) == "swing" ? std::string("stop") : std::string("swing");'
+                # ── Presets (toggle : re-taper = retour à "none") ──
+                - label: { text: "Presets", align: TOP_LEFT, x: 22, y: 50, text_font: roboto_22, text_color: color_text_dim }
+                - obj:
+                    align: TOP_LEFT
+                    x: 22
+                    y: 76
+                    width: 342
+                    height: 92
+                    styles: style_transparent
+                    scrollable: false
+                    layout:
+                      type: FLEX
+                      flex_flow: ROW
+                      flex_align_main: START
+                      flex_align_cross: CENTER
+                      pad_column: 14
                     widgets:
-                      - label: { id: popup_icon_clim_swing, text: "\U000F0E79", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Oscill.", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
+                      # Daikin : pas de preset "eco" — équivalent = "away"
+                      - !include { file: climate_preset_toggle_btn.yaml, vars: { suffix: "eco", preset_name: "away", icon: "\U000F032A", label_text: "Éco" } }
+                      - !include { file: climate_preset_toggle_btn.yaml, vars: { suffix: "boost", preset_name: "boost", icon: "\U000F14DE", label_text: "Boost" } }
 
-                # ── Ligne 3 : Presets ──
-                # Daikin : pas de preset "eco" — équivalent = "away"
-                - !include { file: climate_preset_toggle_btn.yaml, vars: { suffix: "eco", preset_name: "away", icon: "\U000F032A", label_text: "Éco" } }
-                - !include { file: climate_preset_toggle_btn.yaml, vars: { suffix: "boost", preset_name: "boost", icon: "\U000F14DE", label_text: "Boost" } }
+                # ── Ventilation ──
+                - label: { text: "Ventilation", align: TOP_LEFT, x: 22, y: 192, text_font: roboto_22, text_color: color_text_dim }
                 - button:
                     id: popup_btn_clim_quiet
-                    width: 170
-                    height: 60
-                    radius: 12
+                    align: TOP_LEFT
+                    x: 22
+                    y: 218
+                    width: 342
+                    height: 88
+                    radius: 18
                     styles: style_clim_btn
                     pressed:
                       bg_opa: 30%
@@ -251,5 +280,48 @@ obj:
                             entity_id: ${entity_climate_salon}
                             fan_mode: !lambda 'return (id(clim_fan_mode) == "quiet") ? std::string("auto") : std::string("quiet");'
                     widgets:
-                      - label: { id: popup_icon_clim_quiet, text: "\U000F146D", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Silence", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
+                      - label: { id: popup_icon_clim_quiet, text: "\U000F146D", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
+                      - label: { text: "Silence", align: LEFT_MID, x: 88, text_font: roboto_32_b, text_color: color_text }
+
+                # ── Flux d'air (Daikin Onecta : stop / swing / windnice) ──
+                - label: { text: "Flux d'air", align: TOP_LEFT, x: 22, y: 330, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: popup_btn_clim_swing
+                    align: TOP_LEFT
+                    x: 22
+                    y: 356
+                    width: 342
+                    height: 88
+                    radius: 18
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: climate.set_swing_mode
+                          data:
+                            entity_id: ${entity_climate_salon}
+                            swing_mode: !lambda 'return id(clim_swing_mode) == "swing" ? std::string("stop") : std::string("swing");'
+                    widgets:
+                      - label: { id: popup_icon_clim_swing, text: "\U000F0E79", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
+                      - label: { text: "Oscillation", align: LEFT_MID, x: 88, text_font: roboto_32_b, text_color: color_text }
+                - button:
+                    id: popup_btn_clim_windnice
+                    align: TOP_LEFT
+                    x: 22
+                    y: 454
+                    width: 342
+                    height: 88
+                    radius: 18
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: climate.set_swing_mode
+                          data:
+                            entity_id: ${entity_climate_salon}
+                            swing_mode: !lambda 'return id(clim_swing_mode) == "windnice" ? std::string("stop") : std::string("windnice");'
+                    widgets:
+                      - label: { id: popup_icon_clim_windnice, text: "\U000F059D", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
+                      - label: { text: "Brise", align: LEFT_MID, x: 88, text_font: roboto_32_b, text_color: color_text }

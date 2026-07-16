@@ -265,7 +265,11 @@ Activée par `btn_control_ha`. 5 cartes dédiées, chacune avec une icône visib
 Deux niveaux de contrôle, pilotant tous deux la même entité `climate` de Home Assistant :
 
 - **Carte compacte** (toujours visible en zone d'accueil) — température actuelle et cible avec boutons +/−.
-- **Popup clim** (plein écran, ouvert en tapant la carte compacte) — une grille 3×3 de 9 boutons : mode (Froid/Chaud/Éteint/Ventil./Sec/Oscill.) et preset (Éco/Boost/Silence), plus l'arc thermostat et les boutons +/−. 6 des 9 boutons sont des templates factorisés (froid/chaud/ventil/sec, éco/boost) ; les 3 restants (éteint/oscill/silence) et les boutons +/− sont volontairement laissés en YAML individuel — voir [ADR-0007](decisions/0007-climate-popup-not-factorized.md).
+- **Popup clim** (quasi plein écran, carte 1250×690 à 15 px des bords, ouvert en tapant la carte compacte) — trois cartes de verre :
+  - **MODE** : Froid / Chaud / Sec / Ventilation / Éteint, empilés pleine largeur (icônes colorées selon le mode actif, pilotées par `tab5_maj_clim`)
+  - **TEMPÉRATURE** : arc thermostat 320 px (16–30 °C) avec la cible affichée en grand au centre, boutons − / +, et la température réelle de la pièce en bas. La cible s'affiche **immédiatement** (optimiste) et un seul `climate.set_temperature` part une fois le geste terminé (débounce 250 ms — les taps rapides ± sont groupés)
+  - **OPTIONS** : presets Éco / Boost (toggle), Silence (fan quiet), et flux d'air **Oscillation** / **Brise** (`windnice`, mode Daikin Onecta auparavant inaccessible depuis l'écran)
+  - Taper l'overlay sombre ou le bouton × (vrai bouton de verre 96×64) ferme le modal. 6 des 10 boutons sont des templates factorisés (froid/chaud/ventil/sec, éco/boost) ; les 4 restants (éteint/oscill/brise/silence) et les boutons ± sont volontairement laissés en YAML individuel — voir [ADR-0007](decisions/0007-climate-popup-not-factorized.md).
 
 Les contrôles sont estompés (non cachés) quand le clim est éteint, pour garder la mise en page stable.
 

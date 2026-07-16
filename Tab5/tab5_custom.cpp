@@ -1214,6 +1214,18 @@ void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* i
 }
 
 // =============================================================================
+// Popup clim v2 : affichage optimiste de la cible (arc + boutons -/+)
+// =============================================================================
+
+void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target) {
+    if (lbl_target == nullptr || arc == nullptr) return;
+    char buf[8];
+    snprintf(buf, sizeof(buf), "%.1f", target);
+    lv_label_set_text(lbl_target, buf);
+    lv_arc_set_value(arc, (int) target);
+}
+
+// =============================================================================
 // Popup lumiere v2 : selecteur 3 lumieres, arc luminosite synchronise, pastilles
 // (script tab5_light_popup_show + capteurs light_*_state / light_*_brightness)
 // =============================================================================

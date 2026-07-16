@@ -4,6 +4,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-16 — Popup clim v2 : plein écran, modes empilés, cible optimiste, Brise
+- `climate_popup.yaml` refondu (1130×650 → carte 1250×690, 15 px des bords) : 3 cartes de verre — MODE (Froid/Chaud/Sec/Ventilation/Éteint empilés, pile flex), TEMPÉRATURE (arc 320 px, cible `roboto_55_b` au centre, boutons ± 160 px, ligne « Pièce » avec thermomètre), OPTIONS (Presets Éco/Boost, Ventilation Silence, Flux d'air Oscillation + **Brise**).
+- **Nouveau bouton « Brise »** (`windnice`, 3ᵉ mode réel du Daikin Onecta, jusque-là inaccessible depuis l'écran) : toggle windnice↔stop, icône `popup_icon_clim_windnice` pilotée par `tab5_maj_clim` (windnice sorti de la condition Oscillation).
+- **Cible optimiste + débounce** : l'arc et les taps ± mettent à jour label/arc immédiatement (`update_clim_target_ui`, `tab5_custom.cpp`) et un seul `climate.set_temperature` part après 250 ms (`tab5_debounce_clim_temp`) — les taps rapides ± sont groupés, plus d'appel HA par tick d'arc ; le forçage `hvac_mode: cool` si éteinte est conservé.
+- Anti « croix qui décale » : `scrollable: false` partout, croix = vrai bouton de verre 96×64.
+- Templates restylés : `climate_hvac_mode_btn.yaml` (342×88, labels `roboto_32_b`), `climate_preset_toggle_btn.yaml` (164×88).
+- Glyphes : `F059D` (weather-windy) → `mdi_font_45`, `F050F` (thermomètre) → `mdi_font_32`.
+- Contrat `tab5_maj_clim` inchangé côté HA (mêmes variables) ; ids `arc_temp_popup`/`clim_target_popup`/`val_temp_int_popup`/`popup_icon_clim_*` conservés.
+
 ### 2026-07-16 — Présentation GitHub + Hackster.io (vidéo, GIF, galerie)
 - `README.md` (EN+FR) : section « See it in action » avec embed YouTube (`ygNhgtMffu4`), GIF Gemini `docs/images/m5stack_tab5_demo.gif`, schéma push-only, galerie photos corrigée (libellés switches/console/météo).
 - Nouveau `docs/hackster.md` : brouillon complet pour Hackster.io / M5Stack Global Innovation Contest 2026 (story EN+FR, BOM, build, critères jury).

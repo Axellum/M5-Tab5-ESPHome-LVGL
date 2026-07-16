@@ -243,12 +243,20 @@ api:
               lv_obj_set_style_text_color(id(popup_icon_clim_quiet), lv_color_hex(c_inactive), LV_PART_MAIN);
             }
 
-            // Swing
+            // Swing (windnice exclu : il a son propre bouton "Brise" depuis le popup v2)
 
-            if(swing == "swing" || swing == "vertical" || swing == "horizontal" || swing == "both" || swing == "on" || swing == "3d" || swing == "windnice") {
+            if(swing == "swing" || swing == "vertical" || swing == "horizontal" || swing == "both" || swing == "on" || swing == "3d") {
               lv_obj_set_style_text_color(id(popup_icon_clim_swing), lv_color_hex(c_cool_active), LV_PART_MAIN);
             } else {
               lv_obj_set_style_text_color(id(popup_icon_clim_swing), lv_color_hex(c_inactive), LV_PART_MAIN);
+            }
+
+            // Brise (Daikin Onecta "windnice")
+
+            if(swing == "windnice") {
+              lv_obj_set_style_text_color(id(popup_icon_clim_windnice), lv_color_hex(c_cool_active), LV_PART_MAIN);
+            } else {
+              lv_obj_set_style_text_color(id(popup_icon_clim_windnice), lv_color_hex(c_inactive), LV_PART_MAIN);
             }
 
     - service: tab5_maj_alerte_meteo_france
