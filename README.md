@@ -45,8 +45,6 @@ Companion backend (optional, work-in-progress): **[vromvrom-engine](https://gith
 |:-:|:-:|
 | ![Push architecture](docs/images/push_only_architecture_diagram.png) | ![Main dashboard](docs/images/tab5_photo_console_diag.jpg) |
 
-→ Full Hackster.io / contest write-up (story, BOM, build steps): [`docs/hackster.md`](docs/hackster.md)
-
 ---
 
 ## What this is
@@ -54,18 +52,6 @@ Companion backend (optional, work-in-progress): **[vromvrom-engine](https://gith
 A Home Assistant smart-home dashboard running natively on a **M5Stack Tab5 V2** (ESP32-P4), built with ESPHome and LVGL 8.4.
 
 The interface is compiled in C++ and embedded in the device firmware. It does not run a web browser, does not poll for data, and does not depend on a live network connection to stay functional. When Home Assistant has something new to show, it pushes the update directly to the screen.
-
-**Screens** *(real device photos unless noted)*:
-
-| Main dashboard | Quick actions (switches) | Climate popup |
-|:-:|:-:|:-:|
-| ![Main dashboard — weather + voice](docs/images/tab5_photo_console_diag.jpg) | ![Quick actions — PC, shutters, lights](docs/images/tab5_photo_dashboard_switches.jpg) | ![Climate popup](docs/images/tab5_photo_climate_popup.jpg) |
-
-| Diagnostics console | Light control *(design ref.)* | Early UI mock *(design ref.)* |
-|:-:|:-:|:-:|
-| ![Diagnostics console overlay](docs/images/tab5_photo_dashboard_weather.jpg) | ![Light popup design](docs/images/tab5_design_light.jpg) | ![Main design mock](docs/images/tab5_design_main.jpg) |
-
-*Photos from the running device (2026-07-06). Light popup and main mock are earlier design references — see [`docs/debugging.md`](docs/debugging.md) for the console overlay.*
 
 ---
 
@@ -233,18 +219,6 @@ L'interface est compilée en C++ et embarquée dans le firmware de l'appareil. E
 | Architecture push-only | Tableau de bord (réel) |
 |:-:|:-:|
 | ![Architecture push](docs/images/push_only_architecture_diagram.png) | ![Tableau de bord](docs/images/tab5_photo_console_diag.jpg) |
-
-→ Rédaction complète Hackster.io / concours M5Stack : [`docs/hackster.md`](docs/hackster.md)
-
-**Captures** *(photos réelles sauf mention)* :
-
-| Tableau de bord | Actions rapides | Popup clim |
-|:-:|:-:|:-:|
-| ![Tableau de bord](docs/images/tab5_photo_console_diag.jpg) | ![Actions rapides](docs/images/tab5_photo_dashboard_switches.jpg) | ![Clim](docs/images/tab5_photo_climate_popup.jpg) |
-
-| Console diagnostic | Lumières *(maquette)* | UI initiale *(maquette)* |
-|:-:|:-:|:-:|
-| ![Console](docs/images/tab5_photo_dashboard_weather.jpg) | ![Lumières](docs/images/tab5_design_light.jpg) | ![Maquette](docs/images/tab5_design_main.jpg) |
 
 ---
 
