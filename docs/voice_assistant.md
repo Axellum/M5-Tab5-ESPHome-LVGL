@@ -8,7 +8,15 @@
 
 The Tab5 functions as a local voice satellite for Home Assistant. It runs wake-word detection entirely on-device, streams audio only on demand, and gives real-time visual feedback through an icon on the UI.
 
-The pipeline involves four components working in sequence: local wake-word model → I2S audio capture → Home Assistant Voice pipeline → ES8388 DAC playback.
+The pipeline involves these stages in sequence: local wake-word model → I2S audio capture → Home Assistant Voice pipeline (Wyoming STT → conversation agent → Wyoming TTS) → ES8388 DAC playback.
+
+Optionally, the conversation agent is a custom HA integration that calls **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** (Steam Deck / LAN host in this install). The engine then:
+
+- Matches short home-automation phrases locally / deterministically and executes HA services
+- Routes open chat to a light “Discussion” LLM path (TTS-friendly, multi-turn when the HA agent keeps the session open)
+- Can classify specialist work (web, calendar, files…) via a host/classifier — still evolving
+
+The dashboard push UI works without the engine. The engine is what makes voice *interesting* beyond stock Assist.
 
 ---
 
@@ -74,9 +82,11 @@ ESPHome's voice assistant component fires callbacks (`on_listening`, `on_stt_end
 The device supports two assistant modes, selectable from the UI:
 
 1. **Home Assistant mode** — uses the standard Home Assistant conversation agent (controls devices, queries sensors, triggers automations)
-2. **Conversation mode** — routes to a different HA pipeline configured for free-form conversation (connected to an LLM)
+2. **Discussion / LLM mode** — routes to a HA pipeline whose conversation agent talks to [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) (fast chat path + optional specialists), not the full heavy coding pipeline
 
 The mode is stored in the `conversation_mode` global bool. A toggle button on the main screen switches between them and updates the mode icon (🏠 vs 🤖). On the HA side, the `select.m5stack_tab5_home_assistant_hmi_assistant` entity reflects and controls which pipeline is selected.
+
+→ Broader context: [`related_projects.md`](related_projects.md)
 
 ---
 
@@ -90,7 +100,15 @@ The mode is stored in the `conversation_mode` global bool. A toggle button on th
 
 Le Tab5 fonctionne comme un satellite vocal local pour Home Assistant. Il exécute la détection de wake-word entièrement sur l'appareil, stream l'audio uniquement à la demande, et donne un retour visuel en temps réel via une icône dans l'UI.
 
-Le pipeline implique quatre composants en séquence : modèle de wake-word local → capture audio I2S → pipeline Voice de Home Assistant → lecture DAC ES8388.
+Le pipeline enchaîne : modèle de wake-word local → capture audio I2S → pipeline Voice Home Assistant (Wyoming STT → agent conversation → Wyoming TTS) → lecture DAC ES8388.
+
+Optionnellement, l’agent de conversation est une intégration HA custom qui appelle **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** (hôte Steam Deck / LAN dans cette install). Le moteur :
+
+- Matche les phrases domotiques courtes en local / déterministe et exécute les services HA
+- Route le chat libre vers un chemin « Discussion » LLM léger (adapté TTS, multi-tour si l’agent HA garde la session ouverte)
+- Peut classifier des spécialistes (web, calendrier, fichiers…) via un host/classifieur — encore en évolution
+
+Le tableau de bord push fonctionne sans le moteur. C’est le moteur qui rend la voix intéressante au-delà d’Assist stock.
 
 ---
 
@@ -156,6 +174,8 @@ Les callbacks du composant assistant vocal ESPHome (`on_listening`, `on_stt_end`
 L'appareil supporte deux modes assistant, sélectionnables depuis l'UI :
 
 1. **Mode Home Assistant** — utilise l'agent de conversation standard de Home Assistant (contrôle les appareils, interroge les capteurs, déclenche les automations)
-2. **Mode Conversation** — route vers un pipeline HA différent configuré pour la conversation libre (connecté à un LLM)
+2. **Mode Discussion / LLM** — route vers un pipeline HA dont l’agent parle à [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) (chemin chat rapide + spécialistes optionnels), pas le pipeline lourd de codage
 
 Le mode est stocké dans la globale booléenne `conversation_mode`. Un bouton toggle sur l'écran principal bascule entre les deux et met à jour l'icône de mode (🏠 vs 🤖). Côté HA, l'entité `select.m5stack_tab5_home_assistant_hmi_assistant` reflète et contrôle quel pipeline est sélectionné.
+
+→ Contexte plus large : [`related_projects.md`](related_projects.md)

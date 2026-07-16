@@ -4,6 +4,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-16 — Docs README : préambule perso + vocal/moteur + TV/alertes
+- `README.md` (EN+FR) : note personnelle (architecte vs créateur), tableau pipeline vocal ↔ [vromvrom-engine](https://github.com/Axellum/vromvrom-engine), télécommande TV, infos/alertes HA avec tap-to-dismiss, console v2.
+- `docs/related_projects.md` : lien public moteur → `vromvrom-engine` (plus ServeurHA).
+- `docs/voice_assistant.md` + `docs/screens.md` : alignés firmware (moteur Discussion, dismiss, popup TV).
+
 ### 2026-07-16 — Télécommande TV : calage symétrique plein écran
 - `tv_remote_popup.yaml` refondu : modal 1230×670 (~25 px des bords), grille 3 colonnes symétrique, rangée basse unifiée (Play/Pause/Retour/Accueil/Muet).
 - Rangée basse calée à 6 px du bord bas ; corps raccourci pour ne plus chevaucher Menu ni volume.

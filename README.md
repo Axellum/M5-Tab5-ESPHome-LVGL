@@ -11,11 +11,23 @@
 
 </div>
 
-> *A personal project exploring what's possible when AI writes all the code. Built with Claude, Gemini (Antigravity), Deepseek, Minimax, and z.ai — not a single line typed by hand.*
+> *A personal project exploring what's possible when AI writes all the code. Built with Antigravity, DeepSeek, MiniMax, Z.ai, Claude, and Cursor — not a single line typed by hand. I am more the architect than the author.*
 
 ---
 
 ## English · [Français](#version-française)
+
+---
+
+## A short personal note
+
+Having heard a lot about AI — especially for coding — a few months ago I wanted to see for myself what it could actually do. I needed a project, and my old Nextion screen (mostly weather, still on ESPHome and Météo-France) was starting to feel dated. So I decided to replace it — this time with a much more ambitious home-automation setup, on a far more capable display, driven by AI from end to end.
+
+One thing led to another: I added a voice assistant to the screen, then a local “engine” to handle voice home-automation on-device / on-LAN, and semi-local or cloud paths for open conversation. That engine is still a work in progress (of course 🙂) — I put a lot (too much) into it to experiment and better understand how LLMs work: RAG, scoring, multi-LLM routing, MCP, and more. I share it mostly for information: I use it day-to-day with this screen, but not yet for coding, nor for everything I tried to pack in — some of which works more or less well.
+
+I started with Antigravity, then leaned on various models (DeepSeek, MiniMax, Z.ai). Next I tried Claude, which also did a lot of the work, then Cursor more recently. In short: this is my everyday screen project — I am more its architect than its creator — born from my first steps into the world of AI.
+
+Companion backend (optional, work-in-progress): **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** — multi-agent orchestrator used for voice routing and conversation.
 
 ---
 
@@ -46,12 +58,14 @@ A single 1280×720 page with six functional areas, all driven by Home Assistant 
 
 - **Home area** — time, indoor temp/humidity, quick-action buttons, microphone icon with pipeline state; the date recolors with the active weather-alert level
 - **Weather** — **5-window swipeable forecast** in the bottom region: windows 1–2 show hourly weather for the next 15 time slots (time, temperature color-coded, rainfall in mm, condition icon); windows 3–5 show the **15-day daily forecast** (5 days/window) with color-coded day names, dual-layer condition icons, and max/min temperatures
-- **Central rotating card** — cycles every 8 s between planning, short-term rain graph, Météo-France vigilance icons, and an info panel (3-day calendar recap or alert banner)
+- **Central rotating card** — cycles every 8 s between planning, short-term rain graph, Météo-France vigilance icons, an info panel (3-day calendar recap or weather-alert banner), and up to **4 Home Assistant alert / info banners** pushed live from HA
+- **Tap to dismiss** — tapping an info banner or an HA alert removes it immediately from the rotator (local dismiss list so a re-push of the same id stays hidden until HA sends a new one)
+- **TV remote** — fullscreen Samsung IR remote popup (power, pad, volume, channels, playback, mute…) opened from the UI; commands go through Home Assistant `remote.*` services
 - **Climate** — compact card + fullscreen popup: arc thermostat, mode grid (cool / heat / off / fan / dry / swing) and presets (eco / boost / quiet); controls are dimmed (not hidden) when the AC is off
 - **Plants** — soil moisture card for up to 5 BLE plant sensors, dynamically sorted, color-coded by level (red = dry, green = optimal, blue = too wet)
-- **Console** — diagnostics overlay (RAM/PSRAM, Wi-Fi, uptime, loop time, volume slider, double-tap reboot), opened via its dedicated button
+- **Console** — diagnostics + HA management overlay (RAM/PSRAM, Wi-Fi, uptime, volume, re-push screen, reload automations, restart HA / reboot tablet behind confirm), opened via its dedicated button
 
-**Voice assistant** — runs `okay_nabu` wake-word detection locally on the ESP32-P4. The microphone icon changes color to show the pipeline state in real time: grey (idle) → green (listening) → orange (processing) → blue (speaking) → red (error). Wake-word detection can be toggled on/off from the UI; tapping the mic icon triggers push-to-talk. Two modes selectable from the UI: standard Home Assistant agent or a free-form LLM conversation pipeline.
+**Voice assistant** — runs `okay_nabu` wake-word detection locally on the ESP32-P4. The microphone icon changes color to show the pipeline state in real time: grey (idle) → green (listening) → orange (processing) → blue (speaking) → red (error). Wake-word detection can be toggled on/off from the UI; tapping the mic icon triggers push-to-talk. Two modes selectable from the UI: standard Home Assistant agent, or a **Discussion** pipeline backed by [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) (local STT/TTS via Wyoming, engine routing for deterministic HA commands vs LLM chat).
 
 **Roller shutters** — script buttons on the home screen send open/close/position commands to Home Assistant cover entities.
 
@@ -69,13 +83,23 @@ A single 1280×720 page with six functional areas, all driven by Home Assistant 
 
 ---
 
-## Voice assistant
+## Voice assistant & engine
 
-The device runs a local wake-word model (`okay_nabu` via micro_wake_word / TensorFlow Lite) directly on the ESP32-P4. Audio is captured at 16 kHz / 16-bit over I2S and streamed to Home Assistant only after wake-word detection — nothing goes over the network before that.
+The Tab5 is an **Assist Satellite**: it does not “understand” French itself. It captures audio, shows pipeline state, and plays the reply.
 
-Sound output goes through the ES8388 DAC chip (I2C + I2S). Boot sequencing is careful about startup order to avoid the hardware pop that happens if the amplifier enable line fires before the I2S clock is stable.
+| Step | Where | What happens |
+|------|--------|----------------|
+| 1. Wake word | Tab5 (on-device) | `okay_nabu` via micro_wake_word / TensorFlow Lite — idle listening stays local |
+| 2. STT | Home Assistant (Wyoming Whisper, local) | Speech → text |
+| 3. Intent / reply | HA conversation agent → optional **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** | Domotics: fast local / deterministic match → HA action. Discussion: light LLM path (local and/or cloud). Specialists (web, calendar…) when classified by the engine host |
+| 4. TTS | Home Assistant (Wyoming Piper, local) | Text → speech |
+| 5. Playback | Tab5 (ES8388 DAC + amp) | Reply on the built-in speaker |
 
-→ Full details: [`docs/voice_assistant.md`](docs/voice_assistant.md)
+Audio is captured at 16 kHz / 16-bit over I2S and streamed to Home Assistant only after wake-word detection — nothing goes over the network before that. Boot sequencing avoids the hardware pop if the amp enable line fires before the I2S clock is stable.
+
+The engine is optional for the screen UI (push dashboard works without it). It is what makes the **voice + conversation** path interesting: local for short HA commands, semi-local / cloud only when a real chat answer is needed.
+
+→ Full details: [`docs/voice_assistant.md`](docs/voice_assistant.md) · Engine repo: [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) · Context: [`docs/related_projects.md`](docs/related_projects.md)
 
 ---
 
@@ -148,7 +172,7 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 
 ## Note on AI
 
-This project is part of a personal exploration of what AI tools can produce when given full authorship of a technical project. The code, the architecture decisions, and most of this documentation were generated by AI (Claude, Gemini/Antigravity, Deepseek, Minimax, z.ai). The goal was never to produce a polished product — it was to learn, to see where AI helps and where it gets stuck, and to share what came out of it.
+This project is part of a personal exploration of what AI tools can produce when given full authorship of a technical project. The code, the architecture decisions, and most of this documentation were generated by AI (Antigravity/Gemini, DeepSeek, MiniMax, Z.ai, Claude, Cursor). My role was to set the goal, test, reject, and steer — more architect than line-by-line author. The goal was never to ship a polished product — it was to learn, to see where AI helps and where it gets stuck, and to share what came out of it.
 
 If something in the code is weird, it might be an AI quirk. If something works surprisingly well, same answer.
 
@@ -159,6 +183,18 @@ If something in the code is weird, it might be an AI quirk. If something works s
 ---
 
 ## Version Française
+
+---
+
+## Note personnelle
+
+Ayant beaucoup entendu parler de l’IA, et notamment en codage, il y a quelques mois de ça j’ai voulu voir par moi-même ce que cela donnait. Il me fallait un projet, et comme mon vieux écran Nextion (plutôt météo, toujours avec ESPHome et Météo-France) commençait à dater, j’ai opté pour le renouveler — mais cette fois avec un aspect domotique bien plus poussé, sur un écran bien plus qualitatif et puissant, le tout piloté par l’IA.
+
+De fil en aiguille, j’ai complété l’écran avec un assistant vocal, puis par un « moteur » pour gérer en local la partie domotique vocale, et en semi-local ou cloud la partie conversations. Le moteur est un projet en cours (lui aussi 🙂) où j’ai posé beaucoup (trop) de choses pour expérimenter et mieux comprendre comment marchent les LLMs : RAG, notations, gestion multi-LLM, MCP, et j’en passe. Je le partage donc surtout dans un but informatif : je l’utilise de façon fonctionnelle pour l’écran, mais pas encore pour le codage ni pour tout ce que j’ai voulu y implémenter — qui fonctionne plus ou moins bien.
+
+Dans mon périple, j’ai commencé avec Antigravity, puis je l’ai aidé par différents modèles (DeepSeek, MiniMax, Z.ai). Ensuite, j’ai testé Claude, qui a fait lui aussi beaucoup de travail, puis Cursor récemment. Bref, je vous partage le projet de mon écran, fait pour mon usage quotidien, dont je suis plus l’architecte que le créateur — issu de mes débuts d’aventure dans le monde de l’IA.
+
+Backend compagnon (optionnel, en cours) : **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** — orchestrateur multi-agents utilisé pour le routage vocal et la conversation.
 
 ---
 
@@ -186,12 +222,14 @@ Une page unique 1280×720 avec six zones fonctionnelles, toutes alimentées par 
 
 - **Zone d'accueil** — heure, temp/humidité intérieure, boutons d'action rapide, icône microphone avec état du pipeline ; la date se recolore selon le niveau d'alerte météo actif
 - **Météo** — **prévisions par swipe en 5 fenêtres** dans la zone du bas : fenêtres 1–2 = météo horaire pour les 15 prochaines tranches (heure, température avec code couleur, pluie en mm, icône condition) ; fenêtres 3–5 = **prévisions journalières 15 jours** (5 jours/fenêtre) avec noms de jours en code couleur, icônes double couche, temp max/min
-- **Carte centrale rotative** — alterne toutes les 8 s entre planning, graphe de pluie court terme, icônes de vigilance Météo-France, et un panneau info (récap calendrier 3 jours ou bannière d'alerte)
+- **Carte centrale rotative** — alterne toutes les 8 s entre planning, graphe de pluie court terme, icônes de vigilance Météo-France, un panneau info (récap calendrier 3 jours ou bannière d’alerte météo), et jusqu’à **4 bandeaux d’infos / alertes Home Assistant** poussés en live
+- **Tap pour masquer** — un tap sur un bandeau info ou une alerte HA la retire tout de suite du rotateur (liste de dismiss locale : le même id ne réapparaît pas tant que HA n’envoie pas une nouvelle alerte)
+- **Télécommande TV** — popup plein écran Samsung (power, pad, volume, chaînes, lecture, muet…) ouverte depuis l’UI ; commandes via les services Home Assistant `remote.*`
 - **Clim** — carte compacte + popup plein écran : arc thermostat, grille de modes (froid / chaud / arrêt / ventilation / sec / oscillation) et presets (éco / boost / silence) ; les contrôles sont estompés (non cachés) quand la clim est éteinte
 - **Plantes** — carte d'humidité du sol pour jusqu'à 5 capteurs BLE, triés dynamiquement, code couleur par niveau (rouge = sec, vert = optimal, bleu = trop humide)
-- **Console** — overlay diagnostics (RAM/PSRAM, Wi-Fi, uptime, temps de boucle, slider volume, reboot double-tap), ouvert via son bouton dédié
+- **Console** — overlay diagnostics + gestion HA (RAM/PSRAM, Wi-Fi, uptime, volume, re-pousse écran, reload automations, restart HA / reboot tablette derrière confirmation), ouvert via son bouton dédié
 
-**Assistant vocal** — fait tourner la détection wake-word `okay_nabu` localement sur l'ESP32-P4. L'icône microphone change de couleur pour montrer l'état du pipeline en temps réel : gris (repos) → vert (écoute) → orange (traitement) → bleu (synthèse) → rouge (erreur). La détection wake-word peut être activée/désactivée depuis l'UI ; taper sur l'icône micro déclenche le push-to-talk. Deux modes sélectionnables depuis l'UI : agent Home Assistant standard ou pipeline de conversation LLM libre.
+**Assistant vocal** — détection wake-word `okay_nabu` en local sur l’ESP32-P4. L’icône micro change de couleur : gris (repos) → vert (écoute) → orange (traitement) → bleu (synthèse) → rouge (erreur). Wake-word on/off depuis l’UI ; tap micro = push-to-talk. Deux modes : agent Home Assistant standard, ou pipeline **Discussion** branché sur [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) (STT/TTS locaux Wyoming, routage moteur pour commandes HA déterministes vs chat LLM).
 
 **Volets roulants** — des boutons de script sur l'écran d'accueil envoient des commandes ouvrir/fermer/position aux entités cover de Home Assistant.
 
@@ -199,13 +237,23 @@ Une page unique 1280×720 avec six zones fonctionnelles, toutes alimentées par 
 
 ---
 
-## Assistant vocal
+## Assistant vocal & moteur
 
-L'appareil fait tourner un modèle de wake-word local (`okay_nabu` via micro_wake_word / TensorFlow Lite) directement sur l'ESP32-P4. L'audio est capturé en 16 kHz / 16-bit sur I2S et streamé vers Home Assistant uniquement après la détection du wake-word — rien ne passe sur le réseau avant ça.
+Le Tab5 est un **Assist Satellite** : il ne « comprend » pas le français lui-même. Il capte l’audio, affiche l’état du pipeline, et joue la réponse.
 
-La sortie sonore passe par le chip DAC ES8388 (I2C + I2S). Le séquencement au démarrage est soigneux pour éviter le pop hardware qui se produit si la ligne d'activation amplificateur passe avant que l'horloge I2S soit stable.
+| Étape | Où | Quoi |
+|-------|-----|------|
+| 1. Wake word | Tab5 (embarqué) | `okay_nabu` via micro_wake_word / TensorFlow Lite — l’écoute passive reste locale |
+| 2. STT | Home Assistant (Wyoming Whisper, local) | Parole → texte |
+| 3. Intention / réponse | Agent conversation HA → optionnel **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** | Domotique : match local / déterministe → action HA. Discussion : chemin LLM léger (local et/ou cloud). Spécialistes (web, calendrier…) selon le classifieur du moteur |
+| 4. TTS | Home Assistant (Wyoming Piper, local) | Texte → parole |
+| 5. Lecture | Tab5 (DAC ES8388 + ampli) | Réponse sur le haut-parleur intégré |
 
-→ Détail complet : [`docs/voice_assistant.md`](docs/voice_assistant.md)
+L’audio est capturé en 16 kHz / 16-bit sur I2S et streamé vers HA uniquement après le wake-word. Le séquencement au boot évite le pop hardware si l’ampli s’active avant que l’horloge I2S soit stable.
+
+Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui). C’est lui qui rend le chemin **voix + conversation** intéressant : local pour les commandes HA courtes, semi-local / cloud seulement quand il faut vraiment discuter.
+
+→ Détail : [`docs/voice_assistant.md`](docs/voice_assistant.md) · Moteur : [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) · Contexte : [`docs/related_projects.md`](docs/related_projects.md)
 
 ---
 
@@ -235,7 +283,7 @@ La sortie sonore passe par le chip DAC ES8388 (I2C + I2S). Le séquencement au d
 
 ## Note sur l'IA
 
-Ce projet fait partie d'une exploration personnelle de ce que les outils IA peuvent produire quand on leur laisse la pleine paternité d'un projet technique. Le code, les décisions d'architecture et la plupart de cette documentation ont été générés par des IA (Claude, Gemini/Antigravity, Deepseek, Minimax, z.ai). Le but n'a jamais été de produire un produit fini — c'était d'apprendre, de voir où l'IA aide et où elle coince, et de partager ce qui en est sorti.
+Ce projet fait partie d'une exploration personnelle de ce que les outils IA peuvent produire quand on leur laisse la pleine paternité d'un projet technique. Le code, les décisions d'architecture et la plupart de cette documentation ont été générés par des IA (Antigravity/Gemini, DeepSeek, MiniMax, Z.ai, Claude, Cursor). Mon rôle : définir le but, tester, refuser, orienter — plus architecte qu’auteur ligne à ligne. Le but n’a jamais été un produit fini — c’était d’apprendre, de voir où l’IA aide et où elle coince, et de partager ce qui en est sorti.
 
 Si quelque chose dans le code est bizarre, c'est peut-être un quirk d'IA. Si quelque chose marche étonnamment bien, même réponse.
 
