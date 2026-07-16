@@ -4,6 +4,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-16 — Présentation GitHub + Hackster.io (vidéo, GIF, galerie)
+- `README.md` (EN+FR) : section « See it in action » avec embed YouTube (`ygNhgtMffu4`), GIF Gemini `docs/images/m5stack_tab5_demo.gif`, schéma push-only, galerie photos corrigée (libellés switches/console/météo).
+- Nouveau `docs/hackster.md` : brouillon complet pour Hackster.io / M5Stack Global Innovation Contest 2026 (story EN+FR, BOM, build, critères jury).
+
 ### 2026-07-16 — Popup lumière v2 : plein écran, sélecteur, % live, pastilles couleur
 - `light_popup.yaml` refondu (1130×650 → carte 1250×690, 15 px des bords) : 3 cartes de verre — AMPOULE (sélecteur Chambre/Salon/LEDs avec icônes d'état + surbrillance cyan, On/Off, Tout éteindre), LUMINOSITÉ (arc 320 px, valeur % live au centre, raccourcis 10/35/65/100 %), COULEURS (3 blancs nommés + 12 pastilles rondes).
 - `light_color_preset_btn.yaml` : template pastille ronde 78 px (bg = couleur), 12 instances (#T164) — remplace l'ancien bouton icône+libellé.

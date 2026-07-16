@@ -31,24 +31,41 @@ Companion backend (optional, work-in-progress): **[vromvrom-engine](https://gith
 
 ---
 
+## See it in action
+
+**Demo video** (voice, touch UI, TV remote, climate — provisional cut, July 2026):
+
+[![Watch the Tab5 demo on YouTube](https://img.youtube.com/vi/ygNhgtMffu4/hqdefault.jpg)](https://www.youtube.com/watch?v=ygNhgtMffu4)
+
+**Animated overview** — rotating card, weather swipe, popups (GIF):
+
+![Tab5 dashboard demo](docs/images/m5stack_tab5_demo.gif)
+
+| Push-only architecture | Main dashboard (live) |
+|:-:|:-:|
+| ![Push architecture](docs/images/push_only_architecture_diagram.png) | ![Main dashboard](docs/images/tab5_photo_console_diag.jpg) |
+
+→ Full Hackster.io / contest write-up (story, BOM, build steps): [`docs/hackster.md`](docs/hackster.md)
+
+---
+
 ## What this is
 
 A Home Assistant smart-home dashboard running natively on a **M5Stack Tab5 V2** (ESP32-P4), built with ESPHome and LVGL 8.4.
 
 The interface is compiled in C++ and embedded in the device firmware. It does not run a web browser, does not poll for data, and does not depend on a live network connection to stay functional. When Home Assistant has something new to show, it pushes the update directly to the screen.
 
-**Screens:**
-| Main Dashboard | Light Control | Climate Control |
+**Screens** *(real device photos unless noted)*:
+
+| Main dashboard | Quick actions (switches) | Climate popup |
 |:-:|:-:|:-:|
-| ![Main](docs/images/tab5_photo_console_diag.jpg) | ![Light](docs/images/tab5_design_light.jpg) | ![Climate](docs/images/tab5_photo_climate_popup.jpg) |
+| ![Main dashboard — weather + voice](docs/images/tab5_photo_console_diag.jpg) | ![Quick actions — PC, shutters, lights](docs/images/tab5_photo_dashboard_switches.jpg) | ![Climate popup](docs/images/tab5_photo_climate_popup.jpg) |
 
-*Main and Climate are real photos of the running device (2026-07-06). Light Control still shows the earlier design reference — no fresh photo of that popup yet.*
+| Diagnostics console | Light control *(design ref.)* | Early UI mock *(design ref.)* |
+|:-:|:-:|:-:|
+| ![Diagnostics console overlay](docs/images/tab5_photo_dashboard_weather.jpg) | ![Light popup design](docs/images/tab5_design_light.jpg) | ![Main design mock](docs/images/tab5_design_main.jpg) |
 
-More real photos: the same bottom card region toggled to the switches view, and the diagnostics console (opened via the console button, see [`docs/debugging.md`](docs/debugging.md)).
-
-| Domo view (switches↔weather toggle) | Diagnostics console |
-|:-:|:-:|
-| ![Weather](docs/images/tab5_photo_dashboard_switches.jpg) | ![Console](docs/images/tab5_photo_dashboard_weather.jpg) |
+*Photos from the running device (2026-07-06). Light popup and main mock are earlier design references — see [`docs/debugging.md`](docs/debugging.md) for the console overlay.*
 
 ---
 
@@ -124,6 +141,7 @@ The engine is optional for the screen UI (push dashboard works without it). It i
 | [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | HA automations, scripts, template sensors |
 | [`Tab5/README.md`](Tab5/README.md) | ESPHome file-by-file description |
 | [`docs/related_projects.md`](docs/related_projects.md) | Linked projects, AI experiment context |
+| [`docs/hackster.md`](docs/hackster.md) | Hackster.io / M5Stack contest story, BOM, build steps |
 
 ---
 
@@ -204,6 +222,30 @@ Un tableau de bord domotique Home Assistant qui tourne nativement sur un **M5Sta
 
 L'interface est compilée en C++ et embarquée dans le firmware de l'appareil. Elle ne fait pas tourner de navigateur web, ne poll pas les données, et ne dépend pas d'une connexion réseau active pour rester fonctionnelle. Quand Home Assistant a quelque chose de nouveau à afficher, il pousse directement la mise à jour vers l'écran.
 
+**Vidéo de démo** (voix, tactile, télécommande TV, clim — version provisoire, juillet 2026) :
+
+[![Voir la démo Tab5 sur YouTube](https://img.youtube.com/vi/ygNhgtMffu4/hqdefault.jpg)](https://www.youtube.com/watch?v=ygNhgtMffu4)
+
+**Aperçu animé** :
+
+![Démo tableau de bord Tab5](docs/images/m5stack_tab5_demo.gif)
+
+| Architecture push-only | Tableau de bord (réel) |
+|:-:|:-:|
+| ![Architecture push](docs/images/push_only_architecture_diagram.png) | ![Tableau de bord](docs/images/tab5_photo_console_diag.jpg) |
+
+→ Rédaction complète Hackster.io / concours M5Stack : [`docs/hackster.md`](docs/hackster.md)
+
+**Captures** *(photos réelles sauf mention)* :
+
+| Tableau de bord | Actions rapides | Popup clim |
+|:-:|:-:|:-:|
+| ![Tableau de bord](docs/images/tab5_photo_console_diag.jpg) | ![Actions rapides](docs/images/tab5_photo_dashboard_switches.jpg) | ![Clim](docs/images/tab5_photo_climate_popup.jpg) |
+
+| Console diagnostic | Lumières *(maquette)* | UI initiale *(maquette)* |
+|:-:|:-:|:-:|
+| ![Console](docs/images/tab5_photo_dashboard_weather.jpg) | ![Lumières](docs/images/tab5_design_light.jpg) | ![Maquette](docs/images/tab5_design_main.jpg) |
+
 ---
 
 ## Choix de conception
@@ -278,6 +320,7 @@ Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui
 | [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | Automations HA, scripts, template sensors |
 | [`Tab5/README.md`](Tab5/README.md) | Description fichier par fichier ESPHome |
 | [`docs/related_projects.md`](docs/related_projects.md) | Projets liés, contexte expérimentation IA |
+| [`docs/hackster.md`](docs/hackster.md) | Story Hackster.io / concours M5Stack, BOM, étapes de build |
 
 ---
 
