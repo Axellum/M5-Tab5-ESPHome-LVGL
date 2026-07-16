@@ -220,22 +220,19 @@ lvgl:
       border_opa: 22%
       radius: 0
 
-    # --- Carte meteo / tuiles dashboard ---
-    # ESSAI C 16/07 : même décoration que les boutons Domo (style_clim_btn) —
-    # fond 58%, bordure 1px/35%, radius 18. Couvre horloge, clim, bandeau central,
-    # tuiles météo horaires/jours + page HA. pad/scrollbar conservés (conteneurs).
-    # Rollback : docs/essais_design/tab5-styles_avant_meteo_comme_domo.yaml
+    # --- Carte meteo "verre depoli" ---
     - id: style_meteo_card
       bg_color: color_glass_hi
       bg_grad_color: color_glass_lo
       bg_grad_dir: VER
-      bg_opa: 58%
-      border_width: 1
+      bg_main_stop: 30
+      bg_grad_stop: 235
+      bg_opa: 82%
+      border_width: 2
       border_color: color_glass_rim
-      border_opa: 35%
-      radius: 18
+      border_opa: 50%
+      radius: 22
       shadow_width: 0
-      outline_width: 0
       pad_all: 0
       scrollbar_mode: "OFF"
 

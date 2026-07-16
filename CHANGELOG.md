@@ -4,6 +4,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-16 — Tuiles Domo + layout horloge/clim
+- `style_meteo_card` aligné sur le verre des boutons Domo (`style_clim_btn` : opa 58 %, bordure 1 px/35 %, radius 18) — horloge, bandeau central, tuiles météo (toutes pages), page HA, zone clim.
+- Horloge : 401×200, `y: 5` (−6 px/côté, −10 px haut, remontée 5 px).
+- Clim : parent transparent ; verre uniquement autour de − / cible / + (`climate_controls_zone`) ; températures salon/serre inchangées hors zone.
+- Backups essai : `docs/essais_design/tab5-styles_avant_meteo_comme_domo.yaml`, `docs/console_sys_v2_essai_glass_card.yaml`.
+- Vérifié OTA prod : `config_hash=0x30575f2f` (validé Axel).
+
 ### 2026-07-16 — Console Système v2 (redesign + HA management)
 - `Tab5/ui_components/console_sys.yaml` rewritten (233 → 415 lines): modal card enlarged to 1180×680, content organized in 4 glass cards (`style_glass_card`) — MÉMOIRE (SRAM/PSRAM bars restyled with `color_arc_track` track, bloc max, flash), RÉSEAU (SSID, IP, RSSI, new `lbl_sys_ha_val` HA connection status), SYSTÈME (uptime, CPU temp, loop time, volume slider with live % readout `lbl_sys_vol_val`), GESTION (new).
 - GESTION card: « MAJ Écran » (turns `input_boolean` `${entity_primary_active}` back on then triggers `${entity_push_automation}` — direct remedy for the recurring frozen-screen bug), « Recharger autos » (`automation.reload`), « Redémarrer HA » (`homeassistant.restart`) and « Reboot tablette » — the last two behind Annuler/Confirmer overlays (`overlay_confirm_*`).
