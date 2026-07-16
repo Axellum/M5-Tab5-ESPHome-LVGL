@@ -44,7 +44,7 @@ graph TD
         SWCARD["switches_card.yaml (204L)"]
         SWTAB["switch_card_title_tab.yaml (10L)<br/>switch_card_state_tab.yaml (11L)"]
         CONSOLE["console_sys.yaml (415L)<br/>4 cartes : diagnostics + volume + gestion HA (overlays de confirmation)"]
-        LIGHTPOP["light_popup.yaml (151L)"]
+        LIGHTPOP["light_popup.yaml (405L)"]
         LIGHTBTN["light_color_preset_btn.yaml (29L)"]
     end
 
@@ -169,8 +169,8 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 | `switch_card_title_tab.yaml` | 10 | Template onglet titre switch | Réutilisé 3× |
 | `switch_card_state_tab.yaml` | 11 | Template onglet état switch | Réutilisé 3× |
 | `console_sys.yaml` | 415 | Console Système en 4 cartes de verre : MÉMOIRE (SRAM/PSRAM/bloc max/flash), RÉSEAU (SSID/IP/RSSI/état HA), SYSTÈME (uptime/temp CPU/loop time + volume), GESTION (MAJ écran, reload automations, restart HA, reboot — les 2 derniers derrière un overlay de confirmation) — ouvert via `btn_control_console`, pas par swipe | — |
-| `light_popup.yaml` | 151 | Popup contrôle lumière (couleur, luminosité) | Presets couleur factorisés via `light_color_preset_btn.yaml` (8 instances) |
-| `light_color_preset_btn.yaml` | 29 | Template preset couleur lumière | Réutilisé 8× |
+| `light_popup.yaml` | 405 | Popup contrôle lumière plein écran (1250×690) : sélecteur 3 lumières + On/Off + Tout éteindre, arc luminosité avec % live + raccourcis, 3 blancs + 12 pastilles couleur | Pastilles factorisées via `light_color_preset_btn.yaml` (12 instances) ; ouverture/sélection via `script.tab5_light_popup_show` |
+| `light_color_preset_btn.yaml` | 25 | Template pastille couleur ronde 78 px | Réutilisé 12× |
 | `moisture_sensors.yaml` | 64 | 4 slots UI humidité plantes (tri dynamique sur 5 capteurs BLE) | — |
 
 ### 3.5 Composant matériel custom (`my_components/st7123/`)

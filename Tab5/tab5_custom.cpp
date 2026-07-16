@@ -1214,6 +1214,76 @@ void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* i
 }
 
 // =============================================================================
+// Popup lumiere v2 : selecteur 3 lumieres, arc luminosite synchronise, pastilles
+// (script tab5_light_popup_show + capteurs light_*_state / light_*_brightness)
+// =============================================================================
+
+void update_light_selector_icon(lv_obj_t* icon, bool is_on) {
+    if (icon == nullptr) return;
+    lv_obj_set_style_text_color(icon,
+        lv_color_hex(is_on ? UIColor::WARNING : UIColor::TEXT_DIM), LV_PART_MAIN);
+}
+
+// Ecrit "NN %" dans pct_lbl et positionne l'arc — helper interne commun.
+static void set_light_arc_and_label(lv_obj_t* arc, lv_obj_t* pct_lbl, int arcv) {
+    if (arcv < 0) arcv = 0;
+    if (arcv > 255) arcv = 255;
+    lv_arc_set_value(arc, arcv);
+    char buf[8];
+    snprintf(buf, sizeof(buf), "%d %%", arcv * 100 / 255);
+    lv_label_set_text(pct_lbl, buf);
+}
+
+void sync_light_popup_brightness(lv_obj_t* popup, lv_obj_t* arc, lv_obj_t* pct_lbl,
+    float brightness) {
+
+    if (popup == nullptr || arc == nullptr || pct_lbl == nullptr) return;
+    // Popup ferme : rien a rafraichir (resynchronise de toute facon a l'ouverture)
+    if (lv_obj_has_flag(popup, LV_OBJ_FLAG_HIDDEN)) return;
+    // Drag en cours : le retour HA differe ferait sauter le knob sous le doigt
+    if (lv_obj_has_state(arc, LV_STATE_PRESSED)) return;
+    set_light_arc_and_label(arc, pct_lbl, std::isnan(brightness) ? 0 : (int) brightness);
+}
+
+void show_light_popup_ui(int light_idx, const char* const titles[3],
+    const bool is_on[3], const float brightness[3],
+    lv_obj_t* popup, lv_obj_t* title_lbl,
+    lv_obj_t* btn0, lv_obj_t* btn1, lv_obj_t* btn2,
+    lv_obj_t* icon0, lv_obj_t* icon1, lv_obj_t* icon2,
+    lv_obj_t* power_icon, lv_obj_t* arc, lv_obj_t* pct_lbl) {
+
+    if (popup == nullptr || title_lbl == nullptr || arc == nullptr || pct_lbl == nullptr) return;
+    if (light_idx < 0 || light_idx > 2) return;
+
+    lv_label_set_text(title_lbl, titles[light_idx]);
+
+    lv_obj_t* btns[3]  = { btn0, btn1, btn2 };
+    lv_obj_t* icons[3] = { icon0, icon1, icon2 };
+    for (int i = 0; i < 3; i++) {
+        if (btns[i] == nullptr) continue;
+        bool sel = (i == light_idx);
+        lv_obj_set_style_border_width(btns[i], sel ? 3 : 1, LV_PART_MAIN);
+        lv_obj_set_style_border_color(btns[i],
+            lv_color_hex(sel ? UIColor::ACCENT : UIColor::GLASS_RIM), LV_PART_MAIN);
+        lv_obj_set_style_border_opa(btns[i], sel ? LV_OPA_COVER : LV_OPA_40, LV_PART_MAIN);
+        update_light_selector_icon(icons[i], is_on[i]);
+    }
+
+    if (power_icon != nullptr) {
+        lv_obj_set_style_text_color(power_icon,
+            lv_color_hex(is_on[light_idx] ? UIColor::WARNING : UIColor::TEXT_DIM), LV_PART_MAIN);
+    }
+
+    // Lumiere eteinte : l'arc affiche 0 (l'attribut brightness HA est NAN ou obsolete)
+    int arcv = (!is_on[light_idx] || std::isnan(brightness[light_idx]))
+        ? 0 : (int) brightness[light_idx];
+    set_light_arc_and_label(arc, pct_lbl, arcv);
+
+    lv_obj_clear_flag(popup, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_move_foreground(popup);
+}
+
+// =============================================================================
 // Tri dynamique plantes : 5 capteurs -> 4 slots (2 secs + mediane + humide)
 // =============================================================================
 

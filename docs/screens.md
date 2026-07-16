@@ -310,12 +310,13 @@ Ouvert via le bouton console (`btn_control_console`, en haut à droite de la zon
 
 ## Popup lumière — appui long
 
-Un appui long sur la carte prévision journalière chambre, salon ou LEDs bureau (au lieu du tap court qui bascule juste la lumière) ouvre un modal plein écran (960×520) :
-- Colonne gauche : **arc de luminosité** (0–255) — à glisser pour ajuster, appelle `light.turn_on` avec la nouvelle luminosité en temps réel
-- Colonne droite : une grille 3×3 de 9 boutons — **8 couleurs prédéfinies** (Blanc, Chaud, Rouge, Vert, Bleu, Rose, Orange, Cyan — chacune envoie `light.turn_on` avec le `color_name` correspondant) plus un bouton **On/Off** (`light.toggle`, pas une couleur prédéfinie)
-- Taper l'overlay sombre ou le bouton × ferme le modal
+Un appui long sur la carte prévision journalière chambre, salon ou LEDs bureau (au lieu du tap court qui bascule juste la lumière) ouvre un modal quasi plein écran (carte 1250×690, 15 px des bords), organisé en trois cartes de verre :
+- **AMPOULE** (gauche) : sélecteur des 3 lumières (Chambre / Salon / LEDs — icônes colorées selon l'état on/off, bordure cyan sur la sélection) pour changer de lumière sans fermer le popup, gros bouton **On/Off** (`light.toggle`) et **Tout éteindre** (les 3 entités d'un coup)
+- **LUMINOSITÉ** (centre) : **arc 320 px** (0–255) avec la valeur **% affichée en direct** au centre — synchronisée depuis l'attribut `brightness` HA à l'ouverture et en live (jamais pendant un drag) — plus 4 raccourcis 10/35/65/100 %
+- **COULEURS** (droite) : 3 blancs nommés (Chaud/Crème/Froid) et une grille 4×3 de **12 pastilles rondes** (chaque pastille envoie `light.turn_on` avec le `color_name` correspondant, factorisées via `light_color_preset_btn.yaml`)
+- Taper l'overlay sombre ou le bouton × (vrai bouton de verre 96×64) ferme le modal
 
-Le popup est contextuel : l'entité qu'il contrôle est définie dynamiquement à l'ouverture (globale `current_light_entity`), donc le même composant popup gère les trois entités lumière sans duplication.
+Le popup est contextuel : ouverture et sélection passent par `script.tab5_light_popup_show(light_idx)` qui règle la globale `current_light_entity` et synchronise titre, sélecteur, icône power et arc — le même composant popup gère les trois entités lumière sans duplication.
 
 ---
 
