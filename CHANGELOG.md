@@ -4,6 +4,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-16 — Télécommande TV : calage symétrique plein écran
+- `tv_remote_popup.yaml` refondu : modal 1230×670 (~25 px des bords), grille 3 colonnes symétrique, rangée basse unifiée (Play/Pause/Retour/Accueil/Muet).
+- Rangée basse calée à 6 px du bord bas ; corps raccourci pour ne plus chevaucher Menu ni volume.
+- Overlay 85 % pour masquer le dashboard dessous.
+- Vérifié OTA prod : `config_hash=0x218c6309` (validé Axel).
+
 ### 2026-07-16 — Tuiles Domo + layout horloge/clim
 - `style_meteo_card` aligné sur le verre des boutons Domo (`style_clim_btn` : opa 58 %, bordure 1 px/35 %, radius 18) — horloge, bandeau central, tuiles météo (toutes pages), page HA, zone clim.
 - Horloge : 401×200, `y: 5` (−6 px/côté, −10 px haut, remontée 5 px).

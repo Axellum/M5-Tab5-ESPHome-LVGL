@@ -1,34 +1,10 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file tv_remote_popup.yaml
-# @role Popup fullscreen télécommande TV Samsung (1130×650), design inspiré d'une
-#       télécommande physique : colonne gauche = alimentation/source/menu/lecture,
-#       centre = anneau directionnel circulaire avec OK en pastille cyan,
-#       droite = bascule de volume verticale (rocker) + muet. Pas de touches chaîne
-#       +/- (décision Axel 16/07). Ouvert par : long-press sur la carte "PC Bureau"
-#       (switches_card.yaml btn_sw0_action) ET short-click sur `btn_control_tv`
-#       (tab5-lvgl.yaml, barre du haut).
-# @architecture_constraint Les touches passent par le service STANDARD
-#                          `remote.send_command` sur `${entity_tv_remote}`
-#                          (remote.samsung_s95ba_55_tv, intégration CORE `samsungtv` —
-#                          vérifié live dans core.entity_registry le 16/07 : le custom
-#                          samsungtv_smart est installé mais N'A PAS d'entité pour cette
-#                          TV, et n'expose PAS de service send_command). Marche/Arrêt =
-#                          `remote.toggle` (turn_on gère le Wake-on-LAN, KEY_POWER ne
-#                          peut pas rallumer une TV éteinte). Boutons NON factorisables
-#                          (#T164) : même service mais géométrie/forme par zone.
-# @ai_instruction Codes touches = jaruba/ha-samsungtv-tizen Key_codes.md (KEY_UP,
-#                 KEY_ENTER, KEY_VOLUP…) — standard Tizen, non testés un par un sur le
-#                 S95B ; si une touche reste muette, ajuster son code ici.
-# @ai_instruction Les glyphes flèches/home/undo/menu/play/pause/volume-off ont été
-#                 ajoutés à `mdi_font_45` (tab5-styles.yaml) pour cette popup — ne pas
-#                 les retirer du set sans supprimer leurs usages ici.
-#                 Les segments de l'anneau directionnel et du rocker volume utilisent
-#                 `style_invisible` + `bg_color: color_accent` + `pressed: bg_opa` :
-#                 invisible au repos, flash cyan au toucher. `scrollbar_mode: "OFF"`
-#                 est répété inline sur chaque conteneur (le poser seulement dans le
-#                 style ne suffit pas — une ligne de scrollbar apparaissait sous le
-#                 rocker volume, constaté sur device le 16/07).
+# @role Popup télécommande TV Samsung (1230×670, ~25 px des bords écran 1280×720).
+#       Grille symétrique 3 colonnes (290 | 440 | 290) + rangée basse 5 boutons.
+#       Ouvert par long-press carte PC (switches_card) ou btn_control_tv.
+# @architecture_constraint remote.send_command / remote.toggle sur ${entity_tv_remote}.
 # ═══════════════════════════════════════════════════════
 obj:
   id: tv_remote_popup
@@ -39,130 +15,305 @@ obj:
   styles: style_invisible
   scrollbar_mode: "OFF"
   widgets:
-    # Overlay fond sombre (cliquable pour fermer)
+    # Overlay — opacité renforcée pour ne pas confondre avec le dashboard dessous
     - button:
         align: CENTER
         width: 100%
         height: 100%
-        styles: style_modal_overlay
+        bg_color: color_modal_scrim
+        bg_opa: 85%
+        border_width: 0
         on_short_click:
           - lambda: 'lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);'
 
-    # Carte modale principale
+    # Carte modale — 25 px des bords écran (1280×720)
     - obj:
         align: CENTER
-        width: 1130
-        height: 650
+        width: 1230
+        height: 670
         styles: style_modal_card
+        scrollable: false
         scrollbar_mode: "OFF"
         widgets:
 
           # ═══ EN-TÊTE ═══
           - label:
               text: "Télécommande TV"
-              align: TOP_LEFT
-              x: 30
-              y: 18
+              align: TOP_MID
+              y: 16
               text_font: roboto_32_b
               text_color: color_text
           - label:
               text: "Samsung S95B — Salon"
-              align: TOP_LEFT
-              x: 30
-              y: 58
+              align: TOP_MID
+              y: 52
               text_font: roboto_22
               text_color: color_text_dim
 
-          # Bouton fermer (X) — compact, calé dans le coin pour ne pas peser sur la colonne volume
           - button:
               align: TOP_RIGHT
-              x: -18
-              y: 14
+              x: -16
+              y: 12
               width: 64
               height: 64
-              radius: 32
-              styles: style_transparent
+              radius: 18
+              styles: style_clim_btn
+              pressed:
+                bg_opa: 30%
               on_short_click:
                 - lambda: 'lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);'
               widgets:
-                - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_45, text_color: color_console_label }
+                - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_45, text_color: color_text }
 
-          # ═══════════════════════════════════════════════
-          # COLONNE GAUCHE — Alimentation / Source / Menu / Lecture
-          # ═══════════════════════════════════════════════
+          # ═══ CORPS — grille 1170×432 (laisse place à la rangée basse) ═══
           - obj:
-              align: TOP_LEFT
-              x: 45
-              y: 105
-              width: 290
-              height: 520
+              align: TOP_MID
+              y: 88
+              width: 1170
+              height: 432
               styles: style_transparent
+              scrollable: false
               scrollbar_mode: "OFF"
               widgets:
-                # Marche / Arrêt — remote.toggle : KEY_POWER ne rallume pas une TV éteinte,
-                # turn_on (Wake-on-LAN) si off / turn_off si on.
-                - button:
-                    y: 0
-                    width: 290
-                    height: 115
-                    radius: 24
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: remote.toggle
-                          data:
-                            entity_id: ${entity_tv_remote}
-                    widgets:
-                      - label: { text: "\U000F0425", align: LEFT_MID, x: 25, text_font: mdi_font_45, text_color: color_error }
-                      - label: { text: "Marche / Arrêt", align: LEFT_MID, x: 90, text_font: roboto_22, text_color: color_text }
 
-                # Source
-                - button:
-                    y: 140
+                # ── Colonne gauche (290) ──
+                - obj:
+                    align: LEFT_MID
+                    x: 0
                     width: 290
-                    height: 100
-                    radius: 24
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: remote.send_command
-                          data:
-                            entity_id: ${entity_tv_remote}
-                            command: "KEY_SOURCE"
+                    height: 432
+                    styles: style_transparent
+                    scrollable: false
                     widgets:
-                      - label: { text: "\U000F0379", align: LEFT_MID, x: 25, text_font: mdi_font_45, text_color: color_info }
-                      - label: { text: "Source", align: LEFT_MID, x: 90, text_font: roboto_22, text_color: color_text }
+                      - button:
+                          y: 0
+                          width: 290
+                          height: 128
+                          radius: 18
+                          styles: style_clim_btn
+                          pressed:
+                            bg_opa: 30%
+                          on_short_click:
+                            - homeassistant.service:
+                                service: remote.toggle
+                                data:
+                                  entity_id: ${entity_tv_remote}
+                          widgets:
+                            - label: { text: "\U000F0425", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_error }
+                            - label: { text: "Marche / Arrêt", align: LEFT_MID, x: 82, text_font: roboto_22, text_color: color_text }
+                      - button:
+                          y: 144
+                          width: 290
+                          height: 128
+                          radius: 18
+                          styles: style_clim_btn
+                          pressed:
+                            bg_opa: 30%
+                          on_short_click:
+                            - homeassistant.service:
+                                service: remote.send_command
+                                data:
+                                  entity_id: ${entity_tv_remote}
+                                  command: "KEY_SOURCE"
+                          widgets:
+                            - label: { text: "\U000F0379", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_info }
+                            - label: { text: "Source", align: LEFT_MID, x: 82, text_font: roboto_22, text_color: color_text }
+                      - button:
+                          y: 288
+                          width: 290
+                          height: 128
+                          radius: 18
+                          styles: style_clim_btn
+                          pressed:
+                            bg_opa: 30%
+                          on_short_click:
+                            - homeassistant.service:
+                                service: remote.send_command
+                                data:
+                                  entity_id: ${entity_tv_remote}
+                                  command: "KEY_MENU"
+                          widgets:
+                            - label: { text: "\U000F035C", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_text_dim }
+                            - label: { text: "Menu", align: LEFT_MID, x: 82, text_font: roboto_22, text_color: color_text }
 
-                # Menu
-                - button:
-                    y: 265
+                # ── Colonne centre (440) — anneau directionnel ──
+                - obj:
+                    align: CENTER
+                    width: 440
+                    height: 432
+                    styles: style_transparent
+                    scrollable: false
+                    widgets:
+                      - obj:
+                          align: CENTER
+                          width: 360
+                          height: 360
+                          radius: 180
+                          styles: style_meteo_card
+                          scrollable: false
+                          widgets:
+                            - button:
+                                align: TOP_MID
+                                y: 10
+                                width: 138
+                                height: 100
+                                radius: 36
+                                styles: style_invisible
+                                bg_color: color_accent
+                                pressed:
+                                  bg_opa: 25%
+                                on_short_click:
+                                  - homeassistant.service:
+                                      service: remote.send_command
+                                      data:
+                                        entity_id: ${entity_tv_remote}
+                                        command: "KEY_UP"
+                                widgets:
+                                  - label: { text: "\U000F005D", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+                            - button:
+                                align: BOTTOM_MID
+                                y: -10
+                                width: 138
+                                height: 100
+                                radius: 36
+                                styles: style_invisible
+                                bg_color: color_accent
+                                pressed:
+                                  bg_opa: 25%
+                                on_short_click:
+                                  - homeassistant.service:
+                                      service: remote.send_command
+                                      data:
+                                        entity_id: ${entity_tv_remote}
+                                        command: "KEY_DOWN"
+                                widgets:
+                                  - label: { text: "\U000F0045", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+                            - button:
+                                align: LEFT_MID
+                                x: 10
+                                width: 100
+                                height: 138
+                                radius: 36
+                                styles: style_invisible
+                                bg_color: color_accent
+                                pressed:
+                                  bg_opa: 25%
+                                on_short_click:
+                                  - homeassistant.service:
+                                      service: remote.send_command
+                                      data:
+                                        entity_id: ${entity_tv_remote}
+                                        command: "KEY_LEFT"
+                                widgets:
+                                  - label: { text: "\U000F004D", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+                            - button:
+                                align: RIGHT_MID
+                                x: -10
+                                width: 100
+                                height: 138
+                                radius: 36
+                                styles: style_invisible
+                                bg_color: color_accent
+                                pressed:
+                                  bg_opa: 25%
+                                on_short_click:
+                                  - homeassistant.service:
+                                      service: remote.send_command
+                                      data:
+                                        entity_id: ${entity_tv_remote}
+                                        command: "KEY_RIGHT"
+                                widgets:
+                                  - label: { text: "\U000F0054", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+                            - button:
+                                align: CENTER
+                                width: 148
+                                height: 148
+                                radius: 74
+                                styles: style_pill_accent
+                                pressed:
+                                  bg_opa: 45%
+                                on_short_click:
+                                  - homeassistant.service:
+                                      service: remote.send_command
+                                      data:
+                                        entity_id: ${entity_tv_remote}
+                                        command: "KEY_ENTER"
+                                widgets:
+                                  - label: { text: "OK", align: CENTER, text_font: roboto_45_b, text_color: color_text }
+
+                # ── Colonne droite (290) — rocker volume centré ──
+                - obj:
+                    align: RIGHT_MID
+                    x: 0
                     width: 290
-                    height: 100
-                    radius: 24
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: remote.send_command
-                          data:
-                            entity_id: ${entity_tv_remote}
-                            command: "KEY_MENU"
+                    height: 432
+                    styles: style_transparent
+                    scrollable: false
                     widgets:
-                      - label: { text: "\U000F035C", align: LEFT_MID, x: 25, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Menu", align: LEFT_MID, x: 90, text_font: roboto_22, text_color: color_text }
+                      - obj:
+                          align: CENTER
+                          width: 150
+                          height: 360
+                          radius: 75
+                          styles: style_meteo_card
+                          scrollable: false
+                          widgets:
+                            - button:
+                                align: TOP_MID
+                                y: 0
+                                width: 150
+                                height: 150
+                                radius: 75
+                                styles: style_invisible
+                                bg_color: color_accent
+                                pressed:
+                                  bg_opa: 25%
+                                on_short_click:
+                                  - homeassistant.service:
+                                      service: remote.send_command
+                                      data:
+                                        entity_id: ${entity_tv_remote}
+                                        command: "KEY_VOLUP"
+                                widgets:
+                                  - label: { text: "\U000F0415", align: CENTER, y: 8, text_font: mdi_font_45, text_color: color_text }
+                            - label:
+                                text: "VOL"
+                                align: CENTER
+                                text_font: roboto_22
+                                text_color: color_text_dim
+                            - button:
+                                align: BOTTOM_MID
+                                y: 0
+                                width: 150
+                                height: 150
+                                radius: 75
+                                styles: style_invisible
+                                bg_color: color_accent
+                                pressed:
+                                  bg_opa: 25%
+                                on_short_click:
+                                  - homeassistant.service:
+                                      service: remote.send_command
+                                      data:
+                                        entity_id: ${entity_tv_remote}
+                                        command: "KEY_VOLDOWN"
+                                widgets:
+                                  - label: { text: "\U000F0374", align: CENTER, y: -6, text_font: mdi_font_45, text_color: color_text }
 
-                # Lecture / Pause (rangée média)
+          # ═══ RANGÉE BASSE — 6 px du bord bas de la popup ═══
+          - obj:
+              align: BOTTOM_MID
+              y: -6
+              width: 1170
+              height: 102
+              styles: style_transparent
+              scrollable: false
+              widgets:
                 - button:
                     x: 0
-                    y: 390
-                    width: 137
-                    height: 130
-                    radius: 24
+                    width: 221
+                    height: 102
+                    radius: 18
                     styles: style_clim_btn
                     pressed:
                       bg_opa: 30%
@@ -175,11 +326,10 @@ obj:
                     widgets:
                       - label: { text: "\U000F040A", align: CENTER, text_font: mdi_font_45, text_color: color_success }
                 - button:
-                    x: 153
-                    y: 390
-                    width: 137
-                    height: 130
-                    radius: 24
+                    x: 237
+                    width: 221
+                    height: 102
+                    radius: 18
                     styles: style_clim_btn
                     pressed:
                       bg_opa: 30%
@@ -191,130 +341,11 @@ obj:
                             command: "KEY_PAUSE"
                     widgets:
                       - label: { text: "\U000F03E4", align: CENTER, text_font: mdi_font_45, text_color: color_text }
-
-          # ═══════════════════════════════════════════════
-          # CENTRE — Anneau directionnel + OK, puis Retour / Accueil
-          # ═══════════════════════════════════════════════
-          - obj:
-              align: TOP_MID
-              x: 0
-              y: 105
-              width: 420
-              height: 525
-              styles: style_transparent
-              scrollbar_mode: "OFF"
-              widgets:
-                # Anneau de verre (une seule pièce, comme le pavé rond d'une télécommande)
-                - obj:
-                    align: TOP_MID
-                    y: 0
-                    width: 400
-                    height: 400
-                    radius: 200
-                    styles: style_glass_card
-                    scrollbar_mode: "OFF"
-                    widgets:
-                      # Haut
-                      - button:
-                          align: TOP_MID
-                          y: 12
-                          width: 130
-                          height: 100
-                          radius: 40
-                          styles: style_invisible
-                          bg_color: color_accent
-                          pressed:
-                            bg_opa: 25%
-                          on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_UP"
-                          widgets:
-                            - label: { text: "\U000F005D", align: CENTER, text_font: mdi_font_45, text_color: color_text }
-                      # Bas
-                      - button:
-                          align: BOTTOM_MID
-                          y: -12
-                          width: 130
-                          height: 100
-                          radius: 40
-                          styles: style_invisible
-                          bg_color: color_accent
-                          pressed:
-                            bg_opa: 25%
-                          on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_DOWN"
-                          widgets:
-                            - label: { text: "\U000F0045", align: CENTER, text_font: mdi_font_45, text_color: color_text }
-                      # Gauche
-                      - button:
-                          align: LEFT_MID
-                          x: 12
-                          width: 100
-                          height: 130
-                          radius: 40
-                          styles: style_invisible
-                          bg_color: color_accent
-                          pressed:
-                            bg_opa: 25%
-                          on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_LEFT"
-                          widgets:
-                            - label: { text: "\U000F004D", align: CENTER, text_font: mdi_font_45, text_color: color_text }
-                      # Droite
-                      - button:
-                          align: RIGHT_MID
-                          x: -12
-                          width: 100
-                          height: 130
-                          radius: 40
-                          styles: style_invisible
-                          bg_color: color_accent
-                          pressed:
-                            bg_opa: 25%
-                          on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_RIGHT"
-                          widgets:
-                            - label: { text: "\U000F0054", align: CENTER, text_font: mdi_font_45, text_color: color_text }
-                      # OK — moyeu central en pastille accent cyan
-                      - button:
-                          align: CENTER
-                          width: 145
-                          height: 145
-                          radius: 73
-                          styles: style_pill_accent
-                          pressed:
-                            bg_opa: 45%
-                          on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_ENTER"
-                          widgets:
-                            - label: { text: "OK", align: CENTER, text_font: roboto_45_b, text_color: color_text }
-
-                # Rangée Retour / Accueil sous l'anneau (comme sous le pavé d'une vraie télécommande)
                 - button:
-                    x: 5
-                    y: 425
-                    width: 200
-                    height: 95
-                    radius: 24
+                    x: 474
+                    width: 221
+                    height: 102
+                    radius: 18
                     styles: style_clim_btn
                     pressed:
                       bg_opa: 30%
@@ -325,14 +356,13 @@ obj:
                             entity_id: ${entity_tv_remote}
                             command: "KEY_RETURN"
                     widgets:
-                      - label: { text: "\U000F054C", align: LEFT_MID, x: 25, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Retour", align: LEFT_MID, x: 85, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "\U000F054C", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
+                      - label: { text: "Retour", align: LEFT_MID, x: 72, text_font: roboto_22, text_color: color_text }
                 - button:
-                    x: 215
-                    y: 425
-                    width: 200
-                    height: 95
-                    radius: 24
+                    x: 711
+                    width: 221
+                    height: 102
+                    radius: 18
                     styles: style_clim_btn
                     pressed:
                       bg_opa: 30%
@@ -343,80 +373,13 @@ obj:
                             entity_id: ${entity_tv_remote}
                             command: "KEY_HOME"
                     widgets:
-                      - label: { text: "\U000F02DC", align: LEFT_MID, x: 25, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Accueil", align: LEFT_MID, x: 85, text_font: roboto_22, text_color: color_text }
-
-          # ═══════════════════════════════════════════════
-          # COLONNE DROITE — Rocker volume vertical + Muet
-          # ═══════════════════════════════════════════════
-          - obj:
-              align: TOP_RIGHT
-              x: -45
-              y: 105
-              width: 270
-              height: 520
-              styles: style_transparent
-              scrollbar_mode: "OFF"
-              widgets:
-                # Bascule de volume : une seule pièce de verre verticale (rocker physique)
-                - obj:
-                    align: TOP_MID
-                    y: 0
-                    width: 150
-                    height: 355
-                    radius: 75
-                    styles: style_glass_card
-                    scrollbar_mode: "OFF"
-                    widgets:
-                      - button:
-                          align: TOP_MID
-                          y: 0
-                          width: 150
-                          height: 145
-                          radius: 75
-                          styles: style_invisible
-                          bg_color: color_accent
-                          pressed:
-                            bg_opa: 25%
-                          on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_VOLUP"
-                          widgets:
-                            - label: { text: "\U000F0415", align: CENTER, y: 8, text_font: mdi_font_45, text_color: color_text }
-                      - label:
-                          text: "VOL"
-                          align: CENTER
-                          text_font: roboto_22
-                          text_color: color_text_dim
-                      - button:
-                          align: BOTTOM_MID
-                          y: 0
-                          width: 150
-                          height: 145
-                          radius: 75
-                          styles: style_invisible
-                          bg_color: color_accent
-                          pressed:
-                            bg_opa: 25%
-                          on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_VOLDOWN"
-                          widgets:
-                            - label: { text: "\U000F0374", align: CENTER, y: -8, text_font: mdi_font_45, text_color: color_text }
-
-                # Muet
+                      - label: { text: "\U000F02DC", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
+                      - label: { text: "Accueil", align: LEFT_MID, x: 72, text_font: roboto_22, text_color: color_text }
                 - button:
-                    align: TOP_MID
-                    y: 400
-                    width: 150
-                    height: 120
-                    radius: 24
+                    x: 948
+                    width: 221
+                    height: 102
+                    radius: 18
                     styles: style_clim_btn
                     pressed:
                       bg_opa: 30%
@@ -427,5 +390,5 @@ obj:
                             entity_id: ${entity_tv_remote}
                             command: "KEY_MUTE"
                     widgets:
-                      - label: { text: "\U000F0581", align: CENTER, y: -14, text_font: mdi_font_45, text_color: color_warning }
-                      - label: { text: "Muet", align: CENTER, y: 32, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "\U000F0581", align: CENTER, y: -12, text_font: mdi_font_45, text_color: color_warning }
+                      - label: { text: "Muet", align: CENTER, y: 28, text_font: roboto_22, text_color: color_text }
