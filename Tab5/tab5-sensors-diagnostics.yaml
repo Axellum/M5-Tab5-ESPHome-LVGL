@@ -274,5 +274,14 @@ interval:
                  id(sys_loop_time).has_state(), id(sys_loop_time).state, id(lbl_sys_loop_val),
                  id(sys_wifi_ip).has_state(), id(sys_wifi_ip).state.c_str(), id(lbl_sys_ip_val),
                  id(sys_wifi_ssid).has_state(), id(sys_wifi_ssid).state.c_str(), id(lbl_sys_ssid_val));
+
+             // État connexion HA (carte RÉSEAU de la console) — reprend aussi la main
+             // apres le "Redemarrage..." affiche par le bouton Redemarrer HA.
+             if (id(lbl_sys_ha_val) != nullptr) {
+               bool ha_ok = id(status_ha).state;
+               lv_label_set_text(id(lbl_sys_ha_val), ha_ok ? "Connecte" : "Hors ligne");
+               lv_obj_set_style_text_color(id(lbl_sys_ha_val),
+                   lv_color_hex(ha_ok ? UIColor::SUCCESS : UIColor::ERROR), LV_PART_MAIN);
+             }
           }
 

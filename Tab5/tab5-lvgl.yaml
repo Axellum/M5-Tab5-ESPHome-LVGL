@@ -241,6 +241,13 @@ lvgl:
                       id(sys_uptime).has_state(), id(sys_uptime).state,
                       id(sys_wifi_rssi).has_state(), id(sys_wifi_rssi).state,
                       id(sys_core_temp).has_state(), id(sys_core_temp).state);
+                  // État connexion HA immédiat (sinon "--" jusqu'au prochain tick 2s)
+                  if (id(lbl_sys_ha_val) != nullptr) {
+                    bool ha_ok = id(status_ha).state;
+                    lv_label_set_text(id(lbl_sys_ha_val), ha_ok ? "Connecte" : "Hors ligne");
+                    lv_obj_set_style_text_color(id(lbl_sys_ha_val),
+                        lv_color_hex(ha_ok ? UIColor::SUCCESS : UIColor::ERROR), LV_PART_MAIN);
+                  }
             widgets:
               - label: { text: "\U000F0717", align: CENTER, y: -12, text_font: mdi_font_45, text_color: color_text }
               - label: { text: "Sys", align: CENTER, y: 22, text_font: roboto_22, text_color: color_text }

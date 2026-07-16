@@ -12,6 +12,7 @@
 
 entity_tracker_pc: switch.your_pc_or_device_tracker
 entity_tracker_tv: media_player.your_tv
+entity_tv_remote: remote.your_tv
 entity_phone_battery: sensor.your_phone_battery
 
 # --- Lumières ---
@@ -24,6 +25,11 @@ entity_climate_salon: climate.your_living_room_climate
 
 # --- Assistant vocal ---
 entity_tab5_pipeline_select: select.your_tab5_assistant_pipeline
+
+# --- Console Système (bouton "MAJ Écran" de la carte GESTION) ---
+# Flag qui conditionne les automations de push + automation de push écran
+entity_primary_active: input_boolean.your_primary_active_flag
+entity_push_automation: automation.your_tab5_push_automation
 
 # --- Température & humidité ---
 entity_temp_salon: sensor.your_living_room_temperature

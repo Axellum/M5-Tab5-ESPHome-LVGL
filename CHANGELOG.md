@@ -4,6 +4,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-16 — Console Système v2 (redesign + HA management)
+- `Tab5/ui_components/console_sys.yaml` rewritten (233 → 415 lines): modal card enlarged to 1180×680, content organized in 4 glass cards (`style_glass_card`) — MÉMOIRE (SRAM/PSRAM bars restyled with `color_arc_track` track, bloc max, flash), RÉSEAU (SSID, IP, RSSI, new `lbl_sys_ha_val` HA connection status), SYSTÈME (uptime, CPU temp, loop time, volume slider with live % readout `lbl_sys_vol_val`), GESTION (new).
+- GESTION card: « MAJ Écran » (turns `input_boolean` `${entity_primary_active}` back on then triggers `${entity_push_automation}` — direct remedy for the recurring frozen-screen bug), « Recharger autos » (`automation.reload`), « Redémarrer HA » (`homeassistant.restart`) and « Reboot tablette » — the last two behind Annuler/Confirmer overlays (`overlay_confirm_*`).
+- Fix "close button shifts the content": the modal card was scrollable by default, so a slightly dragged tap scrolled the content and left it offset — `scrollable: false` set on the modal card and every sub-card; the close X is now a real 96×64 glass button with pressed feedback.
+- Confirm overlays replace the old invisible double-tap arming: the armed state is the overlay's visibility (single source of truth), so the `reboot_armed` global was removed from `tab5-globals.yaml` (rule header reworded, README globals table updated).
+- Data contract unchanged (`lbl_sys_*`, `bar_sys_*`, `slider_volume` ids kept); `tab5-sensors-diagnostics.yaml` 2 s interval and `tab5-lvgl.yaml` open handler now also feed `lbl_sys_ha_val` (Connecte/Hors ligne, green/red) from `status_ha`.
+- New substitutions `entity_primary_active` / `entity_push_automation` in `user_entities.yaml` + example file.
+- Docs resynced: `Tab5/README.md`, `docs/screens.md`, `docs/architecture.md`, `docs/debugging.md`, `CARTOGRAPHIE_TAB5.md` (both copies). Details of the companion edits: `docs/console_v2_modifs_preparees.md`.
+- Verified: `esphome config` valid + full `esphome clean` + `compile` SUCCESS (`config_hash=0x5e927d97`) + OTA prod 16/07 (`ha_api_status=on`, uptime croissant).
+
 ### 2026-07-14 — Documentation coherence pass (docs vs. real code)
 - Audited `Tab5/README.md`, `docs/*.md` and `CARTOGRAPHIE_TAB5.md` line-by-line against the firmware. Doc-only change, no code touched.
 - `Tab5/README.md`: central-card rotator corrected 6 s → 8 s and 3 → 4 panels; `tab5_maj_probabilites` and `tab5_maj_info_texte` added to the API service table (10 services total) and `tab5_maj_pluie_1h`/`tab5_maj_clim`/`tab5_maj_volet_etat` payloads corrected; `has_info` added to the globals table; navigation description updated (console via `btn_control_console`, swipe = forecast pagination only, `y ≥ 333`); entry-point description updated for `user_entities.yaml`; MDI font sizes corrected; ST7123 described as the touch (not display) controller.
