@@ -140,6 +140,22 @@ script:
             entity_id: !lambda 'return id(current_light_entity);'
             brightness: !lambda 'return to_string(lv_arc_get_value(id(arc_light_brightness)));'
 
+  # Debounce de la cible clim (arc + boutons ± du popup clim) : un seul
+  # climate.set_temperature par geste — les taps rapides ± sont groupés, la
+  # cible affichée est optimiste (update_clim_target_ui) en attendant le retour
+  # HA via tab5_maj_clim. Force le mode "cool" si la clim est éteinte (Daikin
+  # refuse set_temperature en mode off), comme les anciens boutons ±.
+  - id: tab5_debounce_clim_temp
+    mode: restart
+    then:
+      - delay: 250ms
+      - homeassistant.service:
+          service: climate.set_temperature
+          data:
+            entity_id: ${entity_climate_salon}
+            hvac_mode: !lambda 'return (id(clim_hvac_mode) == "off" || id(clim_hvac_mode).empty()) ? std::string("cool") : id(clim_hvac_mode);'
+            temperature: !lambda 'return to_string(id(clim_target_temp));'
+
   # Rotateur central auto (8s) — mode restart : tout tap/advance remet le délai à zéro.
   - id: tab5_central_rotator_auto
     mode: restart

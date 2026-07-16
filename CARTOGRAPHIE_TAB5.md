@@ -36,8 +36,8 @@ graph TD
     subgraph UI["ui_components/*.yaml (16 fichiers, inclus par tab5-lvgl.yaml)"]
         MOIST["moisture_sensors.yaml (64L)"]
         CLIMCARD["climate_card.yaml (104L)"]
-        CLIMPOP["climate_popup.yaml (250L)<br/>NON factorisé, grille 3×3"]
-        CLIMBTN["climate_hvac_mode_btn.yaml (20L)<br/>climate_preset_toggle_btn.yaml (20L)<br/>templates paramétrés !include+vars"]
+        CLIMPOP["climate_popup.yaml (327L)<br/>3 cartes de verre : MODE / TEMPÉRATURE / OPTIONS"]
+        CLIMBTN["climate_hvac_mode_btn.yaml (21L)<br/>climate_preset_toggle_btn.yaml (21L)<br/>templates paramétrés !include+vars"]
         FDAILY["forecast_daily.yaml (292L)"]
         FDTAB["forecast_day_title_tab.yaml (14L)<br/>forecast_day_temp_tab.yaml (35L)<br/>templates paramétrés"]
         FHOUR["forecast_hourly.yaml (26L)<br/>forecast_hour_card.yaml (73L)"]
@@ -157,9 +157,9 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 | Fichier | Lignes | Rôle | Statut factorisation |
 |---|---|---|---|
 | `climate_card.yaml` | 104 | Carte clim compacte (dashboard principal) | — |
-| `climate_popup.yaml` | 250 | Popup fullscreen clim, grille 3×3 (9 boutons mode/preset) | **Partiellement factorisé** (#T164, 06/07) : 6/9 boutons via `climate_hvac_mode_btn.yaml`/`climate_preset_toggle_btn.yaml`. Les 3 restants (`off`, `swing`, `quiet`) + les 2 boutons +/- température volontairement non factorisés (service HA différent par bouton, décision explicite documentée dans `etat_tab5.md`) |
-| `climate_hvac_mode_btn.yaml` | 20 | Template paramétré (`!include`+`vars`) pour bouton mode HVAC | Template réutilisé 4× |
-| `climate_preset_toggle_btn.yaml` | 20 | Template paramétré pour bouton preset (eco/boost) | Template réutilisé 2× |
+| `climate_popup.yaml` | 327 | Popup clim plein écran (1250×690), 3 cartes de verre : MODE (5 modes empilés), TEMPÉRATURE (arc + cible optimiste + ± débouncés), OPTIONS (Éco/Boost, Silence, Oscillation, Brise `windnice`) | **Partiellement factorisé** (#T164, ADR-0007) : 6/10 boutons via `climate_hvac_mode_btn.yaml`/`climate_preset_toggle_btn.yaml`. Les 4 restants (`off`, `swing`, `windnice`, `quiet`) + les 2 boutons ± volontairement non factorisés (service HA différent par bouton) |
+| `climate_hvac_mode_btn.yaml` | 21 | Template paramétré (`!include`+`vars`) pour bouton mode HVAC (342×88) | Template réutilisé 4× |
+| `climate_preset_toggle_btn.yaml` | 21 | Template paramétré pour bouton preset eco/boost (164×88) | Template réutilisé 2× |
 | `forecast_daily.yaml` | 292 | 5 cartes prévisions journalières (fenêtre glissante sur 15 jours) | Onglets titre/température factorisés via `forecast_day_title_tab.yaml`/`forecast_day_temp_tab.yaml` ; le "corps sombre + action" par carte reste dupliqué 5× (actions HA différentes par carte, cf. §4) |
 | `forecast_day_title_tab.yaml` | 14 | Template onglet titre jour | Réutilisé 5× |
 | `forecast_day_temp_tab.yaml` | 35 | Template onglet température jour | Réutilisé 5× |
@@ -231,7 +231,7 @@ Tous ces fichiers sont **gitignorés** (`.gitignore:20-23`) — ce sont les vrai
 
 - ~~**`tab5-sensors.yaml`**~~ — **SCINDÉ** (14/07/2026) en `tab5-sensors-diagnostics.yaml` (278L) + `tab5-sensors-domotique.yaml` (270L), blocs copiés à l'identique, config fusionnée sémantiquement inchangée.
 - **`tab5_custom.cpp` (1095 lignes au 14/07)** — plusieurs responsabilités ; surveiller si découpage en unités de compilation devient nécessaire.
-- **`climate_popup.yaml` (250 lignes)** — non factorisé au-delà de 6/9 boutons (ADR-0007, choix assumé).
+- **`climate_popup.yaml` (327 lignes)** — non factorisé au-delà de 6/10 boutons (ADR-0007, choix assumé).
 
 ### 4.5 Volontairement non corrigé (ne pas « auditer » à nouveau)
 

@@ -228,6 +228,11 @@ void update_light_selector_icon(lv_obj_t* icon, bool is_on);
 void sync_light_popup_brightness(lv_obj_t* popup, lv_obj_t* arc, lv_obj_t* pct_lbl,
     float brightness);
 
+// Affichage optimiste de la cible clim (label + arc du popup) avant le retour HA.
+// Appele par l'arc et les boutons -/+ du popup clim ; le retour reel arrive ensuite
+// par le service tab5_maj_clim qui reecrit les memes widgets.
+void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target);
+
 // Ouvre/resynchronise le popup lumiere sur light_idx (0=Chambre 1=Salon 2=LEDs) :
 // titre, bordure cyan du selecteur, icones d'etat, icone power, arc + % depuis
 // l'etat HA reel. Appele par script tab5_light_popup_show (tab5-scripts.yaml).
