@@ -78,6 +78,8 @@ obj:
               service: climate.set_temperature
               data:
                 entity_id: ${entity_climate_salon}
+                # Si clim éteinte, set_temperature seul ne l'allume pas (Daikin) → forcer cool
+                hvac_mode: !lambda 'return (id(clim_hvac_mode) == "off" || id(clim_hvac_mode).empty()) ? std::string("cool") : id(clim_hvac_mode);'
                 temperature: !lambda "return to_string(id(clim_target_temp) - 0.5);"
         widgets:
           - label: { text: "\U000F0374", align: CENTER, text_font: mdi_font_56, text_color: color_text }
@@ -99,6 +101,7 @@ obj:
               service: climate.set_temperature
               data:
                 entity_id: ${entity_climate_salon}
+                hvac_mode: !lambda 'return (id(clim_hvac_mode) == "off" || id(clim_hvac_mode).empty()) ? std::string("cool") : id(clim_hvac_mode);'
                 temperature: !lambda "return to_string(id(clim_target_temp) + 0.5);"
         widgets:
           - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56, text_color: color_text }

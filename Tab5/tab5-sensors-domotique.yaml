@@ -85,13 +85,13 @@ text_sensor:
 
       - lambda: |-
 
-          if (id(icon_pc) == nullptr || id(icon_card_pc) == nullptr) return;
+          if (id(icon_pc) == nullptr) return;
+          // Accepte device_tracker (home) et switch (on)
+          bool active = (x == "home" || x == "on");
 
-          if(x == "home") {
+          if (active) {
 
             lv_obj_set_style_text_color(id(icon_pc), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-
-            lv_obj_set_style_text_color(id(icon_card_pc), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
 
             if (id(icon_sw0) != nullptr && id(lbl_sw0_state) != nullptr) {
               lv_obj_set_style_text_color(id(icon_sw0), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
@@ -103,14 +103,26 @@ text_sensor:
 
             lv_obj_set_style_text_color(id(icon_pc), lv_color_hex(UIColor::TEXT_PRIMARY), LV_PART_MAIN);
 
-            lv_obj_set_style_text_color(id(icon_card_pc), lv_color_hex(UIColor::TEXT_PRIMARY), LV_PART_MAIN);
-
             if (id(icon_sw0) != nullptr && id(lbl_sw0_state) != nullptr) {
               lv_obj_set_style_text_color(id(icon_sw0), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
               lv_label_set_text(id(lbl_sw0_state), "Éteint");
               lv_obj_set_style_text_color(id(lbl_sw0_state), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
             }
 
+          }
+
+  # TV → icône moniteur existante sur la carte J0 (icon_card_pc), pas une 4e icône bandeau
+  - platform: homeassistant
+    id: tv_status
+    entity_id: ${entity_tracker_tv}
+    on_value:
+      - lambda: |-
+          if (id(icon_card_pc) == nullptr) return;
+          bool active = (x == "home" || x == "on" || x == "playing" || x == "idle" || x == "paused");
+          if (active) {
+            lv_obj_set_style_text_color(id(icon_card_pc), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
+          } else {
+            lv_obj_set_style_text_color(id(icon_card_pc), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
           }
 
   - platform: homeassistant

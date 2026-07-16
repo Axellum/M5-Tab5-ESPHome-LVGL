@@ -127,3 +127,199 @@ script:
           id: speaker_player
           volume: !lambda 'return id(system_volume);'
 
+  # Rotateur central auto (8s) — mode restart : tout tap/advance remet le délai à zéro.
+  - id: tab5_central_rotator_auto
+    mode: restart
+    then:
+      - delay: 8s
+      - if:
+          condition:
+            and:
+              - light.is_on: backlight
+              - lambda: 'return !id(is_showing_temp_planning) && !id(is_showing_vocal_response) && id(forecast_page_index) == 2;'
+          then:
+            - lambda: |-
+                advance_central_panel_rotator(id(current_central_panel),
+                    id(has_rain), id(has_alerts), id(has_info),
+                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                    id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
+                    id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3));
+      - script.execute: tab5_central_rotator_auto
+
+  # Réponse vocale IA : pause rotateur 8s, affichage + défilement si long, puis reprise.
+  - id: tab5_show_vocal_response
+    mode: restart
+    parameters:
+      texte: string
+    then:
+      - if:
+          condition:
+            lambda: 'return id(forecast_page_index) == 2 && texte.size() > 0;'
+          then:
+            - script.stop: tab5_central_rotator_auto
+            - globals.set:
+                id: is_showing_vocal_response
+                value: 'true'
+            - lambda: |-
+                show_vocal_response_ui(texte,
+                    id(vocal_wrapper), id(lbl_vocal_text),
+                    id(page_title_wrapper), id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
+                    id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3),
+                    id(current_central_panel), id(has_rain), id(has_alerts), id(has_info),
+                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                    id(roboto_45_b));
+            - delay: 8s
+            - lambda: |-
+                hide_vocal_response_ui(
+                    id(vocal_wrapper), id(lbl_vocal_text),
+                    id(current_central_panel), id(has_rain), id(has_alerts), id(has_info),
+                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                    id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
+                    id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3));
+            - globals.set:
+                id: is_showing_vocal_response
+                value: 'false'
+            - script.execute: tab5_central_rotator_auto
+
+  # Tap navigation : planning / pluie / icônes MF → ligne suivante (sans dismiss HA).
+  - id: tab5_central_panel_next
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return id(forecast_page_index) == 2 && !id(is_showing_temp_planning);'
+          then:
+            - lambda: |-
+                advance_central_panel_rotator(id(current_central_panel),
+                    id(has_rain), id(has_alerts), id(has_info),
+                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                    id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
+                    id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3));
+            - script.execute: tab5_central_rotator_auto
+
+  # Tap panneau info (ligne météo HA) : dismiss définitif si vigilance, sinon navigation.
+  - id: tab5_dismiss_info_tap
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return id(forecast_page_index) == 2 && !id(is_showing_temp_planning) && id(has_info);'
+          then:
+            - if:
+                condition:
+                  lambda: 'return id(info_meteo_dismiss_id).size() > 0;'
+                then:
+                  - lambda: |-
+                      id(temp_dismiss_alert_id) = id(info_meteo_dismiss_id);
+                      tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
+                      dismiss_central_info_immediate(id(has_info), id(current_central_panel),
+                          id(lbl_info_text), id(info_wrapper),
+                          id(has_rain), id(has_alerts),
+                          id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                          id(planning_wrapper), id(rain_wrapper), id(alert_container),
+                          id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3));
+                  - homeassistant.service:
+                      service: script.tab5_dismiss_alert
+                      data:
+                        alert_id: !lambda 'return id(temp_dismiss_alert_id);'
+                  - globals.set:
+                      id: temp_dismiss_alert_id
+                      value: '""'
+                else:
+                  - lambda: |-
+                      advance_central_panel_rotator(id(current_central_panel),
+                          id(has_rain), id(has_alerts), id(has_info),
+                          id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                          id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
+                          id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3));
+            - script.execute: tab5_central_rotator_auto
+
+  # Tap annonce HA (panneaux 4-7) : dismiss définitif + ligne suivante.
+  - id: tab5_dismiss_ha_alert_0
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return id(ha_alert_id_0).size() > 0;'
+          then:
+            - lambda: |-
+                id(temp_dismiss_alert_id) = id(ha_alert_id_0);
+                tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
+                dismiss_ha_alert_slot_immediate(0, id(current_central_panel),
+                    id(ha_alert_wrapper_0), id(lbl_ha_alert_0), id(has_ha_alert_0), id(ha_alert_id_0),
+                    id(has_rain), id(has_alerts), id(has_info),
+                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                    id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
+                    id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3));
+            - homeassistant.service:
+                service: script.tab5_dismiss_alert
+                data:
+                  alert_id: !lambda 'return id(temp_dismiss_alert_id);'
+            - script.execute: tab5_central_rotator_auto
+
+  - id: tab5_dismiss_ha_alert_1
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return id(ha_alert_id_1).size() > 0;'
+          then:
+            - lambda: |-
+                id(temp_dismiss_alert_id) = id(ha_alert_id_1);
+                tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
+                dismiss_ha_alert_slot_immediate(1, id(current_central_panel),
+                    id(ha_alert_wrapper_1), id(lbl_ha_alert_1), id(has_ha_alert_1), id(ha_alert_id_1),
+                    id(has_rain), id(has_alerts), id(has_info),
+                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                    id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
+                    id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3));
+            - homeassistant.service:
+                service: script.tab5_dismiss_alert
+                data:
+                  alert_id: !lambda 'return id(temp_dismiss_alert_id);'
+            - script.execute: tab5_central_rotator_auto
+
+  - id: tab5_dismiss_ha_alert_2
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return id(ha_alert_id_2).size() > 0;'
+          then:
+            - lambda: |-
+                id(temp_dismiss_alert_id) = id(ha_alert_id_2);
+                tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
+                dismiss_ha_alert_slot_immediate(2, id(current_central_panel),
+                    id(ha_alert_wrapper_2), id(lbl_ha_alert_2), id(has_ha_alert_2), id(ha_alert_id_2),
+                    id(has_rain), id(has_alerts), id(has_info),
+                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                    id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
+                    id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3));
+            - homeassistant.service:
+                service: script.tab5_dismiss_alert
+                data:
+                  alert_id: !lambda 'return id(temp_dismiss_alert_id);'
+            - script.execute: tab5_central_rotator_auto
+
+  - id: tab5_dismiss_ha_alert_3
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return id(ha_alert_id_3).size() > 0;'
+          then:
+            - lambda: |-
+                id(temp_dismiss_alert_id) = id(ha_alert_id_3);
+                tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
+                dismiss_ha_alert_slot_immediate(3, id(current_central_panel),
+                    id(ha_alert_wrapper_3), id(lbl_ha_alert_3), id(has_ha_alert_3), id(ha_alert_id_3),
+                    id(has_rain), id(has_alerts), id(has_info),
+                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                    id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
+                    id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3));
+            - homeassistant.service:
+                service: script.tab5_dismiss_alert
+                data:
+                  alert_id: !lambda 'return id(temp_dismiss_alert_id);'
+            - script.execute: tab5_central_rotator_auto
+

@@ -10,7 +10,8 @@
 #   cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 # Puis remplacez chaque valeur par vos entity IDs (Réglages → Entités dans HA).
 
-entity_tracker_pc: device_tracker.your_pc
+entity_tracker_pc: switch.your_pc_or_device_tracker
+entity_tracker_tv: media_player.your_tv
 entity_phone_battery: sensor.your_phone_battery
 
 # --- Lumières ---

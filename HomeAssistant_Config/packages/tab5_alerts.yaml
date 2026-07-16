@@ -1,0 +1,144 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_alerts.yaml
+# @role File d'alertes HA pour le rotateur Tab5 (panneaux 4-7) + dismiss au tap.
+# @install Nécessite homeassistant.packages: !include_dir_named packages
+# ============================================================================
+
+input_text:
+  tab5_alerts_dismissed:
+    name: "Tab5 alertes HA ignorées"
+    initial: ""
+    max: 255
+    icon: mdi:bell-check
+
+script:
+  tab5_dismiss_alert:
+    alias: "Tab5 — marquer une alerte HA comme lue"
+    mode: queued
+    fields:
+      alert_id:
+        description: "Identifiant stable de l'alerte (entity_id ou ha:unavailable)"
+        required: true
+        selector:
+          text:
+    sequence:
+      - variables:
+          aid: "{{ alert_id | string | trim }}"
+          current: "{{ states('input_text.tab5_alerts_dismissed') }}"
+          new_val: >
+            {% set ids = (current or '').split('|') | reject('equalto','') | list %}
+            {% if aid and aid not in ids %}
+              {{ (ids + [aid]) | join('|') }}
+            {% else %}
+              {{ ids | join('|') }}
+            {% endif %}
+      - action: input_text.set_value
+        continue_on_error: true
+        target:
+          entity_id: input_text.tab5_alerts_dismissed
+        data:
+          value: "{{ new_val[:255] }}"
+      - action: automation.trigger
+        continue_on_error: true
+        target:
+          entity_id: automation.maj_ecran_tab5_esphome_push
+
+  tab5_dismiss_info_panel:
+    alias: "Tab5 — acquitter tout le panneau info (météo + résumé HA)"
+    mode: queued
+    sequence:
+      - variables:
+          dismissed: "{{ (states('input_text.tab5_alerts_dismissed') or '').split('|') | reject('equalto','') | list }}"
+          new_val: >
+            {% set ns = namespace(ids=dismissed) %}
+            {% set alerte = states('sensor.40_weather_alert') %}
+            {% if alerte in ['Rouge', 'Orange', 'Jaune'] %}
+              {% set mk = 'meteo:' ~ (alerte | lower) %}
+              {% if mk not in ns.ids %}{% set ns.ids = ns.ids + [mk] %}{% endif %}
+            {% endif %}
+            {% for u in states.update | selectattr('state', 'eq', 'on') | list %}
+              {% if u.entity_id not in ns.ids %}{% set ns.ids = ns.ids + [u.entity_id] %}{% endif %}
+            {% endfor %}
+            {% for p in states.binary_sensor
+                | selectattr('attributes.device_class', 'defined')
+                | selectattr('attributes.device_class', 'eq', 'problem')
+                | selectattr('state', 'eq', 'on')
+                | list %}
+              {% if p.entity_id not in ns.ids %}{% set ns.ids = ns.ids + [p.entity_id] %}{% endif %}
+            {% endfor %}
+            {% if 'ha:unavailable' not in ns.ids %}
+              {% set ns_u = namespace(n=0) %}
+              {% for s in states %}
+                {% if s.state == 'unavailable'
+                    and not s.entity_id.startswith('update.')
+                    and not s.entity_id.startswith('automation.') %}
+                  {% set ns_u.n = ns_u.n + 1 %}
+                {% endif %}
+              {% endfor %}
+              {% if ns_u.n > 0 %}{% set ns.ids = ns.ids + ['ha:unavailable'] %}{% endif %}
+            {% endif %}
+            {{ ns.ids | join('|') }}
+      - action: input_text.set_value
+        continue_on_error: true
+        target:
+          entity_id: input_text.tab5_alerts_dismissed
+        data:
+          value: "{{ new_val[:255] }}"
+      - action: automation.trigger
+        continue_on_error: true
+        target:
+          entity_id: automation.maj_ecran_tab5_esphome_push
+
+automation:
+  - id: tab5_alert_dismiss_handler
+    alias: "Tab5 — acquittement alerte HA (tap écran)"
+    description: >-
+      Reçoit l'événement tab5_alert_dismiss du firmware et retire l'alerte
+      de la file poussée vers le rotateur 8s.
+    mode: queued
+    trigger:
+      - platform: event
+        event_type: esphome.tab5_alert_dismiss
+    action:
+      - action: script.tab5_dismiss_alert
+        data:
+          alert_id: "{{ trigger.event.data.alert_id | default('') }}"
+
+  - id: tab5_alerts_dismissed_cleanup
+    alias: "Tab5 — purge alertes ignorées obsolètes"
+    description: >-
+      Retire de tab5_alerts_dismissed les IDs dont la source n'existe plus
+      (MAJ installée, capteur OK).
+    mode: single
+    trigger:
+      - platform: time
+        at: "04:00:00"
+    action:
+      - variables:
+          dismissed: "{{ (states('input_text.tab5_alerts_dismissed') or '').split('|') | reject('equalto','') | list }}"
+          kept: >
+            {% set ns = namespace(out=[]) %}
+            {% for aid in dismissed %}
+              {% if aid == 'ha:unavailable' %}
+                {% set ns.out = ns.out + [aid] %}
+              {% elif aid.startswith('meteo:') %}
+                {% set lvl = states('sensor.40_weather_alert') | lower %}
+                {% if aid == 'meteo:' ~ lvl %}
+                  {% set ns.out = ns.out + [aid] %}
+                {% endif %}
+              {% elif aid.startswith('update.') %}
+                {% if is_state(aid, 'on') %}
+                  {% set ns.out = ns.out + [aid] %}
+                {% endif %}
+              {% elif states(aid) in ['on', 'unavailable', 'unknown'] %}
+                {% set ns.out = ns.out + [aid] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.out | join('|') }}
+      - action: input_text.set_value
+        continue_on_error: true
+        target:
+          entity_id: input_text.tab5_alerts_dismissed
+        data:
+          value: "{{ kept }}"

@@ -78,6 +78,7 @@ esphome:
             lv_label_set_text(id(icon_mode_status), "\U000F07D0"); // Home Assistant
             lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
           }
+      - script.execute: tab5_central_rotator_auto
 
 interval:
   - interval: 5min
