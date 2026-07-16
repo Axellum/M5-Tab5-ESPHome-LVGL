@@ -115,6 +115,7 @@ obj:
                           service: climate.set_temperature
                           data:
                             entity_id: ${entity_climate_salon}
+                            hvac_mode: !lambda 'return (id(clim_hvac_mode) == "off" || id(clim_hvac_mode).empty()) ? std::string("cool") : id(clim_hvac_mode);'
                             temperature: !lambda 'return to_string((int)x);'
 
                 # Température cible (superposée au centre de l'arc)
@@ -148,6 +149,7 @@ obj:
                           service: climate.set_temperature
                           data:
                             entity_id: ${entity_climate_salon}
+                            hvac_mode: !lambda 'return (id(clim_hvac_mode) == "off" || id(clim_hvac_mode).empty()) ? std::string("cool") : id(clim_hvac_mode);'
                             temperature: !lambda "return to_string(id(clim_target_temp) - 0.5);"
                     widgets:
                       - label: { text: "\U000F0374", align: CENTER, text_font: mdi_font_56, text_color: color_text }
@@ -166,6 +168,7 @@ obj:
                           service: climate.set_temperature
                           data:
                             entity_id: ${entity_climate_salon}
+                            hvac_mode: !lambda 'return (id(clim_hvac_mode) == "off" || id(clim_hvac_mode).empty()) ? std::string("cool") : id(clim_hvac_mode);'
                             temperature: !lambda "return to_string(id(clim_target_temp) + 0.5);"
                     widgets:
                       - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56, text_color: color_text }
@@ -223,13 +226,15 @@ obj:
                           service: climate.set_swing_mode
                           data:
                             entity_id: ${entity_climate_salon}
-                            swing_mode: !lambda 'return id(clim_swing_mode) == "off" ? std::string("vertical") : std::string("off");'
+                            # Daikin Onecta : modes réels = stop / swing / windnice (pas off/vertical)
+                            swing_mode: !lambda 'return id(clim_swing_mode) == "swing" ? std::string("stop") : std::string("swing");'
                     widgets:
                       - label: { id: popup_icon_clim_swing, text: "\U000F0E79", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
                       - label: { text: "Oscill.", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }
 
                 # ── Ligne 3 : Presets ──
-                - !include { file: climate_preset_toggle_btn.yaml, vars: { suffix: "eco", preset_name: "eco", icon: "\U000F032A", label_text: "Éco" } }
+                # Daikin : pas de preset "eco" — équivalent = "away"
+                - !include { file: climate_preset_toggle_btn.yaml, vars: { suffix: "eco", preset_name: "away", icon: "\U000F032A", label_text: "Éco" } }
                 - !include { file: climate_preset_toggle_btn.yaml, vars: { suffix: "boost", preset_name: "boost", icon: "\U000F14DE", label_text: "Boost" } }
                 - button:
                     id: popup_btn_clim_quiet
@@ -244,7 +249,7 @@ obj:
                           service: climate.set_fan_mode
                           data:
                             entity_id: ${entity_climate_salon}
-                            fan_mode: !lambda 'return (id(clim_fan_mode) == "low" || id(clim_fan_mode) == "quiet" || id(clim_fan_mode) == "Silence") ? std::string("auto") : std::string("low");'
+                            fan_mode: !lambda 'return (id(clim_fan_mode) == "quiet") ? std::string("auto") : std::string("quiet");'
                     widgets:
                       - label: { id: popup_icon_clim_quiet, text: "\U000F146D", align: LEFT_MID, x: 10, text_font: mdi_font_45, text_color: color_text_dim }
                       - label: { text: "Silence", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text_dim }

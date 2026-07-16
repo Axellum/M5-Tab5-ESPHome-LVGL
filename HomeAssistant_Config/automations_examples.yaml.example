@@ -262,7 +262,7 @@
           {% endif %}
           {{ ns.lignes[1] if ns.lignes|length > 1 else "" }}
 
-    # ====== 7. ZONE D'INFO (CALENDRIER ET ALERTES) ======
+    # ====== 7. ZONE D'INFO (ALERTES METEO + SANTE HA, 1 LIGNE) ======
     - action: esphome.tab5_ha_hmi_tab5_maj_info_texte
       continue_on_error: true
       data:
@@ -271,59 +271,74 @@
           {% if alerte == 'Rouge' or alerte == 'Orange' %}
              Alerte Météo {{ alerte }} en cours ! Restez prudent.
           {% else %}
-            {% set ns = namespace(texte="") %}
-            {% set days = ["Dim.", "Lun.", "Mar.", "Mer.", "Jeu.", "Ven.", "Sam."] %}
-            {% for i in range(0, 3) %}
-               {% set target_dt = now() + timedelta(days=i) %}
-               {% set target_str = target_dt.strftime('%Y-%m-%d') %}
-               {% set j_name = "Auj." if i == 0 else ("Dem." if i == 1 else days[target_dt.strftime('%w')|int]) %}
-               
-               {% set travail = false %}
-               {% set em = "" %}
-               {% set de = "" %}
-               {% if agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
-                 {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
-                   {% set ev_start = event.start | default(event.start_time, '') | string %}
-                   {% set ev_end = event.end | default(event.end_time, '') | string %}
-                   {% set ev_msg = event.summary | default(event.message, '') | string %}
-                   {% if target_str in ev_start %}
-                     {% if 'Travail' in ev_msg %}
-                        {% set travail = true %}
-                        {% set start_dt = ev_start | as_datetime %}
-                        {% set end_dt = ev_end | as_datetime %}
-                        {% set em = start_dt.strftime('%H:%M') if start_dt else '??' %}
-                        {% set de = end_dt.strftime('%H:%M') if end_dt else '??' %}
-                     {% endif %}
-                   {% endif %}
-                 {% endfor %}
-               {% endif %}
-               
-               {% set hex = "ffffff" %}
-               {% if i == 0 %}
-                 {% set hex = "4d94ff" %}
-               {% elif target_dt.strftime('%w') == '0' %}
-                 {% set hex = "ffa500" if not travail else "ff4d4d" %}
-               {% elif not travail %}
-                 {% set hex = "4cd964" %}
-               {% elif em != "" and ((em[:2]|int < 9) or (em[:2]|int == 9 and em[3:5]|int == 0)) %}
-                 {% set hex = "ff8888" %}
-               {% endif %}
-               
-               {% set ligne = "#" ~ hex ~ " " ~ j_name ~ " : " ~ (em ~ "-" ~ de if travail else "Repos") ~ "#" %}
-               {% if i == 0 %}
-                 {% set ns.texte = ligne %}
-               {% else %}
-                 {% set ns.texte = ns.texte ~ "\n" ~ ligne %}
-               {% endif %}
+            {% set pending = states.update | selectattr('state', 'eq', 'on') | list %}
+            {% set pending_count = pending | length %}
+            {% set crit_ids = [
+              'update.home_assistant_core_update',
+              'update.home_assistant_supervisor_update',
+              'update.home_assistant_operating_system_update'
+            ] %}
+            {% set ns = namespace(crit=0, parts=[]) %}
+            {% for u in pending %}
+              {% if u.entity_id in crit_ids %}
+                {% set ns.crit = ns.crit + 1 %}
+              {% endif %}
             {% endfor %}
-            {{ ns.texte }}
+            {% set problems = states.binary_sensor
+              | selectattr('attributes.device_class', 'defined')
+              | selectattr('attributes.device_class', 'eq', 'problem')
+              | selectattr('state', 'eq', 'on')
+              | list %}
+            {% set problem_count = problems | length %}
+            {% set ns_u = namespace(n=0) %}
+            {% for s in states %}
+              {% if s.state == 'unavailable'
+                  and not s.entity_id.startswith('update.')
+                  and not s.entity_id.startswith('automation.') %}
+                {% set ns_u.n = ns_u.n + 1 %}
+              {% endif %}
+            {% endfor %}
+            {% if pending_count == 1 %}
+              {% set title = pending[0].attributes.get('title', pending[0].attributes.get('friendly_name', 'MAJ')) %}
+              {% set ns.parts = ns.parts + ['1 MAJ · ' ~ title] %}
+            {% elif pending_count > 1 %}
+              {% set ns.parts = ns.parts + [pending_count ~ ' MAJ'] %}
+            {% endif %}
+            {% if problem_count > 0 %}
+              {% set ns.parts = ns.parts + [problem_count ~ ' erreur' ~ ('s' if problem_count > 1 else '')] %}
+            {% endif %}
+            {% if ns_u.n > 0 %}
+              {% set ns.parts = ns.parts + [ns_u.n ~ ' indispo'] %}
+            {% endif %}
+            {{ ns.parts | join(' · ') }}
           {% endif %}
         couleur: >
           {% set alerte = states('sensor.VOTRE_DEPARTEMENT_weather_alert') %}
           {% if alerte == 'Rouge' %} Rouge
           {% elif alerte == 'Orange' %} Orange
-          {% else %} Blanc {% endif %}
-
+          {% else %}
+            {% set pending = states.update | selectattr('state', 'eq', 'on') | list %}
+            {% set crit_ids = [
+              'update.home_assistant_core_update',
+              'update.home_assistant_supervisor_update',
+              'update.home_assistant_operating_system_update'
+            ] %}
+            {% set ns = namespace(crit=0) %}
+            {% for u in pending %}
+              {% if u.entity_id in crit_ids %}
+                {% set ns.crit = ns.crit + 1 %}
+              {% endif %}
+            {% endfor %}
+            {% set problem_count = states.binary_sensor
+              | selectattr('attributes.device_class', 'defined')
+              | selectattr('attributes.device_class', 'eq', 'problem')
+              | selectattr('state', 'eq', 'on')
+              | list | length %}
+            {% if ns.crit > 0 or problem_count > 0 %} Rouge
+            {% elif (pending | length) > 0 %} Orange
+            {% else %} Blanc
+            {% endif %}
+          {% endif %}
     # ====== 8. PREVISIONS HORAIRES (BULK - 3 chunks au lieu de 1) ======
     - action: weather.get_forecasts
       continue_on_error: true

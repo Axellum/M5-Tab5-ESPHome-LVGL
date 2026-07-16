@@ -1,0 +1,6 @@
+# Snippet à fusionner dans configuration.yaml (section input_text)
+  tab5_alerts_dismissed:
+    name: "Tab5 alertes HA ignorées"
+    initial: ""
+    max: 255
+    icon: mdi:bell-check

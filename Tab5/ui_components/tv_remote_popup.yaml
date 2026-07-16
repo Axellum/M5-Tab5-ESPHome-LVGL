@@ -1,0 +1,322 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file tv_remote_popup.yaml
+# @role Popup fullscreen télécommande TV Samsung (1130×650). Grille 5×3 de boutons
+#       texte (pas de jauge/état — la carte "PC Bureau" affiche déjà l'état combiné
+#       PC/TV via lbl_sw0_state). Ouvert par un `on_long_press` sur `btn_sw0_action`
+#       (switches_card.yaml, Card 0) — la carte garde son `on_short_click` existant
+#       (script.allumer_pc_tv), LVGL distingue nativement short_click/long_press.
+# @architecture_constraint Toutes les actions ciblent `${entity_tracker_tv}`
+#                          (media_player.samsung_s95ba_55_tv, substitution
+#                          user_entities.yaml) via le service `samsungtv_smart.send_command`
+#                          (intégration HACS confirmée installée côté HA,
+#                          contexte_ia/04_Projets/etat_home_assistant.md §2).
+# @ai_instruction [AI-WARNING] Noms de commandes (`KEY_*`) basés sur la doc publique
+#                 samsungtv_smart, PAS vérifiés en direct contre l'instance HA (API
+#                 injoignable au moment de l'écriture — cf. session). À tester après
+#                 flash ; ajuster ici si une touche ne répond pas sur le vrai téléviseur.
+# @ai_instruction Boutons texte uniquement (roboto_22, pas d'icône MDI) : le sous-ensemble
+#                 de glyphes `mdi_font_45`/`mdi_font_56` (tab5-styles.yaml) ne contient pas
+#                 d'icônes flèche/volume/maison — ajouter des glyphes est possible mais hors
+#                 scope de cette popup pour rester simple et sûr à flasher.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: tv_remote_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  styles: style_invisible
+  widgets:
+    # Overlay fond sombre (cliquable pour fermer)
+    - button:
+        align: CENTER
+        width: 100%
+        height: 100%
+        styles: style_modal_overlay
+        on_short_click:
+          - lambda: 'lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);'
+
+    # Carte modale principale
+    - obj:
+        align: CENTER
+        width: 1130
+        height: 650
+        styles: style_modal_card
+        scrollbar_mode: "OFF"
+        widgets:
+
+          # ═══ EN-TÊTE ═══
+          - label:
+              text: "Télécommande TV Samsung"
+              align: TOP_LEFT
+              x: 30
+              y: 20
+              text_font: roboto_32_b
+              text_color: color_text
+
+          # Bouton fermer (X)
+          - button:
+              align: TOP_RIGHT
+              x: -15
+              y: 12
+              width: 80
+              height: 80
+              styles: style_transparent
+              on_short_click:
+                - lambda: 'lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);'
+              widgets:
+                - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_45, text_color: color_console_label }
+
+          # ═══ GRILLE 5×3 ═══
+          - obj:
+              align: CENTER
+              y: 30
+              width: 560
+              height: 440
+              styles: style_transparent
+              layout:
+                type: FLEX
+                flex_flow: ROW_WRAP
+                flex_align_main: SPACE_EVENLY
+                flex_align_cross: CENTER
+                flex_align_track: SPACE_EVENLY
+                pad_row: 12
+                pad_column: 10
+              widgets:
+                # ── Ligne 1 : Marche/Arrêt · Muet · Source ──
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_POWER"
+                    widgets:
+                      - label: { text: "Marche / Arrêt", align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_MUTE"
+                    widgets:
+                      - label: { text: "Muet", align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_SOURCE"
+                    widgets:
+                      - label: { text: "Source", align: CENTER, text_font: roboto_22, text_color: color_text }
+
+                # ── Ligne 2 : Vol - · Vol + · Accueil ──
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_VOLDOWN"
+                    widgets:
+                      - label: { text: "\U000F0374", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text }
+                      - label: { text: "Volume", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text }
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_VOLUP"
+                    widgets:
+                      - label: { text: "\U000F0415", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text }
+                      - label: { text: "Volume", align: LEFT_MID, x: 60, text_font: roboto_22, text_color: color_text }
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_HOME"
+                    widgets:
+                      - label: { text: "Accueil", align: CENTER, text_font: roboto_22, text_color: color_text }
+
+                # ── Ligne 3 : Chaîne - · Chaîne + · Retour ──
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_CHDOWN"
+                    widgets:
+                      - label: { text: "Chaîne -", align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_CHUP"
+                    widgets:
+                      - label: { text: "Chaîne +", align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_RETURN"
+                    widgets:
+                      - label: { text: "Retour", align: CENTER, text_font: roboto_22, text_color: color_text }
+
+                # ── Ligne 4 : Haut · OK · Bas (pavé directionnel) ──
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_UP"
+                    widgets:
+                      - label: { text: "Haut", align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_ENTER"
+                    widgets:
+                      - label: { text: "OK", align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_DOWN"
+                    widgets:
+                      - label: { text: "Bas", align: CENTER, text_font: roboto_22, text_color: color_text }
+
+                # ── Ligne 5 : Gauche · Menu · Droite ──
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_LEFT"
+                    widgets:
+                      - label: { text: "Gauche", align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_MENU"
+                    widgets:
+                      - label: { text: "Menu", align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    width: 170
+                    height: 60
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - homeassistant.service:
+                          service: samsungtv_smart.send_command
+                          data:
+                            entity_id: ${entity_tracker_tv}
+                            command: "KEY_RIGHT"
+                    widgets:
+                      - label: { text: "Droite", align: CENTER, text_font: roboto_22, text_color: color_text }

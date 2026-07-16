@@ -135,7 +135,8 @@ font:
     id: mdi_font_45
     size: 45
     bpp: 1
-    glyphs: "\U000F011E\U000F0379\U000F05A9\U000F07D0\U000F050F\U000F0A86\U000F0596\U000F0374\U000F0415\U000F0425\U000F0717\U000F0238\U000F111C\U000F111E\U000F002D\U000F032A\U000F14DE\U000F146D\U000F0E79\U000F0E66\U000F09F1\U000F0D08\U000F024A\U000F02E5\U000F02E3\U000F04B9\U000F0210\U000F058E\U000F0156\U000F0450\U000F0335\U000F0579"
+    # F07C0 = moniteur (bouton TV haut-droite) — F02E4 était un rectangle vide (crop-landscape)
+    glyphs: "\U000F011E\U000F0379\U000F05A9\U000F07D0\U000F050F\U000F0A86\U000F0596\U000F0374\U000F0415\U000F0425\U000F0717\U000F0238\U000F111C\U000F111E\U000F002D\U000F032A\U000F14DE\U000F146D\U000F0E79\U000F0E66\U000F09F1\U000F0D08\U000F024A\U000F02E5\U000F02E3\U000F04B9\U000F0210\U000F058E\U000F0156\U000F0450\U000F0335\U000F0579\U000F07C0"
 
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_56
@@ -279,14 +280,19 @@ lvgl:
       shadow_width: 0
 
     # --- Onglet meteo "solide" (titre) ---
+    # Même design verre que style_clim_btn (Domo/Discu/HA/Sys/TV) —
+    # titres jours + min/max + onglets horaires/switches.
     - id: style_meteo_tab
       bg_color: color_glass_hi
-      bg_opa: 100%
-      border_width: 2
+      bg_grad_color: color_glass_lo
+      bg_grad_dir: VER
+      bg_opa: 58%
+      border_width: 1
       border_color: color_glass_rim
-      border_opa: 45%
-      radius: 14
+      border_opa: 35%
+      radius: 18
       shadow_width: 0
+      outline_width: 0
       pad_all: 0
       scrollbar_mode: "OFF"
 

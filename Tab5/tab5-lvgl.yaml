@@ -185,11 +185,12 @@ lvgl:
               - label: { id: lbl_date, text: "Jeu 02 Avr", align: TOP_MID, y: 145, text_font: roboto_45, text_color: color_text }
 
         # --- Top Left: Status Icons (Small) ---
+        # TV = icon_card_pc (épaule carte J0, moniteur) — pas d'icône TV ici
         - label: { id: icon_pc, text: "\U000F0379", align: TOP_LEFT, x: 10, y: 10, text_font: mdi_font_26, text_color: color_text_dim }
         - label: { id: icon_phone, text: "\U000F011E", align: TOP_LEFT, x: 45, y: 10, text_font: mdi_font_26, text_color: color_text_dim }
         - label: { id: icon_wifi, text: "\U000F05A9", align: TOP_LEFT, x: 80, y: 10, text_font: mdi_font_26, text_color: color_text_dim }
 
-        # --- Top Right Buttons (Horizontal Layout) ---
+        # --- Top Right Buttons (même habillage verre que Domo/Discu) ---
         - button:
             id: btn_control_ha
             align: TOP_LEFT
@@ -197,8 +198,10 @@ lvgl:
             y: 20
             width: 125
             height: 90
-            radius: 15
-            styles: style_meteo_tab
+            radius: 18
+            styles: style_clim_btn
+            pressed:
+              bg_opa: 30%
             on_short_click:
               - lambda: |-
                   bool state = id(show_switches);
@@ -216,7 +219,8 @@ lvgl:
                       lv_obj_add_flag(id(layer_switches), LV_OBJ_FLAG_HIDDEN);
                   }
             widgets:
-              - label: { id: icon_ha, text: "\U000F07D0", align: CENTER, text_font: mdi_font_56, text_color: color_text }
+              - label: { id: icon_ha, text: "\U000F07D0", align: CENTER, y: -12, text_font: mdi_font_45, text_color: color_text }
+              - label: { text: "HA", align: CENTER, y: 22, text_font: roboto_22, text_color: color_text }
 
         - button:
             id: btn_control_console
@@ -225,8 +229,10 @@ lvgl:
             y: 20
             width: 125
             height: 90
-            radius: 15
-            styles: style_meteo_tab
+            radius: 18
+            styles: style_clim_btn
+            pressed:
+              bg_opa: 30%
             on_short_click:
               - lambda: |-
                   lv_obj_clear_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
@@ -236,19 +242,27 @@ lvgl:
                       id(sys_wifi_rssi).has_state(), id(sys_wifi_rssi).state,
                       id(sys_core_temp).has_state(), id(sys_core_temp).state);
             widgets:
-              - label: { text: "\U000F0717", align: CENTER, text_font: mdi_font_56, text_color: color_text }
+              - label: { text: "\U000F0717", align: CENTER, y: -12, text_font: mdi_font_45, text_color: color_text }
+              - label: { text: "Sys", align: CENTER, y: 22, text_font: roboto_22, text_color: color_text }
 
         - button:
-            id: btn_control_inactive
+            id: btn_control_tv
             align: TOP_LEFT
             x: 1143
             y: 20
             width: 125
             height: 90
-            radius: 15
-            styles: style_meteo_tab
+            radius: 18
+            styles: style_clim_btn
+            pressed:
+              bg_opa: 30%
+            on_short_click:
+              - lambda: |-
+                  lv_obj_clear_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);
+                  lv_obj_move_foreground(id(tv_remote_popup));
             widgets:
-              - label: { text: "\U000F02E4", align: CENTER, text_font: mdi_font_56, text_color: color_icon_muted }
+              - label: { text: "\U000F07C0", align: CENTER, y: -12, text_font: mdi_font_45, text_color: color_text }
+              - label: { text: "TV", align: CENTER, y: 22, text_font: roboto_22, text_color: color_text }
 
         # ==================== MOISTURE SENSORS ====================
         - !include ui_components/moisture_sensors.yaml
@@ -541,3 +555,4 @@ lvgl:
         - !include ui_components/console_sys.yaml
         - !include ui_components/climate_popup.yaml
         - !include ui_components/light_popup.yaml
+        - !include ui_components/tv_remote_popup.yaml

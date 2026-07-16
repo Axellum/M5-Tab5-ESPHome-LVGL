@@ -165,6 +165,8 @@ api:
             sprintf(buf_curr, "%.1f \xC2\xB0""C", f_current);
             lv_label_set_text(id(val_temp_int_popup), buf_curr);
 
+            id(clim_hvac_mode) = mode;
+
             id(clim_preset_mode) = preset;
 
             id(clim_fan_mode) = fan;
@@ -219,7 +221,7 @@ api:
 
             // Eco (carte + popup)
 
-            if(preset == "eco") {
+            if(preset == "eco" || preset == "away") {
               lv_obj_set_style_text_color(id(popup_icon_clim_eco), lv_color_hex(c_eco), LV_PART_MAIN);
             } else {
               lv_obj_set_style_text_color(id(popup_icon_clim_eco), lv_color_hex(c_inactive), LV_PART_MAIN);
@@ -243,7 +245,7 @@ api:
 
             // Swing
 
-            if(swing == "vertical" || swing == "horizontal" || swing == "both" || swing == "on" || swing == "3d") {
+            if(swing == "swing" || swing == "vertical" || swing == "horizontal" || swing == "both" || swing == "on" || swing == "3d" || swing == "windnice") {
               lv_obj_set_style_text_color(id(popup_icon_clim_swing), lv_color_hex(c_cool_active), LV_PART_MAIN);
             } else {
               lv_obj_set_style_text_color(id(popup_icon_clim_swing), lv_color_hex(c_inactive), LV_PART_MAIN);

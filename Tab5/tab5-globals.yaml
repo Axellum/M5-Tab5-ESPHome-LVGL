@@ -26,6 +26,9 @@ globals:
     type: bool
     initial_value: 'false'
     restore_value: false
+  - id: clim_hvac_mode
+    type: std::string
+    initial_value: '"off"'
   - id: clim_preset_mode
     type: std::string
     initial_value: '"none"'
@@ -34,7 +37,7 @@ globals:
     initial_value: '"auto"'
   - id: clim_swing_mode
     type: std::string
-    initial_value: '"off"'
+    initial_value: '"stop"'
   - id: global_neige
     type: int
     initial_value: '0'
