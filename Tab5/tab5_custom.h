@@ -10,6 +10,7 @@
 #include "esphome.h"
 #include <string>
 #include <vector>
+#include <vector>
 
 extern std::string cal_heures[15];
 extern bool cal_toggled[15];
@@ -82,19 +83,79 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
     lv_obj_t* pbars[5],
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont, lv_obj_t* info_wrap,
+    lv_obj_t* ha_wrap_0, lv_obj_t* ha_wrap_1, lv_obj_t* ha_wrap_2, lv_obj_t* ha_wrap_3,
     int current_panel);
 
 // Carte centrale : rotateur planning/pluie/alertes (page 2) ou titre de page (autres).
 void update_central_forecast_page_ui(int forecast_page,
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont, lv_obj_t* info_wrap,
+    lv_obj_t* ha_wrap_0, lv_obj_t* ha_wrap_1, lv_obj_t* ha_wrap_2, lv_obj_t* ha_wrap_3,
     int current_panel);
 
 // Panneau info central (récap calendrier ou bannière alerte) — logique déplacée
 // depuis tab5-api-logic.yaml pour fiabiliser polices LVGL et accents UTF-8.
 void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
-    const std::string& texte, const std::string& couleur, bool& has_info, int& current_panel,
+    const std::string& texte, const std::string& couleur, const std::string& meteo_id,
+    std::string& dismissed_local, bool& has_info, int& current_panel,
     esphome::font::Font* font_small, esphome::font::Font* font_large);
+
+// Rotateur carte centrale : 0 planning, 1 pluie, 2 vigilance MF, 3 info (phrase test),
+// 4-7 alertes HA individuelles (8s, même timer global).
+constexpr int kCentralPanelCount = 8;
+constexpr int kHaAlertPanelBase = 4;
+constexpr int kHaAlertSlotCount = 4;
+
+struct HaAlertSlotUI {
+    lv_obj_t* wrap;
+    lv_obj_t* lbl;
+    bool* has_flag;
+    std::string* id_store;
+};
+
+lv_obj_t* central_panel_wrapper(int panel,
+    lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont, lv_obj_t* info_wrap,
+    lv_obj_t* ha_wrap_0, lv_obj_t* ha_wrap_1, lv_obj_t* ha_wrap_2, lv_obj_t* ha_wrap_3);
+
+bool central_panel_is_active(int panel, bool has_rain, bool has_mf_alerts, bool has_info,
+    bool has_ha_0, bool has_ha_1, bool has_ha_2, bool has_ha_3);
+
+void advance_central_panel_rotator(int& current_panel,
+    bool has_rain, bool has_mf_alerts, bool has_info,
+    bool has_ha_0, bool has_ha_1, bool has_ha_2, bool has_ha_3,
+    lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont, lv_obj_t* info_wrap,
+    lv_obj_t* ha_wrap_0, lv_obj_t* ha_wrap_1, lv_obj_t* ha_wrap_2, lv_obj_t* ha_wrap_3);
+
+void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI slots[4],
+    int& current_panel, bool has_rain, bool has_mf_alerts, bool has_info,
+    lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont, lv_obj_t* info_wrap,
+    lv_obj_t* ha_wrap_0, lv_obj_t* ha_wrap_1, lv_obj_t* ha_wrap_2, lv_obj_t* ha_wrap_3,
+    esphome::font::Font* font, std::string& dismissed_local);
+
+void sync_central_panel_visibility(int& current_panel,
+    bool has_rain, bool has_mf_alerts, bool has_info,
+    bool has_ha_0, bool has_ha_1, bool has_ha_2, bool has_ha_3,
+    lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont, lv_obj_t* info_wrap,
+    lv_obj_t* ha_wrap_0, lv_obj_t* ha_wrap_1, lv_obj_t* ha_wrap_2, lv_obj_t* ha_wrap_3);
+
+// Masquage immédiat au tap (feedback visuel avant le round-trip HA).
+void dismiss_central_info_immediate(bool& has_info, int& current_panel,
+    lv_obj_t* lbl_info, lv_obj_t* info_wrap,
+    bool has_rain, bool has_mf_alerts,
+    bool has_ha_0, bool has_ha_1, bool has_ha_2, bool has_ha_3,
+    lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont,
+    lv_obj_t* ha_wrap_0, lv_obj_t* ha_wrap_1, lv_obj_t* ha_wrap_2, lv_obj_t* ha_wrap_3);
+
+void dismiss_ha_alert_slot_immediate(int slot_idx, int& current_panel,
+    lv_obj_t* wrap, lv_obj_t* lbl, bool& has_flag, std::string& id_store,
+    bool has_rain, bool has_mf_alerts, bool has_info,
+    bool has_ha_0, bool has_ha_1, bool has_ha_2, bool has_ha_3,
+    lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont, lv_obj_t* info_wrap,
+    lv_obj_t* ha_wrap_0, lv_obj_t* ha_wrap_1, lv_obj_t* ha_wrap_2, lv_obj_t* ha_wrap_3);
+
+void tab5_dismiss_local_add(std::string& store, const std::string& id);
+bool tab5_dismiss_local_has(const std::string& store, const std::string& id);
+void tab5_dismiss_local_prune(std::string& store, const std::vector<std::string>& ids_seen);
 
 void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase);
 
@@ -162,8 +223,25 @@ void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* i
 // Tap tuile météo : affiche le planning/horaires du jour dans la carte centrale (6s).
 std::string get_day_planning_display_text(int jour);
 void show_temporary_planning(int jour, lv_obj_t* lbl_planning, lv_obj_t* planning_wrap, lv_obj_t* alert_cont, lv_obj_t* rain_wrap,
-                             lv_obj_t* info_wrap, lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, int forecast_page,
+                             lv_obj_t* info_wrap, lv_obj_t* ha_wrap_0, lv_obj_t* ha_wrap_1, lv_obj_t* ha_wrap_2, lv_obj_t* ha_wrap_3,
+                             lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, int forecast_page,
                              const std::string& plan_l1, const std::string& plan_l2, bool& is_showing_temp, int& current_panel);
+
+// Réponse vocale IA : carte centrale dédiée (8s), défilement si phrase longue.
+void show_vocal_response_ui(const std::string& texte,
+    lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal,
+    lv_obj_t* page_title_wrap, lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont, lv_obj_t* info_wrap,
+    lv_obj_t* ha_wrap_0, lv_obj_t* ha_wrap_1, lv_obj_t* ha_wrap_2, lv_obj_t* ha_wrap_3,
+    int& current_panel, bool has_rain, bool has_mf_alerts, bool has_info,
+    bool has_ha_0, bool has_ha_1, bool has_ha_2, bool has_ha_3,
+    esphome::font::Font* font);
+
+void hide_vocal_response_ui(
+    lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal,
+    int& current_panel, bool has_rain, bool has_mf_alerts, bool has_info,
+    bool has_ha_0, bool has_ha_1, bool has_ha_2, bool has_ha_3,
+    lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont, lv_obj_t* info_wrap,
+    lv_obj_t* ha_wrap_0, lv_obj_t* ha_wrap_1, lv_obj_t* ha_wrap_2, lv_obj_t* ha_wrap_3);
 
 // Couleurs semantiques centralisees (miroir des tokens YAML color:)
 // Utiliser dans les lambdas C++ au lieu des hex bruts

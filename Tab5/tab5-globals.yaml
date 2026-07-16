@@ -80,6 +80,39 @@ globals:
   - id: has_info
     type: bool
     initial_value: 'false'
+  - id: has_ha_alert_0
+    type: bool
+    initial_value: 'false'
+  - id: has_ha_alert_1
+    type: bool
+    initial_value: 'false'
+  - id: has_ha_alert_2
+    type: bool
+    initial_value: 'false'
+  - id: has_ha_alert_3
+    type: bool
+    initial_value: 'false'
+  - id: ha_alert_id_0
+    type: std::string
+    initial_value: '""'
+  - id: ha_alert_id_1
+    type: std::string
+    initial_value: '""'
+  - id: ha_alert_id_2
+    type: std::string
+    initial_value: '""'
+  - id: ha_alert_id_3
+    type: std::string
+    initial_value: '""'
+  - id: temp_dismiss_alert_id
+    type: std::string
+    initial_value: '""'
+  - id: info_meteo_dismiss_id
+    type: std::string
+    initial_value: '""'
+  - id: tab5_dismissed_local
+    type: std::string
+    initial_value: '""'
   - id: current_central_panel
     type: int
     initial_value: '0'
@@ -95,53 +128,12 @@ globals:
   - id: is_showing_temp_planning
     type: bool
     initial_value: 'false'
+  - id: is_showing_vocal_response
+    type: bool
+    initial_value: 'false'
   - id: reboot_armed
     type: bool
     initial_value: 'false'
     restore_value: false
-
-interval:
-  - interval: 8s
-    then:
-      - if:
-          condition:
-            light.is_on: backlight
-          then:
-            - lambda: |-
-                if (id(is_showing_temp_planning)) return;
-                if (id(forecast_page_index) != 2) return;
-                int next_panel = id(current_central_panel);
-                int attempts = 0;
-                while (attempts < 4) {
-                    next_panel = (next_panel + 1) % 4;
-                    if (next_panel == 0) {
-                        break; // Planning is always active
-                    } else if (next_panel == 1 && id(has_rain)) {
-                        break;
-                    } else if (next_panel == 2 && id(has_alerts)) {
-                        break;
-                    } else if (next_panel == 3 && id(has_info)) {
-                        break;
-                    }
-                    attempts++;
-                }
-                if (next_panel != id(current_central_panel)) {
-                    lv_obj_t* out_obj = nullptr;
-                    lv_obj_t* in_obj = nullptr;
-
-                    if (id(current_central_panel) == 0) out_obj = id(planning_wrapper);
-                    else if (id(current_central_panel) == 1) out_obj = id(rain_wrapper);
-                    else if (id(current_central_panel) == 2) out_obj = id(alert_container);
-                    else if (id(current_central_panel) == 3) out_obj = id(info_wrapper);
-
-                    if (next_panel == 0) in_obj = id(planning_wrapper);
-                    else if (next_panel == 1) in_obj = id(rain_wrapper);
-                    else if (next_panel == 2) in_obj = id(alert_container);
-                    else if (next_panel == 3) in_obj = id(info_wrapper);
-
-                    transition_widgets(out_obj, in_obj);
-                    id(current_central_panel) = next_panel;
-                }
-
 
 
