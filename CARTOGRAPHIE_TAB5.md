@@ -43,7 +43,7 @@ graph TD
         FHOUR["forecast_hourly.yaml (26L)<br/>forecast_hour_card.yaml (73L)"]
         SWCARD["switches_card.yaml (204L)"]
         SWTAB["switch_card_title_tab.yaml (10L)<br/>switch_card_state_tab.yaml (11L)"]
-        CONSOLE["console_sys.yaml (233L)<br/>diagnostics + volume + reboot double-tap"]
+        CONSOLE["console_sys.yaml (415L)<br/>4 cartes : diagnostics + volume + gestion HA (overlays de confirmation)"]
         LIGHTPOP["light_popup.yaml (151L)"]
         LIGHTBTN["light_color_preset_btn.yaml (29L)"]
     end
@@ -168,7 +168,7 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 | `switches_card.yaml` | 204 | Cartes switches (PC, volet, lumières) | Onglets titre/état factorisés via `switch_card_title_tab.yaml`/`switch_card_state_tab.yaml` ; actions par carte laissées en clair (logique différente par carte) |
 | `switch_card_title_tab.yaml` | 10 | Template onglet titre switch | Réutilisé 3× |
 | `switch_card_state_tab.yaml` | 11 | Template onglet état switch | Réutilisé 3× |
-| `console_sys.yaml` | 233 | Overlay diagnostic (SRAM/PSRAM/fragmentation/IP/SSID/loop time) + slider volume, reboot par double-tap — ouvert via `btn_control_console`, pas par swipe | — |
+| `console_sys.yaml` | 415 | Console Système en 4 cartes de verre : MÉMOIRE (SRAM/PSRAM/bloc max/flash), RÉSEAU (SSID/IP/RSSI/état HA), SYSTÈME (uptime/temp CPU/loop time + volume), GESTION (MAJ écran, reload automations, restart HA, reboot — les 2 derniers derrière un overlay de confirmation) — ouvert via `btn_control_console`, pas par swipe | — |
 | `light_popup.yaml` | 151 | Popup contrôle lumière (couleur, luminosité) | Presets couleur factorisés via `light_color_preset_btn.yaml` (8 instances) |
 | `light_color_preset_btn.yaml` | 29 | Template preset couleur lumière | Réutilisé 8× |
 | `moisture_sensors.yaml` | 64 | 4 slots UI humidité plantes (tri dynamique sur 5 capteurs BLE) | — |

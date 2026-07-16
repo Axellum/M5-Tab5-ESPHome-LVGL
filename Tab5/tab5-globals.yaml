@@ -6,7 +6,9 @@
 # tab5-globals.yaml — État partagé entre tous les packages (voir table complète
 # dans Tab5/README.md). Règle : tout état lu/écrit par plus d'un fichier ou par
 # deux handlers différents (ex: on_short_click + on_long_press) vit ici, jamais
-# en `static` dans une lambda (cf. bug reboot_armed corrige le 05/07/2026).
+# en `static` dans une lambda (bug historique du double-tap reboot `reboot_armed`,
+# corrigé le 05/07/2026 ; le pattern double-tap a depuis été remplacé par des
+# overlays de confirmation dans console_sys.yaml — le global a été retiré le 16/07).
 globals:
   # Variables globales (vide, prêt à l'emploi)
   - id: active_page
@@ -134,9 +136,5 @@ globals:
   - id: is_showing_vocal_response
     type: bool
     initial_value: 'false'
-  - id: reboot_armed
-    type: bool
-    initial_value: 'false'
-    restore_value: false
 
 

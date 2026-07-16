@@ -16,7 +16,7 @@ There is a **single 1280×720 page** (`page_main`), not a tab-navigated set of s
 2. **Central card** — a small area that automatically rotates between planning, rain forecast, weather alerts and an info panel (calendar recap / alert text).
 3. **Bottom card region** — either the 5-card weather forecast, or 5 quick-action switch cards, whichever is currently selected.
 
-Two overlays open fullscreen on top of this: the **climate popup** (tap the compact climate card) and the **light popup** (long-press a light shortcut). A **diagnostics console** opens via the console button (`btn_control_console`, top right) — not by swipe since the 14/07/2026 gesture rework.
+Two overlays open fullscreen on top of this: the **climate popup** (tap the compact climate card) and the **light popup** (long-press a light shortcut). A **system console** (memory/network/system diagnostics, volume, plus an HA management card: screen re-push, automation reload, HA restart and device reboot behind confirm overlays) opens via the console button (`btn_control_console`, top right) — not by swipe since the 14/07/2026 gesture rework.
 
 ---
 
@@ -192,7 +192,7 @@ Il y a une **page unique 1280×720** (`page_main`), pas un jeu d'écrans navigu�
 2. **Carte centrale** — une petite zone qui alterne automatiquement entre planning, prévision de pluie, alertes météo et un panneau info (récap calendrier / texte d'alerte).
 3. **Zone de cartes du bas** — soit les 5 cartes prévisions météo, soit 5 cartes d'action rapide, selon ce qui est sélectionné.
 
-Deux overlays s'ouvrent en plein écran par-dessus : le **popup clim** (tap sur la carte clim compacte) et le **popup lumière** (appui long sur un raccourci lumière). Une **console diagnostics** s'ouvre via le bouton console (`btn_control_console`, en haut à droite) — plus par swipe depuis la refonte gestuelle du 14/07/2026.
+Deux overlays s'ouvrent en plein écran par-dessus : le **popup clim** (tap sur la carte clim compacte) et le **popup lumière** (appui long sur un raccourci lumière). Une **Console Système** (diagnostics mémoire/réseau/système, volume, plus une carte gestion HA : MAJ écran, reload automations, redémarrage HA et reboot tablette derrière un overlay de confirmation) s'ouvre via le bouton console (`btn_control_console`, en haut à droite) — plus par swipe depuis la refonte gestuelle du 14/07/2026.
 
 ---
 

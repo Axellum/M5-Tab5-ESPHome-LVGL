@@ -129,7 +129,7 @@ page_main (1280×720, single page)
 │   └── forecast card   (`layer_forecast_daily` / `layer_forecast_hourly` — weather, 5 tabs)
 ├── climate_popup (fullscreen overlay, opened by tapping the climate card)
 ├── light_popup   (fullscreen overlay, opened by tapping a light switch card)
-└── console_sys   (diagnostics overlay, opened by the console button `btn_control_console`, top right)
+└── console_sys   (system console: diagnostics + volume + HA management with confirm overlays, opened by the console button `btn_control_console`, top right)
 ```
 
 Navigation is by touch (opening/closing the climate/light popups and the console button, and toggling the bottom card region between switches and weather) and by swipe gesture, handled in C++ (`handle_swipe_gesture()` in `tab5_custom.cpp`):
@@ -304,7 +304,7 @@ page_main (1280×720, page unique)
 │   └── carte prévisions (`layer_forecast_daily` / `layer_forecast_hourly` — météo, 5 onglets)
 ├── climate_popup (overlay plein écran, ouvert au tap sur la carte clim)
 ├── light_popup   (overlay plein écran, ouvert au tap sur une carte switch lumière)
-└── console_sys   (overlay diagnostics, ouvert par le bouton console `btn_control_console`, en haut à droite)
+└── console_sys   (Console Système : diagnostics + volume + gestion HA avec overlays de confirmation, ouverte par le bouton console `btn_control_console`, en haut à droite)
 ```
 
 La navigation se fait au tactile (ouverture/fermeture des popups clim/lumière et du bouton console, et bascule de la zone du bas entre switches et météo) et par geste swipe, géré en C++ (`handle_swipe_gesture()` dans `tab5_custom.cpp`) :

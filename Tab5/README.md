@@ -53,7 +53,7 @@ All LVGL `style_definitions` (glassmorphism "Slate" theme) + font declarations (
 The single-page layout: clock/date, status icons, quick-action buttons, climate card, moisture card, central rotating card, 5 forecast cards (daily/hourly), swipe gesture handling.
 
 ### `ui_components/*.yaml`
-Included by `tab5-lvgl.yaml`: `climate_card.yaml`/`climate_popup.yaml`, `light_popup.yaml`, `console_sys.yaml` (diagnostics + reboot), `forecast_daily.yaml`/`forecast_hourly.yaml`, `moisture_sensors.yaml`, `switches_card.yaml`.
+Included by `tab5-lvgl.yaml`: `climate_card.yaml`/`climate_popup.yaml`, `light_popup.yaml`, `console_sys.yaml` (4 glass cards: memory/network/system diagnostics, volume, and a management card — screen re-push, automation reload, HA restart and device reboot, the last two behind confirm overlays), `forecast_daily.yaml`/`forecast_hourly.yaml`, `moisture_sensors.yaml`, `switches_card.yaml`.
 
 ### `tab5_custom.h` / `tab5_custom.cpp`
 All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get_humidity_color()`, `parse_and_update_heures_bulk()`/`parse_and_update_jours_bulk()`, `sort_and_update_moisture_slots()`, `transition_widgets()`. **Rule: sensors/services should only read HA state and call these C++ functions — never manipulate `lv_obj_*` directly from a `sensor:`/`text_sensor:` lambda** (keeps LVGL logic in one place, testable and greppable).
@@ -81,7 +81,6 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 |---|---|---|
 | `boot_complete` | bool | true une fois le `on_boot` terminé |
 | `conversation_mode` | bool | mode assistant vocal (persiste au reboot) |
-| `reboot_armed` | bool | armement double-tap du bouton reboot (console) |
 | `forecast_page_index` | int (0-4) | page prévisions active — 0-1 horaire, 2-4 journalier |
 | `clim_target_temp`, `clim_preset_mode`, `clim_fan_mode`, `clim_swing_mode` | float/string | état climatisation |
 | `volet_target_open`, `volet_en_mouvement` | bool | état volet |
@@ -93,7 +92,7 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 
 1. **Pas de couleur en dur** (`0xFFAABB`) dans un YAML/lambda — ajouter un token dans `UIColor::` (`tab5_custom.h`) et l'utiliser partout.
 2. **Les `sensor:`/`text_sensor:` ne manipulent pas LVGL directement** — ils appellent une fonction C++ dans `tab5_custom.cpp` (ex: `update_light_ui()`, pas de `lv_obj_set_style_*` inline).
-3. **Pas de `static` dans une lambda pour de l'état partagé entre deux handlers différents** (`on_short_click`/`on_long_press`) — utiliser un `globals:` (cf. bug `reboot_armed` corrigé le 05/07).
+3. **Pas de `static` dans une lambda pour de l'état partagé entre deux handlers différents** (`on_short_click`/`on_long_press`) — utiliser un `globals:` (cf. bug `reboot_armed` corrigé le 05/07 ; global retiré le 16/07 quand la console est passée aux overlays de confirmation).
 4. **Pas de `std::string` par valeur ni de `to_string()` dans un hot-path** (sliders, `on_value` fréquents) — `const std::string&` ou buffer `snprintf` statique.
 5. **Toute nouvelle carte/widget répété ≥3 fois** (météo, switches...) doit passer par une fonction C++ builder paramétrée plutôt qu'un copier-coller YAML (cf. refacto architecture en cours).
 6. Avant de committer : `python -m esphome compile tab5-ha-hmi.yaml` doit réussir (toolchain déjà en cache localement, ~20-45s).

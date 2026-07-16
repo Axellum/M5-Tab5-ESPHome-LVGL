@@ -42,7 +42,7 @@ Note de méthodologie, pas un journal d'incidents — voir [`docs/troubleshootin
 ## Où regarder
 
 - **Logs ESPHome en direct** (`esphome logs tab5-ha-hmi.yaml`, ou la vue logs du dashboard ESPHome) — source de vérité principale pour les problèmes de séquence de boot, l'état des connexions API, et toute ligne `ESP_LOG*` du code C++. Fermer la session une fois terminée ; un process `esphome logs` oublié occupe une connexion API indéfiniment (voir "connexions API épuisées" dans `troubleshooting.md`).
-- **L'overlay console à l'écran** (`console_sys.yaml`, ouvert via le bouton console `btn_control_console`, en haut à droite — plus par swipe depuis la refonte du 14/07/2026) — diagnostics en direct (SRAM/PSRAM, bloc max, uptime, signal Wi-Fi/SSID/IP, température CPU, temps de boucle) plus un slider volume et un reboot par double-tap, directement sur l'appareil. Ce n'est **pas** un visualiseur de logs — pour les payloads/événements, utiliser `esphome logs`.
+- **La Console Système à l'écran** (`console_sys.yaml`, ouverte via le bouton console `btn_control_console`, en haut à droite — plus par swipe depuis la refonte du 14/07/2026) — 4 cartes : MÉMOIRE (SRAM/PSRAM, bloc max, flash), RÉSEAU (SSID/IP/signal + état connexion HA), SYSTÈME (uptime, température CPU, temps de boucle, volume) et GESTION (MAJ écran = re-push du flag `is_primary_active` + automation de push, reload des automations, redémarrage HA et reboot tablette — les deux derniers derrière un overlay de confirmation, refonte du 16/07/2026). Ce n'est **pas** un visualiseur de logs — pour les payloads/événements, utiliser `esphome logs`.
 
   ![Overlay console sur l'appareil réel](images/tab5_photo_dashboard_weather.jpg)
 
