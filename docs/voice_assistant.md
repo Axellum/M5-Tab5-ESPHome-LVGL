@@ -30,6 +30,14 @@ When the model detects the wake phrase with sufficient confidence, it fires an i
 
 Wake-word detection can be toggled via a UI button (`tab5_wake_word_active` switch entity). When off, the device acts as a manual push-to-talk panel only.
 
+### Second wake word: "Stop" (roller shutter)
+
+A second microWakeWord model (`Stop`) is declared alongside `okay_nabu` in `tab5-hardware.yaml`, but it is only armed (`micro_wake_word.enable_model`) while the roller shutter is moving (`volet_en_mouvement` global, pushed by HA) and disarmed as soon as the movement ends. Saying "Stop" while the shutter moves triggers the stop script directly on the device — no wake phrase, no pipeline round-trip, no network latency. Two gotchas already burned into this setup: ESPHome only auto-enables the *first* declared model (hence the explicit enable/disable), and the detected `wake_word` string is `"Stop"` with a capital S.
+
+### Interrupting a running reply
+
+Tapping the mic icon while TTS is playing stops the satellite (`assist_satellite.stop`), aborts the current session and immediately restarts listening (`tab5_vocal_interrupt_and_listen`, `tab5-scripts.yaml`). This is the firmware-side answer to barge-in: while the Assist pipeline is in its responding phase the microphone belongs to the pipeline and the wake word is inactive, so a voice "stop" cannot work there — the tap can.
+
 ---
 
 ## Audio capture
@@ -121,6 +129,14 @@ Quand le modèle détecte la phrase d'activation avec une confiance suffisante, 
 **Coût ressources :** le modèle micro_wake_word tourne à environ 5–8% CPU sur l'ESP32-P4 à 400 MHz, en continu. C'est acceptable, mais ça signifie que les ~92% restants doivent couvrir le rendu LVGL, la gestion I2S et le Wi-Fi. Sur ce matériel, c'est confortable. Sur un ESP32-S3, la marge serait plus serrée.
 
 La détection du wake-word peut être basculée via un bouton UI (switch `tab5_wake_word_active`). Quand désactivé, l'appareil fonctionne uniquement en mode push-to-talk manuel.
+
+### Second wake word : « Stop » (volet roulant)
+
+Un second modèle microWakeWord (`Stop`) est déclaré à côté de `okay_nabu` dans `tab5-hardware.yaml`, mais il n'est armé (`micro_wake_word.enable_model`) que pendant que le volet est en mouvement (globale `volet_en_mouvement`, poussée par HA) et désarmé dès la fin du mouvement. Dire « Stop » pendant que le volet bouge déclenche le script d'arrêt directement sur l'appareil — pas de phrase d'activation, pas d'aller-retour pipeline, pas de latence réseau. Deux pièges déjà rencontrés sur ce setup : ESPHome n'active automatiquement que le *premier* modèle déclaré (d'où l'enable/disable explicite), et la chaîne `wake_word` détectée est `"Stop"` avec un S majuscule.
+
+### Interrompre une réponse en cours
+
+Taper l'icône micro pendant que le TTS joue arrête le satellite (`assist_satellite.stop`), interrompt la session en cours et relance immédiatement l'écoute (`tab5_vocal_interrupt_and_listen`, `tab5-scripts.yaml`). C'est la réponse côté firmware au barge-in : pendant la phase de réponse du pipeline Assist, le micro appartient au pipeline et le wake word est inactif — un « stop » vocal ne peut pas marcher là, le tap si.
 
 ---
 

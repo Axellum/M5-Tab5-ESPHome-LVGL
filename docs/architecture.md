@@ -114,7 +114,7 @@ Variables here are typed and initialized. Uninitialized globals on ESP32 are und
 ---
 
 ### `tab5-lvgl.yaml`
-The UI layout. Declares the single page, panels, labels, buttons, arcs, and icons, plus swipe gesture handling. Includes the 16 `ui_components/*.yaml` files (climate card/popup, light popup, console overlay, forecast cards, moisture gauges, switches card).
+The UI layout. Declares the single page, panels, labels, buttons, arcs, and icons, plus swipe gesture handling. Includes the 17 `ui_components/*.yaml` files (climate card/popup, light popup, TV remote popup, console overlay, forecast cards, moisture gauges, switches card).
 
 **There is a single LVGL page, not a multi-page tab-bar layout.** Everything lives on one 1280×720 `page_main`:
 ```
@@ -129,6 +129,8 @@ page_main (1280×720, single page)
 │   └── forecast card   (`layer_forecast_daily` / `layer_forecast_hourly` — weather, 5 tabs)
 ├── climate_popup (fullscreen overlay, opened by tapping the climate card)
 ├── light_popup   (fullscreen overlay, opened by tapping a light switch card)
+├── tv_remote_popup (fullscreen Samsung remote, opened by the TV button or a
+│                    long-press on the PC card — `remote.*` services via HA)
 └── console_sys   (system console: diagnostics + volume + HA management with confirm overlays, opened by the console button `btn_control_console`, top right)
 ```
 
@@ -287,7 +289,7 @@ Les variables ici sont typées et initialisées. Les globales non initialisées 
 ---
 
 ### `tab5-lvgl.yaml`
-La mise en page UI. Déclare la page unique, panneaux, labels, boutons, arcs et icônes, ainsi que la gestion des gestes swipe. Inclut les 16 fichiers `ui_components/*.yaml` (carte/popup clim, popup lumière, overlay console, cartes prévisions, jauges humidité, carte switches).
+La mise en page UI. Déclare la page unique, panneaux, labels, boutons, arcs et icônes, ainsi que la gestion des gestes swipe. Inclut les 17 fichiers `ui_components/*.yaml` (carte/popup clim, popup lumière, popup télécommande TV, overlay console, cartes prévisions, jauges humidité, carte switches).
 
 **Il y a une seule page LVGL, pas une navigation multi-pages par onglets.** Tout tient sur un `page_main` unique en 1280×720 :
 ```
@@ -304,6 +306,8 @@ page_main (1280×720, page unique)
 │   └── carte prévisions (`layer_forecast_daily` / `layer_forecast_hourly` — météo, 5 onglets)
 ├── climate_popup (overlay plein écran, ouvert au tap sur la carte clim)
 ├── light_popup   (overlay plein écran, ouvert au tap sur une carte switch lumière)
+├── tv_remote_popup (télécommande Samsung plein écran, ouverte par le bouton TV
+│                    ou un appui long sur la carte PC — services `remote.*` via HA)
 └── console_sys   (Console Système : diagnostics + volume + gestion HA avec overlays de confirmation, ouverte par le bouton console `btn_control_console`, en haut à droite)
 ```
 

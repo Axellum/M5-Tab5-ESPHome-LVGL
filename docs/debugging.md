@@ -9,7 +9,7 @@ This is a short methodology note, not an incident log — see [`docs/troubleshoo
 ## Where to look
 
 - **Live ESPHome logs** (`esphome logs tab5-ha-hmi.yaml`, or the ESPHome dashboard's log view) — the primary source of truth for boot sequence issues, API connection state, and any `ESP_LOG*` line in the C++ code. Close the session when you're done; a leaked `esphome logs` process holds an API connection open indefinitely (see the "API connections exhausted" entry in `troubleshooting.md`).
-- **The on-screen console overlay** (`console_sys.yaml`, opened via the console button `btn_control_console`, top right — not by swipe since the 14/07/2026 rework) — shows live diagnostics (SRAM/PSRAM usage, max free block, uptime, Wi-Fi signal/SSID/IP, CPU temperature, loop time) plus a volume slider and a double-tap reboot button, directly on the device. It is **not** a log viewer — for payload/event logs use `esphome logs`. Useful when you don't have a laptop connected but can see the screen.
+- **The on-screen console overlay** (`console_sys.yaml`, opened via the console button `btn_control_console`, top right — not by swipe since the 14/07/2026 rework) — 4 glass cards: MÉMOIRE (SRAM/PSRAM, max free block, flash), RÉSEAU (SSID/IP/signal + HA connection status), SYSTÈME (uptime, CPU temperature, loop time, volume) and GESTION (screen re-push = re-arm the `is_primary_active` flag + push automation, automation reload, HA restart and device reboot — the last two behind a confirm overlay, 16/07/2026 redesign). It is **not** a log viewer — for payload/event logs use `esphome logs`. Useful when you don't have a laptop connected but can see the screen.
 
   ![Console overlay on the real device](images/tab5_photo_dashboard_weather.jpg)
 
