@@ -2,6 +2,7 @@
 
 > **How to use this file:** Copy sections into the Hackster.io project editor. Primary language is **English** (jury-facing). French blocks are marked for optional subtitles or a bilingual page.  
 > **Repos:** [M5-Tab5-ESPHome-LVGL](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL) · [vromvrom-engine](https://github.com/Axellum/vromvrom-engine)  
+> **Firmware release:** [v1.0.5](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v1.0.5) (July 2026)  
 > **Demo video:** https://www.youtube.com/watch?v=ygNhgtMffu4
 
 ---
@@ -43,8 +44,8 @@ This is **not** a kiosk running a web dashboard in a browser. The UI is **compil
 
 - **Push-only data flow** — the Tab5 never polls Home Assistant. HA automations push updates via native ESPHome service calls. CPU stays near idle when nothing changes.
 - **60 FPS native rendering** in 16 MB PSRAM — vector Material Design Icons, no PNG weather sprites in firmware.
-- **Voice Assist Satellite** — wake word `okay_nabu` runs on-device; STT/TTS via local Wyoming (Whisper + Piper) in Home Assistant; optional engine for smart routing (fast HA commands vs LLM chat).
-- **Single 1280×720 page** — weather swipe, rotating info card, climate & light popups, Samsung TV remote, plant moisture, HA alert banners with tap-to-dismiss.
+- **Voice Assist Satellite** — wake word `okay_nabu` runs on-device; STT/TTS via local Wyoming (Whisper + Piper) in Home Assistant; optional engine for smart routing (fast HA commands vs LLM chat). A **second on-device wake word — "Stop"** — is armed only while the roller shutter moves and halts it instantly, no cloud, no round-trip; tapping the mic interrupts a long reply and re-opens listening.
+- **Single 1280×720 page** — weather swipe, rotating info card, full-screen glass popups (climate with optimistic arc thermostat and Daikin "Brise" airflow, light with live-% brightness and 12 color swatches, Samsung TV remote), plant moisture, HA alert banners with tap-to-dismiss.
 
 ### Demo video
 
@@ -118,10 +119,11 @@ Two UI modes: **Domotics** (standard HA agent) and **Discussion** (engine-backed
 - **Weather** — 5 swipe windows (hourly + 15-day forecast)
 - **Rotating center card** — planning, rain graph, Météo-France alerts, calendar recap, up to 4 HA info/alert banners
 - **Tap to dismiss** — tap a banner to hide it locally until HA pushes a new id
-- **Climate popup** — arc thermostat, modes, presets
-- **Light popup** — room selector, brightness arc, color presets
-- **TV remote** — fullscreen Samsung IR remote via HA `remote.*`
-- **Console** — RAM/PSRAM, Wi-Fi, uptime, volume, HA reload/restart (with confirm)
+- **Climate popup** — stacked modes, 320 px arc thermostat with optimistic target (debounced), presets, airflow incl. Daikin "Brise" (`windnice`)
+- **Light popup** — 3-light selector, live-% brightness arc (debounced), 10/35/65/100 % shortcuts, 3 named whites + 12 color swatches
+- **TV remote** — fullscreen Samsung remote via HA `remote.*`
+- **Console** — RAM/PSRAM, Wi-Fi, uptime, volume, HA management (screen re-push, reload, restart/reboot behind confirm)
+- **Voice "Stop"** — on-device second wake word halts the moving shutter instantly; tap the mic to interrupt a reply
 
 → Detail: [`screens.md`](screens.md) · [`voice_assistant.md`](voice_assistant.md)
 

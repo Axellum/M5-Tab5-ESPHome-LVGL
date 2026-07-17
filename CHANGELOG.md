@@ -4,6 +4,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [1.0.5] — 2026-07-17
+
+Jalon firmware taillé pour la soumission au M5Stack Global Innovation Contest 2026 — tout ce qui s'est accumulé depuis `v1.0.0` : popups de verre quasi plein écran (clim v2, lumière v2, télécommande TV Samsung), Console Système v2 avec carte de gestion HA, bandeaux alertes/infos HA avec tap-to-dismiss sur le rotateur central, second wake word local « Stop » pour le volet, interruption vocale au tap micro, mode démo autonome sans Home Assistant, et la couche présentation GitHub/Hackster (vidéo, GIF, docs).
+
 ### 2026-07-16 — Popup clim v2 : plein écran, modes empilés, cible optimiste, Brise
 - `climate_popup.yaml` refondu (1130×650 → carte 1250×690, 15 px des bords) : 3 cartes de verre — MODE (Froid/Chaud/Sec/Ventilation/Éteint empilés, pile flex), TEMPÉRATURE (arc 320 px, cible `roboto_55_b` au centre, boutons ± 160 px, ligne « Pièce » avec thermomètre), OPTIONS (Presets Éco/Boost, Ventilation Silence, Flux d'air Oscillation + **Brise**).
 - **Nouveau bouton « Brise »** (`windnice`, 3ᵉ mode réel du Daikin Onecta, jusque-là inaccessible depuis l'écran) : toggle windnice↔stop, icône `popup_icon_clim_windnice` pilotée par `tab5_maj_clim` (windnice sorti de la condition Oscillation).
@@ -53,6 +57,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 - New substitutions `entity_primary_active` / `entity_push_automation` in `user_entities.yaml` + example file.
 - Docs resynced: `Tab5/README.md`, `docs/screens.md`, `docs/architecture.md`, `docs/debugging.md`, `CARTOGRAPHIE_TAB5.md` (both copies). Details of the companion edits: `docs/console_v2_modifs_preparees.md`.
 - Verified: `esphome config` valid + full `esphome clean` + `compile` SUCCESS (`config_hash=0x5e927d97`) + OTA prod 16/07 (`ha_api_status=on`, uptime croissant).
+
+### 2026-07-16 — Bandeau central roboto_45_b, clim Daikin réelle, télécommande TV, alertes HA ([#43](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/43))
+- Nouveau popup **télécommande TV Samsung** (`tv_remote_popup.yaml`) : power, pad de navigation, volume, chaînes, rangée lecture — chaque touche envoie `remote.send_command`/`remote.toggle` à `${entity_tv_remote}` ; ouvert par le bouton TV ou un long-press sur la carte PC.
+- **Alertes / infos HA sur le rotateur central** : nouveau service `tab5_maj_alertes_ha_bulk` (jusqu'à 4 bandeaux `ha_alert_wrapper_0…3`, un panneau du rotateur chacun) + **tap-to-dismiss** local (l'id masqué est mémorisé, un re-push du même id reste caché) ; package HA `tab5_alerts.yaml`.
+- Nouveau service `tab5_maj_reponse_vocale` : la réponse vocale s'affiche temporairement dans le bandeau central (`tab5_show_vocal_response`).
+- Textes du bandeau central harmonisés en `roboto_45_b` ; boutons HA/Sys/TV et onglets météo passés au verre `style_clim_btn`.
+- Clim mappée sur le Daikin Onecta réel : swing stop/swing, Éco=away, Silence=quiet, ± force le `hvac_mode` si la clim est éteinte ; glyphes MDI flèches/volume ajoutés à `mdi_font_45`.
+
+### 2026-07-15 — Interruption vocale au tap micro ([#42](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/42))
+- Un tap sur l'icône micro pendant que l'assistant parle interrompt la réponse (`assist_satellite.stop` côté HA + arrêt pipeline) et relance immédiatement l'écoute (`tab5_vocal_interrupt_and_listen`) — seule interruption fiable pendant le TTS, le wake word étant inactif en phase de réponse du pipeline Assist.
+- Fix de l'icône micro « verte zombie » après interruption.
+
+### 2026-07-15 — Wake word local « Stop » + suivi mouvement volet ([#41](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/41))
+- Second modèle microWakeWord `Stop` : armé (`micro_wake_word.enable_model`) uniquement quand le volet est en mouvement (`volet_en_mouvement`), désarmé à l'arrêt — dire « Stop » arrête le volet directement sur l'appareil, sans « Okay Nabu » ni aller-retour pipeline. Pièges corrigés : ESPHome n'active que le premier modèle déclaré, et la valeur détectée est `"Stop"` (S majuscule).
+- Suivi du mouvement du volet poussé par HA (package `volet_serre_tracking.yaml`) : l'état/icône du volet à l'écran suit aussi les commandes lancées hors écran (vocal, automations sunrise/sunset).
+
+### 2026-07-15 — Mode démo autonome sans Home Assistant ([#40](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/40))
+- `tools/demo/demo_pusher.py` + `docs/demo_mode.md` : un script Python pousse des données synthétiques (météo, planning, clim, plantes…) vers un Tab5 flashé, via l'API native ESPHome — l'interface complète se teste en quelques minutes sans aucune instance HA.
 
 ### 2026-07-14 — Documentation coherence pass (docs vs. real code)
 - Audited `Tab5/README.md`, `docs/*.md` and `CARTOGRAPHIE_TAB5.md` line-by-line against the firmware. Doc-only change, no code touched.

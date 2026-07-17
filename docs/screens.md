@@ -88,7 +88,11 @@ Toggled in by `btn_control_ha`. 5 dedicated cards, each with a visible icon, a s
 Two levels of control, both driving the same Home Assistant `climate` entity:
 
 - **Compact card** (always visible in the home area) — current temperature and target with +/− buttons.
-- **Climate popup** (fullscreen, opened by tapping the compact card) — a 3×3 grid of 9 buttons: mode (Froid/Chaud/Éteint/Ventil./Sec/Oscill.) and preset (Éco/Boost/Silence), plus the arc thermostat and +/− controls. 6 of the 9 buttons are factorized templates (cool/heat/fan/dry, eco/boost); the remaining 3 (off/swing/quiet) and the +/− buttons are deliberately left as individual YAML — see [ADR-0007](decisions/0007-climate-popup-not-factorized.md).
+- **Climate popup** (near-fullscreen, 1250×690 card 15 px from the screen edges, opened by tapping the compact card) — three glass cards:
+  - **MODE**: Froid / Chaud / Sec / Ventilation / Éteint, stacked full-width (icons colored by the active mode, driven by `tab5_maj_clim`)
+  - **TEMPÉRATURE**: a 320 px arc thermostat (16–30 °C) with the target shown large in the center, − / + buttons, and the actual room temperature at the bottom. The target updates **immediately** (optimistic) and a single `climate.set_temperature` is sent once the gesture ends (250 ms debounce — rapid ± taps are grouped)
+  - **OPTIONS**: Éco / Boost presets (toggle), Silence (fan quiet), and airflow **Oscillation** / **Brise** (`windnice`, a Daikin Onecta mode previously unreachable from the screen)
+  - Tapping the dark overlay or the × button (a real 96×64 glass button) closes the modal. 6 of the 10 buttons are factorized templates (cool/heat/fan/dry, eco/boost); the remaining 4 (off/swing/windnice/quiet) and the ± buttons are deliberately left as individual YAML — see [ADR-0007](decisions/0007-climate-popup-not-factorized.md).
 
 The controls are dimmed (not hidden) when the AC is off, so the layout stays stable.
 
@@ -123,22 +127,39 @@ The microphone icon on the home screen is the visual interface for the voice ass
 
 The mode is saved across reboots via the HA `select` entity (`select.m5stack_tab5_home_assistant_hmi_assistant`).
 
+**Second on-device wake word — "Stop":** a second microWakeWord model (`Stop`) is armed only while the roller shutter is moving (`volet_en_mouvement` global) and disarmed as soon as it stops. Saying "Stop" then halts the shutter directly from the device (`script.tab5_volet_action`) — no "Okay Nabu", no pipeline round-trip.
+
+**Interrupting a reply:** tapping the microphone icon while the assistant is speaking (blue) stops the current reply (`assist_satellite.stop` on the HA side + pipeline stop) and immediately re-opens listening (`tab5_vocal_interrupt_and_listen`) — the reliable way to cut a long Discussion answer short, since the wake word is inactive while the pipeline is in its responding phase.
+
 ---
 
 ## Console (diagnostics overlay)
 
-Opened via the console button (`btn_control_console`, top right of the home area). A modal card showing live diagnostics — SRAM/PSRAM usage bars, max free block, flash size, uptime, Wi-Fi signal/SSID/IP, CPU temperature, loop time — plus a volume slider and a double-tap reboot button. It is **not** a log viewer (use `esphome logs` for payloads and events). See [`docs/debugging.md`](debugging.md) for a screenshot and more on using it to diagnose issues.
+Opened via the console button (`btn_control_console`, top right of the home area). A 1180×680 modal card organized in **four glass cards**:
+- **MÉMOIRE** — SRAM/PSRAM usage bars, max free block, flash size
+- **RÉSEAU** — Wi-Fi SSID, IP, signal strength, and HA connection status (`lbl_sys_ha_val`, green/red)
+- **SYSTÈME** — uptime, CPU temperature, loop time, plus the volume slider with a live % readout
+- **GESTION** — HA management buttons: « MAJ Écran » (re-arms the push flag and re-triggers the screen-push automation — the direct remedy for the recurring frozen-screen incident), « Recharger autos » (`automation.reload`), « Redémarrer HA » and « Reboot tablette » — the last two behind Annuler/Confirmer overlays (no more invisible double-tap arming)
+
+It is **not** a log viewer (use `esphome logs` for payloads and events). See [`docs/debugging.md`](debugging.md) for a screenshot and more on using it to diagnose issues.
 
 ---
 
 ## Light popup — long press
 
-Long-pressing the bedroom, living room, or office-LEDs daily-forecast card (instead of the short tap that just toggles the light) opens a fullscreen modal (960×520):
-- Left column: **brightness arc** (0–255) — drag to adjust, calls `light.turn_on` with the new brightness in real time
-- Right column: a 3×3 grid of 9 buttons — **8 color presets** (Blanc, Chaud, Rouge, Vert, Bleu, Rose, Orange, Cyan — each sends `light.turn_on` with the matching `color_name`) plus one **On/Off** button (`light.toggle`, not a color preset)
-- Tapping the dark overlay or the × button closes the modal
+Long-pressing the bedroom, living room, or office-LEDs daily-forecast card (instead of the short tap that just toggles the light) opens a near-fullscreen modal (1250×690 card, 15 px from the screen edges), organized in three glass cards:
+- **AMPOULE** (left): a selector for the 3 lights (Chambre / Salon / LEDs — icons colored by on/off state, cyan border on the selection) to switch lights without closing the popup, a large **On/Off** button (`light.toggle`) and **Tout éteindre** (all 3 entities at once)
+- **LUMINOSITÉ** (center): a **320 px brightness arc** (0–255) with the **% value shown live** in the center — synced from the HA `brightness` attribute at open time and live (never during a drag), debounced 200 ms so one drag sends a single `light.turn_on` — plus 4 shortcuts 10/35/65/100 %
+- **COULEURS** (right): 3 named whites (Chaud/Crème/Froid) and a 4×3 grid of **12 round color swatches** (each sends `light.turn_on` with the matching `color_name`, factorized via `light_color_preset_btn.yaml`)
+- Tapping the dark overlay or the × button (a real 96×64 glass button) closes the modal
 
-The popup is context-aware: the entity it controls is set dynamically at open time (`current_light_entity` global), so the same popup component handles all three light entities without duplication.
+The popup is context-aware: opening and selection go through `script.tab5_light_popup_show(light_idx)`, which sets the `current_light_entity` global and syncs the title, selector, power icon and arc — the same popup component handles all three light entities without duplication.
+
+---
+
+## TV remote popup
+
+A near-fullscreen Samsung TV remote (`tv_remote_popup.yaml`, 1230×670 card, ~25 px from the screen edges): power, navigation pad, volume and channel columns, and a bottom row (Play/Pause · Retour · Accueil · Muet). Opened by long-pressing the PC switches card or via the TV button (`btn_control_tv`); every key sends `remote.send_command` (or `remote.toggle` for power) to the `${entity_tv_remote}` Home Assistant entity — the Tab5 carries no IR hardware, HA's Samsung integration does the work. Tapping the dark overlay closes it.
 
 ---
 
@@ -304,11 +325,21 @@ L'icône microphone sur l'écran d'accueil est l'interface visuelle de l'assista
 
 Le mode est sauvegardé entre les redémarrages via l'entité HA `select` (`select.m5stack_tab5_home_assistant_hmi_assistant`).
 
+**Second wake word local — « Stop » :** un second modèle microWakeWord (`Stop`) n'est armé que pendant que le volet est en mouvement (globale `volet_en_mouvement`) et désarmé dès l'arrêt. Dire « Stop » arrête alors le volet directement depuis l'appareil (`script.tab5_volet_action`) — sans « Okay Nabu », sans aller-retour pipeline.
+
+**Interrompre une réponse :** taper l'icône micro pendant que l'assistant parle (bleu) coupe la réponse en cours (`assist_satellite.stop` côté HA + arrêt pipeline) et relance immédiatement l'écoute (`tab5_vocal_interrupt_and_listen`) — le moyen fiable d'écourter une longue réponse Discussion, le wake word étant inactif pendant la phase de réponse du pipeline.
+
 ---
 
 ## Console (overlay diagnostics)
 
-Ouvert via le bouton console (`btn_control_console`, en haut à droite de la zone d'accueil). Une carte modale montrant les diagnostics en direct — barres SRAM/PSRAM, bloc max, taille flash, uptime, signal Wi-Fi/SSID/IP, température CPU, temps de boucle — plus un slider volume et un reboot par double-tap. Ce n'est **pas** un visualiseur de logs (utiliser `esphome logs` pour les payloads et événements). Voir [`docs/debugging.md`](debugging.md) pour une capture d'écran et plus de détails sur son usage en debug.
+Ouvert via le bouton console (`btn_control_console`, en haut à droite de la zone d'accueil). Une carte modale 1180×680 organisée en **quatre cartes de verre** :
+- **MÉMOIRE** — barres SRAM/PSRAM, bloc max, taille flash
+- **RÉSEAU** — SSID Wi-Fi, IP, signal, et état de la connexion HA (`lbl_sys_ha_val`, vert/rouge)
+- **SYSTÈME** — uptime, température CPU, temps de boucle, plus le slider volume avec % affiché en direct
+- **GESTION** — boutons de gestion HA : « MAJ Écran » (réarme le flag de push et redéclenche l'automation de push écran — le remède direct à l'incident récurrent d'écran figé), « Recharger autos » (`automation.reload`), « Redémarrer HA » et « Reboot tablette » — les deux derniers derrière des overlays Annuler/Confirmer (fini l'armement invisible par double-tap)
+
+Ce n'est **pas** un visualiseur de logs (utiliser `esphome logs` pour les payloads et événements). Voir [`docs/debugging.md`](debugging.md) pour une capture d'écran et plus de détails sur son usage en debug.
 
 ---
 
@@ -316,11 +347,17 @@ Ouvert via le bouton console (`btn_control_console`, en haut à droite de la zon
 
 Un appui long sur la carte prévision journalière chambre, salon ou LEDs bureau (au lieu du tap court qui bascule juste la lumière) ouvre un modal quasi plein écran (carte 1250×690, 15 px des bords), organisé en trois cartes de verre :
 - **AMPOULE** (gauche) : sélecteur des 3 lumières (Chambre / Salon / LEDs — icônes colorées selon l'état on/off, bordure cyan sur la sélection) pour changer de lumière sans fermer le popup, gros bouton **On/Off** (`light.toggle`) et **Tout éteindre** (les 3 entités d'un coup)
-- **LUMINOSITÉ** (centre) : **arc 320 px** (0–255) avec la valeur **% affichée en direct** au centre — synchronisée depuis l'attribut `brightness` HA à l'ouverture et en live (jamais pendant un drag) — plus 4 raccourcis 10/35/65/100 %
+- **LUMINOSITÉ** (centre) : **arc 320 px** (0–255) avec la valeur **% affichée en direct** au centre — synchronisée depuis l'attribut `brightness` HA à l'ouverture et en live (jamais pendant un drag), débouncée 200 ms pour qu'un glissement n'envoie qu'un seul `light.turn_on` — plus 4 raccourcis 10/35/65/100 %
 - **COULEURS** (droite) : 3 blancs nommés (Chaud/Crème/Froid) et une grille 4×3 de **12 pastilles rondes** (chaque pastille envoie `light.turn_on` avec le `color_name` correspondant, factorisées via `light_color_preset_btn.yaml`)
 - Taper l'overlay sombre ou le bouton × (vrai bouton de verre 96×64) ferme le modal
 
 Le popup est contextuel : ouverture et sélection passent par `script.tab5_light_popup_show(light_idx)` qui règle la globale `current_light_entity` et synchronise titre, sélecteur, icône power et arc — le même composant popup gère les trois entités lumière sans duplication.
+
+---
+
+## Popup télécommande TV
+
+Une télécommande Samsung quasi plein écran (`tv_remote_popup.yaml`, carte 1230×670, ~25 px des bords) : power, pad de navigation, colonnes volume et chaînes, et une rangée basse (Play/Pause · Retour · Accueil · Muet). Ouverte par appui long sur la carte switches PC ou via le bouton TV (`btn_control_tv`) ; chaque touche envoie `remote.send_command` (ou `remote.toggle` pour le power) à l'entité Home Assistant `${entity_tv_remote}` — le Tab5 n'a aucun matériel IR, c'est l'intégration Samsung de HA qui fait le travail. Taper l'overlay sombre ferme le popup.
 
 ---
 
