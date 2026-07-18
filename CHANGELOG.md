@@ -4,6 +4,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-18 — Popup détails plantes : appui long sur les pots
+- Nouveaux `pots_popup.yaml` + template `pot_detail_card.yaml` (5 instances, #T164) : carte modale 1250×690 (15 px des bords), 5 cartes de verre **fixes** (carte N = capteur `moisture_N`, mêmes icônes que le dashboard) — nom, icône colorée par l'humidité, % humidité `roboto_45_b`, statut (OK / Bientôt sec / À arroser ! / Hors ligne) et 4 métriques : Fertilité (EC µS/cm), Lumière (lx), Température (°C, gradient `get_temperature_color`), Batterie (échelle `get_battery_color`).
+- Ouverture par **appui long** sur les 4 slots pots du dashboard (`btn_pots_detail_zone`, zone tactile invisible même géométrie que `moisture_sensors_card`) ; le tap court reste sans effet, aucune synchro à l'ouverture (valeurs poussées en continu).
+- 20 nouveaux capteurs `platform: homeassistant` (`pot*_ec/lux/temp/bat`, substitutions `entity_plante_*_ec/lux/temp/bat` dans `user_entities(.example).yaml`) — présentation entièrement déléguée à `update_pot_metric_ui()` / `update_pots_popup_moisture_ui()` (`tab5_custom.cpp`), zéro LVGL dans le YAML capteurs.
+- `get_battery_color()` factorisé : l'échelle couleur de l'icône téléphone du bandeau (lambda inline) est réutilisée pour la batterie des capteurs plantes.
+- Anti « croix qui décale » : `scrollable: false` partout + croix = vrai bouton de verre 96×64 (recette popups v2).
+- `tab5-styles.yaml` : glyphes `F0241` (flash) et `F0079` (batterie) ajoutés à `mdi_font_32`.
+
 ## [1.0.5] — 2026-07-17
 
 Jalon firmware taillé pour la soumission au M5Stack Global Innovation Contest 2026 — tout ce qui s'est accumulé depuis `v1.0.0` : popups de verre quasi plein écran (clim v2, lumière v2, télécommande TV Samsung), Console Système v2 avec carte de gestion HA, bandeaux alertes/infos HA avec tap-to-dismiss sur le rotateur central, second wake word local « Stop » pour le volet, interruption vocale au tap micro, mode démo autonome sans Home Assistant, et la couche présentation GitHub/Hackster (vidéo, GIF, docs).

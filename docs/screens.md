@@ -104,6 +104,16 @@ Monitors up to 5 BLE soil moisture sensors, but only **4 slots are shown** (`sor
 
 Each slot shows the sensor's icon and moisture-level color (see Color coding below) plus its physical pot number (or `Moy:` for the median slot).
 
+### Plant details popup — long press
+
+A **long press anywhere on the moisture card** opens a near-fullscreen modal (1250×690 card, 15 px from the screen edges) with **5 fixed glass cards — one per sensor** (card N = sensor `moisture_N`, same icon as the dashboard, no dynamic sorting here). Each card shows:
+
+- the pot name and its plant icon, colored by moisture level (same scale as the dashboard)
+- the soil-moisture % (large) and a watering status: **OK** (green), **Bientôt sec** (≤ 20 %, amber), **À arroser !** (≤ 14 %, red — aligned with the `get_humidity_color()` red zone) or **Hors ligne** (sensor unavailable)
+- four metric rows: **Fertility** (EC conductivity, µS/cm), **Light** (lx), **Temperature** (°C, `get_temperature_color()` gradient) and sensor **Battery** (%, `get_battery_color()` scale)
+
+Values are pushed continuously by the `pot*_ec/lux/temp/bat` HA sensors (`update_pot_metric_ui()`, `tab5_custom.cpp`) — the popup needs no sync on open. Tapping the dark overlay or the × button (real 96×64 glass button) closes it. Components: `pots_popup.yaml` + `pot_detail_card.yaml` (5 instances).
+
 ---
 
 ## Voice assistant
@@ -301,6 +311,16 @@ Les contrôles sont estompés (non cachés) quand le clim est éteint, pour gard
 Surveille jusqu'à 5 capteurs BLE d'humidité du sol, mais seuls **4 emplacements sont affichés** (`sort_and_update_moisture_slots()`, `tab5_custom.cpp`). Les capteurs sont triés par niveau d'humidité (du plus sec au plus humide) à chaque mise à jour, puis mappés sur les emplacements ainsi : le plus sec, le 2e plus sec, **le capteur de rang médian** (étiqueté `Moy:` — ça affiche la lecture brute de ce capteur précis, ce n'est pas une moyenne arithmétique calculée sur les 5), et le plus humide. Comme le mapping se fait par rang plutôt que par identité fixe du capteur, *quel* numéro de pot physique apparaît dans quel emplacement change dans le temps selon l'évolution de l'humidité — une photo prise aujourd'hui montrant "Pot 2 / Pot 4 / Moy / Pot 3" n'est pas une disposition figée.
 
 Chaque emplacement affiche l'icône du capteur et sa couleur de niveau d'humidité (voir Coloration ci-dessous) plus son numéro de pot physique (ou `Moy:` pour l'emplacement médian).
+
+### Popup détails plantes — appui long
+
+Un **appui long n'importe où sur la carte des pots** ouvre un modal quasi plein écran (carte 1250×690 à 15 px des bords) avec **5 cartes de verre fixes — une par capteur** (carte N = capteur `moisture_N`, même icône que le dashboard, pas de tri dynamique ici). Chaque carte affiche :
+
+- le nom du pot et son icône de plante, colorée par le niveau d'humidité (même échelle que le dashboard)
+- le % d'humidité du sol (en grand) et un statut d'arrosage : **OK** (vert), **Bientôt sec** (≤ 20 %, ambre), **À arroser !** (≤ 14 %, rouge — aligné sur la zone rouge de `get_humidity_color()`) ou **Hors ligne** (capteur indisponible)
+- quatre lignes de métriques : **Fertilité** (conductivité EC, µS/cm), **Lumière** (lx), **Température** (°C, gradient `get_temperature_color()`) et **Batterie** du capteur (%, échelle `get_battery_color()`)
+
+Les valeurs sont poussées en continu par les capteurs HA `pot*_ec/lux/temp/bat` (`update_pot_metric_ui()`, `tab5_custom.cpp`) — le popup n'a besoin d'aucune synchro à l'ouverture. Taper l'overlay sombre ou le bouton × (vrai bouton de verre 96×64) le ferme. Composants : `pots_popup.yaml` + `pot_detail_card.yaml` (5 instances).
 
 ---
 

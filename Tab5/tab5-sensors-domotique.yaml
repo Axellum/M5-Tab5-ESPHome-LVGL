@@ -197,30 +197,9 @@ sensor:
     on_value:
 
       - lambda: |-
-
+          // Echelle de couleur factorisee dans get_battery_color (partagee popup pots)
           if (id(icon_phone) == nullptr) return;
-
-          if(isnan(x)) {
-
-            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-
-          } else if(x > 80.0) {
-
-            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-
-          } else if(x > 40.0) {
-
-            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-
-          } else if(x >= 20.0) {
-
-            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-
-          } else {
-
-            lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(UIColor::ERROR), LV_PART_MAIN);
-
-          }
+          lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(get_battery_color(x)), LV_PART_MAIN);
 
   - platform: homeassistant
 
@@ -296,6 +275,15 @@ sensor:
               {id(icon_pot_s3), id(val_pot_s3)}
           };
           sort_and_update_moisture_slots(vals, icons, slots);
+          // Popup details pots : humidite + statut des 5 cartes FIXES (carte N = capteur N)
+          PotDetailUI cards[5] = {
+              {id(icon_pot_d1), id(lbl_pot_d1_moist), id(lbl_pot_d1_status)},
+              {id(icon_pot_d2), id(lbl_pot_d2_moist), id(lbl_pot_d2_status)},
+              {id(icon_pot_d3), id(lbl_pot_d3_moist), id(lbl_pot_d3_status)},
+              {id(icon_pot_d4), id(lbl_pot_d4_moist), id(lbl_pot_d4_status)},
+              {id(icon_pot_d5), id(lbl_pot_d5_moist), id(lbl_pot_d5_status)}
+          };
+          update_pots_popup_moisture_ui(vals, cards);
 
   - platform: homeassistant
     id: moisture_2
@@ -316,3 +304,111 @@ sensor:
     id: moisture_5
     entity_id: ${entity_plante_5}
     on_value: *moisture_on_value
+
+  # --- Détails pots (popup appui long) : fertilité EC / éclairement / température /
+  # batterie des 5 capteurs. Chaque on_value pousse texte+couleur via
+  # update_pot_metric_ui (tab5_custom.cpp) — aucune logique de présentation ici. ---
+  - platform: homeassistant
+    id: pot1_ec
+    entity_id: ${entity_plante_1_ec}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d1_ec), x, PotMetric::CONDUCTIVITY);'
+  - platform: homeassistant
+    id: pot1_lux
+    entity_id: ${entity_plante_1_lux}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d1_lux), x, PotMetric::ILLUMINANCE);'
+  - platform: homeassistant
+    id: pot1_temp
+    entity_id: ${entity_plante_1_temp}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d1_temp), x, PotMetric::TEMPERATURE);'
+  - platform: homeassistant
+    id: pot1_bat
+    entity_id: ${entity_plante_1_bat}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d1_bat), x, PotMetric::BATTERY);'
+
+  - platform: homeassistant
+    id: pot2_ec
+    entity_id: ${entity_plante_2_ec}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d2_ec), x, PotMetric::CONDUCTIVITY);'
+  - platform: homeassistant
+    id: pot2_lux
+    entity_id: ${entity_plante_2_lux}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d2_lux), x, PotMetric::ILLUMINANCE);'
+  - platform: homeassistant
+    id: pot2_temp
+    entity_id: ${entity_plante_2_temp}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d2_temp), x, PotMetric::TEMPERATURE);'
+  - platform: homeassistant
+    id: pot2_bat
+    entity_id: ${entity_plante_2_bat}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d2_bat), x, PotMetric::BATTERY);'
+
+  - platform: homeassistant
+    id: pot3_ec
+    entity_id: ${entity_plante_3_ec}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d3_ec), x, PotMetric::CONDUCTIVITY);'
+  - platform: homeassistant
+    id: pot3_lux
+    entity_id: ${entity_plante_3_lux}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d3_lux), x, PotMetric::ILLUMINANCE);'
+  - platform: homeassistant
+    id: pot3_temp
+    entity_id: ${entity_plante_3_temp}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d3_temp), x, PotMetric::TEMPERATURE);'
+  - platform: homeassistant
+    id: pot3_bat
+    entity_id: ${entity_plante_3_bat}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d3_bat), x, PotMetric::BATTERY);'
+
+  - platform: homeassistant
+    id: pot4_ec
+    entity_id: ${entity_plante_4_ec}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d4_ec), x, PotMetric::CONDUCTIVITY);'
+  - platform: homeassistant
+    id: pot4_lux
+    entity_id: ${entity_plante_4_lux}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d4_lux), x, PotMetric::ILLUMINANCE);'
+  - platform: homeassistant
+    id: pot4_temp
+    entity_id: ${entity_plante_4_temp}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d4_temp), x, PotMetric::TEMPERATURE);'
+  - platform: homeassistant
+    id: pot4_bat
+    entity_id: ${entity_plante_4_bat}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d4_bat), x, PotMetric::BATTERY);'
+
+  - platform: homeassistant
+    id: pot5_ec
+    entity_id: ${entity_plante_5_ec}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d5_ec), x, PotMetric::CONDUCTIVITY);'
+  - platform: homeassistant
+    id: pot5_lux
+    entity_id: ${entity_plante_5_lux}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d5_lux), x, PotMetric::ILLUMINANCE);'
+  - platform: homeassistant
+    id: pot5_temp
+    entity_id: ${entity_plante_5_temp}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d5_temp), x, PotMetric::TEMPERATURE);'
+  - platform: homeassistant
+    id: pot5_bat
+    entity_id: ${entity_plante_5_bat}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d5_bat), x, PotMetric::BATTERY);'

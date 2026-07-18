@@ -45,6 +45,29 @@ entity_plante_3: sensor.your_plant_3_moisture
 entity_plante_4: sensor.your_plant_4_moisture
 entity_plante_5: sensor.your_plant_5_moisture
 
+# --- Détails pots (popup appui long) : conductivité EC, éclairement, température,
+#     batterie de chaque capteur. Capteurs BLE type Xiaomi/HHCC Flower Care. ---
+entity_plante_1_ec: sensor.your_plant_1_conductivity
+entity_plante_1_lux: sensor.your_plant_1_illuminance
+entity_plante_1_temp: sensor.your_plant_1_temperature
+entity_plante_1_bat: sensor.your_plant_1_battery
+entity_plante_2_ec: sensor.your_plant_2_conductivity
+entity_plante_2_lux: sensor.your_plant_2_illuminance
+entity_plante_2_temp: sensor.your_plant_2_temperature
+entity_plante_2_bat: sensor.your_plant_2_battery
+entity_plante_3_ec: sensor.your_plant_3_conductivity
+entity_plante_3_lux: sensor.your_plant_3_illuminance
+entity_plante_3_temp: sensor.your_plant_3_temperature
+entity_plante_3_bat: sensor.your_plant_3_battery
+entity_plante_4_ec: sensor.your_plant_4_conductivity
+entity_plante_4_lux: sensor.your_plant_4_illuminance
+entity_plante_4_temp: sensor.your_plant_4_temperature
+entity_plante_4_bat: sensor.your_plant_4_battery
+entity_plante_5_ec: sensor.your_plant_5_conductivity
+entity_plante_5_lux: sensor.your_plant_5_illuminance
+entity_plante_5_temp: sensor.your_plant_5_temperature
+entity_plante_5_bat: sensor.your_plant_5_battery
+
 # --- Layout météo (généralement inchangé) ---
 meteo_cell_width: "230"
 meteo_cell_height: "275"

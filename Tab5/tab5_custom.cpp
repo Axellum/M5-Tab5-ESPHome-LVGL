@@ -1383,6 +1383,81 @@ void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
     }
 }
 
+// =============================================================================
+// Popup details pots : 5 cartes fixes (humidite/statut + EC/lux/temp/batterie)
+// =============================================================================
+
+uint32_t get_battery_color(float x) {
+    if (isnan(x)) return UIColor::INACTIVE;
+    if (x > 80.0f) return UIColor::SUCCESS;
+    if (x > 40.0f) return UIColor::INFO;
+    if (x >= 20.0f) return UIColor::WARNING;
+    return UIColor::ERROR;
+}
+
+void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]) {
+    for (int i = 0; i < 5; i++) {
+        if (cards[i].icon_lbl == nullptr || cards[i].moist_lbl == nullptr
+            || cards[i].status_lbl == nullptr) {
+            continue;
+        }
+        const float v = values[i];
+        const uint32_t c = get_humidity_color(v);  // NaN -> MOISTURE_NAN (gris)
+        lv_obj_set_style_text_color(cards[i].icon_lbl, lv_color_hex(c), LV_PART_MAIN);
+        if (isnan(v)) {
+            lv_label_set_text(cards[i].moist_lbl, "--");
+            lv_obj_set_style_text_color(cards[i].moist_lbl, lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
+            lv_label_set_text(cards[i].status_lbl, "Hors ligne");
+            lv_obj_set_style_text_color(cards[i].status_lbl, lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+            continue;
+        }
+        char buf[12];
+        snprintf(buf, sizeof(buf), "%.0f %%", v);
+        lv_label_set_text(cards[i].moist_lbl, buf);
+        lv_obj_set_style_text_color(cards[i].moist_lbl, lv_color_hex(c), LV_PART_MAIN);
+        // Seuils alignes sur get_humidity_color : <=14 = zone rouge (ALERT_RED)
+        if (v <= 14.0f) {
+            lv_label_set_text(cards[i].status_lbl, "\xC3\x80 arroser !");
+            lv_obj_set_style_text_color(cards[i].status_lbl, lv_color_hex(UIColor::ERROR), LV_PART_MAIN);
+        } else if (v <= 20.0f) {
+            lv_label_set_text(cards[i].status_lbl, "Bient\xC3\xB4t sec");
+            lv_obj_set_style_text_color(cards[i].status_lbl, lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+        } else {
+            lv_label_set_text(cards[i].status_lbl, "OK");
+            lv_obj_set_style_text_color(cards[i].status_lbl, lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
+        }
+    }
+}
+
+void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric) {
+    if (value_lbl == nullptr) return;
+    if (isnan(x)) {
+        lv_label_set_text(value_lbl, "--");
+        lv_obj_set_style_text_color(value_lbl, lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
+        return;
+    }
+    char buf[16];
+    uint32_t color = UIColor::TEXT_SOFT;
+    switch (metric) {
+        case PotMetric::CONDUCTIVITY:
+            snprintf(buf, sizeof(buf), "%.0f \xC2\xB5S/cm", x);
+            break;
+        case PotMetric::ILLUMINANCE:
+            snprintf(buf, sizeof(buf), "%.0f lx", x);
+            break;
+        case PotMetric::TEMPERATURE:
+            snprintf(buf, sizeof(buf), "%.1f \xC2\xB0" "C", x);
+            color = get_temperature_color(x);
+            break;
+        case PotMetric::BATTERY:
+            snprintf(buf, sizeof(buf), "%.0f %%", x);
+            color = get_battery_color(x);
+            break;
+    }
+    lv_label_set_text(value_lbl, buf);
+    lv_obj_set_style_text_color(value_lbl, lv_color_hex(color), LV_PART_MAIN);
+}
+
 // Met a jour un label de temperature (texte + couleur gradient). Factorise
 // depuis temp_serre/temp_salon (tab5-sensors-domotique.yaml, Phase 3, #T164).
 void update_temp_ui(lv_obj_t* label, float x) {

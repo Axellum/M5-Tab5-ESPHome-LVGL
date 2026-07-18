@@ -1,0 +1,74 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file pots_popup.yaml
+# @role Popup plein écran détails plantes (carte 1250×690, 15 px des bords écran 1280×720).
+#       5 cartes de verre FIXES (carte N = capteur moisture_N, MÊME icône que le dashboard) :
+#       nom, icône colorée par l'humidité, % humidité, statut (OK / Bientôt sec /
+#       À arroser / Hors ligne) + 4 métriques (fertilité EC, éclairement, température,
+#       batterie du capteur). Ouvert par on_long_press de btn_pots_detail_zone
+#       (tab5-lvgl.yaml, zone tactile invisible sur les 4 slots pots du dashboard).
+# @architecture_constraint Contrairement aux 4 slots du dashboard (tri dynamique
+#       sort_and_update_moisture_slots), les 5 cartes sont FIXES. Les valeurs arrivent en
+#       continu : humidité+statut via update_pots_popup_moisture_ui (ancre
+#       &moisture_on_value), autres métriques via update_pot_metric_ui (capteurs
+#       pot*_ec/lux/temp/bat, tab5-sensors-domotique.yaml) — aucune synchro à l'ouverture.
+# @ai_instruction `scrollable: false` partout + croix = vrai bouton de verre 96×64
+#       (anti-décalage, même recette que console/lumière/clim v2) — NE PAS retirer.
+#       Les 5 cartes sont factorisées via pot_detail_card.yaml : pour renommer un pot,
+#       éditer `pot_nom` dans les vars du !include correspondant.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: pots_detail_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    # Voile sombre (tap = fermer) — opacité renforcée comme les autres popups v2
+    - button:
+        align: CENTER
+        width: 100%
+        height: 100%
+        bg_color: color_modal_scrim
+        bg_opa: 85%
+        border_width: 0
+        on_short_click:
+          - lambda: 'lv_obj_add_flag(id(pots_detail_popup), LV_OBJ_FLAG_HIDDEN);'
+
+    # Carte modale — 15 px des bords écran (1280×720)
+    - obj:
+        align: CENTER
+        width: 1250
+        height: 690
+        styles: style_modal_card
+        scrollable: false
+        scrollbar_mode: "OFF"
+        widgets:
+
+          # ═══ EN-TÊTE ═══
+          - label: { text: "\U000F024A", align: TOP_LEFT, x: 28, y: 26, text_font: mdi_font_45, text_color: color_success }
+          - label: { text: "Mes Plantes", align: TOP_LEFT, x: 92, y: 26, text_font: roboto_45_b, text_color: color_text }
+
+          # Croix de fermeture — vrai bouton de verre 96×64 (cible tactile large, anti-décalage)
+          - button:
+              align: TOP_RIGHT
+              x: -20
+              y: 16
+              width: 96
+              height: 64
+              styles: style_clim_btn
+              pressed:
+                bg_opa: 30%
+              on_short_click:
+                - lambda: 'lv_obj_add_flag(id(pots_detail_popup), LV_OBJ_FLAG_HIDDEN);'
+              widgets:
+                - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+
+          # ═══ 5 CARTES POTS (ordre = plante_1..plante_5, icônes du dashboard) ═══
+          - !include { file: pot_detail_card.yaml, vars: { pot_idx: "1", x_pos: "24", pot_nom: "Pot 1", icon: "\U000F0E66" } }
+          - !include { file: pot_detail_card.yaml, vars: { pot_idx: "2", x_pos: "268", pot_nom: "Pot 2", icon: "\U000F09F1" } }
+          - !include { file: pot_detail_card.yaml, vars: { pot_idx: "3", x_pos: "512", pot_nom: "Pot 3", icon: "\U000F0D08" } }
+          - !include { file: pot_detail_card.yaml, vars: { pot_idx: "4", x_pos: "756", pot_nom: "Pot 4", icon: "\U000F024A" } }
+          - !include { file: pot_detail_card.yaml, vars: { pot_idx: "5", x_pos: "1000", pot_nom: "Pot 5", icon: "\U000F02E5" } }
