@@ -1,0 +1,81 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par pots_popup.yaml.
+# vars : pot_idx (1-5 — suffixe des ids icon_pot_d*/lbl_pot_d*_*), x_pos (X de la carte
+#        dans la modale), pot_nom (titre affiché), icon (glyphe MDI du pot — MÊME icône
+#        que le dashboard, tableau icons[] de l'ancre &moisture_on_value).
+# Ne rien assigner ici : icône/valeurs/couleurs sont poussées en continu par
+# update_pots_popup_moisture_ui et update_pot_metric_ui (tab5_custom.cpp) via les
+# capteurs de tab5-sensors-domotique.yaml.
+# ═══════════════════════════════════════════════════════
+obj:
+  align: TOP_LEFT
+  x: ${x_pos}
+  y: 100
+  width: 226
+  height: 566
+  styles: style_glass_card
+  scrollable: false
+  widgets:
+    # Nom + icône plante (couleur = humidité, comme les slots du dashboard)
+    - label: { text: "${pot_nom}", align: TOP_MID, y: 16, text_font: roboto_32_b, text_color: color_text }
+    - label: { id: "icon_pot_d${pot_idx}", text: "${icon}", align: TOP_MID, y: 58, text_font: mdi_font_56, text_color: color_text_dim }
+
+    # Humidité du sol (grande valeur) + statut arrosage (OK / Bientôt sec / À arroser / Hors ligne)
+    - label: { id: "lbl_pot_d${pot_idx}_moist", text: "--", align: TOP_MID, y: 130, text_font: roboto_45_b, text_color: color_text_dim }
+    - label: { id: "lbl_pot_d${pot_idx}_status", text: "", align: TOP_MID, y: 188, text_font: roboto_22, text_color: color_text_dim }
+
+    # ─── Fertilité (conductivité EC, µS/cm) ───
+    - obj:
+        align: TOP_LEFT
+        x: 14
+        y: 236
+        width: 198
+        height: 74
+        styles: style_transparent
+        scrollable: false
+        widgets:
+          - label: { text: "\U000F0241", align: LEFT_MID, x: 2, text_font: mdi_font_32, text_color: color_accent_alt }
+          - label: { text: "Fertilité", align: TOP_LEFT, x: 50, y: 12, text_font: roboto_22, text_color: color_text_dim }
+          - label: { id: "lbl_pot_d${pot_idx}_ec", text: "--", align: TOP_LEFT, x: 50, y: 40, text_font: roboto_22, text_color: color_text }
+
+    # ─── Éclairement (lx) ───
+    - obj:
+        align: TOP_LEFT
+        x: 14
+        y: 316
+        width: 198
+        height: 74
+        styles: style_transparent
+        scrollable: false
+        widgets:
+          - label: { text: "\U000F05A9", align: LEFT_MID, x: 2, text_font: mdi_font_32, text_color: color_gold }
+          - label: { text: "Lumière", align: TOP_LEFT, x: 50, y: 12, text_font: roboto_22, text_color: color_text_dim }
+          - label: { id: "lbl_pot_d${pot_idx}_lux", text: "--", align: TOP_LEFT, x: 50, y: 40, text_font: roboto_22, text_color: color_text }
+
+    # ─── Température (°C, gradient get_temperature_color) ───
+    - obj:
+        align: TOP_LEFT
+        x: 14
+        y: 396
+        width: 198
+        height: 74
+        styles: style_transparent
+        scrollable: false
+        widgets:
+          - label: { text: "\U000F050F", align: LEFT_MID, x: 2, text_font: mdi_font_32, text_color: color_info }
+          - label: { text: "Température", align: TOP_LEFT, x: 50, y: 12, text_font: roboto_22, text_color: color_text_dim }
+          - label: { id: "lbl_pot_d${pot_idx}_temp", text: "--", align: TOP_LEFT, x: 50, y: 40, text_font: roboto_22, text_color: color_text }
+
+    # ─── Batterie du capteur (%, échelle get_battery_color) ───
+    - obj:
+        align: TOP_LEFT
+        x: 14
+        y: 476
+        width: 198
+        height: 74
+        styles: style_transparent
+        scrollable: false
+        widgets:
+          - label: { text: "\U000F0079", align: LEFT_MID, x: 2, text_font: mdi_font_32, text_color: color_success }
+          - label: { text: "Batterie", align: TOP_LEFT, x: 50, y: 12, text_font: roboto_22, text_color: color_text_dim }
+          - label: { id: "lbl_pot_d${pot_idx}_bat", text: "--", align: TOP_LEFT, x: 50, y: 40, text_font: roboto_22, text_color: color_text }

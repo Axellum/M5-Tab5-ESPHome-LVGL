@@ -274,6 +274,22 @@ lvgl:
         # ==================== MOISTURE SENSORS ====================
         - !include ui_components/moisture_sensors.yaml
 
+        # Zone tactile invisible par-dessus les 4 slots pots (même géométrie que
+        # moisture_sensors_card) : appui long -> popup détails plantes. Un tap court
+        # reste sans effet, comme avant.
+        - button:
+            id: btn_pots_detail_zone
+            align: TOP_MID
+            x: 0
+            y: 230
+            width: 350
+            height: 80
+            styles: style_invisible
+            on_long_press:
+              - lambda: |-
+                  lv_obj_clear_flag(id(pots_detail_popup), LV_OBJ_FLAG_HIDDEN);
+                  lv_obj_move_foreground(id(pots_detail_popup));
+
         # ==================== CLIMATE CONTROL (MIDDLE RIGHT) ====================
 
         - !include ui_components/climate_card.yaml
@@ -563,3 +579,4 @@ lvgl:
         - !include ui_components/climate_popup.yaml
         - !include ui_components/light_popup.yaml
         - !include ui_components/tv_remote_popup.yaml
+        - !include ui_components/pots_popup.yaml

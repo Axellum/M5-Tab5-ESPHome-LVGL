@@ -33,8 +33,9 @@ graph TD
         LVGL["tab5-lvgl.yaml<br/>565 lignes<br/>page_main + swipe prévisions + btns console/TV"]
     end
 
-    subgraph UI["ui_components/*.yaml (17 fichiers, inclus par tab5-lvgl.yaml)"]
+    subgraph UI["ui_components/*.yaml (19 fichiers, inclus par tab5-lvgl.yaml)"]
         MOIST["moisture_sensors.yaml (64L)"]
+        POTSPOP["pots_popup.yaml (74L)<br/>pot_detail_card.yaml (81L, template ×5)<br/>détails plantes : humidité/statut + EC/lux/temp/batterie"]
         CLIMCARD["climate_card.yaml (104L)"]
         CLIMPOP["climate_popup.yaml (327L)<br/>3 cartes de verre : MODE / TEMPÉRATURE / OPTIONS"]
         CLIMBTN["climate_hvac_mode_btn.yaml (21L)<br/>climate_preset_toggle_btn.yaml (21L)<br/>templates paramétrés !include+vars"]
@@ -50,8 +51,8 @@ graph TD
     end
 
     subgraph CPP["C++ (esphome: includes:)"]
-        HFILE["tab5_custom.h (322L)<br/>déclarations, structs, UIColor::, MeteoIcon::"]
-        CFILE["tab5_custom.cpp (1593L)<br/>toute la logique LVGL non-triviale"]
+        HFILE["tab5_custom.h (343L)<br/>déclarations, structs, UIColor::, MeteoIcon::"]
+        CFILE["tab5_custom.cpp (1668L)<br/>toute la logique LVGL non-triviale"]
     end
 
     subgraph HWCOMP["Composants matériels (natifs + custom)"]
@@ -137,23 +138,23 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 |---|---|---|---|---|
 | `tab5-hardware.yaml` | 376 | Bas niveau : display MIPI-DSI + tactile ST7123, DAC ES8388 (plateforme `audio_dac:`) / ADC micro ES7210 (`audio_adc:`), I2S haut-parleur/micro, expander GPIO PI4IOE5V6408, `esp32_hosted` (co-proc WiFi ESP32-C6 via SDIO 20 MHz), `micro_wake_word` (2 modèles : `okay_nabu` + `Stop` armé/désarmé selon `volet_en_mouvement`)/`voice_assistant`, `ota:` | Hardware, audio, wake-words, OTA | `external_components: my_components/st7123` |
 | `tab5-sensors-diagnostics.yaml` | 287 | `wifi:`, switchs d'alim GPIO (WiFi/USB/5V ext/antenne), statut API HA, IP/SSID, uptime, RSSI, température coeur, RAM libre/loop time (`debug`), select antenne, horloge SNTP, `interval:` icône WiFi 5s + console 2s | Réseau WiFi, alimentation, diagnostics système | `tab5_custom.h` (`update_console_*`, `update_clock_date_ui`, `is_console_layer_visible`) |
-| `tab5-sensors-domotique.yaml` | 318 | Miroirs d'entités HA : humidité 5 plantes (triées dynamiquement), lumières chambre/salon/LED (+ 3 capteurs `attribute: brightness` pour la synchro live de l'arc du popup lumière), présence PC, batterie téléphone, températures/humidité salon/chambre/serre, audio (ampli, jack, wake word) | Capteurs domotique et miroirs d'entités HA | `tab5_custom.h` (`get_temperature_color`, `get_humidity_color`, `sort_and_update_moisture_slots`, `update_light_card_ui`, `update_temp_ui`, `sync_light_popup_brightness`) |
+| `tab5-sensors-domotique.yaml` | 414 | Miroirs d'entités HA : humidité 5 plantes (triées dynamiquement + 5 cartes fixes du popup détails), 20 capteurs détails pots (`pot*_ec/lux/temp/bat` — EC, éclairement, température, batterie), lumières chambre/salon/LED (+ 3 capteurs `attribute: brightness` pour la synchro live de l'arc du popup lumière), présence PC, batterie téléphone, températures/humidité salon/chambre/serre, audio (ampli, jack, wake word) | Capteurs domotique et miroirs d'entités HA | `tab5_custom.h` (`get_temperature_color`, `get_humidity_color`, `get_battery_color`, `sort_and_update_moisture_slots`, `update_pots_popup_moisture_ui`, `update_pot_metric_ui`, `update_light_card_ui`, `update_temp_ui`, `sync_light_popup_brightness`) |
 | `tab5-api-logic.yaml` | 492 | Le contrat réel avec HA : bloc `api: services:` (12 services). Chaque service `tab5_maj_*` reçoit un payload d'une automation HA et appelle une fonction `tab5_custom.cpp` via lambda | Contrat API HA↔Tab5 (clim, volet, planning, alertes météo France, probabilités UV/gel/neige, prévisions bulk, pluie 1h, panneau info, réponse vocale, alertes HA bulk) | `tab5_custom.h/.cpp`, IDs LVGL définis dans `tab5-lvgl.yaml`/`ui_components/*.yaml` |
 | `tab5-styles.yaml` | 331 | Thème "Dark Mode Slate" (glassmorphism) : tokens `color:`, déclarations `font:` (Roboto + MDI + police météo custom), `lvgl: style_definitions:` | Palette visuelle, typographie, styles réutilisables | Polices `Tab5/materialdesignicons-webfont.ttf`, `Tab5/IconeMeteo.ttf` |
 | `tab5-globals.yaml` | 140 | Tout l'état partagé entre fichiers (`globals:`) + l'`interval: 8s` qui fait tourner la carte centrale (planning/pluie/alertes/info + jusqu'à 4 bandeaux HA, actif seulement sur la fenêtre prévisions par défaut) | État global partagé, rotateur carte centrale | `tab5_custom.cpp` (`transition_widgets()`) |
 | `tab5-scripts.yaml` | 380 | Scripts ESPHome par familles : debounces (volume 150 ms, luminosité 200 ms, clim 250 ms), vocal (arm/disarm `Stop`, interrupt + ré-écoute, toggle assist, réponse vocale temporaire), rotateur central + dismiss (info, alertes HA 0-3), volet (fin de mouvement, feedback stop), popup lumière (`tab5_light_popup_show`). L'affichage temporaire du planning est passé en C++ (`show_temporary_planning()`) | Séquences temporisées, vocal, rotateur | `globals:`, `tab5_custom.cpp` |
-| `tab5-lvgl.yaml` | 565 | Layout complet : page unique 1280×720 (`page_main`), swipe gauche/droite = pagination prévisions 0-4 (zone `y ≥ 333` uniquement), console via `btn_control_console` + popup TV via `btn_control_tv` (plus de swipe haut/bas depuis le 14/07), boutons statut/mode vocal/horloge, carte centrale | Layout racine, navigation gestuelle | Tous les `ui_components/*.yaml`, `tab5_custom.cpp` (`handle_swipe_gesture`, `refresh_daily_forecast`, `refresh_hourly_forecast`) |
+| `tab5-lvgl.yaml` | 582 | Layout complet : page unique 1280×720 (`page_main`), swipe gauche/droite = pagination prévisions 0-4 (zone `y ≥ 333` uniquement), console via `btn_control_console` + popup TV via `btn_control_tv` (plus de swipe haut/bas depuis le 14/07), popup détails plantes via appui long sur les pots (`btn_pots_detail_zone`), boutons statut/mode vocal/horloge, carte centrale | Layout racine, navigation gestuelle | Tous les `ui_components/*.yaml`, `tab5_custom.cpp` (`handle_swipe_gesture`, `refresh_daily_forecast`, `refresh_hourly_forecast`) |
 
 ### 3.3 C++ core
 
 | Fichier | Lignes | Rôle exact | Fonctions clés |
 |---|---|---|---|
-| `tab5_custom.h` | 322 | Déclarations, structs (`DayForecastData`, `HourForecastData`, `WeatherHourSlot`, `WeatherDaySlot`, `MoistureSlotUI`, `HaAlertSlotUI`), namespace `MeteoIcon::` (codes UTF-8 police météo), namespace `UIColor::` (palette sémantique — **miroir exact des tokens `color:` YAML, à garder synchro manuellement**) | — |
-| `tab5_custom.cpp` | 1593 | Toute la logique LVGL non-triviale, gardée contre les `lv_obj_t*` nuls (LVGL pas encore initialisé) | `update_meteo_icon()` (icônes météo double-couche), `get_humidity_color()`/`get_temperature_color()` (gradients colorimétriques continus), `parse_and_update_heures_bulk()`/`parse_and_update_jours_bulk()` (parsing `strtok_r` in-place, garde OOM à 2048 octets), `refresh_daily_forecast()`/`refresh_hourly_forecast()`, `handle_swipe_gesture()` (pagination, zone `y ≥ 333`), `show_temporary_planning()` (affichage 6 s + restauration du panneau actif), `update_info_text_ui()` (panneau info, recolor conditionnel), `update_central_forecast_page_ui()` (overlay titre de page hors accueil), `normalize_text_utf8()` (accents Latin-1→UTF-8 des textes HA), `update_light_card_ui()` (factorisée #T164, ex-triplée), `sort_and_update_moisture_slots()` (tri bubble 5→4 slots), `transition_widgets()` (animation glissement+fondu 450ms) |
+| `tab5_custom.h` | 343 | Déclarations, structs (`DayForecastData`, `HourForecastData`, `WeatherHourSlot`, `WeatherDaySlot`, `MoistureSlotUI`, `PotDetailUI`, `HaAlertSlotUI`), enum `PotMetric`, namespace `MeteoIcon::` (codes UTF-8 police météo), namespace `UIColor::` (palette sémantique — **miroir exact des tokens `color:` YAML, à garder synchro manuellement**) | — |
+| `tab5_custom.cpp` | 1668 | Toute la logique LVGL non-triviale, gardée contre les `lv_obj_t*` nuls (LVGL pas encore initialisé) | `update_meteo_icon()` (icônes météo double-couche), `get_humidity_color()`/`get_temperature_color()`/`get_battery_color()` (gradients/échelles colorimétriques), `parse_and_update_heures_bulk()`/`parse_and_update_jours_bulk()` (parsing `strtok_r` in-place, garde OOM à 2048 octets), `refresh_daily_forecast()`/`refresh_hourly_forecast()`, `handle_swipe_gesture()` (pagination, zone `y ≥ 333`), `show_temporary_planning()` (affichage 6 s + restauration du panneau actif), `update_info_text_ui()` (panneau info, recolor conditionnel), `update_central_forecast_page_ui()` (overlay titre de page hors accueil), `normalize_text_utf8()` (accents Latin-1→UTF-8 des textes HA), `update_light_card_ui()` (factorisée #T164, ex-triplée), `sort_and_update_moisture_slots()` (tri bubble 5→4 slots), `update_pots_popup_moisture_ui()`/`update_pot_metric_ui()` (popup détails plantes : humidité/statut + EC/lux/temp/batterie), `transition_widgets()` (animation glissement+fondu 450ms) |
 
 **Règle d'architecture vérifiée et respectée dans le code** (`Tab5/README.md:44`) : les `sensor:`/`text_sensor:` YAML ne manipulent jamais `lv_obj_*` directement — ils appellent toujours une fonction `tab5_custom.cpp`. Confirmé par lecture de `tab5-sensors-diagnostics.yaml`/`tab5-sensors-domotique.yaml` (tous les `on_value:` appellent une fonction C++ nommée, sauf les cas triviaux de couleur d'icône à 2-3 lignes qui restent inline).
 
-### 3.4 Composants UI (`ui_components/*.yaml`, 17 fichiers inclus par `tab5-lvgl.yaml`)
+### 3.4 Composants UI (`ui_components/*.yaml`, 19 fichiers inclus par `tab5-lvgl.yaml`)
 
 | Fichier | Lignes | Rôle | Statut factorisation |
 |---|---|---|---|
@@ -174,6 +175,8 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 | `light_color_preset_btn.yaml` | 25 | Template pastille couleur ronde 78 px | Réutilisé 12× |
 | `tv_remote_popup.yaml` | 394 | Popup télécommande TV Samsung plein écran (1230×670) : power, pad, volume, chaînes, rangée lecture — `remote.send_command`/`remote.toggle` sur `${entity_tv_remote}` ; ouvert par `btn_control_tv` ou long-press carte PC | — |
 | `moisture_sensors.yaml` | 64 | 4 slots UI humidité plantes (tri dynamique sur 5 capteurs BLE) | — |
+| `pots_popup.yaml` | 74 | Popup détails plantes plein écran (1250×690) : 5 cartes **fixes** (carte N = capteur `moisture_N`) — nom, icône colorée par humidité, % humidité, statut arrosage + EC/éclairement/température/batterie ; ouvert par appui long sur les pots (`btn_pots_detail_zone`) | Cartes factorisées via `pot_detail_card.yaml` (5 instances) |
+| `pot_detail_card.yaml` | 81 | Template carte pot individuelle (226×566, ids paramétrés `${pot_idx}`) | Réutilisé 5× |
 
 ### 3.5 Composant matériel custom (`my_components/st7123/`)
 
@@ -257,6 +260,7 @@ Tous ces fichiers sont **gitignorés** (`.gitignore:20-23`) — ce sont les vrai
 | 16/07 | Console Système v2 (4 cartes + GESTION, overlays de confirmation, retrait `reboot_armed`) | #44 |
 | 16/07 | Tuiles Domo unifiées + layout horloge/clim ; recalage télécommande TV | #45, #46 |
 | 16/07 | Popup lumière v2 (sélecteur, % live, 12 pastilles) ; popup clim v2 (modes empilés, cible optimiste, Brise) | #47, #49 |
+| 18/07 | Popup détails plantes (appui long sur les pots : humidité/statut + EC/lux/temp/batterie, 20 capteurs `pot*_*`) | #52 |
 
 ---
 

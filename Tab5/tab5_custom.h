@@ -213,6 +213,27 @@ struct MoistureSlotUI {
 void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
     MoistureSlotUI slots[4]);
 
+// Couleur batterie par niveau (échelle icône téléphone du bandeau, réutilisée
+// par la ligne Batterie du popup détails pots).
+uint32_t get_battery_color(float x);
+
+// Popup détails pots (appui long sur les slots pots) : 5 cartes FIXES, carte N =
+// capteur moisture_N (pas de tri dynamique, contrairement au dashboard).
+struct PotDetailUI {
+    lv_obj_t* icon_lbl;    // icône plante (couleur = humidité)
+    lv_obj_t* moist_lbl;   // grande valeur % humidité
+    lv_obj_t* status_lbl;  // OK / Bientôt sec / À arroser / Hors ligne
+};
+
+// Humidité + statut des 5 cartes — appelé par l'ancre &moisture_on_value
+// (tab5-sensors-domotique.yaml) à chaque mise à jour d'un des 5 capteurs.
+void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]);
+
+// Une métrique secondaire d'une carte pot (texte + couleur). L'humidité passe par
+// update_pots_popup_moisture_ui, pas par cet enum.
+enum class PotMetric { CONDUCTIVITY, ILLUMINANCE, TEMPERATURE, BATTERY };
+void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric);
+
 // Met a jour l'icone carte (epaule j2/j3/j4), l'icone/label du switch associe et le
 // bouton popup power si c'est la lampe actuellement affichee. Factorise depuis les 3
 // blocs identiques light_chambre_state/light_salon_state/light_led_state (#T164).
