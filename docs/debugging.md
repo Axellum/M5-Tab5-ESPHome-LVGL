@@ -11,7 +11,7 @@ This is a short methodology note, not an incident log — see [`docs/troubleshoo
 - **Live ESPHome logs** (`esphome logs tab5-ha-hmi.yaml`, or the ESPHome dashboard's log view) — the primary source of truth for boot sequence issues, API connection state, and any `ESP_LOG*` line in the C++ code. Close the session when you're done; a leaked `esphome logs` process holds an API connection open indefinitely (see the "API connections exhausted" entry in `troubleshooting.md`).
 - **The on-screen console overlay** (`console_sys.yaml`, opened via the console button `btn_control_console`, top right — not by swipe since the 14/07/2026 rework) — 4 glass cards: MÉMOIRE (SRAM/PSRAM, max free block, flash), RÉSEAU (SSID/IP/signal + HA connection status), SYSTÈME (uptime, CPU temperature, loop time, volume) and GESTION (screen re-push = re-arm the `is_primary_active` flag + push automation, automation reload, HA restart and device reboot — the last two behind a confirm overlay, 16/07/2026 redesign). It is **not** a log viewer — for payload/event logs use `esphome logs`. Useful when you don't have a laptop connected but can see the screen.
 
-  ![Console overlay on the real device](images/tab5_photo_dashboard_weather.jpg)
+  ![Console overlay on the real device](images/tab5_photo_console_v2.jpg)
 
 - **Home Assistant's own logs** for anything upstream of the device — automation trigger/condition evaluation, template rendering errors, service call rejections.
 
@@ -44,7 +44,7 @@ Note de méthodologie, pas un journal d'incidents — voir [`docs/troubleshootin
 - **Logs ESPHome en direct** (`esphome logs tab5-ha-hmi.yaml`, ou la vue logs du dashboard ESPHome) — source de vérité principale pour les problèmes de séquence de boot, l'état des connexions API, et toute ligne `ESP_LOG*` du code C++. Fermer la session une fois terminée ; un process `esphome logs` oublié occupe une connexion API indéfiniment (voir "connexions API épuisées" dans `troubleshooting.md`).
 - **La Console Système à l'écran** (`console_sys.yaml`, ouverte via le bouton console `btn_control_console`, en haut à droite — plus par swipe depuis la refonte du 14/07/2026) — 4 cartes : MÉMOIRE (SRAM/PSRAM, bloc max, flash), RÉSEAU (SSID/IP/signal + état connexion HA), SYSTÈME (uptime, température CPU, temps de boucle, volume) et GESTION (MAJ écran = re-push du flag `is_primary_active` + automation de push, reload des automations, redémarrage HA et reboot tablette — les deux derniers derrière un overlay de confirmation, refonte du 16/07/2026). Ce n'est **pas** un visualiseur de logs — pour les payloads/événements, utiliser `esphome logs`.
 
-  ![Overlay console sur l'appareil réel](images/tab5_photo_dashboard_weather.jpg)
+  ![Overlay console sur l'appareil réel](images/tab5_photo_console_v2.jpg)
 
 - **Les logs Home Assistant** pour tout ce qui est en amont de l'appareil — évaluation trigger/condition d'automation, erreurs de rendu de template, rejets d'appel de service.
 
