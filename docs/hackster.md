@@ -144,7 +144,7 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml   # map YOUR entity I
 esphome run tab5-ha-hmi.yaml                                  # USB first time, OTA after
 ```
 
-The firmware is **modular YAML**: 8 packages split by concern (hardware, sensors, API contract, styles, layout, globals, scripts) plus 17 reusable UI components and two C++ files holding all the non-trivial logic. Every file opens with an `[AI-CONTEXT]` header — a local "system prompt" so any AI (or human) editing it knows the constraints. CI compiles every PR.
+The firmware is **modular YAML**: 8 packages split by concern (hardware, sensors, API contract, styles, layout, globals, scripts) plus 19 reusable UI components and two C++ files holding all the non-trivial logic. Every file opens with an `[AI-CONTEXT]` header — a local "system prompt" so any AI (or human) editing it knows the constraints. CI compiles every PR.
 
 **Try it with zero Home Assistant:** flash, then run the demo pusher — it feeds synthetic weather/planning/climate/plant data over the native API:
 
@@ -177,7 +177,7 @@ Everything lives on a **single 1280×720 page** — no tab bar, no page switchin
 
 **#Screen 2: Weather at a flick.** The bottom band holds 5 swipeable windows: 2 of hourly forecast (15 slots) and 3 of 15-day daily forecast. Day names are color-coded against my *work planning* (cyan = today, green = day off, red = early shift — my favorite touch). Each daily card secretly doubles as a quick-action button: tap the icon area and it toggles the PC, the shutter, a light…
 
-**#Screen 3: Domotics strip / quick actions.** Domo view — PC, shutter, bedroom/living-room lights and LED strip.
+**#Screen 3: Domotics strip / quick actions.** Tap the house button and the forecast band flips to the Domo view — PC, shutter, bedroom/living-room lights and LED strip.
 
 📷 **[Photo — `tab5_photo_domo.jpg` — Domo / switches]**
 

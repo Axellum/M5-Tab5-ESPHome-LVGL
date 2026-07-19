@@ -98,7 +98,7 @@ A single 1280×720 page organized in functional areas, all driven by Home Assist
 - **TV remote** — fullscreen Samsung IR remote popup (power, pad, volume, channels, playback, mute…) opened from the UI; commands go through Home Assistant `remote.*` services
 - **Climate** — compact card + near-fullscreen popup in 3 glass cards: stacked mode buttons (cool / heat / dry / fan / off), a 320 px arc thermostat with optimistic target and debounced updates, presets (eco / boost / quiet) and airflow control (swing / Daikin "Brise" `windnice`); controls are dimmed (not hidden) when the AC is off
 - **Lights** — near-fullscreen popup in 3 glass cards: 3-light selector (switch lights without closing the popup), live-% brightness arc (debounced) with 10/35/65/100 % shortcuts, 3 named whites + 12 round color swatches
-- **Plants** — soil moisture card for up to 5 BLE plant sensors, dynamically sorted, color-coded by level (red = dry, green = optimal, blue = too wet)
+- **Plants** — soil moisture card for up to 5 BLE plant sensors, dynamically sorted, color-coded by level (red = dry, green = optimal, blue = too wet); a long press opens a 5-card detail popup (moisture + watering status, fertility, light, temperature, sensor battery)
 - **Console** — diagnostics + HA management overlay (RAM/PSRAM, Wi-Fi, uptime, volume, re-push screen, reload automations, restart HA / reboot tablet behind confirm), opened via its dedicated button
 
 **Voice assistant** — runs `okay_nabu` wake-word detection locally on the ESP32-P4. The microphone icon changes color to show the pipeline state in real time: grey (idle) → green (listening) → orange (processing) → blue (speaking) → red (error). Wake-word detection can be toggled on/off from the UI; tapping the mic icon triggers push-to-talk. A second on-device wake word — **"Stop"** — is armed only while the roller shutter is moving and halts it instantly, with no wake phrase and no pipeline round-trip; tapping the mic while the assistant is speaking interrupts the reply and re-opens listening. Two modes selectable from the UI: standard Home Assistant agent, or a **Discussion** pipeline backed by [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) (local STT/TTS via Wyoming, engine routing for deterministic HA commands vs LLM chat).
@@ -199,9 +199,11 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── tab5-lvgl.yaml        # UI layout — screens, widgets, icons
 │   ├── tab5-globals.yaml     # Shared global variables
 │   ├── tab5-scripts.yaml     # ESPHome script blocks
+│   ├── ui_components/        # 19 reusable LVGL components (popups, cards, buttons)
 │   ├── tab5_custom.h         # C++ declarations
 │   └── tab5_custom.cpp       # C++ implementations (parsers, helpers)
 ├── HomeAssistant_Config/     # Automations, scripts, template sensors for HA
+├── tools/demo/               # Standalone demo pusher (no HA required)
 └── docs/                     # Extended documentation
 ```
 
@@ -304,7 +306,7 @@ Une page unique 1280×720 organisée en zones fonctionnelles, toutes alimentées
 - **Télécommande TV** — popup plein écran Samsung (power, pad, volume, chaînes, lecture, muet…) ouverte depuis l’UI ; commandes via les services Home Assistant `remote.*`
 - **Clim** — carte compacte + popup quasi plein écran en 3 cartes de verre : modes empilés (froid / chaud / sec / ventilation / arrêt), arc thermostat 320 px avec cible optimiste et envois débouncés, presets (éco / boost / silence) et flux d'air (oscillation / « Brise » Daikin `windnice`) ; les contrôles sont estompés (non cachés) quand la clim est éteinte
 - **Lumières** — popup quasi plein écran en 3 cartes de verre : sélecteur 3 lumières (changer de lumière sans fermer le popup), arc de luminosité avec % en direct (débouncé) et raccourcis 10/35/65/100 %, 3 blancs nommés + 12 pastilles couleur rondes
-- **Plantes** — carte d'humidité du sol pour jusqu'à 5 capteurs BLE, triés dynamiquement, code couleur par niveau (rouge = sec, vert = optimal, bleu = trop humide)
+- **Plantes** — carte d'humidité du sol pour jusqu'à 5 capteurs BLE, triés dynamiquement, code couleur par niveau (rouge = sec, vert = optimal, bleu = trop humide) ; un appui long ouvre un popup détail à 5 cartes (humidité + statut d'arrosage, fertilité, lumière, température, batterie du capteur)
 - **Console** — overlay diagnostics + gestion HA (RAM/PSRAM, Wi-Fi, uptime, volume, re-pousse écran, reload automations, restart HA / reboot tablette derrière confirmation), ouvert via son bouton dédié
 
 **Assistant vocal** — détection wake-word `okay_nabu` en local sur l’ESP32-P4. L’icône micro change de couleur : gris (repos) → vert (écoute) → orange (traitement) → bleu (synthèse) → rouge (erreur). Wake-word on/off depuis l’UI ; tap micro = push-to-talk. Un second wake word local — **« Stop »** — n’est armé que pendant que le volet bouge et l’arrête instantanément, sans phrase d’activation ni aller-retour pipeline ; un tap sur le micro pendant que l’assistant parle interrompt la réponse et relance l’écoute. Deux modes : agent Home Assistant standard, ou pipeline **Discussion** branché sur [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) (STT/TTS locaux Wyoming, routage moteur pour commandes HA déterministes vs chat LLM).
