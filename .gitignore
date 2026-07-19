@@ -28,3 +28,6 @@ HomeAssistant_Config/scripts_tab5.yaml
 HomeAssistant_Config/template_sensors_meteo_tab5.yaml
 Tab5/tts_library/
 Tab5/tts_library_v2/
+
+# Cache TTS Piper local (HA / moteur) — pas utilisé par le firmware
+audio_lib/
