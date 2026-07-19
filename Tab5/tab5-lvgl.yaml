@@ -184,6 +184,19 @@ lvgl:
               - label: { id: lbl_time, text: "19:50", align: TOP_MID, y: 10, text_font: roboto_130_b, text_color: color_text }
               - label: { id: lbl_date, text: "Jeu 02 Avr", align: TOP_MID, y: 140, text_font: roboto_45, text_color: color_text }
 
+        # Zone tactile invisible par-dessus l'horloge/date : appui long -> popup
+        # calendrier mensuel. Un tap court reste sans effet, comme avant.
+        - button:
+            id: btn_clock_calendar_zone
+            align: TOP_MID
+            x: 0
+            y: 5
+            width: 401
+            height: 200
+            styles: style_invisible
+            on_long_press:
+              - script.execute: tab5_calendar_open
+
         # --- Top Left: Status Icons (Small) ---
         # TV = icon_card_pc (épaule carte J0, moniteur) — pas d'icône TV ici
         - label: { id: icon_pc, text: "\U000F0379", align: TOP_LEFT, x: 10, y: 10, text_font: mdi_font_26, text_color: color_text_dim }
@@ -580,3 +593,4 @@ lvgl:
         - !include ui_components/light_popup.yaml
         - !include ui_components/tv_remote_popup.yaml
         - !include ui_components/pots_popup.yaml
+        - !include ui_components/calendar_popup.yaml

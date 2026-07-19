@@ -287,6 +287,56 @@ void hide_vocal_response_ui(
     lv_obj_t* planning_wrap, lv_obj_t* rain_wrap, lv_obj_t* alert_cont, lv_obj_t* info_wrap,
     lv_obj_t* ha_wrap_0, lv_obj_t* ha_wrap_1, lv_obj_t* ha_wrap_2, lv_obj_t* ha_wrap_3);
 
+// =============================================================================
+// Popup calendrier mensuel (calendar_popup.yaml, appui long sur l'horloge)
+// Grille 7×6 lundi-en-tête calculée EN LOCAL (SNTP) ; HA enrichit chaque mois à
+// la demande via tab5_maj_calendrier_mois (codes 2 hex/jour + heures de travail)
+// et chaque jour tapé via tab5_maj_calendrier_jour (payload "type|texte;...").
+// =============================================================================
+
+// Bits des codes jour (2 chars hex par jour, poussés par script.tab5_calendrier_mois)
+constexpr int CAL_BIT_TRAVAIL  = 1;
+constexpr int CAL_BIT_FERIE    = 2;
+constexpr int CAL_BIT_VACANCES = 4;   // vacances scolaires (Zone A)
+constexpr int CAL_BIT_RDV      = 8;
+constexpr int CAL_BIT_ANNIV    = 16;
+
+struct CalCellUI {
+    lv_obj_t* cell;   // fond (teinte vacances scolaires) + bordure (aujourd'hui)
+    lv_obj_t* num;    // numéro du jour
+    lv_obj_t* sub;    // heures de travail "09:30-20:15"
+    lv_obj_t* dot;    // pastille RDV (dorée)
+    lv_obj_t* dot2;   // pastille anniversaire (rose)
+};
+
+struct CalDetailLineUI {
+    lv_obj_t* icon;   // glyphe MDI typé (travail/férié/vacances/RDV/anniv/fête)
+    lv_obj_t* txt;    // texte de la ligne
+};
+
+// Cache mensuel (vidé à chaque ouverture du popup pour repartir sur du frais)
+void cal_cache_clear();
+bool cal_month_needs_fetch(int year, int month);
+void cal_store_month_data(const std::string& annee, const std::string& mois,
+    const std::string& codes, const std::string& heures);
+
+// Rendu complet du mois affiché : numéros + alignement lundi-dimanche + weekend +
+// aujourd'hui calculés localement, enrichissement HA appliqué si le mois est en cache.
+void cal_render_month(CalCellUI cells[42], lv_obj_t* lbl_month,
+    int view_year, int view_month, int today_year, int today_month, int today_day);
+
+// "" si la cellule est hors mois, sinon date ISO "YYYY-MM-DD" du jour tapé.
+std::string cal_date_for_cell(int view_year, int view_month, int cell_idx);
+
+// Sous-popup détail : titre "Mardi 21 Juillet" + statut Chargement/HA hors ligne.
+void cal_show_day_detail_loading(lv_obj_t* day_popup, lv_obj_t* lbl_title,
+    lv_obj_t* lbl_status, CalDetailLineUI lines[6], const std::string& date_iso,
+    bool ha_online);
+
+// Remplit les 6 lignes du détail depuis le payload HA ("type|texte;...").
+void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
+    CalDetailLineUI lines[6]);
+
 // Couleurs semantiques centralisees (miroir des tokens YAML color:)
 // Utiliser dans les lambdas C++ au lieu des hex bruts
 // Palette "Dark Mode Slate" : miroir EXACT des tokens YAML color: (les garder synchro).

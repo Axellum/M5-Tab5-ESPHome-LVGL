@@ -1,0 +1,44 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 42x par calendar_popup.yaml
+# (grille 7 colonnes × 6 lignes, lundi en premier).
+# vars : idx (0-41 — suffixe des ids cal_*_${idx}), x / y (position de la cellule dans
+#        la carte modale, colonnes 25+c*172, lignes 124+r*88).
+# Ne rien assigner ici : numéro de jour, heures de travail, couleurs, pastilles et
+# surbrillance "aujourd'hui" sont posés par cal_render_month() (tab5_custom.cpp)
+# à l'ouverture, au changement de mois et à l'arrivée du push HA
+# tab5_maj_calendrier_mois. Un tap ouvre le détail du jour (tab5_cal_day_tap).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: "cal_cell_${idx}"
+  align: TOP_LEFT
+  x: ${x}
+  y: ${y}
+  width: 168
+  height: 84
+  radius: 12
+  bg_color: color_accent_alt
+  bg_opa: 0%
+  border_width: 2
+  border_color: color_accent
+  border_opa: 0%
+  pad_all: 0
+  scrollable: false
+  widgets:
+    # Numéro du jour (couleur : blanc / weekend estompé / férié rose / passé ardoise)
+    - label: { id: "cal_num_${idx}", text: "", align: TOP_LEFT, x: 10, y: 2, text_font: roboto_32_b, text_color: color_text }
+    # Heures de travail du jour ("09:30-20:15", rose si embauche avant 9h)
+    - label: { id: "cal_sub_${idx}", text: "", align: BOTTOM_MID, y: -4, text_font: roboto_22, text_color: color_text }
+    # Pastille RDV (dorée) + pastille anniversaire (rose)
+    - obj: { id: "cal_dot_${idx}", align: TOP_RIGHT, x: -8, y: 6, width: 14, height: 14, radius: 7, bg_color: color_gold, border_width: 0, hidden: true }
+    - obj: { id: "cal_dot2_${idx}", align: TOP_RIGHT, x: -28, y: 6, width: 14, height: 14, radius: 7, bg_color: color_warm_pink, border_width: 0, hidden: true }
+    # Zone tactile : tap court -> détail du jour
+    - button:
+        id: "cal_btn_${idx}"
+        align: CENTER
+        width: 168
+        height: 84
+        styles: style_invisible
+        on_short_click:
+          - script.execute:
+              id: tab5_cal_day_tap
+              cell_idx: ${idx}

@@ -4,6 +4,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-19 — Popup calendrier : appui long sur l'horloge
+- Nouveaux `calendar_popup.yaml` + template `cal_day_cell.yaml` (42 instances, grille 7×6 lundi-en-tête) : carte modale 1250×690 (15 px des bords) — en-tête (navigation ◀ mois ▶ + bouton « Aujourd'hui »), grille mensuelle avec numéro du jour, **heures de travail affichées dans les cases**, pastilles RDV (dorée) / anniversaire (rose), fond violet doux = vacances scolaires, numéro rose = férié, bordure cyan = aujourd'hui, légende en bas.
+- Ouverture par **appui long sur l'horloge/date** (`btn_clock_calendar_zone`, zone tactile invisible sur `clock_tile`) ; tap court sans effet.
+- **Grille calculée en local** (`cal_render_month()`, algorithme de Sakamoto + date SNTP) : numéros, alignement lundi-dimanche, weekend, aujourd'hui et jours passés s'affichent même sans HA. HA enrichit ensuite chaque mois **à la demande** (`script.tab5_calendrier_mois` → service `tab5_maj_calendrier_mois`, codes 2 hex/jour + 31 champs d'heures), avec cache par mois vidé à l'ouverture.
+- **Tap sur un jour** → sous-popup détail 780×540 (`cal_day_popup`) : titre « Mardi 21 Juillet », lignes typées férié / vacances scolaires (Zone A) / horaires de travail / RDV / anniversaire / fête civile avec icônes MDI colorées (`script.tab5_calendrier_jour` → `tab5_maj_calendrier_jour`), états « Chargement... » / « Rien de prévu ce jour » / « Home Assistant hors ligne ».
+- Nouveau package HA `HomeAssistant_Config/packages/tab5_calendar.yaml` : sources = calendrier boulot (événements « Travail* »), jours fériés Google (liste blanche des vrais fériés — les fêtes civiles type Fête des Mères deviennent des lignes « fête »), calendriers famille + anniversaires, et **table statique des vacances scolaires Zone A** (académie de Bordeaux) vérifiée sur data.education.gouv.fr jusqu'à l'été 2027.
+- Anti « croix qui décale » : `scrollable: false` partout + croix = vrai bouton de verre 96×64 (recette popups v2).
+- `tab5-styles.yaml` : token `color_warm_pink` (miroir `UIColor::WARM_PINK`) ; glyphes `F0E17`/`F0141`/`F0142` → `mdi_font_45`, `F00D6`/`F1056`/`F0474`/`F00F0`/`F00EB`/`F09D3` → `mdi_font_32` (codepoints vérifiés dans le TTF).
+
 ### 2026-07-18 — Popup détails plantes : appui long sur les pots
 - Nouveaux `pots_popup.yaml` + template `pot_detail_card.yaml` (5 instances, #T164) : carte modale 1250×690 (15 px des bords), 5 cartes de verre **fixes** (carte N = capteur `moisture_N`, mêmes icônes que le dashboard) — nom, icône colorée par l'humidité, % humidité `roboto_45_b`, statut (OK / Bientôt sec / À arroser ! / Hors ligne) et 4 métriques : Fertilité (EC µS/cm), Lumière (lx), Température (°C, gradient `get_temperature_color`), Batterie (échelle `get_battery_color`).
 - Ouverture par **appui long** sur les 4 slots pots du dashboard (`btn_pots_detail_zone`, zone tactile invisible même géométrie que `moisture_sensors_card`) ; le tap court reste sans effet, aucune synchro à l'ouverture (valeurs poussées en continu).

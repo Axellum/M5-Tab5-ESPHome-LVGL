@@ -137,4 +137,20 @@ globals:
     type: bool
     initial_value: 'false'
 
+  # Popup calendrier (calendar_popup.yaml) : mois affiché + date du détail ouvert.
+  # Partagés entre tab5-scripts.yaml (open/prev/next/today/tap) et
+  # tab5-api-logic.yaml (tab5_maj_calendrier_mois/jour) — donc globals, pas de static.
+  - id: cal_view_year
+    type: int
+    initial_value: '0'
+    restore_value: false
+  - id: cal_view_month
+    type: int
+    initial_value: '0'
+    restore_value: false
+  - id: cal_detail_date
+    type: std::string
+    initial_value: '""'
+    restore_value: false
+
 

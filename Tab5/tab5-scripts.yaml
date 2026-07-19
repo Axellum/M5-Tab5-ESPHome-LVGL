@@ -356,6 +356,153 @@ script:
               id(icon_light_sel_0), id(icon_light_sel_1), id(icon_light_sel_2),
               id(btn_light_power_icon), id(arc_light_brightness), id(lbl_light_brightness_val));
 
+  # ═══ Popup calendrier (calendar_popup.yaml) ═══
+  # Ouverture (appui long horloge) : vue = mois courant (SNTP), cache vidé pour
+  # forcer des données HA fraîches, puis rendu local immédiat + requête HA.
+  - id: tab5_calendar_open
+    mode: restart
+    then:
+      - lambda: |-
+          auto t = id(sntp_time).now();
+          if (!t.is_valid()) return;  // pas d'heure SNTP -> pas de calendrier fiable
+          cal_cache_clear();
+          id(cal_view_year) = t.year;
+          id(cal_view_month) = t.month;
+          id(cal_detail_date) = "";
+          lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_clear_flag(id(calendar_popup), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_move_foreground(id(calendar_popup));
+      - script.execute: tab5_cal_render
+
+  # Rendu du mois affiché : grille locale (numéros/aujourd'hui/weekend) tout de
+  # suite, enrichissement HA (travail/férié/vacances/RDV) si le mois est en cache,
+  # sinon requête script.tab5_calendrier_mois (le push re-déclenche ce rendu).
+  - id: tab5_cal_render
+    mode: restart
+    then:
+      - lambda: |-
+          if (id(cal_view_year) == 0) return;
+          CalCellUI cells[42] = {
+              {id(cal_cell_0), id(cal_num_0), id(cal_sub_0), id(cal_dot_0), id(cal_dot2_0)},
+              {id(cal_cell_1), id(cal_num_1), id(cal_sub_1), id(cal_dot_1), id(cal_dot2_1)},
+              {id(cal_cell_2), id(cal_num_2), id(cal_sub_2), id(cal_dot_2), id(cal_dot2_2)},
+              {id(cal_cell_3), id(cal_num_3), id(cal_sub_3), id(cal_dot_3), id(cal_dot2_3)},
+              {id(cal_cell_4), id(cal_num_4), id(cal_sub_4), id(cal_dot_4), id(cal_dot2_4)},
+              {id(cal_cell_5), id(cal_num_5), id(cal_sub_5), id(cal_dot_5), id(cal_dot2_5)},
+              {id(cal_cell_6), id(cal_num_6), id(cal_sub_6), id(cal_dot_6), id(cal_dot2_6)},
+              {id(cal_cell_7), id(cal_num_7), id(cal_sub_7), id(cal_dot_7), id(cal_dot2_7)},
+              {id(cal_cell_8), id(cal_num_8), id(cal_sub_8), id(cal_dot_8), id(cal_dot2_8)},
+              {id(cal_cell_9), id(cal_num_9), id(cal_sub_9), id(cal_dot_9), id(cal_dot2_9)},
+              {id(cal_cell_10), id(cal_num_10), id(cal_sub_10), id(cal_dot_10), id(cal_dot2_10)},
+              {id(cal_cell_11), id(cal_num_11), id(cal_sub_11), id(cal_dot_11), id(cal_dot2_11)},
+              {id(cal_cell_12), id(cal_num_12), id(cal_sub_12), id(cal_dot_12), id(cal_dot2_12)},
+              {id(cal_cell_13), id(cal_num_13), id(cal_sub_13), id(cal_dot_13), id(cal_dot2_13)},
+              {id(cal_cell_14), id(cal_num_14), id(cal_sub_14), id(cal_dot_14), id(cal_dot2_14)},
+              {id(cal_cell_15), id(cal_num_15), id(cal_sub_15), id(cal_dot_15), id(cal_dot2_15)},
+              {id(cal_cell_16), id(cal_num_16), id(cal_sub_16), id(cal_dot_16), id(cal_dot2_16)},
+              {id(cal_cell_17), id(cal_num_17), id(cal_sub_17), id(cal_dot_17), id(cal_dot2_17)},
+              {id(cal_cell_18), id(cal_num_18), id(cal_sub_18), id(cal_dot_18), id(cal_dot2_18)},
+              {id(cal_cell_19), id(cal_num_19), id(cal_sub_19), id(cal_dot_19), id(cal_dot2_19)},
+              {id(cal_cell_20), id(cal_num_20), id(cal_sub_20), id(cal_dot_20), id(cal_dot2_20)},
+              {id(cal_cell_21), id(cal_num_21), id(cal_sub_21), id(cal_dot_21), id(cal_dot2_21)},
+              {id(cal_cell_22), id(cal_num_22), id(cal_sub_22), id(cal_dot_22), id(cal_dot2_22)},
+              {id(cal_cell_23), id(cal_num_23), id(cal_sub_23), id(cal_dot_23), id(cal_dot2_23)},
+              {id(cal_cell_24), id(cal_num_24), id(cal_sub_24), id(cal_dot_24), id(cal_dot2_24)},
+              {id(cal_cell_25), id(cal_num_25), id(cal_sub_25), id(cal_dot_25), id(cal_dot2_25)},
+              {id(cal_cell_26), id(cal_num_26), id(cal_sub_26), id(cal_dot_26), id(cal_dot2_26)},
+              {id(cal_cell_27), id(cal_num_27), id(cal_sub_27), id(cal_dot_27), id(cal_dot2_27)},
+              {id(cal_cell_28), id(cal_num_28), id(cal_sub_28), id(cal_dot_28), id(cal_dot2_28)},
+              {id(cal_cell_29), id(cal_num_29), id(cal_sub_29), id(cal_dot_29), id(cal_dot2_29)},
+              {id(cal_cell_30), id(cal_num_30), id(cal_sub_30), id(cal_dot_30), id(cal_dot2_30)},
+              {id(cal_cell_31), id(cal_num_31), id(cal_sub_31), id(cal_dot_31), id(cal_dot2_31)},
+              {id(cal_cell_32), id(cal_num_32), id(cal_sub_32), id(cal_dot_32), id(cal_dot2_32)},
+              {id(cal_cell_33), id(cal_num_33), id(cal_sub_33), id(cal_dot_33), id(cal_dot2_33)},
+              {id(cal_cell_34), id(cal_num_34), id(cal_sub_34), id(cal_dot_34), id(cal_dot2_34)},
+              {id(cal_cell_35), id(cal_num_35), id(cal_sub_35), id(cal_dot_35), id(cal_dot2_35)},
+              {id(cal_cell_36), id(cal_num_36), id(cal_sub_36), id(cal_dot_36), id(cal_dot2_36)},
+              {id(cal_cell_37), id(cal_num_37), id(cal_sub_37), id(cal_dot_37), id(cal_dot2_37)},
+              {id(cal_cell_38), id(cal_num_38), id(cal_sub_38), id(cal_dot_38), id(cal_dot2_38)},
+              {id(cal_cell_39), id(cal_num_39), id(cal_sub_39), id(cal_dot_39), id(cal_dot2_39)},
+              {id(cal_cell_40), id(cal_num_40), id(cal_sub_40), id(cal_dot_40), id(cal_dot2_40)},
+              {id(cal_cell_41), id(cal_num_41), id(cal_sub_41), id(cal_dot_41), id(cal_dot2_41)}
+          };
+          auto t = id(sntp_time).now();
+          cal_render_month(cells, id(lbl_cal_month), id(cal_view_year), id(cal_view_month),
+              t.is_valid() ? t.year : 0, t.is_valid() ? t.month : 0,
+              t.is_valid() ? t.day_of_month : 0);
+      - if:
+          condition:
+            lambda: 'return id(cal_view_year) != 0 && cal_month_needs_fetch(id(cal_view_year), id(cal_view_month));'
+          then:
+            - homeassistant.service:
+                service: script.tab5_calendrier_mois
+                data:
+                  annee: !lambda 'return to_string(id(cal_view_year));'
+                  mois: !lambda 'return to_string(id(cal_view_month));'
+
+  # Navigation ◀ / ▶ / Aujourd'hui (le détail jour est refermé au changement de mois)
+  - id: tab5_cal_prev
+    mode: restart
+    then:
+      - lambda: |-
+          if (id(cal_view_year) == 0) return;
+          int m = id(cal_view_month) - 1;
+          if (m < 1) { m = 12; id(cal_view_year) -= 1; }
+          id(cal_view_month) = m;
+          lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
+      - script.execute: tab5_cal_render
+
+  - id: tab5_cal_next
+    mode: restart
+    then:
+      - lambda: |-
+          if (id(cal_view_year) == 0) return;
+          int m = id(cal_view_month) + 1;
+          if (m > 12) { m = 1; id(cal_view_year) += 1; }
+          id(cal_view_month) = m;
+          lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
+      - script.execute: tab5_cal_render
+
+  - id: tab5_cal_today
+    mode: restart
+    then:
+      - lambda: |-
+          auto t = id(sntp_time).now();
+          if (!t.is_valid()) return;
+          id(cal_view_year) = t.year;
+          id(cal_view_month) = t.month;
+          lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
+      - script.execute: tab5_cal_render
+
+  # Tap sur une cellule : ouvre le sous-popup détail ("Chargement..." ou "HA hors
+  # ligne") puis demande le contenu du jour à HA (script.tab5_calendrier_jour).
+  - id: tab5_cal_day_tap
+    mode: restart
+    parameters:
+      cell_idx: int
+    then:
+      - lambda: |-
+          id(cal_detail_date) = cal_date_for_cell(id(cal_view_year), id(cal_view_month), cell_idx);
+          if (id(cal_detail_date).empty()) return;  // cellule vide (hors mois)
+          CalDetailLineUI lines[6] = {
+              {id(cal_det_icon_0), id(cal_det_txt_0)},
+              {id(cal_det_icon_1), id(cal_det_txt_1)},
+              {id(cal_det_icon_2), id(cal_det_txt_2)},
+              {id(cal_det_icon_3), id(cal_det_txt_3)},
+              {id(cal_det_icon_4), id(cal_det_txt_4)},
+              {id(cal_det_icon_5), id(cal_det_txt_5)}
+          };
+          cal_show_day_detail_loading(id(cal_day_popup), id(lbl_cal_day_title),
+              id(lbl_cal_day_status), lines, id(cal_detail_date), id(status_ha).state);
+      - if:
+          condition:
+            lambda: 'return !id(cal_detail_date).empty() && id(status_ha).state;'
+          then:
+            - homeassistant.service:
+                service: script.tab5_calendrier_jour
+                data:
+                  date: !lambda 'return id(cal_detail_date);'
+
   - id: tab5_dismiss_ha_alert_3
     mode: restart
     then:
