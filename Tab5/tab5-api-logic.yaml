@@ -490,3 +490,49 @@ api:
             update_planning_text_ui(id(lbl_planning_text), ligne1, ligne2,
                 id(plan_ligne_1), id(plan_ligne_2));
 
+    # Popup calendrier — réponse de script.tab5_calendrier_mois (HA) : codes = 62 hex
+    # (2/jour, bits 1 travail, 2 férié, 4 vacances scolaires, 8 RDV, 16 anniversaire),
+    # heures = 31 champs "HH:MM-HH:MM" séparés par |. Mis en cache ; re-rendu seulement
+    # si le popup est ouvert sur ce mois.
+    - service: tab5_maj_calendrier_mois
+      variables:
+        annee: string
+        mois: string
+        codes: string
+        heures: string
+      then:
+        - lambda: |-
+            if (id(lbl_cal_month) == nullptr) return;
+            cal_store_month_data(annee, mois, codes, heures);
+        - if:
+            condition:
+              lambda: |-
+                return id(lbl_cal_month) != nullptr
+                    && !lv_obj_has_flag(id(calendar_popup), LV_OBJ_FLAG_HIDDEN)
+                    && atoi(annee.c_str()) == id(cal_view_year)
+                    && atoi(mois.c_str()) == id(cal_view_month);
+            then:
+              - script.execute: tab5_cal_render
+
+    # Popup calendrier — réponse de script.tab5_calendrier_jour (HA) : payload =
+    # "type|texte;..." (types travail/ferie/vacances/rdv/anniv/fete, max 6 lignes).
+    # Ignoré si le détail affiché ne correspond plus à cette date (navigation rapide).
+    - service: tab5_maj_calendrier_jour
+      variables:
+        date: string
+        payload: string
+      then:
+        - lambda: |-
+            if (id(lbl_cal_day_status) == nullptr) return;
+            if (lv_obj_has_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN)) return;
+            if (id(cal_detail_date) != date) return;
+            CalDetailLineUI lines[6] = {
+                {id(cal_det_icon_0), id(cal_det_txt_0)},
+                {id(cal_det_icon_1), id(cal_det_txt_1)},
+                {id(cal_det_icon_2), id(cal_det_txt_2)},
+                {id(cal_det_icon_3), id(cal_det_txt_3)},
+                {id(cal_det_icon_4), id(cal_det_txt_4)},
+                {id(cal_det_icon_5), id(cal_det_txt_5)}
+            };
+            cal_render_day_detail(payload, id(lbl_cal_day_status), lines);
+

@@ -1,0 +1,275 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file calendar_popup.yaml
+# @role Popup plein écran calendrier mensuel (carte 1250×690, 15 px des bords écran
+#       1280×720). Grille 7×6 lundi-en-tête (42 cellules cal_day_cell.yaml), navigation
+#       ◀ / mois affiché / ▶ + bouton "Aujourd'hui", légende en bas, et sous-popup
+#       détail du jour (cal_day_popup, 780×540) ouvert au tap sur une cellule.
+#       Ouvert par on_long_press de btn_clock_calendar_zone (tab5-lvgl.yaml, zone
+#       tactile invisible sur la tuile horloge/date).
+# @architecture_constraint La grille (numéros, alignement lundi-dimanche, weekend,
+#       "aujourd'hui") est calculée EN LOCAL par cal_render_month() (tab5_custom.cpp,
+#       date SNTP) — le popup reste utilisable sans HA. HA enrichit ensuite chaque mois
+#       à la demande (script.tab5_calendrier_mois → service tab5_maj_calendrier_mois :
+#       bitmask travail/férié/vacances scolaires/RDV/anniversaire + heures de travail),
+#       et chaque jour tapé (script.tab5_calendrier_jour → tab5_maj_calendrier_jour).
+# @ai_instruction `scrollable: false` partout + croix = vrai bouton de verre 96×64
+#       (anti-décalage, même recette que console/lumière/clim/pots v2) — NE PAS retirer.
+#       Aucune géométrie de cellule ici : éditer cal_day_cell.yaml (template ×42).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: calendar_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    # Voile sombre (tap = fermer) — opacité renforcée comme les autres popups v2
+    - button:
+        align: CENTER
+        width: 100%
+        height: 100%
+        bg_color: color_modal_scrim
+        bg_opa: 85%
+        border_width: 0
+        on_short_click:
+          - lambda: |-
+              lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
+              lv_obj_add_flag(id(calendar_popup), LV_OBJ_FLAG_HIDDEN);
+
+    # Carte modale — 15 px des bords écran (1280×720)
+    - obj:
+        align: CENTER
+        width: 1250
+        height: 690
+        styles: style_modal_card
+        scrollable: false
+        scrollbar_mode: "OFF"
+        widgets:
+
+          # ═══ EN-TÊTE ═══
+          - label: { text: "\U000F0E17", align: TOP_LEFT, x: 28, y: 26, text_font: mdi_font_45, text_color: color_accent }
+          - label: { text: "Calendrier", align: TOP_LEFT, x: 92, y: 26, text_font: roboto_45_b, text_color: color_text }
+
+          # Navigation mois : ◀  Juillet 2026  ▶
+          - button:
+              id: btn_cal_prev
+              align: TOP_MID
+              x: -278
+              y: 16
+              width: 96
+              height: 64
+              styles: style_clim_btn
+              pressed:
+                bg_opa: 30%
+              on_short_click:
+                - script.execute: tab5_cal_prev
+              widgets:
+                - label: { text: "\U000F0141", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+          - label:
+              id: lbl_cal_month
+              text: ""
+              align: TOP_MID
+              x: 0
+              y: 26
+              width: 420
+              text_align: CENTER
+              text_font: roboto_45_b
+              text_color: color_text
+          - button:
+              id: btn_cal_next
+              align: TOP_MID
+              x: 278
+              y: 16
+              width: 96
+              height: 64
+              styles: style_clim_btn
+              pressed:
+                bg_opa: 30%
+              on_short_click:
+                - script.execute: tab5_cal_next
+              widgets:
+                - label: { text: "\U000F0142", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+
+          # Bouton "Aujourd'hui" (retour au mois courant)
+          - button:
+              id: btn_cal_today
+              align: TOP_RIGHT
+              x: -128
+              y: 16
+              width: 150
+              height: 64
+              styles: style_clim_btn
+              pressed:
+                bg_opa: 30%
+              on_short_click:
+                - script.execute: tab5_cal_today
+              widgets:
+                - label: { text: "Aujourd'hui", align: CENTER, text_font: roboto_22, text_color: color_text }
+
+          # Croix de fermeture — vrai bouton de verre 96×64 (cible tactile large, anti-décalage)
+          - button:
+              id: btn_cal_close
+              align: TOP_RIGHT
+              x: -20
+              y: 16
+              width: 96
+              height: 64
+              styles: style_clim_btn
+              pressed:
+                bg_opa: 30%
+              on_short_click:
+                - lambda: |-
+                    lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_add_flag(id(calendar_popup), LV_OBJ_FLAG_HIDDEN);
+              widgets:
+                - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+
+          # ═══ TÊTE DE GRILLE (jours de la semaine) ═══
+          - label: { text: "Lun", align: TOP_LEFT, x: 25, y: 94, width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+          - label: { text: "Mar", align: TOP_LEFT, x: 197, y: 94, width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+          - label: { text: "Mer", align: TOP_LEFT, x: 369, y: 94, width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+          - label: { text: "Jeu", align: TOP_LEFT, x: 541, y: 94, width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+          - label: { text: "Ven", align: TOP_LEFT, x: 713, y: 94, width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+          - label: { text: "Sam", align: TOP_LEFT, x: 885, y: 94, width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+          - label: { text: "Dim", align: TOP_LEFT, x: 1057, y: 94, width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+
+          # ═══ GRILLE 7×6 (42 cellules, lundi en premier — idx = ligne*7 + colonne) ═══
+          - !include { file: cal_day_cell.yaml, vars: { idx: "0", x: "25", y: "124" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "1", x: "197", y: "124" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "2", x: "369", y: "124" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "3", x: "541", y: "124" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "4", x: "713", y: "124" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "5", x: "885", y: "124" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "6", x: "1057", y: "124" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "7", x: "25", y: "212" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "8", x: "197", y: "212" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "9", x: "369", y: "212" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "10", x: "541", y: "212" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "11", x: "713", y: "212" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "12", x: "885", y: "212" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "13", x: "1057", y: "212" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "14", x: "25", y: "300" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "15", x: "197", y: "300" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "16", x: "369", y: "300" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "17", x: "541", y: "300" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "18", x: "713", y: "300" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "19", x: "885", y: "300" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "20", x: "1057", y: "300" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "21", x: "25", y: "388" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "22", x: "197", y: "388" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "23", x: "369", y: "388" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "24", x: "541", y: "388" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "25", x: "713", y: "388" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "26", x: "885", y: "388" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "27", x: "1057", y: "388" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "28", x: "25", y: "476" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "29", x: "197", y: "476" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "30", x: "369", y: "476" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "31", x: "541", y: "476" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "32", x: "713", y: "476" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "33", x: "885", y: "476" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "34", x: "1057", y: "476" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "35", x: "25", y: "564" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "36", x: "197", y: "564" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "37", x: "369", y: "564" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "38", x: "541", y: "564" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "39", x: "713", y: "564" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "40", x: "885", y: "564" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "41", x: "1057", y: "564" } }
+
+          # ═══ LÉGENDE ═══
+          - obj:
+              align: BOTTOM_MID
+              y: -6
+              width: SIZE_CONTENT
+              height: SIZE_CONTENT
+              styles: style_transparent
+              scrollable: false
+              layout:
+                type: FLEX
+                flex_flow: ROW
+                flex_align_main: CENTER
+                flex_align_cross: CENTER
+                pad_column: 10
+              widgets:
+                - obj: { width: 18, height: 18, radius: 6, bg_opa: 0%, border_width: 2, border_color: color_accent, pad_all: 0 }
+                - label: { text: "Aujourd'hui", text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "·", text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "9:00-19:00", text_font: roboto_22, text_color: color_text }
+                - label: { text: "Travail", text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "·", text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "1", text_font: roboto_22, text_color: color_error }
+                - label: { text: "Férié", text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "·", text_font: roboto_22, text_color: color_text_dim }
+                - obj: { width: 14, height: 14, radius: 4, bg_color: color_accent_alt, bg_opa: 55%, border_width: 0, pad_all: 0 }
+                - label: { text: "Vac. scolaires", text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "·", text_font: roboto_22, text_color: color_text_dim }
+                - obj: { width: 14, height: 14, radius: 7, bg_color: color_gold, border_width: 0, pad_all: 0 }
+                - label: { text: "RDV", text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "·", text_font: roboto_22, text_color: color_text_dim }
+                - obj: { width: 14, height: 14, radius: 7, bg_color: color_warm_pink, border_width: 0, pad_all: 0 }
+                - label: { text: "Anniv.", text_font: roboto_22, text_color: color_text_dim }
+
+    # ═══ SOUS-POPUP DÉTAIL DU JOUR (au-dessus de la grille) ═══
+    - obj:
+        id: cal_day_popup
+        align: CENTER
+        width: 100%
+        height: 100%
+        hidden: true
+        scrollable: false
+        styles: style_invisible
+        widgets:
+          # Voile local (tap = fermer le détail, retour à la grille)
+          - button:
+              align: CENTER
+              width: 100%
+              height: 100%
+              bg_color: color_modal_scrim
+              bg_opa: 60%
+              border_width: 0
+              on_short_click:
+                - lambda: 'lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);'
+          - obj:
+              align: CENTER
+              width: 780
+              height: 540
+              styles: style_modal_card
+              scrollable: false
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: lbl_cal_day_title, text: "", align: TOP_LEFT, x: 28, y: 26, text_font: roboto_45_b, text_color: color_text }
+                - button:
+                    id: btn_cal_day_close
+                    align: TOP_RIGHT
+                    x: -20
+                    y: 16
+                    width: 96
+                    height: 64
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - lambda: 'lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);'
+                    widgets:
+                      - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+
+                # Statut central (Chargement… / Rien de prévu / HA hors ligne)
+                - label: { id: lbl_cal_day_status, text: "", align: CENTER, y: 0, text_font: roboto_32_b, text_color: color_text_dim }
+
+                # 6 lignes de détail (icône typée + texte), remplies par cal_render_day_detail()
+                - label: { id: cal_det_icon_0, text: "", align: TOP_LEFT, x: 32, y: 116, text_font: mdi_font_32, text_color: color_text, hidden: true }
+                - label: { id: cal_det_txt_0, text: "", align: TOP_LEFT, x: 88, y: 118, width: 660, text_font: roboto_32_b, text_color: color_text, hidden: true }
+                - label: { id: cal_det_icon_1, text: "", align: TOP_LEFT, x: 32, y: 184, text_font: mdi_font_32, text_color: color_text, hidden: true }
+                - label: { id: cal_det_txt_1, text: "", align: TOP_LEFT, x: 88, y: 186, width: 660, text_font: roboto_32_b, text_color: color_text, hidden: true }
+                - label: { id: cal_det_icon_2, text: "", align: TOP_LEFT, x: 32, y: 252, text_font: mdi_font_32, text_color: color_text, hidden: true }
+                - label: { id: cal_det_txt_2, text: "", align: TOP_LEFT, x: 88, y: 254, width: 660, text_font: roboto_32_b, text_color: color_text, hidden: true }
+                - label: { id: cal_det_icon_3, text: "", align: TOP_LEFT, x: 32, y: 320, text_font: mdi_font_32, text_color: color_text, hidden: true }
+                - label: { id: cal_det_txt_3, text: "", align: TOP_LEFT, x: 88, y: 322, width: 660, text_font: roboto_32_b, text_color: color_text, hidden: true }
+                - label: { id: cal_det_icon_4, text: "", align: TOP_LEFT, x: 32, y: 388, text_font: mdi_font_32, text_color: color_text, hidden: true }
+                - label: { id: cal_det_txt_4, text: "", align: TOP_LEFT, x: 88, y: 390, width: 660, text_font: roboto_32_b, text_color: color_text, hidden: true }
+                - label: { id: cal_det_icon_5, text: "", align: TOP_LEFT, x: 32, y: 456, text_font: mdi_font_32, text_color: color_text, hidden: true }
+                - label: { id: cal_det_txt_5, text: "", align: TOP_LEFT, x: 88, y: 458, width: 660, text_font: roboto_32_b, text_color: color_text, hidden: true }
