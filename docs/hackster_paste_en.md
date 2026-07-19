@@ -1,50 +1,31 @@
-# Hackster.io / M5Stack Global Innovation Contest 2026 — Project Draft
+# Hackster — texte prêt à coller (EN)
 
-> **How to use this file:** Draft + notes. **Texte prêt à coller Hackster :** [`hackster_paste_en.md`](hackster_paste_en.md) (2026-07-19).
-> **Repos:** [M5-Tab5-ESPHome-LVGL](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL) · [vromvrom-engine](https://github.com/Axellum/vromvrom-engine)
-> **Firmware release:** [v1.0.5](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v1.0.5) (July 2026)
-> **Demo video:** https://www.youtube.com/watch?v=ygNhgtMffu4
-> **Médias:** photos popup/console v2 OK (2026-07-19) · anim 4:3 `docs/images/tab5_ui_tour*.webp|gif|mp4`
+> Copié / synchronisé le 2026-07-19. Case **Made with AI** : cocher.
+> Médias à uploader : voir § Cover media en bas + `docs/images/`.
 
 ---
 
-## Project header (Hackster metadata)
+## Title
 
-- **Title:** Tab5 Voice HMI — Push-Only Home Assistant Dashboard on ESP32-P4
-- **Subtitle:** A 60 FPS native LVGL dashboard + local voice satellite on the M5Stack Tab5 V2 — every line of code written by AI, steered by a human.
-- **Difficulty:** Intermediate
-- **Type:** Full instructions provided
-- **Time:** ~4 hours (dashboard) · a weekend (voice + engine)
-- **License:** MIT
+Tab5 Voice HMI — Push-Only Home Assistant Dashboard on ESP32-P4
 
-### Things used in this project
+## Subtitle
 
-**Hardware components**
+A 60 FPS native LVGL dashboard + local voice satellite on the M5Stack Tab5 V2 — every line of code written by AI, steered by a human.
 
-| Item | Qty | Note |
-|------|-----|------|
-| M5Stack Tab5 V2 (ESP32-P4) | ×1 | The star — **contest-eligible M5Stack controller**. 5" 1280×720 MIPI-DSI touch, ES8388/ES7210 audio, ESP32-C6 co-processor. No soldering, no 3D printing: it's a finished device |
-| Home Assistant server | ×1 | Any: Raspberry Pi, VM, NUC… |
-| Zigbee coordinator (e.g. SLZB-06MU) | ×1 | Optional — lights, covers, sensors |
-| BLE soil moisture sensors | ×1–5 | Optional — plant cards |
-| Daikin (or any HA `climate` entity) | ×1 | Optional — climate popup |
-| Samsung TV (HA integration) | ×1 | Optional — TV remote popup |
-| Steam Deck / any LAN Linux box | ×1 | Optional — hosts the multi-agent engine for Discussion mode |
+## What it does
 
-**Software apps and online services**
+A single-page LVGL dashboard on the M5Stack Tab5 V2, driven only by Home Assistant push events (no polling):
 
-- [ESPHome](https://esphome.io) ≥ 2025.9.3 (firmware framework)
-- [LVGL](https://lvgl.io) 8.4 (UI, compiled into the firmware)
-- [Home Assistant](https://www.home-assistant.io) + Wyoming Whisper (STT) + Wyoming Piper (TTS)
-- [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) (optional, multi-agent voice routing)
-
-**Hand tools and fabrication machines**
-
-- None. A USB-C cable for the first flash — that's the whole workshop.
+- **Home** — clock/date, indoor temps, plant moisture strip, work planning bar, compact climate control, mic icon with live Assist pipeline state, quick actions (PC, shutter, lights)
+- **Weather** — 5 swipeable slides: hourly forecast (15 slots) + 15-day daily forecast, Météo-France vigilance recoloring the date, 1-hour rain graph on the rotating card
+- **Glass popups** — climate (arc thermostat, modes, presets, Daikin airflow), lights (brightness arc, whites + 12 color swatches), full-screen Samsung TV remote, BLE plants detail, system console (memory / network / uptime / HA management)
+- **Voice** — on-device `okay_nabu` wake word on the ESP32-P4; mic color = pipeline state (grey → green → orange → blue → red); tap-to-talk and tap-to-interrupt; optional free-form LLM conversation via vromvrom-engine; second on-device wake word **Stop** to halt a moving shutter
+- **Push-only** — the tablet never requests state; HA automations pack forecasts/events into delimited strings and call native ESPHome services
 
 ---
 
-## Story (EN — paste as main text)
+## Story (main body — paste below)
 
 ### Why a screen, though?
 
@@ -90,9 +71,9 @@ Today the Tab5 sits on my desk and does all of this:
 
 Here's what it actually looks like day to day 👇
 
-📷 **[YouTube embed — https://www.youtube.com/watch?v=ygNhgtMffu4]**
+**[Embed YouTube]** https://www.youtube.com/watch?v=ygNhgtMffu4
 
-📷 **[GIF/WebP — `tab5_ui_tour.webp` (ou `.gif`) — animated UI overview 4:3]**
+**[Upload image/GIF]** `docs/images/tab5_ui_tour.webp` (or `tab5_ui_tour.gif`) — animated UI overview, 4:3
 
 Wanna find out how it works? Read along. Spoiler: this is **not** a web dashboard in a kiosk browser — there is no browser, no polling, and (from my side) not a single hand-typed line of code.
 
@@ -107,7 +88,7 @@ Most DIY wall panels run a browser, reload dashboards, and hammer the server wit
 - Complex payloads (a 15-day forecast!) are **packed into one delimited string** on the HA side and parsed by C++ on the device — one network call instead of dozens.
 - If Wi-Fi drops or HA restarts, the screen just keeps showing the last known state. No spinner, no blank page, ever.
 
-📷 **[Image — `push_only_architecture_diagram.png` — the push-only data flow]**
+**[Upload]** `docs/images/push_only_architecture_diagram.png`
 
 ### What you need to prepare
 
@@ -130,7 +111,7 @@ The Tab5 V2 packs everything this project needs into one finished device — no 
 | ESP32-C6 co-processor (SDIO) | Wi-Fi 6 |
 | PI4IOE5V6408 I2C GPIO expanders | Power rails, display reset… and one great war story (see "Lessons") |
 
-📷 **[Image — `gpio_pinout_table.png` — GPIO map used by the firmware]**
+**[Upload]** `docs/images/gpio_pinout_table.png`
 
 Just one heads-up: several critical pins (display reset, amplifier enable) are **not** native ESP32 GPIOs — they go through I2C GPIO expanders. It matters more than it sounds; it cost me my longest debugging night (Lessons, below).
 
@@ -153,7 +134,7 @@ pip install -r tools/demo/requirements.txt
 python tools/demo/demo_pusher.py --host <tab5-ip> --key <api_encryption_key>
 ```
 
-Full walkthrough: [`installation.md`](installation.md) · [`demo_mode.md`](demo_mode.md)
+Full walkthrough: [`installation.md`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md) · [`demo_mode.md`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/demo_mode.md)
 
 ### Step 3: Wire up Home Assistant
 
@@ -173,35 +154,35 @@ Everything lives on a **single 1280×720 page** — no tab bar, no page switchin
 
 **#Screen 1: The main dashboard.** Clock and date (the date recolors with the Météo-France vigilance level), indoor temperature/humidity, plant moisture (5 BLE sensors auto-sorted driest-first), quick actions, the compact climate card, and the mic icon showing the voice pipeline state in real time.
 
-📷 **[Photo — `tab5_photo_home.jpg` — accueil météo / main dashboard, live]**
+**[Photo]** `tab5_photo_home.jpg` — Accueil météo / main dashboard (live)
 
 **#Screen 2: Weather at a flick.** The bottom band holds 5 swipeable windows: 2 of hourly forecast (15 slots) and 3 of 15-day daily forecast. Day names are color-coded against my *work planning* (cyan = today, green = day off, red = early shift — my favorite touch). Each daily card secretly doubles as a quick-action button: tap the icon area and it toggles the PC, the shutter, a light…
 
-**#Screen 3: Domotics strip / quick actions.** Domo view — PC, shutter, bedroom/living-room lights and LED strip.
+**#Screen 3: Domotics strip / quick actions.** Swipe or open the Domo view for PC, shutter, bedroom/living-room lights and LED strip — status at a glance, one tap to toggle.
 
-📷 **[Photo — `tab5_photo_domo.jpg` — Domo / switches]**
+**[Photo]** `tab5_photo_domo.jpg` — Domo / switches view
 
 **#Screen 4: The rotating central card.** Every 8 s it cycles: planning → 1-hour rain graph → vigilance icons → info panel → up to **4 Home Assistant alert banners** pushed live (updates pending, errors, unavailable devices). Tap a banner to dismiss it — the id is remembered locally, so a re-push of the same alert stays hidden until HA sends a genuinely new one.
 
 **#Screen 5: Climate popup.** Tap the climate card and a near-fullscreen glass panel opens: stacked mode buttons, a 320 px arc thermostat whose target updates *optimistically* (one debounced `climate.set_temperature` per gesture — not one per tick!), presets, and airflow including the Daikin "Brise" (`windnice`) mode that the official remote buries three menus deep.
 
-📷 **[Photo — `tab5_photo_climate_popup_v2.jpg`]**
+**[Photo]** `tab5_photo_climate_popup_v2.jpg`
 
 **#Screen 6: Light popup.** Long-press a light card: a 3-light selector (switch rooms without closing), a brightness arc with the live % in the center — synced from HA's `brightness` attribute, debounced on drag — shortcuts 10/35/65/100 %, 3 named whites and 12 round color swatches.
 
-📷 **[Photo — `tab5_photo_light_popup_v2.jpg`]**
+**[Photo]** `tab5_photo_light_popup_v2.jpg`
 
-**#Screen 7: Plants detail.** Up to 5 BLE soil sensors — moisture, fertility, light, temperature, battery.
+**#Screen 7: Plants detail.** Full plant cards for up to 5 BLE soil sensors — moisture with status color, fertility, light, temperature, battery; offline pots stay visible as "Hors ligne".
 
-📷 **[Photo — `tab5_photo_plants.jpg` — Mes Plantes]**
+**[Photo]** `tab5_photo_plants.jpg` — Mes Plantes
 
 **#Screen 8: TV remote.** A full-screen Samsung remote — power, pad, volume, playback row. The Tab5 has no IR hardware: every key is a `remote.send_command` service call, HA's Samsung integration does the talking.
 
-📷 **[Photo — `tab5_photo_tv_remote.jpg`]**
+**[Photo]** `tab5_photo_tv_remote.jpg`
 
 **#Screen 9: The system console.** Four glass cards: memory (SRAM/PSRAM bars), network (+ HA link state), system (uptime, CPU temp, volume with live %), and a **management card** — re-push the whole screen, reload automations, restart HA or reboot the tablet, the destructive ones behind Cancel/Confirm overlays.
 
-📷 **[Photo — `tab5_photo_console_v2.jpg`]**
+**[Photo]** `tab5_photo_console_v2.jpg`
 
 ### Step 5: Give it a voice
 
@@ -228,7 +209,7 @@ Out of the box, voice goes to the standard HA agent. Flip the on-screen toggle (
 
 ### Lessons from the trenches
 
-The parts no datasheet warned me about — kept in the repo's [`troubleshooting.md`](troubleshooting.md) so nobody debugs them twice:
+The parts no datasheet warned me about — kept in the repo's [`troubleshooting.md`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/troubleshooting.md) so nobody debugs them twice:
 
 - **Black screen after every soft reboot.** The display's reset pin goes through the I2C GPIO expander, which needs a settle delay after boot — reset it too early and it's a silent no-op. One blocking `delay(1000)` at the right boot priority, confirmed over 5 live reboots. It looks like a beginner mistake in the code; it's the fix.
 - **PNG icons with alpha crash the P4.** Weather icons are now font glyphs (MDI + a custom weather TTF) at `bpp: 1` — ~200 bytes per icon instead of 8 KB, scaling for free, and the crash is gone.
@@ -236,11 +217,23 @@ The parts no datasheet warned me about — kept in the repo's [`troubleshooting.
 - **French accents turned to mojibake** the day HA pushed Latin-1 into UTF-8 labels — fixed with an explicit normalization pass on every dynamic string.
 - **One shared style object instead of 80 inline styles** freed ~40 KB of PSRAM. On a microcontroller, CSS hygiene is memory management.
 
-### About the "100 % AI-built" part
+### A note on this project
 
-Firmware, automations, C++, and most of the docs were produced by AI tools (Antigravity/Gemini, DeepSeek, MiniMax, Z.ai, Claude, Cursor). I am more the **architect than the author**: I set the goals, tested every OTA on the real device, rejected what didn't work, and made the calls. The repo keeps the traces honest — `[AI-CONTEXT]` headers in every file, an `AGENTS.md` for the next AI, ADRs for the non-obvious choices, and a changelog where the AI documents its own mistakes.
+This is a personal project. The goal was never to build a product — it was to explore what AI tools can actually do when given a real hardware target, real constraints, and real debugging cycles.
 
-If something in the code looks weird, it might be an AI quirk. If something works surprisingly well — same answer.
+Everything in this repository — the ESPHome YAML, the C++ code, the Home Assistant automations, and most of this documentation — was generated by AI:
+
+- Claude (Anthropic) — architecture decisions, C++ implementation, debugging
+- Gemini / Antigravity (Google) — orchestration, documentation, code review
+- DeepSeek — code generation, optimization passes
+- MiniMax and Z.ai — various generation tasks
+- Cursor — recent editing / packaging passes
+
+The role of the human in the loop was to define what the project should do, to test what came out, to say "this is wrong" or "this is close but not quite", and to keep pushing. No code was written by hand.
+
+This is not a claim about AI capability or human obsolescence. It's just what the experiment looked like in practice. Some things worked better than expected. Some things required many iterations to get right. A few things still don't work correctly. That's the honest version.
+
+If any part of this is useful to you — as a starting point, as a reference, or as a "what not to do" — that's good enough.
 
 ### Done!
 
@@ -250,96 +243,25 @@ Until next time.
 
 ---
 
-## Schematics (Hackster "Schematics" section)
+## Cover media (ordre d’upload Hackster)
 
-- **Push-only architecture** — `docs/images/push_only_architecture_diagram.png`
-- **GPIO & audio map** — `docs/images/gpio_pinout_table.png` (details: [`hardware.md`](hardware.md))
+1. **YouTube** — https://www.youtube.com/watch?v=ygNhgtMffu4
+2. **Hero animé 4:3** — `docs/images/tab5_ui_tour_hq.webp` (ou `.gif` / `.webp` compact)
+3. **Still hero** — `docs/images/tab5_hero_4x3.jpg` (si le champ exige une image fixe)
+4. Photos live (2026-07-19) : `tab5_photo_home.jpg`, `tab5_photo_domo.jpg`, `tab5_photo_climate_popup_v2.jpg`, `tab5_photo_light_popup_v2.jpg`, `tab5_photo_plants.jpg`, `tab5_photo_tv_remote.jpg`, `tab5_photo_console_v2.jpg`
+5. `push_only_architecture_diagram.png` · `gpio_pinout_table.png`
 
-## Code (Hackster "Code" section)
+## Captions gallery (EN)
 
-| Component | Location |
-|-----------|----------|
-| ESPHome entry | `tab5-ha-hmi.yaml` |
-| UI + logic | `Tab5/*.yaml`, `Tab5/tab5_custom.cpp` |
-| HA automations | `HomeAssistant_Config/` |
-| Demo pusher | `tools/demo/demo_pusher.py` |
-| Engine (optional) | [github.com/Axellum/vromvrom-engine](https://github.com/Axellum/vromvrom-engine) |
-
-License: MIT · Firmware release: [v1.0.5](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v1.0.5)
-
----
-
-## Cover media (upload order on Hackster)
-
-> Détail captions + What it does : [`hackster_paste_en.md`](hackster_paste_en.md)
-
-1. **YouTube embed** — `https://www.youtube.com/watch?v=ygNhgtMffu4` (primary hero)
-2. **Anim 4:3** — `docs/images/tab5_ui_tour_hq.webp` (ou `tab5_ui_tour.gif`)
-3. **Still hero** — `docs/images/tab5_hero_4x3.jpg` (si champ image fixe)
-4. **Photos live** (2026-07-19) — accueil, Domo, clim, lumières, plantes, TV, console
-5. **Diagrammes** — `push_only_architecture_diagram.png` · `gpio_pinout_table.png`
-6. **Bonus** — `tab5_design_*.jpg` (June — before/after glass theme)
-
----
-
-## Contest alignment (internal checklist)
-
-| Criterion | Angle |
-|-----------|--------|
-| **Creativity & originality** | Physical push-only HMI + local multi-agent voice routing — not a cloud voice assistant in a box; "100 % AI-built" narrative |
-| **Functionality & execution** | Live demo: wake word → HA command → discussion → touch popup → TV remote → "Stop" on a moving shutter |
-| **Documentation & presentation** | Public GitHub (release v1.0.5) + this tutorial-style page + video + GIF + photos + honest lessons-learned |
-| **Impact & utility** | Private, local-first smart home — no mandatory Alexa/Google cloud |
-| **M5Stack integration** | Tab5 V2 as primary controller: display, touch, audio, dual wake words, LVGL firmware |
-
-**Submission links:** [M5Stack Global Innovation Contest 2026](https://m5stack.com/global-innovation-contest-2026) · Hackster.io project page · Google form (official)
-
----
-
-## Version Française — pourquoi un écran ?
-
-**Bref, pourquoi un écran ?**
-
-Après 5 ans avec le Nextion, je souhaitais donner un coup de jeune à mon écran plutôt axé météo, en gardant a minima les mêmes objectifs :
-
-- faire office d'horloge ;
-- voir au premier coup d'œil si des averses sont prévues dans l'heure : je pars 15 min en avance pour ne pas arriver trempé au boulot ? Je prévois le parapluie ?
-- avoir la prévision météo sur quelques jours, histoire d'avoir un sujet de conversation si je décide de me sociabiliser ;
-- le tout pour une consommation raisonnable et toujours allumé (enfin, quand je suis devant), avec une liberté totale sur les positionnements, designs et logiques — pas juste l'affichage HA standard — avec les avantages... et les inconvénients que ça implique.
-
-Avec un esprit domotique plus poussé : un retour direct de l'humidité de mes pots / de mon potager, allumer la TV et l'ordi sans bouger mes fesses de ma chaise, et gérer les trois spots du salon et la lumière de la chambre.
-
-Puis, petit à petit :
-
-- gérer ma clim ;
-- avoir la main sur mon volet roulant, toujours sans me lever ;
-- intégrer « Ok Nabu », plus besoin de me pencher pour attraper l'écran :) ;
-- peaufiner l'intégration de l'assistant vocal : mode conversation, choix du LLM (local ou pas), domotique la plus rapide possible et qui me comprend ;
-- afficher mon planning avec une lisibilité rapide de mes heures d'embauche ;
-- avoir une télécommande réseau pour ma TV, ça peut toujours dépanner (pour la petite histoire, Claude Fable 5 m'a bluffé sur ce coup : il m'a fait ça en 2 prompts, du coup je l'ai laissé reprendre tous les popups, au prix de 50 % de ma limite des 5h par popup, sur le forfait Pro...).
-
-Le tout avec, en termes de conception, les objectifs suivants. Vu que mes premières sessions avec Gemini sur le code du Nextion m'ont littéralement humilié — il a révolutionné l'envoi des données et divisé le code par trois — je voulais cette fois de la légèreté et de bien meilleures optimisations que ce que j'avais fait à la main :
-
-- pas d'images, le plus léger et optimisé possible pour la tablette ;
-- une gestion des envois de données côté HA robuste et la plus douce possible (mon Home Assistant tourne sur une Freebox, je reste léger) ;
-- un démarrage rapide, pas de lenteur d'affichage, quelque chose de fluide, quoi.
-
-J'ai aussi essayé d'avoir une interface moderne (j'ai la cinquantaine, ne m'en demandez pas trop) : pas de pages, mais des popups, tout accessible directement depuis l'écran d'accueil par bouton, toucher long ou swipe. Beaucoup de code couleur pour une lisibilité même à quelques mètres, tout en ayant un écran pensé pour être lu à moins d'un mètre si on veut voir toutes les données correctement. Et j'ai essayé de caser un maximum d'infos et de commandes sur une interface relativement épurée — oui, je sais, le plus dur pour moi. Objectif final : un écran à peu près correct visuellement, même si je reste plus axé pratique dans l'absolu.
-
-Voilà pour le « pourquoi ». Le « comment », c'est là que l'IA entre en jeu : j'avais beaucoup entendu parler de l'IA, notamment en codage, et je voulais voir par moi-même ce qu'elle valait — pas sur un exemple jouet, mais sur ce projet. Je me suis donc lancé le défi de tout construire — firmware, automations, jusqu'à cette description — en laissant l'IA écrire chaque ligne. Mon rôle est resté modeste : fixer le cap, tester sur l'appareil réel, refuser ce qui ne marchait pas, et orienter.
-
-De fil en aiguille, j'ai complété l'écran avec un assistant vocal, puis par un « moteur » pour gérer en local la partie domotique vocale, et en semi-local ou cloud la partie conversations. Le moteur est un projet en cours (lui aussi 🙂) où j'ai posé beaucoup (trop) de choses pour expérimenter et mieux comprendre comment marchent les LLMs : RAG, notations, gestion multi-LLM, MCP, et j'en passe. Je le partage donc surtout dans un but informatif : je l'utilise de façon fonctionnelle pour l'écran, mais pas encore pour le codage ni pour tout ce que j'ai voulu y implémenter — qui fonctionne plus ou moins bien.
-
-Dans mon périple, j'ai commencé avec Antigravity, puis je l'ai aidé par différents modèles (DeepSeek, MiniMax, Z.ai). Ensuite, j'ai testé Claude, qui a fait lui aussi beaucoup de travail, puis Cursor récemment. Bref, je vous partage le projet de mon écran, fait pour mon usage quotidien, dont je suis plus **l'architecte que le créateur** — issu de mes débuts d'aventure dans le monde de l'IA.
-
-Sur ce, je vous laisse avec le reste de la description du projet faite par l'IA, bien plus pertinente que moi pour l'aspect code, architecture et matériel. Il y a certainement des coquilles ; le projet évolue encore régulièrement.
-
----
-
-## Version Française — titre & résumé Hackster
-
-**Titre :** Tab5 — Tableau de bord HA push-only + assistant vocal local
-
-**Résumé :** Interface LVGL native sur M5Stack Tab5 V2 (ESP32-P4), pilotée par événements Home Assistant (zéro polling), avec satellite vocal Assist (double wake word local dont « Stop » volet), popups clim/lumières/TV plein écran, et moteur multi-agents optionnel pour la conversation.
-
-**Vidéo :** https://www.youtube.com/watch?v=ygNhgtMffu4
+| Media | Caption |
+|-------|---------|
+| tab5_ui_tour*.webp/gif | Animated UI tour — home, domotics, plants, climate, lights, TV, console |
+| tab5_photo_home.jpg | Main dashboard — weather, voice mic, climate strip |
+| tab5_photo_domo.jpg | Quick actions — PC, shutters, room lights |
+| tab5_photo_climate_popup_v2.jpg | Climate popup — modes, optimistic arc, Daikin Brise |
+| tab5_photo_light_popup_v2.jpg | Light popup — selector, live-% arc, color swatches |
+| tab5_photo_plants.jpg | BLE plant sensors — moisture, fertility, light, battery |
+| tab5_photo_tv_remote.jpg | Full-screen Samsung TV remote (HA `remote.send_command`) |
+| tab5_photo_console_v2.jpg | System console — memory, network, uptime, HA management |
+| push_only_architecture_diagram.png | Push-only data flow (no polling) |
+| gpio_pinout_table.png | GPIO / audio map used by the firmware |

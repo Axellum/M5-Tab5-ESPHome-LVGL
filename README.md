@@ -69,13 +69,13 @@ Companion backend (optional, work-in-progress): **[vromvrom-engine](https://gith
 
 [![Watch the Tab5 demo on YouTube](https://img.youtube.com/vi/ygNhgtMffu4/hqdefault.jpg)](https://www.youtube.com/watch?v=ygNhgtMffu4)
 
-**Animated overview** — rotating card, weather swipe, popups (GIF):
+**Animated overview** — home, domotics, plants, climate, lights, TV, console:
 
-![Tab5 dashboard demo](docs/images/m5stack_tab5_demo.gif)
+![Tab5 UI tour](docs/images/tab5_ui_tour.gif)
 
 | Push-only architecture | Main dashboard (live) |
 |:-:|:-:|
-| ![Push architecture](docs/images/push_only_architecture_diagram.png) | ![Main dashboard](docs/images/tab5_photo_console_diag.jpg) |
+| ![Push architecture](docs/images/push_only_architecture_diagram.png) | ![Main dashboard](docs/images/tab5_photo_home.jpg) |
 
 ---
 
@@ -273,13 +273,13 @@ L'interface est compilée en C++ et embarquée dans le firmware de l'appareil. E
 
 [![Voir la démo Tab5 sur YouTube](https://img.youtube.com/vi/ygNhgtMffu4/hqdefault.jpg)](https://www.youtube.com/watch?v=ygNhgtMffu4)
 
-**Aperçu animé** :
+**Aperçu animé** — accueil, domotique, plantes, clim, lumières, TV, console :
 
-![Démo tableau de bord Tab5](docs/images/m5stack_tab5_demo.gif)
+![Tour de l'UI Tab5](docs/images/tab5_ui_tour.gif)
 
 | Architecture push-only | Tableau de bord (réel) |
 |:-:|:-:|
-| ![Architecture push](docs/images/push_only_architecture_diagram.png) | ![Tableau de bord](docs/images/tab5_photo_console_diag.jpg) |
+| ![Architecture push](docs/images/push_only_architecture_diagram.png) | ![Tableau de bord](docs/images/tab5_photo_home.jpg) |
 
 ---
 
