@@ -11,11 +11,15 @@ button:
   pressed:
     bg_opa: 30%
   on_short_click:
+    # Optimiste : calcule le toggle une seule fois, le pose dans le global, recolore,
+    # puis le service envoie le contenu du global (évite un double-toggle inversé).
+    - lambda: 'id(clim_preset_mode) = (id(clim_preset_mode) == "${preset_name}") ? std::string("none") : std::string("${preset_name}");'
+    - script.execute: tab5_clim_recolor
     - homeassistant.service:
         service: climate.set_preset_mode
         data:
           entity_id: ${entity_climate_salon}
-          preset_mode: !lambda 'return id(clim_preset_mode) == "${preset_name}" ? std::string("none") : std::string("${preset_name}");'
+          preset_mode: !lambda 'return id(clim_preset_mode);'
   widgets:
     - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 14, text_font: mdi_font_45, text_color: color_text_dim }
     - label: { text: "${label_text}", align: LEFT_MID, x: 72, text_font: roboto_22, text_color: color_text }
