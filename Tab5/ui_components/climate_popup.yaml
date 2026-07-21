@@ -13,15 +13,20 @@
 #                          (climate_hvac_mode_btn.yaml ×4, climate_preset_toggle_btn.yaml ×2).
 #                          Ne pas renommer arc_temp_popup / clim_target_popup / val_temp_int_popup
 #                          / popup_icon_clim_* : pilotés par le service `tab5_maj_clim`
-#                          (tab5-api-logic.yaml) via les globals clim_* — ne pas essayer de
-#                          dériver les couleurs localement ici.
+#                          (tab5-api-logic.yaml) via les globals clim_*. La coloration des icônes
+#                          est centralisée dans le script `tab5_clim_recolor` (tab5-scripts.yaml) —
+#                          ne pas la dupliquer inline ; les taps l'appellent en mode optimiste.
 # @ai_instruction `scrollable: false` est posé sur la carte modale et toutes les sous-cartes :
 #       un appui légèrement glissé (ex. sur la croix de fermeture) faisait défiler la carte
 #       et laissait le contenu décalé — NE PAS retirer ces flags. La cible (arc et boutons ±)
 #       est affichée de façon optimiste via update_clim_target_ui() (tab5_custom.cpp) et
 #       l'appel HA passe par le débounce tab5_debounce_clim_temp (tab5-scripts.yaml) — un seul
-#       climate.set_temperature par geste, pas un par tick. `pressed: bg_opa: 30%` est répété
-#       sur chaque bouton car ESPHome rejette `pressed:` dans un style partagé.
+#       climate.set_temperature par geste, pas un par tick. Chaque bouton Mode/Preset/Silence/
+#       Oscillation/Brise pose son global clim_* + `script.execute: tab5_clim_recolor` AVANT
+#       l'appel HA (recoloration optimiste ; le retour HA re-applique l'état réel). Sur les
+#       toggles, le global est calculé dans le lambda optimiste et le service envoie ce global
+#       (pas de double-toggle inversé). `pressed: bg_opa: 30%` est répété sur chaque bouton car
+#       ESPHome rejette `pressed:` dans un style partagé.
 # ═══════════════════════════════════════════════════════
 obj:
   id: clim_options_popup
@@ -119,6 +124,9 @@ obj:
                           pressed:
                             bg_opa: 30%
                           on_short_click:
+                            # Optimiste : mode "off" + recolore avant le retour HA
+                            - lambda: 'id(clim_hvac_mode) = "off";'
+                            - script.execute: tab5_clim_recolor
                             - homeassistant.service:
                                 service: climate.turn_off
                                 data:
@@ -274,11 +282,15 @@ obj:
                     pressed:
                       bg_opa: 30%
                     on_short_click:
+                      # Optimiste : calcule le toggle, le pose dans le global, recolore,
+                      # puis le service envoie le global (pas de double-toggle inversé).
+                      - lambda: 'id(clim_fan_mode) = (id(clim_fan_mode) == "quiet") ? std::string("auto") : std::string("quiet");'
+                      - script.execute: tab5_clim_recolor
                       - homeassistant.service:
                           service: climate.set_fan_mode
                           data:
                             entity_id: ${entity_climate_salon}
-                            fan_mode: !lambda 'return (id(clim_fan_mode) == "quiet") ? std::string("auto") : std::string("quiet");'
+                            fan_mode: !lambda 'return id(clim_fan_mode);'
                     widgets:
                       - label: { id: popup_icon_clim_quiet, text: "\U000F146D", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
                       - label: { text: "Silence", align: LEFT_MID, x: 88, text_font: roboto_32_b, text_color: color_text }
@@ -297,11 +309,15 @@ obj:
                     pressed:
                       bg_opa: 30%
                     on_short_click:
+                      # Optimiste : calcule le toggle, le pose dans le global, recolore,
+                      # puis le service envoie le global (pas de double-toggle inversé).
+                      - lambda: 'id(clim_swing_mode) = (id(clim_swing_mode) == "swing") ? std::string("stop") : std::string("swing");'
+                      - script.execute: tab5_clim_recolor
                       - homeassistant.service:
                           service: climate.set_swing_mode
                           data:
                             entity_id: ${entity_climate_salon}
-                            swing_mode: !lambda 'return id(clim_swing_mode) == "swing" ? std::string("stop") : std::string("swing");'
+                            swing_mode: !lambda 'return id(clim_swing_mode);'
                     widgets:
                       - label: { id: popup_icon_clim_swing, text: "\U000F0E79", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
                       - label: { text: "Oscillation", align: LEFT_MID, x: 88, text_font: roboto_32_b, text_color: color_text }
@@ -317,11 +333,15 @@ obj:
                     pressed:
                       bg_opa: 30%
                     on_short_click:
+                      # Optimiste : calcule le toggle, le pose dans le global, recolore,
+                      # puis le service envoie le global (pas de double-toggle inversé).
+                      - lambda: 'id(clim_swing_mode) = (id(clim_swing_mode) == "windnice") ? std::string("stop") : std::string("windnice");'
+                      - script.execute: tab5_clim_recolor
                       - homeassistant.service:
                           service: climate.set_swing_mode
                           data:
                             entity_id: ${entity_climate_salon}
-                            swing_mode: !lambda 'return id(clim_swing_mode) == "windnice" ? std::string("stop") : std::string("windnice");'
+                            swing_mode: !lambda 'return id(clim_swing_mode);'
                     widgets:
                       - label: { id: popup_icon_clim_windnice, text: "\U000F059D", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
                       - label: { text: "Brise", align: LEFT_MID, x: 88, text_font: roboto_32_b, text_color: color_text }

@@ -11,6 +11,10 @@ button:
   pressed:
     bg_opa: 30%
   on_short_click:
+    # Optimiste : pose le mode + recolore l'icône immédiatement (avant le retour
+    # HA/Daikin cloud qui peut prendre plusieurs secondes). tab5_maj_clim corrigera.
+    - lambda: 'id(clim_hvac_mode) = "${hvac_mode}";'
+    - script.execute: tab5_clim_recolor
     - homeassistant.service:
         service: climate.set_hvac_mode
         data:

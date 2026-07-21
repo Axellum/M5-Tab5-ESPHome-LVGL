@@ -4,13 +4,15 @@
 # @role Zone clim dashboard : températures Salon/Serre hors carte (même
 #       place absolue), verre `style_meteo_card` uniquement autour de
 #       − / température cible / +.
-# @architecture_constraint `clim_target`/`current_serre`/`val_temp_salon` sont mis à jour
-#                          par les services `tab5_maj_clim`/helpers C++ (tab5-api-logic.yaml,
-#                          tab5-sensors-domotique.yaml) — jamais localement ici.
-# @ai_instruction Les boutons +/- et le clic sur la cible dupliquent volontairement ceux de
-#                 climate_popup.yaml (même service `climate.set_temperature`/ouverture popup) :
-#                 duplication acceptée, chaque bouton ne fait qu'un appel de service en 1 ligne,
-#                 pas de logique à factoriser. Conteneur parent = transparent (ids conservés).
+# @architecture_constraint `current_serre`/`val_temp_salon` sont mis à jour par les services
+#                          `tab5_maj_clim`/helpers C++ (tab5-api-logic.yaml,
+#                          tab5-sensors-domotique.yaml). `clim_target` est aussi poussé par
+#                          tab5_maj_clim (autoritaire), MAIS mis à jour de façon OPTIMISTE au
+#                          tap ± ci-dessous (21/07) via update_clim_target_ui + débounce.
+# @ai_instruction Les boutons +/- reprennent le mécanisme optimiste+débounce du popup
+#                 (accumulation dans clim_target_temp, un seul set_temperature par geste via
+#                 tab5_debounce_clim_temp). Le clic sur la cible ouvre le popup. Conteneur
+#                 parent = transparent (ids conservés).
 # ═══════════════════════════════════════════════════════
 obj:
   id: climate_card
@@ -68,13 +70,17 @@ obj:
               pressed:
                 bg_opa: 30%
               on_short_click:
-                - homeassistant.service:
-                    service: climate.set_temperature
-                    data:
-                      entity_id: ${entity_climate_salon}
-                      # Si clim éteinte, set_temperature seul ne l'allume pas (Daikin) → forcer cool
-                      hvac_mode: !lambda 'return (id(clim_hvac_mode) == "off" || id(clim_hvac_mode).empty()) ? std::string("cool") : id(clim_hvac_mode);'
-                      temperature: !lambda "return to_string(id(clim_target_temp) - 0.5);"
+                # Optimiste + débounce (même mécanisme que le popup) : on accumule dans
+                # clim_target_temp, on met à jour le label tout de suite, et un seul
+                # set_temperature part une fois le doigt immobile. Avant, l'appel HA direct
+                # ne mettait jamais à jour le global → taps rapides = même valeur renvoyée +
+                # aucun retour visuel avant le push HA.
+                - lambda: |-
+                    float t = id(clim_target_temp) - 0.5f;
+                    if (t < 16.0f) t = 16.0f;
+                    id(clim_target_temp) = t;
+                    update_clim_target_ui(id(clim_target), nullptr, t);
+                - script.execute: tab5_debounce_clim_temp
               widgets:
                 - label: { text: "\U000F0374", align: CENTER, text_font: mdi_font_56, text_color: color_text }
 
@@ -89,11 +95,12 @@ obj:
               pressed:
                 bg_opa: 30%
               on_short_click:
-                - homeassistant.service:
-                    service: climate.set_temperature
-                    data:
-                      entity_id: ${entity_climate_salon}
-                      hvac_mode: !lambda 'return (id(clim_hvac_mode) == "off" || id(clim_hvac_mode).empty()) ? std::string("cool") : id(clim_hvac_mode);'
-                      temperature: !lambda "return to_string(id(clim_target_temp) + 0.5);"
+                # Optimiste + débounce (même mécanisme que le popup) — voir bouton −.
+                - lambda: |-
+                    float t = id(clim_target_temp) + 0.5f;
+                    if (t > 30.0f) t = 30.0f;
+                    id(clim_target_temp) = t;
+                    update_clim_target_ui(id(clim_target), nullptr, t);
+                - script.execute: tab5_debounce_clim_temp
               widgets:
                 - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56, text_color: color_text }
