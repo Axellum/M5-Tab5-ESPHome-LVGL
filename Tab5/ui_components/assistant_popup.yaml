@@ -1,0 +1,384 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file assistant_popup.yaml
+# @role Popup plein écran de l'Assistant vocal (1230×670, ~25 px des bords).
+#       Gauche = réglages (choix LLM/pipeline, Ok Nabu, muet, volume, taille texte).
+#       Droite = "Votre demande" (STT) + "Réponse" écrite (Markdown : tableaux
+#       alignés en monospace + image via online_image). Barre d'action en bas.
+# @architecture_constraint Positions ABSOLUES (x/y fixes) + les états actifs ne
+#       changent que la bordure (dessinée à l'intérieur) => aucun bouton ne se
+#       décale. Toute la logique vit en C++/scripts (décision 0006), pas ici.
+# @open Ouvert par appui long sur la zone micro (tab5-lvgl.yaml), par une demande
+#       vocale (on_stt_end -> tab5_assist_on_request) ou par le service HA
+#       tab5_assist_reponse. Fermé par le scrim, la croix ou "Fermer".
+# ═══════════════════════════════════════════════════════════════════════════
+obj:
+  id: assistant_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  styles: style_invisible
+  scrollbar_mode: "OFF"
+  widgets:
+    # Voile modal (ferme au tap)
+    - button:
+        align: CENTER
+        width: 100%
+        height: 100%
+        bg_color: color_modal_scrim
+        bg_opa: 85%
+        border_width: 0
+        on_short_click:
+          - script.execute: tab5_assist_close
+
+    # Carte modale
+    - obj:
+        align: CENTER
+        width: 1230
+        height: 670
+        styles: style_modal_card
+        pad_all: 0
+        scrollable: false
+        scrollbar_mode: "OFF"
+        widgets:
+
+          # ═══ EN-TÊTE ═══
+          - label: { text: "\U000F036C", align: TOP_LEFT, x: 24, y: 20, text_font: mdi_assist_36, text_color: color_info }
+          - label: { text: "Assistant vocal", align: TOP_LEFT, x: 70, y: 16, text_font: roboto_32_b, text_color: color_text }
+          - label: { text: "Demande & réponse — tableaux et image pris en charge", align: TOP_LEFT, x: 72, y: 54, text_font: roboto_22, text_color: color_text_dim }
+
+          - button:
+              align: TOP_RIGHT
+              x: -16
+              y: 14
+              width: 64
+              height: 64
+              radius: 18
+              styles: style_clim_btn
+              pressed:
+                bg_opa: 30%
+              on_short_click:
+                - script.execute: tab5_assist_close
+              widgets:
+                - label: { text: "\U000F0156", align: CENTER, text_font: mdi_assist_36, text_color: color_text }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # COLONNE GAUCHE — RÉGLAGES
+          # ═══════════════════════════════════════════════════════════════════
+          - obj:
+              id: assist_settings_panel
+              align: TOP_LEFT
+              x: 16
+              y: 96
+              width: 380
+              height: 468
+              styles: style_glass_card
+              pad_all: 0
+              scrollable: false
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { text: "\U000F062E", align: TOP_LEFT, x: 16, y: 14, text_font: mdi_assist_36, text_color: color_text_dim }
+                - label: { text: "Réglages", align: TOP_LEFT, x: 60, y: 18, text_font: roboto_32_b, text_color: color_text }
+
+                # --- Cerveau / LLM ---
+                - label: { text: "Cerveau / LLM", align: TOP_LEFT, x: 16, y: 66, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_assist_pipe_domo
+                    align: TOP_LEFT
+                    x: 16
+                    y: 94
+                    width: 168
+                    height: 66
+                    radius: 18
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - script.execute:
+                          id: tab5_set_assist_mode
+                          discussion: false
+                    widgets:
+                      - label: { text: "\U000F07D0", align: TOP_MID, y: 8, text_font: mdi_assist_36, text_color: color_text }
+                      - label: { text: "Domotique", align: BOTTOM_MID, y: -8, text_font: roboto_22, text_color: color_text }
+                - button:
+                    id: btn_assist_pipe_discu
+                    align: TOP_LEFT
+                    x: 196
+                    y: 94
+                    width: 168
+                    height: 66
+                    radius: 18
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - script.execute:
+                          id: tab5_set_assist_mode
+                          discussion: true
+                    widgets:
+                      - label: { text: "\U000F0450", align: TOP_MID, y: 8, text_font: mdi_assist_36, text_color: color_text }
+                      - label: { text: "Discussion", align: BOTTOM_MID, y: -8, text_font: roboto_22, text_color: color_text }
+
+                # --- Ok Nabu (mot de réveil) ---
+                - button:
+                    id: btn_assist_wake
+                    align: TOP_LEFT
+                    x: 16
+                    y: 176
+                    width: 348
+                    height: 56
+                    radius: 18
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - switch.toggle: tab5_wake_word_active
+                      - script.execute: tab5_assist_sync_settings
+                    widgets:
+                      - label: { id: lbl_assist_wake, text: "Ok Nabu : ON", align: CENTER, text_font: roboto_22, text_color: color_success }
+
+                # --- Muet + Volume ---
+                - button:
+                    id: btn_assist_mute
+                    align: TOP_LEFT
+                    x: 16
+                    y: 248
+                    width: 80
+                    height: 60
+                    radius: 18
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - if:
+                          condition:
+                            lambda: 'return id(system_muted);'
+                          then:
+                            - globals.set:
+                                id: system_muted
+                                value: 'false'
+                            - media_player.volume_set:
+                                id: speaker_player
+                                volume: !lambda 'return id(system_volume);'
+                          else:
+                            - globals.set:
+                                id: system_muted
+                                value: 'true'
+                            - media_player.volume_set:
+                                id: speaker_player
+                                volume: 0.0
+                      - script.execute: tab5_assist_sync_settings
+                    widgets:
+                      - label: { id: icon_assist_mute, text: "\U000F057E", align: CENTER, text_font: mdi_assist_36, text_color: color_text }
+                - slider:
+                    id: slider_assist_volume
+                    align: TOP_LEFT
+                    x: 112
+                    y: 266
+                    width: 252
+                    height: 20
+                    min_value: 0
+                    max_value: 100
+                    value: 100
+                    on_value:
+                      - globals.set:
+                          id: system_volume
+                          value: !lambda 'return x / 100.0f;'
+                      - globals.set:
+                          id: system_muted
+                          value: 'false'
+                      - script.execute: tab5_debounce_volume_set
+
+                # --- Taille du texte de réponse ---
+                - label: { text: "Taille du texte", align: TOP_LEFT, x: 16, y: 324, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_assist_size_s
+                    align: TOP_LEFT
+                    x: 16
+                    y: 356
+                    width: 108
+                    height: 52
+                    radius: 18
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - script.execute:
+                          id: tab5_assist_set_text_size
+                          size: 0
+                    widgets:
+                      - label: { text: "A-", align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    id: btn_assist_size_m
+                    align: TOP_LEFT
+                    x: 136
+                    y: 356
+                    width: 108
+                    height: 52
+                    radius: 18
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - script.execute:
+                          id: tab5_assist_set_text_size
+                          size: 1
+                    widgets:
+                      - label: { text: "A", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                - button:
+                    id: btn_assist_size_l
+                    align: TOP_LEFT
+                    x: 256
+                    y: 356
+                    width: 108
+                    height: 52
+                    radius: 18
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - script.execute:
+                          id: tab5_assist_set_text_size
+                          size: 2
+                    widgets:
+                      - label: { text: "A+", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # COLONNE DROITE — DEMANDE + RÉPONSE
+          # ═══════════════════════════════════════════════════════════════════
+          # --- Votre demande ---
+          - obj:
+              align: TOP_LEFT
+              x: 412
+              y: 96
+              width: 802
+              height: 104
+              styles: style_glass_card
+              pad_all: 0
+              scrollable: false
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { text: "\U000F0361", align: TOP_LEFT, x: 16, y: 14, text_font: mdi_assist_36, text_color: color_info }
+                - label: { text: "VOTRE DEMANDE", align: TOP_LEFT, x: 60, y: 16, text_font: roboto_22, text_color: color_text_dim }
+                - label:
+                    id: lbl_assist_request
+                    align: TOP_LEFT
+                    x: 60
+                    y: 44
+                    width: 726
+                    text: "Appuyez sur le micro puis parlez…"
+                    text_font: roboto_22
+                    text_color: color_text
+
+          # --- Réponse (texte + tableaux + image) ---
+          - obj:
+              align: TOP_LEFT
+              x: 412
+              y: 212
+              width: 802
+              height: 352
+              styles: style_glass_card
+              pad_all: 0
+              scrollable: false
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { text: "\U000F021A", align: TOP_LEFT, x: 16, y: 14, text_font: mdi_assist_36, text_color: color_success }
+                - label: { text: "RÉPONSE", align: TOP_LEFT, x: 60, y: 16, text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "\U000F0A71", align: TOP_RIGHT, x: -60, y: 16, text_font: mdi_assist_36, text_color: color_text_dim }
+                - label: { text: "\U000F021F", align: TOP_RIGHT, x: -16, y: 16, text_font: mdi_assist_36, text_color: color_text_dim }
+
+                # Zone défilante : réponse + image (défile verticalement si long)
+                - obj:
+                    id: assist_response_scroll
+                    align: TOP_LEFT
+                    x: 16
+                    y: 54
+                    width: 770
+                    height: 284
+                    styles: style_transparent
+                    scrollbar_mode: AUTO
+                    layout:
+                      type: FLEX
+                      flex_flow: COLUMN
+                      flex_align_main: START
+                      flex_align_cross: START
+                      pad_row: 10
+                    widgets:
+                      - label:
+                          id: lbl_assist_response
+                          width: 100%
+                          text: ""
+                          text_font: roboto_mono_24
+                          text_color: color_text
+                      - image:
+                          id: assist_img_widget
+                          src: assist_response_image
+                          hidden: true
+                      - label:
+                          id: assist_img_hint
+                          text: ""
+                          hidden: true
+                          text_font: roboto_22
+                          text_color: color_text_dim
+
+          # ═══ BARRE D'ACTION (bas) ═══
+          - obj:
+              align: BOTTOM_MID
+              y: -10
+              width: 1198
+              height: 84
+              styles: style_transparent
+              pad_all: 0
+              scrollable: false
+              scrollbar_mode: "OFF"
+              widgets:
+                - label: { id: lbl_assist_status, text: "Prêt", align: LEFT_MID, x: 8, text_font: roboto_22, text_color: color_text_dim }
+
+                # Micro : démarre / interrompt + ré-écoute (Click to Converse)
+                - button:
+                    id: btn_assist_mic
+                    align: CENTER
+                    x: -100
+                    width: 240
+                    height: 68
+                    radius: 20
+                    styles: style_pill_accent
+                    pressed:
+                      bg_opa: 45%
+                    on_short_click:
+                      - script.execute: tab5_assist_toggle
+                    widgets:
+                      - label: { text: "\U000F036C", align: LEFT_MID, x: 30, text_font: mdi_assist_36, text_color: color_text }
+                      - label: { text: "Parler", align: CENTER, x: 20, text_font: roboto_32_b, text_color: color_text }
+
+                # Stop : coupe pipeline + TTS
+                - button:
+                    id: btn_assist_stop
+                    align: CENTER
+                    x: 150
+                    width: 130
+                    height: 68
+                    radius: 20
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - script.execute: tab5_vocal_interrupt
+                    widgets:
+                      - label: { text: "\U000F04DB", align: CENTER, text_font: mdi_assist_36, text_color: color_error }
+
+                # Fermer
+                - button:
+                    align: RIGHT_MID
+                    x: -4
+                    width: 180
+                    height: 68
+                    radius: 20
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - script.execute: tab5_assist_close
+                    widgets:
+                      - label: { text: "Fermer", align: CENTER, text_font: roboto_22, text_color: color_text }

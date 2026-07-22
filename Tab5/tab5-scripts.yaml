@@ -617,3 +617,128 @@ script:
                   alert_id: !lambda 'return id(temp_dismiss_alert_id);'
             - script.execute: tab5_central_rotator_auto
 
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Popup Assistant vocal (assistant_popup.yaml) — ouverture, réglages, réponse
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  # Ouvre le popup plein écran + resynchronise l'affichage des réglages.
+  - id: tab5_assist_open
+    mode: restart
+    then:
+      - globals.set:
+          id: assist_popup_open
+          value: 'true'
+      - lambda: |-
+          lv_obj_clear_flag(id(assistant_popup), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_move_foreground(id(assistant_popup));
+      - script.execute: tab5_assist_sync_settings
+
+  - id: tab5_assist_close
+    mode: restart
+    then:
+      - globals.set:
+          id: assist_popup_open
+          value: 'false'
+      - lambda: 'lv_obj_add_flag(id(assistant_popup), LV_OBJ_FLAG_HIDDEN);'
+
+  # Nouvelle demande reconnue : passe la réponse en "Réflexion..." et masque l'image
+  # précédente. N'OUVRE le popup automatiquement qu'en mode Discussion (ou s'il est
+  # déjà ouvert) — en mode Domotique, une commande courte ne doit pas voiler le
+  # dashboard (le bandeau central 8 s reste le retour rapide). Long-press micro pour
+  # ouvrir manuellement dans tous les cas.
+  - id: tab5_assist_on_request
+    mode: restart
+    then:
+      - lambda: |-
+          esphome::font::Font* f = id(assist_text_size) == 0 ? id(roboto_mono_20)
+                                 : (id(assist_text_size) == 2 ? id(roboto_mono_28) : id(roboto_mono_24));
+          assist_set_response(id(lbl_assist_response), std::string("Reflexion..."), f);
+          if (id(assist_img_widget) != nullptr) lv_obj_add_flag(id(assist_img_widget), LV_OBJ_FLAG_HIDDEN);
+          if (id(assist_img_hint) != nullptr) lv_obj_add_flag(id(assist_img_hint), LV_OBJ_FLAG_HIDDEN);
+      - if:
+          condition:
+            lambda: 'return id(conversation_mode) || id(assist_popup_open);'
+          then:
+            - script.execute: tab5_assist_open
+
+  # Reflète l'état courant (pipeline/mute/wake/volume/taille) sur les contrôles du popup.
+  - id: tab5_assist_sync_settings
+    mode: restart
+    then:
+      - lambda: |-
+          bool discu = id(conversation_mode);
+          auto hl = [](lv_obj_t* b, bool on, uint32_t col){
+            if (!b) return;
+            lv_obj_set_style_border_color(b, lv_color_hex(on ? col : UIColor::GLASS_RIM), LV_PART_MAIN);
+            lv_obj_set_style_border_opa(b, on ? LV_OPA_COVER : LV_OPA_40, LV_PART_MAIN);
+            lv_obj_set_style_border_width(b, on ? 2 : 1, LV_PART_MAIN);
+          };
+          hl(id(btn_assist_pipe_domo), !discu, UIColor::INFO);
+          hl(id(btn_assist_pipe_discu), discu, UIColor::SUCCESS);
+          if (id(lbl_assist_wake) != nullptr) {
+            bool wake = id(tab5_wake_word_active).state;
+            lv_label_set_text(id(lbl_assist_wake), wake ? "Ok Nabu : ON" : "Ok Nabu : OFF");
+            lv_obj_set_style_text_color(id(lbl_assist_wake),
+                lv_color_hex(wake ? UIColor::SUCCESS : UIColor::TEXT_DIM), LV_PART_MAIN);
+          }
+          if (id(icon_assist_mute) != nullptr) {
+            bool m = id(system_muted);
+            lv_label_set_text(id(icon_assist_mute), m ? "\U000F0581" : "\U000F057E");
+            lv_obj_set_style_text_color(id(icon_assist_mute),
+                lv_color_hex(m ? UIColor::ERROR : UIColor::TEXT_SOFT), LV_PART_MAIN);
+          }
+          if (id(slider_assist_volume) != nullptr)
+            lv_slider_set_value(id(slider_assist_volume), (int)(id(system_volume) * 100.0f + 0.5f), LV_ANIM_OFF);
+      - lambda: |-
+          assist_apply_text_size(id(lbl_assist_response), id(assist_text_size),
+              id(roboto_mono_20), id(roboto_mono_24), id(roboto_mono_28),
+              id(btn_assist_size_s), id(btn_assist_size_m), id(btn_assist_size_l));
+
+  # Choix du cerveau (pipeline HA). discussion=true => LLM libre, false => domotique.
+  # Centralise la mise à jour des boutons du dashboard ET du popup (source unique).
+  - id: tab5_set_assist_mode
+    mode: restart
+    parameters:
+      discussion: bool
+    then:
+      - globals.set:
+          id: conversation_mode
+          value: !lambda 'return discussion;'
+      - homeassistant.service:
+          service: select.select_option
+          data:
+            entity_id: ${entity_tab5_pipeline_select}
+            option: !lambda 'return discussion ? std::string("Discussion LLM") : std::string("preferred");'
+      - lambda: |-
+          auto hl = [](lv_obj_t* b, bool on, uint32_t col){
+            if (!b) return;
+            lv_obj_set_style_border_color(b, lv_color_hex(on ? col : UIColor::GLASS_RIM), LV_PART_MAIN);
+            lv_obj_set_style_border_opa(b, on ? LV_OPA_COVER : LV_OPA_40, LV_PART_MAIN);
+            lv_obj_set_style_border_width(b, on ? 2 : 1, LV_PART_MAIN);
+          };
+          if (discussion) {
+            lv_label_set_text(id(icon_mode_status), "\U000F0450");
+            lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
+          } else {
+            lv_label_set_text(id(icon_mode_status), "\U000F07D0");
+            lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+          }
+          hl(id(btn_mode_domo), !discussion, UIColor::INFO);
+          hl(id(btn_mode_discu), discussion, UIColor::SUCCESS);
+          hl(id(btn_assist_pipe_domo), !discussion, UIColor::INFO);
+          hl(id(btn_assist_pipe_discu), discussion, UIColor::SUCCESS);
+
+  # Taille de la police de réponse : 0=S 1=M 2=L (persisté, confort de lecture).
+  - id: tab5_assist_set_text_size
+    mode: restart
+    parameters:
+      size: int
+    then:
+      - globals.set:
+          id: assist_text_size
+          value: !lambda 'return size;'
+      - lambda: |-
+          assist_apply_text_size(id(lbl_assist_response), size,
+              id(roboto_mono_20), id(roboto_mono_24), id(roboto_mono_28),
+              id(btn_assist_size_s), id(btn_assist_size_m), id(btn_assist_size_l));
+

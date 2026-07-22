@@ -121,6 +121,25 @@ font:
     bpp: 4
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
 
+  # --- Polices MONOSPACE (assistant vocal) ---
+  # Roboto Mono : colonnes de largeur fixe => les tableaux Markdown (réponses IA)
+  # restent alignés. 3 tailles pour le réglage "confort de lecture" S / M / L du popup.
+  - file: gfonts://Roboto+Mono@500
+    id: roboto_mono_20
+    size: 20
+    bpp: 4
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+  - file: gfonts://Roboto+Mono@500
+    id: roboto_mono_24
+    size: 24
+    bpp: 4
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+  - file: gfonts://Roboto+Mono@500
+    id: roboto_mono_28
+    size: 28
+    bpp: 4
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_80
     size: 70
@@ -179,6 +198,21 @@ font:
     size: 26
     bpp: 1
     glyphs: "\U000F0379\U000F111C\U000F111E\U000F0597\U000F0045\U000F005D\U000F03E4\U000F0335\U000F06E8\U000F08B2\U000F0596\U000F011E\U000F05A9"
+
+  # --- Icônes MDI du popup Assistant vocal (assistant_popup.yaml) ---
+  # F036C micro · F0156 fermer · F062E réglages(tune) · F07D0 domotique · F0450 discussion(robot)
+  # F057E volume · F0581 muet · F0361 message(demande) · F021A texte(réponse) · F021F image
+  # F0A71 tableau · F04DB stop · F048A envoyer · F0493 cog
+  - file: "Tab5/materialdesignicons-webfont.ttf"
+    id: mdi_assist_36
+    size: 36
+    bpp: 1
+    glyphs: "\U000F036C\U000F0156\U000F062E\U000F07D0\U000F0450\U000F057E\U000F0581\U000F0361\U000F021A\U000F021F\U000F0A71\U000F04DB\U000F048A\U000F0493"
+  - file: "Tab5/materialdesignicons-webfont.ttf"
+    id: mdi_assist_64
+    size: 64
+    bpp: 1
+    glyphs: "\U000F036C\U000F0156\U000F062E\U000F07D0\U000F0450\U000F057E\U000F0581\U000F0361\U000F021A\U000F021F\U000F0A71\U000F04DB\U000F048A\U000F0493"
 
   - file: "Tab5/IconeMeteo.ttf"
     id: font_meteo_main

@@ -288,6 +288,35 @@ void hide_vocal_response_ui(
     lv_obj_t* ha_wrap_0, lv_obj_t* ha_wrap_1, lv_obj_t* ha_wrap_2, lv_obj_t* ha_wrap_3);
 
 // =============================================================================
+// Popup Assistant vocal (assistant_popup.yaml)
+// Affiche la demande (STT) + la réponse écrite du moteur, avec prise en charge
+// des tableaux Markdown (alignés en police monospace) et d'une image (online_image).
+// Logique centralisée ici (décision 0006 : pas de logique complexe dans le YAML LVGL).
+// =============================================================================
+
+// Nettoie un texte Markdown "léger" pour affichage monospace LVGL :
+//  - retire les marqueurs **gras**, __gras__, `code`, les # de titres ;
+//  - convertit les puces "- " / "* " en "• " ;
+//  - ré-aligne les tableaux Markdown (colonnes séparées par |) en largeur fixe
+//    (comptage en points de code UTF-8, pas en octets) et supprime la ligne
+//    séparatrice |---|---|. Rend les tableaux lisibles sans moteur de rendu.
+std::string format_assist_markdown(const std::string& in);
+
+// Renseigne la bulle "Votre demande" (texte STT normalisé UTF-8).
+void assist_set_request(lv_obj_t* lbl_request, const std::string& texte);
+
+// Renseigne la zone "Réponse" : normalise + format_assist_markdown + applique la
+// police (monospace) puis le texte. Le retour à la ligne LVGL est géré par le YAML.
+void assist_set_response(lv_obj_t* lbl_response, const std::string& texte,
+    esphome::font::Font* font);
+
+// Applique la taille de police de la réponse (0=S 1=M 2=L) SANS perdre le texte
+// déjà affiché (relit lv_label_get_text). Met aussi à jour les 3 boutons S/M/L.
+void assist_apply_text_size(lv_obj_t* lbl_response, int size_idx,
+    esphome::font::Font* f_s, esphome::font::Font* f_m, esphome::font::Font* f_l,
+    lv_obj_t* btn_s, lv_obj_t* btn_m, lv_obj_t* btn_l);
+
+// =============================================================================
 // Popup calendrier mensuel (calendar_popup.yaml, appui long sur l'horloge)
 // Grille 7×6 lundi-en-tête calculée EN LOCAL (SNTP) ; HA enrichit chaque mois à
 // la demande via tab5_maj_calendrier_mois (codes 2 hex/jour + heures de travail)
