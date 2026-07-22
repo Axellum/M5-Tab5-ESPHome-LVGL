@@ -1199,7 +1199,7 @@ void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* i
 
     if (icon_room == nullptr || icon_light == nullptr) return;
 
-    uint32_t color = is_on ? UIColor::WARNING : UIColor::TEXT_DIM;
+    uint32_t color = is_on ? UIColor::INFO : UIColor::TEXT_DIM;
     lv_obj_set_style_text_color(icon_room, lv_color_hex(color), LV_PART_MAIN);
     lv_obj_set_style_text_color(icon_light, lv_color_hex(color), LV_PART_MAIN);
     lv_label_set_text(icon_light, is_on ? "\U000F06E8" : "\U000F0335");
@@ -1236,7 +1236,7 @@ void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target) {
 void update_light_selector_icon(lv_obj_t* icon, bool is_on) {
     if (icon == nullptr) return;
     lv_obj_set_style_text_color(icon,
-        lv_color_hex(is_on ? UIColor::WARNING : UIColor::TEXT_DIM), LV_PART_MAIN);
+        lv_color_hex(is_on ? UIColor::INFO : UIColor::TEXT_DIM), LV_PART_MAIN);
 }
 
 // Ecrit "NN %" dans pct_lbl et positionne l'arc — helper interne commun.
@@ -1286,7 +1286,7 @@ void show_light_popup_ui(int light_idx, const char* const titles[3],
 
     if (power_icon != nullptr) {
         lv_obj_set_style_text_color(power_icon,
-            lv_color_hex(is_on[light_idx] ? UIColor::WARNING : UIColor::TEXT_DIM), LV_PART_MAIN);
+            lv_color_hex(is_on[light_idx] ? UIColor::INFO : UIColor::TEXT_DIM), LV_PART_MAIN);
     }
 
     // Lumiere eteinte : l'arc affiche 0 (l'attribut brightness HA est NAN ou obsolete)

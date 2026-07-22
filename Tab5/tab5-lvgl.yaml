@@ -86,6 +86,12 @@ lvgl:
               - lambda: |-
                   lv_label_set_text(id(icon_mode_status), "\U000F07D0");
                   lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+                  lv_obj_set_style_border_color(id(btn_mode_domo), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
+                  lv_obj_set_style_border_opa(id(btn_mode_domo), LV_OPA_COVER, LV_PART_MAIN);
+                  lv_obj_set_style_border_width(id(btn_mode_domo), 2, LV_PART_MAIN);
+                  lv_obj_set_style_border_color(id(btn_mode_discu), lv_color_hex(UIColor::GLASS_RIM), LV_PART_MAIN);
+                  lv_obj_set_style_border_opa(id(btn_mode_discu), LV_OPA_40, LV_PART_MAIN);
+                  lv_obj_set_style_border_width(id(btn_mode_discu), 1, LV_PART_MAIN);
               - homeassistant.service:
                   service: select.select_option
                   data:
@@ -111,6 +117,12 @@ lvgl:
               - lambda: |-
                   lv_label_set_text(id(icon_mode_status), "\U000F0450");
                   lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
+                  lv_obj_set_style_border_color(id(btn_mode_discu), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
+                  lv_obj_set_style_border_opa(id(btn_mode_discu), LV_OPA_COVER, LV_PART_MAIN);
+                  lv_obj_set_style_border_width(id(btn_mode_discu), 2, LV_PART_MAIN);
+                  lv_obj_set_style_border_color(id(btn_mode_domo), lv_color_hex(UIColor::GLASS_RIM), LV_PART_MAIN);
+                  lv_obj_set_style_border_opa(id(btn_mode_domo), LV_OPA_40, LV_PART_MAIN);
+                  lv_obj_set_style_border_width(id(btn_mode_domo), 1, LV_PART_MAIN);
               - homeassistant.service:
                   service: select.select_option
                   data:
