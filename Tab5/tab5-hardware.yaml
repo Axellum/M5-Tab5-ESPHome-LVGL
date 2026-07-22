@@ -323,19 +323,47 @@ voice_assistant:
   micro_wake_word: mww
   on_listening:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_listening"
-    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);' # Vert (Parlez)
+    - lambda: |-
+        lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN); // Vert (Parlez)
+        if (id(lbl_assist_status) != nullptr) {
+          lv_label_set_text(id(lbl_assist_status), "Écoute…");
+          lv_obj_set_style_text_color(id(lbl_assist_status), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
+        }
     - script.execute: tab5_vocal_arm_stop
   on_stt_end:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_stt_end"
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);' # Orange (Analyse)
     - script.execute: tab5_vocal_arm_stop
+    # Popup assistant : affiche la demande reconnue (STT) + bascule en "Réflexion…"
+    - lambda: |-
+        assist_set_request(id(lbl_assist_request), x);
+        if (id(lbl_assist_status) != nullptr) {
+          lv_label_set_text(id(lbl_assist_status), "Analyse…");
+          lv_obj_set_style_text_color(id(lbl_assist_status), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+        }
+    - script.execute: tab5_assist_on_request
   on_tts_start:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_tts_start"
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::INFO), LV_PART_MAIN);' # Bleu clair (Réponse)
     - script.execute: tab5_vocal_arm_stop
+    # Réponse "par défaut" = texte parlé (TTS). Le moteur peut la remplacer par une
+    # version riche (tableaux + image) via le service HA tab5_assist_reponse.
+    - lambda: |-
+        esphome::font::Font* f = id(assist_text_size) == 0 ? id(roboto_mono_20)
+                               : (id(assist_text_size) == 2 ? id(roboto_mono_28) : id(roboto_mono_24));
+        assist_set_response(id(lbl_assist_response), x, f);
+        if (id(lbl_assist_status) != nullptr) {
+          lv_label_set_text(id(lbl_assist_status), "Réponse");
+          lv_obj_set_style_text_color(id(lbl_assist_status), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
+        }
   on_end:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_end"
-    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);' # Gris (Repos)
+    - lambda: |-
+        lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN); // Gris (Repos)
+        if (id(lbl_assist_status) != nullptr) {
+          lv_label_set_text(id(lbl_assist_status), "Prêt");
+          lv_obj_set_style_text_color(id(lbl_assist_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+        }
     - wait_until:
         condition:
           - media_player.is_announcing:
@@ -356,7 +384,12 @@ voice_assistant:
     - logger.log:
         format: "DEBUG: VOICE_ASSISTANT on_error: %s"
         args: [ "code.c_str()" ]
-    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::ERROR), LV_PART_MAIN);' # Rouge (Erreur)
+    - lambda: |-
+        lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::ERROR), LV_PART_MAIN); // Rouge (Erreur)
+        if (id(lbl_assist_status) != nullptr) {
+          lv_label_set_text(id(lbl_assist_status), "Erreur");
+          lv_obj_set_style_text_color(id(lbl_assist_status), lv_color_hex(UIColor::ERROR), LV_PART_MAIN);
+        }
     - delay: 2s
     - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);' # Retour gris
     - if:
@@ -365,6 +398,34 @@ voice_assistant:
         then:
           - micro_wake_word.start:
     - script.execute: tab5_vocal_disarm_stop
+
+# ─── Image de la réponse assistant (popup) ───────────────────────────────────
+# Le moteur (via le service HA tab5_assist_reponse) fournit une URL d'image PNG ;
+# le Tab5 la télécharge à la demande (online_image.set_url + update) et l'affiche
+# dans le popup. Décodage en PSRAM (RGB565), redimensionné à la zone image.
+http_request:
+  id: assist_http
+  timeout: 12s
+  verify_ssl: false
+  watchdog_timeout: 20s
+
+online_image:
+  - id: assist_response_image
+    url: "http://127.0.0.1/placeholder.png"   # remplacé au runtime par set_url
+    format: PNG
+    type: RGB565
+    resize: 760x360
+    on_download_finished:
+      - lambda: |-
+          if (id(assist_img_widget) != nullptr) lv_obj_clear_flag(id(assist_img_widget), LV_OBJ_FLAG_HIDDEN);
+          if (id(assist_img_hint) != nullptr) lv_obj_add_flag(id(assist_img_hint), LV_OBJ_FLAG_HIDDEN);
+    on_error:
+      - lambda: |-
+          if (id(assist_img_hint) != nullptr) {
+            lv_label_set_text(id(assist_img_hint), "Image indisponible");
+            lv_obj_clear_flag(id(assist_img_hint), LV_OBJ_FLAG_HIDDEN);
+          }
+          if (id(assist_img_widget) != nullptr) lv_obj_add_flag(id(assist_img_widget), LV_OBJ_FLAG_HIDDEN);
 
 button:
   - platform: restart

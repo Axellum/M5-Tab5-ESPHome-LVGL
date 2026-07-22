@@ -4,6 +4,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-22 — Popup Assistant vocal : demande + réponse écrite (tableaux & image)
+- Nouveau `ui_components/assistant_popup.yaml` : carte modale plein écran 1230×670 (25 px des bords, recette popups v2) — **gauche = réglages** (choix du cerveau/pipeline Domotique↔Discussion, Ok Nabu ON/OFF, Muet, slider Volume, taille de texte A-/A/A+), **droite = « Votre demande »** (transcription STT) + **« Réponse »** défilante avec prise en charge Markdown : **tableaux** ré-alignés en monospace et **image** téléchargée à la demande.
+- Ouverture : **appui long sur la zone micro** (`btn_assist_trigger`), automatiquement en **mode Discussion** sur une demande vocale (`on_stt_end` → `tab5_assist_on_request` ; en mode Domotique le bandeau central 8 s reste le retour rapide, pas de voile du dashboard), ou par le moteur via le service HA `tab5_assist_reponse`. Fermeture par scrim / croix / bouton « Fermer ».
+- **Contrat HA** : nouveau service `esphome.<device>_tab5_assist_reponse` (variables `texte` = Markdown, `image_url` = PNG optionnel, vide ⇒ zone image masquée). Le moteur pousse ainsi une réponse riche ; à défaut, le texte parlé (TTS `on_tts_start`) alimente la réponse et la demande vient de `on_stt_end`.
+- **Rendu** (`format_assist_markdown()`, `tab5_custom.cpp`) : nettoyage `**gras**`/`` `code` ``/titres `#`, puces `-`→`•`, et surtout **ré-alignement des colonnes de tableau** avec comptage en points de code UTF-8 (les accents restent alignés) — testé hors-cible. Réglage de taille S/M/L persisté (`assist_text_size`) sans perdre le texte affiché.
+- **Image** : composants `http_request` + `online_image` (PNG→RGB565, redimensionné 760×360, décodage PSRAM), URL fixée au runtime via `online_image.set_url` ; libellés « Chargement… » / « Image indisponible » selon `on_download_finished`/`on_error`.
+- **Anti « boutons qui décalent »** : positions absolues (x/y fixes) et les états actifs ne changent que la bordure (dessinée à l'intérieur du widget) — aucun décalage. Sélecteur de cerveau centralisé (`tab5_set_assist_mode`) synchronisant à la fois les boutons Domo/Discu du dashboard et ceux du popup + libellé d'état Écoute/Analyse/Réponse/Prêt/Erreur.
+- `tab5-styles.yaml` : polices `roboto_mono_20/24/28` (tableaux alignés) et `mdi_assist_36/64` (icônes du popup, codepoints vérifiés dans le TTF). `tab5-globals.yaml` : `assist_popup_open`, `assist_text_size`.
+
 ### 2026-07-19 — Popup calendrier : appui long sur l'horloge
 - Nouveaux `calendar_popup.yaml` + template `cal_day_cell.yaml` (42 instances, grille 7×6 lundi-en-tête) : carte modale 1250×690 (15 px des bords) — en-tête (navigation ◀ mois ▶ + bouton « Aujourd'hui »), grille mensuelle avec numéro du jour, **heures de travail affichées dans les cases**, pastilles RDV (dorée) / anniversaire (rose), fond violet doux = vacances scolaires, numéro rose = férié, bordure cyan = aujourd'hui, légende en bas.
 - Ouverture par **appui long sur l'horloge/date** (`btn_clock_calendar_zone`, zone tactile invisible sur `clock_tile`) ; tap court sans effet.

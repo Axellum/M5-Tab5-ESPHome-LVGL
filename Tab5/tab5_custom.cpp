@@ -1189,6 +1189,172 @@ void hide_vocal_response_ui(
 }
 
 // =============================================================================
+// Popup Assistant vocal (assistant_popup.yaml) — helpers de rendu
+// =============================================================================
+
+// Longueur en points de code UTF-8 (aligne les colonnes des tableaux en monospace,
+// où un caractère accenté = 2/3 octets mais 1 seule cellule visuelle).
+static size_t assist_utf8_cp_len(const std::string& s) {
+    size_t n = 0;
+    for (unsigned char c : s) if ((c & 0xC0) != 0x80) n++;
+    return n;
+}
+
+// Rogne les espaces/tabs/retours en début et fin.
+static std::string assist_trim(const std::string& s) {
+    const char* ws = " \t\r\n";
+    size_t a = s.find_first_not_of(ws);
+    if (a == std::string::npos) return "";
+    size_t b = s.find_last_not_of(ws);
+    return s.substr(a, b - a + 1);
+}
+
+// Retire les marqueurs Markdown inline (**gras**, __gras__, `code`, *ital*, ~barré~).
+static std::string assist_strip_inline_md(const std::string& in) {
+    std::string out;
+    out.reserve(in.size());
+    for (size_t i = 0; i < in.size();) {
+        if (i + 1 < in.size() &&
+            ((in[i] == '*' && in[i + 1] == '*') || (in[i] == '_' && in[i + 1] == '_'))) {
+            i += 2; continue;  // **gras** / __gras__
+        }
+        char c = in[i];
+        if (c == '`' || c == '*' || c == '_' || c == '~') { i++; continue; }
+        out += c; i++;
+    }
+    return out;
+}
+
+// Ligne séparatrice de tableau Markdown : |---|:--:|--| (uniquement - : | espaces).
+static bool assist_is_table_sep(const std::string& line) {
+    bool dash = false;
+    for (char c : line) {
+        if (c == '-') dash = true;
+        else if (c == '|' || c == ':' || c == ' ' || c == '\t') continue;
+        else return false;
+    }
+    return dash;
+}
+
+// Éclate une ligne de tableau en cellules (gère les pipes de bord + nettoie chaque cellule).
+static std::vector<std::string> assist_split_cells(const std::string& row) {
+    std::string r = assist_trim(row);
+    if (!r.empty() && r.front() == '|') r.erase(r.begin());
+    if (!r.empty() && r.back() == '|') r.pop_back();
+    std::vector<std::string> cells;
+    std::string cur;
+    for (char c : r) {
+        if (c == '|') { cells.push_back(assist_trim(assist_strip_inline_md(cur))); cur.clear(); }
+        else cur += c;
+    }
+    cells.push_back(assist_trim(assist_strip_inline_md(cur)));
+    return cells;
+}
+
+std::string format_assist_markdown(const std::string& in) {
+    // Découpe en lignes (ignore les \r).
+    std::vector<std::string> lines;
+    std::string cur;
+    for (char c : in) {
+        if (c == '\n') { lines.push_back(cur); cur.clear(); }
+        else if (c != '\r') cur += c;
+    }
+    lines.push_back(cur);
+
+    std::string out;
+    for (size_t i = 0; i < lines.size();) {
+        const std::string& raw = lines[i];
+        bool is_row = raw.find('|') != std::string::npos;
+
+        // Bloc tableau : au moins 2 lignes consécutives contenant un '|'.
+        if (is_row && i + 1 < lines.size() && lines[i + 1].find('|') != std::string::npos) {
+            size_t j = i;
+            std::vector<std::vector<std::string>> rows;
+            while (j < lines.size() && lines[j].find('|') != std::string::npos) {
+                if (!assist_is_table_sep(lines[j])) rows.push_back(assist_split_cells(lines[j]));
+                j++;
+            }
+            // Largeur (en points de code) de chaque colonne.
+            std::vector<size_t> width;
+            for (auto& r : rows)
+                for (size_t k = 0; k < r.size(); k++) {
+                    size_t l = assist_utf8_cp_len(r[k]);
+                    if (k >= width.size()) width.push_back(l);
+                    else if (l > width[k]) width[k] = l;
+                }
+            // Ré-émission alignée (2 espaces entre colonnes).
+            for (auto& r : rows) {
+                std::string line;
+                for (size_t k = 0; k < r.size(); k++) {
+                    line += r[k];
+                    size_t have = assist_utf8_cp_len(r[k]);
+                    size_t pad = (k < width.size()) ? width[k] : 0;
+                    if (k + 1 < r.size() && have < pad) line.append(pad - have, ' ');
+                    if (k + 1 < r.size()) line += "  ";
+                }
+                out += line; out += "\n";
+            }
+            i = j;
+            continue;
+        }
+
+        // Ligne normale : titres (#), puces (- * +), marqueurs inline.
+        std::string s = raw;
+        size_t a = s.find_first_not_of(" \t");
+        if (a != std::string::npos && s[a] == '#') {
+            size_t h = a;
+            while (h < s.size() && s[h] == '#') h++;
+            while (h < s.size() && s[h] == ' ') h++;
+            s = s.substr(h);
+            a = s.find_first_not_of(" \t");
+        }
+        if (a != std::string::npos && (s[a] == '-' || s[a] == '*' || s[a] == '+') &&
+            a + 1 < s.size() && s[a + 1] == ' ') {
+            s = s.substr(0, a) + "\xE2\x80\xA2 " + s.substr(a + 2);  // "• "
+        }
+        s = assist_strip_inline_md(s);
+        out += s; out += "\n";
+        i++;
+    }
+    if (!out.empty() && out.back() == '\n') out.pop_back();
+    return out;
+}
+
+void assist_set_request(lv_obj_t* lbl_request, const std::string& texte) {
+    if (!lbl_request) return;
+    std::string t = assist_trim(normalize_text_utf8(texte));
+    lv_label_set_text(lbl_request, t.c_str());
+}
+
+void assist_set_response(lv_obj_t* lbl_response, const std::string& texte,
+    esphome::font::Font* font) {
+    if (!lbl_response) return;
+    std::string t = format_assist_markdown(normalize_text_utf8(texte));
+    if (font) esphome::lvgl::lv_obj_set_style_text_font(lbl_response, font, LV_PART_MAIN);
+    lv_label_set_recolor(lbl_response, false);
+    lv_label_set_text(lbl_response, t.c_str());
+}
+
+// Surbrillance d'un bouton de taille (bordure ; largeur/opacité changent SANS
+// décaler la position — la bordure LVGL est dessinée à l'intérieur du widget).
+static void assist_style_size_btn(lv_obj_t* btn, bool active) {
+    if (!btn) return;
+    lv_obj_set_style_border_color(btn, lv_color_hex(active ? UIColor::INFO : UIColor::GLASS_RIM), LV_PART_MAIN);
+    lv_obj_set_style_border_opa(btn, active ? LV_OPA_COVER : LV_OPA_40, LV_PART_MAIN);
+    lv_obj_set_style_border_width(btn, active ? 2 : 1, LV_PART_MAIN);
+}
+
+void assist_apply_text_size(lv_obj_t* lbl_response, int size_idx,
+    esphome::font::Font* f_s, esphome::font::Font* f_m, esphome::font::Font* f_l,
+    lv_obj_t* btn_s, lv_obj_t* btn_m, lv_obj_t* btn_l) {
+    esphome::font::Font* f = (size_idx <= 0) ? f_s : (size_idx == 1 ? f_m : f_l);
+    if (lbl_response && f) esphome::lvgl::lv_obj_set_style_text_font(lbl_response, f, LV_PART_MAIN);
+    assist_style_size_btn(btn_s, size_idx <= 0);
+    assist_style_size_btn(btn_m, size_idx == 1);
+    assist_style_size_btn(btn_l, size_idx >= 2);
+}
+
+// =============================================================================
 // Carte lumiere (epaule j2/j3/j4 + switch associe + popup power) : factorise depuis
 // light_chambre_state/light_salon_state/light_led_state (tab5-sensors-domotique.yaml, #T164)
 // =============================================================================

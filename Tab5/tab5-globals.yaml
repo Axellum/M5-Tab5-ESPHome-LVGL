@@ -137,6 +137,18 @@ globals:
     type: bool
     initial_value: 'false'
 
+  # --- Popup Assistant vocal (assistant_popup.yaml) ---
+  # Ouvert => les événements vocaux (demande/réponse) alimentent le popup plein écran
+  # au lieu (en plus) du bandeau central 8 s. assist_text_size : 0=S 1=M 2=L (confort lecture).
+  - id: assist_popup_open
+    type: bool
+    initial_value: 'false'
+    restore_value: false
+  - id: assist_text_size
+    type: int
+    initial_value: '1'
+    restore_value: true
+
   # Popup calendrier (calendar_popup.yaml) : mois affiché + date du détail ouvert.
   # Partagés entre tab5-scripts.yaml (open/prev/next/today/tap) et
   # tab5-api-logic.yaml (tab5_maj_calendrier_mois/jour) — donc globals, pas de static.

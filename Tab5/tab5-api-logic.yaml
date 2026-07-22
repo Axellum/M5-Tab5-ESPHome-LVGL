@@ -376,6 +376,37 @@ api:
             id: tab5_show_vocal_response
             texte: !lambda 'return texte;'
 
+    # Réponse "riche" du moteur pour le popup Assistant vocal : texte Markdown
+    # (tableaux pris en charge, alignés en monospace) + URL d'image optionnelle.
+    # image_url vide => zone image masquée. Ouvre le popup automatiquement.
+    - service: tab5_assist_reponse
+      variables:
+        texte: string
+        image_url: string
+      then:
+        - lambda: |-
+            esphome::font::Font* f = id(assist_text_size) == 0 ? id(roboto_mono_20)
+                                   : (id(assist_text_size) == 2 ? id(roboto_mono_28) : id(roboto_mono_24));
+            assist_set_response(id(lbl_assist_response), texte, f);
+        - if:
+            condition:
+              lambda: 'return !image_url.empty();'
+            then:
+              - lambda: |-
+                  if (id(assist_img_hint) != nullptr) {
+                    lv_label_set_text(id(assist_img_hint), "Chargement image...");
+                    lv_obj_clear_flag(id(assist_img_hint), LV_OBJ_FLAG_HIDDEN);
+                  }
+                  if (id(assist_img_widget) != nullptr) lv_obj_add_flag(id(assist_img_widget), LV_OBJ_FLAG_HIDDEN);
+              - online_image.set_url:
+                  id: assist_response_image
+                  url: !lambda 'return image_url;'
+            else:
+              - lambda: |-
+                  if (id(assist_img_widget) != nullptr) lv_obj_add_flag(id(assist_img_widget), LV_OBJ_FLAG_HIDDEN);
+                  if (id(assist_img_hint) != nullptr) lv_obj_add_flag(id(assist_img_hint), LV_OBJ_FLAG_HIDDEN);
+        - script.execute: tab5_assist_open
+
     - service: tab5_maj_alertes_ha_bulk
       variables:
         payload: string

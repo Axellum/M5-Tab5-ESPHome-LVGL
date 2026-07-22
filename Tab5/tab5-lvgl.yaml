@@ -69,6 +69,9 @@ lvgl:
             on_short_click:
               - logger.log: "DEBUG: BOUTON MICRO CLIQUE !"
               - script.execute: tab5_assist_toggle
+            on_long_press:
+              # Appui long sur la zone micro -> popup Assistant vocal plein écran
+              - script.execute: tab5_assist_open
         
         # Bouton Domo
         - button:
@@ -606,3 +609,4 @@ lvgl:
         - !include ui_components/tv_remote_popup.yaml
         - !include ui_components/pots_popup.yaml
         - !include ui_components/calendar_popup.yaml
+        - !include ui_components/assistant_popup.yaml
