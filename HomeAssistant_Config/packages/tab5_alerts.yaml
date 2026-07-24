@@ -68,15 +68,9 @@ script:
               {% if p.entity_id not in ns.ids %}{% set ns.ids = ns.ids + [p.entity_id] %}{% endif %}
             {% endfor %}
             {% if 'ha:unavailable' not in ns.ids %}
-              {% set ns_u = namespace(n=0) %}
-              {% for s in states %}
-                {% if s.state == 'unavailable'
-                    and not s.entity_id.startswith('update.')
-                    and not s.entity_id.startswith('automation.') %}
-                  {% set ns_u.n = ns_u.n + 1 %}
-                {% endif %}
-              {% endfor %}
-              {% if ns_u.n > 0 %}{% set ns.ids = ns.ids + ['ha:unavailable'] %}{% endif %}
+              {% if (states('sensor.tab5_unavailable_count') | int(0)) > 0 %}
+                {% set ns.ids = ns.ids + ['ha:unavailable'] %}
+              {% endif %}
             {% endif %}
             {{ ns.ids | join('|') }}
       - action: input_text.set_value
@@ -89,6 +83,39 @@ script:
         continue_on_error: true
         target:
           entity_id: automation.maj_ecran_tab5_esphome_push
+
+template:
+  # ==========================================================================
+  # Compte des entités "unavailable" — sorti du hot-path des poussées écran (#2).
+  # Le scan complet de la state machine (~centaines d'entités) était refait à
+  # CHAQUE poussée dans la section 7 (texte) ET 7b (rotateur) — soit 2× par push,
+  # sur des poussées parfois fréquentes (changement météo). Ce capteur le calcule
+  # UNE fois. `trigger:` (et non `state:`) est OBLIGATOIRE : un capteur `state:`
+  # qui itère `states` se réévaluerait à chaque changement d'état HA (pire que le
+  # problème d'origine). Ici : recalcul toutes les 2 min + au démarrage HA — la
+  # latence de « N indispo » (≤ 2 min) est sans importance pour un bandeau d'état.
+  # Consommé via `states('sensor.tab5_unavailable_count') | int(0)` (défaut 0 tant
+  # que le capteur n'existe pas → dégradation propre avant déploiement).
+  # ==========================================================================
+  - trigger:
+      - platform: homeassistant
+        event: start
+      - platform: time_pattern
+        minutes: "/2"
+    sensor:
+      - name: "Tab5 Unavailable Count"
+        unique_id: tab5_unavailable_count
+        icon: mdi:help-network-outline
+        state: >
+          {% set ns = namespace(n=0) %}
+          {% for s in states %}
+            {% if s.state == 'unavailable'
+                and not s.entity_id.startswith('update.')
+                and not s.entity_id.startswith('automation.') %}
+              {% set ns.n = ns.n + 1 %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.n }}
 
 automation:
   - id: tab5_alert_dismiss_handler

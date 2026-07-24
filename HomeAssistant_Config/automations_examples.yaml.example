@@ -287,14 +287,7 @@
               | selectattr('state', 'eq', 'on')
               | list %}
             {% set problem_count = problems | length %}
-            {% set ns_u = namespace(n=0) %}
-            {% for s in states %}
-              {% if s.state == 'unavailable'
-                  and not s.entity_id.startswith('update.')
-                  and not s.entity_id.startswith('automation.') %}
-                {% set ns_u.n = ns_u.n + 1 %}
-              {% endif %}
-            {% endfor %}
+            {% set ns_u = namespace(n = states('sensor.tab5_unavailable_count') | int(0)) %}
             {% if pending_count == 1 %}
               {% set title = pending[0].attributes.get('title', pending[0].attributes.get('friendly_name', 'MAJ')) %}
               {% set ns.parts = ns.parts + ['1 MAJ · ' ~ title] %}
@@ -482,14 +475,7 @@
               | selectattr('state', 'eq', 'on')
               | list %}
             {% set problem_count = problems | length %}
-            {% set ns_u = namespace(n=0) %}
-            {% for s in states %}
-              {% if s.state == 'unavailable'
-                  and not s.entity_id.startswith('update.')
-                  and not s.entity_id.startswith('automation.') %}
-                {% set ns_u.n = ns_u.n + 1 %}
-              {% endif %}
-            {% endfor %}
+            {% set ns_u = namespace(n = states('sensor.tab5_unavailable_count') | int(0)) %}
             {% if pending_count == 1 %}
               {% set title = pending[0].attributes.get('title', pending[0].attributes.get('friendly_name', 'MAJ')) %}
               {% set ns.parts = ns.parts + ['1 MAJ · ' ~ title] %}
