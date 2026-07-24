@@ -32,14 +32,17 @@
       entity_id: climate.VOTRE_CLIMATISATION
     - platform: state
       entity_id: sensor.VOTRE_VILLE_next_rain
-    - platform: state
-      entity_id: sensor.phrase_prochaine_pluie
     - platform: time_pattern
       minutes: "/10"
     - platform: event
       event_type: esphome.tab5_connected
     - platform: state
       entity_id: calendar.VOTRE_EMAIL_gmail_com
+    # NB : les déclencheurs "légers" (rebours minute phrase pluie, vigilance météo,
+    # MAJ HA, dismiss) sont gérés par l'automation dédiée `tab5_ha_hmi_alerts_push`
+    # ci-dessous — ils ne relancent PLUS la chaîne météo/prévisions/calendrier
+    # complète (~5,5 s de delays + calendar.get_events + weather.get_forecasts).
+    # Ce refresh complet reste ici pour la connexion + le cycle /10 min.
 
   action:
     # ====== 1. MISE A JOUR MINUTE PAR MINUTE DE LA PHRASE PLUIE ET ALERTES ======
@@ -48,12 +51,6 @@
       data:
         payload: >
           {{ states('sensor.phrase_prochaine_pluie') }}|{{ states('sensor.40_weather_alert') | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Crues') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
-
-
-    # ====== 2. INTERRUPTION SI C'EST JUSTE LE REBOURS MINUTE ======
-    - condition: template
-      value_template: >
-        {{ trigger.platform != 'state' or trigger.entity_id != 'sensor.phrase_prochaine_pluie' }}
 
     # ====== 3. METEO ACTUELLE ======
     - action: esphome.tab5_ha_hmi_tab5_maj_meteo_actuelle
@@ -416,6 +413,106 @@
           {% endfor %}
           {{ ns.result }}
 
+
+# ============================================================================
+# PUSH ALERTES / SANTÉ HA (chemin court, faible latence).
+# Motif : un dismiss, une vigilance Météo-France ou une MAJ HA ne doivent PAS
+# relancer toute la chaîne météo/prévisions/calendrier de `tab5_ha_hmi_updater`
+# (~5,5 s de delays + calendar.get_events + weather.get_forecasts) alors qu'ils ne
+# rafraîchissent que les panneaux alertes/info. Cette automation ne pousse QUE les
+# sections 1 (alerte MF) / 7 (info texte) — et, dans la configuration complète,
+# 7b (rotateur alertes HA). Aucun delay, aucun appel API. Le rebours minute de la
+# phrase pluie ne fait QUE la section 1 (garde ci-dessous). mode: queued pour ne
+# pas perdre un dismiss derrière le tick minute.
+# ============================================================================
+- id: tab5_ha_hmi_alerts_push
+  alias: "MAJ Ecran Tab5 Alertes/Santé (push léger)"
+  mode: queued
+  max: 5
+  trigger:
+    - platform: state
+      entity_id: sensor.phrase_prochaine_pluie
+    - platform: state
+      entity_id: sensor.40_weather_alert
+    - platform: state
+      entity_id:
+        - update.home_assistant_core_update
+        - update.home_assistant_supervisor_update
+        - update.home_assistant_operating_system_update
+    - platform: state
+      entity_id: input_text.tab5_alerts_dismissed
+  action:
+    # ====== 1. PHRASE PLUIE + VIGILANCE MÉTÉO-FRANCE ======
+    - action: esphome.tab5_ha_hmi_tab5_maj_alerte_meteo_france
+      continue_on_error: true
+      data:
+        payload: >
+          {{ states('sensor.phrase_prochaine_pluie') }}|{{ states('sensor.40_weather_alert') | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Crues') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
+
+    # ====== 2. REBOURS MINUTE : la phrase pluie seule, pas de scan santé HA ======
+    - condition: template
+      value_template: >
+        {{ trigger.entity_id != 'sensor.phrase_prochaine_pluie' }}
+
+    # ====== 7. ZONE D'INFO (ALERTES METEO + SANTE HA, 1 LIGNE) ======
+    - action: esphome.tab5_ha_hmi_tab5_maj_info_texte
+      continue_on_error: true
+      data:
+        texte: >
+          {% set alerte = states('sensor.VOTRE_DEPARTEMENT_weather_alert') %}
+          {% if alerte == 'Rouge' or alerte == 'Orange' %}
+             Alerte Météo {{ alerte }} en cours ! Restez prudent.
+          {% else %}
+            {% set pending = states.update | selectattr('state', 'eq', 'on') | list %}
+            {% set pending_count = pending | length %}
+            {% set crit_ids = [
+              'update.home_assistant_core_update',
+              'update.home_assistant_supervisor_update',
+              'update.home_assistant_operating_system_update'
+            ] %}
+            {% set ns = namespace(crit=0, parts=[]) %}
+            {% for u in pending %}
+              {% if u.entity_id in crit_ids %}
+                {% set ns.crit = ns.crit + 1 %}
+              {% endif %}
+            {% endfor %}
+            {% set problems = states.binary_sensor
+              | selectattr('attributes.device_class', 'defined')
+              | selectattr('attributes.device_class', 'eq', 'problem')
+              | selectattr('state', 'eq', 'on')
+              | list %}
+            {% set problem_count = problems | length %}
+            {% set ns_u = namespace(n=0) %}
+            {% for s in states %}
+              {% if s.state == 'unavailable'
+                  and not s.entity_id.startswith('update.')
+                  and not s.entity_id.startswith('automation.') %}
+                {% set ns_u.n = ns_u.n + 1 %}
+              {% endif %}
+            {% endfor %}
+            {% if pending_count == 1 %}
+              {% set title = pending[0].attributes.get('title', pending[0].attributes.get('friendly_name', 'MAJ')) %}
+              {% set ns.parts = ns.parts + ['1 MAJ · ' ~ title] %}
+            {% elif pending_count > 1 %}
+              {% set ns.parts = ns.parts + [pending_count ~ ' MAJ'] %}
+            {% endif %}
+            {% if problem_count > 0 %}
+              {% set ns.parts = ns.parts + [problem_count ~ ' erreur' ~ ('s' if problem_count > 1 else '')] %}
+            {% endif %}
+            {% if ns_u.n > 0 %}
+              {% set ns.parts = ns.parts + [ns_u.n ~ ' indispo'] %}
+            {% endif %}
+            {{ ns.parts | join(' · ') }}
+          {% endif %}
+        couleur: >
+          {% set alerte = states('sensor.VOTRE_DEPARTEMENT_weather_alert') %}
+          {% if alerte == 'Rouge' %} Rouge
+          {% elif alerte == 'Orange' %} Orange
+          {% else %} Blanc
+          {% endif %}
+        meteo_id: ""
+    # Dans la configuration complète, pousser ici aussi la section 7b
+    # (esphome.tab5_ha_hmi_tab5_maj_alertes_ha_bulk — rotateur alertes HA).
 
 - id: tab5_volet_updater
   alias: "Sync Tab5 Volet Serre"
