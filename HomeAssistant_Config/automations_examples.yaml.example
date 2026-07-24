@@ -167,97 +167,52 @@
           {% endif %}
 
     # ====== Y. PLANNING HORAIRE (TEXTE TAB5) ======
+    # La liste des créneaux travail à venir est calculée UNE fois ici (avant, la
+    # boucle sur tout l'agenda tournait 2×, une par ligne) puis indexée (#3).
+    - variables:
+        planning_lignes: >
+          {% set ns = namespace(lignes=[]) %}
+          {% set now_dt = now() %}
+          {% if agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
+            {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
+              {% if 'Travail' in event.summary|default(event.message, '') %}
+                {% set start_dt = event.start | as_datetime %}
+                {% set end_dt = event.end | as_datetime %}
+                {% set is_auj = start_dt.date() == now_dt.date() %}
+                {% set is_demain = start_dt.date() == (now_dt + timedelta(days=1)).date() %}
+                {% if is_auj %}
+                  {% set j_name = "Auj." %}
+                {% elif is_demain %}
+                  {% set j_name = "Dem." %}
+                {% else %}
+                  {% set j_name = ["Dim.","Lun.","Mar.","Mer.","Jeu.","Ven.","Sam."][start_dt.strftime('%w')|int] %}
+                {% endif %}
+                {% set em = start_dt.strftime('%H:%M') %}
+                {% set de = end_dt.strftime('%H:%M') %}
+                {% set is_early = start_dt.hour < 9 %}
+                {% set hex = "ff8888" if is_early else "ffffff" %}
+                {% if is_demain %}
+                  {% set j_name_colored = "#44aaff " ~ j_name ~ "#" %}
+                {% else %}
+                  {% set j_name_colored = "#" ~ hex ~ " " ~ j_name ~ "#" %}
+                {% endif %}
+                {% set line_str = (ns.lignes|length + 1)|string ~ "/ " ~ j_name_colored ~ " : #" ~ hex ~ " " ~ em ~ "-" ~ de ~ "#" %}
+                {% if is_auj %}
+                   {% if now_dt.timestamp() < start_dt.timestamp() %}
+                      {% set ns.lignes = ns.lignes + [line_str] %}
+                   {% endif %}
+                {% elif start_dt.date() > now_dt.date() %}
+                   {% set ns.lignes = ns.lignes + [line_str] %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+          {{ ns.lignes }}
     - action: esphome.tab5_ha_hmi_tab5_maj_planning
       continue_on_error: true
       data:
-        ligne1: >
-          {% set ns = namespace(lignes=[]) %}
-          {% set now_dt = now() %}
-          {% if agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
-            {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
-              {% if 'Travail' in event.summary|default(event.message, '') %}
-                {% set start_dt = event.start | as_datetime %}
-                {% set end_dt = event.end | as_datetime %}
-                
-                {% set is_auj = start_dt.date() == now_dt.date() %}
-                {% set is_demain = start_dt.date() == (now_dt + timedelta(days=1)).date() %}
-                
-                {% if is_auj %}
-                  {% set j_name = "Auj." %}
-                {% elif is_demain %}
-                  {% set j_name = "Dem." %}
-                {% else %}
-                  {% set j_name = ["Dim.","Lun.","Mar.","Mer.","Jeu.","Ven.","Sam."][start_dt.strftime('%w')|int] %}
-                {% endif %}
-
-                {% set em = start_dt.strftime('%H:%M') %}
-                {% set de = end_dt.strftime('%H:%M') %}
-                {% set is_early = start_dt.hour < 9 %}
-                {% set hex = "ff8888" if is_early else "ffffff" %}
-                
-                {% if is_demain %}
-                  {% set j_name_colored = "#44aaff " ~ j_name ~ "#" %}
-                {% else %}
-                  {% set j_name_colored = "#" ~ hex ~ " " ~ j_name ~ "#" %}
-                {% endif %}
-                
-                {% set line_str = (ns.lignes|length + 1)|string ~ "/ " ~ j_name_colored ~ " : #" ~ hex ~ " " ~ em ~ "-" ~ de ~ "#" %}
-                
-                {% if is_auj %}
-                   {% if now_dt.timestamp() < start_dt.timestamp() %}
-                      {% set ns.lignes = ns.lignes + [line_str] %}
-                   {% endif %}
-                {% elif start_dt.date() > now_dt.date() %}
-                   {% set ns.lignes = ns.lignes + [line_str] %}
-                {% endif %}
-              {% endif %}
-            {% endfor %}
-          {% endif %}
-          {{ ns.lignes[0] if ns.lignes|length > 0 else "#aaaaaa Aucun travail de prevu#" }}
-        ligne2: >
-          {% set ns = namespace(lignes=[]) %}
-          {% set now_dt = now() %}
-          {% if agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
-            {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
-              {% if 'Travail' in event.summary|default(event.message, '') %}
-                {% set start_dt = event.start | as_datetime %}
-                {% set end_dt = event.end | as_datetime %}
-                
-                {% set is_auj = start_dt.date() == now_dt.date() %}
-                {% set is_demain = start_dt.date() == (now_dt + timedelta(days=1)).date() %}
-                
-                {% if is_auj %}
-                  {% set j_name = "Auj." %}
-                {% elif is_demain %}
-                  {% set j_name = "Dem." %}
-                {% else %}
-                  {% set j_name = ["Dim.","Lun.","Mar.","Mer.","Jeu.","Ven.","Sam."][start_dt.strftime('%w')|int] %}
-                {% endif %}
-
-                {% set em = start_dt.strftime('%H:%M') %}
-                {% set de = end_dt.strftime('%H:%M') %}
-                {% set is_early = start_dt.hour < 9 %}
-                {% set hex = "ff8888" if is_early else "ffffff" %}
-                
-                {% if is_demain %}
-                  {% set j_name_colored = "#44aaff " ~ j_name ~ "#" %}
-                {% else %}
-                  {% set j_name_colored = "#" ~ hex ~ " " ~ j_name ~ "#" %}
-                {% endif %}
-                
-                {% set line_str = (ns.lignes|length + 1)|string ~ "/ " ~ j_name_colored ~ " : #" ~ hex ~ " " ~ em ~ "-" ~ de ~ "#" %}
-                
-                {% if is_auj %}
-                   {% if now_dt.timestamp() < start_dt.timestamp() %}
-                      {% set ns.lignes = ns.lignes + [line_str] %}
-                   {% endif %}
-                {% elif start_dt.date() > now_dt.date() %}
-                   {% set ns.lignes = ns.lignes + [line_str] %}
-                {% endif %}
-              {% endif %}
-            {% endfor %}
-          {% endif %}
-          {{ ns.lignes[1] if ns.lignes|length > 1 else "" }}
+        ligne1: "{{ planning_lignes[0] if planning_lignes | length > 0 else '#aaaaaa Aucun travail de prevu#' }}"
+        ligne2: "{{ planning_lignes[1] if planning_lignes | length > 1 else '' }}"
 
     # ====== 7. ZONE D'INFO (ALERTES METEO + SANTE HA, 1 LIGNE) ======
     - action: esphome.tab5_ha_hmi_tab5_maj_info_texte
@@ -329,7 +284,7 @@
             {% else %} Blanc
             {% endif %}
           {% endif %}
-    # ====== 8. PREVISIONS HORAIRES (BULK - 3 chunks au lieu de 1) ======
+    # ====== 8. PREVISIONS HORAIRES (BULK - 3 chunks de 5 via repeat) ======
     - action: weather.get_forecasts
       continue_on_error: true
       data:
@@ -337,74 +292,35 @@
       target:
         entity_id: weather.VOTRE_VILLE
       response_variable: hourly_var_tab5
-    - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk
-      continue_on_error: true
-      data:
-        payload: >
-          {% set fcasts = hourly_var_tab5.get('weather.VOTRE_VILLE', {}).get('forecast', []) if hourly_var_tab5 is defined else [] %}
-          {% set ns = namespace(result="") %}
-          {% for i in range(0, 5) %}
-            {% if i < fcasts|length %}
-              {% set dt = fcasts[i].datetime | as_datetime %}
-              {% set heure_texte = dt.strftime('%H:00') if dt else '00:00' %}
-              {% set condition = fcasts[i].condition | default('unknown') %}
-              {% set temp = fcasts[i].temperature | float(0) %}
-              {% set pluvio = fcasts[i].precipitation | float(0) %}
-            {% else %}
-              {% set heure_texte = '00:00' %}
-              {% set condition = 'unknown' %}
-              {% set temp = 0 %}
-              {% set pluvio = 0 %}
-            {% endif %}
-            {% set ns.result = ns.result ~ i ~ "|" ~ heure_texte ~ "|" ~ condition ~ "|" ~ temp ~ "|" ~ pluvio ~ ";" %}
-          {% endfor %}
-          {{ ns.result }}
-    - delay: "00:00:01"
-    - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk
-      continue_on_error: true
-      data:
-        payload: >
-          {% set fcasts = hourly_var_tab5.get('weather.VOTRE_VILLE', {}).get('forecast', []) if hourly_var_tab5 is defined else [] %}
-          {% set ns = namespace(result="") %}
-          {% for i in range(5, 10) %}
-            {% if i < fcasts|length %}
-              {% set dt = fcasts[i].datetime | as_datetime %}
-              {% set heure_texte = dt.strftime('%H:00') if dt else '00:00' %}
-              {% set condition = fcasts[i].condition | default('unknown') %}
-              {% set temp = fcasts[i].temperature | float(0) %}
-              {% set pluvio = fcasts[i].precipitation | float(0) %}
-            {% else %}
-              {% set heure_texte = '00:00' %}
-              {% set condition = 'unknown' %}
-              {% set temp = 0 %}
-              {% set pluvio = 0 %}
-            {% endif %}
-            {% set ns.result = ns.result ~ i ~ "|" ~ heure_texte ~ "|" ~ condition ~ "|" ~ temp ~ "|" ~ pluvio ~ ";" %}
-          {% endfor %}
-          {{ ns.result }}
-    - delay: "00:00:01"
-    - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk
-      continue_on_error: true
-      data:
-        payload: >
-          {% set fcasts = hourly_var_tab5.get('weather.VOTRE_VILLE', {}).get('forecast', []) if hourly_var_tab5 is defined else [] %}
-          {% set ns = namespace(result="") %}
-          {% for i in range(10, 15) %}
-            {% if i < fcasts|length %}
-              {% set dt = fcasts[i].datetime | as_datetime %}
-              {% set heure_texte = dt.strftime('%H:00') if dt else '00:00' %}
-              {% set condition = fcasts[i].condition | default('unknown') %}
-              {% set temp = fcasts[i].temperature | float(0) %}
-              {% set pluvio = fcasts[i].precipitation | float(0) %}
-            {% else %}
-              {% set heure_texte = '00:00' %}
-              {% set condition = 'unknown' %}
-              {% set temp = 0 %}
-              {% set pluvio = 0 %}
-            {% endif %}
-            {% set ns.result = ns.result ~ i ~ "|" ~ heure_texte ~ "|" ~ condition ~ "|" ~ temp ~ "|" ~ pluvio ~ ";" %}
-          {% endfor %}
-          {{ ns.result }}
+    # 3 chunks de 5 créneaux (0-4, 5-9, 10-14) — l'ancienne triple copie du même
+    # bloc ne différait que par les bornes range() (#3). base = (repeat.index-1)*5.
+    - repeat:
+        count: 3
+        sequence:
+          - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk
+            continue_on_error: true
+            data:
+              payload: >
+                {% set base = (repeat.index - 1) * 5 %}
+                {% set fcasts = hourly_var_tab5.get('weather.VOTRE_VILLE', {}).get('forecast', []) if hourly_var_tab5 is defined else [] %}
+                {% set ns = namespace(result="") %}
+                {% for i in range(base, base + 5) %}
+                  {% if i < fcasts|length %}
+                    {% set dt = fcasts[i].datetime | as_datetime %}
+                    {% set heure_texte = dt.strftime('%H:00') if dt else '00:00' %}
+                    {% set condition = fcasts[i].condition | default('unknown') %}
+                    {% set temp = fcasts[i].temperature | float(0) %}
+                    {% set pluvio = fcasts[i].precipitation | float(0) %}
+                  {% else %}
+                    {% set heure_texte = '00:00' %}
+                    {% set condition = 'unknown' %}
+                    {% set temp = 0 %}
+                    {% set pluvio = 0 %}
+                  {% endif %}
+                  {% set ns.result = ns.result ~ i ~ "|" ~ heure_texte ~ "|" ~ condition ~ "|" ~ temp ~ "|" ~ pluvio ~ ";" %}
+                {% endfor %}
+                {{ ns.result }}
+          - delay: "00:00:01"
 
 
 # ============================================================================
