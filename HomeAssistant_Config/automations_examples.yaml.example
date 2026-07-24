@@ -122,13 +122,13 @@
             {% set est_passe = 'false' if i < fcasts|length else 'true' %}
             {% set est_dimanche = target_dt.strftime('%w') == '0' %}
             {% set ns_travail = namespace(found=false, heures="") %}
-            {% if agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
+            {% if agenda_events is defined and agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
               {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
                 {% set ev_start = event.start | default(event.start_time, '') | string %}
                 {% set ev_end = event.end | default(event.end_time, '') | string %}
                 {% set ev_msg = event.summary | default(event.message, '') | string %}
                 {% if target_date in ev_start or target_date in ev_end %}
-                  {% if 'Travail' in ev_msg %}
+                  {% if 'TRAVAIL' in ev_msg.upper() %}
                     {% set ns_travail.found = true %}
                     {% if target_date in ev_start %}
                       {% set start_dt = ev_start | as_datetime %}
@@ -173,7 +173,7 @@
         planning_lignes: >
           {% set ns = namespace(lignes=[]) %}
           {% set now_dt = now() %}
-          {% if agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
+          {% if agenda_events is defined and agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
             {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
               {% if 'Travail' in event.summary|default(event.message, '') %}
                 {% set start_dt = event.start | as_datetime %}
