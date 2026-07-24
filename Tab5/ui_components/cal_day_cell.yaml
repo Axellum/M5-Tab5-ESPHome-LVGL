@@ -26,7 +26,7 @@ obj:
   widgets:
     # Numéro du jour (couleur : blanc / weekend estompé / férié rose / passé ardoise)
     - label: { id: "cal_num_${idx}", text: "", align: TOP_LEFT, x: 10, y: 2, text_font: roboto_32_b, text_color: color_text }
-    # Heures de travail du jour ("09:30-20:15", rose si embauche avant 9h)
+    # Heures de travail du jour ("09:30-20:15", orange si embauche < 9h)
     - label: { id: "cal_sub_${idx}", text: "", align: BOTTOM_MID, y: -4, text_font: roboto_22, text_color: color_text }
     # Pastille RDV (dorée) + pastille anniversaire (rose)
     - obj: { id: "cal_dot_${idx}", align: TOP_RIGHT, x: -8, y: 6, width: 14, height: 14, radius: 7, bg_color: color_gold, border_width: 0, hidden: true }

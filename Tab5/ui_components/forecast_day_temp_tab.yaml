@@ -3,6 +3,7 @@
 # tmax/tmin change de largeur). Tap min/max → planning/horaires du jour dans la
 # carte centrale (6s) via show_temporary_planning() — index jour =
 # (forecast_page_index - 2) * 5 + idx (aligné sur refresh_daily_forecast).
+# Texte : "Auj. : 08:30-18:30" (orange recolor si embauche < 9h).
 obj:
   align: BOTTOM_MID
   y: 0
