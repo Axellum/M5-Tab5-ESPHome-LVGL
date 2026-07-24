@@ -1097,7 +1097,9 @@ static void planning_restore_timer_cb(lv_timer_t* timer) {
         if (!static_plan_l2.empty()) {
             combined += "   |   " + static_plan_l2;
         }
-        lv_label_set_text(static_lbl_planning, combined.c_str());
+        // set_label_text_utf8 (pas lv_label_set_text seul) : réactive le recolor
+        // si le bandeau sauvé contient encore des tags #rrggbb (sinon markup brut).
+        set_label_text_utf8(static_lbl_planning, combined.c_str());
     }
     lv_timer_del(timer);
     planning_restore_timer = nullptr;
@@ -1954,6 +1956,12 @@ std::string cal_cached_day_detail(int year, int month, int day) {
     const auto it = s_cal_month_cache.find(cal_cache_key(year, month));
     if (it == s_cal_month_cache.end() || !it->second.has_details) return "";
     return cal_field_delim(it->second.details, day - 1, '~');
+}
+
+bool cal_day_has_embedded_detail(int year, int month, int day) {
+    // Champ ~ vide ≠ « rien de prévu confirmé » : avec get_events borné à aujourd'hui,
+    // les jours passés n'ont souvent pas de détail embarqué → fallback script _jour.
+    return !cal_cached_day_detail(year, month, day).empty();
 }
 
 static int cal_days_in_month(int y, int m) {

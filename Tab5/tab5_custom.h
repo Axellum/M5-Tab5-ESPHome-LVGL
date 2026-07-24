@@ -362,9 +362,11 @@ void cal_render_month(CalCellUI cells[42], lv_obj_t* lbl_month,
 std::string cal_date_for_cell(int view_year, int view_month, int cell_idx);
 
 // Détail jour embarqué dans le payload mois (champs séparés par ~). "" si absent.
-// true si le mois est en cache ET le champ details a été fourni (même vide = "rien").
+// true si le mois est en cache ET le champ details a été fourni (même vide = canal présent).
 bool cal_month_has_details(int year, int month);
 std::string cal_cached_day_detail(int year, int month, int day);
+// true seulement si le champ ~ de CE jour est non vide (sinon fallback script _jour).
+bool cal_day_has_embedded_detail(int year, int month, int day);
 
 // Sous-popup détail : titre "Mardi 21 Juillet" + statut Chargement/HA hors ligne.
 void cal_show_day_detail_loading(lv_obj_t* day_popup, lv_obj_t* lbl_title,
