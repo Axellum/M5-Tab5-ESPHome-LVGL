@@ -356,66 +356,33 @@ script:
             - script.execute: tab5_central_rotator_auto
 
   # Tap annonce HA (panneaux 4-7) : dismiss définitif + ligne suivante.
-  - id: tab5_dismiss_ha_alert_0
+  # Script unique paramétré (slot 0-3) — remplace les ex-tab5_dismiss_ha_alert_0..3
+  # identiques (#3). Les 4 objets/globals par slot sont résolus par tableaux indexés
+  # (pattern &id(bool)/&id(std::string) déjà utilisé dans tab5-api-logic.yaml).
+  - id: tab5_dismiss_ha_alert
     mode: restart
+    parameters:
+      slot: int
     then:
+      - lambda: |-
+          id(temp_dismiss_alert_id) = "";
+          lv_obj_t* wraps[4] = {id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3)};
+          lv_obj_t* lbls[4]  = {id(lbl_ha_alert_0), id(lbl_ha_alert_1), id(lbl_ha_alert_2), id(lbl_ha_alert_3)};
+          bool* hasf[4]       = {&id(has_ha_alert_0), &id(has_ha_alert_1), &id(has_ha_alert_2), &id(has_ha_alert_3)};
+          std::string* ids[4] = {&id(ha_alert_id_0), &id(ha_alert_id_1), &id(ha_alert_id_2), &id(ha_alert_id_3)};
+          if (slot < 0 || slot > 3 || ids[slot]->size() == 0) return;
+          id(temp_dismiss_alert_id) = *ids[slot];
+          tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
+          dismiss_ha_alert_slot_immediate(slot, id(current_central_panel),
+              wraps[slot], lbls[slot], *hasf[slot], *ids[slot],
+              id(has_rain), id(has_alerts), id(has_info),
+              id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+              id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
+              id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3));
       - if:
           condition:
-            lambda: 'return id(ha_alert_id_0).size() > 0;'
+            lambda: 'return id(temp_dismiss_alert_id).size() > 0;'
           then:
-            - lambda: |-
-                id(temp_dismiss_alert_id) = id(ha_alert_id_0);
-                tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
-                dismiss_ha_alert_slot_immediate(0, id(current_central_panel),
-                    id(ha_alert_wrapper_0), id(lbl_ha_alert_0), id(has_ha_alert_0), id(ha_alert_id_0),
-                    id(has_rain), id(has_alerts), id(has_info),
-                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
-                    id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
-                    id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3));
-            - homeassistant.service:
-                service: script.tab5_dismiss_alert
-                data:
-                  alert_id: !lambda 'return id(temp_dismiss_alert_id);'
-            - script.execute: tab5_central_rotator_auto
-
-  - id: tab5_dismiss_ha_alert_1
-    mode: restart
-    then:
-      - if:
-          condition:
-            lambda: 'return id(ha_alert_id_1).size() > 0;'
-          then:
-            - lambda: |-
-                id(temp_dismiss_alert_id) = id(ha_alert_id_1);
-                tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
-                dismiss_ha_alert_slot_immediate(1, id(current_central_panel),
-                    id(ha_alert_wrapper_1), id(lbl_ha_alert_1), id(has_ha_alert_1), id(ha_alert_id_1),
-                    id(has_rain), id(has_alerts), id(has_info),
-                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
-                    id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
-                    id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3));
-            - homeassistant.service:
-                service: script.tab5_dismiss_alert
-                data:
-                  alert_id: !lambda 'return id(temp_dismiss_alert_id);'
-            - script.execute: tab5_central_rotator_auto
-
-  - id: tab5_dismiss_ha_alert_2
-    mode: restart
-    then:
-      - if:
-          condition:
-            lambda: 'return id(ha_alert_id_2).size() > 0;'
-          then:
-            - lambda: |-
-                id(temp_dismiss_alert_id) = id(ha_alert_id_2);
-                tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
-                dismiss_ha_alert_slot_immediate(2, id(current_central_panel),
-                    id(ha_alert_wrapper_2), id(lbl_ha_alert_2), id(has_ha_alert_2), id(ha_alert_id_2),
-                    id(has_rain), id(has_alerts), id(has_info),
-                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
-                    id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
-                    id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3));
             - homeassistant.service:
                 service: script.tab5_dismiss_alert
                 data:
@@ -594,28 +561,6 @@ script:
                 service: script.tab5_calendrier_jour
                 data:
                   date: !lambda 'return id(cal_detail_date);'
-
-  - id: tab5_dismiss_ha_alert_3
-    mode: restart
-    then:
-      - if:
-          condition:
-            lambda: 'return id(ha_alert_id_3).size() > 0;'
-          then:
-            - lambda: |-
-                id(temp_dismiss_alert_id) = id(ha_alert_id_3);
-                tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
-                dismiss_ha_alert_slot_immediate(3, id(current_central_panel),
-                    id(ha_alert_wrapper_3), id(lbl_ha_alert_3), id(has_ha_alert_3), id(ha_alert_id_3),
-                    id(has_rain), id(has_alerts), id(has_info),
-                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
-                    id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
-                    id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3));
-            - homeassistant.service:
-                service: script.tab5_dismiss_alert
-                data:
-                  alert_id: !lambda 'return id(temp_dismiss_alert_id);'
-            - script.execute: tab5_central_rotator_auto
 
   # ═══════════════════════════════════════════════════════════════════════════
   # Popup Assistant vocal (assistant_popup.yaml) — ouverture, réglages, réponse

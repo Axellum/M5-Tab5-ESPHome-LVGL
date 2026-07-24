@@ -513,7 +513,9 @@ lvgl:
                         height: 80
                         styles: style_invisible
                         on_short_click:
-                          - script.execute: tab5_dismiss_ha_alert_0
+                          - script.execute:
+                              id: tab5_dismiss_ha_alert
+                              slot: 0
                         widgets:
                           - label: { id: lbl_ha_alert_0, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
 
@@ -532,7 +534,9 @@ lvgl:
                         height: 80
                         styles: style_invisible
                         on_short_click:
-                          - script.execute: tab5_dismiss_ha_alert_1
+                          - script.execute:
+                              id: tab5_dismiss_ha_alert
+                              slot: 1
                         widgets:
                           - label: { id: lbl_ha_alert_1, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
 
@@ -551,7 +555,9 @@ lvgl:
                         height: 80
                         styles: style_invisible
                         on_short_click:
-                          - script.execute: tab5_dismiss_ha_alert_2
+                          - script.execute:
+                              id: tab5_dismiss_ha_alert
+                              slot: 2
                         widgets:
                           - label: { id: lbl_ha_alert_2, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
 
@@ -570,7 +576,9 @@ lvgl:
                         height: 80
                         styles: style_invisible
                         on_short_click:
-                          - script.execute: tab5_dismiss_ha_alert_3
+                          - script.execute:
+                              id: tab5_dismiss_ha_alert
+                              slot: 3
                         widgets:
                           - label: { id: lbl_ha_alert_3, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
 
