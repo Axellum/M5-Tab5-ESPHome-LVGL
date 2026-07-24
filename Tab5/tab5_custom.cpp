@@ -154,15 +154,14 @@ void tab5_dismiss_local_prune(std::string& store, const std::vector<std::string>
 
 // we can declare references to ESPHome LVGL objects but we can't easily include main.h
 std::string cal_heures[15] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "", ""};
-bool cal_toggled[15] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}; 
 
 DayForecastData cal_jours_data[15];
 HourForecastData cal_heures_data[15];
 
-void tab5_calendar_toggle(int jour) {
-    if (jour >= 0 && jour < 15) {
-        cal_toggled[jour] = !cal_toggled[jour];
-    }
+bool cal_is_early_shift(const std::string& heures_hhmm_hhmm) {
+    // Convention unique : embauche "tôt" si heure de début < 9 (09:00 n'est PAS tôt).
+    if (heures_hhmm_hhmm.size() < 2) return false;
+    return atoi(heures_hhmm_hhmm.substr(0, 2).c_str()) < 9;
 }
 
 // Titre court "Lun 16" pour les pages journalieres 2 et 3 (page_index 1/2).
@@ -373,9 +372,8 @@ void parse_and_update_jours_bulk(const std::string& payload) {
                 cal_jours_data[jour].est_passe = (parts[7][0] == '1');
                 cal_jours_data[jour].heures_ouverture = parts[8];
 
-                // cal_heures[] reste utilise (toggle jour/heure sur tap, cf. refresh_daily_forecast()
-                // et forecast_day_temp_tab.yaml) — cal_jour_nom[] jumeau retire le 06/07/2026 (write-only,
-                // jamais lu, cf. cartographie CARTOGRAPHIE_TAB5.md §4.2)
+                // cal_heures[] reste utilise (affichage temporaire au tap min/max + bandeau
+                // planning dérivé localement) — cal_jour_nom[] jumeau retire le 06/07/2026
                 cal_heures[jour] = parts[8];
             }
         }
@@ -396,22 +394,15 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
         DayForecastData& data = cal_jours_data[jour];
 
         // Titre : page accueil (0) = nom_jour HA ; pages 2-3 = "Lun 16" via SNTP
-        if (cal_toggled[jour]) {
-            lv_label_set_text(slot.day_lbl, cal_heures[jour].c_str());
-        } else if (page_index > 0) {
+        if (page_index > 0) {
             std::string date_lbl = format_short_day_label(jour);
             lv_label_set_text(slot.day_lbl, date_lbl.empty() ? data.nom_jour.c_str() : date_lbl.c_str());
         } else {
             lv_label_set_text(slot.day_lbl, data.nom_jour.c_str());
         }
 
-        if(cal_toggled[jour]) {
-            lv_obj_add_flag(slot.max_lbl, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_add_flag(slot.min_lbl, LV_OBJ_FLAG_HIDDEN);
-        } else {
-            lv_obj_clear_flag(slot.max_lbl, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_clear_flag(slot.min_lbl, LV_OBJ_FLAG_HIDDEN);
-        }
+        lv_obj_clear_flag(slot.max_lbl, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(slot.min_lbl, LV_OBJ_FLAG_HIDDEN);
 
         // Tmin / Tmax colors
         uint32_t cmax = get_temperature_color(data.tmax);
@@ -426,17 +417,12 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
         // Coloring day names
         uint8_t opa = data.est_passe ? 100 : 255;
         uint32_t col = UIColor::TEXT_PRIMARY;
-        bool is_early = false;
-        if (!data.est_repos && data.heures_ouverture.length() >= 5) {
-            int hour = atoi(data.heures_ouverture.substr(0, 2).c_str());
-            int minute = atoi(data.heures_ouverture.substr(3, 2).c_str());
-            if (hour < 9 || (hour == 9 && minute == 0)) is_early = true;
-        }
+        const bool is_early = !data.est_repos && cal_is_early_shift(data.heures_ouverture);
 
         if (jour == 0) col = UIColor::INFO;                                              // Aujourd'hui : cyan info
         else if (data.est_dimanche) col = data.est_repos ? UIColor::WARNING : UIColor::ERROR;
         else if (data.est_repos) col = UIColor::SUCCESS;                                 // Jour de repos : emeraude
-        else if (is_early) col = UIColor::EARLY;                                         // Debauche matinale : rose
+        else if (is_early) col = UIColor::EARLY;                                         // Embauche < 9h : orange
         if (data.est_passe) col = UIColor::PAST;                                         // Jour passe : ardoise estompee
 
         lv_obj_set_style_text_color(slot.day_lbl, lv_color_hex(col), LV_PART_MAIN);
@@ -919,6 +905,65 @@ void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::st
     set_label_text_utf8(lbl, combined.c_str());
 }
 
+void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
+    out_l1.clear();
+    out_l2.clear();
+    static const char* days_short[] = {"Dim.", "Lun.", "Mar.", "Mer.", "Jeu.", "Ven.", "Sam."};
+
+    time_t now_raw = time(nullptr);
+    if (now_raw <= 0) {
+        out_l1 = "#aaaaaa Aucun travail de prevu#";
+        return;
+    }
+    struct tm now_tm;
+    if (localtime_r(&now_raw, &now_tm) == nullptr) {
+        out_l1 = "#aaaaaa Aucun travail de prevu#";
+        return;
+    }
+
+    std::string lines[2];
+    int n = 0;
+    for (int jour = 0; jour < 15 && n < 2; jour++) {
+        const DayForecastData& d = cal_jours_data[jour];
+        const std::string& h = d.heures_ouverture.empty() ? cal_heures[jour] : d.heures_ouverture;
+        if (h.size() < 11 || d.est_repos) continue;  // "HH:MM-HH:MM"
+
+        const int start_h = atoi(h.substr(0, 2).c_str());
+        const int start_m = atoi(h.substr(3, 2).c_str());
+        // Aujourd'hui : ignorer le créneau s'il a déjà commencé (même règle que l'ancien Jinja HA)
+        if (jour == 0) {
+            const int now_min = now_tm.tm_hour * 60 + now_tm.tm_min;
+            if (now_min >= start_h * 60 + start_m) continue;
+        }
+
+        std::string j_name;
+        if (jour == 0) j_name = "Auj.";
+        else if (jour == 1) j_name = "Dem.";
+        else {
+            time_t t = now_raw + static_cast<time_t>(jour) * 86400;
+            struct tm day_tm;
+            if (localtime_r(&t, &day_tm) == nullptr) continue;
+            j_name = days_short[day_tm.tm_wday];
+        }
+
+        const bool early = cal_is_early_shift(h);
+        const char* hex = early ? "fb923c" : "ffffff";
+        std::string j_colored;
+        if (jour == 1) j_colored = "#44aaff " + j_name + "#";
+        else j_colored = std::string("#") + hex + " " + j_name + "#";
+
+        char line[96];
+        snprintf(line, sizeof(line), "%d/ %s : #%s %s#", n + 1, j_colored.c_str(), hex, h.c_str());
+        lines[n++] = line;
+    }
+
+    if (n == 0) out_l1 = "#aaaaaa Aucun travail de prevu#";
+    else {
+        out_l1 = lines[0];
+        if (n > 1) out_l2 = lines[1];
+    }
+}
+
 void update_clock_date_ui(lv_obj_t* lbl_time, lv_obj_t* lbl_date,
     int hour, int minute, int day_of_week, int day_of_month, int month) {
     if (lbl_time) {
@@ -997,14 +1042,26 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
 
 std::string get_day_planning_display_text(int jour) {
     if (jour < 0 || jour >= 15) return "Jour hors plage";
-    if (!cal_heures[jour].empty()) return cal_heures[jour];
     const DayForecastData& d = cal_jours_data[jour];
-    if (!d.heures_ouverture.empty()) {
-        if (!d.nom_jour.empty()) return d.nom_jour + " : " + d.heures_ouverture;
-        return d.heures_ouverture;
+    const std::string& h = !cal_heures[jour].empty() ? cal_heures[jour] : d.heures_ouverture;
+
+    std::string label;
+    if (jour == 0) label = "Auj.";
+    else {
+        std::string short_lbl = format_short_day_label(jour);
+        label = short_lbl.empty() ? d.nom_jour : short_lbl;
     }
-    if (!d.nom_jour.empty()) return d.nom_jour + " : pas d'horaire";
-    return "Pas de planning pour ce jour";
+    if (label.empty()) label = "Jour";
+
+    if (!h.empty()) {
+        // Recolor early (< 9h) en orange EARLY — le reste en blanc
+        if (cal_is_early_shift(h)) {
+            return label + " : #fb923c " + h + "#";
+        }
+        return label + " : " + h;
+    }
+    if (d.est_repos) return label + " : repos";
+    return label + " : pas d'horaire";
 }
 
 static lv_timer_t* planning_restore_timer = nullptr;
@@ -1057,7 +1114,7 @@ void show_temporary_planning(int jour, lv_obj_t* lbl_planning, lv_obj_t* plannin
     current_panel = 0;
 
     std::string text = get_day_planning_display_text(jour);
-    lv_label_set_text(lbl_planning, text.c_str());
+    set_label_text_utf8(lbl_planning, text.c_str());
 
     // Stoppe les animations LVGL en cours sur les panneaux centraux (evite conflit avec le rotateur 8s).
     if (planning_wrap) lv_anim_del(planning_wrap, nullptr);
@@ -1841,8 +1898,10 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
 // =============================================================================
 
 struct CalMonthData {
-    std::string codes;   // 62 hex (2/jour) — bits CAL_BIT_* de tab5_custom.h
-    std::string heures;  // 31 champs "HH:MM-HH:MM" séparés par | (vides autorisés)
+    std::string codes;    // 62 hex (2/jour) — bits CAL_BIT_* de tab5_custom.h
+    std::string heures;   // 31 champs "HH:MM-HH:MM" séparés par | (vides autorisés)
+    std::string details;  // 31 champs "type|texte;..." séparés par ~ (vide = rien prévu)
+    bool has_details = false;  // true si HA a fourni le champ details (même tout vide)
 };
 
 // Cache par mois (clé = annee*12 + mois-1). Vidé à chaque ouverture du popup :
@@ -1859,11 +1918,42 @@ bool cal_month_needs_fetch(int year, int month) {
 }
 
 void cal_store_month_data(const std::string& annee, const std::string& mois,
-    const std::string& codes, const std::string& heures) {
+    const std::string& codes, const std::string& heures, const std::string& details) {
     const int y = atoi(annee.c_str());
     const int m = atoi(mois.c_str());
     if (y < 2000 || y > 2100 || m < 1 || m > 12) return;
-    s_cal_month_cache[cal_cache_key(y, m)] = {codes, heures};
+    CalMonthData data;
+    data.codes = codes;
+    data.heures = heures;
+    data.details = details;
+    // HA envoie toujours 30× '~' minimum (31 champs). Absent / "" = vieux HA → fallback jour.
+    data.has_details = !details.empty();
+    s_cal_month_cache[cal_cache_key(y, m)] = data;
+}
+
+bool cal_month_has_details(int year, int month) {
+    const auto it = s_cal_month_cache.find(cal_cache_key(year, month));
+    return it != s_cal_month_cache.end() && it->second.has_details;
+}
+
+// n-ième champ d'une chaîne délimitée par un séparateur — champs vides autorisés
+static std::string cal_field_delim(const std::string& s, int idx, char delim) {
+    size_t start = 0;
+    for (int i = 0; i < idx; i++) {
+        const size_t p = s.find(delim, start);
+        if (p == std::string::npos) return "";
+        start = p + 1;
+    }
+    size_t end = s.find(delim, start);
+    if (end == std::string::npos) end = s.size();
+    return s.substr(start, end - start);
+}
+
+std::string cal_cached_day_detail(int year, int month, int day) {
+    if (day < 1 || day > 31) return "";
+    const auto it = s_cal_month_cache.find(cal_cache_key(year, month));
+    if (it == s_cal_month_cache.end() || !it->second.has_details) return "";
+    return cal_field_delim(it->second.details, day - 1, '~');
 }
 
 static int cal_days_in_month(int y, int m) {
@@ -1899,15 +1989,7 @@ static const char* cal_weekday_name_utf8(int wd_mon0) {
 // n-ième champ d'une chaîne délimitée par | — champs vides autorisés
 // (strtok_r fusionnerait les séparateurs consécutifs, donc parcours manuel).
 static std::string cal_field(const std::string& s, int idx) {
-    size_t start = 0;
-    for (int i = 0; i < idx; i++) {
-        const size_t p = s.find('|', start);
-        if (p == std::string::npos) return "";
-        start = p + 1;
-    }
-    size_t end = s.find('|', start);
-    if (end == std::string::npos) end = s.size();
-    return s.substr(start, end - start);
+    return cal_field_delim(s, idx, '|');
 }
 
 static int cal_hex_val(char c) {
@@ -1978,12 +2060,12 @@ void cal_render_month(CalCellUI cells[42], lv_obj_t* lbl_month,
         if (is_today) num_color = UIColor::ACCENT;
         lv_obj_set_style_text_color(c.num, lv_color_hex(num_color), LV_PART_MAIN);
 
-        // Heures de travail dans la case (rose si embauche avant 9h — même
-        // convention que le planning central, estompé si jour passé)
+        // Heures de travail dans la case (orange si embauche < 9h — même
+        // convention que les tuiles / bandeau, estompé si jour passé)
         if (!heures.empty()) {
             lv_label_set_text(c.sub, heures.c_str());
             uint32_t h_color = UIColor::TEXT_SOFT;
-            if (heures.size() >= 2 && atoi(heures.substr(0, 2).c_str()) < 9) {
+            if (cal_is_early_shift(heures)) {
                 h_color = UIColor::EARLY;
             }
             if (is_past) h_color = UIColor::PAST;

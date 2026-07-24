@@ -13,7 +13,6 @@
 #include <vector>
 
 extern std::string cal_heures[15];
-extern bool cal_toggled[15];
 
 struct DayForecastData {
     std::string nom_jour;
@@ -36,7 +35,8 @@ struct HourForecastData {
 extern DayForecastData cal_jours_data[15];
 extern HourForecastData cal_heures_data[15];
 
-void tab5_calendar_toggle(int jour);
+// Embauche "tôt" = heure de début < 9h (même seuil partout : tuiles, popup, bandeau).
+bool cal_is_early_shift(const std::string& heures_hhmm_hhmm);
 namespace esphome { namespace font { class Font; } }
 void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, bool is_card, esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
 
@@ -161,6 +161,10 @@ void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase);
 
 void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::string& l2,
     std::string& plan_ligne_1, std::string& plan_ligne_2);
+
+// Construit les 2 prochaines lignes du bandeau planning depuis cal_jours_data[15]
+// (après parse_and_update_jours_bulk) — remplace l'ancien push HA tab5_maj_planning.
+void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2);
 
 void update_clock_date_ui(lv_obj_t* lbl_time, lv_obj_t* lbl_date,
     int hour, int minute, int day_of_week, int day_of_month, int month);
@@ -319,8 +323,8 @@ void assist_apply_text_size(lv_obj_t* lbl_response, int size_idx,
 // =============================================================================
 // Popup calendrier mensuel (calendar_popup.yaml, appui long sur l'horloge)
 // Grille 7×6 lundi-en-tête calculée EN LOCAL (SNTP) ; HA enrichit chaque mois à
-// la demande via tab5_maj_calendrier_mois (codes 2 hex/jour + heures de travail)
-// et chaque jour tapé via tab5_maj_calendrier_jour (payload "type|texte;...").
+// la demande via tab5_maj_calendrier_mois (codes + heures + details optionnels)
+// et chaque jour tapé via tab5_maj_calendrier_jour si le cache details est vide.
 // =============================================================================
 
 // Bits des codes jour (2 chars hex par jour, poussés par script.tab5_calendrier_mois)
@@ -347,7 +351,7 @@ struct CalDetailLineUI {
 void cal_cache_clear();
 bool cal_month_needs_fetch(int year, int month);
 void cal_store_month_data(const std::string& annee, const std::string& mois,
-    const std::string& codes, const std::string& heures);
+    const std::string& codes, const std::string& heures, const std::string& details = "");
 
 // Rendu complet du mois affiché : numéros + alignement lundi-dimanche + weekend +
 // aujourd'hui calculés localement, enrichissement HA appliqué si le mois est en cache.
@@ -356,6 +360,11 @@ void cal_render_month(CalCellUI cells[42], lv_obj_t* lbl_month,
 
 // "" si la cellule est hors mois, sinon date ISO "YYYY-MM-DD" du jour tapé.
 std::string cal_date_for_cell(int view_year, int view_month, int cell_idx);
+
+// Détail jour embarqué dans le payload mois (champs séparés par ~). "" si absent.
+// true si le mois est en cache ET le champ details a été fourni (même vide = "rien").
+bool cal_month_has_details(int year, int month);
+std::string cal_cached_day_detail(int year, int month, int day);
 
 // Sous-popup détail : titre "Mardi 21 Juillet" + statut Chargement/HA hors ligne.
 void cal_show_day_detail_loading(lv_obj_t* day_popup, lv_obj_t* lbl_title,
@@ -383,7 +392,7 @@ namespace UIColor {
     static constexpr uint32_t ACCENT       = 0x22D3EE;  // cyan-400 (accent primaire / halo)
     static constexpr uint32_t ACCENT_ALT   = 0xA78BFA;  // violet-400 (accent secondaire)
     static constexpr uint32_t GLASS_RIM    = 0x93A3BC;  // Liseré lumineux (arête de verre)
-    static constexpr uint32_t EARLY        = 0xFB7185;  // rose-400 (journee a debauche matinale)
+    static constexpr uint32_t EARLY        = 0xFB923C;  // orange-400 (embauche < 9h — distinct de ERROR)
     static constexpr uint32_t PAST         = 0x64748B;  // slate-500 (jour passe, estompe)
     // --- Vigilance Meteo-France : NE PAS modifier (semantique officielle) ---
     static constexpr uint32_t ALERT_YELLOW = 0xFFFF00;  // Vigilance jaune MF

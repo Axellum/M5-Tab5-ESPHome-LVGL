@@ -56,6 +56,13 @@ api:
             int fp = id(forecast_page_index);
             int daily_pi = (fp >= 2) ? (fp - 2) : 0;
             refresh_daily_forecast(slots, daily_pi, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+            // Bandeau planning dérivé localement (plus de push HA tab5_maj_planning)
+            if (!id(is_showing_temp_planning) && id(lbl_planning_text) != nullptr) {
+              std::string l1, l2;
+              build_planning_lines_from_jours(l1, l2);
+              update_planning_text_ui(id(lbl_planning_text), l1, l2,
+                  id(plan_ligne_1), id(plan_ligne_2));
+            }
 
     - service: tab5_maj_volet_etat
 
@@ -424,16 +431,13 @@ api:
                 id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3),
                 id(roboto_45_b), id(tab5_dismissed_local));
 
+    # Conservé pour compat (anciennes automations) — le bandeau est désormais dérivé
+    # localement après tab5_maj_previsions_jours_bulk via build_planning_lines_from_jours().
     - service: tab5_maj_planning
-
       variables:
-
         ligne1: string
-
         ligne2: string
-
       then:
-
         - lambda: |-
             if (id(lbl_planning_text) == nullptr) return;
             update_planning_text_ui(id(lbl_planning_text), ligne1, ligne2,
@@ -441,18 +445,20 @@ api:
 
     # Popup calendrier — réponse de script.tab5_calendrier_mois (HA) : codes = 62 hex
     # (2/jour, bits 1 travail, 2 férié, 4 vacances scolaires, 8 RDV, 16 anniversaire),
-    # heures = 31 champs "HH:MM-HH:MM" séparés par |. Mis en cache ; re-rendu seulement
-    # si le popup est ouvert sur ce mois.
+    # heures = 31 champs "HH:MM-HH:MM" séparés par |, details = 31 champs "type|texte;..."
+    # séparés par ~ (détail jour embarqué → tap instantané sans round-trip).
+    # Mis en cache ; re-rendu seulement si le popup est ouvert sur ce mois.
     - service: tab5_maj_calendrier_mois
       variables:
         annee: string
         mois: string
         codes: string
         heures: string
+        details: string
       then:
         - lambda: |-
             if (id(lbl_cal_month) == nullptr) return;
-            cal_store_month_data(annee, mois, codes, heures);
+            cal_store_month_data(annee, mois, codes, heures, details);
         - if:
             condition:
               lambda: |-

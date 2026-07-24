@@ -31,3 +31,7 @@ Tab5/tts_library_v2/
 
 # Cache TTS Piper local (HA / moteur) — pas utilisé par le firmware
 audio_lib/
+
+# Doublon récursif accidentel (ne jamais versionner)
+Tab5/Tab5/
+

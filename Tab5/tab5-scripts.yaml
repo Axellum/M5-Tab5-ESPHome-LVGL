@@ -533,8 +533,9 @@ script:
           lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
       - script.execute: tab5_cal_render
 
-  # Tap sur une cellule : ouvre le sous-popup détail ("Chargement..." ou "HA hors
-  # ligne") puis demande le contenu du jour à HA (script.tab5_calendrier_jour).
+  # Tap sur une cellule : ouvre le sous-popup détail. Si le payload mois embarquait
+  # déjà les details (~), rendu instantané sans round-trip HA. Sinon fallback
+  # "Chargement..." + script.tab5_calendrier_jour (vieux HA / cache incomplet).
   - id: tab5_cal_day_tap
     mode: restart
     parameters:
@@ -551,11 +552,24 @@ script:
               {id(cal_det_icon_4), id(cal_det_txt_4)},
               {id(cal_det_icon_5), id(cal_det_txt_5)}
           };
-          cal_show_day_detail_loading(id(cal_day_popup), id(lbl_cal_day_title),
-              id(lbl_cal_day_status), lines, id(cal_detail_date), id(status_ha).state);
+          int y = 0, m = 0, d = 0;
+          sscanf(id(cal_detail_date).c_str(), "%d-%d-%d", &y, &m, &d);
+          if (cal_month_has_details(y, m)) {
+            // Titre + lignes depuis le cache mois (instantané)
+            cal_show_day_detail_loading(id(cal_day_popup), id(lbl_cal_day_title),
+                id(lbl_cal_day_status), lines, id(cal_detail_date), true);
+            cal_render_day_detail(cal_cached_day_detail(y, m, d), id(lbl_cal_day_status), lines);
+          } else {
+            cal_show_day_detail_loading(id(cal_day_popup), id(lbl_cal_day_title),
+                id(lbl_cal_day_status), lines, id(cal_detail_date), id(status_ha).state);
+          }
       - if:
           condition:
-            lambda: 'return !id(cal_detail_date).empty() && id(status_ha).state;'
+            lambda: |-
+              if (id(cal_detail_date).empty() || !id(status_ha).state) return false;
+              int y = 0, m = 0, d = 0;
+              sscanf(id(cal_detail_date).c_str(), "%d-%d-%d", &y, &m, &d);
+              return !cal_month_has_details(y, m);
           then:
             - homeassistant.service:
                 service: script.tab5_calendrier_jour

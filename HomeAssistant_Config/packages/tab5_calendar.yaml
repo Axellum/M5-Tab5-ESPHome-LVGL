@@ -8,9 +8,10 @@
 #       esphome.tab5_ha_hmi_tab5_maj_calendrier_mois / _jour (tab5-api-logic.yaml).
 # @payload_contract codes = 62 hex (2 par jour, 31 jours) — bits : 1 travail,
 #       2 férié, 4 vacances scolaires, 8 RDV, 16 anniversaire. heures = 31 champs
-#       "HH:MM-HH:MM" séparés par | (vide si pas de travail). Détail jour =
-#       "type|texte;..." (types travail/ferie/vacances/rdv/anniv/fete, max 6),
-#       textes sanitisés (| -> /, ; -> ,).
+#       "HH:MM-HH:MM" séparés par | (vide si pas de travail). details = 31 champs
+#       "type|texte;..." séparés par ~ (même contrat que tab5_calendrier_jour,
+#       max 6 lignes/jour ; textes sanitisés | -> /, ; -> ,). Détail jour solo =
+#       fallback si le firmware n'a pas reçu details.
 # @data_sources calendar.axxxums_gmail_com ("Planing boulo", événements "Travail*"
 #       horodatés), calendar.jours_feries_et_autres_fetes_en_france (Google, contient
 #       aussi des fêtes NON fériées -> liste blanche feries_connus),
@@ -21,7 +22,12 @@
 #       (rentrée) est ESTIMÉE au 01/09/2027 : compléter la table quand le
 #       calendrier 2027-2028 sera publié (même API, zones="Zone A", location="Bordeaux").
 # @ai_warning Ne JAMAIS passer now() brut à un service — piège documenté dans
-#       automations_tab5.yaml (ici les bornes sont dérivées de annee/mois/date, pas de now()).
+#       automations_tab5.yaml (bornes dérivées de annee/mois/date ; now() servi
+#       uniquement pour clamper le début au jour courant).
+# @perf get_events mois = [max(1er du mois, aujourd'hui), 1er du mois suivant[ :
+#       pas d'événements passés (inutiles à l'affichage). Mois entièrement passé
+#       → debut=fin (fenêtre vide). Codes jours passés = vacances statiques seules
+#       (pas travail/RDV/férié/anniv). Tap jour passé = script _jour inchangé.
 # @install Nécessite homeassistant.packages: !include_dir_named packages
 # ============================================================================
 
@@ -82,13 +88,25 @@ script:
             - "L'Armistice"
             - "Noël"
       - variables:
-          debut: "{{ '%04d-%02d-01 00:00:00' | format(y | int, m | int) }}"
+          # Mois civil [1er, 1er suivant[ ; get_events borné à aujourd'hui si mois courant.
+          # Mois entièrement passé → fenêtre vide (debut=fin) : aucun événement récupéré.
+          debut_mois: "{{ '%04d-%02d-01 00:00:00' | format(y | int, m | int) }}"
           fin: >-
             {% set y2 = (y | int) + 1 if (m | int) == 12 else (y | int) %}
             {% set m2 = 1 if (m | int) == 12 else (m | int) + 1 %}
             {{ '%04d-%02d-01 00:00:00' | format(y2, m2) }}
+          today0: "{{ now().strftime('%Y-%m-%d 00:00:00') }}"
+          today_s: "{{ now().strftime('%Y-%m-%d') }}"
       - variables:
-          ndays: "{{ ((fin | as_datetime) - (debut | as_datetime)).days }}"
+          ndays: "{{ ((fin | as_datetime) - (debut_mois | as_datetime)).days }}"
+          debut: >-
+            {% if (fin | as_datetime).date() <= now().date() %}
+              {{ fin }}
+            {% elif (debut_mois | as_datetime).date() < now().date() %}
+              {{ today0 }}
+            {% else %}
+              {{ debut_mois }}
+            {% endif %}
       - action: calendar.get_events
         continue_on_error: true
         data:
@@ -116,47 +134,50 @@ script:
               {% set f = namespace(trav=false, ferie=false, vac=false, rdv=false, anniv=false) %}
               {% if d <= (ndays | int) %}
                 {% set ds = '%04d-%02d-%02d' | format(y | int, m | int, d) %}
-                {% for e in trav %}
-                  {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
-                  {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
-                  {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
-                  {% set couvre = (st[:10] == ds) if 'T' in st else (st[:10] <= ds and ds < en[:10]) %}
-                  {% if couvre and 'Travail' in summ %}
-                    {% set f.trav = true %}
-                  {% elif couvre %}
-                    {% set f.rdv = true %}
-                  {% endif %}
-                {% endfor %}
-                {% for e in fer %}
-                  {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
-                  {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
-                  {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
-                  {% set couvre = (st[:10] == ds) if 'T' in st else (st[:10] <= ds and ds < en[:10]) %}
-                  {% if couvre and summ in feries_connus %}
-                    {% set f.ferie = true %}
-                  {% endif %}
-                {% endfor %}
+                {% set futur_ou_auj = ds >= today_s %}
                 {% for vp in vacances_zone_a %}
                   {% if vp.d <= ds and ds < vp.f %}
                     {% set f.vac = true %}
                   {% endif %}
                 {% endfor %}
-                {% for e in fam %}
-                  {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
-                  {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
-                  {% set couvre = (st[:10] == ds) if 'T' in st else (st[:10] <= ds and ds < en[:10]) %}
-                  {% if couvre %}
-                    {% set f.rdv = true %}
-                  {% endif %}
-                {% endfor %}
-                {% for e in ann %}
-                  {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
-                  {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
-                  {% set couvre = (st[:10] == ds) if 'T' in st else (st[:10] <= ds and ds < en[:10]) %}
-                  {% if couvre %}
-                    {% set f.anniv = true %}
-                  {% endif %}
-                {% endfor %}
+                {% if futur_ou_auj %}
+                  {% for e in trav %}
+                    {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
+                    {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
+                    {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
+                    {% set couvre = (st[:10] == ds) if 'T' in st else (st[:10] <= ds and ds < en[:10]) %}
+                    {% if couvre and 'Travail' in summ %}
+                      {% set f.trav = true %}
+                    {% elif couvre %}
+                      {% set f.rdv = true %}
+                    {% endif %}
+                  {% endfor %}
+                  {% for e in fer %}
+                    {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
+                    {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
+                    {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
+                    {% set couvre = (st[:10] == ds) if 'T' in st else (st[:10] <= ds and ds < en[:10]) %}
+                    {% if couvre and summ in feries_connus %}
+                      {% set f.ferie = true %}
+                    {% endif %}
+                  {% endfor %}
+                  {% for e in fam %}
+                    {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
+                    {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
+                    {% set couvre = (st[:10] == ds) if 'T' in st else (st[:10] <= ds and ds < en[:10]) %}
+                    {% if couvre %}
+                      {% set f.rdv = true %}
+                    {% endif %}
+                  {% endfor %}
+                  {% for e in ann %}
+                    {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
+                    {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
+                    {% set couvre = (st[:10] == ds) if 'T' in st else (st[:10] <= ds and ds < en[:10]) %}
+                    {% if couvre %}
+                      {% set f.anniv = true %}
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
               {% endif %}
               {% set val = (1 if f.trav else 0) + (2 if f.ferie else 0) + (4 if f.vac else 0) + (8 if f.rdv else 0) + (16 if f.anniv else 0) %}
               {% set ns.out = ns.out ~ '%02X' | format(val) %}
@@ -169,18 +190,23 @@ script:
               {% set h = namespace(txt='') %}
               {% if d <= (ndays | int) %}
                 {% set ds = '%04d-%02d-%02d' | format(y | int, m | int, d) %}
-                {% for e in trav %}
-                  {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
-                  {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
-                  {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
-                  {% if h.txt == '' and 'Travail' in summ and 'T' in st and st[:10] == ds %}
-                    {% set h.txt = (st | as_datetime).strftime('%H:%M') ~ '-' ~ (en | as_datetime).strftime('%H:%M') %}
-                  {% endif %}
-                {% endfor %}
+                {% if ds >= today_s %}
+                  {% for e in trav %}
+                    {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
+                    {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
+                    {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
+                    {% if h.txt == '' and 'Travail' in summ and 'T' in st and st[:10] == ds %}
+                      {% set h.txt = (st | as_datetime).strftime('%H:%M') ~ '-' ~ (en | as_datetime).strftime('%H:%M') %}
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
               {% endif %}
               {% set ns.out = ns.out ~ h.txt ~ ('' if loop.last else '|') %}
             {% endfor %}
             {{ ns.out }}
+          # NE PAS envoyer "details" tant que HA n'a pas rediscovered le service ESPHome
+          # post-OTA (sinon 400 Bad Request → codes/heures jamais poussés → popup sans couleurs).
+          # Firmware accepte l'absence (variable optionnelle côté C++). Tap jour = script _jour.
 
   tab5_calendrier_jour:
     alias: "Tab5 — détail d'un jour (popup calendrier)"
@@ -228,7 +254,7 @@ script:
               {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
               {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
               {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
-              {% set txt = summ | replace('|', '/') | replace(';', ',') %}
+              {% set txt = summ | replace('|', '/') | replace(';', ',') | replace('~', '-') %}
               {% set couvre = (st[:10] == ds) if 'T' in st else (st[:10] <= ds and ds < en[:10]) %}
               {% if couvre and summ in feries_connus %}
                 {% set ns.lines = ns.lines + ['ferie|' ~ txt] %}
@@ -256,7 +282,7 @@ script:
               {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
               {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
               {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
-              {% set txt = summ | replace('|', '/') | replace(';', ',') %}
+              {% set txt = summ | replace('|', '/') | replace(';', ',') | replace('~', '-') %}
               {% set couvre = (st[:10] == ds) if 'T' in st else (st[:10] <= ds and ds < en[:10]) %}
               {% if couvre and 'Travail' not in summ %}
                 {% if 'T' in st %}
@@ -270,7 +296,7 @@ script:
               {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
               {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
               {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
-              {% set txt = summ | replace('|', '/') | replace(';', ',') %}
+              {% set txt = summ | replace('|', '/') | replace(';', ',') | replace('~', '-') %}
               {% set couvre = (st[:10] == ds) if 'T' in st else (st[:10] <= ds and ds < en[:10]) %}
               {% if couvre %}
                 {% if 'T' in st %}
@@ -284,7 +310,7 @@ script:
               {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
               {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
               {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
-              {% set txt = summ | replace('|', '/') | replace(';', ',') %}
+              {% set txt = summ | replace('|', '/') | replace(';', ',') | replace('~', '-') %}
               {% set couvre = (st[:10] == ds) if 'T' in st else (st[:10] <= ds and ds < en[:10]) %}
               {% if couvre %}
                 {% set ns.lines = ns.lines + ['anniv|' ~ txt] %}
@@ -294,7 +320,7 @@ script:
               {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
               {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
               {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
-              {% set txt = summ | replace('|', '/') | replace(';', ',') %}
+              {% set txt = summ | replace('|', '/') | replace(';', ',') | replace('~', '-') %}
               {% set couvre = (st[:10] == ds) if 'T' in st else (st[:10] <= ds and ds < en[:10]) %}
               {% if couvre and summ not in feries_connus %}
                 {% set ns.lines = ns.lines + ['fete|' ~ txt] %}
