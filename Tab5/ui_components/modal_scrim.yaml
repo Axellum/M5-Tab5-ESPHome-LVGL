@@ -1,0 +1,14 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Voile sombre plein écran (tap = fermer) — cadre modal v3.
+# vars : close_lambda (même contrat que modal_close_btn.yaml).
+# Console garde son scrim dédié (ferme aussi les overlays de confirmation).
+# ═══════════════════════════════════════════════════════
+button:
+  align: CENTER
+  width: 100%
+  height: 100%
+  bg_color: color_modal_scrim
+  bg_opa: 85%
+  border_width: 0
+  on_short_click:
+    - lambda: '${close_lambda}'

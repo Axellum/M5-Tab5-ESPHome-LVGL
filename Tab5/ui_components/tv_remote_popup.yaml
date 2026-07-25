@@ -15,16 +15,7 @@ obj:
   styles: style_invisible
   scrollbar_mode: "OFF"
   widgets:
-    # Overlay — opacité renforcée pour ne pas confondre avec le dashboard dessous
-    - button:
-        align: CENTER
-        width: 100%
-        height: 100%
-        bg_color: color_modal_scrim
-        bg_opa: 85%
-        border_width: 0
-        on_short_click:
-          - lambda: 'lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);'
+    - !include { file: modal_scrim.yaml, vars: { close_lambda: "lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
     # Carte modale — 25 px des bords écran (1280×720)
     - obj:
@@ -40,37 +31,24 @@ obj:
           - label:
               text: "Télécommande TV"
               align: TOP_MID
-              y: 16
+              y: 6
               text_font: roboto_32_b
               text_color: color_text
           - label:
               text: "Samsung S95B — Salon"
               align: TOP_MID
-              y: 52
+              y: 40
               text_font: roboto_22
               text_color: color_text_dim
 
-          - button:
-              align: TOP_RIGHT
-              x: -16
-              y: 12
-              width: 64
-              height: 64
-              radius: 18
-              styles: style_clim_btn
-              pressed:
-                bg_opa: 30%
-              on_short_click:
-                - lambda: 'lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);'
-              widgets:
-                - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+          - !include { file: modal_close_btn.yaml, vars: { close_btn_id: "btn_tv_close", close_lambda: "lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
           # ═══ CORPS — grille 1170×432 (laisse place à la rangée basse) ═══
           - obj:
               align: TOP_MID
-              y: 88
+              y: 80
               width: 1170
-              height: 432
+              height: 440
               styles: style_transparent
               scrollable: false
               scrollbar_mode: "OFF"

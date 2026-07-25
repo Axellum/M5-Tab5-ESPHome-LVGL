@@ -16,17 +16,11 @@
 #                          (tab5-api-logic.yaml) via les globals clim_*. La coloration des icônes
 #                          est centralisée dans le script `tab5_clim_recolor` (tab5-scripts.yaml) —
 #                          ne pas la dupliquer inline ; les taps l'appellent en mode optimiste.
-# @ai_instruction `scrollable: false` est posé sur la carte modale et toutes les sous-cartes :
-#       un appui légèrement glissé (ex. sur la croix de fermeture) faisait défiler la carte
-#       et laissait le contenu décalé — NE PAS retirer ces flags. La cible (arc et boutons ±)
-#       est affichée de façon optimiste via update_clim_target_ui() (tab5_custom.cpp) et
-#       l'appel HA passe par le débounce tab5_debounce_clim_temp (tab5-scripts.yaml) — un seul
-#       climate.set_temperature par geste, pas un par tick. Chaque bouton Mode/Preset/Silence/
-#       Oscillation/Brise pose son global clim_* + `script.execute: tab5_clim_recolor` AVANT
-#       l'appel HA (recoloration optimiste ; le retour HA re-applique l'état réel). Sur les
-#       toggles, le global est calculé dans le lambda optimiste et le service envoie ce global
-#       (pas de double-toggle inversé). `pressed: bg_opa: 30%` est répété sur chaque bouton car
-#       ESPHome rejette `pressed:` dans un style partagé.
+# @ai_instruction Cadre modal v3 (ADR-0008) : scrim / marque / croix via modal_*.yaml
+#       (en-tête y=6, côtés 10 px). `scrollable: false` partout — NE PAS retirer.
+#       Cible optimiste via update_clim_target_ui() + débounce tab5_debounce_clim_temp.
+#       Boutons Mode/Preset/… : global clim_* + tab5_clim_recolor AVANT l'appel HA.
+#       `pressed: bg_opa: 30%` répété (ESPHome rejette pressed: dans un style partagé).
 # ═══════════════════════════════════════════════════════
 obj:
   id: clim_options_popup
@@ -37,16 +31,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    # Voile sombre (tap = fermer) — opacité renforcée comme tv_remote_popup
-    - button:
-        align: CENTER
-        width: 100%
-        height: 100%
-        bg_color: color_modal_scrim
-        bg_opa: 85%
-        border_width: 0
-        on_short_click:
-          - lambda: 'lv_obj_add_flag(id(clim_options_popup), LV_OBJ_FLAG_HIDDEN);'
+    - !include { file: modal_scrim.yaml, vars: { close_lambda: "lv_obj_add_flag(id(clim_options_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -58,38 +43,17 @@ obj:
         scrollbar_mode: "OFF"
         widgets:
 
-          # ═══ EN-TÊTE ═══
-          - label: { text: "\U000F0717", align: TOP_LEFT, x: 28, y: 26, text_font: mdi_font_45, text_color: color_info }
-          - label:
-              text: "Climatisation Salon"
-              align: TOP_LEFT
-              x: 92
-              y: 26
-              text_font: roboto_45_b
-              text_color: color_text
-
-          # Croix de fermeture — vrai bouton de verre 96×64 (cible tactile large, anti-décalage)
-          - button:
-              align: TOP_RIGHT
-              x: -20
-              y: 16
-              width: 96
-              height: 64
-              styles: style_clim_btn
-              pressed:
-                bg_opa: 30%
-              on_short_click:
-                - lambda: 'lv_obj_add_flag(id(clim_options_popup), LV_OBJ_FLAG_HIDDEN);'
-              widgets:
-                - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+          # ═══ EN-TÊTE (cadre v3 : y=6, côtés 10) ═══
+          - !include { file: modal_header_brand.yaml, vars: { icon: "\U000F0717", icon_color: "color_info", title: "Climatisation Salon", title_id: "popup_clim_title", brand_width: "520" } }
+          - !include { file: modal_close_btn.yaml, vars: { close_btn_id: "btn_clim_close", close_lambda: "lv_obj_add_flag(id(clim_options_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
           # ═══ CARTE MODE (gauche) : 5 modes HVAC empilés ═══
           - obj:
               align: TOP_LEFT
               x: 24
-              y: 100
+              y: 80
               width: 386
-              height: 566
+              height: 600
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -101,7 +65,7 @@ obj:
                     x: 22
                     y: 50
                     width: 342
-                    height: 506
+                    height: 540
                     styles: style_transparent
                     scrollable: false
                     layout:
@@ -139,9 +103,9 @@ obj:
           - obj:
               align: TOP_LEFT
               x: 426
-              y: 100
+              y: 80
               width: 398
-              height: 566
+              height: 600
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -239,9 +203,9 @@ obj:
           - obj:
               align: TOP_LEFT
               x: 840
-              y: 100
+              y: 80
               width: 386
-              height: 566
+              height: 600
               styles: style_glass_card
               scrollable: false
               widgets:

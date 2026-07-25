@@ -10,9 +10,9 @@
 obj:
   align: TOP_LEFT
   x: ${x_pos}
-  y: 100
+  y: 80
   width: 226
-  height: 566
+  height: 600
   styles: style_glass_card
   scrollable: false
   widgets:

@@ -12,10 +12,7 @@
 #       continu : humidité+statut via update_pots_popup_moisture_ui (ancre
 #       &moisture_on_value), autres métriques via update_pot_metric_ui (capteurs
 #       pot*_ec/lux/temp/bat, tab5-sensors-domotique.yaml) — aucune synchro à l'ouverture.
-# @ai_instruction `scrollable: false` partout + croix = vrai bouton de verre 96×64
-#       (anti-décalage, même recette que console/lumière/clim v2) — NE PAS retirer.
-#       Les 5 cartes sont factorisées via pot_detail_card.yaml : pour renommer un pot,
-#       éditer `pot_nom` dans les vars du !include correspondant.
+# @ai_instruction Cadre modal v3 (ADR-0008). Cartes via pot_detail_card.yaml.
 # ═══════════════════════════════════════════════════════
 obj:
   id: pots_detail_popup
@@ -26,16 +23,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    # Voile sombre (tap = fermer) — opacité renforcée comme les autres popups v2
-    - button:
-        align: CENTER
-        width: 100%
-        height: 100%
-        bg_color: color_modal_scrim
-        bg_opa: 85%
-        border_width: 0
-        on_short_click:
-          - lambda: 'lv_obj_add_flag(id(pots_detail_popup), LV_OBJ_FLAG_HIDDEN);'
+    - !include { file: modal_scrim.yaml, vars: { close_lambda: "lv_obj_add_flag(id(pots_detail_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -47,24 +35,9 @@ obj:
         scrollbar_mode: "OFF"
         widgets:
 
-          # ═══ EN-TÊTE ═══
-          - label: { text: "\U000F024A", align: TOP_LEFT, x: 28, y: 26, text_font: mdi_font_45, text_color: color_success }
-          - label: { text: "Mes Plantes", align: TOP_LEFT, x: 92, y: 26, text_font: roboto_45_b, text_color: color_text }
-
-          # Croix de fermeture — vrai bouton de verre 96×64 (cible tactile large, anti-décalage)
-          - button:
-              align: TOP_RIGHT
-              x: -20
-              y: 16
-              width: 96
-              height: 64
-              styles: style_clim_btn
-              pressed:
-                bg_opa: 30%
-              on_short_click:
-                - lambda: 'lv_obj_add_flag(id(pots_detail_popup), LV_OBJ_FLAG_HIDDEN);'
-              widgets:
-                - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+          # ═══ EN-TÊTE (cadre v3 : y=6, côtés 10) ═══
+          - !include { file: modal_header_brand.yaml, vars: { icon: "\U000F024A", icon_color: "color_success", title: "Mes Plantes", title_id: "popup_pots_title", brand_width: "420" } }
+          - !include { file: modal_close_btn.yaml, vars: { close_btn_id: "btn_pots_close", close_lambda: "lv_obj_add_flag(id(pots_detail_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
           # ═══ 5 CARTES POTS (ordre = plante_1..plante_5, icônes du dashboard) ═══
           - !include { file: pot_detail_card.yaml, vars: { pot_idx: "1", x_pos: "24", pot_nom: "Pot 1", icon: "\U000F0E66" } }
