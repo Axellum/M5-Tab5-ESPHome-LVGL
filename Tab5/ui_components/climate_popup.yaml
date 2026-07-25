@@ -31,29 +31,28 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { close_lambda: "lv_obj_add_flag(id(clim_options_popup), LV_OBJ_FLAG_HIDDEN);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "lv_obj_add_flag(id(clim_options_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
         align: CENTER
-        width: 1250
-        height: 690
+        width: ${modal_card_w}
+        height: ${modal_card_h}
         styles: style_modal_card
         scrollable: false
         scrollbar_mode: "OFF"
         widgets:
 
-          # ═══ EN-TÊTE (cadre v3 : y=6, côtés 10) ═══
-          - !include { file: modal_header_brand.yaml, vars: { icon: "\U000F0717", icon_color: "color_info", title: "Climatisation Salon", title_id: "popup_clim_title", brand_width: "520" } }
-          - !include { file: modal_close_btn.yaml, vars: { close_btn_id: "btn_clim_close", close_lambda: "lv_obj_add_flag(id(clim_options_popup), LV_OBJ_FLAG_HIDDEN);" } }
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0717", icon_color: "color_info", title: "Climatisation Salon", title_id: "popup_clim_title", close_btn_id: "btn_clim_close", close_lambda: "lv_obj_add_flag(id(clim_options_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
           # ═══ CARTE MODE (gauche) : 5 modes HVAC empilés ═══
           - obj:
               align: TOP_LEFT
               x: 24
-              y: 80
+              y: ${modal_body_y}
               width: 386
-              height: 600
+              height: 628
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -103,9 +102,9 @@ obj:
           - obj:
               align: TOP_LEFT
               x: 426
-              y: 80
+              y: ${modal_body_y}
               width: 398
-              height: 600
+              height: 628
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -203,9 +202,9 @@ obj:
           - obj:
               align: TOP_LEFT
               x: 840
-              y: 80
+              y: ${modal_body_y}
               width: 386
-              height: 600
+              height: 628
               styles: style_glass_card
               scrollable: false
               widgets:

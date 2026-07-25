@@ -4,6 +4,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-25 — Cadre modal v4 : une seule barre de titre, compacte, pour les 9 popups
+- **Un seul `!include` produit tout le chrome d'en-tête** : nouveau `ui_components/modal_header.yaml` (conteneur pleine largeur de 52 px : icône + titre à gauche, croix 80×44 à droite). Il remplace et supprime `modal_header_brand.yaml` + `modal_close_btn.yaml` du cadre v3. L'alignement vertical est fait par LVGL (`LEFT_MID`/`RIGHT_MID`) : plus aucun `y:` recopié popup par popup, donc plus de dérive possible entre deux fenêtres.
+- **Barre compacte** : 4 px au-dessus de la ligne, ligne de 44, titre `roboto_32_b`, icône et croix en `mdi_font_32` → le corps démarre à `y: 52` au lieu de 80, soit **28 px de hauteur utile récupérés** par popup. Les sous-titres de l'assistant et de la télécommande TV sont supprimés : une seule variante de barre, sans exception.
+- **Une seule taille de fenêtre** : `1250×690` pour tous, via le nouveau package de tokens `Tab5/tab5-ui-tokens.yaml` (`modal_card_w/h`, `modal_body_y`). L'assistant et la TV passent de 1230×670, la console de 1180×680 — corps recalés en conséquence (grille calendrier 82+r*95 avec des cellules de 91 px, grille console 2×2 recentrée en x 63/637 avec des cartes de 300 px, colonnes assistant/TV étirées).
+- **Un seul voile** : `modal_scrim.yaml` prend une var `scrim_opa` (85 % au premier niveau, 60 % pour le détail du jour qui s'empile). Les trois voiles inline (assistant, console, détail du jour) et le style `style_modal_overlay` (72 %) disparaissent.
+- **Garde-fou** : `scripts/check_tab5_modal_chrome.py` (dépôt racine) signale tout popup qui réintroduit un voile/une croix inline, une taille de carte en dur ou une carte sans barre partagée.
+- `tab5-styles.yaml` : `mdi_font_32` complétée de `F024A`/`F0E17`/`F0141`/`F0142` (les icônes d'en-tête et les chevrons de navigation passent en 32) ; `mdi_font_45` n'est plus utilisée par aucun chrome. Détail et alternatives rejetées : **ADR-0009**.
+
 ### 2026-07-22 — Popup Assistant vocal : demande + réponse écrite (tableaux & image)
 - Nouveau `ui_components/assistant_popup.yaml` : carte modale plein écran 1230×670 (25 px des bords, recette popups v2) — **gauche = réglages** (choix du cerveau/pipeline Domotique↔Discussion, Ok Nabu ON/OFF, Muet, slider Volume, taille de texte A-/A/A+), **droite = « Votre demande »** (transcription STT) + **« Réponse »** défilante avec prise en charge Markdown : **tableaux** ré-alignés en monospace et **image** téléchargée à la demande.
 - Ouverture : **appui long sur la zone micro** (`btn_assist_trigger`), automatiquement en **mode Discussion** sur une demande vocale (`on_stt_end` → `tab5_assist_on_request` ; en mode Domotique le bandeau central 8 s reste le retour rapide, pas de voile du dashboard), ou par le moteur via le service HA `tab5_assist_reponse`. Fermeture par scrim / croix / bouton « Fermer ».

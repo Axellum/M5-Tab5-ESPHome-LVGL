@@ -1,7 +1,8 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file console_sys.yaml
-# @role Popup "Console Système" (carte 1180x680) organisée en 4 cartes de verre :
+# @role Popup "Console Système" (carte modale standard 1250x690, cadre v4)
+#       organisée en 4 cartes de verre 550x300 :
 #       MÉMOIRE (SRAM/PSRAM/bloc max/flash), RÉSEAU (Wi-Fi/IP/signal/état HA),
 #       SYSTÈME (uptime/temp CPU/temps de boucle + volume), GESTION (MAJ écran,
 #       recharge automations, redémarrage HA, reboot tablette).
@@ -36,38 +37,28 @@ obj:
   styles: style_invisible
   widgets:
     # Voile sombre (tap = fermer + refermer les overlays de confirmation)
-    - button:
-        align: CENTER
-        width: 100%
-        height: 100%
-        styles: style_modal_overlay
-        on_short_click:
-          - lambda: |-
-              lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
-              lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
-              lv_obj_add_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);" } }
 
     # Carte modale principale
     - obj:
         align: CENTER
-        width: 1180
-        height: 680
+        width: ${modal_card_w}
+        height: ${modal_card_h}
         styles: style_modal_card
         scrollable: false
         scrollbar_mode: "OFF"
         widgets:
 
-          # ═══ EN-TÊTE (cadre v3 : y=6, côtés 10) ═══
-          - !include { file: modal_header_brand.yaml, vars: { icon: "\U000F0717", icon_color: "color_accent", title: "CONSOLE SYSTÈME", title_id: "popup_console_title", brand_width: "520" } }
-          - !include { file: modal_close_btn.yaml, vars: { close_btn_id: "btn_console_close", close_lambda: "lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);" } }
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0717", icon_color: "color_accent", title: "CONSOLE SYSTÈME", title_id: "popup_console_title", close_btn_id: "btn_console_close", close_lambda: "lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);" } }
 
           # ═══ CARTE MÉMOIRE (haut gauche) ═══
           - obj:
               align: TOP_LEFT
-              x: 28
-              y: 80
+              x: 63
+              y: ${modal_body_y}
               width: 550
-              height: 280
+              height: 300
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -117,10 +108,10 @@ obj:
           # ═══ CARTE RÉSEAU (haut droite) ═══
           - obj:
               align: TOP_LEFT
-              x: 602
-              y: 80
+              x: 637
+              y: ${modal_body_y}
               width: 550
-              height: 280
+              height: 300
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -142,10 +133,10 @@ obj:
           # ═══ CARTE SYSTÈME (bas gauche) ═══
           - obj:
               align: TOP_LEFT
-              x: 28
-              y: 376
+              x: 63
+              y: 370
               width: 550
-              height: 280
+              height: 300
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -195,10 +186,10 @@ obj:
           # ═══ CARTE GESTION (bas droite) ═══
           - obj:
               align: TOP_LEFT
-              x: 602
-              y: 376
+              x: 637
+              y: 370
               width: 550
-              height: 280
+              height: 300
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -298,7 +289,7 @@ obj:
                     x: 0
                     y: 0
                     width: 550
-                    height: 264
+                    height: 300
                     hidden: true
                     scrollable: false
                     bg_color: color_console_bg
@@ -353,7 +344,7 @@ obj:
                     x: 0
                     y: 0
                     width: 550
-                    height: 264
+                    height: 300
                     hidden: true
                     scrollable: false
                     bg_color: color_console_bg

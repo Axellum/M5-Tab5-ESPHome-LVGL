@@ -18,3 +18,4 @@ Format: **Context / Decision / Consequences**. One page max. Add a new one whene
 | [0006](0006-centralize-lvgl-logic-in-cpp.md) | All non-trivial LVGL logic centralized in C++, never inline in sensor lambdas |
 | [0007](0007-climate-popup-not-factorized.md) | `climate_popup.yaml` deliberately left un-factorized |
 | [0008](0008-single-ha-instance.md) | Single Home Assistant instance (Freebox) instead of a Deck failover |
+| [0009](0009-modal-shell-header.md) | Shared modal chrome + one compact title bar for every popup |

@@ -13,8 +13,8 @@
 #       btn_light_power_icon / arc_light_brightness / lbl_light_brightness_val : mis à jour
 #       par update_light_card_ui() (tab5_custom.cpp) et par les capteurs light_*_brightness
 #       (tab5-sensors-domotique.yaml).
-# @ai_instruction Cadre modal v3 (ADR-0008) : scrim / marque / croix via modal_*.yaml
-#       (en-tête y=6, côtés 10 px). `scrollable: false` partout — NE PAS retirer.
+# @ai_instruction Cadre modal v4 (ADR-0009) : modal_scrim.yaml + modal_header.yaml
+#       (barre de titre 52 px, corps à y=52). `scrollable: false` partout — NE PAS retirer.
 #       Les 12 pastilles couleur via light_color_preset_btn.yaml (#T164).
 # ═══════════════════════════════════════════════════════
 obj:
@@ -26,29 +26,28 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { close_lambda: "lv_obj_add_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "lv_obj_add_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
         align: CENTER
-        width: 1250
-        height: 690
+        width: ${modal_card_w}
+        height: ${modal_card_h}
         styles: style_modal_card
         scrollable: false
         scrollbar_mode: "OFF"
         widgets:
 
-          # ═══ EN-TÊTE (cadre v3 : y=6, côtés 10) ═══
-          - !include { file: modal_header_brand.yaml, vars: { icon: "\U000F0335", icon_color: "color_gold", title: "Ampoule", title_id: "popup_light_title", brand_width: "500" } }
-          - !include { file: modal_close_btn.yaml, vars: { close_btn_id: "btn_light_close", close_lambda: "lv_obj_add_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);" } }
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0335", icon_color: "color_gold", title: "Ampoule", title_id: "popup_light_title", close_btn_id: "btn_light_close", close_lambda: "lv_obj_add_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
           # ═══ CARTE AMPOULE (gauche) : sélecteur 3 lumières + puissance ═══
           - obj:
               align: TOP_LEFT
               x: 24
-              y: 80
+              y: ${modal_body_y}
               width: 386
-              height: 600
+              height: 628
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -144,9 +143,9 @@ obj:
           - obj:
               align: TOP_LEFT
               x: 426
-              y: 80
+              y: ${modal_body_y}
               width: 398
-              height: 600
+              height: 628
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -276,9 +275,9 @@ obj:
           - obj:
               align: TOP_LEFT
               x: 840
-              y: 80
+              y: ${modal_body_y}
               width: 386
-              height: 600
+              height: 628
               styles: style_glass_card
               scrollable: false
               widgets:

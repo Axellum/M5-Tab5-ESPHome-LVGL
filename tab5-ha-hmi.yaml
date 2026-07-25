@@ -105,6 +105,7 @@ interval:
 # Plus d'images! image: !include supprimé au profit des polices C++ vectorielles LVGL
 
 packages:
+  tab5_ui_tokens: !include Tab5/tab5-ui-tokens.yaml
   tab5_hardware: !include Tab5/tab5-hardware.yaml
   tab5_sensors_diagnostics: !include Tab5/tab5-sensors-diagnostics.yaml
   tab5_sensors_domotique: !include Tab5/tab5-sensors-domotique.yaml

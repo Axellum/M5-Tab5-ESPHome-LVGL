@@ -1,0 +1,20 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-ui-tokens.yaml
+# @role Tokens de GÉOMÉTRIE de l'UI (les tokens de COULEUR sont dans
+#       tab5-styles.yaml sous `color:`). Package inclus par tab5-ha-hmi.yaml —
+#       ESPHome fusionne les `substitutions:` des packages avec celles de la
+#       racine (user_entities.yaml, gitignoré : ne pas y toucher).
+# @architecture_constraint Source unique de la taille des fenêtres modales.
+#       Changer modal_card_w/h ici change les 9 popups d'un coup. Le corps de
+#       chaque popup démarre à y = ${modal_body_y} (= hauteur de la barre de
+#       titre de modal_header.yaml). Voir ADR-0009.
+# ============================================================================
+substitutions:
+  # Carte modale — 15 px des bords de l'écran 1280×720
+  modal_card_w: "1250"
+  modal_card_h: "690"
+  # Barre de titre compacte : 4 (haut) + 44 (ligne) + 4
+  modal_hdr_h: "52"
+  # Premier y libre sous la barre de titre
+  modal_body_y: "52"

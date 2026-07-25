@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file assistant_popup.yaml
-# @role Popup plein écran de l'Assistant vocal (1230×670, ~25 px des bords).
+# @role Popup plein écran de l'Assistant vocal (carte modale standard 1250×690, cadre v4).
 #       Gauche = réglages (choix LLM/pipeline, Ok Nabu, muet, volume, taille texte).
 #       Droite = "Votre demande" (STT) + "Réponse" écrite (Markdown : tableaux
 #       alignés en monospace + image via online_image). Barre d'action en bas.
@@ -22,45 +22,21 @@ obj:
   scrollbar_mode: "OFF"
   widgets:
     # Voile modal (ferme au tap)
-    - button:
-        align: CENTER
-        width: 100%
-        height: 100%
-        bg_color: color_modal_scrim
-        bg_opa: 85%
-        border_width: 0
-        on_short_click:
-          - script.execute: tab5_assist_close
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "id(tab5_assist_close).execute();" } }
 
     # Carte modale
     - obj:
         align: CENTER
-        width: 1230
-        height: 670
+        width: ${modal_card_w}
+        height: ${modal_card_h}
         styles: style_modal_card
         pad_all: 0
         scrollable: false
         scrollbar_mode: "OFF"
         widgets:
 
-          # ═══ EN-TÊTE (cadre v3 geometry 6/10 ; sous-titre 2 lignes = layout dédié) ═══
-          - label: { text: "\U000F036C", align: TOP_LEFT, x: 10, y: 6, text_font: mdi_assist_36, text_color: color_info }
-          - label: { text: "Assistant vocal", align: TOP_LEFT, x: 56, y: 6, text_font: roboto_32_b, text_color: color_text }
-          - label: { text: "Demande & réponse — tableaux et image pris en charge", align: TOP_LEFT, x: 56, y: 42, text_font: roboto_22, text_color: color_text_dim }
-
-          - button:
-              align: TOP_RIGHT
-              x: -10
-              y: 6
-              width: 96
-              height: 64
-              styles: style_clim_btn
-              pressed:
-                bg_opa: 30%
-              on_short_click:
-                - script.execute: tab5_assist_close
-              widgets:
-                - label: { text: "\U000F0156", align: CENTER, text_font: mdi_assist_36, text_color: color_text }
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F036C", icon_color: "color_info", title: "Assistant vocal", title_id: "popup_assist_title", close_btn_id: "btn_assist_close", close_lambda: "id(tab5_assist_close).execute();" } }
 
           # ═══════════════════════════════════════════════════════════════════
           # COLONNE GAUCHE — RÉGLAGES
@@ -69,9 +45,9 @@ obj:
               id: assist_settings_panel
               align: TOP_LEFT
               x: 16
-              y: 96
+              y: ${modal_body_y}
               width: 380
-              height: 468
+              height: 544
               styles: style_glass_card
               pad_all: 0
               scrollable: false
@@ -250,8 +226,8 @@ obj:
           - obj:
               align: TOP_LEFT
               x: 412
-              y: 96
-              width: 802
+              y: ${modal_body_y}
+              width: 822
               height: 104
               styles: style_glass_card
               pad_all: 0
@@ -265,7 +241,7 @@ obj:
                     align: TOP_LEFT
                     x: 60
                     y: 44
-                    width: 726
+                    width: 746
                     text: "Appuyez sur le micro puis parlez…"
                     text_font: roboto_22
                     text_color: color_text
@@ -274,9 +250,9 @@ obj:
           - obj:
               align: TOP_LEFT
               x: 412
-              y: 212
-              width: 802
-              height: 352
+              y: 168
+              width: 822
+              height: 428
               styles: style_glass_card
               pad_all: 0
               scrollable: false
@@ -293,8 +269,8 @@ obj:
                     align: TOP_LEFT
                     x: 16
                     y: 54
-                    width: 770
-                    height: 284
+                    width: 790
+                    height: 360
                     styles: style_transparent
                     scrollbar_mode: AUTO
                     layout:
@@ -325,7 +301,7 @@ obj:
           - obj:
               align: BOTTOM_MID
               y: -10
-              width: 1198
+              width: 1218
               height: 84
               styles: style_transparent
               pad_all: 0

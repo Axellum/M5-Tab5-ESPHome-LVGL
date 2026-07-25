@@ -10,9 +10,9 @@
 obj:
   align: TOP_LEFT
   x: ${x_pos}
-  y: 80
+  y: ${modal_body_y}
   width: 226
-  height: 600
+  height: 628
   styles: style_glass_card
   scrollable: false
   widgets:

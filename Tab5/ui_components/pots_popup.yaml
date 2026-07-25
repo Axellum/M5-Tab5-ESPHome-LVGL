@@ -23,21 +23,20 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { close_lambda: "lv_obj_add_flag(id(pots_detail_popup), LV_OBJ_FLAG_HIDDEN);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "lv_obj_add_flag(id(pots_detail_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
         align: CENTER
-        width: 1250
-        height: 690
+        width: ${modal_card_w}
+        height: ${modal_card_h}
         styles: style_modal_card
         scrollable: false
         scrollbar_mode: "OFF"
         widgets:
 
-          # ═══ EN-TÊTE (cadre v3 : y=6, côtés 10) ═══
-          - !include { file: modal_header_brand.yaml, vars: { icon: "\U000F024A", icon_color: "color_success", title: "Mes Plantes", title_id: "popup_pots_title", brand_width: "420" } }
-          - !include { file: modal_close_btn.yaml, vars: { close_btn_id: "btn_pots_close", close_lambda: "lv_obj_add_flag(id(pots_detail_popup), LV_OBJ_FLAG_HIDDEN);" } }
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F024A", icon_color: "color_success", title: "Mes Plantes", title_id: "popup_pots_title", close_btn_id: "btn_pots_close", close_lambda: "lv_obj_add_flag(id(pots_detail_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
           # ═══ 5 CARTES POTS (ordre = plante_1..plante_5, icônes du dashboard) ═══
           - !include { file: pot_detail_card.yaml, vars: { pot_idx: "1", x_pos: "24", pot_nom: "Pot 1", icon: "\U000F0E66" } }

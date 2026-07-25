@@ -1,9 +1,11 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file tv_remote_popup.yaml
-# @role Popup télécommande TV Samsung (1230×670, ~25 px des bords écran 1280×720).
+# @role Popup télécommande TV Samsung (carte modale standard 1250×690, cadre v4).
 #       Grille symétrique 3 colonnes (290 | 440 | 290) + rangée basse 5 boutons.
 #       Ouvert par long-press carte PC (switches_card) ou btn_control_tv.
+# @ai_instruction Le modèle « Samsung S95B — Salon » n'est plus affiché en
+#       sous-titre : la barre de titre est identique pour tous les popups (ADR-0009).
 # @architecture_constraint remote.send_command / remote.toggle sur ${entity_tv_remote}.
 # ═══════════════════════════════════════════════════════
 obj:
@@ -15,40 +17,27 @@ obj:
   styles: style_invisible
   scrollbar_mode: "OFF"
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { close_lambda: "lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
-    # Carte modale — 25 px des bords écran (1280×720)
+    # Carte modale — 15 px des bords écran (1280×720)
     - obj:
         align: CENTER
-        width: 1230
-        height: 670
+        width: ${modal_card_w}
+        height: ${modal_card_h}
         styles: style_modal_card
         scrollable: false
         scrollbar_mode: "OFF"
         widgets:
 
-          # ═══ EN-TÊTE ═══
-          - label:
-              text: "Télécommande TV"
-              align: TOP_MID
-              y: 6
-              text_font: roboto_32_b
-              text_color: color_text
-          - label:
-              text: "Samsung S95B — Salon"
-              align: TOP_MID
-              y: 40
-              text_font: roboto_22
-              text_color: color_text_dim
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F07C0", icon_color: "color_info", title: "Télécommande TV", title_id: "popup_tv_title", close_btn_id: "btn_tv_close", close_lambda: "lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
-          - !include { file: modal_close_btn.yaml, vars: { close_btn_id: "btn_tv_close", close_lambda: "lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);" } }
-
-          # ═══ CORPS — grille 1170×432 (laisse place à la rangée basse) ═══
+          # ═══ CORPS — grille (laisse place à la rangée basse) ═══
           - obj:
               align: TOP_MID
-              y: 80
+              y: ${modal_body_y}
               width: 1170
-              height: 440
+              height: 488
               styles: style_transparent
               scrollable: false
               scrollbar_mode: "OFF"
@@ -59,7 +48,7 @@ obj:
                     align: LEFT_MID
                     x: 0
                     width: 290
-                    height: 432
+                    height: 488
                     styles: style_transparent
                     scrollable: false
                     widgets:
@@ -80,7 +69,7 @@ obj:
                             - label: { text: "\U000F0425", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_error }
                             - label: { text: "Marche / Arrêt", align: LEFT_MID, x: 82, text_font: roboto_22, text_color: color_text }
                       - button:
-                          y: 144
+                          y: 180
                           width: 290
                           height: 128
                           radius: 18
@@ -97,7 +86,7 @@ obj:
                             - label: { text: "\U000F0379", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_info }
                             - label: { text: "Source", align: LEFT_MID, x: 82, text_font: roboto_22, text_color: color_text }
                       - button:
-                          y: 288
+                          y: 360
                           width: 290
                           height: 128
                           radius: 18
@@ -118,7 +107,7 @@ obj:
                 - obj:
                     align: CENTER
                     width: 440
-                    height: 432
+                    height: 488
                     styles: style_transparent
                     scrollable: false
                     widgets:
@@ -224,7 +213,7 @@ obj:
                     align: RIGHT_MID
                     x: 0
                     width: 290
-                    height: 432
+                    height: 488
                     styles: style_transparent
                     scrollable: false
                     widgets:
