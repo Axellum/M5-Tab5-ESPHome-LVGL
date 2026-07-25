@@ -4,8 +4,10 @@
 # croix de fermeture à droite. Remplace modal_header_brand + modal_close_btn.
 #
 # Geometry (identique pour TOUS les popups, ne pas surcharger côté appelant) :
-#   conteneur pleine largeur, hauteur 52 = 4 (haut) + 44 (ligne) + 4
-#   → le corps du popup commence à y = ${modal_body_y} (52).
+#   conteneur pleine largeur, hauteur ${modal_hdr_h} = 4 (haut) + 44 (ligne) + 4
+#   → le corps du popup commence à y = ${modal_body_y}, qui DOIT rester égal
+#   à ${modal_hdr_h} (tab5-ui-tokens.yaml) : changer l'un sans l'autre décale
+#   soit le corps sous la barre, soit crée un vide/chevauchement.
 # L'alignement vertical est fait par LVGL (LEFT_MID / RIGHT_MID) : plus aucun
 # `y:` recopié popup par popup, donc plus de dérive possible.
 #
@@ -23,7 +25,7 @@ obj:
   align: TOP_MID
   y: 0
   width: 100%
-  height: 52
+  height: ${modal_hdr_h}
   styles: style_transparent
   scrollable: false
   widgets:
