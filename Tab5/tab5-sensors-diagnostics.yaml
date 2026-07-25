@@ -226,6 +226,19 @@ time:
 
     timezone: Europe/Paris
 
+    # Peint l'horloge dès la 1re sync NTP (sinon placeholders YAML jusqu'au
+    # prochain tick minute de on_time). Indépendant de HA.
+    on_time_sync:
+
+      then:
+
+        - lambda: |-
+            auto t_now = id(sntp_time).now();
+            if (t_now.is_valid()) {
+              update_clock_date_ui(id(lbl_time), id(lbl_date),
+                  t_now.hour, t_now.minute, t_now.day_of_week, t_now.day_of_month, t_now.month);
+            }
+
     on_time:
 
       - seconds: 0

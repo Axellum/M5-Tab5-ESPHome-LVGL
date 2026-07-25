@@ -179,7 +179,10 @@ font:
     # F1056 = party-popper (férié), F0474 = school (vacances scolaires),
     # F00F0 = calendar-clock (RDV), F00EB = cake-variant (anniversaire),
     # F09D3 = calendar-star (fête non fériée) — codepoints vérifiés dans le TTF
-    glyphs: "\U000F0379\U000F111C\U000F111E\U000F0597\U000F0045\U000F005D\U000F03E4\U000F0335\U000F06E8\U000F08B2\U000F0596\U000F07C0\U000F04B9\U000F1B29\U000F1051\U000F036C\U000F0156\U000F0450\U000F0717\U000F0238\U000F0425\U000F0210\U000F058E\U000F0E79\U000F032A\U000F14DE\U000F146D\U000F011E\U000F05A9\U000F07D0\U000F02E3\U000F057E\U000F0580\U000F0581\U000F050F\U000F0241\U000F0079\U000F00D6\U000F1056\U000F0474\U000F00F0\U000F00EB\U000F09D3"
+    # Barre de titre modale v4 (ADR-0009, modal_header.yaml) : F024A = flower
+    # (popup plantes), F0E17 = calendar-month (popup calendrier + détail jour),
+    # F0141/F0142 = chevron-left/right (nav mois, boutons d'en-tête 80×44).
+    glyphs: "\U000F0379\U000F111C\U000F111E\U000F0597\U000F0045\U000F005D\U000F03E4\U000F0335\U000F06E8\U000F08B2\U000F0596\U000F07C0\U000F04B9\U000F1B29\U000F1051\U000F036C\U000F0156\U000F0450\U000F0717\U000F0238\U000F0425\U000F0210\U000F058E\U000F0E79\U000F032A\U000F14DE\U000F146D\U000F011E\U000F05A9\U000F07D0\U000F02E3\U000F057E\U000F0580\U000F0581\U000F050F\U000F0241\U000F0079\U000F00D6\U000F1056\U000F0474\U000F00F0\U000F00EB\U000F09D3\U000F024A\U000F0E17\U000F0141\U000F0142"
 
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_120
@@ -308,11 +311,8 @@ lvgl:
       shadow_width: 0
       outline_width: 0
 
-    # --- Voile modal (scrim sombre, focus accru) ---
-    - id: style_modal_overlay
-      bg_color: color_modal_scrim
-      bg_opa: 72%
-      border_width: 0
+    # (style_modal_overlay supprimé le 25/07/2026 : le voile unique est
+    #  ui_components/modal_scrim.yaml, opacité passée en var — ADR-0009.)
 
     # --- Carte modale "verre" flottante ---
     - id: style_modal_card

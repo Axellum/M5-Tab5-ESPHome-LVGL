@@ -13,11 +13,9 @@
 #       btn_light_power_icon / arc_light_brightness / lbl_light_brightness_val : mis à jour
 #       par update_light_card_ui() (tab5_custom.cpp) et par les capteurs light_*_brightness
 #       (tab5-sensors-domotique.yaml).
-# @ai_instruction `scrollable: false` est posé sur la carte modale et toutes les sous-cartes :
-#       un appui légèrement glissé (ex. sur la croix de fermeture) faisait défiler la carte
-#       et laissait le contenu décalé — NE PAS retirer ces flags. Les 12 pastilles couleur
-#       sont factorisées via light_color_preset_btn.yaml (#T164) : pour ajouter une couleur,
-#       ajouter un `!include` de plus, ne pas dupliquer le bloc bouton.
+# @ai_instruction Cadre modal v4 (ADR-0009) : modal_scrim.yaml + modal_header.yaml
+#       (barre de titre 52 px, corps à y=52). `scrollable: false` partout — NE PAS retirer.
+#       Les 12 pastilles couleur via light_color_preset_btn.yaml (#T164).
 # ═══════════════════════════════════════════════════════
 obj:
   id: light_options_popup
@@ -28,60 +26,28 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    # Voile sombre (tap = fermer) — opacité renforcée comme tv_remote_popup
-    - button:
-        align: CENTER
-        width: 100%
-        height: 100%
-        bg_color: color_modal_scrim
-        bg_opa: 85%
-        border_width: 0
-        on_short_click:
-          - lambda: 'lv_obj_add_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);'
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "lv_obj_add_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
         align: CENTER
-        width: 1250
-        height: 690
+        width: ${modal_card_w}
+        height: ${modal_card_h}
         styles: style_modal_card
         scrollable: false
         scrollbar_mode: "OFF"
         widgets:
 
-          # ═══ EN-TÊTE ═══
-          - label: { text: "\U000F0335", align: TOP_LEFT, x: 28, y: 26, text_font: mdi_font_45, text_color: color_gold }
-          - label:
-              id: popup_light_title
-              text: "Ampoule"
-              align: TOP_LEFT
-              x: 92
-              y: 26
-              text_font: roboto_45_b
-              text_color: color_text
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0335", icon_color: "color_gold", title: "Ampoule", title_id: "popup_light_title", close_btn_id: "btn_light_close", close_lambda: "lv_obj_add_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
-          # Croix de fermeture — vrai bouton de verre 96×64 (cible tactile large, anti-décalage)
-          - button:
-              align: TOP_RIGHT
-              x: -20
-              y: 16
-              width: 96
-              height: 64
-              styles: style_clim_btn
-              pressed:
-                bg_opa: 30%
-              on_short_click:
-                - lambda: 'lv_obj_add_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);'
-              widgets:
-                - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_45, text_color: color_text }
-
-          # ═══ CARTE AMPOULE (gauche) : sélecteur 3 lumières + alimentation ═══
+          # ═══ CARTE AMPOULE (gauche) : sélecteur 3 lumières + puissance ═══
           - obj:
               align: TOP_LEFT
               x: 24
-              y: 100
+              y: ${modal_body_y}
               width: 386
-              height: 566
+              height: 628
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -177,9 +143,9 @@ obj:
           - obj:
               align: TOP_LEFT
               x: 426
-              y: 100
+              y: ${modal_body_y}
               width: 398
-              height: 566
+              height: 628
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -309,9 +275,9 @@ obj:
           - obj:
               align: TOP_LEFT
               x: 840
-              y: 100
+              y: ${modal_body_y}
               width: 386
-              height: 566
+              height: 628
               styles: style_glass_card
               scrollable: false
               widgets:
