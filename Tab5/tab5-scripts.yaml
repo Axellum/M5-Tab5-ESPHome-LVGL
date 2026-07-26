@@ -6,6 +6,25 @@
 # tab5-scripts.yaml — Scripts ESPHome reutilisables (sequences temporisees,
 # debounce). Preferer un script ici a un delay:+action duplique inline.
 script:
+  # Ouvre le jeu « Fil d'Or » (overlay plein écran, marble_game.cpp).
+  # Script unique appelé par les 3 points d'entrée (console GESTION + les deux
+  # long-press de la bande centrale) : la construction de Marble::UI ne vit
+  # qu'à un seul endroit. `id(...)` n'étant utilisable que dans une lambda, les
+  # pointeurs LVGL et les polices sont injectés ici plutôt que dans le C++.
+  - id: tab5_marble_open
+    mode: single
+    then:
+      - lambda: |-
+          Marble::UI ui;
+          ui.root    = id(marble_root);
+          ui.field   = id(marble_field);
+          ui.hud     = id(marble_hud);
+          ui.panel   = id(marble_panel);
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          Marble::open(ui);
+
   # Active le wake word interne « Stop » (désactivé par défaut par ESPHome, 2e modèle).
   # Uniquement via tab5_maj_volet_etat (push HA) — pas d'état optimiste au tap écran.
   - id: tab5_volet_end_movement

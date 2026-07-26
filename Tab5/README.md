@@ -107,6 +107,98 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 5. **Toute nouvelle carte/widget répété ≥3 fois** (météo, switches...) doit passer par une fonction C++ builder paramétrée plutôt qu'un copier-coller YAML (cf. refacto architecture en cours).
 6. Avant de committer : `python -m esphome compile tab5-ha-hmi.yaml` doit réussir (toolchain déjà en cache localement, ~20-45s).
 7. **Tout popup modal réutilise le chrome partagé** (ADR-0009) : `modal_scrim.yaml` (var `scrim_opa`) + `modal_header.yaml` (icône, titre, croix — barre de 52 px, corps à `y: ${modal_body_y}`), carte dimensionnée par `${modal_card_w}`/`${modal_card_h}`. Jamais de voile, de titre ou de croix réécrits à la main ; les boutons d'options d'en-tête restent des frères en `y: 4, height: 44`. Vérification : `python scripts/check_tab5_modal_chrome.py` (dépôt racine du workspace).
+   **Unique exception** : `ui_components/marble_game.yaml` (jeu « Fil d'Or »). Ce n'est pas un popup domotique mais un **flux plein écran** séparé — voir la section « Marble Roguelite » ci-dessous. Il ne déclenche pas le garde-fou (ni `style_modal_card`, ni `color_modal_scrim`, ni glyphe de croix).
+
+---
+
+## Marble Roguelite — « Fil d'Or »
+
+Petit roguelite de bille piloté à l'inclinaison (BMI270), **plein écran 1280×720**, entièrement local : il tourne sans Home Assistant et sans réseau.
+
+### Lancer / quitter
+
+| Action | Où |
+|---|---|
+| Ouvrir | Console **GESTION** → bouton « Fil d'Or » · **ou** long-press sur la bande centrale (bandeau planning ou bandeau pluie) |
+| Quitter | Hub du jeu → « Quitter » (retour propre au dashboard : timer arrêté, run banquée, overlay masqué) |
+| Pause | **Toucher le bandeau HUD** pendant une partie (il n'y a volontairement pas de croix : le jeu est un flux plein cadre) |
+| Calibrer | Hub → **Réglages** → « Calibrer à plat », ou Pause → « Recalibrer à plat ». Poser la tablette **puis** appuyer. |
+
+Le tactile ne sert qu'aux menus — la bille se pilote **uniquement** à l'inclinaison.
+
+### Difficulté et mode dieu
+
+Hub → **Réglages**. Les deux sont persistés et s'appliquent **au lancement de la run suivante** (les changer en cours de partie n'aurait pas de sens — l'écran n'est joignable que depuis le hub).
+
+| Difficulté | PV | Pièges | Vitesse bille | Invulnérabilité | Fragments |
+|---|---|---|---|---|---|
+| **Calme** | +1 | ×0,75 | ×0,92 | 1800 ms | ×0,80 |
+| **Normal** | — | ×1,00 | ×1,00 | 1200 ms | ×1,00 |
+| **Impitoyable** | −1 | ×1,35 | ×1,10 | 800 ms | **×1,60** |
+
+Monter d'un cran rapporte davantage — sinon personne ne le ferait. La difficulté ne change **que le timing**, jamais la géométrie : les passages restent les mêmes (garde-fou ci-dessous), un piège plus rapide reste franchissable.
+
+**Mode dieu** : invulnérable (les trous se contentent de replacer la bille au départ). La run reste entièrement jouable, mais elle est **hors concours** — aucun fragment crédité, aucune statistique enregistrée, `runs` non incrémenté. Sinon l'invulnérabilité viderait la méta-progression de son sens. Le HUD l'affiche en clair (`[ DIEU ]` + « PV invulnérable »).
+
+### Progression façon Dark Souls
+
+Une seule monnaie : les **âmes**, gagnées en ramassant de l'or, en ouvrant des coffres et en battant les boss. Elles servent **à la fois** à monter de niveau et à commercer — c'est le même arbitrage que dans Dark Souls.
+
+**Feu de camp** (hub → *Feu de camp*) — 6 caractéristiques :
+
+| Caractéristique | Effet par niveau | Max |
+|---|---|---|
+| **Vitalité** | +1 point de vie | 5 |
+| **Résistance** | +300 ms d'invulnérabilité ; bouclier par salle dès le niveau 3 | 5 |
+| **Finesse** | −1 px de rayon (bille plus difficile à toucher) | 4 |
+| **Agilité** | +12 % de réponse à l'inclinaison | 5 |
+| **Élan** | +60 de vitesse maximale | 5 |
+| **Découverte** | +15 % d'âmes et +12 % de chance de butin en coffre | 5 |
+
+Le coût d'un point suit le **niveau total** — `60 + 14·L + L²` — donc monter n'importe quelle caractéristique renchérit toutes les autres. Il faut choisir une orientation, exactement comme un build DS.
+
+> **Finesse ne peut que réduire le rayon**, jamais l'augmenter. C'est délibéré : le garde-fou de traversabilité prouve les parcours au rayon maximal (11 px), donc sa preuve reste valable quelle que soit la progression.
+
+**Objets** — 10 pièces, découvertes dans les **coffres au trésor**, lâchées par les **boss** (Némésis en salle 5, le Trône en salle 6, butin garanti), ou achetées chez le **Marchand**. On en équipe **2 à la fois** (hub → *Équipement*, un appui fait défiler). Revente à la moitié du prix — un objet vendu est automatiquement déséquipé. La *Couronne fêlée* est volontairement à double tranchant (+50 % d'âmes, −1 PV).
+
+Un coffre donne 25 à 60 âmes, plus un jet de butin modulé par Découverte. Si la collection est complète, le butin est converti en âmes plutôt que perdu.
+
+### Ce qui est persisté (NVS, survit aux reboots et aux OTA)
+
+`MarbleSave` (voir `marble_game.h`) via `esphome::global_preferences` — **aucune dépendance HA** :
+âmes, runs, victoires, meilleur temps, salle la plus profonde, les 6 caractéristiques, le masque des objets possédés, les 2 emplacements d'équipement, la teinte de bille, la difficulté, le mode dieu et l'offset de calibration.
+Le layout est validé par un `magic` (`SAVE_MAGIC`) : **le modifier oblige à bumper la constante**, sinon une vieille sauvegarde serait relue de travers (elle est alors rejetée et remise à zéro). Historique : `FOR1` initial → `FOR2` (difficulté/dieu) → `FOR3` (âmes, caractéristiques, objets).
+
+### Design note v1
+
+- **Boucle** : hub → 6 salles enchaînées → mort ou victoire → retour hub. Cible **2 à 5 min** par run.
+- **Seed** : `lv_tick_get() ^ 0x9E3779B9 ^ (runs × 2654435761)`, xorshift32. Il pilote (a) le décalage ±28 px des pickups — **annulé si la nouvelle position tombe dans un mur**, (b) le déphasage des scies/orbes, (c) le tirage des 3 boons proposés. Les layouts eux-mêmes restent fixes : c'est le contenu qui varie, pas la lisibilité.
+- **Salles** : 1 Seuil (★☆☆☆, tuto implicite) · 2 Couloirs (★★☆☆, serpentin + scie) · 3 Forge (★★☆☆, tapis d'accélération, or au contact des pointes) · 4 Sanctuaire (★★★☆, route haute sûre vs route basse à trous mieux dotée) · 5 Némésis (★★★★, 2 orbes en orbite + chasseuse + glu) · 6 Trône (★★★★, 3 runes puis portail central gardé).
+- **Pièges (6)** : pointes fixes, scie oscillante, trou/vide, zone de glu, tapis d'accélération, orbe en orbite — plus la **chasseuse** qui poursuit la bille (salles 5-6).
+- **Bonus (6)** : or, bouclier (1 coup), aimant, frein, dash, rune d'objectif.
+- **Boons intra-run (10)**, 3 proposés au choix après les salles **2 et 4** : Main d'Ariane, Cœur de braise, Bourse tressée, Aimant mineur, Semelles lourdes, Élan, Peau de bronze, Œil du dédale, Seconde chance, Pas de velours.
+- **Méta (5)** : Vigueur (+1 PV, ×3), Filon (+12 % fragments, ×3), Main sûre (pilotage plus doux, ×2), Relique (bouclier au départ, ×1), Teinte (cosmétique, ×2).
+- **Balance v1** : 3 PV de base (+1 par Vigueur, ± la difficulté), or = 10/pickup, dégât = retour au départ de la salle + invulnérabilité. Salle 1 volontairement généreuse (1 seul piège, sortie visible) ; salle 6 exigeante mais lisible (orbes télégraphiés par leur orbite régulière autour du portail). **Une run perdue rapporte quand même ses fragments** — y compris si le jeu est quitté en cours de partie (sauf en mode dieu).
+
+### Garde-fou : toutes les salles restent traversables
+
+```bash
+python scripts/check_marble_rooms.py
+```
+
+Lit les 6 salles **directement dans `marble_game.cpp`** (pas de duplication : le test suit le contenu) et vérifie, pour chacune, que le départ n'est pas dans un mur, que la sortie est atteignable, que **chaque bonus et chaque rune** l'est aussi, et que les scies laissent un passage à au moins une phase de leur course.
+
+Méthode : BFS sur une grille d'occupation du **centre de la bille**, murs dilatés du rayon (11 px). La dilatation utilise le rectangle et non le vrai arrondi de Minkowski aux coins — elle bloque donc un peu **plus** que la réalité, ce qui rend le résultat sûr : un chemin trouvé par le test existe forcément en jeu. À lancer après toute modification d'une salle (testé négativement : un mur qui scelle la sortie de la salle 1 est bien détecté).
+
+Le décalage de position des bonus par le seed est en plus contraint côté C++ par `segment_clear()` : la nouvelle position doit être **reliée en ligne droite** à l'ancienne, bille dilatée comprise. « Ne pas être dans un mur » ne suffisait pas — un bonus aurait pu sauter de l'autre côté d'une paroi fine et devenir inatteignable.
+
+### Notes techniques / perf
+
+- Physique à **30 Hz** (`lv_timer` 33 ms) créé à l'ouverture et **détruit à la fermeture** → zéro tick gameplay hors jeu.
+- **3 sous-pas** de collision par frame (anti-tunnelling à 650 px/s), résolution cercle/AABB avec réflexion sur la normale.
+- Objets LVGL **préalloués une seule fois** (pool de 48 entités + bille + 4 bandes de vignette) puis recyclés par `show/hide` + `set_pos` : aucune allocation dans la boucle. Les libellés du HUD ne sont réécrits que si leur valeur change.
+- IMU : les 3 axes d'accélération sont `internal: true` (ils saturaient l'API HA pour rien) ; la **cadence de poll est adaptative** — 100 ms au repos, 33 ms quand le jeu est ouvert (`stop_poller()`/`start_poller()`, car `set_update_interval()` seul ne re-régle pas le poller déjà enregistré).
+- Feedback de dégât : 4 bandes de bord fines + clignotement de la bille + micro-tremblement — **pas** de shake plein écran (il invaliderait 1280×672 à chaque frame).
 
 ---
 
