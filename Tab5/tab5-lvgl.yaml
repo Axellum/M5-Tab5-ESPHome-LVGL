@@ -385,8 +385,6 @@ lvgl:
                         styles: style_invisible
                         on_short_click:
                           - script.execute: tab5_central_panel_next
-                        on_long_press:
-                          - script.execute: tab5_marble_open
 
               # Réponse vocale IA (remplace le rotateur 8s le temps de l'affichage)
               - obj:
@@ -423,8 +421,6 @@ lvgl:
                         styles: style_invisible
                         on_short_click:
                           - script.execute: tab5_central_panel_next
-                        on_long_press:
-                          - script.execute: tab5_marble_open
 
               # Titre de page previsions (pages horaires / journalieres 2-3, masque sur accueil)
               - obj:
@@ -542,14 +538,16 @@ lvgl:
                           - label: { id: lbl_ha_alert_3, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
 
         # ==================== PAGINATION BARS ====================
+        # Zone de pagination (points de navigation des pages forecast).
         - obj:
             id: pagination_container
             x: 480
-            y: 424
+            y: 414
             width: 310
-            height: 10
+            height: 30
             styles: style_transparent
             scrollbar_mode: "OFF"
+            clickable: true
             layout:
               type: FLEX
               flex_flow: ROW
@@ -578,3 +576,7 @@ lvgl:
         - !include ui_components/calendar_popup.yaml
         - !include ui_components/assistant_popup.yaml
         - !include ui_components/marble_game.yaml
+        - !include ui_components/arkanoid_game.yaml
+        - !include ui_components/pinball_game.yaml
+        - !include ui_components/lode_game.yaml
+        - !include ui_components/game_selector.yaml

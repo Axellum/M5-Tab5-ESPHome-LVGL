@@ -92,6 +92,24 @@ color:
     hex: "111A28"          # sol jouable (miroir UIColor::MARBLE_FLOOR)
   - id: color_marble_hud
     hex: "0C1220"          # bandeau HUD (miroir UIColor::MARBLE_HUD_BG)
+  # --- Jeu « Arcanoïde » (arkanoid_game) : miroir des tokens UIColor::ARK_* ---
+  # Seuls les 3 fonds des conteneurs vivent ici ; toutes les autres couleurs du
+  # jeu sont posées en C++ (arkanoid_game.cpp) et n'ont donc pas de token YAML.
+  - id: color_arkanoid_void
+    hex: "0A0A0F"          # fond hors terrain (miroir UIColor::ARK_VOID)
+  - id: color_arkanoid_floor
+    hex: "111118"          # sol jouable (miroir UIColor::ARK_FLOOR)
+  - id: color_arkanoid_hud
+    hex: "0D0D14"          # bandeau HUD (miroir UIColor::ARK_HUD_BG)
+  # --- Jeu « Flip Noir » (pinball_game) : miroir des tokens UIColor::PIN_* ---
+  # Seuls les 3 fonds des conteneurs vivent ici ; toutes les autres couleurs du
+  # jeu sont posées en C++ (pinball_game.cpp) et n'ont donc pas de token YAML.
+  - id: color_pinball_void
+    hex: "0A0A10"          # fond hors table (miroir UIColor::PIN_VOID)
+  - id: color_pinball_floor
+    hex: "121218"          # surface de jeu (miroir UIColor::PIN_FLOOR)
+  - id: color_pinball_hud
+    hex: "0D0D12"          # bandeau HUD (miroir UIColor::PIN_HUD_BG)
 
 # =============================================================================
 # FONTS — inchangees (fonctionnel, pas esthetique)

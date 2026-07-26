@@ -59,6 +59,9 @@ sensor:
 
             // 1) Alimentation du jeu (simple stockage, aucun calcul lourd ici).
             Marble::on_imu(ax, ay, az);
+            Arkanoid::on_imu(ax, ay, az);
+            Pinball::on_imu(ax, ay, az);
+            Lode::on_imu(ax, ay, az);
 
             // 2) Tap-to-wake : au repos la norme vaut ~1 g ; une tape franche
             // sur la dalle produit un pic > 2,5 g. Debounce 500 ms.
@@ -114,7 +117,7 @@ interval:
     then:
       - lambda: |-
           static bool fast = false;
-          bool want = Marble::is_open();
+          bool want = Marble::is_open() || Arkanoid::is_open() || Pinball::is_open() || Lode::is_open();
           if (want == fast) return;
           fast = want;
           id(tab5_imu).set_update_interval(want ? 33 : 100);

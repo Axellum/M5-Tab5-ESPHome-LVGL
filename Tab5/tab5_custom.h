@@ -485,5 +485,36 @@ namespace UIColor {
     static constexpr uint32_t MARBLE_DASH     = 0xF2C14E;  // pickup dash
     static constexpr uint32_t MARBLE_RUNE     = 0xF7E08A;  // rune / cle d'objectif
     static constexpr uint32_t MARBLE_BRASS_CHEST = 0x9A6B2F;  // coffre au tresor (laiton)
+    // --- Jeu « Arcanoïde » (arkanoid_game.cpp) ------------------------------------
+    // Palette rétro Atari / borne arcade 80's : fond sombre, briques vives,
+    // contraste fort. Utilisée uniquement par le namespace Arkanoid.
+    static constexpr uint32_t ARK_VOID      = 0x0A0A0F;  // fond hors terrain (noir bleuté)
+    static constexpr uint32_t ARK_FLOOR     = 0x111118;  // sol jouable (gris très sombre)
+    static constexpr uint32_t ARK_HUD_BG    = 0x0D0D14;  // bandeau HUD
+    static constexpr uint32_t ARK_PADDLE    = 0xE8E8E8;  // raquette (blanc cassé)
+    static constexpr uint32_t ARK_BALL      = 0xFFDD44;  // balle (jaune arcade)
+    static constexpr uint32_t ARK_WALL      = 0x556677;  // briques indestructibles
+    static constexpr uint32_t ARK_TOUGH     = 0x8899AA;  // briques renforcées (plein)
+    static constexpr uint32_t ARK_TOUGH_HIT = 0xBB6633;  // briques renforcées (entamées)
+    static constexpr uint32_t ARK_DANGER    = 0xFF3333;  // flash de mort
+    static constexpr uint32_t ARK_CYAN      = 0x44DDDD;  // accent cyan
+    static constexpr uint32_t ARK_GREEN     = 0x44DD44;  // accent vert (expand, vie)
+    static constexpr uint32_t ARK_ORANGE    = 0xFF8800;  // accent orange (shrink)
+    static constexpr uint32_t ARK_MAGENTA   = 0xFF44AA;  // accent magenta (bonus, colle)
+    static constexpr uint32_t ARK_BTN       = 0x334455;  // boutons tactiles latéraux
+    // --- Jeu « Flip Noir » (pinball_game.cpp) ------------------------------------
+    // Palette rétro flipper 70-80's : table sombre, inserts vifs, bille blanche.
+    // Utilisée uniquement par le namespace Pinball — ne pas mélanger avec le HMI.
+    static constexpr uint32_t PIN_VOID      = 0x0A0A10;  // fond hors table (noir profond)
+    static constexpr uint32_t PIN_FLOOR     = 0x121218;  // surface de jeu (gris très sombre)
+    static constexpr uint32_t PIN_HUD_BG    = 0x0D0D12;  // bandeau HUD
+    static constexpr uint32_t PIN_WALL      = 0x445566;  // murs / guides
+    static constexpr uint32_t PIN_BALL      = 0xF0F0F0;  // bille (blanc brillant)
+    static constexpr uint32_t PIN_WHITE     = 0xFFFFFF;  // flash / flipper
+    static constexpr uint32_t PIN_RED       = 0xFF3344;  // bumper rouge / TILT
+    static constexpr uint32_t PIN_CYAN      = 0x33DDEE;  // accent cyan (rollover, bordures)
+    static constexpr uint32_t PIN_ORANGE    = 0xFF8811;  // slingshot / accent chaud
+    static constexpr uint32_t PIN_YELLOW    = 0xFFDD22;  // score / cibles / titre
+    static constexpr uint32_t PIN_BTN       = 0x222233;  // boutons de menu
 }
 

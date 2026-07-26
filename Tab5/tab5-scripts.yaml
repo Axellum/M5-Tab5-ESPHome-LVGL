@@ -25,6 +25,59 @@ script:
           ui.f_big   = id(roboto_45_b);
           Marble::open(ui);
 
+  # Ouvre le jeu « Arcanoïde » (casse-briques rétro, arkanoid_game.cpp).
+  # Même pattern que Marble : script unique, pointeurs LVGL injectés en lambda.
+  # Point d'entrée : long-press sur la carte prévision J4 (dernier jour).
+  - id: tab5_arkanoid_open
+    mode: single
+    then:
+      - lambda: |-
+          Arkanoid::UI ui;
+          ui.root    = id(arkanoid_root);
+          ui.field   = id(arkanoid_field);
+          ui.hud     = id(arkanoid_hud);
+          ui.panel   = id(arkanoid_panel);
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          Arkanoid::open(ui);
+
+  # Ouvre le jeu « Flip Noir » (flipper rétro, pinball_game.cpp).
+  # Même pattern que Marble : script unique, pointeurs LVGL injectés en lambda.
+  # Point d'entrée : console GESTION (bouton dédié) ou long-press à définir.
+  - id: tab5_pinball_open
+    mode: single
+    then:
+      - lambda: |-
+          Pinball::UI ui;
+          ui.root    = id(pinball_root);
+          ui.field   = id(pinball_field);
+          ui.hud     = id(pinball_hud);
+          ui.panel   = id(pinball_panel);
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          Pinball::open(ui);
+
+  # Ouvre le jeu « Coureur d'Or » (Lode Runner, lode_game.cpp).
+  # Même pattern : script unique, pointeurs LVGL injectés en lambda.
+  - id: tab5_lode_open
+    mode: single
+    then:
+      - lambda: |-
+          Lode::UI ui;
+          ui.root    = id(lode_root);
+          ui.field   = id(lode_field);
+          ui.hud     = id(lode_hud);
+          ui.panel   = id(lode_panel);
+          ui.pad     = id(lode_pad);
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          auto t = id(sntp_time).now();
+          if (t.is_valid()) ui.epoch = t.timestamp;
+          Lode::open(ui);
+
   # Active le wake word interne « Stop » (désactivé par défaut par ESPHome, 2e modèle).
   # Uniquement via tab5_maj_volet_etat (push HA) — pas d'état optimiste au tap écran.
   - id: tab5_volet_end_movement

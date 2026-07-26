@@ -1,0 +1,89 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file lode_game.yaml
+# @role Overlay PLEIN ECRAN du jeu « Coureur d'Or » (clone de Lode Runner).
+# @architecture_constraint EXCEPTION ASSUMEE au chrome modal v4 (ADR-0009) : ce
+#     n'est pas un popup domotique mais un flux de jeu separe. Donc pas de
+#     modal_scrim.yaml, pas de modal_header.yaml, pas de carte 1250x690 — on
+#     occupe les 1280x720 pour que le damier domine. Le garde-fou
+#     scripts/check_tab5_modal_chrome.py ne declenche pas ici (aucune
+#     style_modal_card, aucun color_modal_scrim, aucun glyphe de croix).
+#     La sortie du jeu se fait par le hub (« Quitter »), pas par une croix.
+# @ai_instruction Ce fichier ne declare QUE 5 conteneurs vides. Tout le contenu
+#     (HUD, damier, or, joueur, gardes, zones tactiles, menus) est construit par
+#     lode_game.cpp via Lode::open(). Ne JAMAIS ajouter de widget de gameplay ici.
+#     Aucune couleur n'est posee ici non plus : les fonds sont appliques en C++
+#     depuis Lode::Pal (aucun nouveau token dans tab5-styles.yaml).
+#     ORDRE DES ENFANTS = ordre de dessin : hud < field < pad < panel.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: lode_root
+  align: TOP_LEFT
+  x: 0
+  y: 0
+  width: 1280
+  height: 720
+  hidden: true
+  scrollable: false
+  pad_all: 0
+  radius: 0
+  border_width: 0
+  widgets:
+    # --- Bandeau HUD compact (48 px) : score, vies, niveau, or restant, record ---
+    # Cliquable : un appui pendant la partie ouvre la pause (il n'y a
+    # volontairement pas de croix, le jeu est un flux plein cadre).
+    - obj:
+        id: lode_hud
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: 1280
+        height: 48
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+
+    # --- Damier 1280x672 : 30 x 16 cases de 42 px, centrees (marge de 10 px) ---
+    - obj:
+        id: lode_field
+        align: TOP_LEFT
+        x: 0
+        y: 48
+        width: 1280
+        height: 672
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+
+    # --- Calque des zones tactiles (D-pad + 2 boutons « creuser ») -------------
+    # Transparent et non cliquable lui-meme : seuls ses enfants captent le doigt.
+    # Masque hors partie, et le D-pad disparait en mode « Inclinaison ».
+    - obj:
+        id: lode_pad
+        align: TOP_LEFT
+        x: 0
+        y: 48
+        width: 1280
+        height: 672
+        hidden: true
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+
+    # --- Calque des menus (hub / niveaux / classement / reglages / pause /
+    #     niveau termine / game over). Contenu construit en C++. ---
+    - obj:
+        id: lode_panel
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: 1280
+        height: 720
+        hidden: true
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
