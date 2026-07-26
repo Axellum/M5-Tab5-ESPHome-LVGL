@@ -1,0 +1,85 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-imu.yaml
+# @role BMI270 IMU (M5Stack Unit Mini IMU-Pro) — accel/gyro/temp + tap-to-wake.
+# @architecture_constraint Bus I2C bsp_bus (GPIO31/32 @ 400kHz), adresse 0x68.
+#     Aucun conflit avec PI4IOE (0x43/0x44). Composant natif ESPHome (motion:).
+# @ai_instruction Ne pas modifier l'adresse I2C ni le bus. Les globals game_accel_*
+#     sont lues par le namespace Game (tab5_custom.cpp) pour le jeu Marble Maze.
+# ============================================================================
+
+# --- Plateforme motion (BMI270) ---
+motion:
+  - platform: bmi270
+    id: tab5_imu
+    address: 0x68
+    i2c_id: bsp_bus
+    accelerometer_range: 4G
+    accelerometer_odr: 100HZ
+    gyroscope_range: 2000DPS
+    gyroscope_odr: 200HZ
+    update_interval: 100ms
+
+# --- Sensors : accel X/Y/Z, pitch, roll, temperature ---
+sensor:
+  - platform: motion
+    type: acceleration_x
+    name: "Tab5 Accel X"
+    id: imu_accel_x
+    on_value:
+      then:
+        - lambda: 'Game::update_accel(x, id(imu_accel_y).state);'
+
+  - platform: motion
+    type: acceleration_y
+    name: "Tab5 Accel Y"
+    id: imu_accel_y
+    on_value:
+      then:
+        - lambda: 'Game::update_accel(id(imu_accel_x).state, x);'
+
+  - platform: motion
+    type: acceleration_z
+    name: "Tab5 Accel Z"
+    id: imu_accel_z
+    on_value:
+      then:
+        # 2C : Tap-to-wake — detecte un pic d'acceleration (tap physique).
+        # Au repos mag ~= 1.0g. Un tap sur la tablette produit un pic > 2.5g.
+        # Debounce 500ms pour eviter les multi-declenchements.
+        - lambda: |-
+            if (!id(tab5_tap_to_wake).state) return;
+            float ax = id(imu_accel_x).state;
+            float ay = id(imu_accel_y).state;
+            float az = x;
+            if (isnan(ax) || isnan(ay) || isnan(az)) return;
+            float mag = sqrtf(ax*ax + ay*ay + az*az);
+            static uint32_t last_tap_ms = 0;
+            uint32_t now = millis();
+            if (mag > 2.5f && (now - last_tap_ms) > 500) {
+                last_tap_ms = now;
+                auto call = id(backlight).turn_on();
+                call.perform();
+            }
+
+  - platform: motion
+    type: pitch
+    name: "Tab5 Pitch"
+    id: imu_pitch
+
+  - platform: motion
+    type: roll
+    name: "Tab5 Roll"
+    id: imu_roll
+
+  - platform: bmi270
+    name: "Tab5 IMU Temperature"
+    id: imu_temp
+
+# --- Switch : activer/desactiver le tap-to-wake ---
+switch:
+  - platform: template
+    name: "Tab5 Tap-to-Wake"
+    id: tab5_tap_to_wake
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON

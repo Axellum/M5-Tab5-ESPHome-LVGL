@@ -638,6 +638,13 @@ static void clear_ha_alert_slot(HaAlertSlotUI& slot) {
 void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI slots[4],
     CentralPanelCtx& ctx, esphome::font::Font* font, std::string& dismissed_local) {
 
+    // 1E : Sauvegarde des IDs precedents pour detecter les nouvelles alertes.
+    std::string prev_ids[4];
+    for (int i = 0; i < kHaAlertSlotCount; i++) {
+        if (slots[i].id_store) prev_ids[i] = *slots[i].id_store;
+    }
+    int new_alert_slot = -1;
+
     for (int i = 0; i < kHaAlertSlotCount; i++) {
         clear_ha_alert_slot(slots[i]);
     }
@@ -692,6 +699,14 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
             lv_obj_set_style_text_color(slots[slot_idx].lbl, lv_color_hex(ha_alert_color_from_couleur(parts[1])), LV_PART_MAIN);
             lv_label_set_recolor(slots[slot_idx].lbl, false);
             lv_label_set_text(slots[slot_idx].lbl, texte.c_str());
+            // 1E : Detecte si cette alerte est nouvelle (ID absent du precedent batch).
+            if (new_alert_slot < 0) {
+                bool is_new = true;
+                for (int j = 0; j < kHaAlertSlotCount; j++) {
+                    if (prev_ids[j] == aid) { is_new = false; break; }
+                }
+                if (is_new) new_alert_slot = slot_idx;
+            }
             slot_idx++;
         }
         token = strtok_r(nullptr, ";", &saveptr1);
@@ -702,6 +717,14 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
     for (int i = 0; i < 4; i++)
         ctx.has_ha[i] = slots[i].has_flag ? *slots[i].has_flag : false;
     sync_central_panel_visibility(ctx);
+
+    // 1E : Anime l'entree du bandeau si une nouvelle alerte est active.
+    if (new_alert_slot >= 0) {
+        int alert_panel = kHaAlertPanelBase + new_alert_slot;
+        if (ctx.current_panel == alert_panel && slots[new_alert_slot].wrap) {
+            animate_alert_enter(slots[new_alert_slot].wrap);
+        }
+    }
 }
 
 void dismiss_central_info_immediate(lv_obj_t* lbl_info, CentralPanelCtx& ctx) {
@@ -934,7 +957,8 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
     if (pt_y < FORECAST_SWIPE_Y_MIN) return;
     if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;
 
-    int page = forecast_page_index;
+    int old_page = forecast_page_index;
+    int page = old_page;
         // NE PAS "corriger" en wrap 0<->4 : comportement volontaire, deja teste et
         // valide par Axel (revert du 05/07/2026 d'un changement fait a tort suite a
         // un audit LLM qui l'avait signale comme un bug de pagination "confuse").
@@ -951,14 +975,33 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
         }
         forecast_page_index = page;
 
-        if (page >= 2) {
-            lv_obj_clear_flag(layer_forecast_daily, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_add_flag(layer_forecast_hourly, LV_OBJ_FLAG_HIDDEN);
-            refresh_daily_forecast(day_slots, page - 2, f_main, f_card, f_main_s, f_card_s);
+        // Detection de changement de layer (horaire <-> journalier).
+        // L'animation de swipe horizontal n'a de sens que lors d'un changement de layer.
+        bool old_is_daily = (old_page >= 2);
+        bool new_is_daily = (page >= 2);
+
+        if (old_is_daily != new_is_daily) {
+            // Changement de layer : refresh des donnees AVANT l'animation,
+            // puis animation du glissement horizontal + fondu croise.
+            if (new_is_daily) {
+                refresh_daily_forecast(day_slots, page - 2, f_main, f_card, f_main_s, f_card_s);
+            } else {
+                refresh_hourly_forecast(hour_slots, 1 - page, f_main, f_card, f_main_s, f_card_s);
+            }
+            lv_obj_t* out_layer = old_is_daily ? layer_forecast_daily : layer_forecast_hourly;
+            lv_obj_t* in_layer  = new_is_daily ? layer_forecast_daily : layer_forecast_hourly;
+            animate_swipe_horizontal(out_layer, in_layer, dir);
         } else {
-            lv_obj_add_flag(layer_forecast_daily, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_clear_flag(layer_forecast_hourly, LV_OBJ_FLAG_HIDDEN);
-            refresh_hourly_forecast(hour_slots, 1 - page, f_main, f_card, f_main_s, f_card_s);
+            // Meme layer (page intra-journalier ou intra-horaire) : refresh instantane.
+            if (new_is_daily) {
+                lv_obj_clear_flag(layer_forecast_daily, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(layer_forecast_hourly, LV_OBJ_FLAG_HIDDEN);
+                refresh_daily_forecast(day_slots, page - 2, f_main, f_card, f_main_s, f_card_s);
+            } else {
+                lv_obj_add_flag(layer_forecast_daily, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_clear_flag(layer_forecast_hourly, LV_OBJ_FLAG_HIDDEN);
+                refresh_hourly_forecast(hour_slots, 1 - page, f_main, f_card, f_main_s, f_card_s);
+            }
         }
 
         for (int i = 0; i < 5; i++) {
@@ -1729,10 +1772,43 @@ static void anim_opa_cb(void* obj, int32_t v) {
     lv_obj_set_style_opa((lv_obj_t*)obj, (lv_opa_t)v, LV_PART_MAIN);
 }
 
+// Callback d'animation de scale (transform_scale, encode /256 : 256=100%, 235~=92%).
+// LVGL 9.x : transform_scale splitte en _x/_y -> on set les deux.
+static void anim_scale_cb(void* obj, int32_t v) {
+    lv_obj_set_style_transform_scale_x((lv_obj_t*)obj, (lv_coord_t)v, LV_PART_MAIN);
+    lv_obj_set_style_transform_scale_y((lv_obj_t*)obj, (lv_coord_t)v, LV_PART_MAIN);
+}
+
+// Callback d'animation de position X (glissement horizontal, swipe previsions).
+static void anim_x_cb(void* obj, int32_t v) {
+    lv_obj_set_x((lv_obj_t*)obj, (lv_coord_t)v);
+}
+
+// Cache l'objet a la fin de l'animation (fermeture popup : card + scrim).
+// Reinitialise aussi l'opacité et le scale pour un prochain open propre.
+static void anim_hide_ready_cb(lv_anim_t* a) {
+    lv_obj_t* o = (lv_obj_t*)a->var;
+    if (!o) return;
+    lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_style_opa(o, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_transform_scale_x(o, 256, LV_PART_MAIN);
+    lv_obj_set_style_transform_scale_y(o, 256, LV_PART_MAIN);
+}
+
+// Cache le layer sortant apres un swipe horizontal et reinitialise sa position X
+// + opacité pour le prochain swipe (sinon il resterait invisible mais pas caché).
+static void anim_swipe_out_ready_cb(lv_anim_t* a) {
+    lv_obj_t* o = (lv_obj_t*)a->var;
+    if (!o) return;
+    lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_x(o, 0);
+    lv_obj_set_style_opa(o, LV_OPA_COVER, LV_PART_MAIN);
+}
+
 // Transition "verre depoli" : glissement vertical + fondu croise.
 //   - Sortie : descend en accelerant (ease_in) tout en s'effacant.
 //   - Entree : arrive du haut en decelerant (ease_out) tout en apparaissant.
-// Duree allongee a 450ms pour une sensation plus fluide/posee.
+// Duree 450ms. Pas de transform_scale (trop couteux sur les grands objets).
 void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
     if (out_obj == in_obj) return;
 
@@ -1740,7 +1816,6 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
     const int32_t  OFFSET = 84;   // px de glissement
 
     if (out_obj) {
-        // Glissement vertical sortant (ease_in : accelere en quittant l'ecran)
         lv_anim_t a_out_y;
         lv_anim_init(&a_out_y);
         lv_anim_set_var(&a_out_y, out_obj);
@@ -1751,7 +1826,6 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
         lv_anim_set_ready_cb(&a_out_y, anim_out_y_ready_cb);
         lv_anim_start(&a_out_y);
 
-        // Fondu sortant synchronise
         lv_anim_t a_out_o;
         lv_anim_init(&a_out_o);
         lv_anim_set_var(&a_out_o, out_obj);
@@ -1763,12 +1837,10 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
     }
 
     if (in_obj) {
-        // Etat de depart : au-dessus et transparent
         lv_obj_clear_flag(in_obj, LV_OBJ_FLAG_HIDDEN);
         lv_obj_set_y(in_obj, -OFFSET);
         lv_obj_set_style_opa(in_obj, LV_OPA_TRANSP, LV_PART_MAIN);
 
-        // Glissement vertical entrant (ease_out : decelere en se posant -> fluide)
         lv_anim_t a_in_y;
         lv_anim_init(&a_in_y);
         lv_anim_set_var(&a_in_y, in_obj);
@@ -1778,7 +1850,6 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
         lv_anim_set_exec_cb(&a_in_y, anim_y_cb);
         lv_anim_start(&a_in_y);
 
-        // Fondu entrant synchronise
         lv_anim_t a_in_o;
         lv_anim_init(&a_in_o);
         lv_anim_set_var(&a_in_o, in_obj);
@@ -1789,6 +1860,426 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
         lv_anim_start(&a_in_o);
     }
 }
+
+// =============================================================================
+// Helpers d'animation LVGL (popups, swipe, alertes) — 1A du plan.
+// Reutilisent les callbacks ci-dessus (anim_y_cb/anim_opa_cb/anim_scale_cb/anim_x_cb).
+// =============================================================================
+
+// Animation d'ouverture d'un popup : fondu 0->COVER (card + scrim).
+// Pas de transform_scale : trop couteux sur les objets plein ecran (1280x720).
+// Duree 280ms, ease_out.
+void animate_popup_open(lv_obj_t* card, lv_obj_t* scrim) {
+    const uint32_t DUR = 280;  // ms
+
+    if (scrim) {
+        lv_obj_clear_flag(scrim, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_style_opa(scrim, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_anim_t a_s;
+        lv_anim_init(&a_s);
+        lv_anim_set_var(&a_s, scrim);
+        lv_anim_set_values(&a_s, LV_OPA_TRANSP, LV_OPA_COVER);
+        lv_anim_set_time(&a_s, DUR);
+        lv_anim_set_path_cb(&a_s, lv_anim_path_ease_out);
+        lv_anim_set_exec_cb(&a_s, anim_opa_cb);
+        lv_anim_start(&a_s);
+    }
+    if (card) {
+        lv_obj_clear_flag(card, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_style_opa(card, LV_OPA_TRANSP, LV_PART_MAIN);
+
+        lv_anim_t a_o;
+        lv_anim_init(&a_o);
+        lv_anim_set_var(&a_o, card);
+        lv_anim_set_values(&a_o, LV_OPA_TRANSP, LV_OPA_COVER);
+        lv_anim_set_time(&a_o, DUR);
+        lv_anim_set_path_cb(&a_o, lv_anim_path_ease_out);
+        lv_anim_set_exec_cb(&a_o, anim_opa_cb);
+        lv_anim_start(&a_o);
+    }
+}
+
+// Animation de fermeture : fondu COVER->0. Cache automatiquement card + scrim
+// a la fin (LV_OBJ_FLAG_HIDDEN) via anim_hide_ready_cb.
+// Duree 200ms, ease_in (plus court que l'ouverture pour le "dismiss").
+void animate_popup_close(lv_obj_t* card, lv_obj_t* scrim) {
+    const uint32_t DUR = 200;  // ms
+
+    if (scrim) {
+        lv_anim_t a_s;
+        lv_anim_init(&a_s);
+        lv_anim_set_var(&a_s, scrim);
+        lv_anim_set_values(&a_s, LV_OPA_COVER, LV_OPA_TRANSP);
+        lv_anim_set_time(&a_s, DUR);
+        lv_anim_set_path_cb(&a_s, lv_anim_path_ease_in);
+        lv_anim_set_exec_cb(&a_s, anim_opa_cb);
+        lv_anim_set_ready_cb(&a_s, anim_hide_ready_cb);
+        lv_anim_start(&a_s);
+    }
+    if (card) {
+        lv_anim_t a_o;
+        lv_anim_init(&a_o);
+        lv_anim_set_var(&a_o, card);
+        lv_anim_set_values(&a_o, LV_OPA_COVER, LV_OPA_TRANSP);
+        lv_anim_set_time(&a_o, DUR);
+        lv_anim_set_path_cb(&a_o, lv_anim_path_ease_in);
+        lv_anim_set_exec_cb(&a_o, anim_opa_cb);
+        lv_anim_set_ready_cb(&a_o, anim_hide_ready_cb);
+        lv_anim_start(&a_o);
+    }
+}
+
+// Glissement horizontal + fondu croise entre deux layers (swipe previsions).
+// dir = LV_DIR_LEFT (in arrive de la droite, out part a gauche) ou
+//       LV_DIR_RIGHT (in arrive de la gauche, out part a droite).
+// Duree 350ms. Derivee de transition_widgets() mais en horizontal.
+void animate_swipe_horizontal(lv_obj_t* out_layer, lv_obj_t* in_layer, lv_dir_t dir) {
+    if (out_layer == in_layer) return;
+
+    const uint32_t DUR    = 350;  // ms
+    const int32_t  OFFSET = 200;  // px de glissement
+    // LEFT = page suivante : in arrive de la droite (+OFFSET), out part a gauche (-OFFSET)
+    // RIGHT = page precedente : in arrive de la gauche (-OFFSET), out part a droite (+OFFSET)
+    const int32_t in_start_x  = (dir == LV_DIR_LEFT) ? OFFSET : -OFFSET;
+    const int32_t out_end_x   = (dir == LV_DIR_LEFT) ? -OFFSET : OFFSET;
+
+    if (out_layer) {
+        lv_anim_t a_out_x;
+        lv_anim_init(&a_out_x);
+        lv_anim_set_var(&a_out_x, out_layer);
+        lv_anim_set_values(&a_out_x, 0, out_end_x);
+        lv_anim_set_time(&a_out_x, DUR);
+        lv_anim_set_path_cb(&a_out_x, lv_anim_path_ease_in);
+        lv_anim_set_exec_cb(&a_out_x, anim_x_cb);
+        lv_anim_start(&a_out_x);
+
+        lv_anim_t a_out_o;
+        lv_anim_init(&a_out_o);
+        lv_anim_set_var(&a_out_o, out_layer);
+        lv_anim_set_values(&a_out_o, LV_OPA_COVER, LV_OPA_TRANSP);
+        lv_anim_set_time(&a_out_o, DUR);
+        lv_anim_set_path_cb(&a_out_o, lv_anim_path_ease_in);
+        lv_anim_set_exec_cb(&a_out_o, anim_opa_cb);
+        lv_anim_set_ready_cb(&a_out_o, anim_swipe_out_ready_cb);
+        lv_anim_start(&a_out_o);
+    }
+    if (in_layer) {
+        lv_obj_clear_flag(in_layer, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_x(in_layer, in_start_x);
+        lv_obj_set_style_opa(in_layer, LV_OPA_TRANSP, LV_PART_MAIN);
+
+        lv_anim_t a_in_x;
+        lv_anim_init(&a_in_x);
+        lv_anim_set_var(&a_in_x, in_layer);
+        lv_anim_set_values(&a_in_x, in_start_x, 0);
+        lv_anim_set_time(&a_in_x, DUR);
+        lv_anim_set_path_cb(&a_in_x, lv_anim_path_ease_out);
+        lv_anim_set_exec_cb(&a_in_x, anim_x_cb);
+        lv_anim_start(&a_in_x);
+
+        lv_anim_t a_in_o;
+        lv_anim_init(&a_in_o);
+        lv_anim_set_var(&a_in_o, in_layer);
+        lv_anim_set_values(&a_in_o, LV_OPA_TRANSP, LV_OPA_COVER);
+        lv_anim_set_time(&a_in_o, DUR);
+        lv_anim_set_path_cb(&a_in_o, lv_anim_path_ease_out);
+        lv_anim_set_exec_cb(&a_in_o, anim_opa_cb);
+        lv_anim_start(&a_in_o);
+    }
+}
+
+// Slide-in depuis la droite + fondu pour un bandeau d'alerte qui entre
+// dans le rotateur central (alertes HA, alertes Meteo-France).
+// Duree 300ms, ease_out. OFFSET 100px.
+void animate_alert_enter(lv_obj_t* alert_wrap) {
+    if (!alert_wrap) return;
+    const uint32_t DUR    = 300;  // ms
+    const int32_t  OFFSET = 100;  // px de glissement
+
+    lv_obj_clear_flag(alert_wrap, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_x(alert_wrap, OFFSET);
+    lv_obj_set_style_opa(alert_wrap, LV_OPA_TRANSP, LV_PART_MAIN);
+
+    lv_anim_t a_x;
+    lv_anim_init(&a_x);
+    lv_anim_set_var(&a_x, alert_wrap);
+    lv_anim_set_values(&a_x, OFFSET, 0);
+    lv_anim_set_time(&a_x, DUR);
+    lv_anim_set_path_cb(&a_x, lv_anim_path_ease_out);
+    lv_anim_set_exec_cb(&a_x, anim_x_cb);
+    lv_anim_start(&a_x);
+
+    lv_anim_t a_o;
+    lv_anim_init(&a_o);
+    lv_anim_set_var(&a_o, alert_wrap);
+    lv_anim_set_values(&a_o, LV_OPA_TRANSP, LV_OPA_COVER);
+    lv_anim_set_time(&a_o, DUR);
+    lv_anim_set_path_cb(&a_o, lv_anim_path_ease_out);
+    lv_anim_set_exec_cb(&a_o, anim_opa_cb);
+    lv_anim_start(&a_o);
+}
+
+// =============================================================================
+// 1D : Micro-interactions boutons verre (transform_scale au pressed)
+// ESPHome ne supporte pas state_pressed dans style_definitions -> on injecte
+// un style pressed partage via lv_obj_add_style(obj, style, LV_STATE_PRESSED).
+// La transition (120ms ease_out) est gereee nativement par LVGL.
+// =============================================================================
+static lv_style_t style_btn_pressed;
+static lv_style_transition_dsc_t btn_trans_dsc;
+static bool btn_styles_inited = false;
+
+static void ensure_btn_styles_inited() {
+    if (btn_styles_inited) return;
+    // Transition sur transform_scale X+Y : 120ms ease_out (pas instantane).
+    static const lv_style_prop_t btn_trans_props[] = {
+        LV_STYLE_TRANSFORM_SCALE_X, LV_STYLE_TRANSFORM_SCALE_Y, LV_STYLE_PROP_INV
+    };
+    lv_style_transition_dsc_init(&btn_trans_dsc, btn_trans_props,
+                                 lv_anim_path_ease_out, 120, 0, nullptr);
+    lv_style_init(&style_btn_pressed);
+    lv_style_set_transform_scale_x(&style_btn_pressed, 240);  // 240/256 ~= 94%
+    lv_style_set_transform_scale_y(&style_btn_pressed, 240);
+    lv_style_set_bg_opa(&style_btn_pressed, LV_OPA_30);       // assombrit le verre
+    lv_style_set_transition(&style_btn_pressed, &btn_trans_dsc);
+    btn_styles_inited = true;
+}
+
+void setup_button_press_animation(lv_obj_t* btn) {
+    if (!btn) return;
+    ensure_btn_styles_inited();
+    // Pivot au centre pour un scale symetrique (pas depuis le coin haut-gauche).
+    lv_obj_set_style_transform_pivot_x(btn, lv_obj_get_width(btn) / 2, LV_PART_MAIN);
+    lv_obj_set_style_transform_pivot_y(btn, lv_obj_get_height(btn) / 2, LV_PART_MAIN);
+    lv_obj_add_style(btn, &style_btn_pressed, LV_STATE_PRESSED);
+}
+
+void apply_pressed_scale_to_tree(lv_obj_t* root) {
+    if (!root) return;
+    // Heuristique : objet clickable + radius 18 = bouton verre (style_clim_btn).
+    // Inclut aussi les tuiles meteo cliquables (effet desirable : feedback tactile).
+    if (lv_obj_has_flag(root, LV_OBJ_FLAG_CLICKABLE)) {
+        lv_coord_t radius = lv_obj_get_style_radius(root, LV_PART_MAIN);
+        if (radius == 18) {
+            setup_button_press_animation(root);
+        }
+    }
+    // Recursion dans les enfants
+    uint32_t cnt = lv_obj_get_child_cnt(root);
+    for (uint32_t i = 0; i < cnt; i++) {
+        apply_pressed_scale_to_tree(lv_obj_get_child(root, i));
+    }
+}
+
+// =============================================================================
+// 2D : Jeu Marble Maze — logique complete (namespace Game)
+// Physique : velocity += accel * dt * sensitivity, position += velocity * dt,
+// friction 0.92, rebond murs. Boucle 30 FPS via lv_timer_create.
+// Les globals game_accel_x/y sont mis a jour par tab5-imu.yaml (100Hz).
+// =============================================================================
+namespace Game {
+
+// Derniere acceleration lue (mise a jour par Game::update_accel depuis le YAML).
+static float latest_ax = 0.0f;
+static float latest_ay = 0.0f;
+
+static lv_timer_t* game_timer = nullptr;
+static lv_obj_t* game_area_obj = nullptr;
+static lv_obj_t* status_lbl = nullptr;
+static lv_obj_t* marble_obj = nullptr;
+static lv_obj_t* target_obj = nullptr;
+static lv_obj_t* wall_objs[8] = {};
+static int wall_count = 0;
+
+// Etat physique de la bille
+static float mx, my, mvx, mvy;
+static int level_num = 1;
+static int move_count = 0;
+static bool game_won = false;
+
+// Dimensions du terrain (zone de jeu 800x500, marge interne 4px)
+static constexpr int AW = 800;
+static constexpr int AH = 500;
+static constexpr int MARBLE_R = 8;   // rayon bille (px)
+static constexpr int TARGET_R = 14;  // rayon trou cible
+static constexpr float FRICTION = 0.92f;
+static constexpr float SENSITIVITY = 800.0f;  // accel -> px/s^2
+static constexpr float DT = 0.033f;           // 33ms
+static constexpr float BOUNCE = 0.5f;         // coefficient de rebond
+
+// Niveau 1 : murs simples (x, y, w, h)
+struct Wall { int x, y, w, h; };
+static const Wall LEVEL1[] = {
+    {150, 0, 20, 350},    // mur vertical gauche
+    {300, 150, 20, 350},  // mur vertical centre
+    {450, 0, 20, 300},    // mur vertical droit
+    {600, 200, 20, 300},  // mur vertical fin
+    {150, 350, 170, 20},  // mur horizontal bas gauche
+};
+static constexpr int LEVEL1_WALLS = 5;
+
+// Position depart bille + cible
+static constexpr int START_X = 60;
+static constexpr int START_Y = 60;
+static constexpr int TARGET_X = 720;
+static constexpr int TARGET_Y = 420;
+
+static void game_loop_cb(lv_timer_t* timer) {
+    if (!marble_obj || !game_area_obj || game_won) return;
+
+    // Lecture acceleration (mise a jour par Game::update_accel depuis tab5-imu.yaml)
+    float ax = latest_ax;
+    float ay = latest_ay;
+    if (ax != ax) ax = 0;  // NaN guard
+    if (ay != ay) ay = 0;
+
+    // Physique : velocity += accel * sensitivity * dt
+    // Rotation ecran 270° : axe Y physique -> X ecran, axe X physique -> Y ecran.
+    mvx += -ay * SENSITIVITY * DT;
+    mvy += ax * SENSITIVITY * DT;
+
+    // Friction
+    mvx *= FRICTION;
+    mvy *= FRICTION;
+
+    // Position += velocity * dt
+    mx += mvx * DT;
+    my += mvy * DT;
+
+    // Collisions bords du terrain
+    if (mx < MARBLE_R) { mx = MARBLE_R; mvx = -mvx * BOUNCE; }
+    if (mx > AW - MARBLE_R) { mx = AW - MARBLE_R; mvx = -mvx * BOUNCE; }
+    if (my < MARBLE_R) { my = MARBLE_R; mvy = -mvy * BOUNCE; }
+    if (my > AH - MARBLE_R) { my = AH - MARBLE_R; mvy = -mvy * BOUNCE; }
+
+    // Collisions murs (AABB vs cercle simplifie)
+    for (int i = 0; i < wall_count; i++) {
+        const Wall& w = LEVEL1[i];
+        // Point le plus proche du centre de la bille sur le rectangle
+        float cx = (mx < w.x) ? w.x : (mx > w.x + w.w) ? w.x + w.w : mx;
+        float cy = (my < w.y) ? w.y : (my > w.y + w.h) ? w.y + w.h : my;
+        float dx = mx - cx;
+        float dy = my - cy;
+        float dist2 = dx*dx + dy*dy;
+        if (dist2 < MARBLE_R * MARBLE_R) {
+            // Repousse la bille et inverse la vitesse dominante
+            float dist = sqrtf(dist2);
+            if (dist < 0.01f) dist = 0.01f;
+            float nx = dx / dist;
+            float ny = dy / dist;
+            mx = cx + nx * MARBLE_R;
+            my = cy + ny * MARBLE_R;
+            // Reflet de la vitesse sur la normale
+            float dot = mvx * nx + mvy * ny;
+            mvx -= 2.0f * dot * nx * (1.0f - BOUNCE);
+            mvy -= 2.0f * dot * ny * (1.0f - BOUNCE);
+            mvx *= BOUNCE;
+            mvy *= BOUNCE;
+        }
+    }
+
+    // Victoire : bille dans le trou cible
+    float tdx = mx - TARGET_X;
+    float tdy = my - TARGET_Y;
+    if (tdx*tdx + tdy*tdy < TARGET_R * TARGET_R) {
+        game_won = true;
+        if (status_lbl) {
+            char buf[64];
+            snprintf(buf, sizeof(buf), "Gagne en %d mouvements !", move_count);
+            lv_label_set_text(status_lbl, buf);
+        }
+        return;
+    }
+
+    // Compteur de mouvements (seuil : vitesse > 20 px/s)
+    if (mvx*mvx + mvy*mvy > 400.0f) move_count++;
+
+    // Rendu : deplace la bille
+    lv_obj_set_x(marble_obj, (lv_coord_t)(mx - MARBLE_R));
+    lv_obj_set_y(marble_obj, (lv_coord_t)(my - MARBLE_R));
+}
+
+void init(lv_obj_t* area, lv_obj_t* lbl) {
+    stop();  // Nettoyage si deja actif
+    game_area_obj = area;
+    status_lbl = lbl;
+    if (!area) return;
+
+    // Reset etat
+    mx = START_X; my = START_Y;
+    mvx = 0; mvy = 0;
+    move_count = 0;
+    game_won = false;
+    level_num = 1;
+
+    // Cree les murs
+    wall_count = LEVEL1_WALLS;
+    for (int i = 0; i < wall_count; i++) {
+        const Wall& w = LEVEL1[i];
+        wall_objs[i] = lv_obj_create(area);
+        lv_obj_set_pos(wall_objs[i], w.x, w.y);
+        lv_obj_set_size(wall_objs[i], w.w, w.h);
+        lv_obj_set_style_bg_color(wall_objs[i], lv_color_hex(0x334155), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(wall_objs[i], LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_radius(wall_objs[i], 4, LV_PART_MAIN);
+        lv_obj_set_style_border_width(wall_objs[i], 0, LV_PART_MAIN);
+        lv_obj_clear_flag(wall_objs[i], LV_OBJ_FLAG_CLICKABLE);
+    }
+
+    // Cree le trou cible
+    target_obj = lv_obj_create(area);
+    lv_obj_set_pos(target_obj, TARGET_X - TARGET_R, TARGET_Y - TARGET_R);
+    lv_obj_set_size(target_obj, TARGET_R * 2, TARGET_R * 2);
+    lv_obj_set_style_radius(target_obj, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(target_obj, lv_color_hex(UIColor::GOLD), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(target_obj, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(target_obj, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(target_obj, LV_OBJ_FLAG_CLICKABLE);
+
+    // Cree la bille
+    marble_obj = lv_obj_create(area);
+    lv_obj_set_pos(marble_obj, START_X - MARBLE_R, START_Y - MARBLE_R);
+    lv_obj_set_size(marble_obj, MARBLE_R * 2, MARBLE_R * 2);
+    lv_obj_set_style_radius(marble_obj, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(marble_obj, lv_color_hex(UIColor::ACCENT), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(marble_obj, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(marble_obj, 0, LV_PART_MAIN);
+    lv_obj_set_style_shadow_color(marble_obj, lv_color_hex(UIColor::ACCENT), LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(marble_obj, 12, LV_PART_MAIN);
+    lv_obj_set_style_shadow_opa(marble_obj, LV_OPA_40, LV_PART_MAIN);
+    lv_obj_clear_flag(marble_obj, LV_OBJ_FLAG_CLICKABLE);
+
+    // Label statut
+    if (status_lbl) {
+        lv_label_set_text(status_lbl, "Inclinez la tablette pour guider la bille !");
+    }
+
+    // Timer 30 FPS
+    game_timer = lv_timer_create(game_loop_cb, 33, nullptr);
+}
+
+void stop() {
+    if (game_timer) {
+        lv_timer_delete(game_timer);
+        game_timer = nullptr;
+    }
+    // Detruit les objets crees (murs, bille, cible)
+    if (marble_obj) { lv_obj_delete(marble_obj); marble_obj = nullptr; }
+    if (target_obj) { lv_obj_delete(target_obj); target_obj = nullptr; }
+    for (int i = 0; i < wall_count; i++) {
+        if (wall_objs[i]) { lv_obj_delete(wall_objs[i]); wall_objs[i] = nullptr; }
+    }
+    wall_count = 0;
+    game_area_obj = nullptr;
+    status_lbl = nullptr;
+}
+
+void update_accel(float ax, float ay) {
+    latest_ax = ax;
+    latest_ay = ay;
+}
+
+} // namespace Game
 
 void highlight_button_border(lv_obj_t* btn, bool active, uint32_t color) {
     if (!btn) return;

@@ -463,7 +463,7 @@ script:
           id(cal_view_month) = t.month;
           id(cal_detail_date) = "";
           lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_clear_flag(id(calendar_popup), LV_OBJ_FLAG_HIDDEN);
+          animate_popup_open(id(calendar_popup), nullptr);
           lv_obj_move_foreground(id(calendar_popup));
       - script.execute: tab5_cal_render
 
@@ -623,7 +623,7 @@ script:
           id: assist_popup_open
           value: 'true'
       - lambda: |-
-          lv_obj_clear_flag(id(assistant_popup), LV_OBJ_FLAG_HIDDEN);
+          animate_popup_open(id(assistant_popup), nullptr);
           lv_obj_move_foreground(id(assistant_popup));
       - script.execute: tab5_assist_sync_settings
 
@@ -633,7 +633,7 @@ script:
       - globals.set:
           id: assist_popup_open
           value: 'false'
-      - lambda: 'lv_obj_add_flag(id(assistant_popup), LV_OBJ_FLAG_HIDDEN);'
+      - lambda: 'animate_popup_close(id(assistant_popup), nullptr);'
 
   # Nouvelle demande reconnue : passe la réponse en "Réflexion..." et masque l'image
   # précédente. N'OUVRE le popup automatiquement qu'en mode Discussion (ou s'il est
