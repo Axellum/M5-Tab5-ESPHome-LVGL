@@ -30,14 +30,25 @@ obj:
     - label: { id: val_temp_salon, text: "-- °", align: TOP_LEFT, x: 85, y: 17, text_font: roboto_32_b, text_color: color_temp_max }
     - label: { id: icon_serre, text: "\U000F002D", align: TOP_RIGHT, x: -124, y: 12, text_font: mdi_font_45, text_color: color_text_dim }
     - label: { id: current_serre, text: "-- °", align: TOP_RIGHT, x: -18, y: 17, text_font: roboto_32_b, text_color: color_temp_max }
-    # Zone tactile sur la température serre → ouvre le sélecteur de jeux Arcade
+    # Zone tactile sur la température serre → ouvre le sélecteur de jeux Arcade.
+    # [26/07/2026] FIX : la zone était posée à côté de ce qu'elle est censée
+    # couvrir. Arithmétique (carte large de 413, alignement TOP_RIGHT donc les
+    # offsets x sont comptés depuis le bord DROIT de la carte) :
+    #   icon_serre     x=-124, police 45  -> occupe ~244..289
+    #   current_serre  x=-18,  police 32b -> occupe ~315..395
+    #   ancienne zone  x=-130, largeur 125 -> couvrait 158..283
+    # => elle ne touchait QUE l'icône, jamais la valeur affichée : taper la
+    # température ne déclenchait rien. La zone couvre désormais 231..403,
+    # c'est-à-dire l'icône ET la valeur, avec une marge de 8 px.
+    # Ne pas l'agrandir davantage : au-delà de 403 on mord sur le bord de la
+    # carte, et sous y=60 on entre dans climate_controls_zone (± et cible).
     - button:
         id: btn_serre_games
         align: TOP_RIGHT
-        x: -130
-        y: 8
-        width: 125
-        height: 52
+        x: -10
+        y: 6
+        width: 172
+        height: 54
         styles: style_invisible
         on_short_click:
           - lambda: |-

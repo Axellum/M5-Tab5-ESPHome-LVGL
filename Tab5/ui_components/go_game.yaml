@@ -1,0 +1,57 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file go_game.yaml
+# @role Overlay PLEIN ÉCRAN du jeu « Go Tab ».
+# @architecture_constraint EXCEPTION ADR-0009 : pas de modal_scrim / header /
+#     croix. Flux 1280×720. Contenu = go_game.cpp (Go::Pal).
+# @ai_instruction 4 conteneurs vides. ORDRE : hud < field < panel.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: go_root
+  align: TOP_LEFT
+  x: 0
+  y: 0
+  width: 1280
+  height: 720
+  hidden: true
+  scrollable: false
+  pad_all: 0
+  radius: 0
+  border_width: 0
+  widgets:
+    - obj:
+        id: go_hud
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: 1280
+        height: 48
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+
+    - obj:
+        id: go_field
+        align: TOP_LEFT
+        x: 0
+        y: 48
+        width: 1280
+        height: 672
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+
+    - obj:
+        id: go_panel
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: 1280
+        height: 720
+        hidden: true
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0

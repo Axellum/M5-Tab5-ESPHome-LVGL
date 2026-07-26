@@ -1,0 +1,62 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file draughts_game.yaml
+# @role Overlay PLEIN ÉCRAN du jeu « Dames Tab ».
+# @architecture_constraint EXCEPTION ADR-0009 : pas de modal_scrim / modal_header /
+#     carte 1250×690 / croix. Flux de jeu séparé 1280×720. Sortie via hub.
+#     Garde-fou check_tab5_modal_chrome.py : aucun style_modal_card /
+#     color_modal_scrim / glyphe croix ici.
+# @ai_instruction 4 conteneurs vides uniquement. Contenu = draughts_game.cpp.
+#     Fonds appliqués en C++ (Draughts::Pal) — pas de nouveau token styles
+#     partagé (cohabitation avec jeux en parallèle).
+#     ORDRE : hud < field < panel.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: draughts_root
+  align: TOP_LEFT
+  x: 0
+  y: 0
+  width: 1280
+  height: 720
+  hidden: true
+  scrollable: false
+  pad_all: 0
+  radius: 0
+  border_width: 0
+  widgets:
+    - obj:
+        id: draughts_hud
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: 1280
+        height: 48
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+
+    - obj:
+        id: draughts_field
+        align: TOP_LEFT
+        x: 0
+        y: 48
+        width: 1280
+        height: 672
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+
+    - obj:
+        id: draughts_panel
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: 1280
+        height: 720
+        hidden: true
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
