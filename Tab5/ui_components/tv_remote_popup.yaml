@@ -14,8 +14,8 @@ obj:
   width: 100%
   height: 100%
   hidden: true
+  scrollable: false
   styles: style_invisible
-  scrollbar_mode: "OFF"
   widgets:
     - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
@@ -26,7 +26,6 @@ obj:
         height: ${modal_card_h}
         styles: style_modal_card
         scrollable: false
-        scrollbar_mode: "OFF"
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
@@ -40,7 +39,6 @@ obj:
               height: 488
               styles: style_transparent
               scrollable: false
-              scrollbar_mode: "OFF"
               widgets:
 
                 # ── Colonne gauche (290) ──
@@ -267,10 +265,10 @@ obj:
                                 widgets:
                                   - label: { text: "\U000F0374", align: CENTER, y: -6, text_font: mdi_font_45, text_color: color_text }
 
-          # ═══ RANGÉE BASSE — 6 px du bord bas de la popup ═══
+          # ═══ RANGÉE BASSE — offset bas standard ═══
           - obj:
               align: BOTTOM_MID
-              y: -6
+              y: ${modal_bottom_y}
               width: 1170
               height: 102
               styles: style_transparent

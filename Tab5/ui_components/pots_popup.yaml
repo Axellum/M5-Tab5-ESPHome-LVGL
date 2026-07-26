@@ -32,7 +32,6 @@ obj:
         height: ${modal_card_h}
         styles: style_modal_card
         scrollable: false
-        scrollbar_mode: "OFF"
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══

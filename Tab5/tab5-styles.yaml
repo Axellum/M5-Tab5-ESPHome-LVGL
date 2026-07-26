@@ -144,13 +144,13 @@ font:
     id: mdi_font_80
     size: 70
     bpp: 1
-    glyphs: "\U000F0026\U000F0593\U000F0596\U000F0597\U000F0598\U000F0599\U000F059D\U000F0717\U000F078D\U000F0E01\U000F0EFA\U000F0F29\U000F0F36\U000F1A48\U000F08B2\U000F0379\U000F111E\U000F02E3\U000F04B9\U000F1051"
+    glyphs: "\U000F0026\U000F0593\U000F0596\U000F0597\U000F0598\U000F0599\U000F059D\U000F067E\U000F0717\U000F078D\U000F0E01\U000F0EFA\U000F0F29\U000F0F36\U000F1A48\U000F08B2\U000F0379\U000F111E\U000F02E3\U000F04B9\U000F1051"
 
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_alert
     size: 60
     bpp: 1
-    glyphs: "\U000F0026\U000F0028\U000F09CF\U000F0593\U000F0596\U000F0597\U000F0598\U000F0599\U000F059D\U000F0717\U000F078D\U000F0E01\U000F0EFA\U000F0F29\U000F0F36\U000F1A48"
+    glyphs: "\U000F0026\U000F0028\U000F09CF\U000F0593\U000F0596\U000F0597\U000F0598\U000F0599\U000F059D\U000F067E\U000F0717\U000F078D\U000F0E01\U000F0EFA\U000F0F29\U000F0F36\U000F1A48"
 
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_45
@@ -297,6 +297,8 @@ lvgl:
       border_width: 0
       shadow_width: 0
       outline_width: 0
+      pad_all: 0
+      scrollbar_mode: "OFF"
 
     # --- Bouton climatisation : pastille de verre ---
     - id: style_clim_btn
@@ -327,6 +329,8 @@ lvgl:
       border_opa: 60%
       radius: 24
       shadow_width: 0
+      pad_all: 0
+      scrollbar_mode: "OFF"
 
     # --- Onglet meteo "solide" (titre) ---
     # Même design verre que style_clim_btn (Domo/Discu/HA/Sys/TV) —

@@ -34,7 +34,6 @@ obj:
         height: ${modal_card_h}
         styles: style_modal_card
         scrollable: false
-        scrollbar_mode: "OFF"
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
@@ -108,13 +107,13 @@ obj:
           - label: { text: "Dim", align: TOP_LEFT, x: 1057, y: "${modal_body_y}", width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
 
           # ═══ GRILLE 7×6 (42 cellules, lundi en premier — idx = ligne*7 + colonne) ═══
-          - !include { file: cal_day_cell.yaml, vars: { idx: "0", x: "25", y: "82" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "1", x: "197", y: "82" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "2", x: "369", y: "82" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "3", x: "541", y: "82" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "4", x: "713", y: "82" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "5", x: "885", y: "82" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "6", x: "1057", y: "82" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "0", x: "25", y: "${cal_grid_y}" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "1", x: "197", y: "${cal_grid_y}" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "2", x: "369", y: "${cal_grid_y}" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "3", x: "541", y: "${cal_grid_y}" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "4", x: "713", y: "${cal_grid_y}" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "5", x: "885", y: "${cal_grid_y}" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "6", x: "1057", y: "${cal_grid_y}" } }
           - !include { file: cal_day_cell.yaml, vars: { idx: "7", x: "25", y: "177" } }
           - !include { file: cal_day_cell.yaml, vars: { idx: "8", x: "197", y: "177" } }
           - !include { file: cal_day_cell.yaml, vars: { idx: "9", x: "369", y: "177" } }
@@ -154,7 +153,7 @@ obj:
           # ═══ LÉGENDE ═══
           - obj:
               align: BOTTOM_MID
-              y: -6
+              y: ${modal_bottom_y}
               width: SIZE_CONTENT
               height: SIZE_CONTENT
               styles: style_transparent
@@ -204,7 +203,6 @@ obj:
               height: 540
               styles: style_modal_card
               scrollable: false
-              scrollbar_mode: "OFF"
               widgets:
                 - !include { file: modal_header.yaml, vars: { icon: "\U000F0E17", icon_color: "color_accent", title: "", title_id: "lbl_cal_day_title", close_btn_id: "btn_cal_day_close", close_lambda: "lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);" } }
 
