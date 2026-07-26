@@ -69,27 +69,39 @@ esphome:
           else:
             - micro_wake_word.stop:
       # Synchronisation visuelle de l'icône + bordure des boutons du mode d'assistant vocal (Domotique vs Discussion)
+      - script.execute:
+          id: tab5_set_assist_mode
+          discussion: !lambda 'return id(conversation_mode);'
+      # Initialisation des pointeurs LVGL du contexte carte centrale (fixes apres boot).
       - lambda: |-
-          if (id(icon_mode_status) == nullptr) return;
-          if (id(conversation_mode)) {
-            lv_label_set_text(id(icon_mode_status), "\U000F0450"); // Robot
-            lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-            lv_obj_set_style_border_color(id(btn_mode_discu), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-            lv_obj_set_style_border_opa(id(btn_mode_discu), LV_OPA_COVER, LV_PART_MAIN);
-            lv_obj_set_style_border_width(id(btn_mode_discu), 2, LV_PART_MAIN);
-            lv_obj_set_style_border_color(id(btn_mode_domo), lv_color_hex(UIColor::GLASS_RIM), LV_PART_MAIN);
-            lv_obj_set_style_border_opa(id(btn_mode_domo), LV_OPA_40, LV_PART_MAIN);
-            lv_obj_set_style_border_width(id(btn_mode_domo), 1, LV_PART_MAIN);
-          } else {
-            lv_label_set_text(id(icon_mode_status), "\U000F07D0"); // Home Assistant
-            lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-            lv_obj_set_style_border_color(id(btn_mode_domo), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-            lv_obj_set_style_border_opa(id(btn_mode_domo), LV_OPA_COVER, LV_PART_MAIN);
-            lv_obj_set_style_border_width(id(btn_mode_domo), 2, LV_PART_MAIN);
-            lv_obj_set_style_border_color(id(btn_mode_discu), lv_color_hex(UIColor::GLASS_RIM), LV_PART_MAIN);
-            lv_obj_set_style_border_opa(id(btn_mode_discu), LV_OPA_40, LV_PART_MAIN);
-            lv_obj_set_style_border_width(id(btn_mode_discu), 1, LV_PART_MAIN);
-          }
+          g_central_ctx.planning_wrap = id(planning_wrapper);
+          g_central_ctx.rain_wrap = id(rain_wrapper);
+          g_central_ctx.alert_cont = id(alert_container);
+          g_central_ctx.info_wrap = id(info_wrapper);
+          g_central_ctx.ha_wrap[0] = id(ha_alert_wrapper_0);
+          g_central_ctx.ha_wrap[1] = id(ha_alert_wrapper_1);
+          g_central_ctx.ha_wrap[2] = id(ha_alert_wrapper_2);
+          g_central_ctx.ha_wrap[3] = id(ha_alert_wrapper_3);
+          g_central_ctx.current_panel = id(current_central_panel);
+          g_central_ctx.has_rain = id(has_rain);
+          g_central_ctx.has_mf_alerts = id(has_alerts);
+          g_central_ctx.has_info = id(has_info);
+          g_central_ctx.has_ha[0] = id(has_ha_alert_0);
+          g_central_ctx.has_ha[1] = id(has_ha_alert_1);
+          g_central_ctx.has_ha[2] = id(has_ha_alert_2);
+          g_central_ctx.has_ha[3] = id(has_ha_alert_3);
+          // Slots meteo jour (D2 : plus de duplication dans chaque lambda).
+          g_day_slots[0] = {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr};
+          g_day_slots[1] = {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)};
+          g_day_slots[2] = {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr};
+          g_day_slots[3] = {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr};
+          g_day_slots[4] = {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr};
+          // Slots meteo heure.
+          g_hour_slots[0] = {id(h4_time), id(h4_temp), id(h4_prob), id(h4_icon_layer1), id(h4_icon_layer2)};
+          g_hour_slots[1] = {id(h3_time), id(h3_temp), id(h3_prob), id(h3_icon_layer1), id(h3_icon_layer2)};
+          g_hour_slots[2] = {id(h2_time), id(h2_temp), id(h2_prob), id(h2_icon_layer1), id(h2_icon_layer2)};
+          g_hour_slots[3] = {id(h1_time), id(h1_temp), id(h1_prob), id(h1_icon_layer1), id(h1_icon_layer2)};
+          g_hour_slots[4] = {id(h0_time), id(h0_temp), id(h0_prob), id(h0_icon_layer1), id(h0_icon_layer2)};
       - script.execute: tab5_central_rotator_auto
 
 interval:

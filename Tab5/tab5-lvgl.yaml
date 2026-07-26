@@ -25,31 +25,14 @@ lvgl:
                   lv_indev_get_point(indev, &pt);
                   lv_dir_t d = lv_indev_get_gesture_dir(indev);
 
-                  WeatherDaySlot day_slots[] = {
-                      {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
-                      {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
-                      {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
-                      {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
-                      {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
-                  };
-                  WeatherHourSlot hour_slots[] = {
-                      {id(h4_time), id(h4_temp), id(h4_prob), id(h4_icon_layer1), id(h4_icon_layer2)},
-                      {id(h3_time), id(h3_temp), id(h3_prob), id(h3_icon_layer1), id(h3_icon_layer2)},
-                      {id(h2_time), id(h2_temp), id(h2_prob), id(h2_icon_layer1), id(h2_icon_layer2)},
-                      {id(h1_time), id(h1_temp), id(h1_prob), id(h1_icon_layer1), id(h1_icon_layer2)},
-                      {id(h0_time), id(h0_temp), id(h0_prob), id(h0_icon_layer1), id(h0_icon_layer2)}
-                  };
                   lv_obj_t* pbars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4)};
-
                   handle_swipe_gesture(d, pt.y, id(forecast_page_index),
                       id(layer_forecast_daily), id(layer_forecast_hourly),
-                      day_slots, hour_slots,
+                      g_day_slots, g_hour_slots,
                       id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small),
                       pbars,
                       id(page_title_wrapper), id(lbl_page_title),
-                      id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
-                      id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3),
-                      id(current_central_panel));
+                      g_central_ctx);
               }
 
       widgets:
@@ -83,23 +66,9 @@ lvgl:
             height: 60
             styles: style_clim_btn
             on_short_click:
-              - globals.set:
-                  id: conversation_mode
-                  value: 'false'
-              - lambda: |-
-                  lv_label_set_text(id(icon_mode_status), "\U000F07D0");
-                  lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-                  lv_obj_set_style_border_color(id(btn_mode_domo), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-                  lv_obj_set_style_border_opa(id(btn_mode_domo), LV_OPA_COVER, LV_PART_MAIN);
-                  lv_obj_set_style_border_width(id(btn_mode_domo), 2, LV_PART_MAIN);
-                  lv_obj_set_style_border_color(id(btn_mode_discu), lv_color_hex(UIColor::GLASS_RIM), LV_PART_MAIN);
-                  lv_obj_set_style_border_opa(id(btn_mode_discu), LV_OPA_40, LV_PART_MAIN);
-                  lv_obj_set_style_border_width(id(btn_mode_discu), 1, LV_PART_MAIN);
-              - homeassistant.service:
-                  service: select.select_option
-                  data:
-                    entity_id: ${entity_tab5_pipeline_select}
-                    option: "preferred"
+              - script.execute:
+                  id: tab5_set_assist_mode
+                  discussion: false
             widgets:
               - label: { text: "\U000F07D0", align: CENTER, y: -10, text_font: mdi_font_32, text_color: color_text }
               - label: { text: "Domo", align: CENTER, y: 15, text_font: roboto_22, text_color: color_text }
@@ -114,23 +83,9 @@ lvgl:
             height: 60
             styles: style_clim_btn
             on_short_click:
-              - globals.set:
-                  id: conversation_mode
-                  value: 'true'
-              - lambda: |-
-                  lv_label_set_text(id(icon_mode_status), "\U000F0450");
-                  lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-                  lv_obj_set_style_border_color(id(btn_mode_discu), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-                  lv_obj_set_style_border_opa(id(btn_mode_discu), LV_OPA_COVER, LV_PART_MAIN);
-                  lv_obj_set_style_border_width(id(btn_mode_discu), 2, LV_PART_MAIN);
-                  lv_obj_set_style_border_color(id(btn_mode_domo), lv_color_hex(UIColor::GLASS_RIM), LV_PART_MAIN);
-                  lv_obj_set_style_border_opa(id(btn_mode_domo), LV_OPA_40, LV_PART_MAIN);
-                  lv_obj_set_style_border_width(id(btn_mode_domo), 1, LV_PART_MAIN);
-              - homeassistant.service:
-                  service: select.select_option
-                  data:
-                    entity_id: ${entity_tab5_pipeline_select}
-                    option: "Discussion LLM"
+              - script.execute:
+                  id: tab5_set_assist_mode
+                  discussion: true
             widgets:
               - label: { text: "\U000F0450", align: CENTER, y: -10, text_font: mdi_font_32, text_color: color_text }
               - label: { text: "Discu", align: CENTER, y: 15, text_font: roboto_22, text_color: color_text }

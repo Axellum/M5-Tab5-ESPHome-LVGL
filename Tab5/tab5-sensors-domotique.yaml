@@ -245,11 +245,6 @@ sensor:
           if(!isnan(x)) {
             uint32_t c = get_humidity_color(x);
             lv_obj_set_style_text_color(id(icon_salon), lv_color_hex(c), LV_PART_MAIN);
-            // Afficher la valeur dans la climate card (Desactive car supprime au profit de la serre)
-            // char buf[16];
-            // sprintf(buf, "%.0f%%", x);
-            // lv_label_set_text(id(val_hum_salon_card), buf);
-            // lv_obj_set_style_text_color(id(val_hum_salon_card), lv_color_hex(c), LV_PART_MAIN);
           }
 
   - platform: homeassistant

@@ -28,16 +28,9 @@ api:
         - lambda: |-
             if (id(h4_time) == nullptr) return;
             parse_and_update_heures_bulk(payload);
-            WeatherHourSlot slots[] = {
-                {id(h4_time), id(h4_temp), id(h4_prob), id(h4_icon_layer1), id(h4_icon_layer2)},
-                {id(h3_time), id(h3_temp), id(h3_prob), id(h3_icon_layer1), id(h3_icon_layer2)},
-                {id(h2_time), id(h2_temp), id(h2_prob), id(h2_icon_layer1), id(h2_icon_layer2)},
-                {id(h1_time), id(h1_temp), id(h1_prob), id(h1_icon_layer1), id(h1_icon_layer2)},
-                {id(h0_time), id(h0_temp), id(h0_prob), id(h0_icon_layer1), id(h0_icon_layer2)}
-            };
             int fp = id(forecast_page_index);
             int hourly_pi = (fp < 2) ? (1 - fp) : 0;
-            refresh_hourly_forecast(slots, hourly_pi, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+            refresh_hourly_forecast(g_hour_slots, hourly_pi, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
 
     - service: tab5_maj_previsions_jours_bulk
       variables:
@@ -46,16 +39,9 @@ api:
         - lambda: |-
             if (id(j0_day) == nullptr) return;
             parse_and_update_jours_bulk(payload);
-            WeatherDaySlot slots[] = {
-                {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr},
-                {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)},
-                {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr},
-                {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr},
-                {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr}
-            };
             int fp = id(forecast_page_index);
             int daily_pi = (fp >= 2) ? (fp - 2) : 0;
-            refresh_daily_forecast(slots, daily_pi, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+            refresh_daily_forecast(g_day_slots, daily_pi, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
             // Bandeau planning dérivé localement (plus de push HA tab5_maj_planning)
             if (!id(is_showing_temp_planning) && id(lbl_planning_text) != nullptr) {
               std::string l1, l2;
@@ -304,12 +290,7 @@ api:
               lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(c_hydro), LV_PART_MAIN);
             }
 
-            // Desactive : la temperature exterieure et la grosse icone meteo centrale
-            // ont ete retirees de l'UI (widgets icon_actuel_layer1/2 n'existent plus).
-            // char buf_t[32]; sprintf(buf_t, "%.0f \xC2\xB0", atof(temperature.c_str()));
-            // lv_label_set_text(id(current_temp), buf_t);
-            // uint32_t c_temp = get_temperature_color(atof(temperature.c_str()));
-            // lv_obj_set_style_text_color(id(current_temp), lv_color_hex(c_temp), LV_PART_MAIN);
+
 
     - service: tab5_maj_pluie_1h
       variables:
@@ -425,11 +406,21 @@ api:
               {id(ha_alert_wrapper_2), id(lbl_ha_alert_2), &id(has_ha_alert_2), &id(ha_alert_id_2)},
               {id(ha_alert_wrapper_3), id(lbl_ha_alert_3), &id(has_ha_alert_3), &id(ha_alert_id_3)},
             };
-            parse_and_update_ha_alerts_bulk(payload, slots, id(current_central_panel),
-                id(has_rain), id(has_alerts), id(has_info),
-                id(planning_wrapper), id(rain_wrapper), id(alert_container), id(info_wrapper),
-                id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3),
+            g_central_ctx.has_rain = id(has_rain);
+            g_central_ctx.has_mf_alerts = id(has_alerts);
+            g_central_ctx.has_info = id(has_info);
+            g_central_ctx.has_ha[0] = id(has_ha_alert_0);
+            g_central_ctx.has_ha[1] = id(has_ha_alert_1);
+            g_central_ctx.has_ha[2] = id(has_ha_alert_2);
+            g_central_ctx.has_ha[3] = id(has_ha_alert_3);
+            g_central_ctx.current_panel = id(current_central_panel);
+            parse_and_update_ha_alerts_bulk(payload, slots, g_central_ctx,
                 id(roboto_45_b), id(tab5_dismissed_local));
+            id(has_ha_alert_0) = g_central_ctx.has_ha[0];
+            id(has_ha_alert_1) = g_central_ctx.has_ha[1];
+            id(has_ha_alert_2) = g_central_ctx.has_ha[2];
+            id(has_ha_alert_3) = g_central_ctx.has_ha[3];
+            id(current_central_panel) = g_central_ctx.current_panel;
 
     # Conservé pour compat (anciennes automations) — le bandeau est désormais dérivé
     # localement après tab5_maj_previsions_jours_bulk via build_planning_lines_from_jours().
