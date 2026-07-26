@@ -30,6 +30,19 @@ obj:
     - label: { id: val_temp_salon, text: "-- °", align: TOP_LEFT, x: 85, y: 17, text_font: roboto_32_b, text_color: color_temp_max }
     - label: { id: icon_serre, text: "\U000F002D", align: TOP_RIGHT, x: -124, y: 12, text_font: mdi_font_45, text_color: color_text_dim }
     - label: { id: current_serre, text: "-- °", align: TOP_RIGHT, x: -18, y: 17, text_font: roboto_32_b, text_color: color_temp_max }
+    # Zone tactile sur la température serre → ouvre le sélecteur de jeux Arcade
+    - button:
+        id: btn_serre_games
+        align: TOP_RIGHT
+        x: -130
+        y: 8
+        width: 125
+        height: 52
+        styles: style_invisible
+        on_short_click:
+          - lambda: |-
+              animate_popup_open(id(game_selector_overlay), nullptr);
+              lv_obj_move_foreground(id(game_selector_overlay));
 
     # ═══ Zone verre uniquement autour de − / cible / + ═══
     - obj:

@@ -1,0 +1,77 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file arkanoid_game.yaml
+# @role Overlay PLEIN ECRAN du jeu « Arcanoïde » (casse-briques rétro Atari).
+# @architecture_constraint EXCEPTION ASSUMEE au chrome modal v4 (ADR-0009) : ce
+#     n'est pas un popup domotique mais un flux de jeu séparé. Donc pas de
+#     modal_scrim.yaml, pas de modal_header.yaml, pas de carte 1250x690 — on
+#     occupe les 1280x720 pour que l'aire jouable domine. Le garde-fou
+#     scripts/check_tab5_modal_chrome.py ne déclenche pas ici (aucune
+#     style_modal_card, aucun color_modal_scrim, aucun glyphe de croix).
+#     La sortie du jeu se fait par le hub (« Quitter »), pas par une croix.
+# @ai_instruction Ce fichier ne déclare QUE 4 conteneurs vides. Tout le contenu
+#     (HUD, menus, briques, balles, raquette, power-ups) est construit par
+#     arkanoid_game.cpp via Arkanoid::open(). Ne JAMAIS ajouter de widget de
+#     gameplay ici.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: arkanoid_root
+  align: TOP_LEFT
+  x: 0
+  y: 0
+  width: 1280
+  height: 720
+  hidden: true
+  scrollable: false
+  pad_all: 0
+  radius: 0
+  border_width: 0
+  bg_color: color_arkanoid_void
+  bg_opa: 100%
+  widgets:
+    # --- Bandeau HUD compact (48 px) : score, vies, niveau, meilleur, contrôle ---
+    - obj:
+        id: arkanoid_hud
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: 1280
+        height: 48
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+        bg_color: color_arkanoid_hud
+        bg_opa: 100%
+
+    # --- Aire de jeu 1280x672 : tout le reste de l'écran ---
+    - obj:
+        id: arkanoid_field
+        align: TOP_LEFT
+        x: 0
+        y: 48
+        width: 1280
+        height: 672
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+        bg_color: color_arkanoid_floor
+        bg_opa: 100%
+
+    # --- Calque des menus (hub / réglages / pause / game over / classement).
+    #     Contenu construit en C++, masqué pendant le jeu. ---
+    - obj:
+        id: arkanoid_panel
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: 1280
+        height: 720
+        hidden: true
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+        bg_color: color_arkanoid_void
+        bg_opa: 96%

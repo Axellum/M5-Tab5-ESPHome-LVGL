@@ -1,0 +1,174 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file game_selector.yaml
+# @role Sélecteur de jeux — popup arcade plein écran (1280×720).
+# @architecture_constraint Popup NON modal (pas de modal_scrim/modal_header) :
+#     c'est un overlay autonome avec son propre fond sombre et sa croix de
+#     fermeture. 4 cartes de jeu en grille 2×2, style borne arcade rétro.
+# @ai_instruction Ouvrir via animate_popup_open(id(game_selector_overlay)).
+#     Chaque carte exécute le script d'ouverture du jeu correspondant puis
+#     ferme le sélecteur. Ne PAS ajouter de logique C++ ici.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: game_selector_overlay
+  align: TOP_LEFT
+  x: 0
+  y: 0
+  width: 1280
+  height: 720
+  hidden: true
+  scrollable: false
+  pad_all: 0
+  radius: 0
+  border_width: 0
+  bg_color: 0x080810
+  bg_opa: 97%
+  widgets:
+
+    # ─── Titre ───
+    - label:
+        text: "\U000F02D2  ARCADE"
+        align: TOP_MID
+        y: 28
+        text_font: roboto_45_b
+        text_color: 0xFFDD22
+
+    - label:
+        text: "Choisis ton jeu"
+        align: TOP_MID
+        y: 82
+        text_font: roboto_22
+        text_color: 0x8595AD
+
+    # ─── Croix fermeture ───
+    - button:
+        id: btn_game_selector_close
+        align: TOP_RIGHT
+        x: -20
+        y: 20
+        width: 48
+        height: 48
+        radius: 24
+        bg_color: 0x222233
+        bg_opa: 100%
+        border_color: 0x445566
+        border_width: 1
+        border_opa: 60%
+        on_short_click:
+          - lambda: |-
+              animate_popup_close(id(game_selector_overlay), nullptr);
+        widgets:
+          - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_32, text_color: 0xAABBCC }
+
+    # ─── Grille 2×2 des jeux ───
+    # Carte 1 : Fil d'Or (Marble)
+    - button:
+        id: btn_game_marble
+        align: TOP_LEFT
+        x: 120
+        y: 140
+        width: 500
+        height: 230
+        radius: 16
+        bg_color: 0x111A28
+        bg_opa: 100%
+        border_color: 0xE8B44A
+        border_width: 2
+        border_opa: 50%
+        pressed:
+          bg_opa: 80%
+          border_opa: 100%
+        on_short_click:
+          - lambda: |-
+              animate_popup_close(id(game_selector_overlay), nullptr);
+          - script.execute: tab5_marble_open
+        widgets:
+          - label: { text: "\U000F02D2", align: TOP_LEFT, x: 24, y: 20, text_font: mdi_font_56, text_color: 0xE8B44A }
+          - label: { text: "Fil d'Or", align: TOP_LEFT, x: 100, y: 28, text_font: roboto_32_b, text_color: 0xF1F5F9 }
+          - label: { text: "Roguelite de bille — inclinaison BMI270", align: TOP_LEFT, x: 24, y: 90, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "6 salles, pièges, dash, boss. Piloté au geste.", align: TOP_LEFT, x: 24, y: 125, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "\U000F140E  INCLINAISON", align: BOTTOM_LEFT, x: 24, y: -18, text_font: roboto_22, text_color: 0x2BB3A3 }
+
+    # Carte 2 : Arcanoïde
+    - button:
+        id: btn_game_arkanoid
+        align: TOP_RIGHT
+        x: -120
+        y: 140
+        width: 500
+        height: 230
+        radius: 16
+        bg_color: 0x111118
+        bg_opa: 100%
+        border_color: 0x44DDDD
+        border_width: 2
+        border_opa: 50%
+        pressed:
+          bg_opa: 80%
+          border_opa: 100%
+        on_short_click:
+          - lambda: |-
+              animate_popup_close(id(game_selector_overlay), nullptr);
+          - script.execute: tab5_arkanoid_open
+        widgets:
+          - label: { text: "\U000F02D2", align: TOP_LEFT, x: 24, y: 20, text_font: mdi_font_56, text_color: 0x44DDDD }
+          - label: { text: "Arcanoïde", align: TOP_LEFT, x: 100, y: 28, text_font: roboto_32_b, text_color: 0xF1F5F9 }
+          - label: { text: "Casse-briques rétro Atari 80's", align: TOP_LEFT, x: 24, y: 90, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "8 niveaux, power-ups, multi-balles, combo.", align: TOP_LEFT, x: 24, y: 125, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "\U000F140E  TACTILE + IMU", align: BOTTOM_LEFT, x: 24, y: -18, text_font: roboto_22, text_color: 0x44DDDD }
+
+    # Carte 3 : Flip Noir (Pinball)
+    - button:
+        id: btn_game_pinball
+        align: BOTTOM_LEFT
+        x: 120
+        y: -50
+        width: 500
+        height: 230
+        radius: 16
+        bg_color: 0x121218
+        bg_opa: 100%
+        border_color: 0xFF3344
+        border_width: 2
+        border_opa: 50%
+        pressed:
+          bg_opa: 80%
+          border_opa: 100%
+        on_short_click:
+          - lambda: |-
+              animate_popup_close(id(game_selector_overlay), nullptr);
+          - script.execute: tab5_pinball_open
+        widgets:
+          - label: { text: "\U000F02D2", align: TOP_LEFT, x: 24, y: 20, text_font: mdi_font_56, text_color: 0xFF3344 }
+          - label: { text: "Flip Noir", align: TOP_LEFT, x: 100, y: 28, text_font: roboto_32_b, text_color: 0xF1F5F9 }
+          - label: { text: "Flipper rétro — borne arcade 70-80's", align: TOP_LEFT, x: 24, y: 90, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "Bumpers, slingshots, multiball, tilt, plunger.", align: TOP_LEFT, x: 24, y: 125, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "\U000F140E  TACTILE + NUUDGE", align: BOTTOM_LEFT, x: 24, y: -18, text_font: roboto_22, text_color: 0xFF3344 }
+
+    # Carte 4 : Coureur d'Or (Lode Runner)
+    - button:
+        id: btn_game_lode
+        align: BOTTOM_RIGHT
+        x: -120
+        y: -50
+        width: 500
+        height: 230
+        radius: 16
+        bg_color: 0x0A0A12
+        bg_opa: 100%
+        border_color: 0xFFC61A
+        border_width: 2
+        border_opa: 50%
+        pressed:
+          bg_opa: 80%
+          border_opa: 100%
+        on_short_click:
+          - lambda: |-
+              animate_popup_close(id(game_selector_overlay), nullptr);
+          - script.execute: tab5_lode_open
+        widgets:
+          - label: { text: "\U000F02D2", align: TOP_LEFT, x: 24, y: 20, text_font: mdi_font_56, text_color: 0xFFC61A }
+          - label: { text: "Coureur d'Or", align: TOP_LEFT, x: 100, y: 28, text_font: roboto_32_b, text_color: 0xF1F5F9 }
+          - label: { text: "Lode Runner — plateformes & puzzles 1983", align: TOP_LEFT, x: 24, y: 90, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "Creuse, grimpe, collecte l'or, fuis les gardes.", align: TOP_LEFT, x: 24, y: 125, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "\U000F140E  D-PAD TACTILE", align: BOTTOM_LEFT, x: 24, y: -18, text_font: roboto_22, text_color: 0xFFC61A }

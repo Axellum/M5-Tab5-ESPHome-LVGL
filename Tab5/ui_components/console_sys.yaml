@@ -282,27 +282,6 @@ obj:
                       - label: { text: "\U000F0425", align: CENTER, y: -18, text_font: mdi_font_32, text_color: color_error }
                       - label: { text: "Reboot tablette", align: CENTER, y: 22, text_font: roboto_22, text_color: color_text }
 
-                # Jeu « Fil d'Or » — ouvre l'overlay plein écran (roguelite de bille)
-                - button:
-                    id: btn_open_game
-                    align: TOP_LEFT
-                    x: 22
-                    y: 246
-                    width: 506
-                    height: 44
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - lambda: |-
-                          lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
-                          lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
-                          animate_popup_close(id(layer_console_sys), nullptr);
-                      - script.execute: tab5_marble_open
-                    widgets:
-                      - label: { text: "\U000F02D2", align: LEFT_MID, x: 14, text_font: mdi_font_32, text_color: color_accent }
-                      - label: { text: "Fil d'Or", align: LEFT_MID, x: 56, text_font: roboto_22, text_color: color_text }
-
                 # ── Overlay confirmation : redémarrage Home Assistant ──
                 - obj:
                     id: overlay_confirm_ha

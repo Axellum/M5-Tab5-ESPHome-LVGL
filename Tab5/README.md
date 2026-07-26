@@ -107,7 +107,7 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 5. **Toute nouvelle carte/widget répété ≥3 fois** (météo, switches...) doit passer par une fonction C++ builder paramétrée plutôt qu'un copier-coller YAML (cf. refacto architecture en cours).
 6. Avant de committer : `python -m esphome compile tab5-ha-hmi.yaml` doit réussir (toolchain déjà en cache localement, ~20-45s).
 7. **Tout popup modal réutilise le chrome partagé** (ADR-0009) : `modal_scrim.yaml` (var `scrim_opa`) + `modal_header.yaml` (icône, titre, croix — barre de 52 px, corps à `y: ${modal_body_y}`), carte dimensionnée par `${modal_card_w}`/`${modal_card_h}`. Jamais de voile, de titre ou de croix réécrits à la main ; les boutons d'options d'en-tête restent des frères en `y: 4, height: 44`. Vérification : `python scripts/check_tab5_modal_chrome.py` (dépôt racine du workspace).
-   **Unique exception** : `ui_components/marble_game.yaml` (jeu « Fil d'Or »). Ce n'est pas un popup domotique mais un **flux plein écran** séparé — voir la section « Marble Roguelite » ci-dessous. Il ne déclenche pas le garde-fou (ni `style_modal_card`, ni `color_modal_scrim`, ni glyphe de croix).
+   **Unique exception** : `ui_components/marble_game.yaml` (jeu « Fil d'Or »), `ui_components/arkanoid_game.yaml` (jeu « Arcanoïde ») et `ui_components/pinball_game.yaml` (jeu « Flip Noir »). Ce ne sont pas des popups domotiques mais des **flux plein écran** séparés — voir les sections dédiées ci-dessous. Ils ne déclenchent pas le garde-fou (ni `style_modal_card`, ni `color_modal_scrim`, ni glyphe de croix).
 
 ---
 
@@ -199,6 +199,91 @@ Le décalage de position des bonus par le seed est en plus contraint côté C++ 
 - Objets LVGL **préalloués une seule fois** (pool de 48 entités + bille + 4 bandes de vignette) puis recyclés par `show/hide` + `set_pos` : aucune allocation dans la boucle. Les libellés du HUD ne sont réécrits que si leur valeur change.
 - IMU : les 3 axes d'accélération sont `internal: true` (ils saturaient l'API HA pour rien) ; la **cadence de poll est adaptative** — 100 ms au repos, 33 ms quand le jeu est ouvert (`stop_poller()`/`start_poller()`, car `set_update_interval()` seul ne re-régle pas le poller déjà enregistré).
 - Feedback de dégât : 4 bandes de bord fines + clignotement de la bille + micro-tremblement — **pas** de shake plein écran (il invaliderait 1280×672 à chaque frame).
+
+---
+
+## Arcanoïde — casse-briques rétro Atari
+
+Casse-briques style Arkanoid / Breakout, **plein écran 1280×720**, esthétique rétro Atari 80's (fond sombre, briques colorées par rangée, contraste fort). Entièrement local : aucun réseau ni HA requis.
+
+### Lancer / quitter
+
+| Action | Où |
+|---|---|
+| Ouvrir | **Long-press sur la barre de pagination** (les 5 petits points sous le panneau central météo) |
+| Quitter | Hub du jeu → « Quitter » (retour dashboard : timer arrêté, score sauvegardé, overlay masqué) |
+| Pause | **Toucher le bandeau HUD** pendant une partie (pas de croix : flux plein cadre, exception ADR-0009) |
+| Lancer la balle | **Tap sur l'écran** quand la balle est collée à la raquette |
+
+### Contrôles (réglables dans le hub → Réglages)
+
+| Mode | Principe |
+|---|---|
+| **Inclinaison** (BMI270) | Incliner la tablette gauche/droite déplace la raquette. Mapping rotation 270° : `X_écran = −tilt_Y`. Deadzone radiale + lissage + calibration « à plat » (offset NVS). |
+| **Boutons tactiles** | Deux zones semi-transparentes (opa 50 %) dans les coins bas gauche/droite du playfield. Hold = déplacer, release = stop. |
+| **Les deux** (défaut) | Somme clampée des deux entrées. |
+
+Sensibilité IMU réglable (5 crans). Calibration dans Réglages ou Pause.
+
+### Gameplay
+
+- 8 niveaux (mur plein, pyramide, colonnes, damier, couloirs, forteresse, zigzag, boss final).
+- 3 vies, score + multiplicateur combo (cassages rapides < 1,2 s).
+- Types de briques : normales (1 coup, couleur par rangée), renforcées (2-3 coups), indestructibles, bonus (lâchent un power-up).
+- Power-ups : élargir / rétrécir raquette, balle lente / rapide, multi-balles (max 3), colle, extra vie (rare).
+- Collision balle/raquette : angle selon le point d'impact (pas de rebond vertical monotone).
+- Difficulté progressive : vitesse balle + densité par niveau.
+
+### Classement
+
+Top 10 local en NVS (score, niveau atteint, mode de contrôle, uptime). Écran « Classement » dans le hub, avec bouton « Effacer les scores ».
+
+### Notes techniques
+
+- Physique 30 Hz (`lv_timer` 33 ms), 3 sous-pas anti-tunnelling.
+- Pool LVGL préalloué : 120 briques + 3 balles + 1 raquette + 8 power-ups. Zéro allocation dans le tick.
+- HUD réécrit seulement si valeur change.
+- Persistance `ArkanoidSave` (magic `ARK1`) via `esphome::global_preferences`.
+- Fichiers : `arkanoid_game.h`, `arkanoid_game.cpp`, `ui_components/arkanoid_game.yaml`.
+- Couleurs : `UIColor::ARK_*` dans `tab5_custom.h`.
+
+---
+
+## Flip Noir — flipper rétro arcade 70-80's
+
+Flipper (pinball) style « Getaway: High Speed », **plein écran 1280×720**, esthétique rétro borne arcade (table sombre, bumpers colorés, inserts vifs). Entièrement local : aucun réseau ni HA requis.
+
+| Action | Où |
+|---|---|
+| Ouvrir | Console **GESTION** → bouton « Flip Noir » |
+| Quitter | Hub du jeu → « Quitter » |
+| Pause | Toucher le bandeau HUD pendant une partie |
+
+### Contrôles
+
+- **Zone gauche (hold)** = flipper gauche
+- **Zone droite (hold)** = flipper droit
+- **Coin bas-droit (hold)** = plunger (charger), release = tirer
+- **IMU (mode Mixte)** = nudge latéral (inclinaison légère de la tablette)
+- Abuse de nudge = **TILT** (flippers morts 2,5 s)
+
+### Gameplay
+
+- 3 billes par partie (+1 bille bonus à 50k et 150k).
+- 4 bumpers, 2 slingshots, 3 cibles drop (bank), 2 rollovers.
+- Multiball (2 billes) après 3 cibles drop.
+- Modes score : « Bumper Frenzy » (×2 bumpers 10 s), « Target Mania » (×2 cibles 8 s).
+- Top 10 high scores NVS + compteurs carrière (parties, tilts, multiballs).
+
+### Notes techniques
+
+- Physique ~45 Hz (`lv_timer` 22 ms), 3 sous-pas anti-tunnelling.
+- Collision : bille (cercle) vs segments (murs, flippers) + cercles (bumpers, cibles).
+- Flippers = segments pivotants avec vitesse angulaire (impulsion à la frappe).
+- Pool LVGL préalloué. Zéro allocation dans le tick.
+- Persistance `PinballSave` (magic `PIN1`) via `esphome::global_preferences`.
+- Fichiers : `pinball_game.h`, `pinball_game.cpp`, `ui_components/pinball_game.yaml`.
+- Couleurs : `UIColor::PIN_*` dans `tab5_custom.h`.
 
 ---
 
