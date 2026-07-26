@@ -110,6 +110,25 @@ color:
     hex: "121218"          # surface de jeu (miroir UIColor::PIN_FLOOR)
   - id: color_pinball_hud
     hex: "0D0D12"          # bandeau HUD (miroir UIColor::PIN_HUD_BG)
+  # --- Jeu « Trial Poursuite » (trivia_game) ---------------------------------
+  # trivia_game.yaml référençait ces 3 tokens sans qu'ils existent : la
+  # compilation ESPHome échouait sur « Couldn't find ID 'color_trivia_void' ».
+  # Contrairement aux 3 jeux ci-dessus, trivia_game.cpp ne pose PAS les fonds de
+  # ses conteneurs en C++ — ils doivent donc bien vivre ici.
+  # Teintes accordées à la carte Trivia du sélecteur arcade (accent 0xFF9800).
+  - id: color_trivia_void
+    hex: "100A16"          # fond hors plateau
+  - id: color_trivia_floor
+    hex: "1A1028"          # plateau de jeu
+  - id: color_trivia_hud
+    hex: "150E22"          # bandeau HUD
+  # --- Jeu « Trial Poursuite » (trivia_game) : fonds des conteneurs YAML ---
+  - id: color_trivia_void
+    hex: "0A0A14"          # fond hors plateau
+  - id: color_trivia_floor
+    hex: "101828"          # surface plateau
+  - id: color_trivia_hud
+    hex: "0C1018"          # bandeau HUD
 
 # =============================================================================
 # FONTS — inchangees (fonctionnel, pas esthetique)
