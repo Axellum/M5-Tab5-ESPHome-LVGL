@@ -3,10 +3,8 @@
 # @role Configuration bas niveau (I2C, I2S, DSI Display, Audio, DAC).
 # @ai_instruction FICHIER CRITIQUE. Ne modifier AUCUNE broche GPIO ou fréquence I2C sans l'accord d'Axel.
 # ============================================================================
-external_components:
-  - source:
-      type: local
-      path: Tab5/my_components
+# [2026.7.0] st7123 est maintenant un composant officiel ESPHome — plus besoin de external_components.
+# Le dossier Tab5/my_components/st7123/ est obsolete et peut etre supprime.
 
 esp32:
   board: esp32-p4-evboard
@@ -34,6 +32,7 @@ esp32_hosted:
   reset_pin: GPIO15
   slot: 1
   sdio_frequency: 20MHz
+  use_psram: true             # [2026.6.0] Buffers SDIO en PSRAM: evite crash mempool + libere SRAM interne
 
 logger:
   # ═══════════════════════════════════════════════════════════════════════
@@ -113,7 +112,7 @@ display:
     dimensions:
       height: 1280
       width: 720
-    model: M5STACK-TAB5-V2
+    model: M5STACK-TAB5-ST7123   # [2026.7.0] Renomme depuis M5STACK-TAB5-V2 (deprecated)
     reset_pin:
       pi4ioe5v6408: pi4ioe1
       number: 4
@@ -128,7 +127,7 @@ touchscreen:
     reset_pin:
       pi4ioe5v6408: pi4ioe1
       number: 5
-    update_interval: never
+    update_interval: 100ms   # [2026.7.0] Requis: le composant officiel init dans update() (pas set_timeout). Le poller s'arrete seul une fois l'interruption attachee.
     calibration:
       x_min: 0
       x_max: 720
@@ -173,6 +172,7 @@ audio_adc:
     id: es7210_adc
     bits_per_sample: 16bit
     sample_rate: 16000
+    mic_gain: 24dB     # [AUDIO-2026] Explicite pour tuning facile (0dB..37.5dB)
 
 microphone:
   - platform: i2s_audio
@@ -181,6 +181,7 @@ microphone:
     sample_rate: 16000
     bits_per_sample: 16bit
     adc_type: external
+    correct_dc_offset: true   # [AUDIO-2026] Corrige un eventuel decalage DC du signal ES7210
 
 audio_dac:
   - platform: es8388
@@ -193,7 +194,7 @@ speaker:
     audio_dac: es8388_dac
     dac_type: external
     channel: stereo
-    buffer_duration: 100ms
+    buffer_duration: 200ms    # [AUDIO-2026] 100->200ms: moins de stuttering TTS, latence toujours OK
     timeout: 2000ms
     bits_per_sample: 16bit
     sample_rate: 48000
@@ -246,6 +247,11 @@ media_player:
 micro_wake_word:
   id: mww
   stop_after_detection: false
+  task_stack_in_psram: true   # [AUDIO-2026] ~3Ko SRAM interne economises (P4 a PSRAM hex 200MHz)
+  microphone:
+    microphone: tab5_microphone
+    gain_factor: 2            # [AUDIO-2026] Gain logiciel x2 pour meilleure detection wake word
+  vad:                        # [AUDIO-2026] Voice Activity Detection: reduit faux declenchements
   models:
     - okay_nabu
     - model: https://github.com/kahrendt/microWakeWord/releases/download/stop/stop.json
@@ -318,9 +324,13 @@ micro_wake_word:
 
 voice_assistant:
   id: va
-  microphone: tab5_microphone
+  microphone:
+    microphone: tab5_microphone
+    gain_factor: 2            # [AUDIO-2026] Gain logiciel x2 pour meilleure captation STT
   media_player: speaker_player
   micro_wake_word: mww
+  noise_suppression_level: 2  # [AUDIO-2026] Reduction bruit pipeline HA (0=off, 4=max)
+  auto_gain: 15dBFS           # [AUDIO-2026] Controle auto gain cote HA (0-31dBFS)
   on_listening:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_listening"
     - lambda: |-
