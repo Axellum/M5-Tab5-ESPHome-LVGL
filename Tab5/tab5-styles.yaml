@@ -122,13 +122,6 @@ color:
     hex: "1A1028"          # plateau de jeu
   - id: color_trivia_hud
     hex: "150E22"          # bandeau HUD
-  # --- Jeu « Trial Poursuite » (trivia_game) : fonds des conteneurs YAML ---
-  - id: color_trivia_void
-    hex: "0A0A14"          # fond hors plateau
-  - id: color_trivia_floor
-    hex: "101828"          # surface plateau
-  - id: color_trivia_hud
-    hex: "0C1018"          # bandeau HUD
 
 # =============================================================================
 # FONTS — inchangees (fonctionnel, pas esthetique)
