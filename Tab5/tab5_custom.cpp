@@ -632,7 +632,11 @@ static void clear_ha_alert_slot(HaAlertSlotUI& slot) {
         lv_label_set_recolor(slot.lbl, false);
         lv_label_set_text(slot.lbl, "");
     }
-    if (slot.wrap) lv_obj_add_flag(slot.wrap, LV_OBJ_FLAG_HIDDEN);
+    if (slot.wrap) {
+        lv_obj_add_flag(slot.wrap, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_x(slot.wrap, 0);  // Reset X (animate_alert_enter peut avoir laisse un offset)
+        lv_obj_set_style_opa(slot.wrap, LV_OPA_COVER, LV_PART_MAIN);
+    }
 }
 
 void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI slots[4],
@@ -1873,6 +1877,7 @@ void animate_popup_open(lv_obj_t* card, lv_obj_t* scrim) {
     const uint32_t DUR = 280;  // ms
 
     if (scrim) {
+        lv_anim_delete(scrim, anim_opa_cb);  // Cancel close en cours (race reopen)
         lv_obj_clear_flag(scrim, LV_OBJ_FLAG_HIDDEN);
         lv_obj_set_style_opa(scrim, LV_OPA_TRANSP, LV_PART_MAIN);
         lv_anim_t a_s;
@@ -1885,6 +1890,7 @@ void animate_popup_open(lv_obj_t* card, lv_obj_t* scrim) {
         lv_anim_start(&a_s);
     }
     if (card) {
+        lv_anim_delete(card, anim_opa_cb);  // Cancel close en cours (race reopen)
         lv_obj_clear_flag(card, LV_OBJ_FLAG_HIDDEN);
         lv_obj_set_style_opa(card, LV_OPA_TRANSP, LV_PART_MAIN);
 
@@ -1938,12 +1944,13 @@ void animate_swipe_horizontal(lv_obj_t* out_layer, lv_obj_t* in_layer, lv_dir_t 
 
     const uint32_t DUR    = 350;  // ms
     const int32_t  OFFSET = 200;  // px de glissement
-    // LEFT = page suivante : in arrive de la droite (+OFFSET), out part a gauche (-OFFSET)
-    // RIGHT = page precedente : in arrive de la gauche (-OFFSET), out part a droite (+OFFSET)
     const int32_t in_start_x  = (dir == LV_DIR_LEFT) ? OFFSET : -OFFSET;
     const int32_t out_end_x   = (dir == LV_DIR_LEFT) ? -OFFSET : OFFSET;
 
     if (out_layer) {
+        // Cancel anims precedentes (swipe rapide repete)
+        lv_anim_delete(out_layer, anim_x_cb);
+        lv_anim_delete(out_layer, anim_opa_cb);
         lv_anim_t a_out_x;
         lv_anim_init(&a_out_x);
         lv_anim_set_var(&a_out_x, out_layer);
@@ -1964,6 +1971,8 @@ void animate_swipe_horizontal(lv_obj_t* out_layer, lv_obj_t* in_layer, lv_dir_t 
         lv_anim_start(&a_out_o);
     }
     if (in_layer) {
+        lv_anim_delete(in_layer, anim_x_cb);
+        lv_anim_delete(in_layer, anim_opa_cb);
         lv_obj_clear_flag(in_layer, LV_OBJ_FLAG_HIDDEN);
         lv_obj_set_x(in_layer, in_start_x);
         lv_obj_set_style_opa(in_layer, LV_OPA_TRANSP, LV_PART_MAIN);
@@ -2095,6 +2104,7 @@ static int wall_count = 0;
 static float mx, my, mvx, mvy;
 static int level_num = 1;
 static int move_count = 0;
+static bool was_moving = false;
 static bool game_won = false;
 
 // Dimensions du terrain (zone de jeu 800x500, marge interne 4px)
@@ -2191,8 +2201,10 @@ static void game_loop_cb(lv_timer_t* timer) {
         return;
     }
 
-    // Compteur de mouvements (seuil : vitesse > 20 px/s)
-    if (mvx*mvx + mvy*mvy > 400.0f) move_count++;
+    // Compteur de mouvements : compte les transitions lent -> rapide (pas chaque frame)
+    bool is_moving = (mvx*mvx + mvy*mvy > 400.0f);
+    if (is_moving && !was_moving) move_count++;
+    was_moving = is_moving;
 
     // Rendu : deplace la bille
     lv_obj_set_x(marble_obj, (lv_coord_t)(mx - MARBLE_R));
@@ -2209,6 +2221,7 @@ void init(lv_obj_t* area, lv_obj_t* lbl) {
     mx = START_X; my = START_Y;
     mvx = 0; mvy = 0;
     move_count = 0;
+    was_moving = false;
     game_won = false;
     level_num = 1;
 

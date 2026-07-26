@@ -300,6 +300,7 @@ obj:
                           animate_popup_close(id(layer_console_sys), nullptr);
                           Game::init(id(game_area), id(lbl_game_status));
                           animate_popup_open(id(game_popup), nullptr);
+                          lv_obj_move_foreground(id(game_popup));
                     widgets:
                       - label: { text: "\U000F02D2", align: LEFT_MID, x: 14, text_font: mdi_font_32, text_color: color_accent }
                       - label: { text: "Marble Maze", align: LEFT_MID, x: 56, text_font: roboto_22, text_color: color_text }
