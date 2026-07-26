@@ -107,7 +107,61 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 5. **Toute nouvelle carte/widget répété ≥3 fois** (météo, switches...) doit passer par une fonction C++ builder paramétrée plutôt qu'un copier-coller YAML (cf. refacto architecture en cours).
 6. Avant de committer : `python -m esphome compile tab5-ha-hmi.yaml` doit réussir (toolchain déjà en cache localement, ~20-45s).
 7. **Tout popup modal réutilise le chrome partagé** (ADR-0009) : `modal_scrim.yaml` (var `scrim_opa`) + `modal_header.yaml` (icône, titre, croix — barre de 52 px, corps à `y: ${modal_body_y}`), carte dimensionnée par `${modal_card_w}`/`${modal_card_h}`. Jamais de voile, de titre ou de croix réécrits à la main ; les boutons d'options d'en-tête restent des frères en `y: 4, height: 44`. Vérification : `python scripts/check_tab5_modal_chrome.py` (dépôt racine du workspace).
-   **Unique exception** : `ui_components/marble_game.yaml` (jeu « Fil d'Or »), `ui_components/arkanoid_game.yaml` (jeu « Arcanoïde ») et `ui_components/pinball_game.yaml` (jeu « Flip Noir »). Ce ne sont pas des popups domotiques mais des **flux plein écran** séparés — voir les sections dédiées ci-dessous. Ils ne déclenchent pas le garde-fou (ni `style_modal_card`, ni `color_modal_scrim`, ni glyphe de croix).
+   **Exceptions (overlays de jeu)** : les 8 `*_game.yaml` de la section Arcade ci-dessous. Flux plein écran — pas de garde-fou modal (ni `style_modal_card`, ni `color_modal_scrim`, ni glyphe de croix).
+
+---
+
+## Arcade — les 8 consoles
+
+Toutes les consoles suivent la **même architecture** : overlay plein écran
+1280×720 (exception ADR-0009), YAML réduit à des conteneurs vides, tout le
+contenu construit en C++, `lv_timer` créé à l'ouverture et détruit à la
+fermeture, persistance NVS, **zéro dépendance Home Assistant ou réseau**.
+
+| # | Console | Module C++ | Script d'ouverture | Icône MDI |
+|---|---|---|---|---|
+| 1 | **Fil d'Or** — roguelite de bille | `marble_game` | `tab5_marble_open` | `F0E95` circle-double |
+| 2 | **Arcanoïde** — casse-briques | `arkanoid_game` | `tab5_arkanoid_open` | `F0570` view-grid |
+| 3 | **Flip Noir** — flipper | `pinball_game` | `tab5_pinball_open` | `F05DD` bullseye |
+| 4 | **Coureur d'Or** — Lode Runner | `lode_game` | `tab5_lode_open` | `F15A2` ladder |
+| 5 | **Go Tab** — jeu de Go | `go_engine` + `go_ai` + `go_game` | `tab5_go_open` | `F0B38` circle-multiple |
+| 6 | **Trial Poursuite** — quiz | `trivia_game` | `tab5_trivia_open` | `F134A` head-question |
+| 7 | **Dames Tab** — dames 10×10 | `draughts_ai` + `draughts_game` | `tab5_draughts_open` | `F013A` checkerboard |
+| 8 | **Roi Noir** — échecs FIDE | `chess_ai` + `chess_game` | `tab5_chess_open` | `F0857` chess-king |
+
+### Page Arcade (`ui_components/game_selector.yaml`)
+
+Grille **régulière 4 × 2**, toutes les cartes au même format (298 × 252).
+Colonnes `x = 20 / 334 / 648 / 962`, rangées `y = 132 / 402`. Ouverte par la
+zone tactile sur la température de la serre (`btn_serre_games`, dans
+`climate_card.yaml`).
+
+Chaque carte fait **trois** choses, dans cet ordre :
+
+1. `script.execute: tab5_games_close_all` — ferme le jeu en cours ;
+2. `animate_popup_close(...)` — referme le sélecteur ;
+3. `script.execute: tab5_<jeu>_open` — ouvre la console.
+
+### Règles à respecter pour ajouter une 9ᵉ console
+
+Une console n'est **intégrée** que si les six points suivants sont faits. Un seul
+oubli et le jeu est invisible, ou le firmware ne compile pas :
+
+1. `tab5-ha-hmi.yaml` → `includes:` : **tous** les `.h` et `.cpp`, y compris les
+   en-têtes de données inclus par le `.cpp` (c'est ce qui manquait pour
+   `trivia_questions.h`, et la compilation échouait dessus) ;
+2. `tab5-lvgl.yaml` → `!include ui_components/<jeu>_game.yaml`, **avant**
+   `game_selector.yaml` (le sélecteur doit se dessiner au-dessus) ;
+3. `tab5-scripts.yaml` → script `tab5_<jeu>_open` qui injecte les pointeurs LVGL ;
+4. `tab5-scripts.yaml` → ajouter `<Namespace>::close()` dans
+   **`tab5_games_close_all`** (liste unique, ne jamais la recopier ailleurs) ;
+5. `game_selector.yaml` → une carte dans la grille ;
+6. `tab5-imu.yaml` → `<Namespace>::on_imu(...)`, et `<Namespace>::is_open()` dans
+   la liste de poll rapide **uniquement** si le jeu pilote à l'inclinaison.
+
+Les icônes MDI utilisées doivent en outre figurer dans la liste `glyphs` de
+`mdi_font_56` / `mdi_font_45` (`tab5-styles.yaml`) : une icône absente de la
+sous-police ne s'affiche **pas du tout**, sans le moindre message d'erreur.
 
 ---
 
@@ -284,6 +338,256 @@ Flipper (pinball) style « Getaway: High Speed », **plein écran 1280×720**, e
 - Persistance `PinballSave` (magic `PIN1`) via `esphome::global_preferences`.
 - Fichiers : `pinball_game.h`, `pinball_game.cpp`, `ui_components/pinball_game.yaml`.
 - Couleurs : `UIColor::PIN_*` dans `tab5_custom.h`.
+
+---
+
+## Go Tab — Go 9×9 / 13×13 / 19×19
+
+Jeu de Go **plein écran 1280×720**, 100 % local (NVS). Nom produit : **Go Tab**.
+
+| Action | Où |
+|---|---|
+| Ouvrir | Sélecteur Arcade → barre « Go Tab » |
+| Quitter | Hub → « Quitter » (ADR-0009, pas de croix) |
+| Menu | Tap HUD ou panneau → Menu |
+
+### Règles implémentées
+
+- Placement sur **intersections** ; capture par libertés à 0.
+- **Suicide interdit** (sauf si le coup capture et se libère).
+- **Ko simple** (pas de superko positionnel).
+- **Passe** ; deux passes consécutives → fin + score.
+- **Score chinois (aire)** : pierres + territoire contrôlé + **komi 6.5** aux Blancs.
+- Life/death avancé : non résolu — les chaînes encore présentes en fin de partie sont considérées vivantes (casual). Marquage mort manuel non inclus v1.
+
+### Modes & IA
+
+| Mode | |
+|---|---|
+| Joueur vs Tab | Humain Noir ou Blanc |
+| Joueur vs Joueur | Hot-seat |
+| Tab vs Tab | Démo auto |
+
+Niveaux (time-sliced, « Tab réfléchit… ») : Débutant → Expert (candidats locaux + αβ).
+
+### Contrôles
+
+- Tap intersection → pose (snap).
+- **Passer** / **Undo** (annule aussi la réponse IA) / **Hint** (ou secousse IMU).
+- Panneau : Abandon / Nouvelle / Menu ; historique `N D4` / `B pass`.
+
+### Fichiers
+
+- `go_engine.h/.cpp` — moteur pur (testable host)
+- `go_ai.h/.cpp` — IA time-sliced
+- `go_game.h/.cpp` + `ui_components/go_game.yaml` — UI / NVS
+- Tests : `tools/test_go_engine.py` (miroir) ; `tools/test_go_engine.cpp` si g++ dispo
+
+### Build
+
+```powershell
+$env:ESPHOME_ESP_IDF_PREFIX = "C:\espidf"
+esphome clean tab5-ha-hmi.yaml
+esphome run tab5-ha-hmi.yaml --device 192.168.0.88
+python tools/test_go_engine.py
+```
+
+---
+
+## Roi Noir — Échecs FIDE
+
+Échiquier **plein écran 1280×720**, 100 % local (NVS), IA embarquée time-slicée.
+Nom produit : **Roi Noir**. Aucune dépendance HA / réseau / tablebase.
+
+| Action | Où |
+|---|---|
+| Ouvrir | Sélecteur Arcade → barre « Roi Noir » |
+| Quitter | Hub → « Quitter » (ADR-0009, pas de croix) |
+| Pause | Tap sur le bandeau HUD, ou bouton « Menu » du panneau |
+
+### Règles implémentées
+
+- Génération de coups **légaux** complète (pseudo-légaux filtrés : le roi ne peut
+  pas rester en prise) — validée par `perft` (voir plus bas).
+- **Roque** (4 cas), avec pertes de droits sur déplacement/capture de tour.
+- **Prise en passant**, posée uniquement si un pion adverse peut réellement
+  capturer (sinon deux positions identiques auraient des clés différentes et la
+  triple répétition raterait).
+- **Promotion** D / T / F / C, avec fenêtre de choix ; les 4 sous-promotions sont
+  générées (conformité perft).
+- **Échec, mat, pat**.
+- **Nulles** : matériel insuffisant (R/R, R+mineure/R, R+F/R+F même couleur de
+  case), règle des **50 coups** (activable), **triple répétition** (exacte, via
+  clés Zobrist sur l'historique de la partie).
+
+Limitations assumées :
+
+- **R+C+C contre R n'est pas déclaré nul** (le mat y est possible avec une aide
+  adverse) — conforme FIDE, mais surprenant pour un joueur occasionnel.
+- La **reprise après reboot** restaure la position et les pendules (FEN en NVS),
+  **pas l'historique des coups** : « Annuler » et le compteur de répétition
+  repartent de zéro après une reprise. Reprendre depuis le hub *dans la même
+  session* conserve, lui, tout l'historique.
+- Pas de table de transposition (choix : RAM et simplicité) ; pas de superko.
+
+### Encodage du plateau
+
+**Mailbox 0x88** : `board[128]`, index = `rang*16 + colonne`, hors-échiquier ssi
+`(sq & 0x88)`. Choix documenté face aux bitboards : l'ESP32-P4 est un cœur 32
+bits, un test hors-plateau en un seul `AND` y bat un jeu de masques 64 bits, et
+l'empreinte mémoire reste triviale. Pièce sur 4 bits (bit 3 = couleur).
+
+Les tampons de coups sont **globaux et indexés par ply** (`g_mbuf[16][220]`,
+~20,6 Ko de `.bss`) : à ~11 plies de profondeur, un tableau de 220 coups par ply
+sur la pile ferait déborder la stack de la tâche ESPHome.
+
+**Empreinte mesurée** (`riscv32-esp-elf-size`, `-Os`, cible ESP32-P4) :
+
+| Unité | `.text` | `.bss` |
+|---|---|---|
+| `chess_ai.o` | 12,6 Ko | 33,0 Ko |
+| `chess_game.o` | 23,4 Ko | 13,5 Ko |
+| Police `chess_pieces_80` | ~26 Ko | — |
+| **Total** | **~62 Ko** | **46,5 Ko** |
+
+Le `.bss` est **statique** : il est réservé même jeu fermé. Répartition : tampons
+de coups 20,6 Ko, table Zobrist 7,7 Ko, état de recherche 2,8 Ko, historique de
+partie 10,2 Ko (320 demi-coups × 32 o). C'est le prix d'un hot-path sans
+allocation ; ne pas augmenter `MAX_PLY_BUF` ni `MAX_HIST` sans re-mesurer.
+
+### Modes & niveaux d'IA
+
+| Mode | |
+|---|---|
+| Joueur contre Tab | Humain Blancs ou Noirs |
+| Joueur contre joueur | Hot-seat, « Trait aux Blancs/Noirs » |
+| Tab contre Tab | Démo auto, vitesse réglable |
+
+| Niveau | Profondeur | Quiescence | Budget CPU | Fenêtre aléatoire | Elo fictif |
+|---|---|---|---|---|---|
+| Pion | 1 | — | 120 ms | 160 cp | 600 |
+| Cavalier | 2 | — | 350 ms | 60 cp | 900 |
+| Fou | 3 | 4 plies | 800 ms | 20 cp | 1250 |
+| Dame | 4 | 6 plies | 1800 ms | 0 | 1600 |
+| Roi | 5 | 6 plies | 3500 ms | 0 | 1900 |
+
+La « fenêtre aléatoire » fait tirer au sort parmi les coups dont le score est à
+moins de N centièmes de pion du meilleur : c'est ce qui rend le niveau Pion
+battable sans le rendre absurde.
+
+**Le budget est du temps CPU, pas du temps mural.** La recherche est découpée en
+tranches de ~18 ms (deadline dure 22 ms, élargie à 40 puis 80 ms si un coup
+racine seul dépasse), appelées une par tick de 33 ms : le temps réel d'un coup
+vaut donc ~1,8× le budget. Découpage **au niveau des coups racine** ; dès que la
+profondeur 1 est terminée, un coup jouable est toujours disponible.
+
+### Contrôles
+
+- **Tap case d'origine** → surbrillance des coups légaux (pastille = case vide,
+  anneau = capture) → **tap destination**. Re-tap sur la pièce = désélection.
+- Panneau : **Annuler** (vs Tab : annule votre coup *et* la réponse), **Indice**
+  (recherche profondeur 2 bornée à 30 ms, recharge 8 s), **Menu**.
+- Menu de pause : Reprendre / Annuler / Proposer nulle / Abandonner / Réglages /
+  Quitter.
+- **IMU** : secousse franche = indice (anti-rebond 900 ms), désactivable dans
+  Réglages. Le jeu n'est **pas** ajouté à la liste de poll rapide 30 Hz du
+  BMI270 (`tab5-imu.yaml`) : 10 Hz suffisent pour une secousse et une partie
+  d'échecs peut durer une demi-heure.
+
+### Figurines : police dédiée `ChessPieces.ttf`
+
+Les polices `roboto_*` de `tab5-styles.yaml` n'embarquent que du Latin-1 : ♔♕♖ y
+rendraient un carré vide. On ajoute donc une **police dédiée**, taillée selon la
+même méthode que `IconeMeteo.ttf` — on n'embarque que ce qu'on affiche :
+
+| | |
+|---|---|
+| Fichier | `Tab5/ChessPieces.ttf` — **16,8 Ko** (source DejaVu Sans : 757 Ko) |
+| Glyphes | 12 : `U+2654–2659` (creux) + `U+265A–265F` (pleins) |
+| Déclaration | `chess_pieces_80`, `size: 80`, `bpp: 4` |
+| Coût flash | ~26 Ko rastérisés (12 × 72 × 60 px à 4 bpp) |
+| Régénération | `python tools/make_chess_font.py` |
+| Licence | Bitstream Vera — voir `Tab5/ChessPieces.LICENSE.txt` |
+
+**Rendu en deux calques** (technique lichess / chess.com) :
+
+- calque *corps* = glyphe **plein** `U+265A–265F`, coloré ivoire ou anthracite ;
+- calque *contour* = glyphe **creux** `U+2654–2659`, anthracite, **affiché
+  seulement pour les pièces blanches**.
+
+Sans ce contour, une pièce ivoire disparaîtrait sur une case crème. Les 12
+glyphes ont des boîtes identiques dans cette police (vérifié), la superposition
+est donc pixel-parfaite. `piece_utf8()` encode le codepoint à la volée : l'enum
+va `PAWN=1 … KING=6` alors qu'Unicode range roi → pion, d'où l'index `6 - type`.
+
+`bpp: 4` est obligatoire : en `bpp: 1` les traits fins (couronne, crinière du
+cavalier) crénellent. `size: 80` est calibré — l'encre fait 72 × 60 px dans une
+case de 84, et la boîte du label (94 px de hauteur de ligne) déborde uniquement
+sur des pixels transparents. `PIECE_DY = +1` recentre optiquement l'encre ; la
+valeur est recalculée et affichée par `tools/make_chess_font.py`.
+
+La notation du panneau reste **textuelle** (SAN français : **R** Roi, **D** Dame,
+**T** Tour, **F** Fou, **C** Cavalier, avec désambiguïsation, `x`, `=D`,
+`+` / `#`, `O-O` / `O-O-O`) — une liste de coups se lit mieux en lettres.
+
+L'écran de promotion affiche les 4 choix comme de vraies **cases d'échiquier**
+(crème / vert alternées) portant la figurine rendue exactement comme sur le
+plateau, avec le nom sous chaque tuile.
+
+### Validation du générateur : perft
+
+`Chess::perft_log(depth)` lance `perft(1..depth)` sur la position initiale et
+compare aux valeurs FIDE connues (20 / 400 / 8902 / 197281 / 4865609), avec le
+temps en ms, via `ESP_LOGI`. À appeler ponctuellement en phase de debug, par
+exemple depuis un `on_boot` de priorité basse :
+
+```yaml
+    - priority: 100
+      then:
+        - lambda: 'Chess::perft_log(3);'
+```
+
+À retirer ensuite : `perft(4)` bloque la boucle plusieurs centaines de ms.
+
+### Fichiers
+
+- `chess_ai.h/.cpp` — moteur pur : 0x88, make/unmake, eval, négamax αβ +
+  quiescence + killers, FEN, SAN, perft. **Aucun LVGL, aucun HA.**
+- `chess_game.h/.cpp` + `ui_components/chess_game.yaml` — UI LVGL, machine à
+  états, NVS. Le YAML ne déclare que 4 conteneurs vides ; le calque des menus est
+  créé en C++ comme enfant de `chess_root`.
+- `ChessPieces.ttf` + `ChessPieces.LICENSE.txt` — figurines (12 glyphes).
+- `tools/make_chess_font.py` — régénère le sous-ensemble de police.
+- `tools/test_chess_perft.py` — miroir Python du générateur, suite perft.
+- Palette locale `Chess::Pal` : `tab5_custom.h` n'est pas modifié. Seul ajout à
+  `tab5-styles.yaml` : la police `chess_pieces_80` (aucun token de couleur).
+
+### Checklist de test manuel
+
+| Cas | Attendu |
+|---|---|
+| Mat du berger (Dh5×f7#) | « Échec et mat », partie comptabilisée |
+| Pat (roi seul sans coup légal) | « Pat », nulle |
+| Petit / grand roque, 2 couleurs | Roi + tour bougent, droits perdus ensuite |
+| Roque interdit en échec / à travers une case attaquée | Case g1/c1 non proposée |
+| Prise en passant | Le pion capturé disparaît de sa case, pas de celle d'arrivée |
+| Promotion (poussée **et** capture) | Fenêtre D/T/F/C, la pièce choisie apparaît |
+| Triple répétition (Cf3 Cf6 Cg1 Cg8 ×2) | Nulle annoncée |
+| 50 coups | Nulle si l'option est active |
+| Chute de pendule | Perte au temps, ou nulle si matériel insuffisant |
+| Annuler pendant que le Tab réfléchit | Réflexion abandonnée, trait rendu au joueur |
+| Reboot en pleine partie | « Reprendre » présent au hub, position et pendules restaurées |
+
+### Build
+
+```powershell
+$env:ESPHOME_ESP_IDF_PREFIX = "C:\espidf"
+esphome clean tab5-ha-hmi.yaml
+esphome run tab5-ha-hmi.yaml --device 192.168.0.88
+```
+
+`esphome clean` est **obligatoire** : `chess_ai.cpp` et `chess_game.cpp` sont de
+nouveaux `.cpp` ajoutés à `includes:`.
 
 ---
 

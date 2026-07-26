@@ -1,13 +1,30 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file game_selector.yaml
-# @role Sélecteur de jeux — popup arcade plein écran (1280×720).
+# @role Sélecteur de jeux — page arcade plein écran (1280×720), 8 consoles.
 # @architecture_constraint Popup NON modal (pas de modal_scrim/modal_header) :
 #     c'est un overlay autonome avec son propre fond sombre et sa croix de
-#     fermeture. 4 cartes de jeu en grille 2×2, style borne arcade rétro.
+#     fermeture. Grille RÉGULIÈRE 4 colonnes × 2 rangées — toutes les cartes ont
+#     la même taille, plus de « lanceurs discrets » en bandeau (les 3 derniers
+#     jeux y avaient été ajoutés à la va-vite et cassaient la mise en page).
+#
+#     Géométrie vérifiée : carte 298×252 ; colonnes x = 20 / 334 / 648 / 962
+#     (4×298 + 3×16 de gouttière = 1240, marges 20 à gauche et à droite) ;
+#     rangées y = 132 et 402 (2×252 + 18 = 522, fin à 654). Ne pas modifier une
+#     valeur sans refaire l'addition.
+#
 # @ai_instruction Ouvrir via animate_popup_open(id(game_selector_overlay)).
-#     Chaque carte exécute le script d'ouverture du jeu correspondant puis
-#     ferme le sélecteur. Ne PAS ajouter de logique C++ ici.
+#     Chaque carte fait TROIS choses, dans cet ordre :
+#       1. script.execute: tab5_games_close_all   (ferme le jeu en cours)
+#       2. animate_popup_close(...)               (referme le sélecteur)
+#       3. script.execute: tab5_<jeu>_open        (ouvre la console)
+#     Ne PAS recopier la liste des fermetures ici : elle vit dans
+#     tab5_games_close_all (tab5-scripts.yaml), un seul endroit à maintenir.
+#
+#     Les icônes MDI utilisées ici DOIVENT figurer dans la liste `glyphs` de
+#     mdi_font_56 / mdi_font_45 (tab5-styles.yaml), sinon elles ne s'affichent
+#     pas du tout — c'était le cas de F02D2 (heart-box) sur toutes les cartes.
+#     Ne PAS ajouter de logique C++ ici.
 # ═══════════════════════════════════════════════════════
 obj:
   id: game_selector_overlay
@@ -25,22 +42,29 @@ obj:
   bg_opa: 97%
   widgets:
 
-    # ─── Titre ───
+    # ─── En-tête ───
     - label:
-        text: "\U000F02D2  ARCADE"
+        text: "\U000F0297"
         align: TOP_MID
-        y: 28
+        x: -118
+        y: 26
+        text_font: mdi_font_45
+        text_color: 0xFFDD22
+    - label:
+        text: "ARCADE"
+        align: TOP_MID
+        x: 22
+        y: 22
         text_font: roboto_45_b
         text_color: 0xFFDD22
-
     - label:
-        text: "Choisis ton jeu"
+        text: "8 consoles — une seule à la fois"
         align: TOP_MID
         y: 82
         text_font: roboto_22
         text_color: 0x8595AD
 
-    # ─── Croix fermeture ───
+    # ─── Croix de fermeture ───
     - button:
         id: btn_game_selector_close
         align: TOP_RIGHT
@@ -60,132 +84,206 @@ obj:
         widgets:
           - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_32, text_color: 0xAABBCC }
 
-    # ─── Grille 2×2 des jeux ───
-    # Carte 1 : Fil d'Or (Marble)
+    # ══════════ RANGÉE 1 ══════════
+
+    # 1 · Fil d'Or (marble_game) — bille pilotée à l'inclinaison
     - button:
         id: btn_game_marble
         align: TOP_LEFT
-        x: 120
-        y: 140
-        width: 500
-        height: 230
+        x: 20
+        y: 132
+        width: 298
+        height: 252
         radius: 16
         bg_color: 0x111A28
         bg_opa: 100%
         border_color: 0xE8B44A
         border_width: 2
         border_opa: 50%
-        pressed:
-          bg_opa: 80%
-          border_opa: 100%
+        pressed: { bg_opa: 80%, border_opa: 100% }
         on_short_click:
-          - lambda: |-
-              // Fermer tout jeu actif avant d'en ouvrir un autre
-              if (Marble::is_open()) Marble::close();
-              if (Arkanoid::is_open()) Arkanoid::close();
-              if (Pinball::is_open()) Pinball::close();
-              if (Lode::is_open()) Lode::close();
-              animate_popup_close(id(game_selector_overlay), nullptr);
+          - script.execute: tab5_games_close_all
+          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
           - script.execute: tab5_marble_open
         widgets:
-          - label: { text: "\U000F02D2", align: TOP_LEFT, x: 24, y: 20, text_font: mdi_font_56, text_color: 0xE8B44A }
-          - label: { text: "Fil d'Or", align: TOP_LEFT, x: 100, y: 28, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Roguelite de bille — inclinaison BMI270", align: TOP_LEFT, x: 24, y: 90, text_font: roboto_22, text_color: 0x8595AD }
-          - label: { text: "6 salles, pièges, dash, boss. Piloté au geste.", align: TOP_LEFT, x: 24, y: 125, text_font: roboto_22, text_color: 0x8595AD }
-          - label: { text: "\U000F140E  INCLINAISON", align: BOTTOM_LEFT, x: 24, y: -18, text_font: roboto_22, text_color: 0x2BB3A3 }
+          - label: { text: "\U000F0E95", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xE8B44A }
+          - label: { text: "Fil d'Or", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
+          - label: { text: "Roguelite de bille\n6 salles · inclinaison BMI270", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
 
-    # Carte 2 : Arcanoïde
+    # 2 · Arcanoïde (arkanoid_game) — casse-briques
     - button:
         id: btn_game_arkanoid
-        align: TOP_RIGHT
-        x: -120
-        y: 140
-        width: 500
-        height: 230
+        align: TOP_LEFT
+        x: 334
+        y: 132
+        width: 298
+        height: 252
         radius: 16
         bg_color: 0x111118
         bg_opa: 100%
         border_color: 0x44DDDD
         border_width: 2
         border_opa: 50%
-        pressed:
-          bg_opa: 80%
-          border_opa: 100%
+        pressed: { bg_opa: 80%, border_opa: 100% }
         on_short_click:
-          - lambda: |-
-              if (Marble::is_open()) Marble::close();
-              if (Arkanoid::is_open()) Arkanoid::close();
-              if (Pinball::is_open()) Pinball::close();
-              if (Lode::is_open()) Lode::close();
-              animate_popup_close(id(game_selector_overlay), nullptr);
+          - script.execute: tab5_games_close_all
+          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
           - script.execute: tab5_arkanoid_open
         widgets:
-          - label: { text: "\U000F02D2", align: TOP_LEFT, x: 24, y: 20, text_font: mdi_font_56, text_color: 0x44DDDD }
-          - label: { text: "Arcanoïde", align: TOP_LEFT, x: 100, y: 28, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Casse-briques rétro Atari 80's", align: TOP_LEFT, x: 24, y: 90, text_font: roboto_22, text_color: 0x8595AD }
-          - label: { text: "8 niveaux, power-ups, multi-balles, combo.", align: TOP_LEFT, x: 24, y: 125, text_font: roboto_22, text_color: 0x8595AD }
-          - label: { text: "\U000F140E  TACTILE + IMU", align: BOTTOM_LEFT, x: 24, y: -18, text_font: roboto_22, text_color: 0x44DDDD }
+          - label: { text: "\U000F0570", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0x44DDDD }
+          - label: { text: "Arcanoïde", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
+          - label: { text: "Casse-briques Atari\n8 niveaux · power-ups", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
 
-    # Carte 3 : Flip Noir (Pinball)
+    # 3 · Flip Noir (pinball_game) — flipper
     - button:
         id: btn_game_pinball
-        align: BOTTOM_LEFT
-        x: 120
-        y: -50
-        width: 500
-        height: 230
+        align: TOP_LEFT
+        x: 648
+        y: 132
+        width: 298
+        height: 252
         radius: 16
         bg_color: 0x121218
         bg_opa: 100%
         border_color: 0xFF3344
         border_width: 2
         border_opa: 50%
-        pressed:
-          bg_opa: 80%
-          border_opa: 100%
+        pressed: { bg_opa: 80%, border_opa: 100% }
         on_short_click:
-          - lambda: |-
-              if (Marble::is_open()) Marble::close();
-              if (Arkanoid::is_open()) Arkanoid::close();
-              if (Pinball::is_open()) Pinball::close();
-              if (Lode::is_open()) Lode::close();
-              animate_popup_close(id(game_selector_overlay), nullptr);
+          - script.execute: tab5_games_close_all
+          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
           - script.execute: tab5_pinball_open
         widgets:
-          - label: { text: "\U000F02D2", align: TOP_LEFT, x: 24, y: 20, text_font: mdi_font_56, text_color: 0xFF3344 }
-          - label: { text: "Flip Noir", align: TOP_LEFT, x: 100, y: 28, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Flipper rétro — borne arcade 70-80's", align: TOP_LEFT, x: 24, y: 90, text_font: roboto_22, text_color: 0x8595AD }
-          - label: { text: "Bumpers, slingshots, multiball, tilt, plunger.", align: TOP_LEFT, x: 24, y: 125, text_font: roboto_22, text_color: 0x8595AD }
-          - label: { text: "\U000F140E  TACTILE + NUUDGE", align: BOTTOM_LEFT, x: 24, y: -18, text_font: roboto_22, text_color: 0xFF3344 }
+          - label: { text: "\U000F05DD", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xFF3344 }
+          - label: { text: "Flip Noir", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
+          - label: { text: "Flipper d'arcade\nBumpers · multiball · tilt", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
 
-    # Carte 4 : Coureur d'Or (Lode Runner)
+    # 4 · Coureur d'Or (lode_game) — Lode Runner
     - button:
         id: btn_game_lode
-        align: BOTTOM_RIGHT
-        x: -120
-        y: -50
-        width: 500
-        height: 230
+        align: TOP_LEFT
+        x: 962
+        y: 132
+        width: 298
+        height: 252
         radius: 16
         bg_color: 0x0A0A12
         bg_opa: 100%
         border_color: 0xFFC61A
         border_width: 2
         border_opa: 50%
-        pressed:
-          bg_opa: 80%
-          border_opa: 100%
+        pressed: { bg_opa: 80%, border_opa: 100% }
         on_short_click:
-          - lambda: |-
-              if (Marble::is_open()) Marble::close();
-              if (Arkanoid::is_open()) Arkanoid::close();
-              if (Pinball::is_open()) Pinball::close();
-              if (Lode::is_open()) Lode::close();
-              animate_popup_close(id(game_selector_overlay), nullptr);
+          - script.execute: tab5_games_close_all
+          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
           - script.execute: tab5_lode_open
         widgets:
-          - label: { text: "\U000F02D2", align: TOP_LEFT, x: 24, y: 20, text_font: mdi_font_56, text_color: 0xFFC61A }
-          - label: { text: "Coureur d'Or", align: TOP_LEFT, x: 100, y: 28, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Lode Runner — plateformes & puzzles 1983", align: TOP_LEFT, x: 24, y: 90, text_font: roboto_22, text_color: 0x8595AD }
-          - label: { text: "Creuse, grimpe, collecte l'or, fuis les gardes.", align: TOP_LEFT, x: 24, y: 125, text_font: roboto_22, text_color: 0x8595AD }
-          - label: { text: "\U000F140E  D-PAD TACTILE", align: BOTTOM_LEFT, x: 24, y: -18, text_font: roboto_22, text_color: 0xFFC61A }
+          - label: { text: "\U000F15A2", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xFFC61A }
+          - label: { text: "Coureur d'Or", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
+          - label: { text: "Lode Runner 1983\nCreuse · grimpe · fuis", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+
+    # ══════════ RANGÉE 2 ══════════
+
+    # 5 · Go Tab (go_game) — jeu de Go
+    - button:
+        id: btn_game_go
+        align: TOP_LEFT
+        x: 20
+        y: 402
+        width: 298
+        height: 252
+        radius: 16
+        bg_color: 0x1A150E
+        bg_opa: 100%
+        border_color: 0xC4A574
+        border_width: 2
+        border_opa: 50%
+        pressed: { bg_opa: 80%, border_opa: 100% }
+        on_short_click:
+          - script.execute: tab5_games_close_all
+          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
+          - script.execute: tab5_go_open
+        widgets:
+          - label: { text: "\U000F0B38", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xC4A574 }
+          - label: { text: "Go Tab", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
+          - label: { text: "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+
+    # 6 · Trial Poursuite (trivia_game) — quiz
+    - button:
+        id: btn_game_trivia
+        align: TOP_LEFT
+        x: 334
+        y: 402
+        width: 298
+        height: 252
+        radius: 16
+        bg_color: 0x1A1028
+        bg_opa: 100%
+        border_color: 0xFF9800
+        border_width: 2
+        border_opa: 50%
+        pressed: { bg_opa: 80%, border_opa: 100% }
+        on_short_click:
+          - script.execute: tab5_games_close_all
+          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
+          - script.execute: tab5_trivia_open
+        widgets:
+          - label: { text: "\U000F134A", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xFF9800 }
+          - label: { text: "Trial Poursuite", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
+          - label: { text: "Quiz rétro-salon\n1 à 6 équipes", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+
+    # 7 · Dames Tab (draughts_game) — dames internationales
+    - button:
+        id: btn_game_draughts
+        align: TOP_LEFT
+        x: 648
+        y: 402
+        width: 298
+        height: 252
+        radius: 16
+        bg_color: 0x241810
+        bg_opa: 100%
+        border_color: 0xD4B896
+        border_width: 2
+        border_opa: 50%
+        pressed: { bg_opa: 80%, border_opa: 100% }
+        on_short_click:
+          - script.execute: tab5_games_close_all
+          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
+          - script.execute: tab5_draughts_open
+        widgets:
+          - label: { text: "\U000F013A", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xD4B896 }
+          - label: { text: "Dames Tab", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
+          - label: { text: "Dames internationales 10×10\nPrise majoritaire · rafles", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+
+    # 8 · Roi Noir (chess_game) — échecs
+    - button:
+        id: btn_game_chess
+        align: TOP_LEFT
+        x: 962
+        y: 402
+        width: 298
+        height: 252
+        radius: 16
+        bg_color: 0x121A16
+        bg_opa: 100%
+        border_color: 0x8FBF6A
+        border_width: 2
+        border_opa: 50%
+        pressed: { bg_opa: 80%, border_opa: 100% }
+        on_short_click:
+          - script.execute: tab5_games_close_all
+          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
+          - script.execute: tab5_chess_open
+        widgets:
+          - label: { text: "\U000F0857", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0x8FBF6A }
+          - label: { text: "Roi Noir", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
+          - label: { text: "Échecs FIDE complets\n5 niveaux d'IA embarquée", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+
+    # ─── Pied de page ───
+    - label:
+        text: "Sortie de chaque jeu : hub → « Quitter »"
+        align: BOTTOM_MID
+        y: -22
+        text_font: roboto_22
+        text_color: 0x4A5568

@@ -28,6 +28,32 @@ esphome:
     # Jeu « Coureur d'Or » (Lode Runner) — sous-module isolé du HMI.
     - Tab5/lode_game.h
     - Tab5/lode_game.cpp
+    # Jeu « Roi Noir » (échiquier FIDE + IA embarquée) — sous-module isolé du HMI.
+    # chess_ai.* = moteur pur (aucun LVGL) ; chess_game.* = UI et machine à états.
+    - Tab5/chess_ai.h
+    - Tab5/chess_ai.cpp
+    - Tab5/chess_game.h
+    - Tab5/chess_game.cpp
+    # Jeu « Go Tab » — sous-module isolé (moteur + IA + UI).
+    - Tab5/go_engine.h
+    - Tab5/go_engine.cpp
+    - Tab5/go_ai.h
+    - Tab5/go_ai.cpp
+    - Tab5/go_game.h
+    - Tab5/go_game.cpp
+    # Jeu « Trial Poursuite » (Trivial Pursuit rétro-salon) — sous-module isolé.
+    # trivia_questions.h est inclus par trivia_game.cpp : il DOIT figurer ici,
+    # sinon ESPHome ne le copie pas dans le dossier de build et la compilation
+    # échoue sur un « No such file or directory ».
+    - Tab5/trivia_game.h
+    - Tab5/trivia_questions.h
+    - Tab5/trivia_game.cpp
+    # Jeu « Dames » (dames internationales / anglaises) — sous-module isolé.
+    # draughts_ai.* = moteur + IA ; draughts_game.* = UI et machine à états.
+    - Tab5/draughts_ai.h
+    - Tab5/draughts_ai.cpp
+    - Tab5/draughts_game.h
+    - Tab5/draughts_game.cpp
 
   on_boot:
     - priority: 700

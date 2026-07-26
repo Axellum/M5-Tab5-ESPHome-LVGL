@@ -6,6 +6,26 @@
 # tab5-scripts.yaml — Scripts ESPHome reutilisables (sequences temporisees,
 # debounce). Preferer un script ici a un delay:+action duplique inline.
 script:
+  # Ferme TOUS les jeux ouverts. Un seul overlay de jeu peut vivre à la fois :
+  # sans ça, ouvrir un jeu par-dessus un autre laisse le timer du précédent
+  # tourner et son overlay sous celui du nouveau.
+  # [AI-CONTEXT] Point d'entrée UNIQUE : le sélecteur arcade appelle ce script
+  # avant chaque ouverture, au lieu de recopier la liste dans 8 lambdas (c'était
+  # la source des oublis — Trivia manquait dans 5 cartes sur 8).
+  # Toute nouvelle console DOIT être ajoutée ici.
+  - id: tab5_games_close_all
+    mode: single
+    then:
+      - lambda: |-
+          if (Marble::is_open())   Marble::close();
+          if (Arkanoid::is_open()) Arkanoid::close();
+          if (Pinball::is_open())  Pinball::close();
+          if (Lode::is_open())     Lode::close();
+          if (Go::is_open())       Go::close();
+          if (Trivia::is_open())   Trivia::close();
+          if (Draughts::is_open()) Draughts::close();
+          if (Chess::is_open())    Chess::close();
+
   # Ouvre le jeu « Fil d'Or » (overlay plein écran, marble_game.cpp).
   # Script unique appelé par les 3 points d'entrée (console GESTION + les deux
   # long-press de la bande centrale) : la construction de Marble::UI ne vit
@@ -77,6 +97,72 @@ script:
           auto t = id(sntp_time).now();
           if (t.is_valid()) ui.epoch = t.timestamp;
           Lode::open(ui);
+
+  # Ouvre le jeu « Go Tab » (Go 9×9 / 13×13 / 19×19).
+  - id: tab5_go_open
+    mode: single
+    then:
+      - lambda: |-
+          Go::UI ui;
+          ui.root    = id(go_root);
+          ui.field   = id(go_field);
+          ui.hud     = id(go_hud);
+          ui.panel   = id(go_panel);
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          Go::open(ui);
+
+  # Ouvre le jeu « Trial Poursuite » (Trivial Pursuit rétro-salon, trivia_game.cpp).
+  # Même pattern : script unique, pointeurs LVGL injectés en lambda.
+  - id: tab5_trivia_open
+    mode: single
+    then:
+      - lambda: |-
+          Trivia::UI ui;
+          ui.root    = id(trivia_root);
+          ui.hud     = id(trivia_hud);
+          ui.board   = id(trivia_board);
+          ui.panel   = id(trivia_panel);
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          Trivia::open(ui);
+
+  # Ouvre le jeu « Roi Noir » (échiquier FIDE + IA embarquée, chess_game.cpp).
+  # Même pattern que Marble : script unique, pointeurs LVGL injectés en lambda.
+  # Le 5e calque (menus) est créé en C++, il n'y a donc rien à injecter pour lui.
+  - id: tab5_chess_open
+    mode: single
+    then:
+      - lambda: |-
+          Chess::UI ui;
+          ui.root    = id(chess_root);
+          ui.hud     = id(chess_hud);
+          ui.board   = id(chess_board);
+          ui.panel   = id(chess_panel);
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          // Figurines d'échecs : police dédiée (Tab5/ChessPieces.ttf, 12 glyphes).
+          ui.f_piece = id(chess_pieces_80);
+          Chess::open(ui);
+
+  # Ouvre le jeu « Dames » (draughts_game.cpp).
+  # Même pattern que Marble : script unique, pointeurs LVGL injectés en lambda.
+  - id: tab5_draughts_open
+    mode: single
+    then:
+      - lambda: |-
+          Draughts::UI ui;
+          ui.root    = id(draughts_root);
+          ui.field   = id(draughts_field);
+          ui.hud     = id(draughts_hud);
+          ui.panel   = id(draughts_panel);
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          Draughts::open(ui);
 
   # Active le wake word interne « Stop » (désactivé par défaut par ESPHome, 2e modèle).
   # Uniquement via tab5_maj_volet_etat (push HA) — pas d'état optimiste au tap écran.

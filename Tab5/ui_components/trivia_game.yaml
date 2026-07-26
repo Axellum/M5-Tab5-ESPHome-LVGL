@@ -1,0 +1,74 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file trivia_game.yaml
+# @role Overlay PLEIN ECRAN du jeu « Trial Poursuite » (Trivial Pursuit rétro).
+# @architecture_constraint EXCEPTION ASSUMEE au chrome modal v4 (ADR-0009) : ce
+#     n'est pas un popup domotique mais un flux de jeu séparé. Donc pas de
+#     modal_scrim.yaml, pas de modal_header.yaml, pas de carte 1250x690 — on
+#     occupe les 1280x720 pour que le plateau domine. La sortie du jeu se fait
+#     par le hub (« Quitter »), pas par une croix.
+# @ai_instruction Ce fichier ne déclare QUE 4 conteneurs vides. Tout le contenu
+#     (plateau, HUD, modals, camemberts) est construit par trivia_game.cpp via
+#     Trivia::open(). Ne JAMAIS ajouter de widget de gameplay ici.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: trivia_root
+  align: TOP_LEFT
+  x: 0
+  y: 0
+  width: 1280
+  height: 720
+  hidden: true
+  scrollable: false
+  pad_all: 0
+  radius: 0
+  border_width: 0
+  bg_color: color_trivia_void
+  bg_opa: 100%
+  widgets:
+    # --- Bandeau HUD compact (48 px) : équipe active, dé, tour, timer ---
+    - obj:
+        id: trivia_hud
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: 1280
+        height: 48
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+        bg_color: color_trivia_hud
+        bg_opa: 100%
+
+    # --- Aire plateau 1280x672 : plateau circulaire + pions + dé ---
+    - obj:
+        id: trivia_board
+        align: TOP_LEFT
+        x: 0
+        y: 48
+        width: 1280
+        height: 672
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+        bg_color: color_trivia_floor
+        bg_opa: 100%
+
+    # --- Calque des menus (hub / setup / question / victoire / stats).
+    #     Contenu construit en C++, masqué pendant le jeu. ---
+    - obj:
+        id: trivia_panel
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: 1280
+        height: 720
+        hidden: true
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+        bg_color: color_trivia_void
+        bg_opa: 96%

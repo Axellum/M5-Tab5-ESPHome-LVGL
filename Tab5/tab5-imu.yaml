@@ -2,7 +2,7 @@
 # [AI-CONTEXT]
 # @file tab5-imu.yaml
 # @role BMI270 (IMU embarquée) — accel/gyro/temp, tap-to-wake, et source
-#     d'inclinaison du jeu « Fil d'Or » (marble_game.cpp).
+#     d'inclinaison des jeux plein écran (marble / arkanoid / pinball / lode / go).
 # @architecture_constraint Bus I2C bsp_bus (GPIO31/32 @ 400 kHz), adresse 0x68.
 #     Aucun conflit avec le PI4IOE (0x43/0x44). Composant natif ESPHome (motion:).
 #     Les 3 axes d'accélération sont `internal: true` : à 10-30 Hz ils
@@ -62,6 +62,12 @@ sensor:
             Arkanoid::on_imu(ax, ay, az);
             Pinball::on_imu(ax, ay, az);
             Lode::on_imu(ax, ay, az);
+            Go::on_imu(ax, ay, az);
+            Trivia::on_imu(ax, ay, az);
+            // « Roi Noir » et « Dames » : secousse franche = demande d'indice
+            // (jamais de pilotage du plateau à l'inclinaison, 100 % tactile).
+            Chess::on_imu(ax, ay, az);
+            Draughts::on_imu(ax, ay, az);
 
             // 2) Tap-to-wake : au repos la norme vaut ~1 g ; une tape franche
             // sur la dalle produit un pic > 2,5 g. Debounce 500 ms.
@@ -117,7 +123,11 @@ interval:
     then:
       - lambda: |-
           static bool fast = false;
-          bool want = Marble::is_open() || Arkanoid::is_open() || Pinball::is_open() || Lode::is_open();
+          // « Roi Noir » est VOLONTAIREMENT absent de cette liste : il n'utilise
+          // l'IMU que pour détecter une secousse franche (demande d'indice), ce
+          // qui reste fiable à 10 Hz. Inutile de payer 30 Hz pendant une partie
+          // d'échecs, qui peut durer une demi-heure.
+          bool want = Marble::is_open() || Arkanoid::is_open() || Pinball::is_open() || Lode::is_open() || Go::is_open() || Trivia::is_open();
           if (want == fast) return;
           fast = want;
           id(tab5_imu).set_update_interval(want ? 33 : 100);

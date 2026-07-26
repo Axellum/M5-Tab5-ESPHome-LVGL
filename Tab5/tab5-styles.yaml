@@ -110,6 +110,18 @@ color:
     hex: "121218"          # surface de jeu (miroir UIColor::PIN_FLOOR)
   - id: color_pinball_hud
     hex: "0D0D12"          # bandeau HUD (miroir UIColor::PIN_HUD_BG)
+  # --- Jeu « Trial Poursuite » (trivia_game) ---------------------------------
+  # trivia_game.yaml référençait ces 3 tokens sans qu'ils existent : la
+  # compilation ESPHome échouait sur « Couldn't find ID 'color_trivia_void' ».
+  # Contrairement aux 3 jeux ci-dessus, trivia_game.cpp ne pose PAS les fonds de
+  # ses conteneurs en C++ — ils doivent donc bien vivre ici.
+  # Teintes accordées à la carte Trivia du sélecteur arcade (accent 0xFF9800).
+  - id: color_trivia_void
+    hex: "100A16"          # fond hors plateau
+  - id: color_trivia_floor
+    hex: "1A1028"          # plateau de jeu
+  - id: color_trivia_hud
+    hex: "150E22"          # bandeau HUD
 
 # =============================================================================
 # FONTS — inchangees (fonctionnel, pas esthetique)
@@ -189,13 +201,13 @@ font:
     # F1051 = led-strip (sélecteur LEDs du popup lumière), F059D = weather-windy (Brise popup clim)
     # Bloc calendrier (calendar_popup.yaml) : F0E17 = calendar-month (en-tête),
     # F0141/F0142 = chevron-left/right (navigation mois)
-    glyphs: "\U000F011E\U000F0379\U000F05A9\U000F07D0\U000F050F\U000F0A86\U000F0596\U000F0374\U000F0415\U000F0425\U000F0717\U000F0238\U000F111C\U000F111E\U000F002D\U000F032A\U000F14DE\U000F146D\U000F0E79\U000F0E66\U000F09F1\U000F0D08\U000F024A\U000F02E5\U000F02E3\U000F04B9\U000F0210\U000F058E\U000F0156\U000F0450\U000F0335\U000F0579\U000F07C0\U000F005D\U000F0045\U000F004D\U000F0054\U000F02DC\U000F054C\U000F035C\U000F040A\U000F03E4\U000F0581\U000F1051\U000F059D\U000F0E17\U000F0141\U000F0142"
+    glyphs: "\U000F011E\U000F0379\U000F05A9\U000F07D0\U000F050F\U000F0A86\U000F0596\U000F0374\U000F0415\U000F0425\U000F0717\U000F0238\U000F111C\U000F111E\U000F002D\U000F032A\U000F14DE\U000F146D\U000F0E79\U000F0E66\U000F09F1\U000F0D08\U000F024A\U000F02E5\U000F02E3\U000F04B9\U000F0210\U000F058E\U000F0156\U000F0450\U000F0335\U000F0579\U000F07C0\U000F005D\U000F0045\U000F004D\U000F0054\U000F02DC\U000F054C\U000F035C\U000F040A\U000F03E4\U000F0581\U000F1051\U000F059D\U000F0E17\U000F0141\U000F0142\U000F0297"
 
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_56
     size: 56
     bpp: 1
-    glyphs: "\U000F011E\U000F0379\U000F05A9\U000F07D0\U000F050F\U000F0A86\U000F0596\U000F0374\U000F0415\U000F0425\U000F0717\U000F0238\U000F111C\U000F111E\U000F002D\U000F032A\U000F14DE\U000F146D\U000F0E79\U000F0E66\U000F09F1\U000F0D08\U000F024A\U000F02E5\U000F02E3\U000F04B9\U000F0210\U000F058E\U000F02E4"
+    glyphs: "\U000F011E\U000F0379\U000F05A9\U000F07D0\U000F050F\U000F0A86\U000F0596\U000F0374\U000F0415\U000F0425\U000F0717\U000F0238\U000F111C\U000F111E\U000F002D\U000F032A\U000F14DE\U000F146D\U000F0E79\U000F0E66\U000F09F1\U000F0D08\U000F024A\U000F02E5\U000F02E3\U000F04B9\U000F0210\U000F058E\U000F02E4\U000F0E95\U000F0570\U000F05DD\U000F15A2\U000F0B38\U000F134A\U000F013A\U000F0857"
 
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_32
@@ -267,6 +279,22 @@ font:
     size: 80
     bpp: 4
     glyphs: "\U0000F00B\U0000F00F"
+
+  # --- Jeu « Roi Noir » : pièces d'échecs -----------------------------------
+  # ChessPieces.ttf est un SOUS-ENSEMBLE (12 glyphes, 16 Ko) taillé dans DejaVu
+  # Sans, exactement comme IconeMeteo.ttf : on n'embarque que ce qu'on affiche.
+  # U+2654–2659 = pièces « blanches » (contour creux), U+265A–265F = « noires »
+  # (silhouette pleine). chess_game.cpp superpose les deux pour dessiner une
+  # pièce blanche (corps ivoire + contour sombre) — d'où les 12 glyphes et pas 6.
+  # size 80 : encre 72×60 px dans une case de 84 (calibré, aucun débordement).
+  # bpp 4 obligatoire : en bpp 1 les contours fins (couronne, crinière) crénellent.
+  - file: "Tab5/ChessPieces.ttf"
+    id: chess_pieces_80
+    size: 80
+    bpp: 4
+    # Échappements plutôt que glyphes littéraux : même convention que les polices
+    # MDI ci-dessus, et aucune dépendance à l'encodage de l'éditeur.
+    glyphs: "\u2654\u2655\u2656\u2657\u2658\u2659\u265A\u265B\u265C\u265D\u265E\u265F"
 
 # =============================================================================
 # LVGL — Glassmorphism "Slate"
