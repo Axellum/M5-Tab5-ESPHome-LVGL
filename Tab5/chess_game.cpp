@@ -767,7 +767,7 @@ static void draw_all() {
 static void toast(const char* t, uint32_t ms = 2500) {
     strncpy(g_msg, t, sizeof(g_msg) - 1);
     g_msg[sizeof(g_msg) - 1] = 0;
-    g_msg_until = millis() + ms;
+    g_msg_until = esphome::millis() + ms;
 }
 
 static void fmt_clock(uint32_t ms, char* out, int cap) {
@@ -829,7 +829,7 @@ static void update_hud(bool force) {
     // Statut : message transitoire, sinon echec, sinon reflexion, sinon rien.
     const char* st = "";
     uint32_t stc = Pal::DANGER;
-    if (g_msg_until && (int32_t)(millis() - g_msg_until) < 0) { st = g_msg; stc = Pal::TXT_DIM; }
+    if (g_msg_until && (int32_t)(esphome::millis() - g_msg_until) < 0) { st = g_msg; stc = Pal::TXT_DIM; }
     else if (g_check_sq != NO_SQ) { st = "ECHEC !"; stc = Pal::DANGER; }
     else if (g_ai_think)          { st = "Le Tab reflechit"; stc = Pal::THINK; }
     set_text_if(g_h_status, st);
@@ -1152,7 +1152,7 @@ static void end_game(uint8_t res, const char* reason) {
     }
 
     if ((uint32_t) g_nply > g_save.longest_plies) g_save.longest_plies = (uint32_t) g_nply;
-    if (g_game_t0) g_save.total_ms += millis() - g_game_t0;
+    if (g_game_t0) g_save.total_ms += esphome::millis() - g_game_t0;
     g_game_t0 = 0;
 
     // Seules les parties CONTRE LE TAB alimentent le bilan et le classement.
@@ -1234,7 +1234,7 @@ static void play_move(const Move& m) {
         lv_obj_move_foreground(g_anim);
         g_anim_hide = to_cell;
         g_anim_on = true;
-        g_anim_t0 = millis();
+        g_anim_t0 = esphome::millis();
     }
 
     draw_all();
@@ -1291,8 +1291,8 @@ static void start_new_game() {
     g_clock_on = (g_save.clock_opt != 0);
     g_clock[0] = g_clock[1] = CLOCKS[g_save.clock_opt].base_ms;
     g_inc_ms   = CLOCKS[g_save.clock_opt].inc_ms;
-    g_clock_last = millis();
-    g_game_t0 = millis();
+    g_clock_last = esphome::millis();
+    g_game_t0 = esphome::millis();
 
     g_sel_sq = g_last_from = g_last_to = NO_SQ;
     g_nfrom = 0;
@@ -1337,8 +1337,8 @@ static bool resume_game() {
     g_clock[1] = g_save.r_clock_b;
     g_clock_on = (g_clock[0] != 0 || g_clock[1] != 0);
     g_inc_ms   = CLOCKS[g_save.clock_opt].inc_ms;
-    g_clock_last = millis();
-    g_game_t0 = millis();
+    g_clock_last = esphome::millis();
+    g_game_t0 = esphome::millis();
 
     g_sel_sq = g_last_from = g_last_to = NO_SQ;
     g_nfrom = 0;
@@ -1391,7 +1391,7 @@ static void offer_draw() {
     else {
         g_state = ST_PLAY;
         menu_on(false);
-        g_clock_last = millis();
+        g_clock_last = esphome::millis();
         toast("Le Tab refuse la nulle", 3000);
         update_hud(true);
     }
@@ -1405,7 +1405,7 @@ static void ai_begin() {
     if (!g_running || g_ai_think) return;
     if (g_nall <= 0) return;
     g_ai_think = true;
-    search_start(g_pos, g_level, millis() ^ (uint32_t)(g_nply * 2654435761u));
+    search_start(g_pos, g_level, esphome::millis() ^ (uint32_t)(g_nply * 2654435761u));
     show(g_think_lbl, true);
     show(g_think_bar, true);
 }
@@ -1436,7 +1436,7 @@ void ai_step() {
 
 static void do_hint() {
     if (g_state != ST_PLAY || !g_running || g_ai_think || g_anim_on) return;
-    const uint32_t now = millis();
+    const uint32_t now = esphome::millis();
     if (g_hint_ready_at && (int32_t)(now - g_hint_ready_at) < 0) {
         toast("Indice en recharge", 1500);
         return;
@@ -1532,7 +1532,7 @@ static void slot_event_cb(lv_event_t* e) {
                     // coups (et donc « Annuler » et la triple repetition).
                     g_state = ST_PLAY;
                     menu_on(false);
-                    g_clock_last = millis();
+                    g_clock_last = esphome::millis();
                     memset(g_drawn_pc, 0xFF, sizeof(g_drawn_pc));
                     memset(g_drawn_hl, 0xFF, sizeof(g_drawn_hl));
                     draw_all();
@@ -1608,8 +1608,8 @@ static void slot_event_cb(lv_event_t* e) {
         }
 
         case ST_PAUSE:
-            if (i == 0) { g_state = ST_PLAY; menu_on(false); g_clock_last = millis(); update_hud(true); }
-            else if (i == 1) { if (g_nply > 0) { g_state = ST_PLAY; menu_on(false); g_clock_last = millis(); undo_move(); } }
+            if (i == 0) { g_state = ST_PLAY; menu_on(false); g_clock_last = esphome::millis(); update_hud(true); }
+            else if (i == 1) { if (g_nply > 0) { g_state = ST_PLAY; menu_on(false); g_clock_last = esphome::millis(); undo_move(); } }
             else if (i == 2) { offer_draw(); }
             else if (i == 3) {
                 const uint8_t loser = (g_mode == 0) ? g_human : g_pos.side;
@@ -1648,7 +1648,7 @@ static void update_clocks(uint32_t now) {
 }
 
 static void tick_cb(lv_timer_t*) {
-    const uint32_t now = millis();
+    const uint32_t now = esphome::millis();
 
     if (g_state != ST_PLAY) {
         // Hors partie, la pendule ne coule pas : on garde juste la reference a jour
@@ -1714,7 +1714,7 @@ void on_imu(float ax, float ay, float az) {
     const float mag = sqrtf(ax * ax + ay * ay + az * az);
     // Filtre passe-bas leger : evite qu'une seule lecture bruitee declenche.
     g_shake_mag += (mag - g_shake_mag) * 0.5f;
-    const uint32_t now = millis();
+    const uint32_t now = esphome::millis();
     if (g_shake_mag > 1.9f && (now - g_shake_last) > SHAKE_CD_MS) {
         g_shake_last = now;
         do_hint();
@@ -1749,7 +1749,7 @@ void open(const UI& ui) {
     refresh_movelist();
     update_hud(true);
 
-    g_clock_last = millis();
+    g_clock_last = esphome::millis();
     go_hub();
 
     if (!g_timer) g_timer = lv_timer_create(tick_cb, TICK_MS, nullptr);
@@ -1761,7 +1761,7 @@ void close() {
     // Une partie en cours est sauvegardee pour pouvoir etre reprise au prochain
     // lancement (position + pendules), y compris apres un reboot.
     store_running_game();
-    if (g_game_t0) { g_save.total_ms += millis() - g_game_t0; g_game_t0 = 0; }
+    if (g_game_t0) { g_save.total_ms += esphome::millis() - g_game_t0; g_game_t0 = 0; }
     persist_save();
 
     if (g_timer) { lv_timer_delete(g_timer); g_timer = nullptr; }

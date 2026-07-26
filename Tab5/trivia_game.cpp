@@ -251,7 +251,7 @@ static void prepare_question(uint8_t cat) {
         if (s_choices[i] == 0) { s_correct_slot = (uint8_t)i; break; }
     }
     s_answered = false;
-    s_q_start_ms = millis();
+    s_q_start_ms = esphome::millis();
     s_q_remaining_ms = (s_timer_sec > 0) ? (uint32_t)s_timer_sec * 1000 : 0xFFFFFFFF;
 }
 
@@ -342,14 +342,14 @@ static void handle_answer(uint8_t slot) {
 static void roll_dice() {
     if (s_state != ST_PLAYING || s_dice_rolling) return;
     s_dice_rolling = true;
-    s_dice_start_ms = millis();
+    s_dice_start_ms = esphome::millis();
     s_dice_val = (uint8_t)rnd_range(1, 6);
 }
 
 // Animation du dé (500 ms de roulement)
 static void tick_dice() {
     if (!s_dice_rolling) return;
-    uint32_t elapsed = millis() - s_dice_start_ms;
+    uint32_t elapsed = esphome::millis() - s_dice_start_ms;
     if (elapsed < 500) {
         // Affiche une valeur aléatoire pendant l'animation
         s_dice_val = (uint8_t)rnd_range(1, 6);
@@ -371,7 +371,7 @@ void on_imu(float ax, float ay, float az) {
     float mag = sqrtf(ax*ax + ay*ay + az*az);
     s_imu_mag = mag;
     // Secousse franche > 2.2 g, debounce 800 ms
-    uint32_t now = millis();
+    uint32_t now = esphome::millis();
     if (mag > 2.2f && (now - s_last_shake_ms) > 800) {
         s_last_shake_ms = now;
         if (s_open && s_state == ST_PLAYING && !s_dice_rolling) {
@@ -704,7 +704,7 @@ static void update_ui() {
         }
         // Timer bar
         if (s_q_remaining_ms != 0xFFFFFFFF) {
-            uint32_t elapsed = millis() - s_q_start_ms;
+            uint32_t elapsed = esphome::millis() - s_q_start_ms;
             uint32_t total = (uint32_t)s_timer_sec * 1000;
             int pct = (elapsed < total) ? (int)(100 - elapsed * 100 / total) : 0;
             lv_obj_set_width(s_q_timer_bar, (lv_coord_t)(1020 * pct / 100));
@@ -718,7 +718,7 @@ static void update_ui() {
         }
         // Timer HUD
         if (s_hud_timer && s_q_remaining_ms != 0xFFFFFFFF) {
-            uint32_t elapsed = millis() - s_q_start_ms;
+            uint32_t elapsed = esphome::millis() - s_q_start_ms;
             int sec_left = (int)((s_timer_sec * 1000 - elapsed) / 1000);
             if (sec_left < 0) sec_left = 0;
             snprintf(s_buf, sizeof(s_buf), "Temps: %ds", sec_left);

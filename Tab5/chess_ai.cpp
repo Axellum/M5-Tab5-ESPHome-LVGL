@@ -793,9 +793,9 @@ bool perft_selftest(int depth) {
     Position p;
     set_start(p);
     for (int d = 1; d <= depth; d++) {
-        const uint32_t t0 = millis();
+        const uint32_t t0 = esphome::millis();
         const uint64_t got = perft(p, d);
-        const uint32_t ms  = millis() - t0;
+        const uint32_t ms  = esphome::millis() - t0;
         const bool good = (got == REF[d]);
         if (!good) ok = false;
         ESP_LOGI(TAG, "perft(%d) = %llu (attendu %llu) %s — %u ms",
@@ -936,9 +936,9 @@ static int qsearch(Position& p, int alpha, int beta, int qd, int ply);
 
 static int negamax(Position& p, int depth, int alpha, int beta, int ply) {
     if (g_abort) return 0;
-    // Garde-fou temporel : teste tous les 512 nœuds pour ne pas payer millis()
+    // Garde-fou temporel : teste tous les 512 nœuds pour ne pas payer esphome::millis()
     // a chaque appel (l'appel systeme domine sinon le cout du nœud).
-    if ((++g_nodes & 511u) == 0u && millis() >= g_deadline) { g_abort = true; return 0; }
+    if ((++g_nodes & 511u) == 0u && esphome::millis() >= g_deadline) { g_abort = true; return 0; }
     if (ply >= MAX_PLY_BUF - 2) return eval(p);
     if (depth <= 0) return qsearch(p, alpha, beta, g_qdepth, ply);
     if (p.halfmove >= 100) return 0;      // regle des 50 coups
@@ -977,7 +977,7 @@ static int negamax(Position& p, int depth, int alpha, int beta, int ply) {
 
 static int qsearch(Position& p, int alpha, int beta, int qd, int ply) {
     if (g_abort) return 0;
-    if ((++g_nodes & 511u) == 0u && millis() >= g_deadline) { g_abort = true; return 0; }
+    if ((++g_nodes & 511u) == 0u && esphome::millis() >= g_deadline) { g_abort = true; return 0; }
     if (ply >= MAX_PLY_BUF - 2) return eval(p);
 
     const bool chk = in_check(p, p.side);
@@ -1073,7 +1073,7 @@ void search_start(const Position& p, int level, uint32_t seed) {
     g_ss.alpha      = -INF_SCORE;
     g_ss.iter_best  = 0;
     g_ss.best_score = 0;
-    g_ss.t_start    = millis();
+    g_ss.t_start    = esphome::millis();
     g_ss.cpu_ms     = 0;
     g_ss.retries    = 0;
     g_nodes         = 0;
@@ -1131,7 +1131,7 @@ static bool search_slice(uint32_t t_slice) {
                 g_ss.rscore[j + 1] = s;
             }
 
-            const uint32_t elapsed = g_ss.cpu_ms + (millis() - t_slice);   // temps CPU
+            const uint32_t elapsed = g_ss.cpu_ms + (esphome::millis() - t_slice);   // temps CPU
             const bool mate_found  = iabs(g_ss.best_score) > MATE_SCORE - 100;
             g_ss.depth++;
             g_ss.idx = 0;
@@ -1142,7 +1142,7 @@ static bool search_slice(uint32_t t_slice) {
                 search_finish();
                 return true;
             }
-            if (millis() >= slice_end) return false;
+            if (esphome::millis() >= slice_end) return false;
             continue;
         }
 
@@ -1158,7 +1158,7 @@ static bool search_slice(uint32_t t_slice) {
             g_ss.retries++;
             // Garde-fou 1 : au-dela d'un budget total x3, on arrete la reflexion
             // et on joue le meilleur coup de la derniere profondeur terminee.
-            if (g_ss.cpu_ms + (millis() - t_slice) > (uint32_t) L.budget_ms * 3u &&
+            if (g_ss.cpu_ms + (esphome::millis() - t_slice) > (uint32_t) L.budget_ms * 3u &&
                 g_ss.best_depth > 0) {
                 search_finish();
                 return true;
@@ -1179,15 +1179,15 @@ static bool search_slice(uint32_t t_slice) {
         if (v > g_ss.alpha) { g_ss.alpha = v; g_ss.iter_best = g_ss.idx; }
         g_ss.idx++;
 
-        if (millis() >= slice_end) return false;
+        if (esphome::millis() >= slice_end) return false;
     }
 }
 
 bool search_step() {
     if (!g_ss.active) return true;
-    const uint32_t t_slice = millis();
+    const uint32_t t_slice = esphome::millis();
     const bool done = search_slice(t_slice);
-    g_ss.cpu_ms += millis() - t_slice;
+    g_ss.cpu_ms += esphome::millis() - t_slice;
     return done;
 }
 
@@ -1214,7 +1214,7 @@ Move search_quick(const Position& p, int depth, uint16_t max_ms, int* score_out)
     const int      s_qd    = g_qdepth;
 
     g_abort    = false;
-    g_deadline = millis() + max_ms;
+    g_deadline = esphome::millis() + max_ms;
     g_qdepth   = 2;
 
     Move best = mv[0];
