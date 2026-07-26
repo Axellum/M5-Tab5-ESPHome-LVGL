@@ -18,3 +18,7 @@ substitutions:
   modal_hdr_h: "52"
   # Premier y libre sous la barre de titre
   modal_body_y: "52"
+  # Offset bas standard pour les barres d'action / légendes (BOTTOM_MID)
+  modal_bottom_y: "-8"
+  # Première ligne de la grille calendrier (modal_body_y + 30 px d'en-tête jours)
+  cal_grid_y: "82"

@@ -231,6 +231,7 @@ api:
             check_alert(grand_froid, "\U000F0F29");
             check_alert(vagues_submersion, "\U000F078D");
             check_alert(canicule, "\U000F0E01");
+            check_alert(avalanches, "\U000F067E");
 
             id(has_alerts) = (active_count > 0);
             
