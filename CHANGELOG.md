@@ -4,6 +4,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-26 — Refactoring structurel : CentralPanelCtx + factorisation (audit R2-R5)
+- **`CentralPanelCtx`** (`tab5_custom.h`) : struct regroupant les 8 wrappers LVGL de la carte centrale + 7 flags d'activité + `current_panel`. Les signatures C++ passent de 16 paramètres à 1-3 (référence ctx). Pattern *sync → call → write-back* : les globals ESPHome restent source de vérité, le ctx est synchronisé avant chaque appel.
+- **Globals C++** : `g_central_ctx`, `g_day_slots[5]`, `g_hour_slots[5]` initialisés une fois au boot (`on_boot` dans `tab5-ha-hmi.yaml`) — supprime la reconstruction des tableaux de slots à chaque swipe/appel service.
+- **`highlight_button_border()`** : factorise la lambda `hl` dupliquée (surbrillance bordure boutons mode Domo/Discu) en une fonction C++ réutilisable.
+- **Boutons mode centralisés** : les 3 sites de mise à jour bordure (on_boot, btn Domo, btn Discu) passent par `script.execute: tab5_set_assist_mode` (34 lignes YAML → 6).
+- **Code mort supprimé** : blocs commentés M1/M2, `#include <vector>` dupliqué, 8 variables `static` file-scope remplacées par le ctx.
+- Bilan : **8 fichiers, +298 / −432 lignes** (net −134). Comportement visuel inchangé.
+
 ### 2026-07-25 — Cadre modal v4 : une seule barre de titre, compacte, pour les 9 popups
 - **Un seul `!include` produit tout le chrome d'en-tête** : nouveau `ui_components/modal_header.yaml` (conteneur pleine largeur de 52 px : icône + titre à gauche, croix 80×44 à droite). Il remplace et supprime `modal_header_brand.yaml` + `modal_close_btn.yaml` du cadre v3. L'alignement vertical est fait par LVGL (`LEFT_MID`/`RIGHT_MID`) : plus aucun `y:` recopié popup par popup, donc plus de dérive possible entre deux fenêtres.
 - **Barre compacte** : 4 px au-dessus de la ligne, ligne de 44, titre `roboto_32_b`, icône et croix en `mdi_font_32` → le corps démarre à `y: 52` au lieu de 80, soit **28 px de hauteur utile récupérés** par popup. Les sous-titres de l'assistant et de la télécommande TV sont supprimés : une seule variante de barre, sans exception.
