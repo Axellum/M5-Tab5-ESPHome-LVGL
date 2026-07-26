@@ -17,7 +17,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "animate_popup_close(id(tv_remote_popup), nullptr);" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -29,7 +29,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F07C0", icon_color: "color_info", title: "Télécommande TV", title_id: "popup_tv_title", close_btn_id: "btn_tv_close", close_lambda: "lv_obj_add_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F07C0", icon_color: "color_info", title: "Télécommande TV", title_id: "popup_tv_title", close_btn_id: "btn_tv_close", close_lambda: "animate_popup_close(id(tv_remote_popup), nullptr);" } }
 
           # ═══ CORPS — grille (laisse place à la rangée basse) ═══
           - obj:

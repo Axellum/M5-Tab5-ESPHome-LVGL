@@ -56,7 +56,7 @@ obj:
                           service: script.allumer_pc_tv
                     on_long_press:
                       - lambda: |-
-                          lv_obj_clear_flag(id(tv_remote_popup), LV_OBJ_FLAG_HIDDEN);
+                          animate_popup_open(id(tv_remote_popup), nullptr);
                           lv_obj_move_foreground(id(tv_remote_popup));
 
     # Card 1 : Volet

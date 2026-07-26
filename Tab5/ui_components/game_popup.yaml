@@ -1,0 +1,46 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file game_popup.yaml
+# @role Popup "Marble Maze" — jeu tilt avec le BMI270 (2D du plan).
+# @architecture_constraint Chrome modal v4 (ADR-0009). La logique de jeu est
+#     dans le namespace Game (tab5_custom.cpp). Ce YAML ne definit que la
+#     structure LVGL statique (conteneurs, labels). Les murs/bille/trou sont
+#     crees dynamiquement en C++ via Game::init().
+# @ai_instruction Ne PAS ajouter de logique de jeu ici. Tout passe par Game::*.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: game_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "Game::stop(); animate_popup_close(id(game_popup), nullptr);" } }
+    - !include { file: modal_header.yaml, vars: { icon: "\U000F02D2", icon_color: "color_accent", title: "Marble Maze", title_id: "game_title", close_btn_id: "btn_game_close", close_lambda: "Game::stop(); animate_popup_close(id(game_popup), nullptr);" } }
+
+    # --- Zone de jeu (800x500, centree sous le header) ---
+    - obj:
+        id: game_area
+        align: CENTER
+        y: 30
+        width: 800
+        height: 500
+        bg_color: 0x0A0E17
+        bg_opa: 100%
+        border_width: 2
+        border_color: color_glass_rim
+        border_opa: 40%
+        radius: 12
+        scrollable: false
+        pad_all: 0
+
+    # --- Label score / niveau (sous la zone de jeu) ---
+    - label:
+        id: lbl_game_status
+        align: BOTTOM_MID
+        y: -20
+        text: "Inclinez la tablette pour guider la bille !"
+        text_font: roboto_22
+        text_color: color_text_dim

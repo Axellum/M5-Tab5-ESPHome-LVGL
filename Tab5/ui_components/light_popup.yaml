@@ -26,7 +26,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "lv_obj_add_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "animate_popup_close(id(light_options_popup), nullptr);" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -38,7 +38,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F0335", icon_color: "color_gold", title: "Ampoule", title_id: "popup_light_title", close_btn_id: "btn_light_close", close_lambda: "lv_obj_add_flag(id(light_options_popup), LV_OBJ_FLAG_HIDDEN);" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0335", icon_color: "color_gold", title: "Ampoule", title_id: "popup_light_title", close_btn_id: "btn_light_close", close_lambda: "animate_popup_close(id(light_options_popup), nullptr);" } }
 
           # ═══ CARTE AMPOULE (gauche) : sélecteur 3 lumières + puissance ═══
           - obj:

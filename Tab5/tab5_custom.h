@@ -77,6 +77,60 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
     esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
 void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj);
 
+// =============================================================================
+// Helpers d'animation LVGL (popups, swipe, alertes)
+// Réutilisent les patterns lv_anim_t de transition_widgets() (callbacks
+// anim_y_cb/anim_opa_cb/anim_scale_cb/anim_x_cb). Durées courtes (<350ms)
+// pour rester fluides sur ESP32-P4 sans charger le loop LVGL.
+// =============================================================================
+
+// Animation d'ouverture d'un popup : scale 0.92→1.0 + fondu (card + scrim).
+// Le scrim doit être visible (clear flag) AVANT l'appel. Le pivot du scale
+// est recalé au centre de la card. Durée 280ms, ease_out.
+void animate_popup_open(lv_obj_t* card, lv_obj_t* scrim);
+
+// Animation de fermeture : scale 1.0→0.92 + fondu inverse. Cache
+// automatiquement card + scrim à la fin de l'animation (LV_OBJ_FLAG_HIDDEN).
+// Durée 200ms, ease_in (plus court que l'ouverture pour le "dismiss").
+void animate_popup_close(lv_obj_t* card, lv_obj_t* scrim);
+
+// Glissement horizontal + fondu croisé entre deux layers (swipe prévisions).
+// dir = LV_DIR_LEFT (in arrive de la droite, out part à gauche) ou
+//       LV_DIR_RIGHT (in arrive de la gauche, out part à droite).
+// Durée 350ms. Dérivée de transition_widgets() mais en horizontal.
+void animate_swipe_horizontal(lv_obj_t* out_layer, lv_obj_t* in_layer, lv_dir_t dir);
+
+// Slide-in depuis la droite + fondu pour un bandeau d'alerte qui entre
+// dans le rotateur central (alertes HA, alertes Météo-France).
+// Durée 300ms, ease_out. OFFSET 100px.
+void animate_alert_enter(lv_obj_t* alert_wrap);
+
+// --- 1D : Micro-interactions boutons verre ---
+// Applique un style pressed (transform_scale 94% + bg_opa 30%) avec transition
+// 120ms ease_out sur un bouton. ESPHome ne supporte pas state_pressed dans les
+// styles partagees (style_definitions), donc on l'injecte en C++ via lv_obj_add_style.
+void setup_button_press_animation(lv_obj_t* btn);
+
+// Parcourt l'arbre LVGL depuis root et applique setup_button_press_animation()
+// a tout objet clickable avec radius 18 (caracteristique du style_clim_btn verre).
+// Appele une fois au boot via un interval one-shot (apres layout LVGL).
+void apply_pressed_scale_to_tree(lv_obj_t* root);
+
+// =============================================================================
+// 2D : Jeu Marble Maze (tilt BMI270)
+// Boucle 30 FPS via lv_timer, physique simple (accel + friction), collisions
+// murs/trou cible. Les donnees accel sont lues depuis les globals game_accel_x/y
+// (mises a jour par tab5-imu.yaml a 100Hz).
+// =============================================================================
+namespace Game {
+    // Demarre le jeu : cree bille/trou/murs dans area, lance le timer 33ms.
+    void init(lv_obj_t* area, lv_obj_t* status_lbl);
+    // Arrete le jeu : detruit le timer + les objets crees.
+    void stop();
+    // Met a jour l'acceleration (appele depuis les lambdas on_value de tab5-imu.yaml).
+    void update_accel(float ax, float ay);
+}
+
 // Surbrillance bordure bouton (actif = couleur + 2px, inactif = GLASS_RIM + 1px).
 void highlight_button_border(lv_obj_t* btn, bool active, uint32_t color);
 

@@ -375,3 +375,18 @@ lvgl:
       radius: 999
       pad_all: 0
 
+# 1D : Micro-interactions boutons verre — transform_scale au pressed.
+# ESPHome ne supporte pas state_pressed dans style_definitions -> helper C++.
+# Interval one-shot : se declenche 2s apres le boot (layout LVGL termine).
+# Le flag statique garantit une seule execution (l'interval reste actif mais inerte).
+interval:
+  - interval: 2s
+    id: btn_press_style_init
+    then:
+      - lambda: |-
+          static bool btn_style_done = false;
+          if (!btn_style_done) {
+              apply_pressed_scale_to_tree(lv_scr_act());
+              btn_style_done = true;
+          }
+

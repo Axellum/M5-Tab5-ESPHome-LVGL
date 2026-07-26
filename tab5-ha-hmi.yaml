@@ -126,5 +126,6 @@ packages:
   tab5_globals: !include Tab5/tab5-globals.yaml
   tab5_scripts: !include Tab5/tab5-scripts.yaml
   tab5_lvgl: !include Tab5/tab5-lvgl.yaml
+  tab5_imu: !include Tab5/tab5-imu.yaml
 
 captive_portal:
