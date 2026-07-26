@@ -74,6 +74,8 @@ script:
           ui.f_small = id(roboto_22);
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
+          auto t = id(sntp_time).now();
+          if (t.is_valid()) ui.epoch = t.timestamp;
           Lode::open(ui);
 
   # Active le wake word interne « Stop » (désactivé par défaut par ESPHome, 2e modèle).

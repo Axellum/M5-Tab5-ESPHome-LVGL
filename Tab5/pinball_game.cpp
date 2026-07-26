@@ -869,17 +869,18 @@ static void drain_ball(int idx) {
     if (g_active_balls <= 0) {
         g_active_balls = 0; g_mb_active = false;
         g_tilt_hits = 0; g_tilted = false;
+        uint8_t balls_played = (uint8_t)g_ball_num;  // avant incrément
         g_ball_num++;
         if (g_ball_num > g_balls_total) {
             g_state = ST_GAMEOVER;
             g_save.career_games++;
-            if (g_save.score_count < PIN_MAX_SCORES ||
-                g_score > g_save.scores[g_save.score_count - 1].score) {
+            if (g_score > 0 && (g_save.score_count < PIN_MAX_SCORES ||
+                g_score > g_save.scores[g_save.score_count - 1].score)) {
                 int pos = g_save.score_count < PIN_MAX_SCORES ?
                           g_save.score_count : PIN_MAX_SCORES - 1;
                 g_save.scores[pos].score = g_score;
                 g_save.scores[pos].ctrl_mode = g_save.ctrl_mode;
-                g_save.scores[pos].balls = (uint8_t)g_ball_num;
+                g_save.scores[pos].balls = balls_played;
                 g_save.scores[pos].timestamp = esphome::millis() / 1000;
                 if (g_save.score_count < PIN_MAX_SCORES) g_save.score_count++;
                 for (int i = 0; i < g_save.score_count - 1; i++)
@@ -991,38 +992,53 @@ static void hud_event_cb(lv_event_t* e) {
 
 static void slot_event_cb(lv_event_t* e) {
     int idx = (int)(intptr_t)lv_event_get_user_data(e);
-    const char* txt = lv_label_get_text(g_slot_t[idx]);
-    if (!txt) return;
+    // Routage par index de slot (pas par texte du label, fragile)
     if (g_state == ST_SETTINGS) {
-        if (strncmp(txt, "Mode :", 6) == 0) {
-            g_save.ctrl_mode = (g_save.ctrl_mode == 0) ? 1 : 0;
-            persist_save(); go_settings(); return;
+        switch (idx) {
+            case 0: g_save.ctrl_mode = (g_save.ctrl_mode == 0) ? 1 : 0; persist_save(); go_settings(); return;
+            case 1: if (g_save.sensitivity < 4) g_save.sensitivity++; persist_save(); go_settings(); return;
+            case 2: if (g_save.sensitivity > 0) g_save.sensitivity--; persist_save(); go_settings(); return;
+            case 3: calibrate(); return;
+            case 4: g_save.muted = !g_save.muted; persist_save(); go_settings(); return;
+            case 5: g_state = ST_HUB; return;
         }
-        if (strcmp(txt, "Sensibilite +") == 0) {
-            if (g_save.sensitivity < 4) g_save.sensitivity++;
-            persist_save(); go_settings(); return;
-        }
-        if (strcmp(txt, "Sensibilite -") == 0) {
-            if (g_save.sensitivity > 0) g_save.sensitivity--;
-            persist_save(); go_settings(); return;
-        }
-        if (strncmp(txt, "SFX :", 5) == 0) {
-            g_save.muted = !g_save.muted;
-            persist_save(); go_settings(); return;
-        }
+        return;
     }
-    if (strcmp(txt, "Jouer") == 0) start_game();
-    else if (strcmp(txt, "Classement") == 0) g_state = ST_HIGHSCORES;
-    else if (strcmp(txt, "Reglages") == 0) g_state = ST_SETTINGS;
-    else if (strcmp(txt, "Quitter") == 0) close();
-    else if (strcmp(txt, "Reprendre") == 0) { g_state = ST_PLAYING; show(g_ui.panel, false); }
-    else if (strcmp(txt, "Nouvelle partie") == 0) start_game();
-    else if (strcmp(txt, "Retour") == 0) g_state = ST_HUB;
-    else if (strcmp(txt, "Calibrer IMU") == 0) calibrate();
-    else if (strcmp(txt, "Effacer scores") == 0) {
-        g_save.score_count = 0;
-        memset(g_save.scores, 0, sizeof(g_save.scores));
-        persist_save(); g_state = ST_HUB;
+    if (g_state == ST_PAUSED) {
+        switch (idx) {
+            case 0: g_state = ST_PLAYING; show(g_ui.panel, false); return;  // Reprendre
+            case 1: start_game(); return;  // Nouvelle partie
+            case 2: calibrate(); return;  // Calibrer IMU
+            case 3: close(); return;  // Quitter
+        }
+        return;
+    }
+    if (g_state == ST_GAMEOVER) {
+        switch (idx) {
+            case 0: start_game(); return;  // Nouvelle partie
+            case 1: g_state = ST_HIGHSCORES; return;  // Classement
+            case 2: g_state = ST_HUB; return;  // Retour
+        }
+        return;
+    }
+    if (g_state == ST_HIGHSCORES) {
+        // Indices dynamiques : scores puis "Effacer" (next) et "Retour" (next+1)
+        int next = (g_save.score_count < N_SLOTS - 2) ? g_save.score_count : N_SLOTS - 2;
+        if (idx == next) {
+            g_save.score_count = 0;
+            memset(g_save.scores, 0, sizeof(g_save.scores));
+            persist_save(); g_state = ST_HUB;
+        } else if (idx == next + 1) {
+            g_state = ST_HUB;
+        }
+        return;
+    }
+    // ST_HUB
+    switch (idx) {
+        case 0: start_game(); break;  // Jouer
+        case 1: g_state = ST_HIGHSCORES; break;  // Classement
+        case 2: g_state = ST_SETTINGS; break;  // Reglages
+        case 3: close(); break;  // Quitter
     }
 }
 
@@ -1109,18 +1125,24 @@ static void tick_cb(lv_timer_t* t) {
     if (g_state == ST_OFF) return;
     uint32_t now = esphome::millis();
 
-    if (g_state == ST_HUB) return;
-    if (g_state == ST_PAUSED) { go_pause(); return; }
-    if (g_state == ST_GAMEOVER) { go_gameover(); return; }
-    if (g_state == ST_HIGHSCORES) { go_highscores(); return; }
-    if (g_state == ST_SETTINGS) { go_settings(); return; }
+    // Garde-fou transitions : reconstruit l'UI seulement au changement d'état
+    static int prev_menu = -1;
+    int cur = (int)g_state;
+    if (g_state == ST_PAUSED)       { if (prev_menu != cur) { go_pause();     prev_menu = cur; } return; }
+    if (g_state == ST_GAMEOVER)     { if (prev_menu != cur) { go_gameover();  prev_menu = cur; } return; }
+    if (g_state == ST_HIGHSCORES)   { if (prev_menu != cur) { go_highscores(); prev_menu = cur; } return; }
+    if (g_state == ST_SETTINGS)     { if (prev_menu != cur) { go_settings();  prev_menu = cur; } return; }
+    if (g_state == ST_HUB)          { prev_menu = cur; return; }
     if (g_state == ST_NEXT_BALL) {
-        reset_targets(); g_tilted = false; g_tilt_hits = 0;
+        // Pas de reset_targets : la progression multiball reste entre balles
+        g_tilted = false; g_tilt_hits = 0;
         launch_ball_in_plunger();
         g_state = ST_PLAYING;
+        prev_menu = -1;  // force rebuild si retour menu
         return;
     }
     if (g_state != ST_PLAYING) return;
+    prev_menu = -1;  // reset après retour en jeu
 
     // --- Charge plunger ---
     if (g_plunger_held) {

@@ -80,6 +80,11 @@ obj:
           border_opa: 100%
         on_short_click:
           - lambda: |-
+              // Fermer tout jeu actif avant d'en ouvrir un autre
+              if (Marble::is_open()) Marble::close();
+              if (Arkanoid::is_open()) Arkanoid::close();
+              if (Pinball::is_open()) Pinball::close();
+              if (Lode::is_open()) Lode::close();
               animate_popup_close(id(game_selector_overlay), nullptr);
           - script.execute: tab5_marble_open
         widgets:
@@ -108,6 +113,10 @@ obj:
           border_opa: 100%
         on_short_click:
           - lambda: |-
+              if (Marble::is_open()) Marble::close();
+              if (Arkanoid::is_open()) Arkanoid::close();
+              if (Pinball::is_open()) Pinball::close();
+              if (Lode::is_open()) Lode::close();
               animate_popup_close(id(game_selector_overlay), nullptr);
           - script.execute: tab5_arkanoid_open
         widgets:
@@ -136,6 +145,10 @@ obj:
           border_opa: 100%
         on_short_click:
           - lambda: |-
+              if (Marble::is_open()) Marble::close();
+              if (Arkanoid::is_open()) Arkanoid::close();
+              if (Pinball::is_open()) Pinball::close();
+              if (Lode::is_open()) Lode::close();
               animate_popup_close(id(game_selector_overlay), nullptr);
           - script.execute: tab5_pinball_open
         widgets:
@@ -164,6 +177,10 @@ obj:
           border_opa: 100%
         on_short_click:
           - lambda: |-
+              if (Marble::is_open()) Marble::close();
+              if (Arkanoid::is_open()) Arkanoid::close();
+              if (Pinball::is_open()) Pinball::close();
+              if (Lode::is_open()) Lode::close();
               animate_popup_close(id(game_selector_overlay), nullptr);
           - script.execute: tab5_lode_open
         widgets:

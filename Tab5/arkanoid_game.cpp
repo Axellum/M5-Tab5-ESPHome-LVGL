@@ -1123,8 +1123,8 @@ static void tick_cb(lv_timer_t*) {
 
     // IMU : rotation 270° → X_écran = -tilt_Y
     if (g_save.ctrl_mode == 0 || g_save.ctrl_mode == 2) {
-        float ox = g_save.cal_x / 1000.0f;
-        float raw = g_raw_y - ox;  // axe Y physique → X écran (inversé)
+        float oy = g_save.cal_y / 1000.0f;
+        float raw = g_raw_y - oy;  // axe Y physique → X écran (inversé)
         g_tilt_x += ((-raw) - g_tilt_x) * TILT_SMOOTH;
 
         float dead = TILT_DEADZONE;
@@ -1151,8 +1151,8 @@ static void tick_cb(lv_timer_t*) {
         g_pad_vx = clampf(g_pad_vx, -PAD_MAX_IMU, PAD_MAX_IMU);
         g_pad_x += g_pad_vx * DT;
     }
-    if (g_save.ctrl_mode == 1 || g_save.ctrl_mode == 2) {
-        // Mode boutons : vitesse directe
+    if (g_save.ctrl_mode == 1) {
+        // Mode boutons purs : vitesse directe (en mode mixte, déjà compté dans pad_input)
         if (g_btn_left || g_btn_right) {
             float dir = (g_btn_right ? 1.0f : 0.0f) - (g_btn_left ? 1.0f : 0.0f);
             g_pad_x += dir * PAD_SPEED_BTN * DT;
