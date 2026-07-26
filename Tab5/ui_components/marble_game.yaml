@@ -1,0 +1,78 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file marble_game.yaml
+# @role Overlay PLEIN ECRAN du jeu « Fil d'Or » (roguelite de bille, BMI270).
+# @architecture_constraint EXCEPTION ASSUMEE au chrome modal v4 (ADR-0009) : ce
+#     n'est pas un popup domotique mais un flux de jeu separe. Donc pas de
+#     modal_scrim.yaml, pas de modal_header.yaml, pas de carte 1250x690 — on
+#     occupe les 1280x720 pour que l'aire jouable domine. Le garde-fou
+#     scripts/check_tab5_modal_chrome.py ne declenche pas ici (aucune
+#     style_modal_card, aucun color_modal_scrim, aucun glyphe de croix).
+#     La sortie du jeu se fait par le hub (« Quitter »), pas par une croix.
+# @ai_instruction Ce fichier ne declare QUE 4 conteneurs vides. Tout le contenu
+#     (HUD, menus, murs, bille, pieges) est construit par marble_game.cpp via
+#     Marble::open(). Ne JAMAIS ajouter de widget de gameplay ici.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: marble_root
+  align: TOP_LEFT
+  x: 0
+  y: 0
+  width: 1280
+  height: 720
+  hidden: true
+  scrollable: false
+  pad_all: 0
+  radius: 0
+  border_width: 0
+  bg_color: color_marble_void
+  bg_opa: 100%
+  widgets:
+    # --- Bandeau HUD compact (48 px) : salle, PV, or, objectif, temps, boons ---
+    # Declare AVANT le terrain pour que le terrain le recouvre en cas de debord ;
+    # il est remis au premier plan par le C++ au besoin. Cliquable = pause.
+    - obj:
+        id: marble_hud
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: 1280
+        height: 48
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+        bg_color: color_marble_hud
+        bg_opa: 100%
+
+    # --- Aire de jeu 1280x672 : tout le reste de l'ecran ---
+    - obj:
+        id: marble_field
+        align: TOP_LEFT
+        x: 0
+        y: 48
+        width: 1280
+        height: 672
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+        bg_color: color_marble_floor
+        bg_opa: 100%
+
+    # --- Calque des menus (hub / ameliorations / stats / recompense / pause /
+    #     fin de run). Contenu construit en C++, masque pendant le jeu. ---
+    - obj:
+        id: marble_panel
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: 1280
+        height: 720
+        hidden: true
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+        bg_color: color_marble_void
+        bg_opa: 96%

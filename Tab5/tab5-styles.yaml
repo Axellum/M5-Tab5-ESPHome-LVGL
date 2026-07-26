@@ -83,6 +83,15 @@ color:
     hex: "05080F"          # Voile modal sombre
   - id: color_warm_pink
     hex: "F472B6"          # pink-400 (anniversaires calendrier ; miroir UIColor::WARM_PINK)
+  # --- Jeu « Fil d'Or » (marble_game) : miroir des tokens UIColor::MARBLE_* ---
+  # Seuls les 3 fonds des conteneurs vivent ici ; toutes les autres couleurs du
+  # jeu sont posees en C++ (marble_game.cpp) et n'ont donc pas de token YAML.
+  - id: color_marble_void
+    hex: "080C14"          # fond hors terrain (miroir UIColor::MARBLE_VOID)
+  - id: color_marble_floor
+    hex: "111A28"          # sol jouable (miroir UIColor::MARBLE_FLOOR)
+  - id: color_marble_hud
+    hex: "0C1220"          # bandeau HUD (miroir UIColor::MARBLE_HUD_BG)
 
 # =============================================================================
 # FONTS — inchangees (fonctionnel, pas esthetique)

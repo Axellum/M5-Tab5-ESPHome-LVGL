@@ -116,20 +116,8 @@ void setup_button_press_animation(lv_obj_t* btn);
 // Appele une fois au boot via un interval one-shot (apres layout LVGL).
 void apply_pressed_scale_to_tree(lv_obj_t* root);
 
-// =============================================================================
-// 2D : Jeu Marble Maze (tilt BMI270)
-// Boucle 30 FPS via lv_timer, physique simple (accel + friction), collisions
-// murs/trou cible. Les donnees accel sont lues depuis les globals game_accel_x/y
-// (mises a jour par tab5-imu.yaml a 100Hz).
-// =============================================================================
-namespace Game {
-    // Demarre le jeu : cree bille/trou/murs dans area, lance le timer 33ms.
-    void init(lv_obj_t* area, lv_obj_t* status_lbl);
-    // Arrete le jeu : detruit le timer + les objets crees.
-    void stop();
-    // Met a jour l'acceleration (appele depuis les lambdas on_value de tab5-imu.yaml).
-    void update_accel(float ax, float ay);
-}
+// Le jeu de bille vit desormais dans marble_game.h / marble_game.cpp
+// (namespace Marble). L'ancien prototype `namespace Game` a ete retire.
 
 // Surbrillance bordure bouton (actif = couleur + 2px, inactif = GLASS_RIM + 1px).
 void highlight_button_border(lv_obj_t* btn, bool active, uint32_t color);
@@ -472,5 +460,30 @@ namespace UIColor {
     static constexpr uint32_t ICON_MUTED           = 0x555555;  // Miroir color_icon_muted
     static constexpr uint32_t ARC_TRACK            = 0x2A2D35;  // Miroir color_arc_track
     static constexpr uint32_t MODAL_SCRIM          = 0x05080F;  // Miroir color_modal_scrim
+    // --- Jeu « Fil d'Or » (marble_game.cpp) ------------------------------------
+    // Palette dediee laiton/sarcelle : volontairement distincte du dashboard
+    // (et du cliche « purple glow ») pour que le jeu se lise comme un autre monde.
+    // Utilisee uniquement par le namespace Marble — ne pas melanger avec le HMI.
+    static constexpr uint32_t MARBLE_VOID     = 0x080C14;  // fond hors terrain
+    static constexpr uint32_t MARBLE_FLOOR    = 0x111A28;  // sol jouable
+    static constexpr uint32_t MARBLE_WALL     = 0x3B4A63;  // murs / obstacles
+    static constexpr uint32_t MARBLE_WALL_LIT = 0x63789B;  // arete eclairee des murs
+    static constexpr uint32_t MARBLE_HUD_BG   = 0x0C1220;  // bandeau HUD
+    static constexpr uint32_t MARBLE_BALL     = 0xE8B44A;  // bille — skin 0 (or)
+    static constexpr uint32_t MARBLE_BALL_ALT = 0xD9E4F5;  // bille — skin 1 (argent)
+    static constexpr uint32_t MARBLE_BALL_CU  = 0xE2725B;  // bille — skin 2 (cuivre)
+    static constexpr uint32_t MARBLE_EXIT     = 0x2BB3A3;  // portail de sortie actif
+    static constexpr uint32_t MARBLE_EXIT_OFF = 0x1E4A47;  // portail verrouille (runes manquantes)
+    static constexpr uint32_t MARBLE_DANGER   = 0xE05252;  // pieges mortels (spikes, scies, orbes)
+    static constexpr uint32_t MARBLE_PIT      = 0x03060C;  // trou / vide
+    static constexpr uint32_t MARBLE_SLOW     = 0x7C5CBF;  // glu / zone lente
+    static constexpr uint32_t MARBLE_BOOST    = 0xF2853F;  // zone d'acceleration
+    static constexpr uint32_t MARBLE_WIND     = 0x4E88C7;  // courant lateral
+    static constexpr uint32_t MARBLE_SHIELD   = 0x5AD1E8;  // pickup bouclier
+    static constexpr uint32_t MARBLE_MAGNET   = 0xB68CE8;  // pickup aimant
+    static constexpr uint32_t MARBLE_BRAKE    = 0x8FBF6A;  // pickup frein
+    static constexpr uint32_t MARBLE_DASH     = 0xF2C14E;  // pickup dash
+    static constexpr uint32_t MARBLE_RUNE     = 0xF7E08A;  // rune / cle d'objectif
+    static constexpr uint32_t MARBLE_BRASS_CHEST = 0x9A6B2F;  // coffre au tresor (laiton)
 }
 

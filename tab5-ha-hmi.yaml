@@ -16,6 +16,9 @@ esphome:
   includes:
     - Tab5/tab5_custom.h
     - Tab5/tab5_custom.cpp
+    # Jeu « Fil d'Or » (overlay plein écran) — sous-module isolé du HMI.
+    - Tab5/marble_game.h
+    - Tab5/marble_game.cpp
 
   on_boot:
     - priority: 700

@@ -386,9 +386,7 @@ lvgl:
                         on_short_click:
                           - script.execute: tab5_central_panel_next
                         on_long_press:
-                          - lambda: |-
-                              Game::init(id(game_area), id(lbl_game_status));
-                              animate_popup_open(id(game_popup), nullptr);
+                          - script.execute: tab5_marble_open
 
               # Réponse vocale IA (remplace le rotateur 8s le temps de l'affichage)
               - obj:
@@ -426,9 +424,7 @@ lvgl:
                         on_short_click:
                           - script.execute: tab5_central_panel_next
                         on_long_press:
-                          - lambda: |-
-                              Game::init(id(game_area), id(lbl_game_status));
-                              animate_popup_open(id(game_popup), nullptr);
+                          - script.execute: tab5_marble_open
 
               # Titre de page previsions (pages horaires / journalieres 2-3, masque sur accueil)
               - obj:
@@ -581,4 +577,4 @@ lvgl:
         - !include ui_components/pots_popup.yaml
         - !include ui_components/calendar_popup.yaml
         - !include ui_components/assistant_popup.yaml
-        - !include ui_components/game_popup.yaml
+        - !include ui_components/marble_game.yaml
