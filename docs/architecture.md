@@ -6,7 +6,7 @@
 
 ## Overview
 
-The ESPHome configuration is split into eight YAML packages imported by a single entry-point file. This avoids a monolithic file that becomes impossible to navigate once you're past 1000 lines. Each package has a clearly defined responsibility and can be edited, tested, or replaced in isolation.
+The ESPHome configuration is split into ten YAML packages imported by a single entry-point file. This avoids a monolithic file that becomes impossible to navigate once you're past 1000 lines. Each package has a clearly defined responsibility and can be edited, tested, or replaced in isolation.
 
 ### Push-only data flow
 
@@ -28,6 +28,7 @@ The root file does three things:
 
 ```yaml
 packages:
+  tab5_ui_tokens:  !include Tab5/tab5-ui-tokens.yaml
   tab5_hardware:   !include Tab5/tab5-hardware.yaml
   tab5_sensors_diagnostics: !include Tab5/tab5-sensors-diagnostics.yaml
   tab5_sensors_domotique: !include Tab5/tab5-sensors-domotique.yaml
@@ -36,6 +37,7 @@ packages:
   tab5_globals:    !include Tab5/tab5-globals.yaml
   tab5_scripts:    !include Tab5/tab5-scripts.yaml
   tab5_lvgl:       !include Tab5/tab5-lvgl.yaml
+  tab5_imu:        !include Tab5/tab5-imu.yaml
 ```
 
 ---
@@ -206,7 +208,7 @@ Same pattern applies to the hourly forecast (`tab5_maj_previsions_heures_bulk`) 
 
 ## Vue d'ensemble
 
-La configuration ESPHome est découpée en huit packages YAML importés par un fichier d'entrée unique. Cela évite un fichier monolithique qui devient impossible à naviguer au-delà de 1000 lignes. Chaque package a une responsabilité clairement définie et peut être édité, testé, ou remplacé de façon isolée.
+La configuration ESPHome est découpée en dix packages YAML importés par un fichier d'entrée unique. Cela évite un fichier monolithique qui devient impossible à naviguer au-delà de 1000 lignes. Chaque package a une responsabilité clairement définie et peut être édité, testé, ou remplacé de façon isolée.
 
 ### Flux push-only
 
@@ -367,3 +369,21 @@ Pour les prévisions journalières sur 15 jours, 15 × 4+ points de données (jo
 Le tokenizer C++ découpe sur `;` en un seul passage — O(n) sur la longueur de chaîne, pas O(n) sur le nombre d'appels. La mise à jour LVGL se fait ensuite une seule fois, de façon atomique, sans redraws intermédiaires.
 
 Même schéma pour les prévisions horaires (`tab5_maj_previsions_heures_bulk`) et le payload de vigilance Météo-France (`tab5_maj_alerte_meteo_france`, 11 champs délimités par `|`).
+
+---
+
+## 6. Game layer (Arcade — experimental)
+
+The 8 game consoles are **isolated sub-modules** that share no state with the HMI dashboard. They follow a strict architecture:
+
+- **Fullscreen overlay** 1280×720 — the only documented exception to the modal chrome rule (ADR-0009)
+- **YAML = empty containers** — each `*_game.yaml` declares only 2–4 `lv_obj` containers; all visual content is built in C++
+- **`lv_timer` lifecycle** — created on open, destroyed on close → zero CPU cost when no game is running
+- **Pre-allocated LVGL pool** — all sprites/labels created once at first open, then recycled via `show/hide` + `set_pos` → zero heap allocation in the game loop
+- **NVS persistence** — each game has its own save struct via `esphome::global_preferences` (magic-validated)
+- **Zero HA/network dependency** — games work fully offline
+- **Adaptive IMU polling** — `tab5-imu.yaml` switches from 100 ms (10 Hz) at rest to 33 ms (30 Hz) when a tilt-controlled game is open
+
+The C++ files are included via `esphome: includes:` in the entry point (not as packages). Each game lives in its own namespace (`Marble`, `Arkanoid`, `Pinball`, `Lode`, `Go`, `Trivia`, `Draughts`, `Chess`) with a uniform API: `open()`, `close()`, `is_open()`, `on_imu(ax, ay, az)`.
+
+> **Status: early prototypes.** These are first-pass AI-generated games to test embedded code generation capabilities — functional but not visually polished.

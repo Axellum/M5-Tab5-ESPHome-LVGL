@@ -4,6 +4,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-27 — Arcade : 7 consoles supplémentaires + sélecteur 4×2 + IMU adaptative
+- **Sélecteur Arcade** (`ui_components/game_selector.yaml`) : grille régulière 4×2 (8 cartes 298×252), ouverte par tap sur la température serre (`btn_serre_games` dans `climate_card.yaml`). Chaque carte ferme le jeu en cours, referme le sélecteur, puis ouvre la console cible.
+- **Arcanoïde** (`arkanoid_game.h/.cpp`) : casse-briques rétro Atari 8 niveaux, 3 vies, power-ups (élargir/rétrécir raquette, balle lente/rapide, multi-balles, colle, extra vie), combo multiplicateur, top 10 NVS (`ArkanoidSave`, magic `ARK1`). Contrôles : inclinaison BMI270 + boutons tactiles (mode « Les deux » par défaut).
+- **Flip Noir** (`pinball_game.h/.cpp`) : flipper style arcade 70-80's, 3 billes + bonus, 4 bumpers, 2 slingshots, 3 cibles drop, multiball, modes score (Bumper Frenzy, Target Mania), TILT anti-abus nudge, top 10 NVS (`PinballSave`, magic `PIN1`). Physique ~45 Hz.
+- **Coureur d'Or** (`lode_game.h/.cpp`) : Lode Runner 1983, 10 niveaux, creuser gauche/droite, grimper échelles, collecter l'or, fuir les gardes, 4 vies, record NVS (`LodeSave`, magic `LOD1`). D-pad tactile + boutons CREUSER.
+- **Go Tab** (`go_engine.h/.cpp` + `go_ai.h/.cpp` + `go_game.h/.cpp`) : jeu de Go 9×9/13×13/19×19, règles complètes (capture, suicide interdit, ko simple, score chinois + komi 6,5), 3 modes (vs Tab / vs joueur / Tab vs Tab), IA time-sliced (Débutant → Expert). NVS `GoSave`.
+- **Trial Poursuite** (`trivia_game.h` + `trivia_questions.h` + `trivia_game.cpp`) : quiz rétro-salon 1 à 6 équipes, banque de questions embarquée en flash (PROGMEM), catégories variées, score par équipe, NVS `TriviaSave`.
+- **Dames Tab** (`draughts_ai.h/.cpp` + `draughts_game.h/.cpp`) : dames internationales 10×10, règles complètes (prises majoritaires, rafles, dames), IA embarquée time-sliced, 3 modes, NVS `DraughtsSave`.
+- **Roi Noir** (`chess_ai.h/.cpp` + `chess_game.h/.cpp`) : échecs FIDE complets (roque, en passant, promotion, 50 coups, triple répétition, matériel insuffisant), IA négamax αβ + quiescence + killers, 5 niveaux (Pion → Roi, Elo fictif 600–1900), police dédiée `ChessPieces.ttf` (12 glyphes, rendu 2 calques), perft validé, NVS `ChessSave`. Empreinte : ~62 Ko `.text` + 46,5 Ko `.bss`.
+- **`tab5-imu.yaml`** (nouveau package) : BMI270 via plateforme `motion:` native ESPHome. Axes accélération `internal: true` (pas de publication HA). Cadence de poll adaptative : 100 ms au repos, 33 ms quand un jeu à inclinaison est ouvert (`stop_poller()`/`start_poller()`). Tap-to-wake (> 2,5 g, debounce 500 ms). Pitch/roll/temp throttlés 60 s pour diagnostic HA.
+- **`tab5-ui-tokens.yaml`** (nouveau package) : tokens dimensionnels partagés (`modal_card_w/h`, `modal_body_y`) pour le cadre modal v4.
+- **ESPHome `min_version: 2026.7.0`** : requis pour st7123 officiel (plus de `external_components`), audio zero-copy, VAD, PSRAM SDIO (`use_psram: true` sur `esp32_hosted`), composant `motion:` natif.
+- **CPU 360 MHz** : `CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_360` activé — marge supplémentaire pour la physique des jeux.
+- Architecture commune des 8 consoles : overlay plein écran 1280×720 (exception ADR-0009), YAML = conteneurs vides, tout en C++, `lv_timer` créé/détruit, pool LVGL préalloué, zéro allocation dans le tick, zéro dépendance HA/réseau.
+- **Statut : prototypes expérimentaux** — premier jet IA pour tester les capacités de génération de code sur hardware embarqué. Fonctionnels mais non finalisés visuellement.
+
 ### 2026-07-26 — « Fil d'Or » : roguelite de bille plein écran piloté au BMI270
 - **Nouveau module isolé** `Tab5/marble_game.h` + `Tab5/marble_game.cpp` (namespace `Marble`) + overlay `ui_components/marble_game.yaml`. Remplace le prototype précédent (namespace `Game`, 1 niveau, popup 800×500) qui est **supprimé** avec `game_popup.yaml`.
 - **Boucle roguelite complète** : hub → **6 salles** distinctes (Seuil / Couloirs / Forge / Sanctuaire / Némésis / Trône) → mort ou victoire → retour hub, pour des runs de 2 à 5 min. La salle 6 demande **3 runes** avant d'ouvrir un portail central gardé par deux orbes en orbite.
