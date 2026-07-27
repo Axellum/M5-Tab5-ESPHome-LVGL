@@ -3,8 +3,15 @@
 # @file go_game.yaml
 # @role Overlay PLEIN ÉCRAN du jeu « Go Tab ».
 # @architecture_constraint EXCEPTION ADR-0009 : pas de modal_scrim / header /
-#     croix. Flux 1280×720. Contenu = go_game.cpp (Go::Pal).
-# @ai_instruction 4 conteneurs vides. ORDRE : hud < field < panel.
+#     croix. Flux 1280×720. La sortie se fait par le menu (« Quitter »).
+# @ai_instruction Ce fichier ne déclare QUE 4 conteneurs VIDES. Tout le contenu
+#     (goban, pierres, coordonnées, HUD, panneau latéral, menus, carte de score)
+#     est construit par go_game.cpp via Go::open(). Ne JAMAIS ajouter de widget
+#     de gameplay ici, ni de couleur : les fonds sont posés en C++ depuis Go::Pal.
+#     ORDRE DES ENFANTS = ORDRE DE DESSIN : hud < field < panel.
+#     Géométrie vérifiée : hud 60 px, field 660 px (60 + 660 = 720), panel plein
+#     cadre. Le C++ suppose exactement ces valeurs (HUD_H / FIELD_H dans
+#     go_game.cpp) — ne pas en changer une sans changer l'autre.
 # ═══════════════════════════════════════════════════════
 obj:
   id: go_root
@@ -19,30 +26,35 @@ obj:
   radius: 0
   border_width: 0
   widgets:
+    # --- Bandeau HUD : pastille Noir, statut central, pastille Blanc ---------
+    # Cliquable : un appui pendant la partie ouvre le menu de pause.
     - obj:
         id: go_hud
         align: TOP_LEFT
         x: 0
         y: 0
         width: 1280
-        height: 48
+        height: 60
         scrollable: false
         pad_all: 0
         radius: 0
         border_width: 0
 
+    # --- Aire de jeu : goban à gauche, panneau latéral à droite -------------
     - obj:
         id: go_field
         align: TOP_LEFT
         x: 0
-        y: 48
+        y: 60
         width: 1280
-        height: 672
+        height: 660
         scrollable: false
         pad_all: 0
         radius: 0
         border_width: 0
 
+    # --- Calque des menus (plein cadre, rendu CLIQUABLE en C++ pour absorber
+    #     les taps qui traverseraient sinon jusqu'au goban) -------------------
     - obj:
         id: go_panel
         align: TOP_LEFT

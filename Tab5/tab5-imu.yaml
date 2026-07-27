@@ -123,11 +123,11 @@ interval:
     then:
       - lambda: |-
           static bool fast = false;
-          // « Roi Noir » est VOLONTAIREMENT absent de cette liste : il n'utilise
-          // l'IMU que pour détecter une secousse franche (demande d'indice), ce
-          // qui reste fiable à 10 Hz. Inutile de payer 30 Hz pendant une partie
-          // d'échecs, qui peut durer une demi-heure.
-          bool want = Marble::is_open() || Arkanoid::is_open() || Pinball::is_open() || Lode::is_open() || Go::is_open() || Trivia::is_open();
+          // « Roi Noir », « Dames » et « Go Tab » sont VOLONTAIREMENT absents de
+          // cette liste : ils n'utilisent l'IMU que pour détecter une secousse
+          // franche (demande d'indice), ce qui reste fiable à 10 Hz. Inutile de
+          // payer 30 Hz pendant une partie qui peut durer une demi-heure.
+          bool want = Marble::is_open() || Arkanoid::is_open() || Pinball::is_open() || Lode::is_open() || Trivia::is_open();
           if (want == fast) return;
           fast = want;
           id(tab5_imu).set_update_interval(want ? 33 : 100);
