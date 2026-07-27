@@ -18,7 +18,7 @@ There is a **single 1280×720 page** (`page_main`), not a tab-navigated set of s
 
 ![The single main page on the real device (July 2026)](images/tab5_photo_home.jpg)
 
-Overlays that open fullscreen on top of this: the **climate popup** (tap the compact climate card), the **light popup** (long-press a light shortcut), and the **TV remote popup** (`tv_remote_popup.yaml` — Samsung IR pad via HA `remote.*`, opened from the UI control that clears `LV_OBJ_FLAG_HIDDEN` on `tv_remote_popup`). A **system console** (memory/network/system diagnostics, volume, plus an HA management card: screen re-push, automation reload, HA restart and device reboot behind confirm overlays) opens via the console button (`btn_control_console`, top right) — not by swipe since the 14/07/2026 gesture rework.
+Overlays that open fullscreen on top of this: the **climate popup** (tap the compact climate card), the **light popup** (long-press a light shortcut), the **TV remote popup** (`tv_remote_popup.yaml` — Samsung IR pad via HA `remote.*`), the **assistant popup** (long-press on the mic zone — STT transcription + LLM reply in Markdown), the **calendar popup** (long-press on the clock — monthly grid with work hours), the **plant details popup** (long-press on moisture slots — 5 sensor cards), and the **Arcade selector** (tap on the greenhouse temperature — 4×2 grid of 8 game consoles). A **system console** (memory/network/system diagnostics, volume, plus an HA management card: screen re-push, automation reload, HA restart and device reboot behind confirm overlays) opens via the console button (`btn_control_console`, top right) — not by swipe since the 14/07/2026 gesture rework.
 
 ---
 
@@ -470,3 +470,87 @@ Deux endroits indépendants contrôlent le même volet, appelant tous deux `scri
 - La carte prévision "demain" de la **vue météo**, qui a à la fois l'inversion de sens (tap sur le titre) et le bouton d'action (tap sur l'icône) décrits ci-dessus
 
 Une globale `volet_en_mouvement` suit si le volet est en mouvement (un tap envoie `stop`) ; à l'arrêt, `volet_target_open` suit quel sens le prochain tap enverra (`open`/`close`). Les deux endroits lisent les mêmes deux globales, donc ils restent synchronisés entre eux.
+
+---
+
+## Popup Assistant vocal
+
+Ouvert par **appui long sur la zone micro** (`btn_assist_trigger`). Carte modale quasi plein écran (1250×690) organisée en deux colonnes :
+
+- **Gauche — Réglages** : sélecteur cerveau/pipeline (Domotique ↔ Discussion), toggle Ok Nabu ON/OFF, bouton Muet, slider Volume, taille de texte A-/A/A+ (persistée)
+- **Droite — Conversation** : zone « VOTRE DEMANDE » (transcription STT) + zone « RÉPONSE » défilante avec rendu Markdown (tableaux ré-alignés en monospace, gras, code, puces) + image téléchargée à la demande (`online_image`, PNG→RGB565, 760×360)
+
+En mode Discussion, une demande vocale ouvre automatiquement le popup (`on_stt_end` → `tab5_assist_on_request`). En mode Domotique, le bandeau central 8 s reste le retour rapide. Le moteur peut pousser une réponse riche via le service HA `tab5_assist_reponse` (variables `texte` = Markdown, `image_url` = PNG optionnel).
+
+Boutons bas : « Parler » (push-to-talk), Stop (carré rose), « Fermer ».
+
+![Popup Assistant vocal sur l'appareil réel](images/tab5_photo_assistant_popup.jpg)
+
+---
+
+## Popup Calendrier
+
+Ouvert par **appui long sur l'horloge/date** (`btn_clock_calendar_zone`, zone tactile invisible sur `clock_tile`). Carte modale 1250×690 :
+
+- **En-tête** : icône calendrier + titre « Calendrier », navigation ◀ mois ▶, bouton « Aujourd'hui », croix de fermeture
+- **Grille mensuelle 7×6** (lundi en tête) : 42 cellules templatisées (`cal_day_cell.yaml`) avec numéro du jour, **heures de travail** affichées dans la case, pastilles colorées (dorée = RDV, rose = anniversaire), fond violet doux = vacances scolaires, numéro rose = férié, bordure cyan = aujourd'hui
+- **Légende** en bas : Aujourd'hui / Travail / Férié / Vac. scolaires / RDV / Anniv.
+- **Tap sur un jour** → sous-popup détail 780×540 : titre « Mardi 21 Juillet », lignes typées (férié, vacances scolaires Zone A, horaires travail, RDV, anniversaire, fête civile) avec icônes MDI colorées
+
+La grille est calculée **localement** depuis SNTP (algorithme de Sakamoto). HA enrichit chaque mois à la demande via `tab5_maj_calendrier_mois` (bitmask 2 hex/jour + 31 champs d'heures) avec cache par mois.
+
+![Popup Calendrier sur l'appareil réel](images/tab5_photo_calendar.jpg)
+
+---
+
+## Popup Détails Plantes
+
+Ouvert par **appui long** sur les 4 slots pots du dashboard (`btn_pots_detail_zone`). Carte modale 1250×690 avec 5 cartes de verre **fixes** (carte N = capteur `moisture_N`) :
+
+- Nom du capteur + icône colorée par l'humidité
+- % humidité en `roboto_45_b`
+- Statut : OK / Bientôt sec / À arroser ! / Hors ligne
+- 4 métriques : Fertilité (EC µS/cm), Lumière (lx), Température (°C, gradient), Batterie (échelle couleur)
+
+Valeurs poussées en continu par `update_pots_popup_moisture_ui()` / `update_pot_metric_ui()` — aucune synchro à l'ouverture.
+
+---
+
+## Arcade — 8 consoles de jeu (expérimental)
+
+> **Statut : prototypes précoces.** Premiers jets générés par IA pour tester les capacités de LVGL + C++ sur ESP32-P4. Fonctionnels mais non finalisés — preuve de concept, pas produit fini.
+
+Ouvert par **tap sur la température serre** (`btn_serre_games` dans `climate_card.yaml`). Le sélecteur affiche une grille 4×2 de 8 cartes (298×252 chacune), avec icône MDI, nom du jeu, et description courte.
+
+![Sélecteur Arcade sur l'appareil réel](images/tab5_photo_arcade_selector.jpg)
+
+Chaque console est un overlay plein écran 1280×720 (exception documentée ADR-0009 — pas de chrome modal). Architecture commune : YAML = conteneurs vides, tout le contenu en C++, `lv_timer` créé à l'ouverture / détruit à la fermeture, pool LVGL préalloué (zéro allocation dans le tick), persistance NVS, **zéro dépendance HA ou réseau**.
+
+| # | Console | Description | Contrôles |
+|---|---------|-------------|----------|
+| 1 | **Fil d'Or** | Roguelite de bille, 6 salles, progression Dark Souls | Inclinaison BMI270 |
+| 2 | **Arcanoïde** | Casse-briques 8 niveaux, power-ups, combo | Inclinaison + tactile |
+| 3 | **Flip Noir** | Flipper arcade, multiball, TILT | Touch zones + nudge IMU |
+| 4 | **Coureur d'Or** | Lode Runner 10 niveaux, creuser & grimper | D-pad tactile |
+| 5 | **Go Tab** | Go 9×9/13×13/19×19, score chinois, IA | Tactile |
+| 6 | **Trial Poursuite** | Quiz 1–6 équipes, questions en flash | Tactile |
+| 7 | **Dames Tab** | Dames 10×10, règles internationales, IA | Tactile |
+| 8 | **Roi Noir** | Échecs FIDE, 5 niveaux IA, perft validé | Tactile |
+
+| Roi Noir (échecs) | Arcanoïde (casse-briques) |
+|:-:|:-:|
+| ![Chess](images/tab5_photo_chess.jpg) | ![Arkanoid](images/tab5_photo_arkanoid.jpg) |
+
+| Coureur d'Or (Lode Runner) |
+|:-:|
+| ![Lode Runner](images/tab5_photo_lode_runner.jpg) |
+
+Sortie de chaque jeu : hub → « Quitter » (retour dashboard propre : timer arrêté, overlay masqué, score sauvegardé en NVS).
+
+→ Détails techniques complets par jeu : [`Tab5/README.md`](../Tab5/README.md#arcade--les-8-consoles)
+
+---
+
+## Version Française
+
+Cette page décrit ce que le Tab5 affiche et fait réellement — vérifié contre le firmware le 2026-07-06, re-vérifié le 14/07/2026, complété le 27/07/2026 (popups assistant/calendrier/plantes, section Arcade avec 8 consoles, photos appareil réel).

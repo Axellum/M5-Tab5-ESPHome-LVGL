@@ -2,9 +2,9 @@
 
 > **[AI-CONTEXT] PRÉSENTATION ET RÔLE DE CE FICHIER**
 > Ce fichier est la cartographie officielle du projet Tab5. Il a été créé **spécifiquement pour guider les agents IA** (Claude, Gemini, etc.) dans leur compréhension de l'architecture du firmware.
-> Au lieu de lire et d'analyser à l'aveugle les dizaines de fichiers YAML et C++, **l'IA doit lire cette cartographie en premier**. Elle y trouvera l'arbre des dépendances (8 packages YAML), la répartition des rôles entre le YAML et le C++, ainsi que l'historique des bugs résolus et de la dette technique. Cela évite les hallucinations et le temps perdu en rétro-ingénierie.
+> Au lieu de lire et d'analyser à l'aveugle les dizaines de fichiers YAML et C++, **l'IA doit lire cette cartographie en premier**. Elle y trouvera l'arbre des dépendances (10 packages YAML + 8 modules jeux C++), la répartition des rôles entre le YAML et le C++, ainsi que l'historique des bugs résolus et de la dette technique. Cela évite les hallucinations et le temps perdu en rétro-ingénierie.
 
-`Généré le 2026-07-06` · `maj: 2026-07-19` · Sources vérifiées directement dans le code (`00ProjetTab/`), croisées avec `Tab5/README.md` (réécrit le 05/07/2026 contre le firmware réel), `contexte_ia/04_Projets/etat_tab5.md` et `contexte_ia/02_Hardware/rules_esphome.md`. Aucun fait ci-dessous n'est tiré d'une supposition — chaque ligne cite le fichier source lu.
+`Généré le 2026-07-06` · `maj: 2026-07-27` · Sources vérifiées directement dans le code (`00ProjetTab/`), croisées avec `Tab5/README.md` (réécrit le 05/07/2026 contre le firmware réel), `contexte_ia/04_Projets/etat_tab5.md` et `contexte_ia/02_Hardware/rules_esphome.md`. Aucun fait ci-dessous n'est tiré d'une supposition — chaque ligne cite le fichier source lu.
 
 Repo Git distinct : `Axellum/M5-Tab5-ESPHome-LVGL` (dossier local `00ProjetTab/`), branche `main`.
 
@@ -12,7 +12,7 @@ Repo Git distinct : `Axellum/M5-Tab5-ESPHome-LVGL` (dossier local `00ProjetTab/`
 
 ## 1. Vue d'ensemble en une phrase
 
-Un tableau de bord domotique 60 FPS + satellite vocal local tournant **entièrement en firmware C++/LVGL** sur un M5Stack Tab5 V2 (ESP32-P4), architecture **YAML modulaire par domaine** (8 packages + `ui_components/`), **push-only** depuis Home Assistant (zéro polling), avec toute la logique non-triviale centralisée dans deux fichiers C++ (`tab5_custom.h/.cpp`).
+Un tableau de bord domotique 60 FPS + satellite vocal local + **8 consoles de jeu arcade** (prototypes expérimentaux) tournant **entièrement en firmware C++/LVGL** sur un M5Stack Tab5 V2 (ESP32-P4), architecture **YAML modulaire par domaine** (10 packages + `ui_components/`), **push-only** depuis Home Assistant (zéro polling), avec la logique HMI centralisée dans `tab5_custom.h/.cpp` et chaque jeu dans son propre namespace C++ isolé.
 
 ---
 
@@ -20,59 +20,67 @@ Un tableau de bord domotique 60 FPS + satellite vocal local tournant **entièrem
 
 ```mermaid
 graph TD
-    ENTRY["tab5-ha-hmi.yaml<br/>(point d'entrée, 130 lignes)<br/>substitutions (user_entities) + on_boot + packages:"]
+    ENTRY["tab5-ha-hmi.yaml<br/>(point d'entrée, 169 lignes)<br/>substitutions (user_entities) + on_boot + packages: + includes:"]
 
-    subgraph PKG["Packages ESPHome (Tab5/*.yaml)"]
-        HW["tab5-hardware.yaml<br/>376 lignes<br/>display/touch/i2c/audio/esp32_hosted/wake words (okay_nabu + Stop)/ota:"]
+    subgraph PKG["Packages ESPHome (Tab5/*.yaml) — 10 packages"]
+        TOK["tab5-ui-tokens.yaml<br/>tokens dimensionnels (modal_card_w/h, modal_body_y)"]
+        HW["tab5-hardware.yaml<br/>448 lignes<br/>display/touch/i2c/audio/esp32_hosted/wake words (okay_nabu + Stop)/ota:"]
         SENSD["tab5-sensors-diagnostics.yaml<br/>287 lignes<br/>wifi:/alim GPIO/status_ha/uptime/RAM/loop time/select:/time:/interval:"]
         SENSO["tab5-sensors-domotique.yaml<br/>409 lignes<br/>plantes/lumières (+brightness live)/PC/températures/batterie/audio"]
         API["tab5-api-logic.yaml<br/>484 lignes<br/>api: services: (contrat HA, 14 services)"]
-        STY["tab5-styles.yaml<br/>339 lignes<br/>color:/font:/lvgl: style_definitions"]
+        STY["tab5-styles.yaml<br/>339 lignes<br/>color:/font:/lvgl: style_definitions + chess_pieces_80"]
         GLOB["tab5-globals.yaml<br/>168 lignes<br/>globals: + rotateur carte centrale (8s, planning/pluie/alertes/info + 4 bandeaux HA)"]
-        SCR["tab5-scripts.yaml<br/>726 lignes<br/>script: debounces (volume/lumière/clim) + vocal (Stop, interrupt) + rotateur/dismiss + volet + popup lumière + popup calendrier + popup assistant"]
-        LVGL["tab5-lvgl.yaml<br/>575 lignes<br/>page_main + swipe prévisions + btns console/TV"]
+        SCR["tab5-scripts.yaml<br/>726+ lignes<br/>script: debounces + vocal + rotateur/dismiss + volet + popups + jeux open/close"]
+        LVGL["tab5-lvgl.yaml<br/>575+ lignes<br/>page_main + swipe prévisions + btns console/TV + !include jeux + sélecteur arcade"]
+        IMU["tab5-imu.yaml<br/>136 lignes<br/>BMI270 motion: + poll adaptatif 10/30Hz + tap-to-wake"]
     end
 
-    subgraph UI["ui_components/*.yaml (21 fichiers, inclus par tab5-lvgl.yaml)"]
+    subgraph UI["ui_components/*.yaml (30+ fichiers, inclus par tab5-lvgl.yaml)"]
         MOIST["moisture_sensors.yaml (64L)"]
-        POTSPOP["pots_popup.yaml (74L)<br/>pot_detail_card.yaml (81L, template ×5)<br/>détails plantes : humidité/statut + EC/lux/temp/batterie"]
-        CALPOP["calendar_popup.yaml (275L)<br/>cal_day_cell.yaml (44L, template ×42)<br/>calendrier mensuel : travail/fériés/vacances scolaires/RDV + détail jour"]
+        POTSPOP["pots_popup.yaml + pot_detail_card.yaml<br/>détails plantes : humidité/statut + EC/lux/temp/batterie"]
+        CALPOP["calendar_popup.yaml + cal_day_cell.yaml<br/>calendrier mensuel + détail jour"]
         CLIMCARD["climate_card.yaml (104L)"]
-        CLIMPOP["climate_popup.yaml (327L)<br/>3 cartes de verre : MODE / TEMPÉRATURE / OPTIONS"]
-        CLIMBTN["climate_hvac_mode_btn.yaml (21L)<br/>climate_preset_toggle_btn.yaml (21L)<br/>templates paramétrés !include+vars"]
+        CLIMPOP["climate_popup.yaml (327L)"]
         FDAILY["forecast_daily.yaml (261L)"]
-        FDTAB["forecast_day_title_tab.yaml (14L)<br/>forecast_day_temp_tab.yaml (35L)<br/>templates paramétrés"]
-        FHOUR["forecast_hourly.yaml (26L)<br/>forecast_hour_card.yaml (73L)"]
+        FHOUR["forecast_hourly.yaml + forecast_hour_card.yaml"]
         SWCARD["switches_card.yaml (204L)"]
-        SWTAB["switch_card_title_tab.yaml (10L)<br/>switch_card_state_tab.yaml (11L)"]
-        CONSOLE["console_sys.yaml (415L)<br/>4 cartes : diagnostics + volume + gestion HA (overlays de confirmation)"]
+        CONSOLE["console_sys.yaml (415L)"]
         LIGHTPOP["light_popup.yaml (403L)"]
-        LIGHTBTN["light_color_preset_btn.yaml (25L)"]
-        TVPOP["tv_remote_popup.yaml (394L)<br/>télécommande Samsung plein écran (remote.* via HA)"]
+        TVPOP["tv_remote_popup.yaml (394L)"]
+        ASSISTPOP["assistant_popup.yaml<br/>transcription STT + réponse Markdown + image"]
+        MODAL["modal_header.yaml + modal_scrim.yaml<br/>chrome partagé v4 (ADR-0009)"]
+        GAMES["8× *_game.yaml + game_selector.yaml<br/>overlays plein écran arcade (exception ADR-0009)"]
     end
 
-    subgraph CPP["C++ (esphome: includes:)"]
-        HFILE["tab5_custom.h (422L)<br/>déclarations, structs (CentralPanelCtx, Weather*Slot, UIColor::, MeteoIcon::)"]
-        CFILE["tab5_custom.cpp (2086L)<br/>toute la logique LVGL non-triviale"]
+    subgraph CPP["C++ HMI (esphome: includes:)"]
+        HFILE["tab5_custom.h (422L)<br/>CentralPanelCtx, Weather*Slot, UIColor::, MeteoIcon::"]
+        CFILE["tab5_custom.cpp (2086L)<br/>logique LVGL HMI non-triviale"]
     end
 
-    subgraph HWCOMP["Composants matériels (natifs + custom)"]
-        MIPIDSI["display: mipi_dsi<br/>M5STACK-TAB5-V2, 1280×720, 16bit RGB565"]
-        ST7123TOUCH["my_components/st7123/touchscreen/<br/>st7123_touchscreen.cpp/.h<br/>(composant custom I2C, ACTIF)"]
-        PI4IOE["pi4ioe5v6408 ×2 (pi4ioe1/pi4ioe2)<br/>GPIO expander I2C — reset écran/tactile, alim WiFi/ampli"]
-        ES8388["audio_dac: es8388 (sortie haut-parleur)"]
-        ES7210["audio_adc: es7210 (entrée micro)"]
-        HOSTED["esp32_hosted (co-proc esp32c6, WiFi via SDIO 20MHz)"]
-        MWW["micro_wake_word (okay_nabu, TFLite local)"]
+    subgraph GAMESCPP["C++ Jeux (esphome: includes: — prototypes expérimentaux)"]
+        MARBLE["marble_game.h/.cpp (1928L)<br/>namespace Marble — roguelite bille"]
+        ARKA["arkanoid_game.h/.cpp (1448L)<br/>namespace Arkanoid — casse-briques"]
+        PIN["pinball_game.h/.cpp (1360L)<br/>namespace Pinball — flipper"]
+        LODE["lode_game.h/.cpp (1917L)<br/>namespace Lode — Lode Runner"]
+        GO["go_engine/ai/game .h/.cpp<br/>namespace Go — jeu de Go"]
+        TRIV["trivia_game.h/.cpp + trivia_questions.h<br/>namespace Trivia — quiz"]
+        DRA["draughts_ai/game .h/.cpp<br/>namespace Draughts — dames 10×10"]
+        CHESS["chess_ai/game .h/.cpp<br/>namespace Chess — échecs FIDE"]
+    end
+
+    subgraph HWCOMP["Composants matériels"]
+        MIPIDSI["display: mipi_dsi 1280×720"]
+        ST7123TOUCH["st7123 touchscreen (natif ESPHome 2026.7)"]
+        PI4IOE["pi4ioe5v6408 ×2 (GPIO expander I2C)"]
+        ES8388["audio_dac: es8388"]
+        ES7210["audio_adc: es7210"]
+        HOSTED["esp32_hosted (esp32c6, SDIO, PSRAM)"]
+        BMI270["BMI270 IMU (motion: natif)"]
+        MWW["micro_wake_word (okay_nabu + Stop)"]
         VA["voice_assistant (pipeline HA)"]
     end
 
-    subgraph HASIDE["Côté Home Assistant (HomeAssistant_Config/, gitignoré=config réelle)"]
-        AUTO["automations_tab5.yaml (468L, gitignoré)<br/>push météo/clim/planning/alertes/plantes"]
-        SCRHA["scripts_tab5.yaml (100L, gitignoré)"]
-        TPLHA["template_sensors_meteo_tab5.yaml (49L, gitignoré)"]
-    end
-
+    ENTRY -->|packages:| TOK
     ENTRY -->|packages:| HW
     ENTRY -->|packages:| SENSD
     ENTRY -->|packages:| SENSO
@@ -81,10 +89,18 @@ graph TD
     ENTRY -->|packages:| GLOB
     ENTRY -->|packages:| SCR
     ENTRY -->|packages:| LVGL
+    ENTRY -->|packages:| IMU
     ENTRY -->|includes:| HFILE
     ENTRY -->|includes:| CFILE
+    ENTRY -->|includes:| MARBLE
+    ENTRY -->|includes:| ARKA
+    ENTRY -->|includes:| PIN
+    ENTRY -->|includes:| LODE
+    ENTRY -->|includes:| GO
+    ENTRY -->|includes:| TRIV
+    ENTRY -->|includes:| DRA
+    ENTRY -->|includes:| CHESS
 
-    HW -->|external_components:<br/>path local| ST7123TOUCH
     HW --> MIPIDSI
     HW --> PI4IOE
     HW --> ES8388
@@ -92,8 +108,15 @@ graph TD
     HW --> HOSTED
     HW --> MWW
     HW --> VA
-    ST7123TOUCH -->|reset_pin via| PI4IOE
-    MIPIDSI -->|reset_pin via| PI4IOE
+    IMU --> BMI270
+    IMU -->|on_imu| MARBLE
+    IMU -->|on_imu| ARKA
+    IMU -->|on_imu| PIN
+    IMU -->|on_imu| LODE
+    IMU -->|on_imu| GO
+    IMU -->|on_imu| TRIV
+    IMU -->|on_imu| CHESS
+    IMU -->|on_imu| DRA
 
     LVGL --> MOIST
     LVGL --> CLIMCARD
@@ -103,22 +126,13 @@ graph TD
     LVGL --> CONSOLE
     LVGL --> CLIMPOP
     LVGL --> LIGHTPOP
-
-    CLIMPOP -->|!include+vars| CLIMBTN
-    FDAILY -->|!include+vars| FDTAB
-    FHOUR -->|!include+vars| FHOUR
-    SWCARD -->|!include+vars| SWTAB
-    LIGHTPOP -->|!include+vars| LIGHTBTN
+    LVGL --> ASSISTPOP
+    LVGL --> GAMES
 
     LVGL -->|lambdas appellent| CFILE
     API -->|lambdas appellent| CFILE
     SENSD -->|lambdas appellent| CFILE
     SENSO -->|lambdas appellent| CFILE
-    UI -->|lambdas appellent| CFILE
-    GLOB -->|lambda transition_widgets| CFILE
-
-    AUTO -->|homeassistant.service<br/>tab5_maj_*| API
-    API -->|expose api: services:| AUTO
 ```
 
 ---

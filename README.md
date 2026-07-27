@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![ESPHome](https://img.shields.io/badge/ESPHome-≥2025.9.3-blue)](https://esphome.io)
+[![ESPHome](https://img.shields.io/badge/ESPHome-≥2026.7.0-blue)](https://esphome.io)
 [![Build](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/workflows/esphome-tab5.yml/badge.svg)](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/workflows/esphome-tab5.yml)
 [![LVGL](https://img.shields.io/badge/LVGL-8.4-green)](https://lvgl.io)
 [![Home Assistant](https://img.shields.io/badge/Home_Assistant-Push_Events-orange)](https://www.home-assistant.io)
@@ -100,6 +100,10 @@ A single 1280×720 page organized in functional areas, all driven by Home Assist
 - **Lights** — near-fullscreen popup in 3 glass cards: 3-light selector (switch lights without closing the popup), live-% brightness arc (debounced) with 10/35/65/100 % shortcuts, 3 named whites + 12 round color swatches
 - **Plants** — soil moisture card for up to 5 BLE plant sensors, dynamically sorted, color-coded by level (red = dry, green = optimal, blue = too wet); a long press opens a 5-card detail popup (moisture + watering status, fertility, light, temperature, sensor battery)
 - **Console** — diagnostics + HA management overlay (RAM/PSRAM, Wi-Fi, uptime, volume, re-push screen, reload automations, restart HA / reboot tablet behind confirm), opened via its dedicated button
+- **Arcade** — 8 fullscreen game consoles (experimental prototypes — first-pass AI-generated code to test what's possible on an ESP32-P4): **Fil d'Or** (marble roguelite, tilt-controlled), **Arcanoïde** (Breakout clone), **Flip Noir** (pinball), **Coureur d'Or** (Lode Runner), **Go Tab** (Go 9×9/13×13/19×19), **Trial Poursuite** (trivia quiz), **Dames Tab** (draughts 10×10), **Roi Noir** (FIDE chess with embedded AI). All 100% local, zero HA/network dependency, NVS persistence. Opened via a 4×2 selector grid triggered by tapping the greenhouse temperature
+- **Popup Assistant** — near-fullscreen modal showing the STT transcription ("Your request") and the LLM reply rendered as Markdown (tables, bold, code, images downloaded on demand); left panel = settings (brain selector Domotique/Discussion, Ok Nabu toggle, volume, text size A-/A/A+)
+- **Popup Calendar** — monthly 7×6 grid computed locally from SNTP; work hours inside cells, color-coded markers (public holidays, school holidays, appointments, birthdays); tap a day for a detail sub-popup; HA enriches on demand
+- **Popup Plant Details** — 5 fixed glass cards (one per BLE sensor) showing soil moisture %, watering status, fertility (EC µS/cm), light (lx), temperature, battery — opened by long-press on the dashboard moisture slots
 
 **Voice assistant** — runs `okay_nabu` wake-word detection locally on the ESP32-P4. The microphone icon changes color to show the pipeline state in real time: grey (idle) → green (listening) → orange (processing) → blue (speaking) → red (error). Wake-word detection can be toggled on/off from the UI; tapping the mic icon triggers push-to-talk. A second on-device wake word — **"Stop"** — is armed only while the roller shutter is moving and halts it instantly, with no wake phrase and no pipeline round-trip; tapping the mic while the assistant is speaking interrupts the reply and re-opens listening. Two modes selectable from the UI: standard Home Assistant agent, or a **Discussion** pipeline backed by [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) (local STT/TTS via Wyoming, engine routing for deterministic HA commands vs LLM chat).
 
@@ -109,10 +113,45 @@ A single 1280×720 page organized in functional areas, all driven by Home Assist
 
 ---
 
+## Arcade — 8 game consoles (experimental)
+
+> **Status: early prototypes.** These are first-pass, AI-generated games built to test what LVGL + C++ can do on an ESP32-P4 at 60 FPS. They are functional but not polished — think "proof of concept" rather than "finished product." The goal was to see how far AI code generation can go on embedded hardware, not to ship retail-quality games.
+
+All 8 consoles share the same architecture: fullscreen 1280×720 overlay (the only documented exception to the modal chrome rule — ADR-0009), YAML reduced to empty containers, all content built in C++, `lv_timer` created on open / destroyed on close, NVS persistence, **zero Home Assistant or network dependency**.
+
+| # | Console | Type | Controls |
+|---|---------|------|----------|
+| 1 | **Fil d'Or** | Marble roguelite (6 rooms, Dark Souls-style progression) | Tilt (BMI270) |
+| 2 | **Arcanoïde** | Breakout / Arkanoid (8 levels, power-ups) | Tilt + touch |
+| 3 | **Flip Noir** | Pinball (bumpers, multiball, tilt) | Touch zones + IMU nudge |
+| 4 | **Coureur d'Or** | Lode Runner (10 levels, dig & climb) | Touch D-pad |
+| 5 | **Go Tab** | Go 9×9 / 13×13 / 19×19 (Chinese scoring, komi 6.5) | Touch |
+| 6 | **Trial Poursuite** | Trivia quiz (1–6 teams, retro living-room style) | Touch |
+| 7 | **Dames Tab** | Draughts 10×10 (international rules, embedded AI) | Touch |
+| 8 | **Roi Noir** | FIDE chess (full rules, 5 AI levels, perft-validated) | Touch |
+
+![Arcade selector](docs/images/tab5_photo_arcade_selector.jpg)
+
+| Roi Noir (chess) | Arcanoïde (breakout) |
+|:-:|:-:|
+| ![Chess](docs/images/tab5_photo_chess.jpg) | ![Arkanoid](docs/images/tab5_photo_arkanoid.jpg) |
+
+| Coureur d'Or (Lode Runner) | Calendar popup |
+|:-:|:-:|
+| ![Lode Runner](docs/images/tab5_photo_lode_runner.jpg) | ![Calendar](docs/images/tab5_photo_calendar.jpg) |
+
+| Assistant popup (Discussion mode) |
+|:-:|
+| ![Assistant](docs/images/tab5_photo_assistant_popup.jpg) |
+
+→ Full technical details per game: [`Tab5/README.md`](Tab5/README.md#arcade--les-8-consoles)
+
+---
+
 ## Key design decisions
 
 - **Push-only, zero polling.** The device never requests state from Home Assistant. Automations on the HA side detect changes and push data to the screen via native ESPHome service calls. CPU stays near zero when nothing changes.
-- **Modular YAML.** The ESPHome configuration is split across eight files by concern (hardware, diagnostics sensors, home-automation sensors, API logic, styles, UI, globals, scripts). Each file stays under ~600 lines and is independently readable.
+- **Modular YAML.** The ESPHome configuration is split across ten files by concern (tokens, hardware, diagnostics sensors, home-automation sensors, API logic, styles, UI, globals, scripts, IMU). Each file stays under ~600 lines and is independently readable.
 - **Native LVGL, no web stack.** Rendering runs at 60 FPS directly in the ESP32-P4's PSRAM. Vector fonts (Material Design Icons) replace image files entirely.
 - **Data packing.** Complex payloads (15-day forecast, hourly forecast, weather alerts) are serialized as delimited strings on the HA side and parsed in C++ on the device — one network call, zero subsequent requests.
 - **Offline resilience.** All C++ lambdas check `api.connected()` and `has_state()` before touching the UI. If HA restarts, the last known state stays on screen.
@@ -191,17 +230,27 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 ├── tab5-ha-hmi.yaml          # Entry point — includes user_entities + packages
 ├── Tab5/
 │   ├── user_entities.example.yaml  # Public template (copy → user_entities.yaml)
+│   ├── tab5-ui-tokens.yaml   # Shared dimensional tokens (modal sizes)
 │   ├── tab5-hardware.yaml    # Display (MIPI-DSI), touch, I2C, audio, OTA
 │   ├── tab5-sensors-diagnostics.yaml  # System entities (Wi-Fi, power, uptime, RAM)
 │   ├── tab5-sensors-domotique.yaml    # HA entities (plants, lights, temps, audio)
 │   ├── tab5-api-logic.yaml   # HA service handlers + C++ lambdas
 │   ├── tab5-styles.yaml      # Global LVGL style definitions
-│   ├── tab5-lvgl.yaml        # UI layout — screens, widgets, icons
+│   ├── tab5-lvgl.yaml        # UI layout — screens, widgets, icons, game includes
 │   ├── tab5-globals.yaml     # Shared global variables
 │   ├── tab5-scripts.yaml     # ESPHome script blocks
-│   ├── ui_components/        # 19 reusable LVGL components (popups, cards, buttons)
-│   ├── tab5_custom.h         # C++ declarations
-│   └── tab5_custom.cpp       # C++ implementations (parsers, helpers)
+│   ├── tab5-imu.yaml         # BMI270 IMU — adaptive polling + tap-to-wake
+│   ├── ui_components/        # 30+ reusable LVGL components (popups, cards, games)
+│   ├── tab5_custom.h         # C++ declarations (HMI logic)
+│   ├── tab5_custom.cpp       # C++ implementations (parsers, helpers)
+│   ├── marble_game.h/.cpp    # Game: Fil d'Or (marble roguelite)
+│   ├── arkanoid_game.h/.cpp  # Game: Arcanoïde (breakout)
+│   ├── pinball_game.h/.cpp   # Game: Flip Noir (pinball)
+│   ├── lode_game.h/.cpp      # Game: Coureur d'Or (Lode Runner)
+│   ├── go_engine/ai/game.*   # Game: Go Tab (Go)
+│   ├── trivia_game.h/.cpp    # Game: Trial Poursuite (quiz)
+│   ├── draughts_ai/game.*    # Game: Dames Tab (draughts)
+│   └── chess_ai/game.*       # Game: Roi Noir (chess)
 ├── HomeAssistant_Config/     # Automations, scripts, template sensors for HA
 ├── tools/demo/               # Standalone demo pusher (no HA required)
 └── docs/                     # Extended documentation
@@ -288,7 +337,7 @@ L'interface est compilée en C++ et embarquée dans le firmware de l'appareil. E
 ## Choix de conception
 
 - **Push uniquement, zéro polling.** L'appareil ne demande jamais son état à Home Assistant. Les automations côté HA détectent les changements et poussent les données vers l'écran via des appels de service ESPHome natifs. Le CPU reste proche de zéro quand rien ne change.
-- **YAML modulaire.** La configuration ESPHome est découpée en huit fichiers par domaine (hardware, capteurs diagnostics, capteurs domotique, logique API, styles, UI, globales, scripts). Chaque fichier reste sous ~600 lignes et est lisible indépendamment.
+- **YAML modulaire.** La configuration ESPHome est découpée en dix fichiers par domaine (tokens, hardware, capteurs diagnostics, capteurs domotique, logique API, styles, UI, globales, scripts, IMU). Chaque fichier reste sous ~600 lignes et est lisible indépendamment.
 - **LVGL natif, pas de stack web.** Le rendu tourne à 60 FPS directement dans la PSRAM de l'ESP32-P4. Les polices vectorielles (Material Design Icons) remplacent complètement les fichiers image.
 - **Compression de données.** Les payloads complexes (prévisions 15 jours, prévisions horaires, alertes météo) sont sérialisés en chaînes délimitées côté HA et parsés en C++ sur l'appareil — un seul appel réseau, zéro requête suivante.
 - **Résilience hors-ligne.** Toutes les lambdas C++ vérifient `api.connected()` et `has_state()` avant de toucher l'UI. Si HA redémarre, le dernier état connu reste affiché.
@@ -308,12 +357,37 @@ Une page unique 1280×720 organisée en zones fonctionnelles, toutes alimentées
 - **Lumières** — popup quasi plein écran en 3 cartes de verre : sélecteur 3 lumières (changer de lumière sans fermer le popup), arc de luminosité avec % en direct (débouncé) et raccourcis 10/35/65/100 %, 3 blancs nommés + 12 pastilles couleur rondes
 - **Plantes** — carte d'humidité du sol pour jusqu'à 5 capteurs BLE, triés dynamiquement, code couleur par niveau (rouge = sec, vert = optimal, bleu = trop humide) ; un appui long ouvre un popup détail à 5 cartes (humidité + statut d'arrosage, fertilité, lumière, température, batterie du capteur)
 - **Console** — overlay diagnostics + gestion HA (RAM/PSRAM, Wi-Fi, uptime, volume, re-pousse écran, reload automations, restart HA / reboot tablette derrière confirmation), ouvert via son bouton dédié
+- **Arcade** — 8 consoles de jeu plein écran (prototypes expérimentaux — premier jet généré par IA pour tester ce qu'un ESP32-P4 peut faire) : **Fil d'Or** (roguelite de bille, pilotage inclinaison), **Arcanoïde** (casse-briques), **Flip Noir** (flipper), **Coureur d'Or** (Lode Runner), **Go Tab** (Go 9×9/13×13/19×19), **Trial Poursuite** (quiz), **Dames Tab** (dames 10×10), **Roi Noir** (échecs FIDE avec IA embarquée). Tous 100 % locaux, zéro dépendance HA/réseau, persistance NVS. Ouverts via une grille sélecteur 4×2 déclenchée par tap sur la température serre
+- **Popup Assistant** — modal quasi plein écran affichant la transcription STT (« Votre demande ») et la réponse LLM rendue en Markdown (tableaux, gras, code, images téléchargées à la demande) ; panneau gauche = réglages (sélecteur cerveau Domotique/Discussion, Ok Nabu ON/OFF, volume, taille texte A-/A/A+)
+- **Popup Calendrier** — grille mensuelle 7×6 calculée localement depuis SNTP ; heures de travail dans les cases, marqueurs colorés (fériés, vacances scolaires, RDV, anniversaires) ; tap sur un jour = sous-popup détail ; HA enrichit à la demande
+- **Popup Détails Plantes** — 5 cartes de verre fixes (une par capteur BLE) : humidité sol %, statut arrosage, fertilité (EC µS/cm), lumière (lx), température, batterie — ouvert par appui long sur les slots humidité du dashboard
 
 **Assistant vocal** — détection wake-word `okay_nabu` en local sur l’ESP32-P4. L’icône micro change de couleur : gris (repos) → vert (écoute) → orange (traitement) → bleu (synthèse) → rouge (erreur). Wake-word on/off depuis l’UI ; tap micro = push-to-talk. Un second wake word local — **« Stop »** — n’est armé que pendant que le volet bouge et l’arrête instantanément, sans phrase d’activation ni aller-retour pipeline ; un tap sur le micro pendant que l’assistant parle interrompt la réponse et relance l’écoute. Deux modes : agent Home Assistant standard, ou pipeline **Discussion** branché sur [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) (STT/TTS locaux Wyoming, routage moteur pour commandes HA déterministes vs chat LLM).
 
 **Volets roulants** — des boutons de script sur l'écran d'accueil envoient des commandes ouvrir/fermer/position aux entités cover de Home Assistant.
 
 → Description écran par écran : [`docs/screens.md`](docs/screens.md)
+
+---
+
+## Arcade — 8 consoles de jeu (expérimental)
+
+> **Statut : prototypes précoces.** Ce sont des jeux générés par IA en premier jet, construits pour tester ce que LVGL + C++ peut faire sur un ESP32-P4 à 60 FPS. Ils sont fonctionnels mais non finalisés — pensez « preuve de concept » plutôt que « produit fini ». L'objectif était de voir jusqu'où la génération de code par IA peut aller sur du hardware embarqué, pas de livrer des jeux qualité retail.
+
+Les 8 consoles partagent la même architecture : overlay plein écran 1280×720 (seule exception documentée à la règle du chrome modal — ADR-0009), YAML réduit à des conteneurs vides, tout le contenu construit en C++, `lv_timer` créé à l'ouverture / détruit à la fermeture, persistance NVS, **zéro dépendance Home Assistant ou réseau**.
+
+| # | Console | Type | Contrôles |
+|---|---------|------|----------|
+| 1 | **Fil d'Or** | Roguelite de bille (6 salles, progression façon Dark Souls) | Inclinaison (BMI270) |
+| 2 | **Arcanoïde** | Casse-briques / Arkanoid (8 niveaux, power-ups) | Inclinaison + tactile |
+| 3 | **Flip Noir** | Flipper (bumpers, multiball, tilt) | Zones tactiles + nudge IMU |
+| 4 | **Coureur d'Or** | Lode Runner (10 niveaux, creuser & grimper) | D-pad tactile |
+| 5 | **Go Tab** | Go 9×9 / 13×13 / 19×19 (score chinois, komi 6,5) | Tactile |
+| 6 | **Trial Poursuite** | Quiz rétro-salon (1 à 6 équipes) | Tactile |
+| 7 | **Dames Tab** | Dames 10×10 (règles internationales, IA embarquée) | Tactile |
+| 8 | **Roi Noir** | Échecs FIDE (règles complètes, 5 niveaux d'IA, validé perft) | Tactile |
+
+→ Détails techniques par jeu : [`Tab5/README.md`](Tab5/README.md#arcade--les-8-consoles)
 
 ---
 
