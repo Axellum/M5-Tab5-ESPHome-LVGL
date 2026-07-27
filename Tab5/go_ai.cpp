@@ -346,6 +346,21 @@ static int gen_cands(const Pos& p, Cand* out, int max_out, int noise) {
     return nout;
 }
 
+// Filet de sécurité : si gen_cands a tout filtré (coups trop loin, yeux…),
+// on retombe sur les coups strictement légaux. Sans ça, Ai::begin passerait
+// alors qu'il reste des coups jouables — Bugbot #72.
+static int fill_legal_fallback(const Pos& p, Cand* out, int max_out) {
+    int moves[MAX_SQ];
+    const int nm = Engine::gen_moves(p, moves, MAX_SQ);
+    int nout = 0;
+    for (int i = 0; i < nm && nout < max_out; i++) {
+        out[nout].sq = (int16_t)moves[i];
+        out[nout].score = 1;
+        nout++;
+    }
+    return nout;
+}
+
 // ---------------------------------------------------------------------------
 // Recherche
 // ---------------------------------------------------------------------------
@@ -364,6 +379,7 @@ static int negamax(const Pos& p, int depth, int alpha, int beta) {
     build_chains(p);
     const int k = LEVELS[g_level].node_cands;
     int nm = gen_cands(p, moves, k < MAX_CAND ? k : MAX_CAND, 0);
+    if (nm == 0) nm = fill_legal_fallback(p, moves, k < MAX_CAND ? k : MAX_CAND);
 
     int best = -INF;
     for (int i = 0; i < nm; i++) {
@@ -427,9 +443,10 @@ void begin(const Pos& root, Level level, uint32_t seed) {
     if (should_pass_now(root)) { g_nc = 0; finish(); return; }
 
     build_chains(root);
-    g_nc = gen_cands(root, g_cand, L.root_cands < MAX_CAND ? L.root_cands : MAX_CAND,
-                     L.noise);
-    if (g_nc == 0) { finish(); return; }     // plus rien à jouer : on passe
+    const int cap = L.root_cands < MAX_CAND ? L.root_cands : MAX_CAND;
+    g_nc = gen_cands(root, g_cand, cap, L.noise);
+    if (g_nc == 0) g_nc = fill_legal_fallback(root, g_cand, cap);
+    if (g_nc == 0) { finish(); return; }     // vraiment aucun coup légal → passe
 
     // L'adversaire vient de passer et il ne reste aucun coup TACTIQUE (ni
     // capture, ni atari, ni sauvetage — le meilleur candidat ne vaut qu'un
@@ -447,7 +464,26 @@ void begin(const Pos& root, Level level, uint32_t seed) {
     // interrompue, on rend le meilleur candidat statique.
     g_best = g_cand[0].sq;
 
-    if (g_depth_target <= 0) { finish(); return; }   // niveau Débutant
+    if (g_depth_target <= 0) {
+        // Débutant : tirage pondéré sur les scores statiques (déjà bruités).
+        int min_sc = g_cand[0].score;
+        for (int i = 1; i < g_nc; i++) {
+            if (g_cand[i].score < min_sc) min_sc = g_cand[i].score;
+        }
+        uint32_t sum = 0;
+        uint32_t weights[MAX_CAND];
+        for (int i = 0; i < g_nc; i++) {
+            weights[i] = (uint32_t)(g_cand[i].score - min_sc + 1);
+            sum += weights[i];
+        }
+        uint32_t pick = (sum > 0) ? (rnd() % sum) : 0;
+        for (int i = 0; i < g_nc; i++) {
+            if (pick < weights[i]) { g_best = g_cand[i].sq; break; }
+            pick -= weights[i];
+        }
+        finish();
+        return;
+    }
 
     for (int i = 0; i < g_nc; i++) g_cand[i].score = -INF;
     g_state = AI_THINKING;
