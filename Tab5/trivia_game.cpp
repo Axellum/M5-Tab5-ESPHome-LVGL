@@ -2129,9 +2129,16 @@ void open(const UI& ui) {
 
     g_open = true;
     reset_caches();
-    // Une partie déjà en cours en RAM reprend directement ; sinon on ouvre le hub.
-    if (s_in_game) { s_state = ST_PLAY; begin_roll_phase(); }
-    else            go(ST_HUB);
+    // Une partie déjà en cours en RAM reprend exactement où on l'a laissée
+    // (état + phase + s_reach / question conservés). Ne pas rappeler
+    // begin_roll_phase() ici : ça effaçait un dé déjà lancé, un catpick ou
+    // une question en cours. La reprise NVS (resume_game) repart au lancer
+    // car la phase fine n'est pas persistée — c'est volontaire.
+    if (s_in_game) {
+        if (menu_state(s_state)) render_menu();
+    } else {
+        go(ST_HUB);
+    }
     render_layers();
 
     lv_obj_clear_flag(g_ui.root, LV_OBJ_FLAG_HIDDEN);
