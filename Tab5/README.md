@@ -347,41 +347,87 @@ Jeu de Go **plein écran 1280×720**, 100 % local (NVS). Nom produit : **Go Tab*
 
 | Action | Où |
 |---|---|
-| Ouvrir | Sélecteur Arcade → barre « Go Tab » |
-| Quitter | Hub → « Quitter » (ADR-0009, pas de croix) |
-| Menu | Tap HUD ou panneau → Menu |
+| Ouvrir | Sélecteur Arcade → carte « Go Tab » |
+| Quitter | Menu → « Quitter » (ADR-0009, pas de croix) |
+| Menu / pause | Tap sur le bandeau HUD, ou bouton « Menu » du panneau |
+
+### Écran
+
+`go_game.yaml` ne déclare que **4 conteneurs vides** — HUD 1280×60, aire de jeu
+1280×660 à `y=60`, calque de menus plein cadre. Tout le reste est construit en
+C++ (`Go::open`). Le C++ suppose exactement cette géométrie : changer une valeur
+dans le YAML impose de changer `HUD_H` / `FIELD_H` dans `go_game.cpp`.
+
+- **Goban** : plateau en dégradé bois, liseré, lignes de bord épaissies, points
+  étoiles, coordonnées `A..T` (sans le I) et `1..19`. Taille recalculée à chaque
+  changement de plateau (écart 64 / 46 / 32 px en 9×9 / 13×13 / 19×19).
+- **Pierres** : un seul objet LVGL chacune, relief obtenu par dégradé vertical
+  (`bg_grad_dir`). Le même pool de 361 objets sert de pastilles de territoire
+  pendant le comptage — aucun widget n'est créé en cours de partie.
+- **HUD** : pastille Noir / statut central / pastille Blanc, la pastille au trait
+  s'allume en or.
+- **Panneau latéral** : liste des coups en police mono (2 colonnes), barre de
+  réflexion, bouton de validation, et 4 boutons **Passer / Annuler / Indice / Menu**.
 
 ### Règles implémentées
 
 - Placement sur **intersections** ; capture par libertés à 0.
-- **Suicide interdit** (sauf si le coup capture et se libère).
-- **Ko simple** (pas de superko positionnel).
-- **Passe** ; deux passes consécutives → fin + score.
-- **Score chinois (aire)** : pierres + territoire contrôlé + **komi 6.5** aux Blancs.
-- Life/death avancé : non résolu — les chaînes encore présentes en fin de partie sont considérées vivantes (casual). Marquage mort manuel non inclus v1.
+- **Suicide interdit**, sauf si le coup capture d'abord.
+- **Ko simple** (pas de superko positionnel — assumé, documenté).
+- **Passe** ; deux passes consécutives → écran de **marquage des pierres mortes**.
+- **Score chinois (aire)** : pierres vivantes + territoire + **komi 6,5** aux Blancs.
+- **Handicap 2 à 9 pierres** (placements standards, Blanc commence).
+- **Vie/mort non résolue automatiquement** — c'est le joueur qui marque les
+  groupes morts en fin de partie (toucher un groupe le bascule mort/vivant,
+  « Tout vivant » remet à zéro), avec aperçu du territoire en direct. C'est le
+  fonctionnement de toutes les applications de Go : un solveur de vie/mort n'a
+  pas sa place dans 2 Mo de firmware.
 
 ### Modes & IA
 
 | Mode | |
 |---|---|
-| Joueur vs Tab | Humain Noir ou Blanc |
-| Joueur vs Joueur | Hot-seat |
-| Tab vs Tab | Démo auto |
+| Joueur contre Tab | Humain Noir ou Blanc, handicap possible |
+| Joueur contre joueur | Hot-seat sur le même Tab |
+| Tab contre Tab | Démo automatique |
 
-Niveaux (time-sliced, « Tab réfléchit… ») : Débutant → Expert (candidats locaux + αβ).
+Niveaux : **Débutant** (choix pondéré), **Amateur** (1 pli), **Confirmé** (2 plis),
+**Expert** (3 plis en 9×9, 2 au-delà). La recherche est **bornée par le temps**,
+jamais par un compteur de nœuds : `Ai::step(ms)` rend la main au bout de la
+tranche demandée et un budget CPU total (80 / 350 / 900 / 1900 ms) garantit
+qu'un coup sort toujours. L'évaluation tient en trois termes — matière, sécurité
+des chaînes (atari), influence par diffusion — tous calculés en **O(N) par
+position** grâce à une table des chaînes construite une seule fois par nœud.
 
 ### Contrôles
 
-- Tap intersection → pose (snap).
-- **Passer** / **Undo** (annule aussi la réponse IA) / **Hint** (ou secousse IMU).
-- Panneau : Abandon / Nouvelle / Menu ; historique `N D4` / `B pass`.
+- Tap sur une intersection → **fantôme** ; second tap (ou bouton « Jouer XX »)
+  → coup joué. La confirmation est désactivable dans les réglages, mais elle est
+  active par défaut : en 19×19 l'écart entre intersections tombe à 32 px, soit
+  moins qu'un doigt.
+- **Passer** / **Annuler** (remonte aussi la réponse du Tab) / **Indice**
+  (ou secousse BMI270) / **Menu**.
+- Réglages : confirmation, coordonnées, marqueur du dernier coup, aperçu du
+  territoire, secousse = indice.
 
 ### Fichiers
 
-- `go_engine.h/.cpp` — moteur pur (testable host)
-- `go_ai.h/.cpp` — IA time-sliced
+- `go_engine.h/.cpp` — règles pures (aucun LVGL/ESPHome, testable host).
+  **Tous les scratchs sont des statiques de module** : le moteur tourne dans le
+  contexte LVGL mono-thread et ne doit rien mettre de gros sur la pile.
+- `go_ai.h/.cpp` — IA time-slicée
 - `go_game.h/.cpp` + `ui_components/go_game.yaml` — UI / NVS
-- Tests : `tools/test_go_engine.py` (miroir) ; `tools/test_go_engine.cpp` si g++ dispo
+- Tests : `tools/test_go_engine.py` (**miroir Python exécutable sans toolchain**,
+  c'est le test de référence) ; `tools/test_go_engine.cpp` si un g++ natif est
+  disponible. Toute modification des règles doit être répercutée dans les deux.
+
+### NVS
+
+Une partie de Go fait des centaines de coups : l'écriture flash est **différée**
+(drapeau interne + fenêtre de 15 s) et forcée seulement à l'ouverture d'un menu,
+en fin de partie et à la fermeture. Réglages, statistiques par taille/niveau et
+position en cours sont conservés ; la liste des coups et la pile d'annulation ne
+le sont pas (reprendre une sauvegarde restitue la position, pas l'historique).
 
 ### Build
 

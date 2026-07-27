@@ -4,6 +4,63 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-27 — « Go Tab » v2 : le jeu de Go devient réellement jouable
+
+Le premier jet du 26/07 compilait et se lançait, mais était **inutilisable** : le
+Tab gelait ou redémarrait dès que l'IA réfléchissait, et le score final était
+faux. Les trois modules sont réécrits.
+
+**Corrections de fond**
+
+- **L'IA ne rendait plus la main.** La recherche était bornée en *nombre de
+  nœuds* : à 3 plis, un seul candidat racine coûtait plus que le budget (2 200
+  nœuds), l'index de candidat n'avançait donc jamais et « le Tab réfléchit »
+  ne se terminait pas. La recherche est désormais bornée par le **temps**
+  (`Ai::step(ms)`, horloge testée tous les 32 nœuds) avec un budget CPU total par
+  niveau — un coup valide est disponible dès `Ai::begin()`.
+- **Débordement de pile.** `count_liberties` réservait 2,2 Ko de locales,
+  `try_play` 1,2 Ko, et `negamax` prenait `Pos` **par valeur** : ~5 Ko par niveau
+  de récursion, ~15 Ko à 3 plis, bien au-delà de la pile de la tâche principale.
+  Tous les scratchs du moteur et de l'IA sont devenus des **statiques de module**
+  (contexte LVGL mono-thread, jamais réentrant).
+- **Coût par nœud divisé par ~100.** `collect_candidates` appelait `is_legal` —
+  qui **simulait le coup entier**, copie de `Pos` comprise — sur les 361
+  intersections, à chaque nœud. Désormais : `is_legal` exact **sans copie** (3
+  branches : liberté directe / extension amie / capture), et une **table des
+  chaînes construite une seule fois par position**, lue en O(1) par la cotation
+  des candidats.
+- **Score faux en fin de partie.** Aucun marquage des pierres mortes : tout
+  groupe encore sur le goban comptait comme vivant. Ajout d'un **écran de
+  marquage** (toucher un groupe le bascule mort/vivant, aperçu du territoire et
+  score recalculés en direct) avant la validation du score.
+- **Usure flash.** `esphome::global_preferences->sync()` était appelé **à chaque
+  coup**. L'écriture est maintenant différée (fenêtre de 15 s) et forcée
+  uniquement à l'ouverture d'un menu, en fin de partie et à la fermeture.
+- **Taps traversants.** Le calque de menus n'était pas `CLICKABLE` : les appuis
+  hors bouton passaient jusqu'au goban placé dessous.
+- **`tab5-imu.yaml`** : Go Tab sort de la liste des jeux qui forcent le BMI270 à
+  30 Hz — comme Roi Noir et Dames, il ne s'en sert que pour la secousse.
+
+**Nouveautés**
+
+- **Handicap 2 à 9 pierres** (placements standards ; Blanc commence).
+- **Confirmation du coup en deux touchers** (fantôme + validation), activée par
+  défaut : en 19×19 l'écart entre intersections tombe à 32 px.
+- **Réglages** : confirmation, coordonnées, marqueur du dernier coup, aperçu du
+  territoire, secousse = indice. **Statistiques** par taille et par niveau,
+  parties jouées et temps de jeu cumulé.
+- **Rendu retravaillé** : goban en dégradé bois avec liseré et lignes de bord
+  épaissies, coordonnées `A..T` / `1..19`, pierres en relief par dégradé
+  vertical (un seul objet LVGL chacune), pastille de trait dans le HUD, liste des
+  coups en police mono à deux colonnes, barre de réflexion, carte de fin de
+  partie détaillée par-dessus le goban resté visible.
+- **Tests** : `tools/test_go_engine.py` passe de 5 à 12 cas (capture de groupe,
+  capture prioritaire sur le suicide, œils de centre / bord / coin, handicap,
+  territoire, score avec pierres mortes, plus 20 parties aléatoires vérifiant
+  qu'aucune chaîne sans liberté ne subsiste). `tools/test_go_engine.cpp` aligné.
+- **`GO_SAVE_MAGIC` → `GOT3`** : les anciennes sauvegardes sont rejetées et les
+  réglages repartent des valeurs d'usine (changement de layout `GoSave`).
+
 ### 2026-07-27 — Arcade : 7 consoles supplémentaires + sélecteur 4×2 + IMU adaptative
 - **Sélecteur Arcade** (`ui_components/game_selector.yaml`) : grille régulière 4×2 (8 cartes 298×252), ouverte par tap sur la température serre (`btn_serre_games` dans `climate_card.yaml`). Chaque carte ferme le jeu en cours, referme le sélecteur, puis ouvre la console cible.
 - **Arcanoïde** (`arkanoid_game.h/.cpp`) : casse-briques rétro Atari 8 niveaux, 3 vies, power-ups (élargir/rétrécir raquette, balle lente/rapide, multi-balles, colle, extra vie), combo multiplicateur, top 10 NVS (`ArkanoidSave`, magic `ARK1`). Contrôles : inclinaison BMI270 + boutons tactiles (mode « Les deux » par défaut).

@@ -99,6 +99,8 @@ script:
           Lode::open(ui);
 
   # Ouvre le jeu « Go Tab » (Go 9×9 / 13×13 / 19×19).
+  # f_mono sert à la liste des coups du panneau latéral : en police
+  # proportionnelle, « A1 » et « T19 » ne s'alignent pas et la colonne danse.
   - id: tab5_go_open
     mode: single
     then:
@@ -111,6 +113,7 @@ script:
           ui.f_small = id(roboto_22);
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
+          ui.f_mono  = id(roboto_mono_24);
           Go::open(ui);
 
   # Ouvre le jeu « Trial Poursuite » (Trivial Pursuit rétro-salon, trivia_game.cpp).
