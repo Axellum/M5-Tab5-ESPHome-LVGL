@@ -33,7 +33,7 @@ obj:
         scrollable: false
         widgets:
 
-          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
           - !include { file: modal_header.yaml, vars: { icon: "\U000F036C", icon_color: "color_info", title: "Assistant vocal", title_id: "popup_assist_title", close_btn_id: "btn_assist_close", close_lambda: "id(tab5_assist_close).execute();" } }
 
           # ═══════════════════════════════════════════════════════════════════
@@ -45,7 +45,7 @@ obj:
               x: 24
               y: ${modal_body_y}
               width: 380
-              height: 544
+              height: 506
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -244,9 +244,9 @@ obj:
           - obj:
               align: TOP_LEFT
               x: 420
-              y: 168
+              y: 188
               width: 806
-              height: 428
+              height: 390
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -262,7 +262,7 @@ obj:
                     x: 16
                     y: 54
                     width: 790
-                    height: 360
+                    height: 322
                     styles: style_transparent
                     scrollbar_mode: AUTO
                     layout:

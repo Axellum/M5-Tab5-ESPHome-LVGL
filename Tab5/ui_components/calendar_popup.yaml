@@ -18,7 +18,7 @@
 #       (tab5_cal_prefetch_boot) + mois adjacents (M-1, M+1) à chaque rendu.
 #       Eviction : max 3 mois en cache (cal_cache_evict_distant).
 # @ai_instruction Cadre modal v4 (ADR-0009) : barre de titre modal_header.yaml, grille
-#       à partir de y=52. Cellules : cal_day_cell.yaml (×42), lignes 82+r*95.
+#       à partir de y=72. Cellules : cal_day_cell.yaml (×42), lignes 102+r*90.
 # ═══════════════════════════════════════════════════════
 obj:
   id: calendar_popup
@@ -40,7 +40,7 @@ obj:
         scrollable: false
         widgets:
 
-          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
           - !include { file: modal_header.yaml, vars: { icon: "\U000F0E17", icon_color: "color_accent", title: "Calendrier", title_id: "popup_cal_title", close_btn_id: "btn_cal_close", close_lambda: "animate_popup_close(id(cal_day_popup), nullptr); animate_popup_close(id(calendar_popup), nullptr);" } }
 
           # Options d'en-tête : frères de la barre, alignés sur sa ligne (y=4, hauteur 44)
@@ -118,27 +118,27 @@ obj:
           - !include { file: cal_day_cell.yaml, vars: { idx: "4", x: "713", y: "${cal_grid_y}" } }
           - !include { file: cal_day_cell.yaml, vars: { idx: "5", x: "885", y: "${cal_grid_y}" } }
           - !include { file: cal_day_cell.yaml, vars: { idx: "6", x: "1057", y: "${cal_grid_y}" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "7", x: "25", y: "177" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "8", x: "197", y: "177" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "9", x: "369", y: "177" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "10", x: "541", y: "177" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "11", x: "713", y: "177" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "12", x: "885", y: "177" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "13", x: "1057", y: "177" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "14", x: "25", y: "272" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "15", x: "197", y: "272" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "16", x: "369", y: "272" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "17", x: "541", y: "272" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "18", x: "713", y: "272" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "19", x: "885", y: "272" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "20", x: "1057", y: "272" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "21", x: "25", y: "367" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "22", x: "197", y: "367" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "23", x: "369", y: "367" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "24", x: "541", y: "367" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "25", x: "713", y: "367" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "26", x: "885", y: "367" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "27", x: "1057", y: "367" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "7", x: "25", y: "192" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "8", x: "197", y: "192" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "9", x: "369", y: "192" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "10", x: "541", y: "192" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "11", x: "713", y: "192" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "12", x: "885", y: "192" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "13", x: "1057", y: "192" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "14", x: "25", y: "282" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "15", x: "197", y: "282" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "16", x: "369", y: "282" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "17", x: "541", y: "282" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "18", x: "713", y: "282" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "19", x: "885", y: "282" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "20", x: "1057", y: "282" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "21", x: "25", y: "372" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "22", x: "197", y: "372" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "23", x: "369", y: "372" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "24", x: "541", y: "372" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "25", x: "713", y: "372" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "26", x: "885", y: "372" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "27", x: "1057", y: "372" } }
           - !include { file: cal_day_cell.yaml, vars: { idx: "28", x: "25", y: "462" } }
           - !include { file: cal_day_cell.yaml, vars: { idx: "29", x: "197", y: "462" } }
           - !include { file: cal_day_cell.yaml, vars: { idx: "30", x: "369", y: "462" } }
@@ -146,13 +146,13 @@ obj:
           - !include { file: cal_day_cell.yaml, vars: { idx: "32", x: "713", y: "462" } }
           - !include { file: cal_day_cell.yaml, vars: { idx: "33", x: "885", y: "462" } }
           - !include { file: cal_day_cell.yaml, vars: { idx: "34", x: "1057", y: "462" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "35", x: "25", y: "557" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "36", x: "197", y: "557" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "37", x: "369", y: "557" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "38", x: "541", y: "557" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "39", x: "713", y: "557" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "40", x: "885", y: "557" } }
-          - !include { file: cal_day_cell.yaml, vars: { idx: "41", x: "1057", y: "557" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "35", x: "25", y: "552" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "36", x: "197", y: "552" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "37", x: "369", y: "552" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "38", x: "541", y: "552" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "39", x: "713", y: "552" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "40", x: "885", y: "552" } }
+          - !include { file: cal_day_cell.yaml, vars: { idx: "41", x: "1057", y: "552" } }
 
           # ═══ LÉGENDE ═══
           - obj:

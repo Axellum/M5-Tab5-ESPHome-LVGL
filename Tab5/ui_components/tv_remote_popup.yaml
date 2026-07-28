@@ -28,7 +28,7 @@ obj:
         scrollable: false
         widgets:
 
-          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
           - !include { file: modal_header.yaml, vars: { icon: "\U000F07C0", icon_color: "color_info", title: "Télécommande TV", title_id: "popup_tv_title", close_btn_id: "btn_tv_close", close_lambda: "animate_popup_close(id(tv_remote_popup), nullptr);" } }
 
           # ═══ CORPS — grille (laisse place à la rangée basse) ═══
@@ -205,6 +205,84 @@ obj:
                                         command: "KEY_ENTER"
                                 widgets:
                                   - label: { text: "OK", align: CENTER, text_font: roboto_45_b, text_color: color_text }
+
+                      # ── 4 boutons apps dans les coins autour de la raquette ──
+                      # Netflix (haut-gauche) — rouge signature
+                      - button:
+                          align: TOP_LEFT
+                          x: 5
+                          y: 4
+                          width: 100
+                          height: 55
+                          radius: 27
+                          styles: style_clim_btn
+                          pressed:
+                            bg_opa: 30%
+                          on_short_click:
+                            - homeassistant.service:
+                                service: media_player.select_source
+                                data:
+                                  entity_id: media_player.samsung_s95ba_55_tv
+                                  source: "Netflix"
+                          widgets:
+                            - label: { text: "Netflix", align: CENTER, text_font: roboto_22, text_color: color_error }
+                      # Amazon Prime Video (haut-droite) — bleu signature
+                      - button:
+                          align: TOP_RIGHT
+                          x: 5
+                          y: 4
+                          width: 100
+                          height: 55
+                          radius: 27
+                          styles: style_clim_btn
+                          pressed:
+                            bg_opa: 30%
+                          on_short_click:
+                            - homeassistant.service:
+                                service: media_player.select_source
+                                data:
+                                  entity_id: media_player.samsung_s95ba_55_tv
+                                  source: "Amazon Prime Video"
+                          widgets:
+                            - label: { text: "Amazon", align: CENTER, text_font: roboto_22, text_color: color_info }
+                      # Canal+ (bas-gauche) — violet signature
+                      - button:
+                          align: BOTTOM_LEFT
+                          x: 5
+                          y: 0
+                          width: 100
+                          height: 55
+                          radius: 27
+                          styles: style_clim_btn
+                          pressed:
+                            bg_opa: 30%
+                          on_short_click:
+                            - homeassistant.service:
+                                service: media_player.select_source
+                                data:
+                                  entity_id: media_player.samsung_s95ba_55_tv
+                                  source: "Canal+"
+                          widgets:
+                            - label: { text: "Canal+", align: CENTER, text_font: roboto_22, text_color: color_warning }
+                      # HDMI PC (bas-droit) — vert signature
+                      - button:
+                          align: BOTTOM_RIGHT
+                          x: 5
+                          y: 0
+                          width: 100
+                          height: 55
+                          radius: 27
+                          styles: style_clim_btn
+                          pressed:
+                            bg_opa: 30%
+                          on_short_click:
+                            - homeassistant.service:
+                                service: media_player.select_source
+                                data:
+                                  entity_id: media_player.samsung_s95ba_55_tv
+                                  source: "HDMI"
+                          widgets:
+                            - label: { text: "HDMI PC", align: CENTER, text_font: roboto_22, text_color: color_success }
 
                 # ── Colonne droite (290) — rocker volume centré ──
                 - obj:

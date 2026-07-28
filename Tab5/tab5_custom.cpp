@@ -1982,10 +1982,8 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
 // Reutilisent les callbacks ci-dessus (anim_y_cb/anim_opa_cb/anim_scale_cb/anim_x_cb).
 // =============================================================================
 
-// Animation d'ouverture d'un popup : fondu 0->COVER (card + scrim).
-// Pas de transform_scale : trop couteux sur les objets plein ecran (1280x720).
-// Duree UIAnim::POPUP_IN (150ms — etait 280), ease_out : c'est l'animation la
-// plus exposee a la latence percue (tap -> contenu lisible).
+// Ouverture/fermeture d'un popup : affichage/masquage instantané.
+// Affichage instantané : unhide + opa COVER directement (pas de fondu).
 void animate_popup_open(lv_obj_t* card, lv_obj_t* scrim) {
     // Affichage instantané — pas de fondu (réactivité maximale).
     if (scrim) {
@@ -2000,10 +1998,7 @@ void animate_popup_open(lv_obj_t* card, lv_obj_t* scrim) {
     }
 }
 
-// Animation de fermeture : fondu COVER->0. Cache automatiquement card + scrim
-// a la fin (LV_OBJ_FLAG_HIDDEN) via anim_hide_ready_cb.
-// Duree UIAnim::POPUP_OUT (110ms), ease_in : toujours plus court que
-// l'ouverture — un "dismiss" doit partir tout de suite.
+// Masquage instantané : cache card + scrim directement (LV_OBJ_FLAG_HIDDEN).
 void animate_popup_close(lv_obj_t* card, lv_obj_t* scrim) {
     // Masquage instantané — pas de fondu (réactivité maximale).
     if (scrim) {
@@ -2413,7 +2408,6 @@ static void set_clock_digit_immediate(ClockDigitRoller& r, int box_h, char digit
 // La transition (80ms ease_out) est gereee nativement par LVGL.
 // =============================================================================
 static lv_style_t style_btn_pressed;
-static lv_style_transition_dsc_t btn_trans_dsc;
 static bool btn_styles_inited = false;
 
 static void ensure_btn_styles_inited() {

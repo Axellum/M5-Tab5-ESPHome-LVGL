@@ -42,7 +42,7 @@ obj:
         scrollable: false
         widgets:
 
-          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
           - !include { file: modal_header.yaml, vars: { icon: "\U000F0717", icon_color: "color_info", title: "Climatisation Salon", title_id: "popup_clim_title", close_btn_id: "btn_clim_close", close_lambda: "animate_popup_close(id(clim_options_popup), nullptr);" } }
 
           # ═══ CARTE MODE (gauche) : 5 modes HVAC empilés ═══
@@ -51,7 +51,7 @@ obj:
               x: 24
               y: ${modal_body_y}
               width: 386
-              height: 628
+              height: 598
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -103,7 +103,7 @@ obj:
               x: 426
               y: ${modal_body_y}
               width: 398
-              height: 628
+              height: 598
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -203,7 +203,7 @@ obj:
               x: 840
               y: ${modal_body_y}
               width: 386
-              height: 628
+              height: 598
               styles: style_glass_card
               scrollable: false
               widgets:

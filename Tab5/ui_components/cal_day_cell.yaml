@@ -2,7 +2,7 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 42x par calendar_popup.yaml
 # (grille 7 colonnes × 6 lignes, lundi en premier).
 # vars : idx (0-41 — suffixe des ids cal_*_${idx}), x / y (position de la cellule dans
-#        la carte modale, colonnes 25+c*172, lignes 82+r*95).
+#        la carte modale, colonnes 25+c*172, lignes 102+r*90).
 # Ne rien assigner ici : numéro de jour, heures de travail, couleurs, pastilles et
 # surbrillance "aujourd'hui" sont posés par cal_render_month() (tab5_custom.cpp)
 # à l'ouverture, au changement de mois et à l'arrivée du push HA
@@ -14,7 +14,7 @@ obj:
   x: ${x}
   y: ${y}
   width: 168
-  height: 91
+  height: 86
   radius: 12
   bg_color: color_accent_alt
   bg_opa: 0%
@@ -36,7 +36,7 @@ obj:
         id: "cal_btn_${idx}"
         align: CENTER
         width: 168
-        height: 91
+        height: 86
         styles: style_invisible
         on_short_click:
           - script.execute:

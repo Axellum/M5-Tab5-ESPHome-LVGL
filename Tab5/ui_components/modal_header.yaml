@@ -5,9 +5,9 @@
 #
 # Geometry (identique pour TOUS les popups, ne pas surcharger côté appelant) :
 #   conteneur pleine largeur, hauteur ${modal_hdr_h} = 4 (haut) + 44 (ligne) + 4
-#   → le corps du popup commence à y = ${modal_body_y}, qui DOIT rester égal
-#   à ${modal_hdr_h} (tab5-ui-tokens.yaml) : changer l'un sans l'autre décale
-#   soit le corps sous la barre, soit crée un vide/chevauchement.
+#   → le corps du popup commence à y = ${modal_body_y} = ${modal_hdr_h} + 20 px
+#   d'air (tab5-ui-tokens.yaml) : cet écart de 20 px est VOULU (respiration
+#   titre/corps). Garder body_y >= hdr_h, sinon le corps passe sous la barre.
 # L'alignement vertical est fait par LVGL (LEFT_MID / RIGHT_MID) : plus aucun
 # `y:` recopié popup par popup, donc plus de dérive possible.
 #
