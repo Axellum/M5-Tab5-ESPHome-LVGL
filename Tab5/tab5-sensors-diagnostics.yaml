@@ -107,6 +107,15 @@ binary_sensor:
 
           }
 
+      # Pré-fetch calendrier au reconnect HA (rising edge) : recharge le mois
+      # courant + M+1 pour que le popup s'ouvre instantanément même après une coupure.
+      - if:
+          condition:
+            binary_sensor.is_on: status_ha
+          then:
+            - delay: 2s
+            - script.execute: tab5_cal_prefetch_boot
+
 text_sensor:
 
   - platform: wifi_info

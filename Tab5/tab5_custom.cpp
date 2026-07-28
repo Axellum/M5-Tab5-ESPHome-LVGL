@@ -523,6 +523,11 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
 
 static constexpr lv_coord_t FORECAST_SWIPE_Y_MIN = 333;  // haut de central_card (tab5-lvgl.yaml)
 
+// Page de repos des previsions : journalier J0-J4, celle du boot
+// (forecast_page_index initial_value: 2) et celle ou la carte centrale reprend
+// son rotateur planning/pluie/alertes. C'est la cible du retour automatique.
+static constexpr int FORECAST_MAIN_PAGE = 2;
+
 // Recolor LVGL : vrai seulement si markup #RRGGBB (évite faux positifs sur '#' isolé).
 static bool has_lvgl_recolor_markup(const std::string& t) {
     for (size_t i = 0; i + 7 < t.size(); ++i) {
@@ -999,34 +1004,19 @@ void update_clock_date_ui(lv_obj_t* lbl_date,
     }
 }
 
-void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_index,
+// Applique une page de previsions : donnees, calque, pastilles, carte centrale.
+// Factorise entre les deux seules facons de changer de page — le swipe manuel
+// (handle_swipe_gesture) et le retour automatique d'inactivite
+// (reset_forecast_to_main_page) — pour qu'elles laissent l'ecran dans
+// exactement le meme etat. `dir` ne sert qu'a l'animation de changement de
+// calque (horaire <-> journalier).
+static void apply_forecast_page(int old_page, int page, lv_dir_t dir,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
     lv_obj_t* pbars[5],
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx) {
-
-    if (pt_y < FORECAST_SWIPE_Y_MIN) return;
-    if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;
-
-    int old_page = forecast_page_index;
-    int page = old_page;
-        // NE PAS "corriger" en wrap 0<->4 : comportement volontaire, deja teste et
-        // valide par Axel (revert du 05/07/2026 d'un changement fait a tort suite a
-        // un audit LLM qui l'avait signale comme un bug de pagination "confuse").
-        // Pages 0-1 = horaire, 2-4 = journalier. LEFT boucle sur 2/3/4 une fois
-        // dans le journalier (ne revient pas seul vers l'horaire) ; RIGHT traverse
-        // tout vers le bas et boucle 0->2 (retour au debut du journalier, pas un
-        // tour complet vers 4).
-        if (dir == LV_DIR_LEFT) {
-            if (page >= 4) page = 2;
-            else page = page + 1;
-        } else if (dir == LV_DIR_RIGHT) {
-            if (page <= 0) page = 2;
-            else page = page - 1;
-        }
-        forecast_page_index = page;
 
         // Detection de changement de layer (horaire <-> journalier).
         // L'animation de swipe horizontal n'a de sens que lors d'un changement de layer.
@@ -1072,6 +1062,64 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
         }
 
         update_central_forecast_page_ui(page, page_title_wrap, lbl_page_title, ctx);
+}
+
+void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_index,
+    lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
+    WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
+    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
+    lv_obj_t* pbars[5],
+    lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
+    CentralPanelCtx& ctx) {
+
+    if (pt_y < FORECAST_SWIPE_Y_MIN) return;
+    if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;
+
+    int old_page = forecast_page_index;
+    int page = old_page;
+    // NE PAS "corriger" en wrap 0<->4 : comportement volontaire, deja teste et
+    // valide par Axel (revert du 05/07/2026 d'un changement fait a tort suite a
+    // un audit LLM qui l'avait signale comme un bug de pagination "confuse").
+    // Pages 0-1 = horaire, 2-4 = journalier. LEFT boucle sur 2/3/4 une fois
+    // dans le journalier (ne revient pas seul vers l'horaire) ; RIGHT traverse
+    // tout vers le bas et boucle 0->2 (retour au debut du journalier, pas un
+    // tour complet vers 4).
+    if (dir == LV_DIR_LEFT) {
+        if (page >= 4) page = 2;
+        else page = page + 1;
+    } else if (dir == LV_DIR_RIGHT) {
+        if (page <= 0) page = 2;
+        else page = page - 1;
+    }
+    forecast_page_index = page;
+
+    apply_forecast_page(old_page, page, dir,
+        layer_forecast_daily, layer_forecast_hourly, day_slots, hour_slots,
+        f_main, f_card, f_main_s, f_card_s, pbars,
+        page_title_wrap, lbl_page_title, ctx);
+}
+
+void reset_forecast_to_main_page(int& forecast_page_index,
+    lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
+    WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
+    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
+    lv_obj_t* pbars[5],
+    lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
+    CentralPanelCtx& ctx) {
+
+    const int old_page = forecast_page_index;
+    if (old_page == FORECAST_MAIN_PAGE) return;  // deja au panneau principal
+    forecast_page_index = FORECAST_MAIN_PAGE;
+
+    // Sens de l'animation : depuis l'horaire (0/1) le calque journalier arrive
+    // par la droite, comme un swipe vers la gauche ; depuis 3/4 on recule, donc
+    // swipe vers la droite (sans effet visible : meme calque, refresh direct).
+    const lv_dir_t dir = (old_page < FORECAST_MAIN_PAGE) ? LV_DIR_LEFT : LV_DIR_RIGHT;
+
+    apply_forecast_page(old_page, FORECAST_MAIN_PAGE, dir,
+        layer_forecast_daily, layer_forecast_hourly, day_slots, hour_slots,
+        f_main, f_card, f_main_s, f_card_s, pbars,
+        page_title_wrap, lbl_page_title, ctx);
 }
 
 // =============================================================================
@@ -2001,6 +2049,40 @@ void animate_popup_close(lv_obj_t* card, lv_obj_t* scrim) {
     }
 }
 
+// =============================================================================
+// Retour automatique a l'ecran principal (inactivite tactile) — voir UIIdle
+// dans tab5_custom.h pour les delais et le raisonnement.
+// L'horloge d'inactivite est celle de LVGL : l'indev ecrit last_activity_time
+// a chaque lecture "pressed", donc "inactif" veut bien dire "personne n'a
+// touche la dalle" — inutile d'instrumenter les 200 boutons du HMI.
+// =============================================================================
+
+uint32_t ui_idle_ms() {
+    return lv_display_get_inactive_time(NULL);  // NULL = display par defaut
+}
+
+void ui_mark_activity() {
+    lv_display_trigger_activity(NULL);
+}
+
+bool close_popup_if_open(lv_obj_t* card) {
+    if (card == nullptr) return false;
+    if (lv_obj_has_flag(card, LV_OBJ_FLAG_HIDDEN)) return false;
+    // Fondu deja en cours (ouverture ou fermeture) : ne pas le rejouer.
+    // animate_popup_close() repart de LV_OPA_COVER, donc relancer sur un popup
+    // a moitie efface le rallumerait d'un coup avant de le refaire disparaitre.
+    if (lv_anim_get(card, anim_opa_cb) != nullptr) return false;
+    animate_popup_close(card, nullptr);
+    return true;
+}
+
+bool any_popup_visible(lv_obj_t* const* cards, int n) {
+    for (int i = 0; i < n; i++) {
+        if (cards[i] != nullptr && !lv_obj_has_flag(cards[i], LV_OBJ_FLAG_HIDDEN)) return true;
+    }
+    return false;
+}
+
 // Glissement horizontal + fondu croise entre deux layers (swipe previsions).
 // dir = LV_DIR_LEFT (in arrive de la droite, out part a gauche) ou
 //       LV_DIR_RIGHT (in arrive de la gauche, out part a droite).
@@ -2428,11 +2510,12 @@ struct CalMonthData {
     std::string heures;   // 31 champs "HH:MM-HH:MM" séparés par | (vides autorisés)
     std::string details;  // 31 champs "type|texte;..." séparés par ~ (vide = rien prévu)
     bool has_details = false;  // true si HA a fourni le champ details (même tout vide)
+    uint32_t stored_at = 0;    // millis() au stockage — pour le TTL stale-while-revalidate
 };
 
-// Cache par mois (clé = annee*12 + mois-1). Vidé à chaque ouverture du popup :
-// une session de consultation voit des données fraîches, la navigation dans la
-// même session est instantanée.
+// Cache par mois (clé = annee*12 + mois-1). Stratégie stale-while-revalidate :
+// les données sont affichées immédiatement même si périmées, un refresh silencieux
+// est lancé en parallèle. Eviction : max 3 mois (M-1, M, M+1) autour de la vue courante.
 static std::map<int, CalMonthData> s_cal_month_cache;
 
 static int cal_cache_key(int y, int m) { return y * 12 + (m - 1); }
@@ -2441,6 +2524,21 @@ void cal_cache_clear() { s_cal_month_cache.clear(); }
 
 bool cal_month_needs_fetch(int year, int month) {
     return s_cal_month_cache.find(cal_cache_key(year, month)) == s_cal_month_cache.end();
+}
+
+bool cal_month_is_stale(int year, int month, uint32_t ttl_ms) {
+    const auto it = s_cal_month_cache.find(cal_cache_key(year, month));
+    if (it == s_cal_month_cache.end()) return true;  // absent = périmé
+    return (esphome::millis() - it->second.stored_at) > ttl_ms;
+}
+
+void cal_cache_evict_distant(int year, int month) {
+    // Garde uniquement les mois dans [M-1, M+1] autour de la vue courante.
+    const int center = cal_cache_key(year, month);
+    for (auto it = s_cal_month_cache.begin(); it != s_cal_month_cache.end(); ) {
+        if (abs(it->first - center) > 1) it = s_cal_month_cache.erase(it);
+        else ++it;
+    }
 }
 
 void cal_store_month_data(const std::string& annee, const std::string& mois,
@@ -2454,6 +2552,7 @@ void cal_store_month_data(const std::string& annee, const std::string& mois,
     data.details = details;
     // HA envoie toujours 30× '~' minimum (31 champs). Absent / "" = vieux HA → fallback jour.
     data.has_details = !details.empty();
+    data.stored_at = esphome::millis();
     s_cal_month_cache[cal_cache_key(y, m)] = data;
 }
 

@@ -109,6 +109,30 @@ namespace UIAnim {
     constexpr uint32_t ROLL_STAGGER = 28;   // decalage entre 2 tuiles (effet vague)
 }
 
+// =============================================================================
+// Retour automatique à l'écran principal (inactivité tactile)
+// [28/07/2026, demande Axel] Un popup ou une page météo laissés ouverts
+// reviennent seuls au dashboard. Les deux délais sont des délais d'INACTIVITÉ,
+// pas des délais depuis l'ouverture : toucher la dalle remet le compteur à
+// zéro, donc rien ne se ferme sous les doigts. Le compteur est celui de LVGL
+// (lv_display_get_inactive_time), remis à zéro par l'indev à chaque appui —
+// et par ui_mark_activity() sur les événements vocaux, sinon une conversation
+// mains libres (qui ne touche jamais l'écran) fermerait le popup Assistant.
+// =============================================================================
+namespace UIIdle {
+    constexpr uint32_t POPUP_MS    = 45000;  // popup ouvert -> fermeture
+    constexpr uint32_t FORECAST_MS = 25000;  // page météo -> retour panneau principal
+}
+
+// Millisecondes écoulées depuis la dernière activité (appui tactile ou
+// ui_mark_activity()).
+uint32_t ui_idle_ms();
+
+// Remet le compteur d'inactivité à zéro sans qu'il y ait eu de toucher.
+// À appeler sur toute activité « invisible » qui doit garder l'écran en place
+// (événements du pipeline vocal, ouverture programmée d'un popup).
+void ui_mark_activity();
+
 // Animation d'ouverture d'un popup : fondu card + scrim.
 // Le scrim doit être visible (clear flag) AVANT l'appel.
 // Durée UIAnim::POPUP_IN, ease_out.
@@ -118,6 +142,16 @@ void animate_popup_open(lv_obj_t* card, lv_obj_t* scrim);
 // à la fin de l'animation (LV_OBJ_FLAG_HIDDEN).
 // Durée UIAnim::POPUP_OUT, ease_in (plus court que l'ouverture pour le "dismiss").
 void animate_popup_close(lv_obj_t* card, lv_obj_t* scrim);
+
+// Ferme un popup UNIQUEMENT s'il est réellement affiché et qu'aucun fondu n'est
+// déjà en cours dessus. Renvoie true si une fermeture a été lancée.
+// Le garde-fou sur l'animation évite un clignotement : animate_popup_close()
+// repart de LV_OPA_COVER, la rejouer sur un popup à moitié effacé le
+// rallumerait d'un coup avant de le refaire disparaître.
+bool close_popup_if_open(lv_obj_t* card);
+
+// true si au moins un des popups passés est visible (flag HIDDEN absent).
+bool any_popup_visible(lv_obj_t* const* cards, int n);
 
 // Glissement horizontal + fondu croisé entre deux layers (swipe prévisions).
 // dir = LV_DIR_LEFT (in arrive de la droite, out part à gauche) ou
@@ -224,6 +258,19 @@ extern CentralPanelCtx g_central_ctx;
 // horaires/journalieres (0-4) dans la bande centrale+basse (y >= 333). Console diag :
 // uniquement via btn_control_console (plus de swipe haut/bas).
 void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_index,
+    lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
+    WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
+    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
+    lv_obj_t* pbars[5],
+    lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
+    CentralPanelCtx& ctx);
+
+// Retour au panneau météo principal (page 2 = prévisions journalières J0-J4),
+// déclenché par l'inactivité tactile — mêmes effets qu'un swipe manuel jusqu'à
+// cette page (données, calque, pastilles, carte centrale), le chemin est
+// factorisé avec handle_swipe_gesture().
+// Ne fait rien si on y est déjà : c'est appelé une fois par seconde.
+void reset_forecast_to_main_page(int& forecast_page_index,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
@@ -462,9 +509,13 @@ struct CalDetailLineUI {
     lv_obj_t* txt;    // texte de la ligne
 };
 
-// Cache mensuel (vidé à chaque ouverture du popup pour repartir sur du frais)
+// Cache mensuel (TTL + eviction : max 3 mois M-1/M/M+1, stale-while-revalidate)
 void cal_cache_clear();
 bool cal_month_needs_fetch(int year, int month);
+// true si le mois est en cache mais plus vieux que ttl_ms (refresh silencieux conseillé)
+bool cal_month_is_stale(int year, int month, uint32_t ttl_ms = 600000);  // défaut 10 min
+// Évince les mois distants de >1 par rapport à (year, month) — garde max 3 entrées.
+void cal_cache_evict_distant(int year, int month);
 void cal_store_month_data(const std::string& annee, const std::string& mois,
     const std::string& codes, const std::string& heures, const std::string& details = "");
 

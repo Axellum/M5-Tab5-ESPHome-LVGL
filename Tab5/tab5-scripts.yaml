@@ -183,6 +183,11 @@ script:
       - globals.set:
           id: va_stop_armed
           value: 'true'
+      # Une conversation ne touche pas la dalle : sans ça, le retour automatique
+      # à l'écran principal (interval en bas de ce fichier) fermerait le popup
+      # Assistant en pleine réponse. Appelé sur on_listening / on_stt_end /
+      # on_tts_start, donc à chaque étape du pipeline.
+      - lambda: 'ui_mark_activity();'
 
   - id: tab5_vocal_disarm_stop
     mode: restart
@@ -190,6 +195,9 @@ script:
       - globals.set:
           id: va_stop_armed
           value: 'false'
+      # Fin de pipeline (on_end / on_error) : les 45 s d'inactivité comptent à
+      # partir de la fin de la réponse parlée, pas de son début.
+      - lambda: 'ui_mark_activity();'
       - if:
           condition:
             not:
@@ -558,26 +566,29 @@ script:
               id(btn_light_power_icon), id(arc_light_brightness), id(lbl_light_brightness_val));
 
   # ═══ Popup calendrier (calendar_popup.yaml) ═══
-  # Ouverture (appui long horloge) : vue = mois courant (SNTP), cache vidé pour
-  # forcer des données HA fraîches, puis rendu local immédiat + requête HA.
+  # Ouverture (appui long horloge) : vue = mois courant (SNTP), le cache est
+  # CONSERVÉ (stale-while-revalidate) — affichage instantané si données en cache,
+  # refresh silencieux si périmé (> 10 min). Eviction des mois lointains.
   - id: tab5_calendar_open
     mode: restart
     then:
       - lambda: |-
           auto t = id(sntp_time).now();
           if (!t.is_valid()) return;  // pas d'heure SNTP -> pas de calendrier fiable
-          cal_cache_clear();
           id(cal_view_year) = t.year;
           id(cal_view_month) = t.month;
           id(cal_detail_date) = "";
           lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
+          // Eviction : garde max 3 mois autour de la vue (M-1, M, M+1)
+          cal_cache_evict_distant(t.year, t.month);
           animate_popup_open(id(calendar_popup), nullptr);
           lv_obj_move_foreground(id(calendar_popup));
       - script.execute: tab5_cal_render
 
   # Rendu du mois affiché : grille locale (numéros/aujourd'hui/weekend) tout de
-  # suite, enrichissement HA (travail/férié/vacances/RDV) si le mois est en cache,
-  # sinon requête script.tab5_calendrier_mois (le push re-déclenche ce rendu).
+  # suite, enrichissement HA (travail/férié/vacances/RDV) depuis le cache si dispo.
+  # Si absent OU périmé (> 10 min) → requête script.tab5_calendrier_mois (le push
+  # re-déclenche ce rendu). Pré-fetch silencieux des mois adjacents (M-1, M+1).
   - id: tab5_cal_render
     mode: restart
     then:
@@ -633,15 +644,57 @@ script:
           cal_render_month(cells, id(lbl_cal_month), id(cal_view_year), id(cal_view_month),
               t.is_valid() ? t.year : 0, t.is_valid() ? t.month : 0,
               t.is_valid() ? t.day_of_month : 0);
+          // Eviction : ne garde que M-1, M, M+1 autour de la vue courante
+          cal_cache_evict_distant(id(cal_view_year), id(cal_view_month));
+      # Refresh du mois affiché si absent ou périmé (> 10 min)
       - if:
           condition:
-            lambda: 'return id(cal_view_year) != 0 && cal_month_needs_fetch(id(cal_view_year), id(cal_view_month));'
+            lambda: 'return id(cal_view_year) != 0 && cal_month_is_stale(id(cal_view_year), id(cal_view_month));'
           then:
             - homeassistant.service:
                 service: script.tab5_calendrier_mois
                 data:
                   annee: !lambda 'return to_string(id(cal_view_year));'
                   mois: !lambda 'return to_string(id(cal_view_month));'
+      # Pré-fetch silencieux des mois adjacents (M-1, M+1) si absents du cache
+      - if:
+          condition:
+            lambda: |-
+              if (id(cal_view_year) == 0) return false;
+              int pm = id(cal_view_month) - 1, py = id(cal_view_year);
+              if (pm < 1) { pm = 12; py--; }
+              return cal_month_needs_fetch(py, pm);
+          then:
+            - homeassistant.service:
+                service: script.tab5_calendrier_mois
+                data:
+                  annee: !lambda |-
+                    int py = id(cal_view_year);
+                    if (id(cal_view_month) == 1) py--;
+                    return to_string(py);
+                  mois: !lambda |-
+                    int pm = id(cal_view_month) - 1;
+                    if (pm < 1) pm = 12;
+                    return to_string(pm);
+      - if:
+          condition:
+            lambda: |-
+              if (id(cal_view_year) == 0) return false;
+              int nm = id(cal_view_month) + 1, ny = id(cal_view_year);
+              if (nm > 12) { nm = 1; ny++; }
+              return cal_month_needs_fetch(ny, nm);
+          then:
+            - homeassistant.service:
+                service: script.tab5_calendrier_mois
+                data:
+                  annee: !lambda |-
+                    int ny = id(cal_view_year);
+                    if (id(cal_view_month) == 12) ny++;
+                    return to_string(ny);
+                  mois: !lambda |-
+                    int nm = id(cal_view_month) + 1;
+                    if (nm > 12) nm = 1;
+                    return to_string(nm);
 
   # Navigation ◀ / ▶ / Aujourd'hui (le détail jour est refermé au changement de mois)
   - id: tab5_cal_prev
@@ -676,6 +729,38 @@ script:
           id(cal_view_month) = t.month;
           lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
       - script.execute: tab5_cal_render
+
+  # Pré-fetch au boot / reconnect HA : charge le mois courant + ses adjacents en
+  # arrière-plan (sans ouvrir le popup). Appelé par on_boot et status_ha rising edge.
+  - id: tab5_cal_prefetch_boot
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: |-
+              auto t = id(sntp_time).now();
+              return t.is_valid() && id(status_ha).state;
+          then:
+            - homeassistant.service:
+                service: script.tab5_calendrier_mois
+                data:
+                  annee: !lambda 'return to_string(id(sntp_time).now().year);'
+                  mois: !lambda 'return to_string(id(sntp_time).now().month);'
+            - delay: 2s
+            # Mois suivant (le plus probable en navigation)
+            - homeassistant.service:
+                service: script.tab5_calendrier_mois
+                data:
+                  annee: !lambda |-
+                    auto t = id(sntp_time).now();
+                    int ny = t.year;
+                    if (t.month == 12) ny++;
+                    return to_string(ny);
+                  mois: !lambda |-
+                    auto t = id(sntp_time).now();
+                    int nm = t.month + 1;
+                    if (nm > 12) nm = 1;
+                    return to_string(nm);
 
   # Tap sur une cellule : ouvre le sous-popup détail. Si le champ ~ de CE jour
   # est non vide → rendu instantané. Sinon "Chargement..." + script.tab5_calendrier_jour
@@ -733,6 +818,9 @@ script:
           id: assist_popup_open
           value: 'true'
       - lambda: |-
+          // Ouverture programmée (réponse du moteur) : personne n'a touché la
+          // dalle, on repart donc de 45 s pleines avant le retour automatique.
+          ui_mark_activity();
           animate_popup_open(id(assistant_popup), nullptr);
           lv_obj_move_foreground(id(assistant_popup));
       - script.execute: tab5_assist_sync_settings
@@ -833,4 +921,77 @@ script:
           assist_apply_text_size(id(lbl_assist_response), size,
               id(roboto_mono_20), id(roboto_mono_24), id(roboto_mono_28),
               id(btn_assist_size_s), id(btn_assist_size_m), id(btn_assist_size_l));
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Retour automatique à l'écran principal (inactivité tactile)
+# ───────────────────────────────────────────────────────────────────────────────
+# [28/07/2026, demande Axel] Deux minuteries :
+#   - un popup ouvert se referme au bout de UIIdle::POPUP_MS    (45 s)
+#   - une page météo ≠ panneau principal revient page 2 au bout
+#     de UIIdle::FORECAST_MS                                     (25 s)
+#
+# Ce sont des délais d'INACTIVITÉ, pas des délais depuis l'ouverture : le
+# compteur LVGL repart de zéro à chaque appui, donc un popup ne se ferme jamais
+# pendant qu'on s'en sert (lire le calendrier ou régler la clim prend plus de
+# 45 s). Les événements du pipeline vocal le remettent aussi à zéro
+# (ui_mark_activity() dans tab5_vocal_arm_stop / _disarm_stop / tab5_assist_open)
+# — une conversation mains libres ne touche pas la dalle et fermerait sinon le
+# popup Assistant en pleine réponse.
+#
+# Ordre volontaire popup PUIS météo : tant qu'un popup couvre l'écran, repeindre
+# les prévisions cachées dessous ne sert à rien. Le retour météo se fait donc au
+# tick suivant la fermeture (l'inactivité continue de courir), ce qui évite en
+# prime de cumuler le fondu de fermeture et un refresh de prévisions dans la
+# même frame.
+#
+# Les jeux sont volontairement exclus : un jeu n'est pas un popup, il ne doit
+# jamais se fermer seul (une partie en pause, c'est zéro toucher pendant des
+# minutes). Le panneau des switches HA l'est aussi : il s'affiche sur demande
+# explicite (bouton « HA »), on ne le rend pas à la météo dans son dos — et le
+# révéler sous les switches ferait apparaître un calque par-dessus l'autre.
+interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          if (Marble::is_open() || Arkanoid::is_open() || Lode::is_open() ||
+              Go::is_open() || Trivia::is_open() || Draughts::is_open() ||
+              Chess::is_open()) return;
+
+          // Pointeurs LVGL constants après le boot (même motif que tab5_cal_render) :
+          // pas de reconstruction du tableau à chaque seconde.
+          // Toute nouvelle fenêtre modale DOIT être ajoutée ici.
+          static lv_obj_t* const kPopups[] = {
+              id(assistant_popup), id(calendar_popup), id(light_options_popup),
+              id(clim_options_popup), id(pots_detail_popup), id(tv_remote_popup),
+              id(layer_console_sys), id(game_selector_overlay)
+          };
+          constexpr int kNbPopups = sizeof(kPopups) / sizeof(kPopups[0]);
+
+          const uint32_t idle = ui_idle_ms();
+
+          if (any_popup_visible(kPopups, kNbPopups)) {
+              if (idle < UIIdle::POPUP_MS) return;
+              // Sous-fenêtres internes : masquage sec, elles n'ont pas de fondu
+              // propre et disparaissent avec la carte qui les porte (mêmes gestes
+              // que les croix de calendar_popup.yaml / console_sys.yaml).
+              lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
+              lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
+              lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
+              for (int i = 0; i < kNbPopups; i++) close_popup_if_open(kPopups[i]);
+              id(assist_popup_open) = false;
+              return;
+          }
+
+          if (idle < UIIdle::FORECAST_MS) return;
+          if (id(forecast_page_index) == 2) return;   // déjà au panneau principal
+          if (id(show_switches)) return;              // panneau HA affiché à la demande
+
+          lv_obj_t* pbars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4)};
+          reset_forecast_to_main_page(id(forecast_page_index),
+              id(layer_forecast_daily), id(layer_forecast_hourly),
+              g_day_slots, g_hour_slots,
+              id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small),
+              pbars,
+              id(page_title_wrapper), id(lbl_page_title),
+              g_central_ctx);
 

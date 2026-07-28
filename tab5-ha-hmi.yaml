@@ -138,6 +138,10 @@ esphome:
           g_hour_slots[3] = {id(h1_time), id(h1_temp), id(h1_prob), id(h1_icon_layer1), id(h1_icon_layer2)};
           g_hour_slots[4] = {id(h0_time), id(h0_temp), id(h0_prob), id(h0_icon_layer1), id(h0_icon_layer2)};
       - script.execute: tab5_central_rotator_auto
+      # Pré-fetch calendrier : charge le mois courant + M+1 en arrière-plan pour
+      # que le popup calendrier s'ouvre instantanément (stale-while-revalidate).
+      - delay: 3s
+      - script.execute: tab5_cal_prefetch_boot
 
 interval:
   - interval: 5min
