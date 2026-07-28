@@ -51,6 +51,12 @@ esphome:
     - Tab5/draughts_ai.cpp
     - Tab5/draughts_game.h
     - Tab5/draughts_game.cpp
+    # Jeu « Neon Apron » (flipper PORTRAIT) — sous-module isolé du HMI.
+    # Seule console qui bascule l'écran : elle passe LVGL en 720×1280 le temps
+    # d'une partie puis restaure `rotation: 270`. Voir le bloc [AI-CONTEXT]
+    # ORIENTATION en tête de pinball_game.cpp avant d'y toucher.
+    - Tab5/pinball_game.h
+    - Tab5/pinball_game.cpp
 
   on_boot:
     - priority: 700

@@ -60,7 +60,7 @@ graph TD
     subgraph GAMESCPP["C++ Jeux (esphome: includes: — prototypes expérimentaux)"]
         MARBLE["marble_game.h/.cpp (1928L)<br/>namespace Marble — roguelite bille"]
         ARKA["arkanoid_game.h/.cpp (1448L)<br/>namespace Arkanoid — casse-briques"]
-        PIN["pinball_game.h/.cpp (1360L)<br/>namespace Pinball — flipper"]
+        PIN["pinball_game.h/.cpp (2328L)<br/>namespace Pinball — flipper PORTRAIT<br/>(bascule lvgl rotation 0 ↔ 270)"]
         LODE["lode_game.h/.cpp (1917L)<br/>namespace Lode — Lode Runner"]
         GO["go_engine/ai/game .h/.cpp<br/>namespace Go — jeu de Go"]
         TRIV["trivia_game.h/.cpp + trivia_questions.h<br/>namespace Trivia — quiz"]

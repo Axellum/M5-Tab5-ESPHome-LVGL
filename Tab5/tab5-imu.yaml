@@ -67,6 +67,11 @@ sensor:
             // (jamais de pilotage du plateau à l'inclinaison, 100 % tactile).
             Chess::on_imu(ax, ay, az);
             Draughts::on_imu(ax, ay, az);
+            // « Neon Apron » : l'IMU ne pilote PAS la bille (la gravité de la
+            // table est constante), il ne sert qu'au nudge — une secousse brève
+            // pousse la bille, trois abus de suite déclenchent le TILT. Le
+            // mapping des axes en portrait est démontré dans pinball_game.cpp.
+            Pinball::on_imu(ax, ay, az);
 
             // 2) Tap-to-wake : au repos la norme vaut ~1 g ; une tape franche
             // sur la dalle produit un pic > 2,5 g. Debounce 500 ms.
@@ -126,7 +131,11 @@ interval:
           // cette liste : ils n'utilisent l'IMU que pour détecter une secousse
           // franche (demande d'indice), ce qui reste fiable à 10 Hz. Inutile de
           // payer 30 Hz pendant une partie qui peut durer une demi-heure.
-          bool want = Marble::is_open() || Arkanoid::is_open() || Lode::is_open() || Trivia::is_open();
+          // « Neon Apron » est dans la liste rapide : un nudge est une secousse
+          // de ~150 ms, à 10 Hz on n'en verrait qu'un échantillon sur deux et le
+          // passe-haut raterait la moitié des coups de hanche.
+          bool want = Marble::is_open() || Arkanoid::is_open() || Lode::is_open() ||
+                      Trivia::is_open() || Pinball::is_open();
           if (want == fast) return;
           fast = want;
           id(tab5_imu).set_update_interval(want ? 33 : 100);

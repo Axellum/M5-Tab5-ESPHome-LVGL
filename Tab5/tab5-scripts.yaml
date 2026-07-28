@@ -24,6 +24,10 @@ script:
           if (Trivia::is_open())   Trivia::close();
           if (Draughts::is_open()) Draughts::close();
           if (Chess::is_open())    Chess::close();
+          // « Neon Apron » en dernier : sa fermeture restaure la rotation 270 du
+          // dashboard. Si un jour un autre jeu touche à l'orientation, il devra
+          // lui aussi fermer après, pour que le dernier mot revienne au paysage.
+          if (Pinball::is_open())  Pinball::close();
 
   # Ouvre le jeu « Fil d'Or » (overlay plein écran, marble_game.cpp).
   # Script unique appelé par les 3 points d'entrée (console GESTION + les deux
@@ -148,6 +152,34 @@ script:
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
           Draughts::open(ui);
+
+  # Ouvre le flipper « Neon Apron » (pinball_game.cpp).
+  # Même pattern que Marble, avec DEUX injections en plus :
+  #   - f_score / f_led : le fronton imite un afficheur de borne. roboto_55_b ne
+  #     contient QUE les chiffres et l'espace (cf. tab5-styles.yaml) — parfait
+  #     pour le score, inutilisable pour du texte ; roboto_mono_24 sert aux
+  #     libellés à chasse fixe (« BILLE 2 / 3 », « RECORD 1 250 000 »).
+  #   - ui.lvgl : pointeur sur le LvglComponent. C'est LUI qui permet à
+  #     Pinball::open() de basculer l'écran en portrait 720×1280 et à
+  #     Pinball::close() de restaurer le paysage 270°. Sans lui, le jeu
+  #     s'ouvrirait couché sur le côté. Voir [AI-CONTEXT] ORIENTATION dans
+  #     pinball_game.cpp.
+  - id: tab5_pinball_open
+    mode: single
+    then:
+      - lambda: |-
+          Pinball::UI ui;
+          ui.root    = id(pinball_root);
+          ui.field   = id(pinball_field);
+          ui.hud     = id(pinball_hud);
+          ui.panel   = id(pinball_panel);
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          ui.f_score = id(roboto_55_b);
+          ui.f_led   = id(roboto_mono_24);
+          ui.lvgl    = id(tab5_lvgl);
+          Pinball::open(ui);
 
   # Active le wake word interne « Stop » (désactivé par défaut par ESPHome, 2e modèle).
   # Uniquement via tab5_maj_volet_etat (push HA) — pas d'état optimiste au tap écran.
@@ -955,7 +987,7 @@ interval:
       - lambda: |-
           if (Marble::is_open() || Arkanoid::is_open() || Lode::is_open() ||
               Go::is_open() || Trivia::is_open() || Draughts::is_open() ||
-              Chess::is_open()) return;
+              Chess::is_open() || Pinball::is_open()) return;
 
           // Pointeurs LVGL constants après le boot (même motif que tab5_cal_render) :
           // pas de reconstruction du tableau à chaque seconde.
