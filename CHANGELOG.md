@@ -4,6 +4,25 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-28 — Fil d'Or : rendu au niveau du flipper (dégradés, décor, bille 3 calques)
+
+L'écart esthétique avec Neon Apron n'était pas la physique — c'était le
+vocabulaire de rendu (aplats + bordures). Même fiction Dark Souls, outillage
+visuel du flipper. **Physique inchangée.**
+
+- **19 tokens** en paires HI/LO (`MARBLE_FLOOR_*`, `WALL_*`, `DANGER_*`,
+  `BALL_*`, etc.) + helpers `set_grad` / `mk_arc` / décor borné
+- Calque détail enfant par entité ; bille ombre/corps/reflet ; murs pierre,
+  torches, anneau autour du portail
+- Compile OK `config_hash=0x1103b8a2` (RAM 43,3 % / flash 37,3 %)
+
+### 2026-07-28 — Modales : +20 px d'air sous le titre + ouverture/fermeture instantanée
+
+- `modal_body_y` 52 → **72**, `modal_bottom_y` -8 → **-20**, grille calendrier
+  et corps des popups recalés
+- `animate_popup_open/close` : plus de fondu (unhide/hide immédiat) ; feedback
+  pressed sans transition LVGL
+
 ### 2026-07-28 — Arcade : « Neon Apron », le flipper qui fait pivoter l'écran
 
 Le slot 3 de l'Arcade, libre depuis la suppression de « Flip Noir » (`697e2e9`),

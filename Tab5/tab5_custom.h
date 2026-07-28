@@ -620,6 +620,30 @@ namespace UIColor {
     static constexpr uint32_t MARBLE_DASH     = 0xF2C14E;  // pickup dash
     static constexpr uint32_t MARBLE_RUNE     = 0xF7E08A;  // rune / cle d'objectif
     static constexpr uint32_t MARBLE_BRASS_CHEST = 0x9A6B2F;  // coffre au tresor (laiton)
+    // --- Paires de degrade : c'est d'ICI que vient le volume ---------------------
+    // [AI-CONTEXT] Meme recette que la table du flipper (PIN_*) : chaque piece a
+    // un ton HAUT (face eclairee, vers le haut de l'ecran) et un ton BAS (face a
+    // l'ombre). Un `set_grad(obj, HI, LO)` remplace un aplat et ne coute AUCUN
+    // objet LVGL supplementaire — une seule passe de dessin.
+    // @ai_instruction N'ajoute pas une couleur seule : ajoute une paire, sinon la
+    //      piece redeviendra plate au milieu des autres.
+    static constexpr uint32_t MARBLE_FLOOR_HI = 0x18243A;  // sol, haut du degrade
+    static constexpr uint32_t MARBLE_FLOOR_LO = 0x090E18;  // sol, bas du degrade
+    static constexpr uint32_t MARBLE_SLAB     = 0x16202F;  // dalles peintes au sol (decor)
+    static constexpr uint32_t MARBLE_WALL_HI  = 0x4C5E7C;  // pierre, face eclairee
+    static constexpr uint32_t MARBLE_WALL_LO  = 0x202A3B;  // pierre, face a l'ombre
+    static constexpr uint32_t MARBLE_WALL_EDGE= 0x92A7CA;  // arete vive au sommet du mur
+    static constexpr uint32_t MARBLE_DANGER_HI= 0xFF8A7A;  // pointe / lame, arete eclairee
+    static constexpr uint32_t MARBLE_DANGER_LO= 0x71171C;  // pointe / lame, base sombre
+    static constexpr uint32_t MARBLE_BALL_SH  = 0x03060C;  // ombre portee de la bille
+    static constexpr uint32_t MARBLE_BALL_HI  = 0xFFF0CE;  // reflet speculaire — skin or
+    static constexpr uint32_t MARBLE_BALL_ALT_HI = 0xFFFFFF;  // reflet — skin argent
+    static constexpr uint32_t MARBLE_BALL_CU_HI  = 0xFFD3C2;  // reflet — skin cuivre
+    static constexpr uint32_t MARBLE_PIT_RIM  = 0x2C3648;  // margelle du trou (rebord eclaire)
+    static constexpr uint32_t MARBLE_EXIT_HI  = 0x6FF0DC;  // coeur du portail ouvert
+    static constexpr uint32_t MARBLE_RUNE_LO  = 0xA8863A;  // or / rune, bas du degrade
+    static constexpr uint32_t MARBLE_CHEST_LO = 0x543813;  // coffre, bas du degrade
+    static constexpr uint32_t MARBLE_EMBER    = 0xD8873A;  // braise des torches (decor)
     // --- Jeu « Arcanoïde » (arkanoid_game.cpp) ------------------------------------
     // Palette rétro Atari / borne arcade 80's : fond sombre, briques vives,
     // contraste fort. Utilisée uniquement par le namespace Arkanoid.
