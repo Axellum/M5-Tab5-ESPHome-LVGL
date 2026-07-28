@@ -150,7 +150,62 @@ lvgl:
             styles: style_meteo_card
             scrollbar_mode: "OFF"
             widgets:
-              - label: { id: lbl_time, text: "19:50", align: TOP_MID, y: 10, text_font: roboto_130_b, text_color: color_text }
+              # Horloge à rouleau : UN conteneur qui rogne PAR CHIFFRE (H H : M M),
+              # 2 labels chacun (l'affiché + celui qui arrive), et le ":" fixe.
+              # De 22 à 23 mn, seul le dernier chiffre tourne.
+              # Tailles/positions réelles posées au boot par layout_clock_roller()
+              # (mesurées sur la police) — les valeurs ici ne servent qu'avant.
+              # Ne pas remettre un label unique `lbl_time` : le C++ pilote ces
+              # 8 labels via g_clock_roller.
+              - obj:
+                  id: clock_roll_h10
+                  align: TOP_LEFT
+                  x: 28
+                  y: 10
+                  width: 75
+                  height: 105
+                  styles: style_transparent
+                  scrollable: false
+                  widgets:
+                    - label: { id: lbl_time_h10_a, text: "1", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
+                    - label: { id: lbl_time_h10_b, text: "1", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
+              - obj:
+                  id: clock_roll_h1
+                  align: TOP_LEFT
+                  x: 103
+                  y: 10
+                  width: 75
+                  height: 105
+                  styles: style_transparent
+                  scrollable: false
+                  widgets:
+                    - label: { id: lbl_time_h1_a, text: "9", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
+                    - label: { id: lbl_time_h1_b, text: "9", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
+              - label: { id: lbl_time_colon, text: ":", align: TOP_LEFT, x: 182, y: 10, text_font: roboto_130_b, text_color: color_text }
+              - obj:
+                  id: clock_roll_m10
+                  align: TOP_LEFT
+                  x: 223
+                  y: 10
+                  width: 75
+                  height: 105
+                  styles: style_transparent
+                  scrollable: false
+                  widgets:
+                    - label: { id: lbl_time_m10_a, text: "5", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
+                    - label: { id: lbl_time_m10_b, text: "5", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
+              - obj:
+                  id: clock_roll_m1
+                  align: TOP_LEFT
+                  x: 298
+                  y: 10
+                  width: 75
+                  height: 105
+                  styles: style_transparent
+                  scrollable: false
+                  widgets:
+                    - label: { id: lbl_time_m1_a, text: "0", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
+                    - label: { id: lbl_time_m1_b, text: "0", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
               - label: { id: lbl_date, text: "Jeu 02 Avr", align: TOP_MID, y: 140, text_font: roboto_45, text_color: color_text }
 
         # Zone tactile invisible par-dessus l'horloge/date : appui long -> popup
@@ -185,20 +240,26 @@ lvgl:
             pressed:
               bg_opa: 30%
             on_short_click:
+              # Bascule prévisions <-> switches HA : fondu croisé (I-2) au lieu
+              # d'un basculement sec de flags. Les deux calques occupent la même
+              # zone -> fondu pur, pas de glissement (qui ferait "sauter" le
+              # contenu). Le calque sortant est masqué en fin d'animation.
               - lambda: |-
                   bool state = id(show_switches);
                   id(show_switches) = !state;
+                  const bool daily = (id(forecast_page_index) >= 2);
+                  lv_obj_t* fc_visible = daily ? id(layer_forecast_daily) : id(layer_forecast_hourly);
+                  lv_obj_t* fc_autre   = daily ? id(layer_forecast_hourly) : id(layer_forecast_daily);
+                  // Coupe un swipe en cours sur le calque non actif (sinon X/opa
+                  // continuent sous HIDDEN et polluent le prochain affichage).
+                  lv_anim_delete(fc_autre, nullptr);
+                  lv_obj_set_x(fc_autre, 0);
+                  lv_obj_set_style_opa(fc_autre, LV_OPA_COVER, LV_PART_MAIN);
+                  lv_obj_add_flag(fc_autre, LV_OBJ_FLAG_HIDDEN);
                   if (id(show_switches)) {
-                      lv_obj_add_flag(id(layer_forecast_daily), LV_OBJ_FLAG_HIDDEN);
-                      lv_obj_add_flag(id(layer_forecast_hourly), LV_OBJ_FLAG_HIDDEN);
-                      lv_obj_clear_flag(id(layer_switches), LV_OBJ_FLAG_HIDDEN);
+                      animate_crossfade_layers(fc_visible, id(layer_switches));
                   } else {
-                      if (id(forecast_page_index) >= 2) {
-                          lv_obj_clear_flag(id(layer_forecast_daily), LV_OBJ_FLAG_HIDDEN);
-                      } else {
-                          lv_obj_clear_flag(id(layer_forecast_hourly), LV_OBJ_FLAG_HIDDEN);
-                      }
-                      lv_obj_add_flag(id(layer_switches), LV_OBJ_FLAG_HIDDEN);
+                      animate_crossfade_layers(id(layer_switches), fc_visible);
                   }
             widgets:
               - label: { id: icon_ha, text: "\U000F07D0", align: CENTER, y: -12, text_font: mdi_font_45, text_color: color_text }

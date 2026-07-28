@@ -4,6 +4,37 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-28 — Animations : plus courtes, et deux effets « rouleau »
+
+Les transitions étaient jugées lentes à l'œil et donnaient une impression de
+latence. L'écran est en `update_interval: never` : c'est LVGL qui redessine
+depuis la loop ESPHome, donc **chaque frame d'animation repeint la zone
+animée** (verre + dégradé compris). Durée plus courte = moins de frames.
+
+- **Toutes les durées regroupées dans `UIAnim`** (`tab5_custom.h`) — plus de
+  constantes éparpillées dans 5 fonctions. Rotateur central 450 → **190 ms**
+  (glissement 84 → 28 px), ouverture popup 280 → **150 ms**, fermeture
+  200 → **110 ms**, swipe prévisions 350 → **200 ms** (200 → 110 px), entrée
+  d'alerte 300 → **180 ms** (100 → 44 px). Feedback tactile inchangé (80 ms).
+- **Horloge à rouleau, un rouleau par chiffre** : `lbl_time` (un label
+  « HH:MM ») devient **quatre** conteneurs qui rognent — un par chiffre — de
+  2 labels chacun. Au changement, les deux labels du chiffre glissent d'une
+  hauteur de boîte : le vieux sort par le haut, le neuf entre par le bas
+  (240 ms). **Seul le chiffre qui change tourne** : de 22 à 23 mn la dizaine
+  ne bouge pas. La géométrie (avance des chiffres, hauteur d'encre, centrage)
+  est calculée au boot depuis les métriques réelles de la police
+  (`get_capheight()` / `get_baseline()`), pas codée en dur : changer
+  `roboto_130_b` ne casse rien. Suppose des chiffres tabulaires (Roboto :
+  75 px d'avance pour les 10 glyphes en 130 gras).
+- **Rouleau d'icône de prévision** : quand la condition météo d'une tuile
+  change, la nouvelle icône monte de 22 px en apparaissant (190 ms), en
+  décalé de 28 ms par tuile (effet vague). Ne se déclenche **que** si la
+  condition change réellement (cache par tuile) — les push HA qui renvoient la
+  même météo ne repeignent plus rien. Supprimé pendant un changement de calque
+  horaire↔journalier : le calque glisse déjà.
+- **Bascule prévisions ↔ switches HA** en fondu croisé (200 ms) au lieu d'un
+  basculement sec de flags.
+
 ### 2026-07-28 — Go Tab opti : bugs 19×19, perf, polish
 
 - **PASS = -1** (plus 255) : en 19×19 l'indice 255 est une intersection réelle ;

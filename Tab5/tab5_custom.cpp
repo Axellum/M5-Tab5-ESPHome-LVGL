@@ -387,9 +387,25 @@ void parse_and_update_jours_bulk(const std::string& payload) {
     }
 }
 
+// Condition meteo actuellement peinte par tuile (5 jours + 5 heures). Sert a
+// ne declencher le rouleau que quand l'icone change vraiment : les payloads HA
+// retombent souvent sur la meme condition, et repeindre une icone identique
+// coutait deja un invalidate LVGL pour rien.
+static char s_day_icon_cond[5][20] = {};
+static char s_hour_icon_cond[5][20] = {};
+
+// true = l'icone change ET ce n'est pas le tout premier remplissage
+// (au boot les 5 tuiles se peignent d'un coup : pas d'animation).
+static bool icon_cond_changed(char* cache, const std::string& cond) {
+    if (strncmp(cache, cond.c_str(), sizeof(s_day_icon_cond[0]) - 1) == 0) return false;
+    const bool first = (cache[0] == '\0');
+    snprintf(cache, sizeof(s_day_icon_cond[0]), "%s", cond.c_str());
+    return !first;
+}
+
 void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
     esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
-    
+
     if (page_index < 0 || page_index > 2) return;
 
     for (int i = 0; i < 5; i++) {
@@ -418,7 +434,11 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
 
         lv_label_set_text(slot.max_lbl, data.est_passe ? "-- / " : buftx);
         lv_label_set_text(slot.min_lbl, data.est_passe ? "-- \xC2\xB0" : buftn);
+        const bool icon_rolls = icon_cond_changed(s_day_icon_cond[i], data.condition);
         update_meteo_icon(slot.icon_l1, slot.icon_l2, data.condition, true, f_main, f_card, f_main_s, f_card_s);
+        // Rouleau echelonne de gauche a droite (effet vague) — apres
+        // update_meteo_icon() qui pose le glyphe et son offset de base.
+        if (icon_rolls) animate_icon_roll_in(slot.icon_l1, slot.icon_l2, i * UIAnim::ROLL_STAGGER);
 
         // Coloring day names
         uint8_t opa = data.est_passe ? 100 : 255;
@@ -491,7 +511,9 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
             lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(UIColor::CLIM_TRACK_INACTIVE), LV_PART_MAIN);
         }
 
+        const bool icon_rolls = icon_cond_changed(s_hour_icon_cond[i], data.condition);
         update_meteo_icon(slot.icon_l1, slot.icon_l2, data.condition, true, f_main, f_card, f_main_s, f_card_s);
+        if (icon_rolls) animate_icon_roll_in(slot.icon_l1, slot.icon_l2, i * UIAnim::ROLL_STAGGER);
     }
 }
 
@@ -947,12 +969,25 @@ void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
     }
 }
 
-void update_clock_date_ui(lv_obj_t* lbl_time, lv_obj_t* lbl_date,
+// Rouleau de l'horloge : helpers definis plus bas avec le reste des animations.
+static void roll_clock_digit(ClockDigitRoller& r, int box_h, char digit);
+static void set_clock_digit_immediate(ClockDigitRoller& r, int box_h, char digit);
+
+void update_clock_date_ui(lv_obj_t* lbl_date,
     int hour, int minute, int day_of_week, int day_of_month, int month) {
-    if (lbl_time) {
-        char buf_time[16];
-        snprintf(buf_time, sizeof(buf_time), "%02d:%02d", hour, minute);
-        lv_label_set_text(lbl_time, buf_time);
+    ClockRollerCtx& c = g_clock_roller;
+    if (c.d[0].lbl[0]) {
+        char hhmm[5];
+        snprintf(hhmm, sizeof(hhmm), "%02d%02d", hour, minute);
+
+        // Un rouleau par chiffre : de 22 a 23 mn, seule l'unite tourne.
+        // shown == 0 (jamais peint) ou layout pas encore mesure -> pose directe.
+        for (int i = 0; i < 4; i++) {
+            ClockDigitRoller& r = c.d[i];
+            if (r.shown == hhmm[i] && c.ready) continue;
+            if (r.shown == 0 || !c.ready) set_clock_digit_immediate(r, c.box_h, hhmm[i]);
+            else                          roll_clock_digit(r, c.box_h, hhmm[i]);
+        }
     }
     if (lbl_date) {
         static const char* days[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
@@ -1001,11 +1036,15 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
         if (old_is_daily != new_is_daily) {
             // Changement de layer : refresh des donnees AVANT l'animation,
             // puis animation du glissement horizontal + fondu croise.
+            // Le calque entier glisse deja : pas de rouleau d'icone en plus
+            // (deux animations sur la meme zone = bruit visuel + repaint double).
+            g_forecast_roll_suppress = true;
             if (new_is_daily) {
                 refresh_daily_forecast(day_slots, page - 2, f_main, f_card, f_main_s, f_card_s);
             } else {
                 refresh_hourly_forecast(hour_slots, 1 - page, f_main, f_card, f_main_s, f_card_s);
             }
+            g_forecast_roll_suppress = false;
             lv_obj_t* out_layer = old_is_daily ? layer_forecast_daily : layer_forecast_hourly;
             lv_obj_t* in_layer  = new_is_daily ? layer_forecast_daily : layer_forecast_hourly;
             animate_swipe_horizontal(out_layer, in_layer, dir);
@@ -1802,6 +1841,15 @@ static void anim_x_cb(void* obj, int32_t v) {
     lv_obj_set_x((lv_obj_t*)obj, (lv_coord_t)v);
 }
 
+// Callback d'animation de translate_y (rouleaux : horloge, icones meteo).
+// On anime translate_y et non y : les icones meteo posent deja un offset de
+// base via lv_obj_set_style_translate_y() dans update_meteo_icon(), et les
+// labels de l'horloge sont alignes (align + y). L'offset de base est integre
+// aux bornes de l'animation par l'appelant, ce callback reste donc trivial.
+static void anim_ty_cb(void* obj, int32_t v) {
+    lv_obj_set_style_translate_y((lv_obj_t*)obj, (lv_coord_t)v, LV_PART_MAIN);
+}
+
 // Cache l'objet a la fin de l'animation (fermeture popup : card + scrim).
 // Reinitialise aussi l'opacité et le scale pour un prochain open propre.
 static void anim_hide_ready_cb(lv_anim_t* a) {
@@ -1826,12 +1874,14 @@ static void anim_swipe_out_ready_cb(lv_anim_t* a) {
 // Transition "verre depoli" : glissement vertical + fondu croise.
 //   - Sortie : descend en accelerant (ease_in) tout en s'effacant.
 //   - Entree : arrive du haut en decelerant (ease_out) tout en apparaissant.
-// Duree 450ms. Pas de transform_scale (trop couteux sur les grands objets).
+// Duree/amplitude : UIAnim::PANEL_* (190ms / 28px depuis le 28/07 — etait
+// 450ms / 84px, trop lent pour un rotateur qui tourne toutes les 8s).
+// Pas de transform_scale (trop couteux sur les grands objets).
 void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
     if (out_obj == in_obj) return;
 
-    const uint32_t DUR    = 450;  // ms
-    const int32_t  OFFSET = 84;   // px de glissement
+    const uint32_t DUR    = UIAnim::PANEL_DUR;
+    const int32_t  OFFSET = UIAnim::PANEL_OFFSET;
 
     if (out_obj) {
         lv_anim_t a_out_y;
@@ -1886,9 +1936,10 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
 
 // Animation d'ouverture d'un popup : fondu 0->COVER (card + scrim).
 // Pas de transform_scale : trop couteux sur les objets plein ecran (1280x720).
-// Duree 280ms, ease_out.
+// Duree UIAnim::POPUP_IN (150ms — etait 280), ease_out : c'est l'animation la
+// plus exposee a la latence percue (tap -> contenu lisible).
 void animate_popup_open(lv_obj_t* card, lv_obj_t* scrim) {
-    const uint32_t DUR = 280;  // ms
+    const uint32_t DUR = UIAnim::POPUP_IN;
 
     if (scrim) {
         lv_anim_delete(scrim, anim_opa_cb);  // Cancel close en cours (race reopen)
@@ -1921,9 +1972,10 @@ void animate_popup_open(lv_obj_t* card, lv_obj_t* scrim) {
 
 // Animation de fermeture : fondu COVER->0. Cache automatiquement card + scrim
 // a la fin (LV_OBJ_FLAG_HIDDEN) via anim_hide_ready_cb.
-// Duree 200ms, ease_in (plus court que l'ouverture pour le "dismiss").
+// Duree UIAnim::POPUP_OUT (110ms), ease_in : toujours plus court que
+// l'ouverture — un "dismiss" doit partir tout de suite.
 void animate_popup_close(lv_obj_t* card, lv_obj_t* scrim) {
-    const uint32_t DUR = 200;  // ms
+    const uint32_t DUR = UIAnim::POPUP_OUT;
 
     if (scrim) {
         lv_anim_t a_s;
@@ -1952,12 +2004,14 @@ void animate_popup_close(lv_obj_t* card, lv_obj_t* scrim) {
 // Glissement horizontal + fondu croise entre deux layers (swipe previsions).
 // dir = LV_DIR_LEFT (in arrive de la droite, out part a gauche) ou
 //       LV_DIR_RIGHT (in arrive de la gauche, out part a droite).
-// Duree 350ms. Derivee de transition_widgets() mais en horizontal.
+// Duree/amplitude : UIAnim::SWIPE_* (200ms / 110px — etait 350ms / 200px).
+// C'est une reponse directe a un geste : elle doit "coller" au doigt.
+// Derivee de transition_widgets() mais en horizontal.
 void animate_swipe_horizontal(lv_obj_t* out_layer, lv_obj_t* in_layer, lv_dir_t dir) {
     if (out_layer == in_layer) return;
 
-    const uint32_t DUR    = 350;  // ms
-    const int32_t  OFFSET = 200;  // px de glissement
+    const uint32_t DUR    = UIAnim::SWIPE_DUR;
+    const int32_t  OFFSET = UIAnim::SWIPE_OFFSET;
     const int32_t in_start_x  = (dir == LV_DIR_LEFT) ? OFFSET : -OFFSET;
     const int32_t out_end_x   = (dir == LV_DIR_LEFT) ? -OFFSET : OFFSET;
 
@@ -2013,11 +2067,11 @@ void animate_swipe_horizontal(lv_obj_t* out_layer, lv_obj_t* in_layer, lv_dir_t 
 
 // Slide-in depuis la droite + fondu pour un bandeau d'alerte qui entre
 // dans le rotateur central (alertes HA, alertes Meteo-France).
-// Duree 300ms, ease_out. OFFSET 100px.
+// Duree/amplitude : UIAnim::ALERT_* (180ms / 44px — etait 300ms / 100px).
 void animate_alert_enter(lv_obj_t* alert_wrap) {
     if (!alert_wrap) return;
-    const uint32_t DUR    = 300;  // ms
-    const int32_t  OFFSET = 100;  // px de glissement
+    const uint32_t DUR    = UIAnim::ALERT_DUR;
+    const int32_t  OFFSET = UIAnim::ALERT_OFFSET;
 
     lv_obj_clear_flag(alert_wrap, LV_OBJ_FLAG_HIDDEN);
     lv_obj_set_x(alert_wrap, OFFSET);
@@ -2042,6 +2096,267 @@ void animate_alert_enter(lv_obj_t* alert_wrap) {
     lv_anim_start(&a_o);
 }
 
+// Fondu croise pur entre deux calques plein cadre (previsions <-> switches HA).
+// Pas de glissement : les deux calques occupent exactement la meme zone, un
+// deplacement ferait "sauter" le contenu. Duree UIAnim::SWIPE_DUR.
+// Annule aussi les anims X d'un swipe en cours et remet x=0 — sinon un tap HA
+// pendant/juste apres un swipe laisse le calque decale ou en train de glisser.
+// Si le calque entrant est deja visible (ex: swipe previsions sous overlay HA),
+// on ne le remet pas transparent : rejouer l'entree le blankerait.
+void animate_crossfade_layers(lv_obj_t* out_layer, lv_obj_t* in_layer) {
+    if (out_layer == in_layer) return;
+    const uint32_t DUR = UIAnim::SWIPE_DUR;
+
+    if (out_layer) {
+        lv_anim_delete(out_layer, anim_opa_cb);
+        lv_anim_delete(out_layer, anim_x_cb);
+        lv_obj_set_x(out_layer, 0);
+        lv_anim_t a_out;
+        lv_anim_init(&a_out);
+        lv_anim_set_var(&a_out, out_layer);
+        lv_anim_set_values(&a_out, LV_OPA_COVER, LV_OPA_TRANSP);
+        lv_anim_set_time(&a_out, DUR);
+        lv_anim_set_path_cb(&a_out, lv_anim_path_ease_in);
+        lv_anim_set_exec_cb(&a_out, anim_opa_cb);
+        lv_anim_set_ready_cb(&a_out, anim_hide_ready_cb);
+        lv_anim_start(&a_out);
+    }
+    if (in_layer) {
+        lv_anim_delete(in_layer, anim_opa_cb);
+        lv_anim_delete(in_layer, anim_x_cb);
+        lv_obj_set_x(in_layer, 0);
+
+        const bool already_visible =
+            !lv_obj_has_flag(in_layer, LV_OBJ_FLAG_HIDDEN) &&
+            lv_obj_get_style_opa(in_layer, LV_PART_MAIN) > LV_OPA_TRANSP;
+
+        lv_obj_clear_flag(in_layer, LV_OBJ_FLAG_HIDDEN);
+
+        if (already_visible) {
+            // Deja a l'ecran : rester opaque, pas de replay d'entree.
+            lv_obj_set_style_opa(in_layer, LV_OPA_COVER, LV_PART_MAIN);
+            return;
+        }
+
+        lv_obj_set_style_opa(in_layer, LV_OPA_TRANSP, LV_PART_MAIN);
+
+        lv_anim_t a_in;
+        lv_anim_init(&a_in);
+        lv_anim_set_var(&a_in, in_layer);
+        lv_anim_set_values(&a_in, LV_OPA_TRANSP, LV_OPA_COVER);
+        lv_anim_set_time(&a_in, DUR);
+        lv_anim_set_path_cb(&a_in, lv_anim_path_ease_out);
+        lv_anim_set_exec_cb(&a_in, anim_opa_cb);
+        lv_anim_start(&a_in);
+    }
+}
+
+// =============================================================================
+// Rouleau d'icone meteo
+// L'icone est deja peinte (glyphe + offset de base poses par
+// update_meteo_icon()) : on ne fait que la faire *entrer*. Elle part de
+// base+ROLL_ICON_PX (en dessous) a opacite nulle et remonte a sa place en
+// apparaissant. Pas de sortie animee : il n'y a que 2 labels par tuile (l1/l2),
+// un vrai fondu croise demanderait 2 labels de plus par tuile (x10 tuiles).
+// A 190ms le raccord se lit comme un basculement de volet, pas comme un saut.
+// =============================================================================
+bool g_forecast_roll_suppress = false;
+
+static void roll_in_one_label(lv_obj_t* o, uint32_t delay_ms) {
+    if (!o) return;
+    if (lv_obj_has_flag(o, LV_OBJ_FLAG_HIDDEN)) return;
+
+    lv_anim_delete(o, anim_ty_cb);
+    lv_anim_delete(o, anim_opa_cb);
+
+    // Base = offset pose par update_meteo_icon() juste avant (l1_y / l2_y).
+    const int32_t base = lv_obj_get_style_translate_y(o, LV_PART_MAIN);
+
+    // Etat de depart applique tout de suite : avec un delay, LVGL n'appelle pas
+    // exec_cb avant la fin du delai — sans ca l'icone clignoterait en place.
+    lv_obj_set_style_translate_y(o, (lv_coord_t)(base + UIAnim::ROLL_ICON_PX), LV_PART_MAIN);
+    lv_obj_set_style_opa(o, LV_OPA_TRANSP, LV_PART_MAIN);
+
+    lv_anim_t a_y;
+    lv_anim_init(&a_y);
+    lv_anim_set_var(&a_y, o);
+    lv_anim_set_values(&a_y, base + UIAnim::ROLL_ICON_PX, base);
+    lv_anim_set_time(&a_y, UIAnim::ROLL_ICON);
+    lv_anim_set_delay(&a_y, delay_ms);
+    lv_anim_set_path_cb(&a_y, lv_anim_path_ease_out);
+    lv_anim_set_exec_cb(&a_y, anim_ty_cb);
+    lv_anim_start(&a_y);
+
+    lv_anim_t a_o;
+    lv_anim_init(&a_o);
+    lv_anim_set_var(&a_o, o);
+    lv_anim_set_values(&a_o, LV_OPA_TRANSP, LV_OPA_COVER);
+    lv_anim_set_time(&a_o, UIAnim::ROLL_ICON);
+    lv_anim_set_delay(&a_o, delay_ms);
+    lv_anim_set_path_cb(&a_o, lv_anim_path_ease_out);
+    lv_anim_set_exec_cb(&a_o, anim_opa_cb);
+    lv_anim_start(&a_o);
+}
+
+void animate_icon_roll_in(lv_obj_t* l1, lv_obj_t* l2, uint32_t delay_ms) {
+    if (g_forecast_roll_suppress) return;
+    roll_in_one_label(l1, delay_ms);
+    roll_in_one_label(l2, delay_ms);
+}
+
+// =============================================================================
+// Horloge a rouleau
+// =============================================================================
+ClockRollerCtx g_clock_roller;
+
+// Mesure la largeur d'un texte dans la police du label, sans toucher aux
+// internes de la police : on ecrit le texte, on relance le layout, on lit la
+// largeur, on remet l'ancien texte. Le label est en taille-contenu (defaut
+// ESPHome pour un label sans width).
+static int measure_label_text_w(lv_obj_t* lbl, const char* probe) {
+    if (!lbl) return 0;
+    char saved[16];
+    const char* cur = lv_label_get_text(lbl);
+    snprintf(saved, sizeof(saved), "%s", cur ? cur : "");
+    lv_label_set_text(lbl, probe);
+    lv_obj_update_layout(lbl);
+    const int w = lv_obj_get_width(lbl);
+    lv_label_set_text(lbl, saved);
+    lv_obj_update_layout(lbl);
+    return w;
+}
+
+void layout_clock_roller(lv_obj_t* clock_tile, esphome::font::Font* clock_font) {
+    ClockRollerCtx& c = g_clock_roller;
+    if (c.ready) return;
+    if (!clock_tile || !clock_font || !c.colon) return;
+    for (int i = 0; i < 4; i++) {
+        if (!c.d[i].wrap || !c.d[i].lbl[0] || !c.d[i].lbl[1]) return;
+    }
+
+    lv_obj_update_layout(clock_tile);
+
+    // --- Metriques exactes de la police (ESPHome les calcule au build) ---
+    // clock_font DOIT etre la police posee sur les 4 labels en YAML.
+    // Les chiffres montent exactement a la hauteur de capitale : capheight
+    // donne donc la hauteur d'encre reelle, sans ratio devine.
+    const int line_h     = clock_font->get_height();     // hauteur de ligne (152 @130b)
+    const int baseline_y = clock_font->get_baseline();   // haut de boite -> ligne de base (121)
+    const int cap_h      = clock_font->get_capheight();  // hauteur des chiffres (92)
+    const int ink_top    = baseline_y - cap_h;           // marge vide au-dessus des chiffres (29)
+
+    // Boite de rognage : juste l'encre + une marge de 6px en haut et en bas.
+    // Elle doit rester plus courte que la boite du label, sinon le chiffre qui
+    // arrive deborderait sur la date (posee 130px plus bas dans la tuile).
+    const int pad = 6;
+    const int box_h = cap_h + 2 * pad;
+    const int lbl_y = -(ink_top - pad);              // recale l'encre dans la boite
+
+    // Avance d'un chiffre (identique pour 0-9 : chiffres tabulaires).
+    const int w_digit = measure_label_text_w(c.d[0].lbl[0], "8");
+    const int w_colon = measure_label_text_w(c.colon, ":");
+    if (w_digit <= 0 || box_h <= 0) return;
+
+    // --- Centrage de HH:MM dans la tuile ---
+    // Les deux chiffres d'un groupe sont colles (leur avance fait deja
+    // l'espacement) ; seul le ":" recoit une respiration de chaque cote.
+    const int gap = 4;
+    const int total_w = 4 * w_digit + w_colon + 2 * gap;
+    const int tile_w = lv_obj_get_content_width(clock_tile);
+    const int x0 = (tile_w - total_w) / 2;
+    // y de reference : celui pose en YAML sur le 1er wrap, corrige de la marge
+    // d'encre supprimee (on veut les chiffres exactement ou ils etaient).
+    const int y0 = lv_obj_get_y(c.d[0].wrap) + (ink_top - pad);
+
+    const int x_digit[4] = {
+        x0,
+        x0 + w_digit,
+        x0 + 2 * w_digit + gap + w_colon + gap,
+        x0 + 3 * w_digit + gap + w_colon + gap,
+    };
+
+    for (int i = 0; i < 4; i++) {
+        ClockDigitRoller& r = c.d[i];
+        lv_obj_set_size(r.wrap, w_digit, box_h);
+        lv_obj_set_pos(r.wrap, x_digit[i], y0);
+        // Le rognage des enfants par le parent EST le rouleau : sans lui les
+        // deux chiffres se verraient l'un au-dessus de l'autre pendant la
+        // rotation. (Defaut LVGL, mis explicitement pour ne pas en dependre.)
+        lv_obj_clear_flag(r.wrap, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
+
+        for (int k = 0; k < 2; k++) {
+            lv_obj_set_y(r.lbl[k], lbl_y);
+            // Le label en attente patiente hors de la boite (juste en dessous).
+            lv_obj_set_style_translate_y(r.lbl[k], k == 0 ? 0 : box_h, LV_PART_MAIN);
+        }
+        r.cur = 0;
+    }
+    lv_obj_set_pos(c.colon, x0 + 2 * w_digit + gap, y0 + lbl_y);
+
+    c.box_h = box_h;
+    c.ready = true;
+
+    // Trace unique au boot : la geometrie est deduite de la police, donc non
+    // verifiable en lisant le YAML. Ces valeurs permettent de controler le
+    // rendu sans avoir la dalle sous les yeux.
+    ESP_LOGI("TAB5", "Rouleau horloge: line_h=%d baseline=%d cap=%d ink_top=%d box_h=%d "
+                     "w_digit=%d w_colon=%d x0=%d y0=%d lbl_y=%d",
+             line_h, baseline_y, cap_h, ink_top, box_h, w_digit, w_colon, x0, y0, lbl_y);
+}
+
+// Fait tourner un chiffre vers sa nouvelle valeur. Les deux labels glissent
+// d'une hauteur de boite vers le haut : l'ancien sort par le haut, le nouveau
+// — pose une boite plus bas — prend sa place.
+static void roll_clock_digit(ClockDigitRoller& r, int box_h, char digit) {
+    lv_obj_t* out_lbl = r.lbl[r.cur];
+    lv_obj_t* in_lbl  = r.lbl[r.cur ^ 1];
+    if (!out_lbl || !in_lbl) return;
+
+    lv_anim_delete(out_lbl, anim_ty_cb);
+    lv_anim_delete(in_lbl, anim_ty_cb);
+
+    const char new_text[2] = {digit, '\0'};
+    lv_label_set_text(in_lbl, new_text);
+    lv_obj_set_style_translate_y(in_lbl, box_h, LV_PART_MAIN);
+
+    lv_anim_t a_out;
+    lv_anim_init(&a_out);
+    lv_anim_set_var(&a_out, out_lbl);
+    lv_anim_set_values(&a_out, 0, -box_h);
+    lv_anim_set_time(&a_out, UIAnim::ROLL_CLOCK);
+    lv_anim_set_path_cb(&a_out, lv_anim_path_ease_in_out);
+    lv_anim_set_exec_cb(&a_out, anim_ty_cb);
+    lv_anim_start(&a_out);
+
+    lv_anim_t a_in;
+    lv_anim_init(&a_in);
+    lv_anim_set_var(&a_in, in_lbl);
+    lv_anim_set_values(&a_in, box_h, 0);
+    lv_anim_set_time(&a_in, UIAnim::ROLL_CLOCK);
+    lv_anim_set_path_cb(&a_in, lv_anim_path_ease_in_out);
+    lv_anim_set_exec_cb(&a_in, anim_ty_cb);
+    lv_anim_start(&a_in);
+
+    r.cur ^= 1;
+    r.shown = digit;
+}
+
+// Pose un chiffre sans animation (premier affichage, ou layout pas encore pret).
+// Les DEUX labels recoivent le texte : tant que layout_clock_roller() n'a pas
+// tourne, box_h vaut 0 et le label en attente se superpose a l'affiche — avec
+// le meme texte ca ne se voit pas, avec deux valeurs differentes si.
+static void set_clock_digit_immediate(ClockDigitRoller& r, int box_h, char digit) {
+    if (!r.lbl[r.cur]) return;
+    const char text[2] = {digit, '\0'};
+    lv_label_set_text(r.lbl[r.cur], text);
+    lv_obj_set_style_translate_y(r.lbl[r.cur], 0, LV_PART_MAIN);
+    if (r.lbl[r.cur ^ 1]) {
+        lv_label_set_text(r.lbl[r.cur ^ 1], text);
+        lv_obj_set_style_translate_y(r.lbl[r.cur ^ 1], box_h, LV_PART_MAIN);
+    }
+    r.shown = digit;
+}
+
 // =============================================================================
 // 1D : Micro-interactions boutons verre (transform_scale au pressed)
 // ESPHome ne supporte pas state_pressed dans style_definitions -> on injecte
@@ -2059,7 +2374,7 @@ static void ensure_btn_styles_inited() {
         LV_STYLE_TRANSFORM_SCALE_X, LV_STYLE_TRANSFORM_SCALE_Y, LV_STYLE_PROP_INV
     };
     lv_style_transition_dsc_init(&btn_trans_dsc, btn_trans_props,
-                                 lv_anim_path_ease_out, 80, 0, nullptr);
+                                 lv_anim_path_ease_out, UIAnim::BTN_PRESS, 0, nullptr);
     lv_style_init(&style_btn_pressed);
     lv_style_set_transform_scale_x(&style_btn_pressed, 240);  // 240/256 ~= 94%
     lv_style_set_transform_scale_y(&style_btn_pressed, 240);

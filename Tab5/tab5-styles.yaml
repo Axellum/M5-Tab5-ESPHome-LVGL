@@ -425,6 +425,8 @@ lvgl:
 # ESPHome ne supporte pas state_pressed dans style_definitions -> helper C++.
 # Interval one-shot : se declenche 2s apres le boot (layout LVGL termine).
 # Le flag statique garantit une seule execution (l'interval reste actif mais inerte).
+# Meme fenetre pour l'horloge a rouleau : layout_clock_roller() a besoin d'un
+# layout LVGL termine pour mesurer la police et centrer les deux rouleaux.
 interval:
   - interval: 2s
     id: btn_press_style_init
@@ -433,6 +435,20 @@ interval:
           static bool btn_style_done = false;
           if (!btn_style_done) {
               apply_pressed_scale_to_tree(lv_scr_act());
+              g_clock_roller.colon = id(lbl_time_colon);
+              g_clock_roller.d[0] = {id(clock_roll_h10), {id(lbl_time_h10_a), id(lbl_time_h10_b)}, 0, 0};
+              g_clock_roller.d[1] = {id(clock_roll_h1),  {id(lbl_time_h1_a),  id(lbl_time_h1_b)},  0, 0};
+              g_clock_roller.d[2] = {id(clock_roll_m10), {id(lbl_time_m10_a), id(lbl_time_m10_b)}, 0, 0};
+              g_clock_roller.d[3] = {id(clock_roll_m1),  {id(lbl_time_m1_a),  id(lbl_time_m1_b)},  0, 0};
+              layout_clock_roller(id(clock_tile), id(roboto_130_b));
+              // Repeint l'heure tout de suite : sans ca l'horloge garderait le
+              // placeholder YAML jusqu'au prochain tick minute (on_time_sync a
+              // pu passer avant que les pointeurs du rouleau soient poses).
+              auto t_now = id(sntp_time).now();
+              if (t_now.is_valid()) {
+                  update_clock_date_ui(id(lbl_date), t_now.hour, t_now.minute,
+                      t_now.day_of_week, t_now.day_of_month, t_now.month);
+              }
               btn_style_done = true;
           }
 

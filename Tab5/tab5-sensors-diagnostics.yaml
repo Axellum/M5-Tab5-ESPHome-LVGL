@@ -235,7 +235,7 @@ time:
         - lambda: |-
             auto t_now = id(sntp_time).now();
             if (t_now.is_valid()) {
-              update_clock_date_ui(id(lbl_time), id(lbl_date),
+              update_clock_date_ui(id(lbl_date),
                   t_now.hour, t_now.minute, t_now.day_of_week, t_now.day_of_month, t_now.month);
             }
 
@@ -250,7 +250,7 @@ time:
           - lambda: |-
               auto t_now = id(sntp_time).now();
               if (t_now.is_valid()) {
-                update_clock_date_ui(id(lbl_time), id(lbl_date),
+                update_clock_date_ui(id(lbl_date),
                     t_now.hour, t_now.minute, t_now.day_of_week, t_now.day_of_month, t_now.month);
               }
 
