@@ -375,13 +375,17 @@ dans le YAML impose de changer `HUD_H` / `FIELD_H` dans `go_game.cpp`.
 - **Suicide interdit**, sauf si le coup capture d'abord.
 - **Ko simple** (pas de superko positionnel — assumé, documenté).
 - **Passe** ; deux passes consécutives → écran de **marquage des pierres mortes**.
-- **Score chinois (aire)** : pierres vivantes + territoire + **komi 6,5** aux Blancs.
+- **Score chinois (aire)** : pierres vivantes + territoire + **komi 6,5** aux
+  Blancs (komi **0,5** en partie à handicap ≥ 2).
 - **Handicap 2 à 9 pierres** (placements standards, Blanc commence).
 - **Vie/mort non résolue automatiquement** — c'est le joueur qui marque les
   groupes morts en fin de partie (toucher un groupe le bascule mort/vivant,
-  « Tout vivant » remet à zéro), avec aperçu du territoire en direct. C'est le
+  « Tout vivant » remet à zéro), avec aperçu du territoire en direct. Une pause
+  pendant le marquage **conserve** les groupes déjà marqués. C'est le
   fonctionnement de toutes les applications de Go : un solveur de vie/mort n'a
   pas sa place dans 2 Mo de firmware.
+- L'IA **abandonne** si l'écart d'aire estimé est désespéré (≥ 45 pts, niveaux
+  Amateur et plus) — évite de remplir le goban en salon.
 
 ### Modes & IA
 
@@ -397,7 +401,8 @@ jamais par un compteur de nœuds : `Ai::step(ms)` rend la main au bout de la
 tranche demandée et un budget CPU total (80 / 350 / 900 / 1900 ms) garantit
 qu'un coup sort toujours. L'évaluation tient en trois termes — matière, sécurité
 des chaînes (atari), influence par diffusion — tous calculés en **O(N) par
-position** grâce à une table des chaînes construite une seule fois par nœud.
+position grâce à une table des chaînes construite une seule fois par nœud
+(`chain_liberties` en compteurs de génération, pas de `memset` par chaîne).
 
 ### Contrôles
 

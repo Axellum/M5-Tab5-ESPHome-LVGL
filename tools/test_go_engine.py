@@ -14,7 +14,8 @@ Couverture : capture, suicide, ko, chemin rapide de is_legal (3 branches),
 from __future__ import annotations
 
 EMPTY, BLACK, WHITE = 0, 1, 2
-PASS = 255
+PASS = -1  # hors domaine 0..360 — ne JAMAIS utiliser 255 (intersection 19×19)
+MAX_SQ = 19 * 19
 T_NONE, T_BLACK, T_WHITE, T_DAME = 0, 1, 2, 3
 DR, DC = (-1, 1, 0, 0), (0, 0, -1, 1)
 DDR, DDC = (-1, -1, 1, 1), (-1, 1, -1, 1)
@@ -458,30 +459,78 @@ def test_legal_vide():
         expect(cnt == n * n, f"{n * n} coups legaux sur un goban {n}x{n} vide")
 
 
+def test_pass_hors_domaine_19():
+    """PASS ne doit plus collisionner avec l'intersection 255 en 19×19."""
+    expect(PASS == -1, "PASS = -1 (hors domaine)")
+    expect(PASS < 0 or PASS >= MAX_SQ, "PASS hors de 0..360")
+    p = Pos(19)
+    sq255 = 255  # r=13, c=8
+    expect(0 <= sq255 < 19 * 19, "255 est une intersection valide en 19x19")
+    expect(is_legal(p, sq255), "intersection 255 jouable sur goban vide")
+    expect(play(p, sq255), "poser en 255 pose une pierre")
+    expect(p.sq[sq255] == BLACK, "pierre noire en 255")
+    expect(p.passes == 0, "poser en 255 n'est PAS une passe")
+    expect(p.side == WHITE, "trait passe a Blanc apres pose en 255")
+    # Occupée : plus légale comme placement, et ce n'est toujours pas une passe.
+    expect(not is_legal(p, sq255), "255 occupee : placement illegal")
+    expect(is_legal(p, PASS), "PASS reste toujours legal")
+
+
+def test_ko_haut_indice_19():
+    """Ko au-delà de l'indice 255 — le C++ stockait ko en uint8_t (tronqué)."""
+    n = 19
+    p = Pos(n)
+    # Forme de ko classique décalée vers le bas du goban (indices > 255).
+    # Blanc en atari en (16, 8)=312 ; Noir capture en (16, 7)=311 → ko = 312.
+    p.sq[idx(15, 7, n)] = WHITE
+    p.sq[idx(15, 8, n)] = BLACK
+    p.sq[idx(16, 6, n)] = WHITE
+    p.sq[idx(16, 8, n)] = WHITE
+    p.sq[idx(16, 9, n)] = BLACK
+    p.sq[idx(17, 7, n)] = WHITE
+    p.sq[idx(17, 8, n)] = BLACK
+    cap_sq = idx(16, 8, n)   # 312
+    play_sq = idx(16, 7, n)  # 311
+    expect(cap_sq > 255, f"case capturee {cap_sq} > 255")
+    expect(chain_liberties(p, cap_sq)[0] == 1, "pierre blanche en atari")
+    p.side = BLACK
+    expect(play(p, play_sq), "Noir capture (ko bas-plateau)")
+    expect(p.ko == cap_sq, f"ko memorise = {cap_sq} (pas tronque)")
+    expect(not is_legal(p, cap_sq), "reprise immediate du ko interdite")
+    # Une case sans rapport (troncature uint8 : 312 & 0xFF = 56) doit rester jouable.
+    phantom = cap_sq & 0xFF
+    if p.sq[phantom] == EMPTY:
+        expect(is_legal(p, phantom), f"case fantome {phantom} ne doit pas etre interdite")
+    expect(play(p, PASS), "Blanc passe")
+    expect(p.ko == PASS, "ko leve apres un autre coup")
+
+
 def test_partie_complete():
     """Aucune position atteignable ne doit produire de coup illegal accepte."""
     import random
     random.seed(7)
-    for _ in range(20):
-        p = Pos(9)
-        for _ in range(120):
-            moves = [i for i in range(81) if is_legal(p, i)]
-            if not moves:
-                play(p, PASS)
-                continue
-            sq = random.choice(moves)
-            before = p.sq[:]
-            if not play(p, sq):
-                expect(False, "un coup declare legal a ete refuse")
-                return
-            # Invariant : aucune chaine survivante n'a 0 liberte.
-            for i in range(81):
-                if p.sq[i] != EMPTY and chain_liberties(p, i)[0] == 0:
-                    expect(False, f"chaine sans liberte apres {sq} (avant={before[i]})")
+    for n in (9, 13, 19):
+        N = n * n
+        rounds = 8 if n == 9 else (4 if n == 13 else 2)
+        moves_cap = 120 if n == 9 else (80 if n == 13 else 60)
+        for _ in range(rounds):
+            p = Pos(n)
+            for _ in range(moves_cap):
+                moves = [i for i in range(N) if is_legal(p, i)]
+                if not moves:
+                    play(p, PASS)
+                    continue
+                sq = random.choice(moves)
+                if not play(p, sq):
+                    expect(False, f"coup legal refuse ({n}x{n})")
                     return
-            if p.passes >= 2:
-                break
-    expect(True, "20 parties aleatoires sans chaine morte residuelle")
+                for i in range(N):
+                    if p.sq[i] != EMPTY and chain_liberties(p, i)[0] == 0:
+                        expect(False, f"chaine sans liberte ({n}x{n})")
+                        return
+                if p.passes >= 2:
+                    break
+    expect(True, "parties aleatoires 9/13/19 sans chaine morte residuelle")
 
 
 if __name__ == "__main__":
@@ -497,6 +546,8 @@ if __name__ == "__main__":
     test_territory_map()
     test_handicap()
     test_legal_vide()
+    test_pass_hors_domaine_19()
+    test_ko_haut_indice_19()
     test_partie_complete()
     print(f"=== {'FAILED' if fails else 'ALL PASSED'} ({fails} fails) ===")
     raise SystemExit(1 if fails else 0)

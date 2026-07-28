@@ -581,6 +581,20 @@ bool central_panel_is_active(int panel, const CentralPanelCtx& ctx) {
     }
 }
 
+// Synchronise g_central_ctx depuis les valeurs fournies (issues des globals YAML).
+// Factorise le bloc de 8 lignes répété 7× dans tab5-scripts.yaml.
+void sync_central_ctx(CentralPanelCtx& ctx, bool rain, bool alerts, bool info,
+                      bool ha0, bool ha1, bool ha2, bool ha3, int panel) {
+    ctx.has_rain      = rain;
+    ctx.has_mf_alerts = alerts;
+    ctx.has_info      = info;
+    ctx.has_ha[0]     = ha0;
+    ctx.has_ha[1]     = ha1;
+    ctx.has_ha[2]     = ha2;
+    ctx.has_ha[3]     = ha3;
+    ctx.current_panel = panel;
+}
+
 void advance_central_panel_rotator(CentralPanelCtx& ctx) {
     int next_panel = ctx.current_panel;
     int attempts = 0;
@@ -2032,7 +2046,7 @@ void animate_alert_enter(lv_obj_t* alert_wrap) {
 // 1D : Micro-interactions boutons verre (transform_scale au pressed)
 // ESPHome ne supporte pas state_pressed dans style_definitions -> on injecte
 // un style pressed partage via lv_obj_add_style(obj, style, LV_STATE_PRESSED).
-// La transition (120ms ease_out) est gereee nativement par LVGL.
+// La transition (80ms ease_out) est gereee nativement par LVGL.
 // =============================================================================
 static lv_style_t style_btn_pressed;
 static lv_style_transition_dsc_t btn_trans_dsc;
@@ -2040,12 +2054,12 @@ static bool btn_styles_inited = false;
 
 static void ensure_btn_styles_inited() {
     if (btn_styles_inited) return;
-    // Transition sur transform_scale X+Y : 120ms ease_out (pas instantane).
+    // Transition sur transform_scale X+Y : 80ms ease_out (nerveux, feedback instantané).
     static const lv_style_prop_t btn_trans_props[] = {
         LV_STYLE_TRANSFORM_SCALE_X, LV_STYLE_TRANSFORM_SCALE_Y, LV_STYLE_PROP_INV
     };
     lv_style_transition_dsc_init(&btn_trans_dsc, btn_trans_props,
-                                 lv_anim_path_ease_out, 120, 0, nullptr);
+                                 lv_anim_path_ease_out, 80, 0, nullptr);
     lv_style_init(&style_btn_pressed);
     lv_style_set_transform_scale_x(&style_btn_pressed, 240);  // 240/256 ~= 94%
     lv_style_set_transform_scale_y(&style_btn_pressed, 240);

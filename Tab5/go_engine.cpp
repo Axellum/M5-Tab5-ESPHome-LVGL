@@ -7,6 +7,9 @@
  *      et aucune n'appelle une autre fonction du moteur pendant qu'elle lit un
  *      scratch partagé — chaque bloc de commentaire le rappelle là où c'est
  *      délicat (play() en particulier).
+ * @architecture_constraint chain_liberties utilise des compteurs de génération
+ *      (stamps) au lieu de memset(N) à chaque appel — indispensable pour
+ *      l'invariant O(N) de build_chains dans go_ai.
  */
 #include "go_engine.h"
 
@@ -29,20 +32,31 @@ static const int DDC[4] = {-1, 1, -1, 1};
 // Propriété : s_mark/s_stack appartiennent à chain_liberties() SEULE ; s_dead et
 // s_grp appartiennent à play() ; s_board/s_seen appartiennent au comptage.
 // ---------------------------------------------------------------------------
-static uint8_t s_mark[MAX_SQ];    // visité — chain_liberties
-static uint8_t s_lib[MAX_SQ];     // liberté déjà comptée — chain_liberties
-static int16_t s_stack[MAX_SQ];   // pile de parcours — chain_liberties
-static int16_t s_grp[MAX_SQ];     // chaîne courante — play()
-static uint8_t s_removed[MAX_SQ]; // pierres déjà retirées ce coup — play()
-static uint8_t s_board[MAX_SQ];   // plateau « pierres mortes retirées » — comptage
-static uint8_t s_seen[MAX_SQ];    // régions déjà visitées — comptage
+static uint16_t s_mark_gen[MAX_SQ];  // génération « visité » — chain_liberties
+static uint16_t s_lib_gen[MAX_SQ];   // génération « liberté vue » — chain_liberties
+static uint16_t s_gen = 1;           // compteur de génération (0 = invalide)
+static int16_t s_stack[MAX_SQ];      // pile de parcours — chain_liberties
+static int16_t s_grp[MAX_SQ];        // chaîne courante — play()
+static uint8_t s_removed[MAX_SQ];    // pierres déjà retirées ce coup — play()
+static uint8_t s_board[MAX_SQ];      // plateau « pierres mortes retirées » — comptage
+static uint8_t s_seen[MAX_SQ];       // régions déjà visitées — comptage
+
+static void bump_gen() {
+    s_gen++;
+    if (s_gen == 0) {
+        // Wrap : on remet à zéro les tableaux et on repart de 1.
+        memset(s_mark_gen, 0, sizeof(s_mark_gen));
+        memset(s_lib_gen, 0, sizeof(s_lib_gen));
+        s_gen = 1;
+    }
+}
 
 void pos_init(Pos& p, int n) {
     if (n != 9 && n != 13 && n != 19) n = 9;
     memset(&p, 0, sizeof(p));
     p.n = (uint8_t)n;
     p.side = BLACK;
-    p.ko = (uint8_t)PASS;
+    p.ko = (int16_t)PASS;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,12 +70,12 @@ int chain_liberties(const Pos& p, int sq, int16_t* group_out, int* group_size) {
     if (sq < 0 || sq >= N || p.sq[sq] == EMPTY) return 0;
     const uint8_t col = p.sq[sq];
 
-    memset(s_mark, 0, (size_t)N);
-    memset(s_lib, 0, (size_t)N);
+    bump_gen();
+    const uint16_t g = s_gen;
 
     int sp = 0;
     s_stack[sp++] = (int16_t)sq;
-    s_mark[sq] = 1;
+    s_mark_gen[sq] = g;
     int libs = 0;
     int gsz = 0;
 
@@ -75,9 +89,9 @@ int chain_liberties(const Pos& p, int sq, int16_t* group_out, int* group_size) {
             if (!on(nr, nc, n)) continue;
             const int ni = idx(nr, nc, n);
             if (p.sq[ni] == EMPTY) {
-                if (!s_lib[ni]) { s_lib[ni] = 1; libs++; }
-            } else if (p.sq[ni] == col && !s_mark[ni]) {
-                s_mark[ni] = 1;
+                if (s_lib_gen[ni] != g) { s_lib_gen[ni] = g; libs++; }
+            } else if (p.sq[ni] == col && s_mark_gen[ni] != g) {
+                s_mark_gen[ni] = g;
                 s_stack[sp++] = (int16_t)ni;
             }
         }
@@ -146,7 +160,7 @@ bool play(Pos& p, int sq) {
     if (sq == PASS) {
         p.passes = (uint8_t)(p.passes + 1);
         p.side = (uint8_t)opp((Color)p.side);
-        p.ko = (uint8_t)PASS;
+        p.ko = (int16_t)PASS;
         p.move_no++;
         return true;
     }
@@ -180,11 +194,11 @@ bool play(Pos& p, int sq) {
 
     // Ko simple : la pierre posée capture exactement 1 pierre, est seule dans sa
     // chaîne et n'a qu'une liberté (la case libérée). Reprise immédiate interdite.
-    uint8_t new_ko = (uint8_t)PASS;
+    int16_t new_ko = (int16_t)PASS;
     if (captured == 1) {
         int gsz = 0;
         const int libs = chain_liberties(p, sq, s_grp, &gsz);
-        if (libs == 1 && gsz == 1) new_ko = (uint8_t)last_cap;
+        if (libs == 1 && gsz == 1) new_ko = (int16_t)last_cap;
     }
 
     if (me == BLACK) p.captured_by_black = (uint16_t)(p.captured_by_black + captured);
@@ -374,7 +388,7 @@ int place_handicap(Pos& p, int h) {
 
     for (int i = 0; i < np; i++) p.sq[pts[i]] = BLACK;
     p.side = WHITE;            // avec handicap, les Blancs commencent
-    p.ko = (uint8_t)PASS;
+    p.ko = (int16_t)PASS;
     p.passes = 0;
     p.move_no = 0;
     return np;

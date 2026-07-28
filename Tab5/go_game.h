@@ -58,10 +58,10 @@ struct GoSave {
     uint8_t  has_game;
     uint8_t  n;
     uint8_t  side;
-    uint8_t  ko;
     uint8_t  passes;
+    int16_t  ko;           // PASS (-1) = aucun ; int16 pour couvrir 0..360
     uint8_t  r_size, r_mode, r_human, r_level, r_handicap;
-    uint8_t  reserved2[2];
+    uint8_t  reserved2[3];
     uint16_t move_no;
     uint16_t cap_b, cap_w;
     uint8_t  board[Go::Engine::MAX_SQ];

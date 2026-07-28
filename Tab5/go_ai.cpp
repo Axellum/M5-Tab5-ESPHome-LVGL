@@ -10,7 +10,7 @@
  *      et l'évaluation ne font que lire ces tables. L'ancienne version
  *      appelait is_legal() — qui simulait le coup — sur les 361 intersections
  *      à chaque nœud.
- *   3. PILE PLATE. Aucun tableau de taille MAX_SQ en local : un `Pos` (368 o)
+ *   3. PILE PLATE. Aucun tableau de taille MAX_SQ en local : un `Pos` (~372 o)
  *      et la liste de candidats du niveau, rien de plus.
  */
 #include "go_ai.h"
@@ -33,7 +33,8 @@ static const int DC[4] = {0, 0, -1, 1};
 
 static constexpr int INF = 1000000;
 static constexpr int MAX_CAND = 24;   // candidats retenus à la racine
-static constexpr float KOMI = 6.5f;
+static constexpr float RESIGN_MARGIN = 45.0f;  // écart d'aire → abandon
+static float g_komi = 6.5f;
 
 // ---------------------------------------------------------------------------
 // Table des niveaux
@@ -419,12 +420,26 @@ static bool should_pass_now(const Pos& p) {
     if (p.move_no > (uint16_t)(p.n * p.n * 2)) return true;
     if (p.passes != 1) return false;              // l'adversaire vient de passer
     Engine::Score s;
-    Engine::score_chinese(p, KOMI, nullptr, s);
+    Engine::score_chinese(p, g_komi, nullptr, s);
     return (p.side == BLACK) ? (s.black > s.white) : (s.white > s.black);
 }
 
-void begin(const Pos& root, Level level, uint32_t seed) {
+// Abandon si l'écart d'aire (toutes pierres vivantes) est désespéré.
+// Approximation : pas de marquage morts, mais suffisant pour ne pas jouer
+// jusqu'au remplissage du goban en salon.
+static bool should_resign_now(const Pos& p) {
+    if (g_level < LVL_AMATEUR) return false;
+    if (p.move_no < (uint16_t)(p.n * p.n / 3)) return false;
+    Engine::Score s;
+    Engine::score_chinese(p, g_komi, nullptr, s);
+    const float me  = (p.side == BLACK) ? s.black : s.white;
+    const float you = (p.side == BLACK) ? s.white : s.black;
+    return (you - me) >= RESIGN_MARGIN;
+}
+
+void begin(const Pos& root, Level level, uint32_t seed, float komi) {
     g_root = root;
+    g_komi = komi;
     g_level = (level <= LVL_EXPERT) ? level : LVL_AMATEUR;
     const LevelCfg& L = LEVELS[g_level];
     g_rng ^= seed * 0x9E3779B9u + 0x85EBCA6Bu;
@@ -440,6 +455,7 @@ void begin(const Pos& root, Level level, uint32_t seed) {
     g_budget_ms = L.budget_ms ? L.budget_ms : 1;
     g_best = PASS;
 
+    if (should_resign_now(root)) { g_best = RESIGN; g_nc = 0; finish(); return; }
     if (should_pass_now(root)) { g_nc = 0; finish(); return; }
 
     build_chains(root);

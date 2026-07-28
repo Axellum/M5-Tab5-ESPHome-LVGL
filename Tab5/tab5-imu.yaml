@@ -2,7 +2,7 @@
 # [AI-CONTEXT]
 # @file tab5-imu.yaml
 # @role BMI270 (IMU embarquée) — accel/gyro/temp, tap-to-wake, et source
-#     d'inclinaison des jeux plein écran (marble / arkanoid / pinball / lode / go).
+#     d'inclinaison des jeux plein écran (marble / arkanoid / lode / go / trivia).
 # @architecture_constraint Bus I2C bsp_bus (GPIO31/32 @ 400 kHz), adresse 0x68.
 #     Aucun conflit avec le PI4IOE (0x43/0x44). Composant natif ESPHome (motion:).
 #     Les 3 axes d'accélération sont `internal: true` : à 10-30 Hz ils
@@ -60,7 +60,6 @@ sensor:
             // 1) Alimentation du jeu (simple stockage, aucun calcul lourd ici).
             Marble::on_imu(ax, ay, az);
             Arkanoid::on_imu(ax, ay, az);
-            Pinball::on_imu(ax, ay, az);
             Lode::on_imu(ax, ay, az);
             Go::on_imu(ax, ay, az);
             Trivia::on_imu(ax, ay, az);
@@ -127,7 +126,7 @@ interval:
           // cette liste : ils n'utilisent l'IMU que pour détecter une secousse
           // franche (demande d'indice), ce qui reste fiable à 10 Hz. Inutile de
           // payer 30 Hz pendant une partie qui peut durer une demi-heure.
-          bool want = Marble::is_open() || Arkanoid::is_open() || Pinball::is_open() || Lode::is_open() || Trivia::is_open();
+          bool want = Marble::is_open() || Arkanoid::is_open() || Lode::is_open() || Trivia::is_open();
           if (want == fast) return;
           fast = want;
           id(tab5_imu).set_update_interval(want ? 33 : 100);

@@ -50,10 +50,11 @@ static constexpr int PX = 716, PW = 548;
 static constexpr int ROW_Y0 = 230, ROW_H = 54, ROW_STEP = 60;
 
 // --- Cadences ---
-static constexpr uint32_t TICK_MS      = 33;
+static constexpr uint32_t TICK_ANIM_MS = 33;    // animations (dé, pion) : tick rapide
+static constexpr uint32_t TICK_IDLE_MS = 100;   // phases statiques (question, menus) : tick lent
 static constexpr uint32_t DICE_SPIN_MS = 700;   // durée de roulement du dé
 static constexpr uint32_t DICE_FACE_MS = 70;    // changement de face pendant le roulement
-static constexpr uint32_t HOP_MS       = 110;   // durée d'un pas du pion
+static constexpr uint32_t HOP_MS       = 80;    // durée d'un pas du pion (nerveux)
 static constexpr uint32_t REVEAL_OK_MS = 2200;  // affichage du verdict — bonne réponse
 static constexpr uint32_t REVEAL_KO_MS = 3400;  // ... mauvaise réponse (lecture de la solution)
 static constexpr uint32_t MSG_MS       = 2600;  // message transitoire du bandeau d'état
@@ -1865,6 +1866,17 @@ static void render_layers() {
 static void tick(lv_timer_t* t) {
     (void) t;
     if (!g_open) return;
+
+    // Tick adaptatif : 33 ms pendant les animations (dé qui roule, pion qui
+    // saute), 100 ms en phase statique (question, verdict, menus, attente choix).
+    const bool anim = s_dice_spin || (s_phase == PH_MOVING);
+    const uint32_t want_ms = anim ? TICK_ANIM_MS : TICK_IDLE_MS;
+    static uint32_t cur_period = TICK_IDLE_MS;
+    if (g_timer && cur_period != want_ms) {
+        cur_period = want_ms;
+        lv_timer_set_period(g_timer, want_ms);
+    }
+
     uint32_t now = esphome::millis();
 
     // --- Dé ---
@@ -2143,7 +2155,7 @@ void open(const UI& ui) {
 
     lv_obj_clear_flag(g_ui.root, LV_OBJ_FLAG_HIDDEN);
     lv_obj_move_foreground(g_ui.root);
-    if (!g_timer) g_timer = lv_timer_create(tick, TICK_MS, nullptr);
+    if (!g_timer) g_timer = lv_timer_create(tick, TICK_IDLE_MS, nullptr);
 }
 
 void close() {

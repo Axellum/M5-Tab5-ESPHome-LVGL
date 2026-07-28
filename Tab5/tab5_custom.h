@@ -107,7 +107,7 @@ void animate_alert_enter(lv_obj_t* alert_wrap);
 
 // --- 1D : Micro-interactions boutons verre ---
 // Applique un style pressed (transform_scale 94% + bg_opa 30%) avec transition
-// 120ms ease_out sur un bouton. ESPHome ne supporte pas state_pressed dans les
+// 80ms ease_out sur un bouton. ESPHome ne supporte pas state_pressed dans les
 // styles partagees (style_definitions), donc on l'injecte en C++ via lv_obj_add_style.
 void setup_button_press_animation(lv_obj_t* btn);
 
@@ -174,6 +174,12 @@ constexpr int kHaAlertSlotCount = 4;
 
 lv_obj_t* central_panel_wrapper(int panel, CentralPanelCtx& ctx);
 bool central_panel_is_active(int panel, const CentralPanelCtx& ctx);
+
+// Synchronise g_central_ctx depuis les globals YAML (factorise le bloc 8 lignes
+// répété 7× dans tab5-scripts.yaml). Appelée avant chaque advance/dismiss/show.
+void sync_central_ctx(CentralPanelCtx& ctx, bool rain, bool alerts, bool info,
+                      bool ha0, bool ha1, bool ha2, bool ha3, int panel);
+
 void advance_central_panel_rotator(CentralPanelCtx& ctx);
 void sync_central_panel_visibility(CentralPanelCtx& ctx);
 
@@ -502,19 +508,5 @@ namespace UIColor {
     static constexpr uint32_t ARK_ORANGE    = 0xFF8800;  // accent orange (shrink)
     static constexpr uint32_t ARK_MAGENTA   = 0xFF44AA;  // accent magenta (bonus, colle)
     static constexpr uint32_t ARK_BTN       = 0x334455;  // boutons tactiles latéraux
-    // --- Jeu « Flip Noir » (pinball_game.cpp) ------------------------------------
-    // Palette rétro flipper 70-80's : table sombre, inserts vifs, bille blanche.
-    // Utilisée uniquement par le namespace Pinball — ne pas mélanger avec le HMI.
-    static constexpr uint32_t PIN_VOID      = 0x0A0A10;  // fond hors table (noir profond)
-    static constexpr uint32_t PIN_FLOOR     = 0x121218;  // surface de jeu (gris très sombre)
-    static constexpr uint32_t PIN_HUD_BG    = 0x0D0D12;  // bandeau HUD
-    static constexpr uint32_t PIN_WALL      = 0x445566;  // murs / guides
-    static constexpr uint32_t PIN_BALL      = 0xF0F0F0;  // bille (blanc brillant)
-    static constexpr uint32_t PIN_WHITE     = 0xFFFFFF;  // flash / flipper
-    static constexpr uint32_t PIN_RED       = 0xFF3344;  // bumper rouge / TILT
-    static constexpr uint32_t PIN_CYAN      = 0x33DDEE;  // accent cyan (rollover, bordures)
-    static constexpr uint32_t PIN_ORANGE    = 0xFF8811;  // slingshot / accent chaud
-    static constexpr uint32_t PIN_YELLOW    = 0xFFDD22;  // score / cibles / titre
-    static constexpr uint32_t PIN_BTN       = 0x222233;  // boutons de menu
 }
 
