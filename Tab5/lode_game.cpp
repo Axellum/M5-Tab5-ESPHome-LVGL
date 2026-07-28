@@ -9,15 +9,23 @@
  *      esphome::global_preferences (aucune dependance Home Assistant).
  * @ai_instruction Hot-path = tick_cb() : pas de std::string, pas de to_string(),
  *      pas de new/delete. Les libelles HUD ne sont reecrits que quand leur valeur
- *      change. Couleurs : uniquement Lode::Pal::* (jamais d'hex en dur ici).
- *      Les chaines affichees restent SANS accent (convention du projet, cf.
- *      marble_game.cpp) pour ne dependre d'aucun encodage source.
+ *      change, et les acteurs suivent la MEME regle via leur cache de rendu
+ *      (Actor::dpx/dpy/dbw/dbody/dhead) : ne jamais reposer une position ou une
+ *      couleur inchangee, l'ecran est en rotation 270 et toute zone salie est
+ *      re-tournee par le CPU au flush. Couleurs : uniquement Lode::Pal::*
+ *      (jamais d'hex en dur ici). Les chaines affichees restent SANS accent
+ *      (convention du projet, cf. marble_game.cpp) pour ne dependre d'aucun
+ *      encodage source. Le lv_timer bat a TICK_MS en partie et retombe a
+ *      IDLE_TICK_MS dans les menus (tick_period_sync(), appele par pad_sync()).
  *
  * MODELE DE DEPLACEMENT (identique pour le joueur et les gardes) :
  *      Chaque acteur est verrouille sur la grille. A l'arret (`sub == 0`) il prend
  *      UNE decision et s'engage sur un pas d'une case ; `sub` progresse ensuite de
  *      `speed` px par tick jusqu'a TILE, puis la cellule change. C'est le
  *      fonctionnement du Lode Runner d'origine : pas de platformer flottant.
+ *      Le nombre de px par tick vient de SPEEDS[g_save.speed] (Reglages > Vitesse) :
+ *      c'est LUI qui fixe le rythme du jeu, pas la cadence de rendu. Les gardes
+ *      sautent 1 tick sur 5 et restent donc a 4/5 du joueur a tous les paliers.
  *      Le garde-fou scripts/check_lode_levels.py rejoue EXACTEMENT ces regles
  *      (passable / supported / can_step / arete de creusement) sur les 10 maps.
  */
@@ -44,10 +52,39 @@ static constexpr int FW = 1280, FH = 672, HUD_H = 48;
 static constexpr int OX = (FW - GRID_W * TILE) / 2;   // 10 px de marge de chaque cote
 static constexpr int OY = 0;
 
-static constexpr int TICK_MS     = 33;   // ~30 Hz
-static constexpr int RUN_SPEED   = 6;    // 42/6  = 7 ticks par case (~4,3 cases/s)
-static constexpr int CLIMB_SPEED = 6;
-static constexpr int FALL_SPEED  = 14;   // 42/14 = 3 ticks par case (chute franche)
+static constexpr int TICK_MS      = 25;   // 40 Hz pendant la partie
+static constexpr int IDLE_TICK_MS = 200;  // menus : rien a animer, on laisse dormir LVGL
+
+// --- Vitesse de deplacement (Reglages > Vitesse, persistee en NVS) -----------
+// `run` = pixels parcourus par tick. Une case fait TILE = 42 px, donc elle coute
+// ceil(42/run) ticks de TICK_MS. Quand 42 n'est pas multiple de `run`, advance()
+// recale sur la case (sub = 0) : le dernier tick du pas est simplement plus court,
+// ce qui est invisible a 40 Hz et ne decale jamais la grille.
+//
+// L'echelle est calibree pour TICK_MS = 25. Elle a ete RECALCULEE au passage de
+// 33 a 25 ms : a px/tick constant, baisser la periode aurait accelere le jeu de
+// 32 % d'un bloc, poussant le palier bas a 5,7 cases/s (« Normale » n'aurait plus
+// rien eu d'original) et le haut a 13,3 cases/s. Les px/tick ont donc ete reduits
+// d'autant : le rythme de chaque palier est conserve, seule la FLUIDITE augmente
+// (pas plus petit, rendu 40 fois par seconde au lieu de 30).
+// TOUTE modification de TICK_MS impose de refaire ce calcul.
+struct SpeedDef {
+    const char* name;
+    const char* tag;    // suffixe compact pour le classement ("" = rythme par defaut)
+    int16_t     run;    // px/tick a la marche et a l'echelle
+    int16_t     fall;   // px/tick en chute (toujours > run : la chute reste franche)
+    const char* desc;
+};
+static const SpeedDef SPEEDS[LODE_N_SPEEDS] = {
+    {"Normale",     "",          5, 14, "4,4 cases/s - rythme d'origine"},
+    {"Vive",        "vive",      6, 14, "5,7 cases/s"},
+    {"Rapide",      "rapide",    7, 14, "6,7 cases/s"},
+    {"Tres rapide", "t.rapide",  9, 21, "8,0 cases/s"},
+    {"Fulgurante",  "fulgur.",  11, 21, "10,0 cases/s - reflexes exiges"},
+};
+// Valeurs actives, relues depuis la sauvegarde par apply_speed().
+static int g_run_speed  = SPEEDS[0].run;
+static int g_fall_speed = SPEEDS[0].fall;
 
 static constexpr uint32_t DIG_MS       = 420;   // duree de l'animation de creusement
 static constexpr uint32_t HOLE_MS      = 5400;  // duree de vie d'un trou
@@ -333,6 +370,16 @@ struct Actor {
     uint32_t until;       // fin de creusement / de piege / de respawn
     lv_obj_t* body;
     lv_obj_t* head;
+    // --- Cache de rendu : dernier etat REELLEMENT ecrit dans LVGL -----------
+    // Chaque set_pos / set_size / set_bg_color invalide la zone de l'objet, et
+    // l'ecran tourne en rotation 270 : toute region salie est re-tournee par le
+    // CPU au flush. On ne reecrit donc que ce qui a change. Un acteur immobile
+    // (garde en attente, joueur a l'arret) ne coute alors plus rien du tout,
+    // alors que la couleur etait jusqu'ici reposee 30 fois par seconde.
+    int16_t  dpx, dpy;    // position ecrite (INT16_MIN = cache invalide)
+    int16_t  dbw;         // largeur de corps ecrite
+    uint32_t dbody, dhead;  // couleurs ecrites
+    bool     dshown;      // objets actuellement visibles
 };
 
 struct Hole { int8_t x, y; uint8_t blink; uint32_t at; };
@@ -345,6 +392,7 @@ static UI    g_ui{};
 static bool  g_built = false;
 static State g_state = ST_OFF;
 static lv_timer_t* g_timer = nullptr;
+static uint32_t g_tick_period = 0;   // periode courante du lv_timer, en ms
 static uint32_t g_tick = 0;
 
 // --- Horloge (pour dater les scores sans dependre de HA a l'execution) ---
@@ -436,6 +484,13 @@ static void open_exit();
 // 5. Persistance NVS
 // ===========================================================================
 
+// Recopie le palier de vitesse choisi dans les valeurs lues par la boucle de jeu.
+static void apply_speed() {
+    const SpeedDef& s = SPEEDS[g_save.speed < LODE_N_SPEEDS ? g_save.speed : 0];
+    g_run_speed  = s.run;
+    g_fall_speed = s.fall;
+}
+
 void persist_load() {
     if (!g_pref_ready) {
         g_pref = esphome::global_preferences->make_preference<LodeSave>(PREF_KEY);
@@ -452,7 +507,9 @@ void persist_load() {
     if (g_save.unlocked > LODE_N_LEVELS) g_save.unlocked = LODE_N_LEVELS;
     if (g_save.ctrl_mode > 2) g_save.ctrl_mode = 0;
     if (g_save.sensitivity > 4) g_save.sensitivity = 2;
+    if (g_save.speed >= LODE_N_SPEEDS) g_save.speed = 0;
     if (g_save.score_count > LODE_MAX_SCORES) g_save.score_count = 0;
+    apply_speed();
 }
 
 void persist_save() {
@@ -600,20 +657,39 @@ static int hole_index(int x, int y) {
 static inline int actor_px(const Actor& a) { return OX + a.cx * TILE + a.mdx * a.sub; }
 static inline int actor_py(const Actor& a) { return OY + a.cy * TILE + a.mdy * a.sub; }
 
+// Invalide le cache de rendu : la prochaine passe reecrira tout.
+static inline void draw_reset(Actor& a) {
+    a.dpx = a.dpy = INT16_MIN;
+    a.dbw = -1;
+    a.dbody = a.dhead = 0xFFFFFFFFu;   // hors plage des couleurs 24 bits
+    a.dshown = false;
+}
+
 static void draw_actor(Actor& a, uint32_t body_col, uint32_t head_col) {
     if (!a.body) return;
-    if (a.st == A_GONE) { show(a.body, false); show(a.head, false); return; }
+    if (a.st == A_GONE) {
+        if (a.dshown) { show(a.body, false); show(a.head, false); a.dshown = false; }
+        return;
+    }
     int px = actor_px(a), py = actor_py(a);
     // Animation 2 images : la silhouette s'affine une frame sur deux en marche.
     bool moving = (a.mdx != 0 || a.mdy != 0);
     int bw = (moving && ((g_tick / 4) & 1)) ? 20 : 26;
-    lv_obj_set_size(a.body, bw, 24);
-    lv_obj_set_pos(a.body, px + (TILE - bw) / 2, py + 17);
-    lv_obj_set_pos(a.head, px + 13, py + 3);
-    set_bg(a.body, body_col, LV_OPA_COVER);
-    set_bg(a.head, head_col, LV_OPA_COVER);
-    show(a.body, true);
-    show(a.head, true);
+
+    if (bw != a.dbw) {
+        lv_obj_set_size(a.body, bw, 24);
+        a.dbw = (int16_t) bw;
+        a.dpx = INT16_MIN;   // la largeur entre dans le centrage : forcer le repositionnement
+    }
+    if ((int16_t) px != a.dpx || (int16_t) py != a.dpy) {
+        lv_obj_set_pos(a.body, px + (TILE - bw) / 2, py + 17);
+        lv_obj_set_pos(a.head, px + 13, py + 3);
+        a.dpx = (int16_t) px;
+        a.dpy = (int16_t) py;
+    }
+    if (body_col != a.dbody) { set_bg(a.body, body_col, LV_OPA_COVER); a.dbody = body_col; }
+    if (head_col != a.dhead) { set_bg(a.head, head_col, LV_OPA_COVER); a.dhead = head_col; }
+    if (!a.dshown) { show(a.body, true); show(a.head, true); a.dshown = true; }
 }
 
 // ===========================================================================
@@ -766,9 +842,18 @@ static void build_ui() {
 }
 
 // --- Mise en page des entrees de menu ---------------------------------------
+// Geometrie de la pile de slot_list(). La valeur par defaut vise 5 entrees bien
+// aerees ; REGLAGES en aligne 7 et resserre donc la pile pour ne pas mordre sur
+// le pied de page. Chaque ecran pose sa geometrie AVANT son premier slot_list().
+static int g_slot_top = 196, g_slot_pitch = 70, g_slot_h = 62;
+static inline void slot_layout(int top, int pitch, int h) {
+    g_slot_top = top; g_slot_pitch = pitch; g_slot_h = h;
+}
+static inline void slot_layout_default() { slot_layout(196, 70, 62); }
+
 static void slot_list(int i, const char* title, const char* desc, uint32_t col, bool on) {
-    lv_obj_set_size(g_slot[i], 720, 62);
-    lv_obj_align(g_slot[i], LV_ALIGN_TOP_MID, 0, 196 + i * 70);
+    lv_obj_set_size(g_slot[i], 720, g_slot_h);
+    lv_obj_align(g_slot[i], LV_ALIGN_TOP_MID, 0, g_slot_top + i * g_slot_pitch);
     lv_obj_set_width(g_slot_t[i], LV_SIZE_CONTENT);
     lv_obj_set_style_text_align(g_slot_t[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
     lv_obj_set_width(g_slot_d[i], LV_SIZE_CONTENT);
@@ -814,8 +899,25 @@ static inline void body_center() {
     lv_obj_set_style_text_align(g_p_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
 }
 
+// Tick adaptatif (meme principe que go_game.cpp / trivia_game.cpp) : TICK_MS tant
+// qu'il y a du mouvement a animer, 200 ms dans les menus. Le hub, le classement
+// ou l'ecran de pause n'ont rien de vivant a l'ecran ; les y reveiller 30 fois
+// par seconde ne servait qu'a payer un reveil de tache LVGL pour repartir aussitot.
+// ST_DYING garde la cadence rapide : c'est lui qui rend la main apres DEATH_MS.
+static void tick_period_sync() {
+    if (!g_timer) return;
+    bool live = (g_state == ST_PLAYING || g_state == ST_DYING);
+    uint32_t want = live ? (uint32_t) TICK_MS : (uint32_t) IDLE_TICK_MS;
+    if (want == g_tick_period) return;
+    g_tick_period = want;
+    lv_timer_set_period(g_timer, want);
+}
+
 // Le pad ne s'affiche qu'en jeu ; le D-pad disparait en mode inclinaison pure.
+// pad_sync() est appele a CHAQUE changement d'etat : c'est donc le point unique
+// ou l'on recale aussi la cadence du timer.
 static void pad_sync() {
+    tick_period_sync();
     bool play = (g_state == ST_PLAYING);
     show(g_ui.pad, play);
     if (play) lv_obj_move_foreground(g_ui.pad);
@@ -905,6 +1007,7 @@ static void place_actor(Actor& a, int cx, int cy) {
     a.mdx = a.mdy = 0; a.sub = 0;
     a.st = A_IDLE; a.carry = false; a.digd = 0; a.until = 0;
     a.face = 1;
+    draw_reset(a);   // l'acteur a saute ailleurs : le cache de rendu ne vaut plus rien
 }
 
 static void load_level(int idx) {
@@ -975,6 +1078,7 @@ static void load_level(int idx) {
         g_gd[i].st = A_GONE;
         show(g_gd[i].body, false);
         show(g_gd[i].head, false);
+        draw_reset(g_gd[i]);   // masques ici « a la main » : le cache doit suivre
     }
 
     // Carte sans or (cas theorique, refuse par le garde-fou) : sortie d'emblee.
@@ -1056,6 +1160,7 @@ static void kill_guard(Actor& g, uint32_t now) {
     g.until = now + RESPAWN_MS;
     g.mdx = g.mdy = 0; g.sub = 0;
     show(g.body, false); show(g.head, false);
+    draw_reset(g);   // masque ici directement : le cache de rendu doit suivre
     g_score += SC_TRAP;
 }
 
@@ -1161,7 +1266,7 @@ static void player_step(uint32_t now) {
 
     // 1) Un pas engage se termine avant toute nouvelle decision.
     if (a.mdx || a.mdy) {
-        advance(a, a.st == A_FALL ? FALL_SPEED : RUN_SPEED);
+        advance(a, a.st == A_FALL ? g_fall_speed : g_run_speed);
         if (a.mdx || a.mdy) return;
         player_enter_cell();
         if (g_state != ST_PLAYING) return;    // la case d'arrivee a pu finir le niveau
@@ -1322,11 +1427,13 @@ static void guard_step(Actor& a, int idx, uint32_t now) {
 
     if (a.mdx || a.mdy) {
         if (a.st == A_FALL) {
-            advance(a, FALL_SPEED);
+            advance(a, g_fall_speed);
         } else {
             // Les gardes sautent 1 tick sur 5 : legerement plus lents que le joueur.
+            // Le saut etant proportionnel, ils restent a 4/5 de son rythme quel que
+            // soit le palier de vitesse choisi — la difficulte ne bouge pas.
             if (((g_tick + (uint32_t) idx) % 5) == 0) return;
-            advance(a, CLIMB_SPEED);
+            advance(a, g_run_speed);
         }
         if (a.mdx || a.mdy) return;
         guard_enter_cell(a);
@@ -1364,6 +1471,7 @@ static void record_score() {
     e.level = (uint8_t) (g_level + 1);
     e.ctrl_mode = g_save.ctrl_mode;
     e.flags = g_offrank ? 1 : 0;
+    e.speed = g_save.speed;   // le bonus de temps depend du rythme : on le trace
 
     int n = g_save.score_count;
     int pos = n;
@@ -1383,6 +1491,7 @@ static void record_score() {
 static void show_clear() {
     g_state = ST_CLEAR;
     pad_sync();
+    slot_layout_default();
     bool last = (g_level + 1 >= LODE_N_LEVELS);
     set_text_if(g_p_title, last ? "TOUS LES NIVEAUX !" : "NIVEAU TERMINE");
     char sub[96];
@@ -1404,6 +1513,7 @@ static void show_gameover() {
     record_score();
     g_state = ST_GAMEOVER;
     pad_sync();
+    slot_layout_default();
     set_text_if(g_p_title, "PARTIE TERMINEE");
     char sub[96];
     snprintf(sub, sizeof(sub), "Niveau %d - %s", g_level + 1, LEVELS[g_level].name);
@@ -1555,7 +1665,7 @@ static void tick_cb(lv_timer_t*) {
     player_step(now);
     if (g_state != ST_PLAYING) return;
 
-    // Le champ de distance est recalcule 1 tick sur 4 (~7,5 Hz) : largement
+    // Le champ de distance est recalcule 1 tick sur 4 (10 Hz a 40 Hz de tick) : largement
     // assez reactif pour une poursuite, 4x moins cher qu'a chaque frame.
     if ((g_tick & 3) == 0) rebuild_dist();
 
@@ -1592,17 +1702,20 @@ static void tick_cb(lv_timer_t*) {
 static void go_hub() {
     g_state = ST_HUB;
     pad_sync();
+    slot_layout_default();
     set_text_if(g_p_title, "COUREUR D'OR");
     set_text_if(g_p_sub, "Ramasse tout l'or, echappe aux gardes, grimpe en haut.");
     set_text_if(g_p_body, "");
     set_text_if(g_p_foot, "Pendant une partie : touche le bandeau du haut pour mettre en pause.");
 
-    char d0[96], d1[64], d2[64], d3[64];
+    char d0[96], d1[64], d2[64], d3[96];
     int startlvl = g_save.unlocked;
     snprintf(d0, sizeof(d0), "Niveau %d - %s", startlvl, LEVELS[startlvl - 1].name);
     snprintf(d1, sizeof(d1), "%d/%d debloques", g_save.unlocked, LODE_N_LEVELS);
     snprintf(d2, sizeof(d2), "Meilleur score : %lu", (unsigned long) g_save.best);
-    snprintf(d3, sizeof(d3), "Controle : %s", CTRL_NAME[g_save.ctrl_mode]);
+    snprintf(d3, sizeof(d3), "Controle : %s   -   Vitesse : %s",
+             CTRL_NAME[g_save.ctrl_mode],
+             SPEEDS[g_save.speed < LODE_N_SPEEDS ? g_save.speed : 0].name);
 
     slot_list(0, "Jouer",      d0, Pal::GOLD,   true);
     slot_list(1, "Niveaux",    d1, Pal::LADDER, true);
@@ -1616,6 +1729,7 @@ static void go_hub() {
 static void go_levels() {
     g_state = ST_LEVELS;
     pad_sync();
+    slot_layout_default();
     set_text_if(g_p_title, "NIVEAUX");
     set_text_if(g_p_sub, "Un niveau se debloque en terminant le precedent.");
     set_text_if(g_p_body, "");
@@ -1637,6 +1751,7 @@ static void go_levels() {
 static void go_settings() {
     g_state = ST_SETTINGS;
     pad_sync();
+    slot_layout(176, 66, 60);   // 7 entrees : pile resserree
     set_text_if(g_p_title, "REGLAGES");
     set_text_if(g_p_sub, "Le Tab5 n'a pas de croix physique : ce sont des zones tactiles.");
     set_text_if(g_p_body, "");
@@ -1649,25 +1764,29 @@ static void go_settings() {
         "Inclinaison 4 directions + 2 boutons creuser",
         "Inclinaison ET D-pad, le doigt prime",
     };
-    char d1[64], d3[64];
+    char d1[64], d2[96], d4[64];
     snprintf(d1, sizeof(d1), "%d / 5 (plus haut = plus sensible)", g_save.sensitivity + 1);
-    snprintf(d3, sizeof(d3), "%s - hors classement", g_save.assist ? "Active" : "Desactive");
+    const SpeedDef& sp = SPEEDS[g_save.speed < LODE_N_SPEEDS ? g_save.speed : 0];
+    snprintf(d2, sizeof(d2), "%s - %s", sp.name, sp.desc);
+    snprintf(d4, sizeof(d4), "%s - hors classement", g_save.assist ? "Active" : "Desactive");
 
     char d0[96];
     snprintf(d0, sizeof(d0), "%s : %s", CTRL_NAME[g_save.ctrl_mode], CTRL_DESC[g_save.ctrl_mode]);
     slot_list(0, "Controle",           d0, Pal::LADDER, true);
     slot_list(1, "Sensibilite",        d1, Pal::BAR, g_save.ctrl_mode != 0);
-    slot_list(2, "Calibrer a plat",    "Pose la tablette PUIS appuie", Pal::GOLD, true);
-    slot_list(3, "Mode entrainement",  d3, Pal::TXT, true);
-    slot_list(4, "Effacer scores et progression", "Irreversible", Pal::DANGER, true);
-    slot_list(5, "Retour",             nullptr, Pal::TXT, true);
-    slots_hide_from(6);
+    slot_list(2, "Vitesse",            d2, Pal::RUNNER, true);
+    slot_list(3, "Calibrer a plat",    "Pose la tablette PUIS appuie", Pal::GOLD, true);
+    slot_list(4, "Mode entrainement",  d4, Pal::TXT, true);
+    slot_list(5, "Effacer scores et progression", "Irreversible", Pal::DANGER, true);
+    slot_list(6, "Retour",             nullptr, Pal::TXT, true);
+    slots_hide_from(7);
     panel_on(true);
 }
 
 static void go_scores() {
     g_state = ST_SCORES;
     pad_sync();
+    slot_layout_default();
     set_text_if(g_p_title, "CLASSEMENT");
     set_text_if(g_p_sub, "Top 10 local - conserve en NVS, survit aux reboots et aux OTA.");
     set_text_if(g_p_foot, "");
@@ -1681,11 +1800,14 @@ static void go_scores() {
             const LodeScoreEntry& e = g_save.scores[i];
             char when[24];
             fmt_stamp(e.stamp, when, sizeof(when));
+            // Les entrees d'avant l'ajout du reglage portent 0 = « Normale »,
+            // dont le tag est vide : leur ligne reste identique a avant.
+            const char* stag = SPEEDS[e.speed < LODE_N_SPEEDS ? e.speed : 0].tag;
             int w = snprintf(body + off, sizeof(body) - off,
-                             "%2d.  %7lu   niv %2d   %-11s  %s%s\n",
+                             "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n",
                              i + 1, (unsigned long) e.score, e.level,
                              CTRL_NAME[e.ctrl_mode < 3 ? e.ctrl_mode : 0], when,
-                             (e.flags & 1) ? "   H.C." : "");
+                             stag, (e.flags & 1) ? "H.C." : "");
             // snprintf renvoie la longueur VOULUE : on borne pour ne jamais
             // pousser `off` au-dela du tampon en cas de troncature.
             if (w < 0) break;
@@ -1708,6 +1830,7 @@ static void go_scores() {
 static void go_confirm() {
     g_state = ST_CONFIRM;
     pad_sync();
+    slot_layout_default();
     set_text_if(g_p_title, "TOUT EFFACER ?");
     set_text_if(g_p_sub, "Scores, meilleur score ET progression des niveaux.");
     body_center();
@@ -1722,6 +1845,7 @@ static void go_confirm() {
 static void show_pause() {
     g_state = ST_PAUSED;
     pad_sync();
+    slot_layout_default();
     set_text_if(g_p_title, "PAUSE");
     char sub[96];
     snprintf(sub, sizeof(sub), "Niveau %d - %s", g_level + 1, LEVELS[g_level].name);
@@ -1732,12 +1856,19 @@ static void show_pause() {
     body_center();
     set_text_if(g_p_body, body);
     set_text_if(g_p_foot, "");
+    // La vitesse est reglable ici aussi : elle prend effet des la reprise, sans
+    // repasser par le hub ni perdre la partie en cours.
+    char dv[96];
+    const SpeedDef& sp = SPEEDS[g_save.speed < LODE_N_SPEEDS ? g_save.speed : 0];
+    snprintf(dv, sizeof(dv), "%s - %s", sp.name, sp.desc);
+
     slot_list(0, "Reprendre",            nullptr, Pal::LADDER, true);
     slot_list(1, "Recalibrer a plat",    "Pose la tablette PUIS appuie", Pal::GOLD,
               g_save.ctrl_mode != 0);
-    slot_list(2, "Relancer le niveau",   "Sans perdre de vie", Pal::BAR, true);
-    slot_list(3, "Quitter la partie",    "Le score est enregistre", Pal::DANGER, true);
-    slots_hide_from(4);
+    slot_list(2, "Vitesse",              dv, Pal::RUNNER, true);
+    slot_list(3, "Relancer le niveau",   "Sans perdre de vie", Pal::BAR, true);
+    slot_list(4, "Quitter la partie",    "Le score est enregistre", Pal::DANGER, true);
+    slots_hide_from(5);
     panel_on(true);
 }
 
@@ -1785,14 +1916,18 @@ static void slot_event_cb(lv_event_t* e) {
                 g_save.sensitivity = (uint8_t) ((g_save.sensitivity + 1) % 5);
                 persist_save(); go_settings();
             } else if (i == 2) {
+                g_save.speed = (uint8_t) ((g_save.speed + 1) % LODE_N_SPEEDS);
+                apply_speed();
+                persist_save(); go_settings();
+            } else if (i == 3) {
                 calibrate();
                 set_text_if(g_p_sub, "Calibration prise.");
-            } else if (i == 3) {
+            } else if (i == 4) {
                 g_save.assist = g_save.assist ? 0 : 1;
                 persist_save(); go_settings();
-            } else if (i == 4) {
-                go_confirm();
             } else if (i == 5) {
+                go_confirm();
+            } else if (i == 6) {
                 go_hub();
             }
             break;
@@ -1818,8 +1953,13 @@ static void slot_event_cb(lv_event_t* e) {
         case ST_PAUSED:
             if (i == 0) { g_state = ST_PLAYING; panel_on(false); pad_sync(); }
             else if (i == 1) { calibrate(); set_text_if(g_p_sub, "Calibration prise."); }
-            else if (i == 2) { g_state = ST_PLAYING; panel_on(false); load_level(g_level); pad_sync(); }
-            else if (i == 3) { show_gameover(); }
+            else if (i == 2) {
+                // Prise d'effet immediate : g_run_speed est relu a chaque pas.
+                g_save.speed = (uint8_t) ((g_save.speed + 1) % LODE_N_SPEEDS);
+                apply_speed(); persist_save(); show_pause();
+            }
+            else if (i == 3) { g_state = ST_PLAYING; panel_on(false); load_level(g_level); pad_sync(); }
+            else if (i == 4) { show_gameover(); }
             break;
 
         case ST_CLEAR:
@@ -1892,11 +2032,19 @@ void open(const UI& ui) {
     g_imu_dir = D_NONE;
     g_c_score = g_c_lives = g_c_level = g_c_gold = g_c_best = -1;
     show(g_p.body, false); show(g_p.head, false);
-    for (int i = 0; i < MAX_GUARDS; i++) { show(g_gd[i].body, false); show(g_gd[i].head, false); }
+    draw_reset(g_p);
+    for (int i = 0; i < MAX_GUARDS; i++) {
+        show(g_gd[i].body, false); show(g_gd[i].head, false);
+        draw_reset(g_gd[i]);
+    }
 
     go_hub();
 
-    if (!g_timer) g_timer = lv_timer_create(tick_cb, TICK_MS, nullptr);
+    if (!g_timer) {
+        g_timer = lv_timer_create(tick_cb, TICK_MS, nullptr);
+        g_tick_period = TICK_MS;
+    }
+    tick_period_sync();   // on ouvre sur le hub : cadence menu d'emblee
 }
 
 void close() {
@@ -1906,7 +2054,7 @@ void close() {
     record_score();
     persist_save();
 
-    if (g_timer) { lv_timer_delete(g_timer); g_timer = nullptr; }
+    if (g_timer) { lv_timer_delete(g_timer); g_timer = nullptr; g_tick_period = 0; }
     show(g_ui.pad, false);
     show(g_ui.root, false);
     g_btn_dir = D_NONE;
