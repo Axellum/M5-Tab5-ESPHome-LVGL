@@ -635,13 +635,75 @@ lvgl:
         - !include ui_components/pots_popup.yaml
         - !include ui_components/calendar_popup.yaml
         - !include ui_components/assistant_popup.yaml
-        - !include ui_components/marble_game.yaml
-        - !include ui_components/arkanoid_game.yaml
-        - !include ui_components/lode_game.yaml
-        - !include ui_components/go_game.yaml
-        - !include ui_components/trivia_game.yaml
-        - !include ui_components/chess_game.yaml
-        - !include ui_components/draughts_game.yaml
-        - !include ui_components/pinball_game.yaml
-        # Le sélecteur en DERNIER : il doit se dessiner au-dessus des 8 overlays.
+        # ═══ Les 8 jeux + le sélecteur arcade vivent désormais dans leurs
+        # propres pages LVGL (page_arcade, page_marble, … page_pinball).
+        # Voir ci-dessous. ═══
+
+    # ═══════════════════════════════════════════════════════════════
+    # PAGES GAMING — chacune est un écran LVGL autonome (skip: true
+    # empêche le swipe gesture de naviguer vers/depuis ces pages).
+    # Navigation : lvgl.page.show (YAML) ou lv_scr_load (C++).
+    # ═══════════════════════════════════════════════════════════════
+
+    # ─── Sélecteur arcade (grille 8 consoles) ───
+    - id: page_arcade
+      skip: true
+      scrollbar_mode: "OFF"
+      widgets:
         - !include ui_components/game_selector.yaml
+
+    # ─── Fil d'Or (marble) ───
+    - id: page_marble
+      skip: true
+      scrollbar_mode: "OFF"
+      widgets:
+        - !include ui_components/marble_game.yaml
+
+    # ─── Arcanoïde (arkanoid) ───
+    - id: page_arkanoid
+      skip: true
+      scrollbar_mode: "OFF"
+      widgets:
+        - !include ui_components/arkanoid_game.yaml
+
+    # ─── Neon Apron (pinball — PORTRAIT 720×1280) ───
+    - id: page_pinball
+      skip: true
+      scrollbar_mode: "OFF"
+      widgets:
+        - !include ui_components/pinball_game.yaml
+
+    # ─── Coureur d'Or (lode) ───
+    - id: page_lode
+      skip: true
+      scrollbar_mode: "OFF"
+      widgets:
+        - !include ui_components/lode_game.yaml
+
+    # ─── Go Tab ───
+    - id: page_go
+      skip: true
+      scrollbar_mode: "OFF"
+      widgets:
+        - !include ui_components/go_game.yaml
+
+    # ─── Trial Poursuite (trivia) ───
+    - id: page_trivia
+      skip: true
+      scrollbar_mode: "OFF"
+      widgets:
+        - !include ui_components/trivia_game.yaml
+
+    # ─── Roi Noir (chess) ───
+    - id: page_chess
+      skip: true
+      scrollbar_mode: "OFF"
+      widgets:
+        - !include ui_components/chess_game.yaml
+
+    # ─── Dames Tab (draughts) ───
+    - id: page_draughts
+      skip: true
+      scrollbar_mode: "OFF"
+      widgets:
+        - !include ui_components/draughts_game.yaml

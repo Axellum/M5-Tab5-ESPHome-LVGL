@@ -1900,8 +1900,7 @@ void open(const UI& ui) {
     set_bg(g_ball, skin, LV_OPA_COVER);
 
     for (int i = 0; i < MAX_BOONS; i++) show(g_hud_dot[i], false);
-    show(g_ui.root, true);
-    lv_obj_move_foreground(g_ui.root);
+    // La page LVGL est déjà active (navigation via lvgl.page.show dans le YAML).
 
     g_run_active = false;
     go_hub();
@@ -1930,7 +1929,8 @@ void close() {
 
     if (g_timer) { lv_timer_delete(g_timer); g_timer = nullptr; }
     if (g_ui.hud) lv_obj_remove_event_cb(g_ui.hud, hud_event_cb);
-    show(g_ui.root, false);
+    // Navigation retour vers le sélecteur arcade (page LVGL).
+    if (g_ui.lvgl) g_ui.lvgl->show_page(g_ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
     g_state = ST_OFF;
 }
 

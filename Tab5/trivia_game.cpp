@@ -2153,8 +2153,7 @@ void open(const UI& ui) {
     }
     render_layers();
 
-    lv_obj_clear_flag(g_ui.root, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_move_foreground(g_ui.root);
+    // La page LVGL est déjà active (navigation via lvgl.page.show dans le YAML).
     if (!g_timer) g_timer = lv_timer_create(tick, TICK_IDLE_MS, nullptr);
 }
 
@@ -2163,7 +2162,8 @@ void close() {
     g_open = false;
     persist_save();
     if (g_timer) { lv_timer_delete(g_timer); g_timer = nullptr; }
-    if (g_ui.root) lv_obj_add_flag(g_ui.root, LV_OBJ_FLAG_HIDDEN);
+    // Navigation retour vers le sélecteur arcade (page LVGL).
+    if (g_ui.lvgl) g_ui.lvgl->show_page(g_ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
 }
 
 bool is_open() { return g_open; }

@@ -52,10 +52,12 @@ namespace Marble {
 // Les 4 conteneurs sont declares dans ui_components/marble_game.yaml ; les
 // polices viennent de tab5-styles.yaml (on ne peut pas faire `id(...)` hors lambda).
 struct UI {
-    lv_obj_t* root  = nullptr;  // overlay plein ecran 1280x720
+    lv_obj_t* root  = nullptr;  // page LVGL plein ecran 1280x720
     lv_obj_t* field = nullptr;  // aire de jeu 1280x672 (sous le HUD)
     lv_obj_t* hud   = nullptr;  // bandeau compact 1280x48
     lv_obj_t* panel = nullptr;  // calque menus (hub / recompense / pause / fin)
+    esphome::lvgl::LvglComponent* lvgl = nullptr;  // pour navigation pages
+    size_t home_idx = 0;        // index de la page de retour (page_arcade = 1)
     const esphome::font::Font* f_small = nullptr;  // roboto_22
     const esphome::font::Font* f_mid   = nullptr;  // roboto_32_b
     const esphome::font::Font* f_big   = nullptr;  // roboto_45_b

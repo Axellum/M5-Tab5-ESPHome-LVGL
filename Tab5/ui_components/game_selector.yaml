@@ -1,29 +1,28 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file game_selector.yaml
-# @role Sélecteur de jeux — page arcade plein écran (1280×720), 8 consoles.
-# @architecture_constraint Popup NON modal (pas de modal_scrim/modal_header) :
-#     c'est un overlay autonome avec son propre fond sombre et sa croix de
-#     fermeture. Grille RÉGULIÈRE 4 colonnes × 2 rangées — toutes les cartes ont
-#     la même taille, plus de « lanceurs discrets » en bandeau (les 3 derniers
-#     jeux y avaient été ajoutés à la va-vite et cassaient la mise en page).
+# @role Sélecteur de jeux — PAGE LVGL dédiée (page_arcade), 1280×720, 8 consoles.
+# @architecture_constraint Page LVGL autonome (pas un overlay/popup).
+#     Déclarée dans tab5-lvgl.yaml sous `pages:` avec `skip: true`.
+#     Grille RÉGULIÈRE 4 colonnes × 2 rangées — toutes les cartes ont
+#     la même taille.
 #
 #     Géométrie vérifiée : carte 298×252 ; colonnes x = 20 / 334 / 648 / 962
 #     (4×298 + 3×16 de gouttière = 1240, marges 20 à gauche et à droite) ;
 #     rangées y = 132 et 402 (2×252 + 18 = 522, fin à 654). Ne pas modifier une
 #     valeur sans refaire l'addition.
 #
-# @ai_instruction Ouvrir via animate_popup_open(id(game_selector_overlay)).
+# @ai_instruction Navigation via lvgl.page.show: page_arcade.
 #     Chaque carte fait TROIS choses, dans cet ordre :
 #       1. script.execute: tab5_games_close_all   (ferme le jeu en cours)
-#       2. animate_popup_close(...)               (referme le sélecteur)
+#       2. lvgl.page.show: page_<jeu>             (navigue vers la page du jeu)
 #       3. script.execute: tab5_<jeu>_open        (ouvre la console)
 #     Ne PAS recopier la liste des fermetures ici : elle vit dans
 #     tab5_games_close_all (tab5-scripts.yaml), un seul endroit à maintenir.
 #
 #     Les icônes MDI utilisées ici DOIVENT figurer dans la liste `glyphs` de
 #     mdi_font_56 / mdi_font_45 (tab5-styles.yaml), sinon elles ne s'affichent
-#     pas du tout — c'était le cas de F02D2 (heart-box) sur toutes les cartes.
+#     pas du tout.
 #     Ne PAS ajouter de logique C++ ici.
 # ═══════════════════════════════════════════════════════
 obj:
@@ -33,7 +32,6 @@ obj:
   y: 0
   width: 1280
   height: 720
-  hidden: true
   scrollable: false
   pad_all: 0
   radius: 0
@@ -79,8 +77,7 @@ obj:
         border_width: 1
         border_opa: 60%
         on_short_click:
-          - lambda: |-
-              animate_popup_close(id(game_selector_overlay), nullptr);
+          - lvgl.page.show: page_main
         widgets:
           - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_32, text_color: 0xAABBCC }
 
@@ -103,7 +100,7 @@ obj:
         pressed: { bg_opa: 80%, border_opa: 100% }
         on_short_click:
           - script.execute: tab5_games_close_all
-          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
+          - lvgl.page.show: page_marble
           - script.execute: tab5_marble_open
         widgets:
           - label: { text: "\U000F0E95", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xE8B44A }
@@ -127,7 +124,7 @@ obj:
         pressed: { bg_opa: 80%, border_opa: 100% }
         on_short_click:
           - script.execute: tab5_games_close_all
-          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
+          - lvgl.page.show: page_arkanoid
           - script.execute: tab5_arkanoid_open
         widgets:
           - label: { text: "\U000F0570", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0x44DDDD }
@@ -153,7 +150,7 @@ obj:
         pressed: { bg_opa: 80%, border_opa: 100% }
         on_short_click:
           - script.execute: tab5_games_close_all
-          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
+          - lvgl.page.show: page_pinball
           - script.execute: tab5_pinball_open
         widgets:
           - label: { text: "\U000F05DD", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0x35E6FF }
@@ -177,7 +174,7 @@ obj:
         pressed: { bg_opa: 80%, border_opa: 100% }
         on_short_click:
           - script.execute: tab5_games_close_all
-          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
+          - lvgl.page.show: page_lode
           - script.execute: tab5_lode_open
         widgets:
           - label: { text: "\U000F15A2", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xFFC61A }
@@ -203,7 +200,7 @@ obj:
         pressed: { bg_opa: 80%, border_opa: 100% }
         on_short_click:
           - script.execute: tab5_games_close_all
-          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
+          - lvgl.page.show: page_go
           - script.execute: tab5_go_open
         widgets:
           - label: { text: "\U000F0B38", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xC4A574 }
@@ -227,7 +224,7 @@ obj:
         pressed: { bg_opa: 80%, border_opa: 100% }
         on_short_click:
           - script.execute: tab5_games_close_all
-          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
+          - lvgl.page.show: page_trivia
           - script.execute: tab5_trivia_open
         widgets:
           - label: { text: "\U000F134A", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xFF9800 }
@@ -251,7 +248,7 @@ obj:
         pressed: { bg_opa: 80%, border_opa: 100% }
         on_short_click:
           - script.execute: tab5_games_close_all
-          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
+          - lvgl.page.show: page_draughts
           - script.execute: tab5_draughts_open
         widgets:
           - label: { text: "\U000F013A", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xD4B896 }
@@ -275,7 +272,7 @@ obj:
         pressed: { bg_opa: 80%, border_opa: 100% }
         on_short_click:
           - script.execute: tab5_games_close_all
-          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
+          - lvgl.page.show: page_chess
           - script.execute: tab5_chess_open
         widgets:
           - label: { text: "\U000F0857", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0x8FBF6A }

@@ -2153,8 +2153,7 @@ void open(const UI& ui) {
 
     build_ui();
 
-    show(g_ui.root, true);
-    lv_obj_move_foreground(g_ui.root);
+    // La page LVGL est déjà active (navigation via lvgl.page.show dans le YAML).
 
     // Etat de repos visible derriere le hub : table vide, aucune bille.
     for (int i = 0; i < MAX_SIM_BALLS; i++) {
@@ -2193,12 +2192,13 @@ void close() {
     g_flip[0].pressed = g_flip[1].pressed = false;
     g_plunger_held = false;
 
-    show(g_ui.root, false);
     g_state = ST_OFF;
 
-    // Restauration du paysage EN DERNIER : l'overlay est deja masque, c'est donc
-    // le dashboard qui est remis en page, pas la table.
+    // Restauration du paysage AVANT de naviguer : le sélecteur arcade
+    // s'affiche en orientation correcte.
     screen_portrait(false);
+    // Navigation retour vers le sélecteur arcade (page LVGL).
+    if (g_ui.lvgl) g_ui.lvgl->show_page(g_ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
 }
 
 }  // namespace Pinball

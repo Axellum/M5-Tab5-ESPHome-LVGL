@@ -1,9 +1,11 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file go_game.yaml
-# @role Overlay PLEIN ÉCRAN du jeu « Go Tab ».
-# @architecture_constraint EXCEPTION ADR-0009 : pas de modal_scrim / header /
-#     croix. Flux 1280×720. La sortie se fait par le menu (« Quitter »).
+# @role Page LVGL dédiée du jeu « Go Tab ».
+# @architecture_constraint Page LVGL autonome (page_go dans tab5-lvgl.yaml,
+#     skip: true). Pas de modal_scrim/modal_header — flux de jeu plein cadre.
+#     La sortie du jeu se fait par le hub (« Quitter ») qui navigue vers
+#     page_arcade via lv_scr_load() en C++.
 # @ai_instruction Ce fichier ne déclare QUE 4 conteneurs VIDES. Tout le contenu
 #     (goban, pierres, coordonnées, HUD, panneau latéral, menus, carte de score)
 #     est construit par go_game.cpp via Go::open(). Ne JAMAIS ajouter de widget
@@ -20,7 +22,6 @@ obj:
   y: 0
   width: 1280
   height: 720
-  hidden: true
   scrollable: false
   pad_all: 0
   radius: 0

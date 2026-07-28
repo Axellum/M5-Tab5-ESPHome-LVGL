@@ -104,10 +104,12 @@ static constexpr uint32_t BTN_BG_ON   = 0x2A3648;  // fond de bouton presse
 // Le calque des menus, lui, est cree en C++ (enfant de root) : il n'a aucune
 // raison d'exister dans le YAML puisqu'il est entierement peuple par le C++.
 struct UI {
-    lv_obj_t* root  = nullptr;  // overlay plein ecran 1280x720
+    lv_obj_t* root  = nullptr;  // page LVGL plein ecran 1280x720
     lv_obj_t* hud   = nullptr;  // bandeau superieur 1280x40
     lv_obj_t* board = nullptr;  // plateau 672x672 (8 cases de 84 px)
     lv_obj_t* panel = nullptr;  // panneau lateral 552x672 (coups + boutons)
+    esphome::lvgl::LvglComponent* lvgl = nullptr;  // pour navigation pages
+    size_t home_idx = 0;        // index de la page de retour (page_arcade = 1)
     const esphome::font::Font* f_small = nullptr;  // roboto_22
     const esphome::font::Font* f_mid   = nullptr;  // roboto_32_b
     const esphome::font::Font* f_big   = nullptr;  // roboto_45_b
