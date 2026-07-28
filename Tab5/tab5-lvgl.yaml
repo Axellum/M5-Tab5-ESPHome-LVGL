@@ -250,6 +250,11 @@ lvgl:
                   const bool daily = (id(forecast_page_index) >= 2);
                   lv_obj_t* fc_visible = daily ? id(layer_forecast_daily) : id(layer_forecast_hourly);
                   lv_obj_t* fc_autre   = daily ? id(layer_forecast_hourly) : id(layer_forecast_daily);
+                  // Coupe un swipe en cours sur le calque non actif (sinon X/opa
+                  // continuent sous HIDDEN et polluent le prochain affichage).
+                  lv_anim_delete(fc_autre, nullptr);
+                  lv_obj_set_x(fc_autre, 0);
+                  lv_obj_set_style_opa(fc_autre, LV_OPA_COVER, LV_PART_MAIN);
                   lv_obj_add_flag(fc_autre, LV_OBJ_FLAG_HIDDEN);
                   if (id(show_switches)) {
                       animate_crossfade_layers(fc_visible, id(layer_switches));

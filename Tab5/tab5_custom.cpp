@@ -2099,12 +2099,18 @@ void animate_alert_enter(lv_obj_t* alert_wrap) {
 // Fondu croise pur entre deux calques plein cadre (previsions <-> switches HA).
 // Pas de glissement : les deux calques occupent exactement la meme zone, un
 // deplacement ferait "sauter" le contenu. Duree UIAnim::SWIPE_DUR.
+// Annule aussi les anims X d'un swipe en cours et remet x=0 — sinon un tap HA
+// pendant/juste apres un swipe laisse le calque decale ou en train de glisser.
+// Si le calque entrant est deja visible (ex: swipe previsions sous overlay HA),
+// on ne le remet pas transparent : rejouer l'entree le blankerait.
 void animate_crossfade_layers(lv_obj_t* out_layer, lv_obj_t* in_layer) {
     if (out_layer == in_layer) return;
     const uint32_t DUR = UIAnim::SWIPE_DUR;
 
     if (out_layer) {
         lv_anim_delete(out_layer, anim_opa_cb);
+        lv_anim_delete(out_layer, anim_x_cb);
+        lv_obj_set_x(out_layer, 0);
         lv_anim_t a_out;
         lv_anim_init(&a_out);
         lv_anim_set_var(&a_out, out_layer);
@@ -2117,7 +2123,21 @@ void animate_crossfade_layers(lv_obj_t* out_layer, lv_obj_t* in_layer) {
     }
     if (in_layer) {
         lv_anim_delete(in_layer, anim_opa_cb);
+        lv_anim_delete(in_layer, anim_x_cb);
+        lv_obj_set_x(in_layer, 0);
+
+        const bool already_visible =
+            !lv_obj_has_flag(in_layer, LV_OBJ_FLAG_HIDDEN) &&
+            lv_obj_get_style_opa(in_layer, LV_PART_MAIN) > LV_OPA_TRANSP;
+
         lv_obj_clear_flag(in_layer, LV_OBJ_FLAG_HIDDEN);
+
+        if (already_visible) {
+            // Deja a l'ecran : rester opaque, pas de replay d'entree.
+            lv_obj_set_style_opa(in_layer, LV_OPA_COVER, LV_PART_MAIN);
+            return;
+        }
+
         lv_obj_set_style_opa(in_layer, LV_OPA_TRANSP, LV_PART_MAIN);
 
         lv_anim_t a_in;
