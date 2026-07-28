@@ -13,6 +13,10 @@
 #       à la demande (script.tab5_calendrier_mois → service tab5_maj_calendrier_mois :
 #       bitmask travail/férié/vacances scolaires/RDV/anniversaire + heures de travail),
 #       et chaque jour tapé (script.tab5_calendrier_jour → tab5_maj_calendrier_jour).
+#       Cache stale-while-revalidate : les données sont affichées immédiatement même
+#       si périmées (> 10 min → refresh silencieux). Pré-fetch boot + reconnect HA
+#       (tab5_cal_prefetch_boot) + mois adjacents (M-1, M+1) à chaque rendu.
+#       Eviction : max 3 mois en cache (cal_cache_evict_distant).
 # @ai_instruction Cadre modal v4 (ADR-0009) : barre de titre modal_header.yaml, grille
 #       à partir de y=52. Cellules : cal_day_cell.yaml (×42), lignes 82+r*95.
 # ═══════════════════════════════════════════════════════

@@ -4,6 +4,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-28 — Calendrier instantané + retour auto écran principal
+
+- **Prefetch calendrier (stale-while-revalidate)** : à l'ouverture du popup, le
+  mois déjà en cache s'affiche tout de suite (plus de `cal_cache_clear()` qui
+  forçait un écran vide). TTL 10 min ; eviction des mois lointains (max 3 en
+  RAM, ~4,5 Ko). Prefetch boot + reconnect HA (mois courant + M+1) et mois
+  adjacents à chaque rendu de grille.
+- **Retour automatique après inactivité** : popup ouvert → fermeture à **45 s**
+  sans toucher ; page météo (J5–J9 / horaire) → retour panneau principal à
+  **25 s**. Compteur LVGL d'inactivité (reset à chaque pression) ; les events
+  vocaux appellent `ui_mark_activity()` pour ne pas fermer l'Assistant en
+  pleine réponse. Jeux et panneau switches HA exclus volontairement.
+
 ### 2026-07-28 — Animations : plus courtes, et deux effets « rouleau »
 
 Les transitions étaient jugées lentes à l'œil et donnaient une impression de
