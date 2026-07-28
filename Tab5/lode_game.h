@@ -29,6 +29,7 @@ namespace esphome { namespace font { class Font; } }
 // ---------------------------------------------------------------------------
 #define LODE_MAX_SCORES 10
 #define LODE_N_LEVELS   10
+#define LODE_N_SPEEDS    5   // paliers de vitesse de deplacement (cf. Lode::SPEEDS)
 
 // Une entree du classement local. `flags` bit 0 = partie hors concours
 // (mode debug/invincible) : elle reste affichee mais ne prend pas la tete.
@@ -38,7 +39,8 @@ struct LodeScoreEntry {
     uint8_t  level;      // niveau atteint (1..LODE_N_LEVELS)
     uint8_t  ctrl_mode;  // 0 = boutons, 1 = inclinaison, 2 = mixte
     uint8_t  flags;      // bit 0 = hors classement
-    uint8_t  pad;        // alignement (reserve)
+    uint8_t  speed;      // palier de vitesse joue (0..LODE_N_SPEEDS-1) : le bonus de
+                         // temps depend du rythme, on le trace pour comparer
 };
 
 struct LodeSave {
@@ -51,7 +53,11 @@ struct LodeSave {
     uint8_t        ctrl_mode;                  // 0 = boutons, 1 = inclinaison, 2 = mixte
     uint8_t        sensitivity;                // sensibilite d'inclinaison (0..4, defaut 2)
     uint8_t        assist;                     // 1 = mode entrainement (vies infinies, hors concours)
-    uint8_t        reserved0;                  // reserve (audio a venir)
+    // Palier de vitesse (0..LODE_N_SPEEDS-1). Occupe l'octet jusqu'ici reserve :
+    // le layout est INCHANGE, donc pas de bump de magic et les scores/progressions
+    // deja en NVS survivent. Une sauvegarde anterieure y porte 0 = « Normale »,
+    // c'est-a-dire exactement le rythme d'avant l'ajout du reglage.
+    uint8_t        speed;
     int16_t        cal_x;                      // offset de calibration, en milli-g
     int16_t        cal_y;
 };
