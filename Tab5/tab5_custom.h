@@ -80,30 +80,106 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj);
 // =============================================================================
 // Helpers d'animation LVGL (popups, swipe, alertes)
 // Réutilisent les patterns lv_anim_t de transition_widgets() (callbacks
-// anim_y_cb/anim_opa_cb/anim_scale_cb/anim_x_cb). Durées courtes (<350ms)
-// pour rester fluides sur ESP32-P4 sans charger le loop LVGL.
+// anim_y_cb/anim_opa_cb/anim_scale_cb/anim_x_cb/anim_ty_cb).
+//
+// [28/07/2026] Passe « animations légères » : toutes les durées et amplitudes
+// sont regroupées ici (UIAnim) — c'était la seule façon de les régler d'un
+// coup. L'écran est en `update_interval: never` : c'est LVGL qui redessine
+// depuis la loop ESPHome, donc chaque frame d'animation = un repaint de la
+// zone animée (fond verre + dégradé compris). Durée courte = moins de frames
+// = moins de charge ET moins de latence perçue. Les amplitudes ont été
+// réduites en même temps : un glissement de 84px sur un panneau plein cadre
+// coûte le même repaint qu'un de 28px, mais se « traîne » visuellement.
 // =============================================================================
+namespace UIAnim {
+    constexpr uint32_t PANEL_DUR    = 190;  // rotateur central (etait 450)
+    constexpr int32_t  PANEL_OFFSET = 28;   // px glissement vertical (etait 84)
+    constexpr uint32_t POPUP_IN     = 150;  // ouverture popup (etait 280)
+    constexpr uint32_t POPUP_OUT    = 110;  // fermeture popup (etait 200)
+    constexpr uint32_t SWIPE_DUR    = 200;  // swipe previsions (etait 350)
+    constexpr int32_t  SWIPE_OFFSET = 110;  // px (etait 200)
+    constexpr uint32_t ALERT_DUR    = 180;  // entree bandeau alerte (etait 300)
+    constexpr int32_t  ALERT_OFFSET = 44;   // px (etait 100)
+    constexpr uint32_t BTN_PRESS    = 80;   // feedback tactile (inchange)
 
-// Animation d'ouverture d'un popup : scale 0.92→1.0 + fondu (card + scrim).
-// Le scrim doit être visible (clear flag) AVANT l'appel. Le pivot du scale
-// est recalé au centre de la card. Durée 280ms, ease_out.
+    // Effet « rouleau » (horloge + icones meteo).
+    constexpr uint32_t ROLL_CLOCK   = 240;  // minutes / heures
+    constexpr uint32_t ROLL_ICON    = 190;  // icone de prevision
+    constexpr int32_t  ROLL_ICON_PX = 22;   // amplitude d'entree de l'icone
+    constexpr uint32_t ROLL_STAGGER = 28;   // decalage entre 2 tuiles (effet vague)
+}
+
+// Animation d'ouverture d'un popup : fondu card + scrim.
+// Le scrim doit être visible (clear flag) AVANT l'appel.
+// Durée UIAnim::POPUP_IN, ease_out.
 void animate_popup_open(lv_obj_t* card, lv_obj_t* scrim);
 
-// Animation de fermeture : scale 1.0→0.92 + fondu inverse. Cache
-// automatiquement card + scrim à la fin de l'animation (LV_OBJ_FLAG_HIDDEN).
-// Durée 200ms, ease_in (plus court que l'ouverture pour le "dismiss").
+// Animation de fermeture : fondu inverse. Cache automatiquement card + scrim
+// à la fin de l'animation (LV_OBJ_FLAG_HIDDEN).
+// Durée UIAnim::POPUP_OUT, ease_in (plus court que l'ouverture pour le "dismiss").
 void animate_popup_close(lv_obj_t* card, lv_obj_t* scrim);
 
 // Glissement horizontal + fondu croisé entre deux layers (swipe prévisions).
 // dir = LV_DIR_LEFT (in arrive de la droite, out part à gauche) ou
 //       LV_DIR_RIGHT (in arrive de la gauche, out part à droite).
-// Durée 350ms. Dérivée de transition_widgets() mais en horizontal.
+// Durée UIAnim::SWIPE_DUR. Dérivée de transition_widgets() mais en horizontal.
 void animate_swipe_horizontal(lv_obj_t* out_layer, lv_obj_t* in_layer, lv_dir_t dir);
+
+// Fondu croisé pur (sans glissement) entre deux calques plein cadre —
+// bascule prévisions <-> switches HA (bouton « HA »). Le calque sortant est
+// masqué à la fin. Durée UIAnim::SWIPE_DUR.
+void animate_crossfade_layers(lv_obj_t* out_layer, lv_obj_t* in_layer);
 
 // Slide-in depuis la droite + fondu pour un bandeau d'alerte qui entre
 // dans le rotateur central (alertes HA, alertes Météo-France).
-// Durée 300ms, ease_out. OFFSET 100px.
+// Durée UIAnim::ALERT_DUR, ease_out.
 void animate_alert_enter(lv_obj_t* alert_wrap);
+
+// « Rouleau » d'icône météo : la nouvelle icône monte depuis le bas en
+// apparaissant (translate_y relatif à l'offset de base posé par
+// update_meteo_icon(), donc compatible avec les icônes composées l1+l2).
+// delay_ms permet d'échelonner les 5 tuiles (effet vague).
+void animate_icon_roll_in(lv_obj_t* l1, lv_obj_t* l2, uint32_t delay_ms);
+
+// Suppression temporaire du rouleau d'icônes : mis à true pendant un
+// changement de calque (le calque glisse déjà, un rouleau en plus = bruit).
+extern bool g_forecast_roll_suppress;
+
+// =============================================================================
+// Horloge à rouleau — un rouleau PAR CHIFFRE (H H : M M)
+// Chaque chiffre est un conteneur qui rogne (LVGL clippe les enfants au
+// parent) contenant 2 labels : celui affiché et celui qui arrive. Au
+// changement, les deux glissent d'une hauteur de boîte vers le haut — l'ancien
+// sort, le nouveau entre.
+// Découpage par chiffre et non par nombre : à 22 → 23 seule l'unité des
+// minutes tourne, la dizaine ne bouge pas. C'est aussi 2× moins de surface
+// repeinte par frame qu'un rouleau à deux chiffres.
+// Repose sur des chiffres tabulaires (même avance pour 0-9, vrai pour Roboto :
+// 75 px en 130 gras) — sinon les chiffres danseraient horizontalement.
+// La géométrie (avance des chiffres, hauteur d'encre, centrage dans la tuile)
+// est mesurée au boot depuis la police réelle : rien n'est codé en dur.
+// =============================================================================
+struct ClockDigitRoller {
+    lv_obj_t* wrap = nullptr;
+    lv_obj_t* lbl[2] = {nullptr, nullptr};
+    uint8_t   cur = 0;      // index du label actuellement affiché (0/1)
+    char      shown = 0;    // chiffre peint ('0'..'9'), 0 = jamais peint
+};
+
+struct ClockRollerCtx {
+    ClockDigitRoller d[4];    // HH:MM -> d[0] d[1] : d[2] d[3]
+    lv_obj_t* colon = nullptr;
+    int       box_h = 0;      // hauteur de la boîte de rognage = course du rouleau
+    bool      ready = false;  // layout mesuré
+};
+extern ClockRollerCtx g_clock_roller;
+
+// Dimensionne/centre les deux rouleaux + le « : » dans la tuile horloge, à
+// partir des métriques réelles de la police (hauteur de ligne, ligne de base,
+// hauteur de capitale). `clock_font` doit être la police posée sur les 4 labels
+// dans le YAML. À appeler une fois après le layout LVGL (interval one-shot du
+// boot, comme apply_pressed_scale_to_tree).
+void layout_clock_roller(lv_obj_t* clock_tile, esphome::font::Font* clock_font);
 
 // --- 1D : Micro-interactions boutons verre ---
 // Applique un style pressed (transform_scale 94% + bg_opa 30%) avec transition
@@ -211,7 +287,9 @@ void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::st
 // (après parse_and_update_jours_bulk) — remplace l'ancien push HA tab5_maj_planning.
 void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2);
 
-void update_clock_date_ui(lv_obj_t* lbl_time, lv_obj_t* lbl_date,
+// L'heure passe par g_clock_roller (plus de label lbl_time unique) : seul le
+// groupe qui change roule. La date reste un label simple.
+void update_clock_date_ui(lv_obj_t* lbl_date,
     int hour, int minute, int day_of_week, int day_of_month, int month);
 
 // Met a jour un label de temperature (texte + couleur gradient). Factorise
