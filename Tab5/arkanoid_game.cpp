@@ -1411,8 +1411,7 @@ void open(const UI& ui) {
     persist_load();
     build_ui();
 
-    show(g_ui.root, true);
-    lv_obj_move_foreground(g_ui.root);
+    // La page LVGL est déjà active (navigation via lvgl.page.show dans le YAML).
 
     g_run_active = false;
     go_hub();
@@ -1439,7 +1438,8 @@ void close() {
     if (g_timer) { lv_timer_delete(g_timer); g_timer = nullptr; }
     if (g_ui.hud) lv_obj_remove_event_cb(g_ui.hud, hud_event_cb);
     if (g_ui.field) lv_obj_remove_event_cb(g_ui.field, field_tap_cb);
-    show(g_ui.root, false);
+    // Navigation retour vers le sélecteur arcade (page LVGL).
+    if (g_ui.lvgl) g_ui.lvgl->show_page(g_ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
     g_state = ST_OFF;
     g_btn_left = false;
     g_btn_right = false;

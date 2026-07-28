@@ -99,11 +99,13 @@ static constexpr uint32_t DANGER     = 0xFF3B3B;  // mort / avertissement
 // Les 5 conteneurs sont declares dans ui_components/lode_game.yaml ; les polices
 // viennent de tab5-styles.yaml (on ne peut pas faire `id(...)` hors lambda).
 struct UI {
-    lv_obj_t* root  = nullptr;  // overlay plein ecran 1280x720
+    lv_obj_t* root  = nullptr;  // page LVGL plein ecran 1280x720
     lv_obj_t* field = nullptr;  // damier 1280x672 (sous le HUD)
     lv_obj_t* hud   = nullptr;  // bandeau compact 1280x48
     lv_obj_t* panel = nullptr;  // calque menus (hub / niveaux / classement / pause / fin)
     lv_obj_t* pad   = nullptr;  // calque des zones tactiles (D-pad + creuser)
+    esphome::lvgl::LvglComponent* lvgl = nullptr;  // pour navigation pages
+    size_t home_idx = 0;        // index de la page de retour (page_arcade = 1)
     const esphome::font::Font* f_small = nullptr;  // roboto_22
     const esphome::font::Font* f_mid   = nullptr;  // roboto_32_b
     const esphome::font::Font* f_big   = nullptr;  // roboto_45_b

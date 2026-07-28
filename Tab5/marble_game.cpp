@@ -356,6 +356,7 @@ struct Ent {
     int16_t   a, b;
     uint16_t  phase;      // dephasage (ms) tire au sort par le seed
     lv_obj_t* obj;
+    lv_obj_t* det;        // calque de detail (arete eclairee / reflet), ENFANT de obj
 };
 
 static MarbleSave g_save{};
@@ -425,7 +426,22 @@ static lv_obj_t* g_toast = nullptr;
 static uint32_t  g_toast_until = 0;
 
 // --- Objets LVGL (construits une fois) ---
-static lv_obj_t* g_ball = nullptr;
+// Bille en TROIS calques : ombre portee, corps en degrade, reflet speculaire.
+// C'est ce trio (repris de la bille du flipper) qui la fait passer de pastille
+// plate a sphere. Ils se deplacent ensemble — voir ball_place().
+static lv_obj_t* g_ball = nullptr;        // corps (reference historique)
+static lv_obj_t* g_ball_sh = nullptr;     // ombre portee, legerement decalee
+static lv_obj_t* g_ball_gloss = nullptr;  // reflet, en haut a gauche
+// Decor de salle : peint SOUS les entites, jamais collisionnable. Recycle d'une
+// salle a l'autre exactement comme le pool d'entites.
+static constexpr int MAX_DEC = 22;
+static lv_obj_t* g_dec[MAX_DEC] = {};
+static int g_dec_n = 0;
+// Arcs peints (anneau du portail, orbites des arenes). Pool distinct : un
+// lv_arc n'est pas un lv_obj rectangulaire, il ne peut pas partager g_dec.
+static constexpr int MAX_DEC_ARC = 4;
+static lv_obj_t* g_dec_arc[MAX_DEC_ARC] = {};
+static int g_dec_arc_n = 0;
 static lv_obj_t* g_vign[4] = {};          // 4 bandes de bord (flash de degat)
 static lv_obj_t* g_hud_room = nullptr;
 static lv_obj_t* g_hud_life = nullptr;
@@ -441,6 +457,9 @@ static constexpr int N_SLOTS = 8;
 static lv_obj_t* g_slot[N_SLOTS] = {};
 static lv_obj_t* g_slot_t[N_SLOTS] = {};
 static lv_obj_t* g_slot_d[N_SLOTS] = {};
+// Liseré d'accent de chaque slot (enfant) : reprend la couleur de l'entree.
+// C'est lui qui fait lire les menus comme des cartes et plus comme des boutons.
+static lv_obj_t* g_slot_a[N_SLOTS] = {};
 
 // Caches HUD : on ne reecrit un libelle que si sa valeur a change.
 static int g_c_life = -1, g_c_gold = -1, g_c_runes = -1, g_c_sec = -1;
@@ -532,6 +551,57 @@ static inline void set_border(lv_obj_t* o, uint32_t c, int w, lv_opa_t opa) {
 }
 
 // Ecrit un libelle seulement si le texte a change (evite des invalidations LVGL).
+// Degrade vertical : c'est lui qui donne du volume aux pieces sans coûter
+// d'objet supplementaire (une seule passe de dessin LVGL). Meme recette que la
+// table du flipper — voir les paires MARBLE_*_HI / *_LO dans tab5_custom.h.
+static inline void set_grad(lv_obj_t* o, uint32_t hi, uint32_t lo,
+                            lv_grad_dir_t dir = LV_GRAD_DIR_VER) {
+    if (!o) return;
+    lv_obj_set_style_bg_color(o, lv_color_hex(hi), LV_PART_MAIN);
+    lv_obj_set_style_bg_grad_color(o, lv_color_hex(lo), LV_PART_MAIN);
+    lv_obj_set_style_bg_grad_dir(o, dir, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(o, LV_OPA_COVER, LV_PART_MAIN);
+}
+
+// Arc decoratif (portail, orbites peintes). Le knob et l'anneau de fond sont
+// neutralises : on ne veut qu'un trait courbe, pas un widget interactif.
+static lv_obj_t* mk_arc(lv_obj_t* parent, float cx, float cy, float r,
+                        int a0, int a1, int width, uint32_t color, lv_opa_t opa) {
+    lv_obj_t* a = lv_arc_create(parent);
+    lv_obj_clear_flag(a, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_clear_flag(a, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_opa(a, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(a, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(a, 0, LV_PART_MAIN);
+    lv_obj_set_style_arc_opa(a, LV_OPA_TRANSP, LV_PART_MAIN);   // pas d'anneau de fond
+    lv_obj_set_style_bg_opa(a, LV_OPA_TRANSP, LV_PART_KNOB);    // pas de poignee
+    lv_obj_set_style_pad_all(a, 0, LV_PART_KNOB);
+    lv_obj_set_style_arc_width(a, width, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_rounded(a, true, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_color(a, lv_color_hex(color), LV_PART_INDICATOR);
+    lv_obj_set_style_arc_opa(a, opa, LV_PART_INDICATOR);
+    lv_arc_set_rotation(a, 0);
+    lv_arc_set_bg_angles(a, a0, a1);
+    lv_arc_set_angles(a, a0, a1);
+    int d = (int) (r * 2.0f) + width;
+    lv_obj_set_size(a, d, d);
+    lv_obj_set_pos(a, (int) (cx - d / 2.0f), (int) (cy - d / 2.0f));
+    return a;
+}
+
+// Pose un enfant de detail dans une piece (arete eclairee, reflet, coeur sombre).
+// [AI-CONTEXT] Etre ENFANT est le point important : LVGL le deplace et le masque
+// avec son parent, donc le code de mouvement des mobiles (scies, orbes,
+// chasseuse) n'a AUCUNE ligne a ajouter — un seul lv_obj_set_pos suffit toujours.
+// Corollaire : le detail est clippe a la boite du parent, donc pas de halo
+// debordant ici (les lueurs larges sont peintes dans le decor, cf. build_decor).
+static inline void detail(lv_obj_t* d, int x, int y, int w, int h, int radius) {
+    lv_obj_set_size(d, w, h);
+    lv_obj_set_pos(d, x, y);
+    lv_obj_set_style_radius(d, radius, LV_PART_MAIN);
+    lv_obj_clear_flag(d, LV_OBJ_FLAG_HIDDEN);
+}
+
 static void set_text_if(lv_obj_t* l, const char* txt) {
     if (!l) return;
     const char* cur = lv_label_get_text(l);
@@ -545,21 +615,126 @@ static void set_text_if(lv_obj_t* l, const char* txt) {
 
 static void slot_event_cb(lv_event_t* e);
 
+// Assombrit une couleur (pct = % de luminosite conservee). Sert a fabriquer le
+// ton BAS d'un degrade a partir du ton haut : chaque pastille de bonus gagne du
+// volume sans qu'on ait a inventer un token « version sombre » par pickup.
+static inline uint32_t shade(uint32_t c, int pct) {
+    const uint32_t r = ((c >> 16) & 0xFF) * (uint32_t) pct / 100u;
+    const uint32_t g = ((c >> 8)  & 0xFF) * (uint32_t) pct / 100u;
+    const uint32_t b = ( c        & 0xFF) * (uint32_t) pct / 100u;
+    return (r << 16) | (g << 8) | b;
+}
+
+// --- Bille : 3 calques pilotes ensemble -------------------------------------
+// [AI-CONTEXT] Tout le code de jeu passe par ces quatre fonctions et JAMAIS par
+// g_ball directement : oublier l'ombre ou le reflet les laisserait au dernier
+// endroit visite, ce qui se voit immediatement a l'ecran.
+
+// Rayon effectif (la caracteristique Finesse peut le reduire en cours de run).
+static void ball_resize(int r) {
+    const int d = r * 2;
+    lv_obj_set_size(g_ball_sh, d + 4, d + 4);
+    lv_obj_set_size(g_ball, d, d);
+    // Reflet : ~30 % du diametre, jamais moins de 4 px (sinon il disparait a la
+    // Finesse maximale, ou la bille ne fait plus que 14 px).
+    int gl = d * 3 / 10;
+    if (gl < 4) gl = 4;
+    lv_obj_set_size(g_ball_gloss, gl, gl);
+}
+
+// Applique le skin choisi au corps ET au reflet. Le corps est un degrade
+// clair->sombre : c'est lui qui fait la sphere, le reflet ne fait que la vernir.
+static void ball_apply_skin() {
+    const uint32_t body  = (g_save.skin == 1) ? UIColor::MARBLE_BALL_ALT
+                         : (g_save.skin == 2) ? UIColor::MARBLE_BALL_CU
+                                              : UIColor::MARBLE_BALL;
+    const uint32_t gloss = (g_save.skin == 1) ? UIColor::MARBLE_BALL_ALT_HI
+                         : (g_save.skin == 2) ? UIColor::MARBLE_BALL_CU_HI
+                                              : UIColor::MARBLE_BALL_HI;
+    set_grad(g_ball, gloss, shade(body, 42));
+    set_bg(g_ball_gloss, gloss, 225);
+}
+
+static void ball_show(bool v) {
+    show(g_ball_sh, v);
+    show(g_ball, v);
+    show(g_ball_gloss, v);
+}
+
+// (left, top) = coin haut-gauche du corps, comme l'ancien lv_obj_set_pos direct.
+static void ball_place(int left, int top) {
+    const int d = lv_obj_get_width(g_ball);
+    lv_obj_set_pos(g_ball_sh, left - 2 + 3, top - 2 + 4);   // ombre decalee bas-droite
+    lv_obj_set_pos(g_ball, left, top);
+    lv_obj_set_pos(g_ball_gloss, left + d * 22 / 100, top + d * 16 / 100);
+}
+
+// Clignotement d'invulnerabilite : le trio s'efface ensemble.
+static void ball_set_opa(lv_opa_t opa) {
+    lv_obj_set_style_bg_opa(g_ball, opa, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(g_ball_gloss, opa == LV_OPA_COVER ? 225 : opa, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(g_ball_sh, opa == LV_OPA_COVER ? 150 : opa, LV_PART_MAIN);
+}
+
 static void build_ui() {
     if (g_built) return;
+
+    // --- Sol : degrade vertical au lieu d'un aplat -------------------------
+    // Le haut plus clair simule la lumiere qui tombe du fond du donjon, le bas
+    // sombre fait ressortir la bille. Une seule passe de dessin, zero objet.
+    set_grad(g_ui.field, UIColor::MARBLE_FLOOR_HI, UIColor::MARBLE_FLOOR_LO);
+    set_grad(g_ui.hud, UIColor::MARBLE_HUD_BG, UIColor::MARBLE_VOID);
+    // Filet de laiton sous le HUD : separe le bandeau du terrain sans lui voler
+    // de hauteur (le bandeau doit rester a 48 px, cf. marble_game.yaml).
+    lv_obj_t* hud_line = mk_rect(g_ui.hud);
+    lv_obj_set_size(hud_line, FW, 2);
+    lv_obj_set_pos(hud_line, 0, HUD_H - 2);
+    set_bg(hud_line, UIColor::MARBLE_BRASS_CHEST, 160);
+    // Calque de menus : degrade sombre. On REPOSE l'opacite apres set_grad, qui
+    // force LV_OPA_COVER — sans ca le panneau deviendrait opaque et on perdrait
+    // la lecture du terrain en arriere-plan (choix d'origine du YAML, 96 %).
+    set_grad(g_ui.panel, UIColor::MARBLE_FLOOR_LO, UIColor::MARBLE_VOID);
+    lv_obj_set_style_bg_opa(g_ui.panel, 245, LV_PART_MAIN);
+
+    // --- Pool de decor : cree AVANT les entites => dessine DERRIERE ---------
+    // [AI-WARNING] L'ordre de creation EST l'ordre d'empilement dans LVGL. Si tu
+    // deplaces ce bloc apres le pool d'entites, le decor peindra par-dessus les
+    // murs et la salle deviendra illisible.
+    for (int i = 0; i < MAX_DEC; i++) {
+        g_dec[i] = mk_rect(g_ui.field);
+        lv_obj_add_flag(g_dec[i], LV_OBJ_FLAG_HIDDEN);
+    }
+    for (int i = 0; i < MAX_DEC_ARC; i++) {
+        g_dec_arc[i] = mk_arc(g_ui.field, 0, 0, 10, 0, 360, 2,
+                              UIColor::MARBLE_EXIT, LV_OPA_TRANSP);
+        lv_obj_add_flag(g_dec_arc[i], LV_OBJ_FLAG_HIDDEN);
+    }
 
     // --- Pool d'entites : cree une fois, recycle a chaque salle ---
     for (int i = 0; i < MAX_ENT; i++) {
         g_ent[i].obj = mk_rect(g_ui.field);
         lv_obj_add_flag(g_ent[i].obj, LV_OBJ_FLAG_HIDDEN);
+        // Calque de detail, enfant : suit son parent sans une ligne de code.
+        g_ent[i].det = mk_rect(g_ent[i].obj);
+        lv_obj_add_flag(g_ent[i].det, LV_OBJ_FLAG_HIDDEN);
     }
 
-    // --- Bille (creee apres le pool => dessinee au-dessus) ---
+    // --- Bille en 3 calques (creee apres le pool => dessinee au-dessus) -----
+    // Ordre de creation = ordre d'empilement : ombre, puis corps, puis reflet.
+    g_ball_sh = mk_rect(g_ui.field);
+    lv_obj_set_style_radius(g_ball_sh, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    set_bg(g_ball_sh, UIColor::MARBLE_BALL_SH, 150);
+    lv_obj_add_flag(g_ball_sh, LV_OBJ_FLAG_HIDDEN);
+
     g_ball = mk_rect(g_ui.field);
-    lv_obj_set_size(g_ball, BALL_R * 2, BALL_R * 2);
     lv_obj_set_style_radius(g_ball, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    set_bg(g_ball, UIColor::MARBLE_BALL, LV_OPA_COVER);
     lv_obj_add_flag(g_ball, LV_OBJ_FLAG_HIDDEN);
+
+    g_ball_gloss = mk_rect(g_ui.field);
+    lv_obj_set_style_radius(g_ball_gloss, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_add_flag(g_ball_gloss, LV_OBJ_FLAG_HIDDEN);
+    ball_resize(BALL_R);
+    ball_apply_skin();
 
     // --- Banniere de decouverte (coffres, butin de boss) ---
     g_toast = mk_label(g_ui.field, g_ui.f_mid, UIColor::MARBLE_RUNE);
@@ -615,7 +790,7 @@ static void build_ui() {
         g_slot[i] = mk_rect(g_ui.panel);
         lv_obj_add_flag(g_slot[i], LV_OBJ_FLAG_CLICKABLE);
         lv_obj_set_style_radius(g_slot[i], 14, LV_PART_MAIN);
-        set_bg(g_slot[i], UIColor::MARBLE_FLOOR, LV_OPA_COVER);
+        set_grad(g_slot[i], UIColor::MARBLE_FLOOR_HI, UIColor::MARBLE_FLOOR_LO);
         // Retour tactile : le fond s'eclaircit tant que le doigt est pose.
         // Casts explicites : combiner lv_part_t et lv_state_t directement est
         // deprecie en C++20 (-Wdeprecated-enum-enum-conversion).
@@ -624,6 +799,9 @@ static void build_ui() {
                                   (lv_style_selector_t) LV_STATE_PRESSED);
         lv_obj_add_event_cb(g_slot[i], slot_event_cb, LV_EVENT_CLICKED,
                             (void*) (intptr_t) i);
+        // Cree AVANT les labels : le liseré doit rester derriere le texte.
+        g_slot_a[i] = mk_rect(g_slot[i]);
+        lv_obj_add_flag(g_slot_a[i], LV_OBJ_FLAG_HIDDEN);
         g_slot_t[i] = mk_label(g_slot[i], g_ui.f_mid, UIColor::TEXT_SOFT);
         g_slot_d[i] = mk_label(g_slot[i], g_ui.f_small, UIColor::TEXT_DIM);
         lv_obj_add_flag(g_slot[i], LV_OBJ_FLAG_HIDDEN);
@@ -650,6 +828,9 @@ static void slot_list(int i, const char* title, const char* desc, uint32_t col, 
     set_text_if(g_slot_t[i], title);
     set_text_if(g_slot_d[i], desc ? desc : "");
     set_border(g_slot[i], on ? col : UIColor::INACTIVE, 2, LV_OPA_50);
+    // Liseré vertical a gauche, aux coins arrondis de la carte.
+    detail(g_slot_a[i], 0, 8, 5, 46, 3);
+    set_bg(g_slot_a[i], on ? col : UIColor::INACTIVE, on ? LV_OPA_COVER : LV_OPA_40);
     show(g_slot[i], true);
 }
 
@@ -667,6 +848,10 @@ static void slot_card(int i, const char* title, const char* desc, uint32_t col) 
     set_text_if(g_slot_t[i], title);
     set_text_if(g_slot_d[i], desc);
     set_border(g_slot[i], col, 3, LV_OPA_80);
+    // En mode carte le liseré passe en banniere haute : la carte se lit comme
+    // une carte de boon, pas comme une ligne de menu tournee de 90 deg.
+    detail(g_slot_a[i], 0, 0, 370, 6, 0);
+    set_bg(g_slot_a[i], col, LV_OPA_COVER);
     show(g_slot[i], true);
 }
 
@@ -686,7 +871,7 @@ static void panel_on(bool v) {
 static void go_hub() {
     g_state = ST_HUB;
     panel_on(true);
-    show(g_ball, false);
+    ball_show(false);
     if (g_save.difficulty >= D_COUNT) g_save.difficulty = D_NORMAL;
     const DiffDef& d = DIFFS[g_save.difficulty];
 
@@ -721,7 +906,7 @@ static void go_hub() {
 static void go_settings() {
     g_state = ST_SETTINGS;
     panel_on(true);
-    show(g_ball, false);
+    ball_show(false);
     if (g_save.difficulty >= D_COUNT) g_save.difficulty = D_NORMAL;
     const DiffDef& d = DIFFS[g_save.difficulty];
 
@@ -752,7 +937,7 @@ static void go_settings() {
 static void go_level() {
     g_state = ST_LEVEL;
     panel_on(true);
-    show(g_ball, false);
+    ball_show(false);
     uint32_t lvl = total_level();
     uint32_t cost = level_cost(lvl);
 
@@ -786,7 +971,7 @@ static void go_level() {
 static void go_shop() {
     g_state = ST_SHOP;
     panel_on(true);
-    show(g_ball, false);
+    ball_show(false);
     int pages = (N_ITEMS + SHOP_PER_PAGE - 1) / SHOP_PER_PAGE;
     if (g_shop_page >= pages) g_shop_page = 0;
     int base = g_shop_page * SHOP_PER_PAGE;
@@ -824,7 +1009,7 @@ static void go_shop() {
 static void go_equip() {
     g_state = ST_EQUIP;
     panel_on(true);
-    show(g_ball, false);
+    ball_show(false);
     int owned_n = 0;
     for (int i = 0; i < N_ITEMS; i++) if (g_save.items & (1u << i)) owned_n++;
 
@@ -909,7 +1094,7 @@ static bool boon_owned(uint8_t id) {
 static void show_reward() {
     g_state = ST_REWARD;
     panel_on(true);
-    show(g_ball, false);
+    ball_show(false);
 
     // Tirage de 3 boons distincts ; les boons « uniques » deja pris sont exclus.
     uint8_t pool[BO_COUNT];
@@ -939,7 +1124,7 @@ static void show_reward() {
 static void show_end(bool victory) {
     g_state = victory ? ST_VICTORY : ST_GAMEOVER;
     panel_on(true);
-    show(g_ball, false);
+    ball_show(false);
 
     unsigned s = g_run_ms / 1000;
     static char body[256];
@@ -1017,102 +1202,250 @@ static bool segment_clear(int x0, int y0, int x1, int y1, int upto) {
     return true;
 }
 
+// Pastille ronde de bonus : degrade du ton vif vers son ombre + reflet. Les 6
+// pickups partagent cette recette, seule la teinte change — c'est ce qui les
+// fait lire comme une meme famille d'objets et pas comme 6 gommettes.
+static void style_pickup(Ent& e, uint32_t col, uint32_t rim, int rim_w) {
+    lv_obj_t* o = e.obj;
+    set_grad(o, col, shade(col, 42));
+    lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    if (rim_w > 0) set_border(o, rim, rim_w, LV_OPA_70);
+    int g = e.w * 3 / 10;
+    if (g < 3) g = 3;
+    detail(e.det, e.w * 22 / 100, e.h * 16 / 100, g, g, LV_RADIUS_CIRCLE);
+    set_bg(e.det, UIColor::TEXT_PRIMARY, 150);
+}
+
+// Portail de sortie. Sorti de style_entity parce que son etat change EN COURS
+// de partie (il s'ouvre quand toutes les runes sont prises) : les deux appelants
+// doivent produire exactement le meme rendu, sinon le portail changerait
+// d'aspect au moment ou il s'ouvre pour une raison sans rapport.
+static void style_exit(Ent& e, bool open_gate) {
+    lv_obj_t* o = e.obj;
+    const uint32_t c = open_gate ? UIColor::MARBLE_EXIT : UIColor::MARBLE_EXIT_OFF;
+    lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    set_grad(o, open_gate ? UIColor::MARBLE_EXIT_HI : c, shade(c, 30));
+    lv_obj_set_style_bg_opa(o, open_gate ? 70 : 26, LV_PART_MAIN);
+    set_border(o, c, 5, open_gate ? LV_OPA_COVER : LV_OPA_50);
+    // Coeur lumineux : un second anneau interieur donne la profondeur du puits.
+    const int m = e.w / 5;
+    detail(e.det, m, m, e.w - 2 * m, e.h - 2 * m, LV_RADIUS_CIRCLE);
+    set_bg(e.det, open_gate ? UIColor::MARBLE_EXIT_HI : c, open_gate ? 90 : 30);
+}
+
 static void style_entity(Ent& e) {
     lv_obj_t* o = e.obj;
     lv_obj_set_size(o, e.w, e.h);
     lv_obj_set_style_radius(o, 0, LV_PART_MAIN);
     set_border(o, UIColor::MARBLE_WALL_LIT, 0, LV_OPA_TRANSP);
+    // Le pool est recycle : le detail est masque par defaut, chaque cas le
+    // rallume s'il en veut un. Sans ca, une piece heriterait du detail de la
+    // piece qui occupait le meme slot dans la salle precedente.
+    lv_obj_add_flag(e.det, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_style_border_width(e.det, 0, LV_PART_MAIN);
 
     switch (e.k) {
         case K_WALL:
-            set_bg(o, UIColor::MARBLE_WALL, LV_OPA_COVER);
+            // Bloc de pierre eclaire par le haut : degrade + arete vive au sommet.
+            // C'est le changement le plus visible de la salle — les murs occupent
+            // l'essentiel de l'ecran.
+            set_grad(o, UIColor::MARBLE_WALL_HI, UIColor::MARBLE_WALL_LO);
             lv_obj_set_style_radius(o, 4, LV_PART_MAIN);
-            set_border(o, UIColor::MARBLE_WALL_LIT, 1, LV_OPA_60);
+            set_border(o, shade(UIColor::MARBLE_WALL_LO, 60), 1, LV_OPA_80);
+            detail(e.det, 2, 1, e.w - 4, 2, 1);
+            set_bg(e.det, UIColor::MARBLE_WALL_EDGE, 190);
             break;
         case K_SPIKE:
-            set_bg(o, UIColor::MARBLE_DANGER, LV_OPA_COVER);
+            // Lame : base sombre, arete claire. Le contour noir la detache du sol.
+            set_grad(o, UIColor::MARBLE_DANGER_HI, UIColor::MARBLE_DANGER_LO);
             lv_obj_set_style_radius(o, 3, LV_PART_MAIN);
             set_border(o, UIColor::MARBLE_VOID, 2, LV_OPA_80);
+            detail(e.det, 2, 1, e.w - 4 > 0 ? e.w - 4 : 1, 2, 1);
+            set_bg(e.det, UIColor::MARBLE_DANGER_HI, 230);
             break;
         case K_SAW:
-            set_bg(o, UIColor::MARBLE_DANGER, LV_OPA_COVER);
+            // Barre de scie : degrade + gorge sombre en creux au centre (biseau).
+            set_grad(o, UIColor::MARBLE_DANGER_HI, UIColor::MARBLE_DANGER_LO);
             lv_obj_set_style_radius(o, 6, LV_PART_MAIN);
+            set_border(o, shade(UIColor::MARBLE_DANGER_LO, 70), 1, LV_OPA_80);
+            if (e.w > 10 && e.h > 10) {
+                detail(e.det, 4, 4, e.w - 8, e.h - 8, 4);
+                set_bg(e.det, UIColor::MARBLE_DANGER_LO, 120);
+            }
             break;
         case K_PIT:
-            set_bg(o, UIColor::MARBLE_PIT, LV_OPA_COVER);
+            // Trou : margelle claire (bordure) + puits qui s'assombrit vers le bas
+            // + disque noir en creux. Le vide doit se lire comme une profondeur.
+            set_grad(o, UIColor::MARBLE_PIT, 0x000000);
             lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-            set_border(o, UIColor::MARBLE_WALL, 3, LV_OPA_70);
+            set_border(o, UIColor::MARBLE_PIT_RIM, 3, LV_OPA_90);
+            detail(e.det, e.w / 5, e.h / 5, e.w - 2 * (e.w / 5), e.h - 2 * (e.h / 5),
+                   LV_RADIUS_CIRCLE);
+            set_bg(e.det, 0x000000, 170);
             break;
         case K_GLUE:
-            set_bg(o, UIColor::MARBLE_SLOW, 60);
-            lv_obj_set_style_radius(o, 10, LV_PART_MAIN);
-            set_border(o, UIColor::MARBLE_SLOW, 2, LV_OPA_50);
-            break;
         case K_BOOST:
-            set_bg(o, UIColor::MARBLE_BOOST, 45);
+        case K_WIND: {
+            // Zones d'effet : nappes translucides. Le degre d'opacite est ce qui
+            // les distingue d'un obstacle plein — ne pas le monter.
+            const uint32_t c = (e.k == K_GLUE)  ? UIColor::MARBLE_SLOW
+                             : (e.k == K_BOOST) ? UIColor::MARBLE_BOOST
+                                                : UIColor::MARBLE_WIND;
+            const lv_opa_t a = (e.k == K_GLUE) ? 66 : (e.k == K_BOOST ? 52 : 46);
+            set_grad(o, c, shade(c, 25));
+            lv_obj_set_style_bg_opa(o, a, LV_PART_MAIN);
             lv_obj_set_style_radius(o, 10, LV_PART_MAIN);
-            set_border(o, UIColor::MARBLE_BOOST, 2, LV_OPA_60);
+            set_border(o, c, 2, LV_OPA_60);
+            // Liseré clair au ras du haut : donne une surface a la nappe.
+            detail(e.det, 6, 3, e.w - 12 > 0 ? e.w - 12 : 1, 2, 1);
+            set_bg(e.det, c, 120);
             break;
-        case K_WIND:
-            set_bg(o, UIColor::MARBLE_WIND, 40);
-            lv_obj_set_style_radius(o, 10, LV_PART_MAIN);
-            set_border(o, UIColor::MARBLE_WIND, 2, LV_OPA_50);
-            break;
+        }
         case K_ORB:
-            set_bg(o, UIColor::MARBLE_DANGER, LV_OPA_COVER);
-            lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+            style_pickup(e, UIColor::MARBLE_DANGER, 0, 0);
+            set_bg(e.det, UIColor::MARBLE_DANGER_HI, 200);
             break;
         case K_HUNTER:
-            set_bg(o, UIColor::MARBLE_DANGER, LV_OPA_COVER);
-            lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+            style_pickup(e, UIColor::MARBLE_DANGER, UIColor::MARBLE_RUNE, 3);
             set_border(o, UIColor::MARBLE_RUNE, 3, LV_OPA_COVER);
+            set_bg(e.det, UIColor::MARBLE_DANGER_HI, 210);
             break;
         case K_GOLD:
-            set_bg(o, UIColor::MARBLE_RUNE, LV_OPA_COVER);
+            set_grad(o, UIColor::MARBLE_RUNE, UIColor::MARBLE_RUNE_LO);
             lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+            {
+                int g = e.w * 3 / 10; if (g < 3) g = 3;
+                detail(e.det, e.w * 20 / 100, e.h * 15 / 100, g, g, LV_RADIUS_CIRCLE);
+                set_bg(e.det, UIColor::MARBLE_BALL_HI, 190);
+            }
             break;
-        case K_SHIELD:
-            set_bg(o, UIColor::MARBLE_SHIELD, LV_OPA_COVER);
-            lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-            set_border(o, UIColor::TEXT_PRIMARY, 2, LV_OPA_70);
-            break;
-        case K_MAGNET:
-            set_bg(o, UIColor::MARBLE_MAGNET, LV_OPA_COVER);
-            lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-            break;
-        case K_BRAKE:
-            set_bg(o, UIColor::MARBLE_BRAKE, LV_OPA_COVER);
-            lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-            break;
-        case K_DASH:
-            set_bg(o, UIColor::MARBLE_DASH, LV_OPA_COVER);
-            lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-            break;
+        case K_SHIELD: style_pickup(e, UIColor::MARBLE_SHIELD, UIColor::TEXT_PRIMARY, 2); break;
+        case K_MAGNET: style_pickup(e, UIColor::MARBLE_MAGNET, 0, 0); break;
+        case K_BRAKE:  style_pickup(e, UIColor::MARBLE_BRAKE,  0, 0); break;
+        case K_DASH:   style_pickup(e, UIColor::MARBLE_DASH,   0, 0); break;
         case K_RUNE:
             // Carre a coins doux : se distingue au premier coup d'oeil des pickups ronds.
-            set_bg(o, UIColor::MARBLE_RUNE, LV_OPA_COVER);
+            set_grad(o, UIColor::MARBLE_RUNE, UIColor::MARBLE_RUNE_LO);
             lv_obj_set_style_radius(o, 5, LV_PART_MAIN);
             set_border(o, UIColor::TEXT_PRIMARY, 3, LV_OPA_90);
+            detail(e.det, 4, 3, e.w - 8 > 0 ? e.w - 8 : 1, 2, 1);
+            set_bg(e.det, UIColor::MARBLE_BALL_HI, 200);
             break;
         case K_CHEST:
             // Coffre : rectangle trapu cercle d'or, volontairement different
             // des pastilles rondes de bonus — on doit le reperer de loin.
-            set_bg(o, UIColor::MARBLE_BRASS_CHEST, LV_OPA_COVER);
+            // La ferrure horizontale est ce qui le fait lire comme un coffre.
+            set_grad(o, UIColor::MARBLE_BRASS_CHEST, UIColor::MARBLE_CHEST_LO);
             lv_obj_set_style_radius(o, 6, LV_PART_MAIN);
             set_border(o, UIColor::MARBLE_RUNE, 3, LV_OPA_COVER);
+            detail(e.det, 0, e.h / 2 - 2, e.w, 4, 0);
+            set_bg(e.det, UIColor::MARBLE_RUNE, 170);
             break;
         case K_EXIT:
-            set_bg(o, UIColor::MARBLE_EXIT, 55);
-            lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-            set_border(o, UIColor::MARBLE_EXIT, 5, LV_OPA_COVER);
+            style_exit(e, false);   // etat reel pose par le tick des la 1re frame
             break;
         default: break;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Decor de salle : peinture au sol, JAMAIS de collision.
+// [AI-CONTEXT] Meme principe que la serigraphie sous le verre d'un flipper : la
+// bille passe par-dessus, la physique ignore tout ce qui est cree ici. C'est
+// donc le seul endroit du jeu ou on peut ajouter du visuel sans repasser par
+// scripts/check_marble_rooms.py (qui ne lit que les Spec des salles).
+// @ai_instruction Si tu ajoutes un element, prends-le dans le pool (dec_next /
+//      dec_arc) et ne depasse pas MAX_DEC / MAX_DEC_ARC : le pool est alloue une
+//      fois pour toutes, aucune allocation ne doit avoir lieu en cours de partie.
+// ---------------------------------------------------------------------------
+static lv_obj_t* dec_next() {
+    if (g_dec_n >= MAX_DEC) return nullptr;
+    lv_obj_t* o = g_dec[g_dec_n++];
+    lv_obj_set_style_border_width(o, 0, LV_PART_MAIN);
+    lv_obj_set_style_radius(o, 0, LV_PART_MAIN);
+    lv_obj_set_style_bg_grad_dir(o, LV_GRAD_DIR_NONE, LV_PART_MAIN);
+    lv_obj_clear_flag(o, LV_OBJ_FLAG_HIDDEN);
+    return o;
+}
+
+// Nappe de lumiere : disque large et tres transparent. Designe un lieu (le
+// depart, le portail, une torche) sans ajouter une ligne de HUD.
+static void dec_light(int cx, int cy, int r, uint32_t col, lv_opa_t opa) {
+    lv_obj_t* o = dec_next();
+    if (!o) return;
+    lv_obj_set_size(o, r * 2, r * 2);
+    lv_obj_set_pos(o, cx - r, cy - r);
+    lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    set_bg(o, col, opa);
+}
+
+static void dec_arc(int cx, int cy, int r, int a0, int a1, int w,
+                    uint32_t col, lv_opa_t opa) {
+    if (g_dec_arc_n >= MAX_DEC_ARC) return;
+    lv_obj_t* a = g_dec_arc[g_dec_arc_n++];
+    lv_obj_set_style_arc_width(a, w, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_color(a, lv_color_hex(col), LV_PART_INDICATOR);
+    lv_obj_set_style_arc_opa(a, opa, LV_PART_INDICATOR);
+    lv_arc_set_bg_angles(a, a0, a1);
+    lv_arc_set_angles(a, a0, a1);
+    const int d = r * 2 + w;
+    lv_obj_set_size(a, d, d);
+    lv_obj_set_pos(a, cx - d / 2, cy - d / 2);
+    lv_obj_clear_flag(a, LV_OBJ_FLAG_HIDDEN);
+}
+
+static void build_decor(int idx) {
+    for (int i = 0; i < g_dec_n; i++)     show(g_dec[i], false);
+    for (int i = 0; i < g_dec_arc_n; i++) show(g_dec_arc[i], false);
+    g_dec_n = 0;
+    g_dec_arc_n = 0;
+    const Room& r = ROOMS[idx];
+
+    // Joints de dalles : 3 lignes a peine visibles. Elles donnent une echelle au
+    // sol — sans elles la bille semble flotter dans le vide.
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t* o = dec_next();
+        if (!o) break;
+        lv_obj_set_size(o, FW, 2);
+        lv_obj_set_pos(o, 0, 168 + i * 168);
+        set_bg(o, UIColor::MARBLE_SLAB, 110);
+    }
+
+    // Torches murales : une braise vive dans un halo large. Placees hors des
+    // couloirs principaux (bord haut et bord bas), elles ne masquent rien.
+    static const int TORCH[4][2] = {{210, 24}, {1070, 24}, {210, FH - 24}, {1070, FH - 24}};
+    for (int i = 0; i < 4; i++) {
+        dec_light(TORCH[i][0], TORCH[i][1], 46, UIColor::MARBLE_EMBER, 20);
+        dec_light(TORCH[i][0], TORCH[i][1], 6,  UIColor::MARBLE_EMBER, 210);
+    }
+
+    // Nappe chaude au point de depart : le joueur voit d'ou il part.
+    dec_light(r.sx, r.sy, 84, UIColor::MARBLE_EMBER, 22);
+
+    // Anneau du portail : deux arcs peints autour de la sortie. C'est le repere
+    // le plus utile de la salle, il merite d'etre lisible de loin.
+    for (int i = 0; i < r.n; i++) {
+        if (r.specs[i].k != K_EXIT) continue;
+        const int ex = r.specs[i].x + r.specs[i].w / 2;
+        const int ey = r.specs[i].y + r.specs[i].h / 2;
+        dec_light(ex, ey, 96, UIColor::MARBLE_EXIT, 20);
+        dec_arc(ex, ey, 62, 0, 360, 3, UIColor::MARBLE_EXIT, 70);
+        dec_arc(ex, ey, 78, 210, 330, 2, UIColor::MARBLE_EXIT, 45);
+        break;
+    }
+
+    // Arenes de boss (Nemesis, Trone) : orbite peinte au centre. Elle annonce la
+    // trajectoire des orbes avant meme qu'ils ne bougent.
+    if (idx >= 4) {
+        dec_arc(FW / 2, FH / 2, 196, 0, 360, 2, UIColor::MARBLE_DANGER, 34);
+        dec_light(FW / 2, FH / 2, 150, UIColor::MARBLE_DANGER, 12);
     }
 }
 
 static void load_room(int idx) {
     const Room& r = ROOMS[idx];
     g_ent_n = 0;
+    build_decor(idx);
 
     for (int i = 0; i < r.n && g_ent_n < MAX_ENT; i++) {
         const Spec& s = r.specs[i];
@@ -1173,9 +1506,13 @@ static void load_room(int idx) {
     if (g_has_bronze) g_shield = true;
     g_invuln_until = g_has_velvet ? g_room_enter_ms + VELVET_MS : 0;
 
-    lv_obj_set_pos(g_ball, (int) g_bx - g_ball_r, (int) g_by - g_ball_r);
-    show(g_ball, true);
+    ball_place((int) g_bx - g_ball_r, (int) g_by - g_ball_r);
+    ball_show(true);
+    // Remise au premier plan dans l'ordre d'empilement voulu : ombre, corps,
+    // reflet. Les remonter dans le desordre mettrait l'ombre PAR-DESSUS la bille.
+    lv_obj_move_foreground(g_ball_sh);
     lv_obj_move_foreground(g_ball);
+    lv_obj_move_foreground(g_ball_gloss);
     for (int i = 0; i < 4; i++) lv_obj_move_foreground(g_vign[i]);
 
     // Nom + numero de salle : ecrits une seule fois par salle.
@@ -1243,7 +1580,7 @@ static void start_run() {
 
     if (g_life_max < 1) g_life_max = 1;
     g_life = g_life_max;
-    lv_obj_set_size(g_ball, g_ball_r * 2, g_ball_r * 2);
+    ball_resize(g_ball_r);
     g_room = 0;
     g_run_start_ms = lv_tick_get();
     g_run_ms = 0;
@@ -1672,10 +2009,7 @@ static void tick_cb(lv_timer_t*) {
                 // invaliderait le portail a chaque frame pour rien).
                 if (g_c_gate != (int) open_gate) {
                     g_c_gate = (int) open_gate;
-                    set_bg(e.obj, open_gate ? UIColor::MARBLE_EXIT : UIColor::MARBLE_EXIT_OFF,
-                           open_gate ? 55 : 25);
-                    set_border(e.obj, open_gate ? UIColor::MARBLE_EXIT : UIColor::MARBLE_EXIT_OFF,
-                               5, open_gate ? LV_OPA_COVER : LV_OPA_50);
+                    style_exit(e, open_gate);
                 }
                 // « Oeil du dedale » : le portail ouvert pulse doucement.
                 if (open_gate && g_has_eye) {
@@ -1692,12 +2026,11 @@ static void tick_cb(lv_timer_t*) {
     // --- Rendu de la bille (+ tremblement court apres un degat) --------------
     int jx = 0, jy = 0;
     if (g_jitter > 0) { g_jitter--; jx = rnd_range(-4, 4); jy = rnd_range(-4, 4); }
-    lv_obj_set_pos(g_ball, (int) g_bx - g_ball_r + jx, (int) g_by - g_ball_r + jy);
+    ball_place((int) g_bx - g_ball_r + jx, (int) g_by - g_ball_r + jy);
 
     // Invulnerabilite : la bille clignote (feedback sans cout de rendu).
     bool inv = now < g_invuln_until;
-    lv_obj_set_style_bg_opa(g_ball, (inv && ((now / 100) & 1)) ? LV_OPA_40 : LV_OPA_COVER,
-                            LV_PART_MAIN);
+    ball_set_opa((inv && ((now / 100) & 1)) ? LV_OPA_40 : LV_OPA_COVER);
 
     if (g_vignette_until && now >= g_vignette_until) {
         g_vignette_until = 0;
@@ -1813,10 +2146,7 @@ static void slot_event_cb(lv_event_t* e) {
             } else if (i == 2) {
                 g_save.skin = (uint8_t) ((g_save.skin + 1) % 3);
                 persist_save();
-                uint32_t sk = (g_save.skin == 1) ? UIColor::MARBLE_BALL_ALT
-                            : (g_save.skin == 2) ? UIColor::MARBLE_BALL_CU
-                                                 : UIColor::MARBLE_BALL;
-                set_bg(g_ball, sk, LV_OPA_COVER);
+                ball_apply_skin();
                 go_settings();
             } else if (i == 3) {
                 calibrate();
@@ -1841,7 +2171,7 @@ static void slot_event_cb(lv_event_t* e) {
                 }
                 g_state = ST_PLAYING;
                 panel_on(false);
-                show(g_ball, true);
+                ball_show(true);
                 g_c_life = -1;   // PV/bouclier ont pu changer
             }
             break;
@@ -1893,15 +2223,11 @@ void open(const UI& ui) {
     persist_load();
     build_ui();
 
-    // Teinte de la bille selon le cosmetique debloque.
-    uint32_t skin = (g_save.skin == 1) ? UIColor::MARBLE_BALL_ALT
-                  : (g_save.skin == 2) ? UIColor::MARBLE_BALL_CU
-                                       : UIColor::MARBLE_BALL;
-    set_bg(g_ball, skin, LV_OPA_COVER);
+    // Teinte de la bille selon le cosmetique debloque (corps + reflet).
+    ball_apply_skin();
 
     for (int i = 0; i < MAX_BOONS; i++) show(g_hud_dot[i], false);
-    show(g_ui.root, true);
-    lv_obj_move_foreground(g_ui.root);
+    // La page LVGL est déjà active (navigation via lvgl.page.show dans le YAML).
 
     g_run_active = false;
     go_hub();
@@ -1930,7 +2256,8 @@ void close() {
 
     if (g_timer) { lv_timer_delete(g_timer); g_timer = nullptr; }
     if (g_ui.hud) lv_obj_remove_event_cb(g_ui.hud, hud_event_cb);
-    show(g_ui.root, false);
+    // Navigation retour vers le sélecteur arcade (page LVGL).
+    if (g_ui.lvgl) g_ui.lvgl->show_page(g_ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
     g_state = ST_OFF;
 }
 

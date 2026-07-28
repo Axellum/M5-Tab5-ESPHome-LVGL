@@ -112,10 +112,12 @@ static constexpr uint32_t DICE_PIP   = 0x2A1B47;  // points du dé
 // Les 4 conteneurs sont déclarés dans ui_components/trivia_game.yaml ; les
 // polices viennent de tab5-styles.yaml (on ne peut pas faire `id(...)` hors lambda).
 struct UI {
-    lv_obj_t* root  = nullptr;  // overlay plein écran 1280x720
+    lv_obj_t* root  = nullptr;  // page LVGL plein écran 1280x720
     lv_obj_t* hud   = nullptr;  // bandeau compact 1280x48
     lv_obj_t* board = nullptr;  // aire de jeu 1280x672 (roue + panneau droit)
     lv_obj_t* panel = nullptr;  // calque des menus (hub / setup / stats / pause…)
+    esphome::lvgl::LvglComponent* lvgl = nullptr;  // pour navigation pages
+    size_t home_idx = 0;        // index de la page de retour (page_arcade = 1)
     const esphome::font::Font* f_small = nullptr;  // roboto_22
     const esphome::font::Font* f_mid   = nullptr;  // roboto_32_b
     const esphome::font::Font* f_big   = nullptr;  // roboto_45_b

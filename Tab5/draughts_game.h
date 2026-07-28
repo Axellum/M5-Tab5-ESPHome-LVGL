@@ -82,10 +82,12 @@ static constexpr uint32_t BTN_EDGE    = 0x8A7050;
 }  // namespace Pal
 
 struct UI {
-    lv_obj_t* root  = nullptr;  // overlay 1280×720
+    lv_obj_t* root  = nullptr;  // page LVGL 1280×720
     lv_obj_t* field = nullptr;  // 1280×672 sous HUD
     lv_obj_t* hud   = nullptr;  // bandeau 1280×48
     lv_obj_t* panel = nullptr;  // calque menus plein écran
+    esphome::lvgl::LvglComponent* lvgl = nullptr;  // pour navigation pages
+    size_t home_idx = 0;        // index de la page de retour (page_arcade = 1)
     const esphome::font::Font* f_small = nullptr;  // roboto_22
     const esphome::font::Font* f_mid   = nullptr;  // roboto_32_b
     const esphome::font::Font* f_big   = nullptr;  // roboto_45_b

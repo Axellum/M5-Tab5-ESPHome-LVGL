@@ -29,11 +29,10 @@ script:
           // lui aussi fermer après, pour que le dernier mot revienne au paysage.
           if (Pinball::is_open())  Pinball::close();
 
-  # Ouvre le jeu « Fil d'Or » (overlay plein écran, marble_game.cpp).
-  # Script unique appelé par les 3 points d'entrée (console GESTION + les deux
-  # long-press de la bande centrale) : la construction de Marble::UI ne vit
-  # qu'à un seul endroit. `id(...)` n'étant utilisable que dans une lambda, les
-  # pointeurs LVGL et les polices sont injectés ici plutôt que dans le C++.
+  # Ouvre le jeu « Fil d'Or » (page LVGL dédiée, marble_game.cpp).
+  # Script unique appelé par le sélecteur arcade : la construction de Marble::UI
+  # ne vit qu'à un seul endroit. `id(...)` n'étant utilisable que dans une lambda,
+  # les pointeurs LVGL et les polices sont injectés ici plutôt que dans le C++.
   - id: tab5_marble_open
     mode: single
     then:
@@ -43,6 +42,8 @@ script:
           ui.field   = id(marble_field);
           ui.hud     = id(marble_hud);
           ui.panel   = id(marble_panel);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = 1;  // page_arcade
           ui.f_small = id(roboto_22);
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
@@ -50,7 +51,6 @@ script:
 
   # Ouvre le jeu « Arcanoïde » (casse-briques rétro, arkanoid_game.cpp).
   # Même pattern que Marble : script unique, pointeurs LVGL injectés en lambda.
-  # Point d'entrée : long-press sur la carte prévision J4 (dernier jour).
   - id: tab5_arkanoid_open
     mode: single
     then:
@@ -60,6 +60,8 @@ script:
           ui.field   = id(arkanoid_field);
           ui.hud     = id(arkanoid_hud);
           ui.panel   = id(arkanoid_panel);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = 1;  // page_arcade
           ui.f_small = id(roboto_22);
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
@@ -77,6 +79,8 @@ script:
           ui.hud     = id(lode_hud);
           ui.panel   = id(lode_panel);
           ui.pad     = id(lode_pad);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = 1;  // page_arcade
           ui.f_small = id(roboto_22);
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
@@ -96,6 +100,8 @@ script:
           ui.field   = id(go_field);
           ui.hud     = id(go_hud);
           ui.panel   = id(go_panel);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = 1;  // page_arcade
           ui.f_small = id(roboto_22);
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
@@ -113,6 +119,8 @@ script:
           ui.hud     = id(trivia_hud);
           ui.board   = id(trivia_board);
           ui.panel   = id(trivia_panel);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = 1;  // page_arcade
           ui.f_small = id(roboto_22);
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
@@ -130,6 +138,8 @@ script:
           ui.hud     = id(chess_hud);
           ui.board   = id(chess_board);
           ui.panel   = id(chess_panel);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = 1;  // page_arcade
           ui.f_small = id(roboto_22);
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
@@ -148,6 +158,8 @@ script:
           ui.field   = id(draughts_field);
           ui.hud     = id(draughts_hud);
           ui.panel   = id(draughts_panel);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = 1;  // page_arcade
           ui.f_small = id(roboto_22);
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
@@ -173,13 +185,22 @@ script:
           ui.field   = id(pinball_field);
           ui.hud     = id(pinball_hud);
           ui.panel   = id(pinball_panel);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = 1;  // page_arcade
           ui.f_small = id(roboto_22);
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
           ui.f_score = id(roboto_55_b);
           ui.f_led   = id(roboto_mono_24);
-          ui.lvgl    = id(tab5_lvgl);
           Pinball::open(ui);
+
+  # Ouvre le sélecteur arcade (page_arcade). Point d'entrée unique depuis le
+  # dashboard (tap sur température serre). Ferme d'abord tout jeu en cours.
+  - id: tab5_arcade_open
+    mode: single
+    then:
+      - script.execute: tab5_games_close_all
+      - lvgl.page.show: page_arcade
 
   # Active le wake word interne « Stop » (désactivé par défaut par ESPHome, 2e modèle).
   # Uniquement via tab5_maj_volet_etat (push HA) — pas d'état optimiste au tap écran.
@@ -978,9 +999,10 @@ script:
 #
 # Les jeux sont volontairement exclus : un jeu n'est pas un popup, il ne doit
 # jamais se fermer seul (une partie en pause, c'est zéro toucher pendant des
-# minutes). Le panneau des switches HA l'est aussi : il s'affiche sur demande
-# explicite (bouton « HA »), on ne le rend pas à la météo dans son dos — et le
-# révéler sous les switches ferait apparaître un calque par-dessus l'autre.
+# minutes). Le sélecteur arcade (page_arcade) est géré séparément : si aucun
+# jeu n'est ouvert et que l'inactivité dépasse le seuil popup, on revient au
+# dashboard. Le panneau des switches HA l'est aussi : il s'affiche sur demande
+# explicite (bouton « HA »), on ne le rend pas à la météo dans son dos.
 interval:
   - interval: 1s
     then:
@@ -995,11 +1017,18 @@ interval:
           static lv_obj_t* const kPopups[] = {
               id(assistant_popup), id(calendar_popup), id(light_options_popup),
               id(clim_options_popup), id(pots_detail_popup), id(tv_remote_popup),
-              id(layer_console_sys), id(game_selector_overlay)
+              id(layer_console_sys)
           };
           constexpr int kNbPopups = sizeof(kPopups) / sizeof(kPopups[0]);
 
           const uint32_t idle = ui_idle_ms();
+
+          // Sélecteur arcade (page_arcade) : si aucun jeu n'est ouvert et
+          // inactivité > seuil popup, retour au dashboard.
+          if (id(tab5_lvgl)->get_current_page() == 1) {  // page_arcade
+              if (idle >= UIIdle::POPUP_MS) id(tab5_lvgl)->show_page(0, LV_SCREEN_LOAD_ANIM_NONE, 0);
+              return;
+          }
 
           if (any_popup_visible(kPopups, kNbPopups)) {
               if (idle < UIIdle::POPUP_MS) return;

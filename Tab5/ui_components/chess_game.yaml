@@ -1,14 +1,11 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file chess_game.yaml
-# @role Overlay PLEIN ECRAN du jeu « Roi Noir » (echiquier FIDE + IA embarquee).
-# @architecture_constraint EXCEPTION ASSUMEE au chrome modal v4 (ADR-0009) : ce
-#     n'est pas un popup domotique mais un flux de jeu separe. Donc pas de
-#     modal_scrim.yaml, pas de modal_header.yaml, pas de carte 1250x690 — on
-#     occupe les 1280x720 pour que le plateau domine. Le garde-fou
-#     scripts/check_tab5_modal_chrome.py ne declenche pas ici (aucune
-#     style_modal_card, aucun color_modal_scrim, aucun glyphe de croix).
-#     La sortie du jeu se fait par le hub (« Quitter »), pas par une croix.
+# @role Page LVGL dédiée du jeu « Roi Noir » (echiquier FIDE + IA embarquee).
+# @architecture_constraint Page LVGL autonome (page_chess dans tab5-lvgl.yaml,
+#     skip: true). Pas de modal_scrim/modal_header — flux de jeu plein cadre.
+#     La sortie du jeu se fait par le hub (« Quitter ») qui navigue vers
+#     page_arcade via lv_scr_load() en C++.
 # @ai_instruction Ce fichier ne declare QUE 4 conteneurs vides. Tout le contenu
 #     (cases, pieces, coordonnees, HUD, liste des coups, boutons, menus) est
 #     construit par chess_game.cpp via Chess::open(). Ne JAMAIS ajouter de widget
@@ -26,7 +23,6 @@ obj:
   y: 0
   width: 1280
   height: 720
-  hidden: true
   scrollable: false
   pad_all: 0
   radius: 0

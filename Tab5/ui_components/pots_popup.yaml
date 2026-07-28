@@ -34,7 +34,7 @@ obj:
         scrollable: false
         widgets:
 
-          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
           - !include { file: modal_header.yaml, vars: { icon: "\U000F024A", icon_color: "color_success", title: "Mes Plantes", title_id: "popup_pots_title", close_btn_id: "btn_pots_close", close_lambda: "animate_popup_close(id(pots_detail_popup), nullptr);" } }
 
           # ═══ 5 CARTES POTS (ordre = plante_1..plante_5, icônes du dashboard) ═══

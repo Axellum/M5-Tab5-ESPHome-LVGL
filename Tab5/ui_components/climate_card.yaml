@@ -51,9 +51,7 @@ obj:
         height: 54
         styles: style_invisible
         on_short_click:
-          - lambda: |-
-              animate_popup_open(id(game_selector_overlay), nullptr);
-              lv_obj_move_foreground(id(game_selector_overlay));
+          - script.execute: tab5_arcade_open
 
     # ═══ Zone verre uniquement autour de − / cible / + ═══
     - obj:

@@ -106,10 +106,12 @@ static constexpr uint32_t EDGE      = 0x4A3A26;  // liserés discrets
 // Pointeurs LVGL + polices fournis par tab5-scripts.yaml à l'ouverture
 // (`id(...)` n'est utilisable que dans une lambda).
 struct UI {
-    lv_obj_t* root  = nullptr;   // overlay plein écran 1280×720
+    lv_obj_t* root  = nullptr;   // page LVGL plein écran 1280×720
     lv_obj_t* hud   = nullptr;   // bandeau supérieur 1280×60
     lv_obj_t* field = nullptr;   // aire de jeu 1280×660 (goban + panneau)
     lv_obj_t* panel = nullptr;   // calque des menus 1280×720
+    esphome::lvgl::LvglComponent* lvgl = nullptr;  // pour navigation pages
+    size_t home_idx = 0;         // index de la page de retour (page_arcade = 1)
     const esphome::font::Font* f_small = nullptr;  // roboto_22
     const esphome::font::Font* f_mid   = nullptr;  // roboto_32_b
     const esphome::font::Font* f_big   = nullptr;  // roboto_45_b

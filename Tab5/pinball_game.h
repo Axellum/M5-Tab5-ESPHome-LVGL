@@ -81,10 +81,11 @@ namespace Pinball {
 // polices viennent de tab5-styles.yaml (on ne peut pas faire `id(...)` hors
 // lambda, d'où l'injection depuis le script tab5_pinball_open).
 struct UI {
-    lv_obj_t* root  = nullptr;   // overlay plein écran (portrait 720×1280)
+    lv_obj_t* root  = nullptr;   // page LVGL plein écran (portrait 720×1280)
     lv_obj_t* field = nullptr;   // plateau de jeu, sous le fronton
     lv_obj_t* hud   = nullptr;   // fronton / DMD (score, billes, mode)
     lv_obj_t* panel = nullptr;   // calque menus (hub / classement / pause / fin)
+    size_t home_idx = 0;         // index de la page de retour (page_arcade = 1)
     const esphome::font::Font* f_small = nullptr;  // roboto_22
     const esphome::font::Font* f_mid   = nullptr;  // roboto_32_b
     const esphome::font::Font* f_big   = nullptr;  // roboto_45_b

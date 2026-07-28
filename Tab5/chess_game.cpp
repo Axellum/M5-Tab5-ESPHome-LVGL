@@ -1741,8 +1741,7 @@ void open(const UI& ui) {
         recompute_legal();
     }
 
-    show(g_ui.root, true);
-    lv_obj_move_foreground(g_ui.root);
+    // La page LVGL est déjà active (navigation via lvgl.page.show dans le YAML).
     memset(g_drawn_pc, 0xFF, sizeof(g_drawn_pc));
     memset(g_drawn_hl, 0xFF, sizeof(g_drawn_hl));
     draw_all();
@@ -1767,7 +1766,8 @@ void close() {
     if (g_timer) { lv_timer_delete(g_timer); g_timer = nullptr; }
     g_ai_think = false;
     g_anim_on = false;
-    show(g_ui.root, false);
+    // Navigation retour vers le sélecteur arcade (page LVGL).
+    if (g_ui.lvgl) g_ui.lvgl->show_page(g_ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
     g_state = ST_OFF;
 }
 

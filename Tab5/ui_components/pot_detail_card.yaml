@@ -12,7 +12,7 @@ obj:
   x: ${x_pos}
   y: ${modal_body_y}
   width: 226
-  height: 628
+  height: 598
   styles: style_glass_card
   scrollable: false
   widgets:

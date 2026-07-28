@@ -14,7 +14,7 @@
 #       par update_light_card_ui() (tab5_custom.cpp) et par les capteurs light_*_brightness
 #       (tab5-sensors-domotique.yaml).
 # @ai_instruction Cadre modal v4 (ADR-0009) : modal_scrim.yaml + modal_header.yaml
-#       (barre de titre 52 px, corps à y=52). `scrollable: false` partout — NE PAS retirer.
+#       (barre de titre 52 px + 20 px d'air, corps à y=72). `scrollable: false` partout — NE PAS retirer.
 #       Les 12 pastilles couleur via light_color_preset_btn.yaml (#T164).
 # ═══════════════════════════════════════════════════════
 obj:
@@ -37,7 +37,7 @@ obj:
         scrollable: false
         widgets:
 
-          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=52) ═══
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
           - !include { file: modal_header.yaml, vars: { icon: "\U000F0335", icon_color: "color_gold", title: "Ampoule", title_id: "popup_light_title", close_btn_id: "btn_light_close", close_lambda: "animate_popup_close(id(light_options_popup), nullptr);" } }
 
           # ═══ CARTE AMPOULE (gauche) : sélecteur 3 lumières + puissance ═══
@@ -46,7 +46,7 @@ obj:
               x: 24
               y: ${modal_body_y}
               width: 386
-              height: 628
+              height: 598
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -144,7 +144,7 @@ obj:
               x: 426
               y: ${modal_body_y}
               width: 398
-              height: 628
+              height: 598
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -276,7 +276,7 @@ obj:
               x: 840
               y: ${modal_body_y}
               width: 386
-              height: 628
+              height: 598
               styles: style_glass_card
               scrollable: false
               widgets:

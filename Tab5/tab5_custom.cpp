@@ -1982,70 +1982,32 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
 // Reutilisent les callbacks ci-dessus (anim_y_cb/anim_opa_cb/anim_scale_cb/anim_x_cb).
 // =============================================================================
 
-// Animation d'ouverture d'un popup : fondu 0->COVER (card + scrim).
-// Pas de transform_scale : trop couteux sur les objets plein ecran (1280x720).
-// Duree UIAnim::POPUP_IN (150ms — etait 280), ease_out : c'est l'animation la
-// plus exposee a la latence percue (tap -> contenu lisible).
+// Ouverture/fermeture d'un popup : affichage/masquage instantané.
+// Affichage instantané : unhide + opa COVER directement (pas de fondu).
 void animate_popup_open(lv_obj_t* card, lv_obj_t* scrim) {
-    const uint32_t DUR = UIAnim::POPUP_IN;
-
+    // Affichage instantané — pas de fondu (réactivité maximale).
     if (scrim) {
-        lv_anim_delete(scrim, anim_opa_cb);  // Cancel close en cours (race reopen)
+        lv_anim_delete(scrim, anim_opa_cb);
         lv_obj_clear_flag(scrim, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_set_style_opa(scrim, LV_OPA_TRANSP, LV_PART_MAIN);
-        lv_anim_t a_s;
-        lv_anim_init(&a_s);
-        lv_anim_set_var(&a_s, scrim);
-        lv_anim_set_values(&a_s, LV_OPA_TRANSP, LV_OPA_COVER);
-        lv_anim_set_time(&a_s, DUR);
-        lv_anim_set_path_cb(&a_s, lv_anim_path_ease_out);
-        lv_anim_set_exec_cb(&a_s, anim_opa_cb);
-        lv_anim_start(&a_s);
+        lv_obj_set_style_opa(scrim, LV_OPA_COVER, LV_PART_MAIN);
     }
     if (card) {
-        lv_anim_delete(card, anim_opa_cb);  // Cancel close en cours (race reopen)
+        lv_anim_delete(card, anim_opa_cb);
         lv_obj_clear_flag(card, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_set_style_opa(card, LV_OPA_TRANSP, LV_PART_MAIN);
-
-        lv_anim_t a_o;
-        lv_anim_init(&a_o);
-        lv_anim_set_var(&a_o, card);
-        lv_anim_set_values(&a_o, LV_OPA_TRANSP, LV_OPA_COVER);
-        lv_anim_set_time(&a_o, DUR);
-        lv_anim_set_path_cb(&a_o, lv_anim_path_ease_out);
-        lv_anim_set_exec_cb(&a_o, anim_opa_cb);
-        lv_anim_start(&a_o);
+        lv_obj_set_style_opa(card, LV_OPA_COVER, LV_PART_MAIN);
     }
 }
 
-// Animation de fermeture : fondu COVER->0. Cache automatiquement card + scrim
-// a la fin (LV_OBJ_FLAG_HIDDEN) via anim_hide_ready_cb.
-// Duree UIAnim::POPUP_OUT (110ms), ease_in : toujours plus court que
-// l'ouverture — un "dismiss" doit partir tout de suite.
+// Masquage instantané : cache card + scrim directement (LV_OBJ_FLAG_HIDDEN).
 void animate_popup_close(lv_obj_t* card, lv_obj_t* scrim) {
-    const uint32_t DUR = UIAnim::POPUP_OUT;
-
+    // Masquage instantané — pas de fondu (réactivité maximale).
     if (scrim) {
-        lv_anim_t a_s;
-        lv_anim_init(&a_s);
-        lv_anim_set_var(&a_s, scrim);
-        lv_anim_set_values(&a_s, LV_OPA_COVER, LV_OPA_TRANSP);
-        lv_anim_set_time(&a_s, DUR);
-        lv_anim_set_path_cb(&a_s, lv_anim_path_ease_in);
-        lv_anim_set_exec_cb(&a_s, anim_opa_cb);
-        lv_anim_set_ready_cb(&a_s, anim_hide_ready_cb);
-        lv_anim_start(&a_s);
+        lv_anim_delete(scrim, anim_opa_cb);
+        lv_obj_add_flag(scrim, LV_OBJ_FLAG_HIDDEN);
     }
     if (card) {
-        lv_anim_t a_o;
-        lv_anim_init(&a_o);
-        lv_anim_set_var(&a_o, card);
-        lv_anim_set_values(&a_o, LV_OPA_COVER, LV_OPA_TRANSP);
-        lv_anim_set_time(&a_o, DUR);
-        lv_anim_set_path_cb(&a_o, lv_anim_path_ease_in);
-        lv_anim_set_exec_cb(&a_o, anim_opa_cb);
-        lv_anim_set_ready_cb(&a_o, anim_hide_ready_cb);
-        lv_anim_start(&a_o);
+        lv_anim_delete(card, anim_opa_cb);
+        lv_obj_add_flag(card, LV_OBJ_FLAG_HIDDEN);
     }
 }
 
@@ -2446,22 +2408,15 @@ static void set_clock_digit_immediate(ClockDigitRoller& r, int box_h, char digit
 // La transition (80ms ease_out) est gereee nativement par LVGL.
 // =============================================================================
 static lv_style_t style_btn_pressed;
-static lv_style_transition_dsc_t btn_trans_dsc;
 static bool btn_styles_inited = false;
 
 static void ensure_btn_styles_inited() {
     if (btn_styles_inited) return;
-    // Transition sur transform_scale X+Y : 80ms ease_out (nerveux, feedback instantané).
-    static const lv_style_prop_t btn_trans_props[] = {
-        LV_STYLE_TRANSFORM_SCALE_X, LV_STYLE_TRANSFORM_SCALE_Y, LV_STYLE_PROP_INV
-    };
-    lv_style_transition_dsc_init(&btn_trans_dsc, btn_trans_props,
-                                 lv_anim_path_ease_out, UIAnim::BTN_PRESS, 0, nullptr);
+    // Scale instantané, sans transition : réactivité maximale au tap.
     lv_style_init(&style_btn_pressed);
     lv_style_set_transform_scale_x(&style_btn_pressed, 240);  // 240/256 ~= 94%
     lv_style_set_transform_scale_y(&style_btn_pressed, 240);
     lv_style_set_bg_opa(&style_btn_pressed, LV_OPA_30);       // assombrit le verre
-    lv_style_set_transition(&style_btn_pressed, &btn_trans_dsc);
     btn_styles_inited = true;
 }
 
