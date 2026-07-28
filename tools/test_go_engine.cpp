@@ -101,11 +101,41 @@ static void test_ko() {
     expect(count_liberties(p, idx(1, 2, 9)) == 1, "la pierre blanche est en atari");
     p.side = BLACK;
     expect(play(p, idx(1, 1, 9)), "Noir capture (forme de ko)");
-    expect(p.ko == (uint8_t) idx(1, 2, 9), "la case du ko est memorisee");
+    expect(p.ko == (int16_t) idx(1, 2, 9), "la case du ko est memorisee");
     p.side = WHITE;
     expect(!is_legal(p, idx(1, 2, 9)), "reprise immediate du ko interdite");
     expect(play(p, PASS), "Blanc passe");
-    expect(p.ko == (uint8_t) PASS, "le ko est leve apres un autre coup");
+    expect(p.ko == (int16_t) PASS, "le ko est leve apres un autre coup");
+}
+
+static void test_pass_hors_domaine_19() {
+    expect(PASS == -1, "PASS = -1");
+    Pos p;
+    pos_init(p, 19);
+    const int sq255 = 255;
+    expect(is_legal(p, sq255), "intersection 255 jouable");
+    expect(play(p, sq255), "poser en 255");
+    expect(p.sq[sq255] == BLACK && p.passes == 0, "pose reelle, pas une passe");
+}
+
+static void test_ko_haut_indice_19() {
+    Pos p;
+    pos_init(p, 19);
+    const int n = 19;
+    p.sq[idx(15, 7, n)] = WHITE;
+    p.sq[idx(15, 8, n)] = BLACK;
+    p.sq[idx(16, 6, n)] = WHITE;
+    p.sq[idx(16, 8, n)] = WHITE;
+    p.sq[idx(16, 9, n)] = BLACK;
+    p.sq[idx(17, 7, n)] = WHITE;
+    p.sq[idx(17, 8, n)] = BLACK;
+    const int cap_sq = idx(16, 8, n);
+    const int play_sq = idx(16, 7, n);
+    expect(cap_sq > 255, "case capturee > 255");
+    p.side = BLACK;
+    expect(play(p, play_sq), "Noir capture ko bas-plateau");
+    expect(p.ko == (int16_t) cap_sq, "ko non tronque");
+    expect(!is_legal(p, cap_sq), "reprise ko interdite");
 }
 
 static void test_eye() {
@@ -170,6 +200,8 @@ int main() {
     test_suicide();
     test_capture_avant_suicide();
     test_ko();
+    test_pass_hors_domaine_19();
+    test_ko_haut_indice_19();
     test_eye();
     test_score_et_morts();
     test_handicap();

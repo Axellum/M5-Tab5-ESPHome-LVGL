@@ -38,9 +38,10 @@ using Engine::MAX_N;
 // 1. Constantes
 // ===========================================================================
 
-static constexpr uint32_t SAVE_MAGIC = 0x474F5433u;  // « GOT3 » — bump = reset
+static constexpr uint32_t SAVE_MAGIC = 0x474F5434u;  // « GOT4 » — bump = reset
 static constexpr uint32_t PREF_KEY   = 0x474F5442u;  // « GOTB »
 static constexpr float    KOMI       = 6.5f;
+static constexpr float    KOMI_HCAP  = 0.5f;  // convention handicap : komi réduit
 
 static constexpr int HUD_H     = 60;
 static constexpr int FIELD_H   = 660;
@@ -49,9 +50,10 @@ static constexpr int PANEL_W   = 302;
 static constexpr int PANEL_Y   = 6;
 static constexpr int PANEL_H   = 648;
 
-static constexpr uint32_t TICK_MS      = 25;
+static constexpr uint32_t TICK_THINK_MS = 25;   // réflexion IA : tick rapide
+static constexpr uint32_t TICK_IDLE_MS  = 50;   // menus / attente humain : tick lent
 static constexpr uint32_t AI_SLICE_MS  = 13;   // ≈ 50 % du tick : l'UI reste fluide
-static constexpr uint32_t MIN_THINK_MS = 320;  // le Tab ne répond jamais « trop vite »
+static constexpr uint32_t MIN_THINK_MS = 150;  // délai minimal avant réponse (réactivité)
 static constexpr uint32_t TVT_PAUSE_MS = 550;  // respiration entre deux coups en Tab vs Tab
 static constexpr uint32_t HINT_MS      = 3000;
 static constexpr uint32_t NVS_MIN_MS   = 15000;
@@ -122,6 +124,15 @@ static bool     g_dirty     = false;
 
 static char     g_msg[56] = "";
 static uint32_t g_msg_until = 0;
+
+// Cache de rendu : n'invalider LVGL que sur les intersections qui changent.
+static uint8_t g_vis_col[MAX_SQ];    // dernière couleur peinte (EMPTY/BLACK/WHITE)
+static uint8_t g_vis_mode[MAX_SQ];   // 0=caché, 1=pierre, 2=pierre morte, 3=terr
+static bool    g_vis_dirty = true;   // true → redraw intégral (changement de taille)
+static int     g_vis_last_sq = -999;
+static int     g_vis_pending = -999;
+static int     g_vis_hint_sq = -999;
+static int     g_think_pct_drawn = -1;
 
 // IMU
 static float g_ax = 0, g_ay = 0, g_az = 1;
@@ -252,6 +263,11 @@ static void press_fx(lv_obj_t* o, uint32_t c) {
 static void msg(const char* t) {
     snprintf(g_msg, sizeof(g_msg), "%s", t);
     g_msg_until = esphome::millis() + MSG_MS;
+}
+
+// Komi effectif : 0,5 en partie à handicap (convention), 6,5 sinon.
+static float effective_komi() {
+    return (g_cfg_hcap >= 2) ? KOMI_HCAP : KOMI;
 }
 
 // ===========================================================================
@@ -466,6 +482,8 @@ static void compute_geometry() {
 
 static void layout_board() {
     compute_geometry();
+    g_vis_dirty = true;
+    g_think_pct_drawn = -1;
     const int span = g_gap * (g_n - 1);
 
     lv_obj_set_pos(g_plate, g_plate_x, g_plate_y);
@@ -549,76 +567,110 @@ static void render_board() {
     const bool scoring = (g_state == ST_MARKING || g_state == ST_SCORE);
     const bool terr_on = scoring && g_save.opt_terr;
     const int td = g_gap / 3 < 6 ? 6 : g_gap / 3;
+    const bool force = g_vis_dirty;
 
     for (int i = 0; i < MAX_SQ; i++) {
         lv_obj_t* o = g_stone[i];
-        if (i >= N) { show(o, false); continue; }
+        if (i >= N) {
+            if (force || g_vis_mode[i] != 0) {
+                show(o, false);
+                g_vis_mode[i] = 0;
+                g_vis_col[i] = EMPTY;
+            }
+            continue;
+        }
         const int r = i / n, c = i % n;
         const int cx = g_ox + c * g_gap, cy = g_oy + r * g_gap;
         const uint8_t col = g_pos.sq[i];
 
         if (col == EMPTY) {
             if (terr_on && (g_terr[i] == Engine::T_BLACK || g_terr[i] == Engine::T_WHITE)) {
-                lv_obj_set_pos(o, cx - td / 2, cy - td / 2);
-                lv_obj_set_size(o, td, td);
-                lv_obj_set_style_radius(o, 3, LV_PART_MAIN);
-                set_bg(o, g_terr[i] == Engine::T_BLACK ? Pal::TERR_B : Pal::TERR_W,
-                       (lv_opa_t) 220);
-                set_border(o, 0x000000, 0, LV_OPA_TRANSP);
-                show(o, true);
-            } else {
+                const uint8_t want_col = g_terr[i];
+                if (force || g_vis_mode[i] != 3 || g_vis_col[i] != want_col) {
+                    lv_obj_set_pos(o, cx - td / 2, cy - td / 2);
+                    lv_obj_set_size(o, td, td);
+                    lv_obj_set_style_radius(o, 3, LV_PART_MAIN);
+                    set_bg(o, want_col == Engine::T_BLACK ? Pal::TERR_B : Pal::TERR_W,
+                           (lv_opa_t) 220);
+                    set_border(o, 0x000000, 0, LV_OPA_TRANSP);
+                    show(o, true);
+                    g_vis_mode[i] = 3;
+                    g_vis_col[i] = want_col;
+                }
+            } else if (force || g_vis_mode[i] != 0) {
                 show(o, false);
+                g_vis_mode[i] = 0;
+                g_vis_col[i] = EMPTY;
             }
             continue;
         }
         const bool dead = scoring && g_dead[i];
-        lv_obj_set_pos(o, cx - g_stone_r, cy - g_stone_r);
-        style_stone(o, col == BLACK, g_stone_r,
-                    dead ? (lv_opa_t) 70 : (lv_opa_t) LV_OPA_COVER, dead);
-        show(o, true);
+        const uint8_t mode = dead ? 2 : 1;
+        if (force || g_vis_mode[i] != mode || g_vis_col[i] != col) {
+            lv_obj_set_pos(o, cx - g_stone_r, cy - g_stone_r);
+            style_stone(o, col == BLACK, g_stone_r,
+                        dead ? (lv_opa_t) 70 : (lv_opa_t) LV_OPA_COVER, dead);
+            show(o, true);
+            g_vis_mode[i] = mode;
+            g_vis_col[i] = col;
+        }
     }
 
     // Dernier coup.
     const bool last_ok = g_save.opt_lastmark && g_last_sq != PASS && g_last_sq >= 0 &&
                          g_last_sq < N && g_pos.sq[g_last_sq] != EMPTY && !scoring;
     if (last_ok) {
-        const int r = g_last_sq / n, c = g_last_sq % n;
-        const int d = g_stone_r;
-        lv_obj_set_pos(g_mark_last, g_ox + c * g_gap - d / 2, g_oy + r * g_gap - d / 2);
-        lv_obj_set_size(g_mark_last, d, d);
-        lv_obj_set_style_radius(g_mark_last, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        lv_obj_set_style_bg_opa(g_mark_last, LV_OPA_TRANSP, LV_PART_MAIN);
-        set_border(g_mark_last, Pal::LAST, 3, LV_OPA_COVER);
-        show(g_mark_last, true);
-    } else {
+        if (force || g_vis_last_sq != g_last_sq) {
+            const int r = g_last_sq / n, c = g_last_sq % n;
+            const int d = g_stone_r;
+            lv_obj_set_pos(g_mark_last, g_ox + c * g_gap - d / 2, g_oy + r * g_gap - d / 2);
+            lv_obj_set_size(g_mark_last, d, d);
+            lv_obj_set_style_radius(g_mark_last, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(g_mark_last, LV_OPA_TRANSP, LV_PART_MAIN);
+            set_border(g_mark_last, Pal::LAST, 3, LV_OPA_COVER);
+            show(g_mark_last, true);
+            g_vis_last_sq = g_last_sq;
+        }
+    } else if (force || g_vis_last_sq != -1) {
         show(g_mark_last, false);
+        g_vis_last_sq = -1;
     }
 
     // Coup en attente de validation.
     if (g_pending >= 0 && g_pending < N && g_state == ST_PLAYING) {
-        const int r = g_pending / n, c = g_pending % n;
-        lv_obj_set_pos(g_mark_ghost, g_ox + c * g_gap - g_stone_r,
-                                     g_oy + r * g_gap - g_stone_r);
-        style_stone(g_mark_ghost, g_pos.side == BLACK, g_stone_r, (lv_opa_t) 130, false);
-        set_border(g_mark_ghost, Pal::GHOST, 3, LV_OPA_COVER);
-        show(g_mark_ghost, true);
-    } else {
+        if (force || g_vis_pending != g_pending || g_vis_pending == -999) {
+            const int r = g_pending / n, c = g_pending % n;
+            lv_obj_set_pos(g_mark_ghost, g_ox + c * g_gap - g_stone_r,
+                                         g_oy + r * g_gap - g_stone_r);
+            style_stone(g_mark_ghost, g_pos.side == BLACK, g_stone_r, (lv_opa_t) 130, false);
+            set_border(g_mark_ghost, Pal::GHOST, 3, LV_OPA_COVER);
+            show(g_mark_ghost, true);
+            g_vis_pending = g_pending;
+        }
+    } else if (force || g_vis_pending != -1) {
         show(g_mark_ghost, false);
+        g_vis_pending = -1;
     }
 
     // Indice.
     if (g_hint_sq >= 0 && g_hint_sq < N && esphome::millis() < g_hint_until) {
-        const int r = g_hint_sq / n, c = g_hint_sq % n;
-        const int d = g_stone_r + 4;
-        lv_obj_set_pos(g_mark_hint, g_ox + c * g_gap - d, g_oy + r * g_gap - d);
-        lv_obj_set_size(g_mark_hint, 2 * d, 2 * d);
-        lv_obj_set_style_radius(g_mark_hint, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        set_bg(g_mark_hint, Pal::HINT, (lv_opa_t) 60);
-        set_border(g_mark_hint, Pal::HINT, 3, LV_OPA_COVER);
-        show(g_mark_hint, true);
-    } else {
+        if (force || g_vis_hint_sq != g_hint_sq) {
+            const int r = g_hint_sq / n, c = g_hint_sq % n;
+            const int d = g_stone_r + 4;
+            lv_obj_set_pos(g_mark_hint, g_ox + c * g_gap - d, g_oy + r * g_gap - d);
+            lv_obj_set_size(g_mark_hint, 2 * d, 2 * d);
+            lv_obj_set_style_radius(g_mark_hint, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+            set_bg(g_mark_hint, Pal::HINT, (lv_opa_t) 60);
+            set_border(g_mark_hint, Pal::HINT, 3, LV_OPA_COVER);
+            show(g_mark_hint, true);
+            g_vis_hint_sq = g_hint_sq;
+        }
+    } else if (force || g_vis_hint_sq != -1) {
         show(g_mark_hint, false);
+        g_vis_hint_sq = -1;
     }
+
+    g_vis_dirty = false;
 }
 
 // ===========================================================================
@@ -659,9 +711,10 @@ static void render_hud() {
                  (double) g_score.black, (double) g_score.white);
     } else if (g_pos.move_no > 0) {
         snprintf(buf, sizeof(buf), "Coup %u  ·  komi %.1f",
-                 (unsigned) g_pos.move_no, (double) KOMI);
+                 (unsigned) g_pos.move_no, (double) effective_komi());
     } else {
-        snprintf(buf, sizeof(buf), "%s  ·  komi %.1f", size_name(g_cfg_size), (double) KOMI);
+        snprintf(buf, sizeof(buf), "%s  ·  komi %.1f", size_name(g_cfg_size),
+                 (double) effective_komi());
     }
     set_text_if(g_h_move, buf);
 
@@ -756,11 +809,17 @@ static void render_panel_buttons() {
     show(g_think_lbl, think);
     show(g_think_bar, think);
     if (think) {
-        char buf[32];
-        snprintf(buf, sizeof(buf), "Reflexion  %d %%", Ai::progress_pct());
-        set_text_if(g_think_lbl, buf);
-        const int w = (270 * Ai::progress_pct()) / 100;
-        lv_obj_set_size(g_think_fill, w < 2 ? 2 : w, 8);
+        const int pct = Ai::progress_pct();
+        if (pct != g_think_pct_drawn) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "Reflexion  %d %%", pct);
+            set_text_if(g_think_lbl, buf);
+            const int w = (270 * pct) / 100;
+            lv_obj_set_size(g_think_fill, w < 2 ? 2 : w, 8);
+            g_think_pct_drawn = pct;
+        }
+    } else {
+        g_think_pct_drawn = -1;
     }
 }
 
@@ -837,8 +896,10 @@ static void begin_thinking() {
     if (Engine::is_over(g_pos)) { enter_marking(); return; }
     g_state = ST_THINKING;
     g_think_t0 = esphome::millis();
+    g_think_pct_drawn = -1;
     Ai::begin(g_pos, (Ai::Level) g_cfg_level,
-              (uint32_t) g_pos.move_no * 2654435761u ^ esphome::millis());
+              (uint32_t) g_pos.move_no * 2654435761u ^ esphome::millis(),
+              effective_komi());
     refresh_all();
 }
 
@@ -879,12 +940,12 @@ static void do_undo() {
 static void do_hint() {
     if (g_state != ST_PLAYING || !is_human_turn()) return;
     // Recherche courte et SYNCHRONE, mais bornée : 4 tranches de 8 ms au pire.
-    Ai::begin(g_pos, Ai::LVL_SOLID, esphome::millis());
+    Ai::begin(g_pos, Ai::LVL_SOLID, esphome::millis(), effective_komi());
     for (int i = 0; i < 4 && !Ai::ready(); i++) Ai::step(8);
     const int sq = Ai::best_sq();
     Ai::abort();
     g_state = ST_PLAYING;
-    if (sq == PASS || sq < 0) {
+    if (sq == Ai::RESIGN || sq == PASS || sq < 0) {
         g_hint_sq = -1;
         msg("Indice : passer");
     } else {
@@ -902,16 +963,22 @@ static void do_hint() {
 
 static void refresh_territory() {
     Engine::territory_map(g_pos, g_dead, g_terr);
-    Engine::score_chinese(g_pos, KOMI, g_dead, g_score);
+    Engine::score_chinese(g_pos, effective_komi(), g_dead, g_score);
+    g_vis_dirty = true;  // pastilles territoire / opacités morts
 }
 
 static void enter_marking() {
     Ai::abort();
+    // Ne réinitialise g_dead que si on arrive depuis le jeu (pas une reprise
+    // après pause pendant le marquage — géré par enter_playing).
+    const bool first = (g_state != ST_MARKING);
     g_state = ST_MARKING;
     g_pending = -1;
-    memset(g_dead, 0, sizeof(g_dead));
+    if (first) {
+        memset(g_dead, 0, sizeof(g_dead));
+        msg("Deux passes : marquez les groupes morts");
+    }
     refresh_territory();
-    msg("Deux passes : marquez les groupes morts");
     refresh_all();
 }
 
@@ -983,6 +1050,13 @@ static void resume_game() {
 static void enter_playing() {
     show(g_ui.panel, false);
     show(g_card, false);
+    // Reprise après pause pendant le marquage : conserver g_dead.
+    if (Engine::is_over(g_pos) && g_in_game) {
+        g_state = ST_MARKING;
+        refresh_territory();
+        refresh_all();
+        return;
+    }
     g_state = ST_PLAYING;
     refresh_all();
     after_move();
@@ -1016,7 +1090,10 @@ static void menu_open(const char* title, const char* sub, const char* foot) {
 static void menu_main() {
     g_state = ST_MENU_MAIN;
     Ai::abort();
-    menu_open("Go Tab", "Score chinois d'aire  ·  komi 6,5  ·  ko simple",
+    char sub[72];
+    snprintf(sub, sizeof(sub), "Score chinois d'aire  ·  komi %.1f  ·  ko simple",
+             (double) effective_komi());
+    menu_open("Go Tab", sub,
               "Toutes les parties et les reglages sont conserves dans le Tab.");
     int i = 0;
     if (g_in_game) {
@@ -1159,7 +1236,7 @@ static void show_score_card() {
     snprintf(b, sizeof(b), "Noir   pierres %d   territoire %d", g_score.black_stones, g_score.black_terr);
     set_text_if(g_card_line[0], b);
     snprintf(b, sizeof(b), "Blanc  pierres %d   territoire %d   komi %.1f",
-             g_score.white_stones, g_score.white_terr, (double) KOMI);
+             g_score.white_stones, g_score.white_terr, (double) effective_komi());
     set_text_if(g_card_line[1], b);
     snprintf(b, sizeof(b), "Groupes morts retires : %d noirs, %d blancs",
              g_score.black_dead, g_score.white_dead);
@@ -1592,6 +1669,16 @@ static void build_ui() {
 
 static void tick_cb(lv_timer_t*) {
     if (g_state == ST_OFF) return;
+
+    // Tick adaptatif : 25 ms pendant la réflexion IA, 50 ms sinon (menus, attente
+    // humain, marquage). Réduit la charge CPU de ~50 % entre les coups.
+    const uint32_t want_ms = (g_state == ST_THINKING) ? TICK_THINK_MS : TICK_IDLE_MS;
+    static uint32_t cur_period = TICK_IDLE_MS;
+    if (g_timer && cur_period != want_ms) {
+        cur_period = want_ms;
+        lv_timer_set_period(g_timer, want_ms);
+    }
+
     const uint32_t now = esphome::millis();
 
     // Expiration de l'indice et du message de statut.
@@ -1612,6 +1699,11 @@ static void tick_cb(lv_timer_t*) {
         render_panel_buttons();
         if (Ai::ready() && (now - g_think_t0) >= MIN_THINK_MS) {
             const int sq = Ai::best_sq();
+            if (sq == Ai::RESIGN) {
+                msg("Le Tab abandonne");
+                resign(g_pos.side);
+                return;
+            }
             if (g_cfg_mode == 2 && g_next_move && (int32_t)(now - g_next_move) < 0) return;
             g_next_move = now + TVT_PAUSE_MS;
             apply_move(sq);
@@ -1666,7 +1758,7 @@ void open(const UI& ui) {
     show(g_ui.root, true);
     lv_obj_move_foreground(g_ui.root);
     menu_main();
-    if (!g_timer) g_timer = lv_timer_create(tick_cb, TICK_MS, nullptr);
+    if (!g_timer) g_timer = lv_timer_create(tick_cb, TICK_IDLE_MS, nullptr);
 }
 
 void close() {

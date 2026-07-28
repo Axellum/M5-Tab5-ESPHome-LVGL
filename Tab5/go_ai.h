@@ -26,9 +26,13 @@ enum Level : uint8_t {
 
 enum State : uint8_t { AI_IDLE = 0, AI_THINKING, AI_DONE, AI_ABORT };
 
+// Sentinelle : best_sq() == RESIGN → l'IA abandonne (écart de score trop grand).
+static constexpr int RESIGN = -2;
+
 // Prépare la recherche. `seed` décorrèle les parties (départage aléatoire des
-// coups de score égal). Retourne immédiatement pour LVL_BEGINNER.
-void begin(const Engine::Pos& root, Level level, uint32_t seed);
+// coups de score égal). `komi` doit être celui de la partie (0,5 en handicap).
+// Retourne immédiatement pour LVL_BEGINNER.
+void begin(const Engine::Pos& root, Level level, uint32_t seed, float komi = 6.5f);
 
 // Fait avancer la recherche d'AU PLUS `slice_ms` millisecondes de CPU.
 void step(uint32_t slice_ms);

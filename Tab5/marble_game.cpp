@@ -407,6 +407,8 @@ static int      g_shop_page = 0;
 static uint8_t g_boons[MAX_BOONS];
 static int     g_boon_n = 0;
 static float   g_ctrl_mul, g_gold_mul, g_speed_max, g_fric;
+static float   g_fric_sub;  // cache : powf(g_fric, 1/SUBSTEP) — recalculé uniquement quand g_fric change
+static inline void apply_fric() { g_fric_sub = powf(g_fric, 1.0f / SUBSTEP); }
 static int     g_magnet_r;
 static bool    g_has_bronze, g_has_eye, g_has_velvet;
 static bool    g_revive_left;
@@ -889,7 +891,7 @@ static void apply_boon(uint8_t id) {
         case BO_HEART:   g_life_max++; g_life++; break;
         case BO_PURSE:   g_gold_mul += 0.40f; break;
         case BO_MAGNET:  g_magnet_r = 130; break;
-        case BO_BRAKE:   g_fric -= 0.006f; break;      // friction plus forte
+        case BO_BRAKE:   g_fric -= 0.006f; apply_fric(); break;      // friction plus forte
         case BO_SPEED:   g_speed_max += 170.0f; break;
         case BO_BRONZE:  g_has_bronze = true; g_shield = true; break;
         case BO_EYE:     g_has_eye = true; break;
@@ -1213,6 +1215,7 @@ static void start_run() {
     g_boon_n = 0;
     g_gold_mul = g_diff->gold_mul;
     g_fric = FRICTION;
+    apply_fric();
     g_magnet_r = 0;
     // Resistance 3+ : un bouclier offert a chaque salle (comme « Peau de bronze »).
     g_has_bronze = (st[S_RESISTANCE] >= 3);
@@ -1232,7 +1235,7 @@ static void start_run() {
             case IE_EYE:         g_has_eye = true; break;
             case IE_REVIVE:      g_revive_left = true; break;
             case IE_MAGNET:      g_magnet_r = 130; break;
-            case IE_BRAKE:       g_fric -= 0.005f; break;
+            case IE_BRAKE:       g_fric -= 0.005f; apply_fric(); break;
             case IE_GREED:       g_soul_mul += 0.50f; g_life_max--; break;
             default: break;
         }
@@ -1487,17 +1490,21 @@ static void tick_cb(lv_timer_t*) {
     float dead = TILT_DEADZONE + (g_save.difficulty == D_CALME ? 0.015f : 0.0f);
     // Rotation ecran 270 deg : l'axe Y physique pilote X a l'ecran, et X pilote Y.
     float ax = -g_tilt_y, ay = g_tilt_x;
-    float mag = sqrtf(ax * ax + ay * ay);
-    if (mag < dead) { ax = 0; ay = 0; }
+    float mag_sq = ax * ax + ay * ay;
+    if (mag_sq < dead * dead) { ax = 0; ay = 0; mag_sq = 0; }
     else {
+        float mag = sqrtf(mag_sq);
         float k = (mag - dead) / mag;      // deadzone radiale (pas de marche d'escalier)
         ax *= k; ay *= k;
-        float m2 = sqrtf(ax * ax + ay * ay);
-        if (m2 > TILT_CLAMP) { ax = ax / m2 * TILT_CLAMP; ay = ay / m2 * TILT_CLAMP; }
+        float m2_sq = ax * ax + ay * ay;
+        if (m2_sq > TILT_CLAMP * TILT_CLAMP) {
+            float m2 = sqrtf(m2_sq);
+            ax = ax / m2 * TILT_CLAMP; ay = ay / m2 * TILT_CLAMP;
+        }
     }
 
     // --- Dash : inclinaison franche, avec recharge ---------------------------
-    if (mag > DASH_TILT && now >= g_dash_ready_at) {
+    if (mag_sq > DASH_TILT * DASH_TILT && now >= g_dash_ready_at) {
         g_dash_ready_at = now + DASH_CD_MS;
         float n = sqrtf(ax * ax + ay * ay);
         if (n > 0.001f) { g_vx += ax / n * DASH_IMPULSE; g_vy += ay / n * DASH_IMPULSE; }
@@ -1527,15 +1534,17 @@ static void tick_cb(lv_timer_t*) {
     acc_x += zone_ax; acc_y += zone_ay;
 
     // --- Integration en sous-pas (collisions robustes a grande vitesse) -----
-    float fric_sub = powf(g_fric, 1.0f / SUBSTEP);
     for (int s = 0; s < SUBSTEP; s++) {
         g_vx += acc_x * SDT;
         g_vy += acc_y * SDT;
-        g_vx *= fric_sub * zone_damp;
-        g_vy *= fric_sub * zone_damp;
+        g_vx *= g_fric_sub * zone_damp;
+        g_vy *= g_fric_sub * zone_damp;
 
-        float sp = sqrtf(g_vx * g_vx + g_vy * g_vy);
-        if (sp > g_speed_max) { g_vx = g_vx / sp * g_speed_max; g_vy = g_vy / sp * g_speed_max; }
+        float sp_sq = g_vx * g_vx + g_vy * g_vy;
+        if (sp_sq > g_speed_max * g_speed_max) {
+            float sp = sqrtf(sp_sq);
+            g_vx = g_vx / sp * g_speed_max; g_vy = g_vy / sp * g_speed_max;
+        }
 
         g_bx += g_vx * SDT;
         g_by += g_vy * SDT;
@@ -1623,7 +1632,7 @@ static void tick_cb(lv_timer_t*) {
                 if (circle_hits(e)) { e.alive = false; show(e.obj, false); g_magnet_r = 130; }
                 break;
             case K_BRAKE:
-                if (circle_hits(e)) { e.alive = false; show(e.obj, false); g_fric -= 0.004f; }
+                if (circle_hits(e)) { e.alive = false; show(e.obj, false); g_fric -= 0.004f; apply_fric(); }
                 break;
             case K_DASH:
                 if (circle_hits(e)) { e.alive = false; show(e.obj, false); g_dash_ready_at = 0; }

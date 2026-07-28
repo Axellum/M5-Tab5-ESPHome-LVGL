@@ -19,7 +19,6 @@ script:
       - lambda: |-
           if (Marble::is_open())   Marble::close();
           if (Arkanoid::is_open()) Arkanoid::close();
-          if (Pinball::is_open())  Pinball::close();
           if (Lode::is_open())     Lode::close();
           if (Go::is_open())       Go::close();
           if (Trivia::is_open())   Trivia::close();
@@ -61,23 +60,6 @@ script:
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
           Arkanoid::open(ui);
-
-  # Ouvre le jeu « Flip Noir » (flipper rétro, pinball_game.cpp).
-  # Même pattern que Marble : script unique, pointeurs LVGL injectés en lambda.
-  # Point d'entrée : console GESTION (bouton dédié) ou long-press à définir.
-  - id: tab5_pinball_open
-    mode: single
-    then:
-      - lambda: |-
-          Pinball::UI ui;
-          ui.root    = id(pinball_root);
-          ui.field   = id(pinball_field);
-          ui.hud     = id(pinball_hud);
-          ui.panel   = id(pinball_panel);
-          ui.f_small = id(roboto_22);
-          ui.f_mid   = id(roboto_32_b);
-          ui.f_big   = id(roboto_45_b);
-          Pinball::open(ui);
 
   # Ouvre le jeu « Coureur d'Or » (Lode Runner, lode_game.cpp).
   # Même pattern : script unique, pointeurs LVGL injectés en lambda.
@@ -421,14 +403,9 @@ script:
               - lambda: 'return !id(is_showing_temp_planning) && !id(is_showing_vocal_response) && id(forecast_page_index) == 2;'
           then:
             - lambda: |-
-                g_central_ctx.has_rain = id(has_rain);
-                g_central_ctx.has_mf_alerts = id(has_alerts);
-                g_central_ctx.has_info = id(has_info);
-                g_central_ctx.has_ha[0] = id(has_ha_alert_0);
-                g_central_ctx.has_ha[1] = id(has_ha_alert_1);
-                g_central_ctx.has_ha[2] = id(has_ha_alert_2);
-                g_central_ctx.has_ha[3] = id(has_ha_alert_3);
-                g_central_ctx.current_panel = id(current_central_panel);
+                sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
+                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                    id(current_central_panel));
                 advance_central_panel_rotator(g_central_ctx);
                 id(current_central_panel) = g_central_ctx.current_panel;
       - script.execute: tab5_central_rotator_auto
@@ -448,14 +425,9 @@ script:
                 id: is_showing_vocal_response
                 value: 'true'
             - lambda: |-
-                g_central_ctx.has_rain = id(has_rain);
-                g_central_ctx.has_mf_alerts = id(has_alerts);
-                g_central_ctx.has_info = id(has_info);
-                g_central_ctx.has_ha[0] = id(has_ha_alert_0);
-                g_central_ctx.has_ha[1] = id(has_ha_alert_1);
-                g_central_ctx.has_ha[2] = id(has_ha_alert_2);
-                g_central_ctx.has_ha[3] = id(has_ha_alert_3);
-                g_central_ctx.current_panel = id(current_central_panel);
+                sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
+                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                    id(current_central_panel));
                 show_vocal_response_ui(texte,
                     id(vocal_wrapper), id(lbl_vocal_text),
                     id(page_title_wrapper), g_central_ctx,
@@ -463,14 +435,9 @@ script:
                 id(current_central_panel) = g_central_ctx.current_panel;
             - delay: 8s
             - lambda: |-
-                g_central_ctx.has_rain = id(has_rain);
-                g_central_ctx.has_mf_alerts = id(has_alerts);
-                g_central_ctx.has_info = id(has_info);
-                g_central_ctx.has_ha[0] = id(has_ha_alert_0);
-                g_central_ctx.has_ha[1] = id(has_ha_alert_1);
-                g_central_ctx.has_ha[2] = id(has_ha_alert_2);
-                g_central_ctx.has_ha[3] = id(has_ha_alert_3);
-                g_central_ctx.current_panel = id(current_central_panel);
+                sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
+                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                    id(current_central_panel));
                 hide_vocal_response_ui(id(vocal_wrapper), id(lbl_vocal_text), g_central_ctx);
                 id(current_central_panel) = g_central_ctx.current_panel;
             - globals.set:
@@ -487,14 +454,9 @@ script:
             lambda: 'return id(forecast_page_index) == 2 && !id(is_showing_temp_planning);'
           then:
             - lambda: |-
-                g_central_ctx.has_rain = id(has_rain);
-                g_central_ctx.has_mf_alerts = id(has_alerts);
-                g_central_ctx.has_info = id(has_info);
-                g_central_ctx.has_ha[0] = id(has_ha_alert_0);
-                g_central_ctx.has_ha[1] = id(has_ha_alert_1);
-                g_central_ctx.has_ha[2] = id(has_ha_alert_2);
-                g_central_ctx.has_ha[3] = id(has_ha_alert_3);
-                g_central_ctx.current_panel = id(current_central_panel);
+                sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
+                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                    id(current_central_panel));
                 advance_central_panel_rotator(g_central_ctx);
                 id(current_central_panel) = g_central_ctx.current_panel;
             - script.execute: tab5_central_rotator_auto
@@ -514,14 +476,9 @@ script:
                   - lambda: |-
                       id(temp_dismiss_alert_id) = id(info_meteo_dismiss_id);
                       tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
-                      g_central_ctx.has_rain = id(has_rain);
-                      g_central_ctx.has_mf_alerts = id(has_alerts);
-                      g_central_ctx.has_info = id(has_info);
-                      g_central_ctx.has_ha[0] = id(has_ha_alert_0);
-                      g_central_ctx.has_ha[1] = id(has_ha_alert_1);
-                      g_central_ctx.has_ha[2] = id(has_ha_alert_2);
-                      g_central_ctx.has_ha[3] = id(has_ha_alert_3);
-                      g_central_ctx.current_panel = id(current_central_panel);
+                      sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
+                          id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                          id(current_central_panel));
                       dismiss_central_info_immediate(id(lbl_info_text), g_central_ctx);
                       id(has_info) = g_central_ctx.has_info;
                       id(current_central_panel) = g_central_ctx.current_panel;
@@ -534,14 +491,9 @@ script:
                       value: '""'
                 else:
                   - lambda: |-
-                      g_central_ctx.has_rain = id(has_rain);
-                      g_central_ctx.has_mf_alerts = id(has_alerts);
-                      g_central_ctx.has_info = id(has_info);
-                      g_central_ctx.has_ha[0] = id(has_ha_alert_0);
-                      g_central_ctx.has_ha[1] = id(has_ha_alert_1);
-                      g_central_ctx.has_ha[2] = id(has_ha_alert_2);
-                      g_central_ctx.has_ha[3] = id(has_ha_alert_3);
-                      g_central_ctx.current_panel = id(current_central_panel);
+                      sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
+                          id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                          id(current_central_panel));
                       advance_central_panel_rotator(g_central_ctx);
                       id(current_central_panel) = g_central_ctx.current_panel;
             - script.execute: tab5_central_rotator_auto
@@ -564,14 +516,9 @@ script:
           if (slot < 0 || slot > 3 || ids[slot]->size() == 0) return;
           id(temp_dismiss_alert_id) = *ids[slot];
           tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
-          g_central_ctx.has_rain = id(has_rain);
-          g_central_ctx.has_mf_alerts = id(has_alerts);
-          g_central_ctx.has_info = id(has_info);
-          g_central_ctx.has_ha[0] = id(has_ha_alert_0);
-          g_central_ctx.has_ha[1] = id(has_ha_alert_1);
-          g_central_ctx.has_ha[2] = id(has_ha_alert_2);
-          g_central_ctx.has_ha[3] = id(has_ha_alert_3);
-          g_central_ctx.current_panel = id(current_central_panel);
+          sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
+              id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+              id(current_central_panel));
           dismiss_ha_alert_slot_immediate(slot, wraps[slot], lbls[slot], *hasf[slot], *ids[slot], g_central_ctx);
           id(current_central_panel) = g_central_ctx.current_panel;
       - if:
@@ -636,7 +583,9 @@ script:
     then:
       - lambda: |-
           if (id(cal_view_year) == 0) return;
-          CalCellUI cells[42] = {
+          // static : les pointeurs LVGL sont constants (ids fixes au boot) —
+          // évite de reconstruire 42×5 pointeurs sur la pile à chaque rendu.
+          static CalCellUI cells[42] = {
               {id(cal_cell_0), id(cal_num_0), id(cal_sub_0), id(cal_dot_0), id(cal_dot2_0)},
               {id(cal_cell_1), id(cal_num_1), id(cal_sub_1), id(cal_dot_1), id(cal_dot2_1)},
               {id(cal_cell_2), id(cal_num_2), id(cal_sub_2), id(cal_dot_2), id(cal_dot2_2)},

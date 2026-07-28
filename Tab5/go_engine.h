@@ -11,6 +11,8 @@
  *      mono-thread — il n'est donc PAS réentrant, et n'a pas à l'être. C'était
  *      la cause du crash de la version précédente (≈5 Ko de pile par niveau de
  *      récursion de l'IA, dont 2,2 Ko rien que pour count_liberties).
+ * @architecture_constraint PASS = -1 (hors domaine 0..360). Ne JAMAIS utiliser
+ *      255 : en 19×19 l'indice 255 est une intersection réelle.
  * @ai_instruction Utilisable tel quel par go_ai / go_game et par
  *      tools/test_go_engine.cpp (tests host).
  */
@@ -23,7 +25,7 @@ namespace Engine {
 
 static constexpr int MAX_N  = 19;
 static constexpr int MAX_SQ = MAX_N * MAX_N;  // 361
-static constexpr int PASS   = 255;            // coup « passe »
+static constexpr int PASS   = -1;             // coup « passe » (hors domaine)
 
 enum Color : uint8_t { EMPTY = 0, BLACK = 1, WHITE = 2 };
 
@@ -36,9 +38,9 @@ struct Pos {
     uint8_t sq[MAX_SQ];   // Color
     uint8_t n;            // 9, 13 ou 19
     uint8_t side;         // Color to play (BLACK/WHITE)
-    uint8_t ko;           // case interdite par ko simple, PASS = aucune
     uint8_t passes;       // passes consécutives (2 = fin)
     uint8_t reserved;
+    int16_t ko;           // case interdite par ko simple, PASS = aucune
     uint16_t move_no;
     uint16_t captured_by_black;  // prisonniers pris par Noir (= Blancs capturés)
     uint16_t captured_by_white;

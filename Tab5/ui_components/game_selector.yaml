@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file game_selector.yaml
-# @role Sélecteur de jeux — page arcade plein écran (1280×720), 8 consoles.
+# @role Sélecteur de jeux — page arcade plein écran (1280×720), 7 consoles + 1 slot libre.
 # @architecture_constraint Popup NON modal (pas de modal_scrim/modal_header) :
 #     c'est un overlay autonome avec son propre fond sombre et sa croix de
 #     fermeture. Grille RÉGULIÈRE 4 colonnes × 2 rangées — toutes les cartes ont
@@ -58,7 +58,7 @@ obj:
         text_font: roboto_45_b
         text_color: 0xFFDD22
     - label:
-        text: "8 consoles — une seule à la fois"
+        text: "7 consoles — une seule à la fois"
         align: TOP_MID
         y: 82
         text_font: roboto_22
@@ -134,29 +134,25 @@ obj:
           - label: { text: "Arcanoïde", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
           - label: { text: "Casse-briques Atari\n8 niveaux · power-ups", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
 
-    # 3 · Flip Noir (pinball_game) — flipper
-    - button:
-        id: btn_game_pinball
+    # 3 · Emplacement libre (ex-Flip Noir, retiré le 28/07/2026)
+    - obj:
+        id: btn_game_slot3
         align: TOP_LEFT
         x: 648
         y: 132
         width: 298
         height: 252
         radius: 16
-        bg_color: 0x121218
-        bg_opa: 100%
-        border_color: 0xFF3344
-        border_width: 2
-        border_opa: 50%
-        pressed: { bg_opa: 80%, border_opa: 100% }
-        on_short_click:
-          - script.execute: tab5_games_close_all
-          - lambda: 'animate_popup_close(id(game_selector_overlay), nullptr);'
-          - script.execute: tab5_pinball_open
+        bg_color: 0x0E0E14
+        bg_opa: 60%
+        border_color: 0x334155
+        border_width: 1
+        border_opa: 30%
+        clickable: false
         widgets:
-          - label: { text: "\U000F05DD", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xFF3344 }
-          - label: { text: "Flip Noir", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Flipper d'arcade\nBumpers · multiball · tilt", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "\U000F0297", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0x334155 }
+          - label: { text: "À venir", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0x4A5568 }
+          - label: { text: "Emplacement libre", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x334155 }
 
     # 4 · Coureur d'Or (lode_game) — Lode Runner
     - button:

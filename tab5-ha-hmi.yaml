@@ -22,9 +22,6 @@ esphome:
     # Jeu « Arcanoïde » (casse-briques rétro) — sous-module isolé du HMI.
     - Tab5/arkanoid_game.h
     - Tab5/arkanoid_game.cpp
-    # Jeu « Flip Noir » (flipper rétro arcade) — sous-module isolé du HMI.
-    - Tab5/pinball_game.h
-    - Tab5/pinball_game.cpp
     # Jeu « Coureur d'Or » (Lode Runner) — sous-module isolé du HMI.
     - Tab5/lode_game.h
     - Tab5/lode_game.cpp

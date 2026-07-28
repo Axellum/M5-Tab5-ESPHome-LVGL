@@ -4,6 +4,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-28 — Go Tab opti : bugs 19×19, perf, polish
+
+- **PASS = -1** (plus 255) : en 19×19 l'indice 255 est une intersection réelle ;
+  un tap y déclenchait une passe. `Pos::ko` / `GoSave::ko` passent en `int16_t`
+  (les ko > 255 n'étaient plus stockés correctement). Magic NVS **GOT3 → GOT4**.
+- **Perf** : `chain_liberties` utilise des compteurs de génération (plus de
+  `memset(N)` par chaîne) ; `render_board` est différentiel ; barre de réflexion
+  sans invalidate LVGL si le % n'a pas bougé.
+- **Jouabilité** : komi 0,5 en handicap ; marquage des morts conservé si pause
+  pendant le comptage ; l'IA abandonne si écart d'aire ≥ 45 pts (Amateur+).
+- Tests : collision PASS / ko haut-indice / parties aléatoires 9·13·19.
+
 ### 2026-07-27 — « Go Tab » v2 : le jeu de Go devient réellement jouable
 
 Le premier jet du 26/07 compilait et se lançait, mais était **inutilisable** : le

@@ -50,7 +50,6 @@ lvgl:
             height: 120
             styles: style_invisible
             on_short_click:
-              - logger.log: "DEBUG: BOUTON MICRO CLIQUE !"
               - script.execute: tab5_assist_toggle
             on_long_press:
               # Appui long sur la zone micro -> popup Assistant vocal plein écran
@@ -577,11 +576,10 @@ lvgl:
         - !include ui_components/assistant_popup.yaml
         - !include ui_components/marble_game.yaml
         - !include ui_components/arkanoid_game.yaml
-        - !include ui_components/pinball_game.yaml
         - !include ui_components/lode_game.yaml
         - !include ui_components/go_game.yaml
         - !include ui_components/trivia_game.yaml
         - !include ui_components/chess_game.yaml
         - !include ui_components/draughts_game.yaml
-        # Le sélecteur en DERNIER : il doit se dessiner au-dessus des 8 overlays.
+        # Le sélecteur en DERNIER : il doit se dessiner au-dessus des 7 overlays.
         - !include ui_components/game_selector.yaml
