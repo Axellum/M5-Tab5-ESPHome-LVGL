@@ -118,11 +118,16 @@ Toutes les consoles suivent la **même architecture** : overlay plein écran
 contenu construit en C++, `lv_timer` créé à l'ouverture et détruit à la
 fermeture, persistance NVS, **zéro dépendance Home Assistant ou réseau**.
 
+**Une exception à l'orientation** : « Neon Apron » (#3) bascule LVGL en
+**portrait 720×1280** à l'ouverture et restaure `rotation: 270` à la fermeture —
+un flipper couché sur le côté ne ressemble à rien. C'est la seule console qui
+touche à l'orientation ; voir sa section plus bas avant d'en écrire une autre.
+
 | # | Console | Module C++ | Script d'ouverture | Icône MDI |
 |---|---|---|---|---|
 | 1 | **Fil d'Or** — roguelite de bille | `marble_game` | `tab5_marble_open` | `F0E95` circle-double |
 | 2 | **Arcanoïde** — casse-briques | `arkanoid_game` | `tab5_arkanoid_open` | `F0570` view-grid |
-| 3 | **Flip Noir** — flipper | `pinball_game` | `tab5_pinball_open` | `F05DD` bullseye |
+| 3 | **Neon Apron** — flipper **portrait** | `pinball_game` | `tab5_pinball_open` | `F05DD` bullseye |
 | 4 | **Coureur d'Or** — Lode Runner | `lode_game` | `tab5_lode_open` | `F15A2` ladder |
 | 5 | **Go Tab** — jeu de Go | `go_engine` + `go_ai` + `go_game` | `tab5_go_open` | `F0B38` circle-multiple |
 | 6 | **Trial Poursuite** — quiz | `trivia_game` | `tab5_trivia_open` | `F134A` head-question |
@@ -303,41 +308,97 @@ Top 10 local en NVS (score, niveau atteint, mode de contrôle, uptime). Écran �
 
 ---
 
-## Flip Noir — flipper rétro arcade 70-80's
+## Neon Apron — flipper **portrait**
 
-Flipper (pinball) style « Getaway: High Speed », **plein écran 1280×720**, esthétique rétro borne arcade (table sombre, bumpers colorés, inserts vifs). Entièrement local : aucun réseau ni HA requis.
+Flipper (pinball) néon, **plein écran PORTRAIT 720×1280**. C'est la seule console
+de l'Arcade qui ne se joue pas dans l'orientation du dashboard : on tient la
+tablette debout, comme devant une borne. Entièrement local, aucun réseau ni HA.
+
+> Remplace « Flip Noir » (supprimé en `697e2e9`). L'ancien jeu était une table
+> **paysage** dessinée avec des rectangles LVGL pivotés à chaque frame
+> (`transform_rotation`) : laid et cher. Rien n'en a été réutilisé, sauf les
+> principes de collision. Ne pas ressusciter cette approche.
 
 | Action | Où |
 |---|---|
-| Ouvrir | Console **GESTION** → bouton « Flip Noir » |
-| Quitter | Hub du jeu → « Quitter » |
-| Pause | Toucher le bandeau HUD pendant une partie |
+| Ouvrir | Sélecteur Arcade → carte « Neon Apron » (slot 3) |
+| Quitter | Hub du jeu → « Quitter » (restaure le paysage) |
+| Pause | Toucher le fronton pendant une partie |
+| Calibrer | Hub → Réglages → « Calibrer à plat », ou Pause → « Recalibrer à plat » |
+
+### Orientation — ce qu'il faut savoir
+
+À l'ouverture, le jeu appelle `LvglComponent::set_rotation(0)` : LVGL passe en
+**720×1280** et l'écran devient portrait. À la fermeture, `set_rotation(270)`
+restaure exactement l'état de repos du dashboard.
+
+Trois conséquences non évidentes :
+
+1. **`rotation: 270` doit rester dans `tab5-styles.yaml`.** ESPHome ne compile le
+   support de rotation (buffer dédié + client PPA) que si la clé existe. Sans
+   elle, `set_rotation()` se contente d'un `ESP_LOGW` et le flipper resterait
+   couché. Le bloc `lvgl:` porte aussi un `id: tab5_lvgl` explicite — c'est le
+   seul moyen d'atteindre le composant depuis une lambda.
+2. **Le tactile suit tout seul.** `LVTouchListener` applique
+   `rotate_coordinates()`, qui lit la rotation *courante* à chaque lecture
+   d'indev. La calibration native 720×1280 de `tab5-hardware.yaml` reste valable
+   dans les deux sens — rien à recalibrer.
+3. **Le portrait est plus rapide que le paysage.** À `rotation: 0`, le chemin de
+   flush d'ESPHome tombe dans son `default:` et ne fait aucune rotation
+   logicielle ni passage PPA. Le dashboard paysage, lui, paie une rotation 270 à
+   chaque flush (c'est la piste des `lvgl took a long time` observés au boot).
+
+Si l'écran apparaît à l'envers dans les mains d'Axel : **Réglages → Orientation →
+retournée** (bascule 0 ↔ 180, persistée, effet immédiat). Le sens dépend du côté
+vers lequel on tourne la tablette, il n'y a pas de « bon » réglage universel.
 
 ### Contrôles
 
-- **Zone gauche (hold)** = flipper gauche
-- **Zone droite (hold)** = flipper droit
-- **Coin bas-droit (hold)** = plunger (charger), release = tirer
-- **IMU (mode Mixte)** = nudge latéral (inclinaison légère de la tablette)
-- Abuse de nudge = **TILT** (flippers morts 2,5 s)
+- **Moitié gauche / moitié droite de l'écran (maintien)** = flipper gauche / droit
+- **Bas au centre (maintien puis relâcher)** = lanceur ; la jauge de puissance
+  s'affiche dans le fronton. Un tir faible ne sort pas du couloir, seul un tir
+  fort fait le tour de l'arche et atteint le skill shot.
+- **Secouer la tablette** = nudge. La gravité de la table est **constante** :
+  l'IMU ne sert qu'au nudge, jamais à piloter la bille. On peut donc jouer
+  tablette posée à plat, tenue droite ou inclinée.
+- **3 nudges en moins de 2,6 s = TILT** : flippers morts 2,5 s.
 
 ### Gameplay
 
-- 3 billes par partie (+1 bille bonus à 50k et 150k).
-- 4 bumpers, 2 slingshots, 3 cibles drop (bank), 2 rollovers.
-- Multiball (2 billes) après 3 cibles drop.
-- Modes score : « Bumper Frenzy » (×2 bumpers 10 s), « Target Mania » (×2 cibles 8 s).
-- Top 10 high scores NVS + compteurs carrière (parties, tilts, multiballs).
+- 3 billes (+1 bille bonus à 250k et 750k).
+- 3 bumpers, 2 slingshots, banque de 3 cibles drop, 3 rollovers (skill shot).
+- Banque complétée : alternance **Bumper Frenzy** (bumpers ×3 pendant 9 s) et
+  **Multiball** 2 billes (tout ×2 tant que 2 billes sont en jeu).
+- Skill shot : une lane tirée au sort à chaque service, 25 000 points.
+- Top 10 NVS + carrière (parties, cumul, meilleure bille, tilts, multiballs).
+- Une partie quittée en cours **est comptée** : sinon on pourrait quitter pour
+  effacer un mauvais score.
 
 ### Notes techniques
 
-- Physique ~45 Hz (`lv_timer` 22 ms), 3 sous-pas anti-tunnelling.
-- Collision : bille (cercle) vs segments (murs, flippers) + cercles (bumpers, cibles).
-- Flippers = segments pivotants avec vitesse angulaire (impulsion à la frappe).
-- Pool LVGL préalloué. Zéro allocation dans le tick.
-- Persistance `PinballSave` (magic `PIN1`) via `esphome::global_preferences`.
+- Physique 50 Hz (`lv_timer` 20 ms), 4 sous-pas anti-tunnelling ; tick ralenti à
+  200 ms dans les menus.
+- Collision : segments (rails, guides), **contrainte circulaire** pour l'arche
+  (un seul `sqrtf` au lieu de 18 tests de segment, et aucune facette), cercles
+  (bumpers), capsules (cibles), segments mobiles pour les flippers (l'impulsion
+  vient de la vitesse du bras au point de contact).
+- Clapet anti-retour en haut du couloir du lanceur : segment qui n'existe que
+  pour une bille qui descend.
+- **Rendu : zéro `transform_rotation`.** Table construite une fois — `lv_arc`
+  pour l'arche, `lv_line` à boîte englobante serrée pour rails et flippers,
+  dégradés verticaux pour le volume. Seuls bille, flippers, flashs et ressort
+  bougent. Lampes et inserts sont mis en cache (repeints uniquement au
+  changement d'état).
+- **`LV_USE_LINE`** n'est activé par ESPHome que si un widget `line:` figure dans
+  la config : `pinball_game.yaml` en déclare un, masqué, uniquement pour ça. Ne
+  pas le supprimer, la compilation échouerait sur `lv_line_create`.
+- Persistance `PinballSave` (magic **`PIN2`**, pas `PIN1` — layout incompatible
+  avec l'ancien Flip Noir) via `esphome::global_preferences`.
+- Sons : stubs `sfx_*()` vides (même convention qu'Arcanoïde). Le haut-parleur
+  est monopolisé par le pipeline vocal HA ; l'octet `sfx` de la sauvegarde est
+  réservé pour le jour où un bip local sera possible, sans bump de magic.
 - Fichiers : `pinball_game.h`, `pinball_game.cpp`, `ui_components/pinball_game.yaml`.
-- Couleurs : `UIColor::PIN_*` dans `tab5_custom.h`.
+- Couleurs : `UIColor::PIN_*` dans `tab5_custom.h`, miroirs `color_pinball_*`.
 
 ---
 

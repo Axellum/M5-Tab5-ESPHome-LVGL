@@ -100,7 +100,7 @@ A single 1280×720 page organized in functional areas, all driven by Home Assist
 - **Lights** — near-fullscreen popup in 3 glass cards: 3-light selector (switch lights without closing the popup), live-% brightness arc (debounced) with 10/35/65/100 % shortcuts, 3 named whites + 12 round color swatches
 - **Plants** — soil moisture card for up to 5 BLE plant sensors, dynamically sorted, color-coded by level (red = dry, green = optimal, blue = too wet); a long press opens a 5-card detail popup (moisture + watering status, fertility, light, temperature, sensor battery)
 - **Console** — diagnostics + HA management overlay (RAM/PSRAM, Wi-Fi, uptime, volume, re-push screen, reload automations, restart HA / reboot tablet behind confirm), opened via its dedicated button
-- **Arcade** — 8 fullscreen game consoles (experimental prototypes — first-pass AI-generated code to test what's possible on an ESP32-P4): **Fil d'Or** (marble roguelite, tilt-controlled), **Arcanoïde** (Breakout clone), **Flip Noir** (pinball), **Coureur d'Or** (Lode Runner), **Go Tab** (Go 9×9/13×13/19×19), **Trial Poursuite** (trivia quiz), **Dames Tab** (draughts 10×10), **Roi Noir** (FIDE chess with embedded AI). All 100% local, zero HA/network dependency, NVS persistence. Opened via a 4×2 selector grid triggered by tapping the greenhouse temperature
+- **Arcade** — 8 fullscreen game consoles (experimental prototypes — first-pass AI-generated code to test what's possible on an ESP32-P4): **Fil d'Or** (marble roguelite, tilt-controlled), **Arcanoïde** (Breakout clone), **Neon Apron** (pinball, portrait), **Coureur d'Or** (Lode Runner), **Go Tab** (Go 9×9/13×13/19×19), **Trial Poursuite** (trivia quiz), **Dames Tab** (draughts 10×10), **Roi Noir** (FIDE chess with embedded AI). All 100% local, zero HA/network dependency, NVS persistence. Opened via a 4×2 selector grid triggered by tapping the greenhouse temperature
 - **Popup Assistant** — near-fullscreen modal showing the STT transcription ("Your request") and the LLM reply rendered as Markdown (tables, bold, code, images downloaded on demand); left panel = settings (brain selector Domotique/Discussion, Ok Nabu toggle, volume, text size A-/A/A+)
 - **Popup Calendar** — monthly 7×6 grid computed locally from SNTP; work hours inside cells, color-coded markers (public holidays, school holidays, appointments, birthdays); tap a day for a detail sub-popup; HA enriches on demand
 - **Popup Plant Details** — 5 fixed glass cards (one per BLE sensor) showing soil moisture %, watering status, fertility (EC µS/cm), light (lx), temperature, battery — opened by long-press on the dashboard moisture slots
@@ -123,7 +123,7 @@ All 8 consoles share the same architecture: fullscreen 1280×720 overlay (the on
 |---|---------|------|----------|
 | 1 | **Fil d'Or** | Marble roguelite (6 rooms, Dark Souls-style progression) | Tilt (BMI270) |
 | 2 | **Arcanoïde** | Breakout / Arkanoid (8 levels, power-ups) | Tilt + touch |
-| 3 | **Flip Noir** | Pinball (bumpers, multiball, tilt) | Touch zones + IMU nudge |
+| 3 | **Neon Apron** | Pinball — **portrait**, switches the screen to 720×1280 | Touch zones + IMU nudge |
 | 4 | **Coureur d'Or** | Lode Runner (10 levels, dig & climb) | Touch D-pad |
 | 5 | **Go Tab** | Go 9×9 / 13×13 / 19×19 (Chinese scoring, komi 6.5) | Touch |
 | 6 | **Trial Poursuite** | Trivia quiz (1–6 teams, retro living-room style) | Touch |
@@ -245,7 +245,7 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── tab5_custom.cpp       # C++ implementations (parsers, helpers)
 │   ├── marble_game.h/.cpp    # Game: Fil d'Or (marble roguelite)
 │   ├── arkanoid_game.h/.cpp  # Game: Arcanoïde (breakout)
-│   ├── pinball_game.h/.cpp   # Game: Flip Noir (pinball)
+│   ├── pinball_game.h/.cpp   # Game: Neon Apron (pinball, portrait)
 │   ├── lode_game.h/.cpp      # Game: Coureur d'Or (Lode Runner)
 │   ├── go_engine/ai/game.*   # Game: Go Tab (Go)
 │   ├── trivia_game.h/.cpp    # Game: Trial Poursuite (quiz)
@@ -357,7 +357,7 @@ Une page unique 1280×720 organisée en zones fonctionnelles, toutes alimentées
 - **Lumières** — popup quasi plein écran en 3 cartes de verre : sélecteur 3 lumières (changer de lumière sans fermer le popup), arc de luminosité avec % en direct (débouncé) et raccourcis 10/35/65/100 %, 3 blancs nommés + 12 pastilles couleur rondes
 - **Plantes** — carte d'humidité du sol pour jusqu'à 5 capteurs BLE, triés dynamiquement, code couleur par niveau (rouge = sec, vert = optimal, bleu = trop humide) ; un appui long ouvre un popup détail à 5 cartes (humidité + statut d'arrosage, fertilité, lumière, température, batterie du capteur)
 - **Console** — overlay diagnostics + gestion HA (RAM/PSRAM, Wi-Fi, uptime, volume, re-pousse écran, reload automations, restart HA / reboot tablette derrière confirmation), ouvert via son bouton dédié
-- **Arcade** — 8 consoles de jeu plein écran (prototypes expérimentaux — premier jet généré par IA pour tester ce qu'un ESP32-P4 peut faire) : **Fil d'Or** (roguelite de bille, pilotage inclinaison), **Arcanoïde** (casse-briques), **Flip Noir** (flipper), **Coureur d'Or** (Lode Runner), **Go Tab** (Go 9×9/13×13/19×19), **Trial Poursuite** (quiz), **Dames Tab** (dames 10×10), **Roi Noir** (échecs FIDE avec IA embarquée). Tous 100 % locaux, zéro dépendance HA/réseau, persistance NVS. Ouverts via une grille sélecteur 4×2 déclenchée par tap sur la température serre
+- **Arcade** — 8 consoles de jeu plein écran (prototypes expérimentaux — premier jet généré par IA pour tester ce qu'un ESP32-P4 peut faire) : **Fil d'Or** (roguelite de bille, pilotage inclinaison), **Arcanoïde** (casse-briques), **Neon Apron** (flipper, portrait), **Coureur d'Or** (Lode Runner), **Go Tab** (Go 9×9/13×13/19×19), **Trial Poursuite** (quiz), **Dames Tab** (dames 10×10), **Roi Noir** (échecs FIDE avec IA embarquée). Tous 100 % locaux, zéro dépendance HA/réseau, persistance NVS. Ouverts via une grille sélecteur 4×2 déclenchée par tap sur la température serre
 - **Popup Assistant** — modal quasi plein écran affichant la transcription STT (« Votre demande ») et la réponse LLM rendue en Markdown (tableaux, gras, code, images téléchargées à la demande) ; panneau gauche = réglages (sélecteur cerveau Domotique/Discussion, Ok Nabu ON/OFF, volume, taille texte A-/A/A+)
 - **Popup Calendrier** — grille mensuelle 7×6 calculée localement depuis SNTP ; heures de travail dans les cases, marqueurs colorés (fériés, vacances scolaires, RDV, anniversaires) ; tap sur un jour = sous-popup détail ; HA enrichit à la demande
 - **Popup Détails Plantes** — 5 cartes de verre fixes (une par capteur BLE) : humidité sol %, statut arrosage, fertilité (EC µS/cm), lumière (lx), température, batterie — ouvert par appui long sur les slots humidité du dashboard
@@ -380,7 +380,7 @@ Les 8 consoles partagent la même architecture : overlay plein écran 1280×720 
 |---|---------|------|----------|
 | 1 | **Fil d'Or** | Roguelite de bille (6 salles, progression façon Dark Souls) | Inclinaison (BMI270) |
 | 2 | **Arcanoïde** | Casse-briques / Arkanoid (8 niveaux, power-ups) | Inclinaison + tactile |
-| 3 | **Flip Noir** | Flipper (bumpers, multiball, tilt) | Zones tactiles + nudge IMU |
+| 3 | **Neon Apron** | Flipper — **portrait**, bascule l’écran en 720×1280 | Zones tactiles + nudge IMU |
 | 4 | **Coureur d'Or** | Lode Runner (10 niveaux, creuser & grimper) | D-pad tactile |
 | 5 | **Go Tab** | Go 9×9 / 13×13 / 19×19 (score chinois, komi 6,5) | Tactile |
 | 6 | **Trial Poursuite** | Quiz rétro-salon (1 à 6 équipes) | Tactile |

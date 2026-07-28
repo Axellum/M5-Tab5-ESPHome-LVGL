@@ -4,6 +4,69 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-28 — Arcade : « Neon Apron », le flipper qui fait pivoter l'écran
+
+Le slot 3 de l'Arcade, libre depuis la suppression de « Flip Noir » (`697e2e9`),
+accueille un flipper **entièrement réécrit**. Rien n'a été repris de l'ancien :
+sa table était en **paysage** et ses murs, slingshots et flippers étaient des
+rectangles LVGL repivotés à chaque frame (`transform_rotation`) — laid et cher.
+
+- **Portrait à chaud, une première dans ce firmware.** À l'ouverture, le jeu
+  appelle `LvglComponent::set_rotation(0)` : LVGL passe en **720×1280** et on
+  tient la tablette debout comme devant une borne. `Pinball::close()` restaure
+  `270`. Trois points non évidents, tous documentés en tête de
+  `pinball_game.cpp` :
+  - `rotation: 270` **doit rester** dans `tab5-styles.yaml` : ESPHome ne compile
+    le support de rotation que si la clé existe, sinon `set_rotation()` se
+    contente d'un `ESP_LOGW`. Le bloc `lvgl:` reçoit un `id: tab5_lvgl` explicite
+    (seul moyen d'atteindre le composant depuis une lambda).
+  - **Le tactile suit tout seul** : `LVTouchListener` applique
+    `rotate_coordinates()` avec la rotation *courante*. La calibration native
+    720×1280 reste valable dans les deux sens, rien à recalibrer.
+  - **Le portrait est plus rapide** : à `rotation: 0` le flush d'ESPHome tombe
+    dans son `default:` et ne fait **aucune** rotation logicielle ni passage PPA.
+    Le dashboard paysage, lui, en paie une à chaque flush — c'est la piste des
+    `lvgl took a long time` relevés au boot.
+  - Réglage **Orientation : normale / retournée** (0 ↔ 180) si l'écran apparaît
+    à l'envers : le bon sens dépend du côté vers lequel on tourne la tablette.
+- **Rendu sans une seule `transform_rotation`.** Table construite une fois :
+  `lv_arc` pour l'arche, `lv_line` à **boîte englobante serrée** pour les rails,
+  les guides et les deux flippers (un `lv_line` posé en (0,0) à la taille du
+  plateau serait redessiné à chaque déplacement de bille), dégradés verticaux
+  pour le volume. Seuls bille, flippers, flashs et ressort bougent ; lampes et
+  inserts sont mis en cache et repeints uniquement au changement d'état.
+- **`LV_USE_LINE` activé** : ESPHome ne le pose dans `lv_conf.h` que si un widget
+  `line:` figure dans la config. `pinball_game.yaml` en déclare un, masqué et
+  hors écran, uniquement pour ça — sans lui la compilation échoue sur
+  `lv_line_create`.
+- **Physique** 50 Hz (`lv_timer` 20 ms) / 4 sous-pas, 200 ms dans les menus.
+  L'arche est une **contrainte circulaire** (un `sqrtf` au lieu de 18 tests de
+  segment, et aucune facette où la bille accroche) ; clapet anti-retour en haut
+  du couloir du lanceur ; impulsion des flippers dérivée de la vitesse du bras au
+  point de contact. `GRAVITY` et la course du lanceur sont **calculées** (voir
+  les commentaires) pour qu'un tir faible rate et qu'un tir plein fasse le tour.
+- **L'IMU ne pilote pas la bille** — la gravité de la table est constante, le
+  BMI270 ne sert qu'au **nudge** (passe-haut : une inclinaison entretenue ne
+  déclenche rien, seule une secousse brève compte). 3 nudges en 2,6 s = **TILT**,
+  flippers morts 2,5 s. `Pinball::is_open()` entre dans la liste de poll rapide
+  (33 ms) : à 10 Hz on raterait la moitié des coups de hanche.
+- **Gameplay** : 3 billes (+1 à 250k et 750k), 3 bumpers, 2 slingshots, banque de
+  3 cibles drop qui alterne **Bumper Frenzy** (×3, 9 s) et **Multiball** 2 billes
+  (tout ×2), 3 rollovers dont un skill shot tiré au sort. Top 10 NVS
+  (`PinballSave`, magic **`PIN2`** — pas `PIN1`, layout incompatible avec
+  l'ancien jeu) + statistiques carrière. Une partie quittée en cours est comptée.
+- **Doc rattrapée** : `Tab5/README.md` documentait encore « Flip Noir » comme
+  console #3 alors que le jeu était supprimé depuis `697e2e9`. Section
+  remplacée ; tableaux des consoles, arbre de fichiers et `CARTOGRAPHIE_TAB5.md`
+  mis à jour.
+- Sons : stubs `sfx_*()` vides (convention d'Arcanoïde). Le haut-parleur est
+  monopolisé par le pipeline vocal HA ; l'octet `sfx` de la sauvegarde est
+  réservé pour plus tard, sans bump de magic à prévoir.
+- Vérifié : `esphome config` valide, `esphome compile` **Successfully**
+  (RAM 43,1 % / flash 37,2 %, +0,3 pt), `LV_USE_LINE 1` dans le `lv_conf.h`
+  généré et `pinball_game.cpp.obj` effectivement construit. **Non testé sur la
+  dalle** — pas d'OTA depuis cette session.
+
 ### 2026-07-28 — Calendrier instantané + retour auto écran principal
 
 - **Prefetch calendrier (stale-while-revalidate)** : à l'ouverture du popup, le

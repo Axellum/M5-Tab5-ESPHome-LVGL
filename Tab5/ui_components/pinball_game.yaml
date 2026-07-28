@@ -1,0 +1,105 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file pinball_game.yaml
+# @role Overlay PLEIN ECRAN du flipper « Neon Apron » (pinball_game.cpp).
+#
+# @architecture_constraint ORIENTATION PORTRAIT. Les 4 conteneurs sont dimensionnés
+#     en 720×1280 (portrait) alors que le dashboard vit en 1280×720 (paysage,
+#     `lvgl: rotation: 270`). Ce n'est PAS une erreur : Pinball::open() bascule
+#     LVGL en portrait via `id(tab5_lvgl).set_rotation(0)` et Pinball::close()
+#     restaure 270. Tant que le jeu est fermé, `hidden: true` garde ces objets
+#     hors du calcul de scroll de l'écran (LVGL saute les enfants HIDDEN dans
+#     lv_obj_get_scroll_* — vérifié dans lv_obj_scroll.c), donc un conteneur
+#     plus haut que la dalle ne crée aucune barre de défilement parasite.
+#
+# @architecture_constraint EXCEPTION ASSUMEE au chrome modal v4 (ADR-0009) : ce
+#     n'est pas un popup domotique mais un flux de jeu séparé. Donc pas de
+#     modal_scrim.yaml, pas de modal_header.yaml, pas de carte 1250×690 — on
+#     occupe toute la dalle pour que la table domine. Le garde-fou
+#     scripts/check_tab5_modal_chrome.py ne déclenche pas ici (aucune
+#     style_modal_card, aucun color_modal_scrim, aucun glyphe de croix).
+#     La sortie du jeu se fait par le hub (« Quitter »), pas par une croix.
+#
+# @ai_instruction Ce fichier ne déclare QUE 4 conteneurs vides (+ l'amorce
+#     `line:` ci-dessous). Tout le contenu — rails, bumpers, flippers, bille,
+#     fronton, menus — est construit par pinball_game.cpp via Pinball::open().
+#     Ne JAMAIS ajouter de widget de gameplay ici.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: pinball_root
+  align: TOP_LEFT
+  x: 0
+  y: 0
+  width: 720
+  height: 1280
+  hidden: true
+  scrollable: false
+  pad_all: 0
+  radius: 0
+  border_width: 0
+  bg_color: color_pinball_void
+  bg_opa: 100%
+  widgets:
+    # --- Fronton / DMD (140 px) : score, billes restantes, mode en cours ------
+    # Déclaré avant le plateau pour que le plateau le recouvre en cas de débord ;
+    # remis au premier plan par le C++ au besoin. Cliquable = pause.
+    - obj:
+        id: pinball_hud
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: 720
+        height: 140
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+        bg_color: color_pinball_hud
+        bg_opa: 100%
+
+    # --- Plateau de jeu 720×1140 : tout le reste de l'écran ------------------
+    - obj:
+        id: pinball_field
+        align: TOP_LEFT
+        x: 0
+        y: 140
+        width: 720
+        height: 1140
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+        bg_color: color_pinball_felt
+        bg_opa: 100%
+
+    # --- [AI-WARNING] Amorce indispensable : ne pas supprimer -----------------
+    # ESPHome ne pose `#define LV_USE_LINE 1` dans le lv_conf.h généré QUE si un
+    # widget `line:` apparaît au moins une fois dans la config (cf. la boucle
+    # `for use in df.get_lv_uses()` de esphome/components/lvgl/__init__.py).
+    # pinball_game.cpp dessine TOUS ses guides diagonaux et ses deux flippers
+    # avec lv_line_create() — sans cette amorce, LV_USE_LINE reste à 0 et la
+    # compilation échoue sur « lv_line_create was not declared ».
+    # Ce widget est vide, masqué et hors écran : il ne coûte rien au rendu.
+    - line:
+        id: pinball_lvgl_line_probe
+        hidden: true
+        points:
+          - [0, 0]
+          - [1, 0]
+
+    # --- Calque des menus (hub / classement / réglages / pause / fin) ---------
+    #     Contenu construit en C++, masqué pendant une partie.
+    - obj:
+        id: pinball_panel
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: 720
+        height: 1280
+        hidden: true
+        scrollable: false
+        pad_all: 0
+        radius: 0
+        border_width: 0
+        bg_color: color_pinball_void
+        bg_opa: 96%

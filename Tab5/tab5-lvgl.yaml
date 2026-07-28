@@ -642,5 +642,6 @@ lvgl:
         - !include ui_components/trivia_game.yaml
         - !include ui_components/chess_game.yaml
         - !include ui_components/draughts_game.yaml
-        # Le sélecteur en DERNIER : il doit se dessiner au-dessus des 7 overlays.
+        - !include ui_components/pinball_game.yaml
+        # Le sélecteur en DERNIER : il doit se dessiner au-dessus des 8 overlays.
         - !include ui_components/game_selector.yaml

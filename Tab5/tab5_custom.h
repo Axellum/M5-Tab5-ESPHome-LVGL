@@ -637,5 +637,38 @@ namespace UIColor {
     static constexpr uint32_t ARK_ORANGE    = 0xFF8800;  // accent orange (shrink)
     static constexpr uint32_t ARK_MAGENTA   = 0xFF44AA;  // accent magenta (bonus, colle)
     static constexpr uint32_t ARK_BTN       = 0x334455;  // boutons tactiles latéraux
+    // --- Jeu « Neon Apron » (pinball_game.cpp) ------------------------------------
+    // Flipper portrait 720×1280. Direction artistique : table sombre bleu nuit,
+    // rails d'acier froid, 3 néons seulement (cyan / ambre / magenta) + un vert
+    // réservé aux modes actifs. Pas de photoréalisme, pas de bitmap : tout le
+    // volume vient de paires ombre/arête (chaque pièce a un ton bas et un ton
+    // haut). Utilisée uniquement par le namespace Pinball.
+    // @ai_instruction Si tu ajoutes une pièce à la table, réutilise une paire
+    //     existante (_DIM / _HI) plutôt que d'inventer une 4ᵉ teinte néon : la
+    //     lisibilité du plateau tient au fait qu'il n'y en a que trois.
+    static constexpr uint32_t PIN_VOID        = 0x05070E;  // fond hors table
+    static constexpr uint32_t PIN_FELT_HI     = 0x121C2E;  // sol, haut du dégradé
+    static constexpr uint32_t PIN_FELT_LO     = 0x070B14;  // sol, bas du dégradé
+    static constexpr uint32_t PIN_HUD_BG      = 0x080C16;  // fronton / DMD
+    static constexpr uint32_t PIN_RAIL        = 0x35435C;  // corps des rails et guides
+    static constexpr uint32_t PIN_RAIL_HI     = 0x8CA3C4;  // arête éclairée des rails
+    static constexpr uint32_t PIN_CHROME      = 0xC8D4E6;  // chrome du tablier (apron)
+    static constexpr uint32_t PIN_APRON       = 0x0C1220;  // fond du tablier
+    static constexpr uint32_t PIN_BALL        = 0xC9D6E8;  // corps de la bille (acier)
+    static constexpr uint32_t PIN_BALL_HI     = 0xFFFFFF;  // reflet spéculaire de la bille
+    static constexpr uint32_t PIN_BALL_SH     = 0x1B2333;  // ombre portée de la bille
+    static constexpr uint32_t PIN_FLIP_BASE   = 0x3E1B33;  // flanc sombre du flipper
+    static constexpr uint32_t PIN_FLIP_EDGE   = 0xFF3D8A;  // arête néon du flipper
+    static constexpr uint32_t PIN_CYAN        = 0x35E6FF;  // néon 1 — bumpers, lanes
+    static constexpr uint32_t PIN_CYAN_DIM    = 0x11485C;  // néon 1 éteint
+    static constexpr uint32_t PIN_AMBER       = 0xFFB020;  // néon 2 — score, cibles
+    static constexpr uint32_t PIN_AMBER_DIM   = 0x53390B;  // néon 2 éteint
+    static constexpr uint32_t PIN_MAGENTA     = 0xFF3D8A;  // néon 3 — slingshots, multi
+    static constexpr uint32_t PIN_MAGENTA_DIM = 0x521230;  // néon 3 éteint
+    static constexpr uint32_t PIN_MODE        = 0x3DFF9E;  // vert « mode en cours »
+    static constexpr uint32_t PIN_DANGER      = 0xFF4757;  // TILT, drain, perte de bille
+    static constexpr uint32_t PIN_WHITE       = 0xF2F6FF;  // texte principal
+    static constexpr uint32_t PIN_TEXT_DIM    = 0x6C7C98;  // texte secondaire
+    static constexpr uint32_t PIN_INSERT_OFF  = 0x141E2C;  // insert lumineux éteint
 }
 

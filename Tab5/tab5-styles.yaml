@@ -113,6 +113,15 @@ color:
     hex: "1A1028"          # plateau de jeu
   - id: color_trivia_hud
     hex: "150E22"          # bandeau HUD
+  # --- Jeu « Neon Apron » (pinball_game) : miroir des tokens UIColor::PIN_* ---
+  # Comme Marble et Arcanoïde : seuls les fonds des 4 conteneurs vivent ici, tout
+  # le reste de la palette est posé en C++ (pinball_game.cpp).
+  - id: color_pinball_void
+    hex: "05070E"          # fond hors table (miroir UIColor::PIN_VOID)
+  - id: color_pinball_felt
+    hex: "121C2E"          # haut du sol (miroir UIColor::PIN_FELT_HI)
+  - id: color_pinball_hud
+    hex: "080C16"          # fronton / DMD (miroir UIColor::PIN_HUD_BG)
 
 # =============================================================================
 # FONTS — inchangees (fonctionnel, pas esthetique)
@@ -291,6 +300,20 @@ font:
 # LVGL — Glassmorphism "Slate"
 # =============================================================================
 lvgl:
+  # [AI-CONTEXT] `id` explicite = seul moyen d'atteindre le LvglComponent depuis
+  # une lambda (`id(tab5_lvgl)`), donc de changer la rotation À CHAUD. C'est ce
+  # dont « Neon Apron » (pinball_game.cpp) a besoin pour passer le dashboard en
+  # portrait 720×1280 le temps d'une partie, puis restaurer le paysage.
+  # NE PAS retirer cet id, et NE PAS changer `rotation: 270` : c'est l'état de
+  # repos du dashboard, celui que Pinball::close() rétablit.
+  id: tab5_lvgl
+  # [AI-WARNING] `rotation:` doit rester présent ici même si le jeu la surcharge
+  # à chaud : ESPHome ne compile le support de rotation (rotation_type_ =
+  # ROTATION_SOFTWARE, buffer de rotation + client PPA) QUE si la clé existe
+  # dans la config. Sans elle, LvglComponent::set_rotation() se contente d'un
+  # ESP_LOGW « rotation cannot be changed unless rotation was enabled during
+  # setup » et le flipper resterait en paysage (vérifié dans
+  # esphome/components/lvgl/lvgl_esphome.cpp, LvglComponent::set_rotation).
   rotation: 270
   color_depth: 16
   byte_order: little_endian
