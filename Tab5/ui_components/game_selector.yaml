@@ -105,7 +105,7 @@ obj:
         widgets:
           - label: { text: "\U000F0E95", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xE8B44A }
           - label: { text: "Fil d'Or", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Roguelite de bille\n6 salles · inclinaison BMI270", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "Roguelite de bille\n6 salles · à l'inclinaison", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
 
     # 2 · Arcanoïde (arkanoid_game) — casse-briques
     - button:
@@ -155,7 +155,7 @@ obj:
         widgets:
           - label: { text: "\U000F05DD", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0x35E6FF }
           - label: { text: "Neon Apron", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Flipper néon · 3 billes\nTournez la tablette à la verticale", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "Flipper néon · 3 billes\nTablette à la verticale", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
 
     # 4 · Coureur d'Or (lode_game) — Lode Runner
     - button:
@@ -253,7 +253,7 @@ obj:
         widgets:
           - label: { text: "\U000F013A", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xD4B896 }
           - label: { text: "Dames Tab", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Dames internationales 10×10\nPrise majoritaire · rafles", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "Internationales 10×10\nPrise majoritaire · rafles", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
 
     # 8 · Roi Noir (chess_game) — échecs
     - button:
