@@ -24,3 +24,9 @@ substitutions:
   modal_bottom_y: "-20"
   # Première ligne de la grille calendrier (modal_body_y + 30 px d'en-tête jours)
   cal_grid_y: "102"
+  # Carte "Réponse" de l'assistant vocal : sous la carte "Votre demande"
+  # (modal_body_y + 104 px de haut + 12 px de respiration). Si modal_body_y
+  # change, recalculer cette valeur à la main (ESPHome ne fait pas d'arithmétique
+  # dans les substitutions) — sinon "Réponse" chevauche "Votre demande" sans
+  # qu'aucun garde-fou ne le détecte.
+  assist_resp_y: "188"
