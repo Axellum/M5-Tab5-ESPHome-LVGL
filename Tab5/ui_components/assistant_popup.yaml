@@ -244,7 +244,7 @@ obj:
           - obj:
               align: TOP_LEFT
               x: 420
-              y: 188
+              y: ${assist_resp_y}
               width: 806
               height: 390
               styles: style_glass_card
