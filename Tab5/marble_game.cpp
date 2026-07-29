@@ -325,7 +325,11 @@ static const ItemDef ITEMS[] = {
     {"Couronne felee",     "+50 % d'ames, mais -1 point de vie", 300, IE_GREED,      UIColor::MARBLE_SLOW},
 };
 static constexpr int N_ITEMS = (int) (sizeof(ITEMS) / sizeof(ITEMS[0]));
-static constexpr int SHOP_PER_PAGE = 6;
+// 5 et pas 6 : avec 6 objets par page il fallait 8 lignes (6 + « Page suivante »
+// + « Retour »), et la 8e descendait a y=688 alors que le pied de page commence
+// a y=672 — les deux se chevauchaient. A 5, une page tient en 7 lignes (fin
+// y=620) et les 10 objets se repartissent en 2 pages pleines, sans page bancale.
+static constexpr int SHOP_PER_PAGE = 5;
 
 // Punchlines FR — 1 phrase max, jamais de pave.
 static const char* DEATH_LINES[] = {
@@ -403,6 +407,10 @@ static float    g_soul_mul = 1.0f;
 static float    g_loot_chance = 0.35f;
 // Ecran marchand : page courante + slot d'equipement en cours de modification.
 static int      g_shop_page = 0;
+// Index du bouton « Page suivante » sur la page courante (« Retour » = +1).
+// go_shop() l'ecrit, le gestionnaire de tap le relit : les deux DOIVENT rester
+// d'accord, sinon un tap sur « Retour » declencherait un achat.
+static int      g_shop_rows = 0;
 
 // --- Effets cumules des boons ---
 static uint8_t g_boons[MAX_BOONS];
@@ -453,7 +461,16 @@ static lv_obj_t* g_p_title = nullptr;
 static lv_obj_t* g_p_sub = nullptr;
 static lv_obj_t* g_p_body = nullptr;
 static lv_obj_t* g_p_foot = nullptr;
-static constexpr int N_SLOTS = 8;
+// 7 et pas 8, et c'est une CONTRAINTE de mise en page, pas un chiffre rond :
+// les lignes sont a y = 150 + i*68 sur 62 px de haut, et le pied de page occupe
+// y = 672..698. La ligne d'index 7 irait de 688 a 750 — elle passerait dessous.
+// Fixer le pool a 7 rend l'invariant structurel : aucun ecran ne PEUT en demander
+// une 8e. Ecran le plus charge aujourd'hui : Feu de camp (6 caracteristiques +
+// Retour = 7) et Marchand (5 objets + 2 boutons = 7).
+static constexpr int N_SLOTS = 7;
+static_assert(150 + (N_SLOTS - 1) * 68 + 62 <= 720 - 22 - 26,
+              "La derniere ligne de menu recouvre le pied de page : revoir "
+              "N_SLOTS, le pas de 68 px, ou la position du pied.");
 static lv_obj_t* g_slot[N_SLOTS] = {};
 static lv_obj_t* g_slot_t[N_SLOTS] = {};
 static lv_obj_t* g_slot_d[N_SLOTS] = {};
@@ -754,14 +771,26 @@ static void build_ui() {
     lv_obj_set_pos(g_vign[3], FW - VB, 0);  lv_obj_set_size(g_vign[3], VB, FH);
 
     // --- HUD : bande compacte de 48 px, jamais plus ---
+    // [AI-CONTEXT] Les abscisses ci-dessous ne sont PAS choisies a l'oeil : chaque
+    // colonne reserve la largeur de son libelle le plus long, mesuree dans les
+    // metriques reelles de roboto_22 (police generee par ESPHome), + 22 px de
+    // gouttiere. Les anciennes valeurs (18/300/452/610) faisaient deborder
+    // « Salle 4/6 - Sanctuaire *** [ DIEU ] » (348 px) sur les PV, et
+    // « PV 12/12  +BOUCLIER » (217 px) sur l'or.
+    //   salle    x= 18  reserve 352  (max mesure 348)
+    //   PV       x=392  reserve 236  (max mesure 217)
+    //   or       x=650  reserve 100  (max mesure  93)
+    //   objectif x=772  reserve 172  (max mesure 164) -> fin 944
+    //   1re pastille de boon a x=1016 : 72 px de marge.
+    // @ai_instruction Rallonger un de ces libelles impose de refaire l'addition.
     g_hud_room = mk_label(g_ui.hud, g_ui.f_small, UIColor::MARBLE_BALL);
     lv_obj_align(g_hud_room, LV_ALIGN_LEFT_MID, 18, 0);
     g_hud_life = mk_label(g_ui.hud, g_ui.f_small, UIColor::MARBLE_DANGER);
-    lv_obj_align(g_hud_life, LV_ALIGN_LEFT_MID, 300, 0);
+    lv_obj_align(g_hud_life, LV_ALIGN_LEFT_MID, 392, 0);
     g_hud_gold = mk_label(g_ui.hud, g_ui.f_small, UIColor::MARBLE_RUNE);
-    lv_obj_align(g_hud_gold, LV_ALIGN_LEFT_MID, 452, 0);
+    lv_obj_align(g_hud_gold, LV_ALIGN_LEFT_MID, 650, 0);
     g_hud_goal = mk_label(g_ui.hud, g_ui.f_small, UIColor::MARBLE_EXIT);
-    lv_obj_align(g_hud_goal, LV_ALIGN_LEFT_MID, 610, 0);
+    lv_obj_align(g_hud_goal, LV_ALIGN_LEFT_MID, 772, 0);
     g_hud_time = mk_label(g_ui.hud, g_ui.f_small, UIColor::TEXT_DIM);
     lv_obj_align(g_hud_time, LV_ALIGN_RIGHT_MID, -18, 0);
 
@@ -813,6 +842,10 @@ static void build_ui() {
 // --- Mise en page des slots -------------------------------------------------
 // Liste verticale (menus) : 6 entrees tiennent dans 720 px.
 static void slot_list(int i, const char* title, const char* desc, uint32_t col, bool on) {
+    // Garde de bornes : le pool est volontairement serre (N_SLOTS = 7, cale sur
+    // la place disponible au-dessus du pied de page). Un index hors pool serait
+    // un debordement de tableau, pas juste une ligne mal placee.
+    if (i < 0 || i >= N_SLOTS) return;
     lv_obj_set_size(g_slot[i], 680, 62);
     lv_obj_align(g_slot[i], LV_ALIGN_TOP_MID, 0, 150 + i * 68);
     // Les memes labels servent en mode carte (largeur fixe + texte centre) :
@@ -828,14 +861,19 @@ static void slot_list(int i, const char* title, const char* desc, uint32_t col, 
     set_text_if(g_slot_t[i], title);
     set_text_if(g_slot_d[i], desc ? desc : "");
     set_border(g_slot[i], on ? col : UIColor::INACTIVE, 2, LV_OPA_50);
-    // Liseré vertical a gauche, aux coins arrondis de la carte.
-    detail(g_slot_a[i], 0, 8, 5, 46, 3);
+    // Liseré vertical a gauche. [AI-WARNING] LVGL ne clippe PAS les enfants sur
+    // le rayon du parent (clip_corner est off) et dessine la bordure AVANT eux :
+    // un liseré pose en x=0 chevaucherait les 2 px de bordure et depasserait du
+    // coin arrondi (rayon 14). D'ou x=4 et une hauteur centree hors des arrondis :
+    // 62 - 2*14 = 34 px utiles, donc y=14..48.
+    detail(g_slot_a[i], 4, 14, 5, 34, 3);
     set_bg(g_slot_a[i], on ? col : UIColor::INACTIVE, on ? LV_OPA_COVER : LV_OPA_40);
     show(g_slot[i], true);
 }
 
 // Cartes cote a cote (choix de boon, facon Hades).
 static void slot_card(int i, const char* title, const char* desc, uint32_t col) {
+    if (i < 0 || i >= N_SLOTS) return;
     lv_obj_set_size(g_slot[i], 370, 300);
     lv_obj_align(g_slot[i], LV_ALIGN_TOP_LEFT, 85 + i * 385, 250);
     lv_obj_set_width(g_slot_t[i], 320);
@@ -850,7 +888,9 @@ static void slot_card(int i, const char* title, const char* desc, uint32_t col) 
     set_border(g_slot[i], col, 3, LV_OPA_80);
     // En mode carte le liseré passe en banniere haute : la carte se lit comme
     // une carte de boon, pas comme une ligne de menu tournee de 90 deg.
-    detail(g_slot_a[i], 0, 0, 370, 6, 0);
+    // Meme contrainte que slot_list : rentre de 20 px pour rester a l'interieur
+    // du rayon 14 et ne pas manger les 3 px de bordure.
+    detail(g_slot_a[i], 20, 6, 330, 5, 3);
     set_bg(g_slot_a[i], col, LV_OPA_COVER);
     show(g_slot[i], true);
 }
@@ -1001,9 +1041,16 @@ static void go_shop() {
         slot_list(i, titles[i], descs[i], it.color,
                   owned || g_save.souls >= it.price);
     }
-    slot_list(SHOP_PER_PAGE, "Page suivante", "", UIColor::MARBLE_BOOST, pages > 1);
-    slot_list(SHOP_PER_PAGE + 1, "Retour", "", UIColor::TEXT_DIM, true);
-    slots_hide_from(SHOP_PER_PAGE + 2);
+    // [AI-WARNING] La navigation se place APRES le dernier objet de la page, pas
+    // a un index fixe. Avec des index fixes (SHOP_PER_PAGE, +1), une page
+    // incomplete laissait les slots intermediaires ni remplis ni masques : ils
+    // gardaient le texte de l'ecran precedent — des lignes fantomes cliquables.
+    // g_shop_rows memorise le nombre d'objets affiches pour que le gestionnaire
+    // de tap retrouve les memes index.
+    g_shop_rows = n;
+    slot_list(n, "Page suivante", "", UIColor::MARBLE_BOOST, pages > 1);
+    slot_list(n + 1, "Retour", "", UIColor::TEXT_DIM, true);
+    slots_hide_from(n + 2);
 }
 
 static void go_equip() {
@@ -1252,16 +1299,24 @@ static void style_entity(Ent& e) {
             set_grad(o, UIColor::MARBLE_WALL_HI, UIColor::MARBLE_WALL_LO);
             lv_obj_set_style_radius(o, 4, LV_PART_MAIN);
             set_border(o, shade(UIColor::MARBLE_WALL_LO, 60), 1, LV_OPA_80);
-            detail(e.det, 2, 1, e.w - 4, 2, 1);
-            set_bg(e.det, UIColor::MARBLE_WALL_EDGE, 190);
+            // y=2 : la bordure occupe la ligne 0-1, l'arete se pose juste apres
+            // sans la manger. Garde sur la largeur : certaines cloisons sont fines.
+            if (e.w > 8) {
+                detail(e.det, 3, 2, e.w - 6, 2, 1);
+                set_bg(e.det, UIColor::MARBLE_WALL_EDGE, 190);
+            }
             break;
         case K_SPIKE:
             // Lame : base sombre, arete claire. Le contour noir la detache du sol.
             set_grad(o, UIColor::MARBLE_DANGER_HI, UIColor::MARBLE_DANGER_LO);
             lv_obj_set_style_radius(o, 3, LV_PART_MAIN);
             set_border(o, UIColor::MARBLE_VOID, 2, LV_OPA_80);
-            detail(e.det, 2, 1, e.w - 4 > 0 ? e.w - 4 : 1, 2, 1);
-            set_bg(e.det, UIColor::MARBLE_DANGER_HI, 230);
+            // Le contour noir fait 2 px : l'arete demarre a y=3 pour le laisser
+            // entier, sinon la lame semble ouverte sur le haut.
+            if (e.w > 10) {
+                detail(e.det, 4, 3, e.w - 8, 2, 1);
+                set_bg(e.det, UIColor::MARBLE_DANGER_HI, 230);
+            }
             break;
         case K_SAW:
             // Barre de scie : degrade + gorge sombre en creux au centre (biseau).
@@ -1338,8 +1393,12 @@ static void style_entity(Ent& e) {
             set_grad(o, UIColor::MARBLE_BRASS_CHEST, UIColor::MARBLE_CHEST_LO);
             lv_obj_set_style_radius(o, 6, LV_PART_MAIN);
             set_border(o, UIColor::MARBLE_RUNE, 3, LV_OPA_COVER);
-            detail(e.det, 0, e.h / 2 - 2, e.w, 4, 0);
-            set_bg(e.det, UIColor::MARBLE_RUNE, 170);
+            // Rentree de 3 px de chaque cote : la bordure d'or du coffre fait
+            // 3 px, une ferrure pleine largeur la recouvrirait aux deux bouts.
+            if (e.w > 8) {
+                detail(e.det, 3, e.h / 2 - 2, e.w - 6, 4, 0);
+                set_bg(e.det, UIColor::MARBLE_RUNE, 170);
+            }
             break;
         case K_EXIT:
             style_exit(e, false);   // etat reel pose par le tick des la 1re frame
@@ -1368,9 +1427,25 @@ static lv_obj_t* dec_next() {
     return o;
 }
 
+// Rayon maximal d'un disque centre en (cx,cy) qui tient ENTIEREMENT dans le
+// terrain. [AI-CONTEXT] LVGL clippe au conteneur : un disque trop grand ne
+// deborde pas, il est tranche net — et un arc de cercle coupe par une droite se
+// voit immediatement. Les departs de salle et plusieurs portails sont a moins de
+// 100 px d'un bord, donc les rayons nominaux ci-dessous DOIVENT etre rabotes.
+static inline int fit_radius(int cx, int cy, int r) {
+    int m = cx;
+    if (cy < m) m = cy;
+    if (FW - cx < m) m = FW - cx;
+    if (FH - cy < m) m = FH - cy;
+    return r < m ? r : (m > 0 ? m : 0);
+}
+
 // Nappe de lumiere : disque large et tres transparent. Designe un lieu (le
 // depart, le portail, une torche) sans ajouter une ligne de HUD.
+// Le rayon demande est un MAXIMUM : il est reduit si le bord est trop proche.
 static void dec_light(int cx, int cy, int r, uint32_t col, lv_opa_t opa) {
+    r = fit_radius(cx, cy, r);
+    if (r < 4) return;
     lv_obj_t* o = dec_next();
     if (!o) return;
     lv_obj_set_size(o, r * 2, r * 2);
@@ -1379,8 +1454,12 @@ static void dec_light(int cx, int cy, int r, uint32_t col, lv_opa_t opa) {
     set_bg(o, col, opa);
 }
 
+// Meme regle que dec_light : le rayon demande est un maximum. Un anneau tranche
+// par le bord du terrain est bien plus laid qu'un anneau un peu plus petit.
 static void dec_arc(int cx, int cy, int r, int a0, int a1, int w,
                     uint32_t col, lv_opa_t opa) {
+    r = fit_radius(cx, cy, r) - (w + 1) / 2;   // l'epaisseur du trait compte aussi
+    if (r < 8) return;
     if (g_dec_arc_n >= MAX_DEC_ARC) return;
     lv_obj_t* a = g_dec_arc[g_dec_arc_n++];
     lv_obj_set_style_arc_width(a, w, LV_PART_INDICATOR);
@@ -1411,12 +1490,29 @@ static void build_decor(int idx) {
         set_bg(o, UIColor::MARBLE_SLAB, 110);
     }
 
-    // Torches murales : une braise vive dans un halo large. Placees hors des
-    // couloirs principaux (bord haut et bord bas), elles ne masquent rien.
+    // Torches murales : une braise vive dans un halo large. Les positions
+    // nominales sont fixes, mais une salle peut y avoir plante une cloison —
+    // une braise enterree sous un mur ne se voit pas et fait tache la ou elle
+    // depasse. On decale donc lateralement, et on renonce si rien n'est libre.
     static const int TORCH[4][2] = {{210, 24}, {1070, 24}, {210, FH - 24}, {1070, FH - 24}};
-    for (int i = 0; i < 4; i++) {
-        dec_light(TORCH[i][0], TORCH[i][1], 46, UIColor::MARBLE_EMBER, 20);
-        dec_light(TORCH[i][0], TORCH[i][1], 6,  UIColor::MARBLE_EMBER, 210);
+    static const int SHIFT[5] = {0, -70, 70, -140, 140};
+    for (int t = 0; t < 4; t++) {
+        for (int s = 0; s < 5; s++) {
+            const int tx = TORCH[t][0] + SHIFT[s], ty = TORCH[t][1];
+            if (tx < 30 || tx > FW - 30) continue;
+            bool blocked = false;
+            for (int i = 0; i < r.n && !blocked; i++) {
+                const Spec& sp = r.specs[i];
+                if (sp.k != K_WALL) continue;
+                // Marge de 8 px : une braise collee a un mur se lit mal aussi.
+                blocked = (tx >= sp.x - 8 && tx <= sp.x + sp.w + 8 &&
+                           ty >= sp.y - 8 && ty <= sp.y + sp.h + 8);
+            }
+            if (blocked) continue;
+            dec_light(tx, ty, 46, UIColor::MARBLE_EMBER, 20);
+            dec_light(tx, ty, 6,  UIColor::MARBLE_EMBER, 210);
+            break;
+        }
     }
 
     // Nappe chaude au point de depart : le joueur voit d'ou il part.
@@ -2119,11 +2215,13 @@ static void slot_event_cb(lv_event_t* e) {
             break;
 
         case ST_SHOP:
-            if (i == SHOP_PER_PAGE) {
+            // Index dynamiques : ils suivent le nombre d'objets reellement
+            // affiches (g_shop_rows), comme dans go_shop().
+            if (i == g_shop_rows) {
                 int pages = (N_ITEMS + SHOP_PER_PAGE - 1) / SHOP_PER_PAGE;
                 g_shop_page = (g_shop_page + 1) % (pages > 0 ? pages : 1);
                 go_shop();
-            } else if (i == SHOP_PER_PAGE + 1) {
+            } else if (i == g_shop_rows + 1) {
                 go_hub();
             } else {
                 shop_action(g_shop_page * SHOP_PER_PAGE + i);
