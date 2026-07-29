@@ -54,14 +54,15 @@ obj:
 
                 # --- Cerveau / LLM ---
                 # [AI-CONTEXT] Panneau reglages 380x506 — layout recalcule le 29/07
-                # (etait cale a 66/94/176/248/266/324/356, laissait 98 px vides en
-                # bas ET faisait chevaucher icone+texte des boutons LLM de 12 px :
-                # bouton 66 px de haut, icone mdi_assist_36 (h=36) a y=8..44, texte
-                # roboto_22 (h=26) a y=32..58, zone commune 32..44). Redistribue sur
-                # toute la hauteur du panneau, verifie contre les metriques reelles
-                # des polices generees : chaque section a sa marge, plus aucune
-                # n'est vide. Modifier une police ou une hauteur ici impose de
-                # refaire le calcul (script scratchpad de la session, non versionne).
+                # (2e passe, demande Axel sur capture ecran). Boutons LLM en
+                # ICONE SEULE (le texte "Domotique"/"Discussion" est retire — trop
+                # a l'etroit avec l'icone, cf. 1re passe qui avait deja du monter le
+                # bouton a 84 px pour separer icone/texte de 6 px). L'etat actif
+                # reste visible par la bordure coloree (highlight_button_border,
+                # tab5-scripts.yaml:915-916/961-962 — reference id(btn_assist_pipe_*),
+                # ne touche pas au contenu interne). Barre de son ANCREE EN BAS du
+                # panneau (marge 24 px, symetrique de la marge haute) plutot que
+                # juste sous Ok Nabu : c'est ce qui etait demande.
                 - label: { text: "Cerveau / LLM", align: TOP_LEFT, x: 16, y: 68, text_font: roboto_22, text_color: color_text_dim }
                 - button:
                     id: btn_assist_pipe_domo
@@ -69,7 +70,7 @@ obj:
                     x: 16
                     y: 104
                     width: 168
-                    height: 84
+                    height: 72
                     radius: 18
                     styles: style_clim_btn
                     pressed:
@@ -79,15 +80,14 @@ obj:
                           id: tab5_set_assist_mode
                           discussion: false
                     widgets:
-                      - label: { text: "\U000F07D0", align: TOP_MID, y: 8, text_font: mdi_assist_36, text_color: color_text }
-                      - label: { text: "Domotique", align: BOTTOM_MID, y: -8, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "\U000F07D0", align: CENTER, text_font: mdi_assist_36, text_color: color_text }
                 - button:
                     id: btn_assist_pipe_discu
                     align: TOP_LEFT
                     x: 196
                     y: 104
                     width: 168
-                    height: 84
+                    height: 72
                     radius: 18
                     styles: style_clim_btn
                     pressed:
@@ -97,15 +97,14 @@ obj:
                           id: tab5_set_assist_mode
                           discussion: true
                     widgets:
-                      - label: { text: "\U000F0450", align: TOP_MID, y: 8, text_font: mdi_assist_36, text_color: color_text }
-                      - label: { text: "Discussion", align: BOTTOM_MID, y: -8, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "\U000F0450", align: CENTER, text_font: mdi_assist_36, text_color: color_text }
 
                 # --- Ok Nabu (mot de réveil) ---
                 - button:
                     id: btn_assist_wake
                     align: TOP_LEFT
                     x: 16
-                    y: 208
+                    y: 196
                     width: 348
                     height: 56
                     radius: 18
@@ -118,14 +117,71 @@ obj:
                     widgets:
                       - label: { id: lbl_assist_wake, text: "Ok Nabu : ON", align: CENTER, text_font: roboto_22, text_color: color_success }
 
-                # --- Muet + Volume --- descendus (y=292 au lieu de 248) pour
-                # utiliser l'espace libere par les boutons LLM plus grands, comme
-                # demande : la barre de son avait trop peu d'air au-dessus.
+                # --- Taille du texte de réponse (remontee : la barre de son est
+                # maintenant ancree au bas du panneau, voir plus bas) ---
+                - label: { text: "Taille du texte", align: TOP_LEFT, x: 16, y: 276, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_assist_size_s
+                    align: TOP_LEFT
+                    x: 16
+                    y: 312
+                    width: 108
+                    height: 52
+                    radius: 18
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - script.execute:
+                          id: tab5_assist_set_text_size
+                          size: 0
+                    widgets:
+                      - label: { text: "A-", align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    id: btn_assist_size_m
+                    align: TOP_LEFT
+                    x: 136
+                    y: 312
+                    width: 108
+                    height: 52
+                    radius: 18
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - script.execute:
+                          id: tab5_assist_set_text_size
+                          size: 1
+                    widgets:
+                      - label: { text: "A", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                - button:
+                    id: btn_assist_size_l
+                    align: TOP_LEFT
+                    x: 256
+                    y: 312
+                    width: 108
+                    height: 52
+                    radius: 18
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - script.execute:
+                          id: tab5_assist_set_text_size
+                          size: 2
+                    widgets:
+                      - label: { text: "A+", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+
+                # --- Muet + Volume --- ANCRES EN BAS du panneau (y=422/442,
+                # marge basse 24 px symetrique de la marge haute), comme demande
+                # explicitement : la barre de son avait deja ete descendue une 1re
+                # fois (y=292) mais restait juste sous "Ok Nabu", pas "en bas".
+                # 58 px de respiration avec les boutons A-/A/A+ au-dessus.
                 - button:
                     id: btn_assist_mute
                     align: TOP_LEFT
                     x: 16
-                    y: 292
+                    y: 422
                     width: 80
                     height: 60
                     radius: 18
@@ -157,7 +213,7 @@ obj:
                     id: slider_assist_volume
                     align: TOP_LEFT
                     x: 112
-                    y: 312
+                    y: 442
                     width: 252
                     height: 20
                     min_value: 0
@@ -171,60 +227,6 @@ obj:
                           id: system_muted
                           value: 'false'
                       - script.execute: tab5_debounce_volume_set
-
-                # --- Taille du texte de réponse ---
-                - label: { text: "Taille du texte", align: TOP_LEFT, x: 16, y: 382, text_font: roboto_22, text_color: color_text_dim }
-                - button:
-                    id: btn_assist_size_s
-                    align: TOP_LEFT
-                    x: 16
-                    y: 418
-                    width: 108
-                    height: 52
-                    radius: 18
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - script.execute:
-                          id: tab5_assist_set_text_size
-                          size: 0
-                    widgets:
-                      - label: { text: "A-", align: CENTER, text_font: roboto_22, text_color: color_text }
-                - button:
-                    id: btn_assist_size_m
-                    align: TOP_LEFT
-                    x: 136
-                    y: 418
-                    width: 108
-                    height: 52
-                    radius: 18
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - script.execute:
-                          id: tab5_assist_set_text_size
-                          size: 1
-                    widgets:
-                      - label: { text: "A", align: CENTER, text_font: roboto_32_b, text_color: color_text }
-                - button:
-                    id: btn_assist_size_l
-                    align: TOP_LEFT
-                    x: 256
-                    y: 418
-                    width: 108
-                    height: 52
-                    radius: 18
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - script.execute:
-                          id: tab5_assist_set_text_size
-                          size: 2
-                    widgets:
-                      - label: { text: "A+", align: CENTER, text_font: roboto_32_b, text_color: color_text }
 
           # ═══════════════════════════════════════════════════════════════════
           # COLONNE DROITE — DEMANDE + RÉPONSE

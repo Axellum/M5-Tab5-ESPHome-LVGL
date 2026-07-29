@@ -42,6 +42,12 @@ obj:
               widgets:
 
                 # ── Colonne gauche (290) ──
+                # [AI-CONTEXT] Rythme vertical UNIFORME (29/07, demande Axel « mal
+                # aligné ») : marge haute = gap = gap = marge basse = 26 px (4 x 26 +
+                # 3x128 = 488, exact). Avant : marge haute 0, marge basse 0, gaps
+                # 52 — les boutons touchaient les deux bords de la colonne (0 px de
+                # respiration), contrastant avec la colonne droite (rocker volume)
+                # qui est CENTREE et a donc 64 px de marge naturelle en haut/bas.
                 - obj:
                     align: LEFT_MID
                     x: 0
@@ -51,7 +57,7 @@ obj:
                     scrollable: false
                     widgets:
                       - button:
-                          y: 0
+                          y: 26
                           width: 290
                           height: 128
                           radius: 18
@@ -84,7 +90,7 @@ obj:
                             - label: { text: "\U000F0379", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_info }
                             - label: { text: "Source", align: LEFT_MID, x: 82, text_font: roboto_22, text_color: color_text }
                       - button:
-                          y: 360
+                          y: 334
                           width: 290
                           height: 128
                           radius: 18
@@ -215,11 +221,18 @@ obj:
                                   - label: { text: "OK", align: CENTER, text_font: roboto_45_b, text_color: color_text }
 
                       # ── 4 boutons apps dans les coins autour de la raquette ──
+                      # [AI-CONTEXT] Marge 8/8 SYMETRIQUE sur les 4 coins (29/07,
+                      # demande Axel « revois les positions »). Avant : x=5,y=4 en
+                      # haut mais x=5,y=0 en bas — flush contre le bord inferieur
+                      # de la colonne (0 px de marge), asymetrique avec le haut.
+                      # Marge au disque directionnel verifiee : 32,8 px sur les 4
+                      # boutons (calcul clamp centre-cercle -> rect, meme methode
+                      # que le garde-fou du pave directionnel).
                       # Netflix (haut-gauche) — rouge signature
                       - button:
                           align: TOP_LEFT
-                          x: 5
-                          y: 4
+                          x: 8
+                          y: 8
                           width: 100
                           height: 55
                           radius: 27
@@ -237,8 +250,8 @@ obj:
                       # Amazon Prime Video (haut-droite) — bleu signature
                       - button:
                           align: TOP_RIGHT
-                          x: 5
-                          y: 4
+                          x: 8
+                          y: 8
                           width: 100
                           height: 55
                           radius: 27
@@ -256,8 +269,8 @@ obj:
                       # Canal+ (bas-gauche) — violet signature
                       - button:
                           align: BOTTOM_LEFT
-                          x: 5
-                          y: 0
+                          x: 8
+                          y: 8
                           width: 100
                           height: 55
                           radius: 27
@@ -275,8 +288,8 @@ obj:
                       # HDMI PC (bas-droit) — vert signature
                       - button:
                           align: BOTTOM_RIGHT
-                          x: 5
-                          y: 0
+                          x: 8
+                          y: 8
                           width: 100
                           height: 55
                           radius: 27
