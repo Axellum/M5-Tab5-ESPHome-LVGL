@@ -33,7 +33,7 @@
 
 **Software apps and online services**
 
-- [ESPHome](https://esphome.io) ≥ 2025.9.3 (firmware framework)
+- [ESPHome](https://esphome.io) ≥ 2026.7.0 (firmware framework)
 - [LVGL](https://lvgl.io) 8.4 (UI, compiled into the firmware)
 - [Home Assistant](https://www.home-assistant.io) + Wyoming Whisper (STT) + Wyoming Piper (TTS)
 - [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) (optional, multi-agent voice routing)

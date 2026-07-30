@@ -30,8 +30,8 @@ graph TD
         API["tab5-api-logic.yaml<br/>484 lignes<br/>api: services: (contrat HA, 14 services)"]
         STY["tab5-styles.yaml<br/>339 lignes<br/>color:/font:/lvgl: style_definitions + chess_pieces_80"]
         GLOB["tab5-globals.yaml<br/>168 lignes<br/>globals: + rotateur carte centrale (8s, planning/pluie/alertes/info + 4 bandeaux HA)"]
-        SCR["tab5-scripts.yaml<br/>726+ lignes<br/>script: debounces + vocal + rotateur/dismiss + volet + popups + jeux open/close"]
-        LVGL["tab5-lvgl.yaml<br/>575+ lignes<br/>page_main + swipe prévisions + btns console/TV + !include jeux + sélecteur arcade"]
+        SCR["tab5-scripts.yaml<br/>1058 lignes<br/>script: debounces + vocal + rotateur/dismiss + volet + popups + jeux open/close"]
+        LVGL["tab5-lvgl.yaml<br/>709 lignes<br/>page_main + swipe prévisions + btns console/TV + !include jeux + sélecteur arcade"]
         IMU["tab5-imu.yaml<br/>136 lignes<br/>BMI270 motion: + poll adaptatif 10/30Hz + tap-to-wake"]
     end
 
@@ -49,7 +49,7 @@ graph TD
         TVPOP["tv_remote_popup.yaml (394L)"]
         ASSISTPOP["assistant_popup.yaml<br/>transcription STT + réponse Markdown + image"]
         MODAL["modal_header.yaml + modal_scrim.yaml<br/>chrome partagé v4 (ADR-0009)"]
-        GAMES["8× *_game.yaml + game_selector.yaml<br/>overlays plein écran arcade (exception ADR-0009)"]
+        GAMES["8× *_game.yaml + game_selector.yaml<br/>9 pages LVGL dédiées (skip: true)<br/>exception ADR-0009"]
     end
 
     subgraph CPP["C++ HMI (esphome: includes:)"]
@@ -157,19 +157,21 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 | `tab5-api-logic.yaml` | 484 | Le contrat réel avec HA : bloc `api: services:` (14 services). Chaque service `tab5_maj_*` reçoit un payload d'une automation HA et appelle une fonction `tab5_custom.cpp` via lambda (pattern : sync `g_central_ctx` ← globals, appel C++, write-back) | Contrat API HA↔Tab5 (clim, volet, planning, alertes météo France, probabilités UV/gel/neige, prévisions bulk, pluie 1h, panneau info, réponse vocale, alertes HA bulk, calendrier mois/jour) | `tab5_custom.h/.cpp`, IDs LVGL définis dans `tab5-lvgl.yaml`/`ui_components/*.yaml` |
 | `tab5-styles.yaml` | 339 | Thème "Dark Mode Slate" (glassmorphism) : tokens `color:`, déclarations `font:` (Roboto + MDI + police météo custom), `lvgl: style_definitions:` | Palette visuelle, typographie, styles réutilisables | Polices `Tab5/materialdesignicons-webfont.ttf`, `Tab5/IconeMeteo.ttf` |
 | `tab5-globals.yaml` | 168 | Tout l'état partagé entre fichiers (`globals:`) + l'`interval: 8s` qui fait tourner la carte centrale (planning/pluie/alertes/info + jusqu'à 4 bandeaux HA, actif seulement sur la fenêtre prévisions par défaut) | État global partagé, rotateur carte centrale | `tab5_custom.cpp` (`transition_widgets()`, `g_central_ctx`) |
-| `tab5-scripts.yaml` | 726 | Scripts ESPHome par familles : debounces (volume 150 ms, luminosité 200 ms, clim 250 ms), vocal (arm/disarm `Stop`, interrupt + ré-écoute, toggle assist, réponse vocale temporaire), rotateur central + dismiss (info, alertes HA paramétré slot 0-3), volet (fin de mouvement, feedback stop), popup lumière (`tab5_light_popup_show`), popup calendrier, popup assistant vocal (`tab5_assist_open/close/on_request/sync_settings/set_mode/set_text_size`). L'affichage temporaire du planning est en C++ (`show_temporary_planning()`) | Séquences temporisées, vocal, rotateur, popups | `globals:`, `tab5_custom.cpp`, `g_central_ctx` |
-| `tab5-lvgl.yaml` | 575 | Layout complet : page unique 1280×720 (`page_main`), swipe gauche/droite = pagination prévisions 0-4 (zone `y ≥ 333` uniquement), console via `btn_control_console` + popup TV via `btn_control_tv`, popup détails plantes via appui long, popup calendrier via appui long horloge, boutons statut/mode vocal (centralisés via `tab5_set_assist_mode`), carte centrale | Layout racine, navigation gestuelle | Tous les `ui_components/*.yaml`, `tab5_custom.cpp` (`handle_swipe_gesture`, `g_day_slots`, `g_hour_slots`, `g_central_ctx`) |
+| `tab5-scripts.yaml` | 1058 | Scripts ESPHome par familles : debounces (volume 150 ms, luminosité 200 ms, clim 250 ms), vocal (arm/disarm `Stop`, interrupt + ré-écoute, toggle assist, réponse vocale temporaire), rotateur central + dismiss (info, alertes HA paramétré slot 0-3), volet (fin de mouvement, feedback stop), popup lumière (`tab5_light_popup_show`), popup calendrier, popup assistant vocal (`tab5_assist_open/close/on_request/sync_settings/set_mode/set_text_size`). L'affichage temporaire du planning est en C++ (`show_temporary_planning()`) | Séquences temporisées, vocal, rotateur, popups | `globals:`, `tab5_custom.cpp`, `g_central_ctx` |
+| `tab5-lvgl.yaml` | 709 | Layout complet : page unique 1280×720 (`page_main`), swipe gauche/droite = pagination prévisions 0-4 (zone `y ≥ 333` uniquement), console via `btn_control_console` + popup TV via `btn_control_tv`, popup détails plantes via appui long, popup calendrier via appui long horloge, boutons statut/mode vocal (centralisés via `tab5_set_assist_mode`), carte centrale | Layout racine, navigation gestuelle | Tous les `ui_components/*.yaml`, `tab5_custom.cpp` (`handle_swipe_gesture`, `g_day_slots`, `g_hour_slots`, `g_central_ctx`) |
 
 ### 3.3 C++ core
 
 | Fichier | Lignes | Rôle exact | Fonctions clés |
 |---|---|---|---|
-| `tab5_custom.h` | 422 | Déclarations, structs (`CentralPanelCtx` [8 wrappers + 7 flags + current_panel], `DayForecastData`, `HourForecastData`, `WeatherHourSlot`, `WeatherDaySlot`, `MoistureSlotUI`, `PotDetailUI`, `HaAlertSlotUI`, `CalCellUI`, `CalDetailLineUI`), enum `PotMetric`, bits `CAL_BIT_*`, namespace `MeteoIcon::` (codes UTF-8 police météo), namespace `UIColor::` (palette sémantique — **miroir exact des tokens `color:` YAML, à garder synchro manuellement**) | — |
-| `tab5_custom.cpp` | 2086 | Toute la logique LVGL non-triviale, gardée contre les `lv_obj_t*` nuls (LVGL pas encore initialisé). Globals : `g_central_ctx`, `g_day_slots[5]`, `g_hour_slots[5]` (initialisés au boot) | `update_meteo_icon()` (icônes météo double-couche), `get_humidity_color()`/`get_temperature_color()`/`get_battery_color()` (gradients/échelles colorimétriques), `parse_and_update_heures_bulk()`/`parse_and_update_jours_bulk()` (parsing `strtok_r` in-place, garde OOM à 2048 octets), `refresh_daily_forecast()`/`refresh_hourly_forecast()`, `handle_swipe_gesture()` (pagination, zone `y ≥ 333`), `show_temporary_planning()` (affichage 6 s + restauration du panneau actif), `update_info_text_ui()` (panneau info, recolor conditionnel), `update_central_forecast_page_ui()` (overlay titre de page hors accueil), `highlight_button_border()` (surbrillance bordure bouton mode), `normalize_text_utf8()` (accents Latin-1→UTF-8 des textes HA), `update_light_card_ui()` (factorisée #T164, ex-triplée), `sort_and_update_moisture_slots()` (tri bubble 5→4 slots), `update_pots_popup_moisture_ui()`/`update_pot_metric_ui()` (popup détails plantes), `transition_widgets()` (animation glissement+fondu 450ms), `cal_render_month()`/`cal_store_month_data()`/`cal_render_day_detail()` (popup calendrier) |
+| `tab5_custom.h` | 698 | Déclarations, structs (`CentralPanelCtx` [8 wrappers + 7 flags + current_panel], `DayForecastData`, `HourForecastData`, `WeatherHourSlot`, `WeatherDaySlot`, `MoistureSlotUI`, `PotDetailUI`, `HaAlertSlotUI`, `CalCellUI`, `CalDetailLineUI`), enum `PotMetric`, bits `CAL_BIT_*`, namespace `MeteoIcon::` (codes UTF-8 police météo), namespace `UIColor::` (palette sémantique — **miroir exact des tokens `color:` YAML, à garder synchro manuellement**) | — |
+| `tab5_custom.cpp` | 2762 | Toute la logique LVGL non-triviale, gardée contre les `lv_obj_t*` nuls (LVGL pas encore initialisé). Globals : `g_central_ctx`, `g_day_slots[5]`, `g_hour_slots[5]` (initialisés au boot) | `update_meteo_icon()` (icônes météo double-couche), `get_humidity_color()`/`get_temperature_color()`/`get_battery_color()` (gradients/échelles colorimétriques), `parse_and_update_heures_bulk()`/`parse_and_update_jours_bulk()` (parsing `strtok_r` in-place, garde OOM à 2048 octets), `refresh_daily_forecast()`/`refresh_hourly_forecast()`, `handle_swipe_gesture()` (pagination, zone `y ≥ 333`), `show_temporary_planning()` (affichage 6 s + restauration du panneau actif), `update_info_text_ui()` (panneau info, recolor conditionnel), `update_central_forecast_page_ui()` (overlay titre de page hors accueil), `highlight_button_border()` (surbrillance bordure bouton mode), `normalize_text_utf8()` (accents Latin-1→UTF-8 des textes HA), `update_light_card_ui()` (factorisée #T164, ex-triplée), `sort_and_update_moisture_slots()` (tri bubble 5→4 slots), `update_pots_popup_moisture_ui()`/`update_pot_metric_ui()` (popup détails plantes), `transition_widgets()` (animation glissement+fondu 450ms), `cal_render_month()`/`cal_store_month_data()`/`cal_render_day_detail()` (popup calendrier) |
 
 **Règle d'architecture vérifiée et respectée dans le code** (`Tab5/README.md:44`) : les `sensor:`/`text_sensor:` YAML ne manipulent jamais `lv_obj_*` directement — ils appellent toujours une fonction `tab5_custom.cpp`. Confirmé par lecture de `tab5-sensors-diagnostics.yaml`/`tab5-sensors-domotique.yaml` (tous les `on_value:` appellent une fonction C++ nommée, sauf les cas triviaux de couleur d'icône à 2-3 lignes qui restent inline).
 
-### 3.4 Composants UI (`ui_components/*.yaml`, 21 fichiers inclus par `tab5-lvgl.yaml`)
+### 3.4 Composants UI (`ui_components/*.yaml` — 33 fichiers, dont 21 inclus directement par `tab5-lvgl.yaml`)
+
+Le tableau ci-dessous couvre les composants **domotique**. Les 9 autres fichiers sont traités à part : `game_selector.yaml` + les 8 `*_game.yaml` (§3.4bis), et les deux briques de chrome partagé `modal_scrim.yaml` / `modal_header.yaml` (ADR-0009) incluses avec `vars` par chaque popup.
 
 | Fichier | Lignes | Rôle | Statut factorisation |
 |---|---|---|---|
@@ -195,18 +197,36 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 | `calendar_popup.yaml` | 275 | Popup calendrier mensuel plein écran (1250×690) : grille 7×6 lundi-en-tête, navigation ◀/▶ + « Aujourd'hui », légende, sous-popup détail jour 780×540 ; grille calculée en local (SNTP), enrichie à la demande par `script.tab5_calendrier_mois`/`_jour` (package HA `tab5_calendar.yaml`) ; ouvert par appui long sur l'horloge (`btn_clock_calendar_zone`) | Cellules factorisées via `cal_day_cell.yaml` (42 instances) |
 | `cal_day_cell.yaml` | 44 | Template cellule jour (168×84, ids paramétrés `${idx}`) : numéro, heures de travail, pastilles RDV/anniversaire, fond vacances scolaires, bordure « aujourd'hui » | Réutilisé 42× |
 
-### 3.5 Composant matériel custom (`my_components/st7123/`)
+**Chrome modal partagé (ADR-0009)** — non listés ci-dessus car inclus avec `vars` par chaque popup, pas par `tab5-lvgl.yaml` :
 
-| Fichier | Lignes | Rôle | Statut |
-|---|---|---|---|
-| `st7123/__init__.py` | 6 | Déclaration du namespace ESPHome + dépendance `i2c` | Actif |
-| `st7123/touchscreen/st7123_touchscreen.cpp/.h` | 100 + 59 | Pilote tactile custom pour le contrôleur I2C ST7123 (jusqu'à 10 points de touche simultanés, registres `REG_GET_TOUCH_INFO`/`REG_GET_TOUCH`) | **Utilisé** — instancié dans `tab5-hardware.yaml` (`touchscreen: platform: st7123`) |
+| Fichier | Rôle |
+|---|---|
+| `modal_scrim.yaml` | Voile d'assombrissement (var `scrim_opa`, `close_lambda`) — un seul voile pour tous les popups |
+| `modal_header.yaml` | Barre de titre 52 px : icône + titre + croix de fermeture (vars `icon`, `title`, `close_btn_id`, `close_lambda`) |
 
-L'ancien sous-composant `st7123/binary_sensor/` (bouton physique, jamais instancié) a été **supprimé du dépôt** par la PR #15 (06/07/2026) — seul `touchscreen/` subsiste.
+### 3.4bis Composants Arcade (9 fichiers → 9 pages LVGL)
+
+Depuis `cbfe8d1` (PR #78), chaque jeu n'est plus un overlay empilé sur `page_main` mais **sa propre page LVGL** déclarée sous `pages:` avec `skip: true` (le swipe ne peut pas y naviguer). `game_selector.yaml` occupe `page_arcade`, les 8 `*_game.yaml` occupent `page_marble` … `page_draughts`.
+
+| Fichier | Rôle | Contenu YAML |
+|---|---|---|
+| `game_selector.yaml` | Sélecteur Arcade — grille régulière 4×2, cartes 298×252, colonnes `x = 20/334/648/962`, rangées `y = 132/402`. Point d'entrée unique : `btn_serre_games` (tap sur la température serre) → `tab5_arcade_open` | Grille complète en YAML |
+| `marble_game.yaml`, `arkanoid_game.yaml`, `pinball_game.yaml`, `go_game.yaml`, `trivia_game.yaml`, `chess_game.yaml`, `draughts_game.yaml` | Consoles — **4 conteneurs vides** chacune | Aucun widget de gameplay |
+| `lode_game.yaml` | « Coureur d'Or » — **5** conteneurs vides (un calque `pad` en plus pour le D-pad tactile) | Aucun widget de gameplay |
+
+Tout le contenu visuel est construit en C++ par `<Namespace>::open()`. Exception d'orientation : `pinball_game` bascule LVGL en portrait 720×1280 puis restaure `rotation: 270` à la fermeture — voir le bloc `[AI-CONTEXT]` « ORIENTATION » de `pinball_game.cpp`.
+
+### 3.5 Composant matériel custom (`my_components/st7123/`) — **supprimé**
+
+Le pilote tactile ST7123 était un composant ESPHome maison (`external_components`) tant qu'ESPHome ne le supportait pas. **Depuis ESPHome 2026.7.0, `st7123` est une plateforme officielle** : `tab5-hardware.yaml` déclare simplement `touchscreen: - platform: st7123`, sans `external_components:` ni code local.
+
+`Tab5/my_components/` n'est donc plus versionné, et le commentaire en tête de `tab5-hardware.yaml` signale que toute copie locale résiduelle peut être supprimée. Historique : l'ancien sous-composant `st7123/binary_sensor/` (bouton physique, jamais instancié) avait déjà été retiré par la PR #15 (06/07/2026).
 
 ### 3.6 Côté Home Assistant (`HomeAssistant_Config/`)
 
-Tous ces fichiers sont **gitignorés** (`.gitignore:20-23`) — ce sont les vrais fichiers de prod d'Axel, non versionnés dans le repo public. Seuls les `*_examples.yaml*` (placeholders génériques) sont trackés.
+Les trois fichiers ci-dessous sont **gitignorés** — ce sont les vrais fichiers de prod d'Axel, non versionnés dans le repo public. Ce qui est réellement livré : `automations_examples.yaml.example`, `scripts_examples.yaml`, `template_sensors_examples.yaml` (placeholders génériques), les 4 `packages/*.yaml` et `snippets/`.
+
+> Corrigé le 30/07/2026 : `.gitignore` listait aussi `automations_examples.yaml.example` — alors que ce fichier est suivi et destiné aux utilisateurs. La règle a été retirée et commentée pour éviter la récidive.
 
 | Fichier | Lignes | Rôle |
 |---|---|---|
@@ -218,10 +238,10 @@ Tous ces fichiers sont **gitignorés** (`.gitignore:20-23`) — ce sont les vrai
 
 | Fichier | Rôle |
 |---|---|
-| `.github/workflows/esphome-tab5.yml` | CI GitHub Actions : génère un `secrets.yaml` factice, compile via `esphome/build-action@v7.3.0`, upload le firmware en artifact |
+| `.github/workflows/esphome-tab5.yml` | CI GitHub Actions : génère un `secrets.yaml` factice, compile via `esphome/build-action@v8.0.0`, upload le firmware en artifact |
 | `README.md` (racine) | Doc utilisateur bilingue EN/FR : zones fonctionnelles de la page unique, choix d'architecture, quick start, carte de la documentation |
-| `Tab5/README.md` | **Réécrit le 05/07/2026, re-vérifié le 14/07/2026, complété le 19/07/2026**, description fichier-par-fichier + table des services API (14) + table des globals + 6 règles de code |
-| `docs/*.md` (10 fichiers) | `architecture.md`, `hardware.md`, `ui_design.md`, `voice_assistant.md`, `installation.md`, `screens.md`, `troubleshooting.md`, `debugging.md`, `related_projects.md`, `LVGL_PREMIUM_TEMPLATES.md` + `docs/decisions/` (8 ADR) + `docs/images/`. Les anciens rapports d'audit LLM ont été retirés de `docs/` (synthétisés en tâches #T161-#T169, cf. `audit_tab5/` côté workspace privé) |
+| `Tab5/README.md` | **Réécrit le 05/07/2026, re-vérifié le 14/07/2026, complété le 19/07/2026**, description fichier-par-fichier + table des services API (15) + table des globals + 6 règles de code |
+| `docs/*.md` (13 fichiers) | `architecture.md`, `hardware.md`, `ui_design.md`, `voice_assistant.md`, `installation.md`, `screens.md`, `demo_mode.md`, `troubleshooting.md`, `debugging.md`, `related_projects.md`, `hackster.md`, `hackster_paste_en.md`, `LVGL_PREMIUM_TEMPLATES.md` + `docs/decisions/` (9 ADR) + `docs/images/`. `docs/` ne contient que de la doc de référence : les anciens rapports d'audit LLM (synthétisés en #T161-#T169, cf. `audit_tab5/` côté workspace privé), les patchs de travail et les sauvegardes d'essais en ont été retirés |
 
 ---
 

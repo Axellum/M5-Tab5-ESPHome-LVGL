@@ -8,65 +8,51 @@ This folder contains the Home Assistant side of the Tab5 integration: automation
 
 These are **example files** — they reflect the author's own Home Assistant setup. You will need to adapt entity names to match your own installation.
 
-> **Production Freebox (Axel) — ne pas copier tel quel dans `packages/`**
->
-> Si `configuration.yaml` charge déjà `automation: !include automations.yaml`, `script: !include scripts.yaml` et `template: … !include_dir_merge_list template_sensors`, ces trois fichiers doivent être **fusionnés / inclus à la racine**, pas déposés dans `packages/tab5/`.
->
-> Un package HA (`!include_dir_named packages`) exige un **dictionnaire** avec des clés d'intégration (`automation:`, `script:`, `template:`). Copier une liste d'automations ou des scripts « nus » dans `packages/` provoque exactement les avertissements :
-> `expected a dictionary` et `Integration 'tab5_volet_action' not found`.
->
-> Seul `packages/tab5_health.yaml` est au format package valide. Le script `scripts/tab5_ha_sync/sync_to_freebox.ps1` ne copie vers `packages/tab5/` **que** avec `-CopyPackages` (déconseillé en prod).
+> **What is actually in a clone.** Only the `*_examples*` files and everything under `packages/` and `snippets/` are versioned. The author's real production files (`automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml`) are gitignored: the examples below are generated from them with placeholder entity IDs.
+
+> **Root include vs. `packages/` — pick the right one.** The three `*_examples*` files are **not** packages: they are a bare automation *list*, a bare script *dict* and a bare template *list*. Merge them into your existing `automations.yaml` / `scripts.yaml` / `template:` block. Dropping them into `packages/` gives you `expected a dictionary` and `Integration 'tab5_volet_action' not found`, because a HA package must be a dictionary keyed by integration (`automation:`, `script:`, `template:`).
+> Everything in `packages/` *is* in valid package format and goes there.
 
 ---
 
 ## Files
 
-### `automations_tab5.yaml`
-The main push automation. Triggered by state changes in Home Assistant, it pushes updated data to the Tab5 via native ESPHome service calls.
+### `automations_examples.yaml.example`
+The main push automation, with generic placeholder entity names. Triggered by state changes in Home Assistant, it pushes updated data to the Tab5 via native ESPHome service calls. This is the file to start from.
 
 What it pushes:
-- **Weather (7-day forecast):** on weather entity state change — queries Météo-France entities and serializes 7 × (icon code, max temp, min temp, condition) into a semicolon-delimited string
-- **Hourly rain chart:** on `sensor.next_rain` state change — builds a 60-value rain probability array from Météo-France's `v1/vision/rain` data
-- **Room temperatures and humidity:** on sensor state change — direct value push
-- **Climate state:** on climate entity state change — mode + target temp + current temp
-- **Calendar events:** on `calendar.sync` trigger — fetches up to 4 upcoming events from Google Calendar and formats them with title, time, and color tag
-- **Weather alerts:** on `sensor.weather_alert` state change — alert text + severity level
-- **Plant moisture:** on BLE sensor update — 5 moisture values + temperature
+- **Daily forecast (15 days):** on weather entity state change — serializes 15 × (index, day label, condition, min, max, weekend/holiday flags, work hours) into a `|`/`;`-delimited string sent to `tab5_maj_previsions_jours_bulk`
+- **Hourly forecast (15 slots):** three chunks of 5 through `tab5_maj_previsions_heures_bulk`
+- **Short-term rain chart:** on `sensor.*_next_rain` state change — **9** bars (`tab5_maj_pluie_1h`, one call per index 0–8, i.e. 0/5/10/…/55 min) built from Météo-France's `v1/vision/rain` data
+- **Current weather / probabilities:** `tab5_maj_meteo_actuelle` (condition, temperature, humidity) and `tab5_maj_probabilites` (UV, frost, snow)
+- **Climate state:** on climate entity state change — `tab5_maj_clim` (target, current, mode, preset, fan, swing)
+- **Shutter state:** `tab5_maj_volet_etat` — also arms the device-local “Stop” wake word while the shutter moves
+- **Info banner:** `tab5_maj_info_texte` (text, colour, dismiss id) — 3-day calendar recap or a weather-alert banner
+- **Météo-France vigilance:** `tab5_maj_alerte_meteo_france` — a single 11-field `|`-delimited payload
+- **HA alert queue:** `tab5_maj_alertes_ha_bulk` — up to 4 banners in the central rotator (see `packages/tab5_alerts.yaml`)
+
+Room temperatures, humidity, light states and plant moisture do **not** go through these services: they are “mirror” entities (`platform: homeassistant` in `Tab5/tab5-sensors-domotique.yaml`), which HA syncs automatically — nothing to write on the HA side.
 
 **Traffic pacing:** the automation uses `delay: 1s` between each push block and `delay: 150ms` within forecast loops. This prevents multiple large payloads from overwhelming the ESP32-P4's TCP socket buffer simultaneously with the active I2S audio stream.
 
-### `automations_examples.yaml.example`
-Same as above but with generic placeholder names. Start here if you want to build the automation from scratch for your own setup.
-
 ---
-
-### `scripts_tab5.yaml`
-Scripts called **by** the Tab5 (from YAML `button:` or `on_press:` blocks in the ESPHome config).
-
-Examples:
-- Toggle a specific light group
-- Adjust roller shutter position
-- Trigger a media player action
-
-These are simple pass-through scripts — the device sends a button press event, the script executes the corresponding HA action. This keeps the ESPHome code thin and the logic on the HA side where it belongs.
 
 ### `scripts_examples.yaml`
-Generic example versions of the same scripts.
+Scripts called **by** the Tab5 (from a `homeassistant.service:` in `Tab5/tab5-api-logic.yaml` or an LVGL `on_short_click:`), not the other way round. Simple pass-through — it keeps the ESPHome code thin and the logic on the HA side where it belongs.
+
+Currently just `allumer_leds`. **`tab5_volet_action` used to live here too and was moved to `packages/volet_serre_tracking.yaml`**: this file merges at the root while the package loads via `!include_dir_named packages`, and the install docs ask for both — so you ended up with two definitions of one script id and mismatched helper names, last one loaded winning without any HA warning. The package now owns the script *and* the two helpers it depends on.
 
 ---
 
-### `template_sensors_meteo_tab5.yaml`
-Template sensors that pre-process Météo-France data into strings the Tab5 expects.
+### `template_sensors_examples.yaml`
+Template sensors that pre-process Météo-France data into short strings the Tab5 expects.
 
-The main one is a sensor that generates a short weather sentence from the next-rain forecast:
+The main one generates a weather sentence from the next-rain forecast:
 - `"Pluie dans 10 min"` if rain is coming
 - `"Pas de pluie prévue"` if clear
 - `"Averses possibles"` for uncertain conditions
 
-This runs on the HA side rather than on the device to keep the C++ code simple. Add this to your `template:` block in `configuration.yaml` or in a dedicated `template.yaml` file.
-
-### `template_sensors_examples.yaml`
-Generic placeholder version.
+This runs on the HA side rather than on the device to keep the C++ code simple. Add it to your `template:` block in `configuration.yaml` or a dedicated `template.yaml`.
 
 ---
 
@@ -104,6 +90,20 @@ School holidays come from a **static Zone A table** (Bordeaux academy) verified 
 
 ---
 
+### `packages/tab5_alerts.yaml`
+Backend of the **HA alert queue** — panels 4 to 7 of the central rotating card. Provides the `input_text.tab5_alerts_dismissed` helper (the dismiss list), the `tab5_dismiss_alert` script the device calls when you tap a banner, and the automation that builds the `tab5_maj_alertes_ha_bulk` payload (max 4 banners, already-dismissed ids filtered out).
+
+Tapping a banner on screen removes it immediately and stores its id here, so a re-push of the same id stays hidden until HA sends a new one. `snippets/tab5_alerts_dismissed_input_text.yaml` is the same helper on its own, if you prefer declaring it in your existing `input_text:` block instead of loading the whole package.
+
+---
+
+### `packages/volet_serre_tracking.yaml`
+Helpers + central script for a roller shutter whose motor reports **no position and no end-stop** (typical cheap Tuya module). An `input_boolean` is armed for the measured travel time and an `input_text` carries the label shown on screen; the push automation forwards that label to `tab5_maj_volet_etat`.
+
+Adapt the `26 s` travel delay to your own shutter, and route every other shutter automation (sunrise/sunset, HA UI) through `script.tab5_volet_action` — otherwise the screen won't know the shutter moved.
+
+---
+
 ## Adapting to your setup
 
 Replace these placeholders throughout the files:
@@ -127,18 +127,20 @@ After editing:
 ## How the push works (quick summary)
 
 ```
-HA state change (e.g., outdoor temp sensor updates)
+HA state change (e.g., the weather entity updates)
   ↓
 Automation trigger fires
   ↓
-HA calls: service: esphome.tab5_ha_hmi_tab5_update_meteo_7j
+HA calls: action: esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk
           data:
-            payload: "0;Soleil;28;15;1;Nuageux;24;13;..."
+            payload: "0|Auj 30|sunny|16.0|28.0|0|0|0|09h00 - 17h30;1|Ven 31|..."
   ↓
-ESPHome receives the service call
+ESPHome receives the service call (Tab5/tab5-api-logic.yaml)
   ↓
-C++ function parse_meteo_7j() runs, updates LVGL labels
+C++ parse_and_update_jours_bulk() runs, updates the LVGL labels in one pass
 ```
+
+The service name seen by HA is `esphome.<device_name>_<service>` — with the stock `name: tab5-ha-hmi`, `tab5_maj_previsions_jours_bulk` becomes `esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk`. Rename the device and every call in the automation has to follow.
 
 The device never polls. It only receives. When nothing changes in HA, the device uses near-zero CPU.
 
@@ -154,42 +156,46 @@ Ce dossier contient le côté Home Assistant de l'intégration Tab5 : automation
 
 Ce sont des **fichiers d'exemple** — ils reflètent le setup Home Assistant de l'auteur. Vous devrez adapter les noms d'entités pour correspondre à votre propre installation.
 
+> **Ce qu'un clone contient réellement.** Seuls les fichiers `*_examples*` et tout ce qui est sous `packages/` et `snippets/` sont versionnés. Les vrais fichiers de production de l'auteur (`automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml`) sont gitignorés : les exemples en sont dérivés avec des IDs d'entités placeholder.
+
+> **Include à la racine ou `packages/` — ne pas confondre.** Les trois fichiers `*_examples*` ne sont **pas** des packages : ce sont une *liste* d'automations, un *dict* de scripts et une *liste* de templates, nus. Fusionnez-les dans vos `automations.yaml` / `scripts.yaml` / bloc `template:`. Les déposer dans `packages/` produit exactement `expected a dictionary` et `Integration 'tab5_volet_action' not found`, car un package HA doit être un dictionnaire à clés d'intégration (`automation:`, `script:`, `template:`).
+> Tout ce qui est dans `packages/` est, lui, au bon format et va bien là.
+
 ---
 
 ## Fichiers
 
-### `automations_tab5.yaml`
-L'automatisation push principale. Déclenchée par les changements d'état dans Home Assistant, elle pousse les données mises à jour vers le Tab5 via des appels de service ESPHome natifs.
+### `automations_examples.yaml.example`
+L'automatisation push principale, avec des noms d'entités placeholder. Déclenchée par les changements d'état dans Home Assistant, elle pousse les données vers le Tab5 via des appels de service ESPHome natifs. C'est le fichier par lequel commencer.
 
 Ce qu'elle pousse :
-- **Météo (prévisions 7 jours) :** sur changement d'état de l'entité météo — interroge les entités Météo-France et sérialise 7 × (code icône, temp max, temp min, condition) en chaîne délimitée par des points-virgules
-- **Graphique pluie horaire :** sur changement de `sensor.next_rain` — construit un tableau de 60 valeurs de probabilité de pluie
-- **Températures et humidité des pièces :** sur changement de capteur — push direct de valeur
-- **État climatisation :** sur changement de l'entité climate — mode + temp cible + temp actuelle
-- **Événements calendrier :** sur déclencheur `calendar.sync` — récupère jusqu'à 4 événements Google Calendar prochains formatés avec titre, heure et tag couleur
-- **Alertes météo :** sur changement de `sensor.weather_alert` — texte d'alerte + niveau de sévérité
-- **Humidité plantes :** sur mise à jour capteur BLE — 5 valeurs d'humidité + température
+- **Prévisions journalières (15 jours) :** sur changement d'état de l'entité météo — sérialise 15 × (index, libellé jour, condition, min, max, drapeaux week-end/férié, heures de travail) en chaîne délimitée `|`/`;` vers `tab5_maj_previsions_jours_bulk`
+- **Prévisions horaires (15 créneaux) :** trois chunks de 5 via `tab5_maj_previsions_heures_bulk`
+- **Graphe de pluie court terme :** sur changement de `sensor.*_next_rain` — **9** barres (`tab5_maj_pluie_1h`, un appel par index 0–8, soit 0/5/10/…/55 min) construites depuis `v1/vision/rain` de Météo-France
+- **Météo actuelle / probabilités :** `tab5_maj_meteo_actuelle` (condition, température, humidité) et `tab5_maj_probabilites` (UV, gel, neige)
+- **État climatisation :** `tab5_maj_clim` (cible, actuelle, mode, preset, ventilation, oscillation)
+- **État volet :** `tab5_maj_volet_etat` — arme aussi le wake word local « Stop » pendant le mouvement
+- **Bandeau info :** `tab5_maj_info_texte` (texte, couleur, id de dismiss) — récap calendrier 3 jours ou bannière d'alerte météo
+- **Vigilance Météo-France :** `tab5_maj_alerte_meteo_france` — un seul payload à 11 champs délimités `|`
+- **File d'alertes HA :** `tab5_maj_alertes_ha_bulk` — jusqu'à 4 bandeaux dans le rotateur central (voir `packages/tab5_alerts.yaml`)
+
+Les températures/humidités des pièces, les états de lumière et l'humidité des plantes ne passent **pas** par ces services : ce sont des entités « miroir » (`platform: homeassistant` dans `Tab5/tab5-sensors-domotique.yaml`), synchronisées automatiquement par HA — rien à écrire côté HA.
 
 **Traffic pacing :** l'automatisation utilise `delay: 1s` entre chaque bloc push et `delay: 150ms` dans les boucles de prévisions. Cela empêche plusieurs gros payloads de saturer le buffer de sockets TCP de l'ESP32-P4 simultanément avec le flux audio I2S actif.
 
 ---
 
-### `scripts_tab5.yaml`
-Scripts appelés **par** le Tab5 (depuis des blocs `button:` ou `on_press:` dans la config ESPHome).
+### `scripts_examples.yaml`
+Scripts appelés **par** le Tab5 (depuis un `homeassistant.service:` de `Tab5/tab5-api-logic.yaml` ou un `on_short_click:` LVGL), et pas l'inverse. Pass-through simple — ça garde le code ESPHome léger et la logique côté HA où est sa place.
 
-Exemples :
-- Basculer un groupe de lumières spécifique
-- Ajuster la position d'un volet roulant
-- Déclencher une action media player
-
-Ce sont des scripts de pass-through simples — l'appareil envoie un événement de pression de bouton, le script exécute l'action HA correspondante. Ça garde le code ESPHome léger et la logique côté HA où est sa place.
+Aujourd'hui, il ne contient que `allumer_leds`. **`tab5_volet_action` y vivait aussi et a été déplacé dans `packages/volet_serre_tracking.yaml`** : ce fichier se fusionne à la racine tandis que le package se charge via `!include_dir_named packages`, et la doc d'installation demande les deux — on obtenait donc deux définitions du même script id avec des helpers incohérents, le dernier chargé gagnant sans le moindre avertissement HA. Le package porte désormais le script **et** les deux helpers dont il dépend.
 
 ---
 
-### `template_sensors_meteo_tab5.yaml`
-Template sensors qui pré-traitent les données Météo-France en chaînes attendues par le Tab5.
+### `template_sensors_examples.yaml`
+Template sensors qui pré-traitent les données Météo-France en chaînes courtes attendues par le Tab5.
 
-Le principal génère une courte phrase météo depuis les prévisions de pluie :
+Le principal génère une phrase météo depuis les prévisions de pluie :
 - `"Pluie dans 10 min"` si de la pluie arrive
 - `"Pas de pluie prévue"` si dégagé
 - `"Averses possibles"` pour les conditions incertaines
@@ -232,6 +238,20 @@ Les vacances scolaires viennent d'une **table statique Zone A** (académie de Bo
 
 ---
 
+### `packages/tab5_alerts.yaml`
+Backend de la **file d'alertes HA** — panneaux 4 à 7 de la carte centrale rotative. Fournit le helper `input_text.tab5_alerts_dismissed` (liste de dismiss), le script `tab5_dismiss_alert` que l'appareil appelle au tap sur un bandeau, et l'automatisation qui construit le payload `tab5_maj_alertes_ha_bulk` (4 bandeaux max, ids déjà masqués filtrés).
+
+Un tap sur un bandeau le retire tout de suite et mémorise son id ici : un re-push du même id reste masqué tant que HA n'envoie pas un id différent. `snippets/tab5_alerts_dismissed_input_text.yaml` contient le helper seul, si vous préférez le déclarer dans votre bloc `input_text:` existant plutôt que charger tout le package.
+
+---
+
+### `packages/volet_serre_tracking.yaml`
+Helpers + script central pour un volet dont le moteur ne renvoie **ni position ni fin de course** (module Tuya bas de gamme typique). Un `input_boolean` est armé pendant la durée de course mesurée et un `input_text` porte le libellé affiché à l'écran ; l'automatisation push relaie ce libellé vers `tab5_maj_volet_etat`.
+
+Adaptez le délai de course de `26 s` à votre volet, et faites passer toutes vos autres automatisations de volet (lever/coucher du soleil, UI HA) par `script.tab5_volet_action` — sinon l'écran ne saura pas que le volet a bougé.
+
+---
+
 ## Adapter à votre setup
 
 Remplacez ces placeholders dans les fichiers :
@@ -252,17 +272,19 @@ Après édition : dans HA, allez dans **Outils de développement → YAML → Re
 ## Comment fonctionne le push (résumé rapide)
 
 ```
-Changement d'état HA (ex: capteur temp extérieure se met à jour)
+Changement d'état HA (ex: l'entité météo se met à jour)
   ↓
 Déclencheur d'automatisation se déclenche
   ↓
-HA appelle : service: esphome.tab5_ha_hmi_tab5_update_meteo_7j
+HA appelle : action: esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk
              data:
-               payload: "0;Soleil;28;15;1;Nuageux;24;13;..."
+               payload: "0|Auj 30|sunny|16.0|28.0|0|0|0|09h00 - 17h30;1|Ven 31|..."
   ↓
-ESPHome reçoit l'appel de service
+ESPHome reçoit l'appel de service (Tab5/tab5-api-logic.yaml)
   ↓
-La fonction C++ parse_meteo_7j() s'exécute, met à jour les labels LVGL
+La fonction C++ parse_and_update_jours_bulk() s'exécute et met à jour tous les labels LVGL en une passe
 ```
+
+Le nom vu par HA est `esphome.<nom_appareil>_<service>` — avec le `name: tab5-ha-hmi` livré, `tab5_maj_previsions_jours_bulk` devient `esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk`. Renommez l'appareil et tous les appels de l'automatisation doivent suivre.
 
 L'appareil ne poll jamais. Il reçoit seulement. Quand rien ne change dans HA, l'appareil utilise un CPU quasi nul.

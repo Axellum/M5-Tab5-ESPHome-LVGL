@@ -22,16 +22,23 @@ home-assistant_*.log
 # Configurations et logs locaux ESPHome
 config_dump.yaml
 esphome_live_logs.txt
-HomeAssistant_Config/automations_examples.yaml.example
+
+# Config HA reelle (privee) — les pendants publics *_examples.yaml* sont, eux,
+# versionnes : ne JAMAIS les ajouter ici (automations_examples.yaml.example y a
+# figure par erreur, alors qu'il est suivi et livre aux utilisateurs).
 HomeAssistant_Config/automations_tab5.yaml
 HomeAssistant_Config/scripts_tab5.yaml
 HomeAssistant_Config/template_sensors_meteo_tab5.yaml
+
+# Audio TTS experimental, anterieur au pipeline Voice HA — inutilise par le firmware
 Tab5/tts_library/
 Tab5/tts_library_v2/
 
-# Cache TTS Piper local (HA / moteur) — pas utilisé par le firmware
+# Cache TTS Piper local (HA / moteur) — pas utilise par le firmware
 audio_lib/
 
-# Doublon récursif accidentel (ne jamais versionner)
+# Garde-fou : lien symbolique recursif Tab5/Tab5 -> Tab5 cree par accident
+# (E: est une jonction vers H:). Supprime le 30/07/2026 ; la regle reste pour
+# que la recidive ne soit jamais versionnee.
 Tab5/Tab5/
 

@@ -10,7 +10,9 @@ This folder contains the ESPHome configuration packages and the C++ source files
 
 The entry point is `../tab5-ha-hmi.yaml` at the repository root. It loads `substitutions` from `Tab5/user_entities.yaml` (gitignored — copy `user_entities.example.yaml` and edit your HA entity IDs), declares the `on_boot` sequence, and the `packages:` import list for everything in this folder.
 
-**Screen layout:** a single 1280×720 page (`page_main` in `tab5-lvgl.yaml`), not multiple pages. Navigation is by touch (clim/light/TV-remote popups, diagnostics console via the `btn_control_console` button, top right) and left/right swipes on the lower band of the screen (`y ≥ 333`) to cycle the 5 forecast pages (2 hourly + 3 daily windows). Since the 14/07/2026 swipe rework, the console is **not** opened by swipe anymore.
+**Screen layout:** the whole dashboard lives on a single 1280×720 page (`page_main` in `tab5-lvgl.yaml`) — every home-automation feature is a popup or a layer on it, never a separate screen. Navigation is by touch (clim/light/TV-remote/assistant/calendar/plants popups, diagnostics console via the `btn_control_console` button, top right) and left/right swipes on the lower band of the screen (`y ≥ 333`) to cycle the 5 forecast pages (2 hourly + 3 daily windows). Since the 14/07/2026 swipe rework, the console is **not** opened by swipe anymore.
+
+The only other LVGL pages are the **9 gaming ones** (`page_arcade` + one per console), all declared `skip: true` so swipe navigation can never reach them — see the Arcade section below.
 
 ---
 
@@ -50,10 +52,14 @@ Reusable ESPHome `script:` blocks, grouped by family: **debounces** (`tab5_debou
 All LVGL `style_definitions` (glassmorphism "Slate" theme) + font declarations (Roboto sizes, MDI icon sizes, weather icon font). Color tokens live in `UIColor::` (`tab5_custom.h`) — **never hardcode a hex color in a YAML lambda**, add a token instead.
 
 ### `tab5-lvgl.yaml`
-The single-page layout: clock/date, status icons, quick-action buttons, climate card, moisture card, central rotating card, 5 forecast cards (daily/hourly), swipe gesture handling.
+The dashboard layout on `page_main`: clock/date, status icons, quick-action buttons, climate card, moisture card, central rotating card, 5 forecast cards (daily/hourly), swipe gesture handling — plus the 9 gaming `pages:` entries (`page_arcade` + one per console, all `skip: true`).
 
 ### `ui_components/*.yaml`
-Included by `tab5-lvgl.yaml`: `climate_card.yaml`/`climate_popup.yaml` (near-fullscreen 1250×690 modal in 3 glass cards: stacked HVAC modes Froid/Chaud/Sec/Ventilation/Éteint, 320 px thermostat arc with optimistic target readout and a debounced `climate.set_temperature` + room temperature line, presets Éco/Boost + Silence + airflow Oscillation/Brise `windnice`), `light_popup.yaml` (near-fullscreen 1250×690 modal in 3 glass cards: Chambre/Salon/LEDs selector + On/Off + all-off, 320 px brightness arc with live % readout synced from the HA `brightness` attribute + 10/35/65/100 % shortcuts and a debounced `light.turn_on`, 3 named whites + 12 round color swatches; opened via `script.tab5_light_popup_show`), `console_sys.yaml` (4 glass cards: memory/network/system diagnostics, volume, and a management card — screen re-push, automation reload, HA restart and device reboot, the last two behind confirm overlays), `tv_remote_popup.yaml` (near-fullscreen 1230×670 Samsung remote: power/pad/volume/channels/playback row via `remote.send_command` on `${entity_tv_remote}`, opened by the TV button or a long-press on the PC card), `pots_popup.yaml` + `pot_detail_card.yaml` (near-fullscreen 1250×690 plant-details modal: 5 **fixed** glass cards — card N = sensor `moisture_N`, same icons as the dashboard — with soil-moisture %, watering status and Fertility EC / Light / Temperature / Battery rows, values pushed continuously by `update_pots_popup_moisture_ui()`/`update_pot_metric_ui()`; opened by a long-press on the dashboard moisture slots via the invisible `btn_pots_detail_zone`), `calendar_popup.yaml` + `cal_day_cell.yaml` (near-fullscreen 1250×690 monthly calendar: 7×6 Monday-first grid of 42 templated cells with work hours inside the cells, public-holiday/school-holiday/appointment/birthday markers, ◀ month ▶ + "Aujourd'hui" navigation, and a 780×540 day-detail sub-popup; the grid itself is computed **locally** from SNTP (`cal_render_month()`) and HA enriches each month on demand via `script.tab5_calendrier_mois`/`_jour` — opened by a long-press on the clock via the invisible `btn_clock_calendar_zone`), `forecast_daily.yaml`/`forecast_hourly.yaml`, `moisture_sensors.yaml`, `switches_card.yaml`.
+Included by `tab5-lvgl.yaml`: `climate_card.yaml`/`climate_popup.yaml` (near-fullscreen 1250×690 modal in 3 glass cards: stacked HVAC modes Froid/Chaud/Sec/Ventilation/Éteint, 320 px thermostat arc with optimistic target readout and a debounced `climate.set_temperature` + room temperature line, presets Éco/Boost + Silence + airflow Oscillation/Brise `windnice`), `light_popup.yaml` (near-fullscreen 1250×690 modal in 3 glass cards: Chambre/Salon/LEDs selector + On/Off + all-off, 320 px brightness arc with live % readout synced from the HA `brightness` attribute + 10/35/65/100 % shortcuts and a debounced `light.turn_on`, 3 named whites + 12 round color swatches; opened via `script.tab5_light_popup_show`), `console_sys.yaml` (4 glass cards: memory/network/system diagnostics, volume, and a management card — screen re-push, automation reload, HA restart and device reboot, the last two behind confirm overlays), `tv_remote_popup.yaml` (near-fullscreen 1230×670 Samsung remote: power/pad/volume/channels/playback row via `remote.send_command` on `${entity_tv_remote}`, opened by the TV button or a long-press on the PC card), `pots_popup.yaml` + `pot_detail_card.yaml` (near-fullscreen 1250×690 plant-details modal: 5 **fixed** glass cards — card N = sensor `moisture_N`, same icons as the dashboard — with soil-moisture %, watering status and Fertility EC / Light / Temperature / Battery rows, values pushed continuously by `update_pots_popup_moisture_ui()`/`update_pot_metric_ui()`; opened by a long-press on the dashboard moisture slots via the invisible `btn_pots_detail_zone`), `calendar_popup.yaml` + `cal_day_cell.yaml` (near-fullscreen 1250×690 monthly calendar: 7×6 Monday-first grid of 42 templated cells with work hours inside the cells, public-holiday/school-holiday/appointment/birthday markers, ◀ month ▶ + "Aujourd'hui" navigation, and a 780×540 day-detail sub-popup; the grid itself is computed **locally** from SNTP (`cal_render_month()`) and HA enriches each month on demand via `script.tab5_calendrier_mois`/`_jour` — opened by a long-press on the clock via the invisible `btn_clock_calendar_zone`), `assistant_popup.yaml` (near-fullscreen 1250×690 voice-assistant modal: left column = settings — Domotique/Discussion brain selector, Ok Nabu toggle, mute, volume, A-/A/A+ text size; right column = the STT transcription and the Markdown-rendered LLM reply, with an on-demand `online_image` slot fed by `tab5_assist_reponse`), `forecast_daily.yaml`/`forecast_hourly.yaml`, `moisture_sensors.yaml`, `switches_card.yaml`, `game_selector.yaml` + the 8 `*_game.yaml` (see the Arcade section — each is the sole widget of its own LVGL page).
+
+Two of them are **shared chrome**, not standalone components: `modal_scrim.yaml` (the dimming veil, `scrim_opa` var) and `modal_header.yaml` (icon + title + close cross, 52 px bar). Every popup includes them via `!include { file: …, vars: {…} }` — that is ADR-0009, and the games are the documented exception.
+
+The remaining files are **parametrized sub-templates** included with `vars` from the components above rather than from `tab5-lvgl.yaml`: `climate_hvac_mode_btn.yaml` (×4), `climate_preset_toggle_btn.yaml` (×2), `forecast_day_title_tab.yaml`/`forecast_day_temp_tab.yaml` (×5), `forecast_hour_card.yaml` (×5), `switch_card_title_tab.yaml`/`switch_card_state_tab.yaml` (×3), `light_color_preset_btn.yaml` (×12), `pot_detail_card.yaml` (×5), `cal_day_cell.yaml` (×42). 21 files are included directly by `tab5-lvgl.yaml`, 33 exist in total.
 
 ### `tab5_custom.h` / `tab5_custom.cpp`
 All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get_humidity_color()`, `parse_and_update_heures_bulk()`/`parse_and_update_jours_bulk()`, `sort_and_update_moisture_slots()`, `transition_widgets()`, `highlight_button_border()`. **Rule: sensors/services should only read HA state and call these C++ functions — never manipulate `lv_obj_*` directly from a `sensor:`/`text_sensor:` lambda** (keeps LVGL logic in one place, testable and greppable).
@@ -73,12 +79,13 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 | `tab5_maj_meteo_actuelle` | condition, temperature, humidite | Icône pluie prédictive + hygrométrie (l'ancienne grosse icône météo centrale a été retirée de l'UI) |
 | `tab5_maj_probabilites` | uv, gel, neige (strings) | Bascule l'icône pluie prédictive en flocon si probabilité de neige ≥ 5 |
 | `tab5_maj_pluie_1h` | index_5mn, intensite (strings) | Une barre du graphe pluie 1h (9 barres) ; met à jour `has_rain` |
-| `tab5_maj_info_texte` | texte, couleur (strings) | 4ᵉ panneau du rotateur : alerte météo (Rouge/Orange) ou résumé santé HA 1 ligne — MAJ en attente, erreurs, indispos (`update_info_text_ui()`) |
+| `tab5_maj_info_texte` | texte, couleur, meteo_id (strings) | 4ᵉ panneau du rotateur : alerte météo (Rouge/Orange) ou résumé santé HA 1 ligne — MAJ en attente, erreurs, indispos (`update_info_text_ui()`). `meteo_id` = identifiant de dismiss au tap ; vide = bandeau non masquable. **Les 3 variables sont obligatoires côté appelant** |
 | `tab5_maj_previsions_heures_bulk` | payload (string) | 5 cartes prévisions horaires |
 | `tab5_maj_previsions_jours_bulk` | payload (string) | 5 cartes prévisions journalières (fenêtre glissante selon `forecast_page_index`) |
 | `tab5_maj_reponse_vocale` | texte (string) | Affiche temporairement la réponse vocale dans le bandeau central (`tab5_show_vocal_response`) |
+| `tab5_assist_reponse` | texte, image_url (strings) | Réponse « riche » du moteur pour le popup Assistant : Markdown (tableaux alignés en monospace, gras, code) + URL d'image optionnelle téléchargée à la demande (`online_image`). `image_url` vide = zone image masquée. Ouvre le popup automatiquement |
 | `tab5_maj_alertes_ha_bulk` | payload (string) | Jusqu'à 4 bandeaux d'alertes/infos HA, un panneau du rotateur chacun, tap-to-dismiss local (`parse_and_update_ha_alerts_bulk()`) |
-| `tab5_maj_calendrier_mois` | annee, mois, codes, heures (strings) | Popup calendrier : bitmask 2 hex/jour (travail/férié/vacances scolaires/RDV/anniversaire) + 31 champs d'heures de travail — mis en cache, re-rendu si le mois est affiché (`cal_store_month_data()`/`cal_render_month()`) |
+| `tab5_maj_calendrier_mois` | annee, mois, codes, heures, details (strings) | Popup calendrier : bitmask 2 hex/jour (travail/férié/vacances scolaires/RDV/anniversaire) + 31 champs d'heures de travail + libellés de détail — mis en cache, re-rendu si le mois est affiché (`cal_store_month_data()`/`cal_render_month()`) |
 | `tab5_maj_calendrier_jour` | date, payload (strings) | Popup calendrier : lignes de détail du jour tapé "type\|texte;..." (`cal_render_day_detail()`), ignoré si le détail affiché a changé |
 
 ## Globals principaux (`tab5-globals.yaml`)
@@ -107,16 +114,20 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 5. **Toute nouvelle carte/widget répété ≥3 fois** (météo, switches...) doit passer par une fonction C++ builder paramétrée plutôt qu'un copier-coller YAML (cf. refacto architecture en cours).
 6. Avant de committer : `python -m esphome compile tab5-ha-hmi.yaml` doit réussir (toolchain déjà en cache localement, ~20-45s).
 7. **Tout popup modal réutilise le chrome partagé** (ADR-0009) : `modal_scrim.yaml` (var `scrim_opa`) + `modal_header.yaml` (icône, titre, croix — barre de 52 px, corps à `y: ${modal_body_y}`), carte dimensionnée par `${modal_card_w}`/`${modal_card_h}`. Jamais de voile, de titre ou de croix réécrits à la main ; les boutons d'options d'en-tête restent des frères en `y: 4, height: 44`. Vérification : `python scripts/check_tab5_modal_chrome.py` (dépôt racine du workspace).
-   **Exceptions (overlays de jeu)** : les 8 `*_game.yaml` de la section Arcade ci-dessous. Flux plein écran — pas de garde-fou modal (ni `style_modal_card`, ni `color_modal_scrim`, ni glyphe de croix).
+   **Exceptions (pages de jeu)** : les 8 `*_game.yaml` de la section Arcade ci-dessous, plus `game_selector.yaml`. Ce ne sont pas des popups posés sur `page_main` mais des **pages LVGL autonomes** en flux plein écran — pas de garde-fou modal (ni `style_modal_card`, ni `color_modal_scrim`, ni glyphe de croix).
 
 ---
 
 ## Arcade — les 8 consoles
 
-Toutes les consoles suivent la **même architecture** : overlay plein écran
-1280×720 (exception ADR-0009), YAML réduit à des conteneurs vides, tout le
-contenu construit en C++, `lv_timer` créé à l'ouverture et détruit à la
-fermeture, persistance NVS, **zéro dépendance Home Assistant ou réseau**.
+Toutes les consoles suivent la **même architecture** : chacune est sa **propre
+page LVGL** plein écran 1280×720 (`page_marble`, `page_chess`… déclarées
+`skip: true` dans `tab5-lvgl.yaml`, pour que le swipe ne puisse pas y naviguer)
+— et non un overlay empilé sur `page_main`, comme c'était le cas avant la
+migration en pages (`cbfe8d1`). Exception ADR-0009 : pas de chrome modal. YAML
+réduit à des conteneurs vides, tout le contenu construit en C++, `lv_timer` créé
+à l'ouverture et détruit à la fermeture, persistance NVS, **zéro dépendance Home
+Assistant ou réseau**.
 
 **Une exception à l'orientation** : « Neon Apron » (#3) bascule LVGL en
 **portrait 720×1280** à l'ouverture et restaure `rotation: 270` à la fermeture —
@@ -136,16 +147,20 @@ touche à l'orientation ; voir sa section plus bas avant d'en écrire une autre.
 
 ### Page Arcade (`ui_components/game_selector.yaml`)
 
-Grille **régulière 4 × 2**, toutes les cartes au même format (298 × 252).
-Colonnes `x = 20 / 334 / 648 / 962`, rangées `y = 132 / 402`. Ouverte par la
-zone tactile sur la température de la serre (`btn_serre_games`, dans
-`climate_card.yaml`).
+Page LVGL dédiée `page_arcade`. Grille **régulière 4 × 2**, toutes les cartes au
+même format (298 × 252). Colonnes `x = 20 / 334 / 648 / 962`, rangées
+`y = 132 / 402`. **Point d'entrée unique** : la zone tactile sur la température
+de la serre (`btn_serre_games`, dans `climate_card.yaml`) → `tab5_arcade_open`.
+La croix en haut à droite du sélecteur ramène à `page_main`.
 
 Chaque carte fait **trois** choses, dans cet ordre :
 
 1. `script.execute: tab5_games_close_all` — ferme le jeu en cours ;
-2. `animate_popup_close(...)` — referme le sélecteur ;
-3. `script.execute: tab5_<jeu>_open` — ouvre la console.
+2. `lvgl.page.show: page_<jeu>` — navigue vers la page du jeu ;
+3. `script.execute: tab5_<jeu>_open` — construit et ouvre la console.
+
+Ne pas recopier la liste des fermetures dans les cartes : elle vit dans
+`tab5_games_close_all` (`tab5-scripts.yaml`), un seul endroit à maintenir.
 
 ### Règles à respecter pour ajouter une 9ᵉ console
 
@@ -155,8 +170,11 @@ oubli et le jeu est invisible, ou le firmware ne compile pas :
 1. `tab5-ha-hmi.yaml` → `includes:` : **tous** les `.h` et `.cpp`, y compris les
    en-têtes de données inclus par le `.cpp` (c'est ce qui manquait pour
    `trivia_questions.h`, et la compilation échouait dessus) ;
-2. `tab5-lvgl.yaml` → `!include ui_components/<jeu>_game.yaml`, **avant**
-   `game_selector.yaml` (le sélecteur doit se dessiner au-dessus) ;
+2. `tab5-lvgl.yaml` → une nouvelle entrée sous `pages:` : `- id: page_<jeu>` avec
+   `skip: true` et `scrollbar_mode: "OFF"`, dont l'unique widget est
+   `!include ui_components/<jeu>_game.yaml`. Le `skip: true` n'est pas
+   cosmétique : sans lui, un swipe sur le dashboard peut atterrir sur la page du
+   jeu, timer non démarré et pointeurs non injectés ;
 3. `tab5-scripts.yaml` → script `tab5_<jeu>_open` qui injecte les pointeurs LVGL ;
 4. `tab5-scripts.yaml` → ajouter `<Namespace>::close()` dans
    **`tab5_games_close_all`** (liste unique, ne jamais la recopier ailleurs) ;
@@ -178,8 +196,8 @@ Petit roguelite de bille piloté à l'inclinaison (BMI270), **plein écran 1280�
 
 | Action | Où |
 |---|---|
-| Ouvrir | Console **GESTION** → bouton « Fil d'Or » · **ou** long-press sur la bande centrale (bandeau planning ou bandeau pluie) |
-| Quitter | Hub du jeu → « Quitter » (retour propre au dashboard : timer arrêté, run banquée, overlay masqué) |
+| Ouvrir | Sélecteur Arcade → carte « Fil d'Or » (slot 1) |
+| Quitter | Hub du jeu → « Quitter » (retour propre à `page_arcade` : timer arrêté, run banquée) |
 | Pause | **Toucher le bandeau HUD** pendant une partie (il n'y a volontairement pas de croix : le jeu est un flux plein cadre) |
 | Calibrer | Hub → **Réglages** → « Calibrer à plat », ou Pause → « Recalibrer à plat ». Poser la tablette **puis** appuyer. |
 
@@ -269,8 +287,8 @@ Casse-briques style Arkanoid / Breakout, **plein écran 1280×720**, esthétique
 
 | Action | Où |
 |---|---|
-| Ouvrir | **Long-press sur la barre de pagination** (les 5 petits points sous le panneau central météo) |
-| Quitter | Hub du jeu → « Quitter » (retour dashboard : timer arrêté, score sauvegardé, overlay masqué) |
+| Ouvrir | Sélecteur Arcade → carte « Arcanoïde » (slot 2) |
+| Quitter | Hub du jeu → « Quitter » (retour `page_arcade` : timer arrêté, score sauvegardé) |
 | Pause | **Toucher le bandeau HUD** pendant une partie (pas de croix : flux plein cadre, exception ADR-0009) |
 | Lancer la balle | **Tap sur l'écran** quand la balle est collée à la raquette |
 
@@ -402,6 +420,60 @@ vers lequel on tourne la tablette, il n'y a pas de « bon » réglage universel.
 
 ---
 
+## Coureur d'Or — Lode Runner (1983)
+
+Clone du Lode Runner de Broderbund, **plein écran 1280×720** sur `page_lode`, 100 % local.
+Ramasser tout l'or d'un niveau fait apparaître l'échelle de sortie ; les gardes vous
+poursuivent, et la seule arme est le trou creusé dans une brique.
+
+### Lancer / quitter
+
+| Action | Où |
+|---|---|
+| Ouvrir | Sélecteur Arcade → carte « Coureur d'Or » (slot 4) |
+| Quitter | Hub du jeu → « Quitter » (retour `page_arcade` : timer arrêté, progression sauvée) |
+| Pause | Toucher le bandeau HUD pendant une partie |
+
+### Contrôles
+
+Pad tactile construit en C++ (calque `pad` de `ui_components/lode_game.yaml`, qui ne
+déclare que **5** conteneurs vides — un de plus que les autres jeux, justement pour ce pad) :
+D-pad 4 directions + deux zones de creusement. `Lode::on_dig(bool right)` creuse la brique
+en bas à droite ou en bas à gauche du personnage. Pas de saut : c'est du Lode Runner, on
+grimpe aux échelles et on se suspend aux barres.
+
+### Niveaux
+
+10 niveaux nommés, débloqués dans l'ordre (`LODE_N_LEVELS`) :
+*Premier filon · Escalier · Le pendu · Le puits · Le peigne · Faux chemin · Le nid ·
+Cathédrale · Dédale · Coffre-fort*. La progression (`unlocked`) et le top 10 sont en NVS.
+
+### Vitesse réglable
+
+Hub → **Réglages** → Vitesse. 5 paliers (`SPEEDS[]`), qui changent le nombre de pixels
+par tick — **pas** la cadence de rendu :
+
+| Palier | Rythme |
+|---|---|
+| Normale | 4,4 cases/s — rythme d'origine |
+| Vive | 5,7 cases/s |
+| Rapide | 6,7 cases/s |
+| Très rapide | 8,0 cases/s |
+| Fulgurante | 10,0 cases/s — réflexes exigés |
+
+Les gardes sautent 1 tick sur 5 et restent donc à 4/5 de la vitesse du joueur à tous les
+paliers : l'équilibre du jeu ne change pas, seul le tempo change.
+
+### Notes techniques
+
+Les règles de grille (`passable` / `supported` / `can_step` / arête de creusement) vivent
+dans une section isolée du `.cpp` et sont **rejouées à l'identique** par un garde-fou
+Python hors dépôt sur les 10 cartes — c'est ce qui garantit qu'aucun niveau ne devient
+infaisable après un ajustement. Rendu : cache par acteur (ajouté en `349baee`), aucune
+réallocation LVGL dans le tick.
+
+---
+
 ## Go Tab — Go 9×9 / 13×13 / 19×19
 
 Jeu de Go **plein écran 1280×720**, 100 % local (NVS). Nom produit : **Go Tab**.
@@ -500,9 +572,100 @@ le sont pas (reprendre une sauvegarde restitue la position, pas l'historique).
 ```powershell
 $env:ESPHOME_ESP_IDF_PREFIX = "C:\espidf"
 esphome clean tab5-ha-hmi.yaml
-esphome run tab5-ha-hmi.yaml --device 192.168.0.88
+esphome run tab5-ha-hmi.yaml --device 192.168.x.x
 python tools/test_go_engine.py
 ```
+
+---
+
+## Trial Poursuite — quiz rétro-salon
+
+Clone de Trivial Pursuit, **plein écran 1280×720** sur `page_trivia`, 1 à 6 équipes,
+100 % local (aucune question n'est téléchargée).
+
+### Lancer / quitter
+
+| Action | Où |
+|---|---|
+| Ouvrir | Sélecteur Arcade → carte « Trial Poursuite » (slot 6) |
+| Quitter | Hub → « Quitter » (ADR-0009, pas de croix ; partie en cours conservée en NVS) |
+
+### Plateau
+
+Une **vraie** roue, pas un anneau simplifié — topologie dans `trivia_game.h` :
+
+- couronne extérieure de **42 cases**, dont 6 QG de catégorie (indices 0, 7, 14, 21, 28, 35) ;
+- **6 rayons de 5 cases** reliant chaque QG au centre ;
+- 1 case centrale (QG final).
+
+Soit 73 nœuds numérotés `[0..41]` couronne, `[42..71]` rayons, `[72]` centre.
+Chaque équipe a son camembert 6 parts ; la question finale se joue au centre.
+
+### Banque de questions
+
+**720 questions françaises** en flash (`trivia_questions.h`), 120 par catégorie —
+*Géographie · Divertissement · Histoire · Arts & Littérature · Sciences & Nature ·
+Sports & Loisirs* — réparties ~40 % Facile / ~40 % Moyen / ~20 % Difficile.
+QCM à 4 choix (1 bonne réponse + 3 leurres).
+
+Un `static_assert` refuse la compilation en dessous de 720 questions, et le gameplay
+n'en hardcode aucune : pour en ajouter, on édite `trivia_questions.h` et on incrémente
+les compteurs `TRIVIA_Q_*`.
+
+### Notes techniques
+
+Réglages, statistiques et **partie en cours** sont persistés en NVS : rouvrir la console
+au milieu d'un tour restitue l'état exact (corrigé en `ac12a68`, la réouverture
+réinitialisait le tour). Roue, HUD, modales et camemberts sont construits en C++ ; le
+YAML ne déclare que 4 conteneurs vides.
+
+---
+
+## Dames Tab — dames internationales 10×10
+
+**Plein écran 1280×720** sur `page_draughts`, IA embarquée time-slicée, 100 % local.
+Moteur et IA dans `draughts_ai.*`, UI et machine à états dans `draughts_game.*`.
+
+### Lancer / quitter
+
+| Action | Où |
+|---|---|
+| Ouvrir | Sélecteur Arcade → carte « Dames Tab » (slot 7) |
+| Quitter | Hub → « Quitter » (ADR-0009, pas de croix) |
+
+### Variantes
+
+Deux jeux de règles, jamais mélangés (c'est `Pos.variant` qui pilote tout) :
+
+| Variante | Plateau | Règles |
+|---|---|---|
+| **Internationales** (défaut, `VAR_INTL10`) | 10×10 | prise majoritaire obligatoire, dames volantes, le pion peut prendre en arrière |
+| **Anglaises / checkers** (`VAR_ENG8`) | 8×8 | pion vers l'avant uniquement, dame à portée 1 |
+
+Les pièces capturées ne sont retirées qu'**en fin de rafle** (règle internationale
+standard) — d'où le champ `must_from` qui verrouille la case de départ tant qu'une
+rafle est en cours.
+
+### Niveaux d'IA
+
+4 niveaux (`DRAUGHTS_N_LEVELS`), tous découpés en tranches par le `lv_timer` — jamais de
+recherche bloquante :
+
+| Niveau | Recherche |
+|---|---|
+| Débutant | coups légaux aléatoires (préfère les prises) |
+| Amateur | profondeur 1–2 + évaluation |
+| Confirmé | profondeur 2–3 + alpha-bêta |
+| Expert | profondeur 3–4 + quiescence sur les prises |
+
+Contrainte tenue : `ai_step()` reste sous ~25 ms (budget en nœuds).
+
+### Notes techniques
+
+Palette **locale** `Draughts::Pal` — ni `tab5_custom.h` ni `tab5-styles.yaml` ne sont
+touchés, exactement comme `Chess::Pal`, `Go::Pal` et `Lode::Pal`. Pool de widgets
+dimensionné pour le 10×10 et réutilisé tel quel en 8×8. Options, statistiques et partie
+en cours en NVS (bumper `DRAUGHTS_SAVE_MAGIC` à tout changement de layout).
 
 ---
 
@@ -695,7 +858,7 @@ exemple depuis un `on_boot` de priorité basse :
 ```powershell
 $env:ESPHOME_ESP_IDF_PREFIX = "C:\espidf"
 esphome clean tab5-ha-hmi.yaml
-esphome run tab5-ha-hmi.yaml --device 192.168.0.88
+esphome run tab5-ha-hmi.yaml --device 192.168.x.x
 ```
 
 `esphome clean` est **obligatoire** : `chess_ai.cpp` et `chess_game.cpp` sont de
@@ -705,7 +868,11 @@ nouveaux `.cpp` ajoutés à `includes:`.
 
 ## Version Française
 
-Ce dossier contient les packages de configuration ESPHome et les fichiers source C++ du firmware Tab5. Point d'entrée : `../tab5-ha-hmi.yaml`. Voir la section anglaise ci-dessus pour le détail par fichier, la table des services HA, la table des globals et les règles de code — écrit contre le code réel le 05/07/2026, re-vérifié ligne à ligne le 14/07/2026, puis le 17/07/2026, complété le 19/07/2026 (14 services dont `tab5_maj_calendrier_mois`/`_jour`, popups v2 + calendrier, télécommande TV, wake word « Stop », scripts par familles).
+Ce dossier contient les packages de configuration ESPHome et les fichiers source C++ du firmware Tab5. Point d'entrée : `../tab5-ha-hmi.yaml`.
+
+**Ce fichier est volontairement bilingue par section, pas dupliqué** (contrairement au `README.md` racine et aux `docs/*.md`) : la description fichier par fichier, la table des services HA et la table des globals sont en **anglais** ci-dessus ; les règles de code et les 8 sections Arcade sont en **français**. Le doubler intégralement pour 900 lignes de détail technique coûterait plus qu'il ne rapporte — et une traduction qui dérive est pire qu'une section unique à jour.
+
+Historique de vérification : écrit contre le code réel le 05/07/2026, re-vérifié ligne à ligne le 14/07/2026, puis le 17/07/2026, complété le 19/07/2026 (15 services dont `tab5_maj_calendrier_mois`/`_jour`, popups v2 + calendrier, télécommande TV, wake word « Stop », scripts par familles), et re-vérifié le 30/07/2026 (migration des jeux en pages LVGL dédiées, ajout des sections Coureur d'Or / Trial Poursuite / Dames Tab, `st7123` officiel).
 
 ---
 
@@ -713,13 +880,17 @@ Ce dossier contient les packages de configuration ESPHome et les fichiers source
 
 | Fichier | Contenu |
 |---------|---------|
-| `materialdesignicons-webfont.ttf` | Material Design Icons — plusieurs tailles chargées séparément (26/32/45/56/60/70/120 px — l'id `mdi_font_80` charge en réalité du 70) |
-| `IconeMeteo.ttf` | Police d'icônes météo personnalisée |
+| `materialdesignicons-webfont.ttf` | Material Design Icons — 9 tailles chargées séparément : `mdi_font_26/32/45/56/60/120`, `mdi_assist_36/64`, `mdi_font_alert` (60 px) — et `mdi_font_80`, dont l'id ment : il charge du **70** |
+| `IconeMeteo.ttf` | Police d'icônes météo personnalisée (`font_meteo_main` 270, `font_meteo_main_small` 190, `font_meteo_card` 120, `font_meteo_card_small` 80) |
+| `ChessPieces.ttf` | Figurines d'échecs vectorielles pour « Roi Noir » — licence dans `ChessPieces.LICENSE.txt` |
 
 ## Sous-répertoires
 
-### `my_components/st7123/`
-Composant ESPHome personnalisé pour le contrôleur tactile I2C ST7123 (certains lots Tab5 V2).
+### `ui_components/`
+Les 33 composants LVGL décrits plus haut. Seul sous-répertoire versionné, avec `my_components/` ci-dessous.
 
-### `tts_library/`, `tts_library_v2/`
-Fichiers audio TTS expérimentaux, antérieurs à l'intégration Voice HA. Non utilisés dans la config actuelle.
+### `my_components/st7123/` — **obsolète, absent du dépôt**
+Ancien composant ESPHome maison pour le contrôleur tactile I2C ST7123. **Depuis ESPHome 2026.7.0, `st7123` est une plateforme officielle** : `tab5-hardware.yaml` déclare simplement `touchscreen: - platform: st7123`, il n'y a plus ni `external_components:` ni composant local. Le dossier n'est plus suivi par git — si vous en avez encore une copie locale héritée d'un ancien clone, elle peut être supprimée (voir le commentaire en tête de `tab5-hardware.yaml`).
+
+### `tts_library/`, `tts_library_v2/` — **non versionnés**
+Fichiers audio TTS expérimentaux antérieurs à l'intégration Voice de HA, gitignorés et inutilisés par la config actuelle. Ils n'existent pas dans un clone : ne les cherchez pas.

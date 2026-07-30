@@ -7,76 +7,20 @@
 #       correspondante — garde le C++ firmware léger.
 # ============================================================================
 
-tab5_volet_action:
-  alias: "Action Volet Serre depuis Tab5"
-  mode: restart
-  sequence:
-    - choose:
-        - conditions:
-            - condition: template
-              value_template: "{{ action == 'stop' }}"
-          sequence:
-            - action: cover.stop_cover
-              target:
-                entity_id: cover.VOTRE_VOLET
-            - action: input_boolean.turn_off
-              target:
-                entity_id: input_boolean.VOTRE_VOLET_MOUVEMENT
-            - action: input_text.set_value
-              target:
-                entity_id: input_text.VOTRE_VOLET_ETAT
-              data:
-                value: "Partiel"
-        - conditions:
-            - condition: template
-              value_template: "{{ action == 'open' }}"
-          sequence:
-            - action: cover.open_cover
-              target:
-                entity_id: cover.VOTRE_VOLET
-            - action: input_boolean.turn_on
-              target:
-                entity_id: input_boolean.VOTRE_VOLET_MOUVEMENT
-            - action: input_text.set_value
-              target:
-                entity_id: input_text.VOTRE_VOLET_ETAT
-              data:
-                value: "En_mouvement"
-            - delay:
-                seconds: 26
-            - action: input_boolean.turn_off
-              target:
-                entity_id: input_boolean.VOTRE_VOLET_MOUVEMENT
-            - action: input_text.set_value
-              target:
-                entity_id: input_text.VOTRE_VOLET_ETAT
-              data:
-                value: "Ouvert"
-        - conditions:
-            - condition: template
-              value_template: "{{ action == 'close' }}"
-          sequence:
-            - action: cover.close_cover
-              target:
-                entity_id: cover.VOTRE_VOLET
-            - action: input_boolean.turn_on
-              target:
-                entity_id: input_boolean.VOTRE_VOLET_MOUVEMENT
-            - action: input_text.set_value
-              target:
-                entity_id: input_text.VOTRE_VOLET_ETAT
-              data:
-                value: "En_mouvement"
-            - delay:
-                seconds: 26
-            - action: input_boolean.turn_off
-              target:
-                entity_id: input_boolean.VOTRE_VOLET_MOUVEMENT
-            - action: input_text.set_value
-              target:
-                entity_id: input_text.VOTRE_VOLET_ETAT
-              data:
-                value: "Ferme"
+# ─────────────────────────────────────────────────────────────────────────────
+# `tab5_volet_action` a ete DEPLACE dans `packages/volet_serre_tracking.yaml`.
+#
+# Il vivait ici en double : ce fichier se fusionne a la racine (`script:`) tandis
+# que le package se charge via `!include_dir_named packages`, et la doc
+# d'installation demande les deux. On obtenait donc deux definitions du meme
+# script id, avec en prime des helpers incoherents (`VOTRE_VOLET_MOUVEMENT` ici
+# contre `volet_serre_mouvement` la-bas) — le dernier charge gagnait, sans
+# avertissement HA.
+#
+# Le package est desormais la source unique : il porte le script ET les deux
+# helpers dont il depend, ce qui est justement ce qu'un package sait faire et
+# pas un fichier de scripts nu.
+# ─────────────────────────────────────────────────────────────────────────────
 
 allumer_leds:
   alias: "Allumer LEDs depuis Tab5"

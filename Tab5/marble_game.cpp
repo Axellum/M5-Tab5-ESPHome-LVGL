@@ -30,7 +30,7 @@ static constexpr int   FH = 672;    // hauteur du terrain (720 - bandeau HUD 48)
 static constexpr int   HUD_H = 48;
 
 // Rayon de reference de la bille. La caracteristique « Finesse » ne peut que le
-// REDUIRE (jamais l'augmenter) : le garde-fou scripts/check_marble_rooms.py
+// REDUIRE (jamais l'augmenter) : le garde-fou check_marble_rooms.py (hors depot)
 // prouve la traversabilite a ce rayon maximal, donc sa preuve reste valable
 // quelle que soit la progression du joueur.
 static constexpr int   BALL_R = 11;
@@ -1412,7 +1412,7 @@ static void style_entity(Ent& e) {
 // [AI-CONTEXT] Meme principe que la serigraphie sous le verre d'un flipper : la
 // bille passe par-dessus, la physique ignore tout ce qui est cree ici. C'est
 // donc le seul endroit du jeu ou on peut ajouter du visuel sans repasser par
-// scripts/check_marble_rooms.py (qui ne lit que les Spec des salles).
+// check_marble_rooms.py (hors depot ; il ne lit que les Spec des salles).
 // @ai_instruction Si tu ajoutes un element, prends-le dans le pool (dec_next /
 //      dec_arc) et ne depasse pas MAX_DEC / MAX_DEC_ARC : le pool est alloue une
 //      fois pour toutes, aucune allocation ne doit avoir lieu en cours de partie.

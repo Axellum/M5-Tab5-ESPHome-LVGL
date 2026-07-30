@@ -50,7 +50,7 @@
       continue_on_error: true
       data:
         payload: >
-          {{ states('sensor.phrase_prochaine_pluie') }}|{{ states('sensor.40_weather_alert') | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
+          {{ states('sensor.phrase_prochaine_pluie') }}|{{ states('sensor.VOTRE_DEPARTEMENT_weather_alert') | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
 
     # ====== 3. METEO ACTUELLE ======
     - action: esphome.tab5_ha_hmi_tab5_maj_meteo_actuelle
@@ -240,6 +240,16 @@
             {% else %} Blanc
             {% endif %}
           {% endif %}
+        # Identifiant de dismiss du bandeau (tap = masquer jusqu'au prochain id).
+        # OBLIGATOIRE : le service firmware declare 3 variables, l'omettre fait
+        # echouer l'appel. Vide = bandeau non masquable (recap planning courant).
+        meteo_id: >
+          {% set alerte = states('sensor.VOTRE_DEPARTEMENT_weather_alert') %}
+          {% if alerte in ['Rouge', 'Orange', 'Jaune'] %}
+            meteo:{{ alerte | lower }}
+          {% else %}
+
+          {% endif %}
     # ====== 8. PREVISIONS HORAIRES (BULK - 3 chunks de 5 via repeat) ======
     - action: weather.get_forecasts
       continue_on_error: true
@@ -303,7 +313,7 @@
     - platform: state
       entity_id: sensor.phrase_prochaine_pluie
     - platform: state
-      entity_id: sensor.40_weather_alert
+      entity_id: sensor.VOTRE_DEPARTEMENT_weather_alert
     - platform: state
       entity_id:
         - update.home_assistant_core_update
@@ -317,7 +327,7 @@
       continue_on_error: true
       data:
         payload: >
-          {{ states('sensor.phrase_prochaine_pluie') }}|{{ states('sensor.40_weather_alert') | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
+          {{ states('sensor.phrase_prochaine_pluie') }}|{{ states('sensor.VOTRE_DEPARTEMENT_weather_alert') | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
 
     # ====== 2. REBOURS MINUTE : la phrase pluie seule, pas de scan santé HA ======
     - condition: template
@@ -373,7 +383,18 @@
           {% elif alerte == 'Orange' %} Orange
           {% else %} Blanc
           {% endif %}
-        meteo_id: ""
+        # MEME id de dismiss que l'automation principale ci-dessus : ce push
+        # « rapide » peut afficher une banniere Rouge/Orange, et un id vide
+        # casserait le tap-to-dismiss (update_info_text_ui() n'aurait aucune
+        # cle a comparer a tab5_dismissed_local). La prod envoie le meme
+        # template aux deux endroits — ne pas les desynchroniser.
+        meteo_id: >
+          {% set alerte = states('sensor.VOTRE_DEPARTEMENT_weather_alert') %}
+          {% if alerte in ['Rouge', 'Orange', 'Jaune'] %}
+            meteo:{{ alerte | lower }}
+          {% else %}
+
+          {% endif %}
     # Dans la configuration complète, pousser ici aussi la section 7b
     # (esphome.tab5_ha_hmi_tab5_maj_alertes_ha_bulk — rotateur alertes HA).
 
