@@ -52,7 +52,7 @@ script:
           dismissed: "{{ (states('input_text.tab5_alerts_dismissed') or '').split('|') | reject('equalto','') | list }}"
           new_val: >
             {% set ns = namespace(ids=dismissed) %}
-            {% set alerte = states('sensor.40_weather_alert') %}
+            {% set alerte = states('sensor.VOTRE_DEPARTEMENT_weather_alert') %}
             {% if alerte in ['Rouge', 'Orange', 'Jaune'] %}
               {% set mk = 'meteo:' ~ (alerte | lower) %}
               {% if mk not in ns.ids %}{% set ns.ids = ns.ids + [mk] %}{% endif %}
@@ -150,7 +150,7 @@ automation:
               {% if aid == 'ha:unavailable' %}
                 {% set ns.out = ns.out + [aid] %}
               {% elif aid.startswith('meteo:') %}
-                {% set lvl = states('sensor.40_weather_alert') | lower %}
+                {% set lvl = states('sensor.VOTRE_DEPARTEMENT_weather_alert') | lower %}
                 {% if aid == 'meteo:' ~ lvl %}
                   {% set ns.out = ns.out + [aid] %}
                 {% endif %}

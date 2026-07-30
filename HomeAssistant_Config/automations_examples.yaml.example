@@ -50,7 +50,7 @@
       continue_on_error: true
       data:
         payload: >
-          {{ states('sensor.phrase_prochaine_pluie') }}|{{ states('sensor.40_weather_alert') | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Crues') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
+          {{ states('sensor.phrase_prochaine_pluie') }}|{{ states('sensor.VOTRE_DEPARTEMENT_weather_alert') | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Crues') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
 
     # ====== 3. METEO ACTUELLE ======
     - action: esphome.tab5_ha_hmi_tab5_maj_meteo_actuelle
@@ -313,7 +313,7 @@
     - platform: state
       entity_id: sensor.phrase_prochaine_pluie
     - platform: state
-      entity_id: sensor.40_weather_alert
+      entity_id: sensor.VOTRE_DEPARTEMENT_weather_alert
     - platform: state
       entity_id:
         - update.home_assistant_core_update
@@ -327,7 +327,7 @@
       continue_on_error: true
       data:
         payload: >
-          {{ states('sensor.phrase_prochaine_pluie') }}|{{ states('sensor.40_weather_alert') | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Crues') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.40_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
+          {{ states('sensor.phrase_prochaine_pluie') }}|{{ states('sensor.VOTRE_DEPARTEMENT_weather_alert') | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Crues') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
 
     # ====== 2. REBOURS MINUTE : la phrase pluie seule, pas de scan santé HA ======
     - condition: template

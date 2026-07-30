@@ -572,7 +572,7 @@ le sont pas (reprendre une sauvegarde restitue la position, pas l'historique).
 ```powershell
 $env:ESPHOME_ESP_IDF_PREFIX = "C:\espidf"
 esphome clean tab5-ha-hmi.yaml
-esphome run tab5-ha-hmi.yaml --device 192.168.0.88
+esphome run tab5-ha-hmi.yaml --device 192.168.x.x
 python tools/test_go_engine.py
 ```
 
@@ -858,7 +858,7 @@ exemple depuis un `on_boot` de priorité basse :
 ```powershell
 $env:ESPHOME_ESP_IDF_PREFIX = "C:\espidf"
 esphome clean tab5-ha-hmi.yaml
-esphome run tab5-ha-hmi.yaml --device 192.168.0.88
+esphome run tab5-ha-hmi.yaml --device 192.168.x.x
 ```
 
 `esphome clean` est **obligatoire** : `chess_ai.cpp` et `chess_game.cpp` sont de
