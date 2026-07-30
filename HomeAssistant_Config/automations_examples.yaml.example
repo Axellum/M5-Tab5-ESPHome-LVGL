@@ -383,7 +383,18 @@
           {% elif alerte == 'Orange' %} Orange
           {% else %} Blanc
           {% endif %}
-        meteo_id: ""
+        # MEME id de dismiss que l'automation principale ci-dessus : ce push
+        # « rapide » peut afficher une banniere Rouge/Orange, et un id vide
+        # casserait le tap-to-dismiss (update_info_text_ui() n'aurait aucune
+        # cle a comparer a tab5_dismissed_local). La prod envoie le meme
+        # template aux deux endroits — ne pas les desynchroniser.
+        meteo_id: >
+          {% set alerte = states('sensor.VOTRE_DEPARTEMENT_weather_alert') %}
+          {% if alerte in ['Rouge', 'Orange', 'Jaune'] %}
+            meteo:{{ alerte | lower }}
+          {% else %}
+
+          {% endif %}
     # Dans la configuration complète, pousser ici aussi la section 7b
     # (esphome.tab5_ha_hmi_tab5_maj_alertes_ha_bulk — rotateur alertes HA).
 

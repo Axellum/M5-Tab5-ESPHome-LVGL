@@ -33,7 +33,19 @@ et du passage à ESPHome 2026.7.
 - **`packages/volet_serre_tracking.yaml`** était un fichier 100 % commentaires : chargé
   via `!include_dir_named packages`, il fait échouer HA sur `expected a dictionary` —
   précisément le piège que le README du dossier documente. Réécrit en package valide
-  (helpers + `script.tab5_volet_action` + chrono de course).
+  (helpers + `script.tab5_volet_action` + chrono de course). **`tab5_volet_action` a en
+  conséquence été retiré de `scripts_examples.yaml`** : ce fichier se fusionne à la racine
+  et le package se charge par `!include_dir_named`, or la doc d'installation demande les
+  deux — on se retrouvait avec deux définitions du même script id et des helpers
+  incohérents (`VOTRE_VOLET_MOUVEMENT` contre `volet_serre_mouvement`), le dernier chargé
+  gagnant sans avertissement HA. Le package est désormais la source unique.
+- **`tab5_maj_info_texte` : `meteo_id` cohérent aux deux appels.** L'automation de push
+  « rapide » (`tab5_ha_hmi_alerts_push`) envoyait un id vide alors que l'automation
+  principale envoie un vrai id. Comme ce push rapide peut afficher une bannière
+  Rouge/Orange, le tap-to-dismiss se retrouvait sans clé à comparer à
+  `tab5_dismissed_local`. Les deux appels utilisent maintenant le même template, comme
+  la config de prod. *(Les deux derniers points viennent d'une revue Cursor Bugbot sur
+  la PR #82 — deux régressions introduites par cette même passe.)*
 
 **Doc resynchronisée sur le code**
 

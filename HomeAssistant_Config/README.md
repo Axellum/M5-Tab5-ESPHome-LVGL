@@ -38,9 +38,9 @@ Room temperatures, humidity, light states and plant moisture do **not** go throu
 ---
 
 ### `scripts_examples.yaml`
-Scripts called **by** the Tab5 (from a `homeassistant.service:` in `Tab5/tab5-api-logic.yaml` or an LVGL `on_short_click:`), not the other way round.
+Scripts called **by** the Tab5 (from a `homeassistant.service:` in `Tab5/tab5-api-logic.yaml` or an LVGL `on_short_click:`), not the other way round. Simple pass-through — it keeps the ESPHome code thin and the logic on the HA side where it belongs.
 
-The main one is `tab5_volet_action` (open / close / stop): the device sends the intent, the script drives the cover *and* maintains the two helpers that track a blind Tuya motor's state. Simple pass-through — it keeps the ESPHome code thin and the logic on the HA side where it belongs.
+Currently just `allumer_leds`. **`tab5_volet_action` used to live here too and was moved to `packages/volet_serre_tracking.yaml`**: this file merges at the root while the package loads via `!include_dir_named packages`, and the install docs ask for both — so you ended up with two definitions of one script id and mismatched helper names, last one loaded winning without any HA warning. The package now owns the script *and* the two helpers it depends on.
 
 ---
 
@@ -186,9 +186,9 @@ Les températures/humidités des pièces, les états de lumière et l'humidité 
 ---
 
 ### `scripts_examples.yaml`
-Scripts appelés **par** le Tab5 (depuis un `homeassistant.service:` de `Tab5/tab5-api-logic.yaml` ou un `on_short_click:` LVGL), et pas l'inverse.
+Scripts appelés **par** le Tab5 (depuis un `homeassistant.service:` de `Tab5/tab5-api-logic.yaml` ou un `on_short_click:` LVGL), et pas l'inverse. Pass-through simple — ça garde le code ESPHome léger et la logique côté HA où est sa place.
 
-Le principal est `tab5_volet_action` (open / close / stop) : l'appareil envoie l'intention, le script pilote le volet *et* maintient les deux helpers qui suivent l'état d'un moteur Tuya aveugle. Pass-through simple — ça garde le code ESPHome léger et la logique côté HA où est sa place.
+Aujourd'hui, il ne contient que `allumer_leds`. **`tab5_volet_action` y vivait aussi et a été déplacé dans `packages/volet_serre_tracking.yaml`** : ce fichier se fusionne à la racine tandis que le package se charge via `!include_dir_named packages`, et la doc d'installation demande les deux — on obtenait donc deux définitions du même script id avec des helpers incohérents, le dernier chargé gagnant sans le moindre avertissement HA. Le package porte désormais le script **et** les deux helpers dont il dépend.
 
 ---
 
