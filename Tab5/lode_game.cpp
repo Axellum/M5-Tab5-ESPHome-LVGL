@@ -26,7 +26,8 @@
  *      Le nombre de px par tick vient de SPEEDS[g_save.speed] (Reglages > Vitesse) :
  *      c'est LUI qui fixe le rythme du jeu, pas la cadence de rendu. Les gardes
  *      sautent 1 tick sur 5 et restent donc a 4/5 du joueur a tous les paliers.
- *      Le garde-fou scripts/check_lode_levels.py rejoue EXACTEMENT ces regles
+ *      Le garde-fou check_lode_levels.py (workspace prive de l'auteur, hors de
+ *      ce depot) rejoue EXACTEMENT ces regles
  *      (passable / supported / can_step / arete de creusement) sur les 10 maps.
  */
 #include "lode_game.h"
@@ -594,7 +595,7 @@ static void toast(const char* msg) {
 static inline void sfx(int /*id*/) {}
 
 // ===========================================================================
-// 7. Regles de grille — MIROIR EXACT de scripts/check_lode_levels.py
+// 7. Regles de grille — MIROIR EXACT de check_lode_levels.py (hors depot)
 // ===========================================================================
 
 static inline bool in_grid(int x, int y) {

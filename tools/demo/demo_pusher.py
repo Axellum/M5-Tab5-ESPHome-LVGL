@@ -94,6 +94,17 @@ async def _pousser_scene(client, services_par_nom: dict, scene) -> None:
         if service is None:
             logger.warning("Service %s absent du device (firmware différent du contrat attendu ?)", nom)
             return
+        # Garde-fou de contrat : aioesphomeapi fait `data[arg.name]` pour CHAQUE
+        # argument déclaré par le firmware — un argument manquant lève un KeyError
+        # brut en plein milieu d'une scène. On préfère un message lisible qui
+        # nomme le service et l'argument (c'est exactement ce qui est arrivé quand
+        # `meteo_id` a été ajouté à tab5_maj_info_texte sans mettre la démo à jour).
+        attendus = {arg.name for arg in service.args}
+        if manquants := attendus - data.keys():
+            logger.error("%s : argument(s) %s manquant(s) — le firmware a changé de "
+                         "contrat, mettre à jour tools/demo/. Appel ignoré.",
+                         nom, sorted(manquants))
+            return
         await client.execute_service(service, data)
 
     await appeler(
@@ -132,8 +143,8 @@ async def _pousser_scene(client, services_par_nom: dict, scene) -> None:
     await appeler("tab5_maj_planning", ligne1=ligne1, ligne2=ligne2)
     await asyncio.sleep(DELAI_ENTRE_BLOCS)
 
-    texte, couleur = scene.info_texte
-    await appeler("tab5_maj_info_texte", texte=texte, couleur=couleur)
+    texte, couleur, meteo_id = scene.info_texte
+    await appeler("tab5_maj_info_texte", texte=texte, couleur=couleur, meteo_id=meteo_id)
 
 
 def _gerer_demande_etat(client):

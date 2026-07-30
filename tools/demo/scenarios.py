@@ -212,8 +212,12 @@ class Scene:
     clim: dict                  # target, current, mode, preset, fan, swing (toutes en str)
     volet_etat: str
     planning: tuple              # (ligne1, ligne2)
-    info_texte: tuple            # (texte, couleur) — couleur "Orange"/"Rouge" affiche la
-                                  # bannière de vigilance fixe du firmware, texte est alors ignoré
+    info_texte: tuple            # (texte, couleur, meteo_id) — couleur "Orange"/"Rouge" affiche
+                                  # la bannière de vigilance fixe du firmware, texte est alors ignoré.
+                                  # meteo_id = identifiant de dismiss (tap sur le bandeau) ; vide =
+                                  # bandeau non masquable. Les 3 champs sont OBLIGATOIRES : le service
+                                  # tab5_maj_info_texte déclare 3 variables et aioesphomeapi lève un
+                                  # KeyError si l'une manque (cf. tab5-api-logic.yaml).
 
 
 SCENES: tuple = (
@@ -230,7 +234,7 @@ SCENES: tuple = (
         clim={"target": "22.0", "current": "23.5", "mode": "cool", "preset": "eco", "fan": "auto", "swing": "off"},
         volet_etat="Ouvert",
         planning=("Auj. : 09h00-17h30", "Dem. : Repos"),
-        info_texte=("Auj. : 09h00-17h30\nDem. : Repos\nApr-dem. : 09h00-17h30", "Blanc"),
+        info_texte=("Auj. : 09h00-17h30\nDem. : Repos\nApr-dem. : 09h00-17h30", "Blanc", ""),
     ),
     Scene(
         nom="Pluie + alerte orange",
@@ -252,7 +256,9 @@ SCENES: tuple = (
         volet_etat="En_mouvement",
         planning=("Auj. : Repos", "Dem. : 09h00-17h30"),
         # couleur "Orange" -> bannière de vigilance fixe du firmware (texte ignoré, cf. update_info_text_ui)
-        info_texte=("", "Orange"),
+        # meteo_id non vide : un tap sur le bandeau le masque jusqu'au prochain id
+        # different — c'est la demo de la fonction « tap pour masquer ».
+        info_texte=("", "Orange", "meteo:orange"),
     ),
     Scene(
         nom="Jour de repos, plantes à surveiller",
@@ -267,6 +273,6 @@ SCENES: tuple = (
         clim={"target": "20.0", "current": "19.5", "mode": "fan_only", "preset": "none", "fan": "quiet", "swing": "vertical"},
         volet_etat="Ferme",
         planning=("Auj. : Repos", "Dem. : 09h00-17h30"),
-        info_texte=("Auj. : Repos\nDem. : 09h00-17h30\nApr-dem. : Repos", "Blanc"),
+        info_texte=("Auj. : Repos\nDem. : 09h00-17h30\nApr-dem. : Repos", "Blanc", ""),
     ),
 )

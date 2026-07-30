@@ -236,12 +236,39 @@ A `volet_en_mouvement` global tracks whether the shutter is currently moving (a 
 
 ---
 
+## Arcade — 8 game consoles (experimental)
+
+> **Status: early prototypes.** First-pass AI-generated games, built to see what LVGL + C++ can do on an ESP32-P4. Functional but unpolished — proof of concept, not finished product.
+
+Opened by **tapping the greenhouse temperature** (`btn_serre_games` in `climate_card.yaml`) — the single entry point. The selector shows a 4×2 grid of 8 cards (298×252 each) with an MDI icon, the game name and a one-line description.
+
+![Arcade selector on the real device](images/tab5_photo_arcade_selector.jpg)
+
+Each console is its **own fullscreen LVGL page** (`page_marble`, `page_chess`… declared `skip: true` in `tab5-lvgl.yaml` so swipe navigation can't reach them), not an overlay stacked on the dashboard. Documented ADR-0009 exception: no modal chrome. Shared architecture: YAML = empty containers, all content in C++, `lv_timer` created on open / destroyed on close, pre-allocated LVGL pool (zero allocation in the tick), NVS persistence, **zero HA or network dependency**.
+
+| # | Console | Description | Controls |
+|---|---------|-------------|----------|
+| 1 | **Fil d'Or** | Marble roguelite, 6 rooms, Dark Souls-style progression | BMI270 tilt |
+| 2 | **Arcanoïde** | Breakout, 8 levels, power-ups, combo | Tilt + touch |
+| 3 | **Neon Apron** | Neon 3-ball pinball — **switches the screen to portrait 720×1280** | Touch zones + IMU nudge |
+| 4 | **Coureur d'Or** | Lode Runner, 10 levels, dig & climb | Touch D-pad |
+| 5 | **Go Tab** | Go 9×9/13×13/19×19, Chinese scoring (komi 6.5), 4 AI levels | Touch |
+| 6 | **Trial Poursuite** | Trivia, 1–6 teams, 42-space wheel + 6 spokes | Touch |
+| 7 | **Dames Tab** | International draughts 10×10 (8×8 checkers option), 4 AI levels | Touch |
+| 8 | **Roi Noir** | FIDE chess, 5 AI levels, perft-validated | Touch |
+
+Exiting any game: hub → "Quitter" (clean return to `page_arcade` then the dashboard: timer stopped, score saved to NVS, and for Neon Apron the landscape rotation is restored).
+
+→ Full technical details per game: [`Tab5/README.md`](../Tab5/README.md#arcade--les-8-consoles)
+
+---
+
 
 ## Version Française
 
 ---
 
-Cette page décrit ce que le Tab5 affiche et fait réellement — vérifié contre le firmware (`tab5-lvgl.yaml`, `ui_components/*.yaml`, `tab5_custom.cpp`) le 06/07/2026, re-vérifié le 14/07/2026 (panneau info, bouton console, zones de swipe). L'ancienne version de cette page décrivait une navigation par barre d'onglets à 6 écrans qui n'existe plus (et n'a peut-être jamais été livrée telle quelle) — voir [ADR-0002](decisions/0002-single-page-swipe-navigation.md). Si quelque chose ci-dessous ne correspond plus au firmware réel, c'est le firmware qui a raison — corrigez cette page.
+Cette page décrit ce que le Tab5 affiche et fait réellement — vérifié contre le firmware (`tab5-lvgl.yaml`, `ui_components/*.yaml`, `tab5_custom.cpp`) le 06/07/2026, re-vérifié le 14/07/2026 (panneau info, bouton console, zones de swipe), complété le 27/07/2026 (popups assistant/calendrier/plantes, section Arcade, photos appareil réel) et re-vérifié le 30/07/2026 (migration des jeux vers des pages LVGL dédiées, remplacement de « Flip Noir » par « Neon Apron »). L'ancienne version de cette page décrivait une navigation par barre d'onglets à 6 écrans qui n'existe plus (et n'a peut-être jamais été livrée telle quelle) — voir [ADR-0002](decisions/0002-single-page-swipe-navigation.md). Si quelque chose ci-dessous ne correspond plus au firmware réel, c'est le firmware qui a raison — corrigez cette page.
 
 ---
 
@@ -524,17 +551,17 @@ Ouvert par **tap sur la température serre** (`btn_serre_games` dans `climate_ca
 
 ![Sélecteur Arcade sur l'appareil réel](images/tab5_photo_arcade_selector.jpg)
 
-Chaque console est un overlay plein écran 1280×720 (exception documentée ADR-0009 — pas de chrome modal). Architecture commune : YAML = conteneurs vides, tout le contenu en C++, `lv_timer` créé à l'ouverture / détruit à la fermeture, pool LVGL préalloué (zéro allocation dans le tick), persistance NVS, **zéro dépendance HA ou réseau**.
+Chaque console est sa **propre page LVGL** plein écran 1280×720 (`page_marble`, `page_chess`… déclarées `skip: true` dans `tab5-lvgl.yaml`, pour que le swipe ne puisse pas y naviguer) — pas un overlay posé sur le dashboard. Exception documentée ADR-0009 : pas de chrome modal. Architecture commune : YAML = conteneurs vides, tout le contenu en C++, `lv_timer` créé à l'ouverture / détruit à la fermeture, pool LVGL préalloué (zéro allocation dans le tick), persistance NVS, **zéro dépendance HA ou réseau**.
 
 | # | Console | Description | Contrôles |
 |---|---------|-------------|----------|
 | 1 | **Fil d'Or** | Roguelite de bille, 6 salles, progression Dark Souls | Inclinaison BMI270 |
 | 2 | **Arcanoïde** | Casse-briques 8 niveaux, power-ups, combo | Inclinaison + tactile |
-| 3 | **Flip Noir** | Flipper arcade, multiball, TILT | Touch zones + nudge IMU |
+| 3 | **Neon Apron** | Flipper néon 3 billes — **bascule l'écran en portrait 720×1280** | Zones tactiles + nudge IMU |
 | 4 | **Coureur d'Or** | Lode Runner 10 niveaux, creuser & grimper | D-pad tactile |
-| 5 | **Go Tab** | Go 9×9/13×13/19×19, score chinois, IA | Tactile |
-| 6 | **Trial Poursuite** | Quiz 1–6 équipes, questions en flash | Tactile |
-| 7 | **Dames Tab** | Dames 10×10, règles internationales, IA | Tactile |
+| 5 | **Go Tab** | Go 9×9/13×13/19×19, score chinois (komi 6,5), IA 4 niveaux | Tactile |
+| 6 | **Trial Poursuite** | Quiz 1–6 équipes, roue 42 cases + 6 rayons | Tactile |
+| 7 | **Dames Tab** | Dames 10×10 internationales (option 8×8 anglaises), IA 4 niveaux | Tactile |
 | 8 | **Roi Noir** | Échecs FIDE, 5 niveaux IA, perft validé | Tactile |
 
 | Roi Noir (échecs) | Arcanoïde (casse-briques) |
@@ -545,12 +572,6 @@ Chaque console est un overlay plein écran 1280×720 (exception documentée ADR-
 |:-:|
 | ![Lode Runner](images/tab5_photo_lode_runner.jpg) |
 
-Sortie de chaque jeu : hub → « Quitter » (retour dashboard propre : timer arrêté, overlay masqué, score sauvegardé en NVS).
+Sortie de chaque jeu : hub → « Quitter » (retour propre à `page_arcade` puis au dashboard : timer arrêté, score sauvegardé en NVS, et pour Neon Apron restauration de la rotation paysage).
 
 → Détails techniques complets par jeu : [`Tab5/README.md`](../Tab5/README.md#arcade--les-8-consoles)
-
----
-
-## Version Française
-
-Cette page décrit ce que le Tab5 affiche et fait réellement — vérifié contre le firmware le 2026-07-06, re-vérifié le 14/07/2026, complété le 27/07/2026 (popups assistant/calendrier/plantes, section Arcade avec 8 consoles, photos appareil réel).

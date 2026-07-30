@@ -35,7 +35,16 @@ python -m esphome compile tab5-ha-hmi.yaml
 - If you modified a file included via `!include` (anything in `Tab5/ui_components/`), run `esphome clean` before the next `esphome run` — stale build cache is a known ESPHome trap.
 - Compare the reported `config_hash` before/after a refactor that should be behavior-neutral — identical hash is the standard proof of "no functional change" used across this project's PR history.
 - OTA-flashing the real device is a deliberate, human-authorized action, not a default step of a coding task — only do it if explicitly asked. If you do: confirm afterward via the device's own diagnostic entities (`ha_api_status`, uptime strictly increasing, no reboot) rather than assuming success.
-- There is no unit test suite; `esphome compile` (schema + C++ compile) is the correctness gate. CI (`.github/workflows/esphome-tab5.yml`) runs the same compile with a dummy `secrets.yaml` on every push/PR.
+- `esphome compile` (schema + C++ compile) is the correctness gate for the firmware itself. CI (`.github/workflows/esphome-tab5.yml`) runs the same compile with a dummy `secrets.yaml` on every push/PR.
+- There is no unit test suite *for the HMI*, but two game engines have host tests that run on a plain PC with no toolchain — run them if you touch the corresponding engine:
+
+```bash
+python tools/test_go_engine.py      # règles Go : capture, suicide, ko, territoire, score
+python tools/test_chess_perft.py    # générateur d'échecs contre la suite perft standard
+```
+
+  Both are **Python mirrors** of the C++ (`go_engine.cpp`, `chess_ai.cpp`), not bindings: a change to the C++ must be mirrored there or the test stops proving anything. `tools/test_go_engine.cpp` is the same suite compiled against the real C++ when a host compiler is available.
+- `tools/demo/demo_pusher.py --dry-run` validates every push payload against the firmware contract without any hardware — cheap check after touching `tab5-api-logic.yaml`.
 
 ## Code rules (full detail in `Tab5/README.md`)
 
@@ -50,7 +59,8 @@ python -m esphome compile tab5-ha-hmi.yaml
 
 - Do not read or write `secrets.yaml` / `Tab5/secrets.yaml` (gitignored, never tracked — verified against full git history).
 - Do not read or write `Tab5/user_entities.yaml` (gitignored — your real HA entity IDs). Edit `Tab5/user_entities.example.yaml` only when changing the public template or adding a new substitution key.
-- Do not confuse the gitignored real HA config (`HomeAssistant_Config/automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml` — Axel's actual production files) with the tracked `*_examples.yaml*` placeholders. If you change logic in one, mirror the change in the other.
+- Do not confuse the gitignored real HA config (`HomeAssistant_Config/automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml` — Axel's actual production files) with the tracked `*_examples.yaml*` placeholders. If you change logic in one, mirror the change in the other. **This drifts easily**: on 30/07/2026 the example was found missing the `meteo_id` argument that production had been sending for two weeks.
+- When you add or remove a variable on an `api: services:` entry in `tab5-api-logic.yaml`, you are changing a public contract with **three** callers, not one: the HA automation (`HomeAssistant_Config/automations_examples.yaml.example` *and* the private original), the demo pusher (`tools/demo/`), and the service table in `Tab5/README.md`. Update all of them in the same PR.
 - Do not leave more than a couple of ESPHome CLI processes running against the device at once — the API only has 8 connection slots; a past session's leaked `esphome` processes silently starved the real device of connections.
 - Do not "clean up" code flagged `[AI-WARNING]` without reading the warning and checking `docs/decisions/`.
 - Do not touch `Tab5/tts_library*/` (gitignored, experimental, predates the current voice pipeline, unused).

@@ -117,7 +117,7 @@ A single 1280×720 page organized in functional areas, all driven by Home Assist
 
 > **Status: early prototypes.** These are first-pass, AI-generated games built to test what LVGL + C++ can do on an ESP32-P4 at 60 FPS. They are functional but not polished — think "proof of concept" rather than "finished product." The goal was to see how far AI code generation can go on embedded hardware, not to ship retail-quality games.
 
-All 8 consoles share the same architecture: fullscreen 1280×720 overlay (the only documented exception to the modal chrome rule — ADR-0009), YAML reduced to empty containers, all content built in C++, `lv_timer` created on open / destroyed on close, NVS persistence, **zero Home Assistant or network dependency**.
+All 8 consoles share the same architecture: each one is its **own fullscreen LVGL page** (`page_marble`, `page_chess`… declared `skip: true` so swipe navigation can't reach them), not an overlay stacked on the dashboard — the only documented exception to the modal chrome rule (ADR-0009). YAML reduced to empty containers, all content built in C++, `lv_timer` created on open / destroyed on close, NVS persistence, **zero Home Assistant or network dependency**.
 
 | # | Console | Type | Controls |
 |---|---------|------|----------|
@@ -151,7 +151,7 @@ All 8 consoles share the same architecture: fullscreen 1280×720 overlay (the on
 ## Key design decisions
 
 - **Push-only, zero polling.** The device never requests state from Home Assistant. Automations on the HA side detect changes and push data to the screen via native ESPHome service calls. CPU stays near zero when nothing changes.
-- **Modular YAML.** The ESPHome configuration is split across ten files by concern (tokens, hardware, diagnostics sensors, home-automation sensors, API logic, styles, UI, globals, scripts, IMU). Each file stays under ~600 lines and is independently readable.
+- **Modular YAML.** The ESPHome configuration is split across ten files by concern (tokens, hardware, diagnostics sensors, home-automation sensors, API logic, styles, UI, globals, scripts, IMU), each independently readable. Most stay in the 150–500 line range; the two that carry the bulk of the behaviour (`tab5-scripts.yaml`, `tab5-lvgl.yaml`) are larger, and the UI is further split into 33 reusable `ui_components/*.yaml`.
 - **Native LVGL, no web stack.** Rendering runs at 60 FPS directly in the ESP32-P4's PSRAM. Vector fonts (Material Design Icons) replace image files entirely.
 - **Data packing.** Complex payloads (15-day forecast, hourly forecast, weather alerts) are serialized as delimited strings on the HA side and parsed in C++ on the device — one network call, zero subsequent requests.
 - **Offline resilience.** All C++ lambdas check `api.connected()` and `has_state()` before touching the UI. If HA restarts, the last known state stays on screen.
@@ -251,9 +251,19 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── trivia_game.h/.cpp    # Game: Trial Poursuite (quiz)
 │   ├── draughts_ai/game.*    # Game: Dames Tab (draughts)
 │   └── chess_ai/game.*       # Game: Roi Noir (chess)
-├── HomeAssistant_Config/     # Automations, scripts, template sensors for HA
-├── tools/demo/               # Standalone demo pusher (no HA required)
+├── HomeAssistant_Config/     # HA examples: automations, scripts, template sensors, packages
+├── tools/
+│   ├── demo/                 # Standalone demo pusher (no HA required)
+│   ├── test_go_engine.py     # Host tests: Go rules (capture, ko, scoring)
+│   ├── test_chess_perft.py   # Host tests: chess move generator vs the perft suite
+│   └── make_chess_font.py    # Builds ChessPieces.ttf
 └── docs/                     # Extended documentation
+```
+
+Everything runs on a plain PC, no device needed:
+
+```bash
+python tools/test_go_engine.py && python tools/test_chess_perft.py && python tools/demo/demo_pusher.py --dry-run
 ```
 
 ---
@@ -337,7 +347,7 @@ L'interface est compilée en C++ et embarquée dans le firmware de l'appareil. E
 ## Choix de conception
 
 - **Push uniquement, zéro polling.** L'appareil ne demande jamais son état à Home Assistant. Les automations côté HA détectent les changements et poussent les données vers l'écran via des appels de service ESPHome natifs. Le CPU reste proche de zéro quand rien ne change.
-- **YAML modulaire.** La configuration ESPHome est découpée en dix fichiers par domaine (tokens, hardware, capteurs diagnostics, capteurs domotique, logique API, styles, UI, globales, scripts, IMU). Chaque fichier reste sous ~600 lignes et est lisible indépendamment.
+- **YAML modulaire.** La configuration ESPHome est découpée en dix fichiers par domaine (tokens, hardware, capteurs diagnostics, capteurs domotique, logique API, styles, UI, globales, scripts, IMU), chacun lisible indépendamment. La plupart tiennent entre 150 et 500 lignes ; les deux qui portent l'essentiel du comportement (`tab5-scripts.yaml`, `tab5-lvgl.yaml`) sont plus gros, et l'UI est encore découpée en 33 `ui_components/*.yaml` réutilisables.
 - **LVGL natif, pas de stack web.** Le rendu tourne à 60 FPS directement dans la PSRAM de l'ESP32-P4. Les polices vectorielles (Material Design Icons) remplacent complètement les fichiers image.
 - **Compression de données.** Les payloads complexes (prévisions 15 jours, prévisions horaires, alertes météo) sont sérialisés en chaînes délimitées côté HA et parsés en C++ sur l'appareil — un seul appel réseau, zéro requête suivante.
 - **Résilience hors-ligne.** Toutes les lambdas C++ vérifient `api.connected()` et `has_state()` avant de toucher l'UI. Si HA redémarre, le dernier état connu reste affiché.
@@ -374,7 +384,7 @@ Une page unique 1280×720 organisée en zones fonctionnelles, toutes alimentées
 
 > **Statut : prototypes précoces.** Ce sont des jeux générés par IA en premier jet, construits pour tester ce que LVGL + C++ peut faire sur un ESP32-P4 à 60 FPS. Ils sont fonctionnels mais non finalisés — pensez « preuve de concept » plutôt que « produit fini ». L'objectif était de voir jusqu'où la génération de code par IA peut aller sur du hardware embarqué, pas de livrer des jeux qualité retail.
 
-Les 8 consoles partagent la même architecture : overlay plein écran 1280×720 (seule exception documentée à la règle du chrome modal — ADR-0009), YAML réduit à des conteneurs vides, tout le contenu construit en C++, `lv_timer` créé à l'ouverture / détruit à la fermeture, persistance NVS, **zéro dépendance Home Assistant ou réseau**.
+Les 8 consoles partagent la même architecture : chacune est sa **propre page LVGL plein écran** (`page_marble`, `page_chess`… déclarées `skip: true` pour que le swipe ne puisse pas y naviguer), et non un overlay empilé sur le dashboard — seule exception documentée à la règle du chrome modal (ADR-0009). YAML réduit à des conteneurs vides, tout le contenu construit en C++, `lv_timer` créé à l'ouverture / détruit à la fermeture, persistance NVS, **zéro dépendance Home Assistant ou réseau**.
 
 | # | Console | Type | Contrôles |
 |---|---------|------|----------|

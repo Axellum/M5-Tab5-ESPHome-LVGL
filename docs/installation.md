@@ -10,7 +10,7 @@
 
 - A working **Home Assistant** instance (any installation method)
 - The **ESPHome** add-on or standalone ESPHome CLI (`pip install esphome`)
-- ESPHome version **≥ 2025.9.3** (the project uses features not available in older versions)
+- ESPHome version **≥ 2026.7.0** — enforced by `min_version:` in `tab5-ha-hmi.yaml`, so an older ESPHome refuses to compile. This release is what brings the official `st7123` touchscreen platform (no more `external_components`), zero-copy audio, VAD, and PSRAM-over-SDIO
 - A M5Stack Tab5 V2 (ESP32-P4 variant)
 
 Optional but used by the default configuration:
@@ -91,11 +91,14 @@ Copy the files from `HomeAssistant_Config/` into your Home Assistant configurati
 
 | File | Where to add it |
 |------|-----------------|
-| `automations_tab5.yaml` | Include in your `automations:` section or merge with your `automations.yaml` |
-| `scripts_tab5.yaml` | Include in your `scripts:` section |
-| `template_sensors_meteo_tab5.yaml` | Include in your `template:` section in `configuration.yaml` |
+| `automations_examples.yaml.example` | Merge into your `automations.yaml` (or include it from your `automations:` section) |
+| `scripts_examples.yaml` | Include in your `scripts:` section |
+| `template_sensors_examples.yaml` | Include in your `template:` section in `configuration.yaml` |
+| `packages/*.yaml` | Self-contained HA *packages* — enable `homeassistant: packages: !include_dir_named packages` first |
 
-Then search-and-replace the placeholder entity names in those files. See [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) for the full list.
+Then search-and-replace the placeholder entity names (`VOTRE_VILLE`, `VOTRE_CLIMATISATION`…) in those files. See [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) for the full list.
+
+> The `*_examples*` files are the versioned, genuinely shipped ones. The author's own production files (`automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml`) are gitignored and **not** part of a clone — if a doc mentions them, it is talking about the private originals these examples are generated from.
 
 ---
 
@@ -133,7 +136,7 @@ The weather screen is built around Météo-France's data structure. If you are i
 
 1. Install the **Météo-France** integration from the HA integrations page
 2. You will get entities: `weather.your_city`, `sensor.your_city_next_rain`, `sensor.XX_weather_alert`
-3. The automation in `automations_tab5.yaml` queries `v1/vision/rain` and `v1/forecast` from Météo-France's API and formats the response into the semicolon-delimited payload the device expects
+3. The automation in `automations_examples.yaml.example` queries `v1/vision/rain` and `v1/forecast` from Météo-France's API and formats the response into the semicolon-delimited payload the device expects
 
 If you are outside France, the weather screen requires adaptation. The push automation will need to be rewritten to query your local weather integration and produce the same payload format. The payload format is documented in the automation file comments.
 
@@ -151,7 +154,7 @@ If you are outside France, the weather screen requires adaptation. The push auto
 
 - Une instance **Home Assistant** fonctionnelle (toute méthode d'installation)
 - L'add-on **ESPHome** ou la CLI ESPHome standalone (`pip install esphome`)
-- ESPHome version **≥ 2025.9.3** (le projet utilise des fonctionnalités absentes des versions plus anciennes)
+- ESPHome version **≥ 2026.7.0** — imposée par le `min_version:` de `tab5-ha-hmi.yaml` : une version antérieure refuse de compiler. C'est cette version qui apporte la plateforme tactile `st7123` officielle (plus besoin d'`external_components`), l'audio zero-copy, le VAD et la PSRAM via SDIO
 - Un M5Stack Tab5 V2 (variante ESP32-P4)
 
 Optionnel mais utilisé par la configuration par défaut :
@@ -209,11 +212,14 @@ Copiez les fichiers de `HomeAssistant_Config/` dans votre configuration Home Ass
 
 | Fichier | Où l'ajouter |
 |---------|-------------|
-| `automations_tab5.yaml` | Inclure dans votre section `automations:` ou fusionner avec votre `automations.yaml` |
-| `scripts_tab5.yaml` | Inclure dans votre section `scripts:` |
-| `template_sensors_meteo_tab5.yaml` | Inclure dans votre section `template:` dans `configuration.yaml` |
+| `automations_examples.yaml.example` | Fusionner avec votre `automations.yaml` (ou l'inclure depuis votre section `automations:`) |
+| `scripts_examples.yaml` | Inclure dans votre section `scripts:` |
+| `template_sensors_examples.yaml` | Inclure dans votre section `template:` dans `configuration.yaml` |
+| `packages/*.yaml` | *Packages* HA autonomes — activez d'abord `homeassistant: packages: !include_dir_named packages` |
 
-Puis recherchez-remplacez les noms d'entités placeholder dans ces fichiers. Voir [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) pour la liste complète.
+Puis recherchez-remplacez les noms d'entités placeholder (`VOTRE_VILLE`, `VOTRE_CLIMATISATION`…) dans ces fichiers. Voir [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) pour la liste complète.
+
+> Les fichiers `*_examples*` sont les seuls réellement versionnés et livrés. Les fichiers de production de l'auteur (`automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml`) sont gitignorés et **absents** d'un clone — quand une doc les mentionne, elle parle des originaux privés dont ces exemples sont dérivés.
 
 ---
 
@@ -251,6 +257,6 @@ L'écran météo est construit autour de la structure de données de Météo-Fra
 
 1. Installez l'intégration **Météo-France** depuis la page des intégrations HA
 2. Vous obtiendrez des entités : `weather.votre_ville`, `sensor.votre_ville_next_rain`, `sensor.XX_alerte_meteo`
-3. L'automatisation dans `automations_tab5.yaml` interroge `v1/vision/rain` et `v1/forecast` de l'API Météo-France et formate la réponse en payload délimité par des points-virgules attendu par l'appareil
+3. L'automatisation dans `automations_examples.yaml.example` interroge `v1/vision/rain` et `v1/forecast` de l'API Météo-France et formate la réponse en payload délimité par des points-virgules attendu par l'appareil
 
 Si vous êtes hors de France, l'écran météo nécessite une adaptation. L'automatisation push devra être réécrite pour interroger votre intégration météo locale et produire le même format de payload. Le format du payload est documenté dans les commentaires du fichier d'automatisation.

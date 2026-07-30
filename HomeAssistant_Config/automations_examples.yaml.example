@@ -240,6 +240,16 @@
             {% else %} Blanc
             {% endif %}
           {% endif %}
+        # Identifiant de dismiss du bandeau (tap = masquer jusqu'au prochain id).
+        # OBLIGATOIRE : le service firmware declare 3 variables, l'omettre fait
+        # echouer l'appel. Vide = bandeau non masquable (recap planning courant).
+        meteo_id: >
+          {% set alerte = states('sensor.VOTRE_DEPARTEMENT_weather_alert') %}
+          {% if alerte in ['Rouge', 'Orange', 'Jaune'] %}
+            meteo:{{ alerte | lower }}
+          {% else %}
+
+          {% endif %}
     # ====== 8. PREVISIONS HORAIRES (BULK - 3 chunks de 5 via repeat) ======
     - action: weather.get_forecasts
       continue_on_error: true

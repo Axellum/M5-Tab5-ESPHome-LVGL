@@ -44,9 +44,14 @@ packages:
 
 ## 2. Package roles
 
+### `tab5-ui-tokens.yaml`
+Shared dimensional tokens, loaded first so every other package can reference them: modal card size (`modal_card_w`/`modal_card_h`), the 52 px title bar offset (`modal_body_y`), bottom margin (`modal_bottom_y`), calendar grid origin (`cal_grid_y`). Changing a popup's geometry means changing a token here, not 8 hardcoded numbers across `ui_components/`.
+
+---
+
 ### `tab5-hardware.yaml`
 Low-level hardware configuration:
-- Display driver (MIPI-DSI, `M5STACK-TAB5-V2`), touch controller (custom ST7123 component, I2C)
+- Display driver (MIPI-DSI, `M5STACK-TAB5-V2`), touch controller (`st7123`, I2C — an official ESPHome platform since 2026.7.0; the old `external_components` shim is gone)
 - I2C bus, PI4IOE5V6408 GPIO expanders (display/touch reset lines)
 - ES8388 DAC (`audio_dac:` platform) and ES7210 microphone ADC (`audio_adc:`)
 - `esp32_hosted` — ESP32-C6 Wi-Fi co-processor over SDIO
@@ -116,11 +121,13 @@ Variables here are typed and initialized. Uninitialized globals on ESP32 are und
 ---
 
 ### `tab5-lvgl.yaml`
-The UI layout. Declares the single page, panels, labels, buttons, arcs, and icons, plus swipe gesture handling. Includes the 17 `ui_components/*.yaml` files (climate card/popup, light popup, TV remote popup, console overlay, forecast cards, moisture gauges, switches card).
+The UI layout. Declares the pages, panels, labels, buttons, arcs, and icons, plus swipe gesture handling. It `!include`s 21 `ui_components/*.yaml` files directly (climate card/popup, light popup, TV remote popup, system console, assistant/calendar/plant popups, forecast cards, moisture gauges, switches card, the arcade selector and the 8 games); those in turn include the parametrized sub-templates (`cal_day_cell.yaml`, `pot_detail_card.yaml`, `modal_header.yaml`…), for 33 component files in total.
 
-**There is a single LVGL page, not a multi-page tab-bar layout.** Everything lives on one 1280×720 `page_main`:
+**The dashboard is a single LVGL page, not a multi-page tab-bar layout** ([ADR-0002](decisions/0002-single-page-swipe-navigation.md)) — every home-automation feature lives on one 1280×720 `page_main`, reachable by tap, long-press or swipe. The only other pages are the 9 gaming ones (`page_arcade` + one per console), all declared `skip: true` so swipe navigation can never land on them; they are not part of the dashboard flow.
+
+`page_main` (1280×720):
 ```
-page_main (1280×720, single page)
+page_main (1280×720, the whole dashboard)
 ├── home content always visible   (clock, indoor temp/humidity, quick actions,
 │                                   climate card, moisture card)
 ├── central rotating card          (planning / rain / alerts / info — auto-cycles
@@ -129,11 +136,20 @@ page_main (1280×720, single page)
 ├── bottom card region — one of two, toggled by `btn_control_ha` (house icon, top right):
 │   ├── switches card   (`layer_switches` — PC/volet/light switches, 5 tabs)
 │   └── forecast card   (`layer_forecast_daily` / `layer_forecast_hourly` — weather, 5 tabs)
-├── climate_popup (fullscreen overlay, opened by tapping the climate card)
-├── light_popup   (fullscreen overlay, opened by tapping a light switch card)
-├── tv_remote_popup (fullscreen Samsung remote, opened by the TV button or a
-│                    long-press on the PC card — `remote.*` services via HA)
-└── console_sys   (system console: diagnostics + volume + HA management with confirm overlays, opened by the console button `btn_control_console`, top right)
+├── climate_popup   (near-fullscreen modal, opened by tapping the climate card)
+├── light_popup     (near-fullscreen modal, opened by tapping a light switch card)
+├── tv_remote_popup (Samsung remote, opened by the TV button or a long-press on
+│                    the PC card — `remote.*` services via HA)
+├── assistant_popup (STT transcription + Markdown LLM reply, long-press on the mic)
+├── calendar_popup  (monthly 7×6 grid, long-press on the clock)
+├── pots_popup      (5 plant-detail cards, long-press on the moisture slots)
+└── console_sys     (system console: diagnostics + volume + HA management with
+                     confirm overlays, opened by `btn_control_console`, top right)
+
+separate pages, outside the dashboard flow (all `skip: true` — see §6):
+├── page_arcade   (4×2 selector, opened by tapping the greenhouse temperature)
+└── page_marble / page_arkanoid / page_pinball / page_lode / page_go /
+    page_trivia / page_chess / page_draughts      (one per console)
 ```
 
 Navigation is by touch (opening/closing the climate/light popups and the console button, and toggling the bottom card region between switches and weather) and by swipe gesture, handled in C++ (`handle_swipe_gesture()` in `tab5_custom.cpp`):
@@ -149,7 +165,12 @@ All style references point to IDs defined in `tab5-styles.yaml`. No inline style
 ---
 
 ### `tab5-scripts.yaml`
-Short ESPHome script blocks for reusable multi-step actions called from lambdas or HA. Keeps `tab5-api-logic.yaml` from becoming cluttered with repeated patterns.
+Short ESPHome script blocks for reusable multi-step actions called from lambdas or HA. Keeps `tab5-api-logic.yaml` from becoming cluttered with repeated patterns. Grouped by family: debounces (volume 150 ms, brightness 200 ms, climate 250 ms — one HA call per gesture instead of one per tick), voice, central rotator + dismiss, shutter, light/calendar/assistant popups, and the game open/close scripts (`tab5_arcade_open`, `tab5_<game>_open`, `tab5_games_close_all`).
+
+---
+
+### `tab5-imu.yaml`
+BMI270 accelerometer: the three axes are `internal: true` (at 10–30 Hz they would flood the HA recorder for nothing). Two consumers — tap-to-wake on the dashboard, and tilt input for the games. An `interval:` re-tunes the polling rate at runtime via `set_update_interval()`: 100 ms (10 Hz) at rest, 33 ms (30 Hz) while a tilt-controlled console is open. See §6.
 
 ---
 
@@ -200,6 +221,24 @@ Same pattern applies to the hourly forecast (`tab5_maj_previsions_heures_bulk`) 
 
 ---
 
+## 6. Game layer (Arcade — experimental)
+
+The 8 game consoles are **isolated sub-modules** that share no state with the HMI dashboard. They follow a strict architecture:
+
+- **One dedicated fullscreen LVGL page per game** 1280×720 (`page_marble`, `page_chess`… declared `skip: true` so swipe navigation cannot reach them) — not an overlay stacked on `page_main`. The only documented exception to the modal chrome rule (ADR-0009)
+- **YAML = empty containers** — each `*_game.yaml` declares only 2–4 `lv_obj` containers; all visual content is built in C++
+- **`lv_timer` lifecycle** — created on open, destroyed on close → zero CPU cost when no game is running
+- **Pre-allocated LVGL pool** — all sprites/labels created once at first open, then recycled via `show/hide` + `set_pos` → zero heap allocation in the game loop
+- **NVS persistence** — each game has its own save struct via `esphome::global_preferences` (magic-validated)
+- **Zero HA/network dependency** — games work fully offline
+- **Adaptive IMU polling** — `tab5-imu.yaml` switches from 100 ms (10 Hz) at rest to 33 ms (30 Hz) when a tilt-controlled game is open
+
+Navigation goes through `lvgl.page.show:` (YAML) or `lv_scr_load()` (C++); the selector page `page_arcade` is the single entry point, opened by tapping the greenhouse temperature. The C++ files are included via `esphome: includes:` in the entry point (not as packages). Each game lives in its own namespace (`Marble`, `Arkanoid`, `Pinball`, `Lode`, `Go`, `Trivia`, `Draughts`, `Chess`) with a uniform API: `open()`, `close()`, `is_open()`, `on_imu(ax, ay, az)`.
+
+> **Status: early prototypes.** These are first-pass AI-generated games to test embedded code generation capabilities — functional but not visually polished.
+
+---
+
 ---
 
 ## Version Française
@@ -232,9 +271,14 @@ Le fichier racine fait trois choses :
 
 ## 2. Rôles des packages
 
+### `tab5-ui-tokens.yaml`
+Tokens dimensionnels partagés, chargés en premier pour que tous les autres packages puissent y faire référence : taille de la carte modale (`modal_card_w`/`modal_card_h`), décalage de la barre de titre de 52 px (`modal_body_y`), marge basse (`modal_bottom_y`), origine de la grille calendrier (`cal_grid_y`). Changer la géométrie d'un popup = changer un token ici, pas 8 nombres en dur dispersés dans `ui_components/`.
+
+---
+
 ### `tab5-hardware.yaml`
 Configuration matérielle bas niveau :
-- Driver affichage (MIPI-DSI, `M5STACK-TAB5-V2`), contrôleur tactile (composant custom ST7123, I2C)
+- Driver affichage (MIPI-DSI, `M5STACK-TAB5-V2`), contrôleur tactile (`st7123`, I2C — plateforme officielle ESPHome depuis 2026.7.0 ; l'ancien shim `external_components` a disparu)
 - Bus I2C, expanders GPIO PI4IOE5V6408 (lignes de reset écran/tactile)
 - DAC ES8388 (plateforme `audio_dac:`) et ADC micro ES7210 (`audio_adc:`)
 - `esp32_hosted` — co-processeur Wi-Fi ESP32-C6 via SDIO
@@ -291,11 +335,13 @@ Les variables ici sont typées et initialisées. Les globales non initialisées 
 ---
 
 ### `tab5-lvgl.yaml`
-La mise en page UI. Déclare la page unique, panneaux, labels, boutons, arcs et icônes, ainsi que la gestion des gestes swipe. Inclut les 17 fichiers `ui_components/*.yaml` (carte/popup clim, popup lumière, popup télécommande TV, overlay console, cartes prévisions, jauges humidité, carte switches).
+La mise en page UI. Déclare les pages, panneaux, labels, boutons, arcs et icônes, ainsi que la gestion des gestes swipe. Il `!include` directement 21 fichiers `ui_components/*.yaml` (carte/popup clim, popup lumière, popup télécommande TV, console système, popups assistant/calendrier/plantes, cartes prévisions, jauges humidité, carte switches, le sélecteur arcade et les 8 jeux) ; ceux-ci incluent à leur tour les sous-templates paramétrés (`cal_day_cell.yaml`, `pot_detail_card.yaml`, `modal_header.yaml`…), soit 33 fichiers de composants au total.
 
-**Il y a une seule page LVGL, pas une navigation multi-pages par onglets.** Tout tient sur un `page_main` unique en 1280×720 :
+**Le dashboard tient sur une seule page LVGL, pas une navigation multi-pages par onglets** ([ADR-0002](decisions/0002-single-page-swipe-navigation.md)) — toute la domotique vit sur un `page_main` unique en 1280×720, accessible au tap, à l'appui long ou au swipe. Les seules autres pages sont les 9 pages gaming (`page_arcade` + une par console), toutes en `skip: true` pour que le swipe ne puisse jamais y atterrir ; elles ne font pas partie du parcours dashboard.
+
+`page_main` (1280×720) :
 ```
-page_main (1280×720, page unique)
+page_main (1280×720, tout le dashboard)
 ├── contenu accueil toujours visible   (horloge, temp/humidité intérieure,
 │                                        actions rapides, carte clim, carte
 │                                        humidité)
@@ -306,11 +352,20 @@ page_main (1280×720, page unique)
 ├── zone carte du bas — l'une des deux, basculée par `btn_control_ha` (icône maison, en haut à droite) :
 │   ├── carte switches   (`layer_switches` — switches PC/volet/lumières, 5 onglets)
 │   └── carte prévisions (`layer_forecast_daily` / `layer_forecast_hourly` — météo, 5 onglets)
-├── climate_popup (overlay plein écran, ouvert au tap sur la carte clim)
-├── light_popup   (overlay plein écran, ouvert au tap sur une carte switch lumière)
-├── tv_remote_popup (télécommande Samsung plein écran, ouverte par le bouton TV
-│                    ou un appui long sur la carte PC — services `remote.*` via HA)
-└── console_sys   (Console Système : diagnostics + volume + gestion HA avec overlays de confirmation, ouverte par le bouton console `btn_control_console`, en haut à droite)
+├── climate_popup   (modale quasi plein écran, ouverte au tap sur la carte clim)
+├── light_popup     (modale quasi plein écran, ouverte au tap sur une carte switch lumière)
+├── tv_remote_popup (télécommande Samsung, ouverte par le bouton TV ou un appui
+│                    long sur la carte PC — services `remote.*` via HA)
+├── assistant_popup (transcription STT + réponse LLM en Markdown, appui long micro)
+├── calendar_popup  (grille mensuelle 7×6, appui long sur l'horloge)
+├── pots_popup      (5 cartes détail plantes, appui long sur les slots humidité)
+└── console_sys     (Console Système : diagnostics + volume + gestion HA avec
+                     overlays de confirmation, ouverte par `btn_control_console`)
+
+pages séparées, hors parcours dashboard (toutes en `skip: true` — voir §6) :
+├── page_arcade   (sélecteur 4×2, ouvert au tap sur la température de la serre)
+└── page_marble / page_arkanoid / page_pinball / page_lode / page_go /
+    page_trivia / page_chess / page_draughts      (une par console)
 ```
 
 La navigation se fait au tactile (ouverture/fermeture des popups clim/lumière et du bouton console, et bascule de la zone du bas entre switches et météo) et par geste swipe, géré en C++ (`handle_swipe_gesture()` dans `tab5_custom.cpp`) :
@@ -322,6 +377,16 @@ Le global `show_switches` (`tab5-globals.yaml`) suit laquelle des deux est actue
 Toutes les références de style pointent vers des IDs définis dans `tab5-styles.yaml`. Aucune propriété de style inline.
 
 → Inventaire fichier par fichier et graphe de dépendances complet : [`../CARTOGRAPHIE_TAB5.md`](../CARTOGRAPHIE_TAB5.md)
+
+---
+
+### `tab5-scripts.yaml`
+Blocs `script:` ESPHome réutilisables pour les actions multi-étapes appelées depuis les lambdas ou depuis HA. Évite que `tab5-api-logic.yaml` se remplisse de motifs répétés. Regroupés par famille : debounces (volume 150 ms, luminosité 200 ms, clim 250 ms — un appel HA par geste au lieu d'un par tick), vocal, rotateur central + dismiss, volet, popups lumière/calendrier/assistant, et les scripts d'ouverture/fermeture des jeux (`tab5_arcade_open`, `tab5_<jeu>_open`, `tab5_games_close_all`).
+
+---
+
+### `tab5-imu.yaml`
+Accéléromètre BMI270 : les trois axes sont `internal: true` (à 10–30 Hz ils satureraient le recorder HA pour rien). Deux consommateurs — le tap-to-wake du dashboard, et l'entrée à l'inclinaison des jeux. Un `interval:` réajuste la cadence à chaud via `set_update_interval()` : 100 ms (10 Hz) au repos, 33 ms (30 Hz) quand une console pilotée à l'inclinaison est ouverte. Voir §6.
 
 ---
 
@@ -372,18 +437,20 @@ Même schéma pour les prévisions horaires (`tab5_maj_previsions_heures_bulk`) 
 
 ---
 
-## 6. Game layer (Arcade — experimental)
+## 6. Couche jeux (Arcade — expérimental)
 
-The 8 game consoles are **isolated sub-modules** that share no state with the HMI dashboard. They follow a strict architecture:
+Les 8 consoles sont des **sous-modules isolés** qui ne partagent aucun état avec le dashboard HMI. Elles suivent une architecture stricte :
 
-- **Fullscreen overlay** 1280×720 — the only documented exception to the modal chrome rule (ADR-0009)
-- **YAML = empty containers** — each `*_game.yaml` declares only 2–4 `lv_obj` containers; all visual content is built in C++
-- **`lv_timer` lifecycle** — created on open, destroyed on close → zero CPU cost when no game is running
-- **Pre-allocated LVGL pool** — all sprites/labels created once at first open, then recycled via `show/hide` + `set_pos` → zero heap allocation in the game loop
-- **NVS persistence** — each game has its own save struct via `esphome::global_preferences` (magic-validated)
-- **Zero HA/network dependency** — games work fully offline
-- **Adaptive IMU polling** — `tab5-imu.yaml` switches from 100 ms (10 Hz) at rest to 33 ms (30 Hz) when a tilt-controlled game is open
+- **Une page LVGL dédiée plein écran 1280×720 par jeu** (`page_marble`, `page_chess`… déclarées `skip: true` pour que le swipe ne puisse pas y naviguer) — et non un overlay empilé sur `page_main`. Seule exception documentée à la règle du chrome modal (ADR-0009)
+- **YAML = conteneurs vides** — chaque `*_game.yaml` ne déclare que 2 à 4 conteneurs `lv_obj` ; tout le contenu visuel est construit en C++
+- **Cycle de vie `lv_timer`** — créé à l'ouverture, détruit à la fermeture → coût CPU nul quand aucun jeu ne tourne
+- **Pool LVGL préalloué** — sprites et labels créés une fois à la première ouverture, puis recyclés par `show/hide` + `set_pos` → zéro allocation dans la boucle de jeu
+- **Persistance NVS** — chaque jeu a sa propre struct de sauvegarde via `esphome::global_preferences` (validée par un magic)
+- **Zéro dépendance HA / réseau** — les jeux fonctionnent entièrement hors ligne
+- **Polling IMU adaptatif** — `tab5-imu.yaml` passe de 100 ms (10 Hz) au repos à 33 ms (30 Hz) quand un jeu à l'inclinaison est ouvert
 
-The C++ files are included via `esphome: includes:` in the entry point (not as packages). Each game lives in its own namespace (`Marble`, `Arkanoid`, `Pinball`, `Lode`, `Go`, `Trivia`, `Draughts`, `Chess`) with a uniform API: `open()`, `close()`, `is_open()`, `on_imu(ax, ay, az)`.
+La navigation passe par `lvgl.page.show:` (YAML) ou `lv_scr_load()` (C++) ; la page sélecteur `page_arcade` est le point d'entrée unique, ouverte par un tap sur la température de la serre. Les fichiers C++ sont inclus via `esphome: includes:` dans le point d'entrée (pas en tant que packages). Chaque jeu vit dans son propre namespace (`Marble`, `Arkanoid`, `Pinball`, `Lode`, `Go`, `Trivia`, `Draughts`, `Chess`) avec une API uniforme : `open()`, `close()`, `is_open()`, `on_imu(ax, ay, az)`.
 
-> **Status: early prototypes.** These are first-pass AI-generated games to test embedded code generation capabilities — functional but not visually polished.
+**Une exception à l'orientation** : `Pinball::open()` bascule LVGL en portrait 720×1280 et `Pinball::close()` restaure `rotation: 270`. C'est la seule console qui touche à l'orientation — voir le bloc `[AI-CONTEXT]` « ORIENTATION » en tête de `pinball_game.cpp`.
+
+> **Statut : prototypes précoces.** Premiers jets générés par IA pour tester les capacités de génération de code embarqué — fonctionnels mais non finalisés visuellement.

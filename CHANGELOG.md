@@ -4,6 +4,96 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-30 — Audit doc/code avant partage : la doc rattrape le firmware
+
+Passe de vérification complète de la documentation contre le code réel, avant
+d'ouvrir le projet plus largement. Le code était juste ; **c'est la doc qui avait
+dérivé**, principalement autour de la migration des jeux en pages LVGL (`cbfe8d1`)
+et du passage à ESPHome 2026.7.
+
+**Corrections bloquantes**
+
+- **Mode démo réparé.** `tools/demo/demo_pusher.py` appelait `tab5_maj_info_texte`
+  avec 2 arguments alors que le service en déclare 3 depuis `db47d2f` (16/07) :
+  `aioesphomeapi` fait `data[arg.name]`, donc **`KeyError: 'meteo_id'` sur le dernier
+  push de chaque scène** — la démo était cassée depuis 14 jours. `meteo_id` ajouté au
+  contrat de scène (la scène pluie l'utilise pour démontrer le tap-to-dismiss), plus
+  un garde-fou qui compare les arguments envoyés à ceux déclarés par l'appareil et
+  loggue un message nommant le service au lieu de planter.
+- **`automations_examples.yaml.example`** : même argument `meteo_id` manquant sur un
+  des deux appels (la config de prod, elle, l'envoyait aux deux).
+- **`docs/installation.md` / `docs/hackster.md`** annonçaient ESPHome ≥ 2025.9.3 alors
+  que `tab5-ha-hmi.yaml` impose `min_version: 2026.7.0` — en suivant la doc, on ne
+  compilait pas.
+- **`docs/installation.md`** disait de copier `automations_tab5.yaml` / `scripts_tab5.yaml` /
+  `template_sensors_meteo_tab5.yaml`, qui sont **gitignorés et absents d'un clone**.
+  Redirigé vers les `*_examples*` réellement livrés.
+- **`.gitignore`** ignorait `HomeAssistant_Config/automations_examples.yaml.example`,
+  pourtant suivi et destiné aux utilisateurs. Règle retirée et commentée.
+- **`packages/volet_serre_tracking.yaml`** était un fichier 100 % commentaires : chargé
+  via `!include_dir_named packages`, il fait échouer HA sur `expected a dictionary` —
+  précisément le piège que le README du dossier documente. Réécrit en package valide
+  (helpers + `script.tab5_volet_action` + chrono de course).
+
+**Doc resynchronisée sur le code**
+
+- Les 8 consoles décrites comme « overlay plein écran » partout : ce sont des **pages
+  LVGL dédiées** (`skip: true`) depuis la PR #78. Corrigé dans `README.md` (EN+FR),
+  `Tab5/README.md`, `docs/screens.md`, `docs/architecture.md`, `CARTOGRAPHIE_TAB5.md`,
+  + note d'addendum dans l'ADR-0002 expliquant pourquoi ça ne rouvre pas la décision.
+- `docs/screens.md` listait **« Flip Noir »**, supprimé en `697e2e9`, au lieu de
+  « Neon Apron » ; et portait deux en-têtes `## Version Française`.
+- `Tab5/README.md` : procédure d'ouverture d'un jeu fausse (`animate_popup_close` au
+  lieu de `lvgl.page.show`), règle d'ajout d'une 9ᵉ console périmée (ordre d'`!include`
+  au lieu d'une entrée `pages:`), et points d'entrée inexistants pour Fil d'Or
+  (« Console GESTION ») et Arcanoïde (« long-press barre de pagination »).
+- `docs/architecture.md` : la section « Game layer » n'existait qu'en anglais **après**
+  tout le bloc français. Déplacée avant, et pendant français §6 ajouté. Packages
+  `tab5-ui-tokens.yaml` et `tab5-imu.yaml` documentés (2 des 10 manquaient), arbre de
+  `page_main` complété (assistant/calendrier/plantes + pages gaming).
+- `HomeAssistant_Config/README.md` : le schéma de push citait
+  `esphome.tab5_ha_hmi_tab5_update_meteo_7j` et `parse_meteo_7j()`, **qui n'existent
+  pas** ; « prévisions 7 jours » (c'est 15) ; « tableau de 60 valeurs de pluie »
+  (c'est 9 barres). Sections réorganisées autour des fichiers réellement livrés, et
+  `packages/tab5_alerts.yaml` + `packages/volet_serre_tracking.yaml` documentés.
+- Note de production privée (Freebox, chemin `sync_to_freebox.ps1` hors dépôt) retirée
+  de la section anglaise du README HA ; références à des scripts de garde-fou hors
+  dépôt clarifiées dans `lode_game.cpp` / `marble_game.cpp`.
+
+**Complété**
+
+- `Tab5/README.md` : sections détaillées pour **Coureur d'Or**, **Trial Poursuite** et
+  **Dames Tab** — 3 des 8 jeux n'en avaient pas, alors que le README racine y renvoie
+  pour « le détail technique par jeu ». Table des services alignée sur les 15 réels
+  (`tab5_assist_reponse` manquait ; `_info_texte` et `_calendrier_mois` avaient une
+  signature incomplète).
+- `docs/screens.md` : section Arcade anglaise ajoutée (elle n'existait qu'en français).
+- `AGENTS.md` : « there is no unit test suite » était faux — `tools/test_go_engine.py`
+  et `tools/test_chess_perft.py` passent tous les deux. Documentés, avec la règle que
+  changer une variable de service touche **trois** appelants (HA, démo, doc).
+- `CARTOGRAPHIE_TAB5.md` : décomptes de lignes remis à jour (`tab5-scripts` 726→1058,
+  `tab5-lvgl` 575→709, `tab5_custom.h` 422→698, `.cpp` 2086→2762), CI
+  `build-action@v7.3.0`→`v8.0.0`, 8→9 ADR, 10→15 docs, section Arcade ajoutée, et
+  `my_components/st7123/` marqué supprimé (`st7123` est officiel depuis ESPHome 2026.7).
+- `README.md` : « chaque fichier reste sous ~600 lignes » était faux ; `tools/` (démo +
+  tests hôtes) absent du plan du dépôt.
+
+**Nettoyage du dépôt**
+
+- `docs/` ne contient plus que de la doc de référence. Retirés : `PATCH_LODE_A_APPLIQUER.md`
+  (patch de travail déjà appliqué, qui parlait encore de « Flip Noir » et d'une seconde
+  session IA en parallèle), `console_v2_modifs_preparees.md`, et les deux sauvegardes
+  d'essais `console_sys_v2_essai_glass_card.yaml` + `essais_design/`.
+- `Tab5/my_components/` supprimé : `st7123` est une plateforme ESPHome officielle depuis
+  2026.7, et le dossier ne contenait plus que deux `.pyc` orphelins.
+- `Tab5/Tab5` supprimé — lien symbolique récursif vers son propre parent (E: étant une
+  jonction vers H:), au point de faire échouer un `git status --ignored`. La règle
+  `.gitignore` reste en garde-fou.
+
+Vérifications : `esphome config` valide, `test_go_engine.py` et `test_chess_perft.py`
+au vert, `demo_pusher.py --dry-run` OK, les 4 packages HA se chargent en dictionnaires,
+0 lien markdown cassé sur l'ensemble du dépôt.
+
 ### 2026-07-28 — Fil d'Or : rendu au niveau du flipper (dégradés, décor, bille 3 calques)
 
 L'écart esthétique avec Neon Apron n'était pas la physique — c'était le

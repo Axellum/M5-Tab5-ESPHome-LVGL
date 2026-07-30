@@ -1,11 +1,104 @@
-# Suivi volet serre (moteur aveugle Tuya) — helpers + sync Tab5
-# Helpers : input_boolean.volet_serre_mouvement, input_text.volet_serre_etat
-# Script central : script.tab5_volet_action (open/close/stop + chrono 26s)
-# Sync écran : automation tab5_volet_updater (déjà dans automations Tab5)
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/volet_serre_tracking.yaml
+# @role Suivi d'un volet a moteur « aveugle » (Tuya sans retour de position) :
+#       helpers d'etat + script central appele par le Tab5.
+# @install Necessite `homeassistant: packages: !include_dir_named packages`.
+#
+# @architecture_constraint Le moteur ne renvoie NI position NI fin de course. On
+#       maintient donc l'etat cote HA : un input_boolean « en mouvement » arme
+#       pendant la duree de course mesuree (26 s ici — a chronometrer chez vous),
+#       et un input_text qui porte le libelle affiche sur l'ecran.
+#       C'est cet input_text que l'automation push envoie au firmware via
+#       `esphome.<device>_tab5_maj_volet_etat` (variable `etat_physique`), ce qui
+#       arme aussi le wake word local « Stop » cote Tab5.
+#
+# @ai_warning Ce fichier DOIT rester un dictionnaire YAML valide avec des cles
+#       d'integration au premier niveau (`input_boolean:`, `input_text:`,
+#       `script:`). Un fichier de `packages/` reduit a des commentaires fait
+#       echouer HA au demarrage avec « expected a dictionary » — c'est
+#       exactement le piege documente dans HomeAssistant_Config/README.md.
+#
+# @ai_instruction Remplacer `VOTRE_VOLET` par votre entite cover. La duree 26 s
+#       (`delay`) est la course complete mesuree : trop courte, l'ecran repasse
+#       a l'arret avant la fin ; trop longue, il reste bloque sur « Mouvement ».
+# ============================================================================
 
-# Exemple : remplacer les automations sunrise/sunset cover direct par :
-#   action: script.tab5_volet_action
-#   data: { action: open | close }
+input_boolean:
+  volet_serre_mouvement:
+    name: "Volet serre en mouvement"
+    icon: mdi:window-shutter-cog
 
-# Intercepter les appels cover directs (UI HA, intégrations) pour mettre à jour l'écran :
-# Voir automation volet_serre_track_direct_cover dans automations.yaml Freebox live.
+input_text:
+  volet_serre_etat:
+    name: "Volet serre etat"
+    initial: "Inconnu"
+    max: 20
+    icon: mdi:window-shutter
+
+script:
+  tab5_volet_action:
+    alias: "Volet serre — action depuis le Tab5"
+    # restart : un nouvel appui pendant la course annule le chrono precedent.
+    mode: restart
+    fields:
+      action:
+        description: "open | close | stop"
+        example: "open"
+        selector:
+          select:
+            options: ["open", "close", "stop"]
+    sequence:
+      - choose:
+          # ---- STOP : arret immediat, position intermediaire inconnue ----
+          - conditions: "{{ action == 'stop' }}"
+            sequence:
+              - action: cover.stop_cover
+                target:
+                  entity_id: cover.VOTRE_VOLET
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.volet_serre_mouvement
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.volet_serre_etat
+                data:
+                  value: "Partiel"
+          # ---- OPEN / CLOSE : on arme le chrono de course ----
+          - conditions: "{{ action in ['open', 'close'] }}"
+            sequence:
+              - action: "cover.{{ action }}_cover"
+                target:
+                  entity_id: cover.VOTRE_VOLET
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.volet_serre_mouvement
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.volet_serre_etat
+                data:
+                  value: "En_mouvement"
+              # Course complete mesuree — a adapter a votre volet.
+              - delay: "00:00:26"
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.volet_serre_mouvement
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.volet_serre_etat
+                data:
+                  value: "{{ 'Ouvert' if action == 'open' else 'Ferme' }}"
+
+# ---------------------------------------------------------------------------
+# Aller plus loin (non fourni ici, propre a chaque installation) :
+#
+#  * Remplacer vos automations lever/coucher de soleil qui appellent
+#    `cover.open_cover` directement par :
+#        action: script.tab5_volet_action
+#        data: { action: open }
+#    sinon l'ecran ne saura pas que le volet a bouge.
+#
+#  * Pour rattraper les appels `cover.*` faits ailleurs (UI HA, autre
+#    integration), ajouter une automation declenchee sur l'etat de
+#    `cover.VOTRE_VOLET` qui met a jour les deux helpers ci-dessus.
+# ---------------------------------------------------------------------------
