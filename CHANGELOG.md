@@ -4,6 +4,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-30 — Sync alerte Inondation + fixes Go/TTS (branche cursor)
+
+- Alerte météo HA : attribut `Crues` → `Inondation` (alignement Météo-France / prod).
+- Go : komi handicap cohérent avec `place_handicap` (mode Joueur vs Tab seulement) + libellé menu 0,5/6,5.
+- Voice : `on_end` wait announcing rétabli à 3s (évite coupure TTS / re-arm wake word prématuré).
+
 ### 2026-07-28 — Fil d'Or : rendu au niveau du flipper (dégradés, décor, bille 3 calques)
 
 L'écart esthétique avec Neon Apron n'était pas la physique — c'était le
