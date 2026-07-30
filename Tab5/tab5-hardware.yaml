@@ -377,7 +377,7 @@ voice_assistant:
     - wait_until:
         condition:
           - media_player.is_announcing:
-        timeout: 500ms   # Le TTS local WAV 16 kHz démarre en < 100 ms — 3 s était excessif
+        timeout: 3s    # AXE9: Augmente de 0.5s a 3s pour eviter coupure TTS / re-arm premature du wake word
     - wait_until:
         - and:
             - not:

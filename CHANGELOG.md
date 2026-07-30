@@ -78,6 +78,21 @@ et du passage à ESPHome 2026.7.
 - `README.md` : « chaque fichier reste sous ~600 lignes » était faux ; `tools/` (démo +
   tests hôtes) absent du plan du dépôt.
 
+**Scan secrets et données personnelles**
+
+`secrets.yaml` et `Tab5/user_entities.yaml` n'ont **jamais** été committés (vérifié sur
+tout l'historique, `git log --all`). Deux données personnelles traînaient en revanche
+dans des fichiers destinés aux utilisateurs :
+
+- `sensor.40_weather_alert` — le département réel de l'auteur — utilisé 21× dans
+  `automations_examples.yaml.example` et 2× dans `packages/tab5_alerts.yaml`, alors que
+  la table de correspondance du README annonce `VOTRE_DEPARTEMENT`. Au-delà de la fuite,
+  c'était un bug : qui copiait le fichier recevait les alertes des Landes.
+- L'IP réelle de l'appareil (`192.168.0.88`) dans deux commandes de `Tab5/README.md`,
+  alors qu'`installation.md` utilise déjà `192.168.x.x`.
+
+Seule clé restante : celle du workflow CI, factice et sans appareil derrière.
+
 **Nettoyage du dépôt**
 
 - `docs/` ne contient plus que de la doc de référence. Retirés : `PATCH_LODE_A_APPLIQUER.md`
@@ -93,6 +108,12 @@ et du passage à ESPHome 2026.7.
 Vérifications : `esphome config` valide, `test_go_engine.py` et `test_chess_perft.py`
 au vert, `demo_pusher.py --dry-run` OK, les 4 packages HA se chargent en dictionnaires,
 0 lien markdown cassé sur l'ensemble du dépôt.
+
+### 2026-07-30 — Sync alerte Inondation + fixes Go/TTS (branche cursor)
+
+- Alerte météo HA : attribut `Crues` → `Inondation` (alignement Météo-France / prod).
+- Go : komi handicap cohérent avec `place_handicap` (mode Joueur vs Tab seulement) + libellé menu 0,5/6,5.
+- Voice : `on_end` wait announcing rétabli à 3s (évite coupure TTS / re-arm wake word prématuré).
 
 ### 2026-07-28 — Fil d'Or : rendu au niveau du flipper (dégradés, décor, bille 3 calques)
 
