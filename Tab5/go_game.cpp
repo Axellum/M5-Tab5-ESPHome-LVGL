@@ -265,9 +265,10 @@ static void msg(const char* t) {
     g_msg_until = esphome::millis() + MSG_MS;
 }
 
-// Komi effectif : 0,5 en partie à handicap (convention), 6,5 sinon.
+// Komi effectif : 0,5 seulement quand les pierres d'handicap sont réellement
+// placées (Joueur contre Tab + handicap ≥ 2) — même condition que place_handicap.
 static float effective_komi() {
-    return (g_cfg_hcap >= 2) ? KOMI_HCAP : KOMI;
+    return (g_cfg_mode == 0 && g_cfg_hcap >= 2) ? KOMI_HCAP : KOMI;
 }
 
 // ===========================================================================
@@ -1150,7 +1151,9 @@ static void menu_setup() {
     else                 snprintf(b, sizeof(b), "Handicap : aucun");
     slot_set(4, b, "Pierres offertes a Noir (Blanc commence)", Pal::WOOD, g_cfg_mode == 0);
 
-    slot_set(5, "Jouer !", "Komi 6,5 pour Blanc", Pal::GOOD, true);
+    slot_set(5, "Jouer !",
+             effective_komi() == KOMI_HCAP ? "Komi 0,5 pour Blanc" : "Komi 6,5 pour Blanc",
+             Pal::GOOD, true);
     slot_set(6, "Retour", "", Pal::TXT_MUTED, true);
 }
 
