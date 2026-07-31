@@ -244,6 +244,10 @@ struct CentralPanelCtx {
     lv_obj_t* alert_cont = nullptr;
     lv_obj_t* info_wrap = nullptr;
     lv_obj_t* ha_wrap[4] = {};
+    // Ligne "chapeau" du titre de page previsions (lbl_page_title_sub) : logee ici
+    // plutot qu'ajoutee aux signatures deja passees en parametre (page_title_wrap /
+    // lbl_page_title), qui traversent 3 fonctions et 2 sites d'appel YAML.
+    lv_obj_t* page_title_sub = nullptr;
     bool has_rain = false;
     bool has_mf_alerts = false;
     bool has_info = false;

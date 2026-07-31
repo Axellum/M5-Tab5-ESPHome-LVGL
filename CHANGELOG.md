@@ -4,6 +4,32 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-31 — Titres de fenêtre prévisions : la plage réelle, en toutes lettres
+
+Les pages de prévisions non-accueil affichaient un titre statique (`Prévisions
+journalières 2`) qui disait le rang de la fenêtre mais pas ce qu'elle montre.
+Remplacé par un titre calculé à partir des données réellement affichées.
+
+- **Deux lignes** dans `page_title_wrapper` : chapeau discret (`roboto_22`,
+  `color_text_dim`) `Prévisions journalières · 2/3`, puis la plage en gras
+  (`roboto_32_b`) `Du mercredi 5 août au dimanche 9 août`. Les pages horaires
+  donnent `Prévisions horaires · 1/2` + `De 14:00 à 18:00`, avec la mention
+  `le lendemain` quand la plage franchit minuit.
+- **Bornes toujours chronologiques**, y compris en horaire où les tuiles sont
+  affichées dans l'ordre inverse (`forecast_hourly.yaml`, carte gauche = index 4).
+- **Nouveaux helpers** `local_day_from_offset()` / `fr_day_long_utf8()` /
+  `fr_month_long_utf8()` / `format_long_day_label()` (`tab5_custom.cpp`).
+  `format_short_day_label()` (titres de tuiles "Lun 16") passe par le même helper
+  de date : il ajoutait `jour_offset * 86400 s` à `time()`, ce qui décale la date
+  d'un jour près de minuit lors d'une bascule heure d'été/hiver. Normalisation par
+  `mktime()` à midi, immunisée.
+- **Replis** : si SNTP n'a pas encore l'heure, la plage journalière retombe sur les
+  libellés courts poussés par HA (`Mer 05`) ; s'il n'y a rien du tout, le chapeau
+  prend seul la ligne principale et se recentre verticalement.
+- `lbl_page_title_sub` est joint au C++ via un champ `page_title_sub` de
+  `CentralPanelCtx` plutôt qu'en 4ᵉ paramètre de trois signatures et deux sites
+  d'appel YAML.
+
 ### 2026-07-30 — Audit doc/code avant partage : la doc rattrape le firmware
 
 Passe de vérification complète de la documentation contre le code réel, avant

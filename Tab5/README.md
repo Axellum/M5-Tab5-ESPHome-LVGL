@@ -64,7 +64,7 @@ The remaining files are **parametrized sub-templates** included with `vars` from
 ### `tab5_custom.h` / `tab5_custom.cpp`
 All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get_humidity_color()`, `parse_and_update_heures_bulk()`/`parse_and_update_jours_bulk()`, `sort_and_update_moisture_slots()`, `transition_widgets()`, `highlight_button_border()`. **Rule: sensors/services should only read HA state and call these C++ functions — never manipulate `lv_obj_*` directly from a `sensor:`/`text_sensor:` lambda** (keeps LVGL logic in one place, testable and greppable).
 
-**Architecture `CentralPanelCtx`** (depuis refacto 26/07) : le struct `CentralPanelCtx` regroupe les 8 wrappers LVGL de la carte centrale + 7 flags d'activité + `current_panel`. Les pointeurs sont initialisés **une fois au boot** (`on_boot` dans `tab5-ha-hmi.yaml`) ; les bools sont synchronisés depuis les globals ESPHome (`id(has_rain)` etc.) avant chaque appel C++ (pattern *sync → call → write-back*). Globals C++ : `g_central_ctx`, `g_day_slots[5]`, `g_hour_slots[5]`.
+**Architecture `CentralPanelCtx`** (depuis refacto 26/07) : le struct `CentralPanelCtx` regroupe les 8 wrappers LVGL de la carte centrale (+ `page_title_sub`, la ligne chapeau du titre de page prévisions) + 7 flags d'activité + `current_panel`. Les pointeurs sont initialisés **une fois au boot** (`on_boot` dans `tab5-ha-hmi.yaml`) ; les bools sont synchronisés depuis les globals ESPHome (`id(has_rain)` etc.) avant chaque appel C++ (pattern *sync → call → write-back*). Globals C++ : `g_central_ctx`, `g_day_slots[5]`, `g_hour_slots[5]`.
 
 ---
 

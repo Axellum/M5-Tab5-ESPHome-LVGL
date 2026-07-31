@@ -170,17 +170,65 @@ bool cal_is_early_shift(const std::string& heures_hhmm_hhmm) {
     return atoi(heures_hhmm_hhmm.substr(0, 2).c_str()) < 9;
 }
 
+// Date locale a J+jour_offset via l'heure systeme SNTP (timezone Europe/Paris
+// configuree dans tab5-sensors-diagnostics.yaml). Normalisation par mktime() a midi
+// plutot qu'une addition de 86400 s : immunise contre les bascules heure d'ete/hiver
+// (une journee de 23 h ou 25 h decalerait la date d'un jour pres de minuit).
+static bool local_day_from_offset(int jour_offset, struct tm& out) {
+    time_t raw = time(nullptr);
+    if (raw <= 0 || jour_offset < 0 || jour_offset >= 15) return false;
+    if (localtime_r(&raw, &out) == nullptr) return false;
+    out.tm_mday += jour_offset;
+    out.tm_hour = 12;
+    out.tm_min = 0;
+    out.tm_sec = 0;
+    out.tm_isdst = -1;
+    return mktime(&out) != static_cast<time_t>(-1);
+}
+
 // Titre court "Lun 16" pour les pages journalieres 2 et 3 (page_index 1/2).
-// Utilise l'heure systeme SNTP (timezone Europe/Paris configuree dans tab5-sensors-diagnostics.yaml).
 static std::string format_short_day_label(int jour_offset) {
     static const char* days[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
-    time_t raw = time(nullptr);
-    if (raw <= 0 || jour_offset < 0 || jour_offset >= 15) return "";
-    raw += static_cast<time_t>(jour_offset) * 86400;
     struct tm t;
-    if (localtime_r(&raw, &t) == nullptr) return "";
+    if (!local_day_from_offset(jour_offset, t)) return "";
     char buf[12];
     snprintf(buf, sizeof(buf), "%s %02d", days[t.tm_wday], t.tm_mday);
+    return std::string(buf);
+}
+
+// Jours et mois en toutes lettres pour les titres de la carte centrale.
+// UTF-8 explicite (\xC3\xA9 = e, \xC3\xBB = u circonflexe) — jamais du Latin-1.
+// Minuscules : en francais, jours et mois ne prennent pas de majuscule hors debut
+// de phrase (le titre commence par "Du ...", qui porte la majuscule).
+static const char* fr_day_long_utf8(int wday) {
+    static const char* days[] = {"dimanche", "lundi", "mardi", "mercredi",
+                                 "jeudi", "vendredi", "samedi"};
+    if (wday < 0 || wday > 6) return "";
+    return days[wday];
+}
+
+static const char* fr_month_long_utf8(int mois_1_12) {
+    static const char* months[] = {
+        "janvier", "f\xC3\xA9vrier", "mars", "avril", "mai", "juin", "juillet",
+        "ao\xC3\xBBt", "septembre", "octobre", "novembre", "d\xC3\xA9" "cembre"
+    };
+    if (mois_1_12 < 1 || mois_1_12 > 12) return "";
+    return months[mois_1_12 - 1];
+}
+
+// "mercredi 5 aout" a J+jour_offset — "1er" pour le premier du mois (le seul
+// quantieme ordinal en francais, les autres restent cardinaux : 2, 3, 4...).
+static std::string format_long_day_label(int jour_offset) {
+    struct tm t;
+    if (!local_day_from_offset(jour_offset, t)) return "";
+    char buf[48];
+    if (t.tm_mday == 1) {
+        snprintf(buf, sizeof(buf), "%s 1er %s",
+                 fr_day_long_utf8(t.tm_wday), fr_month_long_utf8(t.tm_mon + 1));
+    } else {
+        snprintf(buf, sizeof(buf), "%s %d %s",
+                 fr_day_long_utf8(t.tm_wday), t.tm_mday, fr_month_long_utf8(t.tm_mon + 1));
+    }
     return std::string(buf);
 }
 
@@ -561,17 +609,63 @@ static const char* clock_month_short_utf8(int month) {
     return months[month - 1];
 }
 
-static const char* forecast_page_title_text(int page) {
-    switch (page) {
-        // forecast_page_index 0/1 utilisent refresh_hourly(..., 1-page) : données
-        // inversées par rapport à l'index UI — titres alignés sur le contenu réel.
-        // UTF-8 explicite (\xC3\xA9 = é, \xC3\xA8 = è) — pas Latin-1 (\xE9).
-        case 0: return "Pr\xC3\xA9visions horaires 2";
-        case 1: return "Pr\xC3\xA9visions horaires 1";
-        case 3: return "Pr\xC3\xA9visions journali\xC3\xA8res 2";
-        case 4: return "Pr\xC3\xA9visions journali\xC3\xA8res 3";
-        default: return nullptr;
+// Titre de la carte centrale sur les pages de previsions autres que l'accueil.
+//   chapeau : famille de page + rang, ex "Pr\xC3\xA9visions journali\xC3\xA8res \xC2\xB7 2/3"
+//   plage   : bornes reelles des 5 tuiles visibles, ex
+//             "Du mercredi 5 ao\xC3\xBBt au dimanche 9 ao\xC3\xBBt" ou "De 14:00 \xC3\xA0 18:00"
+// Renvoie false quand la page n'a pas de titre (page 2 = accueil : la carte
+// centrale y reprend son rotateur planning/pluie/alertes).
+// Les bornes sont toujours donnees dans l'ordre chronologique (la plus tot ->
+// la plus tard), y compris sur les pages horaires ou les tuiles sont affichees
+// dans l'ordre inverse (cf. forecast_hourly.yaml).
+static bool forecast_page_title_parts(int page, std::string& chapeau, std::string& plage) {
+    chapeau.clear();
+    plage.clear();
+    char buf[96];
+
+    if (page == 3 || page == 4) {
+        const int daily_pi = page - 2;                  // 1 = J5-J9, 2 = J10-J14
+        snprintf(buf, sizeof(buf), "Pr\xC3\xA9visions journali\xC3\xA8res \xC2\xB7 %d/3", daily_pi + 1);
+        chapeau = buf;
+
+        const int premier = daily_pi * 5;
+        const int dernier = premier + 4;
+        std::string debut = format_long_day_label(premier);
+        std::string fin   = format_long_day_label(dernier);
+        if (debut.empty() || fin.empty()) {
+            // SNTP pas encore synchronise : repli sur les libelles courts pousses
+            // par HA ("Mer 05"), comme le fait deja refresh_daily_forecast().
+            debut = cal_jours_data[premier].nom_jour;
+            fin   = cal_jours_data[dernier].nom_jour;
+        }
+        if (!debut.empty() && !fin.empty()) {
+            snprintf(buf, sizeof(buf), "Du %s au %s", debut.c_str(), fin.c_str());
+            plage = buf;
+        }
+        return true;
     }
+
+    if (page == 0 || page == 1) {
+        // Pages horaires : l'index UI est inverse par rapport aux donnees
+        // (apply_forecast_page appelle refresh_hourly_forecast(..., 1 - page)).
+        const int hourly_pi = 1 - page;                 // 0 = 5 prochaines heures, 1 = les 5 suivantes
+        snprintf(buf, sizeof(buf), "Pr\xC3\xA9visions horaires \xC2\xB7 %d/2", hourly_pi + 1);
+        chapeau = buf;
+
+        const std::string& debut = cal_heures_data[hourly_pi * 5].heure_texte;
+        const std::string& fin   = cal_heures_data[hourly_pi * 5 + 4].heure_texte;
+        if (!debut.empty() && !fin.empty()) {
+            // Plage a cheval sur minuit (22:00 -> 02:00) : sans mention explicite
+            // le titre se lirait comme une plage a rebours.
+            const bool lendemain = atoi(fin.c_str()) < atoi(debut.c_str());
+            snprintf(buf, sizeof(buf), "De %s \xC3\xA0 %s%s", debut.c_str(), fin.c_str(),
+                     lendemain ? " le lendemain" : "");
+            plage = buf;
+        }
+        return true;
+    }
+
+    return false;
 }
 
 static uint32_t ha_alert_color_from_couleur(const std::string& couleur) {
@@ -825,9 +919,20 @@ void update_central_forecast_page_ui(int forecast_page,
         return;
     }
 
-    const char* title = forecast_page_title_text(forecast_page);
-    if (!title) return;
-    lv_label_set_text(lbl_page_title, title);
+    std::string chapeau, plage;
+    if (!forecast_page_title_parts(forecast_page, chapeau, plage)) return;
+
+    // Deux lignes : chapeau discret (roboto_22 attenue) + plage en gras dessous.
+    // Si les bornes manquent (donnees HA pas encore recues et SNTP muet), le
+    // chapeau prend la ligne principale et se recentre verticalement.
+    const bool deux_lignes = !plage.empty();
+    if (ctx.page_title_sub) {
+        lv_label_set_recolor(ctx.page_title_sub, false);
+        lv_label_set_text(ctx.page_title_sub, deux_lignes ? chapeau.c_str() : "");
+    }
+    lv_label_set_recolor(lbl_page_title, false);
+    lv_label_set_text(lbl_page_title, deux_lignes ? plage.c_str() : chapeau.c_str());
+    lv_obj_align(lbl_page_title, LV_ALIGN_CENTER, 0, deux_lignes ? 13 : 0);
     lv_obj_clear_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
 }
 

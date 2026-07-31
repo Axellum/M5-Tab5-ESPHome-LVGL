@@ -482,16 +482,23 @@ lvgl:
                         on_short_click:
                           - script.execute: tab5_central_panel_next
 
-              # Titre de page previsions (pages horaires / journalieres 2-3, masque sur accueil)
+              # Titre de page previsions (pages horaires / journalieres 2-3, masque sur accueil).
+              # Deux lignes remplies par update_central_forecast_page_ui() (tab5_custom.cpp) :
+              # chapeau "Previsions journalieres · 2/3" + plage "Du mercredi 5 aout au dimanche
+              # 9 aout". Largeur fixe 1200 = zone utile de central_card (1240 - 2x20 de pad) :
+              # les deux labels se centrent sur la meme reference, contrairement a SIZE_CONTENT
+              # qui dependrait du plus large des deux. Les y (-19 / +13) empilent 26 px (roboto_22)
+              # + 38 px (roboto_32_b) centres dans les 84 px de la carte.
               - obj:
                   id: page_title_wrapper
                   align: CENTER
-                  width: SIZE_CONTENT
+                  width: 1200
                   height: 100%
                   styles: style_transparent
                   hidden: true
                   widgets:
-                    - label: { id: lbl_page_title, text: "", align: CENTER, y: 4, text_font: roboto_45_b, text_color: color_text }
+                    - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: -19, text_font: roboto_22, text_color: color_text_dim }
+                    - label: { id: lbl_page_title, text: "", align: CENTER, y: 13, text_font: roboto_32_b, text_color: color_text }
 
               # Info Wrapper (résumé test — panneau 3, tap météo = dismiss définitif)
               - obj:

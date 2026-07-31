@@ -123,6 +123,7 @@ esphome:
           g_central_ctx.ha_wrap[1] = id(ha_alert_wrapper_1);
           g_central_ctx.ha_wrap[2] = id(ha_alert_wrapper_2);
           g_central_ctx.ha_wrap[3] = id(ha_alert_wrapper_3);
+          g_central_ctx.page_title_sub = id(lbl_page_title_sub);
           g_central_ctx.current_panel = id(current_central_panel);
           g_central_ctx.has_rain = id(has_rain);
           g_central_ctx.has_mf_alerts = id(has_alerts);
