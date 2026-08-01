@@ -152,6 +152,8 @@ select:
           };
           lv_obj_t* target = kTargetOf[i];
           if (target != nullptr && !lv_obj_has_flag(target, LV_OBJ_FLAG_HIDDEN)) {
+            // Re-demander l'écran déjà affiché sert à prolonger son affichage.
+            ui_mark_activity();
             id(tab5_goto_screen).publish_state("—");
             return;
           }
@@ -190,6 +192,21 @@ select:
               }
               break;
           }
+          // OUVERTURE PROGRAMMÉE : remettre le compteur d'inactivité à zéro est
+          // OBLIGATOIRE, pas un confort. Le retour automatique de
+          // `tab5-scripts.yaml` tourne toutes les SECONDES et referme tout popup
+          // dès que `ui_idle_ms() >= 45 s` — or personne n'a touché la dalle, le
+          // compteur est donc déjà très au-delà. Sans cette ligne, le popup
+          // ouvert depuis HA est refermé au tick suivant, en moins d'une
+          // seconde : la commande semble ne rien faire. Même piège que celui
+          // déjà traité pour le pipeline vocal (`tab5_vocal_arm_stop`), et c'est
+          // exactement l'usage documenté de `ui_mark_activity()` dans
+          // `tab5_custom.h` : « ouverture programmée d'un popup ».
+          // « Accueil » (i == 1) en est exclu : il ne laisse rien d'ouvert, et
+          // geler le compteur retarderait pour rien le retour auto de la page
+          // météo (25 s).
+          if (i >= 2) ui_mark_activity();
+
           // Le geste est consommé : on repasse en position de repos pour que la
           // même destination puisse être redemandée juste après.
           id(tab5_goto_screen).publish_state("—");

@@ -4,6 +4,27 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-08-01 — `select` « Aller à l'écran » : le popup se refermait aussitôt
+
+Constaté sur l'appareil juste après l'OTA de la PR #85 : demander un écran depuis
+Home Assistant ne faisait **rien de visible**. Le `select` retombait bien sur
+« — » (donc le `on_value` tournait) mais « Écran courant » ne bougeait pas.
+
+Le retour automatique à l'inactivité (`tab5-scripts.yaml`) tourne toutes les
+**secondes** et referme tout popup dès que `ui_idle_ms() >= 45 s`. Or une
+ouverture commandée depuis HA ne touche pas la dalle : le compteur était déjà à
+plusieurs heures. Le popup s'ouvrait puis était refermé au tick suivant, en
+moins d'une seconde — avant même que le `text_sensor` (rafraîchi toutes les 5 s)
+ne puisse le voir passer.
+
+- `ui_mark_activity()` appelé après une ouverture commandée. C'est l'usage
+  documenté de cette fonction dans `tab5_custom.h` (« ouverture programmée d'un
+  popup ») et exactement le piège déjà traité pour le pipeline vocal, dont les
+  réponses parlées ne touchent pas non plus l'écran.
+- « Accueil » en est exclu : il ne laisse rien d'ouvert, et geler le compteur
+  retarderait pour rien le retour automatique de la page météo (25 s).
+- Re-demander un écran déjà affiché prolonge maintenant son affichage de 45 s.
+
 ### 2026-08-01 — Pilotage et supervision de l'écran depuis Home Assistant
 
 Nouveau package `Tab5/tab5-ha-controls.yaml` : quatre entités exposées à HA pour
