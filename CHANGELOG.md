@@ -29,6 +29,15 @@ Remplacé par un titre calculé à partir des données réellement affichées.
 - `lbl_page_title_sub` est joint au C++ via un champ `page_title_sub` de
   `CentralPanelCtx` plutôt qu'en 4ᵉ paramètre de trois signatures et deux sites
   d'appel YAML.
+- **`page_title_wrapper` fait 1100 px de large, pas plus** (`[AI-WARNING]` posé
+  sur place) : la zone utile de `central_card` fait 1198 px (1240 − 2×20 de pad
+  − 2×1 de bordure). Une première version à 1200 px la faisait déborder de 2 px,
+  donc LVGL rendait `central_card` scrollable et le drag partait en scroll
+  élastique — les titres se décalaient sous le doigt et **le swipe ne paginait
+  plus** sur la bande centrale (invisible sur l'accueil, où le wrapper est
+  masqué et sort du calcul de débordement). Le wrapper est en plus posé
+  `scrollable: false` / `clickable: false` pour qu'il ne puisse jamais capter un
+  drag si sa géométrie rebouge.
 
 ### 2026-07-30 — Audit doc/code avant partage : la doc rattrape le firmware
 
