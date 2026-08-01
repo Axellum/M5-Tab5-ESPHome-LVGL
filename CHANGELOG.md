@@ -4,6 +4,58 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-07-31 — Titres de fenêtre prévisions : la plage réelle, en toutes lettres
+
+Les pages de prévisions non-accueil affichaient un titre statique (`Prévisions
+journalières 2`) qui disait le rang de la fenêtre mais pas ce qu'elle montre.
+Remplacé par un titre calculé à partir des données réellement affichées.
+
+- **Deux lignes** dans `page_title_wrapper` : chapeau discret (`roboto_22`,
+  `color_text_dim`) `Prévisions journalières · 2/3`, puis la plage en gras
+  (`roboto_32_b`) `Du mercredi 5 août au dimanche 9 août`. Les pages horaires
+  donnent `Prévisions horaires · 1/2` + `De 14:00 à 18:00`, avec la mention
+  `le lendemain` quand la plage franchit minuit.
+- **Bornes toujours chronologiques**, y compris en horaire où les tuiles sont
+  affichées dans l'ordre inverse (`forecast_hourly.yaml`, carte gauche = index 4).
+- **Nouveaux helpers** `local_day_from_offset()` / `fr_day_long_utf8()` /
+  `fr_month_long_utf8()` / `format_long_day_label()` (`tab5_custom.cpp`).
+  `format_short_day_label()` (titres de tuiles "Lun 16") passe par le même helper
+  de date : il ajoutait `jour_offset * 86400 s` à `time()`, ce qui décale la date
+  d'un jour près de minuit lors d'une bascule heure d'été/hiver. Normalisation par
+  `mktime()` à midi, immunisée.
+- **Replis** : si SNTP n'a pas encore l'heure, la plage journalière retombe sur les
+  libellés courts poussés par HA (`Mer 05`) ; s'il n'y a rien du tout, le chapeau
+  prend seul la ligne principale et se recentre verticalement.
+- `lbl_page_title_sub` est joint au C++ via un champ `page_title_sub` de
+  `CentralPanelCtx` plutôt qu'en 4ᵉ paramètre de trois signatures et deux sites
+  d'appel YAML.
+- **Le panneau titre est structuré comme ses frères de `central_card`**
+  (`[AI-WARNING]` posé sur place) : wrapper `SIZE_CONTENT` + **bouton invisible
+  1180×80 posé en dernier**, exactement comme `planning_wrapper`/`btn_planning_tap`.
+  Les premières versions (wrapper à largeur fixe 1200 puis 1100 px, sans bouton,
+  avec `scrollable`/`clickable` retirés) **cassaient la pagination** : sur les
+  pages prévisions, un drag sur la bande centrale faisait dériver le contenu sous
+  le doigt au lieu de paginer, alors que l'accueil — où le panneau planning est
+  actif — restait correct. Le bouton n'est donc pas décoratif : c'est lui qui
+  reçoit l'appui, et cette structure est la seule vérifiée comme laissant le
+  swipe remonter jusqu'à `page_main.on_gesture`. Validé sur l'appareil par Axel.
+  Le mécanisme LVGL exact n'a pas été instrumenté — la contrainte est empirique,
+  ne pas « simplifier » ce panneau sans re-tester le swipe sur l'appareil.
+- **Le titre suit les pushs HA** (signalé par Cursor Bugbot sur la PR #83) : les
+  services `tab5_maj_previsions_{jours,heures}_bulk` rafraîchissaient les 5 tuiles
+  sans toucher au titre, qui annonce pourtant leurs bornes — la plage restait donc
+  figée sur les anciennes valeurs tant que l'utilisateur ne reswipait pas (visible
+  au premier push après un swipe fait avant l'arrivée des données : tuiles à jour,
+  titre encore dégradé au seul chapeau). Les deux services appellent maintenant
+  `refresh_forecast_page_title_ui()`, qui réécrit le texte **sans** toucher à la
+  visibilité des panneaux et ne fait rien si le titre n'est pas à l'écran — un
+  push ne peut donc pas voler la carte centrale au planning temporaire (6 s) ni à
+  une réponse vocale.
+- **[AI-DEBUG]** `handle_swipe_gesture()` loggue désormais `dir`/`y`/page reçus.
+  Trace muette en fonctionnement normal (logger du projet en `level: INFO`) :
+  passer à `DEBUG` pour distinguer « geste jamais émis » (drag mangé par un
+  scroll) de « geste reçu mais pagination fautive ».
+
 ### 2026-07-30 — Audit doc/code avant partage : la doc rattrape le firmware
 
 Passe de vérification complète de la documentation contre le code réel, avant

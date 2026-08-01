@@ -482,7 +482,18 @@ lvgl:
                         on_short_click:
                           - script.execute: tab5_central_panel_next
 
-              # Titre de page previsions (pages horaires / journalieres 2-3, masque sur accueil)
+              # Titre de page previsions (pages horaires / journalieres 2-3, masque sur accueil).
+              # Deux lignes remplies par update_central_forecast_page_ui() (tab5_custom.cpp) :
+              # chapeau "Previsions journalieres · 2/3" + plage "Du mercredi 5 aout au dimanche
+              # 9 aout". Les y (-19 / +13) empilent 26 px (roboto_22) + 38 px (roboto_32_b)
+              # centres dans les 84 px de la carte.
+              # [AI-WARNING] Ce panneau doit rester structurellement IDENTIQUE a ses freres de
+              # central_card (planning / pluie / alertes / info) : wrapper SIZE_CONTENT + bouton
+              # invisible 1180x80 pose en dernier. Le bouton n'est pas decoratif — c'est lui qui
+              # recoit l'appui, et cette structure est celle qui laisse le swipe paginer (verifie :
+              # sur l'accueil, ou le panneau planning est actif, la pagination marche). Une version
+              # 31/07/2026 sans bouton, avec un wrapper a largeur fixe, faisait deriver le contenu
+              # sous le doigt au lieu de paginer sur les pages previsions. Ne pas "simplifier".
               - obj:
                   id: page_title_wrapper
                   align: CENTER
@@ -491,7 +502,14 @@ lvgl:
                   styles: style_transparent
                   hidden: true
                   widgets:
-                    - label: { id: lbl_page_title, text: "", align: CENTER, y: 4, text_font: roboto_45_b, text_color: color_text }
+                    - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: -19, text_font: roboto_22, text_color: color_text_dim }
+                    - label: { id: lbl_page_title, text: "", align: CENTER, y: 13, text_font: roboto_32_b, text_color: color_text }
+                    - button:
+                        id: btn_page_title_tap
+                        align: CENTER
+                        width: 1180
+                        height: 80
+                        styles: style_invisible
 
               # Info Wrapper (résumé test — panneau 3, tap météo = dismiss définitif)
               - obj:

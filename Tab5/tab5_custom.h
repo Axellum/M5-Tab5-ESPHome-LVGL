@@ -244,6 +244,10 @@ struct CentralPanelCtx {
     lv_obj_t* alert_cont = nullptr;
     lv_obj_t* info_wrap = nullptr;
     lv_obj_t* ha_wrap[4] = {};
+    // Ligne "chapeau" du titre de page previsions (lbl_page_title_sub) : logee ici
+    // plutot qu'ajoutee aux signatures deja passees en parametre (page_title_wrap /
+    // lbl_page_title), qui traversent 3 fonctions et 2 sites d'appel YAML.
+    lv_obj_t* page_title_sub = nullptr;
     bool has_rain = false;
     bool has_mf_alerts = false;
     bool has_info = false;
@@ -280,6 +284,14 @@ void reset_forecast_to_main_page(int& forecast_page_index,
 
 // Carte centrale : rotateur planning/pluie/alertes (page 2) ou titre de page (autres).
 void update_central_forecast_page_ui(int forecast_page,
+    lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, CentralPanelCtx& ctx);
+
+// Reecrit le titre de page previsions en place, sans toucher a la visibilite des
+// panneaux, et ne fait rien si ce titre n'est pas affiche. A appeler depuis les
+// services bulk (tab5-api-logic.yaml) : ils rafraichissent les 5 tuiles, donc
+// sans ca la plage annoncee reste figee sur les anciennes bornes tant que
+// l'utilisateur ne reswipe pas (signale par Cursor Bugbot sur la PR #83).
+void refresh_forecast_page_title_ui(int forecast_page,
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, CentralPanelCtx& ctx);
 
 // Panneau info central (récap calendrier ou bannière alerte) — logique déplacée
