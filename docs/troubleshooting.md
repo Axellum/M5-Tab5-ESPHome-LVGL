@@ -80,6 +80,16 @@ Format: **Symptom → Root cause → Fix**. Entries are chronological, most rece
 
 ---
 
+### Device reboots on its own every ~15–20 min while Home Assistant is unreachable
+
+**Symptom:** Home Assistant is down (or slow to start), the Tab5 is still on Wi-Fi and shows its last known state, yet it reboots by itself roughly every 15–20 minutes. Nothing in the logs looks like a crash: each boot is clean and `safe_mode` reports `Boot seems successful`.
+
+**Root cause:** not a crash — `api: reboot_timeout:` in `tab5-api-logic.yaml`. ESPHome reboots the device when **no API client has been connected** for that long, and the counter restarts on every connection, even a brief one. With the original 15 min, an HA server that takes a while to come up produces a reboot cycle slightly longer than the timeout itself (timeout + boot + reconnection attempts). The `wifi:` component has its own separate `reboot_timeout`, which is *not* involved here since Wi-Fi was fine.
+
+**Fix:** raised to `60min` on 2026-08-01 — an hour-long HA outage or maintenance window no longer cycles the tablet, which stays useful without HA (clock, arcade, diagnostics console, last known weather), while the anti-"zombie" safety net from audit F-04 is kept. Do **not** set it to `0s` without re-reading that audit: a frozen API stack would then leave the device online but mute until someone power-cycles it.
+
+---
+
 ### False positives worth knowing about (don't "fix" these again)
 
 - **Forecast pagination "wrap-around"**: the 5 forecast pages (indices 0–4) intentionally do **not** wrap from 4 back to 0 on a further right-swipe. This was already "corrected" once by an LLM audit that assumed non-wrapping was a bug, then reverted. See [`docs/decisions/`](decisions/README.md).
@@ -147,6 +157,14 @@ Format : **Symptôme → Cause racine → Correctif**.
 **Cause racine :** l'API native n'autorise que 8 connexions simultanées ; des process `esphome` CLI orphelins (sessions de debug oubliées) en occupent chacun une indéfiniment.
 
 **Correctif :** fermer les sessions CLI une fois terminées ; vérifier les process `esphome` orphelins avant de soupçonner l'appareil.
+
+### L'appareil redémarre tout seul toutes les ~15-20 min quand Home Assistant est injoignable
+
+**Symptôme :** HA est tombé (ou met longtemps à démarrer), le Tab5 est toujours sur le WiFi et affiche son dernier état connu, mais il redémarre seul toutes les 15-20 minutes environ. Aucun plantage dans les logs : chaque boot est propre et `safe_mode` annonce `Boot seems successful`.
+
+**Cause racine :** ce n'est pas un crash — c'est `api: reboot_timeout:` dans `tab5-api-logic.yaml`. ESPHome redémarre l'appareil quand **aucun client API n'est connecté** pendant cette durée, et le compteur repart à zéro à chaque connexion, même brève. Avec les 15 min d'origine, un serveur HA long à monter produit un cycle de reboots un peu plus long que le timeout lui-même (timeout + boot + tentatives de reconnexion). Le composant `wifi:` a son propre `reboot_timeout`, qui n'est *pas* en cause ici puisque le WiFi fonctionnait.
+
+**Correctif :** porté à `60min` le 01/08/2026 — une panne ou une maintenance HA d'une heure ne fait plus cycler la tablette, qui reste utile sans HA (horloge, arcade, console diag, dernière météo affichée), tout en gardant le filet anti-« zombie » de l'audit F-04. **Ne pas** mettre `0s` sans relire cet audit : une pile API figée laisserait alors l'appareil en ligne mais muet jusqu'à une coupure d'alimentation manuelle.
 
 ### Faux positifs à connaître (ne pas re-"corriger")
 
