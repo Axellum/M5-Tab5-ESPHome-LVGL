@@ -22,9 +22,12 @@
 #       source de vérité — remplace l'ancien double-tap `reboot_armed`
 #       (global devenu inutilisé, cf. docs/console_v2_modifs_preparees.md).
 # @architecture_constraint `slider_volume` passe par
-#       `script.tab5_debounce_volume_set` (tab5-scripts.yaml) — ne pas appeler
-#       `media_player.volume_set` directement dans `on_value` (saturation I2S
-#       à chaque tick de glissement). Les boutons GESTION passent par
+#       `script.tab5_volume_apply` (tab5-scripts.yaml), point d'entrée unique
+#       partagé avec le slider du popup assistant et avec `number.tab5_volume`
+#       exposé à Home Assistant — ne pas écrire `system_volume` ni appeler
+#       `media_player.volume_set` directement dans `on_value` : le premier fait
+#       diverger les trois affichages, le second sature l'I2S à chaque tick de
+#       glissement (le debounce est dans le script). Les boutons GESTION passent par
 #       `homeassistant.service` (option "appels de service" de l'intégration
 #       ESPHome requise — active depuis le 04/07/2026).
 # ============================================================================
@@ -173,15 +176,13 @@ obj:
                     knob:
                       bg_color: color_text
                     on_value:
-                      - lambda: |-
-                          float vol = x / 100.0;
-                          id(system_volume) = vol;
-                          if (id(lbl_sys_vol_val) != nullptr) {
-                            char b[8];
-                            snprintf(b, sizeof(b), "%d%%", (int)x);
-                            lv_label_set_text(id(lbl_sys_vol_val), b);
-                          }
-                      - script.execute: tab5_debounce_volume_set
+                      # Point d'entrée unique (tab5-scripts.yaml) : écrit le
+                      # global, repeint les DEUX sliders + le label %, publie
+                      # sur number.tab5_volume (HA) puis debounce le volume_set.
+                      - script.execute:
+                          id: tab5_volume_apply
+                          vol: !lambda 'return x / 100.0f;'
+                          push_device: true
                 - label: { text: "\U000F057E", align: TOP_LEFT, x: 416, y: 206, text_font: mdi_font_32, text_color: color_console_label }
 
           # ═══ CARTE GESTION (bas droite) ═══

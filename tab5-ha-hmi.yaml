@@ -173,5 +173,8 @@ packages:
   tab5_scripts: !include Tab5/tab5-scripts.yaml
   tab5_lvgl: !include Tab5/tab5-lvgl.yaml
   tab5_imu: !include Tab5/tab5-imu.yaml
+  # Entites exposees a HA pour piloter/observer l'ecran depuis un dashboard HA.
+  # Charge APRES tab5_lvgl : ses lambdas referencent des ids de widgets LVGL.
+  tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml
 
 captive_portal:

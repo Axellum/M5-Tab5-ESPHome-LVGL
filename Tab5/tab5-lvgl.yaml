@@ -109,7 +109,9 @@ lvgl:
                     - media_player.volume_set:
                         id: speaker_player
                         volume: !lambda 'return id(system_volume);'
-                    - lambda: 'lv_label_set_text(id(icon_mute), "\U000F057E"); lv_obj_set_style_text_color(id(icon_mute), lv_color_hex(UIColor::TEXT_SOFT), LV_PART_MAIN);'
+                    # Les DEUX icones du meme etat (barre + popup assistant),
+                    # sinon celle du popup ment jusqu'a sa prochaine ouverture.
+                    - lambda: 'ui_sync_mute_icons(id(icon_mute), id(icon_assist_mute), false);'
                   else:
                     - globals.set:
                         id: system_muted
@@ -117,7 +119,7 @@ lvgl:
                     - media_player.volume_set:
                         id: speaker_player
                         volume: 0.0
-                    - lambda: 'lv_label_set_text(id(icon_mute), "\U000F0581"); lv_obj_set_style_text_color(id(icon_mute), lv_color_hex(UIColor::ERROR), LV_PART_MAIN);'
+                    - lambda: 'ui_sync_mute_icons(id(icon_mute), id(icon_assist_mute), true);'
             widgets:
               - label: { id: icon_mute, text: "\U000F057E", align: CENTER, text_font: mdi_font_32, text_color: color_text }
 

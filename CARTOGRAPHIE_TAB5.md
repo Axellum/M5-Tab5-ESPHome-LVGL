@@ -22,7 +22,7 @@ Un tableau de bord domotique 60 FPS + satellite vocal local + **8 consoles de je
 graph TD
     ENTRY["tab5-ha-hmi.yaml<br/>(point d'entrée, 169 lignes)<br/>substitutions (user_entities) + on_boot + packages: + includes:"]
 
-    subgraph PKG["Packages ESPHome (Tab5/*.yaml) — 10 packages"]
+    subgraph PKG["Packages ESPHome (Tab5/*.yaml) — 11 packages"]
         TOK["tab5-ui-tokens.yaml<br/>tokens dimensionnels (modal_card_w/h, modal_body_y)"]
         HW["tab5-hardware.yaml<br/>448 lignes<br/>display/touch/i2c/audio/esp32_hosted/wake words (okay_nabu + Stop)/ota:"]
         SENSD["tab5-sensors-diagnostics.yaml<br/>287 lignes<br/>wifi:/alim GPIO/status_ha/uptime/RAM/loop time/select:/time:/interval:"]
@@ -33,6 +33,7 @@ graph TD
         SCR["tab5-scripts.yaml<br/>1058 lignes<br/>script: debounces + vocal + rotateur/dismiss + volet + popups + jeux open/close"]
         LVGL["tab5-lvgl.yaml<br/>709 lignes<br/>page_main + swipe prévisions + btns console/TV + !include jeux + sélecteur arcade"]
         IMU["tab5-imu.yaml<br/>136 lignes<br/>BMI270 motion: + poll adaptatif 10/30Hz + tap-to-wake"]
+        HACTL["tab5-ha-controls.yaml<br/>175 lignes<br/>number volume + text_sensor écran courant + select aller-à + button recharger calendrier + interval rattrapage volume"]
     end
 
     subgraph UI["ui_components/*.yaml (30+ fichiers, inclus par tab5-lvgl.yaml)"]
@@ -90,6 +91,7 @@ graph TD
     ENTRY -->|packages:| SCR
     ENTRY -->|packages:| LVGL
     ENTRY -->|packages:| IMU
+    ENTRY -->|packages:| HACTL
     ENTRY -->|includes:| HFILE
     ENTRY -->|includes:| CFILE
     ENTRY -->|includes:| MARBLE
