@@ -220,13 +220,13 @@ obj:
                     max_value: 100
                     value: 100
                     on_value:
-                      - globals.set:
-                          id: system_volume
-                          value: !lambda 'return x / 100.0f;'
-                      - globals.set:
-                          id: system_muted
-                          value: 'false'
-                      - script.execute: tab5_debounce_volume_set
+                      # Point d'entrée unique (tab5-scripts.yaml) : même chemin
+                      # que le slider de la console système et que le number
+                      # exposé à Home Assistant. Démute au passage, comme avant.
+                      - script.execute:
+                          id: tab5_volume_apply
+                          vol: !lambda 'return x / 100.0f;'
+                          push_device: true
 
           # ═══════════════════════════════════════════════════════════════════
           # COLONNE DROITE — DEMANDE + RÉPONSE

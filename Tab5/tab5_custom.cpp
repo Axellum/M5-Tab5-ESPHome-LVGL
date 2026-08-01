@@ -1922,6 +1922,23 @@ void refresh_console_status_row_ui(lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_
     if (has_temp) update_console_temp_label(lbl_temp, core_temp_c);
 }
 
+// Volume : un seul endroit repeint les trois affichages (slider console, label %
+// de la console, slider du popup assistant). Avant, chaque slider ne peignait que
+// le sien et un reglage venu de Home Assistant n'en peignait aucun.
+void ui_sync_volume_widgets(lv_obj_t* slider_console, lv_obj_t* lbl_console_pct,
+    lv_obj_t* slider_assist, float volume) {
+    if (volume < 0.0f) volume = 0.0f;
+    if (volume > 1.0f) volume = 1.0f;
+    const int pct = (int)(volume * 100.0f + 0.5f);
+    if (slider_console != nullptr) lv_slider_set_value(slider_console, pct, LV_ANIM_OFF);
+    if (slider_assist != nullptr) lv_slider_set_value(slider_assist, pct, LV_ANIM_OFF);
+    if (lbl_console_pct != nullptr) {
+        char buf[8];
+        snprintf(buf, sizeof(buf), "%d%%", pct);
+        lv_label_set_text(lbl_console_pct, buf);
+    }
+}
+
 // Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).
 // Factorise depuis l'interval 2s de tab5-sensors-diagnostics.yaml (Phase 3, #T164). Le garde
 // "console visible ?" reste dans le YAML (evite de passer layer_console_sys ici).

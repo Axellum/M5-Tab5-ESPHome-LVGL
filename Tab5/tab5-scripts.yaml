@@ -331,6 +331,41 @@ script:
           id: speaker_player
           volume: !lambda 'return id(system_volume);'
 
+  # ═══ Point d'entrée UNIQUE du volume ═══
+  # Les 3 sources (slider console, slider popup assistant, number.tab5_volume
+  # exposé à Home Assistant) passent obligatoirement par ici, sinon elles
+  # divergent : avant, chaque slider n'écrivait que `system_volume` et ne
+  # repeignait que le sien, donc un réglage venu de HA laissait l'écran sur
+  # l'ancien % et le prochain démute le ré-appliquait — le réglage HA sautait.
+  # `push_device: false` = on ne fait que refléter un volume déjà appliqué au
+  # haut-parleur (rattrapage d'un media_player.volume_set venu de HA) ; renvoyer
+  # un volume_set dans ce cas serait redondant.
+  # Glisser le volume démute : c'était déjà le cas du slider assistant, la
+  # console, elle, remontait le son sans jamais éteindre son icône « muet ».
+  - id: tab5_volume_apply
+    mode: restart
+    parameters:
+      vol: float
+      push_device: bool
+    then:
+      - lambda: |-
+          float v = vol < 0.0f ? 0.0f : (vol > 1.0f ? 1.0f : vol);
+          id(system_volume) = v;
+          id(system_muted) = false;
+          ui_sync_volume_widgets(id(slider_volume), id(lbl_sys_vol_val),
+                                 id(slider_assist_volume), v);
+          if (id(icon_assist_mute) != nullptr) {
+            lv_label_set_text(id(icon_assist_mute), "\U000F057E");
+            lv_obj_set_style_text_color(id(icon_assist_mute),
+                lv_color_hex(UIColor::TEXT_SOFT), LV_PART_MAIN);
+          }
+      - if:
+          condition:
+            lambda: 'return push_device;'
+          then:
+            - script.execute: tab5_debounce_volume_set
+      - lambda: 'id(tab5_volume_pct).publish_state(id(system_volume) * 100.0f);'
+
   # Debounce de l'arc luminosité du popup lumière : chaque tick de glissement
   # redémarre le délai, un seul light.turn_on part une fois le doigt immobile
   # (même contrainte que le volume — ne pas spammer HA à chaque tick).
@@ -926,8 +961,11 @@ script:
             lv_obj_set_style_text_color(id(icon_assist_mute),
                 lv_color_hex(m ? UIColor::ERROR : UIColor::TEXT_SOFT), LV_PART_MAIN);
           }
-          if (id(slider_assist_volume) != nullptr)
-            lv_slider_set_value(id(slider_assist_volume), (int)(id(system_volume) * 100.0f + 0.5f), LV_ANIM_OFF);
+          // Même helper que script.tab5_volume_apply : à l'ouverture du popup,
+          // les deux sliders et le label % de la console repartent tous de
+          // `system_volume` (qui peut avoir bougé depuis HA entre-temps).
+          ui_sync_volume_widgets(id(slider_volume), id(lbl_sys_vol_val),
+                                 id(slider_assist_volume), id(system_volume));
       - lambda: |-
           assist_apply_text_size(id(lbl_assist_response), id(assist_text_size),
               id(roboto_mono_20), id(roboto_mono_24), id(roboto_mono_28),

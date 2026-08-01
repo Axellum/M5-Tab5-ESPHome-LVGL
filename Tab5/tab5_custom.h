@@ -365,6 +365,14 @@ void update_console_temp_label(lv_obj_t* label, float core_temp_c);
 void refresh_console_status_row_ui(lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_obj_t* lbl_temp,
     bool has_uptime, float uptime_s, bool has_rssi, float rssi_dbm, bool has_temp, float core_temp_c);
 
+// Repose la meme valeur de volume (0..1) sur les DEUX sliders de l'ecran + le
+// label % de la console. Appele par script.tab5_volume_apply, point d'entree
+// unique du volume (ecran, Home Assistant, rattrapage media_player).
+// lv_slider_set_value ne declenche PAS LV_EVENT_VALUE_CHANGED : reposer la
+// valeur sur le slider d'ou vient le geste ne reboucle pas sur on_value.
+void ui_sync_volume_widgets(lv_obj_t* slider_console, lv_obj_t* lbl_console_pct,
+    lv_obj_t* slider_assist, float volume);
+
 // Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).
 // Factorise depuis l'interval 2s de tab5-sensors-diagnostics.yaml (Phase 3, #T164).
 void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,

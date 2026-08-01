@@ -4,6 +4,36 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-08-01 — Pilotage et supervision de l'écran depuis Home Assistant
+
+Nouveau package `Tab5/tab5-ha-controls.yaml` : quatre entités exposées à HA pour
+observer et piloter la tablette sans être devant la dalle, plus la correction
+d'une désynchronisation du volume trouvée en chemin.
+
+- **`number` « Volume »** — le volume était écrit par les deux sliders de
+  l'écran, chacun ne repeignant que le sien, et **rien ne relisait le volume du
+  `media_player`**. Un réglage fait depuis HA changeait bien le son, mais les
+  sliders restaient sur l'ancien % et le prochain démute ré-appliquait la valeur
+  mémorisée : le réglage venu de HA sautait. Les trois sources passent désormais
+  par un point d'entrée unique, `script.tab5_volume_apply`, qui écrit le global,
+  repeint **les deux** sliders + le label % de la console et publie sur HA. Un
+  `interval` de 5 s rattrape en plus un `media_player.volume_set` reçu
+  directement (slider du dashboard, app mobile, automatisation) — ESPHome
+  n'expose pas de trigger `on_volume`. Effet de bord corrigé : glisser le volume
+  depuis la console démute vraiment (elle remontait le son sans jamais éteindre
+  son icône « muet », contrairement au popup assistant).
+- **`text_sensor` « Écran courant »** — nomme le popup affiché, ou le panneau du
+  rotateur central (`Accueil · Planning`, `Accueil · Pluie`…).
+- **`select` « Aller à l'écran »** — ouvre une modale à distance en rejouant
+  exactement le chemin d'ouverture de son bouton (scripts `tab5_assist_open` /
+  `tab5_calendar_open`, `animate_popup_open`, ou `clear_flag` pour la console qui
+  est un layer plein cadre). Retombe sur « — » aussitôt l'action faite : c'est
+  une commande, l'état se lit sur le `text_sensor`. « Lumières » en est absent
+  volontairement (le popup dépend de `current_light_entity`, positionné par la
+  carte qui l'ouvre), « Arcade » aussi (aucun usage à distance).
+- **`button` « Recharger le calendrier »** — rejoue `tab5_cal_prefetch_boot`
+  quand un RDV ajouté dans HA n'est pas encore visible.
+
 ### 2026-08-01 — `api: reboot_timeout` 15 min → 60 min
 
 Dans la nuit du 31/07 au 01/08, le serveur HA a mis longtemps à démarrer. Le

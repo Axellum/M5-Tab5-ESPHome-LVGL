@@ -1,0 +1,193 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-ha-controls.yaml
+# @role Entités ESPHome supplémentaires exposées à Home Assistant pour observer
+#       et piloter l'écran depuis un dashboard HA (« Console Tab5 »), sans être
+#       devant la dalle.
+# @architecture_constraint Ce fichier ne construit AUCUN widget LVGL. Il se
+#       contente (a) de lire l'état de l'UI et (b) de rejouer exactement les
+#       mêmes chemins d'ouverture que les boutons de l'écran — pour que l'état
+#       soit strictement identique qu'on passe par le doigt ou par HA. Toute
+#       nouvelle modale doit être ajoutée aux DEUX tables ci-dessous
+#       (`kScreens` du text_sensor, `switch` du select), sinon HA affichera
+#       « Accueil » alors qu'un popup couvre l'écran.
+# @ai_instruction Le volume ne s'écrit JAMAIS directement ici : tout passe par
+#       `script.tab5_volume_apply` (tab5-scripts.yaml), point d'entrée unique
+#       partagé avec les deux sliders de l'écran.
+# ============================================================================
+
+number:
+  # Volume système exposé à HA. Le getter lit `system_volume` (source de vérité
+  # de l'écran) plutôt que `speaker_player->volume` : quand le son est coupé, le
+  # haut-parleur est à 0 mais le volume mémorisé — celui que le démute va
+  # restaurer, et celui que montrent les sliders — ne l'est pas.
+  - platform: template
+    id: tab5_volume_pct
+    name: "Volume"
+    icon: mdi:volume-high
+    unit_of_measurement: "%"
+    entity_category: config
+    min_value: 0
+    max_value: 100
+    step: 1
+    update_interval: 60s
+    lambda: 'return id(system_volume) * 100.0f;'
+    set_action:
+      - script.execute:
+          id: tab5_volume_apply
+          vol: !lambda 'return x / 100.0f;'
+          push_device: true
+
+text_sensor:
+  # Écran réellement affiché. Utile à distance : savoir si la tablette est restée
+  # sur un popup, ou sur quel panneau du rotateur central elle en est.
+  - platform: template
+    id: tab5_screen_name
+    name: "Écran courant"
+    icon: mdi:monitor-dashboard
+    entity_category: diagnostic
+    update_interval: 5s
+    lambda: |-
+      struct Screen { lv_obj_t* obj; const char* name; };
+      // Ordre = priorité d'affichage : le sélecteur Arcade et les popups
+      // couvrent le dashboard, on nomme donc le premier visible.
+      static const Screen kScreens[] = {
+          {id(game_selector_overlay), "Arcade"},
+          {id(assistant_popup),       "Assistant vocal"},
+          {id(calendar_popup),        "Calendrier"},
+          {id(light_options_popup),   "Lumières"},
+          {id(clim_options_popup),    "Climatisation"},
+          {id(pots_detail_popup),     "Plantes"},
+          {id(tv_remote_popup),       "Télécommande TV"},
+          {id(layer_console_sys),     "Console système"},
+      };
+      for (const auto& s : kScreens) {
+        if (s.obj != nullptr && !lv_obj_has_flag(s.obj, LV_OBJ_FLAG_HIDDEN))
+          return {std::string(s.name)};
+      }
+      // Rien par-dessus : on nomme le panneau du rotateur central (8 s).
+      // Indices figés par update_central_panel_rotation (tab5_custom.h) :
+      // 0 planning, 1 pluie, 2 vigilance Météo-France, 3 info, 4-7 alertes HA.
+      const int p = id(current_central_panel);
+      if (p == 1) return {std::string("Accueil · Pluie")};
+      if (p == 2) return {std::string("Accueil · Vigilance météo")};
+      if (p == 3) return {std::string("Accueil · Info")};
+      if (p >= 4 && p <= 7) return {std::string("Accueil · Alerte HA")};
+      return {std::string("Accueil · Planning")};
+
+select:
+  # Commande d'ouverture à distance, PAS un miroir de l'état (c'est le rôle du
+  # text_sensor ci-dessus) : le select retombe sur « — » aussitôt l'action faite.
+  # Republier « — » redéclenche bien on_value, mais l'index 0 ne fait rien —
+  # la récursion s'arrête là.
+  # Volontairement absents : « Lumières » (le popup dépend de
+  # `current_light_entity`, positionné par la carte qui l'ouvre — l'ouvrir à
+  # froid afficherait les réglages de la dernière lampe touchée) et « Arcade »
+  # (lancer un jeu à distance sur une tablette murale n'a pas d'usage).
+  - platform: template
+    id: tab5_goto_screen
+    name: "Aller à l'écran"
+    icon: mdi:gesture-tap-button
+    entity_category: config
+    optimistic: true
+    options:
+      - "—"
+      - "Accueil"
+      - "Assistant vocal"
+      - "Calendrier"
+      - "Climatisation"
+      - "Plantes"
+      - "Télécommande TV"
+      - "Console système"
+    on_value:
+      - lambda: |-
+          if (i == 0) return;  // « — » : position de repos, aucune action
+
+          // Cible déjà affichée : ne rien faire, sinon le fermer-puis-rouvrir
+          // ci-dessous se verrait comme un clignotement.
+          static lv_obj_t* const kTargetOf[] = {
+              nullptr,                    // 0 « — »
+              nullptr,                    // 1 Accueil (aucun popup)
+              id(assistant_popup),        // 2
+              id(calendar_popup),         // 3
+              id(clim_options_popup),     // 4
+              id(pots_detail_popup),      // 5
+              id(tv_remote_popup),        // 6
+              id(layer_console_sys),      // 7
+          };
+          lv_obj_t* target = kTargetOf[i];
+          if (target != nullptr && !lv_obj_has_flag(target, LV_OBJ_FLAG_HIDDEN)) {
+            id(tab5_goto_screen).publish_state("—");
+            return;
+          }
+
+          // Fermeture de tout ce qui est ouvert — même chemin que le retour
+          // automatique à l'inactivité (tab5-scripts.yaml), pour laisser
+          // exactement le même état derrière soi.
+          static lv_obj_t* const kPopups[] = {
+              id(assistant_popup), id(calendar_popup), id(light_options_popup),
+              id(clim_options_popup), id(pots_detail_popup), id(tv_remote_popup),
+              id(layer_console_sys)
+          };
+          lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
+          for (lv_obj_t* p : kPopups) close_popup_if_open(p);
+          id(assist_popup_open) = false;
+
+          switch (i) {
+            case 2:  // L'assistant a son propre script : il arme aussi l'état
+                     // vocal et la synchro des réglages du panneau gauche.
+              id(tab5_assist_open).execute();
+              break;
+            case 3:  // Le calendrier a besoin de son mois courant + du rendu.
+              id(tab5_calendar_open).execute();
+              break;
+            case 7:  // La console est un layer plein cadre : pas d'animation
+                     // d'ouverture, comme son bouton (tab5-lvgl.yaml).
+              lv_obj_clear_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
+              lv_obj_move_foreground(id(layer_console_sys));
+              break;
+            default:
+              if (target != nullptr) {
+                animate_popup_open(target, nullptr);
+                lv_obj_move_foreground(target);
+              }
+              break;
+          }
+          // Le geste est consommé : on repasse en position de repos pour que la
+          // même destination puisse être redemandée juste après.
+          id(tab5_goto_screen).publish_state("—");
+
+button:
+  # Recharge le mois courant + M+1 du calendrier (même script que le pré-fetch
+  # de boot). À utiliser quand un RDV ajouté dans HA n'apparaît pas encore.
+  - platform: template
+    id: tab5_reload_calendar
+    name: "Recharger le calendrier"
+    icon: mdi:calendar-refresh
+    entity_category: config
+    on_press:
+      - script.execute: tab5_cal_prefetch_boot
+
+interval:
+  # Rattrapage du volume changé côté HA directement sur le media_player (slider
+  # du dashboard, app mobile, automatisation). ESPHome n'expose aucun trigger
+  # `on_volume` sur media_player, donc on compare. Sans ça, `system_volume`
+  # resterait sur l'ancienne valeur : les sliders de l'écran afficheraient un %
+  # faux et le prochain démute écraserait le réglage venu de HA.
+  # `!system_muted` est indispensable : quand le son est coupé, le haut-parleur
+  # est à 0 alors que `system_volume` porte la valeur à restaurer — comparer les
+  # deux dans cet état effacerait le volume mémorisé.
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return !id(system_muted) &&
+                     fabsf(id(speaker_player)->volume - id(system_volume)) > 0.01f;
+          then:
+            - script.execute:
+                id: tab5_volume_apply
+                vol: !lambda 'return id(speaker_player)->volume;'
+                push_device: false

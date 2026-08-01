@@ -240,6 +240,7 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── tab5-globals.yaml     # Shared global variables
 │   ├── tab5-scripts.yaml     # ESPHome script blocks
 │   ├── tab5-imu.yaml         # BMI270 IMU — adaptive polling + tap-to-wake
+│   ├── tab5-ha-controls.yaml # HA-facing entities — volume, current screen, go-to-screen
 │   ├── ui_components/        # 30+ reusable LVGL components (popups, cards, games)
 │   ├── tab5_custom.h         # C++ declarations (HMI logic)
 │   ├── tab5_custom.cpp       # C++ implementations (parsers, helpers)
