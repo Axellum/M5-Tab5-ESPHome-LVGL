@@ -1177,6 +1177,14 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx) {
 
+    // [AI-DEBUG] Un swipe qui ne pagine pas se diagnostique ici : si cette ligne n'apparait
+    // pas pendant le geste, LVGL a consomme le drag en scroll et n'a jamais emis
+    // LV_EVENT_GESTURE — chercher l'objet scrollable sous le doigt (cf. [AI-WARNING] du
+    // panneau titre dans tab5-lvgl.yaml), pas dans cette fonction.
+    // Le logger du projet tourne en `level: INFO` (tab5-hardware.yaml) : passer
+    // temporairement a DEBUG pour voir cette trace, elle est muette autrement.
+    ESP_LOGD("TAB5", "swipe: dir=%d y=%d page=%d", (int) dir, (int) pt_y, forecast_page_index);
+
     if (pt_y < FORECAST_SWIPE_Y_MIN) return;
     if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;
 

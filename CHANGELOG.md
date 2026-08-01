@@ -29,15 +29,22 @@ Remplacé par un titre calculé à partir des données réellement affichées.
 - `lbl_page_title_sub` est joint au C++ via un champ `page_title_sub` de
   `CentralPanelCtx` plutôt qu'en 4ᵉ paramètre de trois signatures et deux sites
   d'appel YAML.
-- **`page_title_wrapper` fait 1100 px de large, pas plus** (`[AI-WARNING]` posé
-  sur place) : la zone utile de `central_card` fait 1198 px (1240 − 2×20 de pad
-  − 2×1 de bordure). Une première version à 1200 px la faisait déborder de 2 px,
-  donc LVGL rendait `central_card` scrollable et le drag partait en scroll
-  élastique — les titres se décalaient sous le doigt et **le swipe ne paginait
-  plus** sur la bande centrale (invisible sur l'accueil, où le wrapper est
-  masqué et sort du calcul de débordement). Le wrapper est en plus posé
-  `scrollable: false` / `clickable: false` pour qu'il ne puisse jamais capter un
-  drag si sa géométrie rebouge.
+- **Le panneau titre est structuré comme ses frères de `central_card`**
+  (`[AI-WARNING]` posé sur place) : wrapper `SIZE_CONTENT` + **bouton invisible
+  1180×80 posé en dernier**, exactement comme `planning_wrapper`/`btn_planning_tap`.
+  Les premières versions (wrapper à largeur fixe 1200 puis 1100 px, sans bouton,
+  avec `scrollable`/`clickable` retirés) **cassaient la pagination** : sur les
+  pages prévisions, un drag sur la bande centrale faisait dériver le contenu sous
+  le doigt au lieu de paginer, alors que l'accueil — où le panneau planning est
+  actif — restait correct. Le bouton n'est donc pas décoratif : c'est lui qui
+  reçoit l'appui, et cette structure est la seule vérifiée comme laissant le
+  swipe remonter jusqu'à `page_main.on_gesture`. Validé sur l'appareil par Axel.
+  Le mécanisme LVGL exact n'a pas été instrumenté — la contrainte est empirique,
+  ne pas « simplifier » ce panneau sans re-tester le swipe sur l'appareil.
+- **[AI-DEBUG]** `handle_swipe_gesture()` loggue désormais `dir`/`y`/page reçus.
+  Trace muette en fonctionnement normal (logger du projet en `level: INFO`) :
+  passer à `DEBUG` pour distinguer « geste jamais émis » (drag mangé par un
+  scroll) de « geste reçu mais pagination fautive ».
 
 ### 2026-07-30 — Audit doc/code avant partage : la doc rattrape le firmware
 
