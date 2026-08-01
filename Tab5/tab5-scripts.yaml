@@ -354,11 +354,12 @@ script:
           id(system_muted) = false;
           ui_sync_volume_widgets(id(slider_volume), id(lbl_sys_vol_val),
                                  id(slider_assist_volume), v);
-          if (id(icon_assist_mute) != nullptr) {
-            lv_label_set_text(id(icon_assist_mute), "\U000F057E");
-            lv_obj_set_style_text_color(id(icon_assist_mute),
-                lv_color_hex(UIColor::TEXT_SOFT), LV_PART_MAIN);
-          }
+          ui_sync_mute_icons(id(icon_mute), id(icon_assist_mute), false);
+          // Horodate AVANT le debounce : le haut-parleur va rester en retard
+          // sur `system_volume` pendant tout le geste (le volume_set ne part
+          // qu'à l'immobilité). Sans cette marque, le rattrapage de 5 s
+          // recopierait le niveau périmé par-dessus le réglage en cours.
+          if (push_device) id(volume_push_ts) = millis();
       - if:
           condition:
             lambda: 'return push_device;'
@@ -955,12 +956,7 @@ script:
             lv_obj_set_style_text_color(id(lbl_assist_wake),
                 lv_color_hex(wake ? UIColor::SUCCESS : UIColor::TEXT_DIM), LV_PART_MAIN);
           }
-          if (id(icon_assist_mute) != nullptr) {
-            bool m = id(system_muted);
-            lv_label_set_text(id(icon_assist_mute), m ? "\U000F0581" : "\U000F057E");
-            lv_obj_set_style_text_color(id(icon_assist_mute),
-                lv_color_hex(m ? UIColor::ERROR : UIColor::TEXT_SOFT), LV_PART_MAIN);
-          }
+          ui_sync_mute_icons(id(icon_mute), id(icon_assist_mute), id(system_muted));
           // Même helper que script.tab5_volume_apply : à l'ouverture du popup,
           // les deux sliders et le label % de la console repartent tous de
           // `system_volume` (qui peut avoir bougé depuis HA entre-temps).

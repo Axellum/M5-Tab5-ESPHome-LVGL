@@ -1939,6 +1939,18 @@ void ui_sync_volume_widgets(lv_obj_t* slider_console, lv_obj_t* lbl_console_pct,
     }
 }
 
+// Muet : deux icones peignent le meme `system_muted` (barre du dashboard et
+// popup assistant). Un seul endroit les met d'accord.
+void ui_sync_mute_icons(lv_obj_t* icon_main, lv_obj_t* icon_assist, bool muted) {
+    const char* glyph = muted ? "\U000F0581" : "\U000F057E";
+    const uint32_t color = muted ? UIColor::ERROR : UIColor::TEXT_SOFT;
+    for (lv_obj_t* icon : {icon_main, icon_assist}) {
+        if (icon == nullptr) continue;
+        lv_label_set_text(icon, glyph);
+        lv_obj_set_style_text_color(icon, lv_color_hex(color), LV_PART_MAIN);
+    }
+}
+
 // Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).
 // Factorise depuis l'interval 2s de tab5-sensors-diagnostics.yaml (Phase 3, #T164). Le garde
 // "console visible ?" reste dans le YAML (evite de passer layer_console_sys ici).

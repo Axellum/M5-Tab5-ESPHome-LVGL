@@ -127,6 +127,15 @@ globals:
   - id: system_muted
     type: bool
     initial_value: 'false'
+  # Horodatage du dernier volume poussé DEPUIS la tablette ou HA (millis()).
+  # Le rattrapage de `tab5-ha-controls.yaml` s'en sert pour ne pas recopier un
+  # volume de haut-parleur encore périmé par-dessus le réglage en cours :
+  # `media_player.volume_set` est débouncé de 150 ms et, pendant un glissement,
+  # ne part qu'une fois le doigt immobile — le haut-parleur reste donc en retard
+  # sur `system_volume` pendant tout le geste.
+  - id: volume_push_ts
+    type: uint32_t
+    initial_value: '0'
   - id: temp_planning_text
     type: std::string
     initial_value: '""'

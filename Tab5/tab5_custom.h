@@ -373,6 +373,14 @@ void refresh_console_status_row_ui(lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_
 void ui_sync_volume_widgets(lv_obj_t* slider_console, lv_obj_t* lbl_console_pct,
     lv_obj_t* slider_assist, float volume);
 
+// Repose l'etat muet/non-muet sur les DEUX icones qui le representent : celle
+// de la barre du dashboard (`icon_mute`) et celle du popup assistant
+// (`icon_assist_mute`). Elles peignent le meme `system_muted` : chaque endroit
+// qui le change doit passer par ici, sinon l'une des deux ment (couper le son
+// depuis le popup laissait l'icone du dashboard sur « son actif », et
+// inversement).
+void ui_sync_mute_icons(lv_obj_t* icon_main, lv_obj_t* icon_assist, bool muted);
+
 // Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).
 // Factorise depuis l'interval 2s de tab5-sensors-diagnostics.yaml (Phase 3, #T164).
 void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,

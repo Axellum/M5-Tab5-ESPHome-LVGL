@@ -48,11 +48,27 @@ text_sensor:
     entity_category: diagnostic
     update_interval: 5s
     lambda: |-
+      // D'ABORD la page LVGL : les popups sont des enfants de `page_main` et le
+      // sélecteur Arcade est le widget RACINE de `page_arcade` — il n'a donc
+      // jamais le flag HIDDEN. Les tester sans regarder la page affichée
+      // annoncerait « Arcade » en permanence, et un popup laissé ouvert
+      // masquerait un jeu en cours.
+      if (!id(page_main)->is_showing()) {
+        if (Marble::is_open())   return {std::string("Jeu · Fil d'Or")};
+        if (Arkanoid::is_open()) return {std::string("Jeu · Arcanoïde")};
+        if (Lode::is_open())     return {std::string("Jeu · Coureur d'Or")};
+        if (Go::is_open())       return {std::string("Jeu · Go Tab")};
+        if (Trivia::is_open())   return {std::string("Jeu · Trial Poursuite")};
+        if (Draughts::is_open()) return {std::string("Jeu · Dames Tab")};
+        if (Chess::is_open())    return {std::string("Jeu · Roi Noir")};
+        if (Pinball::is_open())  return {std::string("Jeu · Neon Apron")};
+        return {std::string("Arcade")};
+      }
+
       struct Screen { lv_obj_t* obj; const char* name; };
-      // Ordre = priorité d'affichage : le sélecteur Arcade et les popups
-      // couvrent le dashboard, on nomme donc le premier visible.
+      // Ordre = priorité d'affichage : les popups couvrent le dashboard, on
+      // nomme donc le premier visible.
       static const Screen kScreens[] = {
-          {id(game_selector_overlay), "Arcade"},
           {id(assistant_popup),       "Assistant vocal"},
           {id(calendar_popup),        "Calendrier"},
           {id(light_options_popup),   "Lumières"},
@@ -100,6 +116,25 @@ select:
       - "Télécommande TV"
       - "Console système"
     on_value:
+      # Les popups sont des enfants de `page_main` : si la tablette est sur le
+      # sélecteur Arcade ou dans une partie, en ouvrir un jouerait hors écran
+      # pendant que l'utilisateur regarde toujours le jeu — et « Accueil » ne
+      # ramènerait rien. On revient donc d'abord sur le dashboard, en fermant le
+      # jeu par la liste unique `tab5_games_close_all` (jamais recopiée : c'est
+      # elle qui restaure aussi la rotation paysage après « Neon Apron »).
+      # Conditionné : rejouer `page.show` alors qu'on y est déjà provoquerait un
+      # rechargement d'écran visible pour rien.
+      - if:
+          condition:
+            and:
+              # `return` dans une lambda ne sort que de la lambda, pas de la
+              # séquence : le filtre « — » doit être dans la condition.
+              - lambda: 'return i != 0;'
+              - not:
+                  lvgl.page.is_showing: page_main
+          then:
+            - script.execute: tab5_games_close_all
+            - lvgl.page.show: page_main
       - lambda: |-
           if (i == 0) return;  // « — » : position de repos, aucune action
 
@@ -179,12 +214,20 @@ interval:
   # `!system_muted` est indispensable : quand le son est coupé, le haut-parleur
   # est à 0 alors que `system_volume` porte la valeur à restaurer — comparer les
   # deux dans cet état effacerait le volume mémorisé.
+  # La fenêtre de garde de 2 s l'est tout autant : `media_player.volume_set` est
+  # débouncé de 150 ms et, pendant un glissement, ne part qu'une fois le doigt
+  # immobile. Le haut-parleur reste donc en retard sur `system_volume` pendant
+  # tout le geste — un tick tombant dans cette fenêtre recopierait le niveau
+  # périmé par-dessus le réglage en cours et ferait sauter le slider sous le
+  # doigt. `volume_push_ts` est réarmé à CHAQUE tick du glissement, la garde
+  # couvre donc le geste entier, pas seulement son premier instant.
   - interval: 5s
     then:
       - if:
           condition:
             lambda: |-
               return !id(system_muted) &&
+                     (millis() - id(volume_push_ts)) > 2000 &&
                      fabsf(id(speaker_player)->volume - id(system_volume)) > 0.01f;
           then:
             - script.execute:
