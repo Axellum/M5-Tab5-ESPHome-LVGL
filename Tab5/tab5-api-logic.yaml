@@ -14,10 +14,27 @@ api:
 
     key: !secret api_encryption_key
 
-  # [Audit F-04] 0s = jamais de reboot si HA injoignable → état "zombie"
-  # déconnecté indéfiniment. 15min force un redémarrage propre après perte
-  # durable de la connexion API (sans gêner les MAJ courtes de HA).
-  reboot_timeout: 15min
+  # ═══════════════════════════════════════════════════════════════════════
+  # Redémarrage automatique quand Home Assistant ne se connecte plus
+  # ═══════════════════════════════════════════════════════════════════════
+  # ESPHome redémarre l'appareil quand AUCUN client API n'est connecté pendant
+  # cette durée. Le compteur repart à zéro à chaque connexion, même brève.
+  #
+  # [Audit F-04] `0s` = jamais de reboot, donc état « zombie » possible : pile
+  # API figée, appareil en ligne mais muet, jusqu'à une intervention physique.
+  # On garde donc un filet — la question n'est que sa durée.
+  #
+  # [Incident 31/07→01/08/2026] Le serveur HA a mis longtemps à démarrer. Le
+  # Tab5, WiFi bon mais sans client API, a redémarré en boucle toutes les
+  # ~15-20 min (15 min de timeout + boot + reconnexions, le compteur repartant
+  # à chaque connexion brève de HA en cours de démarrage). Rien n'était cassé
+  # côté appareil : c'est ce garde-fou qui s'exécutait, comme prévu.
+  #
+  # 60min est un compromis assumé : une panne/maintenance HA d'une heure ne
+  # fait plus cycler la tablette (qui reste utile hors HA — horloge, arcade,
+  # console diag, dernier état météo affiché), et le filet anti-zombie est
+  # conservé. Ne pas repasser à `0s` sans relire l'audit F-04.
+  reboot_timeout: 60min
 
   services:
 

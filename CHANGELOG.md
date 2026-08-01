@@ -4,6 +4,25 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-08-01 — `api: reboot_timeout` 15 min → 60 min
+
+Dans la nuit du 31/07 au 01/08, le serveur HA a mis longtemps à démarrer. Le
+Tab5, WiFi bon mais sans client API, a **redémarré en boucle toutes les ~15-20
+min**. Rien de cassé côté appareil : c'était `api: reboot_timeout: 15min` qui
+faisait son travail (ESPHome redémarre quand aucun client API n'est connecté
+pendant cette durée ; le compteur repart à chaque connexion, même brève, d'où un
+cycle un peu plus long que le timeout).
+
+- Porté à **`60min`** : une panne ou une maintenance HA d'une heure ne fait plus
+  cycler la tablette, qui reste utile sans HA (horloge, arcade, console diag,
+  dernière météo affichée). Le filet anti-« zombie » de l'audit F-04 est conservé
+  — `0s` reste proscrit sans relire cet audit (pile API figée = appareil en ligne
+  mais muet jusqu'à une coupure d'alimentation).
+- Le raisonnement complet (y compris pourquoi le `reboot_timeout` du composant
+  `wifi:` n'est pas en cause) est écrit sur place dans `tab5-api-logic.yaml`,
+  documenté comme incident dans [`docs/troubleshooting.md`](docs/troubleshooting.md)
+  (EN + FR) et résumé dans le bullet « Résilience hors-ligne » du `README.md`.
+
 ### 2026-07-31 — Titres de fenêtre prévisions : la plage réelle, en toutes lettres
 
 Les pages de prévisions non-accueil affichaient un titre statique (`Prévisions
