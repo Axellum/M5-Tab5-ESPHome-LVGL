@@ -31,6 +31,9 @@ api:
             int fp = id(forecast_page_index);
             int hourly_pi = (fp < 2) ? (1 - fp) : 0;
             refresh_hourly_forecast(g_hour_slots, hourly_pi, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+            // Les tuiles viennent de changer : le titre de la carte centrale annonce
+            // leurs bornes, il doit suivre. No-op si ce titre n'est pas affiche.
+            refresh_forecast_page_title_ui(fp, id(page_title_wrapper), id(lbl_page_title), g_central_ctx);
 
     - service: tab5_maj_previsions_jours_bulk
       variables:
@@ -42,6 +45,8 @@ api:
             int fp = id(forecast_page_index);
             int daily_pi = (fp >= 2) ? (fp - 2) : 0;
             refresh_daily_forecast(g_day_slots, daily_pi, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+            // Idem horaire : le titre annonce les bornes des 5 tuiles, il suit leur MAJ.
+            refresh_forecast_page_title_ui(fp, id(page_title_wrapper), id(lbl_page_title), g_central_ctx);
             // Bandeau planning dérivé localement (plus de push HA tab5_maj_planning)
             if (!id(is_showing_temp_planning) && id(lbl_planning_text) != nullptr) {
               std::string l1, l2;

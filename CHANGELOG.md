@@ -41,6 +41,16 @@ Remplacé par un titre calculé à partir des données réellement affichées.
   swipe remonter jusqu'à `page_main.on_gesture`. Validé sur l'appareil par Axel.
   Le mécanisme LVGL exact n'a pas été instrumenté — la contrainte est empirique,
   ne pas « simplifier » ce panneau sans re-tester le swipe sur l'appareil.
+- **Le titre suit les pushs HA** (signalé par Cursor Bugbot sur la PR #83) : les
+  services `tab5_maj_previsions_{jours,heures}_bulk` rafraîchissaient les 5 tuiles
+  sans toucher au titre, qui annonce pourtant leurs bornes — la plage restait donc
+  figée sur les anciennes valeurs tant que l'utilisateur ne reswipait pas (visible
+  au premier push après un swipe fait avant l'arrivée des données : tuiles à jour,
+  titre encore dégradé au seul chapeau). Les deux services appellent maintenant
+  `refresh_forecast_page_title_ui()`, qui réécrit le texte **sans** toucher à la
+  visibilité des panneaux et ne fait rien si le titre n'est pas à l'écran — un
+  push ne peut donc pas voler la carte centrale au planning temporaire (6 s) ni à
+  une réponse vocale.
 - **[AI-DEBUG]** `handle_swipe_gesture()` loggue désormais `dir`/`y`/page reçus.
   Trace muette en fonctionnement normal (logger du projet en `level: INFO`) :
   passer à `DEBUG` pour distinguer « geste jamais émis » (drag mangé par un

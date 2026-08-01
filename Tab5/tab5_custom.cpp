@@ -900,6 +900,27 @@ void dismiss_ha_alert_slot_immediate(int slot_idx, lv_obj_t* wrap, lv_obj_t* lbl
     }
 }
 
+// Pose les deux lignes du titre sans rien decider de la visibilite : chapeau
+// discret (roboto_22 attenue) + plage en gras dessous. Si les bornes manquent
+// (donnees HA pas encore recues et SNTP muet), le chapeau prend la ligne
+// principale et se recentre verticalement.
+// Renvoie false quand la page n'a pas de titre (accueil) : rien n'est ecrit.
+static bool set_forecast_page_title_text(int forecast_page, lv_obj_t* lbl_page_title,
+                                         CentralPanelCtx& ctx) {
+    std::string chapeau, plage;
+    if (!forecast_page_title_parts(forecast_page, chapeau, plage)) return false;
+
+    const bool deux_lignes = !plage.empty();
+    if (ctx.page_title_sub) {
+        lv_label_set_recolor(ctx.page_title_sub, false);
+        lv_label_set_text(ctx.page_title_sub, deux_lignes ? chapeau.c_str() : "");
+    }
+    lv_label_set_recolor(lbl_page_title, false);
+    lv_label_set_text(lbl_page_title, deux_lignes ? plage.c_str() : chapeau.c_str());
+    lv_obj_align(lbl_page_title, LV_ALIGN_CENTER, 0, deux_lignes ? 13 : 0);
+    return true;
+}
+
 void update_central_forecast_page_ui(int forecast_page,
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, CentralPanelCtx& ctx) {
 
@@ -919,21 +940,20 @@ void update_central_forecast_page_ui(int forecast_page,
         return;
     }
 
-    std::string chapeau, plage;
-    if (!forecast_page_title_parts(forecast_page, chapeau, plage)) return;
-
-    // Deux lignes : chapeau discret (roboto_22 attenue) + plage en gras dessous.
-    // Si les bornes manquent (donnees HA pas encore recues et SNTP muet), le
-    // chapeau prend la ligne principale et se recentre verticalement.
-    const bool deux_lignes = !plage.empty();
-    if (ctx.page_title_sub) {
-        lv_label_set_recolor(ctx.page_title_sub, false);
-        lv_label_set_text(ctx.page_title_sub, deux_lignes ? chapeau.c_str() : "");
-    }
-    lv_label_set_recolor(lbl_page_title, false);
-    lv_label_set_text(lbl_page_title, deux_lignes ? plage.c_str() : chapeau.c_str());
-    lv_obj_align(lbl_page_title, LV_ALIGN_CENTER, 0, deux_lignes ? 13 : 0);
+    if (!set_forecast_page_title_text(forecast_page, lbl_page_title, ctx)) return;
     lv_obj_clear_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
+}
+
+void refresh_forecast_page_title_ui(int forecast_page,
+    lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, CentralPanelCtx& ctx) {
+
+    if (!page_title_wrap || !lbl_page_title) return;
+    // No-op si le titre n'est pas a l'ecran (accueil, planning temporaire 6 s,
+    // reponse vocale) : un push HA ne doit jamais reprendre la carte centrale a
+    // ce qui l'occupe. On se contente de reecrire le texte, sans toucher a la
+    // visibilite des panneaux — contrairement a update_central_forecast_page_ui().
+    if (lv_obj_has_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN)) return;
+    set_forecast_page_title_text(forecast_page, lbl_page_title, ctx);
 }
 
 void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
