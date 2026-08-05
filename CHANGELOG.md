@@ -4,6 +4,117 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-08-05 — Réveil matin piloté par le calendrier, et rappels de rendez-vous
+
+Le Tab5 devient un vrai réveil. Réglable **depuis l'écran comme depuis Home
+Assistant** (les deux montrent le même état, il n'y a qu'une source de vérité),
+et surtout : **il sonne même si Home Assistant est éteint**. L'heure vient de
+SNTP, les horaires de travail des 15 prochains jours sont déjà en cache dans
+l'appareil, et la sonnerie est une mélodie synthétisée sur place — HA n'ajoute
+que du confort.
+
+- **Trois modes**, parce que « se baser sur le calendrier » veut dire deux choses
+  différentes selon les jours :
+  - *Heure fixe* — les jours de la semaine cochés ;
+  - *Jours travaillés* — la même heure, mais seulement quand le calendrier
+    annonce du travail ;
+  - *Avant l'ouverture* — l'heure est **dérivée de l'embauche** : début du
+    service − délai réglable, borné par « jamais avant » / « jamais après ».
+- **L'heure de fermeture sert aussi**, via le réglage **« repos mini »** : après
+  une fermeture à 21:00, un repos de 9 h interdit de sonner avant 06:00. Borné
+  par « jamais après » — le repos ne peut pas faire arriver en retard.
+- **Le sélecteur de jours ne gouverne QUE l'heure fixe.** Une journée pilotée par
+  le calendrier sonne quel que soit le jour de la semaine : décocher le samedi ne
+  doit pas faire rater une embauche du samedi matin.
+- **Arrêt à la voix ou au toucher.** Toucher n'importe où sur l'écran de sonnerie
+  arrête le réveil ; « Répéter » reste un bouton distinct. Côté voix, le modèle
+  microWakeWord **« Stop » était déjà embarqué** (il ne servait qu'à arrêter le
+  volet) : il est armé pendant la sonnerie, et n'importe quel mot de réveil coupe
+  l'alarme. Le moteur est démarré même si « Ok Nabu » est désactivé, sinon la
+  promesse ne tiendrait pas pour qui coupe le micro la nuit. Chaque passage de
+  mélodie est suivi de **2,5 s de silence** : c'est la fenêtre où le micro a une
+  chance d'entendre quelque chose.
+- **Annonce des rendez-vous**, N minutes avant (réglable, 0–120). HA pousse la
+  liste des rendez-vous horodatés toutes les 5 minutes ; **c'est le firmware qui
+  tient le compte à rebours**, donc une coupure HA entre la poussée et l'échéance
+  ne fait rien rater. Bandeau sur la carte centrale + annonce parlée.
+- Réglages complets : mélodie (4, écoutables d'un tap), volume dédié au réveil
+  (indépendant du volume système), volume progressif, répétition, durée maximale
+  de sonnerie, briefing parlé au réveil (heure, horaires du jour, rendez-vous,
+  température), et une URL de sonnerie personnalisée servie par HA — avec
+  **repli automatique et silencieux sur la mélodie locale** si HA ne répond pas.
+- Ouverture : **tap court sur la tuile horloge** (l'appui long reste le
+  calendrier — ce tap court ne faisait rien jusqu'ici, aucun geste n'est repris).
+  Pastille d'état dans la barre du haut : cloche verte = armé, ambre = armé mais
+  aucun jour retenu (le piège du mode « jours travaillés » pendant une semaine de
+  congés), barrée = éteint.
+- Nouveaux fichiers : `Tab5/alarm_clock.h/.cpp` (moteur pur — dates, règles
+  calendrier, liste des RDV ; aucun `id()` ESPHome, aucun réseau),
+  `Tab5/tab5-alarm.yaml` (12ᵉ package), `ui_components/alarm_popup.yaml`,
+  `ui_components/alarm_ring_overlay.yaml`, et côté HA
+  `HomeAssistant_Config/packages/tab5_reveil.yaml`.
+- **Bug attrapé par le compilateur, pas par un test** : `fixe_si_coche` avait été
+  déclarée `bool` au lieu de `int` — tous les modes à heure fixe auraient sonné à
+  **00:01** au lieu de l'heure réglée. `-Wint-in-bool-context` l'a signalé à la
+  première compilation.
+- **Récursion infinie évitée de justesse** sur le select « jours » : `publish_state()`
+  rappelle toujours `on_value`, même à valeur inchangée, et le script de
+  rafraîchissement republie ce select à chaque passage. Le garde-fou devait être
+  une `condition:` et non un `return` en lambda — un `return` ne sort que de la
+  lambda, pas de la séquence d'actions (même piège que sur le select « Aller à
+  l'écran »).
+
+
+### 2026-08-05 — Étage de gain du micro remis dans le bon ordre
+
+Le niveau d'entrée était correct, mais **les 6 dB étaient pris au mauvais endroit** : en
+numérique (`gain_factor: 2` sur le wake word et sur le vocal), après le
+convertisseur. Or le gain numérique d'ESPHome est une multiplication entière
+suivie d'un `clamp` dur (`microphone_source.cpp`) : il amplifie le bruit de fond
+du convertisseur exactement autant que la voix — donc zéro gain de rapport
+signal/bruit — et il **écrête net** les crêtes, qui deviennent des signaux carrés.
+C'est précisément ce que Whisper transcrit le plus mal.
+
+- Les mêmes 6 dB sont désormais pris **en analogique, avant la numérisation** :
+  `mic_gain` de l'ES7210 passe de 24 à **30 dB**, et les deux `gain_factor`
+  retombent à **1**. Niveau sonore identique, seuil d'écrêtage inchangé, mais
+  l'amplification se fait là où elle apporte vraiment du signal. L'ES7210 monte
+  jusqu'à 37,5 dB, la marge reste ouverte.
+- **`noise_suppression_level: 2 → 0`.** Ce réglage est bien actif — HA l'applique
+  côté pipeline via `MicroVadSpeexEnhancer` (`assist_pipeline/pipeline.py`) — mais
+  un débruiteur déforme la parole, et Whisper est entraîné sur de l'audio naturel.
+  À remettre à 1 ou 2 si la reconnaissance se dégrade dans une pièce bruyante.
+- **Pipeline de restitution porté à 24000 Hz** (au lieu des 22050 posés le matin
+  même) : « Discussion LLM » est passé sur HA Cloud / AlainNeural, qui produit du
+  24000, pendant que « Domotique » reste sur Piper en local. À 24000 le cloud est
+  natif et Piper est simplement suréchantillonné, ce qui **ne coupe aucun
+  contenu** ; demander 22050 raboterait le cloud au-dessus de 11 kHz.
+
+### 2026-08-05 — Qualité audio des réponses vocales : bande passante et grésillements
+
+Deux défauts distincts dans la chaîne de restitution, tous deux dans
+`Tab5/tab5-hardware.yaml`.
+
+- **La voix était bridée en 16 kHz.** Le bloc `announcement_pipeline` n'est pas
+  un réglage de sortie : c'est le **format préféré annoncé à Home Assistant**,
+  donc ce que HA transcode avant de l'envoyer. Il demandait du `WAV` 16 kHz mono,
+  alors que le modèle Piper réellement utilisé par les deux pipelines Assist du
+  Tab5 (`fr_FR-upmc-medium`) produit du **22050 Hz** : HA sous-échantillonnait à
+  chaque réponse et tout ce qui vit au-dessus de 8 kHz — les sifflantes `s`,
+  `ch`, `f` — était jeté avant même d'atteindre la tablette. Le pipeline demande
+  désormais **22050 Hz, le taux natif du modèle**, soit zéro rééchantillonnage de
+  bout en bout (HA → I2S → ES8388).
+- **`WAV` → `FLAC`** (le défaut ESPHome, et ce que fait le firmware officiel
+  Home Assistant Voice PE) : sans perte, environ deux fois moins de réseau que le
+  WAV brut. La montée en fréquence ne coûte donc rien en débit.
+- **Le tampon de lecture tournait sous le défaut ESPHome.** `buffer_duration`
+  valait 200 ms (le commentaire « 100 → 200 ms » datait d'une version où le
+  défaut était 100 ms ; il vaut **500 ms** aujourd'hui). Ça compte : le TTS est
+  streamé en HTTP depuis HA **pendant sa génération**, via le WiFi porté par le
+  co-processeur C6 en SDIO, et quand ce tampon se vide la tâche du haut-parleur
+  ne met pas le flux en pause — elle **remplit le buffer DMA de silence**. Chaque
+  hoquet réseau devient un micro-trou audible. Tampon ramené au défaut, 500 ms.
+
 ### 2026-08-01 — `select` « Aller à l'écran » : le popup se refermait aussitôt
 
 Constaté sur l'appareil juste après l'OTA de la PR #85 : demander un écran depuis

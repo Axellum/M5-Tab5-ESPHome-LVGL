@@ -210,8 +210,12 @@ lvgl:
                     - label: { id: lbl_time_m1_b, text: "0", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
               - label: { id: lbl_date, text: "Jeu 02 Avr", align: TOP_MID, y: 140, text_font: roboto_45, text_color: color_text }
 
-        # Zone tactile invisible par-dessus l'horloge/date : appui long -> popup
-        # calendrier mensuel. Un tap court reste sans effet, comme avant.
+        # Zone tactile invisible par-dessus l'horloge/date. Deux gestes sur la
+        # même tuile, dans l'ordre qui va de soi quand on regarde une horloge :
+        #   - tap court  -> réglages du RÉVEIL (alarm_popup.yaml)
+        #   - appui long -> CALENDRIER mensuel (inchangé depuis juillet)
+        # Le tap court ne faisait rien jusqu'au 05/08/2026 : aucun geste existant
+        # n'est repris à un autre usage.
         - button:
             id: btn_clock_calendar_zone
             align: TOP_MID
@@ -220,6 +224,8 @@ lvgl:
             width: 401
             height: 200
             styles: style_invisible
+            on_short_click:
+              - script.execute: tab5_alarm_open
             on_long_press:
               - script.execute: tab5_calendar_open
 
@@ -228,6 +234,11 @@ lvgl:
         - label: { id: icon_pc, text: "\U000F0379", align: TOP_LEFT, x: 10, y: 10, text_font: mdi_font_26, text_color: color_text_dim }
         - label: { id: icon_phone, text: "\U000F011E", align: TOP_LEFT, x: 45, y: 10, text_font: mdi_font_26, text_color: color_text_dim }
         - label: { id: icon_wifi, text: "\U000F05A9", align: TOP_LEFT, x: 80, y: 10, text_font: mdi_font_26, text_color: color_text_dim }
+        # Pastille réveil : cloche verte = armé avec une sonnerie calculée,
+        # ambre = armé mais aucun jour retenu (piège du mode « jours travaillés »
+        # pendant une semaine de congés), barrée et éteinte = réveil coupé.
+        # Repeinte par alarm_render_status_icon() depuis tab5_alarm_sync_ui.
+        - label: { id: icon_alarm_status, text: "\U000F0023", align: TOP_LEFT, x: 115, y: 10, text_font: mdi_font_26, text_color: color_inactive }
 
         # --- Top Right Buttons (même habillage verre que Domo/Discu) ---
         - button:
@@ -655,6 +666,12 @@ lvgl:
         - !include ui_components/pots_popup.yaml
         - !include ui_components/calendar_popup.yaml
         - !include ui_components/assistant_popup.yaml
+        - !include ui_components/alarm_popup.yaml
+        # EN DERNIER, volontairement : l'ordre de déclaration est l'ordre de
+        # dessin LVGL, et l'écran de sonnerie doit couvrir toutes les fenêtres
+        # ci-dessus. `lv_obj_move_foreground()` le confirme à chaque affichage,
+        # mais partir déjà au bon rang évite un cadre de clignotement.
+        - !include ui_components/alarm_ring_overlay.yaml
         # ═══ Les 8 jeux + le sélecteur arcade vivent désormais dans leurs
         # propres pages LVGL (page_arcade, page_marble, … page_pinball).
         # Voir ci-dessous. ═══

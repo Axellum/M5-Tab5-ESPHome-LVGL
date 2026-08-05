@@ -2,7 +2,7 @@
 
 > **[AI-CONTEXT] PRÉSENTATION ET RÔLE DE CE FICHIER**
 > Ce fichier est la cartographie officielle du projet Tab5. Il a été créé **spécifiquement pour guider les agents IA** (Claude, Gemini, etc.) dans leur compréhension de l'architecture du firmware.
-> Au lieu de lire et d'analyser à l'aveugle les dizaines de fichiers YAML et C++, **l'IA doit lire cette cartographie en premier**. Elle y trouvera l'arbre des dépendances (11 packages YAML + 8 modules jeux C++), la répartition des rôles entre le YAML et le C++, ainsi que l'historique des bugs résolus et de la dette technique. Cela évite les hallucinations et le temps perdu en rétro-ingénierie.
+> Au lieu de lire et d'analyser à l'aveugle les dizaines de fichiers YAML et C++, **l'IA doit lire cette cartographie en premier**. Elle y trouvera l'arbre des dépendances (12 packages YAML + 9 modules C++ hors HMI), la répartition des rôles entre le YAML et le C++, ainsi que l'historique des bugs résolus et de la dette technique. Cela évite les hallucinations et le temps perdu en rétro-ingénierie.
 
 `Généré le 2026-07-06` · `maj: 2026-08-01` · Sources vérifiées directement dans le code (`00ProjetTab/`), croisées avec `Tab5/README.md` (réécrit le 05/07/2026 contre le firmware réel), `contexte_ia/04_Projets/etat_tab5.md` et `contexte_ia/02_Hardware/rules_esphome.md`. Aucun fait ci-dessous n'est tiré d'une supposition — chaque ligne cite le fichier source lu.
 
@@ -12,7 +12,7 @@ Repo Git distinct : `Axellum/M5-Tab5-ESPHome-LVGL` (dossier local `00ProjetTab/`
 
 ## 1. Vue d'ensemble en une phrase
 
-Un tableau de bord domotique 60 FPS + satellite vocal local + **8 consoles de jeu arcade** (prototypes expérimentaux) tournant **entièrement en firmware C++/LVGL** sur un M5Stack Tab5 V2 (ESP32-P4), architecture **YAML modulaire par domaine** (11 packages + `ui_components/`), **push-only** depuis Home Assistant (zéro polling), avec la logique HMI centralisée dans `tab5_custom.h/.cpp` et chaque jeu dans son propre namespace C++ isolé.
+Un tableau de bord domotique 60 FPS + satellite vocal local + **8 consoles de jeu arcade** (prototypes expérimentaux) tournant **entièrement en firmware C++/LVGL** sur un M5Stack Tab5 V2 (ESP32-P4), architecture **YAML modulaire par domaine** (12 packages + `ui_components/`), **push-only** depuis Home Assistant (zéro polling), avec la logique HMI centralisée dans `tab5_custom.h/.cpp` et chaque jeu dans son propre namespace C++ isolé.
 
 ---
 
@@ -22,7 +22,7 @@ Un tableau de bord domotique 60 FPS + satellite vocal local + **8 consoles de je
 graph TD
     ENTRY["tab5-ha-hmi.yaml<br/>(point d'entrée, 169 lignes)<br/>substitutions (user_entities) + on_boot + packages: + includes:"]
 
-    subgraph PKG["Packages ESPHome (Tab5/*.yaml) — 11 packages"]
+    subgraph PKG["Packages ESPHome (Tab5/*.yaml) — 12 packages"]
         TOK["tab5-ui-tokens.yaml<br/>tokens dimensionnels (modal_card_w/h, modal_body_y)"]
         HW["tab5-hardware.yaml<br/>448 lignes<br/>display/touch/i2c/audio/esp32_hosted/wake words (okay_nabu + Stop)/ota:"]
         SENSD["tab5-sensors-diagnostics.yaml<br/>287 lignes<br/>wifi:/alim GPIO/status_ha/uptime/RAM/loop time/select:/time:/interval:"]
@@ -34,7 +34,11 @@ graph TD
         LVGL["tab5-lvgl.yaml<br/>709 lignes<br/>page_main + swipe prévisions + btns console/TV + !include jeux + sélecteur arcade"]
         IMU["tab5-imu.yaml<br/>136 lignes<br/>BMI270 motion: + poll adaptatif 10/30Hz + tap-to-wake"]
         HACTL["tab5-ha-controls.yaml<br/>175 lignes<br/>number volume + text_sensor écran courant + select aller-à + button recharger calendrier + interval rattrapage volume"]
+        ALARM["tab5-alarm.yaml<br/>réveil : rtttl + 20 entités HA (switch/datetime/number/select/text)<br/>+ machine d'état sonnerie + tick 1s (réveil & annonce RDV)"]
     end
+
+    ALARMC["alarm_clock.h/.cpp<br/>moteur réveil PUR : prochaine sonnerie (8 jours),
+règles calendrier ouverture/fermeture, snooze, liste RDV, rendu LVGL<br/>lit cal_jours_data[] de tab5_custom.h — aucun id() ESPHome, aucun réseau"]
 
     subgraph UI["ui_components/*.yaml (30+ fichiers, inclus par tab5-lvgl.yaml)"]
         MOIST["moisture_sensors.yaml (64L)"]
@@ -92,6 +96,7 @@ graph TD
     ENTRY -->|packages:| LVGL
     ENTRY -->|packages:| IMU
     ENTRY -->|packages:| HACTL
+    ENTRY -->|packages:| ALARM
     ENTRY -->|includes:| HFILE
     ENTRY -->|includes:| CFILE
     ENTRY -->|includes:| MARBLE
@@ -102,7 +107,12 @@ graph TD
     ENTRY -->|includes:| TRIV
     ENTRY -->|includes:| DRA
     ENTRY -->|includes:| CHESS
+    ENTRY -->|includes:| ALARMC
 
+    ALARM --> ALARMC
+    ALARMC -->|lit cal_jours_data| CFILE
+    API -->|tab5_maj_previsions_jours_bulk : alarm_invalidate| ALARMC
+    API -->|tab5_maj_rdv_prochains : rdv_store| ALARMC
     HW --> MIPIDSI
     HW --> PI4IOE
     HW --> ES8388
@@ -161,6 +171,7 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 | `tab5-globals.yaml` | 168 | Tout l'état partagé entre fichiers (`globals:`) + l'`interval: 8s` qui fait tourner la carte centrale (planning/pluie/alertes/info + jusqu'à 4 bandeaux HA, actif seulement sur la fenêtre prévisions par défaut) | État global partagé, rotateur carte centrale | `tab5_custom.cpp` (`transition_widgets()`, `g_central_ctx`) |
 | `tab5-scripts.yaml` | 1058 | Scripts ESPHome par familles : debounces (volume 150 ms, luminosité 200 ms, clim 250 ms), vocal (arm/disarm `Stop`, interrupt + ré-écoute, toggle assist, réponse vocale temporaire), rotateur central + dismiss (info, alertes HA paramétré slot 0-3), volet (fin de mouvement, feedback stop), popup lumière (`tab5_light_popup_show`), popup calendrier, popup assistant vocal (`tab5_assist_open/close/on_request/sync_settings/set_mode/set_text_size`). L'affichage temporaire du planning est en C++ (`show_temporary_planning()`) | Séquences temporisées, vocal, rotateur, popups | `globals:`, `tab5_custom.cpp`, `g_central_ctx` |
 | `tab5-lvgl.yaml` | 709 | Layout complet : page unique 1280×720 (`page_main`), swipe gauche/droite = pagination prévisions 0-4 (zone `y ≥ 333` uniquement), console via `btn_control_console` + popup TV via `btn_control_tv`, popup détails plantes via appui long, popup calendrier via appui long horloge, boutons statut/mode vocal (centralisés via `tab5_set_assist_mode`), carte centrale | Layout racine, navigation gestuelle | Tous les `ui_components/*.yaml`, `tab5_custom.cpp` (`handle_swipe_gesture`, `g_day_slots`, `g_hour_slots`, `g_central_ctx`) |
+| `tab5-alarm.yaml` | 940 | Réveil matin + annonce des rendez-vous. `rtttl:` (mélodie de sonnerie sur `tab5_speaker`, hors media_player), ~20 entités exposées à HA (`switch`/`datetime type:time`/`number`/`select`/`text`/`text_sensor`/`binary_sensor`/`button`), machine d'état de sonnerie (démarrage, boucle mélodie + 2,5 s de silence, arrêt, répétition, durée max, nettoyage), et un `interval: 1s` qui ne fait qu'UNE comparaison d'entiers (le calcul est mis en cache dans `alarm_clock.cpp`). Point d'entrée unique `script.tab5_alarm_refresh` : entités → `g_alarm_cfg`, jamais l'inverse | Réveil, sonnerie, annonce RDV, entités de réglage HA | `alarm_clock.h/.cpp`, `cal_jours_data[]` (`tab5_custom.h`), IDs LVGL de `ui_components/alarm_popup.yaml` et `alarm_ring_overlay.yaml`, `sntp_time`, `speaker_player`, `micro_wake_word` |
 
 ### 3.3 C++ core
 
@@ -168,6 +179,7 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 |---|---|---|---|
 | `tab5_custom.h` | 698 | Déclarations, structs (`CentralPanelCtx` [8 wrappers + le label chapeau du titre de page + 7 flags + current_panel], `DayForecastData`, `HourForecastData`, `WeatherHourSlot`, `WeatherDaySlot`, `MoistureSlotUI`, `PotDetailUI`, `HaAlertSlotUI`, `CalCellUI`, `CalDetailLineUI`), enum `PotMetric`, bits `CAL_BIT_*`, namespace `MeteoIcon::` (codes UTF-8 police météo), namespace `UIColor::` (palette sémantique — **miroir exact des tokens `color:` YAML, à garder synchro manuellement**) | — |
 | `tab5_custom.cpp` | 2762 | Toute la logique LVGL non-triviale, gardée contre les `lv_obj_t*` nuls (LVGL pas encore initialisé). Globals : `g_central_ctx`, `g_day_slots[5]`, `g_hour_slots[5]` (initialisés au boot) | `update_meteo_icon()` (icônes météo double-couche), `get_humidity_color()`/`get_temperature_color()`/`get_battery_color()` (gradients/échelles colorimétriques), `parse_and_update_heures_bulk()`/`parse_and_update_jours_bulk()` (parsing `strtok_r` in-place, garde OOM à 2048 octets), `refresh_daily_forecast()`/`refresh_hourly_forecast()`, `handle_swipe_gesture()` (pagination, zone `y ≥ 333`), `show_temporary_planning()` (affichage 6 s + restauration du panneau actif), `update_info_text_ui()` (panneau info, recolor conditionnel), `update_central_forecast_page_ui()` (overlay titre de page hors accueil), `highlight_button_border()` (surbrillance bordure bouton mode), `normalize_text_utf8()` (accents Latin-1→UTF-8 des textes HA), `update_light_card_ui()` (factorisée #T164, ex-triplée), `sort_and_update_moisture_slots()` (tri bubble 5→4 slots), `update_pots_popup_moisture_ui()`/`update_pot_metric_ui()` (popup détails plantes), `transition_widgets()` (animation glissement+fondu 450ms), `cal_render_month()`/`cal_store_month_data()`/`cal_render_day_detail()` (popup calendrier) |
+| `alarm_clock.h/.cpp` | ~640 | Moteur du réveil, **pur** : aucun `id()` ESPHome, aucun appel réseau, donc entièrement pilotable depuis un test ou une relecture. Cache de la prochaine sonnerie (recalcul seulement si un réglage/le calendrier a bougé, ou une fois par minute — filet contre bascule d'heure et resynchro SNTP). Toute l'arithmétique de dates passe par `local_day_from_offset()` de `tab5_custom.h` (normalisation `mktime()`, immunisée aux bascules heure d'été/hiver) | `alarm_next_ring()` (balaie 8 jours, applique le mode), `ring_minute_for_day()` (les 3 modes + le repos mini dérivé de la FERMETURE de la veille), `alarm_due()` (vrai une seule fois, fenêtre de grâce de 120 s, plancher anti-re-sonnerie sauvegardé en NVS), `alarm_snooze()`/`alarm_dismiss()`, `alarm_next_label()`/`alarm_next_detail()` (annoncent la répétition en cours en priorité), `rdv_store()`/`rdv_due()`/`rdv_next_label()` (appariement par epoch : une re-poussée HA ne ré-annonce pas), `alarm_ring_gain()` (crescendo), `alarm_render_settings()`/`alarm_ring_show/refresh/hide()`/`alarm_render_status_icon()` |
 
 **Règle d'architecture vérifiée et respectée dans le code** (`Tab5/README.md:44`) : les `sensor:`/`text_sensor:` YAML ne manipulent jamais `lv_obj_*` directement — ils appellent toujours une fonction `tab5_custom.cpp`. Confirmé par lecture de `tab5-sensors-diagnostics.yaml`/`tab5-sensors-domotique.yaml` (tous les `on_value:` appellent une fonction C++ nommée, sauf les cas triviaux de couleur d'icône à 2-3 lignes qui restent inline).
 

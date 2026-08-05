@@ -174,7 +174,7 @@ bool cal_is_early_shift(const std::string& heures_hhmm_hhmm) {
 // configuree dans tab5-sensors-diagnostics.yaml). Normalisation par mktime() a midi
 // plutot qu'une addition de 86400 s : immunise contre les bascules heure d'ete/hiver
 // (une journee de 23 h ou 25 h decalerait la date d'un jour pres de minuit).
-static bool local_day_from_offset(int jour_offset, struct tm& out) {
+bool local_day_from_offset(int jour_offset, struct tm& out) {
     time_t raw = time(nullptr);
     if (raw <= 0 || jour_offset < 0 || jour_offset >= 15) return false;
     if (localtime_r(&raw, &out) == nullptr) return false;
@@ -200,14 +200,14 @@ static std::string format_short_day_label(int jour_offset) {
 // UTF-8 explicite (\xC3\xA9 = e, \xC3\xBB = u circonflexe) — jamais du Latin-1.
 // Minuscules : en francais, jours et mois ne prennent pas de majuscule hors debut
 // de phrase (le titre commence par "Du ...", qui porte la majuscule).
-static const char* fr_day_long_utf8(int wday) {
+const char* fr_day_long_utf8(int wday) {
     static const char* days[] = {"dimanche", "lundi", "mardi", "mercredi",
                                  "jeudi", "vendredi", "samedi"};
     if (wday < 0 || wday > 6) return "";
     return days[wday];
 }
 
-static const char* fr_month_long_utf8(int mois_1_12) {
+const char* fr_month_long_utf8(int mois_1_12) {
     static const char* months[] = {
         "janvier", "f\xC3\xA9vrier", "mars", "avril", "mai", "juin", "juillet",
         "ao\xC3\xBBt", "septembre", "octobre", "novembre", "d\xC3\xA9" "cembre"

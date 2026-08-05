@@ -1,0 +1,995 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-alarm.yaml
+# @role Réveil matin + annonce des rendez-vous : entités exposées à Home
+#       Assistant, sonnerie, machine d'état, et pont vers les deux fenêtres LVGL
+#       (ui_components/alarm_popup.yaml et alarm_ring_overlay.yaml).
+# @architecture_constraint AUCUNE logique de calcul ici : les dates, le choix du
+#       jour, les bornes et les libellés vivent dans Tab5/alarm_clock.cpp, qui ne
+#       dépend ni de HA ni du réseau. Ce fichier ne fait que (a) recopier les
+#       entités dans `g_alarm_cfg`, (b) déclencher la sonnerie, (c) rendre l'UI.
+# @architecture_constraint Le réveil DOIT sonner sans Home Assistant : l'heure
+#       vient de SNTP, les horaires de travail sont déjà en cache dans
+#       `cal_jours_data[]`, et la mélodie est synthétisée sur l'appareil (rtttl,
+#       sinus pur — pas un fichier). HA n'apporte que du confort : l'annonce
+#       parlée du réveil, la liste des rendez-vous, et une sonnerie personnalisée
+#       par URL (repli automatique sur la mélodie locale si HA ne répond pas).
+# @ai_instruction Le volume ne s'écrit JAMAIS en dur ici. `rtttl` appelle
+#       `speaker->set_volume()`, qui pilote AUSSI le volume matériel de l'ES8388
+#       (i2s_audio_speaker.cpp:145) : sans la restauration faite par
+#       `tab5_alarm_ring_cleanup`, la première réponse vocale après une sonnerie
+#       sortirait au volume du réveil.
+# @ai_instruction Toute nouvelle entité de réglage doit (1) appeler
+#       `script.tab5_alarm_refresh` dans son `on_value`, sinon `g_alarm_cfg` reste
+#       périmé et la prochaine sonnerie ne bouge pas, et (2) être ajoutée au
+#       rendu de `alarm_render_settings()` si elle apparaît dans le popup.
+# ============================================================================
+
+# ─── Sonnerie locale ────────────────────────────────────────────────────────
+# rtttl écrit directement dans `tab5_speaker`, en DEHORS du media_player. Il
+# attend que le haut-parleur soit à l'arrêt avant de démarrer (rtttl.cpp, état
+# INIT) : aucune collision avec une réponse vocale en cours, juste une attente.
+# `gain` n'est qu'une valeur de départ — chaque passage la réécrit via
+# `set_gain()` pour le volume progressif.
+rtttl:
+  - id: alarm_rtttl
+    speaker: tab5_speaker
+    gain: 0.8
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ENTITÉS DE RÉGLAGE — toutes exposées à Home Assistant (catégorie « config »)
+# ═══════════════════════════════════════════════════════════════════════════
+switch:
+  - platform: template
+    id: tab5_alarm_enabled
+    name: "Réveil"
+    icon: mdi:alarm
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+    on_turn_on:
+      - script.execute: tab5_alarm_refresh
+    on_turn_off:
+      # Éteindre le réveil doit AUSSI couper une répétition en cours et une
+      # sonnerie en train de retentir — sinon la bascule ne « rend » pas la main.
+      - lambda: |-
+          auto t = id(sntp_time).now();
+          if (t.is_valid()) alarm_dismiss(t.timestamp);
+      - if:
+          condition:
+            lambda: 'return id(alarm_ringing);'
+          then:
+            - script.execute: tab5_alarm_stop
+      - script.execute: tab5_alarm_refresh
+
+  - platform: template
+    id: tab5_alarm_repos_fixe
+    name: "Réveil : sonner les jours de repos"
+    icon: mdi:calendar-remove
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+    on_turn_on:
+      - script.execute: tab5_alarm_refresh
+    on_turn_off:
+      - script.execute: tab5_alarm_refresh
+
+  - platform: template
+    id: tab5_alarm_crescendo
+    name: "Réveil : volume progressif"
+    icon: mdi:volume-plus
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
+    on_turn_on:
+      - script.execute: tab5_alarm_refresh
+    on_turn_off:
+      - script.execute: tab5_alarm_refresh
+
+  - platform: template
+    id: tab5_alarm_tts
+    name: "Réveil : annonce parlée"
+    icon: mdi:account-voice
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
+    on_turn_on:
+      - script.execute: tab5_alarm_refresh
+    on_turn_off:
+      - script.execute: tab5_alarm_refresh
+
+  - platform: template
+    id: tab5_alarm_rdv_on
+    name: "Annonce des rendez-vous"
+    icon: mdi:calendar-clock
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
+    on_turn_on:
+      - script.execute: tab5_alarm_refresh
+    on_turn_off:
+      - script.execute: tab5_alarm_refresh
+
+datetime:
+  # `type: time` donne une vraie horloge dans Home Assistant (sélecteur d'heure)
+  # et un état lisible, là où un `number` de minutes obligerait à convertir des
+  # deux côtés. `on_time` n'est PAS utilisé : il ne déclencherait qu'à heure
+  # fixe, alors que le mode calendrier change l'heure tous les jours — c'est
+  # `alarm_due()` qui décide, à partir de l'heure lue ici.
+  - platform: template
+    id: tab5_alarm_time
+    name: "Réveil : heure"
+    icon: mdi:clock-outline
+    type: time
+    optimistic: true
+    restore_value: true
+    initial_value: "07:00:00"
+    entity_category: config
+    on_value:
+      - script.execute: tab5_alarm_refresh
+
+  - platform: template
+    id: tab5_alarm_early
+    name: "Réveil : jamais avant"
+    icon: mdi:clock-start
+    type: time
+    optimistic: true
+    restore_value: true
+    initial_value: "05:00:00"
+    entity_category: config
+    on_value:
+      - script.execute: tab5_alarm_refresh
+
+  - platform: template
+    id: tab5_alarm_late
+    name: "Réveil : jamais après"
+    icon: mdi:clock-end
+    type: time
+    optimistic: true
+    restore_value: true
+    initial_value: "09:00:00"
+    entity_category: config
+    on_value:
+      - script.execute: tab5_alarm_refresh
+
+number:
+  - platform: template
+    id: tab5_alarm_lead
+    name: "Réveil : délai avant l'ouverture"
+    icon: mdi:timer-sand
+    unit_of_measurement: "min"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: 90
+    min_value: 0
+    max_value: 240
+    step: 5
+    on_value:
+      - script.execute: tab5_alarm_refresh
+
+  - platform: template
+    id: tab5_alarm_rest_hours
+    name: "Réveil : repos mini après la fermeture"
+    icon: mdi:sleep
+    unit_of_measurement: "h"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: 0
+    min_value: 0
+    max_value: 14
+    step: 1
+    on_value:
+      - script.execute: tab5_alarm_refresh
+
+  - platform: template
+    id: tab5_alarm_snooze_min
+    name: "Réveil : répétition"
+    icon: mdi:alarm-snooze
+    unit_of_measurement: "min"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: 9
+    min_value: 1
+    max_value: 30
+    step: 1
+    on_value:
+      - script.execute: tab5_alarm_refresh
+
+  - platform: template
+    id: tab5_alarm_max_ring
+    name: "Réveil : durée max de sonnerie"
+    icon: mdi:timer-outline
+    unit_of_measurement: "min"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: 15
+    min_value: 1
+    max_value: 60
+    step: 1
+    on_value:
+      - script.execute: tab5_alarm_refresh
+
+  - platform: template
+    id: tab5_alarm_volume
+    name: "Réveil : volume"
+    icon: mdi:volume-high
+    unit_of_measurement: "%"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: 80
+    min_value: 10
+    max_value: 100
+    step: 5
+    on_value:
+      - script.execute: tab5_alarm_refresh
+
+  - platform: template
+    id: tab5_rdv_lead
+    name: "Rendez-vous : annoncer avant"
+    icon: mdi:bullhorn
+    unit_of_measurement: "min"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: 15
+    min_value: 0
+    max_value: 120
+    step: 5
+    on_value:
+      - script.execute: tab5_alarm_refresh
+
+select:
+  # Les options sont construites à la main mais leur ORDRE est contractuel :
+  # l'index du select est l'entier stocké dans g_alarm_cfg.mode (AlarmMode::*).
+  # Les libellés doivent rester identiques à alarm_mode_name().
+  - platform: template
+    id: tab5_alarm_mode
+    name: "Réveil : mode"
+    icon: mdi:tune
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - "Heure fixe"
+      - "Jours travaillés"
+      - "Avant l'ouverture"
+    initial_option: "Heure fixe"
+    on_value:
+      - script.execute: tab5_alarm_refresh
+
+  - platform: template
+    id: tab5_alarm_melody
+    name: "Réveil : sonnerie"
+    icon: mdi:music-note
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - "Douce"
+      - "Classique"
+      - "Insistante"
+      - "Carillon"
+    initial_option: "Classique"
+    on_value:
+      - script.execute: tab5_alarm_refresh
+
+  # Préréglages de jours : Home Assistant reçoit un choix lisible plutôt que sept
+  # interrupteurs ; le détail jour par jour se règle sur la dalle (7 pastilles).
+  # Les deux écrivent le même `alarm_days_mask`, et ce select retombe sur
+  # « Personnalisé » dès que le masque ne correspond à aucun préréglage.
+  - platform: template
+    id: tab5_alarm_days
+    name: "Réveil : jours"
+    icon: mdi:calendar-week
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - "Tous les jours"
+      - "Lundi-Vendredi"
+      - "Lundi-Samedi"
+      - "Week-end"
+      - "Personnalisé"
+    initial_option: "Lundi-Vendredi"
+    on_value:
+      # [AI-WARNING] Le garde DOIT être une `condition:`, pas un `return` en
+      # lambda. `publish_state()` d'un select rappelle toujours on_value, même
+      # avec la même valeur, et tab5_alarm_refresh republie ce select à chaque
+      # passage : un `return` en lambda ne sort que de la lambda, PAS de la
+      # séquence d'actions (piège déjà payé sur le select « Aller à l'écran »,
+      # cf. tab5-ha-controls.yaml), donc `script.execute` serait quand même
+      # atteint et la paire refresh↔on_value tournerait sans fin.
+      # Avec la condition, la republication du même préréglage est un no-op et
+      # la récursion s'arrête au premier tour.
+      - if:
+          condition:
+            lambda: |-
+              const int m = alarm_days_preset_mask((int) i);
+              return m >= 0 && (uint8_t) m != id(alarm_days_mask);
+          then:
+            - lambda: 'id(alarm_days_mask) = (uint8_t) alarm_days_preset_mask((int) i);'
+            - script.execute: tab5_alarm_refresh
+
+text:
+  # Sonnerie personnalisée : URL d'un média servi par Home Assistant
+  # (http://homeassistant.local:8123/local/reveil.mp3 par exemple). Vide = la
+  # mélodie locale. Le repli est automatique et silencieux : si HA ne répond pas
+  # au moment de sonner, c'est la mélodie locale qui part — un réveil ne doit
+  # jamais dépendre d'un serveur pour faire du bruit.
+  - platform: template
+    id: tab5_alarm_media_url
+    name: "Réveil : URL de sonnerie (option)"
+    icon: mdi:link-variant
+    mode: text
+    optimistic: true
+    restore_value: true
+    initial_value: ""
+    entity_category: config
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ÉTAT OBSERVABLE (diagnostic)
+# ═══════════════════════════════════════════════════════════════════════════
+text_sensor:
+  - platform: template
+    id: tab5_alarm_next_sensor
+    name: "Prochain réveil"
+    icon: mdi:alarm-check
+    entity_category: diagnostic
+    update_interval: 60s
+    lambda: |-
+      auto t = id(sntp_time).now();
+      if (!t.is_valid()) return {std::string("Heure non synchronisée")};
+      return {alarm_next_label(t.timestamp)};
+
+  - platform: template
+    id: tab5_rdv_next_sensor
+    name: "Prochain rendez-vous"
+    icon: mdi:calendar-clock
+    entity_category: diagnostic
+    update_interval: 60s
+    lambda: |-
+      auto t = id(sntp_time).now();
+      if (!t.is_valid()) return {std::string("—")};
+      const std::string s = rdv_next_label(t.timestamp);
+      return {s.empty() ? std::string("—") : s};
+
+binary_sensor:
+  # Publié explicitement par les scripts (immédiat) ; le lambda de repli couvre
+  # le cas d'un redémarrage de HA pendant que la sonnerie retentit.
+  - platform: template
+    id: tab5_alarm_is_ringing
+    name: "Réveil en cours"
+    icon: mdi:bell-ring
+    device_class: sound
+    entity_category: diagnostic
+    lambda: 'return id(alarm_ringing);'
+
+button:
+  - platform: template
+    id: tab5_alarm_btn_test
+    name: "Réveil : tester"
+    icon: mdi:play-circle
+    entity_category: config
+    on_press:
+      # Test = pas une sonnerie planifiée : l'arrêt ne doit PAS dismiss.
+      - globals.set:
+          id: alarm_ring_scheduled
+          value: 'false'
+      - globals.set:
+          id: alarm_ring_cycle
+          value: '0'
+      - script.execute: tab5_alarm_ring_start
+
+  - platform: template
+    id: tab5_alarm_btn_stop
+    name: "Réveil : arrêter"
+    icon: mdi:alarm-off
+    entity_category: config
+    on_press:
+      - script.execute: tab5_alarm_stop
+
+  - platform: template
+    id: tab5_alarm_btn_snooze
+    name: "Réveil : répéter"
+    icon: mdi:alarm-snooze
+    entity_category: config
+    on_press:
+      - script.execute: tab5_alarm_snooze_now
+
+# NB : le service `tab5_maj_rdv_prochains` (liste des rendez-vous poussée par
+# HA) est déclaré dans tab5-api-logic.yaml avec TOUS les autres services de
+# l'appareil — règle explicite du fichier, pour qu'un renommage se voie d'un
+# seul coup d'œil. Son contrat de payload est décrit par `rdv_store()`.
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SCRIPTS
+# ═══════════════════════════════════════════════════════════════════════════
+script:
+  # ─── Recopie des entités vers g_alarm_cfg + repeinture ────────────────────
+  # POINT D'ENTRÉE UNIQUE. Tout ce qui change un réglage passe par ici : les
+  # entités HA (on_value), les boutons du popup, la poussée calendrier et le
+  # boot. Une seule direction (entités -> struct C++), donc aucune divergence
+  # possible entre ce que HA affiche et ce que le moteur calcule.
+  - id: tab5_alarm_refresh
+    mode: restart
+    then:
+      - lambda: |-
+          // Boot : le C++ démarre avec s_skip_before=0 alors que NVS peut
+          // encore porter le plancher d'un arrêt récent. Sans cette restauration,
+          // la ligne « miroir → NVS » plus bas écraserait la valeur sauvée et un
+          // redémarrage dans la fenêtre de grâce ferait re-sonner.
+          if (alarm_skip_floor() == 0 && id(alarm_skip_before) > 0)
+            alarm_set_skip_floor(id(alarm_skip_before));
+
+          // `number.state` vaut NaN tant que la valeur restaurée n'est pas
+          // arrivée : sans ce garde, un cast direct donnerait un délai ou une
+          // durée de sonnerie aberrants au tout premier passage.
+          auto num = [](float v, int d) { return std::isnan(v) ? d : (int) (v + 0.5f); };
+          // Lambda générique : le type concret des entités datetime est généré
+          // par ESPHome (template_::TemplateTime), le nommer ici le figerait.
+          auto tmin = [](auto& e, int d) { return e.has_state() ? (e.hour * 60 + e.minute) : d; };
+
+          g_alarm_cfg.enabled      = id(tab5_alarm_enabled).state;
+          g_alarm_cfg.days_mask    = id(alarm_days_mask);
+          g_alarm_cfg.fixed_min    = tmin(*id(tab5_alarm_time), 7 * 60);
+          g_alarm_cfg.mode         = (int) id(tab5_alarm_mode).active_index().value_or(0);
+          g_alarm_cfg.lead_min     = num(id(tab5_alarm_lead).state, 90);
+          g_alarm_cfg.earliest_min = tmin(*id(tab5_alarm_early), 5 * 60);
+          g_alarm_cfg.latest_min   = tmin(*id(tab5_alarm_late), 9 * 60);
+          g_alarm_cfg.rest_hours   = num(id(tab5_alarm_rest_hours).state, 0);
+          g_alarm_cfg.rest_mode    = id(tab5_alarm_repos_fixe).state ? AlarmRepos::FIXE : AlarmRepos::SILENCE;
+          g_alarm_cfg.snooze_min   = num(id(tab5_alarm_snooze_min).state, 9);
+          g_alarm_cfg.max_ring_min = num(id(tab5_alarm_max_ring).state, 15);
+
+          // Bornes incohérentes (« jamais après » avant « jamais avant ») :
+          // on les remet dans l'ordre plutôt que de laisser clamp() produire
+          // une heure absurde. Correction silencieuse et locale — les entités HA
+          // gardent ce que l'utilisateur a saisi.
+          if (g_alarm_cfg.latest_min < g_alarm_cfg.earliest_min)
+            g_alarm_cfg.latest_min = g_alarm_cfg.earliest_min;
+
+          alarm_invalidate();
+      # Le select des jours reflète le masque courant (ou « Personnalisé »).
+      - lambda: 'id(tab5_alarm_days).publish_state(alarm_days_preset_name(alarm_days_preset_index(id(alarm_days_mask))));'
+      - lambda: |-
+          id(tab5_alarm_next_sensor).update();
+          id(alarm_skip_before) = alarm_skip_floor();
+      - script.execute: tab5_alarm_sync_ui
+
+  # ─── Repeinture du popup + de la pastille d'état ──────────────────────────
+  # La structure de pointeurs est reconstruite à chaque appel (et non `static`
+  # comme tab5_cal_render) : ce script tourne aussi au boot, avant que LVGL n'ait
+  # créé les widgets, et un `static` figerait des nullptr pour toute la session.
+  # Coût réel : ~40 écritures de pointeur, sur un chemin froid (changement de
+  # réglage ou ouverture de fenêtre), jamais dans une boucle.
+  - id: tab5_alarm_sync_ui
+    mode: restart
+    then:
+      - lambda: |-
+          if (id(lbl_alarm_time) == nullptr) return;   // LVGL pas encore construit
+          auto t = id(sntp_time).now();
+          const time_t now = t.is_valid() ? (time_t) t.timestamp : 0;
+
+          AlarmSettingsUI ui{};
+          ui.btn_enable    = id(btn_alarm_enable);
+          ui.icon_enable   = id(icon_alarm_enable);
+          ui.lbl_enable    = id(lbl_alarm_enable);
+          ui.lbl_time      = id(lbl_alarm_time);
+          ui.day_btn[0] = id(btn_alarm_day_0); ui.day_lbl[0] = id(lbl_alarm_day_0);
+          ui.day_btn[1] = id(btn_alarm_day_1); ui.day_lbl[1] = id(lbl_alarm_day_1);
+          ui.day_btn[2] = id(btn_alarm_day_2); ui.day_lbl[2] = id(lbl_alarm_day_2);
+          ui.day_btn[3] = id(btn_alarm_day_3); ui.day_lbl[3] = id(lbl_alarm_day_3);
+          ui.day_btn[4] = id(btn_alarm_day_4); ui.day_lbl[4] = id(lbl_alarm_day_4);
+          ui.day_btn[5] = id(btn_alarm_day_5); ui.day_lbl[5] = id(lbl_alarm_day_5);
+          ui.day_btn[6] = id(btn_alarm_day_6); ui.day_lbl[6] = id(lbl_alarm_day_6);
+          ui.mode_btn[0]   = id(btn_alarm_mode_0);
+          ui.mode_btn[1]   = id(btn_alarm_mode_1);
+          ui.mode_btn[2]   = id(btn_alarm_mode_2);
+          ui.lbl_mode_hint = id(lbl_alarm_mode_hint);
+          ui.lbl_lead      = id(lbl_alarm_lead);
+          ui.lbl_early     = id(lbl_alarm_early);
+          ui.lbl_late      = id(lbl_alarm_late);
+          ui.lbl_rest      = id(lbl_alarm_rest);
+          ui.btn_repos     = id(btn_alarm_repos);
+          ui.lbl_repos     = id(lbl_alarm_repos);
+          ui.lbl_next      = id(lbl_alarm_next);
+          ui.lbl_next_sub  = id(lbl_alarm_next_sub);
+          ui.lbl_melody    = id(lbl_alarm_melody);
+          ui.lbl_vol       = id(lbl_alarm_vol);
+          ui.slider_vol    = id(slider_alarm_vol);
+          ui.btn_cresc     = id(btn_alarm_cresc);
+          ui.lbl_cresc     = id(lbl_alarm_cresc);
+          ui.lbl_snooze    = id(lbl_alarm_snooze);
+          ui.lbl_maxring   = id(lbl_alarm_maxring);
+          ui.btn_tts       = id(btn_alarm_tts);
+          ui.lbl_tts       = id(lbl_alarm_tts);
+          ui.btn_rdv       = id(btn_alarm_rdv);
+          ui.lbl_rdv       = id(lbl_alarm_rdv);
+          ui.lbl_rdv_lead  = id(lbl_alarm_rdv_lead);
+          ui.lbl_rdv_next  = id(lbl_alarm_rdv_next);
+
+          const float vol = std::isnan(id(tab5_alarm_volume).state) ? 0.8f
+                                                                    : id(tab5_alarm_volume).state / 100.0f;
+          const int rdv_lead = std::isnan(id(tab5_rdv_lead).state) ? 15 : (int) (id(tab5_rdv_lead).state + 0.5f);
+          alarm_render_settings(ui, now, (int) id(tab5_alarm_melody).active_index().value_or(1),
+                                vol, id(tab5_alarm_crescendo).state, id(tab5_alarm_tts).state,
+                                id(tab5_alarm_rdv_on).state, rdv_lead);
+          alarm_render_status_icon(id(icon_alarm_status), now);
+
+  # ─── Ouverture / fermeture du popup de réglages ───────────────────────────
+  - id: tab5_alarm_open
+    mode: restart
+    then:
+      - script.execute: tab5_alarm_refresh
+      - lambda: |-
+          // Ouverture éventuellement PROGRAMMÉE (select HA « Aller à l'écran ») :
+          // sans ui_mark_activity(), le retour auto à l'inactivité referme la
+          // fenêtre au tick suivant. Piège documenté dans tab5_custom.h.
+          ui_mark_activity();
+          animate_popup_open(id(alarm_popup), nullptr);
+          lv_obj_move_foreground(id(alarm_popup));
+
+  - id: tab5_alarm_close
+    mode: restart
+    then:
+      - lambda: 'animate_popup_close(id(alarm_popup), nullptr);'
+
+  # ─── Réglages depuis la dalle ─────────────────────────────────────────────
+  # Décalage de l'heure de réveil (± heures, ± minutes). Le modulo 1440 fait
+  # boucler proprement 23:55 -> 00:00 sans cas particulier.
+  - id: tab5_alarm_shift_time
+    mode: single
+    parameters:
+      delta: int
+    then:
+      - datetime.time.set:
+          id: tab5_alarm_time
+          time: !lambda |-
+            ESPTime t{};
+            int base = id(tab5_alarm_time).has_state()
+                         ? (id(tab5_alarm_time).hour * 60 + id(tab5_alarm_time).minute) : 420;
+            int m = ((base + delta) % 1440 + 1440) % 1440;
+            t.hour = m / 60; t.minute = m % 60; t.second = 0;
+            return t;
+
+  - id: tab5_alarm_shift_early
+    mode: single
+    parameters:
+      delta: int
+    then:
+      - datetime.time.set:
+          id: tab5_alarm_early
+          time: !lambda |-
+            ESPTime t{};
+            int base = id(tab5_alarm_early).has_state()
+                         ? (id(tab5_alarm_early).hour * 60 + id(tab5_alarm_early).minute) : 300;
+            int m = ((base + delta) % 1440 + 1440) % 1440;
+            t.hour = m / 60; t.minute = m % 60; t.second = 0;
+            return t;
+
+  - id: tab5_alarm_shift_late
+    mode: single
+    parameters:
+      delta: int
+    then:
+      - datetime.time.set:
+          id: tab5_alarm_late
+          time: !lambda |-
+            ESPTime t{};
+            int base = id(tab5_alarm_late).has_state()
+                         ? (id(tab5_alarm_late).hour * 60 + id(tab5_alarm_late).minute) : 540;
+            int m = ((base + delta) % 1440 + 1440) % 1440;
+            t.hour = m / 60; t.minute = m % 60; t.second = 0;
+            return t;
+
+  # Bascule d'un jour de la semaine (0 = lundi). Le select de préréglages est
+  # remis à jour par tab5_alarm_refresh, qui y écrit « Personnalisé » si besoin.
+  - id: tab5_alarm_toggle_day
+    mode: single
+    parameters:
+      day: int
+    then:
+      - lambda: |-
+          if (day < 0 || day > 6) return;
+          id(alarm_days_mask) ^= (uint8_t) (1 << day);
+      - script.execute: tab5_alarm_refresh
+
+  # Mélodie suivante / précédente (les deux chevrons du popup).
+  - id: tab5_alarm_cycle_melody
+    mode: single
+    parameters:
+      delta: int
+    then:
+      - select.set_index:
+          id: tab5_alarm_melody
+          index: !lambda |-
+            int n = (int) id(tab5_alarm_melody).active_index().value_or(1);
+            return (size_t) ((n + delta + ALARM_MELODY_COUNT) % ALARM_MELODY_COUNT);
+      # Écoute immédiate du choix : régler une sonnerie sans l'entendre n'a
+      # aucun sens. Sans effet si le réveil est déjà en train de sonner.
+      - if:
+          condition:
+            lambda: 'return !id(alarm_ringing);'
+          then:
+            - script.execute: tab5_alarm_preview
+
+  # Aperçu d'un seul passage, au volume réglé, hors machine d'état de sonnerie.
+  - id: tab5_alarm_preview
+    mode: restart
+    then:
+      - lambda: |-
+          const float v = std::isnan(id(tab5_alarm_volume).state) ? 0.8f
+                                                                  : id(tab5_alarm_volume).state / 100.0f;
+          id(alarm_rtttl).set_gain(v);
+      - rtttl.play:
+          id: alarm_rtttl
+          rtttl: !lambda 'return std::string(alarm_melody_rtttl((int) id(tab5_alarm_melody).active_index().value_or(1)));'
+      - wait_until:
+          condition:
+            not:
+              rtttl.is_playing:
+                id: alarm_rtttl
+          timeout: 20s
+      - script.execute: tab5_alarm_restore_volume
+
+  # ═══ SONNERIE ═══════════════════════════════════════════════════════════
+  - id: tab5_alarm_ring_start
+    mode: single
+    then:
+      # Libérer le haut-parleur AVANT de sonner : rtttl attend que le
+      # haut-parleur soit à l'arrêt (état INIT), donc une réponse vocale en cours
+      # retarderait la sonnerie de toute sa durée.
+      - script.execute: tab5_vocal_interrupt
+      - globals.set:
+          id: alarm_ringing
+          value: 'true'
+      # Crescendo : remis à 0 seulement pour une NOUVELLE sonnerie. Un retour de
+      # snooze (snooze_count > 0) reprend au volume déjà atteint — c'est le
+      # contrat documenté sur alarm_ring_cycle.
+      - lambda: |-
+          if (alarm_snooze_count() == 0) id(alarm_ring_cycle) = 0;
+          id(alarm_ring_started) = millis();
+          id(tab5_alarm_is_ringing).publish_state(true);
+          auto t = id(sntp_time).now();
+          id(alarm_ring_sub) = t.is_valid() ? alarm_next_detail(t.timestamp) : std::string("");
+      # L'écran peut être éteint (extinction sur absence WiFi) : le rallumer fait
+      # partie du réveil, pas du confort.
+      - light.turn_on: backlight
+      # Un jeu ouvert vit sur sa propre page LVGL : l'overlay de sonnerie est un
+      # enfant de page_main et jouerait hors écran. Même chemin que le select
+      # « Aller à l'écran » de tab5-ha-controls.yaml.
+      - script.execute: tab5_games_close_all
+      - if:
+          condition:
+            not:
+              lvgl.page.is_showing: page_main
+          then:
+            - lvgl.page.show: page_main
+      - script.execute: tab5_alarm_show_overlay
+      # Arrêt à la voix : le modèle « Stop » est déjà embarqué (tab5-hardware.yaml)
+      # mais désactivé au repos. On force aussi le démarrage du moteur de mots de
+      # réveil même si « Ok Nabu » est coupé — sinon la promesse « arrêt à la
+      # voix » ne tient pas pour qui laisse le micro au repos la nuit.
+      - micro_wake_word.start:
+      - micro_wake_word.enable_model:
+          id: stop
+      - homeassistant.event:
+          event: esphome.tab5_alarm_start
+      - script.execute: tab5_alarm_ring_loop
+
+  # Passage sonore répété jusqu'à l'arrêt, la répétition, ou la durée maximale.
+  # Chaque cycle = un passage de la mélodie + une fenêtre de SILENCE : c'est
+  # pendant ce silence que « Stop » a le plus de chances d'être reconnu, et c'est
+  # aussi ce qui donne à la sonnerie son rythme de réveil plutôt qu'un bourdon
+  # continu.
+  - id: tab5_alarm_ring_loop
+    mode: restart
+    then:
+      - while:
+          condition:
+            lambda: 'return id(alarm_ringing);'
+          then:
+            - lambda: |-
+                const float base = std::isnan(id(tab5_alarm_volume).state) ? 0.8f
+                                                                          : id(tab5_alarm_volume).state / 100.0f;
+                id(alarm_rtttl).set_gain(alarm_ring_gain(base, id(alarm_ring_cycle),
+                                                         id(tab5_alarm_crescendo).state));
+                id(alarm_ring_cycle) += 1;
+            - script.execute: tab5_alarm_refresh_overlay
+            - if:
+                condition:
+                  and:
+                    - lambda: 'return !id(tab5_alarm_media_url).state.empty();'
+                    - binary_sensor.is_on: status_ha
+                then:
+                  # Sonnerie personnalisée servie par HA. Le volume passe par le
+                  # media_player (qui pilote le même étage que rtttl), donc le
+                  # volume progressif s'applique aussi à ce chemin.
+                  - media_player.volume_set:
+                      id: speaker_player
+                      volume: !lambda |-
+                        const float base = std::isnan(id(tab5_alarm_volume).state) ? 0.8f
+                                                                                  : id(tab5_alarm_volume).state / 100.0f;
+                        return alarm_ring_gain(base, id(alarm_ring_cycle) - 1, id(tab5_alarm_crescendo).state);
+                  - media_player.play_media:
+                      id: speaker_player
+                      media_url: !lambda 'return id(tab5_alarm_media_url).state;'
+                      announcement: true
+                  - wait_until:
+                      condition:
+                        not:
+                          media_player.is_announcing:
+                            id: speaker_player
+                      timeout: 90s
+                else:
+                  - rtttl.play:
+                      id: alarm_rtttl
+                      rtttl: !lambda 'return std::string(alarm_melody_rtttl((int) id(tab5_alarm_melody).active_index().value_or(1)));'
+                  # Le délai de garde couvre le cas où le haut-parleur reste pris
+                  # par une annonce : rtttl attendrait indéfiniment en état INIT.
+                  - wait_until:
+                      condition:
+                        not:
+                          rtttl.is_playing:
+                            id: alarm_rtttl
+                      timeout: 30s
+            # Fenêtre d'écoute : silence volontaire, ne pas raccourcir sans
+            # revoir l'arrêt à la voix (le micro n'entend rien pendant la mélodie).
+            - delay: 2500ms
+            # Garde-fou de durée : sans lui, un réveil déclenché pendant une
+            # absence sonnerait jusqu'à la coupure de courant.
+            - if:
+                condition:
+                  lambda: |-
+                    const uint32_t limite = (uint32_t) g_alarm_cfg.max_ring_min * 60000UL;
+                    return (millis() - id(alarm_ring_started)) >= limite;
+                then:
+                  - logger.log: "Reveil : duree maximale atteinte, arret automatique"
+                  - homeassistant.event:
+                      event: esphome.tab5_alarm_timeout
+                  - globals.set:
+                      id: alarm_ringing
+                      value: 'false'
+      # Sortie de boucle « propre » (durée max) : la boucle s'arrête d'elle-même,
+      # il reste à ranger. Les arrêts manuels, eux, tuent ce script et appellent
+      # le nettoyage directement — d'où le fait que le nettoyage soit idempotent.
+      - script.execute: tab5_alarm_ring_cleanup
+
+  # Arrêt définitif (bouton de l'overlay, tap écran, voix, bouton HA).
+  # `alarm_dismiss` UNIQUEMENT si la sonnerie venait du tick planifié — un
+  # « Tester » ou le bouton Arrêter des réglages ne doit pas manger le vrai réveil.
+  - id: tab5_alarm_stop
+    mode: single
+    then:
+      - globals.set:
+          id: alarm_ringing
+          value: 'false'
+      - script.stop: tab5_alarm_ring_loop
+      - rtttl.stop:
+          id: alarm_rtttl
+      # Couper aussi une sonnerie média HA (URL custom) : rtttl.stop seul la laisse
+      # tourner et peut bloquer le haut-parleur / le briefing.
+      - media_player.stop:
+          id: speaker_player
+      - if:
+          condition:
+            lambda: 'return id(alarm_ring_scheduled);'
+          then:
+            - lambda: |-
+                auto t = id(sntp_time).now();
+                if (t.is_valid()) alarm_dismiss(t.timestamp);
+      - globals.set:
+          id: alarm_ring_scheduled
+          value: 'false'
+      - homeassistant.event:
+          event: esphome.tab5_alarm_stop
+      - script.execute: tab5_alarm_ring_cleanup
+
+  # Répétition : même arrêt sonore, mais la sonnerie repartira dans N minutes.
+  - id: tab5_alarm_snooze_now
+    mode: single
+    then:
+      - globals.set:
+          id: alarm_ringing
+          value: 'false'
+      - script.stop: tab5_alarm_ring_loop
+      - rtttl.stop:
+          id: alarm_rtttl
+      - media_player.stop:
+          id: speaker_player
+      - lambda: |-
+          auto t = id(sntp_time).now();
+          if (t.is_valid()) alarm_snooze(t.timestamp, g_alarm_cfg.snooze_min);
+      - homeassistant.event:
+          event: esphome.tab5_alarm_snooze
+      - script.execute: tab5_alarm_ring_cleanup
+
+  # Rangement commun aux trois sorties (arrêt, répétition, durée max).
+  # Idempotent : l'appeler deux fois ne casse rien.
+  - id: tab5_alarm_ring_cleanup
+    mode: single
+    then:
+      - globals.set:
+          id: alarm_ringing
+          value: 'false'
+      # Durée max / arrêt partiel : ne pas laisser le flag « planifié » traîner
+      # (un futur « Arrêter » des réglages ne doit plus dismiss par erreur).
+      - globals.set:
+          id: alarm_ring_scheduled
+          value: 'false'
+      # Filet : une URL custom encore en cours après durée max / arrêt partiel.
+      - media_player.stop:
+          id: speaker_player
+      - lambda: |-
+          id(tab5_alarm_is_ringing).publish_state(false);
+          AlarmRingUI ui{};
+          ui.root = id(alarm_ring_layer);
+          alarm_ring_hide(ui);
+      - script.execute: tab5_alarm_restore_volume
+      # Retour du micro à son état de repos : le modèle « Stop » ne reste armé
+      # que si un volet est en mouvement (son autre usage, tab5-hardware.yaml),
+      # et le moteur de mots de réveil ne tourne que si « Ok Nabu » est activé.
+      - if:
+          condition:
+            lambda: 'return !id(volet_en_mouvement) && !id(va_stop_armed);'
+          then:
+            - micro_wake_word.disable_model:
+                id: stop
+      - if:
+          condition:
+            switch.is_off: tab5_wake_word_active
+          then:
+            - micro_wake_word.stop:
+      - script.execute: tab5_alarm_refresh
+
+  # Restauration du volume système. INDISPENSABLE : rtttl (et le media_player)
+  # écrivent dans `speaker->set_volume()`, qui pilote le volume MATÉRIEL de
+  # l'ES8388 — sans ce retour, la première réponse vocale après une sonnerie
+  # sortirait au volume du réveil, et le slider de l'écran mentirait.
+  # `system_volume` n'est jamais modifié : on ne fait que le ré-appliquer.
+  - id: tab5_alarm_restore_volume
+    mode: restart
+    then:
+      - media_player.volume_set:
+          id: speaker_player
+          volume: !lambda 'return id(system_muted) ? 0.0f : id(system_volume);'
+
+  # ─── Overlay de sonnerie (plein écran) ────────────────────────────────────
+  - id: tab5_alarm_show_overlay
+    mode: single
+    then:
+      - lambda: |-
+          if (id(alarm_ring_layer) == nullptr) return;
+          auto t = id(sntp_time).now();
+          AlarmRingUI ui{};
+          ui.root      = id(alarm_ring_layer);
+          ui.icon      = id(icon_alarm_ring);
+          ui.lbl_time  = id(lbl_alarm_ring_time);
+          ui.lbl_title = id(lbl_alarm_ring_title);
+          ui.lbl_sub   = id(lbl_alarm_ring_sub);
+          ui.lbl_snooze = id(lbl_alarm_ring_snooze);
+          alarm_ring_show(ui, t.is_valid() ? (time_t) t.timestamp : 0, id(alarm_ring_sub));
+          // La sonnerie ne compte pas comme une inactivité : sans ça, le retour
+          // auto pourrait fermer des fenêtres sous l'overlay pendant qu'il sonne.
+          ui_mark_activity();
+
+  - id: tab5_alarm_refresh_overlay
+    mode: single
+    then:
+      - lambda: |-
+          if (id(alarm_ring_layer) == nullptr) return;
+          auto t = id(sntp_time).now();
+          AlarmRingUI ui{};
+          ui.root      = id(alarm_ring_layer);
+          ui.icon      = id(icon_alarm_ring);
+          ui.lbl_time  = id(lbl_alarm_ring_time);
+          ui.lbl_title = id(lbl_alarm_ring_title);
+          ui.lbl_sub   = id(lbl_alarm_ring_sub);
+          ui.lbl_snooze = id(lbl_alarm_ring_snooze);
+          alarm_ring_refresh(ui, t.is_valid() ? (time_t) t.timestamp : 0,
+                             g_alarm_cfg.snooze_min, alarm_snooze_count());
+          ui_mark_activity();
+
+  # ─── Annonce parlée du réveil (confort, nécessite HA) ─────────────────────
+  # Déportée dans un script HA (packages/tab5_reveil.yaml) : c'est lui qui a
+  # accès à la météo, au planning et au moteur TTS. Silencieux si HA est absent.
+  - id: tab5_alarm_speak
+    mode: restart
+    then:
+      - if:
+          condition:
+            and:
+              - switch.is_on: tab5_alarm_tts
+              - binary_sensor.is_on: status_ha
+              # Uniquement au premier déclenchement : réentendre la météo et le
+              # planning à chaque répétition serait pénible, et c'est justement
+              # aux répétitions qu'on veut le moins de bruit.
+              - lambda: 'return alarm_snooze_count() == 0;'
+          then:
+            # Laisse le premier passage de sonnerie finir avant de parler : une
+            # annonce par-dessus la mélodie serait inintelligible.
+            - delay: 12s
+            # Re-testé APRÈS le délai : sans ça, un réveil arrêté au bout de
+            # 3 secondes se mettrait quand même à réciter la météo 9 secondes
+            # plus tard, alors que la tablette est déjà silencieuse.
+            - if:
+                condition:
+                  lambda: 'return id(alarm_ringing);'
+                then:
+                  - homeassistant.service:
+                      service: script.tab5_reveil_annonce
+
+  # ─── Annonce d'un rendez-vous ─────────────────────────────────────────────
+  - id: tab5_rdv_announce
+    mode: single
+    then:
+      # Bandeau 8 s sur la carte centrale : le même chemin que les réponses
+      # vocales, donc le rotateur est mis en pause puis reprend tout seul.
+      - script.execute:
+          id: tab5_show_vocal_response
+          texte: !lambda 'return id(alarm_rdv_screen);'
+      - light.turn_on: backlight
+      - if:
+          condition:
+            and:
+              - binary_sensor.is_on: status_ha
+              - lambda: 'return !id(system_muted);'
+          then:
+            - homeassistant.service:
+                service: assist_satellite.announce
+                data:
+                  entity_id: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
+                  message: !lambda 'return id(alarm_rdv_speech);'
+      - lambda: 'id(tab5_rdv_next_sensor).update();'
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TICK — une comparaison d'entiers par seconde
+# ═══════════════════════════════════════════════════════════════════════════
+# `alarm_due()` et `rdv_due()` s'appuient sur un cache : la prochaine sonnerie
+# n'est recalculée que si un réglage a bougé, si le calendrier a été poussé, ou
+# une fois par minute (filet contre une bascule d'heure ou une resynchro SNTP).
+# Le coût par tick au repos est donc une comparaison de time_t, pas un balayage
+# de 8 jours.
+interval:
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              auto t = id(sntp_time).now();
+              if (!t.is_valid() || id(alarm_ringing)) return false;
+              return alarm_due((time_t) t.timestamp);
+          then:
+            # Sonnerie planifiée (ou retour de snooze) : l'arrêt DOIT dismiss.
+            - globals.set:
+                id: alarm_ring_scheduled
+                value: 'true'
+            - script.execute: tab5_alarm_ring_start
+            - script.execute: tab5_alarm_speak
+      - if:
+          condition:
+            lambda: |-
+              auto t = id(sntp_time).now();
+              // Pas d'annonce RDV pendant la sonnerie : chevauchement audio +
+              // interférence avec l'écoute du wake word « Stop ».
+              if (!t.is_valid() || id(alarm_ringing) || !id(tab5_alarm_rdv_on).state) return false;
+              const int lead = std::isnan(id(tab5_rdv_lead).state) ? 15 : (int) (id(tab5_rdv_lead).state + 0.5f);
+              std::string scr, spk;
+              if (!rdv_due((time_t) t.timestamp, lead, scr, spk)) return false;
+              id(alarm_rdv_screen) = scr;
+              id(alarm_rdv_speech) = spk;
+              return true;
+          then:
+            - script.execute: tab5_rdv_announce
+
+  # Le plancher anti-re-sonnerie est sauvegardé en NVS. Écrire à chaque changement
+  # userait la flash pour rien : une fois par minute suffit largement, et la seule
+  # fenêtre à couvrir est un redémarrage dans les 2 min qui suivent un arrêt.
+  - interval: 60s
+    then:
+      - lambda: 'id(alarm_skip_before) = alarm_skip_floor();'

@@ -64,6 +64,11 @@ api:
             refresh_daily_forecast(g_day_slots, daily_pi, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
             // Idem horaire : le titre annonce les bornes des 5 tuiles, il suit leur MAJ.
             refresh_forecast_page_title_ui(fp, id(page_title_wrapper), id(lbl_page_title), g_central_ctx);
+            // Les horaires de travail des 15 prochains jours viennent d'être
+            // réécrits : c'est la source du mode « avant l'ouverture » du réveil.
+            // Sans cette invalidation, la prochaine sonnerie resterait calculée
+            // sur le planning précédent jusqu'au filet des 60 s.
+            alarm_invalidate();
             // Bandeau planning dérivé localement (plus de push HA tab5_maj_planning)
             if (!id(is_showing_temp_planning) && id(lbl_planning_text) != nullptr) {
               std::string l1, l2;
@@ -456,6 +461,22 @@ api:
             if (id(lbl_planning_text) == nullptr) return;
             update_planning_text_ui(id(lbl_planning_text), ligne1, ligne2,
                 id(plan_ligne_1), id(plan_ligne_2));
+
+    # Réveil — liste des prochains rendez-vous, poussée par
+    # script.tab5_rdv_prochains (HomeAssistant_Config/packages/tab5_reveil.yaml).
+    # payload = "epoch|titre~epoch|titre~…" (epoch UTC du début, max 8 entrées,
+    # titres déjà nettoyés des séparateurs côté HA). Le firmware garde la liste
+    # et déclenche l'annonce LUI-MÊME à la seconde près : une coupure HA entre la
+    # poussée et l'échéance ne fait pas rater l'annonce. Un rendez-vous déjà
+    # annoncé le reste après une nouvelle poussée (appariement par epoch dans
+    # rdv_store), sinon le rappel repartirait toutes les 5 minutes.
+    - service: tab5_maj_rdv_prochains
+      variables:
+        payload: string
+      then:
+        - lambda: |-
+            rdv_store(payload);
+            id(tab5_rdv_next_sensor).update();
 
     # Popup calendrier — réponse de script.tab5_calendrier_mois (HA) : codes = 62 hex
     # (2/jour, bits 1 travail, 2 férié, 4 vacances scolaires, 8 RDV, 16 anniversaire),

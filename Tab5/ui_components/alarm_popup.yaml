@@ -1,0 +1,771 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file alarm_popup.yaml
+# @role Fenêtre de réglage du réveil (carte modale standard 1250×690, cadre v4).
+#       Colonne gauche = ce qui décide QUAND ça sonne (activation + heure, jours,
+#       mode, bornes du mode calendrier). Colonne droite = ce qui se passe QUAND
+#       ça sonne (récapitulatif, sonnerie, répétition, annonces).
+# @architecture_constraint Positions ABSOLUES, comme assistant_popup.yaml : les
+#       états actifs ne changent que la BORDURE (dessinée à l'intérieur), donc
+#       aucun bouton ne se décale quand on l'active. Aucune logique ici — chaque
+#       geste appelle un script de tab5-alarm.yaml, et TOUT le repaint passe par
+#       `alarm_render_settings()` (alarm_clock.cpp) via `tab5_alarm_sync_ui`.
+# @architecture_constraint Ce fichier ne LIT aucun état : il ne fait qu'écrire
+#       (gestes) et exposer des ids (repaint). C'est ce qui garantit que l'écran
+#       et Home Assistant montrent toujours la même chose — les deux affichent
+#       le même `g_alarm_cfg`.
+# @open Tap court sur la tuile horloge (tab5-lvgl.yaml ; l'appui LONG reste le
+#       calendrier), ou depuis HA via le select « Aller à l'écran ».
+# @geometry Corps = y 72 → 578 (barre d'action de 84 px ancrée à
+#       ${modal_bottom_y}). Deux colonnes de 589 px : x=24 et x=637.
+#       Gauche  : 72..222 (150) · 234..330 (96) · 342..468 (126) · 480..578 (98)
+#       Droite  : 72..222 (150) · 234..424 (190) · 436..578 (142)
+# ═══════════════════════════════════════════════════════════════════════════
+obj:
+  id: alarm_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "id(tab5_alarm_close).execute();" } }
+
+    - obj:
+        align: CENTER
+        width: ${modal_card_w}
+        height: ${modal_card_h}
+        styles: style_modal_card
+        scrollable: false
+        widgets:
+
+          # ═══ BARRE DE TITRE (cadre v4) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0020", icon_color: "color_accent", title: "Réveil", title_id: "popup_alarm_title", close_btn_id: "btn_alarm_close", close_lambda: "id(tab5_alarm_close).execute();" } }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # A — ACTIVATION + HEURE FIXE                       (gauche, 72..222)
+          # ═══════════════════════════════════════════════════════════════════
+          - obj:
+              align: TOP_LEFT
+              x: 24
+              y: ${modal_body_y}
+              width: 589
+              height: 150
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                # Grande bascule ON/OFF — c'est le geste le plus fréquent, il a
+                # donc la plus grande cible de la fenêtre.
+                - button:
+                    id: btn_alarm_enable
+                    align: TOP_LEFT
+                    x: 16
+                    y: 20
+                    width: 200
+                    height: 110
+                    radius: 18
+                    styles: style_clim_btn
+                    pressed:
+                      bg_opa: 30%
+                    on_short_click:
+                      - switch.toggle: tab5_alarm_enabled
+                    widgets:
+                      - label: { id: icon_alarm_enable, text: "\U000F0020", align: CENTER, y: -22, text_font: mdi_font_45, text_color: color_text }
+                      - label: { id: lbl_alarm_enable, text: "Réveil éteint", align: CENTER, y: 28, text_font: roboto_22, text_color: color_text_dim }
+
+                - label: { text: "Heure fixe", align: TOP_LEFT, x: 232, y: 14, width: 170, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+                - label: { id: lbl_alarm_time, text: "07:00", align: TOP_LEFT, x: 232, y: 42, width: 170, text_align: CENTER, text_font: roboto_55_b, text_color: color_text }
+
+                # Réglage ± heures / ± minutes. Le pas de 5 min est volontaire :
+                # on règle un réveil, pas un chronomètre.
+                - label: { text: "H", align: TOP_LEFT, x: 416, y: 8, width: 76, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_alarm_h_up
+                    align: TOP_LEFT
+                    x: 416
+                    y: 38
+                    width: 76
+                    height: 48
+                    radius: 14
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_shift_time, delta: 60 }
+                    widgets:
+                      - label: { text: "\U000F0143", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+                - button:
+                    id: btn_alarm_h_dn
+                    align: TOP_LEFT
+                    x: 416
+                    y: 92
+                    width: 76
+                    height: 48
+                    radius: 14
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_shift_time, delta: -60 }
+                    widgets:
+                      - label: { text: "\U000F0140", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+
+                - label: { text: "MIN", align: TOP_LEFT, x: 500, y: 8, width: 76, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_alarm_m_up
+                    align: TOP_LEFT
+                    x: 500
+                    y: 38
+                    width: 76
+                    height: 48
+                    radius: 14
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_shift_time, delta: 5 }
+                    widgets:
+                      - label: { text: "\U000F0143", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+                - button:
+                    id: btn_alarm_m_dn
+                    align: TOP_LEFT
+                    x: 500
+                    y: 92
+                    width: 76
+                    height: 48
+                    radius: 14
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_shift_time, delta: -5 }
+                    widgets:
+                      - label: { text: "\U000F0140", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # B — JOURS DE LA SEMAINE                           (gauche, 234..330)
+          # ═══════════════════════════════════════════════════════════════════
+          # 7 pastilles de 72 px, pas de 80 (8 px de jeu). Le libellé rappelle
+          # que ce sélecteur ne gouverne QUE l'heure fixe : un jour travaillé
+          # sonne quel que soit le jour de la semaine (cf. alarm_clock.cpp).
+          - obj:
+              align: TOP_LEFT
+              x: 24
+              y: 234
+              width: 589
+              height: 96
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                - label: { text: "Jours (heure fixe uniquement)", align: TOP_LEFT, x: 18, y: 6, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_alarm_day_0
+                    align: TOP_LEFT
+                    x: 18
+                    y: 36
+                    width: 72
+                    height: 52
+                    radius: 16
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_toggle_day, day: 0 }
+                    widgets:
+                      - label: { id: lbl_alarm_day_0, text: "L", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                - button:
+                    id: btn_alarm_day_1
+                    align: TOP_LEFT
+                    x: 98
+                    y: 36
+                    width: 72
+                    height: 52
+                    radius: 16
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_toggle_day, day: 1 }
+                    widgets:
+                      - label: { id: lbl_alarm_day_1, text: "M", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                - button:
+                    id: btn_alarm_day_2
+                    align: TOP_LEFT
+                    x: 178
+                    y: 36
+                    width: 72
+                    height: 52
+                    radius: 16
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_toggle_day, day: 2 }
+                    widgets:
+                      - label: { id: lbl_alarm_day_2, text: "M", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                - button:
+                    id: btn_alarm_day_3
+                    align: TOP_LEFT
+                    x: 258
+                    y: 36
+                    width: 72
+                    height: 52
+                    radius: 16
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_toggle_day, day: 3 }
+                    widgets:
+                      - label: { id: lbl_alarm_day_3, text: "J", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                - button:
+                    id: btn_alarm_day_4
+                    align: TOP_LEFT
+                    x: 338
+                    y: 36
+                    width: 72
+                    height: 52
+                    radius: 16
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_toggle_day, day: 4 }
+                    widgets:
+                      - label: { id: lbl_alarm_day_4, text: "V", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                - button:
+                    id: btn_alarm_day_5
+                    align: TOP_LEFT
+                    x: 418
+                    y: 36
+                    width: 72
+                    height: 52
+                    radius: 16
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_toggle_day, day: 5 }
+                    widgets:
+                      - label: { id: lbl_alarm_day_5, text: "S", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                - button:
+                    id: btn_alarm_day_6
+                    align: TOP_LEFT
+                    x: 498
+                    y: 36
+                    width: 72
+                    height: 52
+                    radius: 16
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_toggle_day, day: 6 }
+                    widgets:
+                      - label: { id: lbl_alarm_day_6, text: "D", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # C — MODE                                          (gauche, 342..468)
+          # ═══════════════════════════════════════════════════════════════════
+          - obj:
+              align: TOP_LEFT
+              x: 24
+              y: 342
+              width: 589
+              height: 126
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                - label: { text: "Mode", align: TOP_LEFT, x: 16, y: 8, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_alarm_mode_0
+                    align: TOP_LEFT
+                    x: 12
+                    y: 38
+                    width: 181
+                    height: 56
+                    radius: 16
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - select.set_index: { id: tab5_alarm_mode, index: 0 }
+                    widgets:
+                      - label: { text: "\U000F0150", align: LEFT_MID, x: 14, text_font: mdi_font_32, text_color: color_text }
+                      - label: { text: "Fixe", align: CENTER, x: 18, text_font: roboto_22, text_color: color_text }
+                - button:
+                    id: btn_alarm_mode_1
+                    align: TOP_LEFT
+                    x: 205
+                    y: 38
+                    width: 181
+                    height: 56
+                    radius: 16
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - select.set_index: { id: tab5_alarm_mode, index: 1 }
+                    widgets:
+                      - label: { text: "\U000F00D6", align: LEFT_MID, x: 14, text_font: mdi_font_32, text_color: color_text }
+                      - label: { text: "Travail", align: CENTER, x: 18, text_font: roboto_22, text_color: color_text }
+                - button:
+                    id: btn_alarm_mode_2
+                    align: TOP_LEFT
+                    x: 398
+                    y: 38
+                    width: 181
+                    height: 56
+                    radius: 16
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - select.set_index: { id: tab5_alarm_mode, index: 2 }
+                    widgets:
+                      - label: { text: "\U000F00F0", align: LEFT_MID, x: 14, text_font: mdi_font_32, text_color: color_text }
+                      - label: { text: "Ouverture", align: CENTER, x: 18, text_font: roboto_22, text_color: color_text }
+                - label: { id: lbl_alarm_mode_hint, text: "", align: TOP_LEFT, x: 16, y: 98, width: 557, text_font: roboto_22, text_color: color_text_dim }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # C2 — BORNES DU MODE CALENDRIER                    (gauche, 480..578)
+          # ═══════════════════════════════════════════════════════════════════
+          # « Repos mini » est ce qui exploite l'heure de FERMETURE de la veille :
+          # après une fermeture à 21:00, un repos de 9 h interdit de sonner avant
+          # 06:00 — sauf si « Pas après » l'impose (arriver à l'heure gagne).
+          - obj:
+              align: TOP_LEFT
+              x: 24
+              y: 480
+              width: 589
+              height: 98
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                - label: { text: "Délai", align: TOP_LEFT, x: 12, y: 8, width: 131, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_alarm_lead_dn
+                    align: TOP_LEFT
+                    x: 12
+                    y: 40
+                    width: 36
+                    height: 48
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - number.decrement: { id: tab5_alarm_lead, cycle: false }
+                    widgets:
+                      - label: { text: "\U000F0141", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+                - label: { id: lbl_alarm_lead, text: "90 min", align: TOP_LEFT, x: 48, y: 52, width: 59, text_align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    id: btn_alarm_lead_up
+                    align: TOP_LEFT
+                    x: 107
+                    y: 40
+                    width: 36
+                    height: 48
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - number.increment: { id: tab5_alarm_lead, cycle: false }
+                    widgets:
+                      - label: { text: "\U000F0142", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+
+                - label: { text: "Pas avant", align: TOP_LEFT, x: 155, y: 8, width: 131, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_alarm_early_dn
+                    align: TOP_LEFT
+                    x: 155
+                    y: 40
+                    width: 36
+                    height: 48
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_shift_early, delta: -15 }
+                    widgets:
+                      - label: { text: "\U000F0141", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+                - label: { id: lbl_alarm_early, text: "05:00", align: TOP_LEFT, x: 191, y: 52, width: 59, text_align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    id: btn_alarm_early_up
+                    align: TOP_LEFT
+                    x: 250
+                    y: 40
+                    width: 36
+                    height: 48
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_shift_early, delta: 15 }
+                    widgets:
+                      - label: { text: "\U000F0142", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+
+                - label: { text: "Pas après", align: TOP_LEFT, x: 298, y: 8, width: 131, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_alarm_late_dn
+                    align: TOP_LEFT
+                    x: 298
+                    y: 40
+                    width: 36
+                    height: 48
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_shift_late, delta: -15 }
+                    widgets:
+                      - label: { text: "\U000F0141", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+                - label: { id: lbl_alarm_late, text: "09:00", align: TOP_LEFT, x: 334, y: 52, width: 59, text_align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    id: btn_alarm_late_up
+                    align: TOP_LEFT
+                    x: 393
+                    y: 40
+                    width: 36
+                    height: 48
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_shift_late, delta: 15 }
+                    widgets:
+                      - label: { text: "\U000F0142", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+
+                - label: { text: "Repos mini", align: TOP_LEFT, x: 441, y: 8, width: 131, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_alarm_rest_dn
+                    align: TOP_LEFT
+                    x: 441
+                    y: 40
+                    width: 36
+                    height: 48
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - number.decrement: { id: tab5_alarm_rest_hours, cycle: false }
+                    widgets:
+                      - label: { text: "\U000F0141", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+                - label: { id: lbl_alarm_rest, text: "—", align: TOP_LEFT, x: 477, y: 52, width: 59, text_align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    id: btn_alarm_rest_up
+                    align: TOP_LEFT
+                    x: 536
+                    y: 40
+                    width: 36
+                    height: 48
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - number.increment: { id: tab5_alarm_rest_hours, cycle: false }
+                    widgets:
+                      - label: { text: "\U000F0142", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # D — PROCHAINE SONNERIE                            (droite, 72..222)
+          # ═══════════════════════════════════════════════════════════════════
+          # La carte la plus importante de la fenêtre : elle répond à la seule
+          # question qui compte (« à quelle heure ça sonne, et pourquoi »).
+          - obj:
+              align: TOP_LEFT
+              x: 637
+              y: ${modal_body_y}
+              width: 589
+              height: 150
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                - label: { text: "\U000F0021", align: TOP_LEFT, x: 16, y: 20, text_font: mdi_font_45, text_color: color_accent }
+                - label: { text: "PROCHAINE SONNERIE", align: TOP_LEFT, x: 76, y: 20, text_font: roboto_22, text_color: color_text_dim }
+                - label: { id: lbl_alarm_next, text: "", align: TOP_LEFT, x: 76, y: 52, width: 497, text_font: roboto_45_b, text_color: color_text }
+                - label: { id: lbl_alarm_next_sub, text: "", align: TOP_LEFT, x: 76, y: 112, width: 497, text_font: roboto_22, text_color: color_text_dim }
+
+                # Bascule « jours de repos » : posée ici parce qu'elle explique
+                # directement la ligne du dessus (« repos » vs une vraie heure).
+                - button:
+                    id: btn_alarm_repos
+                    align: TOP_RIGHT
+                    x: -16
+                    y: 16
+                    width: 160
+                    height: 44
+                    radius: 14
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - switch.toggle: tab5_alarm_repos_fixe
+                    widgets:
+                      - label: { id: lbl_alarm_repos, text: "Repos : silence", align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # E — SONNERIE                                      (droite, 234..424)
+          # ═══════════════════════════════════════════════════════════════════
+          - obj:
+              align: TOP_LEFT
+              x: 637
+              y: 234
+              width: 589
+              height: 190
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                - label: { text: "\U000F0387", align: TOP_LEFT, x: 16, y: 8, text_font: mdi_font_32, text_color: color_text_dim }
+                - label: { text: "Sonnerie", align: TOP_LEFT, x: 58, y: 10, text_font: roboto_22, text_color: color_text_dim }
+
+                # Changer de mélodie la joue aussitôt (tab5_alarm_cycle_melody) :
+                # choisir une sonnerie sans l'entendre n'a aucun intérêt.
+                - button:
+                    id: btn_alarm_mel_prev
+                    align: TOP_LEFT
+                    x: 44
+                    y: 38
+                    width: 52
+                    height: 52
+                    radius: 14
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_cycle_melody, delta: -1 }
+                    widgets:
+                      - label: { text: "\U000F0141", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+                - label: { id: lbl_alarm_melody, text: "Classique", align: TOP_LEFT, x: 104, y: 51, width: 380, text_align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                - button:
+                    id: btn_alarm_mel_next
+                    align: TOP_LEFT
+                    x: 492
+                    y: 38
+                    width: 52
+                    height: 52
+                    radius: 14
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: { id: tab5_alarm_cycle_melody, delta: 1 }
+                    widgets:
+                      - label: { text: "\U000F0142", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+
+                - label: { text: "\U000F057E", align: TOP_LEFT, x: 16, y: 98, text_font: mdi_font_32, text_color: color_text_dim }
+                - slider:
+                    id: slider_alarm_vol
+                    align: TOP_LEFT
+                    x: 64
+                    y: 106
+                    width: 390
+                    height: 20
+                    min_value: 10
+                    max_value: 100
+                    value: 80
+                    on_value:
+                      # Le volume du réveil est indépendant du volume système :
+                      # il passe par sa propre entité, jamais par
+                      # `tab5_volume_apply` (qui, lui, écrit `system_volume`).
+                      - number.set:
+                          id: tab5_alarm_volume
+                          value: !lambda 'return x;'
+                - label: { id: lbl_alarm_vol, text: "80 %", align: TOP_LEFT, x: 466, y: 100, width: 100, text_align: CENTER, text_font: roboto_32_b, text_color: color_text }
+
+                - button:
+                    id: btn_alarm_cresc
+                    align: TOP_LEFT
+                    x: 16
+                    y: 142
+                    width: 557
+                    height: 44
+                    radius: 14
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - switch.toggle: tab5_alarm_crescendo
+                    widgets:
+                      - label: { id: lbl_alarm_cresc, text: "Volume constant", align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # F — RÉPÉTITION + ANNONCES                         (droite, 436..578)
+          # ═══════════════════════════════════════════════════════════════════
+          - obj:
+              align: TOP_LEFT
+              x: 637
+              y: 436
+              width: 589
+              height: 142
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                - label: { text: "Répétition", align: TOP_LEFT, x: 16, y: 6, width: 180, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_alarm_snooze_dn
+                    align: TOP_LEFT
+                    x: 16
+                    y: 36
+                    width: 48
+                    height: 48
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - number.decrement: { id: tab5_alarm_snooze_min, cycle: false }
+                    widgets:
+                      - label: { text: "\U000F0141", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+                - label: { id: lbl_alarm_snooze, text: "9 min", align: TOP_LEFT, x: 64, y: 48, width: 84, text_align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    id: btn_alarm_snooze_up
+                    align: TOP_LEFT
+                    x: 148
+                    y: 36
+                    width: 48
+                    height: 48
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - number.increment: { id: tab5_alarm_snooze_min, cycle: false }
+                    widgets:
+                      - label: { text: "\U000F0142", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+
+                - label: { text: "Durée max", align: TOP_LEFT, x: 206, y: 6, width: 180, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_alarm_maxring_dn
+                    align: TOP_LEFT
+                    x: 206
+                    y: 36
+                    width: 48
+                    height: 48
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - number.decrement: { id: tab5_alarm_max_ring, cycle: false }
+                    widgets:
+                      - label: { text: "\U000F0141", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+                - label: { id: lbl_alarm_maxring, text: "15 min", align: TOP_LEFT, x: 254, y: 48, width: 84, text_align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    id: btn_alarm_maxring_up
+                    align: TOP_LEFT
+                    x: 338
+                    y: 36
+                    width: 48
+                    height: 48
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - number.increment: { id: tab5_alarm_max_ring, cycle: false }
+                    widgets:
+                      - label: { text: "\U000F0142", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+
+                - label: { text: "RDV avant", align: TOP_LEFT, x: 396, y: 6, width: 180, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_alarm_rdvlead_dn
+                    align: TOP_LEFT
+                    x: 396
+                    y: 36
+                    width: 48
+                    height: 48
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - number.decrement: { id: tab5_rdv_lead, cycle: false }
+                    widgets:
+                      - label: { text: "\U000F0141", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+                - label: { id: lbl_alarm_rdv_lead, text: "15 min avant", align: TOP_LEFT, x: 444, y: 48, width: 84, text_align: CENTER, text_font: roboto_22, text_color: color_text }
+                - button:
+                    id: btn_alarm_rdvlead_up
+                    align: TOP_LEFT
+                    x: 528
+                    y: 36
+                    width: 48
+                    height: 48
+                    radius: 12
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - number.increment: { id: tab5_rdv_lead, cycle: false }
+                    widgets:
+                      - label: { text: "\U000F0142", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+
+                - button:
+                    id: btn_alarm_tts
+                    align: TOP_LEFT
+                    x: 16
+                    y: 94
+                    width: 278
+                    height: 42
+                    radius: 14
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - switch.toggle: tab5_alarm_tts
+                    widgets:
+                      - label: { text: "\U000F05CB", align: LEFT_MID, x: 12, text_font: mdi_font_32, text_color: color_text_dim }
+                      - label: { id: lbl_alarm_tts, text: "Sonnerie seule", align: CENTER, x: 18, text_font: roboto_22, text_color: color_text_dim }
+                - button:
+                    id: btn_alarm_rdv
+                    align: TOP_LEFT
+                    x: 304
+                    y: 94
+                    width: 278
+                    height: 42
+                    radius: 14
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - switch.toggle: tab5_alarm_rdv_on
+                    widgets:
+                      - label: { text: "\U000F00F0", align: LEFT_MID, x: 12, text_font: mdi_font_32, text_color: color_text_dim }
+                      - label: { id: lbl_alarm_rdv, text: "RDV silencieux", align: CENTER, x: 18, text_font: roboto_22, text_color: color_text_dim }
+
+          # ═══ BARRE D'ACTION (bas) ═══
+          - obj:
+              align: BOTTOM_MID
+              y: ${modal_bottom_y}
+              width: 1202
+              height: 84
+              styles: style_transparent
+              scrollable: false
+              widgets:
+                - label: { id: lbl_alarm_rdv_next, text: "", align: LEFT_MID, x: 8, width: 500, text_font: roboto_22, text_color: color_text_dim }
+
+                # Test grandeur nature : passe par la VRAIE machine d'état
+                # (overlay, crescendo, arrêt à la voix), pas par un raccourci —
+                # tester autre chose que ce qui sonnera n'aurait aucune valeur.
+                - button:
+                    id: btn_alarm_test
+                    align: CENTER
+                    x: -90
+                    width: 220
+                    height: 68
+                    radius: 20
+                    styles: style_pill_accent
+                    pressed:
+                      bg_opa: 45%
+                    on_short_click:
+                      - globals.set:
+                          id: alarm_ring_scheduled
+                          value: 'false'
+                      - globals.set:
+                          id: alarm_ring_cycle
+                          value: '0'
+                      - script.execute: tab5_alarm_ring_start
+                    widgets:
+                      - label: { text: "\U000F040A", align: LEFT_MID, x: 24, text_font: mdi_font_45, text_color: color_text }
+                      - label: { text: "Tester", align: CENTER, x: 22, text_font: roboto_32_b, text_color: color_text }
+
+                - button:
+                    id: btn_alarm_stop_now
+                    align: CENTER
+                    x: 140
+                    width: 160
+                    height: 68
+                    radius: 20
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: tab5_alarm_stop
+                    widgets:
+                      - label: { text: "\U000F04DB", align: CENTER, text_font: mdi_font_45, text_color: color_error }
+
+                - button:
+                    align: RIGHT_MID
+                    x: -4
+                    width: 180
+                    height: 68
+                    radius: 20
+                    styles: style_clim_btn
+                    pressed: { bg_opa: 30% }
+                    on_short_click:
+                      - script.execute: tab5_alarm_close
+                    widgets:
+                      - label: { text: "Fermer", align: CENTER, text_font: roboto_22, text_color: color_text }

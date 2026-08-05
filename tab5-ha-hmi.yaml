@@ -57,6 +57,11 @@ esphome:
     # ORIENTATION en tête de pinball_game.cpp avant d'y toucher.
     - Tab5/pinball_game.h
     - Tab5/pinball_game.cpp
+    # Réveil matin + annonce des rendez-vous — moteur PUR (dates, calendrier,
+    # machine d'état), aucune dépendance HA ni réseau. Il lit `cal_jours_data[]`
+    # de tab5_custom.h : garder cet ordre d'inclusion.
+    - Tab5/alarm_clock.h
+    - Tab5/alarm_clock.cpp
 
   on_boot:
     - priority: 700
@@ -144,6 +149,12 @@ esphome:
           g_hour_slots[2] = {id(h2_time), id(h2_temp), id(h2_prob), id(h2_icon_layer1), id(h2_icon_layer2)};
           g_hour_slots[3] = {id(h1_time), id(h1_temp), id(h1_prob), id(h1_icon_layer1), id(h1_icon_layer2)};
           g_hour_slots[4] = {id(h0_time), id(h0_temp), id(h0_prob), id(h0_icon_layer1), id(h0_icon_layer2)};
+      # Réveil : restaurer le plancher anti-re-sonnerie AVANT le premier calcul,
+      # sinon un redémarrage juste après un arrêt referait sonner l'alarme dans
+      # la fenêtre de grâce (ALARM_GRACE_S). tab5_alarm_refresh remplit ensuite
+      # `g_alarm_cfg` depuis les entités déjà restaurées et repeint la pastille.
+      - lambda: 'alarm_set_skip_floor(id(alarm_skip_before));'
+      - script.execute: tab5_alarm_refresh
       - script.execute: tab5_central_rotator_auto
       # Pré-fetch calendrier : charge le mois courant + M+1 en arrière-plan pour
       # que le popup calendrier s'ouvre instantanément (stale-while-revalidate).
@@ -176,5 +187,8 @@ packages:
   # Entites exposees a HA pour piloter/observer l'ecran depuis un dashboard HA.
   # Charge APRES tab5_lvgl : ses lambdas referencent des ids de widgets LVGL.
   tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml
+  # Reveil matin + annonce des rendez-vous. Comme ci-dessus : APRES tab5_lvgl
+  # (ses scripts referencent les ids de alarm_popup.yaml / alarm_ring_overlay.yaml).
+  tab5_alarm: !include Tab5/tab5-alarm.yaml
 
 captive_portal:

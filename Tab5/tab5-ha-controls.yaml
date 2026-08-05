@@ -67,8 +67,13 @@ text_sensor:
 
       struct Screen { lv_obj_t* obj; const char* name; };
       // Ordre = priorité d'affichage : les popups couvrent le dashboard, on
-      // nomme donc le premier visible.
+      // nomme donc le premier visible. L'écran de SONNERIE du réveil est en
+      // tête : c'est le seul calque qui couvre aussi les fenêtres modales, et
+      // savoir à distance que la tablette est en train de sonner prime sur tout
+      // le reste.
       static const Screen kScreens[] = {
+          {id(alarm_ring_layer),      "Réveil qui sonne"},
+          {id(alarm_popup),           "Réveil"},
           {id(assistant_popup),       "Assistant vocal"},
           {id(calendar_popup),        "Calendrier"},
           {id(light_options_popup),   "Lumières"},
@@ -111,6 +116,7 @@ select:
       - "Accueil"
       - "Assistant vocal"
       - "Calendrier"
+      - "Réveil"
       - "Climatisation"
       - "Plantes"
       - "Télécommande TV"
@@ -145,10 +151,11 @@ select:
               nullptr,                    // 1 Accueil (aucun popup)
               id(assistant_popup),        // 2
               id(calendar_popup),         // 3
-              id(clim_options_popup),     // 4
-              id(pots_detail_popup),      // 5
-              id(tv_remote_popup),        // 6
-              id(layer_console_sys),      // 7
+              id(alarm_popup),            // 4
+              id(clim_options_popup),     // 5
+              id(pots_detail_popup),      // 6
+              id(tv_remote_popup),        // 7
+              id(layer_console_sys),      // 8
           };
           lv_obj_t* target = kTargetOf[i];
           if (target != nullptr && !lv_obj_has_flag(target, LV_OBJ_FLAG_HIDDEN)) {
@@ -164,7 +171,7 @@ select:
           static lv_obj_t* const kPopups[] = {
               id(assistant_popup), id(calendar_popup), id(light_options_popup),
               id(clim_options_popup), id(pots_detail_popup), id(tv_remote_popup),
-              id(layer_console_sys)
+              id(alarm_popup), id(layer_console_sys)
           };
           lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
           lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
@@ -180,7 +187,12 @@ select:
             case 3:  // Le calendrier a besoin de son mois courant + du rendu.
               id(tab5_calendar_open).execute();
               break;
-            case 7:  // La console est un layer plein cadre : pas d'animation
+            case 4:  // Le réveil resynchronise g_alarm_cfg et recalcule la
+                     // prochaine sonnerie avant de s'afficher, sinon la carte
+                     // « Prochaine sonnerie » montrerait un état périmé.
+              id(tab5_alarm_open).execute();
+              break;
+            case 8:  // La console est un layer plein cadre : pas d'animation
                      // d'ouverture, comme son bouton (tab5-lvgl.yaml).
               lv_obj_clear_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
               lv_obj_move_foreground(id(layer_console_sys));

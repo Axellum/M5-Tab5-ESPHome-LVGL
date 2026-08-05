@@ -54,6 +54,8 @@ Tapping the mic icon while TTS is playing stops the satellite (`assist_satellite
 
 16 kHz / 16-bit mono is the standard format for speech processing pipelines. Home Assistant's Whisper-based STT expects this format.
 
+**Gain staging — take gain in the analog stage, not the digital one.** All the input gain is set on the ES7210 preamp (`mic_gain: 30dB`, adjustable 0–37.5 dB), *before* the converter, and both `gain_factor` values (wake word and voice assistant) are left at **1**. ESPHome's `gain_factor` is an integer multiply followed by a hard clamp (`microphone_source.cpp`): it amplifies the converter's noise floor exactly as much as the voice — so it buys no signal-to-noise — and it clips peaks into square waves, which is what Whisper transcribes worst. Moving 6 dB from digital to analog on 2026-08-05 kept the same output level and the same clipping threshold, but put the amplification where it actually adds signal. `noise_suppression_level` is set to `0` for the same reason: it is applied by HA (`MicroVadSpeexEnhancer` in `assist_pipeline/pipeline.py`), but a denoiser distorts speech and Whisper is trained on natural audio. Raise it to 1–2 only if recognition degrades in a noisy room.
+
 Once the wake-word fires, audio is streamed in real time over the existing Wi-Fi connection to the HA Voice pipeline. The pipeline handles STT (Whisper), intent processing (Conversation agent), and TTS (Piper or cloud). The result comes back as an audio stream routed to the `media_player` entity on the Tab5.
 
 ---
@@ -65,6 +67,18 @@ TTS responses play through the ES8388 DAC → amplifier → built-in speaker. Th
 **Boot sequence:** the amplifier enable switch is activated *after* the backlight and the `media_player` volume have been set (and only then does the device wait for the HA API connection). Enabling the amplifier before the I2S clock is stable produces an audible pop. The `on_boot` sequence in `tab5-ha-hmi.yaml` enforces this order.
 
 **Interaction with LVGL traffic pacing:** when TTS is playing, the I2S DMA is actively consuming CPU cycles and memory bandwidth. The traffic pacing delays (1 s between push service blocks, 150 ms within forecast loops) prevent simultaneous large payload pushes from colliding with the active audio stream.
+
+**Playback format — this is a Home Assistant setting, not an output setting.** The `announcement_pipeline` block of the `media_player` declares the *preferred format advertised to HA*, i.e. what HA transcodes the TTS to before sending it. It must therefore match the TTS engine, not the DAC:
+
+| Parameter | Value | Why |
+|-----------|-------|-----|
+| Format | FLAC | Lossless, ~half the bytes of raw WAV over Wi-Fi. ESPHome's default, and what the official Home Assistant Voice PE firmware uses |
+| Sample rate | 24000 Hz | The higher of the two engines now in service: "Domotique" stays on local Piper (`fr_FR-upmc-medium`, 22050 Hz), "Discussion LLM" moved to HA Cloud / AlainNeural (24000 Hz) on 2026-08-05. At 24000 the cloud is native and Piper is merely upsampled, which discards **no** content; asking for 22050 would do the reverse and cut the cloud above 11 kHz. Asking for 16 kHz — the original setting — silently threw away everything above 8 kHz, sibilants included. **Revisit whenever the TTS engines change** |
+| Channels | Mono | One speaker |
+
+The I2S speaker in primary mode accepts 16000–48000 Hz and reconfigures its clock to whatever stream arrives, so the `sample_rate: 48000` on the `speaker:` component is only a default, never a constraint on the pipeline.
+
+**Playback buffer:** `buffer_duration: 500ms` on the speaker (the ESPHome default). Do not lower it. TTS is streamed over HTTP from HA *while it is still being generated*, over Wi-Fi carried by the C6 co-processor on SDIO, and when this ring buffer runs dry the speaker task does not pause the stream — it pads the DMA buffer with silence. Every network hiccup becomes an audible micro-gap.
 
 ---
 
@@ -154,6 +168,8 @@ Taper l'icône micro pendant que le TTS joue arrête le satellite (`assist_satel
 
 16 kHz / 16-bit mono est le format standard pour les pipelines de traitement vocal. Le STT basé sur Whisper de Home Assistant attend ce format.
 
+**Étage de gain — prendre le gain en analogique, pas en numérique.** Tout le gain d'entrée est réglé sur le préampli ES7210 (`mic_gain: 30dB`, réglable de 0 à 37,5 dB), *avant* le convertisseur, et les deux `gain_factor` (wake word et assistant vocal) restent à **1**. Le `gain_factor` d'ESPHome est une multiplication entière suivie d'un `clamp` dur (`microphone_source.cpp`) : il amplifie le bruit de fond du convertisseur exactement autant que la voix — donc aucun gain de rapport signal/bruit — et il écrête les crêtes en signaux carrés, ce que Whisper transcrit le plus mal. Déplacer 6 dB du numérique vers l'analogique le 05/08/2026 a conservé le même niveau de sortie et le même seuil d'écrêtage, mais a mis l'amplification là où elle apporte vraiment du signal. `noise_suppression_level` est à `0` pour la même raison : il est bien appliqué par HA (`MicroVadSpeexEnhancer` dans `assist_pipeline/pipeline.py`), mais un débruiteur déforme la parole et Whisper est entraîné sur de l'audio naturel. Le remonter à 1-2 seulement si la reconnaissance se dégrade dans une pièce bruyante.
+
 Une fois le wake-word déclenché, l'audio est streamé en temps réel via la connexion Wi-Fi existante vers le pipeline Voice HA. Le pipeline gère le STT (Whisper), le traitement d'intention (agent Conversation), et le TTS (Piper ou cloud). Le résultat revient comme flux audio routé vers l'entité `media_player` du Tab5.
 
 ---
@@ -165,6 +181,18 @@ Les réponses TTS sont jouées via le DAC ES8388 → amplificateur → haut-parl
 **Séquence de boot :** le switch d'activation de l'amplificateur est activé *après* le rétroéclairage et le réglage du volume du `media_player` (et c'est seulement ensuite que l'appareil attend la connexion API HA). Activer l'ampli avant que l'horloge I2S soit stable produit un pop audible. La séquence `on_boot` dans `tab5-ha-hmi.yaml` garantit cet ordre.
 
 **Interaction avec le traffic pacing LVGL :** quand le TTS joue, le DMA I2S consomme activement des cycles CPU et de la bande passante mémoire. Les délais de traffic pacing (1 s entre les blocs de service push, 150 ms dans les boucles de prévisions) empêchent les push de gros payloads simultanés d'entrer en collision avec le flux audio actif.
+
+**Format de lecture — c'est un réglage Home Assistant, pas un réglage de sortie.** Le bloc `announcement_pipeline` du `media_player` déclare le *format préféré annoncé à HA*, c'est-à-dire ce vers quoi HA transcode le TTS avant de l'envoyer. Il doit donc coller au moteur TTS, pas au DAC :
+
+| Paramètre | Valeur | Pourquoi |
+|-----------|--------|----------|
+| Format | FLAC | Sans perte, ~deux fois moins d'octets sur le WiFi que le WAV brut. Défaut ESPHome, et ce qu'utilise le firmware officiel Home Assistant Voice PE |
+| Taux d'échantillonnage | 24000 Hz | Le plus haut des deux moteurs désormais en service : « Domotique » reste sur Piper en local (`fr_FR-upmc-medium`, 22050 Hz), « Discussion LLM » est passé sur HA Cloud / AlainNeural (24000 Hz) le 05/08/2026. À 24000 le cloud est natif et Piper est simplement suréchantillonné, ce qui ne coupe **aucun** contenu ; demander 22050 ferait l'inverse et raboterait le cloud au-dessus de 11 kHz. Demander 16 kHz — le réglage d'origine — jetait silencieusement tout ce qui est au-dessus de 8 kHz, sifflantes comprises. **À revoir à chaque changement de moteur TTS** |
+| Canaux | Mono | Un seul haut-parleur |
+
+Le haut-parleur I2S en mode primary accepte 16000 à 48000 Hz et reconfigure son horloge sur le flux qui arrive : le `sample_rate: 48000` du composant `speaker:` n'est qu'un défaut, jamais une contrainte sur le pipeline.
+
+**Tampon de lecture :** `buffer_duration: 500ms` sur le haut-parleur (le défaut ESPHome). Ne pas le baisser. Le TTS est streamé en HTTP depuis HA *pendant sa génération*, via le WiFi porté par le co-processeur C6 en SDIO, et quand ce tampon se vide la tâche du haut-parleur ne met pas le flux en pause — elle remplit le buffer DMA de silence. Chaque hoquet réseau devient un micro-trou audible.
 
 ---
 

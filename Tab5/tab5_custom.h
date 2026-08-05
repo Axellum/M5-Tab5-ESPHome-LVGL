@@ -36,6 +36,23 @@ extern HourForecastData cal_heures_data[15];
 
 // Embauche "tôt" = heure de début < 9h (même seuil partout : tuiles, popup, bandeau).
 bool cal_is_early_shift(const std::string& heures_hhmm_hhmm);
+
+// Date locale à J+jour_offset (0-14) via l'heure système SNTP, normalisée à midi
+// par mktime() : immunisé contre les bascules heure d'été/hiver (une journée de
+// 23 h ou 25 h décalerait la date d'un jour près de minuit). Renvoie false si
+// l'heure n'est pas encore synchronisée ou si l'offset est hors bornes.
+// Partagé avec alarm_clock.cpp (calcul de la prochaine sonnerie) — c'était un
+// `static` de tab5_custom.cpp jusqu'au 05/08/2026 : le réveil DOIT utiliser
+// exactement la même arithmétique de dates que les tuiles météo, sinon les deux
+// divergent d'un jour deux fois par an.
+bool local_day_from_offset(int jour_offset, struct tm& out);
+
+// Jours et mois en toutes lettres, UTF-8, minuscules (en français ils ne
+// prennent pas de majuscule hors début de phrase). wday : 0 = dimanche.
+// Partagés avec alarm_clock.cpp (« demain, mercredi 6 août ») — une seule table
+// pour tout le projet, sinon deux orthographes finissent par diverger.
+const char* fr_day_long_utf8(int wday);
+const char* fr_month_long_utf8(int mois_1_12);
 namespace esphome { namespace font { class Font; } }
 void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, bool is_card, esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
 

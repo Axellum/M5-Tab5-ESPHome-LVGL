@@ -1048,10 +1048,17 @@ interval:
           // Pointeurs LVGL constants après le boot (même motif que tab5_cal_render) :
           // pas de reconstruction du tableau à chaque seconde.
           // Toute nouvelle fenêtre modale DOIT être ajoutée ici.
+          // L'écran de SONNERIE du réveil (alarm_ring_layer) est volontairement
+          // absent de cette liste : c'est un calque plein cadre, pas une fenêtre
+          // modale, et il ne doit surtout pas se refermer parce que personne ne
+          // touche l'écran — c'est exactement la situation qu'il traite. Seuls
+          // tab5_alarm_stop / _snooze_now / la durée maximale le referment.
+          // La fenêtre de RÉGLAGES du réveil (alarm_popup), elle, est une modale
+          // ordinaire et suit la règle commune.
           static lv_obj_t* const kPopups[] = {
               id(assistant_popup), id(calendar_popup), id(light_options_popup),
               id(clim_options_popup), id(pots_detail_popup), id(tv_remote_popup),
-              id(layer_console_sys)
+              id(alarm_popup), id(layer_console_sys)
           };
           constexpr int kNbPopups = sizeof(kPopups) / sizeof(kPopups[0]);
 
