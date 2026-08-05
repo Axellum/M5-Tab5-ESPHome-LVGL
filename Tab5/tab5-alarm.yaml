@@ -813,18 +813,24 @@ script:
                           rtttl.is_playing:
                             id: alarm_rtttl
                       timeout: 30s
-                  # [I2S-BUS] Relais retour haut-parleur -> micro, pour que la
-                  # fenêtre d'écoute qui suit serve vraiment à écouter. Le
-                  # haut-parleur ne rend le mutex qu'une fois sa tâche arrêtée
-                  # (silence de fin puis timeout interne) : sans cette attente, le
-                  # micro passerait la fenêtre à retenter son démarrage une fois
-                  # par seconde.
-                  - wait_until:
-                      condition:
-                        not:
-                          speaker.is_playing: tab5_speaker
-                      timeout: 3s
-                  - micro_wake_word.start:
+            # [I2S-BUS] Relais retour haut-parleur -> micro, pour que la fenêtre
+            # d'écoute qui suit serve vraiment à écouter. Le haut-parleur ne rend
+            # le mutex qu'une fois sa tâche arrêtée (silence de fin puis timeout
+            # interne) : sans cette attente, le micro passerait la fenêtre à
+            # retenter son démarrage une fois par seconde.
+            #
+            # HORS du `if` — donc valable pour les DEUX chemins. Le chemin
+            # « URL de sonnerie HA » passe par le media_player, dont le
+            # `on_announcement` coupe bien microWakeWord (tab5-hardware.yaml) ;
+            # mais son `on_idle`, qui le redémarre d'habitude, est justement
+            # neutralisé pendant une sonnerie. Laisser ce redémarrage dans la
+            # branche `else` tuait donc l'arrêt à la voix sur tout le chemin URL.
+            - wait_until:
+                condition:
+                  not:
+                    speaker.is_playing: tab5_speaker
+                timeout: 3s
+            - micro_wake_word.start:
             # Fenêtre d'écoute : silence volontaire, ne pas raccourcir sans
             # revoir l'arrêt à la voix (le micro n'entend rien pendant la mélodie
             # — au sens propre : il n'a même pas accès au bus I2S). 3 s et non
@@ -1083,6 +1089,40 @@ interval:
               return true;
           then:
             - script.execute: tab5_rdv_announce
+
+  # [I2S-BUS] Filet de sécurité : « Ok Nabu » activé DOIT vouloir dire moteur de
+  # mots de réveil en marche. Depuis que la sonnerie et l'aperçu coupent le micro
+  # pour libérer le bus, cet invariant repose sur une chaîne de redémarrages bien
+  # placés — et il suffit d'un chemin interrompu pour laisser le micro éteint
+  # sans que rien ne le signale (`tab5_alarm_preview` est en `mode: restart` :
+  # un second tap sur les chevrons tue l'instance en cours avant sa restauration).
+  # Plutôt que de fiabiliser chaque appelant un par un, on réconcilie ici.
+  # Toutes les conditions « quelque chose est en train de jouer » sont testées :
+  # ce filet ne doit JAMAIS reprendre le bus à un son en cours.
+  - interval: 10s
+    then:
+      - if:
+          condition:
+            and:
+              - switch.is_on: tab5_wake_word_active
+              - not:
+                  micro_wake_word.is_running:
+              - lambda: 'return !id(alarm_ringing);'
+              - not:
+                  voice_assistant.is_running:
+              - not:
+                  media_player.is_announcing:
+                    id: speaker_player
+              - not:
+                  speaker.is_playing: tab5_speaker
+          then:
+            # `level: INFO` explicite : un `logger.log` est un ESP_LOGD par
+            # défaut, donc du code jamais compilé tant que `logger.level` est à
+            # INFO — un filet muet ne sert à rien.
+            - logger.log:
+                level: INFO
+                format: "Filet I2S : microWakeWord etait arrete alors que Ok Nabu est actif -> redemarrage"
+            - micro_wake_word.start:
 
   # Le plancher anti-re-sonnerie est sauvegardé en NVS. Écrire à chaque changement
   # userait la flash pour rien : une fois par minute suffit largement, et la seule
