@@ -151,7 +151,7 @@ All 8 consoles share the same architecture: each one is its **own fullscreen LVG
 ## Key design decisions
 
 - **Push-only, zero polling.** The device never requests state from Home Assistant. Automations on the HA side detect changes and push data to the screen via native ESPHome service calls. CPU stays near zero when nothing changes.
-- **Modular YAML.** The ESPHome configuration is split across ten files by concern (tokens, hardware, diagnostics sensors, home-automation sensors, API logic, styles, UI, globals, scripts, IMU), each independently readable. Most stay in the 150–500 line range; the two that carry the bulk of the behaviour (`tab5-scripts.yaml`, `tab5-lvgl.yaml`) are larger, and the UI is further split into 33 reusable `ui_components/*.yaml`.
+- **Modular YAML.** The ESPHome configuration is split across twelve files by concern (tokens, hardware, diagnostics sensors, home-automation sensors, API logic, styles, UI, globals, scripts, IMU, HA controls, alarm clock), each independently readable. Most stay in the 150–500 line range; the two that carry the bulk of the behaviour (`tab5-scripts.yaml`, `tab5-lvgl.yaml`) are larger, and the UI is further split into 35 reusable `ui_components/*.yaml`.
 - **Native LVGL, no web stack.** Rendering runs at 60 FPS directly in the ESP32-P4's PSRAM. Vector fonts (Material Design Icons) replace image files entirely.
 - **Data packing.** Complex payloads (15-day forecast, hourly forecast, weather alerts) are serialized as delimited strings on the HA side and parsed in C++ on the device — one network call, zero subsequent requests.
 - **Offline resilience.** All C++ lambdas check `api.connected()` and `has_state()` before touching the UI. If HA restarts, the last known state stays on screen — and the device stays usable on its own (clock, arcade, diagnostics console). It only reboots itself after a full hour without any API client (`api: reboot_timeout: 60min`), a deliberate anti-"zombie" safety net rather than a reaction to a short HA outage.
@@ -241,9 +241,11 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── tab5-scripts.yaml     # ESPHome script blocks
 │   ├── tab5-imu.yaml         # BMI270 IMU — adaptive polling + tap-to-wake
 │   ├── tab5-ha-controls.yaml # HA-facing entities — volume, current screen, go-to-screen
+│   ├── tab5-alarm.yaml       # Alarm clock + appointment reminders (entities, ring, tick)
 │   ├── ui_components/        # 30+ reusable LVGL components (popups, cards, games)
 │   ├── tab5_custom.h         # C++ declarations (HMI logic)
 │   ├── tab5_custom.cpp       # C++ implementations (parsers, helpers)
+│   ├── alarm_clock.h/.cpp    # Alarm engine — next-ring maths, calendar rules, RDV list
 │   ├── marble_game.h/.cpp    # Game: Fil d'Or (marble roguelite)
 │   ├── arkanoid_game.h/.cpp  # Game: Arcanoïde (breakout)
 │   ├── pinball_game.h/.cpp   # Game: Neon Apron (pinball, portrait)
@@ -348,7 +350,7 @@ L'interface est compilée en C++ et embarquée dans le firmware de l'appareil. E
 ## Choix de conception
 
 - **Push uniquement, zéro polling.** L'appareil ne demande jamais son état à Home Assistant. Les automations côté HA détectent les changements et poussent les données vers l'écran via des appels de service ESPHome natifs. Le CPU reste proche de zéro quand rien ne change.
-- **YAML modulaire.** La configuration ESPHome est découpée en dix fichiers par domaine (tokens, hardware, capteurs diagnostics, capteurs domotique, logique API, styles, UI, globales, scripts, IMU), chacun lisible indépendamment. La plupart tiennent entre 150 et 500 lignes ; les deux qui portent l'essentiel du comportement (`tab5-scripts.yaml`, `tab5-lvgl.yaml`) sont plus gros, et l'UI est encore découpée en 33 `ui_components/*.yaml` réutilisables.
+- **YAML modulaire.** La configuration ESPHome est découpée en douze fichiers par domaine (tokens, hardware, capteurs diagnostics, capteurs domotique, logique API, styles, UI, globales, scripts, IMU, entités HA, réveil), chacun lisible indépendamment. La plupart tiennent entre 150 et 500 lignes ; les deux qui portent l'essentiel du comportement (`tab5-scripts.yaml`, `tab5-lvgl.yaml`) sont plus gros, et l'UI est encore découpée en 35 `ui_components/*.yaml` réutilisables.
 - **LVGL natif, pas de stack web.** Le rendu tourne à 60 FPS directement dans la PSRAM de l'ESP32-P4. Les polices vectorielles (Material Design Icons) remplacent complètement les fichiers image.
 - **Compression de données.** Les payloads complexes (prévisions 15 jours, prévisions horaires, alertes météo) sont sérialisés en chaînes délimitées côté HA et parsés en C++ sur l'appareil — un seul appel réseau, zéro requête suivante.
 - **Résilience hors-ligne.** Toutes les lambdas C++ vérifient `api.connected()` et `has_state()` avant de toucher l'UI. Si HA redémarre, le dernier état connu reste affiché — et l'appareil reste utilisable seul (horloge, arcade, console diag). Il ne se redémarre de lui-même qu'après une heure entière sans aucun client API (`api: reboot_timeout: 60min`), un filet anti-« zombie » assumé, pas une réaction à une coupure HA passagère.

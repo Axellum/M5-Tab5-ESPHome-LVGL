@@ -1,0 +1,181 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_reveil.yaml
+# @role Ce que Home Assistant apporte AU RÉVEIL du Tab5 — et rien de plus :
+#         1. `script.tab5_rdv_prochains` pousse la liste des prochains
+#            rendez-vous horodatés vers le firmware ;
+#         2. `script.tab5_reveil_annonce` prononce le briefing du matin ;
+#         3. une automation entretient (1).
+# @architecture_constraint Le réveil lui-même ne dépend PAS de ce fichier. Le
+#       firmware (Tab5/alarm_clock.cpp) calcule son heure à partir de l'horloge
+#       SNTP et des horaires de travail déjà en cache, et sonne une mélodie
+#       synthétisée localement. Si Home Assistant est arrêté, le réveil sonne
+#       quand même — seuls le briefing parlé et les rappels de rendez-vous
+#       manquent. Ne JAMAIS déplacer la décision de sonner ici.
+# @architecture_constraint L'ANNONCE d'un rendez-vous est déclenchée par le
+#       firmware, pas par une automation HA : HA ne fait que pousser la liste
+#       (epoch + titre) toutes les 5 minutes, le Tab5 tient le compte à rebours.
+#       Une coupure HA entre la poussée et l'échéance ne fait donc rien rater.
+# @payload_contract tab5_maj_rdv_prochains : "epoch|titre~epoch|titre~…",
+#       8 entrées maximum, epoch UTC du DÉBUT (zéro-padding sans importance,
+#       lu en base 10), titres débarrassés de `|`, `~` et `;`. Contrat côté
+#       firmware : `rdv_store()` dans Tab5/alarm_clock.cpp.
+# @data_sources calendar.famille + calendar.axxxums_gmail_com (« Planing boulo »,
+#       dont on EXCLUT les événements « Travail » : ce ne sont pas des
+#       rendez-vous, et leurs horaires servent déjà au calcul de l'heure de
+#       réveil). Seuls les événements HORODATÉS sont retenus — un événement
+#       journée entière n'a pas d'heure à annoncer.
+# @ai_warning Ne JAMAIS passer `now()` brut à un service (`{{ now() }}`) —
+#       toujours via `.strftime(...)`. Un `calendar.get_events` avec un datetime
+#       brut (microsecondes incluses) a déjà cassé silencieusement toute une
+#       automation le 04/07/2026, sans aucune erreur loggée par HA.
+# @install Nécessite homeassistant.packages: !include_dir_named packages
+# ============================================================================
+
+script:
+  tab5_rdv_prochains:
+    alias: "Tab5 — prochains rendez-vous (réveil / annonces)"
+    description: >-
+      Pousse vers le Tab5 les rendez-vous horodatés des 24 prochaines heures.
+      Le firmware garde la liste et déclenche l'annonce lui-même, N minutes
+      avant (N réglable depuis l'écran ou depuis number.tab5_rdv_lead).
+      mode restart : si deux déclencheurs tombent en même temps, seule la
+      dernière demande compte.
+    mode: restart
+    sequence:
+      - variables:
+          debut: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+          fin: "{{ (now() + timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S') }}"
+      - action: calendar.get_events
+        continue_on_error: true
+        data:
+          start_date_time: "{{ debut }}"
+          end_date_time: "{{ fin }}"
+        target:
+          entity_id:
+            - calendar.famille
+            - calendar.axxxums_gmail_com
+        response_variable: ev
+      - action: esphome.tab5_ha_hmi_tab5_maj_rdv_prochains
+        continue_on_error: true
+        data:
+          payload: >-
+            {% set fam = ev['calendar.famille'].events if ev is defined and 'calendar.famille' in ev else [] %}
+            {% set boulo = ev['calendar.axxxums_gmail_com'].events if ev is defined and 'calendar.axxxums_gmail_com' in ev else [] %}
+            {% set ns = namespace(rows=[]) %}
+            {% for e in (fam + boulo) %}
+              {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
+              {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
+              {# 'T' dans le début = événement horodaté. Une journée entière n'a
+                 pas d'heure à annoncer, on la saute. #}
+              {% if 'T' in st and 'Travail' not in summ %}
+                {% set ts = st | as_datetime | as_timestamp | int(0) %}
+                {% if ts > 0 %}
+                  {# Titre nettoyé des trois séparateurs du protocole, puis
+                     tronqué : la ligne de bandeau du Tab5 fait 1180 px, et
+                     rdv_due() travaille sur un tampon de 192 octets. #}
+                  {% set txt = summ | replace('|', '/') | replace('~', '-') | replace(';', ',') %}
+                  {# Epoch zéro-padded sur 11 chiffres : le tri lexicographique
+                     ci-dessous devient un tri chronologique, sans passer par
+                     sort(attribute=...) sur des tuples (fragile en Jinja). #}
+                  {% set ns.rows = ns.rows + ['%011d|%s' | format(ts, txt[:64])] %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.rows | sort | unique | list | first(8) | join('~') }}
+
+  tab5_reveil_annonce:
+    alias: "Tab5 — briefing parlé du réveil"
+    description: >-
+      Prononcé sur le Tab5 quelques secondes après le début de la sonnerie,
+      si switch.tab5_alarm_tts est actif. Appelé PAR LE FIRMWARE
+      (script.tab5_alarm_speak), jamais par un déclencheur horaire : c'est le
+      Tab5 qui sait à quelle heure il a sonné.
+    mode: single
+    sequence:
+      - variables:
+          # Horaires de travail du jour, lus dans le même calendrier que celui
+          # qui sert à calculer l'heure de réveil — le briefing dit donc
+          # exactement ce que la tablette a utilisé pour décider.
+          debut_jour: "{{ now().strftime('%Y-%m-%d 00:00:00') }}"
+          fin_jour: "{{ (now() + timedelta(days=1)).strftime('%Y-%m-%d 00:00:00') }}"
+      - action: calendar.get_events
+        continue_on_error: true
+        data:
+          start_date_time: "{{ debut_jour }}"
+          end_date_time: "{{ fin_jour }}"
+        target:
+          entity_id:
+            - calendar.axxxums_gmail_com
+            - calendar.famille
+        response_variable: ev_jour
+      - action: assist_satellite.announce
+        continue_on_error: true
+        data:
+          entity_id: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
+          message: >-
+            {% set h = now().hour %}
+            {% set m = now().minute %}
+            {% set boulo = ev_jour['calendar.axxxums_gmail_com'].events if ev_jour is defined and 'calendar.axxxums_gmail_com' in ev_jour else [] %}
+            {% set fam = ev_jour['calendar.famille'].events if ev_jour is defined and 'calendar.famille' in ev_jour else [] %}
+            {% set ns = namespace(travail='', rdv='') %}
+            {% for e in boulo %}
+              {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
+              {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
+              {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
+              {% if ns.travail == '' and 'Travail' in summ and 'T' in st %}
+                {% set ns.travail = (st | as_datetime).strftime('%H heures %M') ~ ' à ' ~ (en | as_datetime).strftime('%H heures %M') %}
+              {% endif %}
+            {% endfor %}
+            {% for e in (fam + boulo) %}
+              {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
+              {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
+              {% if ns.rdv == '' and 'T' in st and 'Travail' not in summ %}
+                {% set ns.rdv = summ ~ ', à ' ~ (st | as_datetime).strftime('%H heures %M') %}
+              {% endif %}
+            {% endfor %}
+            {% set meteo = states('weather.saint_vincent_de_tyrosse') %}
+            {% set tmax = state_attr('weather.saint_vincent_de_tyrosse', 'temperature') %}
+            Bonjour. Il est {{ h }} heures {{ m }}.
+            {%- if ns.travail != '' %} Vous travaillez de {{ ns.travail }}.
+            {%- else %} Pas de travail aujourd'hui.
+            {%- endif %}
+            {%- if ns.rdv != '' %} Rendez-vous : {{ ns.rdv }}.
+            {%- endif %}
+            {%- if tmax is not none %} Il fera {{ tmax | round(0) | int }} degrés.
+            {%- endif %}
+
+automation:
+  - id: tab5_rdv_push
+    alias: "Tab5 — pousser les prochains rendez-vous"
+    description: >-
+      Entretient la liste embarquée dans le Tab5. Cadence de 5 minutes : le
+      firmware tient le compte à rebours à la seconde, la poussée ne sert donc
+      qu'à découvrir les rendez-vous AJOUTÉS ou DÉPLACÉS. La reconnexion du
+      Tab5 est aussi un déclencheur, sinon la liste resterait vide après un
+      redémarrage de la tablette jusqu'au tick suivant.
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: state
+        entity_id:
+          - calendar.famille
+          - calendar.axxxums_gmail_com
+      - platform: event
+        event_type: esphome.tab5_connected
+      # Le délai d'annonce vient de changer : la liste, elle, n'a pas bougé —
+      # mais republier fait recalculer immédiatement le « prochain rendez-vous »
+      # affiché, au lieu d'attendre jusqu'à 5 minutes.
+      - platform: state
+        entity_id: number.tab5_rdv_lead
+    condition:
+      # Même garde-fou que les autres automations d'écran (cf. l'@ai_warning en
+      # tête de automations_tab5.yaml : ce booléen s'est déjà retrouvé bloqué à
+      # `off` sans trace, coupant TOUTE poussée sans erreur visible).
+      - condition: state
+        entity_id: input_boolean.is_primary_active
+        state: "on"
+    action:
+      - action: script.tab5_rdv_prochains

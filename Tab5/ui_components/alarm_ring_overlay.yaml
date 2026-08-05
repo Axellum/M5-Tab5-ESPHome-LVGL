@@ -1,0 +1,94 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file alarm_ring_overlay.yaml
+# @role Écran de sonnerie du réveil : calque PLEIN CADRE posé au-dessus de tout
+#       (dashboard et fenêtres modales comprises), avec l'heure en très gros et
+#       deux cibles tactiles énormes — arrêter, répéter.
+# @architecture_constraint Ce n'est PAS une fenêtre modale : pas de carte
+#       `style_modal_card`, donc pas de barre de titre ni de croix (exception
+#       assumée à l'ADR-0009, comme les pages de jeux). On le regarde à moitié
+#       réveillé, à un mètre de distance : rien à lire, rien à viser.
+#       En revanche le VOILE reste celui de tout le projet
+#       (`modal_scrim.yaml`, règle 2 du garde-fou check_tab5_modal_chrome.py) —
+#       il tombe parfaitement ici, puisqu'un voile est déjà un bouton plein
+#       cadre dont le tap déclenche un `close_lambda`, et que « toucher l'écran
+#       pour arrêter » est exactement ça.
+# @architecture_constraint Absent de la table `kPopups` du retour automatique à
+#       l'inactivité (tab5-scripts.yaml) : une sonnerie ne se referme pas parce
+#       que personne ne touche l'écran — c'est tout l'inverse de sa raison
+#       d'être. Seuls tab5_alarm_stop, tab5_alarm_snooze_now et la durée
+#       maximale le referment, tous via tab5_alarm_ring_cleanup.
+# @architecture_constraint Les libellés sont des FRÈRES du voile, pas ses
+#       enfants : un label LVGL n'est pas cliquable, l'appui retombe donc sur le
+#       voile qui est dessous — toucher l'heure arrête bien le réveil. Les deux
+#       boutons d'action, eux, sont cliquables et consomment leur propre appui :
+#       « Répéter » reste atteignable sans risque d'arrêter par mégarde.
+# @open Uniquement par `script.tab5_alarm_ring_start` (tab5-alarm.yaml), qui
+#       rallume le rétroéclairage, ferme un jeu éventuel et ramène page_main
+#       avant de l'afficher.
+# @geometry Écran 1280×720. Empilement vertical mesuré, aucun chevauchement :
+#       cloche 95..165 · heure 195..345 · titre 353..407 · détail 416..454 ·
+#       boutons 492..588 · rappel 668..694.
+# ═══════════════════════════════════════════════════════════════════════════
+obj:
+  id: alarm_ring_layer
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    # 96 % et non 100 % : on devine le dashboard derrière, ce qui situe
+    # immédiatement où l'on est sans rien enlever à la lisibilité de l'heure.
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "96", close_lambda: "id(tab5_alarm_stop).execute();" } }
+
+    - label: { id: icon_alarm_ring, text: "\U000F0020", align: CENTER, y: -230, text_font: mdi_font_80, text_color: color_accent }
+    - label: { id: lbl_alarm_ring_time, text: "00:00", align: CENTER, y: -90, text_font: roboto_130_b, text_color: color_text }
+    - label: { id: lbl_alarm_ring_title, text: "Réveil", align: CENTER, y: 20, text_font: roboto_45_b, text_color: color_accent }
+    - label: { id: lbl_alarm_ring_sub, text: "", align: CENTER, y: 75, width: 1100, text_align: CENTER, text_font: roboto_32_b, text_color: color_text_dim }
+
+    # ARRÊTER — action franche, glyphe teinté « erreur » pour être reconnue sans
+    # lire, posée à gauche (là où tombe la main qui tape en premier).
+    - button:
+        id: btn_alarm_ring_stop
+        align: CENTER
+        x: -200
+        y: 180
+        width: 360
+        height: 96
+        radius: 24
+        styles: style_clim_btn
+        pressed:
+          bg_opa: 45%
+        on_short_click:
+          - script.execute: tab5_alarm_stop
+        widgets:
+          - label: { text: "\U000F04DB", align: LEFT_MID, x: 40, text_font: mdi_font_45, text_color: color_error }
+          - label: { text: "Arrêter", align: CENTER, x: 30, text_font: roboto_45_b, text_color: color_text }
+
+    # RÉPÉTER — le libellé porte la durée réelle (réécrit par
+    # alarm_ring_refresh), sinon il faudrait aller la chercher dans les réglages.
+    - button:
+        id: btn_alarm_ring_snooze
+        align: CENTER
+        x: 200
+        y: 180
+        width: 360
+        height: 96
+        radius: 24
+        styles: style_clim_btn
+        pressed:
+          bg_opa: 45%
+        on_short_click:
+          - script.execute: tab5_alarm_snooze_now
+        widgets:
+          - label: { text: "\U000F068E", align: LEFT_MID, x: 30, text_font: mdi_font_45, text_color: color_gold }
+          - label: { id: lbl_alarm_ring_snooze, text: "Répéter", align: CENTER, x: 26, text_font: roboto_32_b, text_color: color_text }
+
+    - label:
+        text: "Touchez l'écran ou dites « Stop » pour arrêter"
+        align: BOTTOM_MID
+        y: -24
+        text_font: roboto_22
+        text_color: color_text_dim

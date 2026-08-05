@@ -174,4 +174,54 @@ globals:
     initial_value: '""'
     restore_value: false
 
+  # --- Réveil matin (tab5-alarm.yaml + alarm_clock.cpp) ---
+  # Ce qui est RÉGLABLE vit dans des entités ESPHome (donc exposé à HA et
+  # persisté par elles) ; seuls l'état de la sonnerie en cours et les deux
+  # valeurs que HA n'a aucune raison de voir passent par des globals.
+  - id: alarm_ringing
+    type: bool
+    initial_value: 'false'
+    restore_value: false
+  # Numéro du passage de sonnerie en cours : c'est lui qui fait monter le volume
+  # progressif (alarm_ring_gain). Remis à 0 à chaque déclenchement, PAS à chaque
+  # répétition — un snooze reprend donc au volume déjà atteint.
+  - id: alarm_ring_cycle
+    type: int
+    initial_value: '0'
+    restore_value: false
+  # millis() du début du passage sonore courant : garde-fou « durée max ».
+  - id: alarm_ring_started
+    type: uint32_t
+    initial_value: '0'
+    restore_value: false
+  # Masque des jours (bit 0 = lundi). Écrit par les 7 chips de l'écran ET par le
+  # select de préréglages exposé à HA — les deux passent par tab5_alarm_refresh,
+  # jamais l'un sans l'autre. Défaut : lundi → vendredi.
+  - id: alarm_days_mask
+    type: uint8_t
+    initial_value: '0x1F'
+    restore_value: true
+  # Plancher de recherche de la prochaine sonnerie, miroir NVS de
+  # alarm_skip_floor(). Sans lui, un redémarrage dans les 2 min qui suivent un
+  # arrêt (fenêtre de grâce ALARM_GRACE_S) ferait re-sonner le réveil qu'on vient
+  # d'arrêter.
+  - id: alarm_skip_before
+    type: uint32_t
+    initial_value: '0'
+    restore_value: true
+  # Tampons de passage vers les services HA (même motif que temp_dismiss_alert_id) :
+  # une lambda remplit, l'action homeassistant.service qui suit relit.
+  - id: alarm_rdv_speech
+    type: std::string
+    initial_value: '""'
+    restore_value: false
+  - id: alarm_rdv_screen
+    type: std::string
+    initial_value: '""'
+    restore_value: false
+  - id: alarm_ring_sub
+    type: std::string
+    initial_value: '""'
+    restore_value: false
+
 

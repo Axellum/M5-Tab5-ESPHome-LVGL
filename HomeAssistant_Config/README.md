@@ -90,6 +90,17 @@ School holidays come from a **static Zone A table** (Bordeaux academy) verified 
 
 ---
 
+### `packages/tab5_reveil.yaml`
+What Home Assistant adds to the firmware's **alarm clock** — and nothing more. **The alarm itself does not depend on this file**: the device computes its ring time from the SNTP clock and the work hours it already caches, and rings a locally synthesised melody. Stop HA and the alarm still goes off; only the spoken briefing and the appointment reminders go missing. Never move the decision to ring in here.
+
+- **`tab5_rdv_prochains`** — pushes the next 24 h of *timed* appointments to `esphome.<device>_tab5_maj_rdv_prochains` as `epoch|title~epoch|title~…` (8 max). Work events are excluded: their hours already drive the alarm time, and they are not appointments. **The device runs the countdown itself**, so an HA outage between the push and the deadline misses nothing.
+- **`tab5_reveil_annonce`** — the spoken morning briefing (time, today's shift, next appointment, temperature), called *by the firmware* when `switch.tab5_alarm_tts` is on, and only on the first ring — not on snoozes.
+- **automation `tab5_rdv_push`** — keeps the list fresh: every 5 min, on calendar changes, on `esphome.tab5_connected` (otherwise the list stays empty after a device reboot), and when the lead time changes.
+
+Edit the two calendar entity IDs at the top of each `calendar.get_events` call to match yours. Same package install as above.
+
+---
+
 ### `packages/tab5_alerts.yaml`
 Backend of the **HA alert queue** — panels 4 to 7 of the central rotating card. Provides the `input_text.tab5_alerts_dismissed` helper (the dismiss list), the `tab5_dismiss_alert` script the device calls when you tap a banner, and the automation that builds the `tab5_maj_alertes_ha_bulk` payload (max 4 banners, already-dismissed ids filtered out).
 
@@ -235,6 +246,17 @@ Backend du **popup calendrier** du firmware (appui long sur l'horloge). Deux scr
 - **`tab5_calendrier_jour`** (`date`) — construit les lignes de détail du jour (`type|texte;...`, max 6) et pousse `esphome.<device>_tab5_maj_calendrier_jour`
 
 Les vacances scolaires viennent d'une **table statique Zone A** (académie de Bordeaux) vérifiée sur data.education.gouv.fr — adaptez-la à votre zone, et complétez-la à la publication de l'année scolaire suivante (voir l'`@ai_warning` dans le fichier). Le calendrier Google des jours fériés mélange vrais fériés et fêtes civiles, d'où la liste blanche `feries_connus`. Même installation package que ci-dessus.
+
+---
+
+### `packages/tab5_reveil.yaml`
+Ce que Home Assistant apporte au **réveil** du firmware — et rien de plus. **Le réveil lui-même ne dépend pas de ce fichier** : l'appareil calcule son heure depuis l'horloge SNTP et les horaires de travail qu'il garde déjà en cache, et sonne une mélodie synthétisée localement. Arrêtez HA, le réveil sonne quand même ; seuls le briefing parlé et les rappels de rendez-vous manquent. Ne jamais déplacer ici la décision de sonner.
+
+- **`tab5_rdv_prochains`** — pousse les rendez-vous *horodatés* des 24 prochaines heures vers `esphome.<device>_tab5_maj_rdv_prochains`, au format `epoch|titre~epoch|titre~…` (8 maximum). Les événements « Travail » sont exclus : leurs horaires servent déjà à calculer l'heure de réveil, et ce ne sont pas des rendez-vous. **C'est l'appareil qui tient le compte à rebours**, donc une coupure HA entre la poussée et l'échéance ne fait rien rater.
+- **`tab5_reveil_annonce`** — le briefing parlé du matin (heure, horaires du jour, prochain rendez-vous, température), appelé *par le firmware* quand `switch.tab5_alarm_tts` est actif, et uniquement au premier déclenchement — pas aux répétitions.
+- **automation `tab5_rdv_push`** — entretient la liste : toutes les 5 min, sur changement de calendrier, sur `esphome.tab5_connected` (sinon la liste reste vide après un redémarrage de la tablette), et quand le délai d'annonce change.
+
+Adaptez les deux IDs de calendrier en tête de chaque `calendar.get_events` aux vôtres. Même installation package que ci-dessus.
 
 ---
 
