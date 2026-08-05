@@ -70,6 +70,10 @@ logger:
   # NE PAS retirer le delai bloquant de tab5-ha-hmi.yaml (esphome:on_boot:
   # priority:700) sans re-tester a fond — c'est lui le vrai garde-fou
   # desormais, pas le niveau de log.
+  # [AI-WARNING 05/08] Ne pas passer ce niveau à DEBUG sans corriger d'abord le
+  # `ESP_LOGD` de tab5-ha-controls.yaml (~ligne 516) : ses spécificateurs de
+  # format déclenchent -Werror=format et le build s'arrête. À INFO le corps du
+  # ESP_LOGD est compilé hors binaire, donc l'erreur reste invisible.
   level: INFO
   baud_rate: 115200
   hardware_uart: USB_SERIAL_JTAG
@@ -269,6 +273,15 @@ media_player:
                 - not:
                     voice_assistant.is_running:
                 - switch.is_on: tab5_wake_word_active
+                # [I2S-BUS] Pendant une sonnerie de réveil, c'est
+                # `tab5_alarm_ring_loop` et lui seul qui décide quand le micro
+                # écoute : il doit lui laisser le bus I2S le temps de chaque
+                # passage de mélodie (micro et haut-parleur partagent `mic_bus`
+                # et son mutex unique). Sans ce garde, le `media_player.stop` du
+                # démarrage de sonnerie passe le lecteur en IDLE, ce hook
+                # relance microWakeWord dans la foulée, le micro reprend le bus
+                # et la mélodie est muette — constaté sur l'appareil le 05/08.
+                - lambda: 'return !id(alarm_ringing);'
           then:
             - micro_wake_word.start:
 
