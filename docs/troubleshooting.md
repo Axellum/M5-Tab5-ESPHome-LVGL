@@ -90,6 +90,26 @@ Format: **Symptom → Root cause → Fix**. Entries are chronological, most rece
 
 ---
 
+### Black screen + device off the network after an OTA — the Wi-Fi co-processor never came up
+
+**Symptom:** an OTA reports `OTA successful`, the device reboots, and then: black screen, no Home Assistant entities, no API (`esphome logs --device <ip>` times out on port 6053). Rebooting it again changes nothing. Confusingly, the IP still answers `ping` — that is a *different* device that picked up the lease, exactly like the 2026-08-01 DHCP mix-up.
+
+**Root cause:** the ESP32-P4 has no radio of its own; Wi-Fi comes from the ESP32-C6 co-processor over SDIO (`esp32_hosted`). That link failed to come up after the OTA's *software* reboot, which resets the P4 but **not** the C6 — so the C6 stays in whatever state it was left in. Serial console (USB, COM port) makes it unambiguous in seconds:
+
+```
+[I][esp-idf:000]: E (93883) H_API: ESP-Hosted link not yet up
+[W][wifi_esp32:300]: esp_wifi_set_mode failed: ESP_FAIL
+[I][wifi:852]: Starting fallback AP
+```
+
+Those three lines repeat ~50 times per second. The black screen is a *consequence*, not the fault: that hot retry loop starves the rest of the firmware, LVGL included. Do not go looking at the display stack.
+
+**Fix:** a **full power cycle** — power off (long-press) *and* unplug USB-C for ~15 s. A soft reboot will not do it. Confirmed on 2026-08-05: same binary, black screen after the OTA reboot, then Wi-Fi + API + display all healthy after the power cycle, `safe_mode: Boot seems successful`. The firmware was not at fault (that OTA only changed audio settings).
+
+**Diagnostic trap, learned the same day:** opening *and closing* the USB serial port to read logs can reset the chip. An unexplained reboot right at the end of an `esphome logs --device COM<n>` session is the log session itself, not an instability. Once the device is back on Wi-Fi, watch it through its Home Assistant diagnostic entities instead.
+
+---
+
 ### False positives worth knowing about (don't "fix" these again)
 
 - **Forecast pagination "wrap-around"**: the 5 forecast pages (indices 0–4) intentionally do **not** wrap from 4 back to 0 on a further right-swipe. This was already "corrected" once by an LLM audit that assumed non-wrapping was a bug, then reverted. See [`docs/decisions/`](decisions/README.md).
@@ -165,6 +185,24 @@ Format : **Symptôme → Cause racine → Correctif**.
 **Cause racine :** ce n'est pas un crash — c'est `api: reboot_timeout:` dans `tab5-api-logic.yaml`. ESPHome redémarre l'appareil quand **aucun client API n'est connecté** pendant cette durée, et le compteur repart à zéro à chaque connexion, même brève. Avec les 15 min d'origine, un serveur HA long à monter produit un cycle de reboots un peu plus long que le timeout lui-même (timeout + boot + tentatives de reconnexion). Le composant `wifi:` a son propre `reboot_timeout`, qui n'est *pas* en cause ici puisque le WiFi fonctionnait.
 
 **Correctif :** porté à `60min` le 01/08/2026 — une panne ou une maintenance HA d'une heure ne fait plus cycler la tablette, qui reste utile sans HA (horloge, arcade, console diag, dernière météo affichée), tout en gardant le filet anti-« zombie » de l'audit F-04. **Ne pas** mettre `0s` sans relire cet audit : une pile API figée laisserait alors l'appareil en ligne mais muet jusqu'à une coupure d'alimentation manuelle.
+
+### Écran noir + appareil absent du réseau après une OTA — le co-processeur WiFi n'est pas remonté
+
+**Symptôme :** une OTA annonce `OTA successful`, l'appareil redémarre, et ensuite : écran noir, aucune entité côté Home Assistant, pas d'API (`esphome logs --device <ip>` part en timeout sur le port 6053). Le rebooter à nouveau ne change rien. Trompeur : l'IP répond toujours au `ping` — c'est un *autre* appareil qui a récupéré le bail, exactement comme la confusion DHCP du 01/08/2026.
+
+**Cause racine :** l'ESP32-P4 n'a pas de radio à lui ; le WiFi vient du co-processeur ESP32-C6 en SDIO (`esp32_hosted`). Ce lien n'est pas remonté après le reboot *logiciel* de l'OTA, qui réinitialise le P4 mais **pas** le C6 — celui-ci reste dans l'état où il a été laissé. La console série (USB, port COM) tranche en quelques secondes :
+
+```
+[I][esp-idf:000]: E (93883) H_API: ESP-Hosted link not yet up
+[W][wifi_esp32:300]: esp_wifi_set_mode failed: ESP_FAIL
+[I][wifi:852]: Starting fallback AP
+```
+
+Ces trois lignes se répètent ~50 fois par seconde. L'écran noir est une *conséquence*, pas la panne : cette boucle chaude de reconnexion affame le reste du firmware, LVGL compris. Ne pas partir fouiller la pile d'affichage.
+
+**Correctif :** une **vraie coupure d'alimentation** — extinction (appui long) *et* débranchement de l'USB-C pendant ~15 s. Un reboot logiciel ne suffit pas. Confirmé le 05/08/2026 : même binaire, écran noir après le reboot d'OTA, puis WiFi + API + dalle tous sains après la coupure, `safe_mode: Boot seems successful`. Le firmware n'était pas en cause (cette OTA ne changeait que des réglages audio).
+
+**Piège de diagnostic, appris le même jour :** ouvrir *et refermer* le port série USB pour lire les logs peut réinitialiser la puce. Un reboot inexpliqué pile à la fin d'une session `esphome logs --device COM<n>`, c'est la session de logs elle-même, pas une instabilité. Une fois l'appareil revenu sur le WiFi, le surveiller via ses entités de diagnostic Home Assistant.
 
 ### Faux positifs à connaître (ne pas re-"corriger")
 
