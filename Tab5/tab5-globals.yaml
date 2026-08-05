@@ -182,9 +182,16 @@ globals:
     type: bool
     initial_value: 'false'
     restore_value: false
+  # True seulement si la sonnerie vient d'`alarm_due` (tick planifié / snooze),
+  # pas d'un « Tester » HA ou dalle. `tab5_alarm_stop` n'appelle `alarm_dismiss`
+  # que dans ce cas — sinon un test du matin mangerait le vrai réveil.
+  - id: alarm_ring_scheduled
+    type: bool
+    initial_value: 'false'
+    restore_value: false
   # Numéro du passage de sonnerie en cours : c'est lui qui fait monter le volume
-  # progressif (alarm_ring_gain). Remis à 0 à chaque déclenchement, PAS à chaque
-  # répétition — un snooze reprend donc au volume déjà atteint.
+  # progressif (alarm_ring_gain). Remis à 0 à chaque NOUVEAU déclenchement, PAS
+  # au retour d'une répétition — un snooze reprend donc au volume déjà atteint.
   - id: alarm_ring_cycle
     type: int
     initial_value: '0'
@@ -204,7 +211,8 @@ globals:
   # Plancher de recherche de la prochaine sonnerie, miroir NVS de
   # alarm_skip_floor(). Sans lui, un redémarrage dans les 2 min qui suivent un
   # arrêt (fenêtre de grâce ALARM_GRACE_S) ferait re-sonner le réveil qu'on vient
-  # d'arrêter.
+  # d'arrêter. Restauré vers le C++ au début de tab5_alarm_refresh (sinon le
+  # miroir NVS est écrasé par un floor C++ encore à 0).
   - id: alarm_skip_before
     type: uint32_t
     initial_value: '0'

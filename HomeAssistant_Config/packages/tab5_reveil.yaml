@@ -118,7 +118,7 @@ script:
             {% set m = now().minute %}
             {% set boulo = ev_jour['calendar.axxxums_gmail_com'].events if ev_jour is defined and 'calendar.axxxums_gmail_com' in ev_jour else [] %}
             {% set fam = ev_jour['calendar.famille'].events if ev_jour is defined and 'calendar.famille' in ev_jour else [] %}
-            {% set ns = namespace(travail='', rdv='') %}
+            {% set ns = namespace(travail='', rdv='', best_ts=none) %}
             {% for e in boulo %}
               {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
               {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
@@ -130,8 +130,14 @@ script:
             {% for e in (fam + boulo) %}
               {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
               {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
-              {% if ns.rdv == '' and 'T' in st and 'Travail' not in summ %}
-                {% set ns.rdv = summ ~ ', à ' ~ (st | as_datetime).strftime('%H heures %M') %}
+              {# Premier = le plus TÔT chronologiquement, pas le premier de la
+                 liste calendrier (ordre d'API non garanti). #}
+              {% if 'T' in st and 'Travail' not in summ %}
+                {% set ts = st | as_datetime | as_timestamp %}
+                {% if ns.best_ts is none or ts < ns.best_ts %}
+                  {% set ns.best_ts = ts %}
+                  {% set ns.rdv = summ ~ ', à ' ~ (st | as_datetime).strftime('%H heures %M') %}
+                {% endif %}
               {% endif %}
             {% endfor %}
             {% set meteo = states('weather.saint_vincent_de_tyrosse') %}

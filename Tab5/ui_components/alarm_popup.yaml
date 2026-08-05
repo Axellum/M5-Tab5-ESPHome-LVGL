@@ -732,6 +732,12 @@ obj:
                     pressed:
                       bg_opa: 45%
                     on_short_click:
+                      - globals.set:
+                          id: alarm_ring_scheduled
+                          value: 'false'
+                      - globals.set:
+                          id: alarm_ring_cycle
+                          value: '0'
                       - script.execute: tab5_alarm_ring_start
                     widgets:
                       - label: { text: "\U000F040A", align: LEFT_MID, x: 24, text_font: mdi_font_45, text_color: color_text }

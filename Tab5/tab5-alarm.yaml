@@ -376,6 +376,13 @@ button:
     icon: mdi:play-circle
     entity_category: config
     on_press:
+      # Test = pas une sonnerie planifiée : l'arrêt ne doit PAS dismiss.
+      - globals.set:
+          id: alarm_ring_scheduled
+          value: 'false'
+      - globals.set:
+          id: alarm_ring_cycle
+          value: '0'
       - script.execute: tab5_alarm_ring_start
 
   - platform: template
@@ -412,6 +419,13 @@ script:
     mode: restart
     then:
       - lambda: |-
+          // Boot : le C++ démarre avec s_skip_before=0 alors que NVS peut
+          // encore porter le plancher d'un arrêt récent. Sans cette restauration,
+          // la ligne « miroir → NVS » plus bas écraserait la valeur sauvée et un
+          // redémarrage dans la fenêtre de grâce ferait re-sonner.
+          if (alarm_skip_floor() == 0 && id(alarm_skip_before) > 0)
+            alarm_set_skip_floor(id(alarm_skip_before));
+
           // `number.state` vaut NaN tant que la valeur restaurée n'est pas
           // arrivée : sans ce garde, un cast direct donnerait un délai ou une
           // durée de sonnerie aberrants au tout premier passage.
@@ -634,10 +648,11 @@ script:
       - globals.set:
           id: alarm_ringing
           value: 'true'
-      - globals.set:
-          id: alarm_ring_cycle
-          value: '0'
+      # Crescendo : remis à 0 seulement pour une NOUVELLE sonnerie. Un retour de
+      # snooze (snooze_count > 0) reprend au volume déjà atteint — c'est le
+      # contrat documenté sur alarm_ring_cycle.
       - lambda: |-
+          if (alarm_snooze_count() == 0) id(alarm_ring_cycle) = 0;
           id(alarm_ring_started) = millis();
           id(tab5_alarm_is_ringing).publish_state(true);
           auto t = id(sntp_time).now();
@@ -746,6 +761,8 @@ script:
       - script.execute: tab5_alarm_ring_cleanup
 
   # Arrêt définitif (bouton de l'overlay, tap écran, voix, bouton HA).
+  # `alarm_dismiss` UNIQUEMENT si la sonnerie venait du tick planifié — un
+  # « Tester » ou le bouton Arrêter des réglages ne doit pas manger le vrai réveil.
   - id: tab5_alarm_stop
     mode: single
     then:
@@ -755,9 +772,20 @@ script:
       - script.stop: tab5_alarm_ring_loop
       - rtttl.stop:
           id: alarm_rtttl
-      - lambda: |-
-          auto t = id(sntp_time).now();
-          if (t.is_valid()) alarm_dismiss(t.timestamp);
+      # Couper aussi une sonnerie média HA (URL custom) : rtttl.stop seul la laisse
+      # tourner et peut bloquer le haut-parleur / le briefing.
+      - media_player.stop:
+          id: speaker_player
+      - if:
+          condition:
+            lambda: 'return id(alarm_ring_scheduled);'
+          then:
+            - lambda: |-
+                auto t = id(sntp_time).now();
+                if (t.is_valid()) alarm_dismiss(t.timestamp);
+      - globals.set:
+          id: alarm_ring_scheduled
+          value: 'false'
       - homeassistant.event:
           event: esphome.tab5_alarm_stop
       - script.execute: tab5_alarm_ring_cleanup
@@ -772,6 +800,8 @@ script:
       - script.stop: tab5_alarm_ring_loop
       - rtttl.stop:
           id: alarm_rtttl
+      - media_player.stop:
+          id: speaker_player
       - lambda: |-
           auto t = id(sntp_time).now();
           if (t.is_valid()) alarm_snooze(t.timestamp, g_alarm_cfg.snooze_min);
@@ -787,6 +817,14 @@ script:
       - globals.set:
           id: alarm_ringing
           value: 'false'
+      # Durée max / arrêt partiel : ne pas laisser le flag « planifié » traîner
+      # (un futur « Arrêter » des réglages ne doit plus dismiss par erreur).
+      - globals.set:
+          id: alarm_ring_scheduled
+          value: 'false'
+      # Filet : une URL custom encore en cours après durée max / arrêt partiel.
+      - media_player.stop:
+          id: speaker_player
       - lambda: |-
           id(tab5_alarm_is_ringing).publish_state(false);
           AlarmRingUI ui{};
@@ -927,13 +965,19 @@ interval:
               if (!t.is_valid() || id(alarm_ringing)) return false;
               return alarm_due((time_t) t.timestamp);
           then:
+            # Sonnerie planifiée (ou retour de snooze) : l'arrêt DOIT dismiss.
+            - globals.set:
+                id: alarm_ring_scheduled
+                value: 'true'
             - script.execute: tab5_alarm_ring_start
             - script.execute: tab5_alarm_speak
       - if:
           condition:
             lambda: |-
               auto t = id(sntp_time).now();
-              if (!t.is_valid() || !id(tab5_alarm_rdv_on).state) return false;
+              // Pas d'annonce RDV pendant la sonnerie : chevauchement audio +
+              // interférence avec l'écoute du wake word « Stop ».
+              if (!t.is_valid() || id(alarm_ringing) || !id(tab5_alarm_rdv_on).state) return false;
               const int lead = std::isnan(id(tab5_rdv_lead).state) ? 15 : (int) (id(tab5_rdv_lead).state + 0.5f);
               std::string scr, spk;
               if (!rdv_due((time_t) t.timestamp, lead, scr, spk)) return false;
