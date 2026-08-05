@@ -4,6 +4,31 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-08-05 — Étage de gain du micro remis dans le bon ordre
+
+Le niveau d'entrée était correct, mais **les 6 dB étaient pris au mauvais endroit** : en
+numérique (`gain_factor: 2` sur le wake word et sur le vocal), après le
+convertisseur. Or le gain numérique d'ESPHome est une multiplication entière
+suivie d'un `clamp` dur (`microphone_source.cpp`) : il amplifie le bruit de fond
+du convertisseur exactement autant que la voix — donc zéro gain de rapport
+signal/bruit — et il **écrête net** les crêtes, qui deviennent des signaux carrés.
+C'est précisément ce que Whisper transcrit le plus mal.
+
+- Les mêmes 6 dB sont désormais pris **en analogique, avant la numérisation** :
+  `mic_gain` de l'ES7210 passe de 24 à **30 dB**, et les deux `gain_factor`
+  retombent à **1**. Niveau sonore identique, seuil d'écrêtage inchangé, mais
+  l'amplification se fait là où elle apporte vraiment du signal. L'ES7210 monte
+  jusqu'à 37,5 dB, la marge reste ouverte.
+- **`noise_suppression_level: 2 → 0`.** Ce réglage est bien actif — HA l'applique
+  côté pipeline via `MicroVadSpeexEnhancer` (`assist_pipeline/pipeline.py`) — mais
+  un débruiteur déforme la parole, et Whisper est entraîné sur de l'audio naturel.
+  À remettre à 1 ou 2 si la reconnaissance se dégrade dans une pièce bruyante.
+- **Pipeline de restitution porté à 24000 Hz** (au lieu des 22050 posés le matin
+  même) : « Discussion LLM » est passé sur HA Cloud / AlainNeural, qui produit du
+  24000, pendant que « Domotique » reste sur Piper en local. À 24000 le cloud est
+  natif et Piper est simplement suréchantillonné, ce qui **ne coupe aucun
+  contenu** ; demander 22050 raboterait le cloud au-dessus de 11 kHz.
+
 ### 2026-08-05 — Qualité audio des réponses vocales : bande passante et grésillements
 
 Deux défauts distincts dans la chaîne de restitution, tous deux dans

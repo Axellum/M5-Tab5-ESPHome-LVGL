@@ -172,7 +172,14 @@ audio_adc:
     id: es7210_adc
     bits_per_sample: 16bit
     sample_rate: 16000
-    mic_gain: 24dB     # [AUDIO-2026] Explicite pour tuning facile (0dB..37.5dB)
+    # [AUDIO-2026] 24 -> 30 dB : les 6 dB qui etaient pris en NUMERIQUE (gain_factor: 2 sur le
+    # wake word et le vocal) sont deplaces ICI, en ANALOGIQUE, avant le convertisseur.
+    # Meme niveau sonore en sortie, mais un vrai gain de rapport signal/bruit : le gain numerique
+    # d'ESPHome est une multiplication entiere suivie d'un clamp dur (microphone_source.cpp), donc
+    # il amplifie le bruit de fond du convertisseur autant que la voix ET ecrete net les cretes --
+    # une crete ecretee devient un signal carre, poison pour Whisper. Le seuil d'ecretage ne bouge
+    # pas (on a juste deplace les memes 6 dB en amont). Valeurs admises : 0, 3, ... 33, 34.5, 36, 37.5.
+    mic_gain: 30dB
 
 microphone:
   - platform: i2s_audio
@@ -237,13 +244,17 @@ media_player:
       #   - 16000 Hz bridait la voix a 8 kHz de bande passante alors que le modele Piper reellement
       #     utilise par les 2 pipelines Assist du Tab5 (fr_FR-upmc-medium) sort du 22050 Hz : HA
       #     sous-echantillonnait, et toutes les sifflantes (s, ch, f) passaient a la trappe.
-      #     22050 = rate natif du modele -> zero reechantillonnage de bout en bout (HA -> I2S -> ES8388).
-      #     A reajuster si le TTS change de moteur (HA Cloud / Google AI TTS sortent en 24000).
+      #     24000 = le taux du plus haut des deux moteurs desormais en service : Piper local
+      #     (fr_FR-upmc-medium, 22050 Hz) reste sur le pipeline "Domotique", et "Discussion LLM" est
+      #     passe sur HA Cloud / AlainNeural (24000 Hz) le 05/08/2026. A 24000, le cloud est natif et
+      #     Piper est simplement surechantillonne -- ce qui ne COUPE aucun contenu ; demander 22050
+      #     ferait l'inverse et raboterait le cloud au-dessus de 11 kHz. Si les deux pipelines
+      #     revenaient un jour sur Piper seul, redescendre a 22050 (zero reechantillonnage).
       #   - FLAC (defaut ESPHome, et ce qu'utilise le firmware officiel Home Assistant Voice PE) :
       #     sans perte, ~2x moins de reseau que le WAV brut -> compense la montee en frequence.
       # Limites du speaker i2s en mode primary : 16000-48000 Hz, 1-2 canaux (i2s_audio/speaker/__init__.py).
       format: FLAC
-      sample_rate: 22050
+      sample_rate: 24000
       num_channels: 1
     on_announcement:
       - if:
@@ -267,7 +278,7 @@ micro_wake_word:
   task_stack_in_psram: true   # [AUDIO-2026] ~3Ko SRAM interne economises (P4 a PSRAM hex 200MHz)
   microphone:
     microphone: tab5_microphone
-    gain_factor: 2            # [AUDIO-2026] Gain logiciel x2 pour meilleure detection wake word
+    gain_factor: 1            # [AUDIO-2026] Les 6 dB sont passes en analogique (es7210 mic_gain: 30dB)
   vad:                        # [AUDIO-2026] Voice Activity Detection: reduit faux declenchements
   models:
     - okay_nabu
@@ -343,10 +354,14 @@ voice_assistant:
   id: va
   microphone:
     microphone: tab5_microphone
-    gain_factor: 2            # [AUDIO-2026] Gain logiciel x2 pour meilleure captation STT
+    gain_factor: 1            # [AUDIO-2026] Les 6 dB sont passes en analogique (es7210 mic_gain: 30dB)
   media_player: speaker_player
   micro_wake_word: mww
-  noise_suppression_level: 2  # [AUDIO-2026] Reduction bruit pipeline HA (0=off, 4=max)
+  # [AUDIO-2026] 2 -> 0. Ce reglage est bien vivant : HA l'applique cote pipeline via
+  # MicroVadSpeexEnhancer (assist_pipeline/pipeline.py). Mais un debruiteur DEFORME la parole et
+  # Whisper est entraine sur de l'audio naturel -- le debruitage degrade souvent sa transcription.
+  # Remettre a 1 ou 2 si la reconnaissance se degrade dans une piece bruyante.
+  noise_suppression_level: 0
   auto_gain: 15dBFS           # [AUDIO-2026] Controle auto gain cote HA (0-31dBFS)
   on_listening:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_listening"
