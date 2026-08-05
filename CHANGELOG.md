@@ -4,6 +4,31 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-08-05 — Qualité audio des réponses vocales : bande passante et grésillements
+
+Deux défauts distincts dans la chaîne de restitution, tous deux dans
+`Tab5/tab5-hardware.yaml`.
+
+- **La voix était bridée en 16 kHz.** Le bloc `announcement_pipeline` n'est pas
+  un réglage de sortie : c'est le **format préféré annoncé à Home Assistant**,
+  donc ce que HA transcode avant de l'envoyer. Il demandait du `WAV` 16 kHz mono,
+  alors que le modèle Piper réellement utilisé par les deux pipelines Assist du
+  Tab5 (`fr_FR-upmc-medium`) produit du **22050 Hz** : HA sous-échantillonnait à
+  chaque réponse et tout ce qui vit au-dessus de 8 kHz — les sifflantes `s`,
+  `ch`, `f` — était jeté avant même d'atteindre la tablette. Le pipeline demande
+  désormais **22050 Hz, le taux natif du modèle**, soit zéro rééchantillonnage de
+  bout en bout (HA → I2S → ES8388).
+- **`WAV` → `FLAC`** (le défaut ESPHome, et ce que fait le firmware officiel
+  Home Assistant Voice PE) : sans perte, environ deux fois moins de réseau que le
+  WAV brut. La montée en fréquence ne coûte donc rien en débit.
+- **Le tampon de lecture tournait sous le défaut ESPHome.** `buffer_duration`
+  valait 200 ms (le commentaire « 100 → 200 ms » datait d'une version où le
+  défaut était 100 ms ; il vaut **500 ms** aujourd'hui). Ça compte : le TTS est
+  streamé en HTTP depuis HA **pendant sa génération**, via le WiFi porté par le
+  co-processeur C6 en SDIO, et quand ce tampon se vide la tâche du haut-parleur
+  ne met pas le flux en pause — elle **remplit le buffer DMA de silence**. Chaque
+  hoquet réseau devient un micro-trou audible. Tampon ramené au défaut, 500 ms.
+
 ### 2026-08-01 — `select` « Aller à l'écran » : le popup se refermait aussitôt
 
 Constaté sur l'appareil juste après l'OTA de la PR #85 : demander un écran depuis

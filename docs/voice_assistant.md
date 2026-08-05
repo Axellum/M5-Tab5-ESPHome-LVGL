@@ -66,6 +66,18 @@ TTS responses play through the ES8388 DAC → amplifier → built-in speaker. Th
 
 **Interaction with LVGL traffic pacing:** when TTS is playing, the I2S DMA is actively consuming CPU cycles and memory bandwidth. The traffic pacing delays (1 s between push service blocks, 150 ms within forecast loops) prevent simultaneous large payload pushes from colliding with the active audio stream.
 
+**Playback format — this is a Home Assistant setting, not an output setting.** The `announcement_pipeline` block of the `media_player` declares the *preferred format advertised to HA*, i.e. what HA transcodes the TTS to before sending it. It must therefore match the TTS engine, not the DAC:
+
+| Parameter | Value | Why |
+|-----------|-------|-----|
+| Format | FLAC | Lossless, ~half the bytes of raw WAV over Wi-Fi. ESPHome's default, and what the official Home Assistant Voice PE firmware uses |
+| Sample rate | 22050 Hz | Native rate of the Piper model used by both of the Tab5's Assist pipelines (`fr_FR-upmc-medium`) — no resampling anywhere in the chain. Asking for 16 kHz here silently threw away everything above 8 kHz, sibilants included. **Change this if the TTS engine changes** (HA Cloud and Google AI TTS output 24000 Hz) |
+| Channels | Mono | One speaker |
+
+The I2S speaker in primary mode accepts 16000–48000 Hz and reconfigures its clock to whatever stream arrives, so the `sample_rate: 48000` on the `speaker:` component is only a default, never a constraint on the pipeline.
+
+**Playback buffer:** `buffer_duration: 500ms` on the speaker (the ESPHome default). Do not lower it. TTS is streamed over HTTP from HA *while it is still being generated*, over Wi-Fi carried by the C6 co-processor on SDIO, and when this ring buffer runs dry the speaker task does not pause the stream — it pads the DMA buffer with silence. Every network hiccup becomes an audible micro-gap.
+
 ---
 
 ## Pipeline states and visual feedback
@@ -165,6 +177,18 @@ Les réponses TTS sont jouées via le DAC ES8388 → amplificateur → haut-parl
 **Séquence de boot :** le switch d'activation de l'amplificateur est activé *après* le rétroéclairage et le réglage du volume du `media_player` (et c'est seulement ensuite que l'appareil attend la connexion API HA). Activer l'ampli avant que l'horloge I2S soit stable produit un pop audible. La séquence `on_boot` dans `tab5-ha-hmi.yaml` garantit cet ordre.
 
 **Interaction avec le traffic pacing LVGL :** quand le TTS joue, le DMA I2S consomme activement des cycles CPU et de la bande passante mémoire. Les délais de traffic pacing (1 s entre les blocs de service push, 150 ms dans les boucles de prévisions) empêchent les push de gros payloads simultanés d'entrer en collision avec le flux audio actif.
+
+**Format de lecture — c'est un réglage Home Assistant, pas un réglage de sortie.** Le bloc `announcement_pipeline` du `media_player` déclare le *format préféré annoncé à HA*, c'est-à-dire ce vers quoi HA transcode le TTS avant de l'envoyer. Il doit donc coller au moteur TTS, pas au DAC :
+
+| Paramètre | Valeur | Pourquoi |
+|-----------|--------|----------|
+| Format | FLAC | Sans perte, ~deux fois moins d'octets sur le WiFi que le WAV brut. Défaut ESPHome, et ce qu'utilise le firmware officiel Home Assistant Voice PE |
+| Taux d'échantillonnage | 22050 Hz | Taux natif du modèle Piper utilisé par les deux pipelines Assist du Tab5 (`fr_FR-upmc-medium`) — aucun rééchantillonnage dans toute la chaîne. Demander 16 kHz ici jetait silencieusement tout ce qui est au-dessus de 8 kHz, sifflantes comprises. **À changer si le moteur TTS change** (HA Cloud et Google AI TTS sortent en 24000 Hz) |
+| Canaux | Mono | Un seul haut-parleur |
+
+Le haut-parleur I2S en mode primary accepte 16000 à 48000 Hz et reconfigure son horloge sur le flux qui arrive : le `sample_rate: 48000` du composant `speaker:` n'est qu'un défaut, jamais une contrainte sur le pipeline.
+
+**Tampon de lecture :** `buffer_duration: 500ms` sur le haut-parleur (le défaut ESPHome). Ne pas le baisser. Le TTS est streamé en HTTP depuis HA *pendant sa génération*, via le WiFi porté par le co-processeur C6 en SDIO, et quand ce tampon se vide la tâche du haut-parleur ne met pas le flux en pause — elle remplit le buffer DMA de silence. Chaque hoquet réseau devient un micro-trou audible.
 
 ---
 

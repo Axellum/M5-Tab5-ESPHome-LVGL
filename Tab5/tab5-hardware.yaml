@@ -194,7 +194,14 @@ speaker:
     audio_dac: es8388_dac
     dac_type: external
     channel: stereo
-    buffer_duration: 200ms    # [AUDIO-2026] 100->200ms: moins de stuttering TTS, latence toujours OK
+    # [AUDIO-2026] 500ms = le defaut ESPHome (le commentaire precedent "100->200ms" datait d'une
+    # version ou le defaut valait 100ms : on tournait donc SOUS le defaut). Quand ce ring buffer se
+    # vide, la tache speaker ne coupe pas le flux : elle remplit le buffer DMA de silence
+    # (i2s_audio_speaker_standard.cpp, "pad the rest of this DMA buffer with silence") -> micro-trous
+    # audibles = gresillements. Le TTS arrive en HTTP streame depuis HA PENDANT sa generation
+    # (voice_assistant.cpp, tts_start_streaming), via le WiFi porte par le co-processeur C6 en SDIO :
+    # les hoquets sont la regle, pas l'exception. Ce buffer est le seul amortisseur en aval du decodeur.
+    buffer_duration: 500ms
     timeout: 2000ms
     bits_per_sample: 16bit
     sample_rate: 48000
@@ -225,8 +232,18 @@ media_player:
     id: speaker_player
     announcement_pipeline:
       speaker: tab5_speaker
-      format: WAV
-      sample_rate: 16000
+      # [AUDIO-2026] Ce bloc n'est PAS un reglage de sortie : c'est le format PREFERE annonce a HA
+      # (media_player/__init__.py, validate_preferred_format), donc ce que HA transcode et envoie.
+      #   - 16000 Hz bridait la voix a 8 kHz de bande passante alors que le modele Piper reellement
+      #     utilise par les 2 pipelines Assist du Tab5 (fr_FR-upmc-medium) sort du 22050 Hz : HA
+      #     sous-echantillonnait, et toutes les sifflantes (s, ch, f) passaient a la trappe.
+      #     22050 = rate natif du modele -> zero reechantillonnage de bout en bout (HA -> I2S -> ES8388).
+      #     A reajuster si le TTS change de moteur (HA Cloud / Google AI TTS sortent en 24000).
+      #   - FLAC (defaut ESPHome, et ce qu'utilise le firmware officiel Home Assistant Voice PE) :
+      #     sans perte, ~2x moins de reseau que le WAV brut -> compense la montee en frequence.
+      # Limites du speaker i2s en mode primary : 16000-48000 Hz, 1-2 canaux (i2s_audio/speaker/__init__.py).
+      format: FLAC
+      sample_rate: 22050
       num_channels: 1
     on_announcement:
       - if:
