@@ -70,10 +70,12 @@ logger:
   # NE PAS retirer le delai bloquant de tab5-ha-hmi.yaml (esphome:on_boot:
   # priority:700) sans re-tester a fond — c'est lui le vrai garde-fou
   # desormais, pas le niveau de log.
-  # [AI-WARNING 05/08] Ne pas passer ce niveau à DEBUG sans corriger d'abord le
-  # `ESP_LOGD` de tab5-ha-controls.yaml (~ligne 516) : ses spécificateurs de
-  # format déclenchent -Werror=format et le build s'arrête. À INFO le corps du
-  # ESP_LOGD est compilé hors binaire, donc l'erreur reste invisible.
+  # [05/08/2026] `DEBUG` fonctionne de nouveau (vérifié : build complet, 0 erreur,
+  # 0 warning de format, +0,3 pt de flash pour les corps de ESP_LOGD). Il était
+  # cassé : un `!lambda` dans les `args:` d'un `logger.log` ne compilait pas, et
+  # ça ne pouvait pas se voir à INFO puisque le corps du ESP_LOGD est alors
+  # compilé hors binaire. Piège général à garder en tête : **tout `logger.log`
+  # est du code jamais compilé tant qu'on reste à INFO.**
   level: INFO
   baud_rate: 115200
   hardware_uart: USB_SERIAL_JTAG
@@ -301,7 +303,14 @@ micro_wake_word:
   on_wake_word_detected:
     - logger.log:
         format: "DEBUG: WAKE WORD DETECTED (%s)"
-        args: ['!lambda return wake_word;']
+        # Les entrées de `args:` sont des expressions C++ BRUTES, pas des
+        # lambdas : un `!lambda` y est recopié tel quel dans le code généré
+        # (`ESP_LOGD(..., !lambda return wake_word;)`) et ne compile pas. Le
+        # corps d'un `logger.log` est un ESP_LOGD, donc compilé hors binaire
+        # tant que `logger.level` reste à INFO — l'erreur ne se voyait qu'en
+        # passant le projet en DEBUG. `wake_word` est un `std::string`
+        # (Trigger<std::string>), d'où le `.c_str()` qu'attend `%s`.
+        args: ['wake_word.c_str()']
     # Réveil en train de sonner : TOUT mot de réveil l'arrête, « Stop » comme
     # « Okay Nabu ». C'est la promesse « arrêt à la voix », et elle passe avant
     # les deux autres usages du mot « Stop » (volet en mouvement, interruption

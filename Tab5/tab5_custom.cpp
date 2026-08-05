@@ -477,8 +477,11 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
         // Tmin / Tmax colors
         uint32_t cmax = get_temperature_color(data.tmax);
         uint32_t cmin = get_temperature_color(data.tmin);
-        char buftx[64]; sprintf(buftx, "#%06x %.0f# / ", cmax, data.tmax);
-        char buftn[64]; sprintf(buftn, " #%06x %.0f# \xC2\xB0", cmin, data.tmin);
+        // `%x` attend un `unsigned int` ; `uint32_t` est un `long unsigned int`
+        // sur cette cible -> -Wformat. La conversion est l'identité (32 bits des
+        // deux côtés) et ces valeurs sont des couleurs RGB, bornées à 0xFFFFFF.
+        char buftx[64]; sprintf(buftx, "#%06x %.0f# / ", (unsigned) cmax, data.tmax);
+        char buftn[64]; sprintf(buftn, " #%06x %.0f# \xC2\xB0", (unsigned) cmin, data.tmin);
 
         lv_label_set_text(slot.max_lbl, data.est_passe ? "-- / " : buftx);
         lv_label_set_text(slot.min_lbl, data.est_passe ? "-- \xC2\xB0" : buftn);
@@ -544,7 +547,7 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
         lv_label_set_text(slot.time_lbl, data.heure_texte.c_str());
         
         uint32_t c_t = get_temperature_color(data.temp);
-        char b_t[32]; sprintf(b_t, "#%06x %.0f#\xC2\xB0", c_t, data.temp);
+        char b_t[32]; sprintf(b_t, "#%06x %.0f#\xC2\xB0", (unsigned) c_t, data.temp);  // cf. -Wformat plus haut
         lv_label_set_text(slot.temp_lbl, b_t);
         lv_label_set_recolor(slot.temp_lbl, true);
         lv_obj_set_style_text_color(slot.temp_lbl, lv_color_hex(UIColor::TEXT_PRIMARY), LV_PART_MAIN);
