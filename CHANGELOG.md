@@ -32,8 +32,22 @@ que du confort.
   volet) : il est armé pendant la sonnerie, et n'importe quel mot de réveil coupe
   l'alarme. Le moteur est démarré même si « Ok Nabu » est désactivé, sinon la
   promesse ne tiendrait pas pour qui coupe le micro la nuit. Chaque passage de
-  mélodie est suivi de **2,5 s de silence** : c'est la fenêtre où le micro a une
-  chance d'entendre quelque chose.
+  mélodie est suivi de **3 s de silence** : c'est la fenêtre où le micro a une
+  chance d'entendre quelque chose — et, sur ce matériel, la seule où il *peut*
+  entendre (voir ci-dessous).
+- **Le micro et le haut-parleur ne peuvent pas fonctionner en même temps**, et ça
+  rendait la sonnerie **totalement muette**. Les deux sont sur le même bus
+  `i2s_audio`, protégé par un mutex unique : le premier qui le prend le garde,
+  l'autre échoue en boucle (« Parent bus is busy ») une fois par seconde. Comme
+  « Ok Nabu » écoute en permanence dans la configuration par défaut, le micro
+  avait toujours le bus, et le réveil ne sortait aucun son — pire, il laissait le
+  haut-parleur bloqué ensuite. Le lecteur média gère déjà ce relais pour les
+  réponses vocales (`on_announcement` coupe le micro, `on_idle` le rend) — c'est
+  pour ça que le TTS, lui, s'entendait. La sonnerie passe **hors** du lecteur
+  média (rtttl écrit directement dans le haut-parleur), elle doit donc faire ce
+  relais elle-même : micro coupé le temps de chaque mélodie, rendu pendant le
+  silence qui suit. L'aperçu de mélodie des réglages était muet pour la même
+  raison.
 - **Annonce des rendez-vous**, N minutes avant (réglable, 0–120). HA pousse la
   liste des rendez-vous horodatés toutes les 5 minutes ; **c'est le firmware qui
   tient le compte à rebours**, donc une coupure HA entre la poussée et l'échéance
