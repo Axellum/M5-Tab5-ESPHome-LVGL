@@ -82,7 +82,14 @@ script:
                 {% endif %}
               {% endif %}
             {% endfor %}
-            {{ ns.rows | sort | unique | list | first(8) | join('~') }}
+            {# Troncature à 8 entrées : SLICE [:8], surtout pas `| first(8)` —
+               `first` est un filtre Jinja SANS paramètre (do_first(env, seq)),
+               lui passer un argument lève « sync_do_first() takes 2 positional
+               arguments but 3 were given » et casse TOUT le rendu du payload
+               (le script s'arrête, `continue_on_error` ne couvre pas le rendu
+               d'un template). Bug resté invisible du 05/08 au 06/08 : la liste
+               des RDV n'a jamais été poussée une seule fois. #}
+            {{ (ns.rows | sort | unique | list)[:8] | join('~') }}
 
   tab5_reveil_annonce:
     alias: "Tab5 — briefing parlé du réveil"
@@ -174,8 +181,12 @@ automation:
       # Le délai d'annonce vient de changer : la liste, elle, n'a pas bougé —
       # mais republier fait recalculer immédiatement le « prochain rendez-vous »
       # affiché, au lieu d'attendre jusqu'à 5 minutes.
+      # NB : c'est le `number` exposé par le firmware (tab5-alarm.yaml), son
+      # entity_id porte le préfixe de l'appareil. `number.tab5_rdv_lead` était
+      # une invention — entité inexistante, donc déclencheur mort (corrigé le
+      # 06/08/2026).
       - platform: state
-        entity_id: number.tab5_rdv_lead
+        entity_id: number.salon_m5stack_tab5_home_assistant_hmi_rendez_vous_annoncer_avant
     condition:
       # Même garde-fou que les autres automations d'écran (cf. l'@ai_warning en
       # tête de automations_tab5.yaml : ce booléen s'est déjà retrouvé bloqué à

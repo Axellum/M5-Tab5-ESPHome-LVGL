@@ -4,9 +4,19 @@
 # @role Popup télécommande TV Samsung (carte modale standard 1250×690, cadre v4).
 #       Grille symétrique 3 colonnes (290 | 440 | 290) + rangée basse 5 boutons.
 #       Ouvert par long-press carte PC (switches_card) ou btn_control_tv.
+#       Rangée basse = 5 raccourcis (Netflix · Prime · YouTube · CANAL+ · PC).
+#       Coins de la raquette = lecture · pause · retour · accueil. Muet au
+#       centre du rocker de volume.
 # @ai_instruction Le modèle « Samsung S95B — Salon » n'est plus affiché en
 #       sous-titre : la barre de titre est identique pour tous les popups (ADR-0009).
-# @architecture_constraint remote.send_command / remote.toggle sur ${entity_tv_remote}.
+# @architecture_constraint DEUX chemins distincts, à ne pas confondre :
+#       1. Touches physiques (fléches, volume, lecture, source, menu…) →
+#          remote.send_command / remote.toggle sur ${entity_tv_remote}.
+#       2. Lancement d'une APPLICATION → script.tab5_tv_app (HA), qui traduit un
+#          nom court en app_id Tizen et fait un POST REST sur la TV.
+#       `media_player.select_source` ne vaut QUE pour "TV" et "HDMI" (les seules
+#       entrées du source_list) et `media_player.play_media` type `app` échoue
+#       en SILENCE sur ce firmware 2022. Voir packages/tab5_tv.yaml côté HA.
 # ═══════════════════════════════════════════════════════
 obj:
   id: tv_remote_popup
@@ -220,90 +230,97 @@ obj:
                                 widgets:
                                   - label: { text: "OK", align: CENTER, text_font: roboto_45_b, text_color: color_text }
 
-                      # ── 4 boutons apps dans les coins autour de la raquette ──
-                      # [AI-CONTEXT] Marge 8/8 SYMETRIQUE sur les 4 coins (29/07,
-                      # demande Axel « revois les positions »). Avant : x=5,y=4 en
-                      # haut mais x=5,y=0 en bas — flush contre le bord inferieur
-                      # de la colonne (0 px de marge), asymetrique avec le haut.
-                      # Marge au disque directionnel verifiee : 32,8 px sur les 4
-                      # boutons (calcul clamp centre-cercle -> rect, meme methode
-                      # que le garde-fou du pave directionnel).
-                      # Netflix (haut-gauche) — rouge signature
+                      # ── 4 touches de lecture dans les coins autour de la raquette ──
+                      # [AI-CONTEXT] Ces 4 coins portaient les boutons d'apps
+                      # (100x55, texte roboto_22). Ils ont ete ECHANGES avec la
+                      # rangee basse le 06/08/2026 (demande Axel « plus grands et
+                      # lisibles, plus pratiques ») : un nom d'app DOIT etre lu,
+                      # alors que lecture/pause/retour/accueil se reconnaissent a
+                      # l'icone seule. Les apps sont donc descendues en 221x102
+                      # (4x la surface) et ces 4 touches sont montees ici.
+                      # [AI-WARNING] Marge 8/8 symetrique conservee. Taille passee
+                      # de 100x55 a 110x64 (icone seule, plus de texte a loger) :
+                      # marge au disque directionnel RECALCULEE, coin interieur a
+                      # (118,72) du centre (220,244) -> sqrt(102^2+172^2) = 200,0
+                      # pour un rayon de 180, soit ~20 px de securite (c'etait
+                      # 32,8 px en 100x55). Ne pas agrandir davantage sans refaire
+                      # ce calcul : a 120x70 il ne reste que 9,8 px.
+                      # Lecture (haut-gauche)
                       - button:
                           align: TOP_LEFT
                           x: 8
                           y: 8
-                          width: 100
-                          height: 55
-                          radius: 27
+                          width: 110
+                          height: 64
+                          radius: 32
                           styles: style_clim_btn
                           pressed:
                             bg_opa: 30%
                           on_short_click:
                             - homeassistant.service:
-                                service: media_player.select_source
+                                service: remote.send_command
                                 data:
-                                  entity_id: media_player.samsung_s95ba_55_tv
-                                  source: "Netflix"
+                                  entity_id: ${entity_tv_remote}
+                                  command: "KEY_PLAY"
                           widgets:
-                            - label: { text: "Netflix", align: CENTER, text_font: roboto_22, text_color: color_error }
-                      # Amazon Prime Video (haut-droite) — bleu signature
+                            - label: { text: "\U000F040A", align: CENTER, text_font: mdi_font_45, text_color: color_success }
+                      # Pause (haut-droite)
                       - button:
                           align: TOP_RIGHT
                           x: 8
                           y: 8
-                          width: 100
-                          height: 55
-                          radius: 27
+                          width: 110
+                          height: 64
+                          radius: 32
                           styles: style_clim_btn
                           pressed:
                             bg_opa: 30%
                           on_short_click:
                             - homeassistant.service:
-                                service: media_player.select_source
+                                service: remote.send_command
                                 data:
-                                  entity_id: media_player.samsung_s95ba_55_tv
-                                  source: "Amazon Prime Video"
+                                  entity_id: ${entity_tv_remote}
+                                  command: "KEY_PAUSE"
                           widgets:
-                            - label: { text: "Amazon", align: CENTER, text_font: roboto_22, text_color: color_info }
-                      # Canal+ (bas-gauche) — violet signature
+                            - label: { text: "\U000F03E4", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+                      # Retour (bas-gauche)
                       - button:
                           align: BOTTOM_LEFT
                           x: 8
                           y: 8
-                          width: 100
-                          height: 55
-                          radius: 27
+                          width: 110
+                          height: 64
+                          radius: 32
                           styles: style_clim_btn
                           pressed:
                             bg_opa: 30%
                           on_short_click:
                             - homeassistant.service:
-                                service: media_player.select_source
+                                service: remote.send_command
                                 data:
-                                  entity_id: media_player.samsung_s95ba_55_tv
-                                  source: "Canal+"
+                                  entity_id: ${entity_tv_remote}
+                                  command: "KEY_RETURN"
                           widgets:
-                            - label: { text: "Canal+", align: CENTER, text_font: roboto_22, text_color: color_warning }
-                      # HDMI PC (bas-droit) — vert signature
+                            - label: { text: "\U000F054C", align: CENTER, text_font: mdi_font_45, text_color: color_text_dim }
+                      # Accueil (bas-droit)
                       - button:
                           align: BOTTOM_RIGHT
                           x: 8
                           y: 8
-                          width: 100
-                          height: 55
-                          radius: 27
+                          width: 110
+                          height: 64
+                          radius: 32
                           styles: style_clim_btn
                           pressed:
                             bg_opa: 30%
                           on_short_click:
                             - homeassistant.service:
-                                service: media_player.select_source
+                                service: remote.send_command
                                 data:
-                                  entity_id: media_player.samsung_s95ba_55_tv
-                                  source: "HDMI"
+                                  entity_id: ${entity_tv_remote}
+                                  command: "KEY_HOME"
                           widgets:
-                            - label: { text: "HDMI PC", align: CENTER, text_font: roboto_22, text_color: color_success }
+                            - label: { text: "\U000F02DC", align: CENTER, text_font: mdi_font_45, text_color: color_text_dim }
 
                 # ── Colonne droite (290) — rocker volume centré ──
                 - obj:
@@ -340,11 +357,32 @@ obj:
                                         command: "KEY_VOLUP"
                                 widgets:
                                   - label: { text: "\U000F0415", align: CENTER, y: 8, text_font: mdi_font_45, text_color: color_text }
-                            - label:
-                                text: "VOL"
+                            # [AI-CONTEXT] Ce creneau portait un simple libelle
+                            # « VOL » decoratif. Il est devenu le bouton MUET le
+                            # 06/08/2026 : « Muet » a quitte la rangee basse (que
+                            # les apps occupent desormais) et sa place logique est
+                            # ici, entre + et -, comme sur une vraie telecommande.
+                            # [AI-WARNING] Hauteur 60 px IMPOSEE : les deux touches
+                            # de volume font 150x150 dans un conteneur de 360 de
+                            # haut, il ne reste donc que 360-300 = 60 px libres au
+                            # centre. Plus grand => recouvrement des touches.
+                            - button:
                                 align: CENTER
-                                text_font: roboto_22
-                                text_color: color_text_dim
+                                width: 150
+                                height: 60
+                                radius: 30
+                                styles: style_invisible
+                                bg_color: color_accent
+                                pressed:
+                                  bg_opa: 25%
+                                on_short_click:
+                                  - homeassistant.service:
+                                      service: remote.send_command
+                                      data:
+                                        entity_id: ${entity_tv_remote}
+                                        command: "KEY_MUTE"
+                                widgets:
+                                  - label: { text: "\U000F0581", align: CENTER, text_font: mdi_font_45, text_color: color_warning }
                             - button:
                                 align: BOTTOM_MID
                                 y: 0
@@ -364,7 +402,24 @@ obj:
                                 widgets:
                                   - label: { text: "\U000F0374", align: CENTER, y: -6, text_font: mdi_font_45, text_color: color_text }
 
-          # ═══ RANGÉE BASSE — offset bas standard ═══
+          # ═══ RANGÉE BASSE — 5 raccourcis apps / source ═══
+          # [AI-CONTEXT] Refonte du 06/08/2026 (demande Axel « plus grands et
+          # lisibles, plus pratiques »). Cette rangee portait lecture / pause /
+          # retour / accueil / muet ; ce sont desormais les 5 raccourcis, et les
+          # touches de transport sont montees dans les coins de la raquette.
+          # Gain de lisibilite : 221x102 en roboto_32_b, contre 100x55 en
+          # roboto_22 avant, soit ~4x la surface et une police 45 % plus haute.
+          # Geometrie inchangee : 5 x 221 + 4 gouttieres de 16 = 1169 sur 1170.
+          #
+          # [AI-WARNING] Les apps passent par `script.tab5_tv_app` (HA), JAMAIS
+          # par `media_player.select_source` : le `source_list` de cette TV ne
+          # contient que ["TV","HDMI"], tout autre nom leve une exception. Et
+          # surtout PAS par `media_player.play_media` type `app`, qui echoue en
+          # SILENCE sur ce firmware 2022. Le detail — et les app_id verifies —
+          # sont dans HomeAssistant_Config/packages/tab5_tv.yaml.
+          # [AI-INSTRUCTION] Le Tab5 n'envoie qu'un NOM COURT. Les app_id vivent
+          # cote HA : si Samsung en change un, on corrige le package et on
+          # recharge HA, sans recompiler ni reflasher le Tab5.
           - obj:
               align: BOTTOM_MID
               y: ${modal_bottom_y}
@@ -383,12 +438,11 @@ obj:
                       bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
-                          service: remote.send_command
+                          service: script.tab5_tv_app
                           data:
-                            entity_id: ${entity_tv_remote}
-                            command: "KEY_PLAY"
+                            app: "netflix"
                     widgets:
-                      - label: { text: "\U000F040A", align: CENTER, text_font: mdi_font_45, text_color: color_success }
+                      - label: { text: "Netflix", align: CENTER, text_font: roboto_32_b, text_color: color_error }
                 - button:
                     x: 237
                     width: 221
@@ -399,12 +453,13 @@ obj:
                       bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
-                          service: remote.send_command
+                          service: script.tab5_tv_app
                           data:
-                            entity_id: ${entity_tv_remote}
-                            command: "KEY_PAUSE"
+                            app: "prime"
                     widgets:
-                      - label: { text: "\U000F03E4", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+                      # « Prime » et non « Prime Video » : en roboto_32_b le nom
+                      # complet fait ~198 px pour 189 px utiles dans le bouton.
+                      - label: { text: "Prime", align: CENTER, text_font: roboto_32_b, text_color: color_info }
                 - button:
                     x: 474
                     width: 221
@@ -415,13 +470,11 @@ obj:
                       bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
-                          service: remote.send_command
+                          service: script.tab5_tv_app
                           data:
-                            entity_id: ${entity_tv_remote}
-                            command: "KEY_RETURN"
+                            app: "youtube"
                     widgets:
-                      - label: { text: "\U000F054C", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Retour", align: LEFT_MID, x: 72, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "YouTube", align: CENTER, text_font: roboto_32_b, text_color: color_warning }
                 - button:
                     x: 711
                     width: 221
@@ -432,13 +485,14 @@ obj:
                       bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
-                          service: remote.send_command
+                          service: script.tab5_tv_app
                           data:
-                            entity_id: ${entity_tv_remote}
-                            command: "KEY_HOME"
+                            app: "canal"
                     widgets:
-                      - label: { text: "\U000F02DC", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Accueil", align: LEFT_MID, x: 72, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "CANAL+", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                # « PC » (ex-« HDMI PC ») : seul bouton a rester sur
+                # select_source — "HDMI" EST dans le source_list de la TV, donc
+                # ce chemin-la a toujours fonctionne et reste le plus direct.
                 - button:
                     x: 948
                     width: 221
@@ -449,10 +503,9 @@ obj:
                       bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
-                          service: remote.send_command
+                          service: media_player.select_source
                           data:
-                            entity_id: ${entity_tv_remote}
-                            command: "KEY_MUTE"
+                            entity_id: media_player.samsung_s95ba_55_tv
+                            source: "HDMI"
                     widgets:
-                      - label: { text: "\U000F0581", align: CENTER, y: -12, text_font: mdi_font_45, text_color: color_warning }
-                      - label: { text: "Muet", align: CENTER, y: 28, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "PC", align: CENTER, text_font: roboto_32_b, text_color: color_success }

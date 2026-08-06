@@ -1,0 +1,109 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_tv.yaml
+# @role Lancement des applications de la TV Samsung depuis le Tab5.
+# @architecture_constraint Le catalogue d'app_id vit ICI, pas dans le firmware.
+#       Le Tab5 n'envoie qu'un nom court (`netflix`, `prime`, `youtube`,
+#       `canal`) : si Samsung change un id, on corrige ce fichier et on
+#       recharge HA — AUCUNE recompilation ni OTA du Tab5.
+#
+# @ai_warning `media_player.select_source` NE PEUT PAS lancer une app sur cette
+#       TV. Son `source_list` ne contient que ["TV", "HDMI"] — la doc HA le dit :
+#       seuls « certains modèles plus anciens » exposent leurs apps en sources.
+#       Tout autre nom lève `HomeAssistantError` (samsungtv/media_player.py,
+#       async_select_source). C'était le bug du popup Tab5 : 3 boutons sur 4
+#       morts, constaté dans les logs du 06/08/2026.
+#
+# @ai_warning `media_player.play_media` avec `media_content_type: app` ne marche
+#       PAS non plus ici, ET IL NE REMONTE AUCUNE ERREUR. HA passe par la
+#       commande WebSocket `ed.apps.launch`, que Samsung a désactivée sur les
+#       firmwares 2022+ (modèle 22_PONTUSM_QD). Vérifié le 06/08/2026 : appel
+#       sans exception, `running` reste `false`, et rien ne bouge à l'écran
+#       (confirmé de visu). Ne pas « simplifier » ce fichier en revenant dessus.
+#
+# @architecture_constraint SEUL mécanisme qui fonctionne : POST REST Tizen sur
+#       http://<tv>:8001/api/v2/applications/<app_id>. Prouvé le 06/08/2026 —
+#       Disney+ est passé de `running: false` à `running: true` sur ce POST,
+#       alors qu'il restait `false` par la voie WebSocket. Le DIAL (port 8080)
+#       sait interroger et ARRÊTER une app par son nom, mais son POST de
+#       lancement ne répond 201 que pour Netflix (404 ailleurs) : inutilisable.
+#
+# @ai_instruction L'IP de la TV est en dur (192.168.0.153). La TV est en
+#       ETHERNET (`networkType: wired`), donc l'IP est stable, mais si elle
+#       change : corriger ici, et vérifier avec
+#       `curl http://<ip>:8001/api/v2/applications/3201907018807` (doit répondre
+#       le JSON de Netflix). Idéalement, poser un bail DHCP fixe.
+#
+# @ai_instruction Pour retrouver l'id d'une app : la TV ne sait PLUS lister ses
+#       applications (Samsung a retiré `ed.installedApp.get` sur les modèles
+#       2022+). On ne peut que VÉRIFIER un id candidat :
+#         curl http://192.168.0.153:8001/api/v2/applications/<id>
+#       → renvoie {"id","name","running","version"} si installée, 404 sinon.
+#       Le nom exact d'une app peut se lire par DIAL :
+#         curl http://192.168.0.153:8080/ws/app/CANAL+
+# @install Nécessite homeassistant.packages: !include_dir_named packages
+# ============================================================================
+
+rest_command:
+  # Lance une application Tizen par son id. Corps vide obligatoire : sans
+  # Content-Length, la TV répond 411 Length Required.
+  tab5_tv_lancer_app:
+    url: "http://192.168.0.153:8001/api/v2/applications/{{ app_id }}"
+    method: post
+    payload: ""
+    timeout: 10
+
+script:
+  tab5_tv_app:
+    alias: "Tab5 — lancer une application sur la TV"
+    description: >-
+      Appelé par le popup télécommande du Tab5. Prend un nom court, le traduit
+      en app_id Tizen et déclenche le POST REST. Allume la TV d'abord si elle
+      est éteinte, sinon le POST part dans le vide.
+      mode restart : sur deux taps rapides, seule la dernière app compte.
+    mode: restart
+    fields:
+      app:
+        description: "Nom court : netflix, prime, youtube, canal, disney, appletv"
+        required: true
+        example: "netflix"
+        selector:
+          text:
+    sequence:
+      - variables:
+          # Ids VÉRIFIÉS sur l'appareil le 06/08/2026 : chacun renvoie bien le
+          # nom attendu sur /api/v2/applications/<id>. Ne rien ajouter ici sans
+          # avoir fait cette vérification — un id inventé échoue en silence.
+          catalogue:
+            netflix: "3201907018807" # Netflix        v70.23.15090
+            prime: "3201910019365" # Prime Video    v5.3.2
+            youtube: "111299001912" # YouTube        v2.1.513
+            canal: "3201606009910" # CANAL+         v7.0.2
+            disney: "3201901017640" # Disney+        v26.4.0
+            appletv: "3201807016597" # Apple TV       v14.4.0
+          app_id: "{{ catalogue.get(app | lower | trim, '') }}"
+
+      # Nom inconnu : on s'arrête ici plutôt que de POSTer une URL vide (la TV
+      # répondrait 404 et on ne saurait pas pourquoi).
+      - condition: template
+        value_template: "{{ app_id != '' }}"
+
+      # TV éteinte : l'allumer et lui laisser le temps de monter sa pile réseau,
+      # sinon le POST part avant que le serveur d'apps ne réponde.
+      - if:
+          - condition: state
+            entity_id: media_player.samsung_s95ba_55_tv
+            state: "off"
+        then:
+          - action: media_player.turn_on
+            target:
+              entity_id: media_player.samsung_s95ba_55_tv
+          - wait_template: >-
+              {{ not is_state('media_player.samsung_s95ba_55_tv', 'off') }}
+            timeout: "00:00:15"
+            continue_on_timeout: true
+          - delay: "00:00:03"
+
+      - action: rest_command.tab5_tv_lancer_app
+        data:
+          app_id: "{{ app_id }}"
