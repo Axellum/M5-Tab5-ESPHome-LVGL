@@ -4,6 +4,50 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-08-06 — Télécommande TV : les raccourcis d'apps marchent enfin, et trois scripts HA réparés
+
+Audit des logs Home Assistant. Quatre choses étaient cassées **en silence** —
+aucune ne se voyait sans lire le journal.
+
+- **Les raccourcis d'apps de la télécommande TV ne marchaient pas** : 3 boutons
+  sur 4 étaient inertes depuis toujours. Ils appelaient
+  `media_player.select_source` avec « Netflix », « Amazon Prime Video »,
+  « Canal+ » — or le `source_list` de la TV ne contient que `TV` et `HDMI`.
+  Seul « HDMI PC » fonctionnait.
+  - `media_player.play_media` en `media_content_type: app` **ne marche pas non
+    plus** sur ce téléviseur (Tizen 2022) : Home Assistant passe par la commande
+    WebSocket `ed.apps.launch`, que Samsung a désactivée — et **l'appel ne
+    remonte aucune erreur**. Vérifié sur l'appareil : rien à l'écran.
+  - Le seul mécanisme qui fonctionne est un **POST REST** sur
+    `http://<tv>:8001/api/v2/applications/<app_id>`. Prouvé : l'application
+    passe de `running: false` à `running: true`, puis `visible: true`.
+  - Nouveau package **`packages/tab5_tv.yaml`** + `script.tab5_tv_app`. Les
+    `app_id` vivent **côté Home Assistant**, pas dans le firmware : si Samsung
+    en change un, il n'y a **ni recompilation ni OTA** à faire. Le script
+    allume aussi la TV si elle est éteinte avant de lancer l'application.
+- **Mise en page revue** (les boutons étaient petits et peu lisibles) : les
+  raccourcis descendent dans la rangée basse en **221×102** avec des libellés
+  en `roboto_32_b` — environ **4× la surface** et une police 45 % plus haute
+  qu'avant. Ils deviennent **Netflix · Prime · YouTube · CANAL+ · PC**
+  (« HDMI PC » renommé). En échange, lecture / pause / retour / accueil
+  montent dans les coins de la raquette, où l'icône seule suffit, et **Muet**
+  rejoint le centre du rocker de volume — sa place logique.
+- **`script.tab5_rdv_prochains` échouait à chaque exécution** depuis sa
+  création, soit une erreur toutes les 5 minutes. `| first(8)` : `first` est un
+  filtre Jinja **sans paramètre**, lui passer un argument casse tout le rendu.
+  La liste des rendez-vous n'avait donc **jamais** été poussée vers le Tab5.
+  Corrigé en `[:8]`. À retenir : `continue_on_error` **ne couvre pas** le rendu
+  d'un template.
+- **`script.tab5_calendrier_mois` échouait sur tout mois entièrement passé** :
+  la fenêtre « vide » `debut = fin` est refusée par `calendar.get_events`, qui
+  exige `end > start` strictement. Résultat, ni codes ni horaires poussés et
+  une grille figée sur le mois précédent dès qu'on revenait en arrière.
+- **Le filet de surveillance était muet aux deux tiers** : `tab5_health.yaml`
+  avait été déposé avec les `entity_id` d'exemple, qui n'existent pas ici. Les
+  alertes « reboot inattendu » et « API déconnectée » ne pouvaient donc jamais
+  se déclencher. Idem pour un déclencheur inventé dans l'automation des
+  rendez-vous.
+
 ### 2026-08-05 — Réveil matin piloté par le calendrier, et rappels de rendez-vous
 
 Le Tab5 devient un vrai réveil. Réglable **depuis l'écran comme depuis Home

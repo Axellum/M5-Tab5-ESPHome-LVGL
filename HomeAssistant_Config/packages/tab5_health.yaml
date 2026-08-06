@@ -20,11 +20,18 @@
 #           packages: !include_dir_named packages
 # ============================================================================
 #
-# À adapter chez vous :
+# ADAPTÉ À CETTE INSTALLATION le 06/08/2026 — ne plus traiter ce fichier comme
+# un exemple générique. Les entity_id d'exemple (`sensor.tab5_uptime`,
+# `binary_sensor.tab5_ha_hmi_ha_api_status`) N'EXISTAIENT PAS ici : le préfixe
+# réel est `m5stack_tab5_home_assistant_hmi`, pas le nom d'appareil ESPHome
+# `tab5-ha-hmi`. Les gardes (b) et (c) étaient donc `on` dans HA mais ne
+# pouvaient JAMAIS se déclencher — un filet de sécurité muet est pire que pas
+# de filet. Toute copie de ce fichier vers une autre installation doit
+# revérifier ces deux ids dans Outils de développement → États.
+#
+# Reste à adapter si vous réutilisez ce package ailleurs :
 #   - notify.notify → votre service réel (ex : notify.mobile_app_votre_telephone)
-#   - binary_sensor.tab5_ha_hmi_ha_api_status et sensor.tab5_uptime → vérifier
-#     l'entity_id exact dans Outils de développement → États (le préfixe dépend
-#     du nom d'appareil ESPHome, ici `tab5-ha-hmi`)
+#     (ici `notify.notify` existe bien et route vers les mobiles déclarés)
 #   - input_boolean.is_primary_active : décommenter le bloc ci-dessous si le
 #     helper n'existe pas déjà dans votre installation.
 
@@ -74,7 +81,7 @@ automation:
             plus rien.
 
   # ==========================================================================
-  # (b) Reboot inattendu — sensor.tab5_uptime redescend
+  # (b) Reboot inattendu — le capteur d'uptime du Tab5 redescend
   # --------------------------------------------------------------------------
   # Détection sans now() ni polling, via trigger.from_state / to_state :
   #   1. l'uptime numérique diminue (reboot rapide, sans passage par
@@ -93,7 +100,7 @@ automation:
     mode: single
     trigger:
       - platform: state
-        entity_id: sensor.tab5_uptime
+        entity_id: sensor.m5stack_tab5_home_assistant_hmi_tab5_uptime
     condition:
       - condition: template
         value_template: >-
@@ -143,7 +150,7 @@ automation:
     mode: single
     trigger:
       - platform: state
-        entity_id: binary_sensor.tab5_ha_hmi_ha_api_status
+        entity_id: binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status
         to:
           - "off"
           - "unavailable"

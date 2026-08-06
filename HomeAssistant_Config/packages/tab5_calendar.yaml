@@ -89,7 +89,7 @@ script:
             - "Noël"
       - variables:
           # Mois civil [1er, 1er suivant[ ; get_events borné à aujourd'hui si mois courant.
-          # Mois entièrement passé → fenêtre vide (debut=fin) : aucun événement récupéré.
+          # Mois entièrement passé → mois civil complet (voir `debut` plus bas).
           debut_mois: "{{ '%04d-%02d-01 00:00:00' | format(y | int, m | int) }}"
           fin: >-
             {% set y2 = (y | int) + 1 if (m | int) == 12 else (y | int) %}
@@ -100,8 +100,18 @@ script:
       - variables:
           ndays: "{{ ((fin | as_datetime) - (debut_mois | as_datetime)).days }}"
           debut: >-
+            {# Mois entièrement passé : on interroge le mois civil COMPLET, et
+               surtout PAS `fin` (= debut). `calendar.get_events` exige
+               end > start STRICTEMENT et rejette la fenêtre vide avec
+               « Expected end time to be after start time » — le script
+               s'arrêtait là et ne poussait NI codes NI heures, donc la grille
+               restait figée sur le mois précédent (constaté le 06/08).
+               Récupérer ces événements ne change rien au résultat : le garde
+               `futur_ou_auj = ds >= today_s` plus bas les ignore tous, jour
+               par jour. Vérifié : un juillet chargé (travail + férié + RDV +
+               anniversaire) et un juillet vide rendent le même payload. #}
             {% if (fin | as_datetime).date() <= now().date() %}
-              {{ fin }}
+              {{ debut_mois }}
             {% elif (debut_mois | as_datetime).date() < now().date() %}
               {{ today0 }}
             {% else %}
@@ -204,9 +214,11 @@ script:
               {% set ns.out = ns.out ~ h.txt ~ ('' if loop.last else '|') %}
             {% endfor %}
             {{ ns.out }}
-          # NE PAS envoyer "details" tant que HA n'a pas rediscovered le service ESPHome
-          # post-OTA (sinon 400 Bad Request → codes/heures jamais poussés → popup sans couleurs).
-          # Firmware accepte l'absence (variable optionnelle côté C++). Tap jour = script _jour.
+          # HA a redécouvert le schéma ESPHome post-OTA (details désormais requis
+          # par le service) : "required key not provided @ data['details']" sur
+          # tab5_calendrier_mois sinon. On envoie vide -> has_details=false côté
+          # firmware -> tap jour retombe sur script._jour (comportement voulu).
+          details: ""
 
   tab5_calendrier_jour:
     alias: "Tab5 — détail d'un jour (popup calendrier)"
