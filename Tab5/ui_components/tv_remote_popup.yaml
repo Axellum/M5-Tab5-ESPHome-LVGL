@@ -5,8 +5,8 @@
 #       Grille symétrique 3 colonnes (290 | 440 | 290) + rangée basse 5 boutons.
 #       Ouvert par long-press carte PC (switches_card) ou btn_control_tv.
 #       Rangée basse = 5 raccourcis (Netflix · Prime · YouTube · CANAL+ · PC).
-#       Coins de la raquette = lecture · pause · retour · accueil. Muet au
-#       centre du rocker de volume.
+#       Sous la raquette = lecture · pause · retour · accueil. Muet au centre
+#       du rocker de volume.
 # @ai_instruction Le modèle « Samsung S95B — Salon » n'est plus affiché en
 #       sous-titre : la barre de titre est identique pour tous les popups (ADR-0009).
 # @architecture_constraint DEUX chemins distincts, à ne pas confondre :
@@ -117,7 +117,19 @@ obj:
                             - label: { text: "\U000F035C", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_text_dim }
                             - label: { text: "Menu", align: LEFT_MID, x: 82, text_font: roboto_22, text_color: color_text }
 
-                # ── Colonne centre (440) — anneau directionnel ──
+                # ── Colonne centre (520) — anneau directionnel + transport ──
+                # [AI-CONTEXT] Largeur passee de 440 a 520 le 06/08/2026. Les 3
+                # colonnes (290 + 520 + 290 = 1100) tiennent dans les 1170 du
+                # corps, il reste 35 px de gouttiere de chaque cote (c'etait 75 :
+                # de la marge dormante, alors que le centre manquait de place).
+                # [AI-CONTEXT] Le disque est passe de CENTER a TOP_MID et la
+                # rangee transport occupe le bas. Avant, lecture/pause/retour/
+                # accueil etaient coinces dans les 4 COINS autour du disque
+                # (110x64) : trop petits, sans libelle, et visuellement colles a
+                # la rangee d'apps en dessous — juge illisible sur l'appareil.
+                # En rangee, ils passent a 121x100 avec icone ET mot (~1,7x la
+                # surface), alignes sur une seule ligne. Bonus : ils ne sont plus
+                # contraints par le cercle, donc plus aucun calcul de marge.
                 # [AI-CONTEXT] Les 4 boutons du pavé (138×100 / 100×138) sont
                 # posés a y=18 / x=18 depuis le bord du disque, PAS a 10 : a 10 px,
                 # les coins exterieurs du bouton (rectangle, meme arrondi) sortent
@@ -125,16 +137,18 @@ obj:
                 # disque a un fond + une bordure (style_meteo_card), pas juste un
                 # halo au press. A 18 px, marge de secu ~4 px (verifie :
                 # sqrt(69^2 + (180-18)^2) = 176,1 < 180). Ne pas redescendre sous
-                # y/x=16 sans refaire ce calcul.
+                # y/x=16 sans refaire ce calcul. Le disque garde son diametre de
+                # 360 : ce calcul reste donc valable tel quel.
                 - obj:
                     align: CENTER
-                    width: 440
+                    width: 520
                     height: 488
                     styles: style_transparent
                     scrollable: false
                     widgets:
                       - obj:
-                          align: CENTER
+                          align: TOP_MID
+                          y: 0
                           width: 360
                           height: 360
                           radius: 180
@@ -230,97 +244,94 @@ obj:
                                 widgets:
                                   - label: { text: "OK", align: CENTER, text_font: roboto_45_b, text_color: color_text }
 
-                      # ── 4 touches de lecture dans les coins autour de la raquette ──
-                      # [AI-CONTEXT] Ces 4 coins portaient les boutons d'apps
-                      # (100x55, texte roboto_22). Ils ont ete ECHANGES avec la
-                      # rangee basse le 06/08/2026 (demande Axel « plus grands et
-                      # lisibles, plus pratiques ») : un nom d'app DOIT etre lu,
-                      # alors que lecture/pause/retour/accueil se reconnaissent a
-                      # l'icone seule. Les apps sont donc descendues en 221x102
-                      # (4x la surface) et ces 4 touches sont montees ici.
-                      # [AI-WARNING] Marge 8/8 symetrique conservee. Taille passee
-                      # de 100x55 a 110x64 (icone seule, plus de texte a loger) :
-                      # marge au disque directionnel RECALCULEE, coin interieur a
-                      # (118,72) du centre (220,244) -> sqrt(102^2+172^2) = 200,0
-                      # pour un rayon de 180, soit ~20 px de securite (c'etait
-                      # 32,8 px en 100x55). Ne pas agrandir davantage sans refaire
-                      # ce calcul : a 120x70 il ne reste que 9,8 px.
-                      # Lecture (haut-gauche)
-                      - button:
-                          align: TOP_LEFT
-                          x: 8
-                          y: 8
-                          width: 110
-                          height: 64
-                          radius: 32
-                          styles: style_clim_btn
-                          pressed:
-                            bg_opa: 30%
-                          on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_PLAY"
+                      # ── Rangee transport, alignee SOUS la raquette ──
+                      # [AI-WARNING] Gabarit exact, ne pas bricoler au pixel :
+                      # 4 x 121 + 3 gouttieres de 12 = 520, soit la largeur de la
+                      # colonne au pixel pres. Verticalement, le disque occupe
+                      # 0..360 et cette rangee 388..488 : 28 px de respiration
+                      # entre les deux, et la rangee s'arrete pile au bas de la
+                      # colonne. Changer la largeur de colonne impose de refaire
+                      # ces quatre x.
+                      # [AI-CONTEXT] Icone + MOT sur chaque touche : l'icone seule
+                      # avait ete jugee insuffisante sur l'appareil. L'icone est
+                      # remontee de 16 px et le mot descendu de 26 px depuis le
+                      # centre, ce qui laisse les deux respirer dans les 100 px.
+                      - obj:
+                          align: BOTTOM_MID
+                          y: 0
+                          width: 520
+                          height: 100
+                          styles: style_transparent
+                          scrollable: false
                           widgets:
-                            - label: { text: "\U000F040A", align: CENTER, text_font: mdi_font_45, text_color: color_success }
-                      # Pause (haut-droite)
-                      - button:
-                          align: TOP_RIGHT
-                          x: 8
-                          y: 8
-                          width: 110
-                          height: 64
-                          radius: 32
-                          styles: style_clim_btn
-                          pressed:
-                            bg_opa: 30%
-                          on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_PAUSE"
-                          widgets:
-                            - label: { text: "\U000F03E4", align: CENTER, text_font: mdi_font_45, text_color: color_text }
-                      # Retour (bas-gauche)
-                      - button:
-                          align: BOTTOM_LEFT
-                          x: 8
-                          y: 8
-                          width: 110
-                          height: 64
-                          radius: 32
-                          styles: style_clim_btn
-                          pressed:
-                            bg_opa: 30%
-                          on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_RETURN"
-                          widgets:
-                            - label: { text: "\U000F054C", align: CENTER, text_font: mdi_font_45, text_color: color_text_dim }
-                      # Accueil (bas-droit)
-                      - button:
-                          align: BOTTOM_RIGHT
-                          x: 8
-                          y: 8
-                          width: 110
-                          height: 64
-                          radius: 32
-                          styles: style_clim_btn
-                          pressed:
-                            bg_opa: 30%
-                          on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_HOME"
-                          widgets:
-                            - label: { text: "\U000F02DC", align: CENTER, text_font: mdi_font_45, text_color: color_text_dim }
+                            - button:
+                                x: 0
+                                width: 121
+                                height: 100
+                                radius: 18
+                                styles: style_clim_btn
+                                pressed:
+                                  bg_opa: 30%
+                                on_short_click:
+                                  - homeassistant.service:
+                                      service: remote.send_command
+                                      data:
+                                        entity_id: ${entity_tv_remote}
+                                        command: "KEY_PLAY"
+                                widgets:
+                                  - label: { text: "\U000F040A", align: CENTER, y: -16, text_font: mdi_font_45, text_color: color_success }
+                                  - label: { text: "Lecture", align: CENTER, y: 26, text_font: roboto_22, text_color: color_text }
+                            - button:
+                                x: 133
+                                width: 121
+                                height: 100
+                                radius: 18
+                                styles: style_clim_btn
+                                pressed:
+                                  bg_opa: 30%
+                                on_short_click:
+                                  - homeassistant.service:
+                                      service: remote.send_command
+                                      data:
+                                        entity_id: ${entity_tv_remote}
+                                        command: "KEY_PAUSE"
+                                widgets:
+                                  - label: { text: "\U000F03E4", align: CENTER, y: -16, text_font: mdi_font_45, text_color: color_text }
+                                  - label: { text: "Pause", align: CENTER, y: 26, text_font: roboto_22, text_color: color_text }
+                            - button:
+                                x: 266
+                                width: 121
+                                height: 100
+                                radius: 18
+                                styles: style_clim_btn
+                                pressed:
+                                  bg_opa: 30%
+                                on_short_click:
+                                  - homeassistant.service:
+                                      service: remote.send_command
+                                      data:
+                                        entity_id: ${entity_tv_remote}
+                                        command: "KEY_RETURN"
+                                widgets:
+                                  - label: { text: "\U000F054C", align: CENTER, y: -16, text_font: mdi_font_45, text_color: color_text_dim }
+                                  - label: { text: "Retour", align: CENTER, y: 26, text_font: roboto_22, text_color: color_text }
+                            - button:
+                                x: 399
+                                width: 121
+                                height: 100
+                                radius: 18
+                                styles: style_clim_btn
+                                pressed:
+                                  bg_opa: 30%
+                                on_short_click:
+                                  - homeassistant.service:
+                                      service: remote.send_command
+                                      data:
+                                        entity_id: ${entity_tv_remote}
+                                        command: "KEY_HOME"
+                                widgets:
+                                  - label: { text: "\U000F02DC", align: CENTER, y: -16, text_font: mdi_font_45, text_color: color_text_dim }
+                                  - label: { text: "Accueil", align: CENTER, y: 26, text_font: roboto_22, text_color: color_text }
 
                 # ── Colonne droite (290) — rocker volume centré ──
                 - obj:
@@ -490,9 +501,15 @@ obj:
                             app: "canal"
                     widgets:
                       - label: { text: "CANAL+", align: CENTER, text_font: roboto_32_b, text_color: color_text }
-                # « PC » (ex-« HDMI PC ») : seul bouton a rester sur
-                # select_source — "HDMI" EST dans le source_list de la TV, donc
-                # ce chemin-la a toujours fonctionne et reste le plus direct.
+                # [AI-WARNING] « PC » ne passe PAS par select_source. Le
+                # source_list de la TV ne contient que "TV" et "HDMI", et "HDMI"
+                # retombe sur la FREEBOX, pas sur le PC — l'ancien bouton
+                # « HDMI PC » se trompait de source depuis sa creation, defaut
+                # constate par Axel le 06/08/2026 seulement (les 3 boutons
+                # voisins etant morts, celui-ci n'etait jamais teste). On vise
+                # la prise a la touche, via le meme point d'entree HA que les
+                # apps : la correspondance PC -> HDMI1 vit dans tab5_tv.yaml,
+                # donc un cable deplace se corrige SANS recompiler ni reflasher.
                 - button:
                     x: 948
                     width: 221
@@ -503,9 +520,8 @@ obj:
                       bg_opa: 30%
                     on_short_click:
                       - homeassistant.service:
-                          service: media_player.select_source
+                          service: script.tab5_tv_app
                           data:
-                            entity_id: media_player.samsung_s95ba_55_tv
-                            source: "HDMI"
+                            app: "pc"
                     widgets:
                       - label: { text: "PC", align: CENTER, text_font: roboto_32_b, text_color: color_success }

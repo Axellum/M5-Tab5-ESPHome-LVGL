@@ -64,7 +64,9 @@ script:
     mode: restart
     fields:
       app:
-        description: "Nom court : netflix, prime, youtube, canal, disney, appletv"
+        description: >-
+          Nom court. Applications : netflix, prime, youtube, canal, disney,
+          appletv. Entrées physiques : pc, freebox, tnt.
         required: true
         example: "netflix"
         selector:
@@ -81,15 +83,27 @@ script:
             canal: "3201606009910" # CANAL+         v7.0.2
             disney: "3201901017640" # Disney+        v26.4.0
             appletv: "3201807016597" # Apple TV       v14.4.0
-          app_id: "{{ catalogue.get(app | lower | trim, '') }}"
+          # Entrées physiques. Le `source_list` de la TV ne contient que "TV" et
+          # "HDMI" — bien trop grossier : "HDMI" retombe sur la Freebox, pas sur
+          # le PC (constaté par Axel le 06/08/2026 ; l'ancien bouton « HDMI PC »
+          # faisait ça depuis sa création). On vise donc la prise à la touche.
+          # [AI-INSTRUCTION] Le PC est sur HDMI 1 (info donnée par Axel). Si un
+          # câble bouge, c'est CETTE ligne qu'on corrige — pas le firmware.
+          touches:
+            pc: "KEY_HDMI1"
+            freebox: "KEY_HDMI2"
+            tnt: "KEY_TV"
+          cible: "{{ app | lower | trim }}"
+          app_id: "{{ catalogue.get(cible, '') }}"
+          touche: "{{ touches.get(cible, '') }}"
 
-      # Nom inconnu : on s'arrête ici plutôt que de POSTer une URL vide (la TV
-      # répondrait 404 et on ne saurait pas pourquoi).
+      # Nom inconnu des deux tables : on s'arrête ici plutôt que de POSTer une
+      # URL vide (la TV répondrait 404 et on ne saurait pas pourquoi).
       - condition: template
-        value_template: "{{ app_id != '' }}"
+        value_template: "{{ app_id != '' or touche != '' }}"
 
       # TV éteinte : l'allumer et lui laisser le temps de monter sa pile réseau,
-      # sinon le POST part avant que le serveur d'apps ne réponde.
+      # sinon la commande part avant que la TV ne réponde.
       - if:
           - condition: state
             entity_id: media_player.samsung_s95ba_55_tv
@@ -104,6 +118,22 @@ script:
             continue_on_timeout: true
           - delay: "00:00:03"
 
-      - action: rest_command.tab5_tv_lancer_app
-        data:
-          app_id: "{{ app_id }}"
+      - choose:
+          # Application → POST REST Tizen (seul mécanisme qui marche, cf. en-tête)
+          - conditions:
+              - condition: template
+                value_template: "{{ app_id != '' }}"
+            sequence:
+              - action: rest_command.tab5_tv_lancer_app
+                data:
+                  app_id: "{{ app_id }}"
+          # Entrée physique → touche de la télécommande
+          - conditions:
+              - condition: template
+                value_template: "{{ touche != '' }}"
+            sequence:
+              - action: remote.send_command
+                target:
+                  entity_id: remote.samsung_s95ba_55_tv
+                data:
+                  command: "{{ touche }}"
