@@ -87,11 +87,13 @@ script:
           # "HDMI" — bien trop grossier : "HDMI" retombe sur la Freebox, pas sur
           # le PC (constaté par Axel le 06/08/2026 ; l'ancien bouton « HDMI PC »
           # faisait ça depuis sa création). On vise donc la prise à la touche.
-          # [AI-INSTRUCTION] Le PC est sur HDMI 1 (info donnée par Axel). Si un
-          # câble bouge, c'est CETTE ligne qu'on corrige — pas le firmware.
+          # [AI-INSTRUCTION] Affectation VÉRIFIÉE par Axel le 06/08/2026 dans le
+          # menu des sources de la TV : PC sur HDMI 1, Freebox sur HDMI 3.
+          # (La Freebox était supposée sur HDMI 2 — c'était faux.) Si un câble
+          # bouge, c'est CETTE table qu'on corrige, pas le firmware.
           touches:
             pc: "KEY_HDMI1"
-            freebox: "KEY_HDMI2"
+            freebox: "KEY_HDMI3"
             tnt: "KEY_TV"
           cible: "{{ app | lower | trim }}"
           app_id: "{{ catalogue.get(cible, '') }}"
@@ -132,6 +134,29 @@ script:
               - condition: template
                 value_template: "{{ touche != '' }}"
             sequence:
+              # [AI-CONTEXT] Réveil du PC AVANT de basculer sur son entrée.
+              # Constaté le 06/08/2026 : le bouton « PC » semblait ne rien
+              # faire. Or KEY_HDMI1 est bel et bien acceptée par la TV — prouvé
+              # par un protocole à deux témoins : Netflix reste au premier plan
+              # (`visible: true`) pendant 16 s sans commande ET après une touche
+              # INEXISTANTE, mais le quitte immédiatement sur KEY_HDMI1. La
+              # commande passe donc ; c'est l'entrée qui n'affiche rien.
+              # Hypothèse retenue : la sortie vidéo du PC est en veille (DPMS).
+              # Le PC répond au réseau (`device_tracker.pc_fix_3` = home) et son
+              # interrupteur est `on`, mais ça ne dit rien de son écran. Sans
+              # signal, la TV affiche du noir puis revient souvent à la source
+              # précédente — ce qui se lit exactement comme « ça ne fait rien ».
+              # Un paquet Wake-on-LAN est inoffensif si la machine est déjà
+              # réveillée, donc on l'envoie sans condition.
+              - if:
+                  - condition: template
+                    value_template: "{{ cible == 'pc' }}"
+                then:
+                  - action: button.press
+                    continue_on_error: true
+                    target:
+                      entity_id: button.wake_on_lan_60_cf_84_a1_7c_44
+                  - delay: "00:00:01"
               - action: remote.send_command
                 target:
                   entity_id: remote.samsung_s95ba_55_tv
