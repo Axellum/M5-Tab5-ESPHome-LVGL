@@ -83,26 +83,55 @@ script:
             canal: "3201606009910" # CANAL+         v7.0.2
             disney: "3201901017640" # Disney+        v26.4.0
             appletv: "3201807016597" # Apple TV       v14.4.0
-          # Entrées physiques. Le `source_list` de la TV ne contient que "TV" et
-          # "HDMI" — bien trop grossier : "HDMI" retombe sur la Freebox, pas sur
-          # le PC (constaté par Axel le 06/08/2026 ; l'ancien bouton « HDMI PC »
-          # faisait ça depuis sa création). On vise donc la prise à la touche.
-          # [AI-INSTRUCTION] Affectation VÉRIFIÉE par Axel le 06/08/2026 dans le
-          # menu des sources de la TV : PC sur HDMI 1, Freebox sur HDMI 3.
-          # (La Freebox était supposée sur HDMI 2 — c'était faux.) Si un câble
-          # bouge, c'est CETTE table qu'on corrige, pas le firmware.
-          touches:
-            pc: "KEY_HDMI1"
-            freebox: "KEY_HDMI3"
-            tnt: "KEY_TV"
+          # ── Entrées physiques ────────────────────────────────────────────
+          # [AI-WARNING] Les touches HDMI NUMÉROTÉES (KEY_HDMI1..KEY_HDMI4) sont
+          # IGNORÉES par cette TV. Vérifié le 07/08/2026 : Netflix laissé au
+          # premier plan, envoi de KEY_HDMI1, `visible` reste `true` et l'écran
+          # ne bouge pas (confirmé de visu). Ne pas les réintroduire.
+          #
+          # [AI-WARNING] `select_source: "HDMI"` (= KEY_HDMI) n'est pas fiable
+          # non plus : il vise la DERNIÈRE entrée HDMI utilisée, pas une prise
+          # fixe. C'est ce qui explique le faux souvenir « ça marchait avant » —
+          # le bouton tombait sur le PC tant que le PC était la dernière source
+          # utilisée, et sur la Freebox dès qu'on avait regardé la Freebox. Il
+          # n'a jamais visé une prise, il avait juste de la chance.
+          #
+          # [AI-INSTRUCTION] SEULE méthode fiable : naviguer dans le menu des
+          # sources avec des touches qui, elles, fonctionnent (KEY_SOURCE, les
+          # flèches, KEY_ENTER). On sature d'abord vers la GAUCHE — 6 appuis,
+          # bien plus que nécessaire — pour partir d'une position connue quelle
+          # que soit la sélection courante, puis on compte les crans vers la
+          # droite. Décompte donné par Axel, télécommande en main, le
+          # 07/08/2026 : le PC est à 3 crans du bord gauche.
+          # Si l'ordre du menu change (câble déplacé, appareil ajouté), c'est
+          # CE nombre de KEY_RIGHT qu'on corrige — pas le firmware du Tab5.
+          sequences:
+            pc:
+              [
+                "KEY_SOURCE",
+                "KEY_LEFT",
+                "KEY_LEFT",
+                "KEY_LEFT",
+                "KEY_LEFT",
+                "KEY_LEFT",
+                "KEY_LEFT",
+                "KEY_RIGHT",
+                "KEY_RIGHT",
+                "KEY_RIGHT",
+                "KEY_ENTER",
+              ]
+            # Pas de décompte relevé pour la Freebox : KEY_HDMI y retombe en
+            # pratique, et aucun bouton du Tab5 ne la vise aujourd'hui.
+            freebox: ["KEY_HDMI"]
+            tnt: ["KEY_TV"]
           cible: "{{ app | lower | trim }}"
           app_id: "{{ catalogue.get(cible, '') }}"
-          touche: "{{ touches.get(cible, '') }}"
+          sequence_touches: "{{ sequences.get(cible, []) }}"
 
       # Nom inconnu des deux tables : on s'arrête ici plutôt que de POSTer une
       # URL vide (la TV répondrait 404 et on ne saurait pas pourquoi).
       - condition: template
-        value_template: "{{ app_id != '' or touche != '' }}"
+        value_template: "{{ app_id != '' or (sequence_touches | length > 0) }}"
 
       # TV éteinte : l'allumer et lui laisser le temps de monter sa pile réseau,
       # sinon la commande part avant que la TV ne réponde.
@@ -129,36 +158,19 @@ script:
               - action: rest_command.tab5_tv_lancer_app
                 data:
                   app_id: "{{ app_id }}"
-          # Entrée physique → touche de la télécommande
+          # Entrée physique → séquence de touches de la télécommande
           - conditions:
               - condition: template
-                value_template: "{{ touche != '' }}"
+                value_template: "{{ sequence_touches | length > 0 }}"
             sequence:
-              # [AI-CONTEXT] Réveil du PC AVANT de basculer sur son entrée.
-              # Constaté le 06/08/2026 : le bouton « PC » semblait ne rien
-              # faire. Or KEY_HDMI1 est bel et bien acceptée par la TV — prouvé
-              # par un protocole à deux témoins : Netflix reste au premier plan
-              # (`visible: true`) pendant 16 s sans commande ET après une touche
-              # INEXISTANTE, mais le quitte immédiatement sur KEY_HDMI1. La
-              # commande passe donc ; c'est l'entrée qui n'affiche rien.
-              # Hypothèse retenue : la sortie vidéo du PC est en veille (DPMS).
-              # Le PC répond au réseau (`device_tracker.pc_fix_3` = home) et son
-              # interrupteur est `on`, mais ça ne dit rien de son écran. Sans
-              # signal, la TV affiche du noir puis revient souvent à la source
-              # précédente — ce qui se lit exactement comme « ça ne fait rien ».
-              # Un paquet Wake-on-LAN est inoffensif si la machine est déjà
-              # réveillée, donc on l'envoie sans condition.
-              - if:
-                  - condition: template
-                    value_template: "{{ cible == 'pc' }}"
-                then:
-                  - action: button.press
-                    continue_on_error: true
-                    target:
-                      entity_id: button.wake_on_lan_60_cf_84_a1_7c_44
-                  - delay: "00:00:01"
+              # [AI-WARNING] `delay_secs` n'est PAS du confort : le menu des
+              # sources de la TV a besoin d'un instant pour s'ouvrir et pour
+              # déplacer sa sélection. Enchaîner les touches sans pause fait
+              # avaler des appuis et la sélection atterrit au mauvais endroit.
+              # Ne pas descendre sous 0,5 s sans le vérifier à l'écran.
               - action: remote.send_command
                 target:
                   entity_id: remote.samsung_s95ba_55_tv
                 data:
-                  command: "{{ touche }}"
+                  command: "{{ sequence_touches }}"
+                  delay_secs: 0.6
