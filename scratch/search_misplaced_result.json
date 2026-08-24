@@ -1,0 +1,25 @@
+{
+  "task_id": "search_misplaced",
+  "status": "OK",
+  "methode": "Script Python 'lister_fichiers_sans_extension.py' (os.listdir, non récursif) + tests unitaires (7/7 passés).",
+  "dossier_inspecte": "H:\\AuxFilsDesIdees\\00ProjetTab\\.qoder",
+  "contenu_non_recursif_de_dot_qoder": [
+    {"name": "wiki_publish", "type": "directory"}
+  ],
+  "fichiers_sans_extension_trouves": [],
+  "nb_fichiers_sans_extension": 0,
+  "explication": "Le dossier '.qoder/' ne contient qu'UN seul élément : le DOSSIER 'wiki_publish' (repo git autonome, commit e8ef68d 'Publie le RepoWiki généré (Qoder)'). C'est un DOSSIER, pas un fichier, donc il n'est pas compté comme 'fichier sans extension'. Aucun fichier sans extension n'existe à ce niveau (non récursif).",
+  "wiki_publish": {
+    "path": "H:\\AuxFilsDesIdees\\00ProjetTab\\.qoder\\wiki_publish",
+    "type": "directory",
+    "git_commit": "e8ef68d Publie le RepoWiki généré (Qoder)",
+    "git_status": "clean",
+    "contenu": "~180 fichiers .md (wiki généré par Qoder) + dossier .git/",
+    "fichiers_cles": {
+      "Home.md": "Index du wiki M5Stack Tab5 (ESPHome + LVGL HMI) : liste des sections GitHub.",
+      "_Sidebar.md": "Sommaire du wiki avec liens GitHub vers toutes les pages."
+    }
+  },
+  "conclusion": "Aucun fichier sans extension dans .qoder/ (non récursif). Le livrable 'wiki_publish' est un DOSSIER (repo git), pas un fichier sans extension. L'analyse wiki est déjà produite et lisible dans ce dossier. Rien à supprimer.",
+  "tests": "7/7 passés (test_lister_fichiers_sans_extension.py)"
+}
