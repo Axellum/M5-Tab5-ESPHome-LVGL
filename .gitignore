@@ -42,3 +42,8 @@ audio_lib/
 # que la recidive ne soit jamais versionnee.
 Tab5/Tab5/
 
+
+# Dossier de travail de l'IDE Qoder, posé dans chaque dépôt ouvert. Le moteur
+# le ramassait dans le diff de ses tâches autonomes : la porte d'arborescence
+# refusait le livrable (9 tâches sur 14 abandonnées le 24/08).
+.qoder/
