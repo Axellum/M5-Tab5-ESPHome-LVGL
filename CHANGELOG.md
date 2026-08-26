@@ -4,6 +4,46 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-08-26 — Montée en ESPHome 2026.8.1
+
+Aucun changement de comportement du firmware : le code est identique, seule la
+version d'ESPHome qui le compile change. Le plancher `min_version` passe de
+`2026.7.0` à `2026.8.1`.
+
+- **Rien ne cassait.** Les breaking changes de 2026.8.0 (modbus, rc522,
+  sgp4x/sen5x/sen6x, aqi, web_server, bandeaux LED, couche BLE neutre,
+  `interrupt_pin` des expandeurs GPIO, animations LVGL `round_trip`) ne touchent
+  **aucun** composant utilisé ici — la CI compilait d'ailleurs déjà en 2026.8.1
+  sans le savoir depuis le 20/08, `build-action` tirant l'image `latest`.
+- **Ce que la montée apporte concrètement**, sur des chemins que le Tab5 exerce
+  en permanence :
+  - `api` [#18577] — la loop se bloquait et déclenchait le watchdog quand
+    l'envoi de la liste d'entités bloquait. On en expose **58**, et
+    `CONFIG_ESP_TASK_WDT_TIMEOUT_S` est monté à 15 s pour ce genre de raison.
+  - `voice_assistant` [#17043] — lecture hachée quand le CPU est chargé, et
+    [#18295] : un morceau d'audio n'est plus consommé quand son envoi est
+    refusé (perte silencieuse sur lien API saturé).
+  - `esp32` [#17769] / [#17770] — le handler de crash capture **MTVAL**,
+    l'adresse fautive sur RISC-V, et signale un crash décodé contre un autre
+    binaire. Utile sur un projet à ~15 000 lignes de C++ à pointeurs LVGL.
+  - `i2s_audio` [#17752] — double conversion d'unité supprimée dans `read_()`,
+    le chemin de lecture du micro ES7210.
+  - `esp32_hosted` [#18030] — `esp_hosted` 2.12.12 / `esp_wifi_remote` 1.6.3 :
+    tout le WiFi passe par le co-processeur C6 en SDIO.
+  - `ota` [#18332] — reprise des envois qui échouent sur une erreur réseau.
+- **Vérifié sur l'appareil, pas sur un message** : compilation réelle
+  (`config_hash=0x331522c3`, `build_time_str=2026-08-26 10:37:44`, RAM 45,1 % /
+  flash 38,8 %), puis OTA confirmée par le `sw_version` que Home Assistant
+  déclare — `2026.8.1 (2026-08-26 10:37:44 +0200)`, soit l'horodatage exact de
+  ce build. L'uptime est retombé de 97 930 s à 8,3 s, API reconnectée, écran
+  rendu sur « Accueil · Planning ».
+- ⚠️ **Reste à faire, repéré au passage** : `online_image:` en bloc de premier
+  niveau est **déprécié**, suppression annoncée en **ESPHome 2027.1.0**
+  (`Tab5/tab5-hardware.yaml`). La migration est mécanique — `image:` avec
+  `- platform: online_image` — et n'a volontairement pas été faite ici pour ne
+  pas mélanger « montée de version » et « modification de code » dans le même
+  test.
+
 ### 2026-08-06 — Télécommande TV : les raccourcis d'apps marchent enfin, et trois scripts HA réparés
 
 Audit des logs Home Assistant. Quatre choses étaient cassées **en silence** —

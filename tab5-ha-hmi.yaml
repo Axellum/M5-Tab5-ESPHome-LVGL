@@ -12,7 +12,20 @@ substitutions: !include Tab5/user_entities.yaml
 esphome:
   name: tab5-ha-hmi
   friendly_name: M5Stack Tab5 Home Assistant HMI
-  min_version: 2026.7.0    # [2026.7.0] Requis pour st7123 officiel + audio zero-copy + VAD + PSRAM SDIO
+  # [2026.7.0] Plancher DUR d'origine : st7123 officiel + audio zero-copy + VAD + PSRAM SDIO.
+  # [2026.8.1] Relevé le 26/08/2026. Le code compile encore tel quel en 2026.7.x — ce
+  # plancher n'est donc pas une dépendance d'API, c'est un choix : 2026.8 corrige trois
+  # choses que ce projet exerce tous les jours, et rien ici ne justifie de laisser
+  # quelqu'un compiler sans elles.
+  #   - api #18577 : la loop se bloque et déclenche le watchdog quand l'envoi de la liste
+  #     d'entités bloque. On expose 58 entités, et CONFIG_ESP_TASK_WDT_TIMEOUT_S est
+  #     justement monté à 15 s dans tab5-hardware.yaml à cause de ce genre de blocage.
+  #   - voice_assistant #17043 : lecture hachée quand le CPU est chargé — exactement le
+  #     cas LVGL + jeux + TTS streamé, celui que buffer_duration: 500ms amortit à peine.
+  #   - esp32 #17769 / #17770 : le handler de crash capture enfin MTVAL (l'adresse
+  #     fautive sur RISC-V) et signale un crash décodé contre un autre binaire.
+  # Redescendre à 2026.7.0 ne casse rien de fonctionnel si le besoin s'en présente.
+  min_version: 2026.8.1
   includes:
     - Tab5/tab5_custom.h
     - Tab5/tab5_custom.cpp
