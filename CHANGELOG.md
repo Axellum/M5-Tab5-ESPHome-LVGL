@@ -37,12 +37,20 @@ version d'ESPHome qui le compile change. Le plancher `min_version` passe de
   déclare — `2026.8.1 (2026-08-26 10:37:44 +0200)`, soit l'horodatage exact de
   ce build. L'uptime est retombé de 97 930 s à 8,3 s, API reconnectée, écran
   rendu sur « Accueil · Planning ».
-- ⚠️ **Reste à faire, repéré au passage** : `online_image:` en bloc de premier
-  niveau est **déprécié**, suppression annoncée en **ESPHome 2027.1.0**
-  (`Tab5/tab5-hardware.yaml`). La migration est mécanique — `image:` avec
-  `- platform: online_image` — et n'a volontairement pas été faite ici pour ne
-  pas mélanger « montée de version » et « modification de code » dans le même
-  test.
+- **`online_image:` migré** vers `image: - platform: online_image`
+  (`Tab5/tab5-hardware.yaml`). Le bloc de premier niveau était **déprécié**,
+  suppression annoncée en **ESPHome 2027.1.0**. C'est un pur déplacement de
+  clé : le shim déprécié réutilise le **même schéma et le même codegen** que la
+  plateforme, et les actions `online_image.set_url` / `online_image.release`
+  gardent leurs noms — **rien à changer** dans `tab5-api-logic.yaml`, qui
+  appelle `set_url` au runtime.
+  - **Neutralité prouvée par la mesure** : après migration, RAM **259 708
+    octets** et flash **3 153 102 octets**, soit *exactement* les mêmes qu'avant
+    — à l'octet près. Seul le `config_hash` change (`0x331522c3` →
+    `0x52a74aa8`), ce qui est attendu puisque le YAML a bougé.
+  - Migré et flashé **séparément** de la montée de version, pour qu'un seul
+    changement soit testé à la fois. OTA confirmée par le `sw_version` de Home
+    Assistant : `2026.8.1 (2026-08-26 11:53:54 +0200)`.
 
 ### 2026-08-06 — Télécommande TV : les raccourcis d'apps marchent enfin, et trois scripts HA réparés
 
