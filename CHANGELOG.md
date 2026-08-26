@@ -4,6 +4,44 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-08-26 — Un popup ouvert depuis HA pouvait recouvrir l'écran de sonnerie
+
+Trouvé en évaluant `lvgl.widget.set_z_index` (finalement écarté, voir plus bas).
+
+- **Le défaut** : l'ouverture d'écran pilotée depuis Home Assistant
+  (`select.…_aller_a_l_ecran`) remontait sa cible au premier plan **sans
+  condition** — `animate_popup_open(target); lv_obj_move_foreground(target);`.
+  Déclenchée pendant que le réveil sonne, elle plaçait donc le popup demandé
+  **au-dessus de `alarm_ring_layer`** et masquait son bouton d'arrêt.
+- **Pourquoi c'était crédible et pas théorique** : le calque de sonnerie est
+  déjà explicitement protégé contre la **fermeture** automatique
+  (`tab5-scripts.yaml`, où il est volontairement absent de `kPopups`, commentaire
+  à l'appui). La même classe de problème était traitée d'un côté et pas de
+  l'autre.
+- **Correctif** (`tab5-ha-controls.yaml`) : refus des ouvertures de fenêtre
+  (`i >= 2`) tant que `alarm_ringing` est vrai, avec un `ESP_LOGI` — un refus
+  muet serait indiscernable d'une commande perdue. **« Accueil » (`i == 1`)
+  reste autorisé** : il ne fait que fermer les popups et revenir sur `page_main`,
+  ce qui *révèle* la sonnerie au lieu de la cacher.
+- **Vérifié sur l'appareil, en A/B** :
+  - contrôle négatif, **sans** sonnerie → « Télécommande TV » demandé,
+    `sensor.…_ecran_courant` passe bien à `Télécommande TV`. Le garde
+    n'élargit rien.
+  - test réel, **pendant** la sonnerie → « Calendrier » demandé, l'écran **reste**
+    sur `Réveil qui sonne`, et l'appareil journalise
+    `[12:07:09.426][I][TAB5:163]: Ouverture d'ecran refusee depuis HA : le reveil
+    sonne`. Le refus est prouvé par le log, pas seulement par l'état final.
+  - Firmware `config_hash=0xcddecfdc`, build `2026-08-26 12:03:52`, RAM 45,1 % /
+    flash 38,8 % (+108 octets : le garde et sa chaîne de log).
+
+**`lvgl.widget.set_z_index` (#17993) écarté**, après lecture du code : chaque
+appel est collé à `animate_popup_open()` dans le même lambda (le convertir
+couperait un lambda en deux morceaux à garder soudés) ; un site travaille sur un
+`lv_obj_t*` **résolu à l'exécution**, hors de portée d'une action à `id:` statique ;
+et le cas de la sonnerie est déjà traité depuis le C++ (`alarm_clock.cpp`), où une
+action YAML n'irait pas. `set_z_index: top` est strictement équivalent à
+`lv_obj_move_foreground` : rien à gagner ici.
+
 ### 2026-08-26 — Montée en ESPHome 2026.8.1
 
 Aucun changement de comportement du firmware : le code est identique, seule la
