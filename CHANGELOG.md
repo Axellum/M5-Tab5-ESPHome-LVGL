@@ -4,6 +4,39 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-08-26 — Le push écran se déclenchait deux fois par relevé Météo-France
+
+`MAJ Ecran Tab5 ESPHome Push` journalisait « Already running » **249 fois en 5
+jours**. Mesuré, pas supposé :
+
+- une exécution dure **6,53 s** (4 traces, constant) ;
+- `sensor.…_next_rain` et `weather.…` viennent du **même coordinateur
+  Météo-France** et se déclenchent à ~0,8 s d'intervalle (12:11:27,938 puis
+  12:11:28,772). Le second tombe donc toujours pendant l'exécution du premier,
+  et HA l'abandonne (`failed_single`) ;
+- **vérifié 2 fois sur 2** le 26/08 (11:56:28 et 12:11:28) : le déclencheur
+  météo n'a **jamais** abouti.
+
+Le retirer ne change donc rien au comportement réel — ça acte ce qui se passait
+déjà. La carte météo reste rafraîchie par le cycle /10 min et par
+`esphome.tab5_connected` (émis toutes les 5 min par le firmware).
+
+- 📌 **Piège à retenir** : un trigger `state:` **nu se déclenche aussi sur les
+  changements d'attributs**. C'est pourquoi `next_rain` déclenchait en continu
+  alors que son état vaut `unknown` depuis des heures — c'est son
+  `1_hour_forecast` qui bougeait.
+- L'avertissement « Already running » est **laissé actif** (pas de
+  `max_exceeded: silent`) : si une nouvelle collision apparaît, on veut le savoir.
+- Une 3ᵉ automation dédiée (comme le push clim) a été envisagée et écartée : le
+  push clim existe parce qu'on **touche** les commandes et qu'on attend un retour
+  immédiat — la météo n'est pas interactive.
+- **Déployé par Samba puis vérifié** : `homeassistant.check_config` valide,
+  `automation.reload`, puis relecture de la config — 4 déclencheurs au lieu de 5,
+  actions intactes (`config_hash` `53e76a38…` → `b6429e59…`). Édition
+  chirurgicale du fichier plutôt que via l'API de config, qui aurait **détruit
+  tous les commentaires YAML**. Sauvegarde sur HA :
+  `automations.yaml.bak_weathertrig_20260826_122850`.
+
 ### 2026-08-26 — Un popup ouvert depuis HA pouvait recouvrir l'écran de sonnerie
 
 Trouvé en évaluant `lvgl.widget.set_z_index` (finalement écarté, voir plus bas).
