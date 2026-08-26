@@ -1,4 +1,15 @@
-# Snippet à fusionner dans configuration.yaml (section input_text)
+# Snippet à fusionner dans configuration.yaml (section input_text).
+#
+# ⚠️ ALTERNATIVE au package, PAS un complément. N'utilisez ce snippet que si vous
+# ne chargez PAS `packages/tab5_alerts.yaml` — ce package fournit déjà cet
+# `input_text`, et déclarer les deux casse le chargement du package avec
+# « Integration 'input_text' has duplicate key 'name' » (constaté le 19/07/2026 sur
+# une config de production, où les copies dans configuration.yaml / scripts.yaml /
+# automations.yaml ont dû être retirées au profit du seul package).
+#
+# Le package reste la voie recommandée : il apporte aussi les scripts
+# `tab5_dismiss_alert` / `tab5_dismiss_info_panel` et l'automation
+# `tab5_alert_dismiss_handler`, que ce snippet seul ne fournit pas.
   tab5_alerts_dismissed:
     name: "Tab5 alertes HA ignorées"
     initial: ""
