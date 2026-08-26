@@ -493,8 +493,15 @@ http_request:
   verify_ssl: false
   watchdog_timeout: 20s
 
-online_image:
-  - id: assist_response_image
+# [2026.8.1] Migré depuis le bloc `online_image:` de premier niveau, déprécié et
+# supprimé en ESPHome 2027.1.0. C'est un pur déplacement de clé : le shim déprécié
+# (online_image/__init__.py) réutilise le MÊME schéma et le MÊME codegen que la
+# plateforme (ONLINE_IMAGE_CONFIG_SCHEMA / setup_online_image), et les actions
+# `online_image.set_url` / `online_image.release` gardent leurs noms — donc rien à
+# changer dans tab5-api-logic.yaml, qui appelle set_url au runtime.
+image:
+  - platform: online_image
+    id: assist_response_image
     url: "http://127.0.0.1/placeholder.png"   # remplacé au runtime par set_url
     format: PNG
     type: RGB565

@@ -4,6 +4,125 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-08-26 — Le push écran se déclenchait deux fois par relevé Météo-France
+
+`MAJ Ecran Tab5 ESPHome Push` journalisait « Already running » **249 fois en 5
+jours**. Mesuré, pas supposé :
+
+- une exécution dure **6,53 s** (4 traces, constant) ;
+- `sensor.…_next_rain` et `weather.…` viennent du **même coordinateur
+  Météo-France** et se déclenchent à ~0,8 s d'intervalle (12:11:27,938 puis
+  12:11:28,772). Le second tombe donc toujours pendant l'exécution du premier,
+  et HA l'abandonne (`failed_single`) ;
+- **vérifié 2 fois sur 2** le 26/08 (11:56:28 et 12:11:28) : le déclencheur
+  météo n'a **jamais** abouti.
+
+Le retirer ne change donc rien au comportement réel — ça acte ce qui se passait
+déjà. La carte météo reste rafraîchie par le cycle /10 min et par
+`esphome.tab5_connected` (émis toutes les 5 min par le firmware).
+
+- 📌 **Piège à retenir** : un trigger `state:` **nu se déclenche aussi sur les
+  changements d'attributs**. C'est pourquoi `next_rain` déclenchait en continu
+  alors que son état vaut `unknown` depuis des heures — c'est son
+  `1_hour_forecast` qui bougeait.
+- L'avertissement « Already running » est **laissé actif** (pas de
+  `max_exceeded: silent`) : si une nouvelle collision apparaît, on veut le savoir.
+- Une 3ᵉ automation dédiée (comme le push clim) a été envisagée et écartée : le
+  push clim existe parce qu'on **touche** les commandes et qu'on attend un retour
+  immédiat — la météo n'est pas interactive.
+- **Déployé par Samba puis vérifié** : `homeassistant.check_config` valide,
+  `automation.reload`, puis relecture de la config — 4 déclencheurs au lieu de 5,
+  actions intactes (`config_hash` `53e76a38…` → `b6429e59…`). Édition
+  chirurgicale du fichier plutôt que via l'API de config, qui aurait **détruit
+  tous les commentaires YAML**. Sauvegarde sur HA :
+  `automations.yaml.bak_weathertrig_20260826_122850`.
+
+### 2026-08-26 — Un popup ouvert depuis HA pouvait recouvrir l'écran de sonnerie
+
+Trouvé en évaluant `lvgl.widget.set_z_index` (finalement écarté, voir plus bas).
+
+- **Le défaut** : l'ouverture d'écran pilotée depuis Home Assistant
+  (`select.…_aller_a_l_ecran`) remontait sa cible au premier plan **sans
+  condition** — `animate_popup_open(target); lv_obj_move_foreground(target);`.
+  Déclenchée pendant que le réveil sonne, elle plaçait donc le popup demandé
+  **au-dessus de `alarm_ring_layer`** et masquait son bouton d'arrêt.
+- **Pourquoi c'était crédible et pas théorique** : le calque de sonnerie est
+  déjà explicitement protégé contre la **fermeture** automatique
+  (`tab5-scripts.yaml`, où il est volontairement absent de `kPopups`, commentaire
+  à l'appui). La même classe de problème était traitée d'un côté et pas de
+  l'autre.
+- **Correctif** (`tab5-ha-controls.yaml`) : refus des ouvertures de fenêtre
+  (`i >= 2`) tant que `alarm_ringing` est vrai, avec un `ESP_LOGI` — un refus
+  muet serait indiscernable d'une commande perdue. **« Accueil » (`i == 1`)
+  reste autorisé** : il ne fait que fermer les popups et revenir sur `page_main`,
+  ce qui *révèle* la sonnerie au lieu de la cacher.
+- **Vérifié sur l'appareil, en A/B** :
+  - contrôle négatif, **sans** sonnerie → « Télécommande TV » demandé,
+    `sensor.…_ecran_courant` passe bien à `Télécommande TV`. Le garde
+    n'élargit rien.
+  - test réel, **pendant** la sonnerie → « Calendrier » demandé, l'écran **reste**
+    sur `Réveil qui sonne`, et l'appareil journalise
+    `[12:07:09.426][I][TAB5:163]: Ouverture d'ecran refusee depuis HA : le reveil
+    sonne`. Le refus est prouvé par le log, pas seulement par l'état final.
+  - Firmware `config_hash=0xcddecfdc`, build `2026-08-26 12:03:52`, RAM 45,1 % /
+    flash 38,8 % (+108 octets : le garde et sa chaîne de log).
+
+**`lvgl.widget.set_z_index` (#17993) écarté**, après lecture du code : chaque
+appel est collé à `animate_popup_open()` dans le même lambda (le convertir
+couperait un lambda en deux morceaux à garder soudés) ; un site travaille sur un
+`lv_obj_t*` **résolu à l'exécution**, hors de portée d'une action à `id:` statique ;
+et le cas de la sonnerie est déjà traité depuis le C++ (`alarm_clock.cpp`), où une
+action YAML n'irait pas. `set_z_index: top` est strictement équivalent à
+`lv_obj_move_foreground` : rien à gagner ici.
+
+### 2026-08-26 — Montée en ESPHome 2026.8.1
+
+Aucun changement de comportement du firmware : le code est identique, seule la
+version d'ESPHome qui le compile change. Le plancher `min_version` passe de
+`2026.7.0` à `2026.8.1`.
+
+- **Rien ne cassait.** Les breaking changes de 2026.8.0 (modbus, rc522,
+  sgp4x/sen5x/sen6x, aqi, web_server, bandeaux LED, couche BLE neutre,
+  `interrupt_pin` des expandeurs GPIO, animations LVGL `round_trip`) ne touchent
+  **aucun** composant utilisé ici — la CI compilait d'ailleurs déjà en 2026.8.1
+  sans le savoir depuis le 20/08, `build-action` tirant l'image `latest`.
+- **Ce que la montée apporte concrètement**, sur des chemins que le Tab5 exerce
+  en permanence :
+  - `api` [#18577] — la loop se bloquait et déclenchait le watchdog quand
+    l'envoi de la liste d'entités bloquait. On en expose **58**, et
+    `CONFIG_ESP_TASK_WDT_TIMEOUT_S` est monté à 15 s pour ce genre de raison.
+  - `voice_assistant` [#17043] — lecture hachée quand le CPU est chargé, et
+    [#18295] : un morceau d'audio n'est plus consommé quand son envoi est
+    refusé (perte silencieuse sur lien API saturé).
+  - `esp32` [#17769] / [#17770] — le handler de crash capture **MTVAL**,
+    l'adresse fautive sur RISC-V, et signale un crash décodé contre un autre
+    binaire. Utile sur un projet à ~15 000 lignes de C++ à pointeurs LVGL.
+  - `i2s_audio` [#17752] — double conversion d'unité supprimée dans `read_()`,
+    le chemin de lecture du micro ES7210.
+  - `esp32_hosted` [#18030] — `esp_hosted` 2.12.12 / `esp_wifi_remote` 1.6.3 :
+    tout le WiFi passe par le co-processeur C6 en SDIO.
+  - `ota` [#18332] — reprise des envois qui échouent sur une erreur réseau.
+- **Vérifié sur l'appareil, pas sur un message** : compilation réelle
+  (`config_hash=0x331522c3`, `build_time_str=2026-08-26 10:37:44`, RAM 45,1 % /
+  flash 38,8 %), puis OTA confirmée par le `sw_version` que Home Assistant
+  déclare — `2026.8.1 (2026-08-26 10:37:44 +0200)`, soit l'horodatage exact de
+  ce build. L'uptime est retombé de 97 930 s à 8,3 s, API reconnectée, écran
+  rendu sur « Accueil · Planning ».
+- **`online_image:` migré** vers `image: - platform: online_image`
+  (`Tab5/tab5-hardware.yaml`). Le bloc de premier niveau était **déprécié**,
+  suppression annoncée en **ESPHome 2027.1.0**. C'est un pur déplacement de
+  clé : le shim déprécié réutilise le **même schéma et le même codegen** que la
+  plateforme, et les actions `online_image.set_url` / `online_image.release`
+  gardent leurs noms — **rien à changer** dans `tab5-api-logic.yaml`, qui
+  appelle `set_url` au runtime.
+  - **Neutralité prouvée par la mesure** : après migration, RAM **259 708
+    octets** et flash **3 153 102 octets**, soit *exactement* les mêmes qu'avant
+    — à l'octet près. Seul le `config_hash` change (`0x331522c3` →
+    `0x52a74aa8`), ce qui est attendu puisque le YAML a bougé.
+  - Migré et flashé **séparément** de la montée de version, pour qu'un seul
+    changement soit testé à la fois. OTA confirmée par le `sw_version` de Home
+    Assistant : `2026.8.1 (2026-08-26 11:53:54 +0200)`.
+
 ### 2026-08-06 — Télécommande TV : les raccourcis d'apps marchent enfin, et trois scripts HA réparés
 
 Audit des logs Home Assistant. Quatre choses étaient cassées **en silence** —

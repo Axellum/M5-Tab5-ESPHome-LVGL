@@ -144,6 +144,27 @@ select:
       - lambda: |-
           if (i == 0) return;  // « — » : position de repos, aucune action
 
+          // [26/08/2026] SONNERIE EN COURS : refuser d'ouvrir une fenêtre.
+          // `alarm_ring_layer` est un calque plein cadre que alarm_clock.cpp
+          // (alarm_ring_show) remonte au premier plan à chaque affichage. Or le
+          // `lv_obj_move_foreground(target)` du switch ci-dessous s'applique
+          // SANS CONDITION : un popup ouvert depuis HA pendant que le réveil
+          // sonne passerait donc PAR-DESSUS l'écran de sonnerie et masquerait
+          // son bouton d'arrêt. C'est le pendant exact de la protection déjà en
+          // place contre la fermeture automatique (tab5-scripts.yaml, liste
+          // kPopups dont alarm_ring_layer est volontairement absent) : tant que
+          // ça sonne, ce calque ne doit être ni refermé, ni recouvert.
+          // « Accueil » (i == 1) reste AUTORISÉ : il ne fait que fermer les
+          // popups et revenir sur page_main, ce qui RÉVÈLE la sonnerie au lieu
+          // de la cacher — utile si une partie était ouverte quand elle a
+          // démarré. ESP_LOGI et pas ESP_LOGD : un refus muet serait
+          // indiscernable d'une commande perdue, et le projet tourne à INFO.
+          if (i >= 2 && id(alarm_ringing)) {
+            ESP_LOGI("TAB5", "Ouverture d'ecran refusee depuis HA : le reveil sonne");
+            id(tab5_goto_screen).publish_state("—");
+            return;
+          }
+
           // Cible déjà affichée : ne rien faire, sinon le fermer-puis-rouvrir
           // ci-dessous se verrait comme un clignotement.
           static lv_obj_t* const kTargetOf[] = {
