@@ -4,6 +4,65 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-08-27 — Un vérificateur de secrets en clair, et le test qui ne pouvait pas échouer
+
+Outil de relecture, pas de firmware : rien ne change sur l'appareil.
+
+`tools/verifier_secrets_config.py` parcourt les YAML du dépôt et signale trois
+familles — jeton HA (`eyJ…`), secret générique (`password|token|api_key|secret|key`
+suivi d'au moins 16 caractères), IP privée RFC1918. Les lignes en `!secret` et les
+commentaires sont ignorés ; `secrets.yaml` lui-même est exclu, c'est là que les
+secrets **doivent** être.
+
+- **La sortie ne contient jamais la valeur trouvée**, seulement fichier, ligne et
+  type. C'est ce qui rendrait l'outil sûr à lancer en CI, où le journal est public.
+- **Un seul résultat sur le dépôt réel, et c'est un vrai** :
+  `HomeAssistant_Config/packages/tab5_tv.yaml:51` — l'IP de la TV en dur dans le
+  `rest_command`, pas en commentaire. Pas de bruit à filtrer, ce qui est la
+  différence entre un outil qu'on garde et un outil qu'on désactive au bout d'une
+  semaine.
+- ⚠️ **L'outil n'est câblé dans aucun workflow**, volontairement : le brancher en
+  CI ferait échouer `main` immédiatement sur ce résultat. Traiter l'IP d'abord.
+
+**Deux défauts corrigés en relecture, avant merge** :
+
+- `test_output_does_not_contain_secret_value`, annoncé « Vérification CRITIQUE »,
+  **ne pouvait pas échouer** : il comparait la valeur du secret au libellé
+  **constant** du type (`"HA_TOKEN"`), donc l'assertion était vraie quoi que fasse
+  `check_file`. Il porte maintenant sur le tuple entier, avec une garde
+  `assert findings` — sans elle, une liste vide ferait passer le test sans rien
+  vérifier. 📌 **Prouvé par mutation, pas par relecture** : en faisant renvoyer la
+  ligne complète à `check_file`, le test échoue désormais en affichant
+  `(1, 'GENERIC_SECRET', 'token: eyJ_SECRET_TOKEN_123456789')` ; l'ancienne version
+  restait **verte** sur cette même mutation.
+- Trois chiffres de `docs/INVENTAIRE_CONFIGS_TESTS.md` ne correspondaient pas à
+  `main` : `ui_components/` 33 → **35**, inclus par `tab5-lvgl.yaml` 21 → **23**,
+  `api: services:` 14 → **16**.
+
+**Contexte** : le 24/08 à 06:09, une tâche autonome a écrasé les deux
+`secrets.yaml` locaux par des marqueurs, ce qui a bloqué net la compilation. Ces
+fichiers étant gitignorés, **aucun `git checkout` ne les récupère**. Cet outil
+détecte, il ne protège pas — la sauvegarde hors dépôt reste à faire.
+
+Récupéré de la branche de tâche autonome `task/81_1787688888`, rebasé sur `main`
+et débarrassé des `.qoder/` qu'elle traînait. La PR #94, qui portait les mêmes
+5 fichiers, est fermée au profit de celle-ci.
+
+### 2026-08-27 — Le snippet alerts est une ALTERNATIVE au package, pas un complément
+
+Le README présentait `snippets/tab5_alerts_dismissed_input_text.yaml` comme un
+moyen de déclarer l'`input_text` sans charger tout le package — c'est exact, mais
+rien n'avertissait de ce qui arrive si on prend les deux.
+
+C'est arrivé : le **19/07/2026**, le doublon a cassé le chargement du package avec
+`Integration 'input_text' has duplicate key 'name'`, et il a fallu retirer les
+copies de `configuration.yaml` / `scripts.yaml` / `automations.yaml` au profit du
+seul package. L'en-tête du snippet le dit maintenant, et rappelle que le package
+reste la voie recommandée : il apporte aussi `tab5_dismiss_alert`,
+`tab5_dismiss_info_panel` et l'automation `tab5_alert_dismiss_handler`, que le
+snippet seul ne fournit pas.
+
+
 ### 2026-08-26 — Le push écran se déclenchait deux fois par relevé Météo-France
 
 `MAJ Ecran Tab5 ESPHome Push` journalisait « Already running » **249 fois en 5
