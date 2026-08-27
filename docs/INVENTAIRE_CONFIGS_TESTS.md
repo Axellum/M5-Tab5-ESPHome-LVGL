@@ -8,7 +8,7 @@
 > d'extension du projet. Les chemins sont relatifs à la racine du dépôt
 > `H:\AuxFilsDesIdees\00ProjetTab`.
 
-`Généré le 2026-08-01` · Sources vérifiées directement dans l'arborescence du dépôt.
+`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-08-27** · Sources vérifiées directement dans l'arborescence du dépôt.
 
 ---
 
@@ -28,7 +28,7 @@
 | `tab5-hardware.yaml` | `Tab5/` | Bas niveau : display MIPI-DSI, tactile ST7123, DAC/ADC audio, expander GPIO, esp32_hosted, wake words, OTA. |
 | `tab5-sensors-diagnostics.yaml` | `Tab5/` | WiFi, alimentation GPIO, statut API HA, uptime, RAM, loop time, horloge SNTP. |
 | `tab5-sensors-domotique.yaml` | `Tab5/` | Miroirs d'entités HA : plantes, lumières, PC, températures, batterie, audio. |
-| `tab5-api-logic.yaml` | `Tab5/` | Contrat API HA↔Tab5 : bloc `api: services:` (14 services). |
+| `tab5-api-logic.yaml` | `Tab5/` | Contrat API HA↔Tab5 : bloc `api: services:` (16 services, comptés le 27/08/2026). |
 | `tab5-styles.yaml` | `Tab5/` | Thème "Dark Mode Slate" : tokens `color:`, déclarations `font:`, `lvgl: style_definitions:`. |
 | `tab5-globals.yaml` | `Tab5/` | État partagé (`globals:`) + rotateur carte centrale (interval 8s). |
 | `tab5-scripts.yaml` | `Tab5/` | Scripts ESPHome : debounces, vocal, rotateur, volet, popups, jeux. |
@@ -39,7 +39,7 @@
 
 ### 1.3 Composants UI (`Tab5/ui_components/*.yaml`)
 
-33 fichiers, dont 21 inclus directement par `tab5-lvgl.yaml`. Exemples :
+35 fichiers, dont 23 inclus directement par `tab5-lvgl.yaml` (compté le 27/08/2026). Exemples :
 
 | Fichier | Emplacement | Rôle |
 |---|---|---|

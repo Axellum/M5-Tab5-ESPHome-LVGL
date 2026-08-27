@@ -58,14 +58,21 @@ def test_ignores_comments(tmp_path):
 
 def test_output_does_not_contain_secret_value(tmp_path):
     """
-    Vérification CRITIQUE : la valeur du secret ne doit JAMAIS apparaître 
-    dans le résultat de check_file.
+    Vérification CRITIQUE : la valeur du secret ne doit JAMAIS apparaître dans
+    ce que renvoie check_file — c'est ce qui rend l'outil sûr à lancer en CI,
+    où la sortie est publique.
+
+    La boucle porte sur le tuple ENTIER (`repr`), pas sur le seul libellé de
+    type : ce libellé est une constante ("HA_TOKEN", "GENERIC_SECRET"…), donc
+    le comparer au secret ne pouvait rien prouver.
     """
     secret_val = "eyJ_SECRET_TOKEN_123456789"
     content = f"token: {secret_val}"
     f = tmp_path / "leak_test.yaml"
     f.write_text(content)
-    
+
     findings = check_file(str(f))
-    for line, secret_type in findings:
-        assert secret_val not in secret_type
+    # Sans cette garde, une liste vide ferait passer le test sans rien vérifier.
+    assert findings, "le secret de test doit être détecté, sinon l'assertion suivante est vide de sens"
+    for finding in findings:
+        assert secret_val not in repr(finding)

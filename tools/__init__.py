@@ -1,1 +1,1 @@
-# Empty file to make it a package
+# Fichier vide : marque le dossier comme paquet Python.
