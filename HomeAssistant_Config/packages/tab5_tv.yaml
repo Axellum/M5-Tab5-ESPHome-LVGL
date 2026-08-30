@@ -28,27 +28,39 @@
 #       sait interroger et ARRÊTER une app par son nom, mais son POST de
 #       lancement ne répond 201 que pour Netflix (404 ailleurs) : inutilisable.
 #
-# @ai_instruction L'IP de la TV est en dur (192.168.0.153). La TV est en
-#       ETHERNET (`networkType: wired`), donc l'IP est stable, mais si elle
-#       change : corriger ici, et vérifier avec
+# @ai_instruction L'IP de la TV ne vit PLUS dans ce fichier : elle est passée
+#       en `!secret tab5_tv_app_url` (voir @install ci-dessous). Ce fichier est
+#       suivi dans un dépôt public — l'IP y était en clair, et le vérificateur
+#       `tools/verifier_secrets_config.py` la signalait à chaque passage.
+#       La TV est en ETHERNET (`networkType: wired`), donc l'IP est stable ; si
+#       elle change, corriger le SECRET, pas ce fichier, puis vérifier avec
 #       `curl http://<ip>:8001/api/v2/applications/3201907018807` (doit répondre
 #       le JSON de Netflix). Idéalement, poser un bail DHCP fixe.
 #
 # @ai_instruction Pour retrouver l'id d'une app : la TV ne sait PLUS lister ses
 #       applications (Samsung a retiré `ed.installedApp.get` sur les modèles
 #       2022+). On ne peut que VÉRIFIER un id candidat :
-#         curl http://192.168.0.153:8001/api/v2/applications/<id>
+#         curl http://<ip-de-la-tv>:8001/api/v2/applications/<id>
 #       → renvoie {"id","name","running","version"} si installée, 404 sinon.
 #       Le nom exact d'une app peut se lire par DIAL :
-#         curl http://192.168.0.153:8080/ws/app/CANAL+
+#         curl http://<ip-de-la-tv>:8080/ws/app/CANAL+
 # @install Nécessite homeassistant.packages: !include_dir_named packages
+#       ET, dans le `secrets.yaml` de Home Assistant, la ligne :
+#         tab5_tv_app_url: "http://<ip-de-la-tv>:8001/api/v2/applications/{{ app_id }}"
+#       L'URL ENTIÈRE va dans le secret, template compris : `!secret` est résolu
+#       au chargement du YAML, bien avant le rendu Jinja, donc on ne peut pas
+#       l'insérer au milieu d'une chaîne (`"http://!secret …"` ne marche pas).
+#       `rest_command` rend ensuite `url` comme un template, et `{{ app_id }}`
+#       est substitué à l'appel comme avant.
+#       Sans ce secret, HA refuse de démarrer sur ce package.
 # ============================================================================
 
 rest_command:
   # Lance une application Tizen par son id. Corps vide obligatoire : sans
   # Content-Length, la TV répond 411 Length Required.
   tab5_tv_lancer_app:
-    url: "http://192.168.0.153:8001/api/v2/applications/{{ app_id }}"
+    # URL entière en secret (hôte + chemin + template) : voir @install en tête.
+    url: !secret tab5_tv_app_url
     method: post
     payload: ""
     timeout: 10

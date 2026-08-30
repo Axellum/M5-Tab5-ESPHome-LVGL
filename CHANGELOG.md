@@ -4,6 +4,44 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-08-27 — L'IP de la TV était en clair dans un fichier public
+
+Premier résultat du vérificateur mergé le matin même : **un seul**, et c'est un
+vrai — `packages/tab5_tv.yaml:51`. Pas en commentaire, dans le `rest_command`,
+et le fichier est suivi dans un dépôt public.
+
+Ce n'était pas un oubli : l'en-tête l'assumait (« l'IP de la TV est en dur », TV
+en ethernet donc IP stable). Deux raisons de changer d'avis quand même — c'est
+une donnée de topologie réseau publiée, et personne d'autre ne peut réutiliser
+ce package tel quel.
+
+Traitement en deux temps, selon le précédent du dépôt (26/07, où `192.168.0.88`
+a été retirée de `Tab5/README.md` au profit de `192.168.x.x`) :
+
+- les 3 occurrences en **commentaire** deviennent `<ip-de-la-tv>` ;
+- la ligne **fonctionnelle** passe en `url: !secret tab5_tv_app_url`.
+
+📌 **C'est l'URL entière qui va dans le secret, template compris** — pas
+seulement l'hôte. `!secret` est résolu par le loader YAML bien avant le rendu
+Jinja, donc il ne peut pas s'insérer au milieu d'une chaîne : `"http://!secret …"`
+ne marche pas. L'en-tête `@install` porte la ligne exacte à ajouter.
+
+- **Le vérificateur passe de `exit 1` à `exit 0`.** C'est ce qui débloque son
+  câblage en CI, jusqu'ici impossible sans faire échouer `main` dès le premier
+  passage.
+- **Ce qui n'est pas mesuré, et qui est dit comme tel** : la chaîne finale vue
+  par Home Assistant est identique à l'octet près — seule sa provenance change,
+  littéral YAML → `secrets.yaml` — donc le schéma `rest_command` voit exactement
+  ce qu'il voyait. C'est un raisonnement, pas une mesure.
+- ⚠️ **Rien n'a été déployé.** `rest_command.tab5_tv_lancer_app` tourne bien en
+  production (vérifié) : tant que `tab5_tv_app_url` n'existe pas dans le
+  `secrets.yaml` de HA, ce fichier **empêche HA de démarrer**. Ordre à
+  respecter — ajouter le secret, `homeassistant.check_config`, recharger, puis
+  lancer une app depuis le popup du Tab5. Le POST réel est la seule preuve.
+
+Aucun impact firmware : le catalogue d'`app_id` vit côté HA, comme documenté.
+
+
 ### 2026-08-27 — Un vérificateur de secrets en clair, et le test qui ne pouvait pas échouer
 
 Outil de relecture, pas de firmware : rien ne change sur l'appareil.
