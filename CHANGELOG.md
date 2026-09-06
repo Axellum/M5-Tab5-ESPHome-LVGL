@@ -4,6 +4,28 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-06 — CI : tests hôte à chaque push, compilation seulement quand le firmware bouge, garde-fous rapatriés
+
+Lot « outillage » de l'audit du 06/09/2026. Aucun fichier de `Tab5/` touché.
+
+- **Les trois garde-fous de contenu entrent dans le dépôt** (`tools/check_tab5_modal_chrome.py`,
+  `check_marble_rooms.py`, `check_lode_levels.py`). Ils vivaient dans le workspace privé
+  alors que `Tab5/README.md`, ADR-0009 et la section Marble les citaient : un clone ne
+  pouvait pas les lancer. Chemins relatifs au dépôt, et `tests/test_guards.py` les joue
+  dans `pytest` — une salle ou une map cassée fait échouer la CI avant tout flash.
+- **Job `python` en CI** à chaque push/PR : `pytest` (31 tests), vérificateur de secrets
+  (câblable depuis #99), dry-run du demo pusher. ~1 min.
+- **La compilation ESPHome ne tourne plus pour une typo Markdown** : job `changes`
+  (`dorny/paths-filter`) → `build` seulement si `tab5-ha-hmi.yaml`, `Tab5/` ou le workflow
+  changent. `build` est un check requis de `main` : il reste déclaré et passe en
+  « skipped » (= succès pour la protection) sinon ; `workflow_dispatch` force la
+  compilation. L'image `latest` est conservée volontairement (canari amont gratuit,
+  cf. 26/08). L'artefact `firmware.bin` n'est plus stocké que pour un push sur `main`
+  ou un lancement manuel (30 jours).
+- `requirements-dev.txt` (pytest, numpy, aioesphomeapi, fonttools — `fontTools` et `numpy`
+  n'étaient déclarés nulle part), Dependabot étendu à `pip`, `CONTRIBUTING.md` et
+  `AGENTS.md` ajoutent `python -m pytest` à la porte d'entrée.
+
 ### 2026-09-06 — Docs : chiffres remis à jour, badge 2026.8.1, sections mortes retirées, trois ADR
 
 Lot P1 « cohérence documentaire » de l'audit du 06/09/2026. Trois commentaires de

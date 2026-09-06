@@ -1,16 +1,62 @@
 name: ESPHome Tab5 Compilation
 
+# Deux jobs :
+#   - python : tests hôte (pytest = outils + moteurs Go/échecs + garde-fous
+#     Marble/Lode/chrome modal), vérificateur de secrets, dry-run du demo pusher.
+#     Toujours exécuté, ~1 min.
+#   - build  : compilation ESPHome complète (~9 min sur ESP32-P4). Check REQUIS
+#     par la protection de `main`, donc le job existe toujours ; il est SAUTÉ
+#     (statut « skipped » = succès pour la protection) quand le push/la PR ne
+#     touche ni tab5-ha-hmi.yaml, ni Tab5/, ni ce workflow — une typo Markdown
+#     ne recompile plus le firmware. `workflow_dispatch` force la compilation.
+#
+# `esphome/build-action` sans `version:` tire l'image `latest` : c'est VOULU.
+# La CI sert de banc d'essai gratuit de la dernière ESPHome (le 25/08/2026 elle
+# compilait déjà en 2026.8.1 avant que le projet ne relève son plancher). Une
+# rupture amont se voit ici avant de toucher l'appareil. `min_version:` dans
+# tab5-ha-hmi.yaml reste la seule contrainte de version.
+
 on:
   push:
-    paths:
-      - '**'
   pull_request:
-    paths:
-      - '**'
   workflow_dispatch:
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      firmware: ${{ steps.filter.outputs.firmware }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            firmware:
+              - 'tab5-ha-hmi.yaml'
+              - 'Tab5/**'
+              - '.github/workflows/esphome-tab5.yml'
+
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Dépendances des outils
+        run: pip install -r requirements-dev.txt
+      - name: Tests hôte (outils, moteurs Go/échecs, garde-fous de contenu)
+        run: python -m pytest
+      - name: Aucun secret en clair dans les YAML
+        run: python tools/verifier_secrets_config.py
+      - name: Payloads du mode démo conformes au contrat firmware
+        run: python tools/demo/demo_pusher.py --dry-run
+
   build:
+    needs: changes
+    if: needs.changes.outputs.firmware == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -29,7 +75,11 @@ jobs:
         with:
           yaml-file: tab5-ha-hmi.yaml
       - name: Upload Artifact
+        # Le binaire n'a d'usage que pour un push sur main (ou un lancement
+        # manuel) : inutile d'en stocker un par commit de branche.
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         uses: actions/upload-artifact@v7
         with:
           name: tab5-firmware
           path: .esphome/build/tab5-ha-hmi/.pioenvs/tab5-ha-hmi/firmware.bin
+          retention-days: 30
