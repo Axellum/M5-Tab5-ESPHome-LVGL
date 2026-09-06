@@ -37,10 +37,17 @@ Tab5/tts_library_v2/
 # Cache TTS Piper local (HA / moteur) — pas utilise par le firmware
 audio_lib/
 
-# Garde-fou : lien symbolique recursif Tab5/Tab5 -> Tab5 cree par accident
-# (E: est une jonction vers H:). Supprime le 30/07/2026 ; la regle reste pour
-# que la recidive ne soit jamais versionnee.
+# Garde-fou : lien symbolique recursif Tab5/Tab5 -> Tab5 cree par accident.
+# Supprime le 30/07/2026 ; la regle reste pour que la recidive ne soit jamais
+# versionnee. (NB 06/09/2026 : E: n'a jamais ete une jonction vers H:, c'est un
+# volume distinct — la racine unique du workspace est H:\AuxFilsDesIdees.)
 Tab5/Tab5/
+
+# Identifiants HA reels (placeholder -> valeur) et rendu deployable produit par
+# tools/render_ha_config.py. Les fichiers publics ne contiennent que des
+# placeholders ; modele suivi : HomeAssistant_Config/placeholders.example.yaml
+HomeAssistant_Config/placeholders.yaml
+HomeAssistant_Config/rendered/
 
 
 # Dossier de travail de l'IDE Qoder, posé dans chaque dépôt ouvert. Le moteur

@@ -39,12 +39,14 @@ python -m esphome compile tab5-ha-hmi.yaml
 - There is no unit test suite *for the HMI*, but two game engines have host tests that run on a plain PC with no toolchain — run them if you touch the corresponding engine:
 
 ```bash
+python -m pytest                    # tout : tests/ (outils) + tools/ (moteurs Go et échecs) — config dans pyproject.toml
 python tools/test_go_engine.py      # règles Go : capture, suicide, ko, territoire, score
 python tools/test_chess_perft.py    # générateur d'échecs contre la suite perft standard
+python tools/render_ha_config.py --check   # aucun identifiant HA réel dans un fichier public
 ```
 
   Both are **Python mirrors** of the C++ (`go_engine.cpp`, `chess_ai.cpp`), not bindings: a change to the C++ must be mirrored there or the test stops proving anything. `tools/test_go_engine.cpp` is the same suite compiled against the real C++ when a host compiler is available.
-- `tools/demo/demo_pusher.py --dry-run` validates every push payload against the firmware contract without any hardware — cheap check after touching `tab5-api-logic.yaml`.
+- `tools/demo/demo_pusher.py --dry-run` validates the payloads of the **10 dashboard push services** against the firmware contract without any hardware — cheap check after touching `tab5-api-logic.yaml`. The 6 other services (`tab5_maj_alertes_ha_bulk`, `tab5_maj_calendrier_mois/_jour`, `tab5_maj_rdv_prochains`, `tab5_assist_reponse`, `tab5_maj_reponse_vocale`) are out of its scope by design (they need live HA entities, a calendar or a voice pipeline).
 
 ## Code rules (full detail in `Tab5/README.md`)
 
@@ -57,9 +59,10 @@ python tools/test_chess_perft.py    # générateur d'échecs contre la suite per
 
 ## Boundaries — do not
 
-- Do not read or write `secrets.yaml` / `Tab5/secrets.yaml` (gitignored, never tracked — verified against full git history).
+- Do not read or write `secrets.yaml` (repo root, gitignored, never tracked — verified against full git history). There is **one** secrets file: the former `Tab5/secrets.yaml` duplicate was removed on 2026-09-06 — ESPHome resolves `!secret` from the package's own folder first, then falls back to the root file, and the CI has always compiled with the root file alone.
 - Do not read or write `Tab5/user_entities.yaml` (gitignored — your real HA entity IDs). Edit `Tab5/user_entities.example.yaml` only when changing the public template or adding a new substitution key.
 - Do not confuse the gitignored real HA config (`HomeAssistant_Config/automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml` — Axel's actual production files) with the tracked `*_examples.yaml*` placeholders. If you change logic in one, mirror the change in the other. **This drifts easily**: on 30/07/2026 the example was found missing the `meteo_id` argument that production had been sending for two weeks.
+- Public HA files (`HomeAssistant_Config/packages/`, `snippets/`, `*_examples*`) contain **only placeholders** (`VOTRE_VILLE`, `calendar.VOTRE_EMAIL_gmail_com`, `media_player.VOTRE_TV`…). The real values live in the gitignored `HomeAssistant_Config/placeholders.yaml` (template: `placeholders.example.yaml`); `python tools/render_ha_config.py` writes the deployable copies to the gitignored `HomeAssistant_Config/rendered/`, and `--check` fails if a real value leaks back into a tracked file (it never prints the value — CI-safe). Deploy to HA **from `rendered/`**, never from the tracked files: on 2026-09-06 the packages running on HA were byte-for-byte the tracked files, real IDs included.
 - When you add or remove a variable on an `api: services:` entry in `tab5-api-logic.yaml`, you are changing a public contract with **three** callers, not one: the HA automation (`HomeAssistant_Config/automations_examples.yaml.example` *and* the private original), the demo pusher (`tools/demo/`), and the service table in `Tab5/README.md`. Update all of them in the same PR.
 - Do not leave more than a couple of ESPHome CLI processes running against the device at once — the API only has 8 connection slots; a past session's leaked `esphome` processes silently starved the real device of connections.
 - Do not "clean up" code flagged `[AI-WARNING]` without reading the warning and checking `docs/decisions/`.

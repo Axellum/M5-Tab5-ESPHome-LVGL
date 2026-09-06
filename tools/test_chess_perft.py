@@ -367,20 +367,36 @@ SUITE = [
 ]
 
 
-def main():
-    ok = True
+def run_suite(verbose=True):
+    """Execute toute la suite ; renvoie la liste des (position, profondeur, obtenu,
+    attendu) en ECHEC — vide si le generateur est valide."""
+    failures = []
     for name, fen, refs in SUITE:
-        print(f"\n=== {name} ===")
-        print(f"    {fen}")
+        if verbose:
+            print(f"\n=== {name} ===")
+            print(f"    {fen}")
         for d, expected in enumerate(refs, start=1):
             p = set_fen(Position(), fen)
             got = perft(p, d)
             good = (got == expected)
-            ok = ok and good
-            print(f"    perft({d}) = {got:>9}  attendu {expected:>9}  {'OK' if good else 'ECHEC'}")
+            if not good:
+                failures.append((name, d, got, expected))
+            if verbose:
+                print(f"    perft({d}) = {got:>9}  attendu {expected:>9}  {'OK' if good else 'ECHEC'}")
+    return failures
+
+
+def test_perft_suite():
+    """Point d'entree pytest. Jusqu'au 06/09/2026 ce script n'avait aucune fonction
+    `test_` : `pytest` ne le collectait pas, seul un lancement manuel le jouait."""
+    assert run_suite(verbose=False) == []
+
+
+def main():
+    failures = run_suite(verbose=True)
     print()
-    print("RESULTAT :", "generateur VALIDE sur toute la suite" if ok else "GENERATEUR FAUX")
-    return 0 if ok else 1
+    print("RESULTAT :", "generateur VALIDE sur toute la suite" if not failures else "GENERATEUR FAUX")
+    return 0 if not failures else 1
 
 
 if __name__ == "__main__":

@@ -66,8 +66,9 @@
 |---|---|---|
 | `Tab5/user_entities.yaml` | `Tab5/` | **Gitignoré** — entités HA réelles d'Axel. |
 | `Tab5/user_entities.example.yaml` | `Tab5/` | Modèle public des substitutions. |
-| `secrets.yaml` | Racine | **Gitignoré** — secrets ESPHome. |
-| `Tab5/secrets.yaml` | `Tab5/` | **Gitignoré** — secrets ESPHome (variante). |
+| `secrets.yaml` | Racine | **Gitignoré** — secrets ESPHome. Fichier UNIQUE depuis le 06/09/2026 (l'ancien doublon `Tab5/secrets.yaml` portait les mêmes 32 clés ; ESPHome retombe sur la racine). |
+| `HomeAssistant_Config/placeholders.yaml` | `HomeAssistant_Config/` | **Gitignoré** — identifiants HA réels (`placeholder: valeur`) ; modèle suivi `placeholders.example.yaml`. |
+| `HomeAssistant_Config/rendered/` | `HomeAssistant_Config/` | **Gitignoré** — rendu déployable produit par `tools/render_ha_config.py`. |
 
 ---
 
@@ -105,6 +106,7 @@
 | Fichier | Emplacement | Type | Cible |
 |---|---|---|---|
 | `test_verifier_secrets_config.py` | `tests/` | Unitaire | Détection de secrets en clair dans les YAML (`tools/verifier_secrets_config.py`). |
+| `test_render_ha_config.py` | `tests/` | Unitaire | Rendu placeholders → valeurs et détection de fuite d'identifiants réels (`tools/render_ha_config.py`). |
 | `__init__.py` | `tests/` | — | Marqueur de package. |
 
 ### 3.2 Tests moteurs de jeux (`tools/`)
@@ -121,12 +123,14 @@
 |---|---|---|---|
 | `tools/demo/demo_pusher.py` | `tools/demo/` | Intégration (dry-run) | Valide chaque payload push contre le contrat firmware. |
 | `tools/verifier_secrets_config.py` | `tools/` | Outil | Analyse les YAML pour détecter des secrets en clair. |
+| `tools/render_ha_config.py` | `tools/` | Outil | Rend les fichiers HA publics avec les identifiants réels (`rendered/`) ; `--check` = garde-fou de fuite. |
+| `pyproject.toml` | Racine | Config | `testpaths = tests, tools` : `pytest` nu ne ramasse plus `archives/`. |
 
 ### 3.4 Commandes de lancement
 
 ```bash
-# Tests pytest (dossier tests/)
-pytest tests/
+# Tous les tests (tests/ + moteurs de jeux sous tools/ — cf. pyproject.toml)
+python -m pytest
 
 # Tests moteurs de jeux (miroirs Python)
 python tools/test_go_engine.py
@@ -166,4 +170,4 @@ python tools/demo/demo_pusher.py --dry-run
 - **Pas de suite de tests unitaires pour la HMI** : la logique LVGL (`tab5_custom.cpp`) n'a pas de tests hôte. Seuls les moteurs de jeux (Go, échecs) disposent de tests exécutables sur PC.
 - **Les tests Go/échecs sont des miroirs Python** du C++ : toute modification du C++ doit être reflétée dans le miroir Python, sinon le test ne prouve plus rien.
 - **CI GitHub Actions** (`.github/workflows/esphome-tab5.yml`) : génère un `secrets.yaml` factice et compile via `esphome/build-action@v8.0.0` à chaque push/PR.
-- **Fichiers gitignorés** : `secrets.yaml`, `Tab5/secrets.yaml`, `Tab5/user_entities.yaml`, `HomeAssistant_Config/automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml`, `Tab5/tts_library*/`, `archives/`.
+- **Fichiers gitignorés** : `secrets.yaml`, `Tab5/user_entities.yaml`, `HomeAssistant_Config/placeholders.yaml`, `HomeAssistant_Config/rendered/`, `HomeAssistant_Config/automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml`, `Tab5/tts_library*/`, `archives/`.

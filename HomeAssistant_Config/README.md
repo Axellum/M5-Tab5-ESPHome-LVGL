@@ -25,7 +25,7 @@ What it pushes:
 - **Hourly forecast (15 slots):** three chunks of 5 through `tab5_maj_previsions_heures_bulk`
 - **Short-term rain chart:** on `sensor.*_next_rain` state change — **9** bars (`tab5_maj_pluie_1h`, one call per index 0–8, i.e. 0/5/10/…/55 min) built from Météo-France's `v1/vision/rain` data
 - **Current weather / probabilities:** `tab5_maj_meteo_actuelle` (condition, temperature, humidity) and `tab5_maj_probabilites` (UV, frost, snow)
-- **Climate state:** on climate entity state change — `tab5_maj_clim` (target, current, mode, preset, fan, swing)
+- **Climate state:** dedicated fast-path automation `tab5_ha_hmi_clim_push` (no delay, `mode: restart`) — `tab5_maj_clim` (target, current, mode, preset, fan, swing)
 - **Shutter state:** `tab5_maj_volet_etat` — also arms the device-local “Stop” wake word while the shutter moves
 - **Info banner:** `tab5_maj_info_texte` (text, colour, dismiss id) — 3-day calendar recap or a weather-alert banner
 - **Météo-France vigilance:** `tab5_maj_alerte_meteo_france` — a single 11-field `|`-delimited payload
@@ -83,7 +83,7 @@ Then adapt the entity names at the top of the file (`notify.notify`, the `tab5_h
 ### `packages/tab5_calendar.yaml`
 Backend of the firmware's **calendar popup** (long press on the clock). Two scripts called *by the device* (`homeassistant.service:`), both `mode: restart`:
 
-- **`tab5_calendrier_mois`** (`annee`, `mois`) — reads the work / public-holidays / family / birthdays calendars over the requested month and pushes back `esphome.<device>_tab5_maj_calendrier_mois`: a 62-hex-char string (2 per day — bits: work / public holiday / school holiday / appointment / birthday) plus 31 `|`-separated work-hour fields
+- **`tab5_calendrier_mois`** (`annee`, `mois`) — reads the work / public-holidays / family / birthdays calendars over the requested month and pushes back `esphome.<device>_tab5_maj_calendrier_mois`: a 62-hex-char string (2 per day — bits: work / public holiday / school holiday / appointment / birthday) plus 31 `|`-separated work-hour fields and a `details` field (day-detail lines, `~`-separated — required by the firmware since the 25/07/2026 schema, sent empty here)
 - **`tab5_calendrier_jour`** (`date`) — builds the day-detail lines (`type|text;...`, max 6) and pushes `esphome.<device>_tab5_maj_calendrier_jour`
 
 School holidays come from a **static Zone A table** (Bordeaux academy) verified against data.education.gouv.fr — edit it for your zone, and extend it once the next school year is published (see the `@ai_warning` in the file). The Google public-holidays calendar mixes real holidays with civil observances, hence the `feries_connus` whitelist. Same package install as above.
@@ -126,9 +126,21 @@ Replace these placeholders throughout the files:
 | `VOTRE_CLIMATISATION` | Your climate entity (`climate.your_ac_unit`) |
 | `VOTRE_EMAIL_gmail_com` | Your Google Calendar entity (`calendar.your_email_gmail_com`) |
 | `VOTRE_VOLET` | Your roller shutter / cover entity |
+| `VOTRE_TV` | Your Samsung TV (`media_player.<…>` **and** `remote.<…>`, package `tab5_tv`) |
+| `VOTRE_LEDS` | The light toggled by `script.allumer_leds` |
+| `VOTRE_TELEPHONE` / `VOTRE_CAPTEUR_PRESENCE` | Phone tracker and presence sensor of the screen on/off automation |
 | `tab5-ha-hmi` | Your ESPHome device name (as configured in `tab5-ha-hmi.yaml`) |
 
-After editing:
+**Don't search-and-replace by hand — render.** Copy `placeholders.example.yaml` to `placeholders.yaml` (gitignored), fill in your real entity IDs, then:
+
+```bash
+python tools/render_ha_config.py          # writes HomeAssistant_Config/rendered/ — the deployable copies
+python tools/render_ha_config.py --check  # fails if a real ID leaked into a tracked file (never prints the value)
+```
+
+Deploy **from `rendered/`** to your HA `config/` (packages, snippets, the three examples). The tracked files stay placeholder-only, so a PR never carries a real entity ID and a `git pull` never overwrites your values.
+
+After deploying:
 
 1. In Home Assistant, go to **Developer Tools → YAML → Reload Automations** (or restart HA)
 2. The Tab5 should receive its first push within a few seconds of connecting to the API
@@ -184,7 +196,7 @@ Ce qu'elle pousse :
 - **Prévisions horaires (15 créneaux) :** trois chunks de 5 via `tab5_maj_previsions_heures_bulk`
 - **Graphe de pluie court terme :** sur changement de `sensor.*_next_rain` — **9** barres (`tab5_maj_pluie_1h`, un appel par index 0–8, soit 0/5/10/…/55 min) construites depuis `v1/vision/rain` de Météo-France
 - **Météo actuelle / probabilités :** `tab5_maj_meteo_actuelle` (condition, température, humidité) et `tab5_maj_probabilites` (UV, gel, neige)
-- **État climatisation :** `tab5_maj_clim` (cible, actuelle, mode, preset, ventilation, oscillation)
+- **État climatisation :** automation dédiée à faible latence `tab5_ha_hmi_clim_push` (sans delay, `mode: restart`) — `tab5_maj_clim` (cible, actuelle, mode, preset, ventilation, oscillation)
 - **État volet :** `tab5_maj_volet_etat` — arme aussi le wake word local « Stop » pendant le mouvement
 - **Bandeau info :** `tab5_maj_info_texte` (texte, couleur, id de dismiss) — récap calendrier 3 jours ou bannière d'alerte météo
 - **Vigilance Météo-France :** `tab5_maj_alerte_meteo_france` — un seul payload à 11 champs délimités `|`
@@ -242,7 +254,7 @@ Puis adaptez les noms d'entités en tête de fichier (`notify.notify`, le préfi
 ### `packages/tab5_calendar.yaml`
 Backend du **popup calendrier** du firmware (appui long sur l'horloge). Deux scripts appelés *par l'appareil* (`homeassistant.service:`), tous deux `mode: restart` :
 
-- **`tab5_calendrier_mois`** (`annee`, `mois`) — lit les calendriers boulot / jours fériés / famille / anniversaires sur le mois demandé et repousse `esphome.<device>_tab5_maj_calendrier_mois` : chaîne de 62 hex (2 par jour — bits : travail / férié / vacances scolaires / RDV / anniversaire) + 31 champs d'heures de travail séparés par `|`
+- **`tab5_calendrier_mois`** (`annee`, `mois`) — lit les calendriers boulot / jours fériés / famille / anniversaires sur le mois demandé et repousse `esphome.<device>_tab5_maj_calendrier_mois` : chaîne de 62 hex (2 par jour — bits : travail / férié / vacances scolaires / RDV / anniversaire) + 31 champs d'heures de travail séparés par `|` + un champ `details` (lignes de détail jour séparées par `~` — exigé par le firmware depuis le schéma du 25/07/2026, envoyé vide ici)
 - **`tab5_calendrier_jour`** (`date`) — construit les lignes de détail du jour (`type|texte;...`, max 6) et pousse `esphome.<device>_tab5_maj_calendrier_jour`
 
 Les vacances scolaires viennent d'une **table statique Zone A** (académie de Bordeaux) vérifiée sur data.education.gouv.fr — adaptez-la à votre zone, et complétez-la à la publication de l'année scolaire suivante (voir l'`@ai_warning` dans le fichier). Le calendrier Google des jours fériés mélange vrais fériés et fêtes civiles, d'où la liste blanche `feries_connus`. Même installation package que ci-dessus.
@@ -285,9 +297,21 @@ Remplacez ces placeholders dans les fichiers :
 | `VOTRE_CLIMATISATION` | Votre entité climate (`climate.votre_clim`) |
 | `VOTRE_EMAIL_gmail_com` | Votre entité Google Calendar (`calendar.votre_email_gmail_com`) |
 | `VOTRE_VOLET` | Votre entité volet roulant / cover |
+| `VOTRE_TV` | Votre TV Samsung (`media_player.<…>` **et** `remote.<…>`, package `tab5_tv`) |
+| `VOTRE_LEDS` | La lumière basculée par `script.allumer_leds` |
+| `VOTRE_TELEPHONE` / `VOTRE_CAPTEUR_PRESENCE` | Tracker du téléphone et capteur de présence de l'automation d'allumage écran |
 | `tab5-ha-hmi` | Le nom de votre appareil ESPHome |
 
-Après édition : dans HA, allez dans **Outils de développement → YAML → Recharger Automations** (ou redémarrez HA). Le Tab5 devrait recevoir son premier push en quelques secondes après connexion à l'API.
+**Ne pas chercher-remplacer à la main — rendre.** Copiez `placeholders.example.yaml` vers `placeholders.yaml` (gitignoré), renseignez vos vrais entity IDs, puis :
+
+```bash
+python tools/render_ha_config.py          # écrit HomeAssistant_Config/rendered/ — les copies déployables
+python tools/render_ha_config.py --check  # échoue si un ID réel est retombé dans un fichier suivi (n'affiche jamais la valeur)
+```
+
+Déployez **depuis `rendered/`** vers le `config/` de HA (packages, snippets, les trois exemples). Les fichiers suivis ne contiennent que des placeholders : une PR n'embarque jamais un ID réel, et un `git pull` n'écrase jamais vos valeurs.
+
+Après déploiement : dans HA, allez dans **Outils de développement → YAML → Recharger Automations** (ou redémarrez HA). Le Tab5 devrait recevoir son premier push en quelques secondes après connexion à l'API.
 
 ---
 

@@ -20,14 +20,16 @@
 #           packages: !include_dir_named packages
 # ============================================================================
 #
-# ADAPTÉ À CETTE INSTALLATION le 06/08/2026 — ne plus traiter ce fichier comme
-# un exemple générique. Les entity_id d'exemple (`sensor.tab5_uptime`,
-# `binary_sensor.tab5_ha_hmi_ha_api_status`) N'EXISTAIENT PAS ici : le préfixe
-# réel est `m5stack_tab5_home_assistant_hmi`, pas le nom d'appareil ESPHome
-# `tab5-ha-hmi`. Les gardes (b) et (c) étaient donc `on` dans HA mais ne
-# pouvaient JAMAIS se déclencher — un filet de sécurité muet est pire que pas
-# de filet. Toute copie de ce fichier vers une autre installation doit
-# revérifier ces deux ids dans Outils de développement → États.
+# PRÉFIXE DES ENTITÉS (piège réel, 06/08/2026) : les ids ne dérivent PAS du
+# nom d'appareil ESPHome (`tab5-ha-hmi`) mais du `friendly_name` tel que Home
+# Assistant l'a enregistré — avec celui livré (« M5Stack Tab5 Home Assistant
+# HMI ») : `sensor.m5stack_tab5_home_assistant_hmi_tab5_uptime` et
+# `binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status`, utilisés
+# ci-dessous. Une première version visait `sensor.tab5_uptime` /
+# `binary_sensor.tab5_ha_hmi_ha_api_status`, qui N'EXISTAIENT PAS : les gardes
+# (b) et (c) étaient `on` dans HA et ne pouvaient JAMAIS se déclencher — un
+# filet de sécurité muet est pire que pas de filet. Vérifiez ces deux ids dans
+# Outils de développement → États (préfixe de pièce `salon_…` possible).
 #
 # Reste à adapter si vous réutilisez ce package ailleurs :
 #   - notify.notify → votre service réel (ex : notify.mobile_app_votre_telephone)

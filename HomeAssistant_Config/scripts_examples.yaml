@@ -28,4 +28,4 @@ allumer_leds:
   sequence:
     - action: light.toggle
       target:
-        entity_id: light.sonoff_1001700057
+        entity_id: light.VOTRE_LEDS

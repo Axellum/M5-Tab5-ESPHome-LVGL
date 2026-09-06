@@ -12,7 +12,7 @@
 #       "type|texte;..." séparés par ~ (même contrat que tab5_calendrier_jour,
 #       max 6 lignes/jour ; textes sanitisés | -> /, ; -> ,). Détail jour solo =
 #       fallback si le firmware n'a pas reçu details.
-# @data_sources calendar.axxxums_gmail_com ("Planing boulo", événements "Travail*"
+# @data_sources calendar.VOTRE_EMAIL_gmail_com ("Planing boulo", événements "Travail*"
 #       horodatés), calendar.jours_feries_et_autres_fetes_en_france (Google, contient
 #       aussi des fêtes NON fériées -> liste blanche feries_connus),
 #       calendar.famille + calendar.anniversaires (RDV / anniversaires).
@@ -124,7 +124,7 @@ script:
           end_date_time: "{{ fin }}"
         target:
           entity_id:
-            - calendar.axxxums_gmail_com
+            - calendar.VOTRE_EMAIL_gmail_com
             - calendar.jours_feries_et_autres_fetes_en_france
             - calendar.famille
             - calendar.anniversaires
@@ -135,7 +135,7 @@ script:
           annee: "{{ y }}"
           mois: "{{ m }}"
           codes: >-
-            {% set trav = ev['calendar.axxxums_gmail_com'].events if ev is defined and 'calendar.axxxums_gmail_com' in ev else [] %}
+            {% set trav = ev['calendar.VOTRE_EMAIL_gmail_com'].events if ev is defined and 'calendar.VOTRE_EMAIL_gmail_com' in ev else [] %}
             {% set fer = ev['calendar.jours_feries_et_autres_fetes_en_france'].events if ev is defined and 'calendar.jours_feries_et_autres_fetes_en_france' in ev else [] %}
             {% set fam = ev['calendar.famille'].events if ev is defined and 'calendar.famille' in ev else [] %}
             {% set ann = ev['calendar.anniversaires'].events if ev is defined and 'calendar.anniversaires' in ev else [] %}
@@ -194,7 +194,7 @@ script:
             {% endfor %}
             {{ ns.out }}
           heures: >-
-            {% set trav = ev['calendar.axxxums_gmail_com'].events if ev is defined and 'calendar.axxxums_gmail_com' in ev else [] %}
+            {% set trav = ev['calendar.VOTRE_EMAIL_gmail_com'].events if ev is defined and 'calendar.VOTRE_EMAIL_gmail_com' in ev else [] %}
             {% set ns = namespace(out='') %}
             {% for d in range(1, 32) %}
               {% set h = namespace(txt='') %}
@@ -247,7 +247,7 @@ script:
           end_date_time: "{{ fin_jour }}"
         target:
           entity_id:
-            - calendar.axxxums_gmail_com
+            - calendar.VOTRE_EMAIL_gmail_com
             - calendar.jours_feries_et_autres_fetes_en_france
             - calendar.famille
             - calendar.anniversaires
@@ -257,7 +257,7 @@ script:
         data:
           date: "{{ ds }}"
           payload: >-
-            {% set trav = ev['calendar.axxxums_gmail_com'].events if ev is defined and 'calendar.axxxums_gmail_com' in ev else [] %}
+            {% set trav = ev['calendar.VOTRE_EMAIL_gmail_com'].events if ev is defined and 'calendar.VOTRE_EMAIL_gmail_com' in ev else [] %}
             {% set fer = ev['calendar.jours_feries_et_autres_fetes_en_france'].events if ev is defined and 'calendar.jours_feries_et_autres_fetes_en_france' in ev else [] %}
             {% set fam = ev['calendar.famille'].events if ev is defined and 'calendar.famille' in ev else [] %}
             {% set ann = ev['calendar.anniversaires'].events if ev is defined and 'calendar.anniversaires' in ev else [] %}

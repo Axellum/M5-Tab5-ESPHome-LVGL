@@ -20,7 +20,7 @@
 #       8 entrées maximum, epoch UTC du DÉBUT (zéro-padding sans importance,
 #       lu en base 10), titres débarrassés de `|`, `~` et `;`. Contrat côté
 #       firmware : `rdv_store()` dans Tab5/alarm_clock.cpp.
-# @data_sources calendar.famille + calendar.axxxums_gmail_com (« Planing boulo »,
+# @data_sources calendar.famille + calendar.VOTRE_EMAIL_gmail_com (« Planing boulo »,
 #       dont on EXCLUT les événements « Travail » : ce ne sont pas des
 #       rendez-vous, et leurs horaires servent déjà au calcul de l'heure de
 #       réveil). Seuls les événements HORODATÉS sont retenus — un événement
@@ -38,7 +38,8 @@ script:
     description: >-
       Pousse vers le Tab5 les rendez-vous horodatés des 24 prochaines heures.
       Le firmware garde la liste et déclenche l'annonce lui-même, N minutes
-      avant (N réglable depuis l'écran ou depuis number.tab5_rdv_lead).
+      avant (N réglable depuis l'écran ou depuis le `number` « Rendez-vous :
+      annoncer avant » exposé par le firmware).
       mode restart : si deux déclencheurs tombent en même temps, seule la
       dernière demande compte.
     mode: restart
@@ -54,14 +55,14 @@ script:
         target:
           entity_id:
             - calendar.famille
-            - calendar.axxxums_gmail_com
+            - calendar.VOTRE_EMAIL_gmail_com
         response_variable: ev
       - action: esphome.tab5_ha_hmi_tab5_maj_rdv_prochains
         continue_on_error: true
         data:
           payload: >-
             {% set fam = ev['calendar.famille'].events if ev is defined and 'calendar.famille' in ev else [] %}
-            {% set boulo = ev['calendar.axxxums_gmail_com'].events if ev is defined and 'calendar.axxxums_gmail_com' in ev else [] %}
+            {% set boulo = ev['calendar.VOTRE_EMAIL_gmail_com'].events if ev is defined and 'calendar.VOTRE_EMAIL_gmail_com' in ev else [] %}
             {% set ns = namespace(rows=[]) %}
             {% for e in (fam + boulo) %}
               {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
@@ -113,7 +114,7 @@ script:
           end_date_time: "{{ fin_jour }}"
         target:
           entity_id:
-            - calendar.axxxums_gmail_com
+            - calendar.VOTRE_EMAIL_gmail_com
             - calendar.famille
         response_variable: ev_jour
       - action: assist_satellite.announce
@@ -123,7 +124,7 @@ script:
           message: >-
             {% set h = now().hour %}
             {% set m = now().minute %}
-            {% set boulo = ev_jour['calendar.axxxums_gmail_com'].events if ev_jour is defined and 'calendar.axxxums_gmail_com' in ev_jour else [] %}
+            {% set boulo = ev_jour['calendar.VOTRE_EMAIL_gmail_com'].events if ev_jour is defined and 'calendar.VOTRE_EMAIL_gmail_com' in ev_jour else [] %}
             {% set fam = ev_jour['calendar.famille'].events if ev_jour is defined and 'calendar.famille' in ev_jour else [] %}
             {% set ns = namespace(travail='', rdv='', best_ts=none) %}
             {% for e in boulo %}
@@ -147,8 +148,8 @@ script:
                 {% endif %}
               {% endif %}
             {% endfor %}
-            {% set meteo = states('weather.saint_vincent_de_tyrosse') %}
-            {% set tmax = state_attr('weather.saint_vincent_de_tyrosse', 'temperature') %}
+            {% set meteo = states('weather.VOTRE_VILLE') %}
+            {% set tmax = state_attr('weather.VOTRE_VILLE', 'temperature') %}
             Bonjour. Il est {{ h }} heures {{ m }}.
             {%- if ns.travail != '' %} Vous travaillez de {{ ns.travail }}.
             {%- else %} Pas de travail aujourd'hui.
@@ -175,18 +176,20 @@ automation:
       - platform: state
         entity_id:
           - calendar.famille
-          - calendar.axxxums_gmail_com
+          - calendar.VOTRE_EMAIL_gmail_com
       - platform: event
         event_type: esphome.tab5_connected
       # Le délai d'annonce vient de changer : la liste, elle, n'a pas bougé —
       # mais republier fait recalculer immédiatement le « prochain rendez-vous »
       # affiché, au lieu d'attendre jusqu'à 5 minutes.
-      # NB : c'est le `number` exposé par le firmware (tab5-alarm.yaml), son
-      # entity_id porte le préfixe de l'appareil. `number.tab5_rdv_lead` était
-      # une invention — entité inexistante, donc déclencheur mort (corrigé le
-      # 06/08/2026).
+      # NB : c'est le `number` exposé par le firmware (tab5-alarm.yaml). Son
+      # entity_id est dérivé du nom de l'appareil dans HA, PAS du nom ESPHome
+      # `tab5-ha-hmi` : `number.tab5_rdv_lead` était une invention — entité
+      # inexistante, donc déclencheur mort (corrigé le 06/08/2026). Si votre
+      # appareil est préfixé par sa pièce (ex. `salon_…`), mettez l'entity_id
+      # complet dans placeholders.yaml (cf. placeholders.example.yaml).
       - platform: state
-        entity_id: number.salon_m5stack_tab5_home_assistant_hmi_rendez_vous_annoncer_avant
+        entity_id: number.m5stack_tab5_home_assistant_hmi_rendez_vous_annoncer_avant
     condition:
       # Même garde-fou que les autres automations d'écran (cf. l'@ai_warning en
       # tête de automations_tab5.yaml : ce booléen s'est déjà retrouvé bloqué à

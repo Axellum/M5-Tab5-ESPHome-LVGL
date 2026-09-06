@@ -26,10 +26,16 @@
   mode: single
   id: tab5_ha_hmi_updater
   trigger:
-    - platform: state
-      entity_id: weather.VOTRE_VILLE
-    - platform: state
-      entity_id: climate.VOTRE_CLIMATISATION
+    # PAS de déclencheur `state:` sur weather.VOTRE_VILLE (retiré le 26/08/2026) :
+    # `weather.*` et `sensor.*_next_rain` viennent du même coordinateur
+    # Météo-France et se déclenchent à ~0,8 s d'intervalle — le second tombait
+    # toujours pendant l'exécution (~6,5 s) du premier et était abandonné
+    # (« Already running » ×249 en 5 jours). La météo reste rafraîchie par le
+    # cycle /10 min et par esphome.tab5_connected. Piège à retenir : un trigger
+    # `state:` nu se déclenche AUSSI sur les changements d'attributs.
+    # Ni sur climate.VOTRE_CLIMATISATION (retiré le 21/07/2026) : la clim a son
+    # automation dédiée `tab5_ha_hmi_clim_push` (plus bas), sans les ~5,5 s de
+    # delays de celle-ci — elle reste poussée ici par le cycle /10 min (bloc 6).
     - platform: state
       entity_id: sensor.VOTRE_VILLE_next_rain
     - platform: time_pattern
@@ -461,6 +467,38 @@
 
 
 # ============================================================================
+# PUSH CLIM RAPIDE — chemin court, faible latence (ajouté en prod le 21/07/2026)
+# ----------------------------------------------------------------------------
+# Motif : poussée par la grosse automation `tab5_ha_hmi_updater`, la clim
+# arrivait APRÈS ~5,5 s de delays + calendar.get_events + weather.get_forecasts,
+# et en `mode: single` un changement pendant un run en cours était même ignoré.
+# Cette automation ne fait QUE pousser l'état clim, sans delay ni appel API :
+# retour à l'écran quasi immédiat. `mode: restart` : le dernier état gagne si
+# taps rapides. Même garde `is_primary_active`. Même contrat `tab5_maj_clim`
+# (Tab5/tab5-api-logic.yaml) — ne pas renommer sans le pendant firmware.
+# ============================================================================
+- id: tab5_ha_hmi_clim_push
+  alias: "MAJ Ecran Tab5 Climatisation (push rapide)"
+  mode: restart
+  trigger:
+    - platform: state
+      entity_id: climate.VOTRE_CLIMATISATION
+  condition:
+    - condition: state
+      entity_id: input_boolean.is_primary_active
+      state: "on"
+  action:
+    - action: esphome.tab5_ha_hmi_tab5_maj_clim
+      continue_on_error: true
+      data:
+        target: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'temperature') | float(20) }}"
+        current: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'current_temperature') | float(20) }}"
+        mode: "{{ states('climate.VOTRE_CLIMATISATION') }}"
+        preset: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'preset_mode') | default('none', true) }}"
+        fan: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'fan_mode') | default('auto', true) }}"
+        swing: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'swing_mode') | default('stop', true) }}"
+
+# ============================================================================
 # ASSISTANT VOCAL — réponse riche vers le popup (assistant_popup.yaml)
 # ----------------------------------------------------------------------------
 # Le moteur (tab5-engine) — ou une automation HA — pousse la réponse écrite dans
@@ -481,5 +519,5 @@
       data:
         # Markdown : titres #, **gras**, puces -, et tableaux Markdown pris en charge.
         texte: "{{ trigger.event.data.texte }}"
-        # PNG servi par le moteur (ex. http://192.168.0.43:8000/images/xxx.png) ou "".
+        # PNG servi par le moteur (ex. http://<ip-du-moteur>:8000/images/xxx.png) ou "".
         image_url: "{{ trigger.event.data.image_url | default('', true) }}"
