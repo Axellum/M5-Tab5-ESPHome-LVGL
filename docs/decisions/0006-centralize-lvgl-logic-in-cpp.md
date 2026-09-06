@@ -12,6 +12,6 @@ Sensors and services only read Home Assistant state and call a named function de
 
 ## Consequences
 
-- All non-trivial LVGL state logic is greppable and testable in one place (`tab5_custom.cpp`, ~520 lines) instead of scattered across `tab5-sensors.yaml`, `tab5-api-logic.yaml`, and 16 `ui_components/*.yaml` files.
+- All non-trivial LVGL state logic is greppable and testable in one place (`tab5_custom.cpp`, ~520 lines when this ADR was written — 2 900+ by 2026-09, which is why the 2026-09-06 audit recommends splitting it into several compilation units, the way the games already are) instead of scattered across `tab5-sensors.yaml`, `tab5-api-logic.yaml`, and 16 `ui_components/*.yaml` files.
 - Every new "sensor reacts to X" feature requires touching two files (the YAML trigger + the C++ handler) instead of one — a small ongoing tax, accepted for the searchability/testability gain.
 - This is enforced as code rule 2 in `Tab5/README.md` and checked by the `esphome compile` + manual review gate in the PR template, not by an automated lint — a lambda that violates this will still compile.

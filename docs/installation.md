@@ -10,7 +10,7 @@
 
 - A working **Home Assistant** instance (any installation method)
 - The **ESPHome** add-on or standalone ESPHome CLI (`pip install esphome`)
-- ESPHome version **≥ 2026.7.0** — enforced by `min_version:` in `tab5-ha-hmi.yaml`, so an older ESPHome refuses to compile. This release is what brings the official `st7123` touchscreen platform (no more `external_components`), zero-copy audio, VAD, and PSRAM-over-SDIO
+- ESPHome version **≥ 2026.8.1** — enforced by `min_version:` in `tab5-ha-hmi.yaml`, so an older ESPHome refuses to compile. 2026.7.0 brought the official `st7123` touchscreen platform (no more `external_components`), zero-copy audio, VAD and PSRAM-over-SDIO; the floor was raised to 2026.8.1 on 2026-08-26 for the API, voice-assistant and crash-handler fixes this project exercises daily (reasoning in the comment above `min_version:`)
 - A M5Stack Tab5 V2 (ESP32-P4 variant)
 
 Optional but used by the default configuration:
@@ -154,7 +154,7 @@ If you are outside France, the weather screen requires adaptation. The push auto
 
 - Une instance **Home Assistant** fonctionnelle (toute méthode d'installation)
 - L'add-on **ESPHome** ou la CLI ESPHome standalone (`pip install esphome`)
-- ESPHome version **≥ 2026.7.0** — imposée par le `min_version:` de `tab5-ha-hmi.yaml` : une version antérieure refuse de compiler. C'est cette version qui apporte la plateforme tactile `st7123` officielle (plus besoin d'`external_components`), l'audio zero-copy, le VAD et la PSRAM via SDIO
+- ESPHome version **≥ 2026.8.1** — imposée par le `min_version:` de `tab5-ha-hmi.yaml` : une version antérieure refuse de compiler. La 2026.7.0 a apporté la plateforme tactile `st7123` officielle (plus besoin d'`external_components`), l'audio zero-copy, le VAD et la PSRAM via SDIO ; le plancher est passé à 2026.8.1 le 26/08/2026 pour les correctifs API, assistant vocal et handler de crash que ce projet exerce tous les jours (raisons dans le commentaire au-dessus de `min_version:`)
 - Un M5Stack Tab5 V2 (variante ESP32-P4)
 
 Optionnel mais utilisé par la configuration par défaut :

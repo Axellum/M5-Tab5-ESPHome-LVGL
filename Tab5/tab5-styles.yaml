@@ -1,4 +1,4 @@
-﻿# [AI-CONTEXT]
+# [AI-CONTEXT]
 # @file tab5-styles.yaml
 # @role Définition des styles LVGL (polices, thèmes, bordures).
 # @ai_instruction Interdiction d'utiliser des codes couleurs hexadécimaux en dur. Utiliser UIColor.
@@ -340,7 +340,8 @@ lvgl:
     # ESSAI C 16/07 : même décoration que les boutons Domo (style_clim_btn) —
     # fond 58%, bordure 1px/35%, radius 18. Couvre horloge, clim, bandeau central,
     # tuiles météo horaires/jours + page HA. pad/scrollbar conservés (conteneurs).
-    # Rollback : docs/essais_design/tab5-styles_avant_meteo_comme_domo.yaml
+    # (Version d'avant l'essai : dans l'historique git du 16/07/2026 — le dossier
+    #  docs/essais_design/ a ete retire du depot.)
     - id: style_meteo_card
       bg_color: color_glass_hi
       bg_grad_color: color_glass_lo

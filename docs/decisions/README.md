@@ -19,3 +19,6 @@ Format: **Context / Decision / Consequences**. One page max. Add a new one whene
 | [0007](0007-climate-popup-not-factorized.md) | `climate_popup.yaml` deliberately left un-factorized |
 | [0008](0008-single-ha-instance.md) | Single Home Assistant instance (Freebox) instead of a Deck failover |
 | [0009](0009-modal-shell-header.md) | Shared modal chrome + one compact title bar for every popup |
+| [0010](0010-shared-i2s-bus-mic-speaker.md) | Microphone and speaker share one I2S bus — every local sound relays the mic itself |
+| [0011](0011-api-reboot-timeout-60min.md) | `api: reboot_timeout: 60min` — anti-zombie net kept, HA outages no longer cycle the tablet |
+| [0012](0012-lvgl-rotation-270-pinball-portrait.md) | Landscape dashboard via `rotation: 270`, one console flips to portrait at runtime |
