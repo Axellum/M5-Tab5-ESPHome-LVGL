@@ -4,6 +4,43 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-06 — P0 de l'audit : un seul secrets.yaml, fichiers HA publics sans identifiant réel, pytest réparé
+
+Suite de l'audit complet du dépôt (`contexte_ia/audits_systeme/audit_tab5_2026-09-06.md`,
+hors dépôt). Rien ne change sur l'appareil : aucun fichier de `Tab5/` n'est touché.
+
+- **Un seul `secrets.yaml`.** `Tab5/secrets.yaml` doublonnait la racine : mêmes
+  32 clés, mêmes valeurs (comparées par empreinte SHA-256, jamais en clair), seuls
+  les commentaires différaient. ESPHome résout `!secret` dans le dossier du package
+  d'abord, donc c'était la copie `Tab5/` qui alimentait le firmware pendant que le
+  demo pusher et la CI lisaient la racine — deux sources pour un même contrat.
+  Supprimé après sauvegarde hors dépôt ; `esphome config` valide avec la racine seule.
+- **Les fichiers Home Assistant publics ne portent plus d'identifiant réel.** Le
+  calendrier de travail (handle Gmail), l'entité météo (commune), la TV, la lampe
+  du script `allumer_leds` et une IP de moteur en commentaire étaient dans des
+  fichiers suivis — et, vérifié sur HA par Samba, les packages déployés étaient
+  **octet pour octet** ces fichiers. D'où `tools/render_ha_config.py` : les fichiers
+  suivis ne contiennent que des placeholders, `HomeAssistant_Config/placeholders.yaml`
+  (gitignoré, modèle `placeholders.example.yaml`) porte les valeurs, et le script
+  écrit `HomeAssistant_Config/rendered/`. Le rendu de ce commit est identique aux
+  quatre packages qui tournent sur HA (calendar, health, reveil, tv) à des
+  commentaires près — les deux paragraphes qui citaient un id réel ont été
+  réécrits. `--check` signale une fuite sans jamais afficher la valeur ; 7 tests.
+- **Exemple d'automation resynchronisé avec la prod** (règle « miroir » d'AGENTS.md) :
+  le déclencheur `state: weather.VOTRE_VILLE` retiré en prod le 26/08 (double
+  déclenchement « Already running ») l'est aussi ici, et l'automation dédiée
+  « Climatisation (push rapide) » du 21/07 est enfin publiée.
+- **`pytest` nu marche depuis la racine** (`pyproject.toml`, `testpaths`) : il
+  ramassait `archives/` et s'arrêtait sur 6 vieux scripts. Deux angles morts en
+  prime : `test_chess_perft.py` n'avait aucune fonction `test_` (jamais collecté),
+  et les 14 tests Go passaient au vert quelle que soit la règle cassée — `expect()`
+  ne faisait qu'incrémenter un compteur qu'aucun `assert` ne relisait. Prouvé par
+  mutation : un `expect(False, …)` injecté fait maintenant échouer la session pytest
+  (erreur au teardown du test concerné, `15 passed, 1 error`).
+- `.gitignore` : le commentaire « E: est une jonction vers H: » était faux (volume
+  distinct) ; branches `fix/tv-ip-secret` (squash-mergée) et
+  `claude/happy-hellman-ae8d32` (vide) supprimées.
+
 ### 2026-08-27 — L'IP de la TV était en clair dans un fichier public
 
 Premier résultat du vérificateur mergé le matin même : **un seul**, et c'est un

@@ -288,6 +288,24 @@ def expect(cond, msg):
         fails += 1
 
 
+# Sous pytest, `expect()` ne fait qu'incrémenter un compteur : sans ce garde,
+# les 14 `test_*` ci-dessous passaient au VERT quelle que soit la règle cassée
+# (constaté lors de l'audit du 06/09/2026). Le lanceur `__main__`, lui, lit le
+# compteur à la fin ; les deux chemins restent donc compatibles.
+try:
+    import pytest as _pytest
+except ImportError:  # exécution directe sans pytest installé
+    _pytest = None
+
+if _pytest is not None:
+    @_pytest.fixture(autouse=True)
+    def _echec_si_expect_a_echoue():
+        global fails
+        fails = 0
+        yield
+        assert fails == 0, f"{fails} attente(s) non satisfaite(s) — voir les lignes FAIL ci-dessus"
+
+
 def test_capture():
     p = Pos(9)
     for r, c in ((3, 4), (5, 4), (4, 3)):

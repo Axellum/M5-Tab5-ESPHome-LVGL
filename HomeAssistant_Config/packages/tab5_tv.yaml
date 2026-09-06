@@ -149,14 +149,14 @@ script:
       # sinon la commande part avant que la TV ne réponde.
       - if:
           - condition: state
-            entity_id: media_player.samsung_s95ba_55_tv
+            entity_id: media_player.VOTRE_TV
             state: "off"
         then:
           - action: media_player.turn_on
             target:
-              entity_id: media_player.samsung_s95ba_55_tv
+              entity_id: media_player.VOTRE_TV
           - wait_template: >-
-              {{ not is_state('media_player.samsung_s95ba_55_tv', 'off') }}
+              {{ not is_state('media_player.VOTRE_TV', 'off') }}
             timeout: "00:00:15"
             continue_on_timeout: true
           - delay: "00:00:03"
@@ -182,7 +182,7 @@ script:
               # Ne pas descendre sous 0,5 s sans le vérifier à l'écran.
               - action: remote.send_command
                 target:
-                  entity_id: remote.samsung_s95ba_55_tv
+                  entity_id: remote.VOTRE_TV
                 data:
                   command: "{{ sequence_touches }}"
                   delay_secs: 0.6

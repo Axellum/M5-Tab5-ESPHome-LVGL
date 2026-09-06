@@ -1,0 +1,14 @@
+# Configuration des outils Python du dépôt (pas de packaging : le firmware est
+# ESPHome, Python ne sert qu'aux garde-fous et aux tests hôte).
+#
+# `pytest` lancé nu depuis la racine ramassait `archives/` (dossier gitignoré
+# mais présent en local) et échouait sur 6 vieux scripts : d'où `testpaths`.
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "tools"]
+python_files = ["test_*.py"]
+norecursedirs = [
+    "archives", ".esphome", ".qoder", ".claude", ".git",
+    "docs", "Tab5", "HomeAssistant_Config", "sources",
+]
+addopts = "-q"
