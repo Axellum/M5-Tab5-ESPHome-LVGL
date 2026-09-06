@@ -114,7 +114,7 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 4. **Pas de `std::string` par valeur ni de `to_string()` dans un hot-path** (sliders, `on_value` fréquents) — `const std::string&` ou buffer `snprintf` statique.
 5. **Toute nouvelle carte/widget répété ≥3 fois** (météo, switches...) doit passer par une fonction C++ builder paramétrée **ou** un template `!include` + `vars` (ex. `climate_hvac_mode_btn.yaml`, `cal_day_cell.yaml` ×42) — jamais un copier-coller YAML. Même règle dans `AGENTS.md`.
 6. Avant de committer : `python -m esphome compile tab5-ha-hmi.yaml` doit réussir (toolchain déjà en cache localement, ~20-45s).
-7. **Tout popup modal réutilise le chrome partagé** (ADR-0009) : `modal_scrim.yaml` (var `scrim_opa`) + `modal_header.yaml` (icône, titre, croix — barre de 52 px, corps à `y: ${modal_body_y}`), carte dimensionnée par `${modal_card_w}`/`${modal_card_h}`. Jamais de voile, de titre ou de croix réécrits à la main ; les boutons d'options d'en-tête restent des frères en `y: 4, height: 44`. Vérification : `python scripts/check_tab5_modal_chrome.py` (script du workspace privé, hors de ce dépôt — rapatriement dans `tools/` prévu par l'audit du 06/09/2026).
+7. **Tout popup modal réutilise le chrome partagé** (ADR-0009) : `modal_scrim.yaml` (var `scrim_opa`) + `modal_header.yaml` (icône, titre, croix — barre de 52 px, corps à `y: ${modal_body_y}`), carte dimensionnée par `${modal_card_w}`/`${modal_card_h}`. Jamais de voile, de titre ou de croix réécrits à la main ; les boutons d'options d'en-tête restent des frères en `y: 4, height: 44`. Vérification : `python tools/check_tab5_modal_chrome.py` (joué aussi par `pytest` et par la CI, `tests/test_guards.py`).
    **Exceptions (pages de jeu)** : les 8 `*_game.yaml` de la section Arcade ci-dessous, plus `game_selector.yaml`. Ce ne sont pas des popups posés sur `page_main` mais des **pages LVGL autonomes** en flux plein écran — pas de garde-fou modal (ni `style_modal_card`, ni `color_modal_scrim`, ni glyphe de croix).
 
 ---
@@ -261,7 +261,7 @@ Le layout est validé par un `magic` (`SAVE_MAGIC`) : **le modifier oblige à bu
 ### Garde-fou : toutes les salles restent traversables
 
 ```bash
-python scripts/check_marble_rooms.py
+python tools/check_marble_rooms.py
 ```
 
 Lit les 6 salles **directement dans `marble_game.cpp`** (pas de duplication : le test suit le contenu) et vérifie, pour chacune, que le départ n'est pas dans un mur, que la sortie est atteignable, que **chaque bonus et chaque rune** l'est aussi, et que les scies laissent un passage à au moins une phase de leur course.
@@ -468,8 +468,8 @@ paliers : l'équilibre du jeu ne change pas, seul le tempo change.
 ### Notes techniques
 
 Les règles de grille (`passable` / `supported` / `can_step` / arête de creusement) vivent
-dans une section isolée du `.cpp` et sont **rejouées à l'identique** par un garde-fou
-Python hors dépôt sur les 10 cartes — c'est ce qui garantit qu'aucun niveau ne devient
+dans une section isolée du `.cpp` et sont **rejouées à l'identique** par le garde-fou
+`tools/check_lode_levels.py` (joué par `pytest` et la CI) sur les 10 cartes — c'est ce qui garantit qu'aucun niveau ne devient
 infaisable après un ajustement. Rendu : cache par acteur (ajouté en `349baee`), aucune
 réallocation LVGL dans le tick.
 
