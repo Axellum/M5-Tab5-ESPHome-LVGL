@@ -35,14 +35,18 @@ python -m esphome compile tab5-ha-hmi.yaml
 - If you modified a file included via `!include` (anything in `Tab5/ui_components/`), run `esphome clean` before the next `esphome run` — stale build cache is a known ESPHome trap.
 - Compare the reported `config_hash` before/after a refactor that should be behavior-neutral — identical hash is the standard proof of "no functional change" used across this project's PR history.
 - OTA-flashing the real device is a deliberate, human-authorized action, not a default step of a coding task — only do it if explicitly asked. If you do: confirm afterward via the device's own diagnostic entities (`ha_api_status`, uptime strictly increasing, no reboot) rather than assuming success.
-- `esphome compile` (schema + C++ compile) is the correctness gate for the firmware itself. CI (`.github/workflows/esphome-tab5.yml`) runs the same compile with a dummy `secrets.yaml` on every push/PR.
-- There is no unit test suite *for the HMI*, but two game engines have host tests that run on a plain PC with no toolchain — run them if you touch the corresponding engine:
+- `esphome compile` (schema + C++ compile) is the correctness gate for the firmware itself. CI (`.github/workflows/esphome-tab5.yml`) runs a `python` job on every push/PR (pytest, secrets checker, demo dry-run) and the same compile with a dummy `secrets.yaml` **only when `tab5-ha-hmi.yaml`, `Tab5/` or the workflow change** — the `build` job is a required check, so it stays present and reports "skipped" (= success) on docs-only changes; `workflow_dispatch` forces a compile. The compile deliberately uses ESPHome `latest` (free upstream canary).
+- There is no unit test suite *for the HMI*, but two game engines have host tests, and three content guards read the real C++/YAML (modal chrome per ADR-0009, Marble rooms traversable, Lode levels playable). Everything runs on a plain PC with no toolchain, in one `pytest` (config in `pyproject.toml`, deps in `requirements-dev.txt`):
 
 ```bash
-python -m pytest                    # tout : tests/ (outils) + tools/ (moteurs Go et échecs) — config dans pyproject.toml
+pip install -r requirements-dev.txt # une fois : pytest, numpy (garde-fou Marble), aioesphomeapi, fonttools
+python -m pytest                    # tout : tests/ (outils + garde-fous) + tools/ (moteurs Go et échecs)
 python tools/test_go_engine.py      # règles Go : capture, suicide, ko, territoire, score
 python tools/test_chess_perft.py    # générateur d'échecs contre la suite perft standard
-python tools/render_ha_config.py --check   # aucun identifiant HA réel dans un fichier public
+python tools/render_ha_config.py --check   # aucun identifiant HA réel dans un fichier public (local : lit placeholders.yaml)
+python tools/check_tab5_modal_chrome.py    # ADR-0009 : chrome modal partagé sur chaque popup
+python tools/check_marble_rooms.py         # les 6 salles de Fil d'Or restent traversables
+python tools/check_lode_levels.py          # les 10 niveaux de Coureur d'Or restent jouables
 ```
 
   Both are **Python mirrors** of the C++ (`go_engine.cpp`, `chess_ai.cpp`), not bindings: a change to the C++ must be mirrored there or the test stops proving anything. `tools/test_go_engine.cpp` is the same suite compiled against the real C++ when a host compiler is available.
