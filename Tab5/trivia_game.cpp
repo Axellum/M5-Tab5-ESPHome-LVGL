@@ -21,6 +21,7 @@
  *      en modulo 42 : on perdrait les rayons, donc la finale.
  */
 #include "trivia_game.h"
+#include "game_common.h"
 #include "trivia_questions.h"
 #include "esphome/core/preferences.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
@@ -124,8 +125,7 @@ static const char* const RULES_TEXT =
 // ===========================================================================
 static uint32_t s_rng = 0xDEADBEEFu;
 static inline uint32_t rnd() {
-    s_rng ^= s_rng << 13; s_rng ^= s_rng >> 17; s_rng ^= s_rng << 5;
-    return s_rng;
+    return xorshift32_next(s_rng);
 }
 static inline int rnd_range(int lo, int hi) {
     if (hi <= lo) return lo;
@@ -296,8 +296,7 @@ static uint8_t s_winner = 0;
 // 6. Persistance NVS
 // ===========================================================================
 static TriviaSave s_save;
-static esphome::ESPPreferenceObject s_pref;
-static bool s_pref_ready = false;
+static NvsSlot<TriviaSave> s_nvs(PREF_KEY, SAVE_MAGIC);
 
 // Copie nom -> nom. Les deux tampons font exactement TRIVIA_NAME_LEN, donc la
 // copie est complete par construction (snprintf ferait hurler -Wformat-truncation).
@@ -327,11 +326,7 @@ static void save_defaults() {
 }
 
 void persist_load() {
-    if (!s_pref_ready) {
-        s_pref = esphome::global_preferences->make_preference<TriviaSave>(PREF_KEY);
-        s_pref_ready = true;
-    }
-    if (!s_pref.load(&s_save) || s_save.magic != SAVE_MAGIC) save_defaults();
+    if (!s_nvs.load(s_save)) save_defaults();
     // Garde-fous : une NVS corrompue ne doit pas indexer hors tableau.
     if (s_save.cfg_difficulty > 2) s_save.cfg_difficulty = 1;
     if (s_save.cfg_timer > 3)      s_save.cfg_timer = 1;
@@ -361,8 +356,7 @@ void persist_load() {
 }
 
 void persist_save() {
-    if (!s_pref_ready) persist_load();
-    s_save.magic          = SAVE_MAGIC;
+    if (!s_nvs.ready()) persist_load();
     s_save.cfg_difficulty = s_difficulty;
     s_save.cfg_timer      = s_timer_idx;
     s_save.cfg_shake      = s_shake_on ? 1 : 0;
@@ -384,8 +378,7 @@ void persist_save() {
         s_save.teams[i].wedges    = s_teams[i].wedges;
         s_save.teams[i].pos       = s_teams[i].pos;
     }
-    s_pref.save(&s_save);
-    esphome::global_preferences->sync();
+    s_nvs.save(s_save);
 }
 
 // ===========================================================================
@@ -492,40 +485,10 @@ static void reset_caches() {
 // ===========================================================================
 // 8. Helpers LVGL
 // ===========================================================================
-static lv_obj_t* mk_rect(lv_obj_t* parent) {
-    lv_obj_t* o = lv_obj_create(parent);
-    lv_obj_remove_style_all(o);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_set_style_bg_opa(o, LV_OPA_COVER, LV_PART_MAIN);
-    return o;
-}
 
-static lv_obj_t* mk_label(lv_obj_t* parent, const esphome::font::Font* f, uint32_t color) {
-    lv_obj_t* l = lv_label_create(parent);
-    lv_obj_remove_style_all(l);
-    if (f) esphome::lvgl::lv_obj_set_style_text_font(l, f, LV_PART_MAIN);
-    lv_obj_set_style_text_color(l, lv_color_hex(color), LV_PART_MAIN);
-    lv_label_set_text(l, "");
-    return l;
-}
 
-static inline void show(lv_obj_t* o, bool v) {
-    if (!o) return;
-    if (v) lv_obj_clear_flag(o, LV_OBJ_FLAG_HIDDEN);
-    else   lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
-}
 
-static inline void set_bg(lv_obj_t* o, uint32_t c, lv_opa_t opa = LV_OPA_COVER) {
-    lv_obj_set_style_bg_color(o, lv_color_hex(c), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(o, opa, LV_PART_MAIN);
-}
 
-static inline void set_border(lv_obj_t* o, uint32_t c, int w, lv_opa_t opa = LV_OPA_COVER) {
-    lv_obj_set_style_border_color(o, lv_color_hex(c), LV_PART_MAIN);
-    lv_obj_set_style_border_width(o, w, LV_PART_MAIN);
-    lv_obj_set_style_border_opa(o, opa, LV_PART_MAIN);
-}
 
 static inline void set_color(lv_obj_t* o, uint32_t c) {
     lv_obj_set_style_text_color(o, lv_color_hex(c), LV_PART_MAIN);
@@ -537,13 +500,6 @@ static inline void set_pressed_bg(lv_obj_t* o, uint32_t c) {
                               (lv_style_selector_t) LV_STATE_PRESSED);
 }
 
-// N'écrit que si le texte change : évite de reconstruire le layout LVGL à 30 Hz.
-static void set_text_if(lv_obj_t* l, const char* t) {
-    if (!l || !t) return;
-    const char* cur = lv_label_get_text(l);
-    if (cur && strcmp(cur, t) == 0) return;
-    lv_label_set_text(l, t);
-}
 
 // Une part de camembert = un arc de 60° dont l'épaisseur vaut le rayon, ce qui
 // le rend plein jusqu'au centre. Le fond et le bouton de l'arc sont neutralisés :
@@ -2136,7 +2092,7 @@ void on_imu(float ax, float ay, float az) {
 // ===========================================================================
 void open(const UI& ui) {
     g_ui = ui;
-    if (!s_pref_ready) persist_load();
+    if (!s_nvs.ready()) persist_load();
     build_ui();
 
     g_open = true;

@@ -49,6 +49,30 @@ struct ArkanoidSave {
 
 namespace Arkanoid {
 
+// Palette LOCALE du jeu (ex-`UIColor::ARK_*` de tab5_custom.h, deplacee ici le
+// 08/09/2026, lot (f) de l'audit : meme convention que Lode::Pal, Go::Pal, Chess::Pal,
+// Trivia::Pal et Draughts::Pal — un sous-module de jeu ne touche pas aux fichiers
+// partages du HMI, ADR-0014). Les tokens « miroir » de tab5-styles.yaml (fond, sol,
+// HUD) restent alignes a la main : verifier les deux quand une valeur change.
+namespace Pal {
+// Palette rétro Atari / borne arcade 80's : fond sombre, briques vives,
+// contraste fort. Utilisée uniquement par le namespace Arkanoid.
+static constexpr uint32_t VOID      = 0x0A0A0F;  // fond hors terrain (noir bleuté)
+static constexpr uint32_t FLOOR     = 0x111118;  // sol jouable (gris très sombre)
+static constexpr uint32_t HUD_BG    = 0x0D0D14;  // bandeau HUD
+static constexpr uint32_t PADDLE    = 0xE8E8E8;  // raquette (blanc cassé)
+static constexpr uint32_t BALL      = 0xFFDD44;  // balle (jaune arcade)
+static constexpr uint32_t WALL      = 0x556677;  // briques indestructibles
+static constexpr uint32_t TOUGH     = 0x8899AA;  // briques renforcées (plein)
+static constexpr uint32_t TOUGH_HIT = 0xBB6633;  // briques renforcées (entamées)
+static constexpr uint32_t DANGER    = 0xFF3333;  // flash de mort
+static constexpr uint32_t CYAN      = 0x44DDDD;  // accent cyan
+static constexpr uint32_t GREEN     = 0x44DD44;  // accent vert (expand, vie)
+static constexpr uint32_t ORANGE    = 0xFF8800;  // accent orange (shrink)
+static constexpr uint32_t MAGENTA   = 0xFF44AA;  // accent magenta (bonus, colle)
+static constexpr uint32_t BTN       = 0x334455;  // boutons tactiles latéraux
+}  // namespace Pal
+
 // Pointeurs LVGL + polices fournis par le YAML au moment de l'ouverture.
 // Les 4 conteneurs sont déclarés dans ui_components/arkanoid_game.yaml ; les
 // polices viennent de tab5-styles.yaml (on ne peut pas faire `id(...)` hors lambda).

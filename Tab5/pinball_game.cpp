@@ -75,6 +75,7 @@
  * l'interet du rendu statique.
  */
 #include "pinball_game.h"
+#include "game_common.h"
 #include "esphome/core/preferences.h"
 #include <math.h>
 #include <string.h>
@@ -237,15 +238,11 @@ static inline void sfx_gameover() { /* STUB : descente */ }
 
 static uint32_t s_rng = 0x9E3779B9u;
 static inline uint32_t rnd() {
-    s_rng ^= s_rng << 13; s_rng ^= s_rng >> 17; s_rng ^= s_rng << 5;
-    return s_rng;
+    return xorshift32_next(s_rng);
 }
 // Flottant aleatoire dans [-1, 1].
 static inline float rndf() { return (float)(int32_t)(rnd() >> 8) / 8388608.0f - 1.0f; }
 
-static inline float clampf(float v, float lo, float hi) {
-    return v < lo ? lo : (v > hi ? hi : v);
-}
 
 // ===========================================================================
 // 5. Types
@@ -364,8 +361,7 @@ enum State : uint8_t {
 };
 
 static PinballSave g_save{};
-static esphome::ESPPreferenceObject g_pref;
-static bool  g_pref_ready = false;
+static NvsSlot<PinballSave> g_nvs(PREF_KEY, PINBALL_SAVE_MAGIC);
 
 static UI    g_ui{};
 static bool  g_built = false;
@@ -470,7 +466,6 @@ static void go_hub();
 static void go_scores();
 static void go_settings();
 static void go_pause();
-static void go_gameover();
 static void tick_period_sync();
 
 // ===========================================================================
@@ -478,11 +473,7 @@ static void tick_period_sync();
 // ===========================================================================
 
 void persist_load() {
-    if (!g_pref_ready) {
-        g_pref = esphome::global_preferences->make_preference<PinballSave>(PREF_KEY);
-        g_pref_ready = true;
-    }
-    if (!g_pref.load(&g_save) || g_save.magic != PINBALL_SAVE_MAGIC) {
+    if (!g_nvs.load(g_save)) {
         g_save = PinballSave{};
         g_save.magic = PINBALL_SAVE_MAGIC;
         g_save.nudge_sens = 2;
@@ -494,10 +485,8 @@ void persist_load() {
 }
 
 void persist_save() {
-    if (!g_pref_ready) return;
-    g_save.magic = PINBALL_SAVE_MAGIC;
-    g_pref.save(&g_save);
-    esphome::global_preferences->sync();
+    if (!g_nvs.ready()) return;
+    g_nvs.save(g_save);
 }
 
 // Insere un score dans le top 10 et renvoie son rang (0 = premier), -1 si hors
@@ -523,39 +512,9 @@ static inline uint32_t best_score() { return g_save.top[0].score; }
 // 9. Helpers LVGL
 // ===========================================================================
 
-static lv_obj_t* mk_rect(lv_obj_t* parent) {
-    lv_obj_t* o = lv_obj_create(parent);
-    lv_obj_remove_style_all(o);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_set_style_bg_opa(o, LV_OPA_COVER, LV_PART_MAIN);
-    return o;
-}
 
-static lv_obj_t* mk_label(lv_obj_t* parent, const esphome::font::Font* f, uint32_t color) {
-    lv_obj_t* l = lv_label_create(parent);
-    lv_obj_remove_style_all(l);
-    if (f) esphome::lvgl::lv_obj_set_style_text_font(l, f, LV_PART_MAIN);
-    lv_obj_set_style_text_color(l, lv_color_hex(color), LV_PART_MAIN);
-    lv_label_set_text(l, "");
-    return l;
-}
 
-// Idempotent A DESSEIN : show() est appelé des dizaines de fois par frame (flashs
-// de bumpers, billes, jauges). Poser un flag déjà posé fait quand même repasser
-// LVGL par lv_obj_invalidate — a 50 Hz ça salit l'écran pour rien.
-static inline void show(lv_obj_t* o, bool v) {
-    if (!o) return;
-    if (v == !lv_obj_has_flag(o, LV_OBJ_FLAG_HIDDEN)) return;
-    if (v) lv_obj_clear_flag(o, LV_OBJ_FLAG_HIDDEN);
-    else   lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
-}
 
-static inline void set_bg(lv_obj_t* o, uint32_t c, lv_opa_t opa) {
-    if (!o) return;
-    lv_obj_set_style_bg_color(o, lv_color_hex(c), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(o, opa, LV_PART_MAIN);
-}
 
 // Degrade vertical : c'est lui qui donne du volume aux pieces sans coûter
 // d'objet supplementaire (une seule passe de dessin LVGL).
@@ -567,21 +526,7 @@ static inline void set_grad(lv_obj_t* o, uint32_t hi, uint32_t lo) {
     lv_obj_set_style_bg_opa(o, LV_OPA_COVER, LV_PART_MAIN);
 }
 
-static inline void set_border(lv_obj_t* o, uint32_t c, int w, lv_opa_t opa) {
-    if (!o) return;
-    lv_obj_set_style_border_color(o, lv_color_hex(c), LV_PART_MAIN);
-    lv_obj_set_style_border_width(o, w, LV_PART_MAIN);
-    lv_obj_set_style_border_opa(o, opa, LV_PART_MAIN);
-}
 
-// N'ecrit un libelle que si le texte a change : evite de reconstruire le layout
-// LVGL a 50 Hz pour rien.
-static void set_text_if(lv_obj_t* l, const char* txt) {
-    if (!l || !txt) return;
-    const char* cur = lv_label_get_text(l);
-    if (cur && strcmp(cur, txt) == 0) return;
-    lv_label_set_text(l, txt);
-}
 
 // Formate un score avec des espaces fins tous les 3 chiffres (« 1 250 000 »).
 // La police roboto_55_b ne contient que les chiffres, l'espace et quelques
@@ -638,8 +583,8 @@ static lv_obj_t* mk_poly(lv_obj_t* parent, const float* xy, int n,
 // Un rail = deux passes : un corps epais en acier froid, une arete fine et
 // claire par-dessus. C'est ce qui donne le relief sans aucune image.
 static void mk_rail(lv_obj_t* parent, const float* xy, int n) {
-    mk_poly(parent, xy, n, 15, UIColor::PIN_RAIL, LV_OPA_COVER);
-    mk_poly(parent, xy, n, 5,  UIColor::PIN_RAIL_HI, 190);
+    mk_poly(parent, xy, n, 15, Pal::RAIL, LV_OPA_COVER);
+    mk_poly(parent, xy, n, 5,  Pal::RAIL_HI, 190);
 }
 
 // Arc decoratif ou structurel. Le knob et l'anneau de fond sont neutralises :
@@ -825,9 +770,9 @@ static void flipper_points(int s, bool force);
 // --- Donnees de placement des pieces animees --------------------------------
 static void build_table_data() {
     struct { float x, y, r; uint32_t c; } bd[N_BUMPERS] = {
-        {186.0f, 570.0f, 36.0f, UIColor::PIN_CYAN},
-        {330.0f, 476.0f, 40.0f, UIColor::PIN_AMBER},
-        {474.0f, 570.0f, 36.0f, UIColor::PIN_MAGENTA},
+        {186.0f, 570.0f, 36.0f, Pal::CYAN},
+        {330.0f, 476.0f, 40.0f, Pal::AMBER},
+        {474.0f, 570.0f, 36.0f, Pal::MAGENTA},
     };
     for (int i = 0; i < N_BUMPERS; i++) {
         g_bump[i].cx = bd[i].x; g_bump[i].cy = bd[i].y; g_bump[i].r = bd[i].r;
@@ -874,11 +819,11 @@ static void build_table_data() {
 static void build_art(lv_obj_t* field) {
     // Sol : degrade vertical du bleu nuit vers le noir. Le haut plus clair
     // « eclaire » l'arche, le bas sombre fait ressortir le tablier chrome.
-    set_grad(field, UIColor::PIN_FELT_HI, UIColor::PIN_FELT_LO);
+    set_grad(field, Pal::FELT_HI, Pal::FELT_LO);
 
     // Orbites peintes sous l'arche.
-    mk_arc(field, ARCH_CX, ARCH_CY, ARCH_R - 44.0f, 182, 358, 3, UIColor::PIN_CYAN, 42);
-    mk_arc(field, ARCH_CX, ARCH_CY, ARCH_R - 62.0f, 195, 345, 2, UIColor::PIN_CYAN, 26);
+    mk_arc(field, ARCH_CX, ARCH_CY, ARCH_R - 44.0f, 182, 358, 3, Pal::CYAN, 42);
+    mk_arc(field, ARCH_CX, ARCH_CY, ARCH_R - 62.0f, 195, 345, 2, Pal::CYAN, 26);
 
     // Halo peint autour du groupe de bumpers : deux disques tres transparents
     // suffisent a creuser le centre de la table.
@@ -886,40 +831,40 @@ static void build_art(lv_obj_t* field) {
     lv_obj_set_size(halo, 420, 300);
     lv_obj_set_pos(halo, 120, 400);
     lv_obj_set_style_radius(halo, 150, LV_PART_MAIN);
-    set_bg(halo, UIColor::PIN_CYAN, 16);
+    set_bg(halo, Pal::CYAN, 16);
 
     // Liseres de fuite au bas du plateau : ils donnent la pente.
     for (int i = 0; i < 3; i++) {
         lv_obj_t* r = mk_rect(field);
         lv_obj_set_size(r, 520 - i * 90, 2);
         lv_obj_set_pos(r, 100 + i * 45, 1000 + i * 22);
-        set_bg(r, UIColor::PIN_RAIL_HI, (lv_opa_t) (26 - i * 7));
+        set_bg(r, Pal::RAIL_HI, (lv_opa_t) (26 - i * 7));
     }
 
     // Couloir du plunger : fond legerement plus clair + fleches de tir.
     lv_obj_t* lane = mk_rect(field);
     lv_obj_set_size(lane, (int) (LANE_RX - LANE_X), (int) (LANE_BOT - 380.0f));
     lv_obj_set_pos(lane, (int) LANE_X, 380);
-    set_grad(lane, UIColor::PIN_FELT_HI, UIColor::PIN_VOID);
+    set_grad(lane, Pal::FELT_HI, Pal::VOID);
     lv_obj_set_style_bg_opa(lane, 210, LV_PART_MAIN);
     for (int i = 0; i < 4; i++) {
         lv_obj_t* a = mk_rect(field);
         lv_obj_set_size(a, 26, 3);
         lv_obj_set_pos(a, (int) LANE_MID - 13, 930 - i * 34);
         lv_obj_set_style_radius(a, 2, LV_PART_MAIN);
-        set_bg(a, UIColor::PIN_CYAN, (lv_opa_t) (110 - i * 22));
+        set_bg(a, Pal::CYAN, (lv_opa_t) (110 - i * 22));
     }
 
     // Inserts lumineux : FRENZY / MULTI / SKILL. Eteints par defaut, allumes
     // par hud_sync() quand le mode correspondant tourne.
     static const char* INS[3] = {"FRENZY", "MULTI", "SKILL"};
-    static const uint32_t INSC[3] = {UIColor::PIN_CYAN, UIColor::PIN_MAGENTA, UIColor::PIN_AMBER};
+    static const uint32_t INSC[3] = {Pal::CYAN, Pal::MAGENTA, Pal::AMBER};
     for (int i = 0; i < 3; i++) {
         lv_obj_t* o = mk_rect(field);
         lv_obj_set_size(o, 104, 34);
         lv_obj_set_pos(o, 151 + i * 126, 652);
         lv_obj_set_style_radius(o, 8, LV_PART_MAIN);
-        set_bg(o, UIColor::PIN_INSERT_OFF, LV_OPA_COVER);
+        set_bg(o, Pal::INSERT_OFF, LV_OPA_COVER);
         set_border(o, INSC[i], 2, 90);
         g_insert[i] = o;
         lv_obj_t* l = mk_label(o, g_ui.f_small, INSC[i]);
@@ -935,8 +880,8 @@ static void build_art(lv_obj_t* field) {
 // --- Rails, arche et guides -------------------------------------------------
 static void build_rails(lv_obj_t* field) {
     // Arche : deux passes, corps d'acier puis liseré neon interieur.
-    mk_arc(field, ARCH_CX, ARCH_CY, ARCH_R, 180, 360, 15, UIColor::PIN_RAIL, LV_OPA_COVER);
-    mk_arc(field, ARCH_CX, ARCH_CY, ARCH_R - 9.0f, 181, 359, 4, UIColor::PIN_RAIL_HI, 170);
+    mk_arc(field, ARCH_CX, ARCH_CY, ARCH_R, 180, 360, 15, Pal::RAIL, LV_OPA_COVER);
+    mk_arc(field, ARCH_CX, ARCH_CY, ARCH_R - 9.0f, 181, 359, 4, Pal::RAIL_HI, 170);
 
     // Tous les segments de collision sont doubles par un rail visible, sauf le
     // clapet anti-retour (invisible sur une vraie machine aussi) : on le marque
@@ -945,7 +890,7 @@ static void build_rails(lv_obj_t* field) {
         const Seg& s = WALLS[i];
         const float xy[4] = {s.x1, s.y1, s.x2, s.y2};
         if (s.one_way) {
-            mk_poly(field, xy, 2, 4, UIColor::PIN_RAIL, 130);
+            mk_poly(field, xy, 2, 4, Pal::RAIL, 130);
             continue;
         }
         mk_rail(field, xy, 2);
@@ -961,8 +906,8 @@ static void build_pieces(lv_obj_t* field) {
         lv_obj_set_size(o, d, d);
         lv_obj_set_pos(o, (int) (g_roll[i].cx - g_roll[i].r), (int) (g_roll[i].cy - g_roll[i].r));
         lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        set_bg(o, UIColor::PIN_CYAN, 40);
-        set_border(o, UIColor::PIN_CYAN, 3, LV_OPA_COVER);
+        set_bg(o, Pal::CYAN, 40);
+        set_border(o, Pal::CYAN, 3, LV_OPA_COVER);
         g_roll[i].obj = o;
     }
 
@@ -973,15 +918,15 @@ static void build_pieces(lv_obj_t* field) {
         lv_obj_set_size(lamp, (int) (t.half * 2.0f) + 8, 10);
         lv_obj_set_pos(lamp, (int) (t.cx - t.half) - 4, (int) t.cy + 9);
         lv_obj_set_style_radius(lamp, 5, LV_PART_MAIN);
-        set_bg(lamp, UIColor::PIN_AMBER_DIM, LV_OPA_COVER);
+        set_bg(lamp, Pal::AMBER_DIM, LV_OPA_COVER);
         t.lamp = lamp;
 
         lv_obj_t* o = mk_rect(field);
         lv_obj_set_size(o, (int) (t.half * 2.0f), 22);
         lv_obj_set_pos(o, (int) (t.cx - t.half), (int) t.cy - 11);
         lv_obj_set_style_radius(o, 7, LV_PART_MAIN);
-        set_grad(o, UIColor::PIN_AMBER, UIColor::PIN_AMBER_DIM);
-        set_border(o, UIColor::PIN_WHITE, 1, 120);
+        set_grad(o, Pal::AMBER, Pal::AMBER_DIM);
+        set_border(o, Pal::WHITE, 1, 120);
         t.obj = o;
     }
 
@@ -992,10 +937,10 @@ static void build_pieces(lv_obj_t* field) {
         const float bx = (s.x1 + s.x2) * 0.5f - s.nx * 40.0f;
         const float by = (s.y1 + s.y2) * 0.5f - s.ny * 40.0f;
         const float tri[8] = {s.x1, s.y1, bx, by, s.x2, s.y2, s.x1, s.y1};
-        mk_poly(field, tri, 4, 13, UIColor::PIN_RAIL, LV_OPA_COVER);
+        mk_poly(field, tri, 4, 13, Pal::RAIL, LV_OPA_COVER);
         const float face[4] = {s.x1, s.y1, s.x2, s.y2};
-        mk_poly(field, face, 2, 7, UIColor::PIN_MAGENTA_DIM, LV_OPA_COVER);
-        s.flash = mk_poly(field, face, 2, 9, UIColor::PIN_MAGENTA, LV_OPA_COVER);
+        mk_poly(field, face, 2, 7, Pal::MAGENTA_DIM, LV_OPA_COVER);
+        s.flash = mk_poly(field, face, 2, 9, Pal::MAGENTA, LV_OPA_COVER);
         show(s.flash, false);
     }
 
@@ -1008,14 +953,14 @@ static void build_pieces(lv_obj_t* field) {
         lv_obj_set_size(base, (r + 9) * 2, (r + 9) * 2);
         lv_obj_set_pos(base, (int) b.cx - r - 9, (int) b.cy - r - 9);
         lv_obj_set_style_radius(base, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        set_bg(base, UIColor::PIN_INSERT_OFF, LV_OPA_COVER);
+        set_bg(base, Pal::INSERT_OFF, LV_OPA_COVER);
         set_border(base, b.color, 2, 110);
 
         lv_obj_t* body = mk_rect(field);
         lv_obj_set_size(body, r * 2, r * 2);
         lv_obj_set_pos(body, (int) b.cx - r, (int) b.cy - r);
         lv_obj_set_style_radius(body, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        set_grad(body, UIColor::PIN_RAIL, UIColor::PIN_VOID);
+        set_grad(body, Pal::RAIL, Pal::VOID);
         set_border(body, b.color, 3, LV_OPA_COVER);
 
         lv_obj_t* cap = mk_rect(field);
@@ -1039,7 +984,7 @@ static void build_pieces(lv_obj_t* field) {
     lv_obj_set_size(g_plunger_rod, 18, 60);
     lv_obj_set_pos(g_plunger_rod, (int) LANE_MID - 9, 1091);
     lv_obj_set_style_radius(g_plunger_rod, 9, LV_PART_MAIN);
-    set_grad(g_plunger_rod, UIColor::PIN_CHROME, UIColor::PIN_RAIL);
+    set_grad(g_plunger_rod, Pal::CHROME, Pal::RAIL);
 }
 
 // --- Billes, flippers, tablier, toast (ordre d'empilement important) --------
@@ -1050,17 +995,17 @@ static void build_actors(lv_obj_t* field) {
         b.shadow = mk_rect(field);
         lv_obj_set_size(b.shadow, (int) (BALL_R * 2.0f) + 4, (int) (BALL_R * 2.0f) + 4);
         lv_obj_set_style_radius(b.shadow, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        set_bg(b.shadow, UIColor::PIN_BALL_SH, 150);
+        set_bg(b.shadow, Pal::BALL_SH, 150);
 
         b.body = mk_rect(field);
         lv_obj_set_size(b.body, (int) (BALL_R * 2.0f), (int) (BALL_R * 2.0f));
         lv_obj_set_style_radius(b.body, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        set_grad(b.body, UIColor::PIN_BALL_HI, UIColor::PIN_RAIL);
+        set_grad(b.body, Pal::BALL_HI, Pal::RAIL);
 
         b.gloss = mk_rect(field);
         lv_obj_set_size(b.gloss, 9, 9);
         lv_obj_set_style_radius(b.gloss, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        set_bg(b.gloss, UIColor::PIN_BALL_HI, 235);
+        set_bg(b.gloss, Pal::BALL_HI, 235);
 
         show(b.shadow, false); show(b.body, false); show(b.gloss, false);
     }
@@ -1077,12 +1022,12 @@ static void build_actors(lv_obj_t* field) {
             lv_obj_set_style_line_rounded(o, true, LV_PART_MAIN);
             if (layer == 0) {
                 lv_obj_set_style_line_width(o, 24, LV_PART_MAIN);
-                lv_obj_set_style_line_color(o, lv_color_hex(UIColor::PIN_FLIP_BASE), LV_PART_MAIN);
+                lv_obj_set_style_line_color(o, lv_color_hex(Pal::FLIP_BASE), LV_PART_MAIN);
                 lv_obj_set_style_line_opa(o, LV_OPA_COVER, LV_PART_MAIN);
                 g_flip_base[s] = o;
             } else {
                 lv_obj_set_style_line_width(o, 10, LV_PART_MAIN);
-                lv_obj_set_style_line_color(o, lv_color_hex(UIColor::PIN_FLIP_EDGE), LV_PART_MAIN);
+                lv_obj_set_style_line_color(o, lv_color_hex(Pal::FLIP_EDGE), LV_PART_MAIN);
                 lv_obj_set_style_line_opa(o, LV_OPA_COVER, LV_PART_MAIN);
                 g_flip_edge[s] = o;
             }
@@ -1099,7 +1044,7 @@ static void build_actors(lv_obj_t* field) {
         lv_obj_set_size(pin, 20, 20);
         lv_obj_set_pos(pin, (int) g_flip[s].px - 10, (int) FLIP_PY - 10);
         lv_obj_set_style_radius(pin, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        set_bg(pin, UIColor::PIN_CHROME, LV_OPA_COVER);
+        set_bg(pin, Pal::CHROME, LV_OPA_COVER);
     }
 
     // Tablier chrome : cree APRES les billes pour masquer le drain, exactement
@@ -1107,17 +1052,17 @@ static void build_actors(lv_obj_t* field) {
     lv_obj_t* apron = mk_rect(field);
     lv_obj_set_size(apron, FW, FH - APRON_Y);
     lv_obj_set_pos(apron, 0, APRON_Y);
-    set_grad(apron, UIColor::PIN_APRON, UIColor::PIN_VOID);
+    set_grad(apron, Pal::APRON, Pal::VOID);
     lv_obj_t* edge = mk_rect(field);
     lv_obj_set_size(edge, FW, 3);
     lv_obj_set_pos(edge, 0, APRON_Y);
-    set_bg(edge, UIColor::PIN_CHROME, 200);
-    lv_obj_t* name = mk_label(apron, g_ui.f_small, UIColor::PIN_TEXT_DIM);
+    set_bg(edge, Pal::CHROME, 200);
+    lv_obj_t* name = mk_label(apron, g_ui.f_small, Pal::TEXT_DIM);
     lv_obj_align(name, LV_ALIGN_CENTER, 0, 4);
     lv_label_set_text(name, "N E O N   A P R O N");
 
     // Consigne de tir, affichee seulement quand une bille attend au plunger.
-    g_plunger_hint = mk_label(field, g_ui.f_small, UIColor::PIN_CYAN);
+    g_plunger_hint = mk_label(field, g_ui.f_small, Pal::CYAN);
     lv_obj_set_width(g_plunger_hint, 300);
     lv_obj_set_style_text_align(g_plunger_hint, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_set_pos(g_plunger_hint, 210, 1020);
@@ -1125,7 +1070,7 @@ static void build_actors(lv_obj_t* field) {
     show(g_plunger_hint, false);
 
     // Banniere de mode, au centre de l'arche (zone la plus lisible du plateau).
-    g_toast = mk_label(field, g_ui.f_big, UIColor::PIN_MODE);
+    g_toast = mk_label(field, g_ui.f_big, Pal::MODE);
     lv_obj_set_width(g_toast, FW);
     lv_obj_set_style_text_align(g_toast, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_set_pos(g_toast, 0, 300);
@@ -1160,7 +1105,7 @@ static void build_zones(lv_obj_t* field) {
 
 // --- Fronton (DMD) ----------------------------------------------------------
 static void build_hud(lv_obj_t* hud) {
-    g_hud_ball = mk_label(hud, g_ui.f_led, UIColor::PIN_TEXT_DIM);
+    g_hud_ball = mk_label(hud, g_ui.f_led, Pal::TEXT_DIM);
     lv_obj_align(g_hud_ball, LV_ALIGN_TOP_LEFT, 24, 12);
 
     for (int i = 0; i < BALLS_PER_GAME; i++) {
@@ -1168,22 +1113,22 @@ static void build_hud(lv_obj_t* hud) {
         lv_obj_set_size(d, 20, 20);
         lv_obj_set_style_radius(d, LV_RADIUS_CIRCLE, LV_PART_MAIN);
         lv_obj_align(d, LV_ALIGN_TOP_LEFT, 24 + i * 28, 48);
-        set_bg(d, UIColor::PIN_AMBER, LV_OPA_COVER);
+        set_bg(d, Pal::AMBER, LV_OPA_COVER);
         g_hud_dot[i] = d;
     }
 
-    g_hud_score = mk_label(hud, g_ui.f_score, UIColor::PIN_AMBER);
+    g_hud_score = mk_label(hud, g_ui.f_score, Pal::AMBER);
     lv_obj_set_style_text_align(g_hud_score, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN);
     lv_obj_align(g_hud_score, LV_ALIGN_TOP_RIGHT, -24, 4);
 
-    g_hud_best = mk_label(hud, g_ui.f_led, UIColor::PIN_TEXT_DIM);
+    g_hud_best = mk_label(hud, g_ui.f_led, Pal::TEXT_DIM);
     lv_obj_align(g_hud_best, LV_ALIGN_TOP_LEFT, 24, 86);
 
-    g_hud_badge = mk_label(hud, g_ui.f_mid, UIColor::PIN_MODE);
+    g_hud_badge = mk_label(hud, g_ui.f_mid, Pal::MODE);
     lv_obj_set_style_text_align(g_hud_badge, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN);
     lv_obj_align(g_hud_badge, LV_ALIGN_TOP_RIGHT, -24, 84);
 
-    g_hud_tilt = mk_label(hud, g_ui.f_big, UIColor::PIN_DANGER);
+    g_hud_tilt = mk_label(hud, g_ui.f_big, Pal::DANGER);
     lv_obj_align(g_hud_tilt, LV_ALIGN_TOP_MID, 0, 40);
     lv_label_set_text(g_hud_tilt, "T I L T");
     show(g_hud_tilt, false);
@@ -1194,20 +1139,20 @@ static void build_hud(lv_obj_t* hud) {
     lv_obj_set_size(g_pwr_bg, 300, 12);
     lv_obj_align(g_pwr_bg, LV_ALIGN_BOTTOM_MID, 0, -12);
     lv_obj_set_style_radius(g_pwr_bg, 6, LV_PART_MAIN);
-    set_bg(g_pwr_bg, UIColor::PIN_INSERT_OFF, LV_OPA_COVER);
-    set_border(g_pwr_bg, UIColor::PIN_CYAN, 1, 120);
+    set_bg(g_pwr_bg, Pal::INSERT_OFF, LV_OPA_COVER);
+    set_border(g_pwr_bg, Pal::CYAN, 1, 120);
     g_pwr_fill = mk_rect(g_pwr_bg);
     lv_obj_set_size(g_pwr_fill, 0, 8);
     lv_obj_align(g_pwr_fill, LV_ALIGN_LEFT_MID, 2, 0);
     lv_obj_set_style_radius(g_pwr_fill, 4, LV_PART_MAIN);
-    set_bg(g_pwr_fill, UIColor::PIN_CYAN, LV_OPA_COVER);
+    set_bg(g_pwr_fill, Pal::CYAN, LV_OPA_COVER);
     show(g_pwr_bg, false);
 
     // Filet neon en pied de fronton : separe le DMD de la table.
     lv_obj_t* rule = mk_rect(hud);
     lv_obj_set_size(rule, SCR_W, 3);
     lv_obj_align(rule, LV_ALIGN_BOTTOM_MID, 0, 0);
-    set_bg(rule, UIColor::PIN_CYAN, 200);
+    set_bg(rule, Pal::CYAN, 200);
 
     lv_obj_add_flag(hud, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(hud, hud_event_cb, LV_EVENT_CLICKED, nullptr);
@@ -1215,22 +1160,22 @@ static void build_hud(lv_obj_t* hud) {
 
 // --- Calque des menus -------------------------------------------------------
 static void build_panel(lv_obj_t* panel) {
-    g_p_title = mk_label(panel, g_ui.f_big, UIColor::PIN_AMBER);
+    g_p_title = mk_label(panel, g_ui.f_big, Pal::AMBER);
     lv_obj_set_width(g_p_title, SCR_W);
     lv_obj_set_style_text_align(g_p_title, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_align(g_p_title, LV_ALIGN_TOP_MID, 0, 96);
 
-    g_p_sub = mk_label(panel, g_ui.f_small, UIColor::PIN_TEXT_DIM);
+    g_p_sub = mk_label(panel, g_ui.f_small, Pal::TEXT_DIM);
     lv_obj_set_width(g_p_sub, SCR_W - 80);
     lv_obj_set_style_text_align(g_p_sub, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_align(g_p_sub, LV_ALIGN_TOP_MID, 0, 156);
 
-    g_p_body = mk_label(panel, g_ui.f_led, UIColor::PIN_WHITE);
+    g_p_body = mk_label(panel, g_ui.f_led, Pal::WHITE);
     lv_obj_set_width(g_p_body, SCR_W - 80);
     lv_obj_set_style_text_align(g_p_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_align(g_p_body, LV_ALIGN_TOP_MID, 0, 210);
 
-    g_p_foot = mk_label(panel, g_ui.f_small, UIColor::PIN_TEXT_DIM);
+    g_p_foot = mk_label(panel, g_ui.f_small, Pal::TEXT_DIM);
     lv_obj_set_width(g_p_foot, SCR_W - 60);
     lv_obj_set_style_text_align(g_p_foot, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_align(g_p_foot, LV_ALIGN_BOTTOM_MID, 0, -28);
@@ -1240,10 +1185,10 @@ static void build_panel(lv_obj_t* panel) {
     lv_obj_set_size(g_rot_land, 104, 66);
     lv_obj_align(g_rot_land, LV_ALIGN_TOP_MID, -104, 214);
     lv_obj_set_style_radius(g_rot_land, 8, LV_PART_MAIN);
-    set_bg(g_rot_land, UIColor::PIN_VOID, LV_OPA_COVER);
-    set_border(g_rot_land, UIColor::PIN_TEXT_DIM, 3, 150);
+    set_bg(g_rot_land, Pal::VOID, LV_OPA_COVER);
+    set_border(g_rot_land, Pal::TEXT_DIM, 3, 150);
 
-    g_rot_arrow = mk_label(panel, g_ui.f_big, UIColor::PIN_CYAN);
+    g_rot_arrow = mk_label(panel, g_ui.f_big, Pal::CYAN);
     lv_obj_align(g_rot_arrow, LV_ALIGN_TOP_MID, 0, 222);
     lv_label_set_text(g_rot_arrow, ">");
 
@@ -1251,24 +1196,24 @@ static void build_panel(lv_obj_t* panel) {
     lv_obj_set_size(g_rot_port, 66, 104);
     lv_obj_align(g_rot_port, LV_ALIGN_TOP_MID, 100, 196);
     lv_obj_set_style_radius(g_rot_port, 8, LV_PART_MAIN);
-    set_bg(g_rot_port, UIColor::PIN_VOID, LV_OPA_COVER);
-    set_border(g_rot_port, UIColor::PIN_CYAN, 3, LV_OPA_COVER);
+    set_bg(g_rot_port, Pal::VOID, LV_OPA_COVER);
+    set_border(g_rot_port, Pal::CYAN, 3, LV_OPA_COVER);
 
     for (int i = 0; i < N_SLOTS; i++) {
         lv_obj_t* s = mk_rect(panel);
         lv_obj_add_flag(s, LV_OBJ_FLAG_CLICKABLE);
         lv_obj_set_style_radius(s, 14, LV_PART_MAIN);
-        set_bg(s, UIColor::PIN_FELT_HI, LV_OPA_COVER);
+        set_bg(s, Pal::FELT_HI, LV_OPA_COVER);
         // Retour tactile : le fond s'eclaircit tant que le doigt est pose.
         // Casts explicites : combiner lv_part_t et lv_state_t directement est
         // deprecie en C++20 (-Wdeprecated-enum-enum-conversion).
-        lv_obj_set_style_bg_color(s, lv_color_hex(UIColor::PIN_RAIL),
+        lv_obj_set_style_bg_color(s, lv_color_hex(Pal::RAIL),
                                   (lv_style_selector_t) LV_PART_MAIN |
                                   (lv_style_selector_t) LV_STATE_PRESSED);
         lv_obj_add_event_cb(s, slot_event_cb, LV_EVENT_CLICKED, (void*) (intptr_t) i);
         g_slot[i]   = s;
-        g_slot_t[i] = mk_label(s, g_ui.f_mid, UIColor::PIN_WHITE);
-        g_slot_d[i] = mk_label(s, g_ui.f_small, UIColor::PIN_TEXT_DIM);
+        g_slot_t[i] = mk_label(s, g_ui.f_mid, Pal::WHITE);
+        g_slot_d[i] = mk_label(s, g_ui.f_small, Pal::TEXT_DIM);
         show(s, false);
     }
 }
@@ -1353,10 +1298,10 @@ static void go_hub() {
     set_text_if(g_p_foot,
         "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\n"
         "Secouez la tablette pour pousser la bille — trois abus de suite et c'est TILT.");
-    slot(0, "Jouer", "3 billes - lanceur en bas de l'ecran", UIColor::PIN_AMBER);
-    slot(1, "Classement", best, UIColor::PIN_CYAN);
-    slot(2, "Reglages", "Nudge, sens de l'ecran, calibration", UIColor::PIN_MAGENTA);
-    slot(3, "Quitter", "Retour au tableau de bord (paysage)", UIColor::PIN_TEXT_DIM);
+    slot(0, "Jouer", "3 billes - lanceur en bas de l'ecran", Pal::AMBER);
+    slot(1, "Classement", best, Pal::CYAN);
+    slot(2, "Reglages", "Nudge, sens de l'ecran, calibration", Pal::MAGENTA);
+    slot(3, "Quitter", "Retour au tableau de bord (paysage)", Pal::TEXT_DIM);
     slots_hide_from(4);
     tick_period_sync();
 }
@@ -1391,7 +1336,7 @@ static void go_scores() {
     set_text_if(g_p_sub, sub);
     set_text_if(g_p_body, body);
     set_text_if(g_p_foot, "b = billes jouees, MB = multiball declenche.");
-    slot(0, "Retour", "", UIColor::PIN_TEXT_DIM);
+    slot(0, "Retour", "", Pal::TEXT_DIM);
     slots_hide_from(1);
     // Le classement est long : on remonte les slots sous le texte.
     lv_obj_align(g_slot[0], LV_ALIGN_BOTTOM_MID, 0, -110);
@@ -1414,11 +1359,11 @@ static void go_settings() {
     set_text_if(g_p_foot,
         "Calibre a plat AVANT de jouer : le nudge mesure l'ecart avec cette reference,\n"
         "pas l'inclinaison absolue. Poser la tablette, puis appuyer.");
-    slot(0, t0, "Force de la secousse necessaire", UIColor::PIN_CYAN);
-    slot(1, t1, "Si la bille part du mauvais cote", UIColor::PIN_CYAN);
-    slot(2, t2, "Si l'ecran est a l'envers dans vos mains", UIColor::PIN_MAGENTA);
-    slot(3, "Calibrer a plat", "Poser la tablette puis appuyer", UIColor::PIN_AMBER);
-    slot(4, "Retour", "", UIColor::PIN_TEXT_DIM);
+    slot(0, t0, "Force de la secousse necessaire", Pal::CYAN);
+    slot(1, t1, "Si la bille part du mauvais cote", Pal::CYAN);
+    slot(2, t2, "Si l'ecran est a l'envers dans vos mains", Pal::MAGENTA);
+    slot(3, "Calibrer a plat", "Poser la tablette puis appuyer", Pal::AMBER);
+    slot(4, "Retour", "", Pal::TEXT_DIM);
     slots_hide_from(5);
     tick_period_sync();
 }
@@ -1436,10 +1381,10 @@ static void go_pause() {
     set_text_if(g_p_sub, sub);
     set_text_if(g_p_body, "");
     set_text_if(g_p_foot, "La partie reprend exactement ou elle s'est arretee.");
-    slot(0, "Reprendre", "", UIColor::PIN_AMBER);
-    slot(1, "Recalibrer a plat", "Poser la tablette puis appuyer", UIColor::PIN_CYAN);
-    slot(2, "Abandonner", "La partie est enregistree telle quelle", UIColor::PIN_MAGENTA);
-    slot(3, "Quitter le flipper", "Retour au tableau de bord", UIColor::PIN_TEXT_DIM);
+    slot(0, "Reprendre", "", Pal::AMBER);
+    slot(1, "Recalibrer a plat", "Poser la tablette puis appuyer", Pal::CYAN);
+    slot(2, "Abandonner", "La partie est enregistree telle quelle", Pal::MAGENTA);
+    slot(3, "Quitter le flipper", "Retour au tableau de bord", Pal::TEXT_DIM);
     slots_hide_from(4);
     tick_period_sync();
 }
@@ -1479,14 +1424,12 @@ static void end_game() {
     set_text_if(g_p_sub, sub);
     set_text_if(g_p_body, body);
     set_text_if(g_p_foot, g_game_tilted ? "Partie marquee TILT." : "");
-    slot(0, "Rejouer", "Nouvelle partie, 3 billes", UIColor::PIN_AMBER);
-    slot(1, "Classement", "", UIColor::PIN_CYAN);
-    slot(2, "Hub", "", UIColor::PIN_TEXT_DIM);
+    slot(0, "Rejouer", "Nouvelle partie, 3 billes", Pal::AMBER);
+    slot(1, "Classement", "", Pal::CYAN);
+    slot(2, "Hub", "", Pal::TEXT_DIM);
     slots_hide_from(3);
     tick_period_sync();
 }
-
-static void go_gameover() { end_game(); }
 
 // ===========================================================================
 // 16. Cycle de vie d'une partie
@@ -1892,10 +1835,10 @@ static void render_effects(uint32_t now) {
         const int8_t v = on[i] ? 1 : 0;
         if (v == g_c_ins[i]) continue;
         g_c_ins[i] = v;
-        lv_obj_set_style_bg_opa(g_insert[i], v ? (lv_opa_t) 110 : LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(g_insert[i], v ? (lv_opa_t) 110 : (lv_opa_t) LV_OPA_COVER, LV_PART_MAIN);
         lv_obj_set_style_bg_color(g_insert[i],
-            lv_color_hex(v ? UIColor::PIN_MODE : UIColor::PIN_INSERT_OFF), LV_PART_MAIN);
-        lv_obj_set_style_text_opa(g_insert_l[i], v ? LV_OPA_COVER : (lv_opa_t) 130, LV_PART_MAIN);
+            lv_color_hex(v ? Pal::MODE : Pal::INSERT_OFF), LV_PART_MAIN);
+        lv_obj_set_style_text_opa(g_insert_l[i], v ? (lv_opa_t) LV_OPA_COVER : (lv_opa_t) 130, LV_PART_MAIN);
     }
 }
 
@@ -1933,7 +1876,7 @@ static void hud_sync(uint32_t now) {
     if (left != g_c_dots) {
         g_c_dots = left;
         for (int i = 0; i < BALLS_PER_GAME; i++) {
-            set_bg(g_hud_dot[i], i < left ? UIColor::PIN_AMBER : UIColor::PIN_INSERT_OFF,
+            set_bg(g_hud_dot[i], i < left ? Pal::AMBER : Pal::INSERT_OFF,
                    LV_OPA_COVER);
         }
     }

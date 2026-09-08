@@ -191,7 +191,7 @@ Ne pas recopier la liste des fermetures dans les cartes : elle vit dans
 
 ### Règles à respecter pour ajouter une 9ᵉ console
 
-Une console n'est **intégrée** que si les cinq points suivants sont faits. Un seul
+Une console n'est **intégrée** que si les six points suivants sont faits. Un seul
 oubli et le jeu est invisible, ou le firmware ne compile pas :
 
 1. `tab5-ha-hmi.yaml` → `includes:` : **tous** les `.h` et `.cpp`, y compris les
@@ -210,7 +210,12 @@ oubli et le jeu est invisible, ou le firmware ne compile pas :
    text_sensor « Écran courant » la lisent tous. `tools/check_tab5_registry.py`
    (joué par `pytest`) échoue si un `*_game.h` n'y figure pas, ou si un
    `<Namespace>::is_open()` réapparaît dans un YAML ;
-5. `game_selector.yaml` → une carte dans la grille.
+5. `game_selector.yaml` → une carte dans la grille ;
+6. le `.cpp` inclut **`game_common.h`** (helpers partagés : `mk_rect`/`mk_label`,
+   `show`/`set_bg`/`set_border`/`set_text_if`, `clampf`, `xorshift32_next`, `NvsSlot<T>`
+   pour la NVS) au lieu de les recopier, et garde sa **palette locale** `<Jeu>::Pal`
+   dans son `.h` — `tab5_custom.h` n'est jamais touché pour un jeu (ADR-0014). Un
+   moteur de règles (échecs, Go, dames) a son **miroir Python** dans `tools/`.
 
 Les icônes MDI utilisées doivent en outre figurer dans la liste `glyphs` de
 `mdi_font_56` / `mdi_font_45` (`tab5-styles.yaml`) : une icône absente de la
@@ -352,7 +357,7 @@ Top 10 local en NVS (score, niveau atteint, mode de contrôle, uptime). Écran �
 - HUD réécrit seulement si valeur change.
 - Persistance `ArkanoidSave` (magic `ARK1`) via `esphome::global_preferences`.
 - Fichiers : `arkanoid_game.h`, `arkanoid_game.cpp`, `ui_components/arkanoid_game.yaml`.
-- Couleurs : `UIColor::ARK_*` dans `tab5_custom.h`.
+- Couleurs : `Arkanoid::Pal::*` dans `tab5_custom.h`.
 
 ---
 
@@ -446,7 +451,7 @@ vers lequel on tourne la tablette, il n'y a pas de « bon » réglage universel.
   est monopolisé par le pipeline vocal HA ; l'octet `sfx` de la sauvegarde est
   réservé pour le jour où un bip local sera possible, sans bump de magic.
 - Fichiers : `pinball_game.h`, `pinball_game.cpp`, `ui_components/pinball_game.yaml`.
-- Couleurs : `UIColor::PIN_*` dans `tab5_custom.h`, miroirs `color_pinball_*`.
+- Couleurs : `Pinball::Pal::*` dans `tab5_custom.h`, miroirs `color_pinball_*`.
 
 ---
 
@@ -655,6 +660,9 @@ YAML ne déclare que 4 conteneurs vides.
 
 **Plein écran 1280×720** sur `page_draughts`, IA embarquée time-slicée, 100 % local.
 Moteur et IA dans `draughts_ai.*`, UI et machine à états dans `draughts_game.*`.
+Tests : `tools/test_draughts_engine.py` — miroir Python du générateur de coups
+(`Draughts::Engine`), perft de référence des deux variantes (10×10 : 9, 81, 658,
+4 265, 27 117… ; 8×8 : 7, 49, 302, 1 469…) et tests de règles, joué par `pytest`.
 
 ### Lancer / quitter
 

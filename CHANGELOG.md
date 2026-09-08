@@ -4,6 +4,38 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — Consoles : helpers partagés dans `game_common.h`, palettes locales, miroir Python des dames
+
+Lot (f) du plan §8 de l'audit du 06/09/2026 (§4.2 points 21, 22 et 23 ; ADR-0014).
+Rien ne change à l'écran ; OTA validée (voir la PR).
+
+- **`Tab5/game_common.h`** (header-only) remplace les copies des 8 consoles :
+  `mk_rect()`/`mk_label()` (×8, identiques), `show()`/`set_bg()`/`set_border()`/
+  `set_text_if()` (×8, à quelques gardes près — la version partagée est le
+  sur-ensemble : gardes nulles, opacité par défaut, `show()` sans invalidation
+  inutile), `clampf()` (×3), xorshift32 (×5 — l'état `s_rng` reste dans chaque jeu),
+  et **`NvsSlot<T>`** pour le cycle NVS (`make_preference` une fois, `load()` +
+  magic, `save()` + `sync()`, `ready()`) recopié ×8. `Go::set_bg()` garde sa
+  variante locale (remise à zéro du dégradé) : une définition dans le namespace du
+  jeu masque celle du header, sans conflit. 754 lignes en moins dans les jeux.
+- **Palettes locales partout** : `Marble::Pal`, `Arkanoid::Pal`, `Pinball::Pal`
+  rejoignent leurs en-têtes comme les cinq autres consoles ; `tab5_custom.h` perd
+  ses 76 tokens `MARBLE_*` / `ARK_*` / `PIN_*` (99 lignes) et ne connaît plus aucun
+  jeu. 257 appels renommés `UIColor::X_*` → `Pal::*` ; les trois tokens « miroir »
+  de `tab5-styles.yaml` (fond, sol, HUD) restent, leurs commentaires pointent
+  désormais vers `<Jeu>::Pal::*`.
+- **`tools/test_draughts_engine.py`** : miroir Python du générateur de coups de
+  « Dames Tab » (`Draughts::Engine`), vérifié contre les perft de référence des
+  deux variantes (10×10 : 9, 81, 658, 4 265, 27 117, 167 140 — 8×8 : 7, 49, 302,
+  1 469, 7 361, 36 768) et sept tests de règles (prise majoritaire, pions anglais
+  sans prise arrière, pas de promotion en cours de rafle, atterrissages de la dame
+  volante, pièce capturée qui bloque sans être reprise…). Joué par `pytest`
+  (43 tests verts). Au passage : le moteur C++ est donc conforme aux règles FMJD
+  et anglaises sur ces profondeurs, et le plus grand nombre de coups légaux vu est
+  12 pour une borne C++ `MAX_MOVES = 96`.
+- `pinball_game.cpp` : `go_gameover()` jamais appelée retirée, deux ternaires
+  enum/entier typés — plus aucun warning dans les sources du dépôt sur un build propre.
+
 ### 2026-09-08 — Firmware : `tab5_custom.cpp` (3 169 lignes) scindé en neuf unités par responsabilité
 
 Lot (e) du plan §8 de l'audit du 06/09/2026 (§4.2 point 20). Aucune fonction modifiée,
