@@ -165,9 +165,23 @@ api:
             id(global_humidite) = atof(humidite.c_str());
             update_rain_predict_icon_ui(id(icon_rain_predict), id(global_neige), (float) id(global_humidite));
 
-    # Une barre par appel : HA pousse 9 appels par rafraîchissement (audit §4.1
-    # point 3 — un service bulk est à faire côté HA + firmware, en gardant
-    # celui-ci le temps de la transition ; rain_level_style() est déjà isolée).
+    # Les 9 barres en UN appel (ADR-0003, audit §4.1 point 3) : payload
+    # « idx|intensité;idx|intensité;… », idx 0..8 = 0,5,10,15,20,25 puis 35,45,55 min,
+    # intensité = libellé Météo-France (« Temps sec », « Pluie faible » … « Pluie très
+    # forte »). C'est ce que HA appelle depuis le 08/09/2026.
+    - service: tab5_maj_pluie_1h_bulk
+      variables:
+        payload: string
+      then:
+        - lambda: |-
+            if (id(rb_0_in) == nullptr) return;
+            lv_obj_t* const bars[9] = {id(rb_0_in), id(rb_1_in), id(rb_2_in), id(rb_3_in), id(rb_4_in),
+                                       id(rb_5_in), id(rb_6_in), id(rb_7_in), id(rb_8_in)};
+            id(has_rain) = update_rain_bars_bulk_ui(payload, bars);
+
+    # Une barre par appel — l'ancien contrat, conservé le temps de la transition
+    # (anciennes automations, mode démo d'avant le 08/09/2026). À retirer quand plus
+    # aucun appelant ne l'utilise.
     - service: tab5_maj_pluie_1h
       variables:
         index_5mn: string

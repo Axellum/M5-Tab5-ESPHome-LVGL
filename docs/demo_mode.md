@@ -46,7 +46,7 @@ By default, the script also logs when you tap a light, climate, or shutter contr
 |---|---|
 | `tab5_maj_meteo_actuelle`, `_probabilites`, `_previsions_heures_bulk`, `_previsions_jours_bulk` | Full 15-hour / 15-day forecast per scene |
 | `tab5_maj_alerte_meteo_france` | 11-field vigilance payload; the rainy scene triggers an Orange alert banner |
-| `tab5_maj_pluie_1h` | 9-bar short-term rain chart |
+| `tab5_maj_pluie_1h_bulk` | 9-bar short-term rain chart, one call (`idx|intensity;…`) |
 | `tab5_maj_clim`, `_volet_etat`, `_planning`, `_info_texte` | Climate, shutter, planning and info-banner cards (`_info_texte` takes 3 args: `texte`, `couleur`, `meteo_id`) |
 | 13 mirror entities (`platform: homeassistant` in `tab5-sensors-domotique.yaml`) | Lights, room temp/humidity, phone battery, PC tracker, 5 plant moisture sensors (one deliberately low, to show the dynamic sort) |
 
@@ -102,7 +102,7 @@ Par défaut, le script loggue aussi quand vous appuyez sur un contrôle lumière
 |---|---|
 | `tab5_maj_meteo_actuelle`, `_probabilites`, `_previsions_heures_bulk`, `_previsions_jours_bulk` | Prévisions complètes 15h / 15 jours par scène |
 | `tab5_maj_alerte_meteo_france` | Payload vigilance à 11 champs ; la scène pluie déclenche une bannière d'alerte Orange |
-| `tab5_maj_pluie_1h` | Graphe de pluie court terme à 9 barres |
+| `tab5_maj_pluie_1h_bulk` | Graphe de pluie court terme à 9 barres, un seul appel (`idx|intensité;…`) |
 | `tab5_maj_clim`, `_volet_etat`, `_planning`, `_info_texte` | Cartes clim, volet, planning et bandeau info (`_info_texte` prend 3 arguments : `texte`, `couleur`, `meteo_id`) |
 | 13 entités miroir (`platform: homeassistant` dans `tab5-sensors-domotique.yaml`) | Lumières, temp/humidité pièces, batterie téléphone, tracker PC, 5 capteurs d'humidité plantes (un volontairement bas, pour montrer le tri dynamique) |
 

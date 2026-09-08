@@ -32,6 +32,7 @@ from scenarios import (
     SCENES,
     build_alerte_payload,
     build_heures_bulk_payload,
+    build_pluie_1h_bulk_payload,
     build_jours_bulk_payload,
     mirror_state_for,
 )
@@ -41,12 +42,11 @@ logger = logging.getLogger("demo_pusher")
 # Pacing repris de HomeAssistant_Config/automations_examples.yaml.example : évite de
 # saturer le socket TCP de l'ESP32-P4 (partagé avec le flux audio I2S).
 DELAI_ENTRE_BLOCS = 1.0
-DELAI_BOUCLE_PLUIE = 0.05
 DELAI_BOUCLE_HEURES = 0.15
 
 SERVICES_ATTENDUS = (
     "tab5_maj_meteo_actuelle", "tab5_maj_probabilites", "tab5_maj_alerte_meteo_france",
-    "tab5_maj_pluie_1h", "tab5_maj_previsions_heures_bulk", "tab5_maj_previsions_jours_bulk",
+    "tab5_maj_pluie_1h_bulk", "tab5_maj_previsions_heures_bulk", "tab5_maj_previsions_jours_bulk",
     "tab5_maj_clim", "tab5_maj_volet_etat", "tab5_maj_planning", "tab5_maj_info_texte",
 )
 
@@ -74,7 +74,7 @@ def _dry_run() -> None:
         })
         print("tab5_maj_probabilites:", scene.probabilites)
         print("tab5_maj_alerte_meteo_france:", build_alerte_payload(**scene.alerte))
-        print("tab5_maj_pluie_1h (9 appels):", scene.pluie_1h)
+        print("tab5_maj_pluie_1h_bulk:", build_pluie_1h_bulk_payload(scene.pluie_1h))
         print("tab5_maj_previsions_heures_bulk (3 appels):")
         for debut in (0, 5, 10):
             print("  -", build_heures_bulk_payload(scene.heures[debut:debut + 5]))
@@ -121,9 +121,8 @@ async def _pousser_scene(client, services_par_nom: dict, scene) -> None:
     await appeler("tab5_maj_alerte_meteo_france", payload=build_alerte_payload(**scene.alerte))
     await asyncio.sleep(DELAI_ENTRE_BLOCS)
 
-    for idx, intensite in enumerate(scene.pluie_1h):
-        await appeler("tab5_maj_pluie_1h", index_5mn=str(idx), intensite=intensite)
-        await asyncio.sleep(DELAI_BOUCLE_PLUIE)
+    await appeler("tab5_maj_pluie_1h_bulk", payload=build_pluie_1h_bulk_payload(scene.pluie_1h))
+    await asyncio.sleep(DELAI_ENTRE_BLOCS)
 
     for debut in (0, 5, 10):
         payload = build_heures_bulk_payload(scene.heures[debut:debut + 5])

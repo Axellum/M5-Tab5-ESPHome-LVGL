@@ -169,6 +169,30 @@ bool update_rain_bar_ui(int idx, const std::string& intensite, lv_obj_t* const b
     return false;
 }
 
+// Bulk (ADR-0003) : « idx|intensité;idx|intensité;… », les 9 barres en UN appel HA
+// au lieu de neuf. Chaque enregistrement passe par update_rain_bar_ui() (même
+// table rain_level_style()) ; un enregistrement sans '|' ou hors 0..8 est ignoré.
+// Tampon fixe : un payload trop long est refusé en bloc (log WARN), les barres
+// restent en l'état. Retourne has_rain (au moins une barre non vide).
+bool update_rain_bars_bulk_ui(const std::string& payload, lv_obj_t* const bars[9]) {
+    char buf[256];
+    if (payload.size() >= sizeof(buf)) {
+        ESP_LOGW("tab5.rain", "payload pluie 1h trop long (%u octets, max %u) : ignore",
+                 (unsigned) payload.size(), (unsigned) (sizeof(buf) - 1));
+        return update_rain_bar_ui(-1, std::string(), bars);
+    }
+    strncpy(buf, payload.c_str(), sizeof(buf));
+    buf[sizeof(buf) - 1] = '\0';
+    char* save = nullptr;
+    for (char* rec = strtok_r(buf, ";", &save); rec != nullptr; rec = strtok_r(nullptr, ";", &save)) {
+        char* sep = strchr(rec, '|');
+        if (sep == nullptr) continue;
+        *sep = '\0';
+        update_rain_bar_ui(atoi(rec), std::string(sep + 1), bars);
+    }
+    return update_rain_bar_ui(-1, std::string(), bars);  // idx -1 = pas de barre touchée, juste le bilan
+}
+
 void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite) {
     if (icon == nullptr) return;
     if (neige >= 5) {
