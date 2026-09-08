@@ -4,6 +4,36 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — Firmware : les 20 capteurs de détail des pots viennent d'un seul package paramétré, plus aucune entité HA en dur
+
+Lot (d) du plan §8 de l'audit du 06/09/2026 (§4.1 points 10 et 15). Rien ne change
+à l'écran ; OTA validée (voir la PR).
+
+- **`Tab5/pot_sensors.yaml`** : les 4 capteurs d'un pot (conductivité EC, éclairement,
+  température, batterie) écrits une fois, inclus cinq fois par
+  `tab5-sensors-domotique.yaml` via un `packages:` imbriqué (`!include` + `vars: {n}`,
+  substitution imbriquée `${entity_plante_${n}_ec}`). 107 lignes recopiées → 11 ;
+  le fichier passe de 401 à 288 lignes. Ce sont des packages et non des `- !include`
+  dans la liste `sensor:` parce qu'ESPHome 2026.8.1 n'aplatit pas une liste incluse
+  dans une liste (vérifié) alors qu'il concatène les `sensor:` des packages.
+- **`entity_tab5_satellite` / `entity_tab5_media_player`** remplacent les cinq
+  écritures en dur de `assist_satellite.m5stack_…` et `media_player.m5stack_…`
+  (`tab5-scripts.yaml` ×4, `tab5-alarm.yaml` ×1). HA dérive ces identifiants du nom
+  de l'appareil : renommer la tablette cassait l'interruption vocale, le retour
+  « Volet arrêté » et l'annonce parlée des rendez-vous sans la moindre erreur.
+  Défauts dans `tab5-scripts.yaml` (nom livré), surcharge documentée dans
+  `user_entities.example.yaml`. Au passage, `tab5_vocal_interrupt` appelait aussi
+  `media_player.media_stop` sur `media_player.m5stack_tab5_home_assistant_hmi_media_player`,
+  entité qui n'existe pas dans HA (vérifié) : appel retiré.
+- **`temp_chambre` / `hum_chambre` retirés** : deux souscriptions HA « conservées pour
+  la console système » que rien ne lisait (aucune référence dans le projet). Clés
+  `entity_temp_chambre` / `entity_hum_chambre` retirées du modèle et du mode démo
+  (13 entités miroir au lieu de 15) ; une clé en trop dans un `user_entities.yaml`
+  existant est simplement ignorée.
+- **Garde-fou** : `tools/check_tab5_code_rules.py` refuse désormais toute valeur
+  `entity_id:` littérale dans un YAML du firmware (règle 4, jouée par `pytest` et la
+  CI). Lancé avant le lot, il listait exactement les cinq écritures en dur.
+
 ### 2026-09-08 — Firmware : pipeline vocal et mot de réveil, un état et une table au lieu de cinq copies et cinq niveaux d'if
 
 Lot (c) du plan §8 de l'audit du 06/09/2026 (§4.1 points 6 et 7). Rien ne change

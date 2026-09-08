@@ -62,7 +62,7 @@ entity_hum_salon: sensor.your_living_room_humidity
 ...
 ```
 
-Replace each value with your own entity IDs. These substitutions propagate throughout all packages — you do not need to edit any other YAML file to adapt the project to your setup. The entry point `tab5-ha-hmi.yaml` includes this file via `substitutions: !include Tab5/user_entities.yaml`.
+Replace each value with your own entity IDs. These substitutions propagate throughout all packages — you do not need to edit any other YAML file to adapt the project to your setup. The entry point `tab5-ha-hmi.yaml` includes this file via `substitutions: !include Tab5/user_entities.yaml`. Two optional keys, `entity_tab5_satellite` and `entity_tab5_media_player`, only matter if you rename the device in Home Assistant: they hold the entity IDs HA derives from the device name (defaults in `Tab5/tab5-scripts.yaml`, commented example in the template).
 
 ---
 
@@ -183,7 +183,7 @@ Copiez le modèle puis adaptez-le à vos entity IDs Home Assistant :
 cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 ```
 
-Ouvrez `Tab5/user_entities.yaml` (gitignoré — ne jamais committer, même principe que `secrets.yaml`) et remplacez chaque valeur. Ces substitutions se propagent dans tous les packages ; le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`.
+Ouvrez `Tab5/user_entities.yaml` (gitignoré — ne jamais committer, même principe que `secrets.yaml`) et remplacez chaque valeur. Ces substitutions se propagent dans tous les packages ; le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`. Deux clés facultatives, `entity_tab5_satellite` et `entity_tab5_media_player`, ne servent que si vous renommez l'appareil dans Home Assistant : elles portent les identifiants qu'HA dérive du nom de la tablette (défauts dans `Tab5/tab5-scripts.yaml`, exemple commenté dans le modèle).
 
 ---
 

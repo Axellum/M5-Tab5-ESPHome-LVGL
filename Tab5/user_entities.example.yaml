@@ -34,9 +34,15 @@ entity_push_automation: automation.your_tab5_push_automation
 # --- Température & humidité ---
 entity_temp_salon: sensor.your_living_room_temperature
 entity_hum_salon: sensor.your_living_room_humidity
-entity_temp_chambre: sensor.your_bedroom_temperature
-entity_hum_chambre: sensor.your_bedroom_humidity
 entity_temp_plante: sensor.your_plant_area_temperature
+
+# --- Entités exposées par la tablette ELLE-MÊME (satellite vocal, lecteur média).
+#     HA les dérive du nom de l'appareil ; les défauts (tab5-scripts.yaml) valent
+#     pour le nom livré « M5Stack Tab5 Home Assistant HMI ». À décommenter et
+#     adapter SEULEMENT si vous avez renommé la tablette dans HA — sinon
+#     l'interruption vocale et l'annonce des rendez-vous échouent en silence. ---
+# entity_tab5_satellite: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
+# entity_tab5_media_player: media_player.m5stack_tab5_home_assistant_hmi_tab5_media_player
 
 # --- Plantes (humidité du sol, jusqu'à 5 capteurs) ---
 entity_plante_1: sensor.your_plant_1_moisture

@@ -5,6 +5,17 @@
 # ============================================================================
 # tab5-scripts.yaml — Scripts ESPHome reutilisables (sequences temporisees,
 # debounce). Preferer un script ici a un delay:+action duplique inline.
+# Entités que la tablette expose ELLE-MÊME dans HA (satellite vocal, lecteur
+# média). ESPHome ne peut pas les calculer : HA les dérive du nom de l'appareil.
+# Valeurs par défaut ici ; `user_entities.yaml` (racine, fusion prioritaire —
+# cf. l'en-tête de tab5-ui-tokens.yaml) les surcharge si la tablette est
+# renommée dans HA. Avant (audit 06/09 §4.1 point 15) elles étaient écrites en
+# dur à cinq endroits : un renommage cassait l'interruption vocale et l'annonce
+# des rendez-vous sans la moindre erreur.
+substitutions:
+  entity_tab5_satellite: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
+  entity_tab5_media_player: media_player.m5stack_tab5_home_assistant_hmi_tab5_media_player
+
 script:
   # Ferme TOUS les jeux ouverts. Un seul overlay de jeu peut vivre à la fois :
   # sans ça, ouvrir un jeu par-dessus un autre laisse le timer du précédent
@@ -257,7 +268,7 @@ script:
       - homeassistant.service:
           service: assist_satellite.announce
           data:
-            entity_id: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
+            entity_id: ${entity_tab5_satellite}
             message: "Volet arrêté."
 
   # Arme le flag d'interruption (Stop vocal local ne reçoit pas le micro pendant pipeline HA).
@@ -308,15 +319,11 @@ script:
       - homeassistant.service:
           service: assist_satellite.stop
           data:
-            entity_id: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
+            entity_id: ${entity_tab5_satellite}
       - homeassistant.service:
           service: media_player.media_stop
           data:
-            entity_id: media_player.m5stack_tab5_home_assistant_hmi_media_player
-      - homeassistant.service:
-          service: media_player.media_stop
-          data:
-            entity_id: media_player.m5stack_tab5_home_assistant_hmi_tab5_media_player
+            entity_id: ${entity_tab5_media_player}
       - lambda: 'assist_set_mic_state(id(icon_mic_status), AssistState::IDLE);'
 
   # Interruption puis ré-écoute immédiate (tap micro / barge-in Discussion).

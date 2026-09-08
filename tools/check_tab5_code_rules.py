@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Règles de code du firmware Tab5, jouées à chaque `pytest` (audit du 06/09/2026,
-§4.1 points 1, 4 et §4.2 point 17 ; ADR-0006). Trois règles, toutes
+§4.1 points 1, 4, 15 et §4.2 point 17 ; ADR-0006). Quatre règles, toutes
 falsifiables sur le dépôt réel :
 
   1. **`snprintf` partout** : aucun `sprintf(` brut dans `Tab5/*.cpp`, `*.h`,
@@ -15,6 +15,12 @@ falsifiables sur le dépôt réel :
      `globals:` doit être lu ou écrit quelque part (`id(x)` dans une lambda,
      `id: x` dans une action `globals.set` / `globals.increment`…). Un global
      que personne ne référence est du code mort qui trompe le lecteur.
+  4. **Aucune entité Home Assistant en dur** dans un YAML du firmware : toute
+     valeur `entity_id:` littérale (`domaine.objet`) doit être une substitution
+     de `user_entities.yaml` (`${entity_…}`) ou un `!lambda`. Les entités que la
+     tablette expose elle-même (`assist_satellite.*`, `media_player.*`) sont
+     dérivées de son nom dans HA : un renommage cassait l'interruption vocale et
+     l'annonce des rendez-vous sans aucune erreur (audit §4.1 point 15).
 
 Usage : python tools/check_tab5_code_rules.py   (aussi lancé par `pytest`, tests/test_guards.py)
 Sortie : 0 si tout est conforme, 1 sinon (liste des écarts sur stdout).
@@ -41,6 +47,9 @@ LV_ALLOWED = {
     "tab5-hardware.yaml": set(),
 }
 RE_GLOBAL_DEF = re.compile(r"^  - id: (\w+)\s*$", re.M)
+# `entity_id: domaine.objet` littéral (clé `entity_id` ou `*_entity_id`). Une
+# substitution `${…}`, un `!lambda` ou une liste de substitutions ne matchent pas.
+RE_HA_ENTITY_LITERAL = re.compile(r"^\s*-?\s*\w*entity_id:\s*['\"]?([a-z_]+\.[A-Za-z0-9_]+)['\"]?\s*$")
 RE_TOP_KEY = re.compile(r"^[a-z_]+:", re.M)
 
 
@@ -124,6 +133,19 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
         if not used:
             problems.append(f"{globals_yaml.name} : global `{name}` défini mais jamais référencé (id({name}) / id: {name}) — code mort")
 
+    # 4. entité HA en dur dans un YAML
+    for path in sources:
+        if path.suffix != ".yaml":
+            continue
+        text = strip_yaml_comments(path.read_text(encoding="utf-8"))
+        for lineno, line in enumerate(text.splitlines(), 1):
+            m = RE_HA_ENTITY_LITERAL.match(line)
+            if m:
+                problems.append(
+                    f"{path.name}:{lineno} : entité HA en dur `{m.group(1)}` — passer par une "
+                    f"substitution de user_entities.yaml (${{entity_…}})"
+                )
+
     return problems
 
 
@@ -134,7 +156,7 @@ def main() -> int:
         for p in problems:
             print("  -", p)
         return 1
-    print("[OK] règles de code Tab5 : snprintf partout, api-logic et hardware sans LVGL, aucun global orphelin")
+    print("[OK] règles de code Tab5 : snprintf partout, api-logic et hardware sans LVGL, aucun global orphelin, aucune entité HA en dur")
     return 0
 
 

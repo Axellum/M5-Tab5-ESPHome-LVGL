@@ -234,6 +234,7 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── tab5-hardware.yaml    # Display (MIPI-DSI), touch, I2C, audio, OTA
 │   ├── tab5-sensors-diagnostics.yaml  # System entities (Wi-Fi, power, uptime, RAM)
 │   ├── tab5-sensors-domotique.yaml    # HA entities (plants, lights, temps, audio)
+│   ├── pot_sensors.yaml      # Parameterized package: 4 plant-detail sensors, included ×5
 │   ├── tab5-api-logic.yaml   # HA service handlers + C++ lambdas
 │   ├── tab5-styles.yaml      # Global LVGL style definitions
 │   ├── tab5-lvgl.yaml        # UI layout — screens, widgets, icons, game includes

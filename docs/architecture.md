@@ -76,6 +76,7 @@ Home-automation entities pushed by Home Assistant:
 - Room & greenhouse temperature/humidity sensors
 - Light/PC state mirrors, phone battery
 - Audio: speaker amp switch, headphone jack, wake-word toggle
+- Plant details (EC / light / temperature / battery): `pot_sensors.yaml`, one parameterized package included five times (nested `packages:` + `vars: {n}`)
 
 These files only declare entities. No UI logic lives here.
 
@@ -313,6 +314,7 @@ Entités domotique poussées par Home Assistant :
 - Température & humidité des pièces et de la serre
 - Miroirs d'état lumières/PC, batterie téléphone
 - Audio : ampli, détection jack, switch wake word
+- Détails des pots (EC / éclairement / température / batterie) : `pot_sensors.yaml`, un package paramétré inclus cinq fois (`packages:` imbriqué + `vars: {n}`)
 
 Ces fichiers ne déclarent que des entités. Aucune logique UI ici.
 

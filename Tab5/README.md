@@ -37,7 +37,7 @@ Low-level hardware: display/touch buses, ES8388 DAC I2C init, speaker/mic I2S, P
 System/network entities: the `wifi:` block, GPIO power switches (Wi-Fi, USB, external 5V, antenna select), HA API status, IP/SSID, uptime, Wi-Fi RSSI, core temperature, free RAM/loop time (`debug`), SNTP clock and the status-bar/console refresh `interval:`s.
 
 ### `tab5-sensors-domotique.yaml`
-Home-automation entities pushed by HA over the ESPHome API: plant moisture (5×, dynamically sorted), light/PC state mirrors, phone battery, room & greenhouse temperature/humidity, audio (speaker amp, headphone jack, wake-word switch).
+Home-automation entities pushed by HA over the ESPHome API: plant moisture (5×, dynamically sorted), light/PC state mirrors, phone battery, room & greenhouse temperature/humidity, audio (speaker amp, headphone jack, wake-word switch). The 20 plant-detail sensors (EC / light / temperature / battery × 5 pots) come from **`pot_sensors.yaml`**, one parameterized package included five times through a nested `packages:` (`!include` + `vars: {n}`) — a sixth pot is one line here plus its four `entity_plante_6_*` keys.
 
 ### `tab5-api-logic.yaml`
 The `api: services:` block — the actual contract with Home Assistant. Each `tab5_maj_*` service receives a payload from an HA automation and calls into `tab5_custom.cpp` (via lambdas) to update the LVGL widgets. See the service table below.
@@ -128,6 +128,7 @@ Garde-fou : `tools/check_tab5_registry.py`.
 6. Avant de committer : `python -m esphome compile tab5-ha-hmi.yaml` doit réussir (toolchain déjà en cache localement, ~20-45s).
 7. **Tout popup modal réutilise le chrome partagé** (ADR-0009) : `modal_scrim.yaml` (var `scrim_opa`) + `modal_header.yaml` (icône, titre, croix — barre de 52 px, corps à `y: ${modal_body_y}`), carte dimensionnée par `${modal_card_w}`/`${modal_card_h}`. Jamais de voile, de titre ou de croix réécrits à la main ; les boutons d'options d'en-tête restent des frères en `y: 4, height: 44`. Vérification : `python tools/check_tab5_modal_chrome.py` (joué aussi par `pytest` et par la CI, `tests/test_guards.py`).
    **Exceptions (pages de jeu)** : les 8 `*_game.yaml` de la section Arcade ci-dessous, plus `game_selector.yaml`. Ce ne sont pas des popups posés sur `page_main` mais des **pages LVGL autonomes** en flux plein écran — pas de garde-fou modal (ni `style_modal_card`, ni `color_modal_scrim`, ni glyphe de croix).
+8. **Aucune entité Home Assistant en dur** dans un YAML du firmware — toujours une substitution de `user_entities.yaml` (`${entity_…}`) ou un `!lambda`. Les entités que la tablette expose elle-même (`assist_satellite.*`, `media_player.*`, dérivées par HA du nom de l'appareil) passent par `entity_tab5_satellite` / `entity_tab5_media_player` : défauts dans `tab5-scripts.yaml`, surcharge dans `user_entities.yaml` si l'appareil est renommé. **Vérifié** : `tools/check_tab5_code_rules.py` échoue sur toute valeur `entity_id:` littérale.
 
 ---
 
