@@ -4,7 +4,7 @@
 > Ce fichier est la cartographie officielle du projet Tab5. Il a été créé **spécifiquement pour guider les agents IA** (Claude, Gemini, etc.) dans leur compréhension de l'architecture du firmware.
 > Au lieu de lire et d'analyser à l'aveugle les dizaines de fichiers YAML et C++, **l'IA doit lire cette cartographie en premier**. Elle y trouvera l'arbre des dépendances (12 packages YAML + 9 modules C++ hors HMI), la répartition des rôles entre le YAML et le C++, ainsi que l'historique des bugs résolus et de la dette technique. Cela évite les hallucinations et le temps perdu en rétro-ingénierie.
 
-`Généré le 2026-07-06` · `maj: 2026-09-06` (comptes de lignes relevés par `wc -l` sur `main` @ `370933c`) · Sources vérifiées directement dans le code (`00ProjetTab/`), croisées avec `Tab5/README.md` (réécrit le 05/07/2026 contre le firmware réel), `contexte_ia/04_Projets/etat_tab5.md` et `contexte_ia/02_Hardware/rules_esphome.md`. Aucun fait ci-dessous n'est tiré d'une supposition — chaque ligne cite le fichier source lu.
+`Généré le 2026-07-06` · `maj: 2026-09-08` (comptes de lignes relevés par `wc -l` sur `refactor/registre-modales-jeux`, ADR-0013) · Sources vérifiées directement dans le code (`00ProjetTab/`), croisées avec `Tab5/README.md` (réécrit le 05/07/2026 contre le firmware réel), `contexte_ia/04_Projets/etat_tab5.md` et `contexte_ia/02_Hardware/rules_esphome.md`. Aucun fait ci-dessous n'est tiré d'une supposition — chaque ligne cite le fichier source lu.
 
 Repo Git distinct : `Axellum/M5-Tab5-ESPHome-LVGL` (dossier local `00ProjetTab/`), branche `main`.
 
@@ -20,7 +20,7 @@ Un tableau de bord domotique 60 FPS + satellite vocal local + **8 consoles de je
 
 ```mermaid
 graph TD
-    ENTRY["tab5-ha-hmi.yaml<br/>(point d'entrée, 206 lignes)<br/>substitutions (user_entities) + on_boot + packages: + includes:"]
+    ENTRY["tab5-ha-hmi.yaml<br/>(point d'entrée, 211 lignes)<br/>substitutions (user_entities) + on_boot + packages: + includes:"]
 
     subgraph PKG["Packages ESPHome (Tab5/*.yaml) — 12 packages"]
         TOK["tab5-ui-tokens.yaml<br/>tokens dimensionnels (modal_card_w/h, modal_body_y)"]
@@ -30,10 +30,10 @@ graph TD
         API["tab5-api-logic.yaml<br/>528 lignes<br/>api: services: (contrat HA, 16 services)"]
         STY["tab5-styles.yaml<br/>477 lignes<br/>color:/font:/lvgl: style_definitions + chess_pieces_80"]
         GLOB["tab5-globals.yaml<br/>235 lignes<br/>globals: + rotateur carte centrale (8s, planning/pluie/alertes/info + 4 bandeaux HA)"]
-        SCR["tab5-scripts.yaml<br/>1099 lignes<br/>script: debounces + vocal + rotateur/dismiss + volet + popups + jeux open/close"]
+        SCR["tab5-scripts.yaml<br/>1110 lignes<br/>script: debounces + vocal + rotateur/dismiss + volet + popups + jeux open/close + init ModalRegistry"]
         LVGL["tab5-lvgl.yaml<br/>746 lignes<br/>page_main + swipe prévisions + btns console/TV + !include jeux + sélecteur arcade"]
-        IMU["tab5-imu.yaml<br/>143 lignes<br/>BMI270 motion: + poll adaptatif 10/30Hz + tap-to-wake"]
-        HACTL["tab5-ha-controls.yaml<br/>286 lignes<br/>number volume + text_sensor écran courant + select aller-à + button recharger calendrier + interval rattrapage volume"]
+        IMU["tab5-imu.yaml<br/>137 lignes<br/>BMI270 motion: + poll adaptatif 10/30Hz + tap-to-wake"]
+        HACTL["tab5-ha-controls.yaml<br/>260 lignes<br/>number volume + text_sensor écran courant + select aller-à + button recharger calendrier + interval rattrapage volume"]
         ALARM["tab5-alarm.yaml<br/>réveil : rtttl + 20 entités HA (switch/datetime/number/select/text)<br/>+ machine d'état sonnerie + tick 1s (réveil & annonce RDV)"]
     end
 
@@ -58,8 +58,9 @@ règles calendrier ouverture/fermeture, snooze, liste RDV, rendu LVGL<br/>lit ca
     end
 
     subgraph CPP["C++ HMI (esphome: includes:)"]
-        HFILE["tab5_custom.h (743L)<br/>CentralPanelCtx, Weather*Slot, UIColor::, MeteoIcon::"]
-        CFILE["tab5_custom.cpp (2927L)<br/>logique LVGL HMI non-triviale"]
+        HFILE["tab5_custom.h (740L)<br/>CentralPanelCtx, Weather*Slot, UIColor::, MeteoIcon::"]
+        CFILE["tab5_custom.cpp (2920L)<br/>logique LVGL HMI non-triviale"]
+        REG["tab5_registry.h/.cpp<br/>GameRegistry::kGames (8 consoles) + ModalRegistry (ADR-0013)"]
     end
 
     subgraph GAMESCPP["C++ Jeux (esphome: includes: — prototypes expérimentaux)"]
@@ -99,6 +100,7 @@ règles calendrier ouverture/fermeture, snooze, liste RDV, rendu LVGL<br/>lit ca
     ENTRY -->|packages:| ALARM
     ENTRY -->|includes:| HFILE
     ENTRY -->|includes:| CFILE
+    ENTRY -->|includes:| REG
     ENTRY -->|includes:| MARBLE
     ENTRY -->|includes:| ARKA
     ENTRY -->|includes:| PIN
@@ -155,7 +157,7 @@ règles calendrier ouverture/fermeture, snooze, liste RDV, rendu LVGL<br/>lit ca
 
 | Fichier | Rôle exact | Gère | Dépend de |
 |---|---|---|---|
-| `tab5-ha-hmi.yaml` (206L) | Point d'entrée ESPHome. `substitutions: !include Tab5/user_entities.yaml` (gitignoré, modèle `user_entities.example.yaml`), séquence `on_boot:` en 2 priorités (700 puis 600) + init `g_central_ctx`/`g_day_slots`/`g_hour_slots`, `packages:` qui importe les 12 packages `Tab5/*.yaml`, `esphome: includes:` pour le C++. | Boot, orchestration des packages | `Tab5/user_entities.yaml`, `Tab5/tab5_custom.h/.cpp`, tous les `Tab5/*.yaml` |
+| `tab5-ha-hmi.yaml` (211L) | Point d'entrée ESPHome. `substitutions: !include Tab5/user_entities.yaml` (gitignoré, modèle `user_entities.example.yaml`), séquence `on_boot:` en 2 priorités (700 puis 600) + init `g_central_ctx`/`g_day_slots`/`g_hour_slots`, `packages:` qui importe les 12 packages `Tab5/*.yaml`, `esphome: includes:` pour le C++. | Boot, orchestration des packages | `Tab5/user_entities.yaml`, `Tab5/tab5_custom.h/.cpp`, tous les `Tab5/*.yaml` |
 
 Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700: lambda: delay(1000);` est la **cause racine confirmée** (06/07/2026, 5 tests OTA avec Axel présent) du bug historique « écran noir après reboot logiciel » — le `reset_pin` de l'écran passe par le GPIO expander I2C `PI4IOE5V6408`, qui a besoin de temps pour se stabiliser après boot avant que le reset ait un effet fiable. Documenté en détail dans `tab5-hardware.yaml:33-69`.
 
@@ -169,7 +171,7 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 | `tab5-api-logic.yaml` | 528 | Le contrat réel avec HA : bloc `api: services:` (16 services). Chaque service `tab5_maj_*` reçoit un payload d'une automation HA et appelle une fonction `tab5_custom.cpp` via lambda (pattern : sync `g_central_ctx` ← globals, appel C++, write-back) | Contrat API HA↔Tab5 (clim, volet, planning, alertes météo France, probabilités UV/gel/neige, prévisions bulk, pluie 1h, panneau info, réponse vocale, alertes HA bulk, calendrier mois/jour) | `tab5_custom.h/.cpp`, IDs LVGL définis dans `tab5-lvgl.yaml`/`ui_components/*.yaml` |
 | `tab5-styles.yaml` | 477 | Thème "Dark Mode Slate" (glassmorphism) : tokens `color:`, déclarations `font:` (Roboto + MDI + police météo custom), `lvgl: style_definitions:` | Palette visuelle, typographie, styles réutilisables | Polices `Tab5/materialdesignicons-webfont.ttf`, `Tab5/IconeMeteo.ttf` |
 | `tab5-globals.yaml` | 235 | Tout l'état partagé entre fichiers (`globals:`) + l'`interval: 8s` qui fait tourner la carte centrale (planning/pluie/alertes/info + jusqu'à 4 bandeaux HA, actif seulement sur la fenêtre prévisions par défaut) | État global partagé, rotateur carte centrale | `tab5_custom.cpp` (`transition_widgets()`, `g_central_ctx`) |
-| `tab5-scripts.yaml` | 1099 | Scripts ESPHome par familles : debounces (volume 150 ms, luminosité 200 ms, clim 250 ms), vocal (arm/disarm `Stop`, interrupt + ré-écoute, toggle assist, réponse vocale temporaire), rotateur central + dismiss (info, alertes HA paramétré slot 0-3), volet (fin de mouvement, feedback stop), popup lumière (`tab5_light_popup_show`), popup calendrier, popup assistant vocal (`tab5_assist_open/close/on_request/sync_settings/set_mode/set_text_size`). L'affichage temporaire du planning est en C++ (`show_temporary_planning()`) | Séquences temporisées, vocal, rotateur, popups | `globals:`, `tab5_custom.cpp`, `g_central_ctx` |
+| `tab5-scripts.yaml` | 1110 | Scripts ESPHome par familles : debounces (volume 150 ms, luminosité 200 ms, clim 250 ms), vocal (arm/disarm `Stop`, interrupt + ré-écoute, toggle assist, réponse vocale temporaire), rotateur central + dismiss (info, alertes HA paramétré slot 0-3), volet (fin de mouvement, feedback stop), popup lumière (`tab5_light_popup_show`), popup calendrier, popup assistant vocal (`tab5_assist_open/close/on_request/sync_settings/set_mode/set_text_size`). L'affichage temporaire du planning est en C++ (`show_temporary_planning()`) | Séquences temporisées, vocal, rotateur, popups | `globals:`, `tab5_custom.cpp`, `g_central_ctx` |
 | `tab5-lvgl.yaml` | 746 | Layout complet : page unique 1280×720 (`page_main`), swipe gauche/droite = pagination prévisions 0-4 (zone `y ≥ 333` uniquement), console via `btn_control_console` + popup TV via `btn_control_tv`, popup détails plantes via appui long, popup calendrier via appui long horloge, boutons statut/mode vocal (centralisés via `tab5_set_assist_mode`), carte centrale | Layout racine, navigation gestuelle | Tous les `ui_components/*.yaml`, `tab5_custom.cpp` (`handle_swipe_gesture`, `g_day_slots`, `g_hour_slots`, `g_central_ctx`) |
 | `tab5-alarm.yaml` | 1132 | Réveil matin + annonce des rendez-vous. `rtttl:` (mélodie de sonnerie sur `tab5_speaker`, hors media_player), ~20 entités exposées à HA (`switch`/`datetime type:time`/`number`/`select`/`text`/`text_sensor`/`binary_sensor`/`button`), machine d'état de sonnerie (démarrage, boucle mélodie + 2,5 s de silence, arrêt, répétition, durée max, nettoyage), et un `interval: 1s` qui ne fait qu'UNE comparaison d'entiers (le calcul est mis en cache dans `alarm_clock.cpp`). Point d'entrée unique `script.tab5_alarm_refresh` : entités → `g_alarm_cfg`, jamais l'inverse | Réveil, sonnerie, annonce RDV, entités de réglage HA | `alarm_clock.h/.cpp`, `cal_jours_data[]` (`tab5_custom.h`), IDs LVGL de `ui_components/alarm_popup.yaml` et `alarm_ring_overlay.yaml`, `sntp_time`, `speaker_player`, `micro_wake_word` |
 
@@ -177,8 +179,9 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 
 | Fichier | Lignes | Rôle exact | Fonctions clés |
 |---|---|---|---|
-| `tab5_custom.h` | 743 | Déclarations, structs (`CentralPanelCtx` [8 wrappers + le label chapeau du titre de page + 7 flags + current_panel], `DayForecastData`, `HourForecastData`, `WeatherHourSlot`, `WeatherDaySlot`, `MoistureSlotUI`, `PotDetailUI`, `HaAlertSlotUI`, `CalCellUI`, `CalDetailLineUI`), enum `PotMetric`, bits `CAL_BIT_*`, namespace `MeteoIcon::` (codes UTF-8 police météo), namespace `UIColor::` (palette sémantique — **miroir exact des tokens `color:` YAML, à garder synchro manuellement**) | — |
-| `tab5_custom.cpp` | 2927 | Toute la logique LVGL non-triviale, gardée contre les `lv_obj_t*` nuls (LVGL pas encore initialisé). Globals : `g_central_ctx`, `g_day_slots[5]`, `g_hour_slots[5]` (initialisés au boot) | `update_meteo_icon()` (icônes météo double-couche), `get_humidity_color()`/`get_temperature_color()`/`get_battery_color()` (gradients/échelles colorimétriques), `parse_and_update_heures_bulk()`/`parse_and_update_jours_bulk()` (parsing `strtok_r` in-place, garde OOM à 2048 octets), `refresh_daily_forecast()`/`refresh_hourly_forecast()`, `handle_swipe_gesture()` (pagination, zone `y ≥ 333`), `show_temporary_planning()` (affichage 6 s + restauration du panneau actif), `update_info_text_ui()` (panneau info, recolor conditionnel), `update_central_forecast_page_ui()` (overlay titre de page hors accueil), `highlight_button_border()` (surbrillance bordure bouton mode), `normalize_text_utf8()` (accents Latin-1→UTF-8 des textes HA), `update_light_card_ui()` (factorisée #T164, ex-triplée), `sort_and_update_moisture_slots()` (tri bubble 5→4 slots), `update_pots_popup_moisture_ui()`/`update_pot_metric_ui()` (popup détails plantes), `transition_widgets()` (animation glissement+fondu 450ms), `cal_render_month()`/`cal_store_month_data()`/`cal_render_day_detail()` (popup calendrier) |
+| `tab5_custom.h` | 740 | Déclarations, structs (`CentralPanelCtx` [8 wrappers + le label chapeau du titre de page + 7 flags + current_panel], `DayForecastData`, `HourForecastData`, `WeatherHourSlot`, `WeatherDaySlot`, `MoistureSlotUI`, `PotDetailUI`, `HaAlertSlotUI`, `CalCellUI`, `CalDetailLineUI`), enum `PotMetric`, bits `CAL_BIT_*`, namespace `MeteoIcon::` (codes UTF-8 police météo), namespace `UIColor::` (palette sémantique — **miroir exact des tokens `color:` YAML, à garder synchro manuellement**) | — |
+| `tab5_custom.cpp` | 2920 | Toute la logique LVGL non-triviale, gardée contre les `lv_obj_t*` nuls (LVGL pas encore initialisé). Globals : `g_central_ctx`, `g_day_slots[5]`, `g_hour_slots[5]` (initialisés au boot) | `update_meteo_icon()` (icônes météo double-couche), `get_humidity_color()`/`get_temperature_color()`/`get_battery_color()` (gradients/échelles colorimétriques), `parse_and_update_heures_bulk()`/`parse_and_update_jours_bulk()` (parsing `strtok_r` in-place, garde OOM à 2048 octets), `refresh_daily_forecast()`/`refresh_hourly_forecast()`, `handle_swipe_gesture()` (pagination, zone `y ≥ 333`), `show_temporary_planning()` (affichage 6 s + restauration du panneau actif), `update_info_text_ui()` (panneau info, recolor conditionnel), `update_central_forecast_page_ui()` (overlay titre de page hors accueil), `highlight_button_border()` (surbrillance bordure bouton mode), `normalize_text_utf8()` (accents Latin-1→UTF-8 des textes HA), `update_light_card_ui()` (factorisée #T164, ex-triplée), `sort_and_update_moisture_slots()` (tri bubble 5→4 slots), `update_pots_popup_moisture_ui()`/`update_pot_metric_ui()` (popup détails plantes), `transition_widgets()` (animation glissement+fondu 450ms), `cal_render_month()`/`cal_store_month_data()`/`cal_render_day_detail()` (popup calendrier) |
+| `tab5_registry.h/.cpp` | 270 | Registre unique des **consoles** (`GameRegistry::kGames` : libellé, `is_open`, `close`, `on_imu`, `imu_fast`) et des **fenêtres modales** (`ModalRegistry`, genres `POPUP`/`SUBWINDOW`/`LAYER`, rempli une fois par le script `tab5_modal_registry_init` de `tab5-scripts.yaml`). Remplace 4 copies de la liste des jeux et 3 tables de popups (`kPopups` ×2, `kScreens`, `kTargetOf`) — ADR-0013. Garde-fou `tools/check_tab5_registry.py` | `GameRegistry::any_open()` / `open_name()` / `close_all()` / `any_imu_fast_open()` / `dispatch_imu()` ; `ModalRegistry::add()` / `visible_name()` / `any_popup_visible()` / `find()` / `close_all()` |
 | `alarm_clock.h/.cpp` | 969 | Moteur du réveil, **pur** : aucun `id()` ESPHome, aucun appel réseau, donc entièrement pilotable depuis un test ou une relecture. Cache de la prochaine sonnerie (recalcul seulement si un réglage/le calendrier a bougé, ou une fois par minute — filet contre bascule d'heure et resynchro SNTP). Toute l'arithmétique de dates passe par `local_day_from_offset()` de `tab5_custom.h` (normalisation `mktime()`, immunisée aux bascules heure d'été/hiver) | `alarm_next_ring()` (balaie 8 jours, applique le mode), `ring_minute_for_day()` (les 3 modes + le repos mini dérivé de la FERMETURE de la veille), `alarm_due()` (vrai une seule fois, fenêtre de grâce de 120 s, plancher anti-re-sonnerie sauvegardé en NVS), `alarm_snooze()`/`alarm_dismiss()`, `alarm_next_label()`/`alarm_next_detail()` (annoncent la répétition en cours en priorité), `rdv_store()`/`rdv_due()`/`rdv_next_label()` (appariement par epoch : une re-poussée HA ne ré-annonce pas), `alarm_ring_gain()` (crescendo), `alarm_render_settings()`/`alarm_ring_show/refresh/hide()`/`alarm_render_status_icon()` |
 
 **Règle d'architecture vérifiée et respectée dans le code** (`Tab5/README.md:44`) : les `sensor:`/`text_sensor:` YAML ne manipulent jamais `lv_obj_*` directement — ils appellent toujours une fonction `tab5_custom.cpp`. Confirmé par lecture de `tab5-sensors-diagnostics.yaml`/`tab5-sensors-domotique.yaml` (tous les `on_value:` appellent une fonction C++ nommée, sauf les cas triviaux de couleur d'icône à 2-3 lignes qui restent inline).
@@ -290,7 +293,7 @@ Les trois fichiers ci-dessous sont **gitignorés** — ce sont les vrais fichier
 ### 4.4 Fichiers volumineux
 
 - ~~**`tab5-sensors.yaml`**~~ — **SCINDÉ** (14/07/2026) en `tab5-sensors-diagnostics.yaml` (278L) + `tab5-sensors-domotique.yaml` (270L), blocs copiés à l'identique, config fusionnée sémantiquement inchangée.
-- **`tab5_custom.cpp` (2927 lignes au 06/09/2026)** — 7 responsabilités (UTF-8/texte, météo, carte centrale, assistant/markdown, calendrier, console, animations + horloge) ; découpage en unités de compilation recommandé par l'audit du 06/09 — `esphome: includes:` accepte plusieurs `.cpp`, comme pour les jeux.
+- **`tab5_custom.cpp` (2920 lignes au 08/09/2026)** — 7 responsabilités (UTF-8/texte, météo, carte centrale, assistant/markdown, calendrier, console, animations + horloge) ; découpage en unités de compilation recommandé par l'audit du 06/09 — `esphome: includes:` accepte plusieurs `.cpp`, comme pour les jeux.
 - **`climate_popup.yaml` (327 lignes)** — non factorisé au-delà de 6/10 boutons (ADR-0007, choix assumé).
 
 ### 4.5 Volontairement non corrigé (ne pas « auditer » à nouveau)

@@ -68,6 +68,18 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 
 ---
 
+### `tab5_registry.h` / `tab5_registry.cpp`
+
+Registre unique des **consoles** (`GameRegistry::kGames` : libellé, `is_open`,
+`close`, `on_imu`, `imu_fast`) et des **fenêtres modales** (`ModalRegistry`,
+rempli une fois par le script `tab5_modal_registry_init` de `tab5-scripts.yaml`,
+seul endroit où `id()` est disponible ; genres `POPUP` / `SUBWINDOW` / `LAYER`,
+ce dernier pour la sonnerie du réveil : nommée, jamais refermée). Tout ce qui a
+besoin de « quel jeu est ouvert ? » ou « quel popup couvre l'écran ? » —
+fermeture globale, poll IMU, text_sensor « Écran courant », select « Aller à
+l'écran », retour automatique à l'inactivité — passe par lui (ADR-0013).
+Garde-fou : `tools/check_tab5_registry.py`.
+
 ## Services HA exposés (`api: services:`)
 
 | Service | Payload | Rôle |
@@ -161,11 +173,12 @@ Chaque carte fait **trois** choses, dans cet ordre :
 3. `script.execute: tab5_<jeu>_open` — construit et ouvre la console.
 
 Ne pas recopier la liste des fermetures dans les cartes : elle vit dans
-`tab5_games_close_all` (`tab5-scripts.yaml`), un seul endroit à maintenir.
+`GameRegistry::kGames` (`tab5_registry.cpp`), que `tab5_games_close_all`
+(`tab5-scripts.yaml`) se contente d'appeler — un seul endroit à maintenir.
 
 ### Règles à respecter pour ajouter une 9ᵉ console
 
-Une console n'est **intégrée** que si les six points suivants sont faits. Un seul
+Une console n'est **intégrée** que si les cinq points suivants sont faits. Un seul
 oubli et le jeu est invisible, ou le firmware ne compile pas :
 
 1. `tab5-ha-hmi.yaml` → `includes:` : **tous** les `.h` et `.cpp`, y compris les
@@ -177,11 +190,14 @@ oubli et le jeu est invisible, ou le firmware ne compile pas :
    cosmétique : sans lui, un swipe sur le dashboard peut atterrir sur la page du
    jeu, timer non démarré et pointeurs non injectés ;
 3. `tab5-scripts.yaml` → script `tab5_<jeu>_open` qui injecte les pointeurs LVGL ;
-4. `tab5-scripts.yaml` → ajouter `<Namespace>::close()` dans
-   **`tab5_games_close_all`** (liste unique, ne jamais la recopier ailleurs) ;
-5. `game_selector.yaml` → une carte dans la grille ;
-6. `tab5-imu.yaml` → `<Namespace>::on_imu(...)`, et `<Namespace>::is_open()` dans
-   la liste de poll rapide **uniquement** si le jeu pilote à l'inclinaison.
+4. `tab5_registry.cpp` → une ligne dans **`GameRegistry::kGames`** (libellé,
+   `is_open`, `close`, `on_imu`, et `imu_fast` à `true` **uniquement** si le jeu
+   pilote à l'inclinaison). C'est la **seule** liste : la fermeture globale
+   (`tab5_games_close_all`), le poll IMU 10/30 Hz, le dispatch des 3 axes et le
+   text_sensor « Écran courant » la lisent tous. `tools/check_tab5_registry.py`
+   (joué par `pytest`) échoue si un `*_game.h` n'y figure pas, ou si un
+   `<Namespace>::is_open()` réapparaît dans un YAML ;
+5. `game_selector.yaml` → une carte dans la grille.
 
 Les icônes MDI utilisées doivent en outre figurer dans la liste `glyphs` de
 `mdi_font_56` / `mdi_font_45` (`tab5-styles.yaml`) : une icône absente de la
