@@ -131,7 +131,7 @@ void parse_and_update_heures_bulk(const std::string& payload) {
         ESP_LOGE("TAB5", "Payload heures trop long (%d octets). Rejeté pour éviter OOM.", payload.length());
         return;
     }
-    ESP_LOGI("TAB5", "Received heures bulk payload length: %d", payload.length());
+    ESP_LOGD("TAB5", "Received heures bulk payload length: %d", payload.length());
     // Buffer stack plutot que "std::string s = payload;" (copie heap evitable
     // jusqu'a 2048 octets) - mirroir du fix deja applique a tab5_maj_alerte_meteo_france.
     char buf[2049];
@@ -176,7 +176,7 @@ void parse_and_update_jours_bulk(const std::string& payload) {
         ESP_LOGE("TAB5", "Payload jours trop long (%d octets). Rejeté pour éviter OOM.", payload.length());
         return;
     }
-    ESP_LOGI("TAB5", "Received jours bulk payload length: %d", payload.length());
+    ESP_LOGD("TAB5", "Received jours bulk payload length: %d", payload.length());
     // Buffer stack plutot que "std::string s = payload;" (copie heap evitable
     // jusqu'a 2048 octets) - mirroir du fix deja applique a tab5_maj_alerte_meteo_france.
     char buf[2049];
