@@ -4,6 +4,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — Firmware : plus de trace INFO à chaque push météo
+
+Audit du 06/09/2026, §4.2 point 24. Le projet tourne en `logger: level: INFO`.
+
+- `parse_and_update_heures_bulk()` / `parse_and_update_jours_bulk()` (`tab5_forecast.cpp`)
+  journalisaient la longueur de chaque payload en `ESP_LOGI` : quatre lignes toutes les
+  dix minutes (trois chunks horaires + un journalier), sans valeur en fonctionnement
+  normal. Passées en `ESP_LOGD`, donc compilées hors binaire au niveau INFO.
+- Les `logger.log "DEBUG: VOICE_ASSISTANT on_*"` et « WAKE WORD DETECTED » cités par
+  l'audit **ne sortaient déjà pas** : un `logger.log` sans `level:` est un `ESP_LOGD`
+  (documenté dans `tab5-hardware.yaml`), donc silencieux en INFO. Laissés tels quels,
+  ils servent quand on repasse en DEBUG.
+- Restent en INFO, à dessein : la décision du mot de réveil (événement rare, lot (c)),
+  le refus d'ouverture d'écran pendant la sonnerie, le layout du rouleau d'horloge
+  (une fois par boot).
+
 ### 2026-09-08 — Contrat HA : l'ancien service `tab5_maj_pluie_1h` est retiré
 
 - Une barre par appel, neuf appels par rafraîchissement : remplacé le même jour par
