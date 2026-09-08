@@ -1180,7 +1180,7 @@ void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite) {
     }
 }
 
-void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* lbl_target_popup, lv_obj_t* arc,
+void update_clim_from_ha_ui(lv_obj_t* lbl_target, lv_obj_t* lbl_target_popup, lv_obj_t* arc,
     lv_obj_t* lbl_current, float target, float current) {
     char buf_target[16];
     snprintf(buf_target, sizeof(buf_target), "%.1f", target);
@@ -1763,18 +1763,90 @@ void assist_apply_text_size(lv_obj_t* lbl_response, int size_idx,
     assist_style_size_btn(btn_l, size_idx >= 2);
 }
 
-void assist_image_hint_ui(lv_obj_t* hint, lv_obj_t* img, bool loading) {
-    if (loading) {
-        if (hint != nullptr) {
-            lv_label_set_text(hint, "Chargement image...");
-            lv_obj_clear_flag(hint, LV_OBJ_FLAG_HIDDEN);
-        }
-        if (img != nullptr) lv_obj_add_flag(img, LV_OBJ_FLAG_HIDDEN);
-        return;
+// Couleur + libellé d'un état du pipeline (mêmes valeurs que les 5 anciens blocs).
+static void assist_state_style(AssistState st, uint32_t& color, const char*& label) {
+    switch (st) {
+        case AssistState::LISTENING: color = UIColor::SUCCESS;  label = "Écoute…";  break;
+        case AssistState::THINKING:  color = UIColor::WARNING;  label = "Analyse…"; break;
+        case AssistState::SPEAKING:  color = UIColor::INFO;     label = "Réponse";  break;
+        case AssistState::ERROR:     color = UIColor::ERROR;    label = "Erreur";   break;
+        case AssistState::IDLE:
+        default:                     color = UIColor::TEXT_DIM; label = "Prêt";     break;
     }
-    if (img != nullptr)  lv_obj_add_flag(img, LV_OBJ_FLAG_HIDDEN);
-    if (hint != nullptr) lv_obj_add_flag(hint, LV_OBJ_FLAG_HIDDEN);
 }
+
+void assist_set_mic_state(lv_obj_t* icon_mic, AssistState st) {
+    if (icon_mic == nullptr) return;
+    uint32_t color;
+    const char* label;
+    assist_state_style(st, color, label);
+    lv_obj_set_style_text_color(icon_mic, lv_color_hex(color), LV_PART_MAIN);
+}
+
+void assist_set_pipeline_state(lv_obj_t* icon_mic, lv_obj_t* lbl_status, AssistState st) {
+    uint32_t color;
+    const char* label;
+    assist_state_style(st, color, label);
+    if (icon_mic != nullptr) lv_obj_set_style_text_color(icon_mic, lv_color_hex(color), LV_PART_MAIN);
+    if (lbl_status != nullptr) {
+        lv_label_set_text(lbl_status, label);
+        lv_obj_set_style_text_color(lbl_status, lv_color_hex(color), LV_PART_MAIN);
+    }
+}
+
+void assist_image_state_ui(lv_obj_t* hint, lv_obj_t* img, AssistImage st) {
+    const char* text = nullptr;
+    if (st == AssistImage::LOADING)    text = "Chargement image...";
+    else if (st == AssistImage::ERROR) text = "Image indisponible";
+    if (img != nullptr) {
+        if (st == AssistImage::READY) lv_obj_clear_flag(img, LV_OBJ_FLAG_HIDDEN);
+        else                          lv_obj_add_flag(img, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (hint != nullptr) {
+        if (text != nullptr) {
+            lv_label_set_text(hint, text);
+            lv_obj_clear_flag(hint, LV_OBJ_FLAG_HIDDEN);
+        } else {
+            lv_obj_add_flag(hint, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
+}
+
+void assist_wake_word_indicator_ui(lv_obj_t* lbl, bool on) {
+    if (lbl == nullptr) return;
+    lv_label_set_text(lbl, on ? "Ok Nabu: ON" : "Ok Nabu: OFF");
+    lv_obj_set_style_text_color(lbl, lv_color_hex(on ? UIColor::SUCCESS : UIColor::TEXT_DIM), LV_PART_MAIN);
+}
+
+// =============================================================================
+// Décision du mot de réveil — pure, sans LVGL ni id() : la table du .h.
+// =============================================================================
+namespace WakeWord {
+
+Action decide(const Inputs& in) {
+    if (in.alarm_ringing) return ALARM_STOP;
+    const bool responding = in.va_stop_armed && in.audio_busy;
+    if (in.is_stop) {
+        if (in.volet_en_mouvement) return VOLET_STOP;
+        return responding ? INTERRUPT_LISTEN : IGNORE_STOP;
+    }
+    if (responding) return INTERRUPT_LISTEN;
+    return (in.wake_word_enabled && in.api_connected) ? START_PIPELINE : IGNORE_INACTIVE;
+}
+
+const char* action_name(Action a) {
+    switch (a) {
+        case ALARM_STOP:       return "ALARM_STOP";
+        case VOLET_STOP:       return "VOLET_STOP";
+        case INTERRUPT_LISTEN: return "INTERRUPT_LISTEN";
+        case START_PIPELINE:   return "START_PIPELINE";
+        case IGNORE_STOP:      return "IGNORE_STOP";
+        case IGNORE_INACTIVE:  return "IGNORE_INACTIVE";
+    }
+    return "?";
+}
+
+}  // namespace WakeWord
 
 // =============================================================================
 // Carte lumiere (epaule j2/j3/j4 + switch associe + popup power) : factorise depuis

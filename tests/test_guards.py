@@ -4,8 +4,8 @@
 - cadre modal v4 (ADR-0009) sur chaque popup de Tab5/ui_components/ ;
 - registre unique des consoles et des fenêtres modales (ADR-0013) : aucune
   liste recopiée dans un YAML, aucun jeu ni popup oublié ;
-- règles de code (ADR-0006) : snprintf partout, aucun lv_* dans le contrat API,
-  aucun global orphelin ;
+- règles de code (ADR-0006) : snprintf partout, aucun lv_* dans le contrat API
+  ni dans le fichier matériel, aucun global orphelin ;
 - les 6 salles de « Fil d'Or » sont traversables et tout le loot atteignable ;
 - les 10 niveaux de « Coureur d'Or » sont jouables jusqu'à la sortie.
 

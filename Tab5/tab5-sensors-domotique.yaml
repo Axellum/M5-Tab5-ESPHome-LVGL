@@ -42,22 +42,14 @@ switch:
             lambda: 'return id(boot_complete);'
           then:
             - micro_wake_word.start:
-      - lambda: |-
-          if (id(lbl_ok_nabu) != nullptr) {
-            lv_label_set_text(id(lbl_ok_nabu), "Ok Nabu: ON");
-            lv_obj_set_style_text_color(id(lbl_ok_nabu), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-          }
+      - lambda: 'assist_wake_word_indicator_ui(id(lbl_ok_nabu), true);'
     on_turn_off:
       - if:
           condition:
             lambda: 'return id(boot_complete);'
           then:
             - micro_wake_word.stop:
-      - lambda: |-
-          if (id(lbl_ok_nabu) != nullptr) {
-            lv_label_set_text(id(lbl_ok_nabu), "Ok Nabu: OFF");
-            lv_obj_set_style_text_color(id(lbl_ok_nabu), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-          }
+      - lambda: 'assist_wake_word_indicator_ui(id(lbl_ok_nabu), false);'
 
 binary_sensor:
 
