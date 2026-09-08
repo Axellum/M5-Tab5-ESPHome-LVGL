@@ -18,7 +18,8 @@
 #       2. lvgl.page.show: page_<jeu>             (navigue vers la page du jeu)
 #       3. script.execute: tab5_<jeu>_open        (ouvre la console)
 #     Ne PAS recopier la liste des fermetures ici : elle vit dans
-#     tab5_games_close_all (tab5-scripts.yaml), un seul endroit à maintenir.
+#     GameRegistry::kGames (tab5_registry.cpp), que tab5_games_close_all
+#     (tab5-scripts.yaml) se contente d'appeler — un seul endroit à maintenir.
 #
 #     Les icônes MDI utilisées ici DOIVENT figurer dans la liste `glyphs` de
 #     mdi_font_56 / mdi_font_45 (tab5-styles.yaml), sinon elles ne s'affichent

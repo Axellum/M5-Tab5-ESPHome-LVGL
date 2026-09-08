@@ -167,9 +167,6 @@ void animate_popup_close(lv_obj_t* card, lv_obj_t* scrim);
 // rallumerait d'un coup avant de le refaire disparaître.
 bool close_popup_if_open(lv_obj_t* card);
 
-// true si au moins un des popups passés est visible (flag HIDDEN absent).
-bool any_popup_visible(lv_obj_t* const* cards, int n);
-
 // Glissement horizontal + fondu croisé entre deux layers (swipe prévisions).
 // dir = LV_DIR_LEFT (in arrive de la droite, out part à gauche) ou
 //       LV_DIR_RIGHT (in arrive de la gauche, out part à droite).
