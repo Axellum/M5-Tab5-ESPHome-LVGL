@@ -14,7 +14,7 @@ The firmware is **push-only** ([ADR-0001](decisions/0001-push-only-zero-polling.
 
 ## What it does *not* touch
 
-Nothing in `Tab5/*.yaml`, `tab5_custom.cpp/.h`, `Tab5/user_entities.yaml`, `secrets.yaml`, or `HomeAssistant_Config/` is modified by demo mode. It is a standalone script that talks to the same API surface real automations use — purely additive.
+Nothing in `Tab5/*.yaml`, `Tab5/*.cpp/.h`, `Tab5/user_entities.yaml`, `secrets.yaml`, or `HomeAssistant_Config/` is modified by demo mode. It is a standalone script that talks to the same API surface real automations use — purely additive.
 
 ## Steps
 
@@ -50,7 +50,7 @@ By default, the script also logs when you tap a light, climate, or shutter contr
 | `tab5_maj_clim`, `_volet_etat`, `_planning`, `_info_texte` | Climate, shutter, planning and info-banner cards (`_info_texte` takes 3 args: `texte`, `couleur`, `meteo_id`) |
 | 13 mirror entities (`platform: homeassistant` in `tab5-sensors-domotique.yaml`) | Lights, room temp/humidity, phone battery, PC tracker, 5 plant moisture sensors (one deliberately low, to show the dynamic sort) |
 
-Source of the exact payload contract: `Tab5/tab5-api-logic.yaml` and `Tab5/tab5_custom.cpp` (parsing rules, field counts, buffer limits) — see comments in `tools/demo/scenarios.py` for the specifics.
+Source of the exact payload contract: `Tab5/tab5-api-logic.yaml` and `Tab5/tab5_services.cpp` / `tab5_forecast.cpp` (parsing rules, field counts, buffer limits) — see comments in `tools/demo/scenarios.py` for the specifics.
 
 ---
 
@@ -70,7 +70,7 @@ Le firmware est **push-only** ([ADR-0001](decisions/0001-push-only-zero-polling.
 
 ## Ce que ça ne touche pas
 
-Rien dans `Tab5/*.yaml`, `tab5_custom.cpp/.h`, `Tab5/user_entities.yaml`, `secrets.yaml`, ou `HomeAssistant_Config/` n'est modifié par le mode démo. C'est un script autonome qui parle la même API que les vraies automations — purement additif.
+Rien dans `Tab5/*.yaml`, `Tab5/*.cpp/.h`, `Tab5/user_entities.yaml`, `secrets.yaml`, ou `HomeAssistant_Config/` n'est modifié par le mode démo. C'est un script autonome qui parle la même API que les vraies automations — purement additif.
 
 ## Étapes
 
@@ -106,4 +106,4 @@ Par défaut, le script loggue aussi quand vous appuyez sur un contrôle lumière
 | `tab5_maj_clim`, `_volet_etat`, `_planning`, `_info_texte` | Cartes clim, volet, planning et bandeau info (`_info_texte` prend 3 arguments : `texte`, `couleur`, `meteo_id`) |
 | 13 entités miroir (`platform: homeassistant` dans `tab5-sensors-domotique.yaml`) | Lumières, temp/humidité pièces, batterie téléphone, tracker PC, 5 capteurs d'humidité plantes (un volontairement bas, pour montrer le tri dynamique) |
 
-Source du contrat exact des payloads : `Tab5/tab5-api-logic.yaml` et `Tab5/tab5_custom.cpp` (règles de parsing, nombre de champs, limites de buffer) — voir les commentaires de `tools/demo/scenarios.py` pour le détail.
+Source du contrat exact des payloads : `Tab5/tab5-api-logic.yaml` et `Tab5/tab5_services.cpp` / `tab5_forecast.cpp` (règles de parsing, nombre de champs, limites de buffer) — voir les commentaires de `tools/demo/scenarios.py` pour le détail.

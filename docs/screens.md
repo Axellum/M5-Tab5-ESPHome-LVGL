@@ -4,7 +4,7 @@
 
 ---
 
-This page describes what the Tab5 actually shows and does — verified against the firmware (`tab5-lvgl.yaml`, `ui_components/*.yaml`, `tab5_custom.cpp`) on 2026-07-06, re-checked 2026-07-14 (info panel, console button, swipe zones). The previous version of this page described a 6-tab, multi-screen navigation bar that no longer exists (and may never have shipped) — see [ADR-0002](decisions/0002-single-page-swipe-navigation.md) for why. If anything below stops matching the running firmware, the firmware is right — fix this page.
+This page describes what the Tab5 actually shows and does — verified against the firmware (`tab5-lvgl.yaml`, `ui_components/*.yaml`, `tab5_*.cpp`) on 2026-07-06, re-checked 2026-07-14 (info panel, console button, swipe zones). The previous version of this page described a 6-tab, multi-screen navigation bar that no longer exists (and may never have shipped) — see [ADR-0002](decisions/0002-single-page-swipe-navigation.md) for why. If anything below stops matching the running firmware, the firmware is right — fix this page.
 
 ---
 
@@ -35,7 +35,7 @@ Always-visible content at the top of the screen:
 
 ## Central card — planning / rain / alerts / info
 
-A single card rotates automatically every 8 seconds (`tab5-globals.yaml`, `interval: 8s`) between up to four panels. The rotation only runs on the default forecast window — swiping to another forecast window replaces the central card with a page-title overlay (`page_title_wrapper`) and pauses the rotation until you swipe back. That overlay is two lines built in `forecast_page_title_parts()` (`tab5_custom.cpp`): a dim kicker naming the family and rank of the window (`Prévisions journalières · 2/3`) above the actual span of the 5 visible tiles — `Du mercredi 5 août au dimanche 9 août` for daily windows (day names/dates from SNTP, `1er` for the first of the month), `De 14:00 à 18:00` for hourly ones, always oldest → newest even though the hourly tiles are laid out right-to-left. If the dates aren't available yet (SNTP not synced and no HA payload), the kicker takes the main line on its own. Tapping a forecast card's temperature (see below) can also interrupt the rotation for a few seconds to show a specific day's schedule.
+A single card rotates automatically every 8 seconds (`tab5-globals.yaml`, `interval: 8s`) between up to four panels. The rotation only runs on the default forecast window — swiping to another forecast window replaces the central card with a page-title overlay (`page_title_wrapper`) and pauses the rotation until you swipe back. That overlay is two lines built in `forecast_page_title_parts()` (`tab5_*.cpp`): a dim kicker naming the family and rank of the window (`Prévisions journalières · 2/3`) above the actual span of the 5 visible tiles — `Du mercredi 5 août au dimanche 9 août` for daily windows (day names/dates from SNTP, `1er` for the first of the month), `De 14:00 à 18:00` for hourly ones, always oldest → newest even though the hourly tiles are laid out right-to-left. If the dates aren't available yet (SNTP not synced and no HA payload), the kicker takes the main line on its own. Tapping a forecast card's temperature (see below) can also interrupt the rotation for a few seconds to show a specific day's schedule.
 
 - **Planning** — always part of the rotation. Shows the day's schedule.
 - **Rain forecast** — only rotated in if `has_rain` is true. A short-term rain graph: one data point every 5 minutes for the first 30 minutes, then every 10 minutes for the following 30 minutes (9 points total, 1-hour window), sourced from Météo-France via the `tab5_maj_pluie_1h` API service.
@@ -43,12 +43,12 @@ A single card rotates automatically every 8 seconds (`tab5-globals.yaml`, `inter
 
 **The date, not "a day", changes color with the current overall alert level:** independently of the rotation above, the date text under the clock in the home area (`lbl_date`, e.g. "Lun 06 Juil") is recolored every time an alert payload is received, based on the *overall* vigilance level for the day (green/default if none, pale yellow/orange/pale red for jaune/orange/rouge) — see `tab5-api-logic.yaml` in the `tab5_maj_alerte_meteo_france` service. This is separate from the per-type icon coloring in the alert panel above, which uses each alert type's own individual level rather than the overall one.
 
-- **Info panel** — only rotated in if `has_info` is true. Shows either a 3-day calendar recap (multi-line, with inline color markup) or a Météo-France alert banner (single line, colored by severity), pushed by HA via the `tab5_maj_info_texte` service (`update_info_text_ui()`, `tab5_custom.cpp`). **Tap dismisses it** (`tab5_dismiss_info_tap` → `dismiss_central_info_immediate`): the panel leaves the rotator immediately; the id is stored in `tab5_dismissed_local` so a re-push of the same id stays hidden until HA sends a new one.
+- **Info panel** — only rotated in if `has_info` is true. Shows either a 3-day calendar recap (multi-line, with inline color markup) or a Météo-France alert banner (single line, colored by severity), pushed by HA via the `tab5_maj_info_texte` service (`update_info_text_ui()`, `tab5_*.cpp`). **Tap dismisses it** (`tab5_dismiss_info_tap` → `dismiss_central_info_immediate`): the panel leaves the rotator immediately; the id is stored in `tab5_dismissed_local` so a re-push of the same id stays hidden until HA sends a new one.
 - **HA alert / info slots (up to 4)** — pushed by `tab5_maj_alertes_ha_bulk` into `ha_alert_wrapper_0…3`. Each slot is its own rotator panel; **tap dismisses that slot** (`tab5_dismiss_ha_alert_N` → `dismiss_ha_alert_slot_immediate`) with the same local-dismiss behavior.
 
 If neither rain, MF alerts, info nor HA alert slots are active, the rotation just keeps planning on screen.
 
-**Temporary override:** tapping the max/min temperature on any of the 5 bottom forecast cards interrupts the rotation for **6 seconds** to show that specific day's opening-hours text in the central card, then automatically restores the previously active panel (`show_temporary_planning()`, `tab5_custom.cpp` — this used to be an ESPHome script in `tab5-scripts.yaml`, moved to C++ in the 12/07 reboot fix).
+**Temporary override:** tapping the max/min temperature on any of the 5 bottom forecast cards interrupts the rotation for **6 seconds** to show that specific day's opening-hours text in the central card, then automatically restores the previously active panel (`show_temporary_planning()`, `tab5_*.cpp` — this used to be an ESPHome script in `tab5-scripts.yaml`, moved to C++ in the 12/07 reboot fix).
 
 ---
 
@@ -106,7 +106,7 @@ The controls are dimmed (not hidden) when the AC is off, so the layout stays sta
 
 ## Plant moisture card
 
-Monitors up to 5 BLE soil moisture sensors, but only **4 slots are shown** (`sort_and_update_moisture_slots()`, `tab5_custom.cpp`). The sensors are sorted by moisture level (driest to wettest) each update, then mapped to slots as: driest, 2nd-driest, **the median-ranked sensor** (labeled `Moy:` — this shows that one sensor's raw reading, it is not a computed arithmetic average of all 5), and wettest. Because the mapping is by rank rather than by fixed sensor identity, *which* physical pot number appears in which slot changes over time as moisture levels shift — a photo taken today showing "Pot 2 / Pot 4 / Moy / Pot 3" is not a fixed layout.
+Monitors up to 5 BLE soil moisture sensors, but only **4 slots are shown** (`sort_and_update_moisture_slots()`, `tab5_*.cpp`). The sensors are sorted by moisture level (driest to wettest) each update, then mapped to slots as: driest, 2nd-driest, **the median-ranked sensor** (labeled `Moy:` — this shows that one sensor's raw reading, it is not a computed arithmetic average of all 5), and wettest. Because the mapping is by rank rather than by fixed sensor identity, *which* physical pot number appears in which slot changes over time as moisture levels shift — a photo taken today showing "Pot 2 / Pot 4 / Moy / Pot 3" is not a fixed layout.
 
 Each slot shows the sensor's icon and moisture-level color (see Color coding below) plus its physical pot number (or `Moy:` for the median slot).
 
@@ -118,7 +118,7 @@ A **long press anywhere on the moisture card** opens a near-fullscreen modal (12
 - the soil-moisture % (large) and a watering status: **OK** (green), **Bientôt sec** (≤ 20 %, amber), **À arroser !** (≤ 14 %, red — aligned with the `get_humidity_color()` red zone) or **Hors ligne** (sensor unavailable)
 - four metric rows: **Fertility** (EC conductivity, µS/cm), **Light** (lx), **Temperature** (°C, `get_temperature_color()` gradient) and sensor **Battery** (%, `get_battery_color()` scale)
 
-Values are pushed continuously by the `pot*_ec/lux/temp/bat` HA sensors (`update_pot_metric_ui()`, `tab5_custom.cpp`) — the popup needs no sync on open. Tapping the dark overlay or the × button (real 96×64 glass button) closes it. Components: `pots_popup.yaml` + `pot_detail_card.yaml` (5 instances).
+Values are pushed continuously by the `pot*_ec/lux/temp/bat` HA sensors (`update_pot_metric_ui()`, `tab5_*.cpp`) — the popup needs no sync on open. Tapping the dark overlay or the × button (real 96×64 glass button) closes it. Components: `pots_popup.yaml` + `pot_detail_card.yaml` (5 instances).
 
 ![Plant details popup on the real device (Pot 5 offline)](images/tab5_photo_plants.jpg)
 
@@ -232,7 +232,7 @@ Color is used consistently as a primary information channel — to let you read 
 
 **Temperatures:** mapped to a continuous scale via `get_temperature_color()` — blue (cold) → green (comfortable) → orange (warm) → red (hot). Applied identically to indoor sensors and forecast temperatures.
 
-**Day names on daily forecast** (`refresh_daily_forecast()`, `tab5_custom.cpp`):
+**Day names on daily forecast** (`refresh_daily_forecast()`, `tab5_*.cpp`):
 - Cyan — today
 - Green — day off (non-Sunday)
 - Amber — Sunday, day off
@@ -292,7 +292,7 @@ Exiting any game: hub → "Quitter" (clean return to `page_arcade` then the dash
 
 ---
 
-Cette page décrit ce que le Tab5 affiche et fait réellement — vérifié contre le firmware (`tab5-lvgl.yaml`, `ui_components/*.yaml`, `tab5_custom.cpp`) le 06/07/2026, re-vérifié le 14/07/2026 (panneau info, bouton console, zones de swipe), complété le 27/07/2026 (popups assistant/calendrier/plantes, section Arcade, photos appareil réel) et re-vérifié le 30/07/2026 (migration des jeux vers des pages LVGL dédiées, remplacement de « Flip Noir » par « Neon Apron »). L'ancienne version de cette page décrivait une navigation par barre d'onglets à 6 écrans qui n'existe plus (et n'a peut-être jamais été livrée telle quelle) — voir [ADR-0002](decisions/0002-single-page-swipe-navigation.md). Si quelque chose ci-dessous ne correspond plus au firmware réel, c'est le firmware qui a raison — corrigez cette page.
+Cette page décrit ce que le Tab5 affiche et fait réellement — vérifié contre le firmware (`tab5-lvgl.yaml`, `ui_components/*.yaml`, `tab5_*.cpp`) le 06/07/2026, re-vérifié le 14/07/2026 (panneau info, bouton console, zones de swipe), complété le 27/07/2026 (popups assistant/calendrier/plantes, section Arcade, photos appareil réel) et re-vérifié le 30/07/2026 (migration des jeux vers des pages LVGL dédiées, remplacement de « Flip Noir » par « Neon Apron »). L'ancienne version de cette page décrivait une navigation par barre d'onglets à 6 écrans qui n'existe plus (et n'a peut-être jamais été livrée telle quelle) — voir [ADR-0002](decisions/0002-single-page-swipe-navigation.md). Si quelque chose ci-dessous ne correspond plus au firmware réel, c'est le firmware qui a raison — corrigez cette page.
 
 ---
 
@@ -323,7 +323,7 @@ Contenu toujours visible en haut de l'écran :
 
 ## Carte centrale — planning / pluie / alertes / info
 
-Une seule carte alterne automatiquement toutes les 8 secondes (`tab5-globals.yaml`, `interval: 8s`) entre jusqu'à quatre panneaux. La rotation ne tourne que sur la fenêtre prévisions par défaut — swiper vers une autre fenêtre remplace la carte centrale par un overlay de titre de page (`page_title_wrapper`) et met la rotation en pause. Cet overlay tient sur deux lignes, construites par `forecast_page_title_parts()` (`tab5_custom.cpp`) : un chapeau atténué qui nomme la famille et le rang de la fenêtre (`Prévisions journalières · 2/3`), puis la plage réellement couverte par les 5 tuiles visibles — `Du mercredi 5 août au dimanche 9 août` en journalier (jours et quantièmes via SNTP, `1er` pour le premier du mois), `De 14:00 à 18:00` en horaire, toujours de la plus ancienne à la plus récente même si les tuiles horaires sont rangées de droite à gauche. Si les dates ne sont pas encore disponibles (SNTP non synchronisé et aucun payload HA reçu), le chapeau prend seul la ligne principale. Taper sur la température d'une carte prévision (voir plus bas) peut aussi interrompre la rotation quelques secondes pour montrer le planning d'un jour précis.
+Une seule carte alterne automatiquement toutes les 8 secondes (`tab5-globals.yaml`, `interval: 8s`) entre jusqu'à quatre panneaux. La rotation ne tourne que sur la fenêtre prévisions par défaut — swiper vers une autre fenêtre remplace la carte centrale par un overlay de titre de page (`page_title_wrapper`) et met la rotation en pause. Cet overlay tient sur deux lignes, construites par `forecast_page_title_parts()` (`tab5_*.cpp`) : un chapeau atténué qui nomme la famille et le rang de la fenêtre (`Prévisions journalières · 2/3`), puis la plage réellement couverte par les 5 tuiles visibles — `Du mercredi 5 août au dimanche 9 août` en journalier (jours et quantièmes via SNTP, `1er` pour le premier du mois), `De 14:00 à 18:00` en horaire, toujours de la plus ancienne à la plus récente même si les tuiles horaires sont rangées de droite à gauche. Si les dates ne sont pas encore disponibles (SNTP non synchronisé et aucun payload HA reçu), le chapeau prend seul la ligne principale. Taper sur la température d'une carte prévision (voir plus bas) peut aussi interrompre la rotation quelques secondes pour montrer le planning d'un jour précis.
 
 - **Planning** — toujours dans la rotation. Affiche le planning du jour.
 - **Prévision de pluie** — intégrée à la rotation seulement si `has_rain` est vrai. Un graphique de pluie à court terme : un point toutes les 5 minutes pour la première demi-heure, puis toutes les 10 minutes pour la demi-heure suivante (9 points au total, fenêtre d'1 heure), fourni par Météo-France via le service API `tab5_maj_pluie_1h`.
@@ -331,12 +331,12 @@ Une seule carte alterne automatiquement toutes les 8 secondes (`tab5-globals.yam
 
 **C'est la date, pas "un jour", qui prend la couleur du niveau d'alerte global en cours :** indépendamment de la rotation ci-dessus, le texte de la date sous l'horloge en zone d'accueil (`lbl_date`, ex. "Lun 06 Juil") est recoloré à chaque réception d'un payload d'alerte, selon le niveau de vigilance *global* du jour (vert/défaut si aucune, jaune pâle/orange/rouge pâle pour jaune/orange/rouge) — voir `tab5-api-logic.yaml` dans le service `tab5_maj_alerte_meteo_france`. C'est distinct de la coloration par icône du panneau d'alerte ci-dessus, qui utilise le niveau propre à chaque type d'alerte plutôt que le niveau global.
 
-- **Panneau info** — intégré à la rotation seulement si `has_info` est vrai. Affiche soit un récap calendrier 3 jours (multi-lignes, avec balisage couleur inline), soit une bannière d'alerte Météo-France (une ligne, colorée selon la sévérité), poussé par HA via le service `tab5_maj_info_texte` (`update_info_text_ui()`, `tab5_custom.cpp`). **Un tap le masque** (`tab5_dismiss_info_tap` → `dismiss_central_info_immediate`) : le panneau quitte le rotateur tout de suite ; l’id est stocké dans `tab5_dismissed_local` pour qu’un re-push du même id reste caché tant que HA n’envoie pas une nouvelle alerte.
+- **Panneau info** — intégré à la rotation seulement si `has_info` est vrai. Affiche soit un récap calendrier 3 jours (multi-lignes, avec balisage couleur inline), soit une bannière d'alerte Météo-France (une ligne, colorée selon la sévérité), poussé par HA via le service `tab5_maj_info_texte` (`update_info_text_ui()`, `tab5_*.cpp`). **Un tap le masque** (`tab5_dismiss_info_tap` → `dismiss_central_info_immediate`) : le panneau quitte le rotateur tout de suite ; l’id est stocké dans `tab5_dismissed_local` pour qu’un re-push du même id reste caché tant que HA n’envoie pas une nouvelle alerte.
 - **Slots infos / alertes HA (jusqu’à 4)** — poussés par `tab5_maj_alertes_ha_bulk` dans `ha_alert_wrapper_0…3`. Chaque slot est son propre panneau du rotateur ; **un tap masque ce slot** (`tab5_dismiss_ha_alert_N` → `dismiss_ha_alert_slot_immediate`), même logique de dismiss local.
 
 Si ni pluie, ni alertes MF, ni info, ni slots HA ne sont actifs, la rotation garde simplement le planning à l'écran.
 
-**Bascule temporaire :** taper sur la température max/min de l'une des 5 cartes prévisions du bas interrompt la rotation pendant **6 secondes** pour afficher le texte des horaires de ce jour précis dans la carte centrale, puis restaure automatiquement le panneau qui était actif (`show_temporary_planning()`, `tab5_custom.cpp` — anciennement un script ESPHome de `tab5-scripts.yaml`, passé en C++ lors du fix reboot du 12/07).
+**Bascule temporaire :** taper sur la température max/min de l'une des 5 cartes prévisions du bas interrompt la rotation pendant **6 secondes** pour afficher le texte des horaires de ce jour précis dans la carte centrale, puis restaure automatiquement le panneau qui était actif (`show_temporary_planning()`, `tab5_*.cpp` — anciennement un script ESPHome de `tab5-scripts.yaml`, passé en C++ lors du fix reboot du 12/07).
 
 ---
 
@@ -394,7 +394,7 @@ Les contrôles sont estompés (non cachés) quand le clim est éteint, pour gard
 
 ## Carte humidité des plantes
 
-Surveille jusqu'à 5 capteurs BLE d'humidité du sol, mais seuls **4 emplacements sont affichés** (`sort_and_update_moisture_slots()`, `tab5_custom.cpp`). Les capteurs sont triés par niveau d'humidité (du plus sec au plus humide) à chaque mise à jour, puis mappés sur les emplacements ainsi : le plus sec, le 2e plus sec, **le capteur de rang médian** (étiqueté `Moy:` — ça affiche la lecture brute de ce capteur précis, ce n'est pas une moyenne arithmétique calculée sur les 5), et le plus humide. Comme le mapping se fait par rang plutôt que par identité fixe du capteur, *quel* numéro de pot physique apparaît dans quel emplacement change dans le temps selon l'évolution de l'humidité — une photo prise aujourd'hui montrant "Pot 2 / Pot 4 / Moy / Pot 3" n'est pas une disposition figée.
+Surveille jusqu'à 5 capteurs BLE d'humidité du sol, mais seuls **4 emplacements sont affichés** (`sort_and_update_moisture_slots()`, `tab5_*.cpp`). Les capteurs sont triés par niveau d'humidité (du plus sec au plus humide) à chaque mise à jour, puis mappés sur les emplacements ainsi : le plus sec, le 2e plus sec, **le capteur de rang médian** (étiqueté `Moy:` — ça affiche la lecture brute de ce capteur précis, ce n'est pas une moyenne arithmétique calculée sur les 5), et le plus humide. Comme le mapping se fait par rang plutôt que par identité fixe du capteur, *quel* numéro de pot physique apparaît dans quel emplacement change dans le temps selon l'évolution de l'humidité — une photo prise aujourd'hui montrant "Pot 2 / Pot 4 / Moy / Pot 3" n'est pas une disposition figée.
 
 Chaque emplacement affiche l'icône du capteur et sa couleur de niveau d'humidité (voir Coloration ci-dessous) plus son numéro de pot physique (ou `Moy:` pour l'emplacement médian).
 
@@ -406,7 +406,7 @@ Un **appui long n'importe où sur la carte des pots** ouvre un modal quasi plein
 - le % d'humidité du sol (en grand) et un statut d'arrosage : **OK** (vert), **Bientôt sec** (≤ 20 %, ambre), **À arroser !** (≤ 14 %, rouge — aligné sur la zone rouge de `get_humidity_color()`) ou **Hors ligne** (capteur indisponible)
 - quatre lignes de métriques : **Fertilité** (conductivité EC, µS/cm), **Lumière** (lx), **Température** (°C, gradient `get_temperature_color()`) et **Batterie** du capteur (%, échelle `get_battery_color()`)
 
-Les valeurs sont poussées en continu par les capteurs HA `pot*_ec/lux/temp/bat` (`update_pot_metric_ui()`, `tab5_custom.cpp`) — le popup n'a besoin d'aucune synchro à l'ouverture. Taper l'overlay sombre ou le bouton × (vrai bouton de verre 96×64) le ferme. Composants : `pots_popup.yaml` + `pot_detail_card.yaml` (5 instances).
+Les valeurs sont poussées en continu par les capteurs HA `pot*_ec/lux/temp/bat` (`update_pot_metric_ui()`, `tab5_*.cpp`) — le popup n'a besoin d'aucune synchro à l'ouverture. Taper l'overlay sombre ou le bouton × (vrai bouton de verre 96×64) le ferme. Composants : `pots_popup.yaml` + `pot_detail_card.yaml` (5 instances).
 
 ![Popup détails plantes sur l'appareil réel (Pot 5 hors ligne)](images/tab5_photo_plants.jpg)
 
@@ -520,7 +520,7 @@ La couleur est utilisée de façon systématique comme canal d'information prima
 
 **Températures :** mappées sur une échelle continue via `get_temperature_color()` — bleu (froid) → vert (confortable) → orange (chaud) → rouge (très chaud). Appliqué identiquement aux capteurs intérieurs et aux températures des prévisions.
 
-**Noms des jours en prévisions journalières** (`refresh_daily_forecast()`, `tab5_custom.cpp`) :
+**Noms des jours en prévisions journalières** (`refresh_daily_forecast()`, `tab5_*.cpp`) :
 - Cyan — aujourd'hui
 - Vert — jour de repos (hors dimanche)
 - Ambre — dimanche, repos

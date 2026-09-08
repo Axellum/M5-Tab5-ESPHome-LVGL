@@ -244,8 +244,10 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── tab5-ha-controls.yaml # HA-facing entities — volume, current screen, go-to-screen
 │   ├── tab5-alarm.yaml       # Alarm clock + appointment reminders (entities, ring, tick)
 │   ├── ui_components/        # 35 reusable LVGL components (popups, cards, games)
-│   ├── tab5_custom.h         # C++ declarations (HMI logic)
-│   ├── tab5_custom.cpp       # C++ implementations (parsers, helpers)
+│   ├── tab5_custom.h         # C++ declarations (HMI logic) — the single public header
+│   ├── tab5_custom.cpp       # Shared globals + map of the C++ units
+│   ├── tab5_internal.h       # Helpers shared between units (not part of the YAML contract)
+│   ├── tab5_text/forecast/central/services/assist/cards/console/anim/calendar.cpp  # One unit per responsibility
 │   ├── alarm_clock.h/.cpp    # Alarm engine — next-ring maths, calendar rules, RDV list
 │   ├── marble_game.h/.cpp    # Game: Fil d'Or (marble roguelite)
 │   ├── arkanoid_game.h/.cpp  # Game: Arcanoïde (breakout)

@@ -4,6 +4,33 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — Firmware : `tab5_custom.cpp` (3 169 lignes) scindé en neuf unités par responsabilité
+
+Lot (e) du plan §8 de l'audit du 06/09/2026 (§4.2 point 20). Aucune fonction modifiée,
+aucun ordre changé : chaque unité est une plage de lignes du fichier d'origine ; OTA
+validée (voir la PR).
+
+- **Neuf unités** dans `Tab5/` : `tab5_text.cpp` (UTF-8, alertes rejetées, libellés de jours),
+  `tab5_forecast.cpp` (icônes/couleurs météo, parsing bulk, tuiles), `tab5_central.cpp`
+  (carte centrale, alertes HA, pagination au swipe, planning au tap, réponse vocale),
+  `tab5_services.cpp` (logique des services HA), `tab5_assist.cpp` (Markdown, états du
+  pipeline, décision du mot de réveil), `tab5_cards.cpp` (lumière, clim, plantes, pots,
+  température), `tab5_console.cpp`, `tab5_anim.cpp` (animations, inactivité, rouleaux
+  d'icône et d'horloge, boutons) et `tab5_calendar.cpp` — 3335 lignes en tout, de 164 à 741
+  par fichier. `tab5_custom.cpp` ne garde que les globals partagés (`g_central_ctx`,
+  `g_day_slots`, `g_hour_slots`, `cal_*`) et la carte des unités (40 lignes).
+- **`tab5_custom.h` reste l'unique en-tête public** : les YAML n'ont pas bougé d'une ligne
+  (hors la liste `includes:`), la règle 2 du README et ADR-0006 s'appliquent telles quelles.
+  Six helpers qui étaient `static` et servent à plusieurs unités (`normalize_text_utf8`,
+  `vigilance_alert_banner_utf8`, `format_short_day_label`, `format_long_day_label`,
+  `set_label_text_utf8`, `clock_month_short_utf8`) sont déclarés dans le nouveau
+  `tab5_internal.h`, qui ne fait pas partie du contrat avec les YAML.
+- `update_clock_date_ui()` rejoint le rouleau d'horloge dans `tab5_anim.cpp` (ses deux
+  déclarations anticipées disparaissent) ; les trois helpers de texte LVGL qui ouvraient
+  la section « swipe » rejoignent `tab5_text.cpp`.
+- Dans les commentaires `[AI-CONTEXT]` des YAML, « tab5_custom.cpp » désigne désormais la
+  couche C++ (`Tab5/tab5_*.cpp`) ; ils n'ont pas été réécrits un par un.
+
 ### 2026-09-08 — Firmware : les 20 capteurs de détail des pots viennent d'un seul package paramétré, plus aucune entité HA en dur
 
 Lot (d) du plan §8 de l'audit du 06/09/2026 (§4.1 points 10 et 15). Rien ne change
