@@ -227,7 +227,7 @@ font:
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
 
   - file: "Tab5/materialdesignicons-webfont.ttf"
-    id: mdi_font_80
+    id: mdi_font_70          # 70 px — s'appelait mdi_font_80 (l'id mentait), renommé le 08/09/2026
     size: 70
     bpp: 1
     glyphs: "\U000F0026\U000F0593\U000F0596\U000F0597\U000F0598\U000F0599\U000F059D\U000F067E\U000F0717\U000F078D\U000F0E01\U000F0EFA\U000F0F29\U000F0F36\U000F1A48\U000F08B2\U000F0379\U000F111E\U000F02E3\U000F04B9\U000F1051\U000F0020"
@@ -273,12 +273,6 @@ font:
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_120
     size: 120
-    bpp: 1
-    glyphs: "\U000F036C"
-
-  - file: "Tab5/materialdesignicons-webfont.ttf"
-    id: mdi_font_60
-    size: 60
     bpp: 1
     glyphs: "\U000F036C"
 
@@ -491,34 +485,3 @@ lvgl:
       border_opa: 70%
       radius: 999
       pad_all: 0
-
-# 1D : Micro-interactions boutons verre — transform_scale au pressed.
-# ESPHome ne supporte pas state_pressed dans style_definitions -> helper C++.
-# Interval one-shot : se declenche 2s apres le boot (layout LVGL termine).
-# Le flag statique garantit une seule execution (l'interval reste actif mais inerte).
-# Meme fenetre pour l'horloge a rouleau : layout_clock_roller() a besoin d'un
-# layout LVGL termine pour mesurer la police et centrer les deux rouleaux.
-interval:
-  - interval: 2s
-    id: btn_press_style_init
-    then:
-      - lambda: |-
-          static bool btn_style_done = false;
-          if (!btn_style_done) {
-              apply_pressed_scale_to_tree(lv_scr_act());
-              g_clock_roller.colon = id(lbl_time_colon);
-              g_clock_roller.d[0] = {id(clock_roll_h10), {id(lbl_time_h10_a), id(lbl_time_h10_b)}, 0, 0};
-              g_clock_roller.d[1] = {id(clock_roll_h1),  {id(lbl_time_h1_a),  id(lbl_time_h1_b)},  0, 0};
-              g_clock_roller.d[2] = {id(clock_roll_m10), {id(lbl_time_m10_a), id(lbl_time_m10_b)}, 0, 0};
-              g_clock_roller.d[3] = {id(clock_roll_m1),  {id(lbl_time_m1_a),  id(lbl_time_m1_b)},  0, 0};
-              layout_clock_roller(id(clock_tile), id(roboto_130_b));
-              // Repeint l'heure tout de suite : sans ca l'horloge garderait le
-              // placeholder YAML jusqu'au prochain tick minute (on_time_sync a
-              // pu passer avant que les pointeurs du rouleau soient poses).
-              auto t_now = id(sntp_time).now();
-              if (t_now.is_valid()) {
-                  update_clock_date_ui(id(lbl_date), t_now.hour, t_now.minute,
-                      t_now.day_of_week, t_now.day_of_month, t_now.month);
-              }
-              btn_style_done = true;
-          }

@@ -45,6 +45,9 @@ RE_LV_CALL = re.compile(r"\b(lv_[a-z0-9_]+)\s*\(")
 LV_ALLOWED = {
     "tab5-api-logic.yaml": {"lv_obj_has_flag"},
     "tab5-hardware.yaml": set(),
+    # Règle 2 (sensor:/text_sensor: sans lv_*), tenue depuis le 08/09/2026.
+    "tab5-sensors-diagnostics.yaml": set(),
+    "tab5-sensors-domotique.yaml": set(),
 }
 RE_GLOBAL_DEF = re.compile(r"^  - id: (\w+)\s*$", re.M)
 # `entity_id: domaine.objet` littéral (clé `entity_id` ou `*_entity_id`). Une
@@ -86,8 +89,9 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     problems: list[str] = []
     api_logic = tab5 / "tab5-api-logic.yaml"
     hardware = tab5 / "tab5-hardware.yaml"
+    sensors = (tab5 / "tab5-sensors-diagnostics.yaml", tab5 / "tab5-sensors-domotique.yaml")
     globals_yaml = tab5 / "tab5-globals.yaml"
-    for required in (api_logic, hardware, globals_yaml):
+    for required in (api_logic, hardware, *sensors, globals_yaml):
         if not required.is_file():
             return [f"fichier introuvable : {required}"]
 
@@ -101,8 +105,8 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
             if RE_SPRINTF.search(line):
                 problems.append(f"{path.name}:{lineno} : sprintf brut — utiliser snprintf(buf, sizeof(buf), …)")
 
-    # 2. lv_* dans le contrat API et le fichier matériel
-    for path in (api_logic, hardware):
+    # 2. lv_* dans le contrat API, le fichier matériel et les deux fichiers sensors
+    for path in (api_logic, hardware, *sensors):
         allowed = LV_ALLOWED.get(path.name, set())
         text = strip_yaml_comments(path.read_text(encoding="utf-8"))
         for lineno, line in enumerate(text.splitlines(), 1):

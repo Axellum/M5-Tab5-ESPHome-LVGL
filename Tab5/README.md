@@ -918,7 +918,7 @@ Historique de vérification : écrit contre le code réel le 05/07/2026, re-vér
 
 | Fichier | Contenu |
 |---------|---------|
-| `materialdesignicons-webfont.ttf` | Material Design Icons — 9 tailles chargées séparément : `mdi_font_26/32/45/56/60/120`, `mdi_assist_36/64`, `mdi_font_alert` (60 px) — et `mdi_font_80`, dont l'id ment : il charge du **70** |
+| `materialdesignicons-webfont.ttf` | Material Design Icons — 9 tailles chargées séparément : `mdi_font_26/32/45/56/70/120`, `mdi_assist_36/64`, `mdi_font_alert` (60 px). Le 08/09/2026 : `mdi_font_80` (qui chargeait du 70) renommé `mdi_font_70`, `mdi_font_60` (un glyphe, jamais référencé) retiré |
 | `IconeMeteo.ttf` | Police d'icônes météo personnalisée (`font_meteo_main` 270, `font_meteo_main_small` 190, `font_meteo_card` 120, `font_meteo_card_small` 80) |
 | `ChessPieces.ttf` | Figurines d'échecs vectorielles pour « Roi Noir » — licence dans `ChessPieces.LICENSE.txt` |
 

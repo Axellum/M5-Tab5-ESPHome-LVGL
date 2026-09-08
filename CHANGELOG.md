@@ -4,6 +4,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — Firmware : les sensors n'appellent plus LVGL, init des boutons dans `on_boot`, polices
+
+Audit du 06/09/2026, §4.1 points 8, 12 et 14 — dernier lot. Rien de visible à l'écran.
+
+- **Règle 2 (`sensor:`/`text_sensor:` sans `lv_*`)** : les 19 appels LVGL restants de
+  `tab5-sensors-diagnostics.yaml` et `tab5-sensors-domotique.yaml` (icônes HA, Wi-Fi, PC,
+  TV, téléphone, salon, ligne « HA » de la console) passent par quatre helpers C++ :
+  `set_icon_color_ui()`, `set_icon_active_ui()`, `update_pc_status_ui()` (`tab5_cards.cpp`)
+  et `update_console_ha_status_ui()` (`tab5_console.cpp`) — mêmes couleurs, mêmes gardes
+  `nullptr`. `tools/check_tab5_code_rules.py` couvre désormais les deux fichiers sensors :
+  le prochain `lv_*` qui y revient fait échouer `pytest`.
+- **Init des micro-interactions** (`apply_pressed_scale_to_tree` + pointeurs du rouleau
+  d'horloge) : l'`interval: 2s` à flag `static` de `tab5-styles.yaml` (logique d'init dans
+  le fichier de styles) devient un `on_boot` `priority: -100` + `delay: 2s` dans
+  `tab5-ha-hmi.yaml`, à côté des autres étapes de démarrage : même fenêtre (2 s après la
+  fin du setup, layout LVGL fait), une seule exécution par construction, plus de `static`.
+- **Polices** : `mdi_font_60` (un glyphe, jamais référencé) retiré ; `mdi_font_80`, qui
+  chargeait du 70 px, renommé `mdi_font_70` (six usages). Les jeux de glyphes Latin-1 +
+  Windows-1252 des Roboto sont **gardés** : ces polices affichent du texte poussé par HA
+  (titres d'événements, réponses de l'assistant), un glyphe absent s'affiche vide, et le
+  gain de flash ne vaut pas ce risque. Les deux `static` de `tab5-imu.yaml` restent
+  (état d'un seul handler, tolérés par la règle 3).
+
 ### 2026-09-08 — Outillage : pre-commit (yamllint, BOM, secrets, placeholders HA)
 
 Audit du 06/09/2026, §6 (« pas de pre-commit : yamllint, détection de BOM et vérificateur
