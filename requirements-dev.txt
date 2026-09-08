@@ -3,4 +3,4 @@
 pytest>=8          # tests/ + tools/test_*.py (config : pyproject.toml)
 numpy>=2.5.2        # tools/check_marble_rooms.py (grille d'occupation de la bille)
 aioesphomeapi      # tools/demo/demo_pusher.py (mode démo sans Home Assistant)
-fonttools>=4.40    # tools/make_chess_font.py (sous-ensemble ChessPieces.ttf)
+fonttools>=4.64.0    # tools/make_chess_font.py (sous-ensemble ChessPieces.ttf)
