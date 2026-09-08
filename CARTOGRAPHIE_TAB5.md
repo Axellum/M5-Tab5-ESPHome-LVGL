@@ -270,7 +270,8 @@ Les trois fichiers ci-dessous sont **gitignorés** — ce sont les vrais fichier
 
 - ~~**`Tab5_backup_20260525/` trackée en Git**~~ — **RÉSOLU** (PR [#15](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/15), 06/07/2026).
 - ~~**`__pycache__/*.pyc` trackés**~~ — **RÉSOLU** (PR [#30](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/30), 12/07/2026) : retirés du dépôt + ajoutés au `.gitignore`.
-- **`archives/` (gitignoré, ~4 Mo local)** — hors Git ; peut polluer le contexte si un outil IA scanne sans respecter `.gitignore`.
+- **`archives/` (gitignoré, ~22 Mo local)** — hors Git ; polluait `pytest` nu jusqu'au `pyproject.toml` de #100 (`norecursedirs`).
+- ~~**`sources/` tracké (23 fichiers Nextion, 1,4 Mo, référencé nulle part)**~~ — **RÉSOLU** (06/09/2026) : supprimé, avec 5 images orphelines de `docs/images/` et le générateur d'animations aux chemins personnels.
 - **Entités HA personnelles** — **RÉSOLU** (PR #30) : déplacées vers `Tab5/user_entities.yaml` (gitignoré) ; le dépôt public ne contient que `user_entities.example.yaml`.
 
 ### 4.2 Code mort / API incomplète

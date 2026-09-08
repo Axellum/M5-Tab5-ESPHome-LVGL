@@ -4,6 +4,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-06 — Dépôt : 1,4 Mo d'actifs Nextion et 1,7 Mo d'images orphelines retirés
+
+Lot « ménage du dépôt » de l'audit du 06/09/2026. Aucun fichier de `Tab5/` touché.
+
+- `sources/` (23 fichiers : SVG météo, `Untitled.ttf`, `mdi.ttf`, `pt.bin`) n'était
+  référencé nulle part — héritage de l'écran Nextion, jamais lu par le firmware
+  (les polices vivent dans `Tab5/`). Supprimé.
+- `docs/images/` : `tab5_ui_tour.mp4` (1,1 Mo, aucun README ne le cite — le GIF et
+  les deux WebP restent), et quatre photos d'une version antérieure de l'UI
+  (`tab5_photo_climate_popup.jpg`, `_console_diag.jpg`, `_dashboard_switches.jpg`,
+  `_dashboard_weather.jpg`) remplacées depuis par leurs `_v2`. Les
+  `tab5_design_*.jpg` sont **conservées** : la liste de médias Hackster les cite.
+- `docs/images/_make_tab5_tour.py` (générateur des animations, chemins Windows et
+  dossier Cursor de l'auteur en dur) sort du dépôt public vers le workspace privé :
+  il n'avait rien à faire dans un dossier d'images livré à tout le monde.
+- Reste dans l'historique git (~29 Mo de pack) : réécrire un dépôt public est une
+  décision à part, non prise ici.
+
 ### 2026-09-06 — CI : tests hôte à chaque push, compilation seulement quand le firmware bouge, garde-fous rapatriés
 
 Lot « outillage » de l'audit du 06/09/2026. Aucun fichier de `Tab5/` touché.
