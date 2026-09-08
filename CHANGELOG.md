@@ -4,7 +4,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
-_Rien depuis la 1.2.0._
+### 2026-09-08 — HA : le push au reboot attend que la liaison API soit prête
+
+- L'automation « MAJ Ecran Tab5 ESPHome Push » part sur l'événement
+  `esphome.tab5_connected`, que le firmware émet dès qu'un client API se connecte —
+  parfois avant que l'intégration HA ait fini d'authentifier sa connexion. Les premiers
+  appels de la séquence partaient alors en « Authenticated connection not ready yet »
+  à chaque reboot (704 occurrences dans les logs HA entre le 02 et le 08/09/2026), et
+  l'écran attendait le rattrapage des dix minutes.
+- Le trigger porte désormais l'id `tab5_connected` et, dans ce seul cas, la séquence
+  commence par un `wait_template` sur `binary_sensor.*_ha_api_status` = `on`
+  (10 s max, puis on continue quand même). `wait_template` plutôt que
+  `wait_for_trigger` à dessein : il passe immédiatement si l'entité est déjà `on`.
+- Exemple public et automation de prod (modifiée en direct via l'API config) alignés.
 
 ## [1.2.0] — 2026-09-08
 

@@ -42,6 +42,7 @@
       minutes: "/10"
     - platform: event
       event_type: esphome.tab5_connected
+      id: tab5_connected
     - platform: state
       entity_id: calendar.VOTRE_EMAIL_gmail_com
     # NB : les déclencheurs "légers" (rebours minute phrase pluie, vigilance météo,
@@ -51,6 +52,20 @@
     # Ce refresh complet reste ici pour la connexion + le cycle /10 min.
 
   action:
+    # ====== 0. RECONNEXION : attendre que la liaison API soit prête ======
+    # Le firmware émet `esphome.tab5_connected` dès qu'un client API se connecte,
+    # parfois avant que l'intégration HA ait fini d'authentifier sa connexion :
+    # les premiers appels partaient alors en « Authenticated connection not ready
+    # yet » à chaque reboot (704 occurrences dans les logs HA entre le 02 et le
+    # 08/09/2026). `wait_template` passe immédiatement si l'entité est déjà `on`.
+    - if:
+        - condition: trigger
+          id: tab5_connected
+      then:
+        - wait_template: "{{ is_state('binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status', 'on') }}"
+          timeout: "00:00:10"
+          continue_on_timeout: true
+
     # ====== 1. MISE A JOUR MINUTE PAR MINUTE DE LA PHRASE PLUIE ET ALERTES ======
     - action: esphome.tab5_ha_hmi_tab5_maj_alerte_meteo_france
       continue_on_error: true
