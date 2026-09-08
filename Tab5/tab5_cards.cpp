@@ -309,3 +309,27 @@ void update_temp_ui(lv_obj_t* label, float x) {
         lv_obj_set_style_text_color(label, lv_color_hex(c_int), LV_PART_MAIN);
     }
 }
+
+// =============================================================================
+// Icônes d'état (bandeau + cartes) et carte PC — appelées par les sensors YAML,
+// qui ne touchent plus LVGL (règle 2, audit du 06/09/2026 §4.1 point 12).
+// =============================================================================
+
+void set_icon_color_ui(lv_obj_t* icon, uint32_t color) {
+    if (icon == nullptr) return;
+    lv_obj_set_style_text_color(icon, lv_color_hex(color), LV_PART_MAIN);
+}
+
+void set_icon_active_ui(lv_obj_t* icon, bool active, uint32_t color_on, uint32_t color_off) {
+    set_icon_color_ui(icon, active ? color_on : color_off);
+}
+
+void update_pc_status_ui(bool active, lv_obj_t* icon_pc, lv_obj_t* icon_sw, lv_obj_t* lbl_sw_state) {
+    if (icon_pc == nullptr) return;
+    set_icon_active_ui(icon_pc, active, UIColor::SUCCESS, UIColor::TEXT_PRIMARY);
+    if (icon_sw == nullptr || lbl_sw_state == nullptr) return;
+    const uint32_t c = active ? UIColor::SUCCESS : UIColor::TEXT_DIM;
+    set_icon_color_ui(icon_sw, c);
+    lv_label_set_text(lbl_sw_state, active ? "Allumé" : "Éteint");
+    set_icon_color_ui(lbl_sw_state, c);
+}

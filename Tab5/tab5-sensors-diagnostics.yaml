@@ -63,13 +63,7 @@ binary_sensor:
     name: "HA API Status"
     id: status_ha
     on_state:
-      - lambda: |-
-          if (id(icon_ha) == nullptr) return;
-          if(x) {
-            lv_obj_set_style_text_color(id(icon_ha), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-          } else {
-            lv_obj_set_style_text_color(id(icon_ha), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-          }
+      - lambda: 'set_icon_active_ui(id(icon_ha), x, UIColor::INFO, UIColor::INACTIVE);'
       # Pré-fetch calendrier au reconnect HA (rising edge) : recharge le mois
       # courant + M+1 pour que le popup s'ouvre instantanément même après une coupure.
       - if:
@@ -173,9 +167,9 @@ interval:
           condition:
             wifi.connected:
           then:
-            - lambda: 'lv_obj_set_style_text_color(id(icon_wifi), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);'
+            - lambda: 'set_icon_active_ui(id(icon_wifi), true, UIColor::SUCCESS, UIColor::INACTIVE);'
           else:
-            - lambda: 'lv_obj_set_style_text_color(id(icon_wifi), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);'
+            - lambda: 'set_icon_active_ui(id(icon_wifi), false, UIColor::SUCCESS, UIColor::INACTIVE);'
 
   - interval: 2s
     then:
@@ -189,10 +183,5 @@ interval:
                  id(sys_wifi_ssid).has_state(), id(sys_wifi_ssid).state.c_str(), id(lbl_sys_ssid_val));
              // État connexion HA (carte RÉSEAU de la console) — reprend aussi la main
              // apres le "Redemarrage..." affiche par le bouton Redemarrer HA.
-             if (id(lbl_sys_ha_val) != nullptr) {
-               bool ha_ok = id(status_ha).state;
-               lv_label_set_text(id(lbl_sys_ha_val), ha_ok ? "Connecte" : "Hors ligne");
-               lv_obj_set_style_text_color(id(lbl_sys_ha_val),
-                   lv_color_hex(ha_ok ? UIColor::SUCCESS : UIColor::ERROR), LV_PART_MAIN);
-             }
+             update_console_ha_status_ui(id(lbl_sys_ha_val), id(status_ha).state);
           }

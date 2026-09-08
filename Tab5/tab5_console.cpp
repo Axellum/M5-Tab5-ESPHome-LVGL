@@ -162,3 +162,12 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
         lv_label_set_text(lbl_ssid, wifi_ssid);
     }
 }
+
+// Ligne « HA » de la carte RÉSEAU (interval 2 s de tab5-sensors-diagnostics.yaml,
+// console visible seulement) — reprend aussi la main après le « Redemarrage... »
+// affiché par le bouton Redémarrer HA.
+void update_console_ha_status_ui(lv_obj_t* lbl, bool ha_ok) {
+    if (lbl == nullptr) return;
+    lv_label_set_text(lbl, ha_ok ? "Connecte" : "Hors ligne");
+    lv_obj_set_style_text_color(lbl, lv_color_hex(ha_ok ? UIColor::SUCCESS : UIColor::ERROR), LV_PART_MAIN);
+}

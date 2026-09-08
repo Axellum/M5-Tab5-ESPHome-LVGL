@@ -58,24 +58,8 @@ text_sensor:
     entity_id: ${entity_tracker_pc}
     on_value:
       - lambda: |-
-          if (id(icon_pc) == nullptr) return;
           // Accepte device_tracker (home) et switch (on)
-          bool active = (x == "home" || x == "on");
-          if (active) {
-            lv_obj_set_style_text_color(id(icon_pc), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-            if (id(icon_sw0) != nullptr && id(lbl_sw0_state) != nullptr) {
-              lv_obj_set_style_text_color(id(icon_sw0), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-              lv_label_set_text(id(lbl_sw0_state), "Allumé");
-              lv_obj_set_style_text_color(id(lbl_sw0_state), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-            }
-          } else {
-            lv_obj_set_style_text_color(id(icon_pc), lv_color_hex(UIColor::TEXT_PRIMARY), LV_PART_MAIN);
-            if (id(icon_sw0) != nullptr && id(lbl_sw0_state) != nullptr) {
-              lv_obj_set_style_text_color(id(icon_sw0), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-              lv_label_set_text(id(lbl_sw0_state), "Éteint");
-              lv_obj_set_style_text_color(id(lbl_sw0_state), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-            }
-          }
+          update_pc_status_ui(x == "home" || x == "on", id(icon_pc), id(icon_sw0), id(lbl_sw0_state));
 
   # TV → icône moniteur existante sur la carte J0 (icon_card_pc), pas une 4e icône bandeau
   - platform: homeassistant
@@ -83,13 +67,8 @@ text_sensor:
     entity_id: ${entity_tracker_tv}
     on_value:
       - lambda: |-
-          if (id(icon_card_pc) == nullptr) return;
           bool active = (x == "home" || x == "on" || x == "playing" || x == "idle" || x == "paused");
-          if (active) {
-            lv_obj_set_style_text_color(id(icon_card_pc), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-          } else {
-            lv_obj_set_style_text_color(id(icon_card_pc), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-          }
+          set_icon_active_ui(id(icon_card_pc), active, UIColor::SUCCESS, UIColor::TEXT_DIM);
 
   - platform: homeassistant
     id: light_chambre_state
@@ -170,8 +149,7 @@ sensor:
     on_value:
       - lambda: |-
           // Echelle de couleur factorisee dans get_battery_color (partagee popup pots)
-          if (id(icon_phone) == nullptr) return;
-          lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(get_battery_color(x)), LV_PART_MAIN);
+          set_icon_color_ui(id(icon_phone), get_battery_color(x));
 
   - platform: homeassistant
     id: temp_serre
@@ -192,11 +170,7 @@ sensor:
     entity_id: ${entity_hum_salon}
     on_value:
       - lambda: |-
-          if (id(icon_salon) == nullptr) return;
-          if(!isnan(x)) {
-            uint32_t c = get_humidity_color(x);
-            lv_obj_set_style_text_color(id(icon_salon), lv_color_hex(c), LV_PART_MAIN);
-          }
+          if (!isnan(x)) set_icon_color_ui(id(icon_salon), get_humidity_color(x));
 
   - platform: homeassistant
     id: moisture_1

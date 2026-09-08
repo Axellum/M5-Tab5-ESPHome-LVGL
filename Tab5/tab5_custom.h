@@ -464,6 +464,10 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
     bool wifi_ip_has_state, const char* wifi_ip, lv_obj_t* lbl_ip,
     bool wifi_ssid_has_state, const char* wifi_ssid, lv_obj_t* lbl_ssid);
 
+// Console système, carte RÉSEAU : ligne « HA » (Connecte / Hors ligne). Appelée par
+// l'interval 2 s de tab5-sensors-diagnostics.yaml quand la console est visible.
+void update_console_ha_status_ui(lv_obj_t* lbl, bool ha_ok);
+
 // AXE5 : Constantes nommees pour les icones meteo (UTF-8 de la police IconeMeteo.ttf)
 // Evite les bytes bruts non-documentés, facilite la maintenance si la police change
 namespace MeteoIcon {
@@ -493,6 +497,17 @@ void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
 // Couleur batterie par niveau (échelle icône téléphone du bandeau, réutilisée
 // par la ligne Batterie du popup détails pots).
 uint32_t get_battery_color(float x);
+
+// Icônes d'état du bandeau et des cartes (règle 2 : les sensors n'appellent pas
+// LVGL). set_icon_color_ui pose une couleur calculée (batterie, humidité) ;
+// set_icon_active_ui choisit entre deux tokens UIColor selon un booléen (API HA,
+// Wi-Fi, TV). Tolèrent un widget nullptr (valeur reçue avant le layout).
+void set_icon_color_ui(lv_obj_t* icon, uint32_t color);
+void set_icon_active_ui(lv_obj_t* icon, bool active, uint32_t color_on, uint32_t color_off);
+
+// Carte PC (text_sensor pc_status) : icône du bandeau + interrupteur 0 de la carte
+// switches (icône et libellé « Allumé » / « Éteint »). Ne fait rien sans icon_pc.
+void update_pc_status_ui(bool active, lv_obj_t* icon_pc, lv_obj_t* icon_sw, lv_obj_t* lbl_sw_state);
 
 // Popup détails pots (appui long sur les slots pots) : 5 cartes FIXES, carte N =
 // capteur moisture_N (pas de tri dynamique, contrairement au dashboard).
