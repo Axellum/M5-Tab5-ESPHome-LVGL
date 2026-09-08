@@ -24,6 +24,8 @@
 #     Les icônes MDI utilisées ici DOIVENT figurer dans la liste `glyphs` de
 #     mdi_font_56 / mdi_font_45 (tab5-styles.yaml), sinon elles ne s'affichent
 #     pas du tout.
+#     Couleurs : uniquement des tokens `color_*` de tab5-styles.yaml (section
+#     « Sélecteur arcade ») — règle 1, plus aucun hex en dur ici depuis le 08/09/2026.
 #     Ne PAS ajouter de logique C++ ici.
 # ═══════════════════════════════════════════════════════
 obj:
@@ -37,7 +39,7 @@ obj:
   pad_all: 0
   radius: 0
   border_width: 0
-  bg_color: 0x080810
+  bg_color: color_arcade_bg
   bg_opa: 97%
   widgets:
 
@@ -48,20 +50,20 @@ obj:
         x: -118
         y: 26
         text_font: mdi_font_45
-        text_color: 0xFFDD22
+        text_color: color_arcade_title
     - label:
         text: "ARCADE"
         align: TOP_MID
         x: 22
         y: 22
         text_font: roboto_45_b
-        text_color: 0xFFDD22
+        text_color: color_arcade_title
     - label:
         text: "8 consoles — une seule à la fois"
         align: TOP_MID
         y: 82
         text_font: roboto_22
-        text_color: 0x8595AD
+        text_color: color_arcade_subtitle
 
     # ─── Croix de fermeture ───
     - button:
@@ -72,15 +74,15 @@ obj:
         width: 48
         height: 48
         radius: 24
-        bg_color: 0x222233
+        bg_color: color_arcade_close_bg
         bg_opa: 100%
-        border_color: 0x445566
+        border_color: color_arcade_close_border
         border_width: 1
         border_opa: 60%
         on_short_click:
           - lvgl.page.show: page_main
         widgets:
-          - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_32, text_color: 0xAABBCC }
+          - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_32, text_color: color_arcade_close_icon }
 
     # ══════════ RANGÉE 1 ══════════
 
@@ -93,9 +95,9 @@ obj:
         width: 298
         height: 252
         radius: 16
-        bg_color: 0x111A28
+        bg_color: color_marble_floor
         bg_opa: 100%
-        border_color: 0xE8B44A
+        border_color: color_arcade_marble_accent
         border_width: 2
         border_opa: 50%
         pressed: { bg_opa: 80%, border_opa: 100% }
@@ -104,9 +106,9 @@ obj:
           - lvgl.page.show: page_marble
           - script.execute: tab5_marble_open
         widgets:
-          - label: { text: "\U000F0E95", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xE8B44A }
-          - label: { text: "Fil d'Or", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Roguelite de bille\n6 salles · à l'inclinaison", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "\U000F0E95", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: color_arcade_marble_accent }
+          - label: { text: "Fil d'Or", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          - label: { text: "Roguelite de bille\n6 salles · à l'inclinaison", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: color_arcade_subtitle }
 
     # 2 · Arcanoïde (arkanoid_game) — casse-briques
     - button:
@@ -117,9 +119,9 @@ obj:
         width: 298
         height: 252
         radius: 16
-        bg_color: 0x111118
+        bg_color: color_arkanoid_floor
         bg_opa: 100%
-        border_color: 0x44DDDD
+        border_color: color_arcade_arkanoid_accent
         border_width: 2
         border_opa: 50%
         pressed: { bg_opa: 80%, border_opa: 100% }
@@ -128,9 +130,9 @@ obj:
           - lvgl.page.show: page_arkanoid
           - script.execute: tab5_arkanoid_open
         widgets:
-          - label: { text: "\U000F0570", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0x44DDDD }
-          - label: { text: "Arcanoïde", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Casse-briques Atari\n8 niveaux · power-ups", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "\U000F0570", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: color_arcade_arkanoid_accent }
+          - label: { text: "Arcanoïde", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          - label: { text: "Casse-briques Atari\n8 niveaux · power-ups", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: color_arcade_subtitle }
 
     # 3 · Neon Apron (pinball_game) — flipper PORTRAIT
     # Seule carte qui ouvre un jeu changeant l'orientation de l'écran : le
@@ -143,9 +145,9 @@ obj:
         width: 298
         height: 252
         radius: 16
-        bg_color: 0x0D1420
+        bg_color: color_arcade_pinball_card
         bg_opa: 100%
-        border_color: 0x35E6FF
+        border_color: color_arcade_pinball_accent
         border_width: 2
         border_opa: 50%
         pressed: { bg_opa: 80%, border_opa: 100% }
@@ -154,9 +156,9 @@ obj:
           - lvgl.page.show: page_pinball
           - script.execute: tab5_pinball_open
         widgets:
-          - label: { text: "\U000F05DD", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0x35E6FF }
-          - label: { text: "Neon Apron", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Flipper néon · 3 billes\nTablette à la verticale", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "\U000F05DD", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: color_arcade_pinball_accent }
+          - label: { text: "Neon Apron", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          - label: { text: "Flipper néon · 3 billes\nTablette à la verticale", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: color_arcade_subtitle }
 
     # 4 · Coureur d'Or (lode_game) — Lode Runner
     - button:
@@ -167,9 +169,9 @@ obj:
         width: 298
         height: 252
         radius: 16
-        bg_color: 0x0A0A12
+        bg_color: color_arcade_lode_card
         bg_opa: 100%
-        border_color: 0xFFC61A
+        border_color: color_arcade_lode_accent
         border_width: 2
         border_opa: 50%
         pressed: { bg_opa: 80%, border_opa: 100% }
@@ -178,9 +180,9 @@ obj:
           - lvgl.page.show: page_lode
           - script.execute: tab5_lode_open
         widgets:
-          - label: { text: "\U000F15A2", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xFFC61A }
-          - label: { text: "Coureur d'Or", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Lode Runner 1983\nCreuse · grimpe · fuis", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "\U000F15A2", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: color_arcade_lode_accent }
+          - label: { text: "Coureur d'Or", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          - label: { text: "Lode Runner 1983\nCreuse · grimpe · fuis", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: color_arcade_subtitle }
 
     # ══════════ RANGÉE 2 ══════════
 
@@ -193,9 +195,9 @@ obj:
         width: 298
         height: 252
         radius: 16
-        bg_color: 0x1A150E
+        bg_color: color_arcade_go_card
         bg_opa: 100%
-        border_color: 0xC4A574
+        border_color: color_arcade_go_accent
         border_width: 2
         border_opa: 50%
         pressed: { bg_opa: 80%, border_opa: 100% }
@@ -204,9 +206,9 @@ obj:
           - lvgl.page.show: page_go
           - script.execute: tab5_go_open
         widgets:
-          - label: { text: "\U000F0B38", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xC4A574 }
-          - label: { text: "Go Tab", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "\U000F0B38", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: color_arcade_go_accent }
+          - label: { text: "Go Tab", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          - label: { text: "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: color_arcade_subtitle }
 
     # 6 · Trial Poursuite (trivia_game) — quiz
     - button:
@@ -217,9 +219,9 @@ obj:
         width: 298
         height: 252
         radius: 16
-        bg_color: 0x1A1028
+        bg_color: color_trivia_floor
         bg_opa: 100%
-        border_color: 0xFF9800
+        border_color: color_arcade_trivia_accent
         border_width: 2
         border_opa: 50%
         pressed: { bg_opa: 80%, border_opa: 100% }
@@ -228,9 +230,9 @@ obj:
           - lvgl.page.show: page_trivia
           - script.execute: tab5_trivia_open
         widgets:
-          - label: { text: "\U000F134A", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xFF9800 }
-          - label: { text: "Trial Poursuite", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Quiz rétro-salon\n1 à 6 équipes", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "\U000F134A", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: color_arcade_trivia_accent }
+          - label: { text: "Trial Poursuite", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          - label: { text: "Quiz rétro-salon\n1 à 6 équipes", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: color_arcade_subtitle }
 
     # 7 · Dames Tab (draughts_game) — dames internationales
     - button:
@@ -241,9 +243,9 @@ obj:
         width: 298
         height: 252
         radius: 16
-        bg_color: 0x241810
+        bg_color: color_arcade_draughts_card
         bg_opa: 100%
-        border_color: 0xD4B896
+        border_color: color_arcade_draughts_accent
         border_width: 2
         border_opa: 50%
         pressed: { bg_opa: 80%, border_opa: 100% }
@@ -252,9 +254,9 @@ obj:
           - lvgl.page.show: page_draughts
           - script.execute: tab5_draughts_open
         widgets:
-          - label: { text: "\U000F013A", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0xD4B896 }
-          - label: { text: "Dames Tab", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Internationales 10×10\nPrise majoritaire · rafles", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "\U000F013A", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: color_arcade_draughts_accent }
+          - label: { text: "Dames Tab", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          - label: { text: "Internationales 10×10\nPrise majoritaire · rafles", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: color_arcade_subtitle }
 
     # 8 · Roi Noir (chess_game) — échecs
     - button:
@@ -265,9 +267,9 @@ obj:
         width: 298
         height: 252
         radius: 16
-        bg_color: 0x121A16
+        bg_color: color_arcade_chess_card
         bg_opa: 100%
-        border_color: 0x8FBF6A
+        border_color: color_arcade_chess_accent
         border_width: 2
         border_opa: 50%
         pressed: { bg_opa: 80%, border_opa: 100% }
@@ -276,9 +278,9 @@ obj:
           - lvgl.page.show: page_chess
           - script.execute: tab5_chess_open
         widgets:
-          - label: { text: "\U000F0857", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: 0x8FBF6A }
-          - label: { text: "Roi Noir", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: 0xF1F5F9 }
-          - label: { text: "Échecs FIDE complets\n5 niveaux d'IA embarquée", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: 0x8595AD }
+          - label: { text: "\U000F0857", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: color_arcade_chess_accent }
+          - label: { text: "Roi Noir", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: color_text }
+          - label: { text: "Échecs FIDE complets\n5 niveaux d'IA embarquée", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: color_arcade_subtitle }
 
     # ─── Pied de page ───
     - label:
@@ -286,4 +288,4 @@ obj:
         align: BOTTOM_MID
         y: -22
         text_font: roboto_22
-        text_color: 0x4A5568
+        text_color: color_arcade_footer

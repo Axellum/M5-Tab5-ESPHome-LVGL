@@ -224,4 +224,9 @@ packages:
   # (ses scripts referencent les ids de alarm_popup.yaml / alarm_ring_overlay.yaml).
   tab5_alarm: !include Tab5/tab5-alarm.yaml
 
+# Portail captif, conservé à dessein (audit du 06/09/2026, §4.1 point 16) : il
+# n'est actif que quand l'AP de secours l'est (`wifi: ap:` dans
+# Tab5/tab5-sensors-diagnostics.yaml), c'est-à-dire après l'échec de la connexion
+# Wi-Fi — la seule voie de récupération sans câble USB. Coût en fonctionnement
+# normal : le code du serveur web dans le binaire et ses objets en RAM.
 captive_portal:

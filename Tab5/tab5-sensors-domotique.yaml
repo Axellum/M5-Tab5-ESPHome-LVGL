@@ -15,19 +15,12 @@
 #                 système dans tab5-sensors-diagnostics.yaml.)
 # ============================================================================
 switch:
-
   - platform: gpio
-
     id: speaker_enable
-
     name: "Speaker Enable"
-
     pin:
-
       pi4ioe5v6408: pi4ioe1
-
       number: 1
-
     restore_mode: DISABLED
 
   - platform: template
@@ -52,55 +45,36 @@ switch:
       - lambda: 'assist_wake_word_indicator_ui(id(lbl_ok_nabu), false);'
 
 binary_sensor:
-
   - platform: gpio
-
     id: headphone_detect
-
     name: "Headphone Detect"
-
     pin:
-
       pi4ioe5v6408: pi4ioe1
-
       number: 7
 
 text_sensor:
-
   - platform: homeassistant
-
     id: pc_status
-
     entity_id: ${entity_tracker_pc}
-
     on_value:
-
       - lambda: |-
-
           if (id(icon_pc) == nullptr) return;
           // Accepte device_tracker (home) et switch (on)
           bool active = (x == "home" || x == "on");
-
           if (active) {
-
             lv_obj_set_style_text_color(id(icon_pc), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-
             if (id(icon_sw0) != nullptr && id(lbl_sw0_state) != nullptr) {
               lv_obj_set_style_text_color(id(icon_sw0), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
               lv_label_set_text(id(lbl_sw0_state), "Allumé");
               lv_obj_set_style_text_color(id(lbl_sw0_state), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
             }
-
           } else {
-
             lv_obj_set_style_text_color(id(icon_pc), lv_color_hex(UIColor::TEXT_PRIMARY), LV_PART_MAIN);
-
             if (id(icon_sw0) != nullptr && id(lbl_sw0_state) != nullptr) {
               lv_obj_set_style_text_color(id(icon_sw0), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
               lv_label_set_text(id(lbl_sw0_state), "Éteint");
               lv_obj_set_style_text_color(id(lbl_sw0_state), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
             }
-
           }
 
   # TV → icône moniteur existante sur la carte J0 (icon_card_pc), pas une 4e icône bandeau
@@ -157,7 +131,6 @@ packages:
   pot_sensors_5: !include { file: pot_sensors.yaml, vars: { n: 5 } }
 
 sensor:
-
   # Luminosité (attribut brightness 0-255) des 3 lumières — synchronise l'arc du popup
   # lumière quand il est ouvert sur cette entité (helper inerte popup fermé / pendant
   # un drag utilisateur — voir sync_light_popup_brightness, tab5_custom.cpp).
@@ -192,51 +165,34 @@ sensor:
                 id(lbl_light_brightness_val), x);
 
   - platform: homeassistant
-
     id: phone_battery
-
     entity_id: ${entity_phone_battery}
-
     on_value:
-
       - lambda: |-
           // Echelle de couleur factorisee dans get_battery_color (partagee popup pots)
           if (id(icon_phone) == nullptr) return;
           lv_obj_set_style_text_color(id(icon_phone), lv_color_hex(get_battery_color(x)), LV_PART_MAIN);
 
   - platform: homeassistant
-
     id: temp_serre
     entity_id: ${entity_temp_plante}
-
     on_value:
       - lambda: |-
           update_temp_ui(id(current_serre), x); // AXE1/Phase 3 : helper centralise
 
   - platform: homeassistant
-
     id: temp_salon
-
     entity_id: ${entity_temp_salon}
-
     on_value:
-
       - lambda: |-
-
           update_temp_ui(id(val_temp_salon), x); // Gradient continu colorimetrique (helper centralise)
 
   - platform: homeassistant
-
     id: hum_salon
-
     entity_id: ${entity_hum_salon}
-
     on_value:
-
       - lambda: |-
-
           if (id(icon_salon) == nullptr) return;
-
           if(!isnan(x)) {
             uint32_t c = get_humidity_color(x);
             lv_obj_set_style_text_color(id(icon_salon), lv_color_hex(c), LV_PART_MAIN);

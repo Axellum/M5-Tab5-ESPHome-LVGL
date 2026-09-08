@@ -4,6 +4,31 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — Firmware : hygiène YAML, reste de l'audit du 06/09
+
+Audit du 06/09/2026, §4.1 points 9, 11, 13 et 16. Rien de visible à l'écran.
+
+- **`ota: on_end` retiré** : le `delay: 2s` puis `button.press: btn_restart` (« fix
+  reboot OTA » du 05/07/2026) était du code mort. ESPHome redémarre lui-même 100 ms
+  après le déclencheur `on_end` (`components/esphome/ota/ota_esphome.cpp` :
+  `notify_state_(OTA_COMPLETED)` → `delay(100)` → `App.safe_reboot()`), le délai de
+  2 s n'aboutissait donc jamais. L'écran noir après OTA (co-processeur C6 non
+  réinitialisé par un reboot logiciel, `docs/troubleshooting.md`) ne se règle par
+  aucun redémarrage logiciel : le bloc `ota:` le dit désormais, pour que personne ne
+  remette ce `on_end`.
+- **`game_selector.yaml` sans hex en dur** : ses 48 couleurs (24 teintes) passent en
+  tokens `color:` de `tab5-styles.yaml` — 20 tokens `color_arcade_*` nouveaux, et
+  quatre tokens existants réutilisés là où la valeur était déjà la même
+  (`color_marble_floor`, `color_arkanoid_floor`, `color_trivia_floor` pour trois fonds
+  de carte, `color_text` pour les titres). Valeurs identiques au hex près, vérifiées
+  par script : le sélecteur arcade ne fait plus exception à la règle 1.
+- **Fin du double interligne** dans `tab5-sensors-diagnostics.yaml` (116 lignes vides
+  retirées) et `tab5-sensors-domotique.yaml` (44) : `git diff --ignore-blank-lines`
+  vide, le contenu n'a pas bougé.
+- **`captive_portal:` et l'AP de secours documentés** comme conservés à dessein : seul
+  chemin de récupération sans câble USB après un flash avec de mauvais identifiants
+  Wi-Fi, actifs seulement après l'échec de la connexion.
+
 ### 2026-09-08 — Firmware : plus de trace INFO à chaque push météo
 
 Audit du 06/09/2026, §4.2 point 24. Le projet tourne en `logger: level: INFO`.
