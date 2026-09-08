@@ -14,99 +14,62 @@
 #                 système (RAM, réseau, alimentation...) se déclare ici.
 # ============================================================================
 wifi:
-
   ssid: !secret wifi_ssid
-
   password: !secret wifi_password
-
   power_save_mode: NONE
-
-  # Point d'accès de secours
-
+  # Point d'accès de secours, conservé à dessein (audit du 06/09/2026, §4.1
+  # point 16) : avec `captive_portal:` (tab5-ha-hmi.yaml), c'est le seul chemin
+  # de récupération sans câble USB si un firmware est flashé avec de mauvais
+  # identifiants Wi-Fi. L'AP ne démarre qu'après l'échec de la connexion
+  # (`ap_timeout`, 1 min par défaut) ; en fonctionnement normal il ne coûte que
+  # sa configuration en RAM et le code du portail dans le binaire.
   ap:
-
     ssid: "Tab5 Fallback AP"
-
     password: !secret wifi_ap_password
 
 switch:
-
   - platform: gpio
-
     id: wifi_power
-
     name: "WiFi Power"
-
     pin:
-
       pi4ioe5v6408: pi4ioe2
-
       number: 0
-
     restore_mode: ALWAYS_ON
 
   - platform: gpio
-
     id: usb_5v_power
-
     name: "USB Power"
-
     pin:
-
       pi4ioe5v6408: pi4ioe2
-
       number: 3
-
     restore_mode: ALWAYS_ON
 
   - platform: gpio
-
     id: wifi_antenna_int_ext
-
     pin:
-
       pi4ioe5v6408: pi4ioe1
-
       number: 0
 
   - platform: gpio
-
     id: external_5v_power
-
     name: "External 5V Power"
-
     pin:
-
       pi4ioe5v6408: pi4ioe1
-
       number: 2
-
     restore_mode: ALWAYS_ON
 
 binary_sensor:
-
   - platform: status
-
     name: "HA API Status"
-
     id: status_ha
-
     on_state:
-
       - lambda: |-
-
           if (id(icon_ha) == nullptr) return;
-
           if(x) {
-
             lv_obj_set_style_text_color(id(icon_ha), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-
           } else {
-
             lv_obj_set_style_text_color(id(icon_ha), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-
           }
-
       # Pré-fetch calendrier au reconnect HA (rising edge) : recharge le mois
       # courant + M+1 pour que le popup s'ouvre instantanément même après une coupure.
       - if:
@@ -117,145 +80,85 @@ binary_sensor:
             - script.execute: tab5_cal_prefetch_boot
 
 text_sensor:
-
   - platform: wifi_info
-
     ip_address:
-
       id: sys_wifi_ip
-
       name: "Tab5 IP"
-
     ssid:
-
       id: sys_wifi_ssid
-
       name: "Tab5 SSID"
 
 sensor:
-
   - platform: uptime
-
     id: sys_uptime
-
     name: "Tab5 Uptime"
-
     update_interval: 60s
-
     on_value:
-
       - lambda: |-
-
           if (!is_console_layer_visible(id(layer_console_sys))) return;
-
           update_console_uptime_label(id(lbl_sys_uptime_val), x);
 
   - platform: wifi_signal
-
     id: sys_wifi_rssi
-
     name: "Tab5 WiFi Signal"
-
     update_interval: 60s
-
     on_value:
-
       - lambda: |-
-
           if (!is_console_layer_visible(id(layer_console_sys))) return;
-
           update_console_rssi_label(id(lbl_sys_rssi_val), x);
 
   - platform: internal_temperature
-
     id: sys_core_temp
-
     name: "Tab5 Core Temp"
-
     update_interval: 60s
-
     on_value:
-
       - lambda: |-
-
           if (!is_console_layer_visible(id(layer_console_sys))) return;
-
           update_console_temp_label(id(lbl_sys_temp_val), x);
 
   - platform: debug
-
     free:
-
       id: sys_free_heap
-
       name: "Tab5 Free Ram"
-
     loop_time:
-
       id: sys_loop_time
-
       name: "Tab5 Loop Time"
 
 select:
   - platform: template
-
     id: wifi_antenna_select
-
     name: "WiFi Antenna"
-
     options:
-
       - "Internal"
-
       - "External"
-
     optimistic: true
-
     on_value:
-
       - if:
-
           condition:
-
             lambda: return i == 0;
-
           then:
-
             - switch.turn_off: wifi_antenna_int_ext
-
           else:
-
             - switch.turn_on: wifi_antenna_int_ext
 
 time:
-
   - platform: sntp
-
     id: sntp_time
-
     timezone: Europe/Paris
-
     # Peint l'horloge dès la 1re sync NTP (sinon placeholders YAML jusqu'au
     # prochain tick minute de on_time). Indépendant de HA.
     on_time_sync:
-
       then:
-
         - lambda: |-
             auto t_now = id(sntp_time).now();
             if (t_now.is_valid()) {
               update_clock_date_ui(id(lbl_date),
                   t_now.hour, t_now.minute, t_now.day_of_week, t_now.day_of_month, t_now.month);
             }
-
     on_time:
-
       - seconds: 0
-
         minutes: "*"
-
         then:
-
           - lambda: |-
               auto t_now = id(sntp_time).now();
               if (t_now.is_valid()) {
@@ -264,31 +167,19 @@ time:
               }
 
 interval:
-
   - interval: 5s
-
     then:
-
       - if:
-
           condition:
-
             wifi.connected:
-
           then:
-
             - lambda: 'lv_obj_set_style_text_color(id(icon_wifi), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);'
-
           else:
-
             - lambda: 'lv_obj_set_style_text_color(id(icon_wifi), lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);'
 
   - interval: 2s
-
     then:
-
       - lambda: |-
-
           // Garde #T222 : pas de LVGL si la console est masquee.
           if (is_console_layer_visible(id(layer_console_sys))) {
              update_console_diagnostics_ui(id(lbl_sys_sram_val), id(bar_sys_sram),
@@ -296,7 +187,6 @@ interval:
                  id(sys_loop_time).has_state(), id(sys_loop_time).state, id(lbl_sys_loop_val),
                  id(sys_wifi_ip).has_state(), id(sys_wifi_ip).state.c_str(), id(lbl_sys_ip_val),
                  id(sys_wifi_ssid).has_state(), id(sys_wifi_ssid).state.c_str(), id(lbl_sys_ssid_val));
-
              // État connexion HA (carte RÉSEAU de la console) — reprend aussi la main
              // apres le "Redemarrage..." affiche par le bouton Redemarrer HA.
              if (id(lbl_sys_ha_val) != nullptr) {
@@ -306,4 +196,3 @@ interval:
                    lv_color_hex(ha_ok ? UIColor::SUCCESS : UIColor::ERROR), LV_PART_MAIN);
              }
           }
-

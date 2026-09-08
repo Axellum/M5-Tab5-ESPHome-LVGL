@@ -88,10 +88,15 @@ psram:
 ota:
   platform: esphome
   password: !secret ota_password
-  on_end:
-    then:
-      - delay: 2s
-      - button.press: btn_restart
+  # Pas de `on_end` ici. ESPHome redémarre lui-même juste après une OTA réussie
+  # (components/esphome/ota/ota_esphome.cpp : notify_state_(OTA_COMPLETED) ->
+  # delay(100) -> App.safe_reboot()). L'ancien `on_end: delay 2s + button.press
+  # btn_restart` (« fix reboot OTA » du 05/07/2026) ne pouvait donc jamais
+  # s'exécuter : l'appareil redémarrait 100 ms après le déclencheur, bien avant la
+  # fin du délai. Retiré le 08/09/2026 (audit du 06/09, §4.1 point 13).
+  # L'écran noir après OTA (co-processeur C6 non réinitialisé par un reboot
+  # logiciel, cf. docs/troubleshooting.md) ne se règle par AUCUN redémarrage
+  # logiciel, seulement par un cycle d'alimentation : ne pas remettre de on_end.
 
 safe_mode:
   num_attempts: 10

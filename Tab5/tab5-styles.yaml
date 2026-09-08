@@ -106,7 +106,8 @@ color:
   # compilation ESPHome échouait sur « Couldn't find ID 'color_trivia_void' ».
   # Contrairement aux 3 jeux ci-dessus, trivia_game.cpp ne pose PAS les fonds de
   # ses conteneurs en C++ — ils doivent donc bien vivre ici.
-  # Teintes accordées à la carte Trivia du sélecteur arcade (accent 0xFF9800).
+  # Teintes accordées à la carte Trivia du sélecteur arcade (accent
+  # color_arcade_trivia_accent, plus bas).
   - id: color_trivia_void
     hex: "100A16"          # fond hors plateau
   - id: color_trivia_floor
@@ -122,6 +123,52 @@ color:
     hex: "121C2E"          # haut du sol (miroir Pinball::Pal::FELT_HI)
   - id: color_pinball_hud
     hex: "080C16"          # fronton / DMD (miroir Pinball::Pal::HUD_BG)
+  # --- Sélecteur arcade (ui_components/game_selector.yaml) --------------------
+  # Chaque carte = un fond (`_card`) + un accent (`_accent`, bordure et icône).
+  # Les fonds des cartes Fil d'Or, Arcanoïde et Trial Poursuite réutilisent le
+  # sol du jeu (color_marble_floor / color_arkanoid_floor / color_trivia_floor)
+  # et les titres color_text ; tout le reste vit ici — plus aucun hex en dur dans
+  # le sélecteur (audit du 06/09/2026, §4.1 point 11).
+  - id: color_arcade_bg
+    hex: "080810"          # fond de la page arcade
+  - id: color_arcade_title
+    hex: "FFDD22"          # icône + titre « ARCADE »
+  - id: color_arcade_subtitle
+    hex: "8595AD"          # sous-titre et descriptions des cartes (même gris que color_console_label)
+  - id: color_arcade_footer
+    hex: "4A5568"          # pied de page
+  - id: color_arcade_close_bg
+    hex: "222233"          # croix de fermeture : fond
+  - id: color_arcade_close_border
+    hex: "445566"          # croix de fermeture : bordure
+  - id: color_arcade_close_icon
+    hex: "AABBCC"          # croix de fermeture : glyphe
+  - id: color_arcade_marble_accent
+    hex: "E8B44A"
+  - id: color_arcade_arkanoid_accent
+    hex: "44DDDD"
+  - id: color_arcade_pinball_card
+    hex: "0D1420"
+  - id: color_arcade_pinball_accent
+    hex: "35E6FF"
+  - id: color_arcade_lode_card
+    hex: "0A0A12"
+  - id: color_arcade_lode_accent
+    hex: "FFC61A"
+  - id: color_arcade_go_card
+    hex: "1A150E"
+  - id: color_arcade_go_accent
+    hex: "C4A574"
+  - id: color_arcade_trivia_accent
+    hex: "FF9800"
+  - id: color_arcade_draughts_card
+    hex: "241810"
+  - id: color_arcade_draughts_accent
+    hex: "D4B896"
+  - id: color_arcade_chess_card
+    hex: "121A16"
+  - id: color_arcade_chess_accent
+    hex: "8FBF6A"
 
 # =============================================================================
 # FONTS — inchangees (fonctionnel, pas esthetique)
