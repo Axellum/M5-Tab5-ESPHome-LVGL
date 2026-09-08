@@ -76,6 +76,7 @@ Home-automation entities pushed by Home Assistant:
 - Room & greenhouse temperature/humidity sensors
 - Light/PC state mirrors, phone battery
 - Audio: speaker amp switch, headphone jack, wake-word toggle
+- Plant details (EC / light / temperature / battery): `pot_sensors.yaml`, one parameterized package included five times (nested `packages:` + `vars: {n}`)
 
 These files only declare entities. No UI logic lives here.
 
@@ -84,7 +85,7 @@ These files only declare entities. No UI logic lives here.
 ### `tab5-api-logic.yaml`
 The most important package. Two things live here:
 
-**ESPHome API service handlers** — these are the endpoints Home Assistant calls to push data to the screen. Each handler receives a payload, validates it, then calls a C++ function in `tab5_custom.cpp` to parse and apply it.
+**ESPHome API service handlers** — these are the endpoints Home Assistant calls to push data to the screen. Each handler receives a payload, validates it, then calls a C++ function of the C++ layer (`tab5_services.cpp`, declared in `tab5_custom.h`) to parse and apply it.
 
 ```yaml
 api:
@@ -154,7 +155,7 @@ separate pages, outside the dashboard flow (all `skip: true` — see §6):
     page_trivia / page_chess / page_draughts      (one per console)
 ```
 
-Navigation is by touch (opening/closing the climate/light popups and the console button, and toggling the bottom card region between switches and weather) and by swipe gesture, handled in C++ (`handle_swipe_gesture()` in `tab5_custom.cpp`):
+Navigation is by touch (opening/closing the climate/light popups and the console button, and toggling the bottom card region between switches and weather) and by swipe gesture, handled in C++ (`handle_swipe_gesture()` in `tab5_central.cpp`):
 - swipe left/right on the lower band of the screen (`y ≥ 333`) → cycle through the 5 forecast pages (2 hourly windows + 3 daily windows, non-wrapping 0↔4) — only when the bottom region is in forecast mode; the switches card doesn't paginate via swipe
 - since the 14/07/2026 rework there is **no** up/down swipe anymore — the console opens via its dedicated button only
 
@@ -186,7 +187,9 @@ Alarm clock + appointment reminders: `rtttl:` melody on `tab5_speaker` (outside 
 
 ---
 
-## 3. C++ layer: `tab5_custom.h` / `tab5_custom.cpp`
+## 3. C++ layer: `tab5_custom.h` + the `tab5_*.cpp` units
+
+Since 2026-09-08 the former single `tab5_custom.cpp` (3 169 lines) is split into nine units, one per responsibility — `tab5_text.cpp`, `tab5_forecast.cpp`, `tab5_central.cpp`, `tab5_services.cpp`, `tab5_assist.cpp`, `tab5_cards.cpp`, `tab5_console.cpp`, `tab5_anim.cpp`, `tab5_calendar.cpp` — with `tab5_custom.h` unchanged as the single public header and `tab5_internal.h` for the few helpers shared between units. `tab5_custom.cpp` only keeps the shared globals.
 
 The `.h` file declares all functions used from YAML lambdas. The `.cpp` file implements them.
 
@@ -313,6 +316,7 @@ Entités domotique poussées par Home Assistant :
 - Température & humidité des pièces et de la serre
 - Miroirs d'état lumières/PC, batterie téléphone
 - Audio : ampli, détection jack, switch wake word
+- Détails des pots (EC / éclairement / température / batterie) : `pot_sensors.yaml`, un package paramétré inclus cinq fois (`packages:` imbriqué + `vars: {n}`)
 
 Ces fichiers ne déclarent que des entités. Aucune logique UI ici.
 
@@ -321,7 +325,7 @@ Ces fichiers ne déclarent que des entités. Aucune logique UI ici.
 ### `tab5-api-logic.yaml`
 Le package le plus important. Deux choses y vivent :
 
-**Gestionnaires de services API ESPHome** — ce sont les endpoints que Home Assistant appelle pour pousser des données vers l'écran. Chaque gestionnaire reçoit un payload, le valide, puis appelle une fonction C++ dans `tab5_custom.cpp` pour le parser et l'appliquer.
+**Gestionnaires de services API ESPHome** — ce sont les endpoints que Home Assistant appelle pour pousser des données vers l'écran. Chaque gestionnaire reçoit un payload, le valide, puis appelle une fonction C++ de la couche C++ (`tab5_services.cpp`, déclarée dans `tab5_custom.h`) pour le parser et l'appliquer.
 
 **Lambdas C++** — pour la logique qui ne rentre pas proprement en YAML (transitions de machine d'états, parsing de chaînes, mises à jour LVGL conditionnelles).
 
@@ -380,7 +384,7 @@ pages séparées, hors parcours dashboard (toutes en `skip: true` — voir §6) 
     page_trivia / page_chess / page_draughts      (une par console)
 ```
 
-La navigation se fait au tactile (ouverture/fermeture des popups clim/lumière et du bouton console, et bascule de la zone du bas entre switches et météo) et par geste swipe, géré en C++ (`handle_swipe_gesture()` dans `tab5_custom.cpp`) :
+La navigation se fait au tactile (ouverture/fermeture des popups clim/lumière et du bouton console, et bascule de la zone du bas entre switches et météo) et par geste swipe, géré en C++ (`handle_swipe_gesture()` dans `tab5_central.cpp`) :
 - swipe gauche/droite sur la bande basse de l'écran (`y ≥ 333`) → cycle les 5 pages de prévisions (2 fenêtres horaires + 3 fenêtres journalières, sans bouclage 0↔4) — uniquement quand la zone du bas est en mode météo ; la carte switches ne se pagine pas au swipe
 - depuis la refonte du 14/07/2026 il n'y a **plus** de swipe haut/bas — la console s'ouvre uniquement par son bouton dédié
 
@@ -412,7 +416,9 @@ Réveil + annonce des rendez-vous : mélodie `rtttl:` sur `tab5_speaker` (hors m
 
 ---
 
-## 3. Couche C++ : `tab5_custom.h` / `tab5_custom.cpp`
+## 3. Couche C++ : `tab5_custom.h` + les unités `tab5_*.cpp`
+
+Depuis le 08/09/2026, l'ancien `tab5_custom.cpp` unique (3 169 lignes) est scindé en neuf unités, une par responsabilité — `tab5_text.cpp`, `tab5_forecast.cpp`, `tab5_central.cpp`, `tab5_services.cpp`, `tab5_assist.cpp`, `tab5_cards.cpp`, `tab5_console.cpp`, `tab5_anim.cpp`, `tab5_calendar.cpp` — `tab5_custom.h` restant l'unique en-tête public et `tab5_internal.h` déclarant les rares helpers partagés entre unités. `tab5_custom.cpp` ne garde que les globals partagés.
 
 Le `.h` déclare toutes les fonctions utilisées depuis les lambdas YAML. Le `.cpp` les implémente.
 

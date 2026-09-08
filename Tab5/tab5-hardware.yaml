@@ -311,86 +311,45 @@ micro_wake_word:
         # passant le projet en DEBUG. `wake_word` est un `std::string`
         # (Trigger<std::string>), d'où le `.c_str()` qu'attend `%s`.
         args: ['wake_word.c_str()']
-    # Réveil en train de sonner : TOUT mot de réveil l'arrête, « Stop » comme
-    # « Okay Nabu ». C'est la promesse « arrêt à la voix », et elle passe avant
-    # les deux autres usages du mot « Stop » (volet en mouvement, interruption
-    # d'une réponse vocale) — pendant que le réveil sonne, aucun des deux n'a de
-    # sens. Le modèle « Stop » est armé par tab5_alarm_ring_start et désarmé par
-    # tab5_alarm_ring_cleanup.
+    # La décision vit dans WakeWord::decide() (tab5_custom.cpp) : une table à
+    # six sorties au lieu de cinq niveaux d'if/else ici. Les entrées sont lues
+    # UNE fois ci-dessous, puis tab5_wake_word_dispatch (tab5-scripts.yaml)
+    # exécute l'action. Priorités, dans l'ordre :
+    #   1. réveil en train de sonner : TOUT mot l'arrête, « Stop » comme « Okay
+    #      Nabu » — c'est la promesse « arrêt à la voix », elle passe avant les
+    #      deux autres usages du mot « Stop » (volet en mouvement, interruption
+    #      d'une réponse) qui n'ont aucun sens pendant que ça sonne ;
+    #   2. « Stop » + volet en mouvement : arrêt local + HA ;
+    #   3. réponse en cours (va_stop_armed + audio ou pipeline pas démarré) :
+    #      on la coupe et on ré-écoute, que le mot soit « Stop » ou « Okay Nabu » ;
+    #   4. « Okay Nabu » au repos : pipeline si le wake word est actif et HA
+    #      joignable. Le modèle « Stop » est armé par tab5_alarm_ring_start /
+    #      le volet / le pipeline, et désarmé par leurs fins.
     # [AI-WARNING] La mélodie est un SINUS pur (rtttl.cpp) et microWakeWord est
     # entraîné sur de la parole : un faux déclenchement par la sonnerie
     # elle-même est improbable mais n'a pas été mesuré. Si Axel constate que le
     # réveil se coupe tout seul, ajouter un global `alarm_listen_window` posé
-    # à `true` par la pause de 2 500 ms de tab5_alarm_ring_loop et le tester
-    # dans la condition ci-dessous — le silence entre deux passages est
-    # justement là pour ça.
-    - if:
-        condition:
-          lambda: 'return id(alarm_ringing);'
-        then:
-          - logger.log: "Mot de reveil pendant la sonnerie -> arret du reveil"
-          - script.execute: tab5_alarm_stop
-        else:
-        - if:
-            condition:
-              lambda: 'return wake_word == "Stop";'
-            then:
-              - if:
-                  condition:
-                    lambda: 'return id(volet_en_mouvement);'
-                  then:
-                    - logger.log: "STOP volet local (wake Stop + mouvement)"
-                    - script.execute: tab5_volet_end_movement
-                    - homeassistant.service:
-                        service: script.tab5_volet_action
-                        data:
-                          action: stop
-                    - script.execute: tab5_volet_stop_voice_feedback
-                    - lambda: |-
-                        if (id(icon_mic_status) != nullptr) {
-                          lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-                        }
-                  else:
-                    - if:
-                        condition:
-                          and:
-                            - lambda: 'return id(va_stop_armed);'
-                            - or:
-                                - speaker.is_playing:
-                                    id: tab5_speaker
-                                - media_player.is_announcing:
-                                    id: speaker_player
-                                - not:
-                                    voice_assistant.is_running:
-                        then:
-                          - logger.log: "STOP vocal (interrupt TTS/responding va_stop_armed)"
-                          - script.execute: tab5_vocal_interrupt_and_listen
-                        else:
-                          - logger.log: "STOP wake ignoré (volet immobile, va_stop_armed=false)"
-            else:
-              - if:
-                  condition:
-                    and:
-                      - lambda: 'return id(va_stop_armed);'
-                      - or:
-                          - speaker.is_playing:
-                              id: tab5_speaker
-                          - media_player.is_announcing:
-                              id: speaker_player
-                          - not:
-                              voice_assistant.is_running:
-                  then:
-                    - logger.log: "Okay Nabu -> interrupt TTS/responding + re-ecoute"
-                    - script.execute: tab5_vocal_interrupt_and_listen
-                  else:
-                    - if:
-                        condition:
-                          and:
-                            - switch.is_on: tab5_wake_word_active
-                            - api.connected:
-                        then:
-                          - voice_assistant.start:
-                              wake_word: !lambda return wake_word;
+    # à `true` par la pause de 2 500 ms de tab5_alarm_ring_loop et l'ajouter
+    # aux entrées de decide() — le silence entre deux passages est justement
+    # là pour ça.
+    - lambda: |-
+        WakeWord::Inputs in;
+        in.alarm_ringing      = id(alarm_ringing);
+        in.is_stop            = (wake_word == "Stop");
+        in.volet_en_mouvement = id(volet_en_mouvement);
+        in.va_stop_armed      = id(va_stop_armed);
+        // Mêmes tests que les anciennes conditions YAML : speaker.is_playing,
+        // media_player.is_announcing, not voice_assistant.is_running.
+        in.audio_busy = id(tab5_speaker)->is_running()
+            || id(speaker_player)->state == media_player::MediaPlayerState::MEDIA_PLAYER_STATE_ANNOUNCING
+            || !(id(va)->is_running() || id(va)->is_continuous());
+        in.wake_word_enabled  = id(tab5_wake_word_active)->state;
+        in.api_connected      = global_api_server->is_connected();
+        const WakeWord::Action a = WakeWord::decide(in);
+        // INFO et pas DEBUG : un mot de réveil est rare et c'est la seule trace
+        // de ce qui a été décidé (le projet tourne à INFO).
+        ESP_LOGI("TAB5", "Mot de reveil '%s' -> %s", wake_word.c_str(), WakeWord::action_name(a));
+        id(tab5_wake_word_dispatch).execute((int) a, wake_word);
 
 voice_assistant:
   id: va
@@ -405,30 +364,22 @@ voice_assistant:
   # Remettre a 1 ou 2 si la reconnaissance se degrade dans une piece bruyante.
   noise_suppression_level: 0
   auto_gain: 15dBFS           # [AUDIO-2026] Controle auto gain cote HA (0-31dBFS)
+  # Les cinq callbacks partagent assist_set_pipeline_state() (tab5_custom.cpp) :
+  # un état = une couleur d'icône micro + un libellé de statut dans le popup.
   on_listening:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_listening"
-    - lambda: |-
-        lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN); // Vert (Parlez)
-        if (id(lbl_assist_status) != nullptr) {
-          lv_label_set_text(id(lbl_assist_status), "Écoute…");
-          lv_obj_set_style_text_color(id(lbl_assist_status), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-        }
+    - lambda: 'assist_set_pipeline_state(id(icon_mic_status), id(lbl_assist_status), AssistState::LISTENING);'
     - script.execute: tab5_vocal_arm_stop
   on_stt_end:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_stt_end"
-    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);' # Orange (Analyse)
+    - lambda: 'assist_set_pipeline_state(id(icon_mic_status), id(lbl_assist_status), AssistState::THINKING);'
     - script.execute: tab5_vocal_arm_stop
-    # Popup assistant : affiche la demande reconnue (STT) + bascule en "Réflexion…"
-    - lambda: |-
-        assist_set_request(id(lbl_assist_request), x);
-        if (id(lbl_assist_status) != nullptr) {
-          lv_label_set_text(id(lbl_assist_status), "Analyse…");
-          lv_obj_set_style_text_color(id(lbl_assist_status), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-        }
+    # Popup assistant : affiche la demande reconnue (STT) puis « Réflexion… »
+    - lambda: 'assist_set_request(id(lbl_assist_request), x);'
     - script.execute: tab5_assist_on_request
   on_tts_start:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_tts_start"
-    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::INFO), LV_PART_MAIN);' # Bleu clair (Réponse)
+    - lambda: 'assist_set_pipeline_state(id(icon_mic_status), id(lbl_assist_status), AssistState::SPEAKING);'
     - script.execute: tab5_vocal_arm_stop
     # Réponse "par défaut" = texte parlé (TTS). Le moteur peut la remplacer par une
     # version riche (tableaux + image) via le service HA tab5_assist_reponse.
@@ -436,18 +387,9 @@ voice_assistant:
         esphome::font::Font* f = id(assist_text_size) == 0 ? id(roboto_mono_20)
                                : (id(assist_text_size) == 2 ? id(roboto_mono_28) : id(roboto_mono_24));
         assist_set_response(id(lbl_assist_response), x, f);
-        if (id(lbl_assist_status) != nullptr) {
-          lv_label_set_text(id(lbl_assist_status), "Réponse");
-          lv_obj_set_style_text_color(id(lbl_assist_status), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-        }
   on_end:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_end"
-    - lambda: |-
-        lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN); // Gris (Repos)
-        if (id(lbl_assist_status) != nullptr) {
-          lv_label_set_text(id(lbl_assist_status), "Prêt");
-          lv_obj_set_style_text_color(id(lbl_assist_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-        }
+    - lambda: 'assist_set_pipeline_state(id(icon_mic_status), id(lbl_assist_status), AssistState::IDLE);'
     - wait_until:
         condition:
           - media_player.is_announcing:
@@ -468,14 +410,10 @@ voice_assistant:
     - logger.log:
         format: "DEBUG: VOICE_ASSISTANT on_error: %s"
         args: [ "code.c_str()" ]
-    - lambda: |-
-        lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::ERROR), LV_PART_MAIN); // Rouge (Erreur)
-        if (id(lbl_assist_status) != nullptr) {
-          lv_label_set_text(id(lbl_assist_status), "Erreur");
-          lv_obj_set_style_text_color(id(lbl_assist_status), lv_color_hex(UIColor::ERROR), LV_PART_MAIN);
-        }
+    - lambda: 'assist_set_pipeline_state(id(icon_mic_status), id(lbl_assist_status), AssistState::ERROR);'
     - delay: 2s
-    - lambda: 'lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);' # Retour gris
+    # Retour au gris de l'icône seule : le popup garde « Erreur » sous les yeux.
+    - lambda: 'assist_set_mic_state(id(icon_mic_status), AssistState::IDLE);'
     - if:
         condition:
           - switch.is_on: tab5_wake_word_active
@@ -507,16 +445,9 @@ image:
     type: RGB565
     resize: 760x360
     on_download_finished:
-      - lambda: |-
-          if (id(assist_img_widget) != nullptr) lv_obj_clear_flag(id(assist_img_widget), LV_OBJ_FLAG_HIDDEN);
-          if (id(assist_img_hint) != nullptr) lv_obj_add_flag(id(assist_img_hint), LV_OBJ_FLAG_HIDDEN);
+      - lambda: 'assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::READY);'
     on_error:
-      - lambda: |-
-          if (id(assist_img_hint) != nullptr) {
-            lv_label_set_text(id(assist_img_hint), "Image indisponible");
-            lv_obj_clear_flag(id(assist_img_hint), LV_OBJ_FLAG_HIDDEN);
-          }
-          if (id(assist_img_widget) != nullptr) lv_obj_add_flag(id(assist_img_widget), LV_OBJ_FLAG_HIDDEN);
+      - lambda: 'assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::ERROR);'
 
 button:
   - platform: restart

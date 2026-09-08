@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
 """Règles de code du firmware Tab5, jouées à chaque `pytest` (audit du 06/09/2026,
-§4.1 points 1, 4 et §4.2 point 17 ; ADR-0006). Trois règles, toutes
+§4.1 points 1, 4, 15 et §4.2 point 17 ; ADR-0006). Quatre règles, toutes
 falsifiables sur le dépôt réel :
 
   1. **`snprintf` partout** : aucun `sprintf(` brut dans `Tab5/*.cpp`, `*.h`,
      `*.yaml` ni `tab5-ha-hmi.yaml`. Un futur `%s` sur un buffer de 16 octets ne
      doit pas pouvoir déborder en silence.
-  2. **Aucune logique LVGL dans `tab5-api-logic.yaml`** : les services résolvent
-     les `id()` et appellent `tab5_custom.cpp`. Seul `lv_obj_has_flag` (lecture
-     pure, dans une condition) est toléré.
+  2. **Aucune logique LVGL dans `tab5-api-logic.yaml` ni `tab5-hardware.yaml`** :
+     les services et les callbacks (voice_assistant, micro_wake_word, online_image)
+     résolvent les `id()` et appellent `tab5_custom.cpp`. Dans le contrat API,
+     seul `lv_obj_has_flag` (lecture pure, dans une condition) est toléré ; dans
+     le fichier matériel, rien.
   3. **Aucun global orphelin** dans `tab5-globals.yaml` : chaque `- id:` du bloc
      `globals:` doit être lu ou écrit quelque part (`id(x)` dans une lambda,
      `id: x` dans une action `globals.set` / `globals.increment`…). Un global
      que personne ne référence est du code mort qui trompe le lecteur.
+  4. **Aucune entité Home Assistant en dur** dans un YAML du firmware : toute
+     valeur `entity_id:` littérale (`domaine.objet`) doit être une substitution
+     de `user_entities.yaml` (`${entity_…}`) ou un `!lambda`. Les entités que la
+     tablette expose elle-même (`assist_satellite.*`, `media_player.*`) sont
+     dérivées de son nom dans HA : un renommage cassait l'interruption vocale et
+     l'annonce des rendez-vous sans aucune erreur (audit §4.1 point 15).
 
 Usage : python tools/check_tab5_code_rules.py   (aussi lancé par `pytest`, tests/test_guards.py)
 Sortie : 0 si tout est conforme, 1 sinon (liste des écarts sur stdout).
@@ -28,12 +36,20 @@ REPO = Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 ENTRY = REPO / "tab5-ha-hmi.yaml"
 API_LOGIC = TAB5 / "tab5-api-logic.yaml"
+HARDWARE = TAB5 / "tab5-hardware.yaml"
 GLOBALS_YAML = TAB5 / "tab5-globals.yaml"
 
 RE_SPRINTF = re.compile(r"(?<![A-Za-z_])sprintf\s*\(")
 RE_LV_CALL = re.compile(r"\b(lv_[a-z0-9_]+)\s*\(")
-LV_ALLOWED_IN_API = {"lv_obj_has_flag"}
+# fichier → appels lv_* tolérés (lecture pure). Tout le reste est interdit.
+LV_ALLOWED = {
+    "tab5-api-logic.yaml": {"lv_obj_has_flag"},
+    "tab5-hardware.yaml": set(),
+}
 RE_GLOBAL_DEF = re.compile(r"^  - id: (\w+)\s*$", re.M)
+# `entity_id: domaine.objet` littéral (clé `entity_id` ou `*_entity_id`). Une
+# substitution `${…}`, un `!lambda` ou une liste de substitutions ne matchent pas.
+RE_HA_ENTITY_LITERAL = re.compile(r"^\s*-?\s*\w*entity_id:\s*['\"]?([a-z_]+\.[A-Za-z0-9_]+)['\"]?\s*$")
 RE_TOP_KEY = re.compile(r"^[a-z_]+:", re.M)
 
 
@@ -69,8 +85,9 @@ def globals_defined(globals_yaml: Path = GLOBALS_YAML) -> list[str]:
 def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     problems: list[str] = []
     api_logic = tab5 / "tab5-api-logic.yaml"
+    hardware = tab5 / "tab5-hardware.yaml"
     globals_yaml = tab5 / "tab5-globals.yaml"
-    for required in (api_logic, globals_yaml):
+    for required in (api_logic, hardware, globals_yaml):
         if not required.is_file():
             return [f"fichier introuvable : {required}"]
 
@@ -84,15 +101,17 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
             if RE_SPRINTF.search(line):
                 problems.append(f"{path.name}:{lineno} : sprintf brut — utiliser snprintf(buf, sizeof(buf), …)")
 
-    # 2. lv_* dans le contrat API
-    api_text = strip_yaml_comments(api_logic.read_text(encoding="utf-8"))
-    for lineno, line in enumerate(api_text.splitlines(), 1):
-        for m in RE_LV_CALL.finditer(line):
-            if m.group(1) not in LV_ALLOWED_IN_API:
-                problems.append(
-                    f"{api_logic.name}:{lineno} : {m.group(1)}() — logique LVGL interdite ici, "
-                    f"la déplacer dans tab5_custom.cpp (ADR-0006)"
-                )
+    # 2. lv_* dans le contrat API et le fichier matériel
+    for path in (api_logic, hardware):
+        allowed = LV_ALLOWED.get(path.name, set())
+        text = strip_yaml_comments(path.read_text(encoding="utf-8"))
+        for lineno, line in enumerate(text.splitlines(), 1):
+            for m in RE_LV_CALL.finditer(line):
+                if m.group(1) not in allowed:
+                    problems.append(
+                        f"{path.name}:{lineno} : {m.group(1)}() — logique LVGL interdite ici, "
+                        f"la déplacer dans tab5_custom.cpp (ADR-0006)"
+                    )
 
     # 3. globals orphelins
     corpus: list[tuple[Path, str]] = []
@@ -114,6 +133,19 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
         if not used:
             problems.append(f"{globals_yaml.name} : global `{name}` défini mais jamais référencé (id({name}) / id: {name}) — code mort")
 
+    # 4. entité HA en dur dans un YAML
+    for path in sources:
+        if path.suffix != ".yaml":
+            continue
+        text = strip_yaml_comments(path.read_text(encoding="utf-8"))
+        for lineno, line in enumerate(text.splitlines(), 1):
+            m = RE_HA_ENTITY_LITERAL.match(line)
+            if m:
+                problems.append(
+                    f"{path.name}:{lineno} : entité HA en dur `{m.group(1)}` — passer par une "
+                    f"substitution de user_entities.yaml (${{entity_…}})"
+                )
+
     return problems
 
 
@@ -124,7 +156,7 @@ def main() -> int:
         for p in problems:
             print("  -", p)
         return 1
-    print("[OK] règles de code Tab5 : snprintf partout, api-logic sans LVGL, aucun global orphelin")
+    print("[OK] règles de code Tab5 : snprintf partout, api-logic et hardware sans LVGL, aucun global orphelin, aucune entité HA en dur")
     return 0
 
 

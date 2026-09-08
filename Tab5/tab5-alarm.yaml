@@ -1046,7 +1046,7 @@ script:
             - homeassistant.service:
                 service: assist_satellite.announce
                 data:
-                  entity_id: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
+                  entity_id: ${entity_tab5_satellite}
                   message: !lambda 'return id(alarm_rdv_speech);'
       - lambda: 'id(tab5_rdv_next_sensor).update();'
 

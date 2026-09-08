@@ -406,9 +406,11 @@ bool update_rain_bar_ui(int idx, const std::string& intensite, lv_obj_t* const b
 // tab5_maj_meteo_actuelle : les deux services partagent le même rendu.
 void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite);
 
-// Clim : cible (carte + popup + arc) et température intérieure du popup. Les
-// modes restent dans les globals, recolorés par le script tab5_clim_recolor.
-void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* lbl_target_popup, lv_obj_t* arc,
+// Clim, retour HA (service tab5_maj_clim) : cible (carte + popup + arc) et
+// température intérieure du popup. Les modes restent dans les globals,
+// recolorés par le script tab5_clim_recolor. Distinct de update_clim_target_ui()
+// (affichage optimiste local, plus bas), qui n'écrit que la cible.
+void update_clim_from_ha_ui(lv_obj_t* lbl_target, lv_obj_t* lbl_target_popup, lv_obj_t* arc,
     lv_obj_t* lbl_current, float target, float current);
 
 void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::string& l2,
@@ -568,10 +570,76 @@ void hide_vocal_response_ui(lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal, CentralPa
 //    séparatrice |---|---|. Rend les tableaux lisibles sans moteur de rendu.
 std::string format_assist_markdown(const std::string& in);
 
-// Zone image de la réponse (service tab5_assist_reponse) : loading = true
-// affiche « Chargement image... » et masque l'image le temps du téléchargement
-// online_image ; loading = false masque les deux (pas d'image dans la réponse).
-void assist_image_hint_ui(lv_obj_t* hint, lv_obj_t* img, bool loading);
+// -----------------------------------------------------------------------------
+// Pipeline vocal — un état, une couleur d'icône micro, un libellé de statut.
+// Remplace les 5 blocs identiques des callbacks voice_assistant: de
+// tab5-hardware.yaml (audit du 06/09/2026 §4.1 point 6).
+// -----------------------------------------------------------------------------
+enum class AssistState : uint8_t {
+    IDLE,       // gris   « Prêt »
+    LISTENING,  // vert   « Écoute… »
+    THINKING,   // orange « Analyse… » (sert aussi d'accusé de réception du volet)
+    SPEAKING,   // bleu   « Réponse »
+    ERROR,      // rouge  « Erreur »
+};
+
+// Icône micro du dashboard + label statut du popup Assistant (nuls acceptés).
+void assist_set_pipeline_state(lv_obj_t* icon_mic, lv_obj_t* lbl_status, AssistState st);
+
+// Icône micro seule : retour au gris 2 s après une erreur, interruption,
+// accusé de réception « Stop » volet — le label du popup n'est pas touché.
+void assist_set_mic_state(lv_obj_t* icon_mic, AssistState st);
+
+// Zone image de la réponse (service tab5_assist_reponse + callbacks online_image).
+enum class AssistImage : uint8_t {
+    NONE,     // pas d'image : indication et image masquées
+    LOADING,  // « Chargement image... », image masquée le temps du téléchargement
+    READY,    // image affichée, indication masquée
+    ERROR,    // « Image indisponible », image masquée
+};
+void assist_image_state_ui(lv_obj_t* hint, lv_obj_t* img, AssistImage st);
+
+// Indicateur « Ok Nabu: ON / OFF » du panneau switches (switch tab5_wake_word_active).
+void assist_wake_word_indicator_ui(lv_obj_t* lbl, bool on);
+
+// -----------------------------------------------------------------------------
+// Décision du mot de réveil (on_wake_word_detected, tab5-hardware.yaml) —
+// audit §4.1 point 7 : les 5 niveaux d'if/else du YAML deviennent une table.
+// Le YAML lit les entrées UNE fois, appelle decide(), puis le script
+// tab5_wake_word_dispatch (tab5-scripts.yaml) exécute l'action.
+// -----------------------------------------------------------------------------
+namespace WakeWord {
+
+enum Action : uint8_t {
+    ALARM_STOP,        // le réveil sonne : TOUT mot l'arrête, avant tout le reste
+    VOLET_STOP,        // « Stop » pendant que le volet bouge : arrêt local + HA
+    INTERRUPT_LISTEN,  // réponse en cours (va_stop_armed + audio) : on coupe et on ré-écoute
+    START_PIPELINE,    // « Okay Nabu » au repos, wake word actif et HA joignable
+    IGNORE_STOP,       // « Stop » sans rien à arrêter
+    IGNORE_INACTIVE,   // « Okay Nabu » mais wake word désactivé ou HA injoignable
+};
+
+struct Inputs {
+    bool alarm_ringing;
+    bool is_stop;            // wake_word == "Stop"
+    bool volet_en_mouvement;
+    bool va_stop_armed;
+    bool audio_busy;         // haut-parleur actif, annonce en cours, ou pipeline pas démarré
+    bool wake_word_enabled;  // switch tab5_wake_word_active
+    bool api_connected;
+};
+
+// Table de décision, dans l'ordre de priorité :
+//   alarm_ringing                                  → ALARM_STOP
+//   is_stop && volet_en_mouvement                  → VOLET_STOP
+//   va_stop_armed && audio_busy                    → INTERRUPT_LISTEN (Stop ou Okay Nabu)
+//   is_stop                                        → IGNORE_STOP
+//   wake_word_enabled && api_connected             → START_PIPELINE
+//   sinon                                          → IGNORE_INACTIVE
+Action decide(const Inputs& in);
+const char* action_name(Action a);  // libellé pour les logs
+
+}  // namespace WakeWord
 
 // Renseigne la bulle "Votre demande" (texte STT normalisé UTF-8).
 void assist_set_request(lv_obj_t* lbl_request, const std::string& texte);

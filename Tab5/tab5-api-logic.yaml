@@ -112,7 +112,7 @@ api:
             float f_target = atof(target.c_str());
             float f_current = atof(current.c_str());
             id(clim_target_temp) = f_target;
-            update_clim_target_ui(id(clim_target), id(clim_target_popup), id(arc_temp_popup),
+            update_clim_from_ha_ui(id(clim_target), id(clim_target_popup), id(arc_temp_popup),
                 id(val_temp_int_popup), f_target, f_current);
             id(clim_hvac_mode) = mode;
             id(clim_preset_mode) = preset;
@@ -218,12 +218,12 @@ api:
             condition:
               lambda: 'return !image_url.empty();'
             then:
-              - lambda: 'assist_image_hint_ui(id(assist_img_hint), id(assist_img_widget), true);'
+              - lambda: 'assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::LOADING);'
               - online_image.set_url:
                   id: assist_response_image
                   url: !lambda 'return image_url;'
             else:
-              - lambda: 'assist_image_hint_ui(id(assist_img_hint), id(assist_img_widget), false);'
+              - lambda: 'assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::NONE);'
         - script.execute: tab5_assist_open
 
     - service: tab5_maj_alertes_ha_bulk

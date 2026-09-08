@@ -42,22 +42,14 @@ switch:
             lambda: 'return id(boot_complete);'
           then:
             - micro_wake_word.start:
-      - lambda: |-
-          if (id(lbl_ok_nabu) != nullptr) {
-            lv_label_set_text(id(lbl_ok_nabu), "Ok Nabu: ON");
-            lv_obj_set_style_text_color(id(lbl_ok_nabu), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-          }
+      - lambda: 'assist_wake_word_indicator_ui(id(lbl_ok_nabu), true);'
     on_turn_off:
       - if:
           condition:
             lambda: 'return id(boot_complete);'
           then:
             - micro_wake_word.stop:
-      - lambda: |-
-          if (id(lbl_ok_nabu) != nullptr) {
-            lv_label_set_text(id(lbl_ok_nabu), "Ok Nabu: OFF");
-            lv_obj_set_style_text_color(id(lbl_ok_nabu), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-          }
+      - lambda: 'assist_wake_word_indicator_ui(id(lbl_ok_nabu), false);'
 
 binary_sensor:
 
@@ -153,6 +145,17 @@ text_sensor:
               id(btn_light_power_icon), id(current_light_entity), "${entity_light_bureau}", x == "on");
           update_light_selector_icon(id(icon_light_sel_2), x == "on");
 
+# Détails pots (popup appui long) : les 4 capteurs × 5 pots viennent d'UN
+# package paramétré (pot_sensors.yaml, règle 5) inclus 5 fois — ESPHome
+# concatène les listes `sensor:` des packages (un `- !include` dans une liste
+# imbriquerait la liste). Un 6ᵉ pot = une ligne ici + ses 4 clés entity_plante_6_*.
+packages:
+  pot_sensors_1: !include { file: pot_sensors.yaml, vars: { n: 1 } }
+  pot_sensors_2: !include { file: pot_sensors.yaml, vars: { n: 2 } }
+  pot_sensors_3: !include { file: pot_sensors.yaml, vars: { n: 3 } }
+  pot_sensors_4: !include { file: pot_sensors.yaml, vars: { n: 4 } }
+  pot_sensors_5: !include { file: pot_sensors.yaml, vars: { n: 5 } }
+
 sensor:
 
   # Luminosité (attribut brightness 0-255) des 3 lumières — synchronise l'arc du popup
@@ -224,14 +227,6 @@ sensor:
 
   - platform: homeassistant
 
-    id: temp_chambre
-
-    entity_id: ${entity_temp_chambre}
-
-    # Capteur conserve pour la console systeme mais plus affiche dans la climate card
-
-  - platform: homeassistant
-
     id: hum_salon
 
     entity_id: ${entity_hum_salon}
@@ -246,14 +241,6 @@ sensor:
             uint32_t c = get_humidity_color(x);
             lv_obj_set_style_text_color(id(icon_salon), lv_color_hex(c), LV_PART_MAIN);
           }
-
-  - platform: homeassistant
-
-    id: hum_chambre
-
-    entity_id: ${entity_hum_chambre}
-
-    # Capteur conserve pour HA mais icon_chambre supprime de la climate card
 
   - platform: homeassistant
     id: moisture_1
@@ -299,111 +286,3 @@ sensor:
     id: moisture_5
     entity_id: ${entity_plante_5}
     on_value: *moisture_on_value
-
-  # --- Détails pots (popup appui long) : fertilité EC / éclairement / température /
-  # batterie des 5 capteurs. Chaque on_value pousse texte+couleur via
-  # update_pot_metric_ui (tab5_custom.cpp) — aucune logique de présentation ici. ---
-  - platform: homeassistant
-    id: pot1_ec
-    entity_id: ${entity_plante_1_ec}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d1_ec), x, PotMetric::CONDUCTIVITY);'
-  - platform: homeassistant
-    id: pot1_lux
-    entity_id: ${entity_plante_1_lux}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d1_lux), x, PotMetric::ILLUMINANCE);'
-  - platform: homeassistant
-    id: pot1_temp
-    entity_id: ${entity_plante_1_temp}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d1_temp), x, PotMetric::TEMPERATURE);'
-  - platform: homeassistant
-    id: pot1_bat
-    entity_id: ${entity_plante_1_bat}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d1_bat), x, PotMetric::BATTERY);'
-
-  - platform: homeassistant
-    id: pot2_ec
-    entity_id: ${entity_plante_2_ec}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d2_ec), x, PotMetric::CONDUCTIVITY);'
-  - platform: homeassistant
-    id: pot2_lux
-    entity_id: ${entity_plante_2_lux}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d2_lux), x, PotMetric::ILLUMINANCE);'
-  - platform: homeassistant
-    id: pot2_temp
-    entity_id: ${entity_plante_2_temp}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d2_temp), x, PotMetric::TEMPERATURE);'
-  - platform: homeassistant
-    id: pot2_bat
-    entity_id: ${entity_plante_2_bat}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d2_bat), x, PotMetric::BATTERY);'
-
-  - platform: homeassistant
-    id: pot3_ec
-    entity_id: ${entity_plante_3_ec}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d3_ec), x, PotMetric::CONDUCTIVITY);'
-  - platform: homeassistant
-    id: pot3_lux
-    entity_id: ${entity_plante_3_lux}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d3_lux), x, PotMetric::ILLUMINANCE);'
-  - platform: homeassistant
-    id: pot3_temp
-    entity_id: ${entity_plante_3_temp}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d3_temp), x, PotMetric::TEMPERATURE);'
-  - platform: homeassistant
-    id: pot3_bat
-    entity_id: ${entity_plante_3_bat}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d3_bat), x, PotMetric::BATTERY);'
-
-  - platform: homeassistant
-    id: pot4_ec
-    entity_id: ${entity_plante_4_ec}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d4_ec), x, PotMetric::CONDUCTIVITY);'
-  - platform: homeassistant
-    id: pot4_lux
-    entity_id: ${entity_plante_4_lux}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d4_lux), x, PotMetric::ILLUMINANCE);'
-  - platform: homeassistant
-    id: pot4_temp
-    entity_id: ${entity_plante_4_temp}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d4_temp), x, PotMetric::TEMPERATURE);'
-  - platform: homeassistant
-    id: pot4_bat
-    entity_id: ${entity_plante_4_bat}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d4_bat), x, PotMetric::BATTERY);'
-
-  - platform: homeassistant
-    id: pot5_ec
-    entity_id: ${entity_plante_5_ec}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d5_ec), x, PotMetric::CONDUCTIVITY);'
-  - platform: homeassistant
-    id: pot5_lux
-    entity_id: ${entity_plante_5_lux}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d5_lux), x, PotMetric::ILLUMINANCE);'
-  - platform: homeassistant
-    id: pot5_temp
-    entity_id: ${entity_plante_5_temp}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d5_temp), x, PotMetric::TEMPERATURE);'
-  - platform: homeassistant
-    id: pot5_bat
-    entity_id: ${entity_plante_5_bat}
-    on_value:
-      - lambda: 'update_pot_metric_ui(id(lbl_pot_d5_bat), x, PotMetric::BATTERY);'

@@ -5,6 +5,17 @@
 # ============================================================================
 # tab5-scripts.yaml — Scripts ESPHome reutilisables (sequences temporisees,
 # debounce). Preferer un script ici a un delay:+action duplique inline.
+# Entités que la tablette expose ELLE-MÊME dans HA (satellite vocal, lecteur
+# média). ESPHome ne peut pas les calculer : HA les dérive du nom de l'appareil.
+# Valeurs par défaut ici ; `user_entities.yaml` (racine, fusion prioritaire —
+# cf. l'en-tête de tab5-ui-tokens.yaml) les surcharge si la tablette est
+# renommée dans HA. Avant (audit 06/09 §4.1 point 15) elles étaient écrites en
+# dur à cinq endroits : un renommage cassait l'interruption vocale et l'annonce
+# des rendez-vous sans la moindre erreur.
+substitutions:
+  entity_tab5_satellite: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
+  entity_tab5_media_player: media_player.m5stack_tab5_home_assistant_hmi_tab5_media_player
+
 script:
   # Ferme TOUS les jeux ouverts. Un seul overlay de jeu peut vivre à la fois :
   # sans ça, ouvrir un jeu par-dessus un autre laisse le timer du précédent
@@ -257,7 +268,7 @@ script:
       - homeassistant.service:
           service: assist_satellite.announce
           data:
-            entity_id: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
+            entity_id: ${entity_tab5_satellite}
             message: "Volet arrêté."
 
   # Arme le flag d'interruption (Stop vocal local ne reçoit pas le micro pendant pipeline HA).
@@ -308,19 +319,12 @@ script:
       - homeassistant.service:
           service: assist_satellite.stop
           data:
-            entity_id: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
+            entity_id: ${entity_tab5_satellite}
       - homeassistant.service:
           service: media_player.media_stop
           data:
-            entity_id: media_player.m5stack_tab5_home_assistant_hmi_media_player
-      - homeassistant.service:
-          service: media_player.media_stop
-          data:
-            entity_id: media_player.m5stack_tab5_home_assistant_hmi_tab5_media_player
-      - lambda: |-
-          if (id(icon_mic_status) != nullptr) {
-            lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-          }
+            entity_id: ${entity_tab5_media_player}
+      - lambda: 'assist_set_mic_state(id(icon_mic_status), AssistState::IDLE);'
 
   # Interruption puis ré-écoute immédiate (tap micro / barge-in Discussion).
   - id: tab5_vocal_interrupt_and_listen
@@ -330,6 +334,45 @@ script:
       - delay: 500ms
       - voice_assistant.start:
           id: va
+
+  # Exécute l'action décidée par WakeWord::decide() (on_wake_word_detected,
+  # tab5-hardware.yaml). `parallel` : chaque détection garde sa propre
+  # séquence, comme quand tout vivait dans le trigger. Les cas IGNORE_* n'ont
+  # rien à faire : la décision est déjà journalisée à INFO par le trigger.
+  - id: tab5_wake_word_dispatch
+    mode: parallel
+    parameters:
+      action: int
+      wake_word: string
+    then:
+      - if:
+          condition:
+            lambda: 'return action == WakeWord::ALARM_STOP;'
+          then:
+            - script.execute: tab5_alarm_stop
+      - if:
+          condition:
+            lambda: 'return action == WakeWord::VOLET_STOP;'
+          then:
+            - script.execute: tab5_volet_end_movement
+            - homeassistant.service:
+                service: script.tab5_volet_action
+                data:
+                  action: stop
+            - script.execute: tab5_volet_stop_voice_feedback
+            # Orange sur l'icône micro = accusé de réception (même teinte qu'« Analyse… »).
+            - lambda: 'assist_set_mic_state(id(icon_mic_status), AssistState::THINKING);'
+      - if:
+          condition:
+            lambda: 'return action == WakeWord::INTERRUPT_LISTEN;'
+          then:
+            - script.execute: tab5_vocal_interrupt_and_listen
+      - if:
+          condition:
+            lambda: 'return action == WakeWord::START_PIPELINE;'
+          then:
+            - voice_assistant.start:
+                wake_word: !lambda return wake_word;
 
   # Tap micro : coupe si assistant actif puis ré-écoute, sinon démarre (Click to Converse).
   - id: tab5_assist_toggle
@@ -965,8 +1008,7 @@ script:
           esphome::font::Font* f = id(assist_text_size) == 0 ? id(roboto_mono_20)
                                  : (id(assist_text_size) == 2 ? id(roboto_mono_28) : id(roboto_mono_24));
           assist_set_response(id(lbl_assist_response), std::string("Reflexion..."), f);
-          if (id(assist_img_widget) != nullptr) lv_obj_add_flag(id(assist_img_widget), LV_OBJ_FLAG_HIDDEN);
-          if (id(assist_img_hint) != nullptr) lv_obj_add_flag(id(assist_img_hint), LV_OBJ_FLAG_HIDDEN);
+          assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::NONE);
       - if:
           condition:
             lambda: 'return id(conversation_mode) || id(assist_popup_open);'

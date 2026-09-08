@@ -11,7 +11,7 @@ A Home Assistant dashboard running natively as ESP32-P4 firmware (ESPHome + LVGL
 In order, before editing code or answering questions about architecture:
 
 1. [`CARTOGRAPHIE_TAB5.md`](CARTOGRAPHIE_TAB5.md) — full dependency graph, file-by-file inventory, and a verified list of known technical debt / dead code. Read this first instead of reverse-engineering the YAML tree from scratch.
-2. [`Tab5/README.md`](Tab5/README.md) — file-by-file description of the ESPHome packages, the HA service contract table, the globals table, and **6 mandatory code rules**.
+2. [`Tab5/README.md`](Tab5/README.md) — file-by-file description of the ESPHome packages, the HA service contract table, the globals table, and **8 mandatory code rules**.
 3. [`docs/decisions/`](docs/decisions/README.md) — why non-obvious architectural choices were made (push-only, single-page UI, no hardcoded colors, etc.). Check here before "fixing" something that looks wrong.
 4. [`docs/troubleshooting.md`](docs/troubleshooting.md) — incidents already diagnosed on this exact device. Check here before re-diagnosing a symptom that looks familiar (black screen after reboot, missing weather/planning data, mic pipeline stuck, etc.).
 5. The target file itself, including its `[AI-CONTEXT]` header (see below).
@@ -55,11 +55,13 @@ python tools/check_lode_levels.py          # les 10 niveaux de Coureur d'Or rest
 ## Code rules (full detail in `Tab5/README.md`)
 
 1. No hardcoded hex colors in YAML/lambdas — add a token to `UIColor::` (`Tab5/tab5_custom.h`).
-2. `sensor:`/`text_sensor:` never touch `lv_obj_*` directly — always call a named C++ function in `tab5_custom.cpp`.
+2. `sensor:`/`text_sensor:` never touch `lv_obj_*` directly — always call a named C++ function of the C++ layer (`Tab5/tab5_*.cpp`, declared in `tab5_custom.h`).
 3. No `static` inside a lambda for state shared across handlers — use a `globals:` entry instead.
 4. No `std::string` by value or `to_string()` in a hot path (sliders, frequent `on_value`) — use `const std::string&` or a `snprintf` buffer.
 5. Any widget/card repeated 3+ times goes through a parametrized C++ builder or `!include`+`vars` template, not copy-pasted YAML.
 6. `esphome compile` must pass before committing.
+7. Every modal popup reuses the shared chrome (`modal_scrim.yaml` + `modal_header.yaml`, ADR-0009) — games are the documented exception.
+8. No hardcoded Home Assistant entity ID in firmware YAML — always a `user_entities.yaml` substitution (`${entity_…}`) or a `!lambda`. The tablet's own entities (`assist_satellite.*`, `media_player.*`, derived by HA from the device name) go through `entity_tab5_satellite` / `entity_tab5_media_player` (defaults in `Tab5/tab5-scripts.yaml`). Enforced by `tools/check_tab5_code_rules.py`.
 
 ## Boundaries — do not
 

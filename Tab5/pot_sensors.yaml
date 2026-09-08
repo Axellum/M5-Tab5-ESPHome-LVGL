@@ -1,0 +1,36 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file pot_sensors.yaml
+# @role Package PARAMÉTRÉ (`!include` + `vars`, règle 5 du README) : les 4
+#       capteurs de détail d'UN pot (conductivité EC, éclairement, température,
+#       batterie du capteur BLE). Inclus 5 fois par tab5-sensors-domotique.yaml
+#       via un `packages:` imbriqué (var `n` = 1..5) : ESPHome concatène les
+#       listes `sensor:` des packages, alors qu'un `- !include` posé dans une
+#       liste y imbrique la liste incluse (vérifié sur 2026.8.1).
+# @ai_instruction Un 6ᵉ pot = une ligne `pot_sensors_6` dans
+#       tab5-sensors-domotique.yaml + les 4 clés `entity_plante_6_*` dans
+#       user_entities(.example).yaml + une carte pot_detail_card dans
+#       pots_popup.yaml. Ne rien afficher ici : chaque on_value pousse
+#       texte+couleur via update_pot_metric_ui (tab5_custom.cpp), règle 2.
+# ============================================================================
+sensor:
+  - platform: homeassistant
+    id: pot${n}_ec
+    entity_id: ${entity_plante_${n}_ec}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d${n}_ec), x, PotMetric::CONDUCTIVITY);'
+  - platform: homeassistant
+    id: pot${n}_lux
+    entity_id: ${entity_plante_${n}_lux}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d${n}_lux), x, PotMetric::ILLUMINANCE);'
+  - platform: homeassistant
+    id: pot${n}_temp
+    entity_id: ${entity_plante_${n}_temp}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d${n}_temp), x, PotMetric::TEMPERATURE);'
+  - platform: homeassistant
+    id: pot${n}_bat
+    entity_id: ${entity_plante_${n}_bat}
+    on_value:
+      - lambda: 'update_pot_metric_ui(id(lbl_pot_d${n}_bat), x, PotMetric::BATTERY);'

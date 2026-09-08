@@ -8,7 +8,7 @@ Several pushed datasets are naturally multi-valued: a 15-day forecast (4 fields 
 
 ## Decision
 
-HA-side automations serialize each multi-valued push into a single semicolon-delimited string (e.g. `"0;Soleil;27;14;1;Nuageux;24;12;..."`) and send it through one API service call. The device tokenizes it in a single C++ pass (`strtok_r`-based parsing in `tab5_custom.cpp`) and updates all affected widgets atomically.
+HA-side automations serialize each multi-valued push into a single semicolon-delimited string (e.g. `"0;Soleil;27;14;1;Nuageux;24;12;..."`) and send it through one API service call. The device tokenizes it in a single C++ pass (`strtok_r`-based parsing in `tab5_forecast.cpp`, formerly `tab5_custom.cpp`) and updates all affected widgets atomically.
 
 ## Consequences
 

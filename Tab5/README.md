@@ -20,7 +20,7 @@ The only other LVGL pages are the **9 gaming ones** (`page_arcade` + one per con
 
 Most files in this folder (and every file in `ui_components/`) start with a comment block tagged `[AI-CONTEXT]` — a short "system prompt" local to that file: its role, its architectural constraints, and explicit `@ai_instruction`s for common edits. Non-obvious decisions (a bug fix that looks removable, a duplication kept on purpose, a `!include` that must not be inlined) are documented **inside the file itself**, not only in the external knowledge base (`contexte_ia/` in the parent workspace) — a session that only has access to this repo (no cross-repo context) must still be able to find them.
 
-A `[AI-WARNING]` (sometimes `[AI-WARNING-CRITICAL]`) marks something that looks like a bug/anti-pattern but is a deliberate, validated fix — e.g. the boot `delay(1000)` in `tab5-ha-hmi.yaml` (documented at length in the `logger:` block of `tab5-hardware.yaml`), or the pagination wrap logic in `handle_swipe_gesture()` (`tab5_custom.cpp`). **Read the warning before "fixing" it** — at least one of these was already reverted once after being "corrected" by an LLM audit that hadn't read it. See [`../docs/decisions/`](../docs/decisions/README.md) for the full reasoning behind each one.
+A `[AI-WARNING]` (sometimes `[AI-WARNING-CRITICAL]`) marks something that looks like a bug/anti-pattern but is a deliberate, validated fix — e.g. the boot `delay(1000)` in `tab5-ha-hmi.yaml` (documented at length in the `logger:` block of `tab5-hardware.yaml`), or the pagination wrap logic in `handle_swipe_gesture()` (`tab5_central.cpp`). **Read the warning before "fixing" it** — at least one of these was already reverted once after being "corrected" by an LLM audit that hadn't read it. See [`../docs/decisions/`](../docs/decisions/README.md) for the full reasoning behind each one.
 
 A `[AI-DEBUG]` marks a good observation point when diagnosing a runtime issue — a log line worth watching, a diagnostics entity/overlay, or a technique already proven to work on this device (e.g. inserting a temporary marker directly into the real HA automation rather than reproducing its logic in an isolated test script, which can pass while masking the actual bug). See [`../docs/debugging.md`](../docs/debugging.md).
 
@@ -31,22 +31,22 @@ If you add a genuinely new architectural constraint or a non-obvious decision wh
 ## File descriptions
 
 ### `tab5-hardware.yaml`
-Low-level hardware: display/touch buses, ES8388 DAC I2C init, speaker/mic I2S, PI4IOE5V6408 GPIO expander (Wi-Fi power/antenna switches), `ota:` (password-protected, see `secrets.yaml`). Also hosts the voice stack: `micro_wake_word` with **two models** — `okay_nabu` (always on when the wake-word switch is enabled) and `Stop` (armed only while the shutter moves, stops it locally) — and the `voice_assistant:` callbacks that drive the mic icon colors.
+Low-level hardware: display/touch buses, ES8388 DAC I2C init, speaker/mic I2S, PI4IOE5V6408 GPIO expander (Wi-Fi power/antenna switches), `ota:` (password-protected, see `secrets.yaml`). Also hosts the voice stack — the wake-word decision itself is `WakeWord::decide()` in `tab5_assist.cpp` (a six-outcome table, executed by the script `tab5_wake_word_dispatch`), and the five `voice_assistant:` callbacks share `assist_set_pipeline_state()` — : `micro_wake_word` with **two models** — `okay_nabu` (always on when the wake-word switch is enabled) and `Stop` (armed only while the shutter moves, stops it locally) — and the `voice_assistant:` callbacks that drive the mic icon colors.
 
 ### `tab5-sensors-diagnostics.yaml`
 System/network entities: the `wifi:` block, GPIO power switches (Wi-Fi, USB, external 5V, antenna select), HA API status, IP/SSID, uptime, Wi-Fi RSSI, core temperature, free RAM/loop time (`debug`), SNTP clock and the status-bar/console refresh `interval:`s.
 
 ### `tab5-sensors-domotique.yaml`
-Home-automation entities pushed by HA over the ESPHome API: plant moisture (5×, dynamically sorted), light/PC state mirrors, phone battery, room & greenhouse temperature/humidity, audio (speaker amp, headphone jack, wake-word switch).
+Home-automation entities pushed by HA over the ESPHome API: plant moisture (5×, dynamically sorted), light/PC state mirrors, phone battery, room & greenhouse temperature/humidity, audio (speaker amp, headphone jack, wake-word switch). The 20 plant-detail sensors (EC / light / temperature / battery × 5 pots) come from **`pot_sensors.yaml`**, one parameterized package included five times through a nested `packages:` (`!include` + `vars: {n}`) — a sixth pot is one line here plus its four `entity_plante_6_*` keys.
 
 ### `tab5-api-logic.yaml`
-The `api: services:` block — the actual contract with Home Assistant. Each `tab5_maj_*` service receives a payload from an HA automation and calls into `tab5_custom.cpp` (via lambdas) to update the LVGL widgets. See the service table below.
+The `api: services:` block — the actual contract with Home Assistant. Each `tab5_maj_*` service receives a payload from an HA automation and calls into the C++ layer (`tab5_services.cpp`, declared in `tab5_custom.h`) via lambdas to update the LVGL widgets. See the service table below.
 
 ### `tab5-globals.yaml`
 All `globals:` (shared state read/written across files) + the 8s central-panel rotator (planning/rain/alerts/info — 4 panels, paused while off the default forecast window). See the globals table below.
 
 ### `tab5-scripts.yaml`
-Reusable ESPHome `script:` blocks, grouped by family: **debounces** (`tab5_debounce_volume_set` 150 ms, `tab5_debounce_light_brightness` 200 ms, `tab5_debounce_clim_temp` 250 ms — one HA call per gesture instead of one per tick), **voice** (`tab5_vocal_arm_stop`/`tab5_vocal_disarm_stop` for the `Stop` wake word, `tab5_vocal_interrupt`/`tab5_vocal_interrupt_and_listen` for tap-to-interrupt, `tab5_assist_toggle`, `tab5_show_vocal_response`), **central rotator** (`tab5_central_rotator_auto`, `tab5_central_panel_next`, `tab5_dismiss_info_tap`, `tab5_dismiss_ha_alert` [paramétré slot 0-3]), **mode** (`tab5_set_assist_mode` — surbrillance bordure Domo/Discu centralisée), **shutter** (`tab5_volet_end_movement`, `tab5_volet_stop_voice_feedback`), **light popup** (`tab5_light_popup_show`), **calendar popup** (`tab5_calendar_open`, `tab5_cal_render`, `tab5_cal_prev`/`tab5_cal_next`/`tab5_cal_today`, `tab5_cal_day_tap`) and **assistant popup** (`tab5_assist_open`/`close`/`on_request`/`sync_settings`/`set_mode`/`set_text_size`). The temporary planning display moved to C++ (`show_temporary_planning()`, `tab5_custom.cpp`). Prefer adding a script here over duplicating a `delay` + action pattern inline.
+Reusable ESPHome `script:` blocks, grouped by family: **debounces** (`tab5_debounce_volume_set` 150 ms, `tab5_debounce_light_brightness` 200 ms, `tab5_debounce_clim_temp` 250 ms — one HA call per gesture instead of one per tick), **voice** (`tab5_vocal_arm_stop`/`tab5_vocal_disarm_stop` for the `Stop` wake word, `tab5_vocal_interrupt`/`tab5_vocal_interrupt_and_listen` for tap-to-interrupt, `tab5_wake_word_dispatch` (runs the action chosen by `WakeWord::decide()`), `tab5_assist_toggle`, `tab5_show_vocal_response`), **central rotator** (`tab5_central_rotator_auto`, `tab5_central_panel_next`, `tab5_dismiss_info_tap`, `tab5_dismiss_ha_alert` [paramétré slot 0-3]), **mode** (`tab5_set_assist_mode` — surbrillance bordure Domo/Discu centralisée), **shutter** (`tab5_volet_end_movement`, `tab5_volet_stop_voice_feedback`), **light popup** (`tab5_light_popup_show`), **calendar popup** (`tab5_calendar_open`, `tab5_cal_render`, `tab5_cal_prev`/`tab5_cal_next`/`tab5_cal_today`, `tab5_cal_day_tap`) and **assistant popup** (`tab5_assist_open`/`close`/`on_request`/`sync_settings`/`set_mode`/`set_text_size`). The temporary planning display moved to C++ (`show_temporary_planning()`, `tab5_central.cpp`). Prefer adding a script here over duplicating a `delay` + action pattern inline.
 
 ### `tab5-styles.yaml`
 All LVGL `style_definitions` (glassmorphism "Slate" theme) + font declarations (Roboto sizes, MDI icon sizes, weather icon font). Color tokens live in `UIColor::` (`tab5_custom.h`) — **never hardcode a hex color in a YAML lambda**, add a token instead.
@@ -61,8 +61,20 @@ Two of them are **shared chrome**, not standalone components: `modal_scrim.yaml`
 
 The remaining files are **parametrized sub-templates** included with `vars` from the components above rather than from `tab5-lvgl.yaml`: `climate_hvac_mode_btn.yaml` (×4), `climate_preset_toggle_btn.yaml` (×2), `forecast_day_title_tab.yaml`/`forecast_day_temp_tab.yaml` (×5), `forecast_hour_card.yaml` (×5), `switch_card_title_tab.yaml`/`switch_card_state_tab.yaml` (×3), `light_color_preset_btn.yaml` (×12), `pot_detail_card.yaml` (×5), `cal_day_cell.yaml` (×42). 23 files are included directly by `tab5-lvgl.yaml`, 35 exist in total.
 
-### `tab5_custom.h` / `tab5_custom.cpp`
-All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get_humidity_color()`, `parse_and_update_heures_bulk()`/`parse_and_update_jours_bulk()`, `sort_and_update_moisture_slots()`, `transition_widgets()`, `highlight_button_border()`. **Rule: sensors/services should only read HA state and call these C++ functions — never manipulate `lv_obj_*` directly from a `sensor:`/`text_sensor:` lambda** (keeps LVGL logic in one place, testable and greppable).
+### `tab5_custom.h` + the `tab5_*.cpp` units (formerly a single `tab5_custom.cpp`)
+All non-trivial C++ logic, declared in **`tab5_custom.h`** (the single public header — YAML lambdas only ever call functions declared there) and, since 2026-09-08 (audit lot (e)), implemented in **nine units** split by responsibility — same functions, same order as the former 3 169-line `tab5_custom.cpp`, which now only holds the shared globals (`g_central_ctx`, `g_day_slots`, `g_hour_slots`, `cal_*`) and a map of the units:
+
+- `tab5_text.cpp` (252 lines) — UTF-8 / mojibake, store local des alertes rejetées, libellés français des jours/mois, `set_label_text_utf8()`
+- `tab5_forecast.cpp` (358 lines) — `update_meteo_icon()`, couleurs température/humidité, `parse_and_update_heures_bulk()`/`_jours_bulk()`, `refresh_daily_forecast()`/`refresh_hourly_forecast()`
+- `tab5_central.cpp` (741 lines) — carte centrale (rotateur, `parse_and_update_ha_alerts_bulk()`, `update_info_text_ui()`, titre de page), `handle_swipe_gesture()`/`reset_forecast_to_main_page()`, `show_temporary_planning()`, `show_vocal_response_ui()`
+- `tab5_services.cpp` (274 lines) — logique des services HA : `update_volet_ui()`, `parse_and_update_vigilance()`, `update_rain_bar_ui()`, `update_rain_predict_icon_ui()`, `update_clim_from_ha_ui()`, `update_planning_text_ui()`
+- `tab5_assist.cpp` (273 lines) — `format_assist_markdown()`, `assist_set_pipeline_state()`, `assist_image_state_ui()`, `WakeWord::decide()`
+- `tab5_cards.cpp` (311 lines) — `update_light_card_ui()`, popup lumière, `update_clim_target_ui()`, `sort_and_update_moisture_slots()`, `update_pots_popup_moisture_ui()`/`update_pot_metric_ui()`, `update_temp_ui()`
+- `tab5_console.cpp` (164 lines) — ligne status, `ui_sync_volume_widgets()`, `update_console_diagnostics_ui()`
+- `tab5_anim.cpp` (636 lines) — `transition_widgets()`, `animate_popup_open()`/`_close()`, `animate_swipe_horizontal()`, `animate_alert_enter()`, `ui_idle_ms()`/`close_popup_if_open()`, `animate_icon_roll_in()`, `layout_clock_roller()`/`update_clock_date_ui()`, `setup_button_press_animation()`/`highlight_button_border()`
+- `tab5_calendar.cpp` (326 lines) — `cal_store_month_data()`, `cal_render_month()`, `cal_render_day_detail()` (cache mensuel `static`)
+
+`tab5_internal.h` declares the six helpers shared *between* units (`normalize_text_utf8()`, `set_label_text_utf8()`, day-label formatters…); it is not part of the YAML contract. **Rule: sensors/services should only read HA state and call these C++ functions — never manipulate `lv_obj_*` directly from a `sensor:`/`text_sensor:`/`api: services:` lambda.** Adding a feature = one `update_*_ui()` in the unit that owns the responsibility + its declaration in `tab5_custom.h`.
 
 **Architecture `CentralPanelCtx`** (depuis refacto 26/07) : le struct `CentralPanelCtx` regroupe les 8 wrappers LVGL de la carte centrale (+ `page_title_sub`, la ligne chapeau du titre de page prévisions) + 7 flags d'activité + `current_panel`. Les pointeurs sont initialisés **une fois au boot** (`on_boot` dans `tab5-ha-hmi.yaml`) ; les bools sont synchronisés depuis les globals ESPHome (`id(has_rain)` etc.) avant chaque appel C++ (pattern *sync → call → write-back*). Globals C++ : `g_central_ctx`, `g_day_slots[5]`, `g_hour_slots[5]`.
 
@@ -84,7 +96,7 @@ Garde-fou : `tools/check_tab5_registry.py`.
 
 | Service | Payload | Rôle |
 |---|---|---|
-| `tab5_maj_clim` | target, current, mode, preset, fan, swing (strings) | État climatisation : cible + température intérieure (`update_clim_target_ui()`), modes dans les globals recolorés par `tab5_clim_recolor` |
+| `tab5_maj_clim` | target, current, mode, preset, fan, swing (strings) | État climatisation : cible + température intérieure (`update_clim_from_ha_ui()`), modes dans les globals recolorés par `tab5_clim_recolor` |
 | `tab5_maj_volet_etat` | etat_physique (string) | État volet (ouvert/fermé/en mouvement) — `update_volet_ui()` ; arme/désarme le wake word « Stop » |
 | `tab5_maj_planning` | ligne1, ligne2 (strings) | Texte planning affiché dans la carte centrale |
 | `tab5_maj_alerte_meteo_france` | payload (string, 11 champs `\|`-delimited) | Alertes météo France (vent, inondation, orages...) + recoloration de la date — `parse_and_update_vigilance()` |
@@ -116,18 +128,19 @@ Garde-fou : `tools/check_tab5_registry.py`.
 | `current_light_entity` | string | entité lumière pilotée par le popup lumière (`tab5_light_popup_show`) |
 | `va_stop_armed` | bool | modèle wake word « Stop » armé (volet en mouvement) |
 | `system_volume`, `system_muted` | float/bool | volume haut-parleur |
-| `cal_view_year`, `cal_view_month`, `cal_detail_date` | int/int/string | popup calendrier : mois affiché + date du détail ouvert (le cache mensuel vit en `static` dans `tab5_custom.cpp`) |
+| `cal_view_year`, `cal_view_month`, `cal_detail_date` | int/int/string | popup calendrier : mois affiché + date du détail ouvert (le cache mensuel vit en `static` dans `tab5_calendar.cpp`) |
 
 ## Règles de code à respecter (issues de l'audit du 05/07/2026)
 
 1. **Pas de couleur en dur** (`0xFFAABB`) dans un YAML/lambda — ajouter un token dans `UIColor::` (`tab5_custom.h`) et l'utiliser partout.
-2. **Les `sensor:`/`text_sensor:` ne manipulent pas LVGL directement** — ils appellent une fonction C++ dans `tab5_custom.cpp` (ex: `update_light_ui()`, pas de `lv_obj_set_style_*` inline). Idem pour les services de `tab5-api-logic.yaml`, et là c'est **vérifié** : `tools/check_tab5_code_rules.py` (joué par `pytest`) échoue sur tout `lv_*` du contrat hors `lv_obj_has_flag`, sur tout `sprintf` brut dans `Tab5/` et sur tout `globals:` que personne ne référence.
+2. **Les `sensor:`/`text_sensor:` ne manipulent pas LVGL directement** — ils appellent une fonction C++ de la couche `Tab5/tab5_*.cpp` (déclarée dans `tab5_custom.h`) (ex: `update_light_ui()`, pas de `lv_obj_set_style_*` inline). Idem pour les services de `tab5-api-logic.yaml`, et là c'est **vérifié** : `tools/check_tab5_code_rules.py` (joué par `pytest`) échoue sur tout `lv_*` du contrat hors `lv_obj_has_flag`, sur tout `sprintf` brut dans `Tab5/` et sur tout `globals:` que personne ne référence.
 3. **Pas de `static` dans une lambda pour de l'état partagé entre deux handlers différents** (`on_short_click`/`on_long_press`) — utiliser un `globals:` (cf. bug `reboot_armed` corrigé le 05/07 ; global retiré le 16/07 quand la console est passée aux overlays de confirmation).
 4. **Pas de `std::string` par valeur ni de `to_string()` dans un hot-path** (sliders, `on_value` fréquents) — `const std::string&` ou buffer `snprintf` statique.
 5. **Toute nouvelle carte/widget répété ≥3 fois** (météo, switches...) doit passer par une fonction C++ builder paramétrée **ou** un template `!include` + `vars` (ex. `climate_hvac_mode_btn.yaml`, `cal_day_cell.yaml` ×42) — jamais un copier-coller YAML. Même règle dans `AGENTS.md`.
 6. Avant de committer : `python -m esphome compile tab5-ha-hmi.yaml` doit réussir (toolchain déjà en cache localement, ~20-45s).
 7. **Tout popup modal réutilise le chrome partagé** (ADR-0009) : `modal_scrim.yaml` (var `scrim_opa`) + `modal_header.yaml` (icône, titre, croix — barre de 52 px, corps à `y: ${modal_body_y}`), carte dimensionnée par `${modal_card_w}`/`${modal_card_h}`. Jamais de voile, de titre ou de croix réécrits à la main ; les boutons d'options d'en-tête restent des frères en `y: 4, height: 44`. Vérification : `python tools/check_tab5_modal_chrome.py` (joué aussi par `pytest` et par la CI, `tests/test_guards.py`).
    **Exceptions (pages de jeu)** : les 8 `*_game.yaml` de la section Arcade ci-dessous, plus `game_selector.yaml`. Ce ne sont pas des popups posés sur `page_main` mais des **pages LVGL autonomes** en flux plein écran — pas de garde-fou modal (ni `style_modal_card`, ni `color_modal_scrim`, ni glyphe de croix).
+8. **Aucune entité Home Assistant en dur** dans un YAML du firmware — toujours une substitution de `user_entities.yaml` (`${entity_…}`) ou un `!lambda`. Les entités que la tablette expose elle-même (`assist_satellite.*`, `media_player.*`, dérivées par HA du nom de l'appareil) passent par `entity_tab5_satellite` / `entity_tab5_media_player` : défauts dans `tab5-scripts.yaml`, surcharge dans `user_entities.yaml` si l'appareil est renommé. **Vérifié** : `tools/check_tab5_code_rules.py` échoue sur toute valeur `entity_id:` littérale.
 
 ---
 

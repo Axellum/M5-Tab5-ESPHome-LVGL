@@ -28,8 +28,6 @@ MIRROR_ENTITIES: dict[str, str] = {
     "entity_light_bureau": "light.your_office_light",
     "entity_temp_salon": "sensor.your_living_room_temperature",
     "entity_hum_salon": "sensor.your_living_room_humidity",
-    "entity_temp_chambre": "sensor.your_bedroom_temperature",
-    "entity_hum_chambre": "sensor.your_bedroom_humidity",
     "entity_temp_plante": "sensor.your_plant_area_temperature",
     "entity_plante_1": "sensor.your_plant_1_moisture",
     "entity_plante_2": "sensor.your_plant_2_moisture",
@@ -49,8 +47,6 @@ MIRROR_STATE_VALUES: dict[str, str] = {
     MIRROR_ENTITIES["entity_light_bureau"]: "off",
     MIRROR_ENTITIES["entity_temp_salon"]: "21.4",
     MIRROR_ENTITIES["entity_hum_salon"]: "48",
-    MIRROR_ENTITIES["entity_temp_chambre"]: "19.8",
-    MIRROR_ENTITIES["entity_hum_chambre"]: "52",
     MIRROR_ENTITIES["entity_temp_plante"]: "22.1",
     # Un pot volontairement asséché pour illustrer le tri dynamique des slots plantes
     # (sort_and_update_moisture_slots, tab5-sensors-domotique.yaml).

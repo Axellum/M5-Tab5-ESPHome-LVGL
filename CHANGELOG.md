@@ -4,6 +4,88 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — Firmware : `tab5_custom.cpp` (3 169 lignes) scindé en neuf unités par responsabilité
+
+Lot (e) du plan §8 de l'audit du 06/09/2026 (§4.2 point 20). Aucune fonction modifiée,
+aucun ordre changé : chaque unité est une plage de lignes du fichier d'origine ; OTA
+validée (voir la PR).
+
+- **Neuf unités** dans `Tab5/` : `tab5_text.cpp` (UTF-8, alertes rejetées, libellés de jours),
+  `tab5_forecast.cpp` (icônes/couleurs météo, parsing bulk, tuiles), `tab5_central.cpp`
+  (carte centrale, alertes HA, pagination au swipe, planning au tap, réponse vocale),
+  `tab5_services.cpp` (logique des services HA), `tab5_assist.cpp` (Markdown, états du
+  pipeline, décision du mot de réveil), `tab5_cards.cpp` (lumière, clim, plantes, pots,
+  température), `tab5_console.cpp`, `tab5_anim.cpp` (animations, inactivité, rouleaux
+  d'icône et d'horloge, boutons) et `tab5_calendar.cpp` — 3335 lignes en tout, de 164 à 741
+  par fichier. `tab5_custom.cpp` ne garde que les globals partagés (`g_central_ctx`,
+  `g_day_slots`, `g_hour_slots`, `cal_*`) et la carte des unités (40 lignes).
+- **`tab5_custom.h` reste l'unique en-tête public** : les YAML n'ont pas bougé d'une ligne
+  (hors la liste `includes:`), la règle 2 du README et ADR-0006 s'appliquent telles quelles.
+  Six helpers qui étaient `static` et servent à plusieurs unités (`normalize_text_utf8`,
+  `vigilance_alert_banner_utf8`, `format_short_day_label`, `format_long_day_label`,
+  `set_label_text_utf8`, `clock_month_short_utf8`) sont déclarés dans le nouveau
+  `tab5_internal.h`, qui ne fait pas partie du contrat avec les YAML.
+- `update_clock_date_ui()` rejoint le rouleau d'horloge dans `tab5_anim.cpp` (ses deux
+  déclarations anticipées disparaissent) ; les trois helpers de texte LVGL qui ouvraient
+  la section « swipe » rejoignent `tab5_text.cpp`.
+- Dans les commentaires `[AI-CONTEXT]` des YAML, « tab5_custom.cpp » désigne désormais la
+  couche C++ (`Tab5/tab5_*.cpp`) ; ils n'ont pas été réécrits un par un.
+
+### 2026-09-08 — Firmware : les 20 capteurs de détail des pots viennent d'un seul package paramétré, plus aucune entité HA en dur
+
+Lot (d) du plan §8 de l'audit du 06/09/2026 (§4.1 points 10 et 15). Rien ne change
+à l'écran ; OTA validée (voir la PR).
+
+- **`Tab5/pot_sensors.yaml`** : les 4 capteurs d'un pot (conductivité EC, éclairement,
+  température, batterie) écrits une fois, inclus cinq fois par
+  `tab5-sensors-domotique.yaml` via un `packages:` imbriqué (`!include` + `vars: {n}`,
+  substitution imbriquée `${entity_plante_${n}_ec}`). 107 lignes recopiées → 11 ;
+  le fichier passe de 401 à 288 lignes. Ce sont des packages et non des `- !include`
+  dans la liste `sensor:` parce qu'ESPHome 2026.8.1 n'aplatit pas une liste incluse
+  dans une liste (vérifié) alors qu'il concatène les `sensor:` des packages.
+- **`entity_tab5_satellite` / `entity_tab5_media_player`** remplacent les cinq
+  écritures en dur de `assist_satellite.m5stack_…` et `media_player.m5stack_…`
+  (`tab5-scripts.yaml` ×4, `tab5-alarm.yaml` ×1). HA dérive ces identifiants du nom
+  de l'appareil : renommer la tablette cassait l'interruption vocale, le retour
+  « Volet arrêté » et l'annonce parlée des rendez-vous sans la moindre erreur.
+  Défauts dans `tab5-scripts.yaml` (nom livré), surcharge documentée dans
+  `user_entities.example.yaml`. Au passage, `tab5_vocal_interrupt` appelait aussi
+  `media_player.media_stop` sur `media_player.m5stack_tab5_home_assistant_hmi_media_player`,
+  entité qui n'existe pas dans HA (vérifié) : appel retiré.
+- **`temp_chambre` / `hum_chambre` retirés** : deux souscriptions HA « conservées pour
+  la console système » que rien ne lisait (aucune référence dans le projet). Clés
+  `entity_temp_chambre` / `entity_hum_chambre` retirées du modèle et du mode démo
+  (13 entités miroir au lieu de 15) ; une clé en trop dans un `user_entities.yaml`
+  existant est simplement ignorée.
+- **Garde-fou** : `tools/check_tab5_code_rules.py` refuse désormais toute valeur
+  `entity_id:` littérale dans un YAML du firmware (règle 4, jouée par `pytest` et la
+  CI). Lancé avant le lot, il listait exactement les cinq écritures en dur.
+
+### 2026-09-08 — Firmware : pipeline vocal et mot de réveil, un état et une table au lieu de cinq copies et cinq niveaux d'if
+
+Lot (c) du plan §8 de l'audit du 06/09/2026 (§4.1 points 6 et 7). Rien ne change
+à l'oreille ni à l'écran ; OTA validée (voir la PR).
+
+- **`assist_set_pipeline_state(icon, label, AssistState)`** remplace le bloc
+  « couleur de l'icône micro + texte + couleur du label statut » recopié dans les
+  cinq callbacks `voice_assistant:` (`on_listening`, `on_stt_end`, `on_tts_start`,
+  `on_end`, `on_error`). `assist_set_mic_state()` pour l'icône seule (retour au gris
+  après une erreur, interruption, accusé de réception du volet).
+- **`WakeWord::decide(Inputs)`** : les cinq niveaux d'`if/else` de
+  `on_wake_word_detected` deviennent une table à six sorties (`ALARM_STOP`,
+  `VOLET_STOP`, `INTERRUPT_LISTEN`, `START_PIPELINE`, `IGNORE_STOP`,
+  `IGNORE_INACTIVE`), même ordre de priorité. Le trigger lit les entrées une
+  fois, journalise la décision à INFO (seule trace d'un mot de réveil, événement
+  rare), et le script `tab5_wake_word_dispatch` exécute l'action.
+- **`assist_image_state_ui(hint, img, AssistImage)`** (NONE / LOADING / READY /
+  ERROR) remplace `assist_image_hint_ui()` de la veille et les deux callbacks
+  `online_image` ; `assist_wake_word_indicator_ui()` pour « Ok Nabu: ON / OFF ».
+- `tab5-hardware.yaml` ne contient plus aucun `lv_*` : le garde-fou
+  `tools/check_tab5_code_rules.py` l'impose désormais, comme pour le contrat API.
+- Homonyme corrigé : la fonction de #106 qui applique le retour HA de la clim
+  s'appelle `update_clim_from_ha_ui()` ; `update_clim_target_ui()` (3 arguments,
+  affichage optimiste local) existait déjà.
+
 ### 2026-09-08 — Firmware : le contrat API n'a plus de logique LVGL, `snprintf` partout, code mort retiré
 
 Lot (a) du plan §8 de l'audit du 06/09/2026. Rien ne change à l'écran ; OTA
@@ -15,7 +97,7 @@ validée sur la tablette (voir la PR).
   ne font plus que résoudre les `id()` et poser les globals. La logique vit dans
   `tab5_custom.cpp` : `update_volet_ui()`, `parse_and_update_vigilance()`,
   `update_rain_bar_ui()`, `update_rain_predict_icon_ui()` (partagée par probabilités
-  et météo actuelle), `update_clim_target_ui()`, `assist_image_hint_ui()`. Le fichier
+  et météo actuelle), `update_clim_from_ha_ui()`, `assist_image_state_ui()`. Le fichier
   passe de 528 à 331 lignes et ne contient plus aucun `lv_*` hors
   `lv_obj_has_flag`. Contrat HA inchangé (mêmes services, mêmes paramètres).
 - **Paramètres réservés documentés** : `condition`/`temperature` (météo actuelle) et
