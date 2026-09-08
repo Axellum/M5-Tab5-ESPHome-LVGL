@@ -39,8 +39,10 @@ python -m esphome compile tab5-ha-hmi.yaml
 - There is no unit test suite *for the HMI*, but two game engines have host tests, and three content guards read the real C++/YAML (modal chrome per ADR-0009, Marble rooms traversable, Lode levels playable). Everything runs on a plain PC with no toolchain, in one `pytest` (config in `pyproject.toml`, deps in `requirements-dev.txt`):
 
 ```bash
-pip install -r requirements-dev.txt # une fois : pytest, numpy (garde-fou Marble), aioesphomeapi, fonttools
+pip install -r requirements-dev.txt # une fois : pytest, numpy (garde-fou Marble), aioesphomeapi, fonttools, pre-commit, yamllint
 python -m pytest                    # tout : tests/ (outils + garde-fous) + tools/ (moteurs Go, échecs et dames)
+pre-commit install                  # une fois : hooks yamllint / BOM / secrets / placeholders HA avant chaque commit
+pre-commit run --all-files          # les mêmes garde-fous sur tout le dépôt (la CI les rejoue)
 python tools/test_go_engine.py      # règles Go : capture, suicide, ko, territoire, score
 python tools/test_chess_perft.py    # générateur d'échecs contre la suite perft standard
 python tools/test_draughts_engine.py # générateur de dames (10×10 et 8×8) contre les perft de référence

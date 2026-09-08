@@ -4,3 +4,5 @@ pytest>=9.1.1          # tests/ + tools/test_*.py (config : pyproject.toml)
 numpy>=2.5.2        # tools/check_marble_rooms.py (grille d'occupation de la bille)
 aioesphomeapi      # tools/demo/demo_pusher.py (mode démo sans Home Assistant)
 fonttools>=4.64.0    # tools/make_chess_font.py (sous-ensemble ChessPieces.ttf)
+pre-commit>=4.6    # hooks locaux (.pre-commit-config.yaml) : yamllint, BOM, secrets, placeholders HA
+yamllint>=1.38     # lint YAML (.yamllint) — lancé par pre-commit et par la CI

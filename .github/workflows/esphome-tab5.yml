@@ -47,6 +47,8 @@ jobs:
           cache: pip
       - name: Dépendances des outils
         run: pip install -r requirements-dev.txt
+      - name: Hooks pre-commit (yamllint, BOM, secrets, placeholders HA)
+        run: pre-commit run --all-files --show-diff-on-failure
       - name: Tests hôte (outils, moteurs Go/échecs, garde-fous de contenu)
         run: python -m pytest
       - name: Aucun secret en clair dans les YAML

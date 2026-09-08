@@ -329,4 +329,3 @@ api:
                 {id(cal_det_icon_5), id(cal_det_txt_5)}
             };
             cal_render_day_detail(payload, id(lbl_cal_day_status), lines);
-

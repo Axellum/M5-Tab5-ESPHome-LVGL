@@ -5,11 +5,11 @@
 #       températures/humidité, batterie téléphone, présence PC, audio
 #       (ampli, jack, wake word).
 # @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
-#                         Les blocs on_value: doivent se contenter d'appeler des fonctions 
+#                         Les blocs on_value: doivent se contenter d'appeler des fonctions
 #                         C++ depuis tab5_custom.cpp (ex: update_light_card_ui(...) ).
 # @anti_pattern_evité Ne pas utiliser std::string ou to_string() ici (hot-path).
-# @ai_instruction Si l'utilisateur demande d'ajouter un nouveau capteur de température, 
-#                 génère l'entité platform: homeassistant, et dans on_value, appelle 
+# @ai_instruction Si l'utilisateur demande d'ajouter un nouveau capteur de température,
+#                 génère l'entité platform: homeassistant, et dans on_value, appelle
 #                 simplement update_temp_ui(id(mon_label), x); Ne génère pas de lv_label_set_text ici.
 #                 (Scission de tab5-sensors.yaml le 14/07/2026 ; entités
 #                 système dans tab5-sensors-diagnostics.yaml.)

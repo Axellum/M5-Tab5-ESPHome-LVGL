@@ -20,10 +20,14 @@ Thanks for looking at this project. It is a personal firmware repo, but issues a
    ```bash
    python -m pytest
    ```
-4. If you changed a `!include`d file: `esphome clean` before the next `run`.
-5. Use the [PR template](.github/PULL_REQUEST_TEMPLATE.md) checklist.
-6. Add a line to [`CHANGELOG.md`](CHANGELOG.md) for user-visible changes.
-7. Never commit `secrets.yaml`, `Tab5/user_entities.yaml`, or production HA files.
+4. Install the pre-commit hooks once (`pre-commit install`, `pre-commit` comes with
+   `requirements-dev.txt`): yamllint, BOM check, secrets check and HA-placeholder check
+   run before each commit. `pre-commit run --all-files` checks the whole tree — the CI
+   runs the same hooks.
+5. If you changed a `!include`d file: `esphome clean` before the next `run`.
+6. Use the [PR template](.github/PULL_REQUEST_TEMPLATE.md) checklist.
+7. Add a line to [`CHANGELOG.md`](CHANGELOG.md) for user-visible changes.
+8. Never commit `secrets.yaml`, `Tab5/user_entities.yaml`, or production HA files.
 
 ### Branching
 
@@ -52,10 +56,14 @@ Merci d'intéresser à ce projet. C'est un firmware personnel, mais issues et PR
    ```bash
    python -m pytest
    ```
-4. Si vous modifiez un fichier `!include` : `esphome clean` avant le prochain `run`.
-5. Utiliser la checklist du [modèle de PR](.github/PULL_REQUEST_TEMPLATE.md).
-6. Ajouter une entrée dans [`CHANGELOG.md`](CHANGELOG.md) pour les changements visibles.
-7. Ne jamais committer `secrets.yaml`, `Tab5/user_entities.yaml`, ni les fichiers HA de prod.
+4. Installer les hooks pre-commit une fois (`pre-commit install`, `pre-commit` vient avec
+   `requirements-dev.txt`) : yamllint, détection de BOM, vérificateur de secrets et de
+   placeholders HA tournent avant chaque commit. `pre-commit run --all-files` vérifie tout
+   le dépôt — la CI rejoue les mêmes hooks.
+5. Si vous modifiez un fichier `!include` : `esphome clean` avant le prochain `run`.
+6. Utiliser la checklist du [modèle de PR](.github/PULL_REQUEST_TEMPLATE.md).
+7. Ajouter une entrée dans [`CHANGELOG.md`](CHANGELOG.md) pour les changements visibles.
+8. Ne jamais committer `secrets.yaml`, `Tab5/user_entities.yaml`, ni les fichiers HA de prod.
 
 ### Branches
 
