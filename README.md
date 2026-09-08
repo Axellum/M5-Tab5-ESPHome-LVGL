@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![ESPHome](https://img.shields.io/badge/ESPHome-≥2026.7.0-blue)](https://esphome.io)
+[![ESPHome](https://img.shields.io/badge/ESPHome-≥2026.8.1-blue)](https://esphome.io)
 [![Build](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/workflows/esphome-tab5.yml/badge.svg)](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/workflows/esphome-tab5.yml)
 [![LVGL](https://img.shields.io/badge/LVGL-8.4-green)](https://lvgl.io)
 [![Home Assistant](https://img.shields.io/badge/Home_Assistant-Push_Events-orange)](https://www.home-assistant.io)
@@ -242,7 +242,7 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── tab5-imu.yaml         # BMI270 IMU — adaptive polling + tap-to-wake
 │   ├── tab5-ha-controls.yaml # HA-facing entities — volume, current screen, go-to-screen
 │   ├── tab5-alarm.yaml       # Alarm clock + appointment reminders (entities, ring, tick)
-│   ├── ui_components/        # 30+ reusable LVGL components (popups, cards, games)
+│   ├── ui_components/        # 35 reusable LVGL components (popups, cards, games)
 │   ├── tab5_custom.h         # C++ declarations (HMI logic)
 │   ├── tab5_custom.cpp       # C++ implementations (parsers, helpers)
 │   ├── alarm_clock.h/.cpp    # Alarm engine — next-ring maths, calendar rules, RDV list

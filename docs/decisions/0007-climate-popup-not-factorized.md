@@ -4,7 +4,7 @@
 
 ## Context
 
-`climate_popup.yaml` is, at 234 lines, the largest `ui_components/*.yaml` file and the most repetitive-looking one — a 3×3 grid of 9 buttons for HVAC mode/preset/swing/quiet/temperature. Every other repeated-widget pattern in this codebase (forecast cards, switch cards, light color presets) was factored into a parametrized C++ builder or an `!include`+`vars` template. A 2026-07-06 refactor pass (task #T164) did factor 6 of the 9 buttons this way (`climate_hvac_mode_btn.yaml`, `climate_preset_toggle_btn.yaml`).
+`climate_popup.yaml` is, at 234 lines when this ADR was written (309 in 2026-09), the largest `ui_components/*.yaml` file and the most repetitive-looking one — a 3×3 grid of 9 buttons for HVAC mode/preset/swing/quiet/temperature. Every other repeated-widget pattern in this codebase (forecast cards, switch cards, light color presets) was factored into a parametrized C++ builder or an `!include`+`vars` template. A 2026-07-06 refactor pass (task #T164) did factor 6 of the 9 buttons this way (`climate_hvac_mode_btn.yaml`, `climate_preset_toggle_btn.yaml`).
 
 ## Decision
 

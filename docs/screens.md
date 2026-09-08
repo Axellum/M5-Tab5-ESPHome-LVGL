@@ -220,7 +220,7 @@ The popup is context-aware: opening and selection go through `script.tab5_light_
 
 ## TV remote popup
 
-A near-fullscreen Samsung TV remote (`tv_remote_popup.yaml`, 1230×670 card, ~25 px from the screen edges): power, navigation pad, volume and channel columns, and a bottom row (Play/Pause · Retour · Accueil · Muet). Opened by long-pressing the PC switches card or via the TV button (`btn_control_tv`); every key sends `remote.send_command` (or `remote.toggle` for power) to the `${entity_tv_remote}` Home Assistant entity — the Tab5 carries no IR hardware, HA's Samsung integration does the work. Tapping the dark overlay closes it.
+A near-fullscreen Samsung TV remote (`tv_remote_popup.yaml`, 1250×690 card — the shared modal tokens of ADR-0009, 15 px from the screen edges): power, navigation pad, volume and channel columns, and a bottom row (Play/Pause · Retour · Accueil · Muet). Opened by long-pressing the PC switches card or via the TV button (`btn_control_tv`); every key sends `remote.send_command` (or `remote.toggle` for power) to the `${entity_tv_remote}` Home Assistant entity — the Tab5 carries no IR hardware, HA's Samsung integration does the work. Tapping the dark overlay closes it.
 
 ![TV remote popup on the real device](images/tab5_photo_tv_remote.jpg)
 
@@ -508,7 +508,7 @@ Le popup est contextuel : ouverture et sélection passent par `script.tab5_light
 
 ## Popup télécommande TV
 
-Une télécommande Samsung quasi plein écran (`tv_remote_popup.yaml`, carte 1230×670, ~25 px des bords) : power, pad de navigation, colonnes volume et chaînes, et une rangée basse (Play/Pause · Retour · Accueil · Muet). Ouverte par appui long sur la carte switches PC ou via le bouton TV (`btn_control_tv`) ; chaque touche envoie `remote.send_command` (ou `remote.toggle` pour le power) à l'entité Home Assistant `${entity_tv_remote}` — le Tab5 n'a aucun matériel IR, c'est l'intégration Samsung de HA qui fait le travail. Taper l'overlay sombre ferme le popup.
+Une télécommande Samsung quasi plein écran (`tv_remote_popup.yaml`, carte 1250×690 — les tokens modaux partagés de l'ADR-0009, 15 px des bords) : power, pad de navigation, colonnes volume et chaînes, et une rangée basse (Play/Pause · Retour · Accueil · Muet). Ouverte par appui long sur la carte switches PC ou via le bouton TV (`btn_control_tv`) ; chaque touche envoie `remote.send_command` (ou `remote.toggle` pour le power) à l'entité Home Assistant `${entity_tv_remote}` — le Tab5 n'a aucun matériel IR, c'est l'intégration Samsung de HA qui fait le travail. Taper l'overlay sombre ferme le popup.
 
 ![Popup télécommande TV sur l'appareil réel](images/tab5_photo_tv_remote.jpg)
 

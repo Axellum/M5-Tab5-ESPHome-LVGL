@@ -4,6 +4,37 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-06 — Docs : chiffres remis à jour, badge 2026.8.1, sections mortes retirées, trois ADR
+
+Lot P1 « cohérence documentaire » de l'audit du 06/09/2026. Trois commentaires de
+`Tab5/` bougent (dont le BOM UTF-8 en tête de `tab5-styles.yaml`) : `config_hash`
+inchangé — `0xcddecfdc`, le hash du firmware qui tourne, et `main.cpp` n'est même pas
+régénéré (`build_time_str` toujours au 26/08 12:03:52) : rien ne change sur l'appareil.
+
+- **La doc « pour agents » disait faux sur les chiffres.** `CARTOGRAPHIE_TAB5.md`
+  annonçait 12 packages en tête mais « importe les 8 fichiers » en §3.1, des
+  tailles de fichiers de juillet (`tab5_custom.cpp` 2762 → 2927, `tab5-alarm.yaml`
+  940 → 1132…), 33 composants au lieu de 35 et 9 ADR ; `docs/architecture.md`
+  parlait de « dix packages » et omettait `tab5-ha-controls` et `tab5-alarm`
+  (sections ajoutées) ; `Tab5/README.md` listait 15 services sur 16
+  (`tab5_maj_rdv_prochains` manquait) et gardait une section `my_components/`
+  pour un dossier disparu. Trois composants (`assistant_popup`, `alarm_popup`,
+  `alarm_ring_overlay`) entrent dans le tableau de la cartographie.
+- **Badge et prérequis** : README, `docs/installation.md` et `docs/hackster.md`
+  annonçaient ESPHome ≥ 2026.7.0 alors que `min_version` vaut 2026.8.1 depuis le 26/08.
+- **Sections et références mortes** : `docs/LVGL_PREMIUM_TEMPLATES.md` supprimé
+  (palette `#121820`/`#00E5FF`, police Outfit et syntaxe `style:`/`range_min` qui
+  n'existent ni dans le thème Slate ni dans le schéma LVGL d'ESPHome — un piège
+  pour un agent, référencé nulle part) ; commentaires vers `docs/essais_design/`,
+  `docs/console_v2_modifs_preparees.md` et `Tab5/my_components/` réécrits ; `docs/screens.md` et la cartographie donnaient encore 1230×670 à la
+  télécommande TV, qui est sur les tokens 1250×690 depuis l'ADR-0009.
+- **Trois décisions qui ne vivaient qu'en commentaires ont leur ADR** :
+  [0010](docs/decisions/0010-shared-i2s-bus-mic-speaker.md) bus I2S partagé micro /
+  haut-parleur (la cause de la sonnerie muette du 05/08), [0011](docs/decisions/0011-api-reboot-timeout-60min.md)
+  `reboot_timeout: 60min`, [0012](docs/decisions/0012-lvgl-rotation-270-pinball-portrait.md)
+  rotation 270 et bascule portrait du flipper. Les ADR 0006/0007 datent désormais
+  leurs chiffres.
+
 ### 2026-09-06 — P0 de l'audit : un seul secrets.yaml, fichiers HA publics sans identifiant réel, pytest réparé
 
 Suite de l'audit complet du dépôt (`contexte_ia/audits_systeme/audit_tab5_2026-09-06.md`,

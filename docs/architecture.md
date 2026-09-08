@@ -6,7 +6,7 @@
 
 ## Overview
 
-The ESPHome configuration is split into ten YAML packages imported by a single entry-point file. This avoids a monolithic file that becomes impossible to navigate once you're past 1000 lines. Each package has a clearly defined responsibility and can be edited, tested, or replaced in isolation.
+The ESPHome configuration is split into twelve YAML packages imported by a single entry-point file. This avoids a monolithic file that becomes impossible to navigate once you're past 1000 lines. Each package has a clearly defined responsibility and can be edited, tested, or replaced in isolation.
 
 ### Push-only data flow
 
@@ -38,6 +38,8 @@ packages:
   tab5_scripts:    !include Tab5/tab5-scripts.yaml
   tab5_lvgl:       !include Tab5/tab5-lvgl.yaml
   tab5_imu:        !include Tab5/tab5-imu.yaml
+  tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml   # after tab5_lvgl: references LVGL widget ids
+  tab5_alarm:      !include Tab5/tab5-alarm.yaml          # after tab5_lvgl too
 ```
 
 ---
@@ -121,7 +123,7 @@ Variables here are typed and initialized. Uninitialized globals on ESP32 are und
 ---
 
 ### `tab5-lvgl.yaml`
-The UI layout. Declares the pages, panels, labels, buttons, arcs, and icons, plus swipe gesture handling. It `!include`s 21 `ui_components/*.yaml` files directly (climate card/popup, light popup, TV remote popup, system console, assistant/calendar/plant popups, forecast cards, moisture gauges, switches card, the arcade selector and the 8 games); those in turn include the parametrized sub-templates (`cal_day_cell.yaml`, `pot_detail_card.yaml`, `modal_header.yaml`…), for 33 component files in total.
+The UI layout. Declares the pages, panels, labels, buttons, arcs, and icons, plus swipe gesture handling. It `!include`s 23 `ui_components/*.yaml` files directly (climate card/popup, light popup, TV remote popup, system console, assistant/calendar/plant popups, forecast cards, moisture gauges, switches card, the arcade selector and the 8 games); those in turn include the parametrized sub-templates (`cal_day_cell.yaml`, `pot_detail_card.yaml`, `modal_header.yaml`…), for 35 component files in total.
 
 **The dashboard is a single LVGL page, not a multi-page tab-bar layout** ([ADR-0002](decisions/0002-single-page-swipe-navigation.md)) — every home-automation feature lives on one 1280×720 `page_main`, reachable by tap, long-press or swipe. The only other pages are the 9 gaming ones (`page_arcade` + one per console), all declared `skip: true` so swipe navigation can never land on them; they are not part of the dashboard flow.
 
@@ -171,6 +173,16 @@ Short ESPHome script blocks for reusable multi-step actions called from lambdas 
 
 ### `tab5-imu.yaml`
 BMI270 accelerometer: the three axes are `internal: true` (at 10–30 Hz they would flood the HA recorder for nothing). Two consumers — tap-to-wake on the dashboard, and tilt input for the games. An `interval:` re-tunes the polling rate at runtime via `set_update_interval()`: 100 ms (10 Hz) at rest, 33 ms (30 Hz) while a tilt-controlled console is open. See §6.
+
+---
+
+### `tab5-ha-controls.yaml`
+Entities exposed to Home Assistant to observe and drive the screen from a dashboard without standing in front of it: a `number` for the volume (single entry point `script.tab5_volume_apply`, shared with both on-screen sliders), a `text_sensor` naming the current screen (game page, visible popup, or central-panel index), a `select` "go to screen" that replays the exact same open paths as the on-screen buttons (refused while the alarm rings), a `button` to reload the calendar, and a 5 s catch-up of volume changes made on the `media_player` side. Loaded **after** `tab5-lvgl.yaml`: its lambdas reference LVGL widget ids.
+
+---
+
+### `tab5-alarm.yaml`
+Alarm clock + appointment reminders: `rtttl:` melody on `tab5_speaker` (outside the media player), ~20 config entities exposed to HA (switches, `datetime type: time`, numbers, selects, text), the ring state machine (one melody pass, then a 3 s listening window for the on-device "Stop" wake word; snooze, max duration, crescendo) and a 1 s `interval:` that only compares two integers — all the date maths live in the pure engine `alarm_clock.cpp` (no `id()`, no network). The alarm rings without Home Assistant; HA only adds the spoken briefing, the appointment list and an optional ringtone URL. Single entry point `script.tab5_alarm_refresh` (entities → `g_alarm_cfg`, never the reverse). The mic/speaker relay it has to perform is [ADR-0010](decisions/0010-shared-i2s-bus-mic-speaker.md).
 
 ---
 
@@ -247,7 +259,7 @@ Navigation goes through `lvgl.page.show:` (YAML) or `lv_scr_load()` (C++); the s
 
 ## Vue d'ensemble
 
-La configuration ESPHome est découpée en dix packages YAML importés par un fichier d'entrée unique. Cela évite un fichier monolithique qui devient impossible à naviguer au-delà de 1000 lignes. Chaque package a une responsabilité clairement définie et peut être édité, testé, ou remplacé de façon isolée.
+La configuration ESPHome est découpée en douze packages YAML importés par un fichier d'entrée unique. Cela évite un fichier monolithique qui devient impossible à naviguer au-delà de 1000 lignes. Chaque package a une responsabilité clairement définie et peut être édité, testé, ou remplacé de façon isolée.
 
 ### Flux push-only
 
@@ -335,7 +347,7 @@ Les variables ici sont typées et initialisées. Les globales non initialisées 
 ---
 
 ### `tab5-lvgl.yaml`
-La mise en page UI. Déclare les pages, panneaux, labels, boutons, arcs et icônes, ainsi que la gestion des gestes swipe. Il `!include` directement 21 fichiers `ui_components/*.yaml` (carte/popup clim, popup lumière, popup télécommande TV, console système, popups assistant/calendrier/plantes, cartes prévisions, jauges humidité, carte switches, le sélecteur arcade et les 8 jeux) ; ceux-ci incluent à leur tour les sous-templates paramétrés (`cal_day_cell.yaml`, `pot_detail_card.yaml`, `modal_header.yaml`…), soit 33 fichiers de composants au total.
+La mise en page UI. Déclare les pages, panneaux, labels, boutons, arcs et icônes, ainsi que la gestion des gestes swipe. Il `!include` directement 23 fichiers `ui_components/*.yaml` (carte/popup clim, popup lumière, popup télécommande TV, console système, popups assistant/calendrier/plantes, cartes prévisions, jauges humidité, carte switches, le sélecteur arcade et les 8 jeux) ; ceux-ci incluent à leur tour les sous-templates paramétrés (`cal_day_cell.yaml`, `pot_detail_card.yaml`, `modal_header.yaml`…), soit 35 fichiers de composants au total.
 
 **Le dashboard tient sur une seule page LVGL, pas une navigation multi-pages par onglets** ([ADR-0002](decisions/0002-single-page-swipe-navigation.md)) — toute la domotique vit sur un `page_main` unique en 1280×720, accessible au tap, à l'appui long ou au swipe. Les seules autres pages sont les 9 pages gaming (`page_arcade` + une par console), toutes en `skip: true` pour que le swipe ne puisse jamais y atterrir ; elles ne font pas partie du parcours dashboard.
 
@@ -387,6 +399,16 @@ Blocs `script:` ESPHome réutilisables pour les actions multi-étapes appelées 
 
 ### `tab5-imu.yaml`
 Accéléromètre BMI270 : les trois axes sont `internal: true` (à 10–30 Hz ils satureraient le recorder HA pour rien). Deux consommateurs — le tap-to-wake du dashboard, et l'entrée à l'inclinaison des jeux. Un `interval:` réajuste la cadence à chaud via `set_update_interval()` : 100 ms (10 Hz) au repos, 33 ms (30 Hz) quand une console pilotée à l'inclinaison est ouverte. Voir §6.
+
+---
+
+### `tab5-ha-controls.yaml`
+Entités exposées à Home Assistant pour observer et piloter l'écran depuis un dashboard sans être devant la dalle : un `number` pour le volume (point d'entrée unique `script.tab5_volume_apply`, partagé avec les deux sliders de l'écran), un `text_sensor` qui nomme l'écran courant (page de jeu, popup visible ou index du panneau central), un `select` « Aller à l'écran » qui rejoue exactement les mêmes chemins d'ouverture que les boutons de la dalle (refusé pendant que le réveil sonne), un `button` de rechargement du calendrier, et un rattrapage toutes les 5 s des changements de volume faits côté `media_player`. Chargé **après** `tab5-lvgl.yaml` : ses lambdas référencent des ids de widgets LVGL.
+
+---
+
+### `tab5-alarm.yaml`
+Réveil + annonce des rendez-vous : mélodie `rtttl:` sur `tab5_speaker` (hors media player), ~20 entités de réglage exposées à HA (switches, `datetime type: time`, numbers, selects, text), la machine d'état de sonnerie (un passage de mélodie, puis 3 s de fenêtre d'écoute pour le mot de réveil local « Stop » ; répétition, durée max, crescendo) et un `interval:` de 1 s qui ne compare que deux entiers — toute l'arithmétique de dates vit dans le moteur pur `alarm_clock.cpp` (aucun `id()`, aucun réseau). Le réveil sonne sans Home Assistant ; HA n'ajoute que le briefing parlé, la liste des rendez-vous et une URL de sonnerie optionnelle. Point d'entrée unique `script.tab5_alarm_refresh` (entités → `g_alarm_cfg`, jamais l'inverse). Le relais micro/haut-parleur qu'il doit faire lui-même est l'[ADR-0010](decisions/0010-shared-i2s-bus-mic-speaker.md).
 
 ---
 
