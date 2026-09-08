@@ -21,6 +21,14 @@ poussé élément par élément : 9 appels + 9 délais de 50 ms à chaque rafra�
   automation de prod modifiée en direct (voir la PR pour la trace).
 - **Mode démo** : `build_pluie_1h_bulk_payload()` (assertions : 9 intensités, libellés
   connus du firmware, < 256 octets) ; le dry-run couvre le nouveau contrat.
+- **Bug latent corrigé au passage — `has_rain`** : le bilan « au moins une barre non
+  vide » relisait `lv_obj_get_height()` juste après `lv_obj_set_height()` ; sous LVGL 9
+  cette lecture rend les coordonnées courantes, mises à jour seulement au prochain
+  rafraîchissement de layout, donc l'ancienne hauteur. Avec neuf appels espacés de 50 ms
+  ça marchait par accident (le 2ᵉ appel voyait la barre du 1ᵉʳ) ; en un seul appel bulk
+  le panneau « Pluie » ne serait jamais entré dans la rotation (constaté depuis HA :
+  « Pluie forte » poussée, rotation Planning/Info/Alerte inchangée). Le bilan se calcule
+  désormais sur les hauteurs posées (`s_rain_bar_height[9]`), pour les deux services.
 - Docs : README Tab5 (table des services : 17), README HA, `screens.md`, `demo_mode.md`,
   inventaire, cartographie, ADR-0003.
 

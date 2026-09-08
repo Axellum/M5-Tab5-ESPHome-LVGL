@@ -155,6 +155,22 @@ static void rain_level_style(const std::string& intensite, uint32_t& color, int&
     }
 }
 
+// Hauteurs posées, barre par barre. has_rain se calcule ICI et pas en relisant
+// lv_obj_get_height() : sous LVGL 9 cette lecture renvoie les coordonnées
+// courantes (obj->coords), mises à jour seulement au prochain rafraîchissement
+// de layout — juste après lv_obj_set_height() elle rend encore l'ancienne
+// hauteur, donc 0, et le panneau « Pluie » ne tournait jamais (constaté le
+// 08/09/2026 depuis HA : « Pluie forte » poussée, rotation Planning/Info/Alerte
+// inchangée). Le même bilan sert aux deux services (unitaire et bulk).
+static int s_rain_bar_height[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+static bool rain_any_bar() {
+    for (int i = 0; i < 9; i++) {
+        if (s_rain_bar_height[i] > 0) return true;
+    }
+    return false;
+}
+
 bool update_rain_bar_ui(int idx, const std::string& intensite, lv_obj_t* const bars[9]) {
     if (idx >= 0 && idx < 9 && bars[idx] != nullptr) {
         uint32_t c;
@@ -162,11 +178,9 @@ bool update_rain_bar_ui(int idx, const std::string& intensite, lv_obj_t* const b
         rain_level_style(intensite, c, h);
         lv_obj_set_style_bg_color(bars[idx], lv_color_hex(c), LV_PART_MAIN);
         lv_obj_set_height(bars[idx], h);
+        s_rain_bar_height[idx] = h;
     }
-    for (int i = 0; i < 9; i++) {
-        if (bars[i] != nullptr && lv_obj_get_height(bars[i]) > 0) return true;
-    }
-    return false;
+    return rain_any_bar();
 }
 
 // Bulk (ADR-0003) : « idx|intensité;idx|intensité;… », les 9 barres en UN appel HA
@@ -179,7 +193,7 @@ bool update_rain_bars_bulk_ui(const std::string& payload, lv_obj_t* const bars[9
     if (payload.size() >= sizeof(buf)) {
         ESP_LOGW("tab5.rain", "payload pluie 1h trop long (%u octets, max %u) : ignore",
                  (unsigned) payload.size(), (unsigned) (sizeof(buf) - 1));
-        return update_rain_bar_ui(-1, std::string(), bars);
+        return rain_any_bar();
     }
     strncpy(buf, payload.c_str(), sizeof(buf));
     buf[sizeof(buf) - 1] = '\0';
@@ -190,7 +204,7 @@ bool update_rain_bars_bulk_ui(const std::string& payload, lv_obj_t* const bars[9
         *sep = '\0';
         update_rain_bar_ui(atoi(rec), std::string(sep + 1), bars);
     }
-    return update_rain_bar_ui(-1, std::string(), bars);  // idx -1 = pas de barre touchée, juste le bilan
+    return rain_any_bar();
 }
 
 void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite) {
