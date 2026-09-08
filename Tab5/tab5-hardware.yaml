@@ -3,8 +3,8 @@
 # @role Configuration bas niveau (I2C, I2S, DSI Display, Audio, DAC).
 # @ai_instruction FICHIER CRITIQUE. Ne modifier AUCUNE broche GPIO ou fréquence I2C sans l'accord d'Axel.
 # ============================================================================
-# [2026.7.0] st7123 est maintenant un composant officiel ESPHome — plus besoin de external_components.
-# Le dossier Tab5/my_components/st7123/ est obsolete et peut etre supprime.
+# [2026.7.0] st7123 est un composant officiel ESPHome : plus d'external_components ni de
+# dossier Tab5/my_components/ (retire du depot le 06/07/2026, PR #15).
 
 esp32:
   board: esp32-p4-evboard

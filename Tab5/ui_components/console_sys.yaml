@@ -20,7 +20,7 @@
 #       tablette / restart HA) passent par des overlays dédiés
 #       (`overlay_confirm_*`) : l'état "armé" = visibilité du widget, une seule
 #       source de vérité — remplace l'ancien double-tap `reboot_armed`
-#       (global devenu inutilisé, cf. docs/console_v2_modifs_preparees.md).
+#       (global retiré le 16/07/2026 avec la Console v2, PR #44).
 # @architecture_constraint `slider_volume` passe par
 #       `script.tab5_volume_apply` (tab5-scripts.yaml), point d'entrée unique
 #       partagé avec le slider du popup assistant et avec `number.tab5_volume`
@@ -130,7 +130,8 @@ obj:
                 - label: { text: "Signal", align: TOP_LEFT, x: 22, y: 154, text_font: roboto_32_b, text_color: color_console_label }
                 - label: { id: lbl_sys_rssi_val, text: "--", align: TOP_RIGHT, x: -22, y: 154, text_font: roboto_32_b, text_color: color_console_value }
 
-                # État connexion HA — alimenté par le snippet préparé (docs/console_v2_modifs_preparees.md)
+                # État connexion HA — mis à jour par l'interval 2 s de tab5-sensors-diagnostics.yaml
+                # et à l'ouverture de la console (btn_control_console, tab5-lvgl.yaml)
                 - label: { text: "Home Assistant", align: TOP_LEFT, x: 22, y: 206, text_font: roboto_32_b, text_color: color_console_label }
                 - label: { id: lbl_sys_ha_val, text: "--", align: TOP_RIGHT, x: -22, y: 206, text_font: roboto_32_b, text_color: color_text_dim }
 
