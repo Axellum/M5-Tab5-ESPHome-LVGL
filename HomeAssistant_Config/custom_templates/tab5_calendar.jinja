@@ -1,0 +1,27 @@
+{#-
+  Macros du popup calendrier Tab5, importées par packages/tab5_calendar.yaml :
+    {% from 'tab5_calendar.jinja' import couvre, ev_start, ev_end, ev_summary %}
+
+  Un événement rendu par calendar.get_events porte start/end et summary — ou,
+  selon la version et le calendrier, start_time/end_time et message. Une journée
+  entière n'a pas d'heure ('T' absent de la date), un événement horodaté en a une.
+  Ces quatre macros normalisent ça une seule fois (avant le 08/09/2026, le même
+  bloc de quatre lignes était recopié dans chaque boucle du package).
+
+  Déploiement : ce fichier va dans config/custom_templates/ de Home Assistant,
+  puis homeassistant.reload_custom_templates (ou redémarrage) — AVANT de charger
+  le package, sinon ses deux scripts échouent à la ligne d'import.
+
+  Une macro Jinja renvoie toujours une chaîne : couvre() rend 'oui' ou '' pour
+  rester utilisable dans un `if` ; ev_start()/ev_end() rendent une chaîne ISO
+  acceptée par `as_datetime`.
+-#}
+{%- macro ev_start(e) -%}{{ e.start | default(e.start_time, true) | default('', true) | string }}{%- endmacro -%}
+{%- macro ev_end(e) -%}{{ e.end | default(e.end_time, true) | default('', true) | string }}{%- endmacro -%}
+{%- macro ev_summary(e) -%}{{ e.summary | default(e.message, true) | default('', true) | string }}{%- endmacro -%}
+{#- Vrai ('oui') si l'événement couvre le jour ds (YYYY-MM-DD) : même jour pour
+    un événement horodaté, intervalle [début, fin[ pour une journée entière. -#}
+{%- macro couvre(e, ds) -%}
+  {%- set st = ev_start(e) -%}{%- set en = ev_end(e) -%}
+  {%- if 'T' in st -%}{{ 'oui' if st[:10] == ds else '' }}{%- else -%}{{ 'oui' if (st[:10] <= ds and ds < en[:10]) else '' }}{%- endif -%}
+{%- endmacro -%}

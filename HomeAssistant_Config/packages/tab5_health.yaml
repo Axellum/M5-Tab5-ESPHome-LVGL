@@ -12,9 +12,11 @@
 # @ai_warning Jamais de now() brut dans les templates (cf. l'en-tête
 #       d'automations_tab5.yaml) : toute la détection repose sur les fenêtres
 #       `for:` des déclencheurs et sur trigger.from_state / trigger.to_state.
-# @ai_instruction Chaque action de notification porte continue_on_error: true :
-#       l'échec d'un canal (téléphone hors ligne, service notify mal nommé) ne
-#       doit pas empêcher les autres canaux de partir.
+# @ai_instruction Les trois gardes notifient via le script tab5_health_notify
+#       (notification persistante + notify.notify) : un seul endroit à adapter.
+#       Chaque canal y porte continue_on_error: true : l'échec d'un canal
+#       (téléphone hors ligne, service notify mal nommé) ne doit pas empêcher
+#       l'autre de partir.
 # @install Nécessite l'activation des packages dans configuration.yaml :
 #         homeassistant:
 #           packages: !include_dir_named packages
@@ -42,6 +44,55 @@
 #     name: "Instance HA primaire active"
 #     icon: mdi:home-assistant
 
+script:
+  # Canal unique des trois gardes : une notification persistante HA (remplacée si
+  # le même notification_id existe déjà) + un push mobile via notify.notify.
+  # mode parallel : deux gardes peuvent tomber en même temps (reboot + API).
+  tab5_health_notify:
+    alias: "Tab5 Santé — notifier (persistante + mobile)"
+    mode: parallel
+    max: 3
+    fields:
+      notification_id:
+        description: "Clé de la notification persistante (une par garde)"
+        required: true
+        selector:
+          text:
+      title:
+        description: "Titre de la notification persistante (et du mobile, sauf titre_court)"
+        required: true
+        selector:
+          text:
+      message:
+        description: "Message détaillé (notification persistante)"
+        required: true
+        selector:
+          text:
+            multiline: true
+      titre_court:
+        description: "Titre du push mobile (défaut : title)"
+        required: false
+        selector:
+          text:
+      message_court:
+        description: "Message du push mobile (défaut : message)"
+        required: false
+        selector:
+          text:
+            multiline: true
+    sequence:
+      - action: persistent_notification.create
+        continue_on_error: true
+        data:
+          notification_id: "{{ notification_id }}"
+          title: "{{ title }}"
+          message: "{{ message }}"
+      - action: notify.notify
+        continue_on_error: true
+        data:
+          title: "{{ titre_court | default(title, true) }}"
+          message: "{{ message_court | default(message, true) }}"
+
 automation:
   # ==========================================================================
   # (a) Instance primaire inactive — is_primary_active OFF depuis plus de 5 min
@@ -64,8 +115,7 @@ automation:
         to: "off"
         for: "00:05:00"
     action:
-      - action: persistent_notification.create
-        continue_on_error: true
+      - action: script.tab5_health_notify
         data:
           notification_id: tab5_health_primary
           title: "⚠️ Tab5 : instance primaire inactive"
@@ -74,11 +124,7 @@ automation:
             plus aucune donnée n'est poussée vers l'écran (météo, planning et
             capteurs figés). Le remettre sur ON, ou vérifier l'automation qui
             le pilote.
-      - action: notify.notify
-        continue_on_error: true
-        data:
-          title: "⚠️ Tab5 : instance primaire inactive"
-          message: >-
+          message_court: >-
             is_primary_active OFF depuis plus de 5 min — l'écran Tab5 ne reçoit
             plus rien.
 
@@ -116,22 +162,18 @@ automation:
                or (not from_num and trigger.to_state.state | float(0) < 300)
              ) }}
     action:
-      - action: persistent_notification.create
-        continue_on_error: true
+      - action: script.tab5_health_notify
         data:
           notification_id: tab5_health_reboot
           title: "⚠️ Tab5 : reboot inattendu détecté"
+          titre_court: "⚠️ Tab5 : reboot inattendu"
           message: >-
             L'uptime du Tab5 est retombé à
             {{ trigger.to_state.state | float(0) | round(0) }} s
             (précédent : {{ trigger.from_state.state
                             if trigger.from_state is not none else 'inconnu' }}).
             L'appareil a redémarré — vérifier l'alimentation et les logs ESPHome.
-      - action: notify.notify
-        continue_on_error: true
-        data:
-          title: "⚠️ Tab5 : reboot inattendu"
-          message: >-
+          message_court: >-
             Uptime retombé à
             {{ trigger.to_state.state | float(0) | round(0) }} s — vérifier
             alimentation / logs ESPHome.
@@ -158,20 +200,16 @@ automation:
           - "unavailable"
         for: "00:02:00"
     action:
-      - action: persistent_notification.create
-        continue_on_error: true
+      - action: script.tab5_health_notify
         data:
           notification_id: tab5_health_api
           title: "⚠️ Tab5 : API Home Assistant déconnectée"
+          titre_court: "⚠️ Tab5 : API déconnectée"
           message: >-
             Le Tab5 est déconnecté de l'API native depuis plus de 2 minutes
             (état : {{ trigger.to_state.state }}). Vérifier le Wi-Fi,
             l'alimentation, ou si l'appareil a planté. Toutes les poussées
             vers l'écran échouent pendant la coupure.
-      - action: notify.notify
-        continue_on_error: true
-        data:
-          title: "⚠️ Tab5 : API déconnectée"
-          message: >-
+          message_court: >-
             Tab5 hors ligne (API ESPHome) depuis plus de 2 min — vérifier
             Wi-Fi / alimentation.

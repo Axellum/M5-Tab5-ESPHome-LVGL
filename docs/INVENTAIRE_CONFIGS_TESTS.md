@@ -91,6 +91,7 @@
 | `template_sensors_examples.yaml` | `HomeAssistant_Config/` | Placeholder générique des template sensors. |
 | `packages/tab5_alerts.yaml` | `HomeAssistant_Config/packages/` | Package alertes HA. |
 | `packages/tab5_calendar.yaml` | `HomeAssistant_Config/packages/` | Package calendrier HA. |
+| `custom_templates/tab5_calendar.jinja` | `HomeAssistant_Config/custom_templates/` | Macros Jinja du calendrier (importées par `tab5_calendar.yaml`). |
 | `packages/tab5_health.yaml` | `HomeAssistant_Config/packages/` | Package santé HA. |
 | `packages/tab5_reveil.yaml` | `HomeAssistant_Config/packages/` | Package réveil HA. |
 | `packages/tab5_tv.yaml` | `HomeAssistant_Config/packages/` | Package TV HA. |

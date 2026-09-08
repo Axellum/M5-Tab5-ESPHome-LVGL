@@ -356,35 +356,43 @@
       continue_on_error: true
       data:
         texte: >
+          {% set dismissed = (states('input_text.tab5_alerts_dismissed') or '').split('|') | reject('equalto','') | list %}
           {% set alerte = states('sensor.VOTRE_DEPARTEMENT_weather_alert') %}
-          {% if alerte == 'Rouge' or alerte == 'Orange' %}
+          {% set meteo_key = 'meteo:' ~ (alerte | lower) if alerte in ['Rouge', 'Orange', 'Jaune'] else '' %}
+          {% set meteo_dismissed = meteo_key and meteo_key in dismissed %}
+          {% if (alerte == 'Rouge' or alerte == 'Orange') and not meteo_dismissed %}
              Alerte Météo {{ alerte }} en cours ! Restez prudent.
           {% else %}
             {% set pending = states.update | selectattr('state', 'eq', 'on') | list %}
-            {% set pending_count = pending | length %}
+            {% set pending_nd = pending | rejectattr('entity_id', 'in', dismissed) | list %}
+            {% set pending_nd_count = pending_nd | length %}
             {% set crit_ids = [
               'update.home_assistant_core_update',
               'update.home_assistant_supervisor_update',
               'update.home_assistant_operating_system_update'
             ] %}
             {% set ns = namespace(crit=0, parts=[]) %}
-            {% for u in pending %}
+            {% for u in pending_nd %}
               {% if u.entity_id in crit_ids %}
                 {% set ns.crit = ns.crit + 1 %}
               {% endif %}
             {% endfor %}
-            {% set problems = states.binary_sensor
+            {% set problems_nd = states.binary_sensor
               | selectattr('attributes.device_class', 'defined')
               | selectattr('attributes.device_class', 'eq', 'problem')
               | selectattr('state', 'eq', 'on')
+              | rejectattr('entity_id', 'in', dismissed)
               | list %}
-            {% set problem_count = problems | length %}
-            {% set ns_u = namespace(n = states('sensor.tab5_unavailable_count') | int(0)) %}
-            {% if pending_count == 1 %}
-              {% set title = pending[0].attributes.get('title', pending[0].attributes.get('friendly_name', 'MAJ')) %}
+            {% set problem_count = problems_nd | length %}
+            {% set ns_u = namespace(n=0) %}
+            {% if 'ha:unavailable' not in dismissed %}
+              {% set ns_u.n = states('sensor.tab5_unavailable_count') | int(0) %}
+            {% endif %}
+            {% if pending_nd_count == 1 %}
+              {% set title = pending_nd[0].attributes.title | default(pending_nd[0].attributes.friendly_name, true) %}
               {% set ns.parts = ns.parts + ['1 MAJ · ' ~ title] %}
-            {% elif pending_count > 1 %}
-              {% set ns.parts = ns.parts + [pending_count ~ ' MAJ'] %}
+            {% elif pending_nd_count > 1 %}
+              {% set ns.parts = ns.parts + [pending_nd_count ~ ' MAJ'] %}
             {% endif %}
             {% if problem_count > 0 %}
               {% set ns.parts = ns.parts + [problem_count ~ ' erreur' ~ ('s' if problem_count > 1 else '')] %}
@@ -392,13 +400,45 @@
             {% if ns_u.n > 0 %}
               {% set ns.parts = ns.parts + [ns_u.n ~ ' indispo'] %}
             {% endif %}
-            {{ ns.parts | join(' · ') }}
+            {% set ha_line = ns.parts | join(' · ') %}
+            {% if alerte == 'Jaune' and not meteo_dismissed and ha_line %}
+              Vigilance Jaune - {{ ha_line }}
+            {% elif alerte == 'Jaune' and not meteo_dismissed %}
+              Vigilance Jaune
+            {% else %}
+              {{ ha_line }}
+            {% endif %}
           {% endif %}
         couleur: >
           {% set alerte = states('sensor.VOTRE_DEPARTEMENT_weather_alert') %}
           {% if alerte == 'Rouge' %} Rouge
           {% elif alerte == 'Orange' %} Orange
-          {% else %} Blanc
+          {% elif alerte == 'Jaune' %} Orange
+          {% else %}
+            {% set dismissed = (states('input_text.tab5_alerts_dismissed') or '').split('|') | reject('equalto','') | list %}
+            {% set pending = states.update | selectattr('state', 'eq', 'on') | list %}
+            {% set pending_nd = pending | rejectattr('entity_id', 'in', dismissed) | list %}
+            {% set crit_ids = [
+              'update.home_assistant_core_update',
+              'update.home_assistant_supervisor_update',
+              'update.home_assistant_operating_system_update'
+            ] %}
+            {% set ns = namespace(crit=0) %}
+            {% for u in pending_nd %}
+              {% if u.entity_id in crit_ids %}
+                {% set ns.crit = ns.crit + 1 %}
+              {% endif %}
+            {% endfor %}
+            {% set problem_count = states.binary_sensor
+              | selectattr('attributes.device_class', 'defined')
+              | selectattr('attributes.device_class', 'eq', 'problem')
+              | selectattr('state', 'eq', 'on')
+              | rejectattr('entity_id', 'in', dismissed)
+              | list | length %}
+            {% if ns.crit > 0 or problem_count > 0 %} Rouge
+            {% elif (pending_nd | length) > 0 %} Orange
+            {% else %} Blanc
+            {% endif %}
           {% endif %}
         # MEME id de dismiss que l'automation principale ci-dessus : ce push
         # « rapide » peut afficher une banniere Rouge/Orange, et un id vide
@@ -412,8 +452,47 @@
           {% else %}
 
           {% endif %}
-    # Dans la configuration complète, pousser ici aussi la section 7b
-    # (esphome.tab5_ha_hmi_tab5_maj_alertes_ha_bulk — rotateur alertes HA).
+
+    # ====== 7b. ROTATEUR ALERTES HA (panneaux 4-7), filtré par la liste d'acquittement ======
+    # C'est CE push qui alimente le rotateur (déclencheurs update.* et
+    # input_text.tab5_alerts_dismissed) et qui retire un bandeau acquitté : les
+    # scripts de packages/tab5_alerts.yaml ne relancent plus l'automation
+    # principale (cf. leur en-tête). Jusqu'à 4 enregistrements `id|couleur|texte`.
+    - action: esphome.tab5_ha_hmi_tab5_maj_alertes_ha_bulk
+      continue_on_error: true
+      data:
+        payload: >
+          {% set dismissed = (states('input_text.tab5_alerts_dismissed') or '').split('|') | reject('equalto','') | list %}
+          {% set ns = namespace(records=[]) %}
+          {% set crit_ids = [
+            'update.home_assistant_core_update',
+            'update.home_assistant_supervisor_update',
+            'update.home_assistant_operating_system_update'
+          ] %}
+          {% for u in states.update | selectattr('state', 'eq', 'on') | list | sort(attribute='entity_id') %}
+            {% if u.entity_id not in dismissed and ns.records | length < 4 %}
+              {% set title = u.attributes.title | default(u.attributes.friendly_name, true) %}
+              {% set couleur = 'Rouge' if u.entity_id in crit_ids else 'Orange' %}
+              {% set ns.records = ns.records + [u.entity_id ~ '|' ~ couleur ~ '|1 MAJ · ' ~ title] %}
+            {% endif %}
+          {% endfor %}
+          {% for p in states.binary_sensor
+              | selectattr('attributes.device_class', 'defined')
+              | selectattr('attributes.device_class', 'eq', 'problem')
+              | selectattr('state', 'eq', 'on')
+              | list | sort(attribute='entity_id') %}
+            {% if p.entity_id not in dismissed and ns.records | length < 4 %}
+              {% set label = p.attributes.friendly_name | default(p.entity_id, true) %}
+              {% set ns.records = ns.records + [p.entity_id ~ '|Rouge|' ~ label] %}
+            {% endif %}
+          {% endfor %}
+          {% if ns.records | length < 4 and 'ha:unavailable' not in dismissed %}
+            {% set ns_u = namespace(n = states('sensor.tab5_unavailable_count') | int(0)) %}
+            {% if ns_u.n > 0 %}
+              {% set ns.records = ns.records + ['ha:unavailable|Orange|' ~ ns_u.n ~ ' indispo'] %}
+            {% endif %}
+          {% endif %}
+          {{ ns.records | join(';') }}
 
 - id: tab5_volet_updater
   alias: "Sync Tab5 Volet Serre"
