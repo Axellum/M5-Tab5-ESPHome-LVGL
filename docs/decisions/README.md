@@ -22,3 +22,4 @@ Format: **Context / Decision / Consequences**. One page max. Add a new one whene
 | [0010](0010-shared-i2s-bus-mic-speaker.md) | Microphone and speaker share one I2S bus — every local sound relays the mic itself |
 | [0011](0011-api-reboot-timeout-60min.md) | `api: reboot_timeout: 60min` — anti-zombie net kept, HA outages no longer cycle the tablet |
 | [0012](0012-lvgl-rotation-270-pinball-portrait.md) | Landscape dashboard via `rotation: 270`, one console flips to portrait at runtime |
+| [0013](0013-single-registry-consoles-modals.md) | One C++ registry lists the 8 consoles and the modal windows — no list is ever copied into YAML |

@@ -68,17 +68,29 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 
 ---
 
+### `tab5_registry.h` / `tab5_registry.cpp`
+
+Registre unique des **consoles** (`GameRegistry::kGames` : libellé, `is_open`,
+`close`, `on_imu`, `imu_fast`) et des **fenêtres modales** (`ModalRegistry`,
+rempli une fois par le script `tab5_modal_registry_init` de `tab5-scripts.yaml`,
+seul endroit où `id()` est disponible ; genres `POPUP` / `SUBWINDOW` / `LAYER`,
+ce dernier pour la sonnerie du réveil : nommée, jamais refermée). Tout ce qui a
+besoin de « quel jeu est ouvert ? » ou « quel popup couvre l'écran ? » —
+fermeture globale, poll IMU, text_sensor « Écran courant », select « Aller à
+l'écran », retour automatique à l'inactivité — passe par lui (ADR-0013).
+Garde-fou : `tools/check_tab5_registry.py`.
+
 ## Services HA exposés (`api: services:`)
 
 | Service | Payload | Rôle |
 |---|---|---|
-| `tab5_maj_clim` | target, current, mode, preset, fan, swing (strings) | État climatisation (couleurs, cible, mode, presets) |
-| `tab5_maj_volet_etat` | etat_physique (string) | État volet (ouvert/fermé/en mouvement) |
+| `tab5_maj_clim` | target, current, mode, preset, fan, swing (strings) | État climatisation : cible + température intérieure (`update_clim_target_ui()`), modes dans les globals recolorés par `tab5_clim_recolor` |
+| `tab5_maj_volet_etat` | etat_physique (string) | État volet (ouvert/fermé/en mouvement) — `update_volet_ui()` ; arme/désarme le wake word « Stop » |
 | `tab5_maj_planning` | ligne1, ligne2 (strings) | Texte planning affiché dans la carte centrale |
-| `tab5_maj_alerte_meteo_france` | payload (string, 11 champs `\|`-delimited) | Alertes météo France (vent, inondation, orages...) + recoloration de la date |
-| `tab5_maj_meteo_actuelle` | condition, temperature, humidite | Icône pluie prédictive + hygrométrie (l'ancienne grosse icône météo centrale a été retirée de l'UI) |
-| `tab5_maj_probabilites` | uv, gel, neige (strings) | Bascule l'icône pluie prédictive en flocon si probabilité de neige ≥ 5 |
-| `tab5_maj_pluie_1h` | index_5mn, intensite (strings) | Une barre du graphe pluie 1h (9 barres) ; met à jour `has_rain` |
+| `tab5_maj_alerte_meteo_france` | payload (string, 11 champs `\|`-delimited) | Alertes météo France (vent, inondation, orages...) + recoloration de la date — `parse_and_update_vigilance()` |
+| `tab5_maj_meteo_actuelle` | condition, temperature, humidite | Hygrométrie → couleur de la goutte « pluie prédictive » (`update_rain_predict_icon_ui()`). `condition` et `temperature` sont **réservés** : reçus, non exploités depuis le retrait de la grosse icône météo centrale ; le contrat n'est pas rétréci (3 appelants HA) |
+| `tab5_maj_probabilites` | uv, gel, neige (strings) | Flocon si probabilité de neige ≥ 5, sinon goutte (`update_rain_predict_icon_ui()`, partagée avec la météo actuelle). `uv` et `gel` sont **réservés** : reçus, non exploités |
+| `tab5_maj_pluie_1h` | index_5mn, intensite (strings) | Une barre du graphe pluie 1h (9 barres, donc 9 appels par rafraîchissement — bulk à faire) ; met à jour `has_rain` (`update_rain_bar_ui()`) |
 | `tab5_maj_info_texte` | texte, couleur, meteo_id (strings) | 4ᵉ panneau du rotateur : alerte météo (Rouge/Orange) ou résumé santé HA 1 ligne — MAJ en attente, erreurs, indispos (`update_info_text_ui()`). `meteo_id` = identifiant de dismiss au tap ; vide = bandeau non masquable. **Les 3 variables sont obligatoires côté appelant** |
 | `tab5_maj_previsions_heures_bulk` | payload (string) | 5 cartes prévisions horaires |
 | `tab5_maj_previsions_jours_bulk` | payload (string) | 5 cartes prévisions journalières (fenêtre glissante selon `forecast_page_index`) |
@@ -109,7 +121,7 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 ## Règles de code à respecter (issues de l'audit du 05/07/2026)
 
 1. **Pas de couleur en dur** (`0xFFAABB`) dans un YAML/lambda — ajouter un token dans `UIColor::` (`tab5_custom.h`) et l'utiliser partout.
-2. **Les `sensor:`/`text_sensor:` ne manipulent pas LVGL directement** — ils appellent une fonction C++ dans `tab5_custom.cpp` (ex: `update_light_ui()`, pas de `lv_obj_set_style_*` inline).
+2. **Les `sensor:`/`text_sensor:` ne manipulent pas LVGL directement** — ils appellent une fonction C++ dans `tab5_custom.cpp` (ex: `update_light_ui()`, pas de `lv_obj_set_style_*` inline). Idem pour les services de `tab5-api-logic.yaml`, et là c'est **vérifié** : `tools/check_tab5_code_rules.py` (joué par `pytest`) échoue sur tout `lv_*` du contrat hors `lv_obj_has_flag`, sur tout `sprintf` brut dans `Tab5/` et sur tout `globals:` que personne ne référence.
 3. **Pas de `static` dans une lambda pour de l'état partagé entre deux handlers différents** (`on_short_click`/`on_long_press`) — utiliser un `globals:` (cf. bug `reboot_armed` corrigé le 05/07 ; global retiré le 16/07 quand la console est passée aux overlays de confirmation).
 4. **Pas de `std::string` par valeur ni de `to_string()` dans un hot-path** (sliders, `on_value` fréquents) — `const std::string&` ou buffer `snprintf` statique.
 5. **Toute nouvelle carte/widget répété ≥3 fois** (météo, switches...) doit passer par une fonction C++ builder paramétrée **ou** un template `!include` + `vars` (ex. `climate_hvac_mode_btn.yaml`, `cal_day_cell.yaml` ×42) — jamais un copier-coller YAML. Même règle dans `AGENTS.md`.
@@ -161,11 +173,12 @@ Chaque carte fait **trois** choses, dans cet ordre :
 3. `script.execute: tab5_<jeu>_open` — construit et ouvre la console.
 
 Ne pas recopier la liste des fermetures dans les cartes : elle vit dans
-`tab5_games_close_all` (`tab5-scripts.yaml`), un seul endroit à maintenir.
+`GameRegistry::kGames` (`tab5_registry.cpp`), que `tab5_games_close_all`
+(`tab5-scripts.yaml`) se contente d'appeler — un seul endroit à maintenir.
 
 ### Règles à respecter pour ajouter une 9ᵉ console
 
-Une console n'est **intégrée** que si les six points suivants sont faits. Un seul
+Une console n'est **intégrée** que si les cinq points suivants sont faits. Un seul
 oubli et le jeu est invisible, ou le firmware ne compile pas :
 
 1. `tab5-ha-hmi.yaml` → `includes:` : **tous** les `.h` et `.cpp`, y compris les
@@ -177,11 +190,14 @@ oubli et le jeu est invisible, ou le firmware ne compile pas :
    cosmétique : sans lui, un swipe sur le dashboard peut atterrir sur la page du
    jeu, timer non démarré et pointeurs non injectés ;
 3. `tab5-scripts.yaml` → script `tab5_<jeu>_open` qui injecte les pointeurs LVGL ;
-4. `tab5-scripts.yaml` → ajouter `<Namespace>::close()` dans
-   **`tab5_games_close_all`** (liste unique, ne jamais la recopier ailleurs) ;
-5. `game_selector.yaml` → une carte dans la grille ;
-6. `tab5-imu.yaml` → `<Namespace>::on_imu(...)`, et `<Namespace>::is_open()` dans
-   la liste de poll rapide **uniquement** si le jeu pilote à l'inclinaison.
+4. `tab5_registry.cpp` → une ligne dans **`GameRegistry::kGames`** (libellé,
+   `is_open`, `close`, `on_imu`, et `imu_fast` à `true` **uniquement** si le jeu
+   pilote à l'inclinaison). C'est la **seule** liste : la fermeture globale
+   (`tab5_games_close_all`), le poll IMU 10/30 Hz, le dispatch des 3 axes et le
+   text_sensor « Écran courant » la lisent tous. `tools/check_tab5_registry.py`
+   (joué par `pytest`) échoue si un `*_game.h` n'y figure pas, ou si un
+   `<Namespace>::is_open()` réapparaît dans un YAML ;
+5. `game_selector.yaml` → une carte dans la grille.
 
 Les icônes MDI utilisées doivent en outre figurer dans la liste `glyphs` de
 `mdi_font_56` / `mdi_font_45` (`tab5-styles.yaml`) : une icône absente de la

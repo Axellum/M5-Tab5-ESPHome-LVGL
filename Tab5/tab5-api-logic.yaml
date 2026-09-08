@@ -5,8 +5,11 @@
 # @payload_contract Chaque service tab5_maj_* reçoit un payload d'une automation HA et doit
 #                   appeler une fonction de tab5_custom.cpp pour traiter la donnée.
 # @ui_mapping Les services mettent à jour l'UI en cascade via les fonctions C++.
-# @ai_instruction Ne change pas les noms des services sans mettre à jour les automations 
-#                 HomeAssistant_Config/automations_tab5.yaml. Ne mets pas de logique LVGL directe ici.
+# @ai_instruction Ne change pas les noms des services sans mettre à jour les automations
+#                 HomeAssistant_Config/automations_tab5.yaml. Ne mets pas de logique LVGL
+#                 directe ici : un service résout ses `id()`, pose ses globals et appelle une
+#                 fonction de tab5_custom.cpp. Vérifié par tools/check_tab5_code_rules.py
+#                 (pytest) : tout `lv_*` autre que lv_obj_has_flag fait échouer la suite.
 # ============================================================================
 api:
 
@@ -78,77 +81,13 @@ api:
             }
 
     - service: tab5_maj_volet_etat
-
       variables:
-
         etat_physique: string
-
       then:
-
         - lambda: |-
-
             if (id(icon_card_shutter_arrow) == nullptr) return;
-
-            if (etat_physique == "En_mouvement") {
-
-              id(volet_en_mouvement) = true;
-
-              lv_label_set_text(id(icon_card_shutter_arrow), "\U000F03E4");
-
-              lv_obj_set_style_text_color(id(icon_card_shutter_arrow), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-
-              if (id(icon_sw1) != nullptr && id(lbl_sw1_state) != nullptr) {
-                lv_obj_set_style_text_color(id(icon_sw1), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-                lv_label_set_text(id(lbl_sw1_state), "Mouvement");
-                lv_obj_set_style_text_color(id(lbl_sw1_state), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-              }
-
-            } else {
-
-              id(volet_en_mouvement) = false;
-
-              if (id(volet_target_open)) {
-
-                lv_label_set_text(id(icon_card_shutter_arrow), "\U000F005D");
-
-              } else {
-
-                lv_label_set_text(id(icon_card_shutter_arrow), "\U000F0045");
-
-              }
-
-              lv_obj_set_style_text_color(id(icon_card_shutter_arrow), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-
-              
-
-              if (etat_physique == "Ouvert" || etat_physique == "Partiel" || etat_physique == "open") {
-
-                lv_label_set_text(id(icon_card_shutter1), "\U000F111E");
-
-                lv_obj_set_style_text_color(id(icon_card_shutter1), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-
-                if (id(icon_sw1) != nullptr && id(lbl_sw1_state) != nullptr) {
-                  lv_obj_set_style_text_color(id(icon_sw1), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-                  lv_label_set_text(id(lbl_sw1_state), "Ouvert");
-                  lv_obj_set_style_text_color(id(lbl_sw1_state), lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-                }
-
-              } else if (etat_physique == "Ferme" || etat_physique == "closed") {
-
-                lv_label_set_text(id(icon_card_shutter1), "\U000F111C");
-
-                lv_obj_set_style_text_color(id(icon_card_shutter1), lv_color_hex(UIColor::ERROR), LV_PART_MAIN);
-
-                if (id(icon_sw1) != nullptr && id(lbl_sw1_state) != nullptr) {
-                  lv_obj_set_style_text_color(id(icon_sw1), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-                  lv_label_set_text(id(lbl_sw1_state), "Fermé");
-                  lv_obj_set_style_text_color(id(lbl_sw1_state), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-                }
-
-              }
-
-            }
-
+            VoletUI ui{id(icon_card_shutter_arrow), id(icon_card_shutter1), id(icon_sw1), id(lbl_sw1_state)};
+            id(volet_en_mouvement) = update_volet_ui(etat_physique, id(volet_target_open), ui);
         - if:
             condition:
               lambda: 'return etat_physique == "En_mouvement";'
@@ -170,27 +109,14 @@ api:
       then:
         - lambda: |-
             if (id(clim_target) == nullptr || id(clim_target_popup) == nullptr) return;
-
             float f_target = atof(target.c_str());
             float f_current = atof(current.c_str());
-
             id(clim_target_temp) = f_target;
-            char buf_target[16];
-            sprintf(buf_target, "%.1f", f_target);
-            lv_label_set_text(id(clim_target), buf_target);
-            lv_label_set_text(id(clim_target_popup), buf_target);
-            lv_arc_set_value(id(arc_temp_popup), (int)f_target);
-
-            char buf_curr[16];
-            sprintf(buf_curr, "%.1f \xC2\xB0""C", f_current);
-            lv_label_set_text(id(val_temp_int_popup), buf_curr);
-
+            update_clim_target_ui(id(clim_target), id(clim_target_popup), id(arc_temp_popup),
+                id(val_temp_int_popup), f_target, f_current);
             id(clim_hvac_mode) = mode;
-
             id(clim_preset_mode) = preset;
-
             id(clim_fan_mode) = fan;
-
             id(clim_swing_mode) = swing;
         # Coloration des icônes déléguée au script centralisé tab5_clim_recolor
         # (tab5-scripts.yaml) — même code que les taps optimistes, une seule source
@@ -203,81 +129,17 @@ api:
       then:
         - lambda: |-
             if (id(lbl_proc_pluie) == nullptr) return;
-            // 1024 (etait 512) : la phrase de vigilance Meteo-France peut etre longue,
-            // un payload complet (11 champs pipe-delimited) depassait parfois 512 et
-            // tronquait silencieusement les derniers champs (#T165).
-            char buf[1024];
-            strncpy(buf, payload.c_str(), sizeof(buf)-1);
-            buf[sizeof(buf)-1] = '\0';
-            char* saveptr;
-            char* phrase_pluie = strtok_r(buf, "|", &saveptr);
-            char* globale = strtok_r(NULL, "|", &saveptr);
-            char* vent = strtok_r(NULL, "|", &saveptr);
-            char* inondation = strtok_r(NULL, "|", &saveptr);
-            char* orages = strtok_r(NULL, "|", &saveptr);
-            char* pluie_inondation = strtok_r(NULL, "|", &saveptr);
-            char* neige_verglas = strtok_r(NULL, "|", &saveptr);
-            char* grand_froid = strtok_r(NULL, "|", &saveptr);
-            char* vagues_submersion = strtok_r(NULL, "|", &saveptr);
-            char* canicule = strtok_r(NULL, "|", &saveptr);
-            char* avalanches = strtok_r(NULL, "|", &saveptr);
+            // 11 champs « | » : phrase pluie, vigilance globale, puis 9 phénomènes
+            // (vent, inondation, orages, pluie-inondation, neige-verglas, grand
+            // froid, vagues-submersion, canicule, avalanches). Découpage, couleur
+            // de la date et 4 slots d'icônes : parse_and_update_vigilance().
+            VigilanceUI ui{id(lbl_proc_pluie), id(lbl_pluie_val), id(lbl_pluie_unit), id(lbl_date),
+                           {id(alerte_slot_0), id(alerte_slot_1), id(alerte_slot_2), id(alerte_slot_3)}};
+            id(has_alerts) = parse_and_update_vigilance(payload, ui);
 
-            if (!phrase_pluie) phrase_pluie = (char*)"";
-            if (!globale) globale = (char*)"";
-            
-            update_rain_phrase_ui(id(lbl_proc_pluie), std::string(phrase_pluie));
-            lv_obj_add_flag(id(lbl_pluie_val), LV_OBJ_FLAG_HIDDEN);
-            lv_obj_add_flag(id(lbl_pluie_unit), LV_OBJ_FLAG_HIDDEN);
-
-            // Couleur de la date selon vigilance globale
-            uint32_t col_date = UIColor::SUCCESS;
-            if (strcmp(globale, "Jaune") == 0) col_date = UIColor::ALERT_DATE_YELLOW;
-            else if (strcmp(globale, "Orange") == 0) col_date = UIColor::ALERT_DATE_ORANGE;
-            else if (strcmp(globale, "Rouge") == 0) col_date = UIColor::ALERT_DATE_RED;
-            lv_obj_set_style_text_color(id(lbl_date), lv_color_hex(col_date), LV_PART_MAIN);
-
-            // Filtrage statique
-            struct AlertEntry { const char* icon; const char* level; };
-            constexpr size_t MAX_ALERTES = 4;
-            AlertEntry actives[MAX_ALERTES];
-            size_t active_count = 0;
-
-            auto check_alert = [&](const char* state, const char* icon_code) {
-              if (active_count >= MAX_ALERTES) return;
-              if (!state || strcmp(state, "Vert") == 0 || strlen(state) == 0 || strcmp(state, "unknown") == 0) return;
-              actives[active_count].icon  = icon_code;
-              actives[active_count].level = state;
-              ++active_count;
-            };
-
-            check_alert(vent, "\U000F059D");
-            check_alert(inondation, "\U000F0EFA");
-            check_alert(orages, "\U000F0593");
-            check_alert(pluie_inondation, "\U000F0596");
-            check_alert(neige_verglas, "\U000F0F36");
-            check_alert(grand_froid, "\U000F0F29");
-            check_alert(vagues_submersion, "\U000F078D");
-            check_alert(canicule, "\U000F0E01");
-            check_alert(avalanches, "\U000F067E");
-
-            id(has_alerts) = (active_count > 0);
-            
-            lv_obj_t* slots[] = {id(alerte_slot_0), id(alerte_slot_1), id(alerte_slot_2), id(alerte_slot_3)};
-            for (size_t i = 0; i < 4; i++) {
-              if (i < active_count) {
-                lv_label_set_text(slots[i], actives[i].icon);
-                uint32_t c = UIColor::ALERT_YELLOW;
-                if (strcmp(actives[i].level, "Orange") == 0) c = UIColor::WARNING;
-                else if (strcmp(actives[i].level, "Rouge") == 0) c = UIColor::ALERT_RED;
-                lv_obj_set_style_text_color(slots[i], lv_color_hex(c), LV_PART_MAIN);
-                lv_obj_set_style_text_opa(slots[i], 255, LV_PART_MAIN);
-                lv_obj_clear_flag(slots[i], LV_OBJ_FLAG_HIDDEN);
-              } else {
-                lv_obj_add_flag(slots[i], LV_OBJ_FLAG_HIDDEN);
-              }
-            }
-
-
+    # `uv` et `gel` sont reçus mais non exploités par l'UI : paramètres RÉSERVÉS.
+    # Le contrat a 3 appelants côté HA, on ne le rétrécit pas ; seule `neige` agit
+    # (flocon si probabilité ≥ 5, sinon goutte colorée par l'hygrométrie).
     - service: tab5_maj_probabilites
       variables:
         uv: string
@@ -286,22 +148,12 @@ api:
       then:
         - lambda: |-
             if (id(j0_day) == nullptr) return;
-            
-            int i_uv = atoi(uv.c_str());
-            int i_gel = atoi(gel.c_str());
-            int i_neige = atoi(neige.c_str());
-            
-            id(global_neige) = i_neige;
-            
-            if(i_neige >= 5) {
-              lv_label_set_text(id(icon_rain_predict), "\U000F0598");
-              lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
-            } else {
-              lv_label_set_text(id(icon_rain_predict), "\U000F0597");
-              uint32_t c_hydro = get_humidity_color((float)id(global_humidite));
-              lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(c_hydro), LV_PART_MAIN);
-            }
+            id(global_neige) = atoi(neige.c_str());
+            update_rain_predict_icon_ui(id(icon_rain_predict), id(global_neige), (float) id(global_humidite));
 
+    # `condition` et `temperature` sont reçus mais non exploités : paramètres
+    # RÉSERVÉS depuis le retrait de la grosse icône météo centrale (même raison,
+    # contrat conservé). Seule `humidite` agit, sur la couleur de la goutte.
     - service: tab5_maj_meteo_actuelle
       variables:
         condition: string
@@ -310,16 +162,12 @@ api:
       then:
         - lambda: |-
             if (id(icon_rain_predict) == nullptr) return;
-
             id(global_humidite) = atof(humidite.c_str());
+            update_rain_predict_icon_ui(id(icon_rain_predict), id(global_neige), (float) id(global_humidite));
 
-            if (id(global_neige) < 5) {
-              uint32_t c_hydro = get_humidity_color((float)id(global_humidite)); // AXE2: factorisation
-              lv_obj_set_style_text_color(id(icon_rain_predict), lv_color_hex(c_hydro), LV_PART_MAIN);
-            }
-
-
-
+    # Une barre par appel : HA pousse 9 appels par rafraîchissement (audit §4.1
+    # point 3 — un service bulk est à faire côté HA + firmware, en gardant
+    # celui-ci le temps de la transition ; rain_level_style() est déjà isolée).
     - service: tab5_maj_pluie_1h
       variables:
         index_5mn: string
@@ -327,47 +175,9 @@ api:
       then:
         - lambda: |-
             if (id(rb_0_in) == nullptr) return;
-            int idx = atoi(index_5mn.c_str());
-
-            uint32_t c_empty = UIColor::CLIM_TRACK_INACTIVE;
-            uint32_t c_faible = UIColor::RAIN_LIGHT;
-            uint32_t c_modere = UIColor::RAIN_MODERATE;
-            uint32_t c_forte = UIColor::RAIN_HEAVY;
-            uint32_t c_tres_forte = UIColor::RAIN_EXTREME;
-
-            uint32_t c = c_empty;
-            int h = 0;
-
-            if (intensite == "Pluie faible") { c = c_faible; h = 13; } // ~1/4 hauteur
-            else if (intensite == "Pluie modérée") { c = c_modere; h = 25; } // 1/2 hauteur
-            else if (intensite == "Pluie forte") { c = c_forte; h = 38; } // 3/4 hauteur
-            else if (intensite == "Pluie très forte" || intensite == "Pluie trés forte") { c = c_tres_forte; h = 50; } // hauteur max
-
-            lv_obj_t* target = NULL;
-
-            switch(idx) {
-              case 0: target = id(rb_0_in); break;
-              case 1: target = id(rb_1_in); break;
-              case 2: target = id(rb_2_in); break;
-              case 3: target = id(rb_3_in); break;
-              case 4: target = id(rb_4_in); break;
-              case 5: target = id(rb_5_in); break;
-              case 6: target = id(rb_6_in); break;
-              case 7: target = id(rb_7_in); break;
-              case 8: target = id(rb_8_in); break;
-            }
-
-            if(target != NULL) {
-              lv_obj_set_style_bg_color(target, lv_color_hex(c), LV_PART_MAIN);
-              lv_obj_set_height(target, h);
-            }
-            
-            bool is_raining = false;
-            lv_obj_t* targets[] = {id(rb_0_in), id(rb_1_in), id(rb_2_in), id(rb_3_in), id(rb_4_in), id(rb_5_in), id(rb_6_in), id(rb_7_in), id(rb_8_in)};
-            for(int i=0; i<9; i++) {
-               if (lv_obj_get_height(targets[i]) > 0) is_raining = true;
-            }
-            id(has_rain) = is_raining;
+            lv_obj_t* const bars[9] = {id(rb_0_in), id(rb_1_in), id(rb_2_in), id(rb_3_in), id(rb_4_in),
+                                       id(rb_5_in), id(rb_6_in), id(rb_7_in), id(rb_8_in)};
+            id(has_rain) = update_rain_bar_ui(atoi(index_5mn.c_str()), intensite, bars);
 
     # Zone d'info de la carte centrale (panneau 3 du rotateur, cf. tab5-globals.yaml) :
     # récap calendrier 3 jours (multi-lignes avec recolor #hex ...#) ou alerte météo
@@ -408,19 +218,12 @@ api:
             condition:
               lambda: 'return !image_url.empty();'
             then:
-              - lambda: |-
-                  if (id(assist_img_hint) != nullptr) {
-                    lv_label_set_text(id(assist_img_hint), "Chargement image...");
-                    lv_obj_clear_flag(id(assist_img_hint), LV_OBJ_FLAG_HIDDEN);
-                  }
-                  if (id(assist_img_widget) != nullptr) lv_obj_add_flag(id(assist_img_widget), LV_OBJ_FLAG_HIDDEN);
+              - lambda: 'assist_image_hint_ui(id(assist_img_hint), id(assist_img_widget), true);'
               - online_image.set_url:
                   id: assist_response_image
                   url: !lambda 'return image_url;'
             else:
-              - lambda: |-
-                  if (id(assist_img_widget) != nullptr) lv_obj_add_flag(id(assist_img_widget), LV_OBJ_FLAG_HIDDEN);
-                  if (id(assist_img_hint) != nullptr) lv_obj_add_flag(id(assist_img_hint), LV_OBJ_FLAG_HIDDEN);
+              - lambda: 'assist_image_hint_ui(id(assist_img_hint), id(assist_img_widget), false);'
         - script.execute: tab5_assist_open
 
     - service: tab5_maj_alertes_ha_bulk

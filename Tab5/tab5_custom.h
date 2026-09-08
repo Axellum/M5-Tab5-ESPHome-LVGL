@@ -97,7 +97,7 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj);
 // =============================================================================
 // Helpers d'animation LVGL (popups, swipe, alertes)
 // Réutilisent les patterns lv_anim_t de transition_widgets() (callbacks
-// anim_y_cb/anim_opa_cb/anim_scale_cb/anim_x_cb/anim_ty_cb).
+// anim_y_cb/anim_opa_cb/anim_x_cb/anim_ty_cb).
 //
 // [28/07/2026] Passe « animations légères » : toutes les durées et amplitudes
 // sont regroupées ici (UIAnim) — c'était la seule façon de les régler d'un
@@ -166,9 +166,6 @@ void animate_popup_close(lv_obj_t* card, lv_obj_t* scrim);
 // repart de LV_OPA_COVER, la rejouer sur un popup à moitié effacé le
 // rallumerait d'un coup avant de le refaire disparaître.
 bool close_popup_if_open(lv_obj_t* card);
-
-// true si au moins un des popups passés est visible (flag HIDDEN absent).
-bool any_popup_visible(lv_obj_t* const* cards, int n);
 
 // Glissement horizontal + fondu croisé entre deux layers (swipe prévisions).
 // dir = LV_DIR_LEFT (in arrive de la droite, out part à gauche) ou
@@ -356,6 +353,64 @@ void tab5_dismiss_local_prune(std::string& store, const std::vector<std::string>
 
 void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase);
 
+// -----------------------------------------------------------------------------
+// Services HA (tab5-api-logic.yaml) : logique LVGL sortie des lambdas le
+// 08/09/2026 (ADR-0006, audit du 06/09 §4.1 point 1). Un service ne fait plus
+// que résoudre ses `id()`, poser ses globals et appeler l'une de ces fonctions ;
+// tools/check_tab5_code_rules.py (pytest) interdit tout `lv_*` dans le contrat
+// (hors lv_obj_has_flag, lecture pure).
+// -----------------------------------------------------------------------------
+
+// Carte volet : flèche (mouvement / sens de la dernière commande), icône du
+// volet, et la ligne « Volet » du panneau switches (sw_icon / sw_label peuvent
+// être nuls : la ligne est optionnelle).
+struct VoletUI {
+    lv_obj_t* arrow;     // icon_card_shutter_arrow
+    lv_obj_t* shutter;   // icon_card_shutter1
+    lv_obj_t* sw_icon;   // icon_sw1
+    lv_obj_t* sw_label;  // lbl_sw1_state
+};
+
+// etat_physique poussé par HA : "En_mouvement", "Ouvert" / "Partiel" / "open",
+// "Ferme" / "closed" (autre valeur : flèche au repos, icône du volet inchangée).
+// target_open = sens de la dernière commande (volet_target_open). Retourne true
+// si le volet est en mouvement — à stocker dans volet_en_mouvement.
+bool update_volet_ui(const std::string& etat_physique, bool target_open, const VoletUI& ui);
+
+// Vigilance Météo-France : phrase pluie, date recolorée, 4 slots d'icônes.
+struct VigilanceUI {
+    lv_obj_t* lbl_phrase;      // lbl_proc_pluie
+    lv_obj_t* lbl_pluie_val;   // masqués quand la phrase s'affiche
+    lv_obj_t* lbl_pluie_unit;
+    lv_obj_t* lbl_date;        // recoloré selon la vigilance globale
+    lv_obj_t* slots[4];        // alerte_slot_0..3
+};
+
+// payload = 11 champs séparés par « | » : phrase pluie, vigilance globale
+// (Vert / Jaune / Orange / Rouge), puis vent, inondation, orages,
+// pluie-inondation, neige-verglas, grand froid, vagues-submersion, canicule,
+// avalanches. Les 4 premiers phénomènes ≠ Vert remplissent les slots (jaune /
+// orange / rouge). Retourne true si au moins un phénomène est actif — à
+// stocker dans has_alerts.
+bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& ui);
+
+// Histogramme pluie 1 h : 9 barres de 5 min (rb_0_in … rb_8_in). intensite =
+// libellé Météo-France (« Pluie faible » … « Pluie très forte »), tout autre
+// texte vide la barre. Retourne true si au moins une barre est non vide — à
+// stocker dans has_rain.
+bool update_rain_bar_ui(int idx, const std::string& intensite, lv_obj_t* const bars[9]);
+
+// Icône « pluie prédictive » de la carte centrale : flocon ambre si la
+// probabilité de neige ≥ 5, sinon goutte colorée par l'hygrométrie
+// (get_humidity_color). Appelée par tab5_maj_probabilites ET
+// tab5_maj_meteo_actuelle : les deux services partagent le même rendu.
+void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite);
+
+// Clim : cible (carte + popup + arc) et température intérieure du popup. Les
+// modes restent dans les globals, recolorés par le script tab5_clim_recolor.
+void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* lbl_target_popup, lv_obj_t* arc,
+    lv_obj_t* lbl_current, float target, float current);
+
 void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::string& l2,
     std::string& plan_ligne_1, std::string& plan_ligne_2);
 
@@ -512,6 +567,11 @@ void hide_vocal_response_ui(lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal, CentralPa
 //    (comptage en points de code UTF-8, pas en octets) et supprime la ligne
 //    séparatrice |---|---|. Rend les tableaux lisibles sans moteur de rendu.
 std::string format_assist_markdown(const std::string& in);
+
+// Zone image de la réponse (service tab5_assist_reponse) : loading = true
+// affiche « Chargement image... » et masque l'image le temps du téléchargement
+// online_image ; loading = false masque les deux (pas d'image dans la réponse).
+void assist_image_hint_ui(lv_obj_t* hint, lv_obj_t* img, bool loading);
 
 // Renseigne la bulle "Votre demande" (texte STT normalisé UTF-8).
 void assist_set_request(lv_obj_t* lbl_request, const std::string& texte);

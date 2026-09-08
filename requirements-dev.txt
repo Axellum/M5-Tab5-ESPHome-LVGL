@@ -1,6 +1,6 @@
 # Outils Python du dépôt (aucun n'est nécessaire pour compiler le firmware).
 #   pip install -r requirements-dev.txt
 pytest>=8          # tests/ + tools/test_*.py (config : pyproject.toml)
-numpy>=1.26        # tools/check_marble_rooms.py (grille d'occupation de la bille)
+numpy>=2.5.2        # tools/check_marble_rooms.py (grille d'occupation de la bille)
 aioesphomeapi      # tools/demo/demo_pusher.py (mode démo sans Home Assistant)
 fonttools>=4.64.0    # tools/make_chess_font.py (sous-ensemble ChessPieces.ttf)

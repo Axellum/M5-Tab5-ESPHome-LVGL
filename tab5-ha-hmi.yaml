@@ -70,6 +70,11 @@ esphome:
     # ORIENTATION en tête de pinball_game.cpp avant d'y toucher.
     - Tab5/pinball_game.h
     - Tab5/pinball_game.cpp
+    # Registre unique des consoles (GameRegistry::kGames) et des fenêtres
+    # modales (ModalRegistry) — ADR-0013. Le .cpp inclut lui-même les 8
+    # *_game.h : garder ces deux lignes APRÈS les consoles.
+    - Tab5/tab5_registry.h
+    - Tab5/tab5_registry.cpp
     # Réveil matin + annonce des rendez-vous — moteur PUR (dates, calendrier,
     # machine d'état), aucune dépendance HA ni réseau. Il lit `cal_jours_data[]`
     # de tab5_custom.h : garder cet ordre d'inclusion.
