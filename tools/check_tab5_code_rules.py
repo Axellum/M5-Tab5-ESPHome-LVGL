@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""Règles de code du firmware Tab5, jouées à chaque `pytest` (audit du 06/09/2026,
+§4.1 points 1, 4 et §4.2 point 17 ; ADR-0006). Trois règles, toutes
+falsifiables sur le dépôt réel :
+
+  1. **`snprintf` partout** : aucun `sprintf(` brut dans `Tab5/*.cpp`, `*.h`,
+     `*.yaml` ni `tab5-ha-hmi.yaml`. Un futur `%s` sur un buffer de 16 octets ne
+     doit pas pouvoir déborder en silence.
+  2. **Aucune logique LVGL dans `tab5-api-logic.yaml`** : les services résolvent
+     les `id()` et appellent `tab5_custom.cpp`. Seul `lv_obj_has_flag` (lecture
+     pure, dans une condition) est toléré.
+  3. **Aucun global orphelin** dans `tab5-globals.yaml` : chaque `- id:` du bloc
+     `globals:` doit être lu ou écrit quelque part (`id(x)` dans une lambda,
+     `id: x` dans une action `globals.set` / `globals.increment`…). Un global
+     que personne ne référence est du code mort qui trompe le lecteur.
+
+Usage : python tools/check_tab5_code_rules.py   (aussi lancé par `pytest`, tests/test_guards.py)
+Sortie : 0 si tout est conforme, 1 sinon (liste des écarts sur stdout).
+"""
+
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent
+TAB5 = REPO / "Tab5"
+ENTRY = REPO / "tab5-ha-hmi.yaml"
+API_LOGIC = TAB5 / "tab5-api-logic.yaml"
+GLOBALS_YAML = TAB5 / "tab5-globals.yaml"
+
+RE_SPRINTF = re.compile(r"(?<![A-Za-z_])sprintf\s*\(")
+RE_LV_CALL = re.compile(r"\b(lv_[a-z0-9_]+)\s*\(")
+LV_ALLOWED_IN_API = {"lv_obj_has_flag"}
+RE_GLOBAL_DEF = re.compile(r"^  - id: (\w+)\s*$", re.M)
+RE_TOP_KEY = re.compile(r"^[a-z_]+:", re.M)
+
+
+def strip_yaml_comments(text: str) -> str:
+    return "\n".join(l for l in text.splitlines() if not l.lstrip().startswith("#"))
+
+
+def strip_cpp_comments(text: str) -> str:
+    text = "\n".join(l.split("//", 1)[0] for l in text.splitlines())
+    return re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+
+
+def firmware_sources(tab5: Path = TAB5, entry: Path = ENTRY) -> list[Path]:
+    files = sorted(tab5.glob("*.cpp")) + sorted(tab5.glob("*.h"))
+    files += sorted(tab5.glob("*.yaml")) + sorted((tab5 / "ui_components").glob("*.yaml"))
+    if entry.is_file():
+        files.append(entry)
+    return files
+
+
+def globals_defined(globals_yaml: Path = GLOBALS_YAML) -> list[str]:
+    """Les `- id:` du bloc `globals:` uniquement (le fichier porte aussi un interval)."""
+    text = globals_yaml.read_text(encoding="utf-8")
+    start = text.find("\nglobals:")
+    if start < 0:
+        return []
+    rest = text[start + len("\nglobals:"):]
+    m = RE_TOP_KEY.search(rest, 1)
+    block = rest if m is None else rest[: m.start()]
+    return RE_GLOBAL_DEF.findall(strip_yaml_comments(block))
+
+
+def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
+    problems: list[str] = []
+    api_logic = tab5 / "tab5-api-logic.yaml"
+    globals_yaml = tab5 / "tab5-globals.yaml"
+    for required in (api_logic, globals_yaml):
+        if not required.is_file():
+            return [f"fichier introuvable : {required}"]
+
+    sources = firmware_sources(tab5, entry)
+
+    # 1. sprintf brut
+    for path in sources:
+        text = path.read_text(encoding="utf-8")
+        text = strip_yaml_comments(text) if path.suffix == ".yaml" else strip_cpp_comments(text)
+        for lineno, line in enumerate(text.splitlines(), 1):
+            if RE_SPRINTF.search(line):
+                problems.append(f"{path.name}:{lineno} : sprintf brut — utiliser snprintf(buf, sizeof(buf), …)")
+
+    # 2. lv_* dans le contrat API
+    api_text = strip_yaml_comments(api_logic.read_text(encoding="utf-8"))
+    for lineno, line in enumerate(api_text.splitlines(), 1):
+        for m in RE_LV_CALL.finditer(line):
+            if m.group(1) not in LV_ALLOWED_IN_API:
+                problems.append(
+                    f"{api_logic.name}:{lineno} : {m.group(1)}() — logique LVGL interdite ici, "
+                    f"la déplacer dans tab5_custom.cpp (ADR-0006)"
+                )
+
+    # 3. globals orphelins
+    corpus: list[tuple[Path, str]] = []
+    for path in sources:
+        text = path.read_text(encoding="utf-8")
+        corpus.append((path, strip_yaml_comments(text) if path.suffix == ".yaml" else text))
+    for name in globals_defined(globals_yaml):
+        pattern = re.compile(rf"\bid\(\s*{re.escape(name)}\s*\)|\bid:\s*{re.escape(name)}\b")
+        used = False
+        for path, text in corpus:
+            for line in text.splitlines():
+                if path == globals_yaml and re.fullmatch(rf"  - id: {re.escape(name)}\s*", line):
+                    continue  # la définition elle-même
+                if pattern.search(line):
+                    used = True
+                    break
+            if used:
+                break
+        if not used:
+            problems.append(f"{globals_yaml.name} : global `{name}` défini mais jamais référencé (id({name}) / id: {name}) — code mort")
+
+    return problems
+
+
+def main() -> int:
+    problems = scan()
+    if problems:
+        print("[KO] règles de code Tab5 — écarts :")
+        for p in problems:
+            print("  -", p)
+        return 1
+    print("[OK] règles de code Tab5 : snprintf partout, api-logic sans LVGL, aucun global orphelin")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
