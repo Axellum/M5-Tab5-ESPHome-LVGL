@@ -4,6 +4,31 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — Firmware : pipeline vocal et mot de réveil, un état et une table au lieu de cinq copies et cinq niveaux d'if
+
+Lot (c) du plan §8 de l'audit du 06/09/2026 (§4.1 points 6 et 7). Rien ne change
+à l'oreille ni à l'écran ; OTA validée (voir la PR).
+
+- **`assist_set_pipeline_state(icon, label, AssistState)`** remplace le bloc
+  « couleur de l'icône micro + texte + couleur du label statut » recopié dans les
+  cinq callbacks `voice_assistant:` (`on_listening`, `on_stt_end`, `on_tts_start`,
+  `on_end`, `on_error`). `assist_set_mic_state()` pour l'icône seule (retour au gris
+  après une erreur, interruption, accusé de réception du volet).
+- **`WakeWord::decide(Inputs)`** : les cinq niveaux d'`if/else` de
+  `on_wake_word_detected` deviennent une table à six sorties (`ALARM_STOP`,
+  `VOLET_STOP`, `INTERRUPT_LISTEN`, `START_PIPELINE`, `IGNORE_STOP`,
+  `IGNORE_INACTIVE`), même ordre de priorité. Le trigger lit les entrées une
+  fois, journalise la décision à INFO (seule trace d'un mot de réveil, événement
+  rare), et le script `tab5_wake_word_dispatch` exécute l'action.
+- **`assist_image_state_ui(hint, img, AssistImage)`** (NONE / LOADING / READY /
+  ERROR) remplace `assist_image_hint_ui()` de la veille et les deux callbacks
+  `online_image` ; `assist_wake_word_indicator_ui()` pour « Ok Nabu: ON / OFF ».
+- `tab5-hardware.yaml` ne contient plus aucun `lv_*` : le garde-fou
+  `tools/check_tab5_code_rules.py` l'impose désormais, comme pour le contrat API.
+- Homonyme corrigé : la fonction de #106 qui applique le retour HA de la clim
+  s'appelle `update_clim_from_ha_ui()` ; `update_clim_target_ui()` (3 arguments,
+  affichage optimiste local) existait déjà.
+
 ### 2026-09-08 — Firmware : le contrat API n'a plus de logique LVGL, `snprintf` partout, code mort retiré
 
 Lot (a) du plan §8 de l'audit du 06/09/2026. Rien ne change à l'écran ; OTA
@@ -15,7 +40,7 @@ validée sur la tablette (voir la PR).
   ne font plus que résoudre les `id()` et poser les globals. La logique vit dans
   `tab5_custom.cpp` : `update_volet_ui()`, `parse_and_update_vigilance()`,
   `update_rain_bar_ui()`, `update_rain_predict_icon_ui()` (partagée par probabilités
-  et météo actuelle), `update_clim_target_ui()`, `assist_image_hint_ui()`. Le fichier
+  et météo actuelle), `update_clim_from_ha_ui()`, `assist_image_state_ui()`. Le fichier
   passe de 528 à 331 lignes et ne contient plus aucun `lv_*` hors
   `lv_obj_has_flag`. Contrat HA inchangé (mêmes services, mêmes paramètres).
 - **Paramètres réservés documentés** : `condition`/`temperature` (météo actuelle) et

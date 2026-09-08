@@ -317,10 +317,7 @@ script:
           service: media_player.media_stop
           data:
             entity_id: media_player.m5stack_tab5_home_assistant_hmi_tab5_media_player
-      - lambda: |-
-          if (id(icon_mic_status) != nullptr) {
-            lv_obj_set_style_text_color(id(icon_mic_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-          }
+      - lambda: 'assist_set_mic_state(id(icon_mic_status), AssistState::IDLE);'
 
   # Interruption puis ré-écoute immédiate (tap micro / barge-in Discussion).
   - id: tab5_vocal_interrupt_and_listen
@@ -330,6 +327,45 @@ script:
       - delay: 500ms
       - voice_assistant.start:
           id: va
+
+  # Exécute l'action décidée par WakeWord::decide() (on_wake_word_detected,
+  # tab5-hardware.yaml). `parallel` : chaque détection garde sa propre
+  # séquence, comme quand tout vivait dans le trigger. Les cas IGNORE_* n'ont
+  # rien à faire : la décision est déjà journalisée à INFO par le trigger.
+  - id: tab5_wake_word_dispatch
+    mode: parallel
+    parameters:
+      action: int
+      wake_word: string
+    then:
+      - if:
+          condition:
+            lambda: 'return action == WakeWord::ALARM_STOP;'
+          then:
+            - script.execute: tab5_alarm_stop
+      - if:
+          condition:
+            lambda: 'return action == WakeWord::VOLET_STOP;'
+          then:
+            - script.execute: tab5_volet_end_movement
+            - homeassistant.service:
+                service: script.tab5_volet_action
+                data:
+                  action: stop
+            - script.execute: tab5_volet_stop_voice_feedback
+            # Orange sur l'icône micro = accusé de réception (même teinte qu'« Analyse… »).
+            - lambda: 'assist_set_mic_state(id(icon_mic_status), AssistState::THINKING);'
+      - if:
+          condition:
+            lambda: 'return action == WakeWord::INTERRUPT_LISTEN;'
+          then:
+            - script.execute: tab5_vocal_interrupt_and_listen
+      - if:
+          condition:
+            lambda: 'return action == WakeWord::START_PIPELINE;'
+          then:
+            - voice_assistant.start:
+                wake_word: !lambda return wake_word;
 
   # Tap micro : coupe si assistant actif puis ré-écoute, sinon démarre (Click to Converse).
   - id: tab5_assist_toggle
@@ -965,8 +1001,7 @@ script:
           esphome::font::Font* f = id(assist_text_size) == 0 ? id(roboto_mono_20)
                                  : (id(assist_text_size) == 2 ? id(roboto_mono_28) : id(roboto_mono_24));
           assist_set_response(id(lbl_assist_response), std::string("Reflexion..."), f);
-          if (id(assist_img_widget) != nullptr) lv_obj_add_flag(id(assist_img_widget), LV_OBJ_FLAG_HIDDEN);
-          if (id(assist_img_hint) != nullptr) lv_obj_add_flag(id(assist_img_hint), LV_OBJ_FLAG_HIDDEN);
+          assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::NONE);
       - if:
           condition:
             lambda: 'return id(conversation_mode) || id(assist_popup_open);'

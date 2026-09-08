@@ -6,9 +6,11 @@ falsifiables sur le dépôt réel :
   1. **`snprintf` partout** : aucun `sprintf(` brut dans `Tab5/*.cpp`, `*.h`,
      `*.yaml` ni `tab5-ha-hmi.yaml`. Un futur `%s` sur un buffer de 16 octets ne
      doit pas pouvoir déborder en silence.
-  2. **Aucune logique LVGL dans `tab5-api-logic.yaml`** : les services résolvent
-     les `id()` et appellent `tab5_custom.cpp`. Seul `lv_obj_has_flag` (lecture
-     pure, dans une condition) est toléré.
+  2. **Aucune logique LVGL dans `tab5-api-logic.yaml` ni `tab5-hardware.yaml`** :
+     les services et les callbacks (voice_assistant, micro_wake_word, online_image)
+     résolvent les `id()` et appellent `tab5_custom.cpp`. Dans le contrat API,
+     seul `lv_obj_has_flag` (lecture pure, dans une condition) est toléré ; dans
+     le fichier matériel, rien.
   3. **Aucun global orphelin** dans `tab5-globals.yaml` : chaque `- id:` du bloc
      `globals:` doit être lu ou écrit quelque part (`id(x)` dans une lambda,
      `id: x` dans une action `globals.set` / `globals.increment`…). Un global
@@ -28,11 +30,16 @@ REPO = Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 ENTRY = REPO / "tab5-ha-hmi.yaml"
 API_LOGIC = TAB5 / "tab5-api-logic.yaml"
+HARDWARE = TAB5 / "tab5-hardware.yaml"
 GLOBALS_YAML = TAB5 / "tab5-globals.yaml"
 
 RE_SPRINTF = re.compile(r"(?<![A-Za-z_])sprintf\s*\(")
 RE_LV_CALL = re.compile(r"\b(lv_[a-z0-9_]+)\s*\(")
-LV_ALLOWED_IN_API = {"lv_obj_has_flag"}
+# fichier → appels lv_* tolérés (lecture pure). Tout le reste est interdit.
+LV_ALLOWED = {
+    "tab5-api-logic.yaml": {"lv_obj_has_flag"},
+    "tab5-hardware.yaml": set(),
+}
 RE_GLOBAL_DEF = re.compile(r"^  - id: (\w+)\s*$", re.M)
 RE_TOP_KEY = re.compile(r"^[a-z_]+:", re.M)
 
@@ -69,8 +76,9 @@ def globals_defined(globals_yaml: Path = GLOBALS_YAML) -> list[str]:
 def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     problems: list[str] = []
     api_logic = tab5 / "tab5-api-logic.yaml"
+    hardware = tab5 / "tab5-hardware.yaml"
     globals_yaml = tab5 / "tab5-globals.yaml"
-    for required in (api_logic, globals_yaml):
+    for required in (api_logic, hardware, globals_yaml):
         if not required.is_file():
             return [f"fichier introuvable : {required}"]
 
@@ -84,15 +92,17 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
             if RE_SPRINTF.search(line):
                 problems.append(f"{path.name}:{lineno} : sprintf brut — utiliser snprintf(buf, sizeof(buf), …)")
 
-    # 2. lv_* dans le contrat API
-    api_text = strip_yaml_comments(api_logic.read_text(encoding="utf-8"))
-    for lineno, line in enumerate(api_text.splitlines(), 1):
-        for m in RE_LV_CALL.finditer(line):
-            if m.group(1) not in LV_ALLOWED_IN_API:
-                problems.append(
-                    f"{api_logic.name}:{lineno} : {m.group(1)}() — logique LVGL interdite ici, "
-                    f"la déplacer dans tab5_custom.cpp (ADR-0006)"
-                )
+    # 2. lv_* dans le contrat API et le fichier matériel
+    for path in (api_logic, hardware):
+        allowed = LV_ALLOWED.get(path.name, set())
+        text = strip_yaml_comments(path.read_text(encoding="utf-8"))
+        for lineno, line in enumerate(text.splitlines(), 1):
+            for m in RE_LV_CALL.finditer(line):
+                if m.group(1) not in allowed:
+                    problems.append(
+                        f"{path.name}:{lineno} : {m.group(1)}() — logique LVGL interdite ici, "
+                        f"la déplacer dans tab5_custom.cpp (ADR-0006)"
+                    )
 
     # 3. globals orphelins
     corpus: list[tuple[Path, str]] = []
@@ -124,7 +134,7 @@ def main() -> int:
         for p in problems:
             print("  -", p)
         return 1
-    print("[OK] règles de code Tab5 : snprintf partout, api-logic sans LVGL, aucun global orphelin")
+    print("[OK] règles de code Tab5 : snprintf partout, api-logic et hardware sans LVGL, aucun global orphelin")
     return 0
 
 
