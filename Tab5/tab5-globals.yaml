@@ -41,7 +41,7 @@ globals:
   - id: global_humidite
     type: float
     initial_value: '50.0'
-  
+
   - id: plan_ligne_1
     type: std::string
     initial_value: '""'
@@ -220,5 +220,3 @@ globals:
     type: std::string
     initial_value: '""'
     restore_value: false
-
-

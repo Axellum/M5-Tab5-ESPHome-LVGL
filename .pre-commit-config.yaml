@@ -1,0 +1,39 @@
+# Garde-fous locaux avant chaque commit (audit du 06/09/2026, §6 : « yamllint,
+# détection de BOM et vérificateur de secrets suffiraient »).
+#
+# Installation, une fois :
+#   pip install -r requirements-dev.txt
+#   pre-commit install            # pose .git/hooks/pre-commit
+# À la main sur tout le dépôt :
+#   pre-commit run --all-files
+#
+# La CI (job `python`) rejoue `pre-commit run --all-files` : ce qui passe ici
+# passe là-bas. Rien ici ne modifie un fichier — les hooks signalent, ils ne
+# corrigent pas.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Détection seulement (« deprecated » au profit de fix-byte-order-marker, qui
+      # réécrit le fichier : on préfère signaler). Un BOM UTF-8 casse ESPHome et !include.
+      - id: check-byte-order-marker
+      - id: check-merge-conflict
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
+    hooks:
+      - id: yamllint                     # règles dans .yamllint (base « relaxed »)
+        args: ["--strict"]               # les avertissements aussi font échouer
+  - repo: local
+    hooks:
+      - id: verifier-secrets
+        name: aucun secret en clair dans un fichier suivi (tools/verifier_secrets_config.py)
+        entry: python tools/verifier_secrets_config.py
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: render-ha-config-check
+        name: aucun identifiant HA réel dans un fichier public (tools/render_ha_config.py --check)
+        entry: python tools/render_ha_config.py --check
+        language: system
+        pass_filenames: false
+        always_run: true

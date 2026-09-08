@@ -4,6 +4,28 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — Outillage : pre-commit (yamllint, BOM, secrets, placeholders HA)
+
+Audit du 06/09/2026, §6 (« pas de pre-commit : yamllint, détection de BOM et vérificateur
+de secrets suffiraient »).
+
+- `.pre-commit-config.yaml` : `check-byte-order-marker` + `check-merge-conflict`
+  (pre-commit-hooks v5.0.0), `yamllint --strict` (v1.38.0, règles dans `.yamllint`), et deux
+  hooks locaux, `tools/verifier_secrets_config.py` et `tools/render_ha_config.py --check`.
+  Aucun hook ne modifie un fichier : ils signalent. `pre-commit install` une fois
+  (CONTRIBUTING, AGENTS), la CI rejoue `pre-commit run --all-files` dans le job `python`.
+- `.yamllint` : base « relaxed », sans `line-length` (lambdas, Jinja), `new-lines` (CRLF
+  Windows), `truthy` (`on:`/`off:`), `document-start` ni `commas` (alignement voulu des
+  mappings en ligne) ; le fragment `snippets/tab5_alerts_dismissed_input_text.yaml`
+  (indenté par construction) et `rendered/` sont ignorés.
+- Pour que tout le dépôt passe du premier coup : espaces en fin de ligne retirés sur 12
+  lignes (`template_sensors_examples.yaml`, `tab5-globals.yaml`, `tab5-lvgl.yaml`, les deux
+  fichiers sensors), lignes vides finales retirées dans cinq YAML ESPHome, et la liste
+  `then:` du `on_boot` `priority: 600` de `tab5-ha-hmi.yaml` indentée comme les autres
+  (`indent-sequences: consistent`) — même document YAML, vérifié par comparaison des
+  arbres chargés avant/après.
+- `requirements-dev.txt` : `pre-commit`, `yamllint`.
+
 ### 2026-09-08 — HA : script de notification santé, acquittement sans push lourd, macros Jinja du calendrier
 
 Audit du 06/09/2026, §5. Fichiers publics de `HomeAssistant_Config/` uniquement — à redéployer

@@ -1,0 +1,23 @@
+# yamllint — configuration du dépôt (hook pre-commit et CI).
+#
+# Base « relaxed » : les YAML ESPHome et Home Assistant sont longs (lambdas C++,
+# templates Jinja) et pleins de tags (!secret, !include, !lambda). On ne garde
+# que ce qui attrape une vraie erreur (syntaxe, clés dupliquées, indentation
+# incohérente) et l'hygiène visible (espaces en fin de ligne, lignes vides en
+# trop en fin de fichier). Tout le reste est du goût, pas de la correction.
+extends: relaxed
+
+rules:
+  line-length: disable        # lambdas C++ et templates Jinja sur une ligne
+  new-lines: disable          # CRLF dans l'arbre de travail Windows (core.autocrlf), LF dans git
+  truthy: disable             # `on:` / `off:` sont des états HA et des déclencheurs ESPHome
+  document-start: disable     # aucun fichier du dépôt ne commence par ---
+  commas: disable             # alignement volontaire des mappings en ligne (forecast_*.yaml)
+
+ignore: |
+  # Fragment à coller sous `input_text:` de configuration.yaml : indenté par
+  # construction, ce n'est pas un document YAML autonome.
+  HomeAssistant_Config/snippets/tab5_alerts_dismissed_input_text.yaml
+  # Rendu local gitignoré (copie déployable), archives hors dépôt.
+  HomeAssistant_Config/rendered/
+  archives/

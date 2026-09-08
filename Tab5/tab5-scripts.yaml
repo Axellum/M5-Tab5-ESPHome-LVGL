@@ -1149,4 +1149,3 @@ interval:
               pbars,
               id(page_title_wrapper), id(lbl_page_title),
               g_central_ctx);
-
