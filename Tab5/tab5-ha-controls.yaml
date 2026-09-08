@@ -7,10 +7,14 @@
 # @architecture_constraint Ce fichier ne construit AUCUN widget LVGL. Il se
 #       contente (a) de lire l'état de l'UI et (b) de rejouer exactement les
 #       mêmes chemins d'ouverture que les boutons de l'écran — pour que l'état
-#       soit strictement identique qu'on passe par le doigt ou par HA. Toute
-#       nouvelle modale doit être ajoutée aux DEUX tables ci-dessous
-#       (`kScreens` du text_sensor, `switch` du select), sinon HA affichera
-#       « Accueil » alors qu'un popup couvre l'écran.
+#       soit strictement identique qu'on passe par le doigt ou par HA. La liste
+#       des fenêtres vit dans ModalRegistry (remplie par
+#       `tab5_modal_registry_init`, tab5-scripts.yaml) : une nouvelle modale
+#       s'y enregistre UNE fois, le text_sensor la nomme aussitôt. Pour l'ouvrir
+#       depuis HA, ajouter en plus son option au `select` ci-dessous avec le
+#       MÊME libellé (c'est par ce nom que `ModalRegistry::find()` la retrouve —
+#       tools/check_tab5_registry.py le vérifie), et un `case` si son ouverture
+#       passe par un script.
 # @ai_instruction Le volume ne s'écrit JAMAIS directement ici : tout passe par
 #       `script.tab5_volume_apply` (tab5-scripts.yaml), point d'entrée unique
 #       partagé avec les deux sliders de l'écran.
@@ -54,38 +58,18 @@ text_sensor:
       // annoncerait « Arcade » en permanence, et un popup laissé ouvert
       // masquerait un jeu en cours.
       if (!id(page_main)->is_showing()) {
-        if (Marble::is_open())   return {std::string("Jeu · Fil d'Or")};
-        if (Arkanoid::is_open()) return {std::string("Jeu · Arcanoïde")};
-        if (Lode::is_open())     return {std::string("Jeu · Coureur d'Or")};
-        if (Go::is_open())       return {std::string("Jeu · Go Tab")};
-        if (Trivia::is_open())   return {std::string("Jeu · Trial Poursuite")};
-        if (Draughts::is_open()) return {std::string("Jeu · Dames Tab")};
-        if (Chess::is_open())    return {std::string("Jeu · Roi Noir")};
-        if (Pinball::is_open())  return {std::string("Jeu · Neon Apron")};
+        const char* game = GameRegistry::open_name();
+        if (game != nullptr) return {std::string("Jeu · ") + game};
         return {std::string("Arcade")};
       }
 
-      struct Screen { lv_obj_t* obj; const char* name; };
       // Ordre = priorité d'affichage : les popups couvrent le dashboard, on
-      // nomme donc le premier visible. L'écran de SONNERIE du réveil est en
-      // tête : c'est le seul calque qui couvre aussi les fenêtres modales, et
-      // savoir à distance que la tablette est en train de sonner prime sur tout
-      // le reste.
-      static const Screen kScreens[] = {
-          {id(alarm_ring_layer),      "Réveil qui sonne"},
-          {id(alarm_popup),           "Réveil"},
-          {id(assistant_popup),       "Assistant vocal"},
-          {id(calendar_popup),        "Calendrier"},
-          {id(light_options_popup),   "Lumières"},
-          {id(clim_options_popup),    "Climatisation"},
-          {id(pots_detail_popup),     "Plantes"},
-          {id(tv_remote_popup),       "Télécommande TV"},
-          {id(layer_console_sys),     "Console système"},
-      };
-      for (const auto& s : kScreens) {
-        if (s.obj != nullptr && !lv_obj_has_flag(s.obj, LV_OBJ_FLAG_HIDDEN))
-          return {std::string(s.name)};
-      }
+      // nomme donc le premier visible. C'est l'ordre d'enregistrement de
+      // tab5_modal_registry_init (tab5-scripts.yaml), sonnerie du réveil en
+      // tête : c'est le seul calque qui couvre aussi les fenêtres modales.
+      id(tab5_modal_registry_init).execute();
+      const char* modal = ModalRegistry::visible_name();
+      if (modal != nullptr) return {std::string(modal)};
       // Rien par-dessus : on nomme le panneau du rotateur central (8 s).
       // Indices figés par update_central_panel_rotation (tab5_custom.h) :
       // 0 planning, 1 pluie, 2 vigilance Météo-France, 3 info, 4-7 alertes HA.
@@ -151,8 +135,8 @@ select:
           // SANS CONDITION : un popup ouvert depuis HA pendant que le réveil
           // sonne passerait donc PAR-DESSUS l'écran de sonnerie et masquerait
           // son bouton d'arrêt. C'est le pendant exact de la protection déjà en
-          // place contre la fermeture automatique (tab5-scripts.yaml, liste
-          // kPopups dont alarm_ring_layer est volontairement absent) : tant que
+          // place contre la fermeture automatique (alarm_ring_layer est un LAYER
+          // du ModalRegistry : nommé, jamais refermé par close_all()) : tant que
           // ça sonne, ce calque ne doit être ni refermé, ni recouvert.
           // « Accueil » (i == 1) reste AUTORISÉ : il ne fait que fermer les
           // popups et revenir sur page_main, ce qui RÉVÈLE la sonnerie au lieu
@@ -166,19 +150,17 @@ select:
           }
 
           // Cible déjà affichée : ne rien faire, sinon le fermer-puis-rouvrir
-          // ci-dessous se verrait comme un clignotement.
-          static lv_obj_t* const kTargetOf[] = {
-              nullptr,                    // 0 « — »
-              nullptr,                    // 1 Accueil (aucun popup)
-              id(assistant_popup),        // 2
-              id(calendar_popup),         // 3
-              id(alarm_popup),            // 4
-              id(clim_options_popup),     // 5
-              id(pots_detail_popup),      // 6
-              id(tv_remote_popup),        // 7
-              id(layer_console_sys),      // 8
-          };
-          lv_obj_t* target = kTargetOf[i];
+          // ci-dessous se verrait comme un clignotement. La cible est retrouvée
+          // PAR SON LIBELLÉ dans ModalRegistry (x = option choisie) : l'option
+          // du select et le nom enregistré dans tab5_modal_registry_init doivent
+          // être identiques — tools/check_tab5_registry.py le vérifie. Un écart
+          // serait sinon un no-op muet sur les cas 5-7 (clim, plantes, TV) : on
+          // le journalise à WARN, le projet tourne à INFO.
+          id(tab5_modal_registry_init).execute();
+          lv_obj_t* target = ModalRegistry::find(x.c_str());
+          if (i >= 2 && target == nullptr) {
+            ESP_LOGW("TAB5", "Aller a l'ecran : option '%s' sans fenetre enregistree", x.c_str());
+          }
           if (target != nullptr && !lv_obj_has_flag(target, LV_OBJ_FLAG_HIDDEN)) {
             // Re-demander l'écran déjà affiché sert à prolonger son affichage.
             ui_mark_activity();
@@ -189,15 +171,7 @@ select:
           // Fermeture de tout ce qui est ouvert — même chemin que le retour
           // automatique à l'inactivité (tab5-scripts.yaml), pour laisser
           // exactement le même état derrière soi.
-          static lv_obj_t* const kPopups[] = {
-              id(assistant_popup), id(calendar_popup), id(light_options_popup),
-              id(clim_options_popup), id(pots_detail_popup), id(tv_remote_popup),
-              id(alarm_popup), id(layer_console_sys)
-          };
-          lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
-          for (lv_obj_t* p : kPopups) close_popup_if_open(p);
+          ModalRegistry::close_all();
           id(assist_popup_open) = false;
 
           switch (i) {

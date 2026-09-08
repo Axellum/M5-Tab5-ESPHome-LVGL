@@ -4,6 +4,64 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — Firmware : le contrat API n'a plus de logique LVGL, `snprintf` partout, code mort retiré
+
+Lot (a) du plan §8 de l'audit du 06/09/2026. Rien ne change à l'écran ; OTA
+validée sur la tablette (voir la PR).
+
+- **`tab5-api-logic.yaml`** : les lambdas de `tab5_maj_volet_etat` (~50 lignes),
+  `tab5_maj_alerte_meteo_france` (~80), `tab5_maj_pluie_1h`, `tab5_maj_probabilites`,
+  `tab5_maj_meteo_actuelle`, `tab5_maj_clim` et la zone image de `tab5_assist_reponse`
+  ne font plus que résoudre les `id()` et poser les globals. La logique vit dans
+  `tab5_custom.cpp` : `update_volet_ui()`, `parse_and_update_vigilance()`,
+  `update_rain_bar_ui()`, `update_rain_predict_icon_ui()` (partagée par probabilités
+  et météo actuelle), `update_clim_target_ui()`, `assist_image_hint_ui()`. Le fichier
+  passe de 528 à 331 lignes et ne contient plus aucun `lv_*` hors
+  `lv_obj_has_flag`. Contrat HA inchangé (mêmes services, mêmes paramètres).
+- **Paramètres réservés documentés** : `condition`/`temperature` (météo actuelle) et
+  `uv`/`gel` (probabilités) sont reçus mais non exploités ; le contrat n'est pas
+  rétréci (3 appelants HA).
+- **`snprintf` partout** : les 14 `sprintf` de `tab5_custom.cpp` et les 2 du contrat.
+- **Code mort retiré** : globals `active_page`, `plan_cycle_counter`,
+  `temp_planning_text` (jamais référencés) et `anim_scale_cb()` (défini, jamais
+  appelé — le warning `-Wunused-function` du build propre disparaît).
+- **Garde-fou `tools/check_tab5_code_rules.py`** (pytest) : aucun `sprintf` brut
+  dans `Tab5/`, aucun `lv_*` dans `tab5-api-logic.yaml`, aucun global orphelin. Sur
+  l'arbre d'avant ce lot il listait exactement les 16 `sprintf`, les appels LVGL du
+  contrat et les 3 globals.
+- ADR-0006 (la règle est désormais vérifiée mécaniquement pour le contrat API),
+  README Tab5 (table des services), cartographie.
+
+### 2026-09-08 — Firmware : un seul registre pour les 8 consoles et les fenêtres modales
+
+Premier lot firmware de l'audit du 06/09/2026 (§4.1, point 5). Rien ne change à
+l'écran. `config_hash` 0xcddecfdc → 0x7a5db911, RAM +40 o, flash +558 o (build
+propre, même toolchain) ; OTA validée sur la tablette : `sw_version`
+`2026-09-08 09:34:15`, popups ouverts, nommés et refermés depuis HA par le
+select « Aller à l'écran » et le capteur « Écran courant ».
+
+- **`Tab5/tab5_registry.h` / `.cpp`** (nouveaux) : `GameRegistry::kGames`
+  (libellé, `is_open`, `close`, `on_imu`, `imu_fast`) et `ModalRegistry`
+  (fenêtres `POPUP` / `SUBWINDOW` / `LAYER`, rempli une fois par le script
+  `tab5_modal_registry_init`, seul endroit où `id()` est disponible).
+- **Quatre copies de la liste des jeux supprimées** : `tab5_games_close_all`
+  (fermeture), `tab5-imu.yaml` (dispatch des 3 axes + poll 10/30 Hz),
+  `tab5-ha-controls.yaml` (text_sensor « Écran courant »), retour automatique
+  de `tab5-scripts.yaml`.
+- **Trois tables de popups supprimées** : `kPopups` (×2), `kScreens`,
+  `kTargetOf`. Le select « Aller à l'écran » retrouve sa cible par le libellé de
+  l'option (`ModalRegistry::find`) et journalise un avertissement si l'option
+  n'a pas de fenêtre enregistrée, au lieu de ne rien faire en silence.
+- `any_popup_visible(lv_obj_t* const*, int)` retiré de `tab5_custom.h/.cpp`
+  (plus aucun appelant).
+- **Garde-fou `tools/check_tab5_registry.py`** (joué par `pytest`) : chaque
+  `*_game.h` est dans `kGames` et réciproquement ; aucun `X::is_open()`,
+  `X::close()`, `X::on_imu(` ni table `kPopups`/`kScreens`/`kTargetOf` dans un
+  YAML ; chaque carte `style_modal_card` est enregistrée ; chaque option du
+  select correspond à un libellé enregistré.
+- ADR-0013, README Tab5 (« ajouter une 9ᵉ console » passe de six à cinq
+  points), cartographie, `architecture.md`.
+
 ### 2026-09-06 — Dépôt : 1,4 Mo d'actifs Nextion et 1,7 Mo d'images orphelines retirés
 
 Lot « ménage du dépôt » de l'audit du 06/09/2026. Aucun fichier de `Tab5/` touché.

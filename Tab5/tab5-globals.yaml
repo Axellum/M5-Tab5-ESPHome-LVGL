@@ -10,11 +10,6 @@
 # corrigé le 05/07/2026 ; le pattern double-tap a depuis été remplacé par des
 # overlays de confirmation dans console_sys.yaml — le global a été retiré le 16/07).
 globals:
-  # Variables globales (vide, prêt à l'emploi)
-  - id: active_page
-    type: int
-    initial_value: '0'
-    restore_value: false
   - id: clim_target_temp
     type: float
     initial_value: '20.0'
@@ -53,9 +48,6 @@ globals:
   - id: plan_ligne_2
     type: std::string
     initial_value: '""'
-  - id: plan_cycle_counter
-    type: int
-    initial_value: '0'
   - id: boot_complete
     type: bool
     initial_value: 'false'
@@ -136,9 +128,6 @@ globals:
   - id: volume_push_ts
     type: uint32_t
     initial_value: '0'
-  - id: temp_planning_text
-    type: std::string
-    initial_value: '""'
   - id: is_showing_temp_planning
     type: bool
     initial_value: 'false'

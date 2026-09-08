@@ -13,11 +13,14 @@
 #       il tombe parfaitement ici, puisqu'un voile est déjà un bouton plein
 #       cadre dont le tap déclenche un `close_lambda`, et que « toucher l'écran
 #       pour arrêter » est exactement ça.
-# @architecture_constraint Absent de la table `kPopups` du retour automatique à
-#       l'inactivité (tab5-scripts.yaml) : une sonnerie ne se referme pas parce
-#       que personne ne touche l'écran — c'est tout l'inverse de sa raison
-#       d'être. Seuls tab5_alarm_stop, tab5_alarm_snooze_now et la durée
-#       maximale le referment, tous via tab5_alarm_ring_cleanup.
+# @architecture_constraint Enregistré en `LAYER` dans le ModalRegistry
+#       (script tab5_modal_registry_init, tab5-scripts.yaml) : NOMMÉ pour HA
+#       (« Réveil qui sonne », en tête de priorité) mais JAMAIS refermé par
+#       `ModalRegistry::close_all()`, donc ni par le retour automatique à
+#       l'inactivité ni par le select « Aller à l'écran » : une sonnerie ne se
+#       referme pas parce que personne ne touche l'écran — c'est tout l'inverse
+#       de sa raison d'être. Seuls tab5_alarm_stop, tab5_alarm_snooze_now et la
+#       durée maximale le referment, tous via tab5_alarm_ring_cleanup.
 # @architecture_constraint Les libellés sont des FRÈRES du voile, pas ses
 #       enfants : un label LVGL n'est pas cliquable, l'appui retombe donc sur le
 #       voile qui est dessous — toucher l'heure arrête bien le réveil. Les deux

@@ -12,22 +12,53 @@ script:
   # [AI-CONTEXT] Point d'entrée UNIQUE : le sélecteur arcade appelle ce script
   # avant chaque ouverture, au lieu de recopier la liste dans 8 lambdas (c'était
   # la source des oublis — Trivia manquait dans 5 cartes sur 8).
-  # Toute nouvelle console DOIT être ajoutée ici.
+  # La liste des consoles ne vit plus ici mais dans `GameRegistry::kGames`
+  # (tab5_registry.cpp) : une 9ᵉ console s'ajoute LÀ, une seule fois. L'ordre
+  # de fermeture est celui de la table (« Neon Apron » en dernier : sa fermeture
+  # restaure la rotation 270 du dashboard, ADR-0012).
   - id: tab5_games_close_all
     mode: single
     then:
       - lambda: |-
-          if (Marble::is_open())   Marble::close();
-          if (Arkanoid::is_open()) Arkanoid::close();
-          if (Lode::is_open())     Lode::close();
-          if (Go::is_open())       Go::close();
-          if (Trivia::is_open())   Trivia::close();
-          if (Draughts::is_open()) Draughts::close();
-          if (Chess::is_open())    Chess::close();
-          // « Neon Apron » en dernier : sa fermeture restaure la rotation 270 du
-          // dashboard. Si un jour un autre jeu touche à l'orientation, il devra
-          // lui aussi fermer après, pour que le dernier mot revienne au paysage.
-          if (Pinball::is_open())  Pinball::close();
+          GameRegistry::close_all();
+
+  # Remplit le registre des fenêtres modales (ModalRegistry, tab5_registry.h).
+  # [AI-CONTEXT] SEUL endroit où la liste des popups est écrite : `id()` n'est
+  # utilisable que dans une lambda YAML, d'où ce script plutôt qu'une table C++.
+  # Idempotent (rien après le premier remplissage) : chaque lecteur du registre
+  # (retour automatique en bas de ce fichier, text_sensor « Écran courant » et
+  # select « Aller à l'écran » de tab5-ha-controls.yaml) l'appelle avant de
+  # lire, donc peu importe lequel tourne en premier après le boot. Les pointeurs
+  # LVGL sont constants une fois les widgets construits.
+  # L'ORDRE est l'ordre de priorité du libellé HA : l'écran de SONNERIE du
+  # réveil est en tête, c'est le seul calque qui couvre aussi les fenêtres
+  # modales, et savoir à distance que la tablette sonne prime sur le reste.
+  # Il est enregistré en LAYER : nommé, mais JAMAIS refermé par close_all() —
+  # ce calque plein cadre ne doit surtout pas se refermer parce que personne
+  # ne touche l'écran, c'est exactement la situation qu'il traite. Seuls
+  # tab5_alarm_stop / _snooze_now / la durée maximale le referment. La fenêtre
+  # de RÉGLAGES du réveil (alarm_popup), elle, est une modale ordinaire.
+  # Les SUBWINDOW (détail d'un jour du calendrier, confirmations de la console)
+  # n'ont pas de fondu propre : masquage sec, avec la carte qui les porte.
+  # Toute nouvelle fenêtre modale DOIT être ajoutée ici — le garde-fou
+  # tools/check_tab5_registry.py le vérifie pour chaque carte `style_modal_card`.
+  - id: tab5_modal_registry_init
+    mode: single
+    then:
+      - lambda: |-
+          if (ModalRegistry::ready()) return;
+          ModalRegistry::add(id(alarm_ring_layer),       "Réveil qui sonne", ModalRegistry::LAYER);
+          ModalRegistry::add(id(alarm_popup),            "Réveil",           ModalRegistry::POPUP);
+          ModalRegistry::add(id(assistant_popup),        "Assistant vocal",  ModalRegistry::POPUP);
+          ModalRegistry::add(id(calendar_popup),         "Calendrier",       ModalRegistry::POPUP);
+          ModalRegistry::add(id(light_options_popup),    "Lumières",         ModalRegistry::POPUP);
+          ModalRegistry::add(id(clim_options_popup),     "Climatisation",    ModalRegistry::POPUP);
+          ModalRegistry::add(id(pots_detail_popup),      "Plantes",          ModalRegistry::POPUP);
+          ModalRegistry::add(id(tv_remote_popup),        "Télécommande TV",  ModalRegistry::POPUP);
+          ModalRegistry::add(id(layer_console_sys),      "Console système",  ModalRegistry::POPUP);
+          ModalRegistry::add(id(cal_day_popup),          nullptr,            ModalRegistry::SUBWINDOW);
+          ModalRegistry::add(id(overlay_confirm_ha),     nullptr,            ModalRegistry::SUBWINDOW);
+          ModalRegistry::add(id(overlay_confirm_reboot), nullptr,            ModalRegistry::SUBWINDOW);
 
   # Ouvre le jeu « Fil d'Or » (page LVGL dédiée, marble_game.cpp).
   # Script unique appelé par le sélecteur arcade : la construction de Marble::UI
@@ -1041,26 +1072,12 @@ interval:
   - interval: 1s
     then:
       - lambda: |-
-          if (Marble::is_open() || Arkanoid::is_open() || Lode::is_open() ||
-              Go::is_open() || Trivia::is_open() || Draughts::is_open() ||
-              Chess::is_open() || Pinball::is_open()) return;
+          if (GameRegistry::any_open()) return;
 
-          // Pointeurs LVGL constants après le boot (même motif que tab5_cal_render) :
-          // pas de reconstruction du tableau à chaque seconde.
-          // Toute nouvelle fenêtre modale DOIT être ajoutée ici.
-          // L'écran de SONNERIE du réveil (alarm_ring_layer) est volontairement
-          // absent de cette liste : c'est un calque plein cadre, pas une fenêtre
-          // modale, et il ne doit surtout pas se refermer parce que personne ne
-          // touche l'écran — c'est exactement la situation qu'il traite. Seuls
-          // tab5_alarm_stop / _snooze_now / la durée maximale le referment.
-          // La fenêtre de RÉGLAGES du réveil (alarm_popup), elle, est une modale
-          // ordinaire et suit la règle commune.
-          static lv_obj_t* const kPopups[] = {
-              id(assistant_popup), id(calendar_popup), id(light_options_popup),
-              id(clim_options_popup), id(pots_detail_popup), id(tv_remote_popup),
-              id(alarm_popup), id(layer_console_sys)
-          };
-          constexpr int kNbPopups = sizeof(kPopups) / sizeof(kPopups[0]);
+          // Liste des fenêtres : ModalRegistry (tab5_registry.h), remplie une
+          // fois par tab5_modal_registry_init (en tête de ce fichier). La
+          // sonnerie du réveil y est un LAYER : jamais refermée ici.
+          id(tab5_modal_registry_init).execute();
 
           const uint32_t idle = ui_idle_ms();
 
@@ -1071,15 +1088,9 @@ interval:
               return;
           }
 
-          if (any_popup_visible(kPopups, kNbPopups)) {
+          if (ModalRegistry::any_popup_visible()) {
               if (idle < UIIdle::POPUP_MS) return;
-              // Sous-fenêtres internes : masquage sec, elles n'ont pas de fondu
-              // propre et disparaissent avec la carte qui les porte (mêmes gestes
-              // que les croix de calendar_popup.yaml / console_sys.yaml).
-              lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
-              lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
-              lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
-              for (int i = 0; i < kNbPopups; i++) close_popup_if_open(kPopups[i]);
+              ModalRegistry::close_all();   // sous-fenêtres masquées, popups en fondu
               id(assist_popup_open) = false;
               return;
           }
