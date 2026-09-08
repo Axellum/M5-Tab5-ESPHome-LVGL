@@ -260,7 +260,7 @@ Until next time.
 | Component | Location |
 |-----------|----------|
 | ESPHome entry | `tab5-ha-hmi.yaml` |
-| UI + logic | `Tab5/*.yaml`, `Tab5/tab5_custom.cpp` |
+| UI + logic | `Tab5/*.yaml`, `Tab5/tab5_*.cpp` |
 | HA automations | `HomeAssistant_Config/` |
 | Demo pusher | `tools/demo/demo_pusher.py` |
 | Engine (optional) | [github.com/Axellum/vromvrom-engine](https://github.com/Axellum/vromvrom-engine) |

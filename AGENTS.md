@@ -55,7 +55,7 @@ python tools/check_lode_levels.py          # les 10 niveaux de Coureur d'Or rest
 ## Code rules (full detail in `Tab5/README.md`)
 
 1. No hardcoded hex colors in YAML/lambdas — add a token to `UIColor::` (`Tab5/tab5_custom.h`).
-2. `sensor:`/`text_sensor:` never touch `lv_obj_*` directly — always call a named C++ function in `tab5_custom.cpp`.
+2. `sensor:`/`text_sensor:` never touch `lv_obj_*` directly — always call a named C++ function of the C++ layer (`Tab5/tab5_*.cpp`, declared in `tab5_custom.h`).
 3. No `static` inside a lambda for state shared across handlers — use a `globals:` entry instead.
 4. No `std::string` by value or `to_string()` in a hot path (sliders, frequent `on_value`) — use `const std::string&` or a `snprintf` buffer.
 5. Any widget/card repeated 3+ times goes through a parametrized C++ builder or `!include`+`vars` template, not copy-pasted YAML.
