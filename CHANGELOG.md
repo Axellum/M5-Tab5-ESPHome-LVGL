@@ -4,6 +4,34 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — HA : script de notification santé, acquittement sans push lourd, macros Jinja du calendrier
+
+Audit du 06/09/2026, §5. Fichiers publics de `HomeAssistant_Config/` uniquement — à redéployer
+depuis `rendered/` (voir l'ordre de déploiement du README HA : `custom_templates/` d'abord).
+
+- `packages/tab5_health.yaml` : les trois gardes appelaient chacune
+  `persistent_notification.create` puis `notify.notify` avec les mêmes champs. Un script
+  `tab5_health_notify` (persistante + mobile, `continue_on_error` par canal, `mode: parallel`)
+  les remplace ; titres et messages inchangés.
+- `packages/tab5_alerts.yaml` : les deux scripts d'acquittement relançaient
+  `automation.maj_ecran_tab5_esphome_push` — la chaîne complète (~5,5 s de delays,
+  calendrier, météo) — alors que l'automation « push léger » (`tab5_ha_hmi_alerts_push`) se
+  déclenche déjà sur `input_text.tab5_alerts_dismissed` et repousse les sections 1, 7 et 7b
+  filtrées par la liste (vérifié sur la configuration de prod le 08/09). Les deux
+  `automation.trigger` sont retirés : un acquittement ne coûte plus qu'un push léger.
+  L'exemple public de cette automation est resynchronisé avec la prod (section 7 filtrée
+  par la liste d'acquittement, section 7b ajoutée) — l'audit demandait de « cibler l'id »,
+  mais un appel de service ne cible qu'un `entity_id`, et le vrai défaut était le double push.
+- `packages/tab5_calendar.yaml` : le bloc « début / fin / résumé / couvre le jour » recopié
+  dans chacune des onze boucles devient quatre macros dans
+  `custom_templates/tab5_calendar.jinja` (`ev_start`, `ev_end`, `ev_summary`, `couvre`),
+  importées en tête des trois templates. Équivalence vérifiée deux fois : les macros contre
+  l'expression d'origine dans le moteur Jinja de HA (0 écart sur 40 cas), puis les trois
+  templates rendus avant/après sur des événements de test (même sortie). **Déploiement** :
+  `rendered/custom_templates/tab5_calendar.jinja` → `config/custom_templates/`, puis
+  `homeassistant.reload_custom_templates`, avant le package — sans lui les deux scripts
+  échouent à l'import. `tools/render_ha_config.py` rend désormais aussi `custom_templates/`.
+
 ### 2026-09-08 — Firmware C++ : contexte du planning temporaire, `cal_heures[]` retiré
 
 Audit du 06/09/2026, §4.2 points 18 et 19. C++ seul : `config_hash` inchangé.

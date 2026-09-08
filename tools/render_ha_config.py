@@ -21,7 +21,7 @@ n'est retombée dans un fichier suivi par git.
       utilisable en CI (journal public).
 
 Usage :
-    python tools/render_ha_config.py            # rend packages/ + snippets/ + exemples
+    python tools/render_ha_config.py            # rend packages/ + snippets/ + custom_templates/ + exemples
     python tools/render_ha_config.py --check    # exit 1 si une valeur réelle traîne dans un fichier suivi
     python tools/render_ha_config.py --map autre.yaml --out /tmp/rendu
 """
@@ -41,6 +41,7 @@ DEFAULT_OUT = HA_DIR / "rendered"
 PUBLIC_GLOBS = (
     "packages/*.yaml",
     "snippets/*.yaml",
+    "custom_templates/*.jinja",
     "automations_examples.yaml.example",
     "scripts_examples.yaml",
     "template_sensors_examples.yaml",

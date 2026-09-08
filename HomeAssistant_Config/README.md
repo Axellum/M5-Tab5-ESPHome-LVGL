@@ -65,7 +65,7 @@ What it watches:
 - **`HA API Status` off/unavailable for more than 2 min** — device unreachable, every push fails during the outage
 
 Design notes:
-- Every notification action carries `continue_on_error: true` so one failing channel doesn't block the others
+- The three guards notify through one script, `script.tab5_health_notify` (persistent notification + `notify.notify`), so the channels are adapted in a single place; each channel carries `continue_on_error: true` so one failing channel doesn't block the other
 - No template uses raw `now()` — detection relies on trigger `for:` windows and `trigger.from_state` / `trigger.to_state`
 - Numeric comparisons use `| float(0)` defaults (boot safety)
 
@@ -88,6 +88,8 @@ Backend of the firmware's **calendar popup** (long press on the clock). Two scri
 
 School holidays come from a **static Zone A table** (Bordeaux academy) verified against data.education.gouv.fr — edit it for your zone, and extend it once the next school year is published (see the `@ai_warning` in the file). The Google public-holidays calendar mixes real holidays with civil observances, hence the `feries_connus` whitelist. Same package install as above.
 
+The four Jinja macros shared by its templates (`ev_start`, `ev_end`, `ev_summary`, `couvre` — one normalisation of a `calendar.get_events` event, all-day or timed) live in `custom_templates/tab5_calendar.jinja`. Deploy that file to HA's `config/custom_templates/` and call `homeassistant.reload_custom_templates` (or restart) **before** loading the package: without it both scripts fail at their import line.
+
 ---
 
 ### `packages/tab5_reveil.yaml`
@@ -103,6 +105,8 @@ Edit the two calendar entity IDs at the top of each `calendar.get_events` call t
 
 ### `packages/tab5_alerts.yaml`
 Backend of the **HA alert queue** — panels 4 to 7 of the central rotating card. Provides the `input_text.tab5_alerts_dismissed` helper (the dismiss list), the `tab5_dismiss_alert` script the device calls when you tap a banner, and the automation that builds the `tab5_maj_alertes_ha_bulk` payload (max 4 banners, already-dismissed ids filtered out).
+
+After a dismiss, the refresh comes from the light push automation (`tab5_ha_hmi_alerts_push` in `automations_examples.yaml.example`): it triggers on `input_text.tab5_alerts_dismissed` and re-pushes sections 1, 7 and 7b filtered by the dismiss list. The two scripts no longer trigger the full push automation (they did until 2026-09-08 — a second, heavy push for nothing).
 
 Tapping a banner on screen removes it immediately and stores its id here, so a re-push of the same id stays hidden until HA sends a new one. `snippets/tab5_alerts_dismissed_input_text.yaml` is the same helper on its own, if you prefer declaring it in your existing `input_text:` block instead of loading the whole package.
 
@@ -138,12 +142,13 @@ python tools/render_ha_config.py          # writes HomeAssistant_Config/rendered
 python tools/render_ha_config.py --check  # fails if a real ID leaked into a tracked file (never prints the value)
 ```
 
-Deploy **from `rendered/`** to your HA `config/` (packages, snippets, the three examples). The tracked files stay placeholder-only, so a PR never carries a real entity ID and a `git pull` never overwrites your values.
+Deploy **from `rendered/`** to your HA `config/` (packages, snippets, `custom_templates/`, the three examples). The tracked files stay placeholder-only, so a PR never carries a real entity ID and a `git pull` never overwrites your values.
 
 After deploying:
 
-1. In Home Assistant, go to **Developer Tools → YAML → Reload Automations** (or restart HA)
-2. The Tab5 should receive its first push within a few seconds of connecting to the API
+1. Reload the custom templates (`homeassistant.reload_custom_templates`) — `packages/tab5_calendar.yaml` imports `custom_templates/tab5_calendar.jinja`
+2. In Home Assistant, go to **Developer Tools → YAML → Reload Automations** (or restart HA)
+3. The Tab5 should receive its first push within a few seconds of connecting to the API
 
 ---
 
@@ -236,7 +241,7 @@ Ce qui est surveillé :
 - **`HA API Status` off/unavailable depuis plus de 2 min** — appareil injoignable, toutes les poussées échouent pendant la coupure
 
 Notes de conception :
-- Chaque action de notification porte `continue_on_error: true` : un canal en échec ne bloque pas les autres
+- Les trois gardes notifient via un seul script, `script.tab5_health_notify` (notification persistante + `notify.notify`) : les canaux s'adaptent à un seul endroit ; chaque canal porte `continue_on_error: true`, un canal en échec ne bloque pas l'autre
 - Aucun template n'utilise `now()` brut — la détection repose sur les fenêtres `for:` des déclencheurs et sur `trigger.from_state` / `trigger.to_state`
 - Les comparaisons numériques utilisent des défauts `| float(0)` (sécurité au boot)
 
@@ -259,6 +264,8 @@ Backend du **popup calendrier** du firmware (appui long sur l'horloge). Deux scr
 
 Les vacances scolaires viennent d'une **table statique Zone A** (académie de Bordeaux) vérifiée sur data.education.gouv.fr — adaptez-la à votre zone, et complétez-la à la publication de l'année scolaire suivante (voir l'`@ai_warning` dans le fichier). Le calendrier Google des jours fériés mélange vrais fériés et fêtes civiles, d'où la liste blanche `feries_connus`. Même installation package que ci-dessus.
 
+Les quatre macros Jinja partagées par ses templates (`ev_start`, `ev_end`, `ev_summary`, `couvre` — une seule normalisation d'un événement `calendar.get_events`, journée entière ou horodaté) vivent dans `custom_templates/tab5_calendar.jinja`. Déployez ce fichier dans le `config/custom_templates/` de HA et appelez `homeassistant.reload_custom_templates` (ou redémarrez) **avant** de charger le package : sans lui, les deux scripts échouent à leur ligne d'import.
+
 ---
 
 ### `packages/tab5_reveil.yaml`
@@ -274,6 +281,8 @@ Adaptez les deux IDs de calendrier en tête de chaque `calendar.get_events` aux 
 
 ### `packages/tab5_alerts.yaml`
 Backend de la **file d'alertes HA** — panneaux 4 à 7 de la carte centrale rotative. Fournit le helper `input_text.tab5_alerts_dismissed` (liste de dismiss), le script `tab5_dismiss_alert` que l'appareil appelle au tap sur un bandeau, et l'automatisation qui construit le payload `tab5_maj_alertes_ha_bulk` (4 bandeaux max, ids déjà masqués filtrés).
+
+Après un acquittement, le rafraîchissement vient de l'automation « push léger » (`tab5_ha_hmi_alerts_push` dans `automations_examples.yaml.example`) : elle se déclenche sur `input_text.tab5_alerts_dismissed` et repousse les sections 1, 7 et 7b filtrées par la liste. Les deux scripts ne déclenchent plus l'automation de push complète (ils le faisaient jusqu'au 08/09/2026 — un second push, lourd, pour rien).
 
 Un tap sur un bandeau le retire tout de suite et mémorise son id ici : un re-push du même id reste masqué tant que HA n'envoie pas un id différent. `snippets/tab5_alerts_dismissed_input_text.yaml` contient le helper seul, si vous préférez le déclarer dans votre bloc `input_text:` existant plutôt que charger tout le package.
 
@@ -309,9 +318,9 @@ python tools/render_ha_config.py          # écrit HomeAssistant_Config/rendered
 python tools/render_ha_config.py --check  # échoue si un ID réel est retombé dans un fichier suivi (n'affiche jamais la valeur)
 ```
 
-Déployez **depuis `rendered/`** vers le `config/` de HA (packages, snippets, les trois exemples). Les fichiers suivis ne contiennent que des placeholders : une PR n'embarque jamais un ID réel, et un `git pull` n'écrase jamais vos valeurs.
+Déployez **depuis `rendered/`** vers le `config/` de HA (packages, snippets, `custom_templates/`, les trois exemples). Les fichiers suivis ne contiennent que des placeholders : une PR n'embarque jamais un ID réel, et un `git pull` n'écrase jamais vos valeurs.
 
-Après déploiement : dans HA, allez dans **Outils de développement → YAML → Recharger Automations** (ou redémarrez HA). Le Tab5 devrait recevoir son premier push en quelques secondes après connexion à l'API.
+Après déploiement : rechargez les templates personnalisés (`homeassistant.reload_custom_templates`, `packages/tab5_calendar.yaml` importe `custom_templates/tab5_calendar.jinja`), puis dans HA, allez dans **Outils de développement → YAML → Recharger Automations** (ou redémarrez HA). Le Tab5 devrait recevoir son premier push en quelques secondes après connexion à l'API.
 
 ---
 
