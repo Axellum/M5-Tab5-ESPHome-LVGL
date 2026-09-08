@@ -4,6 +4,34 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — Contrat HA : les 9 barres de pluie 1 h en un seul appel (`tab5_maj_pluie_1h_bulk`)
+
+Audit du 06/09/2026, §4.1 point 3 (ADR-0003 « data packing »). Dernier service encore
+poussé élément par élément : 9 appels + 9 délais de 50 ms à chaque rafraîchissement
+(toutes les 10 min, à chaque changement de `sensor.*_next_rain` et à chaque reconnexion).
+
+- **Firmware** : `tab5_maj_pluie_1h_bulk(payload)` — `idx|intensité;…` × 9, parsé en
+  place (`strtok_r`, tampon 256 octets, payload trop long refusé en bloc avec un WARN)
+  par `update_rain_bars_bulk_ui()` qui réutilise `update_rain_bar_ui()` et sa table
+  `rain_level_style()` ; `has_rain` calculé comme avant. **`tab5_maj_pluie_1h` est
+  conservé** le temps de la transition (anciennes automations).
+- **Home Assistant** : l'automation « MAJ Ecran Tab5 ESPHome Push » appelle le bulk
+  (un `namespace` Jinja qui concatène les 9 clés `0 min … 55 min` de
+  `1_hour_forecast`) — exemple public `automations_examples.yaml.example` mis à jour,
+  automation de prod modifiée en direct (voir la PR pour la trace).
+- **Mode démo** : `build_pluie_1h_bulk_payload()` (assertions : 9 intensités, libellés
+  connus du firmware, < 256 octets) ; le dry-run couvre le nouveau contrat.
+- **Bug latent corrigé au passage — `has_rain`** : le bilan « au moins une barre non
+  vide » relisait `lv_obj_get_height()` juste après `lv_obj_set_height()` ; sous LVGL 9
+  cette lecture rend les coordonnées courantes, mises à jour seulement au prochain
+  rafraîchissement de layout, donc l'ancienne hauteur. Avec neuf appels espacés de 50 ms
+  ça marchait par accident (le 2ᵉ appel voyait la barre du 1ᵉʳ) ; en un seul appel bulk
+  le panneau « Pluie » ne serait jamais entré dans la rotation (constaté depuis HA :
+  « Pluie forte » poussée, rotation Planning/Info/Alerte inchangée). Le bilan se calcule
+  désormais sur les hauteurs posées (`s_rain_bar_height[9]`), pour les deux services.
+- Docs : README Tab5 (table des services : 17), README HA, `screens.md`, `demo_mode.md`,
+  inventaire, cartographie, ADR-0003.
+
 ### 2026-09-08 — Consoles : helpers partagés dans `game_common.h`, palettes locales, miroir Python des dames
 
 Lot (f) du plan §8 de l'audit du 06/09/2026 (§4.2 points 21, 22 et 23 ; ADR-0014).

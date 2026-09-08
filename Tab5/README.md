@@ -102,7 +102,8 @@ Garde-fou : `tools/check_tab5_registry.py`.
 | `tab5_maj_alerte_meteo_france` | payload (string, 11 champs `\|`-delimited) | Alertes météo France (vent, inondation, orages...) + recoloration de la date — `parse_and_update_vigilance()` |
 | `tab5_maj_meteo_actuelle` | condition, temperature, humidite | Hygrométrie → couleur de la goutte « pluie prédictive » (`update_rain_predict_icon_ui()`). `condition` et `temperature` sont **réservés** : reçus, non exploités depuis le retrait de la grosse icône météo centrale ; le contrat n'est pas rétréci (3 appelants HA) |
 | `tab5_maj_probabilites` | uv, gel, neige (strings) | Flocon si probabilité de neige ≥ 5, sinon goutte (`update_rain_predict_icon_ui()`, partagée avec la météo actuelle). `uv` et `gel` sont **réservés** : reçus, non exploités |
-| `tab5_maj_pluie_1h` | index_5mn, intensite (strings) | Une barre du graphe pluie 1h (9 barres, donc 9 appels par rafraîchissement — bulk à faire) ; met à jour `has_rain` (`update_rain_bar_ui()`) |
+| `tab5_maj_pluie_1h_bulk` | payload (string, `idx\|intensité;…` × 9) | Les 9 barres du graphe pluie 1h en un appel (ADR-0003) ; met à jour `has_rain` (`update_rain_bars_bulk_ui()`) — ce que HA appelle depuis le 08/09/2026 |
+| `tab5_maj_pluie_1h` | index_5mn, intensite (strings) | Une barre du graphe pluie 1h — ancien contrat conservé le temps de la transition ; met à jour `has_rain` (`update_rain_bar_ui()`) |
 | `tab5_maj_info_texte` | texte, couleur, meteo_id (strings) | 4ᵉ panneau du rotateur : alerte météo (Rouge/Orange) ou résumé santé HA 1 ligne — MAJ en attente, erreurs, indispos (`update_info_text_ui()`). `meteo_id` = identifiant de dismiss au tap ; vide = bandeau non masquable. **Les 3 variables sont obligatoires côté appelant** |
 | `tab5_maj_previsions_heures_bulk` | payload (string) | 5 cartes prévisions horaires |
 | `tab5_maj_previsions_jours_bulk` | payload (string) | 5 cartes prévisions journalières (fenêtre glissante selon `forecast_page_index`) |

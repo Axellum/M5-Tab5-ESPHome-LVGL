@@ -399,6 +399,9 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
 // texte vide la barre. Retourne true si au moins une barre est non vide — à
 // stocker dans has_rain.
 bool update_rain_bar_ui(int idx, const std::string& intensite, lv_obj_t* const bars[9]);
+// Même chose pour les 9 barres en un appel : payload « idx|intensité;… » (ADR-0003,
+// service tab5_maj_pluie_1h_bulk). Retourne has_rain.
+bool update_rain_bars_bulk_ui(const std::string& payload, lv_obj_t* const bars[9]);
 
 // Icône « pluie prédictive » de la carte centrale : flocon ambre si la
 // probabilité de neige ≥ 5, sinon goutte colorée par l'hygrométrie

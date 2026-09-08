@@ -28,7 +28,7 @@
 | `tab5-hardware.yaml` | `Tab5/` | Bas niveau : display MIPI-DSI, tactile ST7123, DAC/ADC audio, expander GPIO, esp32_hosted, wake words, OTA. |
 | `tab5-sensors-diagnostics.yaml` | `Tab5/` | WiFi, alimentation GPIO, statut API HA, uptime, RAM, loop time, horloge SNTP. |
 | `tab5-sensors-domotique.yaml` | `Tab5/` | Miroirs d'entités HA : plantes, lumières, PC, températures, batterie, audio. |
-| `tab5-api-logic.yaml` | `Tab5/` | Contrat API HA↔Tab5 : bloc `api: services:` (16 services, comptés le 27/08/2026). |
+| `tab5-api-logic.yaml` | `Tab5/` | Contrat API HA↔Tab5 : bloc `api: services:` (17 services : bulk pluie 1 h ajouté le 08/09/2026, comptés le 27/08/2026 avant lui). |
 | `tab5-styles.yaml` | `Tab5/` | Thème "Dark Mode Slate" : tokens `color:`, déclarations `font:`, `lvgl: style_definitions:`. |
 | `tab5-globals.yaml` | `Tab5/` | État partagé (`globals:`) + rotateur carte centrale (interval 8s). |
 | `tab5-scripts.yaml` | `Tab5/` | Scripts ESPHome : debounces, vocal, rotateur, volet, popups, jeux. |

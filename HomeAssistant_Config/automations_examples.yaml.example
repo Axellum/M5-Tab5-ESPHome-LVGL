@@ -75,21 +75,18 @@
         gel: "{{ states('sensor.VOTRE_VILLE_freeze_chance') | int(0) }}"
         neige: "{{ states('sensor.VOTRE_VILLE_snow_chance') | int(0) }}"
 
-    # ====== 4b. METEO PLUIE 1H (9 barres : 0,5,10,15,20,25 puis 35,45,55) ======
-    - repeat:
-        count: 9
-        sequence:
-          - action: esphome.tab5_ha_hmi_tab5_maj_pluie_1h
-            continue_on_error: true
-            data:
-              index_5mn: "{{ repeat.index - 1 }}"
-              intensite: >
-                {% set fc = state_attr('sensor.VOTRE_VILLE_next_rain', '1_hour_forecast') %}
-                {% set keys = ['0 min', '5 min', '10 min', '15 min', '20 min', '25 min', '35 min', '45 min', '55 min'] %}
-                {% set k = keys[repeat.index - 1] %}
-                {{ fc.get(k, 'Inconnu') if fc is not none else 'Inconnu' }}
-          - delay:
-              milliseconds: 50
+    # ====== 4b. METEO PLUIE 1H (9 barres en UN appel : 0,5,10,15,20,25 puis 35,45,55) ======
+    # Payload « idx|intensité;… » (ADR-0003) ; le firmware garde tab5_maj_pluie_1h
+    # (une barre par appel) le temps de la transition.
+    - action: esphome.tab5_ha_hmi_tab5_maj_pluie_1h_bulk
+      continue_on_error: true
+      data:
+        payload: >
+          {% set fc = state_attr('sensor.VOTRE_VILLE_next_rain', '1_hour_forecast') %}
+          {% set keys = ['0 min', '5 min', '10 min', '15 min', '20 min', '25 min', '35 min', '45 min', '55 min'] %}
+          {% set ns = namespace(r='') %}
+          {% for k in keys %}{% set ns.r = ns.r ~ loop.index0 ~ '|' ~ (fc.get(k, 'Inconnu') if fc is not none else 'Inconnu') ~ ';' %}{% endfor %}
+          {{ ns.r }}
 
     # ====== 5. PREVISIONS JOURS (BULK - 1 seul appel au lieu de 15) ======
     - action: calendar.get_events

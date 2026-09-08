@@ -124,6 +124,19 @@ class JourForecast:
     heures_ouverture: str = ""
 
 
+PLUIE_LIBELLES = ("Temps sec", "Pluie faible", "Pluie modérée", "Pluie forte", "Pluie très forte")
+
+
+def build_pluie_1h_bulk_payload(intensites) -> str:
+    """« idx|intensité;… » pour tab5_maj_pluie_1h_bulk (9 barres, un appel)."""
+    assert len(intensites) == 9, f"9 intensités attendues, {len(intensites)} reçues"
+    for lib in intensites:
+        assert lib in PLUIE_LIBELLES, f"intensité inconnue du firmware : {lib!r}"
+    payload = ";".join(f"{i}|{lib}" for i, lib in enumerate(intensites)) + ";"
+    assert len(payload.encode("utf-8")) < 256, "payload pluie trop long (tampon firmware 256 octets)"
+    return payload
+
+
 def build_heures_bulk_payload(records) -> str:
     parts = [f"{r.idx}|{r.heure_texte}|{r.condition}|{r.temp}|{r.pluvio}" for r in records]
     payload = ";".join(parts) + ";"
