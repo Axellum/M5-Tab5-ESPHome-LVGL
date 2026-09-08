@@ -4,6 +4,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+_Rien depuis la 1.2.0._
+
+## [1.2.0] — 2026-09-08
+
+De `v1.1.0` (30/07) à aujourd'hui : ESPHome 2026.8.1, le réveil matin piloté par le
+calendrier et les rappels de rendez-vous, le pilotage et la supervision de l'écran depuis
+Home Assistant (select « Aller à l'écran », capteur « Écran courant »), la télécommande
+TV, l'audio des réponses vocales, puis l'**audit complet du 06/09/2026** et ses lots :
+secrets et identifiants sortis des fichiers publics, CI qui ne compile que si le firmware
+bouge, docs remises à niveau, et six lots firmware (contrat API sans LVGL, registre
+unique des consoles et des modales, pipeline vocal en table, capteurs paramétrés et
+entités en substitutions, `tab5_custom.cpp` scindé en neuf unités, `game_common.h` et
+palettes locales), enfin le bulk pluie 1 h qui corrige au passage un bug latent de
+`has_rain`. Trois ADR de plus (0010 à 0014).
+
 ### 2026-09-08 — Contrat HA : les 9 barres de pluie 1 h en un seul appel (`tab5_maj_pluie_1h_bulk`)
 
 Audit du 06/09/2026, §4.1 point 3 (ADR-0003 « data packing »). Dernier service encore
@@ -818,6 +833,15 @@ Remplacé par un titre calculé à partir des données réellement affichées.
   Trace muette en fonctionnement normal (logger du projet en `level: INFO`) :
   passer à `DEBUG` pour distinguer « geste jamais émis » (drag mangé par un
   scroll) de « geste reçu mais pagination fautive ».
+
+## [1.1.0] — 2026-07-30
+
+De `v1.0.5` (17/07) au 30/07 : les **8 consoles arcade** (Fil d'Or, Arcanoïde, Neon Apron,
+Coureur d'Or, Go Tab, Trial Poursuite, Dames Tab, Roi Noir) avec leur sélecteur 4×2 et le
+pilotage à l'IMU, les popups v2 (clim, lumière, plantes, calendrier, assistant vocal),
+le cadre modal v4, `CentralPanelCtx`, les animations « rouleau », et l'audit
+doc/code du 30/07 avant partage public. Section écrite rétroactivement le 08/09/2026 :
+ces entrées vivaient sous « Unreleased » alors que le tag existait.
 
 ### 2026-07-30 — Audit doc/code avant partage : la doc rattrape le firmware
 
