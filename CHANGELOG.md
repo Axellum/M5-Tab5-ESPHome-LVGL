@@ -4,6 +4,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — Firmware C++ : contexte du planning temporaire, `cal_heures[]` retiré
+
+Audit du 06/09/2026, §4.2 points 18 et 19. C++ seul : `config_hash` inchangé.
+
+- `show_temporary_planning()` (`tab5_central.cpp`) : les neuf `static` de fichier que le
+  timer de restauration (6 s) devait retrouver — dont un pointeur vers le global ESPHome
+  `is_showing_temp_planning` — sont regroupés dans une `TempPlanningCtx`, une seule
+  instance de fichier, même approche que `CentralPanelCtx`. Aucun changement de
+  comportement.
+- `cal_heures[15]` (`tab5_custom.h`) retiré : il recopiait
+  `cal_jours_data[].heures_ouverture` (seule écriture, au même endroit, dans
+  `parse_and_update_jours_bulk()`), et ses deux lecteurs —
+  `get_day_planning_display_text()` et `build_planning_lines_from_jours()` — arbitraient
+  entre deux copies d'une valeur toujours identique. Dette listée dans la cartographie
+  §4.2 depuis le 06/07, soldée.
+
 ### 2026-09-08 — Firmware : hygiène YAML, reste de l'audit du 06/09
 
 Audit du 06/09/2026, §4.1 points 9, 11, 13 et 16. Rien de visible à l'écran.

@@ -214,10 +214,6 @@ void parse_and_update_jours_bulk(const std::string& payload) {
                 cal_jours_data[jour].est_dimanche = (parts[6][0] == '1');
                 cal_jours_data[jour].est_passe = (parts[7][0] == '1');
                 cal_jours_data[jour].heures_ouverture = parts[8];
-
-                // cal_heures[] reste utilise (affichage temporaire au tap min/max + bandeau
-                // planning dérivé localement) — cal_jour_nom[] jumeau retire le 06/07/2026
-                cal_heures[jour] = parts[8];
             }
         }
         token = strtok_r(nullptr, ";", &saveptr1);
