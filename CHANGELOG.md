@@ -4,6 +4,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — Contrat HA : l'ancien service `tab5_maj_pluie_1h` est retiré
+
+- Une barre par appel, neuf appels par rafraîchissement : remplacé le même jour par
+  `tab5_maj_pluie_1h_bulk` (#114). Retiré une fois vérifié qu'aucun appelant ne
+  restait — automation de prod et exemple public sur le bulk, mode démo sur le bulk,
+  aucune occurrence dans les YAML du serveur HA (packages compris). Le contrat repasse
+  à 16 services. Renommer ou supprimer un service reste un changement de contrat :
+  README Tab5 (table des services), README HA, `screens.md`, inventaire, cartographie
+  et ADR-0003 suivent.
+
 ### 2026-09-08 — HA : le push au reboot attend que la liaison API soit prête
 
 - L'automation « MAJ Ecran Tab5 ESPHome Push » part sur l'événement

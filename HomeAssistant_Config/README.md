@@ -23,7 +23,7 @@ The main push automation, with generic placeholder entity names. Triggered by st
 What it pushes:
 - **Daily forecast (15 days):** on weather entity state change — serializes 15 × (index, day label, condition, min, max, weekend/holiday flags, work hours) into a `|`/`;`-delimited string sent to `tab5_maj_previsions_jours_bulk`
 - **Hourly forecast (15 slots):** three chunks of 5 through `tab5_maj_previsions_heures_bulk`
-- **Short-term rain chart:** on `sensor.*_next_rain` state change — **9** bars in **one** call (`tab5_maj_pluie_1h_bulk`, payload `idx|intensity;…`, index 0–8 = 0/5/10/…/55 min) built from Météo-France's `v1/vision/rain` data; the per-bar `tab5_maj_pluie_1h` is kept for the transition
+- **Short-term rain chart:** on `sensor.*_next_rain` state change — **9** bars in **one** call (`tab5_maj_pluie_1h_bulk`, payload `idx|intensity;…`, index 0–8 = 0/5/10/…/55 min) built from Météo-France's `v1/vision/rain` data
 - **Current weather / probabilities:** `tab5_maj_meteo_actuelle` (condition, temperature, humidity) and `tab5_maj_probabilites` (UV, frost, snow)
 - **Climate state:** dedicated fast-path automation `tab5_ha_hmi_clim_push` (no delay, `mode: restart`) — `tab5_maj_clim` (target, current, mode, preset, fan, swing)
 - **Shutter state:** `tab5_maj_volet_etat` — also arms the device-local “Stop” wake word while the shutter moves
@@ -194,7 +194,7 @@ L'automatisation push principale, avec des noms d'entités placeholder. Déclenc
 Ce qu'elle pousse :
 - **Prévisions journalières (15 jours) :** sur changement d'état de l'entité météo — sérialise 15 × (index, libellé jour, condition, min, max, drapeaux week-end/férié, heures de travail) en chaîne délimitée `|`/`;` vers `tab5_maj_previsions_jours_bulk`
 - **Prévisions horaires (15 créneaux) :** trois chunks de 5 via `tab5_maj_previsions_heures_bulk`
-- **Graphe de pluie court terme :** sur changement de `sensor.*_next_rain` — **9** barres en **un** appel (`tab5_maj_pluie_1h_bulk`, payload `idx|intensité;…`, index 0–8 = 0/5/10/…/55 min) construites depuis `v1/vision/rain` de Météo-France ; `tab5_maj_pluie_1h` (une barre par appel) est conservé le temps de la transition
+- **Graphe de pluie court terme :** sur changement de `sensor.*_next_rain` — **9** barres en **un** appel (`tab5_maj_pluie_1h_bulk`, payload `idx|intensité;…`, index 0–8 = 0/5/10/…/55 min) construites depuis `v1/vision/rain` de Météo-France
 - **Météo actuelle / probabilités :** `tab5_maj_meteo_actuelle` (condition, température, humidité) et `tab5_maj_probabilites` (UV, gel, neige)
 - **État climatisation :** automation dédiée à faible latence `tab5_ha_hmi_clim_push` (sans delay, `mode: restart`) — `tab5_maj_clim` (cible, actuelle, mode, preset, ventilation, oscillation)
 - **État volet :** `tab5_maj_volet_etat` — arme aussi le wake word local « Stop » pendant le mouvement
