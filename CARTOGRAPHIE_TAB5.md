@@ -58,7 +58,7 @@ règles calendrier ouverture/fermeture, snooze, liste RDV, rendu LVGL<br/>lit ca
     end
 
     subgraph CPP["C++ HMI (esphome: includes:)"]
-        HFILE["tab5_custom.h (871L)<br/>CentralPanelCtx, Weather*Slot, UIColor::, MeteoIcon::"]
+        HFILE["tab5_custom.h (772L)<br/>CentralPanelCtx, Weather*Slot, UIColor:: (HMI seulement), MeteoIcon::"]
         CFILE["tab5_custom.cpp (40L, globals) + 9 unités tab5_*.cpp (3335L)<br/>logique LVGL HMI non-triviale, un fichier par responsabilité"]
         REG["tab5_registry.h/.cpp<br/>GameRegistry::kGames (8 consoles) + ModalRegistry (ADR-0013)"]
     end
@@ -180,9 +180,10 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 
 | Fichier | Lignes | Rôle exact | Fonctions clés |
 |---|---|---|---|
-| `tab5_custom.h` | 871 | Déclarations, structs (`CentralPanelCtx` [8 wrappers + le label chapeau du titre de page + 7 flags + current_panel], `DayForecastData`, `HourForecastData`, `WeatherHourSlot`, `WeatherDaySlot`, `MoistureSlotUI`, `PotDetailUI`, `HaAlertSlotUI`, `CalCellUI`, `CalDetailLineUI`), enum `PotMetric`, bits `CAL_BIT_*`, namespace `MeteoIcon::` (codes UTF-8 police météo), namespace `UIColor::` (palette sémantique — **miroir exact des tokens `color:` YAML, à garder synchro manuellement**) | — |
+| `tab5_custom.h` | 772 | Déclarations, structs (`CentralPanelCtx` [8 wrappers + le label chapeau du titre de page + 7 flags + current_panel], `DayForecastData`, `HourForecastData`, `WeatherHourSlot`, `WeatherDaySlot`, `MoistureSlotUI`, `PotDetailUI`, `HaAlertSlotUI`, `CalCellUI`, `CalDetailLineUI`), enum `PotMetric`, bits `CAL_BIT_*`, namespace `MeteoIcon::` (codes UTF-8 police météo), namespace `UIColor::` (palette sémantique — **miroir exact des tokens `color:` YAML, à garder synchro manuellement**) | — |
 | `tab5_custom.cpp` | 40 | Globals partagés (`g_central_ctx`, `g_day_slots[5]`, `g_hour_slots[5]`, `cal_heures`/`cal_jours_data`/`cal_heures_data`) et carte des unités. Depuis le 08/09/2026 (lot (e)) la logique vit dans les neuf unités ci-dessous, mêmes fonctions et même ordre que l'ancien fichier de 3 169 lignes ; toutes gardent contre les `lv_obj_t*` nuls | — |
 | `tab5_internal.h` | 27 | Les six helpers partagés entre unités (ex-`static` du fichier unique) : `normalize_text_utf8()`, `vigilance_alert_banner_utf8()`, `format_short_day_label()`/`format_long_day_label()`, `set_label_text_utf8()`, `clock_month_short_utf8()`. Hors contrat YAML | — |
+| `game_common.h` | 137 | Header-only partagé par les **8 consoles** (ADR-0014) : `clampf()`, `xorshift32_next()` (l'état reste dans chaque jeu), `mk_rect()`/`mk_label()`, `show()`/`set_bg()`/`set_border()`/`set_text_if()` (sur-ensemble des variantes : gardes nulles, opacité par défaut), `NvsSlot<T>` (clé + magic, `load()`/`save()`/`ready()`). Ne dépend pas du HMI ; un jeu peut redéfinir un helper dans son namespace (`Go::set_bg`) | — |
 | `tab5_text.cpp` | 252 | UTF-8 / mojibake, store local des alertes rejetées, libellés français des jours/mois, `set_label_text_utf8()` | voir `tab5_custom.h` |
 | `tab5_forecast.cpp` | 358 | `update_meteo_icon()`, couleurs température/humidité, `parse_and_update_heures_bulk()`/`_jours_bulk()`, `refresh_daily_forecast()`/`refresh_hourly_forecast()` | voir `tab5_custom.h` |
 | `tab5_central.cpp` | 741 | carte centrale (rotateur, `parse_and_update_ha_alerts_bulk()`, `update_info_text_ui()`, titre de page), `handle_swipe_gesture()`/`reset_forecast_to_main_page()`, `show_temporary_planning()`, `show_vocal_response_ui()` | voir `tab5_custom.h` |
@@ -300,6 +301,9 @@ Les trois fichiers ci-dessous sont **gitignorés** — ce sont les vrais fichier
 - ~~**20 capteurs `pot*_ec/lux/temp/bat` recopiés à 4 lignes près** (règle 5 non appliquée aux sensors)~~ — **RÉSOLU** (08/09/2026, lot (d)) : `pot_sensors.yaml`, package paramétré inclus 5×.
 - ~~**Entités HA en dur** (`assist_satellite.m5stack_…` ×3, `media_player.m5stack_…` ×2 dans `tab5-scripts.yaml` / `tab5-alarm.yaml`)~~ — **RÉSOLU** (08/09/2026, lot (d)) : `entity_tab5_satellite` / `entity_tab5_media_player` (défauts dans `tab5-scripts.yaml`, surcharge par `user_entities.yaml`) ; l'appel `media_stop` sur une entité inexistante est retiré ; `tools/check_tab5_code_rules.py` refuse toute valeur `entity_id:` littérale.
 - ~~**`temp_chambre` / `hum_chambre`** importés « conservés » sans aucun lecteur~~ — **RÉSOLU** (08/09/2026, lot (d)) : retirés (2 souscriptions HA de moins), clés retirées du modèle et du mode démo.
+- ~~**Jeux — deux conventions de palette** (`Marble::Pal::*/ARK_*/PIN_*` dans `tab5_custom.h` vs `namespace Pal` local)~~ — **RÉSOLU** (08/09/2026, lot (f), ADR-0014) : palette locale `<Jeu>::Pal` pour les 8 consoles, `tab5_custom.h` ne connaît plus aucun jeu.
+- ~~**Jeux — helpers dupliqués** (`xorshift` ×5, `clampf` ×3, `mk_label`/`mk_rect` ×8, cycle NVS + magic ×8)~~ — **RÉSOLU** (08/09/2026, lot (f)) : `game_common.h` (+ `NvsSlot<T>`), 754 lignes retirées des jeux ; `lv_timer_create/delete` volontairement laissés en place (2 lignes par jeu).
+- ~~**Dames sans miroir Python** (Go et échecs en avaient un)~~ — **RÉSOLU** (08/09/2026, lot (f)) : `tools/test_draughts_engine.py`, perft de référence 10×10 et 8×8 + tests de règles, joué par `pytest`.
 
 ### 4.3 Règles du projet — état actuel
 

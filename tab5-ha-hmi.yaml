@@ -41,6 +41,9 @@ esphome:
     - Tab5/tab5_console.cpp
     - Tab5/tab5_anim.cpp
     - Tab5/tab5_calendar.cpp
+    # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
+    # NvsSlot<T>) — lot (f), ADR-0014. Header-only.
+    - Tab5/game_common.h
     # Jeu « Fil d'Or » (overlay plein écran) — sous-module isolé du HMI.
     - Tab5/marble_game.h
     - Tab5/marble_game.cpp

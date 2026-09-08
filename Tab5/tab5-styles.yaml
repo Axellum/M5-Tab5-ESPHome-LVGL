@@ -83,24 +83,24 @@ color:
     hex: "05080F"          # Voile modal sombre
   - id: color_warm_pink
     hex: "F472B6"          # pink-400 (anniversaires calendrier ; miroir UIColor::WARM_PINK)
-  # --- Jeu « Fil d'Or » (marble_game) : miroir des tokens UIColor::MARBLE_* ---
+  # --- Jeu « Fil d'Or » (marble_game) : miroir des tokens Marble::Pal::* ---
   # Seuls les 3 fonds des conteneurs vivent ici ; toutes les autres couleurs du
   # jeu sont posees en C++ (marble_game.cpp) et n'ont donc pas de token YAML.
   - id: color_marble_void
-    hex: "080C14"          # fond hors terrain (miroir UIColor::MARBLE_VOID)
+    hex: "080C14"          # fond hors terrain (miroir Marble::Pal::VOID)
   - id: color_marble_floor
-    hex: "111A28"          # sol jouable (miroir UIColor::MARBLE_FLOOR)
+    hex: "111A28"          # sol jouable (miroir Marble::Pal::FLOOR)
   - id: color_marble_hud
-    hex: "0C1220"          # bandeau HUD (miroir UIColor::MARBLE_HUD_BG)
-  # --- Jeu « Arcanoïde » (arkanoid_game) : miroir des tokens UIColor::ARK_* ---
+    hex: "0C1220"          # bandeau HUD (miroir Marble::Pal::HUD_BG)
+  # --- Jeu « Arcanoïde » (arkanoid_game) : miroir des tokens Arkanoid::Pal::* ---
   # Seuls les 3 fonds des conteneurs vivent ici ; toutes les autres couleurs du
   # jeu sont posées en C++ (arkanoid_game.cpp) et n'ont donc pas de token YAML.
   - id: color_arkanoid_void
-    hex: "0A0A0F"          # fond hors terrain (miroir UIColor::ARK_VOID)
+    hex: "0A0A0F"          # fond hors terrain (miroir Arkanoid::Pal::VOID)
   - id: color_arkanoid_floor
-    hex: "111118"          # sol jouable (miroir UIColor::ARK_FLOOR)
+    hex: "111118"          # sol jouable (miroir Arkanoid::Pal::FLOOR)
   - id: color_arkanoid_hud
-    hex: "0D0D14"          # bandeau HUD (miroir UIColor::ARK_HUD_BG)
+    hex: "0D0D14"          # bandeau HUD (miroir Arkanoid::Pal::HUD_BG)
   # --- Jeu « Trial Poursuite » (trivia_game) ---------------------------------
   # trivia_game.yaml référençait ces 3 tokens sans qu'ils existent : la
   # compilation ESPHome échouait sur « Couldn't find ID 'color_trivia_void' ».
@@ -113,15 +113,15 @@ color:
     hex: "1A1028"          # plateau de jeu
   - id: color_trivia_hud
     hex: "150E22"          # bandeau HUD
-  # --- Jeu « Neon Apron » (pinball_game) : miroir des tokens UIColor::PIN_* ---
+  # --- Jeu « Neon Apron » (pinball_game) : miroir des tokens Pinball::Pal::* ---
   # Comme Marble et Arcanoïde : seuls les fonds des 4 conteneurs vivent ici, tout
   # le reste de la palette est posé en C++ (pinball_game.cpp).
   - id: color_pinball_void
-    hex: "05070E"          # fond hors table (miroir UIColor::PIN_VOID)
+    hex: "05070E"          # fond hors table (miroir Pinball::Pal::VOID)
   - id: color_pinball_felt
-    hex: "121C2E"          # haut du sol (miroir UIColor::PIN_FELT_HI)
+    hex: "121C2E"          # haut du sol (miroir Pinball::Pal::FELT_HI)
   - id: color_pinball_hud
-    hex: "080C16"          # fronton / DMD (miroir UIColor::PIN_HUD_BG)
+    hex: "080C16"          # fronton / DMD (miroir Pinball::Pal::HUD_BG)
 
 # =============================================================================
 # FONTS — inchangees (fonctionnel, pas esthetique)

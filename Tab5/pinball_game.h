@@ -76,6 +76,46 @@ struct PinballSave {
 
 namespace Pinball {
 
+// Palette LOCALE du jeu (ex-`UIColor::PIN_*` de tab5_custom.h, deplacee ici le
+// 08/09/2026, lot (f) de l'audit : meme convention que Lode::Pal, Go::Pal, Chess::Pal,
+// Trivia::Pal et Draughts::Pal — un sous-module de jeu ne touche pas aux fichiers
+// partages du HMI, ADR-0014). Les tokens « miroir » de tab5-styles.yaml (fond, sol,
+// HUD) restent alignes a la main : verifier les deux quand une valeur change.
+namespace Pal {
+// Flipper portrait 720×1280. Direction artistique : table sombre bleu nuit,
+// rails d'acier froid, 3 néons seulement (cyan / ambre / magenta) + un vert
+// réservé aux modes actifs. Pas de photoréalisme, pas de bitmap : tout le
+// volume vient de paires ombre/arête (chaque pièce a un ton bas et un ton
+// haut). Utilisée uniquement par le namespace Pinball.
+// @ai_instruction Si tu ajoutes une pièce à la table, réutilise une paire
+//     existante (_DIM / _HI) plutôt que d'inventer une 4ᵉ teinte néon : la
+//     lisibilité du plateau tient au fait qu'il n'y en a que trois.
+static constexpr uint32_t VOID        = 0x05070E;  // fond hors table
+static constexpr uint32_t FELT_HI     = 0x121C2E;  // sol, haut du dégradé
+static constexpr uint32_t FELT_LO     = 0x070B14;  // sol, bas du dégradé
+static constexpr uint32_t HUD_BG      = 0x080C16;  // fronton / DMD
+static constexpr uint32_t RAIL        = 0x35435C;  // corps des rails et guides
+static constexpr uint32_t RAIL_HI     = 0x8CA3C4;  // arête éclairée des rails
+static constexpr uint32_t CHROME      = 0xC8D4E6;  // chrome du tablier (apron)
+static constexpr uint32_t APRON       = 0x0C1220;  // fond du tablier
+static constexpr uint32_t BALL        = 0xC9D6E8;  // corps de la bille (acier)
+static constexpr uint32_t BALL_HI     = 0xFFFFFF;  // reflet spéculaire de la bille
+static constexpr uint32_t BALL_SH     = 0x1B2333;  // ombre portée de la bille
+static constexpr uint32_t FLIP_BASE   = 0x3E1B33;  // flanc sombre du flipper
+static constexpr uint32_t FLIP_EDGE   = 0xFF3D8A;  // arête néon du flipper
+static constexpr uint32_t CYAN        = 0x35E6FF;  // néon 1 — bumpers, lanes
+static constexpr uint32_t CYAN_DIM    = 0x11485C;  // néon 1 éteint
+static constexpr uint32_t AMBER       = 0xFFB020;  // néon 2 — score, cibles
+static constexpr uint32_t AMBER_DIM   = 0x53390B;  // néon 2 éteint
+static constexpr uint32_t MAGENTA     = 0xFF3D8A;  // néon 3 — slingshots, multi
+static constexpr uint32_t MAGENTA_DIM = 0x521230;  // néon 3 éteint
+static constexpr uint32_t MODE        = 0x3DFF9E;  // vert « mode en cours »
+static constexpr uint32_t DANGER      = 0xFF4757;  // TILT, drain, perte de bille
+static constexpr uint32_t WHITE       = 0xF2F6FF;  // texte principal
+static constexpr uint32_t TEXT_DIM    = 0x6C7C98;  // texte secondaire
+static constexpr uint32_t INSERT_OFF  = 0x141E2C;  // insert lumineux éteint
+}  // namespace Pal
+
 // Pointeurs LVGL + polices fournis par le YAML au moment de l'ouverture.
 // Les 4 conteneurs sont déclarés dans ui_components/pinball_game.yaml ; les
 // polices viennent de tab5-styles.yaml (on ne peut pas faire `id(...)` hors

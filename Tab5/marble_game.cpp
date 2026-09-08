@@ -9,9 +9,10 @@
  *      esphome::global_preferences (aucune dependance Home Assistant).
  * @ai_instruction Hot-path = tick() : pas de std::string, pas de to_string(), pas
  *      de new/delete. Les libelles HUD ne sont reecrits que quand leur valeur change.
- *      Couleurs : uniquement UIColor::MARBLE_* (jamais d'hex en dur ici).
+ *      Couleurs : uniquement Pal::* (jamais d'hex en dur ici).
  */
 #include "marble_game.h"
+#include "game_common.h"
 #include "esphome/core/preferences.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
 #include <cmath>
@@ -74,8 +75,7 @@ static constexpr uint32_t PREF_KEY   = 0x4D41524Bu;  // cle NVS dediee au jeu
 
 static uint32_t s_rng = 0x1234567u;
 static inline uint32_t rnd() {
-    s_rng ^= s_rng << 13; s_rng ^= s_rng >> 17; s_rng ^= s_rng << 5;
-    return s_rng;
+    return xorshift32_next(s_rng);
 }
 // Entier dans [lo, hi] inclus.
 static inline int rnd_range(int lo, int hi) {
@@ -245,16 +245,16 @@ enum BoonId : uint8_t {
 
 struct BoonDef { const char* name; const char* desc; uint32_t color; bool unique; };
 static const BoonDef BOONS[BO_COUNT] = {
-    {"Main d'Ariane",  "Reponse a l'inclinaison +18 %",        UIColor::MARBLE_BALL,   false},
-    {"Coeur de braise","+1 point de vie, soigne aussitot",     UIColor::MARBLE_DANGER, false},
-    {"Bourse tressee", "+40 % d'ames ramassees",               UIColor::MARBLE_RUNE,   false},
-    {"Aimant mineur",  "Attire les bonus alentour",            UIColor::MARBLE_MAGNET, true},
-    {"Semelles lourdes","Freinage nettement plus mordant",     UIColor::MARBLE_BRAKE,  true},
-    {"Elan",           "Vitesse maximale +170",                UIColor::MARBLE_BOOST,  false},
-    {"Peau de bronze", "Un bouclier a chaque nouvelle salle",  UIColor::MARBLE_SHIELD, true},
-    {"Oeil du dedale", "Le portail pulse et se voit de loin",  UIColor::MARBLE_EXIT,   true},
-    {"Seconde chance", "Releve une fois dans la run",          UIColor::MARBLE_WALL_LIT, true},
-    {"Pas de velours", "3 s d'invulnerabilite par salle",      UIColor::MARBLE_SLOW,   true},
+    {"Main d'Ariane",  "Reponse a l'inclinaison +18 %",        Pal::BALL,   false},
+    {"Coeur de braise","+1 point de vie, soigne aussitot",     Pal::DANGER, false},
+    {"Bourse tressee", "+40 % d'ames ramassees",               Pal::RUNE,   false},
+    {"Aimant mineur",  "Attire les bonus alentour",            Pal::MAGNET, true},
+    {"Semelles lourdes","Freinage nettement plus mordant",     Pal::BRAKE,  true},
+    {"Elan",           "Vitesse maximale +170",                Pal::BOOST,  false},
+    {"Peau de bronze", "Un bouclier a chaque nouvelle salle",  Pal::SHIELD, true},
+    {"Oeil du dedale", "Le portail pulse et se voit de loin",  Pal::EXIT,   true},
+    {"Seconde chance", "Releve une fois dans la run",          Pal::WALL_LIT, true},
+    {"Pas de velours", "3 s d'invulnerabilite par salle",      Pal::SLOW,   true},
 };
 
 // --- Niveaux de difficulte -------------------------------------------------
@@ -276,11 +276,11 @@ struct DiffDef {
 
 static const DiffDef DIFFS[D_COUNT] = {
     {"Calme",       "+1 PV, pieges lents, longue invulnerabilite",
-      1, 0.75f, 0.92f, 0.80f, 1800, UIColor::MARBLE_EXIT},
+      1, 0.75f, 0.92f, 0.80f, 1800, Pal::EXIT},
     {"Normal",      "L'equilibre de reference",
-      0, 1.00f, 1.00f, 1.00f, 1200, UIColor::MARBLE_BALL},
+      0, 1.00f, 1.00f, 1.00f, 1200, Pal::BALL},
     {"Impitoyable", "-1 PV, pieges rapides, mais +60 % d'ames",
-     -1, 1.35f, 1.10f, 1.60f,  800, UIColor::MARBLE_DANGER},
+     -1, 1.35f, 1.10f, 1.60f,  800, Pal::DANGER},
 };
 
 // --- Caracteristiques ameliorables (montee de niveau facon Dark Souls) ------
@@ -292,12 +292,12 @@ enum StatId : uint8_t { S_VITALITE = 0, S_RESISTANCE, S_FINESSE,
 
 struct StatDef { const char* name; const char* desc; uint8_t maxlvl; uint32_t color; };
 static const StatDef STATS[MARBLE_NSTATS] = {
-    {"Vitalite",   "+1 point de vie par niveau",                  5, UIColor::MARBLE_DANGER},
-    {"Resistance", "+300 ms d'invulnerabilite ; bouclier des 3",  5, UIColor::MARBLE_SHIELD},
-    {"Finesse",    "-1 px de rayon : bille plus difficile a toucher", 4, UIColor::MARBLE_EXIT},
-    {"Agilite",    "+12 % de reponse a l'inclinaison par niveau",  5, UIColor::MARBLE_BALL},
-    {"Elan",       "+60 de vitesse maximale par niveau",           5, UIColor::MARBLE_BOOST},
-    {"Decouverte", "+15 % d'ames et +12 % de butin en coffre",     5, UIColor::MARBLE_MAGNET},
+    {"Vitalite",   "+1 point de vie par niveau",                  5, Pal::DANGER},
+    {"Resistance", "+300 ms d'invulnerabilite ; bouclier des 3",  5, Pal::SHIELD},
+    {"Finesse",    "-1 px de rayon : bille plus difficile a toucher", 4, Pal::EXIT},
+    {"Agilite",    "+12 % de reponse a l'inclinaison par niveau",  5, Pal::BALL},
+    {"Elan",       "+60 de vitesse maximale par niveau",           5, Pal::BOOST},
+    {"Decouverte", "+15 % d'ames et +12 % de butin en coffre",     5, Pal::MAGNET},
 };
 
 // Cout d'un niveau en fonction du niveau total deja atteint (courbe DS-like).
@@ -313,16 +313,16 @@ enum ItemEffect : uint8_t {
 
 struct ItemDef { const char* name; const char* desc; uint16_t price; uint8_t effect; uint32_t color; };
 static const ItemDef ITEMS[] = {
-    {"Anneau de fer",      "+1 point de vie",                    180, IE_HP,         UIColor::MARBLE_DANGER},
-    {"Talisman du filon",  "+25 % d'ames ramassees",             220, IE_SOULS,      UIColor::MARBLE_RUNE},
-    {"Plume de suie",      "+70 de vitesse maximale",            200, IE_SPEED,      UIColor::MARBLE_BOOST},
-    {"Gantelet poli",      "+15 % de reponse a l'inclinaison",   200, IE_CONTROL,    UIColor::MARBLE_BALL},
-    {"Ecaille de bronze",  "Un bouclier a chaque salle",         320, IE_SHIELD_ROOM,UIColor::MARBLE_SHIELD},
-    {"Oeil de rune",       "Le portail pulse et se voit de loin",140, IE_EYE,        UIColor::MARBLE_EXIT},
-    {"Pierre de sang",     "Releve une fois par run",            400, IE_REVIVE,     UIColor::MARBLE_WALL_LIT},
-    {"Aimant du mineur",   "Attire les bonus alentour",          260, IE_MAGNET,     UIColor::MARBLE_MAGNET},
-    {"Semelle de plomb",   "Freinage nettement plus mordant",    160, IE_BRAKE,      UIColor::MARBLE_BRAKE},
-    {"Couronne felee",     "+50 % d'ames, mais -1 point de vie", 300, IE_GREED,      UIColor::MARBLE_SLOW},
+    {"Anneau de fer",      "+1 point de vie",                    180, IE_HP,         Pal::DANGER},
+    {"Talisman du filon",  "+25 % d'ames ramassees",             220, IE_SOULS,      Pal::RUNE},
+    {"Plume de suie",      "+70 de vitesse maximale",            200, IE_SPEED,      Pal::BOOST},
+    {"Gantelet poli",      "+15 % de reponse a l'inclinaison",   200, IE_CONTROL,    Pal::BALL},
+    {"Ecaille de bronze",  "Un bouclier a chaque salle",         320, IE_SHIELD_ROOM,Pal::SHIELD},
+    {"Oeil de rune",       "Le portail pulse et se voit de loin",140, IE_EYE,        Pal::EXIT},
+    {"Pierre de sang",     "Releve une fois par run",            400, IE_REVIVE,     Pal::WALL_LIT},
+    {"Aimant du mineur",   "Attire les bonus alentour",          260, IE_MAGNET,     Pal::MAGNET},
+    {"Semelle de plomb",   "Freinage nettement plus mordant",    160, IE_BRAKE,      Pal::BRAKE},
+    {"Couronne felee",     "+50 % d'ames, mais -1 point de vie", 300, IE_GREED,      Pal::SLOW},
 };
 static constexpr int N_ITEMS = (int) (sizeof(ITEMS) / sizeof(ITEMS[0]));
 // 5 et pas 6 : avec 6 objets par page il fallait 8 lignes (6 + « Page suivante »
@@ -364,8 +364,7 @@ struct Ent {
 };
 
 static MarbleSave g_save{};
-static esphome::ESPPreferenceObject g_pref;
-static bool  g_pref_ready = false;
+static NvsSlot<MarbleSave> g_nvs(PREF_KEY, SAVE_MAGIC);
 
 static UI    g_ui{};
 static bool  g_built = false;
@@ -506,66 +505,26 @@ static void end_run(bool victory);
 // ===========================================================================
 
 void persist_load() {
-    if (!g_pref_ready) {
-        g_pref = esphome::global_preferences->make_preference<MarbleSave>(PREF_KEY);
-        g_pref_ready = true;
-    }
-    if (!g_pref.load(&g_save) || g_save.magic != SAVE_MAGIC) {
+    if (!g_nvs.load(g_save)) {
         g_save = MarbleSave{};          // remise a zero complete
         g_save.magic = SAVE_MAGIC;
     }
 }
 
 void persist_save() {
-    if (!g_pref_ready) return;
-    g_save.magic = SAVE_MAGIC;
-    g_pref.save(&g_save);
-    esphome::global_preferences->sync();
+    if (!g_nvs.ready()) return;
+    g_nvs.save(g_save);
 }
 
 // ===========================================================================
 // 7. Helpers LVGL
 // ===========================================================================
 
-static inline float clampf(float v, float lo, float hi) {
-    return v < lo ? lo : (v > hi ? hi : v);
-}
 
-// Rectangle nu : on retire tout le style du theme pour partir d'une base connue.
-static lv_obj_t* mk_rect(lv_obj_t* parent) {
-    lv_obj_t* o = lv_obj_create(parent);
-    lv_obj_remove_style_all(o);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_set_style_bg_opa(o, LV_OPA_COVER, LV_PART_MAIN);
-    return o;
-}
 
-static lv_obj_t* mk_label(lv_obj_t* parent, const esphome::font::Font* f, uint32_t color) {
-    lv_obj_t* l = lv_label_create(parent);
-    lv_obj_remove_style_all(l);
-    if (f) esphome::lvgl::lv_obj_set_style_text_font(l, f, LV_PART_MAIN);
-    lv_obj_set_style_text_color(l, lv_color_hex(color), LV_PART_MAIN);
-    lv_label_set_text(l, "");
-    return l;
-}
 
-static inline void show(lv_obj_t* o, bool v) {
-    if (!o) return;
-    if (v) lv_obj_clear_flag(o, LV_OBJ_FLAG_HIDDEN);
-    else   lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
-}
 
-static inline void set_bg(lv_obj_t* o, uint32_t c, lv_opa_t opa) {
-    lv_obj_set_style_bg_color(o, lv_color_hex(c), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(o, opa, LV_PART_MAIN);
-}
 
-static inline void set_border(lv_obj_t* o, uint32_t c, int w, lv_opa_t opa) {
-    lv_obj_set_style_border_color(o, lv_color_hex(c), LV_PART_MAIN);
-    lv_obj_set_style_border_width(o, w, LV_PART_MAIN);
-    lv_obj_set_style_border_opa(o, opa, LV_PART_MAIN);
-}
 
 // Ecrit un libelle seulement si le texte a change (evite des invalidations LVGL).
 // Degrade vertical : c'est lui qui donne du volume aux pieces sans coûter
@@ -619,12 +578,6 @@ static inline void detail(lv_obj_t* d, int x, int y, int w, int h, int radius) {
     lv_obj_clear_flag(d, LV_OBJ_FLAG_HIDDEN);
 }
 
-static void set_text_if(lv_obj_t* l, const char* txt) {
-    if (!l) return;
-    const char* cur = lv_label_get_text(l);
-    if (cur && strcmp(cur, txt) == 0) return;
-    lv_label_set_text(l, txt);
-}
 
 // ===========================================================================
 // 8. Construction de l'UI (une seule fois)
@@ -662,12 +615,12 @@ static void ball_resize(int r) {
 // Applique le skin choisi au corps ET au reflet. Le corps est un degrade
 // clair->sombre : c'est lui qui fait la sphere, le reflet ne fait que la vernir.
 static void ball_apply_skin() {
-    const uint32_t body  = (g_save.skin == 1) ? UIColor::MARBLE_BALL_ALT
-                         : (g_save.skin == 2) ? UIColor::MARBLE_BALL_CU
-                                              : UIColor::MARBLE_BALL;
-    const uint32_t gloss = (g_save.skin == 1) ? UIColor::MARBLE_BALL_ALT_HI
-                         : (g_save.skin == 2) ? UIColor::MARBLE_BALL_CU_HI
-                                              : UIColor::MARBLE_BALL_HI;
+    const uint32_t body  = (g_save.skin == 1) ? Pal::BALL_ALT
+                         : (g_save.skin == 2) ? Pal::BALL_CU
+                                              : Pal::BALL;
+    const uint32_t gloss = (g_save.skin == 1) ? Pal::BALL_ALT_HI
+                         : (g_save.skin == 2) ? Pal::BALL_CU_HI
+                                              : Pal::BALL_HI;
     set_grad(g_ball, gloss, shade(body, 42));
     set_bg(g_ball_gloss, gloss, 225);
 }
@@ -699,18 +652,18 @@ static void build_ui() {
     // --- Sol : degrade vertical au lieu d'un aplat -------------------------
     // Le haut plus clair simule la lumiere qui tombe du fond du donjon, le bas
     // sombre fait ressortir la bille. Une seule passe de dessin, zero objet.
-    set_grad(g_ui.field, UIColor::MARBLE_FLOOR_HI, UIColor::MARBLE_FLOOR_LO);
-    set_grad(g_ui.hud, UIColor::MARBLE_HUD_BG, UIColor::MARBLE_VOID);
+    set_grad(g_ui.field, Pal::FLOOR_HI, Pal::FLOOR_LO);
+    set_grad(g_ui.hud, Pal::HUD_BG, Pal::VOID);
     // Filet de laiton sous le HUD : separe le bandeau du terrain sans lui voler
     // de hauteur (le bandeau doit rester a 48 px, cf. marble_game.yaml).
     lv_obj_t* hud_line = mk_rect(g_ui.hud);
     lv_obj_set_size(hud_line, FW, 2);
     lv_obj_set_pos(hud_line, 0, HUD_H - 2);
-    set_bg(hud_line, UIColor::MARBLE_BRASS_CHEST, 160);
+    set_bg(hud_line, Pal::BRASS_CHEST, 160);
     // Calque de menus : degrade sombre. On REPOSE l'opacite apres set_grad, qui
     // force LV_OPA_COVER — sans ca le panneau deviendrait opaque et on perdrait
     // la lecture du terrain en arriere-plan (choix d'origine du YAML, 96 %).
-    set_grad(g_ui.panel, UIColor::MARBLE_FLOOR_LO, UIColor::MARBLE_VOID);
+    set_grad(g_ui.panel, Pal::FLOOR_LO, Pal::VOID);
     lv_obj_set_style_bg_opa(g_ui.panel, 245, LV_PART_MAIN);
 
     // --- Pool de decor : cree AVANT les entites => dessine DERRIERE ---------
@@ -723,7 +676,7 @@ static void build_ui() {
     }
     for (int i = 0; i < MAX_DEC_ARC; i++) {
         g_dec_arc[i] = mk_arc(g_ui.field, 0, 0, 10, 0, 360, 2,
-                              UIColor::MARBLE_EXIT, LV_OPA_TRANSP);
+                              Pal::EXIT, LV_OPA_TRANSP);
         lv_obj_add_flag(g_dec_arc[i], LV_OBJ_FLAG_HIDDEN);
     }
 
@@ -740,7 +693,7 @@ static void build_ui() {
     // Ordre de creation = ordre d'empilement : ombre, puis corps, puis reflet.
     g_ball_sh = mk_rect(g_ui.field);
     lv_obj_set_style_radius(g_ball_sh, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    set_bg(g_ball_sh, UIColor::MARBLE_BALL_SH, 150);
+    set_bg(g_ball_sh, Pal::BALL_SH, 150);
     lv_obj_add_flag(g_ball_sh, LV_OBJ_FLAG_HIDDEN);
 
     g_ball = mk_rect(g_ui.field);
@@ -754,7 +707,7 @@ static void build_ui() {
     ball_apply_skin();
 
     // --- Banniere de decouverte (coffres, butin de boss) ---
-    g_toast = mk_label(g_ui.field, g_ui.f_mid, UIColor::MARBLE_RUNE);
+    g_toast = mk_label(g_ui.field, g_ui.f_mid, Pal::RUNE);
     lv_obj_align(g_toast, LV_ALIGN_TOP_MID, 0, 18);
     lv_obj_add_flag(g_toast, LV_OBJ_FLAG_HIDDEN);
 
@@ -762,7 +715,7 @@ static void build_ui() {
     const int VB = 7;
     for (int i = 0; i < 4; i++) {
         g_vign[i] = mk_rect(g_ui.field);
-        set_bg(g_vign[i], UIColor::MARBLE_DANGER, LV_OPA_COVER);
+        set_bg(g_vign[i], Pal::DANGER, LV_OPA_COVER);
         lv_obj_add_flag(g_vign[i], LV_OBJ_FLAG_HIDDEN);
     }
     lv_obj_set_pos(g_vign[0], 0, 0);        lv_obj_set_size(g_vign[0], FW, VB);
@@ -783,13 +736,13 @@ static void build_ui() {
     //   objectif x=772  reserve 172  (max mesure 164) -> fin 944
     //   1re pastille de boon a x=1016 : 72 px de marge.
     // @ai_instruction Rallonger un de ces libelles impose de refaire l'addition.
-    g_hud_room = mk_label(g_ui.hud, g_ui.f_small, UIColor::MARBLE_BALL);
+    g_hud_room = mk_label(g_ui.hud, g_ui.f_small, Pal::BALL);
     lv_obj_align(g_hud_room, LV_ALIGN_LEFT_MID, 18, 0);
-    g_hud_life = mk_label(g_ui.hud, g_ui.f_small, UIColor::MARBLE_DANGER);
+    g_hud_life = mk_label(g_ui.hud, g_ui.f_small, Pal::DANGER);
     lv_obj_align(g_hud_life, LV_ALIGN_LEFT_MID, 392, 0);
-    g_hud_gold = mk_label(g_ui.hud, g_ui.f_small, UIColor::MARBLE_RUNE);
+    g_hud_gold = mk_label(g_ui.hud, g_ui.f_small, Pal::RUNE);
     lv_obj_align(g_hud_gold, LV_ALIGN_LEFT_MID, 650, 0);
-    g_hud_goal = mk_label(g_ui.hud, g_ui.f_small, UIColor::MARBLE_EXIT);
+    g_hud_goal = mk_label(g_ui.hud, g_ui.f_small, Pal::EXIT);
     lv_obj_align(g_hud_goal, LV_ALIGN_LEFT_MID, 772, 0);
     g_hud_time = mk_label(g_ui.hud, g_ui.f_small, UIColor::TEXT_DIM);
     lv_obj_align(g_hud_time, LV_ALIGN_RIGHT_MID, -18, 0);
@@ -804,7 +757,7 @@ static void build_ui() {
     }
 
     // --- Panneau de menus (hub / recompense / pause / fin) ---
-    g_p_title = mk_label(g_ui.panel, g_ui.f_big, UIColor::MARBLE_BALL);
+    g_p_title = mk_label(g_ui.panel, g_ui.f_big, Pal::BALL);
     lv_obj_align(g_p_title, LV_ALIGN_TOP_MID, 0, 56);
     g_p_sub = mk_label(g_ui.panel, g_ui.f_small, UIColor::TEXT_DIM);
     lv_obj_align(g_p_sub, LV_ALIGN_TOP_MID, 0, 122);
@@ -819,11 +772,11 @@ static void build_ui() {
         g_slot[i] = mk_rect(g_ui.panel);
         lv_obj_add_flag(g_slot[i], LV_OBJ_FLAG_CLICKABLE);
         lv_obj_set_style_radius(g_slot[i], 14, LV_PART_MAIN);
-        set_grad(g_slot[i], UIColor::MARBLE_FLOOR_HI, UIColor::MARBLE_FLOOR_LO);
+        set_grad(g_slot[i], Pal::FLOOR_HI, Pal::FLOOR_LO);
         // Retour tactile : le fond s'eclaircit tant que le doigt est pose.
         // Casts explicites : combiner lv_part_t et lv_state_t directement est
         // deprecie en C++20 (-Wdeprecated-enum-enum-conversion).
-        lv_obj_set_style_bg_color(g_slot[i], lv_color_hex(UIColor::MARBLE_WALL),
+        lv_obj_set_style_bg_color(g_slot[i], lv_color_hex(Pal::WALL),
                                   (lv_style_selector_t) LV_PART_MAIN |
                                   (lv_style_selector_t) LV_STATE_PRESSED);
         lv_obj_add_event_cb(g_slot[i], slot_event_cb, LV_EVENT_CLICKED,
@@ -933,12 +886,12 @@ static void go_hub() {
     set_text_if(g_p_sub, sub);
     set_text_if(g_p_body, "");
     set_text_if(g_p_foot, "Incline la tablette pour guider la bille. L'ecran tactile ne sert qu'aux menus.");
-    slot_list(0, "Lancer une run", play_desc, UIColor::MARBLE_BALL, true);
-    slot_list(1, "Feu de camp", "Depenser les ames en caracteristiques", UIColor::MARBLE_DANGER, true);
-    slot_list(2, "Marchand", "Acheter et revendre des objets", UIColor::MARBLE_RUNE, true);
-    slot_list(3, "Equipement", eq_desc, UIColor::MARBLE_MAGNET, true);
-    slot_list(4, "Reglages", "Difficulte, mode dieu, teinte, calibration", UIColor::MARBLE_BOOST, true);
-    slot_list(5, "Statistiques", "Runs, victoires, records", UIColor::MARBLE_EXIT, true);
+    slot_list(0, "Lancer une run", play_desc, Pal::BALL, true);
+    slot_list(1, "Feu de camp", "Depenser les ames en caracteristiques", Pal::DANGER, true);
+    slot_list(2, "Marchand", "Acheter et revendre des objets", Pal::RUNE, true);
+    slot_list(3, "Equipement", eq_desc, Pal::MAGNET, true);
+    slot_list(4, "Reglages", "Difficulte, mode dieu, teinte, calibration", Pal::BOOST, true);
+    slot_list(5, "Statistiques", "Runs, victoires, records", Pal::EXIT, true);
     slot_list(6, "Quitter", "Retour au tableau de bord", UIColor::TEXT_DIM, true);
     slots_hide_from(7);
 }
@@ -963,13 +916,13 @@ static void go_settings() {
     slot_list(0, dtitle, d.desc, d.color, true);
     slot_list(1, gtitle,
               g_save.god ? "Invulnerable - hors concours" : "Jouer sans jamais mourir",
-              g_save.god ? UIColor::MARBLE_MAGNET : UIColor::TEXT_DIM, true);
+              g_save.god ? Pal::MAGNET : UIColor::TEXT_DIM, true);
     static const char* SKINS[3] = {"Or", "Argent", "Cuivre"};
     static char stitle[64];
     snprintf(stitle, sizeof(stitle), "Teinte de la bille : %s",
              SKINS[g_save.skin < 3 ? g_save.skin : 0]);
-    slot_list(2, stitle, "Purement cosmetique", UIColor::MARBLE_BALL, true);
-    slot_list(3, "Calibrer a plat", "Pose la tablette et appuie", UIColor::MARBLE_BOOST, true);
+    slot_list(2, stitle, "Purement cosmetique", Pal::BALL, true);
+    slot_list(3, "Calibrer a plat", "Pose la tablette et appuie", Pal::BOOST, true);
     slot_list(4, "Retour", "", UIColor::TEXT_DIM, true);
     slots_hide_from(5);
 }
@@ -1001,7 +954,7 @@ static void go_level() {
         if (maxed) snprintf(descs[i], sizeof(descs[i]), "%s  -  au maximum", s.desc);
         else       snprintf(descs[i], sizeof(descs[i]), "%s  -  %u ames", s.desc, (unsigned) cost);
         slot_list(i, titles[i], descs[i],
-                  maxed ? UIColor::MARBLE_EXIT : s.color,
+                  maxed ? Pal::EXIT : s.color,
                   !maxed && g_save.souls >= cost);
     }
     slot_list(MARBLE_NSTATS, "Retour", "", UIColor::TEXT_DIM, true);
@@ -1048,7 +1001,7 @@ static void go_shop() {
     // g_shop_rows memorise le nombre d'objets affiches pour que le gestionnaire
     // de tap retrouve les memes index.
     g_shop_rows = n;
-    slot_list(n, "Page suivante", "", UIColor::MARBLE_BOOST, pages > 1);
+    slot_list(n, "Page suivante", "", Pal::BOOST, pages > 1);
     slot_list(n + 1, "Retour", "", UIColor::TEXT_DIM, true);
     slots_hide_from(n + 2);
 }
@@ -1190,7 +1143,7 @@ static void show_end(bool victory) {
     set_text_if(g_p_body, body);
     set_text_if(g_p_foot, g_god ? "Aucune ame creditee : le mode dieu ne compte pas."
                                 : "Les ames sont deja mises de cote.");
-    slot_list(0, "Relancer une run", "", UIColor::MARBLE_BALL, true);
+    slot_list(0, "Relancer une run", "", Pal::BALL, true);
     slot_list(1, "Retour au hub", "", UIColor::TEXT_DIM, true);
     lv_obj_align(g_slot[0], LV_ALIGN_BOTTOM_MID, 0, -180);
     lv_obj_align(g_slot[1], LV_ALIGN_BOTTOM_MID, 0, -100);
@@ -1204,9 +1157,9 @@ static void show_pause() {
     set_text_if(g_p_sub, "Le dedale patiente.");
     set_text_if(g_p_body, "");
     set_text_if(g_p_foot, "");
-    slot_list(0, "Reprendre", "", UIColor::MARBLE_BALL, true);
-    slot_list(1, "Recalibrer a plat", "Pose la tablette avant d'appuyer", UIColor::MARBLE_BOOST, true);
-    slot_list(2, "Abandonner la run", "Les ames sont conservees", UIColor::MARBLE_DANGER, true);
+    slot_list(0, "Reprendre", "", Pal::BALL, true);
+    slot_list(1, "Recalibrer a plat", "Pose la tablette avant d'appuyer", Pal::BOOST, true);
+    slot_list(2, "Abandonner la run", "Les ames sont conservees", Pal::DANGER, true);
     slots_hide_from(3);
 }
 
@@ -1269,22 +1222,22 @@ static void style_pickup(Ent& e, uint32_t col, uint32_t rim, int rim_w) {
 // d'aspect au moment ou il s'ouvre pour une raison sans rapport.
 static void style_exit(Ent& e, bool open_gate) {
     lv_obj_t* o = e.obj;
-    const uint32_t c = open_gate ? UIColor::MARBLE_EXIT : UIColor::MARBLE_EXIT_OFF;
+    const uint32_t c = open_gate ? Pal::EXIT : Pal::EXIT_OFF;
     lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    set_grad(o, open_gate ? UIColor::MARBLE_EXIT_HI : c, shade(c, 30));
+    set_grad(o, open_gate ? Pal::EXIT_HI : c, shade(c, 30));
     lv_obj_set_style_bg_opa(o, open_gate ? 70 : 26, LV_PART_MAIN);
     set_border(o, c, 5, open_gate ? LV_OPA_COVER : LV_OPA_50);
     // Coeur lumineux : un second anneau interieur donne la profondeur du puits.
     const int m = e.w / 5;
     detail(e.det, m, m, e.w - 2 * m, e.h - 2 * m, LV_RADIUS_CIRCLE);
-    set_bg(e.det, open_gate ? UIColor::MARBLE_EXIT_HI : c, open_gate ? 90 : 30);
+    set_bg(e.det, open_gate ? Pal::EXIT_HI : c, open_gate ? 90 : 30);
 }
 
 static void style_entity(Ent& e) {
     lv_obj_t* o = e.obj;
     lv_obj_set_size(o, e.w, e.h);
     lv_obj_set_style_radius(o, 0, LV_PART_MAIN);
-    set_border(o, UIColor::MARBLE_WALL_LIT, 0, LV_OPA_TRANSP);
+    set_border(o, Pal::WALL_LIT, 0, LV_OPA_TRANSP);
     // Le pool est recycle : le detail est masque par defaut, chaque cas le
     // rallume s'il en veut un. Sans ca, une piece heriterait du detail de la
     // piece qui occupait le meme slot dans la salle precedente.
@@ -1296,44 +1249,44 @@ static void style_entity(Ent& e) {
             // Bloc de pierre eclaire par le haut : degrade + arete vive au sommet.
             // C'est le changement le plus visible de la salle — les murs occupent
             // l'essentiel de l'ecran.
-            set_grad(o, UIColor::MARBLE_WALL_HI, UIColor::MARBLE_WALL_LO);
+            set_grad(o, Pal::WALL_HI, Pal::WALL_LO);
             lv_obj_set_style_radius(o, 4, LV_PART_MAIN);
-            set_border(o, shade(UIColor::MARBLE_WALL_LO, 60), 1, LV_OPA_80);
+            set_border(o, shade(Pal::WALL_LO, 60), 1, LV_OPA_80);
             // y=2 : la bordure occupe la ligne 0-1, l'arete se pose juste apres
             // sans la manger. Garde sur la largeur : certaines cloisons sont fines.
             if (e.w > 8) {
                 detail(e.det, 3, 2, e.w - 6, 2, 1);
-                set_bg(e.det, UIColor::MARBLE_WALL_EDGE, 190);
+                set_bg(e.det, Pal::WALL_EDGE, 190);
             }
             break;
         case K_SPIKE:
             // Lame : base sombre, arete claire. Le contour noir la detache du sol.
-            set_grad(o, UIColor::MARBLE_DANGER_HI, UIColor::MARBLE_DANGER_LO);
+            set_grad(o, Pal::DANGER_HI, Pal::DANGER_LO);
             lv_obj_set_style_radius(o, 3, LV_PART_MAIN);
-            set_border(o, UIColor::MARBLE_VOID, 2, LV_OPA_80);
+            set_border(o, Pal::VOID, 2, LV_OPA_80);
             // Le contour noir fait 2 px : l'arete demarre a y=3 pour le laisser
             // entier, sinon la lame semble ouverte sur le haut.
             if (e.w > 10) {
                 detail(e.det, 4, 3, e.w - 8, 2, 1);
-                set_bg(e.det, UIColor::MARBLE_DANGER_HI, 230);
+                set_bg(e.det, Pal::DANGER_HI, 230);
             }
             break;
         case K_SAW:
             // Barre de scie : degrade + gorge sombre en creux au centre (biseau).
-            set_grad(o, UIColor::MARBLE_DANGER_HI, UIColor::MARBLE_DANGER_LO);
+            set_grad(o, Pal::DANGER_HI, Pal::DANGER_LO);
             lv_obj_set_style_radius(o, 6, LV_PART_MAIN);
-            set_border(o, shade(UIColor::MARBLE_DANGER_LO, 70), 1, LV_OPA_80);
+            set_border(o, shade(Pal::DANGER_LO, 70), 1, LV_OPA_80);
             if (e.w > 10 && e.h > 10) {
                 detail(e.det, 4, 4, e.w - 8, e.h - 8, 4);
-                set_bg(e.det, UIColor::MARBLE_DANGER_LO, 120);
+                set_bg(e.det, Pal::DANGER_LO, 120);
             }
             break;
         case K_PIT:
             // Trou : margelle claire (bordure) + puits qui s'assombrit vers le bas
             // + disque noir en creux. Le vide doit se lire comme une profondeur.
-            set_grad(o, UIColor::MARBLE_PIT, 0x000000);
+            set_grad(o, Pal::PIT, 0x000000);
             lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-            set_border(o, UIColor::MARBLE_PIT_RIM, 3, LV_OPA_90);
+            set_border(o, Pal::PIT_RIM, 3, LV_OPA_90);
             detail(e.det, e.w / 5, e.h / 5, e.w - 2 * (e.w / 5), e.h - 2 * (e.h / 5),
                    LV_RADIUS_CIRCLE);
             set_bg(e.det, 0x000000, 170);
@@ -1343,9 +1296,9 @@ static void style_entity(Ent& e) {
         case K_WIND: {
             // Zones d'effet : nappes translucides. Le degre d'opacite est ce qui
             // les distingue d'un obstacle plein — ne pas le monter.
-            const uint32_t c = (e.k == K_GLUE)  ? UIColor::MARBLE_SLOW
-                             : (e.k == K_BOOST) ? UIColor::MARBLE_BOOST
-                                                : UIColor::MARBLE_WIND;
+            const uint32_t c = (e.k == K_GLUE)  ? Pal::SLOW
+                             : (e.k == K_BOOST) ? Pal::BOOST
+                                                : Pal::WIND;
             const lv_opa_t a = (e.k == K_GLUE) ? 66 : (e.k == K_BOOST ? 52 : 46);
             set_grad(o, c, shade(c, 25));
             lv_obj_set_style_bg_opa(o, a, LV_PART_MAIN);
@@ -1357,47 +1310,47 @@ static void style_entity(Ent& e) {
             break;
         }
         case K_ORB:
-            style_pickup(e, UIColor::MARBLE_DANGER, 0, 0);
-            set_bg(e.det, UIColor::MARBLE_DANGER_HI, 200);
+            style_pickup(e, Pal::DANGER, 0, 0);
+            set_bg(e.det, Pal::DANGER_HI, 200);
             break;
         case K_HUNTER:
-            style_pickup(e, UIColor::MARBLE_DANGER, UIColor::MARBLE_RUNE, 3);
-            set_border(o, UIColor::MARBLE_RUNE, 3, LV_OPA_COVER);
-            set_bg(e.det, UIColor::MARBLE_DANGER_HI, 210);
+            style_pickup(e, Pal::DANGER, Pal::RUNE, 3);
+            set_border(o, Pal::RUNE, 3, LV_OPA_COVER);
+            set_bg(e.det, Pal::DANGER_HI, 210);
             break;
         case K_GOLD:
-            set_grad(o, UIColor::MARBLE_RUNE, UIColor::MARBLE_RUNE_LO);
+            set_grad(o, Pal::RUNE, Pal::RUNE_LO);
             lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_MAIN);
             {
                 int g = e.w * 3 / 10; if (g < 3) g = 3;
                 detail(e.det, e.w * 20 / 100, e.h * 15 / 100, g, g, LV_RADIUS_CIRCLE);
-                set_bg(e.det, UIColor::MARBLE_BALL_HI, 190);
+                set_bg(e.det, Pal::BALL_HI, 190);
             }
             break;
-        case K_SHIELD: style_pickup(e, UIColor::MARBLE_SHIELD, UIColor::TEXT_PRIMARY, 2); break;
-        case K_MAGNET: style_pickup(e, UIColor::MARBLE_MAGNET, 0, 0); break;
-        case K_BRAKE:  style_pickup(e, UIColor::MARBLE_BRAKE,  0, 0); break;
-        case K_DASH:   style_pickup(e, UIColor::MARBLE_DASH,   0, 0); break;
+        case K_SHIELD: style_pickup(e, Pal::SHIELD, UIColor::TEXT_PRIMARY, 2); break;
+        case K_MAGNET: style_pickup(e, Pal::MAGNET, 0, 0); break;
+        case K_BRAKE:  style_pickup(e, Pal::BRAKE,  0, 0); break;
+        case K_DASH:   style_pickup(e, Pal::DASH,   0, 0); break;
         case K_RUNE:
             // Carre a coins doux : se distingue au premier coup d'oeil des pickups ronds.
-            set_grad(o, UIColor::MARBLE_RUNE, UIColor::MARBLE_RUNE_LO);
+            set_grad(o, Pal::RUNE, Pal::RUNE_LO);
             lv_obj_set_style_radius(o, 5, LV_PART_MAIN);
             set_border(o, UIColor::TEXT_PRIMARY, 3, LV_OPA_90);
             detail(e.det, 4, 3, e.w - 8 > 0 ? e.w - 8 : 1, 2, 1);
-            set_bg(e.det, UIColor::MARBLE_BALL_HI, 200);
+            set_bg(e.det, Pal::BALL_HI, 200);
             break;
         case K_CHEST:
             // Coffre : rectangle trapu cercle d'or, volontairement different
             // des pastilles rondes de bonus — on doit le reperer de loin.
             // La ferrure horizontale est ce qui le fait lire comme un coffre.
-            set_grad(o, UIColor::MARBLE_BRASS_CHEST, UIColor::MARBLE_CHEST_LO);
+            set_grad(o, Pal::BRASS_CHEST, Pal::CHEST_LO);
             lv_obj_set_style_radius(o, 6, LV_PART_MAIN);
-            set_border(o, UIColor::MARBLE_RUNE, 3, LV_OPA_COVER);
+            set_border(o, Pal::RUNE, 3, LV_OPA_COVER);
             // Rentree de 3 px de chaque cote : la bordure d'or du coffre fait
             // 3 px, une ferrure pleine largeur la recouvrirait aux deux bouts.
             if (e.w > 8) {
                 detail(e.det, 3, e.h / 2 - 2, e.w - 6, 4, 0);
-                set_bg(e.det, UIColor::MARBLE_RUNE, 170);
+                set_bg(e.det, Pal::RUNE, 170);
             }
             break;
         case K_EXIT:
@@ -1487,7 +1440,7 @@ static void build_decor(int idx) {
         if (!o) break;
         lv_obj_set_size(o, FW, 2);
         lv_obj_set_pos(o, 0, 168 + i * 168);
-        set_bg(o, UIColor::MARBLE_SLAB, 110);
+        set_bg(o, Pal::SLAB, 110);
     }
 
     // Torches murales : une braise vive dans un halo large. Les positions
@@ -1509,14 +1462,14 @@ static void build_decor(int idx) {
                            ty >= sp.y - 8 && ty <= sp.y + sp.h + 8);
             }
             if (blocked) continue;
-            dec_light(tx, ty, 46, UIColor::MARBLE_EMBER, 20);
-            dec_light(tx, ty, 6,  UIColor::MARBLE_EMBER, 210);
+            dec_light(tx, ty, 46, Pal::EMBER, 20);
+            dec_light(tx, ty, 6,  Pal::EMBER, 210);
             break;
         }
     }
 
     // Nappe chaude au point de depart : le joueur voit d'ou il part.
-    dec_light(r.sx, r.sy, 84, UIColor::MARBLE_EMBER, 22);
+    dec_light(r.sx, r.sy, 84, Pal::EMBER, 22);
 
     // Anneau du portail : deux arcs peints autour de la sortie. C'est le repere
     // le plus utile de la salle, il merite d'etre lisible de loin.
@@ -1524,17 +1477,17 @@ static void build_decor(int idx) {
         if (r.specs[i].k != K_EXIT) continue;
         const int ex = r.specs[i].x + r.specs[i].w / 2;
         const int ey = r.specs[i].y + r.specs[i].h / 2;
-        dec_light(ex, ey, 96, UIColor::MARBLE_EXIT, 20);
-        dec_arc(ex, ey, 62, 0, 360, 3, UIColor::MARBLE_EXIT, 70);
-        dec_arc(ex, ey, 78, 210, 330, 2, UIColor::MARBLE_EXIT, 45);
+        dec_light(ex, ey, 96, Pal::EXIT, 20);
+        dec_arc(ex, ey, 62, 0, 360, 3, Pal::EXIT, 70);
+        dec_arc(ex, ey, 78, 210, 330, 2, Pal::EXIT, 45);
         break;
     }
 
     // Arenes de boss (Nemesis, Trone) : orbite peinte au centre. Elle annonce la
     // trajectoire des orbes avant meme qu'ils ne bougent.
     if (idx >= 4) {
-        dec_arc(FW / 2, FH / 2, 196, 0, 360, 2, UIColor::MARBLE_DANGER, 34);
-        dec_light(FW / 2, FH / 2, 150, UIColor::MARBLE_DANGER, 12);
+        dec_arc(FW / 2, FH / 2, 196, 0, 360, 2, Pal::DANGER, 34);
+        dec_light(FW / 2, FH / 2, 150, Pal::DANGER, 12);
     }
 }
 
@@ -1617,7 +1570,7 @@ static void load_room(int idx) {
              (int) r.stars, "****", g_god ? "   [ DIEU ]" : "");
     set_text_if(g_hud_room, rbuf);
     lv_obj_set_style_text_color(g_hud_room,
-        lv_color_hex(g_god ? UIColor::MARBLE_MAGNET : UIColor::MARBLE_BALL), LV_PART_MAIN);
+        lv_color_hex(g_god ? Pal::MAGNET : Pal::BALL), LV_PART_MAIN);
 
     // Reset des caches HUD pour forcer un repaint complet du bandeau.
     g_c_life = -1; g_c_gold = -1; g_c_runes = -1; g_c_sec = -1; g_c_gate = -1;
@@ -1849,7 +1802,7 @@ static void boss_reward(const char* who) {
     } else {
         g_gold += 120;
         snprintf(buf, sizeof(buf), "%s cede 120 ames", who);
-        toast(buf, UIColor::MARBLE_RUNE);
+        toast(buf, Pal::RUNE);
     }
 }
 
@@ -1878,8 +1831,8 @@ static void update_hud() {
         }
         set_text_if(g_hud_life, buf);
         lv_obj_set_style_text_color(g_hud_life,
-            lv_color_hex(g_god ? UIColor::MARBLE_MAGNET
-                               : (g_shield ? UIColor::MARBLE_SHIELD : UIColor::MARBLE_DANGER)),
+            lv_color_hex(g_god ? Pal::MAGNET
+                               : (g_shield ? Pal::SHIELD : Pal::DANGER)),
             LV_PART_MAIN);
     }
     if (g_c_gold != g_gold) {
@@ -2089,7 +2042,7 @@ static void tick_cb(lv_timer_t*) {
                         }
                     }
                     snprintf(cbuf, sizeof(cbuf), "Coffre : %d ames", bonus);
-                    toast(cbuf, UIColor::MARBLE_RUNE);
+                    toast(cbuf, Pal::RUNE);
                 }
                 break;
             case K_SPIKE: case K_SAW: case K_ORB: case K_HUNTER:

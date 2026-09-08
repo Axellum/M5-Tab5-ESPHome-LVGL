@@ -247,6 +247,7 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── tab5_custom.h         # C++ declarations (HMI logic) — the single public header
 │   ├── tab5_custom.cpp       # Shared globals + map of the C++ units
 │   ├── tab5_internal.h       # Helpers shared between units (not part of the YAML contract)
+│   ├── game_common.h         # Helpers shared by the 8 consoles (bare widgets, xorshift32, NvsSlot<T>)
 │   ├── tab5_text/forecast/central/services/assist/cards/console/anim/calendar.cpp  # One unit per responsibility
 │   ├── alarm_clock.h/.cpp    # Alarm engine — next-ring maths, calendar rules, RDV list
 │   ├── marble_game.h/.cpp    # Game: Fil d'Or (marble roguelite)
@@ -262,6 +263,7 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── demo/                 # Standalone demo pusher (no HA required)
 │   ├── test_go_engine.py     # Host tests: Go rules (capture, ko, scoring)
 │   ├── test_chess_perft.py   # Host tests: chess move generator vs the perft suite
+│   ├── test_draughts_engine.py  # Host tests: draughts move generator vs reference perft (10×10 and 8×8)
 │   └── make_chess_font.py    # Builds ChessPieces.ttf
 └── docs/                     # Extended documentation
 ```
@@ -269,7 +271,7 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 Everything runs on a plain PC, no device needed:
 
 ```bash
-python tools/test_go_engine.py && python tools/test_chess_perft.py && python tools/demo/demo_pusher.py --dry-run
+python tools/test_go_engine.py && python tools/test_chess_perft.py && python tools/test_draughts_engine.py && python tools/demo/demo_pusher.py --dry-run
 ```
 
 ---

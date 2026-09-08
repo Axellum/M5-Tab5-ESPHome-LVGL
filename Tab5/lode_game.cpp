@@ -31,6 +31,7 @@
  *      (passable / supported / can_step / arete de creusement) sur les 10 maps.
  */
 #include "lode_game.h"
+#include "game_common.h"
 #include "esphome/core/log.h"
 #include "esphome/core/preferences.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
@@ -120,8 +121,7 @@ static constexpr uint32_t PREF_KEY   = 0x4C4F4445u;
 
 static uint32_t s_rng = 0x9E3779B9u;
 static inline uint32_t rnd() {
-    s_rng ^= s_rng << 13; s_rng ^= s_rng >> 17; s_rng ^= s_rng << 5;
-    return s_rng;
+    return xorshift32_next(s_rng);
 }
 static inline int rnd_range(int lo, int hi) {
     if (hi <= lo) return lo;
@@ -386,8 +386,7 @@ struct Actor {
 struct Hole { int8_t x, y; uint8_t blink; uint32_t at; };
 
 static LodeSave g_save{};
-static esphome::ESPPreferenceObject g_pref;
-static bool  g_pref_ready = false;
+static NvsSlot<LodeSave> g_nvs(PREF_KEY, SAVE_MAGIC);
 
 static UI    g_ui{};
 static bool  g_built = false;
@@ -493,11 +492,7 @@ static void apply_speed() {
 }
 
 void persist_load() {
-    if (!g_pref_ready) {
-        g_pref = esphome::global_preferences->make_preference<LodeSave>(PREF_KEY);
-        g_pref_ready = true;
-    }
-    if (!g_pref.load(&g_save) || g_save.magic != SAVE_MAGIC) {
+    if (!g_nvs.load(g_save)) {
         g_save = LodeSave{};
         g_save.magic = SAVE_MAGIC;
         g_save.unlocked = 1;
@@ -514,10 +509,8 @@ void persist_load() {
 }
 
 void persist_save() {
-    if (!g_pref_ready) return;
-    g_save.magic = SAVE_MAGIC;
-    g_pref.save(&g_save);
-    esphome::global_preferences->sync();
+    if (!g_nvs.ready()) return;
+    g_nvs.save(g_save);
 }
 
 // Horodatage courant : base SNTP passee a l'ouverture + temps ecoule depuis.
@@ -539,47 +532,11 @@ static void fmt_stamp(uint32_t st, char* out, size_t n) {
 // 6. Helpers LVGL
 // ===========================================================================
 
-static lv_obj_t* mk_rect(lv_obj_t* parent) {
-    lv_obj_t* o = lv_obj_create(parent);
-    lv_obj_remove_style_all(o);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_set_style_bg_opa(o, LV_OPA_COVER, LV_PART_MAIN);
-    return o;
-}
 
-static lv_obj_t* mk_label(lv_obj_t* parent, const esphome::font::Font* f, uint32_t color) {
-    lv_obj_t* l = lv_label_create(parent);
-    lv_obj_remove_style_all(l);
-    if (f) esphome::lvgl::lv_obj_set_style_text_font(l, f, LV_PART_MAIN);
-    lv_obj_set_style_text_color(l, lv_color_hex(color), LV_PART_MAIN);
-    lv_label_set_text(l, "");
-    return l;
-}
 
-static inline void show(lv_obj_t* o, bool v) {
-    if (!o) return;
-    if (v) lv_obj_clear_flag(o, LV_OBJ_FLAG_HIDDEN);
-    else   lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
-}
 
-static inline void set_bg(lv_obj_t* o, uint32_t c, lv_opa_t opa) {
-    lv_obj_set_style_bg_color(o, lv_color_hex(c), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(o, opa, LV_PART_MAIN);
-}
 
-static inline void set_border(lv_obj_t* o, uint32_t c, int w, lv_opa_t opa) {
-    lv_obj_set_style_border_color(o, lv_color_hex(c), LV_PART_MAIN);
-    lv_obj_set_style_border_width(o, w, LV_PART_MAIN);
-    lv_obj_set_style_border_opa(o, opa, LV_PART_MAIN);
-}
 
-static void set_text_if(lv_obj_t* l, const char* txt) {
-    if (!l) return;
-    const char* cur = lv_label_get_text(l);
-    if (cur && strcmp(cur, txt) == 0) return;
-    lv_label_set_text(l, txt);
-}
 
 static void toast(const char* msg) {
     if (!g_toast) return;

@@ -9,9 +9,10 @@
  *      esphome::global_preferences (aucune dépendance Home Assistant).
  * @ai_instruction Hot-path = tick() : pas de std::string, pas de to_string(), pas
  *      de new/delete. Les libellés HUD ne sont réécrits que quand leur valeur change.
- *      Couleurs : uniquement UIColor::ARK_* (jamais d'hex en dur ici).
+ *      Couleurs : uniquement Pal::* (jamais d'hex en dur ici).
  */
 #include "arkanoid_game.h"
+#include "game_common.h"
 #include "esphome/core/preferences.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
 #include <cmath>
@@ -91,8 +92,7 @@ static constexpr uint32_t PREF_KEY   = 0x41524B44u;  // clé NVS dédiée
 
 static uint32_t s_rng = 0xDEADBEEFu;
 static inline uint32_t rnd() {
-    s_rng ^= s_rng << 13; s_rng ^= s_rng >> 17; s_rng ^= s_rng << 5;
-    return s_rng;
+    return xorshift32_next(s_rng);
 }
 static inline int rnd_range(int lo, int hi) {
     if (hi <= lo) return lo;
@@ -295,8 +295,7 @@ struct Brick {
 };
 
 static ArkanoidSave g_save{};
-static esphome::ESPPreferenceObject g_pref;
-static bool  g_pref_ready = false;
+static NvsSlot<ArkanoidSave> g_nvs(PREF_KEY, SAVE_MAGIC);
 
 static UI    g_ui{};
 static bool  g_built = false;
@@ -368,11 +367,7 @@ static int g_c_score = -1, g_c_lives = -1, g_c_level = -1, g_c_best = -1;
 // ===========================================================================
 
 void persist_load() {
-    if (!g_pref_ready) {
-        g_pref = esphome::global_preferences->make_preference<ArkanoidSave>(PREF_KEY);
-        g_pref_ready = true;
-    }
-    if (!g_pref.load(&g_save) || g_save.magic != SAVE_MAGIC) {
+    if (!g_nvs.load(g_save)) {
         g_save = ArkanoidSave{};
         g_save.magic = SAVE_MAGIC;
         g_save.ctrl_mode = 2;      // défaut : les deux
@@ -381,10 +376,8 @@ void persist_load() {
 }
 
 void persist_save() {
-    if (!g_pref_ready) return;
-    g_save.magic = SAVE_MAGIC;
-    g_pref.save(&g_save);
-    esphome::global_preferences->sync();
+    if (!g_nvs.ready()) return;
+    g_nvs.save(g_save);
 }
 
 // Insère un score dans le top 10 (tri décroissant). Retourne true si qualifié.
@@ -420,51 +413,12 @@ static uint32_t best_score() {
 // 7. Helpers LVGL
 // ===========================================================================
 
-static inline float clampf(float v, float lo, float hi) {
-    return v < lo ? lo : (v > hi ? hi : v);
-}
 
-static lv_obj_t* mk_rect(lv_obj_t* parent) {
-    lv_obj_t* o = lv_obj_create(parent);
-    lv_obj_remove_style_all(o);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_set_style_bg_opa(o, LV_OPA_COVER, LV_PART_MAIN);
-    return o;
-}
 
-static lv_obj_t* mk_label(lv_obj_t* parent, const esphome::font::Font* f, uint32_t color) {
-    lv_obj_t* l = lv_label_create(parent);
-    lv_obj_remove_style_all(l);
-    if (f) esphome::lvgl::lv_obj_set_style_text_font(l, f, LV_PART_MAIN);
-    lv_obj_set_style_text_color(l, lv_color_hex(color), LV_PART_MAIN);
-    lv_label_set_text(l, "");
-    return l;
-}
 
-static inline void show(lv_obj_t* o, bool v) {
-    if (!o) return;
-    if (v) lv_obj_clear_flag(o, LV_OBJ_FLAG_HIDDEN);
-    else   lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
-}
 
-static inline void set_bg(lv_obj_t* o, uint32_t c, lv_opa_t opa) {
-    lv_obj_set_style_bg_color(o, lv_color_hex(c), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(o, opa, LV_PART_MAIN);
-}
 
-static inline void set_border(lv_obj_t* o, uint32_t c, int w, lv_opa_t opa) {
-    lv_obj_set_style_border_color(o, lv_color_hex(c), LV_PART_MAIN);
-    lv_obj_set_style_border_width(o, w, LV_PART_MAIN);
-    lv_obj_set_style_border_opa(o, opa, LV_PART_MAIN);
-}
 
-static void set_text_if(lv_obj_t* l, const char* txt) {
-    if (!l) return;
-    const char* cur = lv_label_get_text(l);
-    if (cur && strcmp(cur, txt) == 0) return;
-    lv_label_set_text(l, txt);
-}
 
 // ===========================================================================
 // 8. Construction de l'UI (une seule fois)
@@ -490,7 +444,7 @@ static void build_ui() {
     g_pad_obj = mk_rect(g_ui.field);
     lv_obj_set_size(g_pad_obj, PAD_W_DEFAULT, PAD_H);
     lv_obj_set_style_radius(g_pad_obj, 4, LV_PART_MAIN);
-    set_bg(g_pad_obj, UIColor::ARK_PADDLE, LV_OPA_COVER);
+    set_bg(g_pad_obj, Pal::PADDLE, LV_OPA_COVER);
     lv_obj_set_pos(g_pad_obj, FW / 2 - PAD_W_DEFAULT / 2, PAD_Y);
 
     // --- Balles (pool de 3) ---
@@ -498,7 +452,7 @@ static void build_ui() {
         g_ball_obj[i] = mk_rect(g_ui.field);
         lv_obj_set_size(g_ball_obj[i], BALL_R * 2, BALL_R * 2);
         lv_obj_set_style_radius(g_ball_obj[i], LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        set_bg(g_ball_obj[i], UIColor::ARK_BALL, LV_OPA_COVER);
+        set_bg(g_ball_obj[i], Pal::BALL, LV_OPA_COVER);
         lv_obj_add_flag(g_ball_obj[i], LV_OBJ_FLAG_HIDDEN);
     }
 
@@ -517,7 +471,7 @@ static void build_ui() {
     lv_obj_set_size(g_btn_l, 180, 120);
     lv_obj_set_pos(g_btn_l, 0, FH - 120);
     lv_obj_set_style_radius(g_btn_l, 0, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(g_btn_l, lv_color_hex(UIColor::ARK_BTN), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(g_btn_l, lv_color_hex(Pal::BTN), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(g_btn_l, LV_OPA_50, LV_PART_MAIN);
     lv_obj_add_flag(g_btn_l, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(g_btn_l, btn_left_cb, LV_EVENT_PRESSED, nullptr);
@@ -530,7 +484,7 @@ static void build_ui() {
     lv_obj_set_size(g_btn_r, 180, 120);
     lv_obj_set_pos(g_btn_r, FW - 180, FH - 120);
     lv_obj_set_style_radius(g_btn_r, 0, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(g_btn_r, lv_color_hex(UIColor::ARK_BTN), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(g_btn_r, lv_color_hex(Pal::BTN), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(g_btn_r, LV_OPA_50, LV_PART_MAIN);
     lv_obj_add_flag(g_btn_r, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(g_btn_r, btn_right_cb, LV_EVENT_PRESSED, nullptr);
@@ -542,7 +496,7 @@ static void build_ui() {
     const int VB = 6;
     for (int i = 0; i < 4; i++) {
         g_vign[i] = mk_rect(g_ui.field);
-        set_bg(g_vign[i], UIColor::ARK_DANGER, LV_OPA_COVER);
+        set_bg(g_vign[i], Pal::DANGER, LV_OPA_COVER);
         lv_obj_add_flag(g_vign[i], LV_OBJ_FLAG_HIDDEN);
     }
     lv_obj_set_pos(g_vign[0], 0, 0);        lv_obj_set_size(g_vign[0], FW, VB);
@@ -551,11 +505,11 @@ static void build_ui() {
     lv_obj_set_pos(g_vign[3], FW - VB, 0);  lv_obj_set_size(g_vign[3], VB, FH);
 
     // --- HUD : bande compacte de 48 px ---
-    g_hud_score = mk_label(g_ui.hud, g_ui.f_small, UIColor::ARK_BALL);
+    g_hud_score = mk_label(g_ui.hud, g_ui.f_small, Pal::BALL);
     lv_obj_align(g_hud_score, LV_ALIGN_LEFT_MID, 18, 0);
-    g_hud_lives = mk_label(g_ui.hud, g_ui.f_small, UIColor::ARK_DANGER);
+    g_hud_lives = mk_label(g_ui.hud, g_ui.f_small, Pal::DANGER);
     lv_obj_align(g_hud_lives, LV_ALIGN_LEFT_MID, 280, 0);
-    g_hud_level = mk_label(g_ui.hud, g_ui.f_small, UIColor::ARK_CYAN);
+    g_hud_level = mk_label(g_ui.hud, g_ui.f_small, Pal::CYAN);
     lv_obj_align(g_hud_level, LV_ALIGN_LEFT_MID, 450, 0);
     g_hud_best  = mk_label(g_ui.hud, g_ui.f_small, UIColor::TEXT_DIM);
     lv_obj_align(g_hud_best, LV_ALIGN_LEFT_MID, 700, 0);
@@ -563,7 +517,7 @@ static void build_ui() {
     lv_obj_align(g_hud_ctrl, LV_ALIGN_RIGHT_MID, -18, 0);
 
     // --- Panneau de menus ---
-    g_p_title = mk_label(g_ui.panel, g_ui.f_big, UIColor::ARK_BALL);
+    g_p_title = mk_label(g_ui.panel, g_ui.f_big, Pal::BALL);
     lv_obj_align(g_p_title, LV_ALIGN_TOP_MID, 0, 56);
     g_p_sub = mk_label(g_ui.panel, g_ui.f_small, UIColor::TEXT_DIM);
     lv_obj_align(g_p_sub, LV_ALIGN_TOP_MID, 0, 122);
@@ -578,8 +532,8 @@ static void build_ui() {
         g_slot[i] = mk_rect(g_ui.panel);
         lv_obj_add_flag(g_slot[i], LV_OBJ_FLAG_CLICKABLE);
         lv_obj_set_style_radius(g_slot[i], 14, LV_PART_MAIN);
-        set_bg(g_slot[i], UIColor::ARK_FLOOR, LV_OPA_COVER);
-        lv_obj_set_style_bg_color(g_slot[i], lv_color_hex(UIColor::ARK_WALL),
+        set_bg(g_slot[i], Pal::FLOOR, LV_OPA_COVER);
+        lv_obj_set_style_bg_color(g_slot[i], lv_color_hex(Pal::WALL),
                                   (lv_style_selector_t)LV_PART_MAIN |
                                   (lv_style_selector_t)LV_STATE_PRESSED);
         lv_obj_add_event_cb(g_slot[i], slot_event_cb, LV_EVENT_CLICKED,
@@ -646,9 +600,9 @@ static void go_hub() {
     set_text_if(g_p_sub, sub);
     set_text_if(g_p_body, "");
     set_text_if(g_p_foot, "Casse toutes les briques. Ne laisse pas tomber la balle.");
-    slot_list(0, "Jouer", "8 niveaux, 3 vies, power-ups", UIColor::ARK_BALL, true);
-    slot_list(1, "Classement", "Top 10 local", UIColor::ARK_CYAN, true);
-    slot_list(2, "Reglages", "Controle, sensibilite, calibration, SFX", UIColor::ARK_GREEN, true);
+    slot_list(0, "Jouer", "8 niveaux, 3 vies, power-ups", Pal::BALL, true);
+    slot_list(1, "Classement", "Top 10 local", Pal::CYAN, true);
+    slot_list(2, "Reglages", "Controle, sensibilite, calibration, SFX", Pal::GREEN, true);
     slot_list(3, "Quitter", "Retour au tableau de bord", UIColor::TEXT_DIM, true);
     slots_hide_from(4);
 }
@@ -667,11 +621,11 @@ static void go_settings() {
     set_text_if(g_p_sub, "Ces reglages sont sauvegardes automatiquement.");
     set_text_if(g_p_body, "");
     set_text_if(g_p_foot, "");
-    slot_list(0, ctrl_title, "Inclinaison / Boutons / Les deux", UIColor::ARK_CYAN, true);
-    slot_list(1, sens_title, "Vitesse de reponse a l'inclinaison", UIColor::ARK_GREEN, true);
-    slot_list(2, "Calibrer a plat", "Pose la tablette et appuie", UIColor::ARK_ORANGE, true);
+    slot_list(0, ctrl_title, "Inclinaison / Boutons / Les deux", Pal::CYAN, true);
+    slot_list(1, sens_title, "Vitesse de reponse a l'inclinaison", Pal::GREEN, true);
+    slot_list(2, "Calibrer a plat", "Pose la tablette et appuie", Pal::ORANGE, true);
     slot_list(3, g_save.muted ? "SFX : coupes" : "SFX : actifs",
-              "Bips sonores (casse, mort, niveau)", UIColor::ARK_MAGENTA, true);
+              "Bips sonores (casse, mort, niveau)", Pal::MAGENTA, true);
     slot_list(4, "Retour", "", UIColor::TEXT_DIM, true);
     slots_hide_from(5);
 }
@@ -697,7 +651,7 @@ static void go_highscores() {
     set_text_if(g_p_sub, "Top 10 local (NVS)");
     set_text_if(g_p_body, body);
     set_text_if(g_p_foot, "");
-    slot_list(0, "Effacer les scores", "Appuie pour confirmer", UIColor::ARK_DANGER, true);
+    slot_list(0, "Effacer les scores", "Appuie pour confirmer", Pal::DANGER, true);
     slot_list(1, "Retour", "", UIColor::TEXT_DIM, true);
     lv_obj_align(g_slot[0], LV_ALIGN_BOTTOM_MID, 0, -160);
     lv_obj_align(g_slot[1], LV_ALIGN_BOTTOM_MID, 0, -80);
@@ -711,9 +665,9 @@ static void show_pause() {
     set_text_if(g_p_sub, "Le jeu attend.");
     set_text_if(g_p_body, "");
     set_text_if(g_p_foot, "");
-    slot_list(0, "Reprendre", "", UIColor::ARK_BALL, true);
-    slot_list(1, "Recalibrer a plat", "Pose la tablette avant d'appuyer", UIColor::ARK_ORANGE, true);
-    slot_list(2, "Abandonner", "Le score est enregistre", UIColor::ARK_DANGER, true);
+    slot_list(0, "Reprendre", "", Pal::BALL, true);
+    slot_list(1, "Recalibrer a plat", "Pose la tablette avant d'appuyer", Pal::ORANGE, true);
+    slot_list(2, "Abandonner", "Le score est enregistre", Pal::DANGER, true);
     slots_hide_from(3);
 }
 
@@ -727,7 +681,7 @@ static void show_level_clear() {
     set_text_if(g_p_sub, "");
     set_text_if(g_p_body, body);
     set_text_if(g_p_foot, "");
-    slot_list(0, "Niveau suivant", "", UIColor::ARK_GREEN, true);
+    slot_list(0, "Niveau suivant", "", Pal::GREEN, true);
     slots_hide_from(1);
     lv_obj_align(g_slot[0], LV_ALIGN_BOTTOM_MID, 0, -120);
 }
@@ -749,7 +703,7 @@ static void show_gameover() {
     set_text_if(g_p_sub, "");
     set_text_if(g_p_body, body);
     set_text_if(g_p_foot, "");
-    slot_list(0, "Rejouer", "", UIColor::ARK_BALL, true);
+    slot_list(0, "Rejouer", "", Pal::BALL, true);
     slot_list(1, "Retour au hub", "", UIColor::TEXT_DIM, true);
     lv_obj_align(g_slot[0], LV_ALIGN_BOTTOM_MID, 0, -180);
     lv_obj_align(g_slot[1], LV_ALIGN_BOTTOM_MID, 0, -100);
@@ -805,13 +759,13 @@ static void load_level(int idx) {
 
             uint32_t col;
             if (val == BT_INDESTRUCT) {
-                col = UIColor::ARK_WALL;
+                col = Pal::WALL;
                 lv_obj_set_style_radius(b.obj, 2, LV_PART_MAIN);
             } else if (val == BT_TOUGH) {
-                col = UIColor::ARK_TOUGH;
+                col = Pal::TOUGH;
                 lv_obj_set_style_radius(b.obj, 3, LV_PART_MAIN);
             } else if (val == BT_BONUS) {
-                col = UIColor::ARK_MAGENTA;
+                col = Pal::MAGENTA;
                 lv_obj_set_style_radius(b.obj, 3, LV_PART_MAIN);
             } else {
                 col = ROW_COLORS[r % 8];
@@ -925,13 +879,13 @@ static void spawn_powerup(float x, float y) {
     // Couleur selon le type
     uint32_t col;
     switch (type) {
-        case PU_EXPAND: col = UIColor::ARK_GREEN; break;
-        case PU_SHRINK: col = UIColor::ARK_ORANGE; break;
-        case PU_SLOW:   col = UIColor::ARK_CYAN; break;
-        case PU_FAST:   col = UIColor::ARK_DANGER; break;
-        case PU_MULTI:  col = UIColor::ARK_BALL; break;
-        case PU_GLUE:   col = UIColor::ARK_MAGENTA; break;
-        case PU_LIFE:   col = UIColor::ARK_GREEN; break;
+        case PU_EXPAND: col = Pal::GREEN; break;
+        case PU_SHRINK: col = Pal::ORANGE; break;
+        case PU_SLOW:   col = Pal::CYAN; break;
+        case PU_FAST:   col = Pal::DANGER; break;
+        case PU_MULTI:  col = Pal::BALL; break;
+        case PU_GLUE:   col = Pal::MAGENTA; break;
+        case PU_LIFE:   col = Pal::GREEN; break;
         default:        col = UIColor::TEXT_DIM; break;
     }
     set_bg(pu.obj, col, LV_OPA_COVER);
@@ -1075,7 +1029,7 @@ static bool ball_hits_brick(Ball& b, Brick& br, int bx, int by) {
         }
     } else {
         // Brique renforcée : change de teinte selon les PV restants
-        uint32_t col = (br.hp == 1) ? UIColor::ARK_TOUGH_HIT : UIColor::ARK_TOUGH;
+        uint32_t col = (br.hp == 1) ? Pal::TOUGH_HIT : Pal::TOUGH;
         set_bg(br.obj, col, LV_OPA_COVER);
     }
     return true;

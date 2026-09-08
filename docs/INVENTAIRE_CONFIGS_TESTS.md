@@ -116,6 +116,7 @@
 |---|---|---|---|
 | `test_go_engine.py` | `tools/` | Unitaire (miroir Python) | Règles Go : capture, suicide, ko, territoire, score. |
 | `test_chess_perft.py` | `tools/` | Unitaire (miroir Python) | Générateur d'échecs contre la suite perft standard. |
+| `test_draughts_engine.py` | `tools/` | Unitaire (miroir Python) | Générateur de dames (10×10 et 8×8) contre les perft de référence + règles (prise majoritaire, dame volante, promotion). |
 | `test_go_engine.cpp` | `tools/` | Unitaire (C++ hôte) | Même suite compilée contre le vrai `go_engine.cpp`. |
 
 ### 3.3 Outils de validation (intégration)
@@ -162,6 +163,7 @@ python tools/demo/demo_pusher.py --dry-run
 │   ├── test_go_engine.py
 │   ├── test_go_engine.cpp
 │   ├── test_chess_perft.py
+│   ├── test_draughts_engine.py
 │   ├── make_chess_font.py
 │   └── verifier_secrets_config.py
 └── .github/workflows/
