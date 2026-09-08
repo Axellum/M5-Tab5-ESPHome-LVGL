@@ -2203,13 +2203,6 @@ bool close_popup_if_open(lv_obj_t* card) {
     return true;
 }
 
-bool any_popup_visible(lv_obj_t* const* cards, int n) {
-    for (int i = 0; i < n; i++) {
-        if (cards[i] != nullptr && !lv_obj_has_flag(cards[i], LV_OBJ_FLAG_HIDDEN)) return true;
-    }
-    return false;
-}
-
 // Glissement horizontal + fondu croise entre deux layers (swipe previsions).
 // dir = LV_DIR_LEFT (in arrive de la droite, out part a gauche) ou
 //       LV_DIR_RIGHT (in arrive de la gauche, out part a droite).

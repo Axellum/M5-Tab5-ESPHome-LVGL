@@ -16,6 +16,10 @@ Thanks for looking at this project. It is a personal firmware repo, but issues a
    ```bash
    python -m esphome compile tab5-ha-hmi.yaml
    ```
+   and so must the host tests (`pip install -r requirements-dev.txt` once):
+   ```bash
+   python -m pytest
+   ```
 4. If you changed a `!include`d file: `esphome clean` before the next `run`.
 5. Use the [PR template](.github/PULL_REQUEST_TEMPLATE.md) checklist.
 6. Add a line to [`CHANGELOG.md`](CHANGELOG.md) for user-visible changes.
@@ -43,6 +47,10 @@ Merci d'intéresser à ce projet. C'est un firmware personnel, mais issues et PR
 3. **La compilation doit passer :**
    ```bash
    python -m esphome compile tab5-ha-hmi.yaml
+   ```
+   et les tests hôte aussi (`pip install -r requirements-dev.txt` une fois) :
+   ```bash
+   python -m pytest
    ```
 4. Si vous modifiez un fichier `!include` : `esphome clean` avant le prochain `run`.
 5. Utiliser la checklist du [modèle de PR](.github/PULL_REQUEST_TEMPLATE.md).

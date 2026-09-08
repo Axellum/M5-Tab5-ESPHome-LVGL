@@ -24,7 +24,7 @@ Rejected again: a single runtime modal instance whose centre is swapped — impo
 ## Consequences
 
 - Changing the cross, the scrim or the title alignment = editing one file. Changing every window's size = editing one substitution.
-- `scripts/check_tab5_modal_chrome.py` (workspace root repo) reports any popup that reintroduces an inline scrim/cross, a hard-coded card size, or a card without the shared bar.
+- `tools/check_tab5_modal_chrome.py` (in this repo since 2026-09-06, run by `pytest` and the CI) reports any popup that reintroduces an inline scrim/cross, a hard-coded card size, or a card without the shared bar.
 - The title dropped from `roboto_45_b` to `roboto_32_b`. This is a deliberate exception to the "don't touch my font sizes" rule of #T166 — it is the lever that makes the bar compact, and it was decided explicitly.
 - 28 px of usable height recovered per popup. Bodies were re-laid out accordingly: calendar rows 82 + r*95 (cells 91 px tall instead of 84), console 2×2 grid re-centred at x 63/637 with 300 px cards, assistant and TV columns stretched to the new card height.
 - `mdi_font_45` is no longer used by any chrome; `mdi_font_32` gained 4 glyphs (F024A, F0E17, F0141, F0142).

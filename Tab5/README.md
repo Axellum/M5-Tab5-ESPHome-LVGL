@@ -68,6 +68,18 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 
 ---
 
+### `tab5_registry.h` / `tab5_registry.cpp`
+
+Registre unique des **consoles** (`GameRegistry::kGames` : libellé, `is_open`,
+`close`, `on_imu`, `imu_fast`) et des **fenêtres modales** (`ModalRegistry`,
+rempli une fois par le script `tab5_modal_registry_init` de `tab5-scripts.yaml`,
+seul endroit où `id()` est disponible ; genres `POPUP` / `SUBWINDOW` / `LAYER`,
+ce dernier pour la sonnerie du réveil : nommée, jamais refermée). Tout ce qui a
+besoin de « quel jeu est ouvert ? » ou « quel popup couvre l'écran ? » —
+fermeture globale, poll IMU, text_sensor « Écran courant », select « Aller à
+l'écran », retour automatique à l'inactivité — passe par lui (ADR-0013).
+Garde-fou : `tools/check_tab5_registry.py`.
+
 ## Services HA exposés (`api: services:`)
 
 | Service | Payload | Rôle |
@@ -114,7 +126,7 @@ All non-trivial C++ logic: `update_meteo_icon()`, `get_temperature_color()`/`get
 4. **Pas de `std::string` par valeur ni de `to_string()` dans un hot-path** (sliders, `on_value` fréquents) — `const std::string&` ou buffer `snprintf` statique.
 5. **Toute nouvelle carte/widget répété ≥3 fois** (météo, switches...) doit passer par une fonction C++ builder paramétrée **ou** un template `!include` + `vars` (ex. `climate_hvac_mode_btn.yaml`, `cal_day_cell.yaml` ×42) — jamais un copier-coller YAML. Même règle dans `AGENTS.md`.
 6. Avant de committer : `python -m esphome compile tab5-ha-hmi.yaml` doit réussir (toolchain déjà en cache localement, ~20-45s).
-7. **Tout popup modal réutilise le chrome partagé** (ADR-0009) : `modal_scrim.yaml` (var `scrim_opa`) + `modal_header.yaml` (icône, titre, croix — barre de 52 px, corps à `y: ${modal_body_y}`), carte dimensionnée par `${modal_card_w}`/`${modal_card_h}`. Jamais de voile, de titre ou de croix réécrits à la main ; les boutons d'options d'en-tête restent des frères en `y: 4, height: 44`. Vérification : `python scripts/check_tab5_modal_chrome.py` (script du workspace privé, hors de ce dépôt — rapatriement dans `tools/` prévu par l'audit du 06/09/2026).
+7. **Tout popup modal réutilise le chrome partagé** (ADR-0009) : `modal_scrim.yaml` (var `scrim_opa`) + `modal_header.yaml` (icône, titre, croix — barre de 52 px, corps à `y: ${modal_body_y}`), carte dimensionnée par `${modal_card_w}`/`${modal_card_h}`. Jamais de voile, de titre ou de croix réécrits à la main ; les boutons d'options d'en-tête restent des frères en `y: 4, height: 44`. Vérification : `python tools/check_tab5_modal_chrome.py` (joué aussi par `pytest` et par la CI, `tests/test_guards.py`).
    **Exceptions (pages de jeu)** : les 8 `*_game.yaml` de la section Arcade ci-dessous, plus `game_selector.yaml`. Ce ne sont pas des popups posés sur `page_main` mais des **pages LVGL autonomes** en flux plein écran — pas de garde-fou modal (ni `style_modal_card`, ni `color_modal_scrim`, ni glyphe de croix).
 
 ---
@@ -161,11 +173,12 @@ Chaque carte fait **trois** choses, dans cet ordre :
 3. `script.execute: tab5_<jeu>_open` — construit et ouvre la console.
 
 Ne pas recopier la liste des fermetures dans les cartes : elle vit dans
-`tab5_games_close_all` (`tab5-scripts.yaml`), un seul endroit à maintenir.
+`GameRegistry::kGames` (`tab5_registry.cpp`), que `tab5_games_close_all`
+(`tab5-scripts.yaml`) se contente d'appeler — un seul endroit à maintenir.
 
 ### Règles à respecter pour ajouter une 9ᵉ console
 
-Une console n'est **intégrée** que si les six points suivants sont faits. Un seul
+Une console n'est **intégrée** que si les cinq points suivants sont faits. Un seul
 oubli et le jeu est invisible, ou le firmware ne compile pas :
 
 1. `tab5-ha-hmi.yaml` → `includes:` : **tous** les `.h` et `.cpp`, y compris les
@@ -177,11 +190,14 @@ oubli et le jeu est invisible, ou le firmware ne compile pas :
    cosmétique : sans lui, un swipe sur le dashboard peut atterrir sur la page du
    jeu, timer non démarré et pointeurs non injectés ;
 3. `tab5-scripts.yaml` → script `tab5_<jeu>_open` qui injecte les pointeurs LVGL ;
-4. `tab5-scripts.yaml` → ajouter `<Namespace>::close()` dans
-   **`tab5_games_close_all`** (liste unique, ne jamais la recopier ailleurs) ;
-5. `game_selector.yaml` → une carte dans la grille ;
-6. `tab5-imu.yaml` → `<Namespace>::on_imu(...)`, et `<Namespace>::is_open()` dans
-   la liste de poll rapide **uniquement** si le jeu pilote à l'inclinaison.
+4. `tab5_registry.cpp` → une ligne dans **`GameRegistry::kGames`** (libellé,
+   `is_open`, `close`, `on_imu`, et `imu_fast` à `true` **uniquement** si le jeu
+   pilote à l'inclinaison). C'est la **seule** liste : la fermeture globale
+   (`tab5_games_close_all`), le poll IMU 10/30 Hz, le dispatch des 3 axes et le
+   text_sensor « Écran courant » la lisent tous. `tools/check_tab5_registry.py`
+   (joué par `pytest`) échoue si un `*_game.h` n'y figure pas, ou si un
+   `<Namespace>::is_open()` réapparaît dans un YAML ;
+5. `game_selector.yaml` → une carte dans la grille.
 
 Les icônes MDI utilisées doivent en outre figurer dans la liste `glyphs` de
 `mdi_font_56` / `mdi_font_45` (`tab5-styles.yaml`) : une icône absente de la
@@ -261,7 +277,7 @@ Le layout est validé par un `magic` (`SAVE_MAGIC`) : **le modifier oblige à bu
 ### Garde-fou : toutes les salles restent traversables
 
 ```bash
-python scripts/check_marble_rooms.py
+python tools/check_marble_rooms.py
 ```
 
 Lit les 6 salles **directement dans `marble_game.cpp`** (pas de duplication : le test suit le contenu) et vérifie, pour chacune, que le départ n'est pas dans un mur, que la sortie est atteignable, que **chaque bonus et chaque rune** l'est aussi, et que les scies laissent un passage à au moins une phase de leur course.
@@ -468,8 +484,8 @@ paliers : l'équilibre du jeu ne change pas, seul le tempo change.
 ### Notes techniques
 
 Les règles de grille (`passable` / `supported` / `can_step` / arête de creusement) vivent
-dans une section isolée du `.cpp` et sont **rejouées à l'identique** par un garde-fou
-Python hors dépôt sur les 10 cartes — c'est ce qui garantit qu'aucun niveau ne devient
+dans une section isolée du `.cpp` et sont **rejouées à l'identique** par le garde-fou
+`tools/check_lode_levels.py` (joué par `pytest` et la CI) sur les 10 cartes — c'est ce qui garantit qu'aucun niveau ne devient
 infaisable après un ajustement. Rendu : cache par acteur (ajouté en `349baee`), aucune
 réallocation LVGL dans le tick.
 

@@ -4,6 +4,76 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-08 — Firmware : un seul registre pour les 8 consoles et les fenêtres modales
+
+Premier lot firmware de l'audit du 06/09/2026 (§4.1, point 5). Rien ne change à
+l'écran. `config_hash` 0xcddecfdc → 0x7a5db911, RAM +40 o, flash +558 o (build
+propre, même toolchain) ; OTA validée sur la tablette : `sw_version`
+`2026-09-08 09:34:15`, popups ouverts, nommés et refermés depuis HA par le
+select « Aller à l'écran » et le capteur « Écran courant ».
+
+- **`Tab5/tab5_registry.h` / `.cpp`** (nouveaux) : `GameRegistry::kGames`
+  (libellé, `is_open`, `close`, `on_imu`, `imu_fast`) et `ModalRegistry`
+  (fenêtres `POPUP` / `SUBWINDOW` / `LAYER`, rempli une fois par le script
+  `tab5_modal_registry_init`, seul endroit où `id()` est disponible).
+- **Quatre copies de la liste des jeux supprimées** : `tab5_games_close_all`
+  (fermeture), `tab5-imu.yaml` (dispatch des 3 axes + poll 10/30 Hz),
+  `tab5-ha-controls.yaml` (text_sensor « Écran courant »), retour automatique
+  de `tab5-scripts.yaml`.
+- **Trois tables de popups supprimées** : `kPopups` (×2), `kScreens`,
+  `kTargetOf`. Le select « Aller à l'écran » retrouve sa cible par le libellé de
+  l'option (`ModalRegistry::find`) et journalise un avertissement si l'option
+  n'a pas de fenêtre enregistrée, au lieu de ne rien faire en silence.
+- `any_popup_visible(lv_obj_t* const*, int)` retiré de `tab5_custom.h/.cpp`
+  (plus aucun appelant).
+- **Garde-fou `tools/check_tab5_registry.py`** (joué par `pytest`) : chaque
+  `*_game.h` est dans `kGames` et réciproquement ; aucun `X::is_open()`,
+  `X::close()`, `X::on_imu(` ni table `kPopups`/`kScreens`/`kTargetOf` dans un
+  YAML ; chaque carte `style_modal_card` est enregistrée ; chaque option du
+  select correspond à un libellé enregistré.
+- ADR-0013, README Tab5 (« ajouter une 9ᵉ console » passe de six à cinq
+  points), cartographie, `architecture.md`.
+
+### 2026-09-06 — Dépôt : 1,4 Mo d'actifs Nextion et 1,7 Mo d'images orphelines retirés
+
+Lot « ménage du dépôt » de l'audit du 06/09/2026. Aucun fichier de `Tab5/` touché.
+
+- `sources/` (23 fichiers : SVG météo, `Untitled.ttf`, `mdi.ttf`, `pt.bin`) n'était
+  référencé nulle part — héritage de l'écran Nextion, jamais lu par le firmware
+  (les polices vivent dans `Tab5/`). Supprimé.
+- `docs/images/` : `tab5_ui_tour.mp4` (1,1 Mo, aucun README ne le cite — le GIF et
+  les deux WebP restent), et quatre photos d'une version antérieure de l'UI
+  (`tab5_photo_climate_popup.jpg`, `_console_diag.jpg`, `_dashboard_switches.jpg`,
+  `_dashboard_weather.jpg`) remplacées depuis par leurs `_v2`. Les
+  `tab5_design_*.jpg` sont **conservées** : la liste de médias Hackster les cite.
+- `docs/images/_make_tab5_tour.py` (générateur des animations, chemins Windows et
+  dossier Cursor de l'auteur en dur) sort du dépôt public vers le workspace privé :
+  il n'avait rien à faire dans un dossier d'images livré à tout le monde.
+- Reste dans l'historique git (~29 Mo de pack) : réécrire un dépôt public est une
+  décision à part, non prise ici.
+
+### 2026-09-06 — CI : tests hôte à chaque push, compilation seulement quand le firmware bouge, garde-fous rapatriés
+
+Lot « outillage » de l'audit du 06/09/2026. Aucun fichier de `Tab5/` touché.
+
+- **Les trois garde-fous de contenu entrent dans le dépôt** (`tools/check_tab5_modal_chrome.py`,
+  `check_marble_rooms.py`, `check_lode_levels.py`). Ils vivaient dans le workspace privé
+  alors que `Tab5/README.md`, ADR-0009 et la section Marble les citaient : un clone ne
+  pouvait pas les lancer. Chemins relatifs au dépôt, et `tests/test_guards.py` les joue
+  dans `pytest` — une salle ou une map cassée fait échouer la CI avant tout flash.
+- **Job `python` en CI** à chaque push/PR : `pytest` (31 tests), vérificateur de secrets
+  (câblable depuis #99), dry-run du demo pusher. ~1 min.
+- **La compilation ESPHome ne tourne plus pour une typo Markdown** : job `changes`
+  (`dorny/paths-filter`) → `build` seulement si `tab5-ha-hmi.yaml`, `Tab5/` ou le workflow
+  changent. `build` est un check requis de `main` : il reste déclaré et passe en
+  « skipped » (= succès pour la protection) sinon ; `workflow_dispatch` force la
+  compilation. L'image `latest` est conservée volontairement (canari amont gratuit,
+  cf. 26/08). L'artefact `firmware.bin` n'est plus stocké que pour un push sur `main`
+  ou un lancement manuel (30 jours).
+- `requirements-dev.txt` (pytest, numpy, aioesphomeapi, fonttools — `fontTools` et `numpy`
+  n'étaient déclarés nulle part), Dependabot étendu à `pip`, `CONTRIBUTING.md` et
+  `AGENTS.md` ajoutent `python -m pytest` à la porte d'entrée.
+
 ### 2026-09-06 — Docs : chiffres remis à jour, badge 2026.8.1, sections mortes retirées, trois ADR
 
 Lot P1 « cohérence documentaire » de l'audit du 06/09/2026. Trois commentaires de
