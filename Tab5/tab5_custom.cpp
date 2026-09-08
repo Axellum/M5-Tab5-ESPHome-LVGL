@@ -34,7 +34,5 @@ WeatherHourSlot g_hour_slots[5];
 
 // Donnees planning/previsions remplies par parse_and_update_*_bulk (tab5_forecast.cpp),
 // lues par la carte centrale, les services et le calendrier.
-std::string cal_heures[15] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "", ""};
-
 DayForecastData cal_jours_data[15];
 HourForecastData cal_heures_data[15];

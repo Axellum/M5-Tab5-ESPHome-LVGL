@@ -579,7 +579,7 @@ void reset_forecast_to_main_page(int& forecast_page_index,
 std::string get_day_planning_display_text(int jour) {
     if (jour < 0 || jour >= 15) return "Jour hors plage";
     const DayForecastData& d = cal_jours_data[jour];
-    const std::string& h = !cal_heures[jour].empty() ? cal_heures[jour] : d.heures_ouverture;
+    const std::string& h = d.heures_ouverture;
 
     std::string label;
     if (jour == 0) label = "Auj.";
@@ -600,33 +600,42 @@ std::string get_day_planning_display_text(int jour) {
     return label + " : pas d'horaire";
 }
 
-static lv_timer_t* planning_restore_timer = nullptr;
-static std::string static_plan_l1;
-static std::string static_plan_l2;
-static lv_obj_t* static_lbl_planning = nullptr;
-static bool* static_is_showing_temp = nullptr;
-static int static_forecast_page_restore = 2;
-static lv_obj_t* static_page_title_wrap = nullptr;
-static lv_obj_t* static_lbl_page_title = nullptr;
-static int static_central_panel_restore = 0;
+// Contexte de l'affichage temporaire du planning (tap sur une tuile météo, 6 s) :
+// tout ce que le timer de restauration doit retrouver, regroupé ici plutôt qu'en
+// neuf `static` de fichier (audit du 06/09/2026, §4.2 point 18 — même approche que
+// CentralPanelCtx). Une seule instance : un seul affichage temporaire à la fois,
+// un nouveau tap remplace le précédent (son timer est supprimé).
+struct TempPlanningCtx {
+    lv_timer_t* restore_timer = nullptr;   // timer 6 s en cours, nullptr sinon
+    std::string plan_l1;                   // bandeau planning à restaurer, ligne 1
+    std::string plan_l2;                   // ... et ligne 2 (vide si absente)
+    lv_obj_t* lbl_planning = nullptr;
+    bool* is_showing_temp = nullptr;       // global ESPHome is_showing_temp_planning
+    int forecast_page_restore = 2;         // page prévisions à rétablir (2 = journalière)
+    lv_obj_t* page_title_wrap = nullptr;
+    lv_obj_t* lbl_page_title = nullptr;
+    int central_panel_restore = 0;         // panneau central à rétablir
+};
+static TempPlanningCtx s_temp_planning;
 
 static void planning_restore_timer_cb(lv_timer_t* timer) {
-    if (static_is_showing_temp) {
-        *static_is_showing_temp = false;
+    TempPlanningCtx& tp = s_temp_planning;
+    if (tp.is_showing_temp) {
+        *tp.is_showing_temp = false;
     }
-    g_central_ctx.current_panel = static_central_panel_restore;
-    if (static_forecast_page_restore != 2) {
-        update_central_forecast_page_ui(static_forecast_page_restore,
-            static_page_title_wrap, static_lbl_page_title, g_central_ctx);
-    } else if (static_lbl_planning) {
-        std::string combined = static_plan_l1;
-        if (!static_plan_l2.empty()) {
-            combined += "   |   " + static_plan_l2;
+    g_central_ctx.current_panel = tp.central_panel_restore;
+    if (tp.forecast_page_restore != 2) {
+        update_central_forecast_page_ui(tp.forecast_page_restore,
+            tp.page_title_wrap, tp.lbl_page_title, g_central_ctx);
+    } else if (tp.lbl_planning) {
+        std::string combined = tp.plan_l1;
+        if (!tp.plan_l2.empty()) {
+            combined += "   |   " + tp.plan_l2;
         }
-        set_label_text_utf8(static_lbl_planning, combined.c_str());
+        set_label_text_utf8(tp.lbl_planning, combined.c_str());
     }
     lv_timer_del(timer);
-    planning_restore_timer = nullptr;
+    tp.restore_timer = nullptr;
 }
 
 void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
@@ -635,7 +644,8 @@ void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
                              bool& is_showing_temp, CentralPanelCtx& ctx) {
     if (!lbl_planning) return;
 
-    static_central_panel_restore = ctx.current_panel;
+    TempPlanningCtx& tp = s_temp_planning;
+    tp.central_panel_restore = ctx.current_panel;
     is_showing_temp = true;
     ctx.current_panel = 0;
 
@@ -659,20 +669,20 @@ void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
     for (int i = 0; i < 4; i++)
         if (ctx.ha_wrap[i]) lv_obj_add_flag(ctx.ha_wrap[i], LV_OBJ_FLAG_HIDDEN);
 
-    static_plan_l1 = plan_l1;
-    static_plan_l2 = plan_l2;
-    static_lbl_planning = lbl_planning;
-    static_is_showing_temp = &is_showing_temp;
-    static_forecast_page_restore = forecast_page;
-    static_page_title_wrap = page_title_wrap;
-    static_lbl_page_title = lbl_page_title;
+    tp.plan_l1 = plan_l1;
+    tp.plan_l2 = plan_l2;
+    tp.lbl_planning = lbl_planning;
+    tp.is_showing_temp = &is_showing_temp;
+    tp.forecast_page_restore = forecast_page;
+    tp.page_title_wrap = page_title_wrap;
+    tp.lbl_page_title = lbl_page_title;
 
-    if (planning_restore_timer != nullptr) {
-        lv_timer_del(planning_restore_timer);
-        planning_restore_timer = nullptr;
+    if (tp.restore_timer != nullptr) {
+        lv_timer_del(tp.restore_timer);
+        tp.restore_timer = nullptr;
     }
 
-    planning_restore_timer = lv_timer_create(planning_restore_timer_cb, 6000, nullptr);
+    tp.restore_timer = lv_timer_create(planning_restore_timer_cb, 6000, nullptr);
 }
 
 static void hide_all_central_panels_for_overlay(lv_obj_t* page_title_wrap, CentralPanelCtx& ctx) {

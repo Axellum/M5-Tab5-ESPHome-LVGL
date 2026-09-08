@@ -11,8 +11,6 @@
 #include <string>
 #include <vector>
 
-extern std::string cal_heures[15];
-
 struct DayForecastData {
     std::string nom_jour;
     std::string condition;

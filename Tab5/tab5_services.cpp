@@ -272,7 +272,7 @@ void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
     int n = 0;
     for (int jour = 0; jour < 15 && n < 2; jour++) {
         const DayForecastData& d = cal_jours_data[jour];
-        const std::string& h = d.heures_ouverture.empty() ? cal_heures[jour] : d.heures_ouverture;
+        const std::string& h = d.heures_ouverture;
         if (h.size() < 11 || d.est_repos) continue;  // "HH:MM-HH:MM"
 
         const int start_h = atoi(h.substr(0, 2).c_str());
