@@ -4,6 +4,37 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-16 — OTA chiffrée avec la clé API, plancher ESPHome 2026.9.0
+
+ESPHome 2026.9.0 (bilan du 16/09/2026 : aucune rupture pour ce projet) apporte le chiffrement
+Noise des mises à jour OTA avec la clé API (esphome #18489, #18979).
+
+- **`ota: encryption:`** (`Tab5/tab5-hardware.yaml`) : le bloc vide hérite de
+  `api: encryption: key`, une seule clé protège l'appareil. `password: !secret ota_password`
+  retiré — redondant (la clé authentifie déjà l'uploader), coûteux (~3,5 Ko de flash + 60 o de
+  RAM d'après le warning 2026.9.0) et de toute façon incompatible avec `encryption:`. **Depuis
+  ce firmware l'upload en clair est refusé** : le poste qui flashe doit avoir
+  `api_encryption_key` dans `secrets.yaml` (le CLI la lit et chiffre seul). `ota_password`
+  n'est plus lu ; la ligne peut rester dans un `secrets.yaml` existant.
+- **Migration en deux OTA** : 2026.9.0 sans le bloc d'abord (le firmware « offre » alors le
+  chiffrement tout en acceptant le clair — faite le 16/09/2026, `config_hash` 0xe62c67fb),
+  puis cette PR. Redescendre = retirer `encryption:`, remettre `password:`, flasher.
+- **`min_version: 2026.9.0`** (`tab5-ha-hmi.yaml`, badge README, `docs/installation.md`,
+  `docs/hackster.md`) : cette fois une vraie dépendance d'API (`ota: encryption:` n'existe
+  pas avant). En prime, sans rien changer : effacement flash paresseux par blocs de 64 Kio
+  (préparation OTA < 0,2 s au lieu de ~4 s) et délais tolérants aux acks perdus (#18580,
+  #19041), correctifs i2s du bus partagé micro/haut-parleur (#19045, #19027, #19046), API
+  qui coupe la connexion au lieu de crasher quand l'allocation d'un tampon échoue (#18802,
+  #18803).
+- **CI** : `ota_password` retiré du `secrets.yaml` factice (plus lu) ; `api_encryption_key`
+  factice conservée, c'est elle que `ota: encryption:` hérite. `docs/installation.md` :
+  l'exemple de `secrets.yaml` perd `ota_password` et gagne `wifi_ap_password` (secret
+  réellement lu par `wifi: ap:`, absent de l'exemple jusqu'ici).
+- **Mesuré** (ESPHome 2026.9.0, build incrémental) : `config_hash` 0xe62c67fb → **0x137762d8**,
+  RAM 258 474 → **258 442 o (−32)**, flash 3 121 312 → **3 120 230 o (−1 082)**. Le gain net est
+  plus petit que les « 3,5 Ko » du warning : le firmware précédent portait déjà le code Noise de
+  l'OTA (il « offrait » le chiffrement), seul le chemin mot de passe disparaît ici.
+
 ### 2026-09-08 — Firmware : les sensors n'appellent plus LVGL, init des boutons dans `on_boot`, polices
 
 Audit du 06/09/2026, §4.1 points 8, 12 et 14 — dernier lot. Rien de visible à l'écran.

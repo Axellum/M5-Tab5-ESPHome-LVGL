@@ -10,7 +10,7 @@
 
 - A working **Home Assistant** instance (any installation method)
 - The **ESPHome** add-on or standalone ESPHome CLI (`pip install esphome`)
-- ESPHome version **≥ 2026.8.1** — enforced by `min_version:` in `tab5-ha-hmi.yaml`, so an older ESPHome refuses to compile. 2026.7.0 brought the official `st7123` touchscreen platform (no more `external_components`), zero-copy audio, VAD and PSRAM-over-SDIO; the floor was raised to 2026.8.1 on 2026-08-26 for the API, voice-assistant and crash-handler fixes this project exercises daily (reasoning in the comment above `min_version:`)
+- ESPHome version **≥ 2026.9.0** — enforced by `min_version:` in `tab5-ha-hmi.yaml`, so an older ESPHome refuses to compile. 2026.7.0 brought the official `st7123` touchscreen platform (no more `external_components`), zero-copy audio, VAD and PSRAM-over-SDIO; the floor was raised to 2026.8.1 on 2026-08-26 for the API, voice-assistant and crash-handler fixes this project exercises daily, then to 2026.9.0 on 2026-09-16 because OTA updates are encrypted with the API key (`ota: encryption:` does not exist in older releases — reasoning in the comment above `min_version:`)
 - A M5Stack Tab5 V2 (ESP32-P4 variant)
 
 Optional but used by the default configuration:
@@ -73,9 +73,11 @@ Create a `secrets.yaml` file at the repository root (already in `.gitignore`):
 ```yaml
 wifi_ssid: "YOUR_WIFI_NETWORK"
 wifi_password: "YOUR_WIFI_PASSWORD"
+wifi_ap_password: "FALLBACK_AP_PASSWORD"   # recovery access point when Wi-Fi is unreachable
 api_encryption_key: "BASE64_32_BYTES_KEY"
-ota_password: "YOUR_OTA_PASSWORD"
 ```
+
+There is no separate OTA password: since ESPHome 2026.9.0 the firmware encrypts OTA updates with `api_encryption_key` (`ota: encryption:` in `Tab5/tab5-hardware.yaml`), so this one key authenticates both Home Assistant and the uploader. The CLI reads it from `secrets.yaml`; a plaintext upload is refused.
 
 To generate a valid `api_encryption_key`:
 
@@ -154,7 +156,7 @@ If you are outside France, the weather screen requires adaptation. The push auto
 
 - Une instance **Home Assistant** fonctionnelle (toute méthode d'installation)
 - L'add-on **ESPHome** ou la CLI ESPHome standalone (`pip install esphome`)
-- ESPHome version **≥ 2026.8.1** — imposée par le `min_version:` de `tab5-ha-hmi.yaml` : une version antérieure refuse de compiler. La 2026.7.0 a apporté la plateforme tactile `st7123` officielle (plus besoin d'`external_components`), l'audio zero-copy, le VAD et la PSRAM via SDIO ; le plancher est passé à 2026.8.1 le 26/08/2026 pour les correctifs API, assistant vocal et handler de crash que ce projet exerce tous les jours (raisons dans le commentaire au-dessus de `min_version:`)
+- ESPHome version **≥ 2026.9.0** — imposée par le `min_version:` de `tab5-ha-hmi.yaml` : une version antérieure refuse de compiler. La 2026.7.0 a apporté la plateforme tactile `st7123` officielle (plus besoin d'`external_components`), l'audio zero-copy, le VAD et la PSRAM via SDIO ; le plancher est passé à 2026.8.1 le 26/08/2026 pour les correctifs API, assistant vocal et handler de crash que ce projet exerce tous les jours, puis à 2026.9.0 le 16/09/2026 parce que les mises à jour OTA sont chiffrées avec la clé API (`ota: encryption:` n'existe pas dans les versions antérieures — raisons dans le commentaire au-dessus de `min_version:`)
 - Un M5Stack Tab5 V2 (variante ESP32-P4)
 
 Optionnel mais utilisé par la configuration par défaut :
@@ -194,9 +196,11 @@ Créez un fichier `secrets.yaml` à la racine du dépôt (déjà dans `.gitignor
 ```yaml
 wifi_ssid: "VOTRE_RESEAU_WIFI"
 wifi_password: "VOTRE_MOT_DE_PASSE"
+wifi_ap_password: "MOT_DE_PASSE_AP_SECOURS"   # point d'accès de secours si le Wi-Fi est injoignable
 api_encryption_key: "CLE_BASE64_32_OCTETS"
-ota_password: "VOTRE_MOT_DE_PASSE_OTA"
 ```
+
+Pas de mot de passe OTA séparé : depuis ESPHome 2026.9.0 le firmware chiffre les mises à jour OTA avec `api_encryption_key` (`ota: encryption:` dans `Tab5/tab5-hardware.yaml`), cette seule clé authentifie donc Home Assistant et l'outil qui flashe. Le CLI la lit dans `secrets.yaml` ; un envoi en clair est refusé.
 
 Pour générer une `api_encryption_key` valide :
 

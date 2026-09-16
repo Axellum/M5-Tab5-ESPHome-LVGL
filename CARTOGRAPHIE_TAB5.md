@@ -20,11 +20,11 @@ Un tableau de bord domotique 60 FPS + satellite vocal local + **8 consoles de je
 
 ```mermaid
 graph TD
-    ENTRY["tab5-ha-hmi.yaml<br/>(point d'entrée, 211 lignes)<br/>substitutions (user_entities) + on_boot + packages: + includes:"]
+    ENTRY["tab5-ha-hmi.yaml<br/>(point d'entrée, 270 lignes)<br/>substitutions (user_entities) + on_boot + packages: + includes:"]
 
     subgraph PKG["Packages ESPHome (Tab5/*.yaml) — 12 packages + pot_sensors.yaml (package paramétré, inclus ×5)"]
         TOK["tab5-ui-tokens.yaml<br/>tokens dimensionnels (modal_card_w/h, modal_body_y)"]
-        HW["tab5-hardware.yaml<br/>459 lignes<br/>display/touch/i2c/audio/esp32_hosted/wake words (okay_nabu + Stop, décision WakeWord::decide en C++)/ota: — zéro lv_* (garde-fou)"]
+        HW["tab5-hardware.yaml<br/>473 lignes<br/>display/touch/i2c/audio/esp32_hosted/wake words (okay_nabu + Stop, décision WakeWord::decide en C++)/ota: — zéro lv_* (garde-fou)"]
         SENSD["tab5-sensors-diagnostics.yaml<br/>309 lignes<br/>wifi:/alim GPIO/status_ha/uptime/RAM/loop time/select:/time:/interval:"]
         SENSO["tab5-sensors-domotique.yaml<br/>288 lignes (+ pot_sensors.yaml ×5)<br/>plantes/lumières (+brightness live)/PC/températures/batterie/audio"]
         API["tab5-api-logic.yaml<br/>332 lignes<br/>api: services: (contrat HA, 16 services, zéro lv_* — garde-fou)"]
@@ -165,7 +165,7 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 
 | Fichier | Lignes | Rôle exact | Gère | Dépend de |
 |---|---|---|---|---|
-| `tab5-hardware.yaml` | 459 | Bas niveau : display MIPI-DSI + tactile ST7123, DAC ES8388 (plateforme `audio_dac:`) / ADC micro ES7210 (`audio_adc:`), I2S haut-parleur/micro, expander GPIO PI4IOE5V6408, `esp32_hosted` (co-proc WiFi ESP32-C6 via SDIO 20 MHz), `micro_wake_word` (2 modèles : `okay_nabu` + `Stop` armé/désarmé selon `volet_en_mouvement`)/`voice_assistant`, `ota:` | Hardware, audio, wake-words, OTA | composants natifs ESPHome ≥ 2026.8.1 (plus d'`external_components` depuis 2026.7.0) |
+| `tab5-hardware.yaml` | 473 | Bas niveau : display MIPI-DSI + tactile ST7123, DAC ES8388 (plateforme `audio_dac:`) / ADC micro ES7210 (`audio_adc:`), I2S haut-parleur/micro, expander GPIO PI4IOE5V6408, `esp32_hosted` (co-proc WiFi ESP32-C6 via SDIO 20 MHz), `micro_wake_word` (2 modèles : `okay_nabu` + `Stop` armé/désarmé selon `volet_en_mouvement`)/`voice_assistant`, `ota:` | Hardware, audio, wake-words, OTA | composants natifs ESPHome ≥ 2026.8.1 (plus d'`external_components` depuis 2026.7.0) |
 | `tab5-sensors-diagnostics.yaml` | 309 | `wifi:`, switchs d'alim GPIO (WiFi/USB/5V ext/antenne), statut API HA, IP/SSID, uptime, RSSI, température coeur, RAM libre/loop time (`debug`), select antenne, horloge SNTP, `interval:` icône WiFi 5s + console 2s | Réseau WiFi, alimentation, diagnostics système | `tab5_custom.h` (`update_console_*`, `update_clock_date_ui`, `is_console_layer_visible`) |
 | `tab5-sensors-domotique.yaml` | 288 | Miroirs d'entités HA : humidité 5 plantes (triées dynamiquement + 5 cartes fixes du popup détails), 20 capteurs détails pots (`pot*_ec/lux/temp/bat` — EC, éclairement, température, batterie — venus de `pot_sensors.yaml`, package paramétré inclus 5× par un `packages:` imbriqué), lumières chambre/salon/LED (+ 3 capteurs `attribute: brightness` pour la synchro live de l'arc du popup lumière), présence PC, batterie téléphone, températures/humidité salon/chambre/serre, audio (ampli, jack, wake word) | Capteurs domotique et miroirs d'entités HA | `tab5_custom.h` (`get_temperature_color`, `get_humidity_color`, `get_battery_color`, `sort_and_update_moisture_slots`, `update_pots_popup_moisture_ui`, `update_pot_metric_ui`, `update_light_card_ui`, `update_temp_ui`, `sync_light_popup_brightness`) |
 | `pot_sensors.yaml` | 36 | Package **paramétré** (`vars: {n}`) : les 4 capteurs `platform: homeassistant` d'un pot (`pot${n}_ec/lux/temp/bat`, `entity_id: ${entity_plante_${n}_*}`, substitution imbriquée), chaque `on_value` appelant `update_pot_metric_ui()`. Inclus 5× par `tab5-sensors-domotique.yaml` (ESPHome concatène les `sensor:` des packages ; un `- !include` dans une liste n'aplatit pas). Un 6ᵉ pot = une ligne + 4 clés `entity_plante_6_*` | Détails des 5 pots (popup appui long) | `tab5_custom.h` (`update_pot_metric_ui`), `user_entities.yaml` |
