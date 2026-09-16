@@ -12,7 +12,8 @@ name: ESPHome Tab5 Compilation
 #
 # `esphome/build-action` sans `version:` tire l'image `latest` : c'est VOULU.
 # La CI sert de banc d'essai gratuit de la dernière ESPHome (le 25/08/2026 elle
-# compilait déjà en 2026.8.1 avant que le projet ne relève son plancher). Une
+# compilait déjà en 2026.8.1, le 16/09/2026 en 2026.9.0, chaque fois avant que le
+# projet ne relève son plancher). Une
 # rupture amont se voit ici avant de toucher l'appareil. `min_version:` dans
 # tab5-ha-hmi.yaml reste la seule contrainte de version.
 
@@ -70,7 +71,6 @@ jobs:
           wifi_password: "ci_dummy_password"
           wifi_ap_password: "ci_dummy_ap_password"
           api_encryption_key: "26IVe/bZ/aI+T8G96D7aYZlM2EH8QUG8JtsZ50HxaCE="
-          ota_password: "ci_dummy_ota_password"
           EOF
       - name: Build ESPHome Firmware
         uses: esphome/build-action@v8.1.0

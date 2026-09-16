@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![ESPHome](https://img.shields.io/badge/ESPHome-≥2026.8.1-blue)](https://esphome.io)
+[![ESPHome](https://img.shields.io/badge/ESPHome-≥2026.9.0-blue)](https://esphome.io)
 [![Build](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/workflows/esphome-tab5.yml/badge.svg)](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/workflows/esphome-tab5.yml)
 [![LVGL](https://img.shields.io/badge/LVGL-8.4-green)](https://lvgl.io)
 [![Home Assistant](https://img.shields.io/badge/Home_Assistant-Push_Events-orange)](https://www.home-assistant.io)

@@ -87,7 +87,18 @@ psram:
 
 ota:
   platform: esphome
-  password: !secret ota_password
+  # [2026.9.0] OTA chiffrée avec la clé API (`api: encryption: key`, tab5-api-logic.yaml) :
+  # le bloc `encryption:` vide hérite de cette clé, une seule clé protège l'appareil
+  # (ESPHome #18489 + #18979). Depuis ce firmware, l'upload en CLAIR est REFUSÉ : le PC
+  # qui flashe doit avoir `api_encryption_key` dans secrets.yaml — le CLI la lit dans le
+  # YAML et chiffre tout seul, rien à passer en ligne de commande. L'ancien `password:`
+  # est retiré : redondant (la clé authentifie déjà l'uploader), coûteux (~3,5 Ko de
+  # flash + 60 o de RAM, warning ESPHome 2026.9.0) et de toute façon incompatible avec
+  # `encryption:` (erreur de validation). Migration faite en deux OTA le 16/09/2026 :
+  # 2026.9.0 sans ce bloc d'abord (le firmware « offre » alors le chiffrement tout en
+  # acceptant le clair), puis ce bloc. Revenir en arrière = retirer `encryption:`,
+  # remettre `password:` et flasher (l'OTA de retour part chiffrée, donc acceptée).
+  encryption:
   # Pas de `on_end` ici. ESPHome redémarre lui-même juste après une OTA réussie
   # (components/esphome/ota/ota_esphome.cpp : notify_state_(OTA_COMPLETED) ->
   # delay(100) -> App.safe_reboot()). L'ancien `on_end: delay 2s + button.press

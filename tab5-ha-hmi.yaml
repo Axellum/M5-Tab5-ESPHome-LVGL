@@ -24,8 +24,19 @@ esphome:
   #     cas LVGL + jeux + TTS streamé, celui que buffer_duration: 500ms amortit à peine.
   #   - esp32 #17769 / #17770 : le handler de crash capture enfin MTVAL (l'adresse
   #     fautive sur RISC-V) et signale un crash décodé contre un autre binaire.
-  # Redescendre à 2026.7.0 ne casse rien de fonctionnel si le besoin s'en présente.
-  min_version: 2026.8.1
+  #   (Redescendre à 2026.7.0 ne cassait rien de fonctionnel tant que ce plancher tenait.)
+  # [2026.9.0] Relevé le 16/09/2026 — cette fois c'est une dépendance d'API : le bloc
+  # `ota: encryption:` (chiffrement OTA avec la clé API, tab5-hardware.yaml) n'existe pas
+  # avant 2026.9.0, une version antérieure refuse la config. En prime, sans rien changer :
+  #   - ota #18580 / #19041 : effacement flash paresseux par blocs de 64 Kio (préparation
+  #     < 0,2 s au lieu de ~4 s) et délais 105 s / 160 s qui survivent aux acks perdus ;
+  #   - i2s_audio #19045 / #19027 / #19046 : plus de « Parent bus is busy » auto-infligé
+  #     en STATE_STARTING, plus de 2e flux muet quand la fréquence change (sonnerie RTTTL
+  #     puis TTS 24 kHz — notre bus I2S partagé micro/haut-parleur, ADR-0010) ;
+  #   - api #18802 / #18803 : la connexion est coupée au lieu de crasher quand l'allocation
+  #     d'un tampon échoue (payloads bulk).
+  # Redescendre sous 2026.9.0 = retirer `ota: encryption:` et remettre `password:`.
+  min_version: 2026.9.0
   includes:
     - Tab5/tab5_custom.h
     - Tab5/tab5_custom.cpp
