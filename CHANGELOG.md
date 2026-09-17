@@ -4,6 +4,32 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-17 — Contrat API : chaque action décrite, chaque variable avec un exemple
+
+ESPHome 2026.9.0 accepte des métadonnées sur les actions définies par l'utilisateur
+(amont #18881). Home Assistant les affiche dans « Outils de développement → Actions » :
+jusqu'ici les 16 actions du Tab5 n'y étaient qu'une liste de champs texte sans indice, alors
+que tous leurs payloads sont sérialisés à la main (« idx|heure|condition|… » séparés par `;`,
+« epoch|titre » séparés par `~`, 62 caractères hexadécimaux pour un mois de calendrier…).
+
+- **16 actions décrites et 34 variables documentées** dans `Tab5/tab5-api-logic.yaml` :
+  `description:` sur l'action, et forme longue `type:` + `description:` + `example:` sur
+  chaque variable. Les exemples sont des payloads réels, repris des automations de
+  `HomeAssistant_Config/`. Les paramètres réservés (`uv`, `gel` de `tab5_maj_probabilites`,
+  `condition`, `temperature` de `tab5_maj_meteo_actuelle`) le disent désormais dans leur
+  propre description, au lieu d'un commentaire que seul le firmware voit.
+- **Règle 5 de `tools/check_tab5_code_rules.py`** (jouée par `pytest`) : une action sans
+  `description:`, ou une variable restée en forme courte `payload: string`, fait échouer la
+  suite. Vérifiée falsifiable sur trois oublis simulés (description d'action retirée,
+  variable en forme courte, `example:` retiré) — et le premier de ces trois tests a
+  effectivement révélé un défaut de la règle, qui acceptait la description d'une variable
+  comme celle de son action.
+- **Aucun changement de contrat** : noms d'actions, noms et types de variables inchangés,
+  donc aucune automation Home Assistant à retoucher.
+- **Mesuré** : `config_hash` 0x137762d8 → **0x30c70fbb**, RAM **258 442 o (identique)**,
+  flash 3 120 230 → **3 126 256 o (+6 026)**. Les chaînes et leurs tables de pointeurs
+  vivent en flash : sur cet ESP32-P4 la RAM ne bouge pas.
+
 ### 2026-09-16 — OTA chiffrée avec la clé API, plancher ESPHome 2026.9.0
 
 ESPHome 2026.9.0 (bilan du 16/09/2026 : aucune rupture pour ce projet) apporte le chiffrement

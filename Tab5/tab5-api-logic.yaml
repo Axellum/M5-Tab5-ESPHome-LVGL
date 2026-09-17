@@ -10,6 +10,13 @@
 #                 directe ici : un service résout ses `id()`, pose ses globals et appelle une
 #                 fonction de tab5_custom.cpp. Vérifié par tools/check_tab5_code_rules.py
 #                 (pytest) : tout `lv_*` autre que lv_obj_has_flag fait échouer la suite.
+# @metadata [2026.9.0] Chaque action porte une `description:`, et chaque variable la forme
+#                 longue `type:` + `description:` + `example:` — c'est ce que Home Assistant
+#                 affiche dans « Outils de développement → Actions », et le seul endroit où
+#                 le format d'un payload sérialisé à la main se lit sans ouvrir ce fichier.
+#                 Une action ou une variable sans métadonnées fait échouer `pytest`
+#                 (règle 5 de tools/check_tab5_code_rules.py). Coût : des chaînes en flash,
+#                 rien en RAM tant qu'aucune action n'est appelée.
 # ============================================================================
 api:
 
@@ -42,8 +49,12 @@ api:
   services:
 
     - service: tab5_maj_previsions_heures_bulk
+      description: "Prévisions horaires : cinq créneaux en un appel (trois appels couvrent les quinze heures affichées)."
       variables:
-        payload: string
+        payload:
+          type: string
+          description: "Cinq créneaux « idx|heure|condition|température|pluie » séparés par ; — idx de 0 à 14, condition = état météo Home Assistant."
+          example: "0|14:00|sunny|21.4|0;1|15:00|cloudy|20.8|0.2;"
       then:
         - lambda: |-
             if (id(h4_time) == nullptr) return;
@@ -56,8 +67,12 @@ api:
             refresh_forecast_page_title_ui(fp, id(page_title_wrapper), id(lbl_page_title), g_central_ctx);
 
     - service: tab5_maj_previsions_jours_bulk
+      description: "Prévisions journalières : les quinze jours en un seul appel. Le bandeau planning en est dérivé localement."
       variables:
-        payload: string
+        payload:
+          type: string
+          description: "Quinze jours « idx|libellé|condition|tmin|tmax|repos|dimanche|passé|heures » séparés par ; — repos, dimanche et passé valent 0 ou 1, heures vaut « HH:MM-HH:MM » ou reste vide."
+          example: "0|Auj 17|sunny|12.1|24.3|0|0|0|;1|Ven 18|rainy|11.0|19.8|1|0|0|08:00-16:00;"
       then:
         - lambda: |-
             if (id(j0_day) == nullptr) return;
@@ -81,8 +96,12 @@ api:
             }
 
     - service: tab5_maj_volet_etat
+      description: "État du volet de la serre affiché sur sa carte."
       variables:
-        etat_physique: string
+        etat_physique:
+          type: string
+          description: "État du volet : « En_mouvement » pendant une manœuvre, sinon le dernier état connu (Ouvert, Ferme, Stoppe…)."
+          example: "En_mouvement"
       then:
         - lambda: |-
             if (id(icon_card_shutter_arrow) == nullptr) return;
@@ -99,13 +118,32 @@ api:
                   id: stop
 
     - service: tab5_maj_clim
+      description: "État de la climatisation du salon : carte d'accueil et popup."
       variables:
-        target: string
-        current: string
-        mode: string
-        preset: string
-        fan: string
-        swing: string
+        target:
+          type: string
+          description: "Consigne en degrés Celsius."
+          example: "21.5"
+        current:
+          type: string
+          description: "Température mesurée par la climatisation, en degrés Celsius."
+          example: "20.8"
+        mode:
+          type: string
+          description: "Mode HVAC Home Assistant : off, cool, heat, dry, fan_only ou auto."
+          example: "cool"
+        preset:
+          type: string
+          description: "Préréglage Home Assistant, « none » s'il n'y en a pas."
+          example: "boost"
+        fan:
+          type: string
+          description: "Vitesse de ventilation."
+          example: "auto"
+        swing:
+          type: string
+          description: "Oscillation des volets."
+          example: "off"
       then:
         - lambda: |-
             if (id(clim_target) == nullptr || id(clim_target_popup) == nullptr) return;
@@ -124,8 +162,12 @@ api:
         - script.execute: tab5_clim_recolor
 
     - service: tab5_maj_alerte_meteo_france
+      description: "Phrase de prochaine pluie et les neuf vigilances Météo-France."
       variables:
-        payload: string
+        payload:
+          type: string
+          description: "Onze champs séparés par | : phrase de pluie, niveau global, puis Vent violent, Inondation, Orages, Pluie-inondation, Neige-verglas, Grand-froid, Vagues-submersion, Canicule et Avalanches — chacun Vert, Jaune, Orange ou Rouge."
+          example: "Pas de pluie dans l'heure|Jaune|Vert|Vert|Jaune|Vert|Vert|Vert|Vert|Vert|Vert"
       then:
         - lambda: |-
             if (id(lbl_proc_pluie) == nullptr) return;
@@ -141,10 +183,20 @@ api:
     # Le contrat a 3 appelants côté HA, on ne le rétrécit pas ; seule `neige` agit
     # (flocon si probabilité ≥ 5, sinon goutte colorée par l'hygrométrie).
     - service: tab5_maj_probabilites
+      description: "Probabilités UV, gel et neige. Seule « neige » agit aujourd'hui ; « uv » et « gel » sont des paramètres réservés."
       variables:
-        uv: string
-        gel: string
-        neige: string
+        uv:
+          type: string
+          description: "Indice UV. Reçu mais pas affiché : paramètre réservé, le contrat n'est pas rétréci."
+          example: "4"
+        gel:
+          type: string
+          description: "Probabilité de gel en pourcent. Reçue mais pas affichée : paramètre réservé."
+          example: "0"
+        neige:
+          type: string
+          description: "Probabilité de neige en pourcent : l'icône devient un flocon à partir de 5."
+          example: "0"
       then:
         - lambda: |-
             if (id(j0_day) == nullptr) return;
@@ -155,10 +207,20 @@ api:
     # RÉSERVÉS depuis le retrait de la grosse icône météo centrale (même raison,
     # contrat conservé). Seule `humidite` agit, sur la couleur de la goutte.
     - service: tab5_maj_meteo_actuelle
+      description: "Conditions du moment. Seule « humidite » agit depuis le retrait de la grande icône météo centrale ; les deux autres sont réservées."
       variables:
-        condition: string
-        temperature: string
-        humidite: string
+        condition:
+          type: string
+          description: "Condition météo Home Assistant. Reçue mais pas affichée : paramètre réservé."
+          example: "sunny"
+        temperature:
+          type: string
+          description: "Température extérieure en degrés Celsius. Reçue mais pas affichée : paramètre réservé."
+          example: "22.4"
+        humidite:
+          type: string
+          description: "Hygrométrie en pourcent : elle colore la goutte de la carte centrale."
+          example: "68"
       then:
         - lambda: |-
             if (id(icon_rain_predict) == nullptr) return;
@@ -171,8 +233,12 @@ api:
     # forte »). Seul contrat depuis le 08/09/2026 : l'ancien tab5_maj_pluie_1h (une barre
     # par appel, 9 appels par rafraîchissement) a été retiré le même jour.
     - service: tab5_maj_pluie_1h_bulk
+      description: "Les neuf barres de pluie de l'heure qui vient, en un appel."
       variables:
-        payload: string
+        payload:
+          type: string
+          description: "Neuf barres « idx|intensité » séparées par ; — idx de 0 à 8 pour 0, 5, 10, 15, 20, 25, 35, 45 et 55 minutes, intensité = libellé Météo-France."
+          example: "0|Temps sec;1|Pluie faible;2|Pluie modérée;"
       then:
         - lambda: |-
             if (id(rb_0_in) == nullptr) return;
@@ -184,10 +250,20 @@ api:
     # récap calendrier 3 jours (multi-lignes avec recolor #hex ...#) ou alerte météo
     # (1 ligne). Alimenté par automations_tab5.yaml section 7 (texte + couleur Rouge/Orange/Blanc).
     - service: tab5_maj_info_texte
+      description: "Zone d'info de la carte centrale : récapitulatif du calendrier sur trois jours, ou alerte météo."
       variables:
-        texte: string
-        couleur: string
-        meteo_id: string
+        texte:
+          type: string
+          description: "Texte affiché, sur une ou plusieurs lignes. Un fragment entouré de « #RRGGBB » et « # » prend cette couleur."
+          example: "Jeu : TRAVAIL 08:00-16:00"
+        couleur:
+          type: string
+          description: "Couleur du texte : Rouge, Orange ou Blanc."
+          example: "Blanc"
+        meteo_id:
+          type: string
+          description: "Identifiant d'acquittement du bandeau : un tap le masque jusqu'au prochain identifiant. Vide = bandeau non masquable. À fournir même vide."
+          example: "meteo:orange"
       then:
         - lambda: |-
             id(info_meteo_dismiss_id) = meteo_id;
@@ -196,8 +272,12 @@ api:
                 id(roboto_32_b), id(roboto_45_b));
 
     - service: tab5_maj_reponse_vocale
+      description: "Réponse vocale courte, affichée sous l'assistant sur l'écran d'accueil."
       variables:
-        texte: string
+        texte:
+          type: string
+          description: "Texte de la réponse, en clair."
+          example: "Il fait 21 degrés dans le salon."
       then:
         - script.execute:
             id: tab5_show_vocal_response
@@ -207,9 +287,16 @@ api:
     # (tableaux pris en charge, alignés en monospace) + URL d'image optionnelle.
     # image_url vide => zone image masquée. Ouvre le popup automatiquement.
     - service: tab5_assist_reponse
+      description: "Réponse riche du moteur dans le popup Assistant vocal, qui s'ouvre automatiquement."
       variables:
-        texte: string
-        image_url: string
+        texte:
+          type: string
+          description: "Réponse en Markdown ; les tableaux sont réalignés en monospace à l'écran."
+          example: "**Salon** : 21 degrés"
+        image_url:
+          type: string
+          description: "URL d'une image PNG à afficher sous le texte. Vide : la zone image reste masquée."
+          example: "http://moteur.local:8000/images/graphe.png"
       then:
         - lambda: |-
             esphome::font::Font* f = id(assist_text_size) == 0 ? id(roboto_mono_20)
@@ -228,8 +315,12 @@ api:
         - script.execute: tab5_assist_open
 
     - service: tab5_maj_alertes_ha_bulk
+      description: "Bandeau des alertes Home Assistant du rotateur 8 s : quatre au maximum, en un appel."
       variables:
-        payload: string
+        payload:
+          type: string
+          description: "Jusqu'à quatre alertes « id|couleur|libellé » séparées par ; — couleur Rouge ou Orange, id renvoyé tel quel à l'acquittement quand l'écran est tapé."
+          example: "update.home_assistant_core_update|Rouge|1 MAJ · Home Assistant Core;ha:unavailable|Orange|3 indispo"
       then:
         - lambda: |-
             HaAlertSlotUI slots[4] = {
@@ -257,9 +348,16 @@ api:
     # Conservé pour compat (anciennes automations) — le bandeau est désormais dérivé
     # localement après tab5_maj_previsions_jours_bulk via build_planning_lines_from_jours().
     - service: tab5_maj_planning
+      description: "Bandeau planning. Conservé pour compatibilité : depuis le 08/09/2026 le firmware le dérive lui-même des prévisions journalières."
       variables:
-        ligne1: string
-        ligne2: string
+        ligne1:
+          type: string
+          description: "Première ligne du bandeau."
+          example: "Auj : TRAVAIL 08:00-16:00"
+        ligne2:
+          type: string
+          description: "Seconde ligne du bandeau."
+          example: "Demain : repos"
       then:
         - lambda: |-
             if (id(lbl_planning_text) == nullptr) return;
@@ -275,8 +373,12 @@ api:
     # annoncé le reste après une nouvelle poussée (appariement par epoch dans
     # rdv_store), sinon le rappel repartirait toutes les 5 minutes.
     - service: tab5_maj_rdv_prochains
+      description: "Liste des prochains rendez-vous. Le firmware la garde et déclenche l'annonce lui-même : une coupure Home Assistant ne la fait pas rater."
       variables:
-        payload: string
+        payload:
+          type: string
+          description: "Jusqu'à huit entrées « epoch|titre » séparées par ~ — epoch UTC du début, titres déjà nettoyés de leurs séparateurs."
+          example: "1789552800|Dentiste~1789639200|Réunion équipe"
       then:
         - lambda: |-
             rdv_store(payload);
@@ -288,12 +390,28 @@ api:
     # séparés par ~ (détail jour embarqué → tap instantané sans round-trip).
     # Mis en cache ; re-rendu seulement si le popup est ouvert sur ce mois.
     - service: tab5_maj_calendrier_mois
+      description: "Enrichit un mois du popup calendrier. La réponse est mise en cache et re-rendue seulement si le popup est ouvert sur ce mois."
       variables:
-        annee: string
-        mois: string
-        codes: string
-        heures: string
-        details: string
+        annee:
+          type: string
+          description: "Année sur quatre chiffres."
+          example: "2026"
+        mois:
+          type: string
+          description: "Mois, de 1 à 12."
+          example: "9"
+        codes:
+          type: string
+          description: "Soixante-deux caractères hexadécimaux, deux par jour : bits 1 travail, 2 férié, 4 vacances scolaires, 8 rendez-vous, 16 anniversaire."
+          example: "010400000000000000…"
+        heures:
+          type: string
+          description: "Trente-et-un champs « HH:MM-HH:MM » séparés par | — champ vide les jours sans horaire de travail."
+          example: "08:00-16:00||14:00-22:00|…"
+        details:
+          type: string
+          description: "Trente-et-un champs séparés par ~, chacun « type|texte;… » : le détail de chaque jour est embarqué, un tap l'affiche sans aller-retour."
+          example: "travail|08:00-16:00~~ferie|Toussaint~…"
       then:
         - lambda: |-
             if (id(lbl_cal_month) == nullptr) return;
@@ -312,9 +430,16 @@ api:
     # "type|texte;..." (types travail/ferie/vacances/rdv/anniv/fete, max 6 lignes).
     # Ignoré si le détail affiché ne correspond plus à cette date (navigation rapide).
     - service: tab5_maj_calendrier_jour
+      description: "Détail d'un jour du popup calendrier, en réponse au tap sur une cellule. Ignoré si l'affichage a changé de date entre-temps."
       variables:
-        date: string
-        payload: string
+        date:
+          type: string
+          description: "Date demandée, au format AAAA-MM-JJ."
+          example: "2026-09-17"
+        payload:
+          type: string
+          description: "Jusqu'à six lignes « type|texte » séparées par ; — types travail, ferie, vacances, rdv, anniv et fete."
+          example: "travail|08:00-16:00;rdv|Dentiste 14:30"
       then:
         - lambda: |-
             if (id(lbl_cal_day_status) == nullptr) return;
