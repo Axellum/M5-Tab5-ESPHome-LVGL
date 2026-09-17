@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Règles de code du firmware Tab5, jouées à chaque `pytest` (audit du 06/09/2026,
-§4.1 points 1, 4, 15 et §4.2 point 17 ; ADR-0006). Quatre règles, toutes
+§4.1 points 1, 4, 15 et §4.2 point 17 ; ADR-0006). Cinq règles, toutes
 falsifiables sur le dépôt réel :
 
   1. **`snprintf` partout** : aucun `sprintf(` brut dans `Tab5/*.cpp`, `*.h`,
@@ -21,6 +21,12 @@ falsifiables sur le dépôt réel :
      tablette expose elle-même (`assist_satellite.*`, `media_player.*`) sont
      dérivées de son nom dans HA : un renommage cassait l'interruption vocale et
      l'annonce des rendez-vous sans aucune erreur (audit §4.1 point 15).
+  5. **Métadonnées sur chaque action du contrat API** (`tab5-api-logic.yaml`) :
+     toute action porte une `description:`, et chaque variable la forme longue
+     `type:` + `description:` + `example:` (ESPHome 2026.9.0, amont #18881). Ce
+     sont elles que Home Assistant affiche dans « Outils de développement →
+     Actions » : sans elles, un champ n'est qu'une case de texte sans indice sur
+     le format du payload, toujours sérialisé à la main ici.
 
 Usage : python tools/check_tab5_code_rules.py   (aussi lancé par `pytest`, tests/test_guards.py)
 Sortie : 0 si tout est conforme, 1 sinon (liste des écarts sur stdout).
@@ -54,6 +60,10 @@ RE_GLOBAL_DEF = re.compile(r"^  - id: (\w+)\s*$", re.M)
 # substitution `${…}`, un `!lambda` ou une liste de substitutions ne matchent pas.
 RE_HA_ENTITY_LITERAL = re.compile(r"^\s*-?\s*\w*entity_id:\s*['\"]?([a-z_]+\.[A-Za-z0-9_]+)['\"]?\s*$")
 RE_TOP_KEY = re.compile(r"^[a-z_]+:", re.M)
+# Variable d'action en forme courte (`payload: string`) alors que la forme longue
+# type/description/example est attendue. `type: string` ressemble lui-même à une
+# forme courte, d'où l'exclusion du nom `type`.
+RE_API_VAR_SHORTHAND = re.compile(r"^\s+(?!type:)([a-z0-9_]+): (?:string|int|float|bool)\s*$")
 
 
 def strip_yaml_comments(text: str) -> str:
@@ -83,6 +93,63 @@ def globals_defined(globals_yaml: Path = GLOBALS_YAML) -> list[str]:
     m = RE_TOP_KEY.search(rest, 1)
     block = rest if m is None else rest[: m.start()]
     return RE_GLOBAL_DEF.findall(strip_yaml_comments(block))
+
+
+def api_action_metadata(api_logic: Path = API_LOGIC) -> list[str]:
+    """Règle 5 : chaque action du contrat API décrite, chaque variable en forme longue."""
+    problems: list[str] = []
+    text = strip_yaml_comments(api_logic.read_text(encoding="utf-8"))
+    # Une action va de son `- service:` au suivant ; on ne lit que sa tête (avant
+    # `then:`), pour ne pas confondre ses métadonnées avec le C++ de ses lambdas.
+    for chunk in re.split(r"^\s+- service: ", text, flags=re.M)[1:]:
+        name = chunk.splitlines()[0].strip()
+        head = re.split(r"^\s+then:\s*$", chunk, maxsplit=1, flags=re.M)[0]
+        # parts[0] = l'action elle-même, sans ses variables : sinon la description
+        # d'une variable suffirait à faire passer l'action pour décrite.
+        parts = re.split(r"^\s+variables:\s*$", head, maxsplit=1, flags=re.M)
+
+        if not re.search(r"^\s+description: \S", parts[0], re.M):
+            problems.append(
+                f"{api_logic.name} : action `{name}` sans `description:` — c'est ce que "
+                f"Home Assistant affiche dans « Outils de développement → Actions »"
+            )
+
+        if len(parts) != 2:
+            continue
+        lines = [l for l in parts[1].splitlines() if l.strip()]
+        if not lines:
+            continue
+
+        # Indentation de premier niveau du bloc = celle des noms de variables ;
+        # tout ce qui est plus indenté appartient à la variable en cours.
+        var_indent = len(lines[0]) - len(lines[0].lstrip())
+        found: dict[str, set[str]] = {}
+        var: str | None = None
+        for line in lines:
+            if len(line) - len(line.lstrip()) > var_indent:
+                if var is not None:
+                    found[var].add(line.strip().split(":", 1)[0])
+                continue
+            short = RE_API_VAR_SHORTHAND.match(line)
+            if short:
+                problems.append(
+                    f"{api_logic.name} : action `{name}`, variable `{short.group(1)}` en "
+                    f"forme courte — passer à type/description/example"
+                )
+                var = None
+                continue
+            var = line.strip().rstrip(":")
+            found[var] = set()
+
+        for var, keys in found.items():
+            missing = {"type", "description", "example"} - keys
+            if missing:
+                problems.append(
+                    f"{api_logic.name} : action `{name}`, variable `{var}` sans "
+                    f"{', '.join(sorted(missing))}"
+                )
+
+    return problems
 
 
 def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
@@ -150,6 +217,9 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
                     f"substitution de user_entities.yaml (${{entity_…}})"
                 )
 
+    # 5. métadonnées des actions du contrat API
+    problems += api_action_metadata(api_logic)
+
     return problems
 
 
@@ -160,7 +230,10 @@ def main() -> int:
         for p in problems:
             print("  -", p)
         return 1
-    print("[OK] règles de code Tab5 : snprintf partout, api-logic et hardware sans LVGL, aucun global orphelin, aucune entité HA en dur")
+    print(
+        "[OK] règles de code Tab5 : snprintf partout, api-logic et hardware sans LVGL, "
+        "aucun global orphelin, aucune entité HA en dur, actions API décrites"
+    )
     return 0
 
 

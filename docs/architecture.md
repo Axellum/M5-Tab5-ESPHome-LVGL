@@ -90,13 +90,19 @@ The most important package. Two things live here:
 ```yaml
 api:
   services:
-    - service: tab5_maj_previsions_jours_bulk   # daily forecast push (bulk)
+    - service: tab5_maj_previsions_jours_bulk
+      description: "Daily forecast: all 15 days in a single call."
       variables:
-        payload: string
+        payload:
+          type: string
+          description: "Fifteen days as idx|label|condition|tmin|tmax|… joined by ;"
+          example: "0|Auj 17|sunny|12.1|24.3|0|0|0|;"
       then:
         - lambda: |-
             parse_and_update_jours_bulk(payload);
 ```
+
+Every handler carries that `description`/`example` metadata (ESPHome 2026.9.0 and later). Home Assistant renders it in *Developer tools → Actions*, which is where the format of a hand-serialised payload becomes readable without opening this file. A handler missing it fails `pytest` (rule 5 of `tools/check_tab5_code_rules.py`).
 
 **C++ lambdas** — for logic that doesn't fit cleanly in YAML (state machine transitions, string parsing, conditional LVGL updates).
 
@@ -326,6 +332,8 @@ Ces fichiers ne déclarent que des entités. Aucune logique UI ici.
 Le package le plus important. Deux choses y vivent :
 
 **Gestionnaires de services API ESPHome** — ce sont les endpoints que Home Assistant appelle pour pousser des données vers l'écran. Chaque gestionnaire reçoit un payload, le valide, puis appelle une fonction C++ de la couche C++ (`tab5_services.cpp`, déclarée dans `tab5_custom.h`) pour le parser et l'appliquer.
+
+Chaque gestionnaire porte ses métadonnées `description` / `example` (ESPHome 2026.9.0 et suivantes) : Home Assistant les affiche dans *Outils de développement → Actions*, seul endroit où le format d'un payload sérialisé à la main se lit sans ouvrir le fichier. Un gestionnaire sans métadonnées fait échouer `pytest` (règle 5 de `tools/check_tab5_code_rules.py`).
 
 **Lambdas C++** — pour la logique qui ne rentre pas proprement en YAML (transitions de machine d'états, parsing de chaînes, mises à jour LVGL conditionnelles).
 
