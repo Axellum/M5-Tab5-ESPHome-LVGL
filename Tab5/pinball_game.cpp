@@ -493,17 +493,15 @@ void persist_save() {
 // classement. Le tableau est trie par score decroissant.
 static int scores_insert(uint32_t sc, int balls, int mb, bool tilted) {
     if (sc == 0) return -1;
-    int pos = -1;
-    for (int i = 0; i < PINBALL_NSCORES; i++) {
-        if (sc > g_save.top[i].score) { pos = i; break; }
-    }
-    if (pos < 0) return -1;
-    for (int i = PINBALL_NSCORES - 1; i > pos; i--) g_save.top[i] = g_save.top[i - 1];
-    g_save.top[pos].score        = sc;
-    g_save.top[pos].ball_reached = (uint16_t) balls;
-    g_save.top[pos].multiballs   = (uint8_t) (mb > 255 ? 255 : mb);
-    g_save.top[pos].tilted       = tilted ? 1 : 0;
-    return pos;
+    PinballScore e{};
+    e.score        = sc;
+    e.ball_reached = (uint16_t) balls;
+    e.multiballs   = (uint8_t) (mb > 255 ? 255 : mb);
+    e.tilted       = tilted ? 1 : 0;
+    // Tableau à sentinelle (cases vides à 0, pas de compteur) : c'est topn_insert
+    // avec count = N, puisque sc > 0 (même rang, mêmes décalages).
+    uint8_t full = PINBALL_NSCORES;
+    return topn_insert(g_save.top, full, e);
 }
 
 static inline uint32_t best_score() { return g_save.top[0].score; }
@@ -1907,11 +1905,7 @@ static void hud_sync(uint32_t now) {
 // Le timer tourne vite en partie et lentement dans les menus : un hub statique
 // n'a rien a animer (meme motif que go_game.cpp / lode_game.cpp).
 static void tick_period_sync() {
-    if (!g_timer) return;
-    const uint32_t want = (g_state == ST_PLAYING) ? TICK_MS : TICK_MENU_MS;
-    if (want == g_tick_period) return;
-    g_tick_period = want;
-    lv_timer_set_period(g_timer, want);
+    timer_period_sync(g_timer, g_tick_period, (g_state == ST_PLAYING) ? TICK_MS : TICK_MENU_MS);
 }
 
 static void tick_cb(lv_timer_t*) {
@@ -2074,8 +2068,7 @@ void on_imu(float ax, float ay, float /*az*/) {
 }
 
 void calibrate_flat() {
-    g_save.cal_x = (int16_t) (g_raw_x * 1000.0f);
-    g_save.cal_y = (int16_t) (g_raw_y * 1000.0f);
+    tilt_calibrate(g_save.cal_x, g_save.cal_y, g_raw_x, g_raw_y);
     g_slow_x = g_slow_y = 0.0f;
     g_tilt_hits = 0;
     persist_save();

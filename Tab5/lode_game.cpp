@@ -863,12 +863,8 @@ static inline void body_center() {
 // par seconde ne servait qu'a payer un reveil de tache LVGL pour repartir aussitot.
 // ST_DYING garde la cadence rapide : c'est lui qui rend la main apres DEATH_MS.
 static void tick_period_sync() {
-    if (!g_timer) return;
     bool live = (g_state == ST_PLAYING || g_state == ST_DYING);
-    uint32_t want = live ? (uint32_t) TICK_MS : (uint32_t) IDLE_TICK_MS;
-    if (want == g_tick_period) return;
-    g_tick_period = want;
-    lv_timer_set_period(g_timer, want);
+    timer_period_sync(g_timer, g_tick_period, live ? (uint32_t) TICK_MS : (uint32_t) IDLE_TICK_MS);
 }
 
 // Le pad ne s'affiche qu'en jeu ; le D-pad disparait en mode inclinaison pure.
@@ -1431,16 +1427,7 @@ static void record_score() {
     e.flags = g_offrank ? 1 : 0;
     e.speed = g_save.speed;   // le bonus de temps depend du rythme : on le trace
 
-    int n = g_save.score_count;
-    int pos = n;
-    for (int i = 0; i < n; i++) {
-        if (e.score > g_save.scores[i].score) { pos = i; break; }
-    }
-    if (pos >= LODE_MAX_SCORES) return;
-    for (int i = (n < LODE_MAX_SCORES ? n : LODE_MAX_SCORES - 1); i > pos; i--)
-        g_save.scores[i] = g_save.scores[i - 1];
-    g_save.scores[pos] = e;
-    if (n < LODE_MAX_SCORES) g_save.score_count = (uint8_t) (n + 1);
+    if (topn_insert(g_save.scores, g_save.score_count, e) < 0) return;
 
     if (!g_offrank && g_score > g_save.best) g_save.best = g_score;
     persist_save();
@@ -1547,10 +1534,7 @@ static void start_level(int idx, bool new_run) {
 // ===========================================================================
 
 static void update_imu_dir() {
-    float ox = g_save.cal_x / 1000.0f, oy = g_save.cal_y / 1000.0f;
-    float tx = g_raw_x - ox, ty = g_raw_y - oy;
-    g_tilt_x += (tx - g_tilt_x) * TILT_SMOOTH;
-    g_tilt_y += (ty - g_tilt_y) * TILT_SMOOTH;
+    tilt_smooth(g_tilt_x, g_tilt_y, g_raw_x, g_raw_y, g_save.cal_x, g_save.cal_y, TILT_SMOOTH);
 
     // Rotation ecran 270 deg (meme convention que marble_game.cpp) :
     // l'axe Y physique pilote X a l'ecran, l'axe X physique pilote Y.
@@ -1962,8 +1946,7 @@ void on_dig(bool right) {
 }
 
 void calibrate() {
-    g_save.cal_x = (int16_t) (g_raw_x * 1000.0f);
-    g_save.cal_y = (int16_t) (g_raw_y * 1000.0f);
+    tilt_calibrate(g_save.cal_x, g_save.cal_y, g_raw_x, g_raw_y);
     g_tilt_x = 0; g_tilt_y = 0;
     g_imu_dir = D_NONE;
     persist_save();

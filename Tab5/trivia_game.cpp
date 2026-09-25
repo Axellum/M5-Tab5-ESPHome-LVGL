@@ -1833,10 +1833,7 @@ static void tick(lv_timer_t* t) {
     // saute), 100 ms en phase statique (question, verdict, menus, attente choix).
     const bool anim = s_dice_spin || (s_phase == PH_MOVING);
     const uint32_t want_ms = anim ? TICK_ANIM_MS : TICK_IDLE_MS;
-    if (g_timer && s_tick_period != want_ms) {
-        s_tick_period = want_ms;
-        lv_timer_set_period(g_timer, want_ms);
-    }
+    timer_period_sync(g_timer, s_tick_period, want_ms);
 
     uint32_t now = esphome::millis();
 
@@ -2100,12 +2097,8 @@ static void slot_cb(lv_event_t* e) {
 void on_imu(float ax, float ay, float az) {
     if (!g_open || !s_shake_on) return;
     if (s_state != ST_PLAY || s_phase != PH_ROLL) return;
-    float mag = sqrtf(ax * ax + ay * ay + az * az);
-    uint32_t now = esphome::millis();
-    if (mag > 2.2f && (now - s_shake_last) > SHAKE_CD_MS) {
-        s_shake_last = now;
-        roll_dice();
-    }
+    const float mag = sqrtf(ax * ax + ay * ay + az * az);
+    if (shake_fire(mag, 2.2f, s_shake_last, esphome::millis(), SHAKE_CD_MS)) roll_dice();
 }
 
 // ===========================================================================

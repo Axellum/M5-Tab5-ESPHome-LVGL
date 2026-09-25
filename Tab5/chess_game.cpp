@@ -1692,11 +1692,7 @@ void on_imu(float ax, float ay, float az) {
     const float mag = sqrtf(ax * ax + ay * ay + az * az);
     // Filtre passe-bas leger : evite qu'une seule lecture bruitee declenche.
     g_shake_mag += (mag - g_shake_mag) * 0.5f;
-    const uint32_t now = esphome::millis();
-    if (g_shake_mag > 1.9f && (now - g_shake_last) > SHAKE_CD_MS) {
-        g_shake_last = now;
-        do_hint();
-    }
+    if (shake_fire(g_shake_mag, 1.9f, g_shake_last, esphome::millis(), SHAKE_CD_MS)) do_hint();
 }
 
 bool is_open() { return g_state != ST_OFF; }
