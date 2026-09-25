@@ -547,6 +547,12 @@ Les pièces capturées ne sont retirées qu'**en fin de rafle** (règle internat
 standard) — d'où le champ `must_from` qui verrouille la case de départ tant qu'une
 rafle est en cours.
 
+**Nulle** : quand aucun pion n'a bougé et que rien n'a été pris pendant 25 coups de chaque
+camp en international (FFJD/FMJD), 40 en anglais (WCDF). Le compteur `no_progress`
+avance d'un demi-coup à chaque coup de dame sans prise et revient à 0 à chaque coup de
+pion ou prise. Pas encore gérés : la triple répétition et les fins de partie réduites
+(16 coups).
+
 ### Niveaux d'IA
 
 4 niveaux (`DRAUGHTS_N_LEVELS`), tous découpés en tranches par le `lv_timer` — jamais de

@@ -4,6 +4,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Dames : la partie n'est plus déclarée nulle au 25ᵉ demi-coup
+
+Vu au premier essai après #145 : une partie contre l'IA Amateur s'est terminée « sans
+raison » après 13 coups des Blancs et 12 des Noirs, sans aucune prise. Le jeu déclarait la
+nulle après 25 **demi-coups** sans prise ni promotion, déplacements de pions compris.
+
+- Règle officielle : nulle quand aucun pion n'a bougé et que rien n'a été pris pendant
+  25 coups de **chaque camp** en international (FFJD/FMJD), soit 50 demi-coups, et 40 en
+  anglais (WCDF), soit 80.
+- `apply_move` remet `no_progress` à 0 à chaque coup de pion (et non plus seulement à la
+  promotion) ; `is_terminal` compare au seuil de la variante. Le miroir Python suit, avec un
+  test du compteur.
+- La triple répétition et les fins de partie réduites (16 coups) ne sont toujours pas
+  gérées.
+- Aucun changement de sauvegarde : le compteur tient toujours sur un octet.
+
 ### 2026-09-25 — Dames : l'IA ne déborde plus la pile et ne réfléchit plus sans fin
 
 Point 2.1 de l'audit du 25/09/2026 (« l'IA ne joue jamais son coup, niveau Amateur »).

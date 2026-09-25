@@ -370,6 +370,7 @@ int gen_moves(const Pos& p, Move* out, int max_out) {
 void apply_move(Pos& p, const Move& m) {
     const int n = p.n;
     uint8_t piece = p.sq[m.from];
+    const bool man_moved = is_man(piece);   // avant une éventuelle promotion
     p.sq[m.from] = EMPTY;
     // Retrait des capturées en FIN de rafle
     for (int i = 0; i < m.n_caps; i++) p.sq[m.caps[i]] = EMPTY;
@@ -378,7 +379,7 @@ void apply_move(Pos& p, const Move& m) {
     }
     p.sq[m.to] = piece;
 
-    if (m.n_caps > 0 || m.promote) p.no_progress = 0;
+    if (m.n_caps > 0 || man_moved) p.no_progress = 0;
     else if (p.no_progress < 250) p.no_progress++;
 
     p.must_from = 255;
@@ -445,7 +446,8 @@ bool is_terminal(const Pos& p, int* winner) {
         if (winner) *winner = (p.side == SIDE_WHITE) ? 1 : 0;
         return true;
     }
-    if (p.no_progress >= DRAW_PLIES) { if (winner) *winner = 2; return true; }
+    const int draw_plies = (p.variant == VAR_ENG8) ? DRAW_PLIES_ENG : DRAW_PLIES_INTL;
+    if (p.no_progress >= draw_plies) { if (winner) *winner = 2; return true; }
     return false;
 }
 

@@ -325,13 +325,14 @@ def apply_move(p: Pos, m: Move) -> Pos:
     """Miroir de Engine::apply_move, sur une copie (le C++ modifie en place)."""
     q = p.copy()
     piece = q.sq[m.frm]
+    man_moved = is_man(piece)  # avant une éventuelle promotion
     q.sq[m.frm] = EMPTY
     for ci in m.caps:
         q.sq[ci] = EMPTY
     if m.promote:
         piece = W_KING if is_white(piece) else B_KING
     q.sq[m.to] = piece
-    if m.caps or m.promote:
+    if m.caps or man_moved:
         q.no_progress = 0
     elif q.no_progress < 250:
         q.no_progress += 1
@@ -469,6 +470,28 @@ def test_apply_move_promotion_et_camp():
     assert moves
     q = apply_move(p, moves[0])
     assert q.sq[moves[0].to] == W_KING and q.side == SIDE_BLACK and q.no_progress == 0
+
+
+def test_compteur_de_nulle_seules_les_dames_le_font_avancer():
+    # Règle de nulle (FFJD/FMJD : 25 coups sans prise ni déplacement de pion) : un coup
+    # de pion remet le compteur à zéro, un coup de dame sans prise l'avance d'un
+    # demi-coup, une prise le remet à zéro.
+    p = empty_pos(VAR_INTL10)
+    put(p, 6, 1, W_MAN)
+    put(p, 9, 8, W_KING)
+    put(p, 0, 1, B_MAN)
+    p.no_progress = 30
+    pion = next(m for m in gen_moves(p) if m.frm == idx(6, 1, 10))
+    assert apply_move(p, pion).no_progress == 0
+    dame = next(m for m in gen_moves(p) if m.frm == idx(9, 8, 10))
+    assert apply_move(p, dame).no_progress == 31
+
+    q = empty_pos(VAR_INTL10)
+    put(q, 5, 4, W_KING)
+    put(q, 4, 5, B_MAN)
+    q.no_progress = 30
+    prise = gen_moves(q)[0]
+    assert prise.n_caps == 1 and apply_move(q, prise).no_progress == 0
 
 
 def main() -> int:
