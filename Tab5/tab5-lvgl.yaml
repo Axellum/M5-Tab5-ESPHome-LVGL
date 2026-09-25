@@ -86,7 +86,7 @@ lvgl:
                   id: tab5_set_assist_mode
                   discussion: true
             widgets:
-              - label: { text: "\U000F0450", align: CENTER, y: -10, text_font: mdi_font_32, text_color: color_text }
+              - label: { text: "\U000F06A9", align: CENTER, y: -10, text_font: mdi_font_32, text_color: color_text }
               - label: { text: "Discu", align: CENTER, y: 15, text_font: roboto_22, text_color: color_text }
 
         # Bouton Mute

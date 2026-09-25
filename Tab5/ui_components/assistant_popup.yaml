@@ -97,7 +97,7 @@ obj:
                           id: tab5_set_assist_mode
                           discussion: true
                     widgets:
-                      - label: { text: "\U000F0450", align: CENTER, text_font: mdi_assist_36, text_color: color_text }
+                      - label: { text: "\U000F06A9", align: CENTER, text_font: mdi_assist_36, text_color: color_text }
 
                 # --- Ok Nabu (mot de réveil) ---
                 - button:
@@ -265,7 +265,7 @@ obj:
               widgets:
                 - label: { text: "\U000F021A", align: TOP_LEFT, x: 16, y: 14, text_font: mdi_assist_36, text_color: color_success }
                 - label: { text: "RÉPONSE", align: TOP_LEFT, x: 60, y: 16, text_font: roboto_22, text_color: color_text_dim }
-                - label: { text: "\U000F0A71", align: TOP_RIGHT, x: -60, y: 16, text_font: mdi_assist_36, text_color: color_text_dim }
+                - label: { text: "\U000F04EB", align: TOP_RIGHT, x: -60, y: 16, text_font: mdi_assist_36, text_color: color_text_dim }
                 - label: { text: "\U000F021F", align: TOP_RIGHT, x: -16, y: 16, text_font: mdi_assist_36, text_color: color_text_dim }
 
                 # Zone défilante : réponse + image (défile verticalement si long)
