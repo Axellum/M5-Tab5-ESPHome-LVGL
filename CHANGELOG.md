@@ -4,6 +4,20 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Jeux : sauvegarde d'Arcanoïde vérifiée au chargement, record du Coureur d'Or
+
+Les deux bugs relevés pendant le lot 8f.
+
+- **Arcanoïde** : une sauvegarde abîmée mais au bon en-tête (`magic`) était reprise telle
+  quelle. `score_count` > 10 faisait lire le classement hors du tableau des scores à la
+  partie suivante, et un `ctrl_mode` hors 0..2 laissait la raquette sans commande (ni
+  inclinaison ni boutons). Le chargement borne maintenant ces champs et la sensibilité,
+  comme le fait déjà le Coureur d'Or.
+- **Coureur d'Or** : le record n'était mis à jour que si le score entrait dans le top 10.
+  Quand des parties hors concours (mode entraînement) occupent les dix places, une partie
+  classée pouvait battre le record sans entrer au classement, et le record restait l'ancien.
+  Le record se juge maintenant à part, et la sauvegarde est écrite dans les deux cas.
+
 ### 2026-09-25 — Jeux : les mécanismes recopiés entre consoles passent dans `game_common.h`
 
 Lot 8f de l'audit du 25/09/2026 (§6), dernier du lot 8. Aucun changement de comportement :

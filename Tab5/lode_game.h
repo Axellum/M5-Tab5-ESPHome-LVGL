@@ -45,7 +45,7 @@ struct LodeScoreEntry {
 struct LodeSave {
     uint32_t       magic;                      // LODE_SAVE_MAGIC — sinon reset usine
     LodeScoreEntry scores[LODE_MAX_SCORES];    // top 10, trie decroissant
-    uint32_t       best;                       // meilleur score (miroir de scores[0])
+    uint32_t       best;                       // meilleur score classe (hors parties hors concours)
     uint32_t       plays;                      // nombre de parties lancees
     uint8_t        score_count;                // entrees valides (0..LODE_MAX_SCORES)
     uint8_t        unlocked;                   // plus haut niveau debloque (1..N)
