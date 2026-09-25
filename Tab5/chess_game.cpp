@@ -54,7 +54,7 @@ static constexpr int PANEL_H  = 672;
 // hauteur de LIGNE de la police (94 px a la taille 80), alors que l'encre des
 // figurines n'occupe que 72x60 px : centrer la boite laisse l'encre 1 px trop
 // haut. Valeur mesuree sur ChessPieces.ttf via les metriques PIL (le meme
-// rasteriseur que celui d'ESPHome) — voir README, section « Roi Noir ».
+// rasteriseur que celui d'ESPHome) — voir docs/arcade.md, section « Roi Noir ».
 static constexpr int PIECE_DY = 1;
 static constexpr int MAX_DOTS = 28;                // max de coups depuis une case (dame)
 static constexpr int N_SLOTS  = 8;                 // entrees de menu preallouees

@@ -4,7 +4,7 @@
 
 [![ESPHome](https://img.shields.io/badge/ESPHome-≥2026.9.0-blue)](https://esphome.io)
 [![Build](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/workflows/esphome-tab5.yml/badge.svg)](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/workflows/esphome-tab5.yml)
-[![LVGL](https://img.shields.io/badge/LVGL-8.4-green)](https://lvgl.io)
+[![LVGL](https://img.shields.io/badge/LVGL-9.5-green)](https://lvgl.io)
 [![Home Assistant](https://img.shields.io/badge/Home_Assistant-Push_Events-orange)](https://www.home-assistant.io)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey)](LICENSE)
 [![Made with AI](https://img.shields.io/badge/Made_with-AI-purple)](docs/related_projects.md)
@@ -81,7 +81,7 @@ Companion backend (optional, work-in-progress): **[vromvrom-engine](https://gith
 
 ## What this is
 
-A Home Assistant smart-home dashboard running natively on a **M5Stack Tab5 V2** (ESP32-P4), built with ESPHome and LVGL 8.4.
+A Home Assistant smart-home dashboard running natively on a **M5Stack Tab5 V2** (ESP32-P4), built with ESPHome and LVGL 9.5.
 
 The interface is compiled in C++ and embedded in the device firmware. It does not run a web browser, does not poll for data, and does not depend on a live network connection to stay functional. When Home Assistant has something new to show, it pushes the update directly to the screen.
 
@@ -144,7 +144,7 @@ All 8 consoles share the same architecture: each one is its **own fullscreen LVG
 |:-:|
 | ![Assistant](docs/images/tab5_photo_assistant_popup.jpg) |
 
-→ Full technical details per game: [`Tab5/README.md`](Tab5/README.md#arcade--les-8-consoles)
+→ Full technical details per game: [`docs/arcade.md`](docs/arcade.md)
 
 ---
 
@@ -199,7 +199,8 @@ The engine is optional for the screen UI (push dashboard works without it). It i
 | [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | HA automations, scripts, template sensors |
 | [`Tab5/README.md`](Tab5/README.md) | ESPHome file-by-file description |
 | [`docs/related_projects.md`](docs/related_projects.md) | Linked projects, AI experiment context |
-| [`docs/hackster.md`](docs/hackster.md) | Hackster.io / M5Stack contest story, BOM, build steps |
+| [`docs/arcade.md`](docs/arcade.md) | The 8 game consoles — shared architecture, adding a 9th, one section per game (in French) |
+| [`docs/press/`](docs/press/hackster.md) | Publication kit — Hackster.io / M5Stack contest story, BOM, build steps |
 
 ---
 
@@ -247,6 +248,7 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── tab5_custom.h         # C++ declarations (HMI logic) — the single public header
 │   ├── tab5_custom.cpp       # Shared globals + map of the C++ units
 │   ├── tab5_internal.h       # Helpers shared between units (not part of the YAML contract)
+│   ├── tab5_registry.h/.cpp  # Single registry of consoles and modal windows (ADR-0013)
 │   ├── game_common.h         # Helpers shared by the 8 consoles (bare widgets, xorshift32, NvsSlot<T>)
 │   ├── tab5_text/forecast/central/services/assist/cards/console/anim/calendar.cpp  # One unit per responsibility
 │   ├── alarm_clock.h/.cpp    # Alarm engine — next-ring maths, calendar rules, RDV list
@@ -259,13 +261,20 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── draughts_ai/game.*    # Game: Dames Tab (draughts)
 │   └── chess_ai/game.*       # Game: Roi Noir (chess)
 ├── HomeAssistant_Config/     # HA examples: automations, scripts, template sensors, packages
+├── tests/                    # pytest: secrets checker, HA placeholder renderer, content guards
 ├── tools/
 │   ├── demo/                 # Standalone demo pusher (no HA required)
-│   ├── test_go_engine.py     # Host tests: Go rules (capture, ko, scoring)
+│   ├── check_*.py            # Content guards read the real C++/YAML (modal chrome, registry, code rules, Marble, Lode)
+│   ├── cartographie_counts.py  # Line counts of CARTOGRAPHIE_TAB5.md (check / --write)
+│   ├── render_ha_config.py   # Public HA files + placeholders.yaml → deployable rendered/ (--check: no real ID leaked)
+│   ├── verifier_secrets_config.py  # No secret in any tracked file (pre-commit + CI)
+│   ├── test_go_engine.py/.cpp  # Host tests: Go rules (Python mirror locally, real C++ with g++ in CI)
 │   ├── test_chess_perft.py   # Host tests: chess move generator vs the perft suite
 │   ├── test_draughts_engine.py  # Host tests: draughts move generator vs reference perft (10×10 and 8×8)
 │   └── make_chess_font.py    # Builds ChessPieces.ttf
-└── docs/                     # Extended documentation
+├── .pre-commit-config.yaml   # yamllint, BOM, secrets, HA placeholders — replayed by CI
+├── pyproject.toml            # pytest config (testpaths: tests, tools)
+└── docs/                     # Extended documentation — arcade.md (games), decisions/ (ADR), press/ (publication kit)
 ```
 
 Everything runs on a plain PC, no device needed:
@@ -334,7 +343,7 @@ Backend compagnon (optionnel, en cours) : **[vromvrom-engine](https://github.com
 
 ## C'est quoi
 
-Un tableau de bord domotique Home Assistant qui tourne nativement sur un **M5Stack Tab5 V2** (ESP32-P4), construit avec ESPHome et LVGL 8.4.
+Un tableau de bord domotique Home Assistant qui tourne nativement sur un **M5Stack Tab5 V2** (ESP32-P4), construit avec ESPHome et LVGL 9.5.
 
 L'interface est compilée en C++ et embarquée dans le firmware de l'appareil. Elle ne fait pas tourner de navigateur web, ne poll pas les données, et ne dépend pas d'une connexion réseau active pour rester fonctionnelle. Quand Home Assistant a quelque chose de nouveau à afficher, il pousse directement la mise à jour vers l'écran.
 
@@ -405,7 +414,7 @@ Les 8 consoles partagent la même architecture : chacune est sa **propre page LV
 | 7 | **Dames Tab** | Dames 10×10 (règles internationales, IA embarquée) | Tactile |
 | 8 | **Roi Noir** | Échecs FIDE (règles complètes, 5 niveaux d'IA, validé perft) | Tactile |
 
-→ Détails techniques par jeu : [`Tab5/README.md`](Tab5/README.md#arcade--les-8-consoles)
+→ Détails techniques par jeu : [`docs/arcade.md`](docs/arcade.md)
 
 ---
 
@@ -450,7 +459,8 @@ Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui
 | [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | Automations HA, scripts, template sensors |
 | [`Tab5/README.md`](Tab5/README.md) | Description fichier par fichier ESPHome |
 | [`docs/related_projects.md`](docs/related_projects.md) | Projets liés, contexte expérimentation IA |
-| [`docs/hackster.md`](docs/hackster.md) | Story Hackster.io / concours M5Stack, BOM, étapes de build |
+| [`docs/arcade.md`](docs/arcade.md) | Les 8 consoles de jeu — architecture commune, ajouter une 9ᵉ, une section par jeu |
+| [`docs/press/`](docs/press/hackster.md) | Kit de publication — story Hackster.io / concours M5Stack, BOM, étapes de build |
 
 ---
 

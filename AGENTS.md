@@ -4,14 +4,14 @@ This file is the entry point for any AI agent (Claude, Codex, Cursor, Copilot, G
 
 ## What this project is
 
-A Home Assistant dashboard running natively as ESP32-P4 firmware (ESPHome + LVGL 8.4) on a M5Stack Tab5 V2. Push-only: the device never polls, Home Assistant automations push data via ESPHome API service calls. No web stack, no browser. See [`README.md`](README.md) for the full picture.
+A Home Assistant dashboard running natively as ESP32-P4 firmware (ESPHome + LVGL 9.5 — not 8.x: check `lv_version.h` in the build tree before picking an API) on a M5Stack Tab5 V2. Push-only: the device never polls, Home Assistant automations push data via ESPHome API service calls. No web stack, no browser. See [`README.md`](README.md) for the full picture.
 
 ## Read this before touching anything
 
 In order, before editing code or answering questions about architecture:
 
 1. [`CARTOGRAPHIE_TAB5.md`](CARTOGRAPHIE_TAB5.md) — full dependency graph, file-by-file inventory, and a verified list of known technical debt / dead code. Read this first instead of reverse-engineering the YAML tree from scratch.
-2. [`Tab5/README.md`](Tab5/README.md) — file-by-file description of the ESPHome packages, the HA service contract table, the globals table, and **8 mandatory code rules**.
+2. [`Tab5/README.md`](Tab5/README.md) — file-by-file description of the ESPHome packages, the HA service contract table, the globals table, and **8 mandatory code rules**. The eight game consoles are documented separately in [`docs/arcade.md`](docs/arcade.md) — read it only when touching a game.
 3. [`docs/decisions/`](docs/decisions/README.md) — why non-obvious architectural choices were made (push-only, single-page UI, no hardcoded colors, etc.). Check here before "fixing" something that looks wrong.
 4. [`docs/troubleshooting.md`](docs/troubleshooting.md) — incidents already diagnosed on this exact device. Check here before re-diagnosing a symptom that looks familiar (black screen after reboot, missing weather/planning data, mic pipeline stuck, etc.).
 5. The target file itself, including its `[AI-CONTEXT]` header (see below).
@@ -35,8 +35,8 @@ python -m esphome compile tab5-ha-hmi.yaml
 - If you modified a file included via `!include` (anything in `Tab5/ui_components/`), run `esphome clean` before the next `esphome run` — stale build cache is a known ESPHome trap.
 - Compare the reported `config_hash` before/after a refactor that should be behavior-neutral — identical hash is the standard proof of "no functional change" used across this project's PR history.
 - OTA-flashing the real device is a deliberate, human-authorized action, not a default step of a coding task — only do it if explicitly asked. If you do: confirm afterward via the device's own diagnostic entities (`ha_api_status`, uptime strictly increasing, no reboot) rather than assuming success.
-- `esphome compile` (schema + C++ compile) is the correctness gate for the firmware itself. CI (`.github/workflows/esphome-tab5.yml`) runs a `python` job on every push/PR (pytest, secrets checker, demo dry-run) and the same compile with a dummy `secrets.yaml` **only when `tab5-ha-hmi.yaml`, `Tab5/` or the workflow change** — the `build` job is a required check, so it stays present and reports "skipped" (= success) on docs-only changes; `workflow_dispatch` forces a compile. The compile deliberately uses ESPHome `latest` (free upstream canary).
-- There is no unit test suite *for the HMI*, but two game engines have host tests, and three content guards read the real C++/YAML (modal chrome per ADR-0009, Marble rooms traversable, Lode levels playable). Everything runs on a plain PC with no toolchain, in one `pytest` (config in `pyproject.toml`, deps in `requirements-dev.txt`):
+- `esphome compile` (schema + C++ compile) is the correctness gate for the firmware itself. CI (`.github/workflows/esphome-tab5.yml`) runs on every PR and on pushes to `main`: a `python` job (pre-commit hooks, pytest, the real Go engine built with g++, demo dry-run) and the same compile with a dummy `secrets.yaml` **only when `tab5-ha-hmi.yaml`, `Tab5/` (Markdown excluded) or the workflow change**. Both `python` and `build` are required checks; `build` stays present and reports "skipped" (= success) on docs-only changes; `workflow_dispatch` forces a compile. The compile deliberately uses ESPHome `latest` (free upstream canary, [ADR-0016](docs/decisions/0016-ci-esphome-latest-canary.md)) and keeps its ccache between runs. `main` publishes the `tab5-firmware` artifact.
+- There is no unit test suite *for the HMI*, but three game engines have host tests (Go, chess, draughts), and six content guards read the real C++/YAML (modal chrome per ADR-0009, single registry per ADR-0013, code rules, Marble rooms traversable, Lode levels playable, `CARTOGRAPHIE_TAB5.md` line counts). Everything runs on a plain PC with no toolchain, in one `pytest` (config in `pyproject.toml`, deps in `requirements-dev.txt`):
 
 ```bash
 pip install -r requirements-dev.txt # une fois : pytest, numpy (garde-fou Marble), aioesphomeapi, fonttools, pre-commit, yamllint
@@ -50,6 +50,9 @@ python tools/render_ha_config.py --check   # aucun identifiant HA réel dans un 
 python tools/check_tab5_modal_chrome.py    # ADR-0009 : chrome modal partagé sur chaque popup
 python tools/check_marble_rooms.py         # les 6 salles de Fil d'Or restent traversables
 python tools/check_lode_levels.py          # les 10 niveaux de Coureur d'Or restent jouables
+python tools/check_tab5_registry.py        # ADR-0013 : registre unique consoles/modales
+python tools/check_tab5_code_rules.py      # règles de code (snprintf, pas de lv_* dans le contrat, pas d'entité HA en dur…)
+python tools/cartographie_counts.py        # comptes de lignes de la cartographie (--write pour les recalculer)
 ```
 
   All three are **Python mirrors** of the C++ (`go_engine.cpp`, `chess_ai.cpp`, `draughts_game.cpp`), not bindings: a change to the C++ must be mirrored there or the test stops proving anything. `tools/test_go_engine.cpp` is the same suite compiled against the real C++: the CI `python` job builds it with g++ and runs it on every PR (the dev box only has the RISC-V cross-compiler).

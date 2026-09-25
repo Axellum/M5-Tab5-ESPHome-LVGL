@@ -283,7 +283,7 @@ Each console is its **own fullscreen LVGL page** (`page_marble`, `page_chess`…
 
 Exiting any game: hub → "Quitter" (clean return to `page_arcade` then the dashboard: timer stopped, score saved to NVS, and for Neon Apron the landscape rotation is restored).
 
-→ Full technical details per game: [`Tab5/README.md`](../Tab5/README.md#arcade--les-8-consoles)
+→ Full technical details per game: [`docs/arcade.md`](arcade.md)
 
 ---
 
@@ -622,4 +622,4 @@ Chaque console est sa **propre page LVGL** plein écran 1280×720 (`page_marble`
 
 Sortie de chaque jeu : hub → « Quitter » (retour propre à `page_arcade` puis au dashboard : timer arrêté, score sauvegardé en NVS, et pour Neon Apron restauration de la rotation paysage).
 
-→ Détails techniques complets par jeu : [`Tab5/README.md`](../Tab5/README.md#arcade--les-8-consoles)
+→ Détails techniques complets par jeu : [`docs/arcade.md`](arcade.md)

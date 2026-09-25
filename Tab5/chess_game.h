@@ -146,7 +146,7 @@ void persist_load();
 
 // Lance perft(1..depth) sur la position initiale et journalise le resultat.
 // Utilitaire de validation du generateur de coups, appelable depuis un lambda
-// ESPHome en phase de debug (voir README, section « Echecs »).
+// ESPHome en phase de debug (voir docs/arcade.md, section « Roi Noir »).
 void perft_log(int depth);
 
 }  // namespace Chess
