@@ -46,22 +46,45 @@ api:
   # conservé. Ne pas repasser à `0s` sans relire l'audit F-04.
   reboot_timeout: 60min
 
+  # Reconnexion de Home Assistant (redémarrage de HA, coupure Wi-Fi sans reboot) :
+  # l'écran a besoin d'un push complet. Remplace le battement `interval: 5min` retiré
+  # le 25/09/2026 (tab5-ha-hmi.yaml, audit lot 3). Au boot, on_boot émet déjà
+  # l'événement et boot_complete est encore faux quand HA se connecte : pas de doublon.
+  # Filtre client_info : `esphome logs` (« ESPHome Logs … ») ne relance pas le push.
+  # 2 s + api.connected(state_subscription_only) : laisser HA finir son abonnement,
+  # sinon l'événement part dans le vide. Côté HA, l'automation ne laisse passer
+  # tab5_connected que si la liaison est `on` depuis moins de 3 min — vrai ici.
+  on_client_connected:
+    - if:
+        condition:
+          lambda: 'return id(boot_complete) && client_info.find("Home Assistant") != std::string::npos;'
+        then:
+          - delay: 2s
+          - if:
+              condition:
+                api.connected:
+                  state_subscription_only: true
+              then:
+                - homeassistant.event:
+                    event: esphome.tab5_connected
+
   services:
 
     - service: tab5_maj_previsions_heures_bulk
-      description: "Prévisions horaires : cinq créneaux en un appel (trois appels couvrent les quinze heures affichées)."
+      description: "Prévisions horaires : cinq créneaux en un appel (deux appels couvrent les dix heures affichées ; un bloc 10-14 est accepté mais jamais affiché)."
       variables:
         payload:
           type: string
-          description: "Cinq créneaux « idx|heure|condition|température|pluie » séparés par ; — idx de 0 à 14, condition = état météo Home Assistant."
+          description: "Cinq créneaux « idx|heure|condition|température|pluie » séparés par ; — idx de 0 à 9 affichés (10 à 14 acceptés), condition = état météo Home Assistant."
           example: "0|14:00|sunny|21.4|0;1|15:00|cloudy|20.8|0.2;"
       then:
         - lambda: |-
             if (id(h4_time) == nullptr) return;
-            parse_and_update_heures_bulk(payload);
-            int fp = id(forecast_page_index);
-            int hourly_pi = (fp < 2) ? (1 - fp) : 0;
-            refresh_hourly_forecast(g_hour_slots, hourly_pi, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+            // Bloc identique au précédent, ou pas à l'écran (calque journalier
+            // affiché, autre page horaire) : rien à repeindre (audit 25/09, lot 3).
+            const int fp = id(forecast_page_index);
+            if (!accept_heures_bulk(payload, fp)) return;
+            refresh_hourly_forecast(g_hour_slots, 1 - fp, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
             // Les tuiles viennent de changer : le titre de la carte centrale annonce
             // leurs bornes, il doit suivre. No-op si ce titre n'est pas affiche.
             refresh_forecast_page_title_ui(fp, id(page_title_wrapper), id(lbl_page_title), g_central_ctx);
@@ -76,12 +99,19 @@ api:
       then:
         - lambda: |-
             if (id(j0_day) == nullptr) return;
+            // Quinze jours identiques au push précédent : ni analyse ni rendu. Sûr
+            // pour le réveil — le contenu change au moins une fois par jour (libellés
+            // des jours décalés), donc la date d'ancrage suit (audit 25/09, lot 3).
+            if (push_unchanged(PushChannel::JOURS, payload.c_str(), payload.size())) return;
             parse_and_update_jours_bulk(payload);
             int fp = id(forecast_page_index);
-            int daily_pi = (fp >= 2) ? (fp - 2) : 0;
-            refresh_daily_forecast(g_day_slots, daily_pi, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
-            // Idem horaire : le titre annonce les bornes des 5 tuiles, il suit leur MAJ.
-            refresh_forecast_page_title_ui(fp, id(page_title_wrapper), id(lbl_page_title), g_central_ctx);
+            // Tuiles journalières repeintes seulement si leur calque est affiché
+            // (pages 2-4) : apply_forecast_page() les repeint au changement de page.
+            if (fp >= 2) {
+              refresh_daily_forecast(g_day_slots, fp - 2, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+              // Idem horaire : le titre annonce les bornes des 5 tuiles, il suit leur MAJ.
+              refresh_forecast_page_title_ui(fp, id(page_title_wrapper), id(lbl_page_title), g_central_ctx);
+            }
             // Les horaires de travail des 15 prochains jours viennent d'être
             // réécrits : c'est la source du mode « avant l'ouverture » du réveil.
             // Sans cette invalidation, la prochaine sonnerie resterait calculée
@@ -171,6 +201,8 @@ api:
       then:
         - lambda: |-
             if (id(lbl_proc_pluie) == nullptr) return;
+            // Identique au précédent : has_alerts garde sa valeur (audit 25/09, lot 3).
+            if (push_unchanged(PushChannel::VIGILANCE, payload.c_str(), payload.size())) return;
             // 11 champs « | » : phrase pluie, vigilance globale, puis 9 phénomènes
             // (vent, inondation, orages, pluie-inondation, neige-verglas, grand
             // froid, vagues-submersion, canicule, avalanches). Découpage, couleur
@@ -242,6 +274,8 @@ api:
       then:
         - lambda: |-
             if (id(rb_0_in) == nullptr) return;
+            // Identique au précédent : has_rain garde sa valeur (audit 25/09, lot 3).
+            if (push_unchanged(PushChannel::PLUIE, payload.c_str(), payload.size())) return;
             lv_obj_t* const bars[9] = {id(rb_0_in), id(rb_1_in), id(rb_2_in), id(rb_3_in), id(rb_4_in),
                                        id(rb_5_in), id(rb_6_in), id(rb_7_in), id(rb_8_in)};
             id(has_rain) = update_rain_bars_bulk_ui(payload, bars);
@@ -267,6 +301,18 @@ api:
       then:
         - lambda: |-
             id(info_meteo_dismiss_id) = meteo_id;
+            // Empreinte sur les trois champs ET les acquittements locaux : un tap sur
+            // la dalle change ce qui s'affiche pour un même texte (audit 25/09, lot 3).
+            // (variables d'action = esphome::StringRef : pas d'operator+ avec un char,
+            // d'où la construction par +=.)
+            std::string cle = texte.str();
+            cle += '\x1f';
+            cle += couleur;
+            cle += '\x1f';
+            cle += meteo_id;
+            cle += '\x1f';
+            cle += id(tab5_dismissed_local);
+            if (push_unchanged(PushChannel::INFO, cle)) return;
             update_info_text_ui(id(lbl_info_text), id(info_wrapper), id(planning_wrapper),
                 texte, couleur, meteo_id, id(tab5_dismissed_local), id(has_info), id(current_central_panel),
                 id(roboto_32_b), id(roboto_45_b));
@@ -323,6 +369,12 @@ api:
           example: "update.home_assistant_core_update|Rouge|1 MAJ · Home Assistant Core;ha:unavailable|Orange|3 indispo"
       then:
         - lambda: |-
+            // Même empreinte que le bandeau info : payload + acquittements locaux
+            // (tab5_dismissed_local filtre les slots au rendu) — audit 25/09, lot 3.
+            std::string cle = payload.str();
+            cle += '\x1f';
+            cle += id(tab5_dismissed_local);
+            if (push_unchanged(PushChannel::ALERTES_HA, cle)) return;
             HaAlertSlotUI slots[4] = {
               {id(ha_alert_wrapper_0), id(lbl_ha_alert_0), &id(has_ha_alert_0), &id(ha_alert_id_0)},
               {id(ha_alert_wrapper_1), id(lbl_ha_alert_1), &id(has_ha_alert_1), &id(ha_alert_id_1)},

@@ -94,6 +94,29 @@ struct WeatherDaySlot {
 void parse_and_update_heures_bulk(const std::string& payload);
 void parse_and_update_jours_bulk(const std::string& payload);
 
+// Garde anti-rendu des poussées HA (audit du 25/09/2026, lot 3). HA repousse tout
+// au cycle /10 min et à chaque (re)connexion, le plus souvent à l'identique ; or en
+// LVGL 9 un setter réécrit et invalide même à valeur égale, et chaque poussée
+// repeignait tout le bandeau météo (boucle 66 ms au repos → 144 ms au push).
+// Vrai si `payload` est identique au précédent reçu sur ce canal (empreinte
+// FNV-1a 32 bits + longueur ; la première réception après boot n'est jamais
+// « identique »). Une collision ferait sauter UNE mise à jour, rattrapée au
+// changement suivant.
+enum class PushChannel : uint8_t {
+    JOURS, HEURES_0, HEURES_1, HEURES_2, VIGILANCE, PLUIE, ALERTES_HA, INFO, COUNT
+};
+bool push_unchanged(PushChannel ch, const char* data, size_t len);
+bool push_unchanged(PushChannel ch, const std::string& payload);
+// Les variables `string` des actions API arrivent en esphome::StringRef (vue sans
+// copie) : passer `payload.c_str(), payload.size()` évite une copie de 2 Ko sur le
+// tas pour le cas courant (push identique, rien d'autre à faire).
+
+// Prévisions horaires reçues par blocs de 5 créneaux (idx 0, 5 ou 10 en tête) :
+// analyse le bloc s'il a changé et renvoie true seulement s'il faut repeindre les
+// tuiles À L'ÉCRAN — calque horaire visible (pages 0-1) et bloc de cette page
+// (page 0 = créneaux 5-9, page 1 = 0-4 ; le bloc 10-14 n'est jamais affiché).
+bool accept_heures_bulk(const std::string& payload, int forecast_page);
+
 // Tableaux globaux des slots meteo (initialises au boot, fixes car ids LVGL constants).
 // Evite la reconstruction identique dans chaque lambda YAML (D2).
 extern WeatherDaySlot g_day_slots[5];

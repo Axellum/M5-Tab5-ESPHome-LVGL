@@ -170,6 +170,18 @@ void parse_and_update_heures_bulk(const std::string& payload) {
     }
 }
 
+bool accept_heures_bulk(const std::string& payload, int forecast_page) {
+    const int premier = std::atoi(payload.c_str());  // idx du 1er créneau du bloc
+    if (premier < 0 || premier >= 15) return false;
+    const int bloc = premier / 5;
+    const auto canal = static_cast<PushChannel>(static_cast<int>(PushChannel::HEURES_0) + bloc);
+    if (push_unchanged(canal, payload)) return false;
+    parse_and_update_heures_bulk(payload);
+    // Rendu inutile quand le calque horaire est masqué : apply_forecast_page()
+    // repeint depuis cal_heures_data au changement de page.
+    return forecast_page < 2 && bloc == 1 - forecast_page;
+}
+
 void parse_and_update_jours_bulk(const std::string& payload) {
     if (payload.empty()) return;
     if (payload.length() > 2048) {
