@@ -569,11 +569,11 @@ void update_clock_date_ui(lv_obj_t* lbl_date,
         }
     }
     if (lbl_date) {
-        // [AI-WARNING] lbl_date est en roboto_45, réduite aux 37 glyphes de ces jours,
-        // des chiffres et de clock_month_short_utf8() (tab5-styles.yaml) : changer un
-        // libellé ou le format = mettre à jour la liste de glyphes (sinon lettre vide).
-        static const char* days[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
-        const char* day = (day_of_week >= 1 && day_of_week <= 7) ? days[day_of_week - 1] : "";
+        // [AI-WARNING] lbl_date est en roboto_45, réduite aux 37 glyphes de
+        // fr_day_short_utf8(), des chiffres et de clock_month_short_utf8() (tab5_core.cpp,
+        // tab5-styles.yaml) : changer le format = mettre à jour la liste de glyphes.
+        // day_of_week ESPHome : 1 = dimanche … 7 = samedi.
+        const char* day = fr_day_short_utf8(day_of_week - 1);
         char buf_date[64];
         snprintf(buf_date, sizeof(buf_date), "%s %02d %s", day, day_of_month, clock_month_short_utf8(month));
         lv_label_set_recolor(lbl_date, false);
@@ -602,7 +602,10 @@ static void ensure_btn_styles_inited() {
     btn_styles_inited = true;
 }
 
-void setup_button_press_animation(lv_obj_t* btn) {
+// Applique un style pressed (transform_scale 94% + bg_opa 30%) avec transition
+// 80ms ease_out sur un bouton. ESPHome ne supporte pas state_pressed dans les
+// styles partagees (style_definitions), donc on l'injecte en C++ via lv_obj_add_style.
+static void setup_button_press_animation(lv_obj_t* btn) {
     if (!btn) return;
     ensure_btn_styles_inited();
     // Pivot au centre pour un scale symetrique (pas depuis le coin haut-gauche).

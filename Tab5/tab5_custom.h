@@ -23,7 +23,6 @@ namespace esphome { namespace font { class Font; } }
 void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, esphome::font::Font* f_card, esphome::font::Font* f_card_s);
 
 uint32_t get_humidity_color(float x);
-uint32_t get_temperature_color(float t);
 
 struct WeatherHourSlot {
     lv_obj_t* time_lbl;
@@ -46,7 +45,6 @@ struct WeatherDaySlot {
     lv_obj_t* extra_btn; // e.g. direction shutter button
 };
 
-void parse_and_update_heures_bulk(const std::string& payload);
 void parse_and_update_jours_bulk(const std::string& payload);
 
 // Garde anti-rendu des poussées HA (audit du 25/09/2026, lot 3). HA repousse tout
@@ -81,7 +79,6 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
     esphome::font::Font* f_card, esphome::font::Font* f_card_s);
 void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
     esphome::font::Font* f_card, esphome::font::Font* f_card_s);
-void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj);
 
 // UIAnim (durées/amplitudes d'animation) et UIIdle (retour à l'accueil par
 // inactivité) : voir tab5_tokens.h.
@@ -105,34 +102,10 @@ void animate_popup_open(lv_obj_t* card, lv_obj_t* scrim);
 // Instantanée elle aussi.
 void animate_popup_close(lv_obj_t* card, lv_obj_t* scrim);
 
-// Ferme un popup UNIQUEMENT s'il est réellement affiché et qu'aucun fondu n'est
-// déjà en cours dessus. Renvoie true si une fermeture a été lancée.
-// Le garde-fou sur l'animation évite un clignotement : animate_popup_close()
-// repart de LV_OPA_COVER, la rejouer sur un popup à moitié effacé le
-// rallumerait d'un coup avant de le refaire disparaître.
-bool close_popup_if_open(lv_obj_t* card);
-
-// Glissement horizontal + fondu croisé entre deux layers (swipe prévisions).
-// dir = LV_DIR_LEFT (in arrive de la droite, out part à gauche) ou
-//       LV_DIR_RIGHT (in arrive de la gauche, out part à droite).
-// Durée UIAnim::SWIPE_DUR. Dérivée de transition_widgets() mais en horizontal.
-void animate_swipe_horizontal(lv_obj_t* out_layer, lv_obj_t* in_layer, lv_dir_t dir);
-
 // Fondu croisé pur (sans glissement) entre deux calques plein cadre —
 // bascule prévisions <-> switches HA (bouton « HA »). Le calque sortant est
 // masqué à la fin. Durée UIAnim::SWIPE_DUR.
 void animate_crossfade_layers(lv_obj_t* out_layer, lv_obj_t* in_layer);
-
-// Slide-in depuis la droite + fondu pour un bandeau d'alerte qui entre
-// dans le rotateur central (alertes HA, alertes Météo-France).
-// Durée UIAnim::ALERT_DUR, ease_out.
-void animate_alert_enter(lv_obj_t* alert_wrap);
-
-// « Rouleau » d'icône météo : la nouvelle icône monte depuis le bas en
-// apparaissant (translate_y relatif à l'offset de base posé par
-// update_meteo_icon(), donc compatible avec les icônes composées l1+l2).
-// delay_ms permet d'échelonner les 5 tuiles (effet vague).
-void animate_icon_roll_in(lv_obj_t* l1, lv_obj_t* l2, uint32_t delay_ms);
 
 // Suppression temporaire du rouleau d'icônes : mis à true pendant un
 // changement de calque (le calque glisse déjà, un rouleau en plus = bruit).
@@ -175,10 +148,6 @@ extern ClockRollerCtx g_clock_roller;
 void layout_clock_roller(lv_obj_t* clock_tile, esphome::font::Font* clock_font);
 
 // --- 1D : Micro-interactions boutons verre ---
-// Applique un style pressed (transform_scale 94% + bg_opa 30%) avec transition
-// 80ms ease_out sur un bouton. ESPHome ne supporte pas state_pressed dans les
-// styles partagees (style_definitions), donc on l'injecte en C++ via lv_obj_add_style.
-void setup_button_press_animation(lv_obj_t* btn);
 
 // Parcourt l'arbre LVGL depuis root et applique setup_button_press_animation()
 // a tout objet clickable avec radius 18 (caracteristique du style_clim_btn verre).
@@ -274,16 +243,12 @@ constexpr int kCentralPanelCount = 8;
 constexpr int kHaAlertPanelBase = 4;
 constexpr int kHaAlertSlotCount = 4;
 
-lv_obj_t* central_panel_wrapper(int panel, CentralPanelCtx& ctx);
-bool central_panel_is_active(int panel, const CentralPanelCtx& ctx);
-
 // Synchronise g_central_ctx depuis les globals YAML (factorise le bloc 8 lignes
 // répété 7× dans tab5-scripts.yaml). Appelée avant chaque advance/dismiss/show.
 void sync_central_ctx(CentralPanelCtx& ctx, bool rain, bool alerts, bool info,
                       bool ha0, bool ha1, bool ha2, bool ha3, int panel);
 
 void advance_central_panel_rotator(CentralPanelCtx& ctx);
-void sync_central_panel_visibility(CentralPanelCtx& ctx);
 
 struct HaAlertSlotUI {
     lv_obj_t* wrap;
@@ -301,10 +266,6 @@ void dismiss_ha_alert_slot_immediate(int slot_idx, lv_obj_t* wrap, lv_obj_t* lbl
     bool& has_flag, std::string& id_store, CentralPanelCtx& ctx);
 
 void tab5_dismiss_local_add(std::string& store, const std::string& id);
-bool tab5_dismiss_local_has(const std::string& store, const std::string& id);
-void tab5_dismiss_local_prune(std::string& store, const std::vector<std::string>& ids_seen);
-
-void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase);
 
 // -----------------------------------------------------------------------------
 // Services HA (tab5-api-logic.yaml) : logique LVGL sortie des lambdas le
@@ -347,11 +308,6 @@ struct VigilanceUI {
 // stocker dans has_alerts.
 bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& ui);
 
-// Histogramme pluie 1 h : 9 barres de 5 min (rb_0_in … rb_8_in). intensite =
-// libellé Météo-France (« Pluie faible » … « Pluie très forte »), tout autre
-// texte vide la barre. Retourne true si au moins une barre est non vide — à
-// stocker dans has_rain.
-bool update_rain_bar_ui(int idx, const std::string& intensite, lv_obj_t* const bars[9]);
 // Même chose pour les 9 barres en un appel : payload « idx|intensité;… » (ADR-0003,
 // service tab5_maj_pluie_1h_bulk). Retourne has_rain.
 bool update_rain_bars_bulk_ui(const std::string& payload, lv_obj_t* const bars[9]);
@@ -515,7 +471,6 @@ void show_light_popup_ui(int light_idx, const char* const titles[3],
 // `current_panel_global` = le global ESPHome current_central_panel : le timer de
 // restauration doit l'écrire aussi, sinon le prochain script le recopie (0, posé
 // par le tap) dans ctx.current_panel et le panneau d'origine est perdu.
-std::string get_day_planning_display_text(int jour);
 void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
                              lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, int forecast_page,
                              const std::string& plan_l1, const std::string& plan_l2,
@@ -535,14 +490,6 @@ void hide_vocal_response_ui(lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal, CentralPa
 // des tableaux Markdown (alignés en police monospace) et d'une image (online_image).
 // Logique centralisée ici (décision 0006 : pas de logique complexe dans le YAML LVGL).
 // =============================================================================
-
-// Nettoie un texte Markdown "léger" pour affichage monospace LVGL :
-//  - retire les marqueurs **gras**, __gras__, `code`, les # de titres ;
-//  - convertit les puces "- " / "* " en "• " ;
-//  - ré-aligne les tableaux Markdown (colonnes séparées par |) en largeur fixe
-//    (comptage en points de code UTF-8, pas en octets) et supprime la ligne
-//    séparatrice |---|---|. Rend les tableaux lisibles sans moteur de rendu.
-std::string format_assist_markdown(const std::string& in);
 
 // -----------------------------------------------------------------------------
 // Pipeline vocal — un état, une couleur d'icône micro, un libellé de statut.

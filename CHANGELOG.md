@@ -4,6 +4,43 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Firmware : `tab5_custom.h` ne déclare plus que le contrat YAML, noms de jours et de mois au même endroit
+
+Lot 8d de l'audit du 25/09/2026 (§6). Aucun changement de comportement.
+
+- **`tab5_custom.h` = exactement les 76 fonctions qu'une lambda YAML appelle** (vérifié par un
+  script de classement : 76 appelées depuis le YAML, 0 interne, 0 sans appelant). Les 17
+  autres en sortent :
+  - 8 ne servaient qu'à leur propre unité et y deviennent `static` :
+    `central_panel_is_active`, `central_panel_wrapper`, `get_day_planning_display_text`,
+    `sync_central_panel_visibility`, `format_assist_markdown`, `parse_and_update_heures_bulk`,
+    `setup_button_press_animation`, `update_rain_bar_ui` ;
+  - 9 sont partagées entre unités et passent dans `tab5_internal.h` : `transition_widgets`,
+    `close_popup_if_open`, `animate_swipe_horizontal/_alert_enter/_icon_roll_in`,
+    `get_temperature_color`, `tab5_dismiss_local_has/_prune`, `update_rain_phrase_ui`.
+- **Noms de jours et de mois : une seule source, `tab5_core.cpp`.** Les tables recopiées de
+  `tab5_anim.cpp` (date sous l'horloge), `tab5_services.cpp` (« Dim. »), `tab5_calendar.cpp`
+  (« Janvier », « Lundi ») et `tab5_text.cpp` (« Janv ») disparaissent ; chaque appelant garde
+  son format à partir de `fr_day_short_utf8()`, `fr_day_long_utf8()`,
+  `fr_month_long_utf8()`, `clock_month_short_utf8()` et `fr_capitalized()` (majuscule
+  initiale, aussi utilisée par le libellé du réveil). Mêmes octets affichés partout.
+- **Règle 6** (glyphes de la date sous l'horloge) : elle lit désormais les deux tables dans
+  `tab5_core.cpp` ; prouvé par mutation (un « ï » glissé dans « Dim » est signalé). Le test
+  hôte du noyau vérifie les nouveaux noms (jours et mois abrégés, majuscule d'un mois accentué).
+- Reste signalé, non corrigé ici (changement de comportement) : `build_planning_lines_from_jours()`
+  calcule J+n par `maintenant + n × 86 400 s`, faux d'un jour les nuits de changement d'heure
+  (audit §5) — à passer par `local_day_from_offset()`.
+
+**Preuve** (`main` @ `9602c2f` contre cette branche, deux compilations) : **`config_hash`
+identique** (0x485c6667, aucun YAML ne change). Côté binaire (`nm -S`), tout écart
+s'explique : les helpers devenus `static` sont inlinés dans leur unique appelant
+(`format_assist_markdown` disparaît, `assist_set_response` grossit d'autant ; idem
+`get_day_planning_display_text` → `show_temporary_planning`, `update_rain_bar_ui` →
+`update_rain_bars_bulk_ui`, `setup_button_press_animation` → `apply_pressed_scale_to_tree`),
+les tables recopiées disparaissent (`cal_month_name_utf8::months`, `days_short`), et
+`fr_day_short_utf8` + `fr_capitalized` apparaissent. Flash 2 843 934 → 2 843 526 o
+(**−408**), RAM 258 370 o (identique), 0 warning.
+
 ### 2026-09-25 — YAML : un package par fonctionnalité (arcade, calendrier, assistant vocal)
 
 Lot 8c de l'audit du 25/09/2026 (§6). Aucun changement de comportement.

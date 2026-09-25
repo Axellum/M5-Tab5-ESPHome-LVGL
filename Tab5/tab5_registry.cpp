@@ -7,6 +7,7 @@
  *       « Neon Apron » en dernier (ADR-0012).
  */
 #include "tab5_registry.h"
+#include "tab5_internal.h"   // close_popup_if_open()
 #include "tab5_custom.h"   // close_popup_if_open()
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"

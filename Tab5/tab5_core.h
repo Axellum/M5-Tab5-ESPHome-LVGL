@@ -74,6 +74,12 @@ int32_t local_day_number_today();
 // pour tout le projet, sinon deux orthographes finissent par diverger.
 const char* fr_day_long_utf8(int wday);
 const char* fr_month_long_utf8(int mois_1_12);
+// « Dim » … « Sam » (wday : 0 = dimanche) et « Janv » … « Déc » (1-12) : la date sous
+// l'horloge. "" hors bornes. Glyphes couverts par roboto_45 (règle 6).
+const char* fr_day_short_utf8(int wday);
+const char* clock_month_short_utf8(int month);
+// Première lettre en majuscule : « dimanche » → « Dimanche » (début de libellé).
+std::string fr_capitalized(const char* s);
 
 // Titres de jour des pages de prévisions : « Lun 16 » et « mercredi 5 août »
 // (« 1er » pour le premier du mois). "" si l'heure n'est pas synchronisée.

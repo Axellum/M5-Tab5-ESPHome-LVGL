@@ -84,7 +84,13 @@ static std::vector<std::string> assist_split_cells(const std::string& row) {
     return cells;
 }
 
-std::string format_assist_markdown(const std::string& in) {
+// Nettoie un texte Markdown "léger" pour affichage monospace LVGL :
+//  - retire les marqueurs **gras**, __gras__, `code`, les # de titres ;
+//  - convertit les puces "- " / "* " en "• " ;
+//  - ré-aligne les tableaux Markdown (colonnes séparées par |) en largeur fixe
+//    (comptage en points de code UTF-8, pas en octets) et supprime la ligne
+//    séparatrice |---|---|. Rend les tableaux lisibles sans moteur de rendu.
+static std::string format_assist_markdown(const std::string& in) {
     // Découpe en lignes (ignore les \r).
     std::vector<std::string> lines;
     std::string cur;

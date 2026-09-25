@@ -116,17 +116,15 @@ static int cal_weekday_mon0(int y, int m, int d) {
     return (w + 6) % 7;
 }
 
-static const char* cal_month_name_utf8(int month) {
-    static const char* months[] = {"Janvier", "F\xC3\xA9vrier", "Mars", "Avril",
-        "Mai", "Juin", "Juillet", "Ao\xC3\xBBt", "Septembre", "Octobre",
-        "Novembre", "D\xC3\xA9" "cembre"};
-    return (month >= 1 && month <= 12) ? months[month - 1] : "";
+// « Janvier » / « Lundi » : noms de tab5_core.cpp, majuscule initiale (titres).
+static std::string cal_month_name_utf8(int month) {
+    return fr_capitalized(fr_month_long_utf8(month));
 }
 
-static const char* cal_weekday_name_utf8(int wd_mon0) {
-    static const char* days[] = {"Lundi", "Mardi", "Mercredi", "Jeudi",
-        "Vendredi", "Samedi", "Dimanche"};
-    return (wd_mon0 >= 0 && wd_mon0 <= 6) ? days[wd_mon0] : "";
+// wd_mon0 : 0 = lundi … 6 = dimanche (grille qui commence le lundi).
+static std::string cal_weekday_name_utf8(int wd_mon0) {
+    if (wd_mon0 < 0 || wd_mon0 > 6) return "";
+    return fr_capitalized(fr_day_long_utf8((wd_mon0 + 1) % 7));
 }
 
 // n-ième champ d'une chaîne délimitée par | — champs vides autorisés
@@ -147,7 +145,7 @@ void cal_render_month(CalCellUI cells[42], lv_obj_t* lbl_month,
     if (!lbl_month || view_month < 1 || view_month > 12) return;
 
     char buf[48];
-    snprintf(buf, sizeof(buf), "%s %d", cal_month_name_utf8(view_month), view_year);
+    snprintf(buf, sizeof(buf), "%s %d", cal_month_name_utf8(view_month).c_str(), view_year);
     lv_label_set_text(lbl_month, buf);
 
     const int first_col = cal_weekday_mon0(view_year, view_month, 1);
@@ -259,7 +257,7 @@ void cal_show_day_detail_loading(lv_obj_t* day_popup, lv_obj_t* lbl_title,
 
     char buf[48];
     snprintf(buf, sizeof(buf), "%s %d %s",
-        cal_weekday_name_utf8(cal_weekday_mon0(y, m, d)), d, cal_month_name_utf8(m));
+        cal_weekday_name_utf8(cal_weekday_mon0(y, m, d)).c_str(), d, cal_month_name_utf8(m).c_str());
     lv_label_set_text(lbl_title, buf);
 
     lv_label_set_text(lbl_status,

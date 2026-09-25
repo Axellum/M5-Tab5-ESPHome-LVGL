@@ -146,6 +146,16 @@ static void test_dates() {
     now_is(at(2026, 9, 30, 12, 0));
     expect_str(format_long_day_label(1), "jeudi 1er octobre", "« 1er » pour le premier du mois");
     expect(cal_is_early_shift("08:59-16:00") && !cal_is_early_shift("09:00-17:00"), "embauche tôt = avant 09:00");
+
+    // Noms de jours et de mois : les seules tables du projet (lot 8d).
+    expect_str(fr_day_short_utf8(0), "Dim", "jour abrégé, 0 = dimanche");
+    expect_str(fr_day_short_utf8(6), "Sam", "jour abrégé, 6 = samedi");
+    expect_str(fr_day_short_utf8(7), "", "jour abrégé hors bornes");
+    expect_str(clock_month_short_utf8(8), "Ao\xC3\xBBt", "mois abrégé d'août (glyphe û)");
+    expect_str(clock_month_short_utf8(13), "", "mois abrégé hors bornes");
+    expect_str(fr_capitalized(fr_month_long_utf8(12)), "D\xC3\xA9" "cembre", "majuscule initiale d'un mois accentué");
+    expect_str(fr_capitalized(fr_day_long_utf8(1)), "Lundi", "majuscule initiale d'un jour");
+    expect_str(fr_capitalized(""), "", "majuscule d'une chaîne vide");
 }
 
 static void test_heure_fixe_jours_coches() {
