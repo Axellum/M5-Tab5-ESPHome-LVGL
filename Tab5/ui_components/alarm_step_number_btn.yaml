@@ -1,0 +1,26 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 10× par alarm_popup.yaml :
+# un bouton −/+ qui décrémente ou incrémente une entité `number` du réveil (délai,
+# repos minimum, répétition, durée max, rendez-vous), sans boucler (`cycle: false`).
+# vars : id (id du bouton), x, y, w, h, r (rayon), icon (glyphe MDI en mdi_font_32 :
+#        il doit figurer dans la liste `glyphs` de mdi_font_32, sinon il s'affiche vide),
+#        op (decrement | increment — la clé d'action devient number.${op}), number (id).
+# Sorti de alarm_popup.yaml le 25/09/2026 (audit, lot 8e, règle 5 : un widget répété
+# 3 fois ou plus passe par un template).
+# Piège YAML : dans un mapping en ligne `{ … }`, une valeur contenant `${…}` doit être
+# entre guillemets, sinon l'accolade casse la syntaxe (yamllint le signale).
+# ═══════════════════════════════════════════════════════
+button:
+  id: ${id}
+  align: TOP_LEFT
+  x: ${x}
+  y: ${y}
+  width: ${w}
+  height: ${h}
+  radius: ${r}
+  styles: style_clim_btn
+  pressed: { bg_opa: 30% }
+  on_short_click:
+    - number.${op}: { id: "${number}", cycle: false }
+  widgets:
+    - label: { text: "${icon}", align: CENTER, text_font: mdi_font_32, text_color: color_text }

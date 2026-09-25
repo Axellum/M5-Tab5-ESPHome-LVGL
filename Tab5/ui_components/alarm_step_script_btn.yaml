@@ -1,0 +1,29 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 10× par alarm_popup.yaml :
+# un bouton à pas qui appelle un script avec un décalage (heure ±60/±5 min, bornes
+# « pas avant / pas après » ±15 min, mélodie ±1).
+# vars : id (id du bouton), x, y, w, h, r (rayon), icon (glyphe MDI en mdi_font_32 :
+#        il doit figurer dans la liste `glyphs` de mdi_font_32, sinon il s'affiche vide),
+#        script (id du script, qui prend un paramètre int `delta`), delta.
+# Sorti de alarm_popup.yaml le 25/09/2026 (audit, lot 8e, règle 5 : un widget répété
+# 3 fois ou plus passe par un template).
+# Piège YAML : dans un mapping en ligne `{ … }`, une valeur contenant `${…}` doit être
+# entre guillemets, sinon l'accolade casse la syntaxe (yamllint le signale).
+# Piège ESPHome : la substitution garde le type de la variable. Un paramètre de script
+# (`delta`) doit être passé en nombre NON quoté dans `vars` (`delta: 3`, pas `"3"`),
+# sinon il part en chaîne ('3') au lieu d'un entier.
+# ═══════════════════════════════════════════════════════
+button:
+  id: ${id}
+  align: TOP_LEFT
+  x: ${x}
+  y: ${y}
+  width: ${w}
+  height: ${h}
+  radius: ${r}
+  styles: style_clim_btn
+  pressed: { bg_opa: 30% }
+  on_short_click:
+    - script.execute: { id: "${script}", delta: "${delta}" }
+  widgets:
+    - label: { text: "${icon}", align: CENTER, text_font: mdi_font_32, text_color: color_text }

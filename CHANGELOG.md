@@ -4,6 +4,38 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — YAML : templates pour les widgets recopiés (arcade, bandeaux d'alerte, popup réveil)
+
+Lot 8e de l'audit du 25/09/2026 (§6, règle 5 : un widget répété 3 fois ou plus passe par un
+template `!include` + `vars`). Aucun changement de comportement.
+
+- **5 templates** dans `Tab5/ui_components/`, sur le modèle de `cal_day_cell.yaml` :
+  - `arcade_card.yaml` : les 8 cartes de la page Arcade (`game_selector.yaml` 291 → 123
+    lignes). Ajouter une console = une ligne `!include` (`docs/arcade.md` mis à jour) ;
+  - `ha_alert_panel.yaml` : les 4 bandeaux d'alerte HA de la carte centrale
+    (`tab5-lvgl.yaml` 742 → 666 lignes) ;
+  - `alarm_day_chip.yaml` (×7), `alarm_step_script_btn.yaml` (×10, pas scripté : heure,
+    bornes, mélodie) et `alarm_step_number_btn.yaml` (×10, `number.${op}`) : 27 boutons du
+    popup réveil (`alarm_popup.yaml` 771 → 420 lignes).
+- **Aucun bloc remplacé à l'aveugle** : chaque bloc d'origine a d'abord été reconstruit à
+  partir du gabarit avec ses propres valeurs et comparé octet pour octet ; un seul écart et
+  le script s'arrêtait sans rien écrire.
+- **Deux pièges vus en route**, documentés dans les templates :
+  - dans un mapping en ligne `{ … }`, une valeur `${…}` doit être entre guillemets
+    (l'accolade casse la syntaxe YAML, yamllint le signale) ;
+  - la substitution garde le type de la variable : un paramètre de script (`slot`, `day`,
+    `delta`) doit recevoir un nombre NON quoté dans `vars`, sinon il part en chaîne
+    (`slot: '0'`). Les coordonnées ne sont pas concernées : leur schéma les convertit.
+
+**Preuve** : `esphome config` (worktrees jetables, fichiers d'exemple, secrets factices) donne
+les mêmes 18 457 lignes que `main`, à une exception près : l'ordre de deux clés par défaut
+(`long_press_time` / `long_press_repeat_time`), qui **varie d'un lancement à l'autre sur
+`main` lui-même** (vérifié : 3 fois dans un ordre, 1 fois dans l'autre). C'était aussi la
+seule différence notée au lot 8c : ce n'était donc pas l'ordre des packages, contrairement à
+ce qu'on avait cru. Binaire : **`config_hash` identique à `main` (0x485c6667) et même flash
+(2 843 524 o)** ; comparée à la compilation du lot 8d, la table des symboles ne diffère que
+par les quatre fonctions du correctif #141, déjà dans `main`.
+
 ### 2026-09-25 — Planning de la carte centrale : le bon jour, même un soir de changement d'heure ou sans HA depuis la veille
 
 Deux bugs du même genre dans `build_planning_lines_from_jours()` (`tab5_services.cpp`),

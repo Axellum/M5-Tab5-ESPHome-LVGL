@@ -68,7 +68,7 @@ Included by `tab5-lvgl.yaml`: `climate_card.yaml`/`climate_popup.yaml` (near-ful
 
 Two of them are **shared chrome**, not standalone components: `modal_scrim.yaml` (the dimming veil, `scrim_opa` var) and `modal_header.yaml` (icon + title + close cross, 52 px bar). Every popup includes them via `!include { file: …, vars: {…} }` — that is ADR-0009, and the games are the documented exception.
 
-The remaining files are **parametrized sub-templates** included with `vars` from the components above rather than from `tab5-lvgl.yaml`: `climate_hvac_mode_btn.yaml` (×4), `climate_preset_toggle_btn.yaml` (×2), `forecast_day_title_tab.yaml`/`forecast_day_temp_tab.yaml` (×5), `forecast_hour_card.yaml` (×5), `switch_card_title_tab.yaml`/`switch_card_state_tab.yaml` (×3), `light_color_preset_btn.yaml` (×12), `pot_detail_card.yaml` (×5), `cal_day_cell.yaml` (×42). 23 files are included directly by `tab5-lvgl.yaml`, 35 exist in total.
+The remaining files are **parametrized sub-templates** included with `vars` from the components above rather than from `tab5-lvgl.yaml`: `climate_hvac_mode_btn.yaml` (×4), `climate_preset_toggle_btn.yaml` (×2), `forecast_day_title_tab.yaml`/`forecast_day_temp_tab.yaml` (×5), `forecast_hour_card.yaml` (×5), `switch_card_title_tab.yaml`/`switch_card_state_tab.yaml` (×3), `light_color_preset_btn.yaml` (×12), `pot_detail_card.yaml` (×5), `cal_day_cell.yaml` (×42), and since 2026-09-25 (audit lot 8e) `arcade_card.yaml` (×8, `game_selector.yaml`), `ha_alert_panel.yaml` (×4, `tab5-lvgl.yaml`), `alarm_day_chip.yaml` (×7), `alarm_step_script_btn.yaml` (×10) and `alarm_step_number_btn.yaml` (×10) for `alarm_popup.yaml`. 24 files are included directly by `tab5-lvgl.yaml`, 40 exist in total.
 
 ### `tab5_custom.h` + the `tab5_*.cpp` units (formerly a single `tab5_custom.cpp`)
 All non-trivial C++ logic, declared in **`tab5_custom.h`** (the single public header — YAML lambdas only ever call functions declared there) and, since 2026-09-08 (audit lot (e)), implemented in **nine units** split by responsibility — same functions, same order as the former 3 169-line `tab5_custom.cpp`, which now only holds the shared globals (`g_central_ctx`, `g_day_slots`, `g_hour_slots`, `cal_*`) and a map of the units:
@@ -185,7 +185,7 @@ Historique de vérification : écrit contre le code réel le 05/07/2026, re-vér
 ## Sous-répertoires
 
 ### `ui_components/`
-Les 35 composants LVGL décrits plus haut. Seul sous-répertoire versionné. (`my_components/st7123/` n'existe plus : `st7123` est une plateforme officielle depuis ESPHome 2026.7.0.)
+Les 40 composants et templates LVGL décrits plus haut. Seul sous-répertoire versionné. (`my_components/st7123/` n'existe plus : `st7123` est une plateforme officielle depuis ESPHome 2026.7.0.)
 
 ### `tts_library/`, `tts_library_v2/` — **non versionnés**
 Fichiers audio TTS expérimentaux antérieurs à l'intégration Voice de HA, gitignorés et inutilisés par la config actuelle. Ils n'existent pas dans un clone : ne les cherchez pas.
