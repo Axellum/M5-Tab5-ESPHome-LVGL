@@ -12,6 +12,10 @@
 # corrigent pas.
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
+    # NE PAS passer en v6 par `pre-commit autoupdate` sans remplacer d'abord
+    # check-byte-order-marker par un hook local qui signale sans réécrire :
+    # en v6.0.0 l'id existe encore mais son entrée est `pre-commit-hooks-removed`
+    # (vérifié le 25/09/2026) — le hook échoue à chaque commit et en CI.
     rev: v5.0.0
     hooks:
       # Détection seulement (« deprecated » au profit de fix-byte-order-marker, qui
@@ -23,6 +27,11 @@ repos:
     hooks:
       - id: yamllint                     # règles dans .yamllint (base « relaxed »)
         args: ["--strict"]               # les avertissements aussi font échouer
+        # `identify` classe `*.yaml.example` en `text` : sans cet élargissement,
+        # l'exemple d'automations HA (le fichier public le plus copié) échappait
+        # au lint. Les motifs d'exclusion de .yamllint s'appliquent toujours.
+        types: [file]
+        files: \.ya?ml(\.example)?$
   - repo: local
     hooks:
       - id: verifier-secrets

@@ -5,6 +5,8 @@
 ## Checklist
 
 - [ ] `esphome compile tab5-ha-hmi.yaml` succeeds locally (`config_hash`: `______`)
+- [ ] `python -m pytest` and `pre-commit run --all-files` pass locally (the CI `python` job replays both)
+- [ ] If this changes `Tab5/go_engine.cpp` or `Tab5/chess_ai.cpp`: its Python mirror (`tools/test_go_engine.py`, `tools/test_chess_perft.py`) is updated in the same PR
 - [ ] If this is a refactor with no intended behavior change: `config_hash` is identical before/after
 - [ ] If a device is available and the change touches firmware behavior: tested via real OTA (device diagnostics checked afterward — `ha_api_status` on, uptime strictly increasing, no reboot) — otherwise noted as not tested and why
 - [ ] If this touches code marked `[AI-WARNING]`: read the warning and `docs/decisions/`, explain below why the override is safe

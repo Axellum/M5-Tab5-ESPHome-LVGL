@@ -76,3 +76,58 @@ def test_output_does_not_contain_secret_value(tmp_path):
     assert findings, "le secret de test doit être détecté, sinon l'assertion suivante est vide de sens"
     for finding in findings:
         assert secret_val not in repr(finding)
+
+
+def test_ignores_uppercase_placeholder(tmp_path):
+    """Une valeur factice en MAJUSCULES (docs d'installation, secrets.yaml de la CI)
+    n'est pas un secret ; la même clé avec une vraie valeur reste signalée."""
+    f = tmp_path / "installation.md"
+    f.write_text('wifi_password: "YOUR_WIFI_PASSWORD"\n'
+                 'api_encryption_key: "CLE_BASE64_32_OCTETS"\n'
+                 'wifi_password: "vraiMotDePasse_2026"\n')
+
+    assert check_file(str(f)) == [(3, "GENERIC_SECRET")]
+
+
+def test_allowlist_pragma_skips_line(tmp_path):
+    """Un faux secret documenté se marque ligne par ligne, pas fichier par fichier."""
+    f = tmp_path / "CHANGELOG.md"
+    f.write_text("`token: eyJ_SECRET_TOKEN_123456789` <!-- pragma: allowlist secret -->\n"
+                 "token: eyJ_SECRET_TOKEN_123456789\n")
+
+    assert check_file(str(f)) == [(2, "GENERIC_SECRET")]
+
+
+def _git(repo, *args):
+    import subprocess
+    subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True)
+
+
+def test_tracked_files_covers_markdown_and_example_only_if_tracked(tmp_path):
+    """Seuls les fichiers suivis comptent (un fichier local gitignoré a le droit
+    de contenir des valeurs réelles), mais .md et .example en font partie."""
+    from tools.verifier_secrets_config import tracked_files
+
+    _git(tmp_path, "init", "-q")
+    (tmp_path / "README.md").write_text("x")
+    (tmp_path / "automations.yaml.example").write_text("x")
+    (tmp_path / "script.py").write_text("x")
+    (tmp_path / "local.yaml").write_text("x")          # jamais ajouté
+    _git(tmp_path, "add", "README.md", "automations.yaml.example", "script.py")
+
+    names = sorted(p.name for p in tracked_files(tmp_path))
+    assert names == ["README.md", "automations.yaml.example"]
+
+
+def test_tracked_secrets_yaml_is_reported(tmp_path, monkeypatch, capsys):
+    """Un secrets.yaml suivi est une fuite même si aucun motif ne le reconnaît
+    (clé base64 avec `+` ou `/`) — et la valeur n'est jamais affichée."""
+    import tools.verifier_secrets_config as vsc
+
+    key = "26IVe/bZ/aI+T8G96D7aYZlM2EH8QUG8JtsZ50HxaCE="
+    (tmp_path / "secrets.yaml").write_text(f'api_encryption_key: "{key}"\n')
+    monkeypatch.setattr(vsc, "tracked_files", lambda root: [tmp_path / "secrets.yaml"])
+
+    assert vsc.main(tmp_path) == 1
+    out = capsys.readouterr().out
+    assert "SECRETS_FILE_TRACKED" in out and key not in out

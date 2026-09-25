@@ -106,7 +106,7 @@
 
 | Fichier | Emplacement | Type | Cible |
 |---|---|---|---|
-| `test_verifier_secrets_config.py` | `tests/` | Unitaire | Détection de secrets en clair dans les YAML (`tools/verifier_secrets_config.py`). |
+| `test_verifier_secrets_config.py` | `tests/` | Unitaire | Détection de secrets en clair dans les fichiers suivis (`tools/verifier_secrets_config.py`) : valeurs factices, pragma, `git ls-files`, `secrets.yaml` suivi. |
 | `test_render_ha_config.py` | `tests/` | Unitaire | Rendu placeholders → valeurs et détection de fuite d'identifiants réels (`tools/render_ha_config.py`). |
 | `test_guards.py` | `tests/` | Contenu | Joue les 3 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, salles Marble, niveaux Lode). |
 | `__init__.py` | `tests/` | — | Marqueur de package. |
@@ -118,14 +118,14 @@
 | `test_go_engine.py` | `tools/` | Unitaire (miroir Python) | Règles Go : capture, suicide, ko, territoire, score. |
 | `test_chess_perft.py` | `tools/` | Unitaire (miroir Python) | Générateur d'échecs contre la suite perft standard. |
 | `test_draughts_engine.py` | `tools/` | Unitaire (miroir Python) | Générateur de dames (10×10 et 8×8) contre les perft de référence + règles (prise majoritaire, dame volante, promotion). |
-| `test_go_engine.cpp` | `tools/` | Unitaire (C++ hôte) | Même suite compilée contre le vrai `go_engine.cpp`. |
+| `test_go_engine.cpp` | `tools/` | Unitaire (C++ hôte) | Même suite compilée contre le vrai `go_engine.cpp` — g++ en CI (job `python`). |
 
 ### 3.3 Outils de validation (intégration)
 
 | Fichier | Emplacement | Type | Rôle |
 |---|---|---|---|
 | `tools/demo/demo_pusher.py` | `tools/demo/` | Intégration (dry-run) | Valide chaque payload push contre le contrat firmware. |
-| `tools/verifier_secrets_config.py` | `tools/` | Outil | Analyse les YAML pour détecter des secrets en clair. |
+| `tools/verifier_secrets_config.py` | `tools/` | Outil | Analyse les fichiers suivis par git (`.yaml`, `.yml`, `.example`, `.jinja`, `.md`) pour détecter des secrets en clair. |
 | `tools/render_ha_config.py` | `tools/` | Outil | Rend les fichiers HA publics avec les identifiants réels (`rendered/`) ; `--check` = garde-fou de fuite. |
 | `tools/check_tab5_modal_chrome.py` | `tools/` | Garde-fou | ADR-0009 : chrome modal partagé sur chaque popup (rapatrié du workspace le 06/09/2026). |
 | `tools/check_marble_rooms.py` | `tools/` | Garde-fou | Les 6 salles de « Fil d'Or » lues dans `marble_game.cpp` restent traversables (numpy). |

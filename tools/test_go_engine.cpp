@@ -5,12 +5,15 @@
  *   g++ -std=c++17 -O2 -I../Tab5 -o test_go_engine.exe test_go_engine.cpp ../Tab5/go_engine.cpp
  *   .\test_go_engine.exe
  *
- * Le poste de dev n'a qu'un cross-compilateur RISC-V : le miroir Python
- * tools/test_go_engine.py couvre les MÊMES règles et tourne, lui, sans
- * toolchain. Garder les deux en phase.
+ * La CI (job `python`, step « Moteur Go C++ ») le compile avec g++ et
+ * l'exécute à chaque PR. Le poste de dev n'a qu'un cross-compilateur RISC-V :
+ * en local, le miroir Python tools/test_go_engine.py couvre les MÊMES règles
+ * sans toolchain. Garder les deux en phase. Vérif de compilation locale :
+ *   riscv32-esp-elf-g++ -std=c++17 -fsyntax-only -I Tab5 tools/test_go_engine.cpp Tab5/go_engine.cpp
  */
 #include "go_engine.h"
 #include <cstdio>
+#include <initializer_list>   // for (int n : {9, 13, 19})
 
 using namespace Go::Engine;
 

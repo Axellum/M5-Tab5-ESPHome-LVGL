@@ -4,6 +4,42 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — CI : l'artefact firmware revient, les garde-fous couvrent enfin les fichiers publics
+
+Lot 6 de l'audit du 25/09/2026 (§8, CI). Aucun changement de firmware.
+
+- **Artefact `tab5-firmware` de nouveau publié** (sur `main` et en lancement manuel). Le
+  chemin visait encore `.pioenvs/…/firmware.bin` (PlatformIO) alors que `build-action`
+  copie ses binaires dans `tab5-ha-hmi-esp32p4/` : plus aucun artefact depuis le 15/07,
+  avec un simple avertissement. Le chemin vient maintenant de la sortie `name` de l'action,
+  et `if-no-files-found: error` fait échouer le job si cela se reproduit.
+- **Une compilation par modification au lieu de deux** : `push` limité à `main` (une branche
+  avec PR était compilée au push ET à la PR, 2 × ~10 min), et `concurrency` annule la
+  compilation d'une PR dépassée par un nouveau commit (jamais sur `main`).
+- **Vérificateur de secrets sur les fichiers suivis** (`git ls-files`) au lieu de `*.yaml`
+  sur disque : il lit maintenant aussi `.yml` (workflows), `.example`, `.jinja` et `.md`,
+  et ignore les fichiers locaux gitignorés, qui ont le droit de contenir des valeurs
+  réelles. Un `secrets.yaml` suivi est signalé en soi. Valeurs factices en MAJUSCULES
+  (`YOUR_WIFI_PASSWORD`) ignorées, exception ligne par ligne par
+  `pragma: allowlist secret`. Premier passage : l'ancienne IP de la tablette traînait
+  deux fois dans ce CHANGELOG — retirée. Le step CI qui le relançait après pre-commit
+  (double exécution) est supprimé.
+- **yamllint lit `automations_examples.yaml.example`** : `identify` le classait en `text`,
+  le fichier public le plus copié échappait au lint (prouvé par mutation : une espace en
+  fin de ligne est maintenant refusée).
+- **`render_ha_config.py --check` vérifie enfin quelque chose en CI** : sans
+  `placeholders.yaml` (gitignoré) il n'avait rien à chercher et répondait 0. Le fichier
+  vient du secret de dépôt `HA_PLACEHOLDERS` ; s'il manque, la CI l'annonce par un
+  avertissement au lieu de réussir en silence.
+- **Le vrai moteur Go C++ est testé** : `tools/test_go_engine.cpp` est compilé par `g++`
+  et exécuté dans le job `python` (le poste de dev n'a qu'un cross-compilateur RISC-V, seul
+  le miroir Python tournait jusqu'ici). Le `-fsyntax-only` du cross-compilateur, avant de
+  pousser, a trouvé un `#include <initializer_list>` manquant pour
+  `for (int n : {9, 13, 19})` : ajouté.
+- Modèle de PR : cases pytest/pre-commit et miroirs Python des moteurs Go et échecs.
+  `.pre-commit-config.yaml` : avertissement avant tout passage de `pre-commit-hooks` en v6,
+  où `check-byte-order-marker` n'est plus qu'un hook « removed » qui échoue toujours.
+
 ### 2026-09-25 — Jeux : l'écran éteint ne fait plus perdre, la partie d'échecs survit à un reboot
 
 Lot 5 de l'audit du 25/09/2026 (§2.5, §2.6, §5, §6), sans les dames (reportées).
@@ -704,7 +740,7 @@ en ethernet donc IP stable). Deux raisons de changer d'avis quand même — c'es
 une donnée de topologie réseau publiée, et personne d'autre ne peut réutiliser
 ce package tel quel.
 
-Traitement en deux temps, selon le précédent du dépôt (26/07, où `192.168.0.88`
+Traitement en deux temps, selon le précédent du dépôt (26/07, où l'IP réelle de la tablette
 a été retirée de `Tab5/README.md` au profit de `192.168.x.x`) :
 
 - les 3 occurrences en **commentaire** deviennent `<ip-de-la-tv>` ;
@@ -760,7 +796,7 @@ secrets **doivent** être.
   `assert findings` — sans elle, une liste vide ferait passer le test sans rien
   vérifier. 📌 **Prouvé par mutation, pas par relecture** : en faisant renvoyer la
   ligne complète à `check_file`, le test échoue désormais en affichant
-  `(1, 'GENERIC_SECRET', 'token: eyJ_SECRET_TOKEN_123456789')` ; l'ancienne version
+  `(1, 'GENERIC_SECRET', 'token: eyJ_SECRET_TOKEN_123456789')` ; l'ancienne version <!-- pragma: allowlist secret -->
   restait **verte** sur cette même mutation.
 - Trois chiffres de `docs/INVENTAIRE_CONFIGS_TESTS.md` ne correspondaient pas à
   `main` : `ui_components/` 33 → **35**, inclus par `tab5-lvgl.yaml` 21 → **23**,
@@ -1305,7 +1341,7 @@ dans des fichiers destinés aux utilisateurs :
   `automations_examples.yaml.example` et 2× dans `packages/tab5_alerts.yaml`, alors que
   la table de correspondance du README annonce `VOTRE_DEPARTEMENT`. Au-delà de la fuite,
   c'était un bug : qui copiait le fichier recevait les alertes des Landes.
-- L'IP réelle de l'appareil (`192.168.0.88`) dans deux commandes de `Tab5/README.md`,
+- L'IP réelle de l'appareil dans deux commandes de `Tab5/README.md`,
   alors qu'`installation.md` utilise déjà `192.168.x.x`.
 
 Seule clé restante : celle du workflow CI, factice et sans appareil derrière.
