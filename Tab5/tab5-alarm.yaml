@@ -709,7 +709,7 @@ script:
           then:
             - lvgl.page.show: page_main
       - script.execute: tab5_alarm_show_overlay
-      # Arrêt à la voix : le modèle « Stop » est déjà embarqué (tab5-hardware.yaml)
+      # Arrêt à la voix : le modèle « Stop » est déjà embarqué (tab5-assist.yaml)
       # mais désactivé au repos. On l'arme ici même si « Ok Nabu » est coupé —
       # sinon la promesse « arrêt à la voix » ne tient pas pour qui laisse le
       # micro au repos la nuit.
@@ -928,7 +928,7 @@ script:
           alarm_ring_hide(ui);
       - script.execute: tab5_alarm_restore_volume
       # Retour du micro à son état de repos : le modèle « Stop » ne reste armé
-      # que si un volet est en mouvement (son autre usage, tab5-hardware.yaml),
+      # que si un volet est en mouvement (son autre usage, tab5-assist.yaml),
       # et le moteur de mots de réveil ne tourne que si « Ok Nabu » est activé.
       - if:
           condition:

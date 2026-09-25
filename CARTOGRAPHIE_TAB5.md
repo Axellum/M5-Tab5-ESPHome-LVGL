@@ -20,20 +20,23 @@ Un tableau de bord domotique 60 FPS + satellite vocal local + **8 consoles de je
 
 ```mermaid
 graph TD
-    ENTRY["tab5-ha-hmi.yaml<br/>(point d'entrée, 270 lignes)<br/>substitutions (user_entities) + on_boot + packages: + includes:"]
+    ENTRY["tab5-ha-hmi.yaml<br/>(point d'entrée)<br/>substitutions (user_entities) + on_boot + packages: + includes:"]
 
     subgraph PKG["Packages ESPHome (Tab5/*.yaml) — 12 packages + pot_sensors.yaml (package paramétré, inclus ×5)"]
         TOK["tab5-ui-tokens.yaml<br/>tokens dimensionnels (modal_card_w/h, modal_body_y)"]
-        HW["tab5-hardware.yaml<br/>473 lignes<br/>display/touch/i2c/audio/esp32_hosted/wake words (okay_nabu + Stop, décision WakeWord::decide en C++)/ota: — zéro lv_* (garde-fou)"]
-        SENSD["tab5-sensors-diagnostics.yaml<br/>309 lignes<br/>wifi:/alim GPIO/status_ha/uptime/RAM/loop time/select:/time:/interval:"]
-        SENSO["tab5-sensors-domotique.yaml<br/>288 lignes (+ pot_sensors.yaml ×5)<br/>plantes/lumières (+brightness live)/PC/températures/batterie/audio"]
-        API["tab5-api-logic.yaml<br/>332 lignes<br/>api: services: (contrat HA, 16 services, zéro lv_* — garde-fou)"]
-        STY["tab5-styles.yaml<br/>477 lignes<br/>color:/font:/lvgl: style_definitions + chess_pieces_80"]
-        GLOB["tab5-globals.yaml<br/>224 lignes<br/>globals: + rotateur carte centrale (8s, planning/pluie/alertes/info + 4 bandeaux HA)"]
-        SCR["tab5-scripts.yaml<br/>1152 lignes<br/>script: debounces + vocal (+ wake_word_dispatch) + rotateur/dismiss + volet + popups + jeux open/close + init ModalRegistry"]
-        LVGL["tab5-lvgl.yaml<br/>746 lignes<br/>page_main + swipe prévisions + btns console/TV + !include jeux + sélecteur arcade"]
-        IMU["tab5-imu.yaml<br/>137 lignes<br/>BMI270 motion: + poll adaptatif 10/30Hz + tap-to-wake"]
-        HACTL["tab5-ha-controls.yaml<br/>260 lignes<br/>number volume + text_sensor écran courant + select aller-à + button recharger calendrier + interval rattrapage volume"]
+        HW["tab5-hardware.yaml<br/>display/touch/i2c/audio (bus I2S, ES7210, ES8388, media_player)/esp32_hosted/ota: — zéro lv_* (garde-fou)"]
+        SENSD["tab5-sensors-diagnostics.yaml<br/>wifi:/alim GPIO/status_ha/uptime/RAM/loop time/select:/time:/interval:"]
+        SENSO["tab5-sensors-domotique.yaml (+ pot_sensors.yaml ×5)<br/>plantes/lumières (+brightness live)/PC/températures/batterie/audio"]
+        API["tab5-api-logic.yaml<br/>api: services: (contrat HA, 16 services, zéro lv_* — garde-fou)"]
+        STY["tab5-styles.yaml<br/>color:/font:/lvgl: style_definitions + chess_pieces_80"]
+        GLOB["tab5-globals.yaml<br/>globals: + rotateur carte centrale (8s, planning/pluie/alertes/info + 4 bandeaux HA)"]
+        SCR["tab5-scripts.yaml<br/>script: init ModalRegistry + volume + debounces + rotateur/dismiss + volet + popup lumière + retour accueil"]
+        ARC["tab5-arcade.yaml<br/>jeux : close_all + 8 × open + page arcade"]
+        CALY["tab5-calendar.yaml<br/>popup calendrier : open/render/prev/next/today/day_tap"]
+        ASSIST["tab5-assist.yaml<br/>micro_wake_word (okay_nabu + Stop, WakeWord::decide en C++) + voice_assistant + image réponse + scripts vocaux et popup Assistant — pile sans lv_* (garde-fou)"]
+        LVGL["tab5-lvgl.yaml<br/>page_main + swipe prévisions + btns console/TV + !include jeux + sélecteur arcade"]
+        IMU["tab5-imu.yaml<br/>BMI270 motion: + poll adaptatif 10/30Hz + tap-to-wake"]
+        HACTL["tab5-ha-controls.yaml<br/>number volume + text_sensor écran courant + select aller-à + button recharger calendrier + interval rattrapage volume"]
         ALARM["tab5-alarm.yaml<br/>réveil : rtttl + 20 entités HA (switch/datetime/number/select/text)<br/>+ machine d'état sonnerie + tick 1s (réveil & annonce RDV)"]
     end
 
@@ -42,17 +45,17 @@ règles calendrier ouverture/fermeture, snooze, liste RDV<br/>lit cal_jours_data
     ALARMR["alarm_render.h/.cpp<br/>rendu LVGL du réveil (popup, sonnerie, pastille)"]
 
     subgraph UI["ui_components/*.yaml (35 fichiers, 23 inclus par tab5-lvgl.yaml)"]
-        MOIST["moisture_sensors.yaml (64L)"]
+        MOIST["moisture_sensors.yaml"]
         POTSPOP["pots_popup.yaml + pot_detail_card.yaml<br/>détails plantes : humidité/statut + EC/lux/temp/batterie"]
         CALPOP["calendar_popup.yaml + cal_day_cell.yaml<br/>calendrier mensuel + détail jour"]
-        CLIMCARD["climate_card.yaml (128L)"]
-        CLIMPOP["climate_popup.yaml (309L)"]
-        FDAILY["forecast_daily.yaml (261L)"]
+        CLIMCARD["climate_card.yaml"]
+        CLIMPOP["climate_popup.yaml"]
+        FDAILY["forecast_daily.yaml"]
         FHOUR["forecast_hourly.yaml + forecast_hour_card.yaml"]
-        SWCARD["switches_card.yaml (209L)"]
-        CONSOLE["console_sys.yaml (389L)"]
-        LIGHTPOP["light_popup.yaml (368L)"]
-        TVPOP["tv_remote_popup.yaml (527L)"]
+        SWCARD["switches_card.yaml"]
+        CONSOLE["console_sys.yaml"]
+        LIGHTPOP["light_popup.yaml"]
+        TVPOP["tv_remote_popup.yaml"]
         ASSISTPOP["assistant_popup.yaml<br/>transcription STT + réponse Markdown + image"]
         MODAL["modal_header.yaml + modal_scrim.yaml<br/>chrome partagé v4 (ADR-0009)"]
         GAMES["8× *_game.yaml + game_selector.yaml<br/>9 pages LVGL dédiées (skip: true)<br/>exception ADR-0009"]
@@ -60,15 +63,15 @@ règles calendrier ouverture/fermeture, snooze, liste RDV<br/>lit cal_jours_data
 
     subgraph CPP["C++ HMI (esphome: includes:)"]
         HFILE["tab5_custom.h<br/>CentralPanelCtx, Weather*Slot, MeteoIcon::<br/>inclut tab5_tokens.h (UIColor/UIAnim/UIIdle)"]
-        CFILE["tab5_custom.cpp (40L, globals) + 9 unités tab5_*.cpp (3335L)<br/>logique LVGL HMI non-triviale, un fichier par responsabilité"]
+        CFILE["tab5_custom.cpp (globals) + 9 unités tab5_*.cpp<br/>logique LVGL HMI non-triviale, un fichier par responsabilité"]
         REG["tab5_registry.h/.cpp<br/>GameRegistry::kGames (8 consoles) + ModalRegistry (ADR-0013)"]
     end
 
     subgraph GAMESCPP["C++ Jeux (esphome: includes: — prototypes expérimentaux)"]
-        MARBLE["marble_game.h/.cpp (2453L)<br/>namespace Marble — roguelite bille"]
-        ARKA["arkanoid_game.h/.cpp (1540L)<br/>namespace Arkanoid — casse-briques"]
-        PIN["pinball_game.h/.cpp (2329L)<br/>namespace Pinball — flipper PORTRAIT<br/>(bascule lvgl rotation 0 ↔ 270)"]
-        LODE["lode_game.h/.cpp (2218L)<br/>namespace Lode — Lode Runner"]
+        MARBLE["marble_game.h/.cpp<br/>namespace Marble — roguelite bille"]
+        ARKA["arkanoid_game.h/.cpp<br/>namespace Arkanoid — casse-briques"]
+        PIN["pinball_game.h/.cpp<br/>namespace Pinball — flipper PORTRAIT<br/>(bascule lvgl rotation 0 ↔ 270)"]
+        LODE["lode_game.h/.cpp<br/>namespace Lode — Lode Runner"]
         GO["go_engine/ai/game .h/.cpp<br/>namespace Go — jeu de Go"]
         TRIV["trivia_game.h/.cpp + trivia_questions.h<br/>namespace Trivia — quiz"]
         DRA["draughts_ai/game .h/.cpp<br/>namespace Draughts — dames 10×10"]
@@ -166,14 +169,17 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 
 | Fichier | Lignes | Rôle exact | Gère | Dépend de |
 |---|---|---|---|---|
-| `tab5-hardware.yaml` | 473 | Bas niveau : display MIPI-DSI + tactile ST7123, DAC ES8388 (plateforme `audio_dac:`) / ADC micro ES7210 (`audio_adc:`), I2S haut-parleur/micro, expander GPIO PI4IOE5V6408, `esp32_hosted` (co-proc WiFi ESP32-C6 via SDIO 20 MHz), `micro_wake_word` (2 modèles : `okay_nabu` + `Stop` armé/désarmé selon `volet_en_mouvement`)/`voice_assistant`, `ota:` | Hardware, audio, wake-words, OTA | composants natifs ESPHome ≥ 2026.8.1 (plus d'`external_components` depuis 2026.7.0) |
+| `tab5-hardware.yaml` | 314 | Bas niveau : display MIPI-DSI + tactile ST7123, DAC ES8388 (plateforme `audio_dac:`) / ADC micro ES7210 (`audio_adc:`), I2S haut-parleur/micro, expander GPIO PI4IOE5V6408, `esp32_hosted` (co-proc WiFi ESP32-C6 via SDIO 20 MHz), `media_player`, `ota:` (la pile vocale est dans `tab5-assist.yaml` depuis le lot 8c) | Hardware, audio, OTA | composants natifs ESPHome ≥ 2026.8.1 (plus d'`external_components` depuis 2026.7.0) |
 | `tab5-sensors-diagnostics.yaml` | 187 | `wifi:`, switchs d'alim GPIO (WiFi/USB/5V ext/antenne), statut API HA, IP/SSID, uptime, RSSI, température coeur, RAM libre/loop time (`debug`), select antenne, horloge SNTP, `interval:` icône WiFi 5s + console 2s | Réseau WiFi, alimentation, diagnostics système | `tab5_custom.h` (`update_console_*`, `update_clock_date_ui`, `is_console_layer_visible`) |
 | `tab5-sensors-domotique.yaml` | 218 | Miroirs d'entités HA : humidité 5 plantes (triées dynamiquement + 5 cartes fixes du popup détails), 20 capteurs détails pots (`pot*_ec/lux/temp/bat` — EC, éclairement, température, batterie — venus de `pot_sensors.yaml`, package paramétré inclus 5× par un `packages:` imbriqué), lumières chambre/salon/LED (+ 3 capteurs `attribute: brightness` pour la synchro live de l'arc du popup lumière), présence PC, batterie téléphone, températures/humidité salon/chambre/serre, audio (ampli, jack, wake word) | Capteurs domotique et miroirs d'entités HA | `tab5_custom.h` (`get_temperature_color`, `get_humidity_color`, `get_battery_color`, `sort_and_update_moisture_slots`, `update_pots_popup_moisture_ui`, `update_pot_metric_ui`, `update_light_card_ui`, `update_temp_ui`, `sync_light_popup_brightness`) |
 | `pot_sensors.yaml` | 36 | Package **paramétré** (`vars: {n}`) : les 4 capteurs `platform: homeassistant` d'un pot (`pot${n}_ec/lux/temp/bat`, `entity_id: ${entity_plante_${n}_*}`, substitution imbriquée), chaque `on_value` appelant `update_pot_metric_ui()`. Inclus 5× par `tab5-sensors-domotique.yaml` (ESPHome concatène les `sensor:` des packages ; un `- !include` dans une liste n'aplatit pas). Un 6ᵉ pot = une ligne + 4 clés `entity_plante_6_*` | Détails des 5 pots (popup appui long) | `tab5_custom.h` (`update_pot_metric_ui`), `user_entities.yaml` |
 | `tab5-api-logic.yaml` | 508 | Le contrat réel avec HA : bloc `api: services:` (16 services : `tab5_maj_pluie_1h_bulk` remplace `tab5_maj_pluie_1h` depuis le 08/09/2026). Chaque service `tab5_maj_*` reçoit un payload d'une automation HA et appelle une fonction C++ (`tab5_services.cpp`, déclarée dans `tab5_custom.h`) via lambda (pattern : sync `g_central_ctx` ← globals, appel C++, write-back) | Contrat API HA↔Tab5 (clim, volet, planning, alertes météo France, probabilités UV/gel/neige, prévisions bulk, pluie 1h, panneau info, réponse vocale, alertes HA bulk, calendrier mois/jour) | `tab5_custom.h/.cpp`, IDs LVGL définis dans `tab5-lvgl.yaml`/`ui_components/*.yaml` |
 | `tab5-styles.yaml` | 623 | Thème "Dark Mode Slate" (glassmorphism) : tokens `color:`, déclarations `font:` (Roboto + MDI + police météo custom), `lvgl: style_definitions:` | Palette visuelle, typographie, styles réutilisables | Polices `Tab5/materialdesignicons-webfont.ttf`, `Tab5/IconeMeteo.ttf` |
 | `tab5-globals.yaml` | 222 | Tout l'état partagé entre fichiers (`globals:`) + l'`interval: 8s` qui fait tourner la carte centrale (planning/pluie/alertes/info + jusqu'à 4 bandeaux HA, actif seulement sur la fenêtre prévisions par défaut) | État global partagé, rotateur carte centrale | `tab5_anim.cpp` (`transition_widgets()`), `g_central_ctx` |
-| `tab5-scripts.yaml` | 1147 | Scripts ESPHome par familles : debounces (volume 150 ms, luminosité 200 ms, clim 250 ms), vocal (arm/disarm `Stop`, interrupt + ré-écoute, toggle assist, réponse vocale temporaire), rotateur central + dismiss (info, alertes HA paramétré slot 0-3), volet (fin de mouvement, feedback stop), popup lumière (`tab5_light_popup_show`), popup calendrier, popup assistant vocal (`tab5_assist_open/close/on_request/sync_settings/set_mode/set_text_size`). L'affichage temporaire du planning est en C++ (`show_temporary_planning()`) | Séquences temporisées, vocal, rotateur, popups | `globals:`, `tab5_custom.h` (unités `tab5_*.cpp`), `g_central_ctx` |
+| `tab5-scripts.yaml` | 459 | Scripts transverses : init du registre des modales (`tab5_modal_registry_init`), volume (`tab5_volume_apply`, point d'entrée unique), debounces (volume 150 ms, luminosité 200 ms, clim 250 ms), recoloration clim, rotateur central + dismiss (info, alertes HA paramétré slot 0-3), volet (fin de mouvement, feedback stop), popup lumière (`tab5_light_popup_show`), `interval:` 1 s de retour à l'accueil. L'affichage temporaire du planning est en C++ (`show_temporary_planning()`) | Séquences temporisées, rotateur, retour accueil | `globals:`, `tab5_custom.h` (unités `tab5_*.cpp`), `g_central_ctx` |
+| `tab5-arcade.yaml` | 202 | Scripts des jeux (lot 8c) : `tab5_games_close_all` (liste lue dans `GameRegistry::kGames`), `tab5_<jeu>_open` ×8 (injection des pointeurs LVGL et des polices), `tab5_arcade_open` | Arcade | `tab5_registry.*`, `*_game.h` |
+| `tab5-calendar.yaml` | 252 | Scripts du popup calendrier (lot 8c) : `tab5_calendar_open`, `tab5_cal_render`, `tab5_cal_prev/next/today`, `tab5_cal_prefetch_boot`, `tab5_cal_day_tap` | Calendrier | `tab5_calendar.cpp`, `calendar_popup.yaml` |
+| `tab5-assist.yaml` | 444 | Assistant vocal complet (lot 8c) : `micro_wake_word` (2 modèles : `okay_nabu` + `Stop` armé/désarmé selon `volet_en_mouvement`), `voice_assistant` (callbacks → `assist_set_pipeline_state()`), image de la réponse (`http_request` + `online_image`), scripts vocaux (`Stop`, interruption, `tab5_wake_word_dispatch`, réponse dans la carte centrale) et du popup Assistant. La pile (avant `script:`) reste sans `lv_*` (règle 2 de `check_tab5_code_rules.py`) | Voix, assistant | `tab5_assist.cpp` (`WakeWord::decide()`), `assistant_popup.yaml` |
 | `tab5-lvgl.yaml` | 742 | Layout complet : page unique 1280×720 (`page_main`), swipe gauche/droite = pagination prévisions 0-4 (zone `y ≥ 333` uniquement), console via `btn_control_console` + popup TV via `btn_control_tv`, popup détails plantes via appui long, popup calendrier via appui long horloge, boutons statut/mode vocal (centralisés via `tab5_set_assist_mode`), carte centrale | Layout racine, navigation gestuelle | Tous les `ui_components/*.yaml`, `tab5_central.cpp` (`handle_swipe_gesture`), `g_day_slots`, `g_hour_slots`, `g_central_ctx`) |
 | `tab5-alarm.yaml` | 1132 | Réveil matin + annonce des rendez-vous. `rtttl:` (mélodie de sonnerie sur `tab5_speaker`, hors media_player), ~20 entités exposées à HA (`switch`/`datetime type:time`/`number`/`select`/`text`/`text_sensor`/`binary_sensor`/`button`), machine d'état de sonnerie (démarrage, boucle mélodie + 2,5 s de silence, arrêt, répétition, durée max, nettoyage), et un `interval: 1s` qui ne fait qu'UNE comparaison d'entiers (le calcul est mis en cache dans `alarm_clock.cpp`). Point d'entrée unique `script.tab5_alarm_refresh` : entités → `g_alarm_cfg`, jamais l'inverse | Réveil, sonnerie, annonce RDV, entités de réglage HA | `alarm_clock.h/.cpp`, `cal_jours_data[]` (`tab5_custom.h`), IDs LVGL de `ui_components/alarm_popup.yaml` et `alarm_ring_overlay.yaml`, `sntp_time`, `speaker_player`, `micro_wake_word` |
 

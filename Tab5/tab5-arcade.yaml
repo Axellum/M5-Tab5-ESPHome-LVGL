@@ -1,0 +1,202 @@
+# [AI-CONTEXT]
+# @file tab5-arcade.yaml
+# @role Scripts de l'arcade : fermeture globale des jeux, ouverture de chacune des
+#       8 consoles (injection des pointeurs LVGL et des polices, seuls accessibles
+#       par `id()`), ouverture du sélecteur `page_arcade`.
+# @architecture_constraint Package par fonctionnalité, sur le modèle de
+#       tab5-alarm.yaml : sorti de tab5-scripts.yaml le 25/09/2026 (audit, lot 8c),
+#       contenu inchangé. Chargé APRÈS tab5_lvgl (références aux pages et widgets
+#       des jeux). La liste des consoles vit dans `GameRegistry::kGames`
+#       (tab5_registry.cpp, ADR-0013), jamais ici.
+# @ai_instruction Une 9ᵉ console : voir docs/arcade.md, « Règles à respecter pour
+#       ajouter une 9ᵉ console » — son script `tab5_<jeu>_open` va dans ce fichier.
+
+script:
+  # Ferme TOUS les jeux ouverts. Un seul overlay de jeu peut vivre à la fois :
+  # sans ça, ouvrir un jeu par-dessus un autre laisse le timer du précédent
+  # tourner et son overlay sous celui du nouveau.
+  # [AI-CONTEXT] Point d'entrée UNIQUE : le sélecteur arcade appelle ce script
+  # avant chaque ouverture, au lieu de recopier la liste dans 8 lambdas (c'était
+  # la source des oublis — Trivia manquait dans 5 cartes sur 8).
+  # La liste des consoles ne vit plus ici mais dans `GameRegistry::kGames`
+  # (tab5_registry.cpp) : une 9ᵉ console s'ajoute LÀ, une seule fois. L'ordre
+  # de fermeture est celui de la table (« Neon Apron » en dernier : sa fermeture
+  # restaure la rotation 270 du dashboard, ADR-0012).
+  - id: tab5_games_close_all
+    mode: single
+    then:
+      - lambda: |-
+          GameRegistry::close_all();
+
+  # Ouvre le jeu « Fil d'Or » (page LVGL dédiée, marble_game.cpp).
+  # Script unique appelé par le sélecteur arcade : la construction de Marble::UI
+  # ne vit qu'à un seul endroit. `id(...)` n'étant utilisable que dans une lambda,
+  # les pointeurs LVGL et les polices sont injectés ici plutôt que dans le C++.
+  - id: tab5_marble_open
+    mode: single
+    then:
+      - lambda: |-
+          Marble::UI ui;
+          ui.root    = id(marble_root);
+          ui.field   = id(marble_field);
+          ui.hud     = id(marble_hud);
+          ui.panel   = id(marble_panel);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = id(page_arcade)->index;  // plus d'index en dur (audit 25/09, lot 5)
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          Marble::open(ui);
+
+  # Ouvre le jeu « Arcanoïde » (casse-briques rétro, arkanoid_game.cpp).
+  # Même pattern que Marble : script unique, pointeurs LVGL injectés en lambda.
+  - id: tab5_arkanoid_open
+    mode: single
+    then:
+      - lambda: |-
+          Arkanoid::UI ui;
+          ui.root    = id(arkanoid_root);
+          ui.field   = id(arkanoid_field);
+          ui.hud     = id(arkanoid_hud);
+          ui.panel   = id(arkanoid_panel);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = id(page_arcade)->index;  // plus d'index en dur (audit 25/09, lot 5)
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          Arkanoid::open(ui);
+
+  # Ouvre le jeu « Coureur d'Or » (Lode Runner, lode_game.cpp).
+  # Même pattern : script unique, pointeurs LVGL injectés en lambda.
+  - id: tab5_lode_open
+    mode: single
+    then:
+      - lambda: |-
+          Lode::UI ui;
+          ui.root    = id(lode_root);
+          ui.field   = id(lode_field);
+          ui.hud     = id(lode_hud);
+          ui.panel   = id(lode_panel);
+          ui.pad     = id(lode_pad);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = id(page_arcade)->index;  // plus d'index en dur (audit 25/09, lot 5)
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          auto t = id(sntp_time).now();
+          if (t.is_valid()) ui.epoch = t.timestamp;
+          Lode::open(ui);
+
+  # Ouvre le jeu « Go Tab » (Go 9×9 / 13×13 / 19×19).
+  # f_mono sert à la liste des coups du panneau latéral : en police
+  # proportionnelle, « A1 » et « T19 » ne s'alignent pas et la colonne danse.
+  - id: tab5_go_open
+    mode: single
+    then:
+      - lambda: |-
+          Go::UI ui;
+          ui.root    = id(go_root);
+          ui.field   = id(go_field);
+          ui.hud     = id(go_hud);
+          ui.panel   = id(go_panel);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = id(page_arcade)->index;  // plus d'index en dur (audit 25/09, lot 5)
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          ui.f_mono  = id(roboto_mono_24);
+          Go::open(ui);
+
+  # Ouvre le jeu « Trial Poursuite » (Trivial Pursuit rétro-salon, trivia_game.cpp).
+  # Même pattern : script unique, pointeurs LVGL injectés en lambda.
+  - id: tab5_trivia_open
+    mode: single
+    then:
+      - lambda: |-
+          Trivia::UI ui;
+          ui.root    = id(trivia_root);
+          ui.hud     = id(trivia_hud);
+          ui.board   = id(trivia_board);
+          ui.panel   = id(trivia_panel);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = id(page_arcade)->index;  // plus d'index en dur (audit 25/09, lot 5)
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          Trivia::open(ui);
+
+  # Ouvre le jeu « Roi Noir » (échiquier FIDE + IA embarquée, chess_game.cpp).
+  # Même pattern que Marble : script unique, pointeurs LVGL injectés en lambda.
+  # Le 5e calque (menus) est créé en C++, il n'y a donc rien à injecter pour lui.
+  - id: tab5_chess_open
+    mode: single
+    then:
+      - lambda: |-
+          Chess::UI ui;
+          ui.root    = id(chess_root);
+          ui.hud     = id(chess_hud);
+          ui.board   = id(chess_board);
+          ui.panel   = id(chess_panel);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = id(page_arcade)->index;  // plus d'index en dur (audit 25/09, lot 5)
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          // Figurines d'échecs : police dédiée (Tab5/ChessPieces.ttf, 12 glyphes).
+          ui.f_piece = id(chess_pieces_80);
+          Chess::open(ui);
+
+  # Ouvre le jeu « Dames » (draughts_game.cpp).
+  # Même pattern que Marble : script unique, pointeurs LVGL injectés en lambda.
+  - id: tab5_draughts_open
+    mode: single
+    then:
+      - lambda: |-
+          Draughts::UI ui;
+          ui.root    = id(draughts_root);
+          ui.field   = id(draughts_field);
+          ui.hud     = id(draughts_hud);
+          ui.panel   = id(draughts_panel);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = id(page_arcade)->index;  // plus d'index en dur (audit 25/09, lot 5)
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          Draughts::open(ui);
+
+  # Ouvre le flipper « Neon Apron » (pinball_game.cpp).
+  # Même pattern que Marble, avec DEUX injections en plus :
+  #   - f_score / f_led : le fronton imite un afficheur de borne. roboto_55_b ne
+  #     contient QUE les chiffres et l'espace (cf. tab5-styles.yaml) — parfait
+  #     pour le score, inutilisable pour du texte ; roboto_mono_24 sert aux
+  #     libellés à chasse fixe (« BILLE 2 / 3 », « RECORD 1 250 000 »).
+  #   - ui.lvgl : pointeur sur le LvglComponent. C'est LUI qui permet à
+  #     Pinball::open() de basculer l'écran en portrait 720×1280 et à
+  #     Pinball::close() de restaurer le paysage 270°. Sans lui, le jeu
+  #     s'ouvrirait couché sur le côté. Voir [AI-CONTEXT] ORIENTATION dans
+  #     pinball_game.cpp.
+  - id: tab5_pinball_open
+    mode: single
+    then:
+      - lambda: |-
+          Pinball::UI ui;
+          ui.root    = id(pinball_root);
+          ui.field   = id(pinball_field);
+          ui.hud     = id(pinball_hud);
+          ui.panel   = id(pinball_panel);
+          ui.lvgl    = id(tab5_lvgl);
+          ui.home_idx = id(page_arcade)->index;  // plus d'index en dur (audit 25/09, lot 5)
+          ui.f_small = id(roboto_22);
+          ui.f_mid   = id(roboto_32_b);
+          ui.f_big   = id(roboto_45_b);
+          ui.f_score = id(roboto_55_b);
+          ui.f_led   = id(roboto_mono_24);
+          Pinball::open(ui);
+
+  # Ouvre le sélecteur arcade (page_arcade). Point d'entrée unique depuis le
+  # dashboard (tap sur température serre). Ferme d'abord tout jeu en cours.
+  - id: tab5_arcade_open
+    mode: single
+    then:
+      - script.execute: tab5_games_close_all
+      - lvgl.page.show: page_arcade

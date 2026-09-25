@@ -148,7 +148,7 @@ globals:
     restore_value: true
 
   # Popup calendrier (calendar_popup.yaml) : mois affiché + date du détail ouvert.
-  # Partagés entre tab5-scripts.yaml (open/prev/next/today/tap) et
+  # Partagés entre tab5-calendar.yaml (open/prev/next/today/tap) et
   # tab5-api-logic.yaml (tab5_maj_calendrier_mois/jour) — donc globals, pas de static.
   - id: cal_view_year
     type: int

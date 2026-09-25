@@ -37,6 +37,9 @@ packages:
   tab5_globals:    !include Tab5/tab5-globals.yaml
   tab5_scripts:    !include Tab5/tab5-scripts.yaml
   tab5_lvgl:       !include Tab5/tab5-lvgl.yaml
+  tab5_arcade:     !include Tab5/tab5-arcade.yaml         # one package per feature (lot 8c),
+  tab5_calendar:   !include Tab5/tab5-calendar.yaml       # after tab5_lvgl: their scripts
+  tab5_assist:     !include Tab5/tab5-assist.yaml         # reference LVGL widget ids
   tab5_imu:        !include Tab5/tab5-imu.yaml
   tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml   # after tab5_lvgl: references LVGL widget ids
   tab5_alarm:      !include Tab5/tab5-alarm.yaml          # after tab5_lvgl too
@@ -57,7 +60,7 @@ Low-level hardware configuration:
 - I2C bus, PI4IOE5V6408 GPIO expanders (display/touch reset lines)
 - ES8388 DAC (`audio_dac:` platform) and ES7210 microphone ADC (`audio_adc:`)
 - `esp32_hosted` — ESP32-C6 Wi-Fi co-processor over SDIO
-- Backlight PWM (LEDC), I2S bus for microphone and speaker, `micro_wake_word`/`voice_assistant`, `ota:`
+- Backlight PWM (LEDC), I2S bus for microphone and speaker, media player, `ota:` — the voice pipeline (`micro_wake_word`/`voice_assistant`) moved to `tab5-assist.yaml` on 2026-09-25
 
 → Details: [`docs/hardware.md`](hardware.md)
 
@@ -174,7 +177,7 @@ All style references point to IDs defined in `tab5-styles.yaml`. No inline style
 ---
 
 ### `tab5-scripts.yaml`
-Short ESPHome script blocks for reusable multi-step actions called from lambdas or HA. Keeps `tab5-api-logic.yaml` from becoming cluttered with repeated patterns. Grouped by family: debounces (volume 150 ms, brightness 200 ms, climate 250 ms — one HA call per gesture instead of one per tick), voice, central rotator + dismiss, shutter, light/calendar/assistant popups, and the game open/close scripts (`tab5_arcade_open`, `tab5_<game>_open`, `tab5_games_close_all`).
+*Since 2026-09-25 (audit lot 8c), the game, calendar and voice/assistant scripts live in their own packages: `tab5-arcade.yaml`, `tab5-calendar.yaml`, `tab5-assist.yaml`.* Short ESPHome script blocks for reusable multi-step actions called from lambdas or HA. Keeps `tab5-api-logic.yaml` from becoming cluttered with repeated patterns. Grouped by family: debounces (volume 150 ms, brightness 200 ms, climate 250 ms — one HA call per gesture instead of one per tick), voice, central rotator + dismiss, shutter, light/calendar/assistant popups, and the game open/close scripts (`tab5_arcade_open`, `tab5_<game>_open`, `tab5_games_close_all`).
 
 ---
 
@@ -205,7 +208,7 @@ Main responsibilities:
 - **Color logic** — maps temperatures and plant moisture levels to continuous color gradients (`get_temperature_color()` / `get_humidity_color()`).
 - **Gestures & central card** — `handle_swipe_gesture()` (forecast pagination), `transition_widgets()` (panel animations), `show_temporary_planning()` (6 s override then restore), `update_info_text_ui()` (info panel), `normalize_text_utf8()` (accent fixing for dynamic HA strings).
 
-(The microphone icon colors are set directly in the `voice_assistant:` callbacks of `tab5-hardware.yaml`, not in the C++ layer.)
+(The microphone icon, its colour and the status label follow the pipeline through `assist_set_pipeline_state()` (`tab5_assist.cpp`), called by the five `voice_assistant:` callbacks of `tab5-assist.yaml`.)
 
 ---
 
@@ -303,7 +306,7 @@ Configuration matérielle bas niveau :
 - Bus I2C, expanders GPIO PI4IOE5V6408 (lignes de reset écran/tactile)
 - DAC ES8388 (plateforme `audio_dac:`) et ADC micro ES7210 (`audio_adc:`)
 - `esp32_hosted` — co-processeur Wi-Fi ESP32-C6 via SDIO
-- PWM rétroéclairage (LEDC), bus I2S micro/haut-parleur, `micro_wake_word`/`voice_assistant`, `ota:`
+- PWM rétroéclairage (LEDC), bus I2S micro/haut-parleur, media player, `ota:` — la pile vocale (`micro_wake_word`/`voice_assistant`) est dans `tab5-assist.yaml` depuis le 25/09/2026
 
 → Détails : [`docs/hardware.md`](hardware.md)
 
@@ -405,7 +408,7 @@ Toutes les références de style pointent vers des IDs définis dans `tab5-style
 ---
 
 ### `tab5-scripts.yaml`
-Blocs `script:` ESPHome réutilisables pour les actions multi-étapes appelées depuis les lambdas ou depuis HA. Évite que `tab5-api-logic.yaml` se remplisse de motifs répétés. Regroupés par famille : debounces (volume 150 ms, luminosité 200 ms, clim 250 ms — un appel HA par geste au lieu d'un par tick), vocal, rotateur central + dismiss, volet, popups lumière/calendrier/assistant, et les scripts d'ouverture/fermeture des jeux (`tab5_arcade_open`, `tab5_<jeu>_open`, `tab5_games_close_all`).
+*Depuis le 25/09/2026 (audit, lot 8c), les scripts des jeux, du calendrier et de la voix/assistant vivent dans leurs packages : `tab5-arcade.yaml`, `tab5-calendar.yaml`, `tab5-assist.yaml`.* Blocs `script:` ESPHome réutilisables pour les actions multi-étapes appelées depuis les lambdas ou depuis HA. Évite que `tab5-api-logic.yaml` se remplisse de motifs répétés. Regroupés par famille : debounces (volume 150 ms, luminosité 200 ms, clim 250 ms — un appel HA par geste au lieu d'un par tick), vocal, rotateur central + dismiss, volet, popups lumière/calendrier/assistant, et les scripts d'ouverture/fermeture des jeux (`tab5_arcade_open`, `tab5_<jeu>_open`, `tab5_games_close_all`).
 
 ---
 
@@ -436,7 +439,7 @@ Responsabilités principales :
 - **Logique couleur** — mappe températures et humidité des plantes sur des gradients continus (`get_temperature_color()` / `get_humidity_color()`).
 - **Gestes & carte centrale** — `handle_swipe_gesture()` (pagination prévisions), `transition_widgets()` (animations de panneaux), `show_temporary_planning()` (affichage 6 s puis restauration), `update_info_text_ui()` (panneau info), `normalize_text_utf8()` (correction d'accents des textes HA dynamiques).
 
-(Les couleurs de l'icône microphone sont réglées directement dans les callbacks `voice_assistant:` de `tab5-hardware.yaml`, pas dans la couche C++.)
+(L'icône du micro, sa couleur et le libellé d'état suivent le pipeline via `assist_set_pipeline_state()` (`tab5_assist.cpp`), appelée par les cinq callbacks `voice_assistant:` de `tab5-assist.yaml`.)
 
 ---
 

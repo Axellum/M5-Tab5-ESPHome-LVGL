@@ -546,8 +546,8 @@ std::string format_assist_markdown(const std::string& in);
 
 // -----------------------------------------------------------------------------
 // Pipeline vocal — un état, une couleur d'icône micro, un libellé de statut.
-// Remplace les 5 blocs identiques des callbacks voice_assistant: de
-// tab5-hardware.yaml (audit du 06/09/2026 §4.1 point 6).
+// Remplace les 5 blocs identiques des callbacks voice_assistant: (alors dans
+// tab5-hardware.yaml, dans tab5-assist.yaml depuis le lot 8c ; audit du 06/09/2026 §4.1 point 6).
 // -----------------------------------------------------------------------------
 enum class AssistState : uint8_t {
     IDLE,       // gris   « Prêt »
@@ -577,10 +577,10 @@ void assist_image_state_ui(lv_obj_t* hint, lv_obj_t* img, AssistImage st);
 void assist_wake_word_indicator_ui(lv_obj_t* lbl, bool on);
 
 // -----------------------------------------------------------------------------
-// Décision du mot de réveil (on_wake_word_detected, tab5-hardware.yaml) —
+// Décision du mot de réveil (on_wake_word_detected, tab5-assist.yaml) —
 // audit §4.1 point 7 : les 5 niveaux d'if/else du YAML deviennent une table.
 // Le YAML lit les entrées UNE fois, appelle decide(), puis le script
-// tab5_wake_word_dispatch (tab5-scripts.yaml) exécute l'action.
+// tab5_wake_word_dispatch (tab5-assist.yaml) exécute l'action.
 // -----------------------------------------------------------------------------
 namespace WakeWord {
 

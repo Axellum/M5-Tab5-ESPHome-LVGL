@@ -4,6 +4,38 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — YAML : un package par fonctionnalité (arcade, calendrier, assistant vocal)
+
+Lot 8c de l'audit du 25/09/2026 (§6). Aucun changement de comportement.
+
+- **`tab5-scripts.yaml` n'est plus un fourre-tout** (1 147 → 459 lignes) : sur le modèle
+  de `tab5-alarm.yaml`, trois familles partent dans leur package, contenu inchangé.
+  - `Tab5/tab5-arcade.yaml` : fermeture globale des jeux, ouverture des 8 consoles, page
+    arcade ;
+  - `Tab5/tab5-calendar.yaml` : les 7 scripts du popup calendrier ;
+  - `Tab5/tab5-assist.yaml` : tout l'assistant vocal — la pile (`micro_wake_word`,
+    `voice_assistant`, image de la réponse), sortie de `tab5-hardware.yaml` (473 → 314
+    lignes, qui garde le matériel audio), et les scripts vocaux et du popup Assistant.
+- Les trois packages sont chargés après `tab5_lvgl`, comme `tab5_alarm`. `on_boot` n'est
+  pas touché.
+- **Règle 2 de `check_tab5_code_rules.py` étendue** : elle interdisait `lv_*` dans
+  `tab5-hardware.yaml`, donc dans les callbacks vocaux ; elle l'interdit maintenant dans
+  la pile de `tab5-assist.yaml` (tout ce qui précède `script:`), prouvé par mutation.
+- Commentaires et docs repointés (`tab5-arcade.yaml` pour ajouter une console,
+  `tab5-assist.yaml` pour le modèle « Stop »…). `docs/architecture.md` et
+  `docs/voice_assistant.md` disaient encore que les callbacks vocaux coloraient l'icône
+  eux-mêmes : c'est `assist_set_pipeline_state()` depuis le 08/09. Les comptes de lignes
+  du graphe de la cartographie, jamais vérifiés, sont retirés (le tableau l'est).
+
+**Preuve de neutralité** (mesurée contre `main` @ `caf93c5`, avant le merge de #137) :
+- `esphome config` (deux worktrees, fichiers d'exemple et secrets factices) : les mêmes
+  18 452 lignes en multi-ensemble. Seule différence : deux clés par défaut d'un même bloc
+  (`long_press_time`, `long_press_repeat_time`) sortent dans l'ordre inverse.
+- Binaire (`nm -S`) : les 18 408 symboles se correspondent une fois neutralisés les
+  numéros auto-générés (lambdas, `ifaction_id_N`, tableaux de polices), qui suivent
+  l'ordre des packages. Seul vrai écart : `setup()`, qui construit les composants dans
+  un autre ordre, maigrit de 1 286 o.
+- Flash 2 844 996 → 2 843 706 o (−1 290), RAM −8 o, 0 warning, `config_hash` 0x4906c7d8.
 ### 2026-09-25 — Réveil : moteur testé sur PC, dates et données calendrier dans un noyau pur
 
 Lot 8b de l'audit du 25/09/2026 (§6, §7 : « le plus rentable, le moteur du réveil »).

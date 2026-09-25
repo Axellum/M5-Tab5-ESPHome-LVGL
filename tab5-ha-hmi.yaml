@@ -261,6 +261,11 @@ packages:
   tab5_globals: !include Tab5/tab5-globals.yaml
   tab5_scripts: !include Tab5/tab5-scripts.yaml
   tab5_lvgl: !include Tab5/tab5-lvgl.yaml
+  # Un package par fonctionnalité (audit du 25/09/2026, lot 8c), APRÈS tab5_lvgl
+  # comme tab5_alarm : leurs scripts référencent des pages et des widgets LVGL.
+  tab5_arcade: !include Tab5/tab5-arcade.yaml
+  tab5_calendar: !include Tab5/tab5-calendar.yaml
+  tab5_assist: !include Tab5/tab5-assist.yaml
   tab5_imu: !include Tab5/tab5-imu.yaml
   # Entites exposees a HA pour piloter/observer l'ecran depuis un dashboard HA.
   # Charge APRES tab5_lvgl : ses lambdas referencent des ids de widgets LVGL.
