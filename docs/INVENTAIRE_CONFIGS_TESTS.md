@@ -8,7 +8,7 @@
 > d'extension du projet. Les chemins sont relatifs à la racine du dépôt
 > `H:\AuxFilsDesIdees\00ProjetTab`.
 
-`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-25** (35 composants UI dont 23 inclus par `tab5-lvgl.yaml`, 16 services) · Sources vérifiées directement dans l'arborescence du dépôt.
+`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-25** (40 composants UI dont 24 inclus par `tab5-lvgl.yaml`, 16 services) · Sources vérifiées directement dans l'arborescence du dépôt.
 
 ---
 
@@ -42,7 +42,7 @@
 
 ### 1.3 Composants UI (`Tab5/ui_components/*.yaml`)
 
-35 fichiers, dont 23 inclus directement par `tab5-lvgl.yaml` (recompté le 25/09/2026). Exemples :
+40 fichiers, dont 24 inclus directement par `tab5-lvgl.yaml` (recompté le 25/09/2026, après les templates du lot 8e). Exemples :
 
 | Fichier | Emplacement | Rôle |
 |---|---|---|

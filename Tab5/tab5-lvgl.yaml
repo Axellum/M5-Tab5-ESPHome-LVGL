@@ -540,89 +540,13 @@ lvgl:
                           - script.execute: tab5_dismiss_info_tap
 
               # Alertes HA individuelles (panneaux 4-7, tap = lu définitif + ligne suivante)
-              - obj:
-                  id: ha_alert_wrapper_0
-                  align: CENTER
-                  width: SIZE_CONTENT
-                  height: 100%
-                  styles: style_transparent
-                  hidden: true
-                  widgets:
-                    - button:
-                        id: btn_ha_alert_tap_0
-                        align: CENTER
-                        width: 1180
-                        height: 80
-                        styles: style_invisible
-                        on_short_click:
-                          - script.execute:
-                              id: tab5_dismiss_ha_alert
-                              slot: 0
-                        widgets:
-                          - label: { id: lbl_ha_alert_0, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
+              - !include { file: ui_components/ha_alert_panel.yaml, vars: { n: 0 } }
 
-              - obj:
-                  id: ha_alert_wrapper_1
-                  align: CENTER
-                  width: SIZE_CONTENT
-                  height: 100%
-                  styles: style_transparent
-                  hidden: true
-                  widgets:
-                    - button:
-                        id: btn_ha_alert_tap_1
-                        align: CENTER
-                        width: 1180
-                        height: 80
-                        styles: style_invisible
-                        on_short_click:
-                          - script.execute:
-                              id: tab5_dismiss_ha_alert
-                              slot: 1
-                        widgets:
-                          - label: { id: lbl_ha_alert_1, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
+              - !include { file: ui_components/ha_alert_panel.yaml, vars: { n: 1 } }
 
-              - obj:
-                  id: ha_alert_wrapper_2
-                  align: CENTER
-                  width: SIZE_CONTENT
-                  height: 100%
-                  styles: style_transparent
-                  hidden: true
-                  widgets:
-                    - button:
-                        id: btn_ha_alert_tap_2
-                        align: CENTER
-                        width: 1180
-                        height: 80
-                        styles: style_invisible
-                        on_short_click:
-                          - script.execute:
-                              id: tab5_dismiss_ha_alert
-                              slot: 2
-                        widgets:
-                          - label: { id: lbl_ha_alert_2, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
+              - !include { file: ui_components/ha_alert_panel.yaml, vars: { n: 2 } }
 
-              - obj:
-                  id: ha_alert_wrapper_3
-                  align: CENTER
-                  width: SIZE_CONTENT
-                  height: 100%
-                  styles: style_transparent
-                  hidden: true
-                  widgets:
-                    - button:
-                        id: btn_ha_alert_tap_3
-                        align: CENTER
-                        width: 1180
-                        height: 80
-                        styles: style_invisible
-                        on_short_click:
-                          - script.execute:
-                              id: tab5_dismiss_ha_alert
-                              slot: 3
-                        widgets:
-                          - label: { id: lbl_ha_alert_3, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
+              - !include { file: ui_components/ha_alert_panel.yaml, vars: { n: 3 } }
 
         # ==================== PAGINATION BARS ====================
         # Zone de pagination (points de navigation des pages forecast).

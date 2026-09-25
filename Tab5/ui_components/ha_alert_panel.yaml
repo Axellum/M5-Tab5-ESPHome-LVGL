@@ -1,0 +1,35 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 4× par tab5-lvgl.yaml :
+# un bandeau d'alerte / info HA de la carte centrale (panneaux 4 à 7 du rotateur).
+# vars : n (0-3 — suffixe des ids ha_alert_wrapper_${n}, btn_ha_alert_tap_${n},
+#        lbl_ha_alert_${n} et numéro de slot passé à tab5_dismiss_ha_alert).
+# Masqué par défaut ; le texte et la visibilité sont posés par
+# parse_and_update_ha_alerts_bulk() (tab5_central.cpp, service
+# tab5_maj_alertes_ha_bulk). Un tap = lu définitif + ligne suivante.
+# Sorti de tab5-lvgl.yaml le 25/09/2026 (audit, lot 8e) : 4 copies de 21 lignes.
+# Piège YAML : dans un mapping en ligne `{ … }`, une valeur contenant `${…}` doit être
+# entre guillemets, sinon l'accolade casse la syntaxe (yamllint le signale).
+# Piège ESPHome : la substitution garde le type de la variable. Un paramètre de script
+# (`n`) doit être passé en nombre NON quoté dans `vars` (`n: 3`, pas `"3"`),
+# sinon il part en chaîne ('3') au lieu d'un entier.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: ha_alert_wrapper_${n}
+  align: CENTER
+  width: SIZE_CONTENT
+  height: 100%
+  styles: style_transparent
+  hidden: true
+  widgets:
+    - button:
+        id: btn_ha_alert_tap_${n}
+        align: CENTER
+        width: 1180
+        height: 80
+        styles: style_invisible
+        on_short_click:
+          - script.execute:
+              id: tab5_dismiss_ha_alert
+              slot: ${n}
+        widgets:
+          - label: { id: "lbl_ha_alert_${n}", text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }

@@ -1,0 +1,29 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 7× par alarm_popup.yaml :
+# une pastille de jour (L M M J V S D) du sélecteur « heure fixe ».
+# vars : n (0 = lundi … 6 = dimanche — suffixe des ids btn_alarm_day_${n} /
+#        lbl_alarm_day_${n}, paramètre `day` de tab5_alarm_toggle_day), x, letter.
+# L'état coché (couleur du libellé, bordure) est peint par alarm_render_settings()
+# (alarm_render.cpp) ; ce template ne pose que la géométrie.
+# Sorti de alarm_popup.yaml le 25/09/2026 (audit, lot 8e, règle 5 : un widget répété
+# 3 fois ou plus passe par un template).
+# Piège YAML : dans un mapping en ligne `{ … }`, une valeur contenant `${…}` doit être
+# entre guillemets, sinon l'accolade casse la syntaxe (yamllint le signale).
+# Piège ESPHome : la substitution garde le type de la variable. Un paramètre de script
+# (`n`) doit être passé en nombre NON quoté dans `vars` (`n: 3`, pas `"3"`),
+# sinon il part en chaîne ('3') au lieu d'un entier.
+# ═══════════════════════════════════════════════════════
+button:
+  id: btn_alarm_day_${n}
+  align: TOP_LEFT
+  x: ${x}
+  y: 36
+  width: 72
+  height: 52
+  radius: 16
+  styles: style_clim_btn
+  pressed: { bg_opa: 30% }
+  on_short_click:
+    - script.execute: { id: tab5_alarm_toggle_day, day: "${n}" }
+  widgets:
+    - label: { id: "lbl_alarm_day_${n}", text: "${letter}", align: CENTER, text_font: roboto_32_b, text_color: color_text }

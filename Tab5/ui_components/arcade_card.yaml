@@ -1,0 +1,37 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 8× par game_selector.yaml :
+# une carte de la page Arcade (grille 4 × 2, cartes de 298 × 252).
+# vars : game (suffixe des ids et des noms : btn_game_${game}, page_${game},
+#        tab5_${game}_open, color_arcade_${game}_accent), x / y (position dans la
+#        grille), bg (couleur de fond de la carte — chaque console garde la sienne),
+#        icon (glyphe MDI, en mdi_font_56 : il doit figurer dans la liste `glyphs` de
+#        mdi_font_56, sinon il s'affiche vide), title, subtitle (deux lignes, « \n »).
+# Chaque carte fait trois choses, dans cet ordre : fermer le jeu en cours, naviguer
+# vers la page du jeu, construire et ouvrir la console (docs/arcade.md).
+# Sorti de game_selector.yaml le 25/09/2026 (audit, lot 8e) : les 8 cartes y étaient
+# recopiées à l'identique, 24 lignes chacune.
+# Piège YAML : dans un mapping en ligne `{ … }`, une valeur contenant `${…}` doit être
+# entre guillemets, sinon l'accolade casse la syntaxe (yamllint le signale).
+# ═══════════════════════════════════════════════════════
+button:
+  id: btn_game_${game}
+  align: TOP_LEFT
+  x: ${x}
+  y: ${y}
+  width: 298
+  height: 252
+  radius: 16
+  bg_color: ${bg}
+  bg_opa: 100%
+  border_color: color_arcade_${game}_accent
+  border_width: 2
+  border_opa: 50%
+  pressed: { bg_opa: 80%, border_opa: 100% }
+  on_short_click:
+    - script.execute: tab5_games_close_all
+    - lvgl.page.show: page_${game}
+    - script.execute: tab5_${game}_open
+  widgets:
+    - label: { text: "${icon}", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: "color_arcade_${game}_accent" }
+    - label: { text: "${title}", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: color_text }
+    - label: { text: "${subtitle}", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_font: roboto_22, text_color: color_arcade_subtitle }

@@ -66,7 +66,8 @@ oubli et le jeu est invisible, ou le firmware ne compile pas :
    text_sensor « Écran courant » la lisent tous. `tools/check_tab5_registry.py`
    (joué par `pytest`) échoue si un `*_game.h` n'y figure pas, ou si un
    `<Namespace>::is_open()` réapparaît dans un YAML ;
-5. `game_selector.yaml` → une carte dans la grille ;
+5. `game_selector.yaml` → une ligne `!include { file: arcade_card.yaml, vars: { game, x, y, bg, icon, title, subtitle } }`
+   dans la grille (template des cartes depuis le lot 8e ; `color_arcade_<jeu>_accent` doit exister) ;
 6. le `.cpp` inclut **`game_common.h`** (helpers partagés : `mk_rect`/`mk_label`,
    `show`/`set_bg`/`set_border`/`set_text_if`, `clampf`, `xorshift32_next`, `NvsSlot<T>`
    pour la NVS) au lieu de les recopier, et garde sa **palette locale** `<Jeu>::Pal`

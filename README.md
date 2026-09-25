@@ -247,7 +247,7 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── tab5-imu.yaml         # BMI270 IMU — adaptive polling + tap-to-wake
 │   ├── tab5-ha-controls.yaml # HA-facing entities — volume, current screen, go-to-screen
 │   ├── tab5-alarm.yaml       # Alarm clock + appointment reminders (entities, ring, tick)
-│   ├── ui_components/        # 35 reusable LVGL components (popups, cards, games)
+│   ├── ui_components/        # 40 reusable LVGL components and templates (popups, cards, games)
 │   ├── tab5_custom.h         # C++ declarations (HMI logic) — the single public header
 │   ├── tab5_custom.cpp       # Shared globals + map of the C++ units
 │   ├── tab5_internal.h       # Helpers shared between units (not part of the YAML contract)
