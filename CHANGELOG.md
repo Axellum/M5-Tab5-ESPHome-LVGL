@@ -4,6 +4,43 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Polices : l'icône du réveil éteint revient, 85 glyphes d'icônes jamais affichés retirés
+
+Audit des polices après le lot 4. Chaque icône affichée a été rattachée à son widget,
+jusqu'aux appels C++ qui reçoivent le widget en paramètre, puis comparée aux glyphes de
+sa police.
+
+- **Bug corrigé : icône vide sur le bouton « Réveil » du popup quand le réveil est
+  éteint.** `alarm_render_settings()` y pose la cloche barrée (U+F0023, `alarm-off`), mais
+  `mdi_font_45` ne l'avait pas : un glyphe absent s'affiche vide, sans erreur de compilation.
+- **« -- » de la consigne clim enfin visible** : `roboto_55_b` n'avait pas le tiret, donc
+  le texte initial du popup restait vide jusqu'au premier push de HA. Une consigne inconnue
+  (NaN) affiche maintenant « -- » au lieu de « nan » (invisible aussi) et ne déplace plus l'arc.
+- **85 glyphes MDI et 2 glyphes météo jamais affichés retirés**. `mdi_font_70` embarquait
+  16 icônes d'alerte météo, copiées de `mdi_font_alert`, que rien n'affiche en 70 px.
+  `mdi_font_56` gardait F02E4, le « rectangle vide » remplacé en 45 px. Les glyphes F003
+  et F004 d'`IconeMeteo.ttf` ne correspondaient à aucune constante de `MeteoIcon`.
+- **Label mort retiré** : `icon_mode_status`, caché, sans police, encore réécrit à chaque
+  changement de mode de l'assistant.
+- **Organisation** : la chaîne Latin-1 (216 glyphes) est déclarée une fois (`&latin1`) au
+  lieu de six copies, et les polices MDI sont en liste, une icône par ligne avec son nom
+  relevé dans le TTF (les anciens commentaires se trompaient parfois : F0450 est `refresh`,
+  pas « discussion (robot) »).
+- **Garde-fou : règle 7 de `tools/check_tab5_code_rules.py`** (pytest et CI). Chaque icône
+  `\U000Fxxxx` affichée doit être dans la police `mdi_*` de son widget, et chaque glyphe
+  d'une police `mdi_*` doit être affiché quelque part. Les icônes posées en C++ passent par
+  la table `MDI_CODE_TARGETS` (fonction → widgets) ; une icône qu'on ne sait pas rattacher
+  fait échouer la règle. Falsifiée par trois tests sur une copie modifiée du firmware
+  (glyphe retiré, glyphe mort ajouté, icône C++ non déclarée). La règle 6 lit les glyphes
+  avec le même analyseur (chaîne, ancre ou liste).
+- **Docs** : règle de code n° 9 dans `AGENTS.md` et `Tab5/README.md`, renvoi dans
+  `docs/arcade.md` et l'inventaire des tests ; ligne MDI du README corrigée (8 tailles,
+  `mdi_assist_64` retirée au lot 4) ; comptes de `CARTOGRAPHIE_TAB5.md` réécrits.
+
+Flash 2 867 084 → 2 844 802 o (**−22 282**), RAM −8 o, 0 warning, `config_hash` 0xef195db7.
+Les six polices texte gardent exactement leur taille (l'ancre ne change rien au binaire) ;
+polices embarquées : 356 638 o.
+
 ### 2026-09-25 — Docs : LVGL 9.5, une seule cartographie aux comptes vérifiés, l'arcade dans son propre fichier, trois ADR
 
 Lot 7 de l'audit du 25/09/2026 (§8, documentation). Aucun changement de firmware (deux

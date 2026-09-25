@@ -1059,13 +1059,6 @@ script:
             entity_id: ${entity_tab5_pipeline_select}
             option: !lambda 'return discussion ? std::string("Discussion LLM") : std::string("preferred");'
       - lambda: |-
-          if (discussion) {
-            lv_label_set_text(id(icon_mode_status), "\U000F0450");
-            lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-          } else {
-            lv_label_set_text(id(icon_mode_status), "\U000F07D0");
-            lv_obj_set_style_text_color(id(icon_mode_status), lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-          }
           highlight_button_border(id(btn_mode_domo), !discussion, UIColor::INFO);
           highlight_button_border(id(btn_mode_discu), discussion, UIColor::SUCCESS);
           highlight_button_border(id(btn_assist_pipe_domo), !discussion, UIColor::INFO);

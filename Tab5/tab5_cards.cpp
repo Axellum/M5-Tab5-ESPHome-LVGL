@@ -53,8 +53,14 @@ void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* i
 
 // arc peut etre nullptr : la carte clim de l'accueil (climate_card.yaml) a le label
 // cible mais pas d'arc — on met a jour le label sans toucher a l'arc dans ce cas.
+// Consigne inconnue (capteur HA indisponible = NaN) : « -- », comme au boot, et
+// l'arc reste où il est — "%.1f" écrirait « nan », sans glyphe dans roboto_55_b.
 void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target) {
     if (lbl_target == nullptr) return;
+    if (std::isnan(target)) {
+        lv_label_set_text(lbl_target, "--");
+        return;
+    }
     char buf[8];
     snprintf(buf, sizeof(buf), "%.1f", target);
     lv_label_set_text(lbl_target, buf);

@@ -171,35 +171,46 @@ color:
     hex: "8FBF6A"
 
 # =============================================================================
-# FONTS — inchangees (fonctionnel, pas esthetique)
+# FONTS — polices embarquées en flash
 # =============================================================================
+# Un glyphe absent de la police s'affiche VIDE, sans erreur de compilation.
+# tools/check_tab5_code_rules.py (pytest) le vérifie : règle 6 pour la date,
+# règle 7 pour les icônes MDI (chaque icône affichée est dans la police de son
+# widget, et chaque glyphe déclaré est affiché quelque part — pas de poids mort).
 font:
+  # Texte libre (poussé par HA, réponses de l'assistant) : tout Latin-1 plus les
+  # ajouts de Windows-1252 (€ … ’ « » œ Œ — –), 216 glyphes. Déclarée une fois
+  # ici (ancre &latin1), reprise par *latin1 dans les cinq autres polices texte.
   - file: gfonts://Roboto@700
     id: roboto_32_b
     size: 32
     bpp: 4
-    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+    glyphs: &latin1 ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+  # Chiffres de l'horloge et de l'écran de sonnerie : rien d'autre.
   - file: gfonts://Roboto@700
     id: roboto_130_b
     size: 130
     bpp: 4
     glyphs: '0123456789:'
+  # Heure du réveil, consigne et température de la clim, score du flipper. Le
+  # tiret sert au « -- » de la consigne quand elle est inconnue (au boot, jusqu'au
+  # 1er push de HA, ou consigne absente) : sans lui, le label restait vide.
   - file: gfonts://Roboto@700
     id: roboto_55_b
     size: 55
     bpp: 4
-    glyphs: '0123456789: °C.%'
+    glyphs: '-0123456789: °C.%'
   - file: gfonts://Roboto@700
     id: roboto_45_b
     size: 45
     bpp: 4
-    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+    glyphs: *latin1
 
   # roboto_45 ne sert QU'À lbl_date (« Jeu 02 Avr »), texte construit par le firmware
   # (update_clock_date_ui, tab5_anim.cpp : jours abrégés + %02d + clock_month_short_utf8).
-  # 37 glyphes au lieu des 190 Latin-1 (25/09/2026, ≈ 59 Ko de flash) — la règle
+  # 37 glyphes au lieu des 216 de *latin1 (25/09/2026, ≈ 59 Ko de flash) — la règle
   # « tout Latin-1 » ne vaut que pour le texte poussé par HA. Toucher au format de la
-  # date ou aux tables de jours/mois = recalculer cette liste (glyphe absent = vide).
+  # date ou aux tables de jours/mois = recalculer cette liste (règle 6).
   - file: gfonts://Roboto@400
     id: roboto_45
     size: 45
@@ -210,7 +221,7 @@ font:
     id: roboto_22
     size: 22
     bpp: 4
-    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+    glyphs: *latin1
 
   # --- Polices MONOSPACE (assistant vocal) ---
   # Roboto Mono : colonnes de largeur fixe => les tableaux Markdown (réponses IA)
@@ -219,93 +230,226 @@ font:
     id: roboto_mono_20
     size: 20
     bpp: 4
-    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+    glyphs: *latin1
   - file: gfonts://Roboto+Mono@500
     id: roboto_mono_24
     size: 24
     bpp: 4
-    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+    glyphs: *latin1
   - file: gfonts://Roboto+Mono@500
     id: roboto_mono_28
     size: 28
     bpp: 4
-    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+    glyphs: *latin1
 
+  # --- Icônes Material Design (Tab5/materialdesignicons-webfont.ttf) ----------
+  # Une icône par ligne, nom relevé dans le TTF. bpp 1 : aplats nets, 4× moins
+  # lourds qu'en bpp 4. Ajouter une icône à l'écran = l'ajouter à la police de son
+  # widget ; la retirer de l'écran = la retirer d'ici (règle 7, sinon pytest échoue).
+
+  # 70 px — icônes des 5 interrupteurs (switches_card.yaml) et cloche de la sonnerie
+  # (alarm_ring_overlay.yaml). S'appelait mdi_font_80 (l'id mentait), renommé le 08/09/2026.
   - file: "Tab5/materialdesignicons-webfont.ttf"
-    id: mdi_font_70          # 70 px — s'appelait mdi_font_80 (l'id mentait), renommé le 08/09/2026
+    id: mdi_font_70
     size: 70
     bpp: 1
-    glyphs: "\U000F0026\U000F0593\U000F0596\U000F0597\U000F0598\U000F0599\U000F059D\U000F067E\U000F0717\U000F078D\U000F0E01\U000F0EFA\U000F0F29\U000F0F36\U000F1A48\U000F08B2\U000F0379\U000F111E\U000F02E3\U000F04B9\U000F1051\U000F0020"
+    glyphs:
+      - "\U000F0020"  # alarm
+      - "\U000F02E3"  # bed
+      - "\U000F0379"  # monitor
+      - "\U000F04B9"  # sofa
+      - "\U000F1051"  # led-strip-variant
+      - "\U000F111E"  # window-shutter-open
 
+  # 60 px — vigilances Météo-France (alerte_slot_*, parse_and_update_vigilance) et
+  # goutte / flocon de la prévision de pluie (icon_rain_predict).
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_alert
     size: 60
     bpp: 1
-    glyphs: "\U000F0026\U000F0028\U000F09CF\U000F0593\U000F0596\U000F0597\U000F0598\U000F0599\U000F059D\U000F067E\U000F0717\U000F078D\U000F0E01\U000F0EFA\U000F0F29\U000F0F36\U000F1A48"
+    glyphs:
+      - "\U000F0593"  # weather-lightning
+      - "\U000F0596"  # weather-pouring
+      - "\U000F0597"  # weather-rainy
+      - "\U000F0598"  # weather-snowy
+      - "\U000F059D"  # weather-windy
+      - "\U000F067E"  # weather-lightning-rainy
+      - "\U000F078D"  # waves
+      - "\U000F0E01"  # thermometer-alert
+      - "\U000F0EFA"  # home-flood
+      - "\U000F0F29"  # snowflake-alert
+      - "\U000F0F36"  # weather-snowy-heavy
 
+  # 45 px — boutons des popups : télécommande TV, clim (modes, préréglages), lumière,
+  # réveil, rangée des plantes, en-tête de la sélection des consoles.
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_45
     size: 45
     bpp: 1
-    # F07C0 = moniteur (bouton TV haut-droite) — F02E4 était un rectangle vide (crop-landscape)
-    # Bloc télécommande TV (tv_remote_popup.yaml) : F005D/F0045/F004D/F0054 = flèches,
-    # F02DC = home, F054C = undo (retour), F035C = menu, F040A/F03E4 = play/pause, F0581 = volume-off
-    # F1051 = led-strip (sélecteur LEDs du popup lumière), F059D = weather-windy (Brise popup clim)
-    # Bloc calendrier (calendar_popup.yaml) : F0E17 = calendar-month (en-tête),
-    # F0141/F0142 = chevron-left/right (navigation mois)
-    glyphs: "\U000F011E\U000F0379\U000F05A9\U000F07D0\U000F050F\U000F0A86\U000F0596\U000F0374\U000F0415\U000F0425\U000F0717\U000F0238\U000F111C\U000F111E\U000F002D\U000F032A\U000F14DE\U000F146D\U000F0E79\U000F0E66\U000F09F1\U000F0D08\U000F024A\U000F02E5\U000F02E3\U000F04B9\U000F0210\U000F058E\U000F0156\U000F0450\U000F0335\U000F0579\U000F07C0\U000F005D\U000F0045\U000F004D\U000F0054\U000F02DC\U000F054C\U000F035C\U000F040A\U000F03E4\U000F0581\U000F1051\U000F059D\U000F0E17\U000F0141\U000F0142\U000F0297\U000F0020\U000F0021\U000F068E\U000F04DB"
+    glyphs:
+      - "\U000F0020"  # alarm
+      - "\U000F0021"  # alarm-check
+      - "\U000F0023"  # alarm-off
+      - "\U000F002D"  # greenhouse
+      - "\U000F0045"  # arrow-down
+      - "\U000F004D"  # arrow-left
+      - "\U000F0054"  # arrow-right
+      - "\U000F005D"  # arrow-up
+      - "\U000F0210"  # fan
+      - "\U000F0238"  # fire
+      - "\U000F024A"  # flower
+      - "\U000F0297"  # gamepad-variant
+      - "\U000F02DC"  # home
+      - "\U000F02E3"  # bed
+      - "\U000F02E5"  # pot
+      - "\U000F032A"  # leaf
+      - "\U000F035C"  # menu
+      - "\U000F0374"  # minus
+      - "\U000F0379"  # monitor
+      - "\U000F03E4"  # pause
+      - "\U000F040A"  # play
+      - "\U000F0415"  # plus
+      - "\U000F0425"  # power
+      - "\U000F04B9"  # sofa
+      - "\U000F04DB"  # stop
+      - "\U000F054C"  # undo
+      - "\U000F0581"  # volume-off
+      - "\U000F058E"  # water-percent
+      - "\U000F059D"  # weather-windy
+      - "\U000F068E"  # alarm-snooze
+      - "\U000F0717"  # snowflake
+      - "\U000F07C0"  # desktop-classic
+      - "\U000F07D0"  # home-assistant
+      - "\U000F09F1"  # flower-tulip
+      - "\U000F0D08"  # flower-poppy
+      - "\U000F0E66"  # sprout
+      - "\U000F0E79"  # arrow-up-down
+      - "\U000F1051"  # led-strip-variant
+      - "\U000F146D"  # fan-chevron-down
+      - "\U000F14DE"  # rocket-launch
 
+  # 56 px — cartes du popup plantes, boutons -/+/marche de la clim, tuiles des consoles.
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_56
     size: 56
     bpp: 1
-    glyphs: "\U000F011E\U000F0379\U000F05A9\U000F07D0\U000F050F\U000F0A86\U000F0596\U000F0374\U000F0415\U000F0425\U000F0717\U000F0238\U000F111C\U000F111E\U000F002D\U000F032A\U000F14DE\U000F146D\U000F0E79\U000F0E66\U000F09F1\U000F0D08\U000F024A\U000F02E5\U000F02E3\U000F04B9\U000F0210\U000F058E\U000F02E4\U000F0E95\U000F0570\U000F05DD\U000F15A2\U000F0B38\U000F134A\U000F013A\U000F0857"
+    glyphs:
+      - "\U000F013A"  # checkerboard
+      - "\U000F024A"  # flower
+      - "\U000F02E5"  # pot
+      - "\U000F0374"  # minus
+      - "\U000F0415"  # plus
+      - "\U000F0425"  # power
+      - "\U000F0570"  # view-grid
+      - "\U000F05DD"  # bullseye
+      - "\U000F0857"  # chess-king
+      - "\U000F09F1"  # flower-tulip
+      - "\U000F0B38"  # circle-multiple
+      - "\U000F0D08"  # flower-poppy
+      - "\U000F0E66"  # sprout
+      - "\U000F0E95"  # circle-double
+      - "\U000F134A"  # head-question
+      - "\U000F15A2"  # ladder
 
+  # 32 px — barre de titre des modales (ADR-0009), tuiles du dashboard, détail du jour
+  # du calendrier, chevrons du réveil, Console système.
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_32
     size: 32
     bpp: 1
-    # F050F = thermomètre (ligne "Pièce" du popup clim)
-    # Bloc détail jour calendrier (calendar_popup.yaml) : F00D6 = briefcase (travail),
-    # F1056 = party-popper (férié), F0474 = school (vacances scolaires),
-    # F00F0 = calendar-clock (RDV), F00EB = cake-variant (anniversaire),
-    # F09D3 = calendar-star (fête non fériée) — codepoints vérifiés dans le TTF
-    # Barre de titre modale v4 (ADR-0009, modal_header.yaml) : F024A = flower
-    # (popup plantes), F0E17 = calendar-month (popup calendrier + détail jour),
-    # F0141/F0142 = chevron-left/right (nav mois, boutons d'en-tête 80×44).
-    glyphs: "\U000F0379\U000F111C\U000F111E\U000F0597\U000F0045\U000F005D\U000F03E4\U000F0335\U000F06E8\U000F08B2\U000F0596\U000F07C0\U000F04B9\U000F1B29\U000F1051\U000F036C\U000F0156\U000F0450\U000F0717\U000F0238\U000F0425\U000F0210\U000F058E\U000F0E79\U000F032A\U000F14DE\U000F146D\U000F011E\U000F05A9\U000F07D0\U000F02E3\U000F057E\U000F0580\U000F0581\U000F050F\U000F0241\U000F0079\U000F00D6\U000F1056\U000F0474\U000F00F0\U000F00EB\U000F09D3\U000F024A\U000F0E17\U000F0141\U000F0142\U000F0020\U000F0023\U000F0140\U000F0143\U000F0150\U000F0387\U000F051B\U000F05CB\U000F068E"
+    glyphs:
+      - "\U000F0020"  # alarm
+      - "\U000F0045"  # arrow-down
+      - "\U000F005D"  # arrow-up
+      - "\U000F0079"  # battery
+      - "\U000F00D6"  # briefcase
+      - "\U000F00EB"  # cake-variant
+      - "\U000F00F0"  # calendar-clock
+      - "\U000F0140"  # chevron-down
+      - "\U000F0141"  # chevron-left
+      - "\U000F0142"  # chevron-right
+      - "\U000F0143"  # chevron-up
+      - "\U000F0150"  # clock-outline
+      - "\U000F0156"  # close
+      - "\U000F0241"  # flash
+      - "\U000F024A"  # flower
+      - "\U000F02E3"  # bed
+      - "\U000F0335"  # lightbulb
+      - "\U000F036C"  # microphone
+      - "\U000F0379"  # monitor
+      - "\U000F0387"  # music-note
+      - "\U000F03E4"  # pause
+      - "\U000F0425"  # power
+      - "\U000F0450"  # refresh
+      - "\U000F0474"  # school
+      - "\U000F04B9"  # sofa
+      - "\U000F050F"  # thermometer
+      - "\U000F057E"  # volume-high
+      - "\U000F0581"  # volume-off
+      - "\U000F05A9"  # wifi
+      - "\U000F05CB"  # account-voice
+      - "\U000F06E8"  # lightbulb-on
+      - "\U000F0717"  # snowflake
+      - "\U000F07C0"  # desktop-classic
+      - "\U000F07D0"  # home-assistant
+      - "\U000F09D3"  # calendar-star
+      - "\U000F0E17"  # calendar-month
+      - "\U000F1051"  # led-strip-variant
+      - "\U000F1056"  # party-popper
+      - "\U000F111C"  # window-shutter
+      - "\U000F111E"  # window-shutter-open
 
+  # 120 px — grand micro de l'assistant.
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_120
     size: 120
     bpp: 1
-    glyphs: "\U000F036C"
+    glyphs:
+      - "\U000F036C"  # microphone
 
+  # 26 px — barre d'état (réveil, Wi-Fi, PC) et pluie des cartes horaires.
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_26
     size: 26
     bpp: 1
-    glyphs: "\U000F0379\U000F111C\U000F111E\U000F0597\U000F0045\U000F005D\U000F03E4\U000F0335\U000F06E8\U000F08B2\U000F0596\U000F011E\U000F05A9\U000F0020\U000F0023"
+    glyphs:
+      - "\U000F0020"  # alarm
+      - "\U000F0023"  # alarm-off
+      - "\U000F011E"  # cellphone-basic
+      - "\U000F0379"  # monitor
+      - "\U000F0596"  # weather-pouring
+      - "\U000F05A9"  # wifi
 
-  # --- Icônes MDI du popup Assistant vocal (assistant_popup.yaml) ---
-  # F036C micro · F0156 fermer · F062E réglages(tune) · F07D0 domotique · F0450 discussion(robot)
-  # F057E volume · F0581 muet · F0361 message(demande) · F021A texte(réponse) · F021F image
-  # F0A71 tableau · F04DB stop · F048A envoyer · F0493 cog
+  # 36 px — popup Assistant vocal (assistant_popup.yaml).
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_assist_36
     size: 36
     bpp: 1
-    glyphs: "\U000F036C\U000F0156\U000F062E\U000F07D0\U000F0450\U000F057E\U000F0581\U000F0361\U000F021A\U000F021F\U000F0A71\U000F04DB\U000F048A\U000F0493"
+    glyphs:
+      - "\U000F021A"  # text-box
+      - "\U000F021F"  # file-image
+      - "\U000F0361"  # message
+      - "\U000F036C"  # microphone
+      - "\U000F0450"  # refresh
+      - "\U000F04DB"  # stop
+      - "\U000F057E"  # volume-high
+      - "\U000F0581"  # volume-off
+      - "\U000F062E"  # tune
+      - "\U000F07D0"  # home-assistant
+      - "\U000F0A71"  # smog
 
   # Icônes météo des tuiles seulement (120 px, calque 2 réduit à 80 px). Les
   # tailles 270 et 190 px (font_meteo_main / _small) sont retirées le 25/09/2026 :
   # la grosse icône centrale n'existe plus, ~196 Ko de flash jamais affichés.
+  # Les 10 glyphes = les 10 constantes de MeteoIcon (tab5_custom.h) ; F003 et F004,
+  # présents dans le TTF mais jamais affichés, sont retirés le 25/09/2026.
   - file: "Tab5/IconeMeteo.ttf"
     id: font_meteo_card
     size: 120
     bpp: 4
-    glyphs: "\U0000F000\U0000F001\U0000F002\U0000F003\U0000F004\U0000F005\U0000F006\U0000F007\U0000F00B\U0000F00E\U0000F00F\U0000F015"
+    glyphs: "\U0000F000\U0000F001\U0000F002\U0000F005\U0000F006\U0000F007\U0000F00B\U0000F00E\U0000F00F\U0000F015"
 
+  # Calque 2 réduit (lune / soleil derrière le nuage de « partlycloudy »).
   - file: "Tab5/IconeMeteo.ttf"
     id: font_meteo_card_small
     size: 80

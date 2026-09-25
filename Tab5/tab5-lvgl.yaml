@@ -137,10 +137,6 @@ lvgl:
             widgets:
               - label: { id: lbl_ok_nabu, text: "Ok Nabu: ON", align: CENTER, text_font: roboto_22, text_color: color_success }
 
-        # Label d'état masqué pour la compatibilité
-        - label: { id: icon_mode_status, text: "", hidden: true }
-
-
         # --- Centre: Horloge (−6px/côté, −10px haut, remontée 5px) ---
         - obj:
             id: clock_tile

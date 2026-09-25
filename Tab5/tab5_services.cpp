@@ -16,6 +16,7 @@
 #include "tab5_internal.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <cmath>
 #include <ctime>
 #include <cstring>
 #include <vector>
@@ -256,11 +257,14 @@ void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite) {
 
 void update_clim_from_ha_ui(lv_obj_t* lbl_target, lv_obj_t* lbl_target_popup, lv_obj_t* arc,
     lv_obj_t* lbl_current, float target, float current) {
+    // Consigne inconnue : « -- » (roboto_55_b n'a pas les lettres de « nan »).
+    const bool known = !std::isnan(target);
     char buf_target[16];
-    snprintf(buf_target, sizeof(buf_target), "%.1f", target);
+    if (known) snprintf(buf_target, sizeof(buf_target), "%.1f", target);
+    else       snprintf(buf_target, sizeof(buf_target), "--");
     if (lbl_target != nullptr)       lv_label_set_text(lbl_target, buf_target);
     if (lbl_target_popup != nullptr) lv_label_set_text(lbl_target_popup, buf_target);
-    if (arc != nullptr)              lv_arc_set_value(arc, (int)target);
+    if (arc != nullptr && known)     lv_arc_set_value(arc, (int)target);
     char buf_curr[16];
     snprintf(buf_curr, sizeof(buf_curr), "%.1f \xC2\xB0" "C", current);
     if (lbl_current != nullptr) lv_label_set_text(lbl_current, buf_curr);
