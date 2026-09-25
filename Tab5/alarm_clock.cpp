@@ -252,15 +252,13 @@ bool alarm_due(time_t now) {
   return ring;
 }
 
-bool alarm_snooze(time_t now, int minutes) {
+void alarm_snooze(time_t now, int minutes) {
   if (minutes < 1) minutes = 1;
   s_snooze_count++;
   s_snooze_until = now + static_cast<time_t>(minutes) * 60;
-  return true;
 }
 
 int alarm_snooze_count() { return s_snooze_count; }
-time_t alarm_snooze_until() { return s_snooze_until; }
 
 void alarm_dismiss(time_t now) {
   s_snooze_until = 0;
@@ -363,11 +361,6 @@ const DaysPreset kPresets[ALARM_DAYS_PRESET_COUNT] = {
     {"Tous les jours", 0x7F}, {"Lundi-Vendredi", 0x1F}, {"Lundi-Samedi", 0x3F},
     {"Week-end", 0x60},       {"Personnalis\xC3\xA9", -1},
 };
-const char* const kModeNames[AlarmMode::COUNT] = {
-    "Heure fixe",
-    "Jours travaill\xC3\xA9s",
-    "Avant l'ouverture",
-};
 }  // namespace
 
 const char* alarm_days_preset_name(int idx) {
@@ -382,7 +375,6 @@ int alarm_days_preset_index(uint8_t mask) {
   }
   return ALARM_DAYS_PRESET_COUNT - 1;  // « Personnalisé »
 }
-const char* alarm_mode_name(int idx) { return kModeNames[clamp_i(idx, 0, AlarmMode::COUNT - 1)]; }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Mélodies RTTTL
@@ -395,17 +387,15 @@ namespace {
 struct Melody {
   const char* name;
   const char* score;
-  uint32_t ms;  // durée approximative d'un passage
 };
-// Les durées sont mesurées à la règle RTTTL : une noire vaut 60000/b ms, et
-// chaque note vaut (60000/b) × (4/d). Elles n'ont pas besoin d'être exactes :
-// elles servent à dimensionner l'attente du cycle, qui se termine de toute
-// façon dès que `rtttl.is_playing` retombe.
+// Pas de durée : le cycle de sonnerie s'arrête sur `rtttl.is_playing`, pas sur
+// une estimation (le champ `ms` et alarm_melody_ms(), jamais lus, sont retirés
+// le 25/09/2026, audit lot 8a).
 const Melody kMelodies[ALARM_MELODY_COUNT] = {
-    {"Douce", "Douce:d=8,o=6,b=92:c,e,g,c7,p,g,e,c,2p", 3800},
-    {"Classique", "Reveil:d=16,o=6,b=140:c7,c7,p,c7,c7,4p,c7,c7,p,c7,c7,4p", 3400},
-    {"Insistante", "Urgence:d=32,o=7,b=180:c,c,c,c,8p,c,c,c,c,8p,c,c,c,c,4p", 2600},
-    {"Carillon", "Carillon:d=4,o=5,b=90:e,c,d,1g4,2p,g4,d,e,1c", 8000},
+    {"Douce", "Douce:d=8,o=6,b=92:c,e,g,c7,p,g,e,c,2p"},
+    {"Classique", "Reveil:d=16,o=6,b=140:c7,c7,p,c7,c7,4p,c7,c7,p,c7,c7,4p"},
+    {"Insistante", "Urgence:d=32,o=7,b=180:c,c,c,c,8p,c,c,c,c,8p,c,c,c,c,4p"},
+    {"Carillon", "Carillon:d=4,o=5,b=90:e,c,d,1g4,2p,g4,d,e,1c"},
 };
 }  // namespace
 
@@ -414,9 +404,6 @@ const char* alarm_melody_name(int idx) {
 }
 const char* alarm_melody_rtttl(int idx) {
   return kMelodies[clamp_i(idx, 0, ALARM_MELODY_COUNT - 1)].score;
-}
-uint32_t alarm_melody_ms(int idx) {
-  return kMelodies[clamp_i(idx, 0, ALARM_MELODY_COUNT - 1)].ms;
 }
 
 // Crescendo : 35 % du volume cible au premier cycle, puis +13 points par cycle
@@ -446,7 +433,6 @@ Rdv s_rdv[ALARM_RDV_MAX];
 int s_rdv_n = 0;
 }  // namespace
 
-int rdv_count() { return s_rdv_n; }
 
 void rdv_clear() {
   for (int i = 0; i < ALARM_RDV_MAX; i++) {

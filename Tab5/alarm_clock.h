@@ -97,11 +97,11 @@ time_t alarm_next_ring(time_t now);
 bool alarm_due(time_t now);
 constexpr int ALARM_GRACE_S = 120;
 
-// Répète la sonnerie dans `minutes`. Rend true si le snooze est armé (false si
-// le nombre maximum de répétitions est atteint — voir alarm_snooze_count()).
-bool alarm_snooze(time_t now, int minutes);
+// Répète la sonnerie dans `minutes` (au moins 1). Toujours armé : il n'y a pas
+// de nombre maximum de répétitions (l'ancien en-tête en promettait un, le code
+// rendait toujours true). Le compte est lisible par alarm_snooze_count().
+void alarm_snooze(time_t now, int minutes);
 int alarm_snooze_count();
-time_t alarm_snooze_until();
 
 // Arrêt définitif : annule un snooze en cours et interdit à la sonnerie du jour
 // de repartir (la recherche suivante démarre après `now`).
@@ -146,8 +146,6 @@ int alarm_days_preset_mask(int idx);
 // Index du préréglage qui correspond au masque, sinon celui de « Personnalisé ».
 int alarm_days_preset_index(uint8_t mask);
 
-// Nom du mode pour le select HA (même ordre que les constantes AlarmMode).
-const char* alarm_mode_name(int idx);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Mélodies RTTTL embarquées (aucun octet de flash : ce sont des chaînes)
@@ -158,9 +156,6 @@ const char* alarm_melody_name(int idx);
 // Partition RTTTL jouée par `rtttl.play`. Modifier une mélodie = éditer cette
 // table, rien d'autre (ni police, ni flash, ni réglage HA).
 const char* alarm_melody_rtttl(int idx);
-// Durée approximative d'un passage, en millisecondes — sert à dimensionner le
-// `wait_until` du cycle de sonnerie sans dépendre d'un callback de fin.
-uint32_t alarm_melody_ms(int idx);
 
 // Volume d'un cycle de sonnerie (0..1) : `base` au premier cycle puis montée
 // progressive jusqu'à `base` si le crescendo est actif, sinon `base` d'emblée.
@@ -180,7 +175,6 @@ constexpr int ALARM_RDV_MAX = 8;
 // poussée : l'appariement se fait sur l'epoch, pas sur la position.
 void rdv_store(const std::string& payload);
 void rdv_clear();
-int rdv_count();
 
 // Cherche un rendez-vous dont l'échéance moins `lead_min` est atteinte et qui
 // n'a pas encore été annoncé. Le marque annoncé et remplit les deux textes :

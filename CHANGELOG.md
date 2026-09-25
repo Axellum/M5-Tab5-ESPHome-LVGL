@@ -4,6 +4,37 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Firmware : jetons sans dépendance, les jeux ne recompilent plus avec le HMI, code mort retiré
+
+Lot 8a de l'audit du 25/09/2026 (§6, organisation). Aucun changement de comportement.
+
+- **`Tab5/tab5_tokens.h`** : `UIColor::`, `UIAnim::` et `UIIdle::` sortent de `tab5_custom.h`
+  dans un en-tête sans dépendance (que des `constexpr`). `tab5_custom.h` l'inclut : les
+  lambdas YAML et les unités C++ ne voient aucune différence.
+- **Les 8 consoles n'incluent plus `tab5_custom.h`** : Arcanoïde et Fil d'Or, qui lisent
+  quatre couleurs, incluent `tab5_tokens.h` ; les six autres n'incluent plus rien du HMI.
+  Une retouche du dashboard ne recompile plus les jeux : 20 159 des 25 909 lignes de C++ de
+  `Tab5/` (78 %), ce qui compte vu les gels du PC pendant les compilations.
+- **Code mort retiré** (chaque symbole vérifié sans appelant, lambdas YAML comprises) :
+  `alarm_melody_ms()` et le champ `ms` des mélodies (le cycle de sonnerie s'arrête sur
+  `rtttl.is_playing`), `alarm_mode_name()` et sa table, `alarm_snooze_until()`,
+  `rdv_count()`, `cal_cache_clear()`, `cal_month_has_details()`, `GameRegistry::count/at`,
+  `ModalRegistry::count`, `UIAnim::POPUP_IN/POPUP_OUT/BTN_PRESS`.
+- **Contrats corrigés** : `alarm_snooze()` promettait `false` au-delà d'un maximum de
+  répétitions qui n'existe pas et rendait toujours `true` ; elle devient `void`. Les
+  commentaires de `animate_popup_open/_close` annonçaient des durées alors que les deux
+  sont instantanées.
+- Gardés à dessein : `Chess::perft_log` (outil documenté de validation du générateur sur
+  la cible) et `Draughts::ai_step`, qui attend l'enquête sur l'IA des dames.
+
+**Preuve de neutralité** (table des symboles de l'ELF, `nm -S`, avant/après) : sur 18 408
+symboles, seuls cinq changent, tous attendus — `kMelodies` (−16 o, champ `ms`),
+`alarm_melody_name/_rtttl` (−4 o chacune), `alarm_snooze` (plus de valeur de retour) et
+l'initialiseur statique de `tab5_calendar.cpp`, renommé d'après sa première fonction. Les
+fonctions retirées n'étaient déjà plus dans le binaire (`--gc-sections`) ; le découplage des
+jeux ne change aucun symbole. Flash 2 844 996 → 2 844 970 o (−26), RAM 258 378 o
+(identique), 0 warning, `config_hash` 0xf09d9e81 (la liste `includes:` change).
+
 ## [2.0.0] — 2026-09-25
 
 De `v1.2.0` (08/09) à aujourd'hui : 21 pull requests (#116 → #136, celle de la release

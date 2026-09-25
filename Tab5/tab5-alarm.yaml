@@ -259,7 +259,7 @@ number:
 select:
   # Les options sont construites à la main mais leur ORDRE est contractuel :
   # l'index du select est l'entier stocké dans g_alarm_cfg.mode (AlarmMode::*).
-  # Les libellés doivent rester identiques à alarm_mode_name().
+  # Les libellés suivent l'ordre des constantes AlarmMode (alarm_clock.h).
   - platform: template
     id: tab5_alarm_mode
     name: "Réveil : mode"

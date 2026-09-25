@@ -246,7 +246,7 @@ Color is used consistently as a primary information channel — to let you read 
 
 **Microphone icon:** see Voice assistant above.
 
-All color constants live in the `UIColor` namespace in `tab5_custom.h`, with YAML-side counterparts in `tab5-styles.yaml`.
+All color constants live in the `UIColor` namespace in `tab5_tokens.h` (included by `tab5_custom.h`), with YAML-side counterparts in `tab5-styles.yaml`.
 
 ---
 
@@ -534,7 +534,7 @@ La couleur est utilisée de façon systématique comme canal d'information prima
 
 **Icône microphone :** voir Assistant vocal ci-dessus.
 
-Toutes les constantes de couleur vivent dans le namespace `UIColor` de `tab5_custom.h`, avec leurs équivalents YAML dans `tab5-styles.yaml`.
+Toutes les constantes de couleur vivent dans le namespace `UIColor` de `tab5_tokens.h` (inclus par `tab5_custom.h`), avec leurs équivalents YAML dans `tab5-styles.yaml`.
 
 ---
 

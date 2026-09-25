@@ -39,8 +39,6 @@ static std::map<int, CalMonthData> s_cal_month_cache;
 
 static int cal_cache_key(int y, int m) { return y * 12 + (m - 1); }
 
-void cal_cache_clear() { s_cal_month_cache.clear(); }
-
 bool cal_month_needs_fetch(int year, int month) {
     return s_cal_month_cache.find(cal_cache_key(year, month)) == s_cal_month_cache.end();
 }
@@ -73,11 +71,6 @@ void cal_store_month_data(const std::string& annee, const std::string& mois,
     data.has_details = !details.empty();
     data.stored_at = esphome::millis();
     s_cal_month_cache[cal_cache_key(y, m)] = data;
-}
-
-bool cal_month_has_details(int year, int month) {
-    const auto it = s_cal_month_cache.find(cal_cache_key(year, month));
-    return it != s_cal_month_cache.end() && it->second.has_details;
 }
 
 // n-ième champ d'une chaîne délimitée par un séparateur — champs vides autorisés
