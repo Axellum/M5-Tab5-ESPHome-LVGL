@@ -591,8 +591,9 @@ position grâce à une table des chaînes construite une seule fois par nœud
 - `go_ai.h/.cpp` — IA time-slicée
 - `go_game.h/.cpp` + `ui_components/go_game.yaml` — UI / NVS
 - Tests : `tools/test_go_engine.py` (**miroir Python exécutable sans toolchain**,
-  c'est le test de référence) ; `tools/test_go_engine.cpp` si un g++ natif est
-  disponible. Toute modification des règles doit être répercutée dans les deux.
+  c'est le test de référence en local) ; `tools/test_go_engine.cpp`, la même suite
+  contre le vrai C++, compilée par g++ et exécutée en CI (job `python`). Toute
+  modification des règles doit être répercutée dans les deux.
 
 ### NVS
 

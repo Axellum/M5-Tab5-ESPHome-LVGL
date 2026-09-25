@@ -52,7 +52,7 @@ python tools/check_marble_rooms.py         # les 6 salles de Fil d'Or restent tr
 python tools/check_lode_levels.py          # les 10 niveaux de Coureur d'Or restent jouables
 ```
 
-  All three are **Python mirrors** of the C++ (`go_engine.cpp`, `chess_ai.cpp`, `draughts_game.cpp`), not bindings: a change to the C++ must be mirrored there or the test stops proving anything. `tools/test_go_engine.cpp` is the same suite compiled against the real C++ when a host compiler is available.
+  All three are **Python mirrors** of the C++ (`go_engine.cpp`, `chess_ai.cpp`, `draughts_game.cpp`), not bindings: a change to the C++ must be mirrored there or the test stops proving anything. `tools/test_go_engine.cpp` is the same suite compiled against the real C++: the CI `python` job builds it with g++ and runs it on every PR (the dev box only has the RISC-V cross-compiler).
 - `tools/demo/demo_pusher.py --dry-run` validates the payloads of the **10 dashboard push services** against the firmware contract without any hardware — cheap check after touching `tab5-api-logic.yaml`. The 6 other services (`tab5_maj_alertes_ha_bulk`, `tab5_maj_calendrier_mois/_jour`, `tab5_maj_rdv_prochains`, `tab5_assist_reponse`, `tab5_maj_reponse_vocale`) are out of its scope by design (they need live HA entities, a calendar or a voice pipeline).
 
 ## Code rules (full detail in `Tab5/README.md`)
