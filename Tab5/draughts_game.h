@@ -47,7 +47,7 @@ struct DraughtsSave {
     uint8_t  side;           // 0 = Blancs à jouer, 1 = Noirs
     uint8_t  must_from;      // 255 = libre, sinon case (r*n+c) pour continuer une rafle
     uint8_t  board_n;        // 8 ou 10
-    uint8_t  no_progress;    // coups sans prise (nulle à 25)
+    uint8_t  no_progress;    // demi-coups sans prise ni pion bougé (nulle à 50 / 80)
     uint8_t  setup_variant;  // miroir variant au moment du save partie
     uint8_t  setup_mode;
     uint8_t  setup_human;
@@ -102,7 +102,10 @@ static constexpr int MAX_SQ    = MAX_N * MAX_N;
 static constexpr int MAX_MOVES = 96;
 static constexpr int MAX_CAPS  = 20;
 static constexpr int MAX_PATH  = 24;
-static constexpr int DRAW_PLIES = 25;  // nulle : 25 coups sans prise ni promotion
+// Nulle quand aucun pion n'a bougé et rien n'a été pris pendant N coups de chaque camp :
+// 25 en international (FFJD/FMJD), 40 en anglais (WCDF). Compté en demi-coups.
+static constexpr int DRAW_PLIES_INTL = 50;
+static constexpr int DRAW_PLIES_ENG  = 80;
 
 enum Variant : uint8_t { VAR_INTL10 = 0, VAR_ENG8 = 1 };
 enum Side    : uint8_t { SIDE_WHITE = 0, SIDE_BLACK = 1 };
@@ -125,7 +128,7 @@ struct Pos {
     uint8_t side;        // Side
     uint8_t must_from;   // 255 = libre
     uint8_t variant;     // Variant
-    uint8_t no_progress; // plies sans prise
+    uint8_t no_progress; // demi-coups sans prise ni déplacement de pion
 };
 
 // Coup légal complet (rafle = chemin + capturées).
