@@ -48,9 +48,6 @@ struct Entry {
     bool imu_fast;                           // pilotage à l'inclinaison → IMU 30 Hz
 };
 
-int count();
-const Entry& at(int i);
-
 // true si une partie est en cours, quelle que soit la console.
 bool any_open();
 
@@ -92,8 +89,6 @@ bool ready();
 // Enregistre une fenêtre. L'ORDRE d'appel est l'ordre de priorité de
 // visible_name() : enregistrer d'abord ce qui recouvre le reste.
 void add(lv_obj_t* obj, const char* name, Kind kind);
-
-int count();
 
 // Libellé de la première fenêtre nommée visible (POPUP ou LAYER), nullptr si
 // rien ne couvre le dashboard.

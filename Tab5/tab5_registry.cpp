@@ -49,9 +49,6 @@ static const Entry kGames[] = {
 };
 static constexpr int kNbGames = sizeof(kGames) / sizeof(kGames[0]);
 
-int count() { return kNbGames; }
-const Entry& at(int i) { return kGames[i]; }
-
 bool any_open() {
     for (const auto& g : kGames) if (g.is_open()) return true;
     return false;
@@ -92,7 +89,6 @@ static Slot g_slots[MAX];
 static int g_nb = 0;
 
 bool ready() { return g_nb > 0; }
-int count() { return g_nb; }
 
 void add(lv_obj_t* obj, const char* name, Kind kind) {
     if (g_nb >= MAX) {

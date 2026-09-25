@@ -17,7 +17,6 @@
  */
 #pragma once
 #include "esphome.h"
-#include "tab5_custom.h"
 
 namespace esphome { namespace font { class Font; } }
 

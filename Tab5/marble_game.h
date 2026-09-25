@@ -14,7 +14,7 @@
  */
 #pragma once
 #include "esphome.h"
-#include "tab5_custom.h"
+#include "tab5_tokens.h"   // UIColor seulement (lot 8a : plus de tab5_custom.h)
 
 namespace esphome { namespace font { class Font; } }
 
