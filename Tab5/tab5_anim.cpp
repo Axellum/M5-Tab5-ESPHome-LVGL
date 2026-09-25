@@ -569,6 +569,9 @@ void update_clock_date_ui(lv_obj_t* lbl_date,
         }
     }
     if (lbl_date) {
+        // [AI-WARNING] lbl_date est en roboto_45, réduite aux 37 glyphes de ces jours,
+        // des chiffres et de clock_month_short_utf8() (tab5-styles.yaml) : changer un
+        // libellé ou le format = mettre à jour la liste de glyphes (sinon lettre vide).
         static const char* days[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
         const char* day = (day_of_week >= 1 && day_of_week <= 7) ? days[day_of_week - 1] : "";
         char buf_date[64];

@@ -29,7 +29,7 @@ lvgl:
                   handle_swipe_gesture(d, pt.y, id(forecast_page_index),
                       id(layer_forecast_daily), id(layer_forecast_hourly),
                       g_day_slots, g_hour_slots,
-                      id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small),
+                      id(font_meteo_card), id(font_meteo_card_small),
                       pbars,
                       id(page_title_wrapper), id(lbl_page_title),
                       g_central_ctx);

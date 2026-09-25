@@ -162,7 +162,19 @@ void assist_set_request(lv_obj_t* lbl_request, const std::string& texte) {
 void assist_set_response(lv_obj_t* lbl_response, const std::string& texte,
     esphome::font::Font* font) {
     if (!lbl_response) return;
-    std::string t = format_assist_markdown(normalize_text_utf8(texte));
+    // Réponse du moteur non bornée : format_assist_markdown() alloue une chaîne par
+    // ligne et par cellule sur le tas INTERNE (malloc ne va pas en PSRAM ici) et le
+    // fragmente. 4 Ko couvrent largement ce que la zone de texte affiche ; au-delà on
+    // coupe sur une frontière de caractère UTF-8 (audit du 25/09/2026, lot 4).
+    constexpr size_t kAssistMaxBytes = 4096;
+    std::string src = normalize_text_utf8(texte);
+    if (src.size() > kAssistMaxBytes) {
+        size_t cut = kAssistMaxBytes;
+        while (cut > 0 && (static_cast<unsigned char>(src[cut]) & 0xC0) == 0x80) cut--;
+        src.resize(cut);
+        src += "\n[...]";
+    }
+    std::string t = format_assist_markdown(src);
     if (font) esphome::lvgl::lv_obj_set_style_text_font(lbl_response, font, LV_PART_MAIN);
     lv_label_set_recolor(lbl_response, false);
     lv_label_set_text(lbl_response, t.c_str());

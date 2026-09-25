@@ -84,7 +84,7 @@ api:
             // affiché, autre page horaire) : rien à repeindre (audit 25/09, lot 3).
             const int fp = id(forecast_page_index);
             if (!accept_heures_bulk(payload, fp)) return;
-            refresh_hourly_forecast(g_hour_slots, 1 - fp, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+            refresh_hourly_forecast(g_hour_slots, 1 - fp, id(font_meteo_card), id(font_meteo_card_small));
             // Les tuiles viennent de changer : le titre de la carte centrale annonce
             // leurs bornes, il doit suivre. No-op si ce titre n'est pas affiche.
             refresh_forecast_page_title_ui(fp, id(page_title_wrapper), id(lbl_page_title), g_central_ctx);
@@ -108,7 +108,7 @@ api:
             // Tuiles journalières repeintes seulement si leur calque est affiché
             // (pages 2-4) : apply_forecast_page() les repeint au changement de page.
             if (fp >= 2) {
-              refresh_daily_forecast(g_day_slots, fp - 2, id(font_meteo_main), id(font_meteo_card), id(font_meteo_main_small), id(font_meteo_card_small));
+              refresh_daily_forecast(g_day_slots, fp - 2, id(font_meteo_card), id(font_meteo_card_small));
               // Idem horaire : le titre annonce les bornes des 5 tuiles, il suit leur MAJ.
               refresh_forecast_page_title_ui(fp, id(page_title_wrapper), id(lbl_page_title), g_central_ctx);
             }

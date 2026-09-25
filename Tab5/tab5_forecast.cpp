@@ -21,7 +21,7 @@
 #include <vector>
 #include <map>
 
-void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, bool is_card, esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
+void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, esphome::font::Font* f_card, esphome::font::Font* f_card_s) {
     std::string l1_text = MeteoIcon::CLOUD; // Nuage par defaut
     uint32_t l1_color = UIColor::TEXT_PRIMARY;
     std::string l2_text = "";
@@ -47,9 +47,11 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& st
     else if (state == "snowy") { l2_text = MeteoIcon::SNOW; l2_color = UIColor::METEO_PRECIP; l2_behind = true; l1_y = -30; }
     else if (state == "windy" || state == "windy-variant") { l1_text = MeteoIcon::WIND; }
 
-    // Systeme de Ratio automatique pour avoir une justesse pixel perfect !
-    // Grosse icone = 270px, Petite = 120px. Ratio exact = 120/270 = 0.4444...
-    float ratio = is_card ? 0.4444f : 1.0f;
+    // Coordonnées ci-dessus dessinées pour la grosse icône d'origine (270 px),
+    // ramenées à la tuile (120 px) : 120/270 = 0.4444. La grosse icône centrale
+    // et ses polices 270/190 px sont retirées depuis le 25/09/2026 (jamais
+    // affichées, ~196 Ko de flash) : les tuiles sont le seul usage.
+    const float ratio = 0.4444f;
     l2_x = (int)(l2_x * ratio);
     l2_y = (int)(l2_y * ratio);
     l1_y = (int)(l1_y * ratio);
@@ -59,7 +61,7 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& st
         lv_label_set_text(l1_obj, l1_text.c_str());
         lv_obj_set_style_text_color(l1_obj, lv_color_hex(l1_color), LV_PART_MAIN);
         lv_obj_set_style_translate_y(l1_obj, l1_y, LV_PART_MAIN);
-        esphome::lvgl::lv_obj_set_style_text_font(l1_obj, is_card ? f_card : f_main, LV_PART_MAIN);
+        esphome::lvgl::lv_obj_set_style_text_font(l1_obj, f_card, LV_PART_MAIN);
         if (l2_behind && l2_obj) { lv_obj_move_foreground(l1_obj); }
     }
     if (l2_obj) {
@@ -69,7 +71,7 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& st
             lv_obj_set_style_text_color(l2_obj, lv_color_hex(l2_color), LV_PART_MAIN);
             lv_obj_set_style_translate_x(l2_obj, l2_x, LV_PART_MAIN);
             lv_obj_set_style_translate_y(l2_obj, l2_y, LV_PART_MAIN);
-            esphome::lvgl::lv_obj_set_style_text_font(l2_obj, is_card ? (l2_small ? f_card_s : f_card) : (l2_small ? f_main_s : f_main), LV_PART_MAIN);
+            esphome::lvgl::lv_obj_set_style_text_font(l2_obj, l2_small ? f_card_s : f_card, LV_PART_MAIN);
         } else {
             lv_obj_add_flag(l2_obj, LV_OBJ_FLAG_HIDDEN);
         }
@@ -255,7 +257,7 @@ static bool icon_cond_changed(char* cache, const std::string& cond) {
 }
 
 void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
-    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
+    esphome::font::Font* f_card, esphome::font::Font* f_card_s) {
 
     if (page_index < 0 || page_index > 2) return;
 
@@ -289,7 +291,7 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
         lv_label_set_text(slot.max_lbl, data.est_passe ? "-- / " : buftx);
         lv_label_set_text(slot.min_lbl, data.est_passe ? "-- \xC2\xB0" : buftn);
         const bool icon_rolls = icon_cond_changed(s_day_icon_cond[i], data.condition);
-        update_meteo_icon(slot.icon_l1, slot.icon_l2, data.condition, true, f_main, f_card, f_main_s, f_card_s);
+        update_meteo_icon(slot.icon_l1, slot.icon_l2, data.condition, f_card, f_card_s);
         // Rouleau echelonne de gauche a droite (effet vague) — apres
         // update_meteo_icon() qui pose le glyphe et son offset de base.
         if (icon_rolls) animate_icon_roll_in(slot.icon_l1, slot.icon_l2, i * UIAnim::ROLL_STAGGER);
@@ -335,7 +337,7 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
 }
 
 void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
-    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s) {
+    esphome::font::Font* f_card, esphome::font::Font* f_card_s) {
     
     if (page_index < 0 || page_index > 2) return;
 
@@ -366,7 +368,7 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
         }
 
         const bool icon_rolls = icon_cond_changed(s_hour_icon_cond[i], data.condition);
-        update_meteo_icon(slot.icon_l1, slot.icon_l2, data.condition, true, f_main, f_card, f_main_s, f_card_s);
+        update_meteo_icon(slot.icon_l1, slot.icon_l2, data.condition, f_card, f_card_s);
         if (icon_rolls) animate_icon_roll_in(slot.icon_l1, slot.icon_l2, i * UIAnim::ROLL_STAGGER);
     }
 }

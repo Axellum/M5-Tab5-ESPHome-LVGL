@@ -195,11 +195,16 @@ font:
     bpp: 4
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
 
+  # roboto_45 ne sert QU'À lbl_date (« Jeu 02 Avr »), texte construit par le firmware
+  # (update_clock_date_ui, tab5_anim.cpp : jours abrégés + %02d + clock_month_short_utf8).
+  # 37 glyphes au lieu des 190 Latin-1 (25/09/2026, ≈ 59 Ko de flash) — la règle
+  # « tout Latin-1 » ne vaut que pour le texte poussé par HA. Toucher au format de la
+  # date ou aux tables de jours/mois = recalculer cette liste (glyphe absent = vide).
   - file: gfonts://Roboto@400
     id: roboto_45
     size: 45
     bpp: 4
-    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+    glyphs: ' 0123456789ADFJLMNOSVaceilmnoprstuvéû'
 
   - file: gfonts://Roboto@700
     id: roboto_22
@@ -291,29 +296,15 @@ font:
     size: 36
     bpp: 1
     glyphs: "\U000F036C\U000F0156\U000F062E\U000F07D0\U000F0450\U000F057E\U000F0581\U000F0361\U000F021A\U000F021F\U000F0A71\U000F04DB\U000F048A\U000F0493"
-  - file: "Tab5/materialdesignicons-webfont.ttf"
-    id: mdi_assist_64
-    size: 64
-    bpp: 1
-    glyphs: "\U000F036C\U000F0156\U000F062E\U000F07D0\U000F0450\U000F057E\U000F0581\U000F0361\U000F021A\U000F021F\U000F0A71\U000F04DB\U000F048A\U000F0493"
 
-  - file: "Tab5/IconeMeteo.ttf"
-    id: font_meteo_main
-    size: 270
-    bpp: 4
-    glyphs: "\U0000F000\U0000F001\U0000F002\U0000F003\U0000F004\U0000F005\U0000F006\U0000F007\U0000F00B\U0000F00E\U0000F00F\U0000F015"
-
+  # Icônes météo des tuiles seulement (120 px, calque 2 réduit à 80 px). Les
+  # tailles 270 et 190 px (font_meteo_main / _small) sont retirées le 25/09/2026 :
+  # la grosse icône centrale n'existe plus, ~196 Ko de flash jamais affichés.
   - file: "Tab5/IconeMeteo.ttf"
     id: font_meteo_card
     size: 120
     bpp: 4
     glyphs: "\U0000F000\U0000F001\U0000F002\U0000F003\U0000F004\U0000F005\U0000F006\U0000F007\U0000F00B\U0000F00E\U0000F00F\U0000F015"
-
-  - file: "Tab5/IconeMeteo.ttf"
-    id: font_meteo_main_small
-    size: 190
-    bpp: 4
-    glyphs: "\U0000F00B\U0000F00F"
 
   - file: "Tab5/IconeMeteo.ttf"
     id: font_meteo_card_small
