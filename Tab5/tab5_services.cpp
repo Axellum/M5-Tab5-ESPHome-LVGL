@@ -22,6 +22,42 @@
 #include <map>
 
 // -----------------------------------------------------------------------------
+// Garde anti-rendu des poussées HA (contrat : tab5_custom.h, PushChannel).
+// -----------------------------------------------------------------------------
+
+static uint32_t fnv1a_32(const char* data, size_t len) {
+    uint32_t h = 2166136261u;
+    for (size_t k = 0; k < len; k++) {
+        h ^= static_cast<unsigned char>(data[k]);
+        h *= 16777619u;
+    }
+    return h;
+}
+
+bool push_unchanged(PushChannel ch, const char* data, size_t len) {
+    struct Last {
+        uint32_t hash = 0;
+        uint32_t len = 0;
+        bool seen = false;
+    };
+    static Last s_last[static_cast<int>(PushChannel::COUNT)];
+    const int i = static_cast<int>(ch);
+    if (i < 0 || i >= static_cast<int>(PushChannel::COUNT) || data == nullptr) return false;
+    Last& last = s_last[i];
+    const uint32_t h = fnv1a_32(data, len);
+    const uint32_t n = static_cast<uint32_t>(len);
+    if (last.seen && last.hash == h && last.len == n) return true;
+    last.hash = h;
+    last.len = n;
+    last.seen = true;
+    return false;
+}
+
+bool push_unchanged(PushChannel ch, const std::string& payload) {
+    return push_unchanged(ch, payload.data(), payload.size());
+}
+
+// -----------------------------------------------------------------------------
 // Services HA (tab5-api-logic.yaml) — logique sortie des lambdas le 08/09/2026.
 // Le comportement est celui des anciens lambdas, à l'identique ; seules les
 // gardes contre les pointeurs nuls ont été étendues à chaque widget.

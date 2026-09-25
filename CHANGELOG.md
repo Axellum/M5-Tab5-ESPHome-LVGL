@@ -4,6 +4,36 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Les poussées HA identiques ne redessinent plus l'écran
+
+Lot 3 de l'audit du 25/09/2026 (§3.1, §3.2). Mesuré le matin même : boucle à 66 ms au
+repos, **144 ms** pendant la poussée de 10:50:00, « api took a long time (102 ms) ». Or HA
+repousse tout toutes les 10 min, le plus souvent à l'identique, et en LVGL 9 un setter
+réécrit et invalide même à valeur égale.
+
+- **Garde anti-rendu** (`push_unchanged()`, empreinte FNV-1a 32 bits + longueur par
+  canal) sur les six services qui repeignent : prévisions jours, prévisions heures (par
+  bloc), vigilance, pluie 1 h, alertes HA et bandeau info. Pour ces deux derniers,
+  l'empreinte inclut les acquittements locaux (`tab5_dismissed_local`), sinon un tap sur
+  la dalle suivi d'un push identique n'aurait pas été repeint. Les drapeaux (`has_rain`,
+  `has_alerts`…) gardent leur valeur quand le push est ignoré. Le réveil n'en souffre pas :
+  les quinze jours changent au moins une fois par jour (libellés décalés), la date
+  d'ancrage suit.
+- **Prévisions : on ne repeint que le calque à l'écran.** Les tuiles journalières étaient
+  repeintes sur les pages horaires (calque masqué), et chacun des TROIS blocs horaires
+  repeignait les cinq tuiles de la page affichée — trois fois par push, calque masqué
+  compris. `accept_heures_bulk()` ne repeint que si le bloc reçu est celui de la page
+  affichée ; `apply_forecast_page()` repeint déjà depuis les données au changement de page.
+- **Deux appels horaires au lieu de trois** (prod HA, exemple public, copie privée, mode
+  démo) : l'écran n'a que deux pages horaires (créneaux 0-9) ; le bloc 10-14 était analysé
+  à chaque cycle mais jamais lu. Le firmware l'accepte toujours (contrat inchangé).
+- **Plus de battement `interval: 5min`** : `esphome.tab5_connected` part au boot (on_boot,
+  inchangé) et à chaque **reconnexion de Home Assistant** (`api: on_client_connected`,
+  filtré sur `client_info` « Home Assistant », après `boot_complete`, 2 s puis
+  `api.connected: state_subscription_only`) — `esphome logs` ne relance plus le push.
+- Rotateur central : pas de rotation sous un popup ouvert (la bande repeinte toutes les
+  8 s sous le voile semi-transparent).
+
 ### 2026-09-25 — Réveil daté, carte centrale sans superpositions
 
 Lot 2 de l'audit du 25/09/2026 (§2.2 et §2.4), sans les dames (reportées : l'IA ne joue

@@ -232,15 +232,12 @@ esphome:
                     t_now.day_of_week, t_now.day_of_month, t_now.month);
             }
 
-interval:
-  - interval: 5min
-    then:
-      - if:
-          condition:
-            api.connected:
-          then:
-            - homeassistant.event:
-                event: esphome.tab5_connected
+# Plus de battement `interval: 5min` qui réémettait esphome.tab5_connected (retiré le
+# 25/09/2026, audit lot 3) : il relançait la chaîne complète côté HA sans raison, ou
+# finissait en « Already running » (×1 627 en 6 jours). L'événement part désormais au
+# boot (on_boot ci-dessus) et à chaque RECONNEXION de Home Assistant (api:
+# on_client_connected, tab5-api-logic.yaml) — les deux seuls cas où l'écran a besoin
+# d'un push complet ; le cycle /10 min côté HA couvre le reste.
 
 # Plus d'images! image: !include supprimé au profit des polices C++ vectorielles LVGL
 

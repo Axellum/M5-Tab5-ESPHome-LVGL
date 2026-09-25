@@ -298,7 +298,7 @@
           {% else %}
 
           {% endif %}
-    # ====== 8. PREVISIONS HORAIRES (BULK - 3 chunks de 5 via repeat) ======
+    # ====== 8. PREVISIONS HORAIRES (BULK - 2 chunks de 5 via repeat) ======
     - action: weather.get_forecasts
       continue_on_error: true
       data:
@@ -306,10 +306,12 @@
       target:
         entity_id: weather.VOTRE_VILLE
       response_variable: hourly_var_tab5
-    # 3 chunks de 5 créneaux (0-4, 5-9, 10-14) — l'ancienne triple copie du même
-    # bloc ne différait que par les bornes range() (#3). base = (repeat.index-1)*5.
+    # 2 chunks de 5 créneaux (0-4, 5-9) — l'ancienne triple copie du même bloc ne
+    # différait que par les bornes range() (#3). base = (repeat.index-1)*5.
+    # 2 et non plus 3 (25/09/2026) : l'écran n'a que deux pages horaires (créneaux
+    # 0-9) ; le bloc 10-14 était analysé à chaque cycle mais jamais affiché.
     - repeat:
-        count: 3
+        count: 2
         sequence:
           - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk
             continue_on_error: true
@@ -339,7 +341,7 @@
           - if:
               condition:
                 - condition: template
-                  value_template: "{{ repeat.index < 3 }}"
+                  value_template: "{{ repeat.index < 2 }}"
             then:
               - delay: "00:00:01"
 

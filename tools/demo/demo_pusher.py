@@ -75,8 +75,8 @@ def _dry_run() -> None:
         print("tab5_maj_probabilites:", scene.probabilites)
         print("tab5_maj_alerte_meteo_france:", build_alerte_payload(**scene.alerte))
         print("tab5_maj_pluie_1h_bulk:", build_pluie_1h_bulk_payload(scene.pluie_1h))
-        print("tab5_maj_previsions_heures_bulk (3 appels):")
-        for debut in (0, 5, 10):
+        print("tab5_maj_previsions_heures_bulk (2 appels):")
+        for debut in (0, 5):
             print("  -", build_heures_bulk_payload(scene.heures[debut:debut + 5]))
         print("tab5_maj_previsions_jours_bulk:", build_jours_bulk_payload(scene.jours))
         print("tab5_maj_clim:", scene.clim)
@@ -124,7 +124,9 @@ async def _pousser_scene(client, services_par_nom: dict, scene) -> None:
     await appeler("tab5_maj_pluie_1h_bulk", payload=build_pluie_1h_bulk_payload(scene.pluie_1h))
     await asyncio.sleep(DELAI_ENTRE_BLOCS)
 
-    for debut in (0, 5, 10):
+    # Deux blocs comme la prod depuis le 25/09/2026 : l'écran n'affiche que les
+    # créneaux 0-9 (deux pages horaires), le bloc 10-14 n'était jamais peint.
+    for debut in (0, 5):
         payload = build_heures_bulk_payload(scene.heures[debut:debut + 5])
         await appeler("tab5_maj_previsions_heures_bulk", payload=payload)
         await asyncio.sleep(DELAI_BOUCLE_HEURES)
