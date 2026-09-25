@@ -145,14 +145,22 @@ esphome:
             volume: 1.0
         # Allumer l'ampli APRES le media_player pour eviter le bruit I2S
         - switch.turn_on: speaker_enable
+        # Attendre Home Assistant lui-même, abonné aux états : `api.connected` nu
+        # s'ouvre au premier client venu (HA à peine connecté, ou `esphome logs`),
+        # et l'événement partait alors avant l'abonnement de HA — perdu 2 boots sur 3
+        # le 25/09/2026 (écran sans agenda ni météo jusqu'au cycle HA /10 min, réveil
+        # en repli sur l'heure fixe). Même garde + 2 s que on_client_connected
+        # (tab5-api-logic.yaml), qui ne tire pas au boot (boot_complete encore faux).
         - wait_until:
             condition:
               api.connected:
+                state_subscription_only: true
             timeout: 30s
-        - delay: 500ms
+        - delay: 2s
         - if:
             condition:
               api.connected:
+                state_subscription_only: true
             then:
               - homeassistant.event:
                   event: esphome.tab5_connected
