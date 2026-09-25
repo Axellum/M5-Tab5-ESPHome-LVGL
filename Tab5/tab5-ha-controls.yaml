@@ -44,7 +44,12 @@ number:
 
 text_sensor:
   # Écran réellement affiché. Utile à distance : savoir si la tablette est restée
-  # sur un popup, ou sur quel panneau du rotateur central elle en est.
+  # sur un popup, dans un jeu ou sur l'accueil.
+  # Publié SEULEMENT quand il change (audit du 25/09/2026, lot 3 bis) : avant, la
+  # même valeur partait toutes les 5 s, et le panneau du rotateur central (planning,
+  # pluie, vigilance, info, alertes, 8 s chacun) en faisait ≈ 10 700 lignes par jour
+  # en base. L'accueil est donc « Accueil » tout court. HA reçoit quand même l'état
+  # courant à chaque reconnexion (ESPHome le renvoie à l'abonnement).
   - platform: template
     id: tab5_screen_name
     name: "Écran courant"
@@ -52,6 +57,8 @@ text_sensor:
     entity_category: diagnostic
     update_interval: 5s
     lambda: |-
+      static std::string last;
+      std::string name;
       // D'ABORD la page LVGL : les popups sont des enfants de `page_main` et le
       // sélecteur Arcade est le widget RACINE de `page_arcade` — il n'a donc
       // jamais le flag HIDDEN. Les tester sans regarder la page affichée
@@ -59,26 +66,19 @@ text_sensor:
       // masquerait un jeu en cours.
       if (!id(page_main)->is_showing()) {
         const char* game = GameRegistry::open_name();
-        if (game != nullptr) return {std::string("Jeu · ") + game};
-        return {std::string("Arcade")};
+        name = (game != nullptr) ? std::string("Jeu · ") + game : std::string("Arcade");
+      } else {
+        // Ordre = priorité d'affichage : les popups couvrent le dashboard, on
+        // nomme donc le premier visible. C'est l'ordre d'enregistrement de
+        // tab5_modal_registry_init (tab5-scripts.yaml), sonnerie du réveil en
+        // tête : c'est le seul calque qui couvre aussi les fenêtres modales.
+        id(tab5_modal_registry_init).execute();
+        const char* modal = ModalRegistry::visible_name();
+        name = (modal != nullptr) ? std::string(modal) : std::string("Accueil");
       }
-
-      // Ordre = priorité d'affichage : les popups couvrent le dashboard, on
-      // nomme donc le premier visible. C'est l'ordre d'enregistrement de
-      // tab5_modal_registry_init (tab5-scripts.yaml), sonnerie du réveil en
-      // tête : c'est le seul calque qui couvre aussi les fenêtres modales.
-      id(tab5_modal_registry_init).execute();
-      const char* modal = ModalRegistry::visible_name();
-      if (modal != nullptr) return {std::string(modal)};
-      // Rien par-dessus : on nomme le panneau du rotateur central (8 s).
-      // Indices figés par update_central_panel_rotation (tab5_custom.h) :
-      // 0 planning, 1 pluie, 2 vigilance Météo-France, 3 info, 4-7 alertes HA.
-      const int p = id(current_central_panel);
-      if (p == 1) return {std::string("Accueil · Pluie")};
-      if (p == 2) return {std::string("Accueil · Vigilance météo")};
-      if (p == 3) return {std::string("Accueil · Info")};
-      if (p >= 4 && p <= 7) return {std::string("Accueil · Alerte HA")};
-      return {std::string("Accueil · Planning")};
+      if (name == last) return {};
+      last = name;
+      return name;
 
 select:
   # Commande d'ouverture à distance, PAS un miroir de l'état (c'est le rôle du
