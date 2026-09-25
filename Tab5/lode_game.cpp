@@ -1427,10 +1427,13 @@ static void record_score() {
     e.flags = g_offrank ? 1 : 0;
     e.speed = g_save.speed;   // le bonus de temps depend du rythme : on le trace
 
-    if (topn_insert(g_save.scores, g_save.score_count, e) < 0) return;
-
-    if (!g_offrank && g_score > g_save.best) g_save.best = g_score;
-    persist_save();
+    // Le record se juge à part du top 10 : quand des parties hors concours occupent
+    // les dix places, un score classé qui n'y entre pas peut quand même battre le
+    // record.
+    const bool ranked = topn_insert(g_save.scores, g_save.score_count, e) >= 0;
+    const bool new_best = !g_offrank && g_score > g_save.best;
+    if (new_best) g_save.best = g_score;
+    if (ranked || new_best) persist_save();
 }
 
 static void show_clear() {

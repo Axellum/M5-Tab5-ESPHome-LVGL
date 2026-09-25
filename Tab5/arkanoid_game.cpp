@@ -373,6 +373,12 @@ void persist_load() {
         g_save.ctrl_mode = 2;      // défaut : les deux
         g_save.sensitivity = 2;    // défaut : médian
     }
+    // Le magic ne garantit pas les champs : une sauvegarde abîmée garde le bon en-tête.
+    // score_count > 10 ferait lire topn_insert() hors du tableau des scores ; un
+    // ctrl_mode hors 0..2 laisserait la raquette sans aucune commande.
+    if (g_save.score_count > ARK_MAX_SCORES) g_save.score_count = 0;
+    if (g_save.ctrl_mode > 2) g_save.ctrl_mode = 2;
+    if (g_save.sensitivity > 4) g_save.sensitivity = 2;
 }
 
 void persist_save() {
