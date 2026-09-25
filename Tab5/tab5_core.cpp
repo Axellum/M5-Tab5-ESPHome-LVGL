@@ -57,6 +57,21 @@ int32_t local_day_number_today() {
     return days_from_civil(t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
 }
 
+// Case de cal_jours_data[] qui correspond à J+offset (offset compté depuis
+// AUJOURD'HUI), -1 si ce jour n'est pas couvert. Les données sont datées par
+// cal_jours_anchor_day (jour local du dernier push) : HA muet depuis hier soir,
+// aujourd'hui est la case 1 et non la case 0 — sans ce recalage, le réveil
+// appliquait le planning de la veille (embauche ratée ou sonnerie un jour de repos,
+// audit du 25/09/2026, §2.2) et le planning de la carte centrale l'affichait sous
+// « Auj. ». Partagée par alarm_clock.cpp et tab5_services.cpp. Au-delà de 14 jours sans push, plus rien n'est couvert.
+int cal_index_for_offset(int offset) {
+  if (offset < 0 || cal_jours_anchor_day < 0) return -1;
+  const int32_t today = local_day_number_today();
+  if (today < 0) return -1;
+  const int32_t idx = static_cast<int32_t>(offset) + (today - cal_jours_anchor_day);
+  return (idx >= 0 && idx < 15) ? static_cast<int>(idx) : -1;
+}
+
 // ─── Noms de jours et de mois : les SEULES tables du projet (lot 8d, 25/09/2026) ───
 // Avant, sept tables recopiées dans cinq fichiers (horloge, services, calendrier…)
 // pouvaient diverger d'orthographe. Chaque appelant garde son format (« Dim »,
