@@ -38,6 +38,7 @@ State state();
 bool  ready();                 // true si AI_DONE
 const Engine::Move& best();    // coup choisi (valide si ready)
 void  abort();                 // annule (undo / fermeture)
+void  release();               // abort() + rend les listes de coups (fermeture du jeu)
 
 }  // namespace Ai
 }  // namespace Draughts
