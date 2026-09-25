@@ -43,11 +43,15 @@ jobs:
       - id: filter
         uses: dorny/paths-filter@v4
         with:
+          # Inclus si un motif positif correspond ET aucun motif `!` : une PR
+          # qui ne touche que Tab5/README.md ne recompile plus le firmware.
+          predicate-quantifier: some-with-excludes
           filters: |
             firmware:
               - 'tab5-ha-hmi.yaml'
               - 'Tab5/**'
               - '.github/workflows/esphome-tab5.yml'
+              - '!**/*.md'
 
   python:
     runs-on: ubuntu-latest
@@ -102,11 +106,46 @@ jobs:
           wifi_ap_password: "CI_DUMMY_AP_PASSWORD"
           api_encryption_key: "26IVe/bZ/aI+T8G96D7aYZlM2EH8QUG8JtsZ50HxaCE="
           EOF
+      # ccache est déjà actif dans le conteneur ESPHome (« ccache will be used for
+      # faster recompilation » dans le log), mais son cache mourait avec le
+      # runner : ~2 000 objets ESP-IDF/LVGL/composants recompilés à chaque run
+      # (8 min 20 s sur 10 min le 25/09/2026). build-action transmet CCACHE_DIR
+      # au conteneur et monte $HOME au même chemin : un dossier sous
+      # runner.temp est donc le même dedans et dehors. Clé unique par run ; la
+      # restauration prend le plus récent (celui de la branche, sinon de main).
+      - name: Cache ccache (objets de la compilation précédente)
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/ccache
+          key: ccache-esp32p4-${{ github.run_id }}
+          restore-keys: ccache-esp32p4-
+      - name: Configuration ccache
+        # CCACHE_DIR exporté pour tout le reste du job (dont les steps internes de
+        # build-action). compiler_check = content : la toolchain est réinstallée
+        # à chaque run, son mtime ne doit pas invalider tout le cache.
+        run: |
+          echo "CCACHE_DIR=$RUNNER_TEMP/ccache" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/ccache"
+          printf 'max_size = 2G\ncompiler_check = content\n' > "$RUNNER_TEMP/ccache/ccache.conf"
       - name: Build ESPHome Firmware
         id: esphome-build
         uses: esphome/build-action@v8.1.0
         with:
           yaml-file: tab5-ha-hmi.yaml
+      - name: Statistiques ccache
+        # Diagnostic seulement : ne doit jamais faire échouer le check requis.
+        # Remises à zéro après lecture : le run suivant n'affiche que les siennes.
+        if: always()
+        continue-on-error: true
+        run: |
+          ccache_run() {
+            docker run --rm --entrypoint ccache --user "$(id -u):$(id -g)" \
+              -e CCACHE_DIR -v "$HOME:$HOME" ghcr.io/esphome/esphome:latest "$@"
+          }
+          stats=$(ccache_run --show-stats)
+          echo "$stats"
+          printf '### ccache\n```\n%s\n```\n' "$stats" >> "$GITHUB_STEP_SUMMARY"
+          ccache_run --zero-stats >/dev/null
       - name: Upload Artifact
         # Le binaire n'a d'usage que pour un push sur main (ou un lancement
         # manuel) : inutile d'en stocker un par commit de branche.

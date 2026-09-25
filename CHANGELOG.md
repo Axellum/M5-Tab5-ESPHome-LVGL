@@ -4,6 +4,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — CI : cache ccache entre deux compilations, docs du Tab5 sans recompilation
+
+Suite du lot 6. Le job `build` durait ~10 min, dont **8 min 20 s de compilation pure**
+(2 055 cibles ninja sur les 4 cœurs du runner) ; le reste est fixe (image Docker 18 s,
+ESP-IDF 40 s, CMake 27 s, génération et `idedata` ≈ 40 s).
+
+- **Cache ccache conservé d'un run à l'autre** (`actions/cache`, clé par run, restauration
+  du plus récent). ccache tournait déjà dans le conteneur ESPHome, mais son dossier
+  disparaissait avec le runner : les ~2 000 objets ESP-IDF, LVGL et composants, identiques
+  d'un commit à l'autre, étaient recompilés à chaque fois. L'heure de build vit dans
+  `build_info_data.*` (aucun `-D` horodaté dans les 1 945 unités de `compile_commands.json`
+  local) : elle n'invalide pas le cache. `compiler_check = content`, puisque la toolchain
+  est réinstallée à chaque run. Les statistiques ccache s'affichent dans le résumé du job.
+- **Une PR qui ne touche que `Tab5/README.md` ne recompile plus** : filtre
+  `predicate-quantifier: some-with-excludes` + `!**/*.md` (sémantique vérifiée dans le code
+  de `dorny/paths-filter@v4` et avec picomatch 2.3).
+
 ### 2026-09-25 — CI : l'artefact firmware revient, les garde-fous couvrent enfin les fichiers publics
 
 Lot 6 de l'audit du 25/09/2026 (§8, CI). Aucun changement de firmware.
