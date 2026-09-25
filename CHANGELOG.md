@@ -4,6 +4,20 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Compilation : plus aucun avertissement dans notre code en -O2
+
+Le passage en `compiler_optimization: PERF` (#149) fait analyser les formats plus finement.
+Trois avertissements `-Wformat-truncation` / `-Wstringop-truncation` sont apparus dans notre
+code. Les PR #149 et #150 annonçaient « aucun avertissement » à tort : leurs compilations ne
+filtraient que les erreurs.
+
+- `alarm_hhmm()` (`alarm_clock.cpp`) : minutes bornées à une journée, champs non signés.
+- `sq_name()` (`go_game.cpp`) : numéro de rangée borné.
+- `push_hist()` (`draughts_game.cpp`) : `memcpy` de même taille au lieu d'un `strncpy`
+  tronquant.
+- Sorties identiques pour toutes les valeurs valides. Vérifié par une recompilation forcée de
+  tous nos fichiers C++ et de `main.cpp` : 0 avertissement.
+
 ### 2026-09-26 — Dames : triple répétition, fins de partie réduites, raison de la nulle
 
 Suite de #146 (règle des 25 coups). Règles FMJD (celles de lidraughts) ; le texte FFJD dit
@@ -22,6 +36,7 @@ contre une ».
 - **Écran de fin** : une nulle affiche sa raison (« 25 coups sans pion ni prise »,
   « Position repetee 3 fois », « Fin de partie : 5/16 coups chacun »).
 - Miroir Python (`tools/test_draughts_engine.py`) : deux tests des fins de partie réduites.
+
 ### 2026-09-25 — « Écran courant » : publié seulement quand il change
 
 Lot 3 bis de l'audit du 25/09/2026 (§3.1). Le capteur partait toutes les 5 s vers HA, même
