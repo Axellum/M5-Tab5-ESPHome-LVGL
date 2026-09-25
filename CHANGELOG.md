@@ -14,7 +14,7 @@ Point 2.1 de l'audit du 25/09/2026 (« l'IA ne joue jamais son coup, niveau Amat
   de 42 Ko alloué au premier coup réfléchi (RAM interne, PSRAM en repli) et rendu à la
   fermeture du jeu. `has_legal_move` n'a plus besoin de liste : un coup trouvé suffit.
   Réservations relevées dans le binaire : `negamax` 5 008 → 192 o, `quiescence`
-  4 976 → 176 o, `has_legal_move` 4 720 → 96 o, `eval_full` 4 720 → 32 o.
+  4 976 → 176 o, `has_legal_move` 4 720 → 80 o, `eval_full` 4 720 → 32 o.
 - **Réflexion sans fin** : le budget de nœuds d'une tranche s'appliquait coup racine par
   coup racine, et un coup dont le sous-arbre dépassait ce budget était repris de zéro à
   chaque tranche, à l'identique. Le niveau Expert pouvait ainsi réfléchir indéfiniment
