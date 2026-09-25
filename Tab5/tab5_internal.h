@@ -17,8 +17,7 @@ std::string normalize_text_utf8(const std::string& in);
 // Bandeau de vigilance selon la couleur Météo-France (« Vert », « Orange »…).
 const char* vigilance_alert_banner_utf8(const std::string& couleur);
 // Libellés de jour relatifs à aujourd'hui (offset en jours) : « Mer 09 » / « mercredi 9 septembre ».
-std::string format_short_day_label(int jour_offset);
-std::string format_long_day_label(int jour_offset);
+// format_short_day_label / format_long_day_label : tab5_core.h (logique pure).
 // Vrai seulement si le texte contient un markup recolor LVGL #RRGGBB (évite les faux positifs sur un '#' isolé).
 bool has_lvgl_recolor_markup(const std::string& t);
 // Pose un texte sur un label en activant le recolor LVGL seulement s'il contient du #RRGGBB.

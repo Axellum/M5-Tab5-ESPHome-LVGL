@@ -12,62 +12,12 @@
 #pragma once
 #include "esphome.h"
 #include "tab5_tokens.h"
+#include "tab5_core.h"
 #include <string>
 #include <vector>
 
-struct DayForecastData {
-    std::string nom_jour;
-    std::string condition;
-    float tmin = 0.0f;
-    float tmax = 0.0f;
-    bool est_repos = false;
-    bool est_dimanche = false;
-    bool est_passe = false;
-    std::string heures_ouverture;
-};
-
-struct HourForecastData {
-    std::string heure_texte;
-    std::string condition;
-    float temp = 0.0f;
-    float pluvio = 0.0f;
-};
-
-extern DayForecastData cal_jours_data[15];
-extern HourForecastData cal_heures_data[15];
-
-// Jour local (numéro de jour civil, cf. local_day_number_today) auquel correspond
-// cal_jours_data[0], posé par parse_and_update_jours_bulk() au moment du push ;
-// -1 tant qu'aucun push n'a été reçu avec l'heure synchronisée. Sans lui, la case 0
-// était « aujourd'hui » quel que soit l'âge des données : HA muet depuis minuit, le
-// réveil appliquait le planning de la veille (audit du 25/09/2026, §2.2).
-extern int32_t cal_jours_anchor_day;
-
-// Embauche "tôt" = heure de début < 9h (même seuil partout : tuiles, popup, bandeau).
-bool cal_is_early_shift(const std::string& heures_hhmm_hhmm);
-
-// Date locale à J+jour_offset (0-14) via l'heure système SNTP, normalisée à midi
-// par mktime() : immunisé contre les bascules heure d'été/hiver (une journée de
-// 23 h ou 25 h décalerait la date d'un jour près de minuit). Renvoie false si
-// l'heure n'est pas encore synchronisée ou si l'offset est hors bornes.
-// Partagé avec alarm_clock.cpp (calcul de la prochaine sonnerie) — c'était un
-// `static` de tab5_custom.cpp jusqu'au 05/08/2026 : le réveil DOIT utiliser
-// exactement la même arithmétique de dates que les tuiles météo, sinon les deux
-// divergent d'un jour deux fois par an.
-bool local_day_from_offset(int jour_offset, struct tm& out);
-
-// Numéro du jour civil local d'aujourd'hui (jours depuis le 01/01/1970 dans le
-// calendrier local, pas une division d'epoch : insensible aux jours de 23 h/25 h).
-// -1 si l'heure SNTP n'est pas encore synchronisée. Deux valeurs se soustraient
-// pour obtenir un écart en jours (cf. cal_jours_anchor_day).
-int32_t local_day_number_today();
-
-// Jours et mois en toutes lettres, UTF-8, minuscules (en français ils ne
-// prennent pas de majuscule hors début de phrase). wday : 0 = dimanche.
-// Partagés avec alarm_clock.cpp (« demain, mercredi 6 août ») — une seule table
-// pour tout le projet, sinon deux orthographes finissent par diverger.
-const char* fr_day_long_utf8(int wday);
-const char* fr_month_long_utf8(int mois_1_12);
+// Données calendrier/prévisions, dates locales, jours et mois en toutes lettres :
+// logique PURE, déclarée dans tab5_core.h (compilable et testable sur PC).
 namespace esphome { namespace font { class Font; } }
 // Icône météo d'une tuile (police 120 px, 80 px pour le petit calque 2).
 void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, esphome::font::Font* f_card, esphome::font::Font* f_card_s);

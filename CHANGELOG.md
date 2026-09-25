@@ -4,6 +4,38 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Réveil : moteur testé sur PC, dates et données calendrier dans un noyau pur
+
+Lot 8b de l'audit du 25/09/2026 (§6, §7 : « le plus rentable, le moteur du réveil »).
+Aucun changement de comportement.
+
+- **`tools/test_alarm_clock.cpp`** : le vrai moteur (`alarm_clock.cpp` + `tab5_core.cpp`)
+  compilé par g++ et exécuté en CI, horloge simulée, fuseau Europe/Paris. 13 scénarios :
+  heure fixe et jours cochés, sonnerie consommée une seule fois, répétition puis arrêt,
+  fenêtre de grâce au démarrage, réglage posé dans le passé, mode embauche (délai, bornes,
+  horaire inconnu), repos minimum après une fermeture tardive, calendrier daté par son jour
+  d'ancrage (non-régression du bug §2.2), repos silencieux ou à heure fixe, calendrier
+  absent ou périmé, nuits de changement d'heure (8 h et 10 h réelles entre 22:00 et 07:00),
+  rendez-vous (annonce unique, appariement par epoch, entrées illisibles).
+- **`Tab5/tab5_core.h/.cpp`** : logique pure partagée par le HMI et le réveil —
+  `DayForecastData`, `cal_jours_data[]`, `local_day_from_offset()`,
+  `local_day_number_today()`, jours et mois en toutes lettres, titres de jour. Déplacés
+  tels quels de `tab5_custom.h` / `tab5_text.cpp` ; l'heure passe par `tab5_time_source`
+  (par défaut `time`) pour que le test fixe « maintenant ». `tab5_custom.h` l'inclut.
+- **`Tab5/alarm_render.h/.cpp`** : le rendu LVGL du réveil sort d'`alarm_clock.cpp`, qui
+  n'inclut plus ni ESPHome ni LVGL (vérifié par `-fsyntax-only` avec `-I Tab5` seul).
+  `hhmm()` devient `alarm_hhmm()` (partagée avec le rendu) ; `alarm_reset_state()` remet le
+  moteur à l'état du démarrage pour les tests (écartée du binaire par l'éditeur de liens).
+- Règle 7 de `check_tab5_code_rules.py` : les trois fonctions du réveil qui posent une icône
+  sont repointées vers `alarm_render.cpp` dans `MDI_CODE_TARGETS` — la règle avait signalé le
+  déménagement, comme prévu.
+
+Firmware : 0 warning, RAM 258 378 o (identique), flash 2 844 970 → 2 845 224 o (**+254**) —
+comparé symbole par symbole : deux instanciations de `std::string` recopiées dans la
+nouvelle unité `tab5_core.cpp` (≈ 190 o), l'inlining qui change d'une unité à l'autre
+(`cal_is_early_shift`, `set_label_text_utf8`…) et le pointeur `tab5_time_source` (4 o).
+Aucune fonction du moteur ne change de logique. `config_hash` 0x82dc12d5 (liste `includes:`).
+
 ### 2026-09-25 — Firmware : jetons sans dépendance, les jeux ne recompilent plus avec le HMI, code mort retiré
 
 Lot 8a de l'audit du 25/09/2026 (§6, organisation). Aucun changement de comportement.

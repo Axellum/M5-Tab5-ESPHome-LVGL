@@ -282,9 +282,9 @@ RE_CPP_FUNC = re.compile(r"^[A-Za-z_][\w:<>,*&\s]*?\b(\w+)\s*\([^;]*$")
 # widgets qui les affichent (motifs fnmatch sur les ids YAML). Une icône posée
 # depuis une fonction absente d'ici fait échouer la règle 7 : l'ajouter.
 MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
-    ("alarm_clock.cpp", "alarm_render_settings"): ("icon_alarm_enable",),
-    ("alarm_clock.cpp", "alarm_ring_show"): ("icon_alarm_ring",),
-    ("alarm_clock.cpp", "alarm_render_status_icon"): ("icon_alarm_status",),
+    ("alarm_render.cpp", "alarm_render_settings"): ("icon_alarm_enable",),
+    ("alarm_render.cpp", "alarm_ring_show"): ("icon_alarm_ring",),
+    ("alarm_render.cpp", "alarm_render_status_icon"): ("icon_alarm_status",),
     ("tab5_calendar.cpp", "cal_detail_type_style"): ("cal_det_icon_*",),
     ("tab5_cards.cpp", "update_light_card_ui"): ("icon_card_light_j*",),
     ("tab5_console.cpp", "ui_sync_mute_icons"): ("icon_mute", "icon_assist_mute"),

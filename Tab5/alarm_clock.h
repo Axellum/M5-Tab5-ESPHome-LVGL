@@ -5,12 +5,14 @@
  *       calendrier, machine d'état) : aucun `id()` ESPHome, aucun appel réseau.
  *       Les entités exposées à Home Assistant et les scripts vivent dans
  *       Tab5/tab5-alarm.yaml ; le rendu LVGL des deux fenêtres dans
- *       ui_components/alarm_popup.yaml et alarm_ring_overlay.yaml.
+ *       ui_components/alarm_popup.yaml et alarm_ring_overlay.yaml, peints par
+ *       alarm_render.h/.cpp. Aucun include ESPHome ni LVGL ici : le moteur se
+ *       compile sur PC (tools/test_alarm_clock.cpp, g++ en CI — lot 8b).
  *
  * @architecture_constraint Le réveil doit sonner SANS Home Assistant. Tout ce
  *       dont il a besoin est déjà local : l'heure vient de SNTP, les horaires de
  *       travail des 15 prochains jours sont dans `cal_jours_data[]`
- *       (tab5_custom.h, poussé par HA toutes les 10 min et mis en cache), et la
+ *       (tab5_core.h, poussé par HA toutes les 10 min et mis en cache), et la
  *       sonnerie est une mélodie RTTTL synthétisée sur l'appareil. HA n'ajoute
  *       que du confort (annonce parlée, sonnerie personnalisée par URL).
  *
@@ -21,11 +23,13 @@
  *       (bascule heure d'été, resynchro SNTP).
  *
  * @ai_instruction Ne JAMAIS recopier ici l'arithmétique de dates : utiliser
- *       `local_day_from_offset()` de tab5_custom.h, qui est la seule version
+ *       `local_day_from_offset()` de tab5_core.h, qui est la seule version
  *       correcte vis-à-vis des bascules heure d'été/hiver.
  */
 #pragma once
-#include "esphome.h"
+#include <cstddef>
+#include <cstdint>
+#include <ctime>
 #include <string>
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -113,6 +117,11 @@ void alarm_dismiss(time_t now);
 uint32_t alarm_skip_floor();
 void alarm_set_skip_floor(uint32_t v);
 
+// Remet le moteur dans l'état du démarrage (cache, plancher, snooze, dernier
+// tick). Pour les tests hôte (tools/test_alarm_clock.cpp) : le firmware ne
+// l'appelle pas, l'éditeur de liens l'écarte du binaire.
+void alarm_reset_state();
+
 // true dès que Home Assistant a poussé au moins un lot de prévisions/horaires
 // (`cal_jours_data[]` rempli) ET que ce lot couvre encore aujourd'hui : les cases
 // sont datées par `cal_jours_anchor_day` (jour local du push) et relues avec le
@@ -185,59 +194,5 @@ bool rdv_due(time_t now, int lead_min, std::string& out_screen, std::string& out
 // « 14:30 · Dentiste » du prochain rendez-vous non passé, "" s'il n'y en a pas.
 std::string rdv_next_label(time_t now);
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Rendu LVGL — les pointeurs sont injectés par les scripts YAML (seuls capables
-// de faire `id(...)`), comme CalCellUI / HaAlertSlotUI.
-// ═══════════════════════════════════════════════════════════════════════════
-struct AlarmSettingsUI {
-  lv_obj_t* btn_enable;      // grande bascule « Réveil »
-  lv_obj_t* icon_enable;
-  lv_obj_t* lbl_enable;
-  lv_obj_t* lbl_time;        // « 05:15 » (roboto_55_b)
-  lv_obj_t* day_btn[7];      // chips L M M J V S D
-  lv_obj_t* day_lbl[7];
-  lv_obj_t* mode_btn[AlarmMode::COUNT];
-  lv_obj_t* lbl_mode_hint;   // phrase qui explique le mode retenu
-  lv_obj_t* lbl_lead;        // « 90 min »
-  lv_obj_t* lbl_early;       // « 05:00 »
-  lv_obj_t* lbl_late;        // « 09:00 »
-  lv_obj_t* lbl_rest;        // « 11 h » / « — »
-  lv_obj_t* btn_repos;       // bascule « jour de repos : sonner quand même »
-  lv_obj_t* lbl_repos;
-  lv_obj_t* lbl_next;        // « Demain 05:15 »
-  lv_obj_t* lbl_next_sub;    // « mercredi 6 août · Travail 06:45 – 15:30 »
-  lv_obj_t* lbl_melody;
-  lv_obj_t* lbl_vol;
-  lv_obj_t* slider_vol;
-  lv_obj_t* btn_cresc;
-  lv_obj_t* lbl_cresc;
-  lv_obj_t* lbl_snooze;
-  lv_obj_t* lbl_maxring;
-  lv_obj_t* btn_tts;
-  lv_obj_t* lbl_tts;
-  lv_obj_t* btn_rdv;
-  lv_obj_t* lbl_rdv;
-  lv_obj_t* lbl_rdv_lead;
-  lv_obj_t* lbl_rdv_next;
-};
-
-// Repeint TOUT le popup depuis `g_alarm_cfg` + les 5 valeurs qui vivent dans des
-// entités ESPHome (le C++ ne peut pas les lire lui-même).
-void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, int melody_idx,
-                           float volume, bool crescendo, bool tts_on, bool rdv_on,
-                           int rdv_lead_min);
-
-struct AlarmRingUI {
-  lv_obj_t* root;       // calque plein écran
-  lv_obj_t* icon;       // cloche
-  lv_obj_t* lbl_time;   // heure courante en très gros
-  lv_obj_t* lbl_title;  // « Réveil » / « Répétition 2 »
-  lv_obj_t* lbl_sub;    // « mercredi 6 août · Travail 06:45 – 15:30 »
-  lv_obj_t* lbl_snooze; // libellé du bouton répéter (« Répéter · 9 min »)
-};
-void alarm_ring_show(const AlarmRingUI& ui, time_t now, const std::string& sub);
-void alarm_ring_refresh(const AlarmRingUI& ui, time_t now, int snooze_min, int snooze_count);
-void alarm_ring_hide(const AlarmRingUI& ui);
-
-// Icône + couleur de la pastille réveil de la barre d'état (tab5-lvgl.yaml).
-void alarm_render_status_icon(lv_obj_t* icon, time_t now);
+// « 07:05 » : minutes depuis minuit → HH:MM (partagé avec le rendu).
+void alarm_hhmm(int minute_of_day, char* out, size_t n);
