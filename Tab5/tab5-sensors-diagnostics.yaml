@@ -220,9 +220,15 @@ interval:
 lvgl:
   on_draw_start:
     - lambda: 'id(draw_t0_us) = micros();'
+  # LV_EVENT_REFR_READY part à CHAQUE passage du timer de rafraîchissement, même
+  # sans rien à redessiner (lv_refr.c : `goto refr_finish`) : sans l'appariement
+  # avec un début de dessin, on mesurait le temps écoulé depuis la dernière image
+  # (2,5 à 4,5 s au repos, relevé le 25/09 sur la première version).
   on_draw_end:
     - lambda: |-
+        if (id(draw_t0_us) == 0) return;
         const uint32_t d = micros() - id(draw_t0_us);
+        id(draw_t0_us) = 0;
         if (d > id(draw_max_us)) id(draw_max_us) = d;
 
 globals:
