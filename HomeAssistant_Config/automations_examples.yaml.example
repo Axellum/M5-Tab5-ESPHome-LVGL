@@ -36,8 +36,14 @@
     # Ni sur climate.VOTRE_CLIMATISATION (retiré le 21/07/2026) : la clim a son
     # automation dédiée `tab5_ha_hmi_clim_push` (plus bas), sans les ~5,5 s de
     # delays de celle-ci — elle reste poussée ici par le cycle /10 min (bloc 6).
+    # `to: ~` (25/09/2026) : état seulement, attributs ignorés. Sans lui, ce
+    # déclencheur partait à CHAQUE rafraîchissement Météo-France (toutes les
+    # 5 min, attribut `1_hour_forecast`) alors que l'état restait `unknown` —
+    # trace du 25/09 : from `unknown` to `unknown` — et relançait toute la
+    # chaîne (~6 s, calendrier + 2 get_forecasts) ≈ 12 fois par heure pour rien.
     - platform: state
       entity_id: sensor.VOTRE_VILLE_next_rain
+      to: ~
     - platform: time_pattern
       minutes: "/10"
     - platform: event
@@ -50,6 +56,27 @@
     # ci-dessous — ils ne relancent PLUS la chaîne météo/prévisions/calendrier
     # complète (~5,5 s de delays + calendar.get_events + weather.get_forecasts).
     # Ce refresh complet reste ici pour la connexion + le cycle /10 min.
+
+  condition:
+    # tab5_connected (25/09/2026) : le firmware réémet cet événement toutes les
+    # 5 min (`interval: 5min` de tab5-ha-hmi.yaml) en plus du boot. Une fois le
+    # déclencheur next_rain corrigé (`to: ~`), ce battement ne tombait plus en
+    # « Already running » et relançait la chaîne complète à son tour : seul un
+    # vrai (re)démarrage de la liaison compte — liaison `on` depuis moins de 3 min.
+    # Adapter l'id du capteur de statut au nom de votre appareil.
+    - alias: "tab5_connected : seulement si la liaison API vient de (re)demarrer (le battement 5 min du firmware est ignore)"
+      condition: or
+      conditions:
+        - condition: not
+          conditions:
+            - condition: trigger
+              id: tab5_connected
+        - condition: not
+          conditions:
+            - condition: state
+              entity_id: binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status
+              state: "on"
+              for: "00:03:00"
 
   action:
     # ====== 0. RECONNEXION : attendre que la liaison API soit prête ======
@@ -133,9 +160,13 @@
             {% else %}
               {% set nom_jour = days_names[target_dt.strftime('%w') | int] ~ " " ~ target_dt.strftime('%d') %}
             {% endif %}
-            {% set condition = fcasts[i].condition | default('unknown') if i < fcasts|length else 'unknown' %}
-            {% set tmin = fcasts[i].templow | float(0) if i < fcasts|length else 0 %}
-            {% set tmax = fcasts[i].temperature | float(0) if i < fcasts|length else 0 %}
+            {# .get() et jamais fcasts[i].cle : Météo-France omet des clés en fin de
+               plage (templow absent du 15e jour le 18/09/2026) et un accès direct lève
+               UndefinedError AVANT le | float(0) — payload jamais rendu, action sautée
+               en silence par continue_on_error, icônes figées. #}
+            {% set condition = fcasts[i].get('condition') | default('unknown', true) if i < fcasts|length else 'unknown' %}
+            {% set tmin = fcasts[i].get('templow') | float(0) if i < fcasts|length else 0 %}
+            {% set tmax = fcasts[i].get('temperature') | float(0) if i < fcasts|length else 0 %}
             {% set est_passe = 'false' if i < fcasts|length else 'true' %}
             {% set est_dimanche = target_dt.strftime('%w') == '0' %}
             {% set ns_travail = namespace(found=false, heures="") %}
@@ -170,7 +201,7 @@
         mode: "{{ states('climate.VOTRE_CLIMATISATION') }}"
         preset: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'preset_mode') | default('none', true) }}"
         fan: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'fan_mode') | default('auto', true) }}"
-        swing: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'swing_mode') | default('off', true) }}"
+        swing: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'swing_mode') | default('stop', true) }}"
 
     # ====== X. ETAT VOLET ======
     - action: esphome.tab5_ha_hmi_tab5_maj_volet_etat
@@ -291,9 +322,11 @@
                   {% if i < fcasts|length %}
                     {% set dt = fcasts[i].datetime | as_datetime %}
                     {% set heure_texte = dt.strftime('%H:00') if dt else '00:00' %}
-                    {% set condition = fcasts[i].condition | default('unknown') %}
-                    {% set temp = fcasts[i].temperature | float(0) %}
-                    {% set pluvio = fcasts[i].precipitation | float(0) %}
+                    {# .get() : au-delà de ~48 h Météo-France n'envoie plus
+                       `precipitation` (constaté le 25/09/2026) — cf. prévisions jours. #}
+                    {% set condition = fcasts[i].get('condition') | default('unknown', true) %}
+                    {% set temp = fcasts[i].get('temperature') | float(0) %}
+                    {% set pluvio = fcasts[i].get('precipitation') | float(0) %}
                   {% else %}
                     {% set heure_texte = '00:00' %}
                     {% set condition = 'unknown' %}
