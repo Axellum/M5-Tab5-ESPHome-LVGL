@@ -4,6 +4,42 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Réveil daté, carte centrale sans superpositions
+
+Lot 2 de l'audit du 25/09/2026 (§2.2 et §2.4), sans les dames (reportées : l'IA ne joue
+pas son coup au niveau Amateur, cause pas encore établie).
+
+- **Le réveil sait de quel jour datent les horaires.** `cal_jours_data[0]` était
+  « aujourd'hui » quel que soit l'âge du dernier push : HA muet de minuit à l'heure du
+  réveil (mise à jour nocturne, VM en panne comme le 18/09), les modes Embauche/Travail
+  appliquaient le planning de la VEILLE — embauche ratée ou sonnerie un jour de repos,
+  contre l'exigence « sonne sans HA » d'`alarm_clock.h`. `parse_and_update_jours_bulk()`
+  date désormais la case 0 (`cal_jours_anchor_day`, numéro de jour civil local, algorithme
+  `days_from_civil` vérifié contre `datetime` sur 25 933 jours) et le moteur relit chaque
+  jour avec le bon décalage (`cal_index_for_offset`). Données d'hier : aujourd'hui = case 1,
+  et la « fermeture de la veille » devient connue. Plus de 14 jours sans push ou heure pas
+  encore synchronisée au moment du push : retour à l'heure fixe, comme sans calendrier.
+- **Carte centrale : le rotateur ne s'affiche plus que quand il a la main** (accueil, hors
+  planning temporaire et hors réponse vocale — `rotator_owns_card()`). Trois
+  superpositions corrigées :
+  - un swipe pendant le planning temporaire (6 s) : 6 s plus tard, le titre de la page
+    d'ORIGINE s'affichait sur l'accueil, le texte du tap restait dans le bandeau et le
+    rotateur tournait par-dessus. Changer de page termine maintenant le planning
+    temporaire (et masque une réponse vocale en cours) ;
+  - le panneau d'origine n'était jamais restauré, même au premier tap : le timer écrivait
+    `g_central_ctx` mais chaque script YAML y recopiait le global `current_central_panel`,
+    resté à 0. Le global est passé à `show_temporary_planning()` et réécrit ; un second tap
+    pendant les 6 s ne remplace plus le panneau d'origine (bug connu du 08/09) ;
+  - un push d'alertes HA, un bandeau info qui se vide ou la fin d'une réponse vocale
+    réaffichaient un panneau transparent du rotateur par-dessus le titre de page ou le
+    planning du tap.
+- `hide_central_panel()` coupe la transition en cours : son callback de fin masquait un
+  panneau que la synchro venait de réafficher (carte vide jusqu'au tour suivant, 8 s).
+- Alertes HA : un payload de plus de 1 024 octets est rejeté AVANT de vider les slots
+  (vidés puis rejetés, ils laissaient des panneaux vides marqués actifs).
+- Aucune modification de `on_boot` : l'occupant de la carte est suivi côté C++
+  (`apply_forecast_page`, `show/hide_vocal_response_ui`, timer du planning temporaire).
+
 ### 2026-09-25 — HA : la pluie ne relance plus tout le push, les prévisions ne cassent plus en silence
 
 Lot 1 de l'audit du 25/09/2026 (côté Home Assistant seulement, aucun changement firmware).

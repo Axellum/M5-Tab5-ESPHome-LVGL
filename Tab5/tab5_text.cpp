@@ -171,6 +171,28 @@ bool local_day_from_offset(int jour_offset, struct tm& out) {
     return mktime(&out) != static_cast<time_t>(-1);
 }
 
+// Jours depuis le 01/01/1970 pour une date civile (algorithme days_from_civil de
+// H. Hinnant) : arithmétique entière sur (année, mois, jour), aucune dépendance au
+// fuseau ni aux jours de 23 h/25 h — contrairement à epoch / 86400.
+static int32_t days_from_civil(int y, int m, int d) {
+    y -= (m <= 2) ? 1 : 0;
+    const int era = (y >= 0 ? y : y - 399) / 400;
+    const int yoe = y - era * 400;                                    // [0, 399]
+    const int doy = (153 * (m > 2 ? m - 3 : m + 9) + 2) / 5 + d - 1;  // [0, 365]
+    const int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;            // [0, 146096]
+    return era * 146097 + doe - 719468;
+}
+
+int32_t local_day_number_today() {
+    const time_t raw = time(nullptr);
+    struct tm t;
+    if (raw <= 0 || localtime_r(&raw, &t) == nullptr) return -1;
+    // Avant la synchro SNTP l'horloge part de 1970 : une date antérieure à 2020 ne
+    // peut pas être la vraie (même seuil qu'ESPTime::is_valid, année ≥ 2019).
+    if (t.tm_year + 1900 < 2020) return -1;
+    return days_from_civil(t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
+}
+
 // Titre court "Lun 16" pour les pages journalieres 2 et 3 (page_index 1/2).
 std::string format_short_day_label(int jour_offset) {
     static const char* days[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
