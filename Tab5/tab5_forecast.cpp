@@ -214,6 +214,12 @@ void parse_and_update_jours_bulk(const std::string& payload) {
                 cal_jours_data[jour].est_dimanche = (parts[6][0] == '1');
                 cal_jours_data[jour].est_passe = (parts[7][0] == '1');
                 cal_jours_data[jour].heures_ouverture = parts[8];
+                // HA calcule l'index 0 sur SON « aujourd'hui » au moment du push : on
+                // date la case 0 avec le jour local de réception (écart possible
+                // seulement si le push chevauche minuit à la seconde près). Heure pas
+                // encore synchronisée → -1 : le réveil reste sur l'heure fixe jusqu'au
+                // push suivant (cycle /10 min) plutôt que de deviner.
+                if (jour == 0) cal_jours_anchor_day = local_day_number_today();
             }
         }
         token = strtok_r(nullptr, ";", &saveptr1);

@@ -33,7 +33,20 @@ static constexpr lv_coord_t FORECAST_SWIPE_Y_MIN = 333;  // haut de central_card
 // son rotateur planning/pluie/alertes. C'est la cible du retour automatique.
 static constexpr int FORECAST_MAIN_PAGE = 2;
 
+// Planning temporaire (tap tuile, 6 s) : définis plus bas, avec TempPlanningCtx.
+static bool temp_planning_active();
+static void end_temporary_planning(CentralPanelCtx& ctx);
 
+// Le rotateur (panneaux 0-7) n'a la main sur la carte centrale que sur l'accueil
+// (page 2), hors planning temporaire et hors réponse vocale. Ailleurs la carte
+// appartient au titre de page ou à l'overlay : une mise à jour de drapeaux (push
+// HA d'alertes ou d'info, acquittement, fin de réponse vocale) y réaffichait un
+// panneau transparent par-dessus (audit du 25/09/2026, §2.4). Seuls les drapeaux et
+// l'index sont alors tenus à jour ; l'affichage revient au rotateur quand il
+// retrouve la main (retour sur la page 2, fin du planning ou de la réponse vocale).
+static bool rotator_owns_card(const CentralPanelCtx& ctx) {
+    return ctx.forecast_page == FORECAST_MAIN_PAGE && !ctx.vocal_shown && !temp_planning_active();
+}
 
 // Titre de la carte centrale sur les pages de previsions autres que l'accueil.
 //   chapeau : famille de page + rang, ex "Pr\xC3\xA9visions journali\xC3\xA8res \xC2\xB7 2/3"
@@ -151,6 +164,10 @@ void advance_central_panel_rotator(CentralPanelCtx& ctx) {
         attempts++;
     }
     if (next_panel == ctx.current_panel) return;
+    if (!rotator_owns_card(ctx)) {
+        ctx.current_panel = next_panel;  // index seulement : la carte est occupée
+        return;
+    }
 
     lv_obj_t* out_obj = central_panel_wrapper(ctx.current_panel, ctx);
     lv_obj_t* in_obj = central_panel_wrapper(next_panel, ctx);
@@ -160,18 +177,16 @@ void advance_central_panel_rotator(CentralPanelCtx& ctx) {
 
 static void hide_central_panel(lv_obj_t* wrap) {
     if (!wrap) return;
+    // Couper la transition en cours : son callback de fin (anim_out_y_ready_cb)
+    // masque le panneau sortant, y compris quand la synchro qui suit vient de le
+    // réafficher — la carte restait vide jusqu'au tour suivant du rotateur (8 s).
+    lv_anim_delete(wrap, nullptr);
     lv_obj_add_flag(wrap, LV_OBJ_FLAG_HIDDEN);
     lv_obj_set_y(wrap, 0);
     lv_obj_set_style_opa(wrap, LV_OPA_COVER, LV_PART_MAIN);
 }
 
 void sync_central_panel_visibility(CentralPanelCtx& ctx) {
-    hide_central_panel(ctx.planning_wrap);
-    hide_central_panel(ctx.rain_wrap);
-    hide_central_panel(ctx.alert_cont);
-    hide_central_panel(ctx.info_wrap);
-    for (int i = 0; i < 4; i++) hide_central_panel(ctx.ha_wrap[i]);
-
     if (!central_panel_is_active(ctx.current_panel, ctx)) {
         ctx.current_panel = 0;
         for (int p = 0; p < kCentralPanelCount; p++) {
@@ -181,6 +196,15 @@ void sync_central_panel_visibility(CentralPanelCtx& ctx) {
             }
         }
     }
+    // Carte occupée (titre de page, planning temporaire, réponse vocale) : on ne
+    // touche à rien de visible — masquer ici effacerait même le planning du tap.
+    if (!rotator_owns_card(ctx)) return;
+
+    hide_central_panel(ctx.planning_wrap);
+    hide_central_panel(ctx.rain_wrap);
+    hide_central_panel(ctx.alert_cont);
+    hide_central_panel(ctx.info_wrap);
+    for (int i = 0; i < 4; i++) hide_central_panel(ctx.ha_wrap[i]);
 
     lv_obj_t* active = central_panel_wrapper(ctx.current_panel, ctx);
     if (active) lv_obj_clear_flag(active, LV_OBJ_FLAG_HIDDEN);
@@ -210,6 +234,14 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
     }
     int new_alert_slot = -1;
 
+    // Rejet AVANT de vider les slots : vidés puis rejetés, ils restaient vides alors
+    // que le YAML recopiait les anciens has_ha = true — le rotateur montrait des
+    // panneaux vides et le tap d'acquittement n'avait plus d'id (audit 25/09, §2.4).
+    if (payload.length() > 1024) {
+        ESP_LOGE("TAB5", "Payload alertes HA trop long (%d octets).", (int) payload.length());
+        return;
+    }
+
     for (int i = 0; i < kHaAlertSlotCount; i++) {
         clear_ha_alert_slot(slots[i]);
     }
@@ -218,10 +250,6 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
         for (int i = 0; i < 4; i++)
             ctx.has_ha[i] = slots[i].has_flag ? *slots[i].has_flag : false;
         sync_central_panel_visibility(ctx);
-        return;
-    }
-    if (payload.length() > 1024) {
-        ESP_LOGE("TAB5", "Payload alertes HA trop long (%d octets).", (int) payload.length());
         return;
     }
 
@@ -415,7 +443,9 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
     if (t.empty()) {
         lv_label_set_text(lbl_info, "");
         if (current_panel == 3 && info_wrap && planning_wrap) {
-            transition_widgets(info_wrap, planning_wrap);
+            // Transition visible seulement si le rotateur a la carte : sinon elle
+            // faisait surgir le panneau planning par-dessus le titre de page.
+            if (rotator_owns_card(g_central_ctx)) transition_widgets(info_wrap, planning_wrap);
             current_panel = 0;
         }
         return;
@@ -458,6 +488,19 @@ static void apply_forecast_page(int old_page, int page, lv_dir_t dir,
     lv_obj_t* pbars[5],
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx) {
+
+        // Changer de page met fin aux overlays de la carte centrale (audit du
+        // 25/09/2026, §2.4) : sans ça, le timer du planning temporaire réaffichait
+        // 6 s plus tard le titre de la page d'ORIGINE sur la nouvelle page, et la
+        // réponse vocale restait visible sous le nouveau titre. Le script YAML de
+        // la réponse vocale finit son délai sans effet visible (masquer un objet
+        // masqué ; la synchro ne réaffiche que si le rotateur a la main).
+        end_temporary_planning(ctx);
+        if (ctx.vocal_shown) {
+            if (ctx.vocal_wrap) lv_obj_add_flag(ctx.vocal_wrap, LV_OBJ_FLAG_HIDDEN);
+            ctx.vocal_shown = false;
+        }
+        ctx.forecast_page = page;
 
         // Detection de changement de layer (horaire <-> journalier).
         // L'animation de swipe horizontal n'a de sens que lors d'un changement de layer.
@@ -615,37 +658,64 @@ struct TempPlanningCtx {
     lv_obj_t* page_title_wrap = nullptr;
     lv_obj_t* lbl_page_title = nullptr;
     int central_panel_restore = 0;         // panneau central à rétablir
+    int* current_panel_global = nullptr;   // global ESPHome current_central_panel
 };
 static TempPlanningCtx s_temp_planning;
 
-static void planning_restore_timer_cb(lv_timer_t* timer) {
+static bool temp_planning_active() { return s_temp_planning.restore_timer != nullptr; }
+
+// Termine le planning temporaire en cours : supprime le timer, rend le texte normal
+// du bandeau et le panneau d'origine. Ne décide PAS de la visibilité — l'appelant
+// la fixe selon la page (timer de 6 s, ou changement de page). Sans effet si aucun
+// planning temporaire n'est affiché.
+static void end_temporary_planning(CentralPanelCtx& ctx) {
     TempPlanningCtx& tp = s_temp_planning;
-    if (tp.is_showing_temp) {
-        *tp.is_showing_temp = false;
-    }
-    g_central_ctx.current_panel = tp.central_panel_restore;
-    if (tp.forecast_page_restore != 2) {
-        update_central_forecast_page_ui(tp.forecast_page_restore,
-            tp.page_title_wrap, tp.lbl_page_title, g_central_ctx);
-    } else if (tp.lbl_planning) {
+    if (tp.restore_timer == nullptr) return;
+    lv_timer_delete(tp.restore_timer);
+    tp.restore_timer = nullptr;
+    if (tp.is_showing_temp) *tp.is_showing_temp = false;
+    ctx.current_panel = tp.central_panel_restore;
+    // Le global aussi : chaque script YAML recopie current_central_panel dans
+    // ctx.current_panel avant d'agir, et il valait encore 0 (posé par le tap) — le
+    // panneau d'origine n'était jamais restauré, même au premier tap (25/09/2026).
+    if (tp.current_panel_global) *tp.current_panel_global = tp.central_panel_restore;
+    // Texte normal rendu dans tous les cas : un tap sur la page 3 ou 4 laissait le
+    // texte du tap dans le bandeau planning, réaffiché tel quel au retour sur 2.
+    if (tp.lbl_planning) {
         std::string combined = tp.plan_l1;
         if (!tp.plan_l2.empty()) {
             combined += "   |   " + tp.plan_l2;
         }
         set_label_text_utf8(tp.lbl_planning, combined.c_str());
     }
-    lv_timer_del(timer);
-    tp.restore_timer = nullptr;
+}
+
+static void planning_restore_timer_cb(lv_timer_t* /*timer*/) {
+    // end_temporary_planning() supprime ce timer depuis son propre callback :
+    // autorisé par LVGL 9 (comme l'ancien lv_timer_del(timer) ici même).
+    const int page = s_temp_planning.forecast_page_restore;
+    end_temporary_planning(g_central_ctx);
+    if (page != FORECAST_MAIN_PAGE) {
+        update_central_forecast_page_ui(page, s_temp_planning.page_title_wrap,
+            s_temp_planning.lbl_page_title, g_central_ctx);
+    } else {
+        // Réaffiche le panneau rétabli (et masque le planning s'il n'était pas
+        // celui d'origine) ; sans effet si une réponse vocale occupe la carte.
+        sync_central_panel_visibility(g_central_ctx);
+    }
 }
 
 void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
                              lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, int forecast_page,
                              const std::string& plan_l1, const std::string& plan_l2,
-                             bool& is_showing_temp, CentralPanelCtx& ctx) {
+                             bool& is_showing_temp, int& current_panel_global, CentralPanelCtx& ctx) {
     if (!lbl_planning) return;
 
     TempPlanningCtx& tp = s_temp_planning;
-    tp.central_panel_restore = ctx.current_panel;
+    // Second tap pendant les 6 s : garder le panneau d'ORIGINE, le premier tap a
+    // déjà mis le panneau courant à 0 (on restaurait le planning au lieu du
+    // panneau d'avant — observation du 08/09/2026).
+    if (tp.restore_timer == nullptr) tp.central_panel_restore = ctx.current_panel;
     is_showing_temp = true;
     ctx.current_panel = 0;
 
@@ -676,9 +746,10 @@ void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
     tp.forecast_page_restore = forecast_page;
     tp.page_title_wrap = page_title_wrap;
     tp.lbl_page_title = lbl_page_title;
+    tp.current_panel_global = &current_panel_global;
 
     if (tp.restore_timer != nullptr) {
-        lv_timer_del(tp.restore_timer);
+        lv_timer_delete(tp.restore_timer);
         tp.restore_timer = nullptr;
     }
 
@@ -737,6 +808,8 @@ void show_vocal_response_ui(const std::string& texte,
     lv_label_set_text(lbl_vocal, t.c_str());
 
     lv_obj_clear_flag(vocal_wrap, LV_OBJ_FLAG_HIDDEN);
+    ctx.vocal_wrap = vocal_wrap;
+    ctx.vocal_shown = true;
 }
 
 void hide_vocal_response_ui(lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal, CentralPanelCtx& ctx) {
@@ -746,6 +819,9 @@ void hide_vocal_response_ui(lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal, CentralPa
         lv_obj_set_width(lbl_vocal, LV_SIZE_CONTENT);
     }
     if (vocal_wrap) lv_obj_add_flag(vocal_wrap, LV_OBJ_FLAG_HIDDEN);
+    ctx.vocal_shown = false;
 
+    // Ne réaffiche un panneau du rotateur que s'il a la main (page 2, pas de
+    // planning temporaire) : si l'on a balayé pendant les 8 s, la carte est au titre.
     sync_central_panel_visibility(ctx);
 }

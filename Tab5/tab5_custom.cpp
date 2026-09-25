@@ -36,3 +36,4 @@ WeatherHourSlot g_hour_slots[5];
 // lues par la carte centrale, les services et le calendrier.
 DayForecastData cal_jours_data[15];
 HourForecastData cal_heures_data[15];
+int32_t cal_jours_anchor_day = -1;  // jour local de cal_jours_data[0], -1 = inconnu

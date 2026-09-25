@@ -32,6 +32,13 @@ struct HourForecastData {
 extern DayForecastData cal_jours_data[15];
 extern HourForecastData cal_heures_data[15];
 
+// Jour local (numéro de jour civil, cf. local_day_number_today) auquel correspond
+// cal_jours_data[0], posé par parse_and_update_jours_bulk() au moment du push ;
+// -1 tant qu'aucun push n'a été reçu avec l'heure synchronisée. Sans lui, la case 0
+// était « aujourd'hui » quel que soit l'âge des données : HA muet depuis minuit, le
+// réveil appliquait le planning de la veille (audit du 25/09/2026, §2.2).
+extern int32_t cal_jours_anchor_day;
+
 // Embauche "tôt" = heure de début < 9h (même seuil partout : tuiles, popup, bandeau).
 bool cal_is_early_shift(const std::string& heures_hhmm_hhmm);
 
@@ -44,6 +51,12 @@ bool cal_is_early_shift(const std::string& heures_hhmm_hhmm);
 // exactement la même arithmétique de dates que les tuiles météo, sinon les deux
 // divergent d'un jour deux fois par an.
 bool local_day_from_offset(int jour_offset, struct tm& out);
+
+// Numéro du jour civil local d'aujourd'hui (jours depuis le 01/01/1970 dans le
+// calendrier local, pas une division d'epoch : insensible aux jours de 23 h/25 h).
+// -1 si l'heure SNTP n'est pas encore synchronisée. Deux valeurs se soustraient
+// pour obtenir un écart en jours (cf. cal_jours_anchor_day).
+int32_t local_day_number_today();
 
 // Jours et mois en toutes lettres, UTF-8, minuscules (en français ils ne
 // prennent pas de majuscule hors début de phrase). wday : 0 = dimanche.
@@ -265,6 +278,14 @@ struct CentralPanelCtx {
     bool has_info = false;
     bool has_ha[4] = {};
     int current_panel = 0;
+    // Qui occupe la carte (audit du 25/09/2026, §2.4) : le rotateur n'a la main que
+    // sur l'accueil (page 2), hors planning temporaire et hors réponse vocale. Tenus à
+    // jour côté C++ (apply_forecast_page, show/hide_vocal_response_ui) plutôt que par
+    // des pointeurs vers les globals ESPHome, pour ne pas toucher à on_boot.
+    // forecast_page démarre à 2 comme le global forecast_page_index (non restauré).
+    int forecast_page = 2;
+    bool vocal_shown = false;
+    lv_obj_t* vocal_wrap = nullptr;   // posé par show_vocal_response_ui
 };
 
 // Contexte global unique (initialise dans tab5-ha-hmi.yaml on_boot ou premier usage).
@@ -557,11 +578,14 @@ void show_light_popup_ui(int light_idx, const char* const titles[3],
     lv_obj_t* power_icon, lv_obj_t* arc, lv_obj_t* pct_lbl);
 
 // Tap tuile météo : affiche le planning/horaires du jour dans la carte centrale (6s).
+// `current_panel_global` = le global ESPHome current_central_panel : le timer de
+// restauration doit l'écrire aussi, sinon le prochain script le recopie (0, posé
+// par le tap) dans ctx.current_panel et le panneau d'origine est perdu.
 std::string get_day_planning_display_text(int jour);
 void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
                              lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, int forecast_page,
                              const std::string& plan_l1, const std::string& plan_l2,
-                             bool& is_showing_temp, CentralPanelCtx& ctx);
+                             bool& is_showing_temp, int& current_panel_global, CentralPanelCtx& ctx);
 
 // Réponse vocale IA : carte centrale dédiée (8s), défilement si phrase longue.
 void show_vocal_response_ui(const std::string& texte,

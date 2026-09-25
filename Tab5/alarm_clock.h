@@ -114,8 +114,11 @@ uint32_t alarm_skip_floor();
 void alarm_set_skip_floor(uint32_t v);
 
 // true dès que Home Assistant a poussé au moins un lot de prévisions/horaires
-// (`cal_jours_data[]` rempli). Tant que c'est false, les modes calendrier
-// retombent sur l'heure fixe : mieux vaut sonner pour rien que rater l'embauche.
+// (`cal_jours_data[]` rempli) ET que ce lot couvre encore aujourd'hui : les cases
+// sont datées par `cal_jours_anchor_day` (jour local du push) et relues avec le
+// bon décalage — HA muet depuis hier, aujourd'hui est la case 1 (25/09/2026).
+// Tant que c'est false, les modes calendrier retombent sur l'heure fixe : mieux
+// vaut sonner pour rien que rater l'embauche.
 bool alarm_calendar_ready();
 
 // ═══════════════════════════════════════════════════════════════════════════

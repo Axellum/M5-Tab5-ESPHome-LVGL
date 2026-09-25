@@ -64,7 +64,24 @@ static bool day_selected(uint8_t mask, int tm_wday) {
   return (mask >> bit) & 1;
 }
 
-bool alarm_calendar_ready() { return !cal_jours_data[0].nom_jour.empty(); }
+// Case de cal_jours_data[] qui correspond à J+offset (offset compté depuis
+// AUJOURD'HUI), -1 si ce jour n'est pas couvert. Les données sont datées par
+// cal_jours_anchor_day (jour local du dernier push) : HA muet depuis hier soir,
+// aujourd'hui est la case 1 et non la case 0 — sans ce recalage, le réveil
+// appliquait le planning de la veille (embauche ratée ou sonnerie un jour de repos,
+// audit du 25/09/2026, §2.2). Au-delà de 14 jours sans push, plus rien n'est couvert.
+static int cal_index_for_offset(int offset) {
+  if (offset < 0 || cal_jours_anchor_day < 0) return -1;
+  const int32_t today = local_day_number_today();
+  if (today < 0) return -1;
+  const int32_t idx = static_cast<int32_t>(offset) + (today - cal_jours_anchor_day);
+  return (idx >= 0 && idx < 15) ? static_cast<int>(idx) : -1;
+}
+
+// Prêt = calendrier reçu ET couvrant aujourd'hui.
+bool alarm_calendar_ready() {
+  return !cal_jours_data[0].nom_jour.empty() && cal_index_for_offset(0) >= 0;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Cache de la prochaine sonnerie
@@ -107,11 +124,15 @@ void alarm_set_skip_floor(uint32_t v) {
 // -1 = ce jour-là, le réveil ne sonne pas.
 static int ring_minute_for_day(int offset, const struct tm& day) {
   const AlarmCfg& c = g_alarm_cfg;
-  const bool cal_ok = alarm_calendar_ready() && offset >= 0 && offset < 15;
-  // Sans données calendrier (boot, HA jamais connecté), les deux modes
-  // calendrier retombent sur l'heure fixe : rater une embauche coûte plus cher
-  // qu'une sonnerie en trop, et l'utilisateur peut toujours arrêter.
-  const bool travaille = cal_ok && !cal_jours_data[offset].est_repos;
+  // idx = la case de cal_jours_data[] qui correspond à ce jour-là (cf.
+  // cal_index_for_offset) : jamais `offset` directement.
+  const int idx = cal_index_for_offset(offset);
+  const bool cal_ok = alarm_calendar_ready() && idx >= 0;
+  // Sans données calendrier (boot, HA jamais connecté, ou données trop vieilles
+  // pour couvrir ce jour), les deux modes calendrier retombent sur l'heure fixe :
+  // rater une embauche coûte plus cher qu'une sonnerie en trop, et l'utilisateur
+  // peut toujours arrêter.
+  const bool travaille = cal_ok && !cal_jours_data[idx].est_repos;
   // int, PAS bool : c'est une heure en minutes depuis minuit (ou -1). Déclarée
   // `bool` par erreur, elle valait 1 dès que fixed_min était non nul, et tous
   // les modes à heure fixe sonnaient à 00:01 — attrapé par -Wint-in-bool-context
@@ -131,7 +152,7 @@ static int ring_minute_for_day(int offset, const struct tm& day) {
   if (c.mode == AlarmMode::TRAVAIL) return c.fixed_min;
 
   // ── Mode EMBAUCHE : ouverture − délai, borné.
-  const int start = parse_shift_start(cal_jours_data[offset].heures_ouverture);
+  const int start = parse_shift_start(cal_jours_data[idx].heures_ouverture);
   if (start < 0) return c.fixed_min;  // travail confirmé mais horaire inconnu
 
   int m = clamp_i(start - c.lead_min, c.earliest_min, c.latest_min);
@@ -140,9 +161,11 @@ static int ring_minute_for_day(int offset, const struct tm& day) {
   // l'horaire du calendrier — après une fermeture à 21:00, un repos de 9 h
   // interdit de sonner avant 06:00. Bornée par `latest_min` : le repos ne peut
   // pas faire arriver en retard.
-  if (c.rest_hours > 0 && offset >= 1) {
-    const int fin_veille = parse_shift_end(cal_jours_data[offset - 1].heures_ouverture);
-    if (fin_veille >= 0 && !cal_jours_data[offset - 1].est_repos) {
+  // idx >= 1 et non offset >= 1 : avec des données d'hier, la veille d'aujourd'hui
+  // est connue (case 0) — elle ne l'était pas avant le recalage.
+  if (c.rest_hours > 0 && idx >= 1) {
+    const int fin_veille = parse_shift_end(cal_jours_data[idx - 1].heures_ouverture);
+    if (fin_veille >= 0 && !cal_jours_data[idx - 1].est_repos) {
       // La veille finit à `fin_veille` minutes après SON minuit, donc
       // fin_veille - 1440 minutes après le minuit du jour visé.
       const int plancher = fin_veille - 1440 + c.rest_hours * 60;
@@ -308,10 +331,16 @@ std::string alarm_next_detail(time_t now) {
   if (!alarm_calendar_ready()) {
     return std::string(date) + " \xC2\xB7 en attente du calendrier";
   }
-  if (s_next_offset >= 15 || cal_jours_data[s_next_offset].est_repos) {
+  // Jour non couvert (données trop vieilles pour aller jusque-là) : la sonnerie a
+  // été calculée sur l'heure fixe, comme sans calendrier.
+  const int idx = cal_index_for_offset(s_next_offset);
+  if (idx < 0) {
+    return std::string(date) + " \xC2\xB7 en attente du calendrier";
+  }
+  if (cal_jours_data[idx].est_repos) {
     return std::string(date) + " \xC2\xB7 repos";
   }
-  const std::string& h = cal_jours_data[s_next_offset].heures_ouverture;
+  const std::string& h = cal_jours_data[idx].heures_ouverture;
   if (h.size() >= 11) {
     // « Travail 06:45 – 15:30 » : tiret demi-cadratin UTF-8, comme le popup
     // calendrier (cal_render_day_detail).
