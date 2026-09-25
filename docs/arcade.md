@@ -75,7 +75,10 @@ oubli et le jeu est invisible, ou le firmware ne compile pas :
 
 Les icônes MDI utilisées doivent en outre figurer dans la liste `glyphs` de
 `mdi_font_56` / `mdi_font_45` (`tab5-styles.yaml`) : une icône absente de la
-sous-police ne s'affiche **pas du tout**, sans le moindre message d'erreur.
+sous-police ne s'affiche **pas du tout**, sans le moindre message d'erreur. La
+règle 7 de `tools/check_tab5_code_rules.py` (pytest) l'attrape : icône affichée
+sans son glyphe, glyphe déclaré jamais affiché, ou icône posée depuis une fonction
+C++ absente de `MDI_CODE_TARGETS`.
 
 ---
 

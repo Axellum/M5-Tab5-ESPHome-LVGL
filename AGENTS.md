@@ -68,6 +68,7 @@ python tools/cartographie_counts.py        # comptes de lignes de la cartographi
 6. `esphome compile` must pass before committing.
 7. Every modal popup reuses the shared chrome (`modal_scrim.yaml` + `modal_header.yaml`, ADR-0009) — games are the documented exception.
 8. No hardcoded Home Assistant entity ID in firmware YAML — always a `user_entities.yaml` substitution (`${entity_…}`) or a `!lambda`. The tablet's own entities (`assist_satellite.*`, `media_player.*`, derived by HA from the device name) go through `entity_tab5_satellite` / `entity_tab5_media_player` (defaults in `Tab5/tab5-scripts.yaml`). Enforced by `tools/check_tab5_code_rules.py`.
+9. Every MDI icon shown on screen must be in the `glyphs:` list of its widget's `mdi_*` font (`Tab5/tab5-styles.yaml`), and every glyph listed there must be shown somewhere — a missing glyph renders blank with no build error. An icon set from C++ on a widget passed as a parameter needs its function in `MDI_CODE_TARGETS` (`tools/check_tab5_code_rules.py`, rule 7, run by `pytest`).
 
 ## Boundaries — do not
 

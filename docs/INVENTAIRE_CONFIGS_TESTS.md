@@ -131,7 +131,7 @@
 | `tools/check_marble_rooms.py` | `tools/` | Garde-fou | Les 6 salles de « Fil d'Or » lues dans `marble_game.cpp` restent traversables (numpy). |
 | `tools/check_lode_levels.py` | `tools/` | Garde-fou | Les 10 niveaux de « Coureur d'Or » lus dans `lode_game.cpp` restent jouables. |
 | `tools/check_tab5_registry.py` | `tools/` | Garde-fou | ADR-0013 : chaque `*_game.h` figure dans `GameRegistry::kGames`, aucune liste de jeux recopiée dans un YAML. |
-| `tools/check_tab5_code_rules.py` | `tools/` | Garde-fou | Règles de code : `snprintf` partout, aucun `lv_*` dans le contrat API, aucun global orphelin, aucune entité HA en dur, glyphes de la date (`roboto_45`). |
+| `tools/check_tab5_code_rules.py` | `tools/` | Garde-fou | Règles de code : `snprintf` partout, aucun `lv_*` dans le contrat API, aucun global orphelin, aucune entité HA en dur, glyphes de la date (`roboto_45`), icônes MDI couvertes par la police de leur widget sans glyphe mort (règle 7). |
 | `tools/cartographie_counts.py` | `tools/` | Garde-fou | Comptes de lignes de `CARTOGRAPHIE_TAB5.md` à 20 % près ; `--write` les recalcule. |
 | `.pre-commit-config.yaml` | Racine | Config | yamllint (dont `*.yaml.example`), BOM, secrets, placeholders HA — rejoué par la CI. |
 | `pyproject.toml` | Racine | Config | `testpaths = tests, tools` : `pytest` nu ne ramasse plus `archives/`. |

@@ -143,6 +143,7 @@ Garde-fou : `tools/check_tab5_registry.py`.
 7. **Tout popup modal réutilise le chrome partagé** (ADR-0009) : `modal_scrim.yaml` (var `scrim_opa`) + `modal_header.yaml` (icône, titre, croix — barre de 52 px, corps à `y: ${modal_body_y}`), carte dimensionnée par `${modal_card_w}`/`${modal_card_h}`. Jamais de voile, de titre ou de croix réécrits à la main ; les boutons d'options d'en-tête restent des frères en `y: 4, height: 44`. Vérification : `python tools/check_tab5_modal_chrome.py` (joué aussi par `pytest` et par la CI, `tests/test_guards.py`).
    **Exceptions (pages de jeu)** : les 8 `*_game.yaml` de la section Arcade ci-dessous, plus `game_selector.yaml`. Ce ne sont pas des popups posés sur `page_main` mais des **pages LVGL autonomes** en flux plein écran — pas de garde-fou modal (ni `style_modal_card`, ni `color_modal_scrim`, ni glyphe de croix).
 8. **Aucune entité Home Assistant en dur** dans un YAML du firmware — toujours une substitution de `user_entities.yaml` (`${entity_…}`) ou un `!lambda`. Les entités que la tablette expose elle-même (`assist_satellite.*`, `media_player.*`, dérivées par HA du nom de l'appareil) passent par `entity_tab5_satellite` / `entity_tab5_media_player` : défauts dans `tab5-scripts.yaml`, surcharge dans `user_entities.yaml` si l'appareil est renommé. **Vérifié** : `tools/check_tab5_code_rules.py` échoue sur toute valeur `entity_id:` littérale.
+9. **Toute icône MDI affichée est dans la liste `glyphs:` de la police `mdi_*` de son widget** (`tab5-styles.yaml`), et tout glyphe listé y est affiché quelque part : un glyphe absent s'affiche vide, sans erreur de compilation. Une icône posée en C++ sur un widget reçu en paramètre exige sa fonction dans `MDI_CODE_TARGETS` (règle 7 de `tools/check_tab5_code_rules.py`, jouée par `pytest`).
 
 ---
 
@@ -168,7 +169,7 @@ Historique de vérification : écrit contre le code réel le 05/07/2026, re-vér
 
 | Fichier | Contenu |
 |---------|---------|
-| `materialdesignicons-webfont.ttf` | Material Design Icons — 9 tailles chargées séparément : `mdi_font_26/32/45/56/70/120`, `mdi_assist_36/64`, `mdi_font_alert` (60 px). Le 08/09/2026 : `mdi_font_80` (qui chargeait du 70) renommé `mdi_font_70`, `mdi_font_60` (un glyphe, jamais référencé) retiré |
+| `materialdesignicons-webfont.ttf` | Material Design Icons — 8 tailles chargées séparément : `mdi_font_26/32/45/56/70/120`, `mdi_assist_36`, `mdi_font_alert` (60 px), chacune avec la seule liste des icônes qu'elle affiche (une par ligne, nommée ; règle 7 de `tools/check_tab5_code_rules.py`). Le 08/09/2026 : `mdi_font_80` (qui chargeait du 70) renommé `mdi_font_70`, `mdi_font_60` (un glyphe, jamais référencé) retiré ; le 25/09/2026 : `mdi_assist_64` retirée, 85 glyphes jamais affichés supprimés |
 | `IconeMeteo.ttf` | Police d'icônes météo personnalisée (`font_meteo_card` 120, `font_meteo_card_small` 80 — les tailles 270/190 sont retirées depuis le 25/09/2026, jamais affichées) |
 | `ChessPieces.ttf` | Figurines d'échecs vectorielles pour « Roi Noir » — licence dans `ChessPieces.LICENSE.txt` |
 
