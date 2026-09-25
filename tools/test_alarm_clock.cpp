@@ -156,6 +156,21 @@ static void test_dates() {
     expect_str(fr_capitalized(fr_month_long_utf8(12)), "D\xC3\xA9" "cembre", "majuscule initiale d'un mois accentué");
     expect_str(fr_capitalized(fr_day_long_utf8(1)), "Lundi", "majuscule initiale d'un jour");
     expect_str(fr_capitalized(""), "", "majuscule d'une chaîne vide");
+
+    // Case du calendrier pour J+n, recalée sur le jour du lot poussé par HA
+    // (partagée par le réveil et le planning de la carte centrale).
+    now_is(at(2026, 9, 25, 12, 0));
+    cal_jours_anchor_day = -1;
+    expect(cal_index_for_offset(0) == -1, "aucun lot daté : pas de case");
+    cal_jours_anchor_day = local_day_number_today();           // lot du jour
+    expect(cal_index_for_offset(0) == 0 && cal_index_for_offset(3) == 3, "lot du jour : case = décalage");
+    expect(cal_index_for_offset(15) == -1 && cal_index_for_offset(-1) == -1, "hors des 15 cases : -1");
+    now_is(at(2026, 9, 26, 0, 5));                              // HA muet depuis la veille
+    expect(cal_index_for_offset(0) == 1 && cal_index_for_offset(13) == 14, "lot de la veille : décalé d'une case");
+    expect(cal_index_for_offset(14) == -1, "lot de la veille : J+14 n'est plus couvert");
+    now_is(at(2026, 10, 10, 12, 0));
+    expect(cal_index_for_offset(0) == -1, "lot vieux de 15 jours : plus rien n'est couvert");
+    cal_jours_anchor_day = -1;
 }
 
 static void test_heure_fixe_jours_coches() {

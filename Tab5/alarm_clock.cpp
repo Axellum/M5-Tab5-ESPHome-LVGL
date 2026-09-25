@@ -66,19 +66,7 @@ static bool day_selected(uint8_t mask, int tm_wday) {
   return (mask >> bit) & 1;
 }
 
-// Case de cal_jours_data[] qui correspond à J+offset (offset compté depuis
-// AUJOURD'HUI), -1 si ce jour n'est pas couvert. Les données sont datées par
-// cal_jours_anchor_day (jour local du dernier push) : HA muet depuis hier soir,
-// aujourd'hui est la case 1 et non la case 0 — sans ce recalage, le réveil
-// appliquait le planning de la veille (embauche ratée ou sonnerie un jour de repos,
-// audit du 25/09/2026, §2.2). Au-delà de 14 jours sans push, plus rien n'est couvert.
-static int cal_index_for_offset(int offset) {
-  if (offset < 0 || cal_jours_anchor_day < 0) return -1;
-  const int32_t today = local_day_number_today();
-  if (today < 0) return -1;
-  const int32_t idx = static_cast<int32_t>(offset) + (today - cal_jours_anchor_day);
-  return (idx >= 0 && idx < 15) ? static_cast<int>(idx) : -1;
-}
+// cal_index_for_offset() : tab5_core.cpp (partagée avec le planning de la carte centrale).
 
 // Prêt = calendrier reçu ET couvrant aujourd'hui.
 bool alarm_calendar_ready() {

@@ -68,6 +68,12 @@ bool local_day_from_offset(int jour_offset, struct tm& out);
 // pour obtenir un écart en jours (cf. cal_jours_anchor_day).
 int32_t local_day_number_today();
 
+// Case de cal_jours_data[] qui correspond à J+offset (offset compté depuis AUJOURD'HUI),
+// recalée par cal_jours_anchor_day ; -1 si ce jour n'est pas couvert, si aucun lot daté
+// n'a été reçu ou si l'heure n'est pas synchronisée. Ne JAMAIS indexer cal_jours_data[]
+// par un décalage depuis aujourd'hui sans passer par elle.
+int cal_index_for_offset(int offset);
+
 // Jours et mois en toutes lettres, UTF-8, minuscules (en français ils ne
 // prennent pas de majuscule hors début de phrase). wday : 0 = dimanche.
 // Partagés avec alarm_clock.cpp (« demain, mercredi 6 août ») — une seule table

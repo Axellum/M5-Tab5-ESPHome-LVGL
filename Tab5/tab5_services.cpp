@@ -314,7 +314,12 @@ void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
     std::string lines[2];
     int n = 0;
     for (int jour = 0; jour < 15 && n < 2; jour++) {
-        const DayForecastData& d = cal_jours_data[jour];
+        // `jour` compte depuis AUJOURD'HUI ; la case lue est recalée sur le jour du lot
+        // poussé par HA (muet depuis hier soir → aujourd'hui = case 1). Lot non daté
+        // (reçu avant la synchro SNTP) : case 0 = aujourd'hui, comme avant le recalage.
+        const int idx = (cal_jours_anchor_day < 0) ? jour : cal_index_for_offset(jour);
+        if (idx < 0) continue;
+        const DayForecastData& d = cal_jours_data[idx];
         const std::string& h = d.heures_ouverture;
         if (h.size() < 11 || d.est_repos) continue;  // "HH:MM-HH:MM"
 
@@ -330,9 +335,10 @@ void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
         if (jour == 0) j_name = "Auj.";
         else if (jour == 1) j_name = "Dem.";
         else {
-            time_t t = now_raw + static_cast<time_t>(jour) * 86400;
+            // Date civile de J+jour normalisée à midi : `maintenant + jour × 86 400 s`
+            // tombait sur le mauvais jour les nuits de changement d'heure (audit §5).
             struct tm day_tm;
-            if (localtime_r(&t, &day_tm) == nullptr) continue;
+            if (!local_day_from_offset(jour, day_tm)) continue;
             j_name = std::string(fr_day_short_utf8(day_tm.tm_wday)) + ".";   // « Dim. »
         }
 

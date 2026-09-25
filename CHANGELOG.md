@@ -4,6 +4,25 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Planning de la carte centrale : le bon jour, même un soir de changement d'heure ou sans HA depuis la veille
+
+Deux bugs du même genre dans `build_planning_lines_from_jours()` (`tab5_services.cpp`),
+les lignes « 1/ Auj. : 08:00-16:00 » de la carte centrale.
+
+- **Nom du jour faux les nuits de changement d'heure** (audit du 25/09/2026, §5) : J+n
+  était calculé par `maintenant + n × 86 400 s`. Une journée de 23 h ou 25 h décalait le
+  résultat d'un jour près de minuit (« Mar. » affiché pour le lundi). Il passe par
+  `local_day_from_offset()`, normalisée à midi, comme le reste du projet.
+- **Horaire de la veille affiché sous « Auj. » quand HA est muet depuis minuit** : la boucle
+  lisait `cal_jours_data[jour]` comme si la case 0 était aujourd'hui, alors que le lot est
+  daté par le jour de sa poussée (lot 2). Elle passe maintenant par `cal_index_for_offset()`,
+  le recalage que le réveil utilise déjà : la fonction sort d'`alarm_clock.cpp` vers
+  `tab5_core.cpp` pour être partagée. Un lot non daté (reçu avant la synchro SNTP) garde
+  l'ancienne lecture, case 0 = aujourd'hui.
+- Test hôte : `cal_index_for_offset()` vérifié directement (lot du jour, lot de la veille,
+  lot périmé, lot non daté) ; le calcul de date était déjà couvert par les nuits de
+  changement d'heure du test du réveil.
+
 ### 2026-09-25 — Firmware : `tab5_custom.h` ne déclare plus que le contrat YAML, noms de jours et de mois au même endroit
 
 Lot 8d de l'audit du 25/09/2026 (§6). Aucun changement de comportement.
