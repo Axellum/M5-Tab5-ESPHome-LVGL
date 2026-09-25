@@ -85,7 +85,7 @@ def enemy(p: int, s: int) -> bool:
 
 
 class Pos:
-    __slots__ = ("sq", "n", "side", "must_from", "variant", "no_progress")
+    __slots__ = ("sq", "n", "side", "must_from", "variant", "no_progress", "eg_limit", "eg_plies")
 
     def __init__(self, variant: int = VAR_INTL10):
         self.n = 8 if variant == VAR_ENG8 else 10
@@ -94,12 +94,15 @@ class Pos:
         self.side = SIDE_WHITE
         self.must_from = NO_MUST
         self.no_progress = 0
+        self.eg_limit = 0
+        self.eg_plies = 0
 
     def copy(self) -> "Pos":
         q = Pos.__new__(Pos)
         q.sq = self.sq[:]
         q.n, q.side, q.must_from, q.variant, q.no_progress = (
             self.n, self.side, self.must_from, self.variant, self.no_progress)
+        q.eg_limit, q.eg_plies = self.eg_limit, self.eg_plies
         return q
 
 
@@ -321,6 +324,31 @@ def gen_moves(p: Pos) -> list[Move]:
     return out
 
 
+ENDGAME_PLIES_SMALL = 10   # 5 coups de chaque camp
+ENDGAME_PLIES_THREE = 32   # 16 coups de chaque camp
+
+
+def refresh_endgame(p: Pos) -> None:
+    """Miroir de Engine::refresh_endgame : fins de partie réduites FMJD (international)."""
+    p.eg_limit = 0
+    p.eg_plies = 0
+    if p.variant != VAR_INTL10:
+        return
+    w = sum(1 for x in p.sq if is_white(x))
+    b = sum(1 for x in p.sq if is_black(x))
+    wk = sum(1 for x in p.sq if x == W_KING)
+    bk = sum(1 for x in p.sq if x == B_KING)
+    if w == 1 and wk == 1:
+        other, other_k = b, bk
+    elif b == 1 and bk == 1:
+        other, other_k = w, wk
+    else:
+        return
+    if other_k == 0 or other > 3:
+        return
+    p.eg_limit = ENDGAME_PLIES_SMALL if other <= 2 else ENDGAME_PLIES_THREE
+
+
 def apply_move(p: Pos, m: Move) -> Pos:
     """Miroir de Engine::apply_move, sur une copie (le C++ modifie en place)."""
     q = p.copy()
@@ -336,6 +364,10 @@ def apply_move(p: Pos, m: Move) -> Pos:
         q.no_progress = 0
     elif q.no_progress < 250:
         q.no_progress += 1
+    if m.caps or m.promote:
+        refresh_endgame(q)
+    elif q.eg_limit and q.eg_plies < 250:
+        q.eg_plies += 1
     q.must_from = NO_MUST
     q.side = SIDE_BLACK if q.side == SIDE_WHITE else SIDE_WHITE
     return q
@@ -492,6 +524,54 @@ def test_compteur_de_nulle_seules_les_dames_le_font_avancer():
     q.no_progress = 30
     prise = gen_moves(q)[0]
     assert prise.n_caps == 1 and apply_move(q, prise).no_progress == 0
+
+
+def test_fins_de_partie_reduites_fmjd():
+    # Une dame seule contre au plus deux pièces dont une dame : 5 coups chacun.
+    p = empty_pos(VAR_INTL10)
+    put(p, 5, 4, W_KING)
+    put(p, 0, 1, B_KING)
+    put(p, 0, 3, B_KING)
+    refresh_endgame(p)
+    assert p.eg_limit == ENDGAME_PLIES_SMALL
+    # ... contre trois pièces dont une dame : 16 coups chacun.
+    put(p, 0, 5, B_MAN)
+    refresh_endgame(p)
+    assert p.eg_limit == ENDGAME_PLIES_THREE
+    # Quatre pièces, ou trois pions sans dame, ou les dames anglaises : pas de décompte.
+    put(p, 0, 7, B_MAN)
+    refresh_endgame(p)
+    assert p.eg_limit == 0
+    q = empty_pos(VAR_INTL10)
+    put(q, 5, 4, W_KING)
+    for c in (1, 3, 5):
+        put(q, 0, c, B_MAN)
+    refresh_endgame(q)
+    assert q.eg_limit == 0
+    e = empty_pos(VAR_ENG8)
+    put(e, 5, 4, W_KING)
+    put(e, 0, 1, B_KING)
+    refresh_endgame(e)
+    assert e.eg_limit == 0
+
+
+def test_fins_de_partie_reduites_decompte():
+    # Chaque coup sans prise avance le décompte ; une prise le recalcule depuis zéro.
+    p = empty_pos(VAR_INTL10)
+    put(p, 9, 0, W_KING)
+    put(p, 0, 9, B_KING)
+    refresh_endgame(p)
+    q = apply_move(p, gen_moves(p)[0])
+    assert q.eg_limit == ENDGAME_PLIES_SMALL and q.eg_plies == 1
+    r = empty_pos(VAR_INTL10)
+    put(r, 5, 4, W_KING)
+    put(r, 4, 5, B_MAN)
+    put(r, 0, 1, B_KING)
+    r.eg_plies = 7
+    prise = gen_moves(r)[0]
+    assert prise.n_caps == 1
+    s = apply_move(r, prise)
+    assert s.eg_limit == ENDGAME_PLIES_SMALL and s.eg_plies == 0
 
 
 def main() -> int:

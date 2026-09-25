@@ -367,6 +367,27 @@ int gen_moves(const Pos& p, Move* out, int max_out) {
     return nout;
 }
 
+void refresh_endgame(Pos& p) {
+    p.eg_limit = 0;
+    p.eg_plies = 0;
+    if (p.variant != VAR_INTL10) return;
+    int w = 0, b = 0, wk = 0, bk = 0;
+    const int N = p.n * p.n;
+    for (int i = 0; i < N; i++) {
+        const uint8_t pc = p.sq[i];
+        if (pc == EMPTY) continue;
+        if (is_white(pc)) { w++; if (is_king(pc)) wk++; }
+        else { b++; if (is_king(pc)) bk++; }
+    }
+    // Une dame seule d'un côté ; de l'autre, 1 à 3 pièces dont au moins une dame.
+    int other = 0, other_k = 0;
+    if (w == 1 && wk == 1) { other = b; other_k = bk; }
+    else if (b == 1 && bk == 1) { other = w; other_k = wk; }
+    else return;
+    if (other_k == 0 || other > 3) return;
+    p.eg_limit = (uint8_t) ((other <= 2) ? ENDGAME_PLIES_SMALL : ENDGAME_PLIES_THREE);
+}
+
 void apply_move(Pos& p, const Move& m) {
     const int n = p.n;
     uint8_t piece = p.sq[m.from];
@@ -381,6 +402,10 @@ void apply_move(Pos& p, const Move& m) {
 
     if (m.n_caps > 0 || man_moved) p.no_progress = 0;
     else if (p.no_progress < 250) p.no_progress++;
+
+    // Le matériel ne change qu'à une prise ou une promotion : on ne recompte qu'alors.
+    if (m.n_caps > 0 || m.promote) refresh_endgame(p);
+    else if (p.eg_limit && p.eg_plies < 250) p.eg_plies++;
 
     p.must_from = 255;
     p.side = (p.side == SIDE_WHITE) ? SIDE_BLACK : SIDE_WHITE;
@@ -448,6 +473,7 @@ bool is_terminal(const Pos& p, int* winner) {
     }
     const int draw_plies = (p.variant == VAR_ENG8) ? DRAW_PLIES_ENG : DRAW_PLIES_INTL;
     if (p.no_progress >= draw_plies) { if (winner) *winner = 2; return true; }
+    if (p.eg_limit && p.eg_plies >= p.eg_limit) { if (winner) *winner = 2; return true; }
     return false;
 }
 
@@ -591,6 +617,38 @@ static void clear_saved_game() {
     persist_save();
 }
 
+// Triple répétition (FFJD/FMJD) : empreintes des positions (cases + trait) depuis le
+// dernier coup irréversible — prise ou coup de pion, après lesquels aucune position
+// antérieure ne peut revenir. Au plus 80 demi-coups (nulle anglaise) + le départ.
+static constexpr int REP_MAX = 82;
+static uint32_t g_rep[REP_MAX];
+static int g_rep_n = 0;
+static const char* g_draw_reason = nullptr;   // sous-titre de l'écran de fin si nulle
+
+static uint32_t pos_hash(const Pos& p) {
+    uint32_t h = 2166136261u;  // FNV-1a
+    const int N = p.n * p.n;
+    for (int i = 0; i < N; i++) { h ^= p.sq[i]; h *= 16777619u; }
+    h ^= p.side;
+    h *= 16777619u;
+    return h;
+}
+
+// À appeler après chaque coup appliqué à g_pos, et sur la position de départ.
+static void rep_record() {
+    if (g_pos.no_progress == 0) g_rep_n = 0;
+    if (g_rep_n < REP_MAX) g_rep[g_rep_n++] = pos_hash(g_pos);
+}
+
+static bool rep_threefold() {
+    if (g_rep_n == 0) return false;
+    const uint32_t h = g_rep[g_rep_n - 1];
+    int seen = 0;
+    for (int i = 0; i < g_rep_n; i++)
+        if (g_rep[i] == h) seen++;
+    return seen >= 3;
+}
+
 static bool load_position() {
     if (!g_save.has_game) return false;
     if (g_save.board_n != 8 && g_save.board_n != 10) return false;
@@ -601,6 +659,9 @@ static bool load_position() {
     g_pos.must_from = g_save.must_from;
     g_pos.no_progress = g_save.no_progress;
     memcpy(g_pos.sq, g_save.board, (size_t)(g_pos.n * g_pos.n));
+    // Le compteur de fin de partie réduite n'est pas sauvegardé (layout NVS inchangé) :
+    // il repart de zéro à la reprise, ce qui ne peut que retarder la nulle.
+    Engine::refresh_endgame(g_pos);
     g_cfg_variant = g_save.setup_variant;
     g_cfg_mode = g_save.setup_mode;
     g_cfg_human = g_save.setup_human;
@@ -986,7 +1047,12 @@ static void go_gameover() {
     else if (g_winner == 1) msg = "Victoire des Noirs";
     set_text_if(g_p_title, msg);
     char buf[64];
-    snprintf(buf, sizeof(buf), "%s · %s", variant_name(g_pos.variant), mode_name(g_cfg_mode));
+    // Une nulle dit pourquoi : sans raison affichée, la règle des 25 coups passait
+    // pour un bug (partie « finie sans raison », 25/09/2026).
+    if (g_winner == 2 && g_draw_reason != nullptr)
+        snprintf(buf, sizeof(buf), "%s", g_draw_reason);
+    else
+        snprintf(buf, sizeof(buf), "%s · %s", variant_name(g_pos.variant), mode_name(g_cfg_mode));
     set_text_if(g_p_sub, buf);
     slot_list(0, "Revanche", "Meme reglage", Pal::KING_RING, true);
     slot_list(1, "Hub", "Menu principal", Pal::TXT_DIM, true);
@@ -1000,6 +1066,8 @@ static void start_new_game() {
     Engine::pos_init(g_pos, (Variant)g_cfg_variant);
     g_hist_n = 0;
     g_undo_n = 0;
+    g_rep_n = 0;
+    rep_record();
     g_sel = -1;
     g_hint_from = -1;
     g_winner = -1;
@@ -1014,6 +1082,8 @@ static void resume_game() {
     if (!load_position()) { go_hub(); return; }
     g_hist_n = 0;
     g_undo_n = 0;
+    g_rep_n = 0;   // les positions d'avant la sauvegarde ne sont pas connues
+    rep_record();
     g_sel = -1;
     g_hint_from = -1;
     g_winner = -1;
@@ -1035,7 +1105,23 @@ static void enter_playing() {
 
 static void finish_if_terminal() {
     int w = -1;
-    if (!Engine::is_terminal(g_pos, &w)) return;
+    g_draw_reason = nullptr;
+    if (Engine::is_terminal(g_pos, &w)) {
+        if (w == 2) {
+            if (g_pos.eg_limit && g_pos.eg_plies >= g_pos.eg_limit)
+                g_draw_reason = (g_pos.eg_limit == Engine::ENDGAME_PLIES_SMALL)
+                                    ? "Fin de partie : 5 coups chacun"
+                                    : "Fin de partie : 16 coups chacun";
+            else
+                g_draw_reason = (g_pos.variant == VAR_ENG8) ? "40 coups sans pion ni prise"
+                                                            : "25 coups sans pion ni prise";
+        }
+    } else if (rep_threefold()) {
+        w = 2;
+        g_draw_reason = "Position repetee 3 fois";
+    } else {
+        return;
+    }
     g_winner = w;
     record_result(w);
     go_gameover();
@@ -1073,6 +1159,7 @@ static void apply_player_move(const Move& m) {
 
     push_hist(m);
     Engine::apply_move(g_pos, m);
+    rep_record();
     g_sel = -1;
     refresh_legal();
     sync_pieces();
@@ -1098,6 +1185,8 @@ static void do_undo() {
     }
     if (g_hist_n > 0) g_hist_n--;
     if (g_cfg_mode == 0 && g_hist_n > 0) g_hist_n--;  // retire aussi le coup IA
+    g_rep_n = 0;   // prudent : le décompte des répétitions repart de cette position
+    rep_record();
     g_sel = -1;
     g_state = ST_PLAYING;
     refresh_legal();
@@ -1446,6 +1535,7 @@ static void tick_cb(lv_timer_t* /*t*/) {
             g_fade_until = esphome::millis() + 180;
             push_hist(m);
             Engine::apply_move(g_pos, m);
+            rep_record();
             g_sel = -1;
             refresh_legal();
             sync_pieces();

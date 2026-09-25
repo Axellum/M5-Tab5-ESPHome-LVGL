@@ -4,6 +4,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Dames : triple répétition, fins de partie réduites, raison de la nulle
+
+Suite de #146 (règle des 25 coups). Règles FMJD (celles de lidraughts) ; le texte FFJD dit
+la même chose pour la répétition et les 16 coups, mais ne chiffre pas le cas « deux dames
+contre une ».
+
+- **Triple répétition** (les deux variantes) : l'interface garde l'empreinte (FNV-1a des
+  cases + trait) de chaque position depuis le dernier coup irréversible (prise ou coup de
+  pion) ; la même position avec le même trait pour la 3ᵉ fois termine la partie. Remise à
+  zéro prudente après une annulation ou une reprise de partie.
+- **Fins de partie réduites** (international) : une dame seule contre au plus deux pièces
+  dont une dame → nulle après 5 coups de chaque camp ; contre trois pièces dont une dame →
+  après 16. Deux champs dans `Engine::Pos` (`eg_limit`, `eg_plies`), recalculés à chaque
+  prise ou promotion, donc pris en compte par la recherche de l'IA. Non sauvegardés (layout
+  NVS inchangé) : recalculés à la reprise, le décompte repart de zéro.
+- **Écran de fin** : une nulle affiche sa raison (« 25 coups sans pion ni prise »,
+  « Position repetee 3 fois », « Fin de partie : 5/16 coups chacun »).
+- Miroir Python (`tools/test_draughts_engine.py`) : deux tests des fins de partie réduites.
 ### 2026-09-25 — « Écran courant » : publié seulement quand il change
 
 Lot 3 bis de l'audit du 25/09/2026 (§3.1). Le capteur partait toutes les 5 s vers HA, même
