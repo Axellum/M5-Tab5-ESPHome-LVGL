@@ -251,7 +251,10 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── tab5_registry.h/.cpp  # Single registry of consoles and modal windows (ADR-0013)
 │   ├── game_common.h         # Helpers shared by the 8 consoles (bare widgets, xorshift32, NvsSlot<T>)
 │   ├── tab5_text/forecast/central/services/assist/cards/console/anim/calendar.cpp  # One unit per responsibility
-│   ├── alarm_clock.h/.cpp    # Alarm engine — next-ring maths, calendar rules, RDV list
+│   ├── tab5_tokens.h         # Design tokens (UIColor/UIAnim/UIIdle) — no dependency
+│   ├── tab5_core.h/.cpp      # Pure logic shared by HMI and alarm (dates, calendar data) — builds on a PC
+│   ├── alarm_clock.h/.cpp    # Alarm engine — next-ring maths, calendar rules, RDV list (pure, host-tested)
+│   ├── alarm_render.h/.cpp   # Alarm LVGL rendering (settings popup, ring overlay, status icon)
 │   ├── marble_game.h/.cpp    # Game: Fil d'Or (marble roguelite)
 │   ├── arkanoid_game.h/.cpp  # Game: Arcanoïde (breakout)
 │   ├── pinball_game.h/.cpp   # Game: Neon Apron (pinball, portrait)
@@ -269,6 +272,7 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 │   ├── render_ha_config.py   # Public HA files + placeholders.yaml → deployable rendered/ (--check: no real ID leaked)
 │   ├── verifier_secrets_config.py  # No secret in any tracked file (pre-commit + CI)
 │   ├── test_go_engine.py/.cpp  # Host tests: Go rules (Python mirror locally, real C++ with g++ in CI)
+│   ├── test_alarm_clock.cpp  # Host tests: alarm engine, simulated clock, Europe/Paris DST (g++ in CI)
 │   ├── test_chess_perft.py   # Host tests: chess move generator vs the perft suite
 │   ├── test_draughts_engine.py  # Host tests: draughts move generator vs reference perft (10×10 and 8×8)
 │   └── make_chess_font.py    # Builds ChessPieces.ttf

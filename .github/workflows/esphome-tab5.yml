@@ -88,6 +88,13 @@ jobs:
           g++ -std=c++17 -O2 -Wall -Wextra -I Tab5 -o "$RUNNER_TEMP/test_go_engine" \
             tools/test_go_engine.cpp Tab5/go_engine.cpp
           "$RUNNER_TEMP/test_go_engine"
+      - name: Moteur du réveil C++ (alarm_clock.cpp + tab5_core.cpp, horloge simulée)
+        # Le réveil doit sonner sans Home Assistant : son moteur est pur (lot 8b)
+        # et se teste ici, fuseau Europe/Paris, changements d'heure compris.
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -I Tab5 -o "$RUNNER_TEMP/test_alarm_clock" \
+            tools/test_alarm_clock.cpp Tab5/alarm_clock.cpp Tab5/tab5_core.cpp
+          "$RUNNER_TEMP/test_alarm_clock"
       - name: Payloads du mode démo conformes au contrat firmware
         run: python tools/demo/demo_pusher.py --dry-run
 
