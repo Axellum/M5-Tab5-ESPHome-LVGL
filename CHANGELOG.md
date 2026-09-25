@@ -4,6 +4,27 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Performance : code exécuté depuis la PSRAM, compilé en -O2
+
+Expériences de l'audit du 25/09/2026 (§3.3), une à la fois, mesurées avec les capteurs
+« Tab5 Draw Max » et « Tab5 Loop Time ». Même protocole pour chaque build : repos, envoi HA,
+écran éteint/rallumé (image pleine), calendrier et console système ouverts à distance,
+deux passages de chaque ; écarts entre passages ≤ 5 ms sur les images.
+
+| | Image pleine | Calendrier | Console | Boucle au repos | RAM interne libre |
+|---|---|---|---|---|---|
+| Référence (-Os, flash DIO 40 MHz) | 202-204 ms | 340 ms | 400 ms | 41-42 ms | 325,5 Ko |
+| `execute_from_psram` | 179 ms | 311 ms | 359-363 ms | 34-35 ms | 316,2 Ko |
+| `compiler_optimization: PERF` | 196-197 ms | 322 ms | 381-384 ms | 37-40 ms | 320,2 Ko |
+| **les deux (retenu)** | **172 ms** | **292-293 ms** | **340 ms** | **33-34 ms** | 310,0 Ko |
+
+- Retenu : `execute_from_psram: true` + `compiler_optimization: PERF` (`Tab5/tab5-hardware.yaml`).
+  Coût : firmware +468 Ko (40,8 % de la partition), RAM interne libre −15,5 Ko, OTA
+  12,9 → 14,7 s. Démarrage inchangé (liaison API revenue en 16,6 s). 5 redémarrages de
+  contrôle sans écran noir.
+- Écarté : fenêtre TCP à 64 Ko (défaut ESPHome) — l'OTA du même binaire passe de 14,7 à
+  14,5 s, il est borné par l'écriture flash ; `CONFIG_LWIP_TCP_WND_DEFAULT: 16384` reste.
+- Pile libre minimale de la boucle : 1 476 → 1 796 o avec -O2 (atteinte dès le démarrage).
 ### 2026-09-25 — Diagnostic : durée des images LVGL et pile libre de la boucle
 
 Point de départ des expériences de performance (audit du 25/09/2026, §3.3). Deux
