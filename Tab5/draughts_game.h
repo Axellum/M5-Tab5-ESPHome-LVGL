@@ -144,9 +144,11 @@ void pos_init(Pos& p, Variant v);
 int  gen_moves(const Pos& p, Move* out, int max_out);
 void apply_move(Pos& p, const Move& m);
 int  eval_material(const Pos& p);          // +blancs, −noirs (pion=100, dame=300)
-int  eval_full(const Pos& p);              // matériel + mobilité légère
+// Matériel + mobilité légère. `scratch` (MAX_MOVES coups) reçoit la génération qui
+// sert à compter la mobilité : 4,7 Ko que l'IA fournit hors de la pile.
+int  eval_full(const Pos& p, Move* scratch);
 int  count_pieces(const Pos& p, Side s);
-bool has_legal_move(const Pos& p);
+bool has_legal_move(const Pos& p);         // sans liste : 1 coup trouvé suffit
 // winner: 0 blancs, 1 noirs, 2 nulle ; retourne true si terminée
 bool is_terminal(const Pos& p, int* winner);
 

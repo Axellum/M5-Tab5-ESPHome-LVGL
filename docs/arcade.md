@@ -559,7 +559,16 @@ recherche bloquante :
 | Confirmé | profondeur 2–3 + alpha-bêta |
 | Expert | profondeur 3–4 + quiescence sur les prises |
 
-Contrainte tenue : `ai_step()` reste sous ~25 ms (budget en nœuds).
+Budget de nœuds par tranche : 600 (Amateur), 1 200 (Confirmé), 2 000 (Expert). Si un coup
+racine ne tient pas dans une tranche complète, le budget double (jusqu'à ×4), puis l'IA
+joue le meilleur coup de la dernière profondeur complète. Sans cette règle, le même
+sous-arbre était repris à l'identique à chaque tranche et l'IA ne jouait jamais.
+
+Les listes de coups de la recherche ne sont **jamais sur la pile** : une liste de 96 coups
+pèse 4,7 Ko et la tâche ESPHome n'a que 8 Ko. Elles vivent dans un tampon de 42 Ko,
+une ligne par ply, alloué au premier coup réfléchi (RAM interne, PSRAM en repli) et
+rendu par `Ai::release()` à la fermeture. Chaque coup de l'IA est tracé dans les logs
+(tag `dames`), avec la pile libre minimale de la tâche.
 
 ### Notes techniques
 

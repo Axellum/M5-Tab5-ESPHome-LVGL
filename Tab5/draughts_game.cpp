@@ -411,11 +411,10 @@ int eval_material(const Pos& p) {
     return sc;
 }
 
-int eval_full(const Pos& p) {
+int eval_full(const Pos& p, Move* scratch) {
     int sc = eval_material(p);
     // Mobilité légère (coût limité : génère pour le côté au trait seulement)
-    Move tmp[MAX_MOVES];
-    int mob = gen_moves(p, tmp, MAX_MOVES);
+    int mob = gen_moves(p, scratch, MAX_MOVES);
     if (p.side == SIDE_WHITE) sc += mob * 2;
     else sc -= mob * 2;
     // Avance des pions
@@ -430,9 +429,12 @@ int eval_full(const Pos& p) {
     return sc;
 }
 
+// Une case suffit : gen_moves() émet toujours le premier coup trouvé, prise ou non,
+// et s'arrête d'écrire à max_out. Une liste complète (4,7 Ko) ici, appelée par
+// is_terminal() au fond de la recherche de l'IA, faisait déborder la pile de 8 Ko.
 bool has_legal_move(const Pos& p) {
-    Move tmp[MAX_MOVES];
-    return gen_moves(p, tmp, MAX_MOVES) > 0;
+    Move one[1];
+    return gen_moves(p, one, 1) > 0;
 }
 
 bool is_terminal(const Pos& p, int* winner) {
@@ -1494,7 +1496,7 @@ void open(const UI& ui) {
 
 void close() {
     if (g_state == ST_OFF) return;
-    Ai::abort();
+    Ai::release();
     if (g_state == ST_PLAYING || g_state == ST_THINKING) save_position();
     persist_save();
     if (g_timer) { lv_timer_delete(g_timer); g_timer = nullptr; }

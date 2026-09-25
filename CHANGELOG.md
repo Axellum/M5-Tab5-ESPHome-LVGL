@@ -4,6 +4,28 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Dames : l'IA ne déborde plus la pile et ne réfléchit plus sans fin
+
+Point 2.1 de l'audit du 25/09/2026 (« l'IA ne joue jamais son coup, niveau Amateur »).
+
+- **Pile** : chaque niveau de la recherche posait une liste de 96 coups (4,7 Ko) sur la
+  pile de la tâche ESPHome, qui n'en a que 8. Au premier coup réfléchi, `negamax` puis
+  `has_legal_move` réservaient déjà ≈ 10 Ko. Les listes vivent maintenant dans un tampon
+  de 42 Ko alloué au premier coup réfléchi (RAM interne, PSRAM en repli) et rendu à la
+  fermeture du jeu. `has_legal_move` n'a plus besoin de liste : un coup trouvé suffit.
+  Réservations relevées dans le binaire : `negamax` 5 008 → 192 o, `quiescence`
+  4 976 → 176 o, `has_legal_move` 4 720 → 96 o, `eval_full` 4 720 → 32 o.
+- **Réflexion sans fin** : le budget de nœuds d'une tranche s'appliquait coup racine par
+  coup racine, et un coup dont le sous-arbre dépassait ce budget était repris de zéro à
+  chaque tranche, à l'identique. Le niveau Expert pouvait ainsi réfléchir indéfiniment
+  (reproduit sur le miroir Python du moteur : une partie sur trois bloquée au 47ᵉ
+  demi-coup). Désormais le budget double (jusqu'à ×4), puis l'IA joue le meilleur coup de
+  la dernière profondeur complète. Hors de ce cas, l'IA choisit exactement les mêmes coups.
+- **Logs** : une ligne quand l'IA prend la main, une quand elle joue (durée, tranches,
+  nœuds, profondeur atteinte, pile libre minimale de la tâche).
+- Si l'allocation échoue, l'IA joue un coup du niveau Débutant au lieu de réfléchir, et le
+  signale dans les logs.
+
 ### 2026-09-25 — Jeux : sauvegarde d'Arcanoïde vérifiée au chargement, record du Coureur d'Or
 
 Les deux bugs relevés pendant le lot 8f.
