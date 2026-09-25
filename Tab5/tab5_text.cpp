@@ -265,6 +265,8 @@ void set_label_text_utf8(lv_obj_t* label, const char* text) {
 }
 
 const char* clock_month_short_utf8(int month) {
+    // [AI-WARNING] Affiché en roboto_45 réduite à 37 glyphes (tab5-styles.yaml) :
+    // modifier ces libellés = mettre à jour la liste de glyphes de roboto_45.
     static const char* months[] = {
         "Janv", "F\xC3\xA9vr", "Mars", "Avr", "Mai", "Juin", "Juil",
         "Ao\xC3\xBBt", "Sept", "Oct", "Nov", "D\xC3\xA9" "c"

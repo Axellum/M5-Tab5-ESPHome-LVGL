@@ -484,7 +484,7 @@ void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase) {
 static void apply_forecast_page(int old_page, int page, lv_dir_t dir,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
-    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
+    esphome::font::Font* f_card, esphome::font::Font* f_card_s,
     lv_obj_t* pbars[5],
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx) {
@@ -514,9 +514,9 @@ static void apply_forecast_page(int old_page, int page, lv_dir_t dir,
             // (deux animations sur la meme zone = bruit visuel + repaint double).
             g_forecast_roll_suppress = true;
             if (new_is_daily) {
-                refresh_daily_forecast(day_slots, page - 2, f_main, f_card, f_main_s, f_card_s);
+                refresh_daily_forecast(day_slots, page - 2, f_card, f_card_s);
             } else {
-                refresh_hourly_forecast(hour_slots, 1 - page, f_main, f_card, f_main_s, f_card_s);
+                refresh_hourly_forecast(hour_slots, 1 - page, f_card, f_card_s);
             }
             g_forecast_roll_suppress = false;
             lv_obj_t* out_layer = old_is_daily ? layer_forecast_daily : layer_forecast_hourly;
@@ -527,11 +527,11 @@ static void apply_forecast_page(int old_page, int page, lv_dir_t dir,
             if (new_is_daily) {
                 lv_obj_clear_flag(layer_forecast_daily, LV_OBJ_FLAG_HIDDEN);
                 lv_obj_add_flag(layer_forecast_hourly, LV_OBJ_FLAG_HIDDEN);
-                refresh_daily_forecast(day_slots, page - 2, f_main, f_card, f_main_s, f_card_s);
+                refresh_daily_forecast(day_slots, page - 2, f_card, f_card_s);
             } else {
                 lv_obj_add_flag(layer_forecast_daily, LV_OBJ_FLAG_HIDDEN);
                 lv_obj_clear_flag(layer_forecast_hourly, LV_OBJ_FLAG_HIDDEN);
-                refresh_hourly_forecast(hour_slots, 1 - page, f_main, f_card, f_main_s, f_card_s);
+                refresh_hourly_forecast(hour_slots, 1 - page, f_card, f_card_s);
             }
         }
 
@@ -551,7 +551,7 @@ static void apply_forecast_page(int old_page, int page, lv_dir_t dir,
 void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_index,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
-    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
+    esphome::font::Font* f_card, esphome::font::Font* f_card_s,
     lv_obj_t* pbars[5],
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx) {
@@ -587,14 +587,14 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
 
     apply_forecast_page(old_page, page, dir,
         layer_forecast_daily, layer_forecast_hourly, day_slots, hour_slots,
-        f_main, f_card, f_main_s, f_card_s, pbars,
+        f_card, f_card_s, pbars,
         page_title_wrap, lbl_page_title, ctx);
 }
 
 void reset_forecast_to_main_page(int& forecast_page_index,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
-    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
+    esphome::font::Font* f_card, esphome::font::Font* f_card_s,
     lv_obj_t* pbars[5],
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx) {
@@ -610,7 +610,7 @@ void reset_forecast_to_main_page(int& forecast_page_index,
 
     apply_forecast_page(old_page, FORECAST_MAIN_PAGE, dir,
         layer_forecast_daily, layer_forecast_hourly, day_slots, hour_slots,
-        f_main, f_card, f_main_s, f_card_s, pbars,
+        f_card, f_card_s, pbars,
         page_title_wrap, lbl_page_title, ctx);
 }
 

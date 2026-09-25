@@ -27,6 +27,12 @@ falsifiables sur le dépôt réel :
      sont elles que Home Assistant affiche dans « Outils de développement →
      Actions » : sans elles, un champ n'est qu'une case de texte sans indice sur
      le format du payload, toujours sérialisé à la main ici.
+  6. **Glyphes de la date** (audit du 25/09/2026, lot 4) : `roboto_45` ne sert qu'à
+     `lbl_date` et n'embarque plus que ses caractères (37 au lieu de 190 Latin-1,
+     ≈ 59 Ko de flash). Chaque caractère des jours de `update_clock_date_ui()`
+     (tab5_anim.cpp), des mois de `clock_month_short_utf8()` (tab5_text.cpp), des
+     chiffres et du texte initial du label doit être dans sa liste de glyphes —
+     sinon la lettre s'affiche vide, sans aucune erreur de compilation.
 
 Usage : python tools/check_tab5_code_rules.py   (aussi lancé par `pytest`, tests/test_guards.py)
 Sortie : 0 si tout est conforme, 1 sinon (liste des écarts sur stdout).
@@ -152,6 +158,55 @@ def api_action_metadata(api_logic: Path = API_LOGIC) -> list[str]:
     return problems
 
 
+RE_C_STRING = re.compile(r'"((?:[^"\\]|\\.)*)"')
+
+
+def _c_literals(block: str) -> list[str]:
+    """Littéraux C d'un bloc, échappements \\xNN décodés (UTF-8). Chaque littéral est
+    décodé seul : les tables coupent exprès « "D\\xC3\\xA9" "c" » pour que \\xA9 ne
+    mange pas le « c » — la couverture des caractères n'a pas besoin de les recoller."""
+    import codecs
+
+    out = []
+    for lit in RE_C_STRING.findall(block):
+        raw = codecs.escape_decode(lit.encode("latin-1"))[0]
+        out.append(raw.decode("utf-8"))
+    return out
+
+
+def date_glyph_coverage(tab5: Path = TAB5) -> list[str]:
+    anim = tab5 / "tab5_anim.cpp"
+    text_cpp = tab5 / "tab5_text.cpp"
+    styles = tab5 / "tab5-styles.yaml"
+    lvgl = tab5 / "tab5-lvgl.yaml"
+    for required in (anim, text_cpp, styles, lvgl):
+        if not required.is_file():
+            return [f"règle 6 : fichier introuvable : {required}"]
+
+    m_days = re.search(r"static const char\* days\[\] = \{(.*?)\};", strip_cpp_comments(anim.read_text(encoding="utf-8")), re.S)
+    m_months = re.search(
+        r"clock_month_short_utf8\(int month\)\s*\{.*?months\[\] = \{(.*?)\};",
+        strip_cpp_comments(text_cpp.read_text(encoding="utf-8")),
+        re.S,
+    )
+    m_glyphs = re.search(r"id: roboto_45\s*\n(?:[^\n]*\n)*?\s*glyphs: '((?:[^']|'')*)'", styles.read_text(encoding="utf-8"))
+    m_initial = re.search(r"id: lbl_date, text: \"([^\"]*)\"", lvgl.read_text(encoding="utf-8"))
+    if not (m_days and m_months and m_glyphs and m_initial):
+        return ["règle 6 : table des jours, des mois, glyphes de roboto_45 ou texte initial de lbl_date introuvable"]
+
+    glyphs = set(m_glyphs.group(1).replace("''", "'"))
+    needed = set(" 0123456789") | set(m_initial.group(1))
+    for word in _c_literals(m_days.group(1)) + _c_literals(m_months.group(1)):
+        needed |= set(word)
+    missing = sorted(needed - glyphs)
+    if missing:
+        return [
+            f"tab5-styles.yaml : roboto_45 sans glyphe pour {''.join(missing)!r} — lbl_date "
+            f"l'afficherait vide (ajouter ces caractères à `glyphs:`)"
+        ]
+    return []
+
+
 def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     problems: list[str] = []
     api_logic = tab5 / "tab5-api-logic.yaml"
@@ -220,6 +275,9 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     # 5. métadonnées des actions du contrat API
     problems += api_action_metadata(api_logic)
 
+    # 6. glyphes de la date (roboto_45 réduite)
+    problems += date_glyph_coverage(tab5)
+
     return problems
 
 
@@ -232,7 +290,8 @@ def main() -> int:
         return 1
     print(
         "[OK] règles de code Tab5 : snprintf partout, api-logic et hardware sans LVGL, "
-        "aucun global orphelin, aucune entité HA en dur, actions API décrites"
+        "aucun global orphelin, aucune entité HA en dur, actions API décrites, "
+        "glyphes de la date couverts"
     )
     return 0
 

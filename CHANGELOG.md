@@ -4,6 +4,33 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Flash : 262 Ko de polices jamais affichées retirés
+
+Lot 4 de l'audit du 25/09/2026 (§4.1, §4.2). Mesuré à la compilation : flash
+3 129 074 → **2 866 746 o (−262 328, −8,4 %)**, RAM statique 258 602 → 258 354 o (−248),
+0 warning, `config_hash` 0x45d032d8 — l'OTA transfère 262 Ko de moins.
+
+- **`font_meteo_main` (270 px) et `font_meteo_main_small` (190 px) retirées** : 161 866 +
+  34 521 o de bitmaps que personne n'affichait — `update_meteo_icon()` n'était appelée
+  qu'avec `is_card = true`. Les paramètres `f_main` / `f_main_s` et `is_card` disparaissent
+  de six signatures (`update_meteo_icon`, `refresh_daily/hourly_forecast`,
+  `handle_swipe_gesture`, `reset_forecast_to_main_page`, `apply_forecast_page`) et de quatre
+  appels YAML. Rendu inchangé : même police 120/80 px, même ratio 0.4444f.
+- **`mdi_assist_64` retirée** (jamais référencée).
+- **`roboto_45` réduite à 37 glyphes** : elle ne sert qu'à `lbl_date` (« Jeu 02 Avr »), texte
+  fabriqué par le firmware ; la règle « tout Latin-1 » ne vaut que pour le texte poussé
+  par HA. **Règle 6** de `tools/check_tab5_code_rules.py` : chaque caractère des jours
+  (`update_clock_date_ui`), des mois (`clock_month_short_utf8`), des chiffres et du texte
+  initial doit avoir son glyphe — vérifiée falsifiable (retirer « û », « é » ou « 7 » la
+  fait échouer).
+- **Réponse de l'assistant plafonnée à 4 Ko** avant le formatage Markdown (coupure sur une
+  frontière UTF-8, « [...] ») : `format_assist_markdown()` allouait une chaîne par ligne
+  et par cellule sur le tas interne, sans borne.
+- Non retenus : libérer l'image de l'assistant (le popup se ferme aussi par
+  `ModalRegistry::close_all()`, un widget encore branché sur une image libérée lirait de
+  la mémoire libérée — et la PSRAM n'est pas contrainte) ; Zobrist des échecs en
+  `constexpr` (7,9 Ko de RAM, touche au moteur : avec les dames, plus tard).
+
 ### 2026-09-25 — Les poussées HA identiques ne redessinent plus l'écran
 
 Lot 3 de l'audit du 25/09/2026 (§3.1, §3.2). Mesuré le matin même : boucle à 66 ms au

@@ -65,7 +65,8 @@ int32_t local_day_number_today();
 const char* fr_day_long_utf8(int wday);
 const char* fr_month_long_utf8(int mois_1_12);
 namespace esphome { namespace font { class Font; } }
-void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, bool is_card, esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
+// Icône météo d'une tuile (police 120 px, 80 px pour le petit calque 2).
+void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, esphome::font::Font* f_card, esphome::font::Font* f_card_s);
 
 uint32_t get_humidity_color(float x);
 uint32_t get_temperature_color(float t);
@@ -123,9 +124,9 @@ extern WeatherDaySlot g_day_slots[5];
 extern WeatherHourSlot g_hour_slots[5];
 
 void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
-    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
+    esphome::font::Font* f_card, esphome::font::Font* f_card_s);
 void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
-    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s);
+    esphome::font::Font* f_card, esphome::font::Font* f_card_s);
 void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj);
 
 // =============================================================================
@@ -320,7 +321,7 @@ extern CentralPanelCtx g_central_ctx;
 void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_index,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
-    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
+    esphome::font::Font* f_card, esphome::font::Font* f_card_s,
     lv_obj_t* pbars[5],
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx);
@@ -333,7 +334,7 @@ void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_inde
 void reset_forecast_to_main_page(int& forecast_page_index,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
-    esphome::font::Font* f_main, esphome::font::Font* f_card, esphome::font::Font* f_main_s, esphome::font::Font* f_card_s,
+    esphome::font::Font* f_card, esphome::font::Font* f_card_s,
     lv_obj_t* pbars[5],
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx);
