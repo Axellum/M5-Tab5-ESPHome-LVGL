@@ -390,17 +390,7 @@ static bool insert_score(uint32_t score, uint8_t level, uint8_t ctrl) {
     entry.pad = 0;
     entry.timestamp = (uint32_t)(esphome::millis() / 1000);
 
-    int pos = g_save.score_count;
-    for (int i = 0; i < g_save.score_count; i++) {
-        if (score > g_save.scores[i].score) { pos = i; break; }
-    }
-    if (pos >= ARK_MAX_SCORES) return false;
-
-    // Décale les entrées suivantes.
-    int end = g_save.score_count < ARK_MAX_SCORES ? g_save.score_count : ARK_MAX_SCORES - 1;
-    for (int i = end; i > pos; i--) g_save.scores[i] = g_save.scores[i - 1];
-    g_save.scores[pos] = entry;
-    if (g_save.score_count < ARK_MAX_SCORES) g_save.score_count++;
+    if (topn_insert(g_save.scores, g_save.score_count, entry) < 0) return false;
     persist_save();
     return true;
 }
@@ -1349,8 +1339,7 @@ void on_imu(float ax, float ay, float /*az*/) {
 }
 
 void calibrate() {
-    g_save.cal_x = (int16_t)(g_raw_x * 1000.0f);
-    g_save.cal_y = (int16_t)(g_raw_y * 1000.0f);
+    tilt_calibrate(g_save.cal_x, g_save.cal_y, g_raw_x, g_raw_y);
     g_tilt_x = 0;
     persist_save();
 }

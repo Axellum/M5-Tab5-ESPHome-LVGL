@@ -1646,10 +1646,7 @@ static void tick_cb(lv_timer_t*) {
     // Tick adaptatif : 25 ms pendant la réflexion IA, 50 ms sinon (menus, attente
     // humain, marquage). Réduit la charge CPU de ~50 % entre les coups.
     const uint32_t want_ms = (g_state == ST_THINKING) ? TICK_THINK_MS : TICK_IDLE_MS;
-    if (g_timer && s_tick_period != want_ms) {
-        s_tick_period = want_ms;
-        lv_timer_set_period(g_timer, want_ms);
-    }
+    timer_period_sync(g_timer, s_tick_period, want_ms);
 
     const uint32_t now = esphome::millis();
 
@@ -1692,16 +1689,10 @@ static void tick_cb(lv_timer_t*) {
 
 void on_imu(float ax, float ay, float az) {
     if (ax != ax || ay != ay || az != az) return;   // NaN
-    const float dax = ax - g_ax, day = ay - g_ay, daz = az - g_az;
-    g_ax = ax; g_ay = ay; g_az = az;
+    const float mag = accel_delta_norm(ax, ay, az, g_ax, g_ay, g_az);
     if (g_state != ST_PLAYING || !g_save.opt_shake) return;
     if (!is_human_turn()) return;
-    const float mag = sqrtf(dax * dax + day * day + daz * daz);
-    const uint32_t now = esphome::millis();
-    if (mag > 1.4f && (now - g_last_shake) > 1200) {
-        g_last_shake = now;
-        do_hint();
-    }
+    if (shake_fire(mag, 1.4f, g_last_shake, esphome::millis(), 1200)) do_hint();
 }
 
 bool is_open() { return g_state != ST_OFF; }

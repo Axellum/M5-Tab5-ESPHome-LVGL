@@ -4,6 +4,36 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Jeux : les mécanismes recopiés entre consoles passent dans `game_common.h`
+
+Lot 8f de l'audit du 25/09/2026 (§6), dernier du lot 8. Aucun changement de comportement :
+chaque helper reproduit exactement l'ordre des opérations d'origine, et les seuils, périodes,
+délais et gardes d'état restent dans chaque jeu — ce sont eux qui font son ressenti.
+
+- `timer_period_sync()` : tick adaptatif de Go, Trivia, Coureur d'Or et Neon Apron.
+- `topn_insert<>()` : classement d'Arcanoïde, de Coureur d'Or et de Neon Apron. Pour Neon
+  Apron, dont le tableau n'a pas de compteur (cases vides à 0), c'est le même algorithme
+  avec un compteur fixé à N, puisque le score inséré est toujours > 0.
+- `tilt_calibrate()` (calibration « à plat » de 4 jeux) et `tilt_smooth()` (inclinaison
+  lissée de Fil d'Or et Coureur d'Or, chacun avec son coefficient).
+- `accel_delta_norm()` et `shake_fire()` : secousse d'Échecs (norme lissée, 1,9 g / 900 ms),
+  Trivia (2,2 g / 900 ms), Dames (variation, 1,2 / 800 ms) et Go (1,4 / 1 200 ms).
+- Laissés tels quels, à dessein : les lignes de menu (`slot_list`, une géométrie et un ordre
+  d'opérations par jeu), `slots_hide_from` (chaque jeu garderait un emballage d'une ligne),
+  le coup de hanche du flipper (passe-haut sur deux axes), la course de Fil d'Or.
+- Relevé exhaustif fait avant d'écrire une ligne (code exact de chaque copie, différences
+  de constantes, d'ordre et de gardes) ; chaque remplacement est parti du texte d'origine
+  exact.
+- Signalés, non corrigés ici (ce serait changer le comportement) : Arcanoïde ne borne pas
+  `score_count` au chargement NVS (une sauvegarde corrompue ferait lire hors du tableau des
+  scores), et Coureur d'Or ne met pas à jour `best` quand un score hors top 10 le dépasse
+  (possible si des parties hors concours occupent le haut du classement).
+
+**Preuve** (`nm -S`, `main` @ `a1d2999` contre cette branche) : sur 18 404 symboles, seules les
+8 fonctions retouchées changent de taille, de quelques octets (génération de code, par
+exemple `Go::on_imu` 226 → 184 o), et rien d'autre ne bouge. `config_hash` identique
+(0x485c6667), flash 2 843 524 → 2 843 470 o (−54), RAM identique, 0 warning.
+
 ### 2026-09-25 — YAML : templates pour les widgets recopiés (arcade, bandeaux d'alerte, popup réveil)
 
 Lot 8e de l'audit du 25/09/2026 (§6, règle 5 : un widget répété 3 fois ou plus passe par un

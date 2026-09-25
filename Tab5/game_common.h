@@ -21,6 +21,7 @@
 #include "esphome.h"
 #include "esphome/core/preferences.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 
@@ -151,6 +152,79 @@ struct NvsSlot {
     uint32_t key_;
     uint32_t magic_;
 };
+
+// ---------------------------------------------------------------------------
+// Mécanismes que 2 à 4 consoles recopiaient (audit du 25/09/2026, lot 8f)
+// ---------------------------------------------------------------------------
+// Chaque helper reproduit EXACTEMENT l'ordre des opérations d'origine (mêmes
+// flottants, mêmes comparaisons strictes) ; les seuils, périodes, délais et gardes
+// d'état restent dans chaque jeu — ce sont eux qui font son ressenti.
+
+// Période d'un lv_timer, écrite seulement si elle change : le cache évite un
+// lv_timer_set_period à chaque tick. go, trivia, lode, pinball (tick adaptatif :
+// rapide pendant l'action, lent dans les menus).
+static inline void timer_period_sync(lv_timer_t* t, uint32_t& cache, uint32_t want) {
+    if (!t || want == cache) return;
+    cache = want;
+    lv_timer_set_period(t, want);
+}
+
+// Insère `e` dans un classement trié par `.score` décroissant, de capacité N, dont
+// `count` entrées sont valides. Un ex-aequo se range APRÈS les scores égaux
+// (comparaison stricte). Rend le rang (0 = premier) ou -1 si hors classement ;
+// `count` monte jusqu'à N. Un tableau à sentinelle (cases vides à 0, sans
+// compteur) s'utilise avec count = N : pour un score > 0 c'est le même algorithme.
+// arkanoid, lode, pinball.
+template <typename T, size_t N, typename C>
+static inline int topn_insert(T (&arr)[N], C& count, const T& e) {
+    const int n = (int) count;
+    int pos = n;
+    for (int i = 0; i < n; i++) {
+        if (e.score > arr[i].score) { pos = i; break; }
+    }
+    if (pos >= (int) N) return -1;
+    for (int i = (n < (int) N ? n : (int) N - 1); i > pos; i--) arr[i] = arr[i - 1];
+    arr[pos] = e;
+    if (n < (int) N) count = (C) (n + 1);
+    return pos;
+}
+
+// Calibration « à plat » : la lecture brute courante (en g) devient le zéro,
+// stockée en milli-g tronqués. arkanoid, marble, lode, pinball.
+static inline void tilt_calibrate(int16_t& cal_x, int16_t& cal_y, float raw_x, float raw_y) {
+    cal_x = (int16_t) (raw_x * 1000.0f);
+    cal_y = (int16_t) (raw_y * 1000.0f);
+}
+
+// Inclinaison lissée : lecture brute moins la calibration, puis moyenne
+// exponentielle de coefficient k (0..1). marble (k = 0.38), lode (0.35).
+static inline void tilt_smooth(float& tilt_x, float& tilt_y, float raw_x, float raw_y,
+                               int16_t cal_x, int16_t cal_y, float k) {
+    const float ox = cal_x / 1000.0f, oy = cal_y / 1000.0f;
+    const float tx = raw_x - ox, ty = raw_y - oy;
+    tilt_x += (tx - tilt_x) * k;
+    tilt_y += (ty - tilt_y) * k;
+}
+
+// Norme de la variation d'accélération depuis l'échantillon précédent (la gravité
+// s'annule par différence), puis mémorisation de l'échantillon. draughts, go.
+static inline float accel_delta_norm(float ax, float ay, float az, float& px, float& py, float& pz) {
+    const float dax = ax - px, day = ay - py, daz = az - pz;
+    px = ax; py = ay; pz = az;
+    return sqrtf(dax * dax + day * day + daz * daz);
+}
+
+// Déclencheur de secousse : vrai si `v` dépasse strictement `thresh` et que le
+// dernier déclenchement date de plus de `cooldown_ms` (réarmé alors à `now`).
+// chess (norme lissée, 1.9 g / 900 ms), trivia (norme, 2.2 g / 900 ms), draughts
+// (variation, 1.2 / 800 ms), go (variation, 1.4 / 1200 ms).
+static inline bool shake_fire(float v, float thresh, uint32_t& last_ms, uint32_t now, uint32_t cooldown_ms) {
+    if (v > thresh && (now - last_ms) > cooldown_ms) {
+        last_ms = now;
+        return true;
+    }
+    return false;
+}
 
 }  // namespace GameCommon
 

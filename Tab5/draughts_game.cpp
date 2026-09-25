@@ -1465,15 +1465,9 @@ void ai_step() {
 
 void on_imu(float ax, float ay, float az) {
     if (ax != ax || ay != ay || az != az) return;
-    float dax = ax - g_imu_ax, day = ay - g_imu_ay, daz = az - g_imu_az;
-    g_imu_ax = ax; g_imu_ay = ay; g_imu_az = az;
+    const float mag = accel_delta_norm(ax, ay, az, g_imu_ax, g_imu_ay, g_imu_az);
     if (g_state != ST_PLAYING || !g_save.imu_hint) return;
-    float mag = sqrtf(dax * dax + day * day + daz * daz);
-    uint32_t now = esphome::millis();
-    if (mag > 1.2f && (now - g_last_shake_ms) > 800) {
-        g_last_shake_ms = now;
-        do_hint();
-    }
+    if (shake_fire(mag, 1.2f, g_last_shake_ms, esphome::millis(), 800)) do_hint();
 }
 
 bool is_open() { return g_state != ST_OFF; }

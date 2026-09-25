@@ -70,7 +70,9 @@ oubli et le jeu est invisible, ou le firmware ne compile pas :
    dans la grille (template des cartes depuis le lot 8e ; `color_arcade_<jeu>_accent` doit exister) ;
 6. le `.cpp` inclut **`game_common.h`** (helpers partagés : `mk_rect`/`mk_label`,
    `show`/`set_bg`/`set_border`/`set_text_if`, `clampf`, `xorshift32_next`, `NvsSlot<T>`
-   pour la NVS) au lieu de les recopier, et garde sa **palette locale** `<Jeu>::Pal`
+   pour la NVS ; depuis le lot 8f : `timer_period_sync` pour un tick adaptatif, `topn_insert`
+   pour un classement, `tilt_calibrate`/`tilt_smooth` pour l'inclinaison,
+   `accel_delta_norm`/`shake_fire` pour une secousse — le jeu garde ses seuils) au lieu de les recopier, et garde sa **palette locale** `<Jeu>::Pal`
    dans son `.h` — `tab5_custom.h` n'est jamais touché pour un jeu (ADR-0014). Un
    moteur de règles (échecs, Go, dames) a son **miroir Python** dans `tools/`.
 

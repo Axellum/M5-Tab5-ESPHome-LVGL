@@ -1876,10 +1876,7 @@ static void tick_cb(lv_timer_t*) {
     g_run_ms = now - g_run_start_ms;
 
     // --- Inclinaison : offset de calibration, lissage, zone morte -----------
-    float ox = g_save.cal_x / 1000.0f, oy = g_save.cal_y / 1000.0f;
-    float tx = g_raw_x - ox, ty = g_raw_y - oy;
-    g_tilt_x += (tx - g_tilt_x) * TILT_SMOOTH;
-    g_tilt_y += (ty - g_tilt_y) * TILT_SMOOTH;
+    tilt_smooth(g_tilt_x, g_tilt_y, g_raw_x, g_raw_y, g_save.cal_x, g_save.cal_y, TILT_SMOOTH);
 
     // « Main sure » elargit legerement la zone morte pour un pilotage plus calme.
     float dead = TILT_DEADZONE + (g_save.difficulty == D_CALME ? 0.015f : 0.0f);
@@ -2267,8 +2264,7 @@ void on_imu(float ax, float ay, float /*az*/) {
 }
 
 void calibrate() {
-    g_save.cal_x = (int16_t) (g_raw_x * 1000.0f);
-    g_save.cal_y = (int16_t) (g_raw_y * 1000.0f);
+    tilt_calibrate(g_save.cal_x, g_save.cal_y, g_raw_x, g_raw_y);
     g_tilt_x = 0; g_tilt_y = 0;
     persist_save();
 }
