@@ -32,7 +32,7 @@ Wake-word detection can be toggled via a UI button (`tab5_wake_word_active` swit
 
 ### Second wake word: "Stop" (roller shutter)
 
-A second microWakeWord model (`Stop`) is declared alongside `okay_nabu` in `tab5-hardware.yaml`, but it is only armed (`micro_wake_word.enable_model`) while the roller shutter is moving (`volet_en_mouvement` global, pushed by HA) and disarmed as soon as the movement ends. Saying "Stop" while the shutter moves triggers the stop script directly on the device — no wake phrase, no pipeline round-trip, no network latency. Two gotchas already burned into this setup: ESPHome only auto-enables the *first* declared model (hence the explicit enable/disable), and the detected `wake_word` string is `"Stop"` with a capital S.
+A second microWakeWord model (`Stop`) is declared alongside `okay_nabu` in `tab5-assist.yaml`, but it is only armed (`micro_wake_word.enable_model`) while the roller shutter is moving (`volet_en_mouvement` global, pushed by HA) and disarmed as soon as the movement ends. Saying "Stop" while the shutter moves triggers the stop script directly on the device — no wake phrase, no pipeline round-trip, no network latency. Two gotchas already burned into this setup: ESPHome only auto-enables the *first* declared model (hence the explicit enable/disable), and the detected `wake_word` string is `"Stop"` with a capital S.
 
 ### Interrupting a running reply
 
@@ -95,7 +95,7 @@ The microphone icon in the UI changes color to reflect the current pipeline stat
 | Error / not understood | Red | Pipeline returned no result |
 | Wake word disabled | Dim grey | Detection switched off |
 
-ESPHome's voice assistant component fires callbacks (`on_listening`, `on_stt_end`, `on_tts_start`, `on_end`, `on_error`) declared in `tab5-hardware.yaml`; each callback sets the icon color directly via `lv_obj_set_style_text_color` with a `UIColor::` token. There is no separate state variable — the icon color *is* the state indicator.
+ESPHome's voice assistant component fires callbacks (`on_listening`, `on_stt_end`, `on_tts_start`, `on_end`, `on_error`) declared in `tab5-assist.yaml`; each one calls `assist_set_pipeline_state()` (`tab5_assist.cpp`), which sets the icon, its `UIColor::` colour and the status label from a single table. There is no separate state variable — the icon color *is* the state indicator.
 
 ---
 
@@ -146,7 +146,7 @@ La détection du wake-word peut être basculée via un bouton UI (switch `tab5_w
 
 ### Second wake word : « Stop » (volet roulant)
 
-Un second modèle microWakeWord (`Stop`) est déclaré à côté de `okay_nabu` dans `tab5-hardware.yaml`, mais il n'est armé (`micro_wake_word.enable_model`) que pendant que le volet est en mouvement (globale `volet_en_mouvement`, poussée par HA) et désarmé dès la fin du mouvement. Dire « Stop » pendant que le volet bouge déclenche le script d'arrêt directement sur l'appareil — pas de phrase d'activation, pas d'aller-retour pipeline, pas de latence réseau. Deux pièges déjà rencontrés sur ce setup : ESPHome n'active automatiquement que le *premier* modèle déclaré (d'où l'enable/disable explicite), et la chaîne `wake_word` détectée est `"Stop"` avec un S majuscule.
+Un second modèle microWakeWord (`Stop`) est déclaré à côté de `okay_nabu` dans `tab5-assist.yaml`, mais il n'est armé (`micro_wake_word.enable_model`) que pendant que le volet est en mouvement (globale `volet_en_mouvement`, poussée par HA) et désarmé dès la fin du mouvement. Dire « Stop » pendant que le volet bouge déclenche le script d'arrêt directement sur l'appareil — pas de phrase d'activation, pas d'aller-retour pipeline, pas de latence réseau. Deux pièges déjà rencontrés sur ce setup : ESPHome n'active automatiquement que le *premier* modèle déclaré (d'où l'enable/disable explicite), et la chaîne `wake_word` détectée est `"Stop"` avec un S majuscule.
 
 ### Interrompre une réponse en cours
 
@@ -209,7 +209,7 @@ L'icône microphone dans l'UI change de couleur pour refléter l'état courant d
 | Erreur / non compris | Rouge | Pipeline n'a retourné aucun résultat |
 | Wake word désactivé | Gris sombre | Détection coupée |
 
-Les callbacks du composant assistant vocal ESPHome (`on_listening`, `on_stt_end`, `on_tts_start`, `on_end`, `on_error`) sont déclarés dans `tab5-hardware.yaml` ; chaque callback règle directement la couleur de l'icône via `lv_obj_set_style_text_color` avec un token `UIColor::`. Il n'y a pas de variable d'état séparée — la couleur de l'icône *est* l'indicateur d'état.
+Les callbacks du composant assistant vocal ESPHome (`on_listening`, `on_stt_end`, `on_tts_start`, `on_end`, `on_error`) sont déclarés dans `tab5-assist.yaml` ; chacun appelle `assist_set_pipeline_state()` (`tab5_assist.cpp`), qui règle l'icône, sa couleur et le libellé d'état depuis une seule table — anciennement, chaque callback réglait directement la couleur via `lv_obj_set_style_text_color` avec un token `UIColor::`. Il n'y a pas de variable d'état séparée — la couleur de l'icône *est* l'indicateur d'état.
 
 ---
 

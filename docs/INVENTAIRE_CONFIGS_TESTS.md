@@ -25,13 +25,16 @@
 | Fichier | Emplacement | Rôle |
 |---|---|---|
 | `tab5-ui-tokens.yaml` | `Tab5/` | Tokens dimensionnels (modal_card_w/h, modal_body_y). |
-| `tab5-hardware.yaml` | `Tab5/` | Bas niveau : display MIPI-DSI, tactile ST7123, DAC/ADC audio, expander GPIO, esp32_hosted, wake words, OTA. |
+| `tab5-hardware.yaml` | `Tab5/` | Bas niveau : display MIPI-DSI, tactile ST7123, DAC/ADC audio, media_player, expander GPIO, esp32_hosted, OTA. |
 | `tab5-sensors-diagnostics.yaml` | `Tab5/` | WiFi, alimentation GPIO, statut API HA, uptime, RAM, loop time, horloge SNTP. |
 | `tab5-sensors-domotique.yaml` | `Tab5/` | Miroirs d'entités HA : plantes, lumières, PC, températures, batterie, audio. |
 | `tab5-api-logic.yaml` | `Tab5/` | Contrat API HA↔Tab5 : bloc `api: services:` (16 services au 08/09/2026 : `tab5_maj_pluie_1h_bulk` a remplacé `tab5_maj_pluie_1h`). |
 | `tab5-styles.yaml` | `Tab5/` | Thème "Dark Mode Slate" : tokens `color:`, déclarations `font:`, `lvgl: style_definitions:`. |
 | `tab5-globals.yaml` | `Tab5/` | État partagé (`globals:`) + rotateur carte centrale (interval 8s). |
-| `tab5-scripts.yaml` | `Tab5/` | Scripts ESPHome : debounces, vocal, rotateur, volet, popups, jeux. |
+| `tab5-scripts.yaml` | `Tab5/` | Scripts transverses : registre des modales, volume, debounces, rotateur, volet, popup lumière, retour à l'accueil. |
+| `tab5-arcade.yaml` | `Tab5/` | Scripts des jeux : fermeture globale, ouverture des 8 consoles, page arcade (lot 8c). |
+| `tab5-calendar.yaml` | `Tab5/` | Scripts du popup calendrier (lot 8c). |
+| `tab5-assist.yaml` | `Tab5/` | Assistant vocal : mots de réveil, pipeline, image de la réponse, scripts vocaux et popup Assistant (lot 8c). |
 | `tab5-lvgl.yaml` | `Tab5/` | Layout complet : page unique 1280×720, swipe prévisions, console, popups. |
 | `tab5-imu.yaml` | `Tab5/` | BMI270 IMU : `motion:`, poll adaptatif 10/30Hz, tap-to-wake. |
 | `tab5-ha-controls.yaml` | `Tab5/` | Number volume, text_sensor écran courant, select aller-à, button recharger calendrier. |

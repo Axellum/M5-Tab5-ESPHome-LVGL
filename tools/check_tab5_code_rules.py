@@ -6,11 +6,12 @@ falsifiables sur le dépôt réel :
   1. **`snprintf` partout** : aucun `sprintf(` brut dans `Tab5/*.cpp`, `*.h`,
      `*.yaml` ni `tab5-ha-hmi.yaml`. Un futur `%s` sur un buffer de 16 octets ne
      doit pas pouvoir déborder en silence.
-  2. **Aucune logique LVGL dans `tab5-api-logic.yaml` ni `tab5-hardware.yaml`** :
+  2. **Aucune logique LVGL dans `tab5-api-logic.yaml`, `tab5-hardware.yaml` ni la
+     pile vocale de `tab5-assist.yaml`** (tout ce qui précède son `script:`) :
      les services et les callbacks (voice_assistant, micro_wake_word, online_image)
      résolvent les `id()` et appellent `tab5_custom.cpp`. Dans le contrat API,
      seul `lv_obj_has_flag` (lecture pure, dans une condition) est toléré ; dans
-     le fichier matériel, rien.
+     le fichier matériel et la pile vocale, rien.
   3. **Aucun global orphelin** dans `tab5-globals.yaml` : chaque `- id:` du bloc
      `globals:` doit être lu ou écrit quelque part (`id(x)` dans une lambda,
      `id: x` dans une action `globals.set` / `globals.increment`…). Un global
@@ -512,6 +513,22 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
                         f"{path.name}:{lineno} : {m.group(1)}() — logique LVGL interdite ici, "
                         f"la déplacer dans tab5_custom.cpp (ADR-0006)"
                     )
+
+    # 2 bis. La pile vocale, sortie de tab5-hardware.yaml vers tab5-assist.yaml au
+    # lot 8c (25/09/2026), garde la même règle : tout ce qui précède `script:`
+    # (micro_wake_word, voice_assistant, image de la réponse) passe par
+    # assist_set_pipeline_state() / assist_image_state_ui(), jamais par lv_*.
+    # Les scripts du popup Assistant, eux, ont le droit de toucher leurs widgets.
+    assist = tab5 / "tab5-assist.yaml"
+    if assist.is_file():
+        text = strip_yaml_comments(assist.read_text(encoding="utf-8"))
+        pile = text.split("\nscript:", 1)[0]
+        for lineno, line in enumerate(pile.splitlines(), 1):
+            for m in RE_LV_CALL.finditer(line):
+                problems.append(
+                    f"tab5-assist.yaml:{lineno} : {m.group(1)}() — la pile vocale ne touche pas "
+                    f"LVGL, passer par assist_set_pipeline_state() (ADR-0006)"
+                )
 
     # 3. globals orphelins
     corpus: list[tuple[Path, str]] = []

@@ -43,7 +43,7 @@ Chaque carte fait **trois** choses, dans cet ordre :
 
 Ne pas recopier la liste des fermetures dans les cartes : elle vit dans
 `GameRegistry::kGames` (`tab5_registry.cpp`), que `tab5_games_close_all`
-(`tab5-scripts.yaml`) se contente d'appeler — un seul endroit à maintenir.
+(`tab5-arcade.yaml`) se contente d'appeler — un seul endroit à maintenir.
 
 ## Règles à respecter pour ajouter une 9ᵉ console
 
@@ -58,7 +58,7 @@ oubli et le jeu est invisible, ou le firmware ne compile pas :
    `!include ui_components/<jeu>_game.yaml`. Le `skip: true` n'est pas
    cosmétique : sans lui, un swipe sur le dashboard peut atterrir sur la page du
    jeu, timer non démarré et pointeurs non injectés ;
-3. `tab5-scripts.yaml` → script `tab5_<jeu>_open` qui injecte les pointeurs LVGL ;
+3. `tab5-arcade.yaml` → script `tab5_<jeu>_open` qui injecte les pointeurs LVGL ;
 4. `tab5_registry.cpp` → une ligne dans **`GameRegistry::kGames`** (libellé,
    `is_open`, `close`, `on_imu`, et `imu_fast` à `true` **uniquement** si le jeu
    pilote à l'inclinaison). C'est la **seule** liste : la fermeture globale

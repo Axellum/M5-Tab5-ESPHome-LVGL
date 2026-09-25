@@ -102,7 +102,7 @@ static constexpr uint32_t THINK     = 0x7FA8E0;  // « le Tab réfléchit »
 static constexpr uint32_t EDGE      = 0x4A3A26;  // liserés discrets
 }  // namespace Pal
 
-// Pointeurs LVGL + polices fournis par tab5-scripts.yaml à l'ouverture
+// Pointeurs LVGL + polices fournis par tab5-arcade.yaml à l'ouverture
 // (`id(...)` n'est utilisable que dans une lambda).
 struct UI {
     lv_obj_t* root  = nullptr;   // page LVGL plein écran 1280×720

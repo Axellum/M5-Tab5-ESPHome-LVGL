@@ -1,0 +1,444 @@
+# [AI-CONTEXT]
+# @file tab5-assist.yaml
+# @role Tout l'assistant vocal au même endroit : la pile (micro_wake_word avec
+#       « Okay Nabu » et « Stop », voice_assistant et ses callbacks), l'image de la
+#       réponse (http_request + online_image), les scripts vocaux (armement du
+#       « Stop », interruption, décision du mot de réveil, réponse dans la carte
+#       centrale) et ceux du popup Assistant (ouverture, réglages, taille du texte).
+# @architecture_constraint Package par fonctionnalité (modèle tab5-alarm.yaml),
+#       assemblé le 25/09/2026 (audit, lot 8c) à partir de tab5-hardware.yaml (pile
+#       et image) et de tab5-scripts.yaml (scripts), contenu inchangé. Le matériel
+#       audio (bus I2S partagé micro/haut-parleur `mic_bus`, ADR-0010 ; ES7210 ;
+#       ES8388 ; media_player) reste dans tab5-hardware.yaml. Chargé APRÈS
+#       tab5_lvgl (références aux widgets du popup Assistant et de la carte centrale).
+# @ai_instruction La décision « que faire d'un mot de réveil » est
+#       `WakeWord::decide()` (tab5_assist.cpp) ; les états visuels du pipeline
+#       passent par `assist_set_pipeline_state()`. Ne pas recopier ces tables ici.
+
+micro_wake_word:
+  id: mww
+  stop_after_detection: false
+  task_stack_in_psram: true   # [AUDIO-2026] ~3Ko SRAM interne economises (P4 a PSRAM hex 200MHz)
+  microphone:
+    microphone: tab5_microphone
+    gain_factor: 1            # [AUDIO-2026] Les 6 dB sont passes en analogique (es7210 mic_gain: 30dB)
+  vad:                        # [AUDIO-2026] Voice Activity Detection: reduit faux declenchements
+  models:
+    - okay_nabu
+    - model: https://github.com/kahrendt/microWakeWord/releases/download/stop/stop.json
+      id: stop
+      internal: true
+  on_wake_word_detected:
+    - logger.log:
+        format: "DEBUG: WAKE WORD DETECTED (%s)"
+        # Les entrées de `args:` sont des expressions C++ BRUTES, pas des
+        # lambdas : un `!lambda` y est recopié tel quel dans le code généré
+        # (`ESP_LOGD(..., !lambda return wake_word;)`) et ne compile pas. Le
+        # corps d'un `logger.log` est un ESP_LOGD, donc compilé hors binaire
+        # tant que `logger.level` reste à INFO — l'erreur ne se voyait qu'en
+        # passant le projet en DEBUG. `wake_word` est un `std::string`
+        # (Trigger<std::string>), d'où le `.c_str()` qu'attend `%s`.
+        args: ['wake_word.c_str()']
+    # La décision vit dans WakeWord::decide() (tab5_custom.cpp) : une table à
+    # six sorties au lieu de cinq niveaux d'if/else ici. Les entrées sont lues
+    # UNE fois ci-dessous, puis tab5_wake_word_dispatch (plus bas dans ce fichier)
+    # exécute l'action. Priorités, dans l'ordre :
+    #   1. réveil en train de sonner : TOUT mot l'arrête, « Stop » comme « Okay
+    #      Nabu » — c'est la promesse « arrêt à la voix », elle passe avant les
+    #      deux autres usages du mot « Stop » (volet en mouvement, interruption
+    #      d'une réponse) qui n'ont aucun sens pendant que ça sonne ;
+    #   2. « Stop » + volet en mouvement : arrêt local + HA ;
+    #   3. réponse en cours (va_stop_armed + audio ou pipeline pas démarré) :
+    #      on la coupe et on ré-écoute, que le mot soit « Stop » ou « Okay Nabu » ;
+    #   4. « Okay Nabu » au repos : pipeline si le wake word est actif et HA
+    #      joignable. Le modèle « Stop » est armé par tab5_alarm_ring_start /
+    #      le volet / le pipeline, et désarmé par leurs fins.
+    # [AI-WARNING] La mélodie est un SINUS pur (rtttl.cpp) et microWakeWord est
+    # entraîné sur de la parole : un faux déclenchement par la sonnerie
+    # elle-même est improbable mais n'a pas été mesuré. Si Axel constate que le
+    # réveil se coupe tout seul, ajouter un global `alarm_listen_window` posé
+    # à `true` par la pause de 2 500 ms de tab5_alarm_ring_loop et l'ajouter
+    # aux entrées de decide() — le silence entre deux passages est justement
+    # là pour ça.
+    - lambda: |-
+        WakeWord::Inputs in;
+        in.alarm_ringing      = id(alarm_ringing);
+        in.is_stop            = (wake_word == "Stop");
+        in.volet_en_mouvement = id(volet_en_mouvement);
+        in.va_stop_armed      = id(va_stop_armed);
+        // Mêmes tests que les anciennes conditions YAML : speaker.is_playing,
+        // media_player.is_announcing, not voice_assistant.is_running.
+        in.audio_busy = id(tab5_speaker)->is_running()
+            || id(speaker_player)->state == media_player::MediaPlayerState::MEDIA_PLAYER_STATE_ANNOUNCING
+            || !(id(va)->is_running() || id(va)->is_continuous());
+        in.wake_word_enabled  = id(tab5_wake_word_active)->state;
+        in.api_connected      = global_api_server->is_connected();
+        const WakeWord::Action a = WakeWord::decide(in);
+        // INFO et pas DEBUG : un mot de réveil est rare et c'est la seule trace
+        // de ce qui a été décidé (le projet tourne à INFO).
+        ESP_LOGI("TAB5", "Mot de reveil '%s' -> %s", wake_word.c_str(), WakeWord::action_name(a));
+        id(tab5_wake_word_dispatch).execute((int) a, wake_word);
+
+voice_assistant:
+  id: va
+  microphone:
+    microphone: tab5_microphone
+    gain_factor: 1            # [AUDIO-2026] Les 6 dB sont passes en analogique (es7210 mic_gain: 30dB)
+  media_player: speaker_player
+  micro_wake_word: mww
+  # [AUDIO-2026] 2 -> 0. Ce reglage est bien vivant : HA l'applique cote pipeline via
+  # MicroVadSpeexEnhancer (assist_pipeline/pipeline.py). Mais un debruiteur DEFORME la parole et
+  # Whisper est entraine sur de l'audio naturel -- le debruitage degrade souvent sa transcription.
+  # Remettre a 1 ou 2 si la reconnaissance se degrade dans une piece bruyante.
+  noise_suppression_level: 0
+  auto_gain: 15dBFS           # [AUDIO-2026] Controle auto gain cote HA (0-31dBFS)
+  # Les cinq callbacks partagent assist_set_pipeline_state() (tab5_custom.cpp) :
+  # un état = une couleur d'icône micro + un libellé de statut dans le popup.
+  on_listening:
+    - logger.log: "DEBUG: VOICE_ASSISTANT on_listening"
+    - lambda: 'assist_set_pipeline_state(id(icon_mic_status), id(lbl_assist_status), AssistState::LISTENING);'
+    - script.execute: tab5_vocal_arm_stop
+  on_stt_end:
+    - logger.log: "DEBUG: VOICE_ASSISTANT on_stt_end"
+    - lambda: 'assist_set_pipeline_state(id(icon_mic_status), id(lbl_assist_status), AssistState::THINKING);'
+    - script.execute: tab5_vocal_arm_stop
+    # Popup assistant : affiche la demande reconnue (STT) puis « Réflexion… »
+    - lambda: 'assist_set_request(id(lbl_assist_request), x);'
+    - script.execute: tab5_assist_on_request
+  on_tts_start:
+    - logger.log: "DEBUG: VOICE_ASSISTANT on_tts_start"
+    - lambda: 'assist_set_pipeline_state(id(icon_mic_status), id(lbl_assist_status), AssistState::SPEAKING);'
+    - script.execute: tab5_vocal_arm_stop
+    # Réponse "par défaut" = texte parlé (TTS). Le moteur peut la remplacer par une
+    # version riche (tableaux + image) via le service HA tab5_assist_reponse.
+    - lambda: |-
+        esphome::font::Font* f = id(assist_text_size) == 0 ? id(roboto_mono_20)
+                               : (id(assist_text_size) == 2 ? id(roboto_mono_28) : id(roboto_mono_24));
+        assist_set_response(id(lbl_assist_response), x, f);
+  on_end:
+    - logger.log: "DEBUG: VOICE_ASSISTANT on_end"
+    - lambda: 'assist_set_pipeline_state(id(icon_mic_status), id(lbl_assist_status), AssistState::IDLE);'
+    - wait_until:
+        condition:
+          - media_player.is_announcing:
+        timeout: 3s    # AXE9: Augmente de 0.5s a 3s pour eviter coupure TTS / re-arm premature du wake word
+    - wait_until:
+        - and:
+            - not:
+                media_player.is_announcing:
+            - not:
+                speaker.is_playing: tab5_speaker
+    - if:
+        condition:
+          - switch.is_on: tab5_wake_word_active
+        then:
+          - micro_wake_word.start:
+    - script.execute: tab5_vocal_disarm_stop
+  on_error:
+    - logger.log:
+        format: "DEBUG: VOICE_ASSISTANT on_error: %s"
+        args: [ "code.c_str()" ]
+    - lambda: 'assist_set_pipeline_state(id(icon_mic_status), id(lbl_assist_status), AssistState::ERROR);'
+    - delay: 2s
+    # Retour au gris de l'icône seule : le popup garde « Erreur » sous les yeux.
+    - lambda: 'assist_set_mic_state(id(icon_mic_status), AssistState::IDLE);'
+    - if:
+        condition:
+          - switch.is_on: tab5_wake_word_active
+        then:
+          - micro_wake_word.start:
+    - script.execute: tab5_vocal_disarm_stop
+
+# ─── Image de la réponse assistant (popup) ───────────────────────────────────
+# Le moteur (via le service HA tab5_assist_reponse) fournit une URL d'image PNG ;
+# le Tab5 la télécharge à la demande (online_image.set_url + update) et l'affiche
+# dans le popup. Décodage en PSRAM (RGB565), redimensionné à la zone image.
+http_request:
+  id: assist_http
+  timeout: 12s
+  verify_ssl: false
+  watchdog_timeout: 20s
+
+# [2026.8.1] Migré depuis le bloc `online_image:` de premier niveau, déprécié et
+# supprimé en ESPHome 2027.1.0. C'est un pur déplacement de clé : le shim déprécié
+# (online_image/__init__.py) réutilise le MÊME schéma et le MÊME codegen que la
+# plateforme (ONLINE_IMAGE_CONFIG_SCHEMA / setup_online_image), et les actions
+# `online_image.set_url` / `online_image.release` gardent leurs noms — donc rien à
+# changer dans tab5-api-logic.yaml, qui appelle set_url au runtime.
+image:
+  - platform: online_image
+    id: assist_response_image
+    url: "http://127.0.0.1/placeholder.png"   # remplacé au runtime par set_url
+    format: PNG
+    type: RGB565
+    resize: 760x360
+    on_download_finished:
+      - lambda: 'assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::READY);'
+    on_error:
+      - lambda: 'assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::ERROR);'
+
+script:
+  # Arme le flag d'interruption (Stop vocal local ne reçoit pas le micro pendant pipeline HA).
+  - id: tab5_vocal_arm_stop
+    mode: restart
+    then:
+      - globals.set:
+          id: va_stop_armed
+          value: 'true'
+      # Une conversation ne touche pas la dalle : sans ça, le retour automatique
+      # à l'écran principal (interval en bas de ce fichier) fermerait le popup
+      # Assistant en pleine réponse. Appelé sur on_listening / on_stt_end /
+      # on_tts_start, donc à chaque étape du pipeline.
+      - lambda: 'ui_mark_activity();'
+
+  - id: tab5_vocal_disarm_stop
+    mode: restart
+    then:
+      - globals.set:
+          id: va_stop_armed
+          value: 'false'
+      # Fin de pipeline (on_end / on_error) : les 45 s d'inactivité comptent à
+      # partir de la fin de la réponse parlée, pas de son début.
+      - lambda: 'ui_mark_activity();'
+      - if:
+          condition:
+            not:
+              voice_assistant.is_running:
+          then:
+            - if:
+                condition:
+                  lambda: 'return !id(volet_en_mouvement);'
+                then:
+                  - micro_wake_word.disable_model:
+                      id: stop
+
+  # Interruption : coupe pipeline local + satellite HA + TTS (sans relancer l'écoute).
+  - id: tab5_vocal_interrupt
+    mode: restart
+    then:
+      - globals.set:
+          id: va_stop_armed
+          value: 'false'
+      - voice_assistant.stop:
+          id: va
+      - media_player.stop:
+          id: speaker_player
+      - homeassistant.service:
+          service: assist_satellite.stop
+          data:
+            entity_id: ${entity_tab5_satellite}
+      - homeassistant.service:
+          service: media_player.media_stop
+          data:
+            entity_id: ${entity_tab5_media_player}
+      - lambda: 'assist_set_mic_state(id(icon_mic_status), AssistState::IDLE);'
+
+  # Interruption puis ré-écoute immédiate (tap micro / barge-in Discussion).
+  - id: tab5_vocal_interrupt_and_listen
+    mode: restart
+    then:
+      - script.execute: tab5_vocal_interrupt
+      - delay: 500ms
+      - voice_assistant.start:
+          id: va
+
+  # Exécute l'action décidée par WakeWord::decide() (on_wake_word_detected,
+  # plus haut dans ce fichier). `parallel` : chaque détection garde sa propre
+  # séquence, comme quand tout vivait dans le trigger. Les cas IGNORE_* n'ont
+  # rien à faire : la décision est déjà journalisée à INFO par le trigger.
+  - id: tab5_wake_word_dispatch
+    mode: parallel
+    parameters:
+      action: int
+      wake_word: string
+    then:
+      - if:
+          condition:
+            lambda: 'return action == WakeWord::ALARM_STOP;'
+          then:
+            - script.execute: tab5_alarm_stop
+      - if:
+          condition:
+            lambda: 'return action == WakeWord::VOLET_STOP;'
+          then:
+            - script.execute: tab5_volet_end_movement
+            - homeassistant.service:
+                service: script.tab5_volet_action
+                data:
+                  action: stop
+            - script.execute: tab5_volet_stop_voice_feedback
+            # Orange sur l'icône micro = accusé de réception (même teinte qu'« Analyse… »).
+            - lambda: 'assist_set_mic_state(id(icon_mic_status), AssistState::THINKING);'
+      - if:
+          condition:
+            lambda: 'return action == WakeWord::INTERRUPT_LISTEN;'
+          then:
+            - script.execute: tab5_vocal_interrupt_and_listen
+      - if:
+          condition:
+            lambda: 'return action == WakeWord::START_PIPELINE;'
+          then:
+            - voice_assistant.start:
+                wake_word: !lambda return wake_word;
+
+  # Tap micro : coupe si assistant actif puis ré-écoute, sinon démarre (Click to Converse).
+  - id: tab5_assist_toggle
+    mode: restart
+    then:
+      - if:
+          condition:
+            or:
+              - voice_assistant.is_running
+              - lambda: 'return id(va_stop_armed);'
+              - speaker.is_playing:
+                  id: tab5_speaker
+              - media_player.is_announcing:
+                  id: speaker_player
+          then:
+            - logger.log: "Tap micro -> interrupt + re-ecoute"
+            - script.execute: tab5_vocal_interrupt_and_listen
+          else:
+            - logger.log: "Tap micro -> start vocal"
+            - voice_assistant.start:
+                id: va
+
+  # Réponse vocale IA : pause rotateur 8s, affichage + défilement si long, puis reprise.
+  - id: tab5_show_vocal_response
+    mode: restart
+    parameters:
+      texte: string
+    then:
+      - if:
+          condition:
+            lambda: 'return id(forecast_page_index) == 2 && texte.size() > 0;'
+          then:
+            - script.stop: tab5_central_rotator_auto
+            - globals.set:
+                id: is_showing_vocal_response
+                value: 'true'
+            - lambda: |-
+                sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
+                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                    id(current_central_panel));
+                show_vocal_response_ui(texte,
+                    id(vocal_wrapper), id(lbl_vocal_text),
+                    id(page_title_wrapper), g_central_ctx,
+                    id(roboto_45_b));
+                id(current_central_panel) = g_central_ctx.current_panel;
+            - delay: 8s
+            - lambda: |-
+                sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
+                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+                    id(current_central_panel));
+                hide_vocal_response_ui(id(vocal_wrapper), id(lbl_vocal_text), g_central_ctx);
+                id(current_central_panel) = g_central_ctx.current_panel;
+            - globals.set:
+                id: is_showing_vocal_response
+                value: 'false'
+            - script.execute: tab5_central_rotator_auto
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Popup Assistant vocal (assistant_popup.yaml) — ouverture, réglages, réponse
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  # Ouvre le popup plein écran + resynchronise l'affichage des réglages.
+  - id: tab5_assist_open
+    mode: restart
+    then:
+      - globals.set:
+          id: assist_popup_open
+          value: 'true'
+      - lambda: |-
+          // Ouverture programmée (réponse du moteur) : personne n'a touché la
+          // dalle, on repart donc de 45 s pleines avant le retour automatique.
+          ui_mark_activity();
+          animate_popup_open(id(assistant_popup), nullptr);
+          lv_obj_move_foreground(id(assistant_popup));
+      - script.execute: tab5_assist_sync_settings
+
+  - id: tab5_assist_close
+    mode: restart
+    then:
+      - globals.set:
+          id: assist_popup_open
+          value: 'false'
+      - lambda: 'animate_popup_close(id(assistant_popup), nullptr);'
+
+  # Nouvelle demande reconnue : passe la réponse en "Réflexion..." et masque l'image
+  # précédente. N'OUVRE le popup automatiquement qu'en mode Discussion (ou s'il est
+  # déjà ouvert) — en mode Domotique, une commande courte ne doit pas voiler le
+  # dashboard (le bandeau central 8 s reste le retour rapide). Long-press micro pour
+  # ouvrir manuellement dans tous les cas.
+  - id: tab5_assist_on_request
+    mode: restart
+    then:
+      - lambda: |-
+          esphome::font::Font* f = id(assist_text_size) == 0 ? id(roboto_mono_20)
+                                 : (id(assist_text_size) == 2 ? id(roboto_mono_28) : id(roboto_mono_24));
+          assist_set_response(id(lbl_assist_response), std::string("Reflexion..."), f);
+          assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::NONE);
+      - if:
+          condition:
+            lambda: 'return id(conversation_mode) || id(assist_popup_open);'
+          then:
+            - script.execute: tab5_assist_open
+
+  # Reflète l'état courant (pipeline/mute/wake/volume/taille) sur les contrôles du popup.
+  - id: tab5_assist_sync_settings
+    mode: restart
+    then:
+      - lambda: |-
+          bool discu = id(conversation_mode);
+          highlight_button_border(id(btn_assist_pipe_domo), !discu, UIColor::INFO);
+          highlight_button_border(id(btn_assist_pipe_discu), discu, UIColor::SUCCESS);
+          if (id(lbl_assist_wake) != nullptr) {
+            bool wake = id(tab5_wake_word_active).state;
+            lv_label_set_text(id(lbl_assist_wake), wake ? "Ok Nabu : ON" : "Ok Nabu : OFF");
+            lv_obj_set_style_text_color(id(lbl_assist_wake),
+                lv_color_hex(wake ? UIColor::SUCCESS : UIColor::TEXT_DIM), LV_PART_MAIN);
+          }
+          ui_sync_mute_icons(id(icon_mute), id(icon_assist_mute), id(system_muted));
+          // Même helper que script.tab5_volume_apply : à l'ouverture du popup,
+          // les deux sliders et le label % de la console repartent tous de
+          // `system_volume` (qui peut avoir bougé depuis HA entre-temps).
+          ui_sync_volume_widgets(id(slider_volume), id(lbl_sys_vol_val),
+                                 id(slider_assist_volume), id(system_volume));
+      - lambda: |-
+          assist_apply_text_size(id(lbl_assist_response), id(assist_text_size),
+              id(roboto_mono_20), id(roboto_mono_24), id(roboto_mono_28),
+              id(btn_assist_size_s), id(btn_assist_size_m), id(btn_assist_size_l));
+
+  # Choix du cerveau (pipeline HA). discussion=true => LLM libre, false => domotique.
+  # Centralise la mise à jour des boutons du dashboard ET du popup (source unique).
+  - id: tab5_set_assist_mode
+    mode: restart
+    parameters:
+      discussion: bool
+    then:
+      - globals.set:
+          id: conversation_mode
+          value: !lambda 'return discussion;'
+      - homeassistant.service:
+          service: select.select_option
+          data:
+            entity_id: ${entity_tab5_pipeline_select}
+            option: !lambda 'return discussion ? std::string("Discussion LLM") : std::string("preferred");'
+      - lambda: |-
+          highlight_button_border(id(btn_mode_domo), !discussion, UIColor::INFO);
+          highlight_button_border(id(btn_mode_discu), discussion, UIColor::SUCCESS);
+          highlight_button_border(id(btn_assist_pipe_domo), !discussion, UIColor::INFO);
+          highlight_button_border(id(btn_assist_pipe_discu), discussion, UIColor::SUCCESS);
+
+  # Taille de la police de réponse : 0=S 1=M 2=L (persisté, confort de lecture).
+  - id: tab5_assist_set_text_size
+    mode: restart
+    parameters:
+      size: int
+    then:
+      - globals.set:
+          id: assist_text_size
+          value: !lambda 'return size;'
+      - lambda: |-
+          assist_apply_text_size(id(lbl_assist_response), size,
+              id(roboto_mono_20), id(roboto_mono_24), id(roboto_mono_28),
+              id(btn_assist_size_s), id(btn_assist_size_m), id(btn_assist_size_l));

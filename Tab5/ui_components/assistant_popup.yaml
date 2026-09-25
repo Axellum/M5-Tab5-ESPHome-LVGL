@@ -59,7 +59,7 @@ obj:
                 # a l'etroit avec l'icone, cf. 1re passe qui avait deja du monter le
                 # bouton a 84 px pour separer icone/texte de 6 px). L'etat actif
                 # reste visible par la bordure coloree (highlight_button_border,
-                # tab5-scripts.yaml:915-916/961-962 — reference id(btn_assist_pipe_*),
+                # tab5-assist.yaml (tab5_set_assist_mode…) — reference id(btn_assist_pipe_*),
                 # ne touche pas au contenu interne). Barre de son ANCREE EN BAS du
                 # panneau (marge 24 px, symetrique de la marge haute) plutot que
                 # juste sous Ok Nabu : c'est ce qui etait demande.
