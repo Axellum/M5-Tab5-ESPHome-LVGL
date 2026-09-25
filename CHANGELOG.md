@@ -4,6 +4,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Boot : le push complet de Home Assistant n'est plus perdu
+
+Modification de `on_boot` autorisée expressément par Axel le 25/09/2026.
+
+- Constat : sur trois redémarrages du 25/09 au soir, un seul événement
+  `esphome.tab5_connected` est arrivé dans HA (base `events`). Les deux autres fois,
+  l'écran est resté sans agenda ni météo jusqu'au cycle HA suivant (/10 min, 8 à 9 min
+  plus tard), et le réveil calculait en repli sur l'heure fixe pendant ce temps.
+- Cause : `on_boot` attendait `api.connected` (n'importe quel client) puis 500 ms. Le
+  premier client venu — Home Assistant en cours de connexion, ou `esphome logs` — ouvrait
+  la porte, et l'événement partait avant que HA soit abonné.
+- Correctif : même garde que la reconnexion (`on_client_connected`,
+  `tab5-api-logic.yaml`) — attendre `api.connected` avec `state_subscription_only: true`,
+  puis 2 s, et revérifier avant d'émettre. Le délai de 30 s et le message « HA injoignable
+  au boot » sont inchangés.
+
 ### 2026-09-25 — Dames : la partie n'est plus déclarée nulle au 25ᵉ demi-coup
 
 Vu au premier essai après #145 : une partie contre l'IA Amateur s'est terminée « sans
