@@ -10,7 +10,7 @@
       prise en passant, meme filtre de legalite dans make(). Il valide donc
       l'ALGORITHME et les TABLES — c'est la ou vivent les bugs d'un generateur.
       Il ne valide PAS le binaire compile : pour ca, appeler `Chess::perft_log(3)`
-      sur la cible (voir Tab5/README.md, section « Roi Noir »).
+      sur la cible (voir docs/arcade.md, section « Roi Noir »).
 
 @ai_instruction Toute modification de gen_impl() / make() / attacked() dans
       chess_ai.cpp doit etre repercutee ici, et ce script re-execute.

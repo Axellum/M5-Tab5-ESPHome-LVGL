@@ -8,7 +8,7 @@
 > d'extension du projet. Les chemins sont relatifs à la racine du dépôt
 > `H:\AuxFilsDesIdees\00ProjetTab`.
 
-`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-08-27** · Sources vérifiées directement dans l'arborescence du dépôt.
+`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-25** (35 composants UI dont 23 inclus par `tab5-lvgl.yaml`, 16 services) · Sources vérifiées directement dans l'arborescence du dépôt.
 
 ---
 
@@ -39,7 +39,7 @@
 
 ### 1.3 Composants UI (`Tab5/ui_components/*.yaml`)
 
-35 fichiers, dont 23 inclus directement par `tab5-lvgl.yaml` (compté le 27/08/2026). Exemples :
+35 fichiers, dont 23 inclus directement par `tab5-lvgl.yaml` (recompté le 25/09/2026). Exemples :
 
 | Fichier | Emplacement | Rôle |
 |---|---|---|
@@ -108,7 +108,7 @@
 |---|---|---|---|
 | `test_verifier_secrets_config.py` | `tests/` | Unitaire | Détection de secrets en clair dans les fichiers suivis (`tools/verifier_secrets_config.py`) : valeurs factices, pragma, `git ls-files`, `secrets.yaml` suivi. |
 | `test_render_ha_config.py` | `tests/` | Unitaire | Rendu placeholders → valeurs et détection de fuite d'identifiants réels (`tools/render_ha_config.py`). |
-| `test_guards.py` | `tests/` | Contenu | Joue les 3 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, salles Marble, niveaux Lode). |
+| `test_guards.py` | `tests/` | Contenu | Joue les 6 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, registre, règles de code, salles Marble, niveaux Lode, comptes de la cartographie). |
 | `__init__.py` | `tests/` | — | Marqueur de package. |
 
 ### 3.2 Tests moteurs de jeux (`tools/`)
@@ -130,8 +130,12 @@
 | `tools/check_tab5_modal_chrome.py` | `tools/` | Garde-fou | ADR-0009 : chrome modal partagé sur chaque popup (rapatrié du workspace le 06/09/2026). |
 | `tools/check_marble_rooms.py` | `tools/` | Garde-fou | Les 6 salles de « Fil d'Or » lues dans `marble_game.cpp` restent traversables (numpy). |
 | `tools/check_lode_levels.py` | `tools/` | Garde-fou | Les 10 niveaux de « Coureur d'Or » lus dans `lode_game.cpp` restent jouables. |
+| `tools/check_tab5_registry.py` | `tools/` | Garde-fou | ADR-0013 : chaque `*_game.h` figure dans `GameRegistry::kGames`, aucune liste de jeux recopiée dans un YAML. |
+| `tools/check_tab5_code_rules.py` | `tools/` | Garde-fou | Règles de code : `snprintf` partout, aucun `lv_*` dans le contrat API, aucun global orphelin, aucune entité HA en dur, glyphes de la date (`roboto_45`). |
+| `tools/cartographie_counts.py` | `tools/` | Garde-fou | Comptes de lignes de `CARTOGRAPHIE_TAB5.md` à 20 % près ; `--write` les recalcule. |
+| `.pre-commit-config.yaml` | Racine | Config | yamllint (dont `*.yaml.example`), BOM, secrets, placeholders HA — rejoué par la CI. |
 | `pyproject.toml` | Racine | Config | `testpaths = tests, tools` : `pytest` nu ne ramasse plus `archives/`. |
-| `requirements-dev.txt` | Racine | Config | Dépendances des outils (pytest, numpy, aioesphomeapi, fonttools) — pas le firmware. |
+| `requirements-dev.txt` | Racine | Config | Dépendances des outils (pytest, numpy, aioesphomeapi, fonttools, pre-commit, yamllint) — pas le firmware. |
 
 ### 3.4 Commandes de lancement
 
@@ -142,6 +146,11 @@ python -m pytest
 # Tests moteurs de jeux (miroirs Python)
 python tools/test_go_engine.py
 python tools/test_chess_perft.py
+python tools/test_draughts_engine.py
+
+# Garde-fous rejoués par la CI
+pre-commit run --all-files
+python tools/cartographie_counts.py --write   # après un ajout/retrait de lignes notable
 
 # Validation des payloads push (dry-run, sans matériel)
 python tools/demo/demo_pusher.py --dry-run
@@ -155,6 +164,8 @@ python tools/demo/demo_pusher.py --dry-run
 00ProjetTab/
 ├── tests/
 │   ├── __init__.py
+│   ├── test_guards.py
+│   ├── test_render_ha_config.py
 │   └── test_verifier_secrets_config.py
 ├── tools/
 │   ├── demo/
@@ -165,17 +176,24 @@ python tools/demo/demo_pusher.py --dry-run
 │   ├── test_go_engine.cpp
 │   ├── test_chess_perft.py
 │   ├── test_draughts_engine.py
+│   ├── check_lode_levels.py
+│   ├── check_marble_rooms.py
+│   ├── check_tab5_code_rules.py
+│   ├── check_tab5_modal_chrome.py
+│   ├── check_tab5_registry.py
+│   ├── cartographie_counts.py
 │   ├── make_chess_font.py
+│   ├── render_ha_config.py
 │   └── verifier_secrets_config.py
 └── .github/workflows/
-    └── esphome-tab5.yml   (CI : compile ESPHome + dummy secrets.yaml)
+    └── esphome-tab5.yml   (CI : jobs python + build, voir § 5)
 ```
 
 ---
 
 ## 5. Notes importantes
 
-- **Pas de suite de tests unitaires pour la HMI** : la logique LVGL (`tab5_*.cpp`) n'a pas de tests hôte. Seuls les moteurs de jeux (Go, échecs) disposent de tests exécutables sur PC.
-- **Les tests Go/échecs sont des miroirs Python** du C++ : toute modification du C++ doit être reflétée dans le miroir Python, sinon le test ne prouve plus rien.
-- **CI GitHub Actions** (`.github/workflows/esphome-tab5.yml`) : job `python` à chaque push/PR (`pytest`, vérificateur de secrets, dry-run démo) ; job `build` (secrets factices + `esphome/build-action@v8.0.0`, image `latest` = canari amont voulu) seulement si `tab5-ha-hmi.yaml`, `Tab5/` ou le workflow changent — check requis de `main`, il reste présent et passe en « skipped » sinon.
+- **Pas de suite de tests unitaires pour la HMI** : la logique LVGL (`tab5_*.cpp`) n'a pas de tests hôte. Seuls les moteurs de jeux (Go, échecs, dames) disposent de tests exécutables sur PC.
+- **Les tests Go/échecs/dames sont des miroirs Python** du C++ : toute modification du C++ doit être reflétée dans le miroir Python, sinon le test ne prouve plus rien. Exception : `test_go_engine.cpp` compile le vrai moteur Go (g++, en CI).
+- **CI GitHub Actions** (`.github/workflows/esphome-tab5.yml`, PR + push sur `main`) : job `python` (pre-commit, `pytest`, moteur Go C++, dry-run démo) ; job `build` (secrets factices + `esphome/build-action@v8.1.0`, image `latest` = canari amont voulu, ADR-0016, ccache conservé entre runs) seulement si `tab5-ha-hmi.yaml`, `Tab5/` (hors `.md`) ou le workflow changent. Les deux sont des checks requis de `main` ; `build` reste présent et passe en « skipped » sinon. Artefact `tab5-firmware` publié sur `main`.
 - **Fichiers gitignorés** : `secrets.yaml`, `Tab5/user_entities.yaml`, `HomeAssistant_Config/placeholders.yaml`, `HomeAssistant_Config/rendered/`, `HomeAssistant_Config/automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml`, `Tab5/tts_library*/`, `archives/`.

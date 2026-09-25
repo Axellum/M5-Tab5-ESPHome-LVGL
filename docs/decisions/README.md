@@ -24,3 +24,6 @@ Format: **Context / Decision / Consequences**. One page max. Add a new one whene
 | [0012](0012-lvgl-rotation-270-pinball-portrait.md) | Landscape dashboard via `rotation: 270`, one console flips to portrait at runtime |
 | [0013](0013-single-registry-consoles-modals.md) | One C++ registry lists the 8 consoles and the modal windows — no list is ever copied into YAML |
 | [0014](0014-game-common-helpers-local-palettes.md) | The 8 consoles share `game_common.h`; every console keeps its palette local; every engine has a Python mirror |
+| [0015](0015-ota-encrypted-with-api-key.md) | OTA encrypted with the API key — plain uploads refused, no OTA password |
+| [0016](0016-ci-esphome-latest-canary.md) | CI compiles with ESPHome `latest` on purpose — a free upstream canary |
+| [0017](0017-ha-placeholders-rendered-copies.md) | Public HA files hold placeholders only — real IDs in `placeholders.yaml`, HA runs `rendered/` |

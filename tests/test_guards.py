@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Les cinq garde-fous de contenu, joués par pytest (donc par la CI) :
+"""Les six garde-fous de contenu, joués par pytest (donc par la CI) :
 
 - cadre modal v4 (ADR-0009) sur chaque popup de Tab5/ui_components/ ;
 - registre unique des consoles et des fenêtres modales (ADR-0013) : aucune
@@ -7,7 +7,8 @@
 - règles de code (ADR-0006) : snprintf partout, aucun lv_* dans le contrat API
   ni dans le fichier matériel, aucun global orphelin ;
 - les 6 salles de « Fil d'Or » sont traversables et tout le loot atteignable ;
-- les 10 niveaux de « Coureur d'Or » sont jouables jusqu'à la sortie.
+- les 10 niveaux de « Coureur d'Or » sont jouables jusqu'à la sortie ;
+- les comptes de lignes de CARTOGRAPHIE_TAB5.md restent à 20 % du réel.
 
 Chaque script reste lançable seul (`python tools/check_*.py`) ; ici on ne fait
 que relire son verdict. Ils lisent le C++/YAML réel du dépôt : une salle ou une
@@ -18,6 +19,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from tools import (  # noqa: E402
+    cartographie_counts,
     check_lode_levels,
     check_marble_rooms,
     check_tab5_code_rules,
@@ -44,3 +46,16 @@ def test_marble_rooms_all_traversable(capsys):
 
 def test_lode_levels_all_playable(capsys):
     assert check_lode_levels.main() == 0, capsys.readouterr().out
+
+
+def test_cartographie_line_counts():
+    rows = cartographie_counts.scan(cartographie_counts.CARTO.read_text(encoding="utf-8"),
+                                    cartographie_counts.tracked())
+    assert len(rows) > 40, "le motif ne reconnaît plus les tableaux de la cartographie"
+    assert cartographie_counts.drifts(rows) == [],         "lancer `python tools/cartographie_counts.py --write`"
+
+
+def test_cartographie_drift_is_detected():
+    """Falsifiabilité : un compte faux de 50 % doit être signalé."""
+    assert cartographie_counts.drifts([(1, "x.cpp", 150, 100)]) != []
+    assert cartographie_counts.drifts([(1, "x.cpp", 110, 100)]) == []

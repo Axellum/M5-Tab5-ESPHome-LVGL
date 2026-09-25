@@ -60,6 +60,21 @@ Format: **Symptom → Root cause → Fix**. Entries are chronological, most rece
 
 ---
 
+### Daily weather icons gone, hourly forecast fine, automation reports success (2026-09-18)
+
+**Symptom:** the five daily forecast cards lost their weather icons (and kept stale data after a reboot) while the hourly cards kept updating. Home Assistant had all the data: the weather entity was fine and `weather.get_forecasts` returned 15 daily and 67 hourly entries. The push automation showed no error.
+
+**Root cause:** the `tab5_maj_previsions_jours_bulk` payload template looped over `range(15)` and read `fcasts[i].templow` directly. Météo-France stopped sending `templow` for the 15th day (D+14): the key is simply absent from that dict. In Jinja, `dict.missing_key` raises `UndefinedError` **before** `| float(0)` can apply, so the payload was never rendered and the service never called. The hourly cards use another call (`previsions_heures_bulk`), which is why they kept working. `continue_on_error: true` on the action is what hid it: HA only logged `Error rendering data template: UndefinedError: 'dict object' has no attribute 'templow'`.
+
+**Fix:** guarded access everywhere a forecast attribute is read: `fcasts[i].get('templow') | float(0)`, same for `condition`, `temperature` and (hourly) `precipitation`. Applied to production on 2026-09-18 and mirrored into `automations_examples.yaml.example` on 2026-09-25.
+
+**How to spot the next one:**
+- Read the automation **trace** and compare the list of services actually called with the expected ones. A missing `…_bulk` call stands out even though the run is "successful".
+- Guard (d) of `HomeAssistant_Config/packages/tab5_health.yaml` (`tab5_health_template_error`) raises an alert on `Error rendering data template`. It needs `system_log: fire_event: true` in `configuration.yaml`, otherwise it loads but never fires.
+- To force a full push after a fix, use the **MAJ Écran** button of the device's system console (`automation.trigger` skips the conditions) or *Run actions* in HA. Firing `esphome.tab5_connected` by hand no longer works since 2026-09-25: that trigger only pushes when the API link came up less than 3 min ago.
+
+---
+
 ### ESPHome `pressed:` style rejected when placed in a shared `style_definitions`
 
 **Symptom:** `esphome compile` fails with `[pressed] is an invalid option for [style_definitions]` after trying to centralize a button's pressed-state styling.
@@ -165,6 +180,16 @@ Format : **Symptôme → Cause racine → Correctif**.
 **Cause racine :** `calendar.get_events` avec `start_date_time: "{{ now() }}"` (datetime brut avec microsecondes) — échec de validation silencieux qui interrompait toute la suite de l'automation.
 
 **Correctif :** `"{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"`, plus `continue_on_error: true` sur chaque action de push + gardes `is defined`.
+
+### Icônes météo des jours disparues, horaire intact, automation « réussie » (18/09/2026)
+
+**Symptôme :** les 5 cartes journalières perdent leurs icônes (et gardent des données périmées après un reboot) alors que l'horaire se met à jour. HA a toutes les données, l'automation de push ne signale aucune erreur.
+
+**Cause racine :** le template du payload `tab5_maj_previsions_jours_bulk` lisait `fcasts[i].templow` en accès direct sur 15 jours. Météo-France ne fournit plus `templow` pour j+14 : en Jinja, `dict.cle_absente` lève `UndefinedError` **avant** que `| float(0)` ne s'applique, le payload n'est jamais rendu et le service jamais appelé. `continue_on_error: true` masquait la panne (seul le journal HA disait « Error rendering data template »).
+
+**Correctif :** accès protégé `fcasts[i].get('templow') | float(0)` (idem `condition`, `temperature`, `precipitation`), en prod le 18/09 et dans l'exemple public le 25/09. Pour repérer la suivante : la **trace** de l'automation (un appel `…_bulk` manquant saute aux yeux), la garde (d) de `packages/tab5_health.yaml` (exige `system_log: fire_event: true`). Pour forcer un push complet : bouton **MAJ Écran** de la console système ou *Exécuter les actions* dans HA — l'événement `esphome.tab5_connected` lancé à la main ne pousse plus rien depuis le 25/09 (réservé à une liaison API de moins de 3 min).
+
+---
 
 ### `pressed:` LVGL refusé dans un `style_definitions` partagé
 

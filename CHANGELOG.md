@@ -4,6 +4,38 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Docs : LVGL 9.5, une seule cartographie aux comptes vérifiés, l'arcade dans son propre fichier, trois ADR
+
+Lot 7 de l'audit du 25/09/2026 (§8, documentation). Aucun changement de firmware (deux
+commentaires de `chess_game.*` repointés).
+
+- **« LVGL 8.4 » → 9.5** dans `AGENTS.md`, le badge et les deux présentations du `README.md`,
+  le kit Hackster : le build compile LVGL 9.5.0 (`lv_version.h`). Piège direct pour un agent
+  qui choisit une API d'après la doc.
+- **`Tab5/README.md`** : l'OTA n'est plus « protégée par mot de passe » mais chiffrée par la
+  clé API (ADR-0015) ; les 9 comptes de lignes des unités C++ retirés (ils ne vivent plus
+  que dans la cartographie).
+- **Les 8 consoles déménagent dans `docs/arcade.md`** (42 Ko) : elles faisaient ≈ 80 % du
+  `Tab5/README.md` (68 → 27 Ko) qu'`AGENTS.md` impose de lire avant toute modification.
+  Un résumé et un lien restent ; `AGENTS.md` dit de lire `docs/arcade.md` seulement pour un
+  jeu. Liens repointés (README ×2, `docs/screens.md` ×2, `chess_game.*`, `test_chess_perft.py`).
+- **Une seule `CARTOGRAPHIE_TAB5.md`**, celle du dépôt : les deux corrections que seule la
+  copie de `contexte_ia/` portait (`cal_heures[15]` retiré le 08/09) y sont reportées, et
+  **22 comptes de lignes sur 49 étaient faux** (`tab5-api-logic.yaml` annoncé à 332 lignes pour
+  508). Nouveau `tools/cartographie_counts.py` : `--write` les recalcule, la vérification
+  (tolérance 20 %) est jouée par pytest — elle ne peut plus dériver en silence.
+- **`AGENTS.md`** : trois moteurs testés (pas deux), six garde-fous (pas trois), CI décrite
+  telle qu'elle est depuis le lot 6 (PR + `main`, `python` et `build` requis, ccache, `.md`
+  exclus). Arborescence du `README.md` complétée (`tests/`, `check_*.py`, `tab5_registry.*`,
+  pre-commit) ; `docs/INVENTAIRE_CONFIGS_TESTS.md` remis à jour.
+- **Trois ADR** : 0015 OTA chiffrée par la clé API (clair refusé, pas de mot de passe),
+  0016 CI sur ESPHome `latest` = canari amont voulu, 0017 placeholders publics → valeurs
+  dans `placeholders.yaml` → HA déployé depuis `rendered/`.
+- **`docs/troubleshooting.md`** : l'incident du 18/09 (icônes des jours disparues, `templow`
+  absent à j+14, erreur masquée par `continue_on_error`), avec la façon de forcer un push
+  complet depuis que `esphome.tab5_connected` est filtré.
+- `docs/hackster*.md` → `docs/press/` (kit de publication, 45 Ko).
+
 ### 2026-09-25 — CI : cache ccache entre deux compilations, docs du Tab5 sans recompilation
 
 Suite du lot 6. Le job `build` durait ~10 min, dont **8 min 20 s de compilation pure**
