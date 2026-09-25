@@ -4,6 +4,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Pile de la boucle : 16 Ko au lieu de 8
+
+Le capteur « Tab5 Stack Free Min » (#148) ne laissait que 1 476 o libres (1 796 en -O2) sur
+les 8 Ko de la pile de la boucle ESPHome, qui porte `setup()` et toute la boucle : LVGL,
+API, lambdas.
+
+- Diagnostic (build d'essai à sondes, non mergé) : le minimum est atteint **pendant
+  l'initialisation**, avant le premier tour de boucle (t = 7,3 s). La zone la plus profonde
+  porte le premier rendu LVGL et un `snprintf` avec formatage de nombre (`_svfprintf_r`,
+  1 152 o de cadre à lui seul). Aucune action HA, aucun popup, aucune image pleine ni partie
+  de dames ne descend plus bas ensuite : les tampons de nos fonctions d'analyse ne sont pas
+  en cause.
+- Correctif : `esp32: framework: advanced: loop_task_stack_size: 16384`.
+- Mesuré sur la tablette : pile libre minimale 1 796 → **9 988 o** ; RAM interne libre
+  310,5 → 302,4 Ko (les 8 Ko de la pile, statique) ; flash inchangée.
+
 ### 2026-09-25 — Performance : code exécuté depuis la PSRAM, compilé en -O2
 
 Expériences de l'audit du 25/09/2026 (§3.3), une à la fois, mesurées avec les capteurs

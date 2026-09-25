@@ -21,6 +21,12 @@ esp32:
       # 5 redémarrages de contrôle (séquence de l'écran noir, voir on_boot).
       execute_from_psram: true
       compiler_optimization: PERF
+      # Pile de la boucle ESPHome (setup() + toute la boucle : LVGL, API, lambdas) :
+      # 16 Ko au lieu des 8 Ko par défaut. Mesuré le 25/09/2026 (capteur « Tab5 Stack
+      # Free Min ») : 8 Ko n'en laissaient que 1,5-1,8 libres, minimum atteint pendant
+      # l'initialisation (premier rendu LVGL + snprintf, 1 152 o à lui seul). Coût :
+      # 8 Ko de RAM interne. Garder une marge d'au moins 4 Ko en cas de nouvelle mesure.
+      loop_task_stack_size: 16384
     sdkconfig_options:
       # Fenêtre gardée à 16 Ko : 64 Ko (défaut ESPHome) ne raccourcit pas l'OTA,
       # borné par l'écriture flash (14,7 → 14,5 s, essai du 25/09/2026).
