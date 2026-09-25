@@ -4,6 +4,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — « Écran courant » : publié seulement quand il change
+
+Lot 3 bis de l'audit du 25/09/2026 (§3.1). Le capteur partait toutes les 5 s vers HA, même
+inchangé, et suivait le panneau du rotateur central (planning, pluie, vigilance, info,
+alertes, 8 s chacun) : jusqu'à ≈ 10 700 lignes par jour en base.
+
+- La lambda ne publie plus que les changements (elle renvoie « rien » sinon). HA reçoit
+  quand même l'état courant à chaque reconnexion : ESPHome le renvoie à l'abonnement.
+- L'accueil s'appelle désormais « Accueil » tout court. Popups, « Arcade » et « Jeu · … »
+  sont inchangés.
+- Aucune automation HA ne lit ce capteur (seule une carte du tableau de bord l'affiche).
+
 ### 2026-09-25 — Pile de la boucle : 16 Ko au lieu de 8
 
 Le capteur « Tab5 Stack Free Min » (#148) ne laissait que 1 476 o libres (1 796 en -O2) sur
