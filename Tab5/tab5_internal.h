@@ -22,5 +22,41 @@ const char* vigilance_alert_banner_utf8(const std::string& couleur);
 bool has_lvgl_recolor_markup(const std::string& t);
 // Pose un texte sur un label en activant le recolor LVGL seulement s'il contient du #RRGGBB.
 void set_label_text_utf8(lv_obj_t* label, const char* text);
-// Mois abrégé en français (1-12), UTF-8.
-const char* clock_month_short_utf8(int month);
+// clock_month_short_utf8() : tab5_core.h.
+
+// --- Sortis de tab5_custom.h le 25/09/2026 (audit, lot 8d) : appelés entre unités
+// C++ mais jamais depuis un YAML — ils ne font pas partie du contrat.
+
+void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj);
+
+// Ferme un popup UNIQUEMENT s'il est réellement affiché et qu'aucun fondu n'est
+// déjà en cours dessus. Renvoie true si une fermeture a été lancée.
+// Le garde-fou sur l'animation évite un clignotement : animate_popup_close()
+// repart de LV_OPA_COVER, la rejouer sur un popup à moitié effacé le
+// rallumerait d'un coup avant de le refaire disparaître.
+bool close_popup_if_open(lv_obj_t* card);
+
+// Glissement horizontal + fondu croisé entre deux layers (swipe prévisions).
+// dir = LV_DIR_LEFT (in arrive de la droite, out part à gauche) ou
+//       LV_DIR_RIGHT (in arrive de la gauche, out part à droite).
+// Durée UIAnim::SWIPE_DUR. Dérivée de transition_widgets() mais en horizontal.
+void animate_swipe_horizontal(lv_obj_t* out_layer, lv_obj_t* in_layer, lv_dir_t dir);
+
+// Slide-in depuis la droite + fondu pour un bandeau d'alerte qui entre
+// dans le rotateur central (alertes HA, alertes Météo-France).
+// Durée UIAnim::ALERT_DUR, ease_out.
+void animate_alert_enter(lv_obj_t* alert_wrap);
+
+// « Rouleau » d'icône météo : la nouvelle icône monte depuis le bas en
+// apparaissant (translate_y relatif à l'offset de base posé par
+// update_meteo_icon(), donc compatible avec les icônes composées l1+l2).
+// delay_ms permet d'échelonner les 5 tuiles (effet vague).
+void animate_icon_roll_in(lv_obj_t* l1, lv_obj_t* l2, uint32_t delay_ms);
+
+uint32_t get_temperature_color(float t);
+
+bool tab5_dismiss_local_has(const std::string& store, const std::string& id);
+
+void tab5_dismiss_local_prune(std::string& store, const std::vector<std::string>& ids_seen);
+
+void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase);

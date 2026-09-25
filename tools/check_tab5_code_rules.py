@@ -241,20 +241,16 @@ def font_glyphs(styles: Path) -> dict[str, set[str]]:
 
 
 def date_glyph_coverage(tab5: Path = TAB5) -> list[str]:
-    anim = tab5 / "tab5_anim.cpp"
-    text_cpp = tab5 / "tab5_text.cpp"
+    core = tab5 / "tab5_core.cpp"      # fr_day_short_utf8 + clock_month_short_utf8 (lot 8d)
     styles = tab5 / "tab5-styles.yaml"
     lvgl = tab5 / "tab5-lvgl.yaml"
-    for required in (anim, text_cpp, styles, lvgl):
+    for required in (core, styles, lvgl):
         if not required.is_file():
             return [f"règle 6 : fichier introuvable : {required}"]
 
-    m_days = re.search(r"static const char\* days\[\] = \{(.*?)\};", strip_cpp_comments(anim.read_text(encoding="utf-8")), re.S)
-    m_months = re.search(
-        r"clock_month_short_utf8\(int month\)\s*\{.*?months\[\] = \{(.*?)\};",
-        strip_cpp_comments(text_cpp.read_text(encoding="utf-8")),
-        re.S,
-    )
+    core_src = strip_cpp_comments(core.read_text(encoding="utf-8"))
+    m_days = re.search(r"fr_day_short_utf8\(int wday\)\s*\{.*?days\[\] = \{(.*?)\};", core_src, re.S)
+    m_months = re.search(r"clock_month_short_utf8\(int month\)\s*\{.*?months\[\] = \{(.*?)\};", core_src, re.S)
     glyphs = font_glyphs(styles).get("roboto_45")
     m_initial = re.search(r"id: lbl_date, text: \"([^\"]*)\"", lvgl.read_text(encoding="utf-8"))
     if not (m_days and m_months and glyphs and m_initial):

@@ -57,13 +57,44 @@ int32_t local_day_number_today() {
     return days_from_civil(t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
 }
 
+// ─── Noms de jours et de mois : les SEULES tables du projet (lot 8d, 25/09/2026) ───
+// Avant, sept tables recopiées dans cinq fichiers (horloge, services, calendrier…)
+// pouvaient diverger d'orthographe. Chaque appelant garde son format (« Dim »,
+// « Dim. », « Dimanche », « dimanche ») en partant d'ici.
+
+// [AI-WARNING] fr_day_short_utf8() et clock_month_short_utf8() sont affichés sous
+// l'horloge en roboto_45, réduite aux 37 glyphes de ces libellés, des chiffres et du
+// texte initial (tab5-styles.yaml) : changer un libellé = mettre à jour la liste de
+// glyphes, sinon la lettre sort vide. Règle 6 de tools/check_tab5_code_rules.py.
+const char* fr_day_short_utf8(int wday) {
+    static const char* days[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
+    if (wday < 0 || wday > 6) return "";
+    return days[wday];
+}
+
+const char* clock_month_short_utf8(int month) {
+    static const char* months[] = {
+        "Janv", "F\xC3\xA9vr", "Mars", "Avr", "Mai", "Juin", "Juil",
+        "Ao\xC3\xBBt", "Sept", "Oct", "Nov", "D\xC3\xA9" "c"
+    };
+    if (month < 1 || month > 12) return "";
+    return months[month - 1];
+}
+
+std::string fr_capitalized(const char* s) {
+    std::string r = (s != nullptr) ? s : "";
+    // Tous les jours et mois commencent par une lettre ASCII (« août », « décembre ») :
+    // mettre en majuscule le premier OCTET suffit, sans table Unicode.
+    if (!r.empty() && r[0] >= 'a' && r[0] <= 'z') r[0] = static_cast<char>(r[0] - 'a' + 'A');
+    return r;
+}
+
 // Titre court "Lun 16" pour les pages journalieres 2 et 3 (page_index 1/2).
 std::string format_short_day_label(int jour_offset) {
-    static const char* days[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
     struct tm t;
     if (!local_day_from_offset(jour_offset, t)) return "";
     char buf[12];
-    snprintf(buf, sizeof(buf), "%s %02d", days[t.tm_wday], t.tm_mday);
+    snprintf(buf, sizeof(buf), "%s %02d", fr_day_short_utf8(t.tm_wday), t.tm_mday);
     return std::string(buf);
 }
 

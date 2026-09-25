@@ -208,7 +208,11 @@ static bool rain_any_bar() {
     return false;
 }
 
-bool update_rain_bar_ui(int idx, const std::string& intensite, lv_obj_t* const bars[9]) {
+// Histogramme pluie 1 h : 9 barres de 5 min (rb_0_in … rb_8_in). intensite =
+// libellé Météo-France (« Pluie faible » … « Pluie très forte »), tout autre
+// texte vide la barre. Retourne true si au moins une barre est non vide — à
+// stocker dans has_rain.
+static bool update_rain_bar_ui(int idx, const std::string& intensite, lv_obj_t* const bars[9]) {
     if (idx >= 0 && idx < 9 && bars[idx] != nullptr) {
         uint32_t c;
         int h;
@@ -295,7 +299,6 @@ void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::st
 void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
     out_l1.clear();
     out_l2.clear();
-    static const char* days_short[] = {"Dim.", "Lun.", "Mar.", "Mer.", "Jeu.", "Ven.", "Sam."};
 
     time_t now_raw = time(nullptr);
     if (now_raw <= 0) {
@@ -330,7 +333,7 @@ void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
             time_t t = now_raw + static_cast<time_t>(jour) * 86400;
             struct tm day_tm;
             if (localtime_r(&t, &day_tm) == nullptr) continue;
-            j_name = days_short[day_tm.tm_wday];
+            j_name = std::string(fr_day_short_utf8(day_tm.tm_wday)) + ".";   // « Dim. »
         }
 
         const bool early = cal_is_early_shift(h);

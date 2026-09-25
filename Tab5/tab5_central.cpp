@@ -113,7 +113,7 @@ static uint32_t ha_alert_color_from_couleur(const std::string& couleur) {
     return UIColor::TEXT_PRIMARY;
 }
 
-lv_obj_t* central_panel_wrapper(int panel, CentralPanelCtx& ctx) {
+static lv_obj_t* central_panel_wrapper(int panel, CentralPanelCtx& ctx) {
     switch (panel) {
         case 0: return ctx.planning_wrap;
         case 1: return ctx.rain_wrap;
@@ -127,7 +127,7 @@ lv_obj_t* central_panel_wrapper(int panel, CentralPanelCtx& ctx) {
     }
 }
 
-bool central_panel_is_active(int panel, const CentralPanelCtx& ctx) {
+static bool central_panel_is_active(int panel, const CentralPanelCtx& ctx) {
     switch (panel) {
         case 0: return true;
         case 1: return ctx.has_rain;
@@ -186,7 +186,7 @@ static void hide_central_panel(lv_obj_t* wrap) {
     lv_obj_set_style_opa(wrap, LV_OPA_COVER, LV_PART_MAIN);
 }
 
-void sync_central_panel_visibility(CentralPanelCtx& ctx) {
+static void sync_central_panel_visibility(CentralPanelCtx& ctx) {
     if (!central_panel_is_active(ctx.current_panel, ctx)) {
         ctx.current_panel = 0;
         for (int p = 0; p < kCentralPanelCount; p++) {
@@ -619,7 +619,7 @@ void reset_forecast_to_main_page(int& forecast_page_index,
 // Planning jour au tap sur tuile météo (carte centrale 6s)
 // =============================================================================
 
-std::string get_day_planning_display_text(int jour) {
+static std::string get_day_planning_display_text(int jour) {
     if (jour < 0 || jour >= 15) return "Jour hors plage";
     const DayForecastData& d = cal_jours_data[jour];
     const std::string& h = d.heures_ouverture;

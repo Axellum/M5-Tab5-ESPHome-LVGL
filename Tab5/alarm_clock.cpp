@@ -317,9 +317,7 @@ std::string alarm_next_label(time_t now) {
   struct tm day;
   if (!local_day_from_offset(s_next_offset, day)) return std::string(h);
   // Majuscule initiale sur le jour : c'est un début de libellé.
-  std::string j = fr_day_long_utf8(day.tm_wday);
-  if (!j.empty()) j[0] = static_cast<char>(j[0] - 32);
-  return j + " " + h;
+  return fr_capitalized(fr_day_long_utf8(day.tm_wday)) + " " + h;
 }
 
 std::string alarm_next_detail(time_t now) {

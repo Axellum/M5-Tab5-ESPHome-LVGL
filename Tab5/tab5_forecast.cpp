@@ -127,7 +127,7 @@ uint32_t get_temperature_color(float t) {
 // =============================================================================
 
 // Remplacement de split_token par un parsing in-place avec strtok_r pour éviter la fragmentation de la SRAM.
-void parse_and_update_heures_bulk(const std::string& payload) {
+static void parse_and_update_heures_bulk(const std::string& payload) {
     if (payload.empty()) return;
     if (payload.length() > 2048) {
         ESP_LOGE("TAB5", "Payload heures trop long (%d octets). Rejeté pour éviter OOM.", payload.length());
