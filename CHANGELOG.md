@@ -4,6 +4,43 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — HA : la pluie ne relance plus tout le push, les prévisions ne cassent plus en silence
+
+Lot 1 de l'audit du 25/09/2026 (côté Home Assistant seulement, aucun changement firmware).
+
+- **`next_rain` ne déclenche plus sur ses attributs.** Le déclencheur `state:` nu de
+  « MAJ Ecran Tab5 ESPHome Push » partait à chaque rafraîchissement Météo-France de
+  l'attribut `1_hour_forecast` (toutes les 5 min) alors que l'état restait `unknown` —
+  trace du 25/09 à 10:49 : *from* `unknown` *to* `unknown`. Chaque fois, la chaîne complète
+  repartait (~6 s, 13 appels ESPHome, `calendar.get_events`, deux `weather.get_forecasts`) :
+  ≈ 18 poussées complètes par heure au lieu de 6, avec des données identiques, et un rendu
+  du bandeau météo à chaque fois côté tablette. `to: ~` = état seulement.
+- **Le battement `tab5_connected` ne relance plus la chaîne.** Le firmware réémet
+  `esphome.tab5_connected` toutes les 5 min (`interval: 5min`), en plus du boot. Jusqu'ici
+  il tombait pile pendant les poussées `next_rain` et finissait en « Already running »
+  (×1 627 depuis le 19/09) ; une fois `next_rain` corrigé, il a relancé la chaîne complète
+  à son tour (vu en prod à 11:34:03 le 25/09 : la redondance s'était juste déplacée).
+  Condition native ajoutée : ce déclencheur ne passe que si
+  `binary_sensor.*_ha_api_status` est `on` depuis moins de 3 min — vrai au boot de la
+  tablette, à une reconnexion et après un redémarrage de HA, faux pour le battement.
+  Reste 6 poussées complètes par heure (cycle /10 min) + les vrais événements. Retirer le
+  battement côté firmware relève du lot 3. Les deux changements sont appliqués en prod le
+  25/09 (automation gérée par l'UI).
+- **Prévisions : `.get()` partout, plus d'accès direct.** Le correctif `templow` du 18/09
+  (Météo-France omet `templow` au 15ᵉ jour ; `fcasts[i].templow` levait `UndefinedError`
+  avant le `| float(0)`, le payload n'était jamais rendu) n'existait qu'en prod : l'exemple
+  public, la copie privée et `rendered/` le réintroduisaient. Même piège sur l'horaire :
+  au-delà de ~48 h Météo-France n'envoie plus `precipitation` (constaté le 25/09) —
+  `condition`/`temperature`/`precipitation` passent aussi en `.get()` (prod comprise).
+  Prouvé dans le moteur HA : l'accès direct échoue, `.get()` rend `unknown 0 0`.
+- **Nouvelle garde (d) dans `packages/tab5_health.yaml`** : une automation Tab5 qui
+  journalise « Error rendering » déclenche `tab5_health_notify` (au plus une notification
+  par heure). HA journalise bien l'erreur en ERROR avant que `continue_on_error` ne la
+  rattrape (`helpers/script.py` de 2026.9.2, `log_exceptions` vrai par défaut pour les
+  automations). **Prérequis** : `system_log: fire_event: true` (redémarrage de HA) et
+  `system_log_event` exclu du recorder — documenté dans l'en-tête du package et le README HA.
+- Exemple public : défaut de `swing` aligné sur la prod et le firmware (`stop`, plus `off`).
+
 ### 2026-09-17 — Contrat API : chaque action décrite, chaque variable avec un exemple
 
 ESPHome 2026.9.0 accepte des métadonnées sur les actions définies par l'utilisateur
