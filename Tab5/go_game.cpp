@@ -1635,15 +1635,19 @@ static void build_ui() {
 // 15. Timer
 // ===========================================================================
 
+// Période réelle du timer. Variable de fichier et non `static` locale : open()
+// recrée le timer à TICK_IDLE_MS, le cache doit repartir de là (fermé pendant
+// la réflexion de l'IA, le jeu restait bloqué à 50 ms — audit 25/09/2026, lot 5).
+static uint32_t s_tick_period = 0;
+
 static void tick_cb(lv_timer_t*) {
     if (g_state == ST_OFF) return;
 
     // Tick adaptatif : 25 ms pendant la réflexion IA, 50 ms sinon (menus, attente
     // humain, marquage). Réduit la charge CPU de ~50 % entre les coups.
     const uint32_t want_ms = (g_state == ST_THINKING) ? TICK_THINK_MS : TICK_IDLE_MS;
-    static uint32_t cur_period = TICK_IDLE_MS;
-    if (g_timer && cur_period != want_ms) {
-        cur_period = want_ms;
+    if (g_timer && s_tick_period != want_ms) {
+        s_tick_period = want_ms;
         lv_timer_set_period(g_timer, want_ms);
     }
 
@@ -1725,7 +1729,10 @@ void open(const UI& ui) {
     refresh_all();
     // La page LVGL est déjà active (navigation via lvgl.page.show dans le YAML).
     menu_main();
-    if (!g_timer) g_timer = lv_timer_create(tick_cb, TICK_IDLE_MS, nullptr);
+    if (!g_timer) {
+        g_timer = lv_timer_create(tick_cb, TICK_IDLE_MS, nullptr);
+        s_tick_period = TICK_IDLE_MS;
+    }
 }
 
 void close() {

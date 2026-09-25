@@ -125,6 +125,14 @@ static uint32_t g_inc_ms     = 0;
 static bool     g_clock_on   = false;
 static uint32_t g_clock_last = 0;
 static uint32_t g_game_t0    = 0;
+// Sauvegarde différée de la partie en cours (même principe que le Go : drapeau +
+// au plus une écriture NVS toutes les 15 s). Avant le 25/09/2026, la partie n'était
+// écrite qu'à la fermeture de la console : un reboot (OTA, watchdog API, coupure)
+// la perdait, ou proposait une partie plus ancienne encore marquée reprenable —
+// alors que le README promet la reprise après redémarrage.
+static constexpr uint32_t RESUME_SAVE_MIN_MS = 15000;
+static bool     g_resume_dirty     = false;
+static uint32_t g_resume_saved_at  = 0;
 
 static uint8_t g_sel_sq    = NO_SQ;      // case selectionnee
 static uint8_t g_last_from = NO_SQ;      // dernier coup joue (encadrement)
@@ -1159,6 +1167,7 @@ static void play_move(const Move& m) {
     g_hist_move[g_nply] = m;
     g_nply++;
     g_hist_hash[g_nply] = hash_of(g_pos);
+    g_resume_dirty = true;   // écrit en NVS par tick_cb, au plus toutes les 15 s
 
     // Increment Fischer credite au joueur qui vient de jouer.
     if (g_clock_on && g_inc_ms) g_clock[cidx(mover)] += g_inc_ms;
@@ -1590,8 +1599,12 @@ static void slot_event_cb(lv_event_t* e) {
 // ===========================================================================
 
 static void update_clocks(uint32_t now) {
-    const uint32_t dt = now - g_clock_last;
+    uint32_t dt = now - g_clock_last;
     g_clock_last = now;
+    // Plus de PAUSE_GAP_MS sans tick : écran éteint (lvgl.pause) ou boucle
+    // bloquée. La pendule ne débite pas ce temps au camp au trait — avant, un
+    // joueur immobile dont l'écran s'éteignait perdait au temps (25/09/2026).
+    if (dt > PAUSE_GAP_MS) dt = 0;
     if (!g_clock_on || !g_running || g_state != ST_PLAY) return;
     const int s = cidx(g_pos.side);
     if (g_clock[s] <= dt) {
@@ -1632,6 +1645,14 @@ static void tick_cb(lv_timer_t*) {
                            g_anim_x0 + (int)((g_anim_x1 - g_anim_x0) * t),
                            g_anim_y0 + (int)((g_anim_y1 - g_anim_y0) * t));
         }
+    }
+
+    // Sauvegarde différée de la partie en cours (cf. RESUME_SAVE_MIN_MS).
+    if (g_resume_dirty && g_running && (now - g_resume_saved_at) >= RESUME_SAVE_MIN_MS) {
+        store_running_game();
+        persist_save();
+        g_resume_dirty = false;
+        g_resume_saved_at = now;
     }
 
     // Extinction de l'indice.

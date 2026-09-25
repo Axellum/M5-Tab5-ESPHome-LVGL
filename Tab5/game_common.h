@@ -29,6 +29,17 @@ namespace esphome { namespace font { class Font; } }
 namespace GameCommon {
 
 // ---------------------------------------------------------------------------
+// Pause d'affichage
+// ---------------------------------------------------------------------------
+
+// Écart entre deux ticks au-delà duquel on considère que LVGL était en pause
+// (écran éteint → `lvgl.pause`, tab5-hardware.yaml) ou la boucle bloquée : les
+// chronos de partie ne décomptent pas ce temps-là. Un tick normal vaut 20 à
+// 200 ms ; une image très lourde (overlay plein écran) ≈ 0,5 s ; 2 s laisse de
+// la marge sans pénaliser un joueur (audit du 25/09/2026, lot 5).
+static constexpr uint32_t PAUSE_GAP_MS = 2000;
+
+// ---------------------------------------------------------------------------
 // Arithmétique / aléa
 // ---------------------------------------------------------------------------
 

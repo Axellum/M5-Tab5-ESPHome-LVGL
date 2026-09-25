@@ -281,6 +281,12 @@ static uint8_t s_bag[TRIVIA_NCAT][128];
 // Message transitoire du bandeau d'état
 static char     s_msg[80] = "";
 static uint32_t s_msg_until = 0;
+// Période réelle du timer de jeu. Variable de fichier et non `static` locale :
+// open() recrée le timer à TICK_IDLE_MS, le cache doit repartir de là — sinon,
+// fermé pendant un déplacement de pion, le jeu restait à 10 Hz au lieu de
+// 30 Hz pendant les animations suivantes (audit du 25/09/2026, lot 5).
+static uint32_t s_tick_period = 0;
+static uint32_t s_last_tick_ms = 0;  // dernier tick, pour détecter une pause
 
 // Écran de confirmation générique
 enum ConfirmKind : uint8_t { CFM_ABANDON = 0, CFM_WIPE_STATS };
@@ -1827,13 +1833,28 @@ static void tick(lv_timer_t* t) {
     // saute), 100 ms en phase statique (question, verdict, menus, attente choix).
     const bool anim = s_dice_spin || (s_phase == PH_MOVING);
     const uint32_t want_ms = anim ? TICK_ANIM_MS : TICK_IDLE_MS;
-    static uint32_t cur_period = TICK_IDLE_MS;
-    if (g_timer && cur_period != want_ms) {
-        cur_period = want_ms;
+    if (g_timer && s_tick_period != want_ms) {
+        s_tick_period = want_ms;
         lv_timer_set_period(g_timer, want_ms);
     }
 
     uint32_t now = esphome::millis();
+
+    // Écran éteint (lvgl.pause) ou console fermée pendant une question : plus de
+    // PAUSE_GAP_MS sans tick. Les échéances en cours sont décalées d'autant — la
+    // question n'est plus comptée fausse au rallumage (25/09/2026). Non remis à
+    // zéro à la fermeture, exprès : une partie gardée en RAM reprend son chrono.
+    if (s_last_tick_ms != 0) {
+        const uint32_t gap = now - s_last_tick_ms;
+        if (gap > PAUSE_GAP_MS) {
+            s_q_t0 += gap;
+            s_hop_t0 += gap;
+            s_dice_t0 += gap;
+            s_reveal_until += gap;
+            s_msg_until += gap;
+        }
+    }
+    s_last_tick_ms = now;
 
     // --- Dé ---
     if (s_dice_spin) {
@@ -2110,7 +2131,10 @@ void open(const UI& ui) {
     render_layers();
 
     // La page LVGL est déjà active (navigation via lvgl.page.show dans le YAML).
-    if (!g_timer) g_timer = lv_timer_create(tick, TICK_IDLE_MS, nullptr);
+    if (!g_timer) {
+        g_timer = lv_timer_create(tick, TICK_IDLE_MS, nullptr);
+        s_tick_period = TICK_IDLE_MS;
+    }
 }
 
 void close() {

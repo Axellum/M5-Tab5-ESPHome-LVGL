@@ -4,6 +4,33 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Jeux : l'écran éteint ne fait plus perdre, la partie d'échecs survit à un reboot
+
+Lot 5 de l'audit du 25/09/2026 (§2.5, §2.6, §5, §6), sans les dames (reportées).
+
+- **Les chronos ne comptent plus l'écran éteint.** `lvgl.pause` (rétroéclairage coupé,
+  y compris par l'automation de présence) arrête les ticks des jeux mais pas l'horloge :
+  au rallumage, la pendule d'échecs débitait toute la pause au camp au trait (défaite
+  au temps possible), la question Trivia en cours était comptée fausse, et le temps de
+  run de Fil d'Or (et donc son record) était gonflé. Chaque jeu détecte maintenant un
+  écart de plus de `PAUSE_GAP_MS` (2 s, `game_common.h`) entre deux ticks et ne le
+  décompte pas : pendule inchangée, échéances Trivia décalées d'autant (une partie gardée
+  en RAM reprend aussi son chrono à la réouverture), début de run de Fil d'Or décalé.
+- **Échecs : sauvegarde différée de la partie en cours**, comme le Go (drapeau + au plus
+  une écriture NVS toutes les 15 s). Elle n'était écrite qu'à la fermeture de la
+  console : un reboot (OTA, watchdog API, coupure) la perdait, ou proposait une partie
+  plus ancienne encore marquée reprenable.
+- **Go et Trivia : cache de période du tick remis à zéro à chaque ouverture.** C'était une
+  `static` locale jamais réinitialisée : fermé pendant une animation, le jeu repartait
+  avec un timer à 100 ms en croyant être à 33 ms (animations saccadées).
+- **Index de la page d'arcade** : `id(page_arcade)->index` au lieu de `1` en dur (8 retours
+  de console + le texte « Écran courant ») — ajouter une page avant l'arcade ne casse plus
+  le retour de toutes les consoles en silence.
+- Non retenu, à dessein : réécrire les comparaisons `now >= échéance` en différence signée
+  pour le bouclage de `millis()` (49,7 jours). Appliquée en masse, la forme signée casse
+  les échéances « non armées » à 0 dès 24,8 jours d'uptime (`now < g_frenzy_until`
+  deviendrait vrai en permanence) : plus dangereux que le mal, à traiter au cas par cas.
+
 ### 2026-09-25 — Flash : 262 Ko de polices jamais affichées retirés
 
 Lot 4 de l'audit du 25/09/2026 (§4.1, §4.2). Mesuré à la compilation : flash

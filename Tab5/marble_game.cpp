@@ -392,6 +392,10 @@ static int      g_gold = 0;          // or ramasse dans la run
 static int      g_runes = 0;
 static uint32_t g_run_start_ms = 0;
 static uint32_t g_run_ms = 0;
+// Dernier tick en partie (0 = aucun depuis le début de la run) : un écart de plus
+// de PAUSE_GAP_MS (écran éteint → lvgl.pause) n'entre pas dans le temps de la
+// run ni dans le record (audit du 25/09/2026, lot 5).
+static uint32_t g_run_last_tick_ms = 0;
 static uint32_t g_room_enter_ms = 0;
 static bool     g_run_active = false;
 // Reglages figes au lancement de la run (changer la difficulte en cours de
@@ -1633,6 +1637,7 @@ static void start_run() {
     g_room = 0;
     g_run_start_ms = lv_tick_get();
     g_run_ms = 0;
+    g_run_last_tick_ms = 0;
     g_run_active = true;
 
     // Une run en mode dieu ne compte pas : ni au compteur, ni au classement.
@@ -1864,6 +1869,10 @@ static void update_hud() {
 static void tick_cb(lv_timer_t*) {
     if (g_state != ST_PLAYING) return;
     uint32_t now = lv_tick_get();
+    if (g_run_last_tick_ms != 0 && (now - g_run_last_tick_ms) > PAUSE_GAP_MS) {
+        g_run_start_ms += now - g_run_last_tick_ms;  // lv_tick_get suit millis()
+    }
+    g_run_last_tick_ms = now;
     g_run_ms = now - g_run_start_ms;
 
     // --- Inclinaison : offset de calibration, lissage, zone morte -----------
