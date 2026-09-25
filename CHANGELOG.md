@@ -4,6 +4,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Pictogrammes : un robot pour la discussion, un tableau pour les tableaux, un glissement de terrain pour les avalanches
+
+Suite du lot polices : les noms relevés dans le TTF MDI ont montré trois icônes qui ne
+disaient pas ce qu'elles annonçaient.
+
+- **Mode « Discussion LLM »** (bouton « Discu » du dashboard et bouton du popup assistant) :
+  F0450 `refresh` → **F06A9 `robot`**, l'intention notée dans l'ancien commentaire. Le
+  `refresh` de la Console système reste : c'est bien « Recharger autos ».
+- **En-tête de la carte « RÉPONSE »** de l'assistant, à côté de l'icône image : F0A71 `smog`
+  (un nuage de pollution) → **F04EB `table`**.
+- **Vigilance avalanches** : F067E `weather-lightning-rainy` (un orage, confondu avec la
+  vigilance orages) → **F1A48 `landslide`** ; MDI n'a pas d'icône avalanche.
+
+Glyphes échangés dans `mdi_font_32`, `mdi_assist_36` et `mdi_font_alert` (règle 7 verte).
+Flash 2 844 802 → 2 844 996 o (+194), RAM inchangée, 0 warning, `config_hash` 0x26da4842.
+
 ### 2026-09-25 — Polices : l'icône du réveil éteint revient, 85 glyphes d'icônes jamais affichés retirés
 
 Audit des polices après le lot 4. Chaque icône affichée a été rattachée à son widget,

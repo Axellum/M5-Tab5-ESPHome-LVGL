@@ -273,12 +273,12 @@ font:
       - "\U000F0597"  # weather-rainy
       - "\U000F0598"  # weather-snowy
       - "\U000F059D"  # weather-windy
-      - "\U000F067E"  # weather-lightning-rainy
       - "\U000F078D"  # waves
       - "\U000F0E01"  # thermometer-alert
       - "\U000F0EFA"  # home-flood
       - "\U000F0F29"  # snowflake-alert
       - "\U000F0F36"  # weather-snowy-heavy
+      - "\U000F1A48"  # landslide (avalanches : MDI n'a pas d'icône avalanche)
 
   # 45 px — boutons des popups : télécommande TV, clim (modes, préréglages), lumière,
   # réveil, rangée des plantes, en-tête de la sélection des consoles.
@@ -388,6 +388,7 @@ font:
       - "\U000F0581"  # volume-off
       - "\U000F05A9"  # wifi
       - "\U000F05CB"  # account-voice
+      - "\U000F06A9"  # robot
       - "\U000F06E8"  # lightbulb-on
       - "\U000F0717"  # snowflake
       - "\U000F07C0"  # desktop-classic
@@ -430,13 +431,13 @@ font:
       - "\U000F021F"  # file-image
       - "\U000F0361"  # message
       - "\U000F036C"  # microphone
-      - "\U000F0450"  # refresh
       - "\U000F04DB"  # stop
+      - "\U000F04EB"  # table
       - "\U000F057E"  # volume-high
       - "\U000F0581"  # volume-off
       - "\U000F062E"  # tune
+      - "\U000F06A9"  # robot
       - "\U000F07D0"  # home-assistant
-      - "\U000F0A71"  # smog
 
   # Icônes météo des tuiles seulement (120 px, calque 2 réduit à 80 px). Les
   # tailles 270 et 190 px (font_meteo_main / _small) sont retirées le 25/09/2026 :

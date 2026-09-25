@@ -148,7 +148,7 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
         "\U000F0F29",  // grand froid
         "\U000F078D",  // vagues-submersion
         "\U000F0E01",  // canicule
-        "\U000F067E",  // avalanches
+        "\U000F1A48",  // avalanches (landslide : MDI n'a pas d'icône avalanche)
     };
     struct AlertEntry { const char* icon; const char* level; };
     constexpr size_t MAX_ALERTES = 4;
