@@ -4,6 +4,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-25 — Diagnostic : durée des images LVGL et pile libre de la boucle
+
+Point de départ des expériences de performance (audit du 25/09/2026, §3.3). Deux
+capteurs de diagnostic, publiés chaque minute comme « Tab5 Loop Time » :
+
+- **Tab5 Draw Max** (ms) : image LVGL la plus longue de la minute écoulée, rendu et envoi
+  à l'écran compris (`on_draw_start` / `on_draw_end`, soit `LV_EVENT_RENDER_START` →
+  `LV_EVENT_REFR_READY`). 0 = rien n'a été redessiné.
+- **Tab5 Stack Free Min** (o) : pile libre minimale de la boucle ESPHome depuis le
+  démarrage (`uxTaskGetStackHighWaterMark`, 8 Ko en tout). Les logs de l'IA des dames
+  (#145) n'y laissaient que 1 492 o.
+
 ### 2026-09-25 — Boot : le push complet de Home Assistant n'est plus perdu
 
 Modification de `on_boot` autorisée expressément par Axel le 25/09/2026.

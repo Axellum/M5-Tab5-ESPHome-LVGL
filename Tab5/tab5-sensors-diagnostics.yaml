@@ -118,6 +118,34 @@ sensor:
       id: sys_loop_time
       name: "Tab5 Loop Time"
 
+  # Mesures de référence des expériences de performance (audit du 25/09/2026, §3.3),
+  # publiées chaque minute comme le temps de boucle.
+  # Image LVGL la plus longue de la minute écoulée : rendu + envoi à l'écran, de
+  # LV_EVENT_RENDER_START à LV_EVENT_REFR_READY (on_draw_start / on_draw_end, bloc
+  # lvgl: plus bas). 0 = aucune image dessinée pendant la minute.
+  - platform: template
+    id: sys_draw_max
+    name: "Tab5 Draw Max"
+    unit_of_measurement: ms
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    update_interval: 60s
+    lambda: |-
+      const float v = id(draw_max_us) / 1000.0f;
+      id(draw_max_us) = 0;
+      return v;
+
+  # Pile libre minimale de la boucle ESPHome depuis le démarrage (8 Ko en tout).
+  # La lambda tourne dans la boucle elle-même : nullptr = la tâche courante.
+  - platform: template
+    id: sys_stack_free
+    name: "Tab5 Stack Free Min"
+    unit_of_measurement: B
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    update_interval: 60s
+    lambda: 'return (float) uxTaskGetStackHighWaterMark(nullptr);'
+
 select:
   - platform: template
     id: wifi_antenna_select
@@ -185,3 +213,28 @@ interval:
              // apres le "Redemarrage..." affiche par le bouton Redemarrer HA.
              update_console_ha_status_ui(id(lbl_sys_ha_val), id(status_ha).state);
           }
+
+# Chronométrage des images LVGL pour « Tab5 Draw Max » (plus haut). Fusionné avec les
+# blocs lvgl: de tab5-styles.yaml et tab5-lvgl.yaml. Deux lectures de micros() par
+# image : coût négligeable, rien n'est touché à l'affichage.
+lvgl:
+  on_draw_start:
+    - lambda: 'id(draw_t0_us) = micros();'
+  # LV_EVENT_REFR_READY part à CHAQUE passage du timer de rafraîchissement, même
+  # sans rien à redessiner (lv_refr.c : `goto refr_finish`) : sans l'appariement
+  # avec un début de dessin, on mesurait le temps écoulé depuis la dernière image
+  # (2,5 à 4,5 s au repos, relevé le 25/09 sur la première version).
+  on_draw_end:
+    - lambda: |-
+        if (id(draw_t0_us) == 0) return;
+        const uint32_t d = micros() - id(draw_t0_us);
+        id(draw_t0_us) = 0;
+        if (d > id(draw_max_us)) id(draw_max_us) = d;
+
+globals:
+  - id: draw_t0_us
+    type: uint32_t
+    initial_value: '0'
+  - id: draw_max_us
+    type: uint32_t
+    initial_value: '0'
