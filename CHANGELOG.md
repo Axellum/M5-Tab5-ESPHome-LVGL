@@ -4,6 +4,32 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Garde « reboot inattendu » : marge de 5 min, heure de démarrage à ±64 s
+
+Suite de la PR précédente, constatée au flash du soir même. Aucun changement de code
+firmware : seuls des commentaires changent.
+
+- **L'heure de démarrage est juste à ±64 s.** L'état d'un capteur ESPHome est un float
+  32 bits, qui arrondit un horodatage Unix (≈ 1,79 × 10⁹) au multiple de 128 s le plus
+  proche. Mesuré : reboot à 19:36:29 UTC, publié 19:35:28.
+- **Garde (b) de `packages/tab5_health.yaml` : marge portée de 2 à 5 min.** Avec 2 min,
+  un démarrage arrondi de 64 s vers le bas, vu par HA 90 s après la coupure, ne
+  déclenchait plus rien. Banc `ha_eval_template` refait avec la valeur arrondie réelle :
+  - 7 cas OK à 5 min ;
+  - 2 échecs à 2 min, les deux détections tardives.
+
+  Comme avec l'ancienne règle (« uptime < 300 s »), une coupure Wi-Fi dans les 5 min
+  qui suivent un démarrage alerte aussi.
+- **Mise à jour depuis le capteur en secondes : recharger l'intégration ESPHome.**
+  Sinon « Tab5 Uptime » reste `unavailable`. L'intégration ESPHome de HA garde l'ancienne
+  unité « s » quand la nouvelle est vide (`esphome/sensor.py`, `_on_static_info_update`),
+  et HA refuse alors un horodatage. Entrée ajoutée à `docs/troubleshooting.md`, avec le
+  faux positif « décalé d'une minute ».
+- **Commentaire de `Tab5/tab5-sensors-diagnostics.yaml` corrigé.** L'heure part au
+  premier rappel de synchro de `sntp_time` où l'heure est valide. Après un redémarrage
+  logiciel, l'heure système survit : ce rappel part dès la première boucle
+  (`SNTPComponent::loop()`), pas « à la première synchro NTP ».
+
 ### 2026-09-26 — CI : compilation avec la version plancher d'ESPHome
 
 Nouveau job **`build-min`** dans `.github/workflows/esphome-tab5.yml` : la même

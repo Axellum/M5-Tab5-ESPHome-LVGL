@@ -127,10 +127,21 @@ Those three lines repeat ~50 times per second. The black screen is a *consequenc
 
 ---
 
+### `Tab5 Uptime` stuck at `unavailable` after the update to the boot-time firmware (2026-09-26)
+
+**Symptom:** after flashing a firmware from 2026-09-26 or later over an older one, every entity comes back except `Tab5 Uptime`, which stays `unavailable`. The Home Assistant log shows `ValueError: Sensor sensor.…_tab5_uptime has a unit of measurement and thus indicating it has a numeric value; however, it has the non-numeric device class: timestamp`.
+
+**Root cause:** Home Assistant, not the firmware. `Tab5 Uptime` changed from seconds (`s`) to a boot timestamp without a unit, under the same name, so the same entity. On reconnection, HA's ESPHome integration updates the existing entity in place and only copies the unit when the new one is not empty (`homeassistant/components/esphome/sensor.py`, `_on_static_info_update`): the old `s` sticks, and HA refuses to write a timestamp state that carries a unit.
+
+**Fix:** reload the ESPHome integration of the device once (Settings → Devices & services → ESPHome → the device → ⋮ → Reload), or restart Home Assistant. The entity is rebuilt from the device's description, without a unit. Done on 2026-09-26 at 21:39.
+
+---
+
 ### False positives worth knowing about (don't "fix" these again)
 
 - **Forecast pagination "wrap-around"**: the 5 forecast pages (indices 0–4) intentionally do **not** wrap from 4 back to 0 on a further right-swipe. This was already "corrected" once by an LLM audit that assumed non-wrapping was a bug, then reverted. See [`docs/decisions/`](decisions/README.md).
 - **A cover entity showing `unknown` in Home Assistant**: this can be real on the HA side while being irrelevant to the Tab5 firmware, if the corresponding UI card drives its own internal state via globals + a script rather than reading that entity's state directly. Check what the specific `ui_components/*.yaml` card actually binds to before assuming the firmware is affected.
+- **`Tab5 Uptime` about a minute away from the actual reboot**: not a clock problem. An ESPHome sensor state is a 32-bit float, which rounds a Unix timestamp to the nearest multiple of 128 s (±64 s). The health guard in `packages/tab5_health.yaml` allows 5 min for it.
 - **Touch "overlap" between two adjacent buttons flagged by a static audit**: verify the actual pixel geometry (`x`/`y`/`width`/`height`) before trusting a reported overlap — a past report was off by roughly a dozen pixels and wasn't a real overlap.
 
 ---
@@ -231,8 +242,17 @@ Ces trois lignes se répètent ~50 fois par seconde. L'écran noir est une *cons
 
 **Piège de diagnostic, appris le même jour :** ouvrir *et refermer* le port série USB pour lire les logs peut réinitialiser la puce. Un reboot inexpliqué pile à la fin d'une session `esphome logs --device COM<n>`, c'est la session de logs elle-même, pas une instabilité. Une fois l'appareil revenu sur le WiFi, le surveiller via ses entités de diagnostic Home Assistant.
 
+### `Tab5 Uptime` bloqué à `unavailable` après la mise à jour vers le firmware à heure de démarrage (26/09/2026)
+
+**Symptôme :** après le flash d'un firmware du 26/09/2026 ou plus récent par-dessus un plus ancien, toutes les entités reviennent sauf `Tab5 Uptime`, qui reste `unavailable`. Le journal de Home Assistant montre `ValueError: Sensor sensor.…_tab5_uptime has a unit of measurement and thus indicating it has a numeric value; however, it has the non-numeric device class: timestamp`.
+
+**Cause racine :** Home Assistant, pas le firmware. `Tab5 Uptime` est passé de secondes (`s`) à une heure de démarrage sans unité, sous le même nom, donc la même entité. À la reconnexion, l'intégration ESPHome de HA met à jour l'entité existante sur place et ne recopie l'unité que si la nouvelle n'est pas vide (`homeassistant/components/esphome/sensor.py`, `_on_static_info_update`) : l'ancien `s` reste, et HA refuse d'écrire un état horodaté qui porte une unité.
+
+**Correctif :** recharger une fois l'intégration ESPHome de l'appareil (Paramètres → Appareils et services → ESPHome → l'appareil → ⋮ → Recharger), ou redémarrer Home Assistant. L'entité est reconstruite depuis la description de l'appareil, sans unité. Fait le 26/09/2026 à 21:39.
+
 ### Faux positifs à connaître (ne pas re-"corriger")
 
 - **Pagination prévisions sans bouclage** : intentionnel (0↔4), déjà "corrigé à tort" une fois par un audit LLM puis reverté. Voir [`docs/decisions/`](decisions/README.md).
 - **Entité `cover` à `unknown` côté HA** : peut être réel côté HA sans affecter le firmware si la carte concernée pilote son propre état via des globals + un script plutôt que de lire cette entité.
+- **`Tab5 Uptime` décalé d'environ une minute par rapport au vrai reboot** : pas un problème d'horloge. L'état d'un capteur ESPHome est un float 32 bits, qui arrondit un horodatage Unix au multiple de 128 s le plus proche (±64 s). La garde de `packages/tab5_health.yaml` prévoit 5 min de marge pour cela.
 - **"Chevauchement" tactile signalé par un audit statique** : vérifier la géométrie pixel réelle avant de faire confiance au rapport — un cas signalé était décalé d'une douzaine de pixels, pas un vrai chevauchement.

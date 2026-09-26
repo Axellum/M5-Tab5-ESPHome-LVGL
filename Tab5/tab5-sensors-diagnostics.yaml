@@ -110,12 +110,20 @@ text_sensor:
 sensor:
   # Uptime en deux capteurs (audit des ressources du 26/09/2026, H4) :
   # - en secondes, pour la console seulement : sans `name:`, il reste interne ;
-  # - pour HA, l'heure du dernier démarrage, publiée UNE fois par démarrage, à la
-  #   première synchro NTP (`uptime_timestamp_sensor.cpp` ne republie jamais). Avant,
-  #   la valeur en secondes partait chaque minute : 1 440 lignes par jour en base et
-  #   autant d'exécutions de la garde « reboot inattendu » de packages/tab5_health.yaml.
+  # - pour HA, l'heure du dernier démarrage, publiée UNE fois par démarrage, au
+  #   premier rappel de synchro de `sntp_time` où l'heure est valide
+  #   (`uptime_timestamp_sensor.cpp` ne republie jamais). Après un redémarrage
+  #   logiciel l'heure système survit : ce rappel part alors dès la première boucle,
+  #   avant le Wi-Fi. Avant, la valeur en secondes partait chaque minute : 1 440
+  #   lignes par jour en base et autant d'exécutions de la garde « reboot inattendu »
+  #   de packages/tab5_health.yaml.
   #   Même nom que l'ancien capteur, donc même entité HA
   #   (sensor.m5stack_tab5_home_assistant_hmi_tab5_uptime), qui devient un horodatage.
+  #   Précision ±64 s : l'état passe par un float 32 bits, qui arrondit un horodatage
+  #   Unix au multiple de 128 s (reboot à 19:36:29 UTC publié 19:35:28, le 26/09/2026).
+  #   Mise à jour depuis l'ancien capteur en secondes : recharger l'intégration ESPHome
+  #   dans HA, sinon l'entité garde son unité « s » et reste `unavailable`
+  #   (docs/troubleshooting.md).
   - platform: uptime
     id: sys_uptime
     update_interval: 60s
