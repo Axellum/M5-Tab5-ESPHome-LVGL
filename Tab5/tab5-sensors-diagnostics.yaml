@@ -149,7 +149,8 @@ sensor:
   # lvgl: plus bas). 0 = aucune image dessinée pendant la minute.
   # `internal: true` (audit ressources du 26/09/2026, lot 2) : la campagne de mesure est
   # close et la valeur change chaque minute — ≈ 1 500 lignes par jour dans la base HA
-  # pour rien. Toujours publiée dans les logs (`esphome logs`) pour une nouvelle mesure.
+  # pour rien. Un capteur interne n'apparaît plus non plus dans `esphome logs` (vérifié
+  # après le flash du 26/09) : pour une nouvelle mesure, retirer `internal: true`.
   - platform: template
     id: sys_draw_max
     name: "Tab5 Draw Max"
