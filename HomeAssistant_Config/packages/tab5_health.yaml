@@ -142,16 +142,21 @@ automation:
   # (b) Reboot inattendu — nouvel horodatage de démarrage du Tab5
   # --------------------------------------------------------------------------
   # « Tab5 Uptime » est l'heure du dernier démarrage (capteur `uptime` de type
-  # `timestamp`), publiée UNE fois par démarrage, à la première synchro NTP.
+  # `timestamp`), publiée UNE fois par démarrage, dès que l'heure est valide.
   # Depuis le 26/09/2026 ; avant, des secondes publiées chaque minute, qui
-  # faisaient tourner cette garde 1 440 fois par jour. Détection sans now() ni
-  # polling, via trigger.from_state / to_state :
+  # faisaient tourner cette garde 1 440 fois par jour.
+  # PRÉCISION ±64 s : l'état d'un capteur ESPHome est un float 32 bits, et un
+  # horodatage Unix (≈ 1,79 × 10⁹) y est arrondi au multiple de 128 s le plus
+  # proche. Mesuré le 26/09/2026 : reboot à 19:36:29 UTC, publié 19:35:28.
+  # Détection sans now() ni polling, via trigger.from_state / to_state :
   #   1. un horodatage valide remplace un autre plus ancien (redémarrage sans
   #      passage par `unavailable`, rare) ;
-  #   2. retour d'`unavailable`/`unknown` avec un démarrage postérieur (à 2 min
-  #      près) au moment où HA a perdu l'appareil. Une coupure Wi-Fi SANS reboot
-  #      revient avec l'ancien démarrage et ne déclenche donc pas ; un NTP en
-  #      retard non plus ne fait rien manquer (l'état reste `unknown` jusque-là).
+  #   2. retour d'`unavailable`/`unknown` avec un démarrage postérieur (à 5 min
+  #      près : arrondi de 64 s + retard de HA à voir la coupure) au moment où
+  #      HA a perdu l'appareil. Une coupure Wi-Fi SANS reboot revient avec
+  #      l'ancien démarrage et ne déclenche donc pas, sauf dans les 5 min qui
+  #      suivent un démarrage (comme l'ancienne règle « uptime < 300 s ») ; un
+  #      NTP en retard ne fait rien manquer (l'état reste `unknown` jusque-là).
   # as_timestamp(…, none) : sûr au boot, capteur pas encore initialisé (cf.
   # règles HA du projet).
   # ==========================================================================
@@ -173,7 +178,7 @@ automation:
              if trigger.from_state is not none else none %}
           {% if to_ts is none or trigger.from_state is none %}false
           {% elif from_ts is not none %}{{ to_ts > from_ts + 60 }}
-          {% else %}{{ to_ts >= as_timestamp(trigger.from_state.last_changed) - 120 }}
+          {% else %}{{ to_ts >= as_timestamp(trigger.from_state.last_changed) - 300 }}
           {% endif %}
     action:
       - action: script.tab5_health_notify
