@@ -122,6 +122,17 @@ Helpers + central script for a roller shutter whose motor reports **no position 
 
 Adapt the `26 s` travel delay to your own shutter, and route every other shutter automation (sunrise/sunset, HA UI) through `script.tab5_volet_action` — otherwise the screen won't know the shutter moved.
 
+### `packages/tab5_micro_absence.yaml`
+Turns the Tab5 wake word (« Ok Nabu ») **off when nobody is home** and back on when someone returns. It listens 24/7 otherwise (10 ms frames, model + voice activity detection: an estimated 5-15 % of a core plus the I2S bus and the microphone ADC), for nothing when the flat is empty.
+
+- Presence is `zone.home` (number of tracked people at home): no personal entity ID in the file. To follow a single person, replace it with a condition on your `person.*`.
+- Off after **10 min** of empty home (a GPS glitch does nothing), on again **as soon as** someone is back.
+- A manual choice is kept: the microphone is only switched back on if this automation switched it off (`input_boolean.tab5_micro_coupe_absence`).
+- A departure or return missed while the tablet was offline is caught up when it reconnects or when HA restarts.
+- The alarm clock still arms its voice « Stop » while ringing, even with the wake word off (firmware side, nothing to do).
+
+After deploying: reload **Input booleans** and **Automations**.
+
 ---
 
 ## Adapting to your setup
@@ -302,6 +313,17 @@ Un tap sur un bandeau le retire tout de suite et mémorise son id ici : un re-pu
 Helpers + script central pour un volet dont le moteur ne renvoie **ni position ni fin de course** (module Tuya bas de gamme typique). Un `input_boolean` est armé pendant la durée de course mesurée et un `input_text` porte le libellé affiché à l'écran ; l'automatisation push relaie ce libellé vers `tab5_maj_volet_etat`.
 
 Adaptez le délai de course de `26 s` à votre volet, et faites passer toutes vos autres automatisations de volet (lever/coucher du soleil, UI HA) par `script.tab5_volet_action` — sinon l'écran ne saura pas que le volet a bougé.
+
+### `packages/tab5_micro_absence.yaml`
+Coupe le mot d'activation du Tab5 (« Ok Nabu ») **quand personne n'est à la maison**, et le rallume au retour. Sinon il écoute 24 h/24 (trames de 10 ms, modèle + détection de voix : 5 à 15 % d'un cœur plus le bus I2S et l'ADC du micro, estimation), pour rien quand l'appartement est vide.
+
+- Présence = `zone.home` (nombre de personnes suivies à la maison) : aucun identifiant personnel dans le fichier. Pour ne suivre qu'une personne, remplacer par une condition sur votre `person.*`.
+- Coupure après **10 min** de maison vide (un saut du GPS ne fait rien), rallumage **dès** le retour.
+- Un choix manuel est respecté : le micro n'est rallumé que si c'est cette automation qui l'a coupé (`input_boolean.tab5_micro_coupe_absence`).
+- Un départ ou un retour manqué pendant que la tablette était hors ligne est rattrapé à sa reconnexion ou au redémarrage de HA.
+- Le réveil arme quand même son « Stop » vocal pendant la sonnerie, micro coupé ou non (côté firmware, rien à faire).
+
+Après le déploiement : recharger **Entrées booléennes** et **Automatisations**.
 
 ---
 
