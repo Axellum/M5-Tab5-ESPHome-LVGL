@@ -1,0 +1,22 @@
+# [AI-CONTEXT]
+# @file ecran-st7123.yaml
+# @role Écran et tactile du Tab5 à puce ST7123 (fabriqué du 14/10/2025 au 28/04/2026) :
+#       la révision de la tablette d'Axel, testée tous les jours. Choisie par défaut.
+# @architecture_constraint Ne contient QUE ce qui change d'une révision à l'autre
+#       (modèle d'écran, plateforme tactile, cadence de scrutation). Broches,
+#       dimensions, calibration et on_release sont dans tab5-hardware.yaml ; les
+#       entrées ci-dessous les ÉTENDENT (`!extend tab5_display`, `!extend touch`). Une
+#       simple fusion par id ne marche pas entre deux packages : essayée le 26/09/2026,
+#       ESPHome garde deux entrées et refuse l'écran (« requires a 'platform' key »).
+#       Choix de la révision : `tab5_ecran:` dans Tab5/user_entities.yaml (docs/hardware.md).
+# ============================================================================
+
+display:
+  - id: !extend tab5_display
+    platform: mipi_dsi
+    model: M5STACK-TAB5-ST7123   # [2026.7.0] Renomme depuis M5STACK-TAB5-V2 (deprecated)
+
+touchscreen:
+  - id: !extend touch
+    platform: st7123
+    update_interval: 100ms   # [2026.7.0] Requis: le composant officiel init dans update() (pas set_timeout). Le poller s'arrete seul une fois l'interruption attachee.

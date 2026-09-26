@@ -1,0 +1,22 @@
+# [AI-CONTEXT]
+# @file ecran-st7121.yaml
+# @role Écran et tactile du Tab5 à puce ST7121 (fabriqué depuis le 28/04/2026, journal
+#       des versions M5Stack). COMPILÉ PAR LA CI, JAMAIS TESTÉ SUR UNE TABLETTE.
+# @architecture_constraint Même découpage que ecran-st7123.yaml : seul ce qui change
+#       d'une révision à l'autre ; le reste vient de tab5-hardware.yaml, étendu par `!extend`.
+#       Écran : modèle officiel M5STACK-TAB5-ST7121 (ESPHome, PR esphome#17500, juillet 2026).
+#       Tactile : ESPHome n'a pas de pilote « st7121 ». Le code du modèle ESPHome note que
+#       le firmware d'usine M5Stack distingue ST7121 et ST7123 en lisant la version du
+#       contrôleur tactile : le même protocole est donc probable, d'où la plateforme st7123.
+#       Hypothèse non vérifiée : un retour de testeur (Discussions) la confirmera ou non.
+# ============================================================================
+
+display:
+  - id: !extend tab5_display
+    platform: mipi_dsi
+    model: M5STACK-TAB5-ST7121
+
+touchscreen:
+  - id: !extend touch
+    platform: st7123
+    update_interval: 100ms   # Comme sur ST7123 : le composant init dans update() et arrête le poller une fois l'interruption attachée.

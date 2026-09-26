@@ -1,6 +1,6 @@
 name: ESPHome Tab5 Compilation
 
-# Trois jobs :
+# Quatre jobs :
 #   - python : hooks pre-commit (yamllint, BOM, secrets, placeholders HA),
 #     tests hôte (pytest = outils + miroirs Python des moteurs + garde-fous
 #     Marble/Lode/chrome modal), vrai moteur Go C++ compilé par g++, dry-run du
@@ -16,6 +16,11 @@ name: ESPHome Tab5 Compilation
 #     passerait inaperçue. Mêmes conditions de déclenchement que `build`, sans
 #     artefact. Check REQUIS de `main` depuis le 26/09/2026 (réglage du dépôt),
 #     comme `build` : sauté (« skipped ») quand le firmware ne change pas.
+#   - build-revisions : la même compilation pour les révisions du Tab5 que la
+#     tablette d'Axel n'a pas (ST7121, ILI9881C ; docs/hardware.md), choisies par
+#     `tab5_ecran:` dans user_entities.yaml (26/09/2026). Elles ne sont testées sur
+#     aucun appareil : la CI garantit seulement qu'elles compilent encore. Lancé
+#     quand l'écran, le matériel, l'entrée ou ce workflow changent ; check NON requis.
 #
 # `esphome/build-action` sans `version:` tire l'image `latest` : c'est VOULU pour
 # `build`. La CI sert de banc d'essai gratuit de la dernière ESPHome (le 25/08/2026
@@ -44,6 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       firmware: ${{ steps.filter.outputs.firmware }}
+      ecrans: ${{ steps.filter.outputs.ecrans }}
     steps:
       - uses: actions/checkout@v7
       - id: filter
@@ -58,6 +64,11 @@ jobs:
               - 'Tab5/**'
               - '.github/workflows/esphome-tab5.yml'
               - '!**/*.md'
+            ecrans:
+              - 'tab5-ha-hmi.yaml'
+              - 'Tab5/tab5-hardware.yaml'
+              - 'Tab5/ecran-*.yaml'
+              - '.github/workflows/esphome-tab5.yml'
 
   python:
     runs-on: ubuntu-latest
@@ -219,3 +230,46 @@ jobs:
         with:
           yaml-file: tab5-ha-hmi.yaml
           version: ${{ steps.plancher.outputs.version }}
+
+  # Révisions du Tab5 absentes de la tablette d'Axel (docs/hardware.md) : on vérifie
+  # seulement que leurs fichiers Tab5/ecran-*.yaml compilent encore. Même compilation
+  # que `build` (image `latest`), la révision ajoutée au user_entities.yaml factice.
+  # Cache de `build` restauré mais jamais sauvegardé : les objets sont presque tous
+  # communs, et trois jobs n'écrasent pas le même cache. Pas d'artefact : un binaire
+  # aux secrets factices publics ne doit pas servir à flasher une tablette.
+  build-revisions:
+    name: build-revisions (${{ matrix.ecran }})
+    needs: changes
+    if: needs.changes.outputs.ecrans == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ecran: [st7121, ili9881c]
+    steps:
+      - uses: actions/checkout@v7
+      - name: user_entities.yaml (révision ${{ matrix.ecran }}) et secrets.yaml factices
+        run: |
+          cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
+          printf '\ntab5_ecran: %s\n' "${{ matrix.ecran }}" >> Tab5/user_entities.yaml
+          cat > secrets.yaml << 'EOF2'
+          wifi_ssid: "ci_dummy_ssid"
+          wifi_password: "CI_DUMMY_PASSWORD"
+          wifi_ap_password: "CI_DUMMY_AP_PASSWORD"
+          api_encryption_key: "26IVe/bZ/aI+T8G96D7aYZlM2EH8QUG8JtsZ50HxaCE="
+          EOF2
+      - name: Cache ccache (restauré depuis build, jamais sauvegardé)
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/ccache
+          key: ccache-esp32p4-${{ github.run_id }}
+          restore-keys: ccache-esp32p4-
+      - name: Configuration ccache
+        run: |
+          echo "CCACHE_DIR=$RUNNER_TEMP/ccache" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/ccache"
+          printf 'max_size = 2G\ncompiler_check = content\n' > "$RUNNER_TEMP/ccache/ccache.conf"
+      - name: Build ESPHome Firmware (révision ${{ matrix.ecran }})
+        uses: esphome/build-action@v8.1.0
+        with:
+          yaml-file: tab5-ha-hmi.yaml

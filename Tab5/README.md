@@ -31,7 +31,10 @@ If you add a genuinely new architectural constraint or a non-obvious decision wh
 ## File descriptions
 
 ### `tab5-hardware.yaml`
-Low-level hardware: display/touch buses, ES8388 DAC I2C init, speaker/mic I2S, PI4IOE5V6408 GPIO expander (Wi-Fi power/antenna switches), `ota:` (encrypted with the API key since 2026-09-16 — `api_encryption_key` in `secrets.yaml`; plain uploads are refused, there is no OTA password anymore, see ADR-0015). The audio hardware stays here (shared I2S bus, ES7210 mic ADC, ES8388 DAC, `media_player`); the voice pipeline itself moved to `tab5-assist.yaml` on 2026-09-25 (audit lot 8c).
+Low-level hardware: display/touch settings shared by every Tab5 revision (pins, dimensions, calibration, wake-on-touch), ES8388 DAC I2C init, speaker/mic I2S, PI4IOE5V6408 GPIO expander (Wi-Fi power/antenna switches), `ota:` (encrypted with the API key since 2026-09-16 — `api_encryption_key` in `secrets.yaml`; plain uploads are refused, there is no OTA password anymore, see ADR-0015). The audio hardware stays here (shared I2S bus, ES7210 mic ADC, ES8388 DAC, `media_player`); the voice pipeline itself moved to `tab5-assist.yaml` on 2026-09-25 (audit lot 8c).
+
+### `ecran-st7123.yaml` / `ecran-st7121.yaml` / `ecran-ili9881c.yaml`
+What differs between Tab5 revisions: display model and touch platform, applied with `!extend` onto `tab5_display` and `touch` from `tab5-hardware.yaml`. One of them is included by `tab5-ha-hmi.yaml`, chosen by `tab5_ecran:` in `user_entities.yaml` (default `st7123`, the only one tested on a device). See [`../docs/hardware.md`](../docs/hardware.md#hardware-revisions).
 
 ### `tab5-sensors-diagnostics.yaml`
 System/network entities: the `wifi:` block, GPIO power switches (Wi-Fi, USB, external 5V, antenna select — internal, not exposed to HA), HA API status, IP/SSID, uptime (seconds for the console, boot timestamp for HA), reset reason, Wi-Fi RSSI, core temperature, free RAM/loop time (`debug`), SNTP clock and the status-bar/console refresh `interval:`s.

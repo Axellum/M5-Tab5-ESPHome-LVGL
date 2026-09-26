@@ -175,12 +175,17 @@ esp_ldo:
   - voltage: 2.5V
     channel: 3
 
+# Écran et tactile : la partie commune aux trois révisions du Tab5. La plateforme,
+# le modèle d'écran et la puce tactile viennent de Tab5/ecran-<révision>.yaml, choisi
+# par la substitution `tab5_ecran` (tab5-ha-hmi.yaml, st7123 par défaut) : le fichier
+# de révision étend les deux entrées ci-dessous par `!extend tab5_display` /
+# `!extend touch` — ne pas renommer ces id. Les broches sont les mêmes sur les trois
+# révisions (docs/hardware.md, « Hardware revisions »).
 display:
-  - platform: mipi_dsi
+  - id: tab5_display
     dimensions:
       height: 1280
       width: 720
-    model: M5STACK-TAB5-ST7123   # [2026.7.0] Renomme depuis M5STACK-TAB5-V2 (deprecated)
     reset_pin:
       pi4ioe5v6408: pi4ioe1
       number: 4
@@ -190,18 +195,16 @@ display:
     auto_clear_enabled: false
 
 touchscreen:
-  - platform: st7123
+  - id: touch
     interrupt_pin: GPIO23
     reset_pin:
       pi4ioe5v6408: pi4ioe1
       number: 5
-    update_interval: 100ms   # [2026.7.0] Requis: le composant officiel init dans update() (pas set_timeout). Le poller s'arrete seul une fois l'interruption attachee.
     calibration:
       x_min: 0
       x_max: 720
       y_min: 0
       y_max: 1280
-    id: touch
     on_release:
       then:
         - if:

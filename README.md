@@ -33,11 +33,11 @@
 - **Voice starts on the device.** "Okay Nabu" and a "Stop" word for the roller shutter are detected on the tablet; audio leaves it only after the wake word.
 - **Keeps working when Home Assistant doesn't.** Clock, alarm clock, games and the diagnostics console stay usable on their own.
 - **Documented and tested like a product.** 17 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome.
-- **Targets the current Tab5 revision (ST7123)**, which most published Tab5 examples do not cover yet.
+- **Runs on the ST7123 revision, and builds for the ST7121 and the original ILI9881C**, while most published Tab5 examples only cover the original one.
 
 ## Before you start
 
-- A Tab5 with the **ST7123** display chip — see [hardware compatibility](#hardware-compatibility).
+- A Tab5: the **ST7123** display chip is the one tested daily; the ST7121 and the original ILI9881C compile but are untested — see [hardware compatibility](#hardware-compatibility).
 - Home Assistant, and ESPHome **≥ 2026.9.0** to compile. **There is no prebuilt firmware yet:** you compile it with your own entity IDs.
 - The on-screen text is **in French** for now; the documentation is bilingual. The one-hour rain graph and the weather warnings come from **Météo-France** (France only).
 - The layout was designed around the author's home: 3 lights, one air conditioner, up to 5 BLE plant sensors, a Samsung TV, one roller shutter. A different home means editing YAML for now; making each area optional is planned.
@@ -66,13 +66,13 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 
 ## Hardware compatibility
 
-| Display chip (sticker on the back) | Status |
-|---|---|
-| **ST7123** | ✅ Supported — the author's device, in daily use |
-| **ST7121** | ❓ Not supported yet — never compiled or tested |
-| **ILI9881C** + GT911 touch (units made before 14 October 2025) | ❌ Not supported yet — different display and touch drivers |
+| Display chip (sticker on the back) | Units made | Status |
+|---|---|---|
+| **ST7123** | 14 Oct 2025 → 28 Apr 2026 | ✅ Supported — the author's device, in daily use (default) |
+| **ST7121** | from 28 Apr 2026 | 🧪 Compiles, untested — add `tab5_ecran: st7121` to `Tab5/user_entities.yaml` |
+| **ILI9881C** + GT911 touch | 9 May 2025 → 14 Oct 2025 | 🧪 Compiles, untested — add `tab5_ecran: ili9881c` to `Tab5/user_entities.yaml` |
 
-Details, how to identify your unit, and the ESPHome model for each chip: [`docs/hardware.md`](docs/hardware.md#hardware-revisions). Own an ST7121 or ILI9881C unit and willing to test? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
+"Compiles, untested": the CI builds these two variants on every display change, but nobody has run them on a real tablet yet. Details, how to identify your unit, and why the ST7121 touch is an educated guess: [`docs/hardware.md`](docs/hardware.md#hardware-revisions). Tried one? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
 
 ---
 
@@ -364,11 +364,11 @@ If something in the code is weird, it might be an AI quirk. If something works s
 - **La voix démarre sur l'appareil.** « Okay Nabu » et un mot « Stop » pour le volet roulant sont détectés sur la tablette ; l'audio n'en sort qu'après le mot d'activation.
 - **Continue de marcher quand Home Assistant ne marche plus.** Horloge, réveil, jeux et console de diagnostic restent utilisables seuls.
 - **Documenté et testé comme un produit.** 17 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome.
-- **Vise la révision actuelle du Tab5 (ST7123)**, que la plupart des exemples Tab5 publiés ne couvrent pas encore.
+- **Tourne sur la révision ST7123, et compile pour la ST7121 et l'ILI9881C d'origine**, alors que la plupart des exemples Tab5 publiés ne couvrent que celle d'origine.
 
 ## Avant de commencer
 
-- Un Tab5 avec la puce écran **ST7123** — voir la [compatibilité matérielle](#compatibilité-matérielle).
+- Un Tab5 : la puce écran **ST7123** est celle testée tous les jours ; la ST7121 et l'ILI9881C d'origine compilent mais ne sont pas testées — voir la [compatibilité matérielle](#compatibilité-matérielle).
 - Home Assistant, et ESPHome **≥ 2026.9.0** pour compiler. **Il n'y a pas encore de firmware précompilé :** vous le compilez avec vos propres entity IDs.
 - Les textes à l'écran sont **en français** pour l'instant ; la documentation est bilingue. Le graphe de pluie dans l'heure et les vigilances viennent de **Météo-France** (France uniquement).
 - La disposition a été pensée pour la maison de l'auteur : 3 lumières, une clim, jusqu'à 5 capteurs de plantes BLE, une TV Samsung, un volet roulant. Une autre maison demande pour l'instant de modifier le YAML ; rendre chaque zone optionnelle est prévu.
@@ -397,13 +397,13 @@ Envie de le voir tourner avant de configurer Home Assistant ? → [`docs/demo_mo
 
 ## Compatibilité matérielle
 
-| Puce écran (autocollant au dos) | Statut |
-|---|---|
-| **ST7123** | ✅ Prise en charge — la tablette de l'auteur, utilisée tous les jours |
-| **ST7121** | ❓ Pas encore prise en charge — jamais compilée ni testée |
-| **ILI9881C** + tactile GT911 (appareils fabriqués avant le 14 octobre 2025) | ❌ Pas encore prise en charge — pilotes d'écran et de tactile différents |
+| Puce écran (autocollant au dos) | Appareils fabriqués | Statut |
+|---|---|---|
+| **ST7123** | du 14/10/2025 au 28/04/2026 | ✅ Prise en charge — la tablette de l'auteur, utilisée tous les jours (défaut) |
+| **ST7121** | depuis le 28/04/2026 | 🧪 Compile, non testée — ajouter `tab5_ecran: st7121` dans `Tab5/user_entities.yaml` |
+| **ILI9881C** + tactile GT911 | du 09/05/2025 au 14/10/2025 | 🧪 Compile, non testée — ajouter `tab5_ecran: ili9881c` dans `Tab5/user_entities.yaml` |
 
-Détails, comment identifier votre appareil, et le modèle ESPHome de chaque puce : [`docs/hardware.md`](docs/hardware.md#révisions-matérielles). Vous avez un Tab5 ST7121 ou ILI9881C et vous voulez bien tester ? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
+« Compile, non testée » : la CI compile ces deux variantes à chaque changement de l'écran, mais personne ne les a encore lancées sur une vraie tablette. Détails, comment identifier votre appareil, et pourquoi le tactile de la ST7121 est une hypothèse : [`docs/hardware.md`](docs/hardware.md#révisions-matérielles). Vous en avez essayé une ? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
 
 ---
 

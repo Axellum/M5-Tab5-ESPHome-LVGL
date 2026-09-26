@@ -4,6 +4,47 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Révisions du Tab5 : ST7121 et ILI9881C compilées par la CI, choix par `tab5_ecran:`
+
+Lot 2 de l'audit « ouverture » du 26/09 (compatibilité). **Rien ne change pour la
+ST7123** : sans la nouvelle clé, la configuration complète (`esphome config`) est
+identique à celle d'avant, à une ligne près (`id: tab5_display`, nouvel id de l'écran).
+
+- **Trois fichiers `Tab5/ecran-<révision>.yaml`** : seul ce qui change d'une révision à
+  l'autre (modèle d'écran `mipi_dsi`, plateforme tactile, cadence de scrutation).
+  - Les broches, les dimensions, la calibration et le réveil au toucher restent dans
+    `tab5-hardware.yaml`, sous les id `tab5_display` et `touch`, que le fichier de
+    révision étend par `!extend`.
+  - Une simple fusion par id ne marche pas entre deux packages : essayée, ESPHome garde
+    deux entrées et refuse l'écran (« requires a 'platform' key »).
+- **Choix par `tab5_ecran:` dans `Tab5/user_entities.yaml`** : `st7123` (défaut),
+  `st7121` ou `ili9881c`. `tab5-ha-hmi.yaml` inclut
+  `Tab5/ecran-${ tab5_ecran | default('st7123') | lower }.yaml`.
+  - Le défaut Jinja évite d'imposer la clé aux `user_entities.yaml` existants ; `lower`
+    tolère « ST7121 ».
+  - Vérifié sur ESPHome 2026.9.0, le plancher, sur une petite configuration d'essai
+    puis sur la vraie.
+- **ST7121** (Tab5 fabriqués depuis le 28/04/2026, journal des versions M5Stack) : modèle
+  officiel `M5STACK-TAB5-ST7121` (ESPHome, juillet 2026). ESPHome n'a pas de pilote
+  tactile ST7121 ; le code du modèle note que le firmware d'usine M5Stack distingue les
+  deux puces en lisant la version du contrôleur tactile. Le même protocole est donc
+  probable, d'où la plateforme `st7123`. **Hypothèse non vérifiée.**
+- **ILI9881C + GT911** (Tab5 d'origine) : modèle `M5STACK-TAB5` et tactile `gt911`
+  repris de la page ESPHome de l'appareil, mêmes broches.
+- **CI : job `build-revisions`** (matrice `st7121` / `ili9881c`). Il ajoute la clé au
+  `user_entities.yaml` factice et restaure le cache ccache de `build` sans le sauvegarder.
+  Pas d'artefact. Il n'est pas requis, et ne tourne que si l'écran, le matériel, l'entrée
+  ou le workflow changent.
+- **Preuves locales** : `esphome config` passe pour les trois révisions. Comparées à la
+  ST7123, la ST7121 ne change que le modèle et ses timings. L'ILI9881C change aussi le
+  tactile (GT911 à l'adresse 0x5D). **Aucune des deux n'a tourné sur une tablette.**
+- **Docs** :
+  - `docs/hardware.md` : tableau avec les dates de fabrication (journal des versions
+    M5Stack), la valeur de `tab5_ecran:`, « compile, non testée » ;
+  - le README (EN/FR), `docs/installation.md` (prérequis et étape 2),
+    `Tab5/README.md`, `user_entities.example.yaml` (clé commentée) et la cartographie
+    suivent.
+
 ### 2026-09-26 — Journal des démarrages : plus de fausse alerte à chaque démarrage
 
 Constaté au flash de la PR précédente (26/09, 22:23). Un démarrage normal a été

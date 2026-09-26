@@ -256,6 +256,12 @@ esphome:
 packages:
   tab5_ui_tokens: !include Tab5/tab5-ui-tokens.yaml
   tab5_hardware: !include Tab5/tab5-hardware.yaml
+  # Écran et tactile selon la révision du Tab5 (docs/hardware.md, « Hardware revisions ») :
+  # `tab5_ecran:` dans Tab5/user_entities.yaml = st7123 (défaut, testée), st7121 ou
+  # ili9881c (compilées par la CI, jamais testées). Le défaut Jinja évite d'imposer la
+  # clé aux user_entities.yaml existants ; `lower` tolère « ST7121 » (vérifié sur
+  # ESPHome 2026.9.0, le plancher).
+  tab5_ecran: !include Tab5/ecran-${ tab5_ecran | default('st7123') | lower }.yaml
   tab5_sensors_diagnostics: !include Tab5/tab5-sensors-diagnostics.yaml
   tab5_sensors_domotique: !include Tab5/tab5-sensors-domotique.yaml
   tab5_api_logic: !include Tab5/tab5-api-logic.yaml
