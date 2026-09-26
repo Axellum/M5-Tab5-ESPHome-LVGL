@@ -36,7 +36,10 @@ même. Seul le firmware change pour Draw Max.
   - le bandeau affichait « Vigilance Jaune - … » ou « Vigilance Jaune · … » selon
     l'automatisation ;
   - l'automatisation de suivi du volet se réveillait à chaque `call_service` de HA :
-    elle filtre désormais `domain: cover` dans son déclencheur.
+    elle filtre désormais `domain: cover` dans son déclencheur ;
+  - `tab5_rdv_push` (`packages/tab5_reveil.yaml`) poussait les rendez-vous même
+    tablette hors ligne ou pas encore authentifiée, soit 66 erreurs les 25 et 26/09.
+    Elle attend maintenant la liaison, comme la poussée complète.
 
 ### 2026-09-26 — Moins de travail permanent : I²C, repeints à l'identique, base HA
 

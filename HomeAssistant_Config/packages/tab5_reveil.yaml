@@ -198,4 +198,12 @@ automation:
         entity_id: input_boolean.is_primary_active
         state: "on"
     action:
+      # Tab5 hors ligne (redémarrage, OTA) ou liaison pas encore authentifiée juste
+      # après esphome.tab5_connected : l'appel partait en erreur (« Not connected »,
+      # « Authenticated connection not ready yet » — 66 fois les 25-26/09/2026).
+      # Même attente que la poussée complète : passe tout de suite si la liaison
+      # est `on`, sinon s'arrête sans erreur après 10 s ; la reconnexion relance.
+      - wait_template: "{{ is_state('binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status', 'on') }}"
+        timeout: "00:00:10"
+        continue_on_timeout: false
       - action: script.tab5_rdv_prochains
