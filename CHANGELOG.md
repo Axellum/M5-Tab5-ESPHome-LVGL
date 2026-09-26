@@ -4,10 +4,26 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
-### 2026-09-26 — Design : boutons instantanés, thème ESPHome, nettoyage
+### 2026-09-26 — Design : popups plus rapides, boutons instantanés, thème ESPHome, nettoyage
 
 Lot 6 de l'audit des ressources du 26/09/2026.
 
+- **Popups 30 à 42 % plus rapides à s'ouvrir** (essai validé par Axel). L'ouverture coûtait
+  ≈ 320-365 ms de rendu : sous le voile à 85 %, LVGL redessinait tout le tableau de bord
+  caché. Mesures (boucle max/min, mêmes écrans) :
+  - ouverture : Climatisation 365 → 216 ms, Calendrier 320 → 223 ms, Console 328 → 191 ms ;
+  - fermeture : 180 → 153-155 ms.
+
+  Changements :
+  - **voile opaque** : 100 % au lieu de 85 % (96 % pour la sonnerie), coins carrés. Le
+    tableau de bord n'apparaît plus derrière les popups ; c'est le seul changement visible ;
+  - **verre pré-mélangé** : la carte des popups et les 55 tuiles et boutons du tableau
+    de bord reçoivent des couleurs calculées d'avance sur leur fond uni
+    (`color_glass_*_page` / `_modal`). Même rendu, mais opaques ;
+  - **teinte à l'appui** : l'effet pressé passe de 30 % à 52 % d'opacité sur ces surfaces
+    (`style_btn_pressed_opaque`), pour garder la même teinte ;
+  - **exceptions** : le sous-popup du jour (voile à 60 %) et les boutons − / + de la clim,
+    posés sur une autre tuile en verre, restent translucides.
 - **Boutons instantanés** (demande d'Axel) : `CONFIG_LV_THEME_DEFAULT_TRANSITION_TIME: "0"`.
   Le thème LVGL par défaut animait chaque appui en 80 ms, et chaque relâchement en 80 ms
   après 70 ms de délai, ce qui se voyait pendant l'ouverture d'un popup. Boutons,
