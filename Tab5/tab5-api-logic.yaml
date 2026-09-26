@@ -331,14 +331,15 @@ api:
             texte: !lambda 'return texte;'
 
     # Réponse "riche" du moteur pour le popup Assistant vocal : texte Markdown
-    # (tableaux pris en charge, alignés en monospace) + URL d'image optionnelle.
+    # (tableaux pris en charge, alignés approximativement : police proportionnelle
+    # depuis l'essai D8 du 26/09/2026) + URL d'image optionnelle.
     # image_url vide => zone image masquée. Ouvre le popup automatiquement.
     - service: tab5_assist_reponse
       description: "Réponse riche du moteur dans le popup Assistant vocal, qui s'ouvre automatiquement."
       variables:
         texte:
           type: string
-          description: "Réponse en Markdown ; les tableaux sont réalignés en monospace à l'écran."
+          description: "Réponse en Markdown ; les colonnes des tableaux sont réalignées à l'écran (approximativement, police proportionnelle)."
           example: "**Salon** : 21 degrés"
         image_url:
           type: string
@@ -347,7 +348,7 @@ api:
       then:
         - lambda: |-
             assist_set_response(id(lbl_assist_response), texte,
-                assist_font(id(assist_text_size), id(roboto_mono_20), id(roboto_mono_24), id(roboto_mono_28)));
+                assist_font(id(assist_text_size), id(roboto_32_b), id(roboto_45_b)));
         - if:
             condition:
               lambda: 'return !image_url.empty();'

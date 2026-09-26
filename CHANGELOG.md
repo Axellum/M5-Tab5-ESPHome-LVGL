@@ -4,6 +4,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Polices : −179 Ko (essai D8, validé par Axel)
+
+Essai D8 de l'audit des ressources du 26/09/2026, avec les choix d'Axel ; flashé et
+validé à l'œil (« tout marche »).
+
+- **Lissage à 4 niveaux (bpp 2)** au lieu de 16 pour les chiffres de l'horloge
+  (`roboto_130_b`), les icônes météo (`font_meteo_card`, `_small`) et les textes gras
+  de 45 et 32 px (`roboto_45_b`, `roboto_32_b`) : leurs bitmaps sont divisés par deux.
+- **Date sous l'horloge en gras** (`roboto_45_b`) : la police fine `roboto_45`, qui ne
+  servait qu'à elle, est retirée. La règle 6 de `tools/check_tab5_code_rules.py` lit
+  maintenant la police de `lbl_date` sur son `text_font:`.
+- **Assistant vocal** : il réutilise les polices existantes (demande d'Axel), A-
+  en `roboto_32_b` et A+ en `roboto_45_b`.
+  - Le bouton A (taille M) est retiré, et A- / A+ reprennent la largeur de la rangée.
+  - Un réglage M déjà enregistré retombe sur A-.
+  - Les tableaux des réponses ne sont plus alignés qu'approximativement, faute de
+    police à chasse fixe.
+- **Go et flipper** passent de `roboto_mono_24` à `roboto_22`. Plus aucune police
+  monospace n'est embarquée (−83 Ko à elles trois).
+- **Mesures** : image 3 244 300 → 3 060 556 o (**−179,4 Ko**), RAM statique −376 o.
+  Première minute après le démarrage : boucle à 859 ms au plus (démarrage, envoi
+  complet de HA, console), puis 175 ms avec l'assistant ouvert.
+
 ### 2026-09-26 — Home Assistant : l'écran s'allume à la présence et s'éteint après 15 min
 
 Demande d'Axel. Aucun changement firmware. Déployé sur le HA de production le jour même.

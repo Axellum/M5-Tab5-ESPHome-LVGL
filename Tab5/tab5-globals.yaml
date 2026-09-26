@@ -118,14 +118,15 @@ globals:
 
   # --- Popup Assistant vocal (assistant_popup.yaml) ---
   # Ouvert => les événements vocaux (demande/réponse) alimentent le popup plein écran
-  # au lieu (en plus) du bandeau central 8 s. assist_text_size : 0=S 1=M 2=L (confort lecture).
+  # au lieu (en plus) du bandeau central 8 s. assist_text_size : 0=S 2=L (confort lecture ;
+  # 1, l'ancien M retiré par l'essai D8 du 26/09/2026, est lu comme S).
   - id: assist_popup_open
     type: bool
     initial_value: 'false'
     restore_value: false
   - id: assist_text_size
     type: int
-    initial_value: '1'
+    initial_value: '0'
     restore_value: true
 
   # Popup calendrier (calendar_popup.yaml) : mois affiché + date du détail ouvert.

@@ -104,7 +104,7 @@ script:
           ui.f_small = id(roboto_22);
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
-          ui.f_mono  = id(roboto_mono_24);
+          ui.f_mono  = id(roboto_22);
           Go::open(ui);
 
   # Ouvre le jeu « Trial Poursuite » (Trivial Pursuit rétro-salon, trivia_game.cpp).
@@ -168,8 +168,9 @@ script:
   # Même pattern que Marble, avec DEUX injections en plus :
   #   - f_score / f_led : le fronton imite un afficheur de borne. roboto_55_b ne
   #     contient QUE les chiffres et l'espace (cf. tab5-styles.yaml) — parfait
-  #     pour le score, inutilisable pour du texte ; roboto_mono_24 sert aux
-  #     libellés à chasse fixe (« BILLE 2 / 3 », « RECORD 1 250 000 »).
+  #     pour le score, inutilisable pour du texte ; roboto_22 sert aux libellés
+  #     (« BILLE 2 / 3 », « RECORD 1 250 000 » — en roboto_mono_24 jusqu'à
+  #     l'essai D8 du 26/09/2026, qui a retiré les polices monospace).
   #   - ui.lvgl : pointeur sur le LvglComponent. C'est LUI qui permet à
   #     Pinball::open() de basculer l'écran en portrait 720×1280 et à
   #     Pinball::close() de restaurer le paysage 270°. Sans lui, le jeu
@@ -190,7 +191,7 @@ script:
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
           ui.f_score = id(roboto_55_b);
-          ui.f_led   = id(roboto_mono_24);
+          ui.f_led   = id(roboto_22);
           Pinball::open(ui);
 
   # Ouvre le sélecteur arcade (page_arcade). Point d'entrée unique depuis le

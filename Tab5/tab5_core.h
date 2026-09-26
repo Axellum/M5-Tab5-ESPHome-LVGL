@@ -81,7 +81,7 @@ int cal_index_for_offset(int offset);
 const char* fr_day_long_utf8(int wday);
 const char* fr_month_long_utf8(int mois_1_12);
 // « Dim » … « Sam » (wday : 0 = dimanche) et « Janv » … « Déc » (1-12) : la date sous
-// l'horloge. "" hors bornes. Glyphes couverts par roboto_45 (règle 6).
+// l'horloge. "" hors bornes. Glyphes couverts par la police de lbl_date (règle 6).
 const char* fr_day_short_utf8(int wday);
 const char* clock_month_short_utf8(int month);
 // Première lettre en majuscule : « dimanche » → « Dimanche » (début de libellé).

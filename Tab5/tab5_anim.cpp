@@ -463,9 +463,9 @@ void update_clock_date_ui(lv_obj_t* lbl_date,
         }
     }
     if (lbl_date) {
-        // [AI-WARNING] lbl_date est en roboto_45, réduite aux 37 glyphes de
-        // fr_day_short_utf8(), des chiffres et de clock_month_short_utf8() (tab5_core.cpp,
-        // tab5-styles.yaml) : changer le format = mettre à jour la liste de glyphes.
+        // [AI-WARNING] lbl_date est en roboto_45_b : ses glyphes doivent couvrir
+        // fr_day_short_utf8(), les chiffres et clock_month_short_utf8() (tab5_core.cpp,
+        // tab5-styles.yaml, règle 6) — changer de police = vérifier sa liste.
         // day_of_week ESPHome : 1 = dimanche … 7 = samedi.
         const char* day = fr_day_short_utf8(day_of_week - 1);
         char buf_date[64];

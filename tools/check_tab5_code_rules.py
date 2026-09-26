@@ -28,9 +28,9 @@ falsifiables sur le dépôt réel :
      sont elles que Home Assistant affiche dans « Outils de développement →
      Actions » : sans elles, un champ n'est qu'une case de texte sans indice sur
      le format du payload, toujours sérialisé à la main ici.
-  6. **Glyphes de la date** (audit du 25/09/2026, lot 4) : `roboto_45` ne sert qu'à
-     `lbl_date` et n'embarque plus que ses caractères (37 au lieu de 216 Latin-1,
-     ≈ 59 Ko de flash). Chaque caractère des jours de `update_clock_date_ui()`
+  6. **Glyphes de la date** (audit du 25/09/2026, lot 4) : la police de `lbl_date`
+     (lue sur son `text_font:`, `roboto_45_b` depuis l'essai D8 du 26/09/2026) doit
+     couvrir ses caractères. Chaque caractère des jours de `update_clock_date_ui()`
      (tab5_anim.cpp), des mois de `clock_month_short_utf8()` (tab5_text.cpp), des
      chiffres et du texte initial du label doit être dans sa liste de glyphes —
      sinon la lettre s'affiche vide, sans aucune erreur de compilation.
@@ -251,10 +251,12 @@ def date_glyph_coverage(tab5: Path = TAB5) -> list[str]:
     core_src = strip_cpp_comments(core.read_text(encoding="utf-8"))
     m_days = re.search(r"fr_day_short_utf8\(int wday\)\s*\{.*?days\[\] = \{(.*?)\};", core_src, re.S)
     m_months = re.search(r"clock_month_short_utf8\(int month\)\s*\{.*?months\[\] = \{(.*?)\};", core_src, re.S)
-    glyphs = font_glyphs(styles).get("roboto_45")
-    m_initial = re.search(r"id: lbl_date, text: \"([^\"]*)\"", lvgl.read_text(encoding="utf-8"))
+    m_initial = re.search(r"id: lbl_date, text: \"([^\"]*)\"[^}\n]*text_font: (\w+)",
+                          lvgl.read_text(encoding="utf-8"))
+    font = m_initial.group(2) if m_initial else "?"
+    glyphs = font_glyphs(styles).get(font)
     if not (m_days and m_months and glyphs and m_initial):
-        return ["règle 6 : table des jours, des mois, glyphes de roboto_45 ou texte initial de lbl_date introuvable"]
+        return [f"règle 6 : table des jours, des mois, glyphes de {font} ou texte initial / police de lbl_date introuvable"]
 
     needed = set(" 0123456789") | set(m_initial.group(1))
     for word in _c_literals(m_days.group(1)) + _c_literals(m_months.group(1)):
@@ -262,7 +264,7 @@ def date_glyph_coverage(tab5: Path = TAB5) -> list[str]:
     missing = sorted(needed - glyphs)
     if missing:
         return [
-            f"tab5-styles.yaml : roboto_45 sans glyphe pour {''.join(missing)!r} — lbl_date "
+            f"tab5-styles.yaml : {font} sans glyphe pour {''.join(missing)!r} — lbl_date "
             f"l'afficherait vide (ajouter ces caractères à `glyphs:`)"
         ]
     return []
@@ -562,7 +564,7 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     # 5. métadonnées des actions du contrat API
     problems += api_action_metadata(api_logic)
 
-    # 6. glyphes de la date (roboto_45 réduite)
+    # 6. glyphes de la date (police de lbl_date)
     problems += date_glyph_coverage(tab5)
 
     # 7. icônes MDI : couvertes par la police de leur widget, aucun glyphe mort

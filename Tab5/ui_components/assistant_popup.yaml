@@ -4,7 +4,7 @@
 # @role Popup plein écran de l'Assistant vocal (carte modale standard 1250×690, cadre v4).
 #       Gauche = réglages (choix LLM/pipeline, Ok Nabu, muet, volume, taille texte).
 #       Droite = "Votre demande" (STT) + "Réponse" écrite (Markdown : tableaux
-#       alignés en monospace + image via online_image). Barre d'action en bas.
+#       alignés approximativement + image via online_image). Barre d'action en bas.
 # @architecture_constraint Positions ABSOLUES (x/y fixes) + les états actifs ne
 #       changent que la bordure (dessinée à l'intérieur) => aucun bouton ne se
 #       décale. Toute la logique vit en C++/scripts (décision 0006), pas ici.
@@ -119,13 +119,15 @@ obj:
 
                 # --- Taille du texte de réponse (remontee : la barre de son est
                 # maintenant ancree au bas du panneau, voir plus bas) ---
+                # Deux tailles depuis l'essai D8 du 26/09/2026 : A- (roboto_32_b) et A+
+                # (roboto_45_b), qui reprennent la largeur de l'ancienne rangée A- / A / A+.
                 - label: { text: "Taille du texte", align: TOP_LEFT, x: 16, y: 276, text_color: color_text_dim }
                 - button:
                     id: btn_assist_size_s
                     align: TOP_LEFT
                     x: 16
                     y: 312
-                    width: 108
+                    width: 168
                     height: 52
                     radius: 18
                     styles: style_clim_btn
@@ -138,28 +140,11 @@ obj:
                     widgets:
                       - label: { text: "A-", align: CENTER }
                 - button:
-                    id: btn_assist_size_m
-                    align: TOP_LEFT
-                    x: 136
-                    y: 312
-                    width: 108
-                    height: 52
-                    radius: 18
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - script.execute:
-                          id: tab5_assist_set_text_size
-                          size: 1
-                    widgets:
-                      - label: { text: "A", align: CENTER, text_font: roboto_32_b }
-                - button:
                     id: btn_assist_size_l
                     align: TOP_LEFT
-                    x: 256
+                    x: 196
                     y: 312
-                    width: 108
+                    width: 168
                     height: 52
                     radius: 18
                     styles: style_clim_btn
@@ -176,7 +161,7 @@ obj:
                 # marge basse 24 px symetrique de la marge haute), comme demande
                 # explicitement : la barre de son avait deja ete descendue une 1re
                 # fois (y=292) mais restait juste sous "Ok Nabu", pas "en bas".
-                # 58 px de respiration avec les boutons A-/A/A+ au-dessus.
+                # 58 px de respiration avec les boutons A- / A+ au-dessus.
                 - button:
                     id: btn_assist_mute
                     align: TOP_LEFT
@@ -287,7 +272,7 @@ obj:
                           id: lbl_assist_response
                           width: 100%
                           text: ""
-                          text_font: roboto_mono_24
+                          text_font: roboto_32_b
                       - image:
                           id: assist_img_widget
                           src: assist_response_image
