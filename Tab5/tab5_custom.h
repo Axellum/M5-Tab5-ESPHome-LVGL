@@ -643,4 +643,21 @@ void cal_show_day_detail_loading(lv_obj_t* day_popup, lv_obj_t* lbl_title,
 void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
     CalDetailLineUI lines[6]);
 
+// =============================================================================
+// Journal des démarrages et des coupures (tab5_journal.cpp, 26/09/2026) : plantages
+// et pannes du lien Wi-Fi (C6), envoyés à HA dans l'événement esphome.tab5_journal.
+// =============================================================================
+// logger: on_message (tab5-hardware.yaml) : garde les erreurs, et les avertissements
+// tant que Home Assistant n'est pas connecté.
+void journal_log_message(uint8_t level, const char* tag, const char* message);
+// interval 30 s (tab5-sensors-diagnostics.yaml) : copie en NVS après 2 min sans HA.
+void journal_tick();
+// Script tab5_journal_envoi, à chaque connexion de HA :
+bool journal_has_report();          // autre chose qu'un démarrage normal
+bool journal_is_serious();          // plantage, erreur ou démarrage sans HA
+std::string journal_reset_reason(); // raison du dernier démarrage, en clair
+std::string journal_boot_count();   // démarrages depuis le dernier envoi
+std::string journal_report_text();  // lignes en attente, une par ligne
+void journal_mark_delivered();      // vide le journal (et sa copie NVS)
+
 // UIColor (couleurs sémantiques) : voir tab5_tokens.h.

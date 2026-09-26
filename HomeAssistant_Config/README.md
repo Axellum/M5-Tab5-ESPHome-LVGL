@@ -63,16 +63,17 @@ This runs on the HA side rather than on the device to keep the C++ code simple. 
 ---
 
 ### `packages/tab5_health.yaml`
-Health-monitoring package: four guard automations that alert when the push pipeline silently degrades. Because the Tab5 is push-only (see `docs/decisions/0001-push-only-zero-polling.md`), a stale screen raises no error on its own — these automations are the HA-side safety net.
+Health-monitoring package: five guard automations that alert when the push pipeline silently degrades. Because the Tab5 is push-only (see `docs/decisions/0001-push-only-zero-polling.md`), a stale screen raises no error on its own — these automations are the HA-side safety net.
 
 What it watches:
 - **`input_boolean.is_primary_active` OFF for more than 5 min** — this boolean gates every push automation; stuck OFF means the screen silently freezes (a real incident, see `docs/troubleshooting.md`)
 - **A new boot time on `Tab5 Uptime`** (a timestamp, published once per boot since 26/09/2026) — unexpected device reboot (brownout, firmware crash, power cut); a plain Wi-Fi drop without reboot comes back with the same boot time and does *not* trigger it
 - **`HA API Status` off/unavailable for more than 2 min** — device unreachable, every push fails during the outage
 - **A Tab5 automation logs « Error rendering »** — a push action failed to render its template and `continue_on_error` skipped it silently (real incident, 18/09/2026: Météo-France dropped `templow` from the 15th day). Requires `system_log: fire_event: true` in `configuration.yaml` (restart needed) — without it the guard loads but never fires. Exclude `system_log_event` from the recorder. At most one notification per hour while the error repeats
+- **The boot and outage journal sent by the Tab5** (`esphome.tab5_journal`, since 26/09/2026) — the firmware (`Tab5/tab5_journal.cpp`) keeps its errors, and its warnings while HA is not connected, in memory that survives software resets and crashes (plus an NVS copy after 2 min without HA, for power cuts), and sends them when HA reconnects if there is more than a normal boot: crash (ESPHome's report: PC and backtrace of both cores), watchdog, brownout, ESP-IDF errors (the ESP-Hosted driver of the Wi-Fi co-processor), or boots that never reached HA. Persistent notification every time; phone push only when `grave` (crash, error, or a boot without HA). No `system_log` prerequisite
 
 Design notes:
-- The four guards notify through one script, `script.tab5_health_notify` (persistent notification + `notify.notify`), so the channels are adapted in a single place; each channel carries `continue_on_error: true` so one failing channel doesn't block the other
+- The guards notify through one script, `script.tab5_health_notify` (persistent notification + `notify.notify`), so the channels are adapted in a single place; each channel carries `continue_on_error: true` so one failing channel doesn't block the other
 - No template uses raw `now()` — detection relies on trigger `for:` windows and `trigger.from_state` / `trigger.to_state`
 - Numeric comparisons use `| float(0)` defaults (boot safety)
 
@@ -257,16 +258,17 @@ Le principal génère une phrase météo depuis les prévisions de pluie :
 ---
 
 ### `packages/tab5_health.yaml`
-Package de surveillance santé : quatre automations de garde qui alertent quand le pipeline de push se dégrade silencieusement. Le Tab5 étant push-only (voir `docs/decisions/0001-push-only-zero-polling.md`), un écran figé ne lève aucune erreur par lui-même — ces automations sont le filet de sécurité côté HA.
+Package de surveillance santé : cinq automations de garde qui alertent quand le pipeline de push se dégrade silencieusement. Le Tab5 étant push-only (voir `docs/decisions/0001-push-only-zero-polling.md`), un écran figé ne lève aucune erreur par lui-même — ces automations sont le filet de sécurité côté HA.
 
 Ce qui est surveillé :
 - **`input_boolean.is_primary_active` OFF depuis plus de 5 min** — ce booléen conditionne toutes les automations de push ; bloqué sur OFF, l'écran se fige silencieusement (incident réel, voir `docs/troubleshooting.md`)
 - **Une nouvelle heure de démarrage sur `Tab5 Uptime`** (un horodatage, publié une fois par démarrage depuis le 26/09/2026) — reboot inattendu de l'appareil (brownout, crash firmware, coupure d'alimentation) ; une simple coupure Wi-Fi sans reboot revient avec la même heure de démarrage et ne déclenche *pas*
 - **`HA API Status` off/unavailable depuis plus de 2 min** — appareil injoignable, toutes les poussées échouent pendant la coupure
 - **Une automation Tab5 journalise « Error rendering »** — une action de poussée n'a pas pu rendre son template et `continue_on_error` l'a sautée en silence (incident réel du 18/09/2026 : Météo-France a retiré `templow` du 15ᵉ jour). Exige `system_log: fire_event: true` dans `configuration.yaml` (redémarrage nécessaire) — sans lui la garde est chargée mais ne se déclenche jamais. Exclure `system_log_event` du recorder. Au plus une notification par heure tant que l'erreur se répète
+- **Le journal des démarrages et des coupures envoyé par le Tab5** (`esphome.tab5_journal`, depuis le 26/09/2026) — le firmware (`Tab5/tab5_journal.cpp`) garde ses erreurs, et ses avertissements tant que HA n'est pas connecté, dans une mémoire qui survit aux redémarrages logiciels et aux plantages (plus une copie NVS après 2 min sans HA, pour les coupures de courant), et les envoie à la reconnexion de HA s'il y a plus qu'un démarrage normal : plantage (rapport d'ESPHome : PC et pile d'appels des deux cœurs), chien de garde, baisse de tension, erreurs d'ESP-IDF (pilote ESP-Hosted du co-processeur Wi-Fi), ou démarrages qui n'ont jamais joint HA. Notification persistante à chaque fois ; téléphone seulement si `grave` (plantage, erreur, ou démarrage sans HA). Aucun prérequis `system_log`
 
 Notes de conception :
-- Les quatre gardes notifient via un seul script, `script.tab5_health_notify` (notification persistante + `notify.notify`) : les canaux s'adaptent à un seul endroit ; chaque canal porte `continue_on_error: true`, un canal en échec ne bloque pas l'autre
+- Les gardes notifient via un seul script, `script.tab5_health_notify` (notification persistante + `notify.notify`) : les canaux s'adaptent à un seul endroit ; chaque canal porte `continue_on_error: true`, un canal en échec ne bloque pas l'autre
 - Aucun template n'utilise `now()` brut — la détection repose sur les fenêtres `for:` des déclencheurs et sur `trigger.from_state` / `trigger.to_state`
 - Les comparaisons numériques utilisent des défauts `| float(0)` (sécurité au boot)
 

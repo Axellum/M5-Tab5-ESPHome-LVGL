@@ -2,9 +2,10 @@
 # [AI-CONTEXT]
 # @file packages/tab5_health.yaml
 # @role Package HA de surveillance santé du Tab5 (exemple public — adapter les
-#       noms d'entités à votre installation). Quatre gardes : instance primaire
+#       noms d'entités à votre installation). Cinq gardes : instance primaire
 #       bloquée OFF, reboot inattendu (nouvel horodatage de démarrage), API ESPHome
-#       déconnectée, erreur de rendu d'un template dans une poussée écran.
+#       déconnectée, erreur de rendu d'un template dans une poussée écran,
+#       journal des démarrages et coupures envoyé par le Tab5.
 # @architecture_constraint L'écran est push-only (cf. docs/decisions/0001) : si
 #       les poussées s'arrêtent, l'écran se fige SILENCIEUSEMENT, sans erreur HA
 #       visible. Ces automations sont le filet de sécurité côté HA — il n'y a
@@ -12,7 +13,7 @@
 # @ai_warning Jamais de now() brut dans les templates (cf. l'en-tête
 #       d'automations_tab5.yaml) : toute la détection repose sur les fenêtres
 #       `for:` des déclencheurs et sur trigger.from_state / trigger.to_state.
-# @ai_instruction Les quatre gardes notifient via le script tab5_health_notify
+# @ai_instruction Les gardes notifient via le script tab5_health_notify
 #       (notification persistante + notify.notify) : un seul endroit à adapter.
 #       Chaque canal y porte continue_on_error: true : l'échec d'un canal
 #       (téléphone hors ligne, service notify mal nommé) ne doit pas empêcher
@@ -285,3 +286,66 @@ automation:
             Une poussée vers l'écran Tab5 échoue au rendu d'un template —
             voir la notification persistante.
       - delay: "01:00:00"
+
+  # ==========================================================================
+  # (e) Journal des démarrages et des coupures, envoyé par le Tab5
+  # --------------------------------------------------------------------------
+  # Le firmware (Tab5/tab5_journal.cpp, 26/09/2026) garde ses erreurs, et ses
+  # avertissements tant que HA n'est pas connecté, dans une mémoire qui survit
+  # aux redémarrages logiciels et aux plantages, avec une copie NVS après 2 min
+  # sans HA (pour survivre à une coupure de courant). À la connexion de HA, il
+  # envoie `esphome.tab5_journal` si le journal contient autre chose qu'un
+  # démarrage normal : plantage (rapport d'ESPHome : PC et pile d'appels des
+  # deux cœurs, à décoder avec l'ELF du build), chien de garde, baisse de
+  # tension, erreurs d'ESP-IDF (pilote ESP-Hosted du co-processeur Wi-Fi C6),
+  # avertissements pendant une absence de HA, ou démarrages sans HA.
+  # Données : raison, demarrages (depuis le dernier envoi), grave (oui/non),
+  # lignes (« #n +t s [niveau][étiquette:ligne]: message »).
+  # Chaque événement reste en base (table events). Notification persistante à
+  # chaque fois (une par envoi, id daté), téléphone seulement si `grave` :
+  # plantage, erreur, ou démarrage passé sans HA.
+  # ==========================================================================
+  - id: tab5_health_journal
+    alias: "Tab5 Santé — journal des démarrages et coupures"
+    description: >-
+      Notifie le journal envoyé par le Tab5 à sa reconnexion : plantage, erreurs
+      du lien Wi-Fi (co-processeur C6), avertissements pendant une absence de HA.
+    mode: queued
+    trigger:
+      - platform: event
+        event_type: esphome.tab5_journal
+    variables:
+      raison: "{{ trigger.event.data.raison | default('inconnue') }}"
+      demarrages: "{{ trigger.event.data.demarrages | default('?') }}"
+      lignes: "{{ trigger.event.data.lignes | default('') }}"
+      id_notif: "tab5_journal_{{ as_timestamp(trigger.event.time_fired) | int }}"
+      titre: >-
+        {{ '⚠️ Tab5 : ' if trigger.event.data.grave == 'oui' else 'Tab5 : ' }}journal
+        du démarrage ({{ raison }})
+      # Bloc littéral : un bloc replié (>-) collerait le bloc de code sur une ligne.
+      corps: |-
+        Raison du dernier démarrage : {{ raison }}. Démarrages depuis le dernier journal : {{ demarrages }} (#0 = suite du démarrage déjà signalé).
+
+        ```
+        {{ lignes }}
+        ```
+    action:
+      - if:
+          - condition: template
+            value_template: "{{ trigger.event.data.grave == 'oui' }}"
+        then:
+          - action: script.tab5_health_notify
+            data:
+              notification_id: "{{ id_notif }}"
+              title: "{{ titre }}"
+              titre_court: "⚠️ Tab5 : {{ raison }}"
+              message: "{{ corps }}"
+              message_court: >-
+                {{ demarrages }} démarrage(s) depuis le dernier journal ; détail dans
+                la notification persistante de HA.
+        else:
+          - action: persistent_notification.create
+            data:
+              notification_id: "{{ id_notif }}"
+              title: "{{ titre }}"
+              message: "{{ corps }}"

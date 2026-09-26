@@ -117,6 +117,15 @@ logger:
   baud_rate: 115200
   hardware_uart: USB_SERIAL_JTAG
   tx_buffer_size: 2048
+  # Journal des démarrages et des coupures (Tab5/tab5_journal.cpp, 26/09/2026) : erreurs
+  # toujours, avertissements tant que HA n'est pas connecté, pour analyser après coup un
+  # plantage ou une panne du lien Wi-Fi (C6). `level: INFO` parce que les erreurs
+  # d'ESP-IDF (pilote ESP-Hosted compris) arrivent au niveau du logger, étiquette
+  # « esp-idf » ; le tri se fait dans le C++. Aucun log dans ce lambda (il bouclerait).
+  on_message:
+    level: INFO
+    then:
+      - lambda: 'journal_log_message(level, tag, message);'
 
 psram:
   mode: hex

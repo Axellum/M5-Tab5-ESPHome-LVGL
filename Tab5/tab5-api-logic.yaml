@@ -67,6 +67,13 @@ api:
               then:
                 - homeassistant.event:
                     event: esphome.tab5_connected
+    # Journal des démarrages et des coupures (Tab5/tab5_journal.cpp) : à chaque
+    # connexion de HA, boot compris (d'où l'absence de boot_complete ici).
+    - if:
+        condition:
+          lambda: 'return client_info.find("Home Assistant") != std::string::npos;'
+        then:
+          - script.execute: tab5_journal_envoi
 
   services:
 
