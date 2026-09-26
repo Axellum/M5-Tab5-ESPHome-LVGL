@@ -4,6 +4,62 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Factorisation : carte centrale à source unique, gabarits, menus des jeux
+
+Lot 7 de l'audit des ressources du 26/09/2026. Refactor : rien ne doit changer à
+l'écran, sauf la correction de la carte centrale ci-dessous. −946 lignes de code
+dans `Tab5/` (C++ −389, YAML −557). Flash ≈ −19,6 Ko (code −20,3 Ko),
+RAM statique −1 352 o.
+
+- **Carte centrale à source unique** : pluie, vigilance, info, les 4 bandeaux HA et le
+  panneau affiché n'existent plus que dans `g_central_ctx`.
+  - Les 8 globals ESPHome qui les doublaient sont retirés, avec `sync_central_ctx()`,
+    les recopies avant et après chaque appel C++ (7 scripts, 2 services, un onglet de
+    tuile) et leur copie dans `on_boot` (accord d'Axel).
+  - **Correction** : quand le C++ changeait le panneau affiché sans script YAML
+    derrière (retour sur l'accueil, synchro après une alerte), le global n'était pas
+    mis à jour. Au tour suivant, le rotateur repartait de l'ancien panneau.
+- **Popups** : `animate_popup_open(card)` affiche le popup et le passe au premier plan.
+  Les 8 appelants écrivaient ce premier plan à la suite de l'appel. Le paramètre du
+  voile, jamais fourni, est retiré de l'ouverture et des 18 fermetures.
+- **Scripts et gabarits YAML** :
+  - calendrier : un seul envoi de demande de mois (`tab5_cal_request`) et un seul
+    calcul « mois ± 1 » (`cal_shift_month()`), au lieu de 5 copies ;
+  - volet : le tap des deux cartes passe par `tab5_volet_tap` ;
+  - télécommande TV : 14 touches passent par `tab5_tv_key(touche)`, avec 3 gabarits
+    (flèches, transport, applications) ;
+  - popup lumière : gabarits du sélecteur, des blancs et des raccourcis de niveau ;
+  - assistant : la police de la réponse vient d'`assist_font()` (3 copies).
+- **Réveil** :
+  - les réglages partagent 3 modèles YAML (ancres) ;
+  - `g_alarm_cfg` porte aussi la mélodie, le volume et l'avance des rendez-vous, ce qui
+    supprime 6 gardes NaN ;
+  - un seul script de décalage d'heure (`tab5_alarm_shift(cible, delta)`) remplace les
+    trois précédents, et un seul script d'overlay les deux précédents.
+  - Les 25 entités exposées à HA sont inchangées.
+- **Jeux** : `SlotMenu<N>` remplace le trio d'entrées de menu recopié dans les 8 jeux.
+  S'y ajoutent `set_pressed_bg()`, `show_front()`, `hud_num()` et un `panel_text()`
+  local dans 6 jeux. Soit −297 lignes dans les jeux.
+- **C++ du cœur** :
+  - `start_anim()` remplace 16 blocs d'animation ;
+  - `central_wraps()` fournit les 8 panneaux de la carte centrale ;
+  - `trim_ws()` / `split_fields()` (`tab5_core`) remplacent 5 rognages et 3 découpes ;
+  - l'icône météo passe en table ;
+  - `highlight_button_border()` sert aussi au sélecteur de lumière et aux boutons S/M/L
+    de l'assistant.
+- **Alias LVGL** : les 108 appels aux noms de compatibilité v8 / v9.x sont migrés vers
+  les noms LVGL 9.5 :
+  - `lv_obj_clear_flag` → `lv_obj_remove_flag` ;
+  - `lv_obj_move_foreground(o)` → `lv_obj_move_to_index(o, -1)` ;
+  - `lv_anim_del` → `lv_anim_delete` ;
+  - `lv_coord_t` → `int32_t`, `LV_LABEL_LONG_*` → `LV_LABEL_LONG_MODE_*`, etc.
+- **Preuves** :
+  - l'arbre des 1 236 widgets est identique avant et après (hors actions voulues) ;
+  - les 25 entités du réveil sont identiques clé par clé ;
+  - les découpes, l'icône météo et les animations sont vérifiées à la compilation
+    contre les anciennes copies (`static_assert` sur un LVGL simulé) ;
+  - pytest (55) passe.
+
 ### 2026-09-26 — Design : popups plus rapides, boutons instantanés, thème ESPHome, nettoyage
 
 Lot 6 de l'audit des ressources du 26/09/2026.
