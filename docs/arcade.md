@@ -464,6 +464,8 @@ Une partie de Go fait des centaines de coups : l'écriture flash est **différé
 en fin de partie et à la fermeture. Réglages, statistiques par taille/niveau et
 position en cours sont conservés ; la liste des coups et la pile d'annulation ne
 le sont pas (reprendre une sauvegarde restitue la position, pas l'historique).
+La pile d'annulation (30 positions, 11 Ko) vit en PSRAM (`EXT_RAM_BSS_ATTR`) :
+elle n'est touchée qu'une fois par coup joué ou annulé.
 
 ### Build
 
@@ -575,10 +577,13 @@ joue le meilleur coup de la dernière profondeur complète. Sans cette règle, l
 sous-arbre était repris à l'identique à chaque tranche et l'IA ne jouait jamais.
 
 Les listes de coups de la recherche ne sont **jamais sur la pile** : une liste de 96 coups
-pèse 4,7 Ko et la tâche ESPHome n'a que 8 Ko. Elles vivent dans un tampon de 42 Ko,
-une ligne par ply, alloué au premier coup réfléchi (RAM interne, PSRAM en repli) et
-rendu par `Ai::release()` à la fermeture. Chaque coup de l'IA est tracé dans les logs
-(tag `dames`), avec la pile libre minimale de la tâche.
+pèse 4,7 Ko, et la tâche ESPHome n'avait que 8 Ko (16 Ko depuis #150). Elles vivent
+dans un tampon de 42 Ko, une ligne par ply, alloué au premier coup réfléchi (RAM
+interne, PSRAM en repli) et rendu par `Ai::release()` à la fermeture. Les coups
+racine, les coups légaux de l'interface et la pile d'annulation (12,8 Ko en tout) sont
+en PSRAM (`EXT_RAM_BSS_ATTR`) : ils ne sont touchés qu'une fois par coup (les coups
+racine, une fois par coup racine et par profondeur), jamais à chaque nœud. Chaque coup
+de l'IA est tracé dans les logs (tag `dames`), avec la pile libre minimale de la tâche.
 
 ### Notes techniques
 
@@ -633,22 +638,26 @@ bits, un test hors-plateau en un seul `AND` y bat un jeu de masques 64 bits, et
 l'empreinte mémoire reste triviale. Pièce sur 4 bits (bit 3 = couleur).
 
 Les tampons de coups sont **globaux et indexés par ply** (`g_mbuf[16][220]`,
-~20,6 Ko de `.bss`) : à ~11 plies de profondeur, un tableau de 220 coups par ply
-sur la pile ferait déborder la stack de la tâche ESPHome.
+~20,6 Ko) : à ~11 plies de profondeur, un tableau de 220 coups par ply sur la pile
+ferait déborder la stack de la tâche ESPHome. Ils ne sont pas statiques : un bloc de
+~24 Ko (tampons de coups + état de recherche) est alloué au premier `search_start()`,
+`search_quick()` ou `perft()`, en RAM interne (PSRAM en repli, tracé dans les logs,
+tag `chess`), et rendu par `search_release()` à la fermeture du jeu. Aucune
+allocation dans le hot-path pour autant : le bloc est pris une fois par session.
 
-**Empreinte mesurée** (`riscv32-esp-elf-size`, `-Os`, cible ESP32-P4) :
+**Empreinte mesurée** (`riscv32-esp-elf-size -A`, `-O2`, cible ESP32-P4, 26/09/2026) :
 
-| Unité | `.text` | `.bss` |
-|---|---|---|
-| `chess_ai.o` | 12,6 Ko | 33,0 Ko |
-| `chess_game.o` | 23,4 Ko | 13,5 Ko |
-| Police `chess_pieces_80` | ~26 Ko | — |
-| **Total** | **~62 Ko** | **46,5 Ko** |
+| Unité | `.text` | `.rodata` | `.bss` interne | `.bss` en PSRAM |
+|---|---|---|---|---|
+| `chess_ai.o` | 11,6 Ko | 8,9 Ko | 1,2 Ko | — |
+| `chess_game.o` | 26,4 Ko | 3,2 Ko | 3,2 Ko | 10,0 Ko |
 
-Le `.bss` est **statique** : il est réservé même jeu fermé. Répartition : tampons
-de coups 20,6 Ko, table Zobrist 7,7 Ko, état de recherche 2,8 Ko, historique de
-partie 10,2 Ko (320 demi-coups × 32 o). C'est le prix d'un hot-path sans
-allocation ; ne pas augmenter `MAX_PLY_BUF` ni `MAX_HIST` sans re-mesurer.
+Jeu fermé, les échecs ne gardent donc que ~4,5 Ko de RAM interne (41 Ko de moins
+qu'avant le 26/09/2026). La table Zobrist (7,7 Ko) est calculée à la compilation et
+vit en flash : elle ne sert qu'à `hash_of()`, une fois par coup joué. L'historique de
+partie (320 demi-coups × 32 o) est en PSRAM (`EXT_RAM_BSS_ATTR`) : il n'est touché
+qu'une fois par coup, jamais par la recherche. Ne pas augmenter `MAX_PLY_BUF` ni
+`MAX_HIST` sans re-mesurer.
 
 ### Modes & niveaux d'IA
 

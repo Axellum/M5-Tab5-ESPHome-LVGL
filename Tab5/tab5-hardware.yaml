@@ -35,6 +35,11 @@ esp32:
       CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_360: "y"
       CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ: "360"
       CONFIG_ESP_TASK_WDT_TIMEOUT_S: "15"         # AXE7: WDT 15s (boot long possible si reseau lent)
+      # Autorise EXT_RAM_BSS_ATTR : les tampons froids des jeux (historiques, piles
+      # d'annulation) vivent en PSRAM au lieu de la RAM interne. Vérifié dans le .map le
+      # 26/09/2026 : seuls ces tableaux y passent (.ext_ram.bss = 34 300 o) ; la BSS de
+      # lwIP, que l'aide de l'option cite, reste en RAM interne sur cette configuration.
+      CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY: "y"
 
 esp32_hosted:
   variant: esp32c6

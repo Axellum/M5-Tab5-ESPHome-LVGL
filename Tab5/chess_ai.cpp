@@ -5,14 +5,16 @@
  * @architecture_constraint Zero LVGL, zero Home Assistant. Les tampons de coups
  *      sont GLOBAUX et indexes par ply (g_mbuf / g_sbuf) : la recherche descend a
  *      ~11 plies, un tableau de 220 coups par ply sur la PILE ferait exploser la
- *      stack de la tache ESPHome. Cout mesure (riscv32-esp-elf-size, -Os) :
- *      12,6 Ko de .text et 33,0 Ko de .bss pour cette unite de compilation.
+ *      stack de la tache ESPHome. Ils vivent dans un bloc de ~24 Ko alloue au
+ *      premier besoin et rendu par search_release() a la fermeture du jeu ; la
+ *      table Zobrist est calculee a la compilation (flash).
  * @ai_instruction Le hot-path est negamax()/qsearch()/make()/unmake() : pas
  *      d'allocation, pas de std::, pas de float. Toute modification du generateur
  *      DOIT etre revalidee par perft_selftest() (valeurs FIDE en dur).
  */
 #include "chess_ai.h"
 #include "esphome.h"
+#include "esp_heap_caps.h"
 #include <cstring>
 #include <cstdio>
 
@@ -126,20 +128,48 @@ static const int PASSED[8] = {0, 5, 10, 20, 35, 60, 90, 0};
 // --- Zobrist ---------------------------------------------------------------
 // 15 codes de piece x 64 cases (~7,7 Ko). Sert UNIQUEMENT a hash_of(), donc a la
 // detection de repetition au niveau partie : jamais dans le hot-path.
-static uint64_t Z_PIECE[15][64];
-static uint64_t Z_CASTLE[16];
-static uint64_t Z_EP[8];
-static uint64_t Z_SIDE;
+// Calculee a la compilation (constexpr) : la table vit en flash, pas en RAM interne.
+// Meme xorshift, meme graine et meme ordre de tirage que l'ancien remplissage
+// dans init() : les empreintes sont inchangees.
+
+// xorshift64 : suffisant pour des clefs Zobrist et pour le tirage des coups.
+static constexpr uint64_t rnd64(uint64_t& s) {
+    s ^= s << 13; s ^= s >> 7; s ^= s << 17;
+    return s;
+}
+
+struct ZobristKeys {
+    uint64_t piece[15][64];
+    uint64_t castle[16];
+    uint64_t ep[8];
+    uint64_t side;
+};
+
+static constexpr ZobristKeys make_zobrist() {
+    ZobristKeys z{};
+    uint64_t s = 0x9E3779B97F4A7C15ull;
+    for (int p = 0; p < 15; p++)
+        for (int i = 0; i < 64; i++) z.piece[p][i] = rnd64(s);
+    for (int i = 0; i < 16; i++) z.castle[i] = rnd64(s);
+    for (int i = 0; i < 8; i++)  z.ep[i] = rnd64(s);
+    z.side = rnd64(s);
+    return z;
+}
+
+static constexpr ZobristKeys ZOBRIST = make_zobrist();
 
 static bool g_inited = false;
 
 // --- Tampons de coups partages, indexes par ply ----------------------------
-// [AI-CONTEXT] 16 x 220 x (4 + 2) = ~20,6 Ko de .bss echanges contre zero
-// pression sur la pile de la tache ESPHome.
+// [AI-CONTEXT] 16 x 220 x (4 + 2) = ~20,6 Ko echanges contre zero pression sur
+// la pile de la tache ESPHome. Ils ne sont pas statiques : ensure_buffers() les
+// alloue (avec SearchState, ~24 Ko en tout) au premier besoin de la recherche,
+// et search_release() les rend a la fermeture du jeu.
 // gen_moves() n'ecrit jamais plus de MAX_MOVES coups (218 est le maximum
 // theorique atteignable dans une position legale).
-static Move    g_mbuf[MAX_PLY_BUF][MAX_MOVES];
-static int16_t g_sbuf[MAX_PLY_BUF][MAX_MOVES];
+static Move    (*g_mbuf)[MAX_MOVES] = nullptr;
+static int16_t (*g_sbuf)[MAX_MOVES] = nullptr;
+static bool ensure_buffers();
 static Move    g_killer[MAX_PLY_BUF][2];
 // Tampons dedies a la generation SAN (appelee depuis l'UI, jamais depuis la
 // recherche) : evite 1,7 Ko de pile a chaque coup joue.
@@ -168,12 +198,6 @@ const AiLevel AI_LEVELS[AI_NLEVELS] = {
 
 static inline int iabs(int v) { return v < 0 ? -v : v; }
 
-// xorshift64 : suffisant pour des clefs Zobrist et pour le tirage des coups.
-static uint64_t rnd64(uint64_t& s) {
-    s ^= s << 13; s ^= s >> 7; s ^= s << 17;
-    return s;
-}
-
 static uint32_t g_rng = 0x2545F491u;
 static inline uint32_t rnd32() {
     g_rng ^= g_rng << 13; g_rng ^= g_rng >> 17; g_rng ^= g_rng << 5;
@@ -188,13 +212,6 @@ void init() {
     int k = 0;
     for (int r = 0; r < 8; r++)
         for (int f = 0; f < 8; f++) SQ64[k++] = (uint8_t)((r << 4) | f);
-
-    uint64_t s = 0x9E3779B97F4A7C15ull;
-    for (int p = 0; p < 15; p++)
-        for (int i = 0; i < 64; i++) Z_PIECE[p][i] = rnd64(s);
-    for (int i = 0; i < 16; i++) Z_CASTLE[i] = rnd64(s);
-    for (int i = 0; i < 8; i++)  Z_EP[i] = rnd64(s);
-    Z_SIDE = rnd64(s);
 
     for (int i = 0; i < 128; i++) CASTLE_MASK[i] = 0x0F;
     CASTLE_MASK[0x00] = (uint8_t) ~CR_WQ;              // a1 : tour dame blanche
@@ -211,11 +228,11 @@ uint64_t hash_of(const Position& p) {
     uint64_t h = 0;
     for (int i = 0; i < 64; i++) {
         uint8_t pc = p.board[SQ64[i]];
-        if (pc) h ^= Z_PIECE[pc & 0x0F][i];
+        if (pc) h ^= ZOBRIST.piece[pc & 0x0F][i];
     }
-    h ^= Z_CASTLE[p.castling & 0x0F];
-    if (p.ep != NO_SQ) h ^= Z_EP[p.ep & 7];
-    if (p.side == BLACK) h ^= Z_SIDE;
+    h ^= ZOBRIST.castle[p.castling & 0x0F];
+    if (p.ep != NO_SQ) h ^= ZOBRIST.ep[p.ep & 7];
+    if (p.side == BLACK) h ^= ZOBRIST.side;
     return h;
 }
 
@@ -770,6 +787,7 @@ int eval(const Position& p) {
 uint64_t perft(Position& p, int depth) {
     init();
     if (depth <= 0) return 1;
+    if (!ensure_buffers()) return 0;
     if (depth >= MAX_PLY_BUF) depth = MAX_PLY_BUF - 1;
     Move* mv = g_mbuf[depth];
     const int n = gen_impl(p, mv, false);
@@ -1033,7 +1051,46 @@ struct SearchState {
     int      retries;
     bool     active;
 };
-static SearchState g_ss;
+
+// Un seul bloc pour la recherche : coups et scores par ply + SearchState.
+// negamax() travaille directement sur ss.pos : le bloc va en RAM interne, la PSRAM
+// n'est qu'un repli (recherche plus lente, mais le coup est joue).
+struct SearchMem {
+    Move        mbuf[MAX_PLY_BUF][MAX_MOVES];
+    int16_t     sbuf[MAX_PLY_BUF][MAX_MOVES];
+    SearchState ss;
+};
+static SearchMem*   g_mem = nullptr;
+static SearchState* g_ss  = nullptr;
+
+// Dernier recours si le bloc est introuvable : un coup legal tire au sort.
+static Move g_fallback_best = {0, 0, 0, 0};
+
+static bool ensure_buffers() {
+    if (g_mem) return true;
+    void* m = heap_caps_calloc(1, sizeof(SearchMem), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    const bool interne = m != nullptr;
+    if (!m) m = heap_caps_calloc(1, sizeof(SearchMem), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!m) {
+        ESP_LOGW(TAG, "IA : %u o introuvables pour la recherche", (unsigned) sizeof(SearchMem));
+        return false;
+    }
+    ESP_LOGI(TAG, "IA : %u o pour la recherche, en %s", (unsigned) sizeof(SearchMem),
+             interne ? "RAM interne" : "PSRAM (repli, recherche plus lente)");
+    g_mem  = static_cast<SearchMem*>(m);
+    g_mbuf = g_mem->mbuf;
+    g_sbuf = g_mem->sbuf;
+    g_ss   = &g_mem->ss;
+    return true;
+}
+
+void search_release() {
+    heap_caps_free(g_mem);
+    g_mem  = nullptr;
+    g_mbuf = nullptr;
+    g_sbuf = nullptr;
+    g_ss   = nullptr;
+}
 
 // Budget d'une tranche. SOFT = on arrete d'entamer un nouveau coup racine ;
 // HARD = deadline dure passee au negamax, elargie a chaque nouvel echec pour
@@ -1042,18 +1099,18 @@ static constexpr uint32_t SLICE_SOFT_MS = 18;
 static const uint32_t SLICE_HARD_MS[3]  = {22, 40, 80};
 
 static void search_finish() {
-    const AiLevel& L = AI_LEVELS[g_ss.level];
+    const AiLevel& L = AI_LEVELS[g_ss->level];
     // Fenetre de choix : sur les niveaux faibles, on tire au sort parmi les coups
     // « pas trop pires » — c'est ce qui donne un adversaire battable sans le
     // rendre stupide (il garde les captures evidentes en tete de liste).
-    if (L.window > 0 && g_ss.n_final > 0 && g_ss.best_depth > 0) {
-        const int seuil = g_ss.best_score - (int) L.window;
+    if (L.window > 0 && g_ss->n_final > 0 && g_ss->best_depth > 0) {
+        const int seuil = g_ss->best_score - (int) L.window;
         int cand[MAX_MOVES], nc = 0;
-        for (int i = 0; i < g_ss.n_final; i++)
-            if ((int) g_ss.fscore[i] >= seuil) cand[nc++] = i;
-        if (nc > 0) g_ss.best = g_ss.fmove[cand[rnd32() % (uint32_t) nc]];
+        for (int i = 0; i < g_ss->n_final; i++)
+            if ((int) g_ss->fscore[i] >= seuil) cand[nc++] = i;
+        if (nc > 0) g_ss->best = g_ss->fmove[cand[rnd32() % (uint32_t) nc]];
     }
-    g_ss.active = false;
+    g_ss->active = false;
 }
 
 void search_start(const Position& p, int level, uint32_t seed) {
@@ -1062,83 +1119,90 @@ void search_start(const Position& p, int level, uint32_t seed) {
     if (level >= AI_NLEVELS) level = AI_NLEVELS - 1;
     if (seed) g_rng = seed | 1u;
 
+    if (!ensure_buffers()) {
+        // search_step() rendra aussitot la main et search_best() ce coup-ci.
+        Move legal[MAX_MOVES];
+        const int n = gen_legal(p, legal);
+        g_fallback_best = n > 0 ? legal[rnd32() % (uint32_t) n] : Move{0, 0, 0, 0};
+        return;
+    }
     memset(g_killer, 0, sizeof(g_killer));
-    g_ss.pos        = p;
-    g_ss.level      = level;
-    g_ss.n_root     = gen_legal(p, g_ss.root);
-    g_ss.n_final    = 0;
-    g_ss.idx        = 0;
-    g_ss.depth      = 1;
-    g_ss.best_depth = 0;
-    g_ss.alpha      = -INF_SCORE;
-    g_ss.iter_best  = 0;
-    g_ss.best_score = 0;
-    g_ss.t_start    = esphome::millis();
-    g_ss.cpu_ms     = 0;
-    g_ss.retries    = 0;
+    g_ss->pos        = p;
+    g_ss->level      = level;
+    g_ss->n_root     = gen_legal(p, g_ss->root);
+    g_ss->n_final    = 0;
+    g_ss->idx        = 0;
+    g_ss->depth      = 1;
+    g_ss->best_depth = 0;
+    g_ss->alpha      = -INF_SCORE;
+    g_ss->iter_best  = 0;
+    g_ss->best_score = 0;
+    g_ss->t_start    = esphome::millis();
+    g_ss->cpu_ms     = 0;
+    g_ss->retries    = 0;
     g_nodes         = 0;
     g_qdepth        = AI_LEVELS[level].qdepth;
 
-    if (g_ss.n_root <= 0) {
-        g_ss.best = Move{0, 0, 0, 0};
-        g_ss.active = false;
+    if (g_ss->n_root <= 0) {
+        g_ss->best = Move{0, 0, 0, 0};
+        g_ss->active = false;
         return;
     }
     // Melange initial : deux parties identiques ne donnent pas la meme ouverture.
-    for (int i = g_ss.n_root - 1; i > 0; i--) {
+    for (int i = g_ss->n_root - 1; i > 0; i--) {
         const int j = (int)(rnd32() % (uint32_t)(i + 1));
-        const Move t = g_ss.root[i]; g_ss.root[i] = g_ss.root[j]; g_ss.root[j] = t;
+        const Move t = g_ss->root[i]; g_ss->root[i] = g_ss->root[j]; g_ss->root[j] = t;
     }
-    g_ss.best   = g_ss.root[0];
-    g_ss.active = true;
+    g_ss->best   = g_ss->root[0];
+    g_ss->active = true;
 }
 
 // Une tranche de reflexion. `t_slice` = horodatage d'entree, sert a mesurer le
 // temps CPU consomme (et NON le temps mural : entre deux tranches, LVGL et
 // ESPHome tournent, ce temps-la ne doit pas etre facture au budget du niveau).
 static bool search_slice(uint32_t t_slice) {
-    const AiLevel& L = AI_LEVELS[g_ss.level];
+    const AiLevel& L = AI_LEVELS[g_ss->level];
     const uint32_t now = t_slice;
     const uint32_t slice_end = now + SLICE_SOFT_MS;
-    const int r = g_ss.retries < 3 ? g_ss.retries : 2;
+    const int r = g_ss->retries < 3 ? g_ss->retries : 2;
     g_deadline = now + SLICE_HARD_MS[r];
     g_abort    = false;
     g_qdepth   = L.qdepth;
 
     for (;;) {
-        if (g_ss.idx >= g_ss.n_root) {
+        if (g_ss->idx >= g_ss->n_root) {
             // --- Iteration terminee : on fige le meilleur coup de ce niveau ---
-            g_ss.best       = g_ss.root[g_ss.iter_best];
-            g_ss.best_score = g_ss.alpha;
-            g_ss.best_depth = g_ss.depth;
-            g_ss.n_final    = g_ss.n_root;
-            for (int i = 0; i < g_ss.n_root; i++) {
-                g_ss.fmove[i]  = g_ss.root[i];
-                g_ss.fscore[i] = g_ss.rscore[i];
+            g_ss->best       = g_ss->root[g_ss->iter_best];
+            g_ss->best_score = g_ss->alpha;
+            g_ss->best_depth = g_ss->depth;
+            g_ss->n_final    = g_ss->n_root;
+            for (int i = 0; i < g_ss->n_root; i++) {
+                g_ss->fmove[i]  = g_ss->root[i];
+                g_ss->fscore[i] = g_ss->rscore[i];
             }
             // Tri decroissant : a la profondeur suivante, explorer d'abord les
             // meilleurs coups multiplie les coupes alpha-beta.
-            for (int i = 1; i < g_ss.n_root; i++) {
-                const Move   m = g_ss.root[i];
-                const int16_t s = g_ss.rscore[i];
+            for (int i = 1; i < g_ss->n_root; i++) {
+                const Move   m = g_ss->root[i];
+                const int16_t s = g_ss->rscore[i];
                 int j = i - 1;
-                while (j >= 0 && g_ss.rscore[j] < s) {
-                    g_ss.root[j + 1] = g_ss.root[j];
-                    g_ss.rscore[j + 1] = g_ss.rscore[j];
+                while (j >= 0 && g_ss->rscore[j] < s) {
+                    g_ss->root[j + 1] = g_ss->root[j];
+                    g_ss->rscore[j + 1] = g_ss->rscore[j];
                     j--;
                 }
-                g_ss.root[j + 1] = m;
-                g_ss.rscore[j + 1] = s;
+                g_ss->root[j + 1] = m;
+                g_ss->rscore[j + 1] = s;
             }
 
-            const uint32_t elapsed = g_ss.cpu_ms + (esphome::millis() - t_slice);   // temps CPU
-            const bool mate_found  = iabs(g_ss.best_score) > MATE_SCORE - 100;
-            g_ss.depth++;
-            g_ss.idx = 0;
-            g_ss.alpha = -INF_SCORE;
-            g_ss.iter_best = 0;
-            if (g_ss.depth > L.max_depth || g_ss.depth > 8 ||
-                elapsed >= L.budget_ms || mate_found || g_ss.n_root == 1) {
+            const uint32_t elapsed = g_ss->cpu_ms + (esphome::millis() - t_slice);   // temps CPU
+            const bool mate_found  = iabs(g_ss->best_score) > MATE_SCORE - 100;
+            g_ss->depth++;
+            g_ss->idx = 0;
+            g_ss->alpha = -INF_SCORE;
+            g_ss->iter_best = 0;
+            if (g_ss->depth > L.max_depth || g_ss->depth > 8 ||
+                elapsed >= L.budget_ms || mate_found || g_ss->n_root == 1) {
                 search_finish();
                 return true;
             }
@@ -1147,60 +1211,63 @@ static bool search_slice(uint32_t t_slice) {
         }
 
         Undo u;
-        const Move m = g_ss.root[g_ss.idx];
-        if (!make(g_ss.pos, m, u)) { g_ss.idx++; continue; }   // ne devrait pas arriver
-        const int v = -negamax(g_ss.pos, g_ss.depth - 1, -INF_SCORE, -g_ss.alpha, 1);
-        unmake(g_ss.pos, m, u);
+        const Move m = g_ss->root[g_ss->idx];
+        if (!make(g_ss->pos, m, u)) { g_ss->idx++; continue; }   // ne devrait pas arriver
+        const int v = -negamax(g_ss->pos, g_ss->depth - 1, -INF_SCORE, -g_ss->alpha, 1);
+        unmake(g_ss->pos, m, u);
 
         if (g_abort) {
             // Tranche epuisee au milieu d'un coup racine : on le re-tentera avec
             // un budget elargi. Rien n'est corrompu, la position est restauree.
-            g_ss.retries++;
+            g_ss->retries++;
             // Garde-fou 1 : au-dela d'un budget total x3, on arrete la reflexion
             // et on joue le meilleur coup de la derniere profondeur terminee.
-            if (g_ss.cpu_ms + (esphome::millis() - t_slice) > (uint32_t) L.budget_ms * 3u &&
-                g_ss.best_depth > 0) {
+            if (g_ss->cpu_ms + (esphome::millis() - t_slice) > (uint32_t) L.budget_ms * 3u &&
+                g_ss->best_depth > 0) {
                 search_finish();
                 return true;
             }
             // Garde-fou 2 : si meme la profondeur 1 n'aboutit pas (systeme tres
             // charge), on finit par jouer le coup racine courant plutot que de
-            // relancer la meme tranche indefiniment. g_ss.best est toujours un
+            // relancer la meme tranche indefiniment. g_ss->best est toujours un
             // coup LEGAL (initialise avec root[0] par search_start()).
-            if (g_ss.retries > 40) {
+            if (g_ss->retries > 40) {
                 search_finish();
                 return true;
             }
             return false;
         }
 
-        g_ss.retries = 0;
-        g_ss.rscore[g_ss.idx] = (int16_t)(v > 32000 ? 32000 : (v < -32000 ? -32000 : v));
-        if (v > g_ss.alpha) { g_ss.alpha = v; g_ss.iter_best = g_ss.idx; }
-        g_ss.idx++;
+        g_ss->retries = 0;
+        g_ss->rscore[g_ss->idx] = (int16_t)(v > 32000 ? 32000 : (v < -32000 ? -32000 : v));
+        if (v > g_ss->alpha) { g_ss->alpha = v; g_ss->iter_best = g_ss->idx; }
+        g_ss->idx++;
 
         if (esphome::millis() >= slice_end) return false;
     }
 }
 
 bool search_step() {
-    if (!g_ss.active) return true;
+    if (!g_ss || !g_ss->active) return true;
     const uint32_t t_slice = esphome::millis();
     const bool done = search_slice(t_slice);
-    g_ss.cpu_ms += esphome::millis() - t_slice;
+    g_ss->cpu_ms += esphome::millis() - t_slice;
     return done;
 }
 
-bool     search_active()     { return g_ss.active; }
-Move     search_best()       { return g_ss.best; }
-int      search_depth_done() { return g_ss.best_depth; }
-int      search_score()      { return g_ss.best_score; }
+// Sans bloc alloue (recherche jamais lancee, rendue, ou allocation ratee), les
+// accesseurs repondent comme une recherche terminee sans profondeur.
+bool     search_active()     { return g_ss && g_ss->active; }
+Move     search_best()       { return g_ss ? g_ss->best : g_fallback_best; }
+int      search_depth_done() { return g_ss ? g_ss->best_depth : 0; }
+int      search_score()      { return g_ss ? g_ss->best_score : 0; }
 uint32_t search_nodes()      { return g_nodes; }
-uint32_t search_cpu_ms()     { return g_ss.cpu_ms; }
-uint16_t search_budget_ms()  { return AI_LEVELS[g_ss.level].budget_ms; }
+uint32_t search_cpu_ms()     { return g_ss ? g_ss->cpu_ms : 0; }
+uint16_t search_budget_ms()  { return g_ss ? AI_LEVELS[g_ss->level].budget_ms : 0; }
 
 Move search_quick(const Position& p, int depth, uint16_t max_ms, int* score_out) {
     init();
+    if (!ensure_buffers()) { if (score_out) *score_out = 0; return Move{0, 0, 0, 0}; }
     Position q = p;
     Move* mv = g_mbuf[0];
     const int n = gen_legal(q, mv);
