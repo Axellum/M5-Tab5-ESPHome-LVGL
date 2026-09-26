@@ -4,6 +4,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Diagnostic : version du logiciel du co-processeur Wi-Fi (ESP32-C6)
+
+Le Tab5 a deux puces : le P4 fait tourner notre firmware (pile TCP/IP comprise), le C6 la
+radio, avec le logiciel ESP-Hosted d'Espressif et sa propre RAM. ESPHome compile la partie
+P4 d'ESP-Hosted (2.12.12) mais ne met pas le C6 à jour, dont la version était inconnue.
+
+- Nouveau capteur texte **« Tab5 C6 Version »** (diagnostic, `tab5-sensors-diagnostics.yaml`),
+  via `read_c6_firmware_version()` (`tab5_console.cpp`) → `esp_hosted_get_coprocessor_fwversion()`.
+  Log `tab5.c6` avec les deux versions (C6 et bibliothèque du P4).
+- Lu une seule fois, Wi-Fi connecté. La requête attend au plus 1 s la réponse du C6 : 3 essais
+  au plus, puis « inconnue », pour ne pas figer la boucle à chaque minute.
+- Lecture seule : aucune mise à jour du C6 (décision à part, plus risquée : un C6 sans
+  Wi-Fi ne se rattrape qu'en USB).
+- `docs/hardware.md` (EN + FR) : RAM du C6, logiciel qui y tourne, capteur.
+
 ### 2026-09-26 — Réseau : fenêtre TCP laissée à la valeur d'ESPHome
 
 `CONFIG_LWIP_TCP_WND_DEFAULT: "16384"` est retiré de `tab5-hardware.yaml` : ESPHome
