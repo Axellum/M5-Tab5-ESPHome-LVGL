@@ -488,9 +488,7 @@ struct Mem {
     lv_obj_t* p_sub = nullptr;
     lv_obj_t* p_body = nullptr;
     lv_obj_t* p_foot = nullptr;
-    lv_obj_t* slot[N_SLOTS] = {};
-    lv_obj_t* slot_t[N_SLOTS] = {};
-    lv_obj_t* slot_d[N_SLOTS] = {};
+    SlotMenu<N_SLOTS> slots;   // entrees des menus (game_common.h)
     // Liseré d'accent de chaque slot (enfant) : reprend la couleur de l'entree.
     // C'est lui qui fait lire les menus comme des cartes et plus comme des boutons.
     lv_obj_t* slot_a[N_SLOTS] = {};
@@ -602,8 +600,8 @@ static inline void set_grad(lv_obj_t* o, uint32_t hi, uint32_t lo,
 static lv_obj_t* mk_arc(lv_obj_t* parent, float cx, float cy, float r,
                         int a0, int a1, int width, uint32_t color, lv_opa_t opa) {
     lv_obj_t* a = lv_arc_create(parent);
-    lv_obj_clear_flag(a, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_clear_flag(a, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(a, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_remove_flag(a, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_opa(a, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(a, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(a, 0, LV_PART_MAIN);
@@ -633,7 +631,7 @@ static inline void detail(lv_obj_t* d, int x, int y, int w, int h, int radius) {
     lv_obj_set_size(d, w, h);
     lv_obj_set_pos(d, x, y);
     lv_obj_set_style_radius(d, radius, LV_PART_MAIN);
-    lv_obj_clear_flag(d, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(d, LV_OBJ_FLAG_HIDDEN);
 }
 
 
@@ -828,26 +826,19 @@ static void build_ui() {
     gs->p_foot = mk_label(gs->ui.panel, gs->ui.f_small, UIColor::TEXT_DIM);
     lv_obj_align(gs->p_foot, LV_ALIGN_BOTTOM_MID, 0, -22);
 
-    for (int i = 0; i < N_SLOTS; i++) {
-        gs->slot[i] = mk_rect(gs->ui.panel);
-        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_style_radius(gs->slot[i], 14, LV_PART_MAIN);
-        set_grad(gs->slot[i], Pal::FLOOR_HI, Pal::FLOOR_LO);
+    // Entrees des menus : liste verticale 680x62 a y = 150 + 68 i (slot_list).
+    gs->slots.geom = {.w = 680, .h = 62, .top = 150, .pitch = 68, .tx = 22, .t_dy = -13, .d_dy = 15,
+                      .border_opa = LV_OPA_50, .off = UIColor::INACTIVE};
+    gs->slots.build(gs->ui.panel, slot_event_cb, gs->ui.f_mid, UIColor::TEXT_SOFT,
+                    gs->ui.f_small, UIColor::TEXT_DIM, [](lv_obj_t* b, int i) {
+        lv_obj_set_style_radius(b, 14, LV_PART_MAIN);
+        set_grad(b, Pal::FLOOR_HI, Pal::FLOOR_LO);
         // Retour tactile : le fond s'eclaircit tant que le doigt est pose.
-        // Casts explicites : combiner lv_part_t et lv_state_t directement est
-        // deprecie en C++20 (-Wdeprecated-enum-enum-conversion).
-        lv_obj_set_style_bg_color(gs->slot[i], lv_color_hex(Pal::WALL),
-                                  (lv_style_selector_t) LV_PART_MAIN |
-                                  (lv_style_selector_t) LV_STATE_PRESSED);
-        lv_obj_add_event_cb(gs->slot[i], slot_event_cb, LV_EVENT_CLICKED,
-                            (void*) (intptr_t) i);
+        set_pressed_bg(b, Pal::WALL);
         // Cree AVANT les labels : le liseré doit rester derriere le texte.
-        gs->slot_a[i] = mk_rect(gs->slot[i]);
+        gs->slot_a[i] = mk_rect(b);
         lv_obj_add_flag(gs->slot_a[i], LV_OBJ_FLAG_HIDDEN);
-        gs->slot_t[i] = mk_label(gs->slot[i], gs->ui.f_mid, UIColor::TEXT_SOFT);
-        gs->slot_d[i] = mk_label(gs->slot[i], gs->ui.f_small, UIColor::TEXT_DIM);
-        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_HIDDEN);
-    }
+    });
 }
 
 // --- Mise en page des slots -------------------------------------------------
@@ -857,21 +848,9 @@ static void slot_list(int i, const char* title, const char* desc, uint32_t col, 
     // la place disponible au-dessus du pied de page). Un index hors pool serait
     // un debordement de tableau, pas juste une ligne mal placee.
     if (i < 0 || i >= N_SLOTS) return;
-    lv_obj_set_size(gs->slot[i], 680, 62);
-    lv_obj_align(gs->slot[i], LV_ALIGN_TOP_MID, 0, 150 + i * 68);
-    // Les memes labels servent en mode carte (largeur fixe + texte centre) :
-    // on remet explicitement la mise en forme « liste », sinon un passage par
-    // l'ecran de recompense laisserait les libelles centres sur 320 px.
-    lv_obj_set_width(gs->slot_t[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(gs->slot_t[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_set_width(gs->slot_d[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(gs->slot_d[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_align(gs->slot_t[i], LV_ALIGN_LEFT_MID, 22, desc && desc[0] ? -13 : 0);
-    lv_obj_align(gs->slot_d[i], LV_ALIGN_LEFT_MID, 22, 15);
-    lv_obj_set_style_text_color(gs->slot_t[i], lv_color_hex(on ? col : UIColor::INACTIVE), LV_PART_MAIN);
-    set_text_if(gs->slot_t[i], title);
-    set_text_if(gs->slot_d[i], desc ? desc : "");
-    set_border(gs->slot[i], on ? col : UIColor::INACTIVE, 2, LV_OPA_50);
+    // row() remet aussi les libelles en mise en forme « liste » (largeur contenu,
+    // texte a gauche) : l'ecran de recompense les laisse centres sur 320 px.
+    gs->slots.row(i, title, desc, col, on);
     // Liseré vertical a gauche. [AI-WARNING] LVGL ne clippe PAS les enfants sur
     // le rayon du parent (clip_corner est off) et dessine la bordure AVANT eux :
     // un liseré pose en x=0 chevaucherait les 2 px de bordure et depasserait du
@@ -879,44 +858,47 @@ static void slot_list(int i, const char* title, const char* desc, uint32_t col, 
     // 62 - 2*14 = 34 px utiles, donc y=14..48.
     detail(gs->slot_a[i], 4, 14, 5, 34, 3);
     set_bg(gs->slot_a[i], on ? col : UIColor::INACTIVE, on ? LV_OPA_COVER : LV_OPA_40);
-    show(gs->slot[i], true);
 }
 
 // Cartes cote a cote (choix de boon, facon Hades).
 static void slot_card(int i, const char* title, const char* desc, uint32_t col) {
     if (i < 0 || i >= N_SLOTS) return;
-    lv_obj_set_size(gs->slot[i], 370, 300);
-    lv_obj_align(gs->slot[i], LV_ALIGN_TOP_LEFT, 85 + i * 385, 250);
-    lv_obj_set_width(gs->slot_t[i], 320);
-    lv_obj_set_style_text_align(gs->slot_t[i], LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    lv_obj_align(gs->slot_t[i], LV_ALIGN_TOP_MID, 0, 48);
-    lv_obj_set_width(gs->slot_d[i], 320);
-    lv_obj_set_style_text_align(gs->slot_d[i], LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    lv_obj_align(gs->slot_d[i], LV_ALIGN_TOP_MID, 0, 130);
-    lv_obj_set_style_text_color(gs->slot_t[i], lv_color_hex(col), LV_PART_MAIN);
-    set_text_if(gs->slot_t[i], title);
-    set_text_if(gs->slot_d[i], desc);
-    set_border(gs->slot[i], col, 3, LV_OPA_80);
+    lv_obj_t* box = gs->slots.box[i];
+    lv_obj_t* t = gs->slots.title[i];
+    lv_obj_t* d = gs->slots.desc[i];
+    lv_obj_set_size(box, 370, 300);
+    lv_obj_align(box, LV_ALIGN_TOP_LEFT, 85 + i * 385, 250);
+    lv_obj_set_width(t, 320);
+    lv_obj_set_style_text_align(t, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_obj_align(t, LV_ALIGN_TOP_MID, 0, 48);
+    lv_obj_set_width(d, 320);
+    lv_obj_set_style_text_align(d, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_obj_align(d, LV_ALIGN_TOP_MID, 0, 130);
+    lv_obj_set_style_text_color(t, lv_color_hex(col), LV_PART_MAIN);
+    set_text_if(t, title);
+    set_text_if(d, desc);
+    set_border(box, col, 3, LV_OPA_80);
     // En mode carte le liseré passe en banniere haute : la carte se lit comme
     // une carte de boon, pas comme une ligne de menu tournee de 90 deg.
     // Meme contrainte que slot_list : rentre de 20 px pour rester a l'interieur
     // du rayon 14 et ne pas manger les 3 px de bordure.
     detail(gs->slot_a[i], 20, 6, 330, 5, 3);
     set_bg(gs->slot_a[i], col, LV_OPA_COVER);
-    show(gs->slot[i], true);
-}
-
-static void slots_hide_from(int n) {
-    for (int i = n; i < N_SLOTS; i++) show(gs->slot[i], false);
+    show(box, true);
 }
 
 // ===========================================================================
 // 9. Ecrans
 // ===========================================================================
 
-static void panel_on(bool v) {
-    show(gs->ui.panel, v);
-    if (v) lv_obj_move_foreground(gs->ui.panel);
+static void panel_on(bool v) { show_front(gs->ui.panel, v); }
+
+// Titre / sous-titre / corps / pied du panneau de menus (nullptr = inchange).
+static void panel_text(const char* t, const char* s, const char* b, const char* f) {
+    set_text_if(gs->p_title, t);
+    set_text_if(gs->p_sub, s);
+    set_text_if(gs->p_body, b);
+    set_text_if(gs->p_foot, f);
 }
 
 static void go_hub() {
@@ -940,10 +922,8 @@ static void go_hub() {
     auto& eq_desc = gs->hub_eq_desc;
     snprintf(eq_desc, sizeof(eq_desc), "%d objet(s) trouve(s) sur %d", owned_n, N_ITEMS);
 
-    set_text_if(gs->p_title, "FIL D'OR");
-    set_text_if(gs->p_sub, sub);
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot, "Incline la tablette pour guider la bille. L'ecran tactile ne sert qu'aux menus.");
+    panel_text("FIL D'OR", sub, "",
+               "Incline la tablette pour guider la bille. L'ecran tactile ne sert qu'aux menus.");
     slot_list(0, "Lancer une run", play_desc, Pal::BALL, true);
     slot_list(1, "Feu de camp", "Depenser les ames en caracteristiques", Pal::DANGER, true);
     slot_list(2, "Marchand", "Acheter et revendre des objets", Pal::RUNE, true);
@@ -951,7 +931,7 @@ static void go_hub() {
     slot_list(4, "Reglages", "Difficulte, mode dieu, teinte, calibration", Pal::BOOST, true);
     slot_list(5, "Statistiques", "Runs, victoires, records", Pal::EXIT, true);
     slot_list(6, "Quitter", "Retour au tableau de bord", UIColor::TEXT_DIM, true);
-    slots_hide_from(7);
+    gs->slots.hide_from(7);
 }
 
 static void go_settings() {
@@ -966,11 +946,9 @@ static void go_settings() {
     auto& gtitle = gs->settings_gtitle;
     snprintf(gtitle, sizeof(gtitle), "Mode dieu : %s", gs->save.god ? "ACTIF" : "inactif");
 
-    set_text_if(gs->p_title, "Reglages");
-    set_text_if(gs->p_sub, "Ces reglages s'appliquent au lancement de la prochaine run.");
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot, "Le mode dieu rend invulnerable : la run reste jouable mais ne rapporte "
-                            "aucun fragment et n'entre pas dans les statistiques.");
+    panel_text("Reglages", "Ces reglages s'appliquent au lancement de la prochaine run.", "",
+               "Le mode dieu rend invulnerable : la run reste jouable mais ne rapporte "
+               "aucun fragment et n'entre pas dans les statistiques.");
     slot_list(0, dtitle, d.desc, d.color, true);
     slot_list(1, gtitle,
               gs->save.god ? "Invulnerable - hors concours" : "Jouer sans jamais mourir",
@@ -982,7 +960,7 @@ static void go_settings() {
     slot_list(2, stitle, "Purement cosmetique", Pal::BALL, true);
     slot_list(3, "Calibrer a plat", "Pose la tablette et appuie", Pal::BOOST, true);
     slot_list(4, "Retour", "", UIColor::TEXT_DIM, true);
-    slots_hide_from(5);
+    gs->slots.hide_from(5);
 }
 
 static void go_level() {
@@ -996,11 +974,9 @@ static void go_level() {
     snprintf(sub, sizeof(sub),
              "Niveau %u   -   %u ames   -   prochain point : %u ames",
              (unsigned) lvl, (unsigned) gs->save.souls, (unsigned) cost);
-    set_text_if(gs->p_title, "Feu de camp");
-    set_text_if(gs->p_sub, sub);
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot, "Le cout depend du niveau TOTAL : monter une caracteristique "
-                            "rencherit toutes les autres. Il faut choisir une orientation.");
+    panel_text("Feu de camp", sub, "",
+               "Le cout depend du niveau TOTAL : monter une caracteristique "
+               "rencherit toutes les autres. Il faut choisir une orientation.");
 
     auto& titles = gs->level_titles;
     auto& descs = gs->level_descs;
@@ -1016,7 +992,7 @@ static void go_level() {
                   !maxed && gs->save.souls >= cost);
     }
     slot_list(MARBLE_NSTATS, "Retour", "", UIColor::TEXT_DIM, true);
-    slots_hide_from(MARBLE_NSTATS + 1);
+    gs->slots.hide_from(MARBLE_NSTATS + 1);
 }
 
 static void go_shop() {
@@ -1032,11 +1008,9 @@ static void go_shop() {
     auto& sub = gs->shop_sub;
     snprintf(sub, sizeof(sub), "%u ames   -   page %d/%d",
              (unsigned) gs->save.souls, gs->shop_page + 1, pages);
-    set_text_if(gs->p_title, "Marchand");
-    set_text_if(gs->p_sub, sub);
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot, "Appuyer sur un objet possede le revend a la moitie de son prix. "
-                            "Un objet revendu est aussi retire de l'equipement.");
+    panel_text("Marchand", sub, "",
+               "Appuyer sur un objet possede le revend a la moitie de son prix. "
+               "Un objet revendu est aussi retire de l'equipement.");
 
     auto& titles = gs->shop_titles;
     auto& descs = gs->shop_descs;
@@ -1061,7 +1035,7 @@ static void go_shop() {
     gs->shop_rows = n;
     slot_list(n, "Page suivante", "", Pal::BOOST, pages > 1);
     slot_list(n + 1, "Retour", "", UIColor::TEXT_DIM, true);
-    slots_hide_from(n + 2);
+    gs->slots.hide_from(n + 2);
 }
 
 static void go_equip() {
@@ -1074,11 +1048,9 @@ static void go_equip() {
     auto& sub = gs->equip_sub;
     snprintf(sub, sizeof(sub), "%d objet(s) en votre possession   -   %d emplacement(s)",
              owned_n, MARBLE_NSLOTS);
-    set_text_if(gs->p_title, "Equipement");
-    set_text_if(gs->p_sub, sub);
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot, owned_n ? "Appuyer sur un emplacement le fait passer a l'objet suivant."
-                                    : "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand.");
+    panel_text("Equipement", sub, "",
+               owned_n ? "Appuyer sur un emplacement le fait passer a l'objet suivant."
+                       : "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand.");
 
     auto& titles = gs->equip_titles;
     auto& descs = gs->equip_descs;
@@ -1096,7 +1068,7 @@ static void go_equip() {
         }
     }
     slot_list(MARBLE_NSLOTS, "Retour", "", UIColor::TEXT_DIM, true);
-    slots_hide_from(MARBLE_NSLOTS + 1);
+    gs->slots.hide_from(MARBLE_NSLOTS + 1);
 }
 
 static void go_stats() {
@@ -1116,14 +1088,11 @@ static void go_stats() {
              (unsigned) gs->save.runs, (unsigned) gs->save.wins,
              (unsigned) gs->save.deepest, best, (unsigned) total_level(),
              (unsigned) gs->save.souls, owned_n, N_ITEMS);
-    set_text_if(gs->p_title, "Statistiques");
-    set_text_if(gs->p_sub, "");
-    set_text_if(gs->p_body, body);
-    set_text_if(gs->p_foot, "Les runs jouees en mode dieu ne sont pas comptabilisees ici.");
+    panel_text("Statistiques", "", body, "Les runs jouees en mode dieu ne sont pas comptabilisees ici.");
     slot_list(0, "Retour", "", UIColor::TEXT_DIM, true);
     // Le bouton retour est place sous le bloc de texte.
-    lv_obj_align(gs->slot[0], LV_ALIGN_BOTTOM_MID, 0, -90);
-    slots_hide_from(1);
+    lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -90);
+    gs->slots.hide_from(1);
 }
 
 // Applique un boon a l'etat de la run.
@@ -1168,15 +1137,13 @@ static void show_reward() {
         pool[p] = pool[--np];
     }
 
-    set_text_if(gs->p_title, "Le dedale offre");
-    set_text_if(gs->p_sub, BOON_LINES[rnd_range(0, 2)]);
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot, "Un seul choix. Il te suivra jusqu'a la fin de la run.");
+    panel_text("Le dedale offre", BOON_LINES[rnd_range(0, 2)], "",
+               "Un seul choix. Il te suivra jusqu'a la fin de la run.");
     for (int i = 0; i < gs->offer_n; i++) {
         const BoonDef& b = BOONS[gs->offer[i]];
         slot_card(i, b.name, b.desc, b.color);
     }
-    slots_hide_from(gs->offer_n);
+    gs->slots.hide_from(gs->offer_n);
 }
 
 static void show_end(bool victory) {
@@ -1195,30 +1162,26 @@ static void show_end(bool victory) {
                  "Salles franchies : %d/6\nTemps : %u:%02u\nDifficulte : %s\nAmes rapportees : %d",
                  victory ? 6 : gs->room, s / 60, s % 60, gs->diff->name, gs->gold);
     }
-    set_text_if(gs->p_title, victory ? "Le fil tient" : "Fin de la run");
-    set_text_if(gs->p_sub, victory ? "Tu sors du dedale. Il te laisse partir."
-                                   : DEATH_LINES[rnd_range(0, 4)]);
-    set_text_if(gs->p_body, body);
-    set_text_if(gs->p_foot, gs->god ? "Aucune ame creditee : le mode dieu ne compte pas."
-                                    : "Les ames sont deja mises de cote.");
+    panel_text(victory ? "Le fil tient" : "Fin de la run",
+               victory ? "Tu sors du dedale. Il te laisse partir." : DEATH_LINES[rnd_range(0, 4)],
+               body,
+               gs->god ? "Aucune ame creditee : le mode dieu ne compte pas."
+                       : "Les ames sont deja mises de cote.");
     slot_list(0, "Relancer une run", "", Pal::BALL, true);
     slot_list(1, "Retour au hub", "", UIColor::TEXT_DIM, true);
-    lv_obj_align(gs->slot[0], LV_ALIGN_BOTTOM_MID, 0, -180);
-    lv_obj_align(gs->slot[1], LV_ALIGN_BOTTOM_MID, 0, -100);
-    slots_hide_from(2);
+    lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -180);
+    lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -100);
+    gs->slots.hide_from(2);
 }
 
 static void show_pause() {
     g_state = ST_PAUSED;
     panel_on(true);
-    set_text_if(gs->p_title, "Pause");
-    set_text_if(gs->p_sub, "Le dedale patiente.");
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot, "");
+    panel_text("Pause", "Le dedale patiente.", "", "");
     slot_list(0, "Reprendre", "", Pal::BALL, true);
     slot_list(1, "Recalibrer a plat", "Pose la tablette avant d'appuyer", Pal::BOOST, true);
     slot_list(2, "Abandonner la run", "Les ames sont conservees", Pal::DANGER, true);
-    slots_hide_from(3);
+    gs->slots.hide_from(3);
 }
 
 // ===========================================================================
@@ -1435,7 +1398,7 @@ static lv_obj_t* dec_next() {
     lv_obj_set_style_border_width(o, 0, LV_PART_MAIN);
     lv_obj_set_style_radius(o, 0, LV_PART_MAIN);
     lv_obj_set_style_bg_grad_dir(o, LV_GRAD_DIR_NONE, LV_PART_MAIN);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(o, LV_OBJ_FLAG_HIDDEN);
     return o;
 }
 
@@ -1482,7 +1445,7 @@ static void dec_arc(int cx, int cy, int r, int a0, int a1, int w,
     const int d = r * 2 + w;
     lv_obj_set_size(a, d, d);
     lv_obj_set_pos(a, cx - d / 2, cy - d / 2);
-    lv_obj_clear_flag(a, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(a, LV_OBJ_FLAG_HIDDEN);
 }
 
 static void build_decor(int idx) {
@@ -1618,10 +1581,10 @@ static void load_room(int idx) {
     ball_show(true);
     // Remise au premier plan dans l'ordre d'empilement voulu : ombre, corps,
     // reflet. Les remonter dans le desordre mettrait l'ombre PAR-DESSUS la bille.
-    lv_obj_move_foreground(gs->ball_sh);
-    lv_obj_move_foreground(gs->ball);
-    lv_obj_move_foreground(gs->ball_gloss);
-    for (int i = 0; i < 4; i++) lv_obj_move_foreground(gs->vign[i]);
+    lv_obj_move_to_index(gs->ball_sh, -1);
+    lv_obj_move_to_index(gs->ball, -1);
+    lv_obj_move_to_index(gs->ball_gloss, -1);
+    for (int i = 0; i < 4; i++) lv_obj_move_to_index(gs->vign[i], -1);
 
     // Nom + numero de salle : ecrits une seule fois par salle.
     auto& rbuf = gs->room_buf;
@@ -1835,7 +1798,7 @@ static void toast(const char* txt, uint32_t color) {
     set_text_if(gs->toast, txt);
     lv_obj_set_style_text_color(gs->toast, lv_color_hex(color), LV_PART_MAIN);
     show(gs->toast, true);
-    lv_obj_move_foreground(gs->toast);
+    lv_obj_move_to_index(gs->toast, -1);
     gs->toast_until = lv_tick_get() + 2500;
 }
 
@@ -1896,11 +1859,7 @@ static void update_hud() {
                                  : (gs->shield ? Pal::SHIELD : Pal::DANGER)),
             LV_PART_MAIN);
     }
-    if (gs->c_gold != gs->gold) {
-        gs->c_gold = gs->gold;
-        snprintf(buf, sizeof(buf), "Or %d", gs->gold);
-        set_text_if(gs->hud_gold, buf);
-    }
+    hud_num(gs->hud_gold, gs->c_gold, gs->gold, "Or %d");
     const Room& r = ROOMS[gs->room];
     if (gs->c_runes != gs->runes) {
         gs->c_runes = gs->runes;

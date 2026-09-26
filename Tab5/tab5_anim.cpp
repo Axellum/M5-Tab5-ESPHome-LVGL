@@ -24,7 +24,7 @@
 
 // Callback d'animation de position Y (#T225 : evite cast ABI lv_obj_set_y).
 static void anim_y_cb(void* obj, int32_t v) {
-    lv_obj_set_y((lv_obj_t*)obj, (lv_coord_t)v);
+    lv_obj_set_y((lv_obj_t*)obj, (int32_t)v);
 }
 
 static void anim_out_y_ready_cb(lv_anim_t* a) {
@@ -42,7 +42,7 @@ static void anim_opa_cb(void* obj, int32_t v) {
 
 // Callback d'animation de position X (glissement horizontal, swipe previsions).
 static void anim_x_cb(void* obj, int32_t v) {
-    lv_obj_set_x((lv_obj_t*)obj, (lv_coord_t)v);
+    lv_obj_set_x((lv_obj_t*)obj, (int32_t)v);
 }
 
 // Callback d'animation de translate_y (rouleaux : horloge, icones meteo).
@@ -51,7 +51,7 @@ static void anim_x_cb(void* obj, int32_t v) {
 // labels de l'horloge sont alignes (align + y). L'offset de base est integre
 // aux bornes de l'animation par l'appelant, ce callback reste donc trivial.
 static void anim_ty_cb(void* obj, int32_t v) {
-    lv_obj_set_style_translate_y((lv_obj_t*)obj, (lv_coord_t)v, LV_PART_MAIN);
+    lv_obj_set_style_translate_y((lv_obj_t*)obj, (int32_t)v, LV_PART_MAIN);
 }
 
 // Cache l'objet a la fin de l'animation (fermeture popup : card + scrim).
@@ -75,6 +75,28 @@ static void anim_swipe_out_ready_cb(lv_anim_t* a) {
     lv_obj_set_style_opa(o, LV_OPA_COVER, LV_PART_MAIN);
 }
 
+// Lance une animation LVGL : remplace les blocs lv_anim_init … lv_anim_start de
+// 8-9 lignes (audit du 26/09/2026, lot 7.1). ready = nullptr et delay = 0 sont
+// les valeurs que pose déjà lv_anim_init() (memzero) : les passer laisse le
+// descripteur identique à celui des anciens blocs qui ne les posaient pas.
+// Les trois callbacks de fin restent distincts : ils ne remettent pas à zéro
+// les mêmes propriétés (y des panneaux, x des calques, échelle du fondu), et les
+// calques de prévisions sont posés à y = 430 — un y = 0 commun les déplacerait.
+static void start_anim(void* var, int32_t from, int32_t to, uint32_t dur,
+                       lv_anim_path_cb_t path, lv_anim_exec_xcb_t exec,
+                       lv_anim_completed_cb_t ready = nullptr, uint32_t delay = 0) {
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, var);
+    lv_anim_set_values(&a, from, to);
+    lv_anim_set_duration(&a, dur);
+    lv_anim_set_delay(&a, delay);
+    lv_anim_set_path_cb(&a, path);
+    lv_anim_set_exec_cb(&a, exec);
+    lv_anim_set_completed_cb(&a, ready);
+    lv_anim_start(&a);
+}
+
 // Transition "verre depoli" : glissement vertical + fondu croise.
 //   - Sortie : descend en accelerant (ease_in) tout en s'effacant.
 //   - Entree : arrive du haut en decelerant (ease_out) tout en apparaissant.
@@ -88,48 +110,17 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
     const int32_t  OFFSET = UIAnim::PANEL_OFFSET;
 
     if (out_obj) {
-        lv_anim_t a_out_y;
-        lv_anim_init(&a_out_y);
-        lv_anim_set_var(&a_out_y, out_obj);
-        lv_anim_set_values(&a_out_y, 0, OFFSET);
-        lv_anim_set_time(&a_out_y, DUR);
-        lv_anim_set_path_cb(&a_out_y, lv_anim_path_ease_in);
-        lv_anim_set_exec_cb(&a_out_y, anim_y_cb);
-        lv_anim_set_ready_cb(&a_out_y, anim_out_y_ready_cb);
-        lv_anim_start(&a_out_y);
-
-        lv_anim_t a_out_o;
-        lv_anim_init(&a_out_o);
-        lv_anim_set_var(&a_out_o, out_obj);
-        lv_anim_set_values(&a_out_o, LV_OPA_COVER, LV_OPA_TRANSP);
-        lv_anim_set_time(&a_out_o, DUR);
-        lv_anim_set_path_cb(&a_out_o, lv_anim_path_ease_in);
-        lv_anim_set_exec_cb(&a_out_o, anim_opa_cb);
-        lv_anim_start(&a_out_o);
+        start_anim(out_obj, 0, OFFSET, DUR, lv_anim_path_ease_in, anim_y_cb, anim_out_y_ready_cb);
+        start_anim(out_obj, LV_OPA_COVER, LV_OPA_TRANSP, DUR, lv_anim_path_ease_in, anim_opa_cb);
     }
 
     if (in_obj) {
-        lv_obj_clear_flag(in_obj, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(in_obj, LV_OBJ_FLAG_HIDDEN);
         lv_obj_set_y(in_obj, -OFFSET);
         lv_obj_set_style_opa(in_obj, LV_OPA_TRANSP, LV_PART_MAIN);
 
-        lv_anim_t a_in_y;
-        lv_anim_init(&a_in_y);
-        lv_anim_set_var(&a_in_y, in_obj);
-        lv_anim_set_values(&a_in_y, -OFFSET, 0);
-        lv_anim_set_time(&a_in_y, DUR);
-        lv_anim_set_path_cb(&a_in_y, lv_anim_path_ease_out);
-        lv_anim_set_exec_cb(&a_in_y, anim_y_cb);
-        lv_anim_start(&a_in_y);
-
-        lv_anim_t a_in_o;
-        lv_anim_init(&a_in_o);
-        lv_anim_set_var(&a_in_o, in_obj);
-        lv_anim_set_values(&a_in_o, LV_OPA_TRANSP, LV_OPA_COVER);
-        lv_anim_set_time(&a_in_o, DUR);
-        lv_anim_set_path_cb(&a_in_o, lv_anim_path_ease_out);
-        lv_anim_set_exec_cb(&a_in_o, anim_opa_cb);
-        lv_anim_start(&a_in_o);
+        start_anim(in_obj, -OFFSET, 0, DUR, lv_anim_path_ease_out, anim_y_cb);
+        start_anim(in_obj, LV_OPA_TRANSP, LV_OPA_COVER, DUR, lv_anim_path_ease_out, anim_opa_cb);
     }
 }
 
@@ -138,33 +129,25 @@ void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
 // Reutilisent les callbacks ci-dessus (anim_y_cb/anim_opa_cb/anim_x_cb).
 // =============================================================================
 
-// Ouverture/fermeture d'un popup : affichage/masquage instantané.
-// Affichage instantané : unhide + opa COVER directement (pas de fondu).
-void animate_popup_open(lv_obj_t* card, lv_obj_t* scrim) {
-    // Affichage instantané — pas de fondu (réactivité maximale).
-    if (scrim) {
-        lv_anim_delete(scrim, anim_opa_cb);
-        lv_obj_clear_flag(scrim, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_set_style_opa(scrim, LV_OPA_COVER, LV_PART_MAIN);
-    }
-    if (card) {
-        lv_anim_delete(card, anim_opa_cb);
-        lv_obj_clear_flag(card, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_set_style_opa(card, LV_OPA_COVER, LV_PART_MAIN);
-    }
+// Ouverture d'un popup : affichage instantané (pas de fondu, réactivité
+// maximale) puis passage au premier plan de son parent, pour qu'un popup ouvert
+// après un autre passe devant. Les 8 appelants YAML écrivaient ce premier plan
+// à la suite de l'appel ; il est ici depuis le lot 7 de l'audit du 26/09/2026,
+// qui a aussi retiré le paramètre du voile (jamais fourni : chaque popup porte
+// le sien, modal_scrim.yaml).
+void animate_popup_open(lv_obj_t* card) {
+    if (!card) return;
+    lv_anim_delete(card, anim_opa_cb);
+    lv_obj_remove_flag(card, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_style_opa(card, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_move_to_index(card, -1);  // dernier enfant = dessiné par-dessus
 }
 
-// Masquage instantané : cache card + scrim directement (LV_OBJ_FLAG_HIDDEN).
-void animate_popup_close(lv_obj_t* card, lv_obj_t* scrim) {
-    // Masquage instantané — pas de fondu (réactivité maximale).
-    if (scrim) {
-        lv_anim_delete(scrim, anim_opa_cb);
-        lv_obj_add_flag(scrim, LV_OBJ_FLAG_HIDDEN);
-    }
-    if (card) {
-        lv_anim_delete(card, anim_opa_cb);
-        lv_obj_add_flag(card, LV_OBJ_FLAG_HIDDEN);
-    }
+// Fermeture d'un popup : masquage instantané.
+void animate_popup_close(lv_obj_t* card) {
+    if (!card) return;
+    lv_anim_delete(card, anim_opa_cb);
+    lv_obj_add_flag(card, LV_OBJ_FLAG_HIDDEN);
 }
 
 // =============================================================================
@@ -190,7 +173,7 @@ bool close_popup_if_open(lv_obj_t* card) {
     // animate_popup_close() repart de LV_OPA_COVER, donc relancer sur un popup
     // a moitie efface le rallumerait d'un coup avant de le refaire disparaitre.
     if (lv_anim_get(card, anim_opa_cb) != nullptr) return false;
-    animate_popup_close(card, nullptr);
+    animate_popup_close(card);
     return true;
 }
 
@@ -212,49 +195,19 @@ void animate_swipe_horizontal(lv_obj_t* out_layer, lv_obj_t* in_layer, lv_dir_t 
         // Cancel anims precedentes (swipe rapide repete)
         lv_anim_delete(out_layer, anim_x_cb);
         lv_anim_delete(out_layer, anim_opa_cb);
-        lv_anim_t a_out_x;
-        lv_anim_init(&a_out_x);
-        lv_anim_set_var(&a_out_x, out_layer);
-        lv_anim_set_values(&a_out_x, 0, out_end_x);
-        lv_anim_set_time(&a_out_x, DUR);
-        lv_anim_set_path_cb(&a_out_x, lv_anim_path_ease_in);
-        lv_anim_set_exec_cb(&a_out_x, anim_x_cb);
-        lv_anim_start(&a_out_x);
-
-        lv_anim_t a_out_o;
-        lv_anim_init(&a_out_o);
-        lv_anim_set_var(&a_out_o, out_layer);
-        lv_anim_set_values(&a_out_o, LV_OPA_COVER, LV_OPA_TRANSP);
-        lv_anim_set_time(&a_out_o, DUR);
-        lv_anim_set_path_cb(&a_out_o, lv_anim_path_ease_in);
-        lv_anim_set_exec_cb(&a_out_o, anim_opa_cb);
-        lv_anim_set_ready_cb(&a_out_o, anim_swipe_out_ready_cb);
-        lv_anim_start(&a_out_o);
+        start_anim(out_layer, 0, out_end_x, DUR, lv_anim_path_ease_in, anim_x_cb);
+        start_anim(out_layer, LV_OPA_COVER, LV_OPA_TRANSP, DUR, lv_anim_path_ease_in, anim_opa_cb,
+                   anim_swipe_out_ready_cb);
     }
     if (in_layer) {
         lv_anim_delete(in_layer, anim_x_cb);
         lv_anim_delete(in_layer, anim_opa_cb);
-        lv_obj_clear_flag(in_layer, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(in_layer, LV_OBJ_FLAG_HIDDEN);
         lv_obj_set_x(in_layer, in_start_x);
         lv_obj_set_style_opa(in_layer, LV_OPA_TRANSP, LV_PART_MAIN);
 
-        lv_anim_t a_in_x;
-        lv_anim_init(&a_in_x);
-        lv_anim_set_var(&a_in_x, in_layer);
-        lv_anim_set_values(&a_in_x, in_start_x, 0);
-        lv_anim_set_time(&a_in_x, DUR);
-        lv_anim_set_path_cb(&a_in_x, lv_anim_path_ease_out);
-        lv_anim_set_exec_cb(&a_in_x, anim_x_cb);
-        lv_anim_start(&a_in_x);
-
-        lv_anim_t a_in_o;
-        lv_anim_init(&a_in_o);
-        lv_anim_set_var(&a_in_o, in_layer);
-        lv_anim_set_values(&a_in_o, LV_OPA_TRANSP, LV_OPA_COVER);
-        lv_anim_set_time(&a_in_o, DUR);
-        lv_anim_set_path_cb(&a_in_o, lv_anim_path_ease_out);
-        lv_anim_set_exec_cb(&a_in_o, anim_opa_cb);
-        lv_anim_start(&a_in_o);
+        start_anim(in_layer, in_start_x, 0, DUR, lv_anim_path_ease_out, anim_x_cb);
+        start_anim(in_layer, LV_OPA_TRANSP, LV_OPA_COVER, DUR, lv_anim_path_ease_out, anim_opa_cb);
     }
 }
 
@@ -266,27 +219,12 @@ void animate_alert_enter(lv_obj_t* alert_wrap) {
     const uint32_t DUR    = UIAnim::ALERT_DUR;
     const int32_t  OFFSET = UIAnim::ALERT_OFFSET;
 
-    lv_obj_clear_flag(alert_wrap, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(alert_wrap, LV_OBJ_FLAG_HIDDEN);
     lv_obj_set_x(alert_wrap, OFFSET);
     lv_obj_set_style_opa(alert_wrap, LV_OPA_TRANSP, LV_PART_MAIN);
 
-    lv_anim_t a_x;
-    lv_anim_init(&a_x);
-    lv_anim_set_var(&a_x, alert_wrap);
-    lv_anim_set_values(&a_x, OFFSET, 0);
-    lv_anim_set_time(&a_x, DUR);
-    lv_anim_set_path_cb(&a_x, lv_anim_path_ease_out);
-    lv_anim_set_exec_cb(&a_x, anim_x_cb);
-    lv_anim_start(&a_x);
-
-    lv_anim_t a_o;
-    lv_anim_init(&a_o);
-    lv_anim_set_var(&a_o, alert_wrap);
-    lv_anim_set_values(&a_o, LV_OPA_TRANSP, LV_OPA_COVER);
-    lv_anim_set_time(&a_o, DUR);
-    lv_anim_set_path_cb(&a_o, lv_anim_path_ease_out);
-    lv_anim_set_exec_cb(&a_o, anim_opa_cb);
-    lv_anim_start(&a_o);
+    start_anim(alert_wrap, OFFSET, 0, DUR, lv_anim_path_ease_out, anim_x_cb);
+    start_anim(alert_wrap, LV_OPA_TRANSP, LV_OPA_COVER, DUR, lv_anim_path_ease_out, anim_opa_cb);
 }
 
 // Fondu croise pur entre deux calques plein cadre (previsions <-> switches HA).
@@ -304,15 +242,8 @@ void animate_crossfade_layers(lv_obj_t* out_layer, lv_obj_t* in_layer) {
         lv_anim_delete(out_layer, anim_opa_cb);
         lv_anim_delete(out_layer, anim_x_cb);
         lv_obj_set_x(out_layer, 0);
-        lv_anim_t a_out;
-        lv_anim_init(&a_out);
-        lv_anim_set_var(&a_out, out_layer);
-        lv_anim_set_values(&a_out, LV_OPA_COVER, LV_OPA_TRANSP);
-        lv_anim_set_time(&a_out, DUR);
-        lv_anim_set_path_cb(&a_out, lv_anim_path_ease_in);
-        lv_anim_set_exec_cb(&a_out, anim_opa_cb);
-        lv_anim_set_ready_cb(&a_out, anim_hide_ready_cb);
-        lv_anim_start(&a_out);
+        start_anim(out_layer, LV_OPA_COVER, LV_OPA_TRANSP, DUR, lv_anim_path_ease_in, anim_opa_cb,
+                   anim_hide_ready_cb);
     }
     if (in_layer) {
         lv_anim_delete(in_layer, anim_opa_cb);
@@ -323,7 +254,7 @@ void animate_crossfade_layers(lv_obj_t* out_layer, lv_obj_t* in_layer) {
             !lv_obj_has_flag(in_layer, LV_OBJ_FLAG_HIDDEN) &&
             lv_obj_get_style_opa(in_layer, LV_PART_MAIN) > LV_OPA_TRANSP;
 
-        lv_obj_clear_flag(in_layer, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(in_layer, LV_OBJ_FLAG_HIDDEN);
 
         if (already_visible) {
             // Deja a l'ecran : rester opaque, pas de replay d'entree.
@@ -333,14 +264,7 @@ void animate_crossfade_layers(lv_obj_t* out_layer, lv_obj_t* in_layer) {
 
         lv_obj_set_style_opa(in_layer, LV_OPA_TRANSP, LV_PART_MAIN);
 
-        lv_anim_t a_in;
-        lv_anim_init(&a_in);
-        lv_anim_set_var(&a_in, in_layer);
-        lv_anim_set_values(&a_in, LV_OPA_TRANSP, LV_OPA_COVER);
-        lv_anim_set_time(&a_in, DUR);
-        lv_anim_set_path_cb(&a_in, lv_anim_path_ease_out);
-        lv_anim_set_exec_cb(&a_in, anim_opa_cb);
-        lv_anim_start(&a_in);
+        start_anim(in_layer, LV_OPA_TRANSP, LV_OPA_COVER, DUR, lv_anim_path_ease_out, anim_opa_cb);
     }
 }
 
@@ -367,28 +291,13 @@ static void roll_in_one_label(lv_obj_t* o, uint32_t delay_ms) {
 
     // Etat de depart applique tout de suite : avec un delay, LVGL n'appelle pas
     // exec_cb avant la fin du delai — sans ca l'icone clignoterait en place.
-    lv_obj_set_style_translate_y(o, (lv_coord_t)(base + UIAnim::ROLL_ICON_PX), LV_PART_MAIN);
+    lv_obj_set_style_translate_y(o, (int32_t)(base + UIAnim::ROLL_ICON_PX), LV_PART_MAIN);
     lv_obj_set_style_opa(o, LV_OPA_TRANSP, LV_PART_MAIN);
 
-    lv_anim_t a_y;
-    lv_anim_init(&a_y);
-    lv_anim_set_var(&a_y, o);
-    lv_anim_set_values(&a_y, base + UIAnim::ROLL_ICON_PX, base);
-    lv_anim_set_time(&a_y, UIAnim::ROLL_ICON);
-    lv_anim_set_delay(&a_y, delay_ms);
-    lv_anim_set_path_cb(&a_y, lv_anim_path_ease_out);
-    lv_anim_set_exec_cb(&a_y, anim_ty_cb);
-    lv_anim_start(&a_y);
-
-    lv_anim_t a_o;
-    lv_anim_init(&a_o);
-    lv_anim_set_var(&a_o, o);
-    lv_anim_set_values(&a_o, LV_OPA_TRANSP, LV_OPA_COVER);
-    lv_anim_set_time(&a_o, UIAnim::ROLL_ICON);
-    lv_anim_set_delay(&a_o, delay_ms);
-    lv_anim_set_path_cb(&a_o, lv_anim_path_ease_out);
-    lv_anim_set_exec_cb(&a_o, anim_opa_cb);
-    lv_anim_start(&a_o);
+    start_anim(o, base + UIAnim::ROLL_ICON_PX, base, UIAnim::ROLL_ICON, lv_anim_path_ease_out,
+               anim_ty_cb, nullptr, delay_ms);
+    start_anim(o, LV_OPA_TRANSP, LV_OPA_COVER, UIAnim::ROLL_ICON, lv_anim_path_ease_out,
+               anim_opa_cb, nullptr, delay_ms);
 }
 
 void animate_icon_roll_in(lv_obj_t* l1, lv_obj_t* l2, uint32_t delay_ms) {
@@ -475,7 +384,7 @@ void layout_clock_roller(lv_obj_t* clock_tile, esphome::font::Font* clock_font) 
         // Le rognage des enfants par le parent EST le rouleau : sans lui les
         // deux chiffres se verraient l'un au-dessus de l'autre pendant la
         // rotation. (Defaut LVGL, mis explicitement pour ne pas en dependre.)
-        lv_obj_clear_flag(r.wrap, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
+        lv_obj_remove_flag(r.wrap, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
 
         for (int k = 0; k < 2; k++) {
             lv_obj_set_y(r.lbl[k], lbl_y);
@@ -512,23 +421,8 @@ static void roll_clock_digit(ClockDigitRoller& r, int box_h, char digit) {
     lv_label_set_text(in_lbl, new_text);
     lv_obj_set_style_translate_y(in_lbl, box_h, LV_PART_MAIN);
 
-    lv_anim_t a_out;
-    lv_anim_init(&a_out);
-    lv_anim_set_var(&a_out, out_lbl);
-    lv_anim_set_values(&a_out, 0, -box_h);
-    lv_anim_set_time(&a_out, UIAnim::ROLL_CLOCK);
-    lv_anim_set_path_cb(&a_out, lv_anim_path_ease_in_out);
-    lv_anim_set_exec_cb(&a_out, anim_ty_cb);
-    lv_anim_start(&a_out);
-
-    lv_anim_t a_in;
-    lv_anim_init(&a_in);
-    lv_anim_set_var(&a_in, in_lbl);
-    lv_anim_set_values(&a_in, box_h, 0);
-    lv_anim_set_time(&a_in, UIAnim::ROLL_CLOCK);
-    lv_anim_set_path_cb(&a_in, lv_anim_path_ease_in_out);
-    lv_anim_set_exec_cb(&a_in, anim_ty_cb);
-    lv_anim_start(&a_in);
+    start_anim(out_lbl, 0, -box_h, UIAnim::ROLL_CLOCK, lv_anim_path_ease_in_out, anim_ty_cb);
+    start_anim(in_lbl, box_h, 0, UIAnim::ROLL_CLOCK, lv_anim_path_ease_in_out, anim_ty_cb);
 
     r.cur ^= 1;
     r.shown = digit;
@@ -634,13 +528,13 @@ void apply_pressed_scale_to_tree(lv_obj_t* root) {
     // Heuristique : objet clickable + radius 18 = bouton verre (style_clim_btn).
     // Inclut aussi les tuiles meteo cliquables (effet desirable : feedback tactile).
     if (lv_obj_has_flag(root, LV_OBJ_FLAG_CLICKABLE)) {
-        lv_coord_t radius = lv_obj_get_style_radius(root, LV_PART_MAIN);
+        int32_t radius = lv_obj_get_style_radius(root, LV_PART_MAIN);
         if (radius == 18) {
             setup_button_press_animation(root);
         }
     }
     // Recursion dans les enfants
-    uint32_t cnt = lv_obj_get_child_cnt(root);
+    uint32_t cnt = lv_obj_get_child_count(root);
     for (uint32_t i = 0; i < cnt; i++) {
         apply_pressed_scale_to_tree(lv_obj_get_child(root, i));
     }
@@ -649,9 +543,9 @@ void apply_pressed_scale_to_tree(lv_obj_t* root) {
 // Le jeu de bille a ete extrait dans marble_game.cpp (namespace Marble) :
 // roguelite plein ecran, trop volumineux pour cohabiter ici.
 
-void highlight_button_border(lv_obj_t* btn, bool active, uint32_t color) {
+void highlight_button_border(lv_obj_t* btn, bool active, uint32_t color, int32_t active_width) {
     if (!btn) return;
     lv_obj_set_style_border_color(btn, lv_color_hex(active ? color : UIColor::GLASS_RIM), LV_PART_MAIN);
     lv_obj_set_style_border_opa(btn, active ? LV_OPA_COVER : LV_OPA_40, LV_PART_MAIN);
-    lv_obj_set_style_border_width(btn, active ? 2 : 1, LV_PART_MAIN);
+    lv_obj_set_style_border_width(btn, active ? active_width : 1, LV_PART_MAIN);
 }

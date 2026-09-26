@@ -15,7 +15,9 @@
 #       (tab5-sensors-domotique.yaml).
 # @ai_instruction Cadre modal v4 (ADR-0009) : modal_scrim.yaml + modal_header.yaml
 #       (barre de titre 52 px + 20 px d'air, corps à y=72). `scrollable: false` partout — NE PAS retirer.
-#       Les 12 pastilles couleur via light_color_preset_btn.yaml (#T164).
+#       Les 12 pastilles couleur via light_color_preset_btn.yaml (#T164) ; sélecteur,
+#       raccourcis de niveau et blancs nommés via light_sel_btn.yaml, light_level_btn.yaml
+#       et light_white_btn.yaml (audit du 26/09/2026, lot 7.3).
 # ═══════════════════════════════════════════════════════
 obj:
   id: light_options_popup
@@ -26,7 +28,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(light_options_popup), nullptr);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(light_options_popup));" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -38,7 +40,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F0335", icon_color: "color_gold", title: "Ampoule", title_id: "popup_light_title", close_btn_id: "btn_light_close", close_lambda: "animate_popup_close(id(light_options_popup), nullptr);" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0335", icon_color: "color_gold", title: "Ampoule", title_id: "popup_light_title", close_btn_id: "btn_light_close", close_lambda: "animate_popup_close(id(light_options_popup));" } }
 
           # ═══ CARTE AMPOULE (gauche) : sélecteur 3 lumières + puissance ═══
           - obj:
@@ -54,51 +56,9 @@ obj:
 
                 # Sélecteur — surbrillance (bordure cyan) posée par tab5_light_popup_show,
                 # icônes recolorées en direct par light_*_state (tab5-sensors-domotique.yaml)
-                - button:
-                    id: btn_light_sel_0
-                    align: TOP_LEFT
-                    x: 22
-                    y: 50
-                    width: 342
-                    height: 86
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - script.execute: { id: tab5_light_popup_show, light_idx: 0 }
-                    widgets:
-                      - label: { id: icon_light_sel_0, text: "\U000F02E3", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Chambre", align: LEFT_MID, x: 88, text_font: roboto_32_b }
-                - button:
-                    id: btn_light_sel_1
-                    align: TOP_LEFT
-                    x: 22
-                    y: 146
-                    width: 342
-                    height: 86
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - script.execute: { id: tab5_light_popup_show, light_idx: 1 }
-                    widgets:
-                      - label: { id: icon_light_sel_1, text: "\U000F04B9", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Salon", align: LEFT_MID, x: 88, text_font: roboto_32_b }
-                - button:
-                    id: btn_light_sel_2
-                    align: TOP_LEFT
-                    x: 22
-                    y: 242
-                    width: 342
-                    height: 86
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - script.execute: { id: tab5_light_popup_show, light_idx: 2 }
-                    widgets:
-                      - label: { id: icon_light_sel_2, text: "\U000F1051", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "LEDs", align: LEFT_MID, x: 88, text_font: roboto_32_b }
+                - !include { file: light_sel_btn.yaml, vars: { idx: 0, y: 50, icon: "\U000F02E3", name: "Chambre" } }
+                - !include { file: light_sel_btn.yaml, vars: { idx: 1, y: 146, icon: "\U000F04B9", name: "Salon" } }
+                - !include { file: light_sel_btn.yaml, vars: { idx: 2, y: 242, icon: "\U000F1051", name: "LEDs" } }
 
                 # On/Off de la lumière sélectionnée (icône recolorée par update_light_card_ui)
                 - button:
@@ -187,87 +147,11 @@ obj:
                     y: 192
                     text_font: roboto_45_b
 
-                # Raccourcis de niveau
-                - button:
-                    align: TOP_LEFT
-                    x: 22
-                    y: 452
-                    width: 80
-                    height: 72
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            brightness_pct: "10"
-                      - lambda: |-
-                          lv_arc_set_value(id(arc_light_brightness), 26);
-                          lv_label_set_text(id(lbl_light_brightness_val), "10 %");
-                    widgets:
-                      - label: { text: "10 %", align: CENTER }
-                - button:
-                    align: TOP_LEFT
-                    x: 112
-                    y: 452
-                    width: 80
-                    height: 72
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            brightness_pct: "35"
-                      - lambda: |-
-                          lv_arc_set_value(id(arc_light_brightness), 89);
-                          lv_label_set_text(id(lbl_light_brightness_val), "35 %");
-                    widgets:
-                      - label: { text: "35 %", align: CENTER }
-                - button:
-                    align: TOP_LEFT
-                    x: 202
-                    y: 452
-                    width: 80
-                    height: 72
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            brightness_pct: "65"
-                      - lambda: |-
-                          lv_arc_set_value(id(arc_light_brightness), 166);
-                          lv_label_set_text(id(lbl_light_brightness_val), "65 %");
-                    widgets:
-                      - label: { text: "65 %", align: CENTER }
-                - button:
-                    align: TOP_LEFT
-                    x: 292
-                    y: 452
-                    width: 80
-                    height: 72
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            brightness_pct: "100"
-                      - lambda: |-
-                          lv_arc_set_value(id(arc_light_brightness), 255);
-                          lv_label_set_text(id(lbl_light_brightness_val), "100 %");
-                    widgets:
-                      - label: { text: "100 %", align: CENTER }
+                # Raccourcis de niveau (gabarit light_level_btn.yaml : arc = pct × 255 / 100, arrondi)
+                - !include { file: light_level_btn.yaml, vars: { x: 22, pct: "10", arc: 26 } }
+                - !include { file: light_level_btn.yaml, vars: { x: 112, pct: "35", arc: 89 } }
+                - !include { file: light_level_btn.yaml, vars: { x: 202, pct: "65", arc: 166 } }
+                - !include { file: light_level_btn.yaml, vars: { x: 292, pct: "100", arc: 255 } }
 
           # ═══ CARTE COULEURS (droite) : blancs nommés + pastilles rondes ═══
           - obj:
@@ -281,61 +165,10 @@ obj:
               widgets:
                 - label: { text: "COULEURS", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
 
-                # Blancs nommés (température de blanc via color_name)
-                - button:
-                    align: TOP_LEFT
-                    x: 22
-                    y: 50
-                    width: 106
-                    height: 92
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            color_name: "warmwhite"
-                    widgets:
-                      - label: { text: "\U000F0335", align: TOP_MID, y: 8, text_font: mdi_font_32, text_color: 0xFFC864 }
-                      - label: { text: "Chaud", align: BOTTOM_MID, y: -8, text_color: color_text_dim }
-                - button:
-                    align: TOP_LEFT
-                    x: 140
-                    y: 50
-                    width: 106
-                    height: 92
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            color_name: "navajowhite"
-                    widgets:
-                      - label: { text: "\U000F0335", align: TOP_MID, y: 8, text_font: mdi_font_32, text_color: 0xFFDEAD }
-                      - label: { text: "Crème", align: BOTTOM_MID, y: -8, text_color: color_text_dim }
-                - button:
-                    align: TOP_LEFT
-                    x: 258
-                    y: 50
-                    width: 106
-                    height: 92
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_on
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
-                            color_name: "white"
-                    widgets:
-                      - label: { text: "\U000F0335", align: TOP_MID, y: 8, text_font: mdi_font_32, text_color: 0xFFFFFF }
-                      - label: { text: "Froid", align: BOTTOM_MID, y: -8, text_color: color_text_dim }
+                # Blancs nommés (température de blanc via color_name) — gabarit light_white_btn.yaml
+                - !include { file: light_white_btn.yaml, vars: { x: 22, color_name: "warmwhite", icon_color: 0xFFC864, name: "Chaud" } }
+                - !include { file: light_white_btn.yaml, vars: { x: 140, color_name: "navajowhite", icon_color: 0xFFDEAD, name: "Crème" } }
+                - !include { file: light_white_btn.yaml, vars: { x: 258, color_name: "white", icon_color: 0xFFFFFF, name: "Froid" } }
 
                 # Grille 4×3 de pastilles couleur (factorisées #T164, chaudes → froides)
                 - obj:

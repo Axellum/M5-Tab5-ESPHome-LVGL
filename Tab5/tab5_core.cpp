@@ -10,6 +10,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 time_t (*tab5_time_source)(time_t*) = time;
 
@@ -147,4 +148,27 @@ std::string format_long_day_label(int jour_offset) {
                  fr_day_long_utf8(t.tm_wday), t.tm_mday, fr_month_long_utf8(t.tm_mon + 1));
     }
     return std::string(buf);
+}
+
+// ─── Découpe de texte : reprend à l'identique les copies qu'elle remplace
+// (rognage de tab5_central.cpp, boucles strchr des payloads bulk). ───
+
+std::string trim_ws(const std::string& s) {
+    const char* ws = " \t\r\n";
+    const size_t deb = s.find_first_not_of(ws);
+    if (deb == std::string::npos) return "";
+    return s.substr(deb, s.find_last_not_of(ws) - deb + 1);
+}
+
+int split_fields(char* s, char sep, char* out[], int max) {
+    int n = 0;
+    char* p = s;
+    while (n < max) {
+        out[n++] = p;
+        char* next = strchr(p, sep);
+        if (next == nullptr) break;
+        *next = '\0';
+        p = next + 1;
+    }
+    return n;
 }

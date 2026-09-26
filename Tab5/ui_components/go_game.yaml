@@ -5,7 +5,7 @@
 # @architecture_constraint Page LVGL autonome (page_go dans tab5-lvgl.yaml,
 #     skip: true). Pas de modal_scrim/modal_header — flux de jeu plein cadre.
 #     La sortie du jeu se fait par le hub (« Quitter ») qui navigue vers
-#     page_arcade via lv_scr_load() en C++.
+#     page_arcade via lv_screen_load() en C++.
 # @ai_instruction Ce fichier ne déclare QUE 4 conteneurs VIDES. Tout le contenu
 #     (goban, pierres, coordonnées, HUD, panneau latéral, menus, carte de score)
 #     est construit par go_game.cpp via Go::open(). Ne JAMAIS ajouter de widget

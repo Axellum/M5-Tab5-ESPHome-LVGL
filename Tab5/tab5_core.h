@@ -91,3 +91,13 @@ std::string fr_capitalized(const char* s);
 // (« 1er » pour le premier du mois). "" si l'heure n'est pas synchronisée.
 std::string format_short_day_label(int jour_offset);
 std::string format_long_day_label(int jour_offset);
+
+// ─── Découpe de texte (audit du 26/09/2026, lot 7.1) ───
+// Copie de `s` sans les espaces, tabulations, CR et LF de début et de fin ; ""
+// s'il n'y a que cela.
+std::string trim_ws(const std::string& s);
+// Découpe EN PLACE `s` sur `sep` : chaque séparateur rencontré devient '\0' et
+// out[0..n-1] pointent sur les champs (vides compris, contrairement à strtok_r).
+// Au plus `max` champs : le séparateur qui suit le dernier est lui aussi coupé,
+// le reste de la chaîne est ignoré. Renvoie n (0 si max <= 0).
+int split_fields(char* s, char sep, char* out[], int max);

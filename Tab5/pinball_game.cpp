@@ -470,9 +470,7 @@ struct Mem {
     lv_obj_t* p_sub   = nullptr;
     lv_obj_t* p_body  = nullptr;
     lv_obj_t* p_foot  = nullptr;
-    lv_obj_t* slot[N_SLOTS]   = {};
-    lv_obj_t* slot_t[N_SLOTS] = {};
-    lv_obj_t* slot_d[N_SLOTS] = {};
+    SlotMenu<N_SLOTS> slots;   // entrées des menus (game_common.h)
     // Pictogramme « tournez la tablette » du hub (3 objets, aucune police MDI a
     // enrichir : deux rectangles et un chevron suffisent et restent lisibles).
     lv_obj_t* rot_land = nullptr;
@@ -625,8 +623,8 @@ static lv_obj_t* mk_poly(lv_obj_t* parent, const float* xy, int n,
 
     lv_obj_t* o = lv_line_create(parent);
     lv_obj_remove_style_all(o);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_remove_flag(o, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(o, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_style_line_width(o, width, LV_PART_MAIN);
     lv_obj_set_style_line_color(o, lv_color_hex(color), LV_PART_MAIN);
     lv_obj_set_style_line_opa(o, opa, LV_PART_MAIN);
@@ -650,8 +648,8 @@ static void mk_rail(lv_obj_t* parent, const float* xy, int n) {
 static lv_obj_t* mk_arc(lv_obj_t* parent, float cx, float cy, float r,
                         int a0, int a1, int width, uint32_t color, lv_opa_t opa) {
     lv_obj_t* a = lv_arc_create(parent);
-    lv_obj_clear_flag(a, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_clear_flag(a, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(a, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_remove_flag(a, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_opa(a, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(a, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(a, 0, LV_PART_MAIN);
@@ -1076,8 +1074,8 @@ static void build_actors(lv_obj_t* field) {
         for (int layer = 0; layer < 2; layer++) {
             lv_obj_t* o = lv_line_create(field);
             lv_obj_remove_style_all(o);
-            lv_obj_clear_flag(o, LV_OBJ_FLAG_SCROLLABLE);
-            lv_obj_clear_flag(o, LV_OBJ_FLAG_CLICKABLE);
+            lv_obj_remove_flag(o, LV_OBJ_FLAG_SCROLLABLE);
+            lv_obj_remove_flag(o, LV_OBJ_FLAG_CLICKABLE);
             lv_obj_set_style_line_rounded(o, true, LV_PART_MAIN);
             if (layer == 0) {
                 lv_obj_set_style_line_width(o, 24, LV_PART_MAIN);
@@ -1150,7 +1148,7 @@ static void build_zones(lv_obj_t* field) {
     for (int i = 0; i < 3; i++) {
         lv_obj_t* o = lv_obj_create(field);
         lv_obj_remove_style_all(o);
-        lv_obj_clear_flag(o, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_remove_flag(o, LV_OBJ_FLAG_SCROLLABLE);
         lv_obj_add_flag(o, LV_OBJ_FLAG_CLICKABLE);
         lv_obj_set_style_bg_opa(o, LV_OPA_TRANSP, LV_PART_MAIN);
         lv_obj_set_pos(o, Z[i].x, Z[i].y);
@@ -1261,23 +1259,16 @@ static void build_panel(lv_obj_t* panel) {
     set_bg(gs->rot_port, Pal::VOID, LV_OPA_COVER);
     set_border(gs->rot_port, Pal::CYAN, 3, LV_OPA_COVER);
 
-    for (int i = 0; i < N_SLOTS; i++) {
-        lv_obj_t* s = mk_rect(panel);
-        lv_obj_add_flag(s, LV_OBJ_FLAG_CLICKABLE);
+    // Entrees de menu : liste verticale 620x84 a y = 400 + 96 i (gs->slots.row).
+    gs->slots.geom = {.w = 620, .h = 84, .top = 400, .pitch = 96, .tx = 26, .t_dy = -15, .d_dy = 18,
+                      .border_opa = 120, .off = Pal::TEXT_DIM};
+    gs->slots.build(panel, slot_event_cb, gs->ui.f_mid, Pal::WHITE, gs->ui.f_small, Pal::TEXT_DIM,
+                    [](lv_obj_t* s, int) {
         lv_obj_set_style_radius(s, 14, LV_PART_MAIN);
         set_bg(s, Pal::FELT_HI, LV_OPA_COVER);
         // Retour tactile : le fond s'eclaircit tant que le doigt est pose.
-        // Casts explicites : combiner lv_part_t et lv_state_t directement est
-        // deprecie en C++20 (-Wdeprecated-enum-enum-conversion).
-        lv_obj_set_style_bg_color(s, lv_color_hex(Pal::RAIL),
-                                  (lv_style_selector_t) LV_PART_MAIN |
-                                  (lv_style_selector_t) LV_STATE_PRESSED);
-        lv_obj_add_event_cb(s, slot_event_cb, LV_EVENT_CLICKED, (void*) (intptr_t) i);
-        gs->slot[i]   = s;
-        gs->slot_t[i] = mk_label(s, gs->ui.f_mid, Pal::WHITE);
-        gs->slot_d[i] = mk_label(s, gs->ui.f_small, Pal::TEXT_DIM);
-        show(s, false);
-    }
+        set_pressed_bg(s, Pal::RAIL);
+    });
 }
 
 // Appelee a CHAQUE ouverture, sur des conteneurs vides (close() detruit tout ce
@@ -1297,29 +1288,17 @@ static void build_ui() {
 }
 
 // ===========================================================================
-// 14. Mise en page des slots de menu
+// 14. Calque des menus (entrees : gs->slots, game_common.h)
 // ===========================================================================
 
-static void slot(int i, const char* title, const char* desc, uint32_t col) {
-    if (i < 0 || i >= N_SLOTS) return;
-    lv_obj_set_size(gs->slot[i], 620, 84);
-    lv_obj_align(gs->slot[i], LV_ALIGN_TOP_MID, 0, 400 + i * 96);
-    lv_obj_align(gs->slot_t[i], LV_ALIGN_LEFT_MID, 26, desc && desc[0] ? -15 : 0);
-    lv_obj_align(gs->slot_d[i], LV_ALIGN_LEFT_MID, 26, 18);
-    lv_obj_set_style_text_color(gs->slot_t[i], lv_color_hex(col), LV_PART_MAIN);
-    set_text_if(gs->slot_t[i], title);
-    set_text_if(gs->slot_d[i], desc ? desc : "");
-    set_border(gs->slot[i], col, 2, 120);
-    show(gs->slot[i], true);
-}
+static void panel_on(bool v) { show_front(gs->ui.panel, v); }
 
-static void slots_hide_from(int n) {
-    for (int i = n; i < N_SLOTS; i++) show(gs->slot[i], false);
-}
-
-static void panel_on(bool v) {
-    show(gs->ui.panel, v);
-    if (v) lv_obj_move_foreground(gs->ui.panel);
+// Titre / sous-titre / corps / pied du panneau de menus (nullptr = inchange).
+static void panel_text(const char* t, const char* s, const char* b, const char* f) {
+    set_text_if(gs->p_title, t);
+    set_text_if(gs->p_sub, s);
+    set_text_if(gs->p_body, b);
+    set_text_if(gs->p_foot, f);
 }
 
 // Le pictogramme d'orientation occupe la bande y = 196..316 du panneau. Les
@@ -1356,17 +1335,14 @@ static void go_hub() {
         snprintf(best, sizeof(best), "Aucun score enregistre");
     }
 
-    set_text_if(gs->p_title, "NEON APRON");
-    set_text_if(gs->p_sub, sub);
-    set_text_if(gs->p_body, "Tournez la tablette a la verticale");
-    set_text_if(gs->p_foot,
+    panel_text("NEON APRON", sub, "Tournez la tablette a la verticale",
         "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\n"
         "Secouez la tablette pour pousser la bille — trois abus de suite et c'est TILT.");
-    slot(0, "Jouer", "3 billes - lanceur en bas de l'ecran", Pal::AMBER);
-    slot(1, "Classement", best, Pal::CYAN);
-    slot(2, "Reglages", "Nudge, sens de l'ecran, calibration", Pal::MAGENTA);
-    slot(3, "Quitter", "Retour au tableau de bord (paysage)", Pal::TEXT_DIM);
-    slots_hide_from(4);
+    gs->slots.row(0, "Jouer", "3 billes - lanceur en bas de l'ecran", Pal::AMBER);
+    gs->slots.row(1, "Classement", best, Pal::CYAN);
+    gs->slots.row(2, "Reglages", "Nudge, sens de l'ecran, calibration", Pal::MAGENTA);
+    gs->slots.row(3, "Quitter", "Retour au tableau de bord (paysage)", Pal::TEXT_DIM);
+    gs->slots.hide_from(4);
     tick_period_sync();
 }
 
@@ -1396,14 +1372,11 @@ static void go_scores() {
     snprintf(sub, sizeof(sub), "Cumul carriere : %lu points",
              (unsigned long) gs->save.total_score);
 
-    set_text_if(gs->p_title, "CLASSEMENT");
-    set_text_if(gs->p_sub, sub);
-    set_text_if(gs->p_body, body);
-    set_text_if(gs->p_foot, "b = billes jouees, MB = multiball declenche.");
-    slot(0, "Retour", "", Pal::TEXT_DIM);
-    slots_hide_from(1);
+    panel_text("CLASSEMENT", sub, body, "b = billes jouees, MB = multiball declenche.");
+    gs->slots.row(0, "Retour", "", Pal::TEXT_DIM);
+    gs->slots.hide_from(1);
     // Le classement est long : on remonte les slots sous le texte.
-    lv_obj_align(gs->slot[0], LV_ALIGN_BOTTOM_MID, 0, -110);
+    lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -110);
     tick_period_sync();
 }
 
@@ -1419,18 +1392,15 @@ static void go_settings() {
     snprintf(t1, sizeof(t1), "Sens du nudge : %s", gs->save.invert_nudge ? "inverse" : "normal");
     snprintf(t2, sizeof(t2), "Orientation : %s", gs->save.flip_screen ? "retournee" : "normale");
 
-    set_text_if(gs->p_title, "REGLAGES");
-    set_text_if(gs->p_sub, "Tout est enregistre et survit au redemarrage.");
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot,
+    panel_text("REGLAGES", "Tout est enregistre et survit au redemarrage.", "",
         "Calibre a plat AVANT de jouer : le nudge mesure l'ecart avec cette reference,\n"
         "pas l'inclinaison absolue. Poser la tablette, puis appuyer.");
-    slot(0, t0, "Force de la secousse necessaire", Pal::CYAN);
-    slot(1, t1, "Si la bille part du mauvais cote", Pal::CYAN);
-    slot(2, t2, "Si l'ecran est a l'envers dans vos mains", Pal::MAGENTA);
-    slot(3, "Calibrer a plat", "Poser la tablette puis appuyer", Pal::AMBER);
-    slot(4, "Retour", "", Pal::TEXT_DIM);
-    slots_hide_from(5);
+    gs->slots.row(0, t0, "Force de la secousse necessaire", Pal::CYAN);
+    gs->slots.row(1, t1, "Si la bille part du mauvais cote", Pal::CYAN);
+    gs->slots.row(2, t2, "Si l'ecran est a l'envers dans vos mains", Pal::MAGENTA);
+    gs->slots.row(3, "Calibrer a plat", "Poser la tablette puis appuyer", Pal::AMBER);
+    gs->slots.row(4, "Retour", "", Pal::TEXT_DIM);
+    gs->slots.hide_from(5);
     tick_period_sync();
 }
 
@@ -1443,15 +1413,12 @@ static void go_pause() {
     char sc[24]; fmt_score(sc, sizeof(sc), gs->score);
     snprintf(sub, sizeof(sub), "Score %s - bille %d / %d", sc, gs->ball_num, gs->balls_total);
 
-    set_text_if(gs->p_title, "PAUSE");
-    set_text_if(gs->p_sub, sub);
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot, "La partie reprend exactement ou elle s'est arretee.");
-    slot(0, "Reprendre", "", Pal::AMBER);
-    slot(1, "Recalibrer a plat", "Poser la tablette puis appuyer", Pal::CYAN);
-    slot(2, "Abandonner", "La partie est enregistree telle quelle", Pal::MAGENTA);
-    slot(3, "Quitter le flipper", "Retour au tableau de bord", Pal::TEXT_DIM);
-    slots_hide_from(4);
+    panel_text("PAUSE", sub, "", "La partie reprend exactement ou elle s'est arretee.");
+    gs->slots.row(0, "Reprendre", "", Pal::AMBER);
+    gs->slots.row(1, "Recalibrer a plat", "Poser la tablette puis appuyer", Pal::CYAN);
+    gs->slots.row(2, "Abandonner", "La partie est enregistree telle quelle", Pal::MAGENTA);
+    gs->slots.row(3, "Quitter le flipper", "Retour au tableau de bord", Pal::TEXT_DIM);
+    gs->slots.hide_from(4);
     tick_period_sync();
 }
 
@@ -1486,14 +1453,11 @@ static void end_game() {
     else if (rank > 0)  snprintf(body, sizeof(body), "%de au classement", rank + 1);
     else                snprintf(body, sizeof(body), "Hors du top %d", PINBALL_NSCORES);
 
-    set_text_if(gs->p_title, "FIN DE PARTIE");
-    set_text_if(gs->p_sub, sub);
-    set_text_if(gs->p_body, body);
-    set_text_if(gs->p_foot, gs->game_tilted ? "Partie marquee TILT." : "");
-    slot(0, "Rejouer", "Nouvelle partie, 3 billes", Pal::AMBER);
-    slot(1, "Classement", "", Pal::CYAN);
-    slot(2, "Hub", "", Pal::TEXT_DIM);
-    slots_hide_from(3);
+    panel_text("FIN DE PARTIE", sub, body, gs->game_tilted ? "Partie marquee TILT." : "");
+    gs->slots.row(0, "Rejouer", "Nouvelle partie, 3 billes", Pal::AMBER);
+    gs->slots.row(1, "Classement", "", Pal::CYAN);
+    gs->slots.row(2, "Hub", "", Pal::TEXT_DIM);
+    gs->slots.hide_from(3);
     tick_period_sync();
 }
 

@@ -73,6 +73,13 @@ struct AlarmCfg {
   // Sécurité : la sonnerie s'arrête seule au bout de ce délai si personne ne
   // touche rien (sinon un réveil déclenché pendant les vacances sonne des jours).
   int max_ring_min = 15;
+  // Réglages de la sonnerie, que le moteur ne lit pas : recopiés ici pour que
+  // les scripts et le rendu lisent une valeur déjà gardée contre le NaN d'un
+  // `number` pas encore restauré, au lieu de refaire la garde à chaque usage
+  // (audit du 26/09/2026, lot 7.3). Défauts = ceux des entités.
+  int melody = 1;             // index de alarm_melody_name() (« Classique »)
+  float volume = 0.8f;        // 0..1 (l'entité est en %)
+  int rdv_lead_min = 15;      // annonce d'un rendez-vous : minutes avant
 };
 extern AlarmCfg g_alarm_cfg;
 

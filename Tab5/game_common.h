@@ -121,8 +121,8 @@ static inline uint32_t xorshift32_next(uint32_t& s) {
 static inline lv_obj_t* mk_rect(lv_obj_t* parent) {
     lv_obj_t* o = lv_obj_create(parent);
     lv_obj_remove_style_all(o);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_clear_flag(o, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_remove_flag(o, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(o, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_style_bg_opa(o, LV_OPA_COVER, LV_PART_MAIN);
     return o;
 }
@@ -142,7 +142,7 @@ static inline lv_obj_t* mk_label(lv_obj_t* parent, const esphome::font::Font* f,
 static inline void show(lv_obj_t* o, bool v) {
     if (!o) return;
     if (v == !lv_obj_has_flag(o, LV_OBJ_FLAG_HIDDEN)) return;
-    if (v) lv_obj_clear_flag(o, LV_OBJ_FLAG_HIDDEN);
+    if (v) lv_obj_remove_flag(o, LV_OBJ_FLAG_HIDDEN);
     else   lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
 }
 
@@ -292,6 +292,78 @@ static inline bool shake_fire(float v, float thresh, uint32_t& last_ms, uint32_t
     }
     return false;
 }
+
+// ---------------------------------------------------------------------------
+// Menus et HUD (lot 7.2 de l'audit ressources du 26/09/2026)
+// ---------------------------------------------------------------------------
+// Fond tant que le doigt est posé (casts : lv_part_t | lv_state_t est déprécié en C++20).
+static inline void set_pressed_bg(lv_obj_t* o, uint32_t c) {
+    if (o) lv_obj_set_style_bg_color(o, lv_color_hex(c), (lv_style_selector_t) LV_PART_MAIN |
+                                                           (lv_style_selector_t) LV_STATE_PRESSED);
+}
+// Calque de menus : affiché, il repasse devant tout ce que le jeu a créé depuis.
+static inline void show_front(lv_obj_t* o, bool v) {
+    show(o, v);
+    if (v && o) lv_obj_move_to_index(o, -1);
+}
+// Libellé HUD à une valeur, réécrit seulement si `v` diffère de `cache` (que le jeu
+// remet à une valeur impossible quand les objets sont neufs). `fmt` : un %, du type V.
+template <typename C, typename V>
+static inline void hud_num(lv_obj_t* lbl, C& cache, V v, const char* fmt) {
+    if (cache == (C) v) return;
+    cache = (C) v;
+    char buf[48];
+    snprintf(buf, sizeof(buf), fmt, v);
+    set_text_if(lbl, buf);
+}
+// Entrées de menu (cadre cliquable, titre, description) : membre du bloc Mem, rien de
+// réservé jeu fermé ; l'habillage du cadre (`style` de build()) et les mises en page à
+// part restent au jeu. row() : cadres w×h en TOP_MID à y = top + i × pitch, libellés à
+// gauche (tx), titre à t_dy s'il a une description, description à d_dy ; inactif : `off`.
+struct SlotGeom {
+    int16_t  w, h, top, pitch, tx, t_dy, d_dy;
+    lv_opa_t border_opa;   // liseré de 2 px
+    uint32_t off;          // titre et liseré d'une entrée inactive
+};
+namespace {  // une copie par unité, comme les helpers `static` qu'elle appelle (ODR)
+template <int N> struct SlotMenu {
+    lv_obj_t* box[N]   = {};   // user_data de LV_EVENT_CLICKED = index de l'entrée
+    lv_obj_t* title[N] = {};
+    lv_obj_t* desc[N]  = {};
+    SlotGeom  geom{};
+    // Ordre de création (= d'empilement) : cadre, style() (ses enfants passent sous le texte), libellés.
+    template <typename F> void build(lv_obj_t* parent, lv_event_cb_t cb, const esphome::font::Font* ft,
+                                     uint32_t ct, const esphome::font::Font* fd, uint32_t cd, F style) {
+        for (int i = 0; i < N; i++) {
+            box[i] = mk_rect(parent);
+            lv_obj_add_flag(box[i], LV_OBJ_FLAG_CLICKABLE);
+            lv_obj_add_event_cb(box[i], cb, LV_EVENT_CLICKED, (void*) (intptr_t) i);
+            style(box[i], i);
+            title[i] = mk_label(box[i], ft, ct);
+            desc[i]  = mk_label(box[i], fd, cd);
+            show(box[i], false);
+        }
+    }
+    void row(int i, const char* t, const char* d, uint32_t col, bool on = true) {
+        if (i < 0 || i >= N) return;
+        lv_obj_set_size(box[i], geom.w, geom.h);
+        lv_obj_align(box[i], LV_ALIGN_TOP_MID, 0, geom.top + i * geom.pitch);
+        for (lv_obj_t* l : {title[i], desc[i]}) {   // largeur « contenu », texte à gauche
+            lv_obj_set_width(l, LV_SIZE_CONTENT);
+            lv_obj_set_style_text_align(l, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+        }
+        lv_obj_align(title[i], LV_ALIGN_LEFT_MID, geom.tx, d && d[0] ? geom.t_dy : 0);
+        lv_obj_align(desc[i], LV_ALIGN_LEFT_MID, geom.tx, geom.d_dy);
+        const uint32_t c = on ? col : geom.off;
+        set_text_color_if(title[i], c);
+        set_text_if(title[i], t);
+        set_text_if(desc[i], d ? d : "");
+        set_border(box[i], c, 2, geom.border_opa);
+        show(box[i], true);
+    }
+    void hide_from(int n) { for (int i = n; i < N; i++) show(box[i], false); }
+};
+}  // namespace
 
 }  // namespace GameCommon
 

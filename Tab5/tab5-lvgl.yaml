@@ -19,7 +19,7 @@ lvgl:
           # [AI-CONTEXT] Pagination previsions (swipe gauche/droite, y>=333 carte centrale)
           # deleguee a handle_swipe_gesture(). Console diag : btn_control_console uniquement.
           - lambda: |-
-              lv_indev_t * indev = lv_indev_get_act();
+              lv_indev_t * indev = lv_indev_active();
               if (indev) {
                   lv_point_t pt;
                   lv_indev_get_point(indev, &pt);
@@ -287,8 +287,8 @@ lvgl:
               bg_opa: 52%
             on_short_click:
               - lambda: |-
-                  lv_obj_clear_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
-                  lv_obj_move_foreground(id(layer_console_sys));
+                  lv_obj_remove_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
+                  lv_obj_move_to_index(id(layer_console_sys), -1);
                   refresh_console_status_row_ui(id(lbl_sys_uptime_val), id(lbl_sys_rssi_val), id(lbl_sys_temp_val),
                       id(sys_uptime).has_state(), id(sys_uptime).state,
                       id(sys_wifi_rssi).has_state(), id(sys_wifi_rssi).state,
@@ -317,8 +317,7 @@ lvgl:
               bg_opa: 52%
             on_short_click:
               - lambda: |-
-                  animate_popup_open(id(tv_remote_popup), nullptr);
-                  lv_obj_move_foreground(id(tv_remote_popup));
+                  animate_popup_open(id(tv_remote_popup));
             widgets:
               - label: { text: "\U000F07C0", align: CENTER, y: -12, text_font: mdi_font_45 }
               - label: { text: "TV", align: CENTER, y: 22 }
@@ -339,8 +338,7 @@ lvgl:
             styles: style_invisible
             on_long_press:
               - lambda: |-
-                  animate_popup_open(id(pots_detail_popup), nullptr);
-                  lv_obj_move_foreground(id(pots_detail_popup));
+                  animate_popup_open(id(pots_detail_popup));
 
         # ==================== CLIMATE CONTROL (MIDDLE RIGHT) ====================
 
@@ -588,7 +586,7 @@ lvgl:
         - !include ui_components/alarm_popup.yaml
         # EN DERNIER, volontairement : l'ordre de déclaration est l'ordre de
         # dessin LVGL, et l'écran de sonnerie doit couvrir toutes les fenêtres
-        # ci-dessus. `lv_obj_move_foreground()` le confirme à chaque affichage,
+        # ci-dessus. `lv_obj_move_to_index(…, -1)` le confirme à chaque affichage,
         # mais partir déjà au bon rang évite un cadre de clignotement.
         - !include ui_components/alarm_ring_overlay.yaml
         # ═══ Les 8 jeux + le sélecteur arcade vivent désormais dans leurs
@@ -598,7 +596,7 @@ lvgl:
     # ═══════════════════════════════════════════════════════════════
     # PAGES GAMING — chacune est un écran LVGL autonome (skip: true
     # empêche le swipe gesture de naviguer vers/depuis ces pages).
-    # Navigation : lvgl.page.show (YAML) ou lv_scr_load (C++).
+    # Navigation : lvgl.page.show (YAML) ou lv_screen_load (C++).
     # ═══════════════════════════════════════════════════════════════
 
     # ─── Sélecteur arcade (grille 8 consoles) ───

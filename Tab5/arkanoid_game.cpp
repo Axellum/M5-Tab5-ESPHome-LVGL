@@ -357,9 +357,7 @@ struct Mem {
     lv_obj_t* p_sub   = nullptr;
     lv_obj_t* p_body  = nullptr;
     lv_obj_t* p_foot  = nullptr;
-    lv_obj_t* slot[N_SLOTS] = {};
-    lv_obj_t* slot_t[N_SLOTS] = {};
-    lv_obj_t* slot_d[N_SLOTS] = {};
+    SlotMenu<N_SLOTS> slots;   // entrées des menus (game_common.h)
 
     // Flash de mort (bandes de bord)
     lv_obj_t* vign[4] = {};
@@ -375,7 +373,6 @@ struct Mem {
     char scores_body[512];
     char clear_body[128];
     char over_body[192];
-    char hud_buf[64];
     char hud_cbuf[32];
 };
 static Mem* gs = nullptr;
@@ -541,51 +538,29 @@ static void build_ui() {
     gs->p_foot = mk_label(gs->ui.panel, gs->ui.f_small, UIColor::TEXT_DIM);
     lv_obj_align(gs->p_foot, LV_ALIGN_BOTTOM_MID, 0, -22);
 
-    for (int i = 0; i < N_SLOTS; i++) {
-        gs->slot[i] = mk_rect(gs->ui.panel);
-        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_style_radius(gs->slot[i], 14, LV_PART_MAIN);
-        set_bg(gs->slot[i], Pal::FLOOR, LV_OPA_COVER);
-        lv_obj_set_style_bg_color(gs->slot[i], lv_color_hex(Pal::WALL),
-                                  (lv_style_selector_t)LV_PART_MAIN |
-                                  (lv_style_selector_t)LV_STATE_PRESSED);
-        lv_obj_add_event_cb(gs->slot[i], slot_event_cb, LV_EVENT_CLICKED,
-                            (void*)(intptr_t)i);
-        gs->slot_t[i] = mk_label(gs->slot[i], gs->ui.f_mid, UIColor::TEXT_SOFT);
-        gs->slot_d[i] = mk_label(gs->slot[i], gs->ui.f_small, UIColor::TEXT_DIM);
-        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_HIDDEN);
-    }
-
-}
-
-// --- Mise en page des slots (liste verticale) ---
-static void slot_list(int i, const char* title, const char* desc, uint32_t col, bool on) {
-    lv_obj_set_size(gs->slot[i], 680, 62);
-    lv_obj_align(gs->slot[i], LV_ALIGN_TOP_MID, 0, 150 + i * 68);
-    lv_obj_set_width(gs->slot_t[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(gs->slot_t[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_set_width(gs->slot_d[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(gs->slot_d[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_align(gs->slot_t[i], LV_ALIGN_LEFT_MID, 22, desc && desc[0] ? -13 : 0);
-    lv_obj_align(gs->slot_d[i], LV_ALIGN_LEFT_MID, 22, 15);
-    lv_obj_set_style_text_color(gs->slot_t[i], lv_color_hex(on ? col : UIColor::INACTIVE), LV_PART_MAIN);
-    set_text_if(gs->slot_t[i], title);
-    set_text_if(gs->slot_d[i], desc ? desc : "");
-    set_border(gs->slot[i], on ? col : UIColor::INACTIVE, 2, LV_OPA_50);
-    show(gs->slot[i], true);
-}
-
-static void slots_hide_from(int n) {
-    for (int i = n; i < N_SLOTS; i++) show(gs->slot[i], false);
+    // Entrées des menus : liste verticale 680×62 à y = 150 + 68 i (gs->slots.row).
+    gs->slots.geom = {.w = 680, .h = 62, .top = 150, .pitch = 68, .tx = 22, .t_dy = -13, .d_dy = 15,
+                      .border_opa = LV_OPA_50, .off = UIColor::INACTIVE};
+    gs->slots.build(gs->ui.panel, slot_event_cb, gs->ui.f_mid, UIColor::TEXT_SOFT,
+                    gs->ui.f_small, UIColor::TEXT_DIM, [](lv_obj_t* b, int) {
+        lv_obj_set_style_radius(b, 14, LV_PART_MAIN);
+        set_bg(b, Pal::FLOOR, LV_OPA_COVER);
+        set_pressed_bg(b, Pal::WALL);
+    });
 }
 
 // ===========================================================================
 // 9. Écrans
 // ===========================================================================
 
-static void panel_on(bool v) {
-    show(gs->ui.panel, v);
-    if (v) lv_obj_move_foreground(gs->ui.panel);
+static void panel_on(bool v) { show_front(gs->ui.panel, v); }
+
+// Titre / sous-titre / corps / pied du panneau de menus (nullptr = inchangé).
+static void panel_text(const char* t, const char* s, const char* b, const char* f) {
+    set_text_if(gs->p_title, t);
+    set_text_if(gs->p_sub, s);
+    set_text_if(gs->p_body, b);
+    set_text_if(gs->p_foot, f);
 }
 
 static const char* ctrl_name() {
@@ -608,15 +583,12 @@ static void go_hub() {
     snprintf(sub, sizeof(sub), "Meilleur score : %u   -   Controle : %s",
              (unsigned)best_score(), ctrl_name());
 
-    set_text_if(gs->p_title, "ARCANOIDE");
-    set_text_if(gs->p_sub, sub);
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot, "Casse toutes les briques. Ne laisse pas tomber la balle.");
-    slot_list(0, "Jouer", "8 niveaux, 3 vies, power-ups", Pal::BALL, true);
-    slot_list(1, "Classement", "Top 10 local", Pal::CYAN, true);
-    slot_list(2, "Reglages", "Controle, sensibilite, calibration, SFX", Pal::GREEN, true);
-    slot_list(3, "Quitter", "Retour au tableau de bord", UIColor::TEXT_DIM, true);
-    slots_hide_from(4);
+    panel_text("ARCANOIDE", sub, "", "Casse toutes les briques. Ne laisse pas tomber la balle.");
+    gs->slots.row(0, "Jouer", "8 niveaux, 3 vies, power-ups", Pal::BALL, true);
+    gs->slots.row(1, "Classement", "Top 10 local", Pal::CYAN, true);
+    gs->slots.row(2, "Reglages", "Controle, sensibilite, calibration, SFX", Pal::GREEN, true);
+    gs->slots.row(3, "Quitter", "Retour au tableau de bord", UIColor::TEXT_DIM, true);
+    gs->slots.hide_from(4);
 }
 
 static void go_settings() {
@@ -629,17 +601,14 @@ static void go_settings() {
     snprintf(sens_title, sizeof(sens_title), "Sensibilite IMU : %d/5",
              (int)gs->save.sensitivity + 1);
 
-    set_text_if(gs->p_title, "Reglages");
-    set_text_if(gs->p_sub, "Ces reglages sont sauvegardes automatiquement.");
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot, "");
-    slot_list(0, ctrl_title, "Inclinaison / Boutons / Les deux", Pal::CYAN, true);
-    slot_list(1, sens_title, "Vitesse de reponse a l'inclinaison", Pal::GREEN, true);
-    slot_list(2, "Calibrer a plat", "Pose la tablette et appuie", Pal::ORANGE, true);
-    slot_list(3, gs->save.muted ? "SFX : coupes" : "SFX : actifs",
-              "Bips sonores (casse, mort, niveau)", Pal::MAGENTA, true);
-    slot_list(4, "Retour", "", UIColor::TEXT_DIM, true);
-    slots_hide_from(5);
+    panel_text("Reglages", "Ces reglages sont sauvegardes automatiquement.", "", "");
+    gs->slots.row(0, ctrl_title, "Inclinaison / Boutons / Les deux", Pal::CYAN, true);
+    gs->slots.row(1, sens_title, "Vitesse de reponse a l'inclinaison", Pal::GREEN, true);
+    gs->slots.row(2, "Calibrer a plat", "Pose la tablette et appuie", Pal::ORANGE, true);
+    gs->slots.row(3, gs->save.muted ? "SFX : coupes" : "SFX : actifs",
+                  "Bips sonores (casse, mort, niveau)", Pal::MAGENTA, true);
+    gs->slots.row(4, "Retour", "", UIColor::TEXT_DIM, true);
+    gs->slots.hide_from(5);
 }
 
 static void go_highscores() {
@@ -659,28 +628,22 @@ static void go_highscores() {
         off += snprintf(body + off, sizeof(body) - off, "\n  Aucun score enregistre.");
     }
 
-    set_text_if(gs->p_title, "Classement");
-    set_text_if(gs->p_sub, "Top 10 local (NVS)");
-    set_text_if(gs->p_body, body);
-    set_text_if(gs->p_foot, "");
-    slot_list(0, "Effacer les scores", "Appuie pour confirmer", Pal::DANGER, true);
-    slot_list(1, "Retour", "", UIColor::TEXT_DIM, true);
-    lv_obj_align(gs->slot[0], LV_ALIGN_BOTTOM_MID, 0, -160);
-    lv_obj_align(gs->slot[1], LV_ALIGN_BOTTOM_MID, 0, -80);
-    slots_hide_from(2);
+    panel_text("Classement", "Top 10 local (NVS)", body, "");
+    gs->slots.row(0, "Effacer les scores", "Appuie pour confirmer", Pal::DANGER, true);
+    gs->slots.row(1, "Retour", "", UIColor::TEXT_DIM, true);
+    lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -160);
+    lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -80);
+    gs->slots.hide_from(2);
 }
 
 static void show_pause() {
     g_state = ST_PAUSED;
     panel_on(true);
-    set_text_if(gs->p_title, "Pause");
-    set_text_if(gs->p_sub, "Le jeu attend.");
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot, "");
-    slot_list(0, "Reprendre", "", Pal::BALL, true);
-    slot_list(1, "Recalibrer a plat", "Pose la tablette avant d'appuyer", Pal::ORANGE, true);
-    slot_list(2, "Abandonner", "Le score est enregistre", Pal::DANGER, true);
-    slots_hide_from(3);
+    panel_text("Pause", "Le jeu attend.", "", "");
+    gs->slots.row(0, "Reprendre", "", Pal::BALL, true);
+    gs->slots.row(1, "Recalibrer a plat", "Pose la tablette avant d'appuyer", Pal::ORANGE, true);
+    gs->slots.row(2, "Abandonner", "Le score est enregistre", Pal::DANGER, true);
+    gs->slots.hide_from(3);
 }
 
 static void show_level_clear() {
@@ -689,13 +652,10 @@ static void show_level_clear() {
     auto& body = gs->clear_body;
     snprintf(body, sizeof(body), "Niveau %d — %s\nScore : %d",
              gs->level + 1, LEVEL_NAMES[gs->level], gs->score);
-    set_text_if(gs->p_title, "Niveau termine !");
-    set_text_if(gs->p_sub, "");
-    set_text_if(gs->p_body, body);
-    set_text_if(gs->p_foot, "");
-    slot_list(0, "Niveau suivant", "", Pal::GREEN, true);
-    slots_hide_from(1);
-    lv_obj_align(gs->slot[0], LV_ALIGN_BOTTOM_MID, 0, -120);
+    panel_text("Niveau termine !", "", body, "");
+    gs->slots.row(0, "Niveau suivant", "", Pal::GREEN, true);
+    gs->slots.hide_from(1);
+    lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -120);
 }
 
 static void show_gameover() {
@@ -711,15 +671,12 @@ static void show_gameover() {
     snprintf(body, sizeof(body), "Score : %d\nNiveau atteint : %d/8 — %s%s",
              gs->score, gs->level + 1, LEVEL_NAMES[gs->level],
              qualified ? "\n*** Nouveau record ! ***" : "");
-    set_text_if(gs->p_title, "GAME OVER");
-    set_text_if(gs->p_sub, "");
-    set_text_if(gs->p_body, body);
-    set_text_if(gs->p_foot, "");
-    slot_list(0, "Rejouer", "", Pal::BALL, true);
-    slot_list(1, "Retour au hub", "", UIColor::TEXT_DIM, true);
-    lv_obj_align(gs->slot[0], LV_ALIGN_BOTTOM_MID, 0, -180);
-    lv_obj_align(gs->slot[1], LV_ALIGN_BOTTOM_MID, 0, -100);
-    slots_hide_from(2);
+    panel_text("GAME OVER", "", body, "");
+    gs->slots.row(0, "Rejouer", "", Pal::BALL, true);
+    gs->slots.row(1, "Retour au hub", "", UIColor::TEXT_DIM, true);
+    lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -180);
+    lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -100);
+    gs->slots.hide_from(2);
 }
 
 // ===========================================================================
@@ -1052,28 +1009,10 @@ static bool ball_hits_brick(Ball& b, Brick& br, int bx, int by) {
 // ===========================================================================
 
 static void update_hud() {
-    auto& buf = gs->hud_buf;
-    if (gs->c_score != gs->score) {
-        gs->c_score = gs->score;
-        snprintf(buf, sizeof(buf), "Score %d", gs->score);
-        set_text_if(gs->hud_score, buf);
-    }
-    if (gs->c_lives != gs->lives) {
-        gs->c_lives = gs->lives;
-        snprintf(buf, sizeof(buf), "Vies %d", gs->lives);
-        set_text_if(gs->hud_lives, buf);
-    }
-    if (gs->c_level != gs->level) {
-        gs->c_level = gs->level;
-        snprintf(buf, sizeof(buf), "Niv %d/8", gs->level + 1);
-        set_text_if(gs->hud_level, buf);
-    }
-    uint32_t bs = best_score();
-    if ((int)bs != gs->c_best) {
-        gs->c_best = (int)bs;
-        snprintf(buf, sizeof(buf), "Best %u", (unsigned)bs);
-        set_text_if(gs->hud_best, buf);
-    }
+    hud_num(gs->hud_score, gs->c_score, gs->score, "Score %d");
+    hud_num(gs->hud_lives, gs->c_lives, gs->lives, "Vies %d");
+    hud_num(gs->hud_level, gs->c_level, gs->level + 1, "Niv %d/8");   // cache : niveau affiché
+    hud_num(gs->hud_best, gs->c_best, (unsigned) best_score(), "Best %u");
     // Indicateur contrôle (écrit une fois)
     auto& cbuf = gs->hud_cbuf;
     snprintf(cbuf, sizeof(cbuf), "[%s]", ctrl_name());

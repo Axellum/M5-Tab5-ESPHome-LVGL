@@ -48,11 +48,10 @@ struct AlarmSettingsUI {
   lv_obj_t* lbl_rdv_next;
 };
 
-// Repeint TOUT le popup depuis `g_alarm_cfg` + les 5 valeurs qui vivent dans des
-// entités ESPHome (le C++ ne peut pas les lire lui-même).
-void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, int melody_idx,
-                           float volume, bool crescendo, bool tts_on, bool rdv_on,
-                           int rdv_lead_min);
+// Repeint TOUT le popup depuis `g_alarm_cfg` + les 3 interrupteurs qui n'y ont
+// pas de miroir (le C++ ne peut pas lire les entités ESPHome lui-même).
+void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo, bool tts_on,
+                           bool rdv_on);
 
 struct AlarmRingUI {
   lv_obj_t* root;       // calque plein écran

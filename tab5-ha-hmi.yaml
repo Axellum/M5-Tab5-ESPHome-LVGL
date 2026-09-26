@@ -191,14 +191,6 @@ esphome:
             g_central_ctx.ha_wrap[2] = id(ha_alert_wrapper_2);
             g_central_ctx.ha_wrap[3] = id(ha_alert_wrapper_3);
             g_central_ctx.page_title_sub = id(lbl_page_title_sub);
-            g_central_ctx.current_panel = id(current_central_panel);
-            g_central_ctx.has_rain = id(has_rain);
-            g_central_ctx.has_mf_alerts = id(has_alerts);
-            g_central_ctx.has_info = id(has_info);
-            g_central_ctx.has_ha[0] = id(has_ha_alert_0);
-            g_central_ctx.has_ha[1] = id(has_ha_alert_1);
-            g_central_ctx.has_ha[2] = id(has_ha_alert_2);
-            g_central_ctx.has_ha[3] = id(has_ha_alert_3);
             // Slots meteo jour (D2 : plus de duplication dans chaque lambda).
             g_day_slots[0] = {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr};
             g_day_slots[1] = {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)};
@@ -234,7 +226,7 @@ esphome:
       then:
         - delay: 2s
         - lambda: |-
-            apply_pressed_scale_to_tree(lv_scr_act());
+            apply_pressed_scale_to_tree(lv_screen_active());
             g_clock_roller.colon = id(lbl_time_colon);
             g_clock_roller.d[0] = {id(clock_roll_h10), {id(lbl_time_h10_a), id(lbl_time_h10_b)}, 0, 0};
             g_clock_roller.d[1] = {id(clock_roll_h1),  {id(lbl_time_h1_a),  id(lbl_time_h1_b)},  0, 0};

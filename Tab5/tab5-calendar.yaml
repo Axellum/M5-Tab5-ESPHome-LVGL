@@ -7,6 +7,8 @@
 #       sorti de tab5-scripts.yaml le 25/09/2026 (audit, lot 8c), contenu inchangé.
 #       La grille est calculée localement (cal_render_month, tab5_calendar.cpp) ;
 #       HA n'enrichit qu'à la demande (script.tab5_calendrier_mois / _jour).
+#       Une demande de mois = tab5_cal_request ; « mois ± 1 » = cal_shift_month()
+#       (tab5_calendar.cpp) — ne pas recopier l'appel ni le calcul (lot 7.3).
 #       Chargé APRÈS tab5_lvgl (références aux widgets du popup).
 
 script:
@@ -26,9 +28,26 @@ script:
           lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
           // Eviction : garde max 3 mois autour de la vue (M-1, M, M+1)
           cal_cache_evict_distant(t.year, t.month);
-          animate_popup_open(id(calendar_popup), nullptr);
-          lv_obj_move_foreground(id(calendar_popup));
+          animate_popup_open(id(calendar_popup));
       - script.execute: tab5_cal_render
+
+  # Demande un mois à HA (script.tab5_calendrier_mois, qui répond par le service
+  # tab5_maj_calendrier_mois). SEUL envoi de cette requête : avant le lot 7.3 de
+  # l'audit (26/09/2026), l'appel et son calcul M±1 étaient recopiés cinq fois
+  # dans ce fichier. Appelé depuis les lambdas par id(tab5_cal_request).execute(a, m).
+  # `parallel` : chaque demande va au bout (aucun délai), comme l'action en
+  # ligne qu'il remplace — le rendu en envoie jusqu'à trois d'affilée.
+  - id: tab5_cal_request
+    mode: parallel
+    parameters:
+      annee: int
+      mois: int
+    then:
+      - homeassistant.service:
+          service: script.tab5_calendrier_mois
+          data:
+            annee: !lambda 'return to_string(annee);'
+            mois: !lambda 'return to_string(mois);'
 
   # Rendu du mois affiché : grille locale (numéros/aujourd'hui/weekend) tout de
   # suite, enrichissement HA (travail/férié/vacances/RDV) depuis le cache si dispo.
@@ -91,55 +110,15 @@ script:
               t.is_valid() ? t.day_of_month : 0);
           // Eviction : ne garde que M-1, M, M+1 autour de la vue courante
           cal_cache_evict_distant(id(cal_view_year), id(cal_view_month));
-      # Refresh du mois affiché si absent ou périmé (> 10 min)
-      - if:
-          condition:
-            lambda: 'return id(cal_view_year) != 0 && cal_month_is_stale(id(cal_view_year), id(cal_view_month));'
-          then:
-            - homeassistant.service:
-                service: script.tab5_calendrier_mois
-                data:
-                  annee: !lambda 'return to_string(id(cal_view_year));'
-                  mois: !lambda 'return to_string(id(cal_view_month));'
-      # Pré-fetch silencieux des mois adjacents (M-1, M+1) si absents du cache
-      - if:
-          condition:
-            lambda: |-
-              if (id(cal_view_year) == 0) return false;
-              int pm = id(cal_view_month) - 1, py = id(cal_view_year);
-              if (pm < 1) { pm = 12; py--; }
-              return cal_month_needs_fetch(py, pm);
-          then:
-            - homeassistant.service:
-                service: script.tab5_calendrier_mois
-                data:
-                  annee: !lambda |-
-                    int py = id(cal_view_year);
-                    if (id(cal_view_month) == 1) py--;
-                    return to_string(py);
-                  mois: !lambda |-
-                    int pm = id(cal_view_month) - 1;
-                    if (pm < 1) pm = 12;
-                    return to_string(pm);
-      - if:
-          condition:
-            lambda: |-
-              if (id(cal_view_year) == 0) return false;
-              int nm = id(cal_view_month) + 1, ny = id(cal_view_year);
-              if (nm > 12) { nm = 1; ny++; }
-              return cal_month_needs_fetch(ny, nm);
-          then:
-            - homeassistant.service:
-                service: script.tab5_calendrier_mois
-                data:
-                  annee: !lambda |-
-                    int ny = id(cal_view_year);
-                    if (id(cal_view_month) == 12) ny++;
-                    return to_string(ny);
-                  mois: !lambda |-
-                    int nm = id(cal_view_month) + 1;
-                    if (nm > 12) nm = 1;
-                    return to_string(nm);
+          // Refresh du mois affiché si absent ou périmé (> 10 min)
+          if (cal_month_is_stale(id(cal_view_year), id(cal_view_month)))
+            id(tab5_cal_request).execute(id(cal_view_year), id(cal_view_month));
+          // Pré-fetch silencieux des mois adjacents (M-1, M+1) si absents du cache
+          for (int delta : {-1, 1}) {
+            int y = id(cal_view_year), m = id(cal_view_month);
+            cal_shift_month(y, m, delta);
+            if (cal_month_needs_fetch(y, m)) id(tab5_cal_request).execute(y, m);
+          }
 
   # Navigation ◀ / ▶ / Aujourd'hui (le détail jour est refermé au changement de mois)
   - id: tab5_cal_prev
@@ -147,9 +126,7 @@ script:
     then:
       - lambda: |-
           if (id(cal_view_year) == 0) return;
-          int m = id(cal_view_month) - 1;
-          if (m < 1) { m = 12; id(cal_view_year) -= 1; }
-          id(cal_view_month) = m;
+          cal_shift_month(id(cal_view_year), id(cal_view_month), -1);
           lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
       - script.execute: tab5_cal_render
 
@@ -158,9 +135,7 @@ script:
     then:
       - lambda: |-
           if (id(cal_view_year) == 0) return;
-          int m = id(cal_view_month) + 1;
-          if (m > 12) { m = 1; id(cal_view_year) += 1; }
-          id(cal_view_month) = m;
+          cal_shift_month(id(cal_view_year), id(cal_view_month), 1);
           lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
       - script.execute: tab5_cal_render
 
@@ -186,26 +161,16 @@ script:
               auto t = id(sntp_time).now();
               return t.is_valid() && id(status_ha).state;
           then:
-            - homeassistant.service:
-                service: script.tab5_calendrier_mois
-                data:
-                  annee: !lambda 'return to_string(id(sntp_time).now().year);'
-                  mois: !lambda 'return to_string(id(sntp_time).now().month);'
+            - lambda: |-
+                auto t = id(sntp_time).now();
+                id(tab5_cal_request).execute(t.year, t.month);
             - delay: 2s
             # Mois suivant (le plus probable en navigation)
-            - homeassistant.service:
-                service: script.tab5_calendrier_mois
-                data:
-                  annee: !lambda |-
-                    auto t = id(sntp_time).now();
-                    int ny = t.year;
-                    if (t.month == 12) ny++;
-                    return to_string(ny);
-                  mois: !lambda |-
-                    auto t = id(sntp_time).now();
-                    int nm = t.month + 1;
-                    if (nm > 12) nm = 1;
-                    return to_string(nm);
+            - lambda: |-
+                auto t = id(sntp_time).now();
+                int y = t.year, m = t.month;
+                cal_shift_month(y, m, 1);
+                id(tab5_cal_request).execute(y, m);
 
   # Tap sur une cellule : ouvre le sous-popup détail. Si le champ ~ de CE jour
   # est non vide → rendu instantané. Sinon "Chargement..." + script.tab5_calendrier_jour

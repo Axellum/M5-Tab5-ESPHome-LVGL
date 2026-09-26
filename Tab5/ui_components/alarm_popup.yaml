@@ -80,12 +80,12 @@ obj:
                 # Réglage ± heures / ± minutes. Le pas de 5 min est volontaire :
                 # on règle un réveil, pas un chronomètre.
                 - label: { text: "H", align: TOP_LEFT, x: 416, y: 8, width: 76, text_align: CENTER, text_color: color_text_dim }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_h_up", x: "416", y: "38", w: "76", h: "48", r: "14", icon: "\U000F0143", script: "tab5_alarm_shift_time", delta: 60 } }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_h_dn", x: "416", y: "92", w: "76", h: "48", r: "14", icon: "\U000F0140", script: "tab5_alarm_shift_time", delta: -60 } }
+                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_h_up", x: "416", y: "38", w: "76", h: "48", r: "14", icon: "\U000F0143", call: { id: tab5_alarm_shift, cible: 0, delta: 60 } } }
+                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_h_dn", x: "416", y: "92", w: "76", h: "48", r: "14", icon: "\U000F0140", call: { id: tab5_alarm_shift, cible: 0, delta: -60 } } }
 
                 - label: { text: "MIN", align: TOP_LEFT, x: 500, y: 8, width: 76, text_align: CENTER, text_color: color_text_dim }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_m_up", x: "500", y: "38", w: "76", h: "48", r: "14", icon: "\U000F0143", script: "tab5_alarm_shift_time", delta: 5 } }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_m_dn", x: "500", y: "92", w: "76", h: "48", r: "14", icon: "\U000F0140", script: "tab5_alarm_shift_time", delta: -5 } }
+                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_m_up", x: "500", y: "38", w: "76", h: "48", r: "14", icon: "\U000F0143", call: { id: tab5_alarm_shift, cible: 0, delta: 5 } } }
+                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_m_dn", x: "500", y: "92", w: "76", h: "48", r: "14", icon: "\U000F0140", call: { id: tab5_alarm_shift, cible: 0, delta: -5 } } }
 
           # ═══════════════════════════════════════════════════════════════════
           # B — JOURS DE LA SEMAINE                           (gauche, 234..330)
@@ -192,14 +192,14 @@ obj:
                 - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_lead_up", x: "107", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", op: "increment", number: "tab5_alarm_lead" } }
 
                 - label: { text: "Pas avant", align: TOP_LEFT, x: 155, y: 8, width: 131, text_align: CENTER, text_color: color_text_dim }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_early_dn", x: "155", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", script: "tab5_alarm_shift_early", delta: -15 } }
+                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_early_dn", x: "155", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", call: { id: tab5_alarm_shift, cible: 1, delta: -15 } } }
                 - label: { id: lbl_alarm_early, text: "05:00", align: TOP_LEFT, x: 191, y: 52, width: 59, text_align: CENTER }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_early_up", x: "250", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", script: "tab5_alarm_shift_early", delta: 15 } }
+                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_early_up", x: "250", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", call: { id: tab5_alarm_shift, cible: 1, delta: 15 } } }
 
                 - label: { text: "Pas après", align: TOP_LEFT, x: 298, y: 8, width: 131, text_align: CENTER, text_color: color_text_dim }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_late_dn", x: "298", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", script: "tab5_alarm_shift_late", delta: -15 } }
+                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_late_dn", x: "298", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", call: { id: tab5_alarm_shift, cible: 2, delta: -15 } } }
                 - label: { id: lbl_alarm_late, text: "09:00", align: TOP_LEFT, x: 334, y: 52, width: 59, text_align: CENTER }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_late_up", x: "393", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", script: "tab5_alarm_shift_late", delta: 15 } }
+                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_late_up", x: "393", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", call: { id: tab5_alarm_shift, cible: 2, delta: 15 } } }
 
                 - label: { text: "Repos mini", align: TOP_LEFT, x: 441, y: 8, width: 131, text_align: CENTER, text_color: color_text_dim }
                 - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_rest_dn", x: "441", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", op: "decrement", number: "tab5_alarm_rest_hours" } }
@@ -259,9 +259,9 @@ obj:
 
                 # Changer de mélodie la joue aussitôt (tab5_alarm_cycle_melody) :
                 # choisir une sonnerie sans l'entendre n'a aucun intérêt.
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_mel_prev", x: "44", y: "38", w: "52", h: "52", r: "14", icon: "\U000F0141", script: "tab5_alarm_cycle_melody", delta: -1 } }
+                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_mel_prev", x: "44", y: "38", w: "52", h: "52", r: "14", icon: "\U000F0141", call: { id: tab5_alarm_cycle_melody, delta: -1 } } }
                 - label: { id: lbl_alarm_melody, text: "Classique", align: TOP_LEFT, x: 104, y: 51, width: 380, text_align: CENTER, text_font: roboto_32_b }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_mel_next", x: "492", y: "38", w: "52", h: "52", r: "14", icon: "\U000F0142", script: "tab5_alarm_cycle_melody", delta: 1 } }
+                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_mel_next", x: "492", y: "38", w: "52", h: "52", r: "14", icon: "\U000F0142", call: { id: tab5_alarm_cycle_melody, delta: 1 } } }
 
                 - label: { text: "\U000F057E", align: TOP_LEFT, x: 16, y: 98, text_font: mdi_font_32, text_color: color_text_dim }
                 - slider:

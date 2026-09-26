@@ -28,8 +28,8 @@ static void set_toggle(lv_obj_t* btn, lv_obj_t* lbl, bool on, const char* on_txt
   }
 }
 
-void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, int melody_idx, float volume,
-                           bool crescendo, bool tts_on, bool rdv_on, int rdv_lead_min) {
+void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo, bool tts_on,
+                           bool rdv_on) {
   const AlarmCfg& c = g_alarm_cfg;
   char buf[96];
 
@@ -110,9 +110,9 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, int melody_idx
   if (ui.lbl_next != nullptr) lv_label_set_text(ui.lbl_next, alarm_next_label(now).c_str());
   if (ui.lbl_next_sub != nullptr) lv_label_set_text(ui.lbl_next_sub, alarm_next_detail(now).c_str());
 
-  if (ui.lbl_melody != nullptr) lv_label_set_text(ui.lbl_melody, alarm_melody_name(melody_idx));
+  if (ui.lbl_melody != nullptr) lv_label_set_text(ui.lbl_melody, alarm_melody_name(c.melody));
   if (ui.slider_vol != nullptr) {
-    const int pct = static_cast<int>(volume * 100.0f + 0.5f);
+    const int pct = static_cast<int>(c.volume * 100.0f + 0.5f);
     // lv_slider_set_value ne déclenche pas LV_EVENT_VALUE_CHANGED : pas de
     // rebouclage sur on_value (même motif que ui_sync_volume_widgets).
     lv_slider_set_value(ui.slider_vol, pct, LV_ANIM_OFF);
@@ -135,7 +135,7 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, int melody_idx
   set_toggle(ui.btn_tts, ui.lbl_tts, tts_on, "Annonce parl\xC3\xA9""e", "Sonnerie seule", UIColor::INFO);
   set_toggle(ui.btn_rdv, ui.lbl_rdv, rdv_on, "Annonce des RDV", "RDV silencieux", UIColor::INFO);
   if (ui.lbl_rdv_lead != nullptr) {
-    snprintf(buf, sizeof(buf), "%d min avant", rdv_lead_min);
+    snprintf(buf, sizeof(buf), "%d min avant", c.rdv_lead_min);
     lv_label_set_text(ui.lbl_rdv_lead, buf);
   }
   if (ui.lbl_rdv_next != nullptr) {
@@ -162,8 +162,8 @@ void alarm_ring_show(const AlarmRingUI& ui, time_t now, const std::string& sub) 
   if (ui.lbl_sub != nullptr) lv_label_set_text(ui.lbl_sub, sub.c_str());
   if (ui.icon != nullptr) lv_label_set_text(ui.icon, "\U000F0020");
   alarm_ring_refresh(ui, now, g_alarm_cfg.snooze_min, alarm_snooze_count());
-  lv_obj_clear_flag(ui.root, LV_OBJ_FLAG_HIDDEN);
-  lv_obj_move_foreground(ui.root);
+  lv_obj_remove_flag(ui.root, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_move_to_index(ui.root, -1);
 }
 
 void alarm_ring_refresh(const AlarmRingUI& ui, time_t now, int snooze_min, int snooze_count) {

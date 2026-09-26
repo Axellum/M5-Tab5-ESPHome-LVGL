@@ -1,0 +1,26 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 4× par tv_remote_popup.yaml :
+# un raccourci de la rangée basse (nom coloré en roboto_32_b) qui lance une application
+# ou une source par script.tab5_tv_app (HA) — JAMAIS par media_player.select_source ni
+# play_media, voir l'en-tête du popup.
+# vars : x (position dans la rangée de 1170 px), app (nom court traduit côté HA,
+#        packages/tab5_tv.yaml), text (libellé), color (jeton color_*).
+# « CANAL+ » reste écrit en entier dans le popup : son libellé n'a pas de couleur propre
+# (celle du thème) et un gabarit lui imposerait un text_color explicite.
+# Sorti de tv_remote_popup.yaml le 26/09/2026 (audit, lot 7.3), rendu inchangé.
+# ═══════════════════════════════════════════════════════
+button:
+  x: ${x}
+  width: 221
+  height: 102
+  radius: 18
+  styles: style_clim_btn
+  pressed:
+    bg_opa: 30%
+  on_short_click:
+    - homeassistant.service:
+        service: script.tab5_tv_app
+        data:
+          app: "${app}"
+  widgets:
+    - label: { text: "${text}", align: CENTER, text_font: roboto_32_b, text_color: "${color}" }

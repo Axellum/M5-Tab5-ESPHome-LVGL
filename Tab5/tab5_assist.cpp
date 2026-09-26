@@ -33,15 +33,6 @@ static size_t assist_utf8_cp_len(const std::string& s) {
     return n;
 }
 
-// Rogne les espaces/tabs/retours en début et fin.
-static std::string assist_trim(const std::string& s) {
-    const char* ws = " \t\r\n";
-    size_t a = s.find_first_not_of(ws);
-    if (a == std::string::npos) return "";
-    size_t b = s.find_last_not_of(ws);
-    return s.substr(a, b - a + 1);
-}
-
 // Retire les marqueurs Markdown inline (**gras**, __gras__, `code`, *ital*, ~barré~).
 static std::string assist_strip_inline_md(const std::string& in) {
     std::string out;
@@ -71,16 +62,16 @@ static bool assist_is_table_sep(const std::string& line) {
 
 // Éclate une ligne de tableau en cellules (gère les pipes de bord + nettoie chaque cellule).
 static std::vector<std::string> assist_split_cells(const std::string& row) {
-    std::string r = assist_trim(row);
+    std::string r = trim_ws(row);
     if (!r.empty() && r.front() == '|') r.erase(r.begin());
     if (!r.empty() && r.back() == '|') r.pop_back();
     std::vector<std::string> cells;
     std::string cur;
     for (char c : r) {
-        if (c == '|') { cells.push_back(assist_trim(assist_strip_inline_md(cur))); cur.clear(); }
+        if (c == '|') { cells.push_back(trim_ws(assist_strip_inline_md(cur))); cur.clear(); }
         else cur += c;
     }
-    cells.push_back(assist_trim(assist_strip_inline_md(cur)));
+    cells.push_back(trim_ws(assist_strip_inline_md(cur)));
     return cells;
 }
 
@@ -161,7 +152,7 @@ static std::string format_assist_markdown(const std::string& in) {
 
 void assist_set_request(lv_obj_t* lbl_request, const std::string& texte) {
     if (!lbl_request) return;
-    std::string t = assist_trim(normalize_text_utf8(texte));
+    std::string t = trim_ws(normalize_text_utf8(texte));
     lv_label_set_text(lbl_request, t.c_str());
 }
 
@@ -186,13 +177,13 @@ void assist_set_response(lv_obj_t* lbl_response, const std::string& texte,
     lv_label_set_text(lbl_response, t.c_str());
 }
 
-// Surbrillance d'un bouton de taille (bordure ; largeur/opacité changent SANS
-// décaler la position — la bordure LVGL est dessinée à l'intérieur du widget).
-static void assist_style_size_btn(lv_obj_t* btn, bool active) {
-    if (!btn) return;
-    lv_obj_set_style_border_color(btn, lv_color_hex(active ? UIColor::INFO : UIColor::GLASS_RIM), LV_PART_MAIN);
-    lv_obj_set_style_border_opa(btn, active ? LV_OPA_COVER : LV_OPA_40, LV_PART_MAIN);
-    lv_obj_set_style_border_width(btn, active ? 2 : 1, LV_PART_MAIN);
+// Même table que le ternaire qu'elle remplace dans tab5-assist.yaml (lot 7.3 de
+// l'audit du 26/09/2026) : 0 → S, 2 → L, sinon M. assist_apply_text_size() garde
+// sa propre table (≤ 0 → S, 1 → M, sinon L) : identique sur 0/1/2, les seules
+// valeurs que les boutons S/M/L écrivent.
+esphome::font::Font* assist_font(int size_idx,
+    esphome::font::Font* f_s, esphome::font::Font* f_m, esphome::font::Font* f_l) {
+    return size_idx == 0 ? f_s : (size_idx == 2 ? f_l : f_m);
 }
 
 void assist_apply_text_size(lv_obj_t* lbl_response, int size_idx,
@@ -200,9 +191,11 @@ void assist_apply_text_size(lv_obj_t* lbl_response, int size_idx,
     lv_obj_t* btn_s, lv_obj_t* btn_m, lv_obj_t* btn_l) {
     esphome::font::Font* f = (size_idx <= 0) ? f_s : (size_idx == 1 ? f_m : f_l);
     if (lbl_response && f) esphome::lvgl::lv_obj_set_style_text_font(lbl_response, f, LV_PART_MAIN);
-    assist_style_size_btn(btn_s, size_idx <= 0);
-    assist_style_size_btn(btn_m, size_idx == 1);
-    assist_style_size_btn(btn_l, size_idx >= 2);
+    // Bouton de la taille active : bordure INFO 2 px (dessinée à l'intérieur du
+    // widget, la position ne bouge pas).
+    highlight_button_border(btn_s, size_idx <= 0, UIColor::INFO);
+    highlight_button_border(btn_m, size_idx == 1, UIColor::INFO);
+    highlight_button_border(btn_l, size_idx >= 2, UIColor::INFO);
 }
 
 // Couleur + libellé d'un état du pipeline (mêmes valeurs que les 5 anciens blocs).
@@ -241,13 +234,13 @@ void assist_image_state_ui(lv_obj_t* hint, lv_obj_t* img, AssistImage st) {
     if (st == AssistImage::LOADING)    text = "Chargement image...";
     else if (st == AssistImage::ERROR) text = "Image indisponible";
     if (img != nullptr) {
-        if (st == AssistImage::READY) lv_obj_clear_flag(img, LV_OBJ_FLAG_HIDDEN);
+        if (st == AssistImage::READY) lv_obj_remove_flag(img, LV_OBJ_FLAG_HIDDEN);
         else                          lv_obj_add_flag(img, LV_OBJ_FLAG_HIDDEN);
     }
     if (hint != nullptr) {
         if (text != nullptr) {
             lv_label_set_text(hint, text);
-            lv_obj_clear_flag(hint, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(hint, LV_OBJ_FLAG_HIDDEN);
         } else {
             lv_obj_add_flag(hint, LV_OBJ_FLAG_HIDDEN);
         }

@@ -11,12 +11,17 @@
 #       sous-titre : la barre de titre est identique pour tous les popups (ADR-0009).
 # @architecture_constraint DEUX chemins distincts, à ne pas confondre :
 #       1. Touches physiques (fléches, volume, lecture, source, menu…) →
-#          remote.send_command / remote.toggle sur ${entity_tv_remote}.
+#          script.tab5_tv_key (tab5-scripts.yaml : remote.send_command sur
+#          ${entity_tv_remote}) ; Marche / Arrêt = remote.toggle, en ligne ici.
 #       2. Lancement d'une APPLICATION → script.tab5_tv_app (HA), qui traduit un
 #          nom court en app_id Tizen et fait un POST REST sur la TV.
 #       `media_player.select_source` ne vaut QUE pour "TV" et "HDMI" (les seules
 #       entrées du source_list) et `media_player.play_media` type `app` échoue
 #       en SILENCE sur ce firmware 2022. Voir packages/tab5_tv.yaml côté HA.
+# @ai_instruction Gabarits (lot 7.3 de l'audit, 26/09/2026) : tv_pad_btn.yaml (flèches),
+#       tv_transport_btn.yaml (lecture/retour/accueil), tv_app_btn.yaml (raccourcis).
+#       Les touches à géométrie ou couleur propre (Marche/Arrêt, Source, Menu, OK,
+#       Pause, volume, Muet, CANAL+) restent écrites ici.
 # ═══════════════════════════════════════════════════════
 obj:
   id: tv_remote_popup
@@ -27,7 +32,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(tv_remote_popup), nullptr);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(tv_remote_popup));" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -39,7 +44,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F07C0", icon_color: "color_info", title: "Télécommande TV", title_id: "popup_tv_title", close_btn_id: "btn_tv_close", close_lambda: "animate_popup_close(id(tv_remote_popup), nullptr);" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F07C0", icon_color: "color_info", title: "Télécommande TV", title_id: "popup_tv_title", close_btn_id: "btn_tv_close", close_lambda: "animate_popup_close(id(tv_remote_popup));" } }
 
           # ═══ CORPS — grille (laisse place à la rangée basse) ═══
           - obj:
@@ -91,11 +96,7 @@ obj:
                           pressed:
                             bg_opa: 30%
                           on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_SOURCE"
+                            - script.execute: { id: tab5_tv_key, touche: "KEY_SOURCE" }
                           widgets:
                             - label: { text: "\U000F0379", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_info }
                             - label: { text: "Source", align: LEFT_MID, x: 82 }
@@ -108,11 +109,7 @@ obj:
                           pressed:
                             bg_opa: 30%
                           on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_MENU"
+                            - script.execute: { id: tab5_tv_key, touche: "KEY_MENU" }
                           widgets:
                             - label: { text: "\U000F035C", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_text_dim }
                             - label: { text: "Menu", align: LEFT_MID, x: 82 }
@@ -155,78 +152,11 @@ obj:
                           styles: style_meteo_card
                           scrollable: false
                           widgets:
-                            - button:
-                                align: TOP_MID
-                                y: 18
-                                width: 138
-                                height: 100
-                                radius: 36
-                                styles: style_invisible
-                                bg_color: color_accent
-                                pressed:
-                                  bg_opa: 25%
-                                on_short_click:
-                                  - homeassistant.service:
-                                      service: remote.send_command
-                                      data:
-                                        entity_id: ${entity_tv_remote}
-                                        command: "KEY_UP"
-                                widgets:
-                                  - label: { text: "\U000F005D", align: CENTER, text_font: mdi_font_45 }
-                            - button:
-                                align: BOTTOM_MID
-                                y: -18
-                                width: 138
-                                height: 100
-                                radius: 36
-                                styles: style_invisible
-                                bg_color: color_accent
-                                pressed:
-                                  bg_opa: 25%
-                                on_short_click:
-                                  - homeassistant.service:
-                                      service: remote.send_command
-                                      data:
-                                        entity_id: ${entity_tv_remote}
-                                        command: "KEY_DOWN"
-                                widgets:
-                                  - label: { text: "\U000F0045", align: CENTER, text_font: mdi_font_45 }
-                            - button:
-                                align: LEFT_MID
-                                x: 18
-                                width: 100
-                                height: 138
-                                radius: 36
-                                styles: style_invisible
-                                bg_color: color_accent
-                                pressed:
-                                  bg_opa: 25%
-                                on_short_click:
-                                  - homeassistant.service:
-                                      service: remote.send_command
-                                      data:
-                                        entity_id: ${entity_tv_remote}
-                                        command: "KEY_LEFT"
-                                widgets:
-                                  - label: { text: "\U000F004D", align: CENTER, text_font: mdi_font_45 }
-                            - button:
-                                align: RIGHT_MID
-                                x: -18
-                                width: 100
-                                height: 138
-                                radius: 36
-                                styles: style_invisible
-                                bg_color: color_accent
-                                pressed:
-                                  bg_opa: 25%
-                                on_short_click:
-                                  - homeassistant.service:
-                                      service: remote.send_command
-                                      data:
-                                        entity_id: ${entity_tv_remote}
-                                        command: "KEY_RIGHT"
-                                widgets:
-                                  - label: { text: "\U000F0054", align: CENTER, text_font: mdi_font_45 }
+                            # Flèches ↑ ↓ ← → : gabarit tv_pad_btn.yaml (un seul décalage par flèche, sur `axis`)
+                            - !include { file: tv_pad_btn.yaml, vars: { align: TOP_MID, axis: "y", offset: 18, w: 138, h: 100, touche: "KEY_UP", icon: "\U000F005D" } }
+                            - !include { file: tv_pad_btn.yaml, vars: { align: BOTTOM_MID, axis: "y", offset: -18, w: 138, h: 100, touche: "KEY_DOWN", icon: "\U000F0045" } }
+                            - !include { file: tv_pad_btn.yaml, vars: { align: LEFT_MID, axis: "x", offset: 18, w: 100, h: 138, touche: "KEY_LEFT", icon: "\U000F004D" } }
+                            - !include { file: tv_pad_btn.yaml, vars: { align: RIGHT_MID, axis: "x", offset: -18, w: 100, h: 138, touche: "KEY_RIGHT", icon: "\U000F0054" } }
                             - button:
                                 align: CENTER
                                 width: 148
@@ -236,11 +166,7 @@ obj:
                                 pressed:
                                   bg_opa: 45%
                                 on_short_click:
-                                  - homeassistant.service:
-                                      service: remote.send_command
-                                      data:
-                                        entity_id: ${entity_tv_remote}
-                                        command: "KEY_ENTER"
+                                  - script.execute: { id: tab5_tv_key, touche: "KEY_ENTER" }
                                 widgets:
                                   - label: { text: "OK", align: CENTER, text_font: roboto_45_b }
 
@@ -264,23 +190,8 @@ obj:
                           styles: style_transparent
                           scrollable: false
                           widgets:
-                            - button:
-                                x: 0
-                                width: 121
-                                height: 100
-                                radius: 18
-                                styles: style_clim_btn
-                                pressed:
-                                  bg_opa: 30%
-                                on_short_click:
-                                  - homeassistant.service:
-                                      service: remote.send_command
-                                      data:
-                                        entity_id: ${entity_tv_remote}
-                                        command: "KEY_PLAY"
-                                widgets:
-                                  - label: { text: "\U000F040A", align: CENTER, y: -16, text_font: mdi_font_45, text_color: color_success }
-                                  - label: { text: "Lecture", align: CENTER, y: 26 }
+                            - !include { file: tv_transport_btn.yaml, vars: { x: 0, touche: "KEY_PLAY", icon: "\U000F040A", icon_color: "color_success", text: "Lecture" } }
+                            # Pause : icône sans couleur propre (thème) — hors gabarit, voir tv_transport_btn.yaml
                             - button:
                                 x: 133
                                 width: 121
@@ -290,48 +201,12 @@ obj:
                                 pressed:
                                   bg_opa: 30%
                                 on_short_click:
-                                  - homeassistant.service:
-                                      service: remote.send_command
-                                      data:
-                                        entity_id: ${entity_tv_remote}
-                                        command: "KEY_PAUSE"
+                                  - script.execute: { id: tab5_tv_key, touche: "KEY_PAUSE" }
                                 widgets:
                                   - label: { text: "\U000F03E4", align: CENTER, y: -16, text_font: mdi_font_45 }
                                   - label: { text: "Pause", align: CENTER, y: 26 }
-                            - button:
-                                x: 266
-                                width: 121
-                                height: 100
-                                radius: 18
-                                styles: style_clim_btn
-                                pressed:
-                                  bg_opa: 30%
-                                on_short_click:
-                                  - homeassistant.service:
-                                      service: remote.send_command
-                                      data:
-                                        entity_id: ${entity_tv_remote}
-                                        command: "KEY_RETURN"
-                                widgets:
-                                  - label: { text: "\U000F054C", align: CENTER, y: -16, text_font: mdi_font_45, text_color: color_text_dim }
-                                  - label: { text: "Retour", align: CENTER, y: 26 }
-                            - button:
-                                x: 399
-                                width: 121
-                                height: 100
-                                radius: 18
-                                styles: style_clim_btn
-                                pressed:
-                                  bg_opa: 30%
-                                on_short_click:
-                                  - homeassistant.service:
-                                      service: remote.send_command
-                                      data:
-                                        entity_id: ${entity_tv_remote}
-                                        command: "KEY_HOME"
-                                widgets:
-                                  - label: { text: "\U000F02DC", align: CENTER, y: -16, text_font: mdi_font_45, text_color: color_text_dim }
-                                  - label: { text: "Accueil", align: CENTER, y: 26 }
+                            - !include { file: tv_transport_btn.yaml, vars: { x: 266, touche: "KEY_RETURN", icon: "\U000F054C", icon_color: "color_text_dim", text: "Retour" } }
+                            - !include { file: tv_transport_btn.yaml, vars: { x: 399, touche: "KEY_HOME", icon: "\U000F02DC", icon_color: "color_text_dim", text: "Accueil" } }
 
                 # ── Colonne droite (290 px) — rocker volume centré dans la colonne ──
                 # (plus de conteneur de centrage : 145 - 75 = 70 px du bord droit)
@@ -355,11 +230,7 @@ obj:
                           pressed:
                             bg_opa: 25%
                           on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_VOLUP"
+                            - script.execute: { id: tab5_tv_key, touche: "KEY_VOLUP" }
                           widgets:
                             - label: { text: "\U000F0415", align: CENTER, y: 8, text_font: mdi_font_45 }
                       # [AI-CONTEXT] Ce creneau portait un simple libelle
@@ -381,11 +252,7 @@ obj:
                           pressed:
                             bg_opa: 25%
                           on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_MUTE"
+                            - script.execute: { id: tab5_tv_key, touche: "KEY_MUTE" }
                           widgets:
                             - label: { text: "\U000F0581", align: CENTER, text_font: mdi_font_45, text_color: color_warning }
                       - button:
@@ -399,11 +266,7 @@ obj:
                           pressed:
                             bg_opa: 25%
                           on_short_click:
-                            - homeassistant.service:
-                                service: remote.send_command
-                                data:
-                                  entity_id: ${entity_tv_remote}
-                                  command: "KEY_VOLDOWN"
+                            - script.execute: { id: tab5_tv_key, touche: "KEY_VOLDOWN" }
                           widgets:
                             - label: { text: "\U000F0374", align: CENTER, y: -6, text_font: mdi_font_45 }
 
@@ -433,53 +296,12 @@ obj:
               styles: style_transparent
               scrollable: false
               widgets:
-                - button:
-                    x: 0
-                    width: 221
-                    height: 102
-                    radius: 18
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: script.tab5_tv_app
-                          data:
-                            app: "netflix"
-                    widgets:
-                      - label: { text: "Netflix", align: CENTER, text_font: roboto_32_b, text_color: color_error }
-                - button:
-                    x: 237
-                    width: 221
-                    height: 102
-                    radius: 18
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: script.tab5_tv_app
-                          data:
-                            app: "prime"
-                    widgets:
-                      # « Prime » et non « Prime Video » : en roboto_32_b le nom
-                      # complet fait ~198 px pour 189 px utiles dans le bouton.
-                      - label: { text: "Prime", align: CENTER, text_font: roboto_32_b, text_color: color_info }
-                - button:
-                    x: 474
-                    width: 221
-                    height: 102
-                    radius: 18
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: script.tab5_tv_app
-                          data:
-                            app: "youtube"
-                    widgets:
-                      - label: { text: "YouTube", align: CENTER, text_font: roboto_32_b, text_color: color_warning }
+                - !include { file: tv_app_btn.yaml, vars: { x: 0, app: "netflix", text: "Netflix", color: "color_error" } }
+                # « Prime » et non « Prime Video » : en roboto_32_b le nom
+                # complet fait ~198 px pour 189 px utiles dans le bouton.
+                - !include { file: tv_app_btn.yaml, vars: { x: 237, app: "prime", text: "Prime", color: "color_info" } }
+                - !include { file: tv_app_btn.yaml, vars: { x: 474, app: "youtube", text: "YouTube", color: "color_warning" } }
+                # CANAL+ : libellé sans couleur propre (thème) — hors gabarit, voir tv_app_btn.yaml
                 - button:
                     x: 711
                     width: 221
@@ -504,18 +326,4 @@ obj:
                 # la prise a la touche, via le meme point d'entree HA que les
                 # apps : la correspondance PC -> HDMI1 vit dans tab5_tv.yaml,
                 # donc un cable deplace se corrige SANS recompiler ni reflasher.
-                - button:
-                    x: 948
-                    width: 221
-                    height: 102
-                    radius: 18
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - homeassistant.service:
-                          service: script.tab5_tv_app
-                          data:
-                            app: "pc"
-                    widgets:
-                      - label: { text: "PC", align: CENTER, text_font: roboto_32_b, text_color: color_success }
+                - !include { file: tv_app_btn.yaml, vars: { x: 948, app: "pc", text: "PC", color: "color_success" } }

@@ -58,6 +58,17 @@ void cal_cache_evict_distant(int year, int month) {
     }
 }
 
+// Seul calcul « mois ± delta » du calendrier (navigation ◀/▶, préchargement des
+// mois adjacents au rendu et au boot) : avant le lot 7.3 de l'audit du 26/09/2026,
+// il était recopié cinq fois dans tab5-calendar.yaml. L'année suit le passage
+// janvier ↔ décembre. Mois attendu dans 1..12 (les seules valeurs que la vue
+// stocke : SNTP ou ce calcul lui-même).
+void cal_shift_month(int& year, int& month, int delta) {
+    month += delta;
+    while (month < 1)  { month += 12; year--; }
+    while (month > 12) { month -= 12; year++; }
+}
+
 void cal_store_month_data(const std::string& annee, const std::string& mois,
     const std::string& codes, const std::string& heures, const std::string& details) {
     const int y = atoi(annee.c_str());
@@ -221,9 +232,9 @@ void cal_render_month(CalCellUI cells[42], lv_obj_t* lbl_month,
         lv_obj_set_style_border_opa(c.cell,
             is_today ? LV_OPA_COVER : LV_OPA_TRANSP, LV_PART_MAIN);
 
-        if (code & CAL_BIT_RDV) lv_obj_clear_flag(c.dot, LV_OBJ_FLAG_HIDDEN);
+        if (code & CAL_BIT_RDV) lv_obj_remove_flag(c.dot, LV_OBJ_FLAG_HIDDEN);
         else lv_obj_add_flag(c.dot, LV_OBJ_FLAG_HIDDEN);
-        if (code & CAL_BIT_ANNIV) lv_obj_clear_flag(c.dot2, LV_OBJ_FLAG_HIDDEN);
+        if (code & CAL_BIT_ANNIV) lv_obj_remove_flag(c.dot2, LV_OBJ_FLAG_HIDDEN);
         else lv_obj_add_flag(c.dot2, LV_OBJ_FLAG_HIDDEN);
     }
 }
@@ -262,13 +273,13 @@ void cal_show_day_detail_loading(lv_obj_t* day_popup, lv_obj_t* lbl_title,
 
     lv_label_set_text(lbl_status,
         ha_online ? "Chargement..." : "Home Assistant hors ligne");
-    lv_obj_clear_flag(lbl_status, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(lbl_status, LV_OBJ_FLAG_HIDDEN);
     for (int i = 0; i < 6; i++) {
         if (lines[i].icon) lv_obj_add_flag(lines[i].icon, LV_OBJ_FLAG_HIDDEN);
         if (lines[i].txt) lv_obj_add_flag(lines[i].txt, LV_OBJ_FLAG_HIDDEN);
     }
-    lv_obj_clear_flag(day_popup, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_move_foreground(day_popup);
+    lv_obj_remove_flag(day_popup, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_move_to_index(day_popup, -1);
 }
 
 void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
@@ -296,8 +307,8 @@ void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
             lv_obj_set_style_text_color(lines[line_count].icon, lv_color_hex(color), LV_PART_MAIN);
             const std::string txt = normalize_text_utf8(std::string(sep + 1));
             set_label_text_utf8(lines[line_count].txt, txt.c_str());
-            lv_obj_clear_flag(lines[line_count].icon, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_clear_flag(lines[line_count].txt, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(lines[line_count].icon, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(lines[line_count].txt, LV_OBJ_FLAG_HIDDEN);
             line_count++;
         }
         tok = strtok_r(nullptr, ";", &saveptr);
@@ -310,7 +321,7 @@ void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
 
     if (line_count == 0) {
         lv_label_set_text(lbl_status, "Rien de pr\xC3\xA9vu ce jour");
-        lv_obj_clear_flag(lbl_status, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(lbl_status, LV_OBJ_FLAG_HIDDEN);
     } else {
         lv_obj_add_flag(lbl_status, LV_OBJ_FLAG_HIDDEN);
     }
