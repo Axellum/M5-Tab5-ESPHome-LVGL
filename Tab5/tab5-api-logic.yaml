@@ -144,8 +144,9 @@ api:
               - micro_wake_word.enable_model:
                   id: stop
             else:
-              - micro_wake_word.disable_model:
-                  id: stop
+              # Pas de désarmement direct : la poussée arrive toutes les 10 min,
+              # y compris pendant une sonnerie du réveil (audit du 26/09/2026, §2.1).
+              - script.execute: tab5_stop_model_release
 
     - service: tab5_maj_clim
       description: "État de la climatisation du salon : carte d'accueil et popup."

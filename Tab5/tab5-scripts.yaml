@@ -70,12 +70,7 @@ script:
       - globals.set:
           id: volet_en_mouvement
           value: 'false'
-      - if:
-          condition:
-            lambda: 'return !id(va_stop_armed);'
-          then:
-            - micro_wake_word.disable_model:
-                id: stop
+      - script.execute: tab5_stop_model_release
 
   # Stop vocal local : annule un pipeline Okay Nabu en cours + TTS court (évite « aucune réponse reçue »).
   - id: tab5_volet_stop_voice_feedback

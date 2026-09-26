@@ -187,6 +187,12 @@ static void test_heure_fixe_jours_coches() {
     now = now_is(at(2026, 9, 27, 22, 0));
     expect_str(alarm_next_label(now), "Demain 07:00", "dimanche soir → « Demain »");
 
+    // Détail du popup : « 1er » pour le premier du mois (audit du 26/09/2026, §2.2 —
+    // le détail refaisait son propre libellé et écrivait « jeudi 1 octobre »).
+    now = now_is(at(2026, 9, 30, 20, 0));  // mercredi soir → jeudi 1er octobre
+    expect_str(alarm_next_detail(now), "jeudi 1er octobre \xC2\xB7 en attente du calendrier",
+               "détail : « 1er » pour le premier du mois");
+
     g_alarm_cfg.enabled = false;
     alarm_invalidate();
     expect(alarm_next_ring(now) == 0, "réveil éteint : aucune sonnerie");
