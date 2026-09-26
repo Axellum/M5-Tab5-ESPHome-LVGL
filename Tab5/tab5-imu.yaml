@@ -11,8 +11,9 @@
 #     remontent à HA, fortement throttlés (diagnostic, pas télémétrie).
 # @ai_instruction Ne pas modifier l'adresse I2C ni le bus. Ne pas retirer
 #     `internal: true` des axes d'accélération. La cadence de poll est pilotée
-#     dynamiquement par l'interval en bas de fichier : 100 ms au repos,
-#     33 ms quand le jeu est ouvert. Ne pas la figer.
+#     dynamiquement par l'interval en bas de fichier : 1 s écran allumé sans jeu,
+#     100 ms écran éteint (tap-to-wake) ou jeu ouvert, 33 ms pour un jeu
+#     `imu_fast`. Ne pas la figer.
 # ============================================================================
 
 # --- Plateforme motion (BMI270) ---
@@ -80,12 +81,19 @@ sensor:
             }
 
   # --- Diagnostic HA : orientation + température, throttlés ------------------
+  # Publiés seulement quand la valeur bouge vraiment (audit du 26/09/2026, lot 3) :
+  # à 2 décimales, le bruit changeait la valeur à chaque minute — ≈ 60 lignes/h
+  # chacun dans la base HA pour une tablette posée. Un point au moins toutes les
+  # 15 min (throttle du `or`) garde les tuiles et l'historique vivants.
   - platform: motion
     type: pitch
     name: "Tab5 Pitch"
     id: imu_pitch
     filters:
       - throttle: 60s
+      - or:
+          - throttle: 15min
+          - delta: 2.0
 
   - platform: motion
     type: roll
@@ -93,12 +101,18 @@ sensor:
     id: imu_roll
     filters:
       - throttle: 60s
+      - or:
+          - throttle: 15min
+          - delta: 2.0
 
   - platform: bmi270
     name: "Tab5 IMU Temperature"
     id: imu_temp
     filters:
       - throttle: 60s
+      - or:
+          - throttle: 15min
+          - delta: 0.5
 
 # --- Switch : activer/désactiver le tap-to-wake ---
 switch:
@@ -109,8 +123,10 @@ switch:
     restore_mode: RESTORE_DEFAULT_ON
 
 # --- Cadence de poll adaptative -------------------------------------------
-# Le jeu a besoin d'une entrée réactive (~30 Hz) ; le reste du temps 10 Hz
-# suffit largement au tap-to-wake. `set_update_interval()` seul ne suffit pas :
+# Le jeu a besoin d'une entrée réactive (~30 Hz) ; écran éteint, 10 Hz suffit
+# largement au tap-to-wake ; écran allumé sans jeu, l'IMU ne sert plus qu'au
+# diagnostic (tangage, roulis, température) : 1 Hz (audit du 26/09/2026, lot 3 :
+# 24 octets lus sur bsp_bus à chaque lecture). `set_update_interval()` seul ne suffit pas :
 # PollingComponent enregistre son interval une fois pour toutes dans
 # call_setup(), il faut donc relancer le poller pour que la nouvelle valeur
 # prenne effet (stop_poller/start_poller sont publics et prévus pour ça).
@@ -120,7 +136,7 @@ interval:
   - interval: 1s
     then:
       - lambda: |-
-          static bool fast = false;
+          static uint32_t cur = 100;   // update_interval du composant, plus haut
           // Quelles consoles justifient 30 Hz : c'est le drapeau `imu_fast` de
           // GameRegistry::kGames (tab5_registry.cpp). « Roi Noir », « Dames » et
           // « Go Tab » l'ont à false : ils n'utilisent l'IMU que pour détecter
@@ -129,9 +145,14 @@ interval:
           // « Neon Apron » l'a à true : un nudge est une secousse de ~150 ms, à
           // 10 Hz on n'en verrait qu'un échantillon sur deux et le passe-haut
           // raterait la moitié des coups de hanche.
-          bool want = GameRegistry::any_imu_fast_open();
-          if (want == fast) return;
-          fast = want;
-          id(tab5_imu).set_update_interval(want ? 33 : 100);
+          // Écran éteint : on écoute le tap-to-wake (s'il est activé). Un jeu
+          // ouvert (« Dames », « Go », « Trial Poursuite ») lit une secousse à 10 Hz.
+          uint32_t want = 1000;
+          if (GameRegistry::any_imu_fast_open()) want = 33;
+          else if (GameRegistry::any_open()) want = 100;
+          else if (!id(backlight).current_values.is_on() && id(tab5_tap_to_wake).state) want = 100;
+          if (want == cur) return;
+          cur = want;
+          id(tab5_imu).set_update_interval(want);
           id(tab5_imu).stop_poller();
           id(tab5_imu).start_poller();

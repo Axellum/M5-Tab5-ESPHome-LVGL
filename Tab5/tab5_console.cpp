@@ -43,21 +43,21 @@ void update_console_uptime_label(lv_obj_t* label, float uptime_s) {
     } else {
         snprintf(buf, sizeof(buf), "%02dh%02d", hours, mins);
     }
-    lv_label_set_text(label, buf);
+    ui_text(label, buf);
 }
 
 void update_console_rssi_label(lv_obj_t* label, float rssi_dbm) {
     if (label == nullptr) return;
     char buf[16];
     snprintf(buf, sizeof(buf), "%.0f dBm", rssi_dbm);
-    lv_label_set_text(label, buf);
+    ui_text(label, buf);
 }
 
 void update_console_temp_label(lv_obj_t* label, float core_temp_c) {
     if (label == nullptr) return;
     char buf[16];
     snprintf(buf, sizeof(buf), "%.1f \xC2\xB0", core_temp_c);
-    lv_label_set_text(label, buf);
+    ui_text(label, buf);
 }
 
 void refresh_console_status_row_ui(lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_obj_t* lbl_temp,
@@ -80,7 +80,7 @@ void ui_sync_volume_widgets(lv_obj_t* slider_console, lv_obj_t* lbl_console_pct,
     if (lbl_console_pct != nullptr) {
         char buf[8];
         snprintf(buf, sizeof(buf), "%d%%", pct);
-        lv_label_set_text(lbl_console_pct, buf);
+        ui_text(lbl_console_pct, buf);
     }
 }
 
@@ -91,8 +91,8 @@ void ui_sync_mute_icons(lv_obj_t* icon_main, lv_obj_t* icon_assist, bool muted) 
     const uint32_t color = muted ? UIColor::ERROR : UIColor::TEXT_SOFT;
     for (lv_obj_t* icon : {icon_main, icon_assist}) {
         if (icon == nullptr) continue;
-        lv_label_set_text(icon, glyph);
-        lv_obj_set_style_text_color(icon, lv_color_hex(color), LV_PART_MAIN);
+        ui_text(icon, glyph);
+        ui_text_color(icon, color);
     }
 }
 
@@ -129,11 +129,11 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
         int psram_pct = (int)((psram_used / psram_total) * 100.0f);
 
         char b_sram[32]; snprintf(b_sram, sizeof(b_sram), "%d%% (%.1f KB)", sram_pct, sram_used);
-        lv_label_set_text(lbl_sram, b_sram);
+        ui_text(lbl_sram, b_sram);
         lv_bar_set_value(bar_sram, sram_pct, LV_ANIM_ON);
 
         char b_psram[32]; snprintf(b_psram, sizeof(b_psram), "%d%% (%.2f MB)", psram_pct, psram_used);
-        lv_label_set_text(lbl_psram, b_psram);
+        ui_text(lbl_psram, b_psram);
         lv_bar_set_value(bar_psram, psram_pct, LV_ANIM_ON);
 
         auto set_bar_color = [](lv_obj_t* bar, int pct) {
@@ -147,22 +147,22 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
         set_bar_color(bar_psram, psram_pct);
 
         char b_frag[32]; snprintf(b_frag, sizeof(b_frag), "%.1f KB", frag);
-        lv_label_set_text(lbl_frag, b_frag);
-        lv_label_set_text(lbl_flash, "16.0 MB");
+        ui_text(lbl_frag, b_frag);
+        ui_text(lbl_flash, "16.0 MB");
     }
 
     if (loop_time_has_state && lbl_loop != nullptr) {
         char buf[32];
         snprintf(buf, sizeof(buf), "%.0f ms", loop_time);
-        lv_label_set_text(lbl_loop, buf);
+        ui_text(lbl_loop, buf);
     }
 
     if (wifi_ip_has_state && lbl_ip != nullptr) {
-        lv_label_set_text(lbl_ip, wifi_ip);
+        ui_text(lbl_ip, wifi_ip);
     }
 
     if (wifi_ssid_has_state && lbl_ssid != nullptr) {
-        lv_label_set_text(lbl_ssid, wifi_ssid);
+        ui_text(lbl_ssid, wifi_ssid);
     }
 }
 
@@ -171,8 +171,8 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
 // affiché par le bouton Redémarrer HA.
 void update_console_ha_status_ui(lv_obj_t* lbl, bool ha_ok) {
     if (lbl == nullptr) return;
-    lv_label_set_text(lbl, ha_ok ? "Connecte" : "Hors ligne");
-    lv_obj_set_style_text_color(lbl, lv_color_hex(ha_ok ? UIColor::SUCCESS : UIColor::ERROR), LV_PART_MAIN);
+    ui_text(lbl, ha_ok ? "Connecte" : "Hors ligne");
+    ui_text_color(lbl, ha_ok ? UIColor::SUCCESS : UIColor::ERROR);
 }
 
 // =============================================================================

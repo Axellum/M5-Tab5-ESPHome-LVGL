@@ -33,17 +33,17 @@ void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* i
     if (icon_room == nullptr || icon_light == nullptr) return;
 
     uint32_t color = is_on ? UIColor::INFO : UIColor::TEXT_DIM;
-    lv_obj_set_style_text_color(icon_room, lv_color_hex(color), LV_PART_MAIN);
-    lv_obj_set_style_text_color(icon_light, lv_color_hex(color), LV_PART_MAIN);
-    lv_label_set_text(icon_light, is_on ? "\U000F06E8" : "\U000F0335");
+    ui_text_color(icon_room, color);
+    ui_text_color(icon_light, color);
+    ui_text(icon_light, is_on ? "\U000F06E8" : "\U000F0335");
 
     if (icon_switch != nullptr && lbl_switch_state != nullptr) {
-        lv_obj_set_style_text_color(icon_switch, lv_color_hex(color), LV_PART_MAIN);
-        lv_label_set_text(lbl_switch_state, is_on ? "Allumé" : "Éteint");
-        lv_obj_set_style_text_color(lbl_switch_state, lv_color_hex(color), LV_PART_MAIN);
+        ui_text_color(icon_switch, color);
+        ui_text(lbl_switch_state, is_on ? "Allumé" : "Éteint");
+        ui_text_color(lbl_switch_state, color);
     }
     if (btn_power_icon != nullptr && current_light_entity == this_entity) {
-        lv_obj_set_style_text_color(btn_power_icon, lv_color_hex(color), LV_PART_MAIN);
+        ui_text_color(btn_power_icon, color);
     }
 }
 
@@ -58,12 +58,12 @@ void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* i
 void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target) {
     if (lbl_target == nullptr) return;
     if (std::isnan(target)) {
-        lv_label_set_text(lbl_target, "--");
+        ui_text(lbl_target, "--");
         return;
     }
     char buf[8];
     snprintf(buf, sizeof(buf), "%.1f", target);
-    lv_label_set_text(lbl_target, buf);
+    ui_text(lbl_target, buf);
     if (arc != nullptr) lv_arc_set_value(arc, (int) target);
 }
 
@@ -74,8 +74,8 @@ void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target) {
 
 void update_light_selector_icon(lv_obj_t* icon, bool is_on) {
     if (icon == nullptr) return;
-    lv_obj_set_style_text_color(icon,
-        lv_color_hex(is_on ? UIColor::INFO : UIColor::TEXT_DIM), LV_PART_MAIN);
+    ui_text_color(icon,
+        is_on ? UIColor::INFO : UIColor::TEXT_DIM);
 }
 
 // Ecrit "NN %" dans pct_lbl et positionne l'arc — helper interne commun.
@@ -85,7 +85,7 @@ static void set_light_arc_and_label(lv_obj_t* arc, lv_obj_t* pct_lbl, int arcv) 
     lv_arc_set_value(arc, arcv);
     char buf[8];
     snprintf(buf, sizeof(buf), "%d %%", arcv * 100 / 255);
-    lv_label_set_text(pct_lbl, buf);
+    ui_text(pct_lbl, buf);
 }
 
 void sync_light_popup_brightness(lv_obj_t* popup, lv_obj_t* arc, lv_obj_t* pct_lbl,
@@ -109,7 +109,7 @@ void show_light_popup_ui(int light_idx, const char* const titles[3],
     if (popup == nullptr || title_lbl == nullptr || arc == nullptr || pct_lbl == nullptr) return;
     if (light_idx < 0 || light_idx > 2) return;
 
-    lv_label_set_text(title_lbl, titles[light_idx]);
+    ui_text(title_lbl, titles[light_idx]);
 
     lv_obj_t* btns[3]  = { btn0, btn1, btn2 };
     lv_obj_t* icons[3] = { icon0, icon1, icon2 };
@@ -124,8 +124,8 @@ void show_light_popup_ui(int light_idx, const char* const titles[3],
     }
 
     if (power_icon != nullptr) {
-        lv_obj_set_style_text_color(power_icon,
-            lv_color_hex(is_on[light_idx] ? UIColor::INFO : UIColor::TEXT_DIM), LV_PART_MAIN);
+        ui_text_color(power_icon,
+            is_on[light_idx] ? UIColor::INFO : UIColor::TEXT_DIM);
     }
 
     // Lumiere eteinte : l'arc affiche 0 (l'attribut brightness HA est NAN ou obsolete)
@@ -199,29 +199,29 @@ void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
     for (int s = 0; s < 4; s++) {
         if (selected[s] < 0 || selected[s] >= n_valid) {
             // Slot vide (pas assez de capteurs)
-            lv_label_set_text(slots[s].val_lbl, "");
-            lv_obj_set_style_text_color(slots[s].icon_lbl, lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-            lv_obj_set_style_text_color(slots[s].val_lbl, lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
+            ui_text(slots[s].val_lbl, "");
+            ui_text_color(slots[s].icon_lbl, UIColor::INACTIVE);
+            ui_text_color(slots[s].val_lbl, UIColor::INACTIVE);
             continue;
         }
 
         Entry& e = valid[selected[s]];
         // Icone du capteur d'origine
-        lv_label_set_text(slots[s].icon_lbl, icons_utf8[e.idx]);
+        ui_text(slots[s].icon_lbl, icons_utf8[e.idx]);
 
         // Texte sous l'icone : "Pot X" ou "Moy:"
         if (s == 2) {
-            lv_label_set_text(slots[s].val_lbl, "Moy:");
+            ui_text(slots[s].val_lbl, "Moy:");
         } else {
             char buf[16];
             snprintf(buf, sizeof(buf), "Pot %d", e.idx + 1);
-            lv_label_set_text(slots[s].val_lbl, buf);
+            ui_text(slots[s].val_lbl, buf);
         }
 
         // Couleur colorimetrique
         uint32_t c = get_humidity_color(e.val);
-        lv_obj_set_style_text_color(slots[s].icon_lbl, lv_color_hex(c), LV_PART_MAIN);
-        lv_obj_set_style_text_color(slots[s].val_lbl, lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+        ui_text_color(slots[s].icon_lbl, c);
+        ui_text_color(slots[s].val_lbl, UIColor::TEXT_DIM);
     }
 }
 
@@ -245,28 +245,28 @@ void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]) 
         }
         const float v = values[i];
         const uint32_t c = get_humidity_color(v);  // NaN -> MOISTURE_NAN (gris)
-        lv_obj_set_style_text_color(cards[i].icon_lbl, lv_color_hex(c), LV_PART_MAIN);
+        ui_text_color(cards[i].icon_lbl, c);
         if (isnan(v)) {
-            lv_label_set_text(cards[i].moist_lbl, "--");
-            lv_obj_set_style_text_color(cards[i].moist_lbl, lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
-            lv_label_set_text(cards[i].status_lbl, "Hors ligne");
-            lv_obj_set_style_text_color(cards[i].status_lbl, lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+            ui_text(cards[i].moist_lbl, "--");
+            ui_text_color(cards[i].moist_lbl, UIColor::INACTIVE);
+            ui_text(cards[i].status_lbl, "Hors ligne");
+            ui_text_color(cards[i].status_lbl, UIColor::TEXT_DIM);
             continue;
         }
         char buf[12];
         snprintf(buf, sizeof(buf), "%.0f %%", v);
-        lv_label_set_text(cards[i].moist_lbl, buf);
-        lv_obj_set_style_text_color(cards[i].moist_lbl, lv_color_hex(c), LV_PART_MAIN);
+        ui_text(cards[i].moist_lbl, buf);
+        ui_text_color(cards[i].moist_lbl, c);
         // Seuils alignes sur get_humidity_color : <=14 = zone rouge (ALERT_RED)
         if (v <= 14.0f) {
-            lv_label_set_text(cards[i].status_lbl, "\xC3\x80 arroser !");
-            lv_obj_set_style_text_color(cards[i].status_lbl, lv_color_hex(UIColor::ERROR), LV_PART_MAIN);
+            ui_text(cards[i].status_lbl, "\xC3\x80 arroser !");
+            ui_text_color(cards[i].status_lbl, UIColor::ERROR);
         } else if (v <= 20.0f) {
-            lv_label_set_text(cards[i].status_lbl, "Bient\xC3\xB4t sec");
-            lv_obj_set_style_text_color(cards[i].status_lbl, lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+            ui_text(cards[i].status_lbl, "Bient\xC3\xB4t sec");
+            ui_text_color(cards[i].status_lbl, UIColor::WARNING);
         } else {
-            lv_label_set_text(cards[i].status_lbl, "OK");
-            lv_obj_set_style_text_color(cards[i].status_lbl, lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
+            ui_text(cards[i].status_lbl, "OK");
+            ui_text_color(cards[i].status_lbl, UIColor::SUCCESS);
         }
     }
 }
@@ -274,8 +274,8 @@ void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]) 
 void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric) {
     if (value_lbl == nullptr) return;
     if (isnan(x)) {
-        lv_label_set_text(value_lbl, "--");
-        lv_obj_set_style_text_color(value_lbl, lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
+        ui_text(value_lbl, "--");
+        ui_text_color(value_lbl, UIColor::INACTIVE);
         return;
     }
     char buf[16];
@@ -296,8 +296,8 @@ void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric) {
             color = get_battery_color(x);
             break;
     }
-    lv_label_set_text(value_lbl, buf);
-    lv_obj_set_style_text_color(value_lbl, lv_color_hex(color), LV_PART_MAIN);
+    ui_text(value_lbl, buf);
+    ui_text_color(value_lbl, color);
 }
 
 // Met a jour un label de temperature (texte + couleur gradient). Factorise
@@ -305,14 +305,14 @@ void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric) {
 void update_temp_ui(lv_obj_t* label, float x) {
     if (label == nullptr) return;
     if (isnan(x)) {
-        lv_label_set_text(label, "-- \xC2\xB0");
-        lv_obj_set_style_text_color(label, lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+        ui_text(label, "-- \xC2\xB0");
+        ui_text_color(label, UIColor::TEXT_DIM);
     } else {
         char buf[32];
         snprintf(buf, sizeof(buf), "%.1f \xC2\xB0", x);
-        lv_label_set_text(label, buf);
+        ui_text(label, buf);
         uint32_t c_int = get_temperature_color(x);
-        lv_obj_set_style_text_color(label, lv_color_hex(c_int), LV_PART_MAIN);
+        ui_text_color(label, c_int);
     }
 }
 
@@ -323,7 +323,7 @@ void update_temp_ui(lv_obj_t* label, float x) {
 
 void set_icon_color_ui(lv_obj_t* icon, uint32_t color) {
     if (icon == nullptr) return;
-    lv_obj_set_style_text_color(icon, lv_color_hex(color), LV_PART_MAIN);
+    ui_text_color(icon, color);
 }
 
 void set_icon_active_ui(lv_obj_t* icon, bool active, uint32_t color_on, uint32_t color_off) {
@@ -336,6 +336,6 @@ void update_pc_status_ui(bool active, lv_obj_t* icon_pc, lv_obj_t* icon_sw, lv_o
     if (icon_sw == nullptr || lbl_sw_state == nullptr) return;
     const uint32_t c = active ? UIColor::SUCCESS : UIColor::TEXT_DIM;
     set_icon_color_ui(icon_sw, c);
-    lv_label_set_text(lbl_sw_state, active ? "Allumé" : "Éteint");
+    ui_text(lbl_sw_state, active ? "Allumé" : "Éteint");
     set_icon_color_ui(lbl_sw_state, c);
 }

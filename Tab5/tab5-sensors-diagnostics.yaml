@@ -114,6 +114,12 @@ sensor:
     id: sys_wifi_rssi
     name: "Tab5 WiFi Signal"
     update_interval: 60s
+    # ≈ 42 lignes/h dans la base HA pour ±1 dB de bruit : publié quand le signal
+    # bouge de 2 dB, et au moins toutes les 15 min pour le graphe (audit 26/09, lot 3).
+    filters:
+      - or:
+          - throttle: 15min
+          - delta: 2.0
     on_value:
       - lambda: |-
           if (!is_console_layer_visible(id(layer_console_sys))) return;

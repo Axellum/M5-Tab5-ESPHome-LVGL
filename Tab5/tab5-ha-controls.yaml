@@ -34,7 +34,10 @@ number:
     min_value: 0
     max_value: 100
     step: 1
-    update_interval: 60s
+    # Publié par tab5_volume_apply (tab5-scripts.yaml), point d'entrée unique de
+    # tous les changements, rattrapage de 5 s compris : le relire chaque minute
+    # renvoyait la même valeur à HA (1 440 messages/jour ; audit 26/09, lot 3).
+    update_interval: never
     lambda: 'return id(system_volume) * 100.0f;'
     set_action:
       - script.execute:

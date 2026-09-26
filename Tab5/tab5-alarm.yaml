@@ -354,10 +354,15 @@ text_sensor:
     icon: mdi:alarm-check
     entity_category: diagnostic
     update_interval: 60s
+    # Recalculé chaque minute, publié seulement s'il change : un text_sensor
+    # republie sinon la même valeur à HA (audit du 26/09/2026, lot 3).
     lambda: |-
+      static std::string last;
       auto t = id(sntp_time).now();
-      if (!t.is_valid()) return {std::string("Heure non synchronisée")};
-      return {alarm_next_label(t.timestamp)};
+      std::string s = t.is_valid() ? alarm_next_label(t.timestamp) : std::string("Heure non synchronisée");
+      if (s == last) return {};
+      last = s;
+      return {s};
 
   - platform: template
     id: tab5_rdv_next_sensor
@@ -366,10 +371,13 @@ text_sensor:
     entity_category: diagnostic
     update_interval: 60s
     lambda: |-
+      static std::string last;
       auto t = id(sntp_time).now();
-      if (!t.is_valid()) return {std::string("—")};
-      const std::string s = rdv_next_label(t.timestamp);
-      return {s.empty() ? std::string("—") : s};
+      std::string s = t.is_valid() ? rdv_next_label(t.timestamp) : std::string();
+      if (s.empty()) s = "—";
+      if (s == last) return {};
+      last = s;
+      return {s};
 
 binary_sensor:
   # Publié explicitement par les scripts (immédiat) ; le lambda de repli couvre

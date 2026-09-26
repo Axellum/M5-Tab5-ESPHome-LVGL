@@ -225,7 +225,7 @@ static void clear_ha_alert_slot(HaAlertSlotUI& slot) {
 }
 
 void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI slots[4],
-    CentralPanelCtx& ctx, esphome::font::Font* font, std::string& dismissed_local) {
+    CentralPanelCtx& ctx, std::string& dismissed_local) {
 
     // 1E : Sauvegarde des IDs precedents pour detecter les nouvelles alertes.
     std::string prev_ids[4];
@@ -286,12 +286,9 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
             *slots[slot_idx].id_store = aid;
             std::string texte = normalize_text_utf8(parts[2]);
             *slots[slot_idx].has_flag = !texte.empty();
-            if (font) {
-                esphome::lvgl::lv_obj_set_style_text_font(slots[slot_idx].lbl, font, LV_PART_MAIN);
-            }
-            lv_obj_set_style_text_color(slots[slot_idx].lbl, lv_color_hex(ha_alert_color_from_couleur(parts[1])), LV_PART_MAIN);
+            ui_text_color(slots[slot_idx].lbl, ha_alert_color_from_couleur(parts[1]));
             lv_label_set_recolor(slots[slot_idx].lbl, false);
-            lv_label_set_text(slots[slot_idx].lbl, texte.c_str());
+            ui_text(slots[slot_idx].lbl, texte.c_str());
             // 1E : Detecte si cette alerte est nouvelle (ID absent du precedent batch).
             if (new_alert_slot < 0) {
                 bool is_new = true;

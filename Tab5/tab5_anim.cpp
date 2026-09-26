@@ -577,7 +577,7 @@ void update_clock_date_ui(lv_obj_t* lbl_date,
         char buf_date[64];
         snprintf(buf_date, sizeof(buf_date), "%s %02d %s", day, day_of_month, clock_month_short_utf8(month));
         lv_label_set_recolor(lbl_date, false);
-        lv_label_set_text(lbl_date, buf_date);
+        ui_text(lbl_date, buf_date);  // appelée chaque minute : ne repeint qu'au changement de jour
     }
 }
 

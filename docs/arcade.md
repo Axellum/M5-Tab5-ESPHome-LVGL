@@ -77,7 +77,7 @@ oubli et le jeu est invisible, ou le firmware ne compile pas :
 4. `tab5_registry.cpp` → une ligne dans **`GameRegistry::kGames`** (libellé,
    `is_open`, `close`, `on_imu`, et `imu_fast` à `true` **uniquement** si le jeu
    pilote à l'inclinaison). C'est la **seule** liste : la fermeture globale
-   (`tab5_games_close_all`), le poll IMU 10/30 Hz, le dispatch des 3 axes et le
+   (`tab5_games_close_all`), le poll IMU 1/10/30 Hz, le dispatch des 3 axes et le
    text_sensor « Écran courant » la lisent tous. `tools/check_tab5_registry.py`
    (joué par `pytest`) échoue si un `*_game.h` n'y figure pas, ou si un
    `<Namespace>::is_open()` réapparaît dans un YAML ;
