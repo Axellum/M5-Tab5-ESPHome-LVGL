@@ -160,10 +160,13 @@
           {% for i in range(15) %}
             {% set target_dt = now() + timedelta(days=i) %}
             {% set target_date = target_dt.strftime('%Y-%m-%d') %}
+            {# Jour seul, SANS date : la page d'accueil (aujourd'hui + 4 jours) l'affiche
+               tel quel ; les deux pages suivantes (jours 5 à 14) calculent elles-mêmes
+               « Lun 05 » via SNTP (tab5_forecast.cpp, format_short_day_label). #}
             {% if i == 0 %}
-              {% set nom_jour = "Auj " ~ target_dt.strftime('%d') %}
+              {% set nom_jour = "Auj" %}
             {% else %}
-              {% set nom_jour = days_names[target_dt.strftime('%w') | int] ~ " " ~ target_dt.strftime('%d') %}
+              {% set nom_jour = days_names[target_dt.strftime('%w') | int] %}
             {% endif %}
             {# .get() et jamais fcasts[i].cle : Météo-France omet des clés en fin de
                plage (templow absent du 15e jour le 18/09/2026) et un accès direct lève

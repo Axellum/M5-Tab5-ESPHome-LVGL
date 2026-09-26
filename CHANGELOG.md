@@ -40,6 +40,10 @@ même. Seul le firmware change pour Draw Max.
   - `tab5_rdv_push` (`packages/tab5_reveil.yaml`) poussait les rendez-vous même
     tablette hors ligne ou pas encore authentifiée, soit 66 erreurs les 25 et 26/09.
     Elle attend maintenant la liaison, comme la poussée complète.
+- **Exemple public aligné sur la prod** pour le libellé des prévisions jours. HA envoie le
+  jour seul (« Auj », « Lun »), affiché tel quel sur la page d'accueil ; les deux pages
+  suivantes ajoutent la date elles-mêmes (« Lun 05 »). Depuis mai, l'exemple envoyait
+  « Lun 05 » partout.
 
 ### 2026-09-26 — Moins de travail permanent : I²C, repeints à l'identique, base HA
 
