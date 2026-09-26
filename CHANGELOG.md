@@ -4,6 +4,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Home Assistant : micro du Tab5 coupé quand personne n'est là (expérience E1)
+
+Expérience E1 de l'audit des ressources du 26/09/2026, demandée par Axel. Aucun
+changement firmware. Déployée sur le HA de production le jour même.
+
+- **Nouveau package `packages/tab5_micro_absence.yaml`** : coupe « Ok Nabu » quand la
+  maison est vide depuis 10 min, le rallume dès le retour. Sans cela, le mot
+  d'activation écoute 24 h/24 : 5 à 15 % d'un cœur, le bus I2S et l'ADC du micro
+  (estimation de l'audit).
+  - Présence lue sur `zone.home`, sans identifiant personnel.
+  - Un « Ok Nabu » coupé à la main reste coupé : seul ce que l'automation a coupé est
+    rallumé (`input_boolean.tab5_micro_coupe_absence`).
+  - Rattrapage à la reconnexion de la tablette et au redémarrage de HA.
+  - Le réveil garde son « Stop » vocal pendant la sonnerie : le firmware arme ce
+    modèle et démarre le micro lui-même, puis rend le micro à l'état de l'interrupteur.
+
 ### 2026-09-26 — Calendrier : grille construite en C++ (−53 Ko de flash)
 
 Lot 8 de l'audit des ressources du 26/09/2026 (point D3). Rien ne change à l'écran.

@@ -1,0 +1,105 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_micro_absence.yaml
+# @role Coupe le micro du Tab5 (« Ok Nabu ») quand personne n'est à la maison, et
+#       le rallume au retour. Expérience E1 de l'audit des ressources du
+#       26/09/2026 : le mot d'activation écoute 24 h/24 (trames de 10 ms, modèle +
+#       détection de voix), soit 5 à 15 % d'un cœur plus le bus I2S et l'ADC du
+#       micro en continu (estimation de l'audit), pour rien quand l'appartement
+#       est vide.
+# @architecture_constraint Aucun changement firmware : on pilote l'interrupteur
+#       « Tab5 Wake Word Active » (switch template ESPHome, restauré au boot).
+#       Coupé, il arrête microWakeWord ; le réveil arme et démarre quand même son
+#       modèle « Stop » pendant la sonnerie, puis rend le micro à l'état de
+#       l'interrupteur (tab5-alarm.yaml, tab5_alarm_ring_start / _ring_loop).
+# @ai_instruction Présence = zone.home (nombre de personnes suivies à la maison) :
+#       aucun identifiant personnel dans ce fichier public. Pour ne suivre qu'une
+#       personne, remplacer zone.home par une condition sur person.<vous>.
+# @ai_warning Respecte un choix manuel : le micro n'est rallumé au retour QUE si
+#       c'est cette automation qui l'a coupé (input_boolean ci-dessous). Un
+#       « Ok Nabu » coupé à la main reste coupé.
+# @install Nécessite l'activation des packages dans configuration.yaml :
+#         homeassistant:
+#           packages: !include_dir_named packages
+#       Puis recharger « Entrées booléennes » et « Automatisations ».
+# ============================================================================
+
+input_boolean:
+  # Vrai tant que le micro est coupé PAR l'absence (et pas à la main). Restauré
+  # après un redémarrage de HA (pas d'`initial:`), comme l'interrupteur côté
+  # tablette.
+  tab5_micro_coupe_absence:
+    name: "Tab5 — micro coupé pour absence"
+    icon: mdi:microphone-off
+
+automation:
+  - id: tab5_micro_absence
+    alias: "Tab5 — couper le micro en absence"
+    description: >-
+      Coupe « Ok Nabu » quand la maison est vide depuis 10 min, le rallume dès le
+      retour s'il avait été coupé par cette automation. Rattrape un départ ou un
+      retour manqué quand la tablette se reconnecte ou que HA redémarre.
+    # Actions courtes et idempotentes : on les enchaîne dans l'ordre d'arrivée.
+    mode: queued
+    max: 5
+    triggers:
+      # 10 min de maison vide : un saut du GPS (téléphone « absent » une minute)
+      # ne coupe rien.
+      - trigger: numeric_state
+        entity_id: zone.home
+        below: 1
+        for: "00:10:00"
+        id: depart
+      # Retour : tout de suite, pour qu'« Ok Nabu » réponde en arrivant.
+      - trigger: numeric_state
+        entity_id: zone.home
+        above: 0
+        id: retour
+      # Tablette reconnectée (redémarrage, OTA, Wi-Fi) ou HA redémarré : l'appel
+      # a pu échouer pendant la coupure, on refait le point.
+      - trigger: state
+        entity_id: binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status
+        to: "on"
+        id: resync
+      - trigger: homeassistant
+        event: start
+        id: resync
+    actions:
+      - choose:
+          # Maison vide et « Ok Nabu » actif : on coupe, et on s'en souvient.
+          # L'interrupteur d'abord : s'il échoue (tablette hors ligne), l'indicateur
+          # n'est pas posé et le rattrapage à la reconnexion recommencera.
+          - conditions:
+              - condition: trigger
+                id: [depart, resync]
+              - condition: numeric_state
+                entity_id: zone.home
+                below: 1
+              - condition: state
+                entity_id: switch.m5stack_tab5_home_assistant_hmi_tab5_wake_word_active
+                state: "on"
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id: switch.m5stack_tab5_home_assistant_hmi_tab5_wake_word_active
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.tab5_micro_coupe_absence
+          # Quelqu'un est là et c'est l'absence qui avait coupé le micro : on le
+          # rallume. Même ordre, pour la même raison.
+          - conditions:
+              - condition: trigger
+                id: [retour, resync]
+              - condition: numeric_state
+                entity_id: zone.home
+                above: 0
+              - condition: state
+                entity_id: input_boolean.tab5_micro_coupe_absence
+                state: "on"
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.m5stack_tab5_home_assistant_hmi_tab5_wake_word_active
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.tab5_micro_coupe_absence
