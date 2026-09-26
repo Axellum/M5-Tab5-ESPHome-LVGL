@@ -552,8 +552,8 @@ Une globale `volet_en_mouvement` suit si le volet est en mouvement (un tap envoi
 
 Ouvert par **appui long sur la zone micro** (`btn_assist_trigger`). Carte modale quasi plein écran (1250×690) organisée en deux colonnes :
 
-- **Gauche — Réglages** : sélecteur cerveau/pipeline (Domotique ↔ Discussion), toggle Ok Nabu ON/OFF, bouton Muet, slider Volume, taille de texte A-/A/A+ (persistée)
-- **Droite — Conversation** : zone « VOTRE DEMANDE » (transcription STT) + zone « RÉPONSE » défilante avec rendu Markdown (tableaux ré-alignés en monospace, gras, code, puces) + image téléchargée à la demande (`online_image`, PNG→RGB565, 760×360)
+- **Gauche — Réglages** : sélecteur cerveau/pipeline (Domotique ↔ Discussion), toggle Ok Nabu ON/OFF, bouton Muet, slider Volume, taille de texte A-/A+ (persistée ; roboto_32_b / roboto_45_b)
+- **Droite — Conversation** : zone « VOTRE DEMANDE » (transcription STT) + zone « RÉPONSE » défilante avec rendu Markdown (tableaux ré-alignés approximativement — police proportionnelle depuis le 26/09/2026 —, gras, code, puces) + image téléchargée à la demande (`online_image`, PNG→RGB565, 760×360)
 
 En mode Discussion, une demande vocale ouvre automatiquement le popup (`on_stt_end` → `tab5_assist_on_request`). En mode Domotique, le bandeau central 8 s reste le retour rapide. Le moteur peut pousser une réponse riche via le service HA `tab5_assist_reponse` (variables `texte` = Markdown, `image_url` = PNG optionnel).
 
