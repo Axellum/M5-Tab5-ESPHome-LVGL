@@ -34,7 +34,7 @@ If you add a genuinely new architectural constraint or a non-obvious decision wh
 Low-level hardware: display/touch buses, ES8388 DAC I2C init, speaker/mic I2S, PI4IOE5V6408 GPIO expander (Wi-Fi power/antenna switches), `ota:` (encrypted with the API key since 2026-09-16 — `api_encryption_key` in `secrets.yaml`; plain uploads are refused, there is no OTA password anymore, see ADR-0015). The audio hardware stays here (shared I2S bus, ES7210 mic ADC, ES8388 DAC, `media_player`); the voice pipeline itself moved to `tab5-assist.yaml` on 2026-09-25 (audit lot 8c).
 
 ### `tab5-sensors-diagnostics.yaml`
-System/network entities: the `wifi:` block, GPIO power switches (Wi-Fi, USB, external 5V, antenna select), HA API status, IP/SSID, uptime, Wi-Fi RSSI, core temperature, free RAM/loop time (`debug`), SNTP clock and the status-bar/console refresh `interval:`s.
+System/network entities: the `wifi:` block, GPIO power switches (Wi-Fi, USB, external 5V, antenna select — internal, not exposed to HA), HA API status, IP/SSID, uptime (seconds for the console, boot timestamp for HA), Wi-Fi RSSI, core temperature, free RAM/loop time (`debug`), SNTP clock and the status-bar/console refresh `interval:`s.
 
 ### `tab5-sensors-domotique.yaml`
 Home-automation entities pushed by HA over the ESPHome API: plant moisture (5×, dynamically sorted), light/PC state mirrors, phone battery, room & greenhouse temperature/humidity, audio (speaker amp, headphone jack, wake-word switch). The 20 plant-detail sensors (EC / light / temperature / battery × 5 pots) come from **`pot_sensors.yaml`**, one parameterized package included five times through a nested `packages:` (`!include` + `vars: {n}`) — a sixth pot is one line here plus its four `entity_plante_6_*` keys.

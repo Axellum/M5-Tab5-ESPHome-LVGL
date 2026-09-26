@@ -4,6 +4,41 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Alimentations masquées à HA, uptime publié une fois par démarrage
+
+Restes de l'audit des ressources du 26/09/2026 (§6 et H4), relevés dans le code le soir même.
+
+- **« WiFi Power », « USB Power » et « External 5V Power » passent en `internal: true`**
+  (`Tab5/tab5-sensors-diagnostics.yaml`). Ce ne sont plus des entités HA. Elles restent
+  allumées au démarrage (`ALWAYS_ON`), et aucune automation ni lambda ne les lit.
+  Pourquoi : un appui sur la tuile « WiFi » coupait le Wi-Fi, et la tablette restait
+  injoignable jusqu'au `reboot_timeout` de l'API, 60 min plus tard.
+- **« Tab5 Uptime » devient l'heure du dernier démarrage** (capteur `uptime` de type
+  `timestamp`, lié à `sntp_time`). Il est publié une seule fois par démarrage, à la
+  première synchro NTP.
+  - Il garde le même nom, donc la même entité HA
+    (`sensor.m5stack_tab5_home_assistant_hmi_tab5_uptime`). Une carte l'affiche
+    maintenant en temps relatif (« il y a 3 heures »).
+  - Avant, la valeur en secondes partait chaque minute : 1 440 lignes par jour en base
+    et autant d'exécutions de la garde « reboot inattendu ».
+  - La console garde ses secondes, par un second capteur `uptime` sans nom, donc
+    interne.
+- **Garde (b) de `packages/tab5_health.yaml` réécrite pour l'horodatage.** Elle alerte
+  dans deux cas :
+  - un démarrage plus récent remplace le précédent ;
+  - l'entité revient d'`unavailable`/`unknown` avec un démarrage postérieur, à 2 min
+    près, au moment où HA a perdu l'appareil.
+
+  Une coupure Wi-Fi sans reboot revient avec l'ancien démarrage et ne déclenche rien ;
+  un NTP en retard ne fait rien manquer. Toujours sans `now()`. Condition vérifiée sur
+  un banc `ha_eval_template` (10 cas : reboot, NTP en retard, plantage vu 90 s trop
+  tard, coupure Wi-Fi, redémarrage de HA, gigue, entité nouvelle).
+- **Docs** : README de `HomeAssistant_Config/` et de `Tab5/`, et contrôle après OTA dans
+  `AGENTS.md` et le modèle de PR : l'heure de démarrage ne doit plus changer après le
+  redémarrage du flash, au lieu de « uptime strictement croissant ».
+- **Mesures** : image 3 060 556 → 3 061 404 o (+848 o, le code du capteur horodaté),
+  RAM statique +64 o, `config_hash` 0xd9a1f848.
+
 ### 2026-09-26 — Polices : −179 Ko (essai D8, validé par Axel)
 
 Essai D8 de l'audit des ressources du 26/09/2026, avec les choix d'Axel ; flashé et

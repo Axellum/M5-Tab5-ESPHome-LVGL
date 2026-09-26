@@ -8,7 +8,7 @@
 - [ ] `python -m pytest` and `pre-commit run --all-files` pass locally (the CI `python` job replays both)
 - [ ] If this changes `Tab5/go_engine.cpp` or `Tab5/chess_ai.cpp`: its Python mirror (`tools/test_go_engine.py`, `tools/test_chess_perft.py`) is updated in the same PR
 - [ ] If this is a refactor with no intended behavior change: `config_hash` is identical before/after
-- [ ] If a device is available and the change touches firmware behavior: tested via real OTA (device diagnostics checked afterward — `ha_api_status` on, uptime strictly increasing, no reboot) — otherwise noted as not tested and why
+- [ ] If a device is available and the change touches firmware behavior: tested via real OTA (device diagnostics checked afterward — `ha_api_status` on, boot time on `Tab5 Uptime` unchanged after the flash's own reboot, no reboot) — otherwise noted as not tested and why
 - [ ] If this touches code marked `[AI-WARNING]`: read the warning and `docs/decisions/`, explain below why the override is safe
 - [ ] If this introduces a new non-obvious constraint: the relevant `[AI-CONTEXT]` block is added/updated
 - [ ] If this changes the file/dependency structure: [`CARTOGRAPHIE_TAB5.md`](../CARTOGRAPHIE_TAB5.md) is updated
