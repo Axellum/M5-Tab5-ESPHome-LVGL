@@ -118,12 +118,15 @@ struct UI {
     const esphome::font::Font* f_piece = nullptr;
 };
 
-// Ouvre le jeu sur le hub (construit l'UI au premier appel, la reutilise ensuite)
-// et demarre le lv_timer. Idempotent.
+// Ouvre le jeu sur le hub : alloue l'interface (et l'etat de partie s'il n'y a pas
+// de partie suspendue), construit l'UI et demarre le lv_timer. Idempotent. Si la
+// memoire manque, revient a l'arcade sans ouvrir.
 void open(const UI& ui);
 
 // Ferme le jeu : arrete le timer, sauvegarde la partie en cours (FEN + pendules)
-// et les statistiques en NVS, masque l'overlay. Idempotent.
+// et les statistiques en NVS, revient a l'arcade, detruit l'UI et rend
+// l'interface ; l'etat de partie n'est garde que si une partie est en cours.
+// Idempotent.
 void close();
 
 // True tant que l'overlay est visible (routage des evenements IMU et cadence
