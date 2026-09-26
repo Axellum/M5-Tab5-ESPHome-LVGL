@@ -122,13 +122,15 @@ struct UI {
     const esphome::font::Font* f_big   = nullptr;  // roboto_45_b
 };
 
-// Ouvre le jeu (construit l'UI au premier appel, la réutilise ensuite) et démarre
-// le lv_timer de gameplay. Reprend la partie en cours s'il y en a une, sinon hub.
-// Idempotent.
+// Ouvre le jeu : alloue l'interface (et l'état de partie s'il n'y a pas de partie
+// suspendue), construit l'UI et démarre le lv_timer de gameplay. Reprend la partie
+// en cours s'il y en a une, sinon hub. Idempotent. Si la mémoire manque, revient à
+// l'arcade sans ouvrir.
 void open(const UI& ui);
 
-// Ferme le jeu : arrête le timer, sauvegarde réglages/stats/partie et masque
-// l'overlay. Idempotent (sans effet si déjà fermé).
+// Ferme le jeu : arrête le timer, sauvegarde réglages/stats/partie, revient à
+// l'arcade, détruit l'UI et rend l'interface ; l'état de partie n'est gardé que si
+// une partie est en cours. Idempotent (sans effet si déjà fermé).
 void close();
 
 // True tant que l'overlay est visible (utilisé pour router les événements).
@@ -138,10 +140,12 @@ bool is_open();
 // Appelé par les capteurs BMI270 (tab5-imu.yaml) — debounce interne.
 void on_imu(float ax, float ay, float az);
 
-// Écrit immédiatement la sauvegarde (réglages + stats + partie) en NVS.
+// Écrit immédiatement la sauvegarde (réglages + stats + partie) en NVS. Sans effet
+// si aucun état de partie n'est en mémoire.
 void persist_save();
 
-// Recharge la sauvegarde depuis la NVS (appelé au premier open()).
+// Recharge la sauvegarde depuis la NVS (appelé par open() quand l'état de partie
+// est recréé, c'est-à-dire sans partie suspendue).
 void persist_load();
 
 }  // namespace Trivia
