@@ -4,6 +4,49 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Journal des démarrages et des coupures : plantages et lien Wi-Fi (C6) analysables après coup
+
+Demande d'Axel : « enregistrer les plantages pour pouvoir analyser le C6 », en vérifiant
+d'abord si la table de partitions devait changer (flash USB).
+
+- **Vérifié : pas de flash USB.**
+  - Un core dump ESP-IDF en flash demanderait une partition `coredump`. La table du
+    build (`partitions.csv` : 2 × 7,75 Mo d'application + 448 Ko de NVS) remplit les
+    16 Mo, et une table de partitions ne s'écrit que par un flash USB.
+  - Il ne servirait pas pour le C6 : ses pannes laissent le P4 tourner, sans plantage.
+  - ESPHome 2026.9 a déjà un gestionnaire de plantage, actif ici
+    (`USE_ESP32_CRASH_HANDLER`) : PC, adresse fautive et pile d'appels des deux cœurs,
+    en `.noinit`. Mais il ne les écrit que dans les logs, au démarrage et au premier
+    client abonné aux logs : sans `system_log: fire_event`, HA n'en faisait rien.
+- **`Tab5/tab5_journal.cpp` (nouveau)** : `logger: on_message` garde les erreurs, et
+  les avertissements tant que HA n'est pas connecté.
+  - Les erreurs d'ESP-IDF, dont le pilote ESP-Hosted du C6, arrivent sous l'étiquette
+    `esp-idf`. Le rapport de plantage d'ESPHome (`esp32.crash`) est gardé une fois.
+  - Une ligne répétée d'affilée est comptée, pas recopiée.
+  - 32 lignes en `.noinit` : elles survivent aux redémarrages logiciels, aux plantages,
+    aux chiens de garde et au reset par l'USB.
+  - Après 2 min sans HA, une copie part en NVS, relue au démarrage suivant si la RAM a
+    été perdue (coupure de courant). Au plus une copie toutes les 15 min, seulement
+    s'il y a du nouveau.
+- **Envoi** : à chaque connexion de HA (`on_client_connected`, sans toucher à
+  `on_boot`), le script `tab5_journal_envoi` attend 10 s. Il envoie ensuite
+  `esphome.tab5_journal` (`raison`, `demarrages`, `grave`, `lignes`) si le journal
+  contient plus qu'un démarrage normal, puis le vide.
+- **Garde (e) de `packages/tab5_health.yaml`** : une notification persistante datée par
+  journal, et le téléphone seulement si `grave` (plantage, erreur, ou démarrage passé
+  sans HA). Déployée en production le 26/09 vers 22:11 et testée avec un faux événement
+  non grave : notification rendue, branche sans téléphone, puis retirée.
+- **Entité « Tab5 Raison du redémarrage »** (`debug: reset_reason`) : une ligne par
+  démarrage dans l'historique HA.
+- **Docs** : `docs/debugging.md` (EN/FR : ce que garde le journal, décoder une pile
+  d'appels avec `addr2line` et l'ELF du build flashé, pourquoi pas de core dump),
+  README de `HomeAssistant_Config/`, cartographie.
+- **Mesures** : image 3 061 404 → 3 069 196 o (+7,8 Ko), RAM statique +3,8 Ko, dont
+  3 344 o de journal en `.noinit`. Aucun nouvel avertissement de compilation.
+  `config_hash` 0x6b2700f1.
+- **CI** : `build-min` est un check requis de `main` depuis ce soir (réglage du dépôt ;
+  workflow, ADR-0016, `AGENTS.md`, cartographie et inventaire mis à jour).
+
 ### 2026-09-26 — Garde « reboot inattendu » : marge de 5 min, heure de démarrage à ±64 s
 
 Suite de la PR précédente, constatée au flash du soir même. Aucun changement de code
@@ -46,8 +89,8 @@ compilation que `build`, mais avec la version d'ESPHome lue dans `min_version:` 
   - le job a son propre cache ccache, une clé par version ;
   - il se déclenche dans les mêmes conditions que `build` et ne produit pas
     d'artefact.
-- **Pas encore un check requis** : pour qu'un échec bloque le merge, il faut l'ajouter
-  aux checks requis de `main` dans les réglages du dépôt.
+- **Check requis de `main`** depuis le soir du 26/09/2026 (réglage du dépôt, à la
+  demande d'Axel), comme `build`.
 
 ### 2026-09-26 — Alimentations masquées à HA, uptime publié une fois par démarrage
 

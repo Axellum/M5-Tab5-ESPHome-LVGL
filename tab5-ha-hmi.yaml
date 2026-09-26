@@ -59,6 +59,8 @@ esphome:
     - Tab5/tab5_console.cpp
     - Tab5/tab5_anim.cpp
     - Tab5/tab5_calendar.cpp
+    # Journal des démarrages et des coupures (plantages, lien Wi-Fi / C6), 26/09/2026.
+    - Tab5/tab5_journal.cpp
     # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
     # NvsSlot<T>) — lot (f), ADR-0014. Header-only.
     - Tab5/game_common.h

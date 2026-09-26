@@ -14,8 +14,8 @@ name: ESPHome Tab5 Compilation
 #     `min_version:` de tab5-ha-hmi.yaml (26/09/2026). Sans elle, rien ne vérifiait
 #     que le plancher annoncé compile encore : une option apparue après lui
 #     passerait inaperçue. Mêmes conditions de déclenchement que `build`, sans
-#     artefact. Pour qu'il bloque un merge, l'ajouter aux checks requis de `main`
-#     (réglage du dépôt, fait à la main).
+#     artefact. Check REQUIS de `main` depuis le 26/09/2026 (réglage du dépôt),
+#     comme `build` : sauté (« skipped ») quand le firmware ne change pas.
 #
 # `esphome/build-action` sans `version:` tire l'image `latest` : c'est VOULU pour
 # `build`. La CI sert de banc d'essai gratuit de la dernière ESPHome (le 25/08/2026
