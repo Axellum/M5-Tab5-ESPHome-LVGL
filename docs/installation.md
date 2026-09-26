@@ -62,6 +62,8 @@ entity_hum_salon: sensor.your_living_room_humidity
 ...
 ```
 
+**Screen language:** French by default; add `tab5_langue: English` for English on the first boot. It can then be changed from Home Assistant (select « Langue »), see [translations](translations.md).
+
 **Tab5 revision:** if the display chip on your sticker is not the ST7123, add `tab5_ecran: st7121` or `tab5_ecran: ili9881c` to this file (see [Hardware revisions](hardware.md#hardware-revisions)). Leave it out for the ST7123.
 
 Replace each value with your own entity IDs. These substitutions propagate throughout all packages — you do not need to edit any other YAML file to adapt the project to your setup. The entry point `tab5-ha-hmi.yaml` includes this file via `substitutions: !include Tab5/user_entities.yaml`. Two optional keys, `entity_tab5_satellite` and `entity_tab5_media_player`, only matter if you rename the device in Home Assistant: they hold the entity IDs HA derives from the device name (defaults in `Tab5/tab5-scripts.yaml`, commented example in the template).
@@ -185,6 +187,8 @@ Copiez le modèle puis adaptez-le à vos entity IDs Home Assistant :
 ```bash
 cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 ```
+
+**Langue de l'écran :** le français par défaut ; ajoutez `tab5_langue: English` pour l'anglais au premier démarrage. Elle se change ensuite depuis Home Assistant (select « Langue »), voir [traductions](translations.md#version-française).
 
 **Révision du Tab5 :** si la puce écran de votre autocollant n'est pas la ST7123, ajoutez `tab5_ecran: st7121` ou `tab5_ecran: ili9881c` dans ce fichier (voir [Révisions matérielles](hardware.md#révisions-matérielles)). Pour la ST7123, ne mettez rien.
 

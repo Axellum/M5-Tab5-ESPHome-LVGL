@@ -4,6 +4,46 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Écran en français ou en anglais, réglable depuis Home Assistant (lot 4a)
+
+Lot 4a de l'audit « ouverture ». Demande d'Axel : la langue se règle depuis HA, et
+l'ajout d'autres langues doit être prévu. Les jeux suivront (lot 4b) ; les textes
+produits par HA et le fuseau horaire aussi (lot 4c).
+
+- **Façon gettext : le texte français du code est la clé.** `tr("Calendrier")` rend
+  « Calendar » en anglais, et le texte lui-même en français ou si la traduction
+  manque. Les mots à deux sens ont un contexte : `tr_ctx("mardi", "M")` → « T »,
+  `tr_ctx("clim", "Chaud")` → « Heat » (et « Warm » pour une lampe). Un ordre de mots
+  qui change passe par un modèle : `{jour}, {mois} {quantieme}`.
+- **Une langue = un fichier** `Tab5/lang/<code>.yaml`. `tools/gen_i18n.py` génère
+  `Tab5/tab5_i18n_data.h`. Ajouter une langue : copier `en.yaml`, traduire, index
+  suivant (voir [`docs/translations.md`](docs/translations.md)).
+- **`Tab5/tab5_i18n.h/.cpp`**, pur (compilé aussi sur PC par les tests du réveil).
+- **Textes posés par le YAML** : gardés en français, et traduits une fois en fin de
+  setup par `i18n_apply_boot()`. C'est une ligne en tête du bloc `on_boot` -100,
+  avant la première image, **ajoutée avec l'accord d'Axel**. En français, elle ne fait
+  rien.
+- **Textes du C++ et des lambdas** : `tr()` sur ce que l'écran affiche ou que la
+  tablette dit (rappels de rendez-vous, « Volet arrêté. »). **Jamais sur ce que HA
+  lit** : noms d'entités, options de select (préréglages de jours, mélodies), états
+  et codes. Une valeur HA affichée est traduite à l'affichage seulement.
+- **Dates** : `day_short_utf8()`, `month_long_utf8()`… traduites ; les tables `fr_*`
+  sont inchangées, et les tests en français aussi.
+- **Select « Langue »** (Français / English, `restore_value`). Un changement depuis HA
+  redémarre la tablette. Défaut du premier démarrage : `tab5_langue:` dans
+  `Tab5/user_entities.yaml`.
+- **`Tab5/lang/en.yaml`** : 241 entrées, marqué `_statut: complet`. Il couvre les
+  popups, les cartes, la console, le réveil, le calendrier, l'assistant et les dates.
+- **Gardes**, `tests/test_i18n.py` (7 tests) : table générée à jour, ordre du select =
+  index des langues, anglais complet, aucune clé orpheline, `%d`/`%s` et `{noms}`
+  conservés, caractères couverts par les polices (`&latin1`), appel au démarrage
+  présent. Chaque garde a été éprouvée par une faute introduite exprès.
+  `tools/test_alarm_clock.cpp` gagne des cas anglais ; la CI le compile avec
+  `tab5_i18n.cpp`.
+- **Preuve « rien ne change en français »** : `tr()` rend la clé elle-même, et le
+  passage au démarrage ne fait rien. Les tests des dates en français sont identiques.
+  `esphome config` passe.
+
 ## [2.1.0] — 2026-09-27
 
 De `v2.0.0` (25/09) à aujourd'hui : 42 pull requests (#137 → #180), plus celle de la
