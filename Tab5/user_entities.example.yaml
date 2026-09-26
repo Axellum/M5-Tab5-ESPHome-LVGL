@@ -10,6 +10,12 @@
 #   cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 # Puis remplacez chaque valeur par vos entity IDs (Réglages → Entités dans HA).
 
+# --- Révision du Tab5 : la puce écran inscrite sur l'autocollant au dos, au-dessus du
+#     logo Espressif. st7123 (défaut si la ligne reste commentée, testée au quotidien),
+#     st7121 (depuis le 28/04/2026) ou ili9881c (Tab5 d'origine) : ces deux-là sont
+#     compilées par la CI mais jamais testées sur une tablette. Voir docs/hardware.md. ---
+# tab5_ecran: st7123
+
 entity_tracker_pc: switch.your_pc_or_device_tracker
 entity_tracker_tv: media_player.your_tv
 entity_tv_remote: remote.your_tv

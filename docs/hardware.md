@@ -6,19 +6,26 @@
 
 ## Hardware revisions
 
-M5Stack has shipped the Tab5 with three different display controllers. Each one needs its own ESPHome display model, and they are not interchangeable ([ESPHome `mipi_dsi` documentation](https://esphome.io/components/display/mipi_dsi/)):
+M5Stack has shipped the Tab5 with three different display controllers ([M5Stack change log](https://docs.m5stack.com/en/core/Tab5)). Each one needs its own ESPHome display model, and they are not interchangeable ([ESPHome `mipi_dsi` documentation](https://esphome.io/components/display/mipi_dsi/)):
 
-| Display chip | Units | ESPHome model | Status in this project |
-|---|---|---|---|
-| **ST7123** (display and touch in one chip) | made from 14 October 2025 | `M5STACK-TAB5-ST7123` (named `M5STACK-TAB5-V2` before ESPHome 2026.7) | ✅ **Supported** — the author's device, in daily use |
-| **ST7121** (display and touch in one chip) | made from 14 October 2025 | `M5STACK-TAB5-ST7121` | ❓ **Not supported yet** — never compiled or tested here |
-| **ILI9881C** + separate **GT911** touch | made before 14 October 2025 | `M5STACK-TAB5` | ❌ **Not supported yet** — different display and touch drivers |
+| Display chip | Units made | ESPHome model | `tab5_ecran:` | Status in this project |
+|---|---|---|---|---|
+| **ILI9881C** + separate **GT911** touch | 9 May 2025 → 14 October 2025 | `M5STACK-TAB5` | `ili9881c` | 🧪 **Compiles, untested** — built by the CI, never run on a device |
+| **ST7123** (display and touch in one chip) | 14 October 2025 → 28 April 2026 | `M5STACK-TAB5-ST7123` (named `M5STACK-TAB5-V2` before ESPHome 2026.7) | `st7123` (default) | ✅ **Supported** — the author's device, in daily use |
+| **ST7121** (display and touch in one chip) | from 28 April 2026 | `M5STACK-TAB5-ST7121` | `st7121` | 🧪 **Compiles, untested** — built by the CI, never run on a device; the touch driver is an educated guess (see below) |
 
-**How to tell which one you have:** the display chip is printed on the sticker on the back, just above the Espressif logo. ESPHome warns that a unit labelled "ST7123" may carry either an ST7123 or an ST7121: the only way to know is to try both models.
+**How to tell which one you have:** the display chip is printed on the sticker on the back, just above the Espressif logo. ESPHome warns that a unit labelled "ST7123" may carry either an ST7123 or an ST7121: the only way to know is to try both.
 
-**Good to know:** most Tab5 examples published so far target the original ILI9881C revision. In September 2026, the [ESPHome device page](https://devices.esphome.io/devices/m5stack-tab5/) still says only that one is supported, and [M5Stack's own Home Assistant HMI example](https://docs.m5stack.com/en/homeassistant/applications/dashboard/tab5_ha_hmi) does not support units made after 14 October 2025. This project goes the other way: it targets the ST7123.
+**Choosing your revision:** add one line to `Tab5/user_entities.yaml`, for example `tab5_ecran: st7121`. Without it, the firmware is built for the ST7123. What differs between revisions (display model, touch chip) lives in `Tab5/ecran-<revision>.yaml`; pins, calibration and behaviour are shared in `Tab5/tab5-hardware.yaml`.
 
-Own an ST7121 or ILI9881C unit and willing to test? Say so in [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
+**What "untested" means:** the CI compiles both files whenever the display configuration changes, so they cannot silently break, but nobody has run them on a real tablet yet.
+
+- **ILI9881C:** display model and GT911 touch taken from the [ESPHome device page](https://devices.esphome.io/devices/m5stack-tab5/) for the original revision, with the same pins as the ST7123.
+- **ST7121:** ESPHome has an official display model, but no ST7121 touch driver. According to comments in ESPHome's model code, M5Stack's factory firmware tells the two chips apart by reading the touch controller's firmware version, so they very likely share the same protocol: this project uses the `st7123` touch platform. If the screen works but touch does not, this is the first suspect.
+
+**Good to know:** most Tab5 examples published so far target the original ILI9881C revision. In September 2026, the [ESPHome device page](https://devices.esphome.io/devices/m5stack-tab5/) still says only that one is supported, and [M5Stack's own Home Assistant HMI example](https://docs.m5stack.com/en/homeassistant/applications/dashboard/tab5_ha_hmi) does not support units made after 14 October 2025. This project runs on the ST7123 and builds for the other two.
+
+Own an ST7121 or ILI9881C unit and willing to try? Say how it went in [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
 
 ---
 
@@ -56,7 +63,7 @@ Address 0x32 on the internal I2C bus (`bsp_bus`, GPIO31/32), backed by a 70 000 
 - **Size:** 5 inches
 - **Resolution:** 1280 × 720 px (M5Stack Tab5 V2 batch used in this project)
 - **Interface:** MIPI-DSI 16-bit RGB565 (ESP32-P4 LCD peripheral)
-- **Touch:** Capacitive multi-touch via ESPHome's official `st7123` I2C touchscreen platform (since ESPHome 2026.7.0; the former custom `my_components/st7123` was removed on 2026-07-06)
+- **Touch:** Capacitive multi-touch via ESPHome's official `st7123` I2C touchscreen platform on the ST7123 revision (since ESPHome 2026.7.0; the former custom `my_components/st7123` was removed on 2026-07-06) — `gt911` on the original ILI9881C revision, see [Hardware revisions](#hardware-revisions)
 
 GPIO pinout reference (display, touch, audio, expanders):
 
@@ -124,19 +131,26 @@ Backlight brightness is software-controlled via PWM (LEDC output on GPIO 22, `li
 
 ## Révisions matérielles
 
-M5Stack a livré le Tab5 avec trois contrôleurs d'écran différents. Chacun demande son propre modèle d'affichage ESPHome, et ils ne sont pas interchangeables ([documentation ESPHome `mipi_dsi`](https://esphome.io/components/display/mipi_dsi/)) :
+M5Stack a livré le Tab5 avec trois contrôleurs d'écran différents ([journal des versions M5Stack](https://docs.m5stack.com/en/core/Tab5)). Chacun demande son propre modèle d'affichage ESPHome, et ils ne sont pas interchangeables ([documentation ESPHome `mipi_dsi`](https://esphome.io/components/display/mipi_dsi/)) :
 
-| Puce écran | Appareils | Modèle ESPHome | Statut dans ce projet |
-|---|---|---|---|
-| **ST7123** (écran et tactile dans une seule puce) | fabriqués à partir du 14 octobre 2025 | `M5STACK-TAB5-ST7123` (nommé `M5STACK-TAB5-V2` avant ESPHome 2026.7) | ✅ **Pris en charge** — la tablette de l'auteur, utilisée tous les jours |
-| **ST7121** (écran et tactile dans une seule puce) | fabriqués à partir du 14 octobre 2025 | `M5STACK-TAB5-ST7121` | ❓ **Pas encore pris en charge** — jamais compilé ni testé ici |
-| **ILI9881C** + tactile **GT911** séparé | fabriqués avant le 14 octobre 2025 | `M5STACK-TAB5` | ❌ **Pas encore pris en charge** — pilotes d'écran et de tactile différents |
+| Puce écran | Appareils fabriqués | Modèle ESPHome | `tab5_ecran:` | Statut dans ce projet |
+|---|---|---|---|---|
+| **ILI9881C** + tactile **GT911** séparé | du 9 mai 2025 au 14 octobre 2025 | `M5STACK-TAB5` | `ili9881c` | 🧪 **Compile, non testée** — compilée par la CI, jamais lancée sur une tablette |
+| **ST7123** (écran et tactile dans une seule puce) | du 14 octobre 2025 au 28 avril 2026 | `M5STACK-TAB5-ST7123` (nommé `M5STACK-TAB5-V2` avant ESPHome 2026.7) | `st7123` (défaut) | ✅ **Prise en charge** — la tablette de l'auteur, utilisée tous les jours |
+| **ST7121** (écran et tactile dans une seule puce) | depuis le 28 avril 2026 | `M5STACK-TAB5-ST7121` | `st7121` | 🧪 **Compile, non testée** — compilée par la CI, jamais lancée sur une tablette ; le pilote tactile est une hypothèse raisonnée (voir plus bas) |
 
-**Comment savoir lequel vous avez :** la puce écran est inscrite sur l'autocollant au dos, juste au-dessus du logo Espressif. ESPHome prévient qu'un appareil marqué « ST7123 » peut contenir une ST7123 ou une ST7121 : le seul moyen de savoir est d'essayer les deux modèles.
+**Comment savoir lequel vous avez :** la puce écran est inscrite sur l'autocollant au dos, juste au-dessus du logo Espressif. ESPHome prévient qu'un appareil marqué « ST7123 » peut contenir une ST7123 ou une ST7121 : le seul moyen de savoir est d'essayer les deux.
 
-**Bon à savoir :** la plupart des exemples Tab5 publiés jusqu'ici visent la révision d'origine ILI9881C. En septembre 2026, la [page ESPHome de l'appareil](https://devices.esphome.io/devices/m5stack-tab5/) n'indique encore qu'elle comme prise en charge, et [l'exemple d'IHM Home Assistant de M5Stack](https://docs.m5stack.com/en/homeassistant/applications/dashboard/tab5_ha_hmi) ne prend pas en charge les appareils fabriqués après le 14 octobre 2025. Ce projet fait l'inverse : il vise la ST7123.
+**Choisir sa révision :** ajoutez une ligne dans `Tab5/user_entities.yaml`, par exemple `tab5_ecran: st7121`. Sans elle, le firmware est compilé pour la ST7123. Ce qui change d'une révision à l'autre (modèle d'écran, puce tactile) est dans `Tab5/ecran-<révision>.yaml` ; les broches, la calibration et le comportement sont communs, dans `Tab5/tab5-hardware.yaml`.
 
-Vous avez un Tab5 ST7121 ou ILI9881C et vous voulez bien tester ? Dites-le dans [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
+**Ce que « non testée » veut dire :** la CI compile les deux fichiers à chaque changement de la configuration de l'écran, ils ne peuvent donc pas casser en silence, mais personne ne les a encore lancés sur une vraie tablette.
+
+- **ILI9881C :** modèle d'écran et tactile GT911 repris de la [page ESPHome de l'appareil](https://devices.esphome.io/devices/m5stack-tab5/) pour la révision d'origine, avec les mêmes broches que la ST7123.
+- **ST7121 :** ESPHome a un modèle d'écran officiel, mais pas de pilote tactile ST7121. D'après les commentaires du code du modèle dans ESPHome, le firmware d'usine de M5Stack distingue les deux puces en lisant la version du contrôleur tactile : elles partagent donc très probablement le même protocole, et ce projet utilise la plateforme tactile `st7123`. Si l'écran marche mais pas le tactile, c'est le premier suspect.
+
+**Bon à savoir :** la plupart des exemples Tab5 publiés jusqu'ici visent la révision d'origine ILI9881C. En septembre 2026, la [page ESPHome de l'appareil](https://devices.esphome.io/devices/m5stack-tab5/) n'indique encore qu'elle comme prise en charge, et [l'exemple d'IHM Home Assistant de M5Stack](https://docs.m5stack.com/en/homeassistant/applications/dashboard/tab5_ha_hmi) ne prend pas en charge les appareils fabriqués après le 14 octobre 2025. Ce projet tourne sur la ST7123 et compile pour les deux autres.
+
+Vous avez un Tab5 ST7121 ou ILI9881C et vous voulez bien essayer ? Racontez ce que ça a donné dans [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
 
 ---
 
@@ -174,7 +188,7 @@ Adresse 0x32 sur le bus I2C interne (`bsp_bus`, GPIO31/32), sauvegardée par un 
 - **Taille :** 5 pouces
 - **Résolution :** 1280 × 720 px (lot M5Stack Tab5 V2 utilisé dans ce projet)
 - **Interface :** MIPI-DSI RGB565 16 bits (périphérique LCD de l'ESP32-P4)
-- **Tactile :** Capacitif multi-touch via la plateforme tactile I2C officielle `st7123` d'ESPHome (depuis ESPHome 2026.7.0 ; l'ancien composant maison `my_components/st7123` a été retiré le 06/07/2026)
+- **Tactile :** Capacitif multi-touch via la plateforme tactile I2C officielle `st7123` d'ESPHome sur la révision ST7123 (depuis ESPHome 2026.7.0 ; l'ancien composant maison `my_components/st7123` a été retiré le 06/07/2026) — `gt911` sur la révision d'origine ILI9881C, voir [Révisions matérielles](#révisions-matérielles)
 
 ---
 

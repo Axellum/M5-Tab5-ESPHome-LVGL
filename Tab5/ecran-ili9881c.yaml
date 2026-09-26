@@ -1,0 +1,21 @@
+# [AI-CONTEXT]
+# @file ecran-ili9881c.yaml
+# @role Écran ILI9881C et tactile GT911 séparé : le Tab5 d'origine (fabriqué du
+#       09/05/2025 au 14/10/2025). COMPILÉ PAR LA CI, JAMAIS TESTÉ SUR UNE TABLETTE.
+# @architecture_constraint Même découpage que ecran-st7123.yaml : seul ce qui change
+#       d'une révision à l'autre ; le reste vient de tab5-hardware.yaml, étendu par `!extend`.
+#       Modèle et tactile repris de la page ESPHome de l'appareil
+#       (devices.esphome.io/devices/m5stack-tab5, config de la révision d'origine) :
+#       mêmes broches que la ST7123 (reset écran pi4ioe1:4, reset tactile pi4ioe1:5,
+#       interruption GPIO23), GT911 sans scrutation (update_interval: never).
+# ============================================================================
+
+display:
+  - id: !extend tab5_display
+    platform: mipi_dsi
+    model: M5STACK-TAB5
+
+touchscreen:
+  - id: !extend touch
+    platform: gt911
+    update_interval: never

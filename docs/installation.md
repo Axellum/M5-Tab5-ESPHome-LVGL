@@ -11,7 +11,7 @@
 - A working **Home Assistant** instance (any installation method)
 - The **ESPHome** add-on or standalone ESPHome CLI (`pip install esphome`)
 - ESPHome version **≥ 2026.9.0** — enforced by `min_version:` in `tab5-ha-hmi.yaml`, so an older ESPHome refuses to compile. 2026.7.0 brought the official `st7123` touchscreen platform (no more `external_components`), zero-copy audio, VAD and PSRAM-over-SDIO; the floor was raised to 2026.8.1 on 2026-08-26 for the API, voice-assistant and crash-handler fixes this project exercises daily, then to 2026.9.0 on 2026-09-16 because OTA updates are encrypted with the API key (`ota: encryption:` does not exist in older releases — reasoning in the comment above `min_version:`)
-- A M5Stack Tab5 with the **ST7123** display chip (sticker on the back) — the ST7121 and the original ILI9881C revisions are not supported yet, see [Hardware revisions](hardware.md#hardware-revisions)
+- A M5Stack Tab5. The **ST7123** display chip (sticker on the back) is the one tested daily; the ST7121 and the original ILI9881C revisions compile but have never been run on a device — see [Hardware revisions](hardware.md#hardware-revisions), and Step 2 to pick yours
 
 Optional but used by the default configuration:
 - **Météo-France** integration (for weather data — replace with your own weather integration if outside France)
@@ -61,6 +61,8 @@ entity_temp_salon: sensor.your_living_room_temperature
 entity_hum_salon: sensor.your_living_room_humidity
 ...
 ```
+
+**Tab5 revision:** if the display chip on your sticker is not the ST7123, add `tab5_ecran: st7121` or `tab5_ecran: ili9881c` to this file (see [Hardware revisions](hardware.md#hardware-revisions)). Leave it out for the ST7123.
 
 Replace each value with your own entity IDs. These substitutions propagate throughout all packages — you do not need to edit any other YAML file to adapt the project to your setup. The entry point `tab5-ha-hmi.yaml` includes this file via `substitutions: !include Tab5/user_entities.yaml`. Two optional keys, `entity_tab5_satellite` and `entity_tab5_media_player`, only matter if you rename the device in Home Assistant: they hold the entity IDs HA derives from the device name (defaults in `Tab5/tab5-scripts.yaml`, commented example in the template).
 
@@ -157,7 +159,7 @@ If you are outside France, the weather screen requires adaptation. The push auto
 - Une instance **Home Assistant** fonctionnelle (toute méthode d'installation)
 - L'add-on **ESPHome** ou la CLI ESPHome standalone (`pip install esphome`)
 - ESPHome version **≥ 2026.9.0** — imposée par le `min_version:` de `tab5-ha-hmi.yaml` : une version antérieure refuse de compiler. La 2026.7.0 a apporté la plateforme tactile `st7123` officielle (plus besoin d'`external_components`), l'audio zero-copy, le VAD et la PSRAM via SDIO ; le plancher est passé à 2026.8.1 le 26/08/2026 pour les correctifs API, assistant vocal et handler de crash que ce projet exerce tous les jours, puis à 2026.9.0 le 16/09/2026 parce que les mises à jour OTA sont chiffrées avec la clé API (`ota: encryption:` n'existe pas dans les versions antérieures — raisons dans le commentaire au-dessus de `min_version:`)
-- Un M5Stack Tab5 avec la puce écran **ST7123** (autocollant au dos) — les révisions ST7121 et ILI9881C d'origine ne sont pas encore prises en charge, voir [Révisions matérielles](hardware.md#révisions-matérielles)
+- Un M5Stack Tab5. La puce écran **ST7123** (autocollant au dos) est celle testée tous les jours ; les révisions ST7121 et ILI9881C d'origine compilent mais n'ont jamais tourné sur une tablette — voir [Révisions matérielles](hardware.md#révisions-matérielles), et l'étape 2 pour choisir la vôtre
 
 Optionnel mais utilisé par la configuration par défaut :
 - Intégration **Météo-France** (pour les données météo — remplacez par votre propre intégration si vous êtes hors de France)
@@ -184,6 +186,8 @@ Copiez le modèle puis adaptez-le à vos entity IDs Home Assistant :
 ```bash
 cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 ```
+
+**Révision du Tab5 :** si la puce écran de votre autocollant n'est pas la ST7123, ajoutez `tab5_ecran: st7121` ou `tab5_ecran: ili9881c` dans ce fichier (voir [Révisions matérielles](hardware.md#révisions-matérielles)). Pour la ST7123, ne mettez rien.
 
 Ouvrez `Tab5/user_entities.yaml` (gitignoré — ne jamais committer, même principe que `secrets.yaml`) et remplacez chaque valeur. Ces substitutions se propagent dans tous les packages ; le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`. Deux clés facultatives, `entity_tab5_satellite` et `entity_tab5_media_player`, ne servent que si vous renommez l'appareil dans Home Assistant : elles portent les identifiants qu'HA dérive du nom de la tablette (défauts dans `Tab5/tab5-scripts.yaml`, exemple commenté dans le modèle).
 
