@@ -4,6 +4,27 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Calendrier : grille construite en C++ (−53 Ko de flash)
+
+Lot 8 de l'audit des ressources du 26/09/2026 (point D3). Rien ne change à l'écran.
+
+- **Les 42 cellules du calendrier sont construites en C++** (`cal_grid_build()`,
+  `tab5_calendar.cpp`) au lieu de 42 `!include` de `cal_day_cell.yaml`, supprimé.
+  - ESPHome recopiait le code de chaque instance dans `setup()`. Chaque cellule
+    portait aussi un bouton invisible, avec son déclencheur, son automatisation et
+    son action.
+  - La boucle crée les mêmes objets avec les mêmes propriétés que le code que générait
+    ESPHome. La cellule reçoit elle-même le tap court, et les pastilles ne captent
+    plus le toucher.
+  - La grille est créée à la première ouverture du calendrier, juste avant la légende
+    (`cal_legend`) : même place dans l'arbre, même ordre de dessin.
+  - La première ligne reste lue dans le jeton `${cal_grid_y}`.
+- **Mesures** : image 3 297 660 → 3 244 300 o (**−53,4 Ko**), RAM statique
+  **−2 184 o**. L'arbre YAML passe de 1 236 à 984 widgets ; le C++ en recrée 210, soit
+  42 de moins qu'avant (les boutons invisibles).
+- **Preuve** : les 984 autres widgets sont identiques, propriété par propriété, à ceux
+  de `main`.
+
 ### 2026-09-26 — Factorisation : carte centrale à source unique, gabarits, menus des jeux
 
 Lot 7 de l'audit des ressources du 26/09/2026. Refactor : rien ne doit changer à

@@ -133,7 +133,7 @@ Variables here are typed and initialized. Uninitialized globals on ESP32 are und
 ---
 
 ### `tab5-lvgl.yaml`
-The UI layout. Declares the pages, panels, labels, buttons, arcs, and icons, plus swipe gesture handling. It `!include`s 23 `ui_components/*.yaml` files directly (climate card/popup, light popup, TV remote popup, system console, assistant/calendar/plant popups, forecast cards, moisture gauges, switches card, the arcade selector and the 8 games); those in turn include the parametrized sub-templates (`cal_day_cell.yaml`, `pot_detail_card.yaml`, `modal_header.yaml`…), for 35 component files in total.
+The UI layout. Declares the pages, panels, labels, buttons, arcs, and icons, plus swipe gesture handling. It `!include`s 23 `ui_components/*.yaml` files directly (climate card/popup, light popup, TV remote popup, system console, assistant/calendar/plant popups, forecast cards, moisture gauges, switches card, the arcade selector and the 8 games); those in turn include the parametrized sub-templates (`pot_detail_card.yaml`, `modal_header.yaml`…), for 45 component files in total (2026-09-26).
 
 **The dashboard is a single LVGL page, not a multi-page tab-bar layout** ([ADR-0002](decisions/0002-single-page-swipe-navigation.md)) — every home-automation feature lives on one 1280×720 `page_main`, reachable by tap, long-press or swipe. The only other pages are the 9 gaming ones (`page_arcade` + one per console), all declared `skip: true` so swipe navigation can never land on them; they are not part of the dashboard flow.
 
@@ -362,7 +362,7 @@ Les variables ici sont typées et initialisées. Les globales non initialisées 
 ---
 
 ### `tab5-lvgl.yaml`
-La mise en page UI. Déclare les pages, panneaux, labels, boutons, arcs et icônes, ainsi que la gestion des gestes swipe. Il `!include` directement 23 fichiers `ui_components/*.yaml` (carte/popup clim, popup lumière, popup télécommande TV, console système, popups assistant/calendrier/plantes, cartes prévisions, jauges humidité, carte switches, le sélecteur arcade et les 8 jeux) ; ceux-ci incluent à leur tour les sous-templates paramétrés (`cal_day_cell.yaml`, `pot_detail_card.yaml`, `modal_header.yaml`…), soit 35 fichiers de composants au total.
+La mise en page UI. Déclare les pages, panneaux, labels, boutons, arcs et icônes, ainsi que la gestion des gestes swipe. Il `!include` directement 23 fichiers `ui_components/*.yaml` (carte/popup clim, popup lumière, popup télécommande TV, console système, popups assistant/calendrier/plantes, cartes prévisions, jauges humidité, carte switches, le sélecteur arcade et les 8 jeux) ; ceux-ci incluent à leur tour les sous-templates paramétrés (`pot_detail_card.yaml`, `modal_header.yaml`…), soit 45 fichiers de composants au total.
 
 **Le dashboard tient sur une seule page LVGL, pas une navigation multi-pages par onglets** ([ADR-0002](decisions/0002-single-page-swipe-navigation.md)) — toute la domotique vit sur un `page_main` unique en 1280×720, accessible au tap, à l'appui long ou au swipe. Les seules autres pages sont les 9 pages gaming (`page_arcade` + une par console), toutes en `skip: true` pour que le swipe ne puisse jamais y atterrir ; elles ne font pas partie du parcours dashboard.
 

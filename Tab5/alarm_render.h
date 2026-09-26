@@ -14,7 +14,7 @@
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Rendu LVGL — les pointeurs sont injectés par les scripts YAML (seuls capables
-// de faire `id(...)`), comme CalCellUI / HaAlertSlotUI.
+// de faire `id(...)`), comme HaAlertSlotUI / CalDetailLineUI.
 // ═══════════════════════════════════════════════════════════════════════════
 struct AlarmSettingsUI {
   lv_obj_t* btn_enable;      // grande bascule « Réveil »

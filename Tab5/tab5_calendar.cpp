@@ -151,7 +151,103 @@ static int cal_hex_val(char c) {
     return 0;
 }
 
-void cal_render_month(CalCellUI cells[42], lv_obj_t* lbl_month,
+// =============================================================================
+// Grille du mois : 42 cellules construites ici (lot 8 de l'audit du 26/09/2026)
+// =============================================================================
+// Avant : 42 `!include` de cal_day_cell.yaml. ESPHome recopiait le code de chaque
+// instance dans setup() (≈ 45 Ko de flash) et posait un bouton invisible sur chaque
+// cellule, avec son déclencheur, son automatisation et son action (252 widgets).
+// Ici, une boucle crée les mêmes objets avec les mêmes propriétés que le main.cpp
+// généré, à la première ouverture du calendrier. La cellule reçoit le tap elle-même.
+
+struct CalCellUI {
+    lv_obj_t* cell;   // fond (teinte vacances scolaires) + bordure (aujourd'hui)
+    lv_obj_t* num;    // numéro du jour
+    lv_obj_t* sub;    // heures de travail "09:30-20:15"
+    lv_obj_t* dot;    // pastille RDV (dorée)
+    lv_obj_t* dot2;   // pastille anniversaire (rose)
+};
+static CalCellUI s_cal_cells[42] = {};
+static void (*s_cal_on_tap)(int) = nullptr;
+
+static void cal_cell_tap_cb(lv_event_t* e) {
+    if (s_cal_on_tap) s_cal_on_tap((int) (intptr_t) lv_event_get_user_data(e));
+}
+
+// Pastille 14 px en haut à droite, masquée tant que le rendu ne l'allume pas.
+static lv_obj_t* cal_dot_create(lv_obj_t* cell, int32_t x, uint32_t color) {
+    lv_obj_t* d = lv_obj_create(cell);
+    lv_obj_set_style_align(d, LV_ALIGN_TOP_RIGHT, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(d, lv_color_hex(color), LV_PART_MAIN);
+    lv_obj_set_style_border_width(d, 0, LV_PART_MAIN);
+    lv_obj_set_style_height(d, 14, LV_PART_MAIN);
+    lv_obj_set_style_radius(d, 7, LV_PART_MAIN);
+    lv_obj_set_style_width(d, 14, LV_PART_MAIN);
+    lv_obj_set_style_x(d, x, LV_PART_MAIN);
+    lv_obj_set_style_y(d, 6, LV_PART_MAIN);
+    lv_obj_add_flag(d, LV_OBJ_FLAG_HIDDEN);
+    // Plus de bouton par-dessus : une pastille cliquable garderait le tap pour
+    // elle, et le jour ne s'ouvrirait pas.
+    lv_obj_remove_flag(d, LV_OBJ_FLAG_CLICKABLE);
+    return d;
+}
+
+// Les libellés reçoivent en local ce que le `theme:` ESPHome pose sur un label
+// YAML (couleur color_text, police roboto_22), puis leurs propriétés propres.
+static lv_obj_t* cal_label_create(lv_obj_t* cell, const esphome::font::Font* font,
+                                  const esphome::font::Font* font_theme) {
+    lv_obj_t* l = lv_label_create(cell);
+    lv_obj_set_style_text_color(l, lv_color_hex(UIColor::TEXT_SOFT), LV_PART_MAIN);
+    esphome::lvgl::lv_obj_set_style_text_font(l, font ? font : font_theme, LV_PART_MAIN);
+    lv_label_set_text(l, "");
+    return l;
+}
+
+bool cal_grid_build(lv_obj_t* anchor, int32_t grid_y, const esphome::font::Font* font_num,
+                    const esphome::font::Font* font_text, void (*on_tap)(int)) {
+    if (s_cal_cells[0].cell != nullptr) return false;   // déjà construite
+    lv_obj_t* parent = anchor ? lv_obj_get_parent(anchor) : nullptr;
+    if (parent == nullptr) return false;
+    s_cal_on_tap = on_tap;
+    for (int i = 0; i < 42; i++) {
+        // Cellule 168×86 : colonnes 25 + c×172, lignes grid_y + r×90 (lundi en tête).
+        lv_obj_t* c = lv_obj_create(parent);
+        lv_obj_move_to_index(c, lv_obj_get_index(anchor));   // même rang qu'en YAML
+        lv_obj_set_style_align(c, LV_ALIGN_TOP_LEFT, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(c, lv_color_hex(UIColor::ACCENT_ALT), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(c, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_obj_set_style_border_color(c, lv_color_hex(UIColor::ACCENT), LV_PART_MAIN);
+        lv_obj_set_style_border_opa(c, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_obj_set_style_border_width(c, 2, LV_PART_MAIN);
+        lv_obj_set_style_height(c, 86, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(c, 0, LV_PART_MAIN);
+        lv_obj_set_style_radius(c, 12, LV_PART_MAIN);
+        lv_obj_set_style_width(c, 168, LV_PART_MAIN);
+        lv_obj_set_style_x(c, 25 + (i % 7) * 172, LV_PART_MAIN);
+        lv_obj_set_style_y(c, grid_y + (i / 7) * 90, LV_PART_MAIN);
+        lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+        // Tap court -> détail du jour (ex-bouton invisible, on_short_click).
+        lv_obj_add_event_cb(c, cal_cell_tap_cb, LV_EVENT_SHORT_CLICKED, (void*) (intptr_t) i);
+
+        CalCellUI& ui = s_cal_cells[i];
+        ui.cell = c;
+        // Numéro du jour (couleur : blanc / weekend estompé / férié rose / passé ardoise)
+        ui.num = cal_label_create(c, font_num, font_text);
+        lv_obj_set_style_align(ui.num, LV_ALIGN_TOP_LEFT, LV_PART_MAIN);
+        lv_obj_set_style_x(ui.num, 10, LV_PART_MAIN);
+        lv_obj_set_style_y(ui.num, 2, LV_PART_MAIN);
+        // Heures de travail du jour ("09:30-20:15", orange si embauche < 9h)
+        ui.sub = cal_label_create(c, nullptr, font_text);
+        lv_obj_set_style_align(ui.sub, LV_ALIGN_BOTTOM_MID, LV_PART_MAIN);
+        lv_obj_set_style_y(ui.sub, -4, LV_PART_MAIN);
+        // Pastille RDV (dorée) + pastille anniversaire (rose)
+        ui.dot = cal_dot_create(c, -8, UIColor::GOLD);
+        ui.dot2 = cal_dot_create(c, -28, UIColor::WARM_PINK);
+    }
+    return true;
+}
+
+void cal_render_month(lv_obj_t* lbl_month,
     int view_year, int view_month, int today_year, int today_month, int today_day) {
     if (!lbl_month || view_month < 1 || view_month > 12) return;
 
@@ -168,7 +264,7 @@ void cal_render_month(CalCellUI cells[42], lv_obj_t* lbl_month,
 
     const bool has_today = (today_year > 0);
     for (int i = 0; i < 42; i++) {
-        const CalCellUI& c = cells[i];
+        const CalCellUI& c = s_cal_cells[i];
         if (!c.cell || !c.num || !c.sub || !c.dot || !c.dot2) continue;
 
         const int day = i - first_col + 1;

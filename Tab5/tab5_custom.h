@@ -598,14 +598,6 @@ constexpr int CAL_BIT_VACANCES = 4;   // vacances scolaires (Zone A)
 constexpr int CAL_BIT_RDV      = 8;
 constexpr int CAL_BIT_ANNIV    = 16;
 
-struct CalCellUI {
-    lv_obj_t* cell;   // fond (teinte vacances scolaires) + bordure (aujourd'hui)
-    lv_obj_t* num;    // numéro du jour
-    lv_obj_t* sub;    // heures de travail "09:30-20:15"
-    lv_obj_t* dot;    // pastille RDV (dorée)
-    lv_obj_t* dot2;   // pastille anniversaire (rose)
-};
-
 struct CalDetailLineUI {
     lv_obj_t* icon;   // glyphe MDI typé (travail/férié/vacances/RDV/anniv/fête)
     lv_obj_t* txt;    // texte de la ligne
@@ -622,9 +614,18 @@ void cal_shift_month(int& year, int& month, int delta);
 void cal_store_month_data(const std::string& annee, const std::string& mois,
     const std::string& codes, const std::string& heures, const std::string& details = "");
 
-// Rendu complet du mois affiché : numéros + alignement lundi-dimanche + weekend +
-// aujourd'hui calculés localement, enrichissement HA appliqué si le mois est en cache.
-void cal_render_month(CalCellUI cells[42], lv_obj_t* lbl_month,
+// Construit les 42 cellules de la grille (168×86, lundi en tête) dans le parent
+// de `anchor`, juste avant lui (la légende) : même rang, mêmes propriétés que
+// l'ancien gabarit cal_day_cell.yaml (lot 8, 26/09/2026). `grid_y` = ${cal_grid_y}.
+// Un tap court sur la cellule i appelle on_tap(i). Une seule fois : false si la
+// grille existe déjà (appeler à chaque ouverture ne coûte rien).
+bool cal_grid_build(lv_obj_t* anchor, int32_t grid_y, const esphome::font::Font* font_num,
+                    const esphome::font::Font* font_text, void (*on_tap)(int));
+
+// Rendu complet du mois affiché dans la grille : numéros + alignement lundi-dimanche
+// + weekend + aujourd'hui calculés localement, enrichissement HA appliqué si le mois
+// est en cache. Sans effet sur les cellules tant que cal_grid_build() n'a pas tourné.
+void cal_render_month(lv_obj_t* lbl_month,
     int view_year, int view_month, int today_year, int today_month, int today_day);
 
 // "" si la cellule est hors mois, sinon date ISO "YYYY-MM-DD" du jour tapé.
