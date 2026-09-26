@@ -4,6 +4,27 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Réveil et voix : trois bugs trouvés par l'audit des ressources
+
+Audit du 26/09/2026 (ressources, code mort, factorisation), §2. Aucun nouveau calcul, aucune
+entité touchée.
+
+- **Le « Stop » vocal du réveil pouvait tomber en panne en pleine sonnerie.** La sonnerie arme
+  le modèle « Stop », mais la poussée HA de l'état du volet (toutes les 10 min) le désarmait
+  sans regarder si le réveil sonnait. Un seul script désarme désormais le modèle,
+  `tab5_stop_model_release` (`tab5-assist.yaml`), et seulement si rien ne le tient plus :
+  réveil qui sonne, volet en mouvement ou réponse vocale en cours. Les quatre désarmements
+  (poussée du volet, fin de mouvement, fin de réponse vocale, fin de sonnerie) passent par lui ;
+  chacun testait jusque-là sa propre combinaison.
+- **« jeudi 1 octobre » dans le détail du prochain réveil** : `alarm_next_detail` refaisait
+  son propre libellé ; il reprend `format_long_day_label` (« jeudi 1er octobre »). Nouveau cas
+  dans `tools/test_alarm_clock.cpp`.
+- **Carte centrale figée après deux réponses vocales rapprochées** : `tab5_show_vocal_response`
+  est en `mode: restart`. Une deuxième réponse arrivée pendant les 8 s d'affichage de la
+  première, page quittée entre-temps, laissait le drapeau `is_showing_vocal_response` levé et
+  le rotateur arrêté. L'exécution coupée est désormais rangée d'abord ; la fin d'une réponse est
+  un script unique, `tab5_vocal_response_end`.
+
 ### 2026-09-26 — Horloge temps réel RX8130 : l'heure dès le démarrage, même sans réseau
 
 Le Tab5 a une horloge RX8130CE (0x32 sur `bsp_bus`, supercondensateur de 70 000 µF) que le

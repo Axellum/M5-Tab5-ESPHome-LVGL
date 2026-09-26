@@ -322,32 +322,30 @@ std::string alarm_next_detail(time_t now) {
   if (!g_alarm_cfg.enabled) return "Touchez l'interrupteur pour l'armer";
   if (alarm_next_ring(now) == 0) return "Aucun jour retenu dans les 8 prochains";
 
-  struct tm day;
-  if (!local_day_from_offset(s_next_offset, day)) return "";
-
-  char date[64];
-  snprintf(date, sizeof(date), "%s %d %s", fr_day_long_utf8(day.tm_wday), day.tm_mday,
-           fr_month_long_utf8(day.tm_mon + 1));
+  // « jeudi 1er octobre » : même libellé que les titres de jours (tab5_core.cpp),
+  // qui connaît le seul ordinal du français. Vide si le jour est hors bornes.
+  const std::string date = format_long_day_label(s_next_offset);
+  if (date.empty()) return "";
 
   if (!alarm_calendar_ready()) {
-    return std::string(date) + " \xC2\xB7 en attente du calendrier";
+    return date + " \xC2\xB7 en attente du calendrier";
   }
   // Jour non couvert (données trop vieilles pour aller jusque-là) : la sonnerie a
   // été calculée sur l'heure fixe, comme sans calendrier.
   const int idx = cal_index_for_offset(s_next_offset);
   if (idx < 0) {
-    return std::string(date) + " \xC2\xB7 en attente du calendrier";
+    return date + " \xC2\xB7 en attente du calendrier";
   }
   if (cal_jours_data[idx].est_repos) {
-    return std::string(date) + " \xC2\xB7 repos";
+    return date + " \xC2\xB7 repos";
   }
   const std::string& h = cal_jours_data[idx].heures_ouverture;
   if (h.size() >= 11) {
     // « Travail 06:45 – 15:30 » : tiret demi-cadratin UTF-8, comme le popup
     // calendrier (cal_render_day_detail).
-    return std::string(date) + " \xC2\xB7 Travail " + h.substr(0, 5) + " \xE2\x80\x93 " + h.substr(6, 5);
+    return date + " \xC2\xB7 Travail " + h.substr(0, 5) + " \xE2\x80\x93 " + h.substr(6, 5);
   }
-  return std::string(date) + " \xC2\xB7 Travail (horaire inconnu)";
+  return date + " \xC2\xB7 Travail (horaire inconnu)";
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

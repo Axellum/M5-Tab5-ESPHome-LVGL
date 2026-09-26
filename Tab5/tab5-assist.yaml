@@ -178,6 +178,22 @@ image:
       - lambda: 'assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::ERROR);'
 
 script:
+  # Seul chemin qui DÉSARME le modèle « Stop » : il ne se relâche que si plus rien
+  # ne le tient — réveil qui sonne (tab5-alarm.yaml l'arme au début de la sonnerie),
+  # volet en mouvement (poussée HA, tab5-api-logic.yaml) ou réponse vocale en cours.
+  # Avant, chaque appelant testait sa propre combinaison : la poussée HA du volet
+  # (toutes les 10 min) désarmait le « Stop » en pleine sonnerie (audit du
+  # 26/09/2026, §2.1). L'armement, lui, reste là où il était.
+  - id: tab5_stop_model_release
+    mode: single
+    then:
+      - if:
+          condition:
+            lambda: 'return !id(alarm_ringing) && !id(volet_en_mouvement) && !id(va_stop_armed);'
+          then:
+            - micro_wake_word.disable_model:
+                id: stop
+
   # Arme le flag d'interruption (Stop vocal local ne reçoit pas le micro pendant pipeline HA).
   - id: tab5_vocal_arm_stop
     mode: restart
@@ -205,12 +221,7 @@ script:
             not:
               voice_assistant.is_running:
           then:
-            - if:
-                condition:
-                  lambda: 'return !id(volet_en_mouvement);'
-                then:
-                  - micro_wake_word.disable_model:
-                      id: stop
+            - script.execute: tab5_stop_model_release
 
   # Interruption : coupe pipeline local + satellite HA + TTS (sans relancer l'écoute).
   - id: tab5_vocal_interrupt
@@ -308,6 +319,16 @@ script:
     parameters:
       texte: string
     then:
+      # `restart` coupe l'exécution précédente pendant ses 8 s : elle laissait le
+      # drapeau à true et le rotateur arrêté. Si la nouvelle réponse ne s'affichait
+      # pas (page quittée entre-temps), la carte centrale restait figée sur l'ancienne
+      # jusqu'à la réponse vocale suivante (audit du 26/09/2026, §2.3). On range
+      # d'abord ce que l'exécution coupée avait posé.
+      - if:
+          condition:
+            lambda: 'return id(is_showing_vocal_response);'
+          then:
+            - script.execute: tab5_vocal_response_end
       - if:
           condition:
             lambda: 'return id(forecast_page_index) == 2 && texte.size() > 0;'
@@ -326,16 +347,23 @@ script:
                     id(roboto_45_b));
                 id(current_central_panel) = g_central_ctx.current_panel;
             - delay: 8s
-            - lambda: |-
-                sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
-                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
-                    id(current_central_panel));
-                hide_vocal_response_ui(id(vocal_wrapper), id(lbl_vocal_text), g_central_ctx);
-                id(current_central_panel) = g_central_ctx.current_panel;
-            - globals.set:
-                id: is_showing_vocal_response
-                value: 'false'
-            - script.execute: tab5_central_rotator_auto
+            - script.execute: tab5_vocal_response_end
+
+  # Fin d'une réponse vocale : la carte centrale reprend son panneau et son rotateur.
+  # Sans délai, donc exécuté en entier au moment de l'appel.
+  - id: tab5_vocal_response_end
+    mode: single
+    then:
+      - lambda: |-
+          sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
+              id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
+              id(current_central_panel));
+          hide_vocal_response_ui(id(vocal_wrapper), id(lbl_vocal_text), g_central_ctx);
+          id(current_central_panel) = g_central_ctx.current_panel;
+      - globals.set:
+          id: is_showing_vocal_response
+          value: 'false'
+      - script.execute: tab5_central_rotator_auto
 
   # ═══════════════════════════════════════════════════════════════════════════
   # Popup Assistant vocal (assistant_popup.yaml) — ouverture, réglages, réponse

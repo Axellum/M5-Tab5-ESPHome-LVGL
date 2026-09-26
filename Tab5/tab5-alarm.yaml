@@ -928,14 +928,10 @@ script:
           alarm_ring_hide(ui);
       - script.execute: tab5_alarm_restore_volume
       # Retour du micro à son état de repos : le modèle « Stop » ne reste armé
-      # que si un volet est en mouvement (son autre usage, tab5-assist.yaml),
+      # que si un volet est en mouvement ou une réponse vocale en cours (ses
+      # autres usages, tab5-assist.yaml) — alarm_ringing vient de passer à false —,
       # et le moteur de mots de réveil ne tourne que si « Ok Nabu » est activé.
-      - if:
-          condition:
-            lambda: 'return !id(volet_en_mouvement) && !id(va_stop_armed);'
-          then:
-            - micro_wake_word.disable_model:
-                id: stop
+      - script.execute: tab5_stop_model_release
       # [I2S-BUS] Le cycle de sonnerie coupe le moteur de mots de réveil à chaque
       # passage de mélodie pour libérer le bus I2S : un arrêt tombé PENDANT une
       # mélodie laisserait donc « Ok Nabu » mort jusqu'au prochain TTS. Ce
