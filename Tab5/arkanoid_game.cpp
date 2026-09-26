@@ -4,9 +4,10 @@
  * @role Jeu « Arcanoïde » — casse-briques rétro Atari / borne arcade 80's.
  * @architecture_constraint Plein écran 1280x720. Le YAML ne fournit que 4
  *      conteneurs vides + 3 polices ; tout le reste est construit ici. Les objets
- *      LVGL sont PRÉALLOUÉS une seule fois (pool) puis réutilisés par show/hide +
- *      move : aucune allocation LVGL dans la boucle de jeu. Persistance NVS via
- *      esphome::global_preferences (aucune dépendance Home Assistant).
+ *      LVGL sont PRÉALLOUÉS à l'ouverture (pool) puis réutilisés par show/hide +
+ *      move : aucune allocation LVGL dans la boucle de jeu. Jeu fermé, il ne reste
+ *      rien : objets détruits et état rendu (struct Mem, audit du 26/09/2026).
+ *      Persistance NVS via esphome::global_preferences (aucune dépendance HA).
  * @ai_instruction Hot-path = tick() : pas de std::string, pas de to_string(), pas
  *      de new/delete. Les libellés HUD ne sont réécrits que quand leur valeur change.
  *      Couleurs : uniquement Pal::* (jamais d'hex en dur ici).
@@ -138,7 +139,7 @@ static const uint32_t ROW_COLORS[8] = {
 // 4. Layouts des 8 niveaux
 // ===========================================================================
 // Encodage : grille BRICK_ROWS x BRICK_COLS, valeurs = BrickType.
-// Pour BT_TOUGH, la valeur stockée dans g_bricks_hp indique les PV restants.
+// Pour BT_TOUGH, Brick::hp indique les PV restants.
 
 // Niveau 1 : Mur plein (classique Breakout)
 static const uint8_t LVL1[BRICK_ROWS][BRICK_COLS] = {
@@ -294,96 +295,114 @@ struct Brick {
     lv_obj_t* obj;
 };
 
-static ArkanoidSave g_save{};
+// Ce qui survit à la fermeture — quelques octets : l'état ouvert/fermé, les
+// dernières lectures IMU (dispatch_imu les envoie aussi jeu fermé), l'accès NVS (le
+// recréer ferait fuir un backend de préférences par ouverture) et le lissage de
+// l'inclinaison, qui continue d'une partie à l'autre.
 static NvsSlot<ArkanoidSave> g_nvs(PREF_KEY, SAVE_MAGIC);
-
-static UI    g_ui{};
-static bool  g_built = false;
 static State g_state = ST_OFF;
-static lv_timer_t* g_timer = nullptr;
-
-// --- IMU / inclinaison ---
 static float g_raw_x = 0.0f, g_raw_y = 0.0f;
 static float g_tilt_x = 0.0f;  // valeur lissée (axe utile pour la raquette)
 
-// --- Entrée boutons tactiles ---
-static bool  g_btn_left = false;
-static bool  g_btn_right = false;
-
-// --- Raquette ---
-static float g_pad_x = 0.0f;   // centre X de la raquette
-static float g_pad_vx = 0.0f;  // vitesse (pour IMU)
-static int   g_pad_w = PAD_W_DEFAULT;
-
-// --- Balles ---
-static Ball  g_balls[MAX_BALLS];
-static int   g_ball_count = 0;
-
-// --- Briques ---
-static Brick g_bricks[MAX_BRICKS];
-static int   g_bricks_alive = 0;  // compteur de briques destructibles vivantes
-
-// --- Power-ups ---
-static PowerUp g_powerups[MAX_POWERUPS];
-
-// --- Partie en cours ---
-static int      g_level = 0;        // index 0..7
-static int      g_lives = LIVES_START;
-static int      g_score = 0;
-static int      g_combo = 0;
-static uint32_t g_last_hit_ms = 0;  // dernier casse (pour combo)
-static float    g_ball_speed = BALL_SPEED_0;
-static bool     g_glue_active = false;
-static bool     g_run_active = false;
-
-// --- Objets LVGL (construits une fois) ---
-static lv_obj_t* g_pad_obj = nullptr;
-static lv_obj_t* g_ball_obj[MAX_BALLS] = {};
-static lv_obj_t* g_hud_score = nullptr;
-static lv_obj_t* g_hud_lives = nullptr;
-static lv_obj_t* g_hud_level = nullptr;
-static lv_obj_t* g_hud_best  = nullptr;
-static lv_obj_t* g_hud_ctrl  = nullptr;
-static lv_obj_t* g_btn_l = nullptr;   // bouton tactile gauche
-static lv_obj_t* g_btn_r = nullptr;   // bouton tactile droite
-static lv_obj_t* g_p_title = nullptr;
-static lv_obj_t* g_p_sub   = nullptr;
-static lv_obj_t* g_p_body  = nullptr;
-static lv_obj_t* g_p_foot  = nullptr;
 static constexpr int N_SLOTS = 8;
-static lv_obj_t* g_slot[N_SLOTS] = {};
-static lv_obj_t* g_slot_t[N_SLOTS] = {};
-static lv_obj_t* g_slot_d[N_SLOTS] = {};
 
-// Flash de mort (bandes de bord)
-static lv_obj_t* g_vign[4] = {};
-static uint32_t  g_vignette_until = 0;
+// Tout le reste n'existe que jeu ouvert : créé par open(), rendu par close(),
+// avec les objets LVGL qu'il pointe (game_common.h, « Mémoire d'un jeu »).
+struct Mem {
+    ArkanoidSave save{};  // relue de la NVS à chaque ouverture
+    UI    ui{};
+    lv_timer_t* timer = nullptr;
 
-// Caches HUD : on ne réécrit un libellé que si sa valeur a changé.
-static int g_c_score = -1, g_c_lives = -1, g_c_level = -1, g_c_best = -1;
+    // --- Entrée boutons tactiles ---
+    bool  btn_left = false;
+    bool  btn_right = false;
+
+    // --- Raquette ---
+    float pad_x = 0.0f;   // centre X de la raquette
+    float pad_vx = 0.0f;  // vitesse (pour IMU)
+    int   pad_w = PAD_W_DEFAULT;
+
+    // --- Balles ---
+    Ball  balls[MAX_BALLS];
+    int   ball_count = 0;
+
+    // --- Briques ---
+    Brick bricks[MAX_BRICKS];
+    int   bricks_alive = 0;  // compteur de briques destructibles vivantes
+
+    // --- Power-ups ---
+    PowerUp powerups[MAX_POWERUPS];
+
+    // --- Partie en cours ---
+    int      level = 0;        // index 0..7
+    int      lives = LIVES_START;
+    int      score = 0;
+    int      combo = 0;
+    uint32_t last_hit_ms = 0;  // dernier casse (pour combo)
+    float    ball_speed = BALL_SPEED_0;
+    bool     glue_active = false;
+    bool     run_active = false;
+
+    // --- Objets LVGL (construits à chaque ouverture) ---
+    lv_obj_t* pad_obj = nullptr;
+    lv_obj_t* ball_obj[MAX_BALLS] = {};
+    lv_obj_t* hud_score = nullptr;
+    lv_obj_t* hud_lives = nullptr;
+    lv_obj_t* hud_level = nullptr;
+    lv_obj_t* hud_best  = nullptr;
+    lv_obj_t* hud_ctrl  = nullptr;
+    lv_obj_t* btn_l = nullptr;   // bouton tactile gauche
+    lv_obj_t* btn_r = nullptr;   // bouton tactile droite
+    lv_obj_t* p_title = nullptr;
+    lv_obj_t* p_sub   = nullptr;
+    lv_obj_t* p_body  = nullptr;
+    lv_obj_t* p_foot  = nullptr;
+    lv_obj_t* slot[N_SLOTS] = {};
+    lv_obj_t* slot_t[N_SLOTS] = {};
+    lv_obj_t* slot_d[N_SLOTS] = {};
+
+    // Flash de mort (bandes de bord)
+    lv_obj_t* vign[4] = {};
+    uint32_t  vignette_until = 0;
+
+    // Caches HUD : on ne réécrit un libellé que si sa valeur a changé.
+    int c_score = -1, c_lives = -1, c_level = -1, c_best = -1;
+
+    // Brouillons de texte des menus et du HUD (le label copie le texte).
+    char hub_sub[128];
+    char settings_ctrl[64];
+    char settings_sens[64];
+    char scores_body[512];
+    char clear_body[128];
+    char over_body[192];
+    char hud_buf[64];
+    char hud_cbuf[32];
+};
+static Mem* gs = nullptr;
 
 // ===========================================================================
 // 6. Persistance NVS
 // ===========================================================================
 
 void persist_load() {
-    if (!g_nvs.load(g_save)) {
-        g_save = ArkanoidSave{};
-        g_save.magic = SAVE_MAGIC;
-        g_save.ctrl_mode = 2;      // défaut : les deux
-        g_save.sensitivity = 2;    // défaut : médian
+    if (!gs) return;  // la sauvegarde n'est en mémoire que jeu ouvert
+    if (!g_nvs.load(gs->save)) {
+        gs->save = ArkanoidSave{};
+        gs->save.magic = SAVE_MAGIC;
+        gs->save.ctrl_mode = 2;      // défaut : les deux
+        gs->save.sensitivity = 2;    // défaut : médian
     }
     // Le magic ne garantit pas les champs : une sauvegarde abîmée garde le bon en-tête.
     // score_count > 10 ferait lire topn_insert() hors du tableau des scores ; un
     // ctrl_mode hors 0..2 laisserait la raquette sans aucune commande.
-    if (g_save.score_count > ARK_MAX_SCORES) g_save.score_count = 0;
-    if (g_save.ctrl_mode > 2) g_save.ctrl_mode = 2;
-    if (g_save.sensitivity > 4) g_save.sensitivity = 2;
+    if (gs->save.score_count > ARK_MAX_SCORES) gs->save.score_count = 0;
+    if (gs->save.ctrl_mode > 2) gs->save.ctrl_mode = 2;
+    if (gs->save.sensitivity > 4) gs->save.sensitivity = 2;
 }
 
 void persist_save() {
-    if (!g_nvs.ready()) return;
-    g_nvs.save(g_save);
+    if (!gs || !g_nvs.ready()) return;
+    g_nvs.save(gs->save);
 }
 
 // Insère un score dans le top 10 (tri décroissant). Retourne true si qualifié.
@@ -396,13 +415,13 @@ static bool insert_score(uint32_t score, uint8_t level, uint8_t ctrl) {
     entry.pad = 0;
     entry.timestamp = (uint32_t)(esphome::millis() / 1000);
 
-    if (topn_insert(g_save.scores, g_save.score_count, entry) < 0) return false;
+    if (topn_insert(gs->save.scores, gs->save.score_count, entry) < 0) return false;
     persist_save();
     return true;
 }
 
 static uint32_t best_score() {
-    return g_save.score_count > 0 ? g_save.scores[0].score : 0;
+    return gs->save.score_count > 0 ? gs->save.scores[0].score : 0;
 }
 
 // ===========================================================================
@@ -417,7 +436,7 @@ static uint32_t best_score() {
 
 
 // ===========================================================================
-// 8. Construction de l'UI (une seule fois)
+// 8. Construction de l'UI (à chaque ouverture)
 // ===========================================================================
 
 static void slot_event_cb(lv_event_t* e);
@@ -427,140 +446,137 @@ static void hud_event_cb(lv_event_t* e);
 static void field_tap_cb(lv_event_t* e);
 
 static void build_ui() {
-    if (g_built) return;
-
     // --- Pool de briques : 120 rectangles préalloués ---
     for (int i = 0; i < MAX_BRICKS; i++) {
-        g_bricks[i].obj = mk_rect(g_ui.field);
-        lv_obj_set_size(g_bricks[i].obj, BRICK_W, BRICK_H);
-        lv_obj_add_flag(g_bricks[i].obj, LV_OBJ_FLAG_HIDDEN);
+        gs->bricks[i].obj = mk_rect(gs->ui.field);
+        lv_obj_set_size(gs->bricks[i].obj, BRICK_W, BRICK_H);
+        lv_obj_add_flag(gs->bricks[i].obj, LV_OBJ_FLAG_HIDDEN);
     }
 
     // --- Raquette ---
-    g_pad_obj = mk_rect(g_ui.field);
-    lv_obj_set_size(g_pad_obj, PAD_W_DEFAULT, PAD_H);
-    lv_obj_set_style_radius(g_pad_obj, 4, LV_PART_MAIN);
-    set_bg(g_pad_obj, Pal::PADDLE, LV_OPA_COVER);
-    lv_obj_set_pos(g_pad_obj, FW / 2 - PAD_W_DEFAULT / 2, PAD_Y);
+    gs->pad_obj = mk_rect(gs->ui.field);
+    lv_obj_set_size(gs->pad_obj, PAD_W_DEFAULT, PAD_H);
+    lv_obj_set_style_radius(gs->pad_obj, 4, LV_PART_MAIN);
+    set_bg(gs->pad_obj, Pal::PADDLE, LV_OPA_COVER);
+    lv_obj_set_pos(gs->pad_obj, FW / 2 - PAD_W_DEFAULT / 2, PAD_Y);
 
     // --- Balles (pool de 3) ---
     for (int i = 0; i < MAX_BALLS; i++) {
-        g_ball_obj[i] = mk_rect(g_ui.field);
-        lv_obj_set_size(g_ball_obj[i], BALL_R * 2, BALL_R * 2);
-        lv_obj_set_style_radius(g_ball_obj[i], LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        set_bg(g_ball_obj[i], Pal::BALL, LV_OPA_COVER);
-        lv_obj_add_flag(g_ball_obj[i], LV_OBJ_FLAG_HIDDEN);
+        gs->ball_obj[i] = mk_rect(gs->ui.field);
+        lv_obj_set_size(gs->ball_obj[i], BALL_R * 2, BALL_R * 2);
+        lv_obj_set_style_radius(gs->ball_obj[i], LV_RADIUS_CIRCLE, LV_PART_MAIN);
+        set_bg(gs->ball_obj[i], Pal::BALL, LV_OPA_COVER);
+        lv_obj_add_flag(gs->ball_obj[i], LV_OBJ_FLAG_HIDDEN);
     }
 
     // --- Power-ups (pool de 8) ---
     for (int i = 0; i < MAX_POWERUPS; i++) {
-        g_powerups[i].obj = mk_rect(g_ui.field);
-        lv_obj_set_size(g_powerups[i].obj, PU_W, PU_H);
-        lv_obj_set_style_radius(g_powerups[i].obj, 4, LV_PART_MAIN);
-        lv_obj_add_flag(g_powerups[i].obj, LV_OBJ_FLAG_HIDDEN);
-        g_powerups[i].active = false;
+        gs->powerups[i].obj = mk_rect(gs->ui.field);
+        lv_obj_set_size(gs->powerups[i].obj, PU_W, PU_H);
+        lv_obj_set_style_radius(gs->powerups[i].obj, 4, LV_PART_MAIN);
+        lv_obj_add_flag(gs->powerups[i].obj, LV_OBJ_FLAG_HIDDEN);
+        gs->powerups[i].active = false;
     }
 
     // --- Boutons tactiles latéraux (semi-transparents, coins bas) ---
-    g_btn_l = lv_obj_create(g_ui.field);
-    lv_obj_remove_style_all(g_btn_l);
-    lv_obj_set_size(g_btn_l, 180, 120);
-    lv_obj_set_pos(g_btn_l, 0, FH - 120);
-    lv_obj_set_style_radius(g_btn_l, 0, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(g_btn_l, lv_color_hex(Pal::BTN), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(g_btn_l, LV_OPA_50, LV_PART_MAIN);
-    lv_obj_add_flag(g_btn_l, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_event_cb(g_btn_l, btn_left_cb, LV_EVENT_PRESSED, nullptr);
-    lv_obj_add_event_cb(g_btn_l, btn_left_cb, LV_EVENT_RELEASED, nullptr);
-    lv_obj_add_event_cb(g_btn_l, btn_left_cb, LV_EVENT_PRESS_LOST, nullptr);
-    lv_obj_add_flag(g_btn_l, LV_OBJ_FLAG_HIDDEN);
+    gs->btn_l = lv_obj_create(gs->ui.field);
+    lv_obj_remove_style_all(gs->btn_l);
+    lv_obj_set_size(gs->btn_l, 180, 120);
+    lv_obj_set_pos(gs->btn_l, 0, FH - 120);
+    lv_obj_set_style_radius(gs->btn_l, 0, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(gs->btn_l, lv_color_hex(Pal::BTN), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(gs->btn_l, LV_OPA_50, LV_PART_MAIN);
+    lv_obj_add_flag(gs->btn_l, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(gs->btn_l, btn_left_cb, LV_EVENT_PRESSED, nullptr);
+    lv_obj_add_event_cb(gs->btn_l, btn_left_cb, LV_EVENT_RELEASED, nullptr);
+    lv_obj_add_event_cb(gs->btn_l, btn_left_cb, LV_EVENT_PRESS_LOST, nullptr);
+    lv_obj_add_flag(gs->btn_l, LV_OBJ_FLAG_HIDDEN);
 
-    g_btn_r = lv_obj_create(g_ui.field);
-    lv_obj_remove_style_all(g_btn_r);
-    lv_obj_set_size(g_btn_r, 180, 120);
-    lv_obj_set_pos(g_btn_r, FW - 180, FH - 120);
-    lv_obj_set_style_radius(g_btn_r, 0, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(g_btn_r, lv_color_hex(Pal::BTN), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(g_btn_r, LV_OPA_50, LV_PART_MAIN);
-    lv_obj_add_flag(g_btn_r, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_event_cb(g_btn_r, btn_right_cb, LV_EVENT_PRESSED, nullptr);
-    lv_obj_add_event_cb(g_btn_r, btn_right_cb, LV_EVENT_RELEASED, nullptr);
-    lv_obj_add_event_cb(g_btn_r, btn_right_cb, LV_EVENT_PRESS_LOST, nullptr);
-    lv_obj_add_flag(g_btn_r, LV_OBJ_FLAG_HIDDEN);
+    gs->btn_r = lv_obj_create(gs->ui.field);
+    lv_obj_remove_style_all(gs->btn_r);
+    lv_obj_set_size(gs->btn_r, 180, 120);
+    lv_obj_set_pos(gs->btn_r, FW - 180, FH - 120);
+    lv_obj_set_style_radius(gs->btn_r, 0, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(gs->btn_r, lv_color_hex(Pal::BTN), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(gs->btn_r, LV_OPA_50, LV_PART_MAIN);
+    lv_obj_add_flag(gs->btn_r, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(gs->btn_r, btn_right_cb, LV_EVENT_PRESSED, nullptr);
+    lv_obj_add_event_cb(gs->btn_r, btn_right_cb, LV_EVENT_RELEASED, nullptr);
+    lv_obj_add_event_cb(gs->btn_r, btn_right_cb, LV_EVENT_PRESS_LOST, nullptr);
+    lv_obj_add_flag(gs->btn_r, LV_OBJ_FLAG_HIDDEN);
 
     // --- Vignette de mort : 4 bandes fines (flash rouge) ---
     const int VB = 6;
     for (int i = 0; i < 4; i++) {
-        g_vign[i] = mk_rect(g_ui.field);
-        set_bg(g_vign[i], Pal::DANGER, LV_OPA_COVER);
-        lv_obj_add_flag(g_vign[i], LV_OBJ_FLAG_HIDDEN);
+        gs->vign[i] = mk_rect(gs->ui.field);
+        set_bg(gs->vign[i], Pal::DANGER, LV_OPA_COVER);
+        lv_obj_add_flag(gs->vign[i], LV_OBJ_FLAG_HIDDEN);
     }
-    lv_obj_set_pos(g_vign[0], 0, 0);        lv_obj_set_size(g_vign[0], FW, VB);
-    lv_obj_set_pos(g_vign[1], 0, FH - VB);  lv_obj_set_size(g_vign[1], FW, VB);
-    lv_obj_set_pos(g_vign[2], 0, 0);        lv_obj_set_size(g_vign[2], VB, FH);
-    lv_obj_set_pos(g_vign[3], FW - VB, 0);  lv_obj_set_size(g_vign[3], VB, FH);
+    lv_obj_set_pos(gs->vign[0], 0, 0);        lv_obj_set_size(gs->vign[0], FW, VB);
+    lv_obj_set_pos(gs->vign[1], 0, FH - VB);  lv_obj_set_size(gs->vign[1], FW, VB);
+    lv_obj_set_pos(gs->vign[2], 0, 0);        lv_obj_set_size(gs->vign[2], VB, FH);
+    lv_obj_set_pos(gs->vign[3], FW - VB, 0);  lv_obj_set_size(gs->vign[3], VB, FH);
 
     // --- HUD : bande compacte de 48 px ---
-    g_hud_score = mk_label(g_ui.hud, g_ui.f_small, Pal::BALL);
-    lv_obj_align(g_hud_score, LV_ALIGN_LEFT_MID, 18, 0);
-    g_hud_lives = mk_label(g_ui.hud, g_ui.f_small, Pal::DANGER);
-    lv_obj_align(g_hud_lives, LV_ALIGN_LEFT_MID, 280, 0);
-    g_hud_level = mk_label(g_ui.hud, g_ui.f_small, Pal::CYAN);
-    lv_obj_align(g_hud_level, LV_ALIGN_LEFT_MID, 450, 0);
-    g_hud_best  = mk_label(g_ui.hud, g_ui.f_small, UIColor::TEXT_DIM);
-    lv_obj_align(g_hud_best, LV_ALIGN_LEFT_MID, 700, 0);
-    g_hud_ctrl  = mk_label(g_ui.hud, g_ui.f_small, UIColor::TEXT_DIM);
-    lv_obj_align(g_hud_ctrl, LV_ALIGN_RIGHT_MID, -18, 0);
+    gs->hud_score = mk_label(gs->ui.hud, gs->ui.f_small, Pal::BALL);
+    lv_obj_align(gs->hud_score, LV_ALIGN_LEFT_MID, 18, 0);
+    gs->hud_lives = mk_label(gs->ui.hud, gs->ui.f_small, Pal::DANGER);
+    lv_obj_align(gs->hud_lives, LV_ALIGN_LEFT_MID, 280, 0);
+    gs->hud_level = mk_label(gs->ui.hud, gs->ui.f_small, Pal::CYAN);
+    lv_obj_align(gs->hud_level, LV_ALIGN_LEFT_MID, 450, 0);
+    gs->hud_best  = mk_label(gs->ui.hud, gs->ui.f_small, UIColor::TEXT_DIM);
+    lv_obj_align(gs->hud_best, LV_ALIGN_LEFT_MID, 700, 0);
+    gs->hud_ctrl  = mk_label(gs->ui.hud, gs->ui.f_small, UIColor::TEXT_DIM);
+    lv_obj_align(gs->hud_ctrl, LV_ALIGN_RIGHT_MID, -18, 0);
 
     // --- Panneau de menus ---
-    g_p_title = mk_label(g_ui.panel, g_ui.f_big, Pal::BALL);
-    lv_obj_align(g_p_title, LV_ALIGN_TOP_MID, 0, 56);
-    g_p_sub = mk_label(g_ui.panel, g_ui.f_small, UIColor::TEXT_DIM);
-    lv_obj_align(g_p_sub, LV_ALIGN_TOP_MID, 0, 122);
-    g_p_body = mk_label(g_ui.panel, g_ui.f_small, UIColor::TEXT_SOFT);
-    lv_obj_set_width(g_p_body, 900);
-    lv_obj_set_style_text_align(g_p_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    lv_obj_align(g_p_body, LV_ALIGN_TOP_MID, 0, 170);
-    g_p_foot = mk_label(g_ui.panel, g_ui.f_small, UIColor::TEXT_DIM);
-    lv_obj_align(g_p_foot, LV_ALIGN_BOTTOM_MID, 0, -22);
+    gs->p_title = mk_label(gs->ui.panel, gs->ui.f_big, Pal::BALL);
+    lv_obj_align(gs->p_title, LV_ALIGN_TOP_MID, 0, 56);
+    gs->p_sub = mk_label(gs->ui.panel, gs->ui.f_small, UIColor::TEXT_DIM);
+    lv_obj_align(gs->p_sub, LV_ALIGN_TOP_MID, 0, 122);
+    gs->p_body = mk_label(gs->ui.panel, gs->ui.f_small, UIColor::TEXT_SOFT);
+    lv_obj_set_width(gs->p_body, 900);
+    lv_obj_set_style_text_align(gs->p_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_obj_align(gs->p_body, LV_ALIGN_TOP_MID, 0, 170);
+    gs->p_foot = mk_label(gs->ui.panel, gs->ui.f_small, UIColor::TEXT_DIM);
+    lv_obj_align(gs->p_foot, LV_ALIGN_BOTTOM_MID, 0, -22);
 
     for (int i = 0; i < N_SLOTS; i++) {
-        g_slot[i] = mk_rect(g_ui.panel);
-        lv_obj_add_flag(g_slot[i], LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_style_radius(g_slot[i], 14, LV_PART_MAIN);
-        set_bg(g_slot[i], Pal::FLOOR, LV_OPA_COVER);
-        lv_obj_set_style_bg_color(g_slot[i], lv_color_hex(Pal::WALL),
+        gs->slot[i] = mk_rect(gs->ui.panel);
+        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_set_style_radius(gs->slot[i], 14, LV_PART_MAIN);
+        set_bg(gs->slot[i], Pal::FLOOR, LV_OPA_COVER);
+        lv_obj_set_style_bg_color(gs->slot[i], lv_color_hex(Pal::WALL),
                                   (lv_style_selector_t)LV_PART_MAIN |
                                   (lv_style_selector_t)LV_STATE_PRESSED);
-        lv_obj_add_event_cb(g_slot[i], slot_event_cb, LV_EVENT_CLICKED,
+        lv_obj_add_event_cb(gs->slot[i], slot_event_cb, LV_EVENT_CLICKED,
                             (void*)(intptr_t)i);
-        g_slot_t[i] = mk_label(g_slot[i], g_ui.f_mid, UIColor::TEXT_SOFT);
-        g_slot_d[i] = mk_label(g_slot[i], g_ui.f_small, UIColor::TEXT_DIM);
-        lv_obj_add_flag(g_slot[i], LV_OBJ_FLAG_HIDDEN);
+        gs->slot_t[i] = mk_label(gs->slot[i], gs->ui.f_mid, UIColor::TEXT_SOFT);
+        gs->slot_d[i] = mk_label(gs->slot[i], gs->ui.f_small, UIColor::TEXT_DIM);
+        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_HIDDEN);
     }
 
-    g_built = true;
 }
 
 // --- Mise en page des slots (liste verticale) ---
 static void slot_list(int i, const char* title, const char* desc, uint32_t col, bool on) {
-    lv_obj_set_size(g_slot[i], 680, 62);
-    lv_obj_align(g_slot[i], LV_ALIGN_TOP_MID, 0, 150 + i * 68);
-    lv_obj_set_width(g_slot_t[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(g_slot_t[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_set_width(g_slot_d[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(g_slot_d[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_align(g_slot_t[i], LV_ALIGN_LEFT_MID, 22, desc && desc[0] ? -13 : 0);
-    lv_obj_align(g_slot_d[i], LV_ALIGN_LEFT_MID, 22, 15);
-    lv_obj_set_style_text_color(g_slot_t[i], lv_color_hex(on ? col : UIColor::INACTIVE), LV_PART_MAIN);
-    set_text_if(g_slot_t[i], title);
-    set_text_if(g_slot_d[i], desc ? desc : "");
-    set_border(g_slot[i], on ? col : UIColor::INACTIVE, 2, LV_OPA_50);
-    show(g_slot[i], true);
+    lv_obj_set_size(gs->slot[i], 680, 62);
+    lv_obj_align(gs->slot[i], LV_ALIGN_TOP_MID, 0, 150 + i * 68);
+    lv_obj_set_width(gs->slot_t[i], LV_SIZE_CONTENT);
+    lv_obj_set_style_text_align(gs->slot_t[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+    lv_obj_set_width(gs->slot_d[i], LV_SIZE_CONTENT);
+    lv_obj_set_style_text_align(gs->slot_d[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+    lv_obj_align(gs->slot_t[i], LV_ALIGN_LEFT_MID, 22, desc && desc[0] ? -13 : 0);
+    lv_obj_align(gs->slot_d[i], LV_ALIGN_LEFT_MID, 22, 15);
+    lv_obj_set_style_text_color(gs->slot_t[i], lv_color_hex(on ? col : UIColor::INACTIVE), LV_PART_MAIN);
+    set_text_if(gs->slot_t[i], title);
+    set_text_if(gs->slot_d[i], desc ? desc : "");
+    set_border(gs->slot[i], on ? col : UIColor::INACTIVE, 2, LV_OPA_50);
+    show(gs->slot[i], true);
 }
 
 static void slots_hide_from(int n) {
-    for (int i = n; i < N_SLOTS; i++) show(g_slot[i], false);
+    for (int i = n; i < N_SLOTS; i++) show(gs->slot[i], false);
 }
 
 // ===========================================================================
@@ -568,12 +584,12 @@ static void slots_hide_from(int n) {
 // ===========================================================================
 
 static void panel_on(bool v) {
-    show(g_ui.panel, v);
-    if (v) lv_obj_move_foreground(g_ui.panel);
+    show(gs->ui.panel, v);
+    if (v) lv_obj_move_foreground(gs->ui.panel);
 }
 
 static const char* ctrl_name() {
-    switch (g_save.ctrl_mode) {
+    switch (gs->save.ctrl_mode) {
         case 0: return "Inclinaison";
         case 1: return "Boutons";
         default: return "Les deux";
@@ -583,19 +599,19 @@ static const char* ctrl_name() {
 static void go_hub() {
     g_state = ST_HUB;
     panel_on(true);
-    show(g_pad_obj, false);
-    for (int i = 0; i < MAX_BALLS; i++) show(g_ball_obj[i], false);
-    show(g_btn_l, false);
-    show(g_btn_r, false);
+    show(gs->pad_obj, false);
+    for (int i = 0; i < MAX_BALLS; i++) show(gs->ball_obj[i], false);
+    show(gs->btn_l, false);
+    show(gs->btn_r, false);
 
-    static char sub[128];
+    auto& sub = gs->hub_sub;
     snprintf(sub, sizeof(sub), "Meilleur score : %u   -   Controle : %s",
              (unsigned)best_score(), ctrl_name());
 
-    set_text_if(g_p_title, "ARCANOIDE");
-    set_text_if(g_p_sub, sub);
-    set_text_if(g_p_body, "");
-    set_text_if(g_p_foot, "Casse toutes les briques. Ne laisse pas tomber la balle.");
+    set_text_if(gs->p_title, "ARCANOIDE");
+    set_text_if(gs->p_sub, sub);
+    set_text_if(gs->p_body, "");
+    set_text_if(gs->p_foot, "Casse toutes les briques. Ne laisse pas tomber la balle.");
     slot_list(0, "Jouer", "8 niveaux, 3 vies, power-ups", Pal::BALL, true);
     slot_list(1, "Classement", "Top 10 local", Pal::CYAN, true);
     slot_list(2, "Reglages", "Controle, sensibilite, calibration, SFX", Pal::GREEN, true);
@@ -607,20 +623,20 @@ static void go_settings() {
     g_state = ST_SETTINGS;
     panel_on(true);
 
-    static char ctrl_title[64];
+    auto& ctrl_title = gs->settings_ctrl;
     snprintf(ctrl_title, sizeof(ctrl_title), "Controle : %s", ctrl_name());
-    static char sens_title[64];
+    auto& sens_title = gs->settings_sens;
     snprintf(sens_title, sizeof(sens_title), "Sensibilite IMU : %d/5",
-             (int)g_save.sensitivity + 1);
+             (int)gs->save.sensitivity + 1);
 
-    set_text_if(g_p_title, "Reglages");
-    set_text_if(g_p_sub, "Ces reglages sont sauvegardes automatiquement.");
-    set_text_if(g_p_body, "");
-    set_text_if(g_p_foot, "");
+    set_text_if(gs->p_title, "Reglages");
+    set_text_if(gs->p_sub, "Ces reglages sont sauvegardes automatiquement.");
+    set_text_if(gs->p_body, "");
+    set_text_if(gs->p_foot, "");
     slot_list(0, ctrl_title, "Inclinaison / Boutons / Les deux", Pal::CYAN, true);
     slot_list(1, sens_title, "Vitesse de reponse a l'inclinaison", Pal::GREEN, true);
     slot_list(2, "Calibrer a plat", "Pose la tablette et appuie", Pal::ORANGE, true);
-    slot_list(3, g_save.muted ? "SFX : coupes" : "SFX : actifs",
+    slot_list(3, gs->save.muted ? "SFX : coupes" : "SFX : actifs",
               "Bips sonores (casse, mort, niveau)", Pal::MAGENTA, true);
     slot_list(4, "Retour", "", UIColor::TEXT_DIM, true);
     slots_hide_from(5);
@@ -630,37 +646,37 @@ static void go_highscores() {
     g_state = ST_HIGHSCORES;
     panel_on(true);
 
-    static char body[512];
+    auto& body = gs->scores_body;
     int off = 0;
     off += snprintf(body + off, sizeof(body) - off, "Rang  Score      Niv  Controle\n");
-    for (int i = 0; i < g_save.score_count && i < ARK_MAX_SCORES; i++) {
-        const ArkScoreEntry& e = g_save.scores[i];
+    for (int i = 0; i < gs->save.score_count && i < ARK_MAX_SCORES; i++) {
+        const ArkScoreEntry& e = gs->save.scores[i];
         const char* cn = (e.ctrl_mode == 0) ? "IMU" : (e.ctrl_mode == 1) ? "Btn" : "Mix";
         off += snprintf(body + off, sizeof(body) - off, " %2d   %7u    %d    %s\n",
                         i + 1, (unsigned)e.score, (int)e.level, cn);
     }
-    if (g_save.score_count == 0) {
+    if (gs->save.score_count == 0) {
         off += snprintf(body + off, sizeof(body) - off, "\n  Aucun score enregistre.");
     }
 
-    set_text_if(g_p_title, "Classement");
-    set_text_if(g_p_sub, "Top 10 local (NVS)");
-    set_text_if(g_p_body, body);
-    set_text_if(g_p_foot, "");
+    set_text_if(gs->p_title, "Classement");
+    set_text_if(gs->p_sub, "Top 10 local (NVS)");
+    set_text_if(gs->p_body, body);
+    set_text_if(gs->p_foot, "");
     slot_list(0, "Effacer les scores", "Appuie pour confirmer", Pal::DANGER, true);
     slot_list(1, "Retour", "", UIColor::TEXT_DIM, true);
-    lv_obj_align(g_slot[0], LV_ALIGN_BOTTOM_MID, 0, -160);
-    lv_obj_align(g_slot[1], LV_ALIGN_BOTTOM_MID, 0, -80);
+    lv_obj_align(gs->slot[0], LV_ALIGN_BOTTOM_MID, 0, -160);
+    lv_obj_align(gs->slot[1], LV_ALIGN_BOTTOM_MID, 0, -80);
     slots_hide_from(2);
 }
 
 static void show_pause() {
     g_state = ST_PAUSED;
     panel_on(true);
-    set_text_if(g_p_title, "Pause");
-    set_text_if(g_p_sub, "Le jeu attend.");
-    set_text_if(g_p_body, "");
-    set_text_if(g_p_foot, "");
+    set_text_if(gs->p_title, "Pause");
+    set_text_if(gs->p_sub, "Le jeu attend.");
+    set_text_if(gs->p_body, "");
+    set_text_if(gs->p_foot, "");
     slot_list(0, "Reprendre", "", Pal::BALL, true);
     slot_list(1, "Recalibrer a plat", "Pose la tablette avant d'appuyer", Pal::ORANGE, true);
     slot_list(2, "Abandonner", "Le score est enregistre", Pal::DANGER, true);
@@ -670,39 +686,39 @@ static void show_pause() {
 static void show_level_clear() {
     g_state = ST_LEVELCLEAR;
     panel_on(true);
-    static char body[128];
+    auto& body = gs->clear_body;
     snprintf(body, sizeof(body), "Niveau %d — %s\nScore : %d",
-             g_level + 1, LEVEL_NAMES[g_level], g_score);
-    set_text_if(g_p_title, "Niveau termine !");
-    set_text_if(g_p_sub, "");
-    set_text_if(g_p_body, body);
-    set_text_if(g_p_foot, "");
+             gs->level + 1, LEVEL_NAMES[gs->level], gs->score);
+    set_text_if(gs->p_title, "Niveau termine !");
+    set_text_if(gs->p_sub, "");
+    set_text_if(gs->p_body, body);
+    set_text_if(gs->p_foot, "");
     slot_list(0, "Niveau suivant", "", Pal::GREEN, true);
     slots_hide_from(1);
-    lv_obj_align(g_slot[0], LV_ALIGN_BOTTOM_MID, 0, -120);
+    lv_obj_align(gs->slot[0], LV_ALIGN_BOTTOM_MID, 0, -120);
 }
 
 static void show_gameover() {
     g_state = ST_GAMEOVER;
     panel_on(true);
-    show(g_pad_obj, false);
-    for (int i = 0; i < MAX_BALLS; i++) show(g_ball_obj[i], false);
-    show(g_btn_l, false);
-    show(g_btn_r, false);
+    show(gs->pad_obj, false);
+    for (int i = 0; i < MAX_BALLS; i++) show(gs->ball_obj[i], false);
+    show(gs->btn_l, false);
+    show(gs->btn_r, false);
 
-    bool qualified = insert_score((uint32_t)g_score, (uint8_t)(g_level + 1), g_save.ctrl_mode);
-    static char body[192];
+    bool qualified = insert_score((uint32_t)gs->score, (uint8_t)(gs->level + 1), gs->save.ctrl_mode);
+    auto& body = gs->over_body;
     snprintf(body, sizeof(body), "Score : %d\nNiveau atteint : %d/8 — %s%s",
-             g_score, g_level + 1, LEVEL_NAMES[g_level],
+             gs->score, gs->level + 1, LEVEL_NAMES[gs->level],
              qualified ? "\n*** Nouveau record ! ***" : "");
-    set_text_if(g_p_title, "GAME OVER");
-    set_text_if(g_p_sub, "");
-    set_text_if(g_p_body, body);
-    set_text_if(g_p_foot, "");
+    set_text_if(gs->p_title, "GAME OVER");
+    set_text_if(gs->p_sub, "");
+    set_text_if(gs->p_body, body);
+    set_text_if(gs->p_foot, "");
     slot_list(0, "Rejouer", "", Pal::BALL, true);
     slot_list(1, "Retour au hub", "", UIColor::TEXT_DIM, true);
-    lv_obj_align(g_slot[0], LV_ALIGN_BOTTOM_MID, 0, -180);
-    lv_obj_align(g_slot[1], LV_ALIGN_BOTTOM_MID, 0, -100);
+    lv_obj_align(gs->slot[0], LV_ALIGN_BOTTOM_MID, 0, -180);
+    lv_obj_align(gs->slot[1], LV_ALIGN_BOTTOM_MID, 0, -100);
     slots_hide_from(2);
 }
 
@@ -711,12 +727,12 @@ static void show_gameover() {
 // ===========================================================================
 
 static void load_level(int idx) {
-    g_level = idx;
-    g_bricks_alive = 0;
-    g_glue_active = false;
-    g_pad_w = PAD_W_DEFAULT;
-    g_ball_speed = BALL_SPEED_0 + BALL_SPEED_INC * idx;
-    if (g_ball_speed > BALL_SPEED_MAX) g_ball_speed = BALL_SPEED_MAX;
+    gs->level = idx;
+    gs->bricks_alive = 0;
+    gs->glue_active = false;
+    gs->pad_w = PAD_W_DEFAULT;
+    gs->ball_speed = BALL_SPEED_0 + BALL_SPEED_INC * idx;
+    if (gs->ball_speed > BALL_SPEED_MAX) gs->ball_speed = BALL_SPEED_MAX;
 
     const uint8_t* layout = LEVELS[idx];
 
@@ -724,7 +740,7 @@ static void load_level(int idx) {
         for (int c = 0; c < BRICK_COLS; c++) {
             int i = r * BRICK_COLS + c;
             uint8_t val = layout[r * BRICK_COLS + c];
-            Brick& b = g_bricks[i];
+            Brick& b = gs->bricks[i];
             b.row = (uint8_t)r;
 
             if (val == 0) {
@@ -745,7 +761,7 @@ static void load_level(int idx) {
                 default: b.hp = 1; break;
             }
 
-            if (val != BT_INDESTRUCT) g_bricks_alive++;
+            if (val != BT_INDESTRUCT) gs->bricks_alive++;
 
             // Position et style
             int px = BRICK_MARGIN_X + c * (BRICK_W + BRICK_GAP);
@@ -774,50 +790,50 @@ static void load_level(int idx) {
     }
 
     // Raquette : centrée
-    g_pad_x = FW / 2.0f;
-    g_pad_vx = 0;
-    lv_obj_set_size(g_pad_obj, g_pad_w, PAD_H);
-    lv_obj_set_pos(g_pad_obj, (int)(g_pad_x - g_pad_w / 2.0f), PAD_Y);
-    show(g_pad_obj, true);
+    gs->pad_x = FW / 2.0f;
+    gs->pad_vx = 0;
+    lv_obj_set_size(gs->pad_obj, gs->pad_w, PAD_H);
+    lv_obj_set_pos(gs->pad_obj, (int)(gs->pad_x - gs->pad_w / 2.0f), PAD_Y);
+    show(gs->pad_obj, true);
 
     // Une seule balle, collée à la raquette
-    g_ball_count = 1;
-    g_balls[0].x = g_pad_x;
-    g_balls[0].y = PAD_Y - BALL_R - 2;
-    g_balls[0].vx = 0;
-    g_balls[0].vy = 0;
-    g_balls[0].active = true;
-    g_balls[0].glued = true;
-    for (int i = 1; i < MAX_BALLS; i++) g_balls[i].active = false;
+    gs->ball_count = 1;
+    gs->balls[0].x = gs->pad_x;
+    gs->balls[0].y = PAD_Y - BALL_R - 2;
+    gs->balls[0].vx = 0;
+    gs->balls[0].vy = 0;
+    gs->balls[0].active = true;
+    gs->balls[0].glued = true;
+    for (int i = 1; i < MAX_BALLS; i++) gs->balls[i].active = false;
 
-    lv_obj_set_pos(g_ball_obj[0], (int)(g_balls[0].x - BALL_R), (int)(g_balls[0].y - BALL_R));
-    show(g_ball_obj[0], true);
-    for (int i = 1; i < MAX_BALLS; i++) show(g_ball_obj[i], false);
+    lv_obj_set_pos(gs->ball_obj[0], (int)(gs->balls[0].x - BALL_R), (int)(gs->balls[0].y - BALL_R));
+    show(gs->ball_obj[0], true);
+    for (int i = 1; i < MAX_BALLS; i++) show(gs->ball_obj[i], false);
 
     // Power-ups : tous désactivés
     for (int i = 0; i < MAX_POWERUPS; i++) {
-        g_powerups[i].active = false;
-        show(g_powerups[i].obj, false);
+        gs->powerups[i].active = false;
+        show(gs->powerups[i].obj, false);
     }
 
     // Boutons tactiles visibles si mode boutons ou les deux
-    bool show_btns = (g_save.ctrl_mode >= 1);
-    show(g_btn_l, show_btns);
-    show(g_btn_r, show_btns);
+    bool show_btns = (gs->save.ctrl_mode >= 1);
+    show(gs->btn_l, show_btns);
+    show(gs->btn_r, show_btns);
 
     // HUD : reset caches
-    g_c_score = -1; g_c_lives = -1; g_c_level = -1; g_c_best = -1;
+    gs->c_score = -1; gs->c_lives = -1; gs->c_level = -1; gs->c_best = -1;
 }
 
 static void start_game() {
     s_rng = (uint32_t)(esphome::millis() ^ 0x9E3779B9u);
     if (s_rng == 0) s_rng = 0xDEADBEEFu;
 
-    g_score = 0;
-    g_lives = LIVES_START;
-    g_combo = 0;
-    g_last_hit_ms = 0;
-    g_run_active = true;
+    gs->score = 0;
+    gs->lives = LIVES_START;
+    gs->combo = 0;
+    gs->last_hit_ms = 0;
+    gs->run_active = true;
 
     load_level(0);
     g_state = ST_PLAYING;
@@ -843,8 +859,8 @@ static void launch_ball(Ball& b) {
     if (!b.glued) return;
     b.glued = false;
     float angle = -1.5708f + (rnd_range(-20, 20) / 100.0f);  // ~-90° ± 11°
-    b.vx = g_ball_speed * cosf(angle);
-    b.vy = g_ball_speed * sinf(angle);
+    b.vx = gs->ball_speed * cosf(angle);
+    b.vy = gs->ball_speed * sinf(angle);
 }
 
 // Spawne un power-up à la position d'une brique cassée.
@@ -852,7 +868,7 @@ static void spawn_powerup(float x, float y) {
     // Cherche un slot libre
     int slot = -1;
     for (int i = 0; i < MAX_POWERUPS; i++) {
-        if (!g_powerups[i].active) { slot = i; break; }
+        if (!gs->powerups[i].active) { slot = i; break; }
     }
     if (slot < 0) return;
 
@@ -867,7 +883,7 @@ static void spawn_powerup(float x, float y) {
     else if (roll < 92) type = PU_GLUE;
     else                type = PU_LIFE;   // 8 % — rare
 
-    PowerUp& pu = g_powerups[slot];
+    PowerUp& pu = gs->powerups[slot];
     pu.x = x; pu.y = y;
     pu.type = type;
     pu.active = true;
@@ -894,36 +910,36 @@ static void spawn_powerup(float x, float y) {
 static void apply_powerup(uint8_t type) {
     switch (type) {
         case PU_EXPAND:
-            g_pad_w = (g_pad_w + 50 <= PAD_W_MAX) ? g_pad_w + 50 : PAD_W_MAX;
-            lv_obj_set_size(g_pad_obj, g_pad_w, PAD_H);
+            gs->pad_w = (gs->pad_w + 50 <= PAD_W_MAX) ? gs->pad_w + 50 : PAD_W_MAX;
+            lv_obj_set_size(gs->pad_obj, gs->pad_w, PAD_H);
             break;
         case PU_SHRINK:
-            g_pad_w = (g_pad_w - 40 >= PAD_W_MIN) ? g_pad_w - 40 : PAD_W_MIN;
-            lv_obj_set_size(g_pad_obj, g_pad_w, PAD_H);
+            gs->pad_w = (gs->pad_w - 40 >= PAD_W_MIN) ? gs->pad_w - 40 : PAD_W_MIN;
+            lv_obj_set_size(gs->pad_obj, gs->pad_w, PAD_H);
             break;
         case PU_SLOW:
-            g_ball_speed = (g_ball_speed > 280.0f) ? g_ball_speed - 80.0f : 280.0f;
+            gs->ball_speed = (gs->ball_speed > 280.0f) ? gs->ball_speed - 80.0f : 280.0f;
             break;
         case PU_FAST:
-            g_ball_speed = (g_ball_speed < BALL_SPEED_MAX) ? g_ball_speed + 60.0f : BALL_SPEED_MAX;
+            gs->ball_speed = (gs->ball_speed < BALL_SPEED_MAX) ? gs->ball_speed + 60.0f : BALL_SPEED_MAX;
             break;
         case PU_MULTI:
             // Ajoute des balles (max 3) depuis une balle active
-            if (g_ball_count < MAX_BALLS) {
-                for (int i = 0; i < MAX_BALLS && g_ball_count < MAX_BALLS; i++) {
-                    if (g_balls[i].active && !g_balls[i].glued) {
+            if (gs->ball_count < MAX_BALLS) {
+                for (int i = 0; i < MAX_BALLS && gs->ball_count < MAX_BALLS; i++) {
+                    if (gs->balls[i].active && !gs->balls[i].glued) {
                         // Trouve un slot libre
                         for (int j = 0; j < MAX_BALLS; j++) {
-                            if (!g_balls[j].active) {
-                                g_balls[j] = g_balls[i];
+                            if (!gs->balls[j].active) {
+                                gs->balls[j] = gs->balls[i];
                                 float ang = (rnd_range(-40, 40) / 100.0f);
-                                float sp = sqrtf(g_balls[j].vx * g_balls[j].vx +
-                                                 g_balls[j].vy * g_balls[j].vy);
-                                g_balls[j].vx = sp * sinf(ang);
-                                g_balls[j].vy = -sp * cosf(ang);
-                                g_balls[j].active = true;
-                                show(g_ball_obj[j], true);
-                                g_ball_count++;
+                                float sp = sqrtf(gs->balls[j].vx * gs->balls[j].vx +
+                                                 gs->balls[j].vy * gs->balls[j].vy);
+                                gs->balls[j].vx = sp * sinf(ang);
+                                gs->balls[j].vy = -sp * cosf(ang);
+                                gs->balls[j].active = true;
+                                show(gs->ball_obj[j], true);
+                                gs->ball_count++;
                                 break;
                             }
                         }
@@ -933,10 +949,10 @@ static void apply_powerup(uint8_t type) {
             }
             break;
         case PU_GLUE:
-            g_glue_active = true;
+            gs->glue_active = true;
             break;
         case PU_LIFE:
-            if (g_lives < 5) g_lives++;
+            if (gs->lives < 5) gs->lives++;
             break;
         default: break;
     }
@@ -944,33 +960,33 @@ static void apply_powerup(uint8_t type) {
 
 // Flash de mort (bandes rouges)
 static void flash_death() {
-    g_vignette_until = lv_tick_get() + 300;
-    for (int i = 0; i < 4; i++) show(g_vign[i], true);
+    gs->vignette_until = lv_tick_get() + 300;
+    for (int i = 0; i < 4; i++) show(gs->vign[i], true);
 }
 
 // Perte d'une balle : -1 vie si c'était la dernière.
 static void lose_ball(int idx) {
-    g_balls[idx].active = false;
-    show(g_ball_obj[idx], false);
-    g_ball_count--;
+    gs->balls[idx].active = false;
+    show(gs->ball_obj[idx], false);
+    gs->ball_count--;
 
-    if (g_ball_count <= 0) {
-        g_lives--;
+    if (gs->ball_count <= 0) {
+        gs->lives--;
         flash_death();
-        if (g_lives <= 0) {
-            g_run_active = false;
+        if (gs->lives <= 0) {
+            gs->run_active = false;
             show_gameover();
             return;
         }
         // Respawn : une balle collée
-        g_ball_count = 1;
-        g_balls[0].x = g_pad_x;
-        g_balls[0].y = PAD_Y - BALL_R - 2;
-        g_balls[0].vx = 0; g_balls[0].vy = 0;
-        g_balls[0].active = true;
-        g_balls[0].glued = true;
-        show(g_ball_obj[0], true);
-        lv_obj_set_pos(g_ball_obj[0], (int)(g_balls[0].x - BALL_R), (int)(g_balls[0].y - BALL_R));
+        gs->ball_count = 1;
+        gs->balls[0].x = gs->pad_x;
+        gs->balls[0].y = PAD_Y - BALL_R - 2;
+        gs->balls[0].vx = 0; gs->balls[0].vy = 0;
+        gs->balls[0].active = true;
+        gs->balls[0].glued = true;
+        show(gs->ball_obj[0], true);
+        lv_obj_set_pos(gs->ball_obj[0], (int)(gs->balls[0].x - BALL_R), (int)(gs->balls[0].y - BALL_R));
     }
 }
 
@@ -1001,15 +1017,15 @@ static bool ball_hits_brick(Ball& b, Brick& br, int bx, int by) {
     if (br.hp == 0) {
         br.alive = false;
         show(br.obj, false);
-        g_bricks_alive--;
+        gs->bricks_alive--;
 
         // Score + combo
         uint32_t now = lv_tick_get();
-        if (now - g_last_hit_ms < COMBO_WINDOW_MS && g_combo < COMBO_MAX) g_combo++;
-        else g_combo = 1;
-        g_last_hit_ms = now;
+        if (now - gs->last_hit_ms < COMBO_WINDOW_MS && gs->combo < COMBO_MAX) gs->combo++;
+        else gs->combo = 1;
+        gs->last_hit_ms = now;
         int pts = (br.type == BT_TOUGH) ? SCORE_TOUGH : SCORE_BRICK;
-        g_score += pts * g_combo;
+        gs->score += pts * gs->combo;
 
         // Bonus : lâche un power-up
         if (br.type == BT_BONUS) {
@@ -1036,32 +1052,32 @@ static bool ball_hits_brick(Ball& b, Brick& br, int bx, int by) {
 // ===========================================================================
 
 static void update_hud() {
-    static char buf[64];
-    if (g_c_score != g_score) {
-        g_c_score = g_score;
-        snprintf(buf, sizeof(buf), "Score %d", g_score);
-        set_text_if(g_hud_score, buf);
+    auto& buf = gs->hud_buf;
+    if (gs->c_score != gs->score) {
+        gs->c_score = gs->score;
+        snprintf(buf, sizeof(buf), "Score %d", gs->score);
+        set_text_if(gs->hud_score, buf);
     }
-    if (g_c_lives != g_lives) {
-        g_c_lives = g_lives;
-        snprintf(buf, sizeof(buf), "Vies %d", g_lives);
-        set_text_if(g_hud_lives, buf);
+    if (gs->c_lives != gs->lives) {
+        gs->c_lives = gs->lives;
+        snprintf(buf, sizeof(buf), "Vies %d", gs->lives);
+        set_text_if(gs->hud_lives, buf);
     }
-    if (g_c_level != g_level) {
-        g_c_level = g_level;
-        snprintf(buf, sizeof(buf), "Niv %d/8", g_level + 1);
-        set_text_if(g_hud_level, buf);
+    if (gs->c_level != gs->level) {
+        gs->c_level = gs->level;
+        snprintf(buf, sizeof(buf), "Niv %d/8", gs->level + 1);
+        set_text_if(gs->hud_level, buf);
     }
     uint32_t bs = best_score();
-    if ((int)bs != g_c_best) {
-        g_c_best = (int)bs;
+    if ((int)bs != gs->c_best) {
+        gs->c_best = (int)bs;
         snprintf(buf, sizeof(buf), "Best %u", (unsigned)bs);
-        set_text_if(g_hud_best, buf);
+        set_text_if(gs->hud_best, buf);
     }
     // Indicateur contrôle (écrit une fois)
-    static char cbuf[32];
+    auto& cbuf = gs->hud_cbuf;
     snprintf(cbuf, sizeof(cbuf), "[%s]", ctrl_name());
-    set_text_if(g_hud_ctrl, cbuf);
+    set_text_if(gs->hud_ctrl, cbuf);
 }
 
 static void tick_cb(lv_timer_t*) {
@@ -1072,14 +1088,14 @@ static void tick_cb(lv_timer_t*) {
     float pad_input = 0.0f;
 
     // IMU : rotation 270° → X_écran = -tilt_Y
-    if (g_save.ctrl_mode == 0 || g_save.ctrl_mode == 2) {
-        float oy = g_save.cal_y / 1000.0f;
+    if (gs->save.ctrl_mode == 0 || gs->save.ctrl_mode == 2) {
+        float oy = gs->save.cal_y / 1000.0f;
         float raw = g_raw_y - oy;  // axe Y physique → X écran (inversé)
         g_tilt_x += ((-raw) - g_tilt_x) * TILT_SMOOTH;
 
         float dead = TILT_DEADZONE;
         float t = g_tilt_x;
-        float sens_scale = 0.6f + 0.2f * g_save.sensitivity;  // 0.6..1.4
+        float sens_scale = 0.6f + 0.2f * gs->save.sensitivity;  // 0.6..1.4
         if (fabsf(t) < dead) t = 0;
         else t = (t > 0 ? t - dead : t + dead) * sens_scale;
         t = clampf(t, -TILT_CLAMP, TILT_CLAMP);
@@ -1087,49 +1103,49 @@ static void tick_cb(lv_timer_t*) {
     }
 
     // Boutons tactiles
-    if (g_save.ctrl_mode == 1 || g_save.ctrl_mode == 2) {
-        if (g_btn_left)  pad_input -= 1.0f;
-        if (g_btn_right) pad_input += 1.0f;
+    if (gs->save.ctrl_mode == 1 || gs->save.ctrl_mode == 2) {
+        if (gs->btn_left)  pad_input -= 1.0f;
+        if (gs->btn_right) pad_input += 1.0f;
     }
     pad_input = clampf(pad_input, -1.0f, 1.0f);
 
     // Déplacement raquette
-    if (g_save.ctrl_mode == 0 || (g_save.ctrl_mode == 2 && fabsf(pad_input) > 0.01f)) {
+    if (gs->save.ctrl_mode == 0 || (gs->save.ctrl_mode == 2 && fabsf(pad_input) > 0.01f)) {
         // Mode IMU : accélération + friction
-        g_pad_vx += pad_input * PAD_ACCEL_IMU * DT;
-        g_pad_vx *= PAD_FRICTION;
-        g_pad_vx = clampf(g_pad_vx, -PAD_MAX_IMU, PAD_MAX_IMU);
-        g_pad_x += g_pad_vx * DT;
+        gs->pad_vx += pad_input * PAD_ACCEL_IMU * DT;
+        gs->pad_vx *= PAD_FRICTION;
+        gs->pad_vx = clampf(gs->pad_vx, -PAD_MAX_IMU, PAD_MAX_IMU);
+        gs->pad_x += gs->pad_vx * DT;
     }
-    if (g_save.ctrl_mode == 1) {
+    if (gs->save.ctrl_mode == 1) {
         // Mode boutons purs : vitesse directe (en mode mixte, déjà compté dans pad_input)
-        if (g_btn_left || g_btn_right) {
-            float dir = (g_btn_right ? 1.0f : 0.0f) - (g_btn_left ? 1.0f : 0.0f);
-            g_pad_x += dir * PAD_SPEED_BTN * DT;
+        if (gs->btn_left || gs->btn_right) {
+            float dir = (gs->btn_right ? 1.0f : 0.0f) - (gs->btn_left ? 1.0f : 0.0f);
+            gs->pad_x += dir * PAD_SPEED_BTN * DT;
         }
     }
     // Clamp raquette dans le terrain
-    float half = g_pad_w / 2.0f;
-    g_pad_x = clampf(g_pad_x, half, (float)(FW - half));
-    lv_obj_set_pos(g_pad_obj, (int)(g_pad_x - half), PAD_Y);
+    float half = gs->pad_w / 2.0f;
+    gs->pad_x = clampf(gs->pad_x, half, (float)(FW - half));
+    lv_obj_set_pos(gs->pad_obj, (int)(gs->pad_x - half), PAD_Y);
 
     // --- Balles : sous-pas de collision ---
     for (int bi = 0; bi < MAX_BALLS; bi++) {
-        Ball& b = g_balls[bi];
+        Ball& b = gs->balls[bi];
         if (!b.active) continue;
 
         // Balle collée : suit la raquette
         if (b.glued) {
-            b.x = g_pad_x;
+            b.x = gs->pad_x;
             b.y = PAD_Y - BALL_R - 2;
-            lv_obj_set_pos(g_ball_obj[bi], (int)(b.x - BALL_R), (int)(b.y - BALL_R));
+            lv_obj_set_pos(gs->ball_obj[bi], (int)(b.x - BALL_R), (int)(b.y - BALL_R));
             continue;
         }
 
-        // Normalise la vitesse à g_ball_speed (évite accélération/décélération parasite)
+        // Normalise la vitesse à gs->ball_speed (évite accélération/décélération parasite)
         float spd = sqrtf(b.vx * b.vx + b.vy * b.vy);
         if (spd > 0.1f) {
-            float k = g_ball_speed / spd;
+            float k = gs->ball_speed / spd;
             b.vx *= k; b.vy *= k;
         }
 
@@ -1145,16 +1161,16 @@ static void tick_cb(lv_timer_t*) {
 
             // Raquette : collision uniquement si la balle descend
             if (b.vy > 0 && b.y + BALL_R >= PAD_Y && b.y + BALL_R <= PAD_Y + PAD_H + 8 &&
-                b.x >= g_pad_x - half - BALL_R && b.x <= g_pad_x + half + BALL_R) {
+                b.x >= gs->pad_x - half - BALL_R && b.x <= gs->pad_x + half + BALL_R) {
                 b.y = PAD_Y - BALL_R;
                 // Angle selon le point d'impact (centre = vertical, bord = oblique)
-                float rel = (b.x - g_pad_x) / half;  // -1..+1
+                float rel = (b.x - gs->pad_x) / half;  // -1..+1
                 rel = clampf(rel, -1.0f, 1.0f);
                 float angle = rel * 1.1f;  // ±63°
-                b.vx = g_ball_speed * sinf(angle);
-                b.vy = -g_ball_speed * cosf(angle);
+                b.vx = gs->ball_speed * sinf(angle);
+                b.vy = -gs->ball_speed * cosf(angle);
                 // Colle : si actif, la balle se recolle
-                if (g_glue_active) {
+                if (gs->glue_active) {
                     b.glued = true;
                     b.vx = 0; b.vy = 0;
                 }
@@ -1164,7 +1180,7 @@ static void tick_cb(lv_timer_t*) {
             for (int r = 0; r < BRICK_ROWS; r++) {
                 for (int c = 0; c < BRICK_COLS; c++) {
                     int idx = r * BRICK_COLS + c;
-                    Brick& br = g_bricks[idx];
+                    Brick& br = gs->bricks[idx];
                     if (!br.alive) continue;
                     int bx = BRICK_MARGIN_X + c * (BRICK_W + BRICK_GAP);
                     int by = BRICK_TOP + r * (BRICK_H + BRICK_GAP);
@@ -1181,20 +1197,20 @@ static void tick_cb(lv_timer_t*) {
 
         // Met à jour la position LVGL
         if (b.active) {
-            lv_obj_set_pos(g_ball_obj[bi], (int)(b.x - BALL_R), (int)(b.y - BALL_R));
+            lv_obj_set_pos(gs->ball_obj[bi], (int)(b.x - BALL_R), (int)(b.y - BALL_R));
         }
     }
 
     // --- Power-ups : chute + ramassage ---
     for (int i = 0; i < MAX_POWERUPS; i++) {
-        PowerUp& pu = g_powerups[i];
+        PowerUp& pu = gs->powerups[i];
         if (!pu.active) continue;
         pu.y += PU_FALL_SPEED * DT;
         lv_obj_set_pos(pu.obj, (int)(pu.x - PU_W / 2), (int)pu.y);
 
         // Ramassage par la raquette
         if (pu.y + PU_H >= PAD_Y && pu.y <= PAD_Y + PAD_H &&
-            pu.x + PU_W / 2 >= g_pad_x - half && pu.x - PU_W / 2 <= g_pad_x + half) {
+            pu.x + PU_W / 2 >= gs->pad_x - half && pu.x - PU_W / 2 <= gs->pad_x + half) {
             apply_powerup(pu.type);
             pu.active = false;
             show(pu.obj, false);
@@ -1207,10 +1223,10 @@ static void tick_cb(lv_timer_t*) {
     }
 
     // --- Fin de niveau : toutes les briques destructibles cassées ---
-    if (g_bricks_alive <= 0 && g_state == ST_PLAYING) {
-        if (g_level >= 7) {
+    if (gs->bricks_alive <= 0 && g_state == ST_PLAYING) {
+        if (gs->level >= 7) {
             // Dernier niveau terminé = victoire = game over avec score
-            g_run_active = false;
+            gs->run_active = false;
             show_gameover();
         } else {
             show_level_clear();
@@ -1219,9 +1235,9 @@ static void tick_cb(lv_timer_t*) {
     }
 
     // --- Flash de mort : extinction ---
-    if (g_vignette_until > 0 && now > g_vignette_until) {
-        g_vignette_until = 0;
-        for (int i = 0; i < 4; i++) show(g_vign[i], false);
+    if (gs->vignette_until > 0 && now > gs->vignette_until) {
+        gs->vignette_until = 0;
+        for (int i = 0; i < 4; i++) show(gs->vign[i], false);
     }
 
     update_hud();
@@ -1233,28 +1249,28 @@ static void tick_cb(lv_timer_t*) {
 
 static void btn_left_cb(lv_event_t* e) {
     lv_event_code_t code = lv_event_get_code(e);
-    if (code == LV_EVENT_PRESSED) g_btn_left = true;
-    else g_btn_left = false;  // RELEASED ou PRESS_LOST
+    if (code == LV_EVENT_PRESSED) gs->btn_left = true;
+    else gs->btn_left = false;  // RELEASED ou PRESS_LOST
 }
 
 static void btn_right_cb(lv_event_t* e) {
     lv_event_code_t code = lv_event_get_code(e);
-    if (code == LV_EVENT_PRESSED) g_btn_right = true;
-    else g_btn_right = false;
+    if (code == LV_EVENT_PRESSED) gs->btn_right = true;
+    else gs->btn_right = false;
 }
 
 // Tap sur le field pendant le jeu : lance la balle collée / désactive la colle.
 static void field_tap_cb(lv_event_t*) {
     if (g_state != ST_PLAYING) return;
-    if (g_glue_active) {
-        g_glue_active = false;
+    if (gs->glue_active) {
+        gs->glue_active = false;
         // Lance toutes les balles collées
         for (int i = 0; i < MAX_BALLS; i++) {
-            if (g_balls[i].active && g_balls[i].glued) launch_ball(g_balls[i]);
+            if (gs->balls[i].active && gs->balls[i].glued) launch_ball(gs->balls[i]);
         }
     } else {
         for (int i = 0; i < MAX_BALLS; i++) {
-            if (g_balls[i].active && g_balls[i].glued) launch_ball(g_balls[i]);
+            if (gs->balls[i].active && gs->balls[i].glued) launch_ball(gs->balls[i]);
         }
     }
 }
@@ -1276,18 +1292,18 @@ static void slot_event_cb(lv_event_t* e) {
 
         case ST_SETTINGS:
             if (i == 0) {
-                g_save.ctrl_mode = (uint8_t)((g_save.ctrl_mode + 1) % 3);
+                gs->save.ctrl_mode = (uint8_t)((gs->save.ctrl_mode + 1) % 3);
                 persist_save();
                 go_settings();
             } else if (i == 1) {
-                g_save.sensitivity = (uint8_t)((g_save.sensitivity + 1) % 5);
+                gs->save.sensitivity = (uint8_t)((gs->save.sensitivity + 1) % 5);
                 persist_save();
                 go_settings();
             } else if (i == 2) {
                 calibrate();
-                set_text_if(g_p_foot, "Calibration prise. Tablette = plat.");
+                set_text_if(gs->p_foot, "Calibration prise. Tablette = plat.");
             } else if (i == 3) {
-                g_save.muted = g_save.muted ? 0 : 1;
+                gs->save.muted = gs->save.muted ? 0 : 1;
                 persist_save();
                 go_settings();
             } else {
@@ -1298,8 +1314,8 @@ static void slot_event_cb(lv_event_t* e) {
         case ST_HIGHSCORES:
             if (i == 0) {
                 // Effacer les scores
-                g_save.score_count = 0;
-                memset(g_save.scores, 0, sizeof(g_save.scores));
+                gs->save.score_count = 0;
+                memset(gs->save.scores, 0, sizeof(gs->save.scores));
                 persist_save();
                 go_highscores();
             } else {
@@ -1309,17 +1325,17 @@ static void slot_event_cb(lv_event_t* e) {
 
         case ST_PAUSED:
             if (i == 0) { g_state = ST_PLAYING; panel_on(false); }
-            else if (i == 1) { calibrate(); set_text_if(g_p_sub, "Calibration prise."); }
+            else if (i == 1) { calibrate(); set_text_if(gs->p_sub, "Calibration prise."); }
             else if (i == 2) {
-                g_run_active = false;
-                insert_score((uint32_t)g_score, (uint8_t)(g_level + 1), g_save.ctrl_mode);
+                gs->run_active = false;
+                insert_score((uint32_t)gs->score, (uint8_t)(gs->level + 1), gs->save.ctrl_mode);
                 go_hub();
             }
             break;
 
         case ST_LEVELCLEAR:
             if (i == 0) {
-                load_level(g_level + 1);
+                load_level(gs->level + 1);
                 g_state = ST_PLAYING;
                 panel_on(false);
             }
@@ -1345,7 +1361,8 @@ void on_imu(float ax, float ay, float /*az*/) {
 }
 
 void calibrate() {
-    tilt_calibrate(g_save.cal_x, g_save.cal_y, g_raw_x, g_raw_y);
+    if (!gs) return;
+    tilt_calibrate(gs->save.cal_x, gs->save.cal_y, g_raw_x, g_raw_y);
     g_tilt_x = 0;
     persist_save();
 }
@@ -1355,43 +1372,52 @@ bool is_open() { return g_state != ST_OFF; }
 void open(const UI& ui) {
     if (g_state != ST_OFF) return;
     if (!ui.root || !ui.field || !ui.hud || !ui.panel) return;
-    g_ui = ui;
+    gs = game_mem_new<Mem>(MemPref::Internal);
+    if (!gs) {
+        ESP_LOGW("arkanoid", "%u o introuvables : jeu non ouvert", (unsigned) sizeof(Mem));
+        if (ui.lvgl) ui.lvgl->show_page(ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
+        return;
+    }
+    gs->ui = ui;
 
     persist_load();
     build_ui();
 
     // La page LVGL est déjà active (navigation via lvgl.page.show dans le YAML).
 
-    g_run_active = false;
+    gs->run_active = false;
     go_hub();
 
     // Pause via tap HUD ; lancement balle via tap field.
-    lv_obj_add_flag(g_ui.hud, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_event_cb(g_ui.hud, hud_event_cb, LV_EVENT_CLICKED, nullptr);
-    lv_obj_add_flag(g_ui.field, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_event_cb(g_ui.field, field_tap_cb, LV_EVENT_CLICKED, nullptr);
+    lv_obj_add_flag(gs->ui.hud, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(gs->ui.hud, hud_event_cb, LV_EVENT_CLICKED, nullptr);
+    lv_obj_add_flag(gs->ui.field, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(gs->ui.field, field_tap_cb, LV_EVENT_CLICKED, nullptr);
 
-    if (!g_timer) g_timer = lv_timer_create(tick_cb, 33, nullptr);
+    if (!gs->timer) gs->timer = lv_timer_create(tick_cb, 33, nullptr);
 }
 
 void close() {
     if (g_state == ST_OFF) return;
 
     // Sauvegarde le score en cours si une partie est active.
-    if (g_run_active && g_score > 0) {
-        insert_score((uint32_t)g_score, (uint8_t)(g_level + 1), g_save.ctrl_mode);
+    if (gs->run_active && gs->score > 0) {
+        insert_score((uint32_t)gs->score, (uint8_t)(gs->level + 1), gs->save.ctrl_mode);
     }
-    g_run_active = false;
+    gs->run_active = false;
     persist_save();
 
-    if (g_timer) { lv_timer_delete(g_timer); g_timer = nullptr; }
-    if (g_ui.hud) lv_obj_remove_event_cb(g_ui.hud, hud_event_cb);
-    if (g_ui.field) lv_obj_remove_event_cb(g_ui.field, field_tap_cb);
+    if (gs->timer) { lv_timer_delete(gs->timer); gs->timer = nullptr; }
+    if (gs->ui.hud) lv_obj_remove_event_cb(gs->ui.hud, hud_event_cb);
+    if (gs->ui.field) lv_obj_remove_event_cb(gs->ui.field, field_tap_cb);
     // Navigation retour vers le sélecteur arcade (page LVGL).
-    if (g_ui.lvgl) g_ui.lvgl->show_page(g_ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
+    if (gs->ui.lvgl) gs->ui.lvgl->show_page(gs->ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
     g_state = ST_OFF;
-    g_btn_left = false;
-    g_btn_right = false;
+
+    // Rien ne reste réservé : les objets LVGL du jeu (dont le slot dont le callback
+    // nous appelle peut-être), puis le bloc qui les pointait.
+    ui_destroy(nullptr, {gs->ui.field, gs->ui.hud, gs->ui.panel});
+    game_mem_free(gs);
 }
 
 }  // namespace Arkanoid

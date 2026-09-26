@@ -4,6 +4,51 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Jeux : plus aucune mémoire réservée quand ils sont fermés
+
+Lot 4 de l'audit des ressources du 26/09/2026. Décision d'Axel : « pas de réserve mémoire
+pour les jeux si non actif ».
+
+| Mémoire statique des 8 consoles (`nm`) | Avant | Après |
+|---|---|---|
+| RAM interne | 46 767 o | 377 o |
+| PSRAM (`.ext_ram.bss`) | 34 300 o | 0 o |
+| RAM interne statique du firmware | 216 888 o | 170 280 o (−46 608) |
+
+- **État pris à l'ouverture, rendu à la fermeture.** Tableaux, pointeurs LVGL, tampons texte
+  des menus et brouillons d'IA passent dans des blocs créés par `open()` et rendus par
+  `close()` : `game_mem_new<T>(MemPref)` et `game_mem_free()` dans `game_common.h`.
+  - `MemPref::Internal` pour ce qui est lu à chaque tick.
+  - `MemPref::Psram` pour les historiques et piles d'annulation, qui étaient en
+    `EXT_RAM_BSS_ATTR` jusque-là.
+- **Objets LVGL détruits à la fermeture et reconstruits à l'ouverture** par `ui_destroy()`.
+  Les conteneurs YAML sont conservés. Les callbacks posés sur ces conteneurs sont retirés
+  à la fermeture, pour ne pas s'empiler à la réouverture.
+- **Ce qui survit, quelques octets par jeu** :
+  - l'état ouvert/fermé (lu par le registre) ;
+  - les dernières lectures IMU (`dispatch_imu()` les envoie aussi aux jeux fermés) ;
+  - le `NvsSlot` (le recréer ferait fuir un backend de préférences à chaque ouverture) ;
+  - les filtres et les graines d'aléa dont la remise à zéro changerait le jeu (lissage
+    d'inclinaison, passe-haut du flipper, lane du skill shot).
+- **Exception voulue** : une partie d'échecs ou de Trial Poursuite **en cours** garde son
+  état (bloc `Play`) et reprend à l'identique, comme avant. Pour les échecs, c'est
+  ≈ 1,2 Ko en interne et 10 Ko d'historique en PSRAM. Le bloc est rendu dès que la partie
+  est finie.
+- **Moteurs et IA** :
+  - échecs : `SQ64` et `CASTLE_MASK` calculés à la compilation (plus d'`init()`), coups
+    « tueurs » dans le bloc de recherche, brouillon SAN pris le temps de l'appel ;
+  - dames : `Ai::acquire()` / `Ai::release()` ;
+  - Go : `Engine::scratch_acquire()` et `Ai::scratch_acquire()`, utilisés aussi par
+    `tools/test_go_engine.cpp` ;
+  - Trial Poursuite : topologie du plateau en table `constexpr`.
+- **Effets visibles**, tous mineurs :
+  - le plateau derrière le menu d'un jeu repart vide à chaque ouverture, comme à la
+    première ouverture après un démarrage ;
+  - aux échecs, une pièce restait masquée si on fermait pendant son animation : corrigé.
+- **Garde-fous** : les fonctions publiques atteignables jeu fermé ne touchent plus au
+  bloc ; si la mémoire manque à l'ouverture, un avertissement est journalisé et on revient
+  à l'arcade sans ouvrir.
+
 ### 2026-09-26 — Réveil et voix : trois bugs trouvés par l'audit des ressources
 
 Audit du 26/09/2026 (ressources, code mort, factorisation), §2. Aucun nouveau calcul, aucune

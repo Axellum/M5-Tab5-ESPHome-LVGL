@@ -11,11 +11,18 @@
  *      appelait is_legal() — qui simulait le coup — sur les 361 intersections
  *      à chaque nœud.
  *   3. PILE PLATE. Aucun tableau de taille MAX_SQ en local : un `Pos` (~372 o)
- *      et la liste de candidats du niveau, rien de plus.
+ *      et la liste de candidats du niveau, rien de plus. Les tables partagées
+ *      vivent dans le bloc `Scratch`, pris à l'ouverture du jeu et rendu à sa
+ *      fermeture (audit du 26/09/2026, lot 4).
  */
 #include "go_ai.h"
 #include "esphome.h"
+#if defined(ESP_PLATFORM)
+#include "esp_heap_caps.h"
+#endif
+#include <cstdlib>
 #include <cstring>
+#include <new>
 
 namespace Go {
 namespace Ai {
@@ -34,7 +41,7 @@ static const int DC[4] = {0, 0, -1, 1};
 static constexpr int INF = 1000000;
 static constexpr int MAX_CAND = 24;   // candidats retenus à la racine
 static constexpr float RESIGN_MARGIN = 45.0f;  // écart d'aire → abandon
-static float g_komi = 6.5f;
+// Komi de la partie : Scratch::komi (posé par begin()).
 
 // ---------------------------------------------------------------------------
 // Table des niveaux
@@ -67,41 +74,81 @@ const char* level_name(Level lv) {
 static inline int size_slot(int n) { return n <= 9 ? 0 : (n <= 13 ? 1 : 2); }
 
 // ---------------------------------------------------------------------------
-// Scratch de module (contexte LVGL mono-thread, jamais réentrant)
+// Scratch de l'IA (contexte LVGL mono-thread, jamais réentrant)
 // ---------------------------------------------------------------------------
 // build_chains / gen_cands / static_eval sont TOUJOURS appelés en séquence au
 // début d'un nœud, et leurs résultats sont consommés avant toute descente
 // récursive. Les partager entre niveaux est donc sûr — et c'est ce qui garde la
 // pile plate.
+// Tables et état de la recherche vivent dans un bloc pris par scratch_acquire()
+// (Go::open) et rendu par scratch_release() (Go::close) : jeu fermé, l'IA ne
+// réserve rien. Mêmes valeurs initiales que les anciens globaux ; begin()
+// réécrit de toute façon tout l'état avant de chercher.
 // ---------------------------------------------------------------------------
-static uint8_t c_libs[MAX_SQ];    // libertés de la chaîne de la case (0 si vide)
-static int16_t c_size[MAX_SQ];    // taille de la chaîne de la case
-static int16_t c_root[MAX_SQ];    // représentant de la chaîne (plus petit index)
-static uint8_t c_seen[MAX_SQ];
-static int16_t c_grp[MAX_SQ];
-
-static uint8_t e_dist[MAX_SQ];    // influence : distance à la pierre la plus proche
-static uint8_t e_own[MAX_SQ];     // influence : couleur dominante (3 = neutre)
-static int16_t e_queue[MAX_SQ];
-
 struct Cand { int16_t sq; int32_t score; };
-static Cand g_cand[MAX_CAND];
-static int  g_nc = 0;
-static int  g_ci = 0;
 
-static State    g_state = AI_IDLE;
-static Level    g_level = LVL_BEGINNER;
-static Pos      g_root;
-static int      g_best = PASS;
-static int      g_depth = 1;
-static int      g_depth_target = 1;
-static int      g_done_depth = 0;
-static uint32_t g_cpu_ms = 0;
-static uint32_t g_budget_ms = 1;
-static uint32_t g_deadline = 0;
-static uint32_t g_nodes = 0;
-static bool     g_abort_slice = false;
+struct Scratch {
+    float komi = 6.5f;         // komi de la partie (posé par begin())
+
+    uint8_t c_libs[MAX_SQ];    // libertés de la chaîne de la case (0 si vide)
+    int16_t c_size[MAX_SQ];    // taille de la chaîne de la case
+    int16_t c_root[MAX_SQ];    // représentant de la chaîne (plus petit index)
+    uint8_t c_seen[MAX_SQ];
+    int16_t c_grp[MAX_SQ];
+
+    uint8_t e_dist[MAX_SQ];    // influence : distance à la pierre la plus proche
+    uint8_t e_own[MAX_SQ];     // influence : couleur dominante (3 = neutre)
+    int16_t e_queue[MAX_SQ];
+
+    Cand cand[MAX_CAND];
+    int  nc = 0;
+    int  ci = 0;
+
+    State    state = AI_IDLE;
+    Level    level = LVL_BEGINNER;
+    Pos      root;
+    int      best = PASS;
+    int      depth = 1;
+    int      depth_target = 1;
+    int      done_depth = 0;
+    uint32_t cpu_ms = 0;
+    uint32_t budget_ms = 1;
+    uint32_t deadline = 0;
+    uint32_t nodes = 0;
+    bool     abort_slice = false;
+};
+static Scratch* ws = nullptr;
+
+// Seul état hors du bloc : l'aléa. begin() y MÉLANGE la graine de chaque coup
+// sans jamais le ré-amorcer ; le remettre à sa valeur d'usine à chaque ouverture
+// changerait la suite des tirages d'une session à l'autre.
 static uint32_t g_rng = 0x60A10001u;
+
+// Chemin chaud (build_chains à chaque nœud) : RAM interne d'abord, PSRAM en
+// secours — la règle MemPref::Internal de game_common.h, sans dépendre de LVGL.
+bool scratch_acquire() {
+    if (ws) return true;
+#if defined(ESP_PLATFORM)
+    void* p = heap_caps_malloc(sizeof(Scratch), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    if (!p) p = heap_caps_malloc(sizeof(Scratch), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+#else
+    void* p = std::malloc(sizeof(Scratch));
+#endif
+    if (!p) return false;
+    ws = new (p) Scratch();
+    return true;
+}
+
+void scratch_release() {
+    if (!ws) return;
+    ws->~Scratch();
+#if defined(ESP_PLATFORM)
+    heap_caps_free(ws);
+#else
+    std::free(ws);
+#endif
+    ws = nullptr;
+}
 
 static inline uint32_t rnd() {
     g_rng ^= g_rng << 13;
@@ -114,21 +161,24 @@ static inline uint32_t rnd() {
 // Tables de chaînes — UNE passe O(N) par position
 // ---------------------------------------------------------------------------
 
+// Référence locale au bloc (ici et dans build_influence) : une écriture uint8_t
+// peut aliaser le pointeur `ws`, que le compilateur relirait sinon à chaque tour.
 static void build_chains(const Pos& p) {
+    Scratch& s = *ws;
     const int N = p.n * p.n;
-    memset(c_libs, 0, (size_t)N);
-    memset(c_seen, 0, (size_t)N);
+    memset(s.c_libs, 0, (size_t)N);
+    memset(s.c_seen, 0, (size_t)N);
     for (int i = 0; i < N; i++) {
-        if (p.sq[i] == EMPTY || c_seen[i]) continue;
+        if (p.sq[i] == EMPTY || s.c_seen[i]) continue;
         int gsz = 0;
-        const int libs = Engine::chain_liberties(p, i, c_grp, &gsz);
+        const int libs = Engine::chain_liberties(p, i, s.c_grp, &gsz);
         const uint8_t l = (uint8_t)(libs > 255 ? 255 : libs);
         for (int k = 0; k < gsz; k++) {
-            const int g = c_grp[k];
-            c_seen[g] = 1;
-            c_libs[g] = l;
-            c_size[g] = (int16_t)gsz;
-            c_root[g] = (int16_t)i;   // i est le plus petit index de la chaîne
+            const int g = s.c_grp[k];
+            s.c_seen[g] = 1;
+            s.c_libs[g] = l;
+            s.c_size[g] = (int16_t)gsz;
+            s.c_root[g] = (int16_t)i;   // i est le plus petit index de la chaîne
         }
     }
 }
@@ -148,8 +198,8 @@ static bool fast_legal(const Pos& p, int sq) {
         const int ni = Engine::idx(nr, nc, n);
         const uint8_t col = p.sq[ni];
         if (col == EMPTY) return true;                    // liberté directe
-        if (col == me  && c_libs[ni] >= 2) friendly_ok = true;
-        if (col == you && c_libs[ni] == 1) capture = true;
+        if (col == me  && ws->c_libs[ni] >= 2) friendly_ok = true;
+        if (col == you && ws->c_libs[ni] == 1) capture = true;
     }
     return friendly_ok || capture;
 }
@@ -159,22 +209,23 @@ static bool fast_legal(const Pos& p, int sq) {
 // ---------------------------------------------------------------------------
 
 static void build_influence(const Pos& p) {
+    Scratch& s = *ws;
     const int n = p.n;
     const int N = n * n;
-    memset(e_dist, 0xFF, (size_t)N);
-    memset(e_own, 0, (size_t)N);
+    memset(s.e_dist, 0xFF, (size_t)N);
+    memset(s.e_own, 0, (size_t)N);
     int head = 0, tail = 0;
     for (int i = 0; i < N; i++) {
         if (p.sq[i] == EMPTY) continue;
-        e_dist[i] = 0;
-        e_own[i] = p.sq[i];
-        e_queue[tail++] = (int16_t)i;
+        s.e_dist[i] = 0;
+        s.e_own[i] = p.sq[i];
+        s.e_queue[tail++] = (int16_t)i;
     }
     while (head < tail) {
-        const int cur = e_queue[head++];
-        const uint8_t o = e_own[cur];
+        const int cur = s.e_queue[head++];
+        const uint8_t o = s.e_own[cur];
         if (o == 3) continue;                 // une zone neutre ne rayonne plus
-        const uint8_t d = e_dist[cur];
+        const uint8_t d = s.e_dist[cur];
         if (d >= 8) continue;                 // au-delà, l'influence est nulle
         const int r = cur / n, c = cur % n;
         for (int k = 0; k < 4; k++) {
@@ -182,12 +233,12 @@ static void build_influence(const Pos& p) {
             if (!Engine::on(nr, nc, n)) continue;
             const int ni = Engine::idx(nr, nc, n);
             if (p.sq[ni] != EMPTY) continue;  // on ne diffuse que dans le vide
-            if (e_dist[ni] == 0xFF) {
-                e_dist[ni] = (uint8_t)(d + 1);
-                e_own[ni] = o;
-                e_queue[tail++] = (int16_t)ni;
-            } else if (e_dist[ni] == d + 1 && e_own[ni] != o) {
-                e_own[ni] = 3;                // égalité de distance = point neutre
+            if (s.e_dist[ni] == 0xFF) {
+                s.e_dist[ni] = (uint8_t)(d + 1);
+                s.e_own[ni] = o;
+                s.e_queue[tail++] = (int16_t)ni;
+            } else if (s.e_dist[ni] == d + 1 && s.e_own[ni] != o) {
+                s.e_own[ni] = 3;                // égalité de distance = point neutre
             }
         }
     }
@@ -216,9 +267,9 @@ static int static_eval(const Pos& p) {
     // Une chaîne n'est comptée qu'une fois : au niveau de son représentant.
     for (int i = 0; i < N; i++) {
         const uint8_t col = p.sq[i];
-        if (col == EMPTY || c_root[i] != (int16_t)i) continue;
-        const int gsz = c_size[i];
-        const int libs = c_libs[i];
+        if (col == EMPTY || ws->c_root[i] != (int16_t)i) continue;
+        const int gsz = ws->c_size[i];
+        const int libs = ws->c_libs[i];
         int v = gsz * 10;
         if (libs <= 1) v -= gsz * 8;
         else if (libs == 2) v -= gsz * 2;
@@ -228,9 +279,9 @@ static int static_eval(const Pos& p) {
     build_influence(p);
     for (int i = 0; i < N; i++) {
         if (p.sq[i] != EMPTY) continue;
-        const uint8_t o = e_own[i];
+        const uint8_t o = ws->e_own[i];
         if (o != BLACK && o != WHITE) continue;
-        const int d = e_dist[i] > 8 ? 8 : e_dist[i];
+        const int d = ws->e_dist[i] > 8 ? 8 : ws->e_dist[i];
         const int w = INF_W[d];
         sc += (o == BLACK) ? w : -w;
     }
@@ -284,8 +335,8 @@ static int gen_cands(const Pos& p, Cand* out, int max_out, int noise) {
             const uint8_t col = p.sq[ni];
             if (col == EMPTY) { empty_nb++; continue; }
             near_stone = true;
-            const int libs = c_libs[ni];
-            const int gsz = c_size[ni];
+            const int libs = ws->c_libs[ni];
+            const int gsz = ws->c_size[ni];
             if (col == you) {
                 if (libs == 1) { sc += 120 + 14 * gsz; captures = true; }
                 else if (libs == 2) sc += 26 + 2 * gsz;   // mise en atari
@@ -369,8 +420,8 @@ static int fill_legal_fallback(const Pos& p, Cand* out, int max_out) {
 static int negamax(const Pos& p, int depth, int alpha, int beta) {
     // Garde-fou temporel : testé tous les 32 nœuds (un nœud de Go coûte cher,
     // inutile d'aller plus fin).
-    if ((++g_nodes & 31u) == 0u && esphome::millis() >= g_deadline) {
-        g_abort_slice = true;
+    if ((++ws->nodes & 31u) == 0u && esphome::millis() >= ws->deadline) {
+        ws->abort_slice = true;
         return 0;
     }
     if (Engine::is_over(p)) return eval_side(p);
@@ -378,7 +429,7 @@ static int negamax(const Pos& p, int depth, int alpha, int beta) {
 
     Cand moves[MAX_CAND];
     build_chains(p);
-    const int k = LEVELS[g_level].node_cands;
+    const int k = LEVELS[ws->level].node_cands;
     int nm = gen_cands(p, moves, k < MAX_CAND ? k : MAX_CAND, 0);
     if (nm == 0) nm = fill_legal_fallback(p, moves, k < MAX_CAND ? k : MAX_CAND);
 
@@ -387,7 +438,7 @@ static int negamax(const Pos& p, int depth, int alpha, int beta) {
         Pos ch = p;
         if (!Engine::play(ch, moves[i].sq)) continue;
         const int sc = -negamax(ch, depth - 1, -beta, -alpha);
-        if (g_abort_slice) return best > -INF ? best : 0;
+        if (ws->abort_slice) return best > -INF ? best : 0;
         if (sc > best) best = sc;
         if (sc > alpha) alpha = sc;
         if (alpha >= beta) break;
@@ -402,17 +453,17 @@ static int negamax(const Pos& p, int depth, int alpha, int beta) {
 }
 
 static void finish() {
-    g_state = AI_DONE;
+    ws->state = AI_DONE;
 }
 
 // Le meilleur candidat après une profondeur entièrement terminée.
 static void commit_best() {
     int bi = 0;
-    for (int i = 1; i < g_nc; i++) {
-        if (g_cand[i].score > g_cand[bi].score) bi = i;
-        else if (g_cand[i].score == g_cand[bi].score && (rnd() & 1u)) bi = i;
+    for (int i = 1; i < ws->nc; i++) {
+        if (ws->cand[i].score > ws->cand[bi].score) bi = i;
+        else if (ws->cand[i].score == ws->cand[bi].score && (rnd() & 1u)) bi = i;
     }
-    g_best = g_cand[bi].sq;
+    ws->best = ws->cand[bi].sq;
 }
 
 // Faut-il passer d'office ? Deux cas nets, pour éviter les parties sans fin.
@@ -420,7 +471,7 @@ static bool should_pass_now(const Pos& p) {
     if (p.move_no > (uint16_t)(p.n * p.n * 2)) return true;
     if (p.passes != 1) return false;              // l'adversaire vient de passer
     Engine::Score s;
-    Engine::score_chinese(p, g_komi, nullptr, s);
+    Engine::score_chinese(p, ws->komi, nullptr, s);
     return (p.side == BLACK) ? (s.black > s.white) : (s.white > s.black);
 }
 
@@ -428,41 +479,42 @@ static bool should_pass_now(const Pos& p) {
 // Approximation : pas de marquage morts, mais suffisant pour ne pas jouer
 // jusqu'au remplissage du goban en salon.
 static bool should_resign_now(const Pos& p) {
-    if (g_level < LVL_AMATEUR) return false;
+    if (ws->level < LVL_AMATEUR) return false;
     if (p.move_no < (uint16_t)(p.n * p.n / 3)) return false;
     Engine::Score s;
-    Engine::score_chinese(p, g_komi, nullptr, s);
+    Engine::score_chinese(p, ws->komi, nullptr, s);
     const float me  = (p.side == BLACK) ? s.black : s.white;
     const float you = (p.side == BLACK) ? s.white : s.black;
     return (you - me) >= RESIGN_MARGIN;
 }
 
 void begin(const Pos& root, Level level, uint32_t seed, float komi) {
-    g_root = root;
-    g_komi = komi;
-    g_level = (level <= LVL_EXPERT) ? level : LVL_AMATEUR;
-    const LevelCfg& L = LEVELS[g_level];
+    if (!ws) return;  // brouillon absent : jamais jeu ouvert (Go::open le prend)
+    ws->root = root;
+    ws->komi = komi;
+    ws->level = (level <= LVL_EXPERT) ? level : LVL_AMATEUR;
+    const LevelCfg& L = LEVELS[ws->level];
     g_rng ^= seed * 0x9E3779B9u + 0x85EBCA6Bu;
     if (g_rng == 0) g_rng = 0x60A10001u;
 
-    g_ci = 0;
-    g_nodes = 0;
-    g_cpu_ms = 0;
-    g_done_depth = 0;
-    g_abort_slice = false;
-    g_depth = 1;
-    g_depth_target = L.depth[size_slot(root.n)];
-    g_budget_ms = L.budget_ms ? L.budget_ms : 1;
-    g_best = PASS;
+    ws->ci = 0;
+    ws->nodes = 0;
+    ws->cpu_ms = 0;
+    ws->done_depth = 0;
+    ws->abort_slice = false;
+    ws->depth = 1;
+    ws->depth_target = L.depth[size_slot(root.n)];
+    ws->budget_ms = L.budget_ms ? L.budget_ms : 1;
+    ws->best = PASS;
 
-    if (should_resign_now(root)) { g_best = RESIGN; g_nc = 0; finish(); return; }
-    if (should_pass_now(root)) { g_nc = 0; finish(); return; }
+    if (should_resign_now(root)) { ws->best = RESIGN; ws->nc = 0; finish(); return; }
+    if (should_pass_now(root)) { ws->nc = 0; finish(); return; }
 
     build_chains(root);
     const int cap = L.root_cands < MAX_CAND ? L.root_cands : MAX_CAND;
-    g_nc = gen_cands(root, g_cand, cap, L.noise);
-    if (g_nc == 0) g_nc = fill_legal_fallback(root, g_cand, cap);
-    if (g_nc == 0) { finish(); return; }     // vraiment aucun coup légal → passe
+    ws->nc = gen_cands(root, ws->cand, cap, L.noise);
+    if (ws->nc == 0) ws->nc = fill_legal_fallback(root, ws->cand, cap);
+    if (ws->nc == 0) { finish(); return; }     // vraiment aucun coup légal → passe
 
     // L'adversaire vient de passer et il ne reste aucun coup TACTIQUE (ni
     // capture, ni atari, ni sauvetage — le meilleur candidat ne vaut qu'un
@@ -470,103 +522,105 @@ void begin(const Pos& root, Level level, uint32_t seed, float komi) {
     // règle, un Tab en position perdante ferait durer la partie jusqu'à remplir
     // le goban, ce qui est correct au Go mais insupportable en salon.
     // Écartée au niveau Débutant, dont le bruit de ±40 rendrait le seuil absurde.
-    if (root.passes == 1 && g_level >= LVL_AMATEUR && g_cand[0].score < 45) {
-        g_best = PASS;
+    if (root.passes == 1 && ws->level >= LVL_AMATEUR && ws->cand[0].score < 45) {
+        ws->best = PASS;
         finish();
         return;
     }
 
     // Un coup valide est disponible dès maintenant : si la recherche est
     // interrompue, on rend le meilleur candidat statique.
-    g_best = g_cand[0].sq;
+    ws->best = ws->cand[0].sq;
 
-    if (g_depth_target <= 0) {
+    if (ws->depth_target <= 0) {
         // Débutant : tirage pondéré sur les scores statiques (déjà bruités).
-        int min_sc = g_cand[0].score;
-        for (int i = 1; i < g_nc; i++) {
-            if (g_cand[i].score < min_sc) min_sc = g_cand[i].score;
+        int min_sc = ws->cand[0].score;
+        for (int i = 1; i < ws->nc; i++) {
+            if (ws->cand[i].score < min_sc) min_sc = ws->cand[i].score;
         }
         uint32_t sum = 0;
         uint32_t weights[MAX_CAND];
-        for (int i = 0; i < g_nc; i++) {
-            weights[i] = (uint32_t)(g_cand[i].score - min_sc + 1);
+        for (int i = 0; i < ws->nc; i++) {
+            weights[i] = (uint32_t)(ws->cand[i].score - min_sc + 1);
             sum += weights[i];
         }
         uint32_t pick = (sum > 0) ? (rnd() % sum) : 0;
-        for (int i = 0; i < g_nc; i++) {
-            if (pick < weights[i]) { g_best = g_cand[i].sq; break; }
+        for (int i = 0; i < ws->nc; i++) {
+            if (pick < weights[i]) { ws->best = ws->cand[i].sq; break; }
             pick -= weights[i];
         }
         finish();
         return;
     }
 
-    for (int i = 0; i < g_nc; i++) g_cand[i].score = -INF;
-    g_state = AI_THINKING;
+    for (int i = 0; i < ws->nc; i++) ws->cand[i].score = -INF;
+    ws->state = AI_THINKING;
 }
 
 void step(uint32_t slice_ms) {
-    if (g_state != AI_THINKING) return;
+    if (!ws || ws->state != AI_THINKING) return;
     const uint32_t t0 = esphome::millis();
-    g_deadline = t0 + (slice_ms ? slice_ms : 1);
-    g_abort_slice = false;
+    ws->deadline = t0 + (slice_ms ? slice_ms : 1);
+    ws->abort_slice = false;
 
     bool sliced_out = false;
     while (!sliced_out) {
-        while (g_ci < g_nc) {
-            if (esphome::millis() >= g_deadline) { sliced_out = true; break; }
-            Pos ch = g_root;
-            if (!Engine::play(ch, g_cand[g_ci].sq)) {
-                g_cand[g_ci].score = -INF;
-                g_ci++;
+        while (ws->ci < ws->nc) {
+            if (esphome::millis() >= ws->deadline) { sliced_out = true; break; }
+            Pos ch = ws->root;
+            if (!Engine::play(ch, ws->cand[ws->ci].sq)) {
+                ws->cand[ws->ci].score = -INF;
+                ws->ci++;
                 continue;
             }
-            const int sc = (g_depth <= 1) ? -eval_side(ch)
-                                          : -negamax(ch, g_depth - 1, -INF, INF);
-            if (g_abort_slice) { sliced_out = true; break; }  // candidat rejoué
-            g_cand[g_ci].score = sc;
-            g_ci++;
+            const int sc = (ws->depth <= 1) ? -eval_side(ch)
+                                          : -negamax(ch, ws->depth - 1, -INF, INF);
+            if (ws->abort_slice) { sliced_out = true; break; }  // candidat rejoué
+            ws->cand[ws->ci].score = sc;
+            ws->ci++;
         }
         if (sliced_out) break;
 
         // Profondeur entièrement explorée : on peut publier son résultat.
         commit_best();
-        g_done_depth = g_depth;
-        const uint32_t spent = g_cpu_ms + (esphome::millis() - t0);
-        if (g_depth >= g_depth_target || spent >= g_budget_ms) {
-            g_cpu_ms = spent;
+        ws->done_depth = ws->depth;
+        const uint32_t spent = ws->cpu_ms + (esphome::millis() - t0);
+        if (ws->depth >= ws->depth_target || spent >= ws->budget_ms) {
+            ws->cpu_ms = spent;
             finish();
             return;
         }
         // Approfondissement itératif : on rejoue dans l'ordre du pli précédent.
-        for (int i = 1; i < g_nc; i++) {
-            const Cand t = g_cand[i];
+        for (int i = 1; i < ws->nc; i++) {
+            const Cand t = ws->cand[i];
             int j = i - 1;
-            while (j >= 0 && g_cand[j].score < t.score) { g_cand[j + 1] = g_cand[j]; j--; }
-            g_cand[j + 1] = t;
+            while (j >= 0 && ws->cand[j].score < t.score) { ws->cand[j + 1] = ws->cand[j]; j--; }
+            ws->cand[j + 1] = t;
         }
-        for (int i = 0; i < g_nc; i++) g_cand[i].score = -INF;
-        g_depth++;
-        g_ci = 0;
+        for (int i = 0; i < ws->nc; i++) ws->cand[i].score = -INF;
+        ws->depth++;
+        ws->ci = 0;
     }
 
-    g_cpu_ms += esphome::millis() - t0;
+    ws->cpu_ms += esphome::millis() - t0;
 
     // Filet de sécurité : quoi qu'il arrive on rend un coup. Si une profondeur a
-    // été terminée, `g_best` en vient ; sinon c'est le meilleur candidat statique.
-    if (g_cpu_ms >= g_budget_ms && g_done_depth >= 1) finish();
-    else if (g_cpu_ms >= g_budget_ms * 3u) finish();
+    // été terminée, `ws->best` en vient ; sinon c'est le meilleur candidat statique.
+    if (ws->cpu_ms >= ws->budget_ms && ws->done_depth >= 1) finish();
+    else if (ws->cpu_ms >= ws->budget_ms * 3u) finish();
 }
 
-State state()      { return g_state; }
-bool  ready()      { return g_state == AI_DONE; }
-int   best_sq()    { return g_best; }
-void  abort()      { g_state = AI_ABORT; g_best = PASS; }
+// Sans brouillon (jeu fermé) : rien en cours, rien de prêt, la passe par défaut.
+State state()      { return ws ? ws->state : AI_IDLE; }
+bool  ready()      { return ws && ws->state == AI_DONE; }
+int   best_sq()    { return ws ? ws->best : PASS; }
+void  abort()      { if (ws) { ws->state = AI_ABORT; ws->best = PASS; } }
 
 int progress_pct() {
-    if (g_state == AI_DONE) return 100;
-    if (g_budget_ms == 0) return 100;
-    uint32_t pct = (g_cpu_ms * 100u) / g_budget_ms;
+    if (!ws) return 0;
+    if (ws->state == AI_DONE) return 100;
+    if (ws->budget_ms == 0) return 100;
+    uint32_t pct = (ws->cpu_ms * 100u) / ws->budget_ms;
     return (int)(pct > 99u ? 99u : pct);
 }
 

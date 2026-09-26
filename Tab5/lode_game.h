@@ -6,9 +6,11 @@
  *      modal v4 (ADR-0009) : pas de modal_scrim / modal_header / carte 1250x690 /
  *      croix — la sortie se fait par le hub (« Quitter »). Le YAML
  *      (ui_components/lode_game.yaml) ne declare QUE 5 conteneurs vides ; tout le
- *      contenu (HUD, damier, acteurs, pad tactile, menus) est construit en C++.
- *      Aucune dependance Home Assistant : scores et progression vivent en NVS via
- *      esphome::global_preferences.
+ *      contenu (HUD, damier, acteurs, pad tactile, menus) est construit en C++ a
+ *      chaque ouverture et detruit a la fermeture : jeu ferme, rien ne reste
+ *      reserve (etat dans un bloc alloue par open(), rendu par close() — audit du
+ *      26/09/2026). Aucune dependance Home Assistant : scores et progression
+ *      vivent en NVS via esphome::global_preferences.
  * @ai_instruction Ne PAS remettre de logique de jeu dans le YAML. Ne PAS appeler
  *      le tick manuellement : il est pilote par un lv_timer cree a l'ouverture et
  *      detruit a la fermeture (zero tick gameplay quand le jeu est ferme). Le
@@ -116,12 +118,13 @@ struct UI {
 // Directions logiques (miroir des zones tactiles et de l'inclinaison).
 enum Dir : uint8_t { D_NONE = 0, D_LEFT, D_RIGHT, D_UP, D_DOWN };
 
-// Ouvre le jeu sur le hub (construit l'UI au premier appel, la reutilise ensuite)
-// et demarre le lv_timer de gameplay. Idempotent.
+// Ouvre le jeu sur le hub : alloue l'etat, construit l'UI et demarre le lv_timer
+// de gameplay. Idempotent. Si la memoire manque, revient a l'arcade sans ouvrir.
 void open(const UI& ui);
 
 // Ferme le jeu : arrete le timer, enregistre la partie en cours si besoin,
-// sauvegarde en NVS et masque l'overlay. Idempotent (sans effet si deja ferme).
+// sauvegarde en NVS, revient a l'arcade puis detruit l'UI et rend l'etat (rien ne
+// reste reserve). Idempotent (sans effet si deja ferme).
 void close();
 
 // True tant que l'overlay est visible (utilise pour router les evenements IMU
@@ -133,19 +136,22 @@ bool is_open();
 void on_imu(float ax, float ay, float az);
 
 // Maintien d'une direction (zones tactiles). `pressed` = doigt pose / relache.
+// Sans effet jeu ferme.
 void on_dir(uint8_t dir, bool pressed);
 
 // Creusement (tap) : `right` = creuse la brique en bas a droite, sinon bas a gauche.
+// Sans effet hors partie (donc jeu ferme).
 void on_dig(bool right);
 
 // Prend l'inclinaison courante comme reference « tablette a plat ».
-// Accessible depuis le hub (Reglages) et l'ecran de pause.
+// Accessible depuis le hub (Reglages) et l'ecran de pause. Sans effet jeu ferme.
 void calibrate();
 
-// Ecrit immediatement la sauvegarde en NVS (appele aux moments cles).
+// Ecrit immediatement la sauvegarde en NVS (appele aux moments cles ; sans effet
+// jeu ferme : la sauvegarde n'est en memoire que jeu ouvert).
 void persist_save();
 
-// Recharge la sauvegarde depuis la NVS (appele au premier open()).
+// Recharge la sauvegarde depuis la NVS (appele a chaque open() ; sans effet jeu ferme).
 void persist_load();
 
 }  // namespace Lode

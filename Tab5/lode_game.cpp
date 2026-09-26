@@ -4,9 +4,10 @@
  * @role Jeu « Coureur d'Or » — clone de Lode Runner pour le Tab5 (ESP32-P4 / LVGL).
  * @architecture_constraint Plein ecran 1280x720. Le YAML ne fournit que 5
  *      conteneurs vides + 3 polices ; tout le reste est construit ici. Les objets
- *      LVGL sont PREALLOUES une seule fois (pool) puis reutilises par show/hide +
- *      move : aucune allocation LVGL dans la boucle de jeu. Persistance NVS via
- *      esphome::global_preferences (aucune dependance Home Assistant).
+ *      LVGL sont PREALLOUES a l'ouverture (pool) puis reutilises par show/hide +
+ *      move : aucune allocation LVGL dans la boucle de jeu. Jeu ferme, il ne reste
+ *      rien : objets detruits et etat rendu (struct Mem, audit du 26/09/2026).
+ *      Persistance NVS via esphome::global_preferences (aucune dependance HA).
  * @ai_instruction Hot-path = tick_cb() : pas de std::string, pas de to_string(),
  *      pas de new/delete. Les libelles HUD ne sont reecrits que quand leur valeur
  *      change, et les acteurs suivent la MEME regle via leur cache de rendu
@@ -23,7 +24,7 @@
  *      UNE decision et s'engage sur un pas d'une case ; `sub` progresse ensuite de
  *      `speed` px par tick jusqu'a TILE, puis la cellule change. C'est le
  *      fonctionnement du Lode Runner d'origine : pas de platformer flottant.
- *      Le nombre de px par tick vient de SPEEDS[g_save.speed] (Reglages > Vitesse) :
+ *      Le nombre de px par tick vient de SPEEDS[gs->save.speed] (Reglages > Vitesse) :
  *      c'est LUI qui fixe le rythme du jeu, pas la cadence de rendu. Les gardes
  *      sautent 1 tick sur 5 et restent donc a 4/5 du joueur a tous les paliers.
  *      Le garde-fou check_lode_levels.py (workspace prive de l'auteur, hors de
@@ -84,9 +85,8 @@ static const SpeedDef SPEEDS[LODE_N_SPEEDS] = {
     {"Tres rapide", "t.rapide",  9, 21, "8,0 cases/s"},
     {"Fulgurante",  "fulgur.",  11, 21, "10,0 cases/s - reflexes exiges"},
 };
-// Valeurs actives, relues depuis la sauvegarde par apply_speed().
-static int g_run_speed  = SPEEDS[0].run;
-static int g_fall_speed = SPEEDS[0].fall;
+// Valeurs actives : Mem::run_speed / Mem::fall_speed (section 4), relues depuis
+// la sauvegarde par apply_speed() a chaque ouverture.
 
 static constexpr uint32_t DIG_MS       = 420;   // duree de l'animation de creusement
 static constexpr uint32_t HOLE_MS      = 5400;  // duree de vie d'un trou
@@ -119,6 +119,9 @@ static constexpr uint32_t PREF_KEY   = 0x4C4F4445u;
 // 2. Generateur pseudo-aleatoire (xorshift32)
 // ===========================================================================
 
+// Survit a la fermeture (hors de Mem) : start_level() ne fait que la perturber
+// (s_rng ^= ...), elle n'est jamais re-semee ; la remettre a sa valeur initiale a
+// chaque ouverture changerait la suite des tirages des gardes.
 static uint32_t s_rng = 0x9E3779B9u;
 static inline uint32_t rnd() {
     return xorshift32_next(s_rng);
@@ -385,88 +388,111 @@ struct Actor {
 
 struct Hole { int8_t x, y; uint8_t blink; uint32_t at; };
 
-static LodeSave g_save{};
+// Ce qui survit a la fermeture — quelques octets : l'etat ouvert/ferme (lu par le
+// registre), les dernieres lectures IMU (dispatch_imu les envoie aussi jeu ferme),
+// l'acces NVS (le recreer ferait fuir un backend de preferences par ouverture), et
+// ce qui continue d'une partie a l'autre : le compteur de ticks, le lissage de
+// l'inclinaison (et s_rng, section 2).
 static NvsSlot<LodeSave> g_nvs(PREF_KEY, SAVE_MAGIC);
-
-static UI    g_ui{};
-static bool  g_built = false;
 static State g_state = ST_OFF;
-static lv_timer_t* g_timer = nullptr;
-static uint32_t g_tick_period = 0;   // periode courante du lv_timer, en ms
+// Jamais remis a zero : fixe la phase du saut des gardes (1 tick sur 5), de
+// l'animation de marche et du recalcul du champ de distance.
 static uint32_t g_tick = 0;
+static float   g_raw_x = 0.0f, g_raw_y = 0.0f;    // ecrits par on_imu(), meme jeu ferme
+static float   g_tilt_x = 0.0f, g_tilt_y = 0.0f;  // EMA : seul calibrate() la remet a 0
 
-// --- Horloge (pour dater les scores sans dependre de HA a l'execution) ---
-static uint32_t g_epoch0 = 0, g_epoch_ms = 0;
-
-// --- Grille ---
-static uint8_t g_tile[GRID_H][GRID_W];
-static bool    g_goldmap[GRID_H][GRID_W];
-static int16_t g_cellobj[GRID_H * GRID_W];   // cellule -> index tuile (-1 = aucun)
-static int16_t g_goldobj[GRID_H * GRID_W];   // cellule -> index lingot (-1 = aucun)
-static Hole    g_hole[MAX_HOLES];
-static int     g_hole_n = 0;
-static bool    g_exit_on = false;
-
-// --- Acteurs ---
-static Actor g_p{};
-static Actor g_gd[MAX_GUARDS];
-static int   g_guard_n = 0;
-
-// --- Champ de distance (BFS inverse depuis le joueur) ---
-static uint8_t  g_dist[GRID_H][GRID_W];
-static uint16_t g_bfsq[GRID_H * GRID_W];
-
-// --- Partie en cours ---
-static int      g_level = 0;         // index 0..9
-static int      g_lives = START_LIVES;
-static uint32_t g_score = 0;
-static int      g_gold_left = 0;     // lingots que le joueur n'a pas encore ramasses
-static uint32_t g_level_start = 0;
-static bool     g_run_active = false;
-static bool     g_offrank = false;   // partie hors classement (mode entrainement)
-static uint32_t g_die_until = 0;
-
-// --- Entrees ---
-static float   g_raw_x = 0.0f, g_raw_y = 0.0f;
-static float   g_tilt_x = 0.0f, g_tilt_y = 0.0f;
-static uint8_t g_btn_dir = D_NONE;
-static uint8_t g_imu_dir = D_NONE;
-// Intention de creusement mise en tampon : un appui recu pendant qu'un pas est
-// en cours (7 ticks) serait sinon perdu, ce qui rend le bouton « mou ».
-// Elle est consommee des que le joueur retombe aligne sur une case, et expire
-// au bout de DIG_BUFFER_MS pour ne jamais declencher un creusement fantome.
-static int8_t   g_dig_want = 0;
-static uint32_t g_dig_want_until = 0;
 static constexpr uint32_t DIG_BUFFER_MS = 350;
-
-// --- Objets LVGL (construits une fois) ---
-static lv_obj_t* g_tobj[MAX_TILEOBJ] = {};
-static int       g_tobj_n = 0;
-static lv_obj_t* g_gobj[MAX_GOLD] = {};
-static int       g_gobj_n = 0;
-static lv_obj_t* g_padbtn[6] = {};        // 0..3 = gauche/droite/haut/bas, 4/5 = creuser G/D
-static lv_obj_t* g_flash = nullptr;       // voile de mort
-static lv_obj_t* g_toast = nullptr;
-static uint32_t  g_toast_until = 0;
-
-static lv_obj_t* g_hud_score = nullptr;
-static lv_obj_t* g_hud_lives = nullptr;
-static lv_obj_t* g_hud_level = nullptr;
-static lv_obj_t* g_hud_gold  = nullptr;
-static lv_obj_t* g_hud_best  = nullptr;
-
-static lv_obj_t* g_p_title = nullptr;
-static lv_obj_t* g_p_sub   = nullptr;
-static lv_obj_t* g_p_body  = nullptr;
-static lv_obj_t* g_p_foot  = nullptr;
 static constexpr int N_SLOTS = 12;
-static lv_obj_t* g_slot[N_SLOTS]   = {};
-static lv_obj_t* g_slot_t[N_SLOTS] = {};
-static lv_obj_t* g_slot_d[N_SLOTS] = {};
 
-// Caches HUD : on ne reecrit un libelle que si sa valeur a change.
-static int32_t g_c_score = -1, g_c_lives = -1, g_c_level = -1,
-               g_c_gold = -1, g_c_best = -1;
+// Tout le reste n'existe que jeu ouvert : cree par open(), rendu par close(),
+// avec les objets LVGL qu'il pointe (game_common.h, « Memoire d'un jeu »).
+struct Mem {
+    LodeSave save{};   // relue de la NVS a chaque ouverture
+    UI    ui{};
+    lv_timer_t* timer = nullptr;
+    uint32_t tick_period = 0;   // periode courante du lv_timer, en ms
+
+    // Palier de vitesse actif, recopie depuis la sauvegarde par apply_speed().
+    int run_speed  = SPEEDS[0].run;
+    int fall_speed = SPEEDS[0].fall;
+
+    // --- Horloge (pour dater les scores sans dependre de HA a l'execution) ---
+    uint32_t epoch0 = 0, epoch_ms = 0;
+
+    // --- Grille ---
+    uint8_t tile[GRID_H][GRID_W];
+    bool    goldmap[GRID_H][GRID_W];
+    int16_t cellobj[GRID_H * GRID_W];   // cellule -> index tuile (-1 = aucun)
+    int16_t goldobj[GRID_H * GRID_W];   // cellule -> index lingot (-1 = aucun)
+    Hole    hole[MAX_HOLES];
+    int     hole_n = 0;
+    bool    exit_on = false;
+
+    // --- Acteurs ---
+    Actor p{};
+    Actor gd[MAX_GUARDS];
+    int   guard_n = 0;
+
+    // --- Champ de distance (BFS inverse depuis le joueur) ---
+    uint8_t  dist[GRID_H][GRID_W];
+    uint16_t bfsq[GRID_H * GRID_W];
+
+    // --- Partie en cours ---
+    int      level = 0;         // index 0..9
+    int      lives = START_LIVES;
+    uint32_t score = 0;
+    int      gold_left = 0;     // lingots que le joueur n'a pas encore ramasses
+    uint32_t level_start = 0;
+    bool     run_active = false;
+    bool     offrank = false;   // partie hors classement (mode entrainement)
+    uint32_t die_until = 0;
+
+    // --- Entrees ---
+    uint8_t btn_dir = D_NONE;
+    uint8_t imu_dir = D_NONE;
+    // Intention de creusement mise en tampon : un appui recu pendant qu'un pas est
+    // en cours (7 ticks) serait sinon perdu, ce qui rend le bouton « mou ».
+    // Elle est consommee des que le joueur retombe aligne sur une case, et expire
+    // au bout de DIG_BUFFER_MS pour ne jamais declencher un creusement fantome.
+    int8_t   dig_want = 0;
+    uint32_t dig_want_until = 0;
+
+    // --- Objets LVGL (construits a chaque ouverture) ---
+    lv_obj_t* tobj[MAX_TILEOBJ] = {};
+    int       tobj_n = 0;
+    lv_obj_t* gobj[MAX_GOLD] = {};
+    int       gobj_n = 0;
+    lv_obj_t* padbtn[6] = {};        // 0..3 = gauche/droite/haut/bas, 4/5 = creuser G/D
+    lv_obj_t* flash = nullptr;       // voile de mort
+    lv_obj_t* toast = nullptr;
+    uint32_t  toast_until = 0;
+
+    lv_obj_t* hud_score = nullptr;
+    lv_obj_t* hud_lives = nullptr;
+    lv_obj_t* hud_level = nullptr;
+    lv_obj_t* hud_gold  = nullptr;
+    lv_obj_t* hud_best  = nullptr;
+
+    lv_obj_t* p_title = nullptr;
+    lv_obj_t* p_sub   = nullptr;
+    lv_obj_t* p_body  = nullptr;
+    lv_obj_t* p_foot  = nullptr;
+    lv_obj_t* slot[N_SLOTS]   = {};
+    lv_obj_t* slot_t[N_SLOTS] = {};
+    lv_obj_t* slot_d[N_SLOTS] = {};
+
+    // Caches HUD : on ne reecrit un libelle que si sa valeur a change.
+    int32_t c_score = -1, c_lives = -1, c_level = -1,
+            c_gold = -1, c_best = -1;
+
+    // Geometrie de la pile de slot_list() (voir slot_layout(), section 9).
+    int slot_top = 196, slot_pitch = 70, slot_h = 62;
+
+    // Brouillons de texte des menus (le label copie le texte).
+    char levels_names[LODE_N_LEVELS][40];
+    char scores_body[900];
+};
+static Mem* gs = nullptr;
 
 static const char* const CTRL_NAME[3] = {"Boutons", "Inclinaison", "Mixte"};
 
@@ -486,37 +512,38 @@ static void open_exit();
 
 // Recopie le palier de vitesse choisi dans les valeurs lues par la boucle de jeu.
 static void apply_speed() {
-    const SpeedDef& s = SPEEDS[g_save.speed < LODE_N_SPEEDS ? g_save.speed : 0];
-    g_run_speed  = s.run;
-    g_fall_speed = s.fall;
+    const SpeedDef& s = SPEEDS[gs->save.speed < LODE_N_SPEEDS ? gs->save.speed : 0];
+    gs->run_speed  = s.run;
+    gs->fall_speed = s.fall;
 }
 
 void persist_load() {
-    if (!g_nvs.load(g_save)) {
-        g_save = LodeSave{};
-        g_save.magic = SAVE_MAGIC;
-        g_save.unlocked = 1;
-        g_save.ctrl_mode = 0;      // boutons par defaut
-        g_save.sensitivity = 2;
+    if (!gs) return;  // la sauvegarde n'est en memoire que jeu ouvert
+    if (!g_nvs.load(gs->save)) {
+        gs->save = LodeSave{};
+        gs->save.magic = SAVE_MAGIC;
+        gs->save.unlocked = 1;
+        gs->save.ctrl_mode = 0;      // boutons par defaut
+        gs->save.sensitivity = 2;
     }
-    if (g_save.unlocked < 1) g_save.unlocked = 1;
-    if (g_save.unlocked > LODE_N_LEVELS) g_save.unlocked = LODE_N_LEVELS;
-    if (g_save.ctrl_mode > 2) g_save.ctrl_mode = 0;
-    if (g_save.sensitivity > 4) g_save.sensitivity = 2;
-    if (g_save.speed >= LODE_N_SPEEDS) g_save.speed = 0;
-    if (g_save.score_count > LODE_MAX_SCORES) g_save.score_count = 0;
+    if (gs->save.unlocked < 1) gs->save.unlocked = 1;
+    if (gs->save.unlocked > LODE_N_LEVELS) gs->save.unlocked = LODE_N_LEVELS;
+    if (gs->save.ctrl_mode > 2) gs->save.ctrl_mode = 0;
+    if (gs->save.sensitivity > 4) gs->save.sensitivity = 2;
+    if (gs->save.speed >= LODE_N_SPEEDS) gs->save.speed = 0;
+    if (gs->save.score_count > LODE_MAX_SCORES) gs->save.score_count = 0;
     apply_speed();
 }
 
 void persist_save() {
-    if (!g_nvs.ready()) return;
-    g_nvs.save(g_save);
+    if (!gs || !g_nvs.ready()) return;
+    g_nvs.save(gs->save);
 }
 
 // Horodatage courant : base SNTP passee a l'ouverture + temps ecoule depuis.
 static uint32_t now_epoch() {
-    if (!g_epoch0) return 0;
-    return g_epoch0 + (lv_tick_get() - g_epoch_ms) / 1000u;
+    if (!gs->epoch0) return 0;
+    return gs->epoch0 + (lv_tick_get() - gs->epoch_ms) / 1000u;
 }
 
 static void fmt_stamp(uint32_t st, char* out, size_t n) {
@@ -539,10 +566,10 @@ static void fmt_stamp(uint32_t st, char* out, size_t n) {
 
 
 static void toast(const char* msg) {
-    if (!g_toast) return;
-    set_text_if(g_toast, msg);
-    show(g_toast, true);
-    g_toast_until = lv_tick_get() + TOAST_MS;
+    if (!gs->toast) return;
+    set_text_if(gs->toast, msg);
+    show(gs->toast, true);
+    gs->toast_until = lv_tick_get() + TOAST_MS;
 }
 
 // Effets sonores : crochet volontairement neutre. Le Tab5 n'expose pas de
@@ -561,12 +588,12 @@ static inline bool in_grid(int x, int y) {
 
 // Hors carte = beton : le monde est ferme, personne ne sort par les bords.
 static inline uint8_t tile_at(int x, int y) {
-    return in_grid(x, y) ? g_tile[y][x] : (uint8_t) T_SOLID;
+    return in_grid(x, y) ? gs->tile[y][x] : (uint8_t) T_SOLID;
 }
 
 static inline bool is_ladder(int x, int y) {
     uint8_t t = tile_at(x, y);
-    return t == T_LADDER || (t == T_EXIT && g_exit_on);
+    return t == T_LADDER || (t == T_EXIT && gs->exit_on);
 }
 
 static inline bool passable(int x, int y) {
@@ -576,8 +603,8 @@ static inline bool passable(int x, int y) {
 
 // Un garde coince dans un trou fait office de plancher : on lui court dessus.
 static bool trapped_guard_at(int x, int y) {
-    for (int i = 0; i < g_guard_n; i++) {
-        const Actor& g = g_gd[i];
+    for (int i = 0; i < gs->guard_n; i++) {
+        const Actor& g = gs->gd[i];
         if (g.st == A_TRAP && g.cx == x && g.cy == y) return true;
     }
     return false;
@@ -589,7 +616,7 @@ static bool supported(int x, int y) {
     if (tile_at(x, y) == T_BAR) return true;      // suspendu a une barre
     uint8_t b = tile_at(x, y + 1);
     if (b == T_BRICK || b == T_SOLID || b == T_LADDER) return true;
-    if (b == T_EXIT && g_exit_on) return true;
+    if (b == T_EXIT && gs->exit_on) return true;
     if (trapped_guard_at(x, y + 1)) return true;
     return false;
 }
@@ -603,8 +630,8 @@ static bool can_step(int fx, int fy, int tx, int ty) {
 }
 
 static int hole_index(int x, int y) {
-    for (int i = 0; i < g_hole_n; i++)
-        if (g_hole[i].x == x && g_hole[i].y == y) return i;
+    for (int i = 0; i < gs->hole_n; i++)
+        if (gs->hole[i].x == x && gs->hole[i].y == y) return i;
     return -1;
 }
 
@@ -651,7 +678,7 @@ static void draw_actor(Actor& a, uint32_t body_col, uint32_t head_col) {
 }
 
 // ===========================================================================
-// 9. Construction de l'UI (une seule fois)
+// 9. Construction de l'UI (a chaque ouverture)
 // ===========================================================================
 
 static void slot_event_cb(lv_event_t* e);
@@ -659,7 +686,7 @@ static void pad_event_cb(lv_event_t* e);
 static void hud_event_cb(lv_event_t* e);
 
 static lv_obj_t* mk_pad_btn(int id, int x, int y, int w, int h) {
-    lv_obj_t* o = mk_rect(g_ui.pad);
+    lv_obj_t* o = mk_rect(gs->ui.pad);
     lv_obj_set_pos(o, x, y);
     lv_obj_set_size(o, w, h);
     lv_obj_set_style_radius(o, 12, LV_PART_MAIN);
@@ -684,177 +711,177 @@ static lv_obj_t* mk_pad_btn(int id, int x, int y, int w, int h) {
 }
 
 static void build_ui() {
-    if (g_built) return;
-
-    set_bg(g_ui.root,  Pal::VOID_BG,  LV_OPA_COVER);
-    set_bg(g_ui.field, Pal::FLOOR_BG, LV_OPA_COVER);
-    set_bg(g_ui.hud,   Pal::HUD_BG,   LV_OPA_COVER);
-    set_bg(g_ui.panel, Pal::VOID_BG,  (lv_opa_t) 245);
+    // Styles des conteneurs YAML : ils y restent apres close() et sont simplement
+    // reposes, a l'identique, a chaque ouverture.
+    set_bg(gs->ui.root,  Pal::VOID_BG,  LV_OPA_COVER);
+    set_bg(gs->ui.field, Pal::FLOOR_BG, LV_OPA_COVER);
+    set_bg(gs->ui.hud,   Pal::HUD_BG,   LV_OPA_COVER);
+    set_bg(gs->ui.panel, Pal::VOID_BG,  (lv_opa_t) 245);
     // Le calque des zones tactiles est transparent et non cliquable lui-meme :
     // seuls ses enfants (D-pad, boutons creuser) captent les evenements.
-    lv_obj_set_style_bg_opa(g_ui.pad, LV_OPA_TRANSP, LV_PART_MAIN);
-    lv_obj_clear_flag(g_ui.pad, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_clear_flag(g_ui.pad, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_opa(gs->ui.pad, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_clear_flag(gs->ui.pad, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_clear_flag(gs->ui.pad, LV_OBJ_FLAG_SCROLLABLE);
 
-    // --- Pool de tuiles : cree une fois, recycle a chaque niveau ---
+    // --- Pool de tuiles : cree a l'ouverture, recycle a chaque niveau ---
     for (int i = 0; i < MAX_TILEOBJ; i++) {
-        g_tobj[i] = mk_rect(g_ui.field);
-        lv_obj_add_flag(g_tobj[i], LV_OBJ_FLAG_HIDDEN);
+        gs->tobj[i] = mk_rect(gs->ui.field);
+        lv_obj_add_flag(gs->tobj[i], LV_OBJ_FLAG_HIDDEN);
     }
     // --- Pool de lingots (dessines APRES les tuiles => au-dessus) ---
     for (int i = 0; i < MAX_GOLD; i++) {
-        g_gobj[i] = mk_rect(g_ui.field);
-        lv_obj_set_size(g_gobj[i], 22, 22);
-        lv_obj_set_style_radius(g_gobj[i], 6, LV_PART_MAIN);
-        set_bg(g_gobj[i], Pal::GOLD, LV_OPA_COVER);
-        set_border(g_gobj[i], Pal::GOLD_HI, 2, LV_OPA_COVER);
-        lv_obj_add_flag(g_gobj[i], LV_OBJ_FLAG_HIDDEN);
+        gs->gobj[i] = mk_rect(gs->ui.field);
+        lv_obj_set_size(gs->gobj[i], 22, 22);
+        lv_obj_set_style_radius(gs->gobj[i], 6, LV_PART_MAIN);
+        set_bg(gs->gobj[i], Pal::GOLD, LV_OPA_COVER);
+        set_border(gs->gobj[i], Pal::GOLD_HI, 2, LV_OPA_COVER);
+        lv_obj_add_flag(gs->gobj[i], LV_OBJ_FLAG_HIDDEN);
     }
     // --- Acteurs : corps + tete (rendu retro 2 blocs, pas de sprite) ---
-    g_p.body = mk_rect(g_ui.field);
-    g_p.head = mk_rect(g_ui.field);
-    lv_obj_set_size(g_p.head, 16, 14);
+    gs->p.body = mk_rect(gs->ui.field);
+    gs->p.head = mk_rect(gs->ui.field);
+    lv_obj_set_size(gs->p.head, 16, 14);
     for (int i = 0; i < MAX_GUARDS; i++) {
-        g_gd[i].body = mk_rect(g_ui.field);
-        g_gd[i].head = mk_rect(g_ui.field);
-        lv_obj_set_size(g_gd[i].head, 16, 14);
-        show(g_gd[i].body, false); show(g_gd[i].head, false);
+        gs->gd[i].body = mk_rect(gs->ui.field);
+        gs->gd[i].head = mk_rect(gs->ui.field);
+        lv_obj_set_size(gs->gd[i].head, 16, 14);
+        show(gs->gd[i].body, false); show(gs->gd[i].head, false);
     }
-    show(g_p.body, false); show(g_p.head, false);
+    show(gs->p.body, false); show(gs->p.head, false);
 
     // --- Voile de mort (flash bref, pas de secousse plein ecran) ---
-    g_flash = mk_rect(g_ui.field);
-    lv_obj_set_pos(g_flash, 0, 0);
-    lv_obj_set_size(g_flash, FW, FH);
-    set_bg(g_flash, Pal::DANGER, (lv_opa_t) 90);
-    show(g_flash, false);
+    gs->flash = mk_rect(gs->ui.field);
+    lv_obj_set_pos(gs->flash, 0, 0);
+    lv_obj_set_size(gs->flash, FW, FH);
+    set_bg(gs->flash, Pal::DANGER, (lv_opa_t) 90);
+    show(gs->flash, false);
 
-    g_toast = mk_label(g_ui.field, g_ui.f_mid, Pal::GOLD);
-    lv_obj_align(g_toast, LV_ALIGN_TOP_MID, 0, 16);
-    show(g_toast, false);
+    gs->toast = mk_label(gs->ui.field, gs->ui.f_mid, Pal::GOLD);
+    lv_obj_align(gs->toast, LV_ALIGN_TOP_MID, 0, 16);
+    show(gs->toast, false);
 
     // --- HUD : bande compacte de 48 px, jamais plus ---
-    g_hud_score = mk_label(g_ui.hud, g_ui.f_small, Pal::TXT);
-    lv_obj_align(g_hud_score, LV_ALIGN_LEFT_MID, 18, 0);
-    g_hud_lives = mk_label(g_ui.hud, g_ui.f_small, Pal::RUNNER);
-    lv_obj_align(g_hud_lives, LV_ALIGN_LEFT_MID, 260, 0);
-    g_hud_level = mk_label(g_ui.hud, g_ui.f_small, Pal::LADDER);
-    lv_obj_align(g_hud_level, LV_ALIGN_LEFT_MID, 420, 0);
-    g_hud_gold = mk_label(g_ui.hud, g_ui.f_small, Pal::GOLD);
-    lv_obj_align(g_hud_gold, LV_ALIGN_LEFT_MID, 700, 0);
-    g_hud_best = mk_label(g_ui.hud, g_ui.f_small, Pal::TXT_DIM);
-    lv_obj_align(g_hud_best, LV_ALIGN_RIGHT_MID, -18, 0);
+    gs->hud_score = mk_label(gs->ui.hud, gs->ui.f_small, Pal::TXT);
+    lv_obj_align(gs->hud_score, LV_ALIGN_LEFT_MID, 18, 0);
+    gs->hud_lives = mk_label(gs->ui.hud, gs->ui.f_small, Pal::RUNNER);
+    lv_obj_align(gs->hud_lives, LV_ALIGN_LEFT_MID, 260, 0);
+    gs->hud_level = mk_label(gs->ui.hud, gs->ui.f_small, Pal::LADDER);
+    lv_obj_align(gs->hud_level, LV_ALIGN_LEFT_MID, 420, 0);
+    gs->hud_gold = mk_label(gs->ui.hud, gs->ui.f_small, Pal::GOLD);
+    lv_obj_align(gs->hud_gold, LV_ALIGN_LEFT_MID, 700, 0);
+    gs->hud_best = mk_label(gs->ui.hud, gs->ui.f_small, Pal::TXT_DIM);
+    lv_obj_align(gs->hud_best, LV_ALIGN_RIGHT_MID, -18, 0);
 
-    lv_obj_add_flag(g_ui.hud, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_event_cb(g_ui.hud, hud_event_cb, LV_EVENT_CLICKED, nullptr);
+    // Callback pose sur le conteneur YAML (qui survit) : close() le retire, sinon
+    // il s'empilerait a chaque ouverture.
+    lv_obj_add_flag(gs->ui.hud, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(gs->ui.hud, hud_event_cb, LV_EVENT_CLICKED, nullptr);
 
     // --- Zones tactiles : D-pad en croix a gauche, creusement a droite --------
     // Le Tab5 n'a pas de bouton physique : ce sont des zones LVGL semi-opaques.
-    g_padbtn[0] = mk_pad_btn(0,  16, 484,  92,  92);   // gauche
-    g_padbtn[1] = mk_pad_btn(1, 204, 484,  92,  92);   // droite
-    g_padbtn[2] = mk_pad_btn(2, 110, 392,  92,  92);   // haut
-    g_padbtn[3] = mk_pad_btn(3, 110, 576,  92,  92);   // bas
-    g_padbtn[4] = mk_pad_btn(4, 884, 560, 170,  96);   // creuser a gauche
-    g_padbtn[5] = mk_pad_btn(5,1064, 560, 170,  96);   // creuser a droite
+    gs->padbtn[0] = mk_pad_btn(0,  16, 484,  92,  92);   // gauche
+    gs->padbtn[1] = mk_pad_btn(1, 204, 484,  92,  92);   // droite
+    gs->padbtn[2] = mk_pad_btn(2, 110, 392,  92,  92);   // haut
+    gs->padbtn[3] = mk_pad_btn(3, 110, 576,  92,  92);   // bas
+    gs->padbtn[4] = mk_pad_btn(4, 884, 560, 170,  96);   // creuser a gauche
+    gs->padbtn[5] = mk_pad_btn(5,1064, 560, 170,  96);   // creuser a droite
 
     static const char* const PAD_TXT[6] = {"<", ">", "^", "v", "<", ">"};
     for (int i = 0; i < 6; i++) {
-        lv_obj_t* l = mk_label(g_padbtn[i], g_ui.f_big, Pal::TXT);
+        lv_obj_t* l = mk_label(gs->padbtn[i], gs->ui.f_big, Pal::TXT);
         lv_label_set_text(l, PAD_TXT[i]);
         lv_obj_align(l, LV_ALIGN_CENTER, 0, i >= 4 ? -14 : 0);
     }
     for (int i = 4; i < 6; i++) {
-        lv_obj_t* l = mk_label(g_padbtn[i], g_ui.f_small, Pal::BRICK_HI);
+        lv_obj_t* l = mk_label(gs->padbtn[i], gs->ui.f_small, Pal::BRICK_HI);
         lv_label_set_text(l, "CREUSER");
         lv_obj_align(l, LV_ALIGN_CENTER, 0, 26);
     }
 
     // --- Panneau de menus ----------------------------------------------------
-    g_p_title = mk_label(g_ui.panel, g_ui.f_big, Pal::GOLD);
-    lv_obj_align(g_p_title, LV_ALIGN_TOP_MID, 0, 42);
-    g_p_sub = mk_label(g_ui.panel, g_ui.f_small, Pal::TXT_DIM);
-    lv_obj_align(g_p_sub, LV_ALIGN_TOP_MID, 0, 104);
-    g_p_body = mk_label(g_ui.panel, g_ui.f_small, Pal::TXT);
-    lv_obj_set_width(g_p_body, 1000);
-    lv_obj_set_style_text_align(g_p_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    lv_obj_align(g_p_body, LV_ALIGN_TOP_MID, 0, 148);
-    g_p_foot = mk_label(g_ui.panel, g_ui.f_small, Pal::TXT_DIM);
-    lv_obj_align(g_p_foot, LV_ALIGN_BOTTOM_MID, 0, -20);
+    gs->p_title = mk_label(gs->ui.panel, gs->ui.f_big, Pal::GOLD);
+    lv_obj_align(gs->p_title, LV_ALIGN_TOP_MID, 0, 42);
+    gs->p_sub = mk_label(gs->ui.panel, gs->ui.f_small, Pal::TXT_DIM);
+    lv_obj_align(gs->p_sub, LV_ALIGN_TOP_MID, 0, 104);
+    gs->p_body = mk_label(gs->ui.panel, gs->ui.f_small, Pal::TXT);
+    lv_obj_set_width(gs->p_body, 1000);
+    lv_obj_set_style_text_align(gs->p_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_obj_align(gs->p_body, LV_ALIGN_TOP_MID, 0, 148);
+    gs->p_foot = mk_label(gs->ui.panel, gs->ui.f_small, Pal::TXT_DIM);
+    lv_obj_align(gs->p_foot, LV_ALIGN_BOTTOM_MID, 0, -20);
 
     for (int i = 0; i < N_SLOTS; i++) {
-        g_slot[i] = mk_rect(g_ui.panel);
-        lv_obj_add_flag(g_slot[i], LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_style_radius(g_slot[i], 8, LV_PART_MAIN);
-        set_bg(g_slot[i], Pal::FLOOR_BG, LV_OPA_COVER);
-        lv_obj_set_style_bg_color(g_slot[i], lv_color_hex(Pal::PAD_FILL),
+        gs->slot[i] = mk_rect(gs->ui.panel);
+        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_set_style_radius(gs->slot[i], 8, LV_PART_MAIN);
+        set_bg(gs->slot[i], Pal::FLOOR_BG, LV_OPA_COVER);
+        lv_obj_set_style_bg_color(gs->slot[i], lv_color_hex(Pal::PAD_FILL),
                                   (lv_style_selector_t) LV_PART_MAIN |
                                   (lv_style_selector_t) LV_STATE_PRESSED);
-        lv_obj_add_event_cb(g_slot[i], slot_event_cb, LV_EVENT_CLICKED,
+        lv_obj_add_event_cb(gs->slot[i], slot_event_cb, LV_EVENT_CLICKED,
                             (void*) (intptr_t) i);
-        g_slot_t[i] = mk_label(g_slot[i], g_ui.f_mid, Pal::TXT);
-        g_slot_d[i] = mk_label(g_slot[i], g_ui.f_small, Pal::TXT_DIM);
-        show(g_slot[i], false);
+        gs->slot_t[i] = mk_label(gs->slot[i], gs->ui.f_mid, Pal::TXT);
+        gs->slot_d[i] = mk_label(gs->slot[i], gs->ui.f_small, Pal::TXT_DIM);
+        show(gs->slot[i], false);
     }
-
-    g_built = true;
 }
 
 // --- Mise en page des entrees de menu ---------------------------------------
-// Geometrie de la pile de slot_list(). La valeur par defaut vise 5 entrees bien
-// aerees ; REGLAGES en aligne 7 et resserre donc la pile pour ne pas mordre sur
-// le pied de page. Chaque ecran pose sa geometrie AVANT son premier slot_list().
-static int g_slot_top = 196, g_slot_pitch = 70, g_slot_h = 62;
+// Geometrie de la pile de slot_list() (Mem::slot_top / slot_pitch / slot_h). La
+// valeur par defaut vise 5 entrees bien aerees ; REGLAGES en aligne 7 et resserre
+// donc la pile pour ne pas mordre sur le pied de page. Chaque ecran pose sa
+// geometrie AVANT son premier slot_list().
 static inline void slot_layout(int top, int pitch, int h) {
-    g_slot_top = top; g_slot_pitch = pitch; g_slot_h = h;
+    gs->slot_top = top; gs->slot_pitch = pitch; gs->slot_h = h;
 }
 static inline void slot_layout_default() { slot_layout(196, 70, 62); }
 
 static void slot_list(int i, const char* title, const char* desc, uint32_t col, bool on) {
-    lv_obj_set_size(g_slot[i], 720, g_slot_h);
-    lv_obj_align(g_slot[i], LV_ALIGN_TOP_MID, 0, g_slot_top + i * g_slot_pitch);
-    lv_obj_set_width(g_slot_t[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(g_slot_t[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_set_width(g_slot_d[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(g_slot_d[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_align(g_slot_t[i], LV_ALIGN_LEFT_MID, 22, desc && desc[0] ? -13 : 0);
-    lv_obj_align(g_slot_d[i], LV_ALIGN_LEFT_MID, 22, 15);
-    lv_obj_set_style_text_color(g_slot_t[i], lv_color_hex(on ? col : Pal::TXT_DIM), LV_PART_MAIN);
-    set_text_if(g_slot_t[i], title);
-    set_text_if(g_slot_d[i], desc ? desc : "");
-    set_border(g_slot[i], on ? col : Pal::TXT_DIM, 2, LV_OPA_50);
-    show(g_slot[i], true);
+    lv_obj_set_size(gs->slot[i], 720, gs->slot_h);
+    lv_obj_align(gs->slot[i], LV_ALIGN_TOP_MID, 0, gs->slot_top + i * gs->slot_pitch);
+    lv_obj_set_width(gs->slot_t[i], LV_SIZE_CONTENT);
+    lv_obj_set_style_text_align(gs->slot_t[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+    lv_obj_set_width(gs->slot_d[i], LV_SIZE_CONTENT);
+    lv_obj_set_style_text_align(gs->slot_d[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+    lv_obj_align(gs->slot_t[i], LV_ALIGN_LEFT_MID, 22, desc && desc[0] ? -13 : 0);
+    lv_obj_align(gs->slot_d[i], LV_ALIGN_LEFT_MID, 22, 15);
+    lv_obj_set_style_text_color(gs->slot_t[i], lv_color_hex(on ? col : Pal::TXT_DIM), LV_PART_MAIN);
+    set_text_if(gs->slot_t[i], title);
+    set_text_if(gs->slot_d[i], desc ? desc : "");
+    set_border(gs->slot[i], on ? col : Pal::TXT_DIM, 2, LV_OPA_50);
+    show(gs->slot[i], true);
 }
 
 // Grille 2 colonnes x 5 lignes : selection de niveau.
 static void slot_grid(int i, const char* title, const char* desc, uint32_t col, bool on) {
     int c = i / 5, r = i % 5;
-    lv_obj_set_size(g_slot[i], 460, 72);
-    lv_obj_align(g_slot[i], LV_ALIGN_TOP_LEFT, 148 + c * 500, 200 + r * 84);
-    lv_obj_set_width(g_slot_t[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(g_slot_t[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_set_width(g_slot_d[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(g_slot_d[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_align(g_slot_t[i], LV_ALIGN_LEFT_MID, 22, -13);
-    lv_obj_align(g_slot_d[i], LV_ALIGN_LEFT_MID, 22, 15);
-    lv_obj_set_style_text_color(g_slot_t[i], lv_color_hex(on ? col : Pal::TXT_DIM), LV_PART_MAIN);
-    set_text_if(g_slot_t[i], title);
-    set_text_if(g_slot_d[i], desc ? desc : "");
-    set_border(g_slot[i], on ? col : Pal::TXT_DIM, 2, LV_OPA_50);
-    show(g_slot[i], true);
+    lv_obj_set_size(gs->slot[i], 460, 72);
+    lv_obj_align(gs->slot[i], LV_ALIGN_TOP_LEFT, 148 + c * 500, 200 + r * 84);
+    lv_obj_set_width(gs->slot_t[i], LV_SIZE_CONTENT);
+    lv_obj_set_style_text_align(gs->slot_t[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+    lv_obj_set_width(gs->slot_d[i], LV_SIZE_CONTENT);
+    lv_obj_set_style_text_align(gs->slot_d[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+    lv_obj_align(gs->slot_t[i], LV_ALIGN_LEFT_MID, 22, -13);
+    lv_obj_align(gs->slot_d[i], LV_ALIGN_LEFT_MID, 22, 15);
+    lv_obj_set_style_text_color(gs->slot_t[i], lv_color_hex(on ? col : Pal::TXT_DIM), LV_PART_MAIN);
+    set_text_if(gs->slot_t[i], title);
+    set_text_if(gs->slot_d[i], desc ? desc : "");
+    set_border(gs->slot[i], on ? col : Pal::TXT_DIM, 2, LV_OPA_50);
+    show(gs->slot[i], true);
 }
 
 static void slots_hide_from(int n) {
-    for (int i = n; i < N_SLOTS; i++) show(g_slot[i], false);
+    for (int i = n; i < N_SLOTS; i++) show(gs->slot[i], false);
 }
 
 static void panel_on(bool v) {
-    show(g_ui.panel, v);
-    if (v) lv_obj_move_foreground(g_ui.panel);
+    show(gs->ui.panel, v);
+    if (v) lv_obj_move_foreground(gs->ui.panel);
 }
 
 // Corps de panneau centre (etat par defaut). Seul le classement passe a gauche.
 static inline void body_center() {
-    lv_obj_set_style_text_align(g_p_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_obj_set_style_text_align(gs->p_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
 }
 
 // Tick adaptatif (meme principe que go_game.cpp / trivia_game.cpp) : TICK_MS tant
@@ -864,7 +891,7 @@ static inline void body_center() {
 // ST_DYING garde la cadence rapide : c'est lui qui rend la main apres DEATH_MS.
 static void tick_period_sync() {
     bool live = (g_state == ST_PLAYING || g_state == ST_DYING);
-    timer_period_sync(g_timer, g_tick_period, live ? (uint32_t) TICK_MS : (uint32_t) IDLE_TICK_MS);
+    timer_period_sync(gs->timer, gs->tick_period, live ? (uint32_t) TICK_MS : (uint32_t) IDLE_TICK_MS);
 }
 
 // Le pad ne s'affiche qu'en jeu ; le D-pad disparait en mode inclinaison pure.
@@ -873,14 +900,14 @@ static void tick_period_sync() {
 static void pad_sync() {
     tick_period_sync();
     bool play = (g_state == ST_PLAYING);
-    show(g_ui.pad, play);
-    if (play) lv_obj_move_foreground(g_ui.pad);
+    show(gs->ui.pad, play);
+    if (play) lv_obj_move_foreground(gs->ui.pad);
     // Masquer le pad sous le doigt ne genere pas toujours un RELEASED : on purge
     // la direction maintenue, sinon le joueur repartirait tout seul a la reprise.
-    else { g_btn_dir = D_NONE; g_dig_want = 0; }
-    bool dpad = play && (g_save.ctrl_mode != 1);
-    for (int i = 0; i < 4; i++) show(g_padbtn[i], dpad);
-    for (int i = 4; i < 6; i++) show(g_padbtn[i], play);
+    else { gs->btn_dir = D_NONE; gs->dig_want = 0; }
+    bool dpad = play && (gs->save.ctrl_mode != 1);
+    for (int i = 0; i < 4; i++) show(gs->padbtn[i], dpad);
+    for (int i = 4; i < 6; i++) show(gs->padbtn[i], play);
 }
 
 // ===========================================================================
@@ -890,26 +917,26 @@ static void pad_sync() {
 // Reconstruit les objets LVGL du damier. Les runs horizontaux de beton sont
 // fusionnes en un seul objet (le bord bas d'une carte = 1 objet au lieu de 30).
 static void build_tiles() {
-    for (int i = 0; i < g_tobj_n; i++) show(g_tobj[i], false);
-    g_tobj_n = 0;
-    memset(g_cellobj, 0xFF, sizeof(g_cellobj));
+    for (int i = 0; i < gs->tobj_n; i++) show(gs->tobj[i], false);
+    gs->tobj_n = 0;
+    memset(gs->cellobj, 0xFF, sizeof(gs->cellobj));
 
     for (int y = 0; y < GRID_H; y++) {
         int x = 0;
         while (x < GRID_W) {
-            uint8_t t = g_tile[y][x];
+            uint8_t t = gs->tile[y][x];
             if (t == T_EMPTY) { x++; continue; }
             int run = 1;
             if (t == T_SOLID)
-                while (x + run < GRID_W && g_tile[y][x + run] == T_SOLID) run++;
+                while (x + run < GRID_W && gs->tile[y][x + run] == T_SOLID) run++;
 
-            if (g_tobj_n >= MAX_TILEOBJ) {
+            if (gs->tobj_n >= MAX_TILEOBJ) {
                 // Ne devrait jamais arriver : check_lode_levels.py plafonne a
                 // MAX_TILEOBJ. On sort proprement plutot que de deborder du pool.
-                ESP_LOGW("lode", "pool de tuiles sature (niveau %d)", g_level + 1);
+                ESP_LOGW("lode", "pool de tuiles sature (niveau %d)", gs->level + 1);
                 return;
             }
-            lv_obj_t* o = g_tobj[g_tobj_n];
+            lv_obj_t* o = gs->tobj[gs->tobj_n];
             int px = OX + x * TILE, py = OY + y * TILE;
 
             switch (t) {
@@ -948,9 +975,9 @@ static void build_tiles() {
             }
             // Seules les tuiles susceptibles de changer d'etat ont besoin d'un
             // lien cellule -> objet (brique creusee, echelle de sortie activee).
-            if (t != T_SOLID) g_cellobj[y * GRID_W + x] = (int16_t) g_tobj_n;
-            show(o, t != T_EXIT || g_exit_on);
-            g_tobj_n++;
+            if (t != T_SOLID) gs->cellobj[y * GRID_W + x] = (int16_t) gs->tobj_n;
+            show(o, t != T_EXIT || gs->exit_on);
+            gs->tobj_n++;
             x += run;
         }
     }
@@ -965,20 +992,20 @@ static void place_actor(Actor& a, int cx, int cy) {
 }
 
 static void load_level(int idx) {
-    g_level = idx;
+    gs->level = idx;
     const char* const* rows = LEVELS[idx].rows;
 
-    memset(g_tile, 0, sizeof(g_tile));
-    memset(g_goldmap, 0, sizeof(g_goldmap));
-    memset(g_goldobj, 0xFF, sizeof(g_goldobj));
-    g_hole_n = 0;
-    g_exit_on = false;
-    g_gold_left = 0;
-    g_guard_n = 0;
-    g_gobj_n = 0;
-    g_btn_dir = D_NONE;
-    g_imu_dir = D_NONE;
-    g_dig_want = 0;
+    memset(gs->tile, 0, sizeof(gs->tile));
+    memset(gs->goldmap, 0, sizeof(gs->goldmap));
+    memset(gs->goldobj, 0xFF, sizeof(gs->goldobj));
+    gs->hole_n = 0;
+    gs->exit_on = false;
+    gs->gold_left = 0;
+    gs->guard_n = 0;
+    gs->gobj_n = 0;
+    gs->btn_dir = D_NONE;
+    gs->imu_dir = D_NONE;
+    gs->dig_want = 0;
 
     int px = 1, py = 1;
     for (int y = 0; y < GRID_H; y++) {
@@ -994,52 +1021,52 @@ static void load_level(int idx) {
                 case '-': t = T_BAR;    break;
                 case 'S': t = T_EXIT;   break;
                 case '$':
-                    if (g_gold_left < MAX_GOLD) {
-                        g_goldmap[y][x] = true;
-                        g_gold_left++;
+                    if (gs->gold_left < MAX_GOLD) {
+                        gs->goldmap[y][x] = true;
+                        gs->gold_left++;
                     }
                     break;
                 case 'P': px = x; py = y; break;
                 case 'G':
-                    if (g_guard_n < MAX_GUARDS) {
-                        place_actor(g_gd[g_guard_n], x, y);
-                        g_guard_n++;
+                    if (gs->guard_n < MAX_GUARDS) {
+                        place_actor(gs->gd[gs->guard_n], x, y);
+                        gs->guard_n++;
                     }
                     break;
                 default: break;
             }
-            g_tile[y][x] = t;
+            gs->tile[y][x] = t;
         }
     }
 
-    place_actor(g_p, px, py);
+    place_actor(gs->p, px, py);
     build_tiles();
 
     // Lingots : un objet par lingot, positionne une fois pour toutes.
-    for (int i = 0; i < MAX_GOLD; i++) show(g_gobj[i], false);
+    for (int i = 0; i < MAX_GOLD; i++) show(gs->gobj[i], false);
     for (int y = 0; y < GRID_H; y++)
         for (int x = 0; x < GRID_W; x++) {
-            if (!g_goldmap[y][x] || g_gobj_n >= MAX_GOLD) continue;
-            lv_obj_t* o = g_gobj[g_gobj_n];
+            if (!gs->goldmap[y][x] || gs->gobj_n >= MAX_GOLD) continue;
+            lv_obj_t* o = gs->gobj[gs->gobj_n];
             lv_obj_set_pos(o, OX + x * TILE + (TILE - 22) / 2,
                               OY + y * TILE + (TILE - 22) / 2);
             show(o, true);
-            g_goldobj[y * GRID_W + x] = (int16_t) g_gobj_n;
-            g_gobj_n++;
+            gs->goldobj[y * GRID_W + x] = (int16_t) gs->gobj_n;
+            gs->gobj_n++;
         }
 
-    for (int i = g_guard_n; i < MAX_GUARDS; i++) {
-        g_gd[i].st = A_GONE;
-        show(g_gd[i].body, false);
-        show(g_gd[i].head, false);
-        draw_reset(g_gd[i]);   // masques ici « a la main » : le cache doit suivre
+    for (int i = gs->guard_n; i < MAX_GUARDS; i++) {
+        gs->gd[i].st = A_GONE;
+        show(gs->gd[i].body, false);
+        show(gs->gd[i].head, false);
+        draw_reset(gs->gd[i]);   // masques ici « a la main » : le cache doit suivre
     }
 
     // Carte sans or (cas theorique, refuse par le garde-fou) : sortie d'emblee.
-    if (g_gold_left <= 0) open_exit();
+    if (gs->gold_left <= 0) open_exit();
 
-    g_level_start = lv_tick_get();
-    show(g_flash, false);
+    gs->level_start = lv_tick_get();
+    show(gs->flash, false);
     rebuild_dist();
 }
 
@@ -1048,13 +1075,13 @@ static void load_level(int idx) {
 // ===========================================================================
 
 static void open_exit() {
-    if (g_exit_on) return;
-    g_exit_on = true;
+    if (gs->exit_on) return;
+    gs->exit_on = true;
     for (int y = 0; y < GRID_H; y++)
         for (int x = 0; x < GRID_W; x++) {
-            if (g_tile[y][x] != T_EXIT) continue;
-            int16_t oi = g_cellobj[y * GRID_W + x];
-            if (oi >= 0) show(g_tobj[oi], true);
+            if (gs->tile[y][x] != T_EXIT) continue;
+            int16_t oi = gs->cellobj[y * GRID_W + x];
+            if (oi >= 0) show(gs->tobj[oi], true);
         }
     toast("Sortie ouverte ! Grimpe tout en haut.");
     sfx(3);
@@ -1063,14 +1090,14 @@ static void open_exit() {
 // Rend visible un lingot sur une case en recyclant un objet libre du pool
 // (un lingot ramasse ou vole en libere toujours un).
 static void spawn_gold_obj(int x, int y) {
-    g_goldmap[y][x] = true;
-    if (g_goldobj[y * GRID_W + x] >= 0) return;
+    gs->goldmap[y][x] = true;
+    if (gs->goldobj[y * GRID_W + x] >= 0) return;
     for (int i = 0; i < MAX_GOLD; i++) {
-        if (!lv_obj_has_flag(g_gobj[i], LV_OBJ_FLAG_HIDDEN)) continue;
-        lv_obj_set_pos(g_gobj[i], OX + x * TILE + (TILE - 22) / 2,
+        if (!lv_obj_has_flag(gs->gobj[i], LV_OBJ_FLAG_HIDDEN)) continue;
+        lv_obj_set_pos(gs->gobj[i], OX + x * TILE + (TILE - 22) / 2,
                                   OY + y * TILE + (TILE - 22) / 2);
-        show(g_gobj[i], true);
-        g_goldobj[y * GRID_W + x] = (int16_t) i;
+        show(gs->gobj[i], true);
+        gs->goldobj[y * GRID_W + x] = (int16_t) i;
         return;
     }
 }
@@ -1081,13 +1108,13 @@ static void drop_gold(int cx, int cy) {
     static const int ORDER[5][2] = {{0, -1}, {0, 0}, {-1, 0}, {1, 0}, {0, 1}};
     for (int k = 0; k < 5; k++) {
         int x = cx + ORDER[k][0], y = cy + ORDER[k][1];
-        if (!in_grid(x, y) || !passable(x, y) || g_goldmap[y][x]) continue;
+        if (!in_grid(x, y) || !passable(x, y) || gs->goldmap[y][x]) continue;
         spawn_gold_obj(x, y);
         return;
     }
     for (int y = GRID_H - 1; y >= 0; y--)
         for (int x = 0; x < GRID_W; x++) {
-            if (!passable(x, y) || g_goldmap[y][x] || !supported(x, y)) continue;
+            if (!passable(x, y) || gs->goldmap[y][x] || !supported(x, y)) continue;
             spawn_gold_obj(x, y);
             return;
         }
@@ -1095,16 +1122,16 @@ static void drop_gold(int cx, int cy) {
 
 static void finish_dig(Actor& a) {
     int tx = a.cx + a.digd, ty = a.cy + 1;
-    if (!in_grid(tx, ty) || g_tile[ty][tx] != T_BRICK) return;
-    if (g_hole_n >= MAX_HOLES) return;
-    g_tile[ty][tx] = T_EMPTY;
-    int16_t oi = g_cellobj[ty * GRID_W + tx];
-    if (oi >= 0) show(g_tobj[oi], false);
-    g_hole[g_hole_n].x = (int8_t) tx;
-    g_hole[g_hole_n].y = (int8_t) ty;
-    g_hole[g_hole_n].blink = 1;
-    g_hole[g_hole_n].at = lv_tick_get() + HOLE_MS;
-    g_hole_n++;
+    if (!in_grid(tx, ty) || gs->tile[ty][tx] != T_BRICK) return;
+    if (gs->hole_n >= MAX_HOLES) return;
+    gs->tile[ty][tx] = T_EMPTY;
+    int16_t oi = gs->cellobj[ty * GRID_W + tx];
+    if (oi >= 0) show(gs->tobj[oi], false);
+    gs->hole[gs->hole_n].x = (int8_t) tx;
+    gs->hole[gs->hole_n].y = (int8_t) ty;
+    gs->hole[gs->hole_n].blink = 1;
+    gs->hole[gs->hole_n].at = lv_tick_get() + HOLE_MS;
+    gs->hole_n++;
     sfx(1);
 }
 
@@ -1115,31 +1142,31 @@ static void kill_guard(Actor& g, uint32_t now) {
     g.mdx = g.mdy = 0; g.sub = 0;
     show(g.body, false); show(g.head, false);
     draw_reset(g);   // masque ici directement : le cache de rendu doit suivre
-    g_score += SC_TRAP;
+    gs->score += SC_TRAP;
 }
 
 static void player_die();
 
 // Refermeture des trous + clignotement d'avertissement.
 static void update_holes(uint32_t now) {
-    for (int i = 0; i < g_hole_n; ) {
-        Hole& h = g_hole[i];
-        int16_t oi = g_cellobj[h.y * GRID_W + h.x];
+    for (int i = 0; i < gs->hole_n; ) {
+        Hole& h = gs->hole[i];
+        int16_t oi = gs->cellobj[h.y * GRID_W + h.x];
         if (now >= h.at) {
-            g_tile[h.y][h.x] = T_BRICK;
-            if (oi >= 0) show(g_tobj[oi], true);
+            gs->tile[h.y][h.x] = T_BRICK;
+            if (oi >= 0) show(gs->tobj[oi], true);
             // Qui se trouve dans la brique au moment ou elle se referme ?
-            for (int k = 0; k < g_guard_n; k++)
-                if (g_gd[k].st != A_GONE && g_gd[k].cx == h.x && g_gd[k].cy == h.y)
-                    kill_guard(g_gd[k], now);
-            bool player_inside = (g_p.cx == h.x && g_p.cy == h.y);
-            g_hole[i] = g_hole[--g_hole_n];
+            for (int k = 0; k < gs->guard_n; k++)
+                if (gs->gd[k].st != A_GONE && gs->gd[k].cx == h.x && gs->gd[k].cy == h.y)
+                    kill_guard(gs->gd[k], now);
+            bool player_inside = (gs->p.cx == h.x && gs->p.cy == h.y);
+            gs->hole[i] = gs->hole[--gs->hole_n];
             if (player_inside) { player_die(); return; }
             continue;
         }
         if (oi >= 0 && h.at - now < HOLE_WARN_MS) {
             uint8_t b = (uint8_t) ((now / 110) & 1);
-            if (b != h.blink) { h.blink = b; show(g_tobj[oi], b != 0); }
+            if (b != h.blink) { h.blink = b; show(gs->tobj[oi], b != 0); }
         }
         i++;
     }
@@ -1150,7 +1177,7 @@ static void update_holes(uint32_t now) {
 // ===========================================================================
 
 static void try_dig(int d) {
-    Actor& a = g_p;
+    Actor& a = gs->p;
     if (g_state != ST_PLAYING) return;
     if (a.st != A_IDLE || a.mdx || a.mdy || a.sub) return;   // ni en l'air, ni en mouvement
     // On ne creuse que debout sur un vrai sol : ni suspendu a une barre,
@@ -1161,12 +1188,12 @@ static void try_dig(int d) {
 
     int tx = a.cx + d, ty = a.cy + 1;
     if (!in_grid(tx, ty)) return;
-    if (g_tile[ty][tx] != T_BRICK) return;    // seul le brique se creuse
+    if (gs->tile[ty][tx] != T_BRICK) return;    // seul le brique se creuse
     if (!passable(tx, a.cy)) return;          // rien ne doit boucher le passage au-dessus
-    if (g_goldmap[ty][tx]) return;            // pas de lingot enterre dans cette version
-    if (g_hole_n >= MAX_HOLES) return;
-    for (int k = 0; k < g_guard_n; k++)       // ni de garde deja sur la cible
-        if (g_gd[k].st != A_GONE && g_gd[k].cx == tx && g_gd[k].cy == ty) return;
+    if (gs->goldmap[ty][tx]) return;            // pas de lingot enterre dans cette version
+    if (gs->hole_n >= MAX_HOLES) return;
+    for (int k = 0; k < gs->guard_n; k++)       // ni de garde deja sur la cible
+        if (gs->gd[k].st != A_GONE && gs->gd[k].cx == tx && gs->gd[k].cy == ty) return;
 
     a.face = (int8_t) d;
     a.digd = (int8_t) d;
@@ -1188,30 +1215,30 @@ static inline void advance(Actor& a, int spd) {
 }
 
 static uint8_t current_dir() {
-    uint8_t m = g_save.ctrl_mode;
-    if (m == 0) return g_btn_dir;                     // boutons seuls
-    if (m == 1) return g_imu_dir;                     // inclinaison seule
-    return g_btn_dir != D_NONE ? g_btn_dir : g_imu_dir;  // mixte : le doigt prime
+    uint8_t m = gs->save.ctrl_mode;
+    if (m == 0) return gs->btn_dir;                     // boutons seuls
+    if (m == 1) return gs->imu_dir;                     // inclinaison seule
+    return gs->btn_dir != D_NONE ? gs->btn_dir : gs->imu_dir;  // mixte : le doigt prime
 }
 
 static void level_clear();
 
 static void player_enter_cell() {
-    Actor& a = g_p;
-    if (g_goldmap[a.cy][a.cx]) {
-        g_goldmap[a.cy][a.cx] = false;
-        int16_t gi = g_goldobj[a.cy * GRID_W + a.cx];
-        if (gi >= 0) { show(g_gobj[gi], false); g_goldobj[a.cy * GRID_W + a.cx] = -1; }
-        g_gold_left--;
-        g_score += SC_GOLD;
+    Actor& a = gs->p;
+    if (gs->goldmap[a.cy][a.cx]) {
+        gs->goldmap[a.cy][a.cx] = false;
+        int16_t gi = gs->goldobj[a.cy * GRID_W + a.cx];
+        if (gi >= 0) { show(gs->gobj[gi], false); gs->goldobj[a.cy * GRID_W + a.cx] = -1; }
+        gs->gold_left--;
+        gs->score += SC_GOLD;
         sfx(2);
-        if (g_gold_left <= 0) open_exit();
+        if (gs->gold_left <= 0) open_exit();
     }
-    if (g_exit_on && a.cy == 0) level_clear();
+    if (gs->exit_on && a.cy == 0) level_clear();
 }
 
 static void player_step(uint32_t now) {
-    Actor& a = g_p;
+    Actor& a = gs->p;
 
     if (a.st == A_DIG) {
         if (now >= a.until) { finish_dig(a); a.st = A_IDLE; }
@@ -1220,7 +1247,7 @@ static void player_step(uint32_t now) {
 
     // 1) Un pas engage se termine avant toute nouvelle decision.
     if (a.mdx || a.mdy) {
-        advance(a, a.st == A_FALL ? g_fall_speed : g_run_speed);
+        advance(a, a.st == A_FALL ? gs->fall_speed : gs->run_speed);
         if (a.mdx || a.mdy) return;
         player_enter_cell();
         if (g_state != ST_PLAYING) return;    // la case d'arrivee a pu finir le niveau
@@ -1235,11 +1262,11 @@ static void player_step(uint32_t now) {
     a.st = A_IDLE;
 
     // 3) Creusement demande pendant le pas precedent : on le consomme ici.
-    if (g_dig_want) {
-        int8_t d = g_dig_want;
-        if (now >= g_dig_want_until) { g_dig_want = 0; }
+    if (gs->dig_want) {
+        int8_t d = gs->dig_want;
+        if (now >= gs->dig_want_until) { gs->dig_want = 0; }
         else {
-            g_dig_want = 0;
+            gs->dig_want = 0;
             try_dig(d);
             if (a.st == A_DIG) return;   // creusement engage : pas d'autre action
         }
@@ -1273,35 +1300,35 @@ static void player_step(uint32_t now) {
 // 14. IA des gardes
 // ===========================================================================
 
-// BFS INVERSE depuis le joueur : g_dist[y][x] = nombre de pas pour ALLER de
+// BFS INVERSE depuis le joueur : gs->dist[y][x] = nombre de pas pour ALLER de
 // (x,y) jusqu'au joueur. On explore donc les predecesseurs (can_step(n -> c)).
 static void rebuild_dist() {
-    memset(g_dist, 0xFF, sizeof(g_dist));
+    memset(gs->dist, 0xFF, sizeof(gs->dist));
     int head = 0, tail = 0;
-    if (!in_grid(g_p.cx, g_p.cy)) return;
-    g_dist[g_p.cy][g_p.cx] = 0;
-    g_bfsq[tail++] = (uint16_t) (g_p.cy * GRID_W + g_p.cx);
+    if (!in_grid(gs->p.cx, gs->p.cy)) return;
+    gs->dist[gs->p.cy][gs->p.cx] = 0;
+    gs->bfsq[tail++] = (uint16_t) (gs->p.cy * GRID_W + gs->p.cx);
 
     static const int DX[4] = {-1, 1, 0, 0};
     static const int DY[4] = {0, 0, -1, 1};
     while (head < tail) {
-        uint16_t c = g_bfsq[head++];
+        uint16_t c = gs->bfsq[head++];
         int x = c % GRID_W, y = c / GRID_W;
-        uint8_t d = g_dist[y][x];
+        uint8_t d = gs->dist[y][x];
         if (d >= 254) continue;
         for (int k = 0; k < 4; k++) {
             int nx = x + DX[k], ny = y + DY[k];
-            if (!in_grid(nx, ny) || g_dist[ny][nx] != 255) continue;
+            if (!in_grid(nx, ny) || gs->dist[ny][nx] != 255) continue;
             if (!can_step(nx, ny, x, y)) continue;
-            g_dist[ny][nx] = (uint8_t) (d + 1);
-            g_bfsq[tail++] = (uint16_t) (ny * GRID_W + nx);
+            gs->dist[ny][nx] = (uint8_t) (d + 1);
+            gs->bfsq[tail++] = (uint16_t) (ny * GRID_W + nx);
         }
     }
 }
 
 static bool guard_cell_taken(const Actor& self, int x, int y) {
-    for (int i = 0; i < g_guard_n; i++) {
-        const Actor& g = g_gd[i];
+    for (int i = 0; i < gs->guard_n; i++) {
+        const Actor& g = gs->gd[i];
         if (&g == &self || g.st == A_GONE) continue;
         if (g.cx == x && g.cy == y) return true;
         if ((g.mdx || g.mdy) && g.cx + g.mdx == x && g.cy + g.mdy == y) return true;
@@ -1314,7 +1341,7 @@ static bool guard_cell_taken(const Actor& self, int x, int y) {
 static void guard_choose(Actor& a) {
     static const int DX[4] = {-1, 1, 0, 0};
     static const int DY[4] = {0, 0, -1, 1};
-    uint8_t here = g_dist[a.cy][a.cx];
+    uint8_t here = gs->dist[a.cy][a.cx];
     uint8_t best = 255;
     int bx = 0, by = 0;
 
@@ -1323,7 +1350,7 @@ static void guard_choose(Actor& a) {
         if (!in_grid(tx, ty)) continue;
         if (!can_step(a.cx, a.cy, tx, ty)) continue;
         if (guard_cell_taken(a, tx, ty)) continue;
-        uint8_t d = g_dist[ty][tx];
+        uint8_t d = gs->dist[ty][tx];
         if (d < best) { best = d; bx = DX[k]; by = DY[k]; }
     }
 
@@ -1333,7 +1360,7 @@ static void guard_choose(Actor& a) {
         return;
     }
     // Joueur injoignable : on se rapproche lateralement pour rester menacant.
-    int want = (g_p.cx > a.cx) ? 1 : (g_p.cx < a.cx ? -1 : 0);
+    int want = (gs->p.cx > a.cx) ? 1 : (gs->p.cx < a.cx ? -1 : 0);
     if (want && can_step(a.cx, a.cy, a.cx + want, a.cy) &&
         !guard_cell_taken(a, a.cx + want, a.cy)) {
         a.mdx = (int8_t) want; a.face = (int8_t) want;
@@ -1345,7 +1372,7 @@ static void guard_respawn(Actor& a) {
         int x = rnd_range(0, GRID_W - 1);
         int y = rnd_range(0, 3);
         if (!passable(x, y) || guard_cell_taken(a, x, y)) continue;
-        if (iabs(x - g_p.cx) < 3 && iabs(y - g_p.cy) < 3) continue;
+        if (iabs(x - gs->p.cx) < 3 && iabs(y - gs->p.cy) < 3) continue;
         place_actor(a, x, y);
         return;
     }
@@ -1355,12 +1382,12 @@ static void guard_respawn(Actor& a) {
 static void guard_enter_cell(Actor& a) {
     // Un garde ramasse un lingot au passage (un seul a la fois), et le relache
     // plus tard : le joueur doit alors le piegier pour recuperer son or.
-    if (!a.carry && g_goldmap[a.cy][a.cx] && rnd_range(0, 99) < 45) {
+    if (!a.carry && gs->goldmap[a.cy][a.cx] && rnd_range(0, 99) < 45) {
         a.carry = true;
-        g_goldmap[a.cy][a.cx] = false;
-        int16_t gi = g_goldobj[a.cy * GRID_W + a.cx];
-        if (gi >= 0) { show(g_gobj[gi], false); g_goldobj[a.cy * GRID_W + a.cx] = -1; }
-    } else if (a.carry && rnd_range(0, 99) < 4 && !g_goldmap[a.cy][a.cx]) {
+        gs->goldmap[a.cy][a.cx] = false;
+        int16_t gi = gs->goldobj[a.cy * GRID_W + a.cx];
+        if (gi >= 0) { show(gs->gobj[gi], false); gs->goldobj[a.cy * GRID_W + a.cx] = -1; }
+    } else if (a.carry && rnd_range(0, 99) < 4 && !gs->goldmap[a.cy][a.cx]) {
         a.carry = false;
         drop_gold(a.cx, a.cy);
     }
@@ -1381,13 +1408,13 @@ static void guard_step(Actor& a, int idx, uint32_t now) {
 
     if (a.mdx || a.mdy) {
         if (a.st == A_FALL) {
-            advance(a, g_fall_speed);
+            advance(a, gs->fall_speed);
         } else {
             // Les gardes sautent 1 tick sur 5 : legerement plus lents que le joueur.
             // Le saut etant proportionnel, ils restent a 4/5 de son rythme quel que
             // soit le palier de vitesse choisi — la difficulte ne bouge pas.
             if (((g_tick + (uint32_t) idx) % 5) == 0) return;
-            advance(a, g_run_speed);
+            advance(a, gs->run_speed);
         }
         if (a.mdx || a.mdy) return;
         guard_enter_cell(a);
@@ -1415,24 +1442,24 @@ static void guard_step(Actor& a, int idx, uint32_t now) {
 // ===========================================================================
 
 static void record_score() {
-    if (!g_run_active) return;
-    g_run_active = false;
-    if (g_score == 0) return;
+    if (!gs->run_active) return;
+    gs->run_active = false;
+    if (gs->score == 0) return;
 
     LodeScoreEntry e{};
-    e.score = g_score;
+    e.score = gs->score;
     e.stamp = now_epoch();
-    e.level = (uint8_t) (g_level + 1);
-    e.ctrl_mode = g_save.ctrl_mode;
-    e.flags = g_offrank ? 1 : 0;
-    e.speed = g_save.speed;   // le bonus de temps depend du rythme : on le trace
+    e.level = (uint8_t) (gs->level + 1);
+    e.ctrl_mode = gs->save.ctrl_mode;
+    e.flags = gs->offrank ? 1 : 0;
+    e.speed = gs->save.speed;   // le bonus de temps depend du rythme : on le trace
 
     // Le record se juge à part du top 10 : quand des parties hors concours occupent
     // les dix places, un score classé qui n'y entre pas peut quand même battre le
     // record.
-    const bool ranked = topn_insert(g_save.scores, g_save.score_count, e) >= 0;
-    const bool new_best = !g_offrank && g_score > g_save.best;
-    if (new_best) g_save.best = g_score;
+    const bool ranked = topn_insert(gs->save.scores, gs->save.score_count, e) >= 0;
+    const bool new_best = !gs->offrank && gs->score > gs->save.best;
+    if (new_best) gs->save.best = gs->score;
     if (ranked || new_best) persist_save();
 }
 
@@ -1440,17 +1467,17 @@ static void show_clear() {
     g_state = ST_CLEAR;
     pad_sync();
     slot_layout_default();
-    bool last = (g_level + 1 >= LODE_N_LEVELS);
-    set_text_if(g_p_title, last ? "TOUS LES NIVEAUX !" : "NIVEAU TERMINE");
+    bool last = (gs->level + 1 >= LODE_N_LEVELS);
+    set_text_if(gs->p_title, last ? "TOUS LES NIVEAUX !" : "NIVEAU TERMINE");
     char sub[96];
-    snprintf(sub, sizeof(sub), "Niveau %d - %s", g_level + 1, LEVELS[g_level].name);
-    set_text_if(g_p_sub, sub);
+    snprintf(sub, sizeof(sub), "Niveau %d - %s", gs->level + 1, LEVELS[gs->level].name);
+    set_text_if(gs->p_sub, sub);
     char body[160];
     snprintf(body, sizeof(body), "Score : %lu     Vies : %d",
-             (unsigned long) g_score, g_lives);
+             (unsigned long) gs->score, gs->lives);
     body_center();
-    set_text_if(g_p_body, body);
-    set_text_if(g_p_foot, "");
+    set_text_if(gs->p_body, body);
+    set_text_if(gs->p_foot, "");
     slot_list(0, last ? "Voir le classement" : "Niveau suivant", nullptr, Pal::LADDER, true);
     slot_list(1, "Retour au hub", nullptr, Pal::TXT, true);
     slots_hide_from(2);
@@ -1462,16 +1489,16 @@ static void show_gameover() {
     g_state = ST_GAMEOVER;
     pad_sync();
     slot_layout_default();
-    set_text_if(g_p_title, "PARTIE TERMINEE");
+    set_text_if(gs->p_title, "PARTIE TERMINEE");
     char sub[96];
-    snprintf(sub, sizeof(sub), "Niveau %d - %s", g_level + 1, LEVELS[g_level].name);
-    set_text_if(g_p_sub, sub);
+    snprintf(sub, sizeof(sub), "Niveau %d - %s", gs->level + 1, LEVELS[gs->level].name);
+    set_text_if(gs->p_sub, sub);
     char body[160];
     snprintf(body, sizeof(body), "Score : %lu%s",
-             (unsigned long) g_score, g_offrank ? "   (hors classement)" : "");
+             (unsigned long) gs->score, gs->offrank ? "   (hors classement)" : "");
     body_center();
-    set_text_if(g_p_body, body);
-    set_text_if(g_p_foot, "");
+    set_text_if(gs->p_body, body);
+    set_text_if(gs->p_foot, "");
     slot_list(0, "Rejouer", nullptr, Pal::GOLD, true);
     slot_list(1, "Classement", nullptr, Pal::LADDER, true);
     slot_list(2, "Retour au hub", nullptr, Pal::TXT, true);
@@ -1481,14 +1508,14 @@ static void show_gameover() {
 
 static void level_clear() {
     // Bonus de temps : recompense la vitesse sans jamais devenir negatif.
-    uint32_t secs = (lv_tick_get() - g_level_start) / 1000u;
+    uint32_t secs = (lv_tick_get() - gs->level_start) / 1000u;
     uint32_t bonus = (secs < 240u) ? (240u - secs) * 12u : 0u;
-    g_score += SC_CLEAR + bonus;
-    if (g_level + 1 < LODE_N_LEVELS && g_save.unlocked < g_level + 2) {
-        g_save.unlocked = (uint8_t) (g_level + 2);
+    gs->score += SC_CLEAR + bonus;
+    if (gs->level + 1 < LODE_N_LEVELS && gs->save.unlocked < gs->level + 2) {
+        gs->save.unlocked = (uint8_t) (gs->level + 2);
         persist_save();
     }
-    if (g_level + 1 >= LODE_N_LEVELS) record_score();
+    if (gs->level + 1 >= LODE_N_LEVELS) record_score();
     sfx(4);
     show_clear();
 }
@@ -1496,19 +1523,19 @@ static void level_clear() {
 static void player_die() {
     if (g_state != ST_PLAYING) return;
     sfx(5);
-    show(g_flash, true);
-    lv_obj_move_foreground(g_flash);
+    show(gs->flash, true);
+    lv_obj_move_foreground(gs->flash);
     g_state = ST_DYING;
-    g_die_until = lv_tick_get() + DEATH_MS;
+    gs->die_until = lv_tick_get() + DEATH_MS;
     pad_sync();
 }
 
 static void after_death() {
-    show(g_flash, false);
-    if (!g_save.assist) g_lives--;
-    if (g_lives <= 0) { show_gameover(); return; }
+    show(gs->flash, false);
+    if (!gs->save.assist) gs->lives--;
+    if (gs->lives <= 0) { show_gameover(); return; }
     g_state = ST_PLAYING;
-    load_level(g_level);
+    load_level(gs->level);
     pad_sync();
 }
 
@@ -1516,11 +1543,11 @@ static void start_level(int idx, bool new_run) {
     if (idx < 0) idx = 0;
     if (idx >= LODE_N_LEVELS) idx = LODE_N_LEVELS - 1;
     if (new_run) {
-        g_lives = START_LIVES;
-        g_score = 0;
-        g_run_active = true;
-        g_offrank = (g_save.assist != 0);
-        g_save.plays++;
+        gs->lives = START_LIVES;
+        gs->score = 0;
+        gs->run_active = true;
+        gs->offrank = (gs->save.assist != 0);
+        gs->save.plays++;
     }
     s_rng ^= lv_tick_get() * 2654435761u + 1u;
     load_level(idx);
@@ -1537,12 +1564,12 @@ static void start_level(int idx, bool new_run) {
 // ===========================================================================
 
 static void update_imu_dir() {
-    tilt_smooth(g_tilt_x, g_tilt_y, g_raw_x, g_raw_y, g_save.cal_x, g_save.cal_y, TILT_SMOOTH);
+    tilt_smooth(g_tilt_x, g_tilt_y, g_raw_x, g_raw_y, gs->save.cal_x, gs->save.cal_y, TILT_SMOOTH);
 
     // Rotation ecran 270 deg (meme convention que marble_game.cpp) :
     // l'axe Y physique pilote X a l'ecran, l'axe X physique pilote Y.
     float ax = -g_tilt_y, ay = g_tilt_x;
-    float dead = DEAD_BASE - g_save.sensitivity * 0.014f;
+    float dead = DEAD_BASE - gs->save.sensitivity * 0.014f;
     float keep = dead * 0.6f;                 // hysteresis : evite le papillonnement
 
     uint8_t d = D_NONE;
@@ -1551,58 +1578,58 @@ static void update_imu_dir() {
     } else {
         if (fabsf(ay) > dead) d = (ay < 0) ? D_UP : D_DOWN;
     }
-    if (d == D_NONE && g_imu_dir != D_NONE) {
-        float v = (g_imu_dir == D_LEFT || g_imu_dir == D_RIGHT) ? fabsf(ax) : fabsf(ay);
-        if (v > keep) d = g_imu_dir;
+    if (d == D_NONE && gs->imu_dir != D_NONE) {
+        float v = (gs->imu_dir == D_LEFT || gs->imu_dir == D_RIGHT) ? fabsf(ax) : fabsf(ay);
+        if (v > keep) d = gs->imu_dir;
     }
-    g_imu_dir = d;
+    gs->imu_dir = d;
 }
 
 static void update_hud() {
     char buf[64];
-    if ((int32_t) g_score != g_c_score) {
-        g_c_score = (int32_t) g_score;
-        snprintf(buf, sizeof(buf), "Score %lu", (unsigned long) g_score);
-        set_text_if(g_hud_score, buf);
+    if ((int32_t) gs->score != gs->c_score) {
+        gs->c_score = (int32_t) gs->score;
+        snprintf(buf, sizeof(buf), "Score %lu", (unsigned long) gs->score);
+        set_text_if(gs->hud_score, buf);
     }
-    if (g_lives != g_c_lives) {
-        g_c_lives = g_lives;
-        if (g_save.assist) set_text_if(g_hud_lives, "Vies  oo");
-        else { snprintf(buf, sizeof(buf), "Vies  %d", g_lives); set_text_if(g_hud_lives, buf); }
+    if (gs->lives != gs->c_lives) {
+        gs->c_lives = gs->lives;
+        if (gs->save.assist) set_text_if(gs->hud_lives, "Vies  oo");
+        else { snprintf(buf, sizeof(buf), "Vies  %d", gs->lives); set_text_if(gs->hud_lives, buf); }
     }
-    if (g_level != g_c_level) {
-        g_c_level = g_level;
+    if (gs->level != gs->c_level) {
+        gs->c_level = gs->level;
         snprintf(buf, sizeof(buf), "Niveau %d/%d  %s",
-                 g_level + 1, LODE_N_LEVELS, LEVELS[g_level].name);
-        set_text_if(g_hud_level, buf);
+                 gs->level + 1, LODE_N_LEVELS, LEVELS[gs->level].name);
+        set_text_if(gs->hud_level, buf);
     }
-    if (g_gold_left != g_c_gold) {
-        g_c_gold = g_gold_left;
-        if (g_gold_left > 0) snprintf(buf, sizeof(buf), "Or restant %d", g_gold_left);
+    if (gs->gold_left != gs->c_gold) {
+        gs->c_gold = gs->gold_left;
+        if (gs->gold_left > 0) snprintf(buf, sizeof(buf), "Or restant %d", gs->gold_left);
         else                 snprintf(buf, sizeof(buf), "SORTIE OUVERTE");
-        set_text_if(g_hud_gold, buf);
+        set_text_if(gs->hud_gold, buf);
     }
-    if ((int32_t) g_save.best != g_c_best) {
-        g_c_best = (int32_t) g_save.best;
-        snprintf(buf, sizeof(buf), "Record %lu", (unsigned long) g_save.best);
-        set_text_if(g_hud_best, buf);
+    if ((int32_t) gs->save.best != gs->c_best) {
+        gs->c_best = (int32_t) gs->save.best;
+        snprintf(buf, sizeof(buf), "Record %lu", (unsigned long) gs->save.best);
+        set_text_if(gs->hud_best, buf);
     }
 }
 
 static void tick_cb(lv_timer_t*) {
     uint32_t now = lv_tick_get();
 
-    if (g_toast_until && now >= g_toast_until) { show(g_toast, false); g_toast_until = 0; }
+    if (gs->toast_until && now >= gs->toast_until) { show(gs->toast, false); gs->toast_until = 0; }
 
     if (g_state == ST_DYING) {
-        if (now >= g_die_until) after_death();
+        if (now >= gs->die_until) after_death();
         return;
     }
     if (g_state != ST_PLAYING) return;
 
     g_tick++;
 
-    if (g_save.ctrl_mode != 0) update_imu_dir();
+    if (gs->save.ctrl_mode != 0) update_imu_dir();
 
     update_holes(now);
     if (g_state != ST_PLAYING) return;   // update_holes a pu tuer le joueur
@@ -1614,25 +1641,25 @@ static void tick_cb(lv_timer_t*) {
     // assez reactif pour une poursuite, 4x moins cher qu'a chaque frame.
     if ((g_tick & 3) == 0) rebuild_dist();
 
-    for (int i = 0; i < g_guard_n; i++) {
-        if (g_gd[i].st == A_GONE && g_gd[i].until == 0) continue;
-        guard_step(g_gd[i], i, now);
+    for (int i = 0; i < gs->guard_n; i++) {
+        if (gs->gd[i].st == A_GONE && gs->gd[i].until == 0) continue;
+        guard_step(gs->gd[i], i, now);
     }
 
     // Contact garde / joueur. Un garde PIEGE ne tue pas : on lui marche dessus.
-    int ppx = actor_px(g_p), ppy = actor_py(g_p);
-    for (int i = 0; i < g_guard_n; i++) {
-        const Actor& g = g_gd[i];
+    int ppx = actor_px(gs->p), ppy = actor_py(gs->p);
+    for (int i = 0; i < gs->guard_n; i++) {
+        const Actor& g = gs->gd[i];
         if (g.st == A_GONE || g.st == A_TRAP) continue;
         if (iabs(actor_px(g) - ppx) < TILE * 3 / 5 &&
             iabs(actor_py(g) - ppy) < TILE * 3 / 5) { player_die(); return; }
     }
 
     // --- Rendu ---
-    uint32_t pcol = (g_p.st == A_DIG && ((now / 90) & 1)) ? Pal::RUNNER_DIG : Pal::RUNNER;
-    draw_actor(g_p, pcol, Pal::RUNNER_HD);
-    for (int i = 0; i < g_guard_n; i++) {
-        Actor& g = g_gd[i];
+    uint32_t pcol = (gs->p.st == A_DIG && ((now / 90) & 1)) ? Pal::RUNNER_DIG : Pal::RUNNER;
+    draw_actor(gs->p, pcol, Pal::RUNNER_HD);
+    for (int i = 0; i < gs->guard_n; i++) {
+        Actor& g = gs->gd[i];
         uint32_t c = g.carry ? Pal::GUARD_AU : Pal::GUARD;
         if (g.st == A_TRAP) c = Pal::SOLID;      // coince : silhouette eteinte
         draw_actor(g, c, Pal::GUARD_HD);
@@ -1648,19 +1675,19 @@ static void go_hub() {
     g_state = ST_HUB;
     pad_sync();
     slot_layout_default();
-    set_text_if(g_p_title, "COUREUR D'OR");
-    set_text_if(g_p_sub, "Ramasse tout l'or, echappe aux gardes, grimpe en haut.");
-    set_text_if(g_p_body, "");
-    set_text_if(g_p_foot, "Pendant une partie : touche le bandeau du haut pour mettre en pause.");
+    set_text_if(gs->p_title, "COUREUR D'OR");
+    set_text_if(gs->p_sub, "Ramasse tout l'or, echappe aux gardes, grimpe en haut.");
+    set_text_if(gs->p_body, "");
+    set_text_if(gs->p_foot, "Pendant une partie : touche le bandeau du haut pour mettre en pause.");
 
     char d0[96], d1[64], d2[64], d3[96];
-    int startlvl = g_save.unlocked;
+    int startlvl = gs->save.unlocked;
     snprintf(d0, sizeof(d0), "Niveau %d - %s", startlvl, LEVELS[startlvl - 1].name);
-    snprintf(d1, sizeof(d1), "%d/%d debloques", g_save.unlocked, LODE_N_LEVELS);
-    snprintf(d2, sizeof(d2), "Meilleur score : %lu", (unsigned long) g_save.best);
+    snprintf(d1, sizeof(d1), "%d/%d debloques", gs->save.unlocked, LODE_N_LEVELS);
+    snprintf(d2, sizeof(d2), "Meilleur score : %lu", (unsigned long) gs->save.best);
     snprintf(d3, sizeof(d3), "Controle : %s   -   Vitesse : %s",
-             CTRL_NAME[g_save.ctrl_mode],
-             SPEEDS[g_save.speed < LODE_N_SPEEDS ? g_save.speed : 0].name);
+             CTRL_NAME[gs->save.ctrl_mode],
+             SPEEDS[gs->save.speed < LODE_N_SPEEDS ? gs->save.speed : 0].name);
 
     slot_list(0, "Jouer",      d0, Pal::GOLD,   true);
     slot_list(1, "Niveaux",    d1, Pal::LADDER, true);
@@ -1675,20 +1702,20 @@ static void go_levels() {
     g_state = ST_LEVELS;
     pad_sync();
     slot_layout_default();
-    set_text_if(g_p_title, "NIVEAUX");
-    set_text_if(g_p_sub, "Un niveau se debloque en terminant le precedent.");
-    set_text_if(g_p_body, "");
-    set_text_if(g_p_foot, "Un niveau termine debloque le suivant, definitivement.");
-    static char names[LODE_N_LEVELS][40];
+    set_text_if(gs->p_title, "NIVEAUX");
+    set_text_if(gs->p_sub, "Un niveau se debloque en terminant le precedent.");
+    set_text_if(gs->p_body, "");
+    set_text_if(gs->p_foot, "Un niveau termine debloque le suivant, definitivement.");
+    auto& names = gs->levels_names;   // brouillon : le label copie le texte
     for (int i = 0; i < LODE_N_LEVELS; i++) {
-        bool on = (i < g_save.unlocked);
+        bool on = (i < gs->save.unlocked);
         snprintf(names[i], sizeof(names[i]), "%d. %s", i + 1, LEVELS[i].name);
         slot_grid(i, names[i], on ? "Jouable" : "Verrouille",
                   on ? Pal::LADDER : Pal::TXT_DIM, on);
     }
     slot_list(10, "Retour", nullptr, Pal::TXT, true);
-    lv_obj_set_size(g_slot[10], 300, 58);
-    lv_obj_align(g_slot[10], LV_ALIGN_BOTTOM_MID, 0, -56);
+    lv_obj_set_size(gs->slot[10], 300, 58);
+    lv_obj_align(gs->slot[10], LV_ALIGN_BOTTOM_MID, 0, -56);
     slots_hide_from(11);
     panel_on(true);
 }
@@ -1697,10 +1724,10 @@ static void go_settings() {
     g_state = ST_SETTINGS;
     pad_sync();
     slot_layout(176, 66, 60);   // 7 entrees : pile resserree
-    set_text_if(g_p_title, "REGLAGES");
-    set_text_if(g_p_sub, "Le Tab5 n'a pas de croix physique : ce sont des zones tactiles.");
-    set_text_if(g_p_body, "");
-    set_text_if(g_p_foot,
+    set_text_if(gs->p_title, "REGLAGES");
+    set_text_if(gs->p_sub, "Le Tab5 n'a pas de croix physique : ce sont des zones tactiles.");
+    set_text_if(gs->p_body, "");
+    set_text_if(gs->p_foot,
         "Un seul point de contact a la fois : en mode Boutons, on creuse a l'arret. "
         "Le mode Mixte libere le doigt pour creuser en marchant.");
 
@@ -1710,15 +1737,15 @@ static void go_settings() {
         "Inclinaison ET D-pad, le doigt prime",
     };
     char d1[64], d2[96], d4[64];
-    snprintf(d1, sizeof(d1), "%d / 5 (plus haut = plus sensible)", g_save.sensitivity + 1);
-    const SpeedDef& sp = SPEEDS[g_save.speed < LODE_N_SPEEDS ? g_save.speed : 0];
+    snprintf(d1, sizeof(d1), "%d / 5 (plus haut = plus sensible)", gs->save.sensitivity + 1);
+    const SpeedDef& sp = SPEEDS[gs->save.speed < LODE_N_SPEEDS ? gs->save.speed : 0];
     snprintf(d2, sizeof(d2), "%s - %s", sp.name, sp.desc);
-    snprintf(d4, sizeof(d4), "%s - hors classement", g_save.assist ? "Active" : "Desactive");
+    snprintf(d4, sizeof(d4), "%s - hors classement", gs->save.assist ? "Active" : "Desactive");
 
     char d0[96];
-    snprintf(d0, sizeof(d0), "%s : %s", CTRL_NAME[g_save.ctrl_mode], CTRL_DESC[g_save.ctrl_mode]);
+    snprintf(d0, sizeof(d0), "%s : %s", CTRL_NAME[gs->save.ctrl_mode], CTRL_DESC[gs->save.ctrl_mode]);
     slot_list(0, "Controle",           d0, Pal::LADDER, true);
-    slot_list(1, "Sensibilite",        d1, Pal::BAR, g_save.ctrl_mode != 0);
+    slot_list(1, "Sensibilite",        d1, Pal::BAR, gs->save.ctrl_mode != 0);
     slot_list(2, "Vitesse",            d2, Pal::RUNNER, true);
     slot_list(3, "Calibrer a plat",    "Pose la tablette PUIS appuie", Pal::GOLD, true);
     slot_list(4, "Mode entrainement",  d4, Pal::TXT, true);
@@ -1732,17 +1759,17 @@ static void go_scores() {
     g_state = ST_SCORES;
     pad_sync();
     slot_layout_default();
-    set_text_if(g_p_title, "CLASSEMENT");
-    set_text_if(g_p_sub, "Top 10 local - conserve en NVS, survit aux reboots et aux OTA.");
-    set_text_if(g_p_foot, "");
+    set_text_if(gs->p_title, "CLASSEMENT");
+    set_text_if(gs->p_sub, "Top 10 local - conserve en NVS, survit aux reboots et aux OTA.");
+    set_text_if(gs->p_foot, "");
 
-    static char body[900];
+    auto& body = gs->scores_body;     // brouillon : le label copie le texte
     int off = 0;
-    if (g_save.score_count == 0) {
+    if (gs->save.score_count == 0) {
         snprintf(body, sizeof(body), "Aucun score enregistre pour l'instant.");
     } else {
-        for (int i = 0; i < g_save.score_count && off < (int) sizeof(body) - 90; i++) {
-            const LodeScoreEntry& e = g_save.scores[i];
+        for (int i = 0; i < gs->save.score_count && off < (int) sizeof(body) - 90; i++) {
+            const LodeScoreEntry& e = gs->save.scores[i];
             char when[24];
             fmt_stamp(e.stamp, when, sizeof(when));
             // Les entrees d'avant l'ajout du reglage portent 0 = « Normale »,
@@ -1762,12 +1789,12 @@ static void go_scores() {
     }
     // Le classement est une colonne : aligne a gauche, contrairement aux autres
     // ecrans dont le corps est une phrase centree.
-    lv_obj_set_style_text_align(g_p_body, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    set_text_if(g_p_body, body);
+    lv_obj_set_style_text_align(gs->p_body, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+    set_text_if(gs->p_body, body);
     slot_list(0, "Effacer les scores", "Demande confirmation", Pal::DANGER, true);
-    lv_obj_align(g_slot[0], LV_ALIGN_BOTTOM_MID, 0, -136);
+    lv_obj_align(gs->slot[0], LV_ALIGN_BOTTOM_MID, 0, -136);
     slot_list(1, "Retour", nullptr, Pal::TXT, true);
-    lv_obj_align(g_slot[1], LV_ALIGN_BOTTOM_MID, 0, -60);
+    lv_obj_align(gs->slot[1], LV_ALIGN_BOTTOM_MID, 0, -60);
     slots_hide_from(2);
     panel_on(true);
 }
@@ -1776,11 +1803,11 @@ static void go_confirm() {
     g_state = ST_CONFIRM;
     pad_sync();
     slot_layout_default();
-    set_text_if(g_p_title, "TOUT EFFACER ?");
-    set_text_if(g_p_sub, "Scores, meilleur score ET progression des niveaux.");
+    set_text_if(gs->p_title, "TOUT EFFACER ?");
+    set_text_if(gs->p_sub, "Scores, meilleur score ET progression des niveaux.");
     body_center();
-    set_text_if(g_p_body, "Cette action est irreversible.");
-    set_text_if(g_p_foot, "");
+    set_text_if(gs->p_body, "Cette action est irreversible.");
+    set_text_if(gs->p_foot, "");
     slot_list(0, "Oui, tout effacer", nullptr, Pal::DANGER, true);
     slot_list(1, "Annuler",           nullptr, Pal::TXT, true);
     slots_hide_from(2);
@@ -1791,25 +1818,25 @@ static void show_pause() {
     g_state = ST_PAUSED;
     pad_sync();
     slot_layout_default();
-    set_text_if(g_p_title, "PAUSE");
+    set_text_if(gs->p_title, "PAUSE");
     char sub[96];
-    snprintf(sub, sizeof(sub), "Niveau %d - %s", g_level + 1, LEVELS[g_level].name);
-    set_text_if(g_p_sub, sub);
+    snprintf(sub, sizeof(sub), "Niveau %d - %s", gs->level + 1, LEVELS[gs->level].name);
+    set_text_if(gs->p_sub, sub);
     char body[160];
     snprintf(body, sizeof(body), "Score : %lu     Vies : %d     Or restant : %d",
-             (unsigned long) g_score, g_lives, g_gold_left);
+             (unsigned long) gs->score, gs->lives, gs->gold_left);
     body_center();
-    set_text_if(g_p_body, body);
-    set_text_if(g_p_foot, "");
+    set_text_if(gs->p_body, body);
+    set_text_if(gs->p_foot, "");
     // La vitesse est reglable ici aussi : elle prend effet des la reprise, sans
     // repasser par le hub ni perdre la partie en cours.
     char dv[96];
-    const SpeedDef& sp = SPEEDS[g_save.speed < LODE_N_SPEEDS ? g_save.speed : 0];
+    const SpeedDef& sp = SPEEDS[gs->save.speed < LODE_N_SPEEDS ? gs->save.speed : 0];
     snprintf(dv, sizeof(dv), "%s - %s", sp.name, sp.desc);
 
     slot_list(0, "Reprendre",            nullptr, Pal::LADDER, true);
     slot_list(1, "Recalibrer a plat",    "Pose la tablette PUIS appuie", Pal::GOLD,
-              g_save.ctrl_mode != 0);
+              gs->save.ctrl_mode != 0);
     slot_list(2, "Vitesse",              dv, Pal::RUNNER, true);
     slot_list(3, "Relancer le niveau",   "Sans perdre de vie", Pal::BAR, true);
     slot_list(4, "Quitter la partie",    "Le score est enregistre", Pal::DANGER, true);
@@ -1841,7 +1868,7 @@ static void slot_event_cb(lv_event_t* e) {
 
     switch (g_state) {
         case ST_HUB:
-            if (i == 0)      start_level(g_save.unlocked - 1, true);
+            if (i == 0)      start_level(gs->save.unlocked - 1, true);
             else if (i == 1) go_levels();
             else if (i == 2) go_scores();
             else if (i == 3) go_settings();
@@ -1850,25 +1877,25 @@ static void slot_event_cb(lv_event_t* e) {
 
         case ST_LEVELS:
             if (i == 10) { go_hub(); break; }
-            if (i < LODE_N_LEVELS && i < g_save.unlocked) start_level(i, true);
+            if (i < LODE_N_LEVELS && i < gs->save.unlocked) start_level(i, true);
             break;
 
         case ST_SETTINGS:
             if (i == 0) {
-                g_save.ctrl_mode = (uint8_t) ((g_save.ctrl_mode + 1) % 3);
+                gs->save.ctrl_mode = (uint8_t) ((gs->save.ctrl_mode + 1) % 3);
                 persist_save(); go_settings();
             } else if (i == 1) {
-                g_save.sensitivity = (uint8_t) ((g_save.sensitivity + 1) % 5);
+                gs->save.sensitivity = (uint8_t) ((gs->save.sensitivity + 1) % 5);
                 persist_save(); go_settings();
             } else if (i == 2) {
-                g_save.speed = (uint8_t) ((g_save.speed + 1) % LODE_N_SPEEDS);
+                gs->save.speed = (uint8_t) ((gs->save.speed + 1) % LODE_N_SPEEDS);
                 apply_speed();
                 persist_save(); go_settings();
             } else if (i == 3) {
                 calibrate();
-                set_text_if(g_p_sub, "Calibration prise.");
+                set_text_if(gs->p_sub, "Calibration prise.");
             } else if (i == 4) {
-                g_save.assist = g_save.assist ? 0 : 1;
+                gs->save.assist = gs->save.assist ? 0 : 1;
                 persist_save(); go_settings();
             } else if (i == 5) {
                 go_confirm();
@@ -1883,12 +1910,12 @@ static void slot_event_cb(lv_event_t* e) {
 
         case ST_CONFIRM:
             if (i == 0) {
-                memset(g_save.scores, 0, sizeof(g_save.scores));
-                g_save.score_count = 0;
-                g_save.best = 0;
-                g_save.unlocked = 1;
+                memset(gs->save.scores, 0, sizeof(gs->save.scores));
+                gs->save.score_count = 0;
+                gs->save.best = 0;
+                gs->save.unlocked = 1;
                 persist_save();
-                g_c_best = -1;
+                gs->c_best = -1;
                 go_hub();
             } else {
                 go_hub();
@@ -1897,20 +1924,20 @@ static void slot_event_cb(lv_event_t* e) {
 
         case ST_PAUSED:
             if (i == 0) { g_state = ST_PLAYING; panel_on(false); pad_sync(); }
-            else if (i == 1) { calibrate(); set_text_if(g_p_sub, "Calibration prise."); }
+            else if (i == 1) { calibrate(); set_text_if(gs->p_sub, "Calibration prise."); }
             else if (i == 2) {
-                // Prise d'effet immediate : g_run_speed est relu a chaque pas.
-                g_save.speed = (uint8_t) ((g_save.speed + 1) % LODE_N_SPEEDS);
+                // Prise d'effet immediate : gs->run_speed est relu a chaque pas.
+                gs->save.speed = (uint8_t) ((gs->save.speed + 1) % LODE_N_SPEEDS);
                 apply_speed(); persist_save(); show_pause();
             }
-            else if (i == 3) { g_state = ST_PLAYING; panel_on(false); load_level(g_level); pad_sync(); }
+            else if (i == 3) { g_state = ST_PLAYING; panel_on(false); load_level(gs->level); pad_sync(); }
             else if (i == 4) { show_gameover(); }
             break;
 
         case ST_CLEAR:
             if (i == 0) {
-                if (g_level + 1 >= LODE_N_LEVELS) { record_score(); go_scores(); }
-                else start_level(g_level + 1, false);
+                if (gs->level + 1 >= LODE_N_LEVELS) { record_score(); go_scores(); }
+                else start_level(gs->level + 1, false);
             } else {
                 record_score();
                 go_hub();
@@ -1938,20 +1965,22 @@ void on_imu(float ax, float ay, float /*az*/) {
 }
 
 void on_dir(uint8_t dir, bool pressed) {
-    if (pressed) g_btn_dir = dir;
-    else if (g_btn_dir == dir) g_btn_dir = D_NONE;
+    if (!gs) return;   // jeu ferme : aucune direction a retenir
+    if (pressed) gs->btn_dir = dir;
+    else if (gs->btn_dir == dir) gs->btn_dir = D_NONE;
 }
 
 void on_dig(bool right) {
-    if (g_state != ST_PLAYING) return;
-    g_dig_want = right ? 1 : -1;
-    g_dig_want_until = lv_tick_get() + DIG_BUFFER_MS;
+    if (!gs || g_state != ST_PLAYING) return;
+    gs->dig_want = right ? 1 : -1;
+    gs->dig_want_until = lv_tick_get() + DIG_BUFFER_MS;
 }
 
 void calibrate() {
-    tilt_calibrate(g_save.cal_x, g_save.cal_y, g_raw_x, g_raw_y);
+    if (!gs) return;   // la calibration vit dans la sauvegarde, en memoire jeu ouvert
+    tilt_calibrate(gs->save.cal_x, gs->save.cal_y, g_raw_x, g_raw_y);
     g_tilt_x = 0; g_tilt_y = 0;
-    g_imu_dir = D_NONE;
+    gs->imu_dir = D_NONE;
     persist_save();
 }
 
@@ -1960,32 +1989,38 @@ bool is_open() { return g_state != ST_OFF; }
 void open(const UI& ui) {
     if (g_state != ST_OFF) return;
     if (!ui.root || !ui.field || !ui.hud || !ui.panel || !ui.pad) return;
-    g_ui = ui;
+    gs = game_mem_new<Mem>(MemPref::Internal);
+    if (!gs) {
+        ESP_LOGW("lode", "%u o introuvables : jeu non ouvert", (unsigned) sizeof(Mem));
+        if (ui.lvgl) ui.lvgl->show_page(ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
+        return;
+    }
+    gs->ui = ui;
 
-    g_epoch0 = ui.epoch;
-    g_epoch_ms = lv_tick_get();
+    gs->epoch0 = ui.epoch;
+    gs->epoch_ms = lv_tick_get();
 
     persist_load();
     build_ui();
 
     // La page LVGL est déjà active (navigation via lvgl.page.show dans le YAML).
 
-    g_run_active = false;
-    g_btn_dir = D_NONE;
-    g_imu_dir = D_NONE;
-    g_c_score = g_c_lives = g_c_level = g_c_gold = g_c_best = -1;
-    show(g_p.body, false); show(g_p.head, false);
-    draw_reset(g_p);
+    gs->run_active = false;
+    gs->btn_dir = D_NONE;
+    gs->imu_dir = D_NONE;
+    gs->c_score = gs->c_lives = gs->c_level = gs->c_gold = gs->c_best = -1;
+    show(gs->p.body, false); show(gs->p.head, false);
+    draw_reset(gs->p);
     for (int i = 0; i < MAX_GUARDS; i++) {
-        show(g_gd[i].body, false); show(g_gd[i].head, false);
-        draw_reset(g_gd[i]);
+        show(gs->gd[i].body, false); show(gs->gd[i].head, false);
+        draw_reset(gs->gd[i]);
     }
 
     go_hub();
 
-    if (!g_timer) {
-        g_timer = lv_timer_create(tick_cb, TICK_MS, nullptr);
-        g_tick_period = TICK_MS;
+    if (!gs->timer) {
+        gs->timer = lv_timer_create(tick_cb, TICK_MS, nullptr);
+        gs->tick_period = TICK_MS;
     }
     tick_period_sync();   // on ouvre sur le hub : cadence menu d'emblee
 }
@@ -1997,13 +2032,21 @@ void close() {
     record_score();
     persist_save();
 
-    if (g_timer) { lv_timer_delete(g_timer); g_timer = nullptr; g_tick_period = 0; }
-    show(g_ui.pad, false);
+    if (gs->timer) { lv_timer_delete(gs->timer); gs->timer = nullptr; gs->tick_period = 0; }
+    show(gs->ui.pad, false);
     // Navigation retour vers le sélecteur arcade (page LVGL).
-    if (g_ui.lvgl) g_ui.lvgl->show_page(g_ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
-    g_btn_dir = D_NONE;
-    g_imu_dir = D_NONE;
+    if (gs->ui.lvgl) gs->ui.lvgl->show_page(gs->ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
+    gs->btn_dir = D_NONE;
+    gs->imu_dir = D_NONE;
     g_state = ST_OFF;
+
+    // Rien ne reste reserve : le callback pose sur le HUD YAML par build_ui() (il
+    // s'empilerait a la reouverture), les objets LVGL du jeu sous les 4 conteneurs
+    // YAML (dont le slot dont le callback nous appelle peut-etre ; aucun objet du
+    // jeu n'est cree directement dans root), puis le bloc qui les pointait.
+    if (gs->ui.hud) lv_obj_remove_event_cb(gs->ui.hud, hud_event_cb);
+    ui_destroy(nullptr, {gs->ui.field, gs->ui.hud, gs->ui.panel, gs->ui.pad});
+    game_mem_free(gs);
 }
 
 }  // namespace Lode

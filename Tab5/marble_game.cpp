@@ -4,9 +4,10 @@
  * @role Jeu « Fil d'Or » — roguelite de bille pilote a l'inclinaison (BMI270).
  * @architecture_constraint Plein ecran 1280x720. Le YAML ne fournit que 4
  *      conteneurs vides + 3 polices ; tout le reste est construit ici. Les objets
- *      LVGL sont PREALLOUES une seule fois (pool) puis reutilises par show/hide +
- *      move : aucune allocation LVGL dans la boucle de jeu. Persistance NVS via
- *      esphome::global_preferences (aucune dependance Home Assistant).
+ *      LVGL sont PREALLOUES a l'ouverture (pool) puis reutilises par show/hide +
+ *      move : aucune allocation LVGL dans la boucle de jeu. Jeu ferme, il ne reste
+ *      rien : objets detruits et etat rendu (struct Mem, audit du 26/09/2026).
+ *      Persistance NVS via esphome::global_preferences (aucune dependance HA).
  * @ai_instruction Hot-path = tick() : pas de std::string, pas de to_string(), pas
  *      de new/delete. Les libelles HUD ne sont reecrits que quand leur valeur change.
  *      Couleurs : uniquement Pal::* (jamais d'hex en dur ici).
@@ -73,10 +74,9 @@ static constexpr uint32_t PREF_KEY   = 0x4D41524Bu;  // cle NVS dediee au jeu
 // 2. Generateur pseudo-aleatoire (xorshift32) — seed par run
 // ===========================================================================
 
-static uint32_t s_rng = 0x1234567u;
-static inline uint32_t rnd() {
-    return xorshift32_next(s_rng);
-}
+// L'etat du generateur (Mem::rng) vit dans le bloc du jeu ouvert (section 5) :
+// rnd() est donc defini apres struct Mem, seule sa declaration est ici.
+static inline uint32_t rnd();
 // Entier dans [lo, hi] inclus.
 static inline int rnd_range(int lo, int hi) {
     if (hi <= lo) return lo;
@@ -363,107 +363,25 @@ struct Ent {
     lv_obj_t* det;        // calque de detail (arete eclairee / reflet), ENFANT de obj
 };
 
-static MarbleSave g_save{};
+// Ce qui survit à la fermeture — quelques octets : l'état ouvert/fermé (lu par le
+// registre jeu fermé), les dernières lectures IMU (dispatch_imu les envoie aussi
+// jeu fermé), l'accès NVS (le recréer ferait fuir un backend de préférences par
+// ouverture) et le lissage de l'inclinaison, qui continue d'une partie à l'autre
+// (seul calibrate() le remet à zéro).
 static NvsSlot<MarbleSave> g_nvs(PREF_KEY, SAVE_MAGIC);
-
-static UI    g_ui{};
-static bool  g_built = false;
 static State g_state = ST_OFF;
-static lv_timer_t* g_timer = nullptr;
 
 // --- IMU / inclinaison ---
 static float g_raw_x = 0.0f, g_raw_y = 0.0f;   // dernier echantillon brut (g)
 static float g_tilt_x = 0.0f, g_tilt_y = 0.0f; // valeur lissee, offset applique
 
-// --- Bille ---
-static float g_bx, g_by, g_vx, g_vy;
-static uint32_t g_invuln_until = 0;
-static uint32_t g_dash_ready_at = 0;
-
-// --- Entites ---
-static Ent g_ent[MAX_ENT];
-static int g_ent_n = 0;
-
-// --- Run en cours ---
-static int      g_room = 0;          // index 0..5
-static int      g_life = 3, g_life_max = 3;
-static bool     g_shield = false;
-static int      g_gold = 0;          // or ramasse dans la run
-static int      g_runes = 0;
-static uint32_t g_run_start_ms = 0;
-static uint32_t g_run_ms = 0;
-// Dernier tick en partie (0 = aucun depuis le début de la run) : un écart de plus
-// de PAUSE_GAP_MS (écran éteint → lvgl.pause) n'entre pas dans le temps de la
-// run ni dans le record (audit du 25/09/2026, lot 5).
-static uint32_t g_run_last_tick_ms = 0;
-static uint32_t g_room_enter_ms = 0;
-static bool     g_run_active = false;
-// Reglages figes au lancement de la run (changer la difficulte en cours de
-// partie n'aurait aucun sens : les Reglages ne sont joignables que depuis le hub).
-static const DiffDef* g_diff = &DIFFS[D_NORMAL];
-static uint32_t g_invuln_ms = INVULN_MS;
-static bool     g_god = false;
-// Rayon effectif (BALL_R - Finesse) fige au lancement de la run.
-static int      g_ball_r = BALL_R;
-// Multiplicateur d'ames issu de Decouverte + objets, et chance de butin en coffre.
-static float    g_soul_mul = 1.0f;
-static float    g_loot_chance = 0.35f;
-// Ecran marchand : page courante + slot d'equipement en cours de modification.
-static int      g_shop_page = 0;
-// Index du bouton « Page suivante » sur la page courante (« Retour » = +1).
-// go_shop() l'ecrit, le gestionnaire de tap le relit : les deux DOIVENT rester
-// d'accord, sinon un tap sur « Retour » declencherait un achat.
-static int      g_shop_rows = 0;
-
-// --- Effets cumules des boons ---
-static uint8_t g_boons[MAX_BOONS];
-static int     g_boon_n = 0;
-static float   g_ctrl_mul, g_gold_mul, g_speed_max, g_fric;
-static float   g_fric_sub;  // cache : powf(g_fric, 1/SUBSTEP) — recalculé uniquement quand g_fric change
-static inline void apply_fric() { g_fric_sub = powf(g_fric, 1.0f / SUBSTEP); }
-static int     g_magnet_r;
-static bool    g_has_bronze, g_has_eye, g_has_velvet;
-static bool    g_revive_left;
-
-// --- Choix de recompense en cours ---
-static uint8_t g_offer[3];
-static int     g_offer_n = 0;
-
-// --- Feedback visuel ---
-static uint32_t g_vignette_until = 0;
-static int      g_jitter = 0;
-// Banniere ephemere en haut du terrain (decouverte d'objet, contenu d'un coffre).
-static lv_obj_t* g_toast = nullptr;
-static uint32_t  g_toast_until = 0;
-
-// --- Objets LVGL (construits une fois) ---
-// Bille en TROIS calques : ombre portee, corps en degrade, reflet speculaire.
-// C'est ce trio (repris de la bille du flipper) qui la fait passer de pastille
-// plate a sphere. Ils se deplacent ensemble — voir ball_place().
-static lv_obj_t* g_ball = nullptr;        // corps (reference historique)
-static lv_obj_t* g_ball_sh = nullptr;     // ombre portee, legerement decalee
-static lv_obj_t* g_ball_gloss = nullptr;  // reflet, en haut a gauche
+// --- Tailles des pools LVGL (constantes) ---
 // Decor de salle : peint SOUS les entites, jamais collisionnable. Recycle d'une
 // salle a l'autre exactement comme le pool d'entites.
 static constexpr int MAX_DEC = 22;
-static lv_obj_t* g_dec[MAX_DEC] = {};
-static int g_dec_n = 0;
 // Arcs peints (anneau du portail, orbites des arenes). Pool distinct : un
-// lv_arc n'est pas un lv_obj rectangulaire, il ne peut pas partager g_dec.
+// lv_arc n'est pas un lv_obj rectangulaire, il ne peut pas partager le pool du decor.
 static constexpr int MAX_DEC_ARC = 4;
-static lv_obj_t* g_dec_arc[MAX_DEC_ARC] = {};
-static int g_dec_arc_n = 0;
-static lv_obj_t* g_vign[4] = {};          // 4 bandes de bord (flash de degat)
-static lv_obj_t* g_hud_room = nullptr;
-static lv_obj_t* g_hud_life = nullptr;
-static lv_obj_t* g_hud_gold = nullptr;
-static lv_obj_t* g_hud_goal = nullptr;
-static lv_obj_t* g_hud_time = nullptr;
-static lv_obj_t* g_hud_dot[MAX_BOONS] = {};
-static lv_obj_t* g_p_title = nullptr;
-static lv_obj_t* g_p_sub = nullptr;
-static lv_obj_t* g_p_body = nullptr;
-static lv_obj_t* g_p_foot = nullptr;
 // 7 et pas 8, et c'est une CONTRAINTE de mise en page, pas un chiffre rond :
 // les lignes sont a y = 150 + i*68 sur 62 px de haut, et le pied de page occupe
 // y = 672..698. La ligne d'index 7 irait de 688 a 750 — elle passerait dessous.
@@ -474,19 +392,148 @@ static constexpr int N_SLOTS = 7;
 static_assert(150 + (N_SLOTS - 1) * 68 + 62 <= 720 - 22 - 26,
               "La derniere ligne de menu recouvre le pied de page : revoir "
               "N_SLOTS, le pas de 68 px, ou la position du pied.");
-static lv_obj_t* g_slot[N_SLOTS] = {};
-static lv_obj_t* g_slot_t[N_SLOTS] = {};
-static lv_obj_t* g_slot_d[N_SLOTS] = {};
-// Liseré d'accent de chaque slot (enfant) : reprend la couleur de l'entree.
-// C'est lui qui fait lire les menus comme des cartes et plus comme des boutons.
-static lv_obj_t* g_slot_a[N_SLOTS] = {};
 
-// Caches HUD : on ne reecrit un libelle que si sa valeur a change.
-static int g_c_life = -1, g_c_gold = -1, g_c_runes = -1, g_c_sec = -1;
-static bool g_c_shield = false;
-// Cache d'etat du portail : -1 = inconnu, sinon 0/1. Evite de reecrire le style
-// du portail a chaque frame (une ecriture de style = une invalidation LVGL).
-static int g_c_gate = -1;
+// Tout le reste n'existe que jeu ouvert : créé par open(), rendu par close(),
+// avec les objets LVGL qu'il pointe (game_common.h, « Mémoire d'un jeu »).
+// Les membres sans initialiseur partent de zéro comme les anciens globaux :
+// game_mem_new() fait `new (p) Mem()`, qui met tout à zéro avant les initialiseurs.
+struct Mem {
+    // Etat du xorshift32 (section 2) : re-seme par start_run avant tout tirage.
+    uint32_t rng = 0x1234567u;
+
+    MarbleSave save{};  // relue de la NVS a chaque ouverture, ecrite par close()
+    UI    ui{};
+    lv_timer_t* timer = nullptr;
+
+    // --- Bille ---
+    float bx, by, vx, vy;
+    uint32_t invuln_until = 0;
+    uint32_t dash_ready_at = 0;
+
+    // --- Entites ---
+    Ent ent[MAX_ENT];
+    int ent_n = 0;
+
+    // --- Run en cours ---
+    int      room = 0;          // index 0..5
+    int      life = 3, life_max = 3;
+    bool     shield = false;
+    int      gold = 0;          // or ramasse dans la run
+    int      runes = 0;
+    uint32_t run_start_ms = 0;
+    uint32_t run_ms = 0;
+    // Dernier tick en partie (0 = aucun depuis le début de la run) : un écart de plus
+    // de PAUSE_GAP_MS (écran éteint → lvgl.pause) n'entre pas dans le temps de la
+    // run ni dans le record (audit du 25/09/2026, lot 5).
+    uint32_t run_last_tick_ms = 0;
+    uint32_t room_enter_ms = 0;
+    bool     run_active = false;
+    // Reglages figes au lancement de la run (changer la difficulte en cours de
+    // partie n'aurait aucun sens : les Reglages ne sont joignables que depuis le hub).
+    const DiffDef* diff = &DIFFS[D_NORMAL];
+    uint32_t invuln_ms = INVULN_MS;
+    bool     god = false;
+    // Rayon effectif (BALL_R - Finesse) fige au lancement de la run.
+    int      ball_r = BALL_R;
+    // Multiplicateur d'ames issu de Decouverte + objets, et chance de butin en coffre.
+    float    soul_mul = 1.0f;
+    float    loot_chance = 0.35f;
+    // Ecran marchand : page courante + slot d'equipement en cours de modification.
+    int      shop_page = 0;
+    // Index du bouton « Page suivante » sur la page courante (« Retour » = +1).
+    // go_shop() l'ecrit, le gestionnaire de tap le relit : les deux DOIVENT rester
+    // d'accord, sinon un tap sur « Retour » declencherait un achat.
+    int      shop_rows = 0;
+
+    // --- Effets cumules des boons ---
+    uint8_t boons[MAX_BOONS];
+    int     boon_n = 0;
+    float   ctrl_mul, gold_mul, speed_max, fric;
+    float   fric_sub;  // cache : powf(fric, 1/SUBSTEP) — recalculé uniquement quand fric change
+    int     magnet_r;
+    bool    has_bronze, has_eye, has_velvet;
+    bool    revive_left;
+
+    // --- Choix de recompense en cours ---
+    uint8_t offer[3];
+    int     offer_n = 0;
+
+    // --- Feedback visuel ---
+    uint32_t vignette_until = 0;
+    int      jitter = 0;
+    // Banniere ephemere en haut du terrain (decouverte d'objet, contenu d'un coffre).
+    lv_obj_t* toast = nullptr;
+    uint32_t  toast_until = 0;
+
+    // --- Objets LVGL (construits a chaque ouverture, detruits a la fermeture) ---
+    // Bille en TROIS calques : ombre portee, corps en degrade, reflet speculaire.
+    // C'est ce trio (repris de la bille du flipper) qui la fait passer de pastille
+    // plate a sphere. Ils se deplacent ensemble — voir ball_place().
+    lv_obj_t* ball = nullptr;        // corps (reference historique)
+    lv_obj_t* ball_sh = nullptr;     // ombre portee, legerement decalee
+    lv_obj_t* ball_gloss = nullptr;  // reflet, en haut a gauche
+    // Pools du decor (rectangles, arcs) et nombre d'elements pris par la salle courante.
+    lv_obj_t* dec[MAX_DEC] = {};
+    int dec_n = 0;
+    lv_obj_t* dec_arc[MAX_DEC_ARC] = {};
+    int dec_arc_n = 0;
+    lv_obj_t* vign[4] = {};          // 4 bandes de bord (flash de degat)
+    lv_obj_t* hud_room = nullptr;
+    lv_obj_t* hud_life = nullptr;
+    lv_obj_t* hud_gold = nullptr;
+    lv_obj_t* hud_goal = nullptr;
+    lv_obj_t* hud_time = nullptr;
+    lv_obj_t* hud_dot[MAX_BOONS] = {};
+    lv_obj_t* p_title = nullptr;
+    lv_obj_t* p_sub = nullptr;
+    lv_obj_t* p_body = nullptr;
+    lv_obj_t* p_foot = nullptr;
+    lv_obj_t* slot[N_SLOTS] = {};
+    lv_obj_t* slot_t[N_SLOTS] = {};
+    lv_obj_t* slot_d[N_SLOTS] = {};
+    // Liseré d'accent de chaque slot (enfant) : reprend la couleur de l'entree.
+    // C'est lui qui fait lire les menus comme des cartes et plus comme des boutons.
+    lv_obj_t* slot_a[N_SLOTS] = {};
+
+    // Caches HUD : on ne reecrit un libelle que si sa valeur a change. Ils repartent
+    // « inconnus » a chaque ouverture, avec les labels neufs.
+    int c_life = -1, c_gold = -1, c_runes = -1, c_sec = -1;
+    bool c_shield = false;
+    // Cache d'etat du portail : -1 = inconnu, sinon 0/1. Evite de reecrire le style
+    // du portail a chaque frame (une ecriture de style = une invalidation LVGL).
+    int c_gate = -1;
+
+    // Brouillons de texte des menus et du HUD (le label copie le texte).
+    char hub_sub[168];
+    char hub_play_desc[80];
+    char hub_eq_desc[80];
+    char settings_dtitle[64];
+    char settings_gtitle[64];
+    char settings_stitle[64];
+    char level_sub[128];
+    char level_titles[MARBLE_NSTATS][72];
+    char level_descs[MARBLE_NSTATS][104];
+    char shop_sub[112];
+    char shop_titles[SHOP_PER_PAGE][80];
+    char shop_descs[SHOP_PER_PAGE][112];
+    char equip_sub[96];
+    char equip_titles[MARBLE_NSLOTS][80];
+    char equip_descs[MARBLE_NSLOTS][112];
+    char stats_body[320];
+    char stats_best[32];
+    char end_body[256];
+    char room_buf[96];
+    char boss_buf[96];
+    char hud_buf[64];
+    char chest_buf[96];
+};
+static Mem* gs = nullptr;
+
+// Tirage du xorshift32 (declare en section 2) : son etat vit dans le bloc.
+static inline uint32_t rnd() {
+    return xorshift32_next(gs->rng);
+}
+static inline void apply_fric() { gs->fric_sub = powf(gs->fric, 1.0f / SUBSTEP); }
 
 static void go_hub();
 static void go_settings();
@@ -497,7 +544,7 @@ static void go_equip();
 // Niveau total = somme des caracteristiques (pilote le cout du prochain point).
 static uint32_t total_level() {
     uint32_t s = 0;
-    for (int i = 0; i < MARBLE_NSTATS; i++) s += g_save.st[i];
+    for (int i = 0; i < MARBLE_NSTATS; i++) s += gs->save.st[i];
     return s;
 }
 static void show_reward();
@@ -509,15 +556,16 @@ static void end_run(bool victory);
 // ===========================================================================
 
 void persist_load() {
-    if (!g_nvs.load(g_save)) {
-        g_save = MarbleSave{};          // remise a zero complete
-        g_save.magic = SAVE_MAGIC;
+    if (!gs) return;  // la sauvegarde n'est en memoire que jeu ouvert
+    if (!g_nvs.load(gs->save)) {
+        gs->save = MarbleSave{};          // remise a zero complete
+        gs->save.magic = SAVE_MAGIC;
     }
 }
 
 void persist_save() {
-    if (!g_nvs.ready()) return;
-    g_nvs.save(g_save);
+    if (!gs || !g_nvs.ready()) return;
+    g_nvs.save(gs->save);
 }
 
 // ===========================================================================
@@ -584,7 +632,7 @@ static inline void detail(lv_obj_t* d, int x, int y, int w, int h, int radius) {
 
 
 // ===========================================================================
-// 8. Construction de l'UI (une seule fois)
+// 8. Construction de l'UI (a chaque ouverture ; close() la detruit)
 // ===========================================================================
 
 static void slot_event_cb(lv_event_t* e);
@@ -601,131 +649,130 @@ static inline uint32_t shade(uint32_t c, int pct) {
 
 // --- Bille : 3 calques pilotes ensemble -------------------------------------
 // [AI-CONTEXT] Tout le code de jeu passe par ces quatre fonctions et JAMAIS par
-// g_ball directement : oublier l'ombre ou le reflet les laisserait au dernier
+// gs->ball directement : oublier l'ombre ou le reflet les laisserait au dernier
 // endroit visite, ce qui se voit immediatement a l'ecran.
 
 // Rayon effectif (la caracteristique Finesse peut le reduire en cours de run).
 static void ball_resize(int r) {
     const int d = r * 2;
-    lv_obj_set_size(g_ball_sh, d + 4, d + 4);
-    lv_obj_set_size(g_ball, d, d);
+    lv_obj_set_size(gs->ball_sh, d + 4, d + 4);
+    lv_obj_set_size(gs->ball, d, d);
     // Reflet : ~30 % du diametre, jamais moins de 4 px (sinon il disparait a la
     // Finesse maximale, ou la bille ne fait plus que 14 px).
     int gl = d * 3 / 10;
     if (gl < 4) gl = 4;
-    lv_obj_set_size(g_ball_gloss, gl, gl);
+    lv_obj_set_size(gs->ball_gloss, gl, gl);
 }
 
 // Applique le skin choisi au corps ET au reflet. Le corps est un degrade
 // clair->sombre : c'est lui qui fait la sphere, le reflet ne fait que la vernir.
 static void ball_apply_skin() {
-    const uint32_t body  = (g_save.skin == 1) ? Pal::BALL_ALT
-                         : (g_save.skin == 2) ? Pal::BALL_CU
-                                              : Pal::BALL;
-    const uint32_t gloss = (g_save.skin == 1) ? Pal::BALL_ALT_HI
-                         : (g_save.skin == 2) ? Pal::BALL_CU_HI
-                                              : Pal::BALL_HI;
-    set_grad(g_ball, gloss, shade(body, 42));
-    set_bg(g_ball_gloss, gloss, 225);
+    const uint32_t body  = (gs->save.skin == 1) ? Pal::BALL_ALT
+                         : (gs->save.skin == 2) ? Pal::BALL_CU
+                                                : Pal::BALL;
+    const uint32_t gloss = (gs->save.skin == 1) ? Pal::BALL_ALT_HI
+                         : (gs->save.skin == 2) ? Pal::BALL_CU_HI
+                                                : Pal::BALL_HI;
+    set_grad(gs->ball, gloss, shade(body, 42));
+    set_bg(gs->ball_gloss, gloss, 225);
 }
 
 static void ball_show(bool v) {
-    show(g_ball_sh, v);
-    show(g_ball, v);
-    show(g_ball_gloss, v);
+    show(gs->ball_sh, v);
+    show(gs->ball, v);
+    show(gs->ball_gloss, v);
 }
 
 // (left, top) = coin haut-gauche du corps, comme l'ancien lv_obj_set_pos direct.
 static void ball_place(int left, int top) {
-    const int d = lv_obj_get_width(g_ball);
-    lv_obj_set_pos(g_ball_sh, left - 2 + 3, top - 2 + 4);   // ombre decalee bas-droite
-    lv_obj_set_pos(g_ball, left, top);
-    lv_obj_set_pos(g_ball_gloss, left + d * 22 / 100, top + d * 16 / 100);
+    const int d = lv_obj_get_width(gs->ball);
+    lv_obj_set_pos(gs->ball_sh, left - 2 + 3, top - 2 + 4);   // ombre decalee bas-droite
+    lv_obj_set_pos(gs->ball, left, top);
+    lv_obj_set_pos(gs->ball_gloss, left + d * 22 / 100, top + d * 16 / 100);
 }
 
 // Clignotement d'invulnerabilite : le trio s'efface ensemble.
 static void ball_set_opa(lv_opa_t opa) {
-    lv_obj_set_style_bg_opa(g_ball, opa, LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(g_ball_gloss, opa == LV_OPA_COVER ? 225 : opa, LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(g_ball_sh, opa == LV_OPA_COVER ? 150 : opa, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(gs->ball, opa, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(gs->ball_gloss, opa == LV_OPA_COVER ? 225 : opa, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(gs->ball_sh, opa == LV_OPA_COVER ? 150 : opa, LV_PART_MAIN);
 }
 
 static void build_ui() {
-    if (g_built) return;
-
     // --- Sol : degrade vertical au lieu d'un aplat -------------------------
     // Le haut plus clair simule la lumiere qui tombe du fond du donjon, le bas
     // sombre fait ressortir la bille. Une seule passe de dessin, zero objet.
-    set_grad(g_ui.field, Pal::FLOOR_HI, Pal::FLOOR_LO);
-    set_grad(g_ui.hud, Pal::HUD_BG, Pal::VOID);
+    set_grad(gs->ui.field, Pal::FLOOR_HI, Pal::FLOOR_LO);
+    set_grad(gs->ui.hud, Pal::HUD_BG, Pal::VOID);
     // Filet de laiton sous le HUD : separe le bandeau du terrain sans lui voler
-    // de hauteur (le bandeau doit rester a 48 px, cf. marble_game.yaml).
-    lv_obj_t* hud_line = mk_rect(g_ui.hud);
+    // de hauteur (le bandeau doit rester a 48 px, cf. marble_game.yaml). Non
+    // memorise : close() le detruit en vidant le HUD.
+    lv_obj_t* hud_line = mk_rect(gs->ui.hud);
     lv_obj_set_size(hud_line, FW, 2);
     lv_obj_set_pos(hud_line, 0, HUD_H - 2);
     set_bg(hud_line, Pal::BRASS_CHEST, 160);
     // Calque de menus : degrade sombre. On REPOSE l'opacite apres set_grad, qui
     // force LV_OPA_COVER — sans ca le panneau deviendrait opaque et on perdrait
     // la lecture du terrain en arriere-plan (choix d'origine du YAML, 96 %).
-    set_grad(g_ui.panel, Pal::FLOOR_LO, Pal::VOID);
-    lv_obj_set_style_bg_opa(g_ui.panel, 245, LV_PART_MAIN);
+    set_grad(gs->ui.panel, Pal::FLOOR_LO, Pal::VOID);
+    lv_obj_set_style_bg_opa(gs->ui.panel, 245, LV_PART_MAIN);
 
     // --- Pool de decor : cree AVANT les entites => dessine DERRIERE ---------
     // [AI-WARNING] L'ordre de creation EST l'ordre d'empilement dans LVGL. Si tu
     // deplaces ce bloc apres le pool d'entites, le decor peindra par-dessus les
     // murs et la salle deviendra illisible.
     for (int i = 0; i < MAX_DEC; i++) {
-        g_dec[i] = mk_rect(g_ui.field);
-        lv_obj_add_flag(g_dec[i], LV_OBJ_FLAG_HIDDEN);
+        gs->dec[i] = mk_rect(gs->ui.field);
+        lv_obj_add_flag(gs->dec[i], LV_OBJ_FLAG_HIDDEN);
     }
     for (int i = 0; i < MAX_DEC_ARC; i++) {
-        g_dec_arc[i] = mk_arc(g_ui.field, 0, 0, 10, 0, 360, 2,
-                              Pal::EXIT, LV_OPA_TRANSP);
-        lv_obj_add_flag(g_dec_arc[i], LV_OBJ_FLAG_HIDDEN);
+        gs->dec_arc[i] = mk_arc(gs->ui.field, 0, 0, 10, 0, 360, 2,
+                                Pal::EXIT, LV_OPA_TRANSP);
+        lv_obj_add_flag(gs->dec_arc[i], LV_OBJ_FLAG_HIDDEN);
     }
 
-    // --- Pool d'entites : cree une fois, recycle a chaque salle ---
+    // --- Pool d'entites : cree a l'ouverture, recycle a chaque salle ---
     for (int i = 0; i < MAX_ENT; i++) {
-        g_ent[i].obj = mk_rect(g_ui.field);
-        lv_obj_add_flag(g_ent[i].obj, LV_OBJ_FLAG_HIDDEN);
+        gs->ent[i].obj = mk_rect(gs->ui.field);
+        lv_obj_add_flag(gs->ent[i].obj, LV_OBJ_FLAG_HIDDEN);
         // Calque de detail, enfant : suit son parent sans une ligne de code.
-        g_ent[i].det = mk_rect(g_ent[i].obj);
-        lv_obj_add_flag(g_ent[i].det, LV_OBJ_FLAG_HIDDEN);
+        gs->ent[i].det = mk_rect(gs->ent[i].obj);
+        lv_obj_add_flag(gs->ent[i].det, LV_OBJ_FLAG_HIDDEN);
     }
 
     // --- Bille en 3 calques (creee apres le pool => dessinee au-dessus) -----
     // Ordre de creation = ordre d'empilement : ombre, puis corps, puis reflet.
-    g_ball_sh = mk_rect(g_ui.field);
-    lv_obj_set_style_radius(g_ball_sh, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    set_bg(g_ball_sh, Pal::BALL_SH, 150);
-    lv_obj_add_flag(g_ball_sh, LV_OBJ_FLAG_HIDDEN);
+    gs->ball_sh = mk_rect(gs->ui.field);
+    lv_obj_set_style_radius(gs->ball_sh, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    set_bg(gs->ball_sh, Pal::BALL_SH, 150);
+    lv_obj_add_flag(gs->ball_sh, LV_OBJ_FLAG_HIDDEN);
 
-    g_ball = mk_rect(g_ui.field);
-    lv_obj_set_style_radius(g_ball, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    lv_obj_add_flag(g_ball, LV_OBJ_FLAG_HIDDEN);
+    gs->ball = mk_rect(gs->ui.field);
+    lv_obj_set_style_radius(gs->ball, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_add_flag(gs->ball, LV_OBJ_FLAG_HIDDEN);
 
-    g_ball_gloss = mk_rect(g_ui.field);
-    lv_obj_set_style_radius(g_ball_gloss, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    lv_obj_add_flag(g_ball_gloss, LV_OBJ_FLAG_HIDDEN);
+    gs->ball_gloss = mk_rect(gs->ui.field);
+    lv_obj_set_style_radius(gs->ball_gloss, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_add_flag(gs->ball_gloss, LV_OBJ_FLAG_HIDDEN);
     ball_resize(BALL_R);
     ball_apply_skin();
 
     // --- Banniere de decouverte (coffres, butin de boss) ---
-    g_toast = mk_label(g_ui.field, g_ui.f_mid, Pal::RUNE);
-    lv_obj_align(g_toast, LV_ALIGN_TOP_MID, 0, 18);
-    lv_obj_add_flag(g_toast, LV_OBJ_FLAG_HIDDEN);
+    gs->toast = mk_label(gs->ui.field, gs->ui.f_mid, Pal::RUNE);
+    lv_obj_align(gs->toast, LV_ALIGN_TOP_MID, 0, 18);
+    lv_obj_add_flag(gs->toast, LV_OBJ_FLAG_HIDDEN);
 
     // --- Vignette de degat : 4 bandes fines (invalide peu de pixels) ---
     const int VB = 7;
     for (int i = 0; i < 4; i++) {
-        g_vign[i] = mk_rect(g_ui.field);
-        set_bg(g_vign[i], Pal::DANGER, LV_OPA_COVER);
-        lv_obj_add_flag(g_vign[i], LV_OBJ_FLAG_HIDDEN);
+        gs->vign[i] = mk_rect(gs->ui.field);
+        set_bg(gs->vign[i], Pal::DANGER, LV_OPA_COVER);
+        lv_obj_add_flag(gs->vign[i], LV_OBJ_FLAG_HIDDEN);
     }
-    lv_obj_set_pos(g_vign[0], 0, 0);        lv_obj_set_size(g_vign[0], FW, VB);
-    lv_obj_set_pos(g_vign[1], 0, FH - VB);  lv_obj_set_size(g_vign[1], FW, VB);
-    lv_obj_set_pos(g_vign[2], 0, 0);        lv_obj_set_size(g_vign[2], VB, FH);
-    lv_obj_set_pos(g_vign[3], FW - VB, 0);  lv_obj_set_size(g_vign[3], VB, FH);
+    lv_obj_set_pos(gs->vign[0], 0, 0);        lv_obj_set_size(gs->vign[0], FW, VB);
+    lv_obj_set_pos(gs->vign[1], 0, FH - VB);  lv_obj_set_size(gs->vign[1], FW, VB);
+    lv_obj_set_pos(gs->vign[2], 0, 0);        lv_obj_set_size(gs->vign[2], VB, FH);
+    lv_obj_set_pos(gs->vign[3], FW - VB, 0);  lv_obj_set_size(gs->vign[3], VB, FH);
 
     // --- HUD : bande compacte de 48 px, jamais plus ---
     // [AI-CONTEXT] Les abscisses ci-dessous ne sont PAS choisies a l'oeil : chaque
@@ -740,60 +787,58 @@ static void build_ui() {
     //   objectif x=772  reserve 172  (max mesure 164) -> fin 944
     //   1re pastille de boon a x=1016 : 72 px de marge.
     // @ai_instruction Rallonger un de ces libelles impose de refaire l'addition.
-    g_hud_room = mk_label(g_ui.hud, g_ui.f_small, Pal::BALL);
-    lv_obj_align(g_hud_room, LV_ALIGN_LEFT_MID, 18, 0);
-    g_hud_life = mk_label(g_ui.hud, g_ui.f_small, Pal::DANGER);
-    lv_obj_align(g_hud_life, LV_ALIGN_LEFT_MID, 392, 0);
-    g_hud_gold = mk_label(g_ui.hud, g_ui.f_small, Pal::RUNE);
-    lv_obj_align(g_hud_gold, LV_ALIGN_LEFT_MID, 650, 0);
-    g_hud_goal = mk_label(g_ui.hud, g_ui.f_small, Pal::EXIT);
-    lv_obj_align(g_hud_goal, LV_ALIGN_LEFT_MID, 772, 0);
-    g_hud_time = mk_label(g_ui.hud, g_ui.f_small, UIColor::TEXT_DIM);
-    lv_obj_align(g_hud_time, LV_ALIGN_RIGHT_MID, -18, 0);
+    gs->hud_room = mk_label(gs->ui.hud, gs->ui.f_small, Pal::BALL);
+    lv_obj_align(gs->hud_room, LV_ALIGN_LEFT_MID, 18, 0);
+    gs->hud_life = mk_label(gs->ui.hud, gs->ui.f_small, Pal::DANGER);
+    lv_obj_align(gs->hud_life, LV_ALIGN_LEFT_MID, 392, 0);
+    gs->hud_gold = mk_label(gs->ui.hud, gs->ui.f_small, Pal::RUNE);
+    lv_obj_align(gs->hud_gold, LV_ALIGN_LEFT_MID, 650, 0);
+    gs->hud_goal = mk_label(gs->ui.hud, gs->ui.f_small, Pal::EXIT);
+    lv_obj_align(gs->hud_goal, LV_ALIGN_LEFT_MID, 772, 0);
+    gs->hud_time = mk_label(gs->ui.hud, gs->ui.f_small, UIColor::TEXT_DIM);
+    lv_obj_align(gs->hud_time, LV_ALIGN_RIGHT_MID, -18, 0);
 
     // Pastilles de boons actifs (compact : une pastille coloree par boon)
     for (int i = 0; i < MAX_BOONS; i++) {
-        g_hud_dot[i] = mk_rect(g_ui.hud);
-        lv_obj_set_size(g_hud_dot[i], 16, 16);
-        lv_obj_set_style_radius(g_hud_dot[i], LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        lv_obj_align(g_hud_dot[i], LV_ALIGN_RIGHT_MID, -110 + i * 22 - (MAX_BOONS - 1) * 22, 0);
-        lv_obj_add_flag(g_hud_dot[i], LV_OBJ_FLAG_HIDDEN);
+        gs->hud_dot[i] = mk_rect(gs->ui.hud);
+        lv_obj_set_size(gs->hud_dot[i], 16, 16);
+        lv_obj_set_style_radius(gs->hud_dot[i], LV_RADIUS_CIRCLE, LV_PART_MAIN);
+        lv_obj_align(gs->hud_dot[i], LV_ALIGN_RIGHT_MID, -110 + i * 22 - (MAX_BOONS - 1) * 22, 0);
+        lv_obj_add_flag(gs->hud_dot[i], LV_OBJ_FLAG_HIDDEN);
     }
 
     // --- Panneau de menus (hub / recompense / pause / fin) ---
-    g_p_title = mk_label(g_ui.panel, g_ui.f_big, Pal::BALL);
-    lv_obj_align(g_p_title, LV_ALIGN_TOP_MID, 0, 56);
-    g_p_sub = mk_label(g_ui.panel, g_ui.f_small, UIColor::TEXT_DIM);
-    lv_obj_align(g_p_sub, LV_ALIGN_TOP_MID, 0, 122);
-    g_p_body = mk_label(g_ui.panel, g_ui.f_small, UIColor::TEXT_SOFT);
-    lv_obj_set_width(g_p_body, 900);
-    lv_obj_set_style_text_align(g_p_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    lv_obj_align(g_p_body, LV_ALIGN_TOP_MID, 0, 170);
-    g_p_foot = mk_label(g_ui.panel, g_ui.f_small, UIColor::TEXT_DIM);
-    lv_obj_align(g_p_foot, LV_ALIGN_BOTTOM_MID, 0, -22);
+    gs->p_title = mk_label(gs->ui.panel, gs->ui.f_big, Pal::BALL);
+    lv_obj_align(gs->p_title, LV_ALIGN_TOP_MID, 0, 56);
+    gs->p_sub = mk_label(gs->ui.panel, gs->ui.f_small, UIColor::TEXT_DIM);
+    lv_obj_align(gs->p_sub, LV_ALIGN_TOP_MID, 0, 122);
+    gs->p_body = mk_label(gs->ui.panel, gs->ui.f_small, UIColor::TEXT_SOFT);
+    lv_obj_set_width(gs->p_body, 900);
+    lv_obj_set_style_text_align(gs->p_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_obj_align(gs->p_body, LV_ALIGN_TOP_MID, 0, 170);
+    gs->p_foot = mk_label(gs->ui.panel, gs->ui.f_small, UIColor::TEXT_DIM);
+    lv_obj_align(gs->p_foot, LV_ALIGN_BOTTOM_MID, 0, -22);
 
     for (int i = 0; i < N_SLOTS; i++) {
-        g_slot[i] = mk_rect(g_ui.panel);
-        lv_obj_add_flag(g_slot[i], LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_style_radius(g_slot[i], 14, LV_PART_MAIN);
-        set_grad(g_slot[i], Pal::FLOOR_HI, Pal::FLOOR_LO);
+        gs->slot[i] = mk_rect(gs->ui.panel);
+        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_set_style_radius(gs->slot[i], 14, LV_PART_MAIN);
+        set_grad(gs->slot[i], Pal::FLOOR_HI, Pal::FLOOR_LO);
         // Retour tactile : le fond s'eclaircit tant que le doigt est pose.
         // Casts explicites : combiner lv_part_t et lv_state_t directement est
         // deprecie en C++20 (-Wdeprecated-enum-enum-conversion).
-        lv_obj_set_style_bg_color(g_slot[i], lv_color_hex(Pal::WALL),
+        lv_obj_set_style_bg_color(gs->slot[i], lv_color_hex(Pal::WALL),
                                   (lv_style_selector_t) LV_PART_MAIN |
                                   (lv_style_selector_t) LV_STATE_PRESSED);
-        lv_obj_add_event_cb(g_slot[i], slot_event_cb, LV_EVENT_CLICKED,
+        lv_obj_add_event_cb(gs->slot[i], slot_event_cb, LV_EVENT_CLICKED,
                             (void*) (intptr_t) i);
         // Cree AVANT les labels : le liseré doit rester derriere le texte.
-        g_slot_a[i] = mk_rect(g_slot[i]);
-        lv_obj_add_flag(g_slot_a[i], LV_OBJ_FLAG_HIDDEN);
-        g_slot_t[i] = mk_label(g_slot[i], g_ui.f_mid, UIColor::TEXT_SOFT);
-        g_slot_d[i] = mk_label(g_slot[i], g_ui.f_small, UIColor::TEXT_DIM);
-        lv_obj_add_flag(g_slot[i], LV_OBJ_FLAG_HIDDEN);
+        gs->slot_a[i] = mk_rect(gs->slot[i]);
+        lv_obj_add_flag(gs->slot_a[i], LV_OBJ_FLAG_HIDDEN);
+        gs->slot_t[i] = mk_label(gs->slot[i], gs->ui.f_mid, UIColor::TEXT_SOFT);
+        gs->slot_d[i] = mk_label(gs->slot[i], gs->ui.f_small, UIColor::TEXT_DIM);
+        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_HIDDEN);
     }
-
-    g_built = true;
 }
 
 // --- Mise en page des slots -------------------------------------------------
@@ -803,57 +848,57 @@ static void slot_list(int i, const char* title, const char* desc, uint32_t col, 
     // la place disponible au-dessus du pied de page). Un index hors pool serait
     // un debordement de tableau, pas juste une ligne mal placee.
     if (i < 0 || i >= N_SLOTS) return;
-    lv_obj_set_size(g_slot[i], 680, 62);
-    lv_obj_align(g_slot[i], LV_ALIGN_TOP_MID, 0, 150 + i * 68);
+    lv_obj_set_size(gs->slot[i], 680, 62);
+    lv_obj_align(gs->slot[i], LV_ALIGN_TOP_MID, 0, 150 + i * 68);
     // Les memes labels servent en mode carte (largeur fixe + texte centre) :
     // on remet explicitement la mise en forme « liste », sinon un passage par
     // l'ecran de recompense laisserait les libelles centres sur 320 px.
-    lv_obj_set_width(g_slot_t[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(g_slot_t[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_set_width(g_slot_d[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(g_slot_d[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_align(g_slot_t[i], LV_ALIGN_LEFT_MID, 22, desc && desc[0] ? -13 : 0);
-    lv_obj_align(g_slot_d[i], LV_ALIGN_LEFT_MID, 22, 15);
-    lv_obj_set_style_text_color(g_slot_t[i], lv_color_hex(on ? col : UIColor::INACTIVE), LV_PART_MAIN);
-    set_text_if(g_slot_t[i], title);
-    set_text_if(g_slot_d[i], desc ? desc : "");
-    set_border(g_slot[i], on ? col : UIColor::INACTIVE, 2, LV_OPA_50);
+    lv_obj_set_width(gs->slot_t[i], LV_SIZE_CONTENT);
+    lv_obj_set_style_text_align(gs->slot_t[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+    lv_obj_set_width(gs->slot_d[i], LV_SIZE_CONTENT);
+    lv_obj_set_style_text_align(gs->slot_d[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+    lv_obj_align(gs->slot_t[i], LV_ALIGN_LEFT_MID, 22, desc && desc[0] ? -13 : 0);
+    lv_obj_align(gs->slot_d[i], LV_ALIGN_LEFT_MID, 22, 15);
+    lv_obj_set_style_text_color(gs->slot_t[i], lv_color_hex(on ? col : UIColor::INACTIVE), LV_PART_MAIN);
+    set_text_if(gs->slot_t[i], title);
+    set_text_if(gs->slot_d[i], desc ? desc : "");
+    set_border(gs->slot[i], on ? col : UIColor::INACTIVE, 2, LV_OPA_50);
     // Liseré vertical a gauche. [AI-WARNING] LVGL ne clippe PAS les enfants sur
     // le rayon du parent (clip_corner est off) et dessine la bordure AVANT eux :
     // un liseré pose en x=0 chevaucherait les 2 px de bordure et depasserait du
     // coin arrondi (rayon 14). D'ou x=4 et une hauteur centree hors des arrondis :
     // 62 - 2*14 = 34 px utiles, donc y=14..48.
-    detail(g_slot_a[i], 4, 14, 5, 34, 3);
-    set_bg(g_slot_a[i], on ? col : UIColor::INACTIVE, on ? LV_OPA_COVER : LV_OPA_40);
-    show(g_slot[i], true);
+    detail(gs->slot_a[i], 4, 14, 5, 34, 3);
+    set_bg(gs->slot_a[i], on ? col : UIColor::INACTIVE, on ? LV_OPA_COVER : LV_OPA_40);
+    show(gs->slot[i], true);
 }
 
 // Cartes cote a cote (choix de boon, facon Hades).
 static void slot_card(int i, const char* title, const char* desc, uint32_t col) {
     if (i < 0 || i >= N_SLOTS) return;
-    lv_obj_set_size(g_slot[i], 370, 300);
-    lv_obj_align(g_slot[i], LV_ALIGN_TOP_LEFT, 85 + i * 385, 250);
-    lv_obj_set_width(g_slot_t[i], 320);
-    lv_obj_set_style_text_align(g_slot_t[i], LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    lv_obj_align(g_slot_t[i], LV_ALIGN_TOP_MID, 0, 48);
-    lv_obj_set_width(g_slot_d[i], 320);
-    lv_obj_set_style_text_align(g_slot_d[i], LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    lv_obj_align(g_slot_d[i], LV_ALIGN_TOP_MID, 0, 130);
-    lv_obj_set_style_text_color(g_slot_t[i], lv_color_hex(col), LV_PART_MAIN);
-    set_text_if(g_slot_t[i], title);
-    set_text_if(g_slot_d[i], desc);
-    set_border(g_slot[i], col, 3, LV_OPA_80);
+    lv_obj_set_size(gs->slot[i], 370, 300);
+    lv_obj_align(gs->slot[i], LV_ALIGN_TOP_LEFT, 85 + i * 385, 250);
+    lv_obj_set_width(gs->slot_t[i], 320);
+    lv_obj_set_style_text_align(gs->slot_t[i], LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_obj_align(gs->slot_t[i], LV_ALIGN_TOP_MID, 0, 48);
+    lv_obj_set_width(gs->slot_d[i], 320);
+    lv_obj_set_style_text_align(gs->slot_d[i], LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_obj_align(gs->slot_d[i], LV_ALIGN_TOP_MID, 0, 130);
+    lv_obj_set_style_text_color(gs->slot_t[i], lv_color_hex(col), LV_PART_MAIN);
+    set_text_if(gs->slot_t[i], title);
+    set_text_if(gs->slot_d[i], desc);
+    set_border(gs->slot[i], col, 3, LV_OPA_80);
     // En mode carte le liseré passe en banniere haute : la carte se lit comme
     // une carte de boon, pas comme une ligne de menu tournee de 90 deg.
     // Meme contrainte que slot_list : rentre de 20 px pour rester a l'interieur
     // du rayon 14 et ne pas manger les 3 px de bordure.
-    detail(g_slot_a[i], 20, 6, 330, 5, 3);
-    set_bg(g_slot_a[i], col, LV_OPA_COVER);
-    show(g_slot[i], true);
+    detail(gs->slot_a[i], 20, 6, 330, 5, 3);
+    set_bg(gs->slot_a[i], col, LV_OPA_COVER);
+    show(gs->slot[i], true);
 }
 
 static void slots_hide_from(int n) {
-    for (int i = n; i < N_SLOTS; i++) show(g_slot[i], false);
+    for (int i = n; i < N_SLOTS; i++) show(gs->slot[i], false);
 }
 
 // ===========================================================================
@@ -861,35 +906,35 @@ static void slots_hide_from(int n) {
 // ===========================================================================
 
 static void panel_on(bool v) {
-    show(g_ui.panel, v);
-    if (v) lv_obj_move_foreground(g_ui.panel);
+    show(gs->ui.panel, v);
+    if (v) lv_obj_move_foreground(gs->ui.panel);
 }
 
 static void go_hub() {
     g_state = ST_HUB;
     panel_on(true);
     ball_show(false);
-    if (g_save.difficulty >= D_COUNT) g_save.difficulty = D_NORMAL;
-    const DiffDef& d = DIFFS[g_save.difficulty];
+    if (gs->save.difficulty >= D_COUNT) gs->save.difficulty = D_NORMAL;
+    const DiffDef& d = DIFFS[gs->save.difficulty];
 
     int owned_n = 0;
-    for (int i = 0; i < N_ITEMS; i++) if (g_save.items & (1u << i)) owned_n++;
+    for (int i = 0; i < N_ITEMS; i++) if (gs->save.items & (1u << i)) owned_n++;
 
-    static char sub[168];
+    auto& sub = gs->hub_sub;
     snprintf(sub, sizeof(sub),
              "Niveau %u   -   %u ames   -   salle %u/6   -   %s%s",
-             (unsigned) total_level(), (unsigned) g_save.souls,
-             (unsigned) g_save.deepest, d.name,
-             g_save.god ? "   -   MODE DIEU" : "");
-    static char play_desc[80];
+             (unsigned) total_level(), (unsigned) gs->save.souls,
+             (unsigned) gs->save.deepest, d.name,
+             gs->save.god ? "   -   MODE DIEU" : "");
+    auto& play_desc = gs->hub_play_desc;
     snprintf(play_desc, sizeof(play_desc), "6 salles. 2 a 5 minutes.  Difficulte : %s", d.name);
-    static char eq_desc[80];
+    auto& eq_desc = gs->hub_eq_desc;
     snprintf(eq_desc, sizeof(eq_desc), "%d objet(s) trouve(s) sur %d", owned_n, N_ITEMS);
 
-    set_text_if(g_p_title, "FIL D'OR");
-    set_text_if(g_p_sub, sub);
-    set_text_if(g_p_body, "");
-    set_text_if(g_p_foot, "Incline la tablette pour guider la bille. L'ecran tactile ne sert qu'aux menus.");
+    set_text_if(gs->p_title, "FIL D'OR");
+    set_text_if(gs->p_sub, sub);
+    set_text_if(gs->p_body, "");
+    set_text_if(gs->p_foot, "Incline la tablette pour guider la bille. L'ecran tactile ne sert qu'aux menus.");
     slot_list(0, "Lancer une run", play_desc, Pal::BALL, true);
     slot_list(1, "Feu de camp", "Depenser les ames en caracteristiques", Pal::DANGER, true);
     slot_list(2, "Marchand", "Acheter et revendre des objets", Pal::RUNE, true);
@@ -904,27 +949,27 @@ static void go_settings() {
     g_state = ST_SETTINGS;
     panel_on(true);
     ball_show(false);
-    if (g_save.difficulty >= D_COUNT) g_save.difficulty = D_NORMAL;
-    const DiffDef& d = DIFFS[g_save.difficulty];
+    if (gs->save.difficulty >= D_COUNT) gs->save.difficulty = D_NORMAL;
+    const DiffDef& d = DIFFS[gs->save.difficulty];
 
-    static char dtitle[64];
+    auto& dtitle = gs->settings_dtitle;
     snprintf(dtitle, sizeof(dtitle), "Difficulte : %s", d.name);
-    static char gtitle[64];
-    snprintf(gtitle, sizeof(gtitle), "Mode dieu : %s", g_save.god ? "ACTIF" : "inactif");
+    auto& gtitle = gs->settings_gtitle;
+    snprintf(gtitle, sizeof(gtitle), "Mode dieu : %s", gs->save.god ? "ACTIF" : "inactif");
 
-    set_text_if(g_p_title, "Reglages");
-    set_text_if(g_p_sub, "Ces reglages s'appliquent au lancement de la prochaine run.");
-    set_text_if(g_p_body, "");
-    set_text_if(g_p_foot, "Le mode dieu rend invulnerable : la run reste jouable mais ne rapporte "
-                          "aucun fragment et n'entre pas dans les statistiques.");
+    set_text_if(gs->p_title, "Reglages");
+    set_text_if(gs->p_sub, "Ces reglages s'appliquent au lancement de la prochaine run.");
+    set_text_if(gs->p_body, "");
+    set_text_if(gs->p_foot, "Le mode dieu rend invulnerable : la run reste jouable mais ne rapporte "
+                            "aucun fragment et n'entre pas dans les statistiques.");
     slot_list(0, dtitle, d.desc, d.color, true);
     slot_list(1, gtitle,
-              g_save.god ? "Invulnerable - hors concours" : "Jouer sans jamais mourir",
-              g_save.god ? Pal::MAGNET : UIColor::TEXT_DIM, true);
+              gs->save.god ? "Invulnerable - hors concours" : "Jouer sans jamais mourir",
+              gs->save.god ? Pal::MAGNET : UIColor::TEXT_DIM, true);
     static const char* SKINS[3] = {"Or", "Argent", "Cuivre"};
-    static char stitle[64];
+    auto& stitle = gs->settings_stitle;
     snprintf(stitle, sizeof(stitle), "Teinte de la bille : %s",
-             SKINS[g_save.skin < 3 ? g_save.skin : 0]);
+             SKINS[gs->save.skin < 3 ? gs->save.skin : 0]);
     slot_list(2, stitle, "Purement cosmetique", Pal::BALL, true);
     slot_list(3, "Calibrer a plat", "Pose la tablette et appuie", Pal::BOOST, true);
     slot_list(4, "Retour", "", UIColor::TEXT_DIM, true);
@@ -938,28 +983,28 @@ static void go_level() {
     uint32_t lvl = total_level();
     uint32_t cost = level_cost(lvl);
 
-    static char sub[128];
+    auto& sub = gs->level_sub;
     snprintf(sub, sizeof(sub),
              "Niveau %u   -   %u ames   -   prochain point : %u ames",
-             (unsigned) lvl, (unsigned) g_save.souls, (unsigned) cost);
-    set_text_if(g_p_title, "Feu de camp");
-    set_text_if(g_p_sub, sub);
-    set_text_if(g_p_body, "");
-    set_text_if(g_p_foot, "Le cout depend du niveau TOTAL : monter une caracteristique "
-                          "rencherit toutes les autres. Il faut choisir une orientation.");
+             (unsigned) lvl, (unsigned) gs->save.souls, (unsigned) cost);
+    set_text_if(gs->p_title, "Feu de camp");
+    set_text_if(gs->p_sub, sub);
+    set_text_if(gs->p_body, "");
+    set_text_if(gs->p_foot, "Le cout depend du niveau TOTAL : monter une caracteristique "
+                            "rencherit toutes les autres. Il faut choisir une orientation.");
 
-    static char titles[MARBLE_NSTATS][72];
-    static char descs[MARBLE_NSTATS][104];
+    auto& titles = gs->level_titles;
+    auto& descs = gs->level_descs;
     for (int i = 0; i < MARBLE_NSTATS; i++) {
         const StatDef& s = STATS[i];
-        bool maxed = g_save.st[i] >= s.maxlvl;
+        bool maxed = gs->save.st[i] >= s.maxlvl;
         snprintf(titles[i], sizeof(titles[i]), "%s  %u/%u", s.name,
-                 (unsigned) g_save.st[i], (unsigned) s.maxlvl);
+                 (unsigned) gs->save.st[i], (unsigned) s.maxlvl);
         if (maxed) snprintf(descs[i], sizeof(descs[i]), "%s  -  au maximum", s.desc);
         else       snprintf(descs[i], sizeof(descs[i]), "%s  -  %u ames", s.desc, (unsigned) cost);
         slot_list(i, titles[i], descs[i],
                   maxed ? Pal::EXIT : s.color,
-                  !maxed && g_save.souls >= cost);
+                  !maxed && gs->save.souls >= cost);
     }
     slot_list(MARBLE_NSTATS, "Retour", "", UIColor::TEXT_DIM, true);
     slots_hide_from(MARBLE_NSTATS + 1);
@@ -970,41 +1015,41 @@ static void go_shop() {
     panel_on(true);
     ball_show(false);
     int pages = (N_ITEMS + SHOP_PER_PAGE - 1) / SHOP_PER_PAGE;
-    if (g_shop_page >= pages) g_shop_page = 0;
-    int base = g_shop_page * SHOP_PER_PAGE;
+    if (gs->shop_page >= pages) gs->shop_page = 0;
+    int base = gs->shop_page * SHOP_PER_PAGE;
     int n = N_ITEMS - base;
     if (n > SHOP_PER_PAGE) n = SHOP_PER_PAGE;
 
-    static char sub[112];
+    auto& sub = gs->shop_sub;
     snprintf(sub, sizeof(sub), "%u ames   -   page %d/%d",
-             (unsigned) g_save.souls, g_shop_page + 1, pages);
-    set_text_if(g_p_title, "Marchand");
-    set_text_if(g_p_sub, sub);
-    set_text_if(g_p_body, "");
-    set_text_if(g_p_foot, "Appuyer sur un objet possede le revend a la moitie de son prix. "
-                          "Un objet revendu est aussi retire de l'equipement.");
+             (unsigned) gs->save.souls, gs->shop_page + 1, pages);
+    set_text_if(gs->p_title, "Marchand");
+    set_text_if(gs->p_sub, sub);
+    set_text_if(gs->p_body, "");
+    set_text_if(gs->p_foot, "Appuyer sur un objet possede le revend a la moitie de son prix. "
+                            "Un objet revendu est aussi retire de l'equipement.");
 
-    static char titles[SHOP_PER_PAGE][80];
-    static char descs[SHOP_PER_PAGE][112];
+    auto& titles = gs->shop_titles;
+    auto& descs = gs->shop_descs;
     for (int i = 0; i < n; i++) {
         int id = base + i;
         const ItemDef& it = ITEMS[id];
-        bool owned = (g_save.items & (1u << id)) != 0;
+        bool owned = (gs->save.items & (1u << id)) != 0;
         snprintf(titles[i], sizeof(titles[i]), "%s%s", it.name, owned ? "  (possede)" : "");
         if (owned) snprintf(descs[i], sizeof(descs[i]), "%s  -  revendre : %u ames",
                             it.desc, (unsigned) (it.price / 2));
         else       snprintf(descs[i], sizeof(descs[i]), "%s  -  %u ames",
                             it.desc, (unsigned) it.price);
         slot_list(i, titles[i], descs[i], it.color,
-                  owned || g_save.souls >= it.price);
+                  owned || gs->save.souls >= it.price);
     }
     // [AI-WARNING] La navigation se place APRES le dernier objet de la page, pas
     // a un index fixe. Avec des index fixes (SHOP_PER_PAGE, +1), une page
     // incomplete laissait les slots intermediaires ni remplis ni masques : ils
     // gardaient le texte de l'ecran precedent — des lignes fantomes cliquables.
-    // g_shop_rows memorise le nombre d'objets affiches pour que le gestionnaire
+    // gs->shop_rows memorise le nombre d'objets affiches pour que le gestionnaire
     // de tap retrouve les memes index.
-    g_shop_rows = n;
+    gs->shop_rows = n;
     slot_list(n, "Page suivante", "", Pal::BOOST, pages > 1);
     slot_list(n + 1, "Retour", "", UIColor::TEXT_DIM, true);
     slots_hide_from(n + 2);
@@ -1015,22 +1060,22 @@ static void go_equip() {
     panel_on(true);
     ball_show(false);
     int owned_n = 0;
-    for (int i = 0; i < N_ITEMS; i++) if (g_save.items & (1u << i)) owned_n++;
+    for (int i = 0; i < N_ITEMS; i++) if (gs->save.items & (1u << i)) owned_n++;
 
-    static char sub[96];
+    auto& sub = gs->equip_sub;
     snprintf(sub, sizeof(sub), "%d objet(s) en votre possession   -   %d emplacement(s)",
              owned_n, MARBLE_NSLOTS);
-    set_text_if(g_p_title, "Equipement");
-    set_text_if(g_p_sub, sub);
-    set_text_if(g_p_body, "");
-    set_text_if(g_p_foot, owned_n ? "Appuyer sur un emplacement le fait passer a l'objet suivant."
-                                  : "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand.");
+    set_text_if(gs->p_title, "Equipement");
+    set_text_if(gs->p_sub, sub);
+    set_text_if(gs->p_body, "");
+    set_text_if(gs->p_foot, owned_n ? "Appuyer sur un emplacement le fait passer a l'objet suivant."
+                                    : "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand.");
 
-    static char titles[MARBLE_NSLOTS][80];
-    static char descs[MARBLE_NSLOTS][112];
+    auto& titles = gs->equip_titles;
+    auto& descs = gs->equip_descs;
     for (int s = 0; s < MARBLE_NSLOTS; s++) {
-        uint8_t e = g_save.equip[s];
-        if (e == 0 || e > N_ITEMS || !(g_save.items & (1u << (e - 1)))) {
+        uint8_t e = gs->save.equip[s];
+        if (e == 0 || e > N_ITEMS || !(gs->save.items & (1u << (e - 1)))) {
             snprintf(titles[s], sizeof(titles[s]), "Emplacement %d : vide", s + 1);
             snprintf(descs[s], sizeof(descs[s]), "Aucun effet actif");
             slot_list(s, titles[s], descs[s], UIColor::TEXT_DIM, owned_n > 0);
@@ -1048,50 +1093,50 @@ static void go_equip() {
 static void go_stats() {
     g_state = ST_STATS;
     panel_on(true);
-    static char body[320];
-    unsigned bs = g_save.best_ms / 1000;
+    auto& body = gs->stats_body;
+    unsigned bs = gs->save.best_ms / 1000;
     int owned_n = 0;
-    for (int i = 0; i < N_ITEMS; i++) if (g_save.items & (1u << i)) owned_n++;
-    static char best[32];
-    if (g_save.best_ms == 0) snprintf(best, sizeof(best), "aucun");
+    for (int i = 0; i < N_ITEMS; i++) if (gs->save.items & (1u << i)) owned_n++;
+    auto& best = gs->stats_best;
+    if (gs->save.best_ms == 0) snprintf(best, sizeof(best), "aucun");
     else snprintf(best, sizeof(best), "%u:%02u", bs / 60, bs % 60);
     snprintf(body, sizeof(body),
              "Runs lancees : %u\nVictoires : %u\nSalle la plus profonde : %u/6\n"
              "Meilleur temps : %s\nNiveau total : %u\nAmes disponibles : %u\n"
              "Objets decouverts : %d/%d",
-             (unsigned) g_save.runs, (unsigned) g_save.wins,
-             (unsigned) g_save.deepest, best, (unsigned) total_level(),
-             (unsigned) g_save.souls, owned_n, N_ITEMS);
-    set_text_if(g_p_title, "Statistiques");
-    set_text_if(g_p_sub, "");
-    set_text_if(g_p_body, body);
-    set_text_if(g_p_foot, "Les runs jouees en mode dieu ne sont pas comptabilisees ici.");
+             (unsigned) gs->save.runs, (unsigned) gs->save.wins,
+             (unsigned) gs->save.deepest, best, (unsigned) total_level(),
+             (unsigned) gs->save.souls, owned_n, N_ITEMS);
+    set_text_if(gs->p_title, "Statistiques");
+    set_text_if(gs->p_sub, "");
+    set_text_if(gs->p_body, body);
+    set_text_if(gs->p_foot, "Les runs jouees en mode dieu ne sont pas comptabilisees ici.");
     slot_list(0, "Retour", "", UIColor::TEXT_DIM, true);
     // Le bouton retour est place sous le bloc de texte.
-    lv_obj_align(g_slot[0], LV_ALIGN_BOTTOM_MID, 0, -90);
+    lv_obj_align(gs->slot[0], LV_ALIGN_BOTTOM_MID, 0, -90);
     slots_hide_from(1);
 }
 
 // Applique un boon a l'etat de la run.
 static void apply_boon(uint8_t id) {
-    if (g_boon_n < MAX_BOONS) g_boons[g_boon_n++] = id;
+    if (gs->boon_n < MAX_BOONS) gs->boons[gs->boon_n++] = id;
     switch (id) {
-        case BO_CONTROL: g_ctrl_mul += 0.18f; break;
-        case BO_HEART:   g_life_max++; g_life++; break;
-        case BO_PURSE:   g_gold_mul += 0.40f; break;
-        case BO_MAGNET:  g_magnet_r = 130; break;
-        case BO_BRAKE:   g_fric -= 0.006f; apply_fric(); break;      // friction plus forte
-        case BO_SPEED:   g_speed_max += 170.0f; break;
-        case BO_BRONZE:  g_has_bronze = true; g_shield = true; break;
-        case BO_EYE:     g_has_eye = true; break;
-        case BO_REVIVE:  g_revive_left = true; break;
-        case BO_VELVET:  g_has_velvet = true; break;
+        case BO_CONTROL: gs->ctrl_mul += 0.18f; break;
+        case BO_HEART:   gs->life_max++; gs->life++; break;
+        case BO_PURSE:   gs->gold_mul += 0.40f; break;
+        case BO_MAGNET:  gs->magnet_r = 130; break;
+        case BO_BRAKE:   gs->fric -= 0.006f; apply_fric(); break;      // friction plus forte
+        case BO_SPEED:   gs->speed_max += 170.0f; break;
+        case BO_BRONZE:  gs->has_bronze = true; gs->shield = true; break;
+        case BO_EYE:     gs->has_eye = true; break;
+        case BO_REVIVE:  gs->revive_left = true; break;
+        case BO_VELVET:  gs->has_velvet = true; break;
         default: break;
     }
 }
 
 static bool boon_owned(uint8_t id) {
-    for (int i = 0; i < g_boon_n; i++) if (g_boons[i] == id) return true;
+    for (int i = 0; i < gs->boon_n; i++) if (gs->boons[i] == id) return true;
     return false;
 }
 
@@ -1107,22 +1152,22 @@ static void show_reward() {
         if (BOONS[i].unique && boon_owned(i)) continue;
         pool[np++] = i;
     }
-    g_offer_n = 0;
+    gs->offer_n = 0;
     for (int k = 0; k < 3 && np > 0; k++) {
         int p = rnd_range(0, np - 1);
-        g_offer[g_offer_n++] = pool[p];
+        gs->offer[gs->offer_n++] = pool[p];
         pool[p] = pool[--np];
     }
 
-    set_text_if(g_p_title, "Le dedale offre");
-    set_text_if(g_p_sub, BOON_LINES[rnd_range(0, 2)]);
-    set_text_if(g_p_body, "");
-    set_text_if(g_p_foot, "Un seul choix. Il te suivra jusqu'a la fin de la run.");
-    for (int i = 0; i < g_offer_n; i++) {
-        const BoonDef& b = BOONS[g_offer[i]];
+    set_text_if(gs->p_title, "Le dedale offre");
+    set_text_if(gs->p_sub, BOON_LINES[rnd_range(0, 2)]);
+    set_text_if(gs->p_body, "");
+    set_text_if(gs->p_foot, "Un seul choix. Il te suivra jusqu'a la fin de la run.");
+    for (int i = 0; i < gs->offer_n; i++) {
+        const BoonDef& b = BOONS[gs->offer[i]];
         slot_card(i, b.name, b.desc, b.color);
     }
-    slots_hide_from(g_offer_n);
+    slots_hide_from(gs->offer_n);
 }
 
 static void show_end(bool victory) {
@@ -1130,37 +1175,37 @@ static void show_end(bool victory) {
     panel_on(true);
     ball_show(false);
 
-    unsigned s = g_run_ms / 1000;
-    static char body[256];
-    if (g_god) {
+    unsigned s = gs->run_ms / 1000;
+    auto& body = gs->end_body;
+    if (gs->god) {
         snprintf(body, sizeof(body),
                  "Salles franchies : %d/6\nTemps : %u:%02u\nMode dieu — run hors concours",
-                 victory ? 6 : g_room, s / 60, s % 60);
+                 victory ? 6 : gs->room, s / 60, s % 60);
     } else {
         snprintf(body, sizeof(body),
                  "Salles franchies : %d/6\nTemps : %u:%02u\nDifficulte : %s\nAmes rapportees : %d",
-                 victory ? 6 : g_room, s / 60, s % 60, g_diff->name, g_gold);
+                 victory ? 6 : gs->room, s / 60, s % 60, gs->diff->name, gs->gold);
     }
-    set_text_if(g_p_title, victory ? "Le fil tient" : "Fin de la run");
-    set_text_if(g_p_sub, victory ? "Tu sors du dedale. Il te laisse partir."
-                                 : DEATH_LINES[rnd_range(0, 4)]);
-    set_text_if(g_p_body, body);
-    set_text_if(g_p_foot, g_god ? "Aucune ame creditee : le mode dieu ne compte pas."
-                                : "Les ames sont deja mises de cote.");
+    set_text_if(gs->p_title, victory ? "Le fil tient" : "Fin de la run");
+    set_text_if(gs->p_sub, victory ? "Tu sors du dedale. Il te laisse partir."
+                                   : DEATH_LINES[rnd_range(0, 4)]);
+    set_text_if(gs->p_body, body);
+    set_text_if(gs->p_foot, gs->god ? "Aucune ame creditee : le mode dieu ne compte pas."
+                                    : "Les ames sont deja mises de cote.");
     slot_list(0, "Relancer une run", "", Pal::BALL, true);
     slot_list(1, "Retour au hub", "", UIColor::TEXT_DIM, true);
-    lv_obj_align(g_slot[0], LV_ALIGN_BOTTOM_MID, 0, -180);
-    lv_obj_align(g_slot[1], LV_ALIGN_BOTTOM_MID, 0, -100);
+    lv_obj_align(gs->slot[0], LV_ALIGN_BOTTOM_MID, 0, -180);
+    lv_obj_align(gs->slot[1], LV_ALIGN_BOTTOM_MID, 0, -100);
     slots_hide_from(2);
 }
 
 static void show_pause() {
     g_state = ST_PAUSED;
     panel_on(true);
-    set_text_if(g_p_title, "Pause");
-    set_text_if(g_p_sub, "Le dedale patiente.");
-    set_text_if(g_p_body, "");
-    set_text_if(g_p_foot, "");
+    set_text_if(gs->p_title, "Pause");
+    set_text_if(gs->p_sub, "Le dedale patiente.");
+    set_text_if(gs->p_body, "");
+    set_text_if(gs->p_foot, "");
     slot_list(0, "Reprendre", "", Pal::BALL, true);
     slot_list(1, "Recalibrer a plat", "Pose la tablette avant d'appuyer", Pal::BOOST, true);
     slot_list(2, "Abandonner la run", "Les ames sont conservees", Pal::DANGER, true);
@@ -1175,7 +1220,7 @@ static void show_pause() {
 // on annule alors le decalage de seed et on garde la position d'origine.
 static bool overlaps_solid(int x, int y, int w, int h, int upto) {
     for (int i = 0; i < upto; i++) {
-        const Ent& e = g_ent[i];
+        const Ent& e = gs->ent[i];
         if (e.k != K_WALL && e.k != K_PIT) continue;
         if (x < e.x + e.w && x + w > e.x && y < e.y + e.h && y + h > e.y) return true;
     }
@@ -1194,7 +1239,7 @@ static bool segment_clear(int x0, int y0, int x1, int y1, int upto) {
         float px = x0 + (x1 - x0) * t;
         float py = y0 + (y1 - y0) * t;
         for (int i = 0; i < upto; i++) {
-            const Ent& e = g_ent[i];
+            const Ent& e = gs->ent[i];
             if (e.k != K_WALL && e.k != K_PIT) continue;
             // Distance point/rectangle < BALL_R => la bille toucherait l'obstacle.
             float cx = clampf(px, e.x, (float) (e.x + e.w));
@@ -1371,12 +1416,12 @@ static void style_entity(Ent& e) {
 // donc le seul endroit du jeu ou on peut ajouter du visuel sans repasser par
 // check_marble_rooms.py (hors depot ; il ne lit que les Spec des salles).
 // @ai_instruction Si tu ajoutes un element, prends-le dans le pool (dec_next /
-//      dec_arc) et ne depasse pas MAX_DEC / MAX_DEC_ARC : le pool est alloue une
-//      fois pour toutes, aucune allocation ne doit avoir lieu en cours de partie.
+//      dec_arc) et ne depasse pas MAX_DEC / MAX_DEC_ARC : le pool est alloue a
+//      l'ouverture du jeu, aucune allocation ne doit avoir lieu en cours de partie.
 // ---------------------------------------------------------------------------
 static lv_obj_t* dec_next() {
-    if (g_dec_n >= MAX_DEC) return nullptr;
-    lv_obj_t* o = g_dec[g_dec_n++];
+    if (gs->dec_n >= MAX_DEC) return nullptr;
+    lv_obj_t* o = gs->dec[gs->dec_n++];
     lv_obj_set_style_border_width(o, 0, LV_PART_MAIN);
     lv_obj_set_style_radius(o, 0, LV_PART_MAIN);
     lv_obj_set_style_bg_grad_dir(o, LV_GRAD_DIR_NONE, LV_PART_MAIN);
@@ -1417,8 +1462,8 @@ static void dec_arc(int cx, int cy, int r, int a0, int a1, int w,
                     uint32_t col, lv_opa_t opa) {
     r = fit_radius(cx, cy, r) - (w + 1) / 2;   // l'epaisseur du trait compte aussi
     if (r < 8) return;
-    if (g_dec_arc_n >= MAX_DEC_ARC) return;
-    lv_obj_t* a = g_dec_arc[g_dec_arc_n++];
+    if (gs->dec_arc_n >= MAX_DEC_ARC) return;
+    lv_obj_t* a = gs->dec_arc[gs->dec_arc_n++];
     lv_obj_set_style_arc_width(a, w, LV_PART_INDICATOR);
     lv_obj_set_style_arc_color(a, lv_color_hex(col), LV_PART_INDICATOR);
     lv_obj_set_style_arc_opa(a, opa, LV_PART_INDICATOR);
@@ -1431,10 +1476,10 @@ static void dec_arc(int cx, int cy, int r, int a0, int a1, int w,
 }
 
 static void build_decor(int idx) {
-    for (int i = 0; i < g_dec_n; i++)     show(g_dec[i], false);
-    for (int i = 0; i < g_dec_arc_n; i++) show(g_dec_arc[i], false);
-    g_dec_n = 0;
-    g_dec_arc_n = 0;
+    for (int i = 0; i < gs->dec_n; i++)     show(gs->dec[i], false);
+    for (int i = 0; i < gs->dec_arc_n; i++) show(gs->dec_arc[i], false);
+    gs->dec_n = 0;
+    gs->dec_arc_n = 0;
     const Room& r = ROOMS[idx];
 
     // Joints de dalles : 3 lignes a peine visibles. Elles donnent une echelle au
@@ -1497,12 +1542,12 @@ static void build_decor(int idx) {
 
 static void load_room(int idx) {
     const Room& r = ROOMS[idx];
-    g_ent_n = 0;
+    gs->ent_n = 0;
     build_decor(idx);
 
-    for (int i = 0; i < r.n && g_ent_n < MAX_ENT; i++) {
+    for (int i = 0; i < r.n && gs->ent_n < MAX_ENT; i++) {
         const Spec& s = r.specs[i];
-        Ent& e = g_ent[g_ent_n];
+        Ent& e = gs->ent[gs->ent_n];
         e.k = s.k;
         e.alive = true;
         e.w = s.w; e.h = s.h;
@@ -1511,11 +1556,11 @@ static void load_room(int idx) {
         // les orbes, `b` est une PERIODE => on la divise pour accelerer ;
         // pour la chasseuse, `b` est une vitesse => on la multiplie.
         if (s.k == K_SAW || s.k == K_ORB) {
-            int nb = (int) (s.b / g_diff->hazard_mul);
+            int nb = (int) (s.b / gs->diff->hazard_mul);
             if (nb < 300) nb = 300;          // garde-fou : jamais injouable
             e.b = (int16_t) nb;
         } else if (s.k == K_HUNTER) {
-            e.b = (int16_t) (s.b * g_diff->hazard_mul);
+            e.b = (int16_t) (s.b * gs->diff->hazard_mul);
         }
         e.phase = (uint16_t) rnd_range(0, e.b > 0 ? e.b - 1 : 0);
 
@@ -1536,9 +1581,9 @@ static void load_room(int idx) {
                 // Trois conditions : dans le terrain, pas dans un obstacle, et
                 // relie en ligne droite a la position d'origine (connexite).
                 if (jx >= 8 && jy >= 8 && jx + e.w <= FW - 8 && jy + e.h <= FH - 8 &&
-                    !overlaps_solid(jx, jy, e.w, e.h, g_ent_n) &&
+                    !overlaps_solid(jx, jy, e.w, e.h, gs->ent_n) &&
                     segment_clear(e.x + e.w / 2, e.y + e.h / 2,
-                                  jx + e.w / 2, jy + e.h / 2, g_ent_n)) {
+                                  jx + e.w / 2, jy + e.h / 2, gs->ent_n)) {
                     e.x = (int16_t) jx; e.y = (int16_t) jy;
                 }
             }
@@ -1547,101 +1592,101 @@ static void load_room(int idx) {
         style_entity(e);
         lv_obj_set_pos(e.obj, e.x, e.y);
         show(e.obj, true);
-        g_ent_n++;
+        gs->ent_n++;
     }
-    for (int i = g_ent_n; i < MAX_ENT; i++) show(g_ent[i].obj, false);
+    for (int i = gs->ent_n; i < MAX_ENT; i++) show(gs->ent[i].obj, false);
 
     // Placement de la bille + reinitialisation de la physique.
-    g_bx = r.sx; g_by = r.sy;
-    g_vx = 0; g_vy = 0;
-    g_runes = 0;
-    g_room_enter_ms = lv_tick_get();
-    if (g_has_bronze) g_shield = true;
-    g_invuln_until = g_has_velvet ? g_room_enter_ms + VELVET_MS : 0;
+    gs->bx = r.sx; gs->by = r.sy;
+    gs->vx = 0; gs->vy = 0;
+    gs->runes = 0;
+    gs->room_enter_ms = lv_tick_get();
+    if (gs->has_bronze) gs->shield = true;
+    gs->invuln_until = gs->has_velvet ? gs->room_enter_ms + VELVET_MS : 0;
 
-    ball_place((int) g_bx - g_ball_r, (int) g_by - g_ball_r);
+    ball_place((int) gs->bx - gs->ball_r, (int) gs->by - gs->ball_r);
     ball_show(true);
     // Remise au premier plan dans l'ordre d'empilement voulu : ombre, corps,
     // reflet. Les remonter dans le desordre mettrait l'ombre PAR-DESSUS la bille.
-    lv_obj_move_foreground(g_ball_sh);
-    lv_obj_move_foreground(g_ball);
-    lv_obj_move_foreground(g_ball_gloss);
-    for (int i = 0; i < 4; i++) lv_obj_move_foreground(g_vign[i]);
+    lv_obj_move_foreground(gs->ball_sh);
+    lv_obj_move_foreground(gs->ball);
+    lv_obj_move_foreground(gs->ball_gloss);
+    for (int i = 0; i < 4; i++) lv_obj_move_foreground(gs->vign[i]);
 
     // Nom + numero de salle : ecrits une seule fois par salle.
-    static char rbuf[96];
+    auto& rbuf = gs->room_buf;
     snprintf(rbuf, sizeof(rbuf), "Salle %d/%d  -  %s  %.*s%s", idx + 1, N_ROOMS, r.name,
-             (int) r.stars, "****", g_god ? "   [ DIEU ]" : "");
-    set_text_if(g_hud_room, rbuf);
-    lv_obj_set_style_text_color(g_hud_room,
-        lv_color_hex(g_god ? Pal::MAGNET : Pal::BALL), LV_PART_MAIN);
+             (int) r.stars, "****", gs->god ? "   [ DIEU ]" : "");
+    set_text_if(gs->hud_room, rbuf);
+    lv_obj_set_style_text_color(gs->hud_room,
+        lv_color_hex(gs->god ? Pal::MAGNET : Pal::BALL), LV_PART_MAIN);
 
     // Reset des caches HUD pour forcer un repaint complet du bandeau.
-    g_c_life = -1; g_c_gold = -1; g_c_runes = -1; g_c_sec = -1; g_c_gate = -1;
+    gs->c_life = -1; gs->c_gold = -1; gs->c_runes = -1; gs->c_sec = -1; gs->c_gate = -1;
 }
 
 static void start_run() {
-    s_rng = lv_tick_get() ^ 0x9E3779B9u ^ (g_save.runs * 2654435761u);
-    if (s_rng == 0) s_rng = 0x1234567u;
+    gs->rng = lv_tick_get() ^ 0x9E3779B9u ^ (gs->save.runs * 2654435761u);
+    if (gs->rng == 0) gs->rng = 0x1234567u;
 
     // Fige les reglages pour toute la duree de la run.
-    if (g_save.difficulty >= D_COUNT) g_save.difficulty = D_NORMAL;
-    g_diff = &DIFFS[g_save.difficulty];
-    g_god = (g_save.god != 0);
+    if (gs->save.difficulty >= D_COUNT) gs->save.difficulty = D_NORMAL;
+    gs->diff = &DIFFS[gs->save.difficulty];
+    gs->god = (gs->save.god != 0);
 
     // --- Caracteristiques ---
-    const uint8_t* st = g_save.st;
-    g_invuln_ms = g_diff->invuln_ms + 300u * st[S_RESISTANCE];
-    g_ball_r = BALL_R - (int) st[S_FINESSE];
-    if (g_ball_r < 5) g_ball_r = 5;
-    g_life_max = 3 + (int) st[S_VITALITE] + g_diff->life_delta;
-    g_ctrl_mul = 1.0f + 0.12f * st[S_AGILITE];
-    g_speed_max = (MAX_SPEED + 60.0f * st[S_ELAN]) * g_diff->speed_mul;
-    g_soul_mul = 1.0f + 0.15f * st[S_DECOUVERTE];
-    g_loot_chance = 0.35f + 0.12f * st[S_DECOUVERTE];
+    const uint8_t* st = gs->save.st;
+    gs->invuln_ms = gs->diff->invuln_ms + 300u * st[S_RESISTANCE];
+    gs->ball_r = BALL_R - (int) st[S_FINESSE];
+    if (gs->ball_r < 5) gs->ball_r = 5;
+    gs->life_max = 3 + (int) st[S_VITALITE] + gs->diff->life_delta;
+    gs->ctrl_mul = 1.0f + 0.12f * st[S_AGILITE];
+    gs->speed_max = (MAX_SPEED + 60.0f * st[S_ELAN]) * gs->diff->speed_mul;
+    gs->soul_mul = 1.0f + 0.15f * st[S_DECOUVERTE];
+    gs->loot_chance = 0.35f + 0.12f * st[S_DECOUVERTE];
 
-    g_shield = false;
-    g_gold = 0;
-    g_boon_n = 0;
-    g_gold_mul = g_diff->gold_mul;
-    g_fric = FRICTION;
+    gs->shield = false;
+    gs->gold = 0;
+    gs->boon_n = 0;
+    gs->gold_mul = gs->diff->gold_mul;
+    gs->fric = FRICTION;
     apply_fric();
-    g_magnet_r = 0;
+    gs->magnet_r = 0;
     // Resistance 3+ : un bouclier offert a chaque salle (comme « Peau de bronze »).
-    g_has_bronze = (st[S_RESISTANCE] >= 3);
-    g_has_eye = false; g_has_velvet = false;
-    g_revive_left = false;
+    gs->has_bronze = (st[S_RESISTANCE] >= 3);
+    gs->has_eye = false; gs->has_velvet = false;
+    gs->revive_left = false;
 
     // --- Objets equipes ---
     for (int s = 0; s < MARBLE_NSLOTS; s++) {
-        uint8_t e = g_save.equip[s];
+        uint8_t e = gs->save.equip[s];
         if (e == 0 || e > N_ITEMS) continue;
         switch (ITEMS[e - 1].effect) {
-            case IE_HP:          g_life_max++; break;
-            case IE_SOULS:       g_soul_mul += 0.25f; break;
-            case IE_SPEED:       g_speed_max += 70.0f; break;
-            case IE_CONTROL:     g_ctrl_mul += 0.15f; break;
-            case IE_SHIELD_ROOM: g_has_bronze = true; break;
-            case IE_EYE:         g_has_eye = true; break;
-            case IE_REVIVE:      g_revive_left = true; break;
-            case IE_MAGNET:      g_magnet_r = 130; break;
-            case IE_BRAKE:       g_fric -= 0.005f; apply_fric(); break;
-            case IE_GREED:       g_soul_mul += 0.50f; g_life_max--; break;
+            case IE_HP:          gs->life_max++; break;
+            case IE_SOULS:       gs->soul_mul += 0.25f; break;
+            case IE_SPEED:       gs->speed_max += 70.0f; break;
+            case IE_CONTROL:     gs->ctrl_mul += 0.15f; break;
+            case IE_SHIELD_ROOM: gs->has_bronze = true; break;
+            case IE_EYE:         gs->has_eye = true; break;
+            case IE_REVIVE:      gs->revive_left = true; break;
+            case IE_MAGNET:      gs->magnet_r = 130; break;
+            case IE_BRAKE:       gs->fric -= 0.005f; apply_fric(); break;
+            case IE_GREED:       gs->soul_mul += 0.50f; gs->life_max--; break;
             default: break;
         }
     }
 
-    if (g_life_max < 1) g_life_max = 1;
-    g_life = g_life_max;
-    ball_resize(g_ball_r);
-    g_room = 0;
-    g_run_start_ms = lv_tick_get();
-    g_run_ms = 0;
-    g_run_last_tick_ms = 0;
-    g_run_active = true;
+    if (gs->life_max < 1) gs->life_max = 1;
+    gs->life = gs->life_max;
+    ball_resize(gs->ball_r);
+    gs->room = 0;
+    gs->run_start_ms = lv_tick_get();
+    gs->run_ms = 0;
+    gs->run_last_tick_ms = 0;
+    gs->run_active = true;
 
     // Une run en mode dieu ne compte pas : ni au compteur, ni au classement.
-    if (!g_god) { g_save.runs++; persist_save(); }
+    if (!gs->god) { gs->save.runs++; persist_save(); }
 
     load_room(0);
     g_state = ST_PLAYING;
@@ -1649,23 +1694,23 @@ static void start_run() {
 }
 
 static void end_run(bool victory) {
-    if (!g_run_active) { show_end(victory); return; }
-    g_run_active = false;
+    if (!gs->run_active) { show_end(victory); return; }
+    gs->run_active = false;
 
     // Mode dieu : rien n'est credite ni enregistre — l'invulnerabilite viderait
     // la meta-progression de son sens. La run reste jouable, juste hors concours.
-    if (g_god) { g_gold = 0; show_end(victory); return; }
+    if (gs->god) { gs->gold = 0; show_end(victory); return; }
 
     // Banque des ames : butin de la run x difficulte x Decouverte/objets x boon Bourse.
-    uint32_t earned = (uint32_t) (g_gold * g_gold_mul * g_soul_mul);
-    g_save.souls += earned;
-    g_gold = (int) earned;   // affiche le montant reellement credite
+    uint32_t earned = (uint32_t) (gs->gold * gs->gold_mul * gs->soul_mul);
+    gs->save.souls += earned;
+    gs->gold = (int) earned;   // affiche le montant reellement credite
 
-    uint8_t reached = (uint8_t) (victory ? 6 : (g_room + 1));
-    if (reached > g_save.deepest) g_save.deepest = reached;
+    uint8_t reached = (uint8_t) (victory ? 6 : (gs->room + 1));
+    if (reached > gs->save.deepest) gs->save.deepest = reached;
     if (victory) {
-        g_save.wins++;
-        if (g_save.best_ms == 0 || g_run_ms < g_save.best_ms) g_save.best_ms = g_run_ms;
+        gs->save.wins++;
+        if (gs->save.best_ms == 0 || gs->run_ms < gs->save.best_ms) gs->save.best_ms = gs->run_ms;
     }
     persist_save();
     show_end(victory);
@@ -1677,90 +1722,90 @@ static void end_run(bool victory) {
 
 // Resolution cercle vs rectangle : repousse la bille et reflechit la vitesse.
 static void resolve_wall(const Ent& e) {
-    float cx = clampf(g_bx, e.x, (float) (e.x + e.w));
-    float cy = clampf(g_by, e.y, (float) (e.y + e.h));
-    float dx = g_bx - cx, dy = g_by - cy;
+    float cx = clampf(gs->bx, e.x, (float) (e.x + e.w));
+    float cy = clampf(gs->by, e.y, (float) (e.y + e.h));
+    float dx = gs->bx - cx, dy = gs->by - cy;
     float d2 = dx * dx + dy * dy;
-    if (d2 >= (float) (g_ball_r * g_ball_r)) return;
+    if (d2 >= (float) (gs->ball_r * gs->ball_r)) return;
 
     float d = sqrtf(d2);
     if (d < 0.001f) {
         // Centre exactement sur l'arete : on ressort par l'axe le moins enfonce.
-        float left = g_bx - e.x, right = (e.x + e.w) - g_bx;
-        float top = g_by - e.y, bot = (e.y + e.h) - g_by;
+        float left = gs->bx - e.x, right = (e.x + e.w) - gs->bx;
+        float top = gs->by - e.y, bot = (e.y + e.h) - gs->by;
         float m = left; float nx = -1, ny = 0;
         if (right < m) { m = right; nx = 1; ny = 0; }
         if (top < m)   { m = top;   nx = 0; ny = -1; }
         if (bot < m)   {            nx = 0; ny = 1; }
-        g_bx = cx + nx * g_ball_r;
-        g_by = cy + ny * g_ball_r;
-        if (nx != 0) g_vx = -g_vx * BOUNCE; else g_vy = -g_vy * BOUNCE;
+        gs->bx = cx + nx * gs->ball_r;
+        gs->by = cy + ny * gs->ball_r;
+        if (nx != 0) gs->vx = -gs->vx * BOUNCE; else gs->vy = -gs->vy * BOUNCE;
         return;
     }
     float nx = dx / d, ny = dy / d;
-    g_bx = cx + nx * g_ball_r;
-    g_by = cy + ny * g_ball_r;
-    float dot = g_vx * nx + g_vy * ny;
+    gs->bx = cx + nx * gs->ball_r;
+    gs->by = cy + ny * gs->ball_r;
+    float dot = gs->vx * nx + gs->vy * ny;
     if (dot < 0) {
-        g_vx -= (1.0f + BOUNCE) * dot * nx;
-        g_vy -= (1.0f + BOUNCE) * dot * ny;
+        gs->vx -= (1.0f + BOUNCE) * dot * nx;
+        gs->vy -= (1.0f + BOUNCE) * dot * ny;
     }
 }
 
 static bool circle_hits(const Ent& e) {
-    float cx = clampf(g_bx, e.x, (float) (e.x + e.w));
-    float cy = clampf(g_by, e.y, (float) (e.y + e.h));
-    float dx = g_bx - cx, dy = g_by - cy;
-    return dx * dx + dy * dy < (float) (g_ball_r * g_ball_r);
+    float cx = clampf(gs->bx, e.x, (float) (e.x + e.w));
+    float cy = clampf(gs->by, e.y, (float) (e.y + e.h));
+    float dx = gs->bx - cx, dy = gs->by - cy;
+    return dx * dx + dy * dy < (float) (gs->ball_r * gs->ball_r);
 }
 
 static bool inside_zone(const Ent& e) {
-    return g_bx > e.x && g_bx < e.x + e.w && g_by > e.y && g_by < e.y + e.h;
+    return gs->bx > e.x && gs->bx < e.x + e.w && gs->by > e.y && gs->by < e.y + e.h;
 }
 
 static void flash_damage() {
-    g_vignette_until = lv_tick_get() + VIGNETTE_MS;
-    g_jitter = 5;
-    for (int i = 0; i < 4; i++) show(g_vign[i], true);
+    gs->vignette_until = lv_tick_get() + VIGNETTE_MS;
+    gs->jitter = 5;
+    for (int i = 0; i < 4; i++) show(gs->vign[i], true);
 }
 
 // Retourne true si la run est terminee.
 static bool take_damage(bool from_pit) {
     uint32_t now = lv_tick_get();
-    if (now < g_invuln_until) return false;
+    if (now < gs->invuln_until) return false;
 
     // Mode dieu : aucun degat. On replace quand meme la bille si elle est
     // tombee dans un trou, sinon elle resterait coincee dans le vide.
-    if (g_god) {
+    if (gs->god) {
         if (from_pit) {
-            g_bx = ROOMS[g_room].sx; g_by = ROOMS[g_room].sy;
-            g_vx = g_vy = 0;
+            gs->bx = ROOMS[gs->room].sx; gs->by = ROOMS[gs->room].sy;
+            gs->vx = gs->vy = 0;
         }
         return false;
     }
 
-    if (g_shield) {
-        g_shield = false;
-        g_invuln_until = now + g_invuln_ms;
+    if (gs->shield) {
+        gs->shield = false;
+        gs->invuln_until = now + gs->invuln_ms;
         flash_damage();
         if (from_pit) {
-            g_bx = ROOMS[g_room].sx; g_by = ROOMS[g_room].sy;
-            g_vx = g_vy = 0;
+            gs->bx = ROOMS[gs->room].sx; gs->by = ROOMS[gs->room].sy;
+            gs->vx = gs->vy = 0;
         }
         return false;
     }
 
-    g_life--;
-    g_invuln_until = now + INVULN_MS;
+    gs->life--;
+    gs->invuln_until = now + INVULN_MS;
     flash_damage();
 
-    if (g_life <= 0) {
-        if (g_revive_left) {
-            g_revive_left = false;
-            g_life = 1;
-            g_bx = ROOMS[g_room].sx; g_by = ROOMS[g_room].sy;
-            g_vx = g_vy = 0;
-            g_invuln_until = now + g_invuln_ms * 2;
+    if (gs->life <= 0) {
+        if (gs->revive_left) {
+            gs->revive_left = false;
+            gs->life = 1;
+            gs->bx = ROOMS[gs->room].sx; gs->by = ROOMS[gs->room].sy;
+            gs->vx = gs->vy = 0;
+            gs->invuln_until = now + gs->invuln_ms * 2;
             return false;
         }
         end_run(false);
@@ -1768,19 +1813,19 @@ static bool take_damage(bool from_pit) {
     }
 
     // Repart du depart de la salle : plus lisible qu'un knockback aleatoire.
-    g_bx = ROOMS[g_room].sx; g_by = ROOMS[g_room].sy;
-    g_vx = g_vy = 0;
+    gs->bx = ROOMS[gs->room].sx; gs->by = ROOMS[gs->room].sy;
+    gs->vx = gs->vy = 0;
     return false;
 }
 
 // Affiche une banniere ephemere en haut du terrain (2,5 s).
 static void toast(const char* txt, uint32_t color) {
-    if (!g_toast) return;
-    set_text_if(g_toast, txt);
-    lv_obj_set_style_text_color(g_toast, lv_color_hex(color), LV_PART_MAIN);
-    show(g_toast, true);
-    lv_obj_move_foreground(g_toast);
-    g_toast_until = lv_tick_get() + 2500;
+    if (!gs->toast) return;
+    set_text_if(gs->toast, txt);
+    lv_obj_set_style_text_color(gs->toast, lv_color_hex(color), LV_PART_MAIN);
+    show(gs->toast, true);
+    lv_obj_move_foreground(gs->toast);
+    gs->toast_until = lv_tick_get() + 2500;
 }
 
 // Accorde un objet non encore possede. Retourne son index, ou -1 si la
@@ -1789,23 +1834,23 @@ static int grant_random_item() {
     uint8_t pool[N_ITEMS];
     int np = 0;
     for (int i = 0; i < N_ITEMS; i++)
-        if (!(g_save.items & (1u << i))) pool[np++] = (uint8_t) i;
+        if (!(gs->save.items & (1u << i))) pool[np++] = (uint8_t) i;
     if (np == 0) return -1;
     int pick = pool[rnd_range(0, np - 1)];
-    g_save.items |= (1u << pick);
+    gs->save.items |= (1u << pick);
     persist_save();
     return pick;
 }
 
 // Butin garanti apres un boss (salles 5 et 6).
 static void boss_reward(const char* who) {
-    static char buf[96];
+    auto& buf = gs->boss_buf;
     int it = grant_random_item();
     if (it >= 0) {
         snprintf(buf, sizeof(buf), "%s cede : %s", who, ITEMS[it].name);
         toast(buf, ITEMS[it].color);
     } else {
-        g_gold += 120;
+        gs->gold += 120;
         snprintf(buf, sizeof(buf), "%s cede 120 ames", who);
         toast(buf, Pal::RUNE);
     }
@@ -1813,73 +1858,73 @@ static void boss_reward(const char* who) {
 
 static void next_room() {
     // Recompense apres les salles 2 et 4 (index 1 et 3), comme prevu au design.
-    int done = g_room + 1;
+    int done = gs->room + 1;
     // Butin de boss : Nemesis (salle 5) et le Trone (salle 6) laissent un objet.
     if (done == 5) boss_reward("Nemesis");
     if (done >= N_ROOMS) { boss_reward("Le Trone"); end_run(true); return; }
-    g_room = done;
-    load_room(g_room);
+    gs->room = done;
+    load_room(gs->room);
     if (done == 2 || done == 4) show_reward();
 }
 
 static void update_hud() {
-    static char buf[64];
+    auto& buf = gs->hud_buf;
 
-    if (g_c_life != g_life || g_c_shield != g_shield) {
-        g_c_life = g_life; g_c_shield = g_shield;
-        if (g_god) {
+    if (gs->c_life != gs->life || gs->c_shield != gs->shield) {
+        gs->c_life = gs->life; gs->c_shield = gs->shield;
+        if (gs->god) {
             // Afficher des PV en mode dieu serait mensonger : rien ne les entame.
             snprintf(buf, sizeof(buf), "PV invulnerable");
         } else {
-            snprintf(buf, sizeof(buf), "PV %d/%d%s", g_life, g_life_max,
-                     g_shield ? "  +BOUCLIER" : "");
+            snprintf(buf, sizeof(buf), "PV %d/%d%s", gs->life, gs->life_max,
+                     gs->shield ? "  +BOUCLIER" : "");
         }
-        set_text_if(g_hud_life, buf);
-        lv_obj_set_style_text_color(g_hud_life,
-            lv_color_hex(g_god ? Pal::MAGNET
-                               : (g_shield ? Pal::SHIELD : Pal::DANGER)),
+        set_text_if(gs->hud_life, buf);
+        lv_obj_set_style_text_color(gs->hud_life,
+            lv_color_hex(gs->god ? Pal::MAGNET
+                                 : (gs->shield ? Pal::SHIELD : Pal::DANGER)),
             LV_PART_MAIN);
     }
-    if (g_c_gold != g_gold) {
-        g_c_gold = g_gold;
-        snprintf(buf, sizeof(buf), "Or %d", g_gold);
-        set_text_if(g_hud_gold, buf);
+    if (gs->c_gold != gs->gold) {
+        gs->c_gold = gs->gold;
+        snprintf(buf, sizeof(buf), "Or %d", gs->gold);
+        set_text_if(gs->hud_gold, buf);
     }
-    const Room& r = ROOMS[g_room];
-    if (g_c_runes != g_runes) {
-        g_c_runes = g_runes;
+    const Room& r = ROOMS[gs->room];
+    if (gs->c_runes != gs->runes) {
+        gs->c_runes = gs->runes;
         if (r.runes > 0) {
-            if (g_runes >= r.runes) snprintf(buf, sizeof(buf), "Portail ouvert !");
-            else snprintf(buf, sizeof(buf), "Runes %d/%u", g_runes, (unsigned) r.runes);
+            if (gs->runes >= r.runes) snprintf(buf, sizeof(buf), "Portail ouvert !");
+            else snprintf(buf, sizeof(buf), "Runes %d/%u", gs->runes, (unsigned) r.runes);
         } else {
             snprintf(buf, sizeof(buf), "%s", r.goal);
         }
-        set_text_if(g_hud_goal, buf);
+        set_text_if(gs->hud_goal, buf);
     }
     // `unsigned` explicite : uint32_t est `long unsigned int` sur RISC-V, ce qui
     // ne correspond pas a %u (-Wformat).
-    unsigned sec = (unsigned) (g_run_ms / 1000);
-    if ((int) sec != g_c_sec) {
-        g_c_sec = (int) sec;
+    unsigned sec = (unsigned) (gs->run_ms / 1000);
+    if ((int) sec != gs->c_sec) {
+        gs->c_sec = (int) sec;
         snprintf(buf, sizeof(buf), "%u:%02u", sec / 60, sec % 60);
-        set_text_if(g_hud_time, buf);
+        set_text_if(gs->hud_time, buf);
     }
 }
 
 static void tick_cb(lv_timer_t*) {
     if (g_state != ST_PLAYING) return;
     uint32_t now = lv_tick_get();
-    if (g_run_last_tick_ms != 0 && (now - g_run_last_tick_ms) > PAUSE_GAP_MS) {
-        g_run_start_ms += now - g_run_last_tick_ms;  // lv_tick_get suit millis()
+    if (gs->run_last_tick_ms != 0 && (now - gs->run_last_tick_ms) > PAUSE_GAP_MS) {
+        gs->run_start_ms += now - gs->run_last_tick_ms;  // lv_tick_get suit millis()
     }
-    g_run_last_tick_ms = now;
-    g_run_ms = now - g_run_start_ms;
+    gs->run_last_tick_ms = now;
+    gs->run_ms = now - gs->run_start_ms;
 
     // --- Inclinaison : offset de calibration, lissage, zone morte -----------
-    tilt_smooth(g_tilt_x, g_tilt_y, g_raw_x, g_raw_y, g_save.cal_x, g_save.cal_y, TILT_SMOOTH);
+    tilt_smooth(g_tilt_x, g_tilt_y, g_raw_x, g_raw_y, gs->save.cal_x, gs->save.cal_y, TILT_SMOOTH);
 
     // « Main sure » elargit legerement la zone morte pour un pilotage plus calme.
-    float dead = TILT_DEADZONE + (g_save.difficulty == D_CALME ? 0.015f : 0.0f);
+    float dead = TILT_DEADZONE + (gs->save.difficulty == D_CALME ? 0.015f : 0.0f);
     // Rotation ecran 270 deg : l'axe Y physique pilote X a l'ecran, et X pilote Y.
     float ax = -g_tilt_y, ay = g_tilt_x;
     float mag_sq = ax * ax + ay * ay;
@@ -1896,19 +1941,19 @@ static void tick_cb(lv_timer_t*) {
     }
 
     // --- Dash : inclinaison franche, avec recharge ---------------------------
-    if (mag_sq > DASH_TILT * DASH_TILT && now >= g_dash_ready_at) {
-        g_dash_ready_at = now + DASH_CD_MS;
+    if (mag_sq > DASH_TILT * DASH_TILT && now >= gs->dash_ready_at) {
+        gs->dash_ready_at = now + DASH_CD_MS;
         float n = sqrtf(ax * ax + ay * ay);
-        if (n > 0.001f) { g_vx += ax / n * DASH_IMPULSE; g_vy += ay / n * DASH_IMPULSE; }
+        if (n > 0.001f) { gs->vx += ax / n * DASH_IMPULSE; gs->vy += ay / n * DASH_IMPULSE; }
     }
 
-    float acc_x = ax * ACCEL_SCALE * g_ctrl_mul;
-    float acc_y = ay * ACCEL_SCALE * g_ctrl_mul;
+    float acc_x = ax * ACCEL_SCALE * gs->ctrl_mul;
+    float acc_y = ay * ACCEL_SCALE * gs->ctrl_mul;
 
     // --- Zones (glu / acceleration / vent) : lues une fois par frame ---------
     float zone_ax = 0, zone_ay = 0, zone_damp = 1.0f;
-    for (int i = 0; i < g_ent_n; i++) {
-        const Ent& e = g_ent[i];
+    for (int i = 0; i < gs->ent_n; i++) {
+        const Ent& e = gs->ent[i];
         if (!e.alive) continue;
         if (e.k == K_GLUE) { if (inside_zone(e)) zone_damp = 0.90f; }
         else if (e.k == K_BOOST || e.k == K_WIND) {
@@ -1927,34 +1972,34 @@ static void tick_cb(lv_timer_t*) {
 
     // --- Integration en sous-pas (collisions robustes a grande vitesse) -----
     for (int s = 0; s < SUBSTEP; s++) {
-        g_vx += acc_x * SDT;
-        g_vy += acc_y * SDT;
-        g_vx *= g_fric_sub * zone_damp;
-        g_vy *= g_fric_sub * zone_damp;
+        gs->vx += acc_x * SDT;
+        gs->vy += acc_y * SDT;
+        gs->vx *= gs->fric_sub * zone_damp;
+        gs->vy *= gs->fric_sub * zone_damp;
 
-        float sp_sq = g_vx * g_vx + g_vy * g_vy;
-        if (sp_sq > g_speed_max * g_speed_max) {
+        float sp_sq = gs->vx * gs->vx + gs->vy * gs->vy;
+        if (sp_sq > gs->speed_max * gs->speed_max) {
             float sp = sqrtf(sp_sq);
-            g_vx = g_vx / sp * g_speed_max; g_vy = g_vy / sp * g_speed_max;
+            gs->vx = gs->vx / sp * gs->speed_max; gs->vy = gs->vy / sp * gs->speed_max;
         }
 
-        g_bx += g_vx * SDT;
-        g_by += g_vy * SDT;
+        gs->bx += gs->vx * SDT;
+        gs->by += gs->vy * SDT;
 
         // Bords du terrain
-        if (g_bx < g_ball_r)      { g_bx = g_ball_r;      g_vx = -g_vx * BOUNCE; }
-        if (g_bx > FW - g_ball_r) { g_bx = FW - g_ball_r; g_vx = -g_vx * BOUNCE; }
-        if (g_by < g_ball_r)      { g_by = g_ball_r;      g_vy = -g_vy * BOUNCE; }
-        if (g_by > FH - g_ball_r) { g_by = FH - g_ball_r; g_vy = -g_vy * BOUNCE; }
+        if (gs->bx < gs->ball_r)      { gs->bx = gs->ball_r;      gs->vx = -gs->vx * BOUNCE; }
+        if (gs->bx > FW - gs->ball_r) { gs->bx = FW - gs->ball_r; gs->vx = -gs->vx * BOUNCE; }
+        if (gs->by < gs->ball_r)      { gs->by = gs->ball_r;      gs->vy = -gs->vy * BOUNCE; }
+        if (gs->by > FH - gs->ball_r) { gs->by = FH - gs->ball_r; gs->vy = -gs->vy * BOUNCE; }
 
-        for (int i = 0; i < g_ent_n; i++) {
-            if (g_ent[i].k == K_WALL) resolve_wall(g_ent[i]);
+        for (int i = 0; i < gs->ent_n; i++) {
+            if (gs->ent[i].k == K_WALL) resolve_wall(gs->ent[i]);
         }
     }
 
     // --- Mobiles : position + rendu -----------------------------------------
-    for (int i = 0; i < g_ent_n; i++) {
-        Ent& e = g_ent[i];
+    for (int i = 0; i < gs->ent_n; i++) {
+        Ent& e = gs->ent[i];
         if (!e.alive) continue;
         // Garde-fou : une periode nulle ferait un modulo/division par zero (UB)
         // si une future salle oubliait de renseigner `b`.
@@ -1978,7 +2023,7 @@ static void tick_cb(lv_timer_t*) {
             lv_obj_set_pos(e.obj, e.x, e.y);
         } else if (e.k == K_HUNTER) {
             float hx = e.x + e.w * 0.5f, hy = e.y + e.h * 0.5f;
-            float dx = g_bx - hx, dy = g_by - hy;
+            float dx = gs->bx - hx, dy = gs->by - hy;
             float d = sqrtf(dx * dx + dy * dy);
             if (d > 1.0f) {
                 float step = e.b * DT;
@@ -1991,15 +2036,15 @@ static void tick_cb(lv_timer_t*) {
     }
 
     // --- Aimant : attire les pickups vers la bille ---------------------------
-    if (g_magnet_r > 0) {
-        for (int i = 0; i < g_ent_n; i++) {
-            Ent& e = g_ent[i];
+    if (gs->magnet_r > 0) {
+        for (int i = 0; i < gs->ent_n; i++) {
+            Ent& e = gs->ent[i];
             if (!e.alive) continue;
             if (e.k != K_GOLD && e.k != K_SHIELD && e.k != K_RUNE) continue;
             float ex = e.x + e.w * 0.5f, ey = e.y + e.h * 0.5f;
-            float dx = g_bx - ex, dy = g_by - ey;
+            float dx = gs->bx - ex, dy = gs->by - ey;
             float d = sqrtf(dx * dx + dy * dy);
-            if (d > 4.0f && d < g_magnet_r) {
+            if (d > 4.0f && d < gs->magnet_r) {
                 float step = 190.0f * DT;
                 e.x = (int16_t) (ex + dx / d * step - e.w * 0.5f);
                 e.y = (int16_t) (ey + dy / d * step - e.h * 0.5f);
@@ -2009,37 +2054,37 @@ static void tick_cb(lv_timer_t*) {
     }
 
     // --- Collisions logiques : pickups, pieges, sortie ------------------------
-    const Room& room = ROOMS[g_room];
-    for (int i = 0; i < g_ent_n; i++) {
-        Ent& e = g_ent[i];
+    const Room& room = ROOMS[gs->room];
+    for (int i = 0; i < gs->ent_n; i++) {
+        Ent& e = gs->ent[i];
         if (!e.alive) continue;
         switch (e.k) {
             case K_GOLD:
-                if (circle_hits(e)) { e.alive = false; show(e.obj, false); g_gold += 10; }
+                if (circle_hits(e)) { e.alive = false; show(e.obj, false); gs->gold += 10; }
                 break;
             case K_SHIELD:
-                if (circle_hits(e)) { e.alive = false; show(e.obj, false); g_shield = true; }
+                if (circle_hits(e)) { e.alive = false; show(e.obj, false); gs->shield = true; }
                 break;
             case K_MAGNET:
-                if (circle_hits(e)) { e.alive = false; show(e.obj, false); g_magnet_r = 130; }
+                if (circle_hits(e)) { e.alive = false; show(e.obj, false); gs->magnet_r = 130; }
                 break;
             case K_BRAKE:
-                if (circle_hits(e)) { e.alive = false; show(e.obj, false); g_fric -= 0.004f; apply_fric(); }
+                if (circle_hits(e)) { e.alive = false; show(e.obj, false); gs->fric -= 0.004f; apply_fric(); }
                 break;
             case K_DASH:
-                if (circle_hits(e)) { e.alive = false; show(e.obj, false); g_dash_ready_at = 0; }
+                if (circle_hits(e)) { e.alive = false; show(e.obj, false); gs->dash_ready_at = 0; }
                 break;
             case K_RUNE:
-                if (circle_hits(e)) { e.alive = false; show(e.obj, false); g_runes++; }
+                if (circle_hits(e)) { e.alive = false; show(e.obj, false); gs->runes++; }
                 break;
             case K_CHEST:
                 if (circle_hits(e)) {
                     e.alive = false; show(e.obj, false);
-                    static char cbuf[96];
+                    auto& cbuf = gs->chest_buf;
                     int bonus = rnd_range(25, 60);
-                    g_gold += bonus;
+                    gs->gold += bonus;
                     // Jet de butin, module par la caracteristique Decouverte.
-                    if ((int) (rnd() % 1000u) < (int) (g_loot_chance * 1000.0f)) {
+                    if ((int) (rnd() % 1000u) < (int) (gs->loot_chance * 1000.0f)) {
                         int it = grant_random_item();
                         if (it >= 0) {
                             snprintf(cbuf, sizeof(cbuf), "Coffre : %s !", ITEMS[it].name);
@@ -2058,16 +2103,16 @@ static void tick_cb(lv_timer_t*) {
                 if (circle_hits(e) && take_damage(true)) return;
                 break;
             case K_EXIT: {
-                bool open_gate = (g_runes >= room.runes);
+                bool open_gate = (gs->runes >= room.runes);
                 // Le portail verrouille reste visible mais eteint : l'objectif se lit.
                 // Le style n'est reecrit qu'au changement d'etat (sinon on
                 // invaliderait le portail a chaque frame pour rien).
-                if (g_c_gate != (int) open_gate) {
-                    g_c_gate = (int) open_gate;
+                if (gs->c_gate != (int) open_gate) {
+                    gs->c_gate = (int) open_gate;
                     style_exit(e, open_gate);
                 }
                 // « Oeil du dedale » : le portail ouvert pulse doucement.
-                if (open_gate && g_has_eye) {
+                if (open_gate && gs->has_eye) {
                     lv_obj_set_style_border_opa(e.obj,
                         (now / 300) & 1 ? LV_OPA_COVER : LV_OPA_50, LV_PART_MAIN);
                 }
@@ -2080,20 +2125,20 @@ static void tick_cb(lv_timer_t*) {
 
     // --- Rendu de la bille (+ tremblement court apres un degat) --------------
     int jx = 0, jy = 0;
-    if (g_jitter > 0) { g_jitter--; jx = rnd_range(-4, 4); jy = rnd_range(-4, 4); }
-    ball_place((int) g_bx - g_ball_r + jx, (int) g_by - g_ball_r + jy);
+    if (gs->jitter > 0) { gs->jitter--; jx = rnd_range(-4, 4); jy = rnd_range(-4, 4); }
+    ball_place((int) gs->bx - gs->ball_r + jx, (int) gs->by - gs->ball_r + jy);
 
     // Invulnerabilite : la bille clignote (feedback sans cout de rendu).
-    bool inv = now < g_invuln_until;
+    bool inv = now < gs->invuln_until;
     ball_set_opa((inv && ((now / 100) & 1)) ? LV_OPA_40 : LV_OPA_COVER);
 
-    if (g_vignette_until && now >= g_vignette_until) {
-        g_vignette_until = 0;
-        for (int i = 0; i < 4; i++) show(g_vign[i], false);
+    if (gs->vignette_until && now >= gs->vignette_until) {
+        gs->vignette_until = 0;
+        for (int i = 0; i < 4; i++) show(gs->vign[i], false);
     }
-    if (g_toast_until && now >= g_toast_until) {
-        g_toast_until = 0;
-        show(g_toast, false);
+    if (gs->toast_until && now >= gs->toast_until) {
+        gs->toast_until = 0;
+        show(gs->toast, false);
     }
 
     update_hud();
@@ -2106,11 +2151,11 @@ static void tick_cb(lv_timer_t*) {
 // Depense un point de niveau dans une caracteristique.
 static void buy_stat(int i) {
     if (i < 0 || i >= MARBLE_NSTATS) return;
-    if (g_save.st[i] >= STATS[i].maxlvl) return;
+    if (gs->save.st[i] >= STATS[i].maxlvl) return;
     uint32_t cost = level_cost(total_level());
-    if (g_save.souls < cost) return;
-    g_save.souls -= cost;
-    g_save.st[i]++;
+    if (gs->save.souls < cost) return;
+    gs->save.souls -= cost;
+    gs->save.st[i]++;
     persist_save();
     go_level();   // rafraichit cout / niveaux / solvabilite
 }
@@ -2120,16 +2165,16 @@ static void shop_action(int id) {
     if (id < 0 || id >= N_ITEMS) return;
     const ItemDef& it = ITEMS[id];
     uint32_t bit = 1u << id;
-    if (g_save.items & bit) {
-        g_save.items &= ~bit;
-        g_save.souls += it.price / 2;
+    if (gs->save.items & bit) {
+        gs->save.items &= ~bit;
+        gs->save.souls += it.price / 2;
         // Un objet vendu ne peut pas rester equipe.
         for (int s = 0; s < MARBLE_NSLOTS; s++)
-            if (g_save.equip[s] == (uint8_t) (id + 1)) g_save.equip[s] = 0;
+            if (gs->save.equip[s] == (uint8_t) (id + 1)) gs->save.equip[s] = 0;
     } else {
-        if (g_save.souls < it.price) return;
-        g_save.souls -= it.price;
-        g_save.items |= bit;
+        if (gs->save.souls < it.price) return;
+        gs->save.souls -= it.price;
+        gs->save.items |= bit;
     }
     persist_save();
     go_shop();
@@ -2139,16 +2184,16 @@ static void shop_action(int id) {
 // Un meme objet ne peut pas occuper les deux emplacements.
 static void equip_cycle(int s) {
     if (s < 0 || s >= MARBLE_NSLOTS) return;
-    uint8_t cur = g_save.equip[s];
+    uint8_t cur = gs->save.equip[s];
     for (int step = 1; step <= N_ITEMS + 1; step++) {
         int next = (cur + step) % (N_ITEMS + 1);
-        if (next == 0) { g_save.equip[s] = 0; break; }
-        if (!(g_save.items & (1u << (next - 1)))) continue;
+        if (next == 0) { gs->save.equip[s] = 0; break; }
+        if (!(gs->save.items & (1u << (next - 1)))) continue;
         bool dup = false;
         for (int o = 0; o < MARBLE_NSLOTS; o++)
-            if (o != s && g_save.equip[o] == (uint8_t) next) dup = true;
+            if (o != s && gs->save.equip[o] == (uint8_t) next) dup = true;
         if (dup) continue;
-        g_save.equip[s] = (uint8_t) next;
+        gs->save.equip[s] = (uint8_t) next;
         break;
     }
     persist_save();
@@ -2162,7 +2207,7 @@ static void slot_event_cb(lv_event_t* e) {
         case ST_HUB:
             if (i == 0) start_run();
             else if (i == 1) go_level();
-            else if (i == 2) { g_shop_page = 0; go_shop(); }
+            else if (i == 2) { gs->shop_page = 0; go_shop(); }
             else if (i == 3) go_equip();
             else if (i == 4) go_settings();
             else if (i == 5) go_stats();
@@ -2175,15 +2220,15 @@ static void slot_event_cb(lv_event_t* e) {
 
         case ST_SHOP:
             // Index dynamiques : ils suivent le nombre d'objets reellement
-            // affiches (g_shop_rows), comme dans go_shop().
-            if (i == g_shop_rows) {
+            // affiches (gs->shop_rows), comme dans go_shop().
+            if (i == gs->shop_rows) {
                 int pages = (N_ITEMS + SHOP_PER_PAGE - 1) / SHOP_PER_PAGE;
-                g_shop_page = (g_shop_page + 1) % (pages > 0 ? pages : 1);
+                gs->shop_page = (gs->shop_page + 1) % (pages > 0 ? pages : 1);
                 go_shop();
-            } else if (i == g_shop_rows + 1) {
+            } else if (i == gs->shop_rows + 1) {
                 go_hub();
             } else {
-                shop_action(g_shop_page * SHOP_PER_PAGE + i);
+                shop_action(gs->shop_page * SHOP_PER_PAGE + i);
             }
             break;
 
@@ -2193,21 +2238,21 @@ static void slot_event_cb(lv_event_t* e) {
 
         case ST_SETTINGS:
             if (i == 0) {
-                g_save.difficulty = (uint8_t) ((g_save.difficulty + 1) % D_COUNT);
+                gs->save.difficulty = (uint8_t) ((gs->save.difficulty + 1) % D_COUNT);
                 persist_save();
                 go_settings();
             } else if (i == 1) {
-                g_save.god = g_save.god ? 0 : 1;
+                gs->save.god = gs->save.god ? 0 : 1;
                 persist_save();
                 go_settings();
             } else if (i == 2) {
-                g_save.skin = (uint8_t) ((g_save.skin + 1) % 3);
+                gs->save.skin = (uint8_t) ((gs->save.skin + 1) % 3);
                 persist_save();
                 ball_apply_skin();
                 go_settings();
             } else if (i == 3) {
                 calibrate();
-                set_text_if(g_p_foot, "Calibration prise. La tablette est desormais « a plat ».");
+                set_text_if(gs->p_foot, "Calibration prise. La tablette est desormais « a plat ».");
             } else {
                 go_hub();
             }
@@ -2218,24 +2263,24 @@ static void slot_event_cb(lv_event_t* e) {
             break;
 
         case ST_REWARD:
-            if (i < g_offer_n) {
-                apply_boon(g_offer[i]);
+            if (i < gs->offer_n) {
+                apply_boon(gs->offer[i]);
                 // Pastille HUD du boon fraichement acquis.
-                int b = g_boon_n - 1;
+                int b = gs->boon_n - 1;
                 if (b >= 0 && b < MAX_BOONS) {
-                    set_bg(g_hud_dot[b], BOONS[g_offer[i]].color, LV_OPA_COVER);
-                    show(g_hud_dot[b], true);
+                    set_bg(gs->hud_dot[b], BOONS[gs->offer[i]].color, LV_OPA_COVER);
+                    show(gs->hud_dot[b], true);
                 }
                 g_state = ST_PLAYING;
                 panel_on(false);
                 ball_show(true);
-                g_c_life = -1;   // PV/bouclier ont pu changer
+                gs->c_life = -1;   // PV/bouclier ont pu changer
             }
             break;
 
         case ST_PAUSED:
             if (i == 0) { g_state = ST_PLAYING; panel_on(false); }
-            else if (i == 1) { calibrate(); set_text_if(g_p_sub, "Calibration prise."); }
+            else if (i == 1) { calibrate(); set_text_if(gs->p_sub, "Calibration prise."); }
             else if (i == 2) end_run(false);
             break;
 
@@ -2264,7 +2309,8 @@ void on_imu(float ax, float ay, float /*az*/) {
 }
 
 void calibrate() {
-    tilt_calibrate(g_save.cal_x, g_save.cal_y, g_raw_x, g_raw_y);
+    if (!gs) return;  // la calibration est rangee dans la sauvegarde (jeu ouvert)
+    tilt_calibrate(gs->save.cal_x, gs->save.cal_y, g_raw_x, g_raw_y);
     g_tilt_x = 0; g_tilt_y = 0;
     persist_save();
 }
@@ -2274,7 +2320,13 @@ bool is_open() { return g_state != ST_OFF; }
 void open(const UI& ui) {
     if (g_state != ST_OFF) return;
     if (!ui.root || !ui.field || !ui.hud || !ui.panel) return;
-    g_ui = ui;
+    gs = game_mem_new<Mem>(MemPref::Internal);
+    if (!gs) {
+        ESP_LOGW("marble", "%u o introuvables : jeu non ouvert", (unsigned) sizeof(Mem));
+        if (ui.lvgl) ui.lvgl->show_page(ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
+        return;
+    }
+    gs->ui = ui;
 
     persist_load();
     build_ui();
@@ -2282,18 +2334,18 @@ void open(const UI& ui) {
     // Teinte de la bille selon le cosmetique debloque (corps + reflet).
     ball_apply_skin();
 
-    for (int i = 0; i < MAX_BOONS; i++) show(g_hud_dot[i], false);
+    for (int i = 0; i < MAX_BOONS; i++) show(gs->hud_dot[i], false);
     // La page LVGL est déjà active (navigation via lvgl.page.show dans le YAML).
 
-    g_run_active = false;
+    gs->run_active = false;
     go_hub();
 
     // La pause se declenche en touchant le bandeau HUD (pas de croix a l'ecran :
     // le jeu est un flux plein cadre, on ne remet pas le chrome modal).
-    lv_obj_add_flag(g_ui.hud, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_event_cb(g_ui.hud, hud_event_cb, LV_EVENT_CLICKED, nullptr);
+    lv_obj_add_flag(gs->ui.hud, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(gs->ui.hud, hud_event_cb, LV_EVENT_CLICKED, nullptr);
 
-    if (!g_timer) g_timer = lv_timer_create(tick_cb, 33, nullptr);
+    if (!gs->timer) gs->timer = lv_timer_create(tick_cb, 33, nullptr);
 }
 
 void close() {
@@ -2301,20 +2353,27 @@ void close() {
 
     // Une run abandonnee en cours conserve quand meme ses ames
     // (sauf en mode dieu, hors concours).
-    if (g_run_active && !g_god) {
-        g_run_active = false;
-        g_save.souls += (uint32_t) (g_gold * g_gold_mul * g_soul_mul);
-        uint8_t reached = (uint8_t) (g_room + 1);
-        if (reached > g_save.deepest) g_save.deepest = reached;
+    if (gs->run_active && !gs->god) {
+        gs->run_active = false;
+        gs->save.souls += (uint32_t) (gs->gold * gs->gold_mul * gs->soul_mul);
+        uint8_t reached = (uint8_t) (gs->room + 1);
+        if (reached > gs->save.deepest) gs->save.deepest = reached;
     }
-    g_run_active = false;
+    gs->run_active = false;
     persist_save();
 
-    if (g_timer) { lv_timer_delete(g_timer); g_timer = nullptr; }
-    if (g_ui.hud) lv_obj_remove_event_cb(g_ui.hud, hud_event_cb);
+    if (gs->timer) { lv_timer_delete(gs->timer); gs->timer = nullptr; }
+    if (gs->ui.hud) lv_obj_remove_event_cb(gs->ui.hud, hud_event_cb);
     // Navigation retour vers le sélecteur arcade (page LVGL).
-    if (g_ui.lvgl) g_ui.lvgl->show_page(g_ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
+    if (gs->ui.lvgl) gs->ui.lvgl->show_page(gs->ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);
     g_state = ST_OFF;
+
+    // Rien ne reste reserve : les objets LVGL du jeu (dont le slot « Quitter » dont
+    // le callback nous appelle), puis le bloc qui les pointait. Le callback du HUD
+    // (conteneur YAML) est retire plus haut ; le jeu ne cree rien directement dans
+    // root, d'ou nullptr.
+    ui_destroy(nullptr, {gs->ui.field, gs->ui.hud, gs->ui.panel});
+    game_mem_free(gs);
 }
 
 }  // namespace Marble

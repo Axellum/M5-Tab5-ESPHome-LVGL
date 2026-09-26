@@ -10,6 +10,10 @@
  *      jamais et le Tab « réfléchissait » indéfiniment.
  * @ai_instruction Un coup valide (`best_sq()`) est disponible dès `begin()` :
  *      toute interruption rend au pire le meilleur candidat statique.
+ * @architecture_constraint Tables de chaînes, influence, candidats et état de la
+ *      recherche (≈ 5 Ko) vivent dans un bloc pris par scratch_acquire() et rendu
+ *      par scratch_release() — Go::open() / Go::close(), comme le brouillon du
+ *      moteur (audit du 26/09/2026, lot 4 : un jeu fermé ne réserve rien).
  */
 #pragma once
 #include "go_engine.h"
@@ -28,6 +32,13 @@ enum State : uint8_t { AI_IDLE = 0, AI_THINKING, AI_DONE, AI_ABORT };
 
 // Sentinelle : best_sq() == RESIGN → l'IA abandonne (écart de score trop grand).
 static constexpr int RESIGN = -2;
+
+// Brouillon de l'IA : idempotent, false si la mémoire manque. Sans lui, begin()
+// et step() ne font rien, state() rend AI_IDLE, ready() false, best_sq() PASS,
+// progress_pct() 0 et abort() rien — jamais le cas jeu ouvert (Go::open() ne
+// s'ouvre pas sans). level_name() n'en a pas besoin.
+bool scratch_acquire();
+void scratch_release();
 
 // Prépare la recherche. `seed` décorrèle les parties (départage aléatoire des
 // coups de score égal). `komi` doit être celui de la partie (0,5 en handicap).

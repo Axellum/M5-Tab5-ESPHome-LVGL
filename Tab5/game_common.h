@@ -21,9 +21,12 @@
 #include "esphome.h"
 #include "esphome/core/preferences.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include "esp_heap_caps.h"
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <initializer_list>
+#include <new>
 
 namespace esphome { namespace font { class Font; } }
 
@@ -41,6 +44,57 @@ namespace GameCommon {
 static constexpr uint32_t PAUSE_GAP_MS = 2000;
 
 // ---------------------------------------------------------------------------
+// Mémoire d'un jeu : rien de réservé tant qu'il est fermé
+// ---------------------------------------------------------------------------
+// Audit du 26/09/2026 (lot 4, choix d'Axel : « pas de réserve mémoire pour les jeux
+// si non actif »). L'état d'une partie — tableaux, pointeurs LVGL, tampons texte —
+// vit dans une ou deux structures créées par open() et rendues par close() ; les
+// objets LVGL du jeu sont détruits à la fermeture et reconstruits à l'ouverture.
+//   Internal : lu à chaque tick → RAM interne d'abord, PSRAM en secours ;
+//   Psram    : lu par coup ou par événement (historiques, tables de coups) →
+//              PSRAM d'abord, comme les EXT_RAM_BSS_ATTR qu'il remplace.
+// `new (p) T()` : les initialiseurs par défaut des membres reprennent ceux des
+// anciens globaux, et chaque ouverture repart de cet état. Ce qui doit survivre à
+// une fermeture (réglages, sauvegarde NVS déjà chargée…) reste hors de ces blocs.
+enum class MemPref : uint8_t { Internal, Psram };  // pas HOT : macro d'ESPHome
+
+template <typename T>
+static inline T* game_mem_new(MemPref pref) {
+    const uint32_t internal = MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT;
+    const uint32_t psram    = MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT;
+    void* p = heap_caps_malloc(sizeof(T), pref == MemPref::Internal ? internal : psram);
+    if (!p) p = heap_caps_malloc(sizeof(T), pref == MemPref::Internal ? psram : internal);
+    return p ? new (p) T() : nullptr;
+}
+
+template <typename T>
+static inline void game_mem_free(T*& p) {
+    if (!p) return;
+    p->~T();
+    heap_caps_free(p);
+    p = nullptr;
+}
+
+// Détruit tout ce que le jeu a créé sous ses conteneurs YAML (ui_components/
+// <jeu>_game.yaml), sans toucher aux conteneurs eux-mêmes : les enfants de `root`
+// qui ne sont pas dans `keep` sont supprimés, les conteneurs de `keep` sont vidés.
+// Sûr depuis le callback d'un objet supprimé : LVGL 9.5 marque l'événement en
+// cours (lv_event_mark_deleted), remet l'entrée tactile à zéro et retire les
+// animations de l'objet (lv_obj.c, lv_obj_tree.c).
+static inline void ui_destroy(lv_obj_t* root, std::initializer_list<lv_obj_t*> keep) {
+    for (lv_obj_t* c : keep) {
+        if (c) lv_obj_clean(c);
+    }
+    if (!root) return;
+    for (int i = (int) lv_obj_get_child_count(root) - 1; i >= 0; i--) {
+        lv_obj_t* child = lv_obj_get_child(root, i);
+        bool kept = false;
+        for (lv_obj_t* c : keep) kept = kept || (c == child);
+        if (!kept) lv_obj_delete(child);
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Arithmétique / aléa
 // ---------------------------------------------------------------------------
 
@@ -48,9 +102,10 @@ static inline float clampf(float v, float lo, float hi) {
     return v < lo ? lo : (v > hi ? hi : v);
 }
 
-// xorshift32 (Marsaglia). L'ÉTAT reste dans chaque jeu (`static uint32_t s_rng`) :
-// il est semé par run (tick, sauvegarde) et parfois persisté (Trivia). Ne jamais
-// laisser l'état à 0 : la suite serait alors nulle pour toujours.
+// xorshift32 (Marsaglia). L'ÉTAT reste dans chaque jeu (`s_rng` global, ou dans son
+// bloc Mem s'il est ré-amorcé à chaque partie) : il est semé par run (tick,
+// sauvegarde) et parfois persisté (Trivia). Ne jamais laisser l'état à 0 : la
+// suite serait alors nulle pour toujours.
 static inline uint32_t xorshift32_next(uint32_t& s) {
     s ^= s << 13;
     s ^= s >> 17;

@@ -15,6 +15,7 @@
 #include "chess_ai.h"
 #include "esphome.h"
 #include "esp_heap_caps.h"
+#include <array>
 #include <cstring>
 #include <cstdio>
 
@@ -28,7 +29,14 @@ static const char* const TAG = "chess";
 
 // Les 64 cases valides de la mailbox 0x88, dans l'ordre a1..h8.
 // Iterer dessus evite de parcourir les 128 entrees dont la moitie est hors jeu.
-static uint8_t SQ64[64];
+// Calculee a la compilation (flash) : plus de RAM ni d'init() (26/09/2026).
+static constexpr std::array<uint8_t, 64> SQ64 = [] {
+    std::array<uint8_t, 64> t{};
+    int k = 0;
+    for (int r = 0; r < 8; r++)
+        for (int f = 0; f < 8; f++) t[k++] = (uint8_t)((r << 4) | f);
+    return t;
+}();
 
 // Deplacements elementaires, en index 0x88.
 static const int8_t OFF_KNIGHT[8] = { 33,  31,  18,  14, -14, -18, -31, -33};
@@ -39,7 +47,18 @@ static const int8_t OFF_KING[8]   = { 17,  16,  15,   1,  -1, -15, -16, -17};
 // Masque applique aux droits de roque a chaque coup :
 // castling &= MASK[from] & MASK[to]. Un roi ou une tour qui bouge (ou une tour
 // qui se fait capturer sur sa case d'origine) perd le droit correspondant.
-static uint8_t CASTLE_MASK[128];
+// Calcule a la compilation (flash) : plus de RAM ni d'init() (26/09/2026).
+static constexpr std::array<uint8_t, 128> CASTLE_MASK = [] {
+    std::array<uint8_t, 128> t{};
+    for (int i = 0; i < 128; i++) t[i] = 0x0F;
+    t[0x00] = (uint8_t) ~CR_WQ;              // a1 : tour dame blanche
+    t[0x07] = (uint8_t) ~CR_WK;              // h1 : tour roi blanche
+    t[0x04] = (uint8_t) ~(CR_WK | CR_WQ);    // e1 : roi blanc
+    t[0x70] = (uint8_t) ~CR_BQ;              // a8
+    t[0x77] = (uint8_t) ~CR_BK;              // h8
+    t[0x74] = (uint8_t) ~(CR_BK | CR_BQ);    // e8
+    return t;
+}();
 
 // Valeur materielle par type (centiemes de pion). Le roi vaut 0 : il est
 // toujours present des deux cotes, l'inclure ne ferait que du bruit.
@@ -130,7 +149,7 @@ static const int PASSED[8] = {0, 5, 10, 20, 35, 60, 90, 0};
 // detection de repetition au niveau partie : jamais dans le hot-path.
 // Calculee a la compilation (constexpr) : la table vit en flash, pas en RAM interne.
 // Meme xorshift, meme graine et meme ordre de tirage que l'ancien remplissage
-// dans init() : les empreintes sont inchangees.
+// dans l'ancien init() : les empreintes sont inchangees.
 
 // xorshift64 : suffisant pour des clefs Zobrist et pour le tirage des coups.
 static constexpr uint64_t rnd64(uint64_t& s) {
@@ -158,8 +177,6 @@ static constexpr ZobristKeys make_zobrist() {
 
 static constexpr ZobristKeys ZOBRIST = make_zobrist();
 
-static bool g_inited = false;
-
 // --- Tampons de coups partages, indexes par ply ----------------------------
 // [AI-CONTEXT] 16 x 220 x (4 + 2) = ~20,6 Ko echanges contre zero pression sur
 // la pile de la tache ESPHome. Ils ne sont pas statiques : ensure_buffers() les
@@ -170,10 +187,8 @@ static bool g_inited = false;
 static Move    (*g_mbuf)[MAX_MOVES] = nullptr;
 static int16_t (*g_sbuf)[MAX_MOVES] = nullptr;
 static bool ensure_buffers();
-static Move    g_killer[MAX_PLY_BUF][2];
-// Tampons dedies a la generation SAN (appelee depuis l'UI, jamais depuis la
-// recherche) : evite 1,7 Ko de pile a chaque coup joue.
-static Move    g_sanbuf[MAX_MOVES];
+// Coups « tueurs » par ply : dans SearchMem avec les tampons ci-dessus (26/09/2026).
+static Move    (*g_killer)[2] = nullptr;
 
 // --- Etat partage de la recherche (garde-fou temporel) ---------------------
 // Volontairement separes de SearchState : search_quick() (indice) doit pouvoir
@@ -206,23 +221,6 @@ static inline uint32_t rnd32() {
 
 // Index 0..63 (a1 = 0) a partir d'un index 0x88.
 static inline int to64(uint8_t sq) { return ((sq >> 4) << 3) | (sq & 7); }
-
-void init() {
-    if (g_inited) return;
-    int k = 0;
-    for (int r = 0; r < 8; r++)
-        for (int f = 0; f < 8; f++) SQ64[k++] = (uint8_t)((r << 4) | f);
-
-    for (int i = 0; i < 128; i++) CASTLE_MASK[i] = 0x0F;
-    CASTLE_MASK[0x00] = (uint8_t) ~CR_WQ;              // a1 : tour dame blanche
-    CASTLE_MASK[0x07] = (uint8_t) ~CR_WK;              // h1 : tour roi blanche
-    CASTLE_MASK[0x04] = (uint8_t) ~(CR_WK | CR_WQ);    // e1 : roi blanc
-    CASTLE_MASK[0x70] = (uint8_t) ~CR_BQ;              // a8
-    CASTLE_MASK[0x77] = (uint8_t) ~CR_BK;              // h8
-    CASTLE_MASK[0x74] = (uint8_t) ~(CR_BK | CR_BQ);    // e8
-
-    g_inited = true;
-}
 
 uint64_t hash_of(const Position& p) {
     uint64_t h = 0;
@@ -263,7 +261,6 @@ static char piece_to_char(uint8_t pc) {
 }
 
 bool set_fen(Position& p, const char* fen) {
-    init();
     if (!fen) return false;
     memset(p.board, EMPTY, sizeof(p.board));
     p.side = WHITE; p.castling = 0; p.ep = NO_SQ;
@@ -785,7 +782,6 @@ int eval(const Position& p) {
 // ===========================================================================
 
 uint64_t perft(Position& p, int depth) {
-    init();
     if (depth <= 0) return 1;
     if (!ensure_buffers()) return 0;
     if (depth >= MAX_PLY_BUF) depth = MAX_PLY_BUF - 1;
@@ -802,7 +798,6 @@ uint64_t perft(Position& p, int depth) {
 }
 
 bool perft_selftest(int depth) {
-    init();
     // Valeurs de reference FIDE pour la position initiale (litterature echiquenne).
     static const uint64_t REF[6] = {1ull, 20ull, 400ull, 8902ull, 197281ull, 4865609ull};
     if (depth < 1) depth = 1;
@@ -854,9 +849,22 @@ void move_to_uci(const Move& m, char* out, int cap) {
     out[k] = 0;
 }
 
+// Brouillon de la generation SAN (appelee depuis l'UI, jamais depuis la
+// recherche) : 880 o pris le temps de l'appel, ni sur la pile de la boucle ni
+// reserves jeu ferme (26/09/2026). S'il manque, le coup s'ecrit sans
+// desambiguisation ni suffixe d'echec : jamais faux, seulement moins precis.
+namespace {
+struct SanScratch {
+    Move* buf = static_cast<Move*>(
+        heap_caps_malloc(sizeof(Move) * MAX_MOVES, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
+    ~SanScratch() { heap_caps_free(buf); }
+};
+}  // namespace
+
 void move_to_san(const Position& before, const Move& m, char* out, int cap) {
     if (!out || cap < 12) return;
-    init();
+    SanScratch scratch;
+    Move* const sanbuf = scratch.buf;
     int k = 0;
     const uint8_t pc = before.board[m.from];
     const uint8_t t  = pc & TYPE_MASK;
@@ -873,10 +881,10 @@ void move_to_san(const Position& before, const Move& m, char* out, int cap) {
             // Desambiguisation : une autre piece du meme type peut-elle aller
             // sur la meme case ? Si oui on precise la colonne, sinon la rangee,
             // sinon les deux (cas des 3 dames apres promotions).
-            const int n = gen_legal(before, g_sanbuf);
+            const int n = sanbuf ? gen_legal(before, sanbuf) : 0;
             bool need = false, same_file = false, same_rank = false;
             for (int i = 0; i < n; i++) {
-                const Move& o = g_sanbuf[i];
+                const Move& o = sanbuf[i];
                 if (o.to != m.to || o.from == m.from) continue;
                 if (before.board[o.from] != pc) continue;
                 need = true;
@@ -903,8 +911,8 @@ void move_to_san(const Position& before, const Move& m, char* out, int cap) {
     Position q = before;
     Undo u;
     if (make(q, m, u)) {
-        if (in_check(q, q.side)) {
-            const int nl = gen_legal(q, g_sanbuf);
+        if (sanbuf && in_check(q, q.side)) {
+            const int nl = gen_legal(q, sanbuf);
             if (k < cap - 1) out[k++] = (nl == 0) ? '#' : '+';
         }
         unmake(q, m, u);
@@ -1058,6 +1066,7 @@ struct SearchState {
 struct SearchMem {
     Move        mbuf[MAX_PLY_BUF][MAX_MOVES];
     int16_t     sbuf[MAX_PLY_BUF][MAX_MOVES];
+    Move        killer[MAX_PLY_BUF][2];
     SearchState ss;
 };
 static SearchMem*   g_mem = nullptr;
@@ -1080,6 +1089,7 @@ static bool ensure_buffers() {
     g_mem  = static_cast<SearchMem*>(m);
     g_mbuf = g_mem->mbuf;
     g_sbuf = g_mem->sbuf;
+    g_killer = g_mem->killer;
     g_ss   = &g_mem->ss;
     return true;
 }
@@ -1089,6 +1099,7 @@ void search_release() {
     g_mem  = nullptr;
     g_mbuf = nullptr;
     g_sbuf = nullptr;
+    g_killer = nullptr;
     g_ss   = nullptr;
 }
 
@@ -1114,7 +1125,6 @@ static void search_finish() {
 }
 
 void search_start(const Position& p, int level, uint32_t seed) {
-    init();
     if (level < 0) level = 0;
     if (level >= AI_NLEVELS) level = AI_NLEVELS - 1;
     if (seed) g_rng = seed | 1u;
@@ -1126,7 +1136,7 @@ void search_start(const Position& p, int level, uint32_t seed) {
         g_fallback_best = n > 0 ? legal[rnd32() % (uint32_t) n] : Move{0, 0, 0, 0};
         return;
     }
-    memset(g_killer, 0, sizeof(g_killer));
+    memset(g_mem->killer, 0, sizeof(g_mem->killer));
     g_ss->pos        = p;
     g_ss->level      = level;
     g_ss->n_root     = gen_legal(p, g_ss->root);
@@ -1266,7 +1276,6 @@ uint32_t search_cpu_ms()     { return g_ss ? g_ss->cpu_ms : 0; }
 uint16_t search_budget_ms()  { return g_ss ? AI_LEVELS[g_ss->level].budget_ms : 0; }
 
 Move search_quick(const Position& p, int depth, uint16_t max_ms, int* score_out) {
-    init();
     if (!ensure_buffers()) { if (score_out) *score_out = 0; return Move{0, 0, 0, 0}; }
     Position q = p;
     Move* mv = g_mbuf[0];

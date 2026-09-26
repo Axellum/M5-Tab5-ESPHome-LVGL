@@ -26,12 +26,20 @@
  *      lv_timer créé à l'ouverture et détruit à la fermeture (zéro tick
  *      gameplay quand le jeu est fermé).
  *
+ * @architecture_constraint MÉMOIRE (lot 4 de l'audit du 26/09/2026). Jeu fermé,
+ *      il ne réserve rien : son état vit dans un bloc créé par open() et rendu
+ *      par close(), et ses objets LVGL sont détruits à la fermeture puis
+ *      reconstruits à l'ouverture. Ne survivent que quelques octets (état
+ *      ouvert/fermé, accès NVS, lectures IMU, passe-haut du nudge, graine
+ *      d'aléa) — détail dans la section 7 de pinball_game.cpp.
+ *
  * [AI-WARNING] Ne PAS dessiner les murs, guides ou flippers avec
  *      `transform_rotation` : c'est exactement ce qui avait rendu l'ancien
  *      « Flip Noir » (supprimé en 697e2e9) à la fois laid et cher. La table est
- *      construite UNE fois en géométrie fixe (arcs + polylignes + rectangles
- *      arrondis) ; seuls la bille, les flippers, les flashes et le plunger
- *      bougent. Voir la section 10 de pinball_game.cpp.
+ *      construite une fois par ouverture (jamais par frame) en géométrie fixe
+ *      (arcs + polylignes + rectangles arrondis) ; seuls la bille, les
+ *      flippers, les flashes et le plunger bougent. Voir la section 13 de
+ *      pinball_game.cpp.
  */
 #pragma once
 #include "esphome.h"
@@ -135,12 +143,15 @@ struct UI {
     esphome::lvgl::LvglComponent* lvgl = nullptr;
 };
 
-// Ouvre le jeu sur le hub (construit l'UI au premier appel, la réutilise
-// ensuite), bascule l'écran en portrait et démarre le lv_timer. Idempotent.
+// Ouvre le jeu sur le hub : crée son bloc d'état, recharge la sauvegarde NVS,
+// bascule l'écran en portrait, construit l'UI (à chaque ouverture) et démarre
+// le lv_timer. Sans mémoire disponible : retour à `home_idx`, jeu non ouvert.
+// Idempotent.
 void open(const UI& ui);
 
-// Ferme le jeu : arrête le timer, sauvegarde en NVS, masque l'overlay et
-// RESTAURE le paysage 270°. Idempotent (sans effet si déjà fermé).
+// Ferme le jeu : arrête le timer, sauvegarde en NVS, RESTAURE le paysage 270°
+// et revient à `home_idx`, puis détruit l'UI du jeu et rend son bloc d'état.
+// Idempotent (sans effet si déjà fermé).
 void close();
 
 // True tant que l'overlay est visible (utilisé pour router les événements et
@@ -153,12 +164,15 @@ void on_imu(float ax, float ay, float az);
 
 // Prend l'inclinaison courante comme référence « tablette à plat ».
 // Accessible depuis les réglages du hub et depuis l'écran de pause.
+// Sans effet jeu fermé (la sauvegarde n'est alors pas en mémoire).
 void calibrate_flat();
 
 // Écrit immédiatement la sauvegarde en NVS (appelé aux moments clés).
+// Sans effet jeu fermé.
 void persist_save();
 
-// Recharge la sauvegarde depuis la NVS (appelé au premier open()).
+// Recharge la sauvegarde depuis la NVS (appelé à chaque open()). Sans effet
+// jeu fermé.
 void persist_load();
 
 }  // namespace Pinball

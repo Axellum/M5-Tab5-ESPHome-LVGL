@@ -11,6 +11,21 @@ réduit à des conteneurs vides, tout le contenu construit en C++, `lv_timer` cr
 à l'ouverture et détruit à la fermeture, persistance NVS, **zéro dépendance Home
 Assistant ou réseau**.
 
+**Jeu fermé, rien ne reste réservé** (26/09/2026, lot 4 de l'audit des ressources) :
+l'état d'une console — tableaux, pointeurs LVGL, tampons texte, brouillons d'IA — vit
+dans des blocs pris par `open()` et rendus par `close()` (`game_mem_new()` /
+`game_mem_free()`, `game_common.h`) : `MemPref::Internal` pour ce qui est lu à chaque
+tick, `MemPref::Psram` pour ce qui ne l'est qu'une fois par coup (historiques, piles
+d'annulation). Les objets LVGL du jeu sont détruits à la fermeture (`ui_destroy()`,
+conteneurs YAML conservés) et reconstruits à l'ouverture. Ne survivent, hors blocs,
+que quelques octets par jeu : l'état ouvert/fermé lu par le registre, les dernières
+lectures IMU (`dispatch_imu()` les envoie aussi aux jeux fermés), le `NvsSlot` (le
+recréer ferait fuir un backend de préférences à chaque ouverture) et les filtres ou
+graines d'aléa dont la remise à zéro changerait le jeu. **Exception voulue** : une
+partie d'échecs ou de Trial Poursuite **en cours** garde son état (bloc `Play`) pour
+reprendre à l'identique ; il est rendu dès qu'elle est finie. Mesure : 46,8 Ko de RAM
+interne et 34,3 Ko de PSRAM statiques → 377 o pour les 8 consoles.
+
 **Une exception à l'orientation** : « Neon Apron » (#3) bascule LVGL en
 **portrait 720×1280** à l'ouverture et restaure `rotation: 270` à la fermeture —
 un flipper couché sur le côté ne ressemble à rien. C'est la seule console qui
@@ -170,7 +185,7 @@ Le décalage de position des bonus par le seed est en plus contraint côté C++ 
 
 - Physique à **30 Hz** (`lv_timer` 33 ms) créé à l'ouverture et **détruit à la fermeture** → zéro tick gameplay hors jeu.
 - **3 sous-pas** de collision par frame (anti-tunnelling à 650 px/s), résolution cercle/AABB avec réflexion sur la normale.
-- Objets LVGL **préalloués une seule fois** (pool de 48 entités + bille + 4 bandes de vignette) puis recyclés par `show/hide` + `set_pos` : aucune allocation dans la boucle. Les libellés du HUD ne sont réécrits que si leur valeur change.
+- Objets LVGL **préalloués à l'ouverture** (pool de 48 entités + bille + 4 bandes de vignette) puis recyclés par `show/hide` + `set_pos` : aucune allocation dans la boucle. Les libellés du HUD ne sont réécrits que si leur valeur change.
 - IMU : les 3 axes d'accélération sont `internal: true` (ils saturaient l'API HA pour rien) ; la **cadence de poll est adaptative** — 100 ms au repos, 33 ms quand le jeu est ouvert (`stop_poller()`/`start_poller()`, car `set_update_interval()` seul ne re-régle pas le poller déjà enregistré).
 - Feedback de dégât : 4 bandes de bord fines + clignotement de la bille + micro-tremblement — **pas** de shake plein écran (il invaliderait 1280×672 à chaque frame).
 
@@ -464,8 +479,11 @@ Une partie de Go fait des centaines de coups : l'écriture flash est **différé
 en fin de partie et à la fermeture. Réglages, statistiques par taille/niveau et
 position en cours sont conservés ; la liste des coups et la pile d'annulation ne
 le sont pas (reprendre une sauvegarde restitue la position, pas l'historique).
-La pile d'annulation (30 positions, 11 Ko) vit en PSRAM (`EXT_RAM_BSS_ATTR`) :
-elle n'est touchée qu'une fois par coup joué ou annulé.
+La pile d'annulation (30 positions, 11 Ko) vit dans le bloc `Cold`, pris en PSRAM à
+l'ouverture et rendu à la fermeture : elle n'est touchée qu'une fois par coup joué ou
+annulé. Les brouillons du moteur et de l'IA (`Engine::scratch_acquire()`,
+`Ai::scratch_acquire()`, ≈ 9 Ko) suivent le même cycle ; `tools/test_go_engine.cpp`
+prend celui du moteur lui-même.
 
 ### Build
 
@@ -581,8 +599,9 @@ pèse 4,7 Ko, et la tâche ESPHome n'avait que 8 Ko (16 Ko depuis #150). Elles v
 dans un tampon de 42 Ko, une ligne par ply, alloué au premier coup réfléchi (RAM
 interne, PSRAM en repli) et rendu par `Ai::release()` à la fermeture. Les coups
 racine, les coups légaux de l'interface et la pile d'annulation (12,8 Ko en tout) sont
-en PSRAM (`EXT_RAM_BSS_ATTR`) : ils ne sont touchés qu'une fois par coup (les coups
-racine, une fois par coup racine et par profondeur), jamais à chaque nœud. Chaque coup
+dans des blocs pris en PSRAM à l'ouverture (`Cold`, `Ai::Cold`) et rendus à la
+fermeture : ils ne sont touchés qu'une fois par coup (les coups racine, une fois par
+coup racine et par profondeur), jamais à chaque nœud. Chaque coup
 de l'IA est tracé dans les logs (tag `dames`), avec la pile libre minimale de la tâche.
 
 ### Notes techniques
@@ -645,18 +664,15 @@ ferait déborder la stack de la tâche ESPHome. Ils ne sont pas statiques : un b
 tag `chess`), et rendu par `search_release()` à la fermeture du jeu. Aucune
 allocation dans le hot-path pour autant : le bloc est pris une fois par session.
 
-**Empreinte mesurée** (`riscv32-esp-elf-size -A`, `-O2`, cible ESP32-P4, 26/09/2026) :
-
-| Unité | `.text` | `.rodata` | `.bss` interne | `.bss` en PSRAM |
-|---|---|---|---|---|
-| `chess_ai.o` | 11,6 Ko | 8,9 Ko | 1,2 Ko | — |
-| `chess_game.o` | 26,4 Ko | 3,2 Ko | 3,2 Ko | 10,0 Ko |
-
-Jeu fermé, les échecs ne gardent donc que ~4,5 Ko de RAM interne (41 Ko de moins
-qu'avant le 26/09/2026). La table Zobrist (7,7 Ko) est calculée à la compilation et
-vit en flash : elle ne sert qu'à `hash_of()`, une fois par coup joué. L'historique de
-partie (320 demi-coups × 32 o) est en PSRAM (`EXT_RAM_BSS_ATTR`) : il n'est touché
-qu'une fois par coup, jamais par la recherche. Ne pas augmenter `MAX_PLY_BUF` ni
+**Empreinte** (26/09/2026, lot 4) : jeu fermé sans partie en cours, les échecs ne
+gardent que **78 o** (`nm`) ; une partie **suspendue** garde son bloc `Play` (≈ 1,2 Ko
+de RAM interne : position, coups légaux, pendules) et son historique `PlayHist`
+(10 Ko en PSRAM) pour reprendre à l'identique, « Annuler » et triple répétition
+compris. Les tables `SQ64`, `CASTLE_MASK` et Zobrist sont calculées à la compilation
+et vivent en flash (plus d'`init()`) ; les coups « tueurs » sont dans le bloc de
+recherche ; le brouillon de la notation SAN (880 o) n'est pris que le temps de
+l'appel. L'historique de partie (320 demi-coups × 32 o) n'est touché qu'une fois par
+coup, jamais par la recherche. Ne pas augmenter `MAX_PLY_BUF` ni
 `MAX_HIST` sans re-mesurer.
 
 ### Modes & niveaux d'IA

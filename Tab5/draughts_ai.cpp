@@ -5,11 +5,15 @@
  * @architecture_constraint Chaque step() consomme un budget de nœuds (~600–2000).
  *      Iterative deepening + alpha-bêta ; quiescence (prises seules) au niveau
  *      Expert. Les listes de coups ne sont JAMAIS sur la pile : un Move[96] pèse
- *      4,7 Ko et la tâche ESPHome n'en a que 8. Elles vivent dans g_mbuf (une
+ *      4,7 Ko et la tâche ESPHome n'en a que 8. Elles vivent dans Mem::mbuf (une
  *      ligne par ply), alloué au premier coup réfléchi et rendu par release().
+ *      Jeu fermé, l'IA ne réserve rien (audit du 26/09/2026, lot 4) : son état
+ *      (struct Mem, RAM interne d'abord) et ses coups racine (struct Cold, PSRAM
+ *      d'abord) sont pris par acquire() à l'ouverture du jeu et rendus par
+ *      release() à sa fermeture. Sans eux, begin/step/abort ne font rien.
  */
 #include "draughts_ai.h"
-#include "esp_attr.h"
+#include "game_common.h"
 #include "esp_heap_caps.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -37,34 +41,51 @@ static constexpr int MAX_DEPTH = 6;
 static constexpr int MAX_PLY_BUF = 8;
 static constexpr int EVAL_ROW = MAX_PLY_BUF;
 static constexpr size_t MBUF_BYTES = sizeof(Move) * (MAX_PLY_BUF + 1) * Engine::MAX_MOVES;
-static Move* g_mbuf = nullptr;
-
-static inline Move* ply_moves(int ply) { return g_mbuf + ply * Engine::MAX_MOVES; }
 
 // Élargissement maximal du budget d'une tranche quand un coup racine n'y tient pas.
 static constexpr int MAX_BUDGET_MUL = 4;
 
-static State   g_state = AI_IDLE;
-static Level   g_level = LVL_BEGINNER;
-static Pos     g_root;
-// Coups racine (4,7 Ko) en PSRAM : lus une fois par coup racine, pas par nœud.
-static EXT_RAM_BSS_ATTR Move g_root_moves[MAX_ROOT];
-static int     g_root_n = 0;
-static int     g_root_scores[MAX_ROOT];
-static int     g_root_i = 0;
-static int     g_depth_target = 1;
-static int     g_depth_cur = 1;
-static int     g_depth_done = 0;     // dernière profondeur entièrement évaluée
-static int     g_budget_mul = 1;
-static Move    g_best;
-static bool    g_has_best = false;
-static int     g_nodes_left = 0;
-static bool    g_truncated = false;
+// Seul état qui survit à la fermeture du jeu : le générateur pseudo-aléatoire. Il
+// évolue de partie en partie et begin() n'y mêle que millis() (ce n'est pas un
+// ré-amorçage) : le remettre à 0xC0FFEE à chaque ouverture changerait la suite des
+// coups du Débutant et des départages d'égalité.
 static uint32_t g_rng = 0xC0FFEEu;
-// Relevé de la réflexion en cours, pour le log du coup joué.
-static uint32_t g_t_start = 0;
-static int      g_steps = 0;
-static int32_t  g_nodes_total = 0;
+
+// Tout le reste n'existe que jeu ouvert : pris par acquire() (Draughts::open),
+// rendu par release() (Draughts::close) — game_common.h, « Mémoire d'un jeu ».
+struct Mem {
+    // Listes de coups de la recherche (MBUF_BYTES), prises au premier coup réfléchi
+    // par ensure_buffers() et rendues par release().
+    Move*   mbuf = nullptr;
+
+    State   state = AI_IDLE;
+    Level   level = LVL_BEGINNER;
+    Pos     root;
+    int     root_n = 0;
+    int     root_scores[MAX_ROOT];
+    int     root_i = 0;
+    int     depth_target = 1;
+    int     depth_cur = 1;
+    int     depth_done = 0;     // dernière profondeur entièrement évaluée
+    int     budget_mul = 1;
+    Move    best;
+    bool    has_best = false;
+    int     nodes_left = 0;
+    bool    truncated = false;
+    // Relevé de la réflexion en cours, pour le log du coup joué.
+    uint32_t t_start = 0;
+    int      steps = 0;
+    int32_t  nodes_total = 0;
+};
+// Coups racine (4,7 Ko) : lus une fois par coup racine, pas par nœud → bloc COLD
+// (PSRAM d'abord), comme l'ancien EXT_RAM_BSS_ATTR.
+struct Cold {
+    Move root_moves[MAX_ROOT];
+};
+static Mem*  gs = nullptr;
+static Cold* gc = nullptr;
+
+static inline Move* ply_moves(int ply) { return gs->mbuf + ply * Engine::MAX_MOVES; }
 
 static inline uint32_t rnd() {
     g_rng ^= g_rng << 13;
@@ -101,12 +122,12 @@ static const char* level_name(Level lv) {
 }
 
 static bool ensure_buffers() {
-    if (g_mbuf) return true;
+    if (gs->mbuf) return true;
     // RAM interne d'abord (plus rapide), PSRAM si elle est trop fragmentée.
-    g_mbuf = static_cast<Move*>(heap_caps_malloc(MBUF_BYTES, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
-    if (!g_mbuf)
-        g_mbuf = static_cast<Move*>(heap_caps_malloc(MBUF_BYTES, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
-    return g_mbuf != nullptr;
+    gs->mbuf = static_cast<Move*>(heap_caps_malloc(MBUF_BYTES, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
+    if (!gs->mbuf)
+        gs->mbuf = static_cast<Move*>(heap_caps_malloc(MBUF_BYTES, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
+    return gs->mbuf != nullptr;
 }
 
 static int eval_side(const Pos& p) {
@@ -116,7 +137,7 @@ static int eval_side(const Pos& p) {
 
 // Quiescence negamax : uniquement les prises (Expert).
 static int quiescence(const Pos& p, int alpha, int beta, int qdepth, int ply) {
-    if (--g_nodes_left <= 0) { g_truncated = true; return eval_side(p); }
+    if (--gs->nodes_left <= 0) { gs->truncated = true; return eval_side(p); }
     int stand = eval_side(p);
     if (stand >= beta) return beta;
     if (stand > alpha) alpha = stand;
@@ -136,7 +157,7 @@ static int quiescence(const Pos& p, int alpha, int beta, int qdepth, int ply) {
         Pos c = p;
         Engine::apply_move(c, moves[i]);
         int sc = -quiescence(c, -beta, -alpha, qdepth - 1, ply + 1);
-        if (g_truncated) return alpha;
+        if (gs->truncated) return alpha;
         if (sc >= beta) return beta;
         if (sc > alpha) alpha = sc;
     }
@@ -145,7 +166,7 @@ static int quiescence(const Pos& p, int alpha, int beta, int qdepth, int ply) {
 
 // Negamax : score du côté au trait, eval toujours +blancs/−noirs.
 static int negamax(const Pos& p, int depth, int alpha, int beta, bool use_q, int ply) {
-    if (--g_nodes_left <= 0) { g_truncated = true; return 0; }
+    if (--gs->nodes_left <= 0) { gs->truncated = true; return 0; }
 
     int winner = -1;
     if (Engine::is_terminal(p, &winner)) {
@@ -185,7 +206,7 @@ static int negamax(const Pos& p, int depth, int alpha, int beta, bool use_q, int
         Pos c = p;
         Engine::apply_move(c, moves[i]);
         int sc = -negamax(c, depth - 1, -beta, -alpha, use_q, ply + 1);
-        if (g_truncated) return best;
+        if (gs->truncated) return best;
         if (sc > best) best = sc;
         if (sc > alpha) alpha = sc;
         if (alpha >= beta) break;
@@ -197,57 +218,58 @@ static void pick_beginner() {
     // Pondération : prises ×4, promotions ×2, sinon 1
     int weights[MAX_ROOT];
     int sum = 0;
-    for (int i = 0; i < g_root_n; i++) {
+    for (int i = 0; i < gs->root_n; i++) {
         int w = 1;
-        if (g_root_moves[i].n_caps > 0) w = 4 + g_root_moves[i].n_caps;
-        if (g_root_moves[i].promote) w += 2;
+        if (gc->root_moves[i].n_caps > 0) w = 4 + gc->root_moves[i].n_caps;
+        if (gc->root_moves[i].promote) w += 2;
         weights[i] = w;
         sum += w;
     }
     int r = (int)(rnd() % (uint32_t)sum);
     int acc = 0;
     int choice = 0;
-    for (int i = 0; i < g_root_n; i++) {
+    for (int i = 0; i < gs->root_n; i++) {
         acc += weights[i];
         if (r < acc) { choice = i; break; }
     }
-    g_best = g_root_moves[choice];
-    g_has_best = true;
-    g_state = AI_DONE;
+    gs->best = gc->root_moves[choice];
+    gs->has_best = true;
+    gs->state = AI_DONE;
 }
 
 static void finish() {
-    g_state = AI_DONE;
+    gs->state = AI_DONE;
     ESP_LOGI(TAG, "IA %s : coup joue apres %u ms, %d tranches, %ld noeuds, profondeur %d/%d, "
                   "pile libre min %u o",
-             level_name(g_level), (unsigned) (esphome::millis() - g_t_start), g_steps,
-             (long) g_nodes_total, g_depth_done, g_depth_target,
+             level_name(gs->level), (unsigned) (esphome::millis() - gs->t_start), gs->steps,
+             (long) gs->nodes_total, gs->depth_done, gs->depth_target,
              (unsigned) uxTaskGetStackHighWaterMark(nullptr));
 }
 
 void begin(const Pos& root, Level level) {
-    g_root = root;
-    g_level = level;
-    g_root_n = Engine::gen_moves(g_root, g_root_moves, MAX_ROOT);
-    g_has_best = false;
-    g_root_i = 0;
-    g_depth_cur = 1;
-    g_depth_done = 0;
-    g_depth_target = max_depth_for(level);
-    g_budget_mul = 1;
-    g_truncated = false;
+    if (!gs) return;  // jeu fermé : aucun état où chercher
+    gs->root = root;
+    gs->level = level;
+    gs->root_n = Engine::gen_moves(gs->root, gc->root_moves, MAX_ROOT);
+    gs->has_best = false;
+    gs->root_i = 0;
+    gs->depth_cur = 1;
+    gs->depth_done = 0;
+    gs->depth_target = max_depth_for(level);
+    gs->budget_mul = 1;
+    gs->truncated = false;
     g_rng ^= (uint32_t)esphome::millis();
-    ESP_LOGI(TAG, "IA %s : a son tour, %d coups possibles", level_name(level), g_root_n);
+    ESP_LOGI(TAG, "IA %s : a son tour, %d coups possibles", level_name(level), gs->root_n);
 
-    if (g_root_n <= 0) {
-        g_state = AI_DONE;
-        g_has_best = false;
+    if (gs->root_n <= 0) {
+        gs->state = AI_DONE;
+        gs->has_best = false;
         return;
     }
-    if (g_root_n == 1) {
-        g_best = g_root_moves[0];
-        g_has_best = true;
-        g_state = AI_DONE;
+    if (gs->root_n == 1) {
+        gs->best = gc->root_moves[0];
+        gs->has_best = true;
+        gs->state = AI_DONE;
         return;
     }
     if (level == LVL_BEGINNER) {
@@ -261,48 +283,48 @@ void begin(const Pos& root, Level level) {
         return;
     }
     // Score initial
-    for (int i = 0; i < g_root_n; i++) g_root_scores[i] = -1000000;
-    g_best = g_root_moves[0];
-    g_has_best = true;
-    g_t_start = esphome::millis();
-    g_steps = 0;
-    g_nodes_total = 0;
-    g_state = AI_THINKING;
+    for (int i = 0; i < gs->root_n; i++) gs->root_scores[i] = -1000000;
+    gs->best = gc->root_moves[0];
+    gs->has_best = true;
+    gs->t_start = esphome::millis();
+    gs->steps = 0;
+    gs->nodes_total = 0;
+    gs->state = AI_THINKING;
 }
 
 void step() {
-    if (g_state != AI_THINKING) return;
+    if (!gs || gs->state != AI_THINKING) return;
 
-    const int budget = node_budget_for(g_level) * g_budget_mul;
-    g_nodes_left = budget;
-    g_truncated = false;
-    bool use_q = (g_level == LVL_EXPERT);
-    const int first = g_root_i;
-    g_steps++;
+    const int budget = node_budget_for(gs->level) * gs->budget_mul;
+    gs->nodes_left = budget;
+    gs->truncated = false;
+    bool use_q = (gs->level == LVL_EXPERT);
+    const int first = gs->root_i;
+    gs->steps++;
 
     // Évalue les coups racine un par un à la profondeur courante
-    while (g_root_i < g_root_n && g_nodes_left > 0) {
-        Pos c = g_root;
-        Engine::apply_move(c, g_root_moves[g_root_i]);
-        int sc = -negamax(c, g_depth_cur - 1, -1000000, 1000000, use_q, 0);
-        if (!g_truncated) {
-            g_root_scores[g_root_i] = sc;
-            g_root_i++;
+    while (gs->root_i < gs->root_n && gs->nodes_left > 0) {
+        Pos c = gs->root;
+        Engine::apply_move(c, gc->root_moves[gs->root_i]);
+        int sc = -negamax(c, gs->depth_cur - 1, -1000000, 1000000, use_q, 0);
+        if (!gs->truncated) {
+            gs->root_scores[gs->root_i] = sc;
+            gs->root_i++;
         } else {
             break;  // reprendra ce coup au prochain step
         }
     }
-    g_nodes_total += budget - (g_nodes_left > 0 ? g_nodes_left : 0);
+    gs->nodes_total += budget - (gs->nodes_left > 0 ? gs->nodes_left : 0);
 
-    if (g_root_i < g_root_n) {
+    if (gs->root_i < gs->root_n) {
         // Le premier coup racine de la tranche a eu tout le budget sans aboutir. La
         // recherche est déterministe : il échouerait à l'identique à chaque tranche,
         // et l'IA « réfléchissait » alors sans fin (vu en Expert). On élargit le
         // budget, puis on joue le meilleur coup de la dernière profondeur complète
         // (à défaut, le premier coup légal).
-        if (g_truncated && g_root_i == first) {
-            if (g_budget_mul < MAX_BUDGET_MUL) {
-                g_budget_mul *= 2;
+        if (gs->truncated && gs->root_i == first) {
+            if (gs->budget_mul < MAX_BUDGET_MUL) {
+                gs->budget_mul *= 2;
                 return;
             }
             finish();
@@ -312,36 +334,51 @@ void step() {
 
     // Choisit le meilleur à cette profondeur
     int bi = 0;
-    for (int i = 1; i < g_root_n; i++) {
-        if (g_root_scores[i] > g_root_scores[bi]) bi = i;
-        else if (g_root_scores[i] == g_root_scores[bi] && (rnd() & 1)) bi = i;
+    for (int i = 1; i < gs->root_n; i++) {
+        if (gs->root_scores[i] > gs->root_scores[bi]) bi = i;
+        else if (gs->root_scores[i] == gs->root_scores[bi] && (rnd() & 1)) bi = i;
     }
-    g_best = g_root_moves[bi];
-    g_has_best = true;
-    g_depth_done = g_depth_cur;
+    gs->best = gc->root_moves[bi];
+    gs->has_best = true;
+    gs->depth_done = gs->depth_cur;
 
-    if (g_depth_cur >= g_depth_target) {
+    if (gs->depth_cur >= gs->depth_target) {
         finish();
         return;
     }
     // Iterative deepening : profondeur suivante
-    g_depth_cur++;
-    g_root_i = 0;
+    gs->depth_cur++;
+    gs->root_i = 0;
 }
 
-State state() { return g_state; }
-bool ready() { return g_state == AI_DONE && g_has_best; }
-const Move& best() { return g_best; }
+// Sans état (jeu fermé) : aucune recherche, rien de prêt.
+State state() { return gs ? gs->state : AI_IDLE; }
+bool ready() { return gs && gs->state == AI_DONE && gs->has_best; }
+const Move& best() {
+    static const Move NONE{};  // jeu fermé : ready() est faux, personne ne le joue
+    return gs ? gs->best : NONE;
+}
 
 void abort() {
-    g_state = AI_ABORT;
-    g_has_best = false;
+    if (!gs) return;
+    gs->state = AI_ABORT;
+    gs->has_best = false;
+}
+
+bool acquire() {
+    if (!gs) gs = game_mem_new<Mem>(MemPref::Internal);
+    if (!gc) gc = game_mem_new<Cold>(MemPref::Psram);
+    if (gs && gc) return true;
+    ESP_LOGW(TAG, "IA : %u + %u o introuvables", (unsigned) sizeof(Mem), (unsigned) sizeof(Cold));
+    release();
+    return false;
 }
 
 void release() {
     abort();
-    heap_caps_free(g_mbuf);
-    g_mbuf = nullptr;
+    if (gs) heap_caps_free(gs->mbuf);  // listes de coups (ensure_buffers), nul si jamais prises
+    game_mem_free(gc);
+    game_mem_free(gs);
 }
 
 }  // namespace Ai

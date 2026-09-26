@@ -138,9 +138,6 @@ extern const AiLevel AI_LEVELS[AI_NLEVELS];
 // 3. API du moteur
 // ===========================================================================
 
-// Initialise les tables internes (Zobrist, masques de roque). Idempotent.
-void init();
-
 // Position de depart FIDE.
 void set_start(Position& p);
 
