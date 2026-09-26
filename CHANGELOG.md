@@ -48,7 +48,9 @@ même. Seul le firmware change pour Draw Max.
     firmware n'émet pas (dernier passage le 16/07/2026) ;
   - le script `tab5_dismiss_info_panel`, sans appelant.
 - **Firmware** : « Tab5 Draw Max » passe en `internal: true`. La campagne de mesure est
-  close, et le capteur faisait ≈ 1 500 lignes par jour en base. Il reste dans les logs.
+  close, et le capteur faisait ≈ 1 500 lignes par jour en base. Un capteur interne
+  n'apparaît plus dans `esphome logs` non plus : pour une nouvelle mesure, retirer
+  `internal: true`.
 - **Corrigé en production au passage** :
   - la vigilance lisait un attribut Météo-France `Crues` qui n'existe plus
     (`Inondation`), donc une vigilance inondation n'arrivait jamais sur l'écran ;
