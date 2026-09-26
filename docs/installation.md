@@ -11,7 +11,7 @@
 - A working **Home Assistant** instance (any installation method)
 - The **ESPHome** add-on or standalone ESPHome CLI (`pip install esphome`)
 - ESPHome version **≥ 2026.9.0** — enforced by `min_version:` in `tab5-ha-hmi.yaml`, so an older ESPHome refuses to compile. 2026.7.0 brought the official `st7123` touchscreen platform (no more `external_components`), zero-copy audio, VAD and PSRAM-over-SDIO; the floor was raised to 2026.8.1 on 2026-08-26 for the API, voice-assistant and crash-handler fixes this project exercises daily, then to 2026.9.0 on 2026-09-16 because OTA updates are encrypted with the API key (`ota: encryption:` does not exist in older releases — reasoning in the comment above `min_version:`)
-- A M5Stack Tab5 V2 (ESP32-P4 variant)
+- A M5Stack Tab5 with the **ST7123** display chip (sticker on the back) — the ST7121 and the original ILI9881C revisions are not supported yet, see [Hardware revisions](hardware.md#hardware-revisions)
 
 Optional but used by the default configuration:
 - **Météo-France** integration (for weather data — replace with your own weather integration if outside France)
@@ -157,7 +157,7 @@ If you are outside France, the weather screen requires adaptation. The push auto
 - Une instance **Home Assistant** fonctionnelle (toute méthode d'installation)
 - L'add-on **ESPHome** ou la CLI ESPHome standalone (`pip install esphome`)
 - ESPHome version **≥ 2026.9.0** — imposée par le `min_version:` de `tab5-ha-hmi.yaml` : une version antérieure refuse de compiler. La 2026.7.0 a apporté la plateforme tactile `st7123` officielle (plus besoin d'`external_components`), l'audio zero-copy, le VAD et la PSRAM via SDIO ; le plancher est passé à 2026.8.1 le 26/08/2026 pour les correctifs API, assistant vocal et handler de crash que ce projet exerce tous les jours, puis à 2026.9.0 le 16/09/2026 parce que les mises à jour OTA sont chiffrées avec la clé API (`ota: encryption:` n'existe pas dans les versions antérieures — raisons dans le commentaire au-dessus de `min_version:`)
-- Un M5Stack Tab5 V2 (variante ESP32-P4)
+- Un M5Stack Tab5 avec la puce écran **ST7123** (autocollant au dos) — les révisions ST7121 et ILI9881C d'origine ne sont pas encore prises en charge, voir [Révisions matérielles](hardware.md#révisions-matérielles)
 
 Optionnel mais utilisé par la configuration par défaut :
 - Intégration **Météo-France** (pour les données météo — remplacez par votre propre intégration si vous êtes hors de France)

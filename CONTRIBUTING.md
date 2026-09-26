@@ -2,7 +2,14 @@
 
 ## English · [Français](#version-française)
 
-Thanks for looking at this project. It is a personal firmware repo, but issues and PRs are welcome.
+Thanks for looking at this project. It is a personal firmware repo, but issues and PRs are welcome — in English or French.
+
+### Questions, bugs, ideas
+
+- **Questions and ideas** go to [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions), not to issues.
+- **Bugs** go through the [issue forms](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/issues/new/choose): they ask for your Tab5 display chip (see [hardware revisions](docs/hardware.md#hardware-revisions)) and your ESPHome version.
+- **Security issues** are reported privately: see [`SECURITY.md`](SECURITY.md).
+- Everyone follows the [code of conduct](CODE_OF_CONDUCT.md).
 
 ### Before you open a PR
 
@@ -38,7 +45,14 @@ Thanks for looking at this project. It is a personal firmware repo, but issues a
 
 ## Version Française
 
-Merci d'intéresser à ce projet. C'est un firmware personnel, mais issues et PR sont les bienvenues.
+Merci de vous intéresser à ce projet. C'est un firmware personnel, mais issues et PR sont les bienvenues — en français ou en anglais.
+
+### Questions, bugs, idées
+
+- **Les questions et les idées** vont dans [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions), pas dans les issues.
+- **Les bugs** passent par les [formulaires d'issue](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/issues/new/choose) : ils demandent la puce écran de votre Tab5 (voir les [révisions matérielles](docs/hardware.md#révisions-matérielles)) et votre version d'ESPHome.
+- **Les failles de sécurité** se signalent en privé : voir [`SECURITY.md`](SECURITY.md#version-française).
+- Tout le monde suit le [code de conduite](CODE_OF_CONDUCT.md#version-française).
 
 ### Avant d'ouvrir une PR
 
