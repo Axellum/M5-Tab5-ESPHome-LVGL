@@ -4,6 +4,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Documentation : 32 Mo de PSRAM, pas 16
+
+`docs/hardware.md` (EN + FR) annonçait 16 Mo de PSRAM « OCT-SPI ». Mesuré sur la tablette le
+26/09/2026 par une sonde d'essai (non mergée) : `esp_psram_get_size()` = 32 768 Ko, dont
+29 567 Ko pour le tas ; le bus est en mode `hex` (16 lignes) à 200 MHz (`psram:` de
+`tab5-hardware.yaml`). Les fiches de `contexte_ia` disaient déjà 32 Mo.
+
 ### 2026-09-26 — Diagnostic : version du logiciel du co-processeur Wi-Fi (ESP32-C6)
 
 Le Tab5 a deux puces : le P4 fait tourner notre firmware (pile TCP/IP comprise), le C6 la
