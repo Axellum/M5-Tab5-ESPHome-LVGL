@@ -20,10 +20,6 @@ color:
   # --- Surfaces ardoise (Slate) ---
   - id: color_bg
     hex: "0B1120"          # Ardoise profonde (fond application)
-  - id: color_card_bg
-    hex: "1B2536"          # Carte opaque (fallback non-verre)
-  - id: color_border
-    hex: "5B6B85"          # Arête ardoise claire (utiliser avec border_opa)
   - id: color_text
     hex: "F1F5F9"          # Blanc ardoise doux (slate-100)
   - id: color_text_dim
@@ -32,8 +28,6 @@ color:
     hex: "F87171"          # Chaud (red-400)
   - id: color_temp_min
     hex: "38BDF8"          # Froid (sky-400)
-  - id: color_bar_active
-    hex: "64748B"          # slate-500
   - id: color_bar_inactive
     hex: "334155"          # slate-700
   - id: color_orange_vif
@@ -54,12 +48,8 @@ color:
   # --- Couleurs console ---
   - id: color_console_bg
     hex: "0A0E16"
-  - id: color_console_border
-    hex: "243047"
   - id: color_console_label
     hex: "8595AD"
-  - id: color_reboot
-    hex: "F43F5E"          # rose-500 (danger)
   # --- NOUVEAUX tokens "Slate Glass" (accents + matiere verre) ---
   - id: color_accent
     hex: "22D3EE"          # cyan-400 : accent primaire / halo
@@ -71,14 +61,27 @@ color:
     hex: "131C2C"          # Bas du degrade verre (ombre interne)
   - id: color_glass_rim
     hex: "93A3BC"          # Liseré lumineux (arête de verre)
-  - id: color_shadow
-    hex: "000000"          # Ombre portee
   - id: color_console_value
     hex: "FFFFFF"          # Valeurs numeriques console
   - id: color_icon_muted
     hex: "555555"          # Icone desactivee / placeholder
   - id: color_arc_track
     hex: "2A2D35"          # Fond arcslider clim / lumiere
+  # --- Verre pré-mélangé (essai D7, 26/09/2026) ---------------------------------
+  # Même rendu que color_glass_hi/lo en transparence, mais calculé une fois pour
+  # toutes : c' = (c × a + fond × (255 − a)) / 255, arrondi comme lv_color_mix().
+  # Un dégradé posé sur un fond UNI se pré-mélange sans erreur (le mélange est
+  # linéaire) ; les coins arrondis et les bordures aussi.
+  # Sur la page (fond color_bg 0B1120, verre à 58 % = 147/255) :
+  - id: color_glass_hi_page
+    hex: "1E293D"
+  - id: color_glass_lo_page
+    hex: "101727"
+  # Sur le voile opaque des popups (fond color_modal_scrim 05080F, carte à 88 % = 224/255) :
+  - id: color_glass_hi_modal
+    hex: "27344A"
+  - id: color_glass_lo_modal
+    hex: "111A28"
   - id: color_modal_scrim
     hex: "05080F"          # Voile modal sombre
   - id: color_warm_pink
@@ -496,23 +499,28 @@ lvgl:
   byte_order: little_endian
   buffer_size: 100%
   bg_color: color_bg
+  # Police par défaut (audit ressources du 26/09/2026, lot 6, D5) : aucun texte de
+  # l'interface n'utilisait la montserrat_14 d'origine (tous les labels posent leur
+  # police, mk_label() des jeux aussi) — elle n'est plus embarquée.
+  default_font: roboto_22
+  # Thème ESPHome : styles partagés posés sur CHAQUE widget du type à sa création,
+  # avant ses `styles:` et ses propriétés locales, qui gardent donc la main.
+  # - label : le blanc et la police courants de l'interface. Un label n'écrit plus
+  #   `text_color: color_text` / `text_font: roboto_22` que s'il s'en écarte
+  #   (292 réglages locaux retirés des sources).
+  # - button : pas d'ombre. Le thème LVGL par défaut en posait une (3 px, décalée de
+  #   4 px) sous tout bouton qui ne l'annulait pas — voiles des popups, cartes de
+  #   l'arcade, pastilles — recalculée à chaque repeint, sans cache (D1).
+  theme:
+    label:
+      text_font: roboto_22
+      text_color: color_text
+    button:
+      shadow_width: 0
   style_definitions:
-    # --- Panneau structurel plein-cadre ---
-    # NB : radius volontairement CONSERVE a 0 (ce style sert de panneau plein-bord ;
-    #      l'arrondir laisserait apparaitre le fond aux coins de l'ecran).
-    #      On apporte la profondeur par un degrade vertical + liseré fin.
-    - id: style_card
-      bg_color: color_glass_hi
-      bg_grad_color: color_glass_lo
-      bg_grad_dir: VER
-      bg_main_stop: 0
-      bg_grad_stop: 255
-      bg_opa: 100%
-      border_width: 1
-      border_color: color_glass_rim
-      border_opa: 22%
-      radius: 0
-
+    # NB : `scrollbar_mode` n'est PAS une propriété de style : ESPHome l'ignore
+    # sans avertissement dans style_definitions (vérifié dans main.cpp le
+    # 26/09/2026, 6 occurrences retirées). Le poser sur le widget.
     # --- Carte meteo / tuiles dashboard ---
     # ESSAI C 16/07 : même décoration que les boutons Domo (style_clim_btn) —
     # fond 58%, bordure 1px/35%, radius 18. Couvre horloge, clim, bandeau central,
@@ -531,21 +539,50 @@ lvgl:
       shadow_width: 0
       outline_width: 0
       pad_all: 0
-      scrollbar_mode: "OFF"
 
     # --- Conteneurs transparents (fonctionnel : inchanges) ---
+    # --- Verre du tableau de bord, pré-mélangé sur la page (essai D7) ---
+    # Rendu identique à style_meteo_card / style_clim_btn posés sur color_bg,
+    # mais opaque : un repeint du tableau de bord (fermeture d'un popup, swipe)
+    # ne mélange plus ≈ 580 000 px. À n'utiliser QUE sur la page elle-même, jamais
+    # dans un popup ni sur le voile (le fond n'y est pas color_bg).
+    # Appui : l'effet pressé (tab5_anim.cpp) passe l'opacité à 52 % au lieu de
+    # 30 % sur un fond opaque, pour la même teinte (30 % × 255 / 147).
+    - id: style_meteo_card_page
+      bg_color: color_glass_hi_page
+      bg_grad_color: color_glass_lo_page
+      bg_grad_dir: VER
+      bg_opa: 100%
+      border_width: 1
+      border_color: color_glass_rim
+      border_opa: 35%
+      radius: 18
+      shadow_width: 0
+      outline_width: 0
+      pad_all: 0
+
+    - id: style_clim_btn_page
+      bg_color: color_glass_hi_page
+      bg_grad_color: color_glass_lo_page
+      bg_grad_dir: VER
+      bg_opa: 100%
+      border_width: 1
+      border_color: color_glass_rim
+      border_opa: 35%
+      radius: 18
+      shadow_width: 0
+      outline_width: 0
+
     - id: style_transparent
       bg_opa: 0
       border_width: 0
       pad_all: 0
-      scrollbar_mode: "OFF"
     - id: style_invisible
       bg_opa: 0
       border_width: 0
       shadow_width: 0
       outline_width: 0
       pad_all: 0
-      scrollbar_mode: "OFF"
 
     # --- Bouton climatisation : pastille de verre ---
     - id: style_clim_btn
@@ -564,7 +601,25 @@ lvgl:
     #  ui_components/modal_scrim.yaml, opacité passée en var — ADR-0009.)
 
     # --- Carte modale "verre" flottante ---
+    # Essai D7 (26/09/2026) : posée sur un voile désormais OPAQUE, elle est
+    # pré-mélangée (même rendu, opaque) — LVGL ne mélange plus 860 000 px à chaque
+    # ouverture. Un popup empilé sur un autre (voile à 60 %) garde la version
+    # translucide style_modal_card_verre, son fond n'étant pas uni.
     - id: style_modal_card
+      bg_color: color_glass_hi_modal
+      bg_grad_color: color_glass_lo_modal
+      bg_grad_dir: VER
+      bg_main_stop: 20
+      bg_grad_stop: 245
+      bg_opa: 100%
+      border_width: 2
+      border_color: color_glass_rim
+      border_opa: 60%
+      radius: 24
+      shadow_width: 0
+      pad_all: 0
+
+    - id: style_modal_card_verre
       bg_color: color_glass_hi
       bg_grad_color: color_glass_lo
       bg_grad_dir: VER
@@ -577,24 +632,6 @@ lvgl:
       radius: 24
       shadow_width: 0
       pad_all: 0
-      scrollbar_mode: "OFF"
-
-    # --- Onglet meteo "solide" (titre) ---
-    # Même design verre que style_clim_btn (Domo/Discu/HA/Sys/TV) —
-    # titres jours + min/max + onglets horaires/switches.
-    - id: style_meteo_tab
-      bg_color: color_glass_hi
-      bg_grad_color: color_glass_lo
-      bg_grad_dir: VER
-      bg_opa: 58%
-      border_width: 1
-      border_color: color_glass_rim
-      border_opa: 35%
-      radius: 18
-      shadow_width: 0
-      outline_width: 0
-      pad_all: 0
-      scrollbar_mode: "OFF"
 
     # --- NOUVEAU : carte de verre generique (reutilisable) ---
     - id: style_glass_card
@@ -610,7 +647,6 @@ lvgl:
       radius: 20
       shadow_width: 0
       pad_all: 0
-      scrollbar_mode: "OFF"
 
     # --- NOUVEAU : pastille / chip d'accent (cyan) ---
     - id: style_pill_accent

@@ -26,4 +26,4 @@ button:
   on_short_click:
     - script.execute: { id: "${script}", delta: "${delta}" }
   widgets:
-    - label: { text: "${icon}", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+    - label: { text: "${icon}", align: CENTER, text_font: mdi_font_32 }

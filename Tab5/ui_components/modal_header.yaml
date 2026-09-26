@@ -41,7 +41,6 @@ obj:
         align: LEFT_MID
         x: 52
         text_font: roboto_32_b
-        text_color: color_text
     - button:
         id: ${close_btn_id}
         align: RIGHT_MID
@@ -54,4 +53,4 @@ obj:
         on_short_click:
           - lambda: '${close_lambda}'
         widgets:
-          - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+          - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_32 }

@@ -48,6 +48,14 @@ esp32:
       # cache est pris sur la RAM interne (SRAM_START = 0x4FF00000 + taille du cache),
       # RAM libre 356 → 226 Ko. 5 redémarrages de contrôle : écran affiché, API en 16,5-16,8 s.
       CONFIG_CACHE_L2_CACHE_256KB: "y"
+      # Boutons instantanés (demande d'Axel, 26/09/2026 — audit ressources, lot 6) : le
+      # thème LVGL par défaut animait chaque appui en 80 ms, et chaque relâchement en
+      # 80 ms APRÈS 70 ms de délai, ce qui se voyait pendant l'ouverture d'un popup
+      # (lv_theme_default.c, trans_delayed / trans_normal). À 0, LVGL ne crée plus ces
+      # transitions : boutons, curseurs, interrupteurs et barres de défilement
+      # basculent d'une image à l'autre. Les animations propres au projet
+      # (tab5_anim.cpp : swipe, rouleaux, alertes) ne dépendent pas de ce réglage.
+      CONFIG_LV_THEME_DEFAULT_TRANSITION_TIME: "0"
 
 esp32_hosted:
   variant: esp32c6

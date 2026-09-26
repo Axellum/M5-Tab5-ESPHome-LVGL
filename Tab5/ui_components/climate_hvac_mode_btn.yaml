@@ -22,4 +22,4 @@ button:
           hvac_mode: "${hvac_mode}"
   widgets:
     - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
-    - label: { text: "${label_text}", align: LEFT_MID, x: 88, text_font: roboto_32_b, text_color: color_text }
+    - label: { text: "${label_text}", align: LEFT_MID, x: 88, text_font: roboto_32_b }

@@ -585,11 +585,21 @@ void update_clock_date_ui(lv_obj_t* lbl_date,
 
 // =============================================================================
 // 1D : Micro-interactions boutons verre (transform_scale au pressed)
-// ESPHome ne supporte pas state_pressed dans style_definitions -> on injecte
-// un style pressed partage via lv_obj_add_style(obj, style, LV_STATE_PRESSED).
-// La transition (80ms ease_out) est gereee nativement par LVGL.
+// Style pressed partagé, injecté via lv_obj_add_style(obj, style, LV_STATE_PRESSED).
+// `pressed:` est refusé dans style_definitions, mais `pressed: { styles: x }` est
+// accepté sur un widget (vérifié le 26/09/2026) : ce qui reste en C++, c'est le
+// pivot au centre, qui dépend de la taille de chaque bouton.
+// Aucune transition : CONFIG_LV_THEME_DEFAULT_TRANSITION_TIME = 0
+// (tab5-hardware.yaml, 26/09/2026) — le thème LVGL animait l'appui en 80 ms et le
+// relâchement en 80 ms après 70 ms de délai. Échelle et assombrissement sont
+// désormais appliqués d'une image à l'autre.
 // =============================================================================
 static lv_style_t style_btn_pressed;
+// Même effet pour une surface de verre PRÉ-MÉLANGÉE (opaque, essai D7 du 26/09/2026 :
+// style_meteo_card_page / style_clim_btn_page) : 30 % d'une couleur déjà mélangée à
+// 58 % donnerait un appui plus sombre qu'avant ; 132/255 (≈ 52 % = 30 % × 255 / 147)
+// redonne exactement la teinte d'origine.
+static lv_style_t style_btn_pressed_opaque;
 static bool btn_styles_inited = false;
 
 static void ensure_btn_styles_inited() {
@@ -599,19 +609,24 @@ static void ensure_btn_styles_inited() {
     lv_style_set_transform_scale_x(&style_btn_pressed, 240);  // 240/256 ~= 94%
     lv_style_set_transform_scale_y(&style_btn_pressed, 240);
     lv_style_set_bg_opa(&style_btn_pressed, LV_OPA_30);       // assombrit le verre
+    lv_style_init(&style_btn_pressed_opaque);
+    lv_style_set_transform_scale_x(&style_btn_pressed_opaque, 240);
+    lv_style_set_transform_scale_y(&style_btn_pressed_opaque, 240);
+    lv_style_set_bg_opa(&style_btn_pressed_opaque, 132);
     btn_styles_inited = true;
 }
 
-// Applique un style pressed (transform_scale 94% + bg_opa 30%) avec transition
-// 80ms ease_out sur un bouton. ESPHome ne supporte pas state_pressed dans les
-// styles partagees (style_definitions), donc on l'injecte en C++ via lv_obj_add_style.
+// Applique le style pressed (transform_scale 94 % + bg_opa 30 %) à un bouton, pivot
+// au centre du bouton.
 static void setup_button_press_animation(lv_obj_t* btn) {
     if (!btn) return;
     ensure_btn_styles_inited();
     // Pivot au centre pour un scale symetrique (pas depuis le coin haut-gauche).
     lv_obj_set_style_transform_pivot_x(btn, lv_obj_get_width(btn) / 2, LV_PART_MAIN);
     lv_obj_set_style_transform_pivot_y(btn, lv_obj_get_height(btn) / 2, LV_PART_MAIN);
-    lv_obj_add_style(btn, &style_btn_pressed, LV_STATE_PRESSED);
+    // Surface opaque (verre pré-mélangé) : opacité d'appui recalée, même teinte.
+    const bool opaque = lv_obj_get_style_bg_opa(btn, LV_PART_MAIN) == LV_OPA_COVER;
+    lv_obj_add_style(btn, opaque ? &style_btn_pressed_opaque : &style_btn_pressed, LV_STATE_PRESSED);
 }
 
 void apply_pressed_scale_to_tree(lv_obj_t* root) {

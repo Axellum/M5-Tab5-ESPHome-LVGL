@@ -4,6 +4,52 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Design : popups plus rapides, boutons instantanés, thème ESPHome, nettoyage
+
+Lot 6 de l'audit des ressources du 26/09/2026.
+
+- **Popups 30 à 42 % plus rapides à s'ouvrir** (essai validé par Axel). L'ouverture coûtait
+  ≈ 320-365 ms de rendu : sous le voile à 85 %, LVGL redessinait tout le tableau de bord
+  caché. Mesures (boucle max/min, mêmes écrans) :
+  - ouverture : Climatisation 365 → 216 ms, Calendrier 320 → 223 ms, Console 328 → 191 ms ;
+  - fermeture : 180 → 153-155 ms.
+
+  Changements :
+  - **voile opaque** : 100 % au lieu de 85 % (96 % pour la sonnerie), coins carrés. Le
+    tableau de bord n'apparaît plus derrière les popups ; c'est le seul changement visible ;
+  - **verre pré-mélangé** : la carte des popups et les 55 tuiles et boutons du tableau
+    de bord reçoivent des couleurs calculées d'avance sur leur fond uni
+    (`color_glass_*_page` / `_modal`). Même rendu, mais opaques ;
+  - **teinte à l'appui** : l'effet pressé passe de 30 % à 52 % d'opacité sur ces surfaces
+    (`style_btn_pressed_opaque`), pour garder la même teinte ;
+  - **exceptions** : le sous-popup du jour (voile à 60 %) et les boutons − / + de la clim,
+    posés sur une autre tuile en verre, restent translucides.
+- **Boutons instantanés** (demande d'Axel) : `CONFIG_LV_THEME_DEFAULT_TRANSITION_TIME: "0"`.
+  Le thème LVGL par défaut animait chaque appui en 80 ms, et chaque relâchement en 80 ms
+  après 70 ms de délai, ce qui se voyait pendant l'ouverture d'un popup. Boutons,
+  curseurs et interrupteurs basculent désormais d'une image à l'autre. Les animations du
+  projet (swipe des prévisions, rouleaux, alertes) ne changent pas.
+- **Thème ESPHome** (`theme:` dans `tab5-styles.yaml`) :
+  - `label` porte le blanc (`color_text`) et la police (`roboto_22`) courants.
+    292 réglages locaux identiques sont retirés des sources. Comparaison des 1 247
+    widgets avant/après : aucune couleur ni police effective ne change ;
+  - `button` n'a plus d'ombre. Le thème LVGL en posait une sous chaque bouton qui ne
+    l'annulait pas (voiles des popups, cartes de l'arcade, pastilles), recalculée à
+    chaque repeint sans cache. Seule différence visible : le liseré gris sous ces boutons.
+- **`default_font: roboto_22`** : la montserrat_14 d'origine, jamais affichée, n'est
+  plus embarquée.
+- **Nettoyage** :
+  - 10 calques d'icône météo (`*_icon_layer3`) cachés et sans référence ;
+  - `style_card`, jamais utilisé ;
+  - `style_meteo_tab`, identique à `style_meteo_card` et remplacé par lui ;
+  - 6 couleurs jamais référencées ;
+  - le conteneur de centrage du volume dans la télécommande TV ;
+  - 6 `scrollbar_mode` qu'ESPHome ignore en silence dans `style_definitions`.
+- **Réveil** : ses deux libellés passaient du blanc YAML (#F1F5F9) au blanc C++
+  (#FFFFFF) au premier rafraîchissement. Ils gardent désormais #F1F5F9.
+- **Doc corrigée** : `pressed: { styles: x }` est accepté sur un widget
+  (`troubleshooting.md`, cartographie, `tab5_anim.cpp`).
+
 ### 2026-09-26 — Jeux : fin du repeint plein écran aux dames, HUD sans réécriture
 
 Lot 5 de l'audit des ressources du 26/09/2026. Rien ne change à l'écran.
@@ -48,7 +94,9 @@ même. Seul le firmware change pour Draw Max.
     firmware n'émet pas (dernier passage le 16/07/2026) ;
   - le script `tab5_dismiss_info_panel`, sans appelant.
 - **Firmware** : « Tab5 Draw Max » passe en `internal: true`. La campagne de mesure est
-  close, et le capteur faisait ≈ 1 500 lignes par jour en base. Il reste dans les logs.
+  close, et le capteur faisait ≈ 1 500 lignes par jour en base. Un capteur interne
+  n'apparaît plus dans `esphome logs` non plus : pour une nouvelle mesure, retirer
+  `internal: true`.
 - **Corrigé en production au passage** :
   - la vigilance lisait un attribut Météo-France `Crues` qui n'existe plus
     (`Inondation`), donc une vigilance inondation n'arrivait jamais sur l'écran ;

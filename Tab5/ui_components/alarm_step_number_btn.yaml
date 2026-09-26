@@ -23,4 +23,4 @@ button:
   on_short_click:
     - number.${op}: { id: "${number}", cycle: false }
   widgets:
-    - label: { text: "${icon}", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+    - label: { text: "${icon}", align: CENTER, text_font: mdi_font_32 }

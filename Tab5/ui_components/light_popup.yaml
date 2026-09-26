@@ -26,7 +26,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "animate_popup_close(id(light_options_popup), nullptr);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(light_options_popup), nullptr);" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -50,7 +50,7 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "AMPOULE", align: TOP_LEFT, x: 22, y: 14, text_font: roboto_22, text_color: color_accent }
+                - label: { text: "AMPOULE", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
 
                 # Sélecteur — surbrillance (bordure cyan) posée par tab5_light_popup_show,
                 # icônes recolorées en direct par light_*_state (tab5-sensors-domotique.yaml)
@@ -68,7 +68,7 @@ obj:
                       - script.execute: { id: tab5_light_popup_show, light_idx: 0 }
                     widgets:
                       - label: { id: icon_light_sel_0, text: "\U000F02E3", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Chambre", align: LEFT_MID, x: 88, text_font: roboto_32_b, text_color: color_text }
+                      - label: { text: "Chambre", align: LEFT_MID, x: 88, text_font: roboto_32_b }
                 - button:
                     id: btn_light_sel_1
                     align: TOP_LEFT
@@ -83,7 +83,7 @@ obj:
                       - script.execute: { id: tab5_light_popup_show, light_idx: 1 }
                     widgets:
                       - label: { id: icon_light_sel_1, text: "\U000F04B9", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "Salon", align: LEFT_MID, x: 88, text_font: roboto_32_b, text_color: color_text }
+                      - label: { text: "Salon", align: LEFT_MID, x: 88, text_font: roboto_32_b }
                 - button:
                     id: btn_light_sel_2
                     align: TOP_LEFT
@@ -98,7 +98,7 @@ obj:
                       - script.execute: { id: tab5_light_popup_show, light_idx: 2 }
                     widgets:
                       - label: { id: icon_light_sel_2, text: "\U000F1051", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
-                      - label: { text: "LEDs", align: LEFT_MID, x: 88, text_font: roboto_32_b, text_color: color_text }
+                      - label: { text: "LEDs", align: LEFT_MID, x: 88, text_font: roboto_32_b }
 
                 # On/Off de la lumière sélectionnée (icône recolorée par update_light_card_ui)
                 - button:
@@ -117,7 +117,7 @@ obj:
                             entity_id: !lambda 'return id(current_light_entity);'
                     widgets:
                       - label: { id: btn_light_power_icon, text: "\U000F0425", align: LEFT_MID, x: 28, text_font: mdi_font_56, text_color: color_text_dim }
-                      - label: { text: "On / Off", align: LEFT_MID, x: 110, text_font: roboto_32_b, text_color: color_text }
+                      - label: { text: "On / Off", align: LEFT_MID, x: 110, text_font: roboto_32_b }
 
                 # Tout éteindre — les 3 lumières d'un coup (coucher)
                 - button:
@@ -136,7 +136,7 @@ obj:
                             entity_id: "${entity_light_chambre}, ${entity_light_salon}, ${entity_light_bureau}"
                     widgets:
                       - label: { text: "\U000F0425", align: LEFT_MID, x: 28, text_font: mdi_font_32, text_color: color_error }
-                      - label: { text: "Tout éteindre", align: LEFT_MID, x: 80, text_font: roboto_22, text_color: color_text_dim }
+                      - label: { text: "Tout éteindre", align: LEFT_MID, x: 80, text_color: color_text_dim }
 
           # ═══ CARTE LUMINOSITÉ (centre) : arc + % live + raccourcis ═══
           - obj:
@@ -148,7 +148,7 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "LUMINOSITÉ", align: TOP_LEFT, x: 22, y: 14, text_font: roboto_22, text_color: color_accent }
+                - label: { text: "LUMINOSITÉ", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
 
                 # Arc jauge — synchronisé à l'ouverture (script) et en live (light_*_brightness)
                 - arc:
@@ -186,7 +186,6 @@ obj:
                     align: TOP_MID
                     y: 192
                     text_font: roboto_45_b
-                    text_color: color_text
 
                 # Raccourcis de niveau
                 - button:
@@ -208,7 +207,7 @@ obj:
                           lv_arc_set_value(id(arc_light_brightness), 26);
                           lv_label_set_text(id(lbl_light_brightness_val), "10 %");
                     widgets:
-                      - label: { text: "10 %", align: CENTER, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "10 %", align: CENTER }
                 - button:
                     align: TOP_LEFT
                     x: 112
@@ -228,7 +227,7 @@ obj:
                           lv_arc_set_value(id(arc_light_brightness), 89);
                           lv_label_set_text(id(lbl_light_brightness_val), "35 %");
                     widgets:
-                      - label: { text: "35 %", align: CENTER, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "35 %", align: CENTER }
                 - button:
                     align: TOP_LEFT
                     x: 202
@@ -248,7 +247,7 @@ obj:
                           lv_arc_set_value(id(arc_light_brightness), 166);
                           lv_label_set_text(id(lbl_light_brightness_val), "65 %");
                     widgets:
-                      - label: { text: "65 %", align: CENTER, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "65 %", align: CENTER }
                 - button:
                     align: TOP_LEFT
                     x: 292
@@ -268,7 +267,7 @@ obj:
                           lv_arc_set_value(id(arc_light_brightness), 255);
                           lv_label_set_text(id(lbl_light_brightness_val), "100 %");
                     widgets:
-                      - label: { text: "100 %", align: CENTER, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "100 %", align: CENTER }
 
           # ═══ CARTE COULEURS (droite) : blancs nommés + pastilles rondes ═══
           - obj:
@@ -280,7 +279,7 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "COULEURS", align: TOP_LEFT, x: 22, y: 14, text_font: roboto_22, text_color: color_accent }
+                - label: { text: "COULEURS", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
 
                 # Blancs nommés (température de blanc via color_name)
                 - button:
@@ -300,7 +299,7 @@ obj:
                             color_name: "warmwhite"
                     widgets:
                       - label: { text: "\U000F0335", align: TOP_MID, y: 8, text_font: mdi_font_32, text_color: 0xFFC864 }
-                      - label: { text: "Chaud", align: BOTTOM_MID, y: -8, text_font: roboto_22, text_color: color_text_dim }
+                      - label: { text: "Chaud", align: BOTTOM_MID, y: -8, text_color: color_text_dim }
                 - button:
                     align: TOP_LEFT
                     x: 140
@@ -318,7 +317,7 @@ obj:
                             color_name: "navajowhite"
                     widgets:
                       - label: { text: "\U000F0335", align: TOP_MID, y: 8, text_font: mdi_font_32, text_color: 0xFFDEAD }
-                      - label: { text: "Crème", align: BOTTOM_MID, y: -8, text_font: roboto_22, text_color: color_text_dim }
+                      - label: { text: "Crème", align: BOTTOM_MID, y: -8, text_color: color_text_dim }
                 - button:
                     align: TOP_LEFT
                     x: 258
@@ -336,7 +335,7 @@ obj:
                             color_name: "white"
                     widgets:
                       - label: { text: "\U000F0335", align: TOP_MID, y: 8, text_font: mdi_font_32, text_color: 0xFFFFFF }
-                      - label: { text: "Froid", align: BOTTOM_MID, y: -8, text_font: roboto_22, text_color: color_text_dim }
+                      - label: { text: "Froid", align: BOTTOM_MID, y: -8, text_color: color_text_dim }
 
                 # Grille 4×3 de pastilles couleur (factorisées #T164, chaudes → froides)
                 - obj:

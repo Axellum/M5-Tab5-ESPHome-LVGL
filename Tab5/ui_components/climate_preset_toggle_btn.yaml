@@ -22,4 +22,4 @@ button:
           preset_mode: !lambda 'return id(clim_preset_mode);'
   widgets:
     - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 14, text_font: mdi_font_45, text_color: color_text_dim }
-    - label: { text: "${label_text}", align: LEFT_MID, x: 72, text_font: roboto_22, text_color: color_text }
+    - label: { text: "${label_text}", align: LEFT_MID, x: 72 }

@@ -22,7 +22,7 @@ obj:
   styles: style_invisible
   widgets:
     # Voile modal (ferme au tap)
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "id(tab5_assist_close).execute();" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "id(tab5_assist_close).execute();" } }
 
     # Carte modale
     - obj:
@@ -50,7 +50,7 @@ obj:
               scrollable: false
               widgets:
                 - label: { text: "\U000F062E", align: TOP_LEFT, x: 16, y: 14, text_font: mdi_assist_36, text_color: color_text_dim }
-                - label: { text: "Réglages", align: TOP_LEFT, x: 60, y: 18, text_font: roboto_32_b, text_color: color_text }
+                - label: { text: "Réglages", align: TOP_LEFT, x: 60, y: 18, text_font: roboto_32_b }
 
                 # --- Cerveau / LLM ---
                 # [AI-CONTEXT] Panneau reglages 380x506 — layout recalcule le 29/07
@@ -63,7 +63,7 @@ obj:
                 # ne touche pas au contenu interne). Barre de son ANCREE EN BAS du
                 # panneau (marge 24 px, symetrique de la marge haute) plutot que
                 # juste sous Ok Nabu : c'est ce qui etait demande.
-                - label: { text: "Cerveau / LLM", align: TOP_LEFT, x: 16, y: 68, text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "Cerveau / LLM", align: TOP_LEFT, x: 16, y: 68, text_color: color_text_dim }
                 - button:
                     id: btn_assist_pipe_domo
                     align: TOP_LEFT
@@ -80,7 +80,7 @@ obj:
                           id: tab5_set_assist_mode
                           discussion: false
                     widgets:
-                      - label: { text: "\U000F07D0", align: CENTER, text_font: mdi_assist_36, text_color: color_text }
+                      - label: { text: "\U000F07D0", align: CENTER, text_font: mdi_assist_36 }
                 - button:
                     id: btn_assist_pipe_discu
                     align: TOP_LEFT
@@ -97,7 +97,7 @@ obj:
                           id: tab5_set_assist_mode
                           discussion: true
                     widgets:
-                      - label: { text: "\U000F06A9", align: CENTER, text_font: mdi_assist_36, text_color: color_text }
+                      - label: { text: "\U000F06A9", align: CENTER, text_font: mdi_assist_36 }
 
                 # --- Ok Nabu (mot de réveil) ---
                 - button:
@@ -115,11 +115,11 @@ obj:
                       - switch.toggle: tab5_wake_word_active
                       - script.execute: tab5_assist_sync_settings
                     widgets:
-                      - label: { id: lbl_assist_wake, text: "Ok Nabu : ON", align: CENTER, text_font: roboto_22, text_color: color_success }
+                      - label: { id: lbl_assist_wake, text: "Ok Nabu : ON", align: CENTER, text_color: color_success }
 
                 # --- Taille du texte de réponse (remontee : la barre de son est
                 # maintenant ancree au bas du panneau, voir plus bas) ---
-                - label: { text: "Taille du texte", align: TOP_LEFT, x: 16, y: 276, text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "Taille du texte", align: TOP_LEFT, x: 16, y: 276, text_color: color_text_dim }
                 - button:
                     id: btn_assist_size_s
                     align: TOP_LEFT
@@ -136,7 +136,7 @@ obj:
                           id: tab5_assist_set_text_size
                           size: 0
                     widgets:
-                      - label: { text: "A-", align: CENTER, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "A-", align: CENTER }
                 - button:
                     id: btn_assist_size_m
                     align: TOP_LEFT
@@ -153,7 +153,7 @@ obj:
                           id: tab5_assist_set_text_size
                           size: 1
                     widgets:
-                      - label: { text: "A", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                      - label: { text: "A", align: CENTER, text_font: roboto_32_b }
                 - button:
                     id: btn_assist_size_l
                     align: TOP_LEFT
@@ -170,7 +170,7 @@ obj:
                           id: tab5_assist_set_text_size
                           size: 2
                     widgets:
-                      - label: { text: "A+", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                      - label: { text: "A+", align: CENTER, text_font: roboto_32_b }
 
                 # --- Muet + Volume --- ANCRES EN BAS du panneau (y=422/442,
                 # marge basse 24 px symetrique de la marge haute), comme demande
@@ -208,7 +208,7 @@ obj:
                                 volume: 0.0
                       - script.execute: tab5_assist_sync_settings
                     widgets:
-                      - label: { id: icon_assist_mute, text: "\U000F057E", align: CENTER, text_font: mdi_assist_36, text_color: color_text }
+                      - label: { id: icon_assist_mute, text: "\U000F057E", align: CENTER, text_font: mdi_assist_36 }
                 - slider:
                     id: slider_assist_volume
                     align: TOP_LEFT
@@ -242,7 +242,7 @@ obj:
               scrollable: false
               widgets:
                 - label: { text: "\U000F0361", align: TOP_LEFT, x: 16, y: 14, text_font: mdi_assist_36, text_color: color_info }
-                - label: { text: "VOTRE DEMANDE", align: TOP_LEFT, x: 60, y: 16, text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "VOTRE DEMANDE", align: TOP_LEFT, x: 60, y: 16, text_color: color_text_dim }
                 - label:
                     id: lbl_assist_request
                     align: TOP_LEFT
@@ -250,8 +250,6 @@ obj:
                     y: 44
                     width: 746
                     text: "Appuyez sur le micro puis parlez…"
-                    text_font: roboto_22
-                    text_color: color_text
 
           # --- Réponse (texte + tableaux + image) ---
           - obj:
@@ -264,7 +262,7 @@ obj:
               scrollable: false
               widgets:
                 - label: { text: "\U000F021A", align: TOP_LEFT, x: 16, y: 14, text_font: mdi_assist_36, text_color: color_success }
-                - label: { text: "RÉPONSE", align: TOP_LEFT, x: 60, y: 16, text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "RÉPONSE", align: TOP_LEFT, x: 60, y: 16, text_color: color_text_dim }
                 - label: { text: "\U000F04EB", align: TOP_RIGHT, x: -60, y: 16, text_font: mdi_assist_36, text_color: color_text_dim }
                 - label: { text: "\U000F021F", align: TOP_RIGHT, x: -16, y: 16, text_font: mdi_assist_36, text_color: color_text_dim }
 
@@ -290,7 +288,6 @@ obj:
                           width: 100%
                           text: ""
                           text_font: roboto_mono_24
-                          text_color: color_text
                       - image:
                           id: assist_img_widget
                           src: assist_response_image
@@ -299,7 +296,6 @@ obj:
                           id: assist_img_hint
                           text: ""
                           hidden: true
-                          text_font: roboto_22
                           text_color: color_text_dim
 
           # ═══ BARRE D'ACTION (bas) ═══
@@ -311,7 +307,7 @@ obj:
               styles: style_transparent
               scrollable: false
               widgets:
-                - label: { id: lbl_assist_status, text: "Prêt", align: LEFT_MID, x: 8, text_font: roboto_22, text_color: color_text_dim }
+                - label: { id: lbl_assist_status, text: "Prêt", align: LEFT_MID, x: 8, text_color: color_text_dim }
 
                 # Micro : démarre / interrompt + ré-écoute (Click to Converse)
                 - button:
@@ -327,8 +323,8 @@ obj:
                     on_short_click:
                       - script.execute: tab5_assist_toggle
                     widgets:
-                      - label: { text: "\U000F036C", align: LEFT_MID, x: 30, text_font: mdi_assist_36, text_color: color_text }
-                      - label: { text: "Parler", align: CENTER, x: 20, text_font: roboto_32_b, text_color: color_text }
+                      - label: { text: "\U000F036C", align: LEFT_MID, x: 30, text_font: mdi_assist_36 }
+                      - label: { text: "Parler", align: CENTER, x: 20, text_font: roboto_32_b }
 
                 # Stop : coupe pipeline + TTS
                 - button:
@@ -359,4 +355,4 @@ obj:
                     on_short_click:
                       - script.execute: tab5_assist_close
                     widgets:
-                      - label: { text: "Fermer", align: CENTER, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "Fermer", align: CENTER }

@@ -32,4 +32,4 @@ obj:
               id: tab5_dismiss_ha_alert
               slot: ${n}
         widgets:
-          - label: { id: "lbl_ha_alert_${n}", text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
+          - label: { id: "lbl_ha_alert_${n}", text: "", align: CENTER, text_font: roboto_45_b }

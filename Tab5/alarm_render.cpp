@@ -58,7 +58,7 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, int melody_idx
     if (ui.day_lbl[i] != nullptr) {
       lv_label_set_text(ui.day_lbl[i], kDays[i]);
       lv_obj_set_style_text_color(ui.day_lbl[i],
-                                  lv_color_hex(on ? (days_govern_all ? UIColor::TEXT_PRIMARY : UIColor::ACCENT)
+                                  lv_color_hex(on ? (days_govern_all ? UIColor::TEXT_SOFT : UIColor::ACCENT)
                                                   : UIColor::TEXT_DIM),
                                   LV_PART_MAIN);
     }
@@ -142,7 +142,7 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, int melody_idx
     const std::string n = rdv_next_label(now);
     lv_label_set_text(ui.lbl_rdv_next, n.empty() ? "Aucun rendez-vous \xC3\xA0 venir" : n.c_str());
     lv_obj_set_style_text_color(ui.lbl_rdv_next,
-                                lv_color_hex(n.empty() ? UIColor::TEXT_DIM : UIColor::TEXT_PRIMARY),
+                                lv_color_hex(n.empty() ? UIColor::TEXT_DIM : UIColor::TEXT_SOFT),
                                 LV_PART_MAIN);
   }
 }

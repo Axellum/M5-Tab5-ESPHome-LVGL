@@ -41,7 +41,7 @@ obj:
   styles: style_invisible
   widgets:
     # Voile sombre (tap = fermer + refermer les overlays de confirmation)
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN); animate_popup_close(id(layer_console_sys), nullptr);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN); animate_popup_close(id(layer_console_sys), nullptr);" } }
 
     # Carte modale principale
     - obj:
@@ -66,10 +66,10 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "MÉMOIRE", align: TOP_LEFT, x: 22, y: 14, text_font: roboto_22, text_color: color_accent }
+                - label: { text: "MÉMOIRE", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
 
                 - label: { text: "SRAM", align: TOP_LEFT, x: 22, y: 46, text_font: roboto_32_b, text_color: color_console_label }
-                - label: { id: lbl_sys_sram_val, text: "--", align: TOP_RIGHT, x: -22, y: 54, text_font: roboto_22, text_color: color_console_value }
+                - label: { id: lbl_sys_sram_val, text: "--", align: TOP_RIGHT, x: -22, y: 54, text_color: color_console_value }
                 - bar:
                     id: bar_sys_sram
                     align: TOP_LEFT
@@ -87,7 +87,7 @@ obj:
                       radius: 8
 
                 - label: { text: "PSRAM", align: TOP_LEFT, x: 22, y: 120, text_font: roboto_32_b, text_color: color_console_label }
-                - label: { id: lbl_sys_psram_val, text: "--", align: TOP_RIGHT, x: -22, y: 128, text_font: roboto_22, text_color: color_console_value }
+                - label: { id: lbl_sys_psram_val, text: "--", align: TOP_RIGHT, x: -22, y: 128, text_color: color_console_value }
                 - bar:
                     id: bar_sys_psram
                     align: TOP_LEFT
@@ -104,10 +104,10 @@ obj:
                       bg_color: color_success
                       radius: 8
 
-                - label: { text: "Bloc max", align: TOP_LEFT, x: 22, y: 216, text_font: roboto_22, text_color: color_console_label }
-                - label: { id: lbl_sys_frag_val, text: "--", align: TOP_LEFT, x: 130, y: 216, text_font: roboto_22, text_color: color_console_value }
-                - label: { text: "Flash", align: TOP_LEFT, x: 330, y: 216, text_font: roboto_22, text_color: color_console_label }
-                - label: { id: lbl_sys_flash_val, text: "--", align: TOP_LEFT, x: 400, y: 216, text_font: roboto_22, text_color: color_console_value }
+                - label: { text: "Bloc max", align: TOP_LEFT, x: 22, y: 216, text_color: color_console_label }
+                - label: { id: lbl_sys_frag_val, text: "--", align: TOP_LEFT, x: 130, y: 216, text_color: color_console_value }
+                - label: { text: "Flash", align: TOP_LEFT, x: 330, y: 216, text_color: color_console_label }
+                - label: { id: lbl_sys_flash_val, text: "--", align: TOP_LEFT, x: 400, y: 216, text_color: color_console_value }
 
           # ═══ CARTE RÉSEAU (haut droite) ═══
           - obj:
@@ -119,7 +119,7 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "RÉSEAU", align: TOP_LEFT, x: 22, y: 14, text_font: roboto_22, text_color: color_accent }
+                - label: { text: "RÉSEAU", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
 
                 - label: { text: "Wi-Fi", align: TOP_LEFT, x: 22, y: 50, text_font: roboto_32_b, text_color: color_console_label }
                 - label: { id: lbl_sys_ssid_val, text: "--", align: TOP_RIGHT, x: -22, y: 50, text_font: roboto_32_b, text_color: color_console_value }
@@ -145,7 +145,7 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "SYSTÈME", align: TOP_LEFT, x: 22, y: 14, text_font: roboto_22, text_color: color_accent }
+                - label: { text: "SYSTÈME", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
 
                 - label: { text: "Temps actif", align: TOP_LEFT, x: 22, y: 50, text_font: roboto_32_b, text_color: color_console_label }
                 - label: { id: lbl_sys_uptime_val, text: "--", align: TOP_RIGHT, x: -22, y: 50, text_font: roboto_32_b, text_color: color_console_value }
@@ -158,7 +158,7 @@ obj:
 
                 # Volume (le label % est mis à jour par le slider lui-même)
                 - label: { text: "\U000F0581", align: TOP_LEFT, x: 22, y: 206, text_font: mdi_font_32, text_color: color_console_label }
-                - label: { id: lbl_sys_vol_val, text: "100%", align: TOP_RIGHT, x: -22, y: 210, text_font: roboto_22, text_color: color_console_value }
+                - label: { id: lbl_sys_vol_val, text: "100%", align: TOP_RIGHT, x: -22, y: 210, text_color: color_console_value }
                 - slider:
                     id: slider_volume
                     align: TOP_LEFT
@@ -196,7 +196,7 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "GESTION", align: TOP_LEFT, x: 22, y: 14, text_font: roboto_22, text_color: color_accent }
+                - label: { text: "GESTION", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
 
                 # MAJ Écran — remet le flag de push à on (cause récurrente d'écran
                 # figé, cf. bug is_primary_active du 04/07) puis force un push complet.
@@ -221,7 +221,7 @@ obj:
                             entity_id: ${entity_push_automation}
                     widgets:
                       - label: { text: "\U000F0379", align: CENTER, y: -18, text_font: mdi_font_32, text_color: color_info }
-                      - label: { text: "MAJ Écran", align: CENTER, y: 22, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "MAJ Écran", align: CENTER, y: 22 }
 
                 # Recharge les automations HA (après édition YAML côté Freebox)
                 - button:
@@ -239,7 +239,7 @@ obj:
                           service: automation.reload
                     widgets:
                       - label: { text: "\U000F0450", align: CENTER, y: -18, text_font: mdi_font_32, text_color: color_info }
-                      - label: { text: "Recharger autos", align: CENTER, y: 22, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "Recharger autos", align: CENTER, y: 22 }
 
                 # Redémarre le serveur HA — confirmation via overlay dédié
                 - button:
@@ -261,7 +261,7 @@ obj:
                           lv_obj_move_foreground(id(overlay_confirm_ha));
                     widgets:
                       - label: { text: "\U000F07D0", align: CENTER, y: -18, text_font: mdi_font_32, text_color: color_error }
-                      - label: { text: "Redémarrer HA", align: CENTER, y: 22, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "Redémarrer HA", align: CENTER, y: 22 }
 
                 # Reboot de la tablette — confirmation via overlay dédié
                 - button:
@@ -283,7 +283,7 @@ obj:
                           lv_obj_move_foreground(id(overlay_confirm_reboot));
                     widgets:
                       - label: { text: "\U000F0425", align: CENTER, y: -18, text_font: mdi_font_32, text_color: color_error }
-                      - label: { text: "Reboot tablette", align: CENTER, y: 22, text_font: roboto_22, text_color: color_text }
+                      - label: { text: "Reboot tablette", align: CENTER, y: 22 }
 
                 # ── Overlay confirmation : redémarrage Home Assistant ──
                 - obj:
@@ -302,8 +302,8 @@ obj:
                     border_color: color_error
                     border_opa: 45%
                     widgets:
-                      - label: { text: "Redémarrer Home Assistant ?", align: CENTER, y: -64, text_font: roboto_32_b, text_color: color_text }
-                      - label: { text: "Le serveur sera indisponible ~1 minute.", align: CENTER, y: -24, text_font: roboto_22, text_color: color_text_dim }
+                      - label: { text: "Redémarrer Home Assistant ?", align: CENTER, y: -64, text_font: roboto_32_b }
+                      - label: { text: "Le serveur sera indisponible ~1 minute.", align: CENTER, y: -24, text_color: color_text_dim }
                       - button:
                           align: CENTER
                           x: -118
@@ -316,7 +316,7 @@ obj:
                           on_short_click:
                             - lambda: 'lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);'
                           widgets:
-                            - label: { text: "Annuler", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                            - label: { text: "Annuler", align: CENTER, text_font: roboto_32_b }
                       - button:
                           align: CENTER
                           x: 118
@@ -357,8 +357,8 @@ obj:
                     border_color: color_error
                     border_opa: 45%
                     widgets:
-                      - label: { text: "Redémarrer la tablette ?", align: CENTER, y: -64, text_font: roboto_32_b, text_color: color_text }
-                      - label: { text: "L'écran redémarre immédiatement.", align: CENTER, y: -24, text_font: roboto_22, text_color: color_text_dim }
+                      - label: { text: "Redémarrer la tablette ?", align: CENTER, y: -64, text_font: roboto_32_b }
+                      - label: { text: "L'écran redémarre immédiatement.", align: CENTER, y: -24, text_color: color_text_dim }
                       - button:
                           align: CENTER
                           x: -118
@@ -371,7 +371,7 @@ obj:
                           on_short_click:
                             - lambda: 'lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);'
                           widgets:
-                            - label: { text: "Annuler", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                            - label: { text: "Annuler", align: CENTER, text_font: roboto_32_b }
                       - button:
                           align: CENTER
                           x: 118

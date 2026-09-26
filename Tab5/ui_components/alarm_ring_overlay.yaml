@@ -44,10 +44,10 @@ obj:
   widgets:
     # 96 % et non 100 % : on devine le dashboard derrière, ce qui situe
     # immédiatement où l'on est sans rien enlever à la lisibilité de l'heure.
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "96", close_lambda: "id(tab5_alarm_stop).execute();" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "id(tab5_alarm_stop).execute();" } }
 
     - label: { id: icon_alarm_ring, text: "\U000F0020", align: CENTER, y: -230, text_font: mdi_font_70, text_color: color_accent }
-    - label: { id: lbl_alarm_ring_time, text: "00:00", align: CENTER, y: -90, text_font: roboto_130_b, text_color: color_text }
+    - label: { id: lbl_alarm_ring_time, text: "00:00", align: CENTER, y: -90, text_font: roboto_130_b }
     - label: { id: lbl_alarm_ring_title, text: "Réveil", align: CENTER, y: 20, text_font: roboto_45_b, text_color: color_accent }
     - label: { id: lbl_alarm_ring_sub, text: "", align: CENTER, y: 75, width: 1100, text_align: CENTER, text_font: roboto_32_b, text_color: color_text_dim }
 
@@ -68,7 +68,7 @@ obj:
           - script.execute: tab5_alarm_stop
         widgets:
           - label: { text: "\U000F04DB", align: LEFT_MID, x: 40, text_font: mdi_font_45, text_color: color_error }
-          - label: { text: "Arrêter", align: CENTER, x: 30, text_font: roboto_45_b, text_color: color_text }
+          - label: { text: "Arrêter", align: CENTER, x: 30, text_font: roboto_45_b }
 
     # RÉPÉTER — le libellé porte la durée réelle (réécrit par
     # alarm_ring_refresh), sinon il faudrait aller la chercher dans les réglages.
@@ -87,11 +87,10 @@ obj:
           - script.execute: tab5_alarm_snooze_now
         widgets:
           - label: { text: "\U000F068E", align: LEFT_MID, x: 30, text_font: mdi_font_45, text_color: color_gold }
-          - label: { id: lbl_alarm_ring_snooze, text: "Répéter", align: CENTER, x: 26, text_font: roboto_32_b, text_color: color_text }
+          - label: { id: lbl_alarm_ring_snooze, text: "Répéter", align: CENTER, x: 26, text_font: roboto_32_b }
 
     - label:
         text: "Touchez l'écran ou dites « Stop » pour arrêter"
         align: BOTTOM_MID
         y: -24
-        text_font: roboto_22
         text_color: color_text_dim

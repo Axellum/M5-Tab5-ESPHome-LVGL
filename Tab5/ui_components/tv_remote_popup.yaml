@@ -27,7 +27,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "animate_popup_close(id(tv_remote_popup), nullptr);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(tv_remote_popup), nullptr);" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -81,7 +81,7 @@ obj:
                                   entity_id: ${entity_tv_remote}
                           widgets:
                             - label: { text: "\U000F0425", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_error }
-                            - label: { text: "Marche / Arrêt", align: LEFT_MID, x: 82, text_font: roboto_22, text_color: color_text }
+                            - label: { text: "Marche / Arrêt", align: LEFT_MID, x: 82 }
                       - button:
                           y: 180
                           width: 290
@@ -98,7 +98,7 @@ obj:
                                   command: "KEY_SOURCE"
                           widgets:
                             - label: { text: "\U000F0379", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_info }
-                            - label: { text: "Source", align: LEFT_MID, x: 82, text_font: roboto_22, text_color: color_text }
+                            - label: { text: "Source", align: LEFT_MID, x: 82 }
                       - button:
                           y: 334
                           width: 290
@@ -115,7 +115,7 @@ obj:
                                   command: "KEY_MENU"
                           widgets:
                             - label: { text: "\U000F035C", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_text_dim }
-                            - label: { text: "Menu", align: LEFT_MID, x: 82, text_font: roboto_22, text_color: color_text }
+                            - label: { text: "Menu", align: LEFT_MID, x: 82 }
 
                 # ── Colonne centre (520) — anneau directionnel + transport ──
                 # [AI-CONTEXT] Largeur passee de 440 a 520 le 06/08/2026. Les 3
@@ -172,7 +172,7 @@ obj:
                                         entity_id: ${entity_tv_remote}
                                         command: "KEY_UP"
                                 widgets:
-                                  - label: { text: "\U000F005D", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+                                  - label: { text: "\U000F005D", align: CENTER, text_font: mdi_font_45 }
                             - button:
                                 align: BOTTOM_MID
                                 y: -18
@@ -190,7 +190,7 @@ obj:
                                         entity_id: ${entity_tv_remote}
                                         command: "KEY_DOWN"
                                 widgets:
-                                  - label: { text: "\U000F0045", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+                                  - label: { text: "\U000F0045", align: CENTER, text_font: mdi_font_45 }
                             - button:
                                 align: LEFT_MID
                                 x: 18
@@ -208,7 +208,7 @@ obj:
                                         entity_id: ${entity_tv_remote}
                                         command: "KEY_LEFT"
                                 widgets:
-                                  - label: { text: "\U000F004D", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+                                  - label: { text: "\U000F004D", align: CENTER, text_font: mdi_font_45 }
                             - button:
                                 align: RIGHT_MID
                                 x: -18
@@ -226,7 +226,7 @@ obj:
                                         entity_id: ${entity_tv_remote}
                                         command: "KEY_RIGHT"
                                 widgets:
-                                  - label: { text: "\U000F0054", align: CENTER, text_font: mdi_font_45, text_color: color_text }
+                                  - label: { text: "\U000F0054", align: CENTER, text_font: mdi_font_45 }
                             - button:
                                 align: CENTER
                                 width: 148
@@ -242,7 +242,7 @@ obj:
                                         entity_id: ${entity_tv_remote}
                                         command: "KEY_ENTER"
                                 widgets:
-                                  - label: { text: "OK", align: CENTER, text_font: roboto_45_b, text_color: color_text }
+                                  - label: { text: "OK", align: CENTER, text_font: roboto_45_b }
 
                       # ── Rangee transport, alignee SOUS la raquette ──
                       # [AI-WARNING] Gabarit exact, ne pas bricoler au pixel :
@@ -280,7 +280,7 @@ obj:
                                         command: "KEY_PLAY"
                                 widgets:
                                   - label: { text: "\U000F040A", align: CENTER, y: -16, text_font: mdi_font_45, text_color: color_success }
-                                  - label: { text: "Lecture", align: CENTER, y: 26, text_font: roboto_22, text_color: color_text }
+                                  - label: { text: "Lecture", align: CENTER, y: 26 }
                             - button:
                                 x: 133
                                 width: 121
@@ -296,8 +296,8 @@ obj:
                                         entity_id: ${entity_tv_remote}
                                         command: "KEY_PAUSE"
                                 widgets:
-                                  - label: { text: "\U000F03E4", align: CENTER, y: -16, text_font: mdi_font_45, text_color: color_text }
-                                  - label: { text: "Pause", align: CENTER, y: 26, text_font: roboto_22, text_color: color_text }
+                                  - label: { text: "\U000F03E4", align: CENTER, y: -16, text_font: mdi_font_45 }
+                                  - label: { text: "Pause", align: CENTER, y: 26 }
                             - button:
                                 x: 266
                                 width: 121
@@ -314,7 +314,7 @@ obj:
                                         command: "KEY_RETURN"
                                 widgets:
                                   - label: { text: "\U000F054C", align: CENTER, y: -16, text_font: mdi_font_45, text_color: color_text_dim }
-                                  - label: { text: "Retour", align: CENTER, y: 26, text_font: roboto_22, text_color: color_text }
+                                  - label: { text: "Retour", align: CENTER, y: 26 }
                             - button:
                                 x: 399
                                 width: 121
@@ -331,87 +331,81 @@ obj:
                                         command: "KEY_HOME"
                                 widgets:
                                   - label: { text: "\U000F02DC", align: CENTER, y: -16, text_font: mdi_font_45, text_color: color_text_dim }
-                                  - label: { text: "Accueil", align: CENTER, y: 26, text_font: roboto_22, text_color: color_text }
+                                  - label: { text: "Accueil", align: CENTER, y: 26 }
 
-                # ── Colonne droite (290) — rocker volume centré ──
+                # ── Colonne droite (290 px) — rocker volume centré dans la colonne ──
+                # (plus de conteneur de centrage : 145 - 75 = 70 px du bord droit)
                 - obj:
                     align: RIGHT_MID
-                    x: 0
-                    width: 290
-                    height: 488
-                    styles: style_transparent
+                    x: -70
+                    width: 150
+                    height: 360
+                    radius: 75
+                    styles: style_meteo_card
                     scrollable: false
                     widgets:
-                      - obj:
+                      - button:
+                          align: TOP_MID
+                          y: 0
+                          width: 150
+                          height: 150
+                          radius: 75
+                          styles: style_invisible
+                          bg_color: color_accent
+                          pressed:
+                            bg_opa: 25%
+                          on_short_click:
+                            - homeassistant.service:
+                                service: remote.send_command
+                                data:
+                                  entity_id: ${entity_tv_remote}
+                                  command: "KEY_VOLUP"
+                          widgets:
+                            - label: { text: "\U000F0415", align: CENTER, y: 8, text_font: mdi_font_45 }
+                      # [AI-CONTEXT] Ce creneau portait un simple libelle
+                      # « VOL » decoratif. Il est devenu le bouton MUET le
+                      # 06/08/2026 : « Muet » a quitte la rangee basse (que
+                      # les apps occupent desormais) et sa place logique est
+                      # ici, entre + et -, comme sur une vraie telecommande.
+                      # [AI-WARNING] Hauteur 60 px IMPOSEE : les deux touches
+                      # de volume font 150x150 dans un conteneur de 360 de
+                      # haut, il ne reste donc que 360-300 = 60 px libres au
+                      # centre. Plus grand => recouvrement des touches.
+                      - button:
                           align: CENTER
                           width: 150
-                          height: 360
-                          radius: 75
-                          styles: style_meteo_card
-                          scrollable: false
+                          height: 60
+                          radius: 30
+                          styles: style_invisible
+                          bg_color: color_accent
+                          pressed:
+                            bg_opa: 25%
+                          on_short_click:
+                            - homeassistant.service:
+                                service: remote.send_command
+                                data:
+                                  entity_id: ${entity_tv_remote}
+                                  command: "KEY_MUTE"
                           widgets:
-                            - button:
-                                align: TOP_MID
-                                y: 0
-                                width: 150
-                                height: 150
-                                radius: 75
-                                styles: style_invisible
-                                bg_color: color_accent
-                                pressed:
-                                  bg_opa: 25%
-                                on_short_click:
-                                  - homeassistant.service:
-                                      service: remote.send_command
-                                      data:
-                                        entity_id: ${entity_tv_remote}
-                                        command: "KEY_VOLUP"
-                                widgets:
-                                  - label: { text: "\U000F0415", align: CENTER, y: 8, text_font: mdi_font_45, text_color: color_text }
-                            # [AI-CONTEXT] Ce creneau portait un simple libelle
-                            # « VOL » decoratif. Il est devenu le bouton MUET le
-                            # 06/08/2026 : « Muet » a quitte la rangee basse (que
-                            # les apps occupent desormais) et sa place logique est
-                            # ici, entre + et -, comme sur une vraie telecommande.
-                            # [AI-WARNING] Hauteur 60 px IMPOSEE : les deux touches
-                            # de volume font 150x150 dans un conteneur de 360 de
-                            # haut, il ne reste donc que 360-300 = 60 px libres au
-                            # centre. Plus grand => recouvrement des touches.
-                            - button:
-                                align: CENTER
-                                width: 150
-                                height: 60
-                                radius: 30
-                                styles: style_invisible
-                                bg_color: color_accent
-                                pressed:
-                                  bg_opa: 25%
-                                on_short_click:
-                                  - homeassistant.service:
-                                      service: remote.send_command
-                                      data:
-                                        entity_id: ${entity_tv_remote}
-                                        command: "KEY_MUTE"
-                                widgets:
-                                  - label: { text: "\U000F0581", align: CENTER, text_font: mdi_font_45, text_color: color_warning }
-                            - button:
-                                align: BOTTOM_MID
-                                y: 0
-                                width: 150
-                                height: 150
-                                radius: 75
-                                styles: style_invisible
-                                bg_color: color_accent
-                                pressed:
-                                  bg_opa: 25%
-                                on_short_click:
-                                  - homeassistant.service:
-                                      service: remote.send_command
-                                      data:
-                                        entity_id: ${entity_tv_remote}
-                                        command: "KEY_VOLDOWN"
-                                widgets:
-                                  - label: { text: "\U000F0374", align: CENTER, y: -6, text_font: mdi_font_45, text_color: color_text }
+                            - label: { text: "\U000F0581", align: CENTER, text_font: mdi_font_45, text_color: color_warning }
+                      - button:
+                          align: BOTTOM_MID
+                          y: 0
+                          width: 150
+                          height: 150
+                          radius: 75
+                          styles: style_invisible
+                          bg_color: color_accent
+                          pressed:
+                            bg_opa: 25%
+                          on_short_click:
+                            - homeassistant.service:
+                                service: remote.send_command
+                                data:
+                                  entity_id: ${entity_tv_remote}
+                                  command: "KEY_VOLDOWN"
+                          widgets:
+                            - label: { text: "\U000F0374", align: CENTER, y: -6, text_font: mdi_font_45 }
 
           # ═══ RANGÉE BASSE — 5 raccourcis apps / source ═══
           # [AI-CONTEXT] Refonte du 06/08/2026 (demande Axel « plus grands et
@@ -500,7 +494,7 @@ obj:
                           data:
                             app: "canal"
                     widgets:
-                      - label: { text: "CANAL+", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+                      - label: { text: "CANAL+", align: CENTER, text_font: roboto_32_b }
                 # [AI-WARNING] « PC » ne passe PAS par select_source. Le
                 # source_list de la TV ne contient que "TV" et "HDMI", et "HDMI"
                 # retombe sur la FREEBOX, pas sur le PC — l'ancien bouton

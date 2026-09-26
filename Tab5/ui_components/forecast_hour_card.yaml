@@ -14,12 +14,11 @@ obj:
         y: 35
         width: 230
         height: 205
-        styles: style_meteo_card
+        styles: style_meteo_card_page
         scrollbar_mode: "OFF"
         widgets:
-          - label: { id: "h${idx}_icon_layer1", text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
-          - label: { id: "h${idx}_icon_layer2", text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
-          - label: { id: "h${idx}_icon_layer3", text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: color_icon_muted }
+          - label: { id: "h${idx}_icon_layer1", text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
+          - label: { id: "h${idx}_icon_layer2", text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
 
     # Onglet Titre
     - obj:
@@ -28,7 +27,7 @@ obj:
         width: 130
         height: 46
         border_width: 0
-        styles: style_meteo_tab
+        styles: style_meteo_card_page
         scrollbar_mode: "OFF"
         widgets:
           - label:
@@ -36,7 +35,6 @@ obj:
               text: "--:--"
               align: CENTER
               text_font: roboto_32_b
-              text_color: color_text
     # Onglet Température & Pluie
     - obj:
         align: BOTTOM_MID
@@ -44,7 +42,7 @@ obj:
         width: 140
         height: 51
         border_width: 0
-        styles: style_meteo_tab
+        styles: style_meteo_card_page
         scrollbar_mode: "OFF"
         widgets:
           - label:

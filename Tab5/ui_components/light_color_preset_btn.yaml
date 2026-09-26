@@ -12,7 +12,6 @@ button:
   border_width: 2
   border_color: color_glass_rim
   border_opa: 45%
-  shadow_width: 0
   pressed:
     bg_opa: 55%
     border_color: color_text
