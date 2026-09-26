@@ -1,6 +1,6 @@
 name: ESPHome Tab5 Compilation
 
-# Deux jobs :
+# Trois jobs :
 #   - python : hooks pre-commit (yamllint, BOM, secrets, placeholders HA),
 #     tests hôte (pytest = outils + miroirs Python des moteurs + garde-fous
 #     Marble/Lode/chrome modal), vrai moteur Go C++ compilé par g++, dry-run du
@@ -10,13 +10,19 @@ name: ESPHome Tab5 Compilation
 #     (statut « skipped » = succès pour la protection) quand le push/la PR ne
 #     touche ni tab5-ha-hmi.yaml, ni Tab5/, ni ce workflow — une typo Markdown
 #     ne recompile plus le firmware. `workflow_dispatch` force la compilation.
+#   - build-min : la même compilation avec la version PLANCHER d'ESPHome, lue dans
+#     `min_version:` de tab5-ha-hmi.yaml (26/09/2026). Sans elle, rien ne vérifiait
+#     que le plancher annoncé compile encore : une option apparue après lui
+#     passerait inaperçue. Mêmes conditions de déclenchement que `build`, sans
+#     artefact. Pour qu'il bloque un merge, l'ajouter aux checks requis de `main`
+#     (réglage du dépôt, fait à la main).
 #
-# `esphome/build-action` sans `version:` tire l'image `latest` : c'est VOULU.
-# La CI sert de banc d'essai gratuit de la dernière ESPHome (le 25/08/2026 elle
-# compilait déjà en 2026.8.1, le 16/09/2026 en 2026.9.0, chaque fois avant que le
-# projet ne relève son plancher). Une
-# rupture amont se voit ici avant de toucher l'appareil. `min_version:` dans
-# tab5-ha-hmi.yaml reste la seule contrainte de version.
+# `esphome/build-action` sans `version:` tire l'image `latest` : c'est VOULU pour
+# `build`. La CI sert de banc d'essai gratuit de la dernière ESPHome (le 25/08/2026
+# elle compilait déjà en 2026.8.1, le 16/09/2026 en 2026.9.0, chaque fois avant que
+# le projet ne relève son plancher). Une rupture amont se voit ici avant de toucher
+# l'appareil ; `build-min` garde l'autre borne. `min_version:` dans tab5-ha-hmi.yaml
+# reste la seule contrainte de version, et la seule source du plancher.
 
 # `push` limité à main : une branche avec PR était compilée deux fois (push +
 # pull_request), 2 × ~10 min par modification. Une branche sans PR se teste par
@@ -167,3 +173,49 @@ jobs:
           path: ${{ steps.esphome-build.outputs.name }}
           if-no-files-found: error
           retention-days: 30
+
+  build-min:
+    needs: changes
+    if: needs.changes.outputs.firmware == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Version plancher (min_version de tab5-ha-hmi.yaml)
+        id: plancher
+        # Lue dans le fichier plutôt que recopiée ici : relever le plancher dans
+        # tab5-ha-hmi.yaml suffit, le job suit.
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          if [ -z "$v" ]; then
+            echo "::error file=tab5-ha-hmi.yaml::min_version introuvable"
+            exit 1
+          fi
+          echo "ESPHome plancher : $v" >> "$GITHUB_STEP_SUMMARY"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+      - name: Générer user_entities.yaml et secrets.yaml factices pour la CI
+        run: |
+          cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
+          cat > secrets.yaml << 'EOF'
+          wifi_ssid: "ci_dummy_ssid"
+          wifi_password: "CI_DUMMY_PASSWORD"
+          wifi_ap_password: "CI_DUMMY_AP_PASSWORD"
+          api_encryption_key: "26IVe/bZ/aI+T8G96D7aYZlM2EH8QUG8JtsZ50HxaCE="
+          EOF
+      # Cache ccache à part : les objets d'une autre version d'ESPHome (ou d'ESP-IDF)
+      # ne resserviraient pas, et chaque job écraserait le cache de l'autre.
+      - name: Cache ccache (objets de la compilation précédente)
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/ccache
+          key: ccache-p4-min-${{ steps.plancher.outputs.version }}-${{ github.run_id }}
+          restore-keys: ccache-p4-min-${{ steps.plancher.outputs.version }}-
+      - name: Configuration ccache
+        run: |
+          echo "CCACHE_DIR=$RUNNER_TEMP/ccache" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/ccache"
+          printf 'max_size = 2G\ncompiler_check = content\n' > "$RUNNER_TEMP/ccache/ccache.conf"
+      - name: Build ESPHome Firmware (version plancher)
+        uses: esphome/build-action@v8.1.0
+        with:
+          yaml-file: tab5-ha-hmi.yaml
+          version: ${{ steps.plancher.outputs.version }}

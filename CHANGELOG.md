@@ -4,6 +4,25 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — CI : compilation avec la version plancher d'ESPHome
+
+Nouveau job **`build-min`** dans `.github/workflows/esphome-tab5.yml` : la même
+compilation que `build`, mais avec la version d'ESPHome lue dans `min_version:` de
+`tab5-ha-hmi.yaml` (2026.9.0 aujourd'hui).
+
+- **Pourquoi** : `build` compile volontairement avec `latest`, pour voir venir les
+  ruptures amont. Mais rien ne vérifiait que la version minimale annoncée compile
+  encore : une option apparue après elle serait passée inaperçue. Les projets ESPHome
+  les plus suivis (NSPanel HA Blueprint, Tessera) compilent eux aussi sur deux versions.
+- **Fonctionnement** :
+  - la version est lue dans `tab5-ha-hmi.yaml`, seule source du plancher : relever
+    `min_version:` suffit ;
+  - le job a son propre cache ccache, une clé par version ;
+  - il se déclenche dans les mêmes conditions que `build` et ne produit pas
+    d'artefact.
+- **Pas encore un check requis** : pour qu'un échec bloque le merge, il faut l'ajouter
+  aux checks requis de `main` dans les réglages du dépôt.
+
 ### 2026-09-26 — Alimentations masquées à HA, uptime publié une fois par démarrage
 
 Restes de l'audit des ressources du 26/09/2026 (§6 et H4), relevés dans le code le soir même.
