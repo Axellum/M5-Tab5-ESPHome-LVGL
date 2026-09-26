@@ -112,9 +112,8 @@ voice_assistant:
     # Réponse "par défaut" = texte parlé (TTS). Le moteur peut la remplacer par une
     # version riche (tableaux + image) via le service HA tab5_assist_reponse.
     - lambda: |-
-        esphome::font::Font* f = id(assist_text_size) == 0 ? id(roboto_mono_20)
-                               : (id(assist_text_size) == 2 ? id(roboto_mono_28) : id(roboto_mono_24));
-        assist_set_response(id(lbl_assist_response), x, f);
+        assist_set_response(id(lbl_assist_response), x, assist_font(id(assist_text_size),
+            id(roboto_mono_20), id(roboto_mono_24), id(roboto_mono_28)));
   on_end:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_end"
     - lambda: 'assist_set_pipeline_state(id(icon_mic_status), id(lbl_assist_status), AssistState::IDLE);'
@@ -338,14 +337,10 @@ script:
                 id: is_showing_vocal_response
                 value: 'true'
             - lambda: |-
-                sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
-                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
-                    id(current_central_panel));
                 show_vocal_response_ui(texte,
                     id(vocal_wrapper), id(lbl_vocal_text),
                     id(page_title_wrapper), g_central_ctx,
                     id(roboto_45_b));
-                id(current_central_panel) = g_central_ctx.current_panel;
             - delay: 8s
             - script.execute: tab5_vocal_response_end
 
@@ -355,11 +350,7 @@ script:
     mode: single
     then:
       - lambda: |-
-          sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
-              id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
-              id(current_central_panel));
           hide_vocal_response_ui(id(vocal_wrapper), id(lbl_vocal_text), g_central_ctx);
-          id(current_central_panel) = g_central_ctx.current_panel;
       - globals.set:
           id: is_showing_vocal_response
           value: 'false'
@@ -380,8 +371,7 @@ script:
           // Ouverture programmée (réponse du moteur) : personne n'a touché la
           // dalle, on repart donc de 45 s pleines avant le retour automatique.
           ui_mark_activity();
-          animate_popup_open(id(assistant_popup), nullptr);
-          lv_obj_move_foreground(id(assistant_popup));
+          animate_popup_open(id(assistant_popup));
       - script.execute: tab5_assist_sync_settings
 
   - id: tab5_assist_close
@@ -390,7 +380,7 @@ script:
       - globals.set:
           id: assist_popup_open
           value: 'false'
-      - lambda: 'animate_popup_close(id(assistant_popup), nullptr);'
+      - lambda: 'animate_popup_close(id(assistant_popup));'
 
   # Nouvelle demande reconnue : passe la réponse en "Réflexion..." et masque l'image
   # précédente. N'OUVRE le popup automatiquement qu'en mode Discussion (ou s'il est
@@ -401,9 +391,8 @@ script:
     mode: restart
     then:
       - lambda: |-
-          esphome::font::Font* f = id(assist_text_size) == 0 ? id(roboto_mono_20)
-                                 : (id(assist_text_size) == 2 ? id(roboto_mono_28) : id(roboto_mono_24));
-          assist_set_response(id(lbl_assist_response), std::string("Reflexion..."), f);
+          assist_set_response(id(lbl_assist_response), std::string("Reflexion..."),
+              assist_font(id(assist_text_size), id(roboto_mono_20), id(roboto_mono_24), id(roboto_mono_28)));
           assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::NONE);
       - if:
           condition:

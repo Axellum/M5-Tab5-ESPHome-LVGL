@@ -79,8 +79,7 @@ obj:
               styles: style_invisible
               on_short_click:
                 - lambda: |-
-                    animate_popup_open(id(clim_options_popup), nullptr);
-                    lv_obj_move_foreground(id(clim_options_popup));
+                    animate_popup_open(id(clim_options_popup));
 
           - button:
               id: btn_clim_minus

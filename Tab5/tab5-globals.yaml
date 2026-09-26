@@ -68,27 +68,11 @@ globals:
   - id: current_light_entity
     type: std::string
     initial_value: '""'
-  - id: has_alerts
-    type: bool
-    initial_value: 'false'
-  - id: has_rain
-    type: bool
-    initial_value: 'false'
-  - id: has_info
-    type: bool
-    initial_value: 'false'
-  - id: has_ha_alert_0
-    type: bool
-    initial_value: 'false'
-  - id: has_ha_alert_1
-    type: bool
-    initial_value: 'false'
-  - id: has_ha_alert_2
-    type: bool
-    initial_value: 'false'
-  - id: has_ha_alert_3
-    type: bool
-    initial_value: 'false'
+  # Contenu et panneau courant de la carte centrale (pluie, vigilance, info,
+  # 4 bandeaux HA, index du rotateur) : PAS de global ici. Leur seule source est
+  # g_central_ctx (CentralPanelCtx, tab5_custom.h), lu et écrit directement par
+  # les lambdas. Jusqu'au lot 7 de l'audit du 26/09/2026, 8 globals doublaient
+  # ses champs et chaque script les recopiait avant et après chaque appel C++.
   - id: ha_alert_id_0
     type: std::string
     initial_value: '""'
@@ -110,9 +94,6 @@ globals:
   - id: tab5_dismissed_local
     type: std::string
     initial_value: '""'
-  - id: current_central_panel
-    type: int
-    initial_value: '0'
   - id: system_volume
     type: float
     initial_value: '1.0'

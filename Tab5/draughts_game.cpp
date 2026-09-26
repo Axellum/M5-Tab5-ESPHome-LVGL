@@ -589,9 +589,7 @@ struct Mem {
     lv_obj_t* side_btns_l[4] = {};
 
     // Panel menus (slots)
-    lv_obj_t* slot[N_SLOTS] = {};
-    lv_obj_t* slot_t[N_SLOTS] = {};
-    lv_obj_t* slot_d[N_SLOTS] = {};
+    SlotMenu<N_SLOTS> slots;   // game_common.h
     lv_obj_t* p_title = nullptr;
     lv_obj_t* p_sub = nullptr;
 
@@ -742,14 +740,15 @@ static void record_result(int winner) {
 
 static void panel_on(bool on) { show(gs->ui.panel, on); }
 
+// Entrée de menu à position fixe (build_ui) ; `on` = false la masque.
 static void slot_list(int i, const char* title, const char* desc, uint32_t col, bool on) {
     if (i < 0 || i >= N_SLOTS) return;
-    show(gs->slot[i], on);
+    show(gs->slots.box[i], on);
     if (!on) return;
-    set_text_if(gs->slot_t[i], title);
-    set_text_if(gs->slot_d[i], desc);
-    lv_obj_set_style_text_color(gs->slot_t[i], lv_color_hex(col), LV_PART_MAIN);
-    set_border(gs->slot[i], col, 2, LV_OPA_50);
+    set_text_if(gs->slots.title[i], title);
+    set_text_if(gs->slots.desc[i], desc);
+    lv_obj_set_style_text_color(gs->slots.title[i], lv_color_hex(col), LV_PART_MAIN);
+    set_border(gs->slots.box[i], col, 2, LV_OPA_50);
 }
 
 static const char* level_name(uint8_t lv) {
@@ -1043,7 +1042,7 @@ static void go_hub() {
     slot_list(2, "Statistiques", "Victoires / nulle / defaites vs Tab", Pal::HL_CAP, true);
     slot_list(3, "Reglages", "Secousse = Hint, reset stats", Pal::TXT_DIM, true);
     slot_list(4, "Quitter", "Retour au tableau de bord", Pal::DANGER, true);
-    slot_list(5, "", "", 0, false);
+    gs->slots.hide_from(5);
 }
 
 static void go_setup() {
@@ -1090,9 +1089,7 @@ static void go_settings() {
               "IMU BMI270", Pal::HL_MOVE, true);
     slot_list(1, "Reset statistiques", "Demande confirmation", Pal::DANGER, true);
     slot_list(2, "Retour", "", Pal::TXT_DIM, true);
-    slot_list(3, "", "", 0, false);
-    slot_list(4, "", "", 0, false);
-    slot_list(5, "", "", 0, false);
+    gs->slots.hide_from(3);
 }
 
 static void go_gameover() {
@@ -1112,10 +1109,7 @@ static void go_gameover() {
     set_text_if(gs->p_sub, buf);
     slot_list(0, "Revanche", "Meme reglage", Pal::KING_RING, true);
     slot_list(1, "Hub", "Menu principal", Pal::TXT_DIM, true);
-    slot_list(2, "", "", 0, false);
-    slot_list(3, "", "", 0, false);
-    slot_list(4, "", "", 0, false);
-    slot_list(5, "", "", 0, false);
+    gs->slots.hide_from(2);
 }
 
 static void start_new_game() {
@@ -1346,7 +1340,7 @@ static void on_square_tap(int r, int c) {
 static void field_event_cb(lv_event_t* e) {
     if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
     if (g_state != ST_PLAYING) return;
-    lv_indev_t* in = lv_indev_get_act();
+    lv_indev_t* in = lv_indev_active();
     if (!in) return;
     lv_point_t pt;
     lv_indev_get_point(in, &pt);
@@ -1423,10 +1417,7 @@ static void slot_cb(lv_event_t* e) {
                 set_text_if(gs->p_sub, "Irréversible");
                 slot_list(0, "Confirmer reset", "", Pal::DANGER, true);
                 slot_list(1, "Annuler", "", Pal::TXT_DIM, true);
-                slot_list(2, "", "", 0, false);
-                slot_list(3, "", "", 0, false);
-                slot_list(4, "", "", 0, false);
-                slot_list(5, "", "", 0, false);
+                gs->slots.hide_from(2);
             } else if (i == 2) go_hub();
             break;
         case ST_CONFIRM_RESET:
@@ -1548,18 +1539,16 @@ static void build_ui() {
     gs->p_sub = mk_label(gs->ui.panel, gs->ui.f_small, Pal::TXT_DIM);
     lv_obj_set_pos(gs->p_sub, 80, 100);
 
+    gs->slots.build(gs->ui.panel, slot_cb, gs->ui.f_mid, Pal::TXT, gs->ui.f_small, Pal::TXT_DIM,
+                    [](lv_obj_t* b, int i) {
+        lv_obj_set_pos(b, 80, 160 + i * 80);
+        lv_obj_set_size(b, 1120, 70);
+        set_bg(b, Pal::PANEL_BG, LV_OPA_COVER);
+        lv_obj_set_style_radius(b, 10, LV_PART_MAIN);
+    });
     for (int i = 0; i < N_SLOTS; i++) {
-        gs->slot[i] = mk_rect(gs->ui.panel);
-        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_pos(gs->slot[i], 80, 160 + i * 80);
-        lv_obj_set_size(gs->slot[i], 1120, 70);
-        set_bg(gs->slot[i], Pal::PANEL_BG, LV_OPA_COVER);
-        lv_obj_set_style_radius(gs->slot[i], 10, LV_PART_MAIN);
-        gs->slot_t[i] = mk_label(gs->slot[i], gs->ui.f_mid, Pal::TXT);
-        lv_obj_set_pos(gs->slot_t[i], 24, 8);
-        gs->slot_d[i] = mk_label(gs->slot[i], gs->ui.f_small, Pal::TXT_DIM);
-        lv_obj_set_pos(gs->slot_d[i], 24, 40);
-        lv_obj_add_event_cb(gs->slot[i], slot_cb, LV_EVENT_CLICKED, (void*)(intptr_t)i);
+        lv_obj_set_pos(gs->slots.title[i], 24, 8);
+        lv_obj_set_pos(gs->slots.desc[i], 24, 40);
     }
 }
 

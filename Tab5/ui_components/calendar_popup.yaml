@@ -29,7 +29,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(cal_day_popup), nullptr); animate_popup_close(id(calendar_popup), nullptr);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(cal_day_popup)); animate_popup_close(id(calendar_popup));" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -41,7 +41,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F0E17", icon_color: "color_accent", title: "Calendrier", title_id: "popup_cal_title", close_btn_id: "btn_cal_close", close_lambda: "animate_popup_close(id(cal_day_popup), nullptr); animate_popup_close(id(calendar_popup), nullptr);" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0E17", icon_color: "color_accent", title: "Calendrier", title_id: "popup_cal_title", close_btn_id: "btn_cal_close", close_lambda: "animate_popup_close(id(cal_day_popup)); animate_popup_close(id(calendar_popup));" } }
 
           # Options d'en-tête : frères de la barre, alignés sur sa ligne (y=4, hauteur 44)
           # Navigation mois : ◀  mois  ▶
@@ -197,7 +197,7 @@ obj:
         styles: style_invisible
         widgets:
           # Voile local, moins opaque : il s'empile sur le voile du calendrier
-          - !include { file: modal_scrim.yaml, vars: { scrim_opa: "60", close_lambda: "animate_popup_close(id(cal_day_popup), nullptr);" } }
+          - !include { file: modal_scrim.yaml, vars: { scrim_opa: "60", close_lambda: "animate_popup_close(id(cal_day_popup));" } }
           # Sous-popup imbriqué : garde sa taille 780×540 (pas une fenêtre de
           # premier niveau), mais la MÊME barre de titre que les autres.
           - obj:
@@ -207,7 +207,7 @@ obj:
               styles: style_modal_card_verre
               scrollable: false
               widgets:
-                - !include { file: modal_header.yaml, vars: { icon: "\U000F0E17", icon_color: "color_accent", title: "", title_id: "lbl_cal_day_title", close_btn_id: "btn_cal_day_close", close_lambda: "animate_popup_close(id(cal_day_popup), nullptr);" } }
+                - !include { file: modal_header.yaml, vars: { icon: "\U000F0E17", icon_color: "color_accent", title: "", title_id: "lbl_cal_day_title", close_btn_id: "btn_cal_day_close", close_lambda: "animate_popup_close(id(cal_day_popup));" } }
 
                 # Statut central (Chargement… / Rien de prévu / HA hors ligne)
                 - label: { id: lbl_cal_day_status, text: "", align: CENTER, y: 0, text_font: roboto_32_b, text_color: color_text_dim }

@@ -108,13 +108,8 @@ static std::vector<std::string> tab5_dismiss_split_ids(const std::string& store)
     char* saveptr = nullptr;
     char* tok = strtok_r(buf, "|", &saveptr);
     while (tok != nullptr) {
-        std::string id = tok;
-        const char* ws = " \t\r\n";
-        size_t deb = id.find_first_not_of(ws);
-        if (deb != std::string::npos) {
-            id = id.substr(deb, id.find_last_not_of(ws) - deb + 1);
-            if (!id.empty()) out.push_back(id);
-        }
+        const std::string id = trim_ws(tok);
+        if (!id.empty()) out.push_back(id);
         tok = strtok_r(nullptr, "|", &saveptr);
     }
     return out;

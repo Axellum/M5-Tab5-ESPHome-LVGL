@@ -243,9 +243,7 @@ struct Mem {
     lv_obj_t* m_sub   = nullptr;
     lv_obj_t* m_body  = nullptr;
     lv_obj_t* m_foot  = nullptr;
-    lv_obj_t* slot[N_SLOTS]   = {};
-    lv_obj_t* slot_t[N_SLOTS] = {};
-    lv_obj_t* slot_d[N_SLOTS] = {};
+    SlotMenu<N_SLOTS> slots;          // entrees des menus (game_common.h)
     lv_obj_t* promo_name[4]   = {};   // libelles sous les tuiles de promotion
 
     // Caches de rendu : une case n'est restylee que si son contenu a change.
@@ -474,11 +472,7 @@ static void build_ui() {
         set_bg(gs->pbtn[i], Pal::BTN_BG, LV_OPA_COVER);
         set_border(gs->pbtn[i], Pal::ACCENT, 2, LV_OPA_40);
         lv_obj_add_flag(gs->pbtn[i], LV_OBJ_FLAG_CLICKABLE);
-        // Retour tactile. Casts explicites : combiner lv_part_t et lv_state_t
-        // directement est deprecie en C++20 (-Wdeprecated-enum-enum-conversion).
-        lv_obj_set_style_bg_color(gs->pbtn[i], lv_color_hex(Pal::BTN_BG_ON),
-                                  (lv_style_selector_t) LV_PART_MAIN |
-                                  (lv_style_selector_t) LV_STATE_PRESSED);
+        set_pressed_bg(gs->pbtn[i], Pal::BTN_BG_ON);   // retour tactile
         lv_obj_add_event_cb(gs->pbtn[i], pbtn_event_cb, LV_EVENT_CLICKED, (void*) (intptr_t) i);
         gs->pbtn_lbl[i] = mk_label(gs->pbtn[i], gs->ui.f_small, Pal::TXT);
         lv_obj_align(gs->pbtn_lbl[i], LV_ALIGN_CENTER, 0, 0);
@@ -504,19 +498,15 @@ static void build_ui() {
     gs->m_foot = mk_label(gs->menu, gs->ui.f_small, Pal::TXT_MUTED);
     lv_obj_align(gs->m_foot, LV_ALIGN_BOTTOM_MID, 0, -20);
 
-    for (int i = 0; i < N_SLOTS; i++) {
-        gs->slot[i] = mk_rect(gs->menu);
-        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_style_radius(gs->slot[i], 14, LV_PART_MAIN);
-        set_bg(gs->slot[i], Pal::BTN_BG, LV_OPA_COVER);
-        lv_obj_set_style_bg_color(gs->slot[i], lv_color_hex(Pal::BTN_BG_ON),
-                                  (lv_style_selector_t) LV_PART_MAIN |
-                                  (lv_style_selector_t) LV_STATE_PRESSED);
-        lv_obj_add_event_cb(gs->slot[i], slot_event_cb, LV_EVENT_CLICKED, (void*) (intptr_t) i);
-        gs->slot_t[i] = mk_label(gs->slot[i], gs->ui.f_mid, Pal::TXT);
-        gs->slot_d[i] = mk_label(gs->slot[i], gs->ui.f_small, Pal::TXT_DIM);
-        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_HIDDEN);
-    }
+    // Entrees de menu : liste verticale 720x62 a y = 210 + 70 i (slot_list).
+    gs->slots.geom = {.w = 720, .h = 62, .top = 210, .pitch = 70, .tx = 24, .t_dy = -13, .d_dy = 15,
+                      .border_opa = LV_OPA_50, .off = Pal::TXT_MUTED};
+    gs->slots.build(gs->menu, slot_event_cb, gs->ui.f_mid, Pal::TXT, gs->ui.f_small, Pal::TXT_DIM,
+                    [](lv_obj_t* b, int) {
+        lv_obj_set_style_radius(b, 14, LV_PART_MAIN);
+        set_bg(b, Pal::BTN_BG, LV_OPA_COVER);
+        set_pressed_bg(b, Pal::BTN_BG_ON);
+    });
 
     // Libelles des 4 tuiles de promotion : centres SOUS chaque tuile, donc
     // alignes avec elles (un seul libelle en pied de page ne pourrait pas l'etre
@@ -544,74 +534,74 @@ static void promo_names(bool v) {
 // l'ecran de promotion detourne les memes objets en tuiles d'echiquier (fond
 // creme, police des figurines) : sans ce reset, le menu suivant en heriterait.
 static void slot_reset(int i) {
-    set_bg(gs->slot[i], Pal::BTN_BG, LV_OPA_COVER);
-    esphome::lvgl::lv_obj_set_style_text_font(gs->slot_t[i], gs->ui.f_mid, LV_PART_MAIN);
-    esphome::lvgl::lv_obj_set_style_text_font(gs->slot_d[i], gs->ui.f_small, LV_PART_MAIN);
-    set_text_color_if(gs->slot_d[i], Pal::TXT_DIM);
-    show(gs->slot_d[i], true);
+    set_bg(gs->slots.box[i], Pal::BTN_BG, LV_OPA_COVER);
+    esphome::lvgl::lv_obj_set_style_text_font(gs->slots.title[i], gs->ui.f_mid, LV_PART_MAIN);
+    esphome::lvgl::lv_obj_set_style_text_font(gs->slots.desc[i], gs->ui.f_small, LV_PART_MAIN);
+    set_text_color_if(gs->slots.desc[i], Pal::TXT_DIM);
+    show(gs->slots.desc[i], true);
 }
 
 // --- Mise en page des entrees de menu --------------------------------------
 static void slot_list(int i, const char* title, const char* desc, uint32_t col, bool on) {
     if (i < 0 || i >= N_SLOTS) return;
     slot_reset(i);
-    lv_obj_set_size(gs->slot[i], 720, 62);
-    lv_obj_align(gs->slot[i], LV_ALIGN_TOP_MID, 0, 210 + i * 70);
-    lv_obj_set_width(gs->slot_t[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(gs->slot_t[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_set_width(gs->slot_d[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(gs->slot_d[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_align(gs->slot_t[i], LV_ALIGN_LEFT_MID, 24, (desc && desc[0]) ? -13 : 0);
-    lv_obj_align(gs->slot_d[i], LV_ALIGN_LEFT_MID, 24, 15);
-    set_text_color_if(gs->slot_t[i], on ? col : Pal::TXT_MUTED);
-    set_text_if(gs->slot_t[i], title);
-    set_text_if(gs->slot_d[i], desc ? desc : "");
-    set_border(gs->slot[i], on ? col : Pal::TXT_MUTED, 2, LV_OPA_50);
-    show(gs->slot[i], true);
+    gs->slots.row(i, title, desc, col, on);
 }
 
 // Tuile de promotion : une vraie case d'echiquier portant la figurine, rendue
 // EXACTEMENT comme sur le plateau (corps plein + contour pour les blancs). On
-// detourne gs->slot_t comme calque « corps » et gs->slot_d comme calque « contour ».
+// detourne le titre comme calque « corps » et la description comme calque « contour ».
 static void slot_promo(int i, uint8_t type, bool white) {
     if (i < 0 || i >= N_SLOTS) return;
-    lv_obj_set_size(gs->slot[i], 168, 168);
-    lv_obj_align(gs->slot[i], LV_ALIGN_TOP_LEFT, 220 + i * 220, 300);
-    lv_obj_set_style_radius(gs->slot[i], 10, LV_PART_MAIN);
+    lv_obj_t* box = gs->slots.box[i];
+    lv_obj_t* body = gs->slots.title[i];
+    lv_obj_t* edge = gs->slots.desc[i];
+    lv_obj_set_size(box, 168, 168);
+    lv_obj_align(box, LV_ALIGN_TOP_LEFT, 220 + i * 220, 300);
+    lv_obj_set_style_radius(box, 10, LV_PART_MAIN);
     // Alternance creme / vert : les 4 tuiles ressemblent a une rangee du damier.
-    set_bg(gs->slot[i], (i & 1) ? Pal::SQ_DARK : Pal::SQ_LIGHT, LV_OPA_COVER);
-    set_border(gs->slot[i], Pal::ACCENT, 3, LV_OPA_80);
+    set_bg(box, (i & 1) ? Pal::SQ_DARK : Pal::SQ_LIGHT, LV_OPA_COVER);
+    set_border(box, Pal::ACCENT, 3, LV_OPA_80);
 
     char g[4];
-    esphome::lvgl::lv_obj_set_style_text_font(gs->slot_t[i], gs->ui.f_piece, LV_PART_MAIN);
-    lv_obj_set_width(gs->slot_t[i], LV_SIZE_CONTENT);
-    lv_obj_align(gs->slot_t[i], LV_ALIGN_CENTER, 0, PIECE_DY);
+    esphome::lvgl::lv_obj_set_style_text_font(body, gs->ui.f_piece, LV_PART_MAIN);
+    lv_obj_set_width(body, LV_SIZE_CONTENT);
+    lv_obj_align(body, LV_ALIGN_CENTER, 0, PIECE_DY);
     piece_utf8(type, false, g);
-    set_text_if(gs->slot_t[i], g);
-    set_text_color_if(gs->slot_t[i], white ? Pal::PC_W_FILL : Pal::PC_B_FILL);
+    set_text_if(body, g);
+    set_text_color_if(body, white ? Pal::PC_W_FILL : Pal::PC_B_FILL);
 
-    esphome::lvgl::lv_obj_set_style_text_font(gs->slot_d[i], gs->ui.f_piece, LV_PART_MAIN);
-    lv_obj_set_width(gs->slot_d[i], LV_SIZE_CONTENT);
-    lv_obj_align(gs->slot_d[i], LV_ALIGN_CENTER, 0, PIECE_DY);
+    esphome::lvgl::lv_obj_set_style_text_font(edge, gs->ui.f_piece, LV_PART_MAIN);
+    lv_obj_set_width(edge, LV_SIZE_CONTENT);
+    lv_obj_align(edge, LV_ALIGN_CENTER, 0, PIECE_DY);
     if (white) {
         piece_utf8(type, true, g);
-        set_text_if(gs->slot_d[i], g);
-        set_text_color_if(gs->slot_d[i], Pal::PC_EDGE);
+        set_text_if(edge, g);
+        set_text_color_if(edge, Pal::PC_EDGE);
     }
-    show(gs->slot_d[i], white);
-    show(gs->slot[i], true);
+    show(edge, white);
+    show(box, true);
 }
 
 static void slots_hide_from(int n) {
-    for (int i = n; i < N_SLOTS; i++) show(gs->slot[i], false);
+    gs->slots.hide_from(n);
     promo_names(false);          // par defaut : masques, show_promo() les rallume
 }
 
 static void menu_on(bool v, lv_opa_t opa = LV_OPA_COVER) {
     if (!gs->menu) return;
     set_bg(gs->menu, Pal::VOID_BG, opa);
-    show(gs->menu, v);
-    if (v) lv_obj_move_foreground(gs->menu);
+    show_front(gs->menu, v);
+}
+
+// Titre (couleur tc) / sous-titre / corps / pied du calque de menus (nullptr = inchange).
+static void panel_text(const char* t, const char* s, const char* b, const char* f,
+                       uint32_t tc = Pal::ACCENT) {
+    set_text_if(gs->m_title, t);
+    set_text_color_if(gs->m_title, tc);
+    set_text_if(gs->m_sub, s);
+    set_text_if(gs->m_body, b);
+    set_text_if(gs->m_foot, f);
 }
 
 // ===========================================================================
@@ -860,14 +850,11 @@ static void go_hub() {
     g_state = ST_HUB;
     gs->ai_think = false;
     menu_on(true);
-    set_text_if(gs->m_title, "ROI NOIR");
-    set_text_color_if(gs->m_title, Pal::ACCENT);
-    set_text_if(gs->m_sub, "Echiquier du Tab — regles FIDE, IA embarquee, 100 % local");
     char body[128];
     snprintf(body, sizeof(body), "Classement local : %u Elo   ·   %u parties jouees",
              (unsigned) gs->save.elo, (unsigned) gs->save.games);
-    set_text_if(gs->m_body, body);
-    set_text_if(gs->m_foot, "Toucher le bandeau du haut pendant la partie ouvre le menu de pause.");
+    panel_text("ROI NOIR", "Echiquier du Tab — regles FIDE, IA embarquee, 100 % local", body,
+               "Toucher le bandeau du haut pendant la partie ouvre le menu de pause.");
 
     int i = 0;
     slot_list(i++, "Nouvelle partie", "Choix du mode, de la couleur, du niveau et de la pendule", Pal::ACCENT, true);
@@ -888,11 +875,7 @@ static void go_hub() {
 static void go_setup() {
     g_state = ST_SETUP;
     menu_on(true);
-    set_text_if(gs->m_title, "NOUVELLE PARTIE");
-    set_text_color_if(gs->m_title, Pal::ACCENT);
-    set_text_if(gs->m_sub, "Toucher une ligne pour changer sa valeur");
-    set_text_if(gs->m_body, "");
-    set_text_if(gs->m_foot, "");
+    panel_text("NOUVELLE PARTIE", "Toucher une ligne pour changer sa valeur", "", "");
 
     char d[96];
     int i = 0;
@@ -923,11 +906,7 @@ static void go_setup() {
 static void go_settings() {
     g_state = ST_SETTINGS;
     menu_on(true);
-    set_text_if(gs->m_title, "REGLAGES");
-    set_text_color_if(gs->m_title, Pal::ACCENT);
-    set_text_if(gs->m_sub, "Conserves en NVS, valables pour toutes les parties");
-    set_text_if(gs->m_body, "");
-    set_text_if(gs->m_foot, "");
+    panel_text("REGLAGES", "Conserves en NVS, valables pour toutes les parties", "", "");
 
     int i = 0;
     slot_list(i++, "Gestes IMU",
@@ -953,13 +932,10 @@ static void go_settings() {
 static void go_stats() {
     g_state = ST_STATS;
     menu_on(true);
-    set_text_if(gs->m_title, "STATISTIQUES");
-    set_text_color_if(gs->m_title, Pal::ACCENT);
 
     char sub[96];
     snprintf(sub, sizeof(sub), "Classement local : %u Elo   ·   %u parties contre le Tab",
              (unsigned) gs->save.elo, (unsigned) gs->save.games);
-    set_text_if(gs->m_sub, sub);
 
     // Bilan par niveau, en une seule etiquette multi-lignes.
     // [FR] snprintf renvoie la longueur QU'IL AURAIT ECRITE : cumuler son
@@ -983,11 +959,10 @@ static void go_stats() {
     append("\nPlus longue partie : %u demi-coups\n", (unsigned) gs->save.longest_plies);
     append("Temps de jeu cumule : %u min", (unsigned)(gs->save.total_ms / 60000u));
     lv_obj_set_style_text_align(gs->m_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    set_text_if(gs->m_body, body);
-    set_text_if(gs->m_foot, "");
+    panel_text("STATISTIQUES", sub, body, "");
 
     slot_list(0, "Retour", "Revenir au menu principal", Pal::TXT_DIM, true);
-    lv_obj_align(gs->slot[0], LV_ALIGN_BOTTOM_MID, 0, -80);
+    lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -80);
     slots_hide_from(1);
 }
 
@@ -995,11 +970,7 @@ static void show_confirm(uint8_t kind, const char* title, const char* question) 
     gs->confirm_kind = kind;
     g_state = ST_CONFIRM;
     menu_on(true);
-    set_text_if(gs->m_title, title);
-    set_text_color_if(gs->m_title, Pal::ACCENT);
-    set_text_if(gs->m_sub, question);
-    set_text_if(gs->m_body, "");
-    set_text_if(gs->m_foot, "");
+    panel_text(title, question, "", "");
     slot_list(0, "Confirmer", "", Pal::DANGER, true);
     slot_list(1, "Annuler", "", Pal::TXT_DIM, true);
     slots_hide_from(2);
@@ -1010,11 +981,7 @@ static void show_promo() {
     // 82 % d'opacite : on garde le plateau visible derriere, c'est utile pour
     // decider entre dame et cavalier.
     menu_on(true, (lv_opa_t) 209);
-    set_text_if(gs->m_title, "PROMOTION");
-    set_text_color_if(gs->m_title, Pal::ACCENT);
-    set_text_if(gs->m_sub, "Le pion atteint la derniere rangee — choisir la piece");
-    set_text_if(gs->m_body, "");
-    set_text_if(gs->m_foot, "");
+    panel_text("PROMOTION", "Le pion atteint la derniere rangee — choisir la piece", "", "");
 
     // La couleur promue est celle du camp AU TRAIT (le pion n'a pas encore bouge).
     const bool white = (gp->pos.side == WHITE);
@@ -1027,11 +994,7 @@ static void show_promo() {
 static void show_pause() {
     g_state = ST_PAUSE;
     menu_on(true, (lv_opa_t) 235);
-    set_text_if(gs->m_title, "PAUSE");
-    set_text_color_if(gs->m_title, Pal::ACCENT);
-    set_text_if(gs->m_sub, "La pendule est arretee");
-    set_text_if(gs->m_body, "");
-    set_text_if(gs->m_foot, "");
+    panel_text("PAUSE", "La pendule est arretee", "", "");
     int i = 0;
     slot_list(i++, "Reprendre", "Retour a la partie", Pal::GOOD, true);
     slot_list(i++, "Annuler le dernier coup", gp->mode == 0 ? "Annule votre coup et la reponse du Tab"
@@ -1060,18 +1023,13 @@ static void show_over() {
             col = Pal::ACCENT;
         }
     }
-    set_text_if(gs->m_title, t);
-    set_text_color_if(gs->m_title, col);
-    set_text_if(gs->m_sub, gs->reason);
-
     char body[160];
     if (gp->mode == 0)
         snprintf(body, sizeof(body), "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo",
                  gp->nply, AI_LEVELS[gp->level].name, (unsigned) gs->save.elo);
     else
         snprintf(body, sizeof(body), "%d demi-coups joues", gp->nply);
-    set_text_if(gs->m_body, body);
-    set_text_if(gs->m_foot, "");
+    panel_text(t, gs->reason, body, "", col);
 
     int i = 0;
     slot_list(i++, "Rejouer", "Meme mode, memes reglages", Pal::ACCENT, true);
@@ -1211,7 +1169,7 @@ static void play_move(const Move& m) {
         gs->anim_y1 = (to_cell >> 3) * CELL;
         lv_obj_set_pos(gs->anim, gs->anim_x0, gs->anim_y0);
         show(gs->anim, true);
-        lv_obj_move_foreground(gs->anim);
+        lv_obj_move_to_index(gs->anim, -1);
         gs->anim_hide = to_cell;
         gs->anim_on = true;
         gs->anim_t0 = esphome::millis();

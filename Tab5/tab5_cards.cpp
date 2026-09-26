@@ -115,11 +115,7 @@ void show_light_popup_ui(int light_idx, const char* const titles[3],
     lv_obj_t* icons[3] = { icon0, icon1, icon2 };
     for (int i = 0; i < 3; i++) {
         if (btns[i] == nullptr) continue;
-        bool sel = (i == light_idx);
-        lv_obj_set_style_border_width(btns[i], sel ? 3 : 1, LV_PART_MAIN);
-        lv_obj_set_style_border_color(btns[i],
-            lv_color_hex(sel ? UIColor::ACCENT : UIColor::GLASS_RIM), LV_PART_MAIN);
-        lv_obj_set_style_border_opa(btns[i], sel ? LV_OPA_COVER : LV_OPA_40, LV_PART_MAIN);
+        highlight_button_border(btns[i], i == light_idx, UIColor::ACCENT, 3);
         update_light_selector_icon(icons[i], is_on[i]);
     }
 
@@ -133,8 +129,8 @@ void show_light_popup_ui(int light_idx, const char* const titles[3],
         ? 0 : (int) brightness[light_idx];
     set_light_arc_and_label(arc, pct_lbl, arcv);
 
-    lv_obj_clear_flag(popup, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_move_foreground(popup);
+    lv_obj_remove_flag(popup, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_move_to_index(popup, -1);
 }
 
 // =============================================================================

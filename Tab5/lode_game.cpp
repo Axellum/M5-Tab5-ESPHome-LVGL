@@ -477,16 +477,11 @@ struct Mem {
     lv_obj_t* p_sub   = nullptr;
     lv_obj_t* p_body  = nullptr;
     lv_obj_t* p_foot  = nullptr;
-    lv_obj_t* slot[N_SLOTS]   = {};
-    lv_obj_t* slot_t[N_SLOTS] = {};
-    lv_obj_t* slot_d[N_SLOTS] = {};
+    SlotMenu<N_SLOTS> slots;   // entrees des menus ; geometrie : slot_layout(), section 9
 
     // Caches HUD : on ne reecrit un libelle que si sa valeur a change.
     int32_t c_score = -1, c_lives = -1, c_level = -1,
             c_gold = -1, c_best = -1;
-
-    // Geometrie de la pile de slot_list() (voir slot_layout(), section 9).
-    int slot_top = 196, slot_pitch = 70, slot_h = 62;
 
     // Brouillons de texte des menus (le label copie le texte).
     char levels_names[LODE_N_LEVELS][40];
@@ -694,11 +689,7 @@ static lv_obj_t* mk_pad_btn(int id, int x, int y, int w, int h) {
     set_border(o, Pal::PAD_EDGE, 2, LV_OPA_70);
     lv_obj_add_flag(o, LV_OBJ_FLAG_CLICKABLE);
     // Retour tactile : le fond s'eclaircit tant que le doigt est pose.
-    // Casts explicites : combiner lv_part_t et lv_state_t directement est
-    // deprecie en C++20 (-Wdeprecated-enum-enum-conversion).
-    lv_obj_set_style_bg_color(o, lv_color_hex(Pal::PAD_EDGE),
-                              (lv_style_selector_t) LV_PART_MAIN |
-                              (lv_style_selector_t) LV_STATE_PRESSED);
+    set_pressed_bg(o, Pal::PAD_EDGE);
     void* ud = (void*) (intptr_t) id;
     if (id < 4) {
         lv_obj_add_event_cb(o, pad_event_cb, LV_EVENT_PRESSED, ud);
@@ -720,8 +711,8 @@ static void build_ui() {
     // Le calque des zones tactiles est transparent et non cliquable lui-meme :
     // seuls ses enfants (D-pad, boutons creuser) captent les evenements.
     lv_obj_set_style_bg_opa(gs->ui.pad, LV_OPA_TRANSP, LV_PART_MAIN);
-    lv_obj_clear_flag(gs->ui.pad, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_clear_flag(gs->ui.pad, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(gs->ui.pad, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_remove_flag(gs->ui.pad, LV_OBJ_FLAG_SCROLLABLE);
 
     // --- Pool de tuiles : cree a l'ouverture, recycle a chaque niveau ---
     for (int i = 0; i < MAX_TILEOBJ; i++) {
@@ -810,73 +801,44 @@ static void build_ui() {
     gs->p_foot = mk_label(gs->ui.panel, gs->ui.f_small, Pal::TXT_DIM);
     lv_obj_align(gs->p_foot, LV_ALIGN_BOTTOM_MID, 0, -20);
 
-    for (int i = 0; i < N_SLOTS; i++) {
-        gs->slot[i] = mk_rect(gs->ui.panel);
-        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_style_radius(gs->slot[i], 8, LV_PART_MAIN);
-        set_bg(gs->slot[i], Pal::FLOOR_BG, LV_OPA_COVER);
-        lv_obj_set_style_bg_color(gs->slot[i], lv_color_hex(Pal::PAD_FILL),
-                                  (lv_style_selector_t) LV_PART_MAIN |
-                                  (lv_style_selector_t) LV_STATE_PRESSED);
-        lv_obj_add_event_cb(gs->slot[i], slot_event_cb, LV_EVENT_CLICKED,
-                            (void*) (intptr_t) i);
-        gs->slot_t[i] = mk_label(gs->slot[i], gs->ui.f_mid, Pal::TXT);
-        gs->slot_d[i] = mk_label(gs->slot[i], gs->ui.f_small, Pal::TXT_DIM);
-        show(gs->slot[i], false);
-    }
+    // Pile verticale 720 px, libelles a 22 px ; top / pitch / h : slot_layout().
+    gs->slots.geom = {.w = 720, .h = 62, .top = 196, .pitch = 70, .tx = 22, .t_dy = -13, .d_dy = 15,
+                      .border_opa = LV_OPA_50, .off = Pal::TXT_DIM};
+    gs->slots.build(gs->ui.panel, slot_event_cb, gs->ui.f_mid, Pal::TXT, gs->ui.f_small, Pal::TXT_DIM,
+                    [](lv_obj_t* b, int) {
+        lv_obj_set_style_radius(b, 8, LV_PART_MAIN);
+        set_bg(b, Pal::FLOOR_BG, LV_OPA_COVER);
+        set_pressed_bg(b, Pal::PAD_FILL);
+    });
 }
 
 // --- Mise en page des entrees de menu ---------------------------------------
-// Geometrie de la pile de slot_list() (Mem::slot_top / slot_pitch / slot_h). La
-// valeur par defaut vise 5 entrees bien aerees ; REGLAGES en aligne 7 et resserre
-// donc la pile pour ne pas mordre sur le pied de page. Chaque ecran pose sa
-// geometrie AVANT son premier slot_list().
+// Geometrie de la pile de gs->slots.row() (geom.top / pitch / h). La valeur par
+// defaut vise 5 entrees bien aerees ; REGLAGES en aligne 7 et resserre donc la
+// pile pour ne pas mordre sur le pied de page. Chaque ecran pose sa geometrie
+// AVANT sa premiere entree.
 static inline void slot_layout(int top, int pitch, int h) {
-    gs->slot_top = top; gs->slot_pitch = pitch; gs->slot_h = h;
+    SlotGeom& g = gs->slots.geom;
+    g.top = (int16_t) top; g.pitch = (int16_t) pitch; g.h = (int16_t) h;
 }
 static inline void slot_layout_default() { slot_layout(196, 70, 62); }
 
-static void slot_list(int i, const char* title, const char* desc, uint32_t col, bool on) {
-    lv_obj_set_size(gs->slot[i], 720, gs->slot_h);
-    lv_obj_align(gs->slot[i], LV_ALIGN_TOP_MID, 0, gs->slot_top + i * gs->slot_pitch);
-    lv_obj_set_width(gs->slot_t[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(gs->slot_t[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_set_width(gs->slot_d[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(gs->slot_d[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_align(gs->slot_t[i], LV_ALIGN_LEFT_MID, 22, desc && desc[0] ? -13 : 0);
-    lv_obj_align(gs->slot_d[i], LV_ALIGN_LEFT_MID, 22, 15);
-    lv_obj_set_style_text_color(gs->slot_t[i], lv_color_hex(on ? col : Pal::TXT_DIM), LV_PART_MAIN);
-    set_text_if(gs->slot_t[i], title);
-    set_text_if(gs->slot_d[i], desc ? desc : "");
-    set_border(gs->slot[i], on ? col : Pal::TXT_DIM, 2, LV_OPA_50);
-    show(gs->slot[i], true);
-}
-
-// Grille 2 colonnes x 5 lignes : selection de niveau.
+// Grille 2 colonnes x 5 lignes : selection de niveau. Une entree de la pile,
+// replacee (sa description, toujours presente, garde le titre a -13).
 static void slot_grid(int i, const char* title, const char* desc, uint32_t col, bool on) {
-    int c = i / 5, r = i % 5;
-    lv_obj_set_size(gs->slot[i], 460, 72);
-    lv_obj_align(gs->slot[i], LV_ALIGN_TOP_LEFT, 148 + c * 500, 200 + r * 84);
-    lv_obj_set_width(gs->slot_t[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(gs->slot_t[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_set_width(gs->slot_d[i], LV_SIZE_CONTENT);
-    lv_obj_set_style_text_align(gs->slot_d[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    lv_obj_align(gs->slot_t[i], LV_ALIGN_LEFT_MID, 22, -13);
-    lv_obj_align(gs->slot_d[i], LV_ALIGN_LEFT_MID, 22, 15);
-    lv_obj_set_style_text_color(gs->slot_t[i], lv_color_hex(on ? col : Pal::TXT_DIM), LV_PART_MAIN);
-    set_text_if(gs->slot_t[i], title);
-    set_text_if(gs->slot_d[i], desc ? desc : "");
-    set_border(gs->slot[i], on ? col : Pal::TXT_DIM, 2, LV_OPA_50);
-    show(gs->slot[i], true);
+    gs->slots.row(i, title, desc, col, on);
+    lv_obj_set_size(gs->slots.box[i], 460, 72);
+    lv_obj_align(gs->slots.box[i], LV_ALIGN_TOP_LEFT, 148 + (i / 5) * 500, 200 + (i % 5) * 84);
 }
 
-static void slots_hide_from(int n) {
-    for (int i = n; i < N_SLOTS; i++) show(gs->slot[i], false);
-}
+static void panel_on(bool v) { show_front(gs->ui.panel, v); }
 
-static void panel_on(bool v) {
-    show(gs->ui.panel, v);
-    if (v) lv_obj_move_foreground(gs->ui.panel);
+// Titre / sous-titre / corps / pied du panneau de menus (nullptr = inchange).
+static void panel_text(const char* t, const char* s, const char* b, const char* f) {
+    set_text_if(gs->p_title, t);
+    set_text_if(gs->p_sub, s);
+    set_text_if(gs->p_body, b);
+    set_text_if(gs->p_foot, f);
 }
 
 // Corps de panneau centre (etat par defaut). Seul le classement passe a gauche.
@@ -901,7 +863,7 @@ static void pad_sync() {
     tick_period_sync();
     bool play = (g_state == ST_PLAYING);
     show(gs->ui.pad, play);
-    if (play) lv_obj_move_foreground(gs->ui.pad);
+    if (play) lv_obj_move_to_index(gs->ui.pad, -1);
     // Masquer le pad sous le doigt ne genere pas toujours un RELEASED : on purge
     // la direction maintenue, sinon le joueur repartirait tout seul a la reprise.
     else { gs->btn_dir = D_NONE; gs->dig_want = 0; }
@@ -1468,19 +1430,16 @@ static void show_clear() {
     pad_sync();
     slot_layout_default();
     bool last = (gs->level + 1 >= LODE_N_LEVELS);
-    set_text_if(gs->p_title, last ? "TOUS LES NIVEAUX !" : "NIVEAU TERMINE");
     char sub[96];
     snprintf(sub, sizeof(sub), "Niveau %d - %s", gs->level + 1, LEVELS[gs->level].name);
-    set_text_if(gs->p_sub, sub);
     char body[160];
     snprintf(body, sizeof(body), "Score : %lu     Vies : %d",
              (unsigned long) gs->score, gs->lives);
     body_center();
-    set_text_if(gs->p_body, body);
-    set_text_if(gs->p_foot, "");
-    slot_list(0, last ? "Voir le classement" : "Niveau suivant", nullptr, Pal::LADDER, true);
-    slot_list(1, "Retour au hub", nullptr, Pal::TXT, true);
-    slots_hide_from(2);
+    panel_text(last ? "TOUS LES NIVEAUX !" : "NIVEAU TERMINE", sub, body, "");
+    gs->slots.row(0, last ? "Voir le classement" : "Niveau suivant", nullptr, Pal::LADDER, true);
+    gs->slots.row(1, "Retour au hub", nullptr, Pal::TXT, true);
+    gs->slots.hide_from(2);
     panel_on(true);
 }
 
@@ -1489,20 +1448,17 @@ static void show_gameover() {
     g_state = ST_GAMEOVER;
     pad_sync();
     slot_layout_default();
-    set_text_if(gs->p_title, "PARTIE TERMINEE");
     char sub[96];
     snprintf(sub, sizeof(sub), "Niveau %d - %s", gs->level + 1, LEVELS[gs->level].name);
-    set_text_if(gs->p_sub, sub);
     char body[160];
     snprintf(body, sizeof(body), "Score : %lu%s",
              (unsigned long) gs->score, gs->offrank ? "   (hors classement)" : "");
     body_center();
-    set_text_if(gs->p_body, body);
-    set_text_if(gs->p_foot, "");
-    slot_list(0, "Rejouer", nullptr, Pal::GOLD, true);
-    slot_list(1, "Classement", nullptr, Pal::LADDER, true);
-    slot_list(2, "Retour au hub", nullptr, Pal::TXT, true);
-    slots_hide_from(3);
+    panel_text("PARTIE TERMINEE", sub, body, "");
+    gs->slots.row(0, "Rejouer", nullptr, Pal::GOLD, true);
+    gs->slots.row(1, "Classement", nullptr, Pal::LADDER, true);
+    gs->slots.row(2, "Retour au hub", nullptr, Pal::TXT, true);
+    gs->slots.hide_from(3);
     panel_on(true);
 }
 
@@ -1524,7 +1480,7 @@ static void player_die() {
     if (g_state != ST_PLAYING) return;
     sfx(5);
     show(gs->flash, true);
-    lv_obj_move_foreground(gs->flash);
+    lv_obj_move_to_index(gs->flash, -1);
     g_state = ST_DYING;
     gs->die_until = lv_tick_get() + DEATH_MS;
     pad_sync();
@@ -1587,11 +1543,7 @@ static void update_imu_dir() {
 
 static void update_hud() {
     char buf[64];
-    if ((int32_t) gs->score != gs->c_score) {
-        gs->c_score = (int32_t) gs->score;
-        snprintf(buf, sizeof(buf), "Score %lu", (unsigned long) gs->score);
-        set_text_if(gs->hud_score, buf);
-    }
+    hud_num(gs->hud_score, gs->c_score, (unsigned long) gs->score, "Score %lu");
     if (gs->lives != gs->c_lives) {
         gs->c_lives = gs->lives;
         if (gs->save.assist) set_text_if(gs->hud_lives, "Vies  oo");
@@ -1609,11 +1561,7 @@ static void update_hud() {
         else                 snprintf(buf, sizeof(buf), "SORTIE OUVERTE");
         set_text_if(gs->hud_gold, buf);
     }
-    if ((int32_t) gs->save.best != gs->c_best) {
-        gs->c_best = (int32_t) gs->save.best;
-        snprintf(buf, sizeof(buf), "Record %lu", (unsigned long) gs->save.best);
-        set_text_if(gs->hud_best, buf);
-    }
+    hud_num(gs->hud_best, gs->c_best, (unsigned long) gs->save.best, "Record %lu");
 }
 
 static void tick_cb(lv_timer_t*) {
@@ -1675,10 +1623,8 @@ static void go_hub() {
     g_state = ST_HUB;
     pad_sync();
     slot_layout_default();
-    set_text_if(gs->p_title, "COUREUR D'OR");
-    set_text_if(gs->p_sub, "Ramasse tout l'or, echappe aux gardes, grimpe en haut.");
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot, "Pendant une partie : touche le bandeau du haut pour mettre en pause.");
+    panel_text("COUREUR D'OR", "Ramasse tout l'or, echappe aux gardes, grimpe en haut.", "",
+               "Pendant une partie : touche le bandeau du haut pour mettre en pause.");
 
     char d0[96], d1[64], d2[64], d3[96];
     int startlvl = gs->save.unlocked;
@@ -1689,12 +1635,12 @@ static void go_hub() {
              CTRL_NAME[gs->save.ctrl_mode],
              SPEEDS[gs->save.speed < LODE_N_SPEEDS ? gs->save.speed : 0].name);
 
-    slot_list(0, "Jouer",      d0, Pal::GOLD,   true);
-    slot_list(1, "Niveaux",    d1, Pal::LADDER, true);
-    slot_list(2, "Classement", d2, Pal::BAR,    true);
-    slot_list(3, "Reglages",   d3, Pal::TXT,    true);
-    slot_list(4, "Quitter",    "Retour au tableau de bord", Pal::DANGER, true);
-    slots_hide_from(5);
+    gs->slots.row(0, "Jouer",      d0, Pal::GOLD,   true);
+    gs->slots.row(1, "Niveaux",    d1, Pal::LADDER, true);
+    gs->slots.row(2, "Classement", d2, Pal::BAR,    true);
+    gs->slots.row(3, "Reglages",   d3, Pal::TXT,    true);
+    gs->slots.row(4, "Quitter",    "Retour au tableau de bord", Pal::DANGER, true);
+    gs->slots.hide_from(5);
     panel_on(true);
 }
 
@@ -1702,10 +1648,8 @@ static void go_levels() {
     g_state = ST_LEVELS;
     pad_sync();
     slot_layout_default();
-    set_text_if(gs->p_title, "NIVEAUX");
-    set_text_if(gs->p_sub, "Un niveau se debloque en terminant le precedent.");
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot, "Un niveau termine debloque le suivant, definitivement.");
+    panel_text("NIVEAUX", "Un niveau se debloque en terminant le precedent.", "",
+               "Un niveau termine debloque le suivant, definitivement.");
     auto& names = gs->levels_names;   // brouillon : le label copie le texte
     for (int i = 0; i < LODE_N_LEVELS; i++) {
         bool on = (i < gs->save.unlocked);
@@ -1713,10 +1657,10 @@ static void go_levels() {
         slot_grid(i, names[i], on ? "Jouable" : "Verrouille",
                   on ? Pal::LADDER : Pal::TXT_DIM, on);
     }
-    slot_list(10, "Retour", nullptr, Pal::TXT, true);
-    lv_obj_set_size(gs->slot[10], 300, 58);
-    lv_obj_align(gs->slot[10], LV_ALIGN_BOTTOM_MID, 0, -56);
-    slots_hide_from(11);
+    gs->slots.row(10, "Retour", nullptr, Pal::TXT, true);
+    lv_obj_set_size(gs->slots.box[10], 300, 58);
+    lv_obj_align(gs->slots.box[10], LV_ALIGN_BOTTOM_MID, 0, -56);
+    gs->slots.hide_from(11);
     panel_on(true);
 }
 
@@ -1724,10 +1668,7 @@ static void go_settings() {
     g_state = ST_SETTINGS;
     pad_sync();
     slot_layout(176, 66, 60);   // 7 entrees : pile resserree
-    set_text_if(gs->p_title, "REGLAGES");
-    set_text_if(gs->p_sub, "Le Tab5 n'a pas de croix physique : ce sont des zones tactiles.");
-    set_text_if(gs->p_body, "");
-    set_text_if(gs->p_foot,
+    panel_text("REGLAGES", "Le Tab5 n'a pas de croix physique : ce sont des zones tactiles.", "",
         "Un seul point de contact a la fois : en mode Boutons, on creuse a l'arret. "
         "Le mode Mixte libere le doigt pour creuser en marchant.");
 
@@ -1744,14 +1685,14 @@ static void go_settings() {
 
     char d0[96];
     snprintf(d0, sizeof(d0), "%s : %s", CTRL_NAME[gs->save.ctrl_mode], CTRL_DESC[gs->save.ctrl_mode]);
-    slot_list(0, "Controle",           d0, Pal::LADDER, true);
-    slot_list(1, "Sensibilite",        d1, Pal::BAR, gs->save.ctrl_mode != 0);
-    slot_list(2, "Vitesse",            d2, Pal::RUNNER, true);
-    slot_list(3, "Calibrer a plat",    "Pose la tablette PUIS appuie", Pal::GOLD, true);
-    slot_list(4, "Mode entrainement",  d4, Pal::TXT, true);
-    slot_list(5, "Effacer scores et progression", "Irreversible", Pal::DANGER, true);
-    slot_list(6, "Retour",             nullptr, Pal::TXT, true);
-    slots_hide_from(7);
+    gs->slots.row(0, "Controle",           d0, Pal::LADDER, true);
+    gs->slots.row(1, "Sensibilite",        d1, Pal::BAR, gs->save.ctrl_mode != 0);
+    gs->slots.row(2, "Vitesse",            d2, Pal::RUNNER, true);
+    gs->slots.row(3, "Calibrer a plat",    "Pose la tablette PUIS appuie", Pal::GOLD, true);
+    gs->slots.row(4, "Mode entrainement",  d4, Pal::TXT, true);
+    gs->slots.row(5, "Effacer scores et progression", "Irreversible", Pal::DANGER, true);
+    gs->slots.row(6, "Retour",             nullptr, Pal::TXT, true);
+    gs->slots.hide_from(7);
     panel_on(true);
 }
 
@@ -1759,10 +1700,6 @@ static void go_scores() {
     g_state = ST_SCORES;
     pad_sync();
     slot_layout_default();
-    set_text_if(gs->p_title, "CLASSEMENT");
-    set_text_if(gs->p_sub, "Top 10 local - conserve en NVS, survit aux reboots et aux OTA.");
-    set_text_if(gs->p_foot, "");
-
     auto& body = gs->scores_body;     // brouillon : le label copie le texte
     int off = 0;
     if (gs->save.score_count == 0) {
@@ -1790,12 +1727,12 @@ static void go_scores() {
     // Le classement est une colonne : aligne a gauche, contrairement aux autres
     // ecrans dont le corps est une phrase centree.
     lv_obj_set_style_text_align(gs->p_body, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    set_text_if(gs->p_body, body);
-    slot_list(0, "Effacer les scores", "Demande confirmation", Pal::DANGER, true);
-    lv_obj_align(gs->slot[0], LV_ALIGN_BOTTOM_MID, 0, -136);
-    slot_list(1, "Retour", nullptr, Pal::TXT, true);
-    lv_obj_align(gs->slot[1], LV_ALIGN_BOTTOM_MID, 0, -60);
-    slots_hide_from(2);
+    panel_text("CLASSEMENT", "Top 10 local - conserve en NVS, survit aux reboots et aux OTA.", body, "");
+    gs->slots.row(0, "Effacer les scores", "Demande confirmation", Pal::DANGER, true);
+    lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -136);
+    gs->slots.row(1, "Retour", nullptr, Pal::TXT, true);
+    lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -60);
+    gs->slots.hide_from(2);
     panel_on(true);
 }
 
@@ -1803,14 +1740,12 @@ static void go_confirm() {
     g_state = ST_CONFIRM;
     pad_sync();
     slot_layout_default();
-    set_text_if(gs->p_title, "TOUT EFFACER ?");
-    set_text_if(gs->p_sub, "Scores, meilleur score ET progression des niveaux.");
     body_center();
-    set_text_if(gs->p_body, "Cette action est irreversible.");
-    set_text_if(gs->p_foot, "");
-    slot_list(0, "Oui, tout effacer", nullptr, Pal::DANGER, true);
-    slot_list(1, "Annuler",           nullptr, Pal::TXT, true);
-    slots_hide_from(2);
+    panel_text("TOUT EFFACER ?", "Scores, meilleur score ET progression des niveaux.",
+               "Cette action est irreversible.", "");
+    gs->slots.row(0, "Oui, tout effacer", nullptr, Pal::DANGER, true);
+    gs->slots.row(1, "Annuler",           nullptr, Pal::TXT, true);
+    gs->slots.hide_from(2);
     panel_on(true);
 }
 
@@ -1818,29 +1753,26 @@ static void show_pause() {
     g_state = ST_PAUSED;
     pad_sync();
     slot_layout_default();
-    set_text_if(gs->p_title, "PAUSE");
     char sub[96];
     snprintf(sub, sizeof(sub), "Niveau %d - %s", gs->level + 1, LEVELS[gs->level].name);
-    set_text_if(gs->p_sub, sub);
     char body[160];
     snprintf(body, sizeof(body), "Score : %lu     Vies : %d     Or restant : %d",
              (unsigned long) gs->score, gs->lives, gs->gold_left);
     body_center();
-    set_text_if(gs->p_body, body);
-    set_text_if(gs->p_foot, "");
+    panel_text("PAUSE", sub, body, "");
     // La vitesse est reglable ici aussi : elle prend effet des la reprise, sans
     // repasser par le hub ni perdre la partie en cours.
     char dv[96];
     const SpeedDef& sp = SPEEDS[gs->save.speed < LODE_N_SPEEDS ? gs->save.speed : 0];
     snprintf(dv, sizeof(dv), "%s - %s", sp.name, sp.desc);
 
-    slot_list(0, "Reprendre",            nullptr, Pal::LADDER, true);
-    slot_list(1, "Recalibrer a plat",    "Pose la tablette PUIS appuie", Pal::GOLD,
-              gs->save.ctrl_mode != 0);
-    slot_list(2, "Vitesse",              dv, Pal::RUNNER, true);
-    slot_list(3, "Relancer le niveau",   "Sans perdre de vie", Pal::BAR, true);
-    slot_list(4, "Quitter la partie",    "Le score est enregistre", Pal::DANGER, true);
-    slots_hide_from(5);
+    gs->slots.row(0, "Reprendre",            nullptr, Pal::LADDER, true);
+    gs->slots.row(1, "Recalibrer a plat",    "Pose la tablette PUIS appuie", Pal::GOLD,
+                  gs->save.ctrl_mode != 0);
+    gs->slots.row(2, "Vitesse",              dv, Pal::RUNNER, true);
+    gs->slots.row(3, "Relancer le niveau",   "Sans perdre de vie", Pal::BAR, true);
+    gs->slots.row(4, "Quitter la partie",    "Le score est enregistre", Pal::DANGER, true);
+    gs->slots.hide_from(5);
     panel_on(true);
 }
 

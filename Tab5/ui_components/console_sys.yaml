@@ -41,7 +41,7 @@ obj:
   styles: style_invisible
   widgets:
     # Voile sombre (tap = fermer + refermer les overlays de confirmation)
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN); animate_popup_close(id(layer_console_sys), nullptr);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN); animate_popup_close(id(layer_console_sys));" } }
 
     # Carte modale principale
     - obj:
@@ -54,7 +54,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F0717", icon_color: "color_accent", title: "CONSOLE SYSTÈME", title_id: "popup_console_title", close_btn_id: "btn_console_close", close_lambda: "lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN); animate_popup_close(id(layer_console_sys), nullptr);" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0717", icon_color: "color_accent", title: "CONSOLE SYSTÈME", title_id: "popup_console_title", close_btn_id: "btn_console_close", close_lambda: "lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN); animate_popup_close(id(layer_console_sys));" } }
 
           # ═══ CARTE MÉMOIRE (haut gauche) ═══
           - obj:
@@ -257,8 +257,8 @@ obj:
                     on_short_click:
                       - lambda: |-
                           lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
-                          lv_obj_clear_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
-                          lv_obj_move_foreground(id(overlay_confirm_ha));
+                          lv_obj_remove_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
+                          lv_obj_move_to_index(id(overlay_confirm_ha), -1);
                     widgets:
                       - label: { text: "\U000F07D0", align: CENTER, y: -18, text_font: mdi_font_32, text_color: color_error }
                       - label: { text: "Redémarrer HA", align: CENTER, y: 22 }
@@ -279,8 +279,8 @@ obj:
                     on_short_click:
                       - lambda: |-
                           lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
-                          lv_obj_clear_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
-                          lv_obj_move_foreground(id(overlay_confirm_reboot));
+                          lv_obj_remove_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
+                          lv_obj_move_to_index(id(overlay_confirm_reboot), -1);
                     widgets:
                       - label: { text: "\U000F0425", align: CENTER, y: -18, text_font: mdi_font_32, text_color: color_error }
                       - label: { text: "Reboot tablette", align: CENTER, y: 22 }

@@ -9,6 +9,8 @@
 #                          Le bouton d'action (`btn_swN_action`) N'EST PAS factorisé : chaque
 #                          carte appelle un service Home Assistant différent — même décision
 #                          que forecast_daily.yaml (cartes j0-j4), voir etat_tab5.md.
+#                          Le volet (sw1) partage son action avec la carte j1 : script
+#                          `tab5_volet_tap` (tab5-scripts.yaml, lot 7.3).
 # @ai_instruction `lbl_swN_state`/`icon_swN` sont mis à jour par les fonctions C++ (ex:
 #                 `update_light_card_ui()`) ou les lambdas de tab5-sensors-domotique.yaml/tab5-api-logic.yaml
 #                 — ne pas leur assigner de texte/couleur directement ici.
@@ -56,8 +58,7 @@ obj:
                           service: script.allumer_pc_tv
                     on_long_press:
                       - lambda: |-
-                          animate_popup_open(id(tv_remote_popup), nullptr);
-                          lv_obj_move_foreground(id(tv_remote_popup));
+                          animate_popup_open(id(tv_remote_popup));
 
     # Card 1 : Volet
     - obj:
@@ -87,29 +88,8 @@ obj:
                     height: 130
                     styles: style_invisible
                     on_short_click:
-                      - if:
-                          condition:
-                            lambda: 'return id(volet_en_mouvement);'
-                          then:
-                            - script.execute: tab5_volet_end_movement
-                            - homeassistant.service:
-                                service: script.tab5_volet_action
-                                data:
-                                  action: "stop"
-                          else:
-                            - if:
-                                condition:
-                                  lambda: 'return id(volet_target_open);'
-                                then:
-                                  - homeassistant.service:
-                                      service: script.tab5_volet_action
-                                      data:
-                                        action: "open"
-                                else:
-                                  - homeassistant.service:
-                                      service: script.tab5_volet_action
-                                      data:
-                                        action: "close"
+                      # Stop si le volet bouge, sinon sens de la flèche (partagé avec forecast_daily.yaml)
+                      - script.execute: tab5_volet_tap
 
     # Card 2 : Chambre
     - obj:

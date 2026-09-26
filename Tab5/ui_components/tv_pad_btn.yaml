@@ -1,0 +1,28 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 4× par tv_remote_popup.yaml :
+# une flèche du pavé directionnel (halo accent au press, icône seule), qui envoie sa
+# touche par script.tab5_tv_key (tab5-scripts.yaml).
+# vars : align, axis (« x » pour ← →, « y » pour ↑ ↓), offset (décalage sur cet axe
+#        depuis le bord du disque : 18 / -18, voir le calcul de marge dans le popup),
+#        w, h, touche (code Samsung KEY_*), icon (glyphe MDI en mdi_font_45 : il doit
+#        figurer dans la liste `glyphs` de mdi_font_45, sinon il s'affiche vide).
+# [AI-WARNING] `axis` est un NOM DE CLÉ substitué (ESPHome substitue aussi les clés) :
+#        chaque flèche ne pose qu'UN décalage, comme avant le gabarit. Poser `x: 0` /
+#        `y: 0` sur l'autre axe ajouterait une propriété de style locale par bouton.
+#        Passer `axis` entre guillemets ("x" / "y").
+# Sorti de tv_remote_popup.yaml le 26/09/2026 (audit, lot 7.3), rendu inchangé.
+# ═══════════════════════════════════════════════════════
+button:
+  align: ${align}
+  ${axis}: ${offset}
+  width: ${w}
+  height: ${h}
+  radius: 36
+  styles: style_invisible
+  bg_color: color_accent
+  pressed:
+    bg_opa: 25%
+  on_short_click:
+    - script.execute: { id: tab5_tv_key, touche: "${touche}" }
+  widgets:
+    - label: { text: "${icon}", align: CENTER, text_font: mdi_font_45 }

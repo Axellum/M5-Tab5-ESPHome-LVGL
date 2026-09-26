@@ -163,17 +163,16 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
     for (size_t i = 0; i < 4; i++) {
         lv_obj_t* slot = ui.slots[i];
         if (slot == nullptr) continue;
-        if (i < active_count) {
+        const bool shown = i < active_count;
+        if (shown) {
             lv_label_set_text(slot, actives[i].icon);
             uint32_t c = UIColor::ALERT_YELLOW;
             if (strcmp(actives[i].level, "Orange") == 0)     c = UIColor::WARNING;
             else if (strcmp(actives[i].level, "Rouge") == 0) c = UIColor::ALERT_RED;
             lv_obj_set_style_text_color(slot, lv_color_hex(c), LV_PART_MAIN);
             lv_obj_set_style_text_opa(slot, 255, LV_PART_MAIN);
-            lv_obj_clear_flag(slot, LV_OBJ_FLAG_HIDDEN);
-        } else {
-            lv_obj_add_flag(slot, LV_OBJ_FLAG_HIDDEN);
         }
+        lv_obj_set_flag(slot, LV_OBJ_FLAG_HIDDEN, !shown);
     }
     return active_count > 0;
 }

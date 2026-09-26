@@ -470,9 +470,7 @@ struct Mem {
     lv_obj_t* m_sub   = nullptr;
     lv_obj_t* m_body  = nullptr;
     lv_obj_t* m_foot  = nullptr;
-    lv_obj_t* slot[N_SLOTS]   = {};
-    lv_obj_t* slot_t[N_SLOTS] = {};
-    lv_obj_t* slot_d[N_SLOTS] = {};
+    SlotMenu<N_SLOTS> slots;           // entrées des menus (game_common.h)
     lv_obj_t* free_hdr[N_FREE] = {};   // intertitres libres
     lv_obj_t* bar[TRIVIA_NCAT] = {};
     lv_obj_t* bar_fill[TRIVIA_NCAT] = {};
@@ -520,12 +518,6 @@ static void reset_caches() {
 // 8. Helpers LVGL
 // ===========================================================================
 
-static inline void set_pressed_bg(lv_obj_t* o, uint32_t c) {
-    lv_obj_set_style_bg_color(o, lv_color_hex(c),
-                              (lv_style_selector_t) LV_PART_MAIN |
-                              (lv_style_selector_t) LV_STATE_PRESSED);
-}
-
 
 // Une part de camembert = un arc de 60° dont l'épaisseur vaut le rayon, ce qui
 // le rend plein jusqu'au centre. Le fond et le bouton de l'arc sont neutralisés :
@@ -533,8 +525,8 @@ static inline void set_pressed_bg(lv_obj_t* o, uint32_t c) {
 static lv_obj_t* mk_wedge(lv_obj_t* parent, int d, int idx) {
     lv_obj_t* a = lv_arc_create(parent);
     lv_obj_set_size(a, d, d);
-    lv_obj_clear_flag(a, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_clear_flag(a, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(a, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_remove_flag(a, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_opa(a, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(a, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(a, 0, LV_PART_MAIN);
@@ -611,7 +603,7 @@ static void build_board_ui() {
         node_pos(n, &cx, &cy);
         lv_obj_t* c = lv_obj_create(b);
         lv_obj_remove_style_all(c);
-        lv_obj_clear_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
         lv_obj_add_flag(c, LV_OBJ_FLAG_CLICKABLE);
         lv_obj_set_size(c, d, d);
         lv_obj_set_pos(c, cx - d / 2, cy - d / 2);
@@ -710,7 +702,7 @@ static void build_panel_ui() {
     gs->status_lbl = mk_label(scard, gs->ui.f_small, Pal::TXT);
     lv_obj_set_width(gs->status_lbl, PW - 32);
     lv_obj_set_style_text_align(gs->status_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    lv_label_set_long_mode(gs->status_lbl, LV_LABEL_LONG_WRAP);
+    lv_label_set_long_mode(gs->status_lbl, LV_LABEL_LONG_MODE_WRAP);
     lv_obj_align(gs->status_lbl, LV_ALIGN_CENTER, 0, 0);
 
     // --- Fiches équipes ---
@@ -845,7 +837,7 @@ static void build_question_ui() {
     gs->qtext = mk_label(gs->qcard, gs->ui.f_mid, Pal::TXT);
     lv_obj_set_width(gs->qtext, 1064);
     lv_obj_set_style_text_align(gs->qtext, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    lv_label_set_long_mode(gs->qtext, LV_LABEL_LONG_WRAP);
+    lv_label_set_long_mode(gs->qtext, LV_LABEL_LONG_MODE_WRAP);
     lv_obj_set_pos(gs->qtext, 48, 110);
 
     for (int i = 0; i < 4; i++) {
@@ -863,14 +855,14 @@ static void build_question_ui() {
         gs->ans_lbl[i] = mk_label(gs->ans[i], gs->ui.f_mid, Pal::TXT);
         lv_obj_set_width(gs->ans_lbl[i], 476);
         lv_obj_set_style_text_align(gs->ans_lbl[i], LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-        lv_label_set_long_mode(gs->ans_lbl[i], LV_LABEL_LONG_WRAP);
+        lv_label_set_long_mode(gs->ans_lbl[i], LV_LABEL_LONG_MODE_WRAP);
         lv_obj_align(gs->ans_lbl[i], LV_ALIGN_CENTER, 0, 0);
     }
 
     gs->qfeed = mk_label(gs->qcard, gs->ui.f_mid, Pal::TXT);
     lv_obj_set_width(gs->qfeed, 1064);
     lv_obj_set_style_text_align(gs->qfeed, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    lv_label_set_long_mode(gs->qfeed, LV_LABEL_LONG_WRAP);
+    lv_label_set_long_mode(gs->qfeed, LV_LABEL_LONG_MODE_WRAP);
     lv_obj_set_pos(gs->qfeed, 48, 522);
 }
 
@@ -878,7 +870,7 @@ static void build_menu_ui() {
     lv_obj_t* p = gs->ui.panel;
     set_bg(p, Pal::VOID_BG, (lv_opa_t) 240);
     lv_obj_add_flag(p, LV_OBJ_FLAG_CLICKABLE);   // absorbe les taps vers le plateau
-    lv_obj_clear_flag(p, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(p, LV_OBJ_FLAG_SCROLLABLE);
     show(p, false);
 
     gs->m_title = mk_label(p, gs->ui.f_big, Pal::ACCENT);
@@ -888,22 +880,18 @@ static void build_menu_ui() {
     gs->m_body = mk_label(p, gs->ui.f_small, Pal::TXT);
     lv_obj_set_width(gs->m_body, 1100);
     lv_obj_set_style_text_align(gs->m_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    lv_label_set_long_mode(gs->m_body, LV_LABEL_LONG_WRAP);
+    lv_label_set_long_mode(gs->m_body, LV_LABEL_LONG_MODE_WRAP);
     lv_obj_align(gs->m_body, LV_ALIGN_TOP_MID, 0, 130);
     gs->m_foot = mk_label(p, gs->ui.f_small, Pal::TXT_MUTED);
     lv_obj_align(gs->m_foot, LV_ALIGN_BOTTOM_MID, 0, -16);
 
-    for (int i = 0; i < N_SLOTS; i++) {
-        gs->slot[i] = mk_rect(p);
-        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_style_radius(gs->slot[i], 14, LV_PART_MAIN);
-        set_bg(gs->slot[i], Pal::BTN_BG, LV_OPA_COVER);
-        set_pressed_bg(gs->slot[i], Pal::BTN_BG_ON);
-        lv_obj_add_event_cb(gs->slot[i], slot_cb, LV_EVENT_CLICKED, (void*) (intptr_t) i);
-        gs->slot_t[i] = mk_label(gs->slot[i], gs->ui.f_mid, Pal::TXT);
-        gs->slot_d[i] = mk_label(gs->slot[i], gs->ui.f_small, Pal::TXT_DIM);
-        show(gs->slot[i], false);
-    }
+    // Entrées : géométrie posée écran par écran (slot_set).
+    gs->slots.build(p, slot_cb, gs->ui.f_mid, Pal::TXT, gs->ui.f_small, Pal::TXT_DIM,
+                    [](lv_obj_t* b, int) {
+        lv_obj_set_style_radius(b, 14, LV_PART_MAIN);
+        set_bg(b, Pal::BTN_BG, LV_OPA_COVER);
+        set_pressed_bg(b, Pal::BTN_BG_ON);
+    });
     for (int i = 0; i < N_FREE; i++) {
         gs->free_hdr[i] = mk_label(p, gs->ui.f_small, Pal::ACCENT);
         show(gs->free_hdr[i], false);
@@ -947,7 +935,9 @@ static void slot_set(int i, int x, int y, int w, int h,
                      uint32_t bg = Pal::BTN_BG, uint32_t border = Pal::BTN_EDGE,
                      uint32_t tcol = Pal::TXT, bool clickable = true, bool left = false) {
     if (i < 0 || i >= N_SLOTS) return;
-    lv_obj_t* s = gs->slot[i];
+    lv_obj_t* s = gs->slots.box[i];
+    lv_obj_t* lt = gs->slots.title[i];
+    lv_obj_t* ld = gs->slots.desc[i];
     lv_obj_set_pos(s, x, y);
     lv_obj_set_size(s, w, h);
     // Rayon remis à plat : l'écran de composition détourne certains slots en
@@ -957,23 +947,23 @@ static void slot_set(int i, int x, int y, int w, int h,
     set_pressed_bg(s, clickable ? Pal::BTN_BG_ON : bg);
     set_border(s, border, 2, LV_OPA_COVER);
     if (clickable) lv_obj_add_flag(s, LV_OBJ_FLAG_CLICKABLE);
-    else           lv_obj_clear_flag(s, LV_OBJ_FLAG_CLICKABLE);
+    else           lv_obj_remove_flag(s, LV_OBJ_FLAG_CLICKABLE);
 
     bool has_desc = (desc && desc[0]);
     // Le titre passe en petite police sur les puces basses (chips, ± , légendes).
-    esphome::lvgl::lv_obj_set_style_text_font(gs->slot_t[i],
+    esphome::lvgl::lv_obj_set_style_text_font(lt,
         (h >= 56 && !has_desc) || h >= 62 ? gs->ui.f_mid : gs->ui.f_small, LV_PART_MAIN);
-    set_text_color_if(gs->slot_t[i], tcol);
-    set_text_if(gs->slot_t[i], title ? title : "");
-    set_text_if(gs->slot_d[i], has_desc ? desc : "");
-    show(gs->slot_d[i], has_desc);
+    set_text_color_if(lt, tcol);
+    set_text_if(lt, title ? title : "");
+    set_text_if(ld, has_desc ? desc : "");
+    show(ld, has_desc);
 
     if (left) {
-        lv_obj_align(gs->slot_t[i], LV_ALIGN_LEFT_MID, 20, has_desc ? -13 : 0);
-        lv_obj_align(gs->slot_d[i], LV_ALIGN_LEFT_MID, 20, 15);
+        lv_obj_align(lt, LV_ALIGN_LEFT_MID, 20, has_desc ? -13 : 0);
+        lv_obj_align(ld, LV_ALIGN_LEFT_MID, 20, 15);
     } else {
-        lv_obj_align(gs->slot_t[i], LV_ALIGN_CENTER, 0, has_desc ? -13 : 0);
-        lv_obj_align(gs->slot_d[i], LV_ALIGN_CENTER, 0, 15);
+        lv_obj_align(lt, LV_ALIGN_CENTER, 0, has_desc ? -13 : 0);
+        lv_obj_align(ld, LV_ALIGN_CENTER, 0, 15);
     }
     show(s, true);
 }
@@ -995,9 +985,6 @@ static void slot_opt(int i, int x, int y, int w, int h, const char* title,
              on ? Pal::ACCENT : Pal::TXT_DIM, true);
 }
 
-static void slots_hide_from(int n) {
-    for (int i = n; i < N_SLOTS; i++) show(gs->slot[i], false);
-}
 static void free_lbl(int i, int x, int y, const char* txt, uint32_t col = Pal::ACCENT) {
     if (i < 0 || i >= N_FREE) return;
     lv_obj_set_pos(gs->free_hdr[i], x, y);
@@ -1015,6 +1002,14 @@ static void bars_hide() {
 static void menu_head(int title_y, int sub_y) {
     lv_obj_align(gs->m_title, LV_ALIGN_TOP_MID, 0, title_y);
     lv_obj_align(gs->m_sub,   LV_ALIGN_TOP_MID, 0, sub_y);
+}
+// Titre / sous-titre / corps / pied du calque de menus (nullptr = inchangé).
+// Attention : gs->fmt est un brouillon partagé, un seul de ces textes peut y vivre.
+static void panel_text(const char* t, const char* s, const char* b, const char* f) {
+    set_text_if(gs->m_title, t);
+    set_text_if(gs->m_sub, s);
+    set_text_if(gs->m_body, b);
+    set_text_if(gs->m_foot, f);
 }
 
 // ===========================================================================
@@ -1287,10 +1282,7 @@ static bool resume_game() {
 // ===========================================================================
 static void render_hub() {
     menu_head(138, 196);
-    set_text_if(gs->m_title, "TRIAL POURSUITE");
-    set_text_if(gs->m_sub, "Le quiz rétro-salon — 720 questions, 6 catégories");
-    set_text_if(gs->m_body, "");
-    set_text_if(gs->m_foot, "");
+    panel_text("TRIAL POURSUITE", "Le quiz rétro-salon — 720 questions, 6 catégories", "", "");
     pie_set(gs->big_pie, gs->big_rim, 640 - 55, 20, 110, 0x3F);
     pie_show(gs->big_pie, gs->big_rim, true);
 
@@ -1313,17 +1305,15 @@ static void render_hub() {
     snprintf(gs->fmt, sizeof(gs->fmt), "%s · %s", DIFF_NAME[gp->difficulty], TIMER_NAME[gp->timer_idx]);
     slot_list(4, 4, "Réglages", gs->fmt);
     slot_list(5, 5, "Quitter", "Retour au Tab", true, Pal::BAD);
-    slots_hide_from(6);
+    gs->slots.hide_from(6);
     free_hide_from(0);
     bars_hide();
 }
 
 static void render_setup() {
     menu_head(28, 86);
-    set_text_if(gs->m_title, "NOUVELLE PARTIE");
-    set_text_if(gs->m_sub, "Composez les équipes, puis réglez les questions");
-    set_text_if(gs->m_body, "");
-    set_text_if(gs->m_foot, "Touchez un nom pour le changer, la pastille pour la couleur");
+    panel_text("NOUVELLE PARTIE", "Composez les équipes, puis réglez les questions", "",
+               "Touchez un nom pour le changer, la pastille pour la couleur");
     pie_show(gs->big_pie, gs->big_rim, false);
     bars_hide();
 
@@ -1338,7 +1328,7 @@ static void render_setup() {
         slot_set(2 * i, 72, y, 56, 56, "", nullptr,
                  on ? PAWN_COLORS[gp->setup_teams[i].color_idx] : Pal::BTN_BG,
                  on ? Pal::TXT : Pal::CARD_EDGE, Pal::TXT, on);
-        lv_obj_set_style_radius(gs->slot[2 * i], LV_RADIUS_CIRCLE, LV_PART_MAIN);
+        lv_obj_set_style_radius(gs->slots.box[2 * i], LV_RADIUS_CIRCLE, LV_PART_MAIN);
         if (on) {
             slot_set(2 * i + 1, 140, y, 496, 56, gp->setup_teams[i].name, nullptr,
                      Pal::BTN_BG, Pal::BTN_EDGE, Pal::TXT, true, true);
@@ -1368,21 +1358,18 @@ static void render_setup() {
     slot_set(21, 680, 506, 528, 80, "COMMENCER LA PARTIE", nullptr,
              Pal::ACCENT, Pal::ACCENT, Pal::VOID_BG, true);
     slot_set(22, 680, 600, 528, 60, "Retour au menu");
-    show(gs->slot[23], false);
+    show(gs->slots.box[23], false);
     free_hide_from(5);
 }
 
 static void render_rules() {
     menu_head(28, 86);
-    set_text_if(gs->m_title, "RÈGLES DU JEU");
-    set_text_if(gs->m_sub, "");
-    set_text_if(gs->m_body, RULES_TEXT);
-    set_text_if(gs->m_foot, "");
+    panel_text("RÈGLES DU JEU", "", RULES_TEXT, "");
     pie_show(gs->big_pie, gs->big_rim, false);
     bars_hide();
     free_hide_from(0);
     slot_set(0, 440, 604, 400, 60, "Retour");
-    slots_hide_from(1);
+    gs->slots.hide_from(1);
 }
 
 static void render_stats() {
@@ -1413,8 +1400,8 @@ static void render_stats() {
         snprintf(gs->fmt, sizeof(gs->fmt), "%u / %u  ·  %d %%", (unsigned) ok, (unsigned) n, pct);
         slot_set(c, 200, y, 880, 56, CAT_NAMES[c], nullptr,
                  Pal::CARD_BG, Pal::CARD_EDGE, CAT_COLORS[c], false, true);
-        set_text_if(gs->slot_d[c], "");
-        show(gs->slot_d[c], false);
+        set_text_if(gs->slots.desc[c], "");
+        show(gs->slots.desc[c], false);
         lv_obj_set_pos(gs->bar[c], 560, y + 20);
         lv_obj_set_size(gs->bar_fill[c], n ? (1 + 479 * pct / 100) : 1, 16);
         show(gs->bar[c], true);
@@ -1426,15 +1413,12 @@ static void render_stats() {
     slot_set(6, 340, 556, 600, 56, "Effacer les statistiques", nullptr,
              Pal::BTN_BG, Pal::BTN_EDGE, Pal::BAD);
     slot_set(7, 340, 622, 600, 56, "Retour");
-    slots_hide_from(8);
+    gs->slots.hide_from(8);
 }
 
 static void render_settings() {
     menu_head(28, 86);
-    set_text_if(gs->m_title, "RÉGLAGES");
-    set_text_if(gs->m_sub, "Ces réglages s'appliquent à la prochaine question");
-    set_text_if(gs->m_body, "");
-    set_text_if(gs->m_foot, "");
+    panel_text("RÉGLAGES", "Ces réglages s'appliquent à la prochaine question", "", "");
     pie_show(gs->big_pie, gs->big_rim, false);
     bars_hide();
 
@@ -1451,17 +1435,14 @@ static void render_settings() {
     slot_set(9, 376, 546, 528, 56, "Effacer les statistiques", nullptr,
              Pal::BTN_BG, Pal::BTN_EDGE, Pal::BAD);
     slot_set(10, 376, 612, 528, 56, "Retour");
-    slots_hide_from(11);
+    gs->slots.hide_from(11);
     free_hide_from(4);
 }
 
 static void render_pause() {
     menu_head(28, 86);
-    set_text_if(gs->m_title, "PAUSE");
     snprintf(gs->fmt, sizeof(gs->fmt), "Tour %u · au tour de %s", (unsigned) gp->turn, gp->teams[gp->cur].name);
-    set_text_if(gs->m_sub, gs->fmt);
-    set_text_if(gs->m_body, "");
-    set_text_if(gs->m_foot, "");
+    panel_text("PAUSE", gs->fmt, "", "");
     pie_show(gs->big_pie, gs->big_rim, false);
     bars_hide();
     free_hide_from(0);
@@ -1470,28 +1451,24 @@ static void render_pause() {
     slot_list(2, 2, "Réglages", nullptr);
     slot_list(3, 3, "Abandonner la partie", "Retour au menu principal", true, Pal::BAD);
     slot_list(4, 4, "Quitter le jeu", "La partie sera reprise plus tard", true, Pal::BAD);
-    slots_hide_from(5);
+    gs->slots.hide_from(5);
 }
 
 static void render_confirm() {
     menu_head(28, 86);
-    set_text_if(gs->m_title, "CONFIRMER");
-    set_text_if(gs->m_sub, "");
-    set_text_if(gs->m_body, gp->confirm == CFM_ABANDON
+    panel_text("CONFIRMER", "", gp->confirm == CFM_ABANDON
         ? "Abandonner la partie en cours ?\nLes parts gagnées seront perdues."
-        : "Effacer toutes les statistiques ?\nCette action est définitive.");
-    set_text_if(gs->m_foot, "");
+        : "Effacer toutes les statistiques ?\nCette action est définitive.", "");
     pie_show(gs->big_pie, gs->big_rim, false);
     bars_hide();
     free_hide_from(0);
     slot_set(0, 300, 380, 320, 76, "Confirmer", nullptr, Pal::BTN_BG, Pal::BAD, Pal::BAD);
     slot_set(1, 660, 380, 320, 76, "Annuler");
-    slots_hide_from(2);
+    gs->slots.hide_from(2);
 }
 
 static void render_catpick() {
     menu_head(28, 86);
-    set_text_if(gs->m_title, gp->is_final ? "QUESTION FINALE" : "CATÉGORIE AU CHOIX");
     if (gp->is_final) {
         if (gp->n_teams > 1) {
             int chooser = (gp->cur + 1) % gp->n_teams;
@@ -1505,9 +1482,8 @@ static void render_catpick() {
         snprintf(gs->fmt, sizeof(gs->fmt), "%s est au centre : choisissez une catégorie",
                  gp->teams[gp->cur].name);
     }
-    set_text_if(gs->m_sub, gs->fmt);
-    set_text_if(gs->m_body, "");
-    set_text_if(gs->m_foot, gp->is_final ? "Bonne réponse = victoire" : "");
+    panel_text(gp->is_final ? "QUESTION FINALE" : "CATÉGORIE AU CHOIX", gs->fmt, "",
+               gp->is_final ? "Bonne réponse = victoire" : "");
     pie_show(gs->big_pie, gs->big_rim, false);
     bars_hide();
     free_hide_from(0);
@@ -1516,7 +1492,7 @@ static void render_catpick() {
         slot_set(c, 100 + col * 360, 200 + row * 180, 340, 150, CAT_NAMES[c], nullptr,
                  CAT_COLORS[c], CAT_COLORS[c], Pal::VOID_BG, true);
     }
-    slots_hide_from(TRIVIA_NCAT);
+    gs->slots.hide_from(TRIVIA_NCAT);
 }
 
 static void render_victory() {
@@ -1536,7 +1512,7 @@ static void render_victory() {
     slot_set(0, 290, 380, 700, 64, "Rejouer avec les mêmes équipes", nullptr);
     slot_set(1, 290, 456, 700, 64, "Nouvelle partie", nullptr);
     slot_set(2, 290, 532, 700, 64, "Retour au menu", nullptr);
-    slots_hide_from(3);
+    gs->slots.hide_from(3);
 }
 
 // Un seul point d'entrée : on repeint l'écran de menu correspondant à l'état.
@@ -1835,8 +1811,8 @@ static void render_layers() {
     gs->c_layers = sig;
     show(gs->qlayer, q != 0);
     show(gs->ui.panel, mn != 0);
-    if (q)       lv_obj_move_foreground(gs->qlayer);
-    else if (mn) lv_obj_move_foreground(gs->ui.panel);
+    if (q)       lv_obj_move_to_index(gs->qlayer, -1);
+    else if (mn) lv_obj_move_to_index(gs->ui.panel, -1);
 }
 
 // ===========================================================================

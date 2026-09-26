@@ -21,57 +21,69 @@
 #include <vector>
 #include <map>
 
+// Icône d'une condition HA : glyphe principal (l1) + glyphe secondaire optionnel
+// (l2), toujours dessiné DERRIÈRE l1. Table de données (audit du 26/09/2026, lot
+// 7.1) à la place de la chaîne de if/else : mêmes appels LVGL pour toutes les
+// conditions, connues ou non (preuve par static_assert faite pour le lot).
+// Décalages en px de tuile (120 px), déjà ramenés depuis la grosse icône d'origine
+// (270 px) par l'ancien calcul (int)(v * 0.4444f) : -45 → -19, -30 → -13. La
+// grosse icône centrale et ses polices 270/190 px sont retirées depuis le
+// 25/09/2026 (jamais affichées, ~196 Ko de flash) : les tuiles sont le seul usage.
+struct MeteoIconSpec {
+    const char* cond;      // état HA (comparaison exacte, casse comprise)
+    const char* l1;        // glyphe principal (police f_card)
+    uint32_t    l1_color;
+    const char* l2;        // glyphe secondaire, nullptr = aucun (l2 masqué)
+    uint32_t    l2_color;
+    bool        l2_small;  // l2 en f_card_s (petit soleil / petite lune)
+    int8_t      l2_x, l2_y, l1_y;
+};
+static constexpr MeteoIconSpec kMeteoIconDefault =  // nuage seul, aussi pour un état inconnu
+    {"", MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY, nullptr, UIColor::TEXT_PRIMARY, false, 0, 0, 0};
+static constexpr MeteoIconSpec kMeteoIcons[] = {
+    // cond                  l1                 l1_color                  l2                     l2_color                  petit  l2_x l2_y l1_y
+    {"clear-night",          MeteoIcon::MOON,  UIColor::METEO_CELESTIAL, nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"cloudy",               MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"fog",                  MeteoIcon::FOG,   UIColor::TEXT_PRIMARY,    nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"Clear",                MeteoIcon::SUNNY, UIColor::METEO_CELESTIAL, nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"sunny",                MeteoIcon::SUNNY, UIColor::METEO_CELESTIAL, nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"partlycloudy",         MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::SUNNY,      UIColor::METEO_CELESTIAL, true,  -19, -19,   0},
+    {"partlycloudy-night",   MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::MOON,       UIColor::METEO_CELESTIAL, true,  -19, -19,   0},
+    {"partlycloudy_night",   MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::MOON,       UIColor::METEO_CELESTIAL, true,  -19, -19,   0},
+    {"hail",                 MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::HAIL,       UIColor::METEO_PRECIP,    false,   0,   0, -13},
+    {"snowy-rainy",          MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::HAIL,       UIColor::METEO_PRECIP,    false,   0,   0, -13},
+    {"lightning",            MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::THUNDER,    UIColor::METEO_THUNDER,   false,   0,   0, -13},
+    {"thunder",              MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::THUNDER,    UIColor::METEO_THUNDER,   false,   0,   0, -13},
+    {"lightning-rainy",      MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::THUNDER,    UIColor::METEO_THUNDER,   false,   0,   0, -13},
+    {"pouring",              MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::HEAVY_RAIN, UIColor::METEO_PRECIP,    false,   0,   0, -13},
+    {"rainy",                MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::RAIN,       UIColor::METEO_PRECIP,    false,   0,   0, -13},
+    {"snowy",                MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::SNOW,       UIColor::METEO_PRECIP,    false,   0,   0, -13},
+    {"windy",                MeteoIcon::WIND,  UIColor::TEXT_PRIMARY,    nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"windy-variant",        MeteoIcon::WIND,  UIColor::TEXT_PRIMARY,    nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
+};
+
 void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, esphome::font::Font* f_card, esphome::font::Font* f_card_s) {
-    std::string l1_text = MeteoIcon::CLOUD; // Nuage par defaut
-    uint32_t l1_color = UIColor::TEXT_PRIMARY;
-    std::string l2_text = "";
-    uint32_t l2_color = UIColor::TEXT_PRIMARY;
-    int l2_x = 0; int l2_y = 0; int l1_y = 0;
-    bool l2_small = false; bool l2_behind = false;
-
-    // Dictionnaire type Classe CSS avec position de base (Grosse icone)
-    if (state == "clear-night") { l1_text = MeteoIcon::MOON; l1_color = UIColor::METEO_CELESTIAL; }
-    else if (state == "cloudy") { l1_text = MeteoIcon::CLOUD; }
-    else if (state == "fog") { l1_text = MeteoIcon::FOG; }
-    else if (state == "Clear" || state == "sunny") { l1_text = MeteoIcon::SUNNY; l1_color = UIColor::METEO_CELESTIAL; }
-    else if (state == "partlycloudy" || state == "partlycloudy-night" || state == "partlycloudy_night") {
-        l1_text = MeteoIcon::CLOUD; 
-        l2_text = (state == "partlycloudy") ? MeteoIcon::SUNNY : MeteoIcon::MOON;
-        l2_small = true; l2_color = UIColor::METEO_CELESTIAL; l2_behind = true;
-        l2_x = -45; l2_y = -45;
+    const MeteoIconSpec* s = &kMeteoIconDefault;
+    for (const MeteoIconSpec& e : kMeteoIcons) {
+        if (state == e.cond) { s = &e; break; }
     }
-    else if (state == "hail" || state == "snowy-rainy") { l2_text = MeteoIcon::HAIL; l2_color = UIColor::METEO_PRECIP; l2_behind = true; l1_y = -30; }
-    else if (state == "lightning" || state == "thunder" || state == "lightning-rainy") { l2_text = MeteoIcon::THUNDER; l2_color = UIColor::METEO_THUNDER; l2_behind = true; l1_y = -30; }
-    else if (state == "pouring") { l2_text = MeteoIcon::HEAVY_RAIN; l2_color = UIColor::METEO_PRECIP; l2_behind = true; l1_y = -30; }
-    else if (state == "rainy") { l2_text = MeteoIcon::RAIN; l2_color = UIColor::METEO_PRECIP; l2_behind = true; l1_y = -30; }
-    else if (state == "snowy") { l2_text = MeteoIcon::SNOW; l2_color = UIColor::METEO_PRECIP; l2_behind = true; l1_y = -30; }
-    else if (state == "windy" || state == "windy-variant") { l1_text = MeteoIcon::WIND; }
-
-    // Coordonnées ci-dessus dessinées pour la grosse icône d'origine (270 px),
-    // ramenées à la tuile (120 px) : 120/270 = 0.4444. La grosse icône centrale
-    // et ses polices 270/190 px sont retirées depuis le 25/09/2026 (jamais
-    // affichées, ~196 Ko de flash) : les tuiles sont le seul usage.
-    const float ratio = 0.4444f;
-    l2_x = (int)(l2_x * ratio);
-    l2_y = (int)(l2_y * ratio);
-    l1_y = (int)(l1_y * ratio);
 
     if (l1_obj) {
-        lv_obj_clear_flag(l1_obj, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(l1_obj, l1_text.c_str());
-        lv_obj_set_style_text_color(l1_obj, lv_color_hex(l1_color), LV_PART_MAIN);
-        lv_obj_set_style_translate_y(l1_obj, l1_y, LV_PART_MAIN);
+        lv_obj_remove_flag(l1_obj, LV_OBJ_FLAG_HIDDEN);
+        lv_label_set_text(l1_obj, s->l1);
+        lv_obj_set_style_text_color(l1_obj, lv_color_hex(s->l1_color), LV_PART_MAIN);
+        lv_obj_set_style_translate_y(l1_obj, s->l1_y, LV_PART_MAIN);
         esphome::lvgl::lv_obj_set_style_text_font(l1_obj, f_card, LV_PART_MAIN);
-        if (l2_behind && l2_obj) { lv_obj_move_foreground(l1_obj); }
+        if (s->l2 && l2_obj) { lv_obj_move_to_index(l1_obj, -1); }
     }
     if (l2_obj) {
-        if (l2_text != "") {
-            lv_obj_clear_flag(l2_obj, LV_OBJ_FLAG_HIDDEN);
-            lv_label_set_text(l2_obj, l2_text.c_str());
-            lv_obj_set_style_text_color(l2_obj, lv_color_hex(l2_color), LV_PART_MAIN);
-            lv_obj_set_style_translate_x(l2_obj, l2_x, LV_PART_MAIN);
-            lv_obj_set_style_translate_y(l2_obj, l2_y, LV_PART_MAIN);
-            esphome::lvgl::lv_obj_set_style_text_font(l2_obj, l2_small ? f_card_s : f_card, LV_PART_MAIN);
+        if (s->l2) {
+            lv_obj_remove_flag(l2_obj, LV_OBJ_FLAG_HIDDEN);
+            lv_label_set_text(l2_obj, s->l2);
+            lv_obj_set_style_text_color(l2_obj, lv_color_hex(s->l2_color), LV_PART_MAIN);
+            lv_obj_set_style_translate_x(l2_obj, s->l2_x, LV_PART_MAIN);
+            lv_obj_set_style_translate_y(l2_obj, s->l2_y, LV_PART_MAIN);
+            esphome::lvgl::lv_obj_set_style_text_font(l2_obj, s->l2_small ? f_card_s : f_card, LV_PART_MAIN);
         } else {
             lv_obj_add_flag(l2_obj, LV_OBJ_FLAG_HIDDEN);
         }
@@ -144,20 +156,7 @@ static void parse_and_update_heures_bulk(const std::string& payload) {
     char* token = strtok_r(buf, ";", &saveptr1);
     while (token != nullptr) {
         char* parts[6];
-        int num_parts = 0;
-
-        char* p = token;
-        while (true) {
-            if (num_parts >= 6) break;
-            parts[num_parts++] = p;
-            char* next = strchr(p, '|');
-            if (next) {
-                *next = '\0';
-                p = next + 1;
-            } else {
-                break;
-            }
-        }
+        const int num_parts = split_fields(token, '|', parts, 6);
 
         if (num_parts >= 5) {
             int idx = std::atoi(parts[0]);
@@ -202,20 +201,7 @@ void parse_and_update_jours_bulk(const std::string& payload) {
     while (token != nullptr) {
         // Découper chaque token par '|' — in-place, pas de std::vector
         char* parts[10];  // 9 champs attendus + marge
-        int num_parts = 0;
-
-        char* p = token;
-        while (true) {
-            if (num_parts >= 10) break;
-            parts[num_parts++] = p;
-            char* next = strchr(p, '|');
-            if (next) {
-                *next = '\0';
-                p = next + 1;
-            } else {
-                break;
-            }
-        }
+        const int num_parts = split_fields(token, '|', parts, 10);
 
         if (num_parts >= 9) {
             int jour = std::atoi(parts[0]);
@@ -281,8 +267,8 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
             ui_text(slot.day_lbl, data.nom_jour.c_str());
         }
 
-        lv_obj_clear_flag(slot.max_lbl, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_flag(slot.min_lbl, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(slot.max_lbl, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(slot.min_lbl, LV_OBJ_FLAG_HIDDEN);
 
         // Tmin / Tmax colors
         uint32_t cmax = get_temperature_color(data.tmax);
@@ -326,17 +312,9 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
 
         // Show/hide action elements depending on page_index (only show actions on page 0)
         if (slot.action_btn) {
-            if (page_index == 0) {
-                lv_obj_clear_flag(slot.action_btn, LV_OBJ_FLAG_HIDDEN);
-                if (slot.action_icon1) lv_obj_clear_flag(slot.action_icon1, LV_OBJ_FLAG_HIDDEN);
-                if (slot.action_icon2) lv_obj_clear_flag(slot.action_icon2, LV_OBJ_FLAG_HIDDEN);
-                if (slot.extra_btn) lv_obj_clear_flag(slot.extra_btn, LV_OBJ_FLAG_HIDDEN);
-            } else {
-                lv_obj_add_flag(slot.action_btn, LV_OBJ_FLAG_HIDDEN);
-                if (slot.action_icon1) lv_obj_add_flag(slot.action_icon1, LV_OBJ_FLAG_HIDDEN);
-                if (slot.action_icon2) lv_obj_add_flag(slot.action_icon2, LV_OBJ_FLAG_HIDDEN);
-                if (slot.extra_btn) lv_obj_add_flag(slot.extra_btn, LV_OBJ_FLAG_HIDDEN);
-            }
+            const bool hide = (page_index != 0);
+            for (lv_obj_t* o : {slot.action_btn, slot.action_icon1, slot.action_icon2, slot.extra_btn})
+                if (o) lv_obj_set_flag(o, LV_OBJ_FLAG_HIDDEN, hide);
         }
     }
 }

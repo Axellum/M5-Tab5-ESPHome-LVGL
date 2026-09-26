@@ -30,12 +30,7 @@ obj:
               if (page < 2) page = 2;
               if (page > 4) page = 4;
               int jour = (page - 2) * 5 + ${idx};
-              // Panneau d'origine lu dans le global (update_info_text_ui ne met à
-              // jour que lui) ; le global est aussi passé pour que la restauration
-              // à 6 s l'écrive (sinon le prochain script y relit 0).
-              g_central_ctx.current_panel = id(current_central_panel);
               show_temporary_planning(jour, id(lbl_planning_text),
                                       id(page_title_wrapper), id(lbl_page_title), id(forecast_page_index),
                                       id(plan_ligne_1), id(plan_ligne_2), id(is_showing_temp_planning),
-                                      id(current_central_panel), g_central_ctx);
-              id(current_central_panel) = g_central_ctx.current_panel;
+                                      g_central_ctx);

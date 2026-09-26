@@ -1,0 +1,27 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 3× par light_popup.yaml :
+# une ligne du sélecteur de lumière (carte AMPOULE). Le tap passe par
+# script.tab5_light_popup_show (tab5-scripts.yaml), qui pose la surbrillance.
+# vars : idx (0=Chambre 1=Salon 2=LEDs, nombre NON quoté : c'est le paramètre int
+#        light_idx du script), y, icon (glyphe MDI en mdi_font_45 : il doit figurer
+#        dans la liste `glyphs` de mdi_font_45), name (libellé).
+# [AI-WARNING] Les ids btn_light_sel_${idx} / icon_light_sel_${idx} sont lus par
+#        tab5_light_popup_show et par light_*_state (tab5-sensors-domotique.yaml) :
+#        ne pas les renommer.
+# Sorti de light_popup.yaml le 26/09/2026 (audit, lot 7.3), rendu inchangé.
+# ═══════════════════════════════════════════════════════
+button:
+  id: btn_light_sel_${idx}
+  align: TOP_LEFT
+  x: 22
+  y: ${y}
+  width: 342
+  height: 86
+  styles: style_clim_btn
+  pressed:
+    bg_opa: 30%
+  on_short_click:
+    - script.execute: { id: tab5_light_popup_show, light_idx: "${idx}" }
+  widgets:
+    - label: { id: "icon_light_sel_${idx}", text: "${icon}", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
+    - label: { text: "${name}", align: LEFT_MID, x: 88, text_font: roboto_32_b }

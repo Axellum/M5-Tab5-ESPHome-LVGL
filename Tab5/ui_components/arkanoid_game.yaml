@@ -5,7 +5,7 @@
 # @architecture_constraint Page LVGL autonome (page_arkanoid dans tab5-lvgl.yaml,
 #     skip: true). Pas de modal_scrim/modal_header — flux de jeu plein cadre.
 #     La sortie du jeu se fait par le hub (« Quitter ») qui navigue vers
-#     page_arcade via lv_scr_load() en C++.
+#     page_arcade via lv_screen_load() en C++.
 # @ai_instruction Ce fichier ne déclare QUE 4 conteneurs vides. Tout le contenu
 #     (HUD, menus, briques, balles, raquette, power-ups) est construit par
 #     arkanoid_game.cpp via Arkanoid::open(). Ne JAMAIS ajouter de widget de

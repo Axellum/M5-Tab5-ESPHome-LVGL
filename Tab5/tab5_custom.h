@@ -92,15 +92,12 @@ uint32_t ui_idle_ms();
 // (événements du pipeline vocal, ouverture programmée d'un popup).
 void ui_mark_activity();
 
-// Animation d'ouverture d'un popup : fondu card + scrim.
-// Le scrim doit être visible (clear flag) AVANT l'appel.
-// Instantanée : pas de fondu (réactivité maximale).
-void animate_popup_open(lv_obj_t* card, lv_obj_t* scrim);
+// Ouverture d'un popup : affichage instantané (pas de fondu) ET passage au
+// premier plan de son parent — ne pas le refaire après l'appel.
+void animate_popup_open(lv_obj_t* card);
 
-// Animation de fermeture : fondu inverse. Cache automatiquement card + scrim
-// à la fin de l'animation (LV_OBJ_FLAG_HIDDEN).
-// Instantanée elle aussi.
-void animate_popup_close(lv_obj_t* card, lv_obj_t* scrim);
+// Fermeture d'un popup : masquage instantané (LV_OBJ_FLAG_HIDDEN).
+void animate_popup_close(lv_obj_t* card);
 
 // Fondu croisé pur (sans glissement) entre deux calques plein cadre —
 // bascule prévisions <-> switches HA (bouton « HA »). Le calque sortant est
@@ -157,14 +154,19 @@ void apply_pressed_scale_to_tree(lv_obj_t* root);
 // Le jeu de bille vit desormais dans marble_game.h / marble_game.cpp
 // (namespace Marble). L'ancien prototype `namespace Game` a ete retire.
 
-// Surbrillance bordure bouton (actif = couleur + 2px, inactif = GLASS_RIM + 1px).
-void highlight_button_border(lv_obj_t* btn, bool active, uint32_t color);
+// Surbrillance bordure bouton (actif = couleur + active_width px, 2 par défaut ;
+// inactif = GLASS_RIM + 1px). Le sélecteur du popup lumière passe 3 px.
+void highlight_button_border(lv_obj_t* btn, bool active, uint32_t color, int32_t active_width = 2);
 
 // =============================================================================
 // Contexte carte centrale : regroupe les 8 wrappers LVGL + 7 flags d'activite
 // + l'index du panneau courant. Reduit les signatures de 16 parametres a 1.
-// Initialise une fois au boot (ids LVGL fixes), les bools sont mis a jour par
-// les services HA / scripts YAML avant chaque appel.
+// Pointeurs LVGL poses une fois dans on_boot (ids fixes). Les flags et
+// current_panel n'existent QUE ici : services HA, scripts YAML et C++ lisent et
+// ecrivent g_central_ctx directement (source unique depuis le lot 7 de l'audit
+// du 26/09/2026 ; avant, 8 globals ESPHome les doublaient, recopies avant et
+// apres chaque appel). Les services HA peuvent y ecrire avant on_boot, qui
+// attend l'API jusqu'a 30 s : d'ou les pointeurs nuls toleres partout.
 // =============================================================================
 struct CentralPanelCtx {
     lv_obj_t* planning_wrap = nullptr;
@@ -197,7 +199,7 @@ extern CentralPanelCtx g_central_ctx;
 // Gestion du geste de swipe (page_main.on_gesture) : pagination previsions
 // horaires/journalieres (0-4) dans la bande centrale+basse (y >= 333). Console diag :
 // uniquement via btn_control_console (plus de swipe haut/bas).
-void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_index,
+void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_card, esphome::font::Font* f_card_s,
@@ -243,17 +245,13 @@ constexpr int kCentralPanelCount = 8;
 constexpr int kHaAlertPanelBase = 4;
 constexpr int kHaAlertSlotCount = 4;
 
-// Synchronise g_central_ctx depuis les globals YAML (factorise le bloc 8 lignes
-// répété 7× dans tab5-scripts.yaml). Appelée avant chaque advance/dismiss/show.
-void sync_central_ctx(CentralPanelCtx& ctx, bool rain, bool alerts, bool info,
-                      bool ha0, bool ha1, bool ha2, bool ha3, int panel);
-
 void advance_central_panel_rotator(CentralPanelCtx& ctx);
 
+// Un bandeau HA : ses widgets et son id d'acquittement. Sa présence est
+// ctx.has_ha[slot], posée par parse_and_update_ha_alerts_bulk.
 struct HaAlertSlotUI {
     lv_obj_t* wrap;
     lv_obj_t* lbl;
-    bool* has_flag;
     std::string* id_store;
 };
 
@@ -265,7 +263,7 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
 // Masquage immédiat au tap (feedback visuel avant le round-trip HA).
 void dismiss_central_info_immediate(lv_obj_t* lbl_info, CentralPanelCtx& ctx);
 void dismiss_ha_alert_slot_immediate(int slot_idx, lv_obj_t* wrap, lv_obj_t* lbl,
-    bool& has_flag, std::string& id_store, CentralPanelCtx& ctx);
+    std::string& id_store, CentralPanelCtx& ctx);
 
 void tab5_dismiss_local_add(std::string& store, const std::string& id);
 
@@ -307,7 +305,7 @@ struct VigilanceUI {
 // pluie-inondation, neige-verglas, grand froid, vagues-submersion, canicule,
 // avalanches. Les 4 premiers phénomènes ≠ Vert remplissent les slots (jaune /
 // orange / rouge). Retourne true si au moins un phénomène est actif — à
-// stocker dans has_alerts.
+// stocker dans g_central_ctx.has_mf_alerts.
 bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& ui);
 
 // Même chose pour les 9 barres en un appel : payload « idx|intensité;… » (ADR-0003,
@@ -475,13 +473,11 @@ void show_light_popup_ui(int light_idx, const char* const titles[3],
     lv_obj_t* power_icon, lv_obj_t* arc, lv_obj_t* pct_lbl);
 
 // Tap tuile météo : affiche le planning/horaires du jour dans la carte centrale (6s).
-// `current_panel_global` = le global ESPHome current_central_panel : le timer de
-// restauration doit l'écrire aussi, sinon le prochain script le recopie (0, posé
-// par le tap) dans ctx.current_panel et le panneau d'origine est perdu.
+// Le timer de restauration rétablit ctx.current_panel (le tap l'a mis à 0).
 void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
                              lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, int forecast_page,
                              const std::string& plan_l1, const std::string& plan_l2,
-                             bool& is_showing_temp, int& current_panel_global, CentralPanelCtx& ctx);
+                             bool& is_showing_temp, CentralPanelCtx& ctx);
 
 // Réponse vocale IA : carte centrale dédiée (8s), défilement si phrase longue.
 void show_vocal_response_ui(const std::string& texte,
@@ -577,6 +573,11 @@ void assist_set_request(lv_obj_t* lbl_request, const std::string& texte);
 void assist_set_response(lv_obj_t* lbl_response, const std::string& texte,
     esphome::font::Font* font);
 
+// Police de la réponse pour la taille `assist_text_size` : 0 → S, 2 → L, toute
+// autre valeur → M (table des callbacks voice_assistant et des scripts du popup).
+esphome::font::Font* assist_font(int size_idx,
+    esphome::font::Font* f_s, esphome::font::Font* f_m, esphome::font::Font* f_l);
+
 // Applique la taille de police de la réponse (0=S 1=M 2=L) SANS perdre le texte
 // déjà affiché (relit lv_label_get_text). Met aussi à jour les 3 boutons S/M/L.
 void assist_apply_text_size(lv_obj_t* lbl_response, int size_idx,
@@ -616,6 +617,8 @@ bool cal_month_needs_fetch(int year, int month);
 bool cal_month_is_stale(int year, int month, uint32_t ttl_ms = 600000);  // défaut 10 min
 // Évince les mois distants de >1 par rapport à (year, month) — garde max 3 entrées.
 void cal_cache_evict_distant(int year, int month);
+// Décale (year, month) de `delta` mois en passant l'année (déc. + 1 = janv. suivant).
+void cal_shift_month(int& year, int& month, int delta);
 void cal_store_month_data(const std::string& annee, const std::string& mois,
     const std::string& codes, const std::string& heures, const std::string& details = "");
 

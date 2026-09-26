@@ -10,6 +10,8 @@
 #                          factorisé : chaque carte a une action Home Assistant DIFFÉRENTE
 #                          (PC bureau / volet serre / lumière chambre / lumière salon / LEDs
 #                          bureau) — décision explicite (#T164, cf. etat_tab5.md), pas un oubli.
+#                          Seule l'action du volet (j1) est partagée avec switches_card.yaml
+#                          (sw1) : script `tab5_volet_tap` (tab5-scripts.yaml, lot 7.3).
 # @ai_instruction Les icônes météo (`jN_icon_layer1/2`) sont mises à jour par
 #                 `update_meteo_icon()`/`refresh_daily_forecast()` (tab5_custom.cpp) — ne jamais
 #                 leur assigner de texte/couleur directement ici.
@@ -87,29 +89,8 @@ obj:
                     height: 130
                     styles: style_invisible
                     on_short_click:
-                      - if:
-                          condition:
-                            lambda: 'return id(volet_en_mouvement);'
-                          then:
-                            - script.execute: tab5_volet_end_movement
-                            - homeassistant.service:
-                                service: script.tab5_volet_action
-                                data:
-                                  action: "stop"
-                          else:
-                            - if:
-                                condition:
-                                  lambda: 'return id(volet_target_open);'
-                                then:
-                                  - homeassistant.service:
-                                      service: script.tab5_volet_action
-                                      data:
-                                        action: "open"
-                                else:
-                                  - homeassistant.service:
-                                      service: script.tab5_volet_action
-                                      data:
-                                        action: "close"
+                      # Stop si le volet bouge, sinon sens de la flèche (partagé avec switches_card.yaml)
+                      - script.execute: tab5_volet_tap
 
           # Icônes latérales (épaules)
           - label: { id: icon_card_shutter1, text: "\U000F111E", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }

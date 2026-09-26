@@ -207,9 +207,7 @@ struct Mem {
     lv_obj_t* m_title = nullptr;
     lv_obj_t* m_sub = nullptr;
     lv_obj_t* m_foot = nullptr;
-    lv_obj_t* slot[N_SLOTS] = {};
-    lv_obj_t* slot_t[N_SLOTS] = {};
-    lv_obj_t* slot_d[N_SLOTS] = {};
+    SlotMenu<N_SLOTS> slots;   // entrées des menus (game_common.h)
     // Carte de fin de partie (géométrie propre : le goban reste visible autour).
     lv_obj_t* card = nullptr;
     lv_obj_t* card_title = nullptr;
@@ -248,14 +246,6 @@ static inline void set_bg_grad(lv_obj_t* o, uint32_t top, uint32_t bottom, lv_op
     lv_obj_set_style_bg_opa(o, opa, LV_PART_MAIN);
 }
 
-
-
-
-static void press_fx(lv_obj_t* o, uint32_t c) {
-    lv_obj_set_style_bg_color(o, lv_color_hex(c),
-                              (lv_style_selector_t) LV_PART_MAIN |
-                              (lv_style_selector_t) LV_STATE_PRESSED);
-}
 static void msg(const char* t) {
     snprintf(gs->msg, sizeof(gs->msg), "%s", t);
     gs->msg_until = esphome::millis() + MSG_MS;
@@ -1060,25 +1050,25 @@ static void enter_playing() {
 // 12. Menus
 // ===========================================================================
 
+// Entrée de menu à position fixe (build_ui) ; `on` = false la masque.
 static void slot_set(int i, const char* title, const char* desc, uint32_t col, bool on) {
     if (i < 0 || i >= N_SLOTS) return;
-    show(gs->slot[i], on);
+    show(gs->slots.box[i], on);
     if (!on) return;
-    set_text_if(gs->slot_t[i], title);
-    set_text_if(gs->slot_d[i], desc ? desc : "");
-    set_text_color_if(gs->slot_t[i], col);
-    set_border(gs->slot[i], col, 2, LV_OPA_40);
+    set_text_if(gs->slots.title[i], title);
+    set_text_if(gs->slots.desc[i], desc ? desc : "");
+    set_text_color_if(gs->slots.title[i], col);
+    set_border(gs->slots.box[i], col, 2, LV_OPA_40);
 }
 
 static void menu_open(const char* title, const char* sub, const char* foot) {
-    show(gs->ui.panel, true);
-    lv_obj_move_foreground(gs->ui.panel);
+    show_front(gs->ui.panel, true);
     set_bg(gs->ui.panel, Pal::VOID_BG, LV_OPA_COVER);
     show(gs->card, false);
     set_text_if(gs->m_title, title);
     set_text_if(gs->m_sub, sub ? sub : "");
     set_text_if(gs->m_foot, foot ? foot : "");
-    for (int i = 0; i < N_SLOTS; i++) show(gs->slot[i], false);
+    gs->slots.hide_from(0);
 }
 
 static void menu_main() {
@@ -1102,7 +1092,7 @@ static void menu_main() {
     slot_set(i++, "Statistiques", "Bilan face au Tab", Pal::TXT, true);
     slot_set(i++, "Reglages", "Confirmation, coordonnees, secousse", Pal::TXT_DIM, true);
     slot_set(i++, "Quitter", "Retour a l'arcade", Pal::DANGER, true);
-    for (; i < N_SLOTS; i++) slot_set(i, "", "", 0, false);
+    gs->slots.hide_from(i);
     flush(true);
 }
 
@@ -1119,7 +1109,7 @@ static void menu_pause() {
     slot_set(3, "Statistiques", "", Pal::TXT, true);
     slot_set(4, "Reglages", "", Pal::TXT_DIM, true);
     slot_set(5, "Quitter le jeu", "La partie est sauvegardee", Pal::TXT_MUTED, true);
-    slot_set(6, "", "", 0, false);
+    gs->slots.hide_from(6);
     stash_position();
     flush(true);
 }
@@ -1188,7 +1178,7 @@ static void menu_opts() {
     slot_set(4, gs->save.opt_shake ? "Secousse = indice : ACTIVE" : "Secousse = indice : DESACTIVE",
              "Detection BMI270", Pal::TXT_DIM, true);
     slot_set(5, "Retour", "", Pal::TXT_MUTED, true);
-    slot_set(6, "", "", 0, false);
+    gs->slots.hide_from(6);
 }
 
 static void menu_confirm_reset() {
@@ -1197,17 +1187,16 @@ static void menu_confirm_reset() {
               "Cette action est definitive.");
     slot_set(0, "Oui, tout effacer", "", Pal::DANGER, true);
     slot_set(1, "Annuler", "", Pal::TXT_MUTED, true);
-    for (int i = 2; i < N_SLOTS; i++) slot_set(i, "", "", 0, false);
+    gs->slots.hide_from(2);
 }
 
 // --- Carte de fin de partie ----------------------------------------------
 
 static void show_score_card() {
     // Panneau semi-transparent : le goban et son territoire restent visibles.
-    show(gs->ui.panel, true);
-    lv_obj_move_foreground(gs->ui.panel);
+    show_front(gs->ui.panel, true);
     set_bg(gs->ui.panel, Pal::VOID_BG, (lv_opa_t) 195);
-    for (int i = 0; i < N_SLOTS; i++) show(gs->slot[i], false);
+    gs->slots.hide_from(0);
     set_text_if(gs->m_title, "");
     set_text_if(gs->m_sub, "");
     set_text_if(gs->m_foot, "");
@@ -1307,7 +1296,7 @@ static void on_board_tap(int x, int y) {
 // du bloc AVANT de tester l'état.
 static void field_cb(lv_event_t* e) {
     if (!gs || lv_event_get_code(e) != LV_EVENT_CLICKED) return;
-    lv_indev_t* in = lv_indev_get_act();
+    lv_indev_t* in = lv_indev_active();
     if (!in) return;
     lv_point_t pt;
     lv_indev_get_point(in, &pt);
@@ -1565,7 +1554,7 @@ static void build_ui() {
     lv_obj_set_size(gs->btn_ok, 270, 56);
     lv_obj_set_style_radius(gs->btn_ok, 12, LV_PART_MAIN);
     set_bg(gs->btn_ok, Pal::CARD_BG, LV_OPA_COVER);
-    press_fx(gs->btn_ok, Pal::CARD_ON);
+    set_pressed_bg(gs->btn_ok, Pal::CARD_ON);
     lv_obj_add_flag(gs->btn_ok, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(gs->btn_ok, btn_ok_cb, LV_EVENT_CLICKED, nullptr);
     gs->btn_ok_lbl = mk_label(gs->btn_ok, gs->ui.f_small, Pal::GHOST);
@@ -1580,7 +1569,7 @@ static void build_ui() {
         lv_obj_set_style_radius(gs->btn[i], 12, LV_PART_MAIN);
         set_bg(gs->btn[i], Pal::CARD_BG, LV_OPA_COVER);
         set_border(gs->btn[i], Pal::EDGE, 1, LV_OPA_80);
-        press_fx(gs->btn[i], Pal::CARD_ON);
+        set_pressed_bg(gs->btn[i], Pal::CARD_ON);
         lv_obj_add_flag(gs->btn[i], LV_OBJ_FLAG_CLICKABLE);
         lv_obj_add_event_cb(gs->btn[i], btn_cb, LV_EVENT_CLICKED, (void*) (intptr_t) i);
         gs->btn_lbl[i] = mk_label(gs->btn[i], gs->ui.f_small, Pal::TXT);
@@ -1602,20 +1591,17 @@ static void build_ui() {
     lv_obj_set_style_text_align(gs->m_foot, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_set_pos(gs->m_foot, 0, 684);
 
+    gs->slots.build(gs->ui.panel, slot_cb, gs->ui.f_mid, Pal::TXT, gs->ui.f_small, Pal::TXT_DIM,
+                    [](lv_obj_t* b, int i) {
+        lv_obj_set_pos(b, 90, 148 + i * 74);
+        lv_obj_set_size(b, 1100, 64);
+        lv_obj_set_style_radius(b, 14, LV_PART_MAIN);
+        set_bg(b, Pal::CARD_BG, LV_OPA_COVER);   // Go::set_bg (dégradé remis à NONE)
+        set_pressed_bg(b, Pal::CARD_ON);
+    });
     for (int i = 0; i < N_SLOTS; i++) {
-        gs->slot[i] = mk_rect(gs->ui.panel);
-        lv_obj_set_pos(gs->slot[i], 90, 148 + i * 74);
-        lv_obj_set_size(gs->slot[i], 1100, 64);
-        lv_obj_set_style_radius(gs->slot[i], 14, LV_PART_MAIN);
-        set_bg(gs->slot[i], Pal::CARD_BG, LV_OPA_COVER);
-        press_fx(gs->slot[i], Pal::CARD_ON);
-        lv_obj_add_flag(gs->slot[i], LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_add_event_cb(gs->slot[i], slot_cb, LV_EVENT_CLICKED, (void*) (intptr_t) i);
-        gs->slot_t[i] = mk_label(gs->slot[i], gs->ui.f_mid, Pal::TXT);
-        lv_obj_set_pos(gs->slot_t[i], 26, 6);
-        gs->slot_d[i] = mk_label(gs->slot[i], gs->ui.f_small, Pal::TXT_DIM);
-        lv_obj_set_pos(gs->slot_d[i], 28, 40);
-        show(gs->slot[i], false);
+        lv_obj_set_pos(gs->slots.title[i], 26, 6);
+        lv_obj_set_pos(gs->slots.desc[i], 28, 40);
     }
 
     // --- Carte de fin de partie -------------------------------------------
@@ -1649,7 +1635,7 @@ static void build_ui() {
         lv_obj_set_style_radius(gs->card_btn[i], 14, LV_PART_MAIN);
         set_bg(gs->card_btn[i], Pal::CARD_BG, LV_OPA_COVER);
         set_border(gs->card_btn[i], i == 0 ? Pal::ACCENT : Pal::EDGE, 2, LV_OPA_70);
-        press_fx(gs->card_btn[i], Pal::CARD_ON);
+        set_pressed_bg(gs->card_btn[i], Pal::CARD_ON);
         lv_obj_add_flag(gs->card_btn[i], LV_OBJ_FLAG_CLICKABLE);
         lv_obj_add_event_cb(gs->card_btn[i], card_btn_cb, LV_EVENT_CLICKED, (void*) (intptr_t) i);
         gs->card_btn_lbl[i] = mk_label(gs->card_btn[i], gs->ui.f_mid,

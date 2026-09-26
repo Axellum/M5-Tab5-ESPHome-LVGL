@@ -1,0 +1,28 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 3× par light_popup.yaml :
+# un « blanc » nommé de la carte COULEURS (ampoule teintée + libellé), qui envoie un
+# color_name à la lumière sélectionnée. Géométrie propre (106×92, icône + mot) : ce
+# n'est PAS une pastille ronde de light_color_preset_btn.yaml.
+# vars : x, color_name (payload HA color_name:), icon_color (hex de l'ampoule, nombre
+#        NON quoté comme 0xFFC864), name (libellé).
+# Cible id(current_light_entity) (global partagé, pas une entité en dur).
+# Sorti de light_popup.yaml le 26/09/2026 (audit, lot 7.3), rendu inchangé.
+# ═══════════════════════════════════════════════════════
+button:
+  align: TOP_LEFT
+  x: ${x}
+  y: 50
+  width: 106
+  height: 92
+  styles: style_clim_btn
+  pressed:
+    bg_opa: 30%
+  on_short_click:
+    - homeassistant.service:
+        service: light.turn_on
+        data:
+          entity_id: !lambda 'return id(current_light_entity);'
+          color_name: "${color_name}"
+  widgets:
+    - label: { text: "\U000F0335", align: TOP_MID, y: 8, text_font: mdi_font_32, text_color: "${icon_color}" }
+    - label: { text: "${name}", align: BOTTOM_MID, y: -8, text_color: color_text_dim }

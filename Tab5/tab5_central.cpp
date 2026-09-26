@@ -17,6 +17,7 @@
 #include "tab5_internal.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <array>
 #include <ctime>
 #include <cstring>
 #include <vector>
@@ -26,7 +27,7 @@
 // Geste de swipe (page_main.on_gesture) : pagination previsions (y >= carte centrale)
 // =============================================================================
 
-static constexpr lv_coord_t FORECAST_SWIPE_Y_MIN = 333;  // haut de central_card (tab5-lvgl.yaml)
+static constexpr int32_t FORECAST_SWIPE_Y_MIN = 333;  // haut de central_card (tab5-lvgl.yaml)
 
 // Page de repos des previsions : journalier J0-J4, celle du boot
 // (forecast_page_index initial_value: 2) et celle ou la carte centrale reprend
@@ -113,46 +114,25 @@ static uint32_t ha_alert_color_from_couleur(const std::string& couleur) {
     return UIColor::TEXT_PRIMARY;
 }
 
+// Les 8 panneaux du rotateur, rangés par index (0 planning, 1 pluie, 2 vigilance
+// MF, 3 info, 4-7 alertes HA) : une seule liste pour les accès par index et les
+// boucles « tout masquer » / « tout arrêter » (audit du 26/09/2026, lot 7.1).
+static std::array<lv_obj_t*, kCentralPanelCount> central_wraps(const CentralPanelCtx& ctx) {
+    return {ctx.planning_wrap, ctx.rain_wrap, ctx.alert_cont, ctx.info_wrap,
+            ctx.ha_wrap[0], ctx.ha_wrap[1], ctx.ha_wrap[2], ctx.ha_wrap[3]};
+}
+
 static lv_obj_t* central_panel_wrapper(int panel, CentralPanelCtx& ctx) {
-    switch (panel) {
-        case 0: return ctx.planning_wrap;
-        case 1: return ctx.rain_wrap;
-        case 2: return ctx.alert_cont;
-        case 3: return ctx.info_wrap;
-        case 4: return ctx.ha_wrap[0];
-        case 5: return ctx.ha_wrap[1];
-        case 6: return ctx.ha_wrap[2];
-        case 7: return ctx.ha_wrap[3];
-        default: return nullptr;
-    }
+    if (panel < 0 || panel >= kCentralPanelCount) return nullptr;
+    return central_wraps(ctx)[panel];
 }
 
+// Même ordre que central_wraps() ; le planning (0) est toujours actif.
 static bool central_panel_is_active(int panel, const CentralPanelCtx& ctx) {
-    switch (panel) {
-        case 0: return true;
-        case 1: return ctx.has_rain;
-        case 2: return ctx.has_mf_alerts;
-        case 3: return ctx.has_info;
-        case 4: return ctx.has_ha[0];
-        case 5: return ctx.has_ha[1];
-        case 6: return ctx.has_ha[2];
-        case 7: return ctx.has_ha[3];
-        default: return false;
-    }
-}
-
-// Synchronise g_central_ctx depuis les valeurs fournies (issues des globals YAML).
-// Factorise le bloc de 8 lignes répété 7× dans tab5-scripts.yaml.
-void sync_central_ctx(CentralPanelCtx& ctx, bool rain, bool alerts, bool info,
-                      bool ha0, bool ha1, bool ha2, bool ha3, int panel) {
-    ctx.has_rain      = rain;
-    ctx.has_mf_alerts = alerts;
-    ctx.has_info      = info;
-    ctx.has_ha[0]     = ha0;
-    ctx.has_ha[1]     = ha1;
-    ctx.has_ha[2]     = ha2;
-    ctx.has_ha[3]     = ha3;
-    ctx.current_panel = panel;
+    if (panel < 0 || panel >= kCentralPanelCount) return false;
+    const bool active[kCentralPanelCount] = {true, ctx.has_rain, ctx.has_mf_alerts, ctx.has_info,
+                                             ctx.has_ha[0], ctx.has_ha[1], ctx.has_ha[2], ctx.has_ha[3]};
+    return active[panel];
 }
 
 void advance_central_panel_rotator(CentralPanelCtx& ctx) {
@@ -200,18 +180,13 @@ static void sync_central_panel_visibility(CentralPanelCtx& ctx) {
     // touche à rien de visible — masquer ici effacerait même le planning du tap.
     if (!rotator_owns_card(ctx)) return;
 
-    hide_central_panel(ctx.planning_wrap);
-    hide_central_panel(ctx.rain_wrap);
-    hide_central_panel(ctx.alert_cont);
-    hide_central_panel(ctx.info_wrap);
-    for (int i = 0; i < 4; i++) hide_central_panel(ctx.ha_wrap[i]);
+    for (lv_obj_t* w : central_wraps(ctx)) hide_central_panel(w);
 
     lv_obj_t* active = central_panel_wrapper(ctx.current_panel, ctx);
-    if (active) lv_obj_clear_flag(active, LV_OBJ_FLAG_HIDDEN);
+    if (active) lv_obj_remove_flag(active, LV_OBJ_FLAG_HIDDEN);
 }
 
 static void clear_ha_alert_slot(HaAlertSlotUI& slot) {
-    if (slot.has_flag) *slot.has_flag = false;
     if (slot.id_store) slot.id_store->clear();
     if (slot.lbl) {
         lv_label_set_recolor(slot.lbl, false);
@@ -243,12 +218,11 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
     }
 
     for (int i = 0; i < kHaAlertSlotCount; i++) {
+        ctx.has_ha[i] = false;
         clear_ha_alert_slot(slots[i]);
     }
 
     if (payload.empty()) {
-        for (int i = 0; i < 4; i++)
-            ctx.has_ha[i] = slots[i].has_flag ? *slots[i].has_flag : false;
         sync_central_panel_visibility(ctx);
         return;
     }
@@ -263,20 +237,8 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
     char* token = strtok_r(buf, ";", &saveptr1);
     while (token != nullptr && slot_idx < kHaAlertSlotCount) {
         char* parts[3];
-        int num_parts = 0;
-        char* p = token;
-        while (true) {
-            if (num_parts >= 3) break;
-            parts[num_parts++] = p;
-            char* next = strchr(p, '|');
-            if (next) {
-                *next = '\0';
-                p = next + 1;
-            } else {
-                break;
-            }
-        }
-        if (num_parts >= 3 && slots[slot_idx].wrap && slots[slot_idx].lbl && slots[slot_idx].has_flag && slots[slot_idx].id_store) {
+        const int num_parts = split_fields(token, '|', parts, 3);
+        if (num_parts >= 3 && slots[slot_idx].wrap && slots[slot_idx].lbl && slots[slot_idx].id_store) {
             std::string aid = parts[0];
             ids_seen.push_back(aid);
             if (tab5_dismiss_local_has(dismissed_local, aid)) {
@@ -285,7 +247,7 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
             }
             *slots[slot_idx].id_store = aid;
             std::string texte = normalize_text_utf8(parts[2]);
-            *slots[slot_idx].has_flag = !texte.empty();
+            ctx.has_ha[slot_idx] = !texte.empty();
             ui_text_color(slots[slot_idx].lbl, ha_alert_color_from_couleur(parts[1]));
             lv_label_set_recolor(slots[slot_idx].lbl, false);
             ui_text(slots[slot_idx].lbl, texte.c_str());
@@ -304,8 +266,6 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
 
     tab5_dismiss_local_prune(dismissed_local, ids_seen);
 
-    for (int i = 0; i < 4; i++)
-        ctx.has_ha[i] = slots[i].has_flag ? *slots[i].has_flag : false;
     sync_central_panel_visibility(ctx);
 
     // 1E : Anime l'entree du bandeau si une nouvelle alerte est active.
@@ -332,11 +292,10 @@ void dismiss_central_info_immediate(lv_obj_t* lbl_info, CentralPanelCtx& ctx) {
 }
 
 void dismiss_ha_alert_slot_immediate(int slot_idx, lv_obj_t* wrap, lv_obj_t* lbl,
-    bool& has_flag, std::string& id_store, CentralPanelCtx& ctx) {
+    std::string& id_store, CentralPanelCtx& ctx) {
 
     if (slot_idx < 0 || slot_idx >= kHaAlertSlotCount) return;
     id_store.clear();
-    has_flag = false;
     ctx.has_ha[slot_idx] = false;
     if (lbl) {
         lv_label_set_recolor(lbl, false);
@@ -377,22 +336,18 @@ void update_central_forecast_page_ui(int forecast_page,
 
     if (!page_title_wrap || !lbl_page_title) return;
 
-    if (ctx.planning_wrap) lv_obj_add_flag(ctx.planning_wrap, LV_OBJ_FLAG_HIDDEN);
-    if (ctx.rain_wrap) lv_obj_add_flag(ctx.rain_wrap, LV_OBJ_FLAG_HIDDEN);
-    if (ctx.alert_cont) lv_obj_add_flag(ctx.alert_cont, LV_OBJ_FLAG_HIDDEN);
-    if (ctx.info_wrap) lv_obj_add_flag(ctx.info_wrap, LV_OBJ_FLAG_HIDDEN);
-    for (int i = 0; i < 4; i++)
-        if (ctx.ha_wrap[i]) lv_obj_add_flag(ctx.ha_wrap[i], LV_OBJ_FLAG_HIDDEN);
+    for (lv_obj_t* w : central_wraps(ctx))
+        if (w) lv_obj_add_flag(w, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
 
     if (forecast_page == 2) {
         lv_obj_t* active = central_panel_wrapper(ctx.current_panel, ctx);
-        if (active) lv_obj_clear_flag(active, LV_OBJ_FLAG_HIDDEN);
+        if (active) lv_obj_remove_flag(active, LV_OBJ_FLAG_HIDDEN);
         return;
     }
 
     if (!set_forecast_page_title_text(forecast_page, lbl_page_title, ctx)) return;
-    lv_obj_clear_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
 }
 
 void refresh_forecast_page_title_ui(int forecast_page,
@@ -414,10 +369,7 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
 
     if (!lbl_info) return;
 
-    std::string t = texte;
-    const char* ws = " \t\r\n";
-    size_t deb = t.find_first_not_of(ws);
-    t = (deb == std::string::npos) ? "" : t.substr(deb, t.find_last_not_of(ws) - deb + 1);
+    std::string t = trim_ws(texte);
 
     // Banniere vigilance : texte fixe UTF-8 cote firmware (HA ne fournit que la couleur).
     if (const char* banner = vigilance_alert_banner_utf8(couleur)) {
@@ -521,13 +473,11 @@ static void apply_forecast_page(int old_page, int page, lv_dir_t dir,
             animate_swipe_horizontal(out_layer, in_layer, dir);
         } else {
             // Meme layer (page intra-journalier ou intra-horaire) : refresh instantane.
+            lv_obj_set_flag(layer_forecast_daily, LV_OBJ_FLAG_HIDDEN, !new_is_daily);
+            lv_obj_set_flag(layer_forecast_hourly, LV_OBJ_FLAG_HIDDEN, new_is_daily);
             if (new_is_daily) {
-                lv_obj_clear_flag(layer_forecast_daily, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_add_flag(layer_forecast_hourly, LV_OBJ_FLAG_HIDDEN);
                 refresh_daily_forecast(day_slots, page - 2, f_card, f_card_s);
             } else {
-                lv_obj_add_flag(layer_forecast_daily, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_clear_flag(layer_forecast_hourly, LV_OBJ_FLAG_HIDDEN);
                 refresh_hourly_forecast(hour_slots, 1 - page, f_card, f_card_s);
             }
         }
@@ -545,7 +495,7 @@ static void apply_forecast_page(int old_page, int page, lv_dir_t dir,
         update_central_forecast_page_ui(page, page_title_wrap, lbl_page_title, ctx);
 }
 
-void handle_swipe_gesture(lv_dir_t dir, lv_coord_t pt_y, int& forecast_page_index,
+void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_card, esphome::font::Font* f_card_s,
@@ -655,7 +605,6 @@ struct TempPlanningCtx {
     lv_obj_t* page_title_wrap = nullptr;
     lv_obj_t* lbl_page_title = nullptr;
     int central_panel_restore = 0;         // panneau central à rétablir
-    int* current_panel_global = nullptr;   // global ESPHome current_central_panel
 };
 static TempPlanningCtx s_temp_planning;
 
@@ -672,10 +621,6 @@ static void end_temporary_planning(CentralPanelCtx& ctx) {
     tp.restore_timer = nullptr;
     if (tp.is_showing_temp) *tp.is_showing_temp = false;
     ctx.current_panel = tp.central_panel_restore;
-    // Le global aussi : chaque script YAML recopie current_central_panel dans
-    // ctx.current_panel avant d'agir, et il valait encore 0 (posé par le tap) — le
-    // panneau d'origine n'était jamais restauré, même au premier tap (25/09/2026).
-    if (tp.current_panel_global) *tp.current_panel_global = tp.central_panel_restore;
     // Texte normal rendu dans tous les cas : un tap sur la page 3 ou 4 laissait le
     // texte du tap dans le bandeau planning, réaffiché tel quel au retour sur 2.
     if (tp.lbl_planning) {
@@ -689,7 +634,7 @@ static void end_temporary_planning(CentralPanelCtx& ctx) {
 
 static void planning_restore_timer_cb(lv_timer_t* /*timer*/) {
     // end_temporary_planning() supprime ce timer depuis son propre callback :
-    // autorisé par LVGL 9 (comme l'ancien lv_timer_del(timer) ici même).
+    // autorisé par LVGL 9 (comme l'ancien lv_timer_delete(timer) ici même).
     const int page = s_temp_planning.forecast_page_restore;
     end_temporary_planning(g_central_ctx);
     if (page != FORECAST_MAIN_PAGE) {
@@ -705,7 +650,7 @@ static void planning_restore_timer_cb(lv_timer_t* /*timer*/) {
 void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
                              lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, int forecast_page,
                              const std::string& plan_l1, const std::string& plan_l2,
-                             bool& is_showing_temp, int& current_panel_global, CentralPanelCtx& ctx) {
+                             bool& is_showing_temp, CentralPanelCtx& ctx) {
     if (!lbl_planning) return;
 
     TempPlanningCtx& tp = s_temp_planning;
@@ -719,22 +664,16 @@ void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
     std::string text = get_day_planning_display_text(jour);
     set_label_text_utf8(lbl_planning, text.c_str());
 
-    // Stoppe les animations LVGL en cours sur les panneaux centraux.
-    if (ctx.planning_wrap) lv_anim_del(ctx.planning_wrap, nullptr);
-    if (ctx.alert_cont) lv_anim_del(ctx.alert_cont, nullptr);
-    if (ctx.rain_wrap) lv_anim_del(ctx.rain_wrap, nullptr);
-    if (ctx.info_wrap) lv_anim_del(ctx.info_wrap, nullptr);
-    for (int i = 0; i < 4; i++)
-        if (ctx.ha_wrap[i]) lv_anim_del(ctx.ha_wrap[i], nullptr);
-    if (page_title_wrap) lv_anim_del(page_title_wrap, nullptr);
+    // Stoppe les animations LVGL en cours sur les panneaux centraux, puis ne
+    // laisse visible que le planning.
+    const auto wraps = central_wraps(ctx);
+    for (lv_obj_t* w : wraps)
+        if (w) lv_anim_delete(w, nullptr);
+    if (page_title_wrap) lv_anim_delete(page_title_wrap, nullptr);
 
     if (page_title_wrap) lv_obj_add_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
-    if (ctx.planning_wrap) lv_obj_clear_flag(ctx.planning_wrap, LV_OBJ_FLAG_HIDDEN);
-    if (ctx.alert_cont) lv_obj_add_flag(ctx.alert_cont, LV_OBJ_FLAG_HIDDEN);
-    if (ctx.rain_wrap) lv_obj_add_flag(ctx.rain_wrap, LV_OBJ_FLAG_HIDDEN);
-    if (ctx.info_wrap) lv_obj_add_flag(ctx.info_wrap, LV_OBJ_FLAG_HIDDEN);
-    for (int i = 0; i < 4; i++)
-        if (ctx.ha_wrap[i]) lv_obj_add_flag(ctx.ha_wrap[i], LV_OBJ_FLAG_HIDDEN);
+    for (lv_obj_t* w : wraps)
+        if (w) lv_obj_set_flag(w, LV_OBJ_FLAG_HIDDEN, w != ctx.planning_wrap);
 
     tp.plan_l1 = plan_l1;
     tp.plan_l2 = plan_l2;
@@ -743,7 +682,6 @@ void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
     tp.forecast_page_restore = forecast_page;
     tp.page_title_wrap = page_title_wrap;
     tp.lbl_page_title = lbl_page_title;
-    tp.current_panel_global = &current_panel_global;
 
     if (tp.restore_timer != nullptr) {
         lv_timer_delete(tp.restore_timer);
@@ -755,12 +693,8 @@ void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
 
 static void hide_all_central_panels_for_overlay(lv_obj_t* page_title_wrap, CentralPanelCtx& ctx) {
     if (page_title_wrap) lv_obj_add_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
-    if (ctx.planning_wrap) lv_obj_add_flag(ctx.planning_wrap, LV_OBJ_FLAG_HIDDEN);
-    if (ctx.rain_wrap) lv_obj_add_flag(ctx.rain_wrap, LV_OBJ_FLAG_HIDDEN);
-    if (ctx.alert_cont) lv_obj_add_flag(ctx.alert_cont, LV_OBJ_FLAG_HIDDEN);
-    if (ctx.info_wrap) lv_obj_add_flag(ctx.info_wrap, LV_OBJ_FLAG_HIDDEN);
-    for (int i = 0; i < 4; i++)
-        if (ctx.ha_wrap[i]) lv_obj_add_flag(ctx.ha_wrap[i], LV_OBJ_FLAG_HIDDEN);
+    for (lv_obj_t* w : central_wraps(ctx))
+        if (w) lv_obj_add_flag(w, LV_OBJ_FLAG_HIDDEN);
 }
 
 void show_vocal_response_ui(const std::string& texte,
@@ -770,20 +704,13 @@ void show_vocal_response_ui(const std::string& texte,
 
     if (!vocal_wrap || !lbl_vocal) return;
 
-    std::string t = normalize_text_utf8(texte);
-    const char* ws = " \t\r\n";
-    size_t deb = t.find_first_not_of(ws);
-    t = (deb == std::string::npos) ? "" : t.substr(deb, t.find_last_not_of(ws) - deb + 1);
+    const std::string t = trim_ws(normalize_text_utf8(texte));
     if (t.empty()) return;
 
-    if (ctx.planning_wrap) lv_anim_del(ctx.planning_wrap, nullptr);
-    if (ctx.rain_wrap) lv_anim_del(ctx.rain_wrap, nullptr);
-    if (ctx.alert_cont) lv_anim_del(ctx.alert_cont, nullptr);
-    if (ctx.info_wrap) lv_anim_del(ctx.info_wrap, nullptr);
-    if (vocal_wrap) lv_anim_del(vocal_wrap, nullptr);
-    for (int i = 0; i < 4; i++)
-        if (ctx.ha_wrap[i]) lv_anim_del(ctx.ha_wrap[i], nullptr);
-    if (page_title_wrap) lv_anim_del(page_title_wrap, nullptr);
+    for (lv_obj_t* w : central_wraps(ctx))
+        if (w) lv_anim_delete(w, nullptr);
+    if (vocal_wrap) lv_anim_delete(vocal_wrap, nullptr);
+    if (page_title_wrap) lv_anim_delete(page_title_wrap, nullptr);
 
     hide_all_central_panels_for_overlay(page_title_wrap, ctx);
 
@@ -797,14 +724,14 @@ void show_vocal_response_ui(const std::string& texte,
     constexpr size_t kScrollMinChars = 42;
     if (t.size() > kScrollMinChars) {
         lv_obj_set_width(lbl_vocal, 1180);
-        lv_label_set_long_mode(lbl_vocal, LV_LABEL_LONG_SCROLL_CIRCULAR);
+        lv_label_set_long_mode(lbl_vocal, LV_LABEL_LONG_MODE_SCROLL_CIRCULAR);
     } else {
         lv_obj_set_width(lbl_vocal, LV_SIZE_CONTENT);
-        lv_label_set_long_mode(lbl_vocal, LV_LABEL_LONG_CLIP);
+        lv_label_set_long_mode(lbl_vocal, LV_LABEL_LONG_MODE_CLIP);
     }
     lv_label_set_text(lbl_vocal, t.c_str());
 
-    lv_obj_clear_flag(vocal_wrap, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(vocal_wrap, LV_OBJ_FLAG_HIDDEN);
     ctx.vocal_wrap = vocal_wrap;
     ctx.vocal_shown = true;
 }
@@ -812,7 +739,7 @@ void show_vocal_response_ui(const std::string& texte,
 void hide_vocal_response_ui(lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal, CentralPanelCtx& ctx) {
     if (lbl_vocal) {
         lv_label_set_text(lbl_vocal, "");
-        lv_label_set_long_mode(lbl_vocal, LV_LABEL_LONG_CLIP);
+        lv_label_set_long_mode(lbl_vocal, LV_LABEL_LONG_MODE_CLIP);
         lv_obj_set_width(lbl_vocal, LV_SIZE_CONTENT);
     }
     if (vocal_wrap) lv_obj_add_flag(vocal_wrap, LV_OBJ_FLAG_HIDDEN);

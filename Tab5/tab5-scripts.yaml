@@ -1,8 +1,9 @@
 # [AI-CONTEXT]
 # @file tab5-scripts.yaml
-# @role Scripts ESPHome transverses : registre des fenêtres modales, volet, volume,
-#       debounces (lumière, clim), recoloration clim, rotateur de la carte centrale,
-#       popup lumière, retour automatique à l'accueil.
+# @role Scripts ESPHome transverses : registre des fenêtres modales, volet (dont le
+#       tap de sa carte), volume, debounces (lumière, clim), recoloration clim,
+#       rotateur de la carte centrale, popup lumière, touches de la télécommande TV,
+#       retour automatique à l'accueil.
 # @architecture_constraint Depuis le 25/09/2026 (audit, lot 8c), les familles qui
 #       ont leur fonctionnalité propre vivent dans leur package : tab5-arcade.yaml
 #       (jeux), tab5-calendar.yaml (popup calendrier), tab5-assist.yaml (voix et
@@ -83,6 +84,40 @@ script:
           data:
             entity_id: ${entity_tab5_satellite}
             message: "Volet arrêté."
+
+  # Tap sur la carte volet — même geste sur les deux vues (btn_j1_action de
+  # forecast_daily.yaml, btn_sw1_action de switches_card.yaml), recopié à
+  # l'identique dans les deux fichiers jusqu'au lot 7.3 de l'audit (26/09/2026).
+  # Volet en mouvement → stop ; sinon ouvre ou ferme selon la flèche de la carte
+  # (volet_target_open, basculée par btn_j1_dir). Aucun état optimiste : l'écran
+  # attend la poussée HA (tab5_maj_volet_etat). `parallel` : chaque tap va au
+  # bout (aucun délai), comme l'action en ligne qu'il remplace.
+  - id: tab5_volet_tap
+    mode: parallel
+    then:
+      - if:
+          condition:
+            lambda: 'return id(volet_en_mouvement);'
+          then:
+            - script.execute: tab5_volet_end_movement
+            - homeassistant.service:
+                service: script.tab5_volet_action
+                data:
+                  action: "stop"
+          else:
+            - if:
+                condition:
+                  lambda: 'return id(volet_target_open);'
+                then:
+                  - homeassistant.service:
+                      service: script.tab5_volet_action
+                      data:
+                        action: "open"
+                else:
+                  - homeassistant.service:
+                      service: script.tab5_volet_action
+                      data:
+                        action: "close"
 
   # Debounce du slider volume : chaque glissement redémarre le délai, un seul
   # media_player.volume_set part réellement une fois le doigt immobile.
@@ -266,11 +301,7 @@ script:
               - lambda: 'return !id(is_showing_temp_planning) && !id(is_showing_vocal_response) && id(forecast_page_index) == 2 && !ModalRegistry::any_popup_visible();'
           then:
             - lambda: |-
-                sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
-                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
-                    id(current_central_panel));
                 advance_central_panel_rotator(g_central_ctx);
-                id(current_central_panel) = g_central_ctx.current_panel;
       - script.execute: tab5_central_rotator_auto
 
   # Tap navigation : planning / pluie / icônes MF → ligne suivante (sans dismiss HA).
@@ -282,11 +313,7 @@ script:
             lambda: 'return id(forecast_page_index) == 2 && !id(is_showing_temp_planning);'
           then:
             - lambda: |-
-                sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
-                    id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
-                    id(current_central_panel));
                 advance_central_panel_rotator(g_central_ctx);
-                id(current_central_panel) = g_central_ctx.current_panel;
             - script.execute: tab5_central_rotator_auto
 
   # Tap panneau info (ligne météo HA) : dismiss définitif si vigilance, sinon navigation.
@@ -295,7 +322,7 @@ script:
     then:
       - if:
           condition:
-            lambda: 'return id(forecast_page_index) == 2 && !id(is_showing_temp_planning) && id(has_info);'
+            lambda: 'return id(forecast_page_index) == 2 && !id(is_showing_temp_planning) && g_central_ctx.has_info;'
           then:
             - if:
                 condition:
@@ -304,12 +331,7 @@ script:
                   - lambda: |-
                       id(temp_dismiss_alert_id) = id(info_meteo_dismiss_id);
                       tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
-                      sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
-                          id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
-                          id(current_central_panel));
                       dismiss_central_info_immediate(id(lbl_info_text), g_central_ctx);
-                      id(has_info) = g_central_ctx.has_info;
-                      id(current_central_panel) = g_central_ctx.current_panel;
                   - homeassistant.service:
                       service: script.tab5_dismiss_alert
                       data:
@@ -319,11 +341,7 @@ script:
                       value: '""'
                 else:
                   - lambda: |-
-                      sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
-                          id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
-                          id(current_central_panel));
                       advance_central_panel_rotator(g_central_ctx);
-                      id(current_central_panel) = g_central_ctx.current_panel;
             - script.execute: tab5_central_rotator_auto
 
   # Tap annonce HA (panneaux 4-7) : dismiss définitif + ligne suivante.
@@ -339,16 +357,11 @@ script:
           id(temp_dismiss_alert_id) = "";
           lv_obj_t* wraps[4] = {id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3)};
           lv_obj_t* lbls[4]  = {id(lbl_ha_alert_0), id(lbl_ha_alert_1), id(lbl_ha_alert_2), id(lbl_ha_alert_3)};
-          bool* hasf[4]       = {&id(has_ha_alert_0), &id(has_ha_alert_1), &id(has_ha_alert_2), &id(has_ha_alert_3)};
           std::string* ids[4] = {&id(ha_alert_id_0), &id(ha_alert_id_1), &id(ha_alert_id_2), &id(ha_alert_id_3)};
           if (slot < 0 || slot > 3 || ids[slot]->size() == 0) return;
           id(temp_dismiss_alert_id) = *ids[slot];
           tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
-          sync_central_ctx(g_central_ctx, id(has_rain), id(has_alerts), id(has_info),
-              id(has_ha_alert_0), id(has_ha_alert_1), id(has_ha_alert_2), id(has_ha_alert_3),
-              id(current_central_panel));
-          dismiss_ha_alert_slot_immediate(slot, wraps[slot], lbls[slot], *hasf[slot], *ids[slot], g_central_ctx);
-          id(current_central_panel) = g_central_ctx.current_panel;
+          dismiss_ha_alert_slot_immediate(slot, wraps[slot], lbls[slot], *ids[slot], g_central_ctx);
       - if:
           condition:
             lambda: 'return id(temp_dismiss_alert_id).size() > 0;'
@@ -384,6 +397,24 @@ script:
               id(btn_light_sel_0), id(btn_light_sel_1), id(btn_light_sel_2),
               id(icon_light_sel_0), id(icon_light_sel_1), id(icon_light_sel_2),
               id(btn_light_power_icon), id(arc_light_brightness), id(lbl_light_brightness_val));
+
+  # Touche physique de la télécommande TV (tv_remote_popup.yaml et ses gabarits
+  # tv_pad_btn.yaml / tv_transport_btn.yaml) : un seul remote.send_command
+  # paramétré au lieu des quatorze blocs recopiés avant le lot 7.3 de l'audit
+  # (26/09/2026). touche = code Samsung (KEY_UP, KEY_VOLUP…). Marche/Arrêt reste un
+  # remote.toggle et les applications passent par script.tab5_tv_app (HA) — voir
+  # l'en-tête du popup. `parallel` : chaque appui va au bout (aucun délai), comme
+  # l'action en ligne qu'il remplace.
+  - id: tab5_tv_key
+    mode: parallel
+    parameters:
+      touche: string
+    then:
+      - homeassistant.service:
+          service: remote.send_command
+          data:
+            entity_id: ${entity_tv_remote}
+            command: !lambda 'return touche;'
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Retour automatique à l'écran principal (inactivité tactile)

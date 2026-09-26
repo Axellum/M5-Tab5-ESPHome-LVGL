@@ -4,14 +4,18 @@
 # « pas avant / pas après » ±15 min, mélodie ±1).
 # vars : id (id du bouton), x, y, w, h, r (rayon), icon (glyphe MDI en mdi_font_32 :
 #        il doit figurer dans la liste `glyphs` de mdi_font_32, sinon il s'affiche vide),
-#        script (id du script, qui prend un paramètre int `delta`), delta.
+#        call (mapping remis tel quel à `script.execute` : l'id du script et ses
+#        paramètres, `{ id: tab5_alarm_shift, cible: 0, delta: 60 }` ou
+#        `{ id: tab5_alarm_cycle_melody, delta: 1 }`).
 # Sorti de alarm_popup.yaml le 25/09/2026 (audit, lot 8e, règle 5 : un widget répété
-# 3 fois ou plus passe par un template).
+# 3 fois ou plus passe par un template). `call` remplace `script` + `delta` le
+# 26/09/2026 (lot 7.3) : les trois scripts de décalage n'en font plus qu'un, à
+# deux paramètres, alors que la mélodie n'en a qu'un.
 # Piège YAML : dans un mapping en ligne `{ … }`, une valeur contenant `${…}` doit être
 # entre guillemets, sinon l'accolade casse la syntaxe (yamllint le signale).
-# Piège ESPHome : la substitution garde le type de la variable. Un paramètre de script
-# (`delta`) doit être passé en nombre NON quoté dans `vars` (`delta: 3`, pas `"3"`),
-# sinon il part en chaîne ('3') au lieu d'un entier.
+# Piège ESPHome : la substitution garde le type de la variable — un `${call}` seul sur
+# sa valeur redevient le mapping entier. Ses paramètres doivent donc être des nombres
+# NON quotés (`delta: 3`, pas `"3"`), sinon ils partent en chaîne ('3').
 # ═══════════════════════════════════════════════════════
 button:
   id: ${id}
@@ -24,6 +28,6 @@ button:
   styles: style_clim_btn
   pressed: { bg_opa: 30% }
   on_short_click:
-    - script.execute: { id: "${script}", delta: "${delta}" }
+    - script.execute: "${call}"
   widgets:
     - label: { text: "${icon}", align: CENTER, text_font: mdi_font_32 }

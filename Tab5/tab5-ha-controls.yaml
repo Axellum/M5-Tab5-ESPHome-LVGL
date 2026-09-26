@@ -134,7 +134,7 @@ select:
           // [26/08/2026] SONNERIE EN COURS : refuser d'ouvrir une fenêtre.
           // `alarm_ring_layer` est un calque plein cadre que alarm_clock.cpp
           // (alarm_ring_show) remonte au premier plan à chaque affichage. Or le
-          // `lv_obj_move_foreground(target)` du switch ci-dessous s'applique
+          // premier plan que pose `animate_popup_open(target)` ci-dessous s'applique
           // SANS CONDITION : un popup ouvert depuis HA pendant que le réveil
           // sonne passerait donc PAR-DESSUS l'écran de sonnerie et masquerait
           // son bouton d'arrêt. C'est le pendant exact de la protection déjà en
@@ -192,13 +192,12 @@ select:
               break;
             case 8:  // La console est un layer plein cadre : pas d'animation
                      // d'ouverture, comme son bouton (tab5-lvgl.yaml).
-              lv_obj_clear_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
-              lv_obj_move_foreground(id(layer_console_sys));
+              lv_obj_remove_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
+              lv_obj_move_to_index(id(layer_console_sys), -1);
               break;
             default:
               if (target != nullptr) {
-                animate_popup_open(target, nullptr);
-                lv_obj_move_foreground(target);
+                animate_popup_open(target);
               }
               break;
           }
