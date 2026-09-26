@@ -266,7 +266,8 @@ static void sq_name(int sq, int n, char* buf, int len) {
     const int r = sq / n, c = sq % n;
     char col = (char) ('A' + c);
     if (col >= 'I') col++;
-    snprintf(buf, len, "%c%d", col, n - r);
+    // Rangée 1..19 ; le modulo borne l'entier pour -O2 (-Wformat-truncation).
+    snprintf(buf, len, "%c%u", col, static_cast<unsigned>(n - r) % 100u);
 }
 static void col_letter(int c, char* buf, int len) {
     char col = (char) ('A' + c);

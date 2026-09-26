@@ -274,7 +274,10 @@ void alarm_reset_state() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 void alarm_hhmm(int minute_of_day, char* out, size_t n) {
-  snprintf(out, n, "%02d:%02d", minute_of_day / 60, minute_of_day % 60);
+  // Borné à une journée : -O2 sait alors que chaque champ tient sur deux chiffres
+  // (sinon -Wformat-truncation). Les appelants passent toujours une heure valide.
+  const unsigned m = static_cast<unsigned>(minute_of_day) % 1440u;
+  snprintf(out, n, "%02u:%02u", m / 60u, m % 60u);
 }
 
 std::string alarm_next_label(time_t now) {

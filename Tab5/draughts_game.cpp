@@ -926,12 +926,12 @@ static void push_hist(const Move& m) {
     char buf[12];
     move_to_notation(m, g_pos.n, buf, sizeof(buf));
     if (g_hist_n < HIST_MAX) {
-        strncpy(g_hist[g_hist_n], buf, 11);
+        memcpy(g_hist[g_hist_n], buf, sizeof(buf));   // même taille (12) : pas de strncpy tronquant
         g_hist[g_hist_n][11] = 0;
         g_hist_n++;
     } else {
         for (int i = 1; i < HIST_MAX; i++) memcpy(g_hist[i - 1], g_hist[i], 12);
-        strncpy(g_hist[HIST_MAX - 1], buf, 11);
+        memcpy(g_hist[HIST_MAX - 1], buf, sizeof(buf));
         g_hist[HIST_MAX - 1][11] = 0;
     }
     update_hist_panel();
