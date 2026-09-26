@@ -4,6 +4,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Horloge temps réel RX8130 : l'heure dès le démarrage, même sans réseau
+
+Le Tab5 a une horloge RX8130CE (0x32 sur `bsp_bus`, supercondensateur de 70 000 µF) que le
+firmware n'utilisait pas. Sondée le 26/09/2026 : présente, elle avançait normalement (36 s de
+retard sur l'UTC, stable sur 14 min).
+
+- `time:` plateforme `rx8130` (`tab5-sensors-diagnostics.yaml`), sans lecture périodique.
+- **Lecture au démarrage** par un `interval: 24h` (première exécution dans les 5 s après le
+  setup, sans effet ensuite tant que l'heure est valide) : `on_boot` n'est pas touché. Log
+  `tab5.rtc` avec l'heure reprise ; l'horloge de l'écran est peinte aussitôt.
+- **Écriture à chaque synchro NTP** (`rx8130.write_time` dans `on_time_sync` du SNTP).
+- Au setup, le composant ESPHome écrit les registres de contrôle de l'horloge, dont la charge
+  du supercondensateur, comme la bibliothèque M5Unified de M5Stack.
+- `docs/hardware.md` (EN + FR) : section horloge ; INA226 (0x41) présent mais non utilisé.
+
 ### 2026-09-26 — Performance : cache L2 de 256 Ko
 
 `CONFIG_CACHE_L2_CACHE_256KB` (128 Ko par défaut). Depuis #149 le code et les polices sont lus
@@ -21,6 +36,7 @@ d'une minute, mêmes actions aux mêmes minutes par rapport à l'envoi HA) :
 - Coût : le cache est pris sur la RAM interne. RAM libre 356 → 226 Ko ; RAM statique inchangée.
 - 5 redémarrages de contrôle : écran affiché à chaque fois (vérifié par Axel), API revenue en
   16,5-16,8 s comme avant.
+
 
 ### 2026-09-26 — Documentation : 32 Mo de PSRAM, pas 16
 

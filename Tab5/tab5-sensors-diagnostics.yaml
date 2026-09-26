@@ -189,6 +189,9 @@ time:
     # prochain tick minute de on_time). Indépendant de HA.
     on_time_sync:
       then:
+        # Recale l'horloge matérielle à chaque synchro NTP (elle stocke l'heure UTC).
+        - rx8130.write_time:
+            id: rtc_time
         - lambda: |-
             auto t_now = id(sntp_time).now();
             if (t_now.is_valid()) {
@@ -206,7 +209,45 @@ time:
                     t_now.hour, t_now.minute, t_now.day_of_week, t_now.day_of_month, t_now.month);
               }
 
+  # Horloge matérielle RX8130 (0x32 sur bsp_bus, sauvegardée par un supercondensateur
+  # de 70 000 µF) : le Tab5 a l'heure dès le démarrage, même sans réseau (horloge,
+  # réveil). Lue une seule fois au démarrage (interval plus bas), écrite à chaque synchro
+  # NTP. Pas de lecture périodique : elle recalerait l'heure système à la seconde près
+  # et pourrait faire sauter les déclencheurs « on_time ».
+  # Au setup, le composant écrit ses registres de contrôle, dont la charge du
+  # supercondensateur (comme M5Unified, la bibliothèque de M5Stack).
+  - platform: rx8130
+    id: rtc_time
+    i2c_id: bsp_bus
+    timezone: Europe/Paris
+    update_interval: never
+    on_time_sync:
+      then:
+        - lambda: |-
+            auto t_now = id(sntp_time).now();
+            if (t_now.is_valid()) {
+              update_clock_date_ui(id(lbl_date),
+                  t_now.hour, t_now.minute, t_now.day_of_week, t_now.day_of_month, t_now.month);
+            }
+
 interval:
+  # Heure de l'horloge RX8130 au démarrage, avant le réseau. Un interval s'exécute pour la
+  # première fois dans les 5 s qui suivent le setup (décalage aléatoire du planificateur
+  # d'ESPHome) : pas besoin de toucher à on_boot. Ensuite, une fois par jour, sans effet
+  # tant que l'heure système est valide.
+  - interval: 24h
+    then:
+      - lambda: |-
+          if (id(sntp_time).now().is_valid()) return;
+          id(rtc_time).read_time();
+          const auto t = id(rtc_time).utcnow();
+          if (t.is_valid()) {
+            ESP_LOGI("tab5.rtc", "Heure reprise de l'horloge RX8130 : %04d-%02d-%02d %02d:%02d:%02d UTC",
+                     t.year, t.month, t.day_of_month, t.hour, t.minute, t.second);
+          } else {
+            ESP_LOGW("tab5.rtc", "Horloge RX8130 illisible ou pas encore réglée : attente de NTP");
+          }
+
   - interval: 5s
     then:
       - if:
