@@ -8,8 +8,8 @@
 # automations.yaml ont dû être retirées au profit du seul package).
 #
 # Le package reste la voie recommandée : il apporte aussi les scripts
-# `tab5_dismiss_alert` / `tab5_dismiss_info_panel` et l'automation
-# `tab5_alert_dismiss_handler`, que ce snippet seul ne fournit pas.
+# `tab5_dismiss_alert`, le capteur `sensor.tab5_unavailable_count` et la purge
+# nocturne `tab5_alerts_dismissed_cleanup`, que ce snippet seul ne fournit pas.
   tab5_alerts_dismissed:
     name: "Tab5 alertes HA ignorées"
     initial: ""

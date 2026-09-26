@@ -147,9 +147,13 @@ sensor:
   # Image LVGL la plus longue de la minute écoulée : rendu + envoi à l'écran, de
   # LV_EVENT_RENDER_START à LV_EVENT_REFR_READY (on_draw_start / on_draw_end, bloc
   # lvgl: plus bas). 0 = aucune image dessinée pendant la minute.
+  # `internal: true` (audit ressources du 26/09/2026, lot 2) : la campagne de mesure est
+  # close et la valeur change chaque minute — ≈ 1 500 lignes par jour dans la base HA
+  # pour rien. Toujours publiée dans les logs (`esphome logs`) pour une nouvelle mesure.
   - platform: template
     id: sys_draw_max
     name: "Tab5 Draw Max"
+    internal: true
     unit_of_measurement: ms
     accuracy_decimals: 0
     entity_category: diagnostic

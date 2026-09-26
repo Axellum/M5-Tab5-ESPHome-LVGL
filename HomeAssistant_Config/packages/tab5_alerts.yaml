@@ -11,6 +11,11 @@
 #       push, lourd (~5,5 s de delays + calendrier + météo), pour rien.
 #       Si la valeur ne change pas (id déjà acquitté), rien n'est repoussé :
 #       il n'y a rien de nouveau à afficher.
+#       Le firmware appelle script.tab5_dismiss_alert directement (tap sur une
+#       alerte ou sur le bandeau info, tab5-scripts.yaml). Retirés le 26/09/2026
+#       (audit ressources, lot 2), faute d'appelant : l'automation qui écoutait
+#       l'événement esphome.tab5_alert_dismiss (jamais émis, dernier passage le
+#       16/07/2026) et le script tab5_dismiss_info_panel.
 # @install Nécessite homeassistant.packages: !include_dir_named packages
 # ============================================================================
 
@@ -42,42 +47,6 @@ script:
             {% else %}
               {{ ids | join('|') }}
             {% endif %}
-      - action: input_text.set_value
-        continue_on_error: true
-        target:
-          entity_id: input_text.tab5_alerts_dismissed
-        data:
-          value: "{{ new_val[:255] }}"
-
-  tab5_dismiss_info_panel:
-    alias: "Tab5 — acquitter tout le panneau info (météo + résumé HA)"
-    mode: queued
-    sequence:
-      - variables:
-          dismissed: "{{ (states('input_text.tab5_alerts_dismissed') or '').split('|') | reject('equalto','') | list }}"
-          new_val: >
-            {% set ns = namespace(ids=dismissed) %}
-            {% set alerte = states('sensor.VOTRE_DEPARTEMENT_weather_alert') %}
-            {% if alerte in ['Rouge', 'Orange', 'Jaune'] %}
-              {% set mk = 'meteo:' ~ (alerte | lower) %}
-              {% if mk not in ns.ids %}{% set ns.ids = ns.ids + [mk] %}{% endif %}
-            {% endif %}
-            {% for u in states.update | selectattr('state', 'eq', 'on') | list %}
-              {% if u.entity_id not in ns.ids %}{% set ns.ids = ns.ids + [u.entity_id] %}{% endif %}
-            {% endfor %}
-            {% for p in states.binary_sensor
-                | selectattr('attributes.device_class', 'defined')
-                | selectattr('attributes.device_class', 'eq', 'problem')
-                | selectattr('state', 'eq', 'on')
-                | list %}
-              {% if p.entity_id not in ns.ids %}{% set ns.ids = ns.ids + [p.entity_id] %}{% endif %}
-            {% endfor %}
-            {% if 'ha:unavailable' not in ns.ids %}
-              {% if (states('sensor.tab5_unavailable_count') | int(0)) > 0 %}
-                {% set ns.ids = ns.ids + ['ha:unavailable'] %}
-              {% endif %}
-            {% endif %}
-            {{ ns.ids | join('|') }}
       - action: input_text.set_value
         continue_on_error: true
         target:
@@ -119,20 +88,6 @@ template:
           {{ ns.n }}
 
 automation:
-  - id: tab5_alert_dismiss_handler
-    alias: "Tab5 — acquittement alerte HA (tap écran)"
-    description: >-
-      Reçoit l'événement tab5_alert_dismiss du firmware et retire l'alerte
-      de la file poussée vers le rotateur 8s.
-    mode: queued
-    trigger:
-      - platform: event
-        event_type: esphome.tab5_alert_dismiss
-    action:
-      - action: script.tab5_dismiss_alert
-        data:
-          alert_id: "{{ trigger.event.data.alert_id | default('') }}"
-
   - id: tab5_alerts_dismissed_cleanup
     alias: "Tab5 — purge alertes ignorées obsolètes"
     description: >-
