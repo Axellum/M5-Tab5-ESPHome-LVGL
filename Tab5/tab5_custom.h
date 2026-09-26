@@ -379,6 +379,11 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
 // l'interval 2 s de tab5-sensors-diagnostics.yaml quand la console est visible.
 void update_console_ha_status_ui(lv_obj_t* lbl, bool ha_ok);
 
+// Version du logiciel ESP-Hosted du co-processeur Wi-Fi (ESP32-C6), « x.y.z », lue par
+// RPC sur le lien SDIO (réponse attendue au plus 1 s). false si le lien ne répond pas.
+// Capteur « Tab5 C6 Version » de tab5-sensors-diagnostics.yaml.
+bool read_c6_firmware_version(char* out, size_t n);
+
 // AXE5 : Constantes nommees pour les icones meteo (UTF-8 de la police IconeMeteo.ttf)
 // Evite les bytes bruts non-documentés, facilite la maintenance si la police change
 namespace MeteoIcon {

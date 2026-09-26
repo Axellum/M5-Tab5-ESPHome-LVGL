@@ -82,6 +82,24 @@ text_sensor:
       id: sys_wifi_ssid
       name: "Tab5 SSID"
 
+  # Version du logiciel ESP-Hosted du co-processeur Wi-Fi (ESP32-C6), qu'ESPHome ne met
+  # pas à jour : celle installée en usine tant que personne ne l'a reflashé. Lue une
+  # fois, Wi-Fi connecté (la requête passe par le C6). Chaque essai peut bloquer la
+  # boucle jusqu'à 1 s si le C6 ne répond pas : 3 essais au plus, puis « inconnue ».
+  - platform: template
+    id: sys_c6_version
+    name: "Tab5 C6 Version"
+    icon: "mdi:chip"
+    entity_category: diagnostic
+    update_interval: 60s
+    lambda: |-
+      static uint8_t essais = 0;
+      if (essais >= 3 || !network::is_connected()) return {};
+      char buf[16];
+      if (read_c6_firmware_version(buf, sizeof(buf))) { essais = 3; return std::string(buf); }
+      if (++essais >= 3) return std::string("inconnue");
+      return {};
+
 sensor:
   - platform: uptime
     id: sys_uptime
@@ -135,7 +153,7 @@ sensor:
       id(draw_max_us) = 0;
       return v;
 
-  # Pile libre minimale de la boucle ESPHome depuis le démarrage (8 Ko en tout).
+  # Pile libre minimale de la boucle ESPHome depuis le démarrage (16 Ko en tout, #150).
   # La lambda tourne dans la boucle elle-même : nullptr = la tâche courante.
   - platform: template
     id: sys_stack_free

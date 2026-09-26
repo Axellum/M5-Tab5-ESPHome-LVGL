@@ -15,6 +15,9 @@
 #include "tab5_internal.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <esp_hosted.h>
+#include <esp_hosted_host_fw_ver.h>
+#include <cinttypes>
 #include <ctime>
 #include <cstring>
 #include <vector>
@@ -170,4 +173,20 @@ void update_console_ha_status_ui(lv_obj_t* lbl, bool ha_ok) {
     if (lbl == nullptr) return;
     lv_label_set_text(lbl, ha_ok ? "Connecte" : "Hors ligne");
     lv_obj_set_style_text_color(lbl, lv_color_hex(ha_ok ? UIColor::SUCCESS : UIColor::ERROR), LV_PART_MAIN);
+}
+
+// =============================================================================
+// Co-processeur Wi-Fi (ESP32-C6) — version de son logiciel ESP-Hosted
+// =============================================================================
+
+bool read_c6_firmware_version(char* out, size_t n) {
+    esp_hosted_coprocessor_fwver_t v;
+    if (esp_hosted_get_coprocessor_fwversion(&v) != ESP_OK) {
+        ESP_LOGW("tab5.c6", "Version du C6 : pas de reponse sur le lien SDIO");
+        return false;
+    }
+    snprintf(out, n, "%" PRIu32 ".%" PRIu32 ".%" PRIu32, v.major1, v.minor1, v.patch1);
+    ESP_LOGI("tab5.c6", "ESP-Hosted : C6 en %s, bibliotheque du P4 en %d.%d.%d", out,
+             ESP_HOSTED_VERSION_MAJOR_1, ESP_HOSTED_VERSION_MINOR_1, ESP_HOSTED_VERSION_PATCH_1);
+    return true;
 }
