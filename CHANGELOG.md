@@ -4,6 +4,36 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Design : boutons instantanés, thème ESPHome, nettoyage
+
+Lot 6 de l'audit des ressources du 26/09/2026.
+
+- **Boutons instantanés** (demande d'Axel) : `CONFIG_LV_THEME_DEFAULT_TRANSITION_TIME: "0"`.
+  Le thème LVGL par défaut animait chaque appui en 80 ms, et chaque relâchement en 80 ms
+  après 70 ms de délai, ce qui se voyait pendant l'ouverture d'un popup. Boutons,
+  curseurs et interrupteurs basculent désormais d'une image à l'autre. Les animations du
+  projet (swipe des prévisions, rouleaux, alertes) ne changent pas.
+- **Thème ESPHome** (`theme:` dans `tab5-styles.yaml`) :
+  - `label` porte le blanc (`color_text`) et la police (`roboto_22`) courants.
+    292 réglages locaux identiques sont retirés des sources. Comparaison des 1 247
+    widgets avant/après : aucune couleur ni police effective ne change ;
+  - `button` n'a plus d'ombre. Le thème LVGL en posait une sous chaque bouton qui ne
+    l'annulait pas (voiles des popups, cartes de l'arcade, pastilles), recalculée à
+    chaque repeint sans cache. Seule différence visible : le liseré gris sous ces boutons.
+- **`default_font: roboto_22`** : la montserrat_14 d'origine, jamais affichée, n'est
+  plus embarquée.
+- **Nettoyage** :
+  - 10 calques d'icône météo (`*_icon_layer3`) cachés et sans référence ;
+  - `style_card`, jamais utilisé ;
+  - `style_meteo_tab`, identique à `style_meteo_card` et remplacé par lui ;
+  - 6 couleurs jamais référencées ;
+  - le conteneur de centrage du volume dans la télécommande TV ;
+  - 6 `scrollbar_mode` qu'ESPHome ignore en silence dans `style_definitions`.
+- **Réveil** : ses deux libellés passaient du blanc YAML (#F1F5F9) au blanc C++
+  (#FFFFFF) au premier rafraîchissement. Ils gardent désormais #F1F5F9.
+- **Doc corrigée** : `pressed: { styles: x }` est accepté sur un widget
+  (`troubleshooting.md`, cartographie, `tab5_anim.cpp`).
+
 ### 2026-09-26 — Jeux : fin du repeint plein écran aux dames, HUD sans réécriture
 
 Lot 5 de l'audit des ressources du 26/09/2026. Rien ne change à l'écran.

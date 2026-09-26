@@ -34,7 +34,7 @@ obj:
         styles: style_transparent
         widgets:
           - label: { id: icon_pot_s0, text: "\U000F024A", align: TOP_MID, text_font: mdi_font_45, text_color: color_text_dim }
-          - label: { id: val_pot_s0, text: "Pot -", align: BOTTOM_MID, y: -5, text_font: roboto_22, text_color: color_text_dim }
+          - label: { id: val_pot_s0, text: "Pot -", align: BOTTOM_MID, y: -5, text_color: color_text_dim }
 
     # Slot 1 : 2e plus sec
     - obj:
@@ -43,7 +43,7 @@ obj:
         styles: style_transparent
         widgets:
           - label: { id: icon_pot_s1, text: "\U000F0E66", align: TOP_MID, text_font: mdi_font_45, text_color: color_text_dim }
-          - label: { id: val_pot_s1, text: "Pot -", align: BOTTOM_MID, y: -5, text_font: roboto_22, text_color: color_text_dim }
+          - label: { id: val_pot_s1, text: "Pot -", align: BOTTOM_MID, y: -5, text_color: color_text_dim }
 
     # Slot 2 : Moyenne
     - obj:
@@ -52,7 +52,7 @@ obj:
         styles: style_transparent
         widgets:
           - label: { id: icon_pot_s2, text: "\U000F02E5", align: TOP_MID, text_font: mdi_font_45, text_color: color_text_dim }
-          - label: { id: val_pot_s2, text: "Moy:", align: BOTTOM_MID, y: -5, text_font: roboto_22, text_color: color_text_dim }
+          - label: { id: val_pot_s2, text: "Moy:", align: BOTTOM_MID, y: -5, text_color: color_text_dim }
 
     # Slot 3 : Plus humide
     - obj:
@@ -61,4 +61,4 @@ obj:
         styles: style_transparent
         widgets:
           - label: { id: icon_pot_s3, text: "\U000F09F1", align: TOP_MID, text_font: mdi_font_45, text_color: color_text_dim }
-          - label: { id: val_pot_s3, text: "Pot -", align: BOTTOM_MID, y: -5, text_font: roboto_22, text_color: color_text_dim }
+          - label: { id: val_pot_s3, text: "Pot -", align: BOTTOM_MID, y: -5, text_color: color_text_dim }

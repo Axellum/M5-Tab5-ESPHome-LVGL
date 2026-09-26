@@ -585,9 +585,14 @@ void update_clock_date_ui(lv_obj_t* lbl_date,
 
 // =============================================================================
 // 1D : Micro-interactions boutons verre (transform_scale au pressed)
-// ESPHome ne supporte pas state_pressed dans style_definitions -> on injecte
-// un style pressed partage via lv_obj_add_style(obj, style, LV_STATE_PRESSED).
-// La transition (80ms ease_out) est gereee nativement par LVGL.
+// Style pressed partagé, injecté via lv_obj_add_style(obj, style, LV_STATE_PRESSED).
+// `pressed:` est refusé dans style_definitions, mais `pressed: { styles: x }` est
+// accepté sur un widget (vérifié le 26/09/2026) : ce qui reste en C++, c'est le
+// pivot au centre, qui dépend de la taille de chaque bouton.
+// Aucune transition : CONFIG_LV_THEME_DEFAULT_TRANSITION_TIME = 0
+// (tab5-hardware.yaml, 26/09/2026) — le thème LVGL animait l'appui en 80 ms et le
+// relâchement en 80 ms après 70 ms de délai. Échelle et assombrissement sont
+// désormais appliqués d'une image à l'autre.
 // =============================================================================
 static lv_style_t style_btn_pressed;
 static bool btn_styles_inited = false;
@@ -602,9 +607,8 @@ static void ensure_btn_styles_inited() {
     btn_styles_inited = true;
 }
 
-// Applique un style pressed (transform_scale 94% + bg_opa 30%) avec transition
-// 80ms ease_out sur un bouton. ESPHome ne supporte pas state_pressed dans les
-// styles partagees (style_definitions), donc on l'injecte en C++ via lv_obj_add_style.
+// Applique le style pressed (transform_scale 94 % + bg_opa 30 %) à un bouton, pivot
+// au centre du bouton.
 static void setup_button_press_animation(lv_obj_t* btn) {
     if (!btn) return;
     ensure_btn_styles_inited();

@@ -69,8 +69,8 @@ lvgl:
                   id: tab5_set_assist_mode
                   discussion: false
             widgets:
-              - label: { text: "\U000F07D0", align: CENTER, y: -10, text_font: mdi_font_32, text_color: color_text }
-              - label: { text: "Domo", align: CENTER, y: 15, text_font: roboto_22, text_color: color_text }
+              - label: { text: "\U000F07D0", align: CENTER, y: -10, text_font: mdi_font_32 }
+              - label: { text: "Domo", align: CENTER, y: 15 }
 
         # Bouton Discu
         - button:
@@ -86,8 +86,8 @@ lvgl:
                   id: tab5_set_assist_mode
                   discussion: true
             widgets:
-              - label: { text: "\U000F06A9", align: CENTER, y: -10, text_font: mdi_font_32, text_color: color_text }
-              - label: { text: "Discu", align: CENTER, y: 15, text_font: roboto_22, text_color: color_text }
+              - label: { text: "\U000F06A9", align: CENTER, y: -10, text_font: mdi_font_32 }
+              - label: { text: "Discu", align: CENTER, y: 15 }
 
         # Bouton Mute
         - button:
@@ -121,7 +121,7 @@ lvgl:
                         volume: 0.0
                     - lambda: 'ui_sync_mute_icons(id(icon_mute), id(icon_assist_mute), true);'
             widgets:
-              - label: { id: icon_mute, text: "\U000F057E", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+              - label: { id: icon_mute, text: "\U000F057E", align: CENTER, text_font: mdi_font_32 }
 
         # Bouton OK Nabu
         - button:
@@ -135,7 +135,7 @@ lvgl:
             on_short_click:
               - switch.toggle: tab5_wake_word_active
             widgets:
-              - label: { id: lbl_ok_nabu, text: "Ok Nabu: ON", align: CENTER, text_font: roboto_22, text_color: color_success }
+              - label: { id: lbl_ok_nabu, text: "Ok Nabu: ON", align: CENTER, text_color: color_success }
 
         # --- Centre: Horloge (−6px/côté, −10px haut, remontée 5px) ---
         - obj:
@@ -165,8 +165,8 @@ lvgl:
                   styles: style_transparent
                   scrollable: false
                   widgets:
-                    - label: { id: lbl_time_h10_a, text: "1", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
-                    - label: { id: lbl_time_h10_b, text: "1", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
+                    - label: { id: lbl_time_h10_a, text: "1", align: TOP_MID, y: 0, text_font: roboto_130_b }
+                    - label: { id: lbl_time_h10_b, text: "1", align: TOP_MID, y: 0, text_font: roboto_130_b }
               - obj:
                   id: clock_roll_h1
                   align: TOP_LEFT
@@ -177,9 +177,9 @@ lvgl:
                   styles: style_transparent
                   scrollable: false
                   widgets:
-                    - label: { id: lbl_time_h1_a, text: "9", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
-                    - label: { id: lbl_time_h1_b, text: "9", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
-              - label: { id: lbl_time_colon, text: ":", align: TOP_LEFT, x: 182, y: 10, text_font: roboto_130_b, text_color: color_text }
+                    - label: { id: lbl_time_h1_a, text: "9", align: TOP_MID, y: 0, text_font: roboto_130_b }
+                    - label: { id: lbl_time_h1_b, text: "9", align: TOP_MID, y: 0, text_font: roboto_130_b }
+              - label: { id: lbl_time_colon, text: ":", align: TOP_LEFT, x: 182, y: 10, text_font: roboto_130_b }
               - obj:
                   id: clock_roll_m10
                   align: TOP_LEFT
@@ -190,8 +190,8 @@ lvgl:
                   styles: style_transparent
                   scrollable: false
                   widgets:
-                    - label: { id: lbl_time_m10_a, text: "5", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
-                    - label: { id: lbl_time_m10_b, text: "5", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
+                    - label: { id: lbl_time_m10_a, text: "5", align: TOP_MID, y: 0, text_font: roboto_130_b }
+                    - label: { id: lbl_time_m10_b, text: "5", align: TOP_MID, y: 0, text_font: roboto_130_b }
               - obj:
                   id: clock_roll_m1
                   align: TOP_LEFT
@@ -202,9 +202,9 @@ lvgl:
                   styles: style_transparent
                   scrollable: false
                   widgets:
-                    - label: { id: lbl_time_m1_a, text: "0", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
-                    - label: { id: lbl_time_m1_b, text: "0", align: TOP_MID, y: 0, text_font: roboto_130_b, text_color: color_text }
-              - label: { id: lbl_date, text: "Jeu 02 Avr", align: TOP_MID, y: 140, text_font: roboto_45, text_color: color_text }
+                    - label: { id: lbl_time_m1_a, text: "0", align: TOP_MID, y: 0, text_font: roboto_130_b }
+                    - label: { id: lbl_time_m1_b, text: "0", align: TOP_MID, y: 0, text_font: roboto_130_b }
+              - label: { id: lbl_date, text: "Jeu 02 Avr", align: TOP_MID, y: 140, text_font: roboto_45 }
 
         # Zone tactile invisible par-dessus l'horloge/date. Deux gestes sur la
         # même tuile, dans l'ordre qui va de soi quand on regarde une horloge :
@@ -271,8 +271,8 @@ lvgl:
                       animate_crossfade_layers(id(layer_switches), fc_visible);
                   }
             widgets:
-              - label: { id: icon_ha, text: "\U000F07D0", align: CENTER, y: -12, text_font: mdi_font_45, text_color: color_text }
-              - label: { text: "HA", align: CENTER, y: 22, text_font: roboto_22, text_color: color_text }
+              - label: { id: icon_ha, text: "\U000F07D0", align: CENTER, y: -12, text_font: mdi_font_45 }
+              - label: { text: "HA", align: CENTER, y: 22 }
 
         - button:
             id: btn_control_console
@@ -301,8 +301,8 @@ lvgl:
                         lv_color_hex(ha_ok ? UIColor::SUCCESS : UIColor::ERROR), LV_PART_MAIN);
                   }
             widgets:
-              - label: { text: "\U000F0717", align: CENTER, y: -12, text_font: mdi_font_45, text_color: color_text }
-              - label: { text: "Sys", align: CENTER, y: 22, text_font: roboto_22, text_color: color_text }
+              - label: { text: "\U000F0717", align: CENTER, y: -12, text_font: mdi_font_45 }
+              - label: { text: "Sys", align: CENTER, y: 22 }
 
         - button:
             id: btn_control_tv
@@ -320,8 +320,8 @@ lvgl:
                   animate_popup_open(id(tv_remote_popup), nullptr);
                   lv_obj_move_foreground(id(tv_remote_popup));
             widgets:
-              - label: { text: "\U000F07C0", align: CENTER, y: -12, text_font: mdi_font_45, text_color: color_text }
-              - label: { text: "TV", align: CENTER, y: 22, text_font: roboto_22, text_color: color_text }
+              - label: { text: "\U000F07C0", align: CENTER, y: -12, text_font: mdi_font_45 }
+              - label: { text: "TV", align: CENTER, y: 22 }
 
         # ==================== MOISTURE SENSORS ====================
         - !include ui_components/moisture_sensors.yaml
@@ -377,10 +377,10 @@ lvgl:
                           flex_align_cross: CENTER
                           pad_column: 15
                         widgets:
-                          - label: { id: alerte_slot_0, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
-                          - label: { id: alerte_slot_1, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
-                          - label: { id: alerte_slot_2, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
-                          - label: { id: alerte_slot_3, text: "", text_font: mdi_font_alert, text_color: color_text, hidden: true }
+                          - label: { id: alerte_slot_0, text: "", text_font: mdi_font_alert, hidden: true }
+                          - label: { id: alerte_slot_1, text: "", text_font: mdi_font_alert, hidden: true }
+                          - label: { id: alerte_slot_2, text: "", text_font: mdi_font_alert, hidden: true }
+                          - label: { id: alerte_slot_3, text: "", text_font: mdi_font_alert, hidden: true }
                     - button:
                         id: btn_alerts_mf_tap
                         align: CENTER
@@ -443,9 +443,9 @@ lvgl:
                                 flex_align_cross: END
                                 pad_column: 6
                               widgets:
-                                - label: { id: lbl_proc_pluie, text: "Synchronisation...", text_font: roboto_45_b, text_color: color_text, pad_bottom: 15 }
+                                - label: { id: lbl_proc_pluie, text: "Synchronisation...", text_font: roboto_45_b, pad_bottom: 15 }
                                 - label: { id: lbl_pluie_val, text: "", text_font: roboto_45_b, text_color: color_orange_vif, pad_bottom: 10 }
-                                - label: { id: lbl_pluie_unit, text: "", text_font: roboto_45_b, text_color: color_text, pad_bottom: 15 }
+                                - label: { id: lbl_pluie_unit, text: "", text_font: roboto_45_b, pad_bottom: 15 }
                     - button:
                         id: btn_rain_tap
                         align: CENTER
@@ -471,7 +471,6 @@ lvgl:
                         width: 1180
                         text: ""
                         text_font: roboto_45_b
-                        text_color: color_text
 
               # Planning Wrapper
               - obj:
@@ -481,7 +480,7 @@ lvgl:
                   height: 100%
                   styles: style_transparent
                   widgets:
-                    - label: { id: lbl_planning_text, text: "", align: CENTER, y: 0, text_font: roboto_45_b, text_color: color_text }
+                    - label: { id: lbl_planning_text, text: "", align: CENTER, y: 0, text_font: roboto_45_b }
                     - button:
                         id: btn_planning_tap
                         align: CENTER
@@ -511,8 +510,8 @@ lvgl:
                   styles: style_transparent
                   hidden: true
                   widgets:
-                    - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: -19, text_font: roboto_22, text_color: color_text_dim }
-                    - label: { id: lbl_page_title, text: "", align: CENTER, y: 13, text_font: roboto_32_b, text_color: color_text }
+                    - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: -19, text_color: color_text_dim }
+                    - label: { id: lbl_page_title, text: "", align: CENTER, y: 13, text_font: roboto_32_b }
                     - button:
                         id: btn_page_title_tap
                         align: CENTER
@@ -529,7 +528,7 @@ lvgl:
                   styles: style_transparent
                   hidden: true
                   widgets:
-                    - label: { id: lbl_info_text, text: "", align: CENTER, text_font: roboto_45_b, text_color: color_text }
+                    - label: { id: lbl_info_text, text: "", align: CENTER, text_font: roboto_45_b }
                     - button:
                         id: btn_info_tap
                         align: CENTER

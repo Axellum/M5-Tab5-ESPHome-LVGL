@@ -68,7 +68,6 @@ obj:
               text: ""
               align: CENTER
               text_font: roboto_55_b
-              text_color: color_text
 
           - button:
               id: btn_clim_target_click
@@ -104,7 +103,7 @@ obj:
                     update_clim_target_ui(id(clim_target), nullptr, t);
                 - script.execute: tab5_debounce_clim_temp
               widgets:
-                - label: { text: "\U000F0374", align: CENTER, text_font: mdi_font_56, text_color: color_text }
+                - label: { text: "\U000F0374", align: CENTER, text_font: mdi_font_56 }
 
           - button:
               id: btn_clim_plus
@@ -125,4 +124,4 @@ obj:
                     update_clim_target_ui(id(clim_target), nullptr, t);
                 - script.execute: tab5_debounce_clim_temp
               widgets:
-                - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56, text_color: color_text }
+                - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56 }

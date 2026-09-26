@@ -10,7 +10,7 @@
 #                          factorisé : chaque carte a une action Home Assistant DIFFÉRENTE
 #                          (PC bureau / volet serre / lumière chambre / lumière salon / LEDs
 #                          bureau) — décision explicite (#T164, cf. etat_tab5.md), pas un oubli.
-# @ai_instruction Les icônes météo (`jN_icon_layer1/2/3`) sont mises à jour par
+# @ai_instruction Les icônes météo (`jN_icon_layer1/2`) sont mises à jour par
 #                 `update_meteo_icon()`/`refresh_daily_forecast()` (tab5_custom.cpp) — ne jamais
 #                 leur assigner de texte/couleur directement ici.
 # ============================================================================
@@ -42,9 +42,8 @@ obj:
               styles: style_meteo_card
               scrollbar_mode: "OFF"
               widgets:
-                - label: { id: j0_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
-                - label: { id: j0_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
-                - label: { id: j0_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: color_icon_muted }
+                - label: { id: j0_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
+                - label: { id: j0_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
                 - button:
                     id: btn_j0_action
                     align: CENTER
@@ -78,9 +77,8 @@ obj:
               styles: style_meteo_card
               scrollbar_mode: "OFF"
               widgets:
-                - label: { id: j1_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
-                - label: { id: j1_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
-                - label: { id: j1_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: color_icon_muted }
+                - label: { id: j1_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
+                - label: { id: j1_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
                 - button:
                     id: btn_j1_action
                     align: CENTER
@@ -155,9 +153,8 @@ obj:
               styles: style_meteo_card
               scrollbar_mode: "OFF"
               widgets:
-                - label: { id: j2_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
-                - label: { id: j2_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
-                - label: { id: j2_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: color_icon_muted }
+                - label: { id: j2_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
+                - label: { id: j2_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
                 - button:
                     id: btn_j2_action
                     align: CENTER
@@ -197,9 +194,8 @@ obj:
               styles: style_meteo_card
               scrollbar_mode: "OFF"
               widgets:
-                - label: { id: j3_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
-                - label: { id: j3_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
-                - label: { id: j3_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: color_icon_muted }
+                - label: { id: j3_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
+                - label: { id: j3_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
                 - button:
                     id: btn_j3_action
                     align: CENTER
@@ -238,9 +234,8 @@ obj:
               styles: style_meteo_card
               scrollbar_mode: "OFF"
               widgets:
-                - label: { id: j4_icon_layer1, text: "", hidden: true, align: CENTER, y: 0 , text_font: font_meteo_card, text_color: color_text }
-                - label: { id: j4_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card, text_color: color_text }
-                - label: { id: j4_icon_layer3, text: "", hidden: true, align: CENTER, y: 0 , text_font: mdi_font_32, text_color: color_icon_muted }
+                - label: { id: j4_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
+                - label: { id: j4_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
                 - button:
                     id: btn_j4_action
                     align: CENTER

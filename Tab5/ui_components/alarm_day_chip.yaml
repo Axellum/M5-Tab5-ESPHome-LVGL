@@ -26,4 +26,4 @@ button:
   on_short_click:
     - script.execute: { id: tab5_alarm_toggle_day, day: "${n}" }
   widgets:
-    - label: { id: "lbl_alarm_day_${n}", text: "${letter}", align: CENTER, text_font: roboto_32_b, text_color: color_text }
+    - label: { id: "lbl_alarm_day_${n}", text: "${letter}", align: CENTER, text_font: roboto_32_b }

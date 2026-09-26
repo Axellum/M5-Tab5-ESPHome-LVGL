@@ -62,7 +62,6 @@ obj:
         text: "8 consoles — une seule à la fois"
         align: TOP_MID
         y: 82
-        text_font: roboto_22
         text_color: color_arcade_subtitle
 
     # ─── Croix de fermeture ───
@@ -119,5 +118,4 @@ obj:
         text: "Sortie de chaque jeu : hub → « Quitter »"
         align: BOTTOM_MID
         y: -22
-        text_font: roboto_22
         text_color: color_arcade_footer

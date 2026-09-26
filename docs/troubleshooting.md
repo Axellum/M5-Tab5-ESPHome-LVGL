@@ -81,7 +81,9 @@ Format: **Symptom → Root cause → Fix**. Entries are chronological, most rece
 
 **Root cause:** confirmed by reading ESPHome's own LVGL component source (`defines.py` / `widgets/__init__.py` / `styles.py`) rather than guessing — the `pressed:` state key is only valid on the widget itself, not inside a reusable `style_definitions:` block.
 
-**Fix:** repeat the `pressed:` block on each individual "glass" button widget instead of trying to share it. This is a genuine ESPHome/LVGL framework limitation, not a code smell to refactor away — don't spend time trying to DRY it further.
+**Fix:** keep the pressed properties out of `style_definitions`, but share them anyway: put them in a normal style and reference it from the widget with `pressed: { styles: style_x }`. ESPHome accepts that form on a widget and generates `lv_obj_add_style(obj, style_x, LV_STATE_PRESSED)` (verified in `schemas.py` / `widgets/__init__.py` of ESPHome 2026.9, 2026-09-26). The earlier advice "repeat the block on every button, it cannot be shared" was wrong.
+
+**Related:** press/release no longer animate. The default LVGL theme used to fade every button over 80 ms, plus a 70 ms delay on release. `CONFIG_LV_THEME_DEFAULT_TRANSITION_TIME: "0"` (`Tab5/tab5-hardware.yaml`) removes those transitions, and the project's own pressed style (`tab5_anim.cpp`, 94 % scale) is applied instantly.
 
 ---
 

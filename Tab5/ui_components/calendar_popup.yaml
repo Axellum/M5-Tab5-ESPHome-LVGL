@@ -58,7 +58,7 @@ obj:
               on_short_click:
                 - script.execute: tab5_cal_prev
               widgets:
-                - label: { text: "\U000F0141", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+                - label: { text: "\U000F0141", align: CENTER, text_font: mdi_font_32 }
           - label:
               id: lbl_cal_month
               text: ""
@@ -69,7 +69,6 @@ obj:
               height: 44
               text_align: CENTER
               text_font: roboto_32_b
-              text_color: color_text
           - button:
               id: btn_cal_next
               align: TOP_MID
@@ -83,7 +82,7 @@ obj:
               on_short_click:
                 - script.execute: tab5_cal_next
               widgets:
-                - label: { text: "\U000F0142", align: CENTER, text_font: mdi_font_32, text_color: color_text }
+                - label: { text: "\U000F0142", align: CENTER, text_font: mdi_font_32 }
 
           # Bouton Aujourd'hui — 10 px à gauche de la croix (80 + 10 + 10)
           - button:
@@ -99,16 +98,16 @@ obj:
               on_short_click:
                 - script.execute: tab5_cal_today
               widgets:
-                - label: { text: "Aujourd'hui", align: CENTER, text_font: roboto_22, text_color: color_text }
+                - label: { text: "Aujourd'hui", align: CENTER }
 
           # ═══ TÊTE DE GRILLE (jours de la semaine) ═══
-          - label: { text: "Lun", align: TOP_LEFT, x: 25, y: "${modal_body_y}", width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
-          - label: { text: "Mar", align: TOP_LEFT, x: 197, y: "${modal_body_y}", width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
-          - label: { text: "Mer", align: TOP_LEFT, x: 369, y: "${modal_body_y}", width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
-          - label: { text: "Jeu", align: TOP_LEFT, x: 541, y: "${modal_body_y}", width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
-          - label: { text: "Ven", align: TOP_LEFT, x: 713, y: "${modal_body_y}", width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
-          - label: { text: "Sam", align: TOP_LEFT, x: 885, y: "${modal_body_y}", width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
-          - label: { text: "Dim", align: TOP_LEFT, x: 1057, y: "${modal_body_y}", width: 168, text_align: CENTER, text_font: roboto_22, text_color: color_text_dim }
+          - label: { text: "Lun", align: TOP_LEFT, x: 25, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
+          - label: { text: "Mar", align: TOP_LEFT, x: 197, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
+          - label: { text: "Mer", align: TOP_LEFT, x: 369, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
+          - label: { text: "Jeu", align: TOP_LEFT, x: 541, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
+          - label: { text: "Ven", align: TOP_LEFT, x: 713, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
+          - label: { text: "Sam", align: TOP_LEFT, x: 885, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
+          - label: { text: "Dim", align: TOP_LEFT, x: 1057, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
 
           # ═══ GRILLE 7×6 (42 cellules, lundi en premier — idx = ligne*7 + colonne) ═══
           - !include { file: cal_day_cell.yaml, vars: { idx: "0", x: "25", y: "${cal_grid_y}" } }
@@ -170,22 +169,22 @@ obj:
                 pad_column: 10
               widgets:
                 - obj: { width: 18, height: 18, radius: 6, bg_opa: 0%, border_width: 2, border_color: color_accent, pad_all: 0 }
-                - label: { text: "Aujourd'hui", text_font: roboto_22, text_color: color_text_dim }
-                - label: { text: "·", text_font: roboto_22, text_color: color_text_dim }
-                - label: { text: "9:00-19:00", text_font: roboto_22, text_color: color_text }
-                - label: { text: "Travail", text_font: roboto_22, text_color: color_text_dim }
-                - label: { text: "·", text_font: roboto_22, text_color: color_text_dim }
-                - label: { text: "1", text_font: roboto_22, text_color: color_error }
-                - label: { text: "Férié", text_font: roboto_22, text_color: color_text_dim }
-                - label: { text: "·", text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "Aujourd'hui", text_color: color_text_dim }
+                - label: { text: "·", text_color: color_text_dim }
+                - label: { text: "9:00-19:00" }
+                - label: { text: "Travail", text_color: color_text_dim }
+                - label: { text: "·", text_color: color_text_dim }
+                - label: { text: "1", text_color: color_error }
+                - label: { text: "Férié", text_color: color_text_dim }
+                - label: { text: "·", text_color: color_text_dim }
                 - obj: { width: 14, height: 14, radius: 4, bg_color: color_accent_alt, bg_opa: 55%, border_width: 0, pad_all: 0 }
-                - label: { text: "Vac. scolaires", text_font: roboto_22, text_color: color_text_dim }
-                - label: { text: "·", text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "Vac. scolaires", text_color: color_text_dim }
+                - label: { text: "·", text_color: color_text_dim }
                 - obj: { width: 14, height: 14, radius: 7, bg_color: color_gold, border_width: 0, pad_all: 0 }
-                - label: { text: "RDV", text_font: roboto_22, text_color: color_text_dim }
-                - label: { text: "·", text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "RDV", text_color: color_text_dim }
+                - label: { text: "·", text_color: color_text_dim }
                 - obj: { width: 14, height: 14, radius: 7, bg_color: color_warm_pink, border_width: 0, pad_all: 0 }
-                - label: { text: "Anniv.", text_font: roboto_22, text_color: color_text_dim }
+                - label: { text: "Anniv.", text_color: color_text_dim }
 
     # ═══ SOUS-POPUP DÉTAIL DU JOUR (au-dessus de la grille) ═══
     - obj:
@@ -214,15 +213,15 @@ obj:
                 - label: { id: lbl_cal_day_status, text: "", align: CENTER, y: 0, text_font: roboto_32_b, text_color: color_text_dim }
 
                 # 6 lignes de détail (icône typée + texte), remplies par cal_render_day_detail()
-                - label: { id: cal_det_icon_0, text: "", align: TOP_LEFT, x: 32, y: 72, text_font: mdi_font_32, text_color: color_text, hidden: true }
-                - label: { id: cal_det_txt_0, text: "", align: TOP_LEFT, x: 88, y: 74, width: 660, text_font: roboto_32_b, text_color: color_text, hidden: true }
-                - label: { id: cal_det_icon_1, text: "", align: TOP_LEFT, x: 32, y: 140, text_font: mdi_font_32, text_color: color_text, hidden: true }
-                - label: { id: cal_det_txt_1, text: "", align: TOP_LEFT, x: 88, y: 142, width: 660, text_font: roboto_32_b, text_color: color_text, hidden: true }
-                - label: { id: cal_det_icon_2, text: "", align: TOP_LEFT, x: 32, y: 208, text_font: mdi_font_32, text_color: color_text, hidden: true }
-                - label: { id: cal_det_txt_2, text: "", align: TOP_LEFT, x: 88, y: 210, width: 660, text_font: roboto_32_b, text_color: color_text, hidden: true }
-                - label: { id: cal_det_icon_3, text: "", align: TOP_LEFT, x: 32, y: 276, text_font: mdi_font_32, text_color: color_text, hidden: true }
-                - label: { id: cal_det_txt_3, text: "", align: TOP_LEFT, x: 88, y: 278, width: 660, text_font: roboto_32_b, text_color: color_text, hidden: true }
-                - label: { id: cal_det_icon_4, text: "", align: TOP_LEFT, x: 32, y: 344, text_font: mdi_font_32, text_color: color_text, hidden: true }
-                - label: { id: cal_det_txt_4, text: "", align: TOP_LEFT, x: 88, y: 346, width: 660, text_font: roboto_32_b, text_color: color_text, hidden: true }
-                - label: { id: cal_det_icon_5, text: "", align: TOP_LEFT, x: 32, y: 412, text_font: mdi_font_32, text_color: color_text, hidden: true }
-                - label: { id: cal_det_txt_5, text: "", align: TOP_LEFT, x: 88, y: 414, width: 660, text_font: roboto_32_b, text_color: color_text, hidden: true }
+                - label: { id: cal_det_icon_0, text: "", align: TOP_LEFT, x: 32, y: 72, text_font: mdi_font_32, hidden: true }
+                - label: { id: cal_det_txt_0, text: "", align: TOP_LEFT, x: 88, y: 74, width: 660, text_font: roboto_32_b, hidden: true }
+                - label: { id: cal_det_icon_1, text: "", align: TOP_LEFT, x: 32, y: 140, text_font: mdi_font_32, hidden: true }
+                - label: { id: cal_det_txt_1, text: "", align: TOP_LEFT, x: 88, y: 142, width: 660, text_font: roboto_32_b, hidden: true }
+                - label: { id: cal_det_icon_2, text: "", align: TOP_LEFT, x: 32, y: 208, text_font: mdi_font_32, hidden: true }
+                - label: { id: cal_det_txt_2, text: "", align: TOP_LEFT, x: 88, y: 210, width: 660, text_font: roboto_32_b, hidden: true }
+                - label: { id: cal_det_icon_3, text: "", align: TOP_LEFT, x: 32, y: 276, text_font: mdi_font_32, hidden: true }
+                - label: { id: cal_det_txt_3, text: "", align: TOP_LEFT, x: 88, y: 278, width: 660, text_font: roboto_32_b, hidden: true }
+                - label: { id: cal_det_icon_4, text: "", align: TOP_LEFT, x: 32, y: 344, text_font: mdi_font_32, hidden: true }
+                - label: { id: cal_det_txt_4, text: "", align: TOP_LEFT, x: 88, y: 346, width: 660, text_font: roboto_32_b, hidden: true }
+                - label: { id: cal_det_icon_5, text: "", align: TOP_LEFT, x: 32, y: 412, text_font: mdi_font_32, hidden: true }
+                - label: { id: cal_det_txt_5, text: "", align: TOP_LEFT, x: 88, y: 414, width: 660, text_font: roboto_32_b, hidden: true }
