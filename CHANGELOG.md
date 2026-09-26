@@ -21,11 +21,12 @@ permanence, même fermés. Il en reste ≈ 47 Ko. RAM interne statique du firmwa
   répondent comme une recherche terminée et l'IA joue un coup légal tiré au sort.
 - **Tampons froids en PSRAM** (`EXT_RAM_BSS_ATTR`, 34,3 Ko) : historique des échecs, pile
   d'annulation du Go, coups légaux et pile d'annulation des dames, coups racine de l'IA
-  des dames. Ils ne sont touchés qu'une fois par coup, jamais par une recherche.
+  des dames. Ils ne sont touchés qu'une fois par coup ; seuls les coups racine des dames
+  sont lus par la recherche, une fois par coup racine et par profondeur, pas par nœud.
   L'option `CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY` est activée pour cela ; le
   `.map` confirme que rien d'autre ne passe en PSRAM (la BSS de lwIP reste interne).
-- Vitesse des IA inchangée par construction : tout ce que lit la recherche reste en RAM
-  interne. 0 avertissement dans notre code.
+- Vitesse des IA : tout ce que la recherche lit à chaque nœud reste en RAM interne ;
+  non mesurée sur la tablette. 0 avertissement dans notre code.
 
 ### 2026-09-26 — Compilation : plus aucun avertissement dans notre code en -O2
 

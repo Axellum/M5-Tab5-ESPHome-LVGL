@@ -579,10 +579,11 @@ sous-arbre était repris à l'identique à chaque tranche et l'IA ne jouait jama
 Les listes de coups de la recherche ne sont **jamais sur la pile** : une liste de 96 coups
 pèse 4,7 Ko, et la tâche ESPHome n'avait que 8 Ko (16 Ko depuis #150). Elles vivent
 dans un tampon de 42 Ko, une ligne par ply, alloué au premier coup réfléchi (RAM
-interne, PSRAM en repli) et rendu par `Ai::release()` à la fermeture. Les coups racine, les coups légaux de
-l'interface et la pile d'annulation (12,8 Ko en tout) sont en PSRAM
-(`EXT_RAM_BSS_ATTR`) : ils ne sont touchés qu'une fois par coup. Chaque coup de l'IA
-est tracé dans les logs (tag `dames`), avec la pile libre minimale de la tâche.
+interne, PSRAM en repli) et rendu par `Ai::release()` à la fermeture. Les coups
+racine, les coups légaux de l'interface et la pile d'annulation (12,8 Ko en tout) sont
+en PSRAM (`EXT_RAM_BSS_ATTR`) : ils ne sont touchés qu'une fois par coup (les coups
+racine, une fois par coup racine et par profondeur), jamais à chaque nœud. Chaque coup
+de l'IA est tracé dans les logs (tag `dames`), avec la pile libre minimale de la tâche.
 
 ### Notes techniques
 
