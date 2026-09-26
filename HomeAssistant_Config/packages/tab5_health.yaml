@@ -3,7 +3,7 @@
 # @file packages/tab5_health.yaml
 # @role Package HA de surveillance santé du Tab5 (exemple public — adapter les
 #       noms d'entités à votre installation). Quatre gardes : instance primaire
-#       bloquée OFF, reboot inattendu (uptime qui redescend), API ESPHome
+#       bloquée OFF, reboot inattendu (nouvel horodatage de démarrage), API ESPHome
 #       déconnectée, erreur de rendu d'un template dans une poussée écran.
 # @architecture_constraint L'écran est push-only (cf. docs/decisions/0001) : si
 #       les poussées s'arrêtent, l'écran se fige SILENCIEUSEMENT, sans erreur HA
@@ -139,22 +139,27 @@ automation:
             plus rien.
 
   # ==========================================================================
-  # (b) Reboot inattendu — le capteur d'uptime du Tab5 redescend
+  # (b) Reboot inattendu — nouvel horodatage de démarrage du Tab5
   # --------------------------------------------------------------------------
-  # Détection sans now() ni polling, via trigger.from_state / to_state :
-  #   1. l'uptime numérique diminue (reboot rapide, sans passage par
-  #      `unavailable`) ;
-  #   2. retour d'`unavailable`/`unknown` avec un uptime < 5 min (reboot
-  #      pendant la coupure). Un simple retour Wi-Fi SANS reboot revient avec
-  #      un uptime élevé et ne déclenche donc pas.
-  # Les `| float(0)` sont obligatoires (sécurité au boot, capteur pas encore
-  # initialisé — cf. règles HA du projet).
+  # « Tab5 Uptime » est l'heure du dernier démarrage (capteur `uptime` de type
+  # `timestamp`), publiée UNE fois par démarrage, à la première synchro NTP.
+  # Depuis le 26/09/2026 ; avant, des secondes publiées chaque minute, qui
+  # faisaient tourner cette garde 1 440 fois par jour. Détection sans now() ni
+  # polling, via trigger.from_state / to_state :
+  #   1. un horodatage valide remplace un autre plus ancien (redémarrage sans
+  #      passage par `unavailable`, rare) ;
+  #   2. retour d'`unavailable`/`unknown` avec un démarrage postérieur (à 2 min
+  #      près) au moment où HA a perdu l'appareil. Une coupure Wi-Fi SANS reboot
+  #      revient avec l'ancien démarrage et ne déclenche donc pas ; un NTP en
+  #      retard non plus ne fait rien manquer (l'état reste `unknown` jusque-là).
+  # as_timestamp(…, none) : sûr au boot, capteur pas encore initialisé (cf.
+  # règles HA du projet).
   # ==========================================================================
   - id: tab5_health_unexpected_reboot
-    alias: "Tab5 Santé — reboot inattendu (uptime en baisse)"
+    alias: "Tab5 Santé — reboot inattendu (nouveau démarrage)"
     description: >-
-      Alerte quand l'uptime du Tab5 redescend : l'appareil a redémarré de
-      manière inattendue (brownout, crash firmware, coupure d'alimentation).
+      Alerte quand l'heure de démarrage du Tab5 change : l'appareil a redémarré
+      de manière inattendue (brownout, crash firmware, coupure d'alimentation).
     mode: single
     trigger:
       - platform: state
@@ -162,15 +167,14 @@ automation:
     condition:
       - condition: template
         value_template: >-
-          {% set to_num = trigger.to_state is not none
-             and trigger.to_state.state not in ['unavailable', 'unknown'] %}
-          {% set from_num = trigger.from_state is not none
-             and trigger.from_state.state not in ['unavailable', 'unknown'] %}
-          {{ to_num and (
-               (from_num and trigger.to_state.state | float(0)
-                            < trigger.from_state.state | float(0))
-               or (not from_num and trigger.to_state.state | float(0) < 300)
-             ) }}
+          {% set to_ts = as_timestamp(trigger.to_state.state, none)
+             if trigger.to_state is not none else none %}
+          {% set from_ts = as_timestamp(trigger.from_state.state, none)
+             if trigger.from_state is not none else none %}
+          {% if to_ts is none or trigger.from_state is none %}false
+          {% elif from_ts is not none %}{{ to_ts > from_ts + 60 }}
+          {% else %}{{ to_ts >= as_timestamp(trigger.from_state.last_changed) - 120 }}
+          {% endif %}
     action:
       - action: script.tab5_health_notify
         data:
@@ -178,15 +182,17 @@ automation:
           title: "⚠️ Tab5 : reboot inattendu détecté"
           titre_court: "⚠️ Tab5 : reboot inattendu"
           message: >-
-            L'uptime du Tab5 est retombé à
-            {{ trigger.to_state.state | float(0) | round(0) }} s
-            (précédent : {{ trigger.from_state.state
-                            if trigger.from_state is not none else 'inconnu' }}).
-            L'appareil a redémarré — vérifier l'alimentation et les logs ESPHome.
+            Le Tab5 a redémarré le
+            {{ as_timestamp(trigger.to_state.state) | timestamp_custom('%d/%m à %H:%M:%S') }}
+            (démarrage précédent : {{
+              as_timestamp(trigger.from_state.state) | timestamp_custom('%d/%m à %H:%M:%S')
+              if as_timestamp(trigger.from_state.state, none) is not none
+              else 'inconnu' }}).
+            Vérifier l'alimentation et les logs ESPHome.
           message_court: >-
-            Uptime retombé à
-            {{ trigger.to_state.state | float(0) | round(0) }} s — vérifier
-            alimentation / logs ESPHome.
+            Redémarré à
+            {{ as_timestamp(trigger.to_state.state) | timestamp_custom('%H:%M:%S') }}
+            — vérifier alimentation / logs ESPHome.
 
   # ==========================================================================
   # (c) API ESPHome déconnectée — HA API Status off/unavailable > 2 min

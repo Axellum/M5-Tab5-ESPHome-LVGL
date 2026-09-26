@@ -2,7 +2,7 @@
 # [AI-CONTEXT]
 # @file tab5-sensors-diagnostics.yaml
 # @role Entités système/diagnostic : WiFi (bloc wifi:, antenne, RSSI, IP/SSID),
-#       alimentations GPIO, statut API HA, uptime, RAM/loop time (debug),
+#       alimentations GPIO (internes), statut API HA, uptime, RAM/loop time (debug),
 #       température coeur, horloge SNTP et intervals de la console système.
 # @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
 #                         Les blocs on_value: doivent se contenter d'appeler des fonctions
@@ -27,10 +27,15 @@ wifi:
     ssid: "Tab5 Fallback AP"
     password: !secret wifi_ap_password
 
+# Alimentations : internes (`internal: true`), plus aucune entité HA. Elles ne servent
+# qu'à être allumées au démarrage (ALWAYS_ON), et « WiFi Power » coupé depuis HA rendait
+# la tablette injoignable jusqu'au `reboot_timeout` de l'API, 60 min plus tard (audit des
+# ressources du 26/09/2026, §6). Aucune automation ni lambda ne les lit.
 switch:
   - platform: gpio
     id: wifi_power
     name: "WiFi Power"
+    internal: true
     pin:
       pi4ioe5v6408: pi4ioe2
       number: 0
@@ -39,6 +44,7 @@ switch:
   - platform: gpio
     id: usb_5v_power
     name: "USB Power"
+    internal: true
     pin:
       pi4ioe5v6408: pi4ioe2
       number: 3
@@ -53,6 +59,7 @@ switch:
   - platform: gpio
     id: external_5v_power
     name: "External 5V Power"
+    internal: true
     pin:
       pi4ioe5v6408: pi4ioe1
       number: 2
@@ -101,14 +108,26 @@ text_sensor:
       return {};
 
 sensor:
+  # Uptime en deux capteurs (audit des ressources du 26/09/2026, H4) :
+  # - en secondes, pour la console seulement : sans `name:`, il reste interne ;
+  # - pour HA, l'heure du dernier démarrage, publiée UNE fois par démarrage, à la
+  #   première synchro NTP (`uptime_timestamp_sensor.cpp` ne republie jamais). Avant,
+  #   la valeur en secondes partait chaque minute : 1 440 lignes par jour en base et
+  #   autant d'exécutions de la garde « reboot inattendu » de packages/tab5_health.yaml.
+  #   Même nom que l'ancien capteur, donc même entité HA
+  #   (sensor.m5stack_tab5_home_assistant_hmi_tab5_uptime), qui devient un horodatage.
   - platform: uptime
     id: sys_uptime
-    name: "Tab5 Uptime"
     update_interval: 60s
     on_value:
       - lambda: |-
           if (!is_console_layer_visible(id(layer_console_sys))) return;
           update_console_uptime_label(id(lbl_sys_uptime_val), x);
+
+  - platform: uptime
+    type: timestamp
+    name: "Tab5 Uptime"
+    time_id: sntp_time
 
   - platform: wifi_signal
     id: sys_wifi_rssi

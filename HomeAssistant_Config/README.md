@@ -67,7 +67,7 @@ Health-monitoring package: four guard automations that alert when the push pipel
 
 What it watches:
 - **`input_boolean.is_primary_active` OFF for more than 5 min** — this boolean gates every push automation; stuck OFF means the screen silently freezes (a real incident, see `docs/troubleshooting.md`)
-- **`sensor.tab5_uptime` decreasing** — unexpected device reboot (brownout, firmware crash, power cut); a plain Wi-Fi drop without reboot does *not* trigger it
+- **A new boot time on `Tab5 Uptime`** (a timestamp, published once per boot since 26/09/2026) — unexpected device reboot (brownout, firmware crash, power cut); a plain Wi-Fi drop without reboot comes back with the same boot time and does *not* trigger it
 - **`HA API Status` off/unavailable for more than 2 min** — device unreachable, every push fails during the outage
 - **A Tab5 automation logs « Error rendering »** — a push action failed to render its template and `continue_on_error` skipped it silently (real incident, 18/09/2026: Météo-France dropped `templow` from the 15th day). Requires `system_log: fire_event: true` in `configuration.yaml` (restart needed) — without it the guard loads but never fires. Exclude `system_log_event` from the recorder. At most one notification per hour while the error repeats
 
@@ -261,7 +261,7 @@ Package de surveillance santé : quatre automations de garde qui alertent quand 
 
 Ce qui est surveillé :
 - **`input_boolean.is_primary_active` OFF depuis plus de 5 min** — ce booléen conditionne toutes les automations de push ; bloqué sur OFF, l'écran se fige silencieusement (incident réel, voir `docs/troubleshooting.md`)
-- **`sensor.tab5_uptime` qui redescend** — reboot inattendu de l'appareil (brownout, crash firmware, coupure d'alimentation) ; une simple coupure Wi-Fi sans reboot ne déclenche *pas*
+- **Une nouvelle heure de démarrage sur `Tab5 Uptime`** (un horodatage, publié une fois par démarrage depuis le 26/09/2026) — reboot inattendu de l'appareil (brownout, crash firmware, coupure d'alimentation) ; une simple coupure Wi-Fi sans reboot revient avec la même heure de démarrage et ne déclenche *pas*
 - **`HA API Status` off/unavailable depuis plus de 2 min** — appareil injoignable, toutes les poussées échouent pendant la coupure
 - **Une automation Tab5 journalise « Error rendering »** — une action de poussée n'a pas pu rendre son template et `continue_on_error` l'a sautée en silence (incident réel du 18/09/2026 : Météo-France a retiré `templow` du 15ᵉ jour). Exige `system_log: fire_event: true` dans `configuration.yaml` (redémarrage nécessaire) — sans lui la garde est chargée mais ne se déclenche jamais. Exclure `system_log_event` du recorder. Au plus une notification par heure tant que l'erreur se répète
 
