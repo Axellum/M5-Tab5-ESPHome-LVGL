@@ -204,7 +204,7 @@ lvgl:
                   widgets:
                     - label: { id: lbl_time_m1_a, text: "0", align: TOP_MID, y: 0, text_font: roboto_130_b }
                     - label: { id: lbl_time_m1_b, text: "0", align: TOP_MID, y: 0, text_font: roboto_130_b }
-              - label: { id: lbl_date, text: "Jeu 02 Avr", align: TOP_MID, y: 140, text_font: roboto_45 }
+              - label: { id: lbl_date, text: "Jeu 02 Avr", align: TOP_MID, y: 140, text_font: roboto_45_b }
 
         # Zone tactile invisible par-dessus l'horloge/date. Deux gestes sur la
         # même tuile, dans l'ordre qui va de soi quand on regarde une horloge :

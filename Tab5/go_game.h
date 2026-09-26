@@ -117,7 +117,7 @@ struct UI {
     const esphome::font::Font* f_small = nullptr;  // roboto_22
     const esphome::font::Font* f_mid   = nullptr;  // roboto_32_b
     const esphome::font::Font* f_big   = nullptr;  // roboto_45_b
-    const esphome::font::Font* f_mono  = nullptr;  // roboto_mono_24 (liste des coups)
+    const esphome::font::Font* f_mono  = nullptr;  // roboto_22 (liste des coups ; mono jusqu'au 26/09/2026)
 };
 
 // Ouvre le jeu sur le menu principal : prend sa mémoire (état + brouillons du

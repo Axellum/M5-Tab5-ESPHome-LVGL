@@ -573,16 +573,14 @@ void assist_set_request(lv_obj_t* lbl_request, const std::string& texte);
 void assist_set_response(lv_obj_t* lbl_response, const std::string& texte,
     esphome::font::Font* font);
 
-// Police de la réponse pour la taille `assist_text_size` : 0 → S, 2 → L, toute
-// autre valeur → M (table des callbacks voice_assistant et des scripts du popup).
-esphome::font::Font* assist_font(int size_idx,
-    esphome::font::Font* f_s, esphome::font::Font* f_m, esphome::font::Font* f_l);
+// Police de la réponse pour la taille `assist_text_size` : 2 → L, toute autre
+// valeur → S (dont le 1 de l'ancien M, essai D8 du 26/09/2026).
+esphome::font::Font* assist_font(int size_idx, esphome::font::Font* f_s, esphome::font::Font* f_l);
 
-// Applique la taille de police de la réponse (0=S 1=M 2=L) SANS perdre le texte
-// déjà affiché (relit lv_label_get_text). Met aussi à jour les 3 boutons S/M/L.
+// Applique la taille de police de la réponse (0=S 2=L) SANS perdre le texte déjà
+// affiché (relit lv_label_get_text). Met aussi à jour les 2 boutons A- / A+.
 void assist_apply_text_size(lv_obj_t* lbl_response, int size_idx,
-    esphome::font::Font* f_s, esphome::font::Font* f_m, esphome::font::Font* f_l,
-    lv_obj_t* btn_s, lv_obj_t* btn_m, lv_obj_t* btn_l);
+    esphome::font::Font* f_s, esphome::font::Font* f_l, lv_obj_t* btn_s, lv_obj_t* btn_l);
 
 // =============================================================================
 // Popup calendrier mensuel (calendar_popup.yaml, appui long sur l'horloge)

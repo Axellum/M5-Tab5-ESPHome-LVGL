@@ -137,7 +137,7 @@ struct UI {
     const esphome::font::Font* f_mid   = nullptr;  // roboto_32_b
     const esphome::font::Font* f_big   = nullptr;  // roboto_45_b
     const esphome::font::Font* f_score = nullptr;  // roboto_55_b — chiffres du DMD
-    const esphome::font::Font* f_led   = nullptr;  // roboto_mono_24 — libellés DMD
+    const esphome::font::Font* f_led   = nullptr;  // roboto_22 — libellés DMD (mono jusqu'au 26/09/2026)
     // [AI-WARNING] Sans ce pointeur, pas de bascule portrait : c'est le seul
     // moyen d'appeler LvglComponent::set_rotation() depuis du C++ hors lambda.
     esphome::lvgl::LvglComponent* lvgl = nullptr;

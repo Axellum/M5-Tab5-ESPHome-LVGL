@@ -183,17 +183,19 @@ color:
 font:
   # Texte libre (poussé par HA, réponses de l'assistant) : tout Latin-1 plus les
   # ajouts de Windows-1252 (€ … ’ « » œ Œ — –), 216 glyphes. Déclarée une fois
-  # ici (ancre &latin1), reprise par *latin1 dans les cinq autres polices texte.
+  # ici (ancre &latin1), reprise par *latin1 dans roboto_45_b et roboto_22.
   - file: gfonts://Roboto@700
     id: roboto_32_b
     size: 32
-    bpp: 4
+    bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
+             # bitmaps divisés par deux, validé à l'œil par Axel
     glyphs: &latin1 ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
   # Chiffres de l'horloge et de l'écran de sonnerie : rien d'autre.
   - file: gfonts://Roboto@700
     id: roboto_130_b
     size: 130
-    bpp: 4
+    bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
+             # bitmaps divisés par deux, validé à l'œil par Axel
     glyphs: '0123456789:'
   # Heure du réveil, consigne et température de la clim, score du flipper. Le
   # tiret sert au « -- » de la consigne quand elle est inconnue (au boot, jusqu'au
@@ -206,19 +208,13 @@ font:
   - file: gfonts://Roboto@700
     id: roboto_45_b
     size: 45
-    bpp: 4
+    bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
+             # bitmaps divisés par deux, validé à l'œil par Axel
     glyphs: *latin1
-
-  # roboto_45 ne sert QU'À lbl_date (« Jeu 02 Avr »), texte construit par le firmware
-  # (update_clock_date_ui, tab5_anim.cpp : jours abrégés + %02d + clock_month_short_utf8).
-  # 37 glyphes au lieu des 216 de *latin1 (25/09/2026, ≈ 59 Ko de flash) — la règle
-  # « tout Latin-1 » ne vaut que pour le texte poussé par HA. Toucher au format de la
-  # date ou aux tables de jours/mois = recalculer cette liste (règle 6).
-  - file: gfonts://Roboto@400
-    id: roboto_45
-    size: 45
-    bpp: 4
-    glyphs: ' 0123456789ADFJLMNOSVaceilmnoprstuvéû'
+  # La date sous l'horloge (lbl_date) est en roboto_45_b depuis l'essai D8 du
+  # 26/09/2026 : la police fine roboto_45, qui ne servait qu'à elle, est retirée
+  # (−12,4 Ko). La règle 6 de tools/check_tab5_code_rules.py vérifie toujours que
+  # la police de lbl_date couvre ses jours, mois et chiffres.
 
   - file: gfonts://Roboto@700
     id: roboto_22
@@ -226,24 +222,10 @@ font:
     bpp: 4
     glyphs: *latin1
 
-  # --- Polices MONOSPACE (assistant vocal) ---
-  # Roboto Mono : colonnes de largeur fixe => les tableaux Markdown (réponses IA)
-  # restent alignés. 3 tailles pour le réglage "confort de lecture" S / M / L du popup.
-  - file: gfonts://Roboto+Mono@500
-    id: roboto_mono_20
-    size: 20
-    bpp: 4
-    glyphs: *latin1
-  - file: gfonts://Roboto+Mono@500
-    id: roboto_mono_24
-    size: 24
-    bpp: 4
-    glyphs: *latin1
-  - file: gfonts://Roboto+Mono@500
-    id: roboto_mono_28
-    size: 28
-    bpp: 4
-    glyphs: *latin1
+  # Plus de police MONOSPACE depuis l'essai D8 du 26/09/2026 (−83 Ko) : à la
+  # demande d'Axel, l'assistant vocal réutilise roboto_32_b (A-) et roboto_45_b
+  # (A+), le Go et le flipper roboto_22. Les tableaux Markdown des réponses ne sont
+  # plus alignés qu'approximativement (format_assist_markdown, tab5_assist.cpp).
 
   # --- Icônes Material Design (Tab5/materialdesignicons-webfont.ttf) ----------
   # Une icône par ligne, nom relevé dans le TTF. bpp 1 : aplats nets, 4× moins
@@ -450,14 +432,16 @@ font:
   - file: "Tab5/IconeMeteo.ttf"
     id: font_meteo_card
     size: 120
-    bpp: 4
+    bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
+             # bitmaps divisés par deux, validé à l'œil par Axel
     glyphs: "\U0000F000\U0000F001\U0000F002\U0000F005\U0000F006\U0000F007\U0000F00B\U0000F00E\U0000F00F\U0000F015"
 
   # Calque 2 réduit (lune / soleil derrière le nuage de « partlycloudy »).
   - file: "Tab5/IconeMeteo.ttf"
     id: font_meteo_card_small
     size: 80
-    bpp: 4
+    bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
+             # bitmaps divisés par deux, validé à l'œil par Axel
     glyphs: "\U0000F00B\U0000F00F"
 
   # --- Jeu « Roi Noir » : pièces d'échecs -----------------------------------

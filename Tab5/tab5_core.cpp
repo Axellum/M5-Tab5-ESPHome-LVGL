@@ -79,9 +79,8 @@ int cal_index_for_offset(int offset) {
 // « Dim. », « Dimanche », « dimanche ») en partant d'ici.
 
 // [AI-WARNING] fr_day_short_utf8() et clock_month_short_utf8() sont affichés sous
-// l'horloge en roboto_45, réduite aux 37 glyphes de ces libellés, des chiffres et du
-// texte initial (tab5-styles.yaml) : changer un libellé = mettre à jour la liste de
-// glyphes, sinon la lettre sort vide. Règle 6 de tools/check_tab5_code_rules.py.
+// l'horloge (lbl_date, roboto_45_b) : la police doit contenir chaque caractère de
+// ces libellés, sinon la lettre sort vide. Règle 6 de tools/check_tab5_code_rules.py.
 const char* fr_day_short_utf8(int wday) {
     static const char* days[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
     if (wday < 0 || wday > 6) return "";

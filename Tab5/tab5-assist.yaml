@@ -113,7 +113,7 @@ voice_assistant:
     # version riche (tableaux + image) via le service HA tab5_assist_reponse.
     - lambda: |-
         assist_set_response(id(lbl_assist_response), x, assist_font(id(assist_text_size),
-            id(roboto_mono_20), id(roboto_mono_24), id(roboto_mono_28)));
+            id(roboto_32_b), id(roboto_45_b)));
   on_end:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_end"
     - lambda: 'assist_set_pipeline_state(id(icon_mic_status), id(lbl_assist_status), AssistState::IDLE);'
@@ -392,7 +392,7 @@ script:
     then:
       - lambda: |-
           assist_set_response(id(lbl_assist_response), std::string("Reflexion..."),
-              assist_font(id(assist_text_size), id(roboto_mono_20), id(roboto_mono_24), id(roboto_mono_28)));
+              assist_font(id(assist_text_size), id(roboto_32_b), id(roboto_45_b)));
           assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::NONE);
       - if:
           condition:
@@ -422,8 +422,7 @@ script:
                                  id(slider_assist_volume), id(system_volume));
       - lambda: |-
           assist_apply_text_size(id(lbl_assist_response), id(assist_text_size),
-              id(roboto_mono_20), id(roboto_mono_24), id(roboto_mono_28),
-              id(btn_assist_size_s), id(btn_assist_size_m), id(btn_assist_size_l));
+              id(roboto_32_b), id(roboto_45_b), id(btn_assist_size_s), id(btn_assist_size_l));
 
   # Choix du cerveau (pipeline HA). discussion=true => LLM libre, false => domotique.
   # Centralise la mise à jour des boutons du dashboard ET du popup (source unique).
@@ -446,7 +445,8 @@ script:
           highlight_button_border(id(btn_assist_pipe_domo), !discussion, UIColor::INFO);
           highlight_button_border(id(btn_assist_pipe_discu), discussion, UIColor::SUCCESS);
 
-  # Taille de la police de réponse : 0=S 1=M 2=L (persisté, confort de lecture).
+  # Taille de la police de réponse : 0=S 2=L (persisté, confort de lecture ; le 1 de
+  # l'ancien M, retiré par l'essai D8 du 26/09/2026, est lu comme S).
   - id: tab5_assist_set_text_size
     mode: restart
     parameters:
@@ -457,5 +457,4 @@ script:
           value: !lambda 'return size;'
       - lambda: |-
           assist_apply_text_size(id(lbl_assist_response), size,
-              id(roboto_mono_20), id(roboto_mono_24), id(roboto_mono_28),
-              id(btn_assist_size_s), id(btn_assist_size_m), id(btn_assist_size_l));
+              id(roboto_32_b), id(roboto_45_b), id(btn_assist_size_s), id(btn_assist_size_l));
