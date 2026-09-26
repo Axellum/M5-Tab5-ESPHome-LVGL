@@ -89,20 +89,19 @@ python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(3
 
 ---
 
-## Step 4 — Set up Home Assistant automations
+## Step 4 — Set up the Home Assistant packages
 
-Copy the files from `HomeAssistant_Config/` into your Home Assistant configuration:
+Everything on the Home Assistant side is a **package** in `HomeAssistant_Config/packages/`:
 
-| File | Where to add it |
-|------|-----------------|
-| `automations_examples.yaml.example` | Merge into your `automations.yaml` (or include it from your `automations:` section) |
-| `scripts_examples.yaml` | Include in your `scripts:` section |
-| `template_sensors_examples.yaml` | Include in your `template:` section in `configuration.yaml` |
-| `packages/*.yaml` | Self-contained HA *packages* — enable `homeassistant: packages: !include_dir_named packages` first |
+1. Enable packages in `configuration.yaml`: `homeassistant: packages: !include_dir_named packages`.
+2. Copy `HomeAssistant_Config/placeholders.example.yaml` to `placeholders.yaml` (gitignored) and fill in your real entity IDs (`VOTRE_VILLE`, `VOTRE_CLIMATISATION`, `VOTRE_PC`…).
+3. Render: `python tools/render_ha_config.py` writes the deployable copies to `HomeAssistant_Config/rendered/`.
+4. Copy `rendered/packages/*.yaml` into your HA `config/packages/`, and `rendered/custom_templates/` into `config/custom_templates/`.
+5. Reload Automations, Scripts, Template entities, Input booleans and Input texts (or restart HA).
 
-Then search-and-replace the placeholder entity names (`VOTRE_VILLE`, `VOTRE_CLIMATISATION`…) in those files. See [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) for the full list.
+Start with `packages/tab5_push.yaml` (push automations, shared scripts, the scripts the Tab5 calls, rain sensor) — the others add optional features. See [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) for what each package does and the full placeholder list.
 
-> The `*_examples*` files are the versioned, genuinely shipped ones. The author's own production files (`automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml`) are gitignored and **not** part of a clone — if a doc mentions them, it is talking about the private originals these examples are generated from.
+> These packages are exactly what runs on the author's Home Assistant (rendered with the author's own values) since 2026-09-26. There are no private versions and nothing to merge into `automations.yaml` or `scripts.yaml`.
 
 ---
 
@@ -140,9 +139,9 @@ The weather screen is built around Météo-France's data structure. If you are i
 
 1. Install the **Météo-France** integration from the HA integrations page
 2. You will get entities: `weather.your_city`, `sensor.your_city_next_rain`, `sensor.XX_weather_alert`
-3. The automation in `automations_examples.yaml.example` queries `v1/vision/rain` and `v1/forecast` from Météo-France's API and formats the response into the semicolon-delimited payload the device expects
+3. The full push automation in `packages/tab5_push.yaml` queries `v1/vision/rain` and `v1/forecast` from Météo-France's API and formats the response into the semicolon-delimited payload the device expects
 
-If you are outside France, the weather screen requires adaptation. The push automation will need to be rewritten to query your local weather integration and produce the same payload format. The payload format is documented in the automation file comments.
+If you are outside France, the weather screen requires adaptation. The push automation will need to be rewritten to query your local weather integration and produce the same payload format. The payload format is documented in the package comments.
 
 ---
 
@@ -214,20 +213,19 @@ python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(3
 
 ---
 
-## Étape 4 — Configurer les automations Home Assistant
+## Étape 4 — Installer les packages Home Assistant
 
-Copiez les fichiers de `HomeAssistant_Config/` dans votre configuration Home Assistant :
+Tout le côté Home Assistant est en **packages**, dans `HomeAssistant_Config/packages/` :
 
-| Fichier | Où l'ajouter |
-|---------|-------------|
-| `automations_examples.yaml.example` | Fusionner avec votre `automations.yaml` (ou l'inclure depuis votre section `automations:`) |
-| `scripts_examples.yaml` | Inclure dans votre section `scripts:` |
-| `template_sensors_examples.yaml` | Inclure dans votre section `template:` dans `configuration.yaml` |
-| `packages/*.yaml` | *Packages* HA autonomes — activez d'abord `homeassistant: packages: !include_dir_named packages` |
+1. Activez les packages dans `configuration.yaml` : `homeassistant: packages: !include_dir_named packages`.
+2. Copiez `HomeAssistant_Config/placeholders.example.yaml` vers `placeholders.yaml` (gitignoré) et renseignez vos vrais entity IDs (`VOTRE_VILLE`, `VOTRE_CLIMATISATION`, `VOTRE_PC`…).
+3. Rendez : `python tools/render_ha_config.py` écrit les copies déployables dans `HomeAssistant_Config/rendered/`.
+4. Copiez `rendered/packages/*.yaml` dans le `config/packages/` de HA, et `rendered/custom_templates/` dans `config/custom_templates/`.
+5. Rechargez Automatisations, Scripts, Entités de template, Entrées booléennes et Entrées de texte (ou redémarrez HA).
 
-Puis recherchez-remplacez les noms d'entités placeholder (`VOTRE_VILLE`, `VOTRE_CLIMATISATION`…) dans ces fichiers. Voir [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) pour la liste complète.
+Commencez par `packages/tab5_push.yaml` (automatisations de poussée, scripts partagés, scripts appelés par le Tab5, capteur de pluie) ; les autres ajoutent des fonctions optionnelles. Voir [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) pour le rôle de chaque package et la liste complète des placeholders.
 
-> Les fichiers `*_examples*` sont les seuls réellement versionnés et livrés. Les fichiers de production de l'auteur (`automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml`) sont gitignorés et **absents** d'un clone — quand une doc les mentionne, elle parle des originaux privés dont ces exemples sont dérivés.
+> Ces packages sont exactement ce qui tourne sur le Home Assistant de l'auteur (rendus avec ses valeurs) depuis le 26/09/2026. Il n'y a pas de version privée, ni rien à fusionner dans `automations.yaml` ou `scripts.yaml`.
 
 ---
 
@@ -265,6 +263,6 @@ L'écran météo est construit autour de la structure de données de Météo-Fra
 
 1. Installez l'intégration **Météo-France** depuis la page des intégrations HA
 2. Vous obtiendrez des entités : `weather.votre_ville`, `sensor.votre_ville_next_rain`, `sensor.XX_alerte_meteo`
-3. L'automatisation dans `automations_examples.yaml.example` interroge `v1/vision/rain` et `v1/forecast` de l'API Météo-France et formate la réponse en payload délimité par des points-virgules attendu par l'appareil
+3. L'automatisation de poussée complète de `packages/tab5_push.yaml` interroge `v1/vision/rain` et `v1/forecast` de l'API Météo-France et formate la réponse en payload délimité par des points-virgules attendu par l'appareil
 
-Si vous êtes hors de France, l'écran météo nécessite une adaptation. L'automatisation push devra être réécrite pour interroger votre intégration météo locale et produire le même format de payload. Le format du payload est documenté dans les commentaires du fichier d'automatisation.
+Si vous êtes hors de France, l'écran météo nécessite une adaptation. L'automatisation push devra être réécrite pour interroger votre intégration météo locale et produire le même format de payload. Le format du payload est documenté dans les commentaires du package.

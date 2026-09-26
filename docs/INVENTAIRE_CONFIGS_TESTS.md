@@ -77,29 +77,24 @@
 
 ## 2. Configurations YAML Home Assistant (`HomeAssistant_Config/`)
 
-### 2.1 Fichiers de production (gitignorés)
+### 2.1 Production = packages rendus
 
-| Fichier | Emplacement | Rôle |
-|---|---|---|
-| `automations_tab5.yaml` | `HomeAssistant_Config/` | Automation push principale (météo, pluie, clim, planning, alertes, plantes). |
-| `scripts_tab5.yaml` | `HomeAssistant_Config/` | Scripts déclenchés par le Tab5. |
-| `template_sensors_meteo_tab5.yaml` | `HomeAssistant_Config/` | Pré-traitement Météo-France côté HA. |
+Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de l'auteur fait tourner les packages ci-dessous, rendus par `tools/render_ha_config.py` avec `placeholders.yaml` (gitignoré) dans `rendered/` (gitignoré).
 
 ### 2.2 Fichiers publics (trackés)
 
 | Fichier | Emplacement | Rôle |
 |---|---|---|
-| `automations_examples.yaml.example` | `HomeAssistant_Config/` | Placeholder générique des automations. |
-| `scripts_examples.yaml` | `HomeAssistant_Config/` | Placeholder générique des scripts. |
-| `template_sensors_examples.yaml` | `HomeAssistant_Config/` | Placeholder générique des template sensors. |
+| `packages/tab5_push.yaml` | `HomeAssistant_Config/packages/` | Package principal : automatisations de poussée, scripts `tab5_push_*`, scripts appelés par le Tab5, capteur de pluie, garde-fou `is_primary_active`. |
 | `packages/tab5_alerts.yaml` | `HomeAssistant_Config/packages/` | Package alertes HA. |
 | `packages/tab5_calendar.yaml` | `HomeAssistant_Config/packages/` | Package calendrier HA. |
 | `custom_templates/tab5_calendar.jinja` | `HomeAssistant_Config/custom_templates/` | Macros Jinja du calendrier (importées par `tab5_calendar.yaml`). |
 | `packages/tab5_health.yaml` | `HomeAssistant_Config/packages/` | Package santé HA. |
 | `packages/tab5_reveil.yaml` | `HomeAssistant_Config/packages/` | Package réveil HA. |
 | `packages/tab5_tv.yaml` | `HomeAssistant_Config/packages/` | Package TV HA. |
-| `packages/volet_serre_tracking.yaml` | `HomeAssistant_Config/packages/` | Package suivi volet/serre. |
+| `packages/volet_serre_tracking.yaml` | `HomeAssistant_Config/packages/` | Package volet : helpers, script, synchro écran, suivi des commandes directes. |
 | `snippets/tab5_alerts_dismissed_input_text.yaml` | `HomeAssistant_Config/snippets/` | Snippet input_text alertes. |
+| `snippets/tab5_assist_reponse_exemple.yaml` | `HomeAssistant_Config/snippets/` | Exemple (non chargé) : réponse du moteur vers le popup Assistant. |
 
 ---
 
@@ -201,4 +196,4 @@ python tools/demo/demo_pusher.py --dry-run
 - **Pas de suite de tests unitaires pour la HMI** : la logique LVGL (`tab5_*.cpp`) n'a pas de tests hôte. Seuls les moteurs de jeux (Go, échecs, dames) disposent de tests exécutables sur PC.
 - **Les tests Go/échecs/dames sont des miroirs Python** du C++ : toute modification du C++ doit être reflétée dans le miroir Python, sinon le test ne prouve plus rien. Exception : `test_go_engine.cpp` compile le vrai moteur Go (g++, en CI).
 - **CI GitHub Actions** (`.github/workflows/esphome-tab5.yml`, PR + push sur `main`) : job `python` (pre-commit, `pytest`, moteur Go C++, dry-run démo) ; job `build` (secrets factices + `esphome/build-action@v8.1.0`, image `latest` = canari amont voulu, ADR-0016, ccache conservé entre runs) seulement si `tab5-ha-hmi.yaml`, `Tab5/` (hors `.md`) ou le workflow changent ; job `build-min`, même compilation avec la version plancher lue dans `min_version:` (26/09/2026). `python`, `build` et `build-min` sont des checks requis de `main` ; `build` reste présent et passe en « skipped » sinon. Artefact `tab5-firmware` publié sur `main`.
-- **Fichiers gitignorés** : `secrets.yaml`, `Tab5/user_entities.yaml`, `HomeAssistant_Config/placeholders.yaml`, `HomeAssistant_Config/rendered/`, `HomeAssistant_Config/automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml`, `Tab5/tts_library*/`, `archives/`.
+- **Fichiers gitignorés** : `secrets.yaml`, `Tab5/user_entities.yaml`, `HomeAssistant_Config/placeholders.yaml`, `HomeAssistant_Config/rendered/`, les anciennes copies privées `automations_tab5.yaml` / `scripts_tab5.yaml` / `template_sensors_meteo_tab5.yaml` (obsolètes, gardées ignorées), `Tab5/tts_library*/`, `archives/`.

@@ -1,0 +1,713 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_push.yaml
+# @role Tout ce que Home Assistant fait POUR le Tab5 hors packages dédiés : les
+#       automatisations qui poussent les données vers l'écran (push-only, cf.
+#       Tab5/README.md), les scripts de poussée `tab5_push_*`, les scripts appelés
+#       par le Tab5 (LEDs, PC + TV), le capteur « Phrase Prochaine Pluie » et le
+#       garde-fou `is_primary_active`.
+# @source_unique Depuis le 26/09/2026 (lot 3 de l'audit « ouverture »), la copie
+#       RENDUE de ce fichier (tools/render_ha_config.py → rendered/packages/) est ce
+#       qui tourne sur le HA de l'auteur. Il remplace les trois fichiers d'exemples
+#       à fusionner à la main (automations_examples.yaml.example, scripts_examples.yaml,
+#       template_sensors_examples.yaml) et les copies privées dont ils étaient tirés.
+#       Ne plus modifier ces automatisations dans l'interface HA : elles y sont en
+#       lecture seule ; modifier ce fichier, rendre, déployer.
+# @install `homeassistant: packages: !include_dir_named packages` dans
+#       configuration.yaml, puis ce fichier (rendu) dans config/packages/.
+#       Placeholders à remplacer (placeholders.example.yaml) : VOTRE_VILLE,
+#       VOTRE_DEPARTEMENT, VOTRE_CLIMATISATION, VOTRE_LEDS, VOTRE_TV, VOTRE_PC,
+#       VOTRE_TELEPHONE, VOTRE_CAPTEUR_PRESENCE, VOTRE_EMAIL_gmail_com ; et les
+#       entités du Tab5 lui-même si votre appareil n'a pas le nom par défaut
+#       (ex. préfixe de pièce `salon_…`, cf. placeholders.example.yaml).
+# @architecture_constraint Chaque `action: esphome.tab5_ha_hmi_tab5_maj_*` correspond à
+#       un service `api: services:` déclaré dans Tab5/tab5-api-logic.yaml. Ne
+#       JAMAIS renommer un service ici sans renommer le pendant firmware (et
+#       vice-versa) — sinon la poussée échoue silencieusement (pas d'erreur HA visible).
+# @payload_contract Les payloads bulk (jours/heures/pluie 1h/alerte météo) sont des
+#       chaînes délimitées par `;`/`|` — le format doit matcher EXACTEMENT ce que
+#       parse_and_update_*_bulk() (Tab5/tab5_*.cpp) attend en nombre de champs.
+#       HA retire les espaces en tête et en fin du rendu d'un template (vérifié le
+#       26/09/2026) : les retours à la ligne entre les `{% set %}` ne partent pas.
+# @ai_instruction `delay: 1s` entre les blocs + `delay: 150ms`/`50ms` dans les boucles
+#       ne sont PAS du remplissage : ils évitent de saturer le socket TCP de l'ESP32-P4
+#       en même temps que le flux audio I2S actif. Ne pas les retirer pour "accélérer".
+# @ai_warning `now()` ne doit JAMAIS être passé brut à un service HA (`{{ now() }}`) —
+#       toujours via `.strftime(...)` explicite. Un datetime brut (microsecondes
+#       incluses) peut casser silencieusement toute la suite de l'automation.
+# @ai_instruction `continue_on_error: true` + les gardes `is defined else []` sur
+#       `daily_var`/`hourly_var_tab5` évitent qu'un échec ponctuel de `calendar.get_events`
+#       ou `weather.get_forecasts` (API externe temporairement indisponible) ne bloque
+#       tout le reste de la poussée écran.
+# ============================================================================
+
+# Garde-fou de toutes les poussées (surveillé par tab5_health.yaml). Vestige de
+# l'ancienne bascule entre deux instances HA (ADR-0008) : il reste à `on`, remis
+# à `on` à chaque démarrage par `force_primary_active_on_boot`.
+input_boolean:
+  is_primary_active:
+    name: "Serveur Principal Actif"
+    icon: mdi:server-network
+
+automation:
+  - alias: "MAJ Ecran Tab5 ESPHome Push"
+    mode: single
+    id: tab5_ha_hmi_updater
+    description: >-
+      Poussée complète du Tab5. Prévisions jours/heures et pluie à chaque passage ;
+      météo actuelle, probabilités, clim et volet seulement à la (re)connexion (ils ont
+      leurs automatisations au changement, plus bas).
+    trigger:
+      # PAS de déclencheur `state:` sur weather.VOTRE_VILLE ici (retiré le 26/08/2026) :
+      # `weather.*` et `sensor.*_next_rain` viennent du même coordinateur
+      # Météo-France et se déclenchent à ~0,8 s d'intervalle — le second tombait
+      # toujours pendant l'exécution du premier et était abandonné
+      # (« Already running » ×249 en 5 jours). La carte météo a son automatisation au
+      # changement (`tab5_ha_hmi_meteo_push`, plus bas), la clim et le volet aussi.
+      # Piège à retenir : un trigger `state:` nu se déclenche AUSSI sur les
+      # changements d'attributs. `to: ~` (25/09/2026) : état seulement — sans lui, ce
+      # déclencheur partait à CHAQUE rafraîchissement Météo-France (toutes les
+      # 5 min, attribut `1_hour_forecast`) et relançait toute la chaîne pour rien.
+      - platform: state
+        entity_id: sensor.VOTRE_VILLE_next_rain
+        to: ~
+      # Toutes les 10 min : prévisions (l'heure et le jour avancent), pluie, alertes HA
+      # (les capteurs « problem » et le compte d'indisponibles n'ont pas d'autre déclencheur).
+      - platform: time_pattern
+        minutes: "/10"
+      # Émis par le firmware à chaque (re)connexion du client API HA (on_client_connected).
+      - platform: event
+        event_type: esphome.tab5_connected
+        id: tab5_connected
+      - platform: state
+        entity_id: calendar.VOTRE_EMAIL_gmail_com
+      # Retour du garde-fou `is_primary_active` (packages/tab5_health.yaml) : aucune
+      # poussée n'est partie pendant qu'il était à `off`, on resynchronise tout.
+      - platform: state
+        entity_id: input_boolean.is_primary_active
+        to: "on"
+        id: resync
+      # NB : les déclencheurs "légers" (rebours minute phrase pluie, vigilance météo,
+      # MAJ HA, dismiss) sont gérés par l'automation dédiée `tab5_ha_hmi_alerts_push`
+      # ci-dessous — ils ne relancent PAS la chaîne prévisions/calendrier complète.
+
+    condition:
+      # Garde-fou commun à toutes les poussées (tab5_health.yaml) : rien ne part tant
+      # que `is_primary_active` est `off`.
+      - condition: state
+        entity_id: input_boolean.is_primary_active
+        state: "on"
+      # Seul un vrai (re)démarrage de la liaison compte : liaison `on` depuis moins de
+      # 3 min. Le firmware n'émet l'événement qu'à la connexion depuis le 25/09/2026 ;
+      # la garde reste contre un événement réémis. Adapter l'id du capteur de statut
+      # au nom de votre appareil.
+      - alias: "tab5_connected : seulement si la liaison API vient de (re)demarrer (garde contre un evenement reemis)"
+        condition: or
+        conditions:
+          - condition: not
+            conditions:
+              - condition: trigger
+                id: tab5_connected
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status
+                state: "on"
+                for: "00:03:00"
+
+    action:
+      # ====== 0. RECONNEXION : attendre que la liaison API soit prête ======
+      # Le firmware émet `esphome.tab5_connected` dès qu'un client API se connecte,
+      # parfois avant que l'intégration HA ait fini d'authentifier sa connexion :
+      # les premiers appels partaient alors en « Authenticated connection not ready
+      # yet » à chaque reboot (704 occurrences dans les logs HA entre le 02 et le
+      # 08/09/2026). `wait_template` passe immédiatement si l'entité est déjà `on`.
+      - if:
+          - condition: trigger
+            id: tab5_connected
+        then:
+          - wait_template: "{{ is_state('binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status', 'on') }}"
+            timeout: "00:00:10"
+            continue_on_timeout: true
+
+      # ====== 1, 7, 7b. VIGILANCE + BANDEAU INFO + ALERTES HA ======
+      # Script partagé avec la poussée légère (section `script:`) : une seule copie
+      # du Jinja, un seul relevé des MAJ / capteurs « problem » par passage. Le filtre
+      # d'acquittement et le compte d'indisponibles viennent de packages/tab5_alerts.yaml.
+      - action: script.tab5_push_alertes
+        continue_on_error: true
+        data:
+          vigilance_seule: false
+
+      # ====== 3-4. METEO ACTUELLE + PROBABILITES : seulement à la (re)connexion ======
+      # Au changement : tab5_ha_hmi_meteo_push. Avant le 26/09/2026, ces deux envois
+      # partaient toutes les 10 min et le firmware les repeignait à chaque fois.
+      - if:
+          - condition: trigger
+            id: [tab5_connected, resync]
+        then:
+          - delay: "00:00:01"
+          - action: script.tab5_push_meteo
+            continue_on_error: true
+      - delay: "00:00:01"
+
+      # ====== 4b. METEO PLUIE 1H (9 barres en UN appel : 0,5,10,15,20,25 puis 35,45,55) ======
+      # Payload « idx|intensité;… » (ADR-0003). Seul contrat pluie depuis le 08/09/2026.
+      - action: esphome.tab5_ha_hmi_tab5_maj_pluie_1h_bulk
+        continue_on_error: true
+        data:
+          payload: >
+            {% set fc = state_attr('sensor.VOTRE_VILLE_next_rain', '1_hour_forecast') %}
+            {% set keys = ['0 min', '5 min', '10 min', '15 min', '20 min', '25 min', '35 min', '45 min', '55 min'] %}
+            {% set ns = namespace(r='') %}
+            {% for k in keys %}{% set ns.r = ns.r ~ loop.index0 ~ '|' ~ (fc.get(k, 'Inconnu') if fc is not none else 'Inconnu') ~ ';' %}{% endfor %}
+            {{ ns.r }}
+
+      - delay: "00:00:01"
+
+      # ====== 5. PREVISIONS JOURS (BULK - 1 seul appel au lieu de 15) ======
+      - action: calendar.get_events
+        continue_on_error: true
+        data:
+          start_date_time: "{{ now().strftime('%Y-%m-%d 00:00:00') }}"
+          end_date_time: "{{ (now() + timedelta(days=15)).strftime('%Y-%m-%d 23:59:59') }}"
+        target:
+          entity_id: calendar.VOTRE_EMAIL_gmail_com
+        response_variable: agenda_events
+      - action: weather.get_forecasts
+        continue_on_error: true
+        data:
+          type: daily
+        target:
+          entity_id: weather.VOTRE_VILLE
+        response_variable: daily_var
+      - action: esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk
+        continue_on_error: true
+        data:
+          payload: >
+            {% set fcasts = daily_var.get('weather.VOTRE_VILLE', {}).get('forecast', []) if daily_var is defined else [] %}
+            {% set days_names = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"] %}
+            {% set ns = namespace(result="") %}
+            {% for i in range(15) %}
+              {% set target_dt = now() + timedelta(days=i) %}
+              {% set target_date = target_dt.strftime('%Y-%m-%d') %}
+              {# Jour seul, SANS date : la page d'accueil (aujourd'hui + 4 jours) l'affiche
+                 tel quel ; les deux pages suivantes (jours 5 à 14) calculent elles-mêmes
+                 « Lun 05 » via SNTP (tab5_forecast.cpp, format_short_day_label). #}
+              {% if i == 0 %}
+                {% set nom_jour = "Auj" %}
+              {% else %}
+                {% set nom_jour = days_names[target_dt.strftime('%w') | int] %}
+              {% endif %}
+              {# .get() et jamais fcasts[i].cle : Météo-France omet des clés en fin de
+                 plage (templow absent du 15e jour le 18/09/2026) et un accès direct lève
+                 UndefinedError AVANT le | float(0) — payload jamais rendu, action sautée
+                 en silence par continue_on_error, icônes figées. #}
+              {% set condition = fcasts[i].get('condition') | default('unknown', true) if i < fcasts|length else 'unknown' %}
+              {% set tmin = fcasts[i].get('templow') | float(0) if i < fcasts|length else 0 %}
+              {% set tmax = fcasts[i].get('temperature') | float(0) if i < fcasts|length else 0 %}
+              {% set est_passe = 'false' if i < fcasts|length else 'true' %}
+              {% set est_dimanche = target_dt.strftime('%w') == '0' %}
+              {% set ns_travail = namespace(found=false, heures="") %}
+              {% if agenda_events is defined and agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
+                {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
+                  {% set ev_start = event.start | default(event.start_time, '') | string %}
+                  {% set ev_end = event.end | default(event.end_time, '') | string %}
+                  {% set ev_msg = event.summary | default(event.message, '') | string %}
+                  {% if target_date in ev_start or target_date in ev_end %}
+                    {% if 'TRAVAIL' in ev_msg.upper() %}
+                      {% set ns_travail.found = true %}
+                      {% if target_date in ev_start %}
+                        {% set start_dt = ev_start | as_datetime %}
+                        {% set end_dt = ev_end | as_datetime %}
+                        {% set ns_travail.heures = start_dt.strftime('%H:%M') ~ "-" ~ end_dt.strftime('%H:%M') %}
+                      {% endif %}
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+              {% set est_repos = not ns_travail.found %}
+              {% set ns.result = ns.result ~ i ~ "|" ~ nom_jour ~ "|" ~ condition ~ "|" ~ tmin ~ "|" ~ tmax ~ "|" ~ ("1" if est_repos else "0") ~ "|" ~ ("1" if est_dimanche else "0") ~ "|" ~ ("1" if est_passe == 'true' else "0") ~ "|" ~ ns_travail.heures ~ ";" %}
+            {% endfor %}
+            {{ ns.result }}
+      # ====== 6 + X. CLIM ET VOLET : seulement à la (re)connexion ======
+      # Au changement : tab5_ha_hmi_clim_push et tab5_volet_updater (plus bas).
+      - if:
+          - condition: trigger
+            id: [tab5_connected, resync]
+        then:
+          - delay: "00:00:01"
+          - action: script.tab5_push_clim
+            continue_on_error: true
+          - delay: "00:00:01"
+          - action: script.tab5_push_volet
+            continue_on_error: true
+
+      # ====== Y. PLANNING HORAIRE ======
+      # SUPPRIMÉ : bandeau dérivé sur le Tab depuis le bulk jours
+      # (build_planning_lines_from_jours). Service tab5_maj_planning conservé en compat.
+      - delay: "00:00:01"
+
+      # ====== 8. PREVISIONS HORAIRES (BULK - 2 chunks de 5 via repeat) ======
+      - action: weather.get_forecasts
+        continue_on_error: true
+        data:
+          type: hourly
+        target:
+          entity_id: weather.VOTRE_VILLE
+        response_variable: hourly_var_tab5
+      # 2 chunks de 5 créneaux (0-4, 5-9) — l'ancienne triple copie du même bloc ne
+      # différait que par les bornes range() (#3). base = (repeat.index-1)*5.
+      # 2 et non plus 3 (25/09/2026) : l'écran n'a que deux pages horaires (créneaux
+      # 0-9) ; le bloc 10-14 était analysé à chaque cycle mais jamais affiché.
+      - repeat:
+          count: 2
+          sequence:
+            - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk
+              continue_on_error: true
+              data:
+                payload: >
+                  {% set base = (repeat.index - 1) * 5 %}
+                  {% set fcasts = hourly_var_tab5.get('weather.VOTRE_VILLE', {}).get('forecast', []) if hourly_var_tab5 is defined else [] %}
+                  {% set ns = namespace(result="") %}
+                  {% for i in range(base, base + 5) %}
+                    {% if i < fcasts|length %}
+                      {% set dt = fcasts[i].datetime | as_datetime %}
+                      {% set heure_texte = dt.strftime('%H:00') if dt else '00:00' %}
+                      {# .get() : au-delà de ~48 h Météo-France n'envoie plus
+                         `precipitation` (constaté le 25/09/2026) — cf. prévisions jours. #}
+                      {% set condition = fcasts[i].get('condition') | default('unknown', true) %}
+                      {% set temp = fcasts[i].get('temperature') | float(0) %}
+                      {% set pluvio = fcasts[i].get('precipitation') | float(0) %}
+                    {% else %}
+                      {% set heure_texte = '00:00' %}
+                      {% set condition = 'unknown' %}
+                      {% set temp = 0 %}
+                      {% set pluvio = 0 %}
+                    {% endif %}
+                    {% set ns.result = ns.result ~ i ~ "|" ~ heure_texte ~ "|" ~ condition ~ "|" ~ temp ~ "|" ~ pluvio ~ ";" %}
+                  {% endfor %}
+                  {{ ns.result }}
+            - if:
+                condition:
+                  - condition: template
+                    value_template: "{{ repeat.index < 2 }}"
+              then:
+                - delay: "00:00:01"
+
+
+  # ============================================================================
+  # PUSH ALERTES / SANTÉ HA (chemin court, faible latence).
+  # Un dismiss, une vigilance Météo-France ou une MAJ HA ne relancent PAS la chaîne
+  # prévisions/calendrier de `tab5_ha_hmi_updater` : ce chemin ne pousse QUE les
+  # sections 1 (alerte MF), 7 (bandeau info) et 7b (rotateur d'alertes HA), via le
+  # même script que la poussée complète — aucun delay, aucun appel API. Le rebours
+  # minute de la phrase pluie ne fait QUE la section 1 (`vigilance_seule`).
+  # mode: queued pour ne pas perdre un dismiss derrière le tick minute.
+  # ============================================================================
+  - id: tab5_ha_hmi_alerts_push
+    alias: "MAJ Ecran Tab5 Alertes/Santé (push léger)"
+    mode: queued
+    max: 5
+    trigger:
+      - platform: state
+        entity_id: sensor.phrase_prochaine_pluie
+      - platform: state
+        entity_id: sensor.VOTRE_DEPARTEMENT_weather_alert
+      - platform: state
+        entity_id:
+          - update.home_assistant_core_update
+          - update.home_assistant_supervisor_update
+          - update.home_assistant_operating_system_update
+      - platform: state
+        entity_id: input_text.tab5_alerts_dismissed
+    condition:
+      - condition: state
+        entity_id: input_boolean.is_primary_active
+        state: "on"
+    action:
+      - action: script.tab5_push_alertes
+        data:
+          vigilance_seule: "{{ trigger.entity_id == 'sensor.phrase_prochaine_pluie' }}"
+
+  # ============================================================================
+  # PUSH METEO ACTUELLE — au changement (26/09/2026)
+  # ----------------------------------------------------------------------------
+  # Condition, température, humidité (weather) et probabilités UV / gel / neige.
+  # queued max 2 : si une probabilité change pendant un passage, le dernier état
+  # part quand même ; le reste est ignoré sans avertissement (max_exceeded: silent).
+  # ============================================================================
+  - id: tab5_ha_hmi_meteo_push
+    alias: "MAJ Ecran Tab5 Météo actuelle (au changement)"
+    mode: queued
+    max: 2
+    max_exceeded: silent
+    trigger:
+      # État nu (sans `to:` ni `attribute:`) : UN déclenchement par mise à jour
+      # Météo-France (≈ 28 par jour). Des déclencheurs par attribut en donnaient un par
+      # attribut changé — 3 passages en 6 ms relevés le 26/09/2026.
+      - platform: state
+        entity_id: weather.VOTRE_VILLE
+      - platform: state
+        entity_id:
+          - sensor.VOTRE_VILLE_uv
+          - sensor.VOTRE_VILLE_freeze_chance
+          - sensor.VOTRE_VILLE_snow_chance
+        to: ~
+    condition:
+      - condition: state
+        entity_id: input_boolean.is_primary_active
+        state: "on"
+    action:
+      - action: script.tab5_push_meteo
+
+  - id: tab5_screen_presence_wifi
+    alias: "Allumage/Extinction Ecran Tab5 selon WiFi Portable"
+    # Allume l'écran à la détection d'une présence (ou au retour du téléphone) s'il
+    # est éteint ; l'éteint après 15 min sans présence dans la pièce (ou au départ du
+    # téléphone) s'il est allumé et que le réveil ne sonne pas. Écran éteint, le
+    # firmware met LVGL en pause ; un toucher ou une tape sur la dalle le rallume.
+    # Remis en place le 26/09/2026 : la version de production avait perdu les
+    # déclencheurs du capteur, et n'éteignait plus qu'au départ du téléphone.
+    description: "Allume l'écran à la détection d'une présence ou au retour du téléphone ; l'éteint après 15 min sans présence ou au départ du téléphone, sauf réveil en cours"
+    mode: queued
+    max: 5
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.VOTRE_CAPTEUR_PRESENCE
+        to: 'on'
+        id: "allumer"
+      - platform: state
+        entity_id: device_tracker.VOTRE_TELEPHONE
+        to: 'home'
+        id: "allumer"
+      # Capteur radar : il repasse off quelques secondes à chaque sortie de la
+      # pièce, d'où les 15 min avant d'éteindre.
+      - platform: state
+        entity_id: binary_sensor.VOTRE_CAPTEUR_PRESENCE
+        to: 'off'
+        for: "00:15:00"
+        id: "eteindre"
+      - platform: state
+        entity_id: device_tracker.VOTRE_TELEPHONE
+        to: 'not_home'
+        id: "eteindre"
+    condition:
+      - condition: state
+        entity_id: input_boolean.is_primary_active
+        state: "on"
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: "allumer"
+              - condition: state
+                entity_id: light.m5stack_tab5_home_assistant_hmi_display_backlight
+                state: "off"
+            sequence:
+              - action: light.turn_on
+                target:
+                  entity_id: light.m5stack_tab5_home_assistant_hmi_display_backlight
+          - conditions:
+              - condition: trigger
+                id: "eteindre"
+              - condition: state
+                entity_id: light.m5stack_tab5_home_assistant_hmi_display_backlight
+                state: "on"
+              # Ne jamais éteindre un réveil qui sonne (le firmware rallume l'écran
+              # à la sonnerie).
+              - condition: state
+                entity_id: binary_sensor.m5stack_tab5_home_assistant_hmi_reveil_en_cours
+                state: "off"
+            sequence:
+              - action: light.turn_off
+                target:
+                  entity_id: light.m5stack_tab5_home_assistant_hmi_display_backlight
+
+
+  # ============================================================================
+  # PUSH CLIM RAPIDE — chemin court, faible latence (ajouté en prod le 21/07/2026)
+  # ----------------------------------------------------------------------------
+  # Retour à l'écran quasi immédiat quand on touche les commandes, sans les delays
+  # de la poussée complète. `mode: restart` : le dernier état gagne si taps rapides.
+  # Même garde `is_primary_active`. Le contrat `tab5_maj_clim` est dans le script
+  # `tab5_push_clim` (section `script:` de ce package).
+  # ============================================================================
+  - id: tab5_ha_hmi_clim_push
+    alias: "MAJ Ecran Tab5 Climatisation (push rapide)"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: climate.VOTRE_CLIMATISATION
+    condition:
+      - condition: state
+        entity_id: input_boolean.is_primary_active
+        state: "on"
+    action:
+      - action: script.tab5_push_clim
+
+  - id: force_primary_active_on_boot
+    alias: "Force Primary Active on Boot"
+    # Au démarrage de HA, remet le garde-fou à `on` : sans lui, un `off` resté d'un
+    # ancien essai de bascule (ADR-0008) bloquerait toutes les poussées en silence.
+    description: "Force input_boolean.is_primary_active à on au démarrage de l'instance principale"
+    trigger:
+      - platform: homeassistant
+        event: start
+    action:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.is_primary_active
+
+script:
+  allumer_leds:
+    alias: "Allumer LEDs depuis Tab5"
+    mode: single
+    sequence:
+      - action: light.toggle
+        target:
+          entity_id: light.VOTRE_LEDS
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Scripts de POUSSÉE vers le Tab5 (26/09/2026) — appelés par les automatisations
+  # (section `automation:` de ce package), pas par le Tab5. Chaque bloc n'existe
+  # qu'ici au lieu d'être recopié dans la poussée complète ET dans son automatisation
+  # « au changement ». mode: queued — chaque passage relit l'état courant, le dernier
+  # gagne. tab5_push_alertes lit input_text.tab5_alerts_dismissed et
+  # sensor.tab5_unavailable_count, fournis par packages/tab5_alerts.yaml.
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  tab5_push_alertes:
+    alias: "Tab5 — pousser vigilance, bandeau info et alertes HA"
+    description: >-
+      Sections 1 (phrase pluie + vigilance Météo-France), 7 (bandeau info) et 7b
+      (rotateur d'alertes HA) de l'écran Tab5. Appelé par la poussée complète
+      (tab5_ha_hmi_updater) et par la poussée légère (tab5_ha_hmi_alerts_push).
+      Les mises à jour, capteurs « problem » et le compte d'indisponibles sont
+      relevés UNE fois (variables) au lieu de trois.
+    mode: queued
+    max: 10
+    fields:
+      vigilance_seule:
+        name: "Vigilance seule"
+        description: "Vrai : seulement la phrase pluie + vigilance (rebours minute de la phrase pluie)."
+        default: false
+        selector:
+          boolean:
+    sequence:
+      - action: esphome.tab5_ha_hmi_tab5_maj_alerte_meteo_france
+        continue_on_error: true
+        data:
+          payload: >-
+            {{ states('sensor.phrase_prochaine_pluie') }}|{{ states('sensor.VOTRE_DEPARTEMENT_weather_alert') | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
+      - alias: "Rebours minute de la phrase pluie : pas de relevé santé HA"
+        condition: template
+        value_template: "{{ not (vigilance_seule | default(false)) }}"
+      - variables:
+          critiques:
+            - update.home_assistant_core_update
+            - update.home_assistant_supervisor_update
+            - update.home_assistant_operating_system_update
+          dismissed: >-
+            {{ (states('input_text.tab5_alerts_dismissed') or '').split('|') | reject('equalto', '') | list }}
+          alerte: "{{ states('sensor.VOTRE_DEPARTEMENT_weather_alert') }}"
+          maj: >-
+            {%- set ns = namespace(l=[]) -%}
+            {%- for u in states.update | selectattr('state', 'eq', 'on') | rejectattr('entity_id', 'in', dismissed) | sort(attribute='entity_id') -%}
+            {%- set ns.l = ns.l + [[u.entity_id, u.attributes.title | default(u.attributes.friendly_name, true)]] -%}
+            {%- endfor -%}
+            {{- ns.l -}}
+          problemes: >-
+            {%- set ns = namespace(l=[]) -%}
+            {%- for p in states.binary_sensor | selectattr('attributes.device_class', 'defined') | selectattr('attributes.device_class', 'eq', 'problem') | selectattr('state', 'eq', 'on') | rejectattr('entity_id', 'in', dismissed) | sort(attribute='entity_id') -%}
+            {%- set ns.l = ns.l + [[p.entity_id, p.attributes.friendly_name | default(p.entity_id, true)]] -%}
+            {%- endfor -%}
+            {{- ns.l -}}
+          indispo: >-
+            {{ 0 if 'ha:unavailable' in dismissed else states('sensor.tab5_unavailable_count') | int(0) }}
+      - action: esphome.tab5_ha_hmi_tab5_maj_info_texte
+        continue_on_error: true
+        data:
+          texte: >-
+            {%- set meteo_key = 'meteo:' ~ (alerte | lower) if alerte in ['Rouge', 'Orange', 'Jaune'] else '' -%}
+            {%- set meteo_vu = meteo_key != '' and meteo_key in dismissed -%}
+            {%- if alerte in ['Rouge', 'Orange'] and not meteo_vu -%}
+            Alerte Météo {{ alerte }} en cours ! Restez prudent.
+            {%- else -%}
+            {%- set ns = namespace(parts=[]) -%}
+            {%- if maj | length == 1 -%}
+            {%- set ns.parts = ns.parts + ['1 MAJ · ' ~ maj[0][1]] -%}
+            {%- elif maj | length > 1 -%}
+            {%- set ns.parts = ns.parts + [(maj | length) ~ ' MAJ'] -%}
+            {%- endif -%}
+            {%- if problemes | length > 0 -%}
+            {%- set ns.parts = ns.parts + [(problemes | length) ~ ' erreur' ~ ('s' if problemes | length > 1 else '')] -%}
+            {%- endif -%}
+            {%- if indispo > 0 -%}
+            {%- set ns.parts = ns.parts + [indispo ~ ' indispo'] -%}
+            {%- endif -%}
+            {%- set ha_line = ns.parts | join(' · ') -%}
+            {%- if alerte == 'Jaune' and not meteo_vu -%}
+            {{- 'Vigilance Jaune · ' ~ ha_line if ha_line else 'Vigilance Jaune' -}}
+            {%- else -%}
+            {{- ha_line -}}
+            {%- endif -%}
+            {%- endif -%}
+          couleur: >-
+            {%- if alerte == 'Rouge' -%}Rouge
+            {%- elif alerte in ['Orange', 'Jaune'] -%}Orange
+            {%- elif problemes | length > 0 or maj | map(attribute=0) | select('in', critiques) | list | length > 0 -%}Rouge
+            {%- elif maj | length > 0 -%}Orange
+            {%- else -%}Blanc
+            {%- endif -%}
+          meteo_id: >-
+            {{ 'meteo:' ~ (alerte | lower) if alerte in ['Rouge', 'Orange', 'Jaune'] else '' }}
+      - action: esphome.tab5_ha_hmi_tab5_maj_alertes_ha_bulk
+        continue_on_error: true
+        data:
+          payload: >-
+            {%- set ns = namespace(r=[]) -%}
+            {%- for u in maj -%}
+            {%- if ns.r | length < 4 -%}
+            {%- set ns.r = ns.r + [u[0] ~ '|' ~ ('Rouge' if u[0] in critiques else 'Orange') ~ '|1 MAJ · ' ~ u[1]] -%}
+            {%- endif -%}
+            {%- endfor -%}
+            {%- for p in problemes -%}
+            {%- if ns.r | length < 4 -%}
+            {%- set ns.r = ns.r + [p[0] ~ '|Rouge|' ~ p[1]] -%}
+            {%- endif -%}
+            {%- endfor -%}
+            {%- if ns.r | length < 4 and indispo > 0 -%}
+            {%- set ns.r = ns.r + ['ha:unavailable|Orange|' ~ indispo ~ ' indispo'] -%}
+            {%- endif -%}
+            {{- ns.r | join(';') -}}
+
+  tab5_push_meteo:
+    alias: "Tab5 — pousser la météo actuelle et les probabilités"
+    description: >-
+      Carte météo (condition, température, humidité) et probabilités (UV, gel,
+      neige). Appelé au changement (tab5_ha_hmi_meteo_push) et à la (re)connexion
+      du Tab5 (tab5_ha_hmi_updater).
+    mode: queued
+    max: 10
+    sequence:
+      - action: esphome.tab5_ha_hmi_tab5_maj_meteo_actuelle
+        continue_on_error: true
+        data:
+          condition: "{{ states('weather.VOTRE_VILLE') }}"
+          temperature: "{{ state_attr('weather.VOTRE_VILLE', 'temperature') | float(0) }}"
+          humidite: "{{ state_attr('weather.VOTRE_VILLE', 'humidity') | float(0) }}"
+      - action: esphome.tab5_ha_hmi_tab5_maj_probabilites
+        continue_on_error: true
+        data:
+          uv: "{{ states('sensor.VOTRE_VILLE_uv') | int(0) }}"
+          gel: "{{ states('sensor.VOTRE_VILLE_freeze_chance') | int(0) }}"
+          neige: "{{ states('sensor.VOTRE_VILLE_snow_chance') | int(0) }}"
+
+  tab5_push_clim:
+    alias: "Tab5 — pousser l'état de la clim"
+    description: >-
+      Cible, température, mode, preset, ventilation, oscillation. Appelé au
+      changement (tab5_ha_hmi_clim_push) et à la (re)connexion (tab5_ha_hmi_updater).
+    mode: queued
+    max: 10
+    sequence:
+      - action: esphome.tab5_ha_hmi_tab5_maj_clim
+        continue_on_error: true
+        data:
+          target: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'temperature') | float(20) }}"
+          current: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'current_temperature') | float(20) }}"
+          mode: "{{ states('climate.VOTRE_CLIMATISATION') }}"
+          preset: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'preset_mode') | default('none', true) }}"
+          fan: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'fan_mode') | default('auto', true) }}"
+          swing: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'swing_mode') | default('stop', true) }}"
+
+  tab5_push_volet:
+    alias: "Tab5 — pousser l'état du volet de la serre"
+    description: >-
+      En_mouvement pendant la course, sinon l'état mémorisé. Appelé au changement
+      (tab5_volet_updater) et à la (re)connexion (tab5_ha_hmi_updater).
+    mode: queued
+    max: 10
+    sequence:
+      - action: esphome.tab5_ha_hmi_tab5_maj_volet_etat
+        continue_on_error: true
+        data:
+          etat_physique: >-
+            {{ 'En_mouvement' if is_state('input_boolean.volet_serre_mouvement', 'on') else states('input_text.volet_serre_etat') }}
+
+  # Bouton « PC Bureau » du Tab5 (Tab5/ui_components/switches_card.yaml et
+  # forecast_daily.yaml appellent `script.allumer_pc_tv`) : bascule PC + TV. TV
+  # allumée → on l'éteint ; sinon on allume le PC (prise ou Wake-on-LAN) et la TV.
+  allumer_pc_tv:
+    alias: "Allumer PC et TV"
+    icon: mdi:monitor
+    mode: single
+    sequence:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ states('media_player.VOTRE_TV') in ['on', 'idle', 'playing', 'paused'] }}"
+            sequence:
+              - action: media_player.turn_off
+                target:
+                  entity_id: media_player.VOTRE_TV
+        default:
+          - action: switch.turn_on
+            target:
+              entity_id: switch.VOTRE_PC
+          - action: media_player.turn_on
+            target:
+              entity_id: media_player.VOTRE_TV
+
+# Capteur de template (format `template: - sensor:` d'un package) : phrase courte
+# sur la pluie à venir, pré-traitée ici
+# plutôt que sur l'appareil (SRAM) et sous la limite de 255 caractères de l'API
+# native ESPHome.
+template:
+  - sensor:
+      - name: "Phrase Prochaine Pluie"
+        unique_id: phrase_prochaine_pluie
+        icon: mdi:weather-rainy
+        state: >
+          {% set ent = 'sensor.VOTRE_VILLE_next_rain' %}
+          {% if not has_value(ent) %}
+            Temps sec
+          {% else %}
+            {% set next_rain = states(ent) | as_timestamp(default=0) %}
+            {% set ref = state_attr(ent, 'forecast_time_ref') | as_timestamp(default=0) %}
+            {% set fc = state_attr(ent, '1_hour_forecast') %}
+
+            {% if next_rain > 0 and ref > 0 and fc is not none %}
+              {% set act_state = fc.get('0 min', 'Temps sec') %}
+
+              {# On raccourcit les termes trop longs et on corrige l'orthographe #}
+              {% set map_int = {
+                'Pluie forte': 'Averses',
+                'Pluie très forte': 'Averses',
+                'Pluie trés forte': 'Averses',
+                'Temps sec': 'Temps sec'
+              } %}
+
+              {% if act_state != 'Temps sec' %}
+                {# S'il pleut déjà (à l'heure de référence), on ignore le délai résiduel #}
+                {{ map_int.get(act_state, act_state) }}
+              {% else %}
+                {# Il ne pleut pas encore, on calcule la prévision #}
+                {% set slot_min = ((next_rain - ref) / 60) | int(0) %}
+                {% set slot_key = slot_min ~ ' min' %}
+                {% set raw_intensity = fc.get(slot_key, 'Pluie') %}
+                {% set intensity = map_int.get(raw_intensity, raw_intensity) %}
+
+                {% set delai_actuel = ((next_rain - now().timestamp()) / 60) | int(0) %}
+
+                {% if delai_actuel <= 0 %}
+                  {{ intensity }}
+                {% else %}
+                  {{ intensity }} dans {{ delai_actuel }} mn
+                {% endif %}
+              {% endif %}
+            {% else %}
+              Pas de données
+            {% endif %}
+          {% endif %}

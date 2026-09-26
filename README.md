@@ -205,7 +205,7 @@ The engine is optional for the screen UI (push dashboard works without it). It i
 | [`docs/decisions/`](docs/decisions/README.md) | Architecture decision records — the "why" behind non-obvious choices |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | PR workflow, compile gate, files never to commit |
 | [`CHANGELOG.md`](CHANGELOG.md) | Version history |
-| [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | HA automations, scripts, template sensors |
+| [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | Home Assistant packages: push automations, scripts, helpers (what runs on the author's HA) |
 | [`Tab5/README.md`](Tab5/README.md) | ESPHome file-by-file description |
 | [`docs/related_projects.md`](docs/related_projects.md) | Linked projects, AI experiment context |
 | [`docs/arcade.md`](docs/arcade.md) | The 8 game consoles — shared architecture, adding a 9th, one section per game (in French) |
@@ -255,7 +255,7 @@ The engine is optional for the screen UI (push dashboard works without it). It i
 │   ├── trivia_game.h/.cpp    # Game: Trial Poursuite (quiz)
 │   ├── draughts_ai/game.*    # Game: Dames Tab (draughts)
 │   └── chess_ai/game.*       # Game: Roi Noir (chess)
-├── HomeAssistant_Config/     # HA examples: automations, scripts, template sensors, packages
+├── HomeAssistant_Config/     # HA packages (placeholders) — rendered, they are what runs on the author's HA
 ├── tests/                    # pytest: secrets checker, HA placeholder renderer, content guards
 ├── tools/
 │   ├── demo/                 # Standalone demo pusher (no HA required)
@@ -522,7 +522,7 @@ Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui
 | [`docs/decisions/`](docs/decisions/README.md) | Décisions d'architecture (ADR) — le "pourquoi" des choix non-évidents (en anglais) |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Workflow PR, gate compile, fichiers à ne jamais committer |
 | [`CHANGELOG.md`](CHANGELOG.md) | Historique des versions |
-| [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | Automations HA, scripts, template sensors |
+| [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | Packages Home Assistant : automatisations de poussée, scripts, helpers (ce qui tourne chez l'auteur) |
 | [`Tab5/README.md`](Tab5/README.md) | Description fichier par fichier ESPHome |
 | [`docs/related_projects.md`](docs/related_projects.md) | Projets liés, contexte expérimentation IA |
 | [`docs/arcade.md`](docs/arcade.md) | Les 8 consoles de jeu — architecture commune, ajouter une 9ᵉ, une section par jeu |

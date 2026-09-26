@@ -11,7 +11,7 @@
 #       visible. Ces automations sont le filet de sécurité côté HA — il n'y a
 #       volontairement AUCUN fallback pull côté firmware.
 # @ai_warning Jamais de now() brut dans les templates (cf. l'en-tête
-#       d'automations_tab5.yaml) : toute la détection repose sur les fenêtres
+#       de packages/tab5_push.yaml) : toute la détection repose sur les fenêtres
 #       `for:` des déclencheurs et sur trigger.from_state / trigger.to_state.
 # @ai_instruction Les gardes notifient via le script tab5_health_notify
 #       (notification persistante + notify.notify) : un seul endroit à adapter.
@@ -47,13 +47,9 @@
 # Reste à adapter si vous réutilisez ce package ailleurs :
 #   - notify.notify → votre service réel (ex : notify.mobile_app_votre_telephone)
 #     (ici `notify.notify` existe bien et route vers les mobiles déclarés)
-#   - input_boolean.is_primary_active : décommenter le bloc ci-dessous si le
-#     helper n'existe pas déjà dans votre installation.
-
-# input_boolean:
-#   is_primary_active:
-#     name: "Instance HA primaire active"
-#     icon: mdi:home-assistant
+#   - input_boolean.is_primary_active est fourni par packages/tab5_push.yaml
+#     (depuis le 26/09/2026), avec l'automatisation qui le remet à `on` au
+#     démarrage de HA : rien à créer à la main.
 
 script:
   # Canal unique des trois gardes : une notification persistante HA (remplacée si

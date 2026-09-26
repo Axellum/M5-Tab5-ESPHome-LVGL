@@ -66,7 +66,7 @@ Format: **Symptom → Root cause → Fix**. Entries are chronological, most rece
 
 **Root cause:** the `tab5_maj_previsions_jours_bulk` payload template looped over `range(15)` and read `fcasts[i].templow` directly. Météo-France stopped sending `templow` for the 15th day (D+14): the key is simply absent from that dict. In Jinja, `dict.missing_key` raises `UndefinedError` **before** `| float(0)` can apply, so the payload was never rendered and the service never called. The hourly cards use another call (`previsions_heures_bulk`), which is why they kept working. `continue_on_error: true` on the action is what hid it: HA only logged `Error rendering data template: UndefinedError: 'dict object' has no attribute 'templow'`.
 
-**Fix:** guarded access everywhere a forecast attribute is read: `fcasts[i].get('templow') | float(0)`, same for `condition`, `temperature` and (hourly) `precipitation`. Applied to production on 2026-09-18 and mirrored into `automations_examples.yaml.example` on 2026-09-25.
+**Fix:** guarded access everywhere a forecast attribute is read: `fcasts[i].get('templow') | float(0)`, same for `condition`, `temperature` and (hourly) `precipitation`. Applied to production on 2026-09-18 and mirrored into the public example on 2026-09-25 (now `packages/tab5_push.yaml`, the single source since 2026-09-26).
 
 **How to spot the next one:**
 - Read the automation **trace** and compare the list of services actually called with the expected ones. A missing `…_bulk` call stands out even though the run is "successful".

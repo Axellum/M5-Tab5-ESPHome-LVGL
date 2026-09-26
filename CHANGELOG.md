@@ -4,6 +4,53 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Home Assistant : une seule source, les packages publics sont la production
+
+Lot 3 de l'audit « ouverture » du 26/09 (demande d'Axel : « tout », avec les deux
+nettoyages). Jusqu'ici, trois fichiers d'exemples à fusionner à la main étaient tirés de
+copies privées gitignorées, et ils dérivaient. Une comparaison avec le HA en service, ce
+jour-là, l'a montré :
+
+- **le package du volet n'avait jamais tourné** : chez Axel, le fichier déployé ne
+  contenait que des commentaires ; le script vivait dans `scripts.yaml` et les helpers dans
+  `configuration.yaml`, sous d'autres noms ;
+- `script.allumer_pc_tv`, appelé par le firmware (bouton « PC Bureau »), n'existait dans
+  aucun fichier public ;
+- la condition `is_primary_active` manquait à 4 automatisations publiques.
+
+Changements :
+
+- **`packages/tab5_push.yaml` (nouveau)** remplace `automations_examples.yaml.example`,
+  `scripts_examples.yaml` et `template_sensors_examples.yaml`. Il contient :
+  - les automatisations de poussée, les scripts `tab5_push_*`, `allumer_leds` et
+    `allumer_pc_tv` (placeholders `VOTRE_TV` / `VOTRE_PC`) ;
+  - le capteur « Phrase Prochaine Pluie » ;
+  - le helper `is_primary_active` et `force_primary_active_on_boot`.
+
+  Tout vient des fichiers publics, commentaires compris, avec la logique de la production
+  reportée dessus.
+- **`packages/volet_serre_tracking.yaml`** porte désormais tout le volet :
+  - les helpers, avec les noms, l'icône et la valeur initiale de la production ;
+  - `tab5_volet_action`, dans la structure exacte de la production ;
+  - `tab5_volet_updater` ;
+  - `volet_serre_track_direct_cover` (nouveau en public), qui suit les commandes `cover.*`
+    venues d'ailleurs.
+- **Exemple de réponse de l'assistant** → `snippets/tab5_assist_reponse_exemple.yaml` :
+  dans un package, il serait devenu actif chez tout le monde.
+- **Preuve d'équivalence** : rendu avec les vraies valeurs, comparé élément par élément à
+  la production, en ignorant les libellés, les espaces et les commentaires Jinja (HA retire
+  les espaces en tête et en fin de rendu, vérifié sur le HA d'Axel). Tout est identique
+  sauf deux changements voulus :
+  - le déclencheur `update.bluetooth_proxy_firmware` est retiré, sur choix d'Axel ;
+  - la poussée horaire lit `hourly_var_tab5` par `.get()`, même résultat mais plus robuste.
+- **Outils et docs** :
+  - `tools/render_ha_config.py` : les exemples ne sont plus rendus ;
+  - test et README HA mis à jour ;
+  - `docs/installation.md` : l'étape 4 dit maintenant d'installer des packages ;
+  - `AGENTS.md`, ADR-0017 (addendum), cartographie, inventaire, `placeholders.example.yaml`
+    (`VOTRE_PC`, capteur du réveil).
+- **Production** : déployée le même soir. Voir `contexte_ia/04_Projets/etat_tab5.md`.
+
 ### 2026-09-26 — Révisions du Tab5 : ST7121 et ILI9881C compilées par la CI, choix par `tab5_ecran:`
 
 Lot 2 de l'audit « ouverture » du 26/09 (compatibilité). **Rien ne change pour la

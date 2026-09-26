@@ -23,9 +23,10 @@ home-assistant_*.log
 config_dump.yaml
 esphome_live_logs.txt
 
-# Config HA reelle (privee) — les pendants publics *_examples.yaml* sont, eux,
-# versionnes : ne JAMAIS les ajouter ici (automations_examples.yaml.example y a
-# figure par erreur, alors qu'il est suivi et livre aux utilisateurs).
+# Anciennes copies privees de la config HA, OBSOLETES depuis le 26/09/2026 (lot 3 de
+# l'audit « ouverture ») : la production tourne sur packages/tab5_push.yaml et
+# packages/volet_serre_tracking.yaml rendus. Gardees ignorees pour qu'une copie
+# locale restante ne soit jamais commitee.
 HomeAssistant_Config/automations_tab5.yaml
 HomeAssistant_Config/scripts_tab5.yaml
 HomeAssistant_Config/template_sensors_meteo_tab5.yaml

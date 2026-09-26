@@ -192,7 +192,7 @@ automation:
         entity_id: number.m5stack_tab5_home_assistant_hmi_rendez_vous_annoncer_avant
     condition:
       # Même garde-fou que les autres automations d'écran (cf. l'@ai_warning en
-      # tête de automations_tab5.yaml : ce booléen s'est déjà retrouvé bloqué à
+      # tête de packages/tab5_push.yaml : ce booléen s'est déjà retrouvé bloqué à
       # `off` sans trace, coupant TOUTE poussée sans erreur visible).
       - condition: state
         entity_id: input_boolean.is_primary_active

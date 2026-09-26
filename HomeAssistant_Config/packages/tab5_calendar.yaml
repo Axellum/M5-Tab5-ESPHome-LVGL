@@ -28,7 +28,7 @@
 #       (rentrée) est ESTIMÉE au 01/09/2027 : compléter la table quand le
 #       calendrier 2027-2028 sera publié (même API, zones="Zone A", location="Bordeaux").
 # @ai_warning Ne JAMAIS passer now() brut à un service — piège documenté dans
-#       automations_tab5.yaml (bornes dérivées de annee/mois/date ; now() servi
+#       packages/tab5_push.yaml (bornes dérivées de annee/mois/date ; now() servi
 #       uniquement pour clamper le début au jour courant).
 # @perf get_events mois = [max(1er du mois, aujourd'hui), 1er du mois suivant[ :
 #       pas d'événements passés (inutiles à l'affichage). Mois entièrement passé

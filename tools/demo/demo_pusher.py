@@ -39,7 +39,7 @@ from scenarios import (
 
 logger = logging.getLogger("demo_pusher")
 
-# Pacing repris de HomeAssistant_Config/automations_examples.yaml.example : évite de
+# Pacing repris de HomeAssistant_Config/packages/tab5_push.yaml : évite de
 # saturer le socket TCP de l'ESP32-P4 (partagé avec le flux audio I2S).
 DELAI_ENTRE_BLOCS = 1.0
 DELAI_BOUCLE_HEURES = 0.15
