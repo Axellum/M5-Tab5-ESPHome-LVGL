@@ -6,8 +6,11 @@
  *      libertés, suicide interdit, ko simple (pas de superko positionnel),
  *      passe, score chinois (aire) + komi, pierres mortes marquées à la main
  *      en fin de partie (le moteur ne résout PAS la vie/mort tout seul).
- * @architecture_constraint AUCUN gros tableau en pile : tous les scratchs sont
- *      des statiques de module. Le moteur tourne dans le contexte LVGL
+ * @architecture_constraint AUCUN gros tableau en pile : tous les scratchs
+ *      vivent dans UN bloc de module (≈ 4 Ko), pris par scratch_acquire() et
+ *      rendu par scratch_release() — Go::open() / Go::close() sur la tablette,
+ *      main() dans le test hôte (audit du 26/09/2026, lot 4 : un jeu fermé ne
+ *      réserve rien). Le moteur tourne dans le contexte LVGL
  *      mono-thread — il n'est donc PAS réentrant, et n'a pas à l'être. C'était
  *      la cause du crash de la version précédente (≈5 Ko de pile par niveau de
  *      récursion de l'IA, dont 2,2 Ko rien que pour count_liberties).
@@ -57,6 +60,19 @@ struct Score {
     int   white_dead;
     int   dame;          // points neutres
 };
+
+// Brouillon du moteur (≈ 4 Ko : marquages de chain_liberties, piles de parcours,
+// plateau de comptage). Il n'existe qu'entre scratch_acquire() et
+// scratch_release() : Go::open() / Go::close() sur la tablette, main() dans
+// tools/test_go_engine.cpp. Un bloc neuf repart à zéro AVEC son compteur de
+// génération (invariant de chain_liberties). acquire est idempotent et rend
+// false si la mémoire manque. Sans brouillon, le moteur ne joue rien et ne lit
+// rien hors de sa mémoire : is_legal/play rendent false (la passe reste
+// possible), chain_liberties 0, mark_chain ne marque rien, score_chinese et
+// territory_map rendent un résultat vide. pos_init/is_eye/place_handicap n'en
+// ont pas besoin.
+bool scratch_acquire();
+void scratch_release();
 
 void pos_init(Pos& p, int n);
 inline int  idx(int r, int c, int n) { return r * n + c; }

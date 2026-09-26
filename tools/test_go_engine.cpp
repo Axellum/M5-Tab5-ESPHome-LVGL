@@ -10,6 +10,10 @@
  * en local, le miroir Python tools/test_go_engine.py couvre les MÊMES règles
  * sans toolchain. Garder les deux en phase. Vérif de compilation locale :
  *   riscv32-esp-elf-g++ -std=c++17 -fsyntax-only -I Tab5 tools/test_go_engine.cpp Tab5/go_engine.cpp
+ *
+ * Le brouillon du moteur (≈ 4 Ko) n'existe qu'entre scratch_acquire() et
+ * scratch_release() — sur la tablette, Go::open() et Go::close() (audit du
+ * 26/09/2026, lot 4). main() le prend donc avant les tests de règles.
  */
 #include "go_engine.h"
 #include <cstdio>
@@ -195,8 +199,51 @@ static void test_handicap() {
     expect(q.side == BLACK, "sans handicap, Noir commence");
 }
 
+// Jeu fermé, le brouillon n'existe pas : le moteur ne doit rien jouer ni lire
+// hors de sa mémoire (gardes de go_engine.cpp).
+static void test_sans_brouillon() {
+    Pos p;
+    pos_init(p, 9);
+    expect(!is_legal(p, idx(4, 4, 9)), "sans brouillon : aucun placement legal");
+    expect(!play(p, idx(4, 4, 9)) && p.sq[idx(4, 4, 9)] == EMPTY,
+           "sans brouillon : rien n'est joue");
+    expect(play(p, PASS) && p.passes == 1, "sans brouillon : la passe reste possible");
+    p.sq[idx(0, 0, 9)] = BLACK;
+    expect(count_liberties(p, idx(0, 0, 9)) == 0, "sans brouillon : aucune liberte comptee");
+    uint8_t dead[MAX_SQ] = {};
+    mark_chain(p, idx(0, 0, 9), dead, 1);
+    expect(dead[idx(0, 0, 9)] == 0, "sans brouillon : rien n'est marque");
+    Score s;
+    score_chinese(p, 6.5f, nullptr, s);
+    expect(s.black == 0.0f && s.white == 0.0f, "sans brouillon : score vide");
+}
+
+// Fermer puis rouvrir le jeu : le bloc neuf repart à zéro AVEC son compteur de
+// génération (invariant de chain_liberties), et le rebouclage du compteur
+// (65 535 → 0 → remise à zéro des marquages) garde des libertés justes.
+static void test_brouillon_neuf() {
+    Pos p;
+    pos_init(p, 9);
+    p.sq[idx(4, 4, 9)] = BLACK;
+    p.sq[idx(4, 5, 9)] = BLACK;   // chaîne de 2 pierres : 6 libertés
+    bool ok = true;
+    for (int i = 0; i < 70000; i++) ok = ok && (count_liberties(p, idx(4, 4, 9)) == 6);
+    expect(ok, "libertes justes a travers le rebouclage du compteur de generation");
+    scratch_release();
+    scratch_release();            // rendre deux fois ne fait rien
+    expect(scratch_acquire(), "brouillon repris (reouverture)");
+    expect(scratch_acquire(), "reprendre un brouillon deja pris ne fait rien");
+    expect(count_liberties(p, idx(4, 5, 9)) == 6, "libertes justes sur un bloc neuf");
+    test_capture();
+}
+
 int main() {
     std::printf("=== test_go_engine ===\n");
+    test_sans_brouillon();
+    if (!scratch_acquire()) {
+        std::printf("FAIL : brouillon du moteur introuvable\n");
+        return 1;
+    }
     test_sizes();
     test_capture();
     test_capture_groupe();
@@ -208,6 +255,8 @@ int main() {
     test_eye();
     test_score_et_morts();
     test_handicap();
+    test_brouillon_neuf();
+    scratch_release();
     std::printf("=== %s (%d fails) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_fail);
     return g_fail ? 1 : 0;
 }

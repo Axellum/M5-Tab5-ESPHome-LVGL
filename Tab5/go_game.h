@@ -14,6 +14,9 @@
  *      Ne PAS appeler ai_step() en boucle depuis une lambda ESPHome : la
  *      réflexion est cadencée par le lv_timer créé à l'ouverture et détruit à la
  *      fermeture (zéro tick quand le jeu est fermé).
+ * @architecture_constraint Jeu fermé, il ne réserve rien (audit du 26/09/2026,
+ *      lot 4) : open() prend l'état (RAM interne + PSRAM) et les brouillons du
+ *      moteur et de l'IA, construit l'UI ; close() détruit l'UI et rend tout.
  */
 #pragma once
 #include "esphome.h"
@@ -117,11 +120,13 @@ struct UI {
     const esphome::font::Font* f_mono  = nullptr;  // roboto_mono_24 (liste des coups)
 };
 
-// Ouvre le jeu sur le menu principal (construit l'UI au premier appel, la
-// réutilise ensuite) et démarre le lv_timer. Idempotent.
+// Ouvre le jeu sur le menu principal : prend sa mémoire (état + brouillons du
+// moteur et de l'IA), construit l'UI et démarre le lv_timer. Idempotent. Si la
+// mémoire manque, rien n'est ouvert et la page de retour est réaffichée.
 void open(const UI& ui);
 
-// Ferme le jeu : arrête le timer, écrit la sauvegarde NVS, masque l'overlay.
+// Ferme le jeu : arrête le timer, écrit la sauvegarde NVS, masque l'overlay,
+// puis détruit l'UI et rend toute sa mémoire.
 void close();
 
 // True tant que l'overlay est visible.
@@ -131,7 +136,8 @@ bool is_open();
 // Filtrage scalaire uniquement, aucun calcul lourd.
 void on_imu(float ax, float ay, float az);
 
-// Écrit / recharge la sauvegarde NVS.
+// Écrit / recharge la sauvegarde NVS (sans effet jeu fermé : elle n'est en
+// mémoire que jeu ouvert).
 void persist_save();
 void persist_load();
 
