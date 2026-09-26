@@ -135,7 +135,7 @@ Home Assistant then enriches each viewed month **on demand** (`script.tab5_calen
 - **school holidays (Zone A)** — soft violet cell background, from a static table verified against data.education.gouv.fr (through summer 2027)
 - **appointments** (gold dot) and **birthdays** (pink dot) from the family/birthday calendars
 
-**Tapping a day** opens a 780×540 detail sub-popup (`script.tab5_calendrier_jour`): "Mardi 21 Juillet" title and up to 6 typed lines with colored MDI icons — holiday name, school-holiday label, work hours, timed appointments, birthdays, civil observances — with "Chargement...", "Rien de prévu ce jour" and "Home Assistant hors ligne" states. Closing follows the v2 popup recipe (real 96×64 glass × buttons, `scrollable: false` everywhere). Components: `calendar_popup.yaml` + `cal_day_cell.yaml` (42 instances) + HA package `HomeAssistant_Config/packages/tab5_calendar.yaml`.
+**Tapping a day** opens a 780×540 detail sub-popup (`script.tab5_calendrier_jour`): "Mardi 21 Juillet" title and up to 6 typed lines with colored MDI icons — holiday name, school-holiday label, work hours, timed appointments, birthdays, civil observances — with "Chargement...", "Rien de prévu ce jour" and "Home Assistant hors ligne" states. Closing follows the v2 popup recipe (real 96×64 glass × buttons, `scrollable: false` everywhere). Components: `calendar_popup.yaml` + `cal_grid_build()` (42 cells built in C++) + HA package `HomeAssistant_Config/packages/tab5_calendar.yaml`.
 
 ---
 
@@ -423,7 +423,7 @@ Home Assistant enrichit ensuite chaque mois consulté **à la demande** (`script
 - **vacances scolaires (Zone A)** — fond de case violet doux, table statique vérifiée sur data.education.gouv.fr (jusqu'à l'été 2027)
 - **RDV** (pastille dorée) et **anniversaires** (pastille rose) depuis les calendriers famille/anniversaires
 
-**Taper un jour** ouvre un sous-popup détail 780×540 (`script.tab5_calendrier_jour`) : titre « Mardi 21 Juillet » et jusqu'à 6 lignes typées avec icônes MDI colorées — nom du férié, libellé des vacances scolaires, horaires de travail, RDV horodatés, anniversaires, fêtes civiles — avec les états « Chargement... », « Rien de prévu ce jour » et « Home Assistant hors ligne ». La fermeture suit la recette popups v2 (croix = vrais boutons de verre 96×64, `scrollable: false` partout). Composants : `calendar_popup.yaml` + `cal_day_cell.yaml` (42 instances) + package HA `HomeAssistant_Config/packages/tab5_calendar.yaml`.
+**Taper un jour** ouvre un sous-popup détail 780×540 (`script.tab5_calendrier_jour`) : titre « Mardi 21 Juillet » et jusqu'à 6 lignes typées avec icônes MDI colorées — nom du férié, libellé des vacances scolaires, horaires de travail, RDV horodatés, anniversaires, fêtes civiles — avec les états « Chargement... », « Rien de prévu ce jour » et « Home Assistant hors ligne ». La fermeture suit la recette popups v2 (croix = vrais boutons de verre 96×64, `scrollable: false` partout). Composants : `calendar_popup.yaml` + `cal_grid_build()` (42 cellules construites en C++) + package HA `HomeAssistant_Config/packages/tab5_calendar.yaml`.
 
 ---
 
@@ -568,7 +568,7 @@ Boutons bas : « Parler » (push-to-talk), Stop (carré rose), « Fermer ».
 Ouvert par **appui long sur l'horloge/date** (`btn_clock_calendar_zone`, zone tactile invisible sur `clock_tile`). Carte modale 1250×690 :
 
 - **En-tête** : icône calendrier + titre « Calendrier », navigation ◀ mois ▶, bouton « Aujourd'hui », croix de fermeture
-- **Grille mensuelle 7×6** (lundi en tête) : 42 cellules templatisées (`cal_day_cell.yaml`) avec numéro du jour, **heures de travail** affichées dans la case, pastilles colorées (dorée = RDV, rose = anniversaire), fond violet doux = vacances scolaires, numéro rose = férié, bordure cyan = aujourd'hui
+- **Grille mensuelle 7×6** (lundi en tête) : 42 cellules construites en C++ (`cal_grid_build()`, à la première ouverture) avec numéro du jour, **heures de travail** affichées dans la case, pastilles colorées (dorée = RDV, rose = anniversaire), fond violet doux = vacances scolaires, numéro rose = férié, bordure cyan = aujourd'hui
 - **Légende** en bas : Aujourd'hui / Travail / Férié / Vac. scolaires / RDV / Anniv.
 - **Tap sur un jour** → sous-popup détail 780×540 : titre « Mardi 21 Juillet », lignes typées (férié, vacances scolaires Zone A, horaires travail, RDV, anniversaire, fête civile) avec icônes MDI colorées
 

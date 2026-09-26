@@ -28,6 +28,10 @@ script:
           lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
           // Eviction : garde max 3 mois autour de la vue (M-1, M, M+1)
           cal_cache_evict_distant(t.year, t.month);
+          // Grille : 42 cellules créées à la première ouverture (sans effet ensuite).
+          // Tap court sur la cellule i -> tab5_cal_day_tap(i).
+          cal_grid_build(id(cal_legend), ${cal_grid_y}, id(roboto_32_b), id(roboto_22),
+                         [](int i) { id(tab5_cal_day_tap).execute(i); });
           animate_popup_open(id(calendar_popup));
       - script.execute: tab5_cal_render
 
@@ -58,54 +62,8 @@ script:
     then:
       - lambda: |-
           if (id(cal_view_year) == 0) return;
-          // static : les pointeurs LVGL sont constants (ids fixes au boot) —
-          // évite de reconstruire 42×5 pointeurs sur la pile à chaque rendu.
-          static CalCellUI cells[42] = {
-              {id(cal_cell_0), id(cal_num_0), id(cal_sub_0), id(cal_dot_0), id(cal_dot2_0)},
-              {id(cal_cell_1), id(cal_num_1), id(cal_sub_1), id(cal_dot_1), id(cal_dot2_1)},
-              {id(cal_cell_2), id(cal_num_2), id(cal_sub_2), id(cal_dot_2), id(cal_dot2_2)},
-              {id(cal_cell_3), id(cal_num_3), id(cal_sub_3), id(cal_dot_3), id(cal_dot2_3)},
-              {id(cal_cell_4), id(cal_num_4), id(cal_sub_4), id(cal_dot_4), id(cal_dot2_4)},
-              {id(cal_cell_5), id(cal_num_5), id(cal_sub_5), id(cal_dot_5), id(cal_dot2_5)},
-              {id(cal_cell_6), id(cal_num_6), id(cal_sub_6), id(cal_dot_6), id(cal_dot2_6)},
-              {id(cal_cell_7), id(cal_num_7), id(cal_sub_7), id(cal_dot_7), id(cal_dot2_7)},
-              {id(cal_cell_8), id(cal_num_8), id(cal_sub_8), id(cal_dot_8), id(cal_dot2_8)},
-              {id(cal_cell_9), id(cal_num_9), id(cal_sub_9), id(cal_dot_9), id(cal_dot2_9)},
-              {id(cal_cell_10), id(cal_num_10), id(cal_sub_10), id(cal_dot_10), id(cal_dot2_10)},
-              {id(cal_cell_11), id(cal_num_11), id(cal_sub_11), id(cal_dot_11), id(cal_dot2_11)},
-              {id(cal_cell_12), id(cal_num_12), id(cal_sub_12), id(cal_dot_12), id(cal_dot2_12)},
-              {id(cal_cell_13), id(cal_num_13), id(cal_sub_13), id(cal_dot_13), id(cal_dot2_13)},
-              {id(cal_cell_14), id(cal_num_14), id(cal_sub_14), id(cal_dot_14), id(cal_dot2_14)},
-              {id(cal_cell_15), id(cal_num_15), id(cal_sub_15), id(cal_dot_15), id(cal_dot2_15)},
-              {id(cal_cell_16), id(cal_num_16), id(cal_sub_16), id(cal_dot_16), id(cal_dot2_16)},
-              {id(cal_cell_17), id(cal_num_17), id(cal_sub_17), id(cal_dot_17), id(cal_dot2_17)},
-              {id(cal_cell_18), id(cal_num_18), id(cal_sub_18), id(cal_dot_18), id(cal_dot2_18)},
-              {id(cal_cell_19), id(cal_num_19), id(cal_sub_19), id(cal_dot_19), id(cal_dot2_19)},
-              {id(cal_cell_20), id(cal_num_20), id(cal_sub_20), id(cal_dot_20), id(cal_dot2_20)},
-              {id(cal_cell_21), id(cal_num_21), id(cal_sub_21), id(cal_dot_21), id(cal_dot2_21)},
-              {id(cal_cell_22), id(cal_num_22), id(cal_sub_22), id(cal_dot_22), id(cal_dot2_22)},
-              {id(cal_cell_23), id(cal_num_23), id(cal_sub_23), id(cal_dot_23), id(cal_dot2_23)},
-              {id(cal_cell_24), id(cal_num_24), id(cal_sub_24), id(cal_dot_24), id(cal_dot2_24)},
-              {id(cal_cell_25), id(cal_num_25), id(cal_sub_25), id(cal_dot_25), id(cal_dot2_25)},
-              {id(cal_cell_26), id(cal_num_26), id(cal_sub_26), id(cal_dot_26), id(cal_dot2_26)},
-              {id(cal_cell_27), id(cal_num_27), id(cal_sub_27), id(cal_dot_27), id(cal_dot2_27)},
-              {id(cal_cell_28), id(cal_num_28), id(cal_sub_28), id(cal_dot_28), id(cal_dot2_28)},
-              {id(cal_cell_29), id(cal_num_29), id(cal_sub_29), id(cal_dot_29), id(cal_dot2_29)},
-              {id(cal_cell_30), id(cal_num_30), id(cal_sub_30), id(cal_dot_30), id(cal_dot2_30)},
-              {id(cal_cell_31), id(cal_num_31), id(cal_sub_31), id(cal_dot_31), id(cal_dot2_31)},
-              {id(cal_cell_32), id(cal_num_32), id(cal_sub_32), id(cal_dot_32), id(cal_dot2_32)},
-              {id(cal_cell_33), id(cal_num_33), id(cal_sub_33), id(cal_dot_33), id(cal_dot2_33)},
-              {id(cal_cell_34), id(cal_num_34), id(cal_sub_34), id(cal_dot_34), id(cal_dot2_34)},
-              {id(cal_cell_35), id(cal_num_35), id(cal_sub_35), id(cal_dot_35), id(cal_dot2_35)},
-              {id(cal_cell_36), id(cal_num_36), id(cal_sub_36), id(cal_dot_36), id(cal_dot2_36)},
-              {id(cal_cell_37), id(cal_num_37), id(cal_sub_37), id(cal_dot_37), id(cal_dot2_37)},
-              {id(cal_cell_38), id(cal_num_38), id(cal_sub_38), id(cal_dot_38), id(cal_dot2_38)},
-              {id(cal_cell_39), id(cal_num_39), id(cal_sub_39), id(cal_dot_39), id(cal_dot2_39)},
-              {id(cal_cell_40), id(cal_num_40), id(cal_sub_40), id(cal_dot_40), id(cal_dot2_40)},
-              {id(cal_cell_41), id(cal_num_41), id(cal_sub_41), id(cal_dot_41), id(cal_dot2_41)}
-          };
           auto t = id(sntp_time).now();
-          cal_render_month(cells, id(lbl_cal_month), id(cal_view_year), id(cal_view_month),
+          cal_render_month(id(lbl_cal_month), id(cal_view_year), id(cal_view_month),
               t.is_valid() ? t.year : 0, t.is_valid() ? t.month : 0,
               t.is_valid() ? t.day_of_month : 0);
           // Eviction : ne garde que M-1, M, M+1 autour de la vue courante
