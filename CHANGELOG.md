@@ -4,6 +4,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Réseau : fenêtre TCP laissée à la valeur d'ESPHome
+
+`CONFIG_LWIP_TCP_WND_DEFAULT: "16384"` est retiré de `tab5-hardware.yaml` : ESPHome
+applique sa propre valeur (65 534 o, réglages lwIP « optimisés » de son composant
+`network`) et la fera évoluer seul.
+
+- Origine du forçage : le correctif OTA d'avril 2026 (sockets coupés côté PC, WinError
+  10053/10054) avait posé deux réglages ensemble, sans essai séparé.
+  `CONFIG_SPI_FLASH_YIELD_DURING_ERASE`, qui laisse le réseau répondre pendant
+  l'effacement de la flash, est gardé. L'explication donnée pour la fenêtre (débordement
+  d'une « boîte aux lettres SPI ») ne tient pas : le lien avec la puce Wi‑Fi (ESP32-C6)
+  est en SDIO, et la fenêtre ne borne que les octets envoyés par le PC avant un accusé
+  de réception.
+- Essai du 25/09/2026 : un firmware à 64 Ko a reçu des OTA normalement (14,5 s).
+- Coût : jusqu'à ≈ 64 Ko de RAM interne tamponnés pendant une réception rapide (OTA),
+  à comparer aux 302 Ko libres mesurés le 26/09/2026 avant #154 (qui en rend ≈ 66).
+
 ### 2026-09-26 — Jeux : 66 Ko de RAM interne rendus quand aucun jeu n'est ouvert
 
 Audit du 25/09/2026, §4.1 (étapes 1 à 3). Les jeux réservaient ≈ 113 Ko de RAM interne en
