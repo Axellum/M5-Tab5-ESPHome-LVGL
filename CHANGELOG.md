@@ -4,6 +4,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Co-processeur Wi-Fi (ESP32-C6) : entité de mise à jour dans HA
+
+Le C6 tourne en ESP-Hosted **1.4.1** (logiciel d'usine, relevé par « Tab5 C6 Version »),
+la bibliothèque du P4 en **2.12.12**. ESPHome sait mettre le C6 à jour depuis le P4.
+
+- Nouvelle entité **« Tab5 C6 Firmware »** (`update:` plateforme `esp32_hosted`, mode
+  `http`, `tab5-hardware.yaml`) : lit le manifeste d'ESPHome
+  (`esphome.github.io/esp-hosted-firmware`) au démarrage puis toutes les 24 h, et propose
+  la plus haute version **compatible avec la bibliothèque du P4** (jamais plus récente :
+  2.12.12 aujourd'hui).
+- **Rien ne s'installe tout seul** : seulement sur « Installer » dans HA ; aucune
+  automation `on_update_available`. Le P4 télécharge le binaire, vérifie son SHA-256, le
+  pousse au C6 par morceaux de 1 500 o, l'active puis redémarre.
+- Risque d'une installation : si le C6 ne redémarre pas, plus de Wi-Fi, donc plus d'OTA ;
+  seul l'USB rattrape.
+- Réutilise le `http_request` existant (`tab5-assist.yaml`, `verify_ssl: false`).
+
 ### 2026-09-26 — Diagnostic : version du logiciel du co-processeur Wi-Fi (ESP32-C6)
 
 Le Tab5 a deux puces : le P4 fait tourner notre firmware (pile TCP/IP comprise), le C6 la

@@ -25,7 +25,7 @@ The PSRAM is critical for this project. LVGL requires a framebuffer sized to the
 
 Handles all radio communication: Wi-Fi 6 (802.11ax) and BLE 5. The main ESP32-P4 communicates with it over an SDIO bus (`esp32_hosted:` component, 20 MHz). From the ESPHome/LVGL code perspective, this is transparent — standard ESPHome Wi-Fi and BLE components work normally.
 
-The C6 has its own RAM (512 KB) and runs Espressif's ESP-Hosted firmware, not ours: our firmware, including the TCP/IP stack (lwIP), runs on the P4. ESPHome builds the P4 side of ESP-Hosted (2.12.12 with ESPHome 2026.9) but does not update the C6, which keeps its factory firmware unless someone reflashes it. The diagnostic sensor **Tab5 C6 Version** reports that version once per boot.
+The C6 has its own RAM (512 KB) and runs Espressif's ESP-Hosted firmware, not ours: our firmware, including the TCP/IP stack (lwIP), runs on the P4. ESPHome builds the P4 side of ESP-Hosted (2.12.12 with ESPHome 2026.9) but does not update the C6, which keeps its factory firmware unless someone reflashes it. The diagnostic sensor **Tab5 C6 Version** reports that version once per boot (1.4.1 on 2026-09-26). The **Tab5 C6 Firmware** update entity offers the highest firmware from ESPHome's manifest that is not newer than the P4 library; nothing is installed until you press *Install* in Home Assistant. If the C6 failed to restart after an update, Wi-Fi (and therefore OTA) would be lost until a USB flash.
 
 ---
 
@@ -121,7 +121,7 @@ La PSRAM est critique pour ce projet. LVGL nécessite un framebuffer dimensionn�
 
 Gère toute la communication radio : Wi-Fi 6 (802.11ax) et BLE 5. Le ESP32-P4 principal communique avec lui via un bus SDIO (composant `esp32_hosted:`, 20 MHz). Du point de vue du code ESPHome/LVGL, c'est transparent — les composants Wi-Fi et BLE standards d'ESPHome fonctionnent normalement.
 
-Le C6 a sa propre RAM (512 Ko) et fait tourner le logiciel ESP-Hosted d'Espressif, pas le nôtre : notre firmware, pile TCP/IP (lwIP) comprise, tourne sur le P4. ESPHome compile la partie P4 d'ESP-Hosted (2.12.12 avec ESPHome 2026.9) mais ne met pas le C6 à jour : il garde son logiciel d'usine tant que personne ne le reflashe. Le capteur de diagnostic **Tab5 C6 Version** en donne la version, lue une fois par démarrage.
+Le C6 a sa propre RAM (512 Ko) et fait tourner le logiciel ESP-Hosted d'Espressif, pas le nôtre : notre firmware, pile TCP/IP (lwIP) comprise, tourne sur le P4. ESPHome compile la partie P4 d'ESP-Hosted (2.12.12 avec ESPHome 2026.9) mais ne met pas le C6 à jour : il garde son logiciel d'usine tant que personne ne le reflashe. Le capteur de diagnostic **Tab5 C6 Version** en donne la version, lue une fois par démarrage (1.4.1 le 26/09/2026). L'entité de mise à jour **Tab5 C6 Firmware** propose la plus haute version du manifeste d'ESPHome qui ne dépasse pas la bibliothèque du P4 ; rien ne s'installe sans un clic sur *Installer* dans Home Assistant. Si le C6 ne redémarrait pas après une mise à jour, le Wi-Fi (donc l'OTA) serait perdu jusqu'à un flash USB.
 
 ---
 

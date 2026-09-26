@@ -57,6 +57,23 @@ esp32_hosted:
   sdio_frequency: 20MHz
   use_psram: true             # [2026.6.0] Buffers SDIO en PSRAM: evite crash mempool + libere SRAM interne
 
+# Logiciel du co-processeur Wi-Fi (ESP32-C6). Entité « update » de HA : elle compare la
+# version du C6 (1.4.1 d'usine, relevée le 26/09/2026) à la plus haute du manifeste
+# d'ESPHome compatible avec la bibliothèque ESP-Hosted du P4 (jamais plus récente
+# qu'elle). Elle n'installe RIEN d'elle-même : seulement sur « Installer » dans HA, et
+# aucune automation n'est branchée ici. Risque d'une installation : un C6 qui ne
+# redémarre pas coupe le Wi-Fi, donc l'OTA ; seul l'USB rattrape.
+# Manifeste relu une fois au démarrage (réseau connecté) puis toutes les 24 h.
+# Passe par http_request (tab5-assist.yaml, verify_ssl: false) : l'intégrité du binaire
+# est vérifiée par le SHA-256 du manifeste.
+update:
+  - platform: esp32_hosted
+    id: c6_firmware_update
+    name: "Tab5 C6 Firmware"
+    type: http
+    source: https://esphome.github.io/esp-hosted-firmware/manifest/esp32c6.json
+    update_interval: 24h
+
 logger:
   # ═══════════════════════════════════════════════════════════════════════
   # [06/07/2026] CAUSE RACINE CONFIRMEE — ecran noir apres reboot logiciel.
