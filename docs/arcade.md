@@ -84,7 +84,7 @@ oubli et le jeu est invisible, ou le firmware ne compile pas :
 5. `game_selector.yaml` → une ligne `!include { file: arcade_card.yaml, vars: { game, x, y, bg, icon, title, subtitle } }`
    dans la grille (template des cartes depuis le lot 8e ; `color_arcade_<jeu>_accent` doit exister) ;
 6. le `.cpp` inclut **`game_common.h`** (helpers partagés : `mk_rect`/`mk_label`,
-   `show`/`set_bg`/`set_border`/`set_text_if`, `clampf`, `xorshift32_next`, `NvsSlot<T>`
+   `show`/`set_bg`/`set_border`/`set_text_if`/`set_text_color_if`, `clampf`, `xorshift32_next`, `NvsSlot<T>`
    pour la NVS ; depuis le lot 8f : `timer_period_sync` pour un tick adaptatif, `topn_insert`
    pour un classement, `tilt_calibrate`/`tilt_smooth` pour l'inclinaison,
    `accel_delta_norm`/`shake_fire` pour une secousse — le jeu garde ses seuils) au lieu de les recopier, et garde sa **palette locale** `<Jeu>::Pal`
@@ -608,8 +608,13 @@ de l'IA est tracé dans les logs (tag `dames`), avec la pile libre minimale de l
 
 Palette **locale** `Draughts::Pal` — ni `tab5_custom.h` ni `tab5-styles.yaml` ne sont
 touchés, exactement comme `Chess::Pal`, `Go::Pal` et `Lode::Pal`. Pool de widgets
-dimensionné pour le 10×10 et réutilisé tel quel en 8×8. Options, statistiques et partie
-en cours en NVS (bumper `DRAUGHTS_SAVE_MAGIC` à tout changement de layout).
+dimensionné pour le 10×10 et réutilisé tel quel en 8×8 : 100 cases, mais pièces,
+couronnes et surbrillances sur les 50 cases foncées seulement (`dark_slot()`). Chaque
+case foncée garde ce qu'elle affiche (`drawn[]`) : un coup ne restyle que les 2 ou 3
+cases qui changent (plus les prises). Restyler les 40 pièces à chaque tap dépassait
+les 32 zones d'invalidation de LVGL, qui repeignait alors tout l'écran.
+Options, statistiques et partie en cours en NVS (bumper `DRAUGHTS_SAVE_MAGIC` à tout
+changement de layout).
 
 ---
 

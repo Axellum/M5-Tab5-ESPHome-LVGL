@@ -502,6 +502,12 @@ struct Mem {
     // Cache d'etat du portail : -1 = inconnu, sinon 0/1. Evite de reecrire le style
     // du portail a chaque frame (une ecriture de style = une invalidation LVGL).
     int c_gate = -1;
+    // Même principe pour l'opacité de la bille (clignotement d'invulnérabilité) et
+    // la pulsation du portail « Oeil du dédale » : -1 = inconnu, sinon la dernière
+    // valeur posée. Sans eux, 3 à 4 styles réécrits à chaque tick de 33 ms
+    // (audit ressources du 26/09/2026, lot 5).
+    int c_ball_opa = -1;
+    int c_eye_opa = -1;
 
     // Brouillons de texte des menus et du HUD (le label copie le texte).
     char hub_sub[168];
@@ -675,6 +681,7 @@ static void ball_apply_skin() {
                                                 : Pal::BALL_HI;
     set_grad(gs->ball, gloss, shade(body, 42));
     set_bg(gs->ball_gloss, gloss, 225);
+    gs->c_ball_opa = -1;   // le reflet vient d'être reposé à 225 : ball_set_opa réécrira
 }
 
 static void ball_show(bool v) {
@@ -693,6 +700,8 @@ static void ball_place(int left, int top) {
 
 // Clignotement d'invulnerabilite : le trio s'efface ensemble.
 static void ball_set_opa(lv_opa_t opa) {
+    if (gs->c_ball_opa == (int) opa) return;
+    gs->c_ball_opa = (int) opa;
     lv_obj_set_style_bg_opa(gs->ball, opa, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(gs->ball_gloss, opa == LV_OPA_COVER ? 225 : opa, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(gs->ball_sh, opa == LV_OPA_COVER ? 150 : opa, LV_PART_MAIN);
@@ -1276,6 +1285,7 @@ static void style_exit(Ent& e, bool open_gate) {
     set_grad(o, open_gate ? Pal::EXIT_HI : c, shade(c, 30));
     lv_obj_set_style_bg_opa(o, open_gate ? 70 : 26, LV_PART_MAIN);
     set_border(o, c, 5, open_gate ? LV_OPA_COVER : LV_OPA_50);
+    gs->c_eye_opa = -1;   // bordure reposée : la pulsation de l'Oeil repart d'un état connu
     // Coeur lumineux : un second anneau interieur donne la profondeur du puits.
     const int m = e.w / 5;
     detail(e.det, m, m, e.w - 2 * m, e.h - 2 * m, LV_RADIUS_CIRCLE);
@@ -1623,6 +1633,7 @@ static void load_room(int idx) {
 
     // Reset des caches HUD pour forcer un repaint complet du bandeau.
     gs->c_life = -1; gs->c_gold = -1; gs->c_runes = -1; gs->c_sec = -1; gs->c_gate = -1;
+    gs->c_eye_opa = -1;
 }
 
 static void start_run() {
@@ -2113,8 +2124,11 @@ static void tick_cb(lv_timer_t*) {
                 }
                 // « Oeil du dedale » : le portail ouvert pulse doucement.
                 if (open_gate && gs->has_eye) {
-                    lv_obj_set_style_border_opa(e.obj,
-                        (now / 300) & 1 ? LV_OPA_COVER : LV_OPA_50, LV_PART_MAIN);
+                    const int opa = (now / 300) & 1 ? LV_OPA_COVER : LV_OPA_50;
+                    if (gs->c_eye_opa != opa) {
+                        gs->c_eye_opa = opa;
+                        lv_obj_set_style_border_opa(e.obj, (lv_opa_t) opa, LV_PART_MAIN);
+                    }
                 }
                 if (open_gate && circle_hits(e)) { next_room(); return; }
                 break;

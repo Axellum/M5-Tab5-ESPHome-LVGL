@@ -4,6 +4,25 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Jeux : fin du repeint plein écran aux dames, HUD sans réécriture
+
+Lot 5 de l'audit des ressources du 26/09/2026. Rien ne change à l'écran.
+
+- **Dames** :
+  - chaque case foncée retient ce qu'elle affiche. Un coup ne restyle plus les 40
+    pièces, seulement les 2 ou 3 cases qui changent, plus les prises. Au-delà de 32
+    zones à redessiner, LVGL repeignait tout l'écran à chaque tap ;
+  - pièces, couronnes et surbrillances ne sont plus créées que sur les 50 cases
+    foncées : 150 objets LVGL de moins à l'ouverture.
+- **Échecs** : l'évaluation affichée n'est plus recalculée à chaque tick de 33 ms,
+  seulement quand la position change. Les couleurs du bandeau ne sont plus reposées
+  si elles sont identiques.
+- **`set_text_color_if()`** (`game_common.h`) remplace les `set_color` d'Échecs, du Go
+  et de Trivia, qui recoloraient sans comparer. En LVGL 9.5, poser un style invalide
+  l'objet même à valeur identique.
+- **Fil d'Or** : l'opacité de la bille (3 styles) et la pulsation du portail « Oeil du
+  dédale » ne sont réécrites qu'au changement, au lieu de chaque tick.
+
 ### 2026-09-26 — Home Assistant : scripts de poussée, plus de renvoi d'un état inchangé
 
 Lot 2 de l'audit des ressources du 26/09/2026. Déployé sur le HA de production le jour

@@ -248,9 +248,6 @@ static inline void set_bg_grad(lv_obj_t* o, uint32_t top, uint32_t bottom, lv_op
     lv_obj_set_style_bg_opa(o, opa, LV_PART_MAIN);
 }
 
-static inline void set_color(lv_obj_t* l, uint32_t c) {
-    if (l) lv_obj_set_style_text_color(l, lv_color_hex(c), LV_PART_MAIN);
-}
 
 
 
@@ -698,7 +695,7 @@ static void render_hud() {
         snprintf(buf, sizeof(buf), "%s  ·  %d prise%s",
                  col == BLACK ? "Noir" : "Blanc", caps, caps > 1 ? "s" : "");
         set_text_if(gs->pill_sub[i], buf);
-        set_color(gs->pill_name[i], active ? Pal::ACCENT : Pal::TXT);
+        set_text_color_if(gs->pill_name[i], active ? Pal::ACCENT : Pal::TXT);
     }
 
     if (g_state == ST_MARKING || g_state == ST_SCORE) {
@@ -735,7 +732,7 @@ static void render_hud() {
         }
     }
     set_text_if(gs->h_status, st);
-    set_color(gs->h_status, stc);
+    set_text_color_if(gs->h_status, stc);
 }
 
 static void render_movelist() {
@@ -787,7 +784,7 @@ static void render_panel_buttons() {
         set_text_if(gs->btn_ok_lbl, "Valider le score");
         set_bg(gs->btn_ok, Pal::CARD_BG, LV_OPA_COVER);
         set_border(gs->btn_ok, Pal::GOOD, 2, LV_OPA_80);
-        set_color(gs->btn_ok_lbl, Pal::GOOD);
+        set_text_color_if(gs->btn_ok_lbl, Pal::GOOD);
         show(gs->btn_ok, true);
     } else if (g_state == ST_PLAYING && gs->pending >= 0) {
         char nm[8], buf[24];
@@ -796,7 +793,7 @@ static void render_panel_buttons() {
         set_text_if(gs->btn_ok_lbl, buf);
         set_bg(gs->btn_ok, Pal::CARD_BG, LV_OPA_COVER);
         set_border(gs->btn_ok, Pal::GHOST, 2, LV_OPA_COVER);
-        set_color(gs->btn_ok_lbl, Pal::GHOST);
+        set_text_color_if(gs->btn_ok_lbl, Pal::GHOST);
         show(gs->btn_ok, true);
     } else {
         show(gs->btn_ok, false);
@@ -1069,7 +1066,7 @@ static void slot_set(int i, const char* title, const char* desc, uint32_t col, b
     if (!on) return;
     set_text_if(gs->slot_t[i], title);
     set_text_if(gs->slot_d[i], desc ? desc : "");
-    set_color(gs->slot_t[i], col);
+    set_text_color_if(gs->slot_t[i], col);
     set_border(gs->slot[i], col, 2, LV_OPA_40);
 }
 
@@ -1217,9 +1214,9 @@ static void show_score_card() {
     show(gs->card, true);
 
     char b[80];
-    if (gs->winner == 0) { set_text_if(gs->card_title, "Noir l'emporte"); set_color(gs->card_title, Pal::TXT); }
-    else if (gs->winner == 1) { set_text_if(gs->card_title, "Blanc l'emporte"); set_color(gs->card_title, Pal::TXT); }
-    else { set_text_if(gs->card_title, "Partie nulle"); set_color(gs->card_title, Pal::ACCENT); }
+    if (gs->winner == 0) { set_text_if(gs->card_title, "Noir l'emporte"); set_text_color_if(gs->card_title, Pal::TXT); }
+    else if (gs->winner == 1) { set_text_if(gs->card_title, "Blanc l'emporte"); set_text_color_if(gs->card_title, Pal::TXT); }
+    else { set_text_if(gs->card_title, "Partie nulle"); set_text_color_if(gs->card_title, Pal::ACCENT); }
 
     if (gs->resigned) {
         snprintf(b, sizeof(b), "Abandon  —  comptage indicatif : %.1f contre %.1f",

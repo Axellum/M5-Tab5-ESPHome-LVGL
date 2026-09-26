@@ -251,7 +251,6 @@ struct Mem {
     // Caches de rendu : une case n'est restylee que si son contenu a change.
     uint8_t drawn_pc[64];
     uint8_t drawn_hl[64];
-    int     c_eval = 0x7FFFFFFF;
     int     c_clock[2] = {-1, -1};
 
     MoveRow movelist_rows[MOVE_ROWS];
@@ -297,15 +296,7 @@ void persist_save() {
 // 6. Helpers LVGL
 // ===========================================================================
 
-
-
-
-
-
-
-static inline void set_color(lv_obj_t* l, uint32_t c) {
-    if (l) lv_obj_set_style_text_color(l, lv_color_hex(c), LV_PART_MAIN);
-}
+// Tous dans game_common.h : set_text_if, set_text_color_if, show, set_bg, set_border…
 
 // ===========================================================================
 // 7. Correspondance case <-> position a l'ecran
@@ -404,8 +395,8 @@ static void build_ui() {
         // La rangee du bas est la ligne 7, la colonne de gauche la colonne 0 :
         // la parite de la case ne depend pas de l'orientation du plateau, ces
         // couleurs sont donc posees une fois pour toutes.
-        set_color(gs->coord_f[i], ((7 + i) & 1) == 0 ? Pal::SQ_DARK : Pal::SQ_LIGHT);
-        set_color(gs->coord_r[i], (i & 1) == 0 ? Pal::SQ_DARK : Pal::SQ_LIGHT);
+        set_text_color_if(gs->coord_f[i], ((7 + i) & 1) == 0 ? Pal::SQ_DARK : Pal::SQ_LIGHT);
+        set_text_color_if(gs->coord_r[i], (i & 1) == 0 ? Pal::SQ_DARK : Pal::SQ_LIGHT);
     }
 
     // --- Marqueurs de coups legaux (au-dessus des cases) -------------------
@@ -556,7 +547,7 @@ static void slot_reset(int i) {
     set_bg(gs->slot[i], Pal::BTN_BG, LV_OPA_COVER);
     esphome::lvgl::lv_obj_set_style_text_font(gs->slot_t[i], gs->ui.f_mid, LV_PART_MAIN);
     esphome::lvgl::lv_obj_set_style_text_font(gs->slot_d[i], gs->ui.f_small, LV_PART_MAIN);
-    set_color(gs->slot_d[i], Pal::TXT_DIM);
+    set_text_color_if(gs->slot_d[i], Pal::TXT_DIM);
     show(gs->slot_d[i], true);
 }
 
@@ -572,7 +563,7 @@ static void slot_list(int i, const char* title, const char* desc, uint32_t col, 
     lv_obj_set_style_text_align(gs->slot_d[i], LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
     lv_obj_align(gs->slot_t[i], LV_ALIGN_LEFT_MID, 24, (desc && desc[0]) ? -13 : 0);
     lv_obj_align(gs->slot_d[i], LV_ALIGN_LEFT_MID, 24, 15);
-    set_color(gs->slot_t[i], on ? col : Pal::TXT_MUTED);
+    set_text_color_if(gs->slot_t[i], on ? col : Pal::TXT_MUTED);
     set_text_if(gs->slot_t[i], title);
     set_text_if(gs->slot_d[i], desc ? desc : "");
     set_border(gs->slot[i], on ? col : Pal::TXT_MUTED, 2, LV_OPA_50);
@@ -597,7 +588,7 @@ static void slot_promo(int i, uint8_t type, bool white) {
     lv_obj_align(gs->slot_t[i], LV_ALIGN_CENTER, 0, PIECE_DY);
     piece_utf8(type, false, g);
     set_text_if(gs->slot_t[i], g);
-    set_color(gs->slot_t[i], white ? Pal::PC_W_FILL : Pal::PC_B_FILL);
+    set_text_color_if(gs->slot_t[i], white ? Pal::PC_W_FILL : Pal::PC_B_FILL);
 
     esphome::lvgl::lv_obj_set_style_text_font(gs->slot_d[i], gs->ui.f_piece, LV_PART_MAIN);
     lv_obj_set_width(gs->slot_d[i], LV_SIZE_CONTENT);
@@ -605,7 +596,7 @@ static void slot_promo(int i, uint8_t type, bool white) {
     if (white) {
         piece_utf8(type, true, g);
         set_text_if(gs->slot_d[i], g);
-        set_color(gs->slot_d[i], Pal::PC_EDGE);
+        set_text_color_if(gs->slot_d[i], Pal::PC_EDGE);
     }
     show(gs->slot_d[i], white);
     show(gs->slot[i], true);
@@ -683,7 +674,7 @@ static void draw_cell(int i, bool force) {
     char g[4];
     piece_utf8(pc, false, g);                 // corps : toujours le glyphe plein
     set_text_if(gs->body[i], g);
-    set_color(gs->body[i], white ? Pal::PC_W_FILL : Pal::PC_B_FILL);
+    set_text_color_if(gs->body[i], white ? Pal::PC_W_FILL : Pal::PC_B_FILL);
     show(gs->body[i], true);
 
     // Contour uniquement sur les pieces claires : sans lui, un corps ivoire
@@ -772,7 +763,7 @@ static void update_hud(bool force) {
     else if (gp->mode == 2) snprintf(buf, sizeof(buf), "Demo — %s", white_turn ? "Blancs" : "Noirs");
     else snprintf(buf, sizeof(buf), "Trait : %s", (gp->pos.side == gp->human) ? "a vous" : "au Tab");
     set_text_if(gs->h_turn, buf);
-    set_color(gs->h_turn, (gp->mode == 0 && gp->pos.side == gp->human) ? Pal::ACCENT : Pal::TXT);
+    set_text_color_if(gs->h_turn, (gp->mode == 0 && gp->pos.side == gp->human) ? Pal::ACCENT : Pal::TXT);
 
     // Niveau d'IA (sans objet en hotseat)
     if (gp->mode == 1) snprintf(buf, sizeof(buf), "Duel local");
@@ -791,7 +782,7 @@ static void update_hud(bool force) {
                 set_text_if(c == 0 ? gs->h_clock_w : gs->h_clock_b, line);
                 lv_obj_t* lab = (c == 0) ? gs->h_clock_w : gs->h_clock_b;
                 const bool active = gp->running && (cidx(gp->pos.side) == c);
-                set_color(lab, gp->clock[c] < 30000 ? Pal::DANGER : (active ? Pal::TXT : Pal::TXT_DIM));
+                set_text_color_if(lab, gp->clock[c] < 30000 ? Pal::DANGER : (active ? Pal::TXT : Pal::TXT_DIM));
             }
         }
     } else if (force) {
@@ -799,15 +790,17 @@ static void update_hud(bool force) {
         set_text_if(gs->h_clock_b, "");
     }
 
-    // Evaluation approximative (statique, du point de vue des blancs).
+    // Evaluation approximative (statique, du point de vue des blancs). Seulement
+    // quand `force` : chaque changement de position (coup, annulation, nouvelle
+    // partie, reprise) appelle update_hud(true) ; le tick de 33 ms la recalculait
+    // 30 fois par seconde pour rien (audit ressources du 26/09/2026, lot 5).
     if (gs->save.show_eval) {
-        int e = eval(gp->pos);
-        if (gp->pos.side == BLACK) e = -e;
-        if (force || e / 5 != gs->c_eval / 5) {          // pas de clignotement pour 4 centiemes
-            gs->c_eval = e;
+        if (force) {
+            int e = eval(gp->pos);
+            if (gp->pos.side == BLACK) e = -e;
             snprintf(buf, sizeof(buf), "Eval %+.1f", e / 100.0f);
             set_text_if(gs->h_eval, buf);
-            set_color(gs->h_eval, e > 80 ? Pal::GOOD : (e < -80 ? Pal::DANGER : Pal::TXT_DIM));
+            set_text_color_if(gs->h_eval, e > 80 ? Pal::GOOD : (e < -80 ? Pal::DANGER : Pal::TXT_DIM));
         }
     } else if (force) {
         set_text_if(gs->h_eval, "");
@@ -820,7 +813,7 @@ static void update_hud(bool force) {
     else if (gp->check_sq != NO_SQ) { st = "ECHEC !"; stc = Pal::DANGER; }
     else if (gs->ai_think)          { st = "Le Tab reflechit"; stc = Pal::THINK; }
     set_text_if(gs->h_status, st);
-    set_color(gs->h_status, stc);
+    set_text_color_if(gs->h_status, stc);
 }
 
 static void refresh_movelist() {
@@ -868,7 +861,7 @@ static void go_hub() {
     gs->ai_think = false;
     menu_on(true);
     set_text_if(gs->m_title, "ROI NOIR");
-    set_color(gs->m_title, Pal::ACCENT);
+    set_text_color_if(gs->m_title, Pal::ACCENT);
     set_text_if(gs->m_sub, "Echiquier du Tab — regles FIDE, IA embarquee, 100 % local");
     char body[128];
     snprintf(body, sizeof(body), "Classement local : %u Elo   ·   %u parties jouees",
@@ -896,7 +889,7 @@ static void go_setup() {
     g_state = ST_SETUP;
     menu_on(true);
     set_text_if(gs->m_title, "NOUVELLE PARTIE");
-    set_color(gs->m_title, Pal::ACCENT);
+    set_text_color_if(gs->m_title, Pal::ACCENT);
     set_text_if(gs->m_sub, "Toucher une ligne pour changer sa valeur");
     set_text_if(gs->m_body, "");
     set_text_if(gs->m_foot, "");
@@ -931,7 +924,7 @@ static void go_settings() {
     g_state = ST_SETTINGS;
     menu_on(true);
     set_text_if(gs->m_title, "REGLAGES");
-    set_color(gs->m_title, Pal::ACCENT);
+    set_text_color_if(gs->m_title, Pal::ACCENT);
     set_text_if(gs->m_sub, "Conserves en NVS, valables pour toutes les parties");
     set_text_if(gs->m_body, "");
     set_text_if(gs->m_foot, "");
@@ -961,7 +954,7 @@ static void go_stats() {
     g_state = ST_STATS;
     menu_on(true);
     set_text_if(gs->m_title, "STATISTIQUES");
-    set_color(gs->m_title, Pal::ACCENT);
+    set_text_color_if(gs->m_title, Pal::ACCENT);
 
     char sub[96];
     snprintf(sub, sizeof(sub), "Classement local : %u Elo   ·   %u parties contre le Tab",
@@ -1003,7 +996,7 @@ static void show_confirm(uint8_t kind, const char* title, const char* question) 
     g_state = ST_CONFIRM;
     menu_on(true);
     set_text_if(gs->m_title, title);
-    set_color(gs->m_title, Pal::ACCENT);
+    set_text_color_if(gs->m_title, Pal::ACCENT);
     set_text_if(gs->m_sub, question);
     set_text_if(gs->m_body, "");
     set_text_if(gs->m_foot, "");
@@ -1018,7 +1011,7 @@ static void show_promo() {
     // decider entre dame et cavalier.
     menu_on(true, (lv_opa_t) 209);
     set_text_if(gs->m_title, "PROMOTION");
-    set_color(gs->m_title, Pal::ACCENT);
+    set_text_color_if(gs->m_title, Pal::ACCENT);
     set_text_if(gs->m_sub, "Le pion atteint la derniere rangee — choisir la piece");
     set_text_if(gs->m_body, "");
     set_text_if(gs->m_foot, "");
@@ -1035,7 +1028,7 @@ static void show_pause() {
     g_state = ST_PAUSE;
     menu_on(true, (lv_opa_t) 235);
     set_text_if(gs->m_title, "PAUSE");
-    set_color(gs->m_title, Pal::ACCENT);
+    set_text_color_if(gs->m_title, Pal::ACCENT);
     set_text_if(gs->m_sub, "La pendule est arretee");
     set_text_if(gs->m_body, "");
     set_text_if(gs->m_foot, "");
@@ -1068,7 +1061,7 @@ static void show_over() {
         }
     }
     set_text_if(gs->m_title, t);
-    set_color(gs->m_title, col);
+    set_text_color_if(gs->m_title, col);
     set_text_if(gs->m_sub, gs->reason);
 
     char body[160];
@@ -1207,7 +1200,7 @@ static void play_move(const Move& m) {
         char g[4];
         piece_utf8(shown, false, g);
         set_text_if(gs->anim_body, g);
-        set_color(gs->anim_body, white ? Pal::PC_W_FILL : Pal::PC_B_FILL);
+        set_text_color_if(gs->anim_body, white ? Pal::PC_W_FILL : Pal::PC_B_FILL);
         if (white) { piece_utf8(shown, true, g); set_text_if(gs->anim_edge, g); }
         show(gs->anim_edge, white);
         // Le conteneur fait exactement une case : ses coordonnees sont celles
@@ -1547,7 +1540,7 @@ static void slot_event_cb(lv_event_t* e) {
         case ST_SETTINGS:
             if (i == 0) { gs->save.gestures ^= 1; go_settings(); }
             else if (i == 1) { gs->save.rule50 ^= 1; go_settings(); }
-            else if (i == 2) { gs->save.show_eval ^= 1; gs->c_eval = 0x7FFFFFFF; go_settings(); }
+            else if (i == 2) { gs->save.show_eval ^= 1; go_settings(); }
             else if (i == 3) { gs->save.demo_speed = (uint8_t)((gs->save.demo_speed + 1) % 3); go_settings(); }
             else if (i == 4) { show_confirm(1, "EFFACER LES STATISTIQUES", "Bilan, records et classement local seront remis a zero."); }
             else if (i == 5) {

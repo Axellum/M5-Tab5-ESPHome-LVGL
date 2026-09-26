@@ -167,6 +167,18 @@ static inline void set_text_if(lv_obj_t* l, const char* txt) {
     lv_label_set_text(l, txt);
 }
 
+// Même principe pour la couleur du texte (lot 5 de l'audit ressources, 26/09/2026) :
+// en LVGL 9.5, poser un style invalide l'objet même à valeur identique, et les HUD
+// des échecs, du Go et de Trivia recoloraient leurs libellés à chaque tick.
+static inline void set_text_color_if(lv_obj_t* o, uint32_t c) {
+    if (!o) return;
+    const lv_color_t want = lv_color_hex(c);
+    lv_style_value_t cur;
+    if (lv_obj_get_local_style_prop(o, LV_STYLE_TEXT_COLOR, &cur, LV_PART_MAIN) == LV_STYLE_RES_FOUND &&
+        lv_color_eq(cur.color, want)) return;
+    lv_obj_set_style_text_color(o, want, LV_PART_MAIN);
+}
+
 // ---------------------------------------------------------------------------
 // Persistance NVS d'une structure de sauvegarde (trivially copyable, champ `magic`)
 // ---------------------------------------------------------------------------
