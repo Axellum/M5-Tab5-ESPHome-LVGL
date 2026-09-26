@@ -47,12 +47,13 @@ def test_render_text_longest_key_first():
 def test_render_writes_same_tree(tmp_path):
     base = _ha_tree(tmp_path)
     (base / "packages" / "p.yaml").write_text("entity_id: weather.VOTRE_VILLE\n", encoding="utf-8")
-    (base / "scripts_examples.yaml").write_text("x: light.VOTRE_LEDS\n", encoding="utf-8")
+    (base / "snippets").mkdir(exist_ok=True)
+    (base / "snippets" / "s.yaml").write_text("x: light.VOTRE_LEDS\n", encoding="utf-8")
     out = tmp_path / "rendered"
     written = render({"VOTRE_VILLE": "ma_ville", "VOTRE_LEDS": "sonoff_1"}, out, base)
-    assert {p.relative_to(out).as_posix() for p in written} == {"packages/p.yaml", "scripts_examples.yaml"}
+    assert {p.relative_to(out).as_posix() for p in written} == {"packages/p.yaml", "snippets/s.yaml"}
     assert (out / "packages" / "p.yaml").read_text(encoding="utf-8") == "entity_id: weather.ma_ville\n"
-    assert (out / "scripts_examples.yaml").read_text(encoding="utf-8") == "x: light.sonoff_1\n"
+    assert (out / "snippets" / "s.yaml").read_text(encoding="utf-8") == "x: light.sonoff_1\n"
 
 
 def test_check_reports_placeholder_name_never_value(tmp_path):

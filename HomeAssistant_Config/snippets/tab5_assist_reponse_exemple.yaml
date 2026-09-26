@@ -1,0 +1,32 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file snippets/tab5_assist_reponse_exemple.yaml
+# @role EXEMPLE, pas deploye : automatisation qui pousse une reponse ecrite
+#       (Markdown + image) dans le popup Assistant du Tab5. A copier dans vos
+#       automatisations si votre moteur de conversation emet l'evenement
+#       `tab5_assistant_reponse_prete`. Sortie de automations_examples.yaml.example
+#       le 26/09/2026 : dans un package, elle serait devenue active chez tout le monde.
+# ============================================================================
+# ============================================================================
+# ASSISTANT VOCAL — réponse riche vers le popup (assistant_popup.yaml)
+# ----------------------------------------------------------------------------
+# Le moteur (tab5-engine) — ou une automation HA — pousse la réponse écrite dans
+# le popup Assistant vocal du Tab5 : `texte` en Markdown (les tableaux | col | col |
+# sont ré-alignés en monospace à l'écran) et `image_url` = URL d'une image PNG
+# (optionnelle ; vide => zone image masquée). Le popup s'ouvre automatiquement.
+# Exemple minimal, à déclencher depuis votre pipeline "Discussion LLM".
+# ============================================================================
+- alias: "Tab5 — Pousser la réponse assistant (exemple)"
+  mode: queued
+  trigger:
+    # À adapter : le moteur émet cet événement avec la réponse formatée.
+    - platform: event
+      event_type: tab5_assistant_reponse_prete
+  action:
+    - action: esphome.tab5_ha_hmi_tab5_assist_reponse
+      continue_on_error: true
+      data:
+        # Markdown : titres #, **gras**, puces -, et tableaux Markdown pris en charge.
+        texte: "{{ trigger.event.data.texte }}"
+        # PNG servi par le moteur (ex. http://<ip-du-moteur>:8000/images/xxx.png) ou "".
+        image_url: "{{ trigger.event.data.image_url | default('', true) }}"

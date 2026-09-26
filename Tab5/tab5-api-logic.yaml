@@ -6,7 +6,7 @@
 #                   appeler une fonction de tab5_custom.cpp pour traiter la donnée.
 # @ui_mapping Les services mettent à jour l'UI en cascade via les fonctions C++.
 # @ai_instruction Ne change pas les noms des services sans mettre à jour les automations
-#                 HomeAssistant_Config/automations_tab5.yaml. Ne mets pas de logique LVGL
+#                 HomeAssistant_Config/packages/tab5_push.yaml. Ne mets pas de logique LVGL
 #                 directe ici : un service résout ses `id()`, pose ses globals et appelle une
 #                 fonction de tab5_custom.cpp. Vérifié par tools/check_tab5_code_rules.py
 #                 (pytest) : tout `lv_*` autre que lv_obj_has_flag fait échouer la suite.
@@ -290,7 +290,7 @@ api:
 
     # Zone d'info de la carte centrale (panneau 3 du rotateur, cf. tab5-globals.yaml) :
     # récap calendrier 3 jours (multi-lignes avec recolor #hex ...#) ou alerte météo
-    # (1 ligne). Alimenté par automations_tab5.yaml section 7 (texte + couleur Rouge/Orange/Blanc).
+    # (1 ligne). Alimenté par packages/tab5_push.yaml (script tab5_push_alertes) section 7 (texte + couleur Rouge/Orange/Blanc).
     - service: tab5_maj_info_texte
       description: "Zone d'info de la carte centrale : récapitulatif du calendrier sur trois jours, ou alerte météo."
       variables:

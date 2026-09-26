@@ -4,7 +4,7 @@
 # @role File d'alertes HA pour le rotateur Tab5 (panneaux 4-7) + dismiss au tap.
 # @ai_instruction Après un acquittement, les scripts ne relancent PAS
 #       l'automation de push complète : l'automation « push léger »
-#       (id tab5_ha_hmi_alerts_push, automations_examples.yaml.example) se
+#       (id tab5_ha_hmi_alerts_push, packages/tab5_push.yaml) se
 #       déclenche déjà sur tout changement de input_text.tab5_alerts_dismissed
 #       et repousse les sections 1, 7 et 7b filtrées par la liste. L'ancien
 #       automation.trigger explicite (retiré le 08/09/2026) provoquait un second

@@ -4,7 +4,7 @@
 # @role Table `placeholder: valeur réelle` lue par `tools/render_ha_config.py`,
 #       qui produit `HomeAssistant_Config/rendered/` : la copie déployable sur
 #       Home Assistant des fichiers publics de ce dossier (packages/, snippets/,
-#       *_examples*). Les fichiers suivis par git ne contiennent QUE les
+#       custom_templates/). Les fichiers suivis par git ne contiennent QUE les
 #       placeholders de la colonne de gauche.
 # @install cp HomeAssistant_Config/placeholders.example.yaml HomeAssistant_Config/placeholders.yaml
 #          puis remplacer chaque valeur ; `python tools/render_ha_config.py`
@@ -24,7 +24,8 @@ VOTRE_DEPARTEMENT: "40"                     # sensor.<dept>_weather_alert (numé
 VOTRE_CLIMATISATION: your_living_room_climate   # climate.<…>
 VOTRE_VOLET: your_roller_shutter                # cover.<…>
 VOTRE_LEDS: your_led_strip                      # light.<…> (script allumer_leds)
-VOTRE_TV: your_samsung_tv                       # media_player.<…> ET remote.<…> (package tab5_tv)
+VOTRE_TV: your_samsung_tv                       # media_player.<…> ET remote.<…> (packages tab5_tv et tab5_push)
+VOTRE_PC: your_pc_switch                        # switch.<…> (bouton « PC Bureau », script allumer_pc_tv)
 VOTRE_TELEPHONE: your_phone                     # device_tracker.<…> (allumage/extinction écran)
 VOTRE_CAPTEUR_PRESENCE: your_presence_sensor    # binary_sensor.<…>
 
@@ -37,3 +38,4 @@ VOTRE_EMAIL_gmail_com: your_email_gmail_com     # calendar.<…> (planning de tr
 # appareil a été créé sous un autre nom (ou préfixé par sa pièce, ex. `salon_`),
 # mettez ici l'entity_id COMPLET tel qu'il apparaît dans Outils de développement.
 number.m5stack_tab5_home_assistant_hmi_rendez_vous_annoncer_avant: number.m5stack_tab5_home_assistant_hmi_rendez_vous_annoncer_avant
+binary_sensor.m5stack_tab5_home_assistant_hmi_reveil_en_cours: binary_sensor.m5stack_tab5_home_assistant_hmi_reveil_en_cours

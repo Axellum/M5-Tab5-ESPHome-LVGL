@@ -36,15 +36,13 @@ HA_DIR = REPO / "HomeAssistant_Config"
 DEFAULT_MAP = HA_DIR / "placeholders.yaml"
 DEFAULT_OUT = HA_DIR / "rendered"
 
-# Fichiers publics rendus (relatifs à HomeAssistant_Config/). Les fichiers de
-# production gitignorés (automations_tab5.yaml…) ne sont ni lus ni écrits.
+# Fichiers publics rendus (relatifs à HomeAssistant_Config/). Depuis le 26/09/2026
+# (lot 3), les packages rendus SONT la production : plus de fichiers d'exemples à
+# fusionner à la main ni de copies privées à tenir en parallèle.
 PUBLIC_GLOBS = (
     "packages/*.yaml",
     "snippets/*.yaml",
     "custom_templates/*.jinja",
-    "automations_examples.yaml.example",
-    "scripts_examples.yaml",
-    "template_sensors_examples.yaml",
 )
 
 # Une valeur réelle plus courte que ça est trop ambiguë pour être cherchée

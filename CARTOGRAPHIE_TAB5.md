@@ -280,15 +280,15 @@ Le pilote tactile ST7123 était un composant ESPHome maison (`external_component
 
 ### 3.6 Côté Home Assistant (`HomeAssistant_Config/`)
 
-Les trois fichiers ci-dessous sont **gitignorés** — ce sont les vrais fichiers de prod d'Axel, non versionnés dans le repo public. Ce qui est réellement livré : `automations_examples.yaml.example`, `scripts_examples.yaml`, `template_sensors_examples.yaml` (placeholders génériques), les 6 `packages/*.yaml` et `snippets/` — **placeholders uniquement** depuis la PR #100 (06/09/2026) : les identifiants réels vivent dans `HomeAssistant_Config/placeholders.yaml` (gitignoré, modèle `placeholders.example.yaml`) et `tools/render_ha_config.py` produit `HomeAssistant_Config/rendered/`, la copie réellement déployée sur HA (`--check` = garde-fou de fuite, n'affiche jamais la valeur).
-
-> Corrigé le 30/07/2026 : `.gitignore` listait aussi `automations_examples.yaml.example` — alors que ce fichier est suivi et destiné aux utilisateurs. La règle a été retirée et commentée pour éviter la récidive.
+**Une seule source depuis le 26/09/2026** (lot 3 de l'audit « ouverture ») : le HA d'Axel fait tourner les copies *rendues* (`tools/render_ha_config.py`, `placeholders.yaml` gitignoré) des packages suivis. Les trois fichiers d'exemples à fusionner à la main et les copies privées gitignorées dont ils étaient tirés (`automations_tab5.yaml`, `scripts_tab5.yaml`, `template_sensors_meteo_tab5.yaml`) ont disparu : ils dérivaient (package volet jamais déployé, `script.allumer_pc_tv` appelé par le firmware mais absent des fichiers publics). Ces automatisations et scripts sont en lecture seule dans l'interface HA.
 
 | Fichier | Lignes | Rôle |
 |---|---|---|
-| `automations_tab5.yaml` | 457 (gitignoré) | Poussées vers le Tab5 : complète (prévisions jours/heures, pluie, planning Google Calendar ; météo, clim et volet seulement à la (re)connexion), légère (vigilance, bandeau info, alertes HA), météo, clim et volet au changement, écran selon la présence, worker. Pacing `delay: 1s` entre blocs |
-| `scripts_tab5.yaml` | 281 (gitignoré) | Scripts déclenchés **par** le Tab5 (volet, LEDs, moteur IA) + scripts de poussée `tab5_push_alertes` / `_meteo` / `_clim` / `_volet` appelés par les automatisations (26/09/2026) |
-| `template_sensors_meteo_tab5.yaml` | 49 (gitignoré) | Pré-traitement Météo-France côté HA (phrase météo courte) avant envoi au device |
+| `tab5_push.yaml` | 711 | Package principal : poussées vers le Tab5 — complète (prévisions jours/heures, pluie, planning Google Calendar ; météo, clim et volet seulement à la (re)connexion), légère (vigilance, bandeau info, alertes HA), météo et clim au changement, écran selon la présence ; scripts de poussée `tab5_push_alertes` / `_meteo` / `_clim` / `_volet` ; scripts appelés par le Tab5 (`allumer_leds`, `allumer_pc_tv`) ; capteur « Phrase Prochaine Pluie » ; garde-fou `input_boolean.is_primary_active` + `force_primary_active_on_boot`. Pacing `delay: 1s` entre blocs |
+| `volet_serre_tracking.yaml` | 231 | Volet sans retour de position : helpers `volet_serre_mouvement` / `volet_serre_etat`, script `tab5_volet_action` (appelé par le Tab5), synchro écran `tab5_volet_updater`, suivi des commandes `cover.*` venues d'ailleurs `volet_serre_track_direct_cover` |
+| `tab5_assist_reponse_exemple.yaml` | 32 | Snippet (non chargé par HA) : exemple d'automatisation moteur → popup Assistant, sorti des exemples le 26/09/2026 pour ne pas devenir actif dans un package |
+
+Les autres packages (`tab5_alerts`, `tab5_calendar`, `tab5_health`, `tab5_micro_absence`, `tab5_reveil`, `tab5_tv`) sont décrits dans `HomeAssistant_Config/README.md`.
 
 ### 3.7 CI/CD et documentation
 
@@ -318,7 +318,7 @@ Les trois fichiers ci-dessous sont **gitignorés** — ce sont les vrais fichier
 ### 4.2 Code mort / API incomplète
 
 - ~~**`my_components/st7123/binary_sensor/` jamais instancié**~~ — **RÉSOLU** (PR #15).
-- ~~**`tab5_maj_info_texte` (lambda vide)**~~ — **RÉSOLU** (14/07/2026) : service **implémenté** (le constat « jamais appelé côté HA » du 12/07 était erroné : appelé par `automations_tab5.yaml` §7, et le retrait avait été réintroduit en stub par le fix reboot #32). Affiche le récap calendrier 3 jours ou une alerte météo dans le panneau `info_wrapper` (4ᵉ panneau du rotateur de la carte centrale).
+- ~~**`tab5_maj_info_texte` (lambda vide)**~~ — **RÉSOLU** (14/07/2026) : service **implémenté** (le constat « jamais appelé côté HA » du 12/07 était erroné : appelé par l'ancien `automations_tab5.yaml` §7 (aujourd'hui `tab5_push_alertes`, packages/tab5_push.yaml), et le retrait avait été réintroduit en stub par le fix reboot #32). Affiche le récap calendrier 3 jours ou une alerte météo dans le panneau `info_wrapper` (4ᵉ panneau du rotateur de la carte centrale).
 - ~~**`cal_heures[15]`** (`tab5_custom.h:14`, rempli par `parse_and_update_jours_bulk()`) doublonne `cal_jours_data[].heures_ouverture`~~ — **RÉSOLU** (08/09/2026, PR hygiène C++ du reste de l'audit) : tableau retiré, `get_day_planning_display_text()` et `build_planning_lines_from_jours()` lisent `cal_jours_data[].heures_ouverture`.
 - ~~**Blocs commentés** dans `tab5-api-logic.yaml` (`tab5_maj_clim`) — vestiges `icon_clim_*`~~ — **RÉSOLU** (constaté le 08/09/2026 : plus aucun `icon_clim` dans le fichier).
 - ~~**Globals orphelins** `active_page`, `plan_cycle_counter`, `temp_planning_text` et **`anim_scale_cb()`** jamais appelée~~ — **RÉSOLU** (08/09/2026, lot (a)) : retirés ; `tools/check_tab5_code_rules.py` refuse désormais tout global que personne ne référence.
@@ -371,5 +371,5 @@ Les trois fichiers ci-dessous sont **gitignorés** — ce sont les vrais fichier
 
 ## 5. Ce que la cartographie ne couvre pas
 
-- Le contenu réel de `HomeAssistant_Config/automations_tab5.yaml` (gitignoré, config privée d'Axel) — seule sa description dans `HomeAssistant_Config/README.md` a pu être vérifiée, pas le payload exact envoyé aujourd'hui.
+- ~~Le contenu réel de `HomeAssistant_Config/automations_tab5.yaml`~~ — levé le 26/09/2026 : la production tourne sur `packages/tab5_push.yaml` rendu, comparé ce jour-là à ce qui tournait (logique identique hors deux changements voulus).
 - Les anciens rapports d'audit LLM (retirés de `docs/` depuis) n'ont pas été relus en détail ici — `etat_tab5.md` indique qu'ils ont déjà été synthétisés en tâches (#T161-#T169) le 05/07/2026, dont plusieurs traitées depuis. Les recopier ici aurait dupliqué un travail déjà fait.
