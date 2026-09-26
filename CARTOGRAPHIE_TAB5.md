@@ -277,8 +277,8 @@ Les trois fichiers ci-dessous sont **gitignorés** — ce sont les vrais fichier
 
 | Fichier | Lignes | Rôle |
 |---|---|---|
-| `automations_tab5.yaml` | 468 (gitignoré) | Automation push principale : météo 7j, pluie horaire, températures/humidité, clim, planning Google Calendar, alertes Météo-France, humidité plantes. Pacing `delay: 1s` entre blocs, `150ms` dans les boucles |
-| `scripts_tab5.yaml` | 100 (gitignoré) | Scripts déclenchés **par** le Tab5 (bouton physique → action HA) |
+| `automations_tab5.yaml` | 457 (gitignoré) | Poussées vers le Tab5 : complète (prévisions jours/heures, pluie, planning Google Calendar ; météo, clim et volet seulement à la (re)connexion), légère (vigilance, bandeau info, alertes HA), météo, clim et volet au changement, écran selon la présence, worker. Pacing `delay: 1s` entre blocs |
+| `scripts_tab5.yaml` | 281 (gitignoré) | Scripts déclenchés **par** le Tab5 (volet, LEDs, moteur IA) + scripts de poussée `tab5_push_alertes` / `_meteo` / `_clim` / `_volet` appelés par les automatisations (26/09/2026) |
 | `template_sensors_meteo_tab5.yaml` | 49 (gitignoré) | Pré-traitement Météo-France côté HA (phrase météo courte) avant envoi au device |
 
 ### 3.7 CI/CD et documentation

@@ -18,20 +18,22 @@ These are **example files** — they reflect the author's own Home Assistant set
 ## Files
 
 ### `automations_examples.yaml.example`
-The main push automation, with generic placeholder entity names. Triggered by state changes in Home Assistant, it pushes updated data to the Tab5 via native ESPHome service calls. This is the file to start from.
+The push automations, with generic placeholder entity names. They push data to the Tab5 via native ESPHome service calls; blocks sent from more than one automation live once in the `tab5_push_*` scripts of `scripts_examples.yaml` (install both). This is the file to start from.
 
 What it pushes:
-- **Daily forecast (15 days):** on weather entity state change — serializes 15 × (index, day label, condition, min, max, weekend/holiday flags, work hours) into a `|`/`;`-delimited string sent to `tab5_maj_previsions_jours_bulk`
-- **Hourly forecast (15 slots):** three chunks of 5 through `tab5_maj_previsions_heures_bulk`
+- **Daily forecast (15 days):** every 10 min, on calendar changes and on (re)connection — serializes 15 × (index, day label, condition, min, max, weekend/holiday flags, work hours) into a `|`/`;`-delimited string sent to `tab5_maj_previsions_jours_bulk`
+- **Hourly forecast (10 slots):** two chunks of 5 through `tab5_maj_previsions_heures_bulk` (the screen has two hourly pages)
 - **Short-term rain chart:** on `sensor.*_next_rain` state change — **9** bars in **one** call (`tab5_maj_pluie_1h_bulk`, payload `idx|intensity;…`, index 0–8 = 0/5/10/…/55 min) built from Météo-France's `v1/vision/rain` data
-- **Current weather / probabilities:** `tab5_maj_meteo_actuelle` (condition, temperature, humidity) and `tab5_maj_probabilites` (UV, frost, snow)
-- **Climate state:** dedicated fast-path automation `tab5_ha_hmi_clim_push` (no delay, `mode: restart`) — `tab5_maj_clim` (target, current, mode, preset, fan, swing)
-- **Shutter state:** `tab5_maj_volet_etat` — also arms the device-local “Stop” wake word while the shutter moves
+- **Current weather / probabilities:** `tab5_maj_meteo_actuelle` (condition, temperature, humidity) and `tab5_maj_probabilites` (UV, frost, snow) — when they change (`tab5_ha_hmi_meteo_push`) and on (re)connection, script `tab5_push_meteo`
+- **Climate state:** dedicated fast-path automation `tab5_ha_hmi_clim_push` (no delay, `mode: restart`) and on (re)connection — `tab5_maj_clim` (target, current, mode, preset, fan, swing), script `tab5_push_clim`
+- **Shutter state:** `tab5_maj_volet_etat` when the helpers change (`tab5_volet_updater`) and on (re)connection, script `tab5_push_volet` — also arms the device-local “Stop” wake word while the shutter moves
 - **Info banner:** `tab5_maj_info_texte` (text, colour, dismiss id) — 3-day calendar recap or a weather-alert banner
 - **Météo-France vigilance:** `tab5_maj_alerte_meteo_france` — a single 11-field `|`-delimited payload
 - **HA alert queue:** `tab5_maj_alertes_ha_bulk` — up to 4 banners in the central rotator (see `packages/tab5_alerts.yaml`)
 
 Room temperatures, humidity, light states and plant moisture do **not** go through these services: they are “mirror” entities (`platform: homeassistant` in `Tab5/tab5-sensors-domotique.yaml`), which HA syncs automatically — nothing to write on the HA side.
+
+**No periodic re-push of unchanged state (2026-09-26):** current weather, probabilities, climate and shutter used to be re-sent every 10 min on top of their on-change pushes (576 calls a day, each one repainted by the device). The full push now sends them only on (re)connection and when `input_boolean.is_primary_active` comes back `on`.
 
 **Traffic pacing:** the automation uses `delay: 1s` between each push block and `delay: 150ms` within forecast loops. This prevents multiple large payloads from overwhelming the ESP32-P4's TCP socket buffer simultaneously with the active I2S audio stream.
 
@@ -40,7 +42,9 @@ Room temperatures, humidity, light states and plant moisture do **not** go throu
 ### `scripts_examples.yaml`
 Scripts called **by** the Tab5 (from a `homeassistant.service:` in `Tab5/tab5-api-logic.yaml` or an LVGL `on_short_click:`), not the other way round. Simple pass-through — it keeps the ESPHome code thin and the logic on the HA side where it belongs.
 
-Currently just `allumer_leds`. **`tab5_volet_action` used to live here too and was moved to `packages/volet_serre_tracking.yaml`**: this file merges at the root while the package loads via `!include_dir_named packages`, and the install docs ask for both — so you ended up with two definitions of one script id and mismatched helper names, last one loaded winning without any HA warning. The package now owns the script *and* the two helpers it depends on.
+Also the **push scripts** `tab5_push_alertes` (sections 1, 7 and 7b: Météo-France vigilance, info banner, HA alert rotator — updates, `problem` sensors and the unavailable count are read once per run), `tab5_push_meteo`, `tab5_push_clim` and `tab5_push_volet`. These are called *by the automations*, not by the Tab5: each block exists once instead of being copied into the full push and into its on-change automation.
+
+Pass-through scripts: just `allumer_leds`. **`tab5_volet_action` used to live here too and was moved to `packages/volet_serre_tracking.yaml`**: this file merges at the root while the package loads via `!include_dir_named packages`, and the install docs ask for both — so you ended up with two definitions of one script id and mismatched helper names, last one loaded winning without any HA warning. The package now owns the script *and* the two helpers it depends on.
 
 ---
 
@@ -105,9 +109,9 @@ Edit the two calendar entity IDs at the top of each `calendar.get_events` call t
 ---
 
 ### `packages/tab5_alerts.yaml`
-Backend of the **HA alert queue** — panels 4 to 7 of the central rotating card. Provides the `input_text.tab5_alerts_dismissed` helper (the dismiss list), the `tab5_dismiss_alert` script the device calls when you tap a banner, and the automation that builds the `tab5_maj_alertes_ha_bulk` payload (max 4 banners, already-dismissed ids filtered out).
+Backend of the **HA alert queue** — panels 4 to 7 of the central rotating card. Provides the `input_text.tab5_alerts_dismissed` helper (the dismiss list), the `tab5_dismiss_alert` script the device calls when you tap a banner or the info panel, the `sensor.tab5_unavailable_count` counter and a nightly cleanup of stale ids. The `tab5_maj_alertes_ha_bulk` payload itself (max 4 banners, already-dismissed ids filtered out) is built by the `tab5_push_alertes` script.
 
-After a dismiss, the refresh comes from the light push automation (`tab5_ha_hmi_alerts_push` in `automations_examples.yaml.example`): it triggers on `input_text.tab5_alerts_dismissed` and re-pushes sections 1, 7 and 7b filtered by the dismiss list. The two scripts no longer trigger the full push automation (they did until 2026-09-08 — a second, heavy push for nothing).
+After a dismiss, the refresh comes from the light push automation (`tab5_ha_hmi_alerts_push` in `automations_examples.yaml.example`): it triggers on `input_text.tab5_alerts_dismissed` and re-pushes sections 1, 7 and 7b filtered by the dismiss list. The dismiss script no longer triggers the full push automation (it did until 2026-09-08 — a second, heavy push for nothing). Removed on 2026-09-26 for lack of callers: the `tab5_dismiss_info_panel` script and the automation listening to `esphome.tab5_alert_dismiss`, an event the firmware never fires.
 
 Tapping a banner on screen removes it immediately and stores its id here, so a re-push of the same id stays hidden until HA sends a new one. `snippets/tab5_alerts_dismissed_input_text.yaml` is the same helper on its own, if you prefer declaring it in your existing `input_text:` block instead of loading the whole package.
 
@@ -195,20 +199,22 @@ Ce sont des **fichiers d'exemple** — ils reflètent le setup Home Assistant de
 ## Fichiers
 
 ### `automations_examples.yaml.example`
-L'automatisation push principale, avec des noms d'entités placeholder. Déclenchée par les changements d'état dans Home Assistant, elle pousse les données vers le Tab5 via des appels de service ESPHome natifs. C'est le fichier par lequel commencer.
+Les automatisations de poussée, avec des noms d'entités placeholder. Elles poussent les données vers le Tab5 via des appels de service ESPHome natifs ; les blocs envoyés par plusieurs automatisations n'existent qu'une fois, dans les scripts `tab5_push_*` de `scripts_examples.yaml` (installer les deux). C'est le fichier par lequel commencer.
 
 Ce qu'elle pousse :
-- **Prévisions journalières (15 jours) :** sur changement d'état de l'entité météo — sérialise 15 × (index, libellé jour, condition, min, max, drapeaux week-end/férié, heures de travail) en chaîne délimitée `|`/`;` vers `tab5_maj_previsions_jours_bulk`
-- **Prévisions horaires (15 créneaux) :** trois chunks de 5 via `tab5_maj_previsions_heures_bulk`
+- **Prévisions journalières (15 jours) :** toutes les 10 min, au changement du calendrier et à la (re)connexion — sérialise 15 × (index, libellé jour, condition, min, max, drapeaux week-end/férié, heures de travail) en chaîne délimitée `|`/`;` vers `tab5_maj_previsions_jours_bulk`
+- **Prévisions horaires (10 créneaux) :** deux chunks de 5 via `tab5_maj_previsions_heures_bulk` (l'écran a deux pages horaires)
 - **Graphe de pluie court terme :** sur changement de `sensor.*_next_rain` — **9** barres en **un** appel (`tab5_maj_pluie_1h_bulk`, payload `idx|intensité;…`, index 0–8 = 0/5/10/…/55 min) construites depuis `v1/vision/rain` de Météo-France
-- **Météo actuelle / probabilités :** `tab5_maj_meteo_actuelle` (condition, température, humidité) et `tab5_maj_probabilites` (UV, gel, neige)
-- **État climatisation :** automation dédiée à faible latence `tab5_ha_hmi_clim_push` (sans delay, `mode: restart`) — `tab5_maj_clim` (cible, actuelle, mode, preset, ventilation, oscillation)
-- **État volet :** `tab5_maj_volet_etat` — arme aussi le wake word local « Stop » pendant le mouvement
+- **Météo actuelle / probabilités :** `tab5_maj_meteo_actuelle` (condition, température, humidité) et `tab5_maj_probabilites` (UV, gel, neige) — au changement (`tab5_ha_hmi_meteo_push`) et à la (re)connexion, script `tab5_push_meteo`
+- **État climatisation :** automation dédiée à faible latence `tab5_ha_hmi_clim_push` (sans delay, `mode: restart`) et à la (re)connexion — `tab5_maj_clim` (cible, actuelle, mode, preset, ventilation, oscillation), script `tab5_push_clim`
+- **État volet :** `tab5_maj_volet_etat` au changement des helpers (`tab5_volet_updater`) et à la (re)connexion, script `tab5_push_volet` — arme aussi le wake word local « Stop » pendant le mouvement
 - **Bandeau info :** `tab5_maj_info_texte` (texte, couleur, id de dismiss) — récap calendrier 3 jours ou bannière d'alerte météo
 - **Vigilance Météo-France :** `tab5_maj_alerte_meteo_france` — un seul payload à 11 champs délimités `|`
 - **File d'alertes HA :** `tab5_maj_alertes_ha_bulk` — jusqu'à 4 bandeaux dans le rotateur central (voir `packages/tab5_alerts.yaml`)
 
 Les températures/humidités des pièces, les états de lumière et l'humidité des plantes ne passent **pas** par ces services : ce sont des entités « miroir » (`platform: homeassistant` dans `Tab5/tab5-sensors-domotique.yaml`), synchronisées automatiquement par HA — rien à écrire côté HA.
+
+**Plus de renvoi périodique d'un état inchangé (26/09/2026) :** météo actuelle, probabilités, clim et volet repartaient toutes les 10 min en plus de leurs poussées au changement (576 appels par jour, chacun repeint par l'appareil). La poussée complète ne les envoie plus qu'à la (re)connexion et au retour à `on` de `input_boolean.is_primary_active`.
 
 **Traffic pacing :** l'automatisation utilise `delay: 1s` entre chaque bloc push et `delay: 150ms` dans les boucles de prévisions. Cela empêche plusieurs gros payloads de saturer le buffer de sockets TCP de l'ESP32-P4 simultanément avec le flux audio I2S actif.
 
@@ -217,7 +223,9 @@ Les températures/humidités des pièces, les états de lumière et l'humidité 
 ### `scripts_examples.yaml`
 Scripts appelés **par** le Tab5 (depuis un `homeassistant.service:` de `Tab5/tab5-api-logic.yaml` ou un `on_short_click:` LVGL), et pas l'inverse. Pass-through simple — ça garde le code ESPHome léger et la logique côté HA où est sa place.
 
-Aujourd'hui, il ne contient que `allumer_leds`. **`tab5_volet_action` y vivait aussi et a été déplacé dans `packages/volet_serre_tracking.yaml`** : ce fichier se fusionne à la racine tandis que le package se charge via `!include_dir_named packages`, et la doc d'installation demande les deux — on obtenait donc deux définitions du même script id avec des helpers incohérents, le dernier chargé gagnant sans le moindre avertissement HA. Le package porte désormais le script **et** les deux helpers dont il dépend.
+Il contient aussi les **scripts de poussée** `tab5_push_alertes` (sections 1, 7 et 7b : vigilance Météo-France, bandeau info, rotateur d'alertes HA — MAJ, capteurs `problem` et compte d'indisponibles relevés une fois par passage), `tab5_push_meteo`, `tab5_push_clim` et `tab5_push_volet`. Ceux-là sont appelés *par les automatisations*, pas par le Tab5 : chaque bloc n'existe qu'une fois au lieu d'être recopié dans la poussée complète et dans son automatisation au changement.
+
+Scripts pass-through : seulement `allumer_leds`. **`tab5_volet_action` y vivait aussi et a été déplacé dans `packages/volet_serre_tracking.yaml`** : ce fichier se fusionne à la racine tandis que le package se charge via `!include_dir_named packages`, et la doc d'installation demande les deux — on obtenait donc deux définitions du même script id avec des helpers incohérents, le dernier chargé gagnant sans le moindre avertissement HA. Le package porte désormais le script **et** les deux helpers dont il dépend.
 
 ---
 
@@ -282,9 +290,9 @@ Adaptez les deux IDs de calendrier en tête de chaque `calendar.get_events` aux 
 ---
 
 ### `packages/tab5_alerts.yaml`
-Backend de la **file d'alertes HA** — panneaux 4 à 7 de la carte centrale rotative. Fournit le helper `input_text.tab5_alerts_dismissed` (liste de dismiss), le script `tab5_dismiss_alert` que l'appareil appelle au tap sur un bandeau, et l'automatisation qui construit le payload `tab5_maj_alertes_ha_bulk` (4 bandeaux max, ids déjà masqués filtrés).
+Backend de la **file d'alertes HA** — panneaux 4 à 7 de la carte centrale rotative. Fournit le helper `input_text.tab5_alerts_dismissed` (liste de dismiss), le script `tab5_dismiss_alert` que l'appareil appelle au tap sur un bandeau ou sur le panneau info, le compteur `sensor.tab5_unavailable_count` et une purge nocturne des ids périmés. Le payload `tab5_maj_alertes_ha_bulk` lui-même (4 bandeaux max, ids déjà masqués filtrés) est construit par le script `tab5_push_alertes`.
 
-Après un acquittement, le rafraîchissement vient de l'automation « push léger » (`tab5_ha_hmi_alerts_push` dans `automations_examples.yaml.example`) : elle se déclenche sur `input_text.tab5_alerts_dismissed` et repousse les sections 1, 7 et 7b filtrées par la liste. Les deux scripts ne déclenchent plus l'automation de push complète (ils le faisaient jusqu'au 08/09/2026 — un second push, lourd, pour rien).
+Après un acquittement, le rafraîchissement vient de l'automation « push léger » (`tab5_ha_hmi_alerts_push` dans `automations_examples.yaml.example`) : elle se déclenche sur `input_text.tab5_alerts_dismissed` et repousse les sections 1, 7 et 7b filtrées par la liste. Le script d'acquittement ne déclenche plus l'automation de push complète (il le faisait jusqu'au 08/09/2026 — un second push, lourd, pour rien). Retirés le 26/09/2026 faute d'appelant : le script `tab5_dismiss_info_panel` et l'automation qui écoutait `esphome.tab5_alert_dismiss`, un événement que le firmware n'émet jamais.
 
 Un tap sur un bandeau le retire tout de suite et mémorise son id ici : un re-push du même id reste masqué tant que HA n'envoie pas un id différent. `snippets/tab5_alerts_dismissed_input_text.yaml` contient le helper seul, si vous préférez le déclarer dans votre bloc `input_text:` existant plutôt que charger tout le package.
 

@@ -4,6 +4,40 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Home Assistant : scripts de poussée, plus de renvoi d'un état inchangé
+
+Lot 2 de l'audit des ressources du 26/09/2026. Déployé sur le HA de production le jour
+même. Seul le firmware change pour Draw Max.
+
+- **Scripts de poussée** `tab5_push_alertes`, `tab5_push_meteo`, `tab5_push_clim` et
+  `tab5_push_volet` (`scripts_examples.yaml`). Chaque bloc n'existe qu'une fois, au lieu
+  d'être recopié dans la poussée complète et dans son automatisation au changement :
+  l'exemple public passe de 649 à 426 lignes.
+  - `tab5_push_alertes` relève les MAJ, les capteurs « problem » et le compte
+    d'indisponibles une fois par passage (trois parcours de `states` auparavant).
+  - Sorties identiques sur 2 880 scénarios comparés dans HA.
+- **Plus de renvoi toutes les 10 min** de la météo actuelle, des probabilités, de la clim
+  et du volet, déjà poussés au changement. Ils ne partent plus qu'à la (re)connexion du
+  Tab5 et au retour à `on` de `is_primary_active` (nouveau déclencheur `resync`) :
+  576 appels par jour en moins, chacun repeint par l'appareil. La poussée complète dure
+  4,1 s au lieu de 7,6 s.
+- **Météo au changement** : nouvelle automatisation `tab5_ha_hmi_meteo_push`
+  (condition, température, humidité, UV / gel / neige). Avant, la carte météo n'avait
+  pas d'autre source que le cycle de 10 min.
+- **Code mort retiré** de `packages/tab5_alerts.yaml` :
+  - l'automatisation qui écoutait `esphome.tab5_alert_dismiss`, un événement que le
+    firmware n'émet pas (dernier passage le 16/07/2026) ;
+  - le script `tab5_dismiss_info_panel`, sans appelant.
+- **Firmware** : « Tab5 Draw Max » passe en `internal: true`. La campagne de mesure est
+  close, et le capteur faisait ≈ 1 500 lignes par jour en base. Il reste dans les logs.
+- **Corrigé en production au passage** :
+  - la vigilance lisait un attribut Météo-France `Crues` qui n'existe plus
+    (`Inondation`), donc une vigilance inondation n'arrivait jamais sur l'écran ;
+  - le bandeau affichait « Vigilance Jaune - … » ou « Vigilance Jaune · … » selon
+    l'automatisation ;
+  - l'automatisation de suivi du volet se réveillait à chaque `call_service` de HA :
+    elle filtre désormais `domain: cover` dans son déclencheur.
+
 ### 2026-09-26 — Moins de travail permanent : I²C, repeints à l'identique, base HA
 
 Lot 3 de l'audit des ressources du 26/09/2026. Rien ne change à l'écran ni dans les
