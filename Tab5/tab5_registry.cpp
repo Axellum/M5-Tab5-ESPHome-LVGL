@@ -30,8 +30,9 @@ static const char* const TAG = "TAB5";
 namespace GameRegistry {
 
 // Ordre = ordre de fermeture ET ordre de priorité du libellé HA.
-// `imu_fast` : « Roi Noir », « Dames Tab » et « Go Tab » n'utilisent l'IMU que
-// pour détecter une secousse franche (demande d'indice), fiable à 10 Hz —
+// `imu_fast` : « Roi Noir », « Dames Tab », « Go Tab » et « Trial Poursuite »
+// n'utilisent l'IMU que pour détecter une secousse franche (indice, lancer du dé ;
+// Trial Poursuite passé à false le 26/09/2026, audit lot 3), fiable à 10 Hz —
 // inutile de payer 30 Hz pendant une partie qui peut durer une demi-heure.
 // « Neon Apron » est en cadence rapide : un nudge est une secousse de ~150 ms,
 // à 10 Hz on n'en verrait qu'un échantillon sur deux.
@@ -40,7 +41,7 @@ static const Entry kGames[] = {
     {"Arcanoïde",       Arkanoid::is_open, Arkanoid::close, Arkanoid::on_imu, true},
     {"Coureur d'Or",    Lode::is_open,     Lode::close,     Lode::on_imu,     true},
     {"Go Tab",          Go::is_open,       Go::close,       Go::on_imu,       false},
-    {"Trial Poursuite", Trivia::is_open,   Trivia::close,   Trivia::on_imu,   true},
+    {"Trial Poursuite", Trivia::is_open,   Trivia::close,   Trivia::on_imu,   false},
     {"Dames Tab",       Draughts::is_open, Draughts::close, Draughts::on_imu, false},
     {"Roi Noir",        Chess::is_open,    Chess::close,    Chess::on_imu,    false},
     // EN DERNIER : sa fermeture restaure la rotation 270 du dashboard. Si un

@@ -9,7 +9,32 @@
  */
 #pragma once
 #include "tab5_custom.h"
+#include <cstring>
 #include <string>
+
+// --- Écritures conditionnelles (audit du 26/09/2026, lot 3) ---
+// En LVGL 9.5, lv_label_set_text() libère et réalloue le texte puis invalide le label
+// même à texte identique (lv_label.c), et tout lv_obj_set_style_*() invalide l'objet
+// (lv_obj_style.c) : un repaint pour rien à chaque capteur, interval ou push inchangé.
+// Ces deux helpers comparent d'abord (mêmes gardes nulles que les appels remplacés).
+inline void ui_text(lv_obj_t* label, const char* txt) {
+    if (label == nullptr || txt == nullptr) return;
+    const char* cur = lv_label_get_text(label);
+    if (cur != nullptr && strcmp(cur, txt) == 0) return;
+    lv_label_set_text(label, txt);
+}
+// Couleur de texte locale (partie principale, état par défaut, comme les
+// lv_obj_set_style_text_color(o, …, LV_PART_MAIN) qu'il remplace).
+inline void ui_text_color(lv_obj_t* obj, uint32_t hex) {
+    if (obj == nullptr) return;
+    const lv_color_t want = lv_color_hex(hex);
+    lv_style_value_t cur;
+    if (lv_obj_get_local_style_prop(obj, LV_STYLE_TEXT_COLOR, &cur, LV_PART_MAIN) == LV_STYLE_RES_FOUND &&
+        lv_color_eq(cur.color, want)) {
+        return;
+    }
+    lv_obj_set_style_text_color(obj, want, LV_PART_MAIN);
+}
 
 // --- tab5_text.cpp ---
 // Normalise un texte venu de HA (Latin-1 / mojibake) en UTF-8 valide pour LVGL.

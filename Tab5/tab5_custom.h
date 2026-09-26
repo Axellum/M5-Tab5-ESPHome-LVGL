@@ -257,8 +257,10 @@ struct HaAlertSlotUI {
     std::string* id_store;
 };
 
+// La police des bandeaux est celle du YAML (ha_alert_panel.yaml, roboto_45_b) :
+// la reposer à chaque push relançait la mise en page pour rien (audit 26/09, lot 3).
 void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI slots[4],
-    CentralPanelCtx& ctx, esphome::font::Font* font, std::string& dismissed_local);
+    CentralPanelCtx& ctx, std::string& dismissed_local);
 
 // Masquage immédiat au tap (feedback visuel avant le round-trip HA).
 void dismiss_central_info_immediate(lv_obj_t* lbl_info, CentralPanelCtx& ctx);

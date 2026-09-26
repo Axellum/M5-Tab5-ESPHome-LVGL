@@ -45,12 +45,26 @@ switch:
       - lambda: 'assist_wake_word_indicator_ui(id(lbl_ok_nabu), false);'
 
 binary_sensor:
+  # Prise casque (tuile « Jack casque » du tableau de bord HA). pi4ioe1 n'a pas de
+  # broche d'interruption : ESPHome relisait l'expander en I²C à CHAQUE tour de
+  # boucle (≈ 60 lectures/s sur bsp_bus, partagé avec le tactile, l'IMU et
+  # l'horloge). L'interval plus bas coupe cette boucle et lit la prise une fois par
+  # seconde (audit du 26/09/2026, lot 3) ; seul un changement est publié.
   - platform: gpio
     id: headphone_detect
     name: "Headphone Detect"
     pin:
       pi4ioe5v6408: pi4ioe1
       number: 7
+
+interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          // disable_loop() / loop() sont publics (esphome/core/component.h) :
+          // GPIOBinarySensor::loop() lit la broche et publie si elle a changé.
+          id(headphone_detect)->disable_loop();
+          id(headphone_detect)->loop();
 
 text_sensor:
   - platform: homeassistant

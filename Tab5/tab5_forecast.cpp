@@ -247,13 +247,18 @@ void parse_and_update_jours_bulk(const std::string& payload) {
 static char s_day_icon_cond[5][20] = {};
 static char s_hour_icon_cond[5][20] = {};
 
-// true = l'icone change ET ce n'est pas le tout premier remplissage
-// (au boot les 5 tuiles se peignent d'un coup : pas d'animation).
-static bool icon_cond_changed(char* cache, const std::string& cond) {
-    if (strncmp(cache, cond.c_str(), sizeof(s_day_icon_cond[0]) - 1) == 0) return false;
+// SAME = la tuile affiche deja cette condition : rien a repeindre (update_meteo_icon
+// ne depend que de la condition ; audit du 26/09/2026, lot 3 — avant, les 5 tuiles
+// etaient repeintes a chaque rafraichissement, 3 ecritures sur 5 relancant la mise
+// en page). FIRST = premier remplissage (au boot les 5 tuiles se peignent d'un coup :
+// pas d'animation). CHANGED = nouvelle condition : peinture + rouleau.
+enum class IconCond : uint8_t { SAME, FIRST, CHANGED };
+static IconCond icon_cond_update(char* cache, const std::string& cond) {
+    if (cache[0] != '\0' && strncmp(cache, cond.c_str(), sizeof(s_day_icon_cond[0]) - 1) == 0)
+        return IconCond::SAME;
     const bool first = (cache[0] == '\0');
     snprintf(cache, sizeof(s_day_icon_cond[0]), "%s", cond.c_str());
-    return !first;
+    return first ? IconCond::FIRST : IconCond::CHANGED;
 }
 
 void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
@@ -271,9 +276,9 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
         // Titre : page accueil (0) = nom_jour HA ; pages 2-3 = "Lun 16" via SNTP
         if (page_index > 0) {
             std::string date_lbl = format_short_day_label(jour);
-            lv_label_set_text(slot.day_lbl, date_lbl.empty() ? data.nom_jour.c_str() : date_lbl.c_str());
+            ui_text(slot.day_lbl, date_lbl.empty() ? data.nom_jour.c_str() : date_lbl.c_str());
         } else {
-            lv_label_set_text(slot.day_lbl, data.nom_jour.c_str());
+            ui_text(slot.day_lbl, data.nom_jour.c_str());
         }
 
         lv_obj_clear_flag(slot.max_lbl, LV_OBJ_FLAG_HIDDEN);
@@ -288,13 +293,13 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
         char buftx[64]; snprintf(buftx, sizeof(buftx), "#%06x %.0f# / ", (unsigned) cmax, data.tmax);
         char buftn[64]; snprintf(buftn, sizeof(buftn), " #%06x %.0f# \xC2\xB0", (unsigned) cmin, data.tmin);
 
-        lv_label_set_text(slot.max_lbl, data.est_passe ? "-- / " : buftx);
-        lv_label_set_text(slot.min_lbl, data.est_passe ? "-- \xC2\xB0" : buftn);
-        const bool icon_rolls = icon_cond_changed(s_day_icon_cond[i], data.condition);
-        update_meteo_icon(slot.icon_l1, slot.icon_l2, data.condition, f_card, f_card_s);
+        ui_text(slot.max_lbl, data.est_passe ? "-- / " : buftx);
+        ui_text(slot.min_lbl, data.est_passe ? "-- \xC2\xB0" : buftn);
+        const IconCond ic = icon_cond_update(s_day_icon_cond[i], data.condition);
+        if (ic != IconCond::SAME) update_meteo_icon(slot.icon_l1, slot.icon_l2, data.condition, f_card, f_card_s);
         // Rouleau echelonne de gauche a droite (effet vague) — apres
         // update_meteo_icon() qui pose le glyphe et son offset de base.
-        if (icon_rolls) animate_icon_roll_in(slot.icon_l1, slot.icon_l2, i * UIAnim::ROLL_STAGGER);
+        if (ic == IconCond::CHANGED) animate_icon_roll_in(slot.icon_l1, slot.icon_l2, i * UIAnim::ROLL_STAGGER);
 
         // Coloring day names
         uint8_t opa = data.est_passe ? 100 : 255;
@@ -307,7 +312,7 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
         else if (is_early) col = UIColor::EARLY;                                         // Embauche < 9h : orange
         if (data.est_passe) col = UIColor::PAST;                                         // Jour passe : ardoise estompee
 
-        lv_obj_set_style_text_color(slot.day_lbl, lv_color_hex(col), LV_PART_MAIN);
+        ui_text_color(slot.day_lbl, col);
         lv_obj_set_style_text_opa(slot.day_lbl, opa, LV_PART_MAIN);
         lv_obj_set_style_text_opa(slot.icon_l1, opa, LV_PART_MAIN);
         lv_obj_set_style_text_opa(slot.icon_l2, opa, LV_PART_MAIN);
@@ -316,8 +321,8 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
         
         lv_label_set_recolor(slot.max_lbl, true);
         lv_label_set_recolor(slot.min_lbl, true);
-        lv_obj_set_style_text_color(slot.max_lbl, lv_color_hex(UIColor::TEXT_PRIMARY), LV_PART_MAIN);
-        lv_obj_set_style_text_color(slot.min_lbl, lv_color_hex(UIColor::TEXT_PRIMARY), LV_PART_MAIN);
+        ui_text_color(slot.max_lbl, UIColor::TEXT_PRIMARY);
+        ui_text_color(slot.min_lbl, UIColor::TEXT_PRIMARY);
 
         // Show/hide action elements depending on page_index (only show actions on page 0)
         if (slot.action_btn) {
@@ -349,26 +354,26 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
 
         HourForecastData& data = cal_heures_data[idx];
 
-        lv_label_set_text(slot.time_lbl, data.heure_texte.c_str());
+        ui_text(slot.time_lbl, data.heure_texte.c_str());
         
         uint32_t c_t = get_temperature_color(data.temp);
         char b_t[32]; snprintf(b_t, sizeof(b_t), "#%06x %.0f#\xC2\xB0", (unsigned) c_t, data.temp);  // cf. -Wformat plus haut
-        lv_label_set_text(slot.temp_lbl, b_t);
+        ui_text(slot.temp_lbl, b_t);
         lv_label_set_recolor(slot.temp_lbl, true);
-        lv_obj_set_style_text_color(slot.temp_lbl, lv_color_hex(UIColor::TEXT_PRIMARY), LV_PART_MAIN);
+        ui_text_color(slot.temp_lbl, UIColor::TEXT_PRIMARY);
 
         char b_p[32];
         if (data.pluvio > 0) {
             snprintf(b_p, sizeof(b_p), "%.1fmm", data.pluvio);
-            lv_label_set_text(slot.prob_lbl, b_p);
-            lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(UIColor::METEO_PRECIP), LV_PART_MAIN);
+            ui_text(slot.prob_lbl, b_p);
+            ui_text_color(slot.prob_lbl, UIColor::METEO_PRECIP);
         } else {
-            lv_label_set_text(slot.prob_lbl, "-");
-            lv_obj_set_style_text_color(slot.prob_lbl, lv_color_hex(UIColor::CLIM_TRACK_INACTIVE), LV_PART_MAIN);
+            ui_text(slot.prob_lbl, "-");
+            ui_text_color(slot.prob_lbl, UIColor::CLIM_TRACK_INACTIVE);
         }
 
-        const bool icon_rolls = icon_cond_changed(s_hour_icon_cond[i], data.condition);
-        update_meteo_icon(slot.icon_l1, slot.icon_l2, data.condition, f_card, f_card_s);
-        if (icon_rolls) animate_icon_roll_in(slot.icon_l1, slot.icon_l2, i * UIAnim::ROLL_STAGGER);
+        const IconCond ic = icon_cond_update(s_hour_icon_cond[i], data.condition);
+        if (ic != IconCond::SAME) update_meteo_icon(slot.icon_l1, slot.icon_l2, data.condition, f_card, f_card_s);
+        if (ic == IconCond::CHANGED) animate_icon_roll_in(slot.icon_l1, slot.icon_l2, i * UIAnim::ROLL_STAGGER);
     }
 }

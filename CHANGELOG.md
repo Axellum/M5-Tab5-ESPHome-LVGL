@@ -4,6 +4,40 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Moins de travail permanent : I²C, repeints à l'identique, base HA
+
+Lot 3 de l'audit des ressources du 26/09/2026. Rien ne change à l'écran ni dans les
+entités HA ; les tuiles du tableau de bord « Accueil » (vue Tab5) restent alimentées.
+
+- **Prise casque** (`Headphone Detect`) : l'expander `pi4ioe1` n'a pas de broche
+  d'interruption, donc ESPHome le relisait en I²C à chaque tour de boucle (≈ 60 fois/s sur
+  `bsp_bus`). La lecture se fait désormais une fois par seconde, par un `interval` qui
+  coupe la boucle du capteur et l'appelle lui-même.
+- **IMU** : cadence de lecture adaptée à l'usage.
+  - 1 s écran allumé sans jeu, contre 100 ms avant ;
+  - 100 ms écran éteint avec tap-to-wake, ou jeu ouvert ;
+  - 33 ms pour un jeu piloté à l'inclinaison.
+
+  Trial Poursuite ne demande plus 30 Hz pour une simple secousse (`imu_fast` à `false`).
+- **Écritures LVGL conditionnelles** : nouveaux helpers `ui_text()` et `ui_text_color()`
+  dans `tab5_internal.h`. En LVGL 9.5, `lv_label_set_text()` et `lv_obj_set_style_*()`
+  invalident l'objet même à valeur identique. Ils sont appliqués aux endroits suivants :
+  - icônes d'état, dont l'icône Wi-Fi repeinte toutes les 5 s ;
+  - cartes lumière, clim, plantes et températures, et popup des pots ;
+  - console système, date sous l'horloge (chaque minute) ;
+  - textes des tuiles de prévisions.
+- **Icônes météo** : une tuile dont la condition n'a pas changé n'est plus repeinte
+  (`icon_cond_update()` : SAME / FIRST / CHANGED). La police des bandeaux d'alertes HA
+  n'est plus reposée à chaque push, puisque c'est celle du YAML.
+- **Publications vers HA** :
+  - tangage, roulis, température IMU et signal Wi-Fi : publiés sur variation réelle
+    (2°, 0,5 °C, 2 dB), et au moins toutes les 15 min ;
+  - « Prochain réveil » et « Prochain rendez-vous » : publiés seulement s'ils changent ;
+  - « Volume » : n'est plus relu chaque minute (déjà publié à chaque changement).
+
+  Estimation : ≈ 5 000 lignes par jour de moins dans la base HA et ≈ 4 300 messages API
+  par jour.
+
 ### 2026-09-26 — Jeux : plus aucune mémoire réservée quand ils sont fermés
 
 Lot 4 de l'audit des ressources du 26/09/2026. Décision d'Axel : « pas de réserve mémoire
