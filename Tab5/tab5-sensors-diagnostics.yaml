@@ -294,9 +294,9 @@ interval:
             ESP_LOGW("tab5.rtc", "Horloge RX8130 illisible ou pas encore réglée : attente de NTP");
           }
 
-  # Journal des démarrages et des coupures (Tab5/tab5_journal.cpp) : après 2 min sans
-  # Home Assistant, une copie en NVS pour survivre à une coupure de courant (au plus
-  # une toutes les 15 min, seulement s'il y a du nouveau). Rien à faire HA connecté.
+  # Journal des démarrages et des coupures (Tab5/tab5_journal.cpp) : quand le Wi-Fi
+  # manque depuis 90 s, une copie en NVS pour survivre à une coupure de courant (au plus
+  # une toutes les 15 min, seulement s'il y a du nouveau). Rien à faire Wi-Fi présent.
   - interval: 30s
     then:
       - lambda: 'journal_tick();'
@@ -329,7 +329,8 @@ interval:
 # Envoi du journal des démarrages et des coupures (Tab5/tab5_journal.cpp), lancé à
 # chaque connexion de Home Assistant (on_client_connected, tab5-api-logic.yaml).
 # 10 s : laisser HA finir ses abonnements (états, services, logs). Événement seulement
-# si le journal contient autre chose qu'un démarrage normal ; côté HA, la garde (e) de
+# si quelque chose le justifie (journal_has_report(), bits `anomalie` de
+# tab5_journal.cpp) : jamais pour un démarrage normal. Côté HA, la garde (e) de
 # packages/tab5_health.yaml en fait une notification. Journal vidé une fois HA joint.
 script:
   - id: tab5_journal_envoi

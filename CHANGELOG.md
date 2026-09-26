@@ -4,6 +4,32 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Journal des démarrages : plus de fausse alerte à chaque démarrage
+
+Constaté au flash de la PR précédente (26/09, 22:23). Un démarrage normal a été
+signalé comme grave, avec une notification sur le téléphone. Deux lignes attendues à
+chaque démarrage l'expliquent :
+
+- `E (3974) H_API: ESP-Hosted link not yet up`, une « erreur » d'ESP-IDF écrite avant
+  que le lien avec le C6 soit monté ;
+- les drapeaux d'état d'ESPHome (« waiting for client connection », « scanning for
+  networks », puis « cleared ») et « Touch Polling Stopped ».
+
+- **La règle juge le résultat, plus chaque ligne.** Les lignes écrites avant la
+  première connexion à HA restent dans le journal, mais seulement comme contexte. Un
+  envoi part pour :
+  - un reset anormal ou un rapport de plantage — grave ;
+  - un Wi-Fi absent 90 s ou plus — grave ;
+  - un démarrage qui n'a jamais joint HA ;
+  - une erreur (ESPHome ou ESP-IDF) après la connexion à HA ;
+  - HA joint plus de 90 s après le démarrage.
+- **Une absence de HA avec Wi-Fi présent** (HA qui redémarre, maintenance) ne déclenche
+  plus rien.
+- **La copie NVS part quand le Wi-Fi manque depuis 90 s**, et non plus après 2 min
+  sans HA : aucune écriture flash pendant un redémarrage de HA.
+- **Mesures** : image +512 o, RAM inchangée, aucun nouvel avertissement. Le
+  `config_hash` ne bouge pas (seul le C++ change) : binaire identifié par son empreinte.
+
 ### 2026-09-26 — Communauté : code de conduite, sécurité, formulaires d'issues, README réorganisé, révisions du Tab5
 
 Demande d'Axel : que le projet soit « à la hauteur des meilleurs, voire au-dessus ». Premier
@@ -33,6 +59,7 @@ firmware ni de configuration Home Assistant.
 - **Corrigé en passant** : `docs/hardware.md` citait encore le pilote tactile maison
   `my_components/st7123`, retiré le 06/07/2026 au profit de la plateforme officielle d'ESPHome
   2026.7 ; CONTRIBUTING (FR) disait « Merci d'intéresser ».
+
 
 ### 2026-09-26 — Journal des démarrages et des coupures : plantages et lien Wi-Fi (C6) analysables après coup
 

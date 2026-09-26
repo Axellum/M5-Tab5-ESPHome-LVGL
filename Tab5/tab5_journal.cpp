@@ -9,11 +9,15 @@
  *         ESP-Hosted du C6) arrivent sous l'étiquette « esp-idf ».
  *       - Les lignes vivent en `.noinit` : elles survivent à un redémarrage logiciel,
  *         à un plantage, à un chien de garde et au reset par l'USB, pas à une coupure
- *         de courant. D'où `journal_tick()` (toutes les 30 s) : après 2 min sans HA,
- *         une copie part en NVS, relue au démarrage suivant si la RAM a été perdue.
+ *         de courant. D'où `journal_tick()` (toutes les 30 s) : quand le Wi-Fi manque
+ *         depuis 90 s, une copie part en NVS, relue au démarrage suivant si la RAM a
+ *         été perdue.
  *       - À la reconnexion de HA, le script `tab5_journal_envoi` envoie l'événement
- *         `esphome.tab5_journal` si le journal contient autre chose qu'un démarrage
- *         normal, puis `journal_mark_delivered()` le vide.
+ *         `esphome.tab5_journal` si quelque chose le justifie (bits `anomalie`, plus
+ *         bas), puis `journal_mark_delivered()` le vide. Les lignes écrites avant la
+ *         première connexion à HA ne sont que du contexte : au démarrage, le lien
+ *         ESP-Hosted « not yet up » et les drapeaux d'état d'ESPHome sont normaux
+ *         (fausse alerte au flash du 26/09/2026, 22:23).
  *       Le rapport de plantage d'ESPHome (étiquette « esp32.crash », PC et pile
  *       d'appels des deux cœurs) est écrit au démarrage : il entre dans le journal.
  * @regle_absolue Aucun log ici : `journal_log_message()` est appelée PAR le logger,
@@ -37,10 +41,13 @@ constexpr uint32_t kPrefKey = 0x7A6A726E;
 constexpr int kLignes = 32;
 constexpr int kTexte = 96;
 
-// Bits de Journal::anomalie
-constexpr uint8_t kAvert = 1;     // au moins un avertissement
-constexpr uint8_t kErreur = 2;    // au moins une erreur (ESPHome ou ESP-IDF)
-constexpr uint8_t kPlantage = 4;  // un démarrage après plantage, chien de garde, baisse de tension
+// Bits de Journal::anomalie : ce qui justifie un envoi. Les deux premiers sont « graves »
+// (notification sur le téléphone côté HA), les deux autres seulement notés.
+constexpr uint8_t kPlantage = 1;  // reset anormal, ou rapport de plantage d'ESPHome
+constexpr uint8_t kWifi = 2;      // Wi-Fi absent 90 s ou plus (lien C6, routeur)
+constexpr uint8_t kErreur = 4;    // erreur ESPHome ou ESP-IDF après la connexion à HA
+constexpr uint8_t kLent = 8;      // HA joint plus de 90 s après le démarrage
+constexpr uint32_t kSeuilMs = 90000;
 
 struct Ligne {
     uint32_t t_ms;     // millis() au moment du message
@@ -66,7 +73,8 @@ Journal s_j __attribute__((section(".noinit")));
 
 bool s_session = false;         // .bss : faux à chaque démarrage
 bool s_copie_en_nvs = false;    // une copie non vide attend en NVS
-uint32_t s_hors_ligne_depuis = 0;
+bool s_ha_vu = false;           // HA joint au moins une fois depuis le démarrage
+uint32_t s_wifi_absent_depuis = 0;
 uint32_t s_derniere_copie = 0;
 uint16_t s_nb_copie = 0xFFFF;
 esphome::ESPPreferenceObject s_pref;
@@ -170,6 +178,7 @@ void ouvrir_session() {
     heap_caps_free(copie);
     const esp_reset_reason_t r = esp_reset_reason();
     if (s_j.demarrages < 0xFFFF) s_j.demarrages++;
+    // kPlantage et kWifi d'un démarrage précédent restent posés jusqu'à l'envoi.
     if (raison_anormale(r)) s_j.anomalie |= kPlantage;
     char repere[kTexte];
     snprintf(repere, sizeof(repere), "démarrage, raison : %s", raison_texte(r));
@@ -185,6 +194,12 @@ void copier_en_nvs() {
     s_nb_copie = s_j.nb;
 }
 
+void marquer_ha_vu() {
+    if (s_ha_vu) return;
+    s_ha_vu = true;
+    if (esphome::millis() > kSeuilMs) s_j.anomalie |= kLent;
+}
+
 }  // namespace
 
 void journal_log_message(uint8_t level, const char* tag, const char* message) {
@@ -195,44 +210,55 @@ void journal_log_message(uint8_t level, const char* tag, const char* message) {
     // Le rapport de plantage est écrit au démarrage, puis réécrit à l'abonnement aux
     // logs de chaque client : on ne garde que le premier passage.
     if (crash && esphome::millis() > 5000) return;
+    const bool ha = ha_connecte();
+    if (ha) marquer_ha_vu();
     const bool erreur = level <= ESPHOME_LOG_LEVEL_ERROR || idf;
     const bool avert = level == ESPHOME_LOG_LEVEL_WARN;
-    if (!erreur && !(avert && !ha_connecte())) return;
+    if (!erreur && !(avert && !ha)) return;
     // Avertissements de durée d'ESPHome (« took a long time ») : attendus au démarrage.
     if (!erreur && strstr(message, "took a long time") != nullptr) return;
     char texte[kTexte];
     copier_sans_ansi(texte, sizeof(texte), message);
-    s_j.anomalie |= erreur ? kErreur : kAvert;
+    // Une ligne seule ne justifie un envoi qu'après la première connexion à HA ; avant,
+    // c'est le démarrage, gardé comme contexte. Un rapport de plantage, toujours.
+    if (crash) s_j.anomalie |= kPlantage;
+    else if (erreur && s_ha_vu) s_j.anomalie |= kErreur;
     ajouter(erreur ? 'E' : 'W', texte);
 }
 
 void journal_tick() {
     ouvrir_session();
     const uint32_t maintenant = esphome::millis();
-    if (ha_connecte()) {
-        s_hors_ligne_depuis = 0;
+    if (ha_connecte()) marquer_ha_vu();
+    // HA absent mais Wi-Fi présent (HA redémarre, maintenance) : rien à signaler.
+    if (esphome::network::is_connected()) {
+        s_wifi_absent_depuis = 0;
         return;
     }
-    if (s_hors_ligne_depuis == 0) {
-        s_hors_ligne_depuis = maintenant == 0 ? 1 : maintenant;
+    if (s_wifi_absent_depuis == 0) {
+        s_wifi_absent_depuis = maintenant == 0 ? 1 : maintenant;
         return;
     }
-    // 2 min sans HA : copie en NVS, pour survivre à une coupure de courant. Ensuite au
-    // plus une copie toutes les 15 min, et seulement s'il y a du nouveau.
-    if (maintenant - s_hors_ligne_depuis < 120000) return;
+    if (maintenant - s_wifi_absent_depuis < kSeuilMs) return;
+    s_j.anomalie |= kWifi;
+    // Copie en NVS, pour survivre à une coupure de courant (tablette figée, débranchée).
+    // Ensuite au plus une copie toutes les 15 min, et seulement s'il y a du nouveau.
     if (s_j.nb == s_nb_copie) return;
     if (s_derniere_copie != 0 && maintenant - s_derniere_copie < 900000) return;
     copier_en_nvs();
 }
 
+// Appelée par le script d'envoi, HA connecté. `demarrages > 1` : un démarrage n'a
+// jamais joint HA (Wi-Fi absent, ou HA absent plus d'une heure : reboot_timeout).
 bool journal_has_report() {
     ouvrir_session();
-    return s_j.nb > 0 && (s_j.anomalie != 0 || s_j.demarrages > 1 || s_j.perdues > 0);
+    if (ha_connecte()) marquer_ha_vu();
+    return s_j.nb > 0 && (s_j.anomalie != 0 || s_j.demarrages > 1);
 }
 
 bool journal_is_serious() {
     ouvrir_session();
-    return (s_j.anomalie & (kErreur | kPlantage)) != 0 || s_j.demarrages > 1;
+    return (s_j.anomalie & (kPlantage | kWifi)) != 0;
 }
 
 std::string journal_reset_reason() {

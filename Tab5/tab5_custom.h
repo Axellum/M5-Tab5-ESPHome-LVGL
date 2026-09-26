@@ -650,7 +650,7 @@ void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
 // logger: on_message (tab5-hardware.yaml) : garde les erreurs, et les avertissements
 // tant que Home Assistant n'est pas connecté.
 void journal_log_message(uint8_t level, const char* tag, const char* message);
-// interval 30 s (tab5-sensors-diagnostics.yaml) : copie en NVS après 2 min sans HA.
+// interval 30 s (tab5-sensors-diagnostics.yaml) : copie en NVS quand le Wi-Fi manque 90 s.
 void journal_tick();
 // Script tab5_journal_envoi, à chaque connexion de HA :
 bool journal_has_report();          // autre chose qu'un démarrage normal
