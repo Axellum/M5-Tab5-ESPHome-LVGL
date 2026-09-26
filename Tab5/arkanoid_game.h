@@ -88,12 +88,12 @@ struct UI {
     const esphome::font::Font* f_big   = nullptr;  // roboto_45_b
 };
 
-// Ouvre le jeu sur le hub (construit l'UI au premier appel, la réutilise ensuite)
-// et démarre le lv_timer de gameplay. Idempotent.
+// Ouvre le jeu sur le hub : alloue l'état, construit l'UI et démarre le lv_timer
+// de gameplay. Idempotent. Si la mémoire manque, revient à l'arcade sans ouvrir.
 void open(const UI& ui);
 
-// Ferme le jeu : arrête le timer, sauvegarde en NVS et masque l'overlay.
-// Idempotent (sans effet si déjà fermé).
+// Ferme le jeu : arrête le timer, sauvegarde en NVS, revient à l'arcade puis
+// détruit l'UI et rend l'état (rien ne reste réservé). Idempotent.
 void close();
 
 // True tant que l'overlay est visible (utilisé pour router les événements IMU).
@@ -107,10 +107,11 @@ void on_imu(float ax, float ay, float az);
 // Accessible depuis le hub et l'écran de pause.
 void calibrate();
 
-// Écrit immédiatement la sauvegarde en NVS (appelé aux moments clés).
+// Écrit immédiatement la sauvegarde en NVS (appelé aux moments clés ; sans effet
+// jeu fermé : la sauvegarde n'est en mémoire que jeu ouvert).
 void persist_save();
 
-// Recharge la sauvegarde depuis la NVS (appelé au premier open()).
+// Recharge la sauvegarde depuis la NVS (appelé à chaque open()).
 void persist_load();
 
 }  // namespace Arkanoid
