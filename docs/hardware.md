@@ -14,12 +14,12 @@ The Tab5 is a 5-inch touch-screen panel from M5Stack. The V2 revision uses an **
 |------|-------|
 | Architecture | RISC-V, dual-core, up to 400 MHz |
 | Internal SRAM | 768 KB |
-| External PSRAM | 16 MB (OCT-SPI) |
+| External PSRAM | 32 MB (hex mode, 16 data lines, 200 MHz) — measured on the device on 2026-09-26: `esp_psram_get_size()` = 32 768 KB, 29 567 KB available to the heap |
 | Flash | 16 MB |
 | Display interface | MIPI-DSI, 16-bit RGB565 |
 | Touch controller | I2C (ST7123) |
 
-The PSRAM is critical for this project. LVGL requires a framebuffer sized to the display resolution — at 1280 × 720 px in RGB565, that's ~1.8 MB just for the framebuffer. The ESP32-P4's internal SRAM alone would not be enough. With 16 MB of PSRAM, the framebuffer stays entirely in external memory, and LVGL can operate at 60 FPS without tearing.
+The PSRAM is critical for this project. LVGL requires a framebuffer sized to the display resolution — at 1280 × 720 px in RGB565, that's ~1.8 MB just for the framebuffer. The ESP32-P4's internal SRAM alone would not be enough. With 32 MB of PSRAM, the framebuffer stays entirely in external memory, and LVGL can operate at 60 FPS without tearing.
 
 ### ESP32-C6 (co-processor)
 
@@ -110,12 +110,12 @@ Le Tab5 est un panneau tactile de 5 pouces de M5Stack. La révision V2 utilise u
 |------|--------|
 | Architecture | RISC-V, dual-core, jusqu'à 400 MHz |
 | SRAM interne | 768 KB |
-| PSRAM externe | 16 MB (OCT-SPI) |
+| PSRAM externe | 32 Mo (mode hex, 16 lignes de données, 200 MHz) — mesuré sur la tablette le 26/09/2026 : `esp_psram_get_size()` = 32 768 Ko, dont 29 567 Ko pour le tas |
 | Flash | 16 MB |
 | Interface affichage | MIPI-DSI, RGB565 16 bits |
 | Contrôleur tactile | I2C (ST7123) |
 
-La PSRAM est critique pour ce projet. LVGL nécessite un framebuffer dimensionné à la résolution de l'affichage — à 1280 × 720 px en RGB565, ça fait ~1,8 MB rien que pour le framebuffer. La SRAM interne de l'ESP32-P4 seule ne suffirait pas. Avec 16 MB de PSRAM, le framebuffer reste entièrement en mémoire externe, et LVGL peut fonctionner à 60 FPS sans tearing.
+La PSRAM est critique pour ce projet. LVGL nécessite un framebuffer dimensionné à la résolution de l'affichage — à 1280 × 720 px en RGB565, ça fait ~1,8 MB rien que pour le framebuffer. La SRAM interne de l'ESP32-P4 seule ne suffirait pas. Avec 32 Mo de PSRAM, le framebuffer reste entièrement en mémoire externe, et LVGL peut fonctionner à 60 FPS sans tearing.
 
 ### ESP32-C6 (co-processeur)
 
