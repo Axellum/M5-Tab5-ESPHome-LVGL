@@ -60,8 +60,10 @@ obj:
         y: -10
         width: 340
         height: 88
-        styles: style_meteo_card
+        styles: style_meteo_card_page
         scrollbar_mode: "OFF"
+        # − et + restent en verre TRANSLUCIDE (style_clim_btn) : ils sont posés sur
+        # cette tuile, pas sur la page — un pré-mélange sur color_bg serait faux ici.
         widgets:
           - label:
               id: clim_target

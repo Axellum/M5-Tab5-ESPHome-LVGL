@@ -63,7 +63,7 @@ lvgl:
             y: 120
             width: 85
             height: 60
-            styles: style_clim_btn
+            styles: style_clim_btn_page
             on_short_click:
               - script.execute:
                   id: tab5_set_assist_mode
@@ -80,7 +80,7 @@ lvgl:
             y: 120
             width: 85
             height: 60
-            styles: style_clim_btn
+            styles: style_clim_btn_page
             on_short_click:
               - script.execute:
                   id: tab5_set_assist_mode
@@ -97,7 +97,7 @@ lvgl:
             y: 220
             width: 85
             height: 50
-            styles: style_clim_btn
+            styles: style_clim_btn_page
             on_short_click:
               - if:
                   condition:
@@ -131,7 +131,7 @@ lvgl:
             y: 220
             width: 160
             height: 50
-            styles: style_clim_btn
+            styles: style_clim_btn_page
             on_short_click:
               - switch.toggle: tab5_wake_word_active
             widgets:
@@ -145,7 +145,7 @@ lvgl:
             y: 5
             width: 401
             height: 200
-            styles: style_meteo_card
+            styles: style_meteo_card_page
             scrollbar_mode: "OFF"
             widgets:
               # Horloge à rouleau : UN conteneur qui rogne PAR CHIFFRE (H H : M M),
@@ -245,9 +245,9 @@ lvgl:
             width: 125
             height: 90
             radius: 18
-            styles: style_clim_btn
+            styles: style_clim_btn_page
             pressed:
-              bg_opa: 30%
+              bg_opa: 52%
             on_short_click:
               # Bascule prévisions <-> switches HA : fondu croisé (I-2) au lieu
               # d'un basculement sec de flags. Les deux calques occupent la même
@@ -282,9 +282,9 @@ lvgl:
             width: 125
             height: 90
             radius: 18
-            styles: style_clim_btn
+            styles: style_clim_btn_page
             pressed:
-              bg_opa: 30%
+              bg_opa: 52%
             on_short_click:
               - lambda: |-
                   lv_obj_clear_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
@@ -312,9 +312,9 @@ lvgl:
             width: 125
             height: 90
             radius: 18
-            styles: style_clim_btn
+            styles: style_clim_btn_page
             pressed:
-              bg_opa: 30%
+              bg_opa: 52%
             on_short_click:
               - lambda: |-
                   animate_popup_open(id(tv_remote_popup), nullptr);
@@ -352,7 +352,7 @@ lvgl:
             y: 333
             width: 1240
             height: 84
-            styles: style_meteo_card
+            styles: style_meteo_card_page
             scrollbar_mode: "OFF"
             pad_left: 20
             pad_right: 20

@@ -30,7 +30,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "id(tab5_alarm_close).execute();" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "id(tab5_alarm_close).execute();" } }
 
     - obj:
         align: CENTER

@@ -39,7 +39,7 @@ obj:
               y: 35
               width: 230
               height: 205
-              styles: style_meteo_card
+              styles: style_meteo_card_page
               scrollbar_mode: "OFF"
               widgets:
                 - label: { id: j0_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
@@ -74,7 +74,7 @@ obj:
               y: 35
               width: 230
               height: 205
-              styles: style_meteo_card
+              styles: style_meteo_card_page
               scrollbar_mode: "OFF"
               widgets:
                 - label: { id: j1_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
@@ -150,7 +150,7 @@ obj:
               y: 35
               width: 230
               height: 205
-              styles: style_meteo_card
+              styles: style_meteo_card_page
               scrollbar_mode: "OFF"
               widgets:
                 - label: { id: j2_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
@@ -191,7 +191,7 @@ obj:
               y: 35
               width: 230
               height: 205
-              styles: style_meteo_card
+              styles: style_meteo_card_page
               scrollbar_mode: "OFF"
               widgets:
                 - label: { id: j3_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
@@ -231,7 +231,7 @@ obj:
               y: 35
               width: 230
               height: 205
-              styles: style_meteo_card
+              styles: style_meteo_card_page
               scrollbar_mode: "OFF"
               widgets:
                 - label: { id: j4_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }

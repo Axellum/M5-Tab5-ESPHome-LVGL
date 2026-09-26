@@ -595,6 +595,11 @@ void update_clock_date_ui(lv_obj_t* lbl_date,
 // désormais appliqués d'une image à l'autre.
 // =============================================================================
 static lv_style_t style_btn_pressed;
+// Même effet pour une surface de verre PRÉ-MÉLANGÉE (opaque, essai D7 du 26/09/2026 :
+// style_meteo_card_page / style_clim_btn_page) : 30 % d'une couleur déjà mélangée à
+// 58 % donnerait un appui plus sombre qu'avant ; 132/255 (≈ 52 % = 30 % × 255 / 147)
+// redonne exactement la teinte d'origine.
+static lv_style_t style_btn_pressed_opaque;
 static bool btn_styles_inited = false;
 
 static void ensure_btn_styles_inited() {
@@ -604,6 +609,10 @@ static void ensure_btn_styles_inited() {
     lv_style_set_transform_scale_x(&style_btn_pressed, 240);  // 240/256 ~= 94%
     lv_style_set_transform_scale_y(&style_btn_pressed, 240);
     lv_style_set_bg_opa(&style_btn_pressed, LV_OPA_30);       // assombrit le verre
+    lv_style_init(&style_btn_pressed_opaque);
+    lv_style_set_transform_scale_x(&style_btn_pressed_opaque, 240);
+    lv_style_set_transform_scale_y(&style_btn_pressed_opaque, 240);
+    lv_style_set_bg_opa(&style_btn_pressed_opaque, 132);
     btn_styles_inited = true;
 }
 
@@ -615,7 +624,9 @@ static void setup_button_press_animation(lv_obj_t* btn) {
     // Pivot au centre pour un scale symetrique (pas depuis le coin haut-gauche).
     lv_obj_set_style_transform_pivot_x(btn, lv_obj_get_width(btn) / 2, LV_PART_MAIN);
     lv_obj_set_style_transform_pivot_y(btn, lv_obj_get_height(btn) / 2, LV_PART_MAIN);
-    lv_obj_add_style(btn, &style_btn_pressed, LV_STATE_PRESSED);
+    // Surface opaque (verre pré-mélangé) : opacité d'appui recalée, même teinte.
+    const bool opaque = lv_obj_get_style_bg_opa(btn, LV_PART_MAIN) == LV_OPA_COVER;
+    lv_obj_add_style(btn, opaque ? &style_btn_pressed_opaque : &style_btn_pressed, LV_STATE_PRESSED);
 }
 
 void apply_pressed_scale_to_tree(lv_obj_t* root) {

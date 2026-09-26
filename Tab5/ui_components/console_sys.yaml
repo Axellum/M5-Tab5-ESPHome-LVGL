@@ -41,7 +41,7 @@ obj:
   styles: style_invisible
   widgets:
     # Voile sombre (tap = fermer + refermer les overlays de confirmation)
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN); animate_popup_close(id(layer_console_sys), nullptr);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN); animate_popup_close(id(layer_console_sys), nullptr);" } }
 
     # Carte modale principale
     - obj:

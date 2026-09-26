@@ -29,7 +29,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "animate_popup_close(id(cal_day_popup), nullptr); animate_popup_close(id(calendar_popup), nullptr);" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(cal_day_popup), nullptr); animate_popup_close(id(calendar_popup), nullptr);" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -204,7 +204,7 @@ obj:
               align: CENTER
               width: 780
               height: 540
-              styles: style_modal_card
+              styles: style_modal_card_verre
               scrollable: false
               widgets:
                 - !include { file: modal_header.yaml, vars: { icon: "\U000F0E17", icon_color: "color_accent", title: "", title_id: "lbl_cal_day_title", close_btn_id: "btn_cal_day_close", close_lambda: "animate_popup_close(id(cal_day_popup), nullptr);" } }

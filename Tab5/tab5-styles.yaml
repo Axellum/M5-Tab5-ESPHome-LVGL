@@ -67,6 +67,21 @@ color:
     hex: "555555"          # Icone desactivee / placeholder
   - id: color_arc_track
     hex: "2A2D35"          # Fond arcslider clim / lumiere
+  # --- Verre pré-mélangé (essai D7, 26/09/2026) ---------------------------------
+  # Même rendu que color_glass_hi/lo en transparence, mais calculé une fois pour
+  # toutes : c' = (c × a + fond × (255 − a)) / 255, arrondi comme lv_color_mix().
+  # Un dégradé posé sur un fond UNI se pré-mélange sans erreur (le mélange est
+  # linéaire) ; les coins arrondis et les bordures aussi.
+  # Sur la page (fond color_bg 0B1120, verre à 58 % = 147/255) :
+  - id: color_glass_hi_page
+    hex: "1E293D"
+  - id: color_glass_lo_page
+    hex: "101727"
+  # Sur le voile opaque des popups (fond color_modal_scrim 05080F, carte à 88 % = 224/255) :
+  - id: color_glass_hi_modal
+    hex: "27344A"
+  - id: color_glass_lo_modal
+    hex: "111A28"
   - id: color_modal_scrim
     hex: "05080F"          # Voile modal sombre
   - id: color_warm_pink
@@ -526,6 +541,38 @@ lvgl:
       pad_all: 0
 
     # --- Conteneurs transparents (fonctionnel : inchanges) ---
+    # --- Verre du tableau de bord, pré-mélangé sur la page (essai D7) ---
+    # Rendu identique à style_meteo_card / style_clim_btn posés sur color_bg,
+    # mais opaque : un repeint du tableau de bord (fermeture d'un popup, swipe)
+    # ne mélange plus ≈ 580 000 px. À n'utiliser QUE sur la page elle-même, jamais
+    # dans un popup ni sur le voile (le fond n'y est pas color_bg).
+    # Appui : l'effet pressé (tab5_anim.cpp) passe l'opacité à 52 % au lieu de
+    # 30 % sur un fond opaque, pour la même teinte (30 % × 255 / 147).
+    - id: style_meteo_card_page
+      bg_color: color_glass_hi_page
+      bg_grad_color: color_glass_lo_page
+      bg_grad_dir: VER
+      bg_opa: 100%
+      border_width: 1
+      border_color: color_glass_rim
+      border_opa: 35%
+      radius: 18
+      shadow_width: 0
+      outline_width: 0
+      pad_all: 0
+
+    - id: style_clim_btn_page
+      bg_color: color_glass_hi_page
+      bg_grad_color: color_glass_lo_page
+      bg_grad_dir: VER
+      bg_opa: 100%
+      border_width: 1
+      border_color: color_glass_rim
+      border_opa: 35%
+      radius: 18
+      shadow_width: 0
+      outline_width: 0
+
     - id: style_transparent
       bg_opa: 0
       border_width: 0
@@ -554,7 +601,25 @@ lvgl:
     #  ui_components/modal_scrim.yaml, opacité passée en var — ADR-0009.)
 
     # --- Carte modale "verre" flottante ---
+    # Essai D7 (26/09/2026) : posée sur un voile désormais OPAQUE, elle est
+    # pré-mélangée (même rendu, opaque) — LVGL ne mélange plus 860 000 px à chaque
+    # ouverture. Un popup empilé sur un autre (voile à 60 %) garde la version
+    # translucide style_modal_card_verre, son fond n'étant pas uni.
     - id: style_modal_card
+      bg_color: color_glass_hi_modal
+      bg_grad_color: color_glass_lo_modal
+      bg_grad_dir: VER
+      bg_main_stop: 20
+      bg_grad_stop: 245
+      bg_opa: 100%
+      border_width: 2
+      border_color: color_glass_rim
+      border_opa: 60%
+      radius: 24
+      shadow_width: 0
+      pad_all: 0
+
+    - id: style_modal_card_verre
       bg_color: color_glass_hi
       bg_grad_color: color_glass_lo
       bg_grad_dir: VER

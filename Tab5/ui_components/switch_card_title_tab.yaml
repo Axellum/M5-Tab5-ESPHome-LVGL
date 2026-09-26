@@ -5,6 +5,6 @@ obj:
   y: 7
   width: 130
   height: 40
-  styles: style_meteo_card
+  styles: style_meteo_card_page
   widgets:
     - label: { text: "${title}", align: CENTER, text_font: roboto_32_b }

@@ -44,7 +44,7 @@ obj:
   widgets:
     # 96 % et non 100 % : on devine le dashboard derrière, ce qui situe
     # immédiatement où l'on est sans rien enlever à la lisibilité de l'heure.
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "96", close_lambda: "id(tab5_alarm_stop).execute();" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "id(tab5_alarm_stop).execute();" } }
 
     - label: { id: icon_alarm_ring, text: "\U000F0020", align: CENTER, y: -230, text_font: mdi_font_70, text_color: color_accent }
     - label: { id: lbl_alarm_ring_time, text: "00:00", align: CENTER, y: -90, text_font: roboto_130_b }

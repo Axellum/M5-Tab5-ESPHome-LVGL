@@ -22,7 +22,7 @@ obj:
   styles: style_invisible
   widgets:
     # Voile modal (ferme au tap)
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "85", close_lambda: "id(tab5_assist_close).execute();" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "id(tab5_assist_close).execute();" } }
 
     # Carte modale
     - obj:

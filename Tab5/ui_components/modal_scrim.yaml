@@ -2,8 +2,9 @@
 # [AI-CONTEXT] Voile sombre plein écran (tap = fermer) — cadre modal v4.
 # Seul voile du projet : aucun popup ne redéfinit un scrim inline (ADR-0009).
 # vars : close_lambda (même contrat que modal_header.yaml),
-#        scrim_opa (opacité SANS le %, "85" pour un popup de premier niveau,
-#        "60" pour un sous-popup empilé sur un voile déjà présent).
+#        scrim_opa (opacité SANS le %, "100" pour un popup de premier niveau —
+#        opaque depuis l'essai D7 du 26/09/2026 : LVGL ne redessine plus le tableau
+#        de bord caché —, "60" pour un sous-popup empilé sur un voile déjà présent).
 # ═══════════════════════════════════════════════════════
 button:
   align: CENTER
@@ -12,5 +13,8 @@ button:
   bg_color: color_modal_scrim
   bg_opa: ${scrim_opa}%
   border_width: 0
+  # Coins carrés : un bouton reçoit un rayon du thème LVGL, et un voile arrondi
+  # n'est plus « couvrant » — LVGL redessinerait tout le tableau de bord dessous.
+  radius: 0
   on_short_click:
     - lambda: '${close_lambda}'
