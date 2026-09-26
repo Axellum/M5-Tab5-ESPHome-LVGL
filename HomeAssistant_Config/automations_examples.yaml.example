@@ -334,26 +334,36 @@
     - action: script.tab5_push_volet
 
 - id: tab5_screen_presence_wifi
-  alias: "Allumage/Extinction Ecran Tab5 selon WiFi Portable et Capteur Présence"
-  description: "Active ou desactive le retroeclairage selon la presence du telephone et du capteur de présence"
-  mode: single
+  alias: "Allumage/Extinction Ecran Tab5 selon WiFi Portable"
+  # Allume l'écran à la détection d'une présence (ou au retour du téléphone) s'il
+  # est éteint ; l'éteint après 15 min sans présence dans la pièce (ou au départ du
+  # téléphone) s'il est allumé et que le réveil ne sonne pas. Écran éteint, le
+  # firmware met LVGL en pause ; un toucher ou une tape sur la dalle le rallume.
+  # Remis en place le 26/09/2026 : la version de production avait perdu les
+  # déclencheurs du capteur, et n'éteignait plus qu'au départ du téléphone.
+  description: "Allume l'écran à la détection d'une présence ou au retour du téléphone ; l'éteint après 15 min sans présence ou au départ du téléphone, sauf réveil en cours"
+  mode: queued
+  max: 5
   trigger:
-    - platform: state
-      entity_id: device_tracker.VOTRE_TELEPHONE
-      to: 'home'
-      id: "connecte"
     - platform: state
       entity_id: binary_sensor.VOTRE_CAPTEUR_PRESENCE
       to: 'on'
-      id: "connecte"
+      id: "allumer"
     - platform: state
       entity_id: device_tracker.VOTRE_TELEPHONE
-      to: 'not_home'
-      id: "deconnecte"
+      to: 'home'
+      id: "allumer"
+    # Capteur radar : il repasse off quelques secondes à chaque sortie de la
+    # pièce, d'où les 15 min avant d'éteindre.
     - platform: state
       entity_id: binary_sensor.VOTRE_CAPTEUR_PRESENCE
       to: 'off'
-      id: "deconnecte"
+      for: "00:15:00"
+      id: "eteindre"
+    - platform: state
+      entity_id: device_tracker.VOTRE_TELEPHONE
+      to: 'not_home'
+      id: "eteindre"
   condition:
     - condition: state
       entity_id: input_boolean.is_primary_active
@@ -362,14 +372,25 @@
     - choose:
         - conditions:
             - condition: trigger
-              id: "connecte"
+              id: "allumer"
+            - condition: state
+              entity_id: light.m5stack_tab5_home_assistant_hmi_display_backlight
+              state: "off"
           sequence:
             - action: light.turn_on
               target:
                 entity_id: light.m5stack_tab5_home_assistant_hmi_display_backlight
         - conditions:
             - condition: trigger
-              id: "deconnecte"
+              id: "eteindre"
+            - condition: state
+              entity_id: light.m5stack_tab5_home_assistant_hmi_display_backlight
+              state: "on"
+            # Ne jamais éteindre un réveil qui sonne (le firmware rallume l'écran
+            # à la sonnerie).
+            - condition: state
+              entity_id: binary_sensor.m5stack_tab5_home_assistant_hmi_reveil_en_cours
+              state: "off"
           sequence:
             - action: light.turn_off
               target:

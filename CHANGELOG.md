@@ -4,6 +4,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Home Assistant : l'écran s'allume à la présence et s'éteint après 15 min
+
+Demande d'Axel. Aucun changement firmware. Déployé sur le HA de production le jour même.
+
+- **`tab5_screen_presence_wifi` remise en place.** La version de production avait perdu
+  les déclencheurs du capteur de présence Zigbee : l'écran ne s'éteignait plus qu'au
+  départ du téléphone, et restait allumé toute la nuit.
+  - **Allumage** à la détection d'une présence, ou au retour du téléphone, seulement
+    si l'écran est éteint.
+  - **Extinction** après 15 min sans présence dans la pièce, ou au départ du
+    téléphone, seulement si l'écran est allumé et que le réveil ne sonne pas. Le
+    capteur est un radar qui repasse « off » quelques secondes à chaque sortie de la
+    pièce, d'où le délai.
+  - `mode: queued`. Écran éteint, le firmware met LVGL en pause, et un toucher ou une
+    tape sur la dalle le rallume (inchangé).
+
 ### 2026-09-26 — Home Assistant : micro du Tab5 coupé quand personne n'est là (expérience E1)
 
 Expérience E1 de l'audit des ressources du 26/09/2026, demandée par Axel. Aucun
