@@ -4,6 +4,36 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Communauté : code de conduite, sécurité, formulaires d'issues, README réorganisé, révisions du Tab5
+
+Demande d'Axel : que le projet soit « à la hauteur des meilleurs, voire au-dessus ». Premier
+lot de l'audit « ouverture » du 26/09 (vitrine et Community Standards). Aucun changement de
+firmware ni de configuration Home Assistant.
+
+- **Profil communautaire GitHub** : `CODE_OF_CONDUCT.md` (adapté du Contributor Covenant 2.1)
+  et `SECURITY.md` (signalement privé, périmètre, rappel sur la clé API qui chiffre API et OTA),
+  tous deux bilingues. Aucune adresse e-mail n'est écrite dans le dépôt : ils renvoient au
+  signalement privé de GitHub et au profil du mainteneur.
+- **Formulaires d'issue** (`.github/ISSUE_TEMPLATE/`) : bug (la **puce écran du Tab5** est
+  demandée en premier, puis les versions du firmware et d'ESPHome), fonctionnalité, et plus
+  d'issue libre : les questions, les montages et les retours de compatibilité vont dans
+  Discussions, les failles dans la politique de sécurité.
+- **README, premier écran** : ce que c'est, le GIF, les liens (installer, essayer sans HA,
+  compatibilité, Discussions), « Why this one », et « Before you start », qui dit franchement les
+  limites (ST7123 seulement, pas de binaire précompilé, textes à l'écran en français,
+  Météo-France, disposition pensée pour la maison de l'auteur). Le démarrage rapide et la
+  compatibilité suivent. La note personnelle, inchangée, passe juste avant la note sur l'IA,
+  et une section « Community » est ajoutée. La partie française reçoit les mêmes sections, dont
+  un **démarrage rapide qu'elle n'avait pas**.
+- **`docs/hardware.md` : tableau des révisions du Tab5.** Il y a trois puces écran (doc ESPHome
+  `mipi_dsi`) : **ST7123** prise en charge, **ST7121** jamais compilée ni testée, **ILI9881C +
+  GT911** (appareils d'avant le 14/10/2025) pas encore prise en charge. On y explique comment
+  lire l'autocollant, et que la page ESPHome de l'appareil comme l'exemple d'IHM de M5Stack ne
+  couvrent pas encore la ST7123. `docs/installation.md` le rappelle dans les prérequis.
+- **Corrigé en passant** : `docs/hardware.md` citait encore le pilote tactile maison
+  `my_components/st7123`, retiré le 06/07/2026 au profit de la plateforme officielle d'ESPHome
+  2026.7 ; CONTRIBUTING (FR) disait « Merci d'intéresser ».
+
 ### 2026-09-26 — Journal des démarrages et des coupures : plantages et lien Wi-Fi (C6) analysables après coup
 
 Demande d'Axel : « enregistrer les plantages pour pouvoir analyser le C6 », en vérifiant

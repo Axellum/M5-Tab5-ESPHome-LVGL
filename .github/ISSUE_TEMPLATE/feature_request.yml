@@ -1,0 +1,45 @@
+# Formulaire « fonctionnalité » : une proposition concrète. Les idées à discuter vont dans
+# Discussions → Ideas (lien dans config.yml).
+name: "Feature request · Proposer une fonctionnalité"
+description: "A concrete change you would like to see. · Un changement concret que vous aimeriez voir."
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Still an open idea? Start in [Discussions → Ideas](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/ideas) — it is easier to shape there.
+        Encore une idée à creuser ? Commencez dans [Discussions → Ideas](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/ideas), c'est plus simple pour la faire mûrir.
+  - type: textarea
+    id: problem
+    attributes:
+      label: "What problem does it solve? · Quel problème cela résout-il ?"
+      placeholder: "I have 2 lights, not 3, and… · J'ai 2 lumières, pas 3, et…"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: "What would you like? · Que proposez-vous ?"
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternatives you considered · Alternatives envisagées"
+  - type: dropdown
+    id: display_chip
+    attributes:
+      label: "Tab5 display chip, if you own one · Puce écran de votre Tab5, si vous en avez un"
+      options:
+        - "ST7123"
+        - "ST7121"
+        - "ILI9881C (+ GT911 touch)"
+        - "I don't know · Je ne sais pas"
+        - "No Tab5 yet · Pas encore de Tab5"
+  - type: checkboxes
+    id: help
+    attributes:
+      label: "Can you help? · Pouvez-vous aider ?"
+      options:
+        - label: "I can test it on my device. · Je peux le tester sur ma tablette."
+        - label: "I would like to open a pull request. · J'aimerais proposer une pull request."

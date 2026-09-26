@@ -1,0 +1,18 @@
+# Pas d'issue libre : questions, montages et retours matériels vont dans Discussions,
+# les failles dans le signalement privé (SECURITY.md).
+# La catégorie « Hardware compatibility » est à créer dans Discussions (slug
+# hardware-compatibility) : les autres catégories sont celles créées par GitHub.
+blank_issues_enabled: false
+contact_links:
+  - name: "Question · Question"
+    url: https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/q-a
+    about: "Installation help, \"how do I…\" — ask in Discussions. · Aide à l'installation, « comment faire… » : posez la question dans Discussions."
+  - name: "Hardware compatibility report · Retour de compatibilité matérielle"
+    url: https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility
+    about: "Tried it on a ST7121 or ILI9881C Tab5? Tell us how it went. · Essayé sur un Tab5 ST7121 ou ILI9881C ? Racontez."
+  - name: "Show your build · Montrez votre installation"
+    url: https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/show-and-tell
+    about: "Photos, your own layout, your own automations. · Photos, votre disposition, vos automatisations."
+  - name: "Security vulnerability · Faille de sécurité"
+    url: https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/security/policy
+    about: "Report it privately, never in a public issue. · À signaler en privé, jamais dans une issue publique."

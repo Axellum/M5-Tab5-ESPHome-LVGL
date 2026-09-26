@@ -19,47 +19,60 @@
 
 ---
 
-## A short personal note
+**A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen draws it at 60 FPS in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, TV remote, alarm clock — and 8 offline games.
 
-Having heard a lot about AI — especially for coding — a few months ago I wanted to see for myself what it could actually do. I needed a project, and my old Nextion screen (mostly weather, still on ESPHome and Météo-France) was starting to feel dated. So I decided to replace it — this time with a much more ambitious home-automation setup, on a far more capable display, driven by AI from end to end.
+![Tab5 UI tour](docs/images/tab5_ui_tour.gif)
 
-One thing led to another: I added a voice assistant to the screen, then a local “engine” to handle voice home-automation on-device / on-LAN, and semi-local or cloud paths for open conversation. That engine is still a work in progress (of course 🙂) — I put a lot (too much) into it to experiment and better understand how LLMs work: RAG, scoring, multi-LLM routing, MCP, and more. I share it mostly for information: I use it day-to-day with this screen, but not yet for coding, nor for everything I tried to pack in — some of which works more or less well.
+**[Install](#quick-start)** · **[Try it without Home Assistant](docs/demo_mode.md)** · **[Hardware compatibility](#hardware-compatibility)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)** · **[The story behind it](#a-short-personal-note)**
 
-I started with Antigravity, then leaned on various models (DeepSeek, MiniMax, Z.ai). Next I tried Claude, which also did a lot of the work, then Cursor more recently. In short: this is my everyday screen project — I am more its architect than its creator — born from my first steps into the world of AI.
+---
 
-**So, why a screen, though?**
+## Why this one
 
-After five years with the Nextion, I wanted to give my mostly-weather screen a facelift, keeping at least the same core goals:
+- **Push-only, zero polling.** Home Assistant sends only what changed; the tablet never asks for anything ([ADR-0001](docs/decisions/0001-push-only-zero-polling.md)).
+- **Voice starts on the device.** "Okay Nabu" and a "Stop" word for the roller shutter are detected on the tablet; audio leaves it only after the wake word.
+- **Keeps working when Home Assistant doesn't.** Clock, alarm clock, games and the diagnostics console stay usable on their own.
+- **Documented and tested like a product.** 17 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome.
+- **Targets the current Tab5 revision (ST7123)**, which most published Tab5 examples do not cover yet.
 
-- Be a clock.
-- Warn me at a glance if rain is coming within the hour — do I leave 15 minutes early so I don't show up soaked at the office? Do I grab an umbrella?
-- Show the forecast for the next few days, so I have a conversation topic for the rare occasions I decide to be social.
-- Do all that on reasonable power, always on (well, whenever I'm actually in front of it), with total freedom over layout, design and logic — not just the stock Home Assistant dashboard — with all the upsides that come with it... and the downsides.
+## Before you start
 
-Then home-automation ambitions crept in:
+- A Tab5 with the **ST7123** display chip — see [hardware compatibility](#hardware-compatibility).
+- Home Assistant, and ESPHome **≥ 2026.9.0** to compile. **There is no prebuilt firmware yet:** you compile it with your own entity IDs.
+- The on-screen text is **in French** for now; the documentation is bilingual. The one-hour rain graph and the weather warnings come from **Météo-France** (France only).
+- The layout was designed around the author's home: 3 lights, one air conditioner, up to 5 BLE plant sensors, a Samsung TV, one roller shutter. A different home means editing YAML for now; making each area optional is planned.
 
-- A direct readout of the soil moisture in my plant pots / veggie patch.
-- Turn the TV and PC on without lifting my butt off the chair.
-- Control the three living-room spotlights and the bedroom light.
+---
 
-Then, little by little...
+## Quick start
 
-- Control my AC.
-- Operate the roller shutter — again, without getting up.
-- Add "Ok Nabu" wake-word support, so I don't even have to lean over to grab the screen anymore 🙂
-- Polish the voice assistant: a conversation mode, a choice of LLM (local or not), and home commands that are as fast as possible and actually understand me.
-- Display my work schedule so I can read my shift hours at a glance.
-- Get a network remote for my TV — it can always come in handy. (Funny story: Claude Fable 5 completely blew me away on that one — it built the whole thing in two prompts flat. Naturally, I then let it loose redoing *every single popup* in the project… at the cost of roughly 50% of my 5-hour usage cap per popup, on the Pro plan. Worth it.)
+```bash
+# Clone the repo
+git clone https://github.com/Axellum/M5-Tab5-ESPHome-LVGL.git
 
-All of that with these design goals in mind. My very first sessions with Gemini, rewriting the old Nextion code, were honestly humbling — it rethought how the data got sent and cut the codebase to a third of its size. So this time I wanted lightness and much better optimization than anything I'd hand-rolled myself:
+# Copy local config files (gitignored), then edit with your values
+cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
+# Create secrets.yaml — see docs/installation.md
 
-- No images anywhere — as light and optimized for the tablet as it gets.
-- Data pushes on the Home Assistant side as gentle as possible (my HA runs on a Freebox box, so I have to stay lean).
-- A fast boot with no display lag — something that just *feels* smooth.
+# Compile via ESPHome dashboard or CLI:
+# esphome run tab5-ha-hmi.yaml
+```
 
-I also aimed for a modern-feeling interface (I'm in my fifties — don't expect miracles): no separate pages, just popups, everything reachable via a button, a long-press, or a swipe. Heavy color-coding gives at-a-glance readability from a few meters away, even though the screen is really meant to be read from under a meter for the fine print. And I tried to pack the maximum info/controls onto something that stays reasonably clean — yes, I know, "clean" is the part I'm worst at. End goal: a screen that looks decent to the eye, even though deep down I'm way more about function than form.
+Full step-by-step: [`docs/installation.md`](docs/installation.md)
 
-Companion backend (optional, work-in-progress): **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** — multi-agent orchestrator used for voice routing and conversation.
+Just want to see it running before setting up Home Assistant? → [`docs/demo_mode.md`](docs/demo_mode.md) pushes synthetic data to a flashed device with a small standalone script — no HA install, nothing left to clean up.
+
+---
+
+## Hardware compatibility
+
+| Display chip (sticker on the back) | Status |
+|---|---|
+| **ST7123** | ✅ Supported — the author's device, in daily use |
+| **ST7121** | ❓ Not supported yet — never compiled or tested |
+| **ILI9881C** + GT911 touch (units made before 14 October 2025) | ❌ Not supported yet — different display and touch drivers |
+
+Details, how to identify your unit, and the ESPHome model for each chip: [`docs/hardware.md`](docs/hardware.md#hardware-revisions). Own an ST7121 or ILI9881C unit and willing to test? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
 
 ---
 
@@ -68,10 +81,6 @@ Companion backend (optional, work-in-progress): **[vromvrom-engine](https://gith
 **Demo video** (voice, touch UI, TV remote, climate — provisional cut, July 2026):
 
 [![Watch the Tab5 demo on YouTube](https://img.youtube.com/vi/ygNhgtMffu4/hqdefault.jpg)](https://www.youtube.com/watch?v=ygNhgtMffu4)
-
-**Animated overview** — home, domotics, plants, climate, lights, TV, console:
-
-![Tab5 UI tour](docs/images/tab5_ui_tour.gif)
 
 | Push-only architecture | Main dashboard (live) |
 |:-:|:-:|
@@ -186,7 +195,7 @@ The engine is optional for the screen UI (push dashboard works without it). It i
 | [`CARTOGRAPHIE_TAB5.md`](CARTOGRAPHIE_TAB5.md) | Full dependency graph and file-by-file inventory, with known technical debt |
 | [`docs/screens.md`](docs/screens.md) | Screen-by-screen feature description |
 | [`docs/architecture.md`](docs/architecture.md) | Modular YAML structure, push paradigm, data packing, boot guards |
-| [`docs/hardware.md`](docs/hardware.md) | ESP32-P4 specs, GPIO mapping, ES8388 DAC, PSRAM, power |
+| [`docs/hardware.md`](docs/hardware.md) | Tab5 hardware revisions (which ones are supported), ESP32-P4 specs, GPIO mapping, ES8388 DAC, PSRAM, power |
 | [`docs/ui_design.md`](docs/ui_design.md) | LVGL rendering, vector fonts, dynamic color, CPU optimizations |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Wake word pipeline, audio chain, visual feedback states |
 | [`docs/installation.md`](docs/installation.md) | Prerequisites, `user_entities.yaml`, secrets, flash & OTA |
@@ -201,26 +210,6 @@ The engine is optional for the screen UI (push dashboard works without it). It i
 | [`docs/related_projects.md`](docs/related_projects.md) | Linked projects, AI experiment context |
 | [`docs/arcade.md`](docs/arcade.md) | The 8 game consoles — shared architecture, adding a 9th, one section per game (in French) |
 | [`docs/press/`](docs/press/hackster.md) | Publication kit — Hackster.io / M5Stack contest story, BOM, build steps |
-
----
-
-## Quick start
-
-```bash
-# Clone the repo
-git clone https://github.com/Axellum/M5-Tab5-ESPHome-LVGL.git
-
-# Copy local config files (gitignored), then edit with your values
-cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-# Create secrets.yaml — see docs/installation.md
-
-# Compile via ESPHome dashboard or CLI:
-# esphome run tab5-ha-hmi.yaml
-```
-
-Full step-by-step: [`docs/installation.md`](docs/installation.md)
-
-Just want to see it running before setting up Home Assistant? → [`docs/demo_mode.md`](docs/demo_mode.md) pushes synthetic data to a flashed device with a small standalone script — no HA install, nothing left to clean up.
 
 ---
 
@@ -292,6 +281,61 @@ python tools/test_go_engine.py && python tools/test_chess_perft.py && python too
 
 ---
 
+## Community
+
+- **Questions, ideas, your own build** → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions) (Q&A, Ideas, Show and tell, Hardware compatibility).
+- **Something broken?** → [open an issue](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/issues/new/choose); the form asks for your display chip and your ESPHome version.
+- **Security issue** → report it privately, see [`SECURITY.md`](SECURITY.md).
+- **Contributing** → [`CONTRIBUTING.md`](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
+
+English or French, both are welcome.
+
+---
+
+## A short personal note
+
+Having heard a lot about AI — especially for coding — a few months ago I wanted to see for myself what it could actually do. I needed a project, and my old Nextion screen (mostly weather, still on ESPHome and Météo-France) was starting to feel dated. So I decided to replace it — this time with a much more ambitious home-automation setup, on a far more capable display, driven by AI from end to end.
+
+One thing led to another: I added a voice assistant to the screen, then a local “engine” to handle voice home-automation on-device / on-LAN, and semi-local or cloud paths for open conversation. That engine is still a work in progress (of course 🙂) — I put a lot (too much) into it to experiment and better understand how LLMs work: RAG, scoring, multi-LLM routing, MCP, and more. I share it mostly for information: I use it day-to-day with this screen, but not yet for coding, nor for everything I tried to pack in — some of which works more or less well.
+
+I started with Antigravity, then leaned on various models (DeepSeek, MiniMax, Z.ai). Next I tried Claude, which also did a lot of the work, then Cursor more recently. In short: this is my everyday screen project — I am more its architect than its creator — born from my first steps into the world of AI.
+
+**So, why a screen, though?**
+
+After five years with the Nextion, I wanted to give my mostly-weather screen a facelift, keeping at least the same core goals:
+
+- Be a clock.
+- Warn me at a glance if rain is coming within the hour — do I leave 15 minutes early so I don't show up soaked at the office? Do I grab an umbrella?
+- Show the forecast for the next few days, so I have a conversation topic for the rare occasions I decide to be social.
+- Do all that on reasonable power, always on (well, whenever I'm actually in front of it), with total freedom over layout, design and logic — not just the stock Home Assistant dashboard — with all the upsides that come with it... and the downsides.
+
+Then home-automation ambitions crept in:
+
+- A direct readout of the soil moisture in my plant pots / veggie patch.
+- Turn the TV and PC on without lifting my butt off the chair.
+- Control the three living-room spotlights and the bedroom light.
+
+Then, little by little...
+
+- Control my AC.
+- Operate the roller shutter — again, without getting up.
+- Add "Ok Nabu" wake-word support, so I don't even have to lean over to grab the screen anymore 🙂
+- Polish the voice assistant: a conversation mode, a choice of LLM (local or not), and home commands that are as fast as possible and actually understand me.
+- Display my work schedule so I can read my shift hours at a glance.
+- Get a network remote for my TV — it can always come in handy. (Funny story: Claude Fable 5 completely blew me away on that one — it built the whole thing in two prompts flat. Naturally, I then let it loose redoing *every single popup* in the project… at the cost of roughly 50% of my 5-hour usage cap per popup, on the Pro plan. Worth it.)
+
+All of that with these design goals in mind. My very first sessions with Gemini, rewriting the old Nextion code, were honestly humbling — it rethought how the data got sent and cut the codebase to a third of its size. So this time I wanted lightness and much better optimization than anything I'd hand-rolled myself:
+
+- No images anywhere — as light and optimized for the tablet as it gets.
+- Data pushes on the Home Assistant side as gentle as possible (my HA runs on a Freebox box, so I have to stay lean).
+- A fast boot with no display lag — something that just *feels* smooth.
+
+I also aimed for a modern-feeling interface (I'm in my fifties — don't expect miracles): no separate pages, just popups, everything reachable via a button, a long-press, or a swipe. Heavy color-coding gives at-a-glance readability from a few meters away, even though the screen is really meant to be read from under a meter for the fine print. And I tried to pack the maximum info/controls onto something that stays reasonably clean — yes, I know, "clean" is the part I'm worst at. End goal: a screen that looks decent to the eye, even though deep down I'm way more about function than form.
+
+Companion backend (optional, work-in-progress): **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** — multi-agent orchestrator used for voice routing and conversation.
+
+---
+
 ## Note on AI
 
 This project is part of a personal exploration of what AI tools can produce when given full authorship of a technical project. The code, the architecture decisions, and most of this documentation were generated by AI (Antigravity/Gemini, DeepSeek, MiniMax, Z.ai, Claude, Cursor). My role was to set the goal, test, reject, and steer — more architect than line-by-line author. The goal was never to ship a polished product — it was to learn, to see where AI helps and where it gets stuck, and to share what came out of it.
@@ -308,43 +352,58 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 ---
 
-## Note personnelle
+**Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran le dessine à 60 FPS en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, télécommande TV, réveil — et 8 jeux hors ligne.
 
-Ayant beaucoup entendu parler de l’IA, et notamment en codage, il y a quelques mois de ça j’ai voulu voir par moi-même ce que cela donnait. Il me fallait un projet, et comme mon vieux écran Nextion (plutôt météo, toujours avec ESPHome et Météo-France) commençait à dater, j’ai opté pour le renouveler — mais cette fois avec un aspect domotique bien plus poussé, sur un écran bien plus qualitatif et puissant, le tout piloté par l’IA.
+**[Installer](#démarrage-rapide)** · **[Essayer sans Home Assistant](docs/demo_mode.md)** · **[Compatibilité matérielle](#compatibilité-matérielle)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)** · **[L'histoire du projet](#note-personnelle)**
 
-De fil en aiguille, j’ai complété l’écran avec un assistant vocal, puis par un « moteur » pour gérer en local la partie domotique vocale, et en semi-local ou cloud la partie conversations. Le moteur est un projet en cours (lui aussi 🙂) où j’ai posé beaucoup (trop) de choses pour expérimenter et mieux comprendre comment marchent les LLMs : RAG, notations, gestion multi-LLM, MCP, et j’en passe. Je le partage donc surtout dans un but informatif : je l’utilise de façon fonctionnelle pour l’écran, mais pas encore pour le codage ni pour tout ce que j’ai voulu y implémenter — qui fonctionne plus ou moins bien.
+---
 
-Dans mon périple, j’ai commencé avec Antigravity, puis je l’ai aidé par différents modèles (DeepSeek, MiniMax, Z.ai). Ensuite, j’ai testé Claude, qui a fait lui aussi beaucoup de travail, puis Cursor récemment. Bref, je vous partage le projet de mon écran, fait pour mon usage quotidien, dont je suis plus l’architecte que le créateur — issu de mes débuts d’aventure dans le monde de l’IA.
+## Pourquoi celui-ci
 
-**Bref, pourquoi un écran ?**
+- **Push uniquement, zéro polling.** Home Assistant n'envoie que ce qui a changé ; la tablette ne demande jamais rien ([ADR-0001](docs/decisions/0001-push-only-zero-polling.md)).
+- **La voix démarre sur l'appareil.** « Okay Nabu » et un mot « Stop » pour le volet roulant sont détectés sur la tablette ; l'audio n'en sort qu'après le mot d'activation.
+- **Continue de marcher quand Home Assistant ne marche plus.** Horloge, réveil, jeux et console de diagnostic restent utilisables seuls.
+- **Documenté et testé comme un produit.** 17 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome.
+- **Vise la révision actuelle du Tab5 (ST7123)**, que la plupart des exemples Tab5 publiés ne couvrent pas encore.
 
-Après 5 ans avec le Nextion, je souhaitais donner un coup de jeune à mon écran plutôt axé météo, en gardant a minima les mêmes objectifs :
+## Avant de commencer
 
-- faire office d’horloge ;
-- voir au premier coup d’œil si des averses sont prévues dans l’heure : je pars 15 min en avance pour ne pas arriver trempé au boulot ? Je prévois le parapluie ?
-- avoir la prévision météo sur quelques jours, histoire d’avoir un sujet de conversation si je décide de me sociabiliser ;
-- le tout pour une consommation raisonnable et toujours allumé (enfin, quand je suis devant), avec une liberté totale sur les positionnements, designs et logiques — pas juste l’affichage HA standard — avec les avantages... et les inconvénients que ça implique.
+- Un Tab5 avec la puce écran **ST7123** — voir la [compatibilité matérielle](#compatibilité-matérielle).
+- Home Assistant, et ESPHome **≥ 2026.9.0** pour compiler. **Il n'y a pas encore de firmware précompilé :** vous le compilez avec vos propres entity IDs.
+- Les textes à l'écran sont **en français** pour l'instant ; la documentation est bilingue. Le graphe de pluie dans l'heure et les vigilances viennent de **Météo-France** (France uniquement).
+- La disposition a été pensée pour la maison de l'auteur : 3 lumières, une clim, jusqu'à 5 capteurs de plantes BLE, une TV Samsung, un volet roulant. Une autre maison demande pour l'instant de modifier le YAML ; rendre chaque zone optionnelle est prévu.
 
-Avec un esprit domotique plus poussé : un retour direct de l’humidité de mes pots / de mon potager, allumer la TV et l’ordi sans bouger mes fesses de ma chaise, et gérer les trois spots du salon et la lumière de la chambre.
+---
 
-Puis, petit à petit :
+## Démarrage rapide
 
-- gérer ma clim ;
-- avoir la main sur mon volet roulant, toujours sans me lever ;
-- intégrer « Ok Nabu », plus besoin de me pencher pour attraper l’écran :) ;
-- peaufiner l’intégration de l’assistant vocal : mode conversation, choix du LLM (local ou pas), domotique la plus rapide possible et qui me comprend ;
-- afficher mon planning avec une lisibilité rapide de mes heures d’embauche ;
-- avoir une télécommande réseau pour ma TV, ça peut toujours dépanner (pour la petite histoire, Claude Fable 5 m’a bluffé sur ce coup : il m’a fait ça en 2 prompts, du coup je l’ai laissé reprendre tous les popups, au prix de 50 % de ma limite des 5h par popup, sur le forfait Pro...).
+```bash
+# Cloner le dépôt
+git clone https://github.com/Axellum/M5-Tab5-ESPHome-LVGL.git
 
-Le tout avec, en termes de conception, les objectifs suivants. Vu que mes premières sessions avec Gemini sur le code du Nextion m’ont littéralement humilié — il a révolutionné l’envoi des données et divisé le code par trois — je voulais cette fois de la légèreté et de bien meilleures optimisations que ce que j’avais fait à la main :
+# Copier les fichiers de config locaux (gitignorés), puis y mettre vos valeurs
+cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
+# Créer secrets.yaml — voir docs/installation.md
 
-- pas d’images, le plus léger et optimisé possible pour la tablette ;
-- une gestion des envois de données côté HA robuste et la plus douce possible (mon Home Assistant tourne sur une Freebox, je reste léger) ;
-- un démarrage rapide, pas de lenteur d’affichage, quelque chose de fluide, quoi.
+# Compiler via le dashboard ESPHome ou la CLI :
+# esphome run tab5-ha-hmi.yaml
+```
 
-J’ai aussi essayé d’avoir une interface moderne (j’ai la cinquantaine, ne m’en demandez pas trop) : pas de pages, mais des popups, tout accessible directement depuis l’écran d’accueil par bouton, toucher long ou swipe. Beaucoup de code couleur pour une lisibilité même à quelques mètres, tout en ayant un écran pensé pour être lu à moins d’un mètre si on veut voir toutes les données correctement. Et j’ai essayé de caser un maximum d’infos et de commandes sur une interface relativement épurée — oui, je sais, le plus dur pour moi. Objectif final : un écran à peu près correct visuellement, même si je reste plus axé pratique dans l’absolu.
+Pas à pas complet : [`docs/installation.md`](docs/installation.md#version-française)
 
-Backend compagnon (optionnel, en cours) : **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** — orchestrateur multi-agents utilisé pour le routage vocal et la conversation.
+Envie de le voir tourner avant de configurer Home Assistant ? → [`docs/demo_mode.md`](docs/demo_mode.md) pousse des données de démonstration vers une tablette flashée avec un petit script autonome — sans installer HA, rien à nettoyer ensuite.
+
+---
+
+## Compatibilité matérielle
+
+| Puce écran (autocollant au dos) | Statut |
+|---|---|
+| **ST7123** | ✅ Prise en charge — la tablette de l'auteur, utilisée tous les jours |
+| **ST7121** | ❓ Pas encore prise en charge — jamais compilée ni testée |
+| **ILI9881C** + tactile GT911 (appareils fabriqués avant le 14 octobre 2025) | ❌ Pas encore prise en charge — pilotes d'écran et de tactile différents |
+
+Détails, comment identifier votre appareil, et le modèle ESPHome de chaque puce : [`docs/hardware.md`](docs/hardware.md#révisions-matérielles). Vous avez un Tab5 ST7121 ou ILI9881C et vous voulez bien tester ? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
 
 ---
 
@@ -453,7 +512,7 @@ Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui
 | [`CARTOGRAPHIE_TAB5.md`](CARTOGRAPHIE_TAB5.md) | Graphe de dépendances complet et inventaire fichier par fichier, dette technique connue |
 | [`docs/screens.md`](docs/screens.md) | Description fonctionnelle écran par écran |
 | [`docs/architecture.md`](docs/architecture.md) | Structure YAML modulaire, paradigme push, data packing, boot guards |
-| [`docs/hardware.md`](docs/hardware.md) | Specs ESP32-P4, mapping GPIO, DAC ES8388, PSRAM, alimentation |
+| [`docs/hardware.md`](docs/hardware.md) | Révisions matérielles du Tab5 (lesquelles sont prises en charge), specs ESP32-P4, mapping GPIO, DAC ES8388, PSRAM, alimentation |
 | [`docs/ui_design.md`](docs/ui_design.md) | Rendu LVGL, polices vectorielles, couleur dynamique, optimisations CPU |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Pipeline wake-word, chaîne audio, états de retour visuel |
 | [`docs/installation.md`](docs/installation.md) | Prérequis, `user_entities.yaml`, secrets, flash & OTA |
@@ -468,6 +527,57 @@ Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui
 | [`docs/related_projects.md`](docs/related_projects.md) | Projets liés, contexte expérimentation IA |
 | [`docs/arcade.md`](docs/arcade.md) | Les 8 consoles de jeu — architecture commune, ajouter une 9ᵉ, une section par jeu |
 | [`docs/press/`](docs/press/hackster.md) | Kit de publication — story Hackster.io / concours M5Stack, BOM, étapes de build |
+
+---
+
+## Communauté
+
+- **Questions, idées, votre installation** → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions) (Q&A, Ideas, Show and tell, Hardware compatibility).
+- **Quelque chose ne marche pas ?** → [ouvrez une issue](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/issues/new/choose) ; le formulaire demande votre puce écran et votre version d'ESPHome.
+- **Faille de sécurité** → à signaler en privé, voir [`SECURITY.md`](SECURITY.md#version-française).
+- **Contribuer** → [`CONTRIBUTING.md`](CONTRIBUTING.md#version-française) et le [code de conduite](CODE_OF_CONDUCT.md#version-française).
+
+Anglais ou français, les deux sont bienvenus.
+
+---
+
+## Note personnelle
+
+Ayant beaucoup entendu parler de l’IA, et notamment en codage, il y a quelques mois de ça j’ai voulu voir par moi-même ce que cela donnait. Il me fallait un projet, et comme mon vieux écran Nextion (plutôt météo, toujours avec ESPHome et Météo-France) commençait à dater, j’ai opté pour le renouveler — mais cette fois avec un aspect domotique bien plus poussé, sur un écran bien plus qualitatif et puissant, le tout piloté par l’IA.
+
+De fil en aiguille, j’ai complété l’écran avec un assistant vocal, puis par un « moteur » pour gérer en local la partie domotique vocale, et en semi-local ou cloud la partie conversations. Le moteur est un projet en cours (lui aussi 🙂) où j’ai posé beaucoup (trop) de choses pour expérimenter et mieux comprendre comment marchent les LLMs : RAG, notations, gestion multi-LLM, MCP, et j’en passe. Je le partage donc surtout dans un but informatif : je l’utilise de façon fonctionnelle pour l’écran, mais pas encore pour le codage ni pour tout ce que j’ai voulu y implémenter — qui fonctionne plus ou moins bien.
+
+Dans mon périple, j’ai commencé avec Antigravity, puis je l’ai aidé par différents modèles (DeepSeek, MiniMax, Z.ai). Ensuite, j’ai testé Claude, qui a fait lui aussi beaucoup de travail, puis Cursor récemment. Bref, je vous partage le projet de mon écran, fait pour mon usage quotidien, dont je suis plus l’architecte que le créateur — issu de mes débuts d’aventure dans le monde de l’IA.
+
+**Bref, pourquoi un écran ?**
+
+Après 5 ans avec le Nextion, je souhaitais donner un coup de jeune à mon écran plutôt axé météo, en gardant a minima les mêmes objectifs :
+
+- faire office d’horloge ;
+- voir au premier coup d’œil si des averses sont prévues dans l’heure : je pars 15 min en avance pour ne pas arriver trempé au boulot ? Je prévois le parapluie ?
+- avoir la prévision météo sur quelques jours, histoire d’avoir un sujet de conversation si je décide de me sociabiliser ;
+- le tout pour une consommation raisonnable et toujours allumé (enfin, quand je suis devant), avec une liberté totale sur les positionnements, designs et logiques — pas juste l’affichage HA standard — avec les avantages... et les inconvénients que ça implique.
+
+Avec un esprit domotique plus poussé : un retour direct de l’humidité de mes pots / de mon potager, allumer la TV et l’ordi sans bouger mes fesses de ma chaise, et gérer les trois spots du salon et la lumière de la chambre.
+
+Puis, petit à petit :
+
+- gérer ma clim ;
+- avoir la main sur mon volet roulant, toujours sans me lever ;
+- intégrer « Ok Nabu », plus besoin de me pencher pour attraper l’écran :) ;
+- peaufiner l’intégration de l’assistant vocal : mode conversation, choix du LLM (local ou pas), domotique la plus rapide possible et qui me comprend ;
+- afficher mon planning avec une lisibilité rapide de mes heures d’embauche ;
+- avoir une télécommande réseau pour ma TV, ça peut toujours dépanner (pour la petite histoire, Claude Fable 5 m’a bluffé sur ce coup : il m’a fait ça en 2 prompts, du coup je l’ai laissé reprendre tous les popups, au prix de 50 % de ma limite des 5h par popup, sur le forfait Pro...).
+
+Le tout avec, en termes de conception, les objectifs suivants. Vu que mes premières sessions avec Gemini sur le code du Nextion m’ont littéralement humilié — il a révolutionné l’envoi des données et divisé le code par trois — je voulais cette fois de la légèreté et de bien meilleures optimisations que ce que j’avais fait à la main :
+
+- pas d’images, le plus léger et optimisé possible pour la tablette ;
+- une gestion des envois de données côté HA robuste et la plus douce possible (mon Home Assistant tourne sur une Freebox, je reste léger) ;
+- un démarrage rapide, pas de lenteur d’affichage, quelque chose de fluide, quoi.
+
+J’ai aussi essayé d’avoir une interface moderne (j’ai la cinquantaine, ne m’en demandez pas trop) : pas de pages, mais des popups, tout accessible directement depuis l’écran d’accueil par bouton, toucher long ou swipe. Beaucoup de code couleur pour une lisibilité même à quelques mètres, tout en ayant un écran pensé pour être lu à moins d’un mètre si on veut voir toutes les données correctement. Et j’ai essayé de caser un maximum d’infos et de commandes sur une interface relativement épurée — oui, je sais, le plus dur pour moi. Objectif final : un écran à peu près correct visuellement, même si je reste plus axé pratique dans l’absolu.
+
+Backend compagnon (optionnel, en cours) : **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** — orchestrateur multi-agents utilisé pour le routage vocal et la conversation.
 
 ---
 

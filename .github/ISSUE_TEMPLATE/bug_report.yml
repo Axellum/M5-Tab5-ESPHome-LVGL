@@ -1,0 +1,77 @@
+# Formulaire « bug » (GitHub issue forms). La puce écran est demandée en premier :
+# chaque rapport alimente le tableau des révisions du Tab5 (docs/hardware.md).
+name: "Bug report · Signaler un bug"
+description: "Something does not work as documented. · Quelque chose ne marche pas comme prévu."
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time! Installation questions go to [Discussions → Q&A](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/q-a). English or French, both are fine.
+        Merci ! Les questions d'installation vont dans [Discussions → Q&A](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/q-a). Anglais ou français, les deux vont très bien.
+
+        **Before pasting logs, remove Wi-Fi passwords, API keys and personal entity IDs. · Avant de coller des logs, retirez mots de passe Wi-Fi, clés d'API et entity IDs personnels.**
+  - type: dropdown
+    id: display_chip
+    attributes:
+      label: "Tab5 display chip · Puce écran du Tab5"
+      description: "Printed on the sticker on the back, just above the Espressif logo. See [hardware revisions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/hardware.md#hardware-revisions). · Inscrite sur l'autocollant au dos, juste au-dessus du logo Espressif."
+      options:
+        - "ST7123"
+        - "ST7121"
+        - "ILI9881C (+ GT911 touch)"
+        - "I don't know · Je ne sais pas"
+    validations:
+      required: true
+  - type: input
+    id: firmware_version
+    attributes:
+      label: "Firmware release or commit · Release ou commit du firmware"
+      placeholder: "v2.0.0 or/ou d821847"
+    validations:
+      required: true
+  - type: input
+    id: esphome_version
+    attributes:
+      label: "ESPHome version · Version d'ESPHome"
+      placeholder: "2026.9.0"
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: "Home Assistant version · Version de Home Assistant"
+      placeholder: "2026.9.2"
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: "What happened, and what did you expect? · Que s'est-il passé, et qu'attendiez-vous ?"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Steps to reproduce · Étapes pour reproduire"
+      placeholder: |
+        1. Open the climate popup · Ouvrir le popup clim
+        2. ...
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Logs"
+      description: "`esphome logs tab5-ha-hmi.yaml`, or the device page in Home Assistant. · ou la page de l'appareil dans Home Assistant."
+      render: text
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: "Photos or screenshots · Photos ou captures"
+      description: "A photo of the screen often says more than a long description. · Une photo de l'écran en dit souvent plus qu'une longue description."
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: "Checks · Vérifications"
+      options:
+        - label: "I searched existing issues and discussions. · J'ai cherché dans les issues et discussions existantes."
+          required: true
+        - label: "I removed secrets and personal data from what I pasted. · J'ai retiré secrets et données personnelles de ce que j'ai collé."
+          required: true
