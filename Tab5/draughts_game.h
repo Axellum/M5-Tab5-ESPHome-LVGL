@@ -106,6 +106,12 @@ static constexpr int MAX_PATH  = 24;
 // 25 en international (FFJD/FMJD), 40 en anglais (WCDF). Compté en demi-coups.
 static constexpr int DRAW_PLIES_INTL = 50;
 static constexpr int DRAW_PLIES_ENG  = 80;
+// Fins de partie réduites (FMJD, international seulement) : une dame seule contre
+// au plus deux pièces dont une dame → nulle après 5 coups de chaque camp ; contre
+// trois pièces dont une dame → après 16. Compté en demi-coups depuis la dernière
+// prise ou promotion (le matériel ne change qu'à ces moments-là).
+static constexpr int ENDGAME_PLIES_SMALL = 10;
+static constexpr int ENDGAME_PLIES_THREE = 32;
 
 enum Variant : uint8_t { VAR_INTL10 = 0, VAR_ENG8 = 1 };
 enum Side    : uint8_t { SIDE_WHITE = 0, SIDE_BLACK = 1 };
@@ -129,6 +135,8 @@ struct Pos {
     uint8_t must_from;   // 255 = libre
     uint8_t variant;     // Variant
     uint8_t no_progress; // demi-coups sans prise ni déplacement de pion
+    uint8_t eg_limit;    // fin de partie réduite : seuil en demi-coups, 0 = hors cas
+    uint8_t eg_plies;    // demi-coups joués depuis l'entrée dans ce cas
 };
 
 // Coup légal complet (rafle = chemin + capturées).
@@ -146,6 +154,10 @@ struct Move {
 void pos_init(Pos& p, Variant v);
 int  gen_moves(const Pos& p, Move* out, int max_out);
 void apply_move(Pos& p, const Move& m);
+// Recalcule eg_limit d'après le matériel (et remet eg_plies à 0). apply_move()
+// l'appelle à chaque prise ou promotion ; à appeler aussi après avoir posé une
+// position à la main (reprise d'une partie sauvegardée).
+void refresh_endgame(Pos& p);
 int  eval_material(const Pos& p);          // +blancs, −noirs (pion=100, dame=300)
 // Matériel + mobilité légère. `scratch` (MAX_MOVES coups) reçoit la génération qui
 // sert à compter la mobilité : 4,7 Ko que l'IA fournit hors de la pile.

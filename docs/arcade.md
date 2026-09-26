@@ -550,8 +550,12 @@ rafle est en cours.
 **Nulle** : quand aucun pion n'a bougé et que rien n'a été pris pendant 25 coups de chaque
 camp en international (FFJD/FMJD), 40 en anglais (WCDF). Le compteur `no_progress`
 avance d'un demi-coup à chaque coup de dame sans prise et revient à 0 à chaque coup de
-pion ou prise. Pas encore gérés : la triple répétition et les fins de partie réduites
-(16 coups).
+pion ou prise. Aussi nulles (règles FMJD) : la **même position, même trait, pour la
+3ᵉ fois** (les deux variantes, suivi par l'interface depuis le dernier coup irréversible) ;
+en international, **une dame seule** contre au plus deux pièces dont une dame après
+**5 coups** de chaque camp, contre trois pièces dont une dame après **16 coups**
+(`eg_limit` / `eg_plies` dans `Pos`, recalculés à chaque prise ou promotion, donc vus
+aussi par l'IA). L'écran de fin affiche la raison de la nulle.
 
 ### Niveaux d'IA
 
