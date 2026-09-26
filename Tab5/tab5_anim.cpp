@@ -465,11 +465,12 @@ void update_clock_date_ui(lv_obj_t* lbl_date,
     if (lbl_date) {
         // [AI-WARNING] lbl_date est en roboto_45_b : ses glyphes doivent couvrir
         // fr_day_short_utf8(), les chiffres et clock_month_short_utf8() (tab5_core.cpp,
-        // tab5-styles.yaml, règle 6) — changer de police = vérifier sa liste.
+        // tab5-styles.yaml, règle 6) — changer de police = vérifier sa liste. Même
+        // chose pour leurs traductions (Tab5/lang/*.yaml, tests/test_i18n.py).
         // day_of_week ESPHome : 1 = dimanche … 7 = samedi.
-        const char* day = fr_day_short_utf8(day_of_week - 1);
+        const char* day = day_short_utf8(day_of_week - 1);
         char buf_date[64];
-        snprintf(buf_date, sizeof(buf_date), "%s %02d %s", day, day_of_month, clock_month_short_utf8(month));
+        snprintf(buf_date, sizeof(buf_date), "%s %02d %s", day, day_of_month, month_short_utf8(month));
         lv_label_set_recolor(lbl_date, false);
         ui_text(lbl_date, buf_date);  // appelée chaque minute : ne repeint qu'au changement de jour
     }

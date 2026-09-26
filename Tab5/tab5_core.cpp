@@ -7,6 +7,7 @@
  *       différence, `time(nullptr)` passe par `tab5_time_source`.
  */
 #include "tab5_core.h"
+#include "tab5_i18n.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -104,12 +105,18 @@ std::string fr_capitalized(const char* s) {
     return r;
 }
 
+// Libellés affichés = libellés français passés par tr() (clés de Tab5/lang/*.yaml).
+const char* day_short_utf8(int wday) { return tr(fr_day_short_utf8(wday)); }
+const char* month_short_utf8(int month) { return tr(clock_month_short_utf8(month)); }
+const char* day_long_utf8(int wday) { return tr(fr_day_long_utf8(wday)); }
+const char* month_long_utf8(int mois_1_12) { return tr(fr_month_long_utf8(mois_1_12)); }
+
 // Titre court "Lun 16" pour les pages journalieres 2 et 3 (page_index 1/2).
 std::string format_short_day_label(int jour_offset) {
     struct tm t;
     if (!local_day_from_offset(jour_offset, t)) return "";
-    char buf[12];
-    snprintf(buf, sizeof(buf), "%s %02d", fr_day_short_utf8(t.tm_wday), t.tm_mday);
+    char buf[24];
+    snprintf(buf, sizeof(buf), "%s %02d", day_short_utf8(t.tm_wday), t.tm_mday);
     return std::string(buf);
 }
 
@@ -135,18 +142,15 @@ const char* fr_month_long_utf8(int mois_1_12) {
 
 // "mercredi 5 aout" a J+jour_offset — "1er" pour le premier du mois (le seul
 // quantieme ordinal en francais, les autres restent cardinaux : 2, 3, 4...).
+// L'ordre des mots est un modele traduisible : « {jour}, {mois} {quantieme} » en
+// anglais, et « 1er » se traduit à part (« 1 » en anglais).
 std::string format_long_day_label(int jour_offset) {
     struct tm t;
     if (!local_day_from_offset(jour_offset, t)) return "";
-    char buf[48];
-    if (t.tm_mday == 1) {
-        snprintf(buf, sizeof(buf), "%s 1er %s",
-                 fr_day_long_utf8(t.tm_wday), fr_month_long_utf8(t.tm_mon + 1));
-    } else {
-        snprintf(buf, sizeof(buf), "%s %d %s",
-                 fr_day_long_utf8(t.tm_wday), t.tm_mday, fr_month_long_utf8(t.tm_mon + 1));
-    }
-    return std::string(buf);
+    const std::string quantieme = (t.tm_mday == 1) ? std::string(tr("1er")) : std::to_string(t.tm_mday);
+    return tr_fill("{jour} {quantieme} {mois}", {{"jour", day_long_utf8(t.tm_wday)},
+                                                {"quantieme", quantieme},
+                                                {"mois", month_long_utf8(t.tm_mon + 1)}});
 }
 
 // ─── Découpe de texte : reprend à l'identique les copies qu'elle remplace

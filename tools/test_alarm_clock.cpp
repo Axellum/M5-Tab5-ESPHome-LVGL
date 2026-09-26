@@ -20,6 +20,7 @@
  */
 #include "alarm_clock.h"
 #include "tab5_core.h"
+#include "tab5_i18n.h"
 
 #include <cmath>
 #include <cstdio>
@@ -424,6 +425,27 @@ static void test_prereglages_et_volume() {
     expect(alarm_ring_gain(1.5f, 0, false) == 1.0f, "volume borné à 1");
 }
 
+// Langue de l'écran (lot 4, 27/09/2026) : les mêmes titres en anglais, puis retour au
+// français — la langue source, qui rend les clés telles quelles.
+static void test_langue() {
+    now_is(at(2026, 9, 30, 12, 0));
+    expect_str(i18n_language_name(0), "Fran\xC3\xA7" "ais", "langue 0 = français (source)");
+    expect_str(i18n_language_name(1), "English", "langue 1 = anglais");
+    i18n_set_language(1);
+    expect_str(format_short_day_label(0), "Wed 30", "titre court en anglais");
+    expect_str(format_long_day_label(1), "Thursday, October 1", "titre long en anglais, sans « 1er »");
+    expect_str(tr("Calendrier"), "Calendar", "texte d'écran traduit");
+    expect_str(tr("texte absent des tables"), "texte absent des tables", "clé inconnue rendue telle quelle");
+    expect_str(tr_ctx("mardi", "M"), "T", "contexte : M = mardi");
+    expect_str(tr_ctx("mercredi", "M"), "W", "contexte : M = mercredi");
+    expect_str(tr_ctx("clim", "Chaud"), "Heat", "contexte : mode chauffage de la clim");
+    expect_str(tr("Chaud"), "Warm", "sans contexte : blanc chaud d'une lampe");
+    i18n_set_language(99);
+    expect(i18n_language() == 0, "langue hors bornes : retour au français");
+    expect_str(tr("Calendrier"), "Calendrier", "français : texte rendu tel quel");
+    expect_str(format_long_day_label(1), "jeudi 1er octobre", "retour au français");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -442,6 +464,7 @@ int main() {
     test_changements_d_heure();
     test_rendez_vous();
     test_prereglages_et_volume();
+    test_langue();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;

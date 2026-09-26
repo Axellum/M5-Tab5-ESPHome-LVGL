@@ -220,6 +220,40 @@ select:
           // même destination puisse être redemandée juste après.
           id(tab5_goto_screen).publish_state("—");
 
+  # Langue de l'écran (lot 4 de l'audit « ouverture », 27/09/2026). Les options sont
+  # les noms natifs de Tab5/lang/*.yaml, DANS L'ORDRE de leurs `_index` : la tablette
+  # mémorise l'INDEX choisi (restore_value), donc une nouvelle langue s'ajoute
+  # TOUJOURS à la fin (tests/test_i18n.py vérifie l'ordre). Seul l'écran change :
+  # noms d'entités, options de select et codes vus par HA restent en français.
+  # Au démarrage, la valeur restaurée règle la langue AVANT la traduction des textes
+  # du YAML (on_boot -100). Un changement en cours de route redémarre la tablette :
+  # les textes posés par le YAML ne se traduisent qu'au démarrage.
+  - platform: template
+    id: tab5_langue
+    name: "Langue"
+    icon: mdi:translate
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - "Français"
+      - "English"
+    # Défaut d'un premier démarrage : `tab5_langue:` dans Tab5/user_entities.yaml
+    # (nom natif, par ex. « English »), sinon le français.
+    initial_option: "${ tab5_langue | default('Français') }"
+    on_value:
+      - if:
+          condition:
+            lambda: 'return id(boot_complete) && i != i18n_language();'
+          then:
+            - logger.log:
+                format: "Langue de l'ecran : %s -> redemarrage"
+                args: ['x.c_str()']
+            - delay: 1s
+            - lambda: 'App.safe_reboot();'
+          else:
+            - lambda: 'i18n_set_language(i);'
+
 button:
   # Recharge le mois courant + M+1 du calendrier (même script que le pré-fetch
   # de boot). À utiliser quand un RDV ajouté dans HA n'apparaît pas encore.

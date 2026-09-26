@@ -13,6 +13,8 @@
 #include "esphome.h"
 #include "tab5_tokens.h"
 #include "tab5_core.h"
+#include "tab5_i18n.h"
+#include <initializer_list>
 #include <string>
 #include <vector>
 
@@ -150,6 +152,12 @@ void layout_clock_roller(lv_obj_t* clock_tile, esphome::font::Font* clock_font);
 // a tout objet clickable avec radius 18 (caracteristique du style_clim_btn verre).
 // Appele une fois au boot via un interval one-shot (apres layout LVGL).
 void apply_pressed_scale_to_tree(lv_obj_t* root);
+
+// --- Langue de l'écran (lot 4, 27/09/2026) ---
+
+// Traduit une fois, en fin de setup, les textes posés par le YAML sous chacune des
+// racines (les pages LVGL). Sans effet en français. Voir tab5_i18n.h.
+void i18n_apply_boot(std::initializer_list<lv_obj_t*> racines);
 
 // Le jeu de bille vit desormais dans marble_game.h / marble_game.cpp
 // (namespace Marble). L'ancien prototype `namespace Game` a ete retire.

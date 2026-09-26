@@ -39,7 +39,7 @@ void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* i
 
     if (icon_switch != nullptr && lbl_switch_state != nullptr) {
         ui_text_color(icon_switch, color);
-        ui_text(lbl_switch_state, is_on ? "Allumé" : "Éteint");
+        ui_text(lbl_switch_state, tr(is_on ? "Allumé" : "Éteint"));
         ui_text_color(lbl_switch_state, color);
     }
     if (btn_power_icon != nullptr && current_light_entity == this_entity) {
@@ -109,7 +109,7 @@ void show_light_popup_ui(int light_idx, const char* const titles[3],
     if (popup == nullptr || title_lbl == nullptr || arc == nullptr || pct_lbl == nullptr) return;
     if (light_idx < 0 || light_idx > 2) return;
 
-    ui_text(title_lbl, titles[light_idx]);
+    ui_text(title_lbl, tr(titles[light_idx]));
 
     lv_obj_t* btns[3]  = { btn0, btn1, btn2 };
     lv_obj_t* icons[3] = { icon0, icon1, icon2 };
@@ -207,10 +207,10 @@ void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
 
         // Texte sous l'icone : "Pot X" ou "Moy:"
         if (s == 2) {
-            ui_text(slots[s].val_lbl, "Moy:");
+            ui_text(slots[s].val_lbl, tr("Moy:"));
         } else {
             char buf[16];
-            snprintf(buf, sizeof(buf), "Pot %d", e.idx + 1);
+            snprintf(buf, sizeof(buf), tr("Pot %d"), e.idx + 1);
             ui_text(slots[s].val_lbl, buf);
         }
 
@@ -245,7 +245,7 @@ void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]) 
         if (isnan(v)) {
             ui_text(cards[i].moist_lbl, "--");
             ui_text_color(cards[i].moist_lbl, UIColor::INACTIVE);
-            ui_text(cards[i].status_lbl, "Hors ligne");
+            ui_text(cards[i].status_lbl, tr("Hors ligne"));
             ui_text_color(cards[i].status_lbl, UIColor::TEXT_DIM);
             continue;
         }
@@ -255,10 +255,10 @@ void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]) 
         ui_text_color(cards[i].moist_lbl, c);
         // Seuils alignes sur get_humidity_color : <=14 = zone rouge (ALERT_RED)
         if (v <= 14.0f) {
-            ui_text(cards[i].status_lbl, "\xC3\x80 arroser !");
+            ui_text(cards[i].status_lbl, tr("\xC3\x80 arroser !"));
             ui_text_color(cards[i].status_lbl, UIColor::ERROR);
         } else if (v <= 20.0f) {
-            ui_text(cards[i].status_lbl, "Bient\xC3\xB4t sec");
+            ui_text(cards[i].status_lbl, tr("Bient\xC3\xB4t sec"));
             ui_text_color(cards[i].status_lbl, UIColor::WARNING);
         } else {
             ui_text(cards[i].status_lbl, "OK");
@@ -332,6 +332,6 @@ void update_pc_status_ui(bool active, lv_obj_t* icon_pc, lv_obj_t* icon_sw, lv_o
     if (icon_sw == nullptr || lbl_sw_state == nullptr) return;
     const uint32_t c = active ? UIColor::SUCCESS : UIColor::TEXT_DIM;
     set_icon_color_ui(icon_sw, c);
-    ui_text(lbl_sw_state, active ? "Allumé" : "Éteint");
+    ui_text(lbl_sw_state, tr(active ? "Allumé" : "Éteint"));
     set_icon_color_ui(lbl_sw_state, c);
 }

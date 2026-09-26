@@ -23,7 +23,7 @@ static void set_toggle(lv_obj_t* btn, lv_obj_t* lbl, bool on, const char* on_txt
                        uint32_t on_color) {
   if (btn != nullptr) highlight_button_border(btn, on, on_color);
   if (lbl != nullptr) {
-    lv_label_set_text(lbl, on ? on_txt : off_txt);
+    lv_label_set_text(lbl, tr(on ? on_txt : off_txt));
     lv_obj_set_style_text_color(lbl, lv_color_hex(on ? on_color : UIColor::TEXT_DIM), LV_PART_MAIN);
   }
 }
@@ -51,12 +51,16 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
   // quand le mode en cours ne s'en sert pas pour les jours travaillés, plutôt
   // que de le masquer (il reste utile pour le repli des jours de repos).
   static const char* const kDays[7] = {"L", "M", "M", "J", "V", "S", "D"};
+  // Contexte de traduction : « M » vaut mardi ET mercredi (« T » et « W » en anglais).
+  // Clés « lundi|L » … « dimanche|D » dans Tab5/lang/*.yaml (lot 4, 27/09/2026).
+  static const char* const kDayCtx[7] = {"lundi", "mardi", "mercredi", "jeudi",
+                                        "vendredi", "samedi", "dimanche"};
   const bool days_govern_all = (c.mode == AlarmMode::FIXE);
   for (int i = 0; i < 7; i++) {
     const bool on = (c.days_mask >> i) & 1;
     if (ui.day_btn[i] != nullptr) highlight_button_border(ui.day_btn[i], on, UIColor::ACCENT);
     if (ui.day_lbl[i] != nullptr) {
-      lv_label_set_text(ui.day_lbl[i], kDays[i]);
+      lv_label_set_text(ui.day_lbl[i], tr_ctx(kDayCtx[i], kDays[i]));
       lv_obj_set_style_text_color(ui.day_lbl[i],
                                   lv_color_hex(on ? (days_govern_all ? UIColor::TEXT_SOFT : UIColor::ACCENT)
                                                   : UIColor::TEXT_DIM),
@@ -80,11 +84,11 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
         hint = "Sonne avant l'ouverture lue dans le calendrier.";
         break;
     }
-    lv_label_set_text(ui.lbl_mode_hint, hint);
+    lv_label_set_text(ui.lbl_mode_hint, tr(hint));
   }
 
   if (ui.lbl_lead != nullptr) {
-    snprintf(buf, sizeof(buf), "%d min", c.lead_min);
+    snprintf(buf, sizeof(buf), tr("%d min"), c.lead_min);
     lv_label_set_text(ui.lbl_lead, buf);
   }
   if (ui.lbl_early != nullptr) {
@@ -110,7 +114,8 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
   if (ui.lbl_next != nullptr) lv_label_set_text(ui.lbl_next, alarm_next_label(now).c_str());
   if (ui.lbl_next_sub != nullptr) lv_label_set_text(ui.lbl_next_sub, alarm_next_detail(now).c_str());
 
-  if (ui.lbl_melody != nullptr) lv_label_set_text(ui.lbl_melody, alarm_melody_name(c.melody));
+  // Le nom de la mélodie est aussi une option du select HA : traduit à l'affichage seulement.
+  if (ui.lbl_melody != nullptr) lv_label_set_text(ui.lbl_melody, tr(alarm_melody_name(c.melody)));
   if (ui.slider_vol != nullptr) {
     const int pct = static_cast<int>(c.volume * 100.0f + 0.5f);
     // lv_slider_set_value ne déclenche pas LV_EVENT_VALUE_CHANGED : pas de
@@ -124,23 +129,23 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
   set_toggle(ui.btn_cresc, ui.lbl_cresc, crescendo, "Progressif", "Volume constant", UIColor::ACCENT);
 
   if (ui.lbl_snooze != nullptr) {
-    snprintf(buf, sizeof(buf), "%d min", c.snooze_min);
+    snprintf(buf, sizeof(buf), tr("%d min"), c.snooze_min);
     lv_label_set_text(ui.lbl_snooze, buf);
   }
   if (ui.lbl_maxring != nullptr) {
-    snprintf(buf, sizeof(buf), "%d min", c.max_ring_min);
+    snprintf(buf, sizeof(buf), tr("%d min"), c.max_ring_min);
     lv_label_set_text(ui.lbl_maxring, buf);
   }
 
   set_toggle(ui.btn_tts, ui.lbl_tts, tts_on, "Annonce parl\xC3\xA9""e", "Sonnerie seule", UIColor::INFO);
   set_toggle(ui.btn_rdv, ui.lbl_rdv, rdv_on, "Annonce des RDV", "RDV silencieux", UIColor::INFO);
   if (ui.lbl_rdv_lead != nullptr) {
-    snprintf(buf, sizeof(buf), "%d min avant", c.rdv_lead_min);
+    snprintf(buf, sizeof(buf), tr("%d min avant"), c.rdv_lead_min);
     lv_label_set_text(ui.lbl_rdv_lead, buf);
   }
   if (ui.lbl_rdv_next != nullptr) {
     const std::string n = rdv_next_label(now);
-    lv_label_set_text(ui.lbl_rdv_next, n.empty() ? "Aucun rendez-vous \xC3\xA0 venir" : n.c_str());
+    lv_label_set_text(ui.lbl_rdv_next, n.empty() ? tr("Aucun rendez-vous \xC3\xA0 venir") : n.c_str());
     lv_obj_set_style_text_color(ui.lbl_rdv_next,
                                 lv_color_hex(n.empty() ? UIColor::TEXT_DIM : UIColor::TEXT_SOFT),
                                 LV_PART_MAIN);
@@ -171,14 +176,14 @@ void alarm_ring_refresh(const AlarmRingUI& ui, time_t now, int snooze_min, int s
   char buf[64];
   if (ui.lbl_title != nullptr) {
     if (snooze_count > 0) {
-      snprintf(buf, sizeof(buf), "R\xC3\xA9p\xC3\xA9tition %d", snooze_count);
+      snprintf(buf, sizeof(buf), tr("R\xC3\xA9p\xC3\xA9tition %d"), snooze_count);
     } else {
-      snprintf(buf, sizeof(buf), "R\xC3\xA9veil");
+      snprintf(buf, sizeof(buf), "%s", tr("R\xC3\xA9veil"));
     }
     lv_label_set_text(ui.lbl_title, buf);
   }
   if (ui.lbl_snooze != nullptr) {
-    snprintf(buf, sizeof(buf), "R\xC3\xA9p\xC3\xA9ter \xC2\xB7 %d min", snooze_min);
+    snprintf(buf, sizeof(buf), tr("R\xC3\xA9p\xC3\xA9ter \xC2\xB7 %d min"), snooze_min);
     lv_label_set_text(ui.lbl_snooze, buf);
   }
 }

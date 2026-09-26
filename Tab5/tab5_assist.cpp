@@ -225,7 +225,7 @@ void assist_set_pipeline_state(lv_obj_t* icon_mic, lv_obj_t* lbl_status, AssistS
     assist_state_style(st, color, label);
     if (icon_mic != nullptr) lv_obj_set_style_text_color(icon_mic, lv_color_hex(color), LV_PART_MAIN);
     if (lbl_status != nullptr) {
-        lv_label_set_text(lbl_status, label);
+        lv_label_set_text(lbl_status, tr(label));
         lv_obj_set_style_text_color(lbl_status, lv_color_hex(color), LV_PART_MAIN);
     }
 }
@@ -240,7 +240,7 @@ void assist_image_state_ui(lv_obj_t* hint, lv_obj_t* img, AssistImage st) {
     }
     if (hint != nullptr) {
         if (text != nullptr) {
-            lv_label_set_text(hint, text);
+            lv_label_set_text(hint, tr(text));
             lv_obj_remove_flag(hint, LV_OBJ_FLAG_HIDDEN);
         } else {
             lv_obj_add_flag(hint, LV_OBJ_FLAG_HIDDEN);

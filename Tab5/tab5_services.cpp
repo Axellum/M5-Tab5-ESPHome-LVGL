@@ -73,7 +73,7 @@ bool update_volet_ui(const std::string& etat, bool target_open, const VoletUI& u
         lv_obj_set_style_text_color(ui.arrow, lv_color_hex(UIColor::INFO), LV_PART_MAIN);
         if (has_sw) {
             lv_obj_set_style_text_color(ui.sw_icon, lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-            lv_label_set_text(ui.sw_label, "Mouvement");
+            lv_label_set_text(ui.sw_label, tr("Mouvement"));
             lv_obj_set_style_text_color(ui.sw_label, lv_color_hex(UIColor::INFO), LV_PART_MAIN);
         }
         return true;
@@ -90,7 +90,7 @@ bool update_volet_ui(const std::string& etat, bool target_open, const VoletUI& u
         }
         if (has_sw) {
             lv_obj_set_style_text_color(ui.sw_icon, lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-            lv_label_set_text(ui.sw_label, "Ouvert");
+            lv_label_set_text(ui.sw_label, tr("Ouvert"));
             lv_obj_set_style_text_color(ui.sw_label, lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
         }
     } else if (etat == "Ferme" || etat == "closed") {
@@ -100,7 +100,7 @@ bool update_volet_ui(const std::string& etat, bool target_open, const VoletUI& u
         }
         if (has_sw) {
             lv_obj_set_style_text_color(ui.sw_icon, lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-            lv_label_set_text(ui.sw_label, "Fermé");
+            lv_label_set_text(ui.sw_label, tr("Fermé"));
             lv_obj_set_style_text_color(ui.sw_label, lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
         }
     }
@@ -331,14 +331,14 @@ void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
         }
 
         std::string j_name;
-        if (jour == 0) j_name = "Auj.";
-        else if (jour == 1) j_name = "Dem.";
+        if (jour == 0) j_name = tr("Auj.");
+        else if (jour == 1) j_name = tr("Dem.");
         else {
             // Date civile de J+jour normalisée à midi : `maintenant + jour × 86 400 s`
             // tombait sur le mauvais jour les nuits de changement d'heure (audit §5).
             struct tm day_tm;
             if (!local_day_from_offset(jour, day_tm)) continue;
-            j_name = std::string(fr_day_short_utf8(day_tm.tm_wday)) + ".";   // « Dim. »
+            j_name = std::string(day_short_utf8(day_tm.tm_wday)) + ".";   // « Dim. »
         }
 
         const bool early = cal_is_early_shift(h);

@@ -332,7 +332,7 @@ obj:
                             - lambda: |-
                                 lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
                                 if (id(lbl_sys_ha_val) != nullptr) {
-                                  lv_label_set_text(id(lbl_sys_ha_val), "Redemarrage...");
+                                  lv_label_set_text(id(lbl_sys_ha_val), tr("Redemarrage..."));
                                   lv_obj_set_style_text_color(id(lbl_sys_ha_val), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
                                 }
                             - homeassistant.service:

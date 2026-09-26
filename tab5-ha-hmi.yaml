@@ -41,6 +41,12 @@ esphome:
     # Jetons sans dépendance (UIColor/UIAnim/UIIdle), inclus par tab5_custom.h et par
     # les deux jeux qui en ont besoin (25/09/2026, audit lot 8a).
     - Tab5/tab5_tokens.h
+    # Langue de l'écran (lot 4, 27/09/2026) : tr() pur, compilé aussi sur PC par les
+    # tests du réveil, et ses tables générées par tools/gen_i18n.py depuis
+    # Tab5/lang/*.yaml. Avant tab5_core, qui s'en sert pour les dates.
+    - Tab5/tab5_i18n_data.h
+    - Tab5/tab5_i18n.h
+    - Tab5/tab5_i18n.cpp
     # Logique pure (dates, données calendrier) : compilée aussi sur PC par les tests
     # du réveil (tools/test_alarm_clock.cpp, lot 8b).
     - Tab5/tab5_core.h
@@ -226,6 +232,15 @@ esphome:
     # setup(), juste avant la boucle ; le delay compte à partir de là.
     - priority: -100
       then:
+        # Langue de l'écran (lot 4, 27/09/2026 — ajout autorisé par Axel) : traduit
+        # les textes posés par le YAML, en fin de setup, AVANT la première image.
+        # Sans effet en français. La langue est déjà réglée : le select « Langue »
+        # (restore_value) a publié sa valeur pendant son propre setup.
+        - lambda: |-
+            i18n_apply_boot({id(page_main)->obj, id(page_arcade)->obj, id(page_marble)->obj,
+                             id(page_arkanoid)->obj, id(page_pinball)->obj, id(page_lode)->obj,
+                             id(page_go)->obj, id(page_trivia)->obj, id(page_chess)->obj,
+                             id(page_draughts)->obj});
         - delay: 2s
         - lambda: |-
             apply_pressed_scale_to_tree(lv_screen_active());

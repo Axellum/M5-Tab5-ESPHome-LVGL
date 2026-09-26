@@ -129,13 +129,13 @@ static int cal_weekday_mon0(int y, int m, int d) {
 
 // « Janvier » / « Lundi » : noms de tab5_core.cpp, majuscule initiale (titres).
 static std::string cal_month_name_utf8(int month) {
-    return fr_capitalized(fr_month_long_utf8(month));
+    return fr_capitalized(month_long_utf8(month));
 }
 
 // wd_mon0 : 0 = lundi … 6 = dimanche (grille qui commence le lundi).
 static std::string cal_weekday_name_utf8(int wd_mon0) {
     if (wd_mon0 < 0 || wd_mon0 > 6) return "";
-    return fr_capitalized(fr_day_long_utf8((wd_mon0 + 1) % 7));
+    return fr_capitalized(day_long_utf8((wd_mon0 + 1) % 7));
 }
 
 // n-ième champ d'une chaîne délimitée par | — champs vides autorisés
@@ -362,13 +362,16 @@ void cal_show_day_detail_loading(lv_obj_t* day_popup, lv_obj_t* lbl_title,
     int y = 0, m = 0, d = 0;
     if (sscanf(date_iso.c_str(), "%d-%d-%d", &y, &m, &d) != 3) return;
 
-    char buf[48];
-    snprintf(buf, sizeof(buf), "%s %d %s",
-        cal_weekday_name_utf8(cal_weekday_mon0(y, m, d)).c_str(), d, cal_month_name_utf8(m).c_str());
-    lv_label_set_text(lbl_title, buf);
+    // Même modèle que les titres de jours (tab5_core.cpp) : « Lundi 5 octobre »,
+    // « Monday, October 5 » — ici sans « 1er », comme avant.
+    const std::string titre = tr_fill("{jour} {quantieme} {mois}",
+        {{"jour", cal_weekday_name_utf8(cal_weekday_mon0(y, m, d))},
+         {"quantieme", std::to_string(d)},
+         {"mois", cal_month_name_utf8(m)}});
+    lv_label_set_text(lbl_title, titre.c_str());
 
     lv_label_set_text(lbl_status,
-        ha_online ? "Chargement..." : "Home Assistant hors ligne");
+        tr(ha_online ? "Chargement..." : "Home Assistant hors ligne"));
     lv_obj_remove_flag(lbl_status, LV_OBJ_FLAG_HIDDEN);
     for (int i = 0; i < 6; i++) {
         if (lines[i].icon) lv_obj_add_flag(lines[i].icon, LV_OBJ_FLAG_HIDDEN);
@@ -416,7 +419,7 @@ void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
     }
 
     if (line_count == 0) {
-        lv_label_set_text(lbl_status, "Rien de pr\xC3\xA9vu ce jour");
+        lv_label_set_text(lbl_status, tr("Rien de pr\xC3\xA9vu ce jour"));
         lv_obj_remove_flag(lbl_status, LV_OBJ_FLAG_HIDDEN);
     } else {
         lv_obj_add_flag(lbl_status, LV_OBJ_FLAG_HIDDEN);
