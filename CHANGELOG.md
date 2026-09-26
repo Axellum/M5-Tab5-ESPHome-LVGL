@@ -4,12 +4,31 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Performance : cache L2 de 256 Ko
+
+`CONFIG_CACHE_L2_CACHE_256KB` (128 Ko par défaut). Depuis #149 le code et les polices sont lus
+en PSRAM à travers ce cache. Mesuré sur la tablette, même protocole que le 25/09 (fenêtres
+d'une minute, mêmes actions aux mêmes minutes par rapport à l'envoi HA) :
+
+| Situation | 128 Ko (image / boucle) | 256 Ko | Gain |
+|---|---|---|---|
+| Repos | 10-11 / 35-36 ms | 10 / 31 ms | boucle −12 % |
+| Écran éteint/rallumé | 179 / 195 ms | 163 / 179 ms | image −9 % |
+| Calendrier | 305-306 / 353-365 ms | 285 / 338-380 ms | image −7 % |
+| Console système | 352-356 / 371-376 ms | 329 / 347-348 ms | image −7 % |
+| Envoi HA | 12 / 38 ms | 13 / 37 ms | ≈ |
+
+- Coût : le cache est pris sur la RAM interne. RAM libre 356 → 226 Ko ; RAM statique inchangée.
+- 5 redémarrages de contrôle : écran affiché à chaque fois (vérifié par Axel), API revenue en
+  16,5-16,8 s comme avant.
+
 ### 2026-09-26 — Documentation : 32 Mo de PSRAM, pas 16
 
 `docs/hardware.md` (EN + FR) annonçait 16 Mo de PSRAM « OCT-SPI ». Mesuré sur la tablette le
 26/09/2026 par une sonde d'essai (non mergée) : `esp_psram_get_size()` = 32 768 Ko, dont
 29 567 Ko pour le tas ; le bus est en mode `hex` (16 lignes) à 200 MHz (`psram:` de
 `tab5-hardware.yaml`). Les fiches de `contexte_ia` disaient déjà 32 Mo.
+
 
 ### 2026-09-26 — Diagnostic : version du logiciel du co-processeur Wi-Fi (ESP32-C6)
 
