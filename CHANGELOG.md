@@ -4,6 +4,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-26 — Jeux : 66 Ko de RAM interne rendus quand aucun jeu n'est ouvert
+
+Audit du 25/09/2026, §4.1 (étapes 1 à 3). Les jeux réservaient ≈ 113 Ko de RAM interne en
+permanence, même fermés. Il en reste ≈ 47 Ko. RAM interne statique du firmware : 282 692 →
+216 616 o (`riscv32-esp-elf-size -A`, `.iram0.text` + `.dram0.*` + `.dram1.bss` +
+`.noinit`).
+
+- **Échecs, table Zobrist calculée à la compilation** (`constexpr`, 7,7 Ko) : elle vit en
+  flash. Même xorshift, même graine, même ordre : les 985 clefs du firmware ont été
+  comparées à celles de l'ancien `init()` (0 écart).
+- **Échecs, tampons de recherche alloués à la demande** : les coups par ply et l'état de
+  recherche (≈ 24 Ko) forment un bloc pris au premier `search_start()`, `search_quick()`
+  ou `perft()`, en RAM interne (PSRAM en repli), et rendu par `search_release()` à la
+  fermeture du jeu. Une trace `chess` indique où il a été pris. Sans bloc, les accesseurs
+  répondent comme une recherche terminée et l'IA joue un coup légal tiré au sort.
+- **Tampons froids en PSRAM** (`EXT_RAM_BSS_ATTR`, 34,3 Ko) : historique des échecs, pile
+  d'annulation du Go, coups légaux et pile d'annulation des dames, coups racine de l'IA
+  des dames. Ils ne sont touchés qu'une fois par coup, jamais par une recherche.
+  L'option `CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY` est activée pour cela ; le
+  `.map` confirme que rien d'autre ne passe en PSRAM (la BSS de lwIP reste interne).
+- Vitesse des IA inchangée par construction : tout ce que lit la recherche reste en RAM
+  interne. 0 avertissement dans notre code.
+
 ### 2026-09-26 — Compilation : plus aucun avertissement dans notre code en -O2
 
 Le passage en `compiler_optimization: PERF` (#149) fait analyser les formats plus finement.

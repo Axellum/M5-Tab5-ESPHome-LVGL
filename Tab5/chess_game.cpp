@@ -30,6 +30,7 @@
 #include "chess_ai.h"
 #include "esphome/core/preferences.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include "esp_attr.h"
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -107,12 +108,14 @@ static GState g_state = ST_OFF;
 // ===========================================================================
 
 static Position g_pos;
-static Move     g_hist_move[MAX_HIST];
-static Undo     g_hist_undo[MAX_HIST];
-static uint64_t g_hist_hash[MAX_HIST + 1];
-static char     g_hist_san[MAX_HIST][12];
-static uint16_t g_hist_num[MAX_HIST];    // numero de coup au moment du demi-coup
-static uint8_t  g_hist_side[MAX_HIST];   // trait au moment du demi-coup
+// Historique (~10 Ko) en PSRAM : lu et ecrit une fois par coup joue, jamais par la
+// recherche. EXT_RAM_BSS_ATTR = BSS en PSRAM, remise a zero au boot comme la BSS.
+static EXT_RAM_BSS_ATTR Move     g_hist_move[MAX_HIST];
+static EXT_RAM_BSS_ATTR Undo     g_hist_undo[MAX_HIST];
+static EXT_RAM_BSS_ATTR uint64_t g_hist_hash[MAX_HIST + 1];
+static EXT_RAM_BSS_ATTR char     g_hist_san[MAX_HIST][12];
+static EXT_RAM_BSS_ATTR uint16_t g_hist_num[MAX_HIST];    // numero de coup au moment du demi-coup
+static EXT_RAM_BSS_ATTR uint8_t  g_hist_side[MAX_HIST];   // trait au moment du demi-coup
 static int      g_nply = 0;
 
 static uint8_t  g_mode       = 0;        // 0 = vs Tab, 1 = hotseat, 2 = demo
@@ -1739,6 +1742,7 @@ void close() {
 
     if (g_timer) { lv_timer_delete(g_timer); g_timer = nullptr; }
     g_ai_think = false;
+    search_release();
     g_anim_on = false;
     // Navigation retour vers le sélecteur arcade (page LVGL).
     if (g_ui.lvgl) g_ui.lvgl->show_page(g_ui.home_idx, LV_SCREEN_LOAD_ANIM_NONE, 0);

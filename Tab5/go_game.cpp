@@ -19,6 +19,7 @@
 #include "go_ai.h"
 #include "esphome/core/preferences.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include "esp_attr.h"
 #include <cstdio>
 #include <cstring>
 #include <cmath>
@@ -110,7 +111,8 @@ static int16_t g_mv[MV_MAX];
 static int     g_mv_n = 0;
 static uint8_t g_first_color = BLACK;
 
-static Pos g_undo[UNDO_MAX];
+// Pile d'annulation (11 Ko) en PSRAM : touchee une fois par coup joue ou annule.
+static EXT_RAM_BSS_ATTR Pos g_undo[UNDO_MAX];
 static int g_undo_last[UNDO_MAX];
 static int g_undo_mv[UNDO_MAX];
 static int g_undo_n = 0;

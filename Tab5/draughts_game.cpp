@@ -13,6 +13,7 @@
 #include "draughts_ai.h"
 #include "esphome/core/preferences.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include "esp_attr.h"
 #include <cstdio>
 #include <cstring>
 #include <cmath>
@@ -502,7 +503,9 @@ static DraughtsSave g_save{};
 static NvsSlot<DraughtsSave> g_nvs(PREF_KEY, SAVE_MAGIC);
 
 static Pos g_pos;
-static Move g_legal[MAX_MOVES];
+// Coups legaux de l'interface (4,7 Ko) en PSRAM : recalcules une fois par coup,
+// l'IA a ses propres tampons.
+static EXT_RAM_BSS_ATTR Move g_legal[MAX_MOVES];
 static int  g_n_legal = 0;
 static int  g_sel = -1;               // case sélectionnée (−1 = aucune)
 static int  g_hint_from = -1, g_hint_to = -1;
@@ -524,7 +527,7 @@ static int  g_hist_n = 0;
 
 // Undo : pile de positions (+ historique count)
 static constexpr int UNDO_MAX = 32;
-static Pos g_undo[UNDO_MAX];
+static EXT_RAM_BSS_ATTR Pos g_undo[UNDO_MAX];   // PSRAM : touchee une fois par coup
 static int g_undo_n = 0;
 
 // Animation capture fade

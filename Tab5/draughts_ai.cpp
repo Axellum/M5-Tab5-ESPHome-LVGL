@@ -9,6 +9,7 @@
  *      ligne par ply), alloué au premier coup réfléchi et rendu par release().
  */
 #include "draughts_ai.h"
+#include "esp_attr.h"
 #include "esp_heap_caps.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -46,7 +47,8 @@ static constexpr int MAX_BUDGET_MUL = 4;
 static State   g_state = AI_IDLE;
 static Level   g_level = LVL_BEGINNER;
 static Pos     g_root;
-static Move    g_root_moves[MAX_ROOT];
+// Coups racine (4,7 Ko) en PSRAM : lus une fois par coup racine, pas par nœud.
+static EXT_RAM_BSS_ATTR Move g_root_moves[MAX_ROOT];
 static int     g_root_n = 0;
 static int     g_root_scores[MAX_ROOT];
 static int     g_root_i = 0;

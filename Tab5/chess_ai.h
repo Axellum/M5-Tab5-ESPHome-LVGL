@@ -251,4 +251,8 @@ uint16_t search_budget_ms();
 // l'appeler avec plus de ~40 ms.
 Move search_quick(const Position& p, int depth, uint16_t max_ms, int* score_out);
 
+// Rend les ~24 Ko de la recherche (coups par ply + etat), alloues au premier
+// search_start() / search_quick() / perft(). A appeler a la fermeture du jeu.
+void search_release();
+
 }  // namespace Chess
