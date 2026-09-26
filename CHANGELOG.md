@@ -22,6 +22,7 @@ compilation que `build`, mais avec la version d'ESPHome lue dans `min_version:` 
     d'artefact.
 - **Pas encore un check requis** : pour qu'un échec bloque le merge, il faut l'ajouter
   aux checks requis de `main` dans les réglages du dépôt.
+
 ### 2026-09-26 — Alimentations masquées à HA, uptime publié une fois par démarrage
 
 Restes de l'audit des ressources du 26/09/2026 (§6 et H4), relevés dans le code le soir même.
