@@ -28,9 +28,11 @@ esp32:
       # 8 Ko de RAM interne. Garder une marge d'au moins 4 Ko en cas de nouvelle mesure.
       loop_task_stack_size: 16384
     sdkconfig_options:
-      # Fenêtre gardée à 16 Ko : 64 Ko (défaut ESPHome) ne raccourcit pas l'OTA,
-      # borné par l'écriture flash (14,7 → 14,5 s, essai du 25/09/2026).
-      CONFIG_LWIP_TCP_WND_DEFAULT: "16384"        # AXE7: Fenetre TCP 16Ko pour OTA stable
+      # Fenêtre TCP : valeur d'ESPHome (65 534 o), plus de forçage à 16 Ko. Le forçage
+      # datait du correctif OTA d'avril 2026 (sockets coupés côté PC, WinError
+      # 10053/10054), posé en même temps que l'option ci-dessous qui laisse le réseau
+      # répondre pendant l'effacement de la flash, sans essai séparé. Une fenêtre à 64 Ko
+      # a reçu des OTA normalement le 25/09/2026.
       CONFIG_SPI_FLASH_YIELD_DURING_ERASE: "y"   # AXE7: Evite gel CPU pendant effacement flash OTA
       CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_360: "y"
       CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ: "360"
