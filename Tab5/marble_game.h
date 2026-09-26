@@ -7,7 +7,8 @@
  *      le playfield doit dominer. Le YAML (ui_components/marble_game.yaml) ne
  *      declare QUE 4 conteneurs vides ; tout le contenu (HUD, menus, entites) est
  *      construit en C++ ici. Aucune dependance Home Assistant : la meta-progression
- *      est persistee en NVS via esphome::global_preferences.
+ *      est persistee en NVS via esphome::global_preferences. Jeu ferme, rien ne
+ *      reste reserve : objets LVGL detruits, etat (struct Mem) rendu par close().
  * @ai_instruction Ne PAS remettre de logique de jeu dans le YAML. Ne PAS appeler
  *      Marble::tick() manuellement : il est pilote par un lv_timer cree a l'ouverture
  *      et detruit a la fermeture (zero tick gameplay quand le jeu est ferme).
@@ -119,12 +120,13 @@ struct UI {
     const esphome::font::Font* f_big   = nullptr;  // roboto_45_b
 };
 
-// Ouvre le jeu sur le hub (construit l'UI au premier appel, la reutilise ensuite)
-// et demarre le lv_timer de gameplay. Idempotent.
+// Ouvre le jeu sur le hub : alloue l'etat, construit l'UI et demarre le lv_timer
+// de gameplay. Idempotent. Si la memoire manque, revient a l'arcade sans ouvrir.
 void open(const UI& ui);
 
 // Ferme le jeu : arrete le timer, banque la run en cours si besoin, sauvegarde
-// en NVS et masque l'overlay. Idempotent (sans effet si deja ferme).
+// en NVS, revient a l'arcade puis detruit l'UI et rend l'etat (rien ne reste
+// reserve). Idempotent (sans effet si deja ferme).
 void close();
 
 // True tant que l'overlay est visible (utilise pour router les evenements).
@@ -135,13 +137,14 @@ bool is_open();
 void on_imu(float ax, float ay, float az);
 
 // Prend l'inclinaison courante comme reference « tablette a plat ».
-// Accessible depuis le hub et l'ecran de pause.
+// Accessible depuis le hub et l'ecran de pause (sans effet jeu ferme).
 void calibrate();
 
-// Ecrit immediatement la sauvegarde meta en NVS (appele aux moments cles).
+// Ecrit immediatement la sauvegarde meta en NVS (appele aux moments cles ; sans
+// effet jeu ferme : la sauvegarde n'est en memoire que jeu ouvert).
 void persist_save();
 
-// Recharge la sauvegarde meta depuis la NVS (appele au premier open()).
+// Recharge la sauvegarde meta depuis la NVS (appele a chaque open()).
 void persist_load();
 
 }  // namespace Marble
