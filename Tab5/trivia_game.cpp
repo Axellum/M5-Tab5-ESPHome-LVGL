@@ -520,14 +520,6 @@ static void reset_caches() {
 // 8. Helpers LVGL
 // ===========================================================================
 
-
-
-
-
-static inline void set_color(lv_obj_t* o, uint32_t c) {
-    lv_obj_set_style_text_color(o, lv_color_hex(c), LV_PART_MAIN);
-}
-
 static inline void set_pressed_bg(lv_obj_t* o, uint32_t c) {
     lv_obj_set_style_bg_color(o, lv_color_hex(c),
                               (lv_style_selector_t) LV_PART_MAIN |
@@ -971,7 +963,7 @@ static void slot_set(int i, int x, int y, int w, int h,
     // Le titre passe en petite police sur les puces basses (chips, ± , légendes).
     esphome::lvgl::lv_obj_set_style_text_font(gs->slot_t[i],
         (h >= 56 && !has_desc) || h >= 62 ? gs->ui.f_mid : gs->ui.f_small, LV_PART_MAIN);
-    set_color(gs->slot_t[i], tcol);
+    set_text_color_if(gs->slot_t[i], tcol);
     set_text_if(gs->slot_t[i], title ? title : "");
     set_text_if(gs->slot_d[i], has_desc ? desc : "");
     show(gs->slot_d[i], has_desc);
@@ -1009,7 +1001,7 @@ static void slots_hide_from(int n) {
 static void free_lbl(int i, int x, int y, const char* txt, uint32_t col = Pal::ACCENT) {
     if (i < 0 || i >= N_FREE) return;
     lv_obj_set_pos(gs->free_hdr[i], x, y);
-    set_color(gs->free_hdr[i], col);
+    set_text_color_if(gs->free_hdr[i], col);
     set_text_if(gs->free_hdr[i], txt);
     show(gs->free_hdr[i], true);
 }
@@ -1667,7 +1659,7 @@ static void render_panel() {
     if (gs->c_roll != can_roll) {
         gs->c_roll = can_roll;
         set_bg(gs->roll_btn, can_roll ? Pal::ACCENT : Pal::BTN_BG, LV_OPA_COVER);
-        set_color(gs->roll_lbl, can_roll ? Pal::VOID_BG : Pal::TXT_MUTED);
+        set_text_color_if(gs->roll_lbl, can_roll ? Pal::VOID_BG : Pal::TXT_MUTED);
     }
     set_text_if(gs->roll_lbl, gp->phase == PH_ROLLING ? "…" : "LANCER LE DÉ");
     set_text_if(gs->roll_hint, gp->shake_on ? "ou secouez la tablette" : "");
@@ -1720,12 +1712,12 @@ static void render_panel() {
         set_bg(gs->row[i], active ? Pal::BTN_BG_ON : Pal::CARD_BG, LV_OPA_COVER);
         set_border(gs->row[i], active ? Pal::ACCENT : Pal::CARD_EDGE, 2, LV_OPA_COVER);
         set_bg(gs->row_chip[i], PAWN_COLORS[gp->teams[i].color_idx], LV_OPA_COVER);
-        set_color(gs->row_name[i], active ? Pal::ACCENT : Pal::TXT);
+        set_text_color_if(gs->row_name[i], active ? Pal::ACCENT : Pal::TXT);
         set_text_if(gs->row_name[i], gp->teams[i].name);
         int nw = n_wedges(i);
         snprintf(gs->fmt, sizeof(gs->fmt), "%d/6", nw);
         set_text_if(gs->row_cnt[i], gs->fmt);
-        set_color(gs->row_cnt[i], nw == TRIVIA_NCAT ? Pal::GOOD : Pal::TXT_DIM);
+        set_text_color_if(gs->row_cnt[i], nw == TRIVIA_NCAT ? Pal::GOOD : Pal::TXT_DIM);
         pie_set(gs->row_pie[i], gs->row_rim[i], 1192, ROW_Y0 + i * ROW_STEP + 5, 44, gp->teams[i].wedges);
     }
 }
@@ -1739,7 +1731,7 @@ static void render_hud() {
         int hsig = ((int) gp->cur << 8) | gp->teams[gp->cur].color_idx;
         if (gs->c_hud_team != hsig) {
             gs->c_hud_team = hsig;
-            set_color(gs->h_team, PAWN_COLORS[gp->teams[gp->cur].color_idx]);
+            set_text_color_if(gs->h_team, PAWN_COLORS[gp->teams[gp->cur].color_idx]);
         }
     } else {
         set_text_if(gs->h_turn, "");
@@ -1754,7 +1746,7 @@ static void render_hud() {
         int warn = (left <= 5) ? 1 : 0;
         if (gs->c_clock_warn != warn) {
             gs->c_clock_warn = warn;
-            set_color(gs->h_clock, warn ? Pal::BAD : Pal::ACCENT);
+            set_text_color_if(gs->h_clock, warn ? Pal::BAD : Pal::ACCENT);
         }
     } else {
         set_text_if(gs->h_clock, "");
@@ -1800,19 +1792,19 @@ static void render_question() {
         if (!reveal) {
             set_bg(gs->ans[i], Pal::BTN_BG, LV_OPA_COVER);
             set_border(gs->ans[i], Pal::BTN_EDGE, 2, LV_OPA_COVER);
-            set_color(gs->ans_lbl[i], Pal::TXT);
+            set_text_color_if(gs->ans_lbl[i], Pal::TXT);
         } else if (i == gp->correct_slot) {
             set_bg(gs->ans[i], Pal::GOOD, LV_OPA_COVER);
             set_border(gs->ans[i], Pal::TXT, 3, LV_OPA_COVER);
-            set_color(gs->ans_lbl[i], Pal::VOID_BG);
+            set_text_color_if(gs->ans_lbl[i], Pal::VOID_BG);
         } else if (i == gp->picked_slot) {
             set_bg(gs->ans[i], Pal::BAD, LV_OPA_COVER);
             set_border(gs->ans[i], Pal::TXT, 3, LV_OPA_COVER);
-            set_color(gs->ans_lbl[i], Pal::TXT);
+            set_text_color_if(gs->ans_lbl[i], Pal::TXT);
         } else {
             set_bg(gs->ans[i], Pal::BTN_BG, (lv_opa_t) 120);
             set_border(gs->ans[i], Pal::BTN_EDGE, 2, (lv_opa_t) 90);
-            set_color(gs->ans_lbl[i], Pal::TXT_MUTED);
+            set_text_color_if(gs->ans_lbl[i], Pal::TXT_MUTED);
         }
     }
 
@@ -1822,12 +1814,12 @@ static void render_question() {
         if (gp->is_final)        snprintf(gs->fmt, sizeof(gs->fmt), "Exact — %s remporte la partie !", gp->teams[gp->cur].name);
         else if (gp->won_wedge)  snprintf(gs->fmt, sizeof(gs->fmt), "Bravo ! Part « %s » gagnée — vous rejouez.", CAT_NAMES[gp->q_cat]);
         else                   snprintf(gs->fmt, sizeof(gs->fmt), "Bonne réponse — vous rejouez.");
-        set_color(gs->qfeed, Pal::GOOD);
+        set_text_color_if(gs->qfeed, Pal::GOOD);
         set_text_if(gs->qfeed, gs->fmt);
     } else {
         if (gp->picked_slot == 0xFF) snprintf(gs->fmt, sizeof(gs->fmt), "Temps écoulé — la réponse était : %s", gp->q->a);
         else                       snprintf(gs->fmt, sizeof(gs->fmt), "Raté — la réponse était : %s", gp->q->a);
-        set_color(gs->qfeed, Pal::BAD);
+        set_text_color_if(gs->qfeed, Pal::BAD);
         set_text_if(gs->qfeed, gs->fmt);
     }
 }

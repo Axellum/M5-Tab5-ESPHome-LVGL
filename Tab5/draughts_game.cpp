@@ -41,6 +41,16 @@ using Engine::SIDE_BLACK;
 using Engine::VAR_INTL10;
 using Engine::VAR_ENG8;
 
+// Pièces, couronnes et surbrillances n'existent que sur les cases foncées : 50 sur
+// 100, 5 par rangée (audit ressources du 26/09/2026, lot 5 — 150 objets LVGL de
+// moins). dark_slot() : index de case de la grille MAX_N -> 0..49, ou -1 (claire).
+// Un damier 8×8 occupe le coin haut-gauche de la grille : sous-ensemble exact.
+static constexpr int MAX_DARK = MAX_SQ / 2;
+static inline int dark_slot(int wi) {
+    const int r = wi / MAX_N, c = wi % MAX_N;
+    return Engine::is_dark_sq(r, c) ? r * (MAX_N / 2) + c / 2 : -1;
+}
+
 // "DAM1"
 static constexpr uint32_t SAVE_MAGIC = 0x44414D31u;
 static constexpr uint32_t PREF_KEY   = 0x44414D54u;  // "DAMT"
@@ -556,11 +566,16 @@ struct Mem {
     int board_y = 26;
     int panel_x = 980;
 
-    // Widgets préalloués (à chaque ouverture)
+    // Widgets préalloués (à chaque ouverture). Cases : grille MAX_N complète ;
+    // pièces, couronnes et surbrillances : cases foncées seules (dark_slot).
     lv_obj_t* sq_obj[MAX_SQ] = {};
-    lv_obj_t* piece_obj[MAX_SQ] = {};
-    lv_obj_t* king_ring[MAX_SQ] = {};
-    lv_obj_t* hl_obj[MAX_SQ] = {};
+    lv_obj_t* piece_obj[MAX_DARK] = {};
+    lv_obj_t* king_ring[MAX_DARK] = {};
+    lv_obj_t* hl_obj[MAX_DARK] = {};
+    // Ce que chaque case foncée affiche (clé de sync_pieces, 0 = rien). Sans lui,
+    // chaque coup restylait les 40 pièces : plus de 32 zones à redessiner, et LVGL
+    // repeignait alors tout l'écran (LV_INV_BUF_SIZE, lv_refr.c).
+    uint8_t drawn[MAX_DARK] = {};
     lv_obj_t* side_panel = nullptr;
     lv_obj_t* btn_undo = nullptr;
     lv_obj_t* btn_hint = nullptr;
@@ -805,9 +820,13 @@ static void layout_squares() {
             int wi = r * MAX_N + c;
             bool used = (r < n && c < n);
             show(gs->sq_obj[wi], used);
-            show(gs->hl_obj[wi], false);
-            show(gs->piece_obj[wi], false);
-            show(gs->king_ring[wi], false);
+            const int d = dark_slot(wi);
+            if (d >= 0) {
+                show(gs->hl_obj[d], false);
+                show(gs->piece_obj[d], false);
+                show(gs->king_ring[d], false);
+                gs->drawn[d] = 0;   // pièce masquée : la prochaine sync la restyle
+            }
             if (!used) continue;
             int x = gs->board_x + c * gs->cell;
             int y = gs->board_y + r * gs->cell;
@@ -815,21 +834,22 @@ static void layout_squares() {
             lv_obj_set_size(gs->sq_obj[wi], gs->cell - 1, gs->cell - 1);
             bool dark = Engine::is_dark_sq(r, c);
             set_bg(gs->sq_obj[wi], dark ? Pal::DARK_SQ : Pal::LIGHT_SQ, LV_OPA_COVER);
+            if (d < 0) continue;   // case claire : ni pièce ni surbrillance
 
-            lv_obj_set_pos(gs->hl_obj[wi], x + 2, y + 2);
-            lv_obj_set_size(gs->hl_obj[wi], gs->cell - 5, gs->cell - 5);
+            lv_obj_set_pos(gs->hl_obj[d], x + 2, y + 2);
+            lv_obj_set_size(gs->hl_obj[d], gs->cell - 5, gs->cell - 5);
 
             int pr = (gs->cell - 1) / 2 - 4;
             if (pr < 10) pr = 10;
             int px = x + (gs->cell - 1 - 2 * pr) / 2;
             int py = y + (gs->cell - 1 - 2 * pr) / 2;
-            lv_obj_set_pos(gs->piece_obj[wi], px, py);
-            lv_obj_set_size(gs->piece_obj[wi], 2 * pr, 2 * pr);
-            lv_obj_set_style_radius(gs->piece_obj[wi], LV_RADIUS_CIRCLE, LV_PART_MAIN);
+            lv_obj_set_pos(gs->piece_obj[d], px, py);
+            lv_obj_set_size(gs->piece_obj[d], 2 * pr, 2 * pr);
+            lv_obj_set_style_radius(gs->piece_obj[d], LV_RADIUS_CIRCLE, LV_PART_MAIN);
 
-            lv_obj_set_pos(gs->king_ring[wi], px + 3, py + 3);
-            lv_obj_set_size(gs->king_ring[wi], 2 * pr - 6, 2 * pr - 6);
-            lv_obj_set_style_radius(gs->king_ring[wi], LV_RADIUS_CIRCLE, LV_PART_MAIN);
+            lv_obj_set_pos(gs->king_ring[d], px + 3, py + 3);
+            lv_obj_set_size(gs->king_ring[d], 2 * pr - 6, 2 * pr - 6);
+            lv_obj_set_style_radius(gs->king_ring[d], LV_RADIUS_CIRCLE, LV_PART_MAIN);
         }
     }
     if (gs->side_panel) {
@@ -848,48 +868,59 @@ static void layout_squares() {
 
 static int widget_i(int r, int c) { return r * MAX_N + c; }
 
+// Ne restyle que les cases dont le contenu a changé (clé drawn[]) : un coup en
+// touche 2 à 3, plus les prises.
 static void sync_pieces() {
     const int n = gs->pos.n;
-    for (int r = 0; r < MAX_N; r++) {
-        for (int c = 0; c < MAX_N; c++) {
-            int wi = widget_i(r, c);
-            if (r >= n || c >= n) {
-                show(gs->piece_obj[wi], false);
-                show(gs->king_ring[wi], false);
-                continue;
-            }
-            int i = r * n + c;
-            uint8_t pc = gs->pos.sq[i];
-            // Fade capture
-            bool fading = false;
-            if (gs->fade_n > 0 && esphome::millis() < gs->fade_until) {
+    const bool fade_on = gs->fade_n > 0 && esphome::millis() < gs->fade_until;
+    for (int wi = 0; wi < MAX_SQ; wi++) {
+        const int d = dark_slot(wi);
+        if (d < 0) continue;   // case claire : jamais de pièce
+        const int r = wi / MAX_N, c = wi % MAX_N;
+        uint8_t key = 0;       // 0 = case vide (ou hors damier 8×8) : rien d'affiché
+        uint8_t pc = EMPTY;
+        bool fading = false;   // pièce prise, encore visible 180 ms
+        int i = -1;
+        if (r < n && c < n) {
+            i = r * n + c;
+            pc = gs->pos.sq[i];
+            if (fade_on)
                 for (int k = 0; k < gs->fade_n; k++) if (gs->fade_sq[k] == i) fading = true;
+            if (pc != EMPTY || fading) {
+                const bool w = (pc != EMPTY) && Engine::is_white(pc);  // prise : pion sombre
+                key = (uint8_t)(1 | (w << 1) | (Engine::is_king(pc) << 2) |
+                                (fading << 3) | ((i == gs->sel) << 4));
             }
-            if (pc == EMPTY && !fading) {
-                show(gs->piece_obj[wi], false);
-                show(gs->king_ring[wi], false);
-                continue;
-            }
-            uint8_t draw = pc;
-            if (fading && pc == EMPTY) draw = B_MAN;  // placeholder sombre
-            bool white = Engine::is_white(draw) || (fading && false);
-            if (pc != EMPTY) white = Engine::is_white(pc);
-            set_bg(gs->piece_obj[wi], white ? Pal::PIECE_W : Pal::PIECE_B, fading ? LV_OPA_50 : LV_OPA_COVER);
-            set_border(gs->piece_obj[wi], white ? Pal::PIECE_W_RIM : Pal::PIECE_B_RIM, 2, LV_OPA_COVER);
-            show(gs->piece_obj[wi], true);
-            bool king = Engine::is_king(pc);
-            show(gs->king_ring[wi], king);
-            if (king) {
-                set_bg(gs->king_ring[wi], 0, LV_OPA_TRANSP);
-                set_border(gs->king_ring[wi], Pal::KING_RING, 3, LV_OPA_COVER);
-            }
-            if (i == gs->sel) set_border(gs->piece_obj[wi], Pal::HL_SEL, 3, LV_OPA_COVER);
         }
+        if (key == gs->drawn[d]) continue;
+        gs->drawn[d] = key;
+        if (key == 0) {
+            show(gs->piece_obj[d], false);
+            show(gs->king_ring[d], false);
+            continue;
+        }
+        const bool white = key & 2, king = key & 4;
+        set_bg(gs->piece_obj[d], white ? Pal::PIECE_W : Pal::PIECE_B, fading ? LV_OPA_50 : LV_OPA_COVER);
+        set_border(gs->piece_obj[d], white ? Pal::PIECE_W_RIM : Pal::PIECE_B_RIM, 2, LV_OPA_COVER);
+        show(gs->piece_obj[d], true);
+        show(gs->king_ring[d], king);
+        if (king) {
+            set_bg(gs->king_ring[d], 0, LV_OPA_TRANSP);
+            set_border(gs->king_ring[d], Pal::KING_RING, 3, LV_OPA_COVER);
+        }
+        if (i == gs->sel) set_border(gs->piece_obj[d], Pal::HL_SEL, 3, LV_OPA_COVER);
     }
 }
 
 static void clear_highlights() {
-    for (int i = 0; i < MAX_SQ; i++) show(gs->hl_obj[i], false);
+    for (int d = 0; d < MAX_DARK; d++) show(gs->hl_obj[d], false);
+}
+
+// Surbrillance de la case (r, c) du damier courant ; nullptr pour une case claire
+// (show/set_bg l'ignorent).
+static lv_obj_t* hl_at(int r, int c) {
+    const int d = dark_slot(widget_i(r, c));
+    return d < 0 ? nullptr : gs->hl_obj[d];
 }
 
 static void show_highlights_for_sel() {
@@ -901,21 +932,18 @@ static void show_highlights_for_sel() {
         // Surbrille chaque étape du path pour rafles guidées
         for (int k = 0; k < gc->legal[i].n_path; k++) {
             int sq = gc->legal[i].path[k];
-            int r = sq / n, c = sq % n;
-            int wi = widget_i(r, c);
-            set_bg(gs->hl_obj[wi], gc->legal[i].n_caps ? Pal::HL_CAP : Pal::HL_MOVE, LV_OPA_60);
-            show(gs->hl_obj[wi], true);
+            lv_obj_t* h = hl_at(sq / n, sq % n);
+            set_bg(h, gc->legal[i].n_caps ? Pal::HL_CAP : Pal::HL_MOVE, LV_OPA_60);
+            show(h, true);
         }
     }
     if (gs->hint_from >= 0 && esphome::millis() < gs->hint_until) {
-        int r = gs->hint_from / n, c = gs->hint_from % n;
-        int wi = widget_i(r, c);
-        set_bg(gs->hl_obj[wi], Pal::HL_SEL, LV_OPA_70);
-        show(gs->hl_obj[wi], true);
-        r = gs->hint_to / n; c = gs->hint_to % n;
-        wi = widget_i(r, c);
-        set_bg(gs->hl_obj[wi], Pal::HL_MOVE, LV_OPA_80);
-        show(gs->hl_obj[wi], true);
+        lv_obj_t* h = hl_at(gs->hint_from / n, gs->hint_from % n);
+        set_bg(h, Pal::HL_SEL, LV_OPA_70);
+        show(h, true);
+        h = hl_at(gs->hint_to / n, gs->hint_to % n);
+        set_bg(h, Pal::HL_MOVE, LV_OPA_80);
+        show(h, true);
     }
 }
 
@@ -1437,17 +1465,19 @@ static void build_ui() {
     set_bg(gs->ui.field, Pal::FLOOR_BG, LV_OPA_COVER);
     set_bg(gs->ui.panel, Pal::VOID_BG, (lv_opa_t)230);
 
-    // Cases / pièces / highlights (pool 10×10)
-    for (int i = 0; i < MAX_SQ; i++) {
-        // Cases NON cliquables : le tap est géré par field_event_cb (coordonnées).
-        gs->sq_obj[i] = mk_rect(gs->ui.field);
-        gs->hl_obj[i] = mk_rect(gs->ui.field);
-        lv_obj_set_style_radius(gs->hl_obj[i], 6, LV_PART_MAIN);
-        show(gs->hl_obj[i], false);
-        gs->piece_obj[i] = mk_rect(gs->ui.field);
-        gs->king_ring[i] = mk_rect(gs->ui.field);
-        show(gs->piece_obj[i], false);
-        show(gs->king_ring[i], false);
+    // Cases (grille 10×10), puis surbrillances / pièces / couronnes des seules cases
+    // foncées. Créées après les cases, donc dessinées par-dessus.
+    // Cases NON cliquables : le tap est géré par field_event_cb (coordonnées).
+    for (int i = 0; i < MAX_SQ; i++) gs->sq_obj[i] = mk_rect(gs->ui.field);
+    for (int d = 0; d < MAX_DARK; d++) {
+        gs->hl_obj[d] = mk_rect(gs->ui.field);
+        lv_obj_set_style_radius(gs->hl_obj[d], 6, LV_PART_MAIN);
+        show(gs->hl_obj[d], false);
+        gs->piece_obj[d] = mk_rect(gs->ui.field);
+        gs->king_ring[d] = mk_rect(gs->ui.field);
+        show(gs->piece_obj[d], false);
+        show(gs->king_ring[d], false);
+        gs->drawn[d] = 0;
     }
 
     // Panneau latéral gameplay
