@@ -42,6 +42,12 @@ esp32:
       # 26/09/2026 : seuls ces tableaux y passent (.ext_ram.bss = 34 300 o) ; la BSS de
       # lwIP, que l'aide de l'option cite, reste en RAM interne sur cette configuration.
       CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY: "y"
+      # Cache L2 256 Ko au lieu de 128 (défaut) : le code et les polices sont lus en PSRAM
+      # (execute_from_psram) à travers ce cache. Mesuré le 26/09/2026, mêmes actions aux
+      # mêmes minutes : images −7 à −9 %, boucle au repos 35 → 31 ms (−12 %). Coût : le
+      # cache est pris sur la RAM interne (SRAM_START = 0x4FF00000 + taille du cache),
+      # RAM libre 356 → 226 Ko. 5 redémarrages de contrôle : écran affiché, API en 16,5-16,8 s.
+      CONFIG_CACHE_L2_CACHE_256KB: "y"
 
 esp32_hosted:
   variant: esp32c6
