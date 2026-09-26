@@ -9,6 +9,9 @@
  *      vides ; tout le contenu est construit en C++. 100 % local (NVS), zéro HA.
  *      Palette LOCALE (Draughts::Pal) pour ne pas entrer en conflit avec les
  *      autres jeux en développement parallèle sur tab5_custom.h / styles.
+ *      Jeu fermé, rien n'est réservé : état de partie et de l'IA (blocs Mem /
+ *      Cold) créés par open() et rendus par close(), objets LVGL détruits à la
+ *      fermeture et reconstruits à l'ouverture (audit du 26/09/2026, lot 4).
  * @ai_instruction Ne PAS remettre de logique dans le YAML. Ne PAS appeler
  *      tick/ai_step manuellement : lv_timer créé à open(), détruit à close().
  *      Règles FR (prise max, flying kings) et US/UK ne doivent JAMAIS se mélanger
@@ -169,7 +172,11 @@ bool is_terminal(const Pos& p, int* winner);
 
 }  // namespace Engine
 
+// Ouvre le jeu sur le hub : alloue l'état (jeu + IA), construit l'UI et démarre
+// le lv_timer. Idempotent. Si la mémoire manque, revient à l'arcade sans ouvrir.
 void open(const UI& ui);
+// Ferme le jeu : sauvegarde en NVS, arrête le timer, revient à l'arcade puis
+// détruit l'UI et rend l'état (rien ne reste réservé). Idempotent.
 void close();
 bool is_open();
 
@@ -179,6 +186,8 @@ void on_imu(float ax, float ay, float az);
 // Time-slice IA — appelée par le timer interne ; exposée pour tests.
 void ai_step();
 
+// Sans effet jeu fermé : la sauvegarde n'est en mémoire que jeu ouvert
+// (persist_load() est appelé à chaque open()).
 void persist_save();
 void persist_load();
 

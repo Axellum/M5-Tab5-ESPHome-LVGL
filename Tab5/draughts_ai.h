@@ -28,6 +28,12 @@ enum State : uint8_t {
     AI_ABORT
 };
 
+// Prend l'état de l'IA (recherche : RAM interne d'abord ; coups racine : PSRAM
+// d'abord). Appelée par Draughts::open() ; false = mémoire introuvable, rien n'est
+// gardé. Sans cet état (jeu fermé), begin/step/abort ne font rien, ready() est faux
+// et state() vaut AI_IDLE.
+bool  acquire();
+
 // Démarre une recherche pour le côté au trait de `root`.
 void begin(const Engine::Pos& root, Level level);
 
@@ -38,7 +44,7 @@ State state();
 bool  ready();                 // true si AI_DONE
 const Engine::Move& best();    // coup choisi (valide si ready)
 void  abort();                 // annule (undo / fermeture)
-void  release();               // abort() + rend les listes de coups (fermeture du jeu)
+void  release();               // abort() + rend l'état et les listes de coups (fermeture du jeu)
 
 }  // namespace Ai
 }  // namespace Draughts
