@@ -69,7 +69,7 @@
 |---|---|---|
 | `Tab5/user_entities.yaml` | `Tab5/` | **Gitignoré** — entités HA réelles d'Axel. |
 | `Tab5/user_entities.example.yaml` | `Tab5/` | Modèle public des substitutions. |
-| `secrets.yaml` | Racine | **Gitignoré** — secrets ESPHome. Fichier UNIQUE depuis le 06/09/2026 (l'ancien doublon `Tab5/secrets.yaml` portait les mêmes 32 clés ; ESPHome retombe sur la racine). |
+| `tab5_signature.pem` | Racine | **Gitignoré** — clé privée RSA-3072 qui signe le firmware (3.0, ADR-0020) ; autre chemin : `tab5_cle_signature` dans `Tab5/user_entities.yaml`. Remplace `secrets.yaml`, que le firmware ne lit plus (seul `tools/migrer_vers_3.py` y prend l'ancienne clé API, une fois). |
 | `HomeAssistant_Config/placeholders.yaml` | `HomeAssistant_Config/` | **Gitignoré** — identifiants HA réels (`placeholder: valeur`) ; modèle suivi `placeholders.example.yaml`. |
 | `HomeAssistant_Config/rendered/` | `HomeAssistant_Config/` | **Gitignoré** — rendu déployable produit par `tools/render_ha_config.py`. |
 
@@ -105,6 +105,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | Fichier | Emplacement | Type | Cible |
 |---|---|---|---|
 | `test_verifier_secrets_config.py` | `tests/` | Unitaire | Détection de secrets en clair dans les fichiers suivis (`tools/verifier_secrets_config.py`) : valeurs factices, pragma, `git ls-files`, `secrets.yaml` suivi. |
+| `test_sans_secret.py` | `tests/` | Contenu + unitaire | Firmware sans secret (ADR-0020) : aucun `!secret`, clé API fournie par HA, fenêtre d'appairage, OTA signée, Wi-Fi sans identifiants, fuseau de HA, CI sans secrets factices ; clé trouvée dans HA par `tools/tab5_cle_api.py`, ancienne clé lue par `tools/migrer_vers_3.py`. |
 | `test_render_ha_config.py` | `tests/` | Unitaire | Rendu placeholders → valeurs et détection de fuite d'identifiants réels (`tools/render_ha_config.py`). |
 | `test_guards.py` | `tests/` | Contenu | Joue les 6 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, registre, règles de code, salles Marble, niveaux Lode, comptes de la cartographie). |
 | `__init__.py` | `tests/` | — | Marqueur de package. |
@@ -196,4 +197,4 @@ python tools/demo/demo_pusher.py --dry-run
 - **Pas de suite de tests unitaires pour la HMI** : la logique LVGL (`tab5_*.cpp`) n'a pas de tests hôte. Seuls les moteurs de jeux (Go, échecs, dames) disposent de tests exécutables sur PC.
 - **Les tests Go/échecs/dames sont des miroirs Python** du C++ : toute modification du C++ doit être reflétée dans le miroir Python, sinon le test ne prouve plus rien. Exception : `test_go_engine.cpp` compile le vrai moteur Go (g++, en CI).
 - **CI GitHub Actions** (`.github/workflows/esphome-tab5.yml`, PR + push sur `main`) : job `python` (pre-commit, `pytest`, moteur Go C++, dry-run démo) ; job `build` (secrets factices + `esphome/build-action@v8.1.0`, image `latest` = canari amont voulu, ADR-0016, ccache conservé entre runs) seulement si `tab5-ha-hmi.yaml`, `Tab5/` (hors `.md`) ou le workflow changent ; job `build-min`, même compilation avec la version plancher lue dans `min_version:` (26/09/2026). `python`, `build` et `build-min` sont des checks requis de `main` ; `build` reste présent et passe en « skipped » sinon. Artefact `tab5-firmware` publié sur `main`.
-- **Fichiers gitignorés** : `secrets.yaml`, `Tab5/user_entities.yaml`, `HomeAssistant_Config/placeholders.yaml`, `HomeAssistant_Config/rendered/`, les anciennes copies privées `automations_tab5.yaml` / `scripts_tab5.yaml` / `template_sensors_meteo_tab5.yaml` (obsolètes, gardées ignorées), `Tab5/tts_library*/`, `archives/`.
+- **Fichiers gitignorés** : `secrets.yaml` (2.x), `*.pem` / `*.key` (clé de signature), `tools/demo/cle_demo.txt`, `Tab5/user_entities.yaml`, `HomeAssistant_Config/placeholders.yaml`, `HomeAssistant_Config/rendered/`, les anciennes copies privées `automations_tab5.yaml` / `scripts_tab5.yaml` / `template_sensors_meteo_tab5.yaml` (obsolètes, gardées ignorées), `Tab5/tts_library*/`, `archives/`.

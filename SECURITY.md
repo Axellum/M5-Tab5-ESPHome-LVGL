@@ -32,12 +32,19 @@ Out of scope — please report these upstream:
 
 ### Good to know
 
-- The firmware encrypts the native API **and** OTA updates with the key you generate in your
-  own `secrets.yaml` ([ADR-0015](docs/decisions/0015-ota-encrypted-with-api-key.md)). Anyone
-  holding that key can control the tablet and flash it: if it leaks, generate a new one and
-  reflash over USB or OTA.
-- `secrets.yaml` and `Tab5/user_entities.yaml` are gitignored, and a pre-commit hook blocks
-  secrets in tracked files. If you fork the project, keep it that way.
+- Since 3.0 the firmware holds no secret ([ADR-0020](docs/decisions/0020-no-secret-firmware-signed-ota.md)).
+  The native API is encrypted with a key Home Assistant creates when you add the tablet, and
+  keeps. A tablet that has no key yet accepts that first contact only in the 30 minutes after
+  it starts.
+- OTA updates are not encrypted, but **signed**: the tablet refuses a firmware that was not
+  signed with the key of the firmware it runs. Your private key (`tab5_signature.pem`) is what
+  lets someone flash it over the network: keep it off git, with a copy outside your computer.
+  If it leaks, create a new one and reflash over USB.
+- The fallback access point (« Tab5 Fallback AP », used to set the Wi-Fi) is open. Someone
+  within range can change the network of a tablet that lost its own; they can neither flash it
+  nor talk to its API.
+- `Tab5/user_entities.yaml`, `*.pem` and `*.key` are gitignored, and a pre-commit hook blocks
+  secrets and private keys in tracked files. If you fork the project, keep it that way.
 
 ---
 
@@ -74,9 +81,17 @@ Hors périmètre — à signaler aux projets concernés :
 
 ### Bon à savoir
 
-- Le firmware chiffre l'API native **et** les mises à jour OTA avec la clé que vous générez
-  dans votre propre `secrets.yaml` ([ADR-0015](docs/decisions/0015-ota-encrypted-with-api-key.md)).
-  Quiconque détient cette clé peut piloter la tablette et la flasher : si elle fuite, générez-en
-  une nouvelle et reflashez en USB ou en OTA.
-- `secrets.yaml` et `Tab5/user_entities.yaml` sont gitignorés, et un hook pre-commit bloque les
-  secrets dans les fichiers suivis. Si vous forkez le projet, gardez cette règle.
+- Depuis la 3.0, le firmware ne contient aucun secret ([ADR-0020](docs/decisions/0020-no-secret-firmware-signed-ota.md)).
+  L'API native est chiffrée avec une clé que Home Assistant crée quand vous ajoutez la tablette,
+  et qu'il garde. Une tablette encore sans clé n'accepte ce premier contact que dans les
+  30 minutes qui suivent son démarrage.
+- Les mises à jour OTA ne sont pas chiffrées, mais **signées** : la tablette refuse un firmware
+  qui n'est pas signé par la clé de celui qu'elle fait tourner. Votre clé privée
+  (`tab5_signature.pem`) est ce qui permet de la flasher par le réseau : jamais dans git, avec
+  une copie hors de votre ordinateur. Si elle fuite, créez-en une autre et reflashez en USB.
+- Le point d'accès de secours (« Tab5 Fallback AP », qui sert à donner le Wi-Fi) est ouvert.
+  Quelqu'un à portée peut changer le réseau d'une tablette qui a perdu le sien ; il ne peut ni
+  la flasher ni parler à son API.
+- `Tab5/user_entities.yaml`, `*.pem` et `*.key` sont gitignorés, et un hook pre-commit bloque
+  les secrets et les clés privées dans les fichiers suivis. Si vous forkez le projet, gardez
+  cette règle.
