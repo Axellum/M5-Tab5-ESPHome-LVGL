@@ -52,7 +52,8 @@ git clone https://github.com/Axellum/M5-Tab5-ESPHome-LVGL.git
 
 # Copy local config files (gitignored), then edit with your values
 cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-# Create secrets.yaml — see docs/installation.md
+# Create the firmware signing key (no secrets.yaml since 3.0) — see docs/installation.md
+python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem
 
 # Compile via ESPHome dashboard or CLI:
 # esphome run tab5-ha-hmi.yaml
@@ -384,7 +385,8 @@ git clone https://github.com/Axellum/M5-Tab5-ESPHome-LVGL.git
 
 # Copier les fichiers de config locaux (gitignorés), puis y mettre vos valeurs
 cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-# Créer secrets.yaml — voir docs/installation.md
+# Créer la clé de signature du firmware (plus de secrets.yaml depuis la 3.0) — voir docs/installation.md
+python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem
 
 # Compiler via le dashboard ESPHome ou la CLI :
 # esphome run tab5-ha-hmi.yaml

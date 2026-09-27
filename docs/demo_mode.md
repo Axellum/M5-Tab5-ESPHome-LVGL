@@ -14,20 +14,20 @@ The firmware is **push-only** ([ADR-0001](decisions/0001-push-only-zero-polling.
 
 ## What it does *not* touch
 
-Nothing in `Tab5/*.yaml`, `Tab5/*.cpp/.h`, `Tab5/user_entities.yaml`, `secrets.yaml`, or `HomeAssistant_Config/` is modified by demo mode. It is a standalone script that talks to the same API surface real automations use — purely additive.
+Nothing in `Tab5/*.yaml`, `Tab5/*.cpp/.h`, `Tab5/user_entities.yaml`, or `HomeAssistant_Config/` is modified by demo mode. It is a standalone script that talks to the same API surface real automations use — purely additive.
 
 ## Steps
 
-1. **Flash normally**, but leave `Tab5/user_entities.example.yaml` as-is (copy it to `Tab5/user_entities.yaml` unmodified — you don't need real Home Assistant entities behind these placeholder IDs for the demo). You still need a `secrets.yaml` with your own Wi-Fi credentials and a generated `api_encryption_key` (see [`installation.md`](installation.md) step 3) — that part is required by ESPHome itself, demo mode doesn't change it.
-2. **Note the device's IP** once it's on your Wi-Fi (ESPHome dashboard, your router, or `esphome logs tab5-ha-hmi.yaml`).
+1. **Flash normally**, but leave `Tab5/user_entities.example.yaml` as-is (copy it to `Tab5/user_entities.yaml` unmodified — you don't need real Home Assistant entities behind these placeholder IDs for the demo). You still need the signing key and the Wi-Fi of [`installation.md`](installation.md) steps 3 and 5.
+2. **Note the device's IP** once it's on your Wi-Fi (your router, or the page of « Tab5 Fallback AP » right after you picked the network).
 3. **Install the one dependency** and run the script from your PC (same Wi-Fi network as the device):
    ```bash
    pip install -r tools/demo/requirements.txt
-   python tools/demo/demo_pusher.py --host <device-ip> --key <api_encryption_key>
+   python tools/demo/demo_pusher.py --host <device-ip>
    ```
-   If `secrets.yaml` exists at the repo root, `--key` can be omitted — the script reads it directly.
+   **Encryption key** (3.0, [ADR-0020](decisions/0020-no-secret-firmware-signed-ota.md)): a tablet never added to Home Assistant has no key yet. The script gives it one, as HA would, within 30 minutes of the tablet's start (otherwise restart it), and keeps it in `tools/demo/cle_demo.txt` (gitignored): **that is the key to give Home Assistant** when you add the tablet later. On a tablet HA already knows, pass HA's key: `--cle`, the `TAB5_CLE_API` variable, or `--config-ha <HA config folder>` to read it where HA keeps it.
 4. **Watch the screen.** Every ~20 seconds it cycles between three scenes (sunny day, rainy day with a weather alert, a rest day with a plant that needs watering), driving nine dashboard push services, the optional-zones answer (`tab5_maj_zones`) and the home's slots (`tab5_maj_emplacements`: lights, temperatures, PC, TV, phone, plants), as the Home Assistant blueprint would (lot 6a). The remaining services are out of scope by design — they belong to features a demo can't fake (`tab5_maj_reponse_vocale` / `tab5_assist_reponse` need a voice pipeline, `tab5_maj_calendrier_mois` / `_jour` need a real calendar, `tab5_maj_alertes_ha_bulk` needs live HA entities).
-5. **Stop with `Ctrl+C`.** Nothing persists anywhere outside the device.
+5. **Stop with `Ctrl+C`.** Nothing persists outside the device, except `tools/demo/cle_demo.txt` for a tablet the demo gave its key to.
 
 Want to check the exact payloads without any hardware or dependency at all:
 ```bash
@@ -81,20 +81,20 @@ Le firmware est **push-only** ([ADR-0001](decisions/0001-push-only-zero-polling.
 
 ## Ce que ça ne touche pas
 
-Rien dans `Tab5/*.yaml`, `Tab5/*.cpp/.h`, `Tab5/user_entities.yaml`, `secrets.yaml`, ou `HomeAssistant_Config/` n'est modifié par le mode démo. C'est un script autonome qui parle la même API que les vraies automations — purement additif.
+Rien dans `Tab5/*.yaml`, `Tab5/*.cpp/.h`, `Tab5/user_entities.yaml` ou `HomeAssistant_Config/` n'est modifié par le mode démo. C'est un script autonome qui parle la même API que les vraies automations — purement additif.
 
 ## Étapes
 
-1. **Flashez normalement**, mais laissez `Tab5/user_entities.example.yaml` tel quel (copiez-le vers `Tab5/user_entities.yaml` sans le modifier — pas besoin de vraies entités Home Assistant derrière ces IDs placeholder pour la démo). Il vous faut quand même un `secrets.yaml` avec votre Wi-Fi et une `api_encryption_key` générée (voir [`installation.md`](installation.md) étape 3) — ça, c'est exigé par ESPHome lui-même, le mode démo n'y change rien.
-2. **Notez l'IP de l'appareil** une fois connecté au Wi-Fi (dashboard ESPHome, votre routeur, ou `esphome logs tab5-ha-hmi.yaml`).
+1. **Flashez normalement**, mais laissez `Tab5/user_entities.example.yaml` tel quel (copiez-le vers `Tab5/user_entities.yaml` sans le modifier — pas besoin de vraies entités Home Assistant derrière ces IDs placeholder pour la démo). Il vous faut quand même la clé de signature et le Wi-Fi des étapes 3 et 5 d'[`installation.md`](installation.md#version-française).
+2. **Notez l'IP de l'appareil** une fois connecté au Wi-Fi (votre routeur, ou la page de « Tab5 Fallback AP » juste après le choix du réseau).
 3. **Installez l'unique dépendance** et lancez le script depuis votre PC (même réseau Wi-Fi que l'appareil) :
    ```bash
    pip install -r tools/demo/requirements.txt
-   python tools/demo/demo_pusher.py --host <ip-appareil> --key <api_encryption_key>
+   python tools/demo/demo_pusher.py --host <ip-appareil>
    ```
-   Si `secrets.yaml` existe à la racine du repo, `--key` peut être omis — le script le lit directement.
+   **Clé de chiffrement** (3.0, [ADR-0020](decisions/0020-no-secret-firmware-signed-ota.md)) : une tablette jamais ajoutée à Home Assistant n'a pas encore de clé. Le script lui en donne une, comme HA le ferait, dans les 30 minutes qui suivent son démarrage (sinon redémarrez-la), et la garde dans `tools/demo/cle_demo.txt` (gitignoré) : **c'est la clé à donner à Home Assistant** quand vous y ajouterez la tablette. Sur une tablette que HA connaît déjà, passez la clé de HA : `--cle`, la variable `TAB5_CLE_API`, ou `--config-ha <dossier de configuration de HA>` pour la lire là où HA la garde.
 4. **Regardez l'écran.** Toutes les ~20 secondes, il alterne entre trois scènes (journée ensoleillée, jour de pluie avec alerte météo, jour de repos avec une plante à arroser), qui pilotent neuf services de push du dashboard, la réponse des zones optionnelles (`tab5_maj_zones`) et les emplacements de la maison (`tab5_maj_emplacements` : lumières, températures, PC, TV, téléphone, plantes), comme le ferait le blueprint Home Assistant (lot 6a). Les services restants sont hors périmètre par choix : ils relèvent de fonctions qu'une démo ne peut pas simuler (`tab5_maj_reponse_vocale` / `tab5_assist_reponse` demandent un pipeline vocal, `tab5_maj_calendrier_mois` / `_jour` un vrai calendrier, `tab5_maj_alertes_ha_bulk` des entités HA vivantes).
-5. **Arrêtez avec `Ctrl+C`.** Rien ne persiste nulle part en dehors de l'appareil.
+5. **Arrêtez avec `Ctrl+C`.** Rien ne persiste en dehors de l'appareil, sauf `tools/demo/cle_demo.txt` pour une tablette à qui la démo a donné sa clé.
 
 Pour vérifier les payloads exacts sans matériel ni dépendance du tout :
 ```bash

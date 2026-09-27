@@ -27,6 +27,18 @@ esp32:
       # l'initialisation (premier rendu LVGL + snprintf, 1 152 o à lui seul). Coût :
       # 8 Ko de RAM interne. Garder une marge d'au moins 4 Ko en cas de nouvelle mesure.
       loop_task_stack_size: 16384
+      # Firmwares signés (lot 6b, ADR-0020) : la compilation signe l'image avec la clé
+      # privée RSA-3072 `tab5_signature.pem` (racine du dépôt, hors git, comme l'était
+      # secrets.yaml ; autre chemin : substitution `tab5_cle_signature` dans
+      # Tab5/user_entities.yaml). La tablette refuse ensuite toute OTA dont la
+      # signature ne vient pas de la même clé : l'OTA en clair qu'accepte une API sans
+      # clé compilée ne permet donc pas de la reflasher avec n'importe quoi. Aucun eFuse
+      # brûlé (pas de Secure Boot) : un flash USB reste toujours possible.
+      # Clé perdue = plus d'OTA, seulement l'USB : en garder une copie hors du PC.
+      # Créer la clé : python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem
+      signed_ota_verification:
+        signing_key: ${ tab5_cle_signature | default('tab5_signature.pem') }
+        signing_scheme: rsa3072
     sdkconfig_options:
       # Fenêtre TCP : valeur d'ESPHome (65 534 o), plus de forçage à 16 Ko. Le forçage
       # datait du correctif OTA d'avril 2026 (sockets coupés côté PC, WinError
@@ -133,18 +145,15 @@ psram:
 
 ota:
   platform: esphome
-  # [2026.9.0] OTA chiffrée avec la clé API (`api: encryption: key`, tab5-api-logic.yaml) :
-  # le bloc `encryption:` vide hérite de cette clé, une seule clé protège l'appareil
-  # (ESPHome #18489 + #18979). Depuis ce firmware, l'upload en CLAIR est REFUSÉ : le PC
-  # qui flashe doit avoir `api_encryption_key` dans secrets.yaml — le CLI la lit dans le
-  # YAML et chiffre tout seul, rien à passer en ligne de commande. L'ancien `password:`
-  # est retiré : redondant (la clé authentifie déjà l'uploader), coûteux (~3,5 Ko de
-  # flash + 60 o de RAM, warning ESPHome 2026.9.0) et de toute façon incompatible avec
-  # `encryption:` (erreur de validation). Migration faite en deux OTA le 16/09/2026 :
-  # 2026.9.0 sans ce bloc d'abord (le firmware « offre » alors le chiffrement tout en
-  # acceptant le clair), puis ce bloc. Revenir en arrière = retirer `encryption:`,
-  # remettre `password:` et flasher (l'OTA de retour part chiffrée, donc acceptée).
-  encryption:
+  # [lot 6b, ADR-0020] Plus de `encryption:` : il héritait de la clé API compilée
+  # (ADR-0015), et la clé vient désormais de HA (un bloc vide avec une API sans clé ne
+  # passe pas la validation). La tablette propose le chiffrement une fois sa clé reçue
+  # mais accepte l'envoi en clair ; ce qui la protège, c'est la signature exigée par
+  # `signed_ota_verification` (bloc esp32 ci-dessus). Pas de `password:` non plus : il
+  # serait le même pour tous, lisible dans le binaire publié.
+  # Migration d'une tablette qui a encore l'ancien firmware (clé compilée) : elle refuse
+  # l'envoi en clair, donc le nouveau binaire part une fois chiffré avec l'ancienne clé
+  # (docs/installation.md, « Passer à la 3.0 »).
   # Pas de `on_end` ici. ESPHome redémarre lui-même juste après une OTA réussie
   # (components/esphome/ota/ota_esphome.cpp : notify_state_(OTA_COMPLETED) ->
   # delay(100) -> App.safe_reboot()). L'ancien `on_end: delay 2s + button.press

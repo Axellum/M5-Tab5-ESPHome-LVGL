@@ -199,7 +199,7 @@ sensor:
     update_interval: never
     on_value:
       - lambda: |-
-          if (!isnan(x)) set_icon_color_ui(id(icon_salon), get_humidity_color(x));
+          if (!std::isnan(x)) set_icon_color_ui(id(icon_salon), get_humidity_color(x));
 
   - platform: template
     id: moisture_1

@@ -376,3 +376,102 @@ void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
         if (n > 1) out_l2 = lines[1];
     }
 }
+
+// -----------------------------------------------------------------------------
+// Fuseau horaire de Home Assistant (lot 6b, ADR-0020). ESPHome applique le fuseau
+// que HA envoie avec l'heure (api_connection.cpp, on_get_time_response), mais ne le
+// garde pas : au démarrage suivant, il repartirait avec celui de la compilation (UTC
+// pour un firmware compilé par la CI), et le réveil sonnerait à la mauvaise heure
+// tant que HA ne répond pas. On range donc en NVS le fuseau que HA a donné, et on le
+// remet au démarrage.
+// -----------------------------------------------------------------------------
+#ifdef USE_TIME_TIMEZONE
+#include "esphome/components/time/posix_tz.h"
+
+namespace {
+
+constexpr uint32_t kFuseauMagic = 0x545A3031;    // « TZ01 »
+constexpr uint32_t kFuseauPrefKey = 0x747A6861;  // « tzha »
+
+struct FuseauSauve {
+    uint32_t magic;
+    esphome::time::ParsedTimezone tz;
+};
+
+esphome::ESPPreferenceObject s_fuseau_pref;
+bool s_fuseau_pret = false;
+esphome::time::ParsedTimezone s_fuseau_range{};  // ce qui est en NVS, une fois connu
+bool s_fuseau_connu = false;
+// HA a donné l'heure depuis le démarrage. L'heure système est commune à toutes les
+// horloges (sntp, rx8130, homeassistant) : sa validité ne dit pas qui l'a donnée.
+bool s_fuseau_de_ha = false;
+
+// Champ par champ : le bourrage des structures n'a pas de valeur définie.
+bool meme_regle(const esphome::time::DSTRule& a, const esphome::time::DSTRule& b) {
+    return a.time_seconds == b.time_seconds && a.day == b.day && a.type == b.type &&
+           a.month == b.month && a.week == b.week && a.day_of_week == b.day_of_week;
+}
+
+bool meme_fuseau(const esphome::time::ParsedTimezone& a, const esphome::time::ParsedTimezone& b) {
+    return a.std_offset_seconds == b.std_offset_seconds &&
+           a.dst_offset_seconds == b.dst_offset_seconds &&
+           meme_regle(a.dst_start, b.dst_start) && meme_regle(a.dst_end, b.dst_end);
+}
+
+// Lit la NVS une seule fois ; vrai si elle contient un fuseau.
+bool fuseau_charger() {
+    if (!s_fuseau_pret) {
+        s_fuseau_pret = true;
+        s_fuseau_pref = esphome::global_preferences->make_preference<FuseauSauve>(kFuseauPrefKey);
+        FuseauSauve s{};
+        if (s_fuseau_pref.load(&s) && s.magic == kFuseauMagic) {
+            s_fuseau_range = s.tz;
+            s_fuseau_connu = true;
+        }
+    }
+    return s_fuseau_connu;
+}
+
+// Décalage d'hiver en heures, pour les logs (POSIX compte positivement vers l'ouest).
+int decalage_hiver_h(const esphome::time::ParsedTimezone& tz) {
+    return static_cast<int>(-tz.std_offset_seconds / 3600);
+}
+
+}  // namespace
+
+void fuseau_restaurer() {
+    static bool fait = false;  // une seule fois : l'interval qui l'appelle revient chaque jour
+    if (fait) return;
+    fait = true;
+    if (!fuseau_charger()) {
+        ESP_LOGI("tab5.fuseau", "Aucun fuseau de HA en mémoire : celui de la compilation");
+        return;
+    }
+    esphome::time::set_global_tz(s_fuseau_range);
+    ESP_LOGI("tab5.fuseau", "Fuseau du dernier passage de HA remis (UTC%+d h en hiver)",
+             decalage_hiver_h(s_fuseau_range));
+}
+
+void fuseau_recu_de_ha() { s_fuseau_de_ha = true; }
+
+void fuseau_memoriser() {
+    // Seul un fuseau venu de HA se range. HA l'applique juste APRÈS le déclencheur
+    // on_time_sync qui appelle fuseau_recu_de_ha() : le tick minute suivant le voit.
+    if (!s_fuseau_de_ha) return;
+    const esphome::time::ParsedTimezone& tz = esphome::time::get_global_tz();
+    if (fuseau_charger() && meme_fuseau(tz, s_fuseau_range)) return;
+    FuseauSauve s{};
+    s.magic = kFuseauMagic;
+    s.tz = tz;
+    if (s_fuseau_pref.save(&s)) {
+        s_fuseau_range = tz;
+        s_fuseau_connu = true;
+        ESP_LOGI("tab5.fuseau", "Fuseau de HA gardé pour le prochain démarrage (UTC%+d h en hiver)",
+                 decalage_hiver_h(tz));
+    }
+}
+#else
+void fuseau_restaurer() {}
+void fuseau_recu_de_ha() {}
+void fuseau_memoriser() {}
+#endif

@@ -14,7 +14,7 @@
 - [ ] If this changes the file/dependency structure: [`CARTOGRAPHIE_TAB5.md`](../CARTOGRAPHIE_TAB5.md) is updated
 - [ ] [`CHANGELOG.md`](../CHANGELOG.md) has a new entry (skip for pure internal chores/docs typos)
 - [ ] No hardcoded hex colors added, no `lv_obj_*` in a `sensor:`/`text_sensor:` lambda, no `static` for cross-handler state (see [`AGENTS.md`](../AGENTS.md#code-rules-full-detail-in-tab5readmemd))
-- [ ] No secrets (`secrets.yaml`, real HA config under `HomeAssistant_Config/`) added or modified in this diff
+- [ ] No secrets (a key such as `tab5_signature.pem`, a `!secret` in the firmware, real HA config under `HomeAssistant_Config/`) added or modified in this diff
 
 ## Notes for the reviewer
 

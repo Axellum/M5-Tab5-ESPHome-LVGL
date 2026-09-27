@@ -21,6 +21,113 @@ web du lot 6c), ton « partagé au cas où ».
     payload au format réel ;
   - chiffres du firmware (17 packages, 45 fichiers de composants) et release 3.0.0.
 - `docs/press/hackster.md` : renvoi vers le texte à jour.
+### 2026-09-27 — L'écran dessiné sans la tablette : rendu sur PC et captures en CI (lot 7)
+
+Lot 7 de l'audit « ouverture », ADR-0021. Choix d'Axel : comparaison informative, galerie
+dans `docs/screens.md`, scènes en anglais en plus.
+
+- **`tab5-rendu-host.yaml`** : les mêmes packages d'interface et les mêmes sources C++
+  que la tablette, compilés pour la plateforme `host` d'ESPHome (Linux/macOS). LVGL
+  dessine dans un affichage `snapshot` en mémoire ; l'action API `rendu_capture` écrit
+  un BMP. Ne se flashe nulle part.
+- **Bouchons, jamais dans le firmware** :
+  - `Tab5/rendu/composants/` : composants de même nom qu'ESPHome, sans effet
+    (`voice_assistant`, `micro_wake_word`, `speaker` et `microphone` qui tirent `audio`
+    réservé à l'ESP32, `rtttl`, `online_image`, `http_request`) et `rendu_muet`
+    (haut-parleur, micro et lecteur muets, actions et conditions sans effet) ;
+  - `Tab5/rendu/bouchons.yaml` : écran, horloges, rétroéclairage, diagnostics lus par
+    la console, `!extend`/`!remove` sur l'ampli et la prise casque ;
+  - `Tab5/rendu/hote/`, `Tab5/rendu/freertos/` : en-têtes ESP-IDF remplacés.
+- **La partie interface de l'`on_boot` est copiée**, la séquence protégée reste
+  intacte ; `tests/test_rendu_host.py` exige chaque lambda telle quelle dans
+  `tab5-ha-hmi.yaml`, les mêmes sources C++, et chaque package repris ou déclaré
+  matériel.
+- **Portabilité, même comportement sur la tablette** : `std::isnan` au lieu de `isnan`
+  (`tab5_cards.cpp`, `tab5_forecast.cpp`, un lambda), branche Arduino morte retirée de
+  la carte mémoire (`tab5_console.cpp`).
+- **CI « Rendu hors tablette »** (`rendu-host.yml`, non requis) : compile, lance le rendu
+  sous `faketime` (16/06/2026 07:45, heure de Paris, horloge monotone intacte), pousse
+  les trois scènes du mode démo par la vraie API (`tools/rendu/capturer.py`), en
+  français, puis en anglais après un vrai changement du select « Langue ». Compare aux
+  références `docs/images/rendu/` (`tools/rendu/comparer.py`) : écarts signalés avec une
+  image de différence, sans bloquer. `tools/rendu/maj_references.py --run <id>` accepte
+  un changement voulu.
+- **Déterministe** : deux runs identiques donnent les mêmes pixels (vérifié).
+- **Premier défaut trouvé par le rendu** : la démo envoyait « Auj 16 », « Mer 17 »
+  au lieu du jour seul que HA envoie et que la tablette traduit ; en anglais, les
+  tuiles restaient en français. Corrigé dans `tools/demo/scenarios.py`, avec un test
+  qui compare à `tab5_push.yaml`.
+- **Docs** : galerie des captures (`docs/screens.md`), « Voir l'écran sans la
+  tablette » (`docs/debugging.md`), ADR-0021, cartographie.
+
+### 2026-09-27 — Un firmware sans aucun secret : clé API fournie par HA, firmwares signés (lot 6b)
+
+Lot 6 de l'audit « ouverture », deuxième partie, **rupture** (3.0.0), ADR-0020 (remplace
+l'ADR-0015). Un même binaire doit pouvoir servir à tout le monde (flasheur web du lot 6c).
+
+- **Wi-Fi** : plus d'identifiants compilés. Improv par le port USB (`improv_serial`, depuis
+  ESPHome Web ou le futur flasheur) ou portail de l'AP de secours, devenu **ouvert** (un mot
+  de passe écrit dans un dépôt public ne protège rien). Le réseau reste en NVS d'une OTA à
+  l'autre.
+- **Clé API fournie par Home Assistant** : `api: encryption: {}` sans clé. HA la crée à
+  l'ajout de la tablette, la lui envoie par une connexion déjà chiffrée et la garde.
+  Fenêtre d'appairage `provisioning: timeout: 30min` : une tablette sans clé n'accepte ce
+  premier contact que dans les 30 minutes qui suivent son démarrage.
+- **Firmwares signés** : l'OTA n'est plus chiffrée (une API sans clé compilée ne peut pas
+  la chiffrer) ni protégée par mot de passe, mais `signed_ota_verification` (RSA-3072) fait
+  refuser tout firmware qui n'est pas signé par la clé de celui qui tourne. Clé privée
+  `tab5_signature.pem` à la racine (gitignorée, comme l'était `secrets.yaml`), ou chemin dans
+  la substitution `tab5_cle_signature`.
+- **Fuseau horaire de HA** (`time: platform: homeassistant`), gardé en NVS et remis au
+  démarrage (`fuseau_restaurer()` / `fuseau_memoriser()`, `tab5_services.cpp`) : le réveil
+  sonne à l'heure locale même quand HA manque après une coupure. `tab5_fuseau` disparaît.
+- **Identité** : `esphome: project: axellum.tab5-ha-hmi` version `3.0.0-dev`, pour le
+  manifeste de mise à jour du lot 6c (qui apportera `update: http_request`).
+- **Outils du PC** : la clé n'est plus dans le YAML.
+  - `tools/tab5_cle_api.py` la trouve (`--cle`, `TAB5_CLE_API`, ou le fichier où HA la
+    garde, `--config-ha`) sans jamais l'afficher ;
+  - `tools/tab5_logs.py` remplace `esphome logs` ;
+  - le mode démo donne sa propre clé à une tablette jamais ajoutée à HA
+    (`tools/demo/cle_demo.txt`, gitignoré, la clé à donner ensuite à HA) ;
+  - `tools/migrer_vers_3.py` envoie une fois la 3.0 avec l'ancienne clé d'un `secrets.yaml`
+    2.x, que le firmware 2.x exige.
+- **CI** : plus de `secrets.yaml` factice, une clé de signature jetable par run
+  (`openssl genrsa`). `tools/verifier_secrets_config.py` refuse aussi un `.pem` / `.key`
+  suivi et un en-tête de clé privée.
+- **Tests** : `tests/test_sans_secret.py` (aucun `!secret` dans le firmware, API, OTA,
+  Wi-Fi, fuseau, projet, CI, clé trouvée dans HA, ancienne clé) ; 2 tests de plus pour le
+  vérificateur de secrets. pytest : 89 passent.
+- **Docs** : installation (EN/FR : étape 3 « clé de signature », étape 5 « premier flash et
+  Wi-Fi », étape 6 « ajouter la tablette à HA », OTA et journaux, « Passer à la 3.0 »),
+  SECURITY, README, CONTRIBUTING, AGENTS, mode démo, débogage, architecture, inventaire,
+  cartographie, ADR-0020.
+- **Vérifié dans le code** d'ESPHome 2026.9.0 et de HA 2026.9.3 : fourniture de la clé par
+  connexion à clé nulle, fenêtre d'appairage (coupe aussi l'AP à son expiration),
+  réauthentification de HA quand une tablette perd sa clé (« chiffrement désactivé »,
+  confirmer, puis nouvelle clé), identifiants Wi-Fi rangés par hash de config seulement
+  quand le YAML en a. `esphome config` valide.
+- **Essai sur la tablette** (27/09, Axel sur place, ESP32-P4 rev1.3, antérieure à la v3) :
+  - migration depuis `main` @ `b13237b` : `tools/migrer_vers_3.py` à 16:30, OTA chiffrée
+    avec l'ancienne clé acceptée ; la tablette redémarre sans réseau, Wi-Fi donné par
+    « Tab5 Fallback AP » depuis un téléphone, réauthentification « chiffrement désactivé »
+    confirmée dans HA, qui fournit une nouvelle clé (différente de l'ancienne) : connectée
+    à 16:33, moins de 3 minutes après le démarrage ;
+  - aucune entité indisponible, l'automatisation des emplacements pousse les 34
+    emplacements et la clim à la connexion, **écran complet (Axel)** ;
+  - la tablette refuse ensuite la clé nulle et le clair ; `tools/tab5_logs.py` lit son
+    journal avec la clé gardée par HA ;
+  - **signature** : le firmware signé par la clé du projet passe en OTA (en clair) ; un
+    firmware signé par une autre clé et un firmware non signé sont refusés (« Firmware
+    signature verification failed »), la tablette reste sur le sien sans redémarrer ;
+  - **fuseau** : « Fuseau du dernier passage de HA remis (UTC+1 h en hiver) » au
+    démarrage suivant, 6 s avant le Wi-Fi. Lu sur l'USB : le journal par l'API arrive
+    trop tard pour ces lignes.
+- **Mesures** (build local, ESPHome 2026.9.0) : image 3 141 222 o (+23,8 Ko), RAM
+  statique 170 626 o. Aucun avertissement dans le code du projet.
+- **À savoir** :
+  - une tablette 2.x migre une fois, sur place (docs/installation.md, « Passer à la 3.0 ») ;
+  - clé de signature perdue = plus d'OTA, seulement l'USB ;
+  - `esphome logs` ne trouve plus de clé : `tools/tab5_logs.py`.
 
 ### 2026-09-27 — Les appareils se choisissent dans HA, à la souris : emplacements et blueprint (lot 6a)
 

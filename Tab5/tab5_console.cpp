@@ -15,6 +15,7 @@
 #include "tab5_internal.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <esp_heap_caps.h>
 #include <esp_hosted.h>
 #include <esp_hosted_host_fw_ver.h>
 #include <cinttypes>
@@ -106,19 +107,14 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
     bool wifi_ssid_has_state, const char* wifi_ssid, lv_obj_t* lbl_ssid) {
 
     if (lbl_sram != nullptr) {
-        #ifdef USE_ESP_IDF
+        // heap_caps d'ESP-IDF. L'ancienne branche Arduino (ESP.getFreeHeap()…) est
+        // retirée : le projet est en ESP-IDF seul. Le rendu hors tablette (lot 7) fournit
+        // un esp_heap_caps.h qui renvoie 0 (Tab5/rendu/hote/).
         float sram_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024.0f;
         float sram_total = heap_caps_get_total_size(MALLOC_CAP_INTERNAL) / 1024.0f;
         float psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024.0f / 1024.0f;
         float psram_total = heap_caps_get_total_size(MALLOC_CAP_SPIRAM) / 1024.0f / 1024.0f;
         float frag = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL) / 1024.0f;
-        #else
-        float sram_free = ESP.getFreeHeap() / 1024.0f;
-        float sram_total = ESP.getHeapSize() / 1024.0f;
-        float psram_free = ESP.getFreePsram() / (1024.0f * 1024.0f);
-        float psram_total = ESP.getPsramSize() / (1024.0f * 1024.0f);
-        float frag = ESP.getMaxAllocHeap() / 1024.0f;
-        #endif
 
         float sram_used = sram_total - sram_free;
         if (sram_used < 0) sram_used = 0;

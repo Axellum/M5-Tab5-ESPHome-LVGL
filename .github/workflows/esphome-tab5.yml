@@ -121,15 +121,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Générer user_entities.yaml et secrets.yaml factices pour la CI
+      - name: user_entities.yaml du modèle et clé de signature jetable
         run: |
           cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-          cat > secrets.yaml << 'EOF'
-          wifi_ssid: "ci_dummy_ssid"
-          wifi_password: "CI_DUMMY_PASSWORD"
-          wifi_ap_password: "CI_DUMMY_AP_PASSWORD"
-          api_encryption_key: "26IVe/bZ/aI+T8G96D7aYZlM2EH8QUG8JtsZ50HxaCE="
-          EOF
+          # Firmware sans secret (lot 6b, ADR-0020) : plus de secrets.yaml, seulement
+          # une clé de signature JETABLE, créée pour ce run et jamais conservée. Un
+          # binaire signé avec elle est refusé en OTA par une tablette du projet.
+          openssl genrsa -out tab5_signature.pem 3072
       # ccache est déjà actif dans le conteneur ESPHome (« ccache will be used for
       # faster recompilation » dans le log), mais son cache mourait avec le
       # runner : ~2 000 objets ESP-IDF/LVGL/composants recompilés à chaque run
@@ -177,6 +175,9 @@ jobs:
         # (tab5-ha-hmi-esp32p4/ : .factory.bin, .ota.bin, manifest.json) — pas
         # dans l'ancien `.pioenvs/…/firmware.bin` de PlatformIO, d'où plus aucun
         # artefact du 15/07 au 25/09/2026 sans que la CI ne le signale.
+        # Depuis le lot 6b, il est signé par la clé jetable du run : une tablette du
+        # projet le refuse en OTA, seul un flash USB (.factory.bin) le pose. Les
+        # binaires à distribuer viendront de la release signée (lot 6c).
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         uses: actions/upload-artifact@v7
         with:
@@ -203,15 +204,13 @@ jobs:
           fi
           echo "ESPHome plancher : $v" >> "$GITHUB_STEP_SUMMARY"
           echo "version=$v" >> "$GITHUB_OUTPUT"
-      - name: Générer user_entities.yaml et secrets.yaml factices pour la CI
+      - name: user_entities.yaml du modèle et clé de signature jetable
         run: |
           cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-          cat > secrets.yaml << 'EOF'
-          wifi_ssid: "ci_dummy_ssid"
-          wifi_password: "CI_DUMMY_PASSWORD"
-          wifi_ap_password: "CI_DUMMY_AP_PASSWORD"
-          api_encryption_key: "26IVe/bZ/aI+T8G96D7aYZlM2EH8QUG8JtsZ50HxaCE="
-          EOF
+          # Firmware sans secret (lot 6b, ADR-0020) : plus de secrets.yaml, seulement
+          # une clé de signature JETABLE, créée pour ce run et jamais conservée. Un
+          # binaire signé avec elle est refusé en OTA par une tablette du projet.
+          openssl genrsa -out tab5_signature.pem 3072
       # Cache ccache à part : les objets d'une autre version d'ESPHome (ou d'ESP-IDF)
       # ne resserviraient pas, et chaque job écraserait le cache de l'autre.
       - name: Cache ccache (objets de la compilation précédente)
@@ -236,7 +235,7 @@ jobs:
   # que `build` (image `latest`), la révision ajoutée au user_entities.yaml factice.
   # Cache de `build` restauré mais jamais sauvegardé : les objets sont presque tous
   # communs, et trois jobs n'écrasent pas le même cache. Pas d'artefact : un binaire
-  # aux secrets factices publics ne doit pas servir à flasher une tablette.
+  # signé par une clé jetable ne sert à aucune tablette.
   build-revisions:
     name: build-revisions (${{ matrix.ecran }})
     needs: changes
@@ -248,16 +247,14 @@ jobs:
         ecran: [st7121, ili9881c]
     steps:
       - uses: actions/checkout@v7
-      - name: user_entities.yaml (révision ${{ matrix.ecran }}) et secrets.yaml factices
+      - name: user_entities.yaml (révision ${{ matrix.ecran }}) et clé de signature jetable
         run: |
           cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
           printf '\ntab5_ecran: %s\n' "${{ matrix.ecran }}" >> Tab5/user_entities.yaml
-          cat > secrets.yaml << 'EOF2'
-          wifi_ssid: "ci_dummy_ssid"
-          wifi_password: "CI_DUMMY_PASSWORD"
-          wifi_ap_password: "CI_DUMMY_AP_PASSWORD"
-          api_encryption_key: "26IVe/bZ/aI+T8G96D7aYZlM2EH8QUG8JtsZ50HxaCE="
-          EOF2
+          # Firmware sans secret (lot 6b, ADR-0020) : plus de secrets.yaml, seulement
+          # une clé de signature JETABLE, créée pour ce run et jamais conservée. Un
+          # binaire signé avec elle est refusé en OTA par une tablette du projet.
+          openssl genrsa -out tab5_signature.pem 3072
       - name: Cache ccache (restauré depuis build, jamais sauvegardé)
         uses: actions/cache/restore@v6
         with:

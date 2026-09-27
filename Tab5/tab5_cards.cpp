@@ -16,6 +16,7 @@
 #include "tab5_internal.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <cmath>
 #include <ctime>
 #include <cstring>
 #include <vector>
@@ -178,7 +179,7 @@ void moisture_slots_refresh() {
 
     for (int i = 0; i < 5; i++) {
         if (zone_absente(static_cast<Zone>(static_cast<int>(Zone::POT_1) + i))) continue;
-        if (!isnan(values[i])) {
+        if (!std::isnan(values[i])) {
             valid[n_valid++] = {i, values[i]};
         } else {
             hors_ligne[n_hors_ligne++] = i;
@@ -242,7 +243,7 @@ void moisture_slots_refresh() {
         }
 
         // Couleur colorimetrique (grise hors ligne)
-        ui_text_color(slots[s].icon_lbl, isnan(val) ? UIColor::INACTIVE : get_humidity_color(val));
+        ui_text_color(slots[s].icon_lbl, std::isnan(val) ? UIColor::INACTIVE : get_humidity_color(val));
         ui_text_color(slots[s].val_lbl, UIColor::TEXT_DIM);
     }
 }
@@ -252,7 +253,7 @@ void moisture_slots_refresh() {
 // =============================================================================
 
 uint32_t get_battery_color(float x) {
-    if (isnan(x)) return UIColor::INACTIVE;
+    if (std::isnan(x)) return UIColor::INACTIVE;
     if (x > 80.0f) return UIColor::SUCCESS;
     if (x > 40.0f) return UIColor::INFO;
     if (x >= 20.0f) return UIColor::WARNING;
@@ -268,7 +269,7 @@ void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]) 
         const float v = values[i];
         const uint32_t c = get_humidity_color(v);  // NaN -> MOISTURE_NAN (gris)
         ui_text_color(cards[i].icon_lbl, c);
-        if (isnan(v)) {
+        if (std::isnan(v)) {
             ui_text(cards[i].moist_lbl, "--");
             ui_text_color(cards[i].moist_lbl, UIColor::INACTIVE);
             ui_text(cards[i].status_lbl, tr("Hors ligne"));
@@ -295,7 +296,7 @@ void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]) 
 
 void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric) {
     if (value_lbl == nullptr) return;
-    if (isnan(x)) {
+    if (std::isnan(x)) {
         ui_text(value_lbl, "--");
         ui_text_color(value_lbl, UIColor::INACTIVE);
         return;
@@ -326,7 +327,7 @@ void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric) {
 // depuis temp_serre/temp_salon (tab5-sensors-domotique.yaml, Phase 3, #T164).
 void update_temp_ui(lv_obj_t* label, float x) {
     if (label == nullptr) return;
-    if (isnan(x)) {
+    if (std::isnan(x)) {
         ui_text(label, "-- \xC2\xB0");
         ui_text_color(label, UIColor::TEXT_DIM);
     } else {
