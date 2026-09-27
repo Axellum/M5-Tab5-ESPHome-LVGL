@@ -1,6 +1,6 @@
 # ADR-0015: OTA encrypted with the API key — plain uploads refused, no OTA password
 
-**Status:** Accepted (2026-09-16)
+**Status:** Superseded by [ADR-0020](0020-no-secret-firmware-signed-ota.md) (2026-09-27, lot 6b): no API key in the firmware any more, so nothing to encrypt the OTA with; OTA images are signed instead. Accepted 2026-09-16.
 **Date:** 2026-09-25 (written retroactively from the `ota:` comment block in `Tab5/tab5-hardware.yaml`, the `min_version` comment in `tab5-ha-hmi.yaml` and the 2026-09-16 CHANGELOG entry)
 
 ## Context

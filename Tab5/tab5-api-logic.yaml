@@ -20,9 +20,13 @@
 # ============================================================================
 api:
 
-  encryption:
-
-    key: !secret api_encryption_key
+  # Clé fournie par Home Assistant (lot 6b, ADR-0020) : aucune clé dans le firmware.
+  # À l'ajout de la tablette, HA génère une clé, l'envoie par une connexion déjà
+  # chiffrée (clé nulle bien connue de Noise) et la garde ; la tablette l'écrit en NVS
+  # et refuse ensuite toute autre connexion. Une tablette sans clé n'accepte ce premier
+  # contact que pendant la fenêtre `provisioning:` ci-dessous. Changer de HA : effacer
+  # la clé (flash USB complet) ou la donner au nouveau HA.
+  encryption: {}
 
   # ═══════════════════════════════════════════════════════════════════════
   # Redémarrage automatique quand Home Assistant ne se connecte plus
@@ -571,3 +575,12 @@ api:
                 {"pot_5_temp", nullptr, id(pot5_temp)}, {"pot_5_bat", nullptr, id(pot5_bat)},
             };
             emplacements_appliquer(payload, kCibles, sizeof(kCibles) / sizeof(kCibles[0]));
+
+# Fenêtre d'appairage (lot 6b, ADR-0020) : une tablette qui n'a pas encore de clé API
+# (neuve, ou jamais ajoutée à HA) n'accepte le premier contact de HA que pendant les
+# 30 minutes qui suivent son démarrage. Passé ce délai, elle refuse toute connexion et
+# coupe son AP de secours ; un redémarrage rouvre la fenêtre. Sans objet une fois la
+# clé reçue : la fenêtre ne s'ouvre plus. Pendant la fenêtre, `reboot_timeout` est
+# suspendu (la tablette attend d'être ajoutée au lieu de redémarrer).
+provisioning:
+  timeout: 30min

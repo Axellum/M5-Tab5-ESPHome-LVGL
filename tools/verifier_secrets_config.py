@@ -14,7 +14,13 @@ SECRET_PATTERNS = {
     "HA_TOKEN": re.compile(r'eyJ[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+'),
     "GENERIC_SECRET": re.compile(r'(password|token|api_key|secret|key)\s*:\s*["\']?([a-zA-Z0-9_\-]{16,})["\']?', re.IGNORECASE),
     "PRIVATE_IP": re.compile(r'\b(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3})\b'),
+    # En-tête PEM d'une clé privée (clé de signature du firmware, lot 6b, ADR-0020).
+    "PRIVATE_KEY": re.compile(r'-----BEGIN [A-Z ]*PRIVATE KEY-----'),
 }
+
+# Fichiers de clé : suivis par git, ce sont des fuites en soi, comme secrets.yaml
+# (la clé de signature du firmware est un .pem, lot 6b).
+KEY_SUFFIXES = ('.pem', '.key')
 
 # Valeur factice conventionnelle : MAJUSCULES, chiffres et `_` seulement
 # (`YOUR_WIFI_PASSWORD`, `CLE_BASE64_32_OCTETS`, `CI_DUMMY_PASSWORD`). Les docs
@@ -83,7 +89,7 @@ def tracked_files(root_dir):
     except (OSError, subprocess.CalledProcessError):
         return None
     names = out.decode('utf-8').split('\0')
-    return [root_dir / n for n in names if n.lower().endswith(CHECKED_SUFFIXES)]
+    return [root_dir / n for n in names if n.lower().endswith(CHECKED_SUFFIXES + KEY_SUFFIXES)]
 
 
 def main(root_dir=None):
@@ -107,6 +113,9 @@ def main(root_dir=None):
         # (une clé base64 avec `+` ou `/` échappe à GENERIC_SECRET).
         if path.name == 'secrets.yaml':
             all_findings[str(path)] = [(0, "SECRETS_FILE_TRACKED")]
+            continue
+        if path.name.lower().endswith(KEY_SUFFIXES):
+            all_findings[str(path)] = [(0, "KEY_FILE_TRACKED")]
             continue
         if not path.is_file():   # supprimé de l'arbre, suppression pas encore indexée
             continue

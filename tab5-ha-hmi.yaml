@@ -12,6 +12,12 @@ substitutions: !include Tab5/user_entities.yaml
 esphome:
   name: tab5-ha-hmi
   friendly_name: M5Stack Tab5 Home Assistant HMI
+  # Identité du firmware (lot 6b, ADR-0020) : HA l'affiche dans la fiche de l'appareil,
+  # et le manifeste de mise à jour du lot 6c doit porter ce même `name`. La version
+  # suit le CHANGELOG ; « -dev » jusqu'à la release.
+  project:
+    name: axellum.tab5-ha-hmi
+    version: 3.0.0-dev
   # [2026.7.0] Plancher DUR d'origine : st7123 officiel + audio zero-copy + VAD + PSRAM SDIO.
   # [2026.8.1] Relevé le 26/08/2026. Le code compile encore tel quel en 2026.7.x — ce
   # plancher n'est donc pas une dépendance d'API, c'est un choix : 2026.8 corrige trois
@@ -35,7 +41,11 @@ esphome:
   #     puis TTS 24 kHz — notre bus I2S partagé micro/haut-parleur, ADR-0010) ;
   #   - api #18802 / #18803 : la connexion est coupée au lieu de crasher quand l'allocation
   #     d'un tampon échoue (payloads bulk).
-  # Redescendre sous 2026.9.0 = retirer `ota: encryption:` et remettre `password:`.
+  # [lot 6b, 27/09/2026] Le bloc `ota: encryption:` est parti (ADR-0020), mais le
+  # plancher reste : `provisioning:` (fenêtre d'appairage), la clé API fournie par HA
+  # par une connexion chiffrée et `signed_ota_verification` sont vérifiés en 2026.9.0
+  # (le job CI build-min compile à ce plancher). Pas cherché si une version plus
+  # ancienne les connaît tous.
   min_version: 2026.9.0
   includes:
     # Jetons sans dépendance (UIColor/UIAnim/UIIdle), inclus par tab5_custom.h et par
