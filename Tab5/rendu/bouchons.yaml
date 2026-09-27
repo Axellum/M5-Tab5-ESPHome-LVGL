@@ -164,6 +164,36 @@ api:
                   then:
                     - lambda: 'advance_central_panel_rotator(g_central_ctx);'
                     - delay: 500ms
+    # Doigt virtuel (Tab5/rendu/rendu_doigt.h) : tools/rendu/capturer.py ouvre chaque
+    # fenêtre, jeu et sous-fenêtre en touchant l'écran comme on le ferait sur la dalle,
+    # aux coordonnées des captures (paysage 1280×720). Mêmes gestionnaires que le doigt :
+    # on_click, on_long_press, recherche du widget touché par LVGL.
+    - service: rendu_toucher
+      description: "Rendu hors tablette : appui en (x, y), levé après `duree` ms (1000 et plus : appui long)."
+      variables:
+        x: int
+        y: int
+        duree: int
+      then:
+        - lambda: 'rendu_doigt_poser(x, y);'
+        - delay: !lambda 'return duree;'
+        - lambda: 'rendu_doigt_lever();'
+    - service: rendu_glisser
+      description: "Rendu hors tablette : geste de (x1, y1) à (x2, y2), en 10 pas de 30 ms."
+      variables:
+        x1: int
+        y1: int
+        x2: int
+        y2: int
+      then:
+        - repeat:
+            count: 11
+            then:
+              - lambda: |-
+                  rendu_doigt_poser(x1 + (x2 - x1) * (int32_t) iteration / 10,
+                                    y1 + (y2 - y1) * (int32_t) iteration / 10);
+              - delay: 30ms
+        - lambda: 'rendu_doigt_lever();'
 
 script:
   # Journal des démarrages (tab5_journal.cpp) : rien à envoyer depuis le rendu.
