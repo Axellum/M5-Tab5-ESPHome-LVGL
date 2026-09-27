@@ -8,12 +8,20 @@ This is a short methodology note, not an incident log — see [`docs/troubleshoo
 
 ## Where to look
 
-- **Live ESPHome logs** (`esphome logs tab5-ha-hmi.yaml`, or the ESPHome dashboard's log view) — the primary source of truth for boot sequence issues, API connection state, and any `ESP_LOG*` line in the C++ code. Close the session when you're done; a leaked `esphome logs` process holds an API connection open indefinitely (see the "API connections exhausted" entry in `troubleshooting.md`).
-- **The on-screen console overlay** (`console_sys.yaml`, opened via the console button `btn_control_console`, top right — not by swipe since the 14/07/2026 rework) — 4 glass cards: MÉMOIRE (SRAM/PSRAM, max free block, flash), RÉSEAU (SSID/IP/signal + HA connection status), SYSTÈME (uptime, CPU temperature, loop time, volume) and GESTION (screen re-push = re-arm the `is_primary_active` flag + push automation, automation reload, HA restart and device reboot — the last two behind a confirm overlay, 16/07/2026 redesign). It is **not** a log viewer — for payload/event logs use `esphome logs`. Useful when you don't have a laptop connected but can see the screen.
+- **Live ESPHome logs** (`python tools/tab5_logs.py --host <ip> --config-ha <HA config folder>` since 3.0, which reads the API key Home Assistant keeps; `esphome logs` no longer finds a key in the YAML) — the primary source of truth for boot sequence issues, API connection state, and any `ESP_LOG*` line in the C++ code. Close the session when you're done; a leaked log process holds an API connection open indefinitely (see the "API connections exhausted" entry in `troubleshooting.md`).
+- **The on-screen console overlay** (`console_sys.yaml`, opened via the console button `btn_control_console`, top right — not by swipe since the 14/07/2026 rework) — 4 glass cards: MÉMOIRE (SRAM/PSRAM, max free block, flash), RÉSEAU (SSID/IP/signal + HA connection status), SYSTÈME (uptime, CPU temperature, loop time, volume) and GESTION (screen re-push = re-arm the `is_primary_active` flag + push automation, automation reload, HA restart and device reboot — the last two behind a confirm overlay, 16/07/2026 redesign). It is **not** a log viewer — for payload/event logs use `tools/tab5_logs.py`. Useful when you don't have a laptop connected but can see the screen.
 
   ![Console overlay on the real device](images/tab5_photo_console_v2.jpg)
 
 - **Home Assistant's own logs** for anything upstream of the device — automation trigger/condition evaluation, template rendering errors, service call rejections.
+
+## Seeing the screen without the tablet
+
+The CI job « Rendu hors tablette » (`.github/workflows/rendu-host.yml`, [ADR-0021](decisions/0021-host-render-stubs.md)) compiles the interface for ESPHome's `host` platform (`tab5-rendu-host.yaml`), runs it on the runner, pushes the demo scenes and takes one picture per scene, in French then in English. On a pull request that touches the screen, it says which screens changed and attaches before/after images (artifact `rendu-captures`, folder `diff/`). It does not block the PR.
+
+- A change on purpose: `python tools/rendu/maj_references.py --run <run id>` replaces `docs/images/rendu/` (also the gallery of [`screens.md`](screens.md)); review the images, then commit.
+- It runs on Linux or macOS only (the `host` platform): on Windows, use the CI (*Actions → Rendu hors tablette → Run workflow*).
+- It shows the layout, not the device: no touch, no sound, no voice assistant, no timings or memory.
 
 ## Marking a spot for later, in code
 
@@ -52,12 +60,20 @@ Note de méthodologie, pas un journal d'incidents — voir [`docs/troubleshootin
 
 ## Où regarder
 
-- **Logs ESPHome en direct** (`esphome logs tab5-ha-hmi.yaml`, ou la vue logs du dashboard ESPHome) — source de vérité principale pour les problèmes de séquence de boot, l'état des connexions API, et toute ligne `ESP_LOG*` du code C++. Fermer la session une fois terminée ; un process `esphome logs` oublié occupe une connexion API indéfiniment (voir "connexions API épuisées" dans `troubleshooting.md`).
-- **La Console Système à l'écran** (`console_sys.yaml`, ouverte via le bouton console `btn_control_console`, en haut à droite — plus par swipe depuis la refonte du 14/07/2026) — 4 cartes : MÉMOIRE (SRAM/PSRAM, bloc max, flash), RÉSEAU (SSID/IP/signal + état connexion HA), SYSTÈME (uptime, température CPU, temps de boucle, volume) et GESTION (MAJ écran = re-push du flag `is_primary_active` + automation de push, reload des automations, redémarrage HA et reboot tablette — les deux derniers derrière un overlay de confirmation, refonte du 16/07/2026). Ce n'est **pas** un visualiseur de logs — pour les payloads/événements, utiliser `esphome logs`.
+- **Logs ESPHome en direct** (`python tools/tab5_logs.py --host <ip> --config-ha <dossier de configuration de HA>` depuis la 3.0, qui lit la clé API que garde Home Assistant ; `esphome logs` ne trouve plus de clé dans le YAML) — source de vérité principale pour les problèmes de séquence de boot, l'état des connexions API, et toute ligne `ESP_LOG*` du code C++. Fermer la session une fois terminée ; un process de logs oublié occupe une connexion API indéfiniment (voir "connexions API épuisées" dans `troubleshooting.md`).
+- **La Console Système à l'écran** (`console_sys.yaml`, ouverte via le bouton console `btn_control_console`, en haut à droite — plus par swipe depuis la refonte du 14/07/2026) — 4 cartes : MÉMOIRE (SRAM/PSRAM, bloc max, flash), RÉSEAU (SSID/IP/signal + état connexion HA), SYSTÈME (uptime, température CPU, temps de boucle, volume) et GESTION (MAJ écran = re-push du flag `is_primary_active` + automation de push, reload des automations, redémarrage HA et reboot tablette — les deux derniers derrière un overlay de confirmation, refonte du 16/07/2026). Ce n'est **pas** un visualiseur de logs — pour les payloads/événements, utiliser `tools/tab5_logs.py`.
 
   ![Overlay console sur l'appareil réel](images/tab5_photo_console_v2.jpg)
 
 - **Les logs Home Assistant** pour tout ce qui est en amont de l'appareil — évaluation trigger/condition d'automation, erreurs de rendu de template, rejets d'appel de service.
+
+## Voir l'écran sans la tablette
+
+Le job CI « Rendu hors tablette » (`.github/workflows/rendu-host.yml`, [ADR-0021](decisions/0021-host-render-stubs.md)) compile l'interface pour la plateforme `host` d'ESPHome (`tab5-rendu-host.yaml`), la lance sur le runner, lui pousse les scènes du mode démo et fait une image par scène, en français puis en anglais. Sur une pull request qui touche l'écran, il dit quels écrans ont changé et joint les images avant/après (artefact `rendu-captures`, dossier `diff/`). Il ne bloque pas la PR.
+
+- Un changement voulu : `python tools/rendu/maj_references.py --run <id du run>` remplace `docs/images/rendu/` (aussi la galerie de [`screens.md`](screens.md#version-française)) ; relire les images, puis committer.
+- Il ne tourne que sous Linux ou macOS (plateforme `host`) : sous Windows, passer par la CI (*Actions → Rendu hors tablette → Run workflow*).
+- Il montre la mise en page, pas l'appareil : ni tactile, ni son, ni assistant vocal, ni temps de rendu ou mémoire.
 
 ## Marquer un point d'observation dans le code
 

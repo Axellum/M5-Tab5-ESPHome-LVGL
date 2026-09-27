@@ -17,7 +17,8 @@ Thanks for looking at this project. It is a personal firmware repo, but issues a
 2. Copy config templates if needed:
    ```bash
    cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-   # create secrets.yaml — see docs/installation.md
+   # firmware signing key (no secrets.yaml since 3.0) — see docs/installation.md, Step 3
+   python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem
    ```
 3. **Compile must pass:**
    ```bash
@@ -34,7 +35,7 @@ Thanks for looking at this project. It is a personal firmware repo, but issues a
 5. If you changed a `!include`d file: `esphome clean` before the next `run`.
 6. Use the [PR template](.github/PULL_REQUEST_TEMPLATE.md) checklist.
 7. Add a line to [`CHANGELOG.md`](CHANGELOG.md) for user-visible changes.
-8. Never commit `secrets.yaml`, `Tab5/user_entities.yaml`, or production HA files.
+8. Never commit a key (`*.pem`, `*.key`), `Tab5/user_entities.yaml`, or production HA files.
 
 ### Branching
 
@@ -60,7 +61,8 @@ Merci de vous intéresser à ce projet. C'est un firmware personnel, mais issues
 2. Copier les modèles de config si besoin :
    ```bash
    cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-   # créer secrets.yaml — voir docs/installation.md
+   # clé de signature du firmware (plus de secrets.yaml depuis la 3.0) — voir docs/installation.md, étape 3
+   python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem
    ```
 3. **La compilation doit passer :**
    ```bash
@@ -77,7 +79,7 @@ Merci de vous intéresser à ce projet. C'est un firmware personnel, mais issues
 5. Si vous modifiez un fichier `!include` : `esphome clean` avant le prochain `run`.
 6. Utiliser la checklist du [modèle de PR](.github/PULL_REQUEST_TEMPLATE.md).
 7. Ajouter une entrée dans [`CHANGELOG.md`](CHANGELOG.md) pour les changements visibles.
-8. Ne jamais committer `secrets.yaml`, `Tab5/user_entities.yaml`, ni les fichiers HA de prod.
+8. Ne jamais committer une clé (`*.pem`, `*.key`), `Tab5/user_entities.yaml`, ni les fichiers HA de prod.
 
 ### Branches
 

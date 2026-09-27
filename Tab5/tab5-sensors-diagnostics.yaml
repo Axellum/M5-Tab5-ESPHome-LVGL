@@ -13,19 +13,28 @@
 #                 vivent dans tab5-sensors-domotique.yaml. Un nouveau capteur
 #                 système (RAM, réseau, alimentation...) se déclare ici.
 # ============================================================================
+# Wi-Fi sans identifiants compilés (lot 6b, ADR-0020) : ils arrivent par Improv (USB,
+# `improv_serial` ci-dessous, depuis le flasheur web ou ESPHome Web) ou par le portail
+# de l'AP de secours, et restent en NVS d'une OTA à l'autre (emplacement fixe quand le
+# YAML n'a pas d'identifiants). Un YAML avec identifiants les rangerait sous le hash de
+# la config : ils ne passeraient pas d'un firmware à l'autre.
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
   power_save_mode: NONE
   # Point d'accès de secours, conservé à dessein (audit du 06/09/2026, §4.1
-  # point 16) : avec `captive_portal:` (tab5-ha-hmi.yaml), c'est le seul chemin
-  # de récupération sans câble USB si un firmware est flashé avec de mauvais
-  # identifiants Wi-Fi. L'AP ne démarre qu'après l'échec de la connexion
-  # (`ap_timeout`, 1 min par défaut) ; en fonctionnement normal il ne coûte que
-  # sa configuration en RAM et le code du portail dans le binaire.
+  # point 16) : avec `captive_portal:` (tab5-ha-hmi.yaml), c'est le chemin sans câble
+  # USB pour donner ou changer le réseau Wi-Fi. Il démarre tout de suite sur une
+  # tablette sans réseau enregistré, sinon après l'échec de la connexion (`ap_timeout`,
+  # 1 min par défaut). OUVERT depuis le lot 6b : un mot de passe écrit dans un dépôt
+  # public ne protège rien. Au pire, quelqu'un à portée change le réseau d'une tablette
+  # qui a perdu le sien ; il ne peut ni la flasher (signature) ni parler à son API (clé).
+  # Il se coupe aussi quand la fenêtre d'appairage expire (tab5-api-logic.yaml).
   ap:
     ssid: "Tab5 Fallback AP"
-    password: !secret wifi_ap_password
+
+# Improv par le port USB (lot 6b) : le flasheur web (lot 6c) ou ESPHome Web règlent le
+# Wi-Fi juste après le flash. Partage le port du logger (USB_SERIAL_JTAG, 115 200 bauds,
+# tab5-hardware.yaml), ce qu'improv_serial accepte sur le P4.
+improv_serial:
 
 # Alimentations : internes (`internal: true`), plus aucune entité HA. Elles ne servent
 # qu'à être allumées au démarrage (ALWAYS_ON), et « WiFi Power » coupé depuis HA rendait
@@ -228,11 +237,23 @@ select:
             - switch.turn_on: wifi_antenna_int_ext
 
 time:
+  # Fuseau horaire de Home Assistant (lot 6b, ADR-0020), plus de `tab5_fuseau` : HA
+  # (≥ 2026.3) l'envoie avec l'heure, à chaque connexion puis toutes les 6 h, et
+  # ESPHome l'applique à toutes les horloges (sntp et rx8130 compris). Rien ne le garde
+  # d'un démarrage à l'autre : fuseau_memoriser() le range en NVS (tick minute
+  # ci-dessous) et fuseau_restaurer() le remet au démarrage (interval plus bas), pour
+  # que le réveil sonne à l'heure locale même quand HA manque après une coupure. Avant
+  # la toute première connexion à HA, c'est le fuseau du PC qui a compilé (UTC pour
+  # un firmware compilé par la CI). SNTP reste la source de l'heure elle-même.
+  - platform: homeassistant
+    id: ha_time
+    update_interval: 6h
+    on_time_sync:
+      then:
+        - lambda: 'fuseau_recu_de_ha();'
+
   - platform: sntp
     id: sntp_time
-    # Fuseau réglable (lot 4c, 27/09/2026) : `tab5_fuseau:` dans Tab5/user_entities.yaml,
-    # au format tz (« America/Montreal », « Europe/Berlin »…). Sans la clé : Paris.
-    timezone: ${ tab5_fuseau | default('Europe/Paris') }
     # Peint l'horloge dès la 1re sync NTP (sinon placeholders YAML jusqu'au
     # prochain tick minute de on_time). Indépendant de HA.
     on_time_sync:
@@ -259,6 +280,9 @@ time:
               // Décompte « dans N mn » de la phrase pluie, fait ici depuis le lot 4c :
               // HA n'a plus à renvoyer la phrase à chaque minute.
               rain_phrase_tick();
+              // Fuseau reçu de HA (lot 6b) : rangé en NVS s'il a changé, pour le
+              // prochain démarrage. Simple comparaison en RAM le reste du temps.
+              fuseau_memoriser();
 
   # Horloge matérielle RX8130 (0x32 sur bsp_bus, sauvegardée par un supercondensateur
   # de 70 000 µF) : le Tab5 a l'heure dès le démarrage, même sans réseau (horloge,
@@ -270,7 +294,6 @@ time:
   - platform: rx8130
     id: rtc_time
     i2c_id: bsp_bus
-    timezone: ${ tab5_fuseau | default('Europe/Paris') }
     update_interval: never
     on_time_sync:
       then:
@@ -289,6 +312,9 @@ interval:
   - interval: 24h
     then:
       - lambda: |-
+          // Fuseau du dernier passage de HA (lot 6b), avant de lire l'horloge. N'agit
+          // qu'au premier appel, au démarrage ; HA le remplacera à sa prochaine connexion.
+          fuseau_restaurer();
           if (id(sntp_time).now().is_valid()) return;
           id(rtc_time).read_time();
           const auto t = id(rtc_time).utcnow();

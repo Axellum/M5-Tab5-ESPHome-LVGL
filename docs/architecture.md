@@ -20,7 +20,7 @@ Home Assistant never waits for the Tab5 to poll. Automations detect changes and 
 
 The root file does three things:
 
-1. **Loads entity substitutions** — `substitutions: !include Tab5/user_entities.yaml` (gitignored local file, same pattern as `secrets.yaml`). Copy `Tab5/user_entities.example.yaml` to `user_entities.yaml` and edit your HA entity IDs — the only per-home config step besides secrets.
+1. **Loads entity substitutions** — `substitutions: !include Tab5/user_entities.yaml` (gitignored local file). Copy `Tab5/user_entities.example.yaml` to `user_entities.yaml` and edit your HA entity IDs. Since 3.0 there is no secret to compile in: Wi-Fi comes from Improv or the fallback AP, the API key from Home Assistant, and builds are signed with `tab5_signature.pem` ([ADR-0020](decisions/0020-no-secret-firmware-signed-ota.md)).
 
 2. **Defines the boot sequence** — the `on_boot` block handles the startup order carefully: backlight on → media player volume set → amplifier enable (in that order, to avoid the ES8388 pop) → wait for Home Assistant itself (`api.connected` with `state_subscription_only`, then 2 s) → fire a `tab5_connected` event on the HA event bus → start wake-word detection if enabled.
 
@@ -285,7 +285,7 @@ Home Assistant ne laisse jamais le Tab5 interroger l'état. Les automations dét
 
 Le fichier racine fait trois choses :
 
-1. **Charge les substitutions d'entités** — `substitutions: !include Tab5/user_entities.yaml` (fichier local gitignoré, même modèle que `secrets.yaml`). Copier `Tab5/user_entities.example.yaml` vers `user_entities.yaml` et éditer vos entity IDs HA.
+1. **Charge les substitutions d'entités** — `substitutions: !include Tab5/user_entities.yaml` (fichier local gitignoré). Copier `Tab5/user_entities.example.yaml` vers `user_entities.yaml` et éditer vos entity IDs HA. Depuis la 3.0, aucun secret n'est compilé : le Wi-Fi vient d'Improv ou de l'AP de secours, la clé API de Home Assistant, et les compilations sont signées par `tab5_signature.pem` ([ADR-0020](decisions/0020-no-secret-firmware-signed-ota.md)).
 
 2. **Définit la séquence de boot** — le bloc `on_boot` gère l'ordre de démarrage soigneusement : rétroéclairage → volume media player → activation ampli (dans cet ordre, pour éviter le pop ES8388) → attente de Home Assistant lui-même (`api.connected` avec `state_subscription_only`, puis 2 s) → envoi d'un événement `tab5_connected` sur le bus HA → démarrage de la détection wake-word si activée.
 

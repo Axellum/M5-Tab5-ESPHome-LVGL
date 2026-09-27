@@ -131,3 +131,29 @@ def test_tracked_secrets_yaml_is_reported(tmp_path, monkeypatch, capsys):
     assert vsc.main(tmp_path) == 1
     out = capsys.readouterr().out
     assert "SECRETS_FILE_TRACKED" in out and key not in out
+
+
+def test_detects_private_key_header(tmp_path):
+    """Une clé privée collée dans un fichier suivi (doc, YAML) est signalée : la clé
+    de signature du firmware (lot 6b) ne doit jamais quitter le PC."""
+    f = tmp_path / "notes.md"
+    f.write_text("Ma clé :\n-----BEGIN PRIVATE KEY-----\nMIIG...\n")
+
+    assert check_file(str(f)) == [(2, "PRIVATE_KEY")]
+
+
+def test_tracked_key_file_is_reported(tmp_path, monkeypatch, capsys):
+    """Un .pem ou un .key suivi est une fuite en soi, comme secrets.yaml, et
+    tracked_files() les liste même hors des suffixes vérifiés ligne à ligne."""
+    import tools.verifier_secrets_config as vsc
+
+    _git(tmp_path, "init", "-q")
+    (tmp_path / "tab5_signature.pem").write_text("-----BEGIN PRIVATE KEY-----\nabc\n")
+    (tmp_path / "autre.key").write_text("abc\n")
+    _git(tmp_path, "add", "tab5_signature.pem", "autre.key")
+    names = sorted(p.name for p in vsc.tracked_files(tmp_path))
+    assert names == ["autre.key", "tab5_signature.pem"]
+
+    assert vsc.main(tmp_path) == 1
+    out = capsys.readouterr().out
+    assert out.count("KEY_FILE_TRACKED") == 2 and "abc" not in out

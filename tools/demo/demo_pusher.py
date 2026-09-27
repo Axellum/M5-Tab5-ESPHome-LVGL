@@ -14,20 +14,28 @@ Ne touche à aucun fichier du firmware (Tab5/*.yaml, tab5_custom.cpp/.h) ni à
 Tab5/user_entities.yaml : flashez avec Tab5/user_entities.example.yaml tel
 quel (voir docs/demo_mode.md).
 
+Clé API (lot 6b, ADR-0020) : aucune n'est compilée depuis la 3.0. Sur une tablette
+déjà ajoutée à HA, la démo prend celle que HA garde (--cle, TAB5_CLE_API ou
+--config-ha, voir tools/tab5_cle_api.py). Sur une tablette jamais ajoutée à HA, elle
+lui en donne une, comme HA le ferait, et la garde dans tools/demo/cle_demo.txt
+(gitignoré) : c'est la clé à donner à HA le jour où vous l'ajouterez.
+
 Usage :
     pip install -r tools/demo/requirements.txt
-    python tools/demo/demo_pusher.py --host 192.168.1.42 --key <api_encryption_key>
+    python tools/demo/demo_pusher.py --host 192.168.1.42
+    python tools/demo/demo_pusher.py --host 192.168.1.42 --config-ha \\\\192.168.1.10\\config
     python tools/demo/demo_pusher.py --host 192.168.1.42 --maison-minimale   # zones optionnelles (lot 5)
     python tools/demo/demo_pusher.py --dry-run   # vérifie le format des payloads, sans matériel ni dépendance
 
-Arrêt : Ctrl+C. Rien à nettoyer ailleurs (pas de HA, pas de compte, aucune
-config persistée en dehors de l'appareil lui-même).
+Arrêt : Ctrl+C. Rien à nettoyer ailleurs (pas de HA, pas de compte ; seule la clé
+donnée à une tablette neuve est gardée, dans tools/demo/cle_demo.txt).
 """
 from __future__ import annotations
 
 import argparse
 import asyncio
 import logging
+import sys
 from pathlib import Path
 
 from scenarios import (
@@ -42,7 +50,13 @@ from scenarios import (
     build_jours_bulk_payload,
 )
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from tab5_cle_api import ajouter_options, trouver_cle  # noqa: E402
+
 logger = logging.getLogger("demo_pusher")
+
+# Clé donnée par la démo à une tablette jamais ajoutée à HA (gitignoré).
+FICHIER_CLE_DEMO = Path(__file__).resolve().parent / "cle_demo.txt"
 
 # Pacing repris de HomeAssistant_Config/packages/tab5_push.yaml : évite de
 # saturer le socket TCP de l'ESP32-P4 (partagé avec le flux audio I2S).
@@ -57,16 +71,47 @@ SERVICES_ATTENDUS = (
 )
 
 
-def _lire_cle_depuis_secrets(repo_root: Path) -> str | None:
-    """Essaie de lire api_encryption_key depuis secrets.yaml à la racine du repo."""
-    secrets_path = repo_root / "secrets.yaml"
-    if not secrets_path.exists():
-        return None
-    for ligne in secrets_path.read_text(encoding="utf-8").splitlines():
-        ligne = ligne.strip()
-        if ligne.startswith("api_encryption_key:"):
-            return ligne.split(":", 1)[1].strip().strip('"').strip("'")
+def _lire_cle_demo() -> str | None:
+    """Clé que la démo a donnée à la tablette lors d'un lancement précédent."""
+    if FICHIER_CLE_DEMO.exists():
+        return FICHIER_CLE_DEMO.read_text(encoding="utf-8").strip() or None
     return None
+
+
+async def _donner_une_cle(host: str) -> str:
+    """Donne une clé à une tablette qui n'en a pas, comme HA le fait à son ajout.
+
+    Connexion avec la clé nulle bien connue (chiffrée, mais sans authentification),
+    acceptée seulement par une tablette sans clé et pendant sa fenêtre d'appairage
+    (30 min après son démarrage). La clé est gardée dans FICHIER_CLE_DEMO.
+    """
+    import base64
+    import secrets
+
+    from aioesphomeapi import ZERO_NOISE_PSK, APIClient, InvalidEncryptionKeyAPIError
+
+    client = APIClient(host, 6053, "", noise_psk=ZERO_NOISE_PSK, client_info="Tab5 demo pusher")
+    try:
+        await client.connect(login=True)
+    except InvalidEncryptionKeyAPIError:
+        raise SystemExit("La tablette a déjà une clé (ajoutée à HA ?) : passez --cle, "
+                         "TAB5_CLE_API ou --config-ha.") from None
+    try:
+        info = await client.device_info()
+        if not info.api_encryption_provisionable:
+            raise SystemExit("Firmware d'avant la 3.0 : passez sa clé API avec --cle.")
+        cle = base64.b64encode(secrets.token_bytes(32))
+        if not await client.noise_encryption_set_key(cle):
+            raise SystemExit("La tablette a refusé la clé (fenêtre d'appairage fermée ? "
+                             "Redémarrez-la puis relancez la démo).")
+    finally:
+        await client.disconnect()
+    FICHIER_CLE_DEMO.write_text(cle.decode() + "\n", encoding="utf-8")
+    logger.info("Clé donnée à la tablette et gardée dans %s : à donner à HA quand vous "
+                "ajouterez la tablette.", FICHIER_CLE_DEMO)
+    # La tablette coupe ses connexions pour passer à la nouvelle clé.
+    await asyncio.sleep(2)
+    return cle.decode()
 
 
 def _dry_run(absentes: frozenset) -> None:
@@ -197,9 +242,11 @@ def _gerer_appel_service(interactive: bool, repondre_zones):
     return _gerer
 
 
-async def _run(host: str, key: str, interval: float, interactive: bool, absentes: frozenset) -> None:
+async def _run(host: str, key: str | None, interval: float, interactive: bool, absentes: frozenset) -> None:
     import aioesphomeapi
 
+    if not key:
+        key = await _donner_une_cle(host)
     client = aioesphomeapi.APIClient(host, 6053, "", noise_psk=key)
     await client.connect(login=True)
     logger.info("Connecté à %s", host)
@@ -248,7 +295,9 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--host", help="IP ou nom mDNS du Tab5 (ex: 192.168.1.42 ou tab5-ha-hmi.local)")
-    parser.add_argument("--key", help="api_encryption_key en base64 (défaut : lue depuis secrets.yaml à la racine du repo)")
+    ajouter_options(parser)
+    # Ancien nom de --cle (avant la 3.0, la clé venait de secrets.yaml).
+    parser.add_argument("--key", dest="cle", help=argparse.SUPPRESS)
     parser.add_argument("--interval", type=float, default=20.0, help="Secondes entre chaque scène (défaut 20s)")
     parser.add_argument("--interactive", dest="interactive", action="store_true", default=True,
                          help="Loggue les appuis lumière/clim/volet (activé par défaut)")
@@ -270,10 +319,10 @@ def main() -> None:
     if not args.host:
         parser.error("--host est requis (sauf en --dry-run)")
 
-    repo_root = Path(__file__).resolve().parent.parent.parent
-    key = args.key or _lire_cle_depuis_secrets(repo_root)
-    if not key:
-        parser.error("--key requis, ou un secrets.yaml avec api_encryption_key à la racine du repo")
+    try:
+        key = trouver_cle(args.cle, args.host, args.config_ha) or _lire_cle_demo()
+    except OSError as err:
+        parser.error(f"clé de HA illisible : {err}")
 
     try:
         asyncio.run(_run(args.host, key, args.interval, args.interactive, absentes))

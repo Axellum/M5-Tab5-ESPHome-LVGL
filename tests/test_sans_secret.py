@@ -1,0 +1,165 @@
+# -*- coding: utf-8 -*-
+"""Firmware sans secret (lot 6b, ADR-0020). Un même binaire doit pouvoir servir à tout
+le monde : rien de personnel ne doit revenir dans le YAML du firmware.
+
+- aucun `!secret` (Wi-Fi, clé API, mot de passe de l'AP) ;
+- clé API fournie par HA (`encryption:` sans `key:`), fenêtre d'appairage bornée ;
+- OTA sans chiffrement ni mot de passe, mais images signées (clé hors git) ;
+- Wi-Fi sans identifiants, Improv par USB, AP de secours ouvert ;
+- fuseau venu de HA (plus de `tab5_fuseau`), identité de projet déclarée ;
+- les outils du PC trouvent la clé gardée par HA sans jamais l'afficher."""
+import json
+import os
+import re
+import sys
+
+import yaml
+
+REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(REPO, "tools"))
+
+from tab5_cle_api import cle_depuis_config_ha, trouver_cle  # noqa: E402
+
+
+class _Chargeur(yaml.SafeLoader):
+    """Lit les YAML ESPHome sans résoudre leurs balises (!include, !lambda, !secret…)."""
+
+
+def _balise(chargeur, suffixe, noeud):
+    if isinstance(noeud, yaml.MappingNode):
+        return chargeur.construct_mapping(noeud)
+    if isinstance(noeud, yaml.SequenceNode):
+        return chargeur.construct_sequence(noeud)
+    return {"!" + suffixe: chargeur.construct_scalar(noeud)}
+
+
+_Chargeur.add_multi_constructor("!", _balise)
+
+
+def _lire(*chemin):
+    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
+        return f.read()
+
+
+def _yaml(*chemin):
+    return yaml.load(_lire(*chemin), Loader=_Chargeur)
+
+
+def _fichiers_firmware():
+    fichiers = [os.path.join(REPO, "tab5-ha-hmi.yaml")]
+    for dossier in (os.path.join(REPO, "Tab5"), os.path.join(REPO, "Tab5", "ui_components")):
+        fichiers += [os.path.join(dossier, n) for n in sorted(os.listdir(dossier))
+                     if n.endswith(".yaml") and n != "user_entities.yaml"]
+    return fichiers
+
+
+def test_aucun_secret_dans_le_firmware():
+    fautifs = []
+    for chemin in _fichiers_firmware():
+        with open(chemin, encoding="utf-8") as f:
+            for num, ligne in enumerate(f, 1):
+                code = ligne.split("#", 1)[0]
+                if "!secret" in code or "tab5_fuseau" in code:
+                    fautifs.append(f"{os.path.relpath(chemin, REPO)}:{num}")
+    assert not fautifs, "secret ou réglage retiré encore lu par le firmware : " + ", ".join(fautifs)
+
+
+def test_cle_api_fournie_par_ha_et_fenetre_bornee():
+    api = _yaml("Tab5", "tab5-api-logic.yaml")
+    assert api["api"]["encryption"] == {}, "une clé compilée rendrait le binaire personnel"
+    assert re.fullmatch(r"\d+min", api["provisioning"]["timeout"])
+
+
+def test_ota_signee_sans_chiffrement_ni_mot_de_passe():
+    materiel = _yaml("Tab5", "tab5-hardware.yaml")
+    ota = materiel["ota"]
+    assert ota["platform"] == "esphome"
+    assert "encryption" not in ota and "password" not in ota
+    signe = materiel["esp32"]["framework"]["advanced"]["signed_ota_verification"]
+    assert signe["signing_scheme"] == "rsa3072"
+    # Chemin réglable, défaut à la racine, là où .gitignore l'exclut.
+    assert "tab5_cle_signature" in signe["signing_key"]
+    assert "tab5_signature.pem" in signe["signing_key"]
+    assert "*.pem" in _lire(".gitignore").splitlines()
+
+
+def test_wifi_sans_identifiants_improv_et_ap_ouvert():
+    diag = _yaml("Tab5", "tab5-sensors-diagnostics.yaml")
+    wifi = diag["wifi"]
+    assert not {"ssid", "password", "networks"} & wifi.keys()
+    assert "password" not in wifi["ap"]
+    assert "improv_serial" in diag
+    assert "captive_portal" in _yaml("tab5-ha-hmi.yaml")
+
+
+def test_fuseau_de_ha_garde_pour_le_demarrage():
+    diag = _yaml("Tab5", "tab5-sensors-diagnostics.yaml")
+    horloges = {h["platform"]: h for h in diag["time"]}
+    ha = horloges["homeassistant"]
+    assert "timezone" not in ha, "un fuseau fixé empêcherait celui de HA"
+    assert "fuseau_recu_de_ha" in str(ha["on_time_sync"])
+    for plateforme in ("sntp", "rx8130"):
+        assert "timezone" not in horloges[plateforme]
+    texte = _lire("Tab5", "tab5-sensors-diagnostics.yaml")
+    assert "fuseau_restaurer();" in texte and "fuseau_memoriser();" in texte
+
+
+def test_identite_de_projet():
+    projet = _yaml("tab5-ha-hmi.yaml")["esphome"]["project"]
+    assert projet["name"] == "axellum.tab5-ha-hmi"
+    assert re.fullmatch(r"\d+\.\d+\.\d+(-dev)?", projet["version"])
+
+
+def test_ci_sans_secrets_factices():
+    ci = _lire(".github", "workflows", "esphome-tab5.yml")
+    assert "secrets.yaml" not in ci.replace("plus de secrets.yaml", "")
+    assert "api_encryption_key" not in ci
+    assert ci.count("openssl genrsa -out tab5_signature.pem 3072") == 3
+
+
+def _config_ha(tmp_path, entrees):
+    stockage = tmp_path / ".storage"
+    stockage.mkdir()
+    (stockage / "core.config_entries").write_text(
+        json.dumps({"version": 1, "data": {"entries": entrees}}), encoding="utf-8")
+    return tmp_path
+
+
+def test_cle_trouvee_dans_ha_par_ip_ou_par_nom(tmp_path, monkeypatch):
+    monkeypatch.delenv("TAB5_CLE_API", raising=False)
+    monkeypatch.delenv("TAB5_CONFIG_HA", raising=False)
+    cle = "QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI="
+    config = _config_ha(tmp_path, [
+        {"domain": "hue", "data": {"host": "192.168.1.42"}},
+        {"domain": "esphome", "data": {"host": "192.168.1.7", "device_name": "autre",
+                                       "noise_psk": "AUTRE"}},
+        {"domain": "esphome", "data": {"host": "192.168.1.42", "device_name": "tab5-ha-hmi",
+                                       "noise_psk": cle}},
+    ])
+    assert cle_depuis_config_ha(config, "192.168.1.42") == cle
+    assert cle_depuis_config_ha(config, "tab5-ha-hmi.local") == cle
+    assert cle_depuis_config_ha(config, "192.168.1.99") is None
+    # Ordre : option, puis variable d'environnement, puis HA.
+    assert trouver_cle(None, "192.168.1.42", str(config)) == cle
+    monkeypatch.setenv("TAB5_CLE_API", "ENV")
+    assert trouver_cle(None, "192.168.1.42", str(config)) == "ENV"
+    assert trouver_cle("OPTION", "192.168.1.42", str(config)) == "OPTION"
+
+
+def test_sans_cle_ni_ha_rien(monkeypatch):
+    monkeypatch.delenv("TAB5_CLE_API", raising=False)
+    monkeypatch.delenv("TAB5_CONFIG_HA", raising=False)
+    assert trouver_cle(None, "192.168.1.42", None) is None
+
+
+def test_migration_lit_l_ancienne_cle(tmp_path):
+    """tools/migrer_vers_3.py : la clé d'un secrets.yaml 2.x, guillemets et
+    commentaire compris ; rien si la ligne manque."""
+    from migrer_vers_3 import lire_ancienne_cle
+
+    secrets = tmp_path / "secrets.yaml"
+    secrets.write_text('wifi_ssid: "Maison"\n'
+                       'api_encryption_key: "QUJD+/w=" # clé de la 2.x\n', encoding="utf-8")
+    assert lire_ancienne_cle(secrets) == "QUJD+/w="
+    secrets.write_text("wifi_ssid: Maison\n", encoding="utf-8")
+    assert lire_ancienne_cle(secrets) is None

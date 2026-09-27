@@ -4,6 +4,13 @@
 /.esphome/
 secrets.yaml
 Tab5/user_entities.yaml
+# Clé privée qui signe le firmware (lot 6b, ADR-0020) : jamais dans git. Toute clé
+# (.pem, .key) par précaution ; tools/verifier_secrets_config.py refuse aussi un
+# en-tête de clé privée dans un fichier suivi.
+*.pem
+*.key
+# Clé API que le mode démo donne à une tablette jamais ajoutée à HA (lot 6b).
+tools/demo/cle_demo.txt
 
 # Bytecode Python (composants ESPHome custom)
 __pycache__/

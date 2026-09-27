@@ -22,6 +22,18 @@ Overlays that open fullscreen on top of this: the **climate popup** (tap the com
 
 ---
 
+## Generated screenshots
+
+These pictures are not photos: the CI draws them without a tablet, from the same interface code, on every pull request that touches the screen ([ADR-0021](decisions/0021-host-render-stubs.md), workflow `rendu-host.yml`). The three scenes are those of [demo mode](demo_mode.md), on a fixed date (16 June, 07:45, Paris time), in French then in English. They are also the references the CI compares new renders with, so they match the current firmware.
+
+| Scene | Français | English |
+|---|---|---|
+| Sunny day | ![Sunny day, French](images/rendu/1-journee-ensoleillee.png) | ![Sunny day, English](images/rendu/1-journee-ensoleillee-en.png) |
+| Rain and orange warning | ![Rain, French](images/rendu/2-pluie-alerte-orange.png) | ![Rain, English](images/rendu/2-pluie-alerte-orange-en.png) |
+| Day off, plants to watch | ![Day off, French](images/rendu/3-jour-de-repos-plantes-a-surveiller.png) | ![Day off, English](images/rendu/3-jour-de-repos-plantes-a-surveiller-en.png) |
+
+---
+
 ## Home area
 
 Always-visible content at the top of the screen:
@@ -198,7 +210,7 @@ Opened via the console button (`btn_control_console`, top right of the home area
 - **SYSTÈME** — uptime, CPU temperature, loop time, plus the volume slider with a live % readout
 - **GESTION** — HA management buttons: « MAJ Écran » (re-arms the push flag and re-triggers the screen-push automation — the direct remedy for the recurring frozen-screen incident), « Recharger autos » (`automation.reload`), « Redémarrer HA » and « Reboot tablette » — the last two behind Annuler/Confirmer overlays (no more invisible double-tap arming)
 
-It is **not** a log viewer (use `esphome logs` for payloads and events). See [`docs/debugging.md`](debugging.md) for more on using it to diagnose issues.
+It is **not** a log viewer (use `tools/tab5_logs.py` for payloads and events). See [`docs/debugging.md`](debugging.md) for more on using it to diagnose issues.
 
 ![System console on the real device](images/tab5_photo_console_v2.jpg)
 
@@ -307,6 +319,18 @@ Il y a une **page unique 1280×720** (`page_main`), pas un jeu d'écrans navigu�
 ![La page unique sur l'appareil réel (juillet 2026)](images/tab5_photo_home.jpg)
 
 Overlays plein écran par-dessus : le **popup clim** (tap sur la carte clim compacte), le **popup lumière** (appui long sur un raccourci lumière), et la **télécommande TV** (`tv_remote_popup.yaml` — pad IR Samsung via `remote.*` HA, ouverte depuis le contrôle UI qui retire `LV_OBJ_FLAG_HIDDEN` sur `tv_remote_popup`). Une **Console Système** (diagnostics mémoire/réseau/système, volume, plus une carte gestion HA : MAJ écran, reload automations, redémarrage HA et reboot tablette derrière un overlay de confirmation) s'ouvre via le bouton console (`btn_control_console`, en haut à droite) — plus par swipe depuis la refonte gestuelle du 14/07/2026.
+
+---
+
+## Captures générées
+
+Ces images ne sont pas des photos : la CI les dessine sans tablette, avec le même code d'interface, à chaque pull request qui touche l'écran ([ADR-0021](decisions/0021-host-render-stubs.md), workflow `rendu-host.yml`). Les trois scènes sont celles du [mode démo](demo_mode.md#version-française), à date fixe (16 juin, 07:45, heure de Paris), en français puis en anglais. Ce sont aussi les références auxquelles la CI compare chaque nouveau rendu : elles suivent donc le firmware.
+
+| Scène | Français | English |
+|---|---|---|
+| Journée ensoleillée | ![Journée ensoleillée, français](images/rendu/1-journee-ensoleillee.png) | ![Journée ensoleillée, anglais](images/rendu/1-journee-ensoleillee-en.png) |
+| Pluie et alerte orange | ![Pluie, français](images/rendu/2-pluie-alerte-orange.png) | ![Pluie, anglais](images/rendu/2-pluie-alerte-orange-en.png) |
+| Jour de repos, plantes à surveiller | ![Jour de repos, français](images/rendu/3-jour-de-repos-plantes-a-surveiller.png) | ![Jour de repos, anglais](images/rendu/3-jour-de-repos-plantes-a-surveiller-en.png) |
 
 ---
 
@@ -486,7 +510,7 @@ Ouvert via le bouton console (`btn_control_console`, en haut à droite de la zon
 - **SYSTÈME** — uptime, température CPU, temps de boucle, plus le slider volume avec % affiché en direct
 - **GESTION** — boutons de gestion HA : « MAJ Écran » (réarme le flag de push et redéclenche l'automation de push écran — le remède direct à l'incident récurrent d'écran figé), « Recharger autos » (`automation.reload`), « Redémarrer HA » et « Reboot tablette » — les deux derniers derrière des overlays Annuler/Confirmer (fini l'armement invisible par double-tap)
 
-Ce n'est **pas** un visualiseur de logs (utiliser `esphome logs` pour les payloads et événements). Voir [`docs/debugging.md`](debugging.md) pour plus de détails sur son usage en debug.
+Ce n'est **pas** un visualiseur de logs (utiliser `tools/tab5_logs.py` pour les payloads et événements). Voir [`docs/debugging.md`](debugging.md) pour plus de détails sur son usage en debug.
 
 ![Console Système sur l'appareil réel](images/tab5_photo_console_v2.jpg)
 

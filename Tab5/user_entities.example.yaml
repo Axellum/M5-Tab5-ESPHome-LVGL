@@ -28,9 +28,16 @@
 #     tablette), sans recompiler. ---
 # tab5_langue: Français
 
-# --- Fuseau horaire de l'horloge et du réveil, au format tz (« America/Montreal »,
-#     « Europe/Berlin »…). Défaut si la ligne reste commentée : Europe/Paris. ---
-# tab5_fuseau: Europe/Paris
+# --- Fuseau horaire : il vient de Home Assistant depuis la 3.0 (lot 6b), la tablette
+#     garde le dernier reçu pour ses démarrages sans HA. Une ancienne ligne
+#     tab5_fuseau est simplement ignorée. ---
+
+# --- Clé privée qui signe le firmware (lot 6b, ADR-0020) : la tablette n'accepte en
+#     OTA qu'un firmware signé par la même clé. Défaut si la ligne reste commentée :
+#     tab5_signature.pem à la racine du dépôt (gitignoré). Un chemin hors du dépôt
+#     évite de la perdre avec un clone ; en garder une copie ailleurs que sur le PC.
+#     Créer la clé : python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem ---
+# tab5_cle_signature: tab5_signature.pem
 
 # --- Assistant vocal : le select de pipeline de la tablette dans HA. ---
 entity_tab5_pipeline_select: select.your_tab5_assistant_pipeline

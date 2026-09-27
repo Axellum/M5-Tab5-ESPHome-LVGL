@@ -16,6 +16,7 @@
 #include "tab5_internal.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <cmath>
 #include <ctime>
 #include <cstring>
 #include <vector>
@@ -91,7 +92,7 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& st
 }
 
 uint32_t get_humidity_color(float x) {
-    if (isnan(x)) return UIColor::MOISTURE_NAN;
+    if (std::isnan(x)) return UIColor::MOISTURE_NAN;
     int val = (int)x;
     if (val <= 14) return UIColor::ALERT_RED;
     if (val >= 80) return UIColor::HUMIDITY_WET;
@@ -114,7 +115,7 @@ uint32_t get_humidity_color(float x) {
 }
 
 uint32_t get_temperature_color(float t) {
-    if (isnan(t)) return UIColor::TEMP_NAN;
+    if (std::isnan(t)) return UIColor::TEMP_NAN;
     if (t <= -12) return UIColor::ALERT_RED;
     if (t <= 0) {
         float r = floor((t + 12) / 2.0) * 2.0 / 12.0;

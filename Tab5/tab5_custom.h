@@ -680,6 +680,19 @@ std::string journal_report_text();  // lignes en attente, une par ligne
 void journal_mark_delivered();      // vide le journal (et sa copie NVS)
 
 // =============================================================================
+// Fuseau horaire de Home Assistant (tab5_services.cpp, lot 6b, ADR-0020). HA l'envoie
+// avec l'heure (time: platform: homeassistant) mais rien ne le garde : sans ces deux
+// fonctions, un démarrage sans HA repartirait avec le fuseau de la compilation.
+// =============================================================================
+// Démarrage (interval de tab5-sensors-diagnostics.yaml) : remet le dernier fuseau reçu.
+// N'agit qu'au premier appel.
+void fuseau_restaurer();
+// on_time_sync de l'horloge homeassistant : HA a donné l'heure, donc son fuseau.
+void fuseau_recu_de_ha();
+// Tick minute : range en NVS le fuseau de HA s'il a changé depuis le dernier rangement.
+void fuseau_memoriser();
+
+// =============================================================================
 // Zones optionnelles (tab5_zones.cpp, lot 5 de l'audit « ouverture », 27/09/2026)
 // Une zone dont l'entité n'existe pas dans Home Assistant disparaît, avec ses
 // boutons. La tablette ne décide pas seule : une entité créée pendant le démarrage

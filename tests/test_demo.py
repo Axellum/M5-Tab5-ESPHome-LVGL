@@ -68,3 +68,14 @@ def test_codes_du_lot_4c():
         assert scene.info_texte[0].count("|") == 6, scene.nom
         for jour in scene.jours:
             assert jour.heures_ouverture == "" or re.fullmatch(r"\d\d:\d\d-\d\d:\d\d", jour.heures_ouverture)
+
+
+def test_noms_de_jours_comme_ha():
+    """Le jour seul (« Auj », « Mer »…), comme tab5_push.yaml : la tablette le traduit
+    (ha_day_name). « Auj 16 » restait en français sur un écran anglais (lot 7)."""
+    ha = open(os.path.join(REPO, "HomeAssistant_Config", "packages", "tab5_push.yaml"), encoding="utf-8").read()
+    noms = set(re.search(r'days_names = \[([^\]]+)\]', ha).group(1).replace('"', "").replace(" ", "").split(","))
+    noms.add("Auj")
+    for scene in scenarios.SCENES:
+        for jour in scene.jours:
+            assert jour.nom_jour in noms, (scene.nom, jour.nom_jour)

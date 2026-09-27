@@ -8,9 +8,9 @@
 
 ## Prerequisites
 
-- A working **Home Assistant** instance (any installation method)
+- A working **Home Assistant** instance, **2026.8 or newer** (it gives the tablet its encryption key, see Step 6), any installation method
 - The **ESPHome** add-on or standalone ESPHome CLI (`pip install esphome`)
-- ESPHome version **≥ 2026.9.0** — enforced by `min_version:` in `tab5-ha-hmi.yaml`, so an older ESPHome refuses to compile. 2026.7.0 brought the official `st7123` touchscreen platform (no more `external_components`), zero-copy audio, VAD and PSRAM-over-SDIO; the floor was raised to 2026.8.1 on 2026-08-26 for the API, voice-assistant and crash-handler fixes this project exercises daily, then to 2026.9.0 on 2026-09-16 because OTA updates are encrypted with the API key (`ota: encryption:` does not exist in older releases — reasoning in the comment above `min_version:`)
+- ESPHome version **≥ 2026.9.0** — enforced by `min_version:` in `tab5-ha-hmi.yaml`, so an older ESPHome refuses to compile. 2026.7.0 brought the official `st7123` touchscreen platform (no more `external_components`), zero-copy audio, VAD and PSRAM-over-SDIO; the floor was raised to 2026.8.1 on 2026-08-26 for the API, voice-assistant and crash-handler fixes this project exercises daily, then to 2026.9.0 on 2026-09-16; the pairing window, the key given by Home Assistant and signed firmware (3.0) are checked on it (reasoning in the comment above `min_version:`)
 - A M5Stack Tab5. The **ST7123** display chip (sticker on the back) is the one tested daily; the ST7121 and the original ILI9881C revisions compile but have never been run on a device — see [Hardware revisions](hardware.md#hardware-revisions), and Step 2 to pick yours
 
 Optional but used by the default configuration:
@@ -39,7 +39,7 @@ Copy the example file:
 cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 ```
 
-Open `Tab5/user_entities.yaml` (gitignored — never committed, same pattern as `secrets.yaml`):
+Open `Tab5/user_entities.yaml` (gitignored — never committed):
 
 ```yaml
 # --- Voice assistant ---
@@ -53,7 +53,7 @@ entity_push_automation: automation.your_tab5_push_automation
 
 **Screen language:** French by default; add `tab5_langue: English` (or `Deutsch`, `Nederlands`) for another language on the first boot. It can then be changed from Home Assistant (select « Langue »), see [translations](translations.md).
 
-**Time zone:** Europe/Paris by default; add `tab5_fuseau: America/Montreal` (any tz name) for the clock and the alarm clock elsewhere.
+**Time zone:** nothing to set since 3.0. The tablet takes Home Assistant's time zone and keeps the last one it received, so the alarm clock stays right when HA is down after a power cut. An old `tab5_fuseau` line is ignored.
 
 **Tab5 revision:** if the display chip on your sticker is not the ST7123, add `tab5_ecran: st7121` or `tab5_ecran: ili9881c` to this file (see [Hardware revisions](hardware.md#hardware-revisions)). Leave it out for the ST7123.
 
@@ -61,24 +61,17 @@ Replace each value with your own entity IDs. **Your devices (lights, climate, pl
 
 ---
 
-## Step 3 — Create your secrets file
+## Step 3 — Create your firmware signing key
 
-Create a `secrets.yaml` file at the repository root (already in `.gitignore`):
-
-```yaml
-wifi_ssid: "YOUR_WIFI_NETWORK"
-wifi_password: "YOUR_WIFI_PASSWORD"
-wifi_ap_password: "FALLBACK_AP_PASSWORD"   # recovery access point when Wi-Fi is unreachable
-api_encryption_key: "BASE64_32_BYTES_KEY"
-```
-
-There is no separate OTA password: since ESPHome 2026.9.0 the firmware encrypts OTA updates with `api_encryption_key` (`ota: encryption:` in `Tab5/tab5-hardware.yaml`), so this one key authenticates both Home Assistant and the uploader. The CLI reads it from `secrets.yaml`; a plaintext upload is refused.
-
-To generate a valid `api_encryption_key`:
+Since 3.0 the firmware holds **no secret**: no Wi-Fi password, no API key ([ADR-0020](decisions/0020-no-secret-firmware-signed-ota.md)). What protects the tablet is a signature: over the network, it only accepts a firmware signed with the same key as the one it runs. Create this private key once, at the repository root:
 
 ```bash
-python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"
+python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem
 ```
+
+`espsecure` comes with ESPHome. The file is gitignored; to keep it elsewhere, set its path in `Tab5/user_entities.yaml` (`tab5_cle_signature: …`). **Keep a copy outside your computer**: without it, the tablet can only be updated over USB.
+
+No `secrets.yaml` any more: one left from 2.x is simply not read (see [Upgrading from 2.x](#upgrading-from-2x)).
 
 ---
 
@@ -87,7 +80,7 @@ python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(3
 Everything on the Home Assistant side is a **package** in `HomeAssistant_Config/packages/`:
 
 1. Enable packages in `configuration.yaml`: `homeassistant: packages: !include_dir_named packages`.
-2. Copy `HomeAssistant_Config/placeholders.example.yaml` to `placeholders.yaml` (gitignored) and fill in your real entity IDs (`VOTRE_VILLE`, `VOTRE_CLIMATISATION`, `VOTRE_PC`…).
+2. Copy `HomeAssistant_Config/placeholders.example.yaml` to `placeholders.yaml` (gitignored) and fill in your real entity IDs (`VOTRE_VILLE`, `VOTRE_DEPARTEMENT`, `VOTRE_EMAIL_gmail_com`…).
 3. Render: `python tools/render_ha_config.py` writes the deployable copies to `HomeAssistant_Config/rendered/`.
 4. Copy `rendered/packages/*.yaml` into your HA `config/packages/`, and `rendered/custom_templates/` into `config/custom_templates/`.
 5. Reload Automations, Scripts, Template entities, Input booleans and Input texts (or restart HA).
@@ -102,31 +95,60 @@ Start with `packages/tab5_push.yaml` (push automations, shared scripts, the scri
 
 ---
 
-## Step 5 — First flash (USB)
+## Step 5 — First flash (USB) and Wi-Fi
 
 Connect the Tab5 to your computer via USB-C. Then:
 
 ```bash
-# Via CLI
 esphome run tab5-ha-hmi.yaml
-
-# Or via ESPHome Dashboard
-# Add the device, point it at tab5-ha-hmi.yaml, click Install
 ```
 
-The first flash must be done over USB. After that, all updates can be done via OTA over Wi-Fi (the device will appear in your ESPHome dashboard once it connects).
+The tablet has no Wi-Fi network yet. Give it yours, either way:
+- **over USB**, right after the flash: [ESPHome Web](https://web.esphome.io) (Chrome or Edge), *Connect*, then *Configure Wi-Fi* (Improv);
+- **without a cable**: join the open **« Tab5 Fallback AP »** network with a phone; a page opens (otherwise go to `http://192.168.4.1`) to pick your network. <!-- pragma: allowlist secret -->
+
+The network is kept across updates. The fallback AP comes back whenever the tablet loses its Wi-Fi for a minute, to set a new one.
+
+---
+
+## Step 6 — Add the tablet to Home Assistant
+
+**Within 30 minutes of the tablet's start** (its pairing window): *Settings → Devices & services*, the tablet shows up as discovered (ESPHome). *Configure*, then *Submit*. Home Assistant creates the encryption key, gives it to the tablet and keeps it: nothing to copy.
+
+- Window missed? Restart the tablet: it reopens for 30 minutes. Once it has its key, the window never opens again.
+- Then, in the device's options (*ESPHome → Configure*), tick **« Allow the device to perform Home Assistant actions »**: voice, calendar and alarm clock use them.
 
 ---
 
 ## OTA updates
 
-After the initial flash, the device registers with ESPHome's OTA server. Subsequent compilations can be pushed wirelessly:
+Once the tablet is on your network, later builds go over Wi-Fi:
 
 ```bash
 esphome run tab5-ha-hmi.yaml --device 192.168.x.x
 ```
 
-Or just click **Install → Wirelessly** in the ESPHome dashboard.
+The transfer is not encrypted any more (there is no key in the YAML); the tablet checks the signature and refuses a firmware signed by another key. Your builds are signed by your key at compile time, nothing else to do.
+
+**Logs:** `esphome logs` looks for the key in the YAML and no longer finds one. Use `python tools/tab5_logs.py --host 192.168.x.x --config-ha \\<ha-ip>\config`: it reads the key Home Assistant keeps (`.storage/core.config_entries`, or the `TAB5_CLE_API` variable) and never prints it.
+
+---
+
+## Upgrading from 2.x
+
+3.0 changes how the tablet is protected ([ADR-0020](decisions/0020-no-secret-firmware-signed-ota.md)). Once, in person (Steps 3 and 4 below must happen within 30 minutes of the tablet's start):
+
+1. **Before flashing**, set up Home Assistant for 3.0: the blueprint of Step 4, item 6 (the tablet no longer knows your entities, [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
+2. **Signing key** (Step 3), then compile: `esphome compile tab5-ha-hmi.yaml`.
+3. **Flash.** The 2.x firmware refuses a plain upload, so this one goes out encrypted with your old key (`api_encryption_key` of your `secrets.yaml`, never printed):
+   ```bash
+   python tools/migrer_vers_3.py --host 192.168.x.x
+   ```
+   Or over USB: `esphome upload tab5-ha-hmi.yaml --device COM3`.
+4. **Wi-Fi.** 2.x had the credentials compiled in, 3.0 does not: the tablet starts without network and opens « Tab5 Fallback AP ». Join it and pick your network (Step 5).
+5. **Home Assistant** notifies that the tablet « disabled transport encryption » (*Settings → Devices & services*, re-authentication): confirm. HA then gives it a new key by itself. The entities, automations and history stay the same.
+
+Then `secrets.yaml` can go (keep the old key only if you may flash 2.x again), and `tab5_fuseau` is ignored.
 
 ---
 
@@ -195,9 +217,9 @@ Limits:
 
 ## Prérequis
 
-- Une instance **Home Assistant** fonctionnelle (toute méthode d'installation)
+- Une instance **Home Assistant** fonctionnelle, **2026.8 ou plus récente** (c'est elle qui donne sa clé de chiffrement à la tablette, voir l'étape 6), toute méthode d'installation
 - L'add-on **ESPHome** ou la CLI ESPHome standalone (`pip install esphome`)
-- ESPHome version **≥ 2026.9.0** — imposée par le `min_version:` de `tab5-ha-hmi.yaml` : une version antérieure refuse de compiler. La 2026.7.0 a apporté la plateforme tactile `st7123` officielle (plus besoin d'`external_components`), l'audio zero-copy, le VAD et la PSRAM via SDIO ; le plancher est passé à 2026.8.1 le 26/08/2026 pour les correctifs API, assistant vocal et handler de crash que ce projet exerce tous les jours, puis à 2026.9.0 le 16/09/2026 parce que les mises à jour OTA sont chiffrées avec la clé API (`ota: encryption:` n'existe pas dans les versions antérieures — raisons dans le commentaire au-dessus de `min_version:`)
+- ESPHome version **≥ 2026.9.0** — imposée par le `min_version:` de `tab5-ha-hmi.yaml` : une version antérieure refuse de compiler. La 2026.7.0 a apporté la plateforme tactile `st7123` officielle (plus besoin d'`external_components`), l'audio zero-copy, le VAD et la PSRAM via SDIO ; le plancher est passé à 2026.8.1 le 26/08/2026 pour les correctifs API, assistant vocal et handler de crash que ce projet exerce tous les jours, puis à 2026.9.0 le 16/09/2026 ; la fenêtre d'appairage, la clé donnée par Home Assistant et les firmwares signés (3.0) y sont vérifiés (raisons dans le commentaire au-dessus de `min_version:`)
 - Un M5Stack Tab5. La puce écran **ST7123** (autocollant au dos) est celle testée tous les jours ; les révisions ST7121 et ILI9881C d'origine compilent mais n'ont jamais tourné sur une tablette — voir [Révisions matérielles](hardware.md#révisions-matérielles), et l'étape 2 pour choisir la vôtre
 
 Optionnel mais utilisé par la configuration par défaut :
@@ -228,32 +250,25 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 
 **Langue de l'écran :** le français par défaut ; ajoutez `tab5_langue: English` (ou `Deutsch`, `Nederlands`) pour une autre langue au premier démarrage. Elle se change ensuite depuis Home Assistant (select « Langue »), voir [traductions](translations.md#version-française).
 
-**Fuseau horaire :** Europe/Paris par défaut ; ajoutez `tab5_fuseau: America/Montreal` (n'importe quel nom de fuseau tz) pour l'horloge et le réveil ailleurs.
+**Fuseau horaire :** rien à régler depuis la 3.0. La tablette prend celui de Home Assistant et garde le dernier reçu : le réveil reste juste quand HA manque après une coupure de courant. Une ancienne ligne `tab5_fuseau` est ignorée.
 
 **Révision du Tab5 :** si la puce écran de votre autocollant n'est pas la ST7123, ajoutez `tab5_ecran: st7121` ou `tab5_ecran: ili9881c` dans ce fichier (voir [Révisions matérielles](hardware.md#révisions-matérielles)). Pour la ST7123, ne mettez rien.
 
-Ouvrez `Tab5/user_entities.yaml` (gitignoré — ne jamais committer, même principe que `secrets.yaml`) et remplacez chaque valeur. **Vos appareils (lumières, clim, plantes, TV…) ne se règlent plus ici (depuis la 3.0)** : vous les choisissez dans Home Assistant, à la souris, voir l'étape 4 et [Adapter à sa maison](#adapter-à-sa-maison) ; les anciennes clés `entity_light_…` d'un fichier existant sont simplement ignorées. Le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`. Deux clés facultatives, `entity_tab5_satellite` et `entity_tab5_media_player`, ne servent que si vous renommez l'appareil dans Home Assistant : elles portent les identifiants qu'HA dérive du nom de la tablette (défauts dans `Tab5/tab5-scripts.yaml`, exemple commenté dans le modèle).
+Ouvrez `Tab5/user_entities.yaml` (gitignoré — ne jamais committer) et remplacez chaque valeur. **Vos appareils (lumières, clim, plantes, TV…) ne se règlent plus ici (depuis la 3.0)** : vous les choisissez dans Home Assistant, à la souris, voir l'étape 4 et [Adapter à sa maison](#adapter-à-sa-maison) ; les anciennes clés `entity_light_…` d'un fichier existant sont simplement ignorées. Le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`. Deux clés facultatives, `entity_tab5_satellite` et `entity_tab5_media_player`, ne servent que si vous renommez l'appareil dans Home Assistant : elles portent les identifiants qu'HA dérive du nom de la tablette (défauts dans `Tab5/tab5-scripts.yaml`, exemple commenté dans le modèle).
 
 ---
 
-## Étape 3 — Créer votre fichier secrets
+## Étape 3 — Créer votre clé de signature du firmware
 
-Créez un fichier `secrets.yaml` à la racine du dépôt (déjà dans `.gitignore`) :
-
-```yaml
-wifi_ssid: "VOTRE_RESEAU_WIFI"
-wifi_password: "VOTRE_MOT_DE_PASSE"
-wifi_ap_password: "MOT_DE_PASSE_AP_SECOURS"   # point d'accès de secours si le Wi-Fi est injoignable
-api_encryption_key: "CLE_BASE64_32_OCTETS"
-```
-
-Pas de mot de passe OTA séparé : depuis ESPHome 2026.9.0 le firmware chiffre les mises à jour OTA avec `api_encryption_key` (`ota: encryption:` dans `Tab5/tab5-hardware.yaml`), cette seule clé authentifie donc Home Assistant et l'outil qui flashe. Le CLI la lit dans `secrets.yaml` ; un envoi en clair est refusé.
-
-Pour générer une `api_encryption_key` valide :
+Depuis la 3.0, le firmware ne contient **aucun secret** : ni mot de passe Wi-Fi, ni clé API ([ADR-0020](decisions/0020-no-secret-firmware-signed-ota.md)). Ce qui protège la tablette, c'est une signature : par le réseau, elle n'accepte qu'un firmware signé par la même clé que celui qu'elle fait tourner. Créez cette clé privée une fois, à la racine du dépôt :
 
 ```bash
-python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"
+python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem
 ```
+
+`espsecure` est installé avec ESPHome. Le fichier est gitignoré ; pour le ranger ailleurs, donnez son chemin dans `Tab5/user_entities.yaml` (`tab5_cle_signature: …`). **Gardez-en une copie hors de votre ordinateur** : sans elle, la tablette ne se met plus à jour que par USB.
+
+Plus de `secrets.yaml` : celui d'une 2.x n'est simplement plus lu (voir [Passer à la 3.0](#passer-à-la-30)).
 
 ---
 
@@ -262,7 +277,7 @@ python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(3
 Tout le côté Home Assistant est en **packages**, dans `HomeAssistant_Config/packages/` :
 
 1. Activez les packages dans `configuration.yaml` : `homeassistant: packages: !include_dir_named packages`.
-2. Copiez `HomeAssistant_Config/placeholders.example.yaml` vers `placeholders.yaml` (gitignoré) et renseignez vos vrais entity IDs (`VOTRE_VILLE`, `VOTRE_CLIMATISATION`, `VOTRE_PC`…).
+2. Copiez `HomeAssistant_Config/placeholders.example.yaml` vers `placeholders.yaml` (gitignoré) et renseignez vos vrais entity IDs (`VOTRE_VILLE`, `VOTRE_DEPARTEMENT`, `VOTRE_EMAIL_gmail_com`…).
 3. Rendez : `python tools/render_ha_config.py` écrit les copies déployables dans `HomeAssistant_Config/rendered/`.
 4. Copiez `rendered/packages/*.yaml` dans le `config/packages/` de HA, et `rendered/custom_templates/` dans `config/custom_templates/`.
 5. Rechargez Automatisations, Scripts, Entités de template, Entrées booléennes et Entrées de texte (ou redémarrez HA).
@@ -277,31 +292,60 @@ Commencez par `packages/tab5_push.yaml` (automatisations de poussée, scripts pa
 
 ---
 
-## Étape 5 — Premier flash (USB)
+## Étape 5 — Premier flash (USB) et Wi-Fi
 
 Connectez le Tab5 à votre ordinateur via USB-C. Ensuite :
 
 ```bash
-# Via CLI
 esphome run tab5-ha-hmi.yaml
-
-# Ou via le Dashboard ESPHome
-# Ajoutez l'appareil, pointez-le vers tab5-ha-hmi.yaml, cliquez Installer
 ```
 
-Le premier flash doit se faire en USB. Ensuite, toutes les mises à jour peuvent se faire en OTA via Wi-Fi.
+La tablette n'a pas encore de réseau Wi-Fi. Donnez-lui le vôtre, au choix :
+- **par l'USB**, juste après le flash : [ESPHome Web](https://web.esphome.io) (Chrome ou Edge), *Connect*, puis *Configure Wi-Fi* (Improv) ;
+- **sans câble** : connectez un téléphone au réseau ouvert **« Tab5 Fallback AP »** ; une page s'ouvre (sinon allez sur `http://192.168.4.1`) pour choisir votre réseau. <!-- pragma: allowlist secret -->
+
+Le réseau est gardé d'une mise à jour à l'autre. L'AP de secours revient dès que la tablette perd son Wi-Fi une minute, pour en donner un autre.
+
+---
+
+## Étape 6 — Ajouter la tablette à Home Assistant
+
+**Dans les 30 minutes qui suivent le démarrage de la tablette** (sa fenêtre d'appairage) : *Paramètres → Appareils et services*, la tablette apparaît comme découverte (ESPHome). *Configurer*, puis *Valider*. Home Assistant crée la clé de chiffrement, la donne à la tablette et la garde : rien à recopier.
+
+- Fenêtre ratée ? Redémarrez la tablette : elle se rouvre pour 30 minutes. Une fois la clé reçue, elle ne s'ouvre plus.
+- Ensuite, dans les options de l'appareil (*ESPHome → Configurer*), cochez **« Autoriser l'appareil à effectuer des actions Home Assistant »** : la voix, l'agenda et le réveil s'en servent.
 
 ---
 
 ## Mises à jour OTA
 
-Après le flash initial, l'appareil s'enregistre auprès du serveur OTA d'ESPHome. Les compilations suivantes peuvent être poussées sans fil :
+Une fois la tablette sur votre réseau, les compilations suivantes passent par le Wi-Fi :
 
 ```bash
 esphome run tab5-ha-hmi.yaml --device 192.168.x.x
 ```
 
-Ou cliquez simplement **Installer → Sans fil** dans le dashboard ESPHome.
+L'envoi n'est plus chiffré (il n'y a pas de clé dans le YAML) ; la tablette vérifie la signature et refuse un firmware signé par une autre clé. Vos compilations sont signées par votre clé, rien d'autre à faire.
+
+**Journaux :** `esphome logs` cherche la clé dans le YAML et n'en trouve plus. Utilisez `python tools/tab5_logs.py --host 192.168.x.x --config-ha \\<ip-de-ha>\config` : il lit la clé que garde Home Assistant (`.storage/core.config_entries`, ou la variable `TAB5_CLE_API`) et ne l'affiche jamais.
+
+---
+
+## Passer à la 3.0
+
+La 3.0 change la façon dont la tablette est protégée ([ADR-0020](decisions/0020-no-secret-firmware-signed-ota.md)). Une fois, sur place (les étapes 3 et 4 ci-dessous doivent tenir dans les 30 minutes qui suivent le démarrage de la tablette) :
+
+1. **Avant de flasher**, préparez Home Assistant pour la 3.0 : le blueprint de l'étape 4, point 6 (la tablette ne connaît plus vos entités, [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
+2. **Clé de signature** (étape 3), puis compilez : `esphome compile tab5-ha-hmi.yaml`.
+3. **Flashez.** Le firmware 2.x refuse un envoi en clair : celui-ci part donc chiffré avec votre ancienne clé (`api_encryption_key` de votre `secrets.yaml`, jamais affichée) :
+   ```bash
+   python tools/migrer_vers_3.py --host 192.168.x.x
+   ```
+   Ou par USB : `esphome upload tab5-ha-hmi.yaml --device COM3`.
+4. **Wi-Fi.** La 2.x avait les identifiants compilés, la 3.0 non : la tablette démarre sans réseau et ouvre « Tab5 Fallback AP ». Connectez-vous-y et choisissez votre réseau (étape 5).
+5. **Home Assistant** signale que la tablette « a désactivé le chiffrement du transport » (*Paramètres → Appareils et services*, réauthentification) : confirmez. HA lui donne ensuite une nouvelle clé tout seul. Les entités, les automatisations et l'historique restent les mêmes.
+
+Ensuite, `secrets.yaml` peut partir (gardez l'ancienne clé seulement si vous risquez de reflasher une 2.x), et `tab5_fuseau` est ignoré.
 
 ---
 
