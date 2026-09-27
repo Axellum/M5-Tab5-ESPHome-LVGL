@@ -17,9 +17,11 @@ This is a short methodology note, not an incident log — see [`docs/troubleshoo
 
 ## Seeing the screen without the tablet
 
-The CI job « Rendu hors tablette » (`.github/workflows/rendu-host.yml`, [ADR-0021](decisions/0021-host-render-stubs.md)) compiles the interface for ESPHome's `host` platform (`tab5-rendu-host.yaml`), runs it on the runner, pushes the demo scenes and takes one picture per scene, in French then in English. On a pull request that touches the screen, it says which screens changed and attaches before/after images (artifact `rendu-captures`, folder `diff/`). It does not block the PR.
+The CI job « Rendu hors tablette » (`.github/workflows/rendu-host.yml`, [ADR-0021](decisions/0021-host-render-stubs.md)) compiles the interface for ESPHome's `host` platform (`tab5-rendu-host.yaml`), runs it on the runner, pushes the demo scenes, then opens the ~80 screens of `tools/rendu/ecrans.py` one by one (popups, sub-windows, Arcade, game menus and games) with a virtual finger, as on the panel. One picture per screen, in the four languages (one job per language). On a pull request that touches the screen, it says which screens changed compared with `main` and attaches before/after images (artifact `rendu-captures`, folder `diff/`). It does not block the PR.
 
-- A change on purpose: `python tools/rendu/maj_references.py --run <run id>` replaces `docs/images/rendu/` (also the gallery of [`screens.md`](screens.md)); review the images, then commit.
+- A change on purpose: nothing to do for the screens, `main` becomes the reference once the PR is merged. For the gallery scenes of [`screens.md`](screens.md): `python tools/rendu/maj_references.py --run <run id>` replaces `docs/images/rendu/`; review the images, then commit.
+- A new screen: an entry in `tools/rendu/ecrans.py` (taps at the captures' coordinates, landscape 1280×720). « identique à … » in the run means a tap missed.
+- Tuning one screen: *Actions → Rendu hors tablette → Run workflow*, fields « seulement » (screen names) and « langues » (e.g. `["de"]`).
 - It runs on Linux or macOS only (the `host` platform): on Windows, use the CI (*Actions → Rendu hors tablette → Run workflow*).
 - It shows the layout, not the device: no touch, no sound, no voice assistant, no timings or memory.
 
@@ -35,8 +37,19 @@ Since 2026-09-26 the device keeps its own journal (`Tab5/tab5_journal.cpp`), so 
 - **Where:** 32 lines in `.noinit` RAM, which survives software resets, crashes, watchdogs and a reset through USB, but not a power cut. Once Wi-Fi has been missing for 90 s, a copy goes to NVS (at most every 15 min, only when something new was logged) and is read back at the next boot if RAM was lost.
 - **How it reaches you:** at each HA connection, the `esphome.tab5_journal` event is sent for an abnormal reset or a crash report, Wi-Fi missing for 90 s or more, a boot that never reached HA, an error after HA connected, or HA reached more than 90 s after boot. Lines logged before the first HA connection are context only (the ESP-Hosted link is legitimately "not yet up" at 4 s): a normal boot sends nothing. Guard (e) of `HomeAssistant_Config/packages/tab5_health.yaml` turns it into a persistent notification (and a phone push when `grave`: abnormal reset, crash, or Wi-Fi missing 90 s). Events stay in the recorder's `events` table.
 - **Reset reason of every boot:** the `Tab5 Raison du redémarrage` entity (`Software Reset`, `Exception`, `Task Watchdog`, `Brownout`, `Power On`…), one row per boot in the HA history.
-- **Decoding a backtrace:** the addresses belong to the build that crashed. Keep the ELF of every flashed build (`H:/.esphome_data/build/tab5-ha-hmi/build/tab5-ha-hmi.elf`, compare `config_hash`) and run `riscv32-esp-elf-addr2line -pfiaC -e tab5-ha-hmi.elf <addresses>`. If the report says *captured by a different firmware build*, use that build's ELF.
+- **Decoding a backtrace:** the addresses belong to the build that crashed. For a local build, keep its ELF (`H:/.esphome_data/build/tab5-ha-hmi/build/tab5-ha-hmi.elf`, compare `config_hash`); for a published one, take the `elf-<revision>` artifact of its « Publication » run (kept 90 days), or rebuild it with *Run workflow*, tag and `elf_seulement` (the run checks that the code is the published one). Then `riscv32-esp-elf-addr2line -pfiaC -e <elf> <addresses>`, or `tools/capture_serie.py --relire … --elf …`. If the report says *captured by a different firmware build*, use that build's ELF.
 - **Not done on purpose:** an ESP-IDF core dump to flash. It needs a `coredump` partition, the current table (`partitions.csv`: 2 × 7.75 MB apps + 448 KB NVS) fills the 16 MB, and a partition table change is only written by a USB flash, never by OTA. The journal covers the C6 case, which is not a crash of the P4.
+
+## Capturing a crash on the serial port
+
+When the journal says « crash (exception) » with no report (first seen at the end of an update from HA, 3.0.0-rc.1 → rc.2, 2026-09-27), the panic output of ESP-IDF went to the only place it is written: the USB console (`CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG`), just before the reboot.
+
+1. Tablet plugged into the PC over USB-C. `python tools/capture_serie.py` lists the Espressif devices and refuses to guess: pass `--mac` (the tablet's MAC is its USB serial number) or `--port`.
+2. `python tools/capture_serie.py --mac <MAC>`: listens up to 10 min without resetting the tablet (DTR and RTS off before opening), writes `capture-serie-<date>.log` as it goes, and stops 60 s after a reboot.
+3. Trigger the event (for example *Install* on the « Firmware » entity in HA).
+4. Read the summary: panic block, reboots, ESPHome's crash report, addresses. Decode with the ELF of the firmware **that crashed** (the one before the update): `python tools/capture_serie.py --relire capture-serie-….log --elf tab5-ha-hmi-st7123.elf`.
+
+Never open another Espressif device plugged into the same PC. Closing the ESP Web Tools window (Chrome) restarts the tablet once.
 
 ## Diagnosing a silent automation failure on the Home Assistant side
 
@@ -89,8 +102,19 @@ Depuis le 26/09/2026, l'appareil tient son propre journal (`Tab5/tab5_journal.cp
 - **Où :** 32 lignes en RAM `.noinit`, qui survit aux redémarrages logiciels, aux plantages, aux chiens de garde et au reset par l'USB, pas à une coupure de courant. Quand le Wi-Fi manque depuis 90 s, une copie part en NVS (au plus toutes les 15 min, seulement s'il y a du nouveau), relue au démarrage suivant si la RAM a été perdue.
 - **Comment il arrive :** à chaque connexion de HA, l'événement `esphome.tab5_journal` part pour un reset anormal ou un rapport de plantage, un Wi-Fi absent 90 s ou plus, un démarrage qui n'a jamais joint HA, une erreur après la connexion à HA, ou HA joint plus de 90 s après le démarrage. Les lignes d'avant la première connexion à HA ne sont que du contexte (le lien ESP-Hosted est normalement « not yet up » à 4 s) : un démarrage normal n'envoie rien. La garde (e) de `HomeAssistant_Config/packages/tab5_health.yaml` en fait une notification persistante (et une notification sur le téléphone si `grave` : reset anormal, plantage, ou Wi-Fi absent 90 s). Les événements restent dans la table `events` du recorder.
 - **Raison de chaque démarrage :** l'entité `Tab5 Raison du redémarrage` (`Software Reset`, `Exception`, `Task Watchdog`, `Brownout`, `Power On`…), une ligne par démarrage dans l'historique HA.
-- **Décoder une pile d'appels :** les adresses appartiennent au build qui a planté. Garder l'ELF de chaque build flashé (`H:/.esphome_data/build/tab5-ha-hmi/build/tab5-ha-hmi.elf`, comparer le `config_hash`) et lancer `riscv32-esp-elf-addr2line -pfiaC -e tab5-ha-hmi.elf <adresses>`. Si le rapport dit *captured by a different firmware build*, prendre l'ELF de ce build-là.
+- **Décoder une pile d'appels :** les adresses appartiennent au build qui a planté. Pour un build local, garder son ELF (`H:/.esphome_data/build/tab5-ha-hmi/build/tab5-ha-hmi.elf`, comparer le `config_hash`) ; pour un firmware publié, prendre l'artefact `elf-<révision>` de son run « Publication » (gardé 90 jours), ou le recompiler par *Run workflow*, tag et `elf_seulement` (le run vérifie que le code est celui publié). Puis `riscv32-esp-elf-addr2line -pfiaC -e <elf> <adresses>`, ou `tools/capture_serie.py --relire … --elf …`. Si le rapport dit *captured by a different firmware build*, prendre l'ELF de ce build-là.
 - **Écarté volontairement :** le core dump d'ESP-IDF en flash. Il lui faut une partition `coredump` ; la table actuelle (`partitions.csv` : 2 × 7,75 Mo d'application + 448 Ko de NVS) remplit les 16 Mo, et une table de partitions ne s'écrit que par un flash USB, jamais par OTA. Le journal couvre le cas du C6, qui n'est pas un plantage du P4.
+
+## Capturer un plantage sur le port série
+
+Quand le journal dit « plantage (exception) » sans rapport (vu la première fois à la fin d'une mise à jour depuis HA, 3.0.0-rc.1 → rc.2, le 27/09/2026), la sortie de panique d'ESP-IDF est partie au seul endroit où elle s'écrit : la console USB (`CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG`), juste avant le redémarrage.
+
+1. Tablette branchée au PC en USB-C. `python tools/capture_serie.py` liste les appareils Espressif et refuse de deviner : donner `--mac` (la MAC de la tablette est son numéro de série USB) ou `--port`.
+2. `python tools/capture_serie.py --mac <MAC>` : écoute jusqu'à 10 min sans réinitialiser la tablette (DTR et RTS coupés avant l'ouverture), écrit `capture-serie-<date>.log` au fil de l'eau, s'arrête 60 s après un redémarrage.
+3. Provoquer l'événement (par exemple *Installer* sur l'entité « Firmware » dans HA).
+4. Lire le résumé : bloc de panique, redémarrages, rapport de plantage d'ESPHome, adresses. Décoder avec l'ELF du firmware **qui a planté** (celui d'avant la mise à jour) : `python tools/capture_serie.py --relire capture-serie-….log --elf tab5-ha-hmi-st7123.elf`.
+
+Ne jamais ouvrir un autre appareil Espressif branché au même PC. Fermer la fenêtre d'ESP Web Tools (Chrome) redémarre la tablette une fois.
 
 ## Diagnostiquer un échec silencieux d'automation côté Home Assistant
 

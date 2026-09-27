@@ -8,6 +8,11 @@ name: Publication (release, page de flashage)
 #      releases : `stable/` = dernière release 3.x non « pre-release », `beta/` = la plus
 #      récente. Les firmwares publiés y lisent leur mise à jour (Tab5/publication-*.yaml).
 # Une pre-release compile en canal `beta` (son entité de mise à jour lit `beta/`).
+# L'ELF de chaque révision est gardé 90 jours (artefact `elf-<révision>`) : c'est lui qui
+# décode la pile d'appels d'un plantage de ce firmware (tools/capture_serie.py --elf).
+# `elf_seulement` recompile une version déjà publiée pour retrouver son ELF, sans rien
+# publier ni remplacer, et vérifie que le code est le même que l'image publiée
+# (tools/publication/meme_code.py).
 
 on:
   release:
@@ -17,6 +22,10 @@ on:
       tag:
         description: Tag de la release à (re)publier, par exemple v3.0.0
         required: true
+      elf_seulement:
+        description: Recompiler seulement, pour garder l'ELF d'une version déjà publiée (rien n'est publié ni remplacé)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -109,12 +118,39 @@ jobs:
           trap 'rm -f tab5_signature.pem' EXIT
           ota=$(ls "${{ steps.esphome-build.outputs.name }}"/*.ota.bin)
           python -m espsecure verify-signature --version 2 --keyfile tab5_signature.pem "$ota"
+      - name: ELF gardé (décoder un plantage de ce firmware)
+        uses: actions/upload-artifact@v7
+        with:
+          name: elf-${{ matrix.ecran }}
+          path: ${{ steps.esphome-build.outputs.name }}/*.elf
+          if-no-files-found: error
+          retention-days: 90
+      # Les sources compilées sont celles du tag : une version publiée avant cet outil ne
+      # l'a pas. On le prend dans le commit du workflow, à part.
+      - name: Outil de comparaison (ELF seulement)
+        if: inputs.elf_seulement
+        uses: actions/checkout@v7
+        with:
+          path: outils-workflow
+          sparse-checkout: tools/publication
+      - name: Même code que l'image publiée (ELF seulement)
+        if: inputs.elf_seulement
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ota=$(ls "${{ steps.esphome-build.outputs.name }}"/*.ota.bin)
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern "tab5-ha-hmi-${{ matrix.ecran }}.ota.bin" --output publie.ota.bin
+          python outils-workflow/tools/publication/meme_code.py publie.ota.bin "$ota" \
+            | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Binaires et manifeste de la révision
+        if: ${{ !inputs.elf_seulement }}
         run: |
           python tools/publication/preparer.py --source "${{ steps.esphome-build.outputs.name }}" \
             --ecran ${{ matrix.ecran }} --version ${{ needs.preparation.outputs.version }} --sortie publie
           ls -l publie
       - uses: actions/upload-artifact@v7
+        if: ${{ !inputs.elf_seulement }}
         with:
           name: publie-${{ matrix.ecran }}
           path: publie
@@ -123,6 +159,7 @@ jobs:
 
   release:
     needs: firmware
+    if: ${{ !inputs.elf_seulement }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
