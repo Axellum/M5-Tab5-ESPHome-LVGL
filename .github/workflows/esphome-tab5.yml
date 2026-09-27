@@ -177,7 +177,8 @@ jobs:
         # artefact du 15/07 au 25/09/2026 sans que la CI ne le signale.
         # Depuis le lot 6b, il est signé par la clé jetable du run : une tablette du
         # projet le refuse en OTA, seul un flash USB (.factory.bin) le pose. Les
-        # binaires à distribuer viendront de la release signée (lot 6c).
+        # binaires à distribuer sont ceux des releases, signés par la clé du projet
+        # (publication.yml, lot 6c, ADR-0022).
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         uses: actions/upload-artifact@v7
         with:

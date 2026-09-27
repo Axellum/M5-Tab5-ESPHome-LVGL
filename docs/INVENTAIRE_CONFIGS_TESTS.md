@@ -39,6 +39,7 @@
 | `tab5-imu.yaml` | `Tab5/` | BMI270 IMU : `motion:`, poll adaptatif 10/30Hz, tap-to-wake. |
 | `tab5-ha-controls.yaml` | `Tab5/` | Number volume, text_sensor écran courant, select aller-à, button recharger calendrier. |
 | `tab5-alarm.yaml` | `Tab5/` | Réveil : rtttl, ~20 entités HA, machine d'état sonnerie, tick 1s. |
+| `publication-*.yaml` | `Tab5/` | Publication (lot 6c, ADR-0022), choisie par `tab5_publication` : `locale` (défaut, vide), `stable` / `beta` (CI de publication) → `publication-commune.yaml` : OTA `http_request` + entité de mise à jour « Firmware » sur le manifeste de GitHub Pages. |
 
 ### 1.3 Composants UI (`Tab5/ui_components/*.yaml`)
 
@@ -107,6 +108,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_verifier_secrets_config.py` | `tests/` | Unitaire | Détection de secrets en clair dans les fichiers suivis (`tools/verifier_secrets_config.py`) : valeurs factices, pragma, `git ls-files`, `secrets.yaml` suivi. |
 | `test_rendu_host.py` | `tests/` | Contenu | Rendu hors tablette (ADR-0021) : lambdas de l'`on_boot` copiées telles quelles de `tab5-ha-hmi.yaml`, mêmes sources C++, chaque package repris ou déclaré matériel, bouchons absents du firmware. |
 | `test_sans_secret.py` | `tests/` | Contenu + unitaire | Firmware sans secret (ADR-0020) : aucun `!secret`, clé API fournie par HA, fenêtre d'appairage, OTA signée, Wi-Fi sans identifiants, fuseau de HA, CI sans secrets factices ; clé trouvée dans HA par `tools/tab5_cle_api.py`, ancienne clé lue par `tools/migrer_vers_3.py`. |
+| `test_publication.py` | `tests/` | Unitaire + contenu | Publication (ADR-0022) : `tools/publication/preparer.py` (binaires renommés par révision, manifeste contrôlé et réécrit, refus d'un manifeste ou d'un binaire inattendu), `pages.py` (canaux stable/bêta parmi les releases 3.x, site reconstruit depuis leurs fichiers) ; mêmes révisions partout (fichiers, matrice, page), clé du projet et jamais de clé jetable, ESPHome figé ≥ plancher, mise à jour seulement dans les firmwares publiés. |
 | `test_render_ha_config.py` | `tests/` | Unitaire | Rendu placeholders → valeurs et détection de fuite d'identifiants réels (`tools/render_ha_config.py`). |
 | `test_guards.py` | `tests/` | Contenu | Joue les 6 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, registre, règles de code, salles Marble, niveaux Lode, comptes de la cartographie). |
 | `__init__.py` | `tests/` | — | Marqueur de package. |

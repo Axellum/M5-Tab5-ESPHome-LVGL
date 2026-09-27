@@ -13,11 +13,13 @@ esphome:
   name: tab5-ha-hmi
   friendly_name: M5Stack Tab5 Home Assistant HMI
   # Identité du firmware (lot 6b, ADR-0020) : HA l'affiche dans la fiche de l'appareil,
-  # et le manifeste de mise à jour du lot 6c doit porter ce même `name`. La version
-  # suit le CHANGELOG ; « -dev » jusqu'à la release.
+  # et le manifeste de mise à jour (lot 6c, ADR-0022) porte ce même `name`. La version
+  # suit le CHANGELOG ; « -dev » pour une compilation locale. Un firmware publié reçoit
+  # celle du tag de sa release (`-s tab5_version …`, .github/workflows/publication.yml),
+  # que l'entité de mise à jour compare au manifeste.
   project:
     name: axellum.tab5-ha-hmi
-    version: 3.0.0-dev
+    version: ${ tab5_version | default('3.0.0-dev') }
   # [2026.7.0] Plancher DUR d'origine : st7123 officiel + audio zero-copy + VAD + PSRAM SDIO.
   # [2026.8.1] Relevé le 26/08/2026. Le code compile encore tel quel en 2026.7.x — ce
   # plancher n'est donc pas une dépendance d'API, c'est un choix : 2026.8 corrige trois
@@ -292,6 +294,10 @@ packages:
   # clé aux user_entities.yaml existants ; `lower` tolère « ST7121 » (vérifié sur
   # ESPHome 2026.9.0, le plancher).
   tab5_ecran: !include Tab5/ecran-${ tab5_ecran | default('st7123') | lower }.yaml
+  # Publication (lot 6c, ADR-0022) : `locale` (défaut, compilation sur son PC) n'ajoute
+  # rien ; `stable` / `beta`, donnés par la CI de publication (`-s tab5_publication …`),
+  # ajoutent l'entité de mise à jour qui lit le manifeste de la page de flashage.
+  tab5_publication: !include Tab5/publication-${ tab5_publication | default('locale') }.yaml
   tab5_sensors_diagnostics: !include Tab5/tab5-sensors-diagnostics.yaml
   tab5_sensors_domotique: !include Tab5/tab5-sensors-domotique.yaml
   tab5_api_logic: !include Tab5/tab5-api-logic.yaml

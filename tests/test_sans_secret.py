@@ -72,9 +72,11 @@ def test_cle_api_fournie_par_ha_et_fenetre_bornee():
 
 def test_ota_signee_sans_chiffrement_ni_mot_de_passe():
     materiel = _yaml("Tab5", "tab5-hardware.yaml")
-    ota = materiel["ota"]
-    assert ota["platform"] == "esphome"
-    assert "encryption" not in ota and "password" not in ota
+    # Liste (lot 6c) : un firmware publié y ajoute `http_request` (publication-commune).
+    otas = materiel["ota"] + _yaml("Tab5", "publication-commune.yaml")["ota"]
+    assert [o["platform"] for o in otas] == ["esphome", "http_request"]
+    for ota in otas:
+        assert "encryption" not in ota and "password" not in ota
     signe = materiel["esp32"]["framework"]["advanced"]["signed_ota_verification"]
     assert signe["signing_scheme"] == "rsa3072"
     # Chemin réglable, défaut à la racine, là où .gitignore l'exclut.
@@ -107,7 +109,10 @@ def test_fuseau_de_ha_garde_pour_le_demarrage():
 def test_identite_de_projet():
     projet = _yaml("tab5-ha-hmi.yaml")["esphome"]["project"]
     assert projet["name"] == "axellum.tab5-ha-hmi"
-    assert re.fullmatch(r"\d+\.\d+\.\d+(-dev)?", projet["version"])
+    # Version du tag pour un firmware publié (lot 6c), « -dev » par défaut en local.
+    defaut = re.fullmatch(r"\$\{ tab5_version \| default\('([^']+)'\) \}", projet["version"])
+    assert defaut, projet["version"]
+    assert re.fullmatch(r"\d+\.\d+\.\d+-dev", defaut.group(1))
 
 
 def _slug(texte):

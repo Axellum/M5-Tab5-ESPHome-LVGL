@@ -1,0 +1,7 @@
+# Firmware publié, canal stable (lot 6c, ADR-0022) : proposé par la page de flashage, il
+# se met à jour vers la dernière release non « pre-release ».
+packages:
+  maj: !include
+    file: publication-commune.yaml
+    vars:
+      canal: stable
