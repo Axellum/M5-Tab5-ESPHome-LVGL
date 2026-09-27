@@ -4,6 +4,61 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Textes de HA composés par la tablette, dans sa langue ; fuseau réglable (lot 4c-1)
+
+Lot 4c de l'audit « ouverture », première partie. Home Assistant écrivait lui-même,
+en français, trois textes affichés par la tablette. Il envoie désormais des **codes**,
+et la tablette compose le texte dans sa langue avec `tr()`. Tout ce que l'écran
+affiche suit donc la langue choisie, sauf les questions du quiz. La seconde partie
+(4c-2 : choix du fournisseur météo) s'appuie sur ces codes.
+
+- **Pluie dans l'heure** : le capteur « Phrase Prochaine Pluie » devient
+  « Tab5 Pluie dans l'heure », dont l'état est un code `@niveau,début`.
+  - niveau -1 = pas de données, 0 = sec, 1 à 4 = faible à très forte, 5 = intensité
+    inconnue ; début = epoch UTC, 0 s'il pleut déjà ; `@-` = pas de source.
+  - La tablette écrit « Averses dans 12 mn » / « Showers in 12 min » et **décompte
+    les minutes elle-même**, au tick de son horloge (`rain_phrase_tick()`).
+  - L'ancien capteur appelait `now()` : il changeait chaque minute avant une averse
+    et relançait à chaque fois la poussée légère. Le nouveau ne change qu'avec les
+    données Météo-France.
+- **Bandeau info** : `@ha|nb MAJ|titre|nb erreurs|nb indispo|jaune|vigilance`. **Rotateur
+  d'alertes HA** : `@maj:titre` et `@indispo:n`.
+- **Bug corrigé** : le firmware choisissait le bandeau « Alerte Météo … » d'après la
+  COULEUR du texte. Or une mise à jour HA (Orange) ou une erreur (Rouge) prennent
+  aussi ces couleurs : avec une vigilance verte, « 1 MAJ · … » s'affichait donc
+  « Alerte Météo Orange en cours ! » (présent depuis #36, 14/07/2026). Le code dit
+  maintenant la vigilance à part. Autre gain : après un tap sur le bandeau
+  vigilance, la ligne HA s'affiche aussitôt, sans attendre HA.
+- **Français à l'identique**, vérifié dans HA (`ha_eval_template`) :
+  - l'ancien modèle et la composition de la tablette donnent le même texte sur
+    6 cas de pluie (sec, pluie en cours, dans 12 min, dans 32 min, créneau absent,
+    pas de données) et 9 cas de bandeau (MAJ, erreurs, indispos, vigilances jaune,
+    orange et rouge, acquittées ou non) ;
+  - le cas réel du moment (sec) donne `@0,0`.
+- **Compatibilité** : un texte sans `@` (ancien package HA) s'affiche comme avant.
+  **Ordre de déploiement : le firmware d'abord, puis le package HA.** Un firmware
+  plus ancien afficherait les codes tels quels.
+- **Prêt pour d'autres fournisseurs (4c-2)** :
+  - les barres de pluie acceptent un niveau chiffré « 0 » à « 4 » en plus des
+    libellés Météo-France ;
+  - la vigilance accepte deux phénomènes de plus en fin de payload, Brouillard et
+    Feux de forêt (types MeteoAlarm sans case Météo-France). Leurs glyphes MDI
+    `weather-fog` (F0591) et `fire` (F0238) sont vérifiés dans le TTF et ajoutés à
+    `mdi_font_alert`.
+- **Fuseau réglable** : `tab5_fuseau:` dans `Tab5/user_entities.yaml` (`sntp` et
+  RX8130), par défaut `Europe/Paris`. `esphome config` donne
+  `CET-1CEST,M3.5.0,M10.5.0/3` sans la clé, et `EST5EDT,M3.2.0,M11.1.0` avec
+  `-s tab5_fuseau America/Montreal`.
+- **Traductions** : 13 clés (bandeau, alertes, phrase de pluie).
+- **Docs** : `docs/translations.md`, README, `docs/installation.md`, README de
+  `HomeAssistant_Config/`, contrat API (`tab5-api-logic.yaml`),
+  `user_entities.example.yaml`, cartographie.
+- **Mesures** (ESPHome 2026.9.0 ; build CI de `main` @ `9eb732e` contre build local) :
+  - image 3 116 684 → 3 121 772 o (+5,1 Ko : deux glyphes de 60 px, le code, 13
+    traductions) ;
+  - RAM statique +24 o (état de la phrase de pluie) ;
+  - aucun avertissement dans notre code.
+
 ### 2026-09-27 — Arcanoïde : « Effacer les scores » demande vraiment confirmation
 
 Défaut signalé pendant le lot 4b : le bouton annonçait « Appuie pour confirmer », mais

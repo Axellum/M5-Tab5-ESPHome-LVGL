@@ -117,10 +117,13 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
 
     // strtok_r saute les champs vides consécutifs ("||"), comme l'ancien lambda :
     // un champ vide décalerait les suivants. Contrat HA inchangé — HA envoie
-    // toujours "Vert" plutôt qu'une chaîne vide.
+    // toujours "Vert" plutôt qu'une chaîne vide. 13 champs depuis le lot 4c
+    // (27/09/2026) : brouillard et feux de forêt en fin de payload, pour les
+    // alertes MeteoAlarm qui n'ont pas de case Météo-France. Un payload à 11
+    // champs (Météo-France) laisse ces deux cases vides.
     char* saveptr = nullptr;
-    const char* fields[11];
-    for (int i = 0; i < 11; i++) {
+    const char* fields[13];
+    for (int i = 0; i < 13; i++) {
         char* tok = strtok_r(i == 0 ? buf : nullptr, "|", &saveptr);
         fields[i] = tok ? tok : "";
     }
@@ -139,7 +142,7 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
     if (ui.lbl_date != nullptr) lv_obj_set_style_text_color(ui.lbl_date, lv_color_hex(col_date), LV_PART_MAIN);
 
     // Phénomènes, dans l'ordre du payload, avec leur glyphe MDI.
-    static const char* const kIcons[9] = {
+    static const char* const kIcons[11] = {
         "\U000F059D",  // vent
         "\U000F0EFA",  // inondation
         "\U000F0593",  // orages
@@ -149,12 +152,14 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
         "\U000F078D",  // vagues-submersion
         "\U000F0E01",  // canicule
         "\U000F1A48",  // avalanches (landslide : MDI n'a pas d'icône avalanche)
+        "\U000F0591",  // brouillard (MeteoAlarm)
+        "\U000F0238",  // feux de forêt (MeteoAlarm)
     };
     struct AlertEntry { const char* icon; const char* level; };
     constexpr size_t MAX_ALERTES = 4;
     AlertEntry actives[MAX_ALERTES];
     size_t active_count = 0;
-    for (int i = 0; i < 9 && active_count < MAX_ALERTES; i++) {
+    for (int i = 0; i < 11 && active_count < MAX_ALERTES; i++) {
         const char* state = fields[2 + i];
         if (strlen(state) == 0 || strcmp(state, "Vert") == 0 || strcmp(state, "unknown") == 0) continue;
         actives[active_count++] = AlertEntry{kIcons[i], state};
@@ -177,17 +182,25 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
     return active_count > 0;
 }
 
-// Niveau Météo-France → couleur + hauteur (px) d'une barre. Isolé pour le jour
-// où un service bulk remplacera les 9 appels par rafraîchissement (audit §4.1
-// point 3) : il n'aura que cette table à réutiliser.
+// Intensité → couleur + hauteur (px) d'une barre. Deux écritures acceptées : le
+// libellé Météo-France (« Pluie faible » … « Pluie très forte »), ou un niveau
+// chiffré « 0 » à « 4 » (lot 4c, 27/09/2026) que les adaptateurs des autres
+// fournisseurs calculent côté HA à partir des mm/h. Tout autre texte vide la barre.
 static void rain_level_style(const std::string& intensite, uint32_t& color, int& height) {
     color = UIColor::CLIM_TRACK_INACTIVE;  // barre vide
     height = 0;
-    if (intensite == "Pluie faible")          { color = UIColor::RAIN_LIGHT;    height = 13; }  // ~1/4 hauteur
-    else if (intensite == "Pluie modérée")    { color = UIColor::RAIN_MODERATE; height = 25; }  // 1/2
-    else if (intensite == "Pluie forte")      { color = UIColor::RAIN_HEAVY;    height = 38; }  // 3/4
-    else if (intensite == "Pluie très forte" || intensite == "Pluie trés forte") {
-        color = UIColor::RAIN_EXTREME; height = 50;                                            // max
+    int niveau = 0;
+    if (intensite.size() == 1 && intensite[0] >= '0' && intensite[0] <= '4') niveau = intensite[0] - '0';
+    else if (intensite == "Pluie faible")     niveau = 1;
+    else if (intensite == "Pluie modérée")    niveau = 2;
+    else if (intensite == "Pluie forte")      niveau = 3;
+    else if (intensite == "Pluie très forte" || intensite == "Pluie trés forte") niveau = 4;
+    switch (niveau) {
+        case 1: color = UIColor::RAIN_LIGHT;    height = 13; break;  // ~1/4 hauteur
+        case 2: color = UIColor::RAIN_MODERATE; height = 25; break;  // 1/2
+        case 3: color = UIColor::RAIN_HEAVY;    height = 38; break;  // 3/4
+        case 4: color = UIColor::RAIN_EXTREME;  height = 50; break;  // max
+        default: break;
     }
 }
 

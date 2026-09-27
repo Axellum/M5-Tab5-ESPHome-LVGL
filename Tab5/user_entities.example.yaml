@@ -21,6 +21,10 @@
 #     tablette), sans recompiler. ---
 # tab5_langue: Français
 
+# --- Fuseau horaire de l'horloge et du réveil, au format tz (« America/Montreal »,
+#     « Europe/Berlin »…). Défaut si la ligne reste commentée : Europe/Paris. ---
+# tab5_fuseau: Europe/Paris
+
 entity_tracker_pc: switch.your_pc_or_device_tracker
 entity_tracker_tv: media_player.your_tv
 entity_tv_remote: remote.your_tv

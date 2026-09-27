@@ -247,6 +247,11 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
     std::string& dismissed_local, bool& has_info, int& current_panel,
     esphome::font::Font* font_small, esphome::font::Font* font_large);
 
+// Phrase pluie (lot 4c, 27/09/2026) : HA envoie un code « @niveau,début » ; la
+// tablette compose la phrase dans sa langue et décompte « dans N mn ». Appelée à
+// chaque minute (on_time de sntp_time, tab5-sensors-diagnostics.yaml).
+void rain_phrase_tick();
+
 // Rotateur carte centrale : 0 planning, 1 pluie, 2 vigilance MF, 3 info (phrase test),
 // 4-7 alertes HA individuelles (8s, même timer global).
 constexpr int kCentralPanelCount = 8;

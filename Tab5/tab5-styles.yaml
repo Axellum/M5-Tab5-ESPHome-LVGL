@@ -264,6 +264,8 @@ font:
       - "\U000F0F29"  # snowflake-alert
       - "\U000F0F36"  # weather-snowy-heavy
       - "\U000F1A48"  # landslide (avalanches : MDI n'a pas d'icône avalanche)
+      - "\U000F0591"  # weather-fog (brouillard, alertes MeteoAlarm — lot 4c)
+      - "\U000F0238"  # fire (feux de forêt, alertes MeteoAlarm — lot 4c)
 
   # 45 px — boutons des popups : télécommande TV, clim (modes, préréglages), lumière,
   # réveil, rangée des plantes, en-tête de la sélection des consoles.

@@ -199,21 +199,24 @@ api:
         # de vérité. Lit les 4 globals qu'on vient de poser ci-dessus.
         - script.execute: tab5_clim_recolor
 
+    # Nom historique : depuis le lot 4c (27/09/2026), la vigilance peut venir d'un autre
+    # fournisseur (MeteoAlarm…), ramené à ces cases par les adaptateurs côté HA.
     - service: tab5_maj_alerte_meteo_france
-      description: "Phrase de prochaine pluie et les neuf vigilances Météo-France."
+      description: "Pluie dans l'heure (code) et vigilances météo, quel que soit le fournisseur."
       variables:
         payload:
           type: string
-          description: "Onze champs séparés par | : phrase de pluie, niveau global, puis Vent violent, Inondation, Orages, Pluie-inondation, Neige-verglas, Grand-froid, Vagues-submersion, Canicule et Avalanches — chacun Vert, Jaune, Orange ou Rouge."
-          example: "Pas de pluie dans l'heure|Jaune|Vert|Vert|Jaune|Vert|Vert|Vert|Vert|Vert|Vert"
+          description: "Champs séparés par | : code de pluie « @niveau,début » (niveau -1 pas de données, 0 sec, 1 à 4 faible à très forte, 5 intensité inconnue ; début = epoch UTC, 0 s'il pleut déjà ; « @- » = pas de source), niveau global, puis Vent violent, Inondation, Orages, Pluie-inondation, Neige-verglas, Grand-froid, Vagues-submersion, Canicule, Avalanches, et en option Brouillard et Feux de forêt — chacun Vert, Jaune, Orange ou Rouge. Un premier champ sans « @ » est affiché tel quel."
+          example: "@2,1790000000|Jaune|Vert|Vert|Jaune|Vert|Vert|Vert|Vert|Vert|Vert"
       then:
         - lambda: |-
             if (id(lbl_proc_pluie) == nullptr) return;
             // Identique au précédent : has_mf_alerts garde sa valeur (audit 25/09, lot 3).
             if (push_unchanged(PushChannel::VIGILANCE, payload.c_str(), payload.size())) return;
-            // 11 champs « | » : phrase pluie, vigilance globale, puis 9 phénomènes
+            // 11 à 13 champs « | » : code pluie, vigilance globale, puis 9 phénomènes
             // (vent, inondation, orages, pluie-inondation, neige-verglas, grand
-            // froid, vagues-submersion, canicule, avalanches). Découpage, couleur
+            // froid, vagues-submersion, canicule, avalanches), et en option
+            // brouillard et feux de forêt (MeteoAlarm, lot 4c). Découpage, couleur
             // de la date et 4 slots d'icônes : parse_and_update_vigilance().
             VigilanceUI ui{id(lbl_proc_pluie), id(lbl_pluie_val), id(lbl_pluie_unit), id(lbl_date),
                            {id(alerte_slot_0), id(alerte_slot_1), id(alerte_slot_2), id(alerte_slot_3)}};
@@ -270,14 +273,15 @@ api:
     # Les 9 barres en UN appel (ADR-0003, audit §4.1 point 3) : payload
     # « idx|intensité;idx|intensité;… », idx 0..8 = 0,5,10,15,20,25 puis 35,45,55 min,
     # intensité = libellé Météo-France (« Temps sec », « Pluie faible » … « Pluie très
-    # forte »). Seul contrat depuis le 08/09/2026 : l'ancien tab5_maj_pluie_1h (une barre
+    # forte ») ou niveau chiffré 0 à 4 (lot 4c : adaptateurs des autres fournisseurs).
+    # Seul contrat depuis le 08/09/2026 : l'ancien tab5_maj_pluie_1h (une barre
     # par appel, 9 appels par rafraîchissement) a été retiré le même jour.
     - service: tab5_maj_pluie_1h_bulk
       description: "Les neuf barres de pluie de l'heure qui vient, en un appel."
       variables:
         payload:
           type: string
-          description: "Neuf barres « idx|intensité » séparées par ; — idx de 0 à 8 pour 0, 5, 10, 15, 20, 25, 35, 45 et 55 minutes, intensité = libellé Météo-France."
+          description: "Neuf barres « idx|intensité » séparées par ; — idx de 0 à 8 pour 0, 5, 10, 15, 20, 25, 35, 45 et 55 minutes, intensité = libellé Météo-France ou niveau de 0 (sec) à 4 (très forte)."
           example: "0|Temps sec;1|Pluie faible;2|Pluie modérée;"
       then:
         - lambda: |-
@@ -296,8 +300,8 @@ api:
       variables:
         texte:
           type: string
-          description: "Texte affiché, sur une ou plusieurs lignes. Un fragment entouré de « #RRGGBB » et « # » prend cette couleur."
-          example: "Jeu : TRAVAIL 08:00-16:00"
+          description: "Texte affiché, sur une ou plusieurs lignes (un fragment entouré de « #RRGGBB » et « # » prend cette couleur), ou code composé par la tablette dans sa langue : « @ha|nb MAJ|titre de la MAJ|nb erreurs|nb indispo|jaune 0 ou 1|vigilance rouge, orange ou vide »."
+          example: "@ha|1|Home Assistant Core|0|0|0|"
         couleur:
           type: string
           description: "Couleur du texte : Rouge, Orange ou Blanc."
@@ -373,8 +377,8 @@ api:
       variables:
         payload:
           type: string
-          description: "Jusqu'à quatre alertes « id|couleur|libellé » séparées par ; — couleur Rouge ou Orange, id renvoyé tel quel à l'acquittement quand l'écran est tapé."
-          example: "update.home_assistant_core_update|Rouge|1 MAJ · Home Assistant Core;ha:unavailable|Orange|3 indispo"
+          description: "Jusqu'à quatre alertes « id|couleur|libellé » séparées par ; — couleur Rouge ou Orange, id renvoyé tel quel à l'acquittement quand l'écran est tapé. Libellés codés, composés par la tablette dans sa langue : « @maj:titre » et « @indispo:nombre »."
+          example: "update.home_assistant_core_update|Rouge|@maj:Home Assistant Core;ha:unavailable|Orange|@indispo:3"
       then:
         - lambda: |-
             // Même empreinte que le bandeau info : payload + acquittements locaux

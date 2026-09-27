@@ -7,9 +7,22 @@
 static const uint8_t kI18nLangCount = 2;
 static const char* const kI18nLangNames[] = {"Français", "English"};
 static const char* const kI18nLangCodes[] = {"fr", "en"};
-static const uint16_t kI18nKeyCount = 934;
+static const uint16_t kI18nKeyCount = 947;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -959,10 +972,13 @@ static const char* const kI18nKeys[] = {
     "%.1f  contre  %.1f      (ecart %.1f)",
     "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n",
     "%d / 5 (plus haut = plus sensible)",
+    "%d MAJ",
     "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo",
     "%d demi-coups joues",
+    "%d erreurs",
     "%d heures",
     "%d heures %d",
+    "%d indispo",
     "%d min",
     "%d min avant",
     "%d objet(s) en votre possession   -   %d emplacement(s)",
@@ -983,6 +999,7 @@ static const char* const kI18nKeys[] = {
     "%s a ses 6 parts — choisissez votre catégorie finale",
     "%s cede 120 ames",
     "%s cede : %s",
+    "%s dans %ld mn",
     "%s est au centre : choisissez une catégorie",
     "%s remporte la partie",
     "%s · %s (dans %d min)",
@@ -1012,6 +1029,8 @@ static const char* const kI18nKeys[] = {
     "+70 de vitesse maximale",
     "-1 PV, pieges rapides, mais +60 % d'ames",
     "-1 px de rayon : bille plus difficile a toucher",
+    "1 MAJ · %s",
+    "1 erreur",
     "1 à 6 équipes",
     "10,0 cases/s - reflexes exiges",
     "15 min",
@@ -1107,6 +1126,7 @@ static const char* const kI18nKeys[] = {
     "Auj.",
     "Aujourd'hui",
     "Aujourd'hui {heure}",
+    "Averses",
     "Avr",
     "BILLE %d / %d",
     "BILLE BONUS",
@@ -1517,6 +1537,7 @@ static const char* const kI18nKeys[] = {
     "Partie reprise.",
     "Pas après",
     "Pas avant",
+    "Pas de données",
     "Pas de velours",
     "Passe",
     "Passe — fin de partie",
@@ -1530,6 +1551,9 @@ static const char* const kI18nKeys[] = {
     "Pierre de sang",
     "Pierres offertes a Noir (Blanc commence)",
     "Pièce",
+    "Pluie",
+    "Pluie faible",
+    "Pluie modérée",
     "Plume de suie",
     "Points neutres (dame) : %d",
     "Portail ouvert !",
@@ -1727,6 +1751,7 @@ static const char* const kI18nKeys[] = {
     "Temps de jeu cumule : %u min",
     "Temps ecoule",
     "Temps ecoule — materiel insuffisant pour mater",
+    "Temps sec",
     "Temps écoulé — la réponse était : %s",
     "Température",
     "Tester",
@@ -1785,6 +1810,7 @@ static const char* const kI18nKeys[] = {
     "Vies  %d",
     "Vies  oo",
     "Vies %d",
+    "Vigilance Jaune",
     "Vitalite",
     "Vitesse",
     "Vitesse de demo",
@@ -1897,10 +1923,13 @@ static const char* const kI18n_en[] = {
     "%.1f  vs  %.1f      (margin %.1f)",  // "%.1f  contre  %.1f      (ecart %.1f)"
     "%2d.  %7lu   lvl %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
     "%d / 5 (higher = more sensitive)",  // "%d / 5 (plus haut = plus sensible)"
+    "%d updates",  // "%d MAJ"
     "%d half-moves  ·  level %s  ·  local rating: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d half-moves played",  // "%d demi-coups joues"
+    "%d errors",  // "%d erreurs"
     "%d:00",  // "%d heures"
     "%d:%02d",  // "%d heures %d"
+    "%d unavailable",  // "%d indispo"
     "%d min",  // "%d min"
     "%d min before",  // "%d min avant"
     "%d item(s) owned   -   %d slot(s)",  // "%d objet(s) en votre possession   -   %d emplacement(s)"
@@ -1921,6 +1950,7 @@ static const char* const kI18n_en[] = {
     "%s has all 6 wedges — pick your final category",  // "%s a ses 6 parts — choisissez votre catégorie finale"
     "%s yields 120 souls",  // "%s cede 120 ames"
     "%s yields: %s",  // "%s cede : %s"
+    "%s in %ld min",  // "%s dans %ld mn"
     "%s is on the hub: pick a category",  // "%s est au centre : choisissez une catégorie"
     "%s wins the game",  // "%s remporte la partie"
     "%s · %s (in %d min)",  // "%s · %s (dans %d min)"
@@ -1950,6 +1980,8 @@ static const char* const kI18n_en[] = {
     "+70 top speed",  // "+70 de vitesse maximale"
     "-1 HP, fast traps, but +60% souls",  // "-1 PV, pieges rapides, mais +60 % d'ames"
     "-1 px radius: marble harder to hit",  // "-1 px de rayon : bille plus difficile a toucher"
+    "1 update · %s",  // "1 MAJ · %s"
+    "1 error",  // "1 erreur"
     "1 to 6 teams",  // "1 à 6 équipes"
     "10.0 tiles/s - quick reflexes",  // "10,0 cases/s - reflexes exiges"
     "15 min",  // "15 min"
@@ -2045,6 +2077,7 @@ static const char* const kI18n_en[] = {
     "Today",  // "Auj."
     "Today",  // "Aujourd'hui"
     "Today {heure}",  // "Aujourd'hui {heure}"
+    "Showers",  // "Averses"
     "Apr",  // "Avr"
     "BALL %d / %d",  // "BILLE %d / %d"
     "EXTRA BALL",  // "BILLE BONUS"
@@ -2455,6 +2488,7 @@ static const char* const kI18n_en[] = {
     "Game resumed.",  // "Partie reprise."
     "Not after",  // "Pas après"
     "Not before",  // "Pas avant"
+    "No data",  // "Pas de données"
     "Velvet Step",  // "Pas de velours"
     "Pass",  // "Passe"
     "Pass — game over",  // "Passe — fin de partie"
@@ -2468,6 +2502,9 @@ static const char* const kI18n_en[] = {
     "Bloodstone",  // "Pierre de sang"
     "Handicap stones for Black (White starts)",  // "Pierres offertes a Noir (Blanc commence)"
     "Room",  // "Pièce"
+    "Rain",  // "Pluie"
+    "Light rain",  // "Pluie faible"
+    "Moderate rain",  // "Pluie modérée"
     "Soot Feather",  // "Plume de suie"
     "Neutral points (dame): %d",  // "Points neutres (dame) : %d"
     "Portal open!",  // "Portail ouvert !"
@@ -2665,6 +2702,7 @@ static const char* const kI18n_en[] = {
     "Total play time: %u min",  // "Temps de jeu cumule : %u min"
     "Time out",  // "Temps ecoule"
     "Time out — insufficient material to mate",  // "Temps ecoule — materiel insuffisant pour mater"
+    "Dry",  // "Temps sec"
     "Time's up — the answer was: %s",  // "Temps écoulé — la réponse était : %s"
     "Temperature",  // "Température"
     "Test",  // "Tester"
@@ -2723,6 +2761,7 @@ static const char* const kI18n_en[] = {
     "Lives  %d",  // "Vies  %d"
     "Lives  oo",  // "Vies  oo"
     "Lives %d",  // "Vies %d"
+    "Yellow warning",  // "Vigilance Jaune"
     "Vitality",  // "Vitalite"
     "Speed",  // "Vitesse"
     "Demo speed",  // "Vitesse de demo"
