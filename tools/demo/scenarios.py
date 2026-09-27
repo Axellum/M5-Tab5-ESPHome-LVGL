@@ -21,7 +21,8 @@ from dataclasses import dataclass, field
 # ---------------------------------------------------------------------------
 
 MIRROR_ENTITIES: dict[str, str] = {
-    "entity_tracker_pc": "device_tracker.your_pc",
+    "entity_tracker_pc": "switch.your_pc_or_device_tracker",
+    "entity_tracker_tv": "media_player.your_tv",
     "entity_phone_battery": "sensor.your_phone_battery",
     "entity_light_chambre": "light.your_bedroom_light",
     "entity_light_salon": "light.your_living_room_light",
@@ -40,7 +41,8 @@ MIRROR_ENTITIES: dict[str, str] = {
 # nombre en string pour sensor). Statique pour la session : la variation vient
 # des scènes météo/planning qui tournent, pas de ces valeurs domotique.
 MIRROR_STATE_VALUES: dict[str, str] = {
-    MIRROR_ENTITIES["entity_tracker_pc"]: "home",
+    MIRROR_ENTITIES["entity_tracker_pc"]: "on",
+    MIRROR_ENTITIES["entity_tracker_tv"]: "off",
     MIRROR_ENTITIES["entity_phone_battery"]: "68",
     MIRROR_ENTITIES["entity_light_chambre"]: "off",
     MIRROR_ENTITIES["entity_light_salon"]: "on",
@@ -58,10 +60,56 @@ MIRROR_STATE_VALUES: dict[str, str] = {
 }
 
 
-def mirror_state_for(entity_id: str) -> str | None:
+def mirror_state_for(entity_id: str, absentes: frozenset = frozenset()) -> str | None:
     """Valeur démo pour une entité miroir, ou None si inconnue (ignorée en silence,
-    ex. si le device a été flashé avec un user_entities.yaml personnalisé)."""
+    ex. si le device a été flashé avec un user_entities.yaml personnalisé) ou si sa
+    zone est retirée (`--maison-minimale` : une entité absente de HA n'envoie rien)."""
+    for cle in absentes:
+        if MIRROR_ENTITIES.get(ZONE_ENTITES.get(cle, "")) == entity_id:
+            return None
     return MIRROR_STATE_VALUES.get(entity_id)
+
+
+# ---------------------------------------------------------------------------
+# Zones optionnelles (lot 5, Tab5/tab5-zones.yaml, ADR-0018) : la tablette envoie
+# esphome.tab5_zones, HA répond tab5_maj_zones avec les clés des zones absentes.
+# Clés = kCles de Tab5/tab5_zones.cpp (tests/test_demo.py vérifie la concordance).
+# ---------------------------------------------------------------------------
+
+# Clé de zone suivie par la tablette -> clé de user_entities (donc de MIRROR_ENTITIES).
+ZONE_ENTITES: dict[str, str] = {
+    "lumiere_1": "entity_light_chambre",
+    "lumiere_2": "entity_light_salon",
+    "lumiere_3": "entity_light_bureau",
+    "pc": "entity_tracker_pc",
+    "tv": "entity_tracker_tv",
+    "telephone": "entity_phone_battery",
+    "salon": "entity_temp_salon",
+    "serre": "entity_temp_plante",
+    "pot_1": "entity_plante_1",
+    "pot_2": "entity_plante_2",
+    "pot_3": "entity_plante_3",
+    "pot_4": "entity_plante_4",
+    "pot_5": "entity_plante_5",
+}
+# Zones que seul HA connaît : il les ajoute lui-même à sa réponse.
+ZONES_HA = ("clim", "volet", "planning")
+
+# `--maison-minimale` : la même maison que l'essai du 27/09/2026 sur la tablette de
+# l'auteur (clim, TV, téléphone, LEDs, serre, pots 3 à 5 retirés), plus le volet et
+# le planning. Reste : PC, deux lampes, salon, deux pots.
+MAISON_MINIMALE: frozenset = frozenset({
+    "lumiere_3", "tv", "telephone", "serre", "pot_3", "pot_4", "pot_5",
+    "clim", "volet", "planning",
+})
+
+
+def build_zones_absentes(absentes: frozenset) -> str:
+    """Réponse tab5_maj_zones : clés triées dans l'ordre de la tablette."""
+    ordre = list(ZONE_ENTITES) + list(ZONES_HA)
+    inconnues = set(absentes) - set(ordre)
+    assert not inconnues, f"clés de zone inconnues de la tablette : {sorted(inconnues)}"
+    return ",".join(c for c in ordre if c in absentes)
 
 
 # ---------------------------------------------------------------------------
@@ -198,9 +246,23 @@ def _jours_depuis_aujourdhui(condition: str, tmax_base: float, tmin_base: float,
             tmax=round(tmax_base + variation, 1),
             est_repos=est_repos,
             est_dimanche=est_dimanche,
-            heures_ouverture="" if est_repos else "09h00 - 17h30",
+            # « HH:MM-HH:MM », comme HA (tab5_push.yaml) : le réveil et le bandeau
+            # planning le découpent (alarm_clock.cpp, cal_is_early_shift).
+            heures_ouverture="" if est_repos else "09:00-17:30",
         ))
     return tuple(records)
+
+
+def code_pluie(niveau: int, dans_min: int | None) -> str:
+    """Code « @niveau,début » du lot 4c (tab5_central.cpp) : la tablette compose la
+    phrase dans sa langue et décompte les minutes. niveau -1 pas de données, 0 sec,
+    1 à 4 faible à très forte ; début = epoch UTC, 0 s'il pleut déjà (dans_min None).
+    Calculé à l'envoi : un epoch figé à l'import vieillirait pendant la démo."""
+    assert -1 <= niveau <= 5, f"niveau de pluie hors contrat : {niveau}"
+    if dans_min is None:
+        return f"@{niveau},0"
+    debut = _dt.datetime.now(_dt.timezone.utc) + _dt.timedelta(minutes=dans_min)
+    return f"@{niveau},{int(debut.timestamp())}"
 
 
 # ---------------------------------------------------------------------------
@@ -215,18 +277,20 @@ class Scene:
     meteo_humidite: float
     probabilites: dict          # uv, gel, neige (str -> int)
     pluie_1h: tuple             # 9 intensités (index 0..8 = 0,5,10,15,20,25,35,45,55 min)
-    alerte: dict                # champs -> valeur (cf. ALERTE_CHAMPS), absents = "Vert"
+    pluie: tuple                # (niveau, dans_min) -> code_pluie(), 1er champ de l'alerte
+    alerte: dict                # vigilances (cf. ALERTE_CHAMPS sauf phrase_pluie), absents = "Vert"
     heures: tuple                # 15 HeureForecast
     jours: tuple                 # 15 JourForecast
     clim: dict                  # target, current, mode, preset, fan, swing (toutes en str)
     volet_etat: str
-    planning: tuple              # (ligne1, ligne2)
-    info_texte: tuple            # (texte, couleur, meteo_id) — couleur "Orange"/"Rouge" affiche
-                                  # la bannière de vigilance fixe du firmware, texte est alors ignoré.
-                                  # meteo_id = identifiant de dismiss (tap sur le bandeau) ; vide =
-                                  # bandeau non masquable. Les 3 champs sont OBLIGATOIRES : le service
-                                  # tab5_maj_info_texte déclare 3 variables et aioesphomeapi lève un
-                                  # KeyError si l'une manque (cf. tab5-api-logic.yaml).
+    info_texte: tuple            # (texte, couleur, meteo_id) — texte = code du lot 4c
+                                  # « @ha|nb MAJ|titre|nb erreurs|nb indispo|jaune 0/1|vigilance »,
+                                  # composé par la tablette dans sa langue (compose_info_code,
+                                  # tab5_central.cpp) ; vigilance « orange »/« rouge » affiche la
+                                  # bannière de vigilance. meteo_id = identifiant de dismiss (tap sur
+                                  # le bandeau) ; vide = bandeau non masquable. Les 3 champs sont
+                                  # OBLIGATOIRES : le service tab5_maj_info_texte déclare 3 variables
+                                  # et aioesphomeapi lève un KeyError si l'une manque.
 
 
 SCENES: tuple = (
@@ -237,13 +301,14 @@ SCENES: tuple = (
         meteo_humidite=38.0,
         probabilites={"uv": 6, "gel": 0, "neige": 0},
         pluie_1h=("Temps sec",) * 9,
-        alerte={"phrase_pluie": "Pas de pluie prévue"},
+        pluie=(0, None),
+        alerte={},
         heures=_heures_depuis_maintenant("sunny", 26.0, 0.0),
         jours=_jours_depuis_aujourdhui("sunny", 28.0, 16.0),
         clim={"target": "22.0", "current": "23.5", "mode": "cool", "preset": "eco", "fan": "auto", "swing": "off"},
         volet_etat="Ouvert",
-        planning=("Auj. : 09h00-17h30", "Dem. : Repos"),
-        info_texte=("Auj. : 09h00-17h30\nDem. : Repos\nApr-dem. : 09h00-17h30", "Blanc", ""),
+        # Rien à signaler côté HA : pas de bandeau info.
+        info_texte=("@ha|0||0|0|0|", "Blanc", ""),
     ),
     Scene(
         nom="Pluie + alerte orange",
@@ -253,8 +318,8 @@ SCENES: tuple = (
         probabilites={"uv": 1, "gel": 0, "neige": 0},
         pluie_1h=("Pluie faible", "Pluie modérée", "Pluie modérée", "Pluie forte",
                    "Pluie forte", "Pluie modérée", "Pluie faible", "Temps sec", "Temps sec"),
+        pluie=(2, 10),  # « Pluie modérée dans 10 mn », décomptée par la tablette
         alerte={
-            "phrase_pluie": "Pluie dans 10 mn",
             "globale": "Orange",
             "pluie_inondation": "Orange",
             "orages": "Jaune",
@@ -263,11 +328,10 @@ SCENES: tuple = (
         jours=_jours_depuis_aujourdhui("rainy", 15.0, 10.0),
         clim={"target": "21.0", "current": "20.0", "mode": "heat", "preset": "none", "fan": "low", "swing": "off"},
         volet_etat="En_mouvement",
-        planning=("Auj. : Repos", "Dem. : 09h00-17h30"),
-        # couleur "Orange" -> bannière de vigilance fixe du firmware (texte ignoré, cf. update_info_text_ui)
-        # meteo_id non vide : un tap sur le bandeau le masque jusqu'au prochain id
-        # different — c'est la demo de la fonction « tap pour masquer ».
-        info_texte=("", "Orange", "meteo:orange"),
+        # vigilance « orange » -> bannière de vigilance du firmware ; meteo_id non vide :
+        # un tap sur le bandeau le masque jusqu'au prochain id différent — c'est la
+        # démo de la fonction « tap pour masquer ».
+        info_texte=("@ha|0||0|0|0|orange", "Orange", "meteo:orange"),
     ),
     Scene(
         nom="Jour de repos, plantes à surveiller",
@@ -276,12 +340,13 @@ SCENES: tuple = (
         meteo_humidite=55.0,
         probabilites={"uv": 3, "gel": 0, "neige": 0},
         pluie_1h=("Temps sec",) * 7 + ("Pluie faible", "Pluie faible"),
-        alerte={"phrase_pluie": "Averses possibles"},
+        pluie=(1, 45),
+        alerte={},
         heures=_heures_depuis_maintenant("partlycloudy", 18.0, 0.5),
         jours=_jours_depuis_aujourdhui("partlycloudy", 20.0, 12.0, jours_repos_supplementaires=frozenset({0})),
         clim={"target": "20.0", "current": "19.5", "mode": "fan_only", "preset": "none", "fan": "quiet", "swing": "vertical"},
         volet_etat="Ferme",
-        planning=("Auj. : Repos", "Dem. : 09h00-17h30"),
-        info_texte=("Auj. : Repos\nDem. : 09h00-17h30\nApr-dem. : Repos", "Blanc", ""),
+        # Une mise à jour et deux entités indisponibles : bandeau « 1 MAJ · … · 2 indispo ».
+        info_texte=("@ha|1|Home Assistant Core 2026.10.0|0|2|0|", "Orange", ""),
     ),
 )

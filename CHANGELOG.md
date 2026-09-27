@@ -4,6 +4,40 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Mode démo « maison minimale », guide « Adapter à sa maison » (lot 5c)
+
+Fin du lot 5 : **ni firmware ni HA**, l'outil de démo et la documentation.
+
+- **Mode démo, option `--maison-minimale`** : la démo se comporte comme un HA sans clim,
+  TV, téléphone, troisième lumière, serre, pots 3 à 5, volet ni agenda de travail.
+  - Elle ne répond pas pour ces entités.
+  - Elle répond à la demande `esphome.tab5_zones` et envoie aussi la réponse d'office
+    à sa connexion, car la tablette ne redemande qu'à une connexion de HA.
+  - Elle ne pousse rien pour la clim ni le volet.
+  - Sans l'option, elle répond « rien ne manque » : une démo complète rétablit donc les
+    zones d'une démo minimale.
+- **Démo alignée sur le contrat actuel** :
+  - l'entité PC suit le modèle `user_entities.example.yaml` (`switch.…`, elle ne
+    répondait plus depuis le 16/07) ; la TV est simulée ;
+  - pluie et bandeau passent aux codes du lot 4c (`@niveau,début` calculé à l'envoi,
+    `@ha|…`) : la démo suit la langue de l'écran ;
+  - horaires au format `HH:MM-HH:MM` (la démo envoyait `09h00 - 17h30`) ;
+  - plus de `tab5_maj_planning`, que HA n'envoie plus depuis le 08/09.
+- **`tests/test_demo.py`** (5 tests) : entités simulées = modèle, clés de zones = celles
+  de la tablette, deux modes à blanc, format des codes et des horaires.
+- **Docs** :
+  - `docs/installation.md` (EN/FR) : section « Adapter à sa maison » (tableau des zones,
+    réglage, diagnostic, limites) ;
+  - étape 2 : fin de la phrase « aucun autre YAML à modifier » et de l'exemple PC périmé ;
+  - étape 4 : `tab5_meteo_sources.yaml` est obligatoire depuis la 2.2.0 ;
+  - `docs/demo_mode.md` (maison minimale ; 14 entités miroir au lieu de « 15 ») ;
+  - README (« Avant de commencer ») et README de `HomeAssistant_Config/` (zones, bandeau
+    `@ha|…`).
+- **Vérifié dans le code de HA** (`config_validation.py`) : un placeholder laissé tel
+  quel (`climate.VOTRE_CLIMATISATION`) est mis en minuscules à la validation. Il donne
+  donc une entité inexistante, c'est-à-dire une zone absente, sans faire refuser le
+  package.
+
 ### 2026-09-27 — HA n'envoie plus rien pour une zone absente (lot 5b)
 
 Suite du lot 5, **HA seulement, aucun flash**. La tablette masque déjà ces zones

@@ -16,6 +16,7 @@ quel (voir docs/demo_mode.md).
 Usage :
     pip install -r tools/demo/requirements.txt
     python tools/demo/demo_pusher.py --host 192.168.1.42 --key <api_encryption_key>
+    python tools/demo/demo_pusher.py --host 192.168.1.42 --maison-minimale   # zones optionnelles (lot 5)
     python tools/demo/demo_pusher.py --dry-run   # vérifie le format des payloads, sans matériel ni dépendance
 
 Arrêt : Ctrl+C. Rien à nettoyer ailleurs (pas de HA, pas de compte, aucune
@@ -29,8 +30,11 @@ import logging
 from pathlib import Path
 
 from scenarios import (
+    MAISON_MINIMALE,
     SCENES,
     build_alerte_payload,
+    build_zones_absentes,
+    code_pluie,
     build_heures_bulk_payload,
     build_pluie_1h_bulk_payload,
     build_jours_bulk_payload,
@@ -47,7 +51,7 @@ DELAI_BOUCLE_HEURES = 0.15
 SERVICES_ATTENDUS = (
     "tab5_maj_meteo_actuelle", "tab5_maj_probabilites", "tab5_maj_alerte_meteo_france",
     "tab5_maj_pluie_1h_bulk", "tab5_maj_previsions_heures_bulk", "tab5_maj_previsions_jours_bulk",
-    "tab5_maj_clim", "tab5_maj_volet_etat", "tab5_maj_planning", "tab5_maj_info_texte",
+    "tab5_maj_clim", "tab5_maj_volet_etat", "tab5_maj_info_texte", "tab5_maj_zones",
 )
 
 
@@ -63,8 +67,9 @@ def _lire_cle_depuis_secrets(repo_root: Path) -> str | None:
     return None
 
 
-def _dry_run() -> None:
+def _dry_run(absentes: frozenset) -> None:
     """Affiche les payloads de chaque scène sans se connecter à un appareil."""
+    print("tab5_maj_zones:", {"absentes": build_zones_absentes(absentes)})
     for scene in SCENES:
         print(f"\n=== Scène : {scene.nom} ===")
         print("tab5_maj_meteo_actuelle:", {
@@ -73,39 +78,45 @@ def _dry_run() -> None:
             "humidite": str(scene.meteo_humidite),
         })
         print("tab5_maj_probabilites:", scene.probabilites)
-        print("tab5_maj_alerte_meteo_france:", build_alerte_payload(**scene.alerte))
+        print("tab5_maj_alerte_meteo_france:",
+              build_alerte_payload(phrase_pluie=code_pluie(*scene.pluie), **scene.alerte))
         print("tab5_maj_pluie_1h_bulk:", build_pluie_1h_bulk_payload(scene.pluie_1h))
         print("tab5_maj_previsions_heures_bulk (2 appels):")
         for debut in (0, 5):
             print("  -", build_heures_bulk_payload(scene.heures[debut:debut + 5]))
         print("tab5_maj_previsions_jours_bulk:", build_jours_bulk_payload(scene.jours))
-        print("tab5_maj_clim:", scene.clim)
-        print("tab5_maj_volet_etat:", scene.volet_etat)
-        print("tab5_maj_planning:", scene.planning)
+        print("tab5_maj_clim:", "(zone absente, rien)" if "clim" in absentes else scene.clim)
+        print("tab5_maj_volet_etat:", "(zone absente, rien)" if "volet" in absentes else scene.volet_etat)
         print("tab5_maj_info_texte:", scene.info_texte)
     print("\nOK — tous les payloads respectent le contrat (assertions dans scenarios.py).")
 
 
-async def _pousser_scene(client, services_par_nom: dict, scene) -> None:
-    """Appelle les 10 services tab5_maj_* pour une scène, avec le pacing de prod."""
+async def _appeler(client, services_par_nom: dict, nom: str, **data: str) -> None:
+    """Appelle un service tab5_maj_* du firmware, en vérifiant ses arguments."""
+    service = services_par_nom.get(nom)
+    if service is None:
+        logger.warning("Service %s absent du device (firmware différent du contrat attendu ?)", nom)
+        return
+    # Garde-fou de contrat : aioesphomeapi fait `data[arg.name]` pour CHAQUE
+    # argument déclaré par le firmware — un argument manquant lève un KeyError
+    # brut en plein milieu d'une scène. On préfère un message lisible qui
+    # nomme le service et l'argument (c'est exactement ce qui est arrivé quand
+    # `meteo_id` a été ajouté à tab5_maj_info_texte sans mettre la démo à jour).
+    attendus = {arg.name for arg in service.args}
+    if manquants := attendus - data.keys():
+        logger.error("%s : argument(s) %s manquant(s) — le firmware a changé de "
+                     "contrat, mettre à jour tools/demo/. Appel ignoré.",
+                     nom, sorted(manquants))
+        return
+    await client.execute_service(service, data)
+
+
+async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozenset) -> None:
+    """Appelle les services tab5_maj_* d'une scène, avec le pacing de prod. Comme le
+    package HA (lot 5b), rien pour la clim ni le volet quand leur zone est absente."""
 
     async def appeler(nom: str, **data: str) -> None:
-        service = services_par_nom.get(nom)
-        if service is None:
-            logger.warning("Service %s absent du device (firmware différent du contrat attendu ?)", nom)
-            return
-        # Garde-fou de contrat : aioesphomeapi fait `data[arg.name]` pour CHAQUE
-        # argument déclaré par le firmware — un argument manquant lève un KeyError
-        # brut en plein milieu d'une scène. On préfère un message lisible qui
-        # nomme le service et l'argument (c'est exactement ce qui est arrivé quand
-        # `meteo_id` a été ajouté à tab5_maj_info_texte sans mettre la démo à jour).
-        attendus = {arg.name for arg in service.args}
-        if manquants := attendus - data.keys():
-            logger.error("%s : argument(s) %s manquant(s) — le firmware a changé de "
-                         "contrat, mettre à jour tools/demo/. Appel ignoré.",
-                         nom, sorted(manquants))
-            return
-        await client.execute_service(service, data)
+        await _appeler(client, services_par_nom, nom, **data)
 
     await appeler(
         "tab5_maj_meteo_actuelle",
@@ -118,7 +129,9 @@ async def _pousser_scene(client, services_par_nom: dict, scene) -> None:
     await appeler("tab5_maj_probabilites", **{k: str(v) for k, v in scene.probabilites.items()})
     await asyncio.sleep(DELAI_ENTRE_BLOCS)
 
-    await appeler("tab5_maj_alerte_meteo_france", payload=build_alerte_payload(**scene.alerte))
+    # Code de pluie calculé maintenant : « dans N mn » part d'un epoch à jour.
+    await appeler("tab5_maj_alerte_meteo_france",
+                  payload=build_alerte_payload(phrase_pluie=code_pluie(*scene.pluie), **scene.alerte))
     await asyncio.sleep(DELAI_ENTRE_BLOCS)
 
     await appeler("tab5_maj_pluie_1h_bulk", payload=build_pluie_1h_bulk_payload(scene.pluie_1h))
@@ -134,36 +147,41 @@ async def _pousser_scene(client, services_par_nom: dict, scene) -> None:
     await appeler("tab5_maj_previsions_jours_bulk", payload=build_jours_bulk_payload(scene.jours))
     await asyncio.sleep(DELAI_ENTRE_BLOCS)
 
-    await appeler("tab5_maj_clim", **scene.clim)
-    await asyncio.sleep(DELAI_ENTRE_BLOCS)
+    if "clim" not in absentes:
+        await appeler("tab5_maj_clim", **scene.clim)
+        await asyncio.sleep(DELAI_ENTRE_BLOCS)
 
-    await appeler("tab5_maj_volet_etat", etat_physique=scene.volet_etat)
-    await asyncio.sleep(DELAI_ENTRE_BLOCS)
+    if "volet" not in absentes:
+        await appeler("tab5_maj_volet_etat", etat_physique=scene.volet_etat)
+        await asyncio.sleep(DELAI_ENTRE_BLOCS)
 
-    ligne1, ligne2 = scene.planning
-    await appeler("tab5_maj_planning", ligne1=ligne1, ligne2=ligne2)
-    await asyncio.sleep(DELAI_ENTRE_BLOCS)
-
+    # Plus de tab5_maj_planning, comme HA depuis le 08/09/2026 : la tablette dérive
+    # le bandeau des horaires de la poussée des jours.
     texte, couleur, meteo_id = scene.info_texte
     await appeler("tab5_maj_info_texte", texte=texte, couleur=couleur, meteo_id=meteo_id)
 
 
-def _gerer_demande_etat(client):
+def _gerer_demande_etat(client, absentes: frozenset):
     """Callback appelé quand le device demande l'état d'une entité miroir (au
-    moment de l'abonnement) — on répond immédiatement avec la valeur démo."""
+    moment de l'abonnement) — on répond immédiatement avec la valeur démo. Une
+    entité de zone retirée (`--maison-minimale`) ne reçoit rien, comme dans HA."""
 
     def _repondre(entity_id: str, attribute: str | None) -> None:
-        valeur = mirror_state_for(entity_id)
+        valeur = mirror_state_for(entity_id, absentes)
         if valeur is None:
-            logger.info("Entité miroir %s inconnue du script démo — ignorée", entity_id)
+            logger.info("Entité miroir %s inconnue ou retirée — rien envoyé", entity_id)
             return
         client.send_home_assistant_state(entity_id, attribute, valeur)
 
     return _repondre
 
 
-def _gerer_appel_service(interactive: bool):
-    """Callback appelé quand le firmware envoie un homeassistant.service: (bouton pressé).
+def _gerer_appel_service(interactive: bool, repondre_zones):
+    """Callback appelé quand le firmware envoie un homeassistant.service: (bouton pressé)
+    ou un homeassistant.event:.
+
+    L'événement esphome.tab5_zones (lot 5) reçoit la réponse que ferait le package HA
+    (automatisation tab5_zones_reponse) : repondre_zones() la planifie.
 
     Limitation assumée (voir docs/demo_mode.md) : le popup lumière cible
     id(current_light_entity), un global interne au firmware réglé par appui
@@ -172,6 +190,9 @@ def _gerer_appel_service(interactive: bool):
     """
 
     def _gerer(call) -> None:
+        if getattr(call, "is_event", False) and call.service == "esphome.tab5_zones":
+            repondre_zones()
+            return
         if not interactive:
             return
         logger.info("Bouton pressé -> %s %s", call.service, dict(call.data))
@@ -179,7 +200,7 @@ def _gerer_appel_service(interactive: bool):
     return _gerer
 
 
-async def _run(host: str, key: str, interval: float, interactive: bool) -> None:
+async def _run(host: str, key: str, interval: float, interactive: bool, absentes: frozenset) -> None:
     import aioesphomeapi
 
     client = aioesphomeapi.APIClient(host, 6053, "", noise_psk=key)
@@ -192,17 +213,31 @@ async def _run(host: str, key: str, interval: float, interactive: bool) -> None:
     if manquants:
         logger.warning("Services absents du device (firmware différent du contrat attendu) : %s", manquants)
 
+    # Zones (lot 5) : la tablette ne redemande qu'une fois par connexion de HA, et
+    # garde sa dernière liste en NVS. On répond donc aussi d'office au démarrage :
+    # une démo complète rétablit ainsi les zones d'une démo « maison minimale ».
+    reponse = build_zones_absentes(absentes)
+    taches: set = set()
+
+    def repondre_zones() -> None:
+        logger.info("Zones absentes -> %s", reponse or "(aucune)")
+        tache = asyncio.get_running_loop().create_task(
+            _appeler(client, services_par_nom, "tab5_maj_zones", absentes=reponse))
+        taches.add(tache)
+        tache.add_done_callback(taches.discard)
+
     client.subscribe_home_assistant_states_and_services(
         on_state=lambda state: None,
-        on_service_call=_gerer_appel_service(interactive),
-        on_state_sub=_gerer_demande_etat(client),
+        on_service_call=_gerer_appel_service(interactive, repondre_zones),
+        on_state_sub=_gerer_demande_etat(client, absentes),
     )
+    repondre_zones()
 
     try:
         while True:
             for scene in SCENES:
                 logger.info("Scène : %s", scene.nom)
-                await _pousser_scene(client, services_par_nom, scene)
+                await _pousser_scene(client, services_par_nom, scene, absentes)
                 await asyncio.sleep(interval)
     finally:
         await client.disconnect()
@@ -219,12 +254,17 @@ def main() -> None:
                          help="Loggue les appuis lumière/clim/volet (activé par défaut)")
     parser.add_argument("--no-interactive", dest="interactive", action="store_false",
                          help="Ignore les appuis, se contente du push passif")
+    parser.add_argument("--maison-minimale", action="store_true",
+                         help="Zones optionnelles (lot 5) : sans clim, TV, téléphone, LEDs, serre, "
+                              "pots 3 à 5, volet ni planning. Redémarrer la tablette en passant "
+                              "d'une démo complète à celle-ci : une donnée déjà reçue garde sa zone")
     parser.add_argument("--dry-run", action="store_true",
                          help="Affiche les payloads sans se connecter (aucune dépendance requise)")
     args = parser.parse_args()
+    absentes = MAISON_MINIMALE if args.maison_minimale else frozenset()
 
     if args.dry_run:
-        _dry_run()
+        _dry_run(absentes)
         return
 
     if not args.host:
@@ -236,7 +276,7 @@ def main() -> None:
         parser.error("--key requis, ou un secrets.yaml avec api_encryption_key à la racine du repo")
 
     try:
-        asyncio.run(_run(args.host, key, args.interval, args.interactive))
+        asyncio.run(_run(args.host, key, args.interval, args.interactive, absentes))
     except KeyboardInterrupt:
         pass
 
