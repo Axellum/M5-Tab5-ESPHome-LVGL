@@ -8,7 +8,9 @@
 #       Tactile : ESPHome n'a pas de pilote « st7121 ». Le code du modèle ESPHome note que
 #       le firmware d'usine M5Stack distingue ST7121 et ST7123 en lisant la version du
 #       contrôleur tactile : le même protocole est donc probable, d'où la plateforme st7123.
-#       Hypothèse non vérifiée : un retour de testeur (Discussions) la confirmera ou non.
+#       Confirmé par un tiers (esphome/esphome#17471, 11/07/2026) : ce même couple modèle
+#       ST7121 + tactile st7123 marche sur une vraie ST7121 (écran et tactile, paysage).
+#       Pas encore essayé avec CE firmware : un retour de testeur (Discussions) le dira.
 # ============================================================================
 
 display:

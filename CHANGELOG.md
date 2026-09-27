@@ -4,6 +4,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — ST7121 : le couple écran + tactile signalé fonctionnel par un tiers (docs)
+
+- **Docs seulement**, ni firmware ni HA. Sur esphome/esphome#17471 (11/07/2026), un
+  utilisateur qui testait la PR ESPHome du modèle ST7121 signale que le couple
+  `M5STACK-TAB5-ST7121` + tactile `st7123`, celui de `Tab5/ecran-st7121.yaml`, marche sur
+  une vraie ST7121 : écran et tactile, en paysage.
+- `docs/hardware.md` et `README.md` (EN/FR) : statut « Compile, non testée **ici** », lien
+  vers ce retour ; le choix du tactile n'est plus présenté comme une simple hypothèse.
+  Ce firmware n'a toujours pas tourné sur une ST7121.
+- En-tête de `Tab5/ecran-st7121.yaml` et `CARTOGRAPHIE_TAB5.md` alignés.
+
 ### 2026-09-27 — Mode démo « maison minimale », guide « Adapter à sa maison » (lot 5c)
 
 Fin du lot 5 : **ni firmware ni HA**, l'outil de démo et la documentation.
