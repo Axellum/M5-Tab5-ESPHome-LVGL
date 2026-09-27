@@ -4,6 +4,52 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Source des prévisions au choix, heures locales (lot 4c-3)
+
+Lot 4c de l'audit « ouverture », troisième partie, demandée par Axel avant la release :
+les prévisions et la météo du moment ne dépendent plus d'une entité figée à
+l'installation. **HA seulement, aucun flash.**
+
+- **Liste « Tab5 · source des prévisions »** (template `select`) : elle propose les
+  entités `weather.*` présentes dans HA. Le choix est gardé dans
+  `input_text.tab5_meteo_previsions`. Choix vide ou entité disparue :
+  `weather.VOTRE_VILLE`, sinon la première entité météo (vérifié).
+- **`sensor.tab5_meteo`** (normalisé) : condition du moment en état, et en attributs
+  `temperature`, `humidite`, `uv`, `gel`, `neige`, ainsi que ce que l'entité sait
+  fournir (`type_jours`, `heures_ok`, lus sur `supported_features` : 1 jours,
+  2 heures, 4 demi-journées, vérifié dans le code de HA 2026.9.3). L'entité est
+  recalculée dans chaque modèle : `this` porterait l'état précédent, et un changement
+  de source n'aurait pris effet qu'au rendu suivant.
+- **Poussée complète** :
+  - elle ne demande que les types de prévisions gérés : jours, sinon demi-journées
+    (NWS), sinon heures (OpenWeatherMap gratuit). Les demi-journées et les heures
+    sont regroupées par date locale (max, min, condition de la période de jour) ;
+  - un type non géré était rattrapé par `continue_on_error`, mais écrit dans le
+    journal à chaque passage (vérifié dans `helpers/script.py`) ;
+  - sans prévisions horaires, la page horaire reste vide, sans erreur.
+- **Bug corrigé : heures UTC sur les tuiles horaires.** `strftime('%H:00')`
+  s'appliquait à la date UTC de Météo-France : la tuile « 09:00 » portait la
+  prévision de 11:00 (2 h de retard l'été, relevé dans la trace du 27/09 à 10:17).
+  Passage par `as_local`.
+- **Icône flocon** sans capteur Météo-France : elle suit la condition du moment
+  (neige). Le réveil lit sa température sur `sensor.tab5_meteo`.
+- **Tests** :
+  - Météo-France : mêmes valeurs qu'avant (UV 2, gel 0, neige 0, humidité 90,
+    `daily`, heures disponibles) ;
+  - choix et repli testés en production ;
+  - **OpenWeatherMap essayé en réel** : Axel a ajouté l'intégration pendant le lot.
+    - prévisions : jours et heures envoyés sans erreur, heures locales justes ;
+      l'API ne donne que 8 jours de prévisions journalières, donc les jours 8 à 14
+      partent vides ;
+    - pluie dans l'heure (`get_minute_forecast`) : réponse réelle au format attendu
+      (60 créneaux, clé = entity_id), `@0,0` un jour sec ;
+  - regroupement NWS et heures de 3 h simulés : températures justes. La condition
+    du jour prenait d'abord la période de nuit (18 h) ; corrigé en préférant
+    `is_daytime`, puis revérifié.
+- **Docs** : `docs/installation.md` (EN/FR), README de `HomeAssistant_Config/`,
+  `placeholders.example.yaml`, cartographie. Sources remises sur Météo-France après
+  les essais.
+
 ### 2026-09-27 — Choix du fournisseur météo dans Home Assistant (lot 4c-2)
 
 Lot 4c de l'audit « ouverture », seconde partie : la pluie dans l'heure et les

@@ -19,7 +19,7 @@
 # --- Météo (packages/tab5_push.yaml, packages/tab5_meteo_sources.yaml) ---
 # La source de la pluie dans l'heure et celle des vigilances se choisissent ensuite
 # dans HA (input_select « Tab5 · source … ») ; une source non installée reste inutilisée.
-VOTRE_VILLE: your_city                      # weather.<ville> (prévisions, tout fournisseur) ; Météo-France : sensor.<ville>_next_rain / _uv / _snow_chance / _freeze_chance
+VOTRE_VILLE: your_city                      # weather.<ville> : source des prévisions PAR DÉFAUT (se change dans HA, « Tab5 · source des prévisions ») ; Météo-France : sensor.<ville>_next_rain / _uv / _snow_chance / _freeze_chance
 VOTRE_DEPARTEMENT: "40"                     # Météo-France : sensor.<dept>_weather_alert (numéro de département)
 # entity_id COMPLETS : « openweathermap » seul se retrouverait aussi dans le nom de
 # l'action openweathermap.get_minute_forecast, et --check y verrait une fuite.

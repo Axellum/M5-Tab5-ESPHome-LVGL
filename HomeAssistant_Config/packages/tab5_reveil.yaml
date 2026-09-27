@@ -148,8 +148,8 @@ script:
                 {% endif %}
               {% endif %}
             {% endfor %}
-            {% set meteo = states('weather.VOTRE_VILLE') %}
-            {% set tmax = state_attr('weather.VOTRE_VILLE', 'temperature') %}
+            {# Source des prévisions choisie dans HA (sensor.tab5_meteo, lot 4c-3). #}
+            {% set tmax = state_attr('sensor.tab5_meteo', 'temperature') %}
             Bonjour. Il est {{ h }} heures {{ m }}.
             {%- if ns.travail != '' %} Vous travaillez de {{ ns.travail }}.
             {%- else %} Pas de travail aujourd'hui.
