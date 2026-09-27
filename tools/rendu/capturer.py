@@ -44,6 +44,13 @@ logger = logging.getLogger("capturer")
 # Laisse LVGL finir ses animations (rouleau de l'horloge, bascules) avant la capture.
 ATTENTE_RENDU = 3.0
 
+# Panneau de la carte centrale montré par chaque scène (action rendu_panneau : 0
+# planning, 1 pluie, 3 info). Sans ça, le rotateur (8 s) décidait selon le moment de
+# la capture, parfois en plein fondu entre deux panneaux.
+PANNEAUX = {1: 0, 2: 1, 3: 3}
+# rendu_panneau avance d'un pas toutes les 500 ms, 8 pas au plus.
+ATTENTE_PANNEAU = 5.0
+
 
 def nom_de(index: int, nom_scene: str, suffixe: str = "") -> str:
     """« 1-journee-ensoleillee » (ou « …-en ») : ASCII, sans espace, dans l'ordre des scènes."""
@@ -82,6 +89,8 @@ async def capturer(hote: str, suffixe: str, puis_langue: str | None) -> None:
             logger.info("Scène %d : %s", index, scene.nom)
             await _pousser_scene(client, services_par_nom, scene, frozenset())
             await asyncio.sleep(ATTENTE_RENDU)
+            await _appeler(client, services_par_nom, "rendu_panneau", panneau=PANNEAUX.get(index, 0))
+            await asyncio.sleep(ATTENTE_PANNEAU)
             await _appeler(client, services_par_nom, "rendu_capture", fichier=nom_de(index, scene.nom, suffixe))
             await asyncio.sleep(1.0)
         if puis_langue:

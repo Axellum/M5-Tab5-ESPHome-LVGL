@@ -140,6 +140,30 @@ api:
         - snapshot.take:
             id: tab5_display
             filename: !lambda 'return fichier;'
+    # La carte centrale change de panneau toutes les 8 s (tab5_central_rotator_auto) :
+    # une capture tombait parfois dans le fondu de 190 ms entre deux panneaux, ou sur
+    # un autre panneau selon le nombre de tours déjà faits (vu le 27/09/2026, scène 2
+    # en anglais). tools/rendu/capturer.py appelle donc cette action avant chaque
+    # capture : le rotateur s'arrête et la carte avance, un pas à la fois comme un
+    # appui, jusqu'au panneau demandé (ordre de central_wraps(), tab5_central.cpp).
+    - service: rendu_panneau
+      description: "Rendu hors tablette (lot 7) : arrête le rotateur de la carte centrale sur un panneau."
+      variables:
+        panneau:
+          type: int
+          description: "0 planning, 1 pluie, 2 vigilance, 3 info, 4-7 alertes HA (un panneau inactif est sauté)."
+          example: "1"
+      then:
+        - script.stop: tab5_central_rotator_auto
+        - repeat:
+            count: 8
+            then:
+              - if:
+                  condition:
+                    lambda: 'return g_central_ctx.current_panel != panneau;'
+                  then:
+                    - lambda: 'advance_central_panel_rotator(g_central_ctx);'
+                    - delay: 500ms
 
 script:
   # Journal des démarrages (tab5_journal.cpp) : rien à envoyer depuis le rendu.

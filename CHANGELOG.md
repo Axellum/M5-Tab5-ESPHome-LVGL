@@ -4,6 +4,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Rendu hors tablette : captures stables (suite du lot 7)
+
+- **Captures instables** : sur un run, la scène « pluie » en anglais est tombée en plein
+  fondu entre le panneau pluie et le panneau des alertes. La carte centrale change de
+  panneau toutes les 8 s, et la capture tombait à un moment différent de ce cycle selon
+  le run.
+- **Correctif, rendu seulement** : l'action `rendu_panneau` (`Tab5/rendu/bouchons.yaml`)
+  arrête le rotateur et avance la carte, un pas à la fois comme un appui, jusqu'au
+  panneau voulu. `tools/rendu/capturer.py` fixe un panneau par scène : planning, pluie,
+  info. Rien ne change sur la tablette.
+- ADR-0021 complété.
+
 ### 2026-09-27 — Textes de présentation prêts pour la 3.0 (lot 8)
 
 Lot 8 de l'audit « ouverture » (communication), **docs seulement**. Choix d'Axel : forum
