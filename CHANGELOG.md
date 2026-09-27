@@ -4,6 +4,74 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-09-27
+
+De `v2.0.0` (25/09) à aujourd'hui : 42 pull requests (#137 → #180), plus celle de la
+release. Trois chantiers : la fin du **deuxième audit** (organisation du code, dames,
+démarrage) et les expériences de performance qui en sont sorties (PSRAM, -O2, cache L2,
+pile) ; le **troisième audit, consacré aux ressources** (RAM, CPU, base HA, code mort,
+factorisation), soldé ; le début de l'**audit « ouverture »** (vitrine communautaire,
+révisions ST7121 et ILI9881C du Tab5, packages HA qui sont la production). **Version
+mineure** : les 16 actions de l'API et leurs variables sont inchangées, le plancher reste
+ESPHome 2026.9.0, et une OTA suffit depuis la 2.0.0. Côté Home Assistant, quelques gestes
+en mettant à jour.
+
+### À faire en mettant à jour depuis 2.0.0
+
+- **Les exemples HA deviennent des packages** (#180). `automations_examples.yaml.example`,
+  `scripts_examples.yaml` et `template_sensors_examples.yaml` sont retirés : leur contenu
+  est dans `packages/tab5_push.yaml`. Si vous les aviez recopiés dans vos fichiers, retirez
+  ces copies avant d'installer le package, pour ne pas définir deux fois les mêmes scripts
+  et automatisations.
+- **« Tab5 Uptime » devient l'heure du dernier démarrage** (#172) : même nom, même entité.
+  Rechargez l'intégration ESPHome après la mise à jour, sinon l'entité reste `unavailable`
+  ([troubleshooting](docs/troubleshooting.md)). Une automatisation qui lisait des secondes
+  est à revoir ; la garde (b) de `packages/tab5_health.yaml` est déjà réécrite.
+- **Redéployer `packages/tab5_health.yaml`** : garde (b) réécrite (#172, #174), garde (e)
+  nouvelle, qui reçoit le journal des démarrages (#175, #177).
+- **Entités qui quittent HA** : « WiFi Power », « USB Power » et « External 5V Power »
+  passent en `internal: true` (#172). Supprimez-les du registre de HA si elles y restent.
+- **« Écran courant »** : l'accueil s'appelle « Accueil » tout court (#151).
+- **Assistant** : la taille M disparaît, un réglage M enregistré retombe sur A- (#171).
+- **Nouveau, facultatif** : `tab5_ecran:` dans `Tab5/user_entities.yaml` pour un Tab5 à
+  écran ST7121 ou ILI9881C (#179) ; `packages/tab5_micro_absence.yaml` (#169) ; allumage de
+  l'écran à la présence, dans `tab5_push.yaml` (#170).
+
+### Mesures de la version
+
+- **Compilations de la CI** (ESPHome 2026.9.0), firmware de `v2.0.0` (`6a07172`) contre
+  celui de ce tag :
+  - **image** 2 844 874 → 3 070 188 o (+225 Ko, 37,8 % de la partition). -O2 et le code
+    exécuté depuis la PSRAM ont coûté +468 Ko (#149) ; les polices (−179 Ko, #171), le
+    calendrier en C++ (−53 Ko, #168) et la factorisation (−20 Ko, #167) en ont repris une
+    partie ;
+  - **RAM statique** 258 378 → 170 752 o (−87,6 Ko), surtout grâce aux jeux, qui ne
+    réservent plus rien quand ils sont fermés (≈ 113 Ko → 377 o, #154 et #162). Le cache L2
+    passé à 256 Ko (#159) prend 128 Ko de RAM interne : la RAM annoncée par ESPHome passe de
+    576 464 à 445 392 o.
+- **Rendu, mesuré sur la tablette pendant les lots** (même protocole, 25-26/09 ; pas refait
+  sur le build final) : image pleine au rallumage 202-204 → 163 ms, calendrier 340 → 285 ms,
+  console système 400 → 329 ms, boucle au repos 41-42 → 31 ms. Ouverture des popups 30 à
+  42 % plus rapide (Climatisation 365 → 216 ms, #166).
+- **Pile de la boucle** : 1 476 → 9 988 o libres au minimum (#150).
+- **Base HA** : jusqu'à ≈ 10 700 lignes par jour de moins pour « Écran courant » (#151),
+  ≈ 5 000 lignes et ≈ 4 300 messages API de moins par jour (#163), 1 440 pour l'uptime
+  (#172). 576 appels de poussée de moins par jour, poussée complète 7,6 → 4,1 s (#164).
+- **Firmware de la release** : `main` à ce tag n'a pas été flashé seul. L'appareil de
+  l'auteur tourne depuis le 27/09 (08:28, OTA) sur ce code plus la PR #181 (langue FR/EN),
+  qui n'ajoute que du code. La plupart des lots ont été flashés avant leur merge ; #177
+  (journal) et #179 (révisions, ST7123 seulement) n'ont tourné que dans ce build. CI : `build` et
+  `build-min` verts sur `c134dfb`, `build-revisions` sur `86e615b` (après lui, seuls des
+  fichiers HA changent).
+
+### Problèmes connus
+
+- **ST7121 et ILI9881C** : compilées par la CI, **jamais essayées sur une tablette**
+  (#179).
+- **Flipper** : en portrait, LVGL écrit en boucle `indev_pointer_proc: X is 832 which is
+  greater than hor. res` tant qu'un doigt est posé (coordonnées tactiles non transformées).
+  Les flippers fonctionnent ; seuls les logs sont inondés.
+
 ### 2026-09-26 — Home Assistant : une seule source, les packages publics sont la production
 
 Lot 3 de l'audit « ouverture » du 26/09 (demande d'Axel : « tout », avec les deux
