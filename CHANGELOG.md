@@ -89,6 +89,24 @@ l'ADR-0015). Un même binaire doit pouvoir servir à tout le monde (flasheur web
   réauthentification de HA quand une tablette perd sa clé (« chiffrement désactivé »,
   confirmer, puis nouvelle clé), identifiants Wi-Fi rangés par hash de config seulement
   quand le YAML en a. `esphome config` valide.
+- **Essai sur la tablette** (27/09, Axel sur place, ESP32-P4 rev1.3, antérieure à la v3) :
+  - migration depuis `main` @ `b13237b` : `tools/migrer_vers_3.py` à 16:30, OTA chiffrée
+    avec l'ancienne clé acceptée ; la tablette redémarre sans réseau, Wi-Fi donné par
+    « Tab5 Fallback AP » depuis un téléphone, réauthentification « chiffrement désactivé »
+    confirmée dans HA, qui fournit une nouvelle clé (différente de l'ancienne) : connectée
+    à 16:33, moins de 3 minutes après le démarrage ;
+  - aucune entité indisponible, l'automatisation des emplacements pousse les 34
+    emplacements et la clim à la connexion, **écran complet (Axel)** ;
+  - la tablette refuse ensuite la clé nulle et le clair ; `tools/tab5_logs.py` lit son
+    journal avec la clé gardée par HA ;
+  - **signature** : le firmware signé par la clé du projet passe en OTA (en clair) ; un
+    firmware signé par une autre clé et un firmware non signé sont refusés (« Firmware
+    signature verification failed »), la tablette reste sur le sien sans redémarrer ;
+  - **fuseau** : « Fuseau du dernier passage de HA remis (UTC+1 h en hiver) » au
+    démarrage suivant, 6 s avant le Wi-Fi. Lu sur l'USB : le journal par l'API arrive
+    trop tard pour ces lignes.
+- **Mesures** (build local, ESPHome 2026.9.0) : image 3 141 222 o (+23,8 Ko), RAM
+  statique 170 626 o. Aucun avertissement dans le code du projet.
 - **À savoir** :
   - une tablette 2.x migre une fois, sur place (docs/installation.md, « Passer à la 3.0 ») ;
   - clé de signature perdue = plus d'OTA, seulement l'USB ;
