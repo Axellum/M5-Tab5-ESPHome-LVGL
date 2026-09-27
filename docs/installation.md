@@ -14,7 +14,7 @@
 - A M5Stack Tab5. The **ST7123** display chip (sticker on the back) is the one tested daily; the ST7121 and the original ILI9881C revisions compile but have never been run on a device — see [Hardware revisions](hardware.md#hardware-revisions), and Step 2 to pick yours
 
 Optional but used by the default configuration:
-- **Météo-France** integration (for weather data — replace with your own weather integration if outside France)
+- A **weather integration** with hourly and daily forecasts (Météo-France, Met.no, OpenWeatherMap…); see [Weather providers](#weather-providers)
 - **Google Calendar** integration (for the planning screen)
 - A configured **Home Assistant Voice pipeline** (for voice assistant features)
 
@@ -137,15 +137,27 @@ Or just click **Install → Wirelessly** in the ESPHome dashboard.
 
 ---
 
-## Météo-France specifics
+## Weather providers
 
-The weather screen is built around Météo-France's data structure. If you are in France:
+The screen does not depend on one weather service (since lot 4c, 2026-09-27).
 
-1. Install the **Météo-France** integration from the HA integrations page
-2. You will get entities: `weather.your_city`, `sensor.your_city_next_rain`, `sensor.XX_weather_alert`
-3. The full push automation in `packages/tab5_push.yaml` queries `v1/vision/rain` and `v1/forecast` from Météo-France's API and formats the response into the semicolon-delimited payload the device expects
+**Forecasts** (hourly and daily pages) come from any `weather.*` entity: set `VOTRE_VILLE` so that `weather.VOTRE_VILLE` is yours. Some integrations lack one of the two forecast types (NWS has no daily forecast, Buienradar no hourly one): that page then shows empty tiles.
 
-If you are outside France, the weather screen requires adaptation. The push automation will need to be rewritten to query your local weather integration and produce the same payload format. The payload format is documented in the package comments.
+**Rain in the next hour and weather warnings** are optional. Their source is chosen **in Home Assistant**, with the two selects of `packages/tab5_meteo_sources.yaml`, without editing YAML:
+
+| Card | Select « Tab5 · source … » | What it needs |
+|---|---|---|
+| Rain in the next hour (bars and sentence) | Météo-France | the Météo-France integration (France): `sensor.<city>_next_rain` |
+| | OpenWeatherMap | the OpenWeatherMap integration in **v3.0** mode, which needs a One Call subscription (1,000 calls a day free; HA polls every 10 min). Set `VOTRE_METEO_OWM` to its full entity id (`weather.openweathermap` by default) |
+| | Aucune (none) | the rain card is hidden |
+| Weather warnings | Météo-France | `sensor.<department>_weather_alert` (set `VOTRE_DEPARTEMENT`) |
+| | MeteoAlarm | the MeteoAlarm integration (YAML only, 39 European countries, one alert at a time). Set `VOTRE_METEOALARM` to its full entity id (`binary_sensor.meteoalarm` by default) |
+| | Aucune (none) | no warning icons |
+
+Honest limits:
+- The OpenWeatherMap and MeteoAlarm adapters were tested with simulated data, not yet on a real installation.
+- Frost probability exists only at Météo-France; the snowflake icon reads `sensor.<city>_snow_chance` when it exists.
+- Other warning sources (DWD, Environment Canada, NWS Alerts…) are not wired yet.
 
 ---
 
@@ -165,7 +177,7 @@ If you are outside France, the weather screen requires adaptation. The push auto
 - Un M5Stack Tab5. La puce écran **ST7123** (autocollant au dos) est celle testée tous les jours ; les révisions ST7121 et ILI9881C d'origine compilent mais n'ont jamais tourné sur une tablette — voir [Révisions matérielles](hardware.md#révisions-matérielles), et l'étape 2 pour choisir la vôtre
 
 Optionnel mais utilisé par la configuration par défaut :
-- Intégration **Météo-France** (pour les données météo — remplacez par votre propre intégration si vous êtes hors de France)
+- Une **intégration météo** avec prévisions horaires et journalières (Météo-France, Met.no, OpenWeatherMap…) ; voir [Fournisseurs météo](#fournisseurs-météo)
 - Intégration **Google Calendar** (pour l'écran planning)
 - Un **pipeline Voice Home Assistant** configuré (pour les fonctions assistant vocal)
 
@@ -265,12 +277,24 @@ Ou cliquez simplement **Installer → Sans fil** dans le dashboard ESPHome.
 
 ---
 
-## Spécificités Météo-France
+## Fournisseurs météo
 
-L'écran météo est construit autour de la structure de données de Météo-France. Si vous êtes en France :
+L'écran ne dépend plus d'un seul service météo (lot 4c, 27/09/2026).
 
-1. Installez l'intégration **Météo-France** depuis la page des intégrations HA
-2. Vous obtiendrez des entités : `weather.votre_ville`, `sensor.votre_ville_next_rain`, `sensor.XX_alerte_meteo`
-3. L'automatisation de poussée complète de `packages/tab5_push.yaml` interroge `v1/vision/rain` et `v1/forecast` de l'API Météo-France et formate la réponse en payload délimité par des points-virgules attendu par l'appareil
+Les **prévisions** (pages horaires et journalières) viennent de n'importe quelle entité `weather.*` : réglez `VOTRE_VILLE` pour que `weather.VOTRE_VILLE` soit la vôtre. Certaines intégrations n'ont qu'un des deux types de prévisions (NWS pas de journalières, Buienradar pas d'horaires) : la page concernée affiche alors des tuiles vides.
 
-Si vous êtes hors de France, l'écran météo nécessite une adaptation. L'automatisation push devra être réécrite pour interroger votre intégration météo locale et produire le même format de payload. Le format du payload est documenté dans les commentaires du package.
+La **pluie dans l'heure** et les **vigilances** sont facultatives. Leur source se choisit **dans Home Assistant**, avec les deux listes de `packages/tab5_meteo_sources.yaml`, sans toucher au YAML :
+
+| Carte | Liste « Tab5 · source … » | Ce qu'il faut |
+|---|---|---|
+| Pluie dans l'heure (barres et phrase) | Météo-France | l'intégration Météo-France (France) : `sensor.<ville>_next_rain` |
+| | OpenWeatherMap | l'intégration OpenWeatherMap en mode **v3.0**, qui demande l'abonnement One Call (1 000 appels par jour gratuits ; HA interroge toutes les 10 min). Réglez `VOTRE_METEO_OWM` sur l'entity_id complet (`weather.openweathermap` par défaut) |
+| | Aucune | la carte pluie est masquée |
+| Vigilances | Météo-France | `sensor.<département>_weather_alert` (réglez `VOTRE_DEPARTEMENT`) |
+| | MeteoAlarm | l'intégration MeteoAlarm (en YAML seulement, 39 pays européens, une alerte à la fois). Réglez `VOTRE_METEOALARM` sur l'entity_id complet (`binary_sensor.meteoalarm` par défaut) |
+| | Aucune | pas d'icônes de vigilance |
+
+Limites, en toute franchise :
+- Les adaptateurs OpenWeatherMap et MeteoAlarm ont été testés avec des données simulées, pas encore sur une vraie installation.
+- La probabilité de gel n'existe que chez Météo-France ; l'icône flocon lit `sensor.<ville>_snow_chance` quand il existe.
+- Les autres sources d'alertes (DWD, Environment Canada, NWS Alerts…) ne sont pas encore branchées.

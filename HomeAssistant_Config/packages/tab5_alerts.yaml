@@ -106,7 +106,7 @@ automation:
               {% if aid == 'ha:unavailable' %}
                 {% set ns.out = ns.out + [aid] %}
               {% elif aid.startswith('meteo:') %}
-                {% set lvl = states('sensor.VOTRE_DEPARTEMENT_weather_alert') | lower %}
+                {% set lvl = states('sensor.tab5_vigilance') | lower %}
                 {% if aid == 'meteo:' ~ lvl %}
                   {% set ns.out = ns.out + [aid] %}
                 {% endif %}
@@ -114,7 +114,9 @@ automation:
                 {% if is_state(aid, 'on') %}
                   {% set ns.out = ns.out + [aid] %}
                 {% endif %}
-              {% elif states(aid) in ['on', 'unavailable', 'unknown'] %}
+              {# '.' : un id qui n'est pas une entité (id de test, ancien format)
+                 rendait « unknown » et restait pour toujours (vu le 27/09/2026). #}
+              {% elif '.' in aid and states(aid) in ['on', 'unavailable', 'unknown'] %}
                 {% set ns.out = ns.out + [aid] %}
               {% endif %}
             {% endfor %}

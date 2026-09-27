@@ -4,8 +4,9 @@
 # @role Tout ce que Home Assistant fait POUR le Tab5 hors packages dédiés : les
 #       automatisations qui poussent les données vers l'écran (push-only, cf.
 #       Tab5/README.md), les scripts de poussée `tab5_push_*`, les scripts appelés
-#       par le Tab5 (LEDs, PC + TV), le capteur « Tab5 Pluie dans l'heure » et le
-#       garde-fou `is_primary_active`.
+#       par le Tab5 (LEDs, PC + TV) et le garde-fou `is_primary_active`. La météo
+#       « pluie dans l'heure » et « vigilances » arrive par les capteurs normalisés de
+#       packages/tab5_meteo_sources.yaml (lot 4c-2), quel que soit le fournisseur.
 # @langue Depuis le lot 4c (27/09/2026), HA n'envoie plus de phrases françaises au
 #       Tab5 : des codes (pluie « @niveau,début », bandeau « @ha|… », alertes
 #       « @maj: » / « @indispo: ») que la tablette compose dans SA langue. Déployer ce
@@ -20,8 +21,8 @@
 #       lecture seule ; modifier ce fichier, rendre, déployer.
 # @install `homeassistant: packages: !include_dir_named packages` dans
 #       configuration.yaml, puis ce fichier (rendu) dans config/packages/.
-#       Placeholders à remplacer (placeholders.example.yaml) : VOTRE_VILLE,
-#       VOTRE_DEPARTEMENT, VOTRE_CLIMATISATION, VOTRE_LEDS, VOTRE_TV, VOTRE_PC,
+#       Placeholders à remplacer (placeholders.example.yaml) : VOTRE_VILLE (entité
+#       weather.* de votre fournisseur, quel qu'il soit), VOTRE_CLIMATISATION, VOTRE_LEDS, VOTRE_TV, VOTRE_PC,
 #       VOTRE_TELEPHONE, VOTRE_CAPTEUR_PRESENCE, VOTRE_EMAIL_gmail_com ; et les
 #       entités du Tab5 lui-même si votre appareil n'a pas le nom par défaut
 #       (ex. préfixe de pièce `salon_…`, cf. placeholders.example.yaml).
@@ -74,7 +75,7 @@ automation:
       # déclencheur partait à CHAQUE rafraîchissement Météo-France (toutes les
       # 5 min, attribut `1_hour_forecast`) et relançait toute la chaîne pour rien.
       - platform: state
-        entity_id: sensor.VOTRE_VILLE_next_rain
+        entity_id: sensor.tab5_pluie_dans_l_heure
         to: ~
       # Toutes les 10 min : prévisions (l'heure et le jour avancent), pluie, alertes HA
       # (les capteurs « problem » et le compte d'indisponibles n'ont pas d'autre déclencheur).
@@ -157,16 +158,14 @@ automation:
       - delay: "00:00:01"
 
       # ====== 4b. METEO PLUIE 1H (9 barres en UN appel : 0,5,10,15,20,25 puis 35,45,55) ======
-      # Payload « idx|intensité;… » (ADR-0003). Seul contrat pluie depuis le 08/09/2026.
+      # Payload « idx|intensité;… » (ADR-0003), construit par le capteur normalisé
+      # (attribut `barres`, packages/tab5_meteo_sources.yaml) selon la source choisie.
+      # Sans capteur : 9 barres vides, pour ne pas laisser les anciennes à l'écran.
       - action: esphome.tab5_ha_hmi_tab5_maj_pluie_1h_bulk
         continue_on_error: true
         data:
           payload: >
-            {% set fc = state_attr('sensor.VOTRE_VILLE_next_rain', '1_hour_forecast') %}
-            {% set keys = ['0 min', '5 min', '10 min', '15 min', '20 min', '25 min', '35 min', '45 min', '55 min'] %}
-            {% set ns = namespace(r='') %}
-            {% for k in keys %}{% set ns.r = ns.r ~ loop.index0 ~ '|' ~ (fc.get(k, 'Inconnu') if fc is not none else 'Inconnu') ~ ';' %}{% endfor %}
-            {{ ns.r }}
+            {{ state_attr('sensor.tab5_pluie_dans_l_heure', 'barres') or '0|0;1|0;2|0;3|0;4|0;5|0;6|0;7|0;8|0;' }}
 
       - delay: "00:00:01"
 
@@ -319,7 +318,7 @@ automation:
       - platform: state
         entity_id: sensor.tab5_pluie_dans_l_heure
       - platform: state
-        entity_id: sensor.VOTRE_DEPARTEMENT_weather_alert
+        entity_id: sensor.tab5_vigilance
       - platform: state
         entity_id:
           - update.home_assistant_core_update
@@ -486,7 +485,7 @@ script:
   tab5_push_alertes:
     alias: "Tab5 — pousser vigilance, bandeau info et alertes HA"
     description: >-
-      Sections 1 (code de pluie + vigilance Météo-France), 7 (bandeau info) et 7b
+      Sections 1 (code de pluie + vigilance, capteurs normalisés), 7 (bandeau info) et 7b
       (rotateur d'alertes HA) de l'écran Tab5. Appelé par la poussée complète
       (tab5_ha_hmi_updater) et par la poussée légère (tab5_ha_hmi_alerts_push).
       Les mises à jour, capteurs « problem » et le compte d'indisponibles sont
@@ -505,7 +504,10 @@ script:
         continue_on_error: true
         data:
           payload: >-
-            {%- set pluie = states('sensor.tab5_pluie_dans_l_heure') -%}{{ pluie if pluie.startswith('@') else '@-1,0' }}|{{ states('sensor.VOTRE_DEPARTEMENT_weather_alert') | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
+            {%- set pluie = states('sensor.tab5_pluie_dans_l_heure') -%}
+            {%- set globale = states('sensor.tab5_vigilance') -%}
+            {%- set phen = state_attr('sensor.tab5_vigilance', 'phenomenes') or (['Vert'] * 11) | join('|') -%}
+            {{ pluie if pluie.startswith('@') else '@-1,0' }}|{{ globale if globale in ['Vert', 'Jaune', 'Orange', 'Rouge'] else 'Vert' }}|{{ phen }}
       - alias: "Changement du code de pluie : pas de relevé santé HA"
         condition: template
         value_template: "{{ not (vigilance_seule | default(false)) }}"
@@ -516,7 +518,7 @@ script:
             - update.home_assistant_operating_system_update
           dismissed: >-
             {{ (states('input_text.tab5_alerts_dismissed') or '').split('|') | reject('equalto', '') | list }}
-          alerte: "{{ states('sensor.VOTRE_DEPARTEMENT_weather_alert') }}"
+          alerte: "{{ states('sensor.tab5_vigilance') }}"
           maj: >-
             {%- set ns = namespace(l=[]) -%}
             {%- for u in states.update | selectattr('state', 'eq', 'on') | rejectattr('entity_id', 'in', dismissed) | sort(attribute='entity_id') -%}
@@ -652,42 +654,7 @@ script:
             target:
               entity_id: media_player.VOTRE_TV
 
-# Capteur de template (format `template: - sensor:` d'un package) : la pluie dans
-# l'heure en CODE, lu par la tablette (lot 4c, 27/09/2026) :
-#   « @niveau,début » — niveau -1 pas de données, 0 temps sec, 1 à 4 pluie faible à
-#   très forte, 5 intensité inconnue ; début = epoch UTC du début de la pluie, 0 s'il
-#   pleut déjà.
-# La tablette compose la phrase dans sa langue (« Averses dans 12 mn » / « Showers in
-# 12 min ») et décompte les minutes elle-même : ce capteur ne change qu'avec les données
-# Météo-France, plus à chaque minute (l'ancien « Phrase Prochaine Pluie » appelait
-# now() et relançait la poussée légère toutes les minutes avant une averse).
-template:
-  - sensor:
-      - name: "Tab5 Pluie dans l'heure"
-        unique_id: tab5_pluie_dans_l_heure
-        icon: mdi:weather-rainy
-        state: >
-          {% set ent = 'sensor.VOTRE_VILLE_next_rain' %}
-          {# Libellés Météo-France → niveau ; « Pluie forte » et « très forte » donnaient
-             tous deux « Averses » dans l'ancienne phrase, la tablette fait de même. #}
-          {% set niv = {'Temps sec': 0, 'Pluie faible': 1, 'Pluie modérée': 2, 'Pluie forte': 3,
-                        'Pluie très forte': 4, 'Pluie trés forte': 4} %}
-          {% if not has_value(ent) %}
-            @0,0
-          {% else %}
-            {% set next_rain = states(ent) | as_timestamp(default=0) %}
-            {% set ref = state_attr(ent, 'forecast_time_ref') | as_timestamp(default=0) %}
-            {% set fc = state_attr(ent, '1_hour_forecast') %}
-            {% if next_rain > 0 and ref > 0 and fc is not none %}
-              {% set actuel = fc.get('0 min', 'Temps sec') %}
-              {% if actuel != 'Temps sec' %}
-                {# Il pleut déjà (à l'heure de référence) : pas de décompte. #}
-                @{{ niv.get(actuel, 5) }},0
-              {% else %}
-                {% set cle = ((next_rain - ref) / 60) | int(0) ~ ' min' %}
-                @{{ niv.get(fc.get(cle, 'Pluie'), 5) }},{{ next_rain | int(0) }}
-              {% endif %}
-            {% else %}
-              @-1,0
-            {% endif %}
-          {% endif %}
+# Le capteur « Tab5 Pluie dans l'heure » (code « @niveau,début ») vit depuis le
+# lot 4c-2 dans packages/tab5_meteo_sources.yaml, avec « Tab5 Vigilance » : même
+# unique_id, même entité, mais sa source se choisit dans HA (Météo-France,
+# OpenWeatherMap ou aucune).

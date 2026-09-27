@@ -20,12 +20,12 @@ The push automations, the scripts they share, the scripts the Tab5 calls, the ra
 What it pushes:
 - **Daily forecast (15 days):** every 10 min, on calendar changes and on (re)connection — serializes 15 × (index, day label, condition, min, max, weekend/holiday flags, work hours) into a `|`/`;`-delimited string sent to `tab5_maj_previsions_jours_bulk`
 - **Hourly forecast (10 slots):** two chunks of 5 through `tab5_maj_previsions_heures_bulk` (the screen has two hourly pages)
-- **Short-term rain chart:** on `sensor.*_next_rain` state change — **9** bars in **one** call (`tab5_maj_pluie_1h_bulk`, payload `idx|intensity;…`, index 0–8 = 0/5/10/…/55 min) built from Météo-France's `v1/vision/rain` data
+- **Short-term rain chart:** on a change of `sensor.tab5_pluie_dans_l_heure` (packages/tab5_meteo_sources.yaml) — **9** bars in **one** call (`tab5_maj_pluie_1h_bulk`, payload `idx|intensity;…`, index 0–8 = 0/5/10/…/55 min, intensity = Météo-France label or level 0–4), from the source chosen in HA: Météo-France, OpenWeatherMap or none
 - **Current weather / probabilities:** `tab5_maj_meteo_actuelle` (condition, temperature, humidity) and `tab5_maj_probabilites` (UV, frost, snow) — when they change (`tab5_ha_hmi_meteo_push`) and on (re)connection, script `tab5_push_meteo`
 - **Climate state:** dedicated fast-path automation `tab5_ha_hmi_clim_push` (no delay, `mode: restart`) and on (re)connection — `tab5_maj_clim` (target, current, mode, preset, fan, swing), script `tab5_push_clim`
 - **Shutter state:** `tab5_maj_volet_etat` when the helpers change (`tab5_volet_updater`) and on (re)connection, script `tab5_push_volet` — also arms the device-local “Stop” wake word while the shutter moves
 - **Info banner:** `tab5_maj_info_texte` (text, colour, dismiss id) — 3-day calendar recap or a weather-alert banner
-- **Météo-France vigilance:** `tab5_maj_alerte_meteo_france` — a single 11-field `|`-delimited payload
+- **Weather warnings:** `tab5_maj_alerte_meteo_france` (historical name) — one `|`-delimited payload: rain code, overall level, then 11 hazards (the 9 Météo-France ones, fog, forest fire), from `sensor.tab5_vigilance` (Météo-France, MeteoAlarm or none)
 - **HA alert queue:** `tab5_maj_alertes_ha_bulk` — up to 4 banners in the central rotator (see `packages/tab5_alerts.yaml`)
 
 Also in the package, not a push: **`tab5_screen_presence_wifi`** switches the screen backlight on when the presence sensor detects someone (or the phone comes home) if it is off, and off after **15 min** without presence (or when the phone leaves) if it is on and the alarm is not ringing. With the screen off the firmware pauses LVGL; a touch or a tap on the panel wakes it.
@@ -42,13 +42,20 @@ Room temperatures, humidity, light states and plant moisture do **not** go throu
 
 Also the **push scripts** `tab5_push_alertes` (sections 1, 7 and 7b: Météo-France vigilance, info banner, HA alert rotator — updates, `problem` sensors and the unavailable count are read once per run), `tab5_push_meteo`, `tab5_push_clim` and `tab5_push_volet`. These are called *by the automations*, not by the Tab5: each block exists once instead of being copied into the full push and into its on-change automation.
 
-**Template sensor.** `Tab5 Pluie dans l'heure` turns the Météo-France next-rain forecast into a **code**, `@level,start` (level -1 no data, 0 dry, 1 to 4 light to very heavy, 5 unknown intensity; start = UTC epoch of the rain, 0 if it is already raining). Since lot 4c (2026-09-27), the Tab5 writes the sentence itself, in its own language (« Averses dans 12 mn » / “Showers in 12 min”), and counts the minutes down on its own clock: the sensor only changes with the Météo-France data, no longer every minute. The info banner and the HA alert rotator are sent as codes too (`@ha|…`, `@maj:`, `@indispo:`). **Deploy this package after the lot 4c firmware**: an older firmware would show the codes as they are.
+**Template sensor** (now in `packages/tab5_meteo_sources.yaml`, see below). `Tab5 Pluie dans l'heure` turns the next-rain forecast into a **code**, `@level,start` (level -1 no data, 0 dry, 1 to 4 light to very heavy, 5 unknown intensity; start = UTC epoch of the rain, 0 if it is already raining). Since lot 4c (2026-09-27), the Tab5 writes the sentence itself, in its own language (« Averses dans 12 mn » / “Showers in 12 min”), and counts the minutes down on its own clock: the sensor only changes with the Météo-France data, no longer every minute. The info banner and the HA alert rotator are sent as codes too (`@ha|…`, `@maj:`, `@indispo:`). **Deploy this package after the lot 4c firmware**: an older firmware would show the codes as they are.
 
 **Guard `input_boolean.is_primary_active`.** Every push is conditioned on it; `force_primary_active_on_boot` turns it back on when HA starts, and `packages/tab5_health.yaml` warns if it stays off for 5 min. It is a leftover of a former two-instance setup ([ADR-0008](../docs/decisions/0008-single-ha-instance.md)): on a single Home Assistant it simply stays on.
 
 The assistant-reply example (engine → assistant popup) moved to `snippets/tab5_assist_reponse_exemple.yaml`: inside a package it would have been active for everyone.
 
 ---
+
+### `packages/tab5_meteo_sources.yaml`
+Weather adapters (lot 4c-2, 2026-09-27). Two selects pick the source **in Home Assistant, without YAML**: « Tab5 · source de la pluie dans l'heure » (Météo-France / OpenWeatherMap / Aucune) and « Tab5 · source des vigilances » (Météo-France / MeteoAlarm / Aucune). Two normalized sensors turn any source into what the Tab5 reads, and the pushes only read them:
+- `sensor.tab5_pluie_dans_l_heure`: state = rain code `@level,start`, attribute `barres` = the 9 bars. It is a trigger-based template: it runs `openweathermap.get_minute_forecast` (minute series in mm/h, read from the integration's cache — no extra API call). Thresholds: < 0.1 dry, < 2.5 light, < 7.6 moderate, < 50 heavy, then very heavy;
+- `sensor.tab5_vigilance`: state = overall level (Vert / Jaune / Orange / Rouge), attribute `phenomenes` = 11 levels. MeteoAlarm codes are mapped to the Tab5 slots (wind, snow-ice, thunderstorms, fog, heat, cold, coastal, forest fire, avalanches, rain, flooding); it exposes one alert at a time.
+
+The OpenWeatherMap and MeteoAlarm branches were tested with simulated data in Home Assistant's template engine, not yet with the real integrations. Setup: [weather providers](../docs/installation.md#weather-providers).
 
 ### `packages/tab5_health.yaml`
 Health-monitoring package: five guard automations that alert when the push pipeline silently degrades. Because the Tab5 is push-only (see `docs/decisions/0001-push-only-zero-polling.md`), a stale screen raises no error on its own — these automations are the HA-side safety net.
@@ -132,7 +139,9 @@ Replace these placeholders throughout the files:
 
 | Placeholder | What to replace with |
 |-------------|---------------------|
-| `VOTRE_VILLE` | Your city entity from Météo-France (`weather.your_city`) |
+| `VOTRE_VILLE` | Your weather entity, any provider (`weather.your_city`); Météo-France also derives `sensor.your_city_next_rain` from it |
+| `VOTRE_METEO_OWM` | Full entity id of the OpenWeatherMap weather (v3.0 mode), if you pick it for the rain (`weather.openweathermap`) |
+| `VOTRE_METEOALARM` | Full entity id of the MeteoAlarm binary sensor, if you pick it for the warnings (`binary_sensor.meteoalarm`) |
 | `VOTRE_DEPARTEMENT` | Your department number for weather alerts (e.g., `40`) |
 | `VOTRE_CLIMATISATION` | Your climate entity (`climate.your_ac_unit`) |
 | `VOTRE_EMAIL_gmail_com` | Your Google Calendar entity (`calendar.your_email_gmail_com`) |
@@ -204,12 +213,12 @@ Les automatisations de poussée, les scripts qu'elles partagent, les scripts app
 Ce qu'elle pousse :
 - **Prévisions journalières (15 jours) :** toutes les 10 min, au changement du calendrier et à la (re)connexion — sérialise 15 × (index, libellé jour, condition, min, max, drapeaux week-end/férié, heures de travail) en chaîne délimitée `|`/`;` vers `tab5_maj_previsions_jours_bulk`
 - **Prévisions horaires (10 créneaux) :** deux chunks de 5 via `tab5_maj_previsions_heures_bulk` (l'écran a deux pages horaires)
-- **Graphe de pluie court terme :** sur changement de `sensor.*_next_rain` — **9** barres en **un** appel (`tab5_maj_pluie_1h_bulk`, payload `idx|intensité;…`, index 0–8 = 0/5/10/…/55 min) construites depuis `v1/vision/rain` de Météo-France
+- **Graphe de pluie court terme :** sur changement de `sensor.tab5_pluie_dans_l_heure` (packages/tab5_meteo_sources.yaml) — **9** barres en **un** appel (`tab5_maj_pluie_1h_bulk`, payload `idx|intensité;…`, index 0–8 = 0/5/10/…/55 min, intensité = libellé Météo-France ou niveau 0–4), depuis la source choisie dans HA : Météo-France, OpenWeatherMap ou aucune
 - **Météo actuelle / probabilités :** `tab5_maj_meteo_actuelle` (condition, température, humidité) et `tab5_maj_probabilites` (UV, gel, neige) — au changement (`tab5_ha_hmi_meteo_push`) et à la (re)connexion, script `tab5_push_meteo`
 - **État climatisation :** automation dédiée à faible latence `tab5_ha_hmi_clim_push` (sans delay, `mode: restart`) et à la (re)connexion — `tab5_maj_clim` (cible, actuelle, mode, preset, ventilation, oscillation), script `tab5_push_clim`
 - **État volet :** `tab5_maj_volet_etat` au changement des helpers (`tab5_volet_updater`) et à la (re)connexion, script `tab5_push_volet` — arme aussi le wake word local « Stop » pendant le mouvement
 - **Bandeau info :** `tab5_maj_info_texte` (texte, couleur, id de dismiss) — récap calendrier 3 jours ou bannière d'alerte météo
-- **Vigilance Météo-France :** `tab5_maj_alerte_meteo_france` — un seul payload à 11 champs délimités `|`
+- **Vigilances :** `tab5_maj_alerte_meteo_france` (nom historique) — un seul payload délimité `|` : code de pluie, niveau global, puis 11 phénomènes (les 9 de Météo-France, brouillard, feux de forêt), depuis `sensor.tab5_vigilance` (Météo-France, MeteoAlarm ou aucune)
 - **File d'alertes HA :** `tab5_maj_alertes_ha_bulk` — jusqu'à 4 bandeaux dans le rotateur central (voir `packages/tab5_alerts.yaml`)
 
 Aussi dans le package, hors poussée : **`tab5_screen_presence_wifi`** allume l'écran quand le capteur de présence détecte quelqu'un (ou au retour du téléphone) s'il est éteint, et l'éteint après **15 min** sans présence (ou au départ du téléphone) s'il est allumé et que le réveil ne sonne pas. Écran éteint, le firmware met LVGL en pause ; un toucher ou une tape sur la dalle le rallume.
@@ -226,13 +235,20 @@ Les températures/humidités des pièces, les états de lumière et l'humidité 
 
 Il contient aussi les **scripts de poussée** `tab5_push_alertes` (sections 1, 7 et 7b : vigilance Météo-France, bandeau info, rotateur d'alertes HA — MAJ, capteurs `problem` et compte d'indisponibles relevés une fois par passage), `tab5_push_meteo`, `tab5_push_clim` et `tab5_push_volet`. Ceux-là sont appelés *par les automatisations*, pas par le Tab5 : chaque bloc n'existe qu'une fois au lieu d'être recopié dans la poussée complète et dans son automatisation au changement.
 
-**Capteur de template.** `Tab5 Pluie dans l'heure` transforme la prévision de pluie Météo-France en **code**, `@niveau,début` (niveau -1 pas de données, 0 sec, 1 à 4 faible à très forte, 5 intensité inconnue ; début = epoch UTC de la pluie, 0 s'il pleut déjà). Depuis le lot 4c (27/09/2026), le Tab5 écrit lui-même la phrase, dans sa langue (« Averses dans 12 mn » / “Showers in 12 min”), et décompte les minutes avec sa propre horloge : le capteur ne change plus qu'avec les données Météo-France, plus à chaque minute. Le bandeau info et le rotateur d'alertes HA partent aussi en codes (`@ha|…`, `@maj:`, `@indispo:`). **Déployer ce package après le firmware du lot 4c** : un firmware plus ancien afficherait les codes tels quels.
+**Capteur de template** (désormais dans `packages/tab5_meteo_sources.yaml`, voir plus bas). `Tab5 Pluie dans l'heure` transforme la prévision de pluie en **code**, `@niveau,début` (niveau -1 pas de données, 0 sec, 1 à 4 faible à très forte, 5 intensité inconnue ; début = epoch UTC de la pluie, 0 s'il pleut déjà). Depuis le lot 4c (27/09/2026), le Tab5 écrit lui-même la phrase, dans sa langue (« Averses dans 12 mn » / “Showers in 12 min”), et décompte les minutes avec sa propre horloge : le capteur ne change plus qu'avec les données Météo-France, plus à chaque minute. Le bandeau info et le rotateur d'alertes HA partent aussi en codes (`@ha|…`, `@maj:`, `@indispo:`). **Déployer ce package après le firmware du lot 4c** : un firmware plus ancien afficherait les codes tels quels.
 
 **Garde-fou `input_boolean.is_primary_active`.** Toutes les poussées en dépendent ; `force_primary_active_on_boot` le remet à `on` au démarrage de HA, et `packages/tab5_health.yaml` prévient s'il reste à `off` 5 min. C'est un reste d'une ancienne installation à deux instances ([ADR-0008](../docs/decisions/0008-single-ha-instance.md)) : avec un seul Home Assistant, il reste simplement à `on`.
 
 L'exemple de réponse de l'assistant (moteur → popup Assistant) est passé dans `snippets/tab5_assist_reponse_exemple.yaml` : dans un package, il aurait été actif chez tout le monde.
 
 ---
+
+### `packages/tab5_meteo_sources.yaml`
+Adaptateurs météo (lot 4c-2, 27/09/2026). Deux listes choisissent la source **dans Home Assistant, sans YAML** : « Tab5 · source de la pluie dans l'heure » (Météo-France / OpenWeatherMap / Aucune) et « Tab5 · source des vigilances » (Météo-France / MeteoAlarm / Aucune). Deux capteurs normalisés ramènent n'importe quelle source à ce que lit le Tab5, et les poussées ne lisent qu'eux :
+- `sensor.tab5_pluie_dans_l_heure` : état = code de pluie `@niveau,début`, attribut `barres` = les 9 barres. Capteur à déclencheurs : il lance `openweathermap.get_minute_forecast` (série à la minute en mm/h, lue dans le cache de l'intégration, sans appel d'API en plus). Seuils : < 0,1 sec, < 2,5 faible, < 7,6 modérée, < 50 forte, au-delà très forte ;
+- `sensor.tab5_vigilance` : état = niveau global (Vert / Jaune / Orange / Rouge), attribut `phenomenes` = 11 niveaux. Les codes MeteoAlarm sont rangés dans les cases du Tab5 (vent, neige-verglas, orages, brouillard, canicule, grand froid, submersion, feux de forêt, avalanches, pluie, inondation) ; il n'expose qu'une alerte à la fois.
+
+Les branches OpenWeatherMap et MeteoAlarm ont été testées avec des données simulées dans le moteur de modèles de Home Assistant, pas encore avec les vraies intégrations. Installation : [fournisseurs météo](../docs/installation.md#fournisseurs-météo).
 
 ### `packages/tab5_health.yaml`
 Package de surveillance santé : cinq automations de garde qui alertent quand le pipeline de push se dégrade silencieusement. Le Tab5 étant push-only (voir `docs/decisions/0001-push-only-zero-polling.md`), un écran figé ne lève aucune erreur par lui-même — ces automations sont le filet de sécurité côté HA.
@@ -316,7 +332,9 @@ Remplacez ces placeholders dans les fichiers :
 
 | Placeholder | Par quoi le remplacer |
 |-------------|----------------------|
-| `VOTRE_VILLE` | Votre entité ville Météo-France (`weather.votre_ville`) |
+| `VOTRE_VILLE` | Votre entité météo, tout fournisseur (`weather.votre_ville`) ; Météo-France en dérive aussi `sensor.votre_ville_next_rain` |
+| `VOTRE_METEO_OWM` | entity_id complet de la météo OpenWeatherMap (mode v3.0), si vous la choisissez pour la pluie (`weather.openweathermap`) |
+| `VOTRE_METEOALARM` | entity_id complet du binary_sensor MeteoAlarm, si vous le choisissez pour les vigilances (`binary_sensor.meteoalarm`) |
 | `VOTRE_DEPARTEMENT` | Votre numéro de département pour les alertes (ex: `40`) |
 | `VOTRE_CLIMATISATION` | Votre entité climate (`climate.votre_clim`) |
 | `VOTRE_EMAIL_gmail_com` | Votre entité Google Calendar (`calendar.votre_email_gmail_com`) |
