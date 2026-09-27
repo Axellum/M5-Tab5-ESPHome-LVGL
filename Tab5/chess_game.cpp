@@ -958,10 +958,12 @@ static void go_stats() {
         if (n < 0) return;
         k = (n >= (int) sizeof(body) - k) ? (int) sizeof(body) - 1 : k + n;
     };
-    // V / N / D = victoires / nulles / defaites, dans l'ordre des colonnes ci-dessous.
-    append("%s", tr("Niveau            V / N / D\n"));
+    // Une ligne par niveau, centrée : des colonnes alignées à l'espace ne tombent pas
+    // juste dans une police proportionnelle (vu sur le rendu hors tablette, 27/09/2026).
+    append("%s", tr("Victoires / nulles / défaites par niveau\n"));
+    const char* ligne = tr("%s : %u / %u / %u\n");
     for (int l = 0; l < CHESS_NLEVELS; l++) {
-        append("%-10s   %u / %u / %u\n", level_name(l),
+        append(ligne, level_name(l),
                (unsigned) gs->save.wins[l], (unsigned) gs->save.draws[l],
                (unsigned) gs->save.losses[l]);
     }

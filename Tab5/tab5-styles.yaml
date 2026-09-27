@@ -182,14 +182,15 @@ color:
 # widget, et chaque glyphe déclaré est affiché quelque part — pas de poids mort).
 font:
   # Texte libre (poussé par HA, réponses de l'assistant) : tout Latin-1 plus les
-  # ajouts de Windows-1252 (€ … ’ « » œ Œ — –), 216 glyphes. Déclarée une fois
+  # ajouts de Windows-1252 (€ … ’ « » œ Œ — –), et İ ō ř des questions de Trial
+  # Poursuite (İnönü, Jōmon Sugi, Dvořák ; 27/09/2026), 219 glyphes. Déclarée une fois
   # ici (ancre &latin1), reprise par *latin1 dans roboto_45_b et roboto_22.
   - file: gfonts://Roboto@700
     id: roboto_32_b
     size: 32
     bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
              # bitmaps divisés par deux, validé à l'œil par Axel
-    glyphs: &latin1 ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+    glyphs: &latin1 ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿİōř'
   # Chiffres de l'horloge et de l'écran de sonnerie : rien d'autre.
   - file: gfonts://Roboto@700
     id: roboto_130_b

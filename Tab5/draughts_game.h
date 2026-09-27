@@ -78,6 +78,7 @@ static constexpr uint32_t HL_CAP      = 0xF2853F;  // surbrille rafle (orange)
 static constexpr uint32_t HL_SEL      = 0xF7E08A;  // pièce sélectionnée
 static constexpr uint32_t TXT         = 0xF1F5F9;
 static constexpr uint32_t TXT_DIM     = 0xA89880;
+static constexpr uint32_t TXT_OFF     = 0x6E6252;  // entrée de menu inactive
 static constexpr uint32_t DANGER      = 0xE05252;
 static constexpr uint32_t BTN         = 0x3A2E22;
 static constexpr uint32_t BTN_EDGE    = 0x8A7050;

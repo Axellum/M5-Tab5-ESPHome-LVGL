@@ -78,6 +78,9 @@ class Ecran:
     fermer: tuple = ()
     attente: float = 1.2
     portrait: bool = False
+    # False : l'image change d'un run à l'autre sans que l'écran ait changé (graine tirée
+    # de l'horloge monotone, qui n'est pas figée) ; capturée, mais pas comparée.
+    stable: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -187,8 +190,10 @@ def _arcade(jeu: str, *etapes) -> tuple:
     return (Toucher(*SERRE, apres=1.0), Toucher(*CARTES[jeu], apres=1.2)) + etapes
 
 
-def _jeu(nom: str, jeu: str, etapes: tuple = (), fermer: tuple = (), portrait: bool = False) -> Ecran:
-    return Ecran(f"jeu-{jeu}" + (f"-{nom}" if nom else ""), _arcade(jeu, *etapes), fermer, portrait=portrait)
+def _jeu(nom: str, jeu: str, etapes: tuple = (), fermer: tuple = (), portrait: bool = False,
+         stable: bool = True) -> Ecran:
+    return Ecran(f"jeu-{jeu}" + (f"-{nom}" if nom else ""), _arcade(jeu, *etapes), fermer,
+                 portrait=portrait, stable=stable)
 
 
 # Parties : chaque partie lancée est ABANDONNÉE avant le retour à l'accueil. Laissée
@@ -281,9 +286,10 @@ ECRANS: tuple[Ecran, ...] = (
     _jeu("equipement", "fil-dor", (_menu(385),)),
     _jeu("reglages", "fil-dor", (_menu(453),)),
     _jeu("statistiques", "fil-dor", (_menu(521),)),
-    _jeu("partie", "fil-dor", FIL_DOR_PARTIE, (_menu(24),) + FIL_DOR_ABANDON + FIL_DOR_HUB),
-    _jeu("pause", "fil-dor", FIL_DOR_PAUSE, FIL_DOR_ABANDON + FIL_DOR_HUB),
-    _jeu("fin", "fil-dor", FIL_DOR_PAUSE + FIL_DOR_ABANDON, FIL_DOR_HUB),
+    # La salle de Fil d'Or est tirée d'une graine prise sur lv_tick_get() (marble_game.cpp).
+    _jeu("partie", "fil-dor", FIL_DOR_PARTIE, (_menu(24),) + FIL_DOR_ABANDON + FIL_DOR_HUB, stable=False),
+    _jeu("pause", "fil-dor", FIL_DOR_PAUSE, FIL_DOR_ABANDON + FIL_DOR_HUB, stable=False),
+    _jeu("fin", "fil-dor", FIL_DOR_PAUSE + FIL_DOR_ABANDON, FIL_DOR_HUB, stable=False),
 
     _jeu("", "arcanoide"),
     _jeu("classement", "arcanoide", (_menu(249),)),
@@ -341,3 +347,5 @@ ECRANS: tuple[Ecran, ...] = (
 
 # Captures en portrait (pas de rotation en PNG).
 PORTRAITS: frozenset = frozenset(e.nom for e in ECRANS if e.portrait)
+# Captures qui varient d'un run à l'autre : tools/rendu/comparer.py ne les compare pas.
+VARIABLES: frozenset = frozenset(e.nom for e in ECRANS if not e.stable)

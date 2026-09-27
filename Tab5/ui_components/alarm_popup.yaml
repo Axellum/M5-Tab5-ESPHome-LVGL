@@ -123,6 +123,10 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
+                # Libellés des boutons centrés dans la place À DROITE du pictogramme : centrés sur
+                # tout le bouton, « Ouverture », « Werkbegin », « Shift start » passaient dessous
+                # (rendu hors tablette, 27/09/2026). Même règle pour les boutons d'annonce. Sans
+                # marge intérieure (pad_all: 0), les x sont ceux du bouton.
                 - label: { text: "Mode", align: TOP_LEFT, x: 16, y: 8, text_color: color_text_dim }
                 - button:
                     id: btn_alarm_mode_0
@@ -132,13 +136,14 @@ obj:
                     width: 181
                     height: 56
                     radius: 16
+                    pad_all: 0   # positions exactes : le thème ajoutait ~21 px
                     styles: style_clim_btn
                     pressed: { bg_opa: 30% }
                     on_short_click:
                       - select.set_index: { id: tab5_alarm_mode, index: 0 }
                     widgets:
                       - label: { text: "\U000F0150", align: LEFT_MID, x: 14, text_font: mdi_font_32 }
-                      - label: { text: "Fixe", align: CENTER, x: 18 }
+                      - label: { text: "Fixe", align: LEFT_MID, x: 52, width: 121, text_align: CENTER }
                 - button:
                     id: btn_alarm_mode_1
                     align: TOP_LEFT
@@ -147,13 +152,14 @@ obj:
                     width: 181
                     height: 56
                     radius: 16
+                    pad_all: 0   # positions exactes : le thème ajoutait ~21 px
                     styles: style_clim_btn
                     pressed: { bg_opa: 30% }
                     on_short_click:
                       - select.set_index: { id: tab5_alarm_mode, index: 1 }
                     widgets:
                       - label: { text: "\U000F00D6", align: LEFT_MID, x: 14, text_font: mdi_font_32 }
-                      - label: { text: "Travail", align: CENTER, x: 18 }
+                      - label: { text: "Travail", align: LEFT_MID, x: 52, width: 121, text_align: CENTER }
                 - button:
                     id: btn_alarm_mode_2
                     align: TOP_LEFT
@@ -162,13 +168,14 @@ obj:
                     width: 181
                     height: 56
                     radius: 16
+                    pad_all: 0   # positions exactes : le thème ajoutait ~21 px
                     styles: style_clim_btn
                     pressed: { bg_opa: 30% }
                     on_short_click:
                       - select.set_index: { id: tab5_alarm_mode, index: 2 }
                     widgets:
                       - label: { text: "\U000F00F0", align: LEFT_MID, x: 14, text_font: mdi_font_32 }
-                      - label: { text: "Ouverture", align: CENTER, x: 18 }
+                      - label: { text: "Ouverture", align: LEFT_MID, x: 52, width: 121, text_align: CENTER }
                 - label: { id: lbl_alarm_mode_hint, text: "", align: TOP_LEFT, x: 16, y: 98, width: 557, text_color: color_text_dim }
 
           # ═══════════════════════════════════════════════════════════════════
@@ -188,7 +195,7 @@ obj:
               widgets:
                 - label: { text: "Délai", align: TOP_LEFT, x: 12, y: 8, width: 131, text_align: CENTER, text_color: color_text_dim }
                 - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_lead_dn", x: "12", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", op: "decrement", number: "tab5_alarm_lead" } }
-                - label: { id: lbl_alarm_lead, text: "90 min", align: TOP_LEFT, x: 48, y: 52, width: 59, text_align: CENTER }
+                - label: { id: lbl_alarm_lead, text: "1h30", align: TOP_LEFT, x: 48, y: 52, width: 59, text_align: CENTER }
                 - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_lead_up", x: "107", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", op: "increment", number: "tab5_alarm_lead" } }
 
                 - label: { text: "Pas avant", align: TOP_LEFT, x: 155, y: 8, width: 131, text_align: CENTER, text_color: color_text_dim }
@@ -322,7 +329,7 @@ obj:
 
                 - label: { text: "RDV avant", align: TOP_LEFT, x: 396, y: 6, width: 180, text_align: CENTER, text_color: color_text_dim }
                 - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_rdvlead_dn", x: "396", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0141", op: "decrement", number: "tab5_rdv_lead" } }
-                - label: { id: lbl_alarm_rdv_lead, text: "15 min avant", align: TOP_LEFT, x: 444, y: 48, width: 84, text_align: CENTER }
+                - label: { id: lbl_alarm_rdv_lead, text: "15 min", align: TOP_LEFT, x: 444, y: 48, width: 84, text_align: CENTER }
                 - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_rdvlead_up", x: "528", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0142", op: "increment", number: "tab5_rdv_lead" } }
 
                 - button:
@@ -333,13 +340,14 @@ obj:
                     width: 278
                     height: 42
                     radius: 14
+                    pad_all: 0   # positions exactes : le thème ajoutait ~21 px
                     styles: style_clim_btn
                     pressed: { bg_opa: 30% }
                     on_short_click:
                       - switch.toggle: tab5_alarm_tts
                     widgets:
                       - label: { text: "\U000F05CB", align: LEFT_MID, x: 12, text_font: mdi_font_32, text_color: color_text_dim }
-                      - label: { id: lbl_alarm_tts, text: "Sonnerie seule", align: CENTER, x: 18, text_color: color_text_dim }
+                      - label: { id: lbl_alarm_tts, text: "Sonnerie seule", align: LEFT_MID, x: 50, width: 220, text_align: CENTER, text_color: color_text_dim }
                 - button:
                     id: btn_alarm_rdv
                     align: TOP_LEFT
@@ -348,13 +356,14 @@ obj:
                     width: 278
                     height: 42
                     radius: 14
+                    pad_all: 0   # positions exactes : le thème ajoutait ~21 px
                     styles: style_clim_btn
                     pressed: { bg_opa: 30% }
                     on_short_click:
                       - switch.toggle: tab5_alarm_rdv_on
                     widgets:
                       - label: { text: "\U000F00F0", align: LEFT_MID, x: 12, text_font: mdi_font_32, text_color: color_text_dim }
-                      - label: { id: lbl_alarm_rdv, text: "RDV silencieux", align: CENTER, x: 18, text_color: color_text_dim }
+                      - label: { id: lbl_alarm_rdv, text: "RDV silencieux", align: LEFT_MID, x: 50, width: 220, text_align: CENTER, text_color: color_text_dim }
 
           # ═══ BARRE D'ACTION (bas) ═══
           - obj:

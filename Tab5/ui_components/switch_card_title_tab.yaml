@@ -1,9 +1,11 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par switches_card.yaml.
 # Var: title (texte statique, pas d'id — ce titre ne change jamais après le boot).
+# 200 px (et non 130 comme les jours) : « PC Bureau » 152 px, « Woonkamer » 173 px en
+# Roboto 32 gras (mesuré le 27/09/2026) ; la carte fait 230.
 obj:
   align: TOP_MID
   y: 7
-  width: 130
+  width: 200
   height: 40
   styles: style_meteo_card_page
   widgets:

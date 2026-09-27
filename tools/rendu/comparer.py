@@ -27,6 +27,14 @@ import sys
 from pathlib import Path
 
 REFERENCES = Path(__file__).resolve().parent.parent.parent / "docs" / "images" / "rendu"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ecrans import VARIABLES  # noqa: E402
+
+
+def variable(nom_png: str) -> bool:
+    """Capture d'un écran qui change d'un run à l'autre (ecrans.py, stable=False)."""
+    stem = nom_png[:-4] if nom_png.endswith(".png") else nom_png
+    return any(stem == v or stem.startswith(v + "-") for v in VARIABLES)
 
 
 def comparer(captures: Path, references: list[Path]) -> list[str]:
@@ -46,6 +54,8 @@ def comparer(captures: Path, references: list[Path]) -> list[str]:
     for nom in sorted(attendues.keys() - faites.keys()):
         ecarts.append(f"`{nom}` : référence sans capture (écran disparu ?)")
     for nom in sorted(faites.keys() & attendues.keys()):
+        if variable(nom):
+            continue
         with Image.open(faites[nom]) as a, Image.open(attendues[nom]) as b:
             a, b = a.convert("RGB"), b.convert("RGB")
             if a.size != b.size:

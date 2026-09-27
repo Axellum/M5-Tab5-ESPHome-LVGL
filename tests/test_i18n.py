@@ -141,6 +141,25 @@ def test_textes_francais_couverts_par_les_polices():
     assert not fautifs, f"caractères absents des polices dans des textes affichés : {fautifs}"
 
 
+def test_litteraux_du_code_couverts_par_les_polices():
+    """Les chaînes du C++ qui ne passent pas par tr() (boutons « + » / « – », questions de
+    Trial Poursuite, noms propres) s'affichent aussi dans les polices &latin1. Trouvé par
+    le rendu hors tablette (27/09/2026) : le signe moins U+2212 de Trial Poursuite, un
+    rectangle vide à l'écran, et İ ō ř dans trois questions."""
+    latin1 = font_glyphs(REPO / "Tab5" / "tab5-styles.yaml").get("roboto_32_b")
+    litteral = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
+    fautifs = {}
+    for f in sorted((REPO / "Tab5").glob("*.cpp")) + sorted((REPO / "Tab5").glob("*.h")):
+        if f.name == "tab5_i18n_data.h":   # tables générées, vérifiées par les tests ci-dessus
+            continue
+        for n, ligne in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+            for s in litteral.findall(ligne.split("//")[0]):
+                hors = {c for c in s if ord(c) > 127} - latin1
+                if hors:
+                    fautifs[f"{f.name}:{n}"] = "".join(sorted(hors))
+    assert not fautifs, f"caractères absents des polices dans des chaînes du code : {fautifs}"
+
+
 def test_traduction_au_demarrage_branchee():
     entree = (REPO / "tab5-ha-hmi.yaml").read_text(encoding="utf-8")
     bloc = entree.split("- priority: -100", 1)[1]

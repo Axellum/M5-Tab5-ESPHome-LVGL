@@ -1481,23 +1481,25 @@ static void build_ui() {
 
     // --- HUD --------------------------------------------------------------
     for (int i = 0; i < 2; i++) {
+        // 54 px de haut (bandeau de 60) : deux lignes en roboto_22 (26 px chacune). À 46,
+        // la seconde (« Noir · 0 prise ») était coupée (rendu hors tablette, 27/09/2026).
         gs->pill[i] = mk_rect(gs->ui.hud);
-        lv_obj_set_size(gs->pill[i], 296, 46);
-        lv_obj_set_pos(gs->pill[i], i == 0 ? 10 : 974, 7);
+        lv_obj_set_size(gs->pill[i], 296, 54);
+        lv_obj_set_pos(gs->pill[i], i == 0 ? 10 : 974, 3);
         lv_obj_set_style_radius(gs->pill[i], 12, LV_PART_MAIN);
         set_bg(gs->pill[i], Pal::CARD_BG, LV_OPA_COVER);
 
         gs->pill_dot[i] = mk_rect(gs->pill[i]);
         lv_obj_set_size(gs->pill_dot[i], 26, 26);
-        lv_obj_set_pos(gs->pill_dot[i], 12, 10);
+        lv_obj_set_pos(gs->pill_dot[i], 12, 14);
         lv_obj_set_style_radius(gs->pill_dot[i], LV_RADIUS_CIRCLE, LV_PART_MAIN);
         if (i == 0) set_bg_grad(gs->pill_dot[i], Pal::STONE_B_H, Pal::STONE_B, LV_OPA_COVER);
         else        set_bg_grad(gs->pill_dot[i], Pal::STONE_W_H, Pal::STONE_W, LV_OPA_COVER);
 
         gs->pill_name[i] = mk_label(gs->pill[i], gs->ui.f_small, Pal::TXT);
-        lv_obj_set_pos(gs->pill_name[i], 48, 3);
+        lv_obj_set_pos(gs->pill_name[i], 48, 2);
         gs->pill_sub[i] = mk_label(gs->pill[i], gs->ui.f_small, Pal::TXT_DIM);
-        lv_obj_set_pos(gs->pill_sub[i], 48, 24);
+        lv_obj_set_pos(gs->pill_sub[i], 48, 26);
     }
     gs->h_move = mk_label(gs->ui.hud, gs->ui.f_small, Pal::TXT_DIM);
     lv_obj_set_width(gs->h_move, 640);
@@ -1598,14 +1600,14 @@ static void build_ui() {
     gs->slots.build(gs->ui.panel, slot_cb, gs->ui.f_mid, Pal::TXT, gs->ui.f_small, Pal::TXT_DIM,
                     [](lv_obj_t* b, int i) {
         lv_obj_set_pos(b, 90, 148 + i * 74);
-        lv_obj_set_size(b, 1100, 64);
+        lv_obj_set_size(b, 1100, 68);   // titre (38 px) + description (26 px) : à 64, coupée
         lv_obj_set_style_radius(b, 14, LV_PART_MAIN);
         set_bg(b, Pal::CARD_BG, LV_OPA_COVER);   // Go::set_bg (dégradé remis à NONE)
         set_pressed_bg(b, Pal::CARD_ON);
     });
     for (int i = 0; i < N_SLOTS; i++) {
-        lv_obj_set_pos(gs->slots.title[i], 26, 6);
-        lv_obj_set_pos(gs->slots.desc[i], 28, 40);
+        lv_obj_set_pos(gs->slots.title[i], 26, 2);
+        lv_obj_set_pos(gs->slots.desc[i], 28, 36);
     }
 
     // --- Carte de fin de partie -------------------------------------------

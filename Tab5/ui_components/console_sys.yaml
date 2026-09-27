@@ -105,7 +105,8 @@ obj:
                       radius: 8
 
                 - label: { text: "Bloc max", align: TOP_LEFT, x: 22, y: 216, text_color: color_console_label }
-                - label: { id: lbl_sys_frag_val, text: "--", align: TOP_LEFT, x: 130, y: 216, text_color: color_console_value }
+                # x 145 : « Max. Block » (allemand, 108 px depuis x 22) collait la valeur à x 130.
+                - label: { id: lbl_sys_frag_val, text: "--", align: TOP_LEFT, x: 145, y: 216, text_color: color_console_value }
                 - label: { text: "Flash", align: TOP_LEFT, x: 330, y: 216, text_color: color_console_label }
                 - label: { id: lbl_sys_flash_val, text: "--", align: TOP_LEFT, x: 400, y: 216, text_color: color_console_value }
 
