@@ -230,7 +230,9 @@ select:
 time:
   - platform: sntp
     id: sntp_time
-    timezone: Europe/Paris
+    # Fuseau réglable (lot 4c, 27/09/2026) : `tab5_fuseau:` dans Tab5/user_entities.yaml,
+    # au format tz (« America/Montreal », « Europe/Berlin »…). Sans la clé : Paris.
+    timezone: ${ tab5_fuseau | default('Europe/Paris') }
     # Peint l'horloge dès la 1re sync NTP (sinon placeholders YAML jusqu'au
     # prochain tick minute de on_time). Indépendant de HA.
     on_time_sync:
@@ -254,6 +256,9 @@ time:
                 update_clock_date_ui(id(lbl_date),
                     t_now.hour, t_now.minute, t_now.day_of_week, t_now.day_of_month, t_now.month);
               }
+              // Décompte « dans N mn » de la phrase pluie, fait ici depuis le lot 4c :
+              // HA n'a plus à renvoyer la phrase à chaque minute.
+              rain_phrase_tick();
 
   # Horloge matérielle RX8130 (0x32 sur bsp_bus, sauvegardée par un supercondensateur
   # de 70 000 µF) : le Tab5 a l'heure dès le démarrage, même sans réseau (horloge,
@@ -265,7 +270,7 @@ time:
   - platform: rx8130
     id: rtc_time
     i2c_id: bsp_bus
-    timezone: Europe/Paris
+    timezone: ${ tab5_fuseau | default('Europe/Paris') }
     update_interval: never
     on_time_sync:
       then:

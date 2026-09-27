@@ -18,6 +18,7 @@
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
 #include <array>
+#include <cstdlib>
 #include <ctime>
 #include <cstring>
 #include <vector>
@@ -199,6 +200,22 @@ static void clear_ha_alert_slot(HaAlertSlotUI& slot) {
     }
 }
 
+// Libellés codés (lot 4c, 27/09/2026), composés dans la langue de la tablette :
+// « @maj:<titre> » → « 1 MAJ · <titre> », « @indispo:<n> » → « <n> indispo ». Tout
+// autre libellé (nom d'un capteur en erreur, ancien package HA) s'affiche tel quel.
+static std::string decode_ha_alert_text(const char* brut) {
+    char tmp[200];
+    if (strncmp(brut, "@maj:", 5) == 0) {
+        snprintf(tmp, sizeof(tmp), tr("1 MAJ · %s"), brut + 5);
+        return normalize_text_utf8(tmp);
+    }
+    if (strncmp(brut, "@indispo:", 9) == 0) {
+        snprintf(tmp, sizeof(tmp), tr("%d indispo"), atoi(brut + 9));
+        return tmp;
+    }
+    return normalize_text_utf8(brut);
+}
+
 void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI slots[4],
     CentralPanelCtx& ctx, std::string& dismissed_local) {
 
@@ -246,7 +263,7 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
                 continue;
             }
             *slots[slot_idx].id_store = aid;
-            std::string texte = normalize_text_utf8(parts[2]);
+            std::string texte = decode_ha_alert_text(parts[2]);
             ctx.has_ha[slot_idx] = !texte.empty();
             ui_text_color(slots[slot_idx].lbl, ha_alert_color_from_couleur(parts[1]));
             lv_label_set_recolor(slots[slot_idx].lbl, false);
@@ -362,6 +379,62 @@ void refresh_forecast_page_title_ui(int forecast_page,
     set_forecast_page_title_text(forecast_page, lbl_page_title, ctx);
 }
 
+// Bandeau info codé (lot 4c, 27/09/2026). HA n'envoie plus de texte français mais
+// des compteurs, composés ici dans la langue de la tablette :
+//   @ha|<nb MAJ>|<titre de la MAJ s'il n'y en a qu'une>|<nb erreurs>|<nb indispo>|<jaune 0/1>|<vigilance>
+// vigilance = « rouge », « orange » ou vide (vigilance non acquittée côté HA).
+// Le bandeau « Alerte Météo … » ne dépend plus de la COULEUR : avec l'ancien texte,
+// une MAJ HA (couleur Orange) ou une erreur (Rouge) affichaient à tort ce bandeau
+// quand la vigilance était verte. Français identique à l'ancien modèle HA.
+static std::string compose_info_code(const std::string& code, const std::string& meteo_id,
+                                     const std::string& dismissed_local) {
+    char buf[256];
+    snprintf(buf, sizeof(buf), "%s", code.c_str() + 4);  // après « @ha| »
+    char* f[6];
+    const int n = split_fields(buf, '|', f, 6);
+    auto champ = [&](int i) -> const char* { return i < n ? f[i] : ""; };
+    const int nb_maj = atoi(champ(0));
+    const char* titre = champ(1);
+    const int nb_err = atoi(champ(2));
+    const int nb_indispo = atoi(champ(3));
+    const bool jaune = atoi(champ(4)) != 0;
+    const char* vigi = champ(5);
+    const bool meteo_vue = !meteo_id.empty() && tab5_dismiss_local_has(dismissed_local, meteo_id);
+    if (!meteo_vue) {
+        if (strcmp(vigi, "rouge") == 0) return vigilance_alert_banner_utf8("Rouge");
+        if (strcmp(vigi, "orange") == 0) return vigilance_alert_banner_utf8("Orange");
+    }
+    std::string ligne;
+    char tmp[192];
+    auto ajoute = [&](const char* partie) {
+        if (!ligne.empty()) ligne += " · ";
+        ligne += partie;
+    };
+    if (nb_maj == 1) {
+        snprintf(tmp, sizeof(tmp), tr("1 MAJ · %s"), titre);
+        ajoute(tmp);
+    } else if (nb_maj > 1) {
+        snprintf(tmp, sizeof(tmp), tr("%d MAJ"), nb_maj);
+        ajoute(tmp);
+    }
+    if (nb_err == 1) {
+        ajoute(tr("1 erreur"));
+    } else if (nb_err > 1) {
+        snprintf(tmp, sizeof(tmp), tr("%d erreurs"), nb_err);
+        ajoute(tmp);
+    }
+    if (nb_indispo > 0) {
+        snprintf(tmp, sizeof(tmp), tr("%d indispo"), nb_indispo);
+        ajoute(tmp);
+    }
+    if (jaune && !meteo_vue) {
+        std::string t = tr("Vigilance Jaune");
+        if (!ligne.empty()) t += " · " + ligne;
+        return t;
+    }
+    return ligne;
+}
+
 void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
     const std::string& texte, const std::string& couleur, const std::string& meteo_id,
     std::string& dismissed_local, bool& has_info, int& current_panel,
@@ -371,8 +444,11 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
 
     std::string t = trim_ws(texte);
 
-    // Banniere vigilance : texte fixe UTF-8 cote firmware (HA ne fournit que la couleur).
-    if (const char* banner = vigilance_alert_banner_utf8(couleur)) {
+    if (t.rfind("@ha|", 0) == 0) {
+        // Codé (package HA du lot 4c et après) : texte composé ici.
+        t = normalize_text_utf8(compose_info_code(t, meteo_id, dismissed_local));
+    } else if (const char* banner = vigilance_alert_banner_utf8(couleur)) {
+        // Ancien package HA : bannière vigilance selon la couleur (comportement d'avant).
         if (!meteo_id.empty() && tab5_dismiss_local_has(dismissed_local, meteo_id)) {
             if (t.empty()) {
                 has_info = false;
@@ -416,10 +492,84 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
     lv_label_set_text(lbl_info, t.c_str());
 }
 
+// -----------------------------------------------------------------------------
+// Phrase pluie composée ici (lot 4c, 27/09/2026)
+// -----------------------------------------------------------------------------
+// HA envoyait une phrase française toute faite (« Averses dans 12 mn ») et la
+// renvoyait chaque minute pour le décompte. Il envoie désormais un code
+// « @niveau,début » :
+//   - niveau -1 = pas de données, 0 = temps sec, 1 à 4 = pluie faible, modérée,
+//     forte, très forte, 5 = pluie d'intensité inconnue ;
+//   - début = heure UTC (epoch) du début de la pluie, 0 s'il pleut déjà ;
+//   - « @- » = aucune source de pluie dans l'heure : la phrase reste vide.
+// La tablette traduit et décompte elle-même (rain_phrase_tick(), chaque minute). Le
+// français est celui de l'ancien modèle HA, à l'octet près. Un texte sans « @ »
+// (package HA d'avant le lot 4c) s'affiche tel quel.
+namespace {
+struct RainPhrase {
+    lv_obj_t* lbl = nullptr;
+    bool code = false;   // dernier envoi = un code (sinon texte brut, rien à décompter)
+    int niveau = 0;      // -2 = aucune source
+    int64_t debut = 0;
+};
+RainPhrase g_rain_phrase;
+}  // namespace
+
+// Forte et très forte → « Averses », comme le faisait le modèle HA.
+static const char* rain_level_label(int niveau) {
+    switch (niveau) {
+        case 1: return tr("Pluie faible");
+        case 2: return tr("Pluie modérée");
+        case 3:
+        case 4: return tr("Averses");
+        default: return tr("Pluie");
+    }
+}
+
+static void rain_phrase_render() {
+    const RainPhrase& s = g_rain_phrase;
+    if (s.lbl == nullptr || !s.code) return;
+    char buf[96];
+    if (s.niveau < -1) {
+        buf[0] = '\0';
+    } else if (s.niveau < 0) {
+        snprintf(buf, sizeof(buf), "%s", tr("Pas de données"));
+    } else if (s.niveau == 0) {
+        snprintf(buf, sizeof(buf), "%s", tr("Temps sec"));
+    } else {
+        const char* label = rain_level_label(s.niveau);
+        // Minutes entières, arrondies vers zéro comme le `| int` de l'ancien modèle.
+        // Heure pas encore valide (avant NTP et RX8130) : pas de décompte.
+        const time_t now = time(nullptr);
+        const long minutes = (s.debut > 0 && now > 1600000000) ? (long) ((s.debut - (int64_t) now) / 60) : 0;
+        if (minutes <= 0) snprintf(buf, sizeof(buf), "%s", label);
+        else snprintf(buf, sizeof(buf), tr("%s dans %ld mn"), label, minutes);
+    }
+    ui_text(s.lbl, buf);
+}
+
+void rain_phrase_tick() { rain_phrase_render(); }
+
 void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase) {
     if (!lbl) return;
-    std::string t = normalize_text_utf8(phrase);
     lv_label_set_recolor(lbl, false);
+    RainPhrase& s = g_rain_phrase;
+    s.lbl = lbl;
+    if (!phrase.empty() && phrase[0] == '@') {
+        s.code = true;
+        if (phrase.size() >= 2 && phrase[1] == '-') {
+            s.niveau = -2;
+            s.debut = 0;
+        } else {
+            s.niveau = atoi(phrase.c_str() + 1);
+            const char* virgule = strchr(phrase.c_str(), ',');
+            s.debut = virgule ? strtoll(virgule + 1, nullptr, 10) : 0;
+        }
+        rain_phrase_render();
+        return;
+    }
+    s.code = false;
+    std::string t = normalize_text_utf8(phrase);
     lv_label_set_text(lbl, t.c_str());
 }
 

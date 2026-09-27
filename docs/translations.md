@@ -11,7 +11,7 @@ The Tab5 screen speaks **French** (the source language) or **English**. Everythi
 - **From Home Assistant:** the tablet exposes a select entity **« Langue »** (Configuration). Pick `English` or `Français`: the tablet restarts and comes back in the new language. It remembers the choice.
 - **Default of a first boot:** `tab5_langue: English` in `Tab5/user_entities.yaml` (the native name of the language). Without that line, French.
 
-What does **not** change: entity names, select options and the states Home Assistant reads (for example « Heure fixe », « Écran courant »). Renaming them would break your history and automations, so they stay as they are in every language. Texts that Home Assistant itself sends to the screen (weather sentence, forecast day labels, banners) are still produced in French by the HA packages; a later step will make them follow the tablet's language.
+What does **not** change: entity names, select options and the states Home Assistant reads (for example « Heure fixe », « Écran courant »). Renaming them would break your history and automations, so they stay as they are in every language. Since lot 4c, Home Assistant no longer sends sentences: it sends **codes** (rain level and start time, update and error counts…), and the tablet writes the sentence in its own language — « Averses dans 12 mn » or “Showers in 12 min”, counted down on the tablet's clock. Forecast day labels are translated when shown. What stays as HA sends it: your own data (calendar event titles, update names, sensor names).
 
 ## How it works
 
@@ -59,7 +59,7 @@ L'écran du Tab5 parle **français** (la langue source) ou **anglais**. Tout ce 
 - **Depuis Home Assistant :** la tablette expose un select **« Langue »** (Configuration). Choisissez `English` ou `Français` : la tablette redémarre et revient dans la nouvelle langue. Elle garde ce choix.
 - **Au premier démarrage :** `tab5_langue: English` dans `Tab5/user_entities.yaml` (le nom de la langue dans la langue elle-même). Sans cette ligne, le français.
 
-Ce qui **ne change pas** : les noms d'entités, les options de select et les états que lit Home Assistant (par exemple « Heure fixe », « Écran courant »). Les renommer casserait votre historique et vos automatisations : ils restent tels quels dans toutes les langues. Les textes que Home Assistant envoie lui-même à l'écran (phrase météo, libellés des jours des prévisions, bandeaux) sont encore produits en français par les packages HA ; une étape suivante les fera suivre la langue de la tablette.
+Ce qui **ne change pas** : les noms d'entités, les options de select et les états que lit Home Assistant (par exemple « Heure fixe », « Écran courant »). Les renommer casserait votre historique et vos automatisations : ils restent tels quels dans toutes les langues. Depuis le lot 4c, Home Assistant n'envoie plus de phrases mais des **codes** (niveau et heure de début de la pluie, nombre de mises à jour et d'erreurs…), et la tablette écrit la phrase dans sa langue — « Averses dans 12 mn » ou “Showers in 12 min”, décomptée avec sa propre horloge. Les libellés des jours des prévisions sont traduits à l'affichage. Ce qui reste tel que HA l'envoie : vos propres données (titres des événements du calendrier, noms des mises à jour et des capteurs).
 
 ## Comment ça marche
 

@@ -39,7 +39,7 @@
 
 - A Tab5: the **ST7123** display chip is the one tested daily; the ST7121 and the original ILI9881C compile but are untested — see [hardware compatibility](#hardware-compatibility).
 - Home Assistant, and ESPHome **≥ 2026.9.0** to compile. **There is no prebuilt firmware yet:** you compile it with your own entity IDs.
-- The screen speaks **French or English**, switchable from Home Assistant ([translations](docs/translations.md)), games included; the quiz questions stay in French, and so do the texts Home Assistant sends (weather sentence, banners). The documentation is bilingual. The one-hour rain graph and the weather warnings come from **Météo-France** (France only).
+- The screen speaks **French or English**, switchable from Home Assistant ([translations](docs/translations.md)), games and texts sent by Home Assistant included (rain sentence, banners); only the quiz questions stay in French. The documentation is bilingual. The one-hour rain graph and the weather warnings come from **Météo-France** (France only).
 - The layout was designed around the author's home: 3 lights, one air conditioner, up to 5 BLE plant sensors, a Samsung TV, one roller shutter. A different home means editing YAML for now; making each area optional is planned.
 
 ---
@@ -371,7 +371,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 - Un Tab5 : la puce écran **ST7123** est celle testée tous les jours ; la ST7121 et l'ILI9881C d'origine compilent mais ne sont pas testées — voir la [compatibilité matérielle](#compatibilité-matérielle).
 - Home Assistant, et ESPHome **≥ 2026.9.0** pour compiler. **Il n'y a pas encore de firmware précompilé :** vous le compilez avec vos propres entity IDs.
-- L'écran parle **français ou anglais**, au choix depuis Home Assistant ([traductions](docs/translations.md#version-française)), jeux compris ; les questions du quiz restent en français, comme les textes envoyés par Home Assistant (phrase météo, bandeaux). La documentation est bilingue. Le graphe de pluie dans l'heure et les vigilances viennent de **Météo-France** (France uniquement).
+- L'écran parle **français ou anglais**, au choix depuis Home Assistant ([traductions](docs/translations.md#version-française)), jeux et textes envoyés par Home Assistant compris (phrase de pluie, bandeaux) ; seules les questions du quiz restent en français. La documentation est bilingue. Le graphe de pluie dans l'heure et les vigilances viennent de **Météo-France** (France uniquement).
 - La disposition a été pensée pour la maison de l'auteur : 3 lumières, une clim, jusqu'à 5 capteurs de plantes BLE, une TV Samsung, un volet roulant. Une autre maison demande pour l'instant de modifier le YAML ; rendre chaque zone optionnelle est prévu.
 
 ---

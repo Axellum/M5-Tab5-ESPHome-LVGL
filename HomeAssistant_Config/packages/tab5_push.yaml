@@ -4,8 +4,13 @@
 # @role Tout ce que Home Assistant fait POUR le Tab5 hors packages dédiés : les
 #       automatisations qui poussent les données vers l'écran (push-only, cf.
 #       Tab5/README.md), les scripts de poussée `tab5_push_*`, les scripts appelés
-#       par le Tab5 (LEDs, PC + TV), le capteur « Phrase Prochaine Pluie » et le
+#       par le Tab5 (LEDs, PC + TV), le capteur « Tab5 Pluie dans l'heure » et le
 #       garde-fou `is_primary_active`.
+# @langue Depuis le lot 4c (27/09/2026), HA n'envoie plus de phrases françaises au
+#       Tab5 : des codes (pluie « @niveau,début », bandeau « @ha|… », alertes
+#       « @maj: » / « @indispo: ») que la tablette compose dans SA langue. Déployer ce
+#       package APRÈS le firmware du lot 4c : un firmware plus ancien afficherait les
+#       codes tels quels.
 # @source_unique Depuis le 26/09/2026 (lot 3 de l'audit « ouverture »), la copie
 #       RENDUE de ce fichier (tools/render_ha_config.py → rendered/packages/) est ce
 #       qui tourne sur le HA de l'auteur. Il remplace les trois fichiers d'exemples
@@ -301,8 +306,9 @@ automation:
   # Un dismiss, une vigilance Météo-France ou une MAJ HA ne relancent PAS la chaîne
   # prévisions/calendrier de `tab5_ha_hmi_updater` : ce chemin ne pousse QUE les
   # sections 1 (alerte MF), 7 (bandeau info) et 7b (rotateur d'alertes HA), via le
-  # même script que la poussée complète — aucun delay, aucun appel API. Le rebours
-  # minute de la phrase pluie ne fait QUE la section 1 (`vigilance_seule`).
+  # même script que la poussée complète — aucun delay, aucun appel API. Un changement
+  # du code de pluie ne fait QUE la section 1 (`vigilance_seule`). Depuis le lot 4c, le
+  # décompte « dans N mn » se fait sur la tablette : plus de poussée à chaque minute.
   # mode: queued pour ne pas perdre un dismiss derrière le tick minute.
   # ============================================================================
   - id: tab5_ha_hmi_alerts_push
@@ -311,7 +317,7 @@ automation:
     max: 5
     trigger:
       - platform: state
-        entity_id: sensor.phrase_prochaine_pluie
+        entity_id: sensor.tab5_pluie_dans_l_heure
       - platform: state
         entity_id: sensor.VOTRE_DEPARTEMENT_weather_alert
       - platform: state
@@ -328,7 +334,7 @@ automation:
     action:
       - action: script.tab5_push_alertes
         data:
-          vigilance_seule: "{{ trigger.entity_id == 'sensor.phrase_prochaine_pluie' }}"
+          vigilance_seule: "{{ trigger.entity_id == 'sensor.tab5_pluie_dans_l_heure' }}"
 
   # ============================================================================
   # PUSH METEO ACTUELLE — au changement (26/09/2026)
@@ -480,7 +486,7 @@ script:
   tab5_push_alertes:
     alias: "Tab5 — pousser vigilance, bandeau info et alertes HA"
     description: >-
-      Sections 1 (phrase pluie + vigilance Météo-France), 7 (bandeau info) et 7b
+      Sections 1 (code de pluie + vigilance Météo-France), 7 (bandeau info) et 7b
       (rotateur d'alertes HA) de l'écran Tab5. Appelé par la poussée complète
       (tab5_ha_hmi_updater) et par la poussée légère (tab5_ha_hmi_alerts_push).
       Les mises à jour, capteurs « problem » et le compte d'indisponibles sont
@@ -490,7 +496,7 @@ script:
     fields:
       vigilance_seule:
         name: "Vigilance seule"
-        description: "Vrai : seulement la phrase pluie + vigilance (rebours minute de la phrase pluie)."
+        description: "Vrai : seulement le code de pluie + la vigilance (le code de pluie a changé)."
         default: false
         selector:
           boolean:
@@ -499,8 +505,8 @@ script:
         continue_on_error: true
         data:
           payload: >-
-            {{ states('sensor.phrase_prochaine_pluie') }}|{{ states('sensor.VOTRE_DEPARTEMENT_weather_alert') | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
-      - alias: "Rebours minute de la phrase pluie : pas de relevé santé HA"
+            {%- set pluie = states('sensor.tab5_pluie_dans_l_heure') -%}{{ pluie if pluie.startswith('@') else '@-1,0' }}|{{ states('sensor.VOTRE_DEPARTEMENT_weather_alert') | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vent violent') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Orages') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Pluie-inondation') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Neige-verglas') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Grand-froid') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Vagues-submersion') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Canicule') | default('Vert', true) | capitalize }}|{{ state_attr('sensor.VOTRE_DEPARTEMENT_weather_alert', 'Avalanches') | default('Vert', true) | capitalize }}
+      - alias: "Changement du code de pluie : pas de relevé santé HA"
         condition: template
         value_template: "{{ not (vigilance_seule | default(false)) }}"
       - variables:
@@ -528,31 +534,17 @@ script:
       - action: esphome.tab5_ha_hmi_tab5_maj_info_texte
         continue_on_error: true
         data:
+          # Code composé par la tablette dans sa langue (lot 4c) :
+          # @ha|nb MAJ|titre de la MAJ s'il n'y en a qu'une|nb erreurs|nb indispo|jaune 0/1|vigilance
+          # vigilance = rouge, orange ou vide. Même logique qu'avant : une vigilance rouge
+          # ou orange non acquittée remplace la ligne HA ; une jaune la préfixe.
           texte: >-
             {%- set meteo_key = 'meteo:' ~ (alerte | lower) if alerte in ['Rouge', 'Orange', 'Jaune'] else '' -%}
             {%- set meteo_vu = meteo_key != '' and meteo_key in dismissed -%}
-            {%- if alerte in ['Rouge', 'Orange'] and not meteo_vu -%}
-            Alerte Météo {{ alerte }} en cours ! Restez prudent.
-            {%- else -%}
-            {%- set ns = namespace(parts=[]) -%}
-            {%- if maj | length == 1 -%}
-            {%- set ns.parts = ns.parts + ['1 MAJ · ' ~ maj[0][1]] -%}
-            {%- elif maj | length > 1 -%}
-            {%- set ns.parts = ns.parts + [(maj | length) ~ ' MAJ'] -%}
-            {%- endif -%}
-            {%- if problemes | length > 0 -%}
-            {%- set ns.parts = ns.parts + [(problemes | length) ~ ' erreur' ~ ('s' if problemes | length > 1 else '')] -%}
-            {%- endif -%}
-            {%- if indispo > 0 -%}
-            {%- set ns.parts = ns.parts + [indispo ~ ' indispo'] -%}
-            {%- endif -%}
-            {%- set ha_line = ns.parts | join(' · ') -%}
-            {%- if alerte == 'Jaune' and not meteo_vu -%}
-            {{- 'Vigilance Jaune · ' ~ ha_line if ha_line else 'Vigilance Jaune' -}}
-            {%- else -%}
-            {{- ha_line -}}
-            {%- endif -%}
-            {%- endif -%}
+            {%- set vigi = (alerte | lower) if alerte in ['Rouge', 'Orange'] and not meteo_vu else '' -%}
+            {%- set jaune = 1 if alerte == 'Jaune' and not meteo_vu else 0 -%}
+            {%- set titre = (maj[0][1] | string | replace('|', '/')) if maj | length == 1 else '' -%}
+            @ha|{{ maj | length }}|{{ titre }}|{{ problemes | length }}|{{ indispo }}|{{ jaune }}|{{ vigi }}
           couleur: >-
             {%- if alerte == 'Rouge' -%}Rouge
             {%- elif alerte in ['Orange', 'Jaune'] -%}Orange
@@ -569,7 +561,7 @@ script:
             {%- set ns = namespace(r=[]) -%}
             {%- for u in maj -%}
             {%- if ns.r | length < 4 -%}
-            {%- set ns.r = ns.r + [u[0] ~ '|' ~ ('Rouge' if u[0] in critiques else 'Orange') ~ '|1 MAJ · ' ~ u[1]] -%}
+            {%- set ns.r = ns.r + [u[0] ~ '|' ~ ('Rouge' if u[0] in critiques else 'Orange') ~ '|@maj:' ~ (u[1] | string | replace(';', ','))] -%}
             {%- endif -%}
             {%- endfor -%}
             {%- for p in problemes -%}
@@ -578,7 +570,7 @@ script:
             {%- endif -%}
             {%- endfor -%}
             {%- if ns.r | length < 4 and indispo > 0 -%}
-            {%- set ns.r = ns.r + ['ha:unavailable|Orange|' ~ indispo ~ ' indispo'] -%}
+            {%- set ns.r = ns.r + ['ha:unavailable|Orange|@indispo:' ~ indispo] -%}
             {%- endif -%}
             {{- ns.r | join(';') -}}
 
@@ -660,54 +652,42 @@ script:
             target:
               entity_id: media_player.VOTRE_TV
 
-# Capteur de template (format `template: - sensor:` d'un package) : phrase courte
-# sur la pluie à venir, pré-traitée ici
-# plutôt que sur l'appareil (SRAM) et sous la limite de 255 caractères de l'API
-# native ESPHome.
+# Capteur de template (format `template: - sensor:` d'un package) : la pluie dans
+# l'heure en CODE, lu par la tablette (lot 4c, 27/09/2026) :
+#   « @niveau,début » — niveau -1 pas de données, 0 temps sec, 1 à 4 pluie faible à
+#   très forte, 5 intensité inconnue ; début = epoch UTC du début de la pluie, 0 s'il
+#   pleut déjà.
+# La tablette compose la phrase dans sa langue (« Averses dans 12 mn » / « Showers in
+# 12 min ») et décompte les minutes elle-même : ce capteur ne change qu'avec les données
+# Météo-France, plus à chaque minute (l'ancien « Phrase Prochaine Pluie » appelait
+# now() et relançait la poussée légère toutes les minutes avant une averse).
 template:
   - sensor:
-      - name: "Phrase Prochaine Pluie"
-        unique_id: phrase_prochaine_pluie
+      - name: "Tab5 Pluie dans l'heure"
+        unique_id: tab5_pluie_dans_l_heure
         icon: mdi:weather-rainy
         state: >
           {% set ent = 'sensor.VOTRE_VILLE_next_rain' %}
+          {# Libellés Météo-France → niveau ; « Pluie forte » et « très forte » donnaient
+             tous deux « Averses » dans l'ancienne phrase, la tablette fait de même. #}
+          {% set niv = {'Temps sec': 0, 'Pluie faible': 1, 'Pluie modérée': 2, 'Pluie forte': 3,
+                        'Pluie très forte': 4, 'Pluie trés forte': 4} %}
           {% if not has_value(ent) %}
-            Temps sec
+            @0,0
           {% else %}
             {% set next_rain = states(ent) | as_timestamp(default=0) %}
             {% set ref = state_attr(ent, 'forecast_time_ref') | as_timestamp(default=0) %}
             {% set fc = state_attr(ent, '1_hour_forecast') %}
-
             {% if next_rain > 0 and ref > 0 and fc is not none %}
-              {% set act_state = fc.get('0 min', 'Temps sec') %}
-
-              {# On raccourcit les termes trop longs et on corrige l'orthographe #}
-              {% set map_int = {
-                'Pluie forte': 'Averses',
-                'Pluie très forte': 'Averses',
-                'Pluie trés forte': 'Averses',
-                'Temps sec': 'Temps sec'
-              } %}
-
-              {% if act_state != 'Temps sec' %}
-                {# S'il pleut déjà (à l'heure de référence), on ignore le délai résiduel #}
-                {{ map_int.get(act_state, act_state) }}
+              {% set actuel = fc.get('0 min', 'Temps sec') %}
+              {% if actuel != 'Temps sec' %}
+                {# Il pleut déjà (à l'heure de référence) : pas de décompte. #}
+                @{{ niv.get(actuel, 5) }},0
               {% else %}
-                {# Il ne pleut pas encore, on calcule la prévision #}
-                {% set slot_min = ((next_rain - ref) / 60) | int(0) %}
-                {% set slot_key = slot_min ~ ' min' %}
-                {% set raw_intensity = fc.get(slot_key, 'Pluie') %}
-                {% set intensity = map_int.get(raw_intensity, raw_intensity) %}
-
-                {% set delai_actuel = ((next_rain - now().timestamp()) / 60) | int(0) %}
-
-                {% if delai_actuel <= 0 %}
-                  {{ intensity }}
-                {% else %}
-                  {{ intensity }} dans {{ delai_actuel }} mn
-                {% endif %}
+                {% set cle = ((next_rain - ref) / 60) | int(0) ~ ' min' %}
+                @{{ niv.get(fc.get(cle, 'Pluie'), 5) }},{{ next_rain | int(0) }}
               {% endif %}
             {% else %}
-              Pas de données
+              @-1,0
             {% endif %}
           {% endif %}

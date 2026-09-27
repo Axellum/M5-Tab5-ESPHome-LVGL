@@ -98,6 +98,21 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "{jour} : pas d'horaire": "{jour}: no hours"
 "Alerte Météo Rouge en cours ! Restez prudent.": "Red weather warning in progress! Stay safe."
 "Alerte Météo Orange en cours ! Restez prudent.": "Orange weather warning in progress! Stay safe."
+# Composés par la tablette depuis les codes de HA (lot 4c) : bandeau info, alertes HA,
+# phrase de pluie (décomptée sur la tablette).
+"Vigilance Jaune": "Yellow warning"
+"1 MAJ · %s": "1 update · %s"
+"%d MAJ": "%d updates"
+"1 erreur": "1 error"
+"%d erreurs": "%d errors"
+"%d indispo": "%d unavailable"
+"Temps sec": "Dry"
+"Pas de données": "No data"
+"Pluie faible": "Light rain"
+"Pluie modérée": "Moderate rain"
+"Averses": "Showers"
+"Pluie": "Rain"
+"%s dans %ld mn": "%s in %ld min"
 
 # --- Switch card, shutter, plants ---------------------------------------------
 "PC Bureau": "Office PC"
