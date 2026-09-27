@@ -190,6 +190,8 @@ struct CentralPanelCtx {
     bool has_mf_alerts = false;
     bool has_info = false;
     bool has_ha[4] = {};
+    // Zone PLANNING absente (lot 5) : le panneau 0 sort du rotateur.
+    bool planning_off = false;
     int current_panel = 0;
     // Qui occupe la carte (audit du 25/09/2026, §2.4) : le rotateur n'a la main que
     // sur l'accueil (page 2), hors planning temporaire et hors réponse vocale. Tenus à
@@ -419,9 +421,13 @@ struct MoistureSlotUI {
 };
 
 // Tri dynamique : prend 5 valeurs, affiche les 2 plus secs + médiane + plus humide
-// icons_utf8[5] = codes MDI pour chaque capteur, slots[4] = widgets LVGL de destination
+// icons_utf8[5] = codes MDI pour chaque capteur, slots[4] = widgets LVGL de destination.
+// Seuls les pots présents comptent (zones POT_1 à POT_5) : jusqu'à 4, chacun a son
+// emplacement ; les emplacements en trop sont masqués. Les entrées sont gardées pour
+// moisture_slots_refresh(), que zones_apply_ui() rejoue quand un pot apparaît.
 void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
     MoistureSlotUI slots[4]);
+void moisture_slots_refresh();
 
 // Couleur batterie par niveau (échelle icône téléphone du bandeau, réutilisée
 // par la ligne Batterie du popup détails pots).
@@ -672,5 +678,77 @@ std::string journal_reset_reason(); // raison du dernier démarrage, en clair
 std::string journal_boot_count();   // démarrages depuis le dernier envoi
 std::string journal_report_text();  // lignes en attente, une par ligne
 void journal_mark_delivered();      // vide le journal (et sa copie NVS)
+
+// =============================================================================
+// Zones optionnelles (tab5_zones.cpp, lot 5 de l'audit « ouverture », 27/09/2026)
+// Une zone dont l'entité n'existe pas dans Home Assistant disparaît, avec ses
+// boutons. La tablette ne décide pas seule : une entité créée pendant le démarrage
+// de HA n'est transmise qu'à son prochain changement (manager.py de l'intégration
+// ESPHome), un silence ne prouve donc rien. Elle envoie ses entités à HA
+// (esphome.tab5_zones, tab5-zones.yaml) et HA répond celles qui n'existent pas
+// (action tab5_maj_zones, package tab5_push.yaml). Une entité en panne existe :
+// sa zone reste affichée (« -- », « Hors ligne »). Sans le package, rien ne
+// disparaît. La liste est gardée en NVS (pas de clignotement au démarrage) et une
+// zone réapparaît dès sa première donnée.
+// =============================================================================
+enum class Zone : uint8_t {
+    // Entité suivie par la tablette (tab5-sensors-domotique.yaml), même ordre que la
+    // liste envoyée par le script tab5_zones_demande.
+    LUMIERE_1, LUMIERE_2, LUMIERE_3,   // chambre, salon, LEDs (tuiles J2 à J4)
+    PC, TV, TELEPHONE, SALON, SERRE,
+    POT_1, POT_2, POT_3, POT_4, POT_5,
+    // Décidées par HA seul (entités du package, pas de la tablette).
+    CLIM, VOLET, PLANNING,
+    COUNT
+};
+constexpr int kZonesSuivies = static_cast<int>(Zone::CLIM);
+
+// Widgets que le masquage touche, posés par le script tab5_zones_apply (tab5-zones.yaml).
+struct ZonesUI {
+    lv_obj_t* icon_pc = nullptr;       // bandeau d'état, dans l'ordre d'affichage
+    lv_obj_t* icon_phone = nullptr;
+    lv_obj_t* icon_wifi = nullptr;
+    lv_obj_t* icon_alarm = nullptr;
+    lv_obj_t* btn_ha = nullptr;        // rangée HA / Sys / TV
+    lv_obj_t* btn_sys = nullptr;
+    lv_obj_t* btn_tv = nullptr;
+    lv_obj_t* sw_card[5] = {};         // cartes du calque « HA »
+    lv_obj_t* light_sel[3] = {};       // sélecteur du popup lumière
+    lv_obj_t* clim_zone = nullptr;     // − / consigne / +
+    lv_obj_t* icon_salon = nullptr;
+    lv_obj_t* val_salon = nullptr;
+    lv_obj_t* icon_serre = nullptr;    // devient une manette sans capteur de serre
+    lv_obj_t* val_serre = nullptr;
+    lv_obj_t* pots_row = nullptr;      // rangée des pots de l'accueil
+    lv_obj_t* pots_zone = nullptr;     // sa zone d'appui long
+    lv_obj_t* pot_card[5] = {};        // cartes du popup « Mes Plantes »
+};
+extern ZonesUI g_zones_ui;
+
+bool zone_absente(Zone z);
+// Donnée reçue : la zone réapparaît si elle était masquée. Vrai si l'affichage
+// doit changer (le YAML relance alors tab5_zones_apply).
+bool zone_vue(Zone z);
+// Réponse de HA : clés des zones absentes, séparées par des virgules. Vrai si
+// l'affichage doit changer.
+bool zones_reponse_ha(const std::string& absentes);
+// Applique l'état des zones aux widgets de g_zones_ui et aux tuiles (g_day_slots).
+void zones_apply_ui();
+// Tuile i (0 à 4) de l'accueil : son appareil est-il absent ?
+bool zone_tuile_absente(int tuile);
+// Nombre de pots présents (0 à 5).
+int zones_pots_presents();
+// « aucune » ou « clim, pot_4, pot_5 » (capteur « Zones masquées » dans HA).
+std::string zones_texte_masquees();
+// Entités des lumières présentes, pour « Tout éteindre » (« a, b »).
+std::string zones_lumieres_presentes(const char* const entites[3]);
+// Demande à HA une fois par connexion : remis à zéro à chaque connexion de HA,
+// consommé par la première poussée des prévisions.
+void zones_nouvelle_connexion();
+bool zones_demande_a_envoyer();
+
+// Carte centrale : le planning n'est plus un panneau du rotateur quand HA n'a
+// pas d'agenda de travail (zone PLANNING).
+void central_planning_set_off(bool off);
 
 // UIColor (couleurs sémantiques) : voir tab5_tokens.h.

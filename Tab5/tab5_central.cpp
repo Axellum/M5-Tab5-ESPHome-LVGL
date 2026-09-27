@@ -128,10 +128,11 @@ static lv_obj_t* central_panel_wrapper(int panel, CentralPanelCtx& ctx) {
     return central_wraps(ctx)[panel];
 }
 
-// Même ordre que central_wraps() ; le planning (0) est toujours actif.
+// Même ordre que central_wraps() ; le planning (0) est actif sauf quand HA n'a pas
+// d'agenda de travail (zone PLANNING, lot 5).
 static bool central_panel_is_active(int panel, const CentralPanelCtx& ctx) {
     if (panel < 0 || panel >= kCentralPanelCount) return false;
-    const bool active[kCentralPanelCount] = {true, ctx.has_rain, ctx.has_mf_alerts, ctx.has_info,
+    const bool active[kCentralPanelCount] = {!ctx.planning_off, ctx.has_rain, ctx.has_mf_alerts, ctx.has_info,
                                              ctx.has_ha[0], ctx.has_ha[1], ctx.has_ha[2], ctx.has_ha[3]};
     return active[panel];
 }
@@ -168,11 +169,13 @@ static void hide_central_panel(lv_obj_t* wrap) {
 }
 
 static void sync_central_panel_visibility(CentralPanelCtx& ctx) {
-    if (!central_panel_is_active(ctx.current_panel, ctx)) {
+    bool any = central_panel_is_active(ctx.current_panel, ctx);
+    if (!any) {
         ctx.current_panel = 0;
         for (int p = 0; p < kCentralPanelCount; p++) {
             if (central_panel_is_active(p, ctx)) {
                 ctx.current_panel = p;
+                any = true;
                 break;
             }
         }
@@ -183,8 +186,16 @@ static void sync_central_panel_visibility(CentralPanelCtx& ctx) {
 
     for (lv_obj_t* w : central_wraps(ctx)) hide_central_panel(w);
 
+    // Rien à montrer (sans planning, lot 5) : la carte reste vide.
+    if (!any) return;
     lv_obj_t* active = central_panel_wrapper(ctx.current_panel, ctx);
     if (active) lv_obj_remove_flag(active, LV_OBJ_FLAG_HIDDEN);
+}
+
+void central_planning_set_off(bool off) {
+    if (g_central_ctx.planning_off == off) return;
+    g_central_ctx.planning_off = off;
+    sync_central_panel_visibility(g_central_ctx);
 }
 
 static void clear_ha_alert_slot(HaAlertSlotUI& slot) {
@@ -358,6 +369,12 @@ void update_central_forecast_page_ui(int forecast_page,
     lv_obj_add_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
 
     if (forecast_page == 2) {
+        // Panneau courant inactif (planning retiré, lot 5) : la synchro choisit le
+        // suivant, ou laisse la carte vide.
+        if (!central_panel_is_active(ctx.current_panel, ctx)) {
+            sync_central_panel_visibility(ctx);
+            return;
+        }
         lv_obj_t* active = central_panel_wrapper(ctx.current_panel, ctx);
         if (active) lv_obj_remove_flag(active, LV_OBJ_FLAG_HIDDEN);
         return;
@@ -468,6 +485,11 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
     if (t.empty()) {
         lv_label_set_text(lbl_info, "");
         if (current_panel == 3 && info_wrap && planning_wrap) {
+            if (g_central_ctx.planning_off) {
+                // Pas de planning (lot 5) : le panneau actif suivant, ou une carte vide.
+                sync_central_panel_visibility(g_central_ctx);
+                return;
+            }
             // Transition visible seulement si le rotateur a la carte : sinon elle
             // faisait surgir le panneau planning par-dessus le titre de page.
             if (rotator_owns_card(g_central_ctx)) transition_widgets(info_wrap, planning_wrap);

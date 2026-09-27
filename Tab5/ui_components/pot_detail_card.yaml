@@ -8,6 +8,8 @@
 # capteurs de tab5-sensors-domotique.yaml.
 # ═══════════════════════════════════════════════════════
 obj:
+  # Masquée et recentrée par zones_apply_ui() quand le pot est absent (lot 5).
+  id: "pot_card_${pot_idx}"
   align: TOP_LEFT
   x: ${x_pos}
   y: ${modal_body_y}

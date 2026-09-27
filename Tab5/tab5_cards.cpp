@@ -137,6 +137,13 @@ void show_light_popup_ui(int light_idx, const char* const titles[3],
 // Tri dynamique plantes : 5 capteurs -> 4 slots (2 secs + mediane + humide)
 // =============================================================================
 
+// Dernières entrées reçues, rejouées par moisture_slots_refresh() quand les zones
+// changent (un pot déclaré absent par HA, ou de retour).
+static float s_pots_vals[5] = {NAN, NAN, NAN, NAN, NAN};
+static const char* s_pots_icons[5] = {};
+static MoistureSlotUI s_pots_slots[4] = {};
+static bool s_pots_prets = false;
+
 void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
     MoistureSlotUI slots[4]) {
 
@@ -146,17 +153,39 @@ void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
             return;
         }
     }
+    for (int i = 0; i < 5; i++) {
+        s_pots_vals[i] = values[i];
+        s_pots_icons[i] = icons_utf8[i];
+    }
+    for (int s = 0; s < 4; s++) s_pots_slots[s] = slots[s];
+    s_pots_prets = true;
+    moisture_slots_refresh();
+}
 
-    // 1) Construire un tableau d'indices valides (pas NaN)
+void moisture_slots_refresh() {
+    if (!s_pots_prets) return;
+    const float* values = s_pots_vals;
+    const char* const* icons_utf8 = s_pots_icons;
+    MoistureSlotUI* slots = s_pots_slots;
+
+    // 1) Pots présents (zones, lot 5) : valides (pas NaN) d'un côté, hors ligne de
+    // l'autre, dans l'ordre des capteurs.
     struct Entry { int idx; float val; };
     Entry valid[5];
     int n_valid = 0;
+    int hors_ligne[5];
+    int n_hors_ligne = 0;
 
     for (int i = 0; i < 5; i++) {
+        if (zone_absente(static_cast<Zone>(static_cast<int>(Zone::POT_1) + i))) continue;
         if (!isnan(values[i])) {
             valid[n_valid++] = {i, values[i]};
+        } else {
+            hors_ligne[n_hors_ligne++] = i;
         }
     }
+    const int n_presents = n_valid + n_hors_ligne;
+    const int n_slots = n_presents < 4 ? n_presents : 4;
 
     // 2) Tri par valeur croissante (bubble sort, max 5 elements)
     for (int i = 0; i < n_valid - 1; i++) {
@@ -169,54 +198,51 @@ void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
         }
     }
 
-    // 3) Selectionner les 4 indices a afficher :
-    //    - slot 0 : le plus sec (valid[0])
-    //    - slot 1 : le 2e plus sec (valid[1])
-    //    - slot 2 : la mediane (valid[n_valid/2])
-    //    - slot 3 : le plus humide (valid[n_valid-1])
-    int selected[4] = {-1, -1, -1, -1};
-    if (n_valid >= 4) {
-        selected[0] = 0;
-        selected[1] = 1;
-        selected[2] = n_valid / 2;
-        selected[3] = n_valid - 1;
+    // 3) Deux façons de remplir les emplacements :
+    //    - résumé, avec 5 pots dont au moins 4 valides : le plus sec, le 2e plus sec,
+    //      la médiane (« Moy: ») et le plus humide ;
+    //    - sinon, un emplacement par pot : les valides du plus sec au plus humide, puis
+    //      les hors ligne en gris. Plus de pot répété sur deux emplacements.
+    const bool resume = (n_presents == 5 && n_valid >= 4);
+    int selected[4] = {0, 1, n_valid / 2, n_valid - 1};
+    if (resume) {
         // Eviter les doublons si mediane == slot 1 ou slot 3
         if (selected[2] <= selected[1]) selected[2] = selected[1] + 1;
         if (selected[2] >= selected[3] && selected[3] > 0) selected[2] = selected[3] - 1;
-    } else if (n_valid == 3) {
-        selected[0] = 0; selected[1] = 1; selected[2] = 1; selected[3] = 2;
-    } else if (n_valid == 2) {
-        selected[0] = 0; selected[1] = 0; selected[2] = 1; selected[3] = 1;
-    } else if (n_valid == 1) {
-        selected[0] = 0; selected[1] = 0; selected[2] = 0; selected[3] = 0;
     }
 
-    // 4) Mise a jour des 4 slots LVGL
+    // 4) Mise a jour des emplacements LVGL ; ceux en trop sont masqués (la rangée,
+    // en flex SPACE_EVENLY, recentre les autres).
     for (int s = 0; s < 4; s++) {
-        if (selected[s] < 0 || selected[s] >= n_valid) {
-            // Slot vide (pas assez de capteurs)
-            ui_text(slots[s].val_lbl, "");
-            ui_text_color(slots[s].icon_lbl, UIColor::INACTIVE);
-            ui_text_color(slots[s].val_lbl, UIColor::INACTIVE);
-            continue;
-        }
+        ui_hidden(lv_obj_get_parent(slots[s].icon_lbl), s >= n_slots);
+        if (s >= n_slots) continue;
 
-        Entry& e = valid[selected[s]];
+        int pot;
+        float val;
+        if (resume) {
+            pot = valid[selected[s]].idx;
+            val = valid[selected[s]].val;
+        } else if (s < n_valid) {
+            pot = valid[s].idx;
+            val = valid[s].val;
+        } else {
+            pot = hors_ligne[s - n_valid];
+            val = NAN;
+        }
         // Icone du capteur d'origine
-        ui_text(slots[s].icon_lbl, icons_utf8[e.idx]);
+        ui_text(slots[s].icon_lbl, icons_utf8[pot]);
 
         // Texte sous l'icone : "Pot X" ou "Moy:"
-        if (s == 2) {
+        if (resume && s == 2) {
             ui_text(slots[s].val_lbl, tr("Moy:"));
         } else {
             char buf[16];
-            snprintf(buf, sizeof(buf), tr("Pot %d"), e.idx + 1);
+            snprintf(buf, sizeof(buf), tr("Pot %d"), pot + 1);
             ui_text(slots[s].val_lbl, buf);
         }
 
-        // Couleur colorimetrique
-        uint32_t c = get_humidity_color(e.val);
-        ui_text_color(slots[s].icon_lbl, c);
+        // Couleur colorimetrique (grise hors ligne)
+        ui_text_color(slots[s].icon_lbl, isnan(val) ? UIColor::INACTIVE : get_humidity_color(val));
         ui_text_color(slots[s].val_lbl, UIColor::TEXT_DIM);
     }
 }
@@ -329,6 +355,7 @@ void set_icon_active_ui(lv_obj_t* icon, bool active, uint32_t color_on, uint32_t
 void update_pc_status_ui(bool active, lv_obj_t* icon_pc, lv_obj_t* icon_sw, lv_obj_t* lbl_sw_state) {
     if (icon_pc == nullptr) return;
     set_icon_active_ui(icon_pc, active, UIColor::SUCCESS, UIColor::TEXT_PRIMARY);
+    zones_note_pc(active);  // épaule de J0 quand il n'y a pas de TV (lot 5)
     if (icon_sw == nullptr || lbl_sw_state == nullptr) return;
     const uint32_t c = active ? UIColor::SUCCESS : UIColor::TEXT_DIM;
     set_icon_color_ui(icon_sw, c);

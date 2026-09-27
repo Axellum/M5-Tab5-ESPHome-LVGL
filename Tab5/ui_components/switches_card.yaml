@@ -28,6 +28,7 @@ obj:
   widgets:
     # Card 0 : PC Bureau
     - obj:
+        id: sw_card_0
         x: 25
         y: ${meteo_cell_y}
         width: ${meteo_cell_width}
@@ -57,11 +58,13 @@ obj:
                       - homeassistant.service:
                           service: script.allumer_pc_tv
                     on_long_press:
+                      # Sans TV (zone absente, lot 5), la télécommande n'a rien à piloter.
                       - lambda: |-
-                          animate_popup_open(id(tv_remote_popup));
+                          if (!zone_absente(Zone::TV)) animate_popup_open(id(tv_remote_popup));
 
     # Card 1 : Volet
     - obj:
+        id: sw_card_1
         x: 275
         y: ${meteo_cell_y}
         width: ${meteo_cell_width}
@@ -93,6 +96,7 @@ obj:
 
     # Card 2 : Chambre
     - obj:
+        id: sw_card_2
         x: 525
         y: ${meteo_cell_y}
         width: ${meteo_cell_width}
@@ -126,6 +130,7 @@ obj:
 
     # Card 3 : Salon
     - obj:
+        id: sw_card_3
         x: 775
         y: ${meteo_cell_y}
         width: ${meteo_cell_width}
@@ -159,6 +164,7 @@ obj:
 
     # Card 4 : LEDs Bureau
     - obj:
+        id: sw_card_4
         x: 1025
         y: ${meteo_cell_y}
         width: ${meteo_cell_width}

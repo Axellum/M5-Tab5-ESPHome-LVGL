@@ -309,13 +309,20 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
         lv_label_set_recolor(slot.min_lbl, true);
         ui_text_color(slot.max_lbl, UIColor::TEXT_PRIMARY);
         ui_text_color(slot.min_lbl, UIColor::TEXT_PRIMARY);
+    }
+    day_slots_apply_actions(slots, page_index);
+}
 
-        // Show/hide action elements depending on page_index (only show actions on page 0)
-        if (slot.action_btn) {
-            const bool hide = (page_index != 0);
-            for (lv_obj_t* o : {slot.action_btn, slot.action_icon1, slot.action_icon2, slot.extra_btn})
-                if (o) lv_obj_set_flag(o, LV_OBJ_FLAG_HIDDEN, hide);
-        }
+// Boutons et épaules d'appareil : seulement sur l'accueil (page 0), et seulement si
+// l'appareil existe (zones optionnelles, lot 5). Rejoué par zones_apply_ui() quand
+// HA déclare une zone absente ou qu'elle revient.
+void day_slots_apply_actions(WeatherDaySlot slots[], int page_index) {
+    for (int i = 0; i < 5; i++) {
+        const WeatherDaySlot& slot = slots[i];
+        if (!slot.action_btn) continue;
+        const bool hide = (page_index != 0) || zone_tuile_absente(i);
+        for (lv_obj_t* o : {slot.action_btn, slot.action_icon1, slot.action_icon2, slot.extra_btn})
+            ui_hidden(o, hide);
     }
 }
 

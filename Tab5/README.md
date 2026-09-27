@@ -57,6 +57,9 @@ Game scripts: `tab5_games_close_all` (closes whatever console is open, list read
 ### `tab5-calendar.yaml`
 Calendar popup scripts: `tab5_calendar_open`, `tab5_cal_render`, `tab5_cal_prev`/`tab5_cal_next`/`tab5_cal_today`, `tab5_cal_prefetch_boot`, `tab5_cal_day_tap`. The month grid is computed locally (`cal_render_month()`); HA only enriches it on demand.
 
+### `tab5-zones.yaml`
+Optional zones (lot 5, ADR-0018): default values for every `entity_…` key (commenting a line in `user_entities.yaml` removes that zone), the `esphome.tab5_zones` request sent to HA once per connection, the `tab5_zones_apply` script and the « Zones masquées » diagnostic sensor. HA answers with `tab5_maj_zones`; the decision lives in `tab5_zones.cpp`.
+
 ### `tab5-assist.yaml`
 The whole voice assistant in one place: `micro_wake_word` with **two models** — `okay_nabu` (always on when the wake-word switch is enabled) and `Stop` (armed only while the shutter moves, stops it locally) —, the `voice_assistant:` callbacks (they share `assist_set_pipeline_state()`), the assistant reply image (`http_request` + `online_image`), the **voice** scripts (`tab5_vocal_arm_stop`/`tab5_vocal_disarm_stop`, `tab5_vocal_interrupt`/`tab5_vocal_interrupt_and_listen`, `tab5_wake_word_dispatch` — runs the action chosen by `WakeWord::decide()` in `tab5_assist.cpp` —, `tab5_assist_toggle`, `tab5_show_vocal_response`) and the **assistant popup** scripts (`tab5_assist_open`/`close`/`on_request`/`sync_settings`, `tab5_set_assist_mode`, `tab5_assist_set_text_size`). The pipeline part (before `script:`) must stay free of `lv_*` — checked by `tools/check_tab5_code_rules.py`.
 
@@ -130,6 +133,7 @@ Garde-fou : `tools/check_tab5_registry.py`.
 | `tab5_maj_rdv_prochains` | payload (string) | Réveil : liste des prochains rendez-vous `epoch\|titre~…` (8 max) poussée par `script.tab5_rdv_prochains` (package HA `tab5_reveil.yaml`) ; le firmware tient le compte à rebours et annonce lui-même (`rdv_store()`, `alarm_clock.cpp`) |
 | `tab5_maj_calendrier_mois` | annee, mois, codes, heures, details (strings) | Popup calendrier : bitmask 2 hex/jour (travail/férié/vacances scolaires/RDV/anniversaire) + 31 champs d'heures de travail + libellés de détail — mis en cache, re-rendu si le mois est affiché (`cal_store_month_data()`/`cal_render_month()`) |
 | `tab5_maj_calendrier_jour` | date, payload (strings) | Popup calendrier : lignes de détail du jour tapé "type\|texte;..." (`cal_render_day_detail()`), ignoré si le détail affiché a changé |
+| `tab5_maj_zones` | absentes (string) | Zones optionnelles (lot 5, ADR-0018) : clés des zones dont l'entité n'existe pas dans HA (`clim,pot_4,…`), réponse à l'événement `esphome.tab5_zones` (`zones_reponse_ha()`, `tab5-zones.yaml`) |
 
 ## Globals principaux (`tab5-globals.yaml`)
 

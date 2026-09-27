@@ -495,6 +495,45 @@ automation:
     action:
       - action: script.tab5_push_clim
 
+  # ============================================================================
+  # ZONES OPTIONNELLES — réponse à la tablette (lot 5, 27/09/2026)
+  # ----------------------------------------------------------------------------
+  # Une fois par connexion, la tablette envoie les entités qu'elle suit, en
+  # « clé=entité » (esphome.tab5_zones, Tab5/tab5-zones.yaml). On répond les clés
+  # de celles qui n'existent pas ; leurs zones disparaissent de l'écran. Une entité
+  # en panne (unavailable) existe : sa zone reste. S'y ajoutent les zones que seul
+  # HA connaît : clim, volet (entité ou package absent), planning (pas d'agenda de
+  # travail). Ne jamais ignorer l'événement : sans réponse, la tablette garde la
+  # liste précédente. Clés : enum Zone de Tab5/tab5_zones.cpp.
+  # ============================================================================
+  - id: tab5_zones_reponse
+    alias: "Tab5 — zones présentes (réponse à la tablette)"
+    mode: queued
+    max: 3
+    trigger:
+      - platform: event
+        event_type: esphome.tab5_zones
+    condition:
+      - condition: state
+        entity_id: input_boolean.is_primary_active
+        state: "on"
+    action:
+      - variables:
+          absentes: >-
+            {% set ns = namespace(cles=[]) %}
+            {% for paire in (trigger.event.data.zones | default('')).split(',') if '=' in paire %}
+              {% set cle, entite = paire.split('=', 1) %}
+              {% if states[entite | trim] is none %}{% set ns.cles = ns.cles + [cle | trim] %}{% endif %}
+            {% endfor %}
+            {% if states['climate.VOTRE_CLIMATISATION'] is none %}{% set ns.cles = ns.cles + ['clim'] %}{% endif %}
+            {% if states['cover.VOTRE_VOLET'] is none or states['script.tab5_volet_action'] is none %}{% set ns.cles = ns.cles + ['volet'] %}{% endif %}
+            {% if states['calendar.VOTRE_EMAIL_gmail_com'] is none %}{% set ns.cles = ns.cles + ['planning'] %}{% endif %}
+            {{ ns.cles | join(',') }}
+      - action: esphome.tab5_ha_hmi_tab5_maj_zones
+        data:
+          absentes: "{{ absentes }}"
+        continue_on_error: true
+
   - id: force_primary_active_on_boot
     alias: "Force Primary Active on Boot"
     # Au démarrage de HA, remet le garde-fou à `on` : sans lui, un `off` resté d'un

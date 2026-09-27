@@ -74,6 +74,9 @@ api:
           lambda: 'return client_info.find("Home Assistant") != std::string::npos;'
         then:
           - script.execute: tab5_journal_envoi
+          # Zones optionnelles (lot 5) : redemander à HA quelles zones sont absentes. La
+          # demande part avec la première poussée des prévisions (tab5_zones_demande).
+          - lambda: 'zones_nouvelle_connexion();'
 
   services:
 
@@ -106,6 +109,10 @@ api:
       then:
         - lambda: |-
             if (id(j0_day) == nullptr) return;
+            // Zones optionnelles (lot 5) : une fois par connexion, avant la garde
+            // ci-dessous. Cette poussée vient d'une automatisation de HA : elles
+            // tournent, donc la réponse (tab5_maj_zones) aussi.
+            if (zones_demande_a_envoyer()) id(tab5_zones_demande).execute();
             // Quinze jours identiques au push précédent : ni analyse ni rendu. Sûr
             // pour le réveil — le contenu change au moins une fois par jour (libellés
             // des jours décalés), donc la date d'ancrage suit (audit 25/09, lot 3).
@@ -505,3 +512,18 @@ api:
                 {id(cal_det_icon_5), id(cal_det_txt_5)}
             };
             cal_render_day_detail(payload, id(lbl_cal_day_status), lines);
+
+    # Zones optionnelles (lot 5, 27/09/2026) — réponse de l'automatisation HA
+    # tab5_zones_reponse (package tab5_push.yaml) à l'événement esphome.tab5_zones
+    # (script tab5_zones_demande, tab5-zones.yaml). La décision vit dans tab5_zones.cpp.
+    - service: tab5_maj_zones
+      description: "Zones optionnelles : les zones de l'écran dont l'entité n'existe pas dans Home Assistant, en réponse à l'événement esphome.tab5_zones. Elles disparaissent, les autres restent ou reviennent."
+      variables:
+        absentes:
+          type: string
+          description: "Clés des zones absentes, séparées par des virgules : lumiere_1, lumiere_2, lumiere_3, pc, tv, telephone, salon, serre, pot_1 à pot_5, clim, volet, planning. Vide : tout est là."
+          example: "clim,pot_4,pot_5"
+      then:
+        - lambda: 'zones_reponse_ha(absentes);'
+        # Toujours : le capteur « Zones masquées » part aussi quand rien ne change.
+        - script.execute: tab5_zones_apply

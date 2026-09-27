@@ -9,6 +9,13 @@
 # Setup (une fois après clone) :
 #   cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 # Puis remplacez chaque valeur par vos entity IDs (Réglages → Entités dans HA).
+#
+# Pas de clim, pas de TV, moins de lumières ou de pots ? Mettez la ligne en
+# commentaire : la zone disparaît de l'écran, avec ses boutons (lot 5, Tab5/tab5-zones.yaml).
+# Il faut le package HA tab5_push.yaml : c'est lui qui confirme qu'une entité n'existe
+# pas. Une entité en panne (unavailable) garde sa zone, avec « -- ». Le capteur
+# « Zones masquées » de la tablette, dans HA, dit ce qui a disparu : une faute de
+# frappe dans un entity ID s'y voit.
 
 # --- Révision du Tab5 : la puce écran inscrite sur l'autocollant au dos, au-dessus du
 #     logo Espressif. st7123 (défaut si la ligne reste commentée, testée au quotidien),
