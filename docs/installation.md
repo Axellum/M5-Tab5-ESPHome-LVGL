@@ -98,7 +98,7 @@ esphome run tab5-ha-hmi.yaml
 ```
 
 The tablet has no Wi-Fi network yet. Give it yours, either way:
-- **over USB**, right after the flash: [ESPHome Web](https://web.esphome.io) (Chrome or Edge), *Connect*, then *Configure Wi-Fi* (Improv);
+- **over USB**, right after the flash: the project's [web flasher](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/) (Chrome or Edge), *Connect and install*, then its Wi-Fi button, or [ESPHome Web](https://web.esphome.io), *Connect*, then *Configure Wi-Fi*. Both use Improv and work with a firmware you built yourself. Closing that window restarts the tablet once: that is normal;
 - **without a cable**: join the open **« Tab5 Fallback AP »** network with a phone; a page opens (otherwise go to `http://192.168.4.1`) to pick your network. <!-- pragma: allowlist secret -->
 
 The network is kept across updates. The fallback AP comes back whenever the tablet loses its Wi-Fi for a minute, to set a new one.
@@ -138,10 +138,10 @@ A tablet installed from the [web flasher](https://axellum.github.io/M5-Tab5-ESPH
 2. **Signing key** (Step 3), then compile: `esphome compile tab5-ha-hmi.yaml`.
 3. **Flash.** The 2.x firmware refuses a plain upload, so this one goes out encrypted with your old key (`api_encryption_key` of your `secrets.yaml`, never printed):
    ```bash
-   python tools/migrer_vers_3.py --host 192.168.x.x
+   python tools/migrer_vers_3.py --host 192.168.x.x --port COM3
    ```
-   Or over USB: `esphome upload tab5-ha-hmi.yaml --device COM3`.
-4. **Wi-Fi.** 2.x had the credentials compiled in, 3.0 does not: the tablet starts without network and opens « Tab5 Fallback AP ». Join it and pick your network (Step 5).
+   `--port` is the tablet's USB port (`COM…` on Windows, `/dev/ttyACM0` on Linux; `python -m serial.tools.list_ports -v` lists them, the tablet's serial number is its MAC address). Or over USB only: `esphome upload tab5-ha-hmi.yaml --device COM3`.
+4. **Wi-Fi.** 2.x had the credentials compiled in, 3.0 does not. With `--port`, the script gives them back right after the restart, over USB (Improv, `wifi_ssid` and `wifi_password` of the same `secrets.yaml`, never printed): no phone, no access point. Without it, the tablet starts without network and opens « Tab5 Fallback AP »: join it and pick your network, or use the web flasher's Wi-Fi button over USB (Step 5).
 5. **Home Assistant** notifies that the tablet « disabled transport encryption » (*Settings → Devices & services*, re-authentication): confirm. HA then gives it a new key by itself. The entities, automations and history stay the same.
 
 Then `secrets.yaml` can go (keep the old key only if you may flash 2.x again), and `tab5_fuseau` is ignored.
@@ -301,7 +301,7 @@ esphome run tab5-ha-hmi.yaml
 ```
 
 La tablette n'a pas encore de réseau Wi-Fi. Donnez-lui le vôtre, au choix :
-- **par l'USB**, juste après le flash : [ESPHome Web](https://web.esphome.io) (Chrome ou Edge), *Connect*, puis *Configure Wi-Fi* (Improv) ;
+- **par l'USB**, juste après le flash : le [flasheur web](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/) du projet (Chrome ou Edge), *Connecter et installer*, puis son bouton Wi-Fi, ou [ESPHome Web](https://web.esphome.io), *Connect*, puis *Configure Wi-Fi*. Les deux passent par Improv et marchent avec un firmware compilé soi-même. Fermer cette fenêtre redémarre la tablette une fois : c'est normal ;
 - **sans câble** : connectez un téléphone au réseau ouvert **« Tab5 Fallback AP »** ; une page s'ouvre (sinon allez sur `http://192.168.4.1`) pour choisir votre réseau. <!-- pragma: allowlist secret -->
 
 Le réseau est gardé d'une mise à jour à l'autre. L'AP de secours revient dès que la tablette perd son Wi-Fi une minute, pour en donner un autre.
@@ -341,10 +341,10 @@ La 3.0 change la façon dont la tablette est protégée ([ADR-0020](decisions/00
 2. **Clé de signature** (étape 3), puis compilez : `esphome compile tab5-ha-hmi.yaml`.
 3. **Flashez.** Le firmware 2.x refuse un envoi en clair : celui-ci part donc chiffré avec votre ancienne clé (`api_encryption_key` de votre `secrets.yaml`, jamais affichée) :
    ```bash
-   python tools/migrer_vers_3.py --host 192.168.x.x
+   python tools/migrer_vers_3.py --host 192.168.x.x --port COM3
    ```
-   Ou par USB : `esphome upload tab5-ha-hmi.yaml --device COM3`.
-4. **Wi-Fi.** La 2.x avait les identifiants compilés, la 3.0 non : la tablette démarre sans réseau et ouvre « Tab5 Fallback AP ». Connectez-vous-y et choisissez votre réseau (étape 5).
+   `--port` est le port USB de la tablette (`COM…` sous Windows, `/dev/ttyACM0` sous Linux ; `python -m serial.tools.list_ports -v` les liste, le numéro de série de la tablette est son adresse MAC). Ou seulement par USB : `esphome upload tab5-ha-hmi.yaml --device COM3`.
+4. **Wi-Fi.** La 2.x avait les identifiants compilés, la 3.0 non. Avec `--port`, le script les lui redonne juste après le redémarrage, par l'USB (Improv, `wifi_ssid` et `wifi_password` du même `secrets.yaml`, jamais affichés) : ni téléphone ni point d'accès. Sans lui, la tablette démarre sans réseau et ouvre « Tab5 Fallback AP » : connectez-vous-y et choisissez votre réseau, ou utilisez le bouton Wi-Fi du flasheur web par l'USB (étape 5).
 5. **Home Assistant** signale que la tablette « a désactivé le chiffrement du transport » (*Paramètres → Appareils et services*, réauthentification) : confirmez. HA lui donne ensuite une nouvelle clé tout seul. Les entités, les automatisations et l'historique restent les mêmes.
 
 Ensuite, `secrets.yaml` peut partir (gardez l'ancienne clé seulement si vous risquez de reflasher une 2.x), et `tab5_fuseau` est ignoré.
