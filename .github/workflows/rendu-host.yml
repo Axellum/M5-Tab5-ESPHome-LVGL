@@ -46,16 +46,18 @@ jobs:
           TZ: Europe/Paris
         run: esphome compile tab5-rendu-host.yaml
       - name: Lancer le rendu et capturer les scènes, en français puis en anglais
-        # Date et heure figées au départ (puis elles avancent), pour le rendu ET le script :
-        # l'heure affichée et le « dans N mn » de la pluie ne changent pas d'un run à
-        # l'autre. L'horloge monotone reste la vraie : ESPHome y mesure le temps depuis
+        # Date et heure FIGÉES (faketime sans « @ » : l'horloge ne tourne pas), pour le rendu
+        # ET le script : l'heure affichée et le « dans N mn » de la pluie ne changent pas
+        # d'un run à l'autre. Une heure qui avance franchissait une minute pendant les
+        # ~64 s des trois scènes (07:45 → 07:46 sur la dernière capture, vu le 27/09/2026).
+        # L'horloge monotone reste la vraie : ESPHome y mesure le temps depuis
         # le démarrage (millis), et une date de 2026 la ferait croire vieille de 56 ans
         # (la fenêtre d'appairage de 30 min se fermait dès le démarrage).
         # Le changement de langue enregistre et redémarre, c'est-à-dire qu'il arrête le
         # programme sur host : on le relance avec les mêmes préférences (ESPHOME_PREFDIR).
         env:
           TZ: Europe/Paris
-          DEPART: "@2026-06-16 07:45:00"
+          DEPART: "2026-06-16 07:45:00"
           FAKETIME_DONT_FAKE_MONOTONIC: "1"
           ESPHOME_PREFDIR: ${{ runner.temp }}/prefs
         run: |
