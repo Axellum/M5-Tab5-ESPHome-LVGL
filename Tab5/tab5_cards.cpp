@@ -28,7 +28,7 @@
 
 void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* icon_switch,
     lv_obj_t* lbl_switch_state, lv_obj_t* btn_power_icon,
-    const std::string& current_light_entity, const std::string& this_entity, bool is_on) {
+    const std::string& current_light_slot, const std::string& this_slot, bool is_on) {
 
     if (icon_room == nullptr || icon_light == nullptr) return;
 
@@ -42,7 +42,7 @@ void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* i
         ui_text(lbl_switch_state, tr(is_on ? "Allumé" : "Éteint"));
         ui_text_color(lbl_switch_state, color);
     }
-    if (btn_power_icon != nullptr && current_light_entity == this_entity) {
+    if (btn_power_icon != nullptr && current_light_slot == this_slot) {
         ui_text_color(btn_power_icon, color);
     }
 }

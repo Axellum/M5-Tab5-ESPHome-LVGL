@@ -1,6 +1,6 @@
 # ADR-0018: Optional zones — a zone disappears only when Home Assistant confirms its entity does not exist
 
-**Status:** Accepted (2026-09-27)
+**Status:** Accepted (2026-09-27) — updated by [ADR-0019](0019-logical-slots-blueprint.md) (lot 6a): the tablet now sends only the slot keys, and the « Tab5 — emplacements » blueprint answers (an empty slot is an absent zone); commenting a line in `user_entities.yaml` no longer applies.
 **Date:** 2026-09-27 (lot 5 of the « ouverture » audit)
 
 ## Context

@@ -2,7 +2,8 @@
  * [AI-CONTEXT]
  * @file tab5_zones.cpp
  * @role Zones optionnelles (lot 5 de l'audit « ouverture », 27/09/2026) : quelles zones
- *       de l'écran masquer, et le masquage lui-même. Contrat et raisons dans
+ *       de l'écran masquer, et le masquage lui-même. Et, depuis le lot 6a (ADR-0019),
+ *       emplacements_appliquer() : les valeurs des emplacements poussées par HA. Contrat et raisons dans
  *       tab5_custom.h (« Zones optionnelles ») ; échanges avec HA dans tab5-zones.yaml.
  * @architecture_constraint Rien ne disparaît sans réponse de HA : la tablette seule ne
  *       sait pas distinguer une entité absente d'une entité pas encore transmise. Une
@@ -15,6 +16,7 @@
  */
 #include "tab5_internal.h"
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 
 ZonesUI g_zones_ui;
@@ -143,14 +145,37 @@ std::string zones_texte_masquees() {
     return t.empty() ? std::string("aucune") : t;
 }
 
-std::string zones_lumieres_presentes(const char* const entites[3]) {
-    std::string t;
-    for (int i = 0; i < 3; i++) {
-        if (zone_absente(zone_lumiere(i)) || entites[i] == nullptr) continue;
-        if (!t.empty()) t += ", ";
-        t += entites[i];
+
+int emplacements_appliquer(const std::string& payload, const EmplacementCible* cibles, size_t n) {
+    int appliquees = 0;
+    size_t debut = 0;
+    while (debut < payload.size()) {
+        size_t fin = payload.find(';', debut);
+        if (fin == std::string::npos) fin = payload.size();
+        const size_t p1 = payload.find('|', debut);
+        if (p1 != std::string::npos && p1 < fin) {
+            const size_t p2 = payload.find('|', p1 + 1);
+            const bool trois = (p2 != std::string::npos && p2 < fin);
+            const std::string cle = payload.substr(debut, p1 - debut);
+            const std::string etat = payload.substr(p1 + 1, (trois ? p2 : fin) - p1 - 1);
+            const std::string valeur = trois ? payload.substr(p2 + 1, fin - p2 - 1) : std::string();
+            for (size_t i = 0; i < n; i++) {
+                if (cle != cibles[i].cle) continue;
+                // Valeur d'abord : le on_value de l'état (lumières) lit la luminosité.
+                if (cibles[i].valeur != nullptr) {
+                    char* bout = nullptr;
+                    float v = strtof(valeur.c_str(), &bout);
+                    if (valeur.empty() || bout == valeur.c_str()) v = NAN;  // « unavailable »…
+                    cibles[i].valeur->publish_state(v);
+                }
+                if (cibles[i].texte != nullptr) cibles[i].texte->publish_state(etat);
+                appliquees++;
+                break;
+            }
+        }
+        debut = fin + 1;
     }
-    return t;
+    return appliquees;
 }
 
 void zones_nouvelle_connexion() { s_demande = true; }

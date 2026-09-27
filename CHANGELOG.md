@@ -4,6 +4,65 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Les appareils se choisissent dans HA, à la souris : emplacements et blueprint (lot 6a)
+
+Lot 6 de l'audit « ouverture » (firmware générique), première partie, **rupture** (3.0.0)
+(ADR-0019). Choix d'Axel : blueprint HA, firmwares signés, nom `tab5-ha-hmi` gardé,
+emplacements d'abord, appareils seulement.
+
+- **La tablette ne connaît plus aucune entité de la maison.** Elle parle en emplacements
+  (`lumiere_1` à `lumiere_3`, `pc`, `tv`, `telephone`, `salon`, `serre`, `pot_1` à
+  `pot_5` et leurs détails, `clim`, `volet`, `planning`).
+  - Les 37 capteurs `platform: homeassistant` deviennent des `template` internes,
+    alimentés par la nouvelle action `tab5_maj_emplacements` (« clé|état|valeur;… »).
+    Leurs `on_value` n'ont pas changé.
+  - Les commandes nommant une entité (lumières et popup lumière, clim, TV, PC, volet)
+    passent par un script unique, `tab5_action`, qui émet l'événement
+    `esphome.tab5_action` (emplacement, action, valeur). Un événement n'exige pas
+    l'option « autoriser les actions HA ».
+  - Restent des actions HA, parce qu'elles ne visent aucune entité de la maison :
+    annonces et arrêt de la voix de la tablette, pipeline vocal, agenda, réveil,
+    acquittement des alertes, console système.
+- **Blueprint « Tab5 — emplacements »**
+  (`HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml`) :
+  - un sélecteur par emplacement, filtré par domaine et classe, rangé en sections, tous
+    facultatifs ; un seul choix par pot (conductivité, éclairement, température et
+    batterie sont pris sur l'appareil du capteur d'humidité, par classe, vérifié sur des
+    Flower Care) ;
+  - une automatisation par tablette : elle pousse tous les emplacements à la connexion
+    et un seul à chaque changement, pousse la clim et le volet qui signale sa course,
+    exécute les commandes et répond aux zones (lot 5 : emplacement vide = zone absente).
+  - Changer d'appareil = modifier l'automatisation dans HA : ni flash ni redémarrage.
+- **Package `tab5_push.yaml`** : il perd ce que le blueprint reprend (réponse des zones,
+  poussée de la clim, scripts `allumer_leds` et `allumer_pc_tv`). Placeholders
+  `VOTRE_CLIMATISATION`, `VOTRE_LEDS` et `VOTRE_PC` retirés.
+- **`user_entities.yaml`** : les clés des appareils disparaissent ; celles d'un fichier
+  existant sont simplement ignorées.
+- **Mode démo** : il pousse les emplacements (`tab5_maj_emplacements`) au lieu de
+  répondre à des abonnements, et journalise les commandes `esphome.tab5_action`.
+- **Tests** :
+  - `tests/test_emplacements.py` : clés du blueprint = table du firmware, chaque
+    commande de l'écran a sa branche, entrées facultatives, plus aucun abonnement ;
+  - `test_zones.py` : la réponse vient du blueprint, plus du package ;
+  - `test_demo.py` : emplacements de la démo = table du firmware ;
+  - pytest : 77 passent.
+- **Vérifié sur le HA d'Axel** : tous les modèles du blueprint (le filtre `extract`,
+  d'Ansible, n'existe pas dans HA : remplacé par une boucle), rendu du blueprint avec
+  des entrées vides.
+- **Essai sur la tablette** (27/09) :
+  - package déployé (sauvegarde `.bak_20260927_lot6a`) et automatisation créée à partir
+    du blueprint avec les entités d'Axel ; firmware flashé à 13:07 ;
+  - à la connexion, 34 emplacements poussés avec les vraies valeurs (pots 4-5 et LEDs
+    indisponibles : « -- », zones gardées), clim poussée, volet laissé au package, zones
+    `absentes: ""` ;
+  - **écran et commandes validés par Axel** (lampes, popup, clim, TV).
+- **À savoir** : le blueprint exige le firmware 3.0. Avec un plus ancien, l'action
+  `tab5_maj_emplacements` n'existe pas, et `continue_on_error` ne rattrape pas une
+  action inexistante (vu juste avant le flash).
+- **Mesures** (build local, ESPHome 2026.9.0) : image −12,6 Ko (3 116 876 o), RAM
+  statique −1,4 Ko, sans les 37 abonnements HA. Aucun avertissement dans le code du
+  projet.
+
 ### 2026-09-27 — ST7121 : le couple écran + tactile signalé fonctionnel par un tiers (docs)
 
 - **Docs seulement**, ni firmware ni HA. Sur esphome/esphome#17471 (11/07/2026), un

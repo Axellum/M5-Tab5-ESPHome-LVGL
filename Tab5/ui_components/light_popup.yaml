@@ -8,7 +8,7 @@
 #       (forecast_daily.yaml j2/j3/j4) ou par le sélecteur interne — les deux passent par
 #       script.tab5_light_popup_show (tab5-scripts.yaml) qui synchronise titre, surbrillance
 #       du sélecteur, icône power et arc de luminosité depuis l'état HA réel.
-# @architecture_constraint Toutes les actions ciblent id(current_light_entity) — PAS une
+# @architecture_constraint Toutes les actions ciblent id(current_light_slot) — PAS une
 #       entité en dur — car ce popup est partagé par les 3 lumières. Ne pas renommer
 #       btn_light_power_icon / arc_light_brightness / lbl_light_brightness_val : mis à jour
 #       par update_light_card_ui() (tab5_custom.cpp) et par les capteurs light_*_brightness
@@ -71,10 +71,7 @@ obj:
                     pressed:
                       bg_opa: 30%
                     on_short_click:
-                      - homeassistant.service:
-                          service: light.toggle
-                          data:
-                            entity_id: !lambda 'return id(current_light_entity);'
+                      - script.execute: { id: tab5_action, emplacement: !lambda 'return id(current_light_slot);', commande: basculer, valeur: "" }
                     widgets:
                       - label: { id: btn_light_power_icon, text: "\U000F0425", align: LEFT_MID, x: 28, text_font: mdi_font_56, text_color: color_text_dim }
                       - label: { text: "On / Off", align: LEFT_MID, x: 110, text_font: roboto_32_b }
@@ -91,12 +88,7 @@ obj:
                     pressed:
                       bg_opa: 30%
                     on_short_click:
-                      - homeassistant.service:
-                          service: light.turn_off
-                          data:
-                            entity_id: !lambda |-
-                              static const char* const kEntites[3] = {"${entity_light_chambre}", "${entity_light_salon}", "${entity_light_bureau}"};
-                              return zones_lumieres_presentes(kEntites);
+                      - script.execute: { id: tab5_action, emplacement: lumieres, commande: eteindre, valeur: "" }
                     widgets:
                       - label: { text: "\U000F0425", align: LEFT_MID, x: 28, text_font: mdi_font_32, text_color: color_error }
                       - label: { text: "Tout éteindre", align: LEFT_MID, x: 80, text_color: color_text_dim }

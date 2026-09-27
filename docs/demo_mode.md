@@ -26,7 +26,7 @@ Nothing in `Tab5/*.yaml`, `Tab5/*.cpp/.h`, `Tab5/user_entities.yaml`, `secrets.y
    python tools/demo/demo_pusher.py --host <device-ip> --key <api_encryption_key>
    ```
    If `secrets.yaml` exists at the repo root, `--key` can be omitted — the script reads it directly.
-4. **Watch the screen.** Every ~20 seconds it cycles between three scenes (sunny day, rainy day with a weather alert, a rest day with a plant that needs watering), driving nine dashboard push services, the optional-zones answer (`tab5_maj_zones`) and 14 "mirror" entities (plants, lights, temperatures, PC, TV, phone). The remaining services are out of scope by design — they belong to features a demo can't fake (`tab5_maj_reponse_vocale` / `tab5_assist_reponse` need a voice pipeline, `tab5_maj_calendrier_mois` / `_jour` need a real calendar, `tab5_maj_alertes_ha_bulk` needs live HA entities).
+4. **Watch the screen.** Every ~20 seconds it cycles between three scenes (sunny day, rainy day with a weather alert, a rest day with a plant that needs watering), driving nine dashboard push services, the optional-zones answer (`tab5_maj_zones`) and the home's slots (`tab5_maj_emplacements`: lights, temperatures, PC, TV, phone, plants), as the Home Assistant blueprint would (lot 6a). The remaining services are out of scope by design — they belong to features a demo can't fake (`tab5_maj_reponse_vocale` / `tab5_assist_reponse` need a voice pipeline, `tab5_maj_calendrier_mois` / `_jour` need a real calendar, `tab5_maj_alertes_ha_bulk` needs live HA entities).
 5. **Stop with `Ctrl+C`.** Nothing persists anywhere outside the device.
 
 Want to check the exact payloads without any hardware or dependency at all:
@@ -40,7 +40,7 @@ A zone whose Home Assistant entity doesn't exist disappears from the screen ([AD
 ```bash
 python tools/demo/demo_pusher.py --host <device-ip> --maison-minimale
 ```
-The script then behaves like a Home Assistant without a climate unit, TV, phone, third light, greenhouse sensor, plants 3 to 5, shutter or work calendar: it doesn't answer for those entities, answers the tablet's `esphome.tab5_zones` request with their keys, and pushes nothing for the climate and the shutter. What stays: the PC, two lights, the living-room temperature and two plants. The greenhouse spot shows a gamepad (the arcade entrance stays where it was).
+The script then behaves like a Home Assistant without a climate unit, TV, phone, third light, greenhouse sensor, plants 3 to 5, shutter or work calendar: it pushes nothing for those slots, answers the tablet's `esphome.tab5_zones` request with their keys, and pushes nothing for the climate and the shutter. What stays: the PC, two lights, the living-room temperature and two plants. The greenhouse spot shows a gamepad (the arcade entrance stays where it was).
 
 **Restart the tablet when switching from a full demo to this one**: a zone that has already received data stays on screen (data always wins). The other way round needs nothing: a full demo answers "nothing missing" as soon as it connects.
 
@@ -48,7 +48,7 @@ The script then behaves like a Home Assistant without a climate unit, TV, phone,
 
 By default, the script also logs when you tap a light, climate, or shutter control on screen (confirms the touch path works), via ESPHome's `subscribe_home_assistant_states_and_services` hook. Disable it with `--no-interactive`.
 
-**Known limitation**: the light popup targets `id(current_light_entity)`, an internal firmware global set by a long-press on a card — it isn't observable over the native API protocol, so the script cannot mirror the exact on-screen light state back after a tap. It logs the button press (proof the touchscreen works) but does not fake a state change. This is a deliberate scope limit, not a bug.
+**Known limitation**: the light popup targets `id(current_light_slot)`, an internal firmware global set by a long-press on a card — it isn't observable over the native API protocol, so the script cannot mirror the exact on-screen light state back after a tap. It logs the button press (proof the touchscreen works) but does not fake a state change. This is a deliberate scope limit, not a bug.
 
 ## Reference: what gets pushed
 
@@ -59,7 +59,7 @@ By default, the script also logs when you tap a light, climate, or shutter contr
 | `tab5_maj_pluie_1h_bulk` | 9-bar short-term rain chart, one call (`idx|intensity;…`) |
 | `tab5_maj_clim`, `_volet_etat`, `_info_texte` | Climate, shutter and info-banner cards (`_info_texte` takes 3 args: `texte`, `couleur`, `meteo_id`). Rain and banner use the lot 4c codes (`@level,start`, `@ha|…`), so the tablet writes them in its own language. The planning banner is derived by the tablet from the daily push, as with Home Assistant |
 | `tab5_maj_zones` | Optional zones: empty answer (full home), or the minimal home's keys with `--maison-minimale` |
-| 14 mirror entities (`platform: homeassistant` in `tab5-sensors-domotique.yaml`) | Lights, room temp/humidity, phone battery, PC and TV trackers, 5 plant moisture sensors (one deliberately low, to show the dynamic sort) |
+| `tab5_maj_emplacements` (lot 6a) | The home's slots, as the blueprint pushes them: lights, room temp/humidity, phone battery, PC, TV, 5 plants with their details (one deliberately low, to show the dynamic sort). The screen's commands (`esphome.tab5_action`) are only logged |
 
 Source of the exact payload contract: `Tab5/tab5-api-logic.yaml` and `Tab5/tab5_services.cpp` / `tab5_forecast.cpp` (parsing rules, field counts, buffer limits) — see comments in `tools/demo/scenarios.py` for the specifics.
 
@@ -93,7 +93,7 @@ Rien dans `Tab5/*.yaml`, `Tab5/*.cpp/.h`, `Tab5/user_entities.yaml`, `secrets.ya
    python tools/demo/demo_pusher.py --host <ip-appareil> --key <api_encryption_key>
    ```
    Si `secrets.yaml` existe à la racine du repo, `--key` peut être omis — le script le lit directement.
-4. **Regardez l'écran.** Toutes les ~20 secondes, il alterne entre trois scènes (journée ensoleillée, jour de pluie avec alerte météo, jour de repos avec une plante à arroser), qui pilotent neuf services de push du dashboard, la réponse des zones optionnelles (`tab5_maj_zones`) et 14 entités « miroir » (plantes, lumières, températures, PC, TV, téléphone). Les services restants sont hors périmètre par choix : ils relèvent de fonctions qu'une démo ne peut pas simuler (`tab5_maj_reponse_vocale` / `tab5_assist_reponse` demandent un pipeline vocal, `tab5_maj_calendrier_mois` / `_jour` un vrai calendrier, `tab5_maj_alertes_ha_bulk` des entités HA vivantes).
+4. **Regardez l'écran.** Toutes les ~20 secondes, il alterne entre trois scènes (journée ensoleillée, jour de pluie avec alerte météo, jour de repos avec une plante à arroser), qui pilotent neuf services de push du dashboard, la réponse des zones optionnelles (`tab5_maj_zones`) et les emplacements de la maison (`tab5_maj_emplacements` : lumières, températures, PC, TV, téléphone, plantes), comme le ferait le blueprint Home Assistant (lot 6a). Les services restants sont hors périmètre par choix : ils relèvent de fonctions qu'une démo ne peut pas simuler (`tab5_maj_reponse_vocale` / `tab5_assist_reponse` demandent un pipeline vocal, `tab5_maj_calendrier_mois` / `_jour` un vrai calendrier, `tab5_maj_alertes_ha_bulk` des entités HA vivantes).
 5. **Arrêtez avec `Ctrl+C`.** Rien ne persiste nulle part en dehors de l'appareil.
 
 Pour vérifier les payloads exacts sans matériel ni dépendance du tout :
@@ -108,7 +108,7 @@ Une zone dont l'entité Home Assistant n'existe pas disparaît de l'écran ([ADR
 python tools/demo/demo_pusher.py --host <ip-appareil> --maison-minimale
 ```
 Le script se comporte alors comme un Home Assistant sans clim, TV, téléphone, troisième lumière, capteur de serre, pots 3 à 5, volet ni agenda de travail :
-- il ne répond pas pour ces entités ;
+- il ne pousse rien pour ces emplacements ;
 - il répond à la demande `esphome.tab5_zones` de la tablette avec leurs clés ;
 - il ne pousse rien pour la clim ni le volet.
 
@@ -120,7 +120,7 @@ Il reste le PC, deux lumières, la température du salon et deux pots. À la pla
 
 Par défaut, le script loggue aussi quand vous appuyez sur un contrôle lumière/clim/volet à l'écran (confirme que le tactile fonctionne), via le hook `subscribe_home_assistant_states_and_services` d'ESPHome. Désactivez avec `--no-interactive`.
 
-**Limitation connue** : le popup lumière cible `id(current_light_entity)`, un global interne au firmware réglé par un appui long sur une carte — invisible depuis le protocole natif. Le script loggue l'appui (preuve que le tactile fonctionne) mais ne simule pas de changement d'état à l'écran. C'est une limite de périmètre assumée, pas un bug.
+**Limitation connue** : le popup lumière cible `id(current_light_slot)`, un global interne au firmware réglé par un appui long sur une carte — invisible depuis le protocole natif. Le script loggue l'appui (preuve que le tactile fonctionne) mais ne simule pas de changement d'état à l'écran. C'est une limite de périmètre assumée, pas un bug.
 
 ## Référence : ce qui est poussé
 
@@ -131,6 +131,6 @@ Par défaut, le script loggue aussi quand vous appuyez sur un contrôle lumière
 | `tab5_maj_pluie_1h_bulk` | Graphe de pluie court terme à 9 barres, un seul appel (`idx|intensité;…`) |
 | `tab5_maj_clim`, `_volet_etat`, `_info_texte` | Cartes clim et volet, bandeau info (`_info_texte` prend 3 arguments : `texte`, `couleur`, `meteo_id`). Pluie et bandeau passent par les codes du lot 4c (`@niveau,début`, `@ha|…`) : la tablette les écrit dans sa langue. Le bandeau planning est dérivé par la tablette de la poussée des jours, comme avec Home Assistant |
 | `tab5_maj_zones` | Zones optionnelles : réponse vide (maison complète), ou les clés de la maison minimale avec `--maison-minimale` |
-| 14 entités miroir (`platform: homeassistant` dans `tab5-sensors-domotique.yaml`) | Lumières, temp/humidité pièces, batterie téléphone, suivi du PC et de la TV, 5 capteurs d'humidité plantes (un volontairement bas, pour montrer le tri dynamique) |
+| `tab5_maj_emplacements` (lot 6a) | Les emplacements de la maison, comme le blueprint les pousse : lumières, temp/humidité de la pièce, batterie du téléphone, PC, TV, 5 pots avec leurs détails (un volontairement bas, pour montrer le tri dynamique). Les commandes de l'écran (`esphome.tab5_action`) sont seulement journalisées |
 
 Source du contrat exact des payloads : `Tab5/tab5-api-logic.yaml` et `Tab5/tab5_services.cpp` / `tab5_forecast.cpp` (règles de parsing, nombre de champs, limites de buffer) — voir les commentaires de `tools/demo/scenarios.py` pour le détail.

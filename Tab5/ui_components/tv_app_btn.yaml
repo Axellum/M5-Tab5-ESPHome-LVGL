@@ -18,9 +18,6 @@ button:
   pressed:
     bg_opa: 30%
   on_short_click:
-    - homeassistant.service:
-        service: script.tab5_tv_app
-        data:
-          app: "${app}"
+    - script.execute: { id: tab5_action, emplacement: tv, commande: appli, valeur: "${app}" }
   widgets:
     - label: { text: "${text}", align: CENTER, text_font: roboto_32_b, text_color: "${color}" }

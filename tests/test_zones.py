@@ -4,15 +4,14 @@ la tablette et Home Assistant tient en des clés écrites à quatre endroits, qu
 compilateur ne compare :
 
 - l'enum `Zone` (Tab5/tab5_custom.h) et le tableau `kCles` (Tab5/tab5_zones.cpp) ;
-- la demande `esphome.tab5_zones` (Tab5/tab5-zones.yaml), « clé=entité » dans l'ordre
-  de l'enum pour les zones que la tablette suit ;
-- la réponse de HA (automatisation `tab5_zones_reponse`, package tab5_push.yaml), qui
-  ajoute seule les zones qu'elle seule connaît (clim, volet, planning).
+- la demande `esphome.tab5_zones` (Tab5/tab5-zones.yaml), les clés des zones que la
+  tablette suit, dans l'ordre de l'enum ;
+- la réponse de HA : depuis le lot 6a (ADR-0019), le blueprint « Tab5 — emplacements »
+  (liste `cles_zones`), qui ajoute les zones qu'il est seul à connaître (clim, volet,
+  planning).
 
 Une clé qui diverge ferait masquer la mauvaise zone, ou jamais la bonne, sans aucune
-erreur. On vérifie aussi que chaque entité de zone a une valeur par défaut (une ligne
-commentée dans user_entities.yaml doit compiler) et que chaque capteur de zone signale
-ses données (zone_vue)."""
+erreur. On vérifie aussi que chaque capteur de zone signale ses données (zone_vue)."""
 import os
 import re
 
@@ -42,7 +41,18 @@ def _kcles():
 def _demande():
     m = re.search(r'^\s+zones: "([^"]+)"', _lire("Tab5", "tab5-zones.yaml"), re.M)
     assert m, "chaîne zones: introuvable dans tab5-zones.yaml"
-    return [p.split("=", 1) for p in m.group(1).split(",")]
+    return m.group(1).split(",")
+
+
+def _blueprint():
+    return _lire("HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
+
+
+def _liste_yaml(texte, nom):
+    """Les éléments « - x » de la liste `nom:` (une clé par ligne)."""
+    m = re.search(rf"^(\s+){nom}:\n((?:\1  - \w+\n)+)", texte, re.M)
+    assert m, f"liste {nom} introuvable"
+    return re.findall(r"- (\w+)", m.group(2))
 
 
 def test_cles_suivent_l_enum():
@@ -52,31 +62,20 @@ def test_cles_suivent_l_enum():
 def test_demande_dans_l_ordre_des_zones_suivies():
     cles = _kcles()
     premiere_ha = _enum_zone().index("CLIM")  # kZonesSuivies
-    assert [c for c, _ in _demande()] == cles[:premiere_ha]
+    assert _demande() == cles[:premiere_ha]
 
 
-def test_entites_de_zone_ont_un_defaut():
-    zones_yaml = _lire("Tab5", "tab5-zones.yaml")
-    bloc = zones_yaml.split("\nsubstitutions:\n", 1)[1].split("\nscript:", 1)[0]
-    defauts = set(re.findall(r"^  (entity_\w+): \w+\.tab5_zone_absente\s*$", bloc, re.M))
-    utilisees = {e[2:-1] for _, e in _demande()}
-    for fichier in ("tab5-sensors-domotique.yaml", "pot_sensors.yaml"):
-        utilisees |= set(re.findall(r"\$\{(entity_\w+)\}", _lire("Tab5", fichier)))
-    # pot_sensors.yaml : ${entity_plante_${n}_ec} → les 5 pots.
-    utilisees = {u for u in utilisees if "$" not in u}
-    utilisees |= {f"entity_plante_{n}_{m}" for n in range(1, 6) for m in ("ec", "lux", "temp", "bat")}
-    assert utilisees - defauts == set()
+def test_le_blueprint_repond_toutes_les_zones():
+    bp = _blueprint()
+    assert "event_type: esphome.tab5_zones" in bp
+    assert '_tab5_maj_zones"' in bp
+    # Toutes les clés, y compris clim, volet et planning, que seul HA connaît.
+    assert _liste_yaml(bp, "cles_zones") == _kcles()
 
 
-def test_ha_repond_les_zones_qu_il_est_seul_a_connaitre():
-    push = _lire("HomeAssistant_Config", "packages", "tab5_push.yaml")
-    debut = push.index("- id: tab5_zones_reponse")
-    auto = push[debut:push.index("\n  - id:", debut + 1)]
-    assert "event_type: esphome.tab5_zones" in auto
-    assert "action: esphome.tab5_ha_hmi_tab5_maj_zones" in auto
-    premiere_ha = _enum_zone().index("CLIM")
-    for cle in _kcles()[premiere_ha:]:
-        assert f"['{cle}']" in auto, f"HA ne répond jamais « {cle} »"
+def test_plus_de_reponse_des_zones_dans_le_package():
+    # Deux répondeurs s'écraseraient : la tablette remplace toute sa liste à chaque réponse.
+    assert "tab5_maj_zones" not in _lire("HomeAssistant_Config", "packages", "tab5_push.yaml")
 
 
 def test_chaque_capteur_de_zone_signale_ses_donnees():

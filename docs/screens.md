@@ -212,7 +212,7 @@ Long-pressing the bedroom, living room, or office-LEDs daily-forecast card (inst
 - **COULEURS** (right): 3 named whites (Chaud/Crème/Froid) and a 4×3 grid of **12 round color swatches** (each sends `light.turn_on` with the matching `color_name`, factorized via `light_color_preset_btn.yaml`)
 - Tapping the dark overlay or the × button (a real 96×64 glass button) closes the modal
 
-The popup is context-aware: opening and selection go through `script.tab5_light_popup_show(light_idx)`, which sets the `current_light_entity` global and syncs the title, selector, power icon and arc — the same popup component handles all three light entities without duplication.
+The popup is context-aware: opening and selection go through `script.tab5_light_popup_show(light_idx)`, which sets the `current_light_slot` global and syncs the title, selector, power icon and arc — the same popup component handles all three light entities without duplication.
 
 ![Light popup on the real device](images/tab5_photo_light_popup_v2.jpg)
 
@@ -500,7 +500,7 @@ Un appui long sur la carte prévision journalière chambre, salon ou LEDs bureau
 - **COULEURS** (droite) : 3 blancs nommés (Chaud/Crème/Froid) et une grille 4×3 de **12 pastilles rondes** (chaque pastille envoie `light.turn_on` avec le `color_name` correspondant, factorisées via `light_color_preset_btn.yaml`)
 - Taper l'overlay sombre ou le bouton × (vrai bouton de verre 96×64) ferme le modal
 
-Le popup est contextuel : ouverture et sélection passent par `script.tab5_light_popup_show(light_idx)` qui règle la globale `current_light_entity` et synchronise titre, sélecteur, icône power et arc — le même composant popup gère les trois entités lumière sans duplication.
+Le popup est contextuel : ouverture et sélection passent par `script.tab5_light_popup_show(light_idx)` qui règle la globale `current_light_slot` et synchronise titre, sélecteur, icône power et arc — le même composant popup gère les trois entités lumière sans duplication.
 
 ![Popup lumière sur l'appareil réel](images/tab5_photo_light_popup_v2.jpg)
 

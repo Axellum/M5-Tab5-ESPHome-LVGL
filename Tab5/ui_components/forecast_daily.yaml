@@ -54,8 +54,7 @@ obj:
                     height: 130
                     styles: style_invisible
                     on_short_click:
-                      - homeassistant.service:
-                          service: script.allumer_pc_tv
+                      - script.execute: { id: tab5_action, emplacement: pc, commande: basculer, valeur: "" }
 
           # Onglet Titre + Onglet Température : factorises (#T164), meme motif sur les 5 cartes
           - !include { file: forecast_day_title_tab.yaml, vars: { idx: "0", day_label: "Journee" } }
@@ -144,10 +143,7 @@ obj:
                     height: 130
                     styles: style_invisible
                     on_short_click:
-                      - homeassistant.service:
-                          service: light.toggle
-                          data:
-                            entity_id: ${entity_light_chambre}
+                      - script.execute: { id: tab5_action, emplacement: lumiere_1, commande: basculer, valeur: "" }
                     on_long_press:
                       # Synchro complète (titre, sélecteur, power, arc) déléguée au script partagé
                       - script.execute: { id: tab5_light_popup_show, light_idx: 0 }
@@ -185,10 +181,7 @@ obj:
                     height: 130
                     styles: style_invisible
                     on_short_click:
-                      - homeassistant.service:
-                          service: light.toggle
-                          data:
-                            entity_id: ${entity_light_salon}
+                      - script.execute: { id: tab5_action, emplacement: lumiere_2, commande: basculer, valeur: "" }
                     on_long_press:
                       - script.execute: { id: tab5_light_popup_show, light_idx: 1 }
 
@@ -225,8 +218,7 @@ obj:
                     height: 130
                     styles: style_invisible
                     on_short_click:
-                      - homeassistant.service:
-                          service: script.allumer_leds
+                      - script.execute: { id: tab5_action, emplacement: lumiere_3, commande: basculer, valeur: "" }
                     on_long_press:
                       - script.execute: { id: tab5_light_popup_show, light_idx: 2 }
           # Icônes latérales (épaules)

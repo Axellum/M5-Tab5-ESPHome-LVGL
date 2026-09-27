@@ -2,10 +2,11 @@
 """Mode démo (tools/demo/) : il se fait passer pour HA, sans relire le firmware. Ce qui
 ne se voit qu'une fois flashé est vérifié ici :
 
-- les entités simulées sont celles du modèle Tab5/user_entities.example.yaml, avec
-  lequel la démo se flashe (l'entité PC y avait divergé le 16/07/2026 : le PC ne
-  répondait plus) ;
+- les emplacements poussés par la démo sont exactement ceux de la table de
+  `tab5_maj_emplacements` (Tab5/tab5-api-logic.yaml, lot 6a) : une clé inconnue serait
+  ignorée en silence par la tablette ;
 - les clés de zones (lot 5) sont celles de la tablette (kCles, Tab5/tab5_zones.cpp) ;
+- la « maison minimale » ne pousse rien pour ses zones retirées ;
 - les deux modes, complet et « maison minimale », passent à blanc ;
 - les codes du lot 4c (pluie « @niveau,début », bandeau « @ha|… ») et le format des
   horaires suivent le contrat."""
@@ -22,36 +23,34 @@ import demo_pusher  # noqa: E402
 import scenarios  # noqa: E402
 
 
-def _modele():
-    valeurs = {}
-    with open(os.path.join(REPO, "Tab5", "user_entities.example.yaml"), encoding="utf-8") as f:
-        for ligne in f:
-            m = re.match(r"^(entity_\w+):\s*(\S+)\s*$", ligne)
-            if m:
-                valeurs[m.group(1)] = m.group(2)
-    return valeurs
+def _lire(*parts):
+    with open(os.path.join(REPO, *parts), encoding="utf-8") as f:
+        return f.read()
 
 
-def test_entites_simulees_du_modele():
-    modele = _modele()
-    for cle, entite in scenarios.MIRROR_ENTITIES.items():
-        assert modele.get(cle) == entite, f"{cle} : démo {entite}, modèle {modele.get(cle)}"
+def test_emplacements_de_la_demo_egaux_a_la_table_du_firmware():
+    bloc = _lire("Tab5", "tab5-api-logic.yaml").split("- service: tab5_maj_emplacements", 1)[1]
+    cles_firmware = re.findall(r'\{"(\w+)", ', bloc.split("emplacements_appliquer", 1)[0])
+    assert sorted(scenarios.EMPLACEMENTS) == sorted(cles_firmware)
 
 
 def test_cles_de_zones_de_la_tablette():
-    with open(os.path.join(REPO, "Tab5", "tab5_zones.cpp"), encoding="utf-8") as f:
-        m = re.search(r"kCles\[kNbZones\] = \{(.*?)\};", f.read(), re.S)
+    m = re.search(r"kCles\[kNbZones\] = \{(.*?)\};", _lire("Tab5", "tab5_zones.cpp"), re.S)
     kcles = re.findall(r'"([a-z0-9_]+)"', m.group(1))
-    assert list(scenarios.ZONE_ENTITES) + list(scenarios.ZONES_HA) == kcles
-    for cle in scenarios.ZONE_ENTITES.values():
-        assert cle in scenarios.MIRROR_ENTITIES, f"zone sans entité simulée : {cle}"
+    assert list(scenarios.ZONES_SUIVIES) + list(scenarios.ZONES_HA) == kcles
+    for cle in scenarios.EMPLACEMENTS:
+        assert scenarios.zone_de(cle) in scenarios.ZONES_SUIVIES, cle
 
 
-def test_maison_minimale_ne_repond_pas_pour_ses_zones():
-    for cle in scenarios.MAISON_MINIMALE - set(scenarios.ZONES_HA):
-        entite = scenarios.MIRROR_ENTITIES[scenarios.ZONE_ENTITES[cle]]
-        assert scenarios.mirror_state_for(entite) is not None
-        assert scenarios.mirror_state_for(entite, scenarios.MAISON_MINIMALE) is None
+def test_maison_minimale_ne_pousse_pas_ses_zones():
+    complet = scenarios.build_emplacements_payload()
+    minimal = scenarios.build_emplacements_payload(scenarios.MAISON_MINIMALE)
+    for cle in scenarios.EMPLACEMENTS:
+        assert f"{cle}|" in complet
+        if scenarios.zone_de(cle) in scenarios.MAISON_MINIMALE:
+            assert not re.search(rf"(^|;){cle}\|", minimal), cle
+        else:
+            assert re.search(rf"(^|;){cle}\|", minimal), cle
 
 
 def test_deux_modes_a_blanc():
