@@ -7,9 +7,10 @@
 static const uint8_t kI18nLangCount = 2;
 static const char* const kI18nLangNames[] = {"Français", "English"};
 static const char* const kI18nLangCodes[] = {"fr", "en"};
-static const uint16_t kI18nKeyCount = 933;
+static const uint16_t kI18nKeyCount = 934;
 
 static const char* const kI18nCtx[] = {
+    "",
     "",
     "",
     "",
@@ -1076,7 +1077,6 @@ static const char* const kI18nKeys[] = {
     "Août",
     "Apercu du territoire : ACTIVE",
     "Apercu du territoire : DESACTIVE",
-    "Appuie pour confirmer",
     "Appuyer sur un emplacement le fait passer a l'objet suivant.",
     "Appuyer sur un objet possede le revend a la moitie de son prix. Un objet revendu est aussi retire de l'equipement.",
     "Appuyez sur le micro puis parlez…",
@@ -1255,6 +1255,7 @@ static const char* const kI18nKeys[] = {
     "Echec et mat",
     "Echiquier du Tab — regles FIDE, IA embarquee, 100 % local",
     "Effacer les scores",
+    "Effacer les scores ?",
     "Effacer les statistiques",
     "Effacer les statistiques ?",
     "Effacer scores et progression",
@@ -1745,6 +1746,7 @@ static const char* const kI18nKeys[] = {
     "Tour %u · au tour de %s",
     "Tournez la tablette a la verticale",
     "Tout est enregistre et survit au redemarrage.",
+    "Tout le Top 10 local, meilleur score compris.",
     "Tout vivant",
     "Tout éteindre",
     "Toutes les parties et les reglages sont conserves dans le Tab.",
@@ -2013,7 +2015,6 @@ static const char* const kI18n_en[] = {
     "Aug",  // "Août"
     "Territory preview: ON",  // "Apercu du territoire : ACTIVE"
     "Territory preview: OFF",  // "Apercu du territoire : DESACTIVE"
-    "Tap to confirm",  // "Appuie pour confirmer"
     "Tapping a slot switches it to the next item.",  // "Appuyer sur un emplacement le fait passer a l'objet suivant."
     "Tapping an owned item sells it back for half its price. A sold item is also unequipped.",  // "Appuyer sur un objet possede le revend a la moitie de son prix. Un objet revendu est aussi retire de l'equipement."
     "Tap the mic, then speak…",  // "Appuyez sur le micro puis parlez…"
@@ -2192,6 +2193,7 @@ static const char* const kI18n_en[] = {
     "Checkmate",  // "Echec et mat"
     "Tab's chessboard — FIDE rules, built-in AI, 100% local",  // "Echiquier du Tab — regles FIDE, IA embarquee, 100 % local"
     "Clear scores",  // "Effacer les scores"
+    "Clear scores?",  // "Effacer les scores ?"
     "Clear statistics",  // "Effacer les statistiques"
     "Clear the statistics?",  // "Effacer les statistiques ?"
     "Clear scores and progress",  // "Effacer scores et progression"
@@ -2682,6 +2684,7 @@ static const char* const kI18n_en[] = {
     "Round %u · %s to play",  // "Tour %u · au tour de %s"
     "Turn the tablet upright",  // "Tournez la tablette a la verticale"
     "Everything is saved and survives a restart.",  // "Tout est enregistre et survit au redemarrage."
+    "The whole local top 10, best score included.",  // "Tout le Top 10 local, meilleur score compris."
     "All alive",  // "Tout vivant"
     "All off",  // "Tout éteindre"
     "All games and settings are kept on the Tab.",  // "Toutes les parties et les reglages sont conserves dans le Tab."

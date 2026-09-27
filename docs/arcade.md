@@ -231,7 +231,7 @@ Sensibilité IMU réglable (5 crans). Calibration dans Réglages ou Pause.
 
 ### Classement
 
-Top 10 local en NVS (score, niveau atteint, mode de contrôle, uptime). Écran « Classement » dans le hub, avec bouton « Effacer les scores ».
+Top 10 local en NVS (score, niveau atteint, mode de contrôle, uptime). Écran « Classement » dans le hub, avec bouton « Effacer les scores » (demande confirmation ; « Annuler » prend la place du bouton, un double appui n'efface rien).
 
 ### Notes techniques
 

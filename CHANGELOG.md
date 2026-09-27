@@ -4,6 +4,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Arcanoïde : « Effacer les scores » demande vraiment confirmation
+
+Défaut signalé pendant le lot 4b : le bouton annonçait « Appuie pour confirmer », mais
+le classement était effacé dès le premier appui.
+
+- **Écran de confirmation**, comme Coureur d'Or : « Effacer les scores ? », « Oui, tout
+  effacer » / « Annuler ». Les deux reviennent au classement.
+- **« Annuler » prend la place du bouton « Effacer les scores »** : un double appui ou
+  un rebond tombe sur Annuler, jamais sur le Oui.
+- **Textes** : la description du bouton devient « Demande confirmation » (clé déjà
+  traduite pour Coureur d'Or) ; deux clés nouvelles dans `Tab5/lang/en.yaml`,
+  « Appuie pour confirmer » retirée.
+
 ### 2026-09-27 — Les huit jeux en français ou en anglais (lot 4b)
 
 Lot 4b de l'audit « ouverture ». Les consoles suivent la langue choisie dans HA, comme
