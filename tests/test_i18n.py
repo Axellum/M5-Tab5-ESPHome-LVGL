@@ -48,6 +48,32 @@ def test_langues_completes():
         assert not manque, f"{l['file']} : {len(manque)} texte(s) sans traduction : {manque[:10]}"
 
 
+def test_anglais_complet_car_langue_de_repli():
+    """Les trous d'une langue partielle s'affichent en anglais : l'anglais doit donc
+    rester complet, sinon ces trous retomberaient sur le français."""
+    repli = [l for l in LANGS if l["code"] == gen_i18n.REPLI]
+    assert repli, f"langue de repli « {gen_i18n.REPLI} » introuvable dans Tab5/lang/"
+    meta = gen_i18n.yaml.safe_load((gen_i18n.LANG_DIR / repli[0]["file"]).read_text(encoding="utf-8"))
+    assert meta.get("_statut") == "complet", f"{repli[0]['file']} doit porter `_statut: complet`"
+
+
+def test_repli_sur_l_anglais_dans_la_table_generee():
+    """Une langue partielle prend le texte anglais là où elle n'a rien (commentaire
+    « repli en »), puis nullptr (→ français) si l'anglais ne l'a pas non plus.
+    L'anglais lui-même ne se replie sur rien."""
+    fr = {"file": "fr.yaml", "name": "Français", "code": "fr", "index": 0, "entries": {}}
+    en = {"file": "en.yaml", "name": "English", "code": "en", "index": 1,
+          "entries": {"Oui": "Yes", "Non": "No"}}
+    es = {"file": "es.yaml", "name": "Español", "code": "es", "index": 2,
+          "entries": {"Oui": "Sí", "Non": None, "Peut-être": "Quizás"}}
+    texte = gen_i18n.render([fr, en, es])
+    table = lambda code: texte.split(f"kI18n_{code}[] = {{", 1)[1].split("};", 1)[0]
+    assert '"Sí",  // "Oui"\n' in table("es")
+    assert '"No",  // "Non" (repli en)\n' in table("es")
+    assert '"Quizás",  // "Peut-être"\n' in table("es")
+    assert 'nullptr,  // "Peut-être"\n' in table("en")
+
+
 def _litteraux_du_code() -> set[str]:
     lits: set[str] = set()
     for f in i18n_keys.fichiers_source(inclure_jeux=True):

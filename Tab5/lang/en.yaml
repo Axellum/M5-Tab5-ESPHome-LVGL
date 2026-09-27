@@ -300,7 +300,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # Spoken by the tablet (TTS): times read as "14:30".
 "%d heures": "%d:00"
 "%d heures %d": "%d:%02d"
-"Rappel : %s, à %s, dans %d minute%s.": "Reminder: %s, at %s, in %d minute%s."
+"Rappel : %s, à %s, dans %d minute.": "Reminder: %s, at %s, in %d minute."
+"Rappel : %s, à %s, dans %d minutes.": "Reminder: %s, at %s, in %d minutes."
 "Rappel : %s, c'est maintenant.": "Reminder: %s, it's now."
 
 # --- Arcade page (ui_components/game_selector.yaml) ----------------------------

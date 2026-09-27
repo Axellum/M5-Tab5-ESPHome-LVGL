@@ -4,6 +4,8 @@
  * @role Traduction de l'écran (lot 4 de l'audit « ouverture », 27/09/2026). Façon
  *       gettext : le texte FRANÇAIS est la clé. `tr("Calendrier")` rend « Calendar »
  *       en anglais, et le texte reçu tel quel en français ou si la traduction manque.
+ *       Une langue partielle affiche l'anglais là où elle n'a pas de traduction :
+ *       le repli est écrit dans ses tables par tools/gen_i18n.py.
  *       Les tables viennent de Tab5/lang/ (un .yaml par langue), générées dans tab5_i18n_data.h par
  *       tools/gen_i18n.py (ajouter une langue : voir l'en-tête de ce script).
  * @architecture_constraint PUR : ni LVGL, ni ESPHome, ni HA. tab5_core.cpp (dates)

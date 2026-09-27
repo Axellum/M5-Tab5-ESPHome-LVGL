@@ -19,6 +19,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   passait de 07:45 à 07:46 (vu sur le premier run de ce correctif). « Dans 10 mn »
   devient exact pour le rendu comme pour le script ; références régénérées.
 - ADR-0021 complété.
+### 2026-09-27 — L'écran parle aussi allemand et néerlandais
+
+Suite du lot 4 (langue). Choix d'après les statistiques publiques de Home Assistant
+(26/09/2026) : l'Allemagne est le premier pays des installations (19 %), les
+néerlandophones pèsent plus que les hispanophones ou les sinophones, et ces deux
+langues tiennent dans les polices actuelles (Latin-1), sans flash en plus.
+
+- `Tab5/lang/de.yaml` (`Deutsch`, index 2) et `Tab5/lang/nl.yaml` (`Nederlands`,
+  index 3), complets : tout ce que l'écran affiche, jeux compris (sauf les questions
+  du quiz, comme en anglais). Traductions faites par une IA et **pas encore relues
+  par une personne dont c'est la langue** : corrections bienvenues.
+- Le select « Langue » propose `Deutsch` et `Nederlands` à la suite : les index déjà
+  mémorisés par les tablettes ne bougent pas.
+- Le rappel parlé du réveil n'ajoute plus un « s » pour le pluriel (« minute%s ») :
+  deux phrases, singulier et pluriel, parce que le pluriel n'est pas un « s » partout
+  (Minuten, minuten).
+- **Repli sur l'anglais** : dans une langue pas encore complète, un texte manquant
+  s'affiche en anglais plutôt qu'en français (puis en français si l'anglais ne l'a
+  pas). Le repli est écrit dans les tables par `tools/gen_i18n.py` : rien ne change à
+  l'exécution. Une nouvelle langue peut donc arriver partielle ; l'anglais doit rester
+  complet (nouveau test).
+- Documentation : les phrases dites par la tablette suivent la langue de l'écran,
+  mais la voix est celle du pipeline vocal de HA, à régler dans la même langue.
 
 ### 2026-09-27 — Textes de présentation prêts pour la 3.0 (lot 8)
 

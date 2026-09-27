@@ -525,8 +525,12 @@ bool rdv_due(time_t now, int lead_min, std::string& out_screen, std::string& out
       snprintf(heure_parlee, sizeof(heure_parlee), tr("%d heures %d"), hh, mm);
     }
     if (reste > 0) {
-      snprintf(spk, sizeof(spk), tr("Rappel : %s, \xC3\xA0 %s, dans %d minute%s."), r.titre.c_str(),
-               heure_parlee, reste, reste > 1 ? "s" : "");
+      // Deux phrases plutôt qu'un « s » ajouté : le pluriel n'est pas un « s » dans
+      // toutes les langues (Minute → Minuten, minuut → minuten).
+      snprintf(spk, sizeof(spk),
+               reste > 1 ? tr("Rappel : %s, \xC3\xA0 %s, dans %d minutes.")
+                         : tr("Rappel : %s, \xC3\xA0 %s, dans %d minute."),
+               r.titre.c_str(), heure_parlee, reste);
     } else {
       snprintf(spk, sizeof(spk), tr("Rappel : %s, c'est maintenant."), r.titre.c_str());
     }
