@@ -51,7 +51,7 @@ entity_push_automation: automation.your_tab5_push_automation
 ...
 ```
 
-**Screen language:** French by default; add `tab5_langue: English` for English on the first boot. It can then be changed from Home Assistant (select « Langue »), see [translations](translations.md).
+**Screen language:** French by default; add `tab5_langue: English` (or `Deutsch`, `Nederlands`) for another language on the first boot. It can then be changed from Home Assistant (select « Langue »), see [translations](translations.md).
 
 **Time zone:** Europe/Paris by default; add `tab5_fuseau: America/Montreal` (any tz name) for the clock and the alarm clock elsewhere.
 
@@ -226,7 +226,7 @@ Copiez le modèle :
 cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 ```
 
-**Langue de l'écran :** le français par défaut ; ajoutez `tab5_langue: English` pour l'anglais au premier démarrage. Elle se change ensuite depuis Home Assistant (select « Langue »), voir [traductions](translations.md#version-française).
+**Langue de l'écran :** le français par défaut ; ajoutez `tab5_langue: English` (ou `Deutsch`, `Nederlands`) pour une autre langue au premier démarrage. Elle se change ensuite depuis Home Assistant (select « Langue »), voir [traductions](translations.md#version-française).
 
 **Fuseau horaire :** Europe/Paris par défaut ; ajoutez `tab5_fuseau: America/Montreal` (n'importe quel nom de fuseau tz) pour l'horloge et le réveil ailleurs.
 

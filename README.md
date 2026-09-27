@@ -39,7 +39,7 @@
 
 - A Tab5: the **ST7123** display chip is the one tested daily; the ST7121 and the original ILI9881C compile but are untested — see [hardware compatibility](#hardware-compatibility).
 - Home Assistant, and ESPHome **≥ 2026.9.0** to compile. **There is no prebuilt firmware yet:** you compile it with your own entity IDs.
-- The screen speaks **French or English**, switchable from Home Assistant ([translations](docs/translations.md)), games and texts sent by Home Assistant included (rain sentence, banners); only the quiz questions stay in French. The documentation is bilingual. The one-hour rain graph and the weather warnings come from **Météo-France** by default; OpenWeatherMap (rain, worldwide, subscription with a free tier) and MeteoAlarm (warnings, 39 European countries) can be chosen from Home Assistant, as can the forecast source (any weather entity). OpenWeatherMap was tried by the author, MeteoAlarm only with simulated data ([weather providers](docs/installation.md#weather-providers)).
+- The screen speaks **French, English, German or Dutch**, switchable from Home Assistant ([translations](docs/translations.md); German and Dutch made by an AI, not reviewed by a native speaker yet), games and texts sent by Home Assistant included (rain sentence, banners); only the quiz questions stay in French. The documentation is bilingual. The one-hour rain graph and the weather warnings come from **Météo-France** by default; OpenWeatherMap (rain, worldwide, subscription with a free tier) and MeteoAlarm (warnings, 39 European countries) can be chosen from Home Assistant, as can the forecast source (any weather entity). OpenWeatherMap was tried by the author, MeteoAlarm only with simulated data ([weather providers](docs/installation.md#weather-providers)).
 - The layout was designed around the author's home: 3 lights, one air conditioner, up to 5 BLE plant sensors, a Samsung TV, one roller shutter. Since 3.0 you pick your devices in Home Assistant with the mouse (a blueprint), and what you don't have disappears from the screen (see [Adapt to your home](docs/installation.md#adapt-to-your-home)); more than 3 lights or a different device per tile is not possible yet.
 
 ---
@@ -199,7 +199,7 @@ The engine is optional for the screen UI (push dashboard works without it). It i
 | [`docs/ui_design.md`](docs/ui_design.md) | LVGL rendering, vector fonts, dynamic color, CPU optimizations |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Wake word pipeline, audio chain, visual feedback states |
 | [`docs/installation.md`](docs/installation.md) | Prerequisites, `user_entities.yaml`, secrets, flash & OTA |
-| [`docs/translations.md`](docs/translations.md) | Screen language (French / English), adding a language |
+| [`docs/translations.md`](docs/translations.md) | Screen language (French, English, German, Dutch), adding a language |
 | [`docs/demo_mode.md`](docs/demo_mode.md) | Try it in minutes, no Home Assistant required |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Symptom → root cause → fix log for incidents already diagnosed |
 | [`docs/debugging.md`](docs/debugging.md) | How to observe/diagnose the device (logs, console overlay, marker technique) |
@@ -371,7 +371,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 - Un Tab5 : la puce écran **ST7123** est celle testée tous les jours ; la ST7121 et l'ILI9881C d'origine compilent mais ne sont pas testées — voir la [compatibilité matérielle](#compatibilité-matérielle).
 - Home Assistant, et ESPHome **≥ 2026.9.0** pour compiler. **Il n'y a pas encore de firmware précompilé :** vous le compilez avec vos propres entity IDs.
-- L'écran parle **français ou anglais**, au choix depuis Home Assistant ([traductions](docs/translations.md#version-française)), jeux et textes envoyés par Home Assistant compris (phrase de pluie, bandeaux) ; seules les questions du quiz restent en français. La documentation est bilingue. Le graphe de pluie dans l'heure et les vigilances viennent de **Météo-France** par défaut ; OpenWeatherMap (pluie, monde entier, abonnement avec palier gratuit) et MeteoAlarm (vigilances, 39 pays européens) se choisissent depuis Home Assistant, comme la source des prévisions (n'importe quelle entité météo). OpenWeatherMap a été essayé par l'auteur, MeteoAlarm seulement avec des données simulées ([fournisseurs météo](docs/installation.md#fournisseurs-météo)).
+- L'écran parle **français, anglais, allemand ou néerlandais**, au choix depuis Home Assistant ([traductions](docs/translations.md#version-française) ; allemand et néerlandais faits par une IA, pas encore relus par une personne dont c'est la langue), jeux et textes envoyés par Home Assistant compris (phrase de pluie, bandeaux) ; seules les questions du quiz restent en français. La documentation est bilingue. Le graphe de pluie dans l'heure et les vigilances viennent de **Météo-France** par défaut ; OpenWeatherMap (pluie, monde entier, abonnement avec palier gratuit) et MeteoAlarm (vigilances, 39 pays européens) se choisissent depuis Home Assistant, comme la source des prévisions (n'importe quelle entité météo). OpenWeatherMap a été essayé par l'auteur, MeteoAlarm seulement avec des données simulées ([fournisseurs météo](docs/installation.md#fournisseurs-météo)).
 - La disposition a été pensée pour la maison de l'auteur : 3 lumières, une clim, jusqu'à 5 capteurs de plantes BLE, une TV Samsung, un volet roulant. Depuis la 3.0, vous choisissez vos appareils dans Home Assistant, à la souris (un blueprint), et ce que vous n'avez pas disparaît de l'écran (voir [Adapter à sa maison](docs/installation.md#adapter-à-sa-maison)) ; plus de 3 lumières ou un autre appareil par tuile n'est pas encore possible.
 
 ---
@@ -517,7 +517,7 @@ Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui
 | [`docs/ui_design.md`](docs/ui_design.md) | Rendu LVGL, polices vectorielles, couleur dynamique, optimisations CPU |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Pipeline wake-word, chaîne audio, états de retour visuel |
 | [`docs/installation.md`](docs/installation.md) | Prérequis, `user_entities.yaml`, secrets, flash & OTA |
-| [`docs/translations.md`](docs/translations.md#version-française) | Langue de l'écran (français / anglais), ajouter une langue |
+| [`docs/translations.md`](docs/translations.md#version-française) | Langue de l'écran (français, anglais, allemand, néerlandais), ajouter une langue |
 | [`docs/demo_mode.md`](docs/demo_mode.md) | Tester en quelques minutes, sans Home Assistant |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Journal symptôme → cause racine → correctif des incidents déjà diagnostiqués |
 | [`docs/debugging.md`](docs/debugging.md) | Comment observer/diagnostiquer l'appareil (logs, overlay console, technique des marqueurs) |

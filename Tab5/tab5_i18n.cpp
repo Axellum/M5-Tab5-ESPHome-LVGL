@@ -3,7 +3,8 @@
  * @file tab5_i18n.cpp
  * @role Recherche des traductions (voir tab5_i18n.h). Tables générées dans
  *       tab5_i18n_data.h : clés triées par octets (contexte puis texte), une table
- *       par langue alignée sur les clés, nullptr = pas de traduction.
+ *       par langue alignée sur les clés, trous d'une langue partielle déjà remplis
+ *       par l'anglais (gen_i18n.py), nullptr = pas de traduction du tout.
  * @architecture_constraint PUR (compilé aussi sur PC par tools/test_alarm_clock.cpp).
  */
 #include "tab5_i18n.h"
