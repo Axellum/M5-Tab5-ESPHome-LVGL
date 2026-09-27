@@ -1124,7 +1124,7 @@ static void build_actors(lv_obj_t* field) {
     lv_obj_set_width(gs->plunger_hint, 300);
     lv_obj_set_style_text_align(gs->plunger_hint, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_set_pos(gs->plunger_hint, 210, 1020);
-    lv_label_set_text(gs->plunger_hint, tr("Maintiens ici pour armer,\nrelache pour tirer"));
+    lv_label_set_text(gs->plunger_hint, tr("Maintiens ici pour armer,\nrelâche pour tirer"));
     show(gs->plunger_hint, false);
 
     // Banniere de mode, au centre de l'arche (zone la plus lisible du plateau).
@@ -1321,8 +1321,8 @@ static void rot_hint(bool v, int body_y) {
 // et tr_noop ne porte pas de contexte. Appele seulement a l'affichage des reglages.
 static const char* nudge_name(uint8_t i) {
     const char* const noms[5] = {
-        tr_ctx("nudge", "Tres douce"), tr_ctx("nudge", "Douce"), tr_ctx("nudge", "Normale"),
-        tr_ctx("nudge", "Vive"), tr_ctx("nudge", "Tres vive"),
+        tr_ctx("nudge", "Très douce"), tr_ctx("nudge", "Douce"), tr_ctx("nudge", "Normale"),
+        tr_ctx("nudge", "Vive"), tr_ctx("nudge", "Très vive"),
     };
     return noms[i];
 }
@@ -1342,16 +1342,16 @@ static void go_hub() {
         char sc[24]; fmt_score(sc, sizeof(sc), best_score());
         snprintf(best, sizeof(best), tr("Record : %s"), sc);
     } else {
-        snprintf(best, sizeof(best), "%s", tr("Aucun score enregistre"));
+        snprintf(best, sizeof(best), "%s", tr("Aucun score enregistré"));
     }
 
     // Pied en UN litteral sur une ligne : tools/i18n_keys.py ne releve que les appels
     // tr() d'une ligne (un littéral coupé en deux lignes n'y serait vu qu'à moitié).
-    panel_text("NEON APRON", sub, tr("Tournez la tablette a la verticale"),
+    panel_text("NEON APRON", sub, tr("Tournez la tablette à la verticale"),
         tr("Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."));
-    gs->slots.row(0, tr("Jouer"), tr("3 billes - lanceur en bas de l'ecran"), Pal::AMBER);
+    gs->slots.row(0, tr("Jouer"), tr("3 billes - lanceur en bas de l'écran"), Pal::AMBER);
     gs->slots.row(1, tr("Classement"), best, Pal::CYAN);
-    gs->slots.row(2, tr("Reglages"), tr("Nudge, sens de l'ecran, calibration"), Pal::MAGENTA);
+    gs->slots.row(2, tr("Réglages"), tr("Nudge, sens de l'écran, calibration"), Pal::MAGENTA);
     gs->slots.row(3, tr("Quitter"), tr("Retour au tableau de bord (paysage)"), Pal::TEXT_DIM);
     gs->slots.hide_from(4);
     tick_period_sync();
@@ -1380,10 +1380,10 @@ static void go_scores() {
     if (!any) snprintf(body, sizeof(body), "%s", tr("Aucun score pour l'instant.\nLance une partie !"));
 
     auto& sub = gs->scores_sub;
-    snprintf(sub, sizeof(sub), tr("Cumul carriere : %lu points"),
+    snprintf(sub, sizeof(sub), tr("Cumul carrière : %lu points"),
              (unsigned long) gs->save.total_score);
 
-    panel_text(tr("CLASSEMENT"), sub, body, tr("b = billes jouees, MB = multiball declenche."));
+    panel_text(tr("CLASSEMENT"), sub, body, tr("b = billes jouées, MB = multiball déclenché."));
     gs->slots.row(0, tr("Retour"), "", Pal::TEXT_DIM);
     gs->slots.hide_from(1);
     // Le classement est long : on remonte les slots sous le texte.
@@ -1399,18 +1399,18 @@ static void go_settings() {
     auto& t0 = gs->settings_t0;
     auto& t1 = gs->settings_t1;
     auto& t2 = gs->settings_t2;
-    snprintf(t0, sizeof(t0), tr("Sensibilite du nudge : %s"), nudge_name(gs->save.nudge_sens));
+    snprintf(t0, sizeof(t0), tr("Sensibilité du nudge : %s"), nudge_name(gs->save.nudge_sens));
     snprintf(t1, sizeof(t1), tr("Sens du nudge : %s"), tr(gs->save.invert_nudge ? "inverse" : "normal"));
-    snprintf(t2, sizeof(t2), tr("Orientation : %s"), tr(gs->save.flip_screen ? "retournee" : "normale"));
+    snprintf(t2, sizeof(t2), tr("Orientation : %s"), tr(gs->save.flip_screen ? "retournée" : "normale"));
 
     // Pied en UN litteral sur une ligne : tools/i18n_keys.py ne releve que les appels
     // tr() d'une ligne, et le "" qui precede fausse le recollage de littéraux adjacents.
-    panel_text(tr("REGLAGES"), tr("Tout est enregistre et survit au redemarrage."), "",
-        tr("Calibre a plat AVANT de jouer : le nudge mesure l'ecart avec cette reference,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."));
-    gs->slots.row(0, t0, tr("Force de la secousse necessaire"), Pal::CYAN);
-    gs->slots.row(1, t1, tr("Si la bille part du mauvais cote"), Pal::CYAN);
-    gs->slots.row(2, t2, tr("Si l'ecran est a l'envers dans vos mains"), Pal::MAGENTA);
-    gs->slots.row(3, tr("Calibrer a plat"), tr("Poser la tablette puis appuyer"), Pal::AMBER);
+    panel_text(tr("RÉGLAGES"), tr("Tout est enregistré et survit au redémarrage."), "",
+        tr("Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."));
+    gs->slots.row(0, t0, tr("Force de la secousse nécessaire"), Pal::CYAN);
+    gs->slots.row(1, t1, tr("Si la bille part du mauvais côté"), Pal::CYAN);
+    gs->slots.row(2, t2, tr("Si l'écran est à l'envers dans vos mains"), Pal::MAGENTA);
+    gs->slots.row(3, tr("Calibrer à plat"), tr("Poser la tablette puis appuyer"), Pal::AMBER);
     gs->slots.row(4, tr("Retour"), "", Pal::TEXT_DIM);
     gs->slots.hide_from(5);
     tick_period_sync();
@@ -1425,10 +1425,10 @@ static void go_pause() {
     char sc[24]; fmt_score(sc, sizeof(sc), gs->score);
     snprintf(sub, sizeof(sub), tr("Score %s - bille %d / %d"), sc, gs->ball_num, gs->balls_total);
 
-    panel_text(tr("PAUSE"), sub, "", tr("La partie reprend exactement ou elle s'est arretee."));
+    panel_text(tr("PAUSE"), sub, "", tr("La partie reprend exactement où elle s'est arrêtée."));
     gs->slots.row(0, tr("Reprendre"), "", Pal::AMBER);
-    gs->slots.row(1, tr("Recalibrer a plat"), tr("Poser la tablette puis appuyer"), Pal::CYAN);
-    gs->slots.row(2, tr("Abandonner"), tr("La partie est enregistree telle quelle"), Pal::MAGENTA);
+    gs->slots.row(1, tr("Recalibrer à plat"), tr("Poser la tablette puis appuyer"), Pal::CYAN);
+    gs->slots.row(2, tr("Abandonner"), tr("La partie est enregistrée telle quelle"), Pal::MAGENTA);
     gs->slots.row(3, tr("Quitter le flipper"), tr("Retour au tableau de bord"), Pal::TEXT_DIM);
     gs->slots.hide_from(4);
     tick_period_sync();
@@ -1465,7 +1465,7 @@ static void end_game() {
     else if (rank > 0)  snprintf(body, sizeof(body), tr("%de au classement"), rank + 1);
     else                snprintf(body, sizeof(body), tr("Hors du top %d"), PINBALL_NSCORES);
 
-    panel_text(tr("FIN DE PARTIE"), sub, body, gs->game_tilted ? tr("Partie marquee TILT.") : "");
+    panel_text(tr("FIN DE PARTIE"), sub, body, gs->game_tilted ? tr("Partie marquée TILT.") : "");
     gs->slots.row(0, tr("Rejouer"), tr("Nouvelle partie, 3 billes"), Pal::AMBER);
     gs->slots.row(1, tr("Classement"), "", Pal::CYAN);
     gs->slots.row(2, "Hub", "", Pal::TEXT_DIM);
@@ -1550,7 +1550,7 @@ static void ball_drained(Ball& b) {
         if (gs->active_balls == 1 && gs->mb_active) {
             gs->mb_active = false;
             gs->multiplier = 1;
-            toast(tr("MULTIBALL TERMINE"), 1400);
+            toast(tr("MULTIBALL TERMINÉ"), 1400);
         }
         return;
     }

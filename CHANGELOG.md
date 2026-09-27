@@ -4,6 +4,20 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Les jeux parlent un français accentué (lot b)
+
+- **Accents** : les textes français des huit consoles avaient été écrits sans accents
+  (« Reglages », « Equipement », « Difficulte », « ARCANOIDE »…), alors que les polices
+  ont les glyphes : l'allemand affichait ses umlauts. Le texte français étant la clé de
+  traduction, 233 clés sont renommées dans le code et dans les trois langues (traductions
+  inchangées ; 10 fusionnées avec une clé qui existait déjà, comme « Réglages »). Les mots
+  ambigus (a / à, ou / où, termine / terminé, Active / Activé…) relus phrase par phrase ;
+  les contextes de `tr_ctx` (« echecs|Pion ») ne changent pas.
+- **Dames** : plus d'anglais dans l'interface française (« flying kings », « Setup »,
+  « PvP », « Hint », « Undo », « Reset », « 0W / 0D / 0L ») ; boutons Annuler / Indice
+  élargis à 96 px, avec les clés déjà traduites de Go et du Roi Noir.
+- **Arcanoïde** : « Record » au lieu de « Best ». « GAME OVER » reste, comme sur les bornes.
+
 ### 2026-09-27 — Calages relevés sur le rendu hors tablette (lot a)
 
 Défauts vus sur les captures de tous les écrans (lot 7 bis), réels sur la tablette : le

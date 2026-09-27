@@ -308,9 +308,10 @@ ECRANS: tuple[Ecran, ...] = (
     _jeu("niveaux", "coureur-dor", (_menu(297),)),
     _jeu("classement", "coureur-dor", (_menu(367),)),
     _jeu("reglages", "coureur-dor", (_menu(437),)),
-    _jeu("partie", "coureur-dor", COUREUR_PARTIE, (_menu(24),) + COUREUR_QUITTER + COUREUR_HUB),
-    _jeu("pause", "coureur-dor", COUREUR_PAUSE, COUREUR_QUITTER + COUREUR_HUB),
-    _jeu("fin", "coureur-dor", COUREUR_PAUSE + COUREUR_QUITTER, COUREUR_HUB),
+    # Les gardes avancent en temps réel : leur position dépend du moment de la capture.
+    _jeu("partie", "coureur-dor", COUREUR_PARTIE, (_menu(24),) + COUREUR_QUITTER + COUREUR_HUB, stable=False),
+    _jeu("pause", "coureur-dor", COUREUR_PAUSE, COUREUR_QUITTER + COUREUR_HUB, stable=False),
+    _jeu("fin", "coureur-dor", COUREUR_PAUSE + COUREUR_QUITTER, COUREUR_HUB, stable=False),
 
     _jeu("", "go"),
     _jeu("nouvelle-partie", "go", (_menu(180),)),

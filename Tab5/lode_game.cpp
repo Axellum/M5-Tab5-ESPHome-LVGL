@@ -83,8 +83,8 @@ static const SpeedDef SPEEDS[LODE_N_SPEEDS] = {
     {tr_noop("Normale"),     "",                   5, 14, tr_noop("4,4 cases/s - rythme d'origine")},
     {tr_noop("Vive"),        tr_noop("vive"),      6, 14, tr_noop("5,7 cases/s")},
     {tr_noop("Rapide"),      tr_noop("rapide"),    7, 14, tr_noop("6,7 cases/s")},
-    {tr_noop("Tres rapide"), tr_noop("t.rapide"),  9, 21, tr_noop("8,0 cases/s")},
-    {tr_noop("Fulgurante"),  tr_noop("fulgur."),  11, 21, tr_noop("10,0 cases/s - reflexes exiges")},
+    {tr_noop("Très rapide"), tr_noop("t.rapide"),  9, 21, tr_noop("8,0 cases/s")},
+    {tr_noop("Fulgurante"),  tr_noop("fulgur."),  11, 21, tr_noop("10,0 cases/s - réflexes exigés")},
 };
 // Valeurs actives : Mem::run_speed / Mem::fall_speed (section 4), relues depuis
 // la sauvegarde par apply_speed() a chaque ouverture.
@@ -351,8 +351,8 @@ static const LevelDef LEVELS[LODE_N_LEVELS] = {
     {tr_noop("Premier filon"), MAP1},  {tr_noop("Escalier"),    MAP2},
     {tr_noop("Le pendu"),      MAP3},  {tr_noop("Le puits"),    MAP4},
     {tr_noop("Le peigne"),     MAP5},  {tr_noop("Faux chemin"), MAP6},
-    {tr_noop("Le nid"),        MAP7},  {tr_noop("Cathedrale"),  MAP8},
-    {tr_noop("Dedale"),        MAP9},  {tr_noop("Coffre-fort"), MAP10},
+    {tr_noop("Le nid"),        MAP7},  {tr_noop("Cathédrale"),  MAP8},
+    {tr_noop("Dédale"),        MAP9},  {tr_noop("Coffre-fort"), MAP10},
 };
 
 // ===========================================================================
@@ -1442,7 +1442,7 @@ static void show_clear() {
     snprintf(body, sizeof(body), tr("Score : %lu     Vies : %d"),
              (unsigned long) gs->score, gs->lives);
     body_center();
-    panel_text(tr(last ? "TOUS LES NIVEAUX !" : "NIVEAU TERMINE"), sub, body, "");
+    panel_text(tr(last ? "TOUS LES NIVEAUX !" : "NIVEAU TERMINÉ"), sub, body, "");
     gs->slots.row(0, tr(last ? "Voir le classement" : "Niveau suivant"), nullptr, Pal::LADDER, true);
     gs->slots.row(1, tr("Retour au hub"), nullptr, Pal::TXT, true);
     gs->slots.hide_from(2);
@@ -1460,7 +1460,7 @@ static void show_gameover() {
     snprintf(body, sizeof(body), tr("Score : %lu%s"),
              (unsigned long) gs->score, gs->offrank ? tr("   (hors classement)") : "");
     body_center();
-    panel_text(tr("PARTIE TERMINEE"), sub, body, "");
+    panel_text(tr("PARTIE TERMINÉE"), sub, body, "");
     gs->slots.row(0, tr("Rejouer"), nullptr, Pal::GOLD, true);
     gs->slots.row(1, tr("Classement"), nullptr, Pal::LADDER, true);
     gs->slots.row(2, tr("Retour au hub"), nullptr, Pal::TXT, true);
@@ -1632,22 +1632,22 @@ static void go_hub() {
     pad_sync();
     slot_layout_default();
     // « COUREUR D'OR » : nom de la console, jamais traduit (nom propre).
-    panel_text("COUREUR D'OR", tr("Ramasse tout l'or, echappe aux gardes, grimpe en haut."), "",
+    panel_text("COUREUR D'OR", tr("Ramasse tout l'or, échappe aux gardes, grimpe en haut."), "",
                tr("Pendant une partie : touche le bandeau du haut pour mettre en pause."));
 
     char d0[96], d1[64], d2[64], d3[96];
     int startlvl = gs->save.unlocked;
     snprintf(d0, sizeof(d0), tr("Niveau %d - %s"), startlvl, tr(LEVELS[startlvl - 1].name));
-    snprintf(d1, sizeof(d1), tr("%d/%d debloques"), gs->save.unlocked, LODE_N_LEVELS);
+    snprintf(d1, sizeof(d1), tr("%d/%d débloqués"), gs->save.unlocked, LODE_N_LEVELS);
     snprintf(d2, sizeof(d2), tr("Meilleur score : %lu"), (unsigned long) gs->save.best);
-    snprintf(d3, sizeof(d3), tr("Controle : %s   -   Vitesse : %s"),
+    snprintf(d3, sizeof(d3), tr("Contrôle : %s   -   Vitesse : %s"),
              tr(CTRL_NAME[gs->save.ctrl_mode]),
              tr(SPEEDS[gs->save.speed < LODE_N_SPEEDS ? gs->save.speed : 0].name));
 
     gs->slots.row(0, tr("Jouer"),      d0, Pal::GOLD,   true);
     gs->slots.row(1, tr("Niveaux"),    d1, Pal::LADDER, true);
     gs->slots.row(2, tr("Classement"), d2, Pal::BAR,    true);
-    gs->slots.row(3, tr("Reglages"),   d3, Pal::TXT,    true);
+    gs->slots.row(3, tr("Réglages"),   d3, Pal::TXT,    true);
     gs->slots.row(4, tr("Quitter"),    tr("Retour au tableau de bord"), Pal::DANGER, true);
     gs->slots.hide_from(5);
     panel_on(true);
@@ -1657,12 +1657,12 @@ static void go_levels() {
     g_state = ST_LEVELS;
     pad_sync();
     slot_layout_default();
-    panel_text(tr("NIVEAUX"), tr("Un niveau se debloque en terminant le precedent."), "",
-               tr("Un niveau termine debloque le suivant, definitivement."));
+    panel_text(tr("NIVEAUX"), tr("Un niveau se débloque en terminant le précédent."), "",
+               tr("Un niveau terminé débloque le suivant, définitivement."));
     auto& names = gs->levels_names;   // brouillon : le label copie le texte
     // Traduits une fois pour la grille (10 entrees, a l'ouverture de l'ecran).
     const char* txt_on  = tr("Jouable");
-    const char* txt_off = tr("Verrouille");
+    const char* txt_off = tr("Verrouillé");
     for (int i = 0; i < LODE_N_LEVELS; i++) {
         bool on = (i < gs->save.unlocked);
         snprintf(names[i], sizeof(names[i]), "%d. %s", i + 1, tr(LEVELS[i].name));
@@ -1682,8 +1682,8 @@ static void go_settings() {
     slot_layout(176, 66, 60);   // 7 entrees : pile resserree
     // Pied de page sur UNE ligne : tools/i18n_keys.py ne releve la cle d'un tr()
     // que sur la ligne de l'appel (lot 4b).
-    panel_text(tr("REGLAGES"), tr("Le Tab5 n'a pas de croix physique : ce sont des zones tactiles."), "",
-        tr("Un seul point de contact a la fois : en mode Boutons, on creuse a l'arret. Le mode Mixte libere le doigt pour creuser en marchant."));
+    panel_text(tr("RÉGLAGES"), tr("Le Tab5 n'a pas de croix physique : ce sont des zones tactiles."), "",
+        tr("Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."));
 
     static const char* const CTRL_DESC[3] = {   // traduits a l'affichage : tr(CTRL_DESC[i])
         tr_noop("D-pad + 2 boutons creuser"),
@@ -1694,16 +1694,16 @@ static void go_settings() {
     snprintf(d1, sizeof(d1), tr("%d / 5 (plus haut = plus sensible)"), gs->save.sensitivity + 1);
     const SpeedDef& sp = SPEEDS[gs->save.speed < LODE_N_SPEEDS ? gs->save.speed : 0];
     snprintf(d2, sizeof(d2), "%s - %s", tr(sp.name), tr(sp.desc));
-    snprintf(d4, sizeof(d4), tr("%s - hors classement"), tr(gs->save.assist ? "Active" : "Desactive"));
+    snprintf(d4, sizeof(d4), tr("%s - hors classement"), tr(gs->save.assist ? "Activé" : "Désactivé"));
 
     char d0[96];
     snprintf(d0, sizeof(d0), tr("%s : %s"), tr(CTRL_NAME[gs->save.ctrl_mode]), tr(CTRL_DESC[gs->save.ctrl_mode]));
-    gs->slots.row(0, tr("Controle"),           d0, Pal::LADDER, true);
-    gs->slots.row(1, tr("Sensibilite"),        d1, Pal::BAR, gs->save.ctrl_mode != 0);
+    gs->slots.row(0, tr("Contrôle"),           d0, Pal::LADDER, true);
+    gs->slots.row(1, tr("Sensibilité"),        d1, Pal::BAR, gs->save.ctrl_mode != 0);
     gs->slots.row(2, tr("Vitesse"),            d2, Pal::RUNNER, true);
-    gs->slots.row(3, tr("Calibrer a plat"),    tr("Pose la tablette PUIS appuie"), Pal::GOLD, true);
-    gs->slots.row(4, tr("Mode entrainement"),  d4, Pal::TXT, true);
-    gs->slots.row(5, tr("Effacer scores et progression"), tr("Irreversible"), Pal::DANGER, true);
+    gs->slots.row(3, tr("Calibrer à plat"),    tr("Pose la tablette PUIS appuie"), Pal::GOLD, true);
+    gs->slots.row(4, tr("Mode entraînement"),  d4, Pal::TXT, true);
+    gs->slots.row(5, tr("Effacer scores et progression"), tr("Irréversible"), Pal::DANGER, true);
     gs->slots.row(6, tr("Retour"),             nullptr, Pal::TXT, true);
     gs->slots.hide_from(7);
     panel_on(true);
@@ -1716,7 +1716,7 @@ static void go_scores() {
     auto& body = gs->scores_body;     // brouillon : le label copie le texte
     int off = 0;
     if (gs->save.score_count == 0) {
-        snprintf(body, sizeof(body), "%s", tr("Aucun score enregistre pour l'instant."));
+        snprintf(body, sizeof(body), "%s", tr("Aucun score enregistré pour l'instant."));
     } else {
         // Traduits une fois pour toute la table (lot 4b). « niv » = niveau atteint,
         // « H.C. » = partie hors classement (mode entrainement).
@@ -1744,7 +1744,7 @@ static void go_scores() {
     // ecrans dont le corps est une phrase centree. Sans score, c'est une phrase.
     if (gs->save.score_count == 0) body_center();
     else lv_obj_set_style_text_align(gs->p_body, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    panel_text(tr("CLASSEMENT"), tr("Top 10 local - conserve en NVS, survit aux reboots et aux OTA."), body, "");
+    panel_text(tr("CLASSEMENT"), tr("Top 10 local - conservé en NVS, survit aux reboots et aux OTA."), body, "");
     gs->slots.row(0, tr("Effacer les scores"), tr("Demande confirmation"), Pal::DANGER, true);
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -136);
     gs->slots.row(1, tr("Retour"), nullptr, Pal::TXT, true);
@@ -1759,7 +1759,7 @@ static void go_confirm() {
     slot_layout_default();
     body_center();
     panel_text(tr("TOUT EFFACER ?"), tr("Scores, meilleur score ET progression des niveaux."),
-               tr("Cette action est irreversible."), "");
+               tr("Cette action est irréversible."), "");
     gs->slots.row(0, tr("Oui, tout effacer"), nullptr, Pal::DANGER, true);
     gs->slots.row(1, tr("Annuler"),           nullptr, Pal::TXT, true);
     gs->slots.hide_from(2);
@@ -1784,11 +1784,11 @@ static void show_pause() {
     snprintf(dv, sizeof(dv), "%s - %s", tr(sp.name), tr(sp.desc));
 
     gs->slots.row(0, tr("Reprendre"),            nullptr, Pal::LADDER, true);
-    gs->slots.row(1, tr("Recalibrer a plat"),    tr("Pose la tablette PUIS appuie"), Pal::GOLD,
+    gs->slots.row(1, tr("Recalibrer à plat"),    tr("Pose la tablette PUIS appuie"), Pal::GOLD,
                   gs->save.ctrl_mode != 0);
     gs->slots.row(2, tr("Vitesse"),              dv, Pal::RUNNER, true);
     gs->slots.row(3, tr("Relancer le niveau"),   tr("Sans perdre de vie"), Pal::BAR, true);
-    gs->slots.row(4, tr("Quitter la partie"),    tr("Le score est enregistre"), Pal::DANGER, true);
+    gs->slots.row(4, tr("Quitter la partie"),    tr("Le score est enregistré"), Pal::DANGER, true);
     gs->slots.hide_from(5);
     panel_on(true);
 }

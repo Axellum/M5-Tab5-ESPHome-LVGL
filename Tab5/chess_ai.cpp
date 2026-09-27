@@ -203,11 +203,11 @@ static int      g_qdepth   = 0;
 // Les NOMS s'affichent par level_name() ci-dessous (contexte « echecs »).
 const AiLevel AI_LEVELS[AI_NLEVELS] = {
     // nom         description                                             prof  q  budget fen. elo
-    {"Pion",     tr_noop("Debutant : ne voit qu'un coup, se trompe"),        1,  0,  120, 160,  600},
-    {"Cavalier", tr_noop("Voit les prises simples et les repond"),           2,  0,  350,  60,  900},
-    {"Fou",      tr_noop("Calcule 3 coups + les prises en chaine"),          3,  4,  800,  20, 1250},
+    {"Pion",     tr_noop("Débutant : ne voit qu'un coup, se trompe"),        1,  0,  120, 160,  600},
+    {"Cavalier", tr_noop("Voit les prises simples et les répond"),           2,  0,  350,  60,  900},
+    {"Fou",      tr_noop("Calcule 3 coups + les prises en chaîne"),          3,  4,  800,  20, 1250},
     {"Dame",     tr_noop("Calcule 4 coups, tactique correcte"),              4,  6, 1800,   0, 1600},
-    {"Roi",      tr_noop("Effort maximal du Tab (5 coups vises)"),           5,  6, 3500,   0, 1900},
+    {"Roi",      tr_noop("Effort maximal du Tab (5 coups visés)"),           5,  6, 3500,   0, 1900},
 };
 
 // Nom du niveau tel qu'affiche. Contexte « echecs » : la « Dame » des echecs n'est pas

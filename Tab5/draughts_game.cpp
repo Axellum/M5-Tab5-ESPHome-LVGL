@@ -756,21 +756,21 @@ static void slot_list(int i, const char* title, const char* desc, uint32_t col, 
 // Noms affichés, déjà traduits (tr) : ne servent qu'à l'écran.
 static const char* level_name(uint8_t lv) {
     switch (lv) {
-        case 0: return tr("Debutant");
+        case 0: return tr("Débutant");
         case 1: return tr("Amateur");
-        case 2: return tr("Confirme");
+        case 2: return tr("Confirmé");
         case 3: return tr("Expert");
         default: return "?";
     }
 }
 static const char* variant_name(uint8_t v) {
-    return tr(v == VAR_ENG8 ? "Anglais 8x8" : "Intl 10x10");
+    return tr(v == VAR_ENG8 ? "Anglaises 8×8" : "Internationales 10×10");
 }
 static const char* mode_name(uint8_t m) {
     switch (m) {
-        case 0: return tr("Joueur vs Tab");
-        case 1: return tr("Joueur vs Joueur");
-        case 2: return tr("Tab vs Tab");
+        case 0: return tr("Joueur contre Tab");
+        case 1: return tr("Joueur contre joueur");
+        case 2: return tr("Tab contre Tab");
         default: return "?";
     }
 }
@@ -859,12 +859,13 @@ static void layout_squares() {
         lv_obj_set_size(gs->side_panel, 288, 656);
     }
     if (gs->btn_undo) {
+        // 96 px : « Annuler » (75 px en roboto_22) ; le damier commence à x 170 (10×10).
         lv_obj_set_pos(gs->btn_undo, 8, 280);
-        lv_obj_set_size(gs->btn_undo, 56, 120);
+        lv_obj_set_size(gs->btn_undo, 96, 120);
     }
     if (gs->btn_hint) {
-        lv_obj_set_pos(gs->btn_hint, gs->panel_x - 64, 280);
-        lv_obj_set_size(gs->btn_hint, 56, 120);
+        lv_obj_set_pos(gs->btn_hint, gs->panel_x - 104, 280);
+        lv_obj_set_size(gs->btn_hint, 96, 120);
     }
 }
 
@@ -956,11 +957,11 @@ static void refresh_legal() {
 static void update_hud() {
     char buf[48];
     const char* side = tr((gs->pos.side == SIDE_WHITE) ? "Blancs" : "Noirs");
-    if (g_state == ST_THINKING) snprintf(buf, sizeof(buf), "%s", tr("Tab reflechit..."));
-    else snprintf(buf, sizeof(buf), tr("Trait: %s"), side);
+    if (g_state == ST_THINKING) snprintf(buf, sizeof(buf), "%s", tr("Le Tab réfléchit..."));
+    else snprintf(buf, sizeof(buf), tr("Trait : %s"), side);
     set_text_if(gs->hud_trait, buf);
     set_text_if(gs->hud_var, variant_name(gs->pos.variant));
-    snprintf(buf, sizeof(buf), tr("IA: %s"), level_name(gs->cfg_level));
+    snprintf(buf, sizeof(buf), tr("IA : %s"), level_name(gs->cfg_level));
     set_text_if(gs->hud_lvl, buf);
 
     int max_cap = 0;
@@ -1037,15 +1038,15 @@ static void go_hub() {
     Ai::abort();
     panel_on(true);
     set_text_if(gs->p_title, "Dames Tab");   // nom de la console : jamais traduit
-    set_text_if(gs->p_sub, tr("Dames internationales — flying kings"));
-    slot_list(0, tr("Nouvelle partie"), tr("Setup variante / mode / niveau"), Pal::KING_RING, true);
+    set_text_if(gs->p_sub, tr("Dames internationales — dames volantes"));
+    slot_list(0, tr("Nouvelle partie"), tr("Variante, mode, niveau"), Pal::KING_RING, true);
     // Sans sauvegarde, l'entrée reste là, grisée (slot_cb l'ignore) : masquée, elle
     // laissait un trou dans le menu (vu sur le rendu hors tablette, 27/09/2026).
     slot_list(1, tr(gs->save.has_game ? "Reprendre" : "Reprendre (vide)"),
-              tr(gs->save.has_game ? "Position sauvegardee" : "Aucune partie en cours"),
+              tr(gs->save.has_game ? "Position sauvegardée" : "Aucune partie en cours"),
               gs->save.has_game ? Pal::HL_MOVE : Pal::TXT_OFF, true);
-    slot_list(2, tr("Statistiques"), tr("Victoires / nulle / defaites vs Tab"), Pal::HL_CAP, true);
-    slot_list(3, tr("Reglages"), tr("Secousse = Hint, reset stats"), Pal::TXT_DIM, true);
+    slot_list(2, tr("Statistiques"), tr("Victoires, nulles, défaites contre le Tab"), Pal::HL_CAP, true);
+    slot_list(3, tr("Réglages"), tr("Secousse = indice, remise à zéro des stats"), Pal::TXT_DIM, true);
     slot_list(4, tr("Quitter"), tr("Retour au tableau de bord"), Pal::DANGER, true);
     gs->slots.hide_from(5);
 }
@@ -1057,10 +1058,10 @@ static void go_setup() {
     char buf[64];
     snprintf(buf, sizeof(buf), "%s · %s", variant_name(gs->cfg_variant), mode_name(gs->cfg_mode));
     set_text_if(gs->p_sub, buf);
-    slot_list(0, variant_name(gs->cfg_variant), tr("Tap: Intl 10x10 / Anglais 8x8"), Pal::LIGHT_SQ, true);
-    slot_list(1, mode_name(gs->cfg_mode), tr("Joueur vs Tab / PvP / Tab vs Tab"), Pal::HL_MOVE, true);
-    snprintf(buf, sizeof(buf), tr("Humain: %s"), tr(gs->cfg_human == 0 ? "Blancs" : "Noirs"));
-    slot_list(2, buf, tr("Couleur (mode vs Tab)"), Pal::PIECE_W, gs->cfg_mode == 0);
+    slot_list(0, variant_name(gs->cfg_variant), tr("Touchez : internationales 10×10 ou anglaises 8×8"), Pal::LIGHT_SQ, true);
+    slot_list(1, mode_name(gs->cfg_mode), tr("Joueur contre Tab / contre joueur / Tab contre Tab"), Pal::HL_MOVE, true);
+    snprintf(buf, sizeof(buf), tr("Vous jouez les %s"), tr(gs->cfg_human == 0 ? "Blancs" : "Noirs"));
+    slot_list(2, buf, tr("Couleur (contre le Tab)"), Pal::PIECE_W, gs->cfg_mode == 0);
     slot_list(3, level_name(gs->cfg_level), tr("Niveau IA"), Pal::KING_RING, gs->cfg_mode != 1);
     slot_list(4, tr("Jouer !"), tr("Lance la partie"), Pal::HL_CAP, true);
     slot_list(5, tr("Retour"), "", Pal::TXT_DIM, true);
@@ -1070,29 +1071,29 @@ static void go_stats() {
     g_state = ST_STATS;
     panel_on(true);
     set_text_if(gs->p_title, tr("Statistiques"));
-    set_text_if(gs->p_sub, tr("Bilan vs Tab (par variante / niveau)"));
+    set_text_if(gs->p_sub, tr("Bilan contre le Tab (par variante et niveau)"));
     char buf[72];
     uint8_t v = gs->cfg_variant;
     for (int lv = 0; lv < 4; lv++) {
-        snprintf(buf, sizeof(buf), "%s — %uW / %uD / %uL",
+        snprintf(buf, sizeof(buf), tr("%s — %u V · %u N · %u D"),
                  level_name((uint8_t)lv),
                  (unsigned)gs->save.wins[v][lv],
                  (unsigned)gs->save.draws[v][lv],
                  (unsigned)gs->save.losses[v][lv]);
         slot_list(lv, buf, variant_name(v), Pal::TXT, true);
     }
-    slot_list(4, tr("Changer variante stats"), variant_name(v), Pal::HL_MOVE, true);
+    slot_list(4, tr("Changer de variante"), variant_name(v), Pal::HL_MOVE, true);
     slot_list(5, tr("Retour"), "", Pal::TXT_DIM, true);
 }
 
 static void go_settings() {
     g_state = ST_SETTINGS;
     panel_on(true);
-    set_text_if(gs->p_title, tr("Reglages"));
+    set_text_if(gs->p_title, tr("Réglages"));
     set_text_if(gs->p_sub, tr("Options locales (NVS)"));
-    slot_list(0, tr(gs->save.imu_hint ? "Secousse Hint: ON" : "Secousse Hint: OFF"),
+    slot_list(0, tr(gs->save.imu_hint ? "Secousse = indice : ACTIVÉE" : "Secousse = indice : DÉSACTIVÉE"),
               "IMU BMI270", Pal::HL_MOVE, true);
-    slot_list(1, tr("Reset statistiques"), tr("Demande confirmation"), Pal::DANGER, true);
+    slot_list(1, tr("Remettre les statistiques à zéro"), tr("Demande confirmation"), Pal::DANGER, true);
     slot_list(2, tr("Retour"), "", Pal::TXT_DIM, true);
     gs->slots.hide_from(3);
 }
@@ -1112,7 +1113,7 @@ static void go_gameover() {
     else
         snprintf(buf, sizeof(buf), "%s · %s", variant_name(gs->pos.variant), mode_name(gs->cfg_mode));
     set_text_if(gs->p_sub, buf);
-    slot_list(0, tr("Revanche"), tr("Meme reglage"), Pal::KING_RING, true);
+    slot_list(0, tr("Revanche"), tr("Mêmes réglages"), Pal::KING_RING, true);
     slot_list(1, "Hub", tr("Menu principal"), Pal::TXT_DIM, true);   // « Hub » : déjà anglais
     gs->slots.hide_from(2);
 }
@@ -1173,7 +1174,7 @@ static void finish_if_terminal() {
         }
     } else if (rep_threefold()) {
         w = 2;
-        gs->draw_reason = tr_noop("Position repetee 3 fois");
+        gs->draw_reason = tr_noop("Position répétée 3 fois");
     } else {
         return;
     }
@@ -1188,7 +1189,7 @@ static void try_start_ai() {
     int w = -1;
     if (Engine::is_terminal(gs->pos, &w)) { finish_if_terminal(); return; }
     g_state = ST_THINKING;
-    snprintf(gs->status, sizeof(gs->status), "%s", tr("Tab reflechit..."));
+    snprintf(gs->status, sizeof(gs->status), "%s", tr("Le Tab réfléchit..."));
     update_hud();
     Ai::begin(gs->pos, (Ai::Level)gs->cfg_level);
 }
@@ -1200,7 +1201,7 @@ static void after_human_or_ai_move() {
     else {
         g_state = ST_PLAYING;
         snprintf(gs->status, sizeof(gs->status), "%s",
-                 tr(gs->n_legal && gc->legal[0].n_caps ? "Prise obligatoire" : "A vous"));
+                 tr(gs->n_legal && gc->legal[0].n_caps ? "Prise obligatoire" : "À vous"));
         update_hud();
     }
 }
@@ -1228,7 +1229,7 @@ static void do_undo() {
     if (g_state != ST_PLAYING && g_state != ST_THINKING) return;
     Ai::abort();
     if (gs->undo_n <= 0) {
-        snprintf(gs->status, sizeof(gs->status), "%s", tr("Rien a annuler"));
+        snprintf(gs->status, sizeof(gs->status), "%s", tr("Rien à annuler"));
         update_hud();
         return;
     }
@@ -1249,7 +1250,7 @@ static void do_undo() {
     clear_highlights();
     update_hist_panel();
     save_position();
-    snprintf(gs->status, sizeof(gs->status), "%s", tr("Coup annule"));
+    snprintf(gs->status, sizeof(gs->status), "%s", tr("Coup annulé"));
     update_hud();
     after_human_or_ai_move();
 }
@@ -1268,7 +1269,7 @@ static void do_hint() {
     gs->hint_until = esphome::millis() + 2500;
     gs->sel = gs->hint_from;
     show_highlights_for_sel();
-    snprintf(gs->status, sizeof(gs->status), "%s", tr("Indice affiche"));
+    snprintf(gs->status, sizeof(gs->status), "%s", tr("Indice affiché"));
     update_hud();
 }
 
@@ -1418,9 +1419,9 @@ static void slot_cb(lv_event_t* e) {
             if (i == 0) { gs->save.imu_hint ^= 1; persist_save(); go_settings(); }
             else if (i == 1) {
                 g_state = ST_CONFIRM_RESET;
-                set_text_if(gs->p_title, tr("Reset stats ?"));
+                set_text_if(gs->p_title, tr("Remettre les stats à zéro ?"));
                 set_text_if(gs->p_sub, tr("Irréversible"));
-                slot_list(0, tr("Confirmer reset"), "", Pal::DANGER, true);
+                slot_list(0, tr("Confirmer la remise à zéro"), "", Pal::DANGER, true);
                 slot_list(1, tr("Annuler"), "", Pal::TXT_DIM, true);   // bouton de dialogue : Cancel
                 gs->slots.hide_from(2);
             } else if (i == 2) go_hub();
@@ -1502,7 +1503,7 @@ static void build_ui() {
         lv_obj_add_event_cb(gs->side_btns[i], side_btn_cb, LV_EVENT_CLICKED, (void*)(intptr_t)i);
     }
 
-    // Boutons latéraux Undo / Hint
+    // Boutons latéraux Annuler / Indice (mêmes clés que Go et le Roi Noir)
     gs->btn_undo = mk_rect(gs->ui.field);
     lv_obj_add_flag(gs->btn_undo, LV_OBJ_FLAG_CLICKABLE);
     set_bg(gs->btn_undo, Pal::BTN, LV_OPA_COVER);
@@ -1510,7 +1511,7 @@ static void build_ui() {
     lv_obj_set_style_radius(gs->btn_undo, 10, LV_PART_MAIN);
     {
         lv_obj_t* l = mk_label(gs->btn_undo, gs->ui.f_small, Pal::TXT);
-        set_text_if(l, "Undo");
+        set_text_if(l, tr_ctx("coup", "Annuler"));
         lv_obj_center(l);
     }
     lv_obj_add_event_cb(gs->btn_undo, undo_cb, LV_EVENT_CLICKED, nullptr);
@@ -1522,7 +1523,7 @@ static void build_ui() {
     lv_obj_set_style_radius(gs->btn_hint, 10, LV_PART_MAIN);
     {
         lv_obj_t* l = mk_label(gs->btn_hint, gs->ui.f_small, Pal::TXT);
-        set_text_if(l, "Hint");
+        set_text_if(l, tr("Indice"));
         lv_obj_center(l);
     }
     lv_obj_add_event_cb(gs->btn_hint, hint_cb, LV_EVENT_CLICKED, nullptr);
