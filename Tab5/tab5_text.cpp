@@ -92,10 +92,10 @@ std::string normalize_text_utf8(const std::string& in) {
 
 const char* vigilance_alert_banner_utf8(const std::string& couleur) {
     if (couleur.find("Rouge") != std::string::npos) {
-        return "Alerte M\xC3\xA9t\xC3\xA9o Rouge en cours ! Restez prudent.";
+        return tr("Alerte M\xC3\xA9t\xC3\xA9o Rouge en cours ! Restez prudent.");
     }
     if (couleur.find("Orange") != std::string::npos) {
-        return "Alerte M\xC3\xA9t\xC3\xA9o Orange en cours ! Restez prudent.";
+        return tr("Alerte M\xC3\xA9t\xC3\xA9o Orange en cours ! Restez prudent.");
     }
     return nullptr;
 }
@@ -173,3 +173,30 @@ void set_label_text_utf8(lv_obj_t* label, const char* text) {
 
 // clock_month_short_utf8() : tab5_core.cpp, avec tous les autres noms de jours et
 // de mois (lot 8d).
+
+// =============================================================================
+// Traduction des textes posés par le YAML (lot 4, 27/09/2026)
+// =============================================================================
+// Les labels du YAML gardent leur texte français (`text: "Calendrier"`) : c'est la
+// clé de tab5_i18n. Un seul passage en fin de setup (on_boot -100, AVANT la
+// première image, autorisé par Axel le 27/09/2026) les remplace par leur
+// traduction. En français, rien : retour immédiat. Les textes posés ensuite par le
+// C++ passent eux-mêmes par tr().
+
+static void i18n_apply_tree(lv_obj_t* obj) {
+    if (obj == nullptr) return;
+    if (lv_obj_check_type(obj, &lv_label_class)) {
+        const char* actuel = lv_label_get_text(obj);
+        const char* traduit = tr(actuel);
+        if (traduit != actuel) lv_label_set_text(obj, traduit);
+    }
+    const uint32_t n = lv_obj_get_child_count(obj);
+    for (uint32_t i = 0; i < n; i++) {
+        i18n_apply_tree(lv_obj_get_child(obj, i));
+    }
+}
+
+void i18n_apply_boot(std::initializer_list<lv_obj_t*> racines) {
+    if (i18n_language() == 0) return;
+    for (lv_obj_t* r : racines) i18n_apply_tree(r);
+}

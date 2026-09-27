@@ -306,7 +306,7 @@ text_sensor:
     lambda: |-
       static std::string last;
       auto t = id(sntp_time).now();
-      std::string s = t.is_valid() ? alarm_next_label(t.timestamp) : std::string("Heure non synchronisée");
+      std::string s = t.is_valid() ? alarm_next_label(t.timestamp) : std::string(tr("Heure non synchronisée"));
       if (s == last) return {};
       last = s;
       return {s};

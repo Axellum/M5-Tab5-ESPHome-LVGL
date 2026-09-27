@@ -171,7 +171,7 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
 // affiché par le bouton Redémarrer HA.
 void update_console_ha_status_ui(lv_obj_t* lbl, bool ha_ok) {
     if (lbl == nullptr) return;
-    ui_text(lbl, ha_ok ? "Connecte" : "Hors ligne");
+    ui_text(lbl, tr(ha_ok ? "Connecte" : "Hors ligne"));
     ui_text_color(lbl, ha_ok ? UIColor::SUCCESS : UIColor::ERROR);
 }
 

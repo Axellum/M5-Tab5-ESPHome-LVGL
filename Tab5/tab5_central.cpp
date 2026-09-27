@@ -65,7 +65,7 @@ static bool forecast_page_title_parts(int page, std::string& chapeau, std::strin
 
     if (page == 3 || page == 4) {
         const int daily_pi = page - 2;                  // 1 = J5-J9, 2 = J10-J14
-        snprintf(buf, sizeof(buf), "Pr\xC3\xA9visions journali\xC3\xA8res \xC2\xB7 %d/3", daily_pi + 1);
+        snprintf(buf, sizeof(buf), tr("Pr\xC3\xA9visions journali\xC3\xA8res \xC2\xB7 %d/3"), daily_pi + 1);
         chapeau = buf;
 
         const int premier = daily_pi * 5;
@@ -75,11 +75,11 @@ static bool forecast_page_title_parts(int page, std::string& chapeau, std::strin
         if (debut.empty() || fin.empty()) {
             // SNTP pas encore synchronise : repli sur les libelles courts pousses
             // par HA ("Mer 05"), comme le fait deja refresh_daily_forecast().
-            debut = cal_jours_data[premier].nom_jour;
-            fin   = cal_jours_data[dernier].nom_jour;
+            debut = ha_day_name(cal_jours_data[premier].nom_jour);
+            fin   = ha_day_name(cal_jours_data[dernier].nom_jour);
         }
         if (!debut.empty() && !fin.empty()) {
-            snprintf(buf, sizeof(buf), "Du %s au %s", debut.c_str(), fin.c_str());
+            snprintf(buf, sizeof(buf), tr("Du %s au %s"), debut.c_str(), fin.c_str());
             plage = buf;
         }
         return true;
@@ -89,7 +89,7 @@ static bool forecast_page_title_parts(int page, std::string& chapeau, std::strin
         // Pages horaires : l'index UI est inverse par rapport aux donnees
         // (apply_forecast_page appelle refresh_hourly_forecast(..., 1 - page)).
         const int hourly_pi = 1 - page;                 // 0 = 5 prochaines heures, 1 = les 5 suivantes
-        snprintf(buf, sizeof(buf), "Pr\xC3\xA9visions horaires \xC2\xB7 %d/2", hourly_pi + 1);
+        snprintf(buf, sizeof(buf), tr("Pr\xC3\xA9visions horaires \xC2\xB7 %d/2"), hourly_pi + 1);
         chapeau = buf;
 
         const std::string& debut = cal_heures_data[hourly_pi * 5].heure_texte;
@@ -98,8 +98,8 @@ static bool forecast_page_title_parts(int page, std::string& chapeau, std::strin
             // Plage a cheval sur minuit (22:00 -> 02:00) : sans mention explicite
             // le titre se lirait comme une plage a rebours.
             const bool lendemain = atoi(fin.c_str()) < atoi(debut.c_str());
-            snprintf(buf, sizeof(buf), "De %s \xC3\xA0 %s%s", debut.c_str(), fin.c_str(),
-                     lendemain ? " le lendemain" : "");
+            snprintf(buf, sizeof(buf), tr("De %s \xC3\xA0 %s%s"), debut.c_str(), fin.c_str(),
+                     lendemain ? tr(" le lendemain") : "");
             plage = buf;
         }
         return true;
@@ -567,27 +567,27 @@ void reset_forecast_to_main_page(int& forecast_page_index,
 // =============================================================================
 
 static std::string get_day_planning_display_text(int jour) {
-    if (jour < 0 || jour >= 15) return "Jour hors plage";
+    if (jour < 0 || jour >= 15) return tr("Jour hors plage");
     const DayForecastData& d = cal_jours_data[jour];
     const std::string& h = d.heures_ouverture;
 
     std::string label;
-    if (jour == 0) label = "Auj.";
+    if (jour == 0) label = tr("Auj.");
     else {
         std::string short_lbl = format_short_day_label(jour);
-        label = short_lbl.empty() ? d.nom_jour : short_lbl;
+        label = short_lbl.empty() ? std::string(ha_day_name(d.nom_jour)) : short_lbl;
     }
-    if (label.empty()) label = "Jour";
+    if (label.empty()) label = tr("Jour");
 
     if (!h.empty()) {
         // Recolor early (< 9h) en orange EARLY — le reste en blanc
         if (cal_is_early_shift(h)) {
-            return label + " : #fb923c " + h + "#";
+            return tr_fill("{jour} : #fb923c {horaire}#", {{"jour", label}, {"horaire", h}});
         }
-        return label + " : " + h;
+        return tr_fill("{jour} : {horaire}", {{"jour", label}, {"horaire", h}});
     }
-    if (d.est_repos) return label + " : repos";
-    return label + " : pas d'horaire";
+    if (d.est_repos) return tr_fill("{jour} : repos", {{"jour", label}});
+    return tr_fill("{jour} : pas d'horaire", {{"jour", label}});
 }
 
 // Contexte de l'affichage temporaire du planning (tap sur une tuile météo, 6 s) :

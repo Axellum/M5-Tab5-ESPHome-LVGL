@@ -296,7 +296,7 @@ lvgl:
                   // État connexion HA immédiat (sinon "--" jusqu'au prochain tick 2s)
                   if (id(lbl_sys_ha_val) != nullptr) {
                     bool ha_ok = id(status_ha).state;
-                    lv_label_set_text(id(lbl_sys_ha_val), ha_ok ? "Connecte" : "Hors ligne");
+                    lv_label_set_text(id(lbl_sys_ha_val), tr(ha_ok ? "Connecte" : "Hors ligne"));
                     lv_obj_set_style_text_color(id(lbl_sys_ha_val),
                         lv_color_hex(ha_ok ? UIColor::SUCCESS : UIColor::ERROR), LV_PART_MAIN);
                   }

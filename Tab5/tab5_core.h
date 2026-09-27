@@ -85,10 +85,28 @@ const char* fr_month_long_utf8(int mois_1_12);
 const char* fr_day_short_utf8(int wday);
 const char* clock_month_short_utf8(int month);
 // Première lettre en majuscule : « dimanche » → « Dimanche » (début de libellé).
+// Seulement une première lettre ASCII : une langue dont un jour ou un mois
+// commence par une lettre accentuée doit l'écrire déjà en majuscule dans sa
+// traduction.
 std::string fr_capitalized(const char* s);
 
-// Titres de jour des pages de prévisions : « Lun 16 » et « mercredi 5 août »
-// (« 1er » pour le premier du mois). "" si l'heure n'est pas synchronisée.
+// Les mêmes libellés dans la langue de l'écran (tab5_i18n, lot 4 du 27/09/2026) :
+// ce sont EUX qu'on affiche. Les fr_* restent la source (clés de traduction dans
+// Tab5/lang/*.yaml) et ce que vérifient les tests en français.
+const char* day_long_utf8(int wday);
+const char* month_long_utf8(int mois_1_12);
+const char* day_short_utf8(int wday);
+const char* month_short_utf8(int month);
+
+// Nom de jour poussé par HA dans le lot des prévisions (« Auj », « Lun »…), traduit
+// au moment de l'affichage : cal_jours_data garde le texte reçu. Un texte inconnu
+// passe inchangé : le pointeur rendu est alors celui de `nom`, qui doit vivre
+// au moins aussi longtemps que son usage.
+const char* ha_day_name(const std::string& nom);
+
+// Titres de jour des pages de prévisions, dans la langue de l'écran : « Lun 16 » et
+// « mercredi 5 août » (« 1er » pour le premier du mois) ; en anglais « Mon 16 » et
+// « Wednesday, August 5 ». "" si l'heure n'est pas synchronisée.
 std::string format_short_day_label(int jour_offset);
 std::string format_long_day_label(int jour_offset);
 

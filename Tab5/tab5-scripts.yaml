@@ -83,7 +83,8 @@ script:
           service: assist_satellite.announce
           data:
             entity_id: ${entity_tab5_satellite}
-            message: "Volet arrêté."
+            # Phrase dite par la tablette : dans la langue de l'écran (lot 4).
+            message: !lambda 'return std::string(tr("Volet arrêté."));'
 
   # Tap sur la carte volet — même geste sur les deux vues (btn_j1_action de
   # forecast_daily.yaml, btn_sw1_action de switches_card.yaml), recopié à
@@ -208,6 +209,10 @@ script:
     then:
       - lambda: |-
           if (id(popup_icon_clim_cool) == nullptr) return;
+
+          // « Chaud » est aussi un blanc de lampe (« Warm » en anglais) : le mode de
+          // la clim a sa propre traduction (« Heat »), clé « clim|Chaud » (lot 4).
+          ui_text(id(popup_lbl_clim_heat), tr_ctx("clim", "Chaud"));
 
           const std::string& mode  = id(clim_hvac_mode);
           const std::string& preset = id(clim_preset_mode);

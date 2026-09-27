@@ -7,6 +7,7 @@
  *       Contrat et justifications d'architecture : voir alarm_clock.h.
  */
 #include "alarm_clock.h"
+#include "tab5_i18n.h"
 #include "tab5_core.h"
 
 #include <cstdio>
@@ -288,39 +289,39 @@ std::string alarm_next_label(time_t now) {
     struct tm t;
     if (localtime_r(&s_snooze_until, &t) != nullptr) {
       const int reste = static_cast<int>((s_snooze_until - now + 59) / 60);
-      char buf[56];
-      snprintf(buf, sizeof(buf), "R\xC3\xA9p\xC3\xA9tition %02d:%02d (%d min)", t.tm_hour, t.tm_min, reste);
+      char buf[96];
+      snprintf(buf, sizeof(buf), tr("R\xC3\xA9p\xC3\xA9tition %02d:%02d (%d min)"), t.tm_hour, t.tm_min, reste);
       return std::string(buf);
     }
   }
-  if (!g_alarm_cfg.enabled) return "D\xC3\xA9sactiv\xC3\xA9";
-  if (alarm_next_ring(now) == 0) return "Aucune sonnerie pr\xC3\xA9vue";
+  if (!g_alarm_cfg.enabled) return tr("D\xC3\xA9sactiv\xC3\xA9");
+  if (alarm_next_ring(now) == 0) return tr("Aucune sonnerie pr\xC3\xA9vue");
 
   char h[8];
   alarm_hhmm(s_next_min, h, sizeof(h));
 
   if (s_next_offset == 0) {
-    return std::string("Aujourd'hui ") + h;
+    return tr_fill("Aujourd'hui {heure}", {{"heure", h}});
   }
   if (s_next_offset == 1) {
-    return std::string("Demain ") + h;
+    return tr_fill("Demain {heure}", {{"heure", h}});
   }
   struct tm day;
   if (!local_day_from_offset(s_next_offset, day)) return std::string(h);
   // Majuscule initiale sur le jour : c'est un début de libellé.
-  return fr_capitalized(fr_day_long_utf8(day.tm_wday)) + " " + h;
+  return fr_capitalized(day_long_utf8(day.tm_wday)) + " " + h;
 }
 
 std::string alarm_next_detail(time_t now) {
   if (s_snooze_until > now) {
-    char buf[80];
+    char buf[128];
     snprintf(buf, sizeof(buf),
-             "R\xC3\xA9p\xC3\xA9tition n\xC2\xB0%d \xC2\xB7 « Arr\xC3\xAAter » pour reprendre le cycle normal",
+             tr("R\xC3\xA9p\xC3\xA9tition n\xC2\xB0%d \xC2\xB7 « Arr\xC3\xAAter » pour reprendre le cycle normal"),
              s_snooze_count);
     return std::string(buf);
   }
-  if (!g_alarm_cfg.enabled) return "Touchez l'interrupteur pour l'armer";
-  if (alarm_next_ring(now) == 0) return "Aucun jour retenu dans les 8 prochains";
+  if (!g_alarm_cfg.enabled) return tr("Touchez l'interrupteur pour l'armer");
+  if (alarm_next_ring(now) == 0) return tr("Aucun jour retenu dans les 8 prochains");
 
   // « jeudi 1er octobre » : même libellé que les titres de jours (tab5_core.cpp),
   // qui connaît le seul ordinal du français. Vide si le jour est hors bornes.
@@ -328,24 +329,24 @@ std::string alarm_next_detail(time_t now) {
   if (date.empty()) return "";
 
   if (!alarm_calendar_ready()) {
-    return date + " \xC2\xB7 en attente du calendrier";
+    return date + " \xC2\xB7 " + tr("en attente du calendrier");
   }
   // Jour non couvert (données trop vieilles pour aller jusque-là) : la sonnerie a
   // été calculée sur l'heure fixe, comme sans calendrier.
   const int idx = cal_index_for_offset(s_next_offset);
   if (idx < 0) {
-    return date + " \xC2\xB7 en attente du calendrier";
+    return date + " \xC2\xB7 " + tr("en attente du calendrier");
   }
   if (cal_jours_data[idx].est_repos) {
-    return date + " \xC2\xB7 repos";
+    return date + " \xC2\xB7 " + tr("repos");
   }
   const std::string& h = cal_jours_data[idx].heures_ouverture;
   if (h.size() >= 11) {
     // « Travail 06:45 – 15:30 » : tiret demi-cadratin UTF-8, comme le popup
     // calendrier (cal_render_day_detail).
-    return date + " \xC2\xB7 Travail " + h.substr(0, 5) + " \xE2\x80\x93 " + h.substr(6, 5);
+    return date + " \xC2\xB7 " + tr("Travail") + " " + h.substr(0, 5) + " \xE2\x80\x93 " + h.substr(6, 5);
   }
-  return date + " \xC2\xB7 Travail (horaire inconnu)";
+  return date + " \xC2\xB7 " + tr("Travail (horaire inconnu)");
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -505,9 +506,9 @@ bool rdv_due(time_t now, int lead_min, std::string& out_screen, std::string& out
 
     char scr[192];
     if (reste > 0) {
-      snprintf(scr, sizeof(scr), "%s \xC2\xB7 %s (dans %d min)", h, r.titre.c_str(), reste);
+      snprintf(scr, sizeof(scr), tr("%s \xC2\xB7 %s (dans %d min)"), h, r.titre.c_str(), reste);
     } else {
-      snprintf(scr, sizeof(scr), "%s \xC2\xB7 %s (maintenant)", h, r.titre.c_str());
+      snprintf(scr, sizeof(scr), tr("%s \xC2\xB7 %s (maintenant)"), h, r.titre.c_str());
     }
     out_screen = scr;
 
@@ -519,15 +520,15 @@ bool rdv_due(time_t now, int lead_min, std::string& out_screen, std::string& out
     const int mm = atoi(std::string(h).substr(3, 2).c_str());
     char heure_parlee[24];
     if (mm == 0) {
-      snprintf(heure_parlee, sizeof(heure_parlee), "%d heures", hh);
+      snprintf(heure_parlee, sizeof(heure_parlee), tr("%d heures"), hh);
     } else {
-      snprintf(heure_parlee, sizeof(heure_parlee), "%d heures %d", hh, mm);
+      snprintf(heure_parlee, sizeof(heure_parlee), tr("%d heures %d"), hh, mm);
     }
     if (reste > 0) {
-      snprintf(spk, sizeof(spk), "Rappel : %s, \xC3\xA0 %s, dans %d minute%s.", r.titre.c_str(),
+      snprintf(spk, sizeof(spk), tr("Rappel : %s, \xC3\xA0 %s, dans %d minute%s."), r.titre.c_str(),
                heure_parlee, reste, reste > 1 ? "s" : "");
     } else {
-      snprintf(spk, sizeof(spk), "Rappel : %s, c'est maintenant.", r.titre.c_str());
+      snprintf(spk, sizeof(spk), tr("Rappel : %s, c'est maintenant."), r.titre.c_str());
     }
     out_speech = spk;
     return true;

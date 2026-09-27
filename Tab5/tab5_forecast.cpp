@@ -259,12 +259,12 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
 
         DayForecastData& data = cal_jours_data[jour];
 
-        // Titre : page accueil (0) = nom_jour HA ; pages 2-3 = "Lun 16" via SNTP
+        // Titre : page accueil (0) = nom_jour HA traduit ; pages 2-3 = "Lun 16" via SNTP
         if (page_index > 0) {
             std::string date_lbl = format_short_day_label(jour);
-            ui_text(slot.day_lbl, date_lbl.empty() ? data.nom_jour.c_str() : date_lbl.c_str());
+            ui_text(slot.day_lbl, date_lbl.empty() ? ha_day_name(data.nom_jour) : date_lbl.c_str());
         } else {
-            ui_text(slot.day_lbl, data.nom_jour.c_str());
+            ui_text(slot.day_lbl, ha_day_name(data.nom_jour));
         }
 
         lv_obj_remove_flag(slot.max_lbl, LV_OBJ_FLAG_HIDDEN);

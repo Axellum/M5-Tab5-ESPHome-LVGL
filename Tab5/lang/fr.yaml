@@ -1,0 +1,13 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file lang/fr.yaml — langue SOURCE de l'écran.
+# @role Le français est la clé de toutes les traductions (façon gettext) : le code
+#       et le YAML gardent leurs textes français, et chaque autre langue les traduit
+#       dans son propre fichier (en.yaml…). Ce fichier ne porte donc que les
+#       métadonnées de la langue.
+# @ai_instruction Ne jamais changer `_index: 0`. Pour ajouter une langue, voir
+#       l'en-tête de tools/gen_i18n.py.
+# ============================================================================
+_langue: Français
+_code: fr
+_index: 0
