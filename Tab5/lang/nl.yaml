@@ -234,7 +234,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Annuler": "Annuleren"
 "Confirmer": "Bevestigen"
 "Redemarrage...": "Herstarten..."
-"Connecte": "Verbonden"
+"Connecté": "Verbonden"
 
 # --- Alarm clock: popup ---------------------------------------------------------
 "Réveil": "Wekker"
