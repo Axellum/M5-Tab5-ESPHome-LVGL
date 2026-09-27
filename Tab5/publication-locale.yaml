@@ -1,0 +1,8 @@
+# [AI-CONTEXT]
+# @file publication-locale.yaml
+# @role Package de publication d'un firmware compilé sur son PC (lot 6c, ADR-0022) :
+#       VIDE. Choisi par défaut par tab5-ha-hmi.yaml (`tab5_publication`, absent de
+#       user_entities.yaml). Pas d'entité de mise à jour : le manifeste publié propose des
+#       binaires signés par la clé du projet, qu'une tablette flashée avec une autre clé
+#       refuserait (signed_ota_verification). Voir publication-stable.yaml.
+{}

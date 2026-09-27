@@ -31,3 +31,4 @@ Format: **Context / Decision / Consequences**. One page max. Add a new one whene
 | [0019](0019-logical-slots-blueprint.md) | Logical slots — the device knows slots, a Home Assistant blueprint maps them to entities |
 | [0020](0020-no-secret-firmware-signed-ota.md) | No secret in the firmware — Home Assistant provisions the API key, OTA images are signed |
 | [0021](0021-host-render-stubs.md) | The screen is rendered off the tablet — the `host` platform, stubbed hardware, no firmware change |
+| [0022](0022-published-firmware-pages-channels.md) | Published firmware — signed in CI, a web flasher on GitHub Pages, stable and beta channels |

@@ -144,25 +144,28 @@ psram:
   speed: 200MHz
 
 ota:
-  platform: esphome
-  # [lot 6b, ADR-0020] Plus de `encryption:` : il héritait de la clé API compilée
-  # (ADR-0015), et la clé vient désormais de HA (un bloc vide avec une API sans clé ne
-  # passe pas la validation). La tablette propose le chiffrement une fois sa clé reçue
-  # mais accepte l'envoi en clair ; ce qui la protège, c'est la signature exigée par
-  # `signed_ota_verification` (bloc esp32 ci-dessus). Pas de `password:` non plus : il
-  # serait le même pour tous, lisible dans le binaire publié.
-  # Migration d'une tablette qui a encore l'ancien firmware (clé compilée) : elle refuse
-  # l'envoi en clair, donc le nouveau binaire part une fois chiffré avec l'ancienne clé
-  # (docs/installation.md, « Passer à la 3.0 »).
-  # Pas de `on_end` ici. ESPHome redémarre lui-même juste après une OTA réussie
-  # (components/esphome/ota/ota_esphome.cpp : notify_state_(OTA_COMPLETED) ->
-  # delay(100) -> App.safe_reboot()). L'ancien `on_end: delay 2s + button.press
-  # btn_restart` (« fix reboot OTA » du 05/07/2026) ne pouvait donc jamais
-  # s'exécuter : l'appareil redémarrait 100 ms après le déclencheur, bien avant la
-  # fin du délai. Retiré le 08/09/2026 (audit du 06/09, §4.1 point 13).
-  # L'écran noir après OTA (co-processeur C6 non réinitialisé par un reboot
-  # logiciel, cf. docs/troubleshooting.md) ne se règle par AUCUN redémarrage
-  # logiciel, seulement par un cycle d'alimentation : ne pas remettre de on_end.
+  # En LISTE (lot 6c) : un firmware publié y ajoute `http_request`
+  # (publication-commune.yaml). Écrit en dictionnaire, ce bloc était REMPLACÉ par celui
+  # du package (vérifié sur ESPHome 2026.9.0 : plus d'OTA `esphome` du tout).
+  - platform: esphome
+    # [lot 6b, ADR-0020] Plus de `encryption:` : il héritait de la clé API compilée
+    # (ADR-0015), et la clé vient désormais de HA (un bloc vide avec une API sans clé ne
+    # passe pas la validation). La tablette propose le chiffrement une fois sa clé reçue
+    # mais accepte l'envoi en clair ; ce qui la protège, c'est la signature exigée par
+    # `signed_ota_verification` (bloc esp32 ci-dessus). Pas de `password:` non plus : il
+    # serait le même pour tous, lisible dans le binaire publié.
+    # Migration d'une tablette qui a encore l'ancien firmware (clé compilée) : elle refuse
+    # l'envoi en clair, donc le nouveau binaire part une fois chiffré avec l'ancienne clé
+    # (docs/installation.md, « Passer à la 3.0 »).
+    # Pas de `on_end` ici. ESPHome redémarre lui-même juste après une OTA réussie
+    # (components/esphome/ota/ota_esphome.cpp : notify_state_(OTA_COMPLETED) ->
+    # delay(100) -> App.safe_reboot()). L'ancien `on_end: delay 2s + button.press
+    # btn_restart` (« fix reboot OTA » du 05/07/2026) ne pouvait donc jamais
+    # s'exécuter : l'appareil redémarrait 100 ms après le déclencheur, bien avant la
+    # fin du délai. Retiré le 08/09/2026 (audit du 06/09, §4.1 point 13).
+    # L'écran noir après OTA (co-processeur C6 non réinitialisé par un reboot
+    # logiciel, cf. docs/troubleshooting.md) ne se règle par AUCUN redémarrage
+    # logiciel, seulement par un cycle d'alimentation : ne pas remettre de on_end.
 
 safe_mode:
   num_attempts: 10

@@ -2,9 +2,9 @@
 
 > **Mis à jour pour la 3.0** (lot 8 de l'audit « ouverture », 27/09/2026) : installation par
 > le flasheur web et le blueprint, plus de `secrets.yaml`. Axel met la page à jour lui-même,
-> **après la publication de la 3.0.0**. Avant de coller : remplacer `<LIEN DU FLASHEUR>`
-> (lot 6c), vérifier le numéro de version dans « Done! », et garder le ton « partagé au
-> cas où » (pas d'appel insistant).
+> **après la publication de la 3.0.0**. Avant de coller : vérifier que le flasheur web
+> (lien dans le texte, lot 6c) propose la 3.0.0 en version stable, vérifier le numéro de
+> version dans « Done! », et garder le ton « partagé au cas où » (pas d'appel insistant).
 
 > Copié / synchronisé le 2026-07-19. Case **Made with AI** : cocher.
 > Médias à uploader : voir § Cover media en bas + `docs/images/`.
@@ -123,7 +123,7 @@ Just one heads-up: several critical pins (display reset, amplifier enable) are *
 
 ### Step 2: Flash the firmware
 
-The easy way: plug the Tab5 into your computer over USB and flash it from the browser (Chrome or Edge): <LIEN DU FLASHEUR>. The same page sets the Wi-Fi right after the flash. Then add the tablet in Home Assistant, which gives it its encryption key: there is no secret in the firmware, and updates must be signed.
+The easy way: plug the Tab5 into your computer over USB and flash it from the browser (Chrome or Edge): https://axellum.github.io/M5-Tab5-ESPHome-LVGL/. The same page sets the Wi-Fi right after the flash. Then add the tablet in Home Assistant, which gives it its encryption key: there is no secret in the firmware, and updates must be signed.
 
 Or compile it yourself:
 

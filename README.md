@@ -46,6 +46,10 @@
 
 ## Quick start
 
+**No compiling (3.0 and later):** [install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/) (Chrome or Edge, USB-C cable). Pick your display revision, flash, set the Wi-Fi, then add the tablet in Home Assistant and install the packages and the blueprint ([`docs/installation.md`](docs/installation.md), Steps 4 and 6). Updates then show up in Home Assistant.
+
+**Or build your own firmware:**
+
 ```bash
 # Clone the repo
 git clone https://github.com/Axellum/M5-Tab5-ESPHome-LVGL.git
@@ -378,6 +382,10 @@ If something in the code is weird, it might be an AI quirk. If something works s
 ---
 
 ## Démarrage rapide
+
+**Sans compiler (3.0 et suivantes) :** [installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/) (Chrome ou Edge, câble USB-C). Choisissez votre révision d'écran, flashez, réglez le Wi-Fi, puis ajoutez la tablette dans Home Assistant et installez les packages et le blueprint ([`docs/installation.md`](docs/installation.md#version-française), étapes 4 et 6). Les mises à jour arrivent ensuite dans Home Assistant.
+
+**Ou compiler votre propre firmware :**
 
 ```bash
 # Cloner le dépôt

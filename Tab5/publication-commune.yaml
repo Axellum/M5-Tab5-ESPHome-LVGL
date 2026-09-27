@@ -1,0 +1,23 @@
+# [AI-CONTEXT]
+# @file publication-commune.yaml
+# @role Mise à jour depuis Home Assistant, pour les firmwares PUBLIÉS seulement (lot 6c,
+#       ADR-0022). Inclus par publication-stable.yaml / publication-beta.yaml avec la
+#       variable `canal` ; jamais par une compilation locale (publication-locale.yaml).
+# @architecture_constraint Le manifeste est celui de la page de flashage (GitHub Pages,
+#       .github/workflows/publication.yml) : `<canal>/<révision d'écran>/manifest.json`.
+#       Chaque révision a le sien (la puce d'écran est choisie à la compilation).
+# ============================================================================
+# L'entité « Firmware » compare la version du projet (`project: version`, donnée par le
+# tag de la release) à celle du manifeste, toutes les 6 h. « Installer » dans HA
+# télécharge l'image OTA et la vérifie : MD5 du manifeste, puis signature (le backend
+# OTA commun applique `signed_ota_verification`, comme pour `ota: esphome`). Le
+# certificat HTTPS n'est pas vérifié (`verify_ssl: false`, tab5-assist.yaml) : c'est la
+# signature qui garantit l'origine de l'image.
+ota:
+  - platform: http_request
+
+update:
+  - platform: http_request
+    id: tab5_mise_a_jour
+    name: Firmware
+    source: https://axellum.github.io/M5-Tab5-ESPHome-LVGL/${canal}/${ tab5_ecran | default('st7123') | lower }/manifest.json

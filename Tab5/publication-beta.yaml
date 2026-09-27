@@ -1,0 +1,8 @@
+# Firmware publié, canal bêta (lot 6c, ADR-0022) : une pre-release. Il se met à jour vers
+# la release la plus récente, pre-release ou non (une bêta passe donc à la stable qui la
+# suit).
+packages:
+  maj: !include
+    file: publication-commune.yaml
+    vars:
+      canal: beta

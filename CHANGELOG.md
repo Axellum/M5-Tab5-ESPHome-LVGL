@@ -4,6 +4,54 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Installer depuis le navigateur, mettre à jour depuis Home Assistant (lot 6c-2)
+
+Lot 6 de l'audit « ouverture », fin : le firmware publié, ADR-0022. Choix d'Axel : clé du
+projet dans un secret GitHub (posé par lui), GitHub Pages, mise à jour dans les seuls
+firmwares publiés, pré-release `v3.0.0-rc.1` pour essayer la chaîne.
+
+- **Workflow `.github/workflows/publication.yml`**, à la publication d'une release (ou à
+  la main pour un tag) :
+  - compile les trois révisions d'écran avec ESPHome **figé** (`ESPHOME_PUBLICATION`,
+    2026.9.0, jamais sous `min_version`) ;
+  - les signe avec la **clé du projet** (secret `TAB5_CLE_SIGNATURE`). Avant, il vérifie
+    que le secret redonne l'empreinte publique SBv2 écrite dans le workflow ; après, il
+    vérifie la signature de chaque image, puis efface la clé ;
+  - joint `tab5-ha-hmi-<révision>.factory.bin`, `.ota.bin` et `manifest-<révision>.json`
+    à la release ;
+  - reconstruit GitHub Pages depuis les fichiers des releases : `stable/` = dernière
+    release 3.x non « pre-release », `beta/` = la plus récente.
+- **Page de flashage `web/index.html`** (ESP Web Tools 10.4.0 figé, français et anglais) :
+  choix de la révision d'écran (avec ce qui a été essayé ou non) et du canal, puis Wi-Fi
+  par Improv, ajout à HA, blueprint. Vérifiée en local avec un site assemblé par
+  `pages.py` : versions affichées, manifeste suivi, langue.
+- **Firmware** :
+  - `tab5_publication` choisit `Tab5/publication-<valeur>.yaml` : `locale` (défaut) est
+    vide, `stable` / `beta` ajoutent `ota: http_request` et l'entité de mise à jour
+    « Firmware », qui lit `<canal>/<révision>/manifest.json` toutes les 6 h ;
+  - `project: version` vient de `tab5_version` (le tag), `3.0.0-dev` en local ;
+  - `ota:` passe en liste dans `tab5-hardware.yaml`. **Piège** : écrit en dictionnaire,
+    il était REMPLACÉ par celui du package (plus aucune OTA `esphome`), vu avec
+    `esphome config` avant tout flash.
+- **Vérifié dans le code** (ESPHome 2026.9.0, `esphome/build-action` v8.1.0) :
+  - le manifeste lu par la tablette : `name`, `version`, `chipFamily` = « ESP32-P4 »,
+    `ota.path` et `ota.md5`, chemin relatif au manifeste ;
+  - une mise à jour téléchargée passe par le backend OTA commun, qui vérifie la
+    signature ;
+  - `build-action` écrit le manifeste complet et accepte des substitutions.
+- **Outils** : `tools/publication/preparer.py` (renomme par révision, contrôle projet,
+  puce, version et empreintes), `tools/publication/pages.py` (canaux et site).
+- **Tests** : `tests/test_publication.py` (12 cas) ; `test_sans_secret.py` et
+  `test_rendu_host.py` adaptés (OTA en liste, version par substitution, packages de
+  publication hors rendu).
+- `esphome config` valide en local (aucune entité de mise à jour, `3.0.0-dev`) et publié
+  (`esphome` + `http_request`, manifeste du bon canal et de la bonne révision).
+- **Docs** : ADR-0022, installation (encadré « sans compiler », mises à jour), README
+  (démarrage rapide), SECURITY, brouillons forum HA et Hackster (lien du flasheur),
+  cartographie, inventaire.
+- **À faire avant la première publication** : Axel pose le secret, Pages est activé
+  (source « GitHub Actions »), puis `v3.0.0-rc.1` en pré-release.
+
 ### 2026-09-27 — Plus aucune entité à renseigner pour compiler (lot 6c-1)
 
 Lot 6 de l'audit « ouverture », troisième partie, préalable au flasheur web : un binaire

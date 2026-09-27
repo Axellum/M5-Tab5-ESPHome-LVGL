@@ -1,0 +1,190 @@
+name: Publication (release, page de flashage)
+
+# Lot 6c, ADR-0022. À la publication d'une release (ou relancé à la main pour un tag) :
+#   1. les trois révisions d'écran sont compilées, SIGNÉES par la clé du projet (secret
+#      TAB5_CLE_SIGNATURE, posé par Axel) — jamais une clé jetable comme en PR ;
+#   2. leurs binaires et manifestes sont joints à la release ;
+#   3. la page de flashage (GitHub Pages) est reconstruite à partir des fichiers des
+#      releases : `stable/` = dernière release 3.x non « pre-release », `beta/` = la plus
+#      récente. Les firmwares publiés y lisent leur mise à jour (Tab5/publication-*.yaml).
+# Une pre-release compile en canal `beta` (son entité de mise à jour lit `beta/`).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag de la release à (re)publier, par exemple v3.0.0
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publication
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event.release.tag_name || inputs.tag }}
+  # Empreinte SBv2 (SHA-256) de la clé PUBLIQUE du projet (ADR-0020) : le secret doit
+  # la redonner, sinon rien n'est signé. Publique, elle ne permet pas de signer.
+  EMPREINTE_CLE: 17600dd727976131c81d25ec2160b93a6f649424297a7d6afe859a9d6d718402
+  # Version d'ESPHome des binaires publiés : celle essayée sur la tablette, FIGÉE (la CI
+  # des PR suit `latest` et `min_version`, esphome-tab5.yml). À relever volontairement,
+  # après un essai sur la tablette ; jamais sous `min_version` (test_publication.py).
+  ESPHOME_PUBLICATION: "2026.9.0"
+
+jobs:
+  preparation:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      canal: ${{ steps.release.outputs.canal }}
+      nom: ${{ steps.release.outputs.nom }}
+      url: ${{ steps.release.outputs.url }}
+    steps:
+      - name: Release, version et canal
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [[ "$TAG" =~ ^v([0-9]+)\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] \
+            || { echo "::error::tag $TAG : vX.Y.Z[-suffixe] attendu"; exit 1; }
+          (( BASH_REMATCH[1] >= 3 )) || { echo "::error::$TAG : binaires publiés depuis la 3.0 seulement"; exit 1; }
+          infos=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isPrerelease,isDraft,name,url)
+          [[ $(jq -r .isDraft <<<"$infos") == false ]] || { echo "::error::$TAG est un brouillon"; exit 1; }
+          canal=$([[ $(jq -r .isPrerelease <<<"$infos") == true ]] && echo beta || echo stable)
+          {
+            echo "version=${TAG#v}"
+            echo "canal=$canal"
+            echo "nom=$(jq -r '.name // empty' <<<"$infos")"
+            echo "url=$(jq -r .url <<<"$infos")"
+          } >> "$GITHUB_OUTPUT"
+          echo "### $TAG : version ${TAG#v}, canal $canal" >> "$GITHUB_STEP_SUMMARY"
+
+  firmware:
+    needs: preparation
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        ecran: [st7123, st7121, ili9881c]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: esptool (espsecure)
+        run: pip install "esptool>=5"
+      - name: Clé de signature du projet (secret), vérifiée par son empreinte
+        env:
+          CLE: ${{ secrets.TAB5_CLE_SIGNATURE }}
+        run: |
+          [[ -n "$CLE" ]] || { echo "::error::secret TAB5_CLE_SIGNATURE absent (docs/decisions/0022)"; exit 1; }
+          ( umask 077; printf '%s\n' "$CLE" > tab5_signature.pem )
+          python -m espsecure digest-sbv2-public-key --keyfile tab5_signature.pem --output empreinte.bin >/dev/null
+          empreinte=$(od -An -tx1 -v empreinte.bin | tr -d ' \n')
+          rm -f empreinte.bin
+          [[ "$empreinte" == "$EMPREINTE_CLE" ]] || { echo "::error::le secret n'est pas la clé du projet (empreinte $empreinte)"; exit 1; }
+          cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
+      - name: Compilation (${{ matrix.ecran }}, canal ${{ needs.preparation.outputs.canal }})
+        id: esphome-build
+        uses: esphome/build-action@v8.1.0
+        with:
+          yaml-file: tab5-ha-hmi.yaml
+          version: ${{ env.ESPHOME_PUBLICATION }}
+          complete-manifest: true
+          release-summary: ${{ needs.preparation.outputs.nom }}
+          release-url: ${{ needs.preparation.outputs.url }}
+          substitutions: |
+            tab5_ecran=${{ matrix.ecran }}
+            tab5_publication=${{ needs.preparation.outputs.canal }}
+            tab5_version=${{ needs.preparation.outputs.version }}
+      - name: Signature vérifiée, puis clé effacée
+        if: always()
+        run: |
+          trap 'rm -f tab5_signature.pem' EXIT
+          ota=$(ls "${{ steps.esphome-build.outputs.name }}"/*.ota.bin)
+          python -m espsecure verify-signature --version 2 --keyfile tab5_signature.pem "$ota"
+      - name: Binaires et manifeste de la révision
+        run: |
+          python tools/publication/preparer.py --source "${{ steps.esphome-build.outputs.name }}" \
+            --ecran ${{ matrix.ecran }} --version ${{ needs.preparation.outputs.version }} --sortie publie
+          ls -l publie
+      - uses: actions/upload-artifact@v7
+        with:
+          name: publie-${{ matrix.ecran }}
+          path: publie
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    needs: firmware
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: publie-*
+          path: publie
+          merge-multiple: true
+      - name: Fichiers joints à la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -l publie
+          gh release upload "$TAG" publie/* --clobber --repo "$GITHUB_REPOSITORY"
+
+  pages:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      # La page (web/) et l'outil viennent de la branche par défaut : une correction de la
+      # page n'attend pas la release suivante (relancer ce workflow suffit).
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Canaux stable et bêta
+        id: canaux
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 \
+            --json tagName,isPrerelease,isDraft,publishedAt > releases.json
+          python tools/publication/pages.py choisir --releases releases.json | tee -a "$GITHUB_OUTPUT"
+      - name: Fichiers des releases retenues
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STABLE: ${{ steps.canaux.outputs.stable }}
+          BETA: ${{ steps.canaux.outputs.beta }}
+        run: |
+          for tag in $(printf '%s\n' "$STABLE" "$BETA" | sort -u); do
+            [[ -n "$tag" ]] || continue
+            gh release download "$tag" --repo "$GITHUB_REPOSITORY" --dir "assets/$tag" \
+              --pattern 'manifest-*.json' --pattern 'tab5-ha-hmi-*.bin'
+          done
+      - name: Site
+        run: |
+          python tools/publication/pages.py assembler --web web --assets assets \
+            --stable "${{ steps.canaux.outputs.stable }}" --beta "${{ steps.canaux.outputs.beta }}" \
+            --sortie site | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+      - id: deploiement
+        uses: actions/deploy-pages@v5

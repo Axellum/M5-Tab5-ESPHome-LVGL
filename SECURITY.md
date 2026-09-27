@@ -40,6 +40,10 @@ Out of scope — please report these upstream:
   signed with the key of the firmware it runs. Your private key (`tab5_signature.pem`) is what
   lets someone flash it over the network: keep it off git, with a copy outside your computer.
   If it leaks, create a new one and reflash over USB.
+- Published firmware (web flasher, updates from Home Assistant) is signed in GitHub Actions with
+  the project key, kept in a repository secret. Before signing, the workflow checks the key's
+  public digest (SBv2, written in `.github/workflows/publication.yml`); the download itself is
+  protected by that signature, not by the HTTPS certificate ([ADR-0022](docs/decisions/0022-published-firmware-pages-channels.md)).
 - The fallback access point (« Tab5 Fallback AP », used to set the Wi-Fi) is open. Someone
   within range can change the network of a tablet that lost its own; they can neither flash it
   nor talk to its API.
@@ -89,6 +93,11 @@ Hors périmètre — à signaler aux projets concernés :
   qui n'est pas signé par la clé de celui qu'elle fait tourner. Votre clé privée
   (`tab5_signature.pem`) est ce qui permet de la flasher par le réseau : jamais dans git, avec
   une copie hors de votre ordinateur. Si elle fuite, créez-en une autre et reflashez en USB.
+- Les firmwares publiés (flasheur web, mises à jour par Home Assistant) sont signés dans GitHub
+  Actions avec la clé du projet, gardée dans un secret du dépôt. Avant de signer, le workflow
+  vérifie l'empreinte publique de la clé (SBv2, écrite dans `.github/workflows/publication.yml`) ;
+  le téléchargement est protégé par cette signature, pas par le certificat HTTPS
+  ([ADR-0022](docs/decisions/0022-published-firmware-pages-channels.md)).
 - Le point d'accès de secours (« Tab5 Fallback AP », qui sert à donner le Wi-Fi) est ouvert.
   Quelqu'un à portée peut changer le réseau d'une tablette qui a perdu le sien ; il ne peut ni
   la flasher ni parler à son API.
