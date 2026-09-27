@@ -548,10 +548,13 @@ automation:
           entity_id: input_boolean.is_primary_active
 
 script:
+  # Sans ruban LED (entité absente), rien : la tablette masque déjà sa tuile (lot 5).
   allumer_leds:
     alias: "Allumer LEDs depuis Tab5"
     mode: single
     sequence:
+      - condition: template
+        value_template: "{{ states['light.VOTRE_LEDS'] is not none }}"
       - action: light.toggle
         target:
           entity_id: light.VOTRE_LEDS
@@ -686,9 +689,13 @@ script:
     description: >-
       Cible, température, mode, preset, ventilation, oscillation. Appelé au
       changement (tab5_ha_hmi_clim_push) et à la (re)connexion (tab5_ha_hmi_updater).
+      Sans clim, rien : la tablette masque sa carte (zone « clim », lot 5), et les
+      `float(20)` ci-dessous y affichaient une fausse clim à 20.0.
     mode: queued
     max: 10
     sequence:
+      - condition: template
+        value_template: "{{ states['climate.VOTRE_CLIMATISATION'] is not none }}"
       - action: esphome.tab5_ha_hmi_tab5_maj_clim
         continue_on_error: true
         data:
@@ -703,10 +710,15 @@ script:
     alias: "Tab5 — pousser l'état du volet de la serre"
     description: >-
       En_mouvement pendant la course, sinon l'état mémorisé. Appelé au changement
-      (tab5_volet_updater) et à la (re)connexion (tab5_ha_hmi_updater).
+      (tab5_volet_updater) et à la (re)connexion (tab5_ha_hmi_updater). Sans volet
+      ou sans le package volet_serre_tracking.yaml, rien : la tablette masque sa
+      tuile (zone « volet », lot 5), et recevait jusque-là « unknown » ou « Ferme ».
     mode: queued
     max: 10
     sequence:
+      - condition: template
+        value_template: >-
+          {{ states['cover.VOTRE_VOLET'] is not none and states['script.tab5_volet_action'] is not none }}
       - action: esphome.tab5_ha_hmi_tab5_maj_volet_etat
         continue_on_error: true
         data:
@@ -716,6 +728,8 @@ script:
   # Bouton « PC Bureau » du Tab5 (Tab5/ui_components/switches_card.yaml et
   # forecast_daily.yaml appellent `script.allumer_pc_tv`) : bascule PC + TV. TV
   # allumée → on l'éteint ; sinon on allume le PC (prise ou Wake-on-LAN) et la TV.
+  # Chacun seulement s'il existe (lot 5) : une maison sans TV ou sans PC garde la
+  # tuile de l'autre, et HA n'appelle plus d'entité absente.
   allumer_pc_tv:
     alias: "Allumer PC et TV"
     icon: mdi:monitor
@@ -730,12 +744,20 @@ script:
                 target:
                   entity_id: media_player.VOTRE_TV
         default:
-          - action: switch.turn_on
-            target:
-              entity_id: switch.VOTRE_PC
-          - action: media_player.turn_on
-            target:
-              entity_id: media_player.VOTRE_TV
+          - if:
+              - condition: template
+                value_template: "{{ states['switch.VOTRE_PC'] is not none }}"
+            then:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.VOTRE_PC
+          - if:
+              - condition: template
+                value_template: "{{ states['media_player.VOTRE_TV'] is not none }}"
+            then:
+              - action: media_player.turn_on
+                target:
+                  entity_id: media_player.VOTRE_TV
 
 # Le capteur « Tab5 Pluie dans l'heure » (code « @niveau,début ») vit depuis le
 # lot 4c-2 dans packages/tab5_meteo_sources.yaml, avec « Tab5 Vigilance » : même
