@@ -15,7 +15,7 @@ This folder contains the Home Assistant side of the Tab5 integration: automation
 ## Files
 
 ### `packages/tab5_push.yaml`
-The push automations, the scripts they share, the scripts the Tab5 calls, the rain template sensor and the `is_primary_active` guard. They push data to the Tab5 via native ESPHome service calls; blocks sent from more than one automation live once in the `tab5_push_*` scripts. This is the package to start from.
+The push automations, the scripts they share, the scripts the Tab5 calls, the optional-zones answer and the `is_primary_active` guard. They push data to the Tab5 via native ESPHome service calls; blocks sent from more than one automation live once in the `tab5_push_*` scripts. This is the package to start from.
 
 What it pushes:
 - **Daily forecast (15 days):** every 10 min, on calendar changes and on (re)connection — serializes 15 × (index, day label, condition, min, max, weekend/holiday flags, work hours) into a `|`/`;`-delimited string sent to `tab5_maj_previsions_jours_bulk`
@@ -24,7 +24,7 @@ What it pushes:
 - **Current weather / probabilities:** `tab5_maj_meteo_actuelle` (condition, temperature, humidity) and `tab5_maj_probabilites` (UV, frost, snow) — when they change (`tab5_ha_hmi_meteo_push`) and on (re)connection, script `tab5_push_meteo`
 - **Climate state:** dedicated fast-path automation `tab5_ha_hmi_clim_push` (no delay, `mode: restart`) and on (re)connection — `tab5_maj_clim` (target, current, mode, preset, fan, swing), script `tab5_push_clim`
 - **Shutter state:** `tab5_maj_volet_etat` when the helpers change (`tab5_volet_updater`) and on (re)connection, script `tab5_push_volet` — also arms the device-local “Stop” wake word while the shutter moves
-- **Info banner:** `tab5_maj_info_texte` (text, colour, dismiss id) — 3-day calendar recap or a weather-alert banner
+- **Info banner:** `tab5_maj_info_texte` (text, colour, dismiss id) — the `@ha|…` code (updates, errors, unavailable entities, weather-warning banner), written by the Tab5 in its language
 - **Weather warnings:** `tab5_maj_alerte_meteo_france` (historical name) — one `|`-delimited payload: rain code, overall level, then 11 hazards (the 9 Météo-France ones, fog, forest fire), from `sensor.tab5_vigilance` (Météo-France, MeteoAlarm or none)
 - **HA alert queue:** `tab5_maj_alertes_ha_bulk` — up to 4 banners in the central rotator (see `packages/tab5_alerts.yaml`)
 
@@ -43,6 +43,8 @@ Room temperatures, humidity, light states and plant moisture do **not** go throu
 Also the **push scripts** `tab5_push_alertes` (sections 1, 7 and 7b: Météo-France vigilance, info banner, HA alert rotator — updates, `problem` sensors and the unavailable count are read once per run), `tab5_push_meteo`, `tab5_push_clim` and `tab5_push_volet`. These are called *by the automations*, not by the Tab5: each block exists once instead of being copied into the full push and into its on-change automation.
 
 **Template sensor** (now in `packages/tab5_meteo_sources.yaml`, see below). `Tab5 Pluie dans l'heure` turns the next-rain forecast into a **code**, `@level,start` (level -1 no data, 0 dry, 1 to 4 light to very heavy, 5 unknown intensity; start = UTC epoch of the rain, 0 if it is already raining). Since lot 4c (2026-09-27), the Tab5 writes the sentence itself, in its own language (« Averses dans 12 mn » / “Showers in 12 min”), and counts the minutes down on its own clock: the sensor only changes with the Météo-France data, no longer every minute. The info banner and the HA alert rotator are sent as codes too (`@ha|…`, `@maj:`, `@indispo:`). **Deploy this package after the lot 4c firmware**: an older firmware would show the codes as they are.
+
+**Optional zones (lot 5, 2026-09-27, [ADR-0018](../docs/decisions/0018-optional-zones-confirmed-by-ha.md)).** Once per connection the Tab5 fires `esphome.tab5_zones` with the entities it follows (`key=entity`); the `tab5_zones_reponse` automation answers `tab5_maj_zones` with the keys whose entity does not exist (`states[e] is none`: an `unavailable` entity exists), plus `clim`, `volet` (entity or `volet_serre_tracking.yaml` missing) and `planning` (no work calendar). Those zones disappear from the screen. The pushes and scripts follow the same rule (lot 5b): `tab5_push_clim` and `tab5_push_volet` send nothing, `allumer_leds` and `allumer_pc_tv` only call the entities that exist. To leave a zone out on the HA side, keep the example value of its placeholder. See [Adapt to your home](../docs/installation.md#adapt-to-your-home).
 
 **Guard `input_boolean.is_primary_active`.** Every push is conditioned on it; `force_primary_active_on_boot` turns it back on when HA starts, and `packages/tab5_health.yaml` warns if it stays off for 5 min. It is a leftover of a former two-instance setup ([ADR-0008](../docs/decisions/0008-single-ha-instance.md)): on a single Home Assistant it simply stays on.
 
@@ -210,7 +212,7 @@ Ce dossier contient le côté Home Assistant de l'intégration Tab5 : automatisa
 ## Fichiers
 
 ### `packages/tab5_push.yaml`
-Les automatisations de poussée, les scripts qu'elles partagent, les scripts appelés par le Tab5, le capteur de template de la pluie et le garde-fou `is_primary_active`. Elles poussent les données vers le Tab5 via des appels de service ESPHome natifs ; les blocs envoyés par plusieurs automatisations n'existent qu'une fois, dans les scripts `tab5_push_*`. C'est le package par lequel commencer.
+Les automatisations de poussée, les scripts qu'elles partagent, les scripts appelés par le Tab5, la réponse des zones optionnelles et le garde-fou `is_primary_active`. Elles poussent les données vers le Tab5 via des appels de service ESPHome natifs ; les blocs envoyés par plusieurs automatisations n'existent qu'une fois, dans les scripts `tab5_push_*`. C'est le package par lequel commencer.
 
 Ce qu'elle pousse :
 - **Prévisions journalières (15 jours) :** toutes les 10 min, au changement du calendrier et à la (re)connexion — sérialise 15 × (index, libellé jour, condition, min, max, drapeaux week-end/férié, heures de travail) en chaîne délimitée `|`/`;` vers `tab5_maj_previsions_jours_bulk`
@@ -219,7 +221,7 @@ Ce qu'elle pousse :
 - **Météo actuelle / probabilités :** `tab5_maj_meteo_actuelle` (condition, température, humidité) et `tab5_maj_probabilites` (UV, gel, neige) — au changement (`tab5_ha_hmi_meteo_push`) et à la (re)connexion, script `tab5_push_meteo`
 - **État climatisation :** automation dédiée à faible latence `tab5_ha_hmi_clim_push` (sans delay, `mode: restart`) et à la (re)connexion — `tab5_maj_clim` (cible, actuelle, mode, preset, ventilation, oscillation), script `tab5_push_clim`
 - **État volet :** `tab5_maj_volet_etat` au changement des helpers (`tab5_volet_updater`) et à la (re)connexion, script `tab5_push_volet` — arme aussi le wake word local « Stop » pendant le mouvement
-- **Bandeau info :** `tab5_maj_info_texte` (texte, couleur, id de dismiss) — récap calendrier 3 jours ou bannière d'alerte météo
+- **Bandeau info :** `tab5_maj_info_texte` (texte, couleur, id de dismiss) — le code `@ha|…` (mises à jour, erreurs, entités indisponibles, bannière de vigilance), écrit par le Tab5 dans sa langue
 - **Vigilances :** `tab5_maj_alerte_meteo_france` (nom historique) — un seul payload délimité `|` : code de pluie, niveau global, puis 11 phénomènes (les 9 de Météo-France, brouillard, feux de forêt), depuis `sensor.tab5_vigilance` (Météo-France, MeteoAlarm ou aucune)
 - **File d'alertes HA :** `tab5_maj_alertes_ha_bulk` — jusqu'à 4 bandeaux dans le rotateur central (voir `packages/tab5_alerts.yaml`)
 
@@ -238,6 +240,8 @@ Les températures/humidités des pièces, les états de lumière et l'humidité 
 Il contient aussi les **scripts de poussée** `tab5_push_alertes` (sections 1, 7 et 7b : vigilance Météo-France, bandeau info, rotateur d'alertes HA — MAJ, capteurs `problem` et compte d'indisponibles relevés une fois par passage), `tab5_push_meteo`, `tab5_push_clim` et `tab5_push_volet`. Ceux-là sont appelés *par les automatisations*, pas par le Tab5 : chaque bloc n'existe qu'une fois au lieu d'être recopié dans la poussée complète et dans son automatisation au changement.
 
 **Capteur de template** (désormais dans `packages/tab5_meteo_sources.yaml`, voir plus bas). `Tab5 Pluie dans l'heure` transforme la prévision de pluie en **code**, `@niveau,début` (niveau -1 pas de données, 0 sec, 1 à 4 faible à très forte, 5 intensité inconnue ; début = epoch UTC de la pluie, 0 s'il pleut déjà). Depuis le lot 4c (27/09/2026), le Tab5 écrit lui-même la phrase, dans sa langue (« Averses dans 12 mn » / “Showers in 12 min”), et décompte les minutes avec sa propre horloge : le capteur ne change plus qu'avec les données Météo-France, plus à chaque minute. Le bandeau info et le rotateur d'alertes HA partent aussi en codes (`@ha|…`, `@maj:`, `@indispo:`). **Déployer ce package après le firmware du lot 4c** : un firmware plus ancien afficherait les codes tels quels.
+
+**Zones optionnelles (lot 5, 27/09/2026, [ADR-0018](../docs/decisions/0018-optional-zones-confirmed-by-ha.md)).** Une fois par connexion, le Tab5 envoie `esphome.tab5_zones` avec les entités qu'il suit (`clé=entité`) ; l'automatisation `tab5_zones_reponse` répond `tab5_maj_zones` avec les clés dont l'entité n'existe pas (`states[e] is none` : une entité `unavailable` existe), plus `clim`, `volet` (entité ou `volet_serre_tracking.yaml` absents) et `planning` (pas d'agenda de travail). Ces zones disparaissent de l'écran. Les poussées et les scripts suivent la même règle (lot 5b) : `tab5_push_clim` et `tab5_push_volet` n'envoient rien, `allumer_leds` et `allumer_pc_tv` n'appellent que les entités qui existent. Pour laisser une zone de côté côté HA, gardez la valeur d'exemple de son placeholder. Voir [Adapter à sa maison](../docs/installation.md#adapter-à-sa-maison).
 
 **Garde-fou `input_boolean.is_primary_active`.** Toutes les poussées en dépendent ; `force_primary_active_on_boot` le remet à `on` au démarrage de HA, et `packages/tab5_health.yaml` prévient s'il reste à `off` 5 min. C'est un reste d'une ancienne installation à deux instances ([ADR-0008](../docs/decisions/0008-single-ha-instance.md)) : avec un seul Home Assistant, il reste simplement à `on`.
 

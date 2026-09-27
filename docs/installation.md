@@ -42,7 +42,7 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 Open `Tab5/user_entities.yaml` (gitignored — never committed, same pattern as `secrets.yaml`):
 
 ```yaml
-entity_tracker_pc: device_tracker.your_pc
+entity_tracker_pc: switch.your_pc_or_device_tracker
 entity_phone_battery: sensor.your_phone_battery
 
 # --- Lights ---
@@ -68,7 +68,7 @@ entity_hum_salon: sensor.your_living_room_humidity
 
 **Tab5 revision:** if the display chip on your sticker is not the ST7123, add `tab5_ecran: st7121` or `tab5_ecran: ili9881c` to this file (see [Hardware revisions](hardware.md#hardware-revisions)). Leave it out for the ST7123.
 
-Replace each value with your own entity IDs. These substitutions propagate throughout all packages — you do not need to edit any other YAML file to adapt the project to your setup. The entry point `tab5-ha-hmi.yaml` includes this file via `substitutions: !include Tab5/user_entities.yaml`. Two optional keys, `entity_tab5_satellite` and `entity_tab5_media_player`, only matter if you rename the device in Home Assistant: they hold the entity IDs HA derives from the device name (defaults in `Tab5/tab5-scripts.yaml`, commented example in the template).
+Replace each value with your own entity IDs. These substitutions propagate throughout all packages. **Something you don't have (no climate unit, fewer lights or plants…)? Comment out its line**: the zone disappears from the screen, see [Adapt to your home](#adapt-to-your-home). The entry point `tab5-ha-hmi.yaml` includes this file via `substitutions: !include Tab5/user_entities.yaml`. Two optional keys, `entity_tab5_satellite` and `entity_tab5_media_player`, only matter if you rename the device in Home Assistant: they hold the entity IDs HA derives from the device name (defaults in `Tab5/tab5-scripts.yaml`, commented example in the template).
 
 ---
 
@@ -103,7 +103,7 @@ Everything on the Home Assistant side is a **package** in `HomeAssistant_Config/
 4. Copy `rendered/packages/*.yaml` into your HA `config/packages/`, and `rendered/custom_templates/` into `config/custom_templates/`.
 5. Reload Automations, Scripts, Template entities, Input booleans and Input texts (or restart HA).
 
-Start with `packages/tab5_push.yaml` (push automations, shared scripts, the scripts the Tab5 calls, rain sensor) — the others add optional features. See [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) for what each package does and the full placeholder list.
+Start with `packages/tab5_push.yaml` (push automations, shared scripts, the scripts the Tab5 calls, the optional-zones answer) and `packages/tab5_meteo_sources.yaml` (weather, rain and warning sources, required since 2.2.0) — the others add optional features. See [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) for what each package does and the full placeholder list.
 
 > These packages are exactly what runs on the author's Home Assistant (rendered with the author's own values) since 2026-09-26. There are no private versions and nothing to merge into `automations.yaml` or `scripts.yaml`.
 
@@ -161,6 +161,37 @@ Honest limits:
 
 ---
 
+## Adapt to your home
+
+The screen was drawn around the author's home: three lights, a climate unit, a greenhouse shutter, a TV, five plant sensors. Since lot 5 (2026-09-27), **what you don't have disappears**, with its buttons ([ADR-0018](decisions/0018-optional-zones-confirmed-by-ha.md)).
+
+- **Remove a zone: comment out its line** in `Tab5/user_entities.yaml`, then flash. The key falls back to an entity that exists in no Home Assistant.
+- **Home Assistant confirms.** Once per connection, the tablet sends the entities it follows; the `tab5_push.yaml` package answers with those that don't exist. An entity that exists but is `unavailable` keeps its zone (« -- », « Hors ligne »). **Without the package, nothing disappears.**
+- **A zone missing by mistake?** The tablet's diagnostic sensor « Zones masquées » lists what disappeared. A typo in an entity ID hides its zone; that is where you'll see it.
+- A zone comes back by itself as soon as its entity sends a value.
+
+| Zone | Where it is set | Hidden when the entity is missing |
+|---|---|---|
+| Lights (up to 3) | `entity_light_chambre`, `_salon`, `_bureau` | Icons of tiles 3 to 5, card of the « HA » layer, light-popup selector, « Tout éteindre » |
+| PC | `entity_tracker_pc` | Status icon, « PC Bureau » card; the first tile too if there is no TV either |
+| TV | `entity_tracker_tv` (and `entity_tv_remote`) | TV button and remote; « HA » and « Sys » move one column right |
+| Phone | `entity_phone_battery` | Status icon |
+| Living room | `entity_temp_salon` (and `entity_hum_salon`) | Its temperature |
+| Greenhouse | `entity_temp_plante` | Its temperature; the icon becomes a gamepad, the arcade entrance stays |
+| Plants (0 to 5) | `entity_plante_1` … `_5` (and their `_ec`, `_lux`, `_temp`, `_bat`) | Up to 4 plants: one slot each; 5: the « driest / median / wettest » summary. Popup cards, re-centred |
+| Climate | `VOTRE_CLIMATISATION` in `placeholders.yaml` (HA decides) | − / setpoint / + and the popup |
+| Shutter | `VOTRE_VOLET`, and the `volet_serre_tracking.yaml` package | Icons of tile 2, card of the « HA » layer |
+| Work planning | `VOTRE_EMAIL_gmail_com` (calendar) | Planning panel of the central card |
+
+For the last three, Home Assistant decides alone: keep the example value of the placeholder (it points to an entity that doesn't exist). The PC, the TV, the LEDs and the climate unit are declared twice, in `user_entities.yaml` (what the tablet reads and controls) and in `placeholders.yaml` (what HA scripts switch): use the same entities on both sides.
+
+Limits:
+- **More than 3 lights, or another device on a tile**: not yet. The tiles are 5 fixed places (PC/TV, shutter, three lights); this is lot 6 (logical slots).
+- **Calendars written in the packages**: `calendar.famille`, `calendar.anniversaires` and the French public-holiday calendar (`tab5_reveil.yaml`, `tab5_calendar.yaml`) are to be edited by hand, see [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md).
+- To see a smaller home without touching yours: [demo mode](demo_mode.md#minimal-home-optional-zones), option `--maison-minimale`.
+
+---
+
 ---
 
 ## Version Française
@@ -208,7 +239,7 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 
 **Révision du Tab5 :** si la puce écran de votre autocollant n'est pas la ST7123, ajoutez `tab5_ecran: st7121` ou `tab5_ecran: ili9881c` dans ce fichier (voir [Révisions matérielles](hardware.md#révisions-matérielles)). Pour la ST7123, ne mettez rien.
 
-Ouvrez `Tab5/user_entities.yaml` (gitignoré — ne jamais committer, même principe que `secrets.yaml`) et remplacez chaque valeur. Ces substitutions se propagent dans tous les packages ; le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`. Deux clés facultatives, `entity_tab5_satellite` et `entity_tab5_media_player`, ne servent que si vous renommez l'appareil dans Home Assistant : elles portent les identifiants qu'HA dérive du nom de la tablette (défauts dans `Tab5/tab5-scripts.yaml`, exemple commenté dans le modèle).
+Ouvrez `Tab5/user_entities.yaml` (gitignoré — ne jamais committer, même principe que `secrets.yaml`) et remplacez chaque valeur. Ces substitutions se propagent dans tous les packages. **Quelque chose que vous n'avez pas (pas de clim, moins de lumières ou de pots…) ? Mettez sa ligne en commentaire** : la zone disparaît de l'écran, voir [Adapter à sa maison](#adapter-à-sa-maison). Le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`. Deux clés facultatives, `entity_tab5_satellite` et `entity_tab5_media_player`, ne servent que si vous renommez l'appareil dans Home Assistant : elles portent les identifiants qu'HA dérive du nom de la tablette (défauts dans `Tab5/tab5-scripts.yaml`, exemple commenté dans le modèle).
 
 ---
 
@@ -243,7 +274,7 @@ Tout le côté Home Assistant est en **packages**, dans `HomeAssistant_Config/pa
 4. Copiez `rendered/packages/*.yaml` dans le `config/packages/` de HA, et `rendered/custom_templates/` dans `config/custom_templates/`.
 5. Rechargez Automatisations, Scripts, Entités de template, Entrées booléennes et Entrées de texte (ou redémarrez HA).
 
-Commencez par `packages/tab5_push.yaml` (automatisations de poussée, scripts partagés, scripts appelés par le Tab5, capteur de pluie) ; les autres ajoutent des fonctions optionnelles. Voir [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) pour le rôle de chaque package et la liste complète des placeholders.
+Commencez par `packages/tab5_push.yaml` (automatisations de poussée, scripts partagés, scripts appelés par le Tab5, réponse des zones optionnelles) et `packages/tab5_meteo_sources.yaml` (sources de la météo, de la pluie et des vigilances, obligatoire depuis la 2.2.0) ; les autres ajoutent des fonctions optionnelles. Voir [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) pour le rôle de chaque package et la liste complète des placeholders.
 
 > Ces packages sont exactement ce qui tourne sur le Home Assistant de l'auteur (rendus avec ses valeurs) depuis le 26/09/2026. Il n'y a pas de version privée, ni rien à fusionner dans `automations.yaml` ou `scripts.yaml`.
 
@@ -298,3 +329,34 @@ Limites, en toute franchise :
 - OpenWeatherMap a été essayé sur l'installation de l'auteur le 27/09/2026 (prévisions et pluie dans l'heure, un jour sec) ; ses prévisions journalières couvrent 8 jours, les derniers jours des pages de 15 jours restent donc vides. MeteoAlarm et le regroupement des demi-journées (NWS) n'ont été testés qu'avec des données simulées.
 - La probabilité de gel n'existe que chez Météo-France. L'icône flocon lit `sensor.<ville>_snow_chance` quand il existe ; sinon, elle suit la condition du moment (neige).
 - Les autres sources d'alertes (DWD, Environment Canada, NWS Alerts…) ne sont pas encore branchées.
+
+---
+
+## Adapter à sa maison
+
+L'écran a été dessiné autour de la maison de l'auteur : trois lumières, une clim, un volet de serre, une TV, cinq capteurs de plantes. Depuis le lot 5 (27/09/2026), **ce que vous n'avez pas disparaît**, avec ses boutons ([ADR-0018](decisions/0018-optional-zones-confirmed-by-ha.md)).
+
+- **Retirer une zone : mettez sa ligne en commentaire** dans `Tab5/user_entities.yaml`, puis flashez. La clé retombe sur une entité qui n'existe dans aucun Home Assistant.
+- **Home Assistant confirme.** Une fois par connexion, la tablette envoie les entités qu'elle suit ; le package `tab5_push.yaml` répond celles qui n'existent pas. Une entité qui existe mais est `unavailable` garde sa zone (« -- », « Hors ligne »). **Sans le package, rien ne disparaît.**
+- **Une zone manque par erreur ?** Le capteur de diagnostic « Zones masquées » de la tablette liste ce qui a disparu. Une faute de frappe dans un entity ID masque sa zone ; c'est là qu'on la voit.
+- Une zone revient d'elle-même dès que son entité envoie une valeur.
+
+| Zone | Où elle se règle | Masqué quand l'entité manque |
+|---|---|---|
+| Lumières (jusqu'à 3) | `entity_light_chambre`, `_salon`, `_bureau` | Icônes des tuiles 3 à 5, carte du calque « HA », sélecteur du popup lumière, « Tout éteindre » |
+| PC | `entity_tracker_pc` | Icône d'état, carte « PC Bureau » ; la première tuile aussi s'il n'y a pas non plus de TV |
+| TV | `entity_tracker_tv` (et `entity_tv_remote`) | Bouton TV et télécommande ; « HA » et « Sys » glissent d'une colonne |
+| Téléphone | `entity_phone_battery` | Icône d'état |
+| Salon | `entity_temp_salon` (et `entity_hum_salon`) | Sa température |
+| Serre | `entity_temp_plante` | Sa température ; l'icône devient une manette, l'entrée de l'arcade reste |
+| Pots (0 à 5) | `entity_plante_1` … `_5` (et leurs `_ec`, `_lux`, `_temp`, `_bat`) | Jusqu'à 4 pots : un emplacement chacun ; à 5 : le résumé « plus secs / médiane / plus humide ». Cartes du popup, recentrées |
+| Clim | `VOTRE_CLIMATISATION` dans `placeholders.yaml` (HA décide) | − / consigne / + et le popup |
+| Volet | `VOTRE_VOLET`, et le package `volet_serre_tracking.yaml` | Icônes de la tuile 2, carte du calque « HA » |
+| Planning de travail | `VOTRE_EMAIL_gmail_com` (agenda) | Panneau planning de la carte centrale |
+
+Pour les trois dernières, Home Assistant décide seul : gardez la valeur d'exemple du placeholder (elle désigne une entité qui n'existe pas). Le PC, la TV, les LEDs et la clim sont déclarés deux fois, dans `user_entities.yaml` (ce que la tablette lit et pilote) et dans `placeholders.yaml` (ce que les scripts HA commutent) : mettez les mêmes entités des deux côtés.
+
+Limites :
+- **Plus de 3 lumières, ou un autre appareil sur une tuile** : pas encore. Les tuiles sont 5 places fixes (PC/TV, volet, trois lumières) ; ce sera le lot 6 (emplacements logiques).
+- **Agendas écrits dans les packages** : `calendar.famille`, `calendar.anniversaires` et l'agenda des jours fériés français (`tab5_reveil.yaml`, `tab5_calendar.yaml`) se corrigent à la main, voir [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md#version-française).
+- Pour voir une maison plus petite sans toucher à la vôtre : [mode démo](demo_mode.md#maison-minimale-zones-optionnelles), option `--maison-minimale`.
