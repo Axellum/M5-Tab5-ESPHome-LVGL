@@ -105,6 +105,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | Fichier | Emplacement | Type | Cible |
 |---|---|---|---|
 | `test_verifier_secrets_config.py` | `tests/` | Unitaire | Détection de secrets en clair dans les fichiers suivis (`tools/verifier_secrets_config.py`) : valeurs factices, pragma, `git ls-files`, `secrets.yaml` suivi. |
+| `test_rendu_host.py` | `tests/` | Contenu | Rendu hors tablette (ADR-0021) : lambdas de l'`on_boot` copiées telles quelles de `tab5-ha-hmi.yaml`, mêmes sources C++, chaque package repris ou déclaré matériel, bouchons absents du firmware. |
 | `test_sans_secret.py` | `tests/` | Contenu + unitaire | Firmware sans secret (ADR-0020) : aucun `!secret`, clé API fournie par HA, fenêtre d'appairage, OTA signée, Wi-Fi sans identifiants, fuseau de HA, CI sans secrets factices ; clé trouvée dans HA par `tools/tab5_cle_api.py`, ancienne clé lue par `tools/migrer_vers_3.py`. |
 | `test_render_ha_config.py` | `tests/` | Unitaire | Rendu placeholders → valeurs et détection de fuite d'identifiants réels (`tools/render_ha_config.py`). |
 | `test_guards.py` | `tests/` | Contenu | Joue les 6 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, registre, règles de code, salles Marble, niveaux Lode, comptes de la cartographie). |

@@ -4,6 +4,45 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — L'écran dessiné sans la tablette : rendu sur PC et captures en CI (lot 7)
+
+Lot 7 de l'audit « ouverture », ADR-0021. Choix d'Axel : comparaison informative, galerie
+dans `docs/screens.md`, scènes en anglais en plus.
+
+- **`tab5-rendu-host.yaml`** : les mêmes packages d'interface et les mêmes sources C++
+  que la tablette, compilés pour la plateforme `host` d'ESPHome (Linux/macOS). LVGL
+  dessine dans un affichage `snapshot` en mémoire ; l'action API `rendu_capture` écrit
+  un BMP. Ne se flashe nulle part.
+- **Bouchons, jamais dans le firmware** :
+  - `Tab5/rendu/composants/` : composants de même nom qu'ESPHome, sans effet
+    (`voice_assistant`, `micro_wake_word`, `speaker` et `microphone` qui tirent `audio`
+    réservé à l'ESP32, `rtttl`, `online_image`, `http_request`) et `rendu_muet`
+    (haut-parleur, micro et lecteur muets, actions et conditions sans effet) ;
+  - `Tab5/rendu/bouchons.yaml` : écran, horloges, rétroéclairage, diagnostics lus par
+    la console, `!extend`/`!remove` sur l'ampli et la prise casque ;
+  - `Tab5/rendu/hote/`, `Tab5/rendu/freertos/` : en-têtes ESP-IDF remplacés.
+- **La partie interface de l'`on_boot` est copiée**, la séquence protégée reste
+  intacte ; `tests/test_rendu_host.py` exige chaque lambda telle quelle dans
+  `tab5-ha-hmi.yaml`, les mêmes sources C++, et chaque package repris ou déclaré
+  matériel.
+- **Portabilité, même comportement sur la tablette** : `std::isnan` au lieu de `isnan`
+  (`tab5_cards.cpp`, `tab5_forecast.cpp`, un lambda), branche Arduino morte retirée de
+  la carte mémoire (`tab5_console.cpp`).
+- **CI « Rendu hors tablette »** (`rendu-host.yml`, non requis) : compile, lance le rendu
+  sous `faketime` (16/06/2026 07:45, heure de Paris, horloge monotone intacte), pousse
+  les trois scènes du mode démo par la vraie API (`tools/rendu/capturer.py`), en
+  français, puis en anglais après un vrai changement du select « Langue ». Compare aux
+  références `docs/images/rendu/` (`tools/rendu/comparer.py`) : écarts signalés avec une
+  image de différence, sans bloquer. `tools/rendu/maj_references.py --run <id>` accepte
+  un changement voulu.
+- **Déterministe** : deux runs identiques donnent les mêmes pixels (vérifié).
+- **Premier défaut trouvé par le rendu** : la démo envoyait « Auj 16 », « Mer 17 »
+  au lieu du jour seul que HA envoie et que la tablette traduit ; en anglais, les
+  tuiles restaient en français. Corrigé dans `tools/demo/scenarios.py`, avec un test
+  qui compare à `tab5_push.yaml`.
+- **Docs** : galerie des captures (`docs/screens.md`), « Voir l'écran sans la
+  tablette » (`docs/debugging.md`), ADR-0021, cartographie.
+
 ### 2026-09-27 — Un firmware sans aucun secret : clé API fournie par HA, firmwares signés (lot 6b)
 
 Lot 6 de l'audit « ouverture », deuxième partie, **rupture** (3.0.0), ADR-0020 (remplace
