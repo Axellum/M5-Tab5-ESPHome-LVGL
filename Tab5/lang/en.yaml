@@ -520,7 +520,10 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "\n  Aucun score enregistre.": "\n  No scores saved."
 "Top 10 local (NVS)": "Local top 10 (NVS)"
 "Effacer les scores": "Clear scores"
-"Appuie pour confirmer": "Tap to confirm"
+# « Demande confirmation », « Oui, tout effacer », « Annuler » et
+# « Cette action est irreversible. » : déjà plus bas (Coureur d'Or).
+"Effacer les scores ?": "Clear scores?"
+"Tout le Top 10 local, meilleur score compris.": "The whole local top 10, best score included."
 # --- Pause ---
 "Le jeu attend.": "Game on hold."
 "Abandonner": "Give up"

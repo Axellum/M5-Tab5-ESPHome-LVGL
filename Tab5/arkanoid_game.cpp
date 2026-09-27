@@ -271,7 +271,7 @@ static const char* LEVEL_NAMES[8] = {
 
 enum State : uint8_t {
     ST_OFF = 0, ST_HUB, ST_SETTINGS, ST_PLAYING, ST_PAUSED,
-    ST_LEVELCLEAR, ST_GAMEOVER, ST_HIGHSCORES
+    ST_LEVELCLEAR, ST_GAMEOVER, ST_HIGHSCORES, ST_CONFIRM
 };
 
 struct Ball {
@@ -631,10 +631,25 @@ static void go_highscores() {
     }
 
     panel_text(tr("Classement"), tr("Top 10 local (NVS)"), body, "");
-    gs->slots.row(0, tr("Effacer les scores"), tr("Appuie pour confirmer"), Pal::DANGER, true);
+    gs->slots.row(0, tr("Effacer les scores"), tr("Demande confirmation"), Pal::DANGER, true);
     gs->slots.row(1, tr("Retour"), "", UIColor::TEXT_DIM, true);
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -160);
     lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -80);
+    gs->slots.hide_from(2);
+}
+
+// Confirmation avant d'effacer le classement (même écran que Coureur d'Or).
+// « Annuler » prend la place du bouton « Effacer les scores » qu'on vient
+// d'appuyer : un double appui ou un rebond tombe sur Annuler, jamais sur le Oui.
+static void go_confirm_wipe() {
+    g_state = ST_CONFIRM;
+    panel_on(true);
+    panel_text(tr("Effacer les scores ?"), tr("Tout le Top 10 local, meilleur score compris."),
+               tr("Cette action est irreversible."), "");
+    gs->slots.row(0, tr("Oui, tout effacer"), "", Pal::DANGER, true);
+    gs->slots.row(1, tr("Annuler"), "", UIColor::TEXT_DIM, true);
+    lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -160);
+    lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -80);
     gs->slots.hide_from(2);
 }
 
@@ -1253,15 +1268,17 @@ static void slot_event_cb(lv_event_t* e) {
             break;
 
         case ST_HIGHSCORES:
+            if (i == 0) go_confirm_wipe();
+            else go_hub();
+            break;
+
+        case ST_CONFIRM:
             if (i == 0) {
-                // Effacer les scores
                 gs->save.score_count = 0;
                 memset(gs->save.scores, 0, sizeof(gs->save.scores));
                 persist_save();
-                go_highscores();
-            } else {
-                go_hub();
             }
+            go_highscores();   // effacé ou annulé : retour au classement
             break;
 
         case ST_PAUSED:
