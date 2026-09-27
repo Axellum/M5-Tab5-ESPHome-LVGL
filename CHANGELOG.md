@@ -4,6 +4,27 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Chaque écran capturé, en quatre langues, au doigt virtuel (lot 7 bis)
+
+Suite du lot 7 (ADR-0021, amendée) : le rendu hors tablette ne capturait que les trois
+scènes de l'accueil, en français et en anglais.
+
+- **Doigt virtuel** (`Tab5/rendu/rendu_doigt.h`, rendu seulement) : un pointeur LVGL piloté
+  par les actions `rendu_toucher` (appui, appui long) et `rendu_glisser` (geste), aux
+  coordonnées des captures. Les écrans s'ouvrent comme sur la dalle, widgets des jeux
+  créés en C++ compris.
+- **Plan de 80 écrans** (`tools/rendu/ecrans.py`) : variantes de l'accueil, toutes les
+  fenêtres et sous-fenêtres, le sélecteur Arcade, menus, partie, pause et fin des 8 jeux.
+  Toute partie lancée est abandonnée (une sauvegarde décalerait les menus).
+  `capturer.py` signale une capture identique à une autre (appui tombé à côté) ;
+  `tests/test_rendu_ecrans.py` garde le plan cohérent.
+- **CI** : une tâche par langue en parallèle (français, anglais, allemand, néerlandais),
+  préférences neuves pour chacune, ~14 min. Une PR est comparée aux captures du dernier
+  run réussi sur `main` (artefact gardé 90 jours) ; seules les scènes FR/EN restent
+  versionnées (galerie). `workflow_dispatch` : langues et écrans au choix.
+- **Correctif** : « Connecté » avait perdu son accent dans la console système.
+- Vérifié : 332 captures, aucune en double ; les 6 références d'origine identiques au pixel.
+
 ### 2026-09-27 — Installer depuis le navigateur, mettre à jour depuis Home Assistant (lot 6c-2)
 
 Lot 6 de l'audit « ouverture », fin : le firmware publié, ADR-0022. Choix d'Axel : clé du
