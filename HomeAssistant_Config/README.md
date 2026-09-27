@@ -22,7 +22,7 @@ What it pushes:
 - **Hourly forecast (10 slots):** two chunks of 5 through `tab5_maj_previsions_heures_bulk` (the screen has two hourly pages)
 - **Short-term rain chart:** on a change of `sensor.tab5_pluie_dans_l_heure` (packages/tab5_meteo_sources.yaml) — **9** bars in **one** call (`tab5_maj_pluie_1h_bulk`, payload `idx|intensity;…`, index 0–8 = 0/5/10/…/55 min, intensity = Météo-France label or level 0–4), from the source chosen in HA: Météo-France, OpenWeatherMap or none
 - **Current weather / probabilities:** `tab5_maj_meteo_actuelle` (condition, temperature, humidity) and `tab5_maj_probabilites` (UV, frost, snow) — when they change (`tab5_ha_hmi_meteo_push`) and on (re)connection, script `tab5_push_meteo`
-- **Climate state:** dedicated fast-path automation `tab5_ha_hmi_clim_push` (no delay, `mode: restart`) and on (re)connection — `tab5_maj_clim` (target, current, mode, preset, fan, swing), script `tab5_push_clim`
+- **Climate state:** pushed by the blueprint `tab5_emplacements.yaml` since 3.0 (`tab5_maj_clim`: target, current, mode, preset, fan, swing), on each change and on (re)connection
 - **Shutter state:** `tab5_maj_volet_etat` when the helpers change (`tab5_volet_updater`) and on (re)connection, script `tab5_push_volet` — also arms the device-local “Stop” wake word while the shutter moves
 - **Info banner:** `tab5_maj_info_texte` (text, colour, dismiss id) — the `@ha|…` code (updates, errors, unavailable entities, weather-warning banner), written by the Tab5 in its language
 - **Weather warnings:** `tab5_maj_alerte_meteo_france` (historical name) — one `|`-delimited payload: rain code, overall level, then 11 hazards (the 9 Météo-France ones, fog, forest fire), from `sensor.tab5_vigilance` (Météo-France, MeteoAlarm or none)
@@ -30,7 +30,7 @@ What it pushes:
 
 Also in the package, not a push: **`tab5_screen_presence_wifi`** switches the screen backlight on when the presence sensor detects someone (or the phone comes home) if it is off, and off after **15 min** without presence (or when the phone leaves) if it is on and the alarm is not ringing. With the screen off the firmware pauses LVGL; a touch or a tap on the panel wakes it.
 
-Room temperatures, humidity, light states and plant moisture do **not** go through these services: they are “mirror” entities (`platform: homeassistant` in `Tab5/tab5-sensors-domotique.yaml`), which HA syncs automatically — nothing to write on the HA side.
+Room temperatures, lights, PC, TV, phone and plants do **not** go through this package: since 3.0 the blueprint `tab5_emplacements.yaml` pushes them (`tab5_maj_emplacements`). The tablet no longer subscribes to any entity of your home.
 
 **No periodic re-push of unchanged state (2026-09-26):** current weather, probabilities, climate and shutter used to be re-sent every 10 min on top of their on-change pushes (576 calls a day, each one repainted by the device). The full push now sends them only on (re)connection and when `input_boolean.is_primary_active` comes back `on`.
 
@@ -38,19 +38,27 @@ Room temperatures, humidity, light states and plant moisture do **not** go throu
 
 ---
 
-**Scripts.** Called **by** the Tab5 (from a `homeassistant.service:` in `Tab5/tab5-api-logic.yaml` or an LVGL `on_short_click:`), not the other way round: `allumer_leds`, and `allumer_pc_tv` for the « PC Bureau » button (TV on → turn it off; otherwise turn the PC and the TV on). Simple pass-through: it keeps the ESPHome code thin and the logic on the HA side where it belongs.
+**Scripts.** Since 3.0 the Tab5 calls no script for your devices: its commands go to the blueprint (see below). It still calls `script.tab5_volet_action` (shutter package, through the blueprint), `script.tab5_tv_app` (TV package), the calendar, alarm and dismiss scripts.
 
-Also the **push scripts** `tab5_push_alertes` (sections 1, 7 and 7b: Météo-France vigilance, info banner, HA alert rotator — updates, `problem` sensors and the unavailable count are read once per run), `tab5_push_meteo`, `tab5_push_clim` and `tab5_push_volet`. These are called *by the automations*, not by the Tab5: each block exists once instead of being copied into the full push and into its on-change automation.
+Also the **push scripts** `tab5_push_alertes` (sections 1, 7 and 7b: Météo-France vigilance, info banner, HA alert rotator — updates, `problem` sensors and the unavailable count are read once per run), `tab5_push_meteo` and `tab5_push_volet`. These are called *by the automations*, not by the Tab5: each block exists once instead of being copied into the full push and into its on-change automation.
 
 **Template sensor** (now in `packages/tab5_meteo_sources.yaml`, see below). `Tab5 Pluie dans l'heure` turns the next-rain forecast into a **code**, `@level,start` (level -1 no data, 0 dry, 1 to 4 light to very heavy, 5 unknown intensity; start = UTC epoch of the rain, 0 if it is already raining). Since lot 4c (2026-09-27), the Tab5 writes the sentence itself, in its own language (« Averses dans 12 mn » / “Showers in 12 min”), and counts the minutes down on its own clock: the sensor only changes with the Météo-France data, no longer every minute. The info banner and the HA alert rotator are sent as codes too (`@ha|…`, `@maj:`, `@indispo:`). **Deploy this package after the lot 4c firmware**: an older firmware would show the codes as they are.
 
-**Optional zones (lot 5, 2026-09-27, [ADR-0018](../docs/decisions/0018-optional-zones-confirmed-by-ha.md)).** Once per connection the Tab5 fires `esphome.tab5_zones` with the entities it follows (`key=entity`); the `tab5_zones_reponse` automation answers `tab5_maj_zones` with the keys whose entity does not exist (`states[e] is none`: an `unavailable` entity exists), plus `clim`, `volet` (entity or `volet_serre_tracking.yaml` missing) and `planning` (no work calendar). Those zones disappear from the screen. The pushes and scripts follow the same rule (lot 5b): `tab5_push_clim` and `tab5_push_volet` send nothing, `allumer_leds` and `allumer_pc_tv` only call the entities that exist. To leave a zone out on the HA side, keep the example value of its placeholder. See [Adapt to your home](../docs/installation.md#adapt-to-your-home).
+**Optional zones (lot 5, [ADR-0018](../docs/decisions/0018-optional-zones-confirmed-by-ha.md)).** Since 3.0 the blueprint answers the tablet's zones request: an empty slot, or an entity that doesn't exist, disappears from the screen. The pushes of this package follow the same rule: `tab5_push_volet` sends nothing without a shutter. See [Adapt to your home](../docs/installation.md#adapt-to-your-home).
 
 **Guard `input_boolean.is_primary_active`.** Every push is conditioned on it; `force_primary_active_on_boot` turns it back on when HA starts, and `packages/tab5_health.yaml` warns if it stays off for 5 min. It is a leftover of a former two-instance setup ([ADR-0008](../docs/decisions/0008-single-ha-instance.md)): on a single Home Assistant it simply stays on.
 
 The assistant-reply example (engine → assistant popup) moved to `snippets/tab5_assist_reponse_exemple.yaml`: inside a package it would have been active for everyone.
 
 ---
+
+### `blueprints/automation/tab5/tab5_emplacements.yaml` — pick your devices (since 3.0)
+The Tab5 knows no entity of your home any more ([ADR-0019](../docs/decisions/0019-logical-slots-blueprint.md)): this **blueprint** maps its slots to your entities. Import it (*Settings → Automations & scenes → Blueprints → Import blueprint*, then paste its GitHub URL) or copy it into `config/blueprints/automation/tab5/`, then create **one automation per tablet** and pick an entity for each slot, all optional: lights 1-3, PC, TV and its remote, phone battery, room temperature and humidity, a second temperature (greenhouse), climate, shutter, plants 1-5 (the moisture sensor; conductivity, light, temperature and battery are taken from the same device), work calendar. The automation:
+- pushes the slots with `tab5_maj_emplacements` (`key|state|value;…`): all of them on (re)connection, one on each change; the climate with `tab5_maj_clim`, and a shutter that reports its travel with `tab5_maj_volet_etat`;
+- runs the screen's commands (`esphome.tab5_action` events: toggle, brightness, colour, setpoint, HVAC mode, TV keys and apps, shutter…) on the chosen entity. Events need no « allow the device to perform Home Assistant actions » option;
+- answers the zones request (`esphome.tab5_zones`, [ADR-0018](../docs/decisions/0018-optional-zones-confirmed-by-ha.md)): an empty slot, or an entity that doesn't exist, disappears from the screen.
+
+No placeholder: the file is generic. Changing a device is an edit of the automation in HA's UI — no flash, no restart.
 
 ### `packages/tab5_meteo_sources.yaml`
 Weather adapters (lot 4c-2, 2026-09-27). Two selects pick the source **in Home Assistant, without YAML**: « Tab5 · source de la pluie dans l'heure » (Météo-France / OpenWeatherMap / Aucune) and « Tab5 · source des vigilances » (Météo-France / MeteoAlarm / Aucune). Two normalized sensors turn any source into what the Tab5 reads, and the pushes only read them:
@@ -147,12 +155,9 @@ Replace these placeholders throughout the files:
 | `VOTRE_METEO_OWM` | Full entity id of the OpenWeatherMap weather (v3.0 mode), if you pick it for the rain (`weather.openweathermap`) |
 | `VOTRE_METEOALARM` | Full entity id of the MeteoAlarm binary sensor, if you pick it for the warnings (`binary_sensor.meteoalarm`) |
 | `VOTRE_DEPARTEMENT` | Your department number for weather alerts (e.g., `40`) |
-| `VOTRE_CLIMATISATION` | Your climate entity (`climate.your_ac_unit`) |
 | `VOTRE_EMAIL_gmail_com` | Your Google Calendar entity (`calendar.your_email_gmail_com`) |
 | `VOTRE_VOLET` | Your roller shutter / cover entity |
 | `VOTRE_TV` | Your Samsung TV (`media_player.<…>` **and** `remote.<…>`, package `tab5_tv`) |
-| `VOTRE_LEDS` | The light toggled by `script.allumer_leds` |
-| `VOTRE_PC` | The switch that turns your PC on (`switch.<…>`, `script.allumer_pc_tv`) |
 | `VOTRE_TELEPHONE` / `VOTRE_CAPTEUR_PRESENCE` | Phone tracker and presence sensor of the screen on/off automation |
 | `tab5-ha-hmi` | Your ESPHome device name (as configured in `tab5-ha-hmi.yaml`) |
 
@@ -219,7 +224,7 @@ Ce qu'elle pousse :
 - **Prévisions horaires (10 créneaux) :** deux chunks de 5 via `tab5_maj_previsions_heures_bulk` (l'écran a deux pages horaires)
 - **Graphe de pluie court terme :** sur changement de `sensor.tab5_pluie_dans_l_heure` (packages/tab5_meteo_sources.yaml) — **9** barres en **un** appel (`tab5_maj_pluie_1h_bulk`, payload `idx|intensité;…`, index 0–8 = 0/5/10/…/55 min, intensité = libellé Météo-France ou niveau 0–4), depuis la source choisie dans HA : Météo-France, OpenWeatherMap ou aucune
 - **Météo actuelle / probabilités :** `tab5_maj_meteo_actuelle` (condition, température, humidité) et `tab5_maj_probabilites` (UV, gel, neige) — au changement (`tab5_ha_hmi_meteo_push`) et à la (re)connexion, script `tab5_push_meteo`
-- **État climatisation :** automation dédiée à faible latence `tab5_ha_hmi_clim_push` (sans delay, `mode: restart`) et à la (re)connexion — `tab5_maj_clim` (cible, actuelle, mode, preset, ventilation, oscillation), script `tab5_push_clim`
+- **État climatisation :** poussé par le blueprint `tab5_emplacements.yaml` depuis la 3.0 (`tab5_maj_clim` : cible, actuelle, mode, preset, ventilation, oscillation), à chaque changement et à la (re)connexion
 - **État volet :** `tab5_maj_volet_etat` au changement des helpers (`tab5_volet_updater`) et à la (re)connexion, script `tab5_push_volet` — arme aussi le wake word local « Stop » pendant le mouvement
 - **Bandeau info :** `tab5_maj_info_texte` (texte, couleur, id de dismiss) — le code `@ha|…` (mises à jour, erreurs, entités indisponibles, bannière de vigilance), écrit par le Tab5 dans sa langue
 - **Vigilances :** `tab5_maj_alerte_meteo_france` (nom historique) — un seul payload délimité `|` : code de pluie, niveau global, puis 11 phénomènes (les 9 de Météo-France, brouillard, feux de forêt), depuis `sensor.tab5_vigilance` (Météo-France, MeteoAlarm ou aucune)
@@ -227,7 +232,7 @@ Ce qu'elle pousse :
 
 Aussi dans le package, hors poussée : **`tab5_screen_presence_wifi`** allume l'écran quand le capteur de présence détecte quelqu'un (ou au retour du téléphone) s'il est éteint, et l'éteint après **15 min** sans présence (ou au départ du téléphone) s'il est allumé et que le réveil ne sonne pas. Écran éteint, le firmware met LVGL en pause ; un toucher ou une tape sur la dalle le rallume.
 
-Les températures/humidités des pièces, les états de lumière et l'humidité des plantes ne passent **pas** par ces services : ce sont des entités « miroir » (`platform: homeassistant` dans `Tab5/tab5-sensors-domotique.yaml`), synchronisées automatiquement par HA — rien à écrire côté HA.
+Les températures, les lumières, le PC, la TV, le téléphone et les plantes ne passent **pas** par ce package : depuis la 3.0, le blueprint `tab5_emplacements.yaml` les pousse (`tab5_maj_emplacements`). La tablette ne s'abonne plus à aucune entité de votre maison.
 
 **Plus de renvoi périodique d'un état inchangé (26/09/2026) :** météo actuelle, probabilités, clim et volet repartaient toutes les 10 min en plus de leurs poussées au changement (576 appels par jour, chacun repeint par l'appareil). La poussée complète ne les envoie plus qu'à la (re)connexion et au retour à `on` de `input_boolean.is_primary_active`.
 
@@ -235,19 +240,27 @@ Les températures/humidités des pièces, les états de lumière et l'humidité 
 
 ---
 
-**Scripts.** Appelés **par** le Tab5 (depuis un `homeassistant.service:` de `Tab5/tab5-api-logic.yaml` ou un `on_short_click:` LVGL), et pas l'inverse : `allumer_leds`, et `allumer_pc_tv` pour le bouton « PC Bureau » (TV allumée → on l'éteint ; sinon on allume le PC et la TV). Pass-through simple : ça garde le code ESPHome léger et la logique côté HA où est sa place.
+**Scripts.** Depuis la 3.0, le Tab5 n'appelle plus de script pour vos appareils : ses commandes vont au blueprint (voir plus bas). Il appelle encore `script.tab5_volet_action` (package du volet, via le blueprint), `script.tab5_tv_app` (package TV), et les scripts d'agenda, de réveil et d'acquittement.
 
-Il contient aussi les **scripts de poussée** `tab5_push_alertes` (sections 1, 7 et 7b : vigilance Météo-France, bandeau info, rotateur d'alertes HA — MAJ, capteurs `problem` et compte d'indisponibles relevés une fois par passage), `tab5_push_meteo`, `tab5_push_clim` et `tab5_push_volet`. Ceux-là sont appelés *par les automatisations*, pas par le Tab5 : chaque bloc n'existe qu'une fois au lieu d'être recopié dans la poussée complète et dans son automatisation au changement.
+Il contient aussi les **scripts de poussée** `tab5_push_alertes` (sections 1, 7 et 7b : vigilance Météo-France, bandeau info, rotateur d'alertes HA — MAJ, capteurs `problem` et compte d'indisponibles relevés une fois par passage), `tab5_push_meteo` et `tab5_push_volet`. Ceux-là sont appelés *par les automatisations*, pas par le Tab5 : chaque bloc n'existe qu'une fois au lieu d'être recopié dans la poussée complète et dans son automatisation au changement.
 
 **Capteur de template** (désormais dans `packages/tab5_meteo_sources.yaml`, voir plus bas). `Tab5 Pluie dans l'heure` transforme la prévision de pluie en **code**, `@niveau,début` (niveau -1 pas de données, 0 sec, 1 à 4 faible à très forte, 5 intensité inconnue ; début = epoch UTC de la pluie, 0 s'il pleut déjà). Depuis le lot 4c (27/09/2026), le Tab5 écrit lui-même la phrase, dans sa langue (« Averses dans 12 mn » / “Showers in 12 min”), et décompte les minutes avec sa propre horloge : le capteur ne change plus qu'avec les données Météo-France, plus à chaque minute. Le bandeau info et le rotateur d'alertes HA partent aussi en codes (`@ha|…`, `@maj:`, `@indispo:`). **Déployer ce package après le firmware du lot 4c** : un firmware plus ancien afficherait les codes tels quels.
 
-**Zones optionnelles (lot 5, 27/09/2026, [ADR-0018](../docs/decisions/0018-optional-zones-confirmed-by-ha.md)).** Une fois par connexion, le Tab5 envoie `esphome.tab5_zones` avec les entités qu'il suit (`clé=entité`) ; l'automatisation `tab5_zones_reponse` répond `tab5_maj_zones` avec les clés dont l'entité n'existe pas (`states[e] is none` : une entité `unavailable` existe), plus `clim`, `volet` (entité ou `volet_serre_tracking.yaml` absents) et `planning` (pas d'agenda de travail). Ces zones disparaissent de l'écran. Les poussées et les scripts suivent la même règle (lot 5b) : `tab5_push_clim` et `tab5_push_volet` n'envoient rien, `allumer_leds` et `allumer_pc_tv` n'appellent que les entités qui existent. Pour laisser une zone de côté côté HA, gardez la valeur d'exemple de son placeholder. Voir [Adapter à sa maison](../docs/installation.md#adapter-à-sa-maison).
+**Zones optionnelles (lot 5, [ADR-0018](../docs/decisions/0018-optional-zones-confirmed-by-ha.md)).** Depuis la 3.0, c'est le blueprint qui répond à la demande des zones de la tablette : un emplacement vide, ou une entité qui n'existe pas, disparaît de l'écran. Les poussées de ce package suivent la même règle : `tab5_push_volet` n'envoie rien sans volet. Voir [Adapter à sa maison](../docs/installation.md#adapter-à-sa-maison).
 
 **Garde-fou `input_boolean.is_primary_active`.** Toutes les poussées en dépendent ; `force_primary_active_on_boot` le remet à `on` au démarrage de HA, et `packages/tab5_health.yaml` prévient s'il reste à `off` 5 min. C'est un reste d'une ancienne installation à deux instances ([ADR-0008](../docs/decisions/0008-single-ha-instance.md)) : avec un seul Home Assistant, il reste simplement à `on`.
 
 L'exemple de réponse de l'assistant (moteur → popup Assistant) est passé dans `snippets/tab5_assist_reponse_exemple.yaml` : dans un package, il aurait été actif chez tout le monde.
 
 ---
+
+### `blueprints/automation/tab5/tab5_emplacements.yaml` — choisir ses appareils (depuis la 3.0)
+Le Tab5 ne connaît plus aucune entité de votre maison ([ADR-0019](../docs/decisions/0019-logical-slots-blueprint.md)) : ce **blueprint** relie ses emplacements à vos entités. Importez-le (*Paramètres → Automatisations et scènes → Blueprints → Importer un blueprint*, puis collez son URL GitHub) ou copiez-le dans `config/blueprints/automation/tab5/`, puis créez **une automatisation par tablette** et choisissez une entité pour chaque emplacement, tous facultatifs : lumières 1 à 3, PC, TV et sa télécommande, batterie du téléphone, température et humidité de la pièce, seconde température (serre), clim, volet, pots 1 à 5 (le capteur d'humidité ; conductivité, éclairement, température et batterie sont pris sur le même appareil), agenda de travail. L'automatisation :
+- pousse les emplacements par `tab5_maj_emplacements` (`clé|état|valeur;…`) : tous à la (re)connexion, un seul à chaque changement ; la clim par `tab5_maj_clim`, et un volet qui signale sa course par `tab5_maj_volet_etat` ;
+- exécute les commandes de l'écran (événements `esphome.tab5_action` : bascule, luminosité, couleur, consigne, mode, touches et applications de la TV, volet…) sur l'entité choisie. Un événement n'exige pas l'option « autoriser l'appareil à effectuer des actions Home Assistant » ;
+- répond à la demande des zones (`esphome.tab5_zones`, [ADR-0018](../docs/decisions/0018-optional-zones-confirmed-by-ha.md)) : un emplacement vide, ou une entité qui n'existe pas, disparaît de l'écran.
+
+Aucun placeholder : le fichier est générique. Changer d'appareil = modifier l'automatisation dans l'interface de HA, ni flash ni redémarrage.
 
 ### `packages/tab5_meteo_sources.yaml`
 Adaptateurs météo (lot 4c-2, 27/09/2026). Deux listes choisissent la source **dans Home Assistant, sans YAML** : « Tab5 · source de la pluie dans l'heure » (Météo-France / OpenWeatherMap / Aucune) et « Tab5 · source des vigilances » (Météo-France / MeteoAlarm / Aucune). Deux capteurs normalisés ramènent n'importe quelle source à ce que lit le Tab5, et les poussées ne lisent qu'eux :
@@ -344,12 +357,9 @@ Remplacez ces placeholders dans les fichiers :
 | `VOTRE_METEO_OWM` | entity_id complet de la météo OpenWeatherMap (mode v3.0), si vous la choisissez pour la pluie (`weather.openweathermap`) |
 | `VOTRE_METEOALARM` | entity_id complet du binary_sensor MeteoAlarm, si vous le choisissez pour les vigilances (`binary_sensor.meteoalarm`) |
 | `VOTRE_DEPARTEMENT` | Votre numéro de département pour les alertes (ex: `40`) |
-| `VOTRE_CLIMATISATION` | Votre entité climate (`climate.votre_clim`) |
 | `VOTRE_EMAIL_gmail_com` | Votre entité Google Calendar (`calendar.votre_email_gmail_com`) |
 | `VOTRE_VOLET` | Votre entité volet roulant / cover |
 | `VOTRE_TV` | Votre TV Samsung (`media_player.<…>` **et** `remote.<…>`, package `tab5_tv`) |
-| `VOTRE_LEDS` | La lumière basculée par `script.allumer_leds` |
-| `VOTRE_PC` | L'interrupteur qui allume votre PC (`switch.<…>`, `script.allumer_pc_tv`) |
 | `VOTRE_TELEPHONE` / `VOTRE_CAPTEUR_PRESENCE` | Tracker du téléphone et capteur de présence de l'automation d'allumage écran |
 | `tab5-ha-hmi` | Le nom de votre appareil ESPHome |
 

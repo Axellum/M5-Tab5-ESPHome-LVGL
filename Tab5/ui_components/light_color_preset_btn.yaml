@@ -2,7 +2,7 @@
 # réutilisé 12x par la grille COULEURS de light_popup.yaml (#T164).
 # Vars: color_name (payload HA color_name:), icon_color (hex de la pastille affichée —
 # peut différer du CSS exact pour rester lisible sur fond sombre, ex. purple → 0xA855F7).
-# Cible id(current_light_entity) (global partagé, pas une entité en dur).
+# Cible id(current_light_slot) (global partagé, pas une entité en dur).
 button:
   width: 78
   height: 78
@@ -17,8 +17,4 @@ button:
     border_color: color_text
     border_opa: 100%
   on_short_click:
-    - homeassistant.service:
-        service: light.turn_on
-        data:
-          entity_id: !lambda 'return id(current_light_entity);'
-          color_name: "${color_name}"
+    - script.execute: { id: tab5_action, emplacement: !lambda 'return id(current_light_slot);', commande: couleur, valeur: "${color_name}" }

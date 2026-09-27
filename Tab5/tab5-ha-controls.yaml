@@ -89,7 +89,7 @@ select:
   # Republier « — » redéclenche bien on_value, mais l'index 0 ne fait rien —
   # la récursion s'arrête là.
   # Volontairement absents : « Lumières » (le popup dépend de
-  # `current_light_entity`, positionné par la carte qui l'ouvre — l'ouvrir à
+  # `current_light_slot`, positionné par la carte qui l'ouvre — l'ouvrir à
   # froid afficherait les réglages de la dernière lampe touchée) et « Arcade »
   # (lancer un jeu à distance sur une tablette murale n'a pas d'usage).
   - platform: template

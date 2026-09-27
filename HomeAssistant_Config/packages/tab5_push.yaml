@@ -3,8 +3,10 @@
 # @file packages/tab5_push.yaml
 # @role Tout ce que Home Assistant fait POUR le Tab5 hors packages dédiés : les
 #       automatisations qui poussent les données vers l'écran (push-only, cf.
-#       Tab5/README.md), les scripts de poussée `tab5_push_*`, les scripts appelés
-#       par le Tab5 (LEDs, PC + TV) et le garde-fou `is_primary_active`. La météo
+#       Tab5/README.md), les scripts de poussée `tab5_push_*` et le garde-fou
+#       `is_primary_active`. Les appareils de la maison (lumières, clim, PC, TV,
+#       plantes…) et la réponse des zones sont dans le blueprint « Tab5 —
+#       emplacements » depuis le lot 6a (ADR-0019). La météo
 #       « pluie dans l'heure » et « vigilances » arrive par les capteurs normalisés de
 #       packages/tab5_meteo_sources.yaml (lot 4c-2), quel que soit le fournisseur.
 # @langue Depuis le lot 4c (27/09/2026), HA n'envoie plus de phrases françaises au
@@ -23,8 +25,8 @@
 #       configuration.yaml, puis ce fichier (rendu) dans config/packages/.
 #       Placeholders à remplacer (placeholders.example.yaml) : VOTRE_VILLE (entité
 #       weather.* par défaut ; la source des prévisions se change ensuite dans HA,
-#       « Tab5 · source des prévisions », lot 4c-3), VOTRE_CLIMATISATION, VOTRE_LEDS, VOTRE_TV, VOTRE_PC,
-#       VOTRE_TELEPHONE, VOTRE_CAPTEUR_PRESENCE, VOTRE_EMAIL_gmail_com ; et les
+#       « Tab5 · source des prévisions », lot 4c-3), VOTRE_TELEPHONE,
+#       VOTRE_CAPTEUR_PRESENCE, VOTRE_EMAIL_gmail_com ; et les
 #       entités du Tab5 lui-même si votre appareil n'a pas le nom par défaut
 #       (ex. préfixe de pièce `salon_…`, cf. placeholders.example.yaml).
 # @architecture_constraint Chaque `action: esphome.tab5_ha_hmi_tab5_maj_*` correspond à
@@ -277,15 +279,14 @@ automation:
               {% set ns.result = ns.result ~ i ~ "|" ~ nom_jour ~ "|" ~ condition ~ "|" ~ tmin ~ "|" ~ tmax ~ "|" ~ ("1" if est_repos else "0") ~ "|" ~ ("1" if est_dimanche else "0") ~ "|" ~ ("1" if est_passe == 'true' else "0") ~ "|" ~ ns_travail.heures ~ ";" %}
             {% endfor %}
             {{ ns.result }}
-      # ====== 6 + X. CLIM ET VOLET : seulement à la (re)connexion ======
-      # Au changement : tab5_ha_hmi_clim_push et tab5_volet_updater (plus bas).
+      # ====== 6 + X. VOLET : seulement à la (re)connexion ======
+      # Au changement : tab5_volet_updater (volet_serre_tracking.yaml). La clim et
+      # les appareils de la maison sont poussés par le blueprint « Tab5 —
+      # emplacements » depuis le lot 6a (ADR-0019).
       - if:
           - condition: trigger
             id: [tab5_connected, resync]
         then:
-          - delay: "00:00:01"
-          - action: script.tab5_push_clim
-            continue_on_error: true
           - delay: "00:00:01"
           - action: script.tab5_push_volet
             continue_on_error: true
@@ -474,66 +475,6 @@ automation:
                   entity_id: light.m5stack_tab5_home_assistant_hmi_display_backlight
 
 
-  # ============================================================================
-  # PUSH CLIM RAPIDE — chemin court, faible latence (ajouté en prod le 21/07/2026)
-  # ----------------------------------------------------------------------------
-  # Retour à l'écran quasi immédiat quand on touche les commandes, sans les delays
-  # de la poussée complète. `mode: restart` : le dernier état gagne si taps rapides.
-  # Même garde `is_primary_active`. Le contrat `tab5_maj_clim` est dans le script
-  # `tab5_push_clim` (section `script:` de ce package).
-  # ============================================================================
-  - id: tab5_ha_hmi_clim_push
-    alias: "MAJ Ecran Tab5 Climatisation (push rapide)"
-    mode: restart
-    trigger:
-      - platform: state
-        entity_id: climate.VOTRE_CLIMATISATION
-    condition:
-      - condition: state
-        entity_id: input_boolean.is_primary_active
-        state: "on"
-    action:
-      - action: script.tab5_push_clim
-
-  # ============================================================================
-  # ZONES OPTIONNELLES — réponse à la tablette (lot 5, 27/09/2026)
-  # ----------------------------------------------------------------------------
-  # Une fois par connexion, la tablette envoie les entités qu'elle suit, en
-  # « clé=entité » (esphome.tab5_zones, Tab5/tab5-zones.yaml). On répond les clés
-  # de celles qui n'existent pas ; leurs zones disparaissent de l'écran. Une entité
-  # en panne (unavailable) existe : sa zone reste. S'y ajoutent les zones que seul
-  # HA connaît : clim, volet (entité ou package absent), planning (pas d'agenda de
-  # travail). Ne jamais ignorer l'événement : sans réponse, la tablette garde la
-  # liste précédente. Clés : enum Zone de Tab5/tab5_zones.cpp.
-  # ============================================================================
-  - id: tab5_zones_reponse
-    alias: "Tab5 — zones présentes (réponse à la tablette)"
-    mode: queued
-    max: 3
-    trigger:
-      - platform: event
-        event_type: esphome.tab5_zones
-    condition:
-      - condition: state
-        entity_id: input_boolean.is_primary_active
-        state: "on"
-    action:
-      - variables:
-          absentes: >-
-            {% set ns = namespace(cles=[]) %}
-            {% for paire in (trigger.event.data.zones | default('')).split(',') if '=' in paire %}
-              {% set cle, entite = paire.split('=', 1) %}
-              {% if states[entite | trim] is none %}{% set ns.cles = ns.cles + [cle | trim] %}{% endif %}
-            {% endfor %}
-            {% if states['climate.VOTRE_CLIMATISATION'] is none %}{% set ns.cles = ns.cles + ['clim'] %}{% endif %}
-            {% if states['cover.VOTRE_VOLET'] is none or states['script.tab5_volet_action'] is none %}{% set ns.cles = ns.cles + ['volet'] %}{% endif %}
-            {% if states['calendar.VOTRE_EMAIL_gmail_com'] is none %}{% set ns.cles = ns.cles + ['planning'] %}{% endif %}
-            {{ ns.cles | join(',') }}
-      - action: esphome.tab5_ha_hmi_tab5_maj_zones
-        data:
-          absentes: "{{ absentes }}"
-        continue_on_error: true
-
   - id: force_primary_active_on_boot
     alias: "Force Primary Active on Boot"
     # Au démarrage de HA, remet le garde-fou à `on` : sans lui, un `off` resté d'un
@@ -548,17 +489,6 @@ automation:
           entity_id: input_boolean.is_primary_active
 
 script:
-  # Sans ruban LED (entité absente), rien : la tablette masque déjà sa tuile (lot 5).
-  allumer_leds:
-    alias: "Allumer LEDs depuis Tab5"
-    mode: single
-    sequence:
-      - condition: template
-        value_template: "{{ states['light.VOTRE_LEDS'] is not none }}"
-      - action: light.toggle
-        target:
-          entity_id: light.VOTRE_LEDS
-
   # ─────────────────────────────────────────────────────────────────────────────
   # Scripts de POUSSÉE vers le Tab5 (26/09/2026) — appelés par les automatisations
   # (section `automation:` de ce package), pas par le Tab5. Chaque bloc n'existe
@@ -684,28 +614,6 @@ script:
           gel: "{{ state_attr('sensor.tab5_meteo', 'gel') | int(0) }}"
           neige: "{{ state_attr('sensor.tab5_meteo', 'neige') | int(0) }}"
 
-  tab5_push_clim:
-    alias: "Tab5 — pousser l'état de la clim"
-    description: >-
-      Cible, température, mode, preset, ventilation, oscillation. Appelé au
-      changement (tab5_ha_hmi_clim_push) et à la (re)connexion (tab5_ha_hmi_updater).
-      Sans clim, rien : la tablette masque sa carte (zone « clim », lot 5), et les
-      `float(20)` ci-dessous y affichaient une fausse clim à 20.0.
-    mode: queued
-    max: 10
-    sequence:
-      - condition: template
-        value_template: "{{ states['climate.VOTRE_CLIMATISATION'] is not none }}"
-      - action: esphome.tab5_ha_hmi_tab5_maj_clim
-        continue_on_error: true
-        data:
-          target: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'temperature') | float(20) }}"
-          current: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'current_temperature') | float(20) }}"
-          mode: "{{ states('climate.VOTRE_CLIMATISATION') }}"
-          preset: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'preset_mode') | default('none', true) }}"
-          fan: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'fan_mode') | default('auto', true) }}"
-          swing: "{{ state_attr('climate.VOTRE_CLIMATISATION', 'swing_mode') | default('stop', true) }}"
-
   tab5_push_volet:
     alias: "Tab5 — pousser l'état du volet de la serre"
     description: >-
@@ -724,40 +632,6 @@ script:
         data:
           etat_physique: >-
             {{ 'En_mouvement' if is_state('input_boolean.volet_serre_mouvement', 'on') else states('input_text.volet_serre_etat') }}
-
-  # Bouton « PC Bureau » du Tab5 (Tab5/ui_components/switches_card.yaml et
-  # forecast_daily.yaml appellent `script.allumer_pc_tv`) : bascule PC + TV. TV
-  # allumée → on l'éteint ; sinon on allume le PC (prise ou Wake-on-LAN) et la TV.
-  # Chacun seulement s'il existe (lot 5) : une maison sans TV ou sans PC garde la
-  # tuile de l'autre, et HA n'appelle plus d'entité absente.
-  allumer_pc_tv:
-    alias: "Allumer PC et TV"
-    icon: mdi:monitor
-    mode: single
-    sequence:
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: "{{ states('media_player.VOTRE_TV') in ['on', 'idle', 'playing', 'paused'] }}"
-            sequence:
-              - action: media_player.turn_off
-                target:
-                  entity_id: media_player.VOTRE_TV
-        default:
-          - if:
-              - condition: template
-                value_template: "{{ states['switch.VOTRE_PC'] is not none }}"
-            then:
-              - action: switch.turn_on
-                target:
-                  entity_id: switch.VOTRE_PC
-          - if:
-              - condition: template
-                value_template: "{{ states['media_player.VOTRE_TV'] is not none }}"
-            then:
-              - action: media_player.turn_on
-                target:
-                  entity_id: media_player.VOTRE_TV
 
 # Le capteur « Tab5 Pluie dans l'heure » (code « @niveau,début ») vit depuis le
 # lot 4c-2 dans packages/tab5_meteo_sources.yaml, avec « Tab5 Vigilance » : même

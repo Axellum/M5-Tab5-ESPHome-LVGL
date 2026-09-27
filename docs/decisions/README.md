@@ -28,3 +28,4 @@ Format: **Context / Decision / Consequences**. One page max. Add a new one whene
 | [0016](0016-ci-esphome-latest-canary.md) | CI compiles with ESPHome `latest` on purpose — a free upstream canary |
 | [0017](0017-ha-placeholders-rendered-copies.md) | Public HA files hold placeholders only — real IDs in `placeholders.yaml`, HA runs `rendered/` |
 | [0018](0018-optional-zones-confirmed-by-ha.md) | Optional zones — a zone disappears only when HA confirms its entity does not exist |
+| [0019](0019-logical-slots-blueprint.md) | Logical slots — the device knows slots, a Home Assistant blueprint maps them to entities |

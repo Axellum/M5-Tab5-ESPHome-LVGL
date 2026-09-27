@@ -527,3 +527,47 @@ api:
         - lambda: 'zones_reponse_ha(absentes);'
         # Toujours : le capteur « Zones masquées » part aussi quand rien ne change.
         - script.execute: tab5_zones_apply
+
+    # Emplacements de la maison (lot 6a, ADR-0019) — poussés par le blueprint
+    # « Tab5 — emplacements » (HomeAssistant_Config/blueprints/automation/tab5/) :
+    # tous à la connexion, un seul à chaque changement de son entité. La tablette ne
+    # connaît plus d'entité ; chaque clé est publiée dans le capteur interne qui la
+    # porte (tab5-sensors-domotique.yaml, pot_sensors.yaml), dont les on_value n'ont
+    # pas changé. Clé inconnue : ignorée. tests/test_emplacements.py compare cette
+    # table au blueprint.
+    - service: tab5_maj_emplacements
+      description: "Emplacements de la maison choisis dans le blueprint « Tab5 — emplacements » : état et valeur de chacun. Tous à la connexion, un seul à chaque changement."
+      variables:
+        payload:
+          type: string
+          description: "« clé|état|valeur » séparés par ; — clés lumiere_1 à lumiere_3, pc, tv, telephone, salon, salon_hum, serre, pot_1 à pot_5 et pot_N_ec, _lux, _temp, _bat. État = état Home Assistant tel quel ; valeur = nombre affiché (luminosité 0-255, %, °C, µS/cm, lx), nan s'il n'y en a pas."
+          example: "lumiere_1|on|180;salon|21.4|21.4;pot_3|45|45;"
+      then:
+        - lambda: |-
+            static const EmplacementCible kCibles[] = {
+                {"lumiere_1", id(light_chambre_state), id(light_chambre_brightness)},
+                {"lumiere_2", id(light_salon_state), id(light_salon_brightness)},
+                {"lumiere_3", id(light_led_state), id(light_led_brightness)},
+                {"pc", id(pc_status), nullptr},
+                {"tv", id(tv_status), nullptr},
+                {"telephone", nullptr, id(phone_battery)},
+                {"salon", nullptr, id(temp_salon)},
+                {"salon_hum", nullptr, id(hum_salon)},
+                {"serre", nullptr, id(temp_serre)},
+                {"pot_1", nullptr, id(moisture_1)},
+                {"pot_2", nullptr, id(moisture_2)},
+                {"pot_3", nullptr, id(moisture_3)},
+                {"pot_4", nullptr, id(moisture_4)},
+                {"pot_5", nullptr, id(moisture_5)},
+                {"pot_1_ec", nullptr, id(pot1_ec)}, {"pot_1_lux", nullptr, id(pot1_lux)},
+                {"pot_1_temp", nullptr, id(pot1_temp)}, {"pot_1_bat", nullptr, id(pot1_bat)},
+                {"pot_2_ec", nullptr, id(pot2_ec)}, {"pot_2_lux", nullptr, id(pot2_lux)},
+                {"pot_2_temp", nullptr, id(pot2_temp)}, {"pot_2_bat", nullptr, id(pot2_bat)},
+                {"pot_3_ec", nullptr, id(pot3_ec)}, {"pot_3_lux", nullptr, id(pot3_lux)},
+                {"pot_3_temp", nullptr, id(pot3_temp)}, {"pot_3_bat", nullptr, id(pot3_bat)},
+                {"pot_4_ec", nullptr, id(pot4_ec)}, {"pot_4_lux", nullptr, id(pot4_lux)},
+                {"pot_4_temp", nullptr, id(pot4_temp)}, {"pot_4_bat", nullptr, id(pot4_bat)},
+                {"pot_5_ec", nullptr, id(pot5_ec)}, {"pot_5_lux", nullptr, id(pot5_lux)},
+                {"pot_5_temp", nullptr, id(pot5_temp)}, {"pot_5_bat", nullptr, id(pot5_bat)},
+            };
+            emplacements_appliquer(payload, kCibles, sizeof(kCibles) / sizeof(kCibles[0]));

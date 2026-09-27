@@ -272,10 +272,7 @@ script:
             lambda: 'return action == WakeWord::VOLET_STOP;'
           then:
             - script.execute: tab5_volet_end_movement
-            - homeassistant.service:
-                service: script.tab5_volet_action
-                data:
-                  action: stop
+            - script.execute: { id: tab5_action, emplacement: volet, commande: arreter, valeur: "" }
             - script.execute: tab5_volet_stop_voice_feedback
             # Orange sur l'icône micro = accusé de réception (même teinte qu'« Analyse… »).
             - lambda: 'assist_set_mic_state(id(icon_mic_status), AssistState::THINKING);'

@@ -27,11 +27,11 @@ VOTRE_METEO_OWM: weather.openweathermap     # OpenWeatherMap (mode v3.0) : la pl
 VOTRE_METEOALARM: binary_sensor.meteoalarm  # MeteoAlarm : vigilances (39 pays européens)
 
 # --- Domotique ---
-VOTRE_CLIMATISATION: your_living_room_climate   # climate.<…>
-VOTRE_VOLET: your_roller_shutter                # cover.<…>
-VOTRE_LEDS: your_led_strip                      # light.<…> (script allumer_leds)
-VOTRE_TV: your_samsung_tv                       # media_player.<…> ET remote.<…> (packages tab5_tv et tab5_push)
-VOTRE_PC: your_pc_switch                        # switch.<…> (bouton « PC Bureau », script allumer_pc_tv)
+# Les appareils affichés par l'écran (lumières, clim, PC, TV, téléphone, températures,
+# plantes) se choisissent dans le blueprint « Tab5 — emplacements » (lot 6a) : plus de
+# placeholder pour eux. Restent ceux des packages suivants.
+VOTRE_VOLET: your_roller_shutter                # cover.<…> (package volet_serre_tracking : volet à course simulée)
+VOTRE_TV: your_samsung_tv                       # media_player.<…> ET remote.<…> (package tab5_tv : applications)
 VOTRE_TELEPHONE: your_phone                     # device_tracker.<…> (allumage/extinction écran)
 VOTRE_CAPTEUR_PRESENCE: your_presence_sensor    # binary_sensor.<…>
 

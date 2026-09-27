@@ -466,7 +466,7 @@ void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric);
 // blocs identiques light_chambre_state/light_salon_state/light_led_state (#T164).
 void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* icon_switch,
     lv_obj_t* lbl_switch_state, lv_obj_t* btn_power_icon,
-    const std::string& current_light_entity, const std::string& this_entity, bool is_on);
+    const std::string& current_light_slot, const std::string& this_slot, bool is_on);
 
 // Icone du selecteur du popup lumiere (lit/canape/ruban LED) : doree si allumee.
 void update_light_selector_icon(lv_obj_t* icon, bool is_on);
@@ -684,16 +684,17 @@ void journal_mark_delivered();      // vide le journal (et sa copie NVS)
 // Une zone dont l'entité n'existe pas dans Home Assistant disparaît, avec ses
 // boutons. La tablette ne décide pas seule : une entité créée pendant le démarrage
 // de HA n'est transmise qu'à son prochain changement (manager.py de l'intégration
-// ESPHome), un silence ne prouve donc rien. Elle envoie ses entités à HA
-// (esphome.tab5_zones, tab5-zones.yaml) et HA répond celles qui n'existent pas
-// (action tab5_maj_zones, package tab5_push.yaml). Une entité en panne existe :
+// ESPHome), un silence ne prouve donc rien. Elle demande à HA (esphome.tab5_zones,
+// tab5-zones.yaml) et HA répond les zones absentes (action tab5_maj_zones) : depuis le
+// lot 6a, le blueprint « Tab5 — emplacements », qui sait quels emplacements sont
+// choisis et si leurs entités existent (ADR-0019). Une entité en panne existe :
 // sa zone reste affichée (« -- », « Hors ligne »). Sans le package, rien ne
 // disparaît. La liste est gardée en NVS (pas de clignotement au démarrage) et une
 // zone réapparaît dès sa première donnée.
 // =============================================================================
 enum class Zone : uint8_t {
-    // Entité suivie par la tablette (tab5-sensors-domotique.yaml), même ordre que la
-    // liste envoyée par le script tab5_zones_demande.
+    // Emplacement suivi par la tablette (tab5-sensors-domotique.yaml), même ordre que
+    // la liste envoyée par le script tab5_zones_demande.
     LUMIERE_1, LUMIERE_2, LUMIERE_3,   // chambre, salon, LEDs (tuiles J2 à J4)
     PC, TV, TELEPHONE, SALON, SERRE,
     POT_1, POT_2, POT_3, POT_4, POT_5,
@@ -740,8 +741,6 @@ bool zone_tuile_absente(int tuile);
 int zones_pots_presents();
 // « aucune » ou « clim, pot_4, pot_5 » (capteur « Zones masquées » dans HA).
 std::string zones_texte_masquees();
-// Entités des lumières présentes, pour « Tout éteindre » (« a, b »).
-std::string zones_lumieres_presentes(const char* const entites[3]);
 // Demande à HA une fois par connexion : remis à zéro à chaque connexion de HA,
 // consommé par la première poussée des prévisions.
 void zones_nouvelle_connexion();
@@ -750,5 +749,21 @@ bool zones_demande_a_envoyer();
 // Carte centrale : le planning n'est plus un panneau du rotateur quand HA n'a
 // pas d'agenda de travail (zone PLANNING).
 void central_planning_set_off(bool off);
+
+// =============================================================================
+// Emplacements de la maison (lot 6a, ADR-0019) : la tablette ne connaît plus aucune
+// entité. Le blueprint « Tab5 — emplacements » pousse « clé|état|valeur;… »
+// (action tab5_maj_emplacements) ; chaque clé est publiée dans le capteur interne qui
+// la porte, dont le on_value met l'écran à jour comme avant. Les commandes repartent
+// en événements esphome.tab5_action (script tab5_action, tab5-scripts.yaml).
+// =============================================================================
+struct EmplacementCible {
+    const char* cle;
+    esphome::text_sensor::TextSensor* texte;  // état HA tel quel (on, off, home…), ou nullptr
+    esphome::sensor::Sensor* valeur;          // nombre affiché, NaN pour « nan » ou illisible, ou nullptr
+};
+// Applique la chaîne aux capteurs de la table ; une clé inconnue est ignorée.
+// Renvoie le nombre d'entrées appliquées.
+int emplacements_appliquer(const std::string& payload, const EmplacementCible* cibles, size_t n);
 
 // UIColor (couleurs sémantiques) : voir tab5_tokens.h.

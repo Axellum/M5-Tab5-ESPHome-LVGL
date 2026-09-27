@@ -63,6 +63,28 @@ script:
           ModalRegistry::add(id(overlay_confirm_ha),     nullptr,            ModalRegistry::SUBWINDOW);
           ModalRegistry::add(id(overlay_confirm_reboot), nullptr,            ModalRegistry::SUBWINDOW);
 
+  # Commande d'un emplacement de la maison (lot 6a, ADR-0019) : la tablette ne
+  # connaît plus aucune entité de la maison. Événement esphome.tab5_action, traité
+  # par le blueprint « Tab5 — emplacements »
+  # (HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml), qui
+  # l'applique à l'entité choisie pour cet emplacement. Un événement `esphome.*` ne
+  # demande pas l'option « autoriser les actions HA » (manager.py de HA). Emplacements
+  # et commandes : voir le blueprint, et tests/test_emplacements.py qui les compare.
+  # `parallel` : chaque appui part (aucun délai).
+  - id: tab5_action
+    mode: parallel
+    parameters:
+      emplacement: string
+      commande: string
+      valeur: string
+    then:
+      - homeassistant.event:
+          event: esphome.tab5_action
+          data:
+            emplacement: !lambda 'return emplacement;'
+            action: !lambda 'return commande;'
+            valeur: !lambda 'return valeur;'
+
   # Active le wake word interne « Stop » (désactivé par défaut par ESPHome, 2e modèle).
   # Uniquement via tab5_maj_volet_etat (push HA) — pas d'état optimiste au tap écran.
   - id: tab5_volet_end_movement
@@ -101,24 +123,15 @@ script:
             lambda: 'return id(volet_en_mouvement);'
           then:
             - script.execute: tab5_volet_end_movement
-            - homeassistant.service:
-                service: script.tab5_volet_action
-                data:
-                  action: "stop"
+            - script.execute: { id: tab5_action, emplacement: volet, commande: arreter, valeur: "" }
           else:
             - if:
                 condition:
                   lambda: 'return id(volet_target_open);'
                 then:
-                  - homeassistant.service:
-                      service: script.tab5_volet_action
-                      data:
-                        action: "open"
+                  - script.execute: { id: tab5_action, emplacement: volet, commande: ouvrir, valeur: "" }
                 else:
-                  - homeassistant.service:
-                      service: script.tab5_volet_action
-                      data:
-                        action: "close"
+                  - script.execute: { id: tab5_action, emplacement: volet, commande: fermer, valeur: "" }
 
   # Debounce du slider volume : chaque glissement redémarre le délai, un seul
   # media_player.volume_set part réellement une fois le doigt immobile.
@@ -173,27 +186,26 @@ script:
     mode: restart
     then:
       - delay: 200ms
-      - homeassistant.service:
-          service: light.turn_on
-          data:
-            entity_id: !lambda 'return id(current_light_entity);'
-            brightness: !lambda 'return to_string(lv_arc_get_value(id(arc_light_brightness)));'
+      - script.execute:
+          id: tab5_action
+          emplacement: !lambda 'return id(current_light_slot);'
+          commande: luminosite
+          valeur: !lambda 'return to_string(lv_arc_get_value(id(arc_light_brightness)));'
 
   # Debounce de la cible clim (arc + boutons ± du popup clim) : un seul
   # climate.set_temperature par geste — les taps rapides ± sont groupés, la
   # cible affichée est optimiste (update_clim_target_ui) en attendant le retour
-  # HA via tab5_maj_clim. Force le mode "cool" si la clim est éteinte (Daikin
-  # refuse set_temperature en mode off), comme les anciens boutons ±.
+  # HA via tab5_maj_clim. Le blueprint force le mode « cool » si la clim est
+  # éteinte (Daikin refuse set_temperature en mode off), comme les anciens boutons ±.
   - id: tab5_debounce_clim_temp
     mode: restart
     then:
       - delay: 250ms
-      - homeassistant.service:
-          service: climate.set_temperature
-          data:
-            entity_id: ${entity_climate_salon}
-            hvac_mode: !lambda 'return (id(clim_hvac_mode) == "off" || id(clim_hvac_mode).empty()) ? std::string("cool") : id(clim_hvac_mode);'
-            temperature: !lambda 'return to_string(id(clim_target_temp));'
+      - script.execute:
+          id: tab5_action
+          emplacement: clim
+          commande: consigne
+          valeur: !lambda 'return to_string(id(clim_target_temp));'
 
   # Recoloration centralisée des icônes clim (source unique de vérité) — lit les 4
   # globals clim_hvac_mode / clim_preset_mode / clim_fan_mode / clim_swing_mode et
@@ -389,8 +401,10 @@ script:
       - lambda: |-
           if (light_idx < 0 || light_idx > 2) return;
           static const char* const kTitles[3] = {"Ampoule Chambre", "Ampoule Salon", "Ampoule LEDs"};
-          static const char* const kEntities[3] = {"${entity_light_chambre}", "${entity_light_salon}", "${entity_light_bureau}"};
-          id(current_light_entity) = kEntities[light_idx];
+          // Emplacement (lot 6a, ADR-0019) : les commandes du popup partent en
+          // esphome.tab5_action, le blueprint trouve l'entité.
+          static const char* const kSlots[3] = {"lumiere_1", "lumiere_2", "lumiere_3"};
+          id(current_light_slot) = kSlots[light_idx];
           const bool is_on[3] = { id(light_chambre_state).state == "on",
                                   id(light_salon_state).state == "on",
                                   id(light_led_state).state == "on" };
@@ -404,22 +418,18 @@ script:
               id(btn_light_power_icon), id(arc_light_brightness), id(lbl_light_brightness_val));
 
   # Touche physique de la télécommande TV (tv_remote_popup.yaml et ses gabarits
-  # tv_pad_btn.yaml / tv_transport_btn.yaml) : un seul remote.send_command
-  # paramétré au lieu des quatorze blocs recopiés avant le lot 7.3 de l'audit
-  # (26/09/2026). touche = code Samsung (KEY_UP, KEY_VOLUP…). Marche/Arrêt reste un
-  # remote.toggle et les applications passent par script.tab5_tv_app (HA) — voir
-  # l'en-tête du popup. `parallel` : chaque appui va au bout (aucun délai), comme
-  # l'action en ligne qu'il remplace.
+  # tv_pad_btn.yaml / tv_transport_btn.yaml) : une seule commande paramétrée au
+  # lieu des quatorze blocs recopiés avant le lot 7.3 de l'audit (26/09/2026).
+  # touche = code Samsung (KEY_UP, KEY_VOLUP…). Depuis le lot 6a, commande
+  # « tv / touche » (tab5_action) : le blueprint l'envoie à la télécommande choisie.
+  # Marche/Arrêt (« tv / alimentation ») et les applications (« tv / appli ») aussi.
+  # `parallel` : chaque appui va au bout (aucun délai).
   - id: tab5_tv_key
     mode: parallel
     parameters:
       touche: string
     then:
-      - homeassistant.service:
-          service: remote.send_command
-          data:
-            entity_id: ${entity_tv_remote}
-            command: !lambda 'return touche;'
+      - script.execute: { id: tab5_action, emplacement: tv, commande: touche, valeur: !lambda 'return touche;' }
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Retour automatique à l'écran principal (inactivité tactile)

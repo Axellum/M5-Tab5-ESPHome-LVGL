@@ -1,0 +1,641 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5_emplacements.yaml
+# @role Blueprint HA (lot 6a de l'audit « ouverture », ADR-0019) : choisir à la souris
+#       l'appareil de chaque emplacement de l'écran du M5Stack Tab5. Une automatisation
+#       par tablette. Elle :
+#       - pousse l'état des emplacements (action tab5_maj_emplacements, « clé|état|valeur;… ») :
+#         tous à la connexion (esphome.tab5_connected), un seul à chaque changement ;
+#       - pousse la clim (tab5_maj_clim) et un volet qui signale sa course (tab5_maj_volet_etat) ;
+#       - exécute les commandes de l'écran (événement esphome.tab5_action) sur l'entité choisie ;
+#       - répond à la demande des zones (esphome.tab5_zones → tab5_maj_zones) : un
+#         emplacement vide, ou dont l'entité n'existe pas, disparaît de l'écran (ADR-0018).
+# @architecture_constraint Aucun placeholder : ce fichier est générique, il s'importe tel
+#       quel. Les clés d'emplacement et les commandes sont celles du firmware
+#       (tab5-api-logic.yaml, script tab5_action) ; tests/test_emplacements.py compare.
+#       Les événements esphome.* n'exigent pas l'option « autoriser l'appareil à effectuer
+#       des actions HA » (manager.py de l'intégration ESPHome).
+# ============================================================================
+blueprint:
+  name: "Tab5 — emplacements de l'écran"
+  description: >-
+    Choisissez l'appareil de chaque emplacement de l'écran du M5Stack Tab5 (firmware
+    3.0 et plus). Un emplacement laissé vide disparaît de l'écran, avec ses boutons.
+    Une seule automatisation par tablette. Les états sont poussés à la connexion et à
+    chaque changement ; les boutons de l'écran commandent l'entité choisie.
+  domain: automation
+  author: Axellum
+  source_url: https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml
+  homeassistant:
+    min_version: 2024.6.0
+  input:
+    lumieres:
+      name: Lumières
+      icon: mdi:lightbulb-group
+      description: Les trois tuiles de droite de l'accueil, et le popup lumière.
+      input:
+        lumiere_1:
+          name: Lumière 1 (tuile 3)
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: light
+        lumiere_2:
+          name: Lumière 2 (tuile 4)
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: light
+        lumiere_3:
+          name: Lumière 3 (tuile 5)
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: light
+    appareils:
+      name: PC, TV, téléphone
+      icon: mdi:monitor
+      input:
+        pc:
+          name: PC
+          description: Une prise ou un interrupteur (allumé par la tuile 1), ou un suivi de présence (affichage seul).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: [switch, input_boolean, device_tracker, binary_sensor]
+        tv:
+          name: TV
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: media_player
+        tv_telecommande:
+          name: Télécommande de la TV
+          description: Pour les touches du popup TV. Les applications passent par le script tab5_tv_app, s'il existe.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: remote
+        telephone:
+          name: Batterie du téléphone
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: battery
+    temperatures:
+      name: Températures
+      icon: mdi:thermometer
+      input:
+        salon_temperature:
+          name: Température de la pièce
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        salon_humidite:
+          name: Humidité de la pièce
+          description: Colore l'icône de la pièce.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: humidity
+        serre_temperature:
+          name: Seconde température (serre)
+          description: Sans elle, une manette ouvre l'arcade à sa place.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+    clim_volet:
+      name: Climatisation et volet
+      icon: mdi:air-conditioner
+      input:
+        clim:
+          name: Climatisation
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: climate
+        volet:
+          name: Volet
+          description: >-
+            Tuile 2. Un volet qui signale sa course (opening/closing) est poussé ici ;
+            avec le package volet_serre_tracking.yaml (volet qui ne la signale pas),
+            c'est le package qui pousse son état.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: cover
+    plantes:
+      name: Plantes
+      icon: mdi:sprout
+      description: >-
+        Le capteur d'humidité de chaque pot. Conductivité, éclairement, température et
+        batterie sont pris sur le même appareil (capteurs Flower Care et semblables).
+      input:
+        pot_1:
+          name: Pot 1
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: moisture
+        pot_2:
+          name: Pot 2
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: moisture
+        pot_3:
+          name: Pot 3
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: moisture
+        pot_4:
+          name: Pot 4
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: moisture
+        pot_5:
+          name: Pot 5
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: moisture
+    planning:
+      name: Planning de travail
+      icon: mdi:calendar-clock
+      input:
+        agenda_travail:
+          name: Agenda de travail
+          description: >-
+            Sans agenda, le panneau planning sort de la carte centrale. Les horaires
+            eux-mêmes viennent encore du package tab5_push.yaml (VOTRE_EMAIL).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: calendar
+    avance:
+      name: Avancé
+      icon: mdi:cog
+      collapsed: true
+      input:
+        tablette:
+          name: Nom de la tablette dans ESPHome
+          description: Préfixe de ses actions (esphome.<nom>_tab5_maj_…). Ne changer que si l'appareil a été renommé.
+          default: tab5_ha_hmi
+          selector:
+            text:
+
+mode: queued
+max: 25
+max_exceeded: silent
+# Les capteurs de plantes déclenchent souvent : avec les 5 traces par défaut, celle
+# d'une commande de l'écran disparaît en quelques minutes.
+trace:
+  stored_traces: 20
+
+variables:
+  tablette: !input tablette
+  choix:
+    lumiere_1: !input lumiere_1
+    lumiere_2: !input lumiere_2
+    lumiere_3: !input lumiere_3
+    pc: !input pc
+    tv: !input tv
+    tv_telecommande: !input tv_telecommande
+    telephone: !input telephone
+    salon: !input salon_temperature
+    salon_hum: !input salon_humidite
+    serre: !input serre_temperature
+    clim: !input clim
+    volet: !input volet
+    pot_1: !input pot_1
+    pot_2: !input pot_2
+    pot_3: !input pot_3
+    pot_4: !input pot_4
+    pot_5: !input pot_5
+    planning: !input agenda_travail
+  # clé -> entité (chaîne vide si rien n'est choisi). Les détails des pots viennent de
+  # l'appareil du capteur d'humidité, par classe (vérifié sur des Flower Care).
+  sources: >-
+    {%- set ns = namespace(d={}) -%}
+    {%- for cle, v in choix.items() -%}
+      {%- set ns.d = dict(ns.d, **{cle: (v if v is string else (v | first if v else ''))}) -%}
+    {%- endfor -%}
+    {%- for n in range(1, 6) -%}
+      {%- set p = ns.d['pot_' ~ n] -%}
+      {%- set dev = device_id(p) if p else none -%}
+      {%- for suffixe, classe in [('ec', 'conductivity'), ('lux', 'illuminance'), ('temp', 'temperature'), ('bat', 'battery')] -%}
+        {%- set e = (device_entities(dev) | select('match', 'sensor\\.') | select('is_state_attr', 'device_class', classe) | first | default('')) if dev else '' -%}
+        {%- set ns.d = dict(ns.d, **{'pot_' ~ n ~ '_' ~ suffixe: e}) -%}
+      {%- endfor -%}
+    {%- endfor -%}
+    {{ ns.d }}
+  # Clés poussées par tab5_maj_emplacements (clim et volet ont leurs actions).
+  cles_emplacements:
+    - lumiere_1
+    - lumiere_2
+    - lumiere_3
+    - pc
+    - tv
+    - telephone
+    - salon
+    - salon_hum
+    - serre
+    - pot_1
+    - pot_2
+    - pot_3
+    - pot_4
+    - pot_5
+  # Clés des zones de l'écran (kCles de Tab5/tab5_zones.cpp).
+  cles_zones:
+    - lumiere_1
+    - lumiere_2
+    - lumiere_3
+    - pc
+    - tv
+    - telephone
+    - salon
+    - serre
+    - pot_1
+    - pot_2
+    - pot_3
+    - pot_4
+    - pot_5
+    - clim
+    - volet
+    - planning
+  volet_par_package: "{{ states['script.tab5_volet_action'] is not none }}"
+
+triggers:
+  - trigger: event
+    event_type: esphome.tab5_connected
+    id: connexion
+  - trigger: event
+    event_type: esphome.tab5_zones
+    id: zones
+  - trigger: event
+    event_type: esphome.tab5_action
+    id: action
+  - trigger: state
+    entity_id: !input lumiere_1
+    id: lumiere_1
+  - trigger: state
+    entity_id: !input lumiere_2
+    id: lumiere_2
+  - trigger: state
+    entity_id: !input lumiere_3
+    id: lumiere_3
+  - trigger: state
+    entity_id: !input pc
+    id: pc
+  - trigger: state
+    entity_id: !input tv
+    id: tv
+  - trigger: state
+    entity_id: !input telephone
+    id: telephone
+  - trigger: state
+    entity_id: !input salon_temperature
+    id: salon
+  - trigger: state
+    entity_id: !input salon_humidite
+    id: salon_hum
+  - trigger: state
+    entity_id: !input serre_temperature
+    id: serre
+  - trigger: state
+    entity_id: !input pot_1
+    id: pot_1
+  - trigger: state
+    entity_id: !input pot_2
+    id: pot_2
+  - trigger: state
+    entity_id: !input pot_3
+    id: pot_3
+  - trigger: state
+    entity_id: !input pot_4
+    id: pot_4
+  - trigger: state
+    entity_id: !input pot_5
+    id: pot_5
+  - trigger: state
+    entity_id: !input clim
+    id: clim
+  - trigger: state
+    entity_id: !input volet
+    id: volet
+
+conditions:
+  # Garde-fou des packages (ADR-0008) : absent, il laisse passer.
+  - condition: template
+    value_template: "{{ states('input_boolean.is_primary_active') != 'off' }}"
+
+actions:
+  - variables:
+      # Emplacements à pousser : tous à la connexion ; un pot avec ses 4 détails.
+      cles: >-
+        {%- if trigger.id == 'connexion' -%}
+          {%- set ns = namespace(l=[]) -%}
+          {%- for c in cles_emplacements -%}
+            {%- set ns.l = ns.l + [c] + ([c ~ '_ec', c ~ '_lux', c ~ '_temp', c ~ '_bat'] if c.startswith('pot_') else []) -%}
+          {%- endfor -%}
+          {{ ns.l }}
+        {%- elif trigger.id.startswith('pot_') -%}
+          {{ [trigger.id, trigger.id ~ '_ec', trigger.id ~ '_lux', trigger.id ~ '_temp', trigger.id ~ '_bat'] }}
+        {%- elif trigger.id in cles_emplacements -%}
+          {{ [trigger.id] }}
+        {%- else -%}
+          {{ [] }}
+        {%- endif -%}
+      # « clé|état|valeur; » : état tel quel, valeur = luminosité (lampes) ou nombre de
+      # l'état (capteurs), nan sinon. Une entité absente n'est pas poussée (zone absente).
+      payload: >-
+        {%- set ns = namespace(r='') -%}
+        {%- for c in cles -%}
+          {%- set x = sources.get(c, '') -%}
+          {%- if x and states[x] is not none -%}
+            {%- if c.startswith('lumiere_') -%}
+              {%- set v = state_attr(x, 'brightness') | float('nan') -%}
+            {%- elif c in ['pc', 'tv'] -%}
+              {%- set v = 'nan' -%}
+            {%- else -%}
+              {%- set v = states(x) | float('nan') -%}
+            {%- endif -%}
+            {%- set ns.r = ns.r ~ c ~ '|' ~ (states(x) | replace('|', '/') | replace(';', ',')) ~ '|' ~ v ~ ';' -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {{ ns.r }}
+      absentes: >-
+        {%- set ns = namespace(l=[]) -%}
+        {%- for c in cles_zones -%}
+          {%- set x = sources.get(c, '') -%}
+          {%- if not x or states[x] is none -%}{%- set ns.l = ns.l + [c] -%}{%- endif -%}
+        {%- endfor -%}
+        {{ ns.l | join(',') }}
+      clim: "{{ sources.clim if sources.clim and states[sources.clim] is not none else '' }}"
+      volet: "{{ sources.volet if sources.volet and states[sources.volet] is not none else '' }}"
+  - choose:
+      - alias: "La tablette demande quelles zones sont absentes"
+        conditions: "{{ trigger.id == 'zones' }}"
+        sequence:
+          - action: "esphome.{{ tablette }}_tab5_maj_zones"
+            data:
+              absentes: "{{ absentes }}"
+            continue_on_error: true
+
+      - alias: "Commande d'un bouton de l'écran"
+        conditions: "{{ trigger.id == 'action' }}"
+        sequence:
+          - variables:
+              emplacement: "{{ trigger.event.data.emplacement | default('') }}"
+              commande: "{{ trigger.event.data.action | default('') }}"
+              valeur: "{{ trigger.event.data.valeur | default('') }}"
+              cible: "{{ sources.get(emplacement, '') }}"
+          - choose:
+              - alias: "Lumière : basculer"
+                conditions: "{{ emplacement.startswith('lumiere_') and commande == 'basculer' and cible != '' }}"
+                sequence:
+                  - action: light.toggle
+                    target:
+                      entity_id: "{{ cible }}"
+              - alias: "Lumière : luminosité 0-255"
+                conditions: "{{ emplacement.startswith('lumiere_') and commande == 'luminosite' and cible != '' }}"
+                sequence:
+                  - action: light.turn_on
+                    target:
+                      entity_id: "{{ cible }}"
+                    data:
+                      brightness: "{{ valeur | int(0) }}"
+              - alias: "Lumière : luminosité en %"
+                conditions: "{{ emplacement.startswith('lumiere_') and commande == 'luminosite_pct' and cible != '' }}"
+                sequence:
+                  - action: light.turn_on
+                    target:
+                      entity_id: "{{ cible }}"
+                    data:
+                      brightness_pct: "{{ valeur | int(0) }}"
+              - alias: "Lumière : couleur"
+                conditions: "{{ emplacement.startswith('lumiere_') and commande == 'couleur' and cible != '' }}"
+                sequence:
+                  - action: light.turn_on
+                    target:
+                      entity_id: "{{ cible }}"
+                    data:
+                      color_name: "{{ valeur }}"
+              - alias: "Tout éteindre"
+                conditions: "{{ emplacement == 'lumieres' and commande == 'eteindre' }}"
+                sequence:
+                  - variables:
+                      # Pas de filtre `extract` dans le Jinja de HA (c'est un filtre Ansible).
+                      lampes: >-
+                        {%- set ns = namespace(l=[]) -%}
+                        {%- for c in ['lumiere_1', 'lumiere_2', 'lumiere_3'] -%}
+                          {%- set x = sources.get(c, '') -%}
+                          {%- if x and states[x] is not none -%}{%- set ns.l = ns.l + [x] -%}{%- endif -%}
+                        {%- endfor -%}
+                        {{ ns.l }}
+                  - if: "{{ lampes | count > 0 }}"
+                    then:
+                      - action: light.turn_off
+                        target:
+                          entity_id: "{{ lampes }}"
+              - alias: "PC : la TV allumée s'éteint, sinon PC et TV s'allument"
+                conditions: "{{ emplacement == 'pc' and commande == 'basculer' }}"
+                sequence:
+                  - variables:
+                      tv: "{{ sources.tv }}"
+                      pc: "{{ sources.pc }}"
+                  - choose:
+                      - conditions: "{{ tv != '' and states(tv) in ['on', 'idle', 'playing', 'paused'] }}"
+                        sequence:
+                          - action: media_player.turn_off
+                            target:
+                              entity_id: "{{ tv }}"
+                    default:
+                      - if: "{{ pc != '' and pc.split('.')[0] in ['switch', 'input_boolean'] and states[pc] is not none }}"
+                        then:
+                          - action: homeassistant.turn_on
+                            target:
+                              entity_id: "{{ pc }}"
+                      - if: "{{ tv != '' and states[tv] is not none }}"
+                        then:
+                          - action: media_player.turn_on
+                            target:
+                              entity_id: "{{ tv }}"
+              - alias: "Clim : consigne (mode froid si elle est éteinte)"
+                conditions: "{{ emplacement == 'clim' and commande == 'consigne' and clim != '' }}"
+                sequence:
+                  - action: climate.set_temperature
+                    target:
+                      entity_id: "{{ clim }}"
+                    data:
+                      temperature: "{{ valeur | float(20) }}"
+                      hvac_mode: "{{ 'cool' if states(clim) in ['off', 'unknown', 'unavailable'] else states(clim) }}"
+              - alias: "Clim : éteindre"
+                conditions: "{{ emplacement == 'clim' and commande == 'eteindre' and clim != '' }}"
+                sequence:
+                  - action: climate.turn_off
+                    target:
+                      entity_id: "{{ clim }}"
+              - alias: "Clim : mode"
+                conditions: "{{ emplacement == 'clim' and commande == 'mode' and clim != '' }}"
+                sequence:
+                  - action: climate.set_hvac_mode
+                    target:
+                      entity_id: "{{ clim }}"
+                    data:
+                      hvac_mode: "{{ valeur }}"
+              - alias: "Clim : préréglage"
+                conditions: "{{ emplacement == 'clim' and commande == 'preset' and clim != '' }}"
+                sequence:
+                  - action: climate.set_preset_mode
+                    target:
+                      entity_id: "{{ clim }}"
+                    data:
+                      preset_mode: "{{ valeur }}"
+              - alias: "Clim : ventilation"
+                conditions: "{{ emplacement == 'clim' and commande == 'ventilation' and clim != '' }}"
+                sequence:
+                  - action: climate.set_fan_mode
+                    target:
+                      entity_id: "{{ clim }}"
+                    data:
+                      fan_mode: "{{ valeur }}"
+              - alias: "Clim : oscillation"
+                conditions: "{{ emplacement == 'clim' and commande == 'oscillation' and clim != '' }}"
+                sequence:
+                  - action: climate.set_swing_mode
+                    target:
+                      entity_id: "{{ clim }}"
+                    data:
+                      swing_mode: "{{ valeur }}"
+              - alias: "TV : marche / arrêt"
+                conditions: "{{ emplacement == 'tv' and commande == 'alimentation' }}"
+                sequence:
+                  - if: "{{ sources.tv_telecommande != '' and states[sources.tv_telecommande] is not none }}"
+                    then:
+                      - action: remote.toggle
+                        target:
+                          entity_id: "{{ sources.tv_telecommande }}"
+                    else:
+                      - if: "{{ sources.tv != '' and states[sources.tv] is not none }}"
+                        then:
+                          - action: media_player.toggle
+                            target:
+                              entity_id: "{{ sources.tv }}"
+              - alias: "TV : touche de la télécommande"
+                conditions: >-
+                  {{ emplacement == 'tv' and commande == 'touche' and sources.tv_telecommande != ''
+                     and states[sources.tv_telecommande] is not none }}
+                sequence:
+                  - action: remote.send_command
+                    target:
+                      entity_id: "{{ sources.tv_telecommande }}"
+                    data:
+                      command: "{{ valeur }}"
+              - alias: "TV : application (script tab5_tv_app, package tab5_tv.yaml)"
+                conditions: "{{ emplacement == 'tv' and commande == 'appli' and states['script.tab5_tv_app'] is not none }}"
+                sequence:
+                  - action: script.tab5_tv_app
+                    data:
+                      app: "{{ valeur }}"
+              - alias: "Volet : ouvrir, fermer, arrêter"
+                conditions: "{{ emplacement == 'volet' and commande in ['ouvrir', 'fermer', 'arreter'] }}"
+                sequence:
+                  - variables:
+                      sens: "{{ {'ouvrir': 'open', 'fermer': 'close', 'arreter': 'stop'}[commande] }}"
+                  - choose:
+                      - alias: "Volet suivi par le package (course simulée)"
+                        conditions: "{{ volet_par_package }}"
+                        sequence:
+                          - action: script.tab5_volet_action
+                            data:
+                              action: "{{ sens }}"
+                      - alias: "Volet qui signale sa course"
+                        conditions: "{{ volet != '' }}"
+                        sequence:
+                          - action: "cover.{{ sens }}_cover"
+                            target:
+                              entity_id: "{{ volet }}"
+
+      - alias: "Clim : son état a changé"
+        conditions: "{{ trigger.id == 'clim' and clim != '' }}"
+        sequence:
+          - action: "esphome.{{ tablette }}_tab5_maj_clim"
+            data:
+              target: "{{ state_attr(clim, 'temperature') | float(20) }}"
+              current: "{{ state_attr(clim, 'current_temperature') | float(20) }}"
+              mode: "{{ states(clim) }}"
+              preset: "{{ state_attr(clim, 'preset_mode') | default('none', true) }}"
+              fan: "{{ state_attr(clim, 'fan_mode') | default('auto', true) }}"
+              swing: "{{ state_attr(clim, 'swing_mode') | default('stop', true) }}"
+            continue_on_error: true
+
+      - alias: "Volet qui signale sa course : son état a changé"
+        conditions: "{{ trigger.id == 'volet' and volet != '' and not volet_par_package }}"
+        sequence:
+          - action: "esphome.{{ tablette }}_tab5_maj_volet_etat"
+            data:
+              etat_physique: >-
+                {{ {'opening': 'En_mouvement', 'closing': 'En_mouvement', 'open': 'Ouvert', 'closed': 'Ferme'}.get(states(volet), states(volet)) }}
+            continue_on_error: true
+
+    # Connexion ou changement d'un emplacement : ses valeurs ; à la connexion, aussi la
+    # clim et le volet (sans package), un peu après pour ne pas saturer la tablette.
+    default:
+      - if: "{{ payload != '' }}"
+        then:
+          - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
+            data:
+              payload: "{{ payload }}"
+            continue_on_error: true
+      - if: "{{ trigger.id == 'connexion' and clim != '' }}"
+        then:
+          - delay: "00:00:01"
+          - action: "esphome.{{ tablette }}_tab5_maj_clim"
+            data:
+              target: "{{ state_attr(clim, 'temperature') | float(20) }}"
+              current: "{{ state_attr(clim, 'current_temperature') | float(20) }}"
+              mode: "{{ states(clim) }}"
+              preset: "{{ state_attr(clim, 'preset_mode') | default('none', true) }}"
+              fan: "{{ state_attr(clim, 'fan_mode') | default('auto', true) }}"
+              swing: "{{ state_attr(clim, 'swing_mode') | default('stop', true) }}"
+            continue_on_error: true
+      - if: "{{ trigger.id == 'connexion' and volet != '' and not volet_par_package }}"
+        then:
+          - delay: "00:00:01"
+          - action: "esphome.{{ tablette }}_tab5_maj_volet_etat"
+            data:
+              etat_physique: >-
+                {{ {'opening': 'En_mouvement', 'closing': 'En_mouvement', 'open': 'Ouvert', 'closed': 'Ferme'}.get(states(volet), states(volet)) }}
+            continue_on_error: true

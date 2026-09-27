@@ -4,10 +4,11 @@ sans Home Assistant, pour tester le projet en quelques minutes.
 
 Le firmware Tab5 est *push-only* (docs/decisions/0001-push-only-zero-polling.md) :
 il ne fait que réagir aux appels de service ESPHome natifs (`tab5_maj_*`, cf.
-Tab5/tab5-api-logic.yaml) et aux mises à jour d'entités "miroir" que Home
-Assistant lui envoie normalement. Ce script se fait passer pour HA via
-`aioesphomeapi` (la même librairie que l'intégration ESPHome de HA) — sans
-jamais installer ni configurer de vrai Home Assistant.
+Tab5/tab5-api-logic.yaml). Depuis le lot 6a (ADR-0019), les appareils de la maison
+arrivent eux aussi par une poussée, `tab5_maj_emplacements`, que le blueprint HA
+envoie normalement. Ce script se fait passer pour HA via `aioesphomeapi` (la même
+librairie que l'intégration ESPHome de HA) — sans jamais installer ni configurer
+de vrai Home Assistant.
 
 Ne touche à aucun fichier du firmware (Tab5/*.yaml, tab5_custom.cpp/.h) ni à
 Tab5/user_entities.yaml : flashez avec Tab5/user_entities.example.yaml tel
@@ -33,12 +34,12 @@ from scenarios import (
     MAISON_MINIMALE,
     SCENES,
     build_alerte_payload,
+    build_emplacements_payload,
     build_zones_absentes,
     code_pluie,
     build_heures_bulk_payload,
     build_pluie_1h_bulk_payload,
     build_jours_bulk_payload,
-    mirror_state_for,
 )
 
 logger = logging.getLogger("demo_pusher")
@@ -52,6 +53,7 @@ SERVICES_ATTENDUS = (
     "tab5_maj_meteo_actuelle", "tab5_maj_probabilites", "tab5_maj_alerte_meteo_france",
     "tab5_maj_pluie_1h_bulk", "tab5_maj_previsions_heures_bulk", "tab5_maj_previsions_jours_bulk",
     "tab5_maj_clim", "tab5_maj_volet_etat", "tab5_maj_info_texte", "tab5_maj_zones",
+    "tab5_maj_emplacements",
 )
 
 
@@ -70,6 +72,7 @@ def _lire_cle_depuis_secrets(repo_root: Path) -> str | None:
 def _dry_run(absentes: frozenset) -> None:
     """Affiche les payloads de chaque scène sans se connecter à un appareil."""
     print("tab5_maj_zones:", {"absentes": build_zones_absentes(absentes)})
+    print("tab5_maj_emplacements:", build_emplacements_payload(absentes))
     for scene in SCENES:
         print(f"\n=== Scène : {scene.nom} ===")
         print("tab5_maj_meteo_actuelle:", {
@@ -159,21 +162,10 @@ async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozen
     # le bandeau des horaires de la poussée des jours.
     texte, couleur, meteo_id = scene.info_texte
     await appeler("tab5_maj_info_texte", texte=texte, couleur=couleur, meteo_id=meteo_id)
+    await asyncio.sleep(DELAI_ENTRE_BLOCS)
 
-
-def _gerer_demande_etat(client, absentes: frozenset):
-    """Callback appelé quand le device demande l'état d'une entité miroir (au
-    moment de l'abonnement) — on répond immédiatement avec la valeur démo. Une
-    entité de zone retirée (`--maison-minimale`) ne reçoit rien, comme dans HA."""
-
-    def _repondre(entity_id: str, attribute: str | None) -> None:
-        valeur = mirror_state_for(entity_id, absentes)
-        if valeur is None:
-            logger.info("Entité miroir %s inconnue ou retirée — rien envoyé", entity_id)
-            return
-        client.send_home_assistant_state(entity_id, attribute, valeur)
-
-    return _repondre
+    # Emplacements de la maison (lot 6a), comme le blueprint à chaque connexion.
+    await appeler("tab5_maj_emplacements", payload=build_emplacements_payload(absentes))
 
 
 def _gerer_appel_service(interactive: bool, repondre_zones):
@@ -184,7 +176,7 @@ def _gerer_appel_service(interactive: bool, repondre_zones):
     (automatisation tab5_zones_reponse) : repondre_zones() la planifie.
 
     Limitation assumée (voir docs/demo_mode.md) : le popup lumière cible
-    id(current_light_entity), un global interne au firmware réglé par appui
+    id(current_light_slot), un global interne au firmware réglé par appui
     long — invisible depuis le protocole natif. On loggue l'intention (preuve
     que le tactile fonctionne) sans simuler d'état de retour à l'écran.
     """
@@ -194,6 +186,11 @@ def _gerer_appel_service(interactive: bool, repondre_zones):
             repondre_zones()
             return
         if not interactive:
+            return
+        if getattr(call, "is_event", False) and call.service == "esphome.tab5_action":
+            # Commande d'un emplacement (lot 6a) : le blueprint l'appliquerait à
+            # l'entité choisie ; la démo la journalise seulement.
+            logger.info("Commande -> %s", dict(call.data))
             return
         logger.info("Bouton pressé -> %s %s", call.service, dict(call.data))
 
@@ -226,10 +223,13 @@ async def _run(host: str, key: str, interval: float, interactive: bool, absentes
         taches.add(tache)
         tache.add_done_callback(taches.discard)
 
+    # Plus d'abonnement de la tablette à des entités (lot 6a) : on_state_sub reste
+    # branché pour un firmware plus ancien, sans rien y répondre.
     client.subscribe_home_assistant_states_and_services(
         on_state=lambda state: None,
         on_service_call=_gerer_appel_service(interactive, repondre_zones),
-        on_state_sub=_gerer_demande_etat(client, absentes),
+        on_state_sub=lambda entity_id, attribute: logger.info(
+            "Abonnement à %s demandé par un firmware d'avant le lot 6a — ignoré", entity_id),
     )
     repondre_zones()
 

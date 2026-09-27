@@ -1,22 +1,28 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file tab5-sensors-domotique.yaml
-# @role Entités domotique poussées par HA : plantes (moisture), lumières,
-#       températures/humidité, batterie téléphone, présence PC, audio
+# @role Emplacements de la maison poussés par HA : plantes (humidité + détails),
+#       lumières, températures/humidité, batterie du téléphone, PC, TV ; et l'audio
 #       (ampli, jack, wake word).
+# @emplacements Depuis le lot 6a (ADR-0019), la tablette ne connaît plus aucune entité
+#       de la maison : ces capteurs sont des `template` internes, sans entity_id. Le
+#       blueprint « Tab5 — emplacements » leur pousse les valeurs par l'action
+#       tab5_maj_emplacements (tab5-api-logic.yaml), qui les publie par clé (lumiere_1,
+#       pot_3_ec…) ; leurs on_value n'ont pas changé. Ajouter un emplacement = un
+#       capteur ici, sa ligne dans la table de tab5_maj_emplacements et son entrée dans
+#       le blueprint (tests/test_emplacements.py compare).
 # @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
 #                         Les blocs on_value: doivent se contenter d'appeler des fonctions
 #                         C++ depuis tab5_custom.cpp (ex: update_light_card_ui(...) ).
 # @anti_pattern_evité Ne pas utiliser std::string ou to_string() ici (hot-path).
-# @ai_instruction Si l'utilisateur demande d'ajouter un nouveau capteur de température,
-#                 génère l'entité platform: homeassistant, et dans on_value, appelle
-#                 simplement update_temp_ui(id(mon_label), x); Ne génère pas de lv_label_set_text ici.
+# @ai_instruction Nouveau capteur de température : un `platform: template` (voir plus
+#                 haut), et dans on_value, appeler simplement update_temp_ui(id(mon_label), x);
+#                 Ne génère pas de lv_label_set_text ici.
 #                 (Scission de tab5-sensors.yaml le 14/07/2026 ; entités
 #                 système dans tab5-sensors-diagnostics.yaml.)
 # @zones Chaque capteur qui porte une zone de l'écran (lumières, PC, TV, téléphone,
 #        salon, serre, pots) commence son on_value par zone_vue() : une donnée reçue
 #        fait revenir une zone que HA avait déclarée absente (lot 5, tab5-zones.yaml).
-#        Les valeurs par défaut des entity_… sont dans tab5-zones.yaml.
 # ============================================================================
 switch:
   - platform: gpio
@@ -71,9 +77,9 @@ interval:
           id(headphone_detect)->loop();
 
 text_sensor:
-  - platform: homeassistant
+  - platform: template
     id: pc_status
-    entity_id: ${entity_tracker_pc}
+    update_interval: never
     on_value:
       - lambda: |-
           if (zone_vue(Zone::PC)) id(tab5_zones_apply).execute();
@@ -81,50 +87,50 @@ text_sensor:
           update_pc_status_ui(x == "home" || x == "on", id(icon_pc), id(icon_sw0), id(lbl_sw0_state));
 
   # TV → icône moniteur existante sur la carte J0 (icon_card_pc), pas une 4e icône bandeau
-  - platform: homeassistant
+  - platform: template
     id: tv_status
-    entity_id: ${entity_tracker_tv}
+    update_interval: never
     on_value:
       - lambda: |-
           if (zone_vue(Zone::TV)) id(tab5_zones_apply).execute();
           bool active = (x == "home" || x == "on" || x == "playing" || x == "idle" || x == "paused");
           set_icon_active_ui(id(icon_card_pc), active, UIColor::SUCCESS, UIColor::TEXT_DIM);
 
-  - platform: homeassistant
+  - platform: template
     id: light_chambre_state
-    entity_id: ${entity_light_chambre}
+    update_interval: never
     on_value:
       # Bloc factorise dans update_light_card_ui() (#T164, ex-triplique chambre/salon/led)
       - lambda: |-
           if (zone_vue(Zone::LUMIERE_1)) id(tab5_zones_apply).execute();
           update_light_card_ui(id(icon_card_lit_j2), id(icon_card_light_j2), id(icon_sw2), id(lbl_sw2_state),
-              id(btn_light_power_icon), id(current_light_entity), "${entity_light_chambre}", x == "on");
+              id(btn_light_power_icon), id(current_light_slot), "lumiere_1", x == "on");
           update_light_selector_icon(id(icon_light_sel_0), x == "on");
 
-  - platform: homeassistant
+  - platform: template
     id: light_salon_state
-    entity_id: ${entity_light_salon}
+    update_interval: never
     on_value:
       - lambda: |-
           if (zone_vue(Zone::LUMIERE_2)) id(tab5_zones_apply).execute();
           update_light_card_ui(id(icon_card_salon_j3), id(icon_card_light_j3), id(icon_sw3), id(lbl_sw3_state),
-              id(btn_light_power_icon), id(current_light_entity), "${entity_light_salon}", x == "on");
+              id(btn_light_power_icon), id(current_light_slot), "lumiere_2", x == "on");
           update_light_selector_icon(id(icon_light_sel_1), x == "on");
 
-  - platform: homeassistant
+  - platform: template
     id: light_led_state
-    entity_id: ${entity_light_bureau}
+    update_interval: never
     on_value:
       - lambda: |-
           if (zone_vue(Zone::LUMIERE_3)) id(tab5_zones_apply).execute();
           update_light_card_ui(id(icon_card_led_j4), id(icon_card_light_j4), id(icon_sw4), id(lbl_sw4_state),
-              id(btn_light_power_icon), id(current_light_entity), "${entity_light_bureau}", x == "on");
+              id(btn_light_power_icon), id(current_light_slot), "lumiere_3", x == "on");
           update_light_selector_icon(id(icon_light_sel_2), x == "on");
 
 # Détails pots (popup appui long) : les 4 capteurs × 5 pots viennent d'UN
 # package paramétré (pot_sensors.yaml, règle 5) inclus 5 fois — ESPHome
 # concatène les listes `sensor:` des packages (un `- !include` dans une liste
-# imbriquerait la liste). Un 6ᵉ pot = une ligne ici + ses 4 clés entity_plante_6_*.
+# imbriquerait la liste). Un 6ᵉ pot : voir l'en-tête de pot_sensors.yaml.
 packages:
   pot_sensors_1: !include { file: pot_sensors.yaml, vars: { n: 1 } }
   pot_sensors_2: !include { file: pot_sensors.yaml, vars: { n: 2 } }
@@ -136,71 +142,68 @@ sensor:
   # Luminosité (attribut brightness 0-255) des 3 lumières — synchronise l'arc du popup
   # lumière quand il est ouvert sur cette entité (helper inerte popup fermé / pendant
   # un drag utilisateur — voir sync_light_popup_brightness, tab5_custom.cpp).
-  - platform: homeassistant
+  - platform: template
     id: light_chambre_brightness
-    entity_id: ${entity_light_chambre}
-    attribute: brightness
+    update_interval: never
     on_value:
       - lambda: |-
-          if (id(current_light_entity) == "${entity_light_chambre}")
+          if (id(current_light_slot) == "lumiere_1")
             sync_light_popup_brightness(id(light_options_popup), id(arc_light_brightness),
                 id(lbl_light_brightness_val), x);
 
-  - platform: homeassistant
+  - platform: template
     id: light_salon_brightness
-    entity_id: ${entity_light_salon}
-    attribute: brightness
+    update_interval: never
     on_value:
       - lambda: |-
-          if (id(current_light_entity) == "${entity_light_salon}")
+          if (id(current_light_slot) == "lumiere_2")
             sync_light_popup_brightness(id(light_options_popup), id(arc_light_brightness),
                 id(lbl_light_brightness_val), x);
 
-  - platform: homeassistant
+  - platform: template
     id: light_led_brightness
-    entity_id: ${entity_light_bureau}
-    attribute: brightness
+    update_interval: never
     on_value:
       - lambda: |-
-          if (id(current_light_entity) == "${entity_light_bureau}")
+          if (id(current_light_slot) == "lumiere_3")
             sync_light_popup_brightness(id(light_options_popup), id(arc_light_brightness),
                 id(lbl_light_brightness_val), x);
 
-  - platform: homeassistant
+  - platform: template
     id: phone_battery
-    entity_id: ${entity_phone_battery}
+    update_interval: never
     on_value:
       - lambda: |-
           if (zone_vue(Zone::TELEPHONE)) id(tab5_zones_apply).execute();
           // Echelle de couleur factorisee dans get_battery_color (partagee popup pots)
           set_icon_color_ui(id(icon_phone), get_battery_color(x));
 
-  - platform: homeassistant
+  - platform: template
     id: temp_serre
-    entity_id: ${entity_temp_plante}
+    update_interval: never
     on_value:
       - lambda: |-
           if (zone_vue(Zone::SERRE)) id(tab5_zones_apply).execute();
           update_temp_ui(id(current_serre), x); // AXE1/Phase 3 : helper centralise
 
-  - platform: homeassistant
+  - platform: template
     id: temp_salon
-    entity_id: ${entity_temp_salon}
+    update_interval: never
     on_value:
       - lambda: |-
           if (zone_vue(Zone::SALON)) id(tab5_zones_apply).execute();
           update_temp_ui(id(val_temp_salon), x); // Gradient continu colorimetrique (helper centralise)
 
-  - platform: homeassistant
+  - platform: template
     id: hum_salon
-    entity_id: ${entity_hum_salon}
+    update_interval: never
     on_value:
       - lambda: |-
           if (!isnan(x)) set_icon_color_ui(id(icon_salon), get_humidity_color(x));
 
-  - platform: homeassistant
+  - platform: template
     id: moisture_1
-    entity_id: ${entity_plante_1}
+    update_interval: never
     on_value: &moisture_on_value
       # Tri dynamique des 4 slots plantes a chaque mise a jour (bloc partage via ancre YAML, cf. #T164)
       - lambda: |-
@@ -231,22 +234,22 @@ sensor:
           update_pots_popup_moisture_ui(vals, cards);
           if (zones_changees) id(tab5_zones_apply).execute();
 
-  - platform: homeassistant
+  - platform: template
     id: moisture_2
-    entity_id: ${entity_plante_2}
+    update_interval: never
     on_value: *moisture_on_value
 
-  - platform: homeassistant
+  - platform: template
     id: moisture_3
-    entity_id: ${entity_plante_3}
+    update_interval: never
     on_value: *moisture_on_value
 
-  - platform: homeassistant
+  - platform: template
     id: moisture_4
-    entity_id: ${entity_plante_4}
+    update_interval: never
     on_value: *moisture_on_value
 
-  - platform: homeassistant
+  - platform: template
     id: moisture_5
-    entity_id: ${entity_plante_5}
+    update_interval: never
     on_value: *moisture_on_value

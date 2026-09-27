@@ -55,8 +55,7 @@ obj:
                     height: 130
                     styles: style_invisible
                     on_short_click:
-                      - homeassistant.service:
-                          service: script.allumer_pc_tv
+                      - script.execute: { id: tab5_action, emplacement: pc, commande: basculer, valeur: "" }
                     on_long_press:
                       # Sans TV (zone absente, lot 5), la télécommande n'a rien à piloter.
                       - lambda: |-
@@ -123,10 +122,7 @@ obj:
                     height: 130
                     styles: style_invisible
                     on_short_click:
-                      - homeassistant.service:
-                          service: light.toggle
-                          data:
-                            entity_id: ${entity_light_chambre}
+                      - script.execute: { id: tab5_action, emplacement: lumiere_1, commande: basculer, valeur: "" }
 
     # Card 3 : Salon
     - obj:
@@ -157,10 +153,7 @@ obj:
                     height: 130
                     styles: style_invisible
                     on_short_click:
-                      - homeassistant.service:
-                          service: light.toggle
-                          data:
-                            entity_id: ${entity_light_salon}
+                      - script.execute: { id: tab5_action, emplacement: lumiere_2, commande: basculer, valeur: "" }
 
     # Card 4 : LEDs Bureau
     - obj:
@@ -191,5 +184,4 @@ obj:
                     height: 130
                     styles: style_invisible
                     on_short_click:
-                      - homeassistant.service:
-                          service: script.allumer_leds
+                      - script.execute: { id: tab5_action, emplacement: lumiere_3, commande: basculer, valeur: "" }

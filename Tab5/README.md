@@ -134,6 +134,7 @@ Garde-fou : `tools/check_tab5_registry.py`.
 | `tab5_maj_calendrier_mois` | annee, mois, codes, heures, details (strings) | Popup calendrier : bitmask 2 hex/jour (travail/férié/vacances scolaires/RDV/anniversaire) + 31 champs d'heures de travail + libellés de détail — mis en cache, re-rendu si le mois est affiché (`cal_store_month_data()`/`cal_render_month()`) |
 | `tab5_maj_calendrier_jour` | date, payload (strings) | Popup calendrier : lignes de détail du jour tapé "type\|texte;..." (`cal_render_day_detail()`), ignoré si le détail affiché a changé |
 | `tab5_maj_zones` | absentes (string) | Zones optionnelles (lot 5, ADR-0018) : clés des zones dont l'entité n'existe pas dans HA (`clim,pot_4,…`), réponse à l'événement `esphome.tab5_zones` (`zones_reponse_ha()`, `tab5-zones.yaml`) |
+| `tab5_maj_emplacements` | payload (string) | Emplacements de la maison (lot 6a, ADR-0019) : « clé\|état\|valeur;… » poussé par le blueprint « Tab5 — emplacements » ; chaque clé est publiée dans le capteur `template` qui la porte (`emplacements_appliquer()`). Les commandes repartent en événement `esphome.tab5_action` (script `tab5_action`) |
 
 ## Globals principaux (`tab5-globals.yaml`)
 
@@ -146,7 +147,7 @@ Garde-fou : `tools/check_tab5_registry.py`.
 | `volet_target_open`, `volet_en_mouvement` | bool | état volet |
 | `plan_ligne_1`, `plan_ligne_2` | string | texte planning brut |
 | `ha_alert_id_0…3` | string | ids des bandeaux alertes/infos HA (`tab5_maj_alertes_ha_bulk`) — leur présence et le panneau affiché vivent dans `g_central_ctx` (voir plus haut) ; `tab5_dismissed_local` mémorise les ids masqués au tap |
-| `current_light_entity` | string | entité lumière pilotée par le popup lumière (`tab5_light_popup_show`) |
+| `current_light_slot` | string | emplacement de la lampe pilotée par le popup lumière (`lumiere_1` à `lumiere_3`, posé par `tab5_light_popup_show` ; lot 6a) |
 | `va_stop_armed` | bool | modèle wake word « Stop » armé (volet en mouvement) |
 | `system_volume`, `system_muted` | float/bool | volume haut-parleur |
 | `cal_view_year`, `cal_view_month`, `cal_detail_date` | int/int/string | popup calendrier : mois affiché + date du détail ouvert (le cache mensuel vit en `static` dans `tab5_calendar.cpp`) |

@@ -1,21 +1,20 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file user_entities.example.yaml
-# @role Modèle public des entity IDs Home Assistant (substitutions ESPHome).
+# @role Modèle public des réglages de compilation (substitutions ESPHome).
 # @ai_instruction Copier vers Tab5/user_entities.yaml puis adapter à votre HA.
 #   Ne jamais committer user_entities.yaml (gitignoré, comme secrets.yaml).
 # ============================================================================
 #
 # Setup (une fois après clone) :
 #   cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-# Puis remplacez chaque valeur par vos entity IDs (Réglages → Entités dans HA).
 #
-# Pas de clim, pas de TV, moins de lumières ou de pots ? Mettez la ligne en
-# commentaire : la zone disparaît de l'écran, avec ses boutons (lot 5, Tab5/tab5-zones.yaml).
-# Il faut le package HA tab5_push.yaml : c'est lui qui confirme qu'une entité n'existe
-# pas. Une entité en panne (unavailable) garde sa zone, avec « -- ». Le capteur
-# « Zones masquées » de la tablette, dans HA, dit ce qui a disparu : une faute de
-# frappe dans un entity ID s'y voit.
+# Les appareils de la maison (lumières, clim, volet, PC, TV, téléphone, températures,
+# plantes) ne se règlent plus ici depuis la 3.0 (lot 6a, ADR-0019) : ils se choisissent
+# dans Home Assistant, à la souris, avec le blueprint « Tab5 — emplacements »
+# (HomeAssistant_Config/blueprints/automation/tab5/). Un emplacement laissé vide est une
+# zone absente de l'écran. Les anciennes clés entity_light_… etc. d'un fichier existant
+# sont simplement ignorées.
 
 # --- Révision du Tab5 : la puce écran inscrite sur l'autocollant au dos, au-dessus du
 #     logo Espressif. st7123 (défaut si la ligne reste commentée, testée au quotidien),
@@ -32,31 +31,13 @@
 #     « Europe/Berlin »…). Défaut si la ligne reste commentée : Europe/Paris. ---
 # tab5_fuseau: Europe/Paris
 
-entity_tracker_pc: switch.your_pc_or_device_tracker
-entity_tracker_tv: media_player.your_tv
-entity_tv_remote: remote.your_tv
-entity_phone_battery: sensor.your_phone_battery
-
-# --- Lumières ---
-entity_light_chambre: light.your_bedroom_light
-entity_light_salon: light.your_living_room_light
-entity_light_bureau: light.your_office_light
-
-# --- Climatisation ---
-entity_climate_salon: climate.your_living_room_climate
-
-# --- Assistant vocal ---
+# --- Assistant vocal : le select de pipeline de la tablette dans HA. ---
 entity_tab5_pipeline_select: select.your_tab5_assistant_pipeline
 
 # --- Console Système (bouton "MAJ Écran" de la carte GESTION) ---
 # Flag qui conditionne les automations de push + automation de push écran
 entity_primary_active: input_boolean.your_primary_active_flag
 entity_push_automation: automation.your_tab5_push_automation
-
-# --- Température & humidité ---
-entity_temp_salon: sensor.your_living_room_temperature
-entity_hum_salon: sensor.your_living_room_humidity
-entity_temp_plante: sensor.your_plant_area_temperature
 
 # --- Entités exposées par la tablette ELLE-MÊME (satellite vocal, lecteur média).
 #     HA les dérive du nom de l'appareil ; les défauts (tab5-scripts.yaml) valent
@@ -65,36 +46,6 @@ entity_temp_plante: sensor.your_plant_area_temperature
 #     l'interruption vocale et l'annonce des rendez-vous échouent en silence. ---
 # entity_tab5_satellite: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
 # entity_tab5_media_player: media_player.m5stack_tab5_home_assistant_hmi_tab5_media_player
-
-# --- Plantes (humidité du sol, jusqu'à 5 capteurs) ---
-entity_plante_1: sensor.your_plant_1_moisture
-entity_plante_2: sensor.your_plant_2_moisture
-entity_plante_3: sensor.your_plant_3_moisture
-entity_plante_4: sensor.your_plant_4_moisture
-entity_plante_5: sensor.your_plant_5_moisture
-
-# --- Détails pots (popup appui long) : conductivité EC, éclairement, température,
-#     batterie de chaque capteur. Capteurs BLE type Xiaomi/HHCC Flower Care. ---
-entity_plante_1_ec: sensor.your_plant_1_conductivity
-entity_plante_1_lux: sensor.your_plant_1_illuminance
-entity_plante_1_temp: sensor.your_plant_1_temperature
-entity_plante_1_bat: sensor.your_plant_1_battery
-entity_plante_2_ec: sensor.your_plant_2_conductivity
-entity_plante_2_lux: sensor.your_plant_2_illuminance
-entity_plante_2_temp: sensor.your_plant_2_temperature
-entity_plante_2_bat: sensor.your_plant_2_battery
-entity_plante_3_ec: sensor.your_plant_3_conductivity
-entity_plante_3_lux: sensor.your_plant_3_illuminance
-entity_plante_3_temp: sensor.your_plant_3_temperature
-entity_plante_3_bat: sensor.your_plant_3_battery
-entity_plante_4_ec: sensor.your_plant_4_conductivity
-entity_plante_4_lux: sensor.your_plant_4_illuminance
-entity_plante_4_temp: sensor.your_plant_4_temperature
-entity_plante_4_bat: sensor.your_plant_4_battery
-entity_plante_5_ec: sensor.your_plant_5_conductivity
-entity_plante_5_lux: sensor.your_plant_5_illuminance
-entity_plante_5_temp: sensor.your_plant_5_temperature
-entity_plante_5_bat: sensor.your_plant_5_battery
 
 # --- Layout météo (généralement inchangé) ---
 meteo_cell_width: "230"

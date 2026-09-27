@@ -65,7 +65,7 @@ globals:
     initial_value: 'false'
     restore_value: false
 
-  - id: current_light_entity
+  - id: current_light_slot
     type: std::string
     initial_value: '""'
   # Contenu et panneau courant de la carte centrale (pluie, vigilance, info,

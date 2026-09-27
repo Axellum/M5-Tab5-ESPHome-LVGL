@@ -15,59 +15,56 @@ import datetime as _dt
 from dataclasses import dataclass, field
 
 # ---------------------------------------------------------------------------
-# Entités "miroir" (platform: homeassistant, Tab5/tab5-sensors-domotique.yaml).
-# Clés = mêmes noms que Tab5/user_entities.example.yaml ; le script démo est
-# fait pour être utilisé avec ce fichier d'exemple tel quel (pas de vrai HA).
+# Emplacements de la maison (lot 6a, ADR-0019) : la tablette ne connaît plus
+# d'entité ; HA (le blueprint « Tab5 — emplacements ») lui pousse chaque
+# emplacement par tab5_maj_emplacements, « clé|état|valeur;… ». La démo fait de
+# même. Clés = table de tab5_maj_emplacements (Tab5/tab5-api-logic.yaml),
+# vérifiées par tests/test_demo.py. Valeurs statiques pour la session : la
+# variation vient des scènes météo qui tournent.
 # ---------------------------------------------------------------------------
 
-MIRROR_ENTITIES: dict[str, str] = {
-    "entity_tracker_pc": "switch.your_pc_or_device_tracker",
-    "entity_tracker_tv": "media_player.your_tv",
-    "entity_phone_battery": "sensor.your_phone_battery",
-    "entity_light_chambre": "light.your_bedroom_light",
-    "entity_light_salon": "light.your_living_room_light",
-    "entity_light_bureau": "light.your_office_light",
-    "entity_temp_salon": "sensor.your_living_room_temperature",
-    "entity_hum_salon": "sensor.your_living_room_humidity",
-    "entity_temp_plante": "sensor.your_plant_area_temperature",
-    "entity_plante_1": "sensor.your_plant_1_moisture",
-    "entity_plante_2": "sensor.your_plant_2_moisture",
-    "entity_plante_3": "sensor.your_plant_3_moisture",
-    "entity_plante_4": "sensor.your_plant_4_moisture",
-    "entity_plante_5": "sensor.your_plant_5_moisture",
+EMPLACEMENTS: dict[str, tuple[str, str]] = {
+    # clé : (état tel que HA l'envoie, valeur affichée — luminosité 0-255, %, °C…)
+    "lumiere_1": ("off", "nan"),
+    "lumiere_2": ("on", "180"),
+    "lumiere_3": ("off", "nan"),
+    "pc": ("on", "nan"),
+    "tv": ("off", "nan"),
+    "telephone": ("68", "68"),
+    "salon": ("21.4", "21.4"),
+    "salon_hum": ("48", "48"),
+    "serre": ("22.1", "22.1"),
+    # Un pot volontairement asséché pour illustrer le tri dynamique des emplacements
+    # plantes (sort_and_update_moisture_slots).
+    "pot_1": ("61", "61"),
+    "pot_2": ("12", "12"),
+    "pot_3": ("74", "74"),
+    "pot_4": ("45", "45"),
+    "pot_5": ("38", "38"),
 }
-
-# entity_id -> valeur d'état envoyée (texte pour text_sensor "on"/"off"/"home",
-# nombre en string pour sensor). Statique pour la session : la variation vient
-# des scènes météo/planning qui tournent, pas de ces valeurs domotique.
-MIRROR_STATE_VALUES: dict[str, str] = {
-    MIRROR_ENTITIES["entity_tracker_pc"]: "on",
-    MIRROR_ENTITIES["entity_tracker_tv"]: "off",
-    MIRROR_ENTITIES["entity_phone_battery"]: "68",
-    MIRROR_ENTITIES["entity_light_chambre"]: "off",
-    MIRROR_ENTITIES["entity_light_salon"]: "on",
-    MIRROR_ENTITIES["entity_light_bureau"]: "off",
-    MIRROR_ENTITIES["entity_temp_salon"]: "21.4",
-    MIRROR_ENTITIES["entity_hum_salon"]: "48",
-    MIRROR_ENTITIES["entity_temp_plante"]: "22.1",
-    # Un pot volontairement asséché pour illustrer le tri dynamique des slots plantes
-    # (sort_and_update_moisture_slots, tab5-sensors-domotique.yaml).
-    MIRROR_ENTITIES["entity_plante_1"]: "61",
-    MIRROR_ENTITIES["entity_plante_2"]: "12",
-    MIRROR_ENTITIES["entity_plante_3"]: "74",
-    MIRROR_ENTITIES["entity_plante_4"]: "45",
-    MIRROR_ENTITIES["entity_plante_5"]: "38",
-}
+for _n, (_ec, _lux, _temp, _bat) in enumerate(
+        [(350, 2400, 21.8, 90), (120, 800, 22.5, 35), (410, 5200, 23.1, 76),
+         (280, 1500, 21.2, 18), (300, 3100, 22.0, 64)], start=1):
+    EMPLACEMENTS[f"pot_{_n}_ec"] = (str(_ec), str(_ec))
+    EMPLACEMENTS[f"pot_{_n}_lux"] = (str(_lux), str(_lux))
+    EMPLACEMENTS[f"pot_{_n}_temp"] = (str(_temp), str(_temp))
+    EMPLACEMENTS[f"pot_{_n}_bat"] = (str(_bat), str(_bat))
 
 
-def mirror_state_for(entity_id: str, absentes: frozenset = frozenset()) -> str | None:
-    """Valeur démo pour une entité miroir, ou None si inconnue (ignorée en silence,
-    ex. si le device a été flashé avec un user_entities.yaml personnalisé) ou si sa
-    zone est retirée (`--maison-minimale` : une entité absente de HA n'envoie rien)."""
-    for cle in absentes:
-        if MIRROR_ENTITIES.get(ZONE_ENTITES.get(cle, "")) == entity_id:
-            return None
-    return MIRROR_STATE_VALUES.get(entity_id)
+def zone_de(cle: str) -> str:
+    """Zone d'une clé d'emplacement : pot_3_ec -> pot_3, salon_hum -> salon."""
+    if cle.startswith("pot_"):
+        return cle[:5]
+    return "salon" if cle == "salon_hum" else cle
+
+
+def build_emplacements_payload(absentes: frozenset = frozenset()) -> str:
+    """tab5_maj_emplacements : tous les emplacements, sauf ceux d'une zone retirée
+    (`--maison-minimale` : comme le blueprint, rien n'est poussé pour une case vide)."""
+    payload = "".join(f"{cle}|{etat}|{valeur};" for cle, (etat, valeur) in EMPLACEMENTS.items()
+                      if zone_de(cle) not in absentes)
+    assert len(payload.encode("utf-8")) < 32 * 1024, "au-delà d'un message API ESPHome (32 Kio)"
+    return payload
 
 
 # ---------------------------------------------------------------------------
@@ -76,22 +73,9 @@ def mirror_state_for(entity_id: str, absentes: frozenset = frozenset()) -> str |
 # Clés = kCles de Tab5/tab5_zones.cpp (tests/test_demo.py vérifie la concordance).
 # ---------------------------------------------------------------------------
 
-# Clé de zone suivie par la tablette -> clé de user_entities (donc de MIRROR_ENTITIES).
-ZONE_ENTITES: dict[str, str] = {
-    "lumiere_1": "entity_light_chambre",
-    "lumiere_2": "entity_light_salon",
-    "lumiere_3": "entity_light_bureau",
-    "pc": "entity_tracker_pc",
-    "tv": "entity_tracker_tv",
-    "telephone": "entity_phone_battery",
-    "salon": "entity_temp_salon",
-    "serre": "entity_temp_plante",
-    "pot_1": "entity_plante_1",
-    "pot_2": "entity_plante_2",
-    "pot_3": "entity_plante_3",
-    "pot_4": "entity_plante_4",
-    "pot_5": "entity_plante_5",
-}
+# Zones suivies par la tablette, dans l'ordre de l'enum Zone.
+ZONES_SUIVIES = ("lumiere_1", "lumiere_2", "lumiere_3", "pc", "tv", "telephone", "salon",
+                 "serre", "pot_1", "pot_2", "pot_3", "pot_4", "pot_5")
 # Zones que seul HA connaît : il les ajoute lui-même à sa réponse.
 ZONES_HA = ("clim", "volet", "planning")
 
@@ -103,10 +87,9 @@ MAISON_MINIMALE: frozenset = frozenset({
     "clim", "volet", "planning",
 })
 
-
 def build_zones_absentes(absentes: frozenset) -> str:
     """Réponse tab5_maj_zones : clés triées dans l'ordre de la tablette."""
-    ordre = list(ZONE_ENTITES) + list(ZONES_HA)
+    ordre = list(ZONES_SUIVIES) + list(ZONES_HA)
     inconnues = set(absentes) - set(ordre)
     assert not inconnues, f"clés de zone inconnues de la tablette : {sorted(inconnues)}"
     return ",".join(c for c in ordre if c in absentes)

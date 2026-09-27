@@ -1,65 +1,22 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file tab5-zones.yaml
-# @role Zones optionnelles (lot 5 de l'audit « ouverture », 27/09/2026) : une zone dont
-#       l'entité n'existe pas dans Home Assistant disparaît de l'écran, avec ses boutons.
-#       Ce fichier porte :
-#       - les valeurs par défaut des entités : une ligne mise en commentaire dans
-#         Tab5/user_entities.yaml donne une entité qui n'existe pas, donc une zone absente ;
+# @role Zones optionnelles (lot 5 de l'audit « ouverture », 27/09/2026) : une zone sans
+#       entité disparaît de l'écran, avec ses boutons. Depuis le lot 6a (ADR-0019), une
+#       zone est absente quand son emplacement n'est pas choisi dans le blueprint
+#       « Tab5 — emplacements », ou que l'entité choisie n'existe pas. Ce fichier porte :
 #       - la demande à HA (événement esphome.tab5_zones, une fois par connexion) ;
 #       - l'application aux widgets et le capteur de diagnostic « Zones masquées ».
-#       HA répond par l'action tab5_maj_zones (tab5-api-logic.yaml), depuis
-#       l'automatisation tab5_zones_reponse du package HomeAssistant_Config/packages/tab5_push.yaml.
+#       Le blueprint répond par l'action tab5_maj_zones (tab5-api-logic.yaml).
 # @architecture_constraint La décision vit dans tab5_zones.cpp (pourquoi la tablette ne
 #       décide pas seule : tab5_custom.h, « Zones optionnelles »). Aucun lv_* ici : le
 #       script pose les pointeurs et appelle zones_apply_ui(). Chargé APRÈS tab5_lvgl :
 #       il référence des widgets.
-# @ai_instruction Nouvelle zone suivie par la tablette = sa valeur par défaut ci-dessous,
-#       sa paire « clé=entité » dans tab5_zones_demande (ordre de l'enum Zone), sa clé dans
-#       kCles (tab5_zones.cpp) et un zone_vue() dans le on_value de son capteur
-#       (tab5-sensors-domotique.yaml). tests/test_zones.py vérifie la concordance.
+# @ai_instruction Nouvelle zone suivie par la tablette = sa clé dans tab5_zones_demande
+#       (ordre de l'enum Zone) et dans kCles (tab5_zones.cpp), un zone_vue() dans le
+#       on_value de son capteur (tab5-sensors-domotique.yaml), et son entrée dans le
+#       blueprint. tests/test_zones.py et tests/test_emplacements.py vérifient la concordance.
 # ============================================================================
-
-# Une clé de Tab5/user_entities.yaml remplace la valeur d'ici (vérifié sur ESPHome
-# 2026.9.0, le plancher). Ces entités n'existent dans aucun HA : leur zone est déclarée
-# absente et disparaît.
-substitutions:
-  entity_tracker_pc: switch.tab5_zone_absente
-  entity_tracker_tv: media_player.tab5_zone_absente
-  entity_tv_remote: remote.tab5_zone_absente
-  entity_phone_battery: sensor.tab5_zone_absente
-  entity_light_chambre: light.tab5_zone_absente
-  entity_light_salon: light.tab5_zone_absente
-  entity_light_bureau: light.tab5_zone_absente
-  entity_climate_salon: climate.tab5_zone_absente
-  entity_temp_salon: sensor.tab5_zone_absente
-  entity_hum_salon: sensor.tab5_zone_absente
-  entity_temp_plante: sensor.tab5_zone_absente
-  entity_plante_1: sensor.tab5_zone_absente
-  entity_plante_2: sensor.tab5_zone_absente
-  entity_plante_3: sensor.tab5_zone_absente
-  entity_plante_4: sensor.tab5_zone_absente
-  entity_plante_5: sensor.tab5_zone_absente
-  entity_plante_1_ec: sensor.tab5_zone_absente
-  entity_plante_1_lux: sensor.tab5_zone_absente
-  entity_plante_1_temp: sensor.tab5_zone_absente
-  entity_plante_1_bat: sensor.tab5_zone_absente
-  entity_plante_2_ec: sensor.tab5_zone_absente
-  entity_plante_2_lux: sensor.tab5_zone_absente
-  entity_plante_2_temp: sensor.tab5_zone_absente
-  entity_plante_2_bat: sensor.tab5_zone_absente
-  entity_plante_3_ec: sensor.tab5_zone_absente
-  entity_plante_3_lux: sensor.tab5_zone_absente
-  entity_plante_3_temp: sensor.tab5_zone_absente
-  entity_plante_3_bat: sensor.tab5_zone_absente
-  entity_plante_4_ec: sensor.tab5_zone_absente
-  entity_plante_4_lux: sensor.tab5_zone_absente
-  entity_plante_4_temp: sensor.tab5_zone_absente
-  entity_plante_4_bat: sensor.tab5_zone_absente
-  entity_plante_5_ec: sensor.tab5_zone_absente
-  entity_plante_5_lux: sensor.tab5_zone_absente
-  entity_plante_5_temp: sensor.tab5_zone_absente
-  entity_plante_5_bat: sensor.tab5_zone_absente
 
 script:
   # Pose les widgets dans g_zones_ui et applique l'état des zones. Appelé à la fin du
@@ -99,17 +56,19 @@ script:
           zones_apply_ui();
           id(tab5_zones_masquees).publish_state(zones_texte_masquees());
 
-  # Demande à HA quelles zones sont absentes : les entités suivies par la tablette, en
-  # « clé=entité », dans l'ordre de l'enum Zone. HA ajoute de lui-même clim, volet et
-  # planning. Lancé par la première poussée des prévisions après chaque connexion
-  # (tab5-api-logic.yaml) : elle prouve que les automatisations de HA tournent, ce qui
-  # n'est pas le cas pendant son démarrage.
+  # Demande à HA quelles zones sont absentes. Depuis le lot 6a (ADR-0019), la tablette
+  # ne connaît plus les entités : elle envoie seulement les clés de ses emplacements
+  # (ordre de l'enum Zone), et le blueprint « Tab5 — emplacements », qui sait lesquels
+  # sont choisis, répond, en y ajoutant clim, volet et planning. Lancé par la première
+  # poussée des prévisions après chaque connexion (tab5-api-logic.yaml) : elle prouve
+  # que les automatisations de HA tournent, ce qui n'est pas le cas pendant son
+  # démarrage.
   - id: tab5_zones_demande
     then:
       - homeassistant.event:
           event: esphome.tab5_zones
           data:
-            zones: "lumiere_1=${entity_light_chambre},lumiere_2=${entity_light_salon},lumiere_3=${entity_light_bureau},pc=${entity_tracker_pc},tv=${entity_tracker_tv},telephone=${entity_phone_battery},salon=${entity_temp_salon},serre=${entity_temp_plante},pot_1=${entity_plante_1},pot_2=${entity_plante_2},pot_3=${entity_plante_3},pot_4=${entity_plante_4},pot_5=${entity_plante_5}"
+            zones: "lumiere_1,lumiere_2,lumiere_3,pc,tv,telephone,salon,serre,pot_1,pot_2,pot_3,pot_4,pot_5"
 
 text_sensor:
   # Diagnostic : les zones que HA a déclarées absentes (« aucune » sinon). Une faute de

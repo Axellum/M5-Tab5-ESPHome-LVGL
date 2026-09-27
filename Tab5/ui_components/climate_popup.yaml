@@ -89,10 +89,7 @@ obj:
                             # Optimiste : mode "off" + recolore avant le retour HA
                             - lambda: 'id(clim_hvac_mode) = "off";'
                             - script.execute: tab5_clim_recolor
-                            - homeassistant.service:
-                                service: climate.turn_off
-                                data:
-                                  entity_id: ${entity_climate_salon}
+                            - script.execute: { id: tab5_action, emplacement: clim, commande: eteindre, valeur: "" }
                           widgets:
                             - label: { id: popup_icon_clim_off, text: "\U000F0425", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
                             - label: { text: "Éteint", align: LEFT_MID, x: 88, text_font: roboto_32_b }
@@ -246,11 +243,7 @@ obj:
                       # puis le service envoie le global (pas de double-toggle inversé).
                       - lambda: 'id(clim_fan_mode) = (id(clim_fan_mode) == "quiet") ? std::string("auto") : std::string("quiet");'
                       - script.execute: tab5_clim_recolor
-                      - homeassistant.service:
-                          service: climate.set_fan_mode
-                          data:
-                            entity_id: ${entity_climate_salon}
-                            fan_mode: !lambda 'return id(clim_fan_mode);'
+                      - script.execute: { id: tab5_action, emplacement: clim, commande: ventilation, valeur: !lambda 'return id(clim_fan_mode);' }
                     widgets:
                       - label: { id: popup_icon_clim_quiet, text: "\U000F146D", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
                       - label: { text: "Silence", align: LEFT_MID, x: 88, text_font: roboto_32_b }
@@ -273,11 +266,7 @@ obj:
                       # puis le service envoie le global (pas de double-toggle inversé).
                       - lambda: 'id(clim_swing_mode) = (id(clim_swing_mode) == "swing") ? std::string("stop") : std::string("swing");'
                       - script.execute: tab5_clim_recolor
-                      - homeassistant.service:
-                          service: climate.set_swing_mode
-                          data:
-                            entity_id: ${entity_climate_salon}
-                            swing_mode: !lambda 'return id(clim_swing_mode);'
+                      - script.execute: { id: tab5_action, emplacement: clim, commande: oscillation, valeur: !lambda 'return id(clim_swing_mode);' }
                     widgets:
                       - label: { id: popup_icon_clim_swing, text: "\U000F0E79", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
                       - label: { text: "Oscillation", align: LEFT_MID, x: 88, text_font: roboto_32_b }
@@ -297,11 +286,7 @@ obj:
                       # puis le service envoie le global (pas de double-toggle inversé).
                       - lambda: 'id(clim_swing_mode) = (id(clim_swing_mode) == "windnice") ? std::string("stop") : std::string("windnice");'
                       - script.execute: tab5_clim_recolor
-                      - homeassistant.service:
-                          service: climate.set_swing_mode
-                          data:
-                            entity_id: ${entity_climate_salon}
-                            swing_mode: !lambda 'return id(clim_swing_mode);'
+                      - script.execute: { id: tab5_action, emplacement: clim, commande: oscillation, valeur: !lambda 'return id(clim_swing_mode);' }
                     widgets:
                       - label: { id: popup_icon_clim_windnice, text: "\U000F059D", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
                       - label: { text: "Brise", align: LEFT_MID, x: 88, text_font: roboto_32_b }

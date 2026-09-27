@@ -5,7 +5,7 @@
 # HA via light_*_brightness corrige).
 # vars : x, pct (pourcentage, en CHAÎNE : "10"), arc (valeur 0-255 de l'arc pour ce
 #        pourcentage : 26 / 89 / 166 / 255).
-# Cible id(current_light_entity) (global partagé, pas une entité en dur).
+# Cible id(current_light_slot) (global partagé, pas une entité en dur).
 # Sorti de light_popup.yaml le 26/09/2026 (audit, lot 7.3), rendu inchangé.
 # ═══════════════════════════════════════════════════════
 button:
@@ -18,11 +18,7 @@ button:
   pressed:
     bg_opa: 30%
   on_short_click:
-    - homeassistant.service:
-        service: light.turn_on
-        data:
-          entity_id: !lambda 'return id(current_light_entity);'
-          brightness_pct: "${pct}"
+    - script.execute: { id: tab5_action, emplacement: !lambda 'return id(current_light_slot);', commande: luminosite_pct, valeur: "${pct}" }
     - lambda: |-
         lv_arc_set_value(id(arc_light_brightness), ${arc});
         lv_label_set_text(id(lbl_light_brightness_val), "${pct} %");

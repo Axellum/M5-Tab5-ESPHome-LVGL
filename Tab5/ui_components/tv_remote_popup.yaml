@@ -11,10 +11,13 @@
 #       sous-titre : la barre de titre est identique pour tous les popups (ADR-0009).
 # @architecture_constraint DEUX chemins distincts, à ne pas confondre :
 #       1. Touches physiques (fléches, volume, lecture, source, menu…) →
-#          script.tab5_tv_key (tab5-scripts.yaml : remote.send_command sur
-#          ${entity_tv_remote}) ; Marche / Arrêt = remote.toggle, en ligne ici.
-#       2. Lancement d'une APPLICATION → script.tab5_tv_app (HA), qui traduit un
-#          nom court en app_id Tizen et fait un POST REST sur la TV.
+#          script.tab5_tv_key (tab5-scripts.yaml), commande « tv / touche » ;
+#          Marche / Arrêt = « tv / alimentation ». Le blueprint « Tab5 —
+#          emplacements » les envoie à la télécommande choisie (remote.send_command,
+#          remote.toggle), lot 6a.
+#       2. Lancement d'une APPLICATION → « tv / appli », que le blueprint confie à
+#          script.tab5_tv_app (package tab5_tv.yaml), qui traduit un nom court en
+#          app_id Tizen et fait un POST REST sur la TV.
 #       `media_player.select_source` ne vaut QUE pour "TV" et "HDMI" (les seules
 #       entrées du source_list) et `media_player.play_media` type `app` échoue
 #       en SILENCE sur ce firmware 2022. Voir packages/tab5_tv.yaml côté HA.
@@ -80,10 +83,7 @@ obj:
                           pressed:
                             bg_opa: 30%
                           on_short_click:
-                            - homeassistant.service:
-                                service: remote.toggle
-                                data:
-                                  entity_id: ${entity_tv_remote}
+                            - script.execute: { id: tab5_action, emplacement: tv, commande: alimentation, valeur: "" }
                           widgets:
                             - label: { text: "\U000F0425", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_error }
                             - label: { text: "Marche / Arrêt", align: LEFT_MID, x: 82 }
@@ -311,10 +311,7 @@ obj:
                     pressed:
                       bg_opa: 30%
                     on_short_click:
-                      - homeassistant.service:
-                          service: script.tab5_tv_app
-                          data:
-                            app: "canal"
+                      - script.execute: { id: tab5_action, emplacement: tv, commande: appli, valeur: canal }
                     widgets:
                       - label: { text: "CANAL+", align: CENTER, text_font: roboto_32_b }
                 # [AI-WARNING] « PC » ne passe PAS par select_source. Le
