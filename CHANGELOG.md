@@ -4,6 +4,26 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Capturer un plantage sur le port série, garder l'ELF des firmwares publiés
+
+La mise à jour de la tablette depuis HA (3.0.0-rc.1 → rc.2, 27/09/2026) a fini par
+« plantage (exception) », sans rapport dans le journal des démarrages : la sortie de
+panique d'ESP-IDF ne s'écrit que sur la console USB, et l'ELF qui décode ses adresses
+n'était pas gardé.
+
+- **`tools/capture_serie.py`** : écoute le port USB de la tablette sans la réinitialiser
+  (trouvée par sa MAC, jamais devinée entre deux appareils Espressif ; DTR et RTS coupés
+  avant l'ouverture), écrit la capture au fil de l'eau, s'arrête 60 s après un
+  redémarrage, extrait le bloc de panique et décode ses adresses avec `--elf`
+  (`riscv32-esp-elf-addr2line`). Essayé en écoute sur la tablette : pas de redémarrage.
+- **Publication** : l'ELF de chaque révision est gardé 90 jours (artefact
+  `elf-<révision>`). L'entrée `elf_seulement` recompile une version déjà publiée pour
+  retrouver son ELF, sans rien publier ni remplacer, et vérifie que le code est celui de
+  l'image publiée (`tools/publication/meme_code.py` : même taille, seuls l'heure de
+  compilation, les empreintes et la signature diffèrent).
+- **Docs** : `debugging.md`, « Capturer un plantage sur le port série », en français et
+  en anglais ; la partie anglaise du rendu hors tablette mise à jour (80 écrans, 4 langues).
+
 ### 2026-09-27 — Les jeux parlent un français accentué (lot b)
 
 - **Accents** : les textes français des huit consoles avaient été écrits sans accents
