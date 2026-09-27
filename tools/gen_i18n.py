@@ -17,7 +17,13 @@ le reste (clés utilisées, formats printf, glyphes des polices).
 Format d'un fichier de langue : un mapping YAML plat `"texte français": "traduction"`.
 Une clé `"contexte|texte"` sépare deux sens d'un même mot (`tr_ctx("jour", "Jeu")`
 → « Thu », alors qu'un « Jeu » sans contexte serait un jeu). Les clés qui commencent
-par `_` sont des métadonnées. Une traduction vide ou absente retombe sur le français.
+par `_` sont des métadonnées.
+
+Repli : une traduction vide ou absente prend le texte ANGLAIS, écrit ici dans la table
+de la langue (commentaire « repli en »), puis le français si l'anglais ne l'a pas non
+plus. Une langue récente peut donc rester partielle (sans `_statut: complet`) : ses
+trous s'affichent en anglais plutôt qu'en français. Le repli est fait à la génération
+et non dans tr() : aucun coût à l'exécution, et tab5_i18n.cpp ne change pas.
 """
 from __future__ import annotations
 
@@ -30,6 +36,7 @@ REPO = Path(__file__).resolve().parent.parent
 LANG_DIR = REPO / "Tab5" / "lang"
 OUT = REPO / "Tab5" / "tab5_i18n_data.h"
 SEP = "|"
+REPLI = "en"   # langue de repli des langues partielles (doit rester complète)
 
 
 def load_languages(lang_dir: Path = LANG_DIR) -> list[dict]:
@@ -90,7 +97,8 @@ def render(langs: list[dict]) -> str:
     lines = [
         "// GÉNÉRÉ par tools/gen_i18n.py depuis Tab5/lang/*.yaml — NE PAS MODIFIER À LA MAIN.",
         "// Clés = textes français (triés par octets UTF-8 : contexte puis texte, pour la",
-        "// recherche dichotomique de tab5_i18n.cpp). nullptr = pas de traduction → français.",
+        "// recherche dichotomique de tab5_i18n.cpp). Texte absent d'une langue = texte anglais",
+        "// (« repli en ») ; nullptr = pas de traduction du tout → français.",
         "#pragma once",
         "#include <cstdint>",
         "",
@@ -105,9 +113,17 @@ def render(langs: list[dict]) -> str:
     lines += ["};", "", "static const char* const kI18nKeys[] = {"]
     lines += [f"    {c_str(split_key(k)[1])}," for k in keys] or ["    nullptr,"]
     lines += ["};"]
+    repli = next((l for l in langs[1:] if l["code"] == REPLI), None)
     for l in langs[1:]:
         lines += ["", f"// {l['name']} ({l['file']})", f"static const char* const kI18n_{l['code']}[] = {{"]
-        lines += [f"    {c_str(l['entries'].get(k))},  // {c_str(k)}" for k in keys] or ["    nullptr,"]
+        for k in keys:
+            v, note = l["entries"].get(k), ""
+            if v is None and repli is not None and l is not repli:
+                v = repli["entries"].get(k)
+                note = f" (repli {REPLI})" if v is not None else ""
+            lines.append(f"    {c_str(v)},  // {c_str(k)}{note}")
+        if not keys:
+            lines.append("    nullptr,")
         lines += ["};"]
     tables = ", ".join(["nullptr"] + [f"kI18n_{l['code']}" for l in langs[1:]])
     lines += ["", f"static const char* const* const kI18nTables[] = {{{tables}}};", ""]
