@@ -63,9 +63,9 @@ struct LevelCfg {
 // `name` est la clé française (tr_noop) : l'écran la traduit par tr() à l'affichage.
 static const LevelCfg LEVELS[4] = {
     // nom                     9  13 19  root node  budget noise
-    { tr_noop("Debutant"),   { 0, 0, 0 },  20,  0,     80,  40 },
+    { tr_noop("Débutant"),   { 0, 0, 0 },  20,  0,     80,  40 },
     { tr_noop("Amateur"),    { 1, 1, 1 },  20, 10,    350,  14 },
-    { tr_noop("Confirme"),   { 2, 2, 1 },  18,  9,    900,   5 },
+    { tr_noop("Confirmé"),   { 2, 2, 1 },  18,  9,    900,   5 },
     { tr_noop("Expert"),     { 3, 2, 2 },  16,  8,   1900,   0 },
 };
 

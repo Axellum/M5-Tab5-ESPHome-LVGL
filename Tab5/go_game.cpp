@@ -708,14 +708,14 @@ static void render_hud() {
     if (gs->msg_until && (int32_t)(esphome::millis() - gs->msg_until) < 0) {
         st = gs->msg; stc = Pal::ACCENT;
     } else if (g_state == ST_THINKING) {
-        st = tr("Le Tab reflechit..."); stc = Pal::THINK;
+        st = tr("Le Tab réfléchit..."); stc = Pal::THINK;
     } else if (g_state == ST_MARKING) {
         st = tr("Touchez les groupes MORTS, puis Valider"); stc = Pal::ACCENT;
     } else if (g_state == ST_PLAYING) {
         if (gs->pending >= 0) {
             char nm[8];
             sq_name(gs->pending, gs->pos.n, nm, sizeof(nm));
-            snprintf(line, sizeof(line), tr("Touchez a nouveau %s pour valider"), nm);
+            snprintf(line, sizeof(line), tr("Touchez à nouveau %s pour valider"), nm);
             st = line; stc = Pal::GHOST;
         } else {
             st = tr((gs->pos.side == BLACK) ? "Au tour de Noir" : "Au tour de Blanc");
@@ -799,7 +799,7 @@ static void render_panel_buttons() {
         const int pct = Ai::progress_pct();
         if (pct != gs->think_pct_drawn) {
             char buf[32];
-            snprintf(buf, sizeof(buf), tr("Reflexion  %d %%"), pct);
+            snprintf(buf, sizeof(buf), tr("Réflexion  %d %%"), pct);
             set_text_if(gs->think_lbl, buf);
             const int w = (270 * pct) / 100;
             lv_obj_set_size(gs->think_fill, w < 2 ? 2 : w, 8);
@@ -852,7 +852,7 @@ static void apply_move(int sq) {
     int played = sq;
     if (!Engine::play(gs->pos, sq)) {
         gs->undo_n--;                       // rien n'a bougé : on défait la pile
-        if (by_human) { msg(tr("Coup illegal")); refresh_all(); return; }
+        if (by_human) { msg(tr("Coup illégal")); refresh_all(); return; }
         // Un coup illégal proposé par l'IA ne doit JAMAIS bloquer la partie :
         // on passe à sa place et la partie continue.
         msg(tr("Le Tab passe"));
@@ -904,7 +904,7 @@ static void do_undo() {
     // Depuis l'écran de marquage, « Reprendre » revient au coup d'avant la
     // seconde passe : on efface aussi les marques de groupes morts.
     if (g_state == ST_MARKING) memset(gs->dead, 0, sizeof(gs->dead));
-    if (gs->undo_n <= 0) { g_state = ST_PLAYING; msg(tr("Rien a annuler")); refresh_all(); return; }
+    if (gs->undo_n <= 0) { g_state = ST_PLAYING; msg(tr("Rien à annuler")); refresh_all(); return; }
     gs->undo_n--;
     gs->pos = gc->undo[gs->undo_n];
     gs->last_sq = gs->undo_last[gs->undo_n];
@@ -918,7 +918,7 @@ static void do_undo() {
         gs->mv_n = gs->undo_mv[gs->undo_n];
     }
     g_state = ST_PLAYING;
-    msg(tr("Coup annule"));
+    msg(tr("Coup annulé"));
     stash_position();
     refresh_all();
     after_move();
@@ -1081,7 +1081,7 @@ static void menu_main() {
     snprintf(sub, sizeof(sub), tr("Score chinois d'aire  ·  komi %.1f  ·  ko simple"),
              (double) effective_komi());
     menu_open("Go Tab", sub,
-              tr("Toutes les parties et les reglages sont conserves dans le Tab."));
+              tr("Toutes les parties et les réglages sont conservés dans le Tab."));
     int i = 0;
     if (gs->in_game) {
         slot_set(i++, tr("Reprendre la partie"), tr("Retour au goban"), Pal::GOOD, true);
@@ -1093,8 +1093,8 @@ static void menu_main() {
     }
     slot_set(i++, tr("Nouvelle partie"), tr("Taille, mode, niveau, handicap"), Pal::ACCENT, true);
     slot_set(i++, tr("Statistiques"), tr("Bilan face au Tab"), Pal::TXT, true);
-    slot_set(i++, tr("Reglages"), tr("Confirmation, coordonnees, secousse"), Pal::TXT_DIM, true);
-    slot_set(i++, tr("Quitter"), tr("Retour a l'arcade"), Pal::DANGER, true);
+    slot_set(i++, tr("Réglages"), tr("Confirmation, coordonnées, secousse"), Pal::TXT_DIM, true);
+    slot_set(i++, tr("Quitter"), tr("Retour à l'arcade"), Pal::DANGER, true);
     gs->slots.hide_from(i);
     flush(true);
 }
@@ -1107,11 +1107,11 @@ static void menu_pause() {
              mode_name(gs->cfg_mode), (unsigned) gs->pos.move_no);
     menu_open(tr("Pause"), sub, tr("Le goban vous attend."));
     slot_set(0, tr("Reprendre la partie"), "", Pal::GOOD, true);
-    slot_set(1, tr("Nouvelle partie"), tr("Changer les reglages"), Pal::ACCENT, true);
+    slot_set(1, tr("Nouvelle partie"), tr("Changer les réglages"), Pal::ACCENT, true);
     slot_set(2, tr_ctx("plateau", "Abandonner"), tr("L'adversaire gagne"), Pal::DANGER, true);
     slot_set(3, tr("Statistiques"), "", Pal::TXT, true);
-    slot_set(4, tr("Reglages"), "", Pal::TXT_DIM, true);
-    slot_set(5, tr("Quitter le jeu"), tr("La partie est sauvegardee"), Pal::TXT_MUTED, true);
+    slot_set(4, tr("Réglages"), "", Pal::TXT_DIM, true);
+    slot_set(5, tr("Quitter le jeu"), tr("La partie est sauvegardée"), Pal::TXT_MUTED, true);
     gs->slots.hide_from(6);
     stash_position();
     flush(true);
@@ -1135,7 +1135,7 @@ static void menu_setup() {
 
     if (gs->cfg_hcap >= 2) snprintf(b, sizeof(b), tr("Handicap : %d pierres"), (int) gs->cfg_hcap);
     else                 snprintf(b, sizeof(b), "%s", tr("Handicap : aucun"));
-    slot_set(4, b, tr("Pierres offertes a Noir (Blanc commence)"), Pal::WOOD, gs->cfg_mode == 0);
+    slot_set(4, b, tr("Pierres offertes à Noir (Blanc commence)"), Pal::WOOD, gs->cfg_mode == 0);
 
     slot_set(5, tr("Jouer !"),
              tr(effective_komi() == KOMI_HCAP ? "Komi 0,5 pour Blanc" : "Komi 6,5 pour Blanc"),
@@ -1156,38 +1156,38 @@ static void menu_stats() {
     for (int lv = 0; lv < GO_N_LEVELS; lv++) {
         const unsigned w = gs->save.wins[s][lv], dr = gs->save.draws[s][lv], l = gs->save.losses[s][lv];
         snprintf(t, sizeof(t), "%s", level_name((uint8_t) lv));
-        snprintf(d, sizeof(d), tr("%u victoire%s  ·  %u nulle%s  ·  %u defaite%s"),
+        snprintf(d, sizeof(d), tr("%u victoire%s  ·  %u nulle%s  ·  %u défaite%s"),
                  w, w > 1 ? "s" : "", dr, dr > 1 ? "s" : "", l, l > 1 ? "s" : "");
         slot_set(lv, t, d, w > l ? Pal::GOOD : Pal::TXT, true);
     }
-    snprintf(t, sizeof(t), tr("Taille affichee : %s"), size_name(s));
+    snprintf(t, sizeof(t), tr("Taille affichée : %s"), size_name(s));
     slot_set(4, t, tr("Toucher pour changer"), Pal::WOOD, true);
-    slot_set(5, tr("Remettre les compteurs a zero"), tr("Irreversible"), Pal::DANGER, true);
+    slot_set(5, tr("Remettre les compteurs à zéro"), tr("Irréversible"), Pal::DANGER, true);
     slot_set(6, tr("Retour"), "", Pal::TXT_MUTED, true);
 }
 
 static void menu_opts() {
     g_state = ST_MENU_OPTS;
-    menu_open(tr("Reglages"), tr("Options locales, conservees dans le Tab"), "");
-    slot_set(0, gs->save.opt_confirm ? tr("Confirmation du coup : ACTIVEE")
-                                     : tr("Confirmation du coup : DESACTIVEE"),
-             tr("Un premier toucher place un fantome, le second valide"), Pal::ACCENT, true);
-    slot_set(1, tr(gs->save.opt_coords ? "Coordonnees : AFFICHEES" : "Coordonnees : MASQUEES"),
+    menu_open(tr("Réglages"), tr("Options locales, conservées dans le Tab"), "");
+    slot_set(0, gs->save.opt_confirm ? tr("Confirmation du coup : ACTIVÉE")
+                                     : tr("Confirmation du coup : DÉSACTIVÉE"),
+             tr("Un premier toucher place un fantôme, le second valide"), Pal::ACCENT, true);
+    slot_set(1, tr(gs->save.opt_coords ? "Coordonnées : AFFICHÉES" : "Coordonnées : MASQUÉES"),
              tr("Lettres A..T et chiffres autour du goban"), Pal::TXT, true);
-    slot_set(2, tr(gs->save.opt_lastmark ? "Dernier coup : MARQUE" : "Dernier coup : NON MARQUE"),
-             tr("Anneau rouge sur la derniere pierre posee"), Pal::TXT, true);
-    slot_set(3, tr(gs->save.opt_terr ? "Apercu du territoire : ACTIVE" : "Apercu du territoire : DESACTIVE"),
+    slot_set(2, tr(gs->save.opt_lastmark ? "Dernier coup : MARQUÉ" : "Dernier coup : NON MARQUÉ"),
+             tr("Anneau rouge sur la dernière pierre posée"), Pal::TXT, true);
+    slot_set(3, tr(gs->save.opt_terr ? "Aperçu du territoire : ACTIVÉ" : "Aperçu du territoire : DÉSACTIVÉ"),
              tr("Pastilles de territoire pendant le comptage"), Pal::TXT, true);
-    slot_set(4, tr(gs->save.opt_shake ? "Secousse = indice : ACTIVE" : "Secousse = indice : DESACTIVE"),
-             tr("Detection BMI270"), Pal::TXT_DIM, true);
+    slot_set(4, tr(gs->save.opt_shake ? "Secousse = indice : ACTIVÉE" : "Secousse = indice : DÉSACTIVÉE"),
+             tr("Détection BMI270"), Pal::TXT_DIM, true);
     slot_set(5, tr("Retour"), "", Pal::TXT_MUTED, true);
     gs->slots.hide_from(6);
 }
 
 static void menu_confirm_reset() {
     g_state = ST_CONFIRM_RESET;
-    menu_open(tr("Effacer les statistiques ?"), tr("Victoires, nulles et defaites de toutes les tailles"),
-              tr("Cette action est definitive."));
+    menu_open(tr("Effacer les statistiques ?"), tr("Victoires, nulles et défaites de toutes les tailles"),
+              tr("Cette action est définitive."));
     slot_set(0, tr("Oui, tout effacer"), "", Pal::DANGER, true);
     slot_set(1, tr("Annuler"), "", Pal::TXT_MUTED, true);
     gs->slots.hide_from(2);
@@ -1216,7 +1216,7 @@ static void show_score_card() {
     } else {
         const float diff = gs->score.black - gs->score.white;
         const float ad = diff < 0 ? -diff : diff;
-        snprintf(b, sizeof(b), tr("%.1f  contre  %.1f      (ecart %.1f)"),
+        snprintf(b, sizeof(b), tr("%.1f  contre  %.1f      (écart %.1f)"),
                  (double) gs->score.black, (double) gs->score.white, (double) ad);
     }
     set_text_if(gs->card_sub, b);
@@ -1226,7 +1226,7 @@ static void show_score_card() {
     snprintf(b, sizeof(b), tr("Blanc  pierres %d   territoire %d   komi %.1f"),
              gs->score.white_stones, gs->score.white_terr, (double) effective_komi());
     set_text_if(gs->card_line[1], b);
-    snprintf(b, sizeof(b), tr("Groupes morts retires : %d noirs, %d blancs"),
+    snprintf(b, sizeof(b), tr("Groupes morts retirés : %d noirs, %d blancs"),
              gs->score.black_dead, gs->score.white_dead);
     set_text_if(gs->card_line[2], b);
     snprintf(b, sizeof(b), tr("Points neutres (dame) : %d"), gs->score.dame);
@@ -1284,7 +1284,7 @@ static void on_board_tap(int x, int y) {
     }
     if (!Engine::is_legal(gs->pos, sq)) {
         gs->pending = -1;
-        msg(tr(gs->pos.sq[sq] != EMPTY ? "Intersection occupee" : "Coup interdit (ko ou suicide)"));
+        msg(tr(gs->pos.sq[sq] != EMPTY ? "Intersection occupée" : "Coup interdit (ko ou suicide)"));
         refresh_all();
         return;
     }

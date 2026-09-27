@@ -581,14 +581,14 @@ static void go_hub() {
     show(gs->btn_r, false);
 
     auto& sub = gs->hub_sub;
-    snprintf(sub, sizeof(sub), tr("Meilleur score : %u   -   Controle : %s"),
+    snprintf(sub, sizeof(sub), tr("Meilleur score : %u   -   Contrôle : %s"),
              (unsigned)best_score(), ctrl_name());
 
     // « ARCANOIDE » : nom de la console, jamais traduit.
-    panel_text("ARCANOIDE", sub, "", tr("Casse toutes les briques. Ne laisse pas tomber la balle."));
+    panel_text("ARCANOÏDE", sub, "", tr("Casse toutes les briques. Ne laisse pas tomber la balle."));
     gs->slots.row(0, tr("Jouer"), tr("8 niveaux, 3 vies, power-ups"), Pal::BALL, true);
     gs->slots.row(1, tr("Classement"), tr("Top 10 local"), Pal::CYAN, true);
-    gs->slots.row(2, tr("Reglages"), tr("Controle, sensibilite, calibration, SFX"), Pal::GREEN, true);
+    gs->slots.row(2, tr("Réglages"), tr("Contrôle, sensibilité, calibration, SFX"), Pal::GREEN, true);
     gs->slots.row(3, tr("Quitter"), tr("Retour au tableau de bord"), UIColor::TEXT_DIM, true);
     gs->slots.hide_from(4);
 }
@@ -598,16 +598,16 @@ static void go_settings() {
     panel_on(true);
 
     auto& ctrl_title = gs->settings_ctrl;
-    snprintf(ctrl_title, sizeof(ctrl_title), tr("Controle : %s"), ctrl_name());
+    snprintf(ctrl_title, sizeof(ctrl_title), tr("Contrôle : %s"), ctrl_name());
     auto& sens_title = gs->settings_sens;
-    snprintf(sens_title, sizeof(sens_title), tr("Sensibilite IMU : %d/5"),
+    snprintf(sens_title, sizeof(sens_title), tr("Sensibilité IMU : %d/5"),
              (int)gs->save.sensitivity + 1);
 
-    panel_text(tr("Reglages"), tr("Ces reglages sont sauvegardes automatiquement."), "", "");
+    panel_text(tr("Réglages"), tr("Ces réglages sont sauvegardés automatiquement."), "", "");
     gs->slots.row(0, ctrl_title, tr("Inclinaison / Boutons / Les deux"), Pal::CYAN, true);
-    gs->slots.row(1, sens_title, tr("Vitesse de reponse a l'inclinaison"), Pal::GREEN, true);
-    gs->slots.row(2, tr("Calibrer a plat"), tr("Pose la tablette et appuie"), Pal::ORANGE, true);
-    gs->slots.row(3, tr(gs->save.muted ? "SFX : coupes" : "SFX : actifs"),
+    gs->slots.row(1, sens_title, tr("Vitesse de réponse à l'inclinaison"), Pal::GREEN, true);
+    gs->slots.row(2, tr("Calibrer à plat"), tr("Pose la tablette et appuie"), Pal::ORANGE, true);
+    gs->slots.row(3, tr(gs->save.muted ? "SFX : coupés" : "SFX : actifs"),
                   tr("Bips sonores (casse, mort, niveau)"), Pal::MAGENTA, true);
     gs->slots.row(4, tr("Retour"), "", UIColor::TEXT_DIM, true);
     gs->slots.hide_from(5);
@@ -619,7 +619,7 @@ static void go_highscores() {
 
     auto& body = gs->scores_body;
     int off = 0;
-    off += snprintf(body + off, sizeof(body) - off, "%s", tr("Rang  Score      Niv  Controle\n"));
+    off += snprintf(body + off, sizeof(body) - off, "%s", tr("Rang  Score      Niv  Contrôle\n"));
     for (int i = 0; i < gs->save.score_count && i < ARK_MAX_SCORES; i++) {
         const ArkScoreEntry& e = gs->save.scores[i];
         const char* cn = tr((e.ctrl_mode == 0) ? "IMU" : (e.ctrl_mode == 1) ? "Btn" : "Mix");
@@ -645,7 +645,7 @@ static void go_confirm_wipe() {
     g_state = ST_CONFIRM;
     panel_on(true);
     panel_text(tr("Effacer les scores ?"), tr("Tout le Top 10 local, meilleur score compris."),
-               tr("Cette action est irreversible."), "");
+               tr("Cette action est irréversible."), "");
     gs->slots.row(0, tr("Oui, tout effacer"), "", Pal::DANGER, true);
     gs->slots.row(1, tr("Annuler"), "", UIColor::TEXT_DIM, true);
     lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -160);
@@ -658,8 +658,8 @@ static void show_pause() {
     panel_on(true);
     panel_text(tr("Pause"), tr("Le jeu attend."), "", "");
     gs->slots.row(0, tr("Reprendre"), "", Pal::BALL, true);
-    gs->slots.row(1, tr("Recalibrer a plat"), tr("Pose la tablette avant d'appuyer"), Pal::ORANGE, true);
-    gs->slots.row(2, tr("Abandonner"), tr("Le score est enregistre"), Pal::DANGER, true);
+    gs->slots.row(1, tr("Recalibrer à plat"), tr("Pose la tablette avant d'appuyer"), Pal::ORANGE, true);
+    gs->slots.row(2, tr("Abandonner"), tr("Le score est enregistré"), Pal::DANGER, true);
     gs->slots.hide_from(3);
 }
 
@@ -669,7 +669,7 @@ static void show_level_clear() {
     auto& body = gs->clear_body;
     snprintf(body, sizeof(body), tr("Niveau %d — %s\nScore : %d"),
              gs->level + 1, tr(LEVEL_NAMES[gs->level]), gs->score);
-    panel_text(tr("Niveau termine !"), "", body, "");
+    panel_text(tr("Niveau terminé !"), "", body, "");
     gs->slots.row(0, tr("Niveau suivant"), "", Pal::GREEN, true);
     gs->slots.hide_from(1);
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -120);
@@ -1029,7 +1029,7 @@ static void update_hud() {
     hud_num(gs->hud_score, gs->c_score, gs->score, tr("Score %d"));
     hud_num(gs->hud_lives, gs->c_lives, gs->lives, tr("Vies %d"));
     hud_num(gs->hud_level, gs->c_level, gs->level + 1, tr("Niv %d/8"));   // cache : niveau affiché
-    hud_num(gs->hud_best, gs->c_best, (unsigned) best_score(), tr("Best %u"));
+    hud_num(gs->hud_best, gs->c_best, (unsigned) best_score(), tr("Record %u"));
     // Indicateur contrôle (écrit une fois)
     auto& cbuf = gs->hud_cbuf;
     snprintf(cbuf, sizeof(cbuf), "[%s]", ctrl_name());

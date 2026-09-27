@@ -115,9 +115,9 @@ static int node_budget_for(Level lv) {
 static const char* level_name(Level lv) {
     switch (lv) {
         case LVL_AMATEUR: return "Amateur";
-        case LVL_SOLID:   return "Confirme";
+        case LVL_SOLID:   return "Confirmé";
         case LVL_EXPERT:  return "Expert";
-        default:          return "Debutant";
+        default:          return "Débutant";
     }
 }
 
