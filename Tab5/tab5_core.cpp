@@ -111,6 +111,12 @@ const char* month_short_utf8(int month) { return tr(clock_month_short_utf8(month
 const char* day_long_utf8(int wday) { return tr(fr_day_long_utf8(wday)); }
 const char* month_long_utf8(int mois_1_12) { return tr(fr_month_long_utf8(mois_1_12)); }
 
+// « Auj » (sans point) est le seul nom que HA envoie hors de fr_day_short_utf8().
+const char* ha_day_name(const std::string& nom) {
+    if (nom == "Auj") return tr("Auj");
+    return tr(nom.c_str());
+}
+
 // Titre court "Lun 16" pour les pages journalieres 2 et 3 (page_index 1/2).
 std::string format_short_day_label(int jour_offset) {
     struct tm t;

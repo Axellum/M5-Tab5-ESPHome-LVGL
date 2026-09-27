@@ -440,10 +440,14 @@ static void test_langue() {
     expect_str(tr_ctx("mercredi", "M"), "W", "contexte : M = mercredi");
     expect_str(tr_ctx("clim", "Chaud"), "Heat", "contexte : mode chauffage de la clim");
     expect_str(tr("Chaud"), "Warm", "sans contexte : blanc chaud d'une lampe");
+    expect_str(ha_day_name("Auj"), "Today", "nom de jour HA : aujourd'hui");
+    expect_str(ha_day_name("Mar"), "Tue", "nom de jour HA : mardi");
+    expect_str(ha_day_name("Mer 05"), "Mer 05", "nom de jour HA inconnu : inchangé");
     i18n_set_language(99);
     expect(i18n_language() == 0, "langue hors bornes : retour au français");
     expect_str(tr("Calendrier"), "Calendrier", "français : texte rendu tel quel");
     expect_str(format_long_day_label(1), "jeudi 1er octobre", "retour au français");
+    expect_str(ha_day_name("Auj"), "Auj", "nom de jour HA : inchangé en français");
 }
 
 int main() {

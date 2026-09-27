@@ -75,8 +75,8 @@ static bool forecast_page_title_parts(int page, std::string& chapeau, std::strin
         if (debut.empty() || fin.empty()) {
             // SNTP pas encore synchronise : repli sur les libelles courts pousses
             // par HA ("Mer 05"), comme le fait deja refresh_daily_forecast().
-            debut = cal_jours_data[premier].nom_jour;
-            fin   = cal_jours_data[dernier].nom_jour;
+            debut = ha_day_name(cal_jours_data[premier].nom_jour);
+            fin   = ha_day_name(cal_jours_data[dernier].nom_jour);
         }
         if (!debut.empty() && !fin.empty()) {
             snprintf(buf, sizeof(buf), tr("Du %s au %s"), debut.c_str(), fin.c_str());
@@ -575,7 +575,7 @@ static std::string get_day_planning_display_text(int jour) {
     if (jour == 0) label = tr("Auj.");
     else {
         std::string short_lbl = format_short_day_label(jour);
-        label = short_lbl.empty() ? d.nom_jour : short_lbl;
+        label = short_lbl.empty() ? std::string(ha_day_name(d.nom_jour)) : short_lbl;
     }
     if (label.empty()) label = tr("Jour");
 

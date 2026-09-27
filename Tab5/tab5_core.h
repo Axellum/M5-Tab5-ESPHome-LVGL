@@ -98,6 +98,12 @@ const char* month_long_utf8(int mois_1_12);
 const char* day_short_utf8(int wday);
 const char* month_short_utf8(int month);
 
+// Nom de jour poussé par HA dans le lot des prévisions (« Auj », « Lun »…), traduit
+// au moment de l'affichage : cal_jours_data garde le texte reçu. Un texte inconnu
+// passe inchangé : le pointeur rendu est alors celui de `nom`, qui doit vivre
+// au moins aussi longtemps que son usage.
+const char* ha_day_name(const std::string& nom);
+
 // Titres de jour des pages de prévisions, dans la langue de l'écran : « Lun 16 » et
 // « mercredi 5 août » (« 1er » pour le premier du mois) ; en anglais « Mon 16 » et
 // « Wednesday, August 5 ». "" si l'heure n'est pas synchronisée.

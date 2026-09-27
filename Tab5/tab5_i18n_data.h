@@ -7,9 +7,11 @@
 static const uint8_t kI18nLangCount = 2;
 static const char* const kI18nLangNames[] = {"Français", "English"};
 static const char* const kI18nLangCodes[] = {"fr", "en"};
-static const uint16_t kI18nKeyCount = 241;
+static const uint16_t kI18nKeyCount = 243;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
     "",
     "",
     "",
@@ -290,7 +292,9 @@ static const char* const kI18nKeys[] = {
     "Assistant vocal",
     "Aucun jour retenu dans les 8 prochains",
     "Aucun rendez-vous à venir",
+    "Aucun travail de prevu",
     "Aucune sonnerie prévue",
+    "Auj",
     "Auj.",
     "Aujourd'hui",
     "Aujourd'hui {heure}",
@@ -535,7 +539,9 @@ static const char* const kI18n_en[] = {
     "Voice assistant",  // "Assistant vocal"
     "No day selected in the next 8",  // "Aucun jour retenu dans les 8 prochains"
     "No upcoming appointment",  // "Aucun rendez-vous à venir"
+    "No work scheduled",  // "Aucun travail de prevu"
     "No alarm scheduled",  // "Aucune sonnerie prévue"
+    "Today",  // "Auj"
     "Today",  // "Auj."
     "Today",  // "Aujourd'hui"
     "Today {heure}",  // "Aujourd'hui {heure}"

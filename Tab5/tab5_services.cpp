@@ -295,18 +295,23 @@ void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::st
     set_label_text_utf8(lbl, combined.c_str());
 }
 
+// Bandeau planning vide, en gris (recolor LVGL « #aaaaaa …# »).
+static std::string planning_vide() {
+    return std::string("#aaaaaa ") + tr("Aucun travail de prevu") + "#";
+}
+
 void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
     out_l1.clear();
     out_l2.clear();
 
     time_t now_raw = time(nullptr);
     if (now_raw <= 0) {
-        out_l1 = "#aaaaaa Aucun travail de prevu#";
+        out_l1 = planning_vide();
         return;
     }
     struct tm now_tm;
     if (localtime_r(&now_raw, &now_tm) == nullptr) {
-        out_l1 = "#aaaaaa Aucun travail de prevu#";
+        out_l1 = planning_vide();
         return;
     }
 
@@ -352,7 +357,7 @@ void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
         lines[n++] = line;
     }
 
-    if (n == 0) out_l1 = "#aaaaaa Aucun travail de prevu#";
+    if (n == 0) out_l1 = planning_vide();
     else {
         out_l1 = lines[0];
         if (n > 1) out_l2 = lines[1];

@@ -88,6 +88,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Jour hors plage": "Day out of range"
 "Auj.": "Today"
 "Dem.": "Tmrw."
+# Nom de jour envoyé par HA pour aujourd'hui (tuiles météo de l'accueil), sans point.
+"Auj": "Today"
+"Aucun travail de prevu": "No work scheduled"
 "Jour": "Day"
 "{jour} : {horaire}": "{jour}: {horaire}"
 "{jour} : #fb923c {horaire}#": "{jour}: #fb923c {horaire}#"
