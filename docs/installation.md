@@ -141,7 +141,7 @@ Or just click **Install → Wirelessly** in the ESPHome dashboard.
 
 The screen does not depend on one weather service (since lot 4c, 2026-09-27).
 
-**Forecasts** (hourly and daily pages) come from any `weather.*` entity: set `VOTRE_VILLE` so that `weather.VOTRE_VILLE` is yours. Some integrations lack one of the two forecast types (NWS has no daily forecast, Buienradar no hourly one): that page then shows empty tiles.
+**Forecasts and current weather** (hourly and daily pages, the humidity drop) come from any `weather.*` entity, picked in Home Assistant from the select « Tab5 · source des prévisions », which lists the weather entities you have (`VOTRE_VILLE` is only the default). The Tab5 asks each entity only for what it declares: daily forecasts, or else twice-daily ones (NWS) or hourly ones (free OpenWeatherMap) grouped by date; without hourly forecasts (Buienradar), the hourly page stays empty. Hours are shown in local time.
 
 **Rain in the next hour and weather warnings** are optional. Their source is chosen **in Home Assistant**, with the two selects of `packages/tab5_meteo_sources.yaml`, without editing YAML:
 
@@ -155,8 +155,8 @@ The screen does not depend on one weather service (since lot 4c, 2026-09-27).
 | | Aucune (none) | no warning icons |
 
 Honest limits:
-- The OpenWeatherMap and MeteoAlarm adapters were tested with simulated data, not yet on a real installation.
-- Frost probability exists only at Météo-France; the snowflake icon reads `sensor.<city>_snow_chance` when it exists.
+- OpenWeatherMap was tried on the author's installation on 2026-09-27 (forecasts and rain in the next hour, on a dry day); its daily forecast covers 8 days, so the last days of the 15-day pages stay empty. MeteoAlarm and the twice-daily grouping (NWS) were tested with simulated data only.
+- Frost probability exists only at Météo-France. The snowflake icon reads `sensor.<city>_snow_chance` when it exists; otherwise it follows the current condition (snowy).
 - Other warning sources (DWD, Environment Canada, NWS Alerts…) are not wired yet.
 
 ---
@@ -281,7 +281,7 @@ Ou cliquez simplement **Installer → Sans fil** dans le dashboard ESPHome.
 
 L'écran ne dépend plus d'un seul service météo (lot 4c, 27/09/2026).
 
-Les **prévisions** (pages horaires et journalières) viennent de n'importe quelle entité `weather.*` : réglez `VOTRE_VILLE` pour que `weather.VOTRE_VILLE` soit la vôtre. Certaines intégrations n'ont qu'un des deux types de prévisions (NWS pas de journalières, Buienradar pas d'horaires) : la page concernée affiche alors des tuiles vides.
+Les **prévisions et la météo du moment** (pages horaires et journalières, goutte d'humidité) viennent de n'importe quelle entité `weather.*`, choisie dans Home Assistant avec la liste « Tab5 · source des prévisions », qui propose les entités météo présentes (`VOTRE_VILLE` n'est que le choix par défaut). Le Tab5 ne demande à chaque entité que ce qu'elle déclare : les prévisions journalières, sinon les demi-journées (NWS) ou les horaires (OpenWeatherMap gratuit) regroupées par date ; sans prévisions horaires (Buienradar), la page horaire reste vide. Les heures sont affichées en heure locale.
 
 La **pluie dans l'heure** et les **vigilances** sont facultatives. Leur source se choisit **dans Home Assistant**, avec les deux listes de `packages/tab5_meteo_sources.yaml`, sans toucher au YAML :
 
@@ -295,6 +295,6 @@ La **pluie dans l'heure** et les **vigilances** sont facultatives. Leur source s
 | | Aucune | pas d'icônes de vigilance |
 
 Limites, en toute franchise :
-- Les adaptateurs OpenWeatherMap et MeteoAlarm ont été testés avec des données simulées, pas encore sur une vraie installation.
-- La probabilité de gel n'existe que chez Météo-France ; l'icône flocon lit `sensor.<ville>_snow_chance` quand il existe.
+- OpenWeatherMap a été essayé sur l'installation de l'auteur le 27/09/2026 (prévisions et pluie dans l'heure, un jour sec) ; ses prévisions journalières couvrent 8 jours, les derniers jours des pages de 15 jours restent donc vides. MeteoAlarm et le regroupement des demi-journées (NWS) n'ont été testés qu'avec des données simulées.
+- La probabilité de gel n'existe que chez Météo-France. L'icône flocon lit `sensor.<ville>_snow_chance` quand il existe ; sinon, elle suit la condition du moment (neige).
 - Les autres sources d'alertes (DWD, Environment Canada, NWS Alerts…) ne sont pas encore branchées.

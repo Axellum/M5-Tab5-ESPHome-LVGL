@@ -55,7 +55,9 @@ Weather adapters (lot 4c-2, 2026-09-27). Two selects pick the source **in Home A
 - `sensor.tab5_pluie_dans_l_heure`: state = rain code `@level,start`, attribute `barres` = the 9 bars. It is a trigger-based template: it runs `openweathermap.get_minute_forecast` (minute series in mm/h, read from the integration's cache — no extra API call). Thresholds: < 0.1 dry, < 2.5 light, < 7.6 moderate, < 50 heavy, then very heavy;
 - `sensor.tab5_vigilance`: state = overall level (Vert / Jaune / Orange / Rouge), attribute `phenomenes` = 11 levels. MeteoAlarm codes are mapped to the Tab5 slots (wind, snow-ice, thunderstorms, fog, heat, cold, coastal, forest fire, avalanches, rain, flooding); it exposes one alert at a time.
 
-The OpenWeatherMap and MeteoAlarm branches were tested with simulated data in Home Assistant's template engine, not yet with the real integrations. Setup: [weather providers](../docs/installation.md#weather-providers).
+- **Forecast source** (lot 4c-3): the select « Tab5 · source des prévisions » lists the `weather.*` entities (choice kept in `input_text.tab5_meteo_previsions`; empty or gone: `weather.VOTRE_VILLE`). `sensor.tab5_meteo` gives its condition (state) and `temperature`, `humidite`, `uv`, `gel`, `neige`, plus what the entity supports (`type_jours` = daily, twice_daily or hourly; `heures_ok`). The full push asks only for supported types and groups twice-daily or hourly forecasts by date.
+
+OpenWeatherMap (forecasts and rain) was tried on the author's installation on 2026-09-27; the MeteoAlarm branch and the twice-daily/hourly grouping were tested with simulated data in Home Assistant's template engine only. Setup: [weather providers](../docs/installation.md#weather-providers).
 
 ### `packages/tab5_health.yaml`
 Health-monitoring package: five guard automations that alert when the push pipeline silently degrades. Because the Tab5 is push-only (see `docs/decisions/0001-push-only-zero-polling.md`), a stale screen raises no error on its own — these automations are the HA-side safety net.
@@ -248,7 +250,9 @@ Adaptateurs météo (lot 4c-2, 27/09/2026). Deux listes choisissent la source **
 - `sensor.tab5_pluie_dans_l_heure` : état = code de pluie `@niveau,début`, attribut `barres` = les 9 barres. Capteur à déclencheurs : il lance `openweathermap.get_minute_forecast` (série à la minute en mm/h, lue dans le cache de l'intégration, sans appel d'API en plus). Seuils : < 0,1 sec, < 2,5 faible, < 7,6 modérée, < 50 forte, au-delà très forte ;
 - `sensor.tab5_vigilance` : état = niveau global (Vert / Jaune / Orange / Rouge), attribut `phenomenes` = 11 niveaux. Les codes MeteoAlarm sont rangés dans les cases du Tab5 (vent, neige-verglas, orages, brouillard, canicule, grand froid, submersion, feux de forêt, avalanches, pluie, inondation) ; il n'expose qu'une alerte à la fois.
 
-Les branches OpenWeatherMap et MeteoAlarm ont été testées avec des données simulées dans le moteur de modèles de Home Assistant, pas encore avec les vraies intégrations. Installation : [fournisseurs météo](../docs/installation.md#fournisseurs-météo).
+- **Source des prévisions** (lot 4c-3) : la liste « Tab5 · source des prévisions » propose les entités `weather.*` (choix gardé dans `input_text.tab5_meteo_previsions` ; vide ou disparue : `weather.VOTRE_VILLE`). `sensor.tab5_meteo` donne sa condition (état) et `temperature`, `humidite`, `uv`, `gel`, `neige`, ainsi que ce que l'entité sait fournir (`type_jours` = daily, twice_daily ou hourly ; `heures_ok`). La poussée complète ne demande que les types gérés et regroupe par date les demi-journées ou les heures.
+
+OpenWeatherMap (prévisions et pluie) a été essayé sur l'installation de l'auteur le 27/09/2026 ; la branche MeteoAlarm et le regroupement des demi-journées et des heures n'ont été testés qu'avec des données simulées dans le moteur de modèles de Home Assistant. Installation : [fournisseurs météo](../docs/installation.md#fournisseurs-météo).
 
 ### `packages/tab5_health.yaml`
 Package de surveillance santé : cinq automations de garde qui alertent quand le pipeline de push se dégrade silencieusement. Le Tab5 étant push-only (voir `docs/decisions/0001-push-only-zero-polling.md`), un écran figé ne lève aucune erreur par lui-même — ces automations sont le filet de sécurité côté HA.
