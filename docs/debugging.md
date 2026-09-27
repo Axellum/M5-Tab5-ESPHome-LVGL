@@ -15,6 +15,14 @@ This is a short methodology note, not an incident log — see [`docs/troubleshoo
 
 - **Home Assistant's own logs** for anything upstream of the device — automation trigger/condition evaluation, template rendering errors, service call rejections.
 
+## Seeing the screen without the tablet
+
+The CI job « Rendu hors tablette » (`.github/workflows/rendu-host.yml`, [ADR-0021](decisions/0021-host-render-stubs.md)) compiles the interface for ESPHome's `host` platform (`tab5-rendu-host.yaml`), runs it on the runner, pushes the demo scenes and takes one picture per scene, in French then in English. On a pull request that touches the screen, it says which screens changed and attaches before/after images (artifact `rendu-captures`, folder `diff/`). It does not block the PR.
+
+- A change on purpose: `python tools/rendu/maj_references.py --run <run id>` replaces `docs/images/rendu/` (also the gallery of [`screens.md`](screens.md)); review the images, then commit.
+- It runs on Linux or macOS only (the `host` platform): on Windows, use the CI (*Actions → Rendu hors tablette → Run workflow*).
+- It shows the layout, not the device: no touch, no sound, no voice assistant, no timings or memory.
+
 ## Marking a spot for later, in code
 
 Use the `[AI-DEBUG]` tag (see [`Tab5/README.md`](../Tab5/README.md)) in a comment when you find a good observation point while investigating something, even if you don't fix the underlying issue in the same session — it saves the next debugging pass (human or AI) from re-finding the same vantage point.
@@ -58,6 +66,14 @@ Note de méthodologie, pas un journal d'incidents — voir [`docs/troubleshootin
   ![Overlay console sur l'appareil réel](images/tab5_photo_console_v2.jpg)
 
 - **Les logs Home Assistant** pour tout ce qui est en amont de l'appareil — évaluation trigger/condition d'automation, erreurs de rendu de template, rejets d'appel de service.
+
+## Voir l'écran sans la tablette
+
+Le job CI « Rendu hors tablette » (`.github/workflows/rendu-host.yml`, [ADR-0021](decisions/0021-host-render-stubs.md)) compile l'interface pour la plateforme `host` d'ESPHome (`tab5-rendu-host.yaml`), la lance sur le runner, lui pousse les scènes du mode démo et fait une image par scène, en français puis en anglais. Sur une pull request qui touche l'écran, il dit quels écrans ont changé et joint les images avant/après (artefact `rendu-captures`, dossier `diff/`). Il ne bloque pas la PR.
+
+- Un changement voulu : `python tools/rendu/maj_references.py --run <id du run>` remplace `docs/images/rendu/` (aussi la galerie de [`screens.md`](screens.md#version-française)) ; relire les images, puis committer.
+- Il ne tourne que sous Linux ou macOS (plateforme `host`) : sous Windows, passer par la CI (*Actions → Rendu hors tablette → Run workflow*).
+- Il montre la mise en page, pas l'appareil : ni tactile, ni son, ni assistant vocal, ni temps de rendu ou mémoire.
 
 ## Marquer un point d'observation dans le code
 

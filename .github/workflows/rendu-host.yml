@@ -1,0 +1,91 @@
+name: Rendu hors tablette
+
+# Lot 7 de l'audit « ouverture » (ADR-0021) : l'interface de la tablette compilée pour
+# la plateforme `host` d'ESPHome (tab5-rendu-host.yaml), lancée sur le runner puis
+# capturée scène par scène (tools/rendu/capturer.py, scènes du mode démo), en français
+# puis en anglais. Les captures sont comparées aux références de docs/images/rendu/
+# (tools/rendu/comparer.py) : INFORMATIF, un écart est signalé sans faire échouer le
+# job (choix d'Axel, 27/09/2026). Accepter un écart : tools/rendu/maj_references.py.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'tab5-ha-hmi.yaml'
+      - 'tab5-rendu-host.yaml'
+      - 'Tab5/**'
+      - 'tools/rendu/**'
+      - 'tools/demo/**'
+      - 'docs/images/rendu/**'
+      - '.github/workflows/rendu-host.yml'
+      - '!**/*.md'
+
+permissions:
+  contents: read
+
+jobs:
+  rendu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: ESPHome à la version plancher (min_version de tab5-ha-hmi.yaml), Pillow, faketime
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          echo "ESPHome $v" >> "$GITHUB_STEP_SUMMARY"
+          pip install "esphome==$v" pillow
+          sudo apt-get install -y --no-install-recommends faketime
+      - name: Compiler le rendu (plateforme host)
+        # Le fuseau d'une horloge `host` est celui de la compilation (le runner est en UTC).
+        env:
+          TZ: Europe/Paris
+        run: esphome compile tab5-rendu-host.yaml
+      - name: Lancer le rendu et capturer les scènes, en français puis en anglais
+        # Date et heure figées au départ (puis elles avancent), pour le rendu ET le script :
+        # l'heure affichée et le « dans N mn » de la pluie ne changent pas d'un run à
+        # l'autre. L'horloge monotone reste la vraie : ESPHome y mesure le temps depuis
+        # le démarrage (millis), et une date de 2026 la ferait croire vieille de 56 ans
+        # (la fenêtre d'appairage de 30 min se fermait dès le démarrage).
+        # Le changement de langue enregistre et redémarre, c'est-à-dire qu'il arrête le
+        # programme sur host : on le relance avec les mêmes préférences (ESPHOME_PREFDIR).
+        env:
+          TZ: Europe/Paris
+          DEPART: "@2026-06-16 07:45:00"
+          FAKETIME_DONT_FAKE_MONOTONIC: "1"
+          ESPHOME_PREFDIR: ${{ runner.temp }}/prefs
+        run: |
+          prog=$(find .esphome/build/tab5-rendu -name program -type f | head -n 1)
+          echo "Programme : $prog"
+          mkdir -p captures
+          export ESPHOME_SNAPSHOT_DIR="$PWD/captures"
+
+          faketime -f "$DEPART" "$prog" > captures/rendu-fr.log 2>&1 &
+          pid=$!
+          sleep 8
+          faketime -f "$DEPART" python tools/rendu/capturer.py --dossier captures --puis-langue English
+          for i in $(seq 1 20); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
+          kill "$pid" 2>/dev/null || true
+
+          faketime -f "$DEPART" "$prog" > captures/rendu-en.log 2>&1 &
+          pid=$!
+          sleep 8
+          faketime -f "$DEPART" python tools/rendu/capturer.py --dossier captures --suffixe en
+          kill "$pid" || true
+      - name: Comparer aux références (informatif)
+        run: python tools/rendu/comparer.py --captures captures
+      - name: Journaux du rendu
+        if: always()
+        run: tail -n 80 captures/rendu-*.log || true
+      - name: Captures
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rendu-captures
+          path: captures/
+          if-no-files-found: warn
+          retention-days: 14

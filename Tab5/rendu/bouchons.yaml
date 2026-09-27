@@ -1,0 +1,147 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file Tab5/rendu/bouchons.yaml
+# @role Bouchons du rendu hors tablette (tab5-rendu-host.yaml, lot 7) : les id du
+#       matériel que l'interface référence, sans matériel derrière. Les packages
+#       tab5-hardware.yaml, ecran-*.yaml, tab5-sensors-diagnostics.yaml et
+#       tab5-imu.yaml ne sont pas chargés ; ce fichier fournit ce que l'interface
+#       y prend. L'assistant vocal (tab5-assist.yaml) est chargé, mais ses composants
+#       matériels sont remplacés par Tab5/rendu/composants/.
+# ============================================================================
+
+# L'écran : un affichage en mémoire (plateforme host), même taille que la dalle du
+# Tab5 et même `rotation: 270` côté LVGL (tab5-styles.yaml). snapshot.take écrit un BMP.
+display:
+  - platform: snapshot
+    id: tab5_display
+    dimensions:
+      width: 720
+      height: 1280
+    update_interval: never
+
+# Heure de la machine (fuseau de la compilation). sntp_time porte le tick minute de
+# l'horloge, comme sur la tablette (tab5-sensors-diagnostics.yaml).
+time:
+  - platform: host
+    id: sntp_time
+    on_time_sync:
+      then:
+        - lambda: |-
+            auto t_now = id(sntp_time).now();
+            if (t_now.is_valid()) {
+              update_clock_date_ui(id(lbl_date),
+                  t_now.hour, t_now.minute, t_now.day_of_week, t_now.day_of_month, t_now.month);
+            }
+    on_time:
+      - seconds: 0
+        minutes: "*"
+        then:
+          - lambda: |-
+              auto t_now = id(sntp_time).now();
+              if (t_now.is_valid()) {
+                update_clock_date_ui(id(lbl_date),
+                    t_now.hour, t_now.minute, t_now.day_of_week, t_now.day_of_month, t_now.month);
+              }
+              rain_phrase_tick();
+  - platform: host
+    id: rtc_time
+
+# Rétroéclairage : un variateur sans broche (la veille de l'écran le pilote).
+output:
+  - platform: template
+    id: backlight_pwm
+    type: float
+    write_action: []
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    id: backlight
+    restore_mode: ALWAYS_ON
+
+# Audio : muet, mais avec les id et les actions d'ESPHome (media_player.*, speaker.*,
+# microphone.*, rtttl.*) que l'interface et le réveil appellent.
+speaker:
+  - platform: rendu_muet
+    id: tab5_speaker
+
+microphone:
+  - platform: rendu_muet
+    id: tab5_microphone
+
+media_player:
+  - platform: rendu_muet
+    id: speaker_player
+    name: "Tab5 Media Player"
+    internal: true
+
+switch:
+  # Ampli (broche de l'expander sur la tablette) : un interrupteur sans matériel.
+  - id: !extend speaker_enable
+    platform: template
+    pin: !remove
+    optimistic: true
+
+binary_sensor:
+  # Prise casque (expander) : jamais branchée ici.
+  - id: !extend headphone_detect
+    platform: template
+    pin: !remove
+  # Liaison avec HA : celle de l'API du rendu (le mode démo s'y connecte).
+  - platform: status
+    id: status_ha
+    internal: true
+
+# Capteurs lus par la console système : valeurs fixes, sans Wi-Fi ni sonde.
+sensor:
+  - platform: uptime
+    id: sys_uptime
+    internal: true
+  - platform: template
+    id: sys_wifi_rssi
+    internal: true
+    lambda: 'return -55.0f;'
+  - platform: template
+    id: sys_core_temp
+    internal: true
+    lambda: 'return 45.0f;'
+  - platform: template
+    id: sys_loop_time
+    internal: true
+    lambda: 'return 30.0f;'
+
+text_sensor:
+  - platform: template
+    id: sys_wifi_ssid
+    internal: true
+    lambda: 'return {"Rendu"};'
+  - platform: template
+    id: sys_wifi_ip
+    internal: true
+    lambda: 'return {"127.0.0.1"};'
+
+button:
+  - platform: template
+    id: btn_restart
+    internal: true
+
+# Capture de l'écran, appelée par tools/rendu/capturer.py après chaque scène. S'ajoute
+# aux actions de tab5-api-logic.yaml (les listes `services:` des packages se suivent).
+api:
+  services:
+    - service: rendu_capture
+      description: "Rendu hors tablette (lot 7) : écrit l'écran courant dans un BMP."
+      variables:
+        fichier:
+          type: string
+          description: "Nom du fichier, sans extension (dossier : ESPHOME_SNAPSHOT_DIR)."
+          example: "scene_1"
+      then:
+        - snapshot.take:
+            id: tab5_display
+            filename: !lambda 'return fichier;'
+
+script:
+  # Journal des démarrages (tab5_journal.cpp) : rien à envoyer depuis le rendu.
+  - id: tab5_journal_envoi
+    then: []

@@ -145,7 +145,7 @@ class HeureForecast:
 @dataclass
 class JourForecast:
     idx: int              # 0-14
-    nom_jour: str          # "Auj 15", "Mer 16"...
+    nom_jour: str          # "Auj", "Mer"… : le jour seul, comme tab5_push.yaml
     condition: str
     tmin: float
     tmax: float
@@ -219,7 +219,10 @@ def _jours_depuis_aujourdhui(condition: str, tmax_base: float, tmin_base: float,
         est_dimanche = jour.weekday() == 6
         est_weekend = jour.weekday() >= 5
         est_repos = est_weekend or i in jours_repos_supplementaires
-        nom = f"Auj {jour.strftime('%d')}" if i == 0 else f"{JOURS_FR[(jour.weekday() + 1) % 7]} {jour.strftime('%d')}"
+        # Le jour SEUL, sans date, comme HA (tab5_push.yaml) : la tablette le traduit
+        # (ha_day_name, tab5_forecast.cpp). « Auj 16 » n'était reconnu par aucune langue
+        # et restait en français sur un écran anglais (vu sur le rendu hors tablette).
+        nom = "Auj" if i == 0 else JOURS_FR[(jour.weekday() + 1) % 7]
         variation = (i % 4) - 1
         records.append(JourForecast(
             idx=i,

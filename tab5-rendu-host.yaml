@@ -1,0 +1,170 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-rendu-host.yaml
+# @role Rendu de l'écran HORS tablette (lot 7 de l'audit « ouverture ») : la même
+#       interface LVGL, compilée pour la plateforme `host` d'ESPHome (Linux/macOS),
+#       qui dessine dans un affichage en mémoire (`snapshot`) et écrit des BMP.
+# @usage CI (job rendu) : captures des scènes du mode démo. Ne se flashe nulle part.
+# @ai_instruction Mêmes packages d'interface que tab5-ha-hmi.yaml ; le matériel
+#                 (écran, audio, IMU, Wi-Fi) est remplacé par Tab5/rendu/bouchons.yaml.
+# ============================================================================
+substitutions: !include Tab5/user_entities.example.yaml
+
+esphome:
+  name: tab5-rendu
+  friendly_name: Tab5 rendu
+  includes:
+    # En-têtes d'ESP-IDF, d'ESP-Hosted et de FreeRTOS remplacés pour la plateforme host
+    # (Tab5/rendu/hote/, Tab5/rendu/freertos/) : les sources du projet restent celles
+    # de la tablette, sans une ligne changée.
+    - Tab5/rendu/hote/esp_heap_caps.h
+    - Tab5/rendu/hote/esp_attr.h
+    - Tab5/rendu/hote/esp_system.h
+    - Tab5/rendu/hote/esp_hosted.h
+    - Tab5/rendu/hote/esp_hosted_host_fw_ver.h
+    - Tab5/rendu/freertos
+    - Tab5/tab5_tokens.h
+    - Tab5/tab5_i18n_data.h
+    - Tab5/tab5_i18n.h
+    - Tab5/tab5_i18n.cpp
+    - Tab5/tab5_core.h
+    - Tab5/tab5_core.cpp
+    - Tab5/tab5_custom.h
+    - Tab5/tab5_custom.cpp
+    - Tab5/tab5_internal.h
+    - Tab5/tab5_text.cpp
+    - Tab5/tab5_forecast.cpp
+    - Tab5/tab5_central.cpp
+    - Tab5/tab5_services.cpp
+    - Tab5/tab5_assist.cpp
+    - Tab5/tab5_cards.cpp
+    - Tab5/tab5_console.cpp
+    - Tab5/tab5_anim.cpp
+    - Tab5/tab5_calendar.cpp
+    - Tab5/tab5_journal.cpp
+    - Tab5/tab5_zones.cpp
+    - Tab5/game_common.h
+    - Tab5/marble_game.h
+    - Tab5/marble_game.cpp
+    - Tab5/arkanoid_game.h
+    - Tab5/arkanoid_game.cpp
+    - Tab5/lode_game.h
+    - Tab5/lode_game.cpp
+    - Tab5/chess_ai.h
+    - Tab5/chess_ai.cpp
+    - Tab5/chess_game.h
+    - Tab5/chess_game.cpp
+    - Tab5/go_engine.h
+    - Tab5/go_engine.cpp
+    - Tab5/go_ai.h
+    - Tab5/go_ai.cpp
+    - Tab5/go_game.h
+    - Tab5/go_game.cpp
+    - Tab5/trivia_game.h
+    - Tab5/trivia_questions.h
+    - Tab5/trivia_game.cpp
+    - Tab5/draughts_ai.h
+    - Tab5/draughts_ai.cpp
+    - Tab5/draughts_game.h
+    - Tab5/draughts_game.cpp
+    - Tab5/pinball_game.h
+    - Tab5/pinball_game.cpp
+    - Tab5/tab5_registry.h
+    - Tab5/tab5_registry.cpp
+    - Tab5/alarm_clock.h
+    - Tab5/alarm_clock.cpp
+    - Tab5/alarm_render.h
+    - Tab5/alarm_render.cpp
+
+  # Ce que l'on_boot de tab5-ha-hmi.yaml fait pour l'INTERFACE, sans le matériel (délai
+  # de l'expander, rétroéclairage, ampli, attente de HA, mot de réveil). Les lambdas
+  # sont des copies exactes : tests/test_rendu_host.py vérifie qu'elles figurent
+  # telles quelles dans tab5-ha-hmi.yaml.
+  on_boot:
+    - priority: 600
+      then:
+        - globals.set:
+            id: boot_complete
+            value: 'true'
+        - script.execute:
+            id: tab5_set_assist_mode
+            discussion: !lambda 'return id(conversation_mode);'
+        - lambda: |-
+            g_central_ctx.planning_wrap = id(planning_wrapper);
+            g_central_ctx.rain_wrap = id(rain_wrapper);
+            g_central_ctx.alert_cont = id(alert_container);
+            g_central_ctx.info_wrap = id(info_wrapper);
+            g_central_ctx.ha_wrap[0] = id(ha_alert_wrapper_0);
+            g_central_ctx.ha_wrap[1] = id(ha_alert_wrapper_1);
+            g_central_ctx.ha_wrap[2] = id(ha_alert_wrapper_2);
+            g_central_ctx.ha_wrap[3] = id(ha_alert_wrapper_3);
+            g_central_ctx.page_title_sub = id(lbl_page_title_sub);
+            // Slots meteo jour (D2 : plus de duplication dans chaque lambda).
+            g_day_slots[0] = {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr};
+            g_day_slots[1] = {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)};
+            g_day_slots[2] = {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr};
+            g_day_slots[3] = {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr};
+            g_day_slots[4] = {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr};
+            // Slots meteo heure.
+            g_hour_slots[0] = {id(h4_time), id(h4_temp), id(h4_prob), id(h4_icon_layer1), id(h4_icon_layer2)};
+            g_hour_slots[1] = {id(h3_time), id(h3_temp), id(h3_prob), id(h3_icon_layer1), id(h3_icon_layer2)};
+            g_hour_slots[2] = {id(h2_time), id(h2_temp), id(h2_prob), id(h2_icon_layer1), id(h2_icon_layer2)};
+            g_hour_slots[3] = {id(h1_time), id(h1_temp), id(h1_prob), id(h1_icon_layer1), id(h1_icon_layer2)};
+            g_hour_slots[4] = {id(h0_time), id(h0_temp), id(h0_prob), id(h0_icon_layer1), id(h0_icon_layer2)};
+        - lambda: 'alarm_set_skip_floor(id(alarm_skip_before));'
+        - script.execute: tab5_alarm_refresh
+        - script.execute: tab5_central_rotator_auto
+    - priority: -100
+      then:
+        - lambda: |-
+            i18n_apply_boot({id(page_main)->obj, id(page_arcade)->obj, id(page_marble)->obj,
+                             id(page_arkanoid)->obj, id(page_pinball)->obj, id(page_lode)->obj,
+                             id(page_go)->obj, id(page_trivia)->obj, id(page_chess)->obj,
+                             id(page_draughts)->obj});
+        - script.execute: tab5_zones_apply
+        - delay: 2s
+        - lambda: |-
+            apply_pressed_scale_to_tree(lv_screen_active());
+            g_clock_roller.colon = id(lbl_time_colon);
+            g_clock_roller.d[0] = {id(clock_roll_h10), {id(lbl_time_h10_a), id(lbl_time_h10_b)}, 0, 0};
+            g_clock_roller.d[1] = {id(clock_roll_h1),  {id(lbl_time_h1_a),  id(lbl_time_h1_b)},  0, 0};
+            g_clock_roller.d[2] = {id(clock_roll_m10), {id(lbl_time_m10_a), id(lbl_time_m10_b)}, 0, 0};
+            g_clock_roller.d[3] = {id(clock_roll_m1),  {id(lbl_time_m1_a),  id(lbl_time_m1_b)},  0, 0};
+            layout_clock_roller(id(clock_tile), id(roboto_130_b));
+            // Repeint l'heure tout de suite : sans ca l'horloge garderait le
+            // placeholder YAML jusqu'au prochain tick minute (on_time_sync a
+            // pu passer avant que les pointeurs du rouleau soient poses).
+            auto t_now = id(sntp_time).now();
+            if (t_now.is_valid()) {
+                update_clock_date_ui(id(lbl_date), t_now.hour, t_now.minute,
+                    t_now.day_of_week, t_now.day_of_month, t_now.month);
+            }
+
+host:
+
+logger:
+  level: INFO
+
+# Composants de remplacement (Tab5/rendu/composants/) : ils portent les noms de ceux
+# d'ESPHome qui n'existent que sur la tablette (voice_assistant, micro_wake_word…) et
+# les remplacent ici seulement. rendu_muet fournit l'audio muet.
+external_components:
+  - source:
+      type: local
+      path: Tab5/rendu/composants
+
+packages:
+  tab5_ui_tokens: !include Tab5/tab5-ui-tokens.yaml
+  tab5_bouchons: !include Tab5/rendu/bouchons.yaml
+  tab5_assist: !include Tab5/tab5-assist.yaml
+  tab5_sensors_domotique: !include Tab5/tab5-sensors-domotique.yaml
+  tab5_api_logic: !include Tab5/tab5-api-logic.yaml
+  tab5_styles: !include Tab5/tab5-styles.yaml
+  tab5_globals: !include Tab5/tab5-globals.yaml
+  tab5_scripts: !include Tab5/tab5-scripts.yaml
+  tab5_lvgl: !include Tab5/tab5-lvgl.yaml
+  tab5_arcade: !include Tab5/tab5-arcade.yaml
+  tab5_calendar: !include Tab5/tab5-calendar.yaml
+  tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml
+  tab5_alarm: !include Tab5/tab5-alarm.yaml
+  tab5_zones: !include Tab5/tab5-zones.yaml
