@@ -4,6 +4,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — La garde « reboot inattendu » ignore les redémarrages demandés
+
+- `packages/tab5_health.yaml`, garde (b) : elle notifiait à chaque nouveau démarrage, mise à
+  jour comprise (vu ce soir, rc.2 → rc.3). Elle lit maintenant `Tab5 Raison du redémarrage`,
+  en attendant au plus 1 min celle de ce démarrage (elle repasse par `unavailable` à chaque
+  coupure). Ne notifient plus : « Reboot request from … » (mise à jour depuis HA ou par
+  `esphome upload`, bouton de redémarrage), « software via esp_restart » (select Langue),
+  « USB peripheral » (flasheur web). Un plantage, une coupure ou une chute de tension
+  notifient toujours, avec la raison dans le message ; sans raison reçue à temps aussi.
+- Déployé sur HA (rendu, `.bak` à côté, configuration vérifiée, automatisations
+  rechargées) ; logique vérifiée sur les vraies raisons avec l'évaluateur de templates.
+
 ### 2026-09-27 — Capturer un plantage sur le port série, garder l'ELF des firmwares publiés
 
 La mise à jour de la tablette depuis HA (3.0.0-rc.1 → rc.2, 27/09/2026) a fini par

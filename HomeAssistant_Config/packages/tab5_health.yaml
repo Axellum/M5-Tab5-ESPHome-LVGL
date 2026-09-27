@@ -157,11 +157,21 @@ automation:
   # as_timestamp(…, none) : sûr au boot, capteur pas encore initialisé (cf.
   # règles HA du projet).
   # ==========================================================================
+  # REDÉMARRAGE DEMANDÉ (27/09/2026) : une mise à jour (depuis HA ou `esphome
+  # upload`), le bouton « Redémarrage Système », un changement de langue ou un reset
+  # par l'USB (flasheur web) ne sont pas inattendus. La raison du démarrage arrive
+  # avec les autres états à la reconnexion, dans un ordre quelconque : on attend
+  # qu'elle soit celle de CE démarrage (elle repasse par `unavailable` à chaque
+  # coupure), au plus 1 min. Raisons « demandées » : « Reboot request from … »
+  # (ESPHome : esphome.ota, http_request.update, api…), « software via esp_restart »
+  # (le firmware, ex. le select Langue), « USB peripheral ». Sans raison fraîche
+  # (délai dépassé), on notifie : mieux vaut une alerte de trop qu'un plantage muet.
   - id: tab5_health_unexpected_reboot
     alias: "Tab5 Santé — reboot inattendu (nouveau démarrage)"
     description: >-
-      Alerte quand l'heure de démarrage du Tab5 change : l'appareil a redémarré
-      de manière inattendue (brownout, crash firmware, coupure d'alimentation).
+      Alerte quand l'heure de démarrage du Tab5 change sans que le redémarrage ait
+      été demandé : brownout, crash firmware, coupure d'alimentation. Une mise à
+      jour, un redémarrage demandé ou un changement de langue ne notifient pas.
     mode: single
     trigger:
       - platform: state
@@ -178,6 +188,19 @@ automation:
           {% else %}{{ to_ts >= as_timestamp(trigger.from_state.last_changed) - 300 }}
           {% endif %}
     action:
+      - wait_template: >-
+          {% set r = states.sensor.m5stack_tab5_home_assistant_hmi_tab5_raison_du_redemarrage %}
+          {{ r is not none and r.state not in ['unavailable', 'unknown']
+             and as_timestamp(r.last_changed) >= as_timestamp(trigger.to_state.last_changed) - 60 }}
+        timeout: "00:01:00"
+        continue_on_timeout: true
+      - variables:
+          raison: "{{ states('sensor.m5stack_tab5_home_assistant_hmi_tab5_raison_du_redemarrage') }}"
+          demande: >-
+            {{ wait.completed and (raison is match('Reboot request from ')
+               or raison in ['software via esp_restart', 'USB peripheral']) }}
+      - condition: template
+        value_template: "{{ not demande }}"
       - action: script.tab5_health_notify
         data:
           notification_id: tab5_health_reboot
@@ -190,10 +213,12 @@ automation:
               as_timestamp(trigger.from_state.state) | timestamp_custom('%d/%m à %H:%M:%S')
               if as_timestamp(trigger.from_state.state, none) is not none
               else 'inconnu' }}).
+            Raison : {{ raison if wait.completed else 'pas encore reçue' }}.
             Vérifier l'alimentation et les logs ESPHome.
           message_court: >-
             Redémarré à
             {{ as_timestamp(trigger.to_state.state) | timestamp_custom('%H:%M:%S') }}
+            ({{ raison if wait.completed else 'raison inconnue' }})
             — vérifier alimentation / logs ESPHome.
 
   # ==========================================================================

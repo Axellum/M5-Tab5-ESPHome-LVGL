@@ -45,3 +45,4 @@ VOTRE_EMAIL_gmail_com: your_email_gmail_com     # calendar.<…> (planning de tr
 # mettez ici l'entity_id COMPLET tel qu'il apparaît dans Outils de développement.
 number.m5stack_tab5_home_assistant_hmi_rendez_vous_annoncer_avant: number.m5stack_tab5_home_assistant_hmi_rendez_vous_annoncer_avant
 binary_sensor.m5stack_tab5_home_assistant_hmi_reveil_en_cours: binary_sensor.m5stack_tab5_home_assistant_hmi_reveil_en_cours
+sensor.m5stack_tab5_home_assistant_hmi_tab5_raison_du_redemarrage: sensor.m5stack_tab5_home_assistant_hmi_tab5_raison_du_redemarrage  # garde (b) de tab5_health.yaml
