@@ -4,6 +4,54 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Calages relevés sur le rendu hors tablette (lot a)
+
+Défauts vus sur les captures de tous les écrans (lot 7 bis), réels sur la tablette : le
+rendu dessine avec le même code.
+
+- **Prévisions horaires** : dès qu'il pleuvait, « 0.5mm » recouvrait la température.
+  Onglet du bas à 210 px (mesuré en Roboto 32 gras), sans décimale au-delà de 10 mm.
+- **Interrupteurs** : les onglets étaient déclarés avant le corps de la carte, donc dessinés
+  dessous (titres coupés, accent de « Éteint » masqué). Ordre des prévisions repris ;
+  onglet de titre à 200 px (« Woonkamer » : 173 px).
+- **Go** : lignes de menu de 68 px et pastilles des joueurs de 54 px, la seconde ligne
+  n'est plus coupée.
+- **Trial Poursuite** : « – » au lieu du signe moins, absent des polices (rectangle vide) ;
+  İ ō ř ajoutés au jeu latin-1 pour trois questions ; nouveau test : toute chaîne du code
+  s'affiche avec les glyphes des polices.
+- **Réveil** : libellés des boutons centrés à droite du pictogramme, sans la marge du thème
+  (« Ouverture », « Werkbegin », « Shift start » passaient dessous) ; délai en « 1h30 »
+  (« 90 min » ne tenait pas en 59 px) ; « 15 min » sous « RDV avant » ; « Voice
+  announcement » en anglais.
+- **Coureur d'Or** : grille des niveaux resserrée, « Retour » ne la touche plus ; classement
+  vide centré. **Dames** : « Reprendre » grisé au lieu d'un trou. **Roi Noir** : bilan par
+  niveau en lignes centrées (les colonnes à l'espace ne tombaient pas juste). **Console** :
+  valeur de « Bloc max » décalée (« Max. Block » la touchait).
+- **Rendu** : temps actif de la console figé ; les parties de Fil d'Or (salle tirée d'une
+  graine prise sur l'horloge monotone) sont capturées mais plus comparées.
+- Vérifié sur le rendu, dans les 4 langues : seuls les écrans visés changent.
+
+### 2026-09-27 — Chaque écran capturé, en quatre langues, au doigt virtuel (lot 7 bis)
+
+Suite du lot 7 (ADR-0021, amendée) : le rendu hors tablette ne capturait que les trois
+scènes de l'accueil, en français et en anglais.
+
+- **Doigt virtuel** (`Tab5/rendu/rendu_doigt.h`, rendu seulement) : un pointeur LVGL piloté
+  par les actions `rendu_toucher` (appui, appui long) et `rendu_glisser` (geste), aux
+  coordonnées des captures. Les écrans s'ouvrent comme sur la dalle, widgets des jeux
+  créés en C++ compris.
+- **Plan de 80 écrans** (`tools/rendu/ecrans.py`) : variantes de l'accueil, toutes les
+  fenêtres et sous-fenêtres, le sélecteur Arcade, menus, partie, pause et fin des 8 jeux.
+  Toute partie lancée est abandonnée (une sauvegarde décalerait les menus).
+  `capturer.py` signale une capture identique à une autre (appui tombé à côté) ;
+  `tests/test_rendu_ecrans.py` garde le plan cohérent.
+- **CI** : une tâche par langue en parallèle (français, anglais, allemand, néerlandais),
+  préférences neuves pour chacune, ~14 min. Une PR est comparée aux captures du dernier
+  run réussi sur `main` (artefact gardé 90 jours) ; seules les scènes FR/EN restent
+  versionnées (galerie). `workflow_dispatch` : langues et écrans au choix.
+- **Correctif** : « Connecté » avait perdu son accent dans la console système.
+- Vérifié : 332 captures, aucune en double ; les 6 références d'origine identiques au pixel.
+
 ### 2026-09-27 — Installer depuis le navigateur, mettre à jour depuis Home Assistant (lot 6c-2)
 
 Lot 6 de l'audit « ouverture », fin : le firmware publié, ADR-0022. Choix d'Axel : clé du

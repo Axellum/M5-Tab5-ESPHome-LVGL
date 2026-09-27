@@ -94,9 +94,12 @@ binary_sensor:
 
 # Capteurs lus par la console système : valeurs fixes, sans Wi-Fi ni sonde.
 sensor:
-  - platform: uptime
+  # Temps actif figé (1 h 02) : le vrai suivait l'horloge monotone et la capture de la
+  # console changeait d'une minute selon le run (vu le 27/09/2026).
+  - platform: template
     id: sys_uptime
     internal: true
+    lambda: 'return 3720.0f;'
   - platform: template
     id: sys_wifi_rssi
     internal: true
