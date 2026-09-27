@@ -4,6 +4,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — HA n'envoie plus rien pour une zone absente (lot 5b)
+
+Suite du lot 5, **HA seulement, aucun flash**. La tablette masque déjà ces zones
+(lot 5a) ; HA cesse d'y pousser des valeurs ou d'appeler des entités absentes.
+
+- **Clim** : `tab5_push_clim` s'arrête sans entité climat. Il poussait une fausse clim
+  à 20.0 (`| float(20)`) à chaque connexion.
+- **Volet** : `tab5_push_volet` s'arrête sans volet ou sans le package
+  `volet_serre_tracking.yaml` (même règle que la zone « volet »). Il poussait
+  « unknown ».
+- **`allumer_leds`** et **`allumer_pc_tv`** : chaque entité seulement si elle existe.
+  Une maison sans TV garde son PC, et inversement.
+- **Pluie, source Météo-France sans l'intégration** (le choix par défaut) : code
+  « aucune source » (`@-`), comme « Aucune », au lieu de « temps sec » (`@0,0`). Sans
+  effet visible jusqu'ici, car la phrase ne s'affiche que dans le panneau pluie, qui
+  ne tourne que s'il pleut. Une entité indisponible garde l'ancien comportement.
+- **Pas touché** : une clim *indisponible* (qui existe) reçoit toujours 20 par défaut.
+  Une consigne « nan » serait plus honnête, mais les boutons ± de la tablette en
+  feraient une consigne invalide envoyée à HA : c'est un changement de firmware, à
+  faire à part.
+- **Vérifié sur le HA d'Axel** : toutes les gardes sont vraies (rien ne change chez
+  lui), et fausses pour une entité inventée.
+
 ### 2026-09-27 — Zones optionnelles : une zone sans entité disparaît de l'écran (lot 5a)
 
 Lot 5 de l'audit « ouverture » : l'écran ne suppose plus la maison de l'auteur. Chez

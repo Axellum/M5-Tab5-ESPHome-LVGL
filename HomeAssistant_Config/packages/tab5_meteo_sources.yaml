@@ -137,7 +137,11 @@ template:
             {% set ent = 'sensor.VOTRE_VILLE_next_rain' %}
             {% set niv = {'Temps sec': 0, 'Pluie faible': 1, 'Pluie modérée': 2, 'Pluie forte': 3,
                           'Pluie très forte': 4, 'Pluie trés forte': 4} %}
-            {% if not has_value(ent) %}
+            {% if states[ent] is none %}
+              {# Pas d'intégration Météo-France (choix par défaut de la liste) : aucune
+                 source, comme « Aucune » — et non « temps sec » (lot 5b). #}
+              @-
+            {% elif not has_value(ent) %}
               @0,0
             {% else %}
               {% set next_rain = states(ent) | as_timestamp(default=0) %}
