@@ -14,6 +14,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   arrête le rotateur et avance la carte, un pas à la fois comme un appui, jusqu'au
   panneau voulu. `tools/rendu/capturer.py` fixe un panneau par scène : planning, pluie,
   info. Rien ne change sur la tablette.
+- **Heure figée** : `faketime` arrête l'horloge (sans « @ »). Une heure qui avance
+  franchissait une minute pendant les ~64 s des trois scènes : la dernière capture
+  passait de 07:45 à 07:46 (vu sur le premier run de ce correctif). « Dans 10 mn »
+  devient exact pour le rendu comme pour le script ; références régénérées.
 - ADR-0021 complété.
 
 ### 2026-09-27 — Textes de présentation prêts pour la 3.0 (lot 8)
