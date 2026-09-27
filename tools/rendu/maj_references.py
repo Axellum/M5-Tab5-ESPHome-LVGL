@@ -7,6 +7,10 @@ Quand l'écran change pour de bon, le job « Rendu hors tablette » le signale
 servent à la fois de références et de galerie (docs/screens.md). Il n'y a plus qu'à
 relire les images et à les committer.
 
+Seules les scènes du mode démo, en français et en anglais, sont versionnées (celles de
+la galerie) : les autres écrans et langues (~320 images) ont pour référence les
+captures du dernier run de main, sans alourdir le dépôt.
+
 Usage :
     python tools/rendu/maj_references.py --run 36318894541
 """
@@ -22,6 +26,11 @@ from pathlib import Path
 REFERENCES = Path(__file__).resolve().parent.parent.parent / "docs" / "images" / "rendu"
 
 
+def dans_la_galerie(nom: str) -> bool:
+    """Scène du mode démo (« 1-journee-ensoleillee »), en français ou en anglais."""
+    return nom[:1].isdigit() and nom.rsplit("-", 1)[-1] not in ("de", "nl")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--run", required=True, help="identifiant du run GitHub Actions")
@@ -31,7 +40,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         subprocess.run(["gh", "run", "download", args.run, "--repo", args.depot,
                         "--name", "rendu-captures", "--dir", tmp], check=True)
-        pngs = sorted(Path(tmp).glob("*.png"))
+        pngs = sorted(p for p in Path(tmp).glob("*.png") if dans_la_galerie(p.stem))
         if not pngs:
             print("Aucune capture PNG dans l'artefact de ce run.", file=sys.stderr)
             return 1

@@ -3,19 +3,27 @@
 
 Chaque écran s'ouvre depuis l'accueil comme sur la dalle : appuis du doigt virtuel du
 rendu (Toucher, Glisser : coordonnées LOGIQUES, celles des captures PNG, paysage
-1280×720), ou select HA « Aller à l'écran » (Aller). tools/rendu/capturer.py joue les
-étapes, capture, joue `fermer` puis revient à l'accueil par « Aller à l'écran » →
-Accueil, qui referme fenêtres, sous-fenêtres et jeu en cours.
+1280×720, portrait 720×1280 dans Neon Apron), ou select HA « Aller à l'écran » (Aller),
+ou une poussée de HA (Service). tools/rendu/capturer.py joue les étapes, capture, joue
+`fermer` puis revient à l'accueil par « Aller à l'écran » → Accueil, qui referme
+fenêtres, sous-fenêtres et jeu en cours.
 
-Les coordonnées viennent des captures de référence (docs/images/rendu/) et des
-positions déclarées dans Tab5/*.yaml. Si la mise en page change, capturer.py signale
-une capture identique à une autre : l'appui est tombé à côté.
+Les coordonnées viennent des captures et des positions déclarées dans Tab5/*.yaml,
+Tab5/ui_components/*.yaml et les *_game.cpp (inventaire du 27/09/2026). Si la mise en
+page change, capturer.py signale une capture identique à une autre : l'appui est tombé
+à côté.
 
-Module pur (stdlib), vérifié par tests/test_rendu_ecrans.py.
+Module pur (stdlib, et tools/demo/scenarios.py), vérifié par tests/test_rendu_ecrans.py.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import datetime as _dt
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
+from scenarios import SCENES, build_alerte_payload, code_pluie  # noqa: E402
 
 
 @dataclass(frozen=True)
@@ -27,7 +35,7 @@ class Toucher:
     apres: float = 0.6
 
 
-def Long(x: int, y: int, apres: float = 0.6) -> Toucher:  # noqa: N802 — se lit comme une étape
+def Long(x: int, y: int, apres: float = 0.8) -> Toucher:  # noqa: N802 — se lit comme une étape
     """Appui long (on_long_press d'LVGL : 400 ms par défaut, 1,2 s par sécurité)."""
     return Toucher(x, y, duree=1200, apres=apres)
 
@@ -51,7 +59,7 @@ class Aller:
 
 @dataclass(frozen=True)
 class Service:
-    """Action de l'API du rendu (tab5_maj_* comme HA, ou rendu_*)."""
+    """Action de l'API du rendu (tab5_maj_* comme HA, ou rendu_*) : `donnees` = paires."""
     nom: str
     donnees: tuple = ()
     apres: float = 0.8
@@ -72,10 +80,263 @@ class Ecran:
     portrait: bool = False
 
 
+# ---------------------------------------------------------------------------
+# Données que HA pousserait, pour que les fenêtres ne soient pas vides. Date figée
+# des captures : mardi 16 juin 2026, 07:45 à Paris (rendu-host.yml).
+# ---------------------------------------------------------------------------
+
+def _calendrier_juin_2026() -> tuple:
+    """Arguments de tab5_maj_calendrier_mois : travail en semaine, un rendez-vous, un
+    anniversaire, une fête, deux jours de vacances scolaires (codes : bits 1 travail,
+    2 férié, 4 vacances, 8 rendez-vous, 16 anniversaire)."""
+    codes, heures, details = [], [], []
+    for jour in range(1, 32):
+        code, horaire, lignes = 0, "", []
+        if jour <= 30 and _dt.date(2026, 6, jour).weekday() < 5:
+            code, horaire = 1, "09:00-17:30"
+            lignes.append("travail|09:00-17:30")
+        if jour == 18:
+            code |= 8
+            lignes.append("rdv|Dentiste 14:30")
+        if jour == 21:
+            lignes.append("fete|Fête de la musique")
+        if jour == 24:
+            code |= 16
+            lignes.append("anniv|Anniversaire de Léa")
+        if jour in (29, 30):
+            code |= 4
+            lignes.append("vacances|Vacances scolaires")
+        codes.append(f"{code:02x}")
+        heures.append(horaire)
+        details.append(";".join(lignes))
+    return (("annee", "2026"), ("mois", "6"), ("codes", "".join(codes)),
+            ("heures", "|".join(heures)), ("details", "~".join(details)))
+
+
+def _epoch(annee: int, mois: int, jour: int, heure: int, minute: int) -> int:
+    """Epoch UTC d'une heure de Paris en juin (UTC+2)."""
+    return int(_dt.datetime(annee, mois, jour, heure - 2, minute, tzinfo=_dt.timezone.utc).timestamp())
+
+
+RDV = f"{_epoch(2026, 6, 18, 14, 30)}|Dentiste~{_epoch(2026, 6, 19, 9, 0)}|Réunion équipe"
+
+REPONSE_ASSISTANT = (
+    "**Demain à la maison** : ciel voilé, 24 °C l'après-midi.\n\n"
+    "- Pluie : 10 % vers 18 h\n"
+    "- Volet de la serre : fermé\n"
+    "- Prochain rendez-vous : *Dentiste*, jeudi 14:30\n\n"
+    "| Heure | Temp. | Pluie |\n|---|---|---|\n| 09:00 | 18 ° | 0 % |\n| 15:00 | 24 ° | 5 % |"
+)
+
+ALERTES_HA = "update.home_assistant_core_update|Rouge|@maj:Home Assistant Core;ha:unavailable|Orange|@indispo:3"
+
+# Vigilance de la scène 2 (orange), puis retour à celle de la scène 3, la dernière
+# poussée par capturer.py. Heure figée : les codes de pluie sont ceux des scènes.
+VIGILANCE_ORANGE = build_alerte_payload(phrase_pluie=code_pluie(*SCENES[1].pluie), **SCENES[1].alerte)
+VIGILANCE_SCENE_3 = build_alerte_payload(phrase_pluie=code_pluie(*SCENES[2].pluie), **SCENES[2].alerte)
+
+
+def _panneau(n: int) -> Service:
+    """rendu_panneau : arrête le rotateur de la carte centrale sur le panneau n."""
+    return Service("rendu_panneau", (("panneau", n),), apres=5.0)
+
+
+# ---------------------------------------------------------------------------
+# Écran principal (paysage 1280×720).
+# ---------------------------------------------------------------------------
+
+HORLOGE = (640, 105)          # court : Réveil · long : Calendrier
+MICRO = (206, 145)            # long : Assistant vocal
+DOMO, DISCU = (72, 150), (340, 150)
+BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
+POTS = (640, 270)             # long : Plantes
+SERRE = (1172, 158)           # court : Arcade
+CONSIGNE_CLIM = (1061, 251)   # court : Climatisation
+TUILE_J1_TEMP = (390, 684)    # court : planning de ce jour, 6 s
+TUILES = {"chambre": (640, 572), "salon": (890, 572)}  # long : Lumières
+
+# Gestes sur les prévisions : départ et arrivée entre deux tuiles, pas sur un bouton
+# (un bouton garde l'appui et se déclencherait au relâché).
+VERS_LA_GAUCHE = Glisser(1015, 520, 265, 520)   # page 2 → 3 → 4 (journalières)
+VERS_LA_DROITE = Glisser(265, 520, 1015, 520)   # page 2 → 1 → 0 (horaires)
+
+REVEIL_TESTER = (550, 641)
+SONNERIE_ARRETER = (440, 540)
+CAL_JOUR_18 = (642, 342)      # cellule du jeudi 18 (rangée 2, colonne 3)
+CONSOLE_REDEMARRER_HA, CONSOLE_REBOOT = (801, 588), (1060, 588)
+CONFIRMATION_ANNULER = (813, 596)   # jamais « Confirmer » (1049, 596)
+
+
+# ---------------------------------------------------------------------------
+# Arcade : sélecteur et consoles. Menus centrés en x = 640 (360 pour Neon Apron).
+# ---------------------------------------------------------------------------
+
+CARTES = {
+    "fil-dor": (169, 258), "arcanoide": (483, 258), "neon-apron": (797, 258),
+    "coureur-dor": (1111, 258), "go": (169, 528), "trial-poursuite": (483, 528),
+    "dames": (797, 528), "roi-noir": (1111, 528),
+}
+
+
+def _menu(y: int, x: int = 640) -> Toucher:
+    return Toucher(x, y, apres=0.8)
+
+
+def _arcade(jeu: str, *etapes) -> tuple:
+    """Accueil → sélecteur Arcade → console `jeu` → étapes."""
+    return (Toucher(*SERRE, apres=1.0), Toucher(*CARTES[jeu], apres=1.2)) + etapes
+
+
+def _jeu(nom: str, jeu: str, etapes: tuple = (), fermer: tuple = (), portrait: bool = False) -> Ecran:
+    return Ecran(f"jeu-{jeu}" + (f"-{nom}" if nom else ""), _arcade(jeu, *etapes), fermer, portrait=portrait)
+
+
+# Parties : chaque partie lancée est ABANDONNÉE avant le retour à l'accueil. Laissée
+# en cours, elle serait sauvegardée (NVS) et ajouterait une ligne « Reprendre » aux
+# menus de Go et du Roi Noir, décalant tous les appuis suivants.
+FIL_DOR_PARTIE = (_menu(181),)
+FIL_DOR_PAUSE = FIL_DOR_PARTIE + (_menu(24),)
+FIL_DOR_ABANDON = (_menu(317),)
+FIL_DOR_HUB = (_menu(589),)
+
+ARCANOIDE_PARTIE = (_menu(181),)
+
+NEON_PARTIE = (_menu(442, 360),)
+NEON_PAUSE = NEON_PARTIE + (_menu(70, 360),)
+NEON_ABANDON = (_menu(634, 360),)
+NEON_HUB = (_menu(634, 360),)
+
+COUREUR_PARTIE = (_menu(227),)
+COUREUR_PAUSE = COUREUR_PARTIE + (_menu(24),)
+COUREUR_QUITTER = (_menu(507),)
+COUREUR_HUB = (_menu(367),)
+
+GO_PARTIE = (_menu(180), _menu(550), Toucher(483, 390, apres=0.8))   # pierre fantôme au tengen
+GO_MENU = (Toucher(1187, 665, apres=0.8),)
+GO_ABANDON = (_menu(328),)
+GO_APRES_SCORE = (Toucher(832, 535, apres=0.8),)
+
+TRIAL_PLATEAU = (_menu(272), Toucher(944, 546, apres=1.2))
+TRIAL_MENU = (Toucher(1205, 24, apres=0.8),)
+TRIAL_ABANDON = (_menu(488),)
+TRIAL_CONFIRMER = (Toucher(460, 418, apres=0.8),)
+
+DAMES_PARTIE = (_menu(195), _menu(515), Toucher(266, 480, apres=0.8))  # pion choisi, coups montrés
+DAMES_ABANDON = (Toucher(1125, 366, apres=0.8),)
+DAMES_HUB = (_menu(275),)
+
+ROI_PARTIE = (_menu(241), _menu(521), Toucher(401, 593, apres=0.8))   # pion e2 choisi
+ROI_MENU = (Toucher(1164, 666, apres=0.8),)
+ROI_ABANDON = (_menu(451),)
+ROI_RETOUR = (_menu(311),)
+
+
 ECRANS: tuple[Ecran, ...] = (
-    Ecran("calendrier", (Aller("Calendrier"),)),
-    Ecran("console-systeme", (Toucher(1061, 65),)),
-    Ecran("telecommande-tv", (Toucher(1205, 65),)),
+    # --- Écran principal : variantes -----------------------------------------------
+    Ecran("accueil-previsions-jours-2", (VERS_LA_GAUCHE,), (VERS_LA_DROITE,)),
+    Ecran("accueil-previsions-jours-3", (VERS_LA_GAUCHE, VERS_LA_GAUCHE), (VERS_LA_DROITE, VERS_LA_DROITE)),
+    Ecran("accueil-previsions-heures-1", (VERS_LA_DROITE,), (VERS_LA_GAUCHE,)),
+    Ecran("accueil-previsions-heures-2", (VERS_LA_DROITE, VERS_LA_DROITE), (VERS_LA_GAUCHE, VERS_LA_GAUCHE)),
+    Ecran("accueil-interrupteurs", (Toucher(*BOUTON_HA),), (Toucher(*BOUTON_HA),)),
+    Ecran("accueil-mode-discussion", (Toucher(*DISCU),), (Toucher(*DOMO),)),
+    Ecran("accueil-vigilance",
+          (Service("tab5_maj_alerte_meteo_france", (("payload", VIGILANCE_ORANGE),)), _panneau(2)),
+          (Service("tab5_maj_alerte_meteo_france", (("payload", VIGILANCE_SCENE_3),)), _panneau(3))),
+    Ecran("accueil-alertes-ha",
+          (Service("tab5_maj_alertes_ha_bulk", (("payload", ALERTES_HA),)), _panneau(4)),
+          (Service("tab5_maj_alertes_ha_bulk", (("payload", ""),)), _panneau(3))),
+    # Le planning du jour touché reste 6 s ; la réponse vocale 8 s, puis relance le
+    # rotateur (tab5-assist.yaml) : on l'arrête de nouveau sur le panneau des scènes.
+    Ecran("accueil-planning-du-jour", (Toucher(*TUILE_J1_TEMP),), (Attendre(6.5),)),
+    Ecran("accueil-reponse-vocale",
+          (Service("tab5_maj_reponse_vocale", (("texte", "Le volet de la serre est fermé."),)),),
+          (Attendre(8.5), _panneau(3))),
+
+    # --- Fenêtres ---------------------------------------------------------------------
+    Ecran("reveil", (Service("tab5_maj_rdv_prochains", (("payload", RDV),)), Toucher(*HORLOGE))),
+    Ecran("reveil-sonnerie", (Toucher(*HORLOGE), Toucher(*REVEIL_TESTER, apres=1.5)),
+          (Toucher(*SONNERIE_ARRETER),)),
+    Ecran("assistant", (Long(*MICRO),)),
+    Ecran("assistant-reponse",
+          (Service("tab5_assist_reponse", (("texte", REPONSE_ASSISTANT), ("image_url", ""))),)),
+    Ecran("calendrier", (Service("tab5_maj_calendrier_mois", _calendrier_juin_2026()), Long(*HORLOGE))),
+    Ecran("calendrier-jour", (Long(*HORLOGE), Toucher(*CAL_JOUR_18))),
+    Ecran("lumieres-chambre", (Long(*TUILES["chambre"]),)),
+    Ecran("lumieres-salon", (Long(*TUILES["salon"]),)),
+    Ecran("climatisation", (Toucher(*CONSIGNE_CLIM),)),
+    Ecran("plantes", (Long(*POTS),)),
+    Ecran("telecommande-tv", (Toucher(*BOUTON_TV),)),
+    Ecran("console-systeme", (Toucher(*BOUTON_SYS),)),
+    Ecran("console-confirmer-redemarrage-ha", (Toucher(*BOUTON_SYS), Toucher(*CONSOLE_REDEMARRER_HA)),
+          (Toucher(*CONFIRMATION_ANNULER),)),
+    Ecran("console-confirmer-reboot", (Toucher(*BOUTON_SYS), Toucher(*CONSOLE_REBOOT)),
+          (Toucher(*CONFIRMATION_ANNULER),)),
+
+    # --- Arcade -----------------------------------------------------------------------
+    Ecran("arcade", (Toucher(*SERRE, apres=1.0),)),
+
+    _jeu("", "fil-dor"),
+    _jeu("feu-de-camp", "fil-dor", (_menu(249),)),
+    _jeu("marchand", "fil-dor", (_menu(317),)),
+    _jeu("equipement", "fil-dor", (_menu(385),)),
+    _jeu("reglages", "fil-dor", (_menu(453),)),
+    _jeu("statistiques", "fil-dor", (_menu(521),)),
+    _jeu("partie", "fil-dor", FIL_DOR_PARTIE, (_menu(24),) + FIL_DOR_ABANDON + FIL_DOR_HUB),
+    _jeu("pause", "fil-dor", FIL_DOR_PAUSE, FIL_DOR_ABANDON + FIL_DOR_HUB),
+    _jeu("fin", "fil-dor", FIL_DOR_PAUSE + FIL_DOR_ABANDON, FIL_DOR_HUB),
+
+    _jeu("", "arcanoide"),
+    _jeu("classement", "arcanoide", (_menu(249),)),
+    _jeu("reglages", "arcanoide", (_menu(317),)),
+    _jeu("partie", "arcanoide", ARCANOIDE_PARTIE),
+    _jeu("pause", "arcanoide", ARCANOIDE_PARTIE + (_menu(24),)),
+
+    _jeu("", "neon-apron", portrait=True),
+    _jeu("classement", "neon-apron", (_menu(538, 360),), portrait=True),
+    _jeu("reglages", "neon-apron", (_menu(634, 360),), portrait=True),
+    _jeu("partie", "neon-apron", NEON_PARTIE, (_menu(70, 360),) + NEON_ABANDON + NEON_HUB, portrait=True),
+    _jeu("pause", "neon-apron", NEON_PAUSE, NEON_ABANDON + NEON_HUB, portrait=True),
+    _jeu("fin", "neon-apron", NEON_PAUSE + NEON_ABANDON, NEON_HUB, portrait=True),
+
+    _jeu("", "coureur-dor"),
+    _jeu("niveaux", "coureur-dor", (_menu(297),)),
+    _jeu("classement", "coureur-dor", (_menu(367),)),
+    _jeu("reglages", "coureur-dor", (_menu(437),)),
+    _jeu("partie", "coureur-dor", COUREUR_PARTIE, (_menu(24),) + COUREUR_QUITTER + COUREUR_HUB),
+    _jeu("pause", "coureur-dor", COUREUR_PAUSE, COUREUR_QUITTER + COUREUR_HUB),
+    _jeu("fin", "coureur-dor", COUREUR_PAUSE + COUREUR_QUITTER, COUREUR_HUB),
+
+    _jeu("", "go"),
+    _jeu("nouvelle-partie", "go", (_menu(180),)),
+    _jeu("statistiques", "go", (_menu(254),)),
+    _jeu("reglages", "go", (_menu(328),)),
+    _jeu("partie", "go", GO_PARTIE, GO_MENU + GO_ABANDON + GO_APRES_SCORE),
+    _jeu("pause", "go", GO_PARTIE + GO_MENU, GO_ABANDON + GO_APRES_SCORE),
+    _jeu("score", "go", GO_PARTIE + GO_MENU + GO_ABANDON, GO_APRES_SCORE),
+
+    _jeu("", "trial-poursuite"),
+    _jeu("nouvelle-partie", "trial-poursuite", (_menu(272),)),
+    _jeu("statistiques", "trial-poursuite", (_menu(416),)),
+    _jeu("regles", "trial-poursuite", (_menu(488),)),
+    _jeu("reglages", "trial-poursuite", (_menu(560),)),
+    _jeu("plateau", "trial-poursuite", TRIAL_PLATEAU, TRIAL_MENU + TRIAL_ABANDON + TRIAL_CONFIRMER),
+    _jeu("pause", "trial-poursuite", TRIAL_PLATEAU + TRIAL_MENU, TRIAL_ABANDON + TRIAL_CONFIRMER),
+    _jeu("abandon", "trial-poursuite", TRIAL_PLATEAU + TRIAL_MENU + TRIAL_ABANDON, TRIAL_CONFIRMER),
+
+    _jeu("", "dames"),
+    _jeu("nouvelle-partie", "dames", (_menu(195),)),
+    _jeu("statistiques", "dames", (_menu(355),)),
+    _jeu("reglages", "dames", (_menu(435),)),
+    _jeu("partie", "dames", DAMES_PARTIE, DAMES_ABANDON + DAMES_HUB),
+    _jeu("fin", "dames", DAMES_PARTIE + DAMES_ABANDON, DAMES_HUB),
+
+    _jeu("", "roi-noir"),
+    _jeu("nouvelle-partie", "roi-noir", (_menu(241),)),
+    _jeu("statistiques", "roi-noir", (_menu(311),)),
+    _jeu("reglages", "roi-noir", (_menu(381),)),
+    _jeu("partie", "roi-noir", ROI_PARTIE, ROI_MENU + ROI_ABANDON + ROI_RETOUR),
+    _jeu("pause", "roi-noir", ROI_PARTIE + ROI_MENU, ROI_ABANDON + ROI_RETOUR),
+    _jeu("defaite", "roi-noir", ROI_PARTIE + ROI_MENU + ROI_ABANDON, ROI_RETOUR),
 )
 
 # Captures en portrait (pas de rotation en PNG).

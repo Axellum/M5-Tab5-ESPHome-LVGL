@@ -19,16 +19,16 @@ périmées après un changement de mise en page ?).
 Clé API : un rendu qui n'en a pas en reçoit une (comme une tablette neuve ajoutée à HA),
 gardée dans tools/demo/cle_demo.txt et reprise au lancement suivant.
 
-Langue : `--puis-langue English` choisit la langue dans le select « Langue » après les
-captures. Comme la tablette, le rendu enregistre et redémarre, c'est-à-dire qu'il
-s'arrête sur la plateforme host : on le relance (même ESPHOME_PREFDIR), puis
-`--suffixe en` pour les captures anglaises (de même `de`, `nl`).
+Langue : `--langue Deutsch` choisit seulement la langue dans le select « Langue »
+(`--puis-langue`, la même chose après les captures). Comme la tablette, le rendu
+enregistre et redémarre, c'est-à-dire qu'il s'arrête sur la plateforme host : on le
+relance (même ESPHOME_PREFDIR), puis `--suffixe de` pour les captures allemandes.
 
-Usage (voir .github/workflows/rendu-host.yml) :
+Usage (voir .github/workflows/rendu-host.yml, une tâche par langue) :
     ESPHOME_SNAPSHOT_DIR=captures ESPHOME_PREFDIR=prefs ./program &
-    python tools/rendu/capturer.py --dossier captures --puis-langue English
+    python tools/rendu/capturer.py --dossier captures --langue Deutsch
     ESPHOME_SNAPSHOT_DIR=captures ESPHOME_PREFDIR=prefs ./program &
-    python tools/rendu/capturer.py --dossier captures --suffixe en
+    python tools/rendu/capturer.py --dossier captures --suffixe de
     python tools/rendu/capturer.py --dossier captures --seulement calendrier   # mise au point
 """
 from __future__ import annotations
@@ -79,7 +79,8 @@ def _portrait(nom_fichier: str) -> bool:
 
 
 def en_png(dossier: Path) -> list[Path]:
-    """Chaque BMP du dossier devient un PNG à l'endroit (Pillow requis)."""
+    """Chaque BMP du dossier devient un PNG à l'endroit (Pillow requis), puis le BMP
+    (2,7 Mo, ~330 par run) est supprimé."""
     try:
         from PIL import Image
     except ImportError:
@@ -90,6 +91,7 @@ def en_png(dossier: Path) -> list[Path]:
         png = bmp.with_suffix(".png")
         with Image.open(bmp) as image:
             (image if _portrait(bmp.stem) else image.rotate(270, expand=True)).save(png, optimize=True)
+        bmp.unlink()
         pngs.append(png)
     return pngs
 
@@ -156,7 +158,7 @@ class Rendu:
 
 
 async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | None,
-                   seulement: set[str] | None) -> list[str]:
+                   seulement: set[str] | None, langue: str | None = None) -> list[str]:
     from aioesphomeapi import APIClient
 
     cle = _lire_cle_demo() or await _donner_une_cle(hote)
@@ -165,6 +167,11 @@ async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | No
     try:
         entites, services = await client.list_entities_services()
         rendu = Rendu(client, entites, services, dossier, suffixe)
+        if langue:
+            logger.info("Langue -> %s, sans capture (le rendu enregistre et s'arrête)", langue)
+            rendu.choisir("Langue", langue)
+            await asyncio.sleep(3.0)
+            return []
         await rendu.appeler("tab5_maj_zones", absentes=build_zones_absentes(frozenset()))
         for index, scene in enumerate(SCENES, 1):
             logger.info("Scène %d : %s", index, scene.nom)
@@ -187,9 +194,8 @@ async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | No
                 await rendu.jouer(etape)
             await rendu.accueil()
         if puis_langue:
-            langue = rendu.selects["Langue"]
             logger.info("Langue -> %s (le rendu enregistre et s'arrête)", puis_langue)
-            client.select_command(langue.key, puis_langue)
+            rendu.choisir("Langue", puis_langue)
             await asyncio.sleep(3.0)
         return rendu.alertes
     finally:
@@ -206,16 +212,18 @@ def main() -> int:
     parser.add_argument("--puis-langue", help="après les captures, choisit cette langue (« English »)")
     parser.add_argument("--seulement", nargs="+", metavar="ECRAN",
                         help="ces écrans seulement (noms de tools/rendu/ecrans.py), sans les scènes")
+    parser.add_argument("--langue", help="choisit seulement cette langue (« Deutsch »), sans capture")
     args = parser.parse_args()
 
     alertes = asyncio.run(capturer(args.host, args.dossier, args.suffixe, args.puis_langue,
-                                   set(args.seulement) if args.seulement else None))
+                                   set(args.seulement) if args.seulement else None, args.langue))
+    if args.langue:
+        return 0
     pngs = en_png(args.dossier)
-    bmps = sorted(args.dossier.glob("*.bmp"))
-    logger.info("%d captures BMP, %d PNG dans %s", len(bmps), len(pngs), args.dossier)
+    logger.info("%d captures PNG dans %s", len(pngs), args.dossier)
     for texte in alertes:
         print(f"::warning title=Captures::{texte}")
-    return 0 if bmps else 1
+    return 0 if pngs else 1
 
 
 if __name__ == "__main__":
