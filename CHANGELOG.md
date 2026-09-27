@@ -4,6 +4,31 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Plus aucune entité à renseigner pour compiler (lot 6c-1)
+
+Lot 6 de l'audit « ouverture », troisième partie, préalable au flasheur web : un binaire
+publié ne lit pas de `user_entities.yaml`, donc chaque entité HA qu'il appelle doit avoir
+un défaut qui existe chez tout le monde.
+
+- **Trois défauts de plus dans `Tab5/tab5-scripts.yaml`**, à côté du satellite et du
+  lecteur média :
+  - `entity_tab5_pipeline_select` (boutons Domotique / Discussion) :
+    `select.m5stack_tab5_home_assistant_hmi_assistant`, dérivé par HA du nom livré ;
+  - `entity_primary_active` et `entity_push_automation` (bouton « MAJ Écran » de la
+    console) : `input_boolean.is_primary_active` et
+    `automation.maj_ecran_tab5_esphome_push`, les noms que crée
+    `packages/tab5_push.yaml`.
+  - Ce sont les valeurs de l'installation de l'auteur : rien ne change sur sa tablette.
+- **`user_entities.example.yaml`** : ces lignes deviennent des exemples commentés.
+  Pour une installation standard, plus rien n'y est à remplacer.
+- **Test** `test_entites_par_defaut_generiques` : défauts dérivés du nom livré de
+  l'appareil ou présents dans le package, aucune clé `entity_…` active dans le modèle.
+- `esphome config` valide avec le modèle seul : les trois défauts arrivent dans les
+  appels HA, plus aucun `your_…`.
+- Docs : installation (EN/FR, étape 2).
+- **Reste propre à l'auteur** : le nom du pipeline « Discussion LLM » du bouton
+  Discussion.
+
 ### 2026-09-27 — Rendu hors tablette : captures stables (suite du lot 7)
 
 - **Captures instables** : sur un run, la scène « pluie » en anglais est tombée en plein

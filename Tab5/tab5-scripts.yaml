@@ -20,9 +20,19 @@
 # renommée dans HA. Avant (audit 06/09 §4.1 point 15) elles étaient écrites en
 # dur à cinq endroits : un renommage cassait l'interruption vocale et l'annonce
 # des rendez-vous sans la moindre erreur.
+#
+# Même règle (lot 6c, 27/09/2026) pour les trois entités qu'un binaire publié ne peut
+# pas demander : le select de pipeline de la tablette (dérivé du nom de l'appareil,
+# boutons Domotique / Discussion) ; le garde-fou et l'automatisation de poussée du
+# package public `tab5_push.yaml` (bouton « MAJ Écran » de la console). Ce sont les
+# noms que ce package et HA créent : rien à régler, sauf tablette renommée ou
+# package modifié.
 substitutions:
   entity_tab5_satellite: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
   entity_tab5_media_player: media_player.m5stack_tab5_home_assistant_hmi_tab5_media_player
+  entity_tab5_pipeline_select: select.m5stack_tab5_home_assistant_hmi_assistant
+  entity_primary_active: input_boolean.is_primary_active
+  entity_push_automation: automation.maj_ecran_tab5_esphome_push
 
 script:
   # Remplit le registre des fenêtres modales (ModalRegistry, tab5_registry.h).

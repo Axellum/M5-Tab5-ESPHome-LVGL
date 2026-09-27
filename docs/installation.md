@@ -39,17 +39,7 @@ Copy the example file:
 cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 ```
 
-Open `Tab5/user_entities.yaml` (gitignored — never committed):
-
-```yaml
-# --- Voice assistant ---
-entity_tab5_pipeline_select: select.your_tab5_assistant_pipeline
-
-# --- System console ---
-entity_primary_active: input_boolean.your_primary_active_flag
-entity_push_automation: automation.your_tab5_push_automation
-...
-```
+`Tab5/user_entities.yaml` is gitignored (never committed). For a standard install there is nothing to replace in it: every line is optional.
 
 **Screen language:** French by default; add `tab5_langue: English` (or `Deutsch`, `Nederlands`) for another language on the first boot. It can then be changed from Home Assistant (select « Langue »), see [translations](translations.md).
 
@@ -57,7 +47,9 @@ entity_push_automation: automation.your_tab5_push_automation
 
 **Tab5 revision:** if the display chip on your sticker is not the ST7123, add `tab5_ecran: st7121` or `tab5_ecran: ili9881c` to this file (see [Hardware revisions](hardware.md#hardware-revisions)). Leave it out for the ST7123.
 
-Replace each value with your own entity IDs. **Your devices (lights, climate, plants, TV…) are not set here any more (since 3.0)**: you pick them in Home Assistant with the mouse, see Step 4 and [Adapt to your home](#adapt-to-your-home); old `entity_light_…` keys in an existing file are simply ignored. The entry point `tab5-ha-hmi.yaml` includes this file via `substitutions: !include Tab5/user_entities.yaml`. Two optional keys, `entity_tab5_satellite` and `entity_tab5_media_player`, only matter if you rename the device in Home Assistant: they hold the entity IDs HA derives from the device name (defaults in `Tab5/tab5-scripts.yaml`, commented example in the template).
+**Your devices (lights, climate, plants, TV…) are not set here any more (since 3.0)**: you pick them in Home Assistant with the mouse, see Step 4 and [Adapt to your home](#adapt-to-your-home); old `entity_light_…` keys in an existing file are simply ignored. The entry point `tab5-ha-hmi.yaml` includes this file via `substitutions: !include Tab5/user_entities.yaml`. The remaining entity keys are commented out in the template, with their defaults in `Tab5/tab5-scripts.yaml`:
+- `entity_tab5_satellite`, `entity_tab5_media_player` and `entity_tab5_pipeline_select` (Domotique / Discussion buttons) hold the entity IDs Home Assistant derives from the device name: set them only if you rename the tablet in HA;
+- `entity_primary_active` and `entity_push_automation` (« MAJ Écran » button of the system console) are the names created by `packages/tab5_push.yaml`: set them only if you changed that package.
 
 ---
 
@@ -254,7 +246,9 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 
 **Révision du Tab5 :** si la puce écran de votre autocollant n'est pas la ST7123, ajoutez `tab5_ecran: st7121` ou `tab5_ecran: ili9881c` dans ce fichier (voir [Révisions matérielles](hardware.md#révisions-matérielles)). Pour la ST7123, ne mettez rien.
 
-Ouvrez `Tab5/user_entities.yaml` (gitignoré — ne jamais committer) et remplacez chaque valeur. **Vos appareils (lumières, clim, plantes, TV…) ne se règlent plus ici (depuis la 3.0)** : vous les choisissez dans Home Assistant, à la souris, voir l'étape 4 et [Adapter à sa maison](#adapter-à-sa-maison) ; les anciennes clés `entity_light_…` d'un fichier existant sont simplement ignorées. Le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`. Deux clés facultatives, `entity_tab5_satellite` et `entity_tab5_media_player`, ne servent que si vous renommez l'appareil dans Home Assistant : elles portent les identifiants qu'HA dérive du nom de la tablette (défauts dans `Tab5/tab5-scripts.yaml`, exemple commenté dans le modèle).
+`Tab5/user_entities.yaml` est gitignoré (ne jamais le committer). Pour une installation standard, rien n'y est à remplacer : toutes les lignes sont facultatives. **Vos appareils (lumières, clim, plantes, TV…) ne se règlent plus ici (depuis la 3.0)** : vous les choisissez dans Home Assistant, à la souris, voir l'étape 4 et [Adapter à sa maison](#adapter-à-sa-maison) ; les anciennes clés `entity_light_…` d'un fichier existant sont simplement ignorées. Le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`. Les clés d'entités qui restent sont commentées dans le modèle, avec leurs défauts dans `Tab5/tab5-scripts.yaml` :
+- `entity_tab5_satellite`, `entity_tab5_media_player` et `entity_tab5_pipeline_select` (boutons Domotique / Discussion) portent les identifiants qu'HA dérive du nom de la tablette : à régler seulement si vous la renommez dans HA ;
+- `entity_primary_active` et `entity_push_automation` (bouton « MAJ Écran » de la console système) sont les noms que crée `packages/tab5_push.yaml` : à régler seulement si vous avez modifié ce package.
 
 ---
 
