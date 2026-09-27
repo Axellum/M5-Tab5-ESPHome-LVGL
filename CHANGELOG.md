@@ -4,6 +4,28 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Migration depuis la 2.x : le Wi-Fi redonné par l'USB, sans point d'accès (lot 6c-3)
+
+Demande d'Axel après sa propre migration : ne plus passer par « Tab5 Fallback AP » et un
+téléphone pour le premier réglage du Wi-Fi.
+
+- **`tools/migrer_vers_3.py --port COM…`** : juste après l'envoi de la 3.0, le script
+  attend que la tablette redémarre et lui redonne son réseau par Improv sur l'USB, avec
+  `wifi_ssid` et `wifi_password` du même `secrets.yaml` (jamais affichés). Si la tablette
+  ne répond pas ou n'arrive pas à se connecter, il le dit et renvoie au point d'accès.
+- **`tools/improv_serie.py`** : le protocole Improv série (celui du bouton Wi-Fi de la
+  page de flashage), réutilisable ; lancé seul, il lit l'état et l'identité de la
+  tablette sans rien changer. Port ouvert DTR et RTS à 0 : pas de réinitialisation.
+  - Essayé sur la tablette le 27/09 (3.0.0-rc.1, COM6), en lecture seule : « Wi-Fi
+    réglé » et son identité (projet, version, puce, nom), rien de redémarré.
+- `secrets.yaml` lu en YAML (un mot de passe entre guillemets contenant `#` était
+  coupé par l'ancien découpage à la main).
+- **Page de flashage** : ne pas effacer une tablette déjà installée (elle garde son
+  Wi-Fi et sa clé de HA) ; fermer la fenêtre la redémarre une fois (vu le 27/09).
+- **Tests** : `tests/test_improv_serie.py` (paquets, lecture au milieu du journal,
+  réglage face à une fausse liaison série).
+- Docs : installation (étape 5 et « Passer à la 3.0 », EN/FR).
+
 ### 2026-09-27 — Installer depuis le navigateur, mettre à jour depuis Home Assistant (lot 6c-2)
 
 Lot 6 de l'audit « ouverture », fin : le firmware publié, ADR-0022. Choix d'Axel : clé du
