@@ -828,11 +828,13 @@ static inline void slot_layout(int top, int pitch, int h) {
 static inline void slot_layout_default() { slot_layout(196, 70, 62); }
 
 // Grille 2 colonnes x 5 lignes : selection de niveau. Une entree de la pile,
-// replacee (sa description, toujours presente, garde le titre a -13).
+// replacee (sa description, toujours presente, garde le titre a -13). Pas de 80 :
+// avec 84, la derniere rangee touchait « Retour » (vu sur le rendu hors tablette,
+// 27/09/2026).
 static void slot_grid(int i, const char* title, const char* desc, uint32_t col, bool on) {
     gs->slots.row(i, title, desc, col, on);
-    lv_obj_set_size(gs->slots.box[i], 460, 72);
-    lv_obj_align(gs->slots.box[i], LV_ALIGN_TOP_LEFT, 148 + (i / 5) * 500, 200 + (i % 5) * 84);
+    lv_obj_set_size(gs->slots.box[i], 460, 70);
+    lv_obj_align(gs->slots.box[i], LV_ALIGN_TOP_LEFT, 148 + (i / 5) * 500, 200 + (i % 5) * 80);
 }
 
 static void panel_on(bool v) { show_front(gs->ui.panel, v); }
@@ -1739,8 +1741,9 @@ static void go_scores() {
         }
     }
     // Le classement est une colonne : aligne a gauche, contrairement aux autres
-    // ecrans dont le corps est une phrase centree.
-    lv_obj_set_style_text_align(gs->p_body, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+    // ecrans dont le corps est une phrase centree. Sans score, c'est une phrase.
+    if (gs->save.score_count == 0) body_center();
+    else lv_obj_set_style_text_align(gs->p_body, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
     panel_text(tr("CLASSEMENT"), tr("Top 10 local - conserve en NVS, survit aux reboots et aux OTA."), body, "");
     gs->slots.row(0, tr("Effacer les scores"), tr("Demande confirmation"), Pal::DANGER, true);
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -136);

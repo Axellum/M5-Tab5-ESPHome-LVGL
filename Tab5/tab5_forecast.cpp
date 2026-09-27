@@ -350,7 +350,9 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
 
         char b_p[32];
         if (data.pluvio > 0) {
-            snprintf(b_p, sizeof(b_p), "%.1fmm", data.pluvio);
+            // Une décimale sous 10 mm, aucune au-delà : « 12mm » tient dans l'onglet
+            // (forecast_hour_card.yaml), « 12.5mm » non.
+            snprintf(b_p, sizeof(b_p), data.pluvio < 9.95f ? "%.1fmm" : "%.0fmm", data.pluvio);
             ui_text(slot.prob_lbl, b_p);
             ui_text_color(slot.prob_lbl, UIColor::METEO_PRECIP);
         } else {

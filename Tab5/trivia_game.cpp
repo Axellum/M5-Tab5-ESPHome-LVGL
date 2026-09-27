@@ -1333,7 +1333,9 @@ static void render_setup() {
                      (i == gp->setup_n) ? Pal::TXT_DIM : Pal::TXT_MUTED, (i == gp->setup_n), true);
         }
     }
-    slot_set(24, 486, 118, 46, 40, "−", nullptr, Pal::BTN_BG, Pal::BTN_EDGE,
+    // « – » (U+2013, dans les polices latin-1) : le vrai signe moins U+2212 n'y est
+    // pas et s'affichait en rectangle vide (vu sur le rendu hors tablette, 27/09/2026).
+    slot_set(24, 486, 118, 46, 40, "–", nullptr, Pal::BTN_BG, Pal::BTN_EDGE,
              gp->setup_n > 1 ? Pal::TXT : Pal::TXT_MUTED, gp->setup_n > 1);
     slot_set(25, 590, 118, 46, 40, "+", nullptr, Pal::BTN_BG, Pal::BTN_EDGE,
              gp->setup_n < TRIVIA_MAX_TEAMS ? Pal::TXT : Pal::TXT_MUTED,

@@ -88,7 +88,9 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
   }
 
   if (ui.lbl_lead != nullptr) {
-    snprintf(buf, sizeof(buf), tr("%d min"), c.lead_min);
+    // « 1h30 » et non « 90 min » : le champ fait 59 px entre ses flèches, et même
+    // « 45 min » (68 px en roboto_22) passait sur deux lignes (rendu hors tablette).
+    snprintf(buf, sizeof(buf), tr("%dh%02d"), c.lead_min / 60, c.lead_min % 60);
     lv_label_set_text(ui.lbl_lead, buf);
   }
   if (ui.lbl_early != nullptr) {
@@ -140,7 +142,9 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
   set_toggle(ui.btn_tts, ui.lbl_tts, tts_on, "Annonce parl\xC3\xA9""e", "Sonnerie seule", UIColor::INFO);
   set_toggle(ui.btn_rdv, ui.lbl_rdv, rdv_on, "Annonce des RDV", "RDV silencieux", UIColor::INFO);
   if (ui.lbl_rdv_lead != nullptr) {
-    snprintf(buf, sizeof(buf), tr("%d min avant"), c.rdv_lead_min);
+    // « avant » est déjà dans le titre du champ (« RDV avant ») : « 15 min avant »
+    // passait sur deux lignes.
+    snprintf(buf, sizeof(buf), tr("%d min"), c.rdv_lead_min);
     lv_label_set_text(ui.lbl_rdv_lead, buf);
   }
   if (ui.lbl_rdv_next != nullptr) {

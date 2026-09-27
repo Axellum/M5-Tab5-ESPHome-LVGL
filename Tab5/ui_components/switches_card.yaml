@@ -36,10 +36,7 @@ obj:
         styles: style_transparent
         scrollbar_mode: "OFF"
         widgets:
-          # Onglet Titre + Onglet État : factorises (#T164), action du bouton laissee en override ci-dessous
-          - !include { file: switch_card_title_tab.yaml, vars: { title: "PC Bureau" } }
-          - !include { file: switch_card_state_tab.yaml, vars: { idx: "0", state_text: "Éteint" } }
-          # Corps Sombre (chevauche les onglets)
+          # Corps Sombre
           - obj:
               y: 35
               width: 230
@@ -60,6 +57,10 @@ obj:
                       # Sans TV (zone absente, lot 5), la télécommande n'a rien à piloter.
                       - lambda: |-
                           if (!zone_absente(Zone::TV)) animate_popup_open(id(tv_remote_popup));
+          # Onglets Titre + État (factorisés, #T164) APRÈS le corps : dessinés par-dessus,
+          # comme les tuiles de prévisions (forecast_daily.yaml).
+          - !include { file: switch_card_title_tab.yaml, vars: { title: "PC Bureau" } }
+          - !include { file: switch_card_state_tab.yaml, vars: { idx: "0", state_text: "Éteint" } }
 
     # Card 1 : Volet
     - obj:
@@ -71,9 +72,6 @@ obj:
         styles: style_transparent
         scrollbar_mode: "OFF"
         widgets:
-          # Onglet Titre + Onglet État : factorises (#T164), action du bouton laissee en override ci-dessous
-          - !include { file: switch_card_title_tab.yaml, vars: { title: "Volet" } }
-          - !include { file: switch_card_state_tab.yaml, vars: { idx: "1", state_text: "Fermé" } }
           # Corps Sombre
           - obj:
               y: 35
@@ -92,6 +90,10 @@ obj:
                     on_short_click:
                       # Stop si le volet bouge, sinon sens de la flèche (partagé avec forecast_daily.yaml)
                       - script.execute: tab5_volet_tap
+          # Onglets Titre + État (factorisés, #T164) APRÈS le corps : dessinés par-dessus,
+          # comme les tuiles de prévisions (forecast_daily.yaml).
+          - !include { file: switch_card_title_tab.yaml, vars: { title: "Volet" } }
+          - !include { file: switch_card_state_tab.yaml, vars: { idx: "1", state_text: "Fermé" } }
 
     # Card 2 : Chambre
     - obj:
@@ -103,9 +105,6 @@ obj:
         styles: style_transparent
         scrollbar_mode: "OFF"
         widgets:
-          # Onglet Titre + Onglet État : factorises (#T164), action du bouton laissee en override ci-dessous
-          - !include { file: switch_card_title_tab.yaml, vars: { title: "Chambre" } }
-          - !include { file: switch_card_state_tab.yaml, vars: { idx: "2", state_text: "Éteint" } }
           # Corps Sombre
           - obj:
               y: 35
@@ -123,6 +122,10 @@ obj:
                     styles: style_invisible
                     on_short_click:
                       - script.execute: { id: tab5_action, emplacement: lumiere_1, commande: basculer, valeur: "" }
+          # Onglets Titre + État (factorisés, #T164) APRÈS le corps : dessinés par-dessus,
+          # comme les tuiles de prévisions (forecast_daily.yaml).
+          - !include { file: switch_card_title_tab.yaml, vars: { title: "Chambre" } }
+          - !include { file: switch_card_state_tab.yaml, vars: { idx: "2", state_text: "Éteint" } }
 
     # Card 3 : Salon
     - obj:
@@ -134,9 +137,6 @@ obj:
         styles: style_transparent
         scrollbar_mode: "OFF"
         widgets:
-          # Onglet Titre + Onglet État : factorises (#T164), action du bouton laissee en override ci-dessous
-          - !include { file: switch_card_title_tab.yaml, vars: { title: "Salon" } }
-          - !include { file: switch_card_state_tab.yaml, vars: { idx: "3", state_text: "Éteint" } }
           # Corps Sombre
           - obj:
               y: 35
@@ -154,6 +154,10 @@ obj:
                     styles: style_invisible
                     on_short_click:
                       - script.execute: { id: tab5_action, emplacement: lumiere_2, commande: basculer, valeur: "" }
+          # Onglets Titre + État (factorisés, #T164) APRÈS le corps : dessinés par-dessus,
+          # comme les tuiles de prévisions (forecast_daily.yaml).
+          - !include { file: switch_card_title_tab.yaml, vars: { title: "Salon" } }
+          - !include { file: switch_card_state_tab.yaml, vars: { idx: "3", state_text: "Éteint" } }
 
     # Card 4 : LEDs Bureau
     - obj:
@@ -165,9 +169,6 @@ obj:
         styles: style_transparent
         scrollbar_mode: "OFF"
         widgets:
-          # Onglet Titre + Onglet État : factorises (#T164), action du bouton laissee en override ci-dessous
-          - !include { file: switch_card_title_tab.yaml, vars: { title: "LEDs" } }
-          - !include { file: switch_card_state_tab.yaml, vars: { idx: "4", state_text: "Éteint" } }
           # Corps Sombre
           - obj:
               y: 35
@@ -185,3 +186,7 @@ obj:
                     styles: style_invisible
                     on_short_click:
                       - script.execute: { id: tab5_action, emplacement: lumiere_3, commande: basculer, valeur: "" }
+          # Onglets Titre + État (factorisés, #T164) APRÈS le corps : dessinés par-dessus,
+          # comme les tuiles de prévisions (forecast_daily.yaml).
+          - !include { file: switch_card_title_tab.yaml, vars: { title: "LEDs" } }
+          - !include { file: switch_card_state_tab.yaml, vars: { idx: "4", state_text: "Éteint" } }

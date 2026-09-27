@@ -35,11 +35,13 @@ obj:
               text: "--:--"
               align: CENTER
               text_font: roboto_32_b
-    # Onglet Température & Pluie
+    # Onglet Température & Pluie. 210 px : pictogramme (x 5) + « 0.5mm » (101 px, x 34)
+    # + « -12° » (61 px) en Roboto 32 gras ; à 140, la pluie recouvrait la température
+    # (rendu hors tablette, 27/09/2026).
     - obj:
         align: BOTTOM_MID
         y: 0
-        width: 140
+        width: 210
         height: 51
         border_width: 0
         styles: style_meteo_card_page

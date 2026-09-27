@@ -274,12 +274,10 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "RDV silencieux": "Termine stumm"
 "Tester": "Testen"
 "Fermer": "Schließen"
-"90 min": "90 min"
 "9 min": "9 min"
 "15 min": "15 min"
-"15 min avant": "15 min vorher"
 "%d min": "%d min"
-"%d min avant": "%d min vorher"
+"%dh%02d": "%dh%02d"
 "Sonne à l'heure fixe, les jours cochés ci-dessus.": "Klingelt zur festen Zeit an den oben gewählten Tagen."
 "Sonne à l'heure fixe, uniquement les jours travaillés.": "Klingelt zur festen Zeit, nur an Arbeitstagen."
 "Sonne avant l'ouverture lue dans le calendrier.": "Klingelt vor Schichtbeginn laut Kalender."
@@ -1117,7 +1115,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # --- Statistiques ---
 # En-tête du tableau : S = Siege, R = Remis, N = Niederlagen (même alignement que le français).
 "Classement local : %u Elo   ·   %u parties contre le Tab": "Lokale Wertung: %u Elo   ·   %u Partien gegen den Tab"
-"Niveau            V / N / D\n": "Stufe             S / R / N\n"
+"Victoires / nulles / défaites par niveau\n": "Siege / Remis / Niederlagen je Stufe\n"
+"%s : %u / %u / %u\n": "%s: %u / %u / %u\n"
 "\nPlus longue partie : %u demi-coups\n": "\nLängste Partie: %u Halbzüge\n"
 "Temps de jeu cumule : %u min": "Gesamtspielzeit: %u min"
 # --- Promotion ---

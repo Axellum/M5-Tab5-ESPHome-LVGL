@@ -8,10 +8,9 @@
 static const uint8_t kI18nLangCount = 4;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl"};
-static const uint16_t kI18nKeyCount = 948;
+static const uint16_t kI18nKeyCount = 947;
 
 static const char* const kI18nCtx[] = {
-    "",
     "",
     "",
     "",
@@ -982,11 +981,11 @@ static const char* const kI18nKeys[] = {
     "%d heures %d",
     "%d indispo",
     "%d min",
-    "%d min avant",
     "%d objet(s) en votre possession   -   %d emplacement(s)",
     "%d objet(s) trouve(s) sur %d",
     "%d/%d debloques",
     "%de au classement",
+    "%dh%02d",
     "%dx%d, coup %u",
     "%lu partie(s) - %lu multiball(s) - %lu tilt(s)",
     "%s  -  %u ames",
@@ -997,6 +996,7 @@ static const char* const kI18nKeys[] = {
     "%s  ·  %s  ·  coup %u",
     "%s - hors classement",
     "%s : %s",
+    "%s : %u / %u / %u\n",
     "%s a ses 6 parts — %s choisit la catégorie",
     "%s a ses 6 parts — choisissez votre catégorie finale",
     "%s cede 120 ames",
@@ -1037,7 +1037,6 @@ static const char* const kI18nKeys[] = {
     "10,0 cases/s - reflexes exiges",
     "15 min",
     "15 min + 10 s",
-    "15 min avant",
     "1er",
     "2 Jours",
     "25 coups sans pion ni prise",
@@ -1054,7 +1053,6 @@ static const char* const kI18nKeys[] = {
     "8 niveaux, 3 vies, power-ups",
     "8,0 cases/s",
     "9 min",
-    "90 min",
     "A vous",
     "ACTIF",
     "AMPOULE",
@@ -1477,7 +1475,6 @@ static const char* const kI18nKeys[] = {
     "NOUVELLE PARTIE",
     "Nemesis",
     "Niv %d/8",
-    "Niveau            V / N / D\n",
     "Niveau %d - %s",
     "Niveau %d — %s\nScore : %d",
     "Niveau %d/%d  %s",
@@ -1809,6 +1806,7 @@ static const char* const kI18nKeys[] = {
     "Victoire des Noirs",
     "Victoire la plus rapide : %u tours",
     "Victoires / nulle / defaites vs Tab",
+    "Victoires / nulles / défaites par niveau\n",
     "Victoires, nulles et defaites de toutes les tailles",
     "Vies  %d",
     "Vies  oo",
@@ -1934,11 +1932,11 @@ static const char* const kI18n_en[] = {
     "%d:%02d",  // "%d heures %d"
     "%d unavailable",  // "%d indispo"
     "%d min",  // "%d min"
-    "%d min before",  // "%d min avant"
     "%d item(s) owned   -   %d slot(s)",  // "%d objet(s) en votre possession   -   %d emplacement(s)"
     "%d of %d items found",  // "%d objet(s) trouve(s) sur %d"
     "%d/%d unlocked",  // "%d/%d debloques"
     "Ranked #%d",  // "%de au classement"
+    "%dh%02d",  // "%dh%02d"
     "%dx%d, move %u",  // "%dx%d, coup %u"
     "%lu game(s) - %lu multiball(s) - %lu tilt(s)",  // "%lu partie(s) - %lu multiball(s) - %lu tilt(s)"
     "%s  -  %u souls",  // "%s  -  %u ames"
@@ -1949,6 +1947,7 @@ static const char* const kI18n_en[] = {
     "%s  ·  %s  ·  move %u",  // "%s  ·  %s  ·  coup %u"
     "%s - unranked",  // "%s - hors classement"
     "%s: %s",  // "%s : %s"
+    "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
     "%s has all 6 wedges — %s picks the category",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s has all 6 wedges — pick your final category",  // "%s a ses 6 parts — choisissez votre catégorie finale"
     "%s yields 120 souls",  // "%s cede 120 ames"
@@ -1989,7 +1988,6 @@ static const char* const kI18n_en[] = {
     "10.0 tiles/s - quick reflexes",  // "10,0 cases/s - reflexes exiges"
     "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
-    "15 min before",  // "15 min avant"
     "1",  // "1er"
     "2 Days",  // "2 Jours"
     "25 moves with no man move or capture",  // "25 coups sans pion ni prise"
@@ -2006,7 +2004,6 @@ static const char* const kI18n_en[] = {
     "8 levels, 3 lives, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8.0 tiles/s",  // "8,0 cases/s"
     "9 min",  // "9 min"
-    "90 min",  // "90 min"
     "Your move",  // "A vous"
     "ON",  // "ACTIF"
     "BULB",  // "AMPOULE"
@@ -2042,7 +2039,7 @@ static const char* const kI18n_en[] = {
     "Red ring on the last stone played",  // "Anneau rouge sur la derniere pierre posee"
     "B-day",  // "Anniv."
     "Announce appts",  // "Annonce des RDV"
-    "Spoken announcement",  // "Annonce parlée"
+    "Voice announcement",  // "Annonce parlée"
     "Undoes the last half-move",  // "Annule le dernier demi-coup"
     "Undoes your move and Tab's reply",  // "Annule votre coup et la reponse du Tab"
     "Cancel",  // "Annuler"
@@ -2429,7 +2426,6 @@ static const char* const kI18n_en[] = {
     "NEW GAME",  // "NOUVELLE PARTIE"
     "Nemesis",  // "Nemesis"
     "Lvl %d/8",  // "Niv %d/8"
-    "Level             W / D / L\n",  // "Niveau            V / N / D\n"
     "Level %d - %s",  // "Niveau %d - %s"
     "Level %d — %s\nScore: %d",  // "Niveau %d — %s\nScore : %d"
     "Level %d/%d  %s",  // "Niveau %d/%d  %s"
@@ -2761,6 +2757,7 @@ static const char* const kI18n_en[] = {
     "Black wins",  // "Victoire des Noirs"
     "Fastest win: %u rounds",  // "Victoire la plus rapide : %u tours"
     "Wins / draws / losses vs Tab",  // "Victoires / nulle / defaites vs Tab"
+    "Wins / draws / losses by level\n",  // "Victoires / nulles / défaites par niveau\n"
     "Wins, draws and losses for all board sizes",  // "Victoires, nulles et defaites de toutes les tailles"
     "Lives  %d",  // "Vies  %d"
     "Lives  oo",  // "Vies  oo"
@@ -2886,11 +2883,11 @@ static const char* const kI18n_de[] = {
     "%d Uhr %d",  // "%d heures %d"
     "%d offline",  // "%d indispo"
     "%d min",  // "%d min"
-    "%d min vorher",  // "%d min avant"
     "Gegenstände: %d   -   Plätze: %d",  // "%d objet(s) en votre possession   -   %d emplacement(s)"
     "%d von %d Gegenständen gefunden",  // "%d objet(s) trouve(s) sur %d"
     "%d/%d frei",  // "%d/%d debloques"
     "Platz %d",  // "%de au classement"
+    "%dh%02d",  // "%dh%02d"
     "%dx%d, Zug %u",  // "%dx%d, coup %u"
     "%lu Spiel(e) - %lu Multiball(s) - %lu Tilt(s)",  // "%lu partie(s) - %lu multiball(s) - %lu tilt(s)"
     "%s  -  %u Seelen",  // "%s  -  %u ames"
@@ -2901,6 +2898,7 @@ static const char* const kI18n_de[] = {
     "%s  ·  %s  ·  Zug %u",  // "%s  ·  %s  ·  coup %u"
     "%s - außer Wertung",  // "%s - hors classement"
     "%s: %s",  // "%s : %s"
+    "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
     "%s hat alle 6 Ecken — %s wählt die Kategorie",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s hat alle 6 Ecken — Finalkategorie wählen",  // "%s a ses 6 parts — choisissez votre catégorie finale"
     "%s gibt 120 Seelen",  // "%s cede 120 ames"
@@ -2941,7 +2939,6 @@ static const char* const kI18n_de[] = {
     "10,0 Felder/s - schnelle Reflexe",  // "10,0 cases/s - reflexes exiges"
     "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
-    "15 min vorher",  // "15 min avant"
     "1",  // "1er"
     "2 Tage",  // "2 Jours"
     "25 Züge ohne Steinzug oder Schlag",  // "25 coups sans pion ni prise"
@@ -2958,7 +2955,6 @@ static const char* const kI18n_de[] = {
     "8 Level, 3 Leben, Power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 Felder/s",  // "8,0 cases/s"
     "9 min",  // "9 min"
-    "90 min",  // "90 min"
     "Dein Zug",  // "A vous"
     "AN",  // "ACTIF"
     "LAMPE",  // "AMPOULE"
@@ -3381,7 +3377,6 @@ static const char* const kI18n_de[] = {
     "NEUES SPIEL",  // "NOUVELLE PARTIE"
     "Nemesis",  // "Nemesis"
     "Lvl %d/8",  // "Niv %d/8"
-    "Stufe             S / R / N\n",  // "Niveau            V / N / D\n"
     "Level %d - %s",  // "Niveau %d - %s"
     "Level %d — %s\nScore: %d",  // "Niveau %d — %s\nScore : %d"
     "Level %d/%d  %s",  // "Niveau %d/%d  %s"
@@ -3713,6 +3708,7 @@ static const char* const kI18n_de[] = {
     "Schwarz gewinnt",  // "Victoire des Noirs"
     "Schnellster Sieg: %u Runden",  // "Victoire la plus rapide : %u tours"
     "Siege / Remis / Niederlagen vs Tab",  // "Victoires / nulle / defaites vs Tab"
+    "Siege / Remis / Niederlagen je Stufe\n",  // "Victoires / nulles / défaites par niveau\n"
     "Siege, Remis und Niederlagen aller Brettgrößen",  // "Victoires, nulles et defaites de toutes les tailles"
     "Leben  %d",  // "Vies  %d"
     "Leben  oo",  // "Vies  oo"
@@ -3838,11 +3834,11 @@ static const char* const kI18n_nl[] = {
     "%d uur %d",  // "%d heures %d"
     "%d onbeschikbaar",  // "%d indispo"
     "%d min",  // "%d min"
-    "%d min vooraf",  // "%d min avant"
     "%d voorwerp(en) in bezit   -   %d vak(ken)",  // "%d objet(s) en votre possession   -   %d emplacement(s)"
     "%d van %d voorwerpen gevonden",  // "%d objet(s) trouve(s) sur %d"
     "%d/%d ontgrendeld",  // "%d/%d debloques"
     "%de plaats",  // "%de au classement"
+    "%dh%02d",  // "%dh%02d"
     "%dx%d, zet %u",  // "%dx%d, coup %u"
     "%lu spel(len) - %lu multiball(s) - %lu tilt(s)",  // "%lu partie(s) - %lu multiball(s) - %lu tilt(s)"
     "%s  -  %u zielen",  // "%s  -  %u ames"
@@ -3853,6 +3849,7 @@ static const char* const kI18n_nl[] = {
     "%s  ·  %s  ·  zet %u",  // "%s  ·  %s  ·  coup %u"
     "%s - telt niet mee",  // "%s - hors classement"
     "%s: %s",  // "%s : %s"
+    "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
     "%s heeft alle 6 partjes — %s kiest de categorie",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s heeft alle 6 partjes — kies je finalecategorie",  // "%s a ses 6 parts — choisissez votre catégorie finale"
     "%s geeft 120 zielen",  // "%s cede 120 ames"
@@ -3893,7 +3890,6 @@ static const char* const kI18n_nl[] = {
     "10,0 vakjes/s - snelle reflexen",  // "10,0 cases/s - reflexes exiges"
     "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
-    "15 min vooraf",  // "15 min avant"
     "1",  // "1er"
     "2 dagen",  // "2 Jours"
     "25 zetten zonder schijf of slag",  // "25 coups sans pion ni prise"
@@ -3910,7 +3906,6 @@ static const char* const kI18n_nl[] = {
     "8 levels, 3 levens, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 vakjes/s",  // "8,0 cases/s"
     "9 min",  // "9 min"
-    "90 min",  // "90 min"
     "Jouw zet",  // "A vous"
     "AAN",  // "ACTIF"
     "LAMP",  // "AMPOULE"
@@ -4333,7 +4328,6 @@ static const char* const kI18n_nl[] = {
     "NIEUW SPEL",  // "NOUVELLE PARTIE"
     "Nemesis",  // "Nemesis"
     "Lvl %d/8",  // "Niv %d/8"
-    "Niveau            W / R / V\n",  // "Niveau            V / N / D\n"
     "Level %d - %s",  // "Niveau %d - %s"
     "Level %d — %s\nScore: %d",  // "Niveau %d — %s\nScore : %d"
     "Level %d/%d  %s",  // "Niveau %d/%d  %s"
@@ -4665,6 +4659,7 @@ static const char* const kI18n_nl[] = {
     "Zwart wint",  // "Victoire des Noirs"
     "Snelste zege: %u rondes",  // "Victoire la plus rapide : %u tours"
     "Winst / remise / verlies vs Tab",  // "Victoires / nulle / defaites vs Tab"
+    "Winst / remise / verlies per niveau\n",  // "Victoires / nulles / défaites par niveau\n"
     "Winst, remise en verlies voor alle groottes",  // "Victoires, nulles et defaites de toutes les tailles"
     "Levens  %d",  // "Vies  %d"
     "Levens  oo",  // "Vies  oo"

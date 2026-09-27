@@ -1039,9 +1039,11 @@ static void go_hub() {
     set_text_if(gs->p_title, "Dames Tab");   // nom de la console : jamais traduit
     set_text_if(gs->p_sub, tr("Dames internationales — flying kings"));
     slot_list(0, tr("Nouvelle partie"), tr("Setup variante / mode / niveau"), Pal::KING_RING, true);
+    // Sans sauvegarde, l'entrée reste là, grisée (slot_cb l'ignore) : masquée, elle
+    // laissait un trou dans le menu (vu sur le rendu hors tablette, 27/09/2026).
     slot_list(1, tr(gs->save.has_game ? "Reprendre" : "Reprendre (vide)"),
               tr(gs->save.has_game ? "Position sauvegardee" : "Aucune partie en cours"),
-              Pal::HL_MOVE, gs->save.has_game != 0);
+              gs->save.has_game ? Pal::HL_MOVE : Pal::TXT_OFF, true);
     slot_list(2, tr("Statistiques"), tr("Victoires / nulle / defaites vs Tab"), Pal::HL_CAP, true);
     slot_list(3, tr("Reglages"), tr("Secousse = Hint, reset stats"), Pal::TXT_DIM, true);
     slot_list(4, tr("Quitter"), tr("Retour au tableau de bord"), Pal::DANGER, true);

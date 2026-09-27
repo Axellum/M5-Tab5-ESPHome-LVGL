@@ -268,12 +268,10 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "RDV silencieux": "Stille afspraken"
 "Tester": "Testen"
 "Fermer": "Sluiten"
-"90 min": "90 min"
 "9 min": "9 min"
 "15 min": "15 min"
-"15 min avant": "15 min vooraf"
 "%d min": "%d min"
-"%d min avant": "%d min vooraf"
+"%dh%02d": "%dh%02d"
 "Sonne à l'heure fixe, les jours cochés ci-dessus.": "Gaat af op de vaste tijd, op de dagen hierboven."
 "Sonne à l'heure fixe, uniquement les jours travaillés.": "Gaat af op de vaste tijd, alleen op werkdagen."
 "Sonne avant l'ouverture lue dans le calendrier.": "Gaat af vóór het werkbegin uit de agenda."
@@ -1098,7 +1096,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Bilan, records et classement local seront remis a zero.": "Resultaten, records en lokale rating worden gewist."
 # --- Statistiques ---
 "Classement local : %u Elo   ·   %u parties contre le Tab": "Lokale rating: %u Elo   ·   %u partijen tegen de Tab"
-"Niveau            V / N / D\n": "Niveau            W / R / V\n"
+"Victoires / nulles / défaites par niveau\n": "Winst / remise / verlies per niveau\n"
+"%s : %u / %u / %u\n": "%s: %u / %u / %u\n"
 "\nPlus longue partie : %u demi-coups\n": "\nLangste partij: %u halve zetten\n"
 "Temps de jeu cumule : %u min": "Totale speeltijd: %u min"
 # --- Promotion ---
