@@ -69,10 +69,10 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 | Display chip (sticker on the back) | Units made | Status |
 |---|---|---|
 | **ST7123** | 14 Oct 2025 → 28 Apr 2026 | ✅ Supported — the author's device, in daily use (default) |
-| **ST7121** | from 28 Apr 2026 | 🧪 Compiles, untested — add `tab5_ecran: st7121` to `Tab5/user_entities.yaml` |
+| **ST7121** | from 28 Apr 2026 | 🧪 Compiles, untested here (same display and touch settings reported working by another user) — add `tab5_ecran: st7121` to `Tab5/user_entities.yaml` |
 | **ILI9881C** + GT911 touch | 9 May 2025 → 14 Oct 2025 | 🧪 Compiles, untested — add `tab5_ecran: ili9881c` to `Tab5/user_entities.yaml` |
 
-"Compiles, untested": the CI builds these two variants on every display change, but nobody has run them on a real tablet yet. Details, how to identify your unit, and why the ST7121 touch is an educated guess: [`docs/hardware.md`](docs/hardware.md#hardware-revisions). Tried one? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
+"Compiles, untested": the CI builds these two variants on every display change, but this firmware has not been run on those chips yet. Details, how to identify your unit, and the ST7121 report: [`docs/hardware.md`](docs/hardware.md#hardware-revisions). Tried one? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
 
 ---
 
@@ -401,10 +401,10 @@ Envie de le voir tourner avant de configurer Home Assistant ? → [`docs/demo_mo
 | Puce écran (autocollant au dos) | Appareils fabriqués | Statut |
 |---|---|---|
 | **ST7123** | du 14/10/2025 au 28/04/2026 | ✅ Prise en charge — la tablette de l'auteur, utilisée tous les jours (défaut) |
-| **ST7121** | depuis le 28/04/2026 | 🧪 Compile, non testée — ajouter `tab5_ecran: st7121` dans `Tab5/user_entities.yaml` |
+| **ST7121** | depuis le 28/04/2026 | 🧪 Compile, non testée ici (mêmes réglages d'écran et de tactile signalés fonctionnels par un autre utilisateur) — ajouter `tab5_ecran: st7121` dans `Tab5/user_entities.yaml` |
 | **ILI9881C** + tactile GT911 | du 09/05/2025 au 14/10/2025 | 🧪 Compile, non testée — ajouter `tab5_ecran: ili9881c` dans `Tab5/user_entities.yaml` |
 
-« Compile, non testée » : la CI compile ces deux variantes à chaque changement de l'écran, mais personne ne les a encore lancées sur une vraie tablette. Détails, comment identifier votre appareil, et pourquoi le tactile de la ST7121 est une hypothèse : [`docs/hardware.md`](docs/hardware.md#révisions-matérielles). Vous en avez essayé une ? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
+« Compile, non testée » : la CI compile ces deux variantes à chaque changement de l'écran, mais ce firmware n'a encore tourné sur aucune de ces puces. Détails, comment identifier votre appareil, et le retour sur la ST7121 : [`docs/hardware.md`](docs/hardware.md#révisions-matérielles). Vous en avez essayé une ? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
 
 ---
 
