@@ -152,6 +152,15 @@ select:
             return;
           }
 
+          // Zone absente de cette maison (lot 5, tab5-zones.yaml) : sa fenêtre n'aurait
+          // rien à montrer ni à piloter. Les options restent : HA lit la liste fixe.
+          if ((i == 5 && zone_absente(Zone::CLIM)) || (i == 6 && zones_pots_presents() == 0) ||
+              (i == 7 && zone_absente(Zone::TV))) {
+            ESP_LOGI("TAB5", "Aller a l'ecran : '%s' absent de cette maison", x.c_str());
+            id(tab5_goto_screen).publish_state("—");
+            return;
+          }
+
           // Cible déjà affichée : ne rien faire, sinon le fermer-puis-rouvrir
           // ci-dessous se verrait comme un clignotement. La cible est retrouvée
           // PAR SON LIBELLÉ dans ModalRegistry (x = option choisie) : l'option

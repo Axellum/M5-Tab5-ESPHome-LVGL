@@ -35,6 +35,18 @@ inline void ui_text_color(lv_obj_t* obj, uint32_t hex) {
     }
     lv_obj_set_style_text_color(obj, want, LV_PART_MAIN);
 }
+// Masquage et position (zones optionnelles, lot 5) : lv_obj_add_flag(HIDDEN) invalide
+// l'objet même déjà masqué, lv_obj_set_x/y réécrivent le style même à valeur égale.
+inline void ui_hidden(lv_obj_t* obj, bool hidden) {
+    if (obj == nullptr || lv_obj_has_flag(obj, LV_OBJ_FLAG_HIDDEN) == hidden) return;
+    lv_obj_set_flag(obj, LV_OBJ_FLAG_HIDDEN, hidden);
+}
+inline void ui_x(lv_obj_t* obj, int32_t x) {
+    if (obj != nullptr && lv_obj_get_x_aligned(obj) != x) lv_obj_set_x(obj, x);
+}
+inline void ui_y(lv_obj_t* obj, int32_t y) {
+    if (obj != nullptr && lv_obj_get_y_aligned(obj) != y) lv_obj_set_y(obj, y);
+}
 
 // --- tab5_text.cpp ---
 // Normalise un texte venu de HA (Latin-1 / mojibake) en UTF-8 valide pour LVGL.
@@ -85,3 +97,10 @@ bool tab5_dismiss_local_has(const std::string& store, const std::string& id);
 void tab5_dismiss_local_prune(std::string& store, const std::vector<std::string>& ids_seen);
 
 void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase);
+
+// --- Zones optionnelles (lot 5) ---
+// tab5_forecast.cpp : boutons et épaules d'appareil des 5 tuiles (accueil seulement,
+// appareil présent seulement). Appelé par refresh_daily_forecast et zones_apply_ui.
+void day_slots_apply_actions(WeatherDaySlot slots[], int page_index);
+// tab5_zones.cpp : état du PC, repeint sur l'épaule de J0 quand la TV manque.
+void zones_note_pc(bool actif);

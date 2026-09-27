@@ -67,6 +67,8 @@ esphome:
     - Tab5/tab5_calendar.cpp
     # Journal des démarrages et des coupures (plantages, lien Wi-Fi / C6), 26/09/2026.
     - Tab5/tab5_journal.cpp
+    # Zones optionnelles : ce qui disparaît quand l'entité manque dans HA (lot 5, 27/09/2026).
+    - Tab5/tab5_zones.cpp
     # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
     # NvsSlot<T>) — lot (f), ADR-0014. Header-only.
     - Tab5/game_common.h
@@ -241,6 +243,9 @@ esphome:
                              id(page_arkanoid)->obj, id(page_pinball)->obj, id(page_lode)->obj,
                              id(page_go)->obj, id(page_trivia)->obj, id(page_chess)->obj,
                              id(page_draughts)->obj});
+        # Zones optionnelles (lot 5, 27/09/2026 — ajout autorisé par Axel) : masque les
+        # zones absentes mémorisées, AVANT la première image (pas de clignotement).
+        - script.execute: tab5_zones_apply
         - delay: 2s
         - lambda: |-
             apply_pressed_scale_to_tree(lv_screen_active());
@@ -296,6 +301,9 @@ packages:
   # Reveil matin + annonce des rendez-vous. Comme ci-dessus : APRES tab5_lvgl
   # (ses scripts referencent les ids de alarm_popup.yaml / alarm_ring_overlay.yaml).
   tab5_alarm: !include Tab5/tab5-alarm.yaml
+  # Zones optionnelles (lot 5) : APRES tab5_lvgl (widgets). Ses substitutions sont les
+  # valeurs par défaut des entity_… : une clé de Tab5/user_entities.yaml l'emporte.
+  tab5_zones: !include Tab5/tab5-zones.yaml
 
 # Portail captif, conservé à dessein (audit du 06/09/2026, §4.1 point 16) : il
 # n'est actif que quand l'AP de secours l'est (`wifi: ap:` dans

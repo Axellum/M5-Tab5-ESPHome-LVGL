@@ -4,6 +4,63 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Zones optionnelles : une zone sans entité disparaît de l'écran (lot 5a)
+
+Lot 5 de l'audit « ouverture » : l'écran ne suppose plus la maison de l'auteur. Chez
+quelqu'un sans clim, une fausse clim à 20.0 s'affichait (le `| float(20)` de HA sur une
+entité absente). Une lampe sans entité paraissait « éteinte », et 1 à 3 capteurs de
+plantes se répétaient sur les 4 emplacements. Tous les boutons appelaient des entités
+inexistantes. **Firmware et package HA ensemble**, le firmware d'abord (ADR-0018).
+
+- **Retirer une zone = mettre sa ligne en commentaire** dans `Tab5/user_entities.yaml`.
+  Le nouveau package `Tab5/tab5-zones.yaml` donne à chaque `entity_…` une valeur par
+  défaut qui n'existe dans aucun HA. Une clé de l'utilisateur l'emporte (vérifié sur
+  ESPHome 2026.9.0 par `esphome config`, sur une « maison minimale »).
+- **HA confirme, la tablette demande** :
+  - une fois par connexion, à la première poussée des prévisions, la tablette envoie
+    ses entités (`esphome.tab5_zones`) ;
+  - l'automatisation `tab5_zones_reponse` (`tab5_push.yaml`) répond celles qui
+    n'existent pas (`tab5_maj_zones`). Une entité « unavailable » existe : sa zone
+    reste. HA ajoute seul `clim`, `volet` (entité ou package absent) et `planning`
+    (pas d'agenda de travail) ;
+  - raison, vérifiée dans le `manager.py` de l'intégration ESPHome de HA : une entité
+    créée après l'abonnement de la tablette n'est transmise qu'à son prochain
+    changement. Pendant le démarrage de HA, un silence ne prouve donc rien, et une
+    lampe aurait pu disparaître des heures durant ;
+  - une donnée reçue fait toujours revenir sa zone. Sans le package, rien ne disparaît.
+- **Ce qui disparaît** :
+  - bandeau d'état : PC, téléphone (les icônes restantes se resserrent) ;
+  - bouton TV et télécommande. Sans TV, HA et Sys glissent d'une colonne, et l'épaule
+    de la tuile J0 suit le PC ;
+  - boutons et épaules des tuiles J0 à J4 et cartes du calque « HA » (recentrées) ;
+  - lampes du sélecteur du popup lumière et de « Tout éteindre » ;
+  - − / consigne / + de la clim ;
+  - température du salon ;
+  - sans serre, l'icône devient une manette : l'arcade reste à sa place ;
+  - pots de l'accueil (jusqu'à 4, un emplacement chacun, plus de doublon ; le résumé
+    « 2 plus secs, médiane, plus humide » reste à 5) et cartes du popup (recentrées) ;
+  - planning : il sort du rotateur de la carte centrale, qui reste vide s'il n'a rien
+    d'autre à montrer ;
+  - « Aller à l'écran » (HA) n'ouvre plus la clim, les plantes ou la TV absentes.
+- **Pas de clignotement** : la liste est gardée en NVS et appliquée dans `on_boot`
+  (priorité -100, une ligne ajoutée avec l'accord d'Axel), avant la première image.
+- **Diagnostic** : capteur « Zones masquées » (« aucune », ou « clim, pot_4… »). Une
+  faute de frappe dans un entity_id s'y voit.
+- **Tests** : `tests/test_zones.py` compare les clés aux quatre endroits (enum,
+  `kCles`, demande, automatisation HA), les valeurs par défaut et les `zone_vue()`.
+  Falsifié : une clé renommée le fait échouer. Gabarit HA essayé sur le HA d'Axel
+  (entités inventées signalées, réelles non).
+- **Essai sur la tablette** (27/09) :
+  - firmware d'Axel flashé à 11:53 : demande envoyée après une reconnexion, réponse
+    `absentes: ""`, rien ne disparaît ;
+  - build de test « maison minimale » (clim, TV, téléphone, LEDs, serre et pots 3 à 5
+    en commentaire) flashé à 11:58. HA a répondu exactement ces 7 zones, puis clim,
+    volet et planning ont été envoyés à la main. **Écran validé par Axel** ;
+  - retour au firmware d'Axel à 12:02 (`esphome upload --file`, sans recompiler) :
+    toutes les zones sont revenues, « Zones masquées » = « aucune ».
+- **Mesures** (build local, ESPHome 2026.9.0) : image +7,8 Ko (3 129 532 o), aucun
+  avertissement dans le code du projet.
+
 ## [2.2.0] — 2026-09-27
 
 De `v2.1.0` (27/09 au matin) à aujourd'hui : 6 pull requests (#181, #183 → #187), plus

@@ -290,6 +290,7 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_services.cpp", "update_volet_ui"): ("icon_card_shutter_arrow", "icon_card_shutter1"),
     ("tab5_services.cpp", "parse_and_update_vigilance"): ("alerte_slot_*",),
     ("tab5_services.cpp", "update_rain_predict_icon_ui"): ("icon_rain_predict",),
+    ("tab5_zones.cpp", "zones_apply_ui"): ("icon_serre",),
     ("tab5-sensors-domotique.yaml", "moisture_1"): ("icon_pot_s*",),
 }
 

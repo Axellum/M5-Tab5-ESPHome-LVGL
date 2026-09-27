@@ -79,7 +79,8 @@ obj:
                       - label: { id: btn_light_power_icon, text: "\U000F0425", align: LEFT_MID, x: 28, text_font: mdi_font_56, text_color: color_text_dim }
                       - label: { text: "On / Off", align: LEFT_MID, x: 110, text_font: roboto_32_b }
 
-                # Tout éteindre — les 3 lumières d'un coup (coucher)
+                # Tout éteindre — les lumières présentes d'un coup (coucher). Une lampe
+                # absente de la maison (zone, lot 5) n'est pas envoyée à HA.
                 - button:
                     align: TOP_LEFT
                     x: 22
@@ -93,7 +94,9 @@ obj:
                       - homeassistant.service:
                           service: light.turn_off
                           data:
-                            entity_id: "${entity_light_chambre}, ${entity_light_salon}, ${entity_light_bureau}"
+                            entity_id: !lambda |-
+                              static const char* const kEntites[3] = {"${entity_light_chambre}", "${entity_light_salon}", "${entity_light_bureau}"};
+                              return zones_lumieres_presentes(kEntites);
                     widgets:
                       - label: { text: "\U000F0425", align: LEFT_MID, x: 28, text_font: mdi_font_32, text_color: color_error }
                       - label: { text: "Tout éteindre", align: LEFT_MID, x: 80, text_color: color_text_dim }
