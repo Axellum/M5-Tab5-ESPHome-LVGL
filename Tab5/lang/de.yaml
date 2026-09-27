@@ -240,7 +240,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Annuler": "Abbrechen"
 "Confirmer": "Bestätigen"
 "Redemarrage...": "Neustart..."
-"Connecte": "Verbunden"
+"Connecté": "Verbunden"
 
 # --- Alarm clock: popup ---------------------------------------------------------
 "Réveil": "Wecker"

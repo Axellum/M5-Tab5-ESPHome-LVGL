@@ -2,13 +2,22 @@ name: Rendu hors tablette
 
 # Lot 7 de l'audit « ouverture » (ADR-0021) : l'interface de la tablette compilée pour
 # la plateforme `host` d'ESPHome (tab5-rendu-host.yaml), lancée sur le runner puis
-# capturée scène par scène (tools/rendu/capturer.py, scènes du mode démo), en français
-# puis en anglais. Les captures sont comparées aux références de docs/images/rendu/
-# (tools/rendu/comparer.py) : INFORMATIF, un écart est signalé sans faire échouer le
-# job (choix d'Axel, 27/09/2026). Accepter un écart : tools/rendu/maj_references.py.
+# capturée : les scènes du mode démo, puis chaque fenêtre, sous-fenêtre, écran de jeu
+# (tools/rendu/capturer.py, plan dans tools/rendu/ecrans.py), dans les quatre langues
+# de l'écran, une tâche par langue en parallèle. Les captures sont comparées
+# (tools/rendu/comparer.py) à celles du dernier run réussi sur main, et les scènes à la
+# galerie versionnée docs/images/rendu/ : INFORMATIF, un écart est signalé sans faire
+# échouer le job (choix d'Axel, 27/09/2026). Galerie : tools/rendu/maj_references.py.
 
 on:
   workflow_dispatch:
+    inputs:
+      langues:
+        description: "Langues, en JSON (fr, en, de, nl)"
+        default: '["fr", "en", "de", "nl"]'
+      seulement:
+        description: "Mise au point : ces écrans seulement (noms de tools/rendu/ecrans.py, séparés par des espaces), sans les scènes"
+        default: ""
   push:
     branches: [main]
   pull_request:
@@ -24,11 +33,16 @@ on:
 
 permissions:
   contents: read
+  actions: read   # captures du dernier run de main (références des écrans)
 
 jobs:
   rendu:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        langue: ${{ fromJSON(inputs.langues || '["fr", "en", "de", "nl"]') }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -45,7 +59,7 @@ jobs:
         env:
           TZ: Europe/Paris
         run: esphome compile tab5-rendu-host.yaml
-      - name: Lancer le rendu et capturer les scènes, en français puis en anglais
+      - name: Lancer le rendu et capturer scènes et écrans (${{ matrix.langue }})
         # Date et heure FIGÉES (faketime sans « @ » : l'horloge ne tourne pas), pour le rendu
         # ET le script : l'heure affichée et le « dans N mn » de la pluie ne changent pas
         # d'un run à l'autre. Une heure qui avance franchissait une minute pendant les
@@ -53,41 +67,103 @@ jobs:
         # L'horloge monotone reste la vraie : ESPHome y mesure le temps depuis
         # le démarrage (millis), et une date de 2026 la ferait croire vieille de 56 ans
         # (la fenêtre d'appairage de 30 min se fermait dès le démarrage).
-        # Le changement de langue enregistre et redémarre, c'est-à-dire qu'il arrête le
-        # programme sur host : on le relance avec les mêmes préférences (ESPHOME_PREFDIR).
+        # Hors français, on choisit d'abord la langue : comme la tablette, le rendu
+        # l'enregistre et redémarre, c'est-à-dire qu'il s'arrête sur host ; on le relance
+        # avec les mêmes préférences (ESPHOME_PREFDIR), neuves pour chaque langue.
         env:
           TZ: Europe/Paris
           DEPART: "2026-06-16 07:45:00"
           FAKETIME_DONT_FAKE_MONOTONIC: "1"
           ESPHOME_PREFDIR: ${{ runner.temp }}/prefs
+          LANGUE: ${{ matrix.langue }}
+          SEULEMENT: ${{ inputs.seulement }}
         run: |
           prog=$(find .esphome/build/tab5-rendu -name program -type f | head -n 1)
           echo "Programme : $prog"
           mkdir -p captures
           export ESPHOME_SNAPSHOT_DIR="$PWD/captures"
+          case "$LANGUE" in
+            fr) nom="" ;;
+            en) nom="English" ;;
+            de) nom="Deutsch" ;;
+            nl) nom="Nederlands" ;;
+            *) echo "Langue inconnue : $LANGUE"; exit 1 ;;
+          esac
 
-          faketime -f "$DEPART" "$prog" > captures/rendu-fr.log 2>&1 &
+          if [ -n "$nom" ]; then
+            faketime -f "$DEPART" "$prog" > "captures/rendu-$LANGUE-choix.log" 2>&1 &
+            pid=$!
+            sleep 8
+            faketime -f "$DEPART" python tools/rendu/capturer.py --dossier captures --langue "$nom"
+            for i in $(seq 1 20); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
+            kill "$pid" 2>/dev/null || true
+          fi
+
+          faketime -f "$DEPART" "$prog" > "captures/rendu-$LANGUE.log" 2>&1 &
           pid=$!
           sleep 8
-          faketime -f "$DEPART" python tools/rendu/capturer.py --dossier captures --puis-langue English
-          for i in $(seq 1 20); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
+          args=(--dossier captures)
+          [ "$LANGUE" != fr ] && args+=(--suffixe "$LANGUE")
+          # shellcheck disable=SC2206 # noms d'écrans séparés par des espaces
+          [ -n "$SEULEMENT" ] && args+=(--seulement $SEULEMENT)
+          faketime -f "$DEPART" python tools/rendu/capturer.py "${args[@]}"
           kill "$pid" 2>/dev/null || true
-
-          faketime -f "$DEPART" "$prog" > captures/rendu-en.log 2>&1 &
-          pid=$!
-          sleep 8
-          faketime -f "$DEPART" python tools/rendu/capturer.py --dossier captures --suffixe en
-          kill "$pid" || true
-      - name: Comparer aux références (informatif)
-        run: python tools/rendu/comparer.py --captures captures
       - name: Journaux du rendu
         if: always()
         run: tail -n 80 captures/rendu-*.log || true
+      - name: Captures (${{ matrix.langue }})
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rendu-captures-${{ matrix.langue }}
+          path: |
+            captures/
+            !captures/*.bmp
+          if-no-files-found: warn
+          retention-days: 3
+
+  comparer:
+    needs: rendu
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: pip install pillow
+      - name: Réunir les captures des quatre langues
+        uses: actions/download-artifact@v7
+        with:
+          pattern: rendu-captures-*
+          merge-multiple: true
+          path: captures
+      - name: Captures du dernier run réussi sur main (références des écrans)
+        if: github.ref != 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow rendu-host.yml --branch main \
+                 --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -n "$id" ]; then
+            echo "Références : run $id de main"
+            gh run download "$id" --repo "$GITHUB_REPOSITORY" --name rendu-captures --dir references-main \
+              || echo "::notice title=Rendu::captures du run $id de main indisponibles"
+          fi
+      - name: Comparer (informatif)
+        run: |
+          refs=(--references docs/images/rendu)
+          [ -d references-main ] && refs+=(--references references-main)
+          python tools/rendu/comparer.py --captures captures "${refs[@]}"
       - name: Captures
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: rendu-captures
-          path: captures/
+          path: |
+            captures/
+            !captures/*.bmp
           if-no-files-found: warn
-          retention-days: 14
+          # Celles de main servent de références aux PR : gardées plus longtemps.
+          retention-days: ${{ github.ref == 'refs/heads/main' && 90 || 14 }}

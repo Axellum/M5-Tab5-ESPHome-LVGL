@@ -69,9 +69,11 @@ Note de méthodologie, pas un journal d'incidents — voir [`docs/troubleshootin
 
 ## Voir l'écran sans la tablette
 
-Le job CI « Rendu hors tablette » (`.github/workflows/rendu-host.yml`, [ADR-0021](decisions/0021-host-render-stubs.md)) compile l'interface pour la plateforme `host` d'ESPHome (`tab5-rendu-host.yaml`), la lance sur le runner, lui pousse les scènes du mode démo et fait une image par scène, en français puis en anglais. Sur une pull request qui touche l'écran, il dit quels écrans ont changé et joint les images avant/après (artefact `rendu-captures`, dossier `diff/`). Il ne bloque pas la PR.
+Le job CI « Rendu hors tablette » (`.github/workflows/rendu-host.yml`, [ADR-0021](decisions/0021-host-render-stubs.md)) compile l'interface pour la plateforme `host` d'ESPHome (`tab5-rendu-host.yaml`), la lance sur le runner, lui pousse les scènes du mode démo, puis ouvre un à un les ~80 écrans de `tools/rendu/ecrans.py` (fenêtres, sous-fenêtres, Arcade, menus et parties des jeux) avec un doigt virtuel, comme sur la dalle. Une image par écran, dans les quatre langues (une tâche par langue). Sur une pull request qui touche l'écran, il dit quels écrans ont changé par rapport à `main` et joint les images avant/après (artefact `rendu-captures`, dossier `diff/`). Il ne bloque pas la PR.
 
-- Un changement voulu : `python tools/rendu/maj_references.py --run <id du run>` remplace `docs/images/rendu/` (aussi la galerie de [`screens.md`](screens.md#version-française)) ; relire les images, puis committer.
+- Un changement voulu : rien à faire pour les écrans, `main` devient la référence une fois la PR mergée. Pour les scènes de la galerie de [`screens.md`](screens.md#version-française) : `python tools/rendu/maj_references.py --run <id du run>` remplace `docs/images/rendu/` ; relire les images, puis committer.
+- Un nouvel écran : une entrée dans `tools/rendu/ecrans.py` (appuis aux coordonnées des captures, paysage 1280×720). « Une capture identique à … » dans le run veut dire qu'un appui est tombé à côté.
+- Mise au point d'un écran : *Actions → Rendu hors tablette → Run workflow*, champ « seulement » (noms d'écrans) et « langues » (par ex. `["de"]`).
 - Il ne tourne que sous Linux ou macOS (plateforme `host`) : sous Windows, passer par la CI (*Actions → Rendu hors tablette → Run workflow*).
 - Il montre la mise en page, pas l'appareil : ni tactile, ni son, ni assistant vocal, ni temps de rendu ou mémoire.
 

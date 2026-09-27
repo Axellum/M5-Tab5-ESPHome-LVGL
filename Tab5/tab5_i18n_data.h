@@ -1211,7 +1211,7 @@ static const char* const kI18nKeys[] = {
     "Confirme",
     "Confirmer",
     "Confirmer reset",
-    "Connecte",
+    "Connecté",
     "Conserves en NVS, valables pour toutes les parties",
     "Controle",
     "Controle : %s",
@@ -2163,7 +2163,7 @@ static const char* const kI18n_en[] = {
     "Advanced",  // "Confirme"
     "Confirm",  // "Confirmer"
     "Confirm reset",  // "Confirmer reset"
-    "Connected",  // "Connecte"
+    "Connected",  // "Connecté"
     "Saved in NVS, used for every game",  // "Conserves en NVS, valables pour toutes les parties"
     "Control",  // "Controle"
     "Control: %s",  // "Controle : %s"
@@ -3115,7 +3115,7 @@ static const char* const kI18n_de[] = {
     "Erfahren",  // "Confirme"
     "Bestätigen",  // "Confirmer"
     "Reset bestätigen",  // "Confirmer reset"
-    "Verbunden",  // "Connecte"
+    "Verbunden",  // "Connecté"
     "In NVS gespeichert, gilt für alle Partien",  // "Conserves en NVS, valables pour toutes les parties"
     "Steuerung",  // "Controle"
     "Steuerung: %s",  // "Controle : %s"
@@ -4067,7 +4067,7 @@ static const char* const kI18n_nl[] = {
     "Gevorderd",  // "Confirme"
     "Bevestigen",  // "Confirmer"
     "Reset bevestigen",  // "Confirmer reset"
-    "Verbonden",  // "Connecte"
+    "Verbonden",  // "Connecté"
     "Bewaard in NVS, geldig voor alle partijen",  // "Conserves en NVS, valables pour toutes les parties"
     "Besturing",  // "Controle"
     "Besturing: %s",  // "Controle : %s"
