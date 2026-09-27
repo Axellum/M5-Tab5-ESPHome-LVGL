@@ -4,6 +4,71 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Choix du fournisseur météo dans Home Assistant (lot 4c-2)
+
+Lot 4c de l'audit « ouverture », seconde partie : la pluie dans l'heure et les
+vigilances ne dépendent plus de Météo-France. **HA seulement, aucun flash** : le
+firmware de 4c-1 accepte déjà les niveaux de pluie chiffrés et les deux phénomènes
+supplémentaires.
+
+- **Nouveau package `packages/tab5_meteo_sources.yaml`** :
+  - Deux `input_select` choisissent la source **dans HA, sans YAML** :
+    - « Tab5 · source de la pluie dans l'heure » : Météo-France, OpenWeatherMap ou
+      Aucune ;
+    - « Tab5 · source des vigilances » : Météo-France, MeteoAlarm ou Aucune.
+  - Deux capteurs **normalisés**, seuls lus par les poussées :
+    - `sensor.tab5_pluie_dans_l_heure` : code `@niveau,début`, attribut `barres` ;
+    - `sensor.tab5_vigilance` : niveau global, attribut `phenomenes` (11 cases).
+- **Faits vérifiés** dans le code de HA 2026.9.3 et la documentation des
+  fournisseurs, le 27/09/2026 :
+  - Hors de France, seul **OpenWeatherMap** en mode v3.0 expose une série de pluie
+    minute par minute (`openweathermap.get_minute_forecast`, en mm/h, lue dans le
+    cache de l'intégration). HA l'interroge toutes les 10 min. L'offre donne 1 000
+    appels par jour gratuits, puis 0,0014 € par appel. One Call 3.0 est marqué
+    « deprecated » ; la 4.0 est recommandée, sans date d'arrêt annoncée.
+  - **MeteoAlarm** : 39 pays européens, intégration en YAML seulement, une seule
+    alerte à la fois (la bibliothèque s'arrête à la première), `on` seulement si
+    l'alerte n'a pas expiré. Codes `awareness_type` 1 à 13, relevés dans le code de
+    la carte MeteoalarmCard.
+  - Les capteurs de gabarit à déclencheurs acceptent `actions:`, dont la réponse
+    sert aux modèles.
+- **Pluie OpenWeatherMap** : premier créneau ≥ 0,1 mm/h = début. Seuils : < 2,5
+  faible, < 7,6 modérée, < 50 forte, au-delà très forte. Chaque barre prend le
+  maximum de sa fenêtre.
+- **Vigilances MeteoAlarm** : chaque type est rangé dans une case de la tablette,
+  brouillard et feux de forêt compris. Niveau 2 jaune, 3 orange, 4 rouge.
+- **Tests dans le moteur de modèles de HA**, avec des données simulées :
+  - OpenWeatherMap : pluie dans 13 min à 3 mm/h, puis 9 mm/h, puis 0,5 mm/h. On
+    obtient `@2,…` début dans 13,0 min et les barres `0,0,2,2,3,3,1,1,0` ;
+  - MeteoAlarm, 6 cas : brouillard orange, pluie jaune, feux rouge, niveau 1 actif,
+    type inconnu, pas d'alerte. Les cases et les niveaux sont ceux attendus.
+  - **Aucune des deux intégrations n'est installée chez l'auteur** : pas de test
+    réel avec leurs données.
+- **Testé en production, source par source** (package déployé le 27/09 vers 10 h 15) :
+  - Météo-France : même sortie qu'avant (`@0,0`, mêmes barres). Seule différence, la
+    vigilance part sur 11 cases au lieu de 9 ;
+  - « Aucune » : `@-` et 9 barres vides ;
+  - retour à Météo-France : `@0,0`.
+  - **OpenWeatherMap choisi sans l'intégration** : HA lève « Action … not found », et
+    `continue_on_error` ne rattrape PAS cette erreur. Le capteur restait figé, avec
+    une erreur écrite toutes les 5 min. Correctif : l'action n'est lancée que si
+    l'entité existe (`has_value`). Revérifié : `@-1,0` (« Pas de données »), barres
+    vides, plus aucune erreur.
+- **Placeholders** `VOTRE_METEO_OWM` et `VOTRE_METEOALARM`, en entity_id
+  **complets**. « openweathermap » seul apparaîtrait aussi dans le nom de l'action,
+  et `render_ha_config.py --check` y verrait une fuite. `VOTRE_VILLE` désigne
+  désormais l'entité météo de n'importe quel fournisseur.
+- **`tab5_push.yaml`** lit les capteurs normalisés : barres, code de pluie,
+  vigilance et bandeau info. Les déclencheurs sont sur ces capteurs. Le capteur de
+  pluie déménage dans le nouveau package, avec le même `unique_id`.
+- **Nettoyage de `tab5_alerts.yaml`** : un identifiant d'acquittement qui n'est pas
+  une entité (sans « . ») ne reste plus pour toujours. Les deux identifiants de test
+  du 27/09 y étaient restés ; ils ont été retirés à la main.
+- **Docs** : `docs/installation.md` (section « Fournisseurs météo », EN/FR), README,
+  README de `HomeAssistant_Config/`, `placeholders.example.yaml`, cartographie.
+- **Entité supprimée** du registre de HA (accord d'Axel) :
+  `sensor.phrase_prochaine_pluie`, remplacée depuis 4c-1.
+
 ### 2026-09-27 — Textes de HA composés par la tablette, dans sa langue ; fuseau réglable (lot 4c-1)
 
 Lot 4c de l'audit « ouverture », première partie. Home Assistant écrivait lui-même,

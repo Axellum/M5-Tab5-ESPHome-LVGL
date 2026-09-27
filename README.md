@@ -39,7 +39,7 @@
 
 - A Tab5: the **ST7123** display chip is the one tested daily; the ST7121 and the original ILI9881C compile but are untested — see [hardware compatibility](#hardware-compatibility).
 - Home Assistant, and ESPHome **≥ 2026.9.0** to compile. **There is no prebuilt firmware yet:** you compile it with your own entity IDs.
-- The screen speaks **French or English**, switchable from Home Assistant ([translations](docs/translations.md)), games and texts sent by Home Assistant included (rain sentence, banners); only the quiz questions stay in French. The documentation is bilingual. The one-hour rain graph and the weather warnings come from **Météo-France** (France only).
+- The screen speaks **French or English**, switchable from Home Assistant ([translations](docs/translations.md)), games and texts sent by Home Assistant included (rain sentence, banners); only the quiz questions stay in French. The documentation is bilingual. The one-hour rain graph and the weather warnings come from **Météo-France** by default; OpenWeatherMap (rain, worldwide, subscription with a free tier) and MeteoAlarm (warnings, 39 European countries) can be chosen from Home Assistant — tested with simulated data only so far ([weather providers](docs/installation.md#weather-providers)).
 - The layout was designed around the author's home: 3 lights, one air conditioner, up to 5 BLE plant sensors, a Samsung TV, one roller shutter. A different home means editing YAML for now; making each area optional is planned.
 
 ---
@@ -102,7 +102,7 @@ A single 1280×720 page organized in functional areas, all driven by Home Assist
 
 - **Home area** — time, indoor temp/humidity, quick-action buttons, microphone icon with pipeline state; the date recolors with the active weather-alert level
 - **Weather** — **5-window swipeable forecast** in the bottom region: windows 1–2 show hourly weather for the next 15 time slots (time, temperature color-coded, rainfall in mm, condition icon); windows 3–5 show the **15-day daily forecast** (5 days/window) with color-coded day names, dual-layer condition icons, and max/min temperatures
-- **Central rotating card** — cycles every 8 s between planning, short-term rain graph, Météo-France vigilance icons, an info panel (3-day calendar recap or weather-alert banner), and up to **4 Home Assistant alert / info banners** pushed live from HA
+- **Central rotating card** — cycles every 8 s between planning, short-term rain graph, weather-warning icons (Météo-France or MeteoAlarm), an info panel (3-day calendar recap or weather-alert banner), and up to **4 Home Assistant alert / info banners** pushed live from HA
 - **Tap to dismiss** — tapping an info banner or an HA alert removes it immediately from the rotator (local dismiss list so a re-push of the same id stays hidden until HA sends a new one)
 - **TV remote** — fullscreen Samsung IR remote popup (power, pad, volume, channels, playback, mute…) opened from the UI; commands go through Home Assistant `remote.*` services
 - **Climate** — compact card + near-fullscreen popup in 3 glass cards: stacked mode buttons (cool / heat / dry / fan / off), a 320 px arc thermostat with optimistic target and debounced updates, presets (eco / boost / quiet) and airflow control (swing / Daikin "Brise" `windnice`); controls are dimmed (not hidden) when the AC is off
@@ -371,7 +371,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 - Un Tab5 : la puce écran **ST7123** est celle testée tous les jours ; la ST7121 et l'ILI9881C d'origine compilent mais ne sont pas testées — voir la [compatibilité matérielle](#compatibilité-matérielle).
 - Home Assistant, et ESPHome **≥ 2026.9.0** pour compiler. **Il n'y a pas encore de firmware précompilé :** vous le compilez avec vos propres entity IDs.
-- L'écran parle **français ou anglais**, au choix depuis Home Assistant ([traductions](docs/translations.md#version-française)), jeux et textes envoyés par Home Assistant compris (phrase de pluie, bandeaux) ; seules les questions du quiz restent en français. La documentation est bilingue. Le graphe de pluie dans l'heure et les vigilances viennent de **Météo-France** (France uniquement).
+- L'écran parle **français ou anglais**, au choix depuis Home Assistant ([traductions](docs/translations.md#version-française)), jeux et textes envoyés par Home Assistant compris (phrase de pluie, bandeaux) ; seules les questions du quiz restent en français. La documentation est bilingue. Le graphe de pluie dans l'heure et les vigilances viennent de **Météo-France** par défaut ; OpenWeatherMap (pluie, monde entier, abonnement avec palier gratuit) et MeteoAlarm (vigilances, 39 pays européens) se choisissent depuis Home Assistant — testés seulement avec des données simulées pour l'instant ([fournisseurs météo](docs/installation.md#fournisseurs-météo)).
 - La disposition a été pensée pour la maison de l'auteur : 3 lumières, une clim, jusqu'à 5 capteurs de plantes BLE, une TV Samsung, un volet roulant. Une autre maison demande pour l'instant de modifier le YAML ; rendre chaque zone optionnelle est prévu.
 
 ---
@@ -444,7 +444,7 @@ Une page unique 1280×720 organisée en zones fonctionnelles, toutes alimentées
 
 - **Zone d'accueil** — heure, temp/humidité intérieure, boutons d'action rapide, icône microphone avec état du pipeline ; la date se recolore selon le niveau d'alerte météo actif
 - **Météo** — **prévisions par swipe en 5 fenêtres** dans la zone du bas : fenêtres 1–2 = météo horaire pour les 15 prochaines tranches (heure, température avec code couleur, pluie en mm, icône condition) ; fenêtres 3–5 = **prévisions journalières 15 jours** (5 jours/fenêtre) avec noms de jours en code couleur, icônes double couche, temp max/min
-- **Carte centrale rotative** — alterne toutes les 8 s entre planning, graphe de pluie court terme, icônes de vigilance Météo-France, un panneau info (récap calendrier 3 jours ou bannière d’alerte météo), et jusqu’à **4 bandeaux d’infos / alertes Home Assistant** poussés en live
+- **Carte centrale rotative** — alterne toutes les 8 s entre planning, graphe de pluie court terme, icônes de vigilance (Météo-France ou MeteoAlarm), un panneau info (récap calendrier 3 jours ou bannière d’alerte météo), et jusqu’à **4 bandeaux d’infos / alertes Home Assistant** poussés en live
 - **Tap pour masquer** — un tap sur un bandeau info ou une alerte HA la retire tout de suite du rotateur (liste de dismiss locale : le même id ne réapparaît pas tant que HA n’envoie pas une nouvelle alerte)
 - **Télécommande TV** — popup plein écran Samsung (power, pad, volume, chaînes, lecture, muet…) ouverte depuis l’UI ; commandes via les services Home Assistant `remote.*`
 - **Clim** — carte compacte + popup quasi plein écran en 3 cartes de verre : modes empilés (froid / chaud / sec / ventilation / arrêt), arc thermostat 320 px avec cible optimiste et envois débouncés, presets (éco / boost / silence) et flux d'air (oscillation / « Brise » Daikin `windnice`) ; les contrôles sont estompés (non cachés) quand la clim est éteinte
