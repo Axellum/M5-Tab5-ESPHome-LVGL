@@ -4,6 +4,75 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [2.2.0] — 2026-09-27
+
+De `v2.1.0` (27/09 au matin) à aujourd'hui : 6 pull requests (#181, #183 → #187), plus
+celle de la release. Le lot 4 de l'audit « ouverture » est terminé :
+- **l'écran parle français ou anglais**, au choix depuis HA : écran, jeux et textes
+  envoyés par HA compris. Seules les questions du quiz restent en français ;
+- **la météo ne dépend plus de Météo-France** : la source des prévisions, celle de la
+  pluie dans l'heure et celle des vigilances se choisissent dans HA (OpenWeatherMap,
+  MeteoAlarm, toute entité `weather.*`) ;
+- le fuseau horaire est réglable.
+
+**Version mineure** : le plancher reste ESPHome 2026.9.0, et une OTA suffit. Mais le
+package HA et le firmware changent **ensemble** : voir l'ordre ci-dessous.
+
+### À faire en mettant à jour depuis 2.1.0
+
+- **Le firmware d'abord, les packages HA ensuite.** Les nouveaux packages envoient
+  des codes (`@2,…`, `@ha|…`) que seul le nouveau firmware compose en texte. Un
+  firmware 2.1.0 les afficherait tels quels. Dans l'autre sens, le nouveau firmware
+  accepte encore les phrases de l'ancien package.
+- **Packages HA** : reprendre `tab5_push.yaml`, `tab5_alerts.yaml` et
+  `tab5_reveil.yaml`, et **ajouter `tab5_meteo_sources.yaml`** (nouveau). Sans lui,
+  la pluie, les vigilances et les prévisions n'ont plus de source.
+- **Placeholders** : ajouter `VOTRE_METEO_OWM` et `VOTRE_METEOALARM`, en entity_id
+  complets. Les valeurs par défaut conviennent même sans ces intégrations
+  (`weather.openweathermap`, `binary_sensor.meteoalarm`). Sans elles, HA refuse le
+  package, car un placeholder non remplacé n'est pas un entity_id valide.
+- **Recharger** input_select, input_text, template, script et automation (ou
+  redémarrer HA).
+- **Entité remplacée** : `sensor.phrase_prochaine_pluie` devient
+  `sensor.tab5_pluie_dans_l_heure`. Supprimez l'ancienne du registre de HA.
+- **Nouveau, facultatif** :
+  - select « Langue » de la tablette (un changement redémarre la tablette) ;
+    `tab5_langue:` pour le premier démarrage ;
+  - `tab5_fuseau:` dans `Tab5/user_entities.yaml` (défaut Europe/Paris) ;
+  - les trois listes « Tab5 · source … » dans HA.
+
+### Mesures de la version
+
+- **Compilations de la CI** (ESPHome 2026.9.0), firmware de `v2.1.0` (`c134dfb`)
+  contre celui de ce tag :
+  - image 3 070 188 → 3 122 396 o (+51 Ko). La langue en fait l'essentiel : 4a
+    +14,6 Ko, 4b +30,9 Ko (690 clés), 4c-1 +5,1 Ko ;
+  - RAM statique 170 752 → 170 992 o (+240 o) ;
+  - aucun avertissement dans notre code.
+- **Base HA et poussées** : plus de poussée chaque minute avant une averse. La
+  tablette décompte « dans N mn » elle-même.
+- **Firmware de la release** : `main` à ce tag est le firmware flashé sur l'appareil
+  de l'auteur le 27/09 à 09:55 (OTA, binaire compilé depuis le même arbre, aucun
+  fichier firmware changé depuis). Validé à l'écran par Axel, en français puis en
+  anglais.
+
+### Problèmes connus
+
+- **Questions du quiz** : en français, par choix. Le sous-titre anglais du jeu le
+  dit.
+- **Annonce parlée du réveil** (« Bonjour. Il est… ») : composée en français par HA
+  (`tab5_reveil.yaml`), elle ne suit pas la langue de la tablette. La voix de
+  synthèse est elle aussi réglée en français.
+- **Fournisseurs météo** :
+  - OpenWeatherMap essayé en réel, mais ses prévisions journalières ne couvrent que
+    8 jours : les derniers jours des pages de 15 jours restent vides ;
+  - MeteoAlarm (une alerte à la fois) et le regroupement en demi-journées (NWS)
+    n'ont été testés qu'avec des données simulées.
+- **ST7121 et ILI9881C** : toujours jamais essayées sur une tablette.
+- **Flipper** : en portrait, les logs LVGL sont inondés tant qu'un doigt est posé.
+- **Garde « reboot inattendu »** : elle notifie aussi les redémarrages voulus
+  (changement de langue, OTA).
+
 ### 2026-09-27 — Source des prévisions au choix, heures locales (lot 4c-3)
 
 Lot 4c de l'audit « ouverture », troisième partie, demandée par Axel avant la release :
