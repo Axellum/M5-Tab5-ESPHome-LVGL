@@ -1,5 +1,11 @@
 # Hackster — texte prêt à coller (EN)
 
+> **Mis à jour pour la 3.0** (lot 8 de l'audit « ouverture », 27/09/2026) : installation par
+> le flasheur web et le blueprint, plus de `secrets.yaml`. Axel met la page à jour lui-même,
+> **après la publication de la 3.0.0**. Avant de coller : remplacer `<LIEN DU FLASHEUR>`
+> (lot 6c), vérifier le numéro de version dans « Done! », et garder le ton « partagé au
+> cas où » (pas d'appel insistant).
+
 > Copié / synchronisé le 2026-07-19. Case **Made with AI** : cocher.
 > Médias à uploader : voir § Cover media en bas + `docs/images/`.
 
@@ -94,7 +100,7 @@ Most DIY wall panels run a browser, reload dashboards, and hammer the server wit
 
 **Minimum demo:** an M5Stack Tab5 V2, a Wi-Fi network, and a PC with ESPHome for the first USB flash. That's it — there's even a demo mode that fakes all the data without any Home Assistant (see Step 2).
 
-**Full install (as in the video):** add Home Assistant, Wyoming Whisper/Piper for local voice, and whatever entities you want on screen (lights, cover, climate, TV, plant sensors). Everything is optional and mapped in one config file.
+**Full install (as in the video):** add Home Assistant, Wyoming Whisper/Piper for local voice, and whatever devices you want on screen (lights, cover, climate, TV, plant sensors). Everything is optional, and you pick your devices in Home Assistant with a blueprint — what you leave empty disappears from the screen.
 
 ---
 
@@ -117,33 +123,37 @@ Just one heads-up: several critical pins (display reset, amplifier enable) are *
 
 ### Step 2: Flash the firmware
 
+The easy way: plug the Tab5 into your computer over USB and flash it from the browser (Chrome or Edge): <LIEN DU FLASHEUR>. The same page sets the Wi-Fi right after the flash. Then add the tablet in Home Assistant, which gives it its encryption key: there is no secret in the firmware, and updates must be signed.
+
+Or compile it yourself:
+
 ```bash
 git clone https://github.com/Axellum/M5-Tab5-ESPHome-LVGL.git
 cd M5-Tab5-ESPHome-LVGL
-cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml   # map YOUR entity IDs
-# create secrets.yaml (Wi-Fi + API key) — see docs/installation.md
+cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
+python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem   # signs your builds
 esphome run tab5-ha-hmi.yaml                                  # USB first time, OTA after
 ```
 
-The firmware is **modular YAML**: 8 packages split by concern (hardware, sensors, API contract, styles, layout, globals, scripts) plus 19 reusable UI components and two C++ files holding all the non-trivial logic. Every file opens with an `[AI-CONTEXT]` header — a local "system prompt" so any AI (or human) editing it knows the constraints. CI compiles every PR.
+The firmware is **modular YAML**: 17 packages split by concern (hardware, sensors, API contract, styles, layout, scripts, alarm clock, voice, games…) plus 45 UI component files, and C++ units holding all the non-trivial logic (LVGL code never lives in the YAML). Every file opens with an `[AI-CONTEXT]` header — a local "system prompt" so any AI (or human) editing it knows the constraints. CI compiles every PR, against both the minimum and the latest ESPHome.
 
 **Try it with zero Home Assistant:** flash, then run the demo pusher — it feeds synthetic weather/planning/climate/plant data over the native API:
 
 ```bash
 pip install -r tools/demo/requirements.txt
-python tools/demo/demo_pusher.py --host <tab5-ip> --key <api_encryption_key>
+python tools/demo/demo_pusher.py --host <tab5-ip>
 ```
 
 Full walkthrough: [`installation.md`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md) · [`demo_mode.md`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/demo_mode.md)
 
 ### Step 3: Wire up Home Assistant
 
-Copy the packages from `HomeAssistant_Config/` into your HA instance. They implement the push side: automations that watch your entities and call the Tab5's 12 `tab5_maj_*` services (forecast bulks, climate, shutter, planning, rain graph, Météo-France alerts, HA alert banners, voice replies).
+Copy the packages from `HomeAssistant_Config/` into your HA instance, and import the « Tab5 — emplacements » blueprint to pick your devices with the mouse. Together they implement the push side: automations that watch your entities and call the Tab5's 17 `tab5_maj_*` actions (forecast bulks, climate, shutter, device slots, rain graph, weather warnings, HA alert banners, voice replies).
 
 A taste of the "data packing" trick — the whole 15-day forecast travels as one string, built by a Jinja template and parsed in C++ on the device:
 
 ```
-"Lun 21;soleil;28;16|Mar 22;nuageux;24;15|..."
+"0|Auj|sunny|15|27|0|0|0|09:00-17:30;1|Mar|cloudy|16|24|0|0|0|09:00-17:30;..."
 ```
 
 Just two heads-ups learned the hard way: put `continue_on_error: true` on every push action (one malformed payload otherwise silently kills the *rest* of the automation), and never pass a raw Jinja `now()` to `calendar.get_events` — format it with `strftime`, or the schema rejects it without a word.
@@ -237,7 +247,7 @@ If any part of this is useful to you — as a starting point, as a reference, or
 
 ### Done!
 
-That's Tab5 Voice HMI — release [v1.0.5](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v1.0.5), in daily use on my desk, and fully reproducible from the repo. If you'd like to see another screen on it (or want to argue about push vs. poll), tell me in the comments.
+That's Tab5 Voice HMI — release [3.0.0](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.0.0), in daily use on my desk, and fully reproducible from the repo. If you'd like to see another screen on it (or want to argue about push vs. poll), tell me in the comments.
 
 Until next time.
 

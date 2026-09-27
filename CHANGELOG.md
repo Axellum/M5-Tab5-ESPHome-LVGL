@@ -4,6 +4,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Textes de présentation prêts pour la 3.0 (lot 8)
+
+Lot 8 de l'audit « ouverture » (communication), **docs seulement**. Choix d'Axel : forum
+HA et Hackster seulement, textes préparés maintenant, publiés par lui après la 3.0 (flasheur
+web du lot 6c), ton « partagé au cas où ».
+
+- **`docs/press/forum_ha_en.md`** (nouveau) : brouillon pour « Share your Projects », en
+  anglais, avec la liste de ce qu'il faut vérifier juste avant de publier (lien du
+  flasheur, limites toujours vraies, image).
+- **`docs/press/hackster_paste_en.md`** mis à jour pour la 3.0 :
+  - étape 2 : flasheur web, puis ajout dans HA qui fournit la clé ; compilation avec une
+    clé de signature au lieu de `secrets.yaml` ;
+  - démo sans `--key` ;
+  - étape 3 : blueprint pour choisir les appareils, 17 actions `tab5_maj_*`, exemple de
+    payload au format réel ;
+  - chiffres du firmware (17 packages, 45 fichiers de composants) et release 3.0.0.
+- `docs/press/hackster.md` : renvoi vers le texte à jour.
+
 ### 2026-09-27 — Les appareils se choisissent dans HA, à la souris : emplacements et blueprint (lot 6a)
 
 Lot 6 de l'audit « ouverture » (firmware générique), première partie, **rupture** (3.0.0)

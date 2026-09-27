@@ -2,7 +2,7 @@
 
 > **How to use this file:** Draft + notes. **Texte prêt à coller Hackster :** [`hackster_paste_en.md`](hackster_paste_en.md) (2026-07-19).
 > **Repos:** [M5-Tab5-ESPHome-LVGL](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL) · [vromvrom-engine](https://github.com/Axellum/vromvrom-engine)
-> **Firmware release:** [v1.0.5](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v1.0.5) (July 2026)
+> **Firmware release:** [v1.0.5](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v1.0.5) (July 2026, concours) · **mise à jour prévue avec la 3.0.0** : le texte à coller ([`hackster_paste_en.md`](hackster_paste_en.md)) est à jour (flasheur web, blueprint, plus de `secrets.yaml`) ; ce brouillon-ci garde les notes du concours de juillet.
 > **Demo video:** https://www.youtube.com/watch?v=ygNhgtMffu4
 > **Médias:** photos popup/console v2 OK (2026-07-19) · anim 4:3 `docs/images/tab5_ui_tour*.webp|gif|mp4`
 
