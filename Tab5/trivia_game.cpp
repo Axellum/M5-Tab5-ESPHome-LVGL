@@ -80,13 +80,15 @@ static constexpr uint32_t CAT_COLORS[TRIVIA_NCAT] = {
     0x4CAF50,  // 4 Sciences & Nature — vert
     0xFF7043   // 5 Sports & Loisirs  — orange
 };
+// Libellés d'interface (tr_noop) : traduits à l'affichage par tr(CAT_NAMES[c]).
 static const char* const CAT_NAMES[TRIVIA_NCAT] = {
-    "Géographie", "Divertissement", "Histoire",
-    "Arts & Littérature", "Sciences & Nature", "Sports & Loisirs"
+    tr_noop("Géographie"), tr_noop("Divertissement"), tr_noop("Histoire"),
+    tr_noop("Arts & Littérature"), tr_noop("Sciences & Nature"), tr_noop("Sports & Loisirs")
 };
 // Version courte pour la légende du panneau (largeur de chip = 172 px).
 static const char* const CAT_SHORT[TRIVIA_NCAT] = {
-    "Géographie", "Divertis.", "Histoire", "Arts", "Sciences", "Sports"
+    tr_noop("Géographie"), tr_noop("Divertis."), tr_noop("Histoire"),
+    tr_noop("Arts"), tr_noop("Sciences"), tr_noop("Sports")
 };
 
 static constexpr uint32_t PAWN_COLORS[TRIVIA_MAX_TEAMS] = {
@@ -99,28 +101,19 @@ static const char* const PRESET_NAMES[12] = {
 };
 
 // Difficulté → masque de bits sur TriviaQuestion::difficulty (0=facile,1=moyen,2=dur).
-static const char* const DIFF_NAME[3] = {"Facile", "Normal", "Expert"};
-static const char* const DIFF_DESC[3] = {"Questions faciles", "Faciles + moyennes", "Moyennes + difficiles"};
+// Libellés traduits à l'affichage : tr(DIFF_NAME[i]), tr(DIFF_DESC[i]), tr(TIMER_NAME[i]).
+static const char* const DIFF_NAME[3] = {tr_noop("Facile"), tr_noop("Normal"), tr_noop("Expert")};
+static const char* const DIFF_DESC[3] = {tr_noop("Questions faciles"), tr_noop("Faciles + moyennes"),
+                                         tr_noop("Moyennes + difficiles")};
 static const uint8_t     DIFF_MASK[3] = {0x01, 0x03, 0x06};
 
 static const uint8_t     TIMER_SEC[4]  = {15, 30, 60, 0};
-static const char* const TIMER_NAME[4] = {"15 s", "30 s", "60 s", "Illimité"};
+// « 15 s »… s'écrivent pareil en anglais : seul « Illimité » a une traduction.
+static const char* const TIMER_NAME[4] = {"15 s", "30 s", "60 s", tr_noop("Illimité")};
 
-static const char* const RULES_TEXT =
-    "Réunissez les 6 parts de camembert, puis rejoignez le centre pour la question finale.\n"
-    "\n"
-    "Lancez le dé avec le bouton, ou secouez la tablette.\n"
-    "Touchez ensuite l'une des cases surlignées : vous choisissez votre direction,\n"
-    "mais jamais de demi-tour en cours de déplacement.\n"
-    "\n"
-    "Bonne réponse : vous rejouez.   Mauvaise réponse : au suivant.\n"
-    "\n"
-    "Les 6 grandes cases cerclées de blanc sont les QG de catégorie :\n"
-    "elles seules rapportent une part de camembert.\n"
-    "Une case violette à point blanc = Rejouer, relancez immédiatement le dé.\n"
-    "Le centre sans les 6 parts = question de la catégorie de votre choix.\n"
-    "Le centre avec les 6 parts = finale : l'équipe suivante choisit la catégorie,\n"
-    "et une bonne réponse remporte la partie.";
+// Une seule ligne, exprès : tools/i18n_keys.py ne relève une clé que si tout le
+// littéral est sur la ligne de l'appel. Affiché par tr(RULES_TEXT).
+static const char* const RULES_TEXT = tr_noop("Réunissez les 6 parts de camembert, puis rejoignez le centre pour la question finale.\n\nLancez le dé avec le bouton, ou secouez la tablette.\nTouchez ensuite l'une des cases surlignées : vous choisissez votre direction,\nmais jamais de demi-tour en cours de déplacement.\n\nBonne réponse : vous rejouez.   Mauvaise réponse : au suivant.\n\nLes 6 grandes cases cerclées de blanc sont les QG de catégorie :\nelles seules rapportent une part de camembert.\nUne case violette à point blanc = Rejouer, relancez immédiatement le dé.\nLe centre sans les 6 parts = question de la catégorie de votre choix.\nLe centre avec les 6 parts = finale : l'équipe suivante choisit la catégorie,\net une bonne réponse remporte la partie.");
 
 // ===========================================================================
 // 3. Générateur pseudo-aléatoire (xorshift32)
@@ -683,7 +676,7 @@ static void build_panel_ui() {
     lv_obj_add_event_cb(gs->roll_btn, roll_cb, LV_EVENT_CLICKED, nullptr);
     gs->roll_lbl = mk_label(gs->roll_btn, gs->ui.f_mid, Pal::VOID_BG);
     lv_obj_align(gs->roll_lbl, LV_ALIGN_CENTER, 0, 0);
-    set_text_if(gs->roll_lbl, "LANCER LE DÉ");
+    set_text_if(gs->roll_lbl, tr("LANCER LE DÉ"));
 
     gs->roll_hint = mk_label(b, gs->ui.f_small, Pal::TXT_MUTED);
     lv_obj_set_width(gs->roll_hint, 368);
@@ -754,7 +747,7 @@ static void build_panel_ui() {
         set_bg(dot, CAT_COLORS[c], LV_OPA_COVER);
         lv_obj_t* l = mk_label(b, gs->ui.f_small, Pal::TXT_DIM);
         lv_obj_set_pos(l, lx + 20, ly);
-        set_text_if(l, CAT_SHORT[c]);
+        set_text_if(l, tr(CAT_SHORT[c]));
     }
 }
 
@@ -1154,7 +1147,7 @@ static void resolve_cell() {
     const BoardCell& c = kBoard.c[gp->teams[gp->cur].pos];
     switch (c.type) {
         case CELL_ROLL:
-            msg("Case Rejouer — relancez le dé !");
+            msg(tr("Case Rejouer — relancez le dé !"));
             gp->state = ST_PLAY;
             begin_roll_phase();
             break;
@@ -1218,11 +1211,11 @@ static void end_reveal() {
     if (gp->is_final) {
         gp->is_final = false;
         if (gp->correct) { victory(gp->cur); return; }
-        msg("Finale manquée — il faudra revenir au centre.");
+        msg(tr("Finale manquée — il faudra revenir au centre."));
         next_team();
     } else if (gp->correct) {
-        if (gp->won_wedge) msg("Part gagnée ! Vous rejouez.");
-        else             msg("Bonne réponse — vous rejouez.");
+        if (gp->won_wedge) msg(tr("Part gagnée ! Vous rejouez."));
+        else             msg(tr("Bonne réponse — vous rejouez."));
     } else {
         next_team();
     }
@@ -1249,7 +1242,7 @@ static void start_game(uint8_t n, const Team* roster) {
     gp->state = ST_PLAY;
     begin_roll_phase();
     reset_caches();
-    msg("Que la partie commence !");
+    msg(tr("Que la partie commence !"));
 }
 
 static bool resume_game() {
@@ -1282,29 +1275,30 @@ static bool resume_game() {
 // ===========================================================================
 static void render_hub() {
     menu_head(138, 196);
-    panel_text("TRIAL POURSUITE", "Le quiz rétro-salon — 720 questions, 6 catégories", "", "");
+    // Le titre est le nom de la console : il ne se traduit pas.
+    panel_text("TRIAL POURSUITE", tr("Le quiz rétro-salon — 720 questions, 6 catégories"), "", "");
     pie_set(gs->big_pie, gs->big_rim, 640 - 55, 20, 110, 0x3F);
     pie_show(gs->big_pie, gs->big_rim, true);
 
-    slot_list(0, 0, "Nouvelle partie", "1 à 6 équipes");
+    slot_list(0, 0, tr("Nouvelle partie"), tr("1 à 6 équipes"));
     if (gp->in_game || gp->save.n_teams > 0) {
         uint8_t n = gp->in_game ? gp->n_teams : gp->save.n_teams;
         uint8_t t = gp->in_game ? gp->turn : gp->save.turn_num;
-        snprintf(gs->fmt, sizeof(gs->fmt), "%u équipes · tour %u", (unsigned) n, (unsigned) t);
-        slot_list(1, 1, "Reprendre la partie", gs->fmt);
+        snprintf(gs->fmt, sizeof(gs->fmt), tr("%u équipes · tour %u"), (unsigned) n, (unsigned) t);
+        slot_list(1, 1, tr("Reprendre la partie"), gs->fmt);
     } else {
-        slot_list(1, 1, "Reprendre la partie", "Aucune partie sauvegardée", false);
+        slot_list(1, 1, tr("Reprendre la partie"), tr("Aucune partie sauvegardée"), false);
     }
     uint32_t tot = gp->save.stats.q_ok + gp->save.stats.q_ko;
-    if (tot > 0) snprintf(gs->fmt, sizeof(gs->fmt), "%u parties · %u %% de réussite",
+    if (tot > 0) snprintf(gs->fmt, sizeof(gs->fmt), tr("%u parties · %u %% de réussite"),
                           (unsigned) gp->save.stats.games_played,
                           (unsigned) (gp->save.stats.q_ok * 100 / tot));
-    else snprintf(gs->fmt, sizeof(gs->fmt), "Aucune question jouée");
-    slot_list(2, 2, "Statistiques", gs->fmt);
-    slot_list(3, 3, "Règles du jeu", "Comment gagner ses 6 parts");
-    snprintf(gs->fmt, sizeof(gs->fmt), "%s · %s", DIFF_NAME[gp->difficulty], TIMER_NAME[gp->timer_idx]);
-    slot_list(4, 4, "Réglages", gs->fmt);
-    slot_list(5, 5, "Quitter", "Retour au Tab", true, Pal::BAD);
+    else snprintf(gs->fmt, sizeof(gs->fmt), "%s", tr("Aucune question jouée"));
+    slot_list(2, 2, tr("Statistiques"), gs->fmt);
+    slot_list(3, 3, tr("Règles du jeu"), tr("Comment gagner ses 6 parts"));
+    snprintf(gs->fmt, sizeof(gs->fmt), "%s · %s", tr(DIFF_NAME[gp->difficulty]), tr(TIMER_NAME[gp->timer_idx]));
+    slot_list(4, 4, tr("Réglages"), gs->fmt);
+    slot_list(5, 5, tr("Quitter"), tr("Retour au Tab"), true, Pal::BAD);
     gs->slots.hide_from(6);
     free_hide_from(0);
     bars_hide();
@@ -1312,12 +1306,12 @@ static void render_hub() {
 
 static void render_setup() {
     menu_head(28, 86);
-    panel_text("NOUVELLE PARTIE", "Composez les équipes, puis réglez les questions", "",
-               "Touchez un nom pour le changer, la pastille pour la couleur");
+    panel_text(tr("NOUVELLE PARTIE"), tr("Composez les équipes, puis réglez les questions"), "",
+               tr("Touchez un nom pour le changer, la pastille pour la couleur"));
     pie_show(gs->big_pie, gs->big_rim, false);
     bars_hide();
 
-    free_lbl(0, 72, 126, "ÉQUIPES");
+    free_lbl(0, 72, 126, tr("ÉQUIPES"));
     snprintf(gs->fmt, sizeof(gs->fmt), "%u", (unsigned) gp->setup_n);
     free_lbl(1, 556, 126, gs->fmt, Pal::TXT);
 
@@ -1334,7 +1328,7 @@ static void render_setup() {
                      Pal::BTN_BG, Pal::BTN_EDGE, Pal::TXT, true, true);
         } else {
             slot_set(2 * i + 1, 140, y, 496, 56,
-                     (i == gp->setup_n) ? "+ Ajouter une équipe" : "—", nullptr,
+                     (i == gp->setup_n) ? tr("+ Ajouter une équipe") : "—", nullptr,
                      Pal::BTN_BG, Pal::CARD_EDGE,
                      (i == gp->setup_n) ? Pal::TXT_DIM : Pal::TXT_MUTED, (i == gp->setup_n), true);
         }
@@ -1345,46 +1339,46 @@ static void render_setup() {
              gp->setup_n < TRIVIA_MAX_TEAMS ? Pal::TXT : Pal::TXT_MUTED,
              gp->setup_n < TRIVIA_MAX_TEAMS);
 
-    free_lbl(2, 680, 126, "DIFFICULTÉ");
+    free_lbl(2, 680, 126, tr("DIFFICULTÉ"));
     for (int i = 0; i < 3; i++)
-        slot_opt(12 + i, 680 + i * 180, 162, 168, 64, DIFF_NAME[i], nullptr, gp->difficulty == i);
-    free_lbl(3, 680, 246, "TEMPS DE RÉPONSE");
+        slot_opt(12 + i, 680 + i * 180, 162, 168, 64, tr(DIFF_NAME[i]), nullptr, gp->difficulty == i);
+    free_lbl(3, 680, 246, tr("TEMPS DE RÉPONSE"));
     for (int i = 0; i < 4; i++)
-        slot_opt(15 + i, 680 + i * 135, 284, 123, 64, TIMER_NAME[i], nullptr, gp->timer_idx == i);
-    free_lbl(4, 680, 368, "SECOUSSE = LANCER LE DÉ");
-    slot_opt(19, 680, 406, 258, 64, "Activée", nullptr, gp->shake_on);
-    slot_opt(20, 950, 406, 258, 64, "Désactivée", nullptr, !gp->shake_on);
+        slot_opt(15 + i, 680 + i * 135, 284, 123, 64, tr(TIMER_NAME[i]), nullptr, gp->timer_idx == i);
+    free_lbl(4, 680, 368, tr("SECOUSSE = LANCER LE DÉ"));
+    slot_opt(19, 680, 406, 258, 64, tr("Activée"), nullptr, gp->shake_on);
+    slot_opt(20, 950, 406, 258, 64, tr("Désactivée"), nullptr, !gp->shake_on);
 
-    slot_set(21, 680, 506, 528, 80, "COMMENCER LA PARTIE", nullptr,
+    slot_set(21, 680, 506, 528, 80, tr("COMMENCER LA PARTIE"), nullptr,
              Pal::ACCENT, Pal::ACCENT, Pal::VOID_BG, true);
-    slot_set(22, 680, 600, 528, 60, "Retour au menu");
+    slot_set(22, 680, 600, 528, 60, tr("Retour au menu"));
     show(gs->slots.box[23], false);
     free_hide_from(5);
 }
 
 static void render_rules() {
     menu_head(28, 86);
-    panel_text("RÈGLES DU JEU", "", RULES_TEXT, "");
+    panel_text(tr("RÈGLES DU JEU"), "", tr(RULES_TEXT), "");
     pie_show(gs->big_pie, gs->big_rim, false);
     bars_hide();
     free_hide_from(0);
-    slot_set(0, 440, 604, 400, 60, "Retour");
+    slot_set(0, 440, 604, 400, 60, tr("Retour"));
     gs->slots.hide_from(1);
 }
 
 static void render_stats() {
     menu_head(28, 86);
-    set_text_if(gs->m_title, "STATISTIQUES");
+    set_text_if(gs->m_title, tr("STATISTIQUES"));
     uint32_t tot = gp->save.stats.q_ok + gp->save.stats.q_ko;
     if (tot > 0) snprintf(gs->fmt, sizeof(gs->fmt),
-                          "%u parties · %u questions · %u %% de réussite · %u parts gagnées",
+                          tr("%u parties · %u questions · %u %% de réussite · %u parts gagnées"),
                           (unsigned) gp->save.stats.games_played, (unsigned) tot,
                           (unsigned) (gp->save.stats.q_ok * 100 / tot),
                           (unsigned) gp->save.stats.wedges_won);
-    else snprintf(gs->fmt, sizeof(gs->fmt), "Aucune question jouée pour le moment");
+    else snprintf(gs->fmt, sizeof(gs->fmt), "%s", tr("Aucune question jouée pour le moment"));
     set_text_if(gs->m_sub, gs->fmt);
     if (gp->save.stats.best_turns > 0) {
-        snprintf(gs->fmt, sizeof(gs->fmt), "Victoire la plus rapide : %u tours",
+        snprintf(gs->fmt, sizeof(gs->fmt), tr("Victoire la plus rapide : %u tours"),
                  (unsigned) gp->save.stats.best_turns);
         set_text_if(gs->m_foot, gs->fmt);
     } else set_text_if(gs->m_foot, "");
@@ -1398,7 +1392,7 @@ static void render_stats() {
         uint32_t n = ok + ko;
         int pct = n ? (int) (ok * 100 / n) : 0;
         snprintf(gs->fmt, sizeof(gs->fmt), "%u / %u  ·  %d %%", (unsigned) ok, (unsigned) n, pct);
-        slot_set(c, 200, y, 880, 56, CAT_NAMES[c], nullptr,
+        slot_set(c, 200, y, 880, 56, tr(CAT_NAMES[c]), nullptr,
                  Pal::CARD_BG, Pal::CARD_EDGE, CAT_COLORS[c], false, true);
         set_text_if(gs->slots.desc[c], "");
         show(gs->slots.desc[c], false);
@@ -1410,60 +1404,60 @@ static void render_stats() {
         free_lbl(c, 1090, y + 16, gs->fmt, Pal::TXT_DIM);
     }
     free_hide_from(TRIVIA_NCAT);
-    slot_set(6, 340, 556, 600, 56, "Effacer les statistiques", nullptr,
+    slot_set(6, 340, 556, 600, 56, tr("Effacer les statistiques"), nullptr,
              Pal::BTN_BG, Pal::BTN_EDGE, Pal::BAD);
-    slot_set(7, 340, 622, 600, 56, "Retour");
+    slot_set(7, 340, 622, 600, 56, tr("Retour"));
     gs->slots.hide_from(8);
 }
 
 static void render_settings() {
     menu_head(28, 86);
-    panel_text("RÉGLAGES", "Ces réglages s'appliquent à la prochaine question", "", "");
+    panel_text(tr("RÉGLAGES"), tr("Ces réglages s'appliquent à la prochaine question"), "", "");
     pie_show(gs->big_pie, gs->big_rim, false);
     bars_hide();
 
-    free_lbl(0, 376, 152, "DIFFICULTÉ");
+    free_lbl(0, 376, 152, tr("DIFFICULTÉ"));
     for (int i = 0; i < 3; i++)
-        slot_opt(i, 376 + i * 180, 190, 168, 64, DIFF_NAME[i], nullptr, gp->difficulty == i);
-    free_lbl(1, 376, 262, DIFF_DESC[gp->difficulty], Pal::TXT_DIM);
-    free_lbl(2, 376, 300, "TEMPS DE RÉPONSE");
+        slot_opt(i, 376 + i * 180, 190, 168, 64, tr(DIFF_NAME[i]), nullptr, gp->difficulty == i);
+    free_lbl(1, 376, 262, tr(DIFF_DESC[gp->difficulty]), Pal::TXT_DIM);
+    free_lbl(2, 376, 300, tr("TEMPS DE RÉPONSE"));
     for (int i = 0; i < 4; i++)
-        slot_opt(3 + i, 376 + i * 135, 338, 123, 64, TIMER_NAME[i], nullptr, gp->timer_idx == i);
-    free_lbl(3, 376, 420, "SECOUSSE = LANCER LE DÉ");
-    slot_opt(7, 376, 458, 258, 64, "Activée", nullptr, gp->shake_on);
-    slot_opt(8, 646, 458, 258, 64, "Désactivée", nullptr, !gp->shake_on);
-    slot_set(9, 376, 546, 528, 56, "Effacer les statistiques", nullptr,
+        slot_opt(3 + i, 376 + i * 135, 338, 123, 64, tr(TIMER_NAME[i]), nullptr, gp->timer_idx == i);
+    free_lbl(3, 376, 420, tr("SECOUSSE = LANCER LE DÉ"));
+    slot_opt(7, 376, 458, 258, 64, tr("Activée"), nullptr, gp->shake_on);
+    slot_opt(8, 646, 458, 258, 64, tr("Désactivée"), nullptr, !gp->shake_on);
+    slot_set(9, 376, 546, 528, 56, tr("Effacer les statistiques"), nullptr,
              Pal::BTN_BG, Pal::BTN_EDGE, Pal::BAD);
-    slot_set(10, 376, 612, 528, 56, "Retour");
+    slot_set(10, 376, 612, 528, 56, tr("Retour"));
     gs->slots.hide_from(11);
     free_hide_from(4);
 }
 
 static void render_pause() {
     menu_head(28, 86);
-    snprintf(gs->fmt, sizeof(gs->fmt), "Tour %u · au tour de %s", (unsigned) gp->turn, gp->teams[gp->cur].name);
-    panel_text("PAUSE", gs->fmt, "", "");
+    snprintf(gs->fmt, sizeof(gs->fmt), tr("Tour %u · au tour de %s"), (unsigned) gp->turn, gp->teams[gp->cur].name);
+    panel_text(tr("PAUSE"), gs->fmt, "", "");
     pie_show(gs->big_pie, gs->big_rim, false);
     bars_hide();
     free_hide_from(0);
-    slot_list(0, 0, "Reprendre la partie", nullptr);
-    slot_list(1, 1, "Règles du jeu", nullptr);
-    slot_list(2, 2, "Réglages", nullptr);
-    slot_list(3, 3, "Abandonner la partie", "Retour au menu principal", true, Pal::BAD);
-    slot_list(4, 4, "Quitter le jeu", "La partie sera reprise plus tard", true, Pal::BAD);
+    slot_list(0, 0, tr("Reprendre la partie"), nullptr);
+    slot_list(1, 1, tr("Règles du jeu"), nullptr);
+    slot_list(2, 2, tr("Réglages"), nullptr);
+    slot_list(3, 3, tr("Abandonner la partie"), tr("Retour au menu principal"), true, Pal::BAD);
+    slot_list(4, 4, tr("Quitter le jeu"), tr("La partie sera reprise plus tard"), true, Pal::BAD);
     gs->slots.hide_from(5);
 }
 
 static void render_confirm() {
     menu_head(28, 86);
-    panel_text("CONFIRMER", "", gp->confirm == CFM_ABANDON
-        ? "Abandonner la partie en cours ?\nLes parts gagnées seront perdues."
-        : "Effacer toutes les statistiques ?\nCette action est définitive.", "");
+    panel_text(tr("CONFIRMER"), "", gp->confirm == CFM_ABANDON
+        ? tr("Abandonner la partie en cours ?\nLes parts gagnées seront perdues.")
+        : tr("Effacer toutes les statistiques ?\nCette action est définitive."), "");
     pie_show(gs->big_pie, gs->big_rim, false);
     bars_hide();
     free_hide_from(0);
-    slot_set(0, 300, 380, 320, 76, "Confirmer", nullptr, Pal::BTN_BG, Pal::BAD, Pal::BAD);
-    slot_set(1, 660, 380, 320, 76, "Annuler");
+    slot_set(0, 300, 380, 320, 76, tr("Confirmer"), nullptr, Pal::BTN_BG, Pal::BAD, Pal::BAD);
+    slot_set(1, 660, 380, 320, 76, tr("Annuler"));
     gs->slots.hide_from(2);
 }
 
@@ -1472,24 +1466,24 @@ static void render_catpick() {
     if (gp->is_final) {
         if (gp->n_teams > 1) {
             int chooser = (gp->cur + 1) % gp->n_teams;
-            snprintf(gs->fmt, sizeof(gs->fmt), "%s a ses 6 parts — %s choisit la catégorie",
+            snprintf(gs->fmt, sizeof(gs->fmt), tr("%s a ses 6 parts — %s choisit la catégorie"),
                      gp->teams[gp->cur].name, gp->teams[chooser].name);
         } else {
-            snprintf(gs->fmt, sizeof(gs->fmt), "%s a ses 6 parts — choisissez votre catégorie finale",
+            snprintf(gs->fmt, sizeof(gs->fmt), tr("%s a ses 6 parts — choisissez votre catégorie finale"),
                      gp->teams[gp->cur].name);
         }
     } else {
-        snprintf(gs->fmt, sizeof(gs->fmt), "%s est au centre : choisissez une catégorie",
+        snprintf(gs->fmt, sizeof(gs->fmt), tr("%s est au centre : choisissez une catégorie"),
                  gp->teams[gp->cur].name);
     }
-    panel_text(gp->is_final ? "QUESTION FINALE" : "CATÉGORIE AU CHOIX", gs->fmt, "",
-               gp->is_final ? "Bonne réponse = victoire" : "");
+    panel_text(tr(gp->is_final ? "QUESTION FINALE" : "CATÉGORIE AU CHOIX"), gs->fmt, "",
+               gp->is_final ? tr("Bonne réponse = victoire") : "");
     pie_show(gs->big_pie, gs->big_rim, false);
     bars_hide();
     free_hide_from(0);
     for (int c = 0; c < TRIVIA_NCAT; c++) {
         int col = c % 3, row = c / 3;
-        slot_set(c, 100 + col * 360, 200 + row * 180, 340, 150, CAT_NAMES[c], nullptr,
+        slot_set(c, 100 + col * 360, 200 + row * 180, 340, 150, tr(CAT_NAMES[c]), nullptr,
                  CAT_COLORS[c], CAT_COLORS[c], Pal::VOID_BG, true);
     }
     gs->slots.hide_from(TRIVIA_NCAT);
@@ -1497,11 +1491,11 @@ static void render_catpick() {
 
 static void render_victory() {
     menu_head(28, 86);
-    set_text_if(gs->m_title, "VICTOIRE !");
-    snprintf(gs->fmt, sizeof(gs->fmt), "%s remporte la partie", gp->teams[gp->winner].name);
+    set_text_if(gs->m_title, tr("VICTOIRE !"));
+    snprintf(gs->fmt, sizeof(gs->fmt), tr("%s remporte la partie"), gp->teams[gp->winner].name);
     set_text_if(gs->m_sub, gs->fmt);
     uint32_t n = gp->game_ok + gp->game_ko;
-    snprintf(gs->fmt, sizeof(gs->fmt), "Partie bouclée en %u tours · %u bonnes réponses sur %u",
+    snprintf(gs->fmt, sizeof(gs->fmt), tr("Partie bouclée en %u tours · %u bonnes réponses sur %u"),
              (unsigned) gp->turn, (unsigned) gp->game_ok, (unsigned) n);
     set_text_if(gs->m_body, gs->fmt);
     set_text_if(gs->m_foot, "");
@@ -1509,9 +1503,9 @@ static void render_victory() {
     pie_show(gs->big_pie, gs->big_rim, true);
     bars_hide();
     free_hide_from(0);
-    slot_set(0, 290, 380, 700, 64, "Rejouer avec les mêmes équipes", nullptr);
-    slot_set(1, 290, 456, 700, 64, "Nouvelle partie", nullptr);
-    slot_set(2, 290, 532, 700, 64, "Retour au menu", nullptr);
+    slot_set(0, 290, 380, 700, 64, tr("Rejouer avec les mêmes équipes"), nullptr);
+    slot_set(1, 290, 456, 700, 64, tr("Nouvelle partie"), nullptr);
+    slot_set(2, 290, 532, 700, 64, tr("Retour au menu"), nullptr);
     gs->slots.hide_from(3);
 }
 
@@ -1637,26 +1631,26 @@ static void render_panel() {
         set_bg(gs->roll_btn, can_roll ? Pal::ACCENT : Pal::BTN_BG, LV_OPA_COVER);
         set_text_color_if(gs->roll_lbl, can_roll ? Pal::VOID_BG : Pal::TXT_MUTED);
     }
-    set_text_if(gs->roll_lbl, gp->phase == PH_ROLLING ? "…" : "LANCER LE DÉ");
-    set_text_if(gs->roll_hint, gp->shake_on ? "ou secouez la tablette" : "");
+    set_text_if(gs->roll_lbl, gp->phase == PH_ROLLING ? "…" : tr("LANCER LE DÉ"));
+    set_text_if(gs->roll_hint, gp->shake_on ? tr("ou secouez la tablette") : "");
 
     // Bandeau d'état
     const char* st;
     if (gp->msg[0] && esphome::millis() < gp->msg_until) {
         st = gp->msg;
     } else if (!gp->in_game) {
-        st = "Aucune partie en cours";
+        st = tr("Aucune partie en cours");
     } else {
         switch (gp->phase) {
-            case PH_ROLLING: st = "Le dé roule…"; break;
-            case PH_MOVING:  st = "Déplacement…"; break;
+            case PH_ROLLING: st = tr("Le dé roule…"); break;
+            case PH_MOVING:  st = tr("Déplacement…"); break;
             case PH_CHOOSE:
-                snprintf(gs->fmt, sizeof(gs->fmt), "Dé : %u — touchez une case surlignée",
+                snprintf(gs->fmt, sizeof(gs->fmt), tr("Dé : %u — touchez une case surlignée"),
                          (unsigned) gp->dice_val);
                 st = gs->fmt;
                 break;
             default:
-                snprintf(gs->fmt, sizeof(gs->fmt), "À %s de lancer le dé", gp->teams[gp->cur].name);
+                snprintf(gs->fmt, sizeof(gs->fmt), tr("À %s de lancer le dé"), gp->teams[gp->cur].name);
                 st = gs->fmt;
                 break;
         }
@@ -1700,9 +1694,9 @@ static void render_panel() {
 
 static void render_hud() {
     if (gp->in_game) {
-        snprintf(gs->fmt, sizeof(gs->fmt), "Tour %u", (unsigned) gp->turn);
+        snprintf(gs->fmt, sizeof(gs->fmt), tr("Tour %u"), (unsigned) gp->turn);
         set_text_if(gs->h_turn, gs->fmt);
-        snprintf(gs->fmt, sizeof(gs->fmt), "Équipe : %s", gp->teams[gp->cur].name);
+        snprintf(gs->fmt, sizeof(gs->fmt), tr("Équipe : %s"), gp->teams[gp->cur].name);
         set_text_if(gs->h_team, gs->fmt);
         int hsig = ((int) gp->cur << 8) | gp->teams[gp->cur].color_idx;
         if (gs->c_hud_team != hsig) {
@@ -1754,12 +1748,12 @@ static void render_question() {
     uint32_t col = CAT_COLORS[gp->q_cat];
     set_bg(gs->qban, col, LV_OPA_COVER);
     set_bg(gs->qban_fix, col, LV_OPA_COVER);
-    if (gp->is_final) snprintf(gs->fmt, sizeof(gs->fmt), "FINALE — %s", CAT_NAMES[gp->q_cat]);
-    else            snprintf(gs->fmt, sizeof(gs->fmt), "%s", CAT_NAMES[gp->q_cat]);
+    if (gp->is_final) snprintf(gs->fmt, sizeof(gs->fmt), tr("FINALE — %s"), tr(CAT_NAMES[gp->q_cat]));
+    else            snprintf(gs->fmt, sizeof(gs->fmt), "%s", tr(CAT_NAMES[gp->q_cat]));
     set_text_if(gs->qban_cat, gs->fmt);
-    static const char* const DLBL[3] = {"Facile", "Moyen", "Difficile"};
+    static const char* const DLBL[3] = {tr_noop("Facile"), tr_noop("Moyen"), tr_noop("Difficile")};
     snprintf(gs->fmt, sizeof(gs->fmt), "%s  ·  %s", gp->teams[gp->cur].name,
-             DLBL[gp->q->difficulty < 3 ? gp->q->difficulty : 0]);
+             tr(DLBL[gp->q->difficulty < 3 ? gp->q->difficulty : 0]));
     set_text_if(gs->qban_side, gs->fmt);
     set_text_if(gs->qtext, gp->q->q);
 
@@ -1787,14 +1781,15 @@ static void render_question() {
     if (!reveal) {
         set_text_if(gs->qfeed, "");
     } else if (gp->correct) {
-        if (gp->is_final)        snprintf(gs->fmt, sizeof(gs->fmt), "Exact — %s remporte la partie !", gp->teams[gp->cur].name);
-        else if (gp->won_wedge)  snprintf(gs->fmt, sizeof(gs->fmt), "Bravo ! Part « %s » gagnée — vous rejouez.", CAT_NAMES[gp->q_cat]);
-        else                   snprintf(gs->fmt, sizeof(gs->fmt), "Bonne réponse — vous rejouez.");
+        if (gp->is_final)        snprintf(gs->fmt, sizeof(gs->fmt), tr("Exact — %s remporte la partie !"), gp->teams[gp->cur].name);
+        else if (gp->won_wedge)  snprintf(gs->fmt, sizeof(gs->fmt), tr("Bravo ! Part « %s » gagnée — vous rejouez."), tr(CAT_NAMES[gp->q_cat]));
+        else                   snprintf(gs->fmt, sizeof(gs->fmt), "%s", tr("Bonne réponse — vous rejouez."));
         set_text_color_if(gs->qfeed, Pal::GOOD);
         set_text_if(gs->qfeed, gs->fmt);
     } else {
-        if (gp->picked_slot == 0xFF) snprintf(gs->fmt, sizeof(gs->fmt), "Temps écoulé — la réponse était : %s", gp->q->a);
-        else                       snprintf(gs->fmt, sizeof(gs->fmt), "Raté — la réponse était : %s", gp->q->a);
+        // La réponse (gp->q->a) reste en français, comme les questions.
+        if (gp->picked_slot == 0xFF) snprintf(gs->fmt, sizeof(gs->fmt), tr("Temps écoulé — la réponse était : %s"), gp->q->a);
+        else                       snprintf(gs->fmt, sizeof(gs->fmt), tr("Raté — la réponse était : %s"), gp->q->a);
         set_text_color_if(gs->qfeed, Pal::BAD);
         set_text_if(gs->qfeed, gs->fmt);
     }
@@ -1861,7 +1856,7 @@ static void tick(lv_timer_t* t) {
             for (int n = 0; n < TRIVIA_NODES; n++) if (gp->reach[n]) { cnt++; only = n; }
             gp->phase = PH_CHOOSE;
             if (cnt == 0) {                        // filet de sécurité : jamais de blocage
-                msg("Aucun déplacement possible — au suivant.");
+                msg(tr("Aucun déplacement possible — au suivant."));
                 next_team();
                 begin_roll_phase();
             } else if (cnt == 1) {
@@ -1953,7 +1948,7 @@ static void slot_cb(lv_event_t* e) {
                 case 0: gp->setup_n = gp->setup_n ? gp->setup_n : 2; go(ST_SETUP); break;
                 case 1:
                     if (gp->in_game) { gp->state = ST_PLAY; begin_roll_phase(); }
-                    else if (resume_game()) { msg("Partie reprise."); }
+                    else if (resume_game()) { msg(tr("Partie reprise.")); }
                     break;
                 case 2: go(ST_STATS); break;
                 case 3: gp->return_to = ST_HUB; go(ST_RULES); break;

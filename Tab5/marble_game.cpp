@@ -224,6 +224,12 @@ static const Spec R6[] = {
 };
 
 #define RN(a) (uint8_t)(sizeof(a) / sizeof((a)[0]))
+// [AI-WARNING] Traduction (lot 4b) : les textes de ROOMS restent des littéraux NUS,
+// sans tr_noop() — tools/check_marble_rooms.py lit cette table par regex
+// (`{"nom", "ligne", "objectif", sx, sy, Rn,`) et ne la reconnaîtrait plus. Le nom et
+// l'objectif sont traduits à l'affichage (tr(r.name), tr(r.goal)) ; leurs clés sont
+// dans Tab5/lang/*.yaml sans être relevées par tools/i18n_keys.py. `line` n'est
+// affichée nulle part : pas de traduction.
 static const Room ROOMS[N_ROOMS] = {
     {"Seuil",      "Le fil commence ici. Ne le lache pas.",   "Rejoins le portail",   70,  90, R1, RN(R1), 0, 1},
     {"Couloirs",   "Le dedale se resserre. Respire.",         "Rejoins le portail",   90,  90, R2, RN(R2), 0, 2},
@@ -243,18 +249,19 @@ enum BoonId : uint8_t {
     BO_SPEED, BO_BRONZE, BO_EYE, BO_REVIVE, BO_VELVET, BO_COUNT
 };
 
+// Textes marqués tr_noop() (lot 4b) : traduits à l'affichage, tr(b.name) / tr(b.desc).
 struct BoonDef { const char* name; const char* desc; uint32_t color; bool unique; };
 static const BoonDef BOONS[BO_COUNT] = {
-    {"Main d'Ariane",  "Reponse a l'inclinaison +18 %",        Pal::BALL,   false},
-    {"Coeur de braise","+1 point de vie, soigne aussitot",     Pal::DANGER, false},
-    {"Bourse tressee", "+40 % d'ames ramassees",               Pal::RUNE,   false},
-    {"Aimant mineur",  "Attire les bonus alentour",            Pal::MAGNET, true},
-    {"Semelles lourdes","Freinage nettement plus mordant",     Pal::BRAKE,  true},
-    {"Elan",           "Vitesse maximale +170",                Pal::BOOST,  false},
-    {"Peau de bronze", "Un bouclier a chaque nouvelle salle",  Pal::SHIELD, true},
-    {"Oeil du dedale", "Le portail pulse et se voit de loin",  Pal::EXIT,   true},
-    {"Seconde chance", "Releve une fois dans la run",          Pal::WALL_LIT, true},
-    {"Pas de velours", "3 s d'invulnerabilite par salle",      Pal::SLOW,   true},
+    {tr_noop("Main d'Ariane"),   tr_noop("Reponse a l'inclinaison +18 %"),       Pal::BALL,   false},
+    {tr_noop("Coeur de braise"), tr_noop("+1 point de vie, soigne aussitot"),    Pal::DANGER, false},
+    {tr_noop("Bourse tressee"),  tr_noop("+40 % d'ames ramassees"),              Pal::RUNE,   false},
+    {tr_noop("Aimant mineur"),   tr_noop("Attire les bonus alentour"),           Pal::MAGNET, true},
+    {tr_noop("Semelles lourdes"),tr_noop("Freinage nettement plus mordant"),     Pal::BRAKE,  true},
+    {tr_noop("Elan"),            tr_noop("Vitesse maximale +170"),               Pal::BOOST,  false},
+    {tr_noop("Peau de bronze"),  tr_noop("Un bouclier a chaque nouvelle salle"), Pal::SHIELD, true},
+    {tr_noop("Oeil du dedale"),  tr_noop("Le portail pulse et se voit de loin"), Pal::EXIT,   true},
+    {tr_noop("Seconde chance"),  tr_noop("Releve une fois dans la run"),         Pal::WALL_LIT, true},
+    {tr_noop("Pas de velours"),  tr_noop("3 s d'invulnerabilite par salle"),     Pal::SLOW,   true},
 };
 
 // --- Niveaux de difficulte -------------------------------------------------
@@ -275,11 +282,11 @@ struct DiffDef {
 };
 
 static const DiffDef DIFFS[D_COUNT] = {
-    {"Calme",       "+1 PV, pieges lents, longue invulnerabilite",
+    {tr_noop("Calme"),       tr_noop("+1 PV, pieges lents, longue invulnerabilite"),
       1, 0.75f, 0.92f, 0.80f, 1800, Pal::EXIT},
-    {"Normal",      "L'equilibre de reference",
+    {tr_noop("Normal"),      tr_noop("L'equilibre de reference"),
       0, 1.00f, 1.00f, 1.00f, 1200, Pal::BALL},
-    {"Impitoyable", "-1 PV, pieges rapides, mais +60 % d'ames",
+    {tr_noop("Impitoyable"), tr_noop("-1 PV, pieges rapides, mais +60 % d'ames"),
      -1, 1.35f, 1.10f, 1.60f,  800, Pal::DANGER},
 };
 
@@ -292,12 +299,12 @@ enum StatId : uint8_t { S_VITALITE = 0, S_RESISTANCE, S_FINESSE,
 
 struct StatDef { const char* name; const char* desc; uint8_t maxlvl; uint32_t color; };
 static const StatDef STATS[MARBLE_NSTATS] = {
-    {"Vitalite",   "+1 point de vie par niveau",                  5, Pal::DANGER},
-    {"Resistance", "+300 ms d'invulnerabilite ; bouclier des 3",  5, Pal::SHIELD},
-    {"Finesse",    "-1 px de rayon : bille plus difficile a toucher", 4, Pal::EXIT},
-    {"Agilite",    "+12 % de reponse a l'inclinaison par niveau",  5, Pal::BALL},
-    {"Elan",       "+60 de vitesse maximale par niveau",           5, Pal::BOOST},
-    {"Decouverte", "+15 % d'ames et +12 % de butin en coffre",     5, Pal::MAGNET},
+    {tr_noop("Vitalite"),   tr_noop("+1 point de vie par niveau"),                  5, Pal::DANGER},
+    {tr_noop("Resistance"), tr_noop("+300 ms d'invulnerabilite ; bouclier des 3"),  5, Pal::SHIELD},
+    {tr_noop("Finesse"),    tr_noop("-1 px de rayon : bille plus difficile a toucher"), 4, Pal::EXIT},
+    {tr_noop("Agilite"),    tr_noop("+12 % de reponse a l'inclinaison par niveau"),  5, Pal::BALL},
+    {tr_noop("Elan"),       tr_noop("+60 de vitesse maximale par niveau"),           5, Pal::BOOST},
+    {tr_noop("Decouverte"), tr_noop("+15 % d'ames et +12 % de butin en coffre"),     5, Pal::MAGNET},
 };
 
 // Cout d'un niveau en fonction du niveau total deja atteint (courbe DS-like).
@@ -313,16 +320,16 @@ enum ItemEffect : uint8_t {
 
 struct ItemDef { const char* name; const char* desc; uint16_t price; uint8_t effect; uint32_t color; };
 static const ItemDef ITEMS[] = {
-    {"Anneau de fer",      "+1 point de vie",                    180, IE_HP,         Pal::DANGER},
-    {"Talisman du filon",  "+25 % d'ames ramassees",             220, IE_SOULS,      Pal::RUNE},
-    {"Plume de suie",      "+70 de vitesse maximale",            200, IE_SPEED,      Pal::BOOST},
-    {"Gantelet poli",      "+15 % de reponse a l'inclinaison",   200, IE_CONTROL,    Pal::BALL},
-    {"Ecaille de bronze",  "Un bouclier a chaque salle",         320, IE_SHIELD_ROOM,Pal::SHIELD},
-    {"Oeil de rune",       "Le portail pulse et se voit de loin",140, IE_EYE,        Pal::EXIT},
-    {"Pierre de sang",     "Releve une fois par run",            400, IE_REVIVE,     Pal::WALL_LIT},
-    {"Aimant du mineur",   "Attire les bonus alentour",          260, IE_MAGNET,     Pal::MAGNET},
-    {"Semelle de plomb",   "Freinage nettement plus mordant",    160, IE_BRAKE,      Pal::BRAKE},
-    {"Couronne felee",     "+50 % d'ames, mais -1 point de vie", 300, IE_GREED,      Pal::SLOW},
+    {tr_noop("Anneau de fer"),     tr_noop("+1 point de vie"),                    180, IE_HP,         Pal::DANGER},
+    {tr_noop("Talisman du filon"), tr_noop("+25 % d'ames ramassees"),             220, IE_SOULS,      Pal::RUNE},
+    {tr_noop("Plume de suie"),     tr_noop("+70 de vitesse maximale"),            200, IE_SPEED,      Pal::BOOST},
+    {tr_noop("Gantelet poli"),     tr_noop("+15 % de reponse a l'inclinaison"),   200, IE_CONTROL,    Pal::BALL},
+    {tr_noop("Ecaille de bronze"), tr_noop("Un bouclier a chaque salle"),         320, IE_SHIELD_ROOM,Pal::SHIELD},
+    {tr_noop("Oeil de rune"),      tr_noop("Le portail pulse et se voit de loin"),140, IE_EYE,        Pal::EXIT},
+    {tr_noop("Pierre de sang"),    tr_noop("Releve une fois par run"),            400, IE_REVIVE,     Pal::WALL_LIT},
+    {tr_noop("Aimant du mineur"),  tr_noop("Attire les bonus alentour"),          260, IE_MAGNET,     Pal::MAGNET},
+    {tr_noop("Semelle de plomb"),  tr_noop("Freinage nettement plus mordant"),    160, IE_BRAKE,      Pal::BRAKE},
+    {tr_noop("Couronne felee"),    tr_noop("+50 % d'ames, mais -1 point de vie"), 300, IE_GREED,      Pal::SLOW},
 };
 static constexpr int N_ITEMS = (int) (sizeof(ITEMS) / sizeof(ITEMS[0]));
 // 5 et pas 6 : avec 6 objets par page il fallait 8 lignes (6 + « Page suivante »
@@ -332,17 +339,18 @@ static constexpr int N_ITEMS = (int) (sizeof(ITEMS) / sizeof(ITEMS[0]));
 static constexpr int SHOP_PER_PAGE = 5;
 
 // Punchlines FR — 1 phrase max, jamais de pave.
+// Traduites a l'affichage : tr(DEATH_LINES[i]), tr(BOON_LINES[i]).
 static const char* DEATH_LINES[] = {
-    "Le fil se rompt. Il en reste toujours un bout.",
-    "La pierre gagne cette manche.",
-    "Tu rouleras encore.",
-    "Le dedale te garde un peu plus longtemps.",
-    "Chute nette. Reprends ton souffle.",
+    tr_noop("Le fil se rompt. Il en reste toujours un bout."),
+    tr_noop("La pierre gagne cette manche."),
+    tr_noop("Tu rouleras encore."),
+    tr_noop("Le dedale te garde un peu plus longtemps."),
+    tr_noop("Chute nette. Reprends ton souffle."),
 };
 static const char* BOON_LINES[] = {
-    "Le dedale consent.",
-    "Un serment de plus.",
-    "Prends. Tu en auras besoin.",
+    tr_noop("Le dedale consent."),
+    tr_noop("Un serment de plus."),
+    tr_noop("Prends. Tu en auras besoin."),
 };
 
 // ===========================================================================
@@ -913,24 +921,25 @@ static void go_hub() {
 
     auto& sub = gs->hub_sub;
     snprintf(sub, sizeof(sub),
-             "Niveau %u   -   %u ames   -   salle %u/6   -   %s%s",
+             tr("Niveau %u   -   %u ames   -   salle %u/6   -   %s%s"),
              (unsigned) total_level(), (unsigned) gs->save.souls,
-             (unsigned) gs->save.deepest, d.name,
-             gs->save.god ? "   -   MODE DIEU" : "");
+             (unsigned) gs->save.deepest, tr(d.name),
+             gs->save.god ? tr("   -   MODE DIEU") : "");
     auto& play_desc = gs->hub_play_desc;
-    snprintf(play_desc, sizeof(play_desc), "6 salles. 2 a 5 minutes.  Difficulte : %s", d.name);
+    snprintf(play_desc, sizeof(play_desc), tr("6 salles. 2 a 5 minutes.  Difficulte : %s"), tr(d.name));
     auto& eq_desc = gs->hub_eq_desc;
-    snprintf(eq_desc, sizeof(eq_desc), "%d objet(s) trouve(s) sur %d", owned_n, N_ITEMS);
+    snprintf(eq_desc, sizeof(eq_desc), tr("%d objet(s) trouve(s) sur %d"), owned_n, N_ITEMS);
 
+    // « FIL D'OR » : nom de la console, jamais traduit (nom propre, cf. NON_TRADUITS).
     panel_text("FIL D'OR", sub, "",
-               "Incline la tablette pour guider la bille. L'ecran tactile ne sert qu'aux menus.");
-    slot_list(0, "Lancer une run", play_desc, Pal::BALL, true);
-    slot_list(1, "Feu de camp", "Depenser les ames en caracteristiques", Pal::DANGER, true);
-    slot_list(2, "Marchand", "Acheter et revendre des objets", Pal::RUNE, true);
-    slot_list(3, "Equipement", eq_desc, Pal::MAGNET, true);
-    slot_list(4, "Reglages", "Difficulte, mode dieu, teinte, calibration", Pal::BOOST, true);
-    slot_list(5, "Statistiques", "Runs, victoires, records", Pal::EXIT, true);
-    slot_list(6, "Quitter", "Retour au tableau de bord", UIColor::TEXT_DIM, true);
+               tr("Incline la tablette pour guider la bille. L'ecran tactile ne sert qu'aux menus."));
+    slot_list(0, tr("Lancer une run"), play_desc, Pal::BALL, true);
+    slot_list(1, tr("Feu de camp"), tr("Depenser les ames en caracteristiques"), Pal::DANGER, true);
+    slot_list(2, tr("Marchand"), tr("Acheter et revendre des objets"), Pal::RUNE, true);
+    slot_list(3, tr("Equipement"), eq_desc, Pal::MAGNET, true);
+    slot_list(4, tr("Reglages"), tr("Difficulte, mode dieu, teinte, calibration"), Pal::BOOST, true);
+    slot_list(5, tr("Statistiques"), tr("Runs, victoires, records"), Pal::EXIT, true);
+    slot_list(6, tr("Quitter"), tr("Retour au tableau de bord"), UIColor::TEXT_DIM, true);
     gs->slots.hide_from(7);
 }
 
@@ -942,24 +951,24 @@ static void go_settings() {
     const DiffDef& d = DIFFS[gs->save.difficulty];
 
     auto& dtitle = gs->settings_dtitle;
-    snprintf(dtitle, sizeof(dtitle), "Difficulte : %s", d.name);
+    snprintf(dtitle, sizeof(dtitle), tr("Difficulte : %s"), tr(d.name));
     auto& gtitle = gs->settings_gtitle;
-    snprintf(gtitle, sizeof(gtitle), "Mode dieu : %s", gs->save.god ? "ACTIF" : "inactif");
+    snprintf(gtitle, sizeof(gtitle), tr("Mode dieu : %s"), tr(gs->save.god ? "ACTIF" : "inactif"));
 
-    panel_text("Reglages", "Ces reglages s'appliquent au lancement de la prochaine run.", "",
-               "Le mode dieu rend invulnerable : la run reste jouable mais ne rapporte "
-               "aucun fragment et n'entre pas dans les statistiques.");
-    slot_list(0, dtitle, d.desc, d.color, true);
+    // Pied sur UNE ligne de source : tools/i18n_keys.py ne relève pas un tr() coupé.
+    panel_text(tr("Reglages"), tr("Ces reglages s'appliquent au lancement de la prochaine run."), "",
+               tr("Le mode dieu rend invulnerable : la run reste jouable mais ne rapporte aucun fragment et n'entre pas dans les statistiques."));
+    slot_list(0, dtitle, tr(d.desc), d.color, true);
     slot_list(1, gtitle,
-              gs->save.god ? "Invulnerable - hors concours" : "Jouer sans jamais mourir",
+              tr(gs->save.god ? "Invulnerable - hors concours" : "Jouer sans jamais mourir"),
               gs->save.god ? Pal::MAGNET : UIColor::TEXT_DIM, true);
-    static const char* SKINS[3] = {"Or", "Argent", "Cuivre"};
+    static const char* SKINS[3] = {tr_noop("Or"), tr_noop("Argent"), tr_noop("Cuivre")};
     auto& stitle = gs->settings_stitle;
-    snprintf(stitle, sizeof(stitle), "Teinte de la bille : %s",
-             SKINS[gs->save.skin < 3 ? gs->save.skin : 0]);
-    slot_list(2, stitle, "Purement cosmetique", Pal::BALL, true);
-    slot_list(3, "Calibrer a plat", "Pose la tablette et appuie", Pal::BOOST, true);
-    slot_list(4, "Retour", "", UIColor::TEXT_DIM, true);
+    snprintf(stitle, sizeof(stitle), tr("Teinte de la bille : %s"),
+             tr(SKINS[gs->save.skin < 3 ? gs->save.skin : 0]));
+    slot_list(2, stitle, tr("Purement cosmetique"), Pal::BALL, true);
+    slot_list(3, tr("Calibrer a plat"), tr("Pose la tablette et appuie"), Pal::BOOST, true);
+    slot_list(4, tr("Retour"), "", UIColor::TEXT_DIM, true);
     gs->slots.hide_from(5);
 }
 
@@ -972,26 +981,26 @@ static void go_level() {
 
     auto& sub = gs->level_sub;
     snprintf(sub, sizeof(sub),
-             "Niveau %u   -   %u ames   -   prochain point : %u ames",
+             tr("Niveau %u   -   %u ames   -   prochain point : %u ames"),
              (unsigned) lvl, (unsigned) gs->save.souls, (unsigned) cost);
-    panel_text("Feu de camp", sub, "",
-               "Le cout depend du niveau TOTAL : monter une caracteristique "
-               "rencherit toutes les autres. Il faut choisir une orientation.");
+    // Pied sur UNE ligne de source : tools/i18n_keys.py ne relève pas un tr() coupé.
+    panel_text(tr("Feu de camp"), sub, "",
+               tr("Le cout depend du niveau TOTAL : monter une caracteristique rencherit toutes les autres. Il faut choisir une orientation."));
 
     auto& titles = gs->level_titles;
     auto& descs = gs->level_descs;
     for (int i = 0; i < MARBLE_NSTATS; i++) {
         const StatDef& s = STATS[i];
         bool maxed = gs->save.st[i] >= s.maxlvl;
-        snprintf(titles[i], sizeof(titles[i]), "%s  %u/%u", s.name,
+        snprintf(titles[i], sizeof(titles[i]), "%s  %u/%u", tr(s.name),
                  (unsigned) gs->save.st[i], (unsigned) s.maxlvl);
-        if (maxed) snprintf(descs[i], sizeof(descs[i]), "%s  -  au maximum", s.desc);
-        else       snprintf(descs[i], sizeof(descs[i]), "%s  -  %u ames", s.desc, (unsigned) cost);
+        if (maxed) snprintf(descs[i], sizeof(descs[i]), tr("%s  -  au maximum"), tr(s.desc));
+        else       snprintf(descs[i], sizeof(descs[i]), tr("%s  -  %u ames"), tr(s.desc), (unsigned) cost);
         slot_list(i, titles[i], descs[i],
                   maxed ? Pal::EXIT : s.color,
                   !maxed && gs->save.souls >= cost);
     }
-    slot_list(MARBLE_NSTATS, "Retour", "", UIColor::TEXT_DIM, true);
+    slot_list(MARBLE_NSTATS, tr("Retour"), "", UIColor::TEXT_DIM, true);
     gs->slots.hide_from(MARBLE_NSTATS + 1);
 }
 
@@ -1006,11 +1015,11 @@ static void go_shop() {
     if (n > SHOP_PER_PAGE) n = SHOP_PER_PAGE;
 
     auto& sub = gs->shop_sub;
-    snprintf(sub, sizeof(sub), "%u ames   -   page %d/%d",
+    snprintf(sub, sizeof(sub), tr("%u ames   -   page %d/%d"),
              (unsigned) gs->save.souls, gs->shop_page + 1, pages);
-    panel_text("Marchand", sub, "",
-               "Appuyer sur un objet possede le revend a la moitie de son prix. "
-               "Un objet revendu est aussi retire de l'equipement.");
+    // Pied sur UNE ligne de source : tools/i18n_keys.py ne relève pas un tr() coupé.
+    panel_text(tr("Marchand"), sub, "",
+               tr("Appuyer sur un objet possede le revend a la moitie de son prix. Un objet revendu est aussi retire de l'equipement."));
 
     auto& titles = gs->shop_titles;
     auto& descs = gs->shop_descs;
@@ -1018,11 +1027,11 @@ static void go_shop() {
         int id = base + i;
         const ItemDef& it = ITEMS[id];
         bool owned = (gs->save.items & (1u << id)) != 0;
-        snprintf(titles[i], sizeof(titles[i]), "%s%s", it.name, owned ? "  (possede)" : "");
-        if (owned) snprintf(descs[i], sizeof(descs[i]), "%s  -  revendre : %u ames",
-                            it.desc, (unsigned) (it.price / 2));
-        else       snprintf(descs[i], sizeof(descs[i]), "%s  -  %u ames",
-                            it.desc, (unsigned) it.price);
+        snprintf(titles[i], sizeof(titles[i]), "%s%s", tr(it.name), owned ? tr("  (possede)") : "");
+        if (owned) snprintf(descs[i], sizeof(descs[i]), tr("%s  -  revendre : %u ames"),
+                            tr(it.desc), (unsigned) (it.price / 2));
+        else       snprintf(descs[i], sizeof(descs[i]), tr("%s  -  %u ames"),
+                            tr(it.desc), (unsigned) it.price);
         slot_list(i, titles[i], descs[i], it.color,
                   owned || gs->save.souls >= it.price);
     }
@@ -1033,8 +1042,8 @@ static void go_shop() {
     // gs->shop_rows memorise le nombre d'objets affiches pour que le gestionnaire
     // de tap retrouve les memes index.
     gs->shop_rows = n;
-    slot_list(n, "Page suivante", "", Pal::BOOST, pages > 1);
-    slot_list(n + 1, "Retour", "", UIColor::TEXT_DIM, true);
+    slot_list(n, tr("Page suivante"), "", Pal::BOOST, pages > 1);
+    slot_list(n + 1, tr("Retour"), "", UIColor::TEXT_DIM, true);
     gs->slots.hide_from(n + 2);
 }
 
@@ -1046,28 +1055,28 @@ static void go_equip() {
     for (int i = 0; i < N_ITEMS; i++) if (gs->save.items & (1u << i)) owned_n++;
 
     auto& sub = gs->equip_sub;
-    snprintf(sub, sizeof(sub), "%d objet(s) en votre possession   -   %d emplacement(s)",
+    snprintf(sub, sizeof(sub), tr("%d objet(s) en votre possession   -   %d emplacement(s)"),
              owned_n, MARBLE_NSLOTS);
-    panel_text("Equipement", sub, "",
-               owned_n ? "Appuyer sur un emplacement le fait passer a l'objet suivant."
-                       : "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand.");
+    panel_text(tr("Equipement"), sub, "",
+               owned_n ? tr("Appuyer sur un emplacement le fait passer a l'objet suivant.")
+                       : tr("Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."));
 
     auto& titles = gs->equip_titles;
     auto& descs = gs->equip_descs;
     for (int s = 0; s < MARBLE_NSLOTS; s++) {
         uint8_t e = gs->save.equip[s];
         if (e == 0 || e > N_ITEMS || !(gs->save.items & (1u << (e - 1)))) {
-            snprintf(titles[s], sizeof(titles[s]), "Emplacement %d : vide", s + 1);
-            snprintf(descs[s], sizeof(descs[s]), "Aucun effet actif");
+            snprintf(titles[s], sizeof(titles[s]), tr("Emplacement %d : vide"), s + 1);
+            snprintf(descs[s], sizeof(descs[s]), "%s", tr("Aucun effet actif"));
             slot_list(s, titles[s], descs[s], UIColor::TEXT_DIM, owned_n > 0);
         } else {
             const ItemDef& it = ITEMS[e - 1];
-            snprintf(titles[s], sizeof(titles[s]), "Emplacement %d : %s", s + 1, it.name);
-            snprintf(descs[s], sizeof(descs[s]), "%s", it.desc);
+            snprintf(titles[s], sizeof(titles[s]), tr("Emplacement %d : %s"), s + 1, tr(it.name));
+            snprintf(descs[s], sizeof(descs[s]), "%s", tr(it.desc));
             slot_list(s, titles[s], descs[s], it.color, true);
         }
     }
-    slot_list(MARBLE_NSLOTS, "Retour", "", UIColor::TEXT_DIM, true);
+    slot_list(MARBLE_NSLOTS, tr("Retour"), "", UIColor::TEXT_DIM, true);
     gs->slots.hide_from(MARBLE_NSLOTS + 1);
 }
 
@@ -1079,17 +1088,16 @@ static void go_stats() {
     int owned_n = 0;
     for (int i = 0; i < N_ITEMS; i++) if (gs->save.items & (1u << i)) owned_n++;
     auto& best = gs->stats_best;
-    if (gs->save.best_ms == 0) snprintf(best, sizeof(best), "aucun");
+    if (gs->save.best_ms == 0) snprintf(best, sizeof(best), "%s", tr("aucun"));
     else snprintf(best, sizeof(best), "%u:%02u", bs / 60, bs % 60);
+    // Modele sur UNE ligne de source : tools/i18n_keys.py ne relève pas un tr() coupé.
     snprintf(body, sizeof(body),
-             "Runs lancees : %u\nVictoires : %u\nSalle la plus profonde : %u/6\n"
-             "Meilleur temps : %s\nNiveau total : %u\nAmes disponibles : %u\n"
-             "Objets decouverts : %d/%d",
+             tr("Runs lancees : %u\nVictoires : %u\nSalle la plus profonde : %u/6\nMeilleur temps : %s\nNiveau total : %u\nAmes disponibles : %u\nObjets decouverts : %d/%d"),
              (unsigned) gs->save.runs, (unsigned) gs->save.wins,
              (unsigned) gs->save.deepest, best, (unsigned) total_level(),
              (unsigned) gs->save.souls, owned_n, N_ITEMS);
-    panel_text("Statistiques", "", body, "Les runs jouees en mode dieu ne sont pas comptabilisees ici.");
-    slot_list(0, "Retour", "", UIColor::TEXT_DIM, true);
+    panel_text(tr("Statistiques"), "", body, tr("Les runs jouees en mode dieu ne sont pas comptabilisees ici."));
+    slot_list(0, tr("Retour"), "", UIColor::TEXT_DIM, true);
     // Le bouton retour est place sous le bloc de texte.
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -90);
     gs->slots.hide_from(1);
@@ -1137,11 +1145,11 @@ static void show_reward() {
         pool[p] = pool[--np];
     }
 
-    panel_text("Le dedale offre", BOON_LINES[rnd_range(0, 2)], "",
-               "Un seul choix. Il te suivra jusqu'a la fin de la run.");
+    panel_text(tr("Le dedale offre"), tr(BOON_LINES[rnd_range(0, 2)]), "",
+               tr("Un seul choix. Il te suivra jusqu'a la fin de la run."));
     for (int i = 0; i < gs->offer_n; i++) {
         const BoonDef& b = BOONS[gs->offer[i]];
-        slot_card(i, b.name, b.desc, b.color);
+        slot_card(i, tr(b.name), tr(b.desc), b.color);
     }
     gs->slots.hide_from(gs->offer_n);
 }
@@ -1155,20 +1163,20 @@ static void show_end(bool victory) {
     auto& body = gs->end_body;
     if (gs->god) {
         snprintf(body, sizeof(body),
-                 "Salles franchies : %d/6\nTemps : %u:%02u\nMode dieu — run hors concours",
+                 tr("Salles franchies : %d/6\nTemps : %u:%02u\nMode dieu — run hors concours"),
                  victory ? 6 : gs->room, s / 60, s % 60);
     } else {
         snprintf(body, sizeof(body),
-                 "Salles franchies : %d/6\nTemps : %u:%02u\nDifficulte : %s\nAmes rapportees : %d",
-                 victory ? 6 : gs->room, s / 60, s % 60, gs->diff->name, gs->gold);
+                 tr("Salles franchies : %d/6\nTemps : %u:%02u\nDifficulte : %s\nAmes rapportees : %d"),
+                 victory ? 6 : gs->room, s / 60, s % 60, tr(gs->diff->name), gs->gold);
     }
-    panel_text(victory ? "Le fil tient" : "Fin de la run",
-               victory ? "Tu sors du dedale. Il te laisse partir." : DEATH_LINES[rnd_range(0, 4)],
+    panel_text(tr(victory ? "Le fil tient" : "Fin de la run"),
+               victory ? tr("Tu sors du dedale. Il te laisse partir.") : tr(DEATH_LINES[rnd_range(0, 4)]),
                body,
-               gs->god ? "Aucune ame creditee : le mode dieu ne compte pas."
-                       : "Les ames sont deja mises de cote.");
-    slot_list(0, "Relancer une run", "", Pal::BALL, true);
-    slot_list(1, "Retour au hub", "", UIColor::TEXT_DIM, true);
+               gs->god ? tr("Aucune ame creditee : le mode dieu ne compte pas.")
+                       : tr("Les ames sont deja mises de cote."));
+    slot_list(0, tr("Relancer une run"), "", Pal::BALL, true);
+    slot_list(1, tr("Retour au hub"), "", UIColor::TEXT_DIM, true);
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -180);
     lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -100);
     gs->slots.hide_from(2);
@@ -1177,10 +1185,10 @@ static void show_end(bool victory) {
 static void show_pause() {
     g_state = ST_PAUSED;
     panel_on(true);
-    panel_text("Pause", "Le dedale patiente.", "", "");
-    slot_list(0, "Reprendre", "", Pal::BALL, true);
-    slot_list(1, "Recalibrer a plat", "Pose la tablette avant d'appuyer", Pal::BOOST, true);
-    slot_list(2, "Abandonner la run", "Les ames sont conservees", Pal::DANGER, true);
+    panel_text(tr("Pause"), tr("Le dedale patiente."), "", "");
+    slot_list(0, tr("Reprendre"), "", Pal::BALL, true);
+    slot_list(1, tr("Recalibrer a plat"), tr("Pose la tablette avant d'appuyer"), Pal::BOOST, true);
+    slot_list(2, tr("Abandonner la run"), tr("Les ames sont conservees"), Pal::DANGER, true);
     gs->slots.hide_from(3);
 }
 
@@ -1588,8 +1596,8 @@ static void load_room(int idx) {
 
     // Nom + numero de salle : ecrits une seule fois par salle.
     auto& rbuf = gs->room_buf;
-    snprintf(rbuf, sizeof(rbuf), "Salle %d/%d  -  %s  %.*s%s", idx + 1, N_ROOMS, r.name,
-             (int) r.stars, "****", gs->god ? "   [ DIEU ]" : "");
+    snprintf(rbuf, sizeof(rbuf), tr("Salle %d/%d  -  %s  %.*s%s"), idx + 1, N_ROOMS, tr(r.name),
+             (int) r.stars, "****", gs->god ? tr("   [ DIEU ]") : "");
     set_text_if(gs->hud_room, rbuf);
     lv_obj_set_style_text_color(gs->hud_room,
         lv_color_hex(gs->god ? Pal::MAGNET : Pal::BALL), LV_PART_MAIN);
@@ -1821,11 +1829,11 @@ static void boss_reward(const char* who) {
     auto& buf = gs->boss_buf;
     int it = grant_random_item();
     if (it >= 0) {
-        snprintf(buf, sizeof(buf), "%s cede : %s", who, ITEMS[it].name);
+        snprintf(buf, sizeof(buf), tr("%s cede : %s"), who, tr(ITEMS[it].name));
         toast(buf, ITEMS[it].color);
     } else {
         gs->gold += 120;
-        snprintf(buf, sizeof(buf), "%s cede 120 ames", who);
+        snprintf(buf, sizeof(buf), tr("%s cede 120 ames"), who);
         toast(buf, Pal::RUNE);
     }
 }
@@ -1834,8 +1842,8 @@ static void next_room() {
     // Recompense apres les salles 2 et 4 (index 1 et 3), comme prevu au design.
     int done = gs->room + 1;
     // Butin de boss : Nemesis (salle 5) et le Trone (salle 6) laissent un objet.
-    if (done == 5) boss_reward("Nemesis");
-    if (done >= N_ROOMS) { boss_reward("Le Trone"); end_run(true); return; }
+    if (done == 5) boss_reward(tr("Nemesis"));
+    if (done >= N_ROOMS) { boss_reward(tr("Le Trone")); end_run(true); return; }
     gs->room = done;
     load_room(gs->room);
     if (done == 2 || done == 4) show_reward();
@@ -1848,10 +1856,10 @@ static void update_hud() {
         gs->c_life = gs->life; gs->c_shield = gs->shield;
         if (gs->god) {
             // Afficher des PV en mode dieu serait mensonger : rien ne les entame.
-            snprintf(buf, sizeof(buf), "PV invulnerable");
+            snprintf(buf, sizeof(buf), "%s", tr("PV invulnerable"));
         } else {
-            snprintf(buf, sizeof(buf), "PV %d/%d%s", gs->life, gs->life_max,
-                     gs->shield ? "  +BOUCLIER" : "");
+            snprintf(buf, sizeof(buf), tr("PV %d/%d%s"), gs->life, gs->life_max,
+                     gs->shield ? tr("  +BOUCLIER") : "");
         }
         set_text_if(gs->hud_life, buf);
         lv_obj_set_style_text_color(gs->hud_life,
@@ -1859,15 +1867,16 @@ static void update_hud() {
                                  : (gs->shield ? Pal::SHIELD : Pal::DANGER)),
             LV_PART_MAIN);
     }
-    hud_num(gs->hud_gold, gs->c_gold, gs->gold, "Or %d");
+    // tr() seulement quand l'or change (hud_num ne fait rien sinon) : rien par image.
+    if (gs->c_gold != gs->gold) hud_num(gs->hud_gold, gs->c_gold, gs->gold, tr("Or %d"));
     const Room& r = ROOMS[gs->room];
     if (gs->c_runes != gs->runes) {
         gs->c_runes = gs->runes;
         if (r.runes > 0) {
-            if (gs->runes >= r.runes) snprintf(buf, sizeof(buf), "Portail ouvert !");
-            else snprintf(buf, sizeof(buf), "Runes %d/%u", gs->runes, (unsigned) r.runes);
+            if (gs->runes >= r.runes) snprintf(buf, sizeof(buf), "%s", tr("Portail ouvert !"));
+            else snprintf(buf, sizeof(buf), tr("Runes %d/%u"), gs->runes, (unsigned) r.runes);
         } else {
-            snprintf(buf, sizeof(buf), "%s", r.goal);
+            snprintf(buf, sizeof(buf), "%s", tr(r.goal));
         }
         set_text_if(gs->hud_goal, buf);
     }
@@ -2057,12 +2066,12 @@ static void tick_cb(lv_timer_t*) {
                     if ((int) (rnd() % 1000u) < (int) (gs->loot_chance * 1000.0f)) {
                         int it = grant_random_item();
                         if (it >= 0) {
-                            snprintf(cbuf, sizeof(cbuf), "Coffre : %s !", ITEMS[it].name);
+                            snprintf(cbuf, sizeof(cbuf), tr("Coffre : %s !"), tr(ITEMS[it].name));
                             toast(cbuf, ITEMS[it].color);
                             break;
                         }
                     }
-                    snprintf(cbuf, sizeof(cbuf), "Coffre : %d ames", bonus);
+                    snprintf(cbuf, sizeof(cbuf), tr("Coffre : %d ames"), bonus);
                     toast(cbuf, Pal::RUNE);
                 }
                 break;
@@ -2225,7 +2234,7 @@ static void slot_event_cb(lv_event_t* e) {
                 go_settings();
             } else if (i == 3) {
                 calibrate();
-                set_text_if(gs->p_foot, "Calibration prise. La tablette est desormais « a plat ».");
+                set_text_if(gs->p_foot, tr("Calibration prise. La tablette est desormais « a plat »."));
             } else {
                 go_hub();
             }
@@ -2253,7 +2262,7 @@ static void slot_event_cb(lv_event_t* e) {
 
         case ST_PAUSED:
             if (i == 0) { g_state = ST_PLAYING; panel_on(false); }
-            else if (i == 1) { calibrate(); set_text_if(gs->p_sub, "Calibration prise."); }
+            else if (i == 1) { calibrate(); set_text_if(gs->p_sub, tr("Calibration prise.")); }
             else if (i == 2) end_run(false);
             break;
 

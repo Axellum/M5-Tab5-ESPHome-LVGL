@@ -55,7 +55,8 @@ int   progress_pct();// 0..100, pour la barre de réflexion
 void  abort();
 
 // Nom court du niveau (« Débutant », « Amateur », …) — sans accent, les polices
-// du Tab5 les gèrent mais l'UI reste homogène avec le reste des jeux.
+// du Tab5 les gèrent mais l'UI reste homogène avec le reste des jeux. C'est la
+// clé française (tr_noop) : l'appelant la traduit par tr() à l'affichage.
 const char* level_name(Level lv);
 
 }  // namespace Ai

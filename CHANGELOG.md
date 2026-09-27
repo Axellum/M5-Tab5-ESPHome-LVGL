@@ -4,6 +4,61 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-27 — Les huit jeux en français ou en anglais (lot 4b)
+
+Lot 4b de l'audit « ouverture ». Les consoles suivent la langue choisie dans HA, comme
+le reste de l'écran depuis le lot 4a. Seules les questions du quiz restent en français
+(choix d'Axel).
+
+- **Textes des jeux** : les 8 consoles et la page Arcade passent par `tr()`. Cela fait
+  690 clés de plus dans `Tab5/lang/en.yaml`, 870 au total.
+  - **`tr_noop()`** (nouveau, `tab5_i18n.h`) marque un texte rangé dans une table.
+    Il ne traduit rien : la traduction se fait à l'affichage, `tr(table[i])`.
+  - **Contextes** :
+    - `echecs|` pour les pièces (« Dame » = Queen, alors qu'aux dames c'est un roi) ;
+    - `coup|Annuler` (Undo) ;
+    - `plateau|Abandonner` (Resign aux échecs et au Go, « Give up » dans les jeux
+      d'arcade) et `raison|Abandon` (Resignation) ;
+    - `pendule|B/N` et `ouvrir|…` aux échecs ;
+    - `san|R/D/T/F/C` : la notation des coups passe en anglais (« Nf3 » au lieu de
+      « Cf3 ») ;
+    - `nudge|…` pour la sensibilité du flipper.
+- **Pas traduits** :
+  - les noms des consoles (Fil d'Or, Roi Noir…) : ce sont des noms propres, et le
+    libellé « Écran courant » que lit HA ;
+  - les questions et réponses du quiz : le sous-titre anglais du jeu le signale
+    (« 720 questions in French ») ;
+  - les logs, la NVS, et les termes de flipper déjà anglais (TILT, MULTIBALL…).
+- **Français inchangé** : `tr()` rend le texte lui-même. Trois ajustements sans effet
+  à l'écran :
+  - un `snprintf` sans argument passe par `"%s"` ;
+  - quelques textes écrits sur plusieurs lignes sont recollés en un seul littéral,
+    identique ;
+  - aux dames, 7 `strncpy` deviennent des `snprintf`. Sinon `-Wstringop-truncation`,
+    et le `strncpy` ne garantissait pas le zéro final.
+- **Défaut corrigé** : le « → » du pied de page de l'Arcade n'existe pas dans les
+  polices (jeu `&latin1`). Le texte devient « hub, puis « Quitter » ». Nouvelle garde
+  `test_textes_francais_couverts_par_les_polices` : le français aussi est contrôlé.
+- **Outillage** :
+  - `tools/i18n_keys.py` relève `tr_noop()` et décode les `\n` du YAML ;
+  - seul `trivia_questions.h` reste exclu, et les noms des consoles rejoignent
+    `NON_TRADUITS` ;
+  - `tests/test_i18n.py` recolle les littéraux adjacents par séquences entières ;
+  - le contrôle printf ignore le drapeau « espace » : « +40 % d'âmes » était pris pour
+    un `%d`.
+- **Docs** : `docs/translations.md`, README, `AGENTS.md`, `docs/arcade.md` (7ᵉ règle
+  pour ajouter une console), `Tab5/README.md` et la cartographie.
+- **Mesures** (ESPHome 2026.9.0 ; build CI de #181 contre build local) :
+  - image 3 084 764 → 3 115 708 o (+30,9 Ko : les clés et les traductions) ;
+  - RAM statique inchangée (170 968 o) ;
+  - aucun avertissement dans notre code.
+- **Signalés, non corrigés** (hors périmètre) :
+  - Arcanoïde, « Effacer les scores » : l'écran annonce une confirmation, mais le
+    code efface au premier appui ;
+  - Go, « Groupes morts retires » : le compteur compte des pierres ;
+  - Fil d'Or : « Gold %d » à 4 chiffres dépasserait un peu sa colonne du HUD. Le
+    maximum réaliste d'une run est d'environ 810.
+
 ### 2026-09-27 — Écran en français ou en anglais, réglable depuis Home Assistant (lot 4a)
 
 Lot 4a de l'audit « ouverture ». Demande d'Axel : la langue se règle depuis HA, et

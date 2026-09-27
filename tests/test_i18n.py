@@ -19,7 +19,7 @@ import i18n_keys  # noqa: E402
 from check_tab5_code_rules import font_glyphs  # noqa: E402
 
 LANGS = gen_i18n.load_languages()
-RE_PRINTF = re.compile(r"%[-+ #0]*\d*(?:\.\d+)?(?:hh|h|ll|l|z|j|t)?([diouxXfFeEgGcsp%])")
+RE_PRINTF = re.compile(r"%[-+#0]*\d*(?:\.\d+)?(?:hh|h|ll|l|z|j|t)?([diouxXfFeEgGcsp%])")
 RE_NOM = re.compile(r"\{(\w+)\}")
 
 
@@ -55,8 +55,13 @@ def _litteraux_du_code() -> set[str]:
         for m in re.finditer(i18n_keys.RE_LIT, texte):
             lits.add(i18n_keys.c_decode(m.group(1)))
         # Littéraux C adjacents recollés ("parl\xC3\xA9""e") : même mécanique que tr().
-        for m in re.finditer(r'"((?:[^"\\]|\\.)*)"\s*"((?:[^"\\]|\\.)*)"', texte):
-            lits.add(i18n_keys.c_decode(m.group(1)) + i18n_keys.c_decode(m.group(2)))
+        # Par séquences entières, puis chaque sous-suite contiguë : un appariement deux
+        # à deux se décalait quand un "" précédait la paire (vu au lot 4b).
+        for m in re.finditer(r'"(?:[^"\\]|\\.)*"(?:\s*"(?:[^"\\]|\\.)*")+', texte):
+            parts = [i18n_keys.c_decode(p) for p in re.findall(i18n_keys.RE_LIT, m.group(0))]
+            for i in range(len(parts)):
+                for j in range(i + 2, len(parts) + 1):
+                    lits.add("".join(parts[i:j]))
     return lits
 
 
@@ -96,6 +101,18 @@ def test_traductions_couvertes_par_les_polices():
         for k, v in l["entries"].items():
             manquants = sorted(set(v or "") - latin1 - {"\n"})
             assert not manquants, f"{l['file']} : {k!r} utilise {''.join(manquants)!r}, absent des polices"
+
+
+def test_textes_francais_couverts_par_les_polices():
+    """Même garde côté français : un texte de l'écran (clé tr() ou texte YAML) dont un
+    caractère manque aux polices ne peut pas s'afficher. Trouvé au lot 4b : le « → » du
+    pied de page de l'arcade, absent du jeu &latin1."""
+    latin1 = font_glyphs(REPO / "Tab5" / "tab5-styles.yaml").get("roboto_32_b")
+    fichiers = i18n_keys.fichiers_source()
+    cles = set(i18n_keys.cles_tr(fichiers)) | set(i18n_keys.textes_yaml(fichiers))
+    fautifs = {k: "".join(sorted(set(gen_i18n.split_key(k)[1]) - latin1 - {"\n"})) for k in cles}
+    fautifs = {k: v for k, v in fautifs.items() if v}
+    assert not fautifs, f"caractères absents des polices dans des textes affichés : {fautifs}"
 
 
 def test_traduction_au_demarrage_branchee():

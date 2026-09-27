@@ -4,7 +4,7 @@
 
 ---
 
-The Tab5 screen speaks **French** (the source language) or **English**. Everything the screen shows or the tablet says follows the chosen language: popups, cards, dates, the alarm clock and its spoken reminders. The eight games are still in French for now (they will use the same mechanism), and the quiz questions stay French.
+The Tab5 screen speaks **French** (the source language) or **English**. Everything the screen shows or the tablet says follows the chosen language: popups, cards, dates, the alarm clock and its spoken reminders, and the eight games. Two exceptions: the **quiz questions** of Trial Poursuite stay French (more than 720 of them), and the **console names** (Fil d'Or, Roi Noir…) are proper names, kept as they are.
 
 ## Choosing the language
 
@@ -19,8 +19,9 @@ It works like gettext: **the French text written in the code is the key.**
 
 - In C++ and YAML lambdas, a displayed text goes through `tr("Calendrier")`, which returns `Calendar` in English and the French text itself in French — or when a translation is missing.
 - Texts laid out by the YAML (`text: "Calendrier"`) keep their French text; `i18n_apply_boot()` translates them once at the end of the setup, before the first frame.
-- A word with two meanings gets a context: `tr_ctx("mardi", "M")` → `T`, `tr_ctx("mercredi", "M")` → `W`.
+- A word with two meanings gets a context: `tr_ctx("mardi", "M")` → `T`, `tr_ctx("mercredi", "M")` → `W`, `tr_ctx("echecs", "Dame")` → `Queen` but `tr_ctx("dames", "Dame")` → `King`.
 - Word order that changes with the language goes through a template: `tr_fill("{jour} {quantieme} {mois}", …)` → `{jour}, {mois} {quantieme}` in English.
+- A text kept in a table (`static const char* const kModes[] = {…}`) is marked `tr_noop("Joueur contre Tab")` and translated where it is shown, `tr(kModes[i])`. `tr_noop()` translates nothing; it only tells `tools/i18n_keys.py` that the text is a key.
 
 Each language is one file, `Tab5/lang/<code>.yaml`: a flat mapping `"French text": "translation"`. `tools/gen_i18n.py` turns them into `Tab5/tab5_i18n_data.h` (generated, committed).
 
@@ -42,7 +43,8 @@ Each language is one file, `Tab5/lang/<code>.yaml`: a flat mapping `"French text
 
 ## Rules for contributors
 
-- A new text **on the screen** is written in French in the code, wrapped in `tr()` (C++, lambdas) or laid out by the YAML, and gets its line in each complete language file. `tests/test_i18n.py` fails if English misses it.
+- A new text **on the screen** is written in French in the code, wrapped in `tr()` (C++, lambdas) or laid out by the YAML, and gets its line in each complete language file. `tests/test_i18n.py` fails if English misses it. Keep the literal on the same line as `tr(`: the key finder reads one line at a time.
+- The French text itself must use only characters the fonts carry: the tests check French too.
 - Never translate what Home Assistant reads: entity `name:`, select options, text-sensor states, payload codes (`En_mouvement`, `Rouge`…). A HA value shown on screen is translated **at display time**: `tr(state.c_str())`.
 - A key that no longer matches any text of the code fails the tests: change the key when you change the French text.
 
@@ -50,7 +52,7 @@ Each language is one file, `Tab5/lang/<code>.yaml`: a flat mapping `"French text
 
 ## Version Française
 
-L'écran du Tab5 parle **français** (la langue source) ou **anglais**. Tout ce que l'écran affiche ou que la tablette dit suit la langue choisie : popups, cartes, dates, le réveil et ses rappels parlés. Les huit jeux restent en français pour l'instant (ils passeront par le même mécanisme), et les questions du quiz restent en français.
+L'écran du Tab5 parle **français** (la langue source) ou **anglais**. Tout ce que l'écran affiche ou que la tablette dit suit la langue choisie : popups, cartes, dates, le réveil et ses rappels parlés, et les huit jeux. Deux exceptions : les **questions du quiz** de Trial Poursuite restent en français (plus de 720), et les **noms des consoles** (Fil d'Or, Roi Noir…) sont des noms propres, gardés tels quels.
 
 ## Choisir la langue
 
@@ -65,8 +67,9 @@ Comme gettext : **le texte français écrit dans le code est la clé.**
 
 - En C++ et dans les lambdas YAML, un texte affiché passe par `tr("Calendrier")`, qui rend `Calendar` en anglais, et le texte français lui-même en français — ou quand la traduction manque.
 - Les textes posés par le YAML (`text: "Calendrier"`) gardent leur texte français ; `i18n_apply_boot()` les traduit une fois en fin de setup, avant la première image.
-- Un mot à deux sens reçoit un contexte : `tr_ctx("mardi", "M")` → `T`, `tr_ctx("mercredi", "M")` → `W`.
+- Un mot à deux sens reçoit un contexte : `tr_ctx("mardi", "M")` → `T`, `tr_ctx("mercredi", "M")` → `W`, `tr_ctx("echecs", "Dame")` → `Queen` mais `tr_ctx("dames", "Dame")` → `King`.
 - Un ordre des mots qui change avec la langue passe par un modèle : `tr_fill("{jour} {quantieme} {mois}", …)` → `{jour}, {mois} {quantieme}` en anglais.
+- Un texte rangé dans une table (`static const char* const kModes[] = {…}`) est marqué `tr_noop("Joueur contre Tab")` et traduit là où il s'affiche, `tr(kModes[i])`. `tr_noop()` ne traduit rien : il signale seulement à `tools/i18n_keys.py` que le texte est une clé.
 
 Chaque langue est un fichier, `Tab5/lang/<code>.yaml` : un mapping plat `"texte français": "traduction"`. `tools/gen_i18n.py` en fait `Tab5/tab5_i18n_data.h` (généré, versionné).
 
@@ -88,6 +91,7 @@ Chaque langue est un fichier, `Tab5/lang/<code>.yaml` : un mapping plat `"texte 
 
 ## Règles pour contribuer
 
-- Un nouveau texte **à l'écran** s'écrit en français dans le code, passe par `tr()` (C++, lambdas) ou est posé par le YAML, et reçoit sa ligne dans chaque fichier de langue complet. `tests/test_i18n.py` échoue si l'anglais ne l'a pas.
+- Un nouveau texte **à l'écran** s'écrit en français dans le code, passe par `tr()` (C++, lambdas) ou est posé par le YAML, et reçoit sa ligne dans chaque fichier de langue complet. `tests/test_i18n.py` échoue si l'anglais ne l'a pas. Gardez le littéral sur la même ligne que `tr(` : l'outil qui relève les clés lit ligne par ligne.
+- Le texte français lui-même ne doit utiliser que des caractères des polices : les tests vérifient aussi le français.
 - Ne jamais traduire ce que lit Home Assistant : `name:` d'entité, options de select, états de text_sensor, codes des payloads (`En_mouvement`, `Rouge`…). Une valeur HA affichée à l'écran se traduit **au moment de l'affichage** : `tr(etat.c_str())`.
 - Une clé qui ne correspond plus à aucun texte du code fait échouer les tests : changez la clé quand vous changez le texte français.

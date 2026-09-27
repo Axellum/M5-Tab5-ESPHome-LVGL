@@ -259,9 +259,10 @@ static const uint8_t* LEVELS[8] = {
     (const uint8_t*)LVL7, (const uint8_t*)LVL8,
 };
 
+// Noms affichés (fin de niveau, game over) : traduits à l'affichage, tr(LEVEL_NAMES[i]).
 static const char* LEVEL_NAMES[8] = {
-    "Mur plein", "Pyramide", "Colonnes", "Damier",
-    "Couloirs", "Forteresse", "Zigzag", "Boss final"
+    tr_noop("Mur plein"), tr_noop("Pyramide"), tr_noop("Colonnes"), tr_noop("Damier"),
+    tr_noop("Couloirs"), tr_noop("Forteresse"), tr_noop("Zigzag"), tr_noop("Boss final")
 };
 
 // ===========================================================================
@@ -565,9 +566,9 @@ static void panel_text(const char* t, const char* s, const char* b, const char* 
 
 static const char* ctrl_name() {
     switch (gs->save.ctrl_mode) {
-        case 0: return "Inclinaison";
-        case 1: return "Boutons";
-        default: return "Les deux";
+        case 0: return tr("Inclinaison");
+        case 1: return tr("Boutons");
+        default: return tr("Les deux");
     }
 }
 
@@ -580,14 +581,15 @@ static void go_hub() {
     show(gs->btn_r, false);
 
     auto& sub = gs->hub_sub;
-    snprintf(sub, sizeof(sub), "Meilleur score : %u   -   Controle : %s",
+    snprintf(sub, sizeof(sub), tr("Meilleur score : %u   -   Controle : %s"),
              (unsigned)best_score(), ctrl_name());
 
-    panel_text("ARCANOIDE", sub, "", "Casse toutes les briques. Ne laisse pas tomber la balle.");
-    gs->slots.row(0, "Jouer", "8 niveaux, 3 vies, power-ups", Pal::BALL, true);
-    gs->slots.row(1, "Classement", "Top 10 local", Pal::CYAN, true);
-    gs->slots.row(2, "Reglages", "Controle, sensibilite, calibration, SFX", Pal::GREEN, true);
-    gs->slots.row(3, "Quitter", "Retour au tableau de bord", UIColor::TEXT_DIM, true);
+    // « ARCANOIDE » : nom de la console, jamais traduit.
+    panel_text("ARCANOIDE", sub, "", tr("Casse toutes les briques. Ne laisse pas tomber la balle."));
+    gs->slots.row(0, tr("Jouer"), tr("8 niveaux, 3 vies, power-ups"), Pal::BALL, true);
+    gs->slots.row(1, tr("Classement"), tr("Top 10 local"), Pal::CYAN, true);
+    gs->slots.row(2, tr("Reglages"), tr("Controle, sensibilite, calibration, SFX"), Pal::GREEN, true);
+    gs->slots.row(3, tr("Quitter"), tr("Retour au tableau de bord"), UIColor::TEXT_DIM, true);
     gs->slots.hide_from(4);
 }
 
@@ -596,18 +598,18 @@ static void go_settings() {
     panel_on(true);
 
     auto& ctrl_title = gs->settings_ctrl;
-    snprintf(ctrl_title, sizeof(ctrl_title), "Controle : %s", ctrl_name());
+    snprintf(ctrl_title, sizeof(ctrl_title), tr("Controle : %s"), ctrl_name());
     auto& sens_title = gs->settings_sens;
-    snprintf(sens_title, sizeof(sens_title), "Sensibilite IMU : %d/5",
+    snprintf(sens_title, sizeof(sens_title), tr("Sensibilite IMU : %d/5"),
              (int)gs->save.sensitivity + 1);
 
-    panel_text("Reglages", "Ces reglages sont sauvegardes automatiquement.", "", "");
-    gs->slots.row(0, ctrl_title, "Inclinaison / Boutons / Les deux", Pal::CYAN, true);
-    gs->slots.row(1, sens_title, "Vitesse de reponse a l'inclinaison", Pal::GREEN, true);
-    gs->slots.row(2, "Calibrer a plat", "Pose la tablette et appuie", Pal::ORANGE, true);
-    gs->slots.row(3, gs->save.muted ? "SFX : coupes" : "SFX : actifs",
-                  "Bips sonores (casse, mort, niveau)", Pal::MAGENTA, true);
-    gs->slots.row(4, "Retour", "", UIColor::TEXT_DIM, true);
+    panel_text(tr("Reglages"), tr("Ces reglages sont sauvegardes automatiquement."), "", "");
+    gs->slots.row(0, ctrl_title, tr("Inclinaison / Boutons / Les deux"), Pal::CYAN, true);
+    gs->slots.row(1, sens_title, tr("Vitesse de reponse a l'inclinaison"), Pal::GREEN, true);
+    gs->slots.row(2, tr("Calibrer a plat"), tr("Pose la tablette et appuie"), Pal::ORANGE, true);
+    gs->slots.row(3, tr(gs->save.muted ? "SFX : coupes" : "SFX : actifs"),
+                  tr("Bips sonores (casse, mort, niveau)"), Pal::MAGENTA, true);
+    gs->slots.row(4, tr("Retour"), "", UIColor::TEXT_DIM, true);
     gs->slots.hide_from(5);
 }
 
@@ -617,20 +619,20 @@ static void go_highscores() {
 
     auto& body = gs->scores_body;
     int off = 0;
-    off += snprintf(body + off, sizeof(body) - off, "Rang  Score      Niv  Controle\n");
+    off += snprintf(body + off, sizeof(body) - off, "%s", tr("Rang  Score      Niv  Controle\n"));
     for (int i = 0; i < gs->save.score_count && i < ARK_MAX_SCORES; i++) {
         const ArkScoreEntry& e = gs->save.scores[i];
-        const char* cn = (e.ctrl_mode == 0) ? "IMU" : (e.ctrl_mode == 1) ? "Btn" : "Mix";
+        const char* cn = tr((e.ctrl_mode == 0) ? "IMU" : (e.ctrl_mode == 1) ? "Btn" : "Mix");
         off += snprintf(body + off, sizeof(body) - off, " %2d   %7u    %d    %s\n",
                         i + 1, (unsigned)e.score, (int)e.level, cn);
     }
     if (gs->save.score_count == 0) {
-        off += snprintf(body + off, sizeof(body) - off, "\n  Aucun score enregistre.");
+        off += snprintf(body + off, sizeof(body) - off, "%s", tr("\n  Aucun score enregistre."));
     }
 
-    panel_text("Classement", "Top 10 local (NVS)", body, "");
-    gs->slots.row(0, "Effacer les scores", "Appuie pour confirmer", Pal::DANGER, true);
-    gs->slots.row(1, "Retour", "", UIColor::TEXT_DIM, true);
+    panel_text(tr("Classement"), tr("Top 10 local (NVS)"), body, "");
+    gs->slots.row(0, tr("Effacer les scores"), tr("Appuie pour confirmer"), Pal::DANGER, true);
+    gs->slots.row(1, tr("Retour"), "", UIColor::TEXT_DIM, true);
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -160);
     lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -80);
     gs->slots.hide_from(2);
@@ -639,10 +641,10 @@ static void go_highscores() {
 static void show_pause() {
     g_state = ST_PAUSED;
     panel_on(true);
-    panel_text("Pause", "Le jeu attend.", "", "");
-    gs->slots.row(0, "Reprendre", "", Pal::BALL, true);
-    gs->slots.row(1, "Recalibrer a plat", "Pose la tablette avant d'appuyer", Pal::ORANGE, true);
-    gs->slots.row(2, "Abandonner", "Le score est enregistre", Pal::DANGER, true);
+    panel_text(tr("Pause"), tr("Le jeu attend."), "", "");
+    gs->slots.row(0, tr("Reprendre"), "", Pal::BALL, true);
+    gs->slots.row(1, tr("Recalibrer a plat"), tr("Pose la tablette avant d'appuyer"), Pal::ORANGE, true);
+    gs->slots.row(2, tr("Abandonner"), tr("Le score est enregistre"), Pal::DANGER, true);
     gs->slots.hide_from(3);
 }
 
@@ -650,10 +652,10 @@ static void show_level_clear() {
     g_state = ST_LEVELCLEAR;
     panel_on(true);
     auto& body = gs->clear_body;
-    snprintf(body, sizeof(body), "Niveau %d — %s\nScore : %d",
-             gs->level + 1, LEVEL_NAMES[gs->level], gs->score);
-    panel_text("Niveau termine !", "", body, "");
-    gs->slots.row(0, "Niveau suivant", "", Pal::GREEN, true);
+    snprintf(body, sizeof(body), tr("Niveau %d — %s\nScore : %d"),
+             gs->level + 1, tr(LEVEL_NAMES[gs->level]), gs->score);
+    panel_text(tr("Niveau termine !"), "", body, "");
+    gs->slots.row(0, tr("Niveau suivant"), "", Pal::GREEN, true);
     gs->slots.hide_from(1);
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -120);
 }
@@ -668,12 +670,12 @@ static void show_gameover() {
 
     bool qualified = insert_score((uint32_t)gs->score, (uint8_t)(gs->level + 1), gs->save.ctrl_mode);
     auto& body = gs->over_body;
-    snprintf(body, sizeof(body), "Score : %d\nNiveau atteint : %d/8 — %s%s",
-             gs->score, gs->level + 1, LEVEL_NAMES[gs->level],
-             qualified ? "\n*** Nouveau record ! ***" : "");
-    panel_text("GAME OVER", "", body, "");
-    gs->slots.row(0, "Rejouer", "", Pal::BALL, true);
-    gs->slots.row(1, "Retour au hub", "", UIColor::TEXT_DIM, true);
+    snprintf(body, sizeof(body), tr("Score : %d\nNiveau atteint : %d/8 — %s%s"),
+             gs->score, gs->level + 1, tr(LEVEL_NAMES[gs->level]),
+             qualified ? tr("\n*** Nouveau record ! ***") : "");
+    panel_text(tr("GAME OVER"), "", body, "");
+    gs->slots.row(0, tr("Rejouer"), "", Pal::BALL, true);
+    gs->slots.row(1, tr("Retour au hub"), "", UIColor::TEXT_DIM, true);
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -180);
     lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -100);
     gs->slots.hide_from(2);
@@ -1009,10 +1011,10 @@ static bool ball_hits_brick(Ball& b, Brick& br, int bx, int by) {
 // ===========================================================================
 
 static void update_hud() {
-    hud_num(gs->hud_score, gs->c_score, gs->score, "Score %d");
-    hud_num(gs->hud_lives, gs->c_lives, gs->lives, "Vies %d");
-    hud_num(gs->hud_level, gs->c_level, gs->level + 1, "Niv %d/8");   // cache : niveau affiché
-    hud_num(gs->hud_best, gs->c_best, (unsigned) best_score(), "Best %u");
+    hud_num(gs->hud_score, gs->c_score, gs->score, tr("Score %d"));
+    hud_num(gs->hud_lives, gs->c_lives, gs->lives, tr("Vies %d"));
+    hud_num(gs->hud_level, gs->c_level, gs->level + 1, tr("Niv %d/8"));   // cache : niveau affiché
+    hud_num(gs->hud_best, gs->c_best, (unsigned) best_score(), tr("Best %u"));
     // Indicateur contrôle (écrit une fois)
     auto& cbuf = gs->hud_cbuf;
     snprintf(cbuf, sizeof(cbuf), "[%s]", ctrl_name());
@@ -1240,7 +1242,7 @@ static void slot_event_cb(lv_event_t* e) {
                 go_settings();
             } else if (i == 2) {
                 calibrate();
-                set_text_if(gs->p_foot, "Calibration prise. Tablette = plat.");
+                set_text_if(gs->p_foot, tr("Calibration prise. Tablette = plat."));
             } else if (i == 3) {
                 gs->save.muted = gs->save.muted ? 0 : 1;
                 persist_save();
@@ -1264,7 +1266,7 @@ static void slot_event_cb(lv_event_t* e) {
 
         case ST_PAUSED:
             if (i == 0) { g_state = ST_PLAYING; panel_on(false); }
-            else if (i == 1) { calibrate(); set_text_if(gs->p_sub, "Calibration prise."); }
+            else if (i == 1) { calibrate(); set_text_if(gs->p_sub, tr("Calibration prise.")); }
             else if (i == 2) {
                 gs->run_active = false;
                 insert_score((uint32_t)gs->score, (uint8_t)(gs->level + 1), gs->save.ctrl_mode);

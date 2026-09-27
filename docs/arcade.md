@@ -62,7 +62,7 @@ Ne pas recopier la liste des fermetures dans les cartes : elle vit dans
 
 ## Règles à respecter pour ajouter une 9ᵉ console
 
-Une console n'est **intégrée** que si les six points suivants sont faits. Un seul
+Une console n'est **intégrée** que si les sept points suivants sont faits. Un seul
 oubli et le jeu est invisible, ou le firmware ne compile pas :
 
 1. `tab5-ha-hmi.yaml` → `includes:` : **tous** les `.h` et `.cpp`, y compris les
@@ -90,6 +90,12 @@ oubli et le jeu est invisible, ou le firmware ne compile pas :
    `accel_delta_norm`/`shake_fire` pour une secousse — le jeu garde ses seuils) au lieu de les recopier, et garde sa **palette locale** `<Jeu>::Pal`
    dans son `.h` — `tab5_custom.h` n'est jamais touché pour un jeu (ADR-0014). Un
    moteur de règles (échecs, Go, dames) a son **miroir Python** dans `tools/`.
+7. **Langue** (lot 4b, 27/09/2026) : chaque texte affiché passe par `tr("…")`
+   (`tr_noop("…")` dans une table, puis `tr(table[i])` à l'affichage), avec sa ligne
+   dans `Tab5/lang/en.yaml` ; la page du jeu s'ajoute à la liste d'`i18n_apply_boot()`
+   (`tab5-ha-hmi.yaml`, `on_boot` -100) pour les textes posés par son YAML. Le nom de
+   la console ne se traduit pas : c'est aussi le libellé « Écran courant » lu par HA.
+   Voir [`translations.md`](translations.md).
 
 Les icônes MDI utilisées doivent en outre figurer dans la liste `glyphs` de
 `mdi_font_56` / `mdi_font_45` (`tab5-styles.yaml`) : une icône absente de la

@@ -13,6 +13,7 @@
  *      DOIT etre revalidee par perft_selftest() (valeurs FIDE en dur).
  */
 #include "chess_ai.h"
+#include "tab5_i18n.h"  // noms/descriptions des niveaux et lettres SAN a l'ecran (lot 4b), pur
 #include "esphome.h"
 #include "esp_heap_caps.h"
 #include <array>
@@ -198,14 +199,30 @@ static uint32_t g_deadline = 0;
 static uint32_t g_nodes    = 0;
 static int      g_qdepth   = 0;
 
+// Descriptions marquees tr_noop() (lot 4b) : traduites a l'affichage, tr(AI_LEVELS[l].desc).
+// Les NOMS s'affichent par level_name() ci-dessous (contexte « echecs »).
 const AiLevel AI_LEVELS[AI_NLEVELS] = {
-    // nom         description                                    prof  q  budget fen. elo
-    {"Pion",     "Debutant : ne voit qu'un coup, se trompe",        1,  0,  120, 160,  600},
-    {"Cavalier", "Voit les prises simples et les repond",           2,  0,  350,  60,  900},
-    {"Fou",      "Calcule 3 coups + les prises en chaine",          3,  4,  800,  20, 1250},
-    {"Dame",     "Calcule 4 coups, tactique correcte",              4,  6, 1800,   0, 1600},
-    {"Roi",      "Effort maximal du Tab (5 coups vises)",           5,  6, 3500,   0, 1900},
+    // nom         description                                             prof  q  budget fen. elo
+    {"Pion",     tr_noop("Debutant : ne voit qu'un coup, se trompe"),        1,  0,  120, 160,  600},
+    {"Cavalier", tr_noop("Voit les prises simples et les repond"),           2,  0,  350,  60,  900},
+    {"Fou",      tr_noop("Calcule 3 coups + les prises en chaine"),          3,  4,  800,  20, 1250},
+    {"Dame",     tr_noop("Calcule 4 coups, tactique correcte"),              4,  6, 1800,   0, 1600},
+    {"Roi",      tr_noop("Effort maximal du Tab (5 coups vises)"),           5,  6, 3500,   0, 1900},
 };
+
+// Nom du niveau tel qu'affiche. Contexte « echecs » : la « Dame » des echecs n'est pas
+// celle des dames (pion couronne). tr_noop() ne porte pas de contexte, d'ou ces appels
+// explicites, dans l'ORDRE de AI_LEVELS ci-dessus : garder les deux alignes.
+const char* level_name(int l) {
+    switch (l) {
+        case 0:  return tr_ctx("echecs", "Pion");
+        case 1:  return tr_ctx("echecs", "Cavalier");
+        case 2:  return tr_ctx("echecs", "Fou");
+        case 3:  return tr_ctx("echecs", "Dame");
+        case 4:  return tr_ctx("echecs", "Roi");
+        default: return "";
+    }
+}
 
 // ===========================================================================
 // 2. Utilitaires
@@ -835,6 +852,23 @@ static char piece_letter_fr(uint8_t t) {
     }
 }
 
+// Meme lettre dans la langue de l'ecran (lot 4b) : R D T F C en francais, K Q R B N en
+// anglais (contexte « san » : lettres seules). Pour la SAN affichee uniquement ;
+// move_to_uci() garde la lettre francaise. Appelee une ou deux fois par coup JOUE,
+// jamais par la recherche.
+static char piece_letter_san(uint8_t t) {
+    const char* s;
+    switch (t) {
+        case KING:   s = tr_ctx("san", "R"); break;
+        case QUEEN:  s = tr_ctx("san", "D"); break;
+        case ROOK:   s = tr_ctx("san", "T"); break;
+        case BISHOP: s = tr_ctx("san", "F"); break;
+        case KNIGHT: s = tr_ctx("san", "C"); break;
+        default:     return 0;
+    }
+    return s[0];
+}
+
 void move_to_uci(const Move& m, char* out, int cap) {
     if (!out || cap < 6) return;
     int k = 0;
@@ -875,7 +909,7 @@ void move_to_san(const Position& before, const Move& m, char* out, int cap) {
         const char* s = king_side ? "O-O" : "O-O-O";
         while (*s && k < cap - 6) out[k++] = *s++;
     } else {
-        const char L = piece_letter_fr(t);
+        const char L = piece_letter_san(t);
         if (L) {
             out[k++] = L;
             // Desambiguisation : une autre piece du meme type peut-elle aller
@@ -904,7 +938,7 @@ void move_to_san(const Position& before, const Move& m, char* out, int cap) {
         }
         out[k++] = (char)('a' + (m.to & 7));
         out[k++] = (char)('1' + (m.to >> 4));
-        if (m.flags & MF_PROMO) { out[k++] = '='; out[k++] = piece_letter_fr(m.promo); }
+        if (m.flags & MF_PROMO) { out[k++] = '='; out[k++] = piece_letter_san(m.promo); }
     }
 
     // Suffixe echec (+) ou mat (#).
