@@ -16,6 +16,7 @@
  *      fermeture (audit du 26/09/2026, lot 4).
  */
 #include "go_ai.h"
+#include "tab5_i18n.h"  // tr_noop : noms des niveaux (traduits à l'affichage, go_game.cpp)
 #include "esphome.h"
 #if defined(ESP_PLATFORM)
 #include "esp_heap_caps.h"
@@ -59,12 +60,13 @@ struct LevelCfg {
     uint8_t  noise;       // bruit ajouté au score statique (variété des parties)
 };
 
+// `name` est la clé française (tr_noop) : l'écran la traduit par tr() à l'affichage.
 static const LevelCfg LEVELS[4] = {
-    // nom            9  13 19  root node  budget noise
-    { "Debutant",   { 0, 0, 0 },  20,  0,     80,  40 },
-    { "Amateur",    { 1, 1, 1 },  20, 10,    350,  14 },
-    { "Confirme",   { 2, 2, 1 },  18,  9,    900,   5 },
-    { "Expert",     { 3, 2, 2 },  16,  8,   1900,   0 },
+    // nom                     9  13 19  root node  budget noise
+    { tr_noop("Debutant"),   { 0, 0, 0 },  20,  0,     80,  40 },
+    { tr_noop("Amateur"),    { 1, 1, 1 },  20, 10,    350,  14 },
+    { tr_noop("Confirme"),   { 2, 2, 1 },  18,  9,    900,   5 },
+    { tr_noop("Expert"),     { 3, 2, 2 },  16,  8,   1900,   0 },
 };
 
 const char* level_name(Level lv) {

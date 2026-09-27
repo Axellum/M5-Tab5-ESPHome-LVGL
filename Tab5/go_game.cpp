@@ -267,17 +267,18 @@ static const char* size_name(uint8_t i) {
 }
 static const char* mode_name(uint8_t m) {
     switch (m) {
-        case 0: return "Joueur contre Tab";
-        case 1: return "Joueur contre joueur";
-        case 2: return "Tab contre Tab";
+        case 0: return tr("Joueur contre Tab");
+        case 1: return tr("Joueur contre joueur");
+        case 2: return tr("Tab contre Tab");
     }
     return "?";
 }
-static const char* level_name(uint8_t lv) { return Ai::level_name((Ai::Level) lv); }
+// Ai::level_name rend la clé française (tr_noop dans go_ai.cpp) : traduite ici.
+static const char* level_name(uint8_t lv) { return tr(Ai::level_name((Ai::Level) lv)); }
 
 // Coordonnées de Go : colonnes A.. sans le I, rangées n..1 depuis le haut.
 static void sq_name(int sq, int n, char* buf, int len) {
-    if (sq == PASS || sq < 0) { snprintf(buf, len, "passe"); return; }
+    if (sq == PASS || sq < 0) { snprintf(buf, len, "%s", tr("passe")); return; }
     const int r = sq / n, c = sq % n;
     char col = (char) ('A' + c);
     if (col >= 'I') col++;
@@ -662,9 +663,9 @@ static void render_board() {
 
 // Qui tient les pierres de cette couleur ?
 static const char* seat_name(uint8_t color, char* buf, int len) {
-    if (gs->cfg_mode == 1) { snprintf(buf, len, "Joueur %s", color == BLACK ? "1" : "2"); return buf; }
+    if (gs->cfg_mode == 1) { snprintf(buf, len, tr("Joueur %s"), color == BLACK ? "1" : "2"); return buf; }
     if (gs->cfg_mode == 2) { snprintf(buf, len, "Tab %s", level_name(gs->cfg_level)); return buf; }
-    if (color == gs->cfg_human) { snprintf(buf, len, "Vous"); return buf; }
+    if (color == gs->cfg_human) { snprintf(buf, len, "%s", tr("Vous")); return buf; }
     snprintf(buf, len, "Tab %s", level_name(gs->cfg_level));
     return buf;
 }
@@ -682,18 +683,18 @@ static void render_hud() {
         set_text_if(gs->pill_name[i], seat_name(col, buf, sizeof(buf)));
         const int caps = (col == BLACK) ? (int) gs->pos.captured_by_black
                                         : (int) gs->pos.captured_by_white;
-        snprintf(buf, sizeof(buf), "%s  ·  %d prise%s",
-                 col == BLACK ? "Noir" : "Blanc", caps, caps > 1 ? "s" : "");
+        snprintf(buf, sizeof(buf), tr("%s  ·  %d prise%s"),
+                 tr(col == BLACK ? "Noir" : "Blanc"), caps, caps > 1 ? "s" : "");
         set_text_if(gs->pill_sub[i], buf);
         set_text_color_if(gs->pill_name[i], active ? Pal::ACCENT : Pal::TXT);
     }
 
     if (g_state == ST_MARKING || g_state == ST_SCORE) {
         // Comptage en direct : le joueur voit l'effet de chaque groupe marqué.
-        snprintf(buf, sizeof(buf), "Noir %.1f   contre   Blanc %.1f",
+        snprintf(buf, sizeof(buf), tr("Noir %.1f   contre   Blanc %.1f"),
                  (double) gs->score.black, (double) gs->score.white);
     } else if (gs->pos.move_no > 0) {
-        snprintf(buf, sizeof(buf), "Coup %u  ·  komi %.1f",
+        snprintf(buf, sizeof(buf), tr("Coup %u  ·  komi %.1f"),
                  (unsigned) gs->pos.move_no, (double) effective_komi());
     } else {
         snprintf(buf, sizeof(buf), "%s  ·  komi %.1f", size_name(gs->cfg_size),
@@ -707,17 +708,17 @@ static void render_hud() {
     if (gs->msg_until && (int32_t)(esphome::millis() - gs->msg_until) < 0) {
         st = gs->msg; stc = Pal::ACCENT;
     } else if (g_state == ST_THINKING) {
-        st = "Le Tab reflechit..."; stc = Pal::THINK;
+        st = tr("Le Tab reflechit..."); stc = Pal::THINK;
     } else if (g_state == ST_MARKING) {
-        st = "Touchez les groupes MORTS, puis Valider"; stc = Pal::ACCENT;
+        st = tr("Touchez les groupes MORTS, puis Valider"); stc = Pal::ACCENT;
     } else if (g_state == ST_PLAYING) {
         if (gs->pending >= 0) {
             char nm[8];
             sq_name(gs->pending, gs->pos.n, nm, sizeof(nm));
-            snprintf(line, sizeof(line), "Touchez a nouveau %s pour valider", nm);
+            snprintf(line, sizeof(line), tr("Touchez a nouveau %s pour valider"), nm);
             st = line; stc = Pal::GHOST;
         } else {
-            st = (gs->pos.side == BLACK) ? "Au tour de Noir" : "Au tour de Blanc";
+            st = tr((gs->pos.side == BLACK) ? "Au tour de Noir" : "Au tour de Blanc");
             stc = Pal::TXT_DIM;
         }
     }
@@ -731,8 +732,8 @@ static void render_movelist() {
     int start = rows - MOVE_ROWS;
     if (start < 0) start = 0;
 
-    set_text_if(gs->p_head[0], gs->first_color == BLACK ? "Noir" : "Blanc");
-    set_text_if(gs->p_head[1], gs->first_color == BLACK ? "Blanc" : "Noir");
+    set_text_if(gs->p_head[0], tr(gs->first_color == BLACK ? "Noir" : "Blanc"));
+    set_text_if(gs->p_head[1], tr(gs->first_color == BLACK ? "Blanc" : "Noir"));
 
     for (int i = 0; i < MOVE_ROWS; i++) {
         const int row = start + i;
@@ -758,8 +759,9 @@ static void render_movelist() {
 // Les 4 boutons changent de rôle selon l'état — un seul jeu de widgets.
 static void render_panel_buttons() {
     // `const` des deux côtés : tables en flash, pas 32 o de .data en RAM interne.
-    static const char* const PLAY_LBL[4] = {"Passer", "Annuler", "Indice", "Menu"};
-    static const char* const MARK_LBL[4] = {"Tout vivant", "Reprendre", "", "Menu"};
+    // Clés françaises (tr_noop), traduites à l'affichage ; « Annuler » passe par tr_ctx.
+    static const char* const PLAY_LBL[4] = {tr_noop("Passer"), "Annuler", tr_noop("Indice"), "Menu"};
+    static const char* const MARK_LBL[4] = {tr_noop("Tout vivant"), tr_noop("Reprendre"), "", "Menu"};
     const bool marking = (g_state == ST_MARKING);
     const char* const* L = marking ? MARK_LBL : PLAY_LBL;
 
@@ -767,11 +769,12 @@ static void render_panel_buttons() {
         const bool on = L[i][0] != 0;
         show(gs->btn[i], on);
         if (!on) continue;
-        set_text_if(gs->btn_lbl[i], L[i]);
+        // « Annuler » reprend un coup (Undo), pas un dialogue (Cancel) : contexte « coup ».
+        set_text_if(gs->btn_lbl[i], (!marking && i == 1) ? tr_ctx("coup", "Annuler") : tr(L[i]));
     }
     // Bouton large : valider le coup en attente, ou valider le score.
     if (marking) {
-        set_text_if(gs->btn_ok_lbl, "Valider le score");
+        set_text_if(gs->btn_ok_lbl, tr("Valider le score"));
         set_bg(gs->btn_ok, Pal::CARD_BG, LV_OPA_COVER);
         set_border(gs->btn_ok, Pal::GOOD, 2, LV_OPA_80);
         set_text_color_if(gs->btn_ok_lbl, Pal::GOOD);
@@ -779,7 +782,7 @@ static void render_panel_buttons() {
     } else if (g_state == ST_PLAYING && gs->pending >= 0) {
         char nm[8], buf[24];
         sq_name(gs->pending, gs->pos.n, nm, sizeof(nm));
-        snprintf(buf, sizeof(buf), "Jouer %s", nm);
+        snprintf(buf, sizeof(buf), tr("Jouer %s"), nm);
         set_text_if(gs->btn_ok_lbl, buf);
         set_bg(gs->btn_ok, Pal::CARD_BG, LV_OPA_COVER);
         set_border(gs->btn_ok, Pal::GHOST, 2, LV_OPA_COVER);
@@ -796,7 +799,7 @@ static void render_panel_buttons() {
         const int pct = Ai::progress_pct();
         if (pct != gs->think_pct_drawn) {
             char buf[32];
-            snprintf(buf, sizeof(buf), "Reflexion  %d %%", pct);
+            snprintf(buf, sizeof(buf), tr("Reflexion  %d %%"), pct);
             set_text_if(gs->think_lbl, buf);
             const int w = (270 * pct) / 100;
             lv_obj_set_size(gs->think_fill, w < 2 ? 2 : w, 8);
@@ -849,10 +852,10 @@ static void apply_move(int sq) {
     int played = sq;
     if (!Engine::play(gs->pos, sq)) {
         gs->undo_n--;                       // rien n'a bougé : on défait la pile
-        if (by_human) { msg("Coup illegal"); refresh_all(); return; }
+        if (by_human) { msg(tr("Coup illegal")); refresh_all(); return; }
         // Un coup illégal proposé par l'IA ne doit JAMAIS bloquer la partie :
         // on passe à sa place et la partie continue.
-        msg("Le Tab passe");
+        msg(tr("Le Tab passe"));
         push_undo();
         Engine::play(gs->pos, PASS);
         played = PASS;
@@ -890,7 +893,7 @@ static void begin_thinking() {
 static void do_pass() {
     if (g_state != ST_PLAYING || !is_human_turn()) return;
     gs->pending = -1;
-    msg(gs->pos.passes == 1 ? "Passe — fin de partie" : "Passe");
+    msg(tr(gs->pos.passes == 1 ? "Passe — fin de partie" : "Passe"));
     apply_move(PASS);
 }
 
@@ -901,7 +904,7 @@ static void do_undo() {
     // Depuis l'écran de marquage, « Reprendre » revient au coup d'avant la
     // seconde passe : on efface aussi les marques de groupes morts.
     if (g_state == ST_MARKING) memset(gs->dead, 0, sizeof(gs->dead));
-    if (gs->undo_n <= 0) { g_state = ST_PLAYING; msg("Rien a annuler"); refresh_all(); return; }
+    if (gs->undo_n <= 0) { g_state = ST_PLAYING; msg(tr("Rien a annuler")); refresh_all(); return; }
     gs->undo_n--;
     gs->pos = gc->undo[gs->undo_n];
     gs->last_sq = gs->undo_last[gs->undo_n];
@@ -915,7 +918,7 @@ static void do_undo() {
         gs->mv_n = gs->undo_mv[gs->undo_n];
     }
     g_state = ST_PLAYING;
-    msg("Coup annule");
+    msg(tr("Coup annule"));
     stash_position();
     refresh_all();
     after_move();
@@ -931,13 +934,13 @@ static void do_hint() {
     g_state = ST_PLAYING;
     if (sq == Ai::RESIGN || sq == PASS || sq < 0) {
         gs->hint_sq = -1;
-        msg("Indice : passer");
+        msg(tr("Indice : passer"));
     } else {
         gs->hint_sq = sq;
         gs->hint_until = esphome::millis() + HINT_MS;
         char nm[8], buf[32];
         sq_name(sq, gs->pos.n, nm, sizeof(nm));
-        snprintf(buf, sizeof(buf), "Indice : %s", nm);
+        snprintf(buf, sizeof(buf), tr("Indice : %s"), nm);
         msg(buf);
     }
     refresh_all();
@@ -960,7 +963,7 @@ static void enter_marking() {
     gs->pending = -1;
     if (first) {
         memset(gs->dead, 0, sizeof(gs->dead));
-        msg("Deux passes : marquez les groupes morts");
+        msg(tr("Deux passes : marquez les groupes morts"));
     }
     refresh_territory();
     refresh_all();
@@ -1027,7 +1030,7 @@ static void resume_game() {
     memset(gs->dead, 0, sizeof(gs->dead));
     memset(gs->terr, 0, sizeof(gs->terr));
     layout_board();
-    msg("Partie reprise");
+    msg(tr("Partie reprise"));
     enter_playing();
 }
 
@@ -1075,23 +1078,23 @@ static void menu_main() {
     g_state = ST_MENU_MAIN;
     Ai::abort();
     char sub[72];
-    snprintf(sub, sizeof(sub), "Score chinois d'aire  ·  komi %.1f  ·  ko simple",
+    snprintf(sub, sizeof(sub), tr("Score chinois d'aire  ·  komi %.1f  ·  ko simple"),
              (double) effective_komi());
     menu_open("Go Tab", sub,
-              "Toutes les parties et les reglages sont conserves dans le Tab.");
+              tr("Toutes les parties et les reglages sont conserves dans le Tab."));
     int i = 0;
     if (gs->in_game) {
-        slot_set(i++, "Reprendre la partie", "Retour au goban", Pal::GOOD, true);
+        slot_set(i++, tr("Reprendre la partie"), tr("Retour au goban"), Pal::GOOD, true);
     } else if (gs->save.has_game) {
         char d[48];
-        snprintf(d, sizeof(d), "%dx%d, coup %u", (int) gs->save.n, (int) gs->save.n,
+        snprintf(d, sizeof(d), tr("%dx%d, coup %u"), (int) gs->save.n, (int) gs->save.n,
                  (unsigned) gs->save.move_no);
-        slot_set(i++, "Reprendre la sauvegarde", d, Pal::GOOD, true);
+        slot_set(i++, tr("Reprendre la sauvegarde"), d, Pal::GOOD, true);
     }
-    slot_set(i++, "Nouvelle partie", "Taille, mode, niveau, handicap", Pal::ACCENT, true);
-    slot_set(i++, "Statistiques", "Bilan face au Tab", Pal::TXT, true);
-    slot_set(i++, "Reglages", "Confirmation, coordonnees, secousse", Pal::TXT_DIM, true);
-    slot_set(i++, "Quitter", "Retour a l'arcade", Pal::DANGER, true);
+    slot_set(i++, tr("Nouvelle partie"), tr("Taille, mode, niveau, handicap"), Pal::ACCENT, true);
+    slot_set(i++, tr("Statistiques"), tr("Bilan face au Tab"), Pal::TXT, true);
+    slot_set(i++, tr("Reglages"), tr("Confirmation, coordonnees, secousse"), Pal::TXT_DIM, true);
+    slot_set(i++, tr("Quitter"), tr("Retour a l'arcade"), Pal::DANGER, true);
     gs->slots.hide_from(i);
     flush(true);
 }
@@ -1100,15 +1103,15 @@ static void menu_pause() {
     g_state = ST_PAUSE;
     Ai::abort();
     char sub[64];
-    snprintf(sub, sizeof(sub), "%s  ·  %s  ·  coup %u", size_name(gs->cfg_size),
+    snprintf(sub, sizeof(sub), tr("%s  ·  %s  ·  coup %u"), size_name(gs->cfg_size),
              mode_name(gs->cfg_mode), (unsigned) gs->pos.move_no);
-    menu_open("Pause", sub, "Le goban vous attend.");
-    slot_set(0, "Reprendre la partie", "", Pal::GOOD, true);
-    slot_set(1, "Nouvelle partie", "Changer les reglages", Pal::ACCENT, true);
-    slot_set(2, "Abandonner", "L'adversaire gagne", Pal::DANGER, true);
-    slot_set(3, "Statistiques", "", Pal::TXT, true);
-    slot_set(4, "Reglages", "", Pal::TXT_DIM, true);
-    slot_set(5, "Quitter le jeu", "La partie est sauvegardee", Pal::TXT_MUTED, true);
+    menu_open(tr("Pause"), sub, tr("Le goban vous attend."));
+    slot_set(0, tr("Reprendre la partie"), "", Pal::GOOD, true);
+    slot_set(1, tr("Nouvelle partie"), tr("Changer les reglages"), Pal::ACCENT, true);
+    slot_set(2, tr_ctx("plateau", "Abandonner"), tr("L'adversaire gagne"), Pal::DANGER, true);
+    slot_set(3, tr("Statistiques"), "", Pal::TXT, true);
+    slot_set(4, tr("Reglages"), "", Pal::TXT_DIM, true);
+    slot_set(5, tr("Quitter le jeu"), tr("La partie est sauvegardee"), Pal::TXT_MUTED, true);
     gs->slots.hide_from(6);
     stash_position();
     flush(true);
@@ -1118,75 +1121,75 @@ static void menu_setup() {
     g_state = ST_MENU_SETUP;
     char sub[80], b[64];
     snprintf(sub, sizeof(sub), "%s  ·  %s", size_name(gs->cfg_size), mode_name(gs->cfg_mode));
-    menu_open("Nouvelle partie", sub, "Touchez une ligne pour changer sa valeur.");
+    menu_open(tr("Nouvelle partie"), sub, tr("Touchez une ligne pour changer sa valeur."));
 
-    slot_set(0, size_name(gs->cfg_size), "Taille du goban  —  9x9 / 13x13 / 19x19",
+    slot_set(0, size_name(gs->cfg_size), tr("Taille du goban  —  9x9 / 13x13 / 19x19"),
              Pal::WOOD, true);
-    slot_set(1, mode_name(gs->cfg_mode), "Adversaire", Pal::THINK, true);
+    slot_set(1, mode_name(gs->cfg_mode), tr("Adversaire"), Pal::THINK, true);
 
-    snprintf(b, sizeof(b), "Vous jouez %s", gs->cfg_human == BLACK ? "Noir (premier)" : "Blanc");
-    slot_set(2, b, "Couleur du joueur", Pal::TXT, gs->cfg_mode == 0);
+    snprintf(b, sizeof(b), tr("Vous jouez %s"), tr(gs->cfg_human == BLACK ? "Noir (premier)" : "Blanc"));
+    slot_set(2, b, tr("Couleur du joueur"), Pal::TXT, gs->cfg_mode == 0);
 
-    snprintf(b, sizeof(b), "Niveau : %s", level_name(gs->cfg_level));
-    slot_set(3, b, "Force du Tab", Pal::ACCENT, gs->cfg_mode != 1);
+    snprintf(b, sizeof(b), tr("Niveau : %s"), level_name(gs->cfg_level));
+    slot_set(3, b, tr("Force du Tab"), Pal::ACCENT, gs->cfg_mode != 1);
 
-    if (gs->cfg_hcap >= 2) snprintf(b, sizeof(b), "Handicap : %d pierres", (int) gs->cfg_hcap);
-    else                 snprintf(b, sizeof(b), "Handicap : aucun");
-    slot_set(4, b, "Pierres offertes a Noir (Blanc commence)", Pal::WOOD, gs->cfg_mode == 0);
+    if (gs->cfg_hcap >= 2) snprintf(b, sizeof(b), tr("Handicap : %d pierres"), (int) gs->cfg_hcap);
+    else                 snprintf(b, sizeof(b), "%s", tr("Handicap : aucun"));
+    slot_set(4, b, tr("Pierres offertes a Noir (Blanc commence)"), Pal::WOOD, gs->cfg_mode == 0);
 
-    slot_set(5, "Jouer !",
-             effective_komi() == KOMI_HCAP ? "Komi 0,5 pour Blanc" : "Komi 6,5 pour Blanc",
+    slot_set(5, tr("Jouer !"),
+             tr(effective_komi() == KOMI_HCAP ? "Komi 0,5 pour Blanc" : "Komi 6,5 pour Blanc"),
              Pal::GOOD, true);
-    slot_set(6, "Retour", "", Pal::TXT_MUTED, true);
+    slot_set(6, tr("Retour"), "", Pal::TXT_MUTED, true);
 }
 
 static void menu_stats() {
     g_state = ST_MENU_STATS;
     char sub[64];
     const unsigned mins = (unsigned) (gs->save.total_ms / 60000u);
-    snprintf(sub, sizeof(sub), "%u parties  ·  %u min de jeu",
+    snprintf(sub, sizeof(sub), tr("%u parties  ·  %u min de jeu"),
              (unsigned) gs->save.games, mins);
-    menu_open("Statistiques", sub, "Comptabilise uniquement le mode Joueur contre Tab.");
+    menu_open(tr("Statistiques"), sub, tr("Comptabilise uniquement le mode Joueur contre Tab."));
 
     char t[64], d[64];
     const uint8_t s = gs->stats_size < GO_N_SIZES ? gs->stats_size : 0;
     for (int lv = 0; lv < GO_N_LEVELS; lv++) {
         const unsigned w = gs->save.wins[s][lv], dr = gs->save.draws[s][lv], l = gs->save.losses[s][lv];
         snprintf(t, sizeof(t), "%s", level_name((uint8_t) lv));
-        snprintf(d, sizeof(d), "%u victoire%s  ·  %u nulle%s  ·  %u defaite%s",
+        snprintf(d, sizeof(d), tr("%u victoire%s  ·  %u nulle%s  ·  %u defaite%s"),
                  w, w > 1 ? "s" : "", dr, dr > 1 ? "s" : "", l, l > 1 ? "s" : "");
         slot_set(lv, t, d, w > l ? Pal::GOOD : Pal::TXT, true);
     }
-    snprintf(t, sizeof(t), "Taille affichee : %s", size_name(s));
-    slot_set(4, t, "Toucher pour changer", Pal::WOOD, true);
-    slot_set(5, "Remettre les compteurs a zero", "Irreversible", Pal::DANGER, true);
-    slot_set(6, "Retour", "", Pal::TXT_MUTED, true);
+    snprintf(t, sizeof(t), tr("Taille affichee : %s"), size_name(s));
+    slot_set(4, t, tr("Toucher pour changer"), Pal::WOOD, true);
+    slot_set(5, tr("Remettre les compteurs a zero"), tr("Irreversible"), Pal::DANGER, true);
+    slot_set(6, tr("Retour"), "", Pal::TXT_MUTED, true);
 }
 
 static void menu_opts() {
     g_state = ST_MENU_OPTS;
-    menu_open("Reglages", "Options locales, conservees dans le Tab", "");
-    slot_set(0, gs->save.opt_confirm ? "Confirmation du coup : ACTIVEE"
-                                   : "Confirmation du coup : DESACTIVEE",
-             "Un premier toucher place un fantome, le second valide", Pal::ACCENT, true);
-    slot_set(1, gs->save.opt_coords ? "Coordonnees : AFFICHEES" : "Coordonnees : MASQUEES",
-             "Lettres A..T et chiffres autour du goban", Pal::TXT, true);
-    slot_set(2, gs->save.opt_lastmark ? "Dernier coup : MARQUE" : "Dernier coup : NON MARQUE",
-             "Anneau rouge sur la derniere pierre posee", Pal::TXT, true);
-    slot_set(3, gs->save.opt_terr ? "Apercu du territoire : ACTIVE" : "Apercu du territoire : DESACTIVE",
-             "Pastilles de territoire pendant le comptage", Pal::TXT, true);
-    slot_set(4, gs->save.opt_shake ? "Secousse = indice : ACTIVE" : "Secousse = indice : DESACTIVE",
-             "Detection BMI270", Pal::TXT_DIM, true);
-    slot_set(5, "Retour", "", Pal::TXT_MUTED, true);
+    menu_open(tr("Reglages"), tr("Options locales, conservees dans le Tab"), "");
+    slot_set(0, gs->save.opt_confirm ? tr("Confirmation du coup : ACTIVEE")
+                                     : tr("Confirmation du coup : DESACTIVEE"),
+             tr("Un premier toucher place un fantome, le second valide"), Pal::ACCENT, true);
+    slot_set(1, tr(gs->save.opt_coords ? "Coordonnees : AFFICHEES" : "Coordonnees : MASQUEES"),
+             tr("Lettres A..T et chiffres autour du goban"), Pal::TXT, true);
+    slot_set(2, tr(gs->save.opt_lastmark ? "Dernier coup : MARQUE" : "Dernier coup : NON MARQUE"),
+             tr("Anneau rouge sur la derniere pierre posee"), Pal::TXT, true);
+    slot_set(3, tr(gs->save.opt_terr ? "Apercu du territoire : ACTIVE" : "Apercu du territoire : DESACTIVE"),
+             tr("Pastilles de territoire pendant le comptage"), Pal::TXT, true);
+    slot_set(4, tr(gs->save.opt_shake ? "Secousse = indice : ACTIVE" : "Secousse = indice : DESACTIVE"),
+             tr("Detection BMI270"), Pal::TXT_DIM, true);
+    slot_set(5, tr("Retour"), "", Pal::TXT_MUTED, true);
     gs->slots.hide_from(6);
 }
 
 static void menu_confirm_reset() {
     g_state = ST_CONFIRM_RESET;
-    menu_open("Effacer les statistiques ?", "Victoires, nulles et defaites de toutes les tailles",
-              "Cette action est definitive.");
-    slot_set(0, "Oui, tout effacer", "", Pal::DANGER, true);
-    slot_set(1, "Annuler", "", Pal::TXT_MUTED, true);
+    menu_open(tr("Effacer les statistiques ?"), tr("Victoires, nulles et defaites de toutes les tailles"),
+              tr("Cette action est definitive."));
+    slot_set(0, tr("Oui, tout effacer"), "", Pal::DANGER, true);
+    slot_set(1, tr("Annuler"), "", Pal::TXT_MUTED, true);
     gs->slots.hide_from(2);
 }
 
@@ -1203,40 +1206,40 @@ static void show_score_card() {
     show(gs->card, true);
 
     char b[80];
-    if (gs->winner == 0) { set_text_if(gs->card_title, "Noir l'emporte"); set_text_color_if(gs->card_title, Pal::TXT); }
-    else if (gs->winner == 1) { set_text_if(gs->card_title, "Blanc l'emporte"); set_text_color_if(gs->card_title, Pal::TXT); }
-    else { set_text_if(gs->card_title, "Partie nulle"); set_text_color_if(gs->card_title, Pal::ACCENT); }
+    if (gs->winner == 0) { set_text_if(gs->card_title, tr("Noir l'emporte")); set_text_color_if(gs->card_title, Pal::TXT); }
+    else if (gs->winner == 1) { set_text_if(gs->card_title, tr("Blanc l'emporte")); set_text_color_if(gs->card_title, Pal::TXT); }
+    else { set_text_if(gs->card_title, tr("Partie nulle")); set_text_color_if(gs->card_title, Pal::ACCENT); }
 
     if (gs->resigned) {
-        snprintf(b, sizeof(b), "Abandon  —  comptage indicatif : %.1f contre %.1f",
+        snprintf(b, sizeof(b), tr("Abandon  —  comptage indicatif : %.1f contre %.1f"),
                  (double) gs->score.black, (double) gs->score.white);
     } else {
         const float diff = gs->score.black - gs->score.white;
         const float ad = diff < 0 ? -diff : diff;
-        snprintf(b, sizeof(b), "%.1f  contre  %.1f      (ecart %.1f)",
+        snprintf(b, sizeof(b), tr("%.1f  contre  %.1f      (ecart %.1f)"),
                  (double) gs->score.black, (double) gs->score.white, (double) ad);
     }
     set_text_if(gs->card_sub, b);
 
-    snprintf(b, sizeof(b), "Noir   pierres %d   territoire %d", gs->score.black_stones, gs->score.black_terr);
+    snprintf(b, sizeof(b), tr("Noir   pierres %d   territoire %d"), gs->score.black_stones, gs->score.black_terr);
     set_text_if(gs->card_line[0], b);
-    snprintf(b, sizeof(b), "Blanc  pierres %d   territoire %d   komi %.1f",
+    snprintf(b, sizeof(b), tr("Blanc  pierres %d   territoire %d   komi %.1f"),
              gs->score.white_stones, gs->score.white_terr, (double) effective_komi());
     set_text_if(gs->card_line[1], b);
-    snprintf(b, sizeof(b), "Groupes morts retires : %d noirs, %d blancs",
+    snprintf(b, sizeof(b), tr("Groupes morts retires : %d noirs, %d blancs"),
              gs->score.black_dead, gs->score.white_dead);
     set_text_if(gs->card_line[2], b);
-    snprintf(b, sizeof(b), "Points neutres (dame) : %d", gs->score.dame);
+    snprintf(b, sizeof(b), tr("Points neutres (dame) : %d"), gs->score.dame);
     set_text_if(gs->card_line[3], b);
-    snprintf(b, sizeof(b), "Prisonniers de la partie : Noir %u, Blanc %u",
+    snprintf(b, sizeof(b), tr("Prisonniers de la partie : Noir %u, Blanc %u"),
              (unsigned) gs->pos.captured_by_black, (unsigned) gs->pos.captured_by_white);
     set_text_if(gs->card_line[4], b);
-    snprintf(b, sizeof(b), "%s  ·  %s  ·  %u coups", size_name(gs->cfg_size),
+    snprintf(b, sizeof(b), tr("%s  ·  %s  ·  %u coups"), size_name(gs->cfg_size),
              mode_name(gs->cfg_mode), (unsigned) gs->pos.move_no);
     set_text_if(gs->card_line[5], b);
 
-    set_text_if(gs->card_btn_lbl[0], "Revanche");
-    set_text_if(gs->card_btn_lbl[1], "Menu principal");
+    set_text_if(gs->card_btn_lbl[0], tr("Revanche"));
+    set_text_if(gs->card_btn_lbl[1], tr("Menu principal"));
 }
 
 // ===========================================================================
@@ -1281,7 +1284,7 @@ static void on_board_tap(int x, int y) {
     }
     if (!Engine::is_legal(gs->pos, sq)) {
         gs->pending = -1;
-        msg(gs->pos.sq[sq] != EMPTY ? "Intersection occupee" : "Coup interdit (ko ou suicide)");
+        msg(tr(gs->pos.sq[sq] != EMPTY ? "Intersection occupee" : "Coup interdit (ko ou suicide)"));
         refresh_all();
         return;
     }
@@ -1518,7 +1521,7 @@ static void build_ui() {
 
     gs->p_title = mk_label(gs->panel, gs->ui.f_small, Pal::ACCENT);
     lv_obj_set_pos(gs->p_title, 16, 12);
-    set_text_if(gs->p_title, "COUPS");
+    set_text_if(gs->p_title, tr("COUPS"));
     gs->p_head[0] = mk_label(gs->panel, gs->ui.f_small, Pal::TXT_MUTED);
     lv_obj_set_pos(gs->p_head[0], 108, 12);
     gs->p_head[1] = mk_label(gs->panel, gs->ui.f_small, Pal::TXT_MUTED);
@@ -1561,7 +1564,8 @@ static void build_ui() {
     lv_obj_center(gs->btn_ok_lbl);
     show(gs->btn_ok, false);
 
-    static const char* const BTN0[4] = {"Passer", "Annuler", "Indice", "Menu"};
+    // Mêmes libellés que PLAY_LBL (render_panel_buttons) : « Annuler » = Undo, via tr_ctx.
+    static const char* const BTN0[4] = {tr_noop("Passer"), "Annuler", tr_noop("Indice"), "Menu"};
     for (int i = 0; i < 4; i++) {
         gs->btn[i] = mk_rect(gs->panel);
         lv_obj_set_pos(gs->btn[i], (i & 1) ? 154 : 16, 500 + (i >> 1) * 68);
@@ -1573,7 +1577,7 @@ static void build_ui() {
         lv_obj_add_flag(gs->btn[i], LV_OBJ_FLAG_CLICKABLE);
         lv_obj_add_event_cb(gs->btn[i], btn_cb, LV_EVENT_CLICKED, (void*) (intptr_t) i);
         gs->btn_lbl[i] = mk_label(gs->btn[i], gs->ui.f_small, Pal::TXT);
-        set_text_if(gs->btn_lbl[i], BTN0[i]);
+        set_text_if(gs->btn_lbl[i], i == 1 ? tr_ctx("coup", "Annuler") : tr(BTN0[i]));
         lv_obj_center(gs->btn_lbl[i]);
     }
 
@@ -1627,7 +1631,7 @@ static void build_ui() {
         lv_obj_set_style_text_align(gs->card_line[i], LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
         lv_obj_set_pos(gs->card_line[i], 30, 148 + i * 32);
     }
-    static const char* const CBTN[2] = {"Revanche", "Menu principal"};
+    static const char* const CBTN[2] = {tr_noop("Revanche"), tr_noop("Menu principal")};
     for (int i = 0; i < 2; i++) {
         gs->card_btn[i] = mk_rect(gs->card);
         lv_obj_set_pos(gs->card_btn[i], 60 + i * 380, 380);
@@ -1640,7 +1644,7 @@ static void build_ui() {
         lv_obj_add_event_cb(gs->card_btn[i], card_btn_cb, LV_EVENT_CLICKED, (void*) (intptr_t) i);
         gs->card_btn_lbl[i] = mk_label(gs->card_btn[i], gs->ui.f_mid,
                                      i == 0 ? Pal::ACCENT : Pal::TXT);
-        set_text_if(gs->card_btn_lbl[i], CBTN[i]);
+        set_text_if(gs->card_btn_lbl[i], tr(CBTN[i]));
         lv_obj_center(gs->card_btn_lbl[i]);
     }
 }
@@ -1682,7 +1686,7 @@ static void tick_cb(lv_timer_t*) {
         if (Ai::ready() && (now - gs->think_t0) >= MIN_THINK_MS) {
             const int sq = Ai::best_sq();
             if (sq == Ai::RESIGN) {
-                msg("Le Tab abandonne");
+                msg(tr("Le Tab abandonne"));
                 resign(gs->pos.side);
                 return;
             }

@@ -134,6 +134,11 @@ struct AiLevel {
 static constexpr int AI_NLEVELS = 5;
 extern const AiLevel AI_LEVELS[AI_NLEVELS];
 
+// Nom du niveau `l` tel qu'affiche, dans la langue de l'ecran (lot 4b) : a utiliser a
+// la place de AI_LEVELS[l].name partout ou le nom s'affiche (contexte « echecs », la
+// « Dame » des echecs n'etant pas celle des dames). Hors bornes : "".
+const char* level_name(int l);
+
 // ===========================================================================
 // 3. API du moteur
 // ===========================================================================
@@ -197,8 +202,9 @@ bool perft_selftest(int depth);
 // 4. Notation
 // ===========================================================================
 
-// SAN francais (R D T F C, pas de lettre pour les pions), avec desambiguisation,
-// « x », « =D », « + » / « # » et « O-O » / « O-O-O ».
+// SAN dans la langue de l'ecran (R D T F C en francais, K Q R B N en anglais ; pas de
+// lettre pour les pions), avec desambiguisation, « x », « =D », « + » / « # » et
+// « O-O » / « O-O-O ».
 // `before` = position AVANT le coup. `cap` >= 12.
 void move_to_san(const Position& before, const Move& m, char* out, int cap);
 

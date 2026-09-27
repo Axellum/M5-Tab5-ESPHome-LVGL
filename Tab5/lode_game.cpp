@@ -78,12 +78,13 @@ struct SpeedDef {
     int16_t     fall;   // px/tick en chute (toujours > run : la chute reste franche)
     const char* desc;
 };
+// Textes affiches : marques tr_noop(), traduits a l'affichage par tr() (lot 4b).
 static const SpeedDef SPEEDS[LODE_N_SPEEDS] = {
-    {"Normale",     "",          5, 14, "4,4 cases/s - rythme d'origine"},
-    {"Vive",        "vive",      6, 14, "5,7 cases/s"},
-    {"Rapide",      "rapide",    7, 14, "6,7 cases/s"},
-    {"Tres rapide", "t.rapide",  9, 21, "8,0 cases/s"},
-    {"Fulgurante",  "fulgur.",  11, 21, "10,0 cases/s - reflexes exiges"},
+    {tr_noop("Normale"),     "",                   5, 14, tr_noop("4,4 cases/s - rythme d'origine")},
+    {tr_noop("Vive"),        tr_noop("vive"),      6, 14, tr_noop("5,7 cases/s")},
+    {tr_noop("Rapide"),      tr_noop("rapide"),    7, 14, tr_noop("6,7 cases/s")},
+    {tr_noop("Tres rapide"), tr_noop("t.rapide"),  9, 21, tr_noop("8,0 cases/s")},
+    {tr_noop("Fulgurante"),  tr_noop("fulgur."),  11, 21, tr_noop("10,0 cases/s - reflexes exiges")},
 };
 // Valeurs actives : Mem::run_speed / Mem::fall_speed (section 4), relues depuis
 // la sauvegarde par apply_speed() a chaque ouverture.
@@ -343,13 +344,15 @@ static const char* const MAP10[GRID_H] = {
     "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@",
 };
 
+// Noms affiches : marques tr_noop(), traduits a l'affichage par tr() (lot 4b).
+// Les cartes MAPn ci-dessus, elles, ne se traduisent jamais (check_lode_levels.py).
 struct LevelDef { const char* name; const char* const* rows; };
 static const LevelDef LEVELS[LODE_N_LEVELS] = {
-    {"Premier filon", MAP1},  {"Escalier",    MAP2},
-    {"Le pendu",      MAP3},  {"Le puits",    MAP4},
-    {"Le peigne",     MAP5},  {"Faux chemin", MAP6},
-    {"Le nid",        MAP7},  {"Cathedrale",  MAP8},
-    {"Dedale",        MAP9},  {"Coffre-fort", MAP10},
+    {tr_noop("Premier filon"), MAP1},  {tr_noop("Escalier"),    MAP2},
+    {tr_noop("Le pendu"),      MAP3},  {tr_noop("Le puits"),    MAP4},
+    {tr_noop("Le peigne"),     MAP5},  {tr_noop("Faux chemin"), MAP6},
+    {tr_noop("Le nid"),        MAP7},  {tr_noop("Cathedrale"),  MAP8},
+    {tr_noop("Dedale"),        MAP9},  {tr_noop("Coffre-fort"), MAP10},
 };
 
 // ===========================================================================
@@ -489,7 +492,8 @@ struct Mem {
 };
 static Mem* gs = nullptr;
 
-static const char* const CTRL_NAME[3] = {"Boutons", "Inclinaison", "Mixte"};
+// Traduits a l'affichage : tr(CTRL_NAME[i]).
+static const char* const CTRL_NAME[3] = {tr_noop("Boutons"), tr_noop("Inclinaison"), tr_noop("Mixte")};
 
 static void go_hub();
 static void go_levels();
@@ -785,7 +789,7 @@ static void build_ui() {
     }
     for (int i = 4; i < 6; i++) {
         lv_obj_t* l = mk_label(gs->padbtn[i], gs->ui.f_small, Pal::BRICK_HI);
-        lv_label_set_text(l, "CREUSER");
+        lv_label_set_text(l, tr("CREUSER"));
         lv_obj_align(l, LV_ALIGN_CENTER, 0, 26);
     }
 
@@ -1045,7 +1049,7 @@ static void open_exit() {
             int16_t oi = gs->cellobj[y * GRID_W + x];
             if (oi >= 0) show(gs->tobj[oi], true);
         }
-    toast("Sortie ouverte ! Grimpe tout en haut.");
+    toast(tr("Sortie ouverte ! Grimpe tout en haut."));
     sfx(3);
 }
 
@@ -1431,14 +1435,14 @@ static void show_clear() {
     slot_layout_default();
     bool last = (gs->level + 1 >= LODE_N_LEVELS);
     char sub[96];
-    snprintf(sub, sizeof(sub), "Niveau %d - %s", gs->level + 1, LEVELS[gs->level].name);
+    snprintf(sub, sizeof(sub), tr("Niveau %d - %s"), gs->level + 1, tr(LEVELS[gs->level].name));
     char body[160];
-    snprintf(body, sizeof(body), "Score : %lu     Vies : %d",
+    snprintf(body, sizeof(body), tr("Score : %lu     Vies : %d"),
              (unsigned long) gs->score, gs->lives);
     body_center();
-    panel_text(last ? "TOUS LES NIVEAUX !" : "NIVEAU TERMINE", sub, body, "");
-    gs->slots.row(0, last ? "Voir le classement" : "Niveau suivant", nullptr, Pal::LADDER, true);
-    gs->slots.row(1, "Retour au hub", nullptr, Pal::TXT, true);
+    panel_text(tr(last ? "TOUS LES NIVEAUX !" : "NIVEAU TERMINE"), sub, body, "");
+    gs->slots.row(0, tr(last ? "Voir le classement" : "Niveau suivant"), nullptr, Pal::LADDER, true);
+    gs->slots.row(1, tr("Retour au hub"), nullptr, Pal::TXT, true);
     gs->slots.hide_from(2);
     panel_on(true);
 }
@@ -1449,15 +1453,15 @@ static void show_gameover() {
     pad_sync();
     slot_layout_default();
     char sub[96];
-    snprintf(sub, sizeof(sub), "Niveau %d - %s", gs->level + 1, LEVELS[gs->level].name);
+    snprintf(sub, sizeof(sub), tr("Niveau %d - %s"), gs->level + 1, tr(LEVELS[gs->level].name));
     char body[160];
-    snprintf(body, sizeof(body), "Score : %lu%s",
-             (unsigned long) gs->score, gs->offrank ? "   (hors classement)" : "");
+    snprintf(body, sizeof(body), tr("Score : %lu%s"),
+             (unsigned long) gs->score, gs->offrank ? tr("   (hors classement)") : "");
     body_center();
-    panel_text("PARTIE TERMINEE", sub, body, "");
-    gs->slots.row(0, "Rejouer", nullptr, Pal::GOLD, true);
-    gs->slots.row(1, "Classement", nullptr, Pal::LADDER, true);
-    gs->slots.row(2, "Retour au hub", nullptr, Pal::TXT, true);
+    panel_text(tr("PARTIE TERMINEE"), sub, body, "");
+    gs->slots.row(0, tr("Rejouer"), nullptr, Pal::GOLD, true);
+    gs->slots.row(1, tr("Classement"), nullptr, Pal::LADDER, true);
+    gs->slots.row(2, tr("Retour au hub"), nullptr, Pal::TXT, true);
     gs->slots.hide_from(3);
     panel_on(true);
 }
@@ -1511,7 +1515,7 @@ static void start_level(int idx, bool new_run) {
     panel_on(false);
     pad_sync();
     char t[96];
-    snprintf(t, sizeof(t), "Niveau %d - %s", idx + 1, LEVELS[idx].name);
+    snprintf(t, sizeof(t), tr("Niveau %d - %s"), idx + 1, tr(LEVELS[idx].name));
     toast(t);
 }
 
@@ -1543,25 +1547,27 @@ static void update_imu_dir() {
 
 static void update_hud() {
     char buf[64];
-    hud_num(gs->hud_score, gs->c_score, (unsigned long) gs->score, "Score %lu");
+    // tr() : ~11 strcmp par appel, 2 par tick pour les hud_num (format passe
+    // a chaque appel), les autres seulement quand leur valeur change.
+    hud_num(gs->hud_score, gs->c_score, (unsigned long) gs->score, tr("Score %lu"));
     if (gs->lives != gs->c_lives) {
         gs->c_lives = gs->lives;
-        if (gs->save.assist) set_text_if(gs->hud_lives, "Vies  oo");
-        else { snprintf(buf, sizeof(buf), "Vies  %d", gs->lives); set_text_if(gs->hud_lives, buf); }
+        if (gs->save.assist) set_text_if(gs->hud_lives, tr("Vies  oo"));
+        else { snprintf(buf, sizeof(buf), tr("Vies  %d"), gs->lives); set_text_if(gs->hud_lives, buf); }
     }
     if (gs->level != gs->c_level) {
         gs->c_level = gs->level;
-        snprintf(buf, sizeof(buf), "Niveau %d/%d  %s",
-                 gs->level + 1, LODE_N_LEVELS, LEVELS[gs->level].name);
+        snprintf(buf, sizeof(buf), tr("Niveau %d/%d  %s"),
+                 gs->level + 1, LODE_N_LEVELS, tr(LEVELS[gs->level].name));
         set_text_if(gs->hud_level, buf);
     }
     if (gs->gold_left != gs->c_gold) {
         gs->c_gold = gs->gold_left;
-        if (gs->gold_left > 0) snprintf(buf, sizeof(buf), "Or restant %d", gs->gold_left);
-        else                 snprintf(buf, sizeof(buf), "SORTIE OUVERTE");
+        if (gs->gold_left > 0) snprintf(buf, sizeof(buf), tr("Or restant %d"), gs->gold_left);
+        else                 snprintf(buf, sizeof(buf), "%s", tr("SORTIE OUVERTE"));
         set_text_if(gs->hud_gold, buf);
     }
-    hud_num(gs->hud_best, gs->c_best, (unsigned long) gs->save.best, "Record %lu");
+    hud_num(gs->hud_best, gs->c_best, (unsigned long) gs->save.best, tr("Record %lu"));
 }
 
 static void tick_cb(lv_timer_t*) {
@@ -1623,23 +1629,24 @@ static void go_hub() {
     g_state = ST_HUB;
     pad_sync();
     slot_layout_default();
-    panel_text("COUREUR D'OR", "Ramasse tout l'or, echappe aux gardes, grimpe en haut.", "",
-               "Pendant une partie : touche le bandeau du haut pour mettre en pause.");
+    // « COUREUR D'OR » : nom de la console, jamais traduit (nom propre).
+    panel_text("COUREUR D'OR", tr("Ramasse tout l'or, echappe aux gardes, grimpe en haut."), "",
+               tr("Pendant une partie : touche le bandeau du haut pour mettre en pause."));
 
     char d0[96], d1[64], d2[64], d3[96];
     int startlvl = gs->save.unlocked;
-    snprintf(d0, sizeof(d0), "Niveau %d - %s", startlvl, LEVELS[startlvl - 1].name);
-    snprintf(d1, sizeof(d1), "%d/%d debloques", gs->save.unlocked, LODE_N_LEVELS);
-    snprintf(d2, sizeof(d2), "Meilleur score : %lu", (unsigned long) gs->save.best);
-    snprintf(d3, sizeof(d3), "Controle : %s   -   Vitesse : %s",
-             CTRL_NAME[gs->save.ctrl_mode],
-             SPEEDS[gs->save.speed < LODE_N_SPEEDS ? gs->save.speed : 0].name);
+    snprintf(d0, sizeof(d0), tr("Niveau %d - %s"), startlvl, tr(LEVELS[startlvl - 1].name));
+    snprintf(d1, sizeof(d1), tr("%d/%d debloques"), gs->save.unlocked, LODE_N_LEVELS);
+    snprintf(d2, sizeof(d2), tr("Meilleur score : %lu"), (unsigned long) gs->save.best);
+    snprintf(d3, sizeof(d3), tr("Controle : %s   -   Vitesse : %s"),
+             tr(CTRL_NAME[gs->save.ctrl_mode]),
+             tr(SPEEDS[gs->save.speed < LODE_N_SPEEDS ? gs->save.speed : 0].name));
 
-    gs->slots.row(0, "Jouer",      d0, Pal::GOLD,   true);
-    gs->slots.row(1, "Niveaux",    d1, Pal::LADDER, true);
-    gs->slots.row(2, "Classement", d2, Pal::BAR,    true);
-    gs->slots.row(3, "Reglages",   d3, Pal::TXT,    true);
-    gs->slots.row(4, "Quitter",    "Retour au tableau de bord", Pal::DANGER, true);
+    gs->slots.row(0, tr("Jouer"),      d0, Pal::GOLD,   true);
+    gs->slots.row(1, tr("Niveaux"),    d1, Pal::LADDER, true);
+    gs->slots.row(2, tr("Classement"), d2, Pal::BAR,    true);
+    gs->slots.row(3, tr("Reglages"),   d3, Pal::TXT,    true);
+    gs->slots.row(4, tr("Quitter"),    tr("Retour au tableau de bord"), Pal::DANGER, true);
     gs->slots.hide_from(5);
     panel_on(true);
 }
@@ -1648,16 +1655,19 @@ static void go_levels() {
     g_state = ST_LEVELS;
     pad_sync();
     slot_layout_default();
-    panel_text("NIVEAUX", "Un niveau se debloque en terminant le precedent.", "",
-               "Un niveau termine debloque le suivant, definitivement.");
+    panel_text(tr("NIVEAUX"), tr("Un niveau se debloque en terminant le precedent."), "",
+               tr("Un niveau termine debloque le suivant, definitivement."));
     auto& names = gs->levels_names;   // brouillon : le label copie le texte
+    // Traduits une fois pour la grille (10 entrees, a l'ouverture de l'ecran).
+    const char* txt_on  = tr("Jouable");
+    const char* txt_off = tr("Verrouille");
     for (int i = 0; i < LODE_N_LEVELS; i++) {
         bool on = (i < gs->save.unlocked);
-        snprintf(names[i], sizeof(names[i]), "%d. %s", i + 1, LEVELS[i].name);
-        slot_grid(i, names[i], on ? "Jouable" : "Verrouille",
+        snprintf(names[i], sizeof(names[i]), "%d. %s", i + 1, tr(LEVELS[i].name));
+        slot_grid(i, names[i], on ? txt_on : txt_off,
                   on ? Pal::LADDER : Pal::TXT_DIM, on);
     }
-    gs->slots.row(10, "Retour", nullptr, Pal::TXT, true);
+    gs->slots.row(10, tr("Retour"), nullptr, Pal::TXT, true);
     lv_obj_set_size(gs->slots.box[10], 300, 58);
     lv_obj_align(gs->slots.box[10], LV_ALIGN_BOTTOM_MID, 0, -56);
     gs->slots.hide_from(11);
@@ -1668,30 +1678,31 @@ static void go_settings() {
     g_state = ST_SETTINGS;
     pad_sync();
     slot_layout(176, 66, 60);   // 7 entrees : pile resserree
-    panel_text("REGLAGES", "Le Tab5 n'a pas de croix physique : ce sont des zones tactiles.", "",
-        "Un seul point de contact a la fois : en mode Boutons, on creuse a l'arret. "
-        "Le mode Mixte libere le doigt pour creuser en marchant.");
+    // Pied de page sur UNE ligne : tools/i18n_keys.py ne releve la cle d'un tr()
+    // que sur la ligne de l'appel (lot 4b).
+    panel_text(tr("REGLAGES"), tr("Le Tab5 n'a pas de croix physique : ce sont des zones tactiles."), "",
+        tr("Un seul point de contact a la fois : en mode Boutons, on creuse a l'arret. Le mode Mixte libere le doigt pour creuser en marchant."));
 
-    static const char* const CTRL_DESC[3] = {
-        "D-pad + 2 boutons creuser",
-        "Inclinaison 4 directions + 2 boutons creuser",
-        "Inclinaison ET D-pad, le doigt prime",
+    static const char* const CTRL_DESC[3] = {   // traduits a l'affichage : tr(CTRL_DESC[i])
+        tr_noop("D-pad + 2 boutons creuser"),
+        tr_noop("Inclinaison 4 directions + 2 boutons creuser"),
+        tr_noop("Inclinaison ET D-pad, le doigt prime"),
     };
     char d1[64], d2[96], d4[64];
-    snprintf(d1, sizeof(d1), "%d / 5 (plus haut = plus sensible)", gs->save.sensitivity + 1);
+    snprintf(d1, sizeof(d1), tr("%d / 5 (plus haut = plus sensible)"), gs->save.sensitivity + 1);
     const SpeedDef& sp = SPEEDS[gs->save.speed < LODE_N_SPEEDS ? gs->save.speed : 0];
-    snprintf(d2, sizeof(d2), "%s - %s", sp.name, sp.desc);
-    snprintf(d4, sizeof(d4), "%s - hors classement", gs->save.assist ? "Active" : "Desactive");
+    snprintf(d2, sizeof(d2), "%s - %s", tr(sp.name), tr(sp.desc));
+    snprintf(d4, sizeof(d4), tr("%s - hors classement"), tr(gs->save.assist ? "Active" : "Desactive"));
 
     char d0[96];
-    snprintf(d0, sizeof(d0), "%s : %s", CTRL_NAME[gs->save.ctrl_mode], CTRL_DESC[gs->save.ctrl_mode]);
-    gs->slots.row(0, "Controle",           d0, Pal::LADDER, true);
-    gs->slots.row(1, "Sensibilite",        d1, Pal::BAR, gs->save.ctrl_mode != 0);
-    gs->slots.row(2, "Vitesse",            d2, Pal::RUNNER, true);
-    gs->slots.row(3, "Calibrer a plat",    "Pose la tablette PUIS appuie", Pal::GOLD, true);
-    gs->slots.row(4, "Mode entrainement",  d4, Pal::TXT, true);
-    gs->slots.row(5, "Effacer scores et progression", "Irreversible", Pal::DANGER, true);
-    gs->slots.row(6, "Retour",             nullptr, Pal::TXT, true);
+    snprintf(d0, sizeof(d0), tr("%s : %s"), tr(CTRL_NAME[gs->save.ctrl_mode]), tr(CTRL_DESC[gs->save.ctrl_mode]));
+    gs->slots.row(0, tr("Controle"),           d0, Pal::LADDER, true);
+    gs->slots.row(1, tr("Sensibilite"),        d1, Pal::BAR, gs->save.ctrl_mode != 0);
+    gs->slots.row(2, tr("Vitesse"),            d2, Pal::RUNNER, true);
+    gs->slots.row(3, tr("Calibrer a plat"),    tr("Pose la tablette PUIS appuie"), Pal::GOLD, true);
+    gs->slots.row(4, tr("Mode entrainement"),  d4, Pal::TXT, true);
+    gs->slots.row(5, tr("Effacer scores et progression"), tr("Irreversible"), Pal::DANGER, true);
+    gs->slots.row(6, tr("Retour"),             nullptr, Pal::TXT, true);
     gs->slots.hide_from(7);
     panel_on(true);
 }
@@ -1703,8 +1714,12 @@ static void go_scores() {
     auto& body = gs->scores_body;     // brouillon : le label copie le texte
     int off = 0;
     if (gs->save.score_count == 0) {
-        snprintf(body, sizeof(body), "Aucun score enregistre pour l'instant.");
+        snprintf(body, sizeof(body), "%s", tr("Aucun score enregistre pour l'instant."));
     } else {
+        // Traduits une fois pour toute la table (lot 4b). « niv » = niveau atteint,
+        // « H.C. » = partie hors classement (mode entrainement).
+        const char* row_fmt = tr("%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n");
+        const char* off_tag = tr("H.C.");
         for (int i = 0; i < gs->save.score_count && off < (int) sizeof(body) - 90; i++) {
             const LodeScoreEntry& e = gs->save.scores[i];
             char when[24];
@@ -1712,11 +1727,10 @@ static void go_scores() {
             // Les entrees d'avant l'ajout du reglage portent 0 = « Normale »,
             // dont le tag est vide : leur ligne reste identique a avant.
             const char* stag = SPEEDS[e.speed < LODE_N_SPEEDS ? e.speed : 0].tag;
-            int w = snprintf(body + off, sizeof(body) - off,
-                             "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n",
+            int w = snprintf(body + off, sizeof(body) - off, row_fmt,
                              i + 1, (unsigned long) e.score, e.level,
-                             CTRL_NAME[e.ctrl_mode < 3 ? e.ctrl_mode : 0], when,
-                             stag, (e.flags & 1) ? "H.C." : "");
+                             tr(CTRL_NAME[e.ctrl_mode < 3 ? e.ctrl_mode : 0]), when,
+                             tr(stag), (e.flags & 1) ? off_tag : "");
             // snprintf renvoie la longueur VOULUE : on borne pour ne jamais
             // pousser `off` au-dela du tampon en cas de troncature.
             if (w < 0) break;
@@ -1727,10 +1741,10 @@ static void go_scores() {
     // Le classement est une colonne : aligne a gauche, contrairement aux autres
     // ecrans dont le corps est une phrase centree.
     lv_obj_set_style_text_align(gs->p_body, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    panel_text("CLASSEMENT", "Top 10 local - conserve en NVS, survit aux reboots et aux OTA.", body, "");
-    gs->slots.row(0, "Effacer les scores", "Demande confirmation", Pal::DANGER, true);
+    panel_text(tr("CLASSEMENT"), tr("Top 10 local - conserve en NVS, survit aux reboots et aux OTA."), body, "");
+    gs->slots.row(0, tr("Effacer les scores"), tr("Demande confirmation"), Pal::DANGER, true);
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -136);
-    gs->slots.row(1, "Retour", nullptr, Pal::TXT, true);
+    gs->slots.row(1, tr("Retour"), nullptr, Pal::TXT, true);
     lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -60);
     gs->slots.hide_from(2);
     panel_on(true);
@@ -1741,10 +1755,10 @@ static void go_confirm() {
     pad_sync();
     slot_layout_default();
     body_center();
-    panel_text("TOUT EFFACER ?", "Scores, meilleur score ET progression des niveaux.",
-               "Cette action est irreversible.", "");
-    gs->slots.row(0, "Oui, tout effacer", nullptr, Pal::DANGER, true);
-    gs->slots.row(1, "Annuler",           nullptr, Pal::TXT, true);
+    panel_text(tr("TOUT EFFACER ?"), tr("Scores, meilleur score ET progression des niveaux."),
+               tr("Cette action est irreversible."), "");
+    gs->slots.row(0, tr("Oui, tout effacer"), nullptr, Pal::DANGER, true);
+    gs->slots.row(1, tr("Annuler"),           nullptr, Pal::TXT, true);
     gs->slots.hide_from(2);
     panel_on(true);
 }
@@ -1754,24 +1768,24 @@ static void show_pause() {
     pad_sync();
     slot_layout_default();
     char sub[96];
-    snprintf(sub, sizeof(sub), "Niveau %d - %s", gs->level + 1, LEVELS[gs->level].name);
+    snprintf(sub, sizeof(sub), tr("Niveau %d - %s"), gs->level + 1, tr(LEVELS[gs->level].name));
     char body[160];
-    snprintf(body, sizeof(body), "Score : %lu     Vies : %d     Or restant : %d",
+    snprintf(body, sizeof(body), tr("Score : %lu     Vies : %d     Or restant : %d"),
              (unsigned long) gs->score, gs->lives, gs->gold_left);
     body_center();
-    panel_text("PAUSE", sub, body, "");
+    panel_text(tr("PAUSE"), sub, body, "");
     // La vitesse est reglable ici aussi : elle prend effet des la reprise, sans
     // repasser par le hub ni perdre la partie en cours.
     char dv[96];
     const SpeedDef& sp = SPEEDS[gs->save.speed < LODE_N_SPEEDS ? gs->save.speed : 0];
-    snprintf(dv, sizeof(dv), "%s - %s", sp.name, sp.desc);
+    snprintf(dv, sizeof(dv), "%s - %s", tr(sp.name), tr(sp.desc));
 
-    gs->slots.row(0, "Reprendre",            nullptr, Pal::LADDER, true);
-    gs->slots.row(1, "Recalibrer a plat",    "Pose la tablette PUIS appuie", Pal::GOLD,
+    gs->slots.row(0, tr("Reprendre"),            nullptr, Pal::LADDER, true);
+    gs->slots.row(1, tr("Recalibrer a plat"),    tr("Pose la tablette PUIS appuie"), Pal::GOLD,
                   gs->save.ctrl_mode != 0);
-    gs->slots.row(2, "Vitesse",              dv, Pal::RUNNER, true);
-    gs->slots.row(3, "Relancer le niveau",   "Sans perdre de vie", Pal::BAR, true);
-    gs->slots.row(4, "Quitter la partie",    "Le score est enregistre", Pal::DANGER, true);
+    gs->slots.row(2, tr("Vitesse"),              dv, Pal::RUNNER, true);
+    gs->slots.row(3, tr("Relancer le niveau"),   tr("Sans perdre de vie"), Pal::BAR, true);
+    gs->slots.row(4, tr("Quitter la partie"),    tr("Le score est enregistre"), Pal::DANGER, true);
     gs->slots.hide_from(5);
     panel_on(true);
 }
@@ -1825,7 +1839,7 @@ static void slot_event_cb(lv_event_t* e) {
                 persist_save(); go_settings();
             } else if (i == 3) {
                 calibrate();
-                set_text_if(gs->p_sub, "Calibration prise.");
+                set_text_if(gs->p_sub, tr("Calibration prise."));
             } else if (i == 4) {
                 gs->save.assist = gs->save.assist ? 0 : 1;
                 persist_save(); go_settings();
@@ -1856,7 +1870,7 @@ static void slot_event_cb(lv_event_t* e) {
 
         case ST_PAUSED:
             if (i == 0) { g_state = ST_PLAYING; panel_on(false); pad_sync(); }
-            else if (i == 1) { calibrate(); set_text_if(gs->p_sub, "Calibration prise."); }
+            else if (i == 1) { calibrate(); set_text_if(gs->p_sub, tr("Calibration prise.")); }
             else if (i == 2) {
                 // Prise d'effet immediate : gs->run_speed est relu a chaque pas.
                 gs->save.speed = (uint8_t) ((gs->save.speed + 1) % LODE_N_SPEEDS);

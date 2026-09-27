@@ -77,16 +77,17 @@ static const uint32_t DEMO_DELAY[3] = {1100, 550, 160};
 
 // Pendules proposees. 0 = sans limite. L'increment Fischer n'existe que sur la
 // derniere entree (15 min + 10 s par coup).
+// Noms de ces tables marqués tr_noop() (lot 4b) : traduits à l'affichage, tr(CLOCKS[i].name).
 struct ClockOpt { const char* name; uint32_t base_ms; uint32_t inc_ms; };
 static const ClockOpt CLOCKS[4] = {
-    {"Sans limite",     0,          0},
-    {"Blitz 5 min",     5u * 60000, 0},
-    {"Rapide 10 min",  10u * 60000, 0},
-    {"15 min + 10 s",  15u * 60000, 10000},
+    {tr_noop("Sans limite"),     0,          0},
+    {tr_noop("Blitz 5 min"),     5u * 60000, 0},
+    {tr_noop("Rapide 10 min"),  10u * 60000, 0},
+    {tr_noop("15 min + 10 s"),  15u * 60000, 10000},
 };
 
-static const char* const MODE_NAME[3] = {"Joueur contre Tab", "Joueur contre joueur", "Tab contre Tab"};
-static const char* const DEMO_NAME[3] = {"Lente", "Normale", "Rapide"};
+static const char* const MODE_NAME[3] = {tr_noop("Joueur contre Tab"), tr_noop("Joueur contre joueur"), tr_noop("Tab contre Tab")};
+static const char* const DEMO_NAME[3] = {tr_noop("Lente"), tr_noop("Normale"), tr_noop("Rapide")};
 
 // ===========================================================================
 // 2. Etats
@@ -436,7 +437,7 @@ static void build_ui() {
     // --- Panneau lateral ---------------------------------------------------
     gs->p_title = mk_label(gs->ui.panel, gs->ui.f_small, Pal::ACCENT);
     lv_obj_set_pos(gs->p_title, 24, 18);
-    set_text_if(gs->p_title, "PARTIE");
+    set_text_if(gs->p_title, tr("PARTIE"));
 
     for (int i = 0; i < MOVE_ROWS; i++) {
         const int y = 66 + i * 32;
@@ -463,7 +464,9 @@ static void build_ui() {
     show(gs->think_lbl, false);
     show(gs->think_bar, false);
 
-    static const char* const BTN[3] = {"Annuler", "Indice", "Menu"};
+    // « Annuler » reprend ici un coup (Undo) : contexte « coup », à distinguer du
+    // bouton « Annuler » des dialogues (Cancel).
+    const char* const BTN[3] = {tr_ctx("coup", "Annuler"), tr("Indice"), tr("Menu")};
     for (int i = 0; i < 3; i++) {
         gs->pbtn[i] = mk_rect(gs->ui.panel);
         lv_obj_set_size(gs->pbtn[i], 168, 64);
@@ -511,7 +514,9 @@ static void build_ui() {
     // Libelles des 4 tuiles de promotion : centres SOUS chaque tuile, donc
     // alignes avec elles (un seul libelle en pied de page ne pourrait pas l'etre
     // avec une police proportionnelle).
-    static const char* const PROMO_NAME[4] = {"Dame", "Tour", "Fou", "Cavalier"};
+    // Contexte « echecs » : la « Dame » des échecs n'est pas celle des dames (pion couronné).
+    const char* const PROMO_NAME[4] = {tr_ctx("echecs", "Dame"), tr_ctx("echecs", "Tour"),
+                                       tr_ctx("echecs", "Fou"), tr_ctx("echecs", "Cavalier")};
     for (int i = 0; i < 4; i++) {
         gs->promo_name[i] = mk_label(gs->menu, gs->ui.f_small, Pal::TXT_DIM);
         lv_obj_set_width(gs->promo_name[i], 168);
@@ -749,15 +754,15 @@ static void update_hud(bool force) {
 
     // Trait
     const bool white_turn = (gp->pos.side == WHITE);
-    if (gp->mode == 1) snprintf(buf, sizeof(buf), "Trait aux %s", white_turn ? "Blancs" : "Noirs");
-    else if (gp->mode == 2) snprintf(buf, sizeof(buf), "Demo — %s", white_turn ? "Blancs" : "Noirs");
-    else snprintf(buf, sizeof(buf), "Trait : %s", (gp->pos.side == gp->human) ? "a vous" : "au Tab");
+    if (gp->mode == 1) snprintf(buf, sizeof(buf), tr("Trait aux %s"), tr(white_turn ? "Blancs" : "Noirs"));
+    else if (gp->mode == 2) snprintf(buf, sizeof(buf), tr("Demo — %s"), tr(white_turn ? "Blancs" : "Noirs"));
+    else snprintf(buf, sizeof(buf), tr("Trait : %s"), tr((gp->pos.side == gp->human) ? "a vous" : "au Tab"));
     set_text_if(gs->h_turn, buf);
     set_text_color_if(gs->h_turn, (gp->mode == 0 && gp->pos.side == gp->human) ? Pal::ACCENT : Pal::TXT);
 
     // Niveau d'IA (sans objet en hotseat)
-    if (gp->mode == 1) snprintf(buf, sizeof(buf), "Duel local");
-    else snprintf(buf, sizeof(buf), "Niveau : %s", AI_LEVELS[gp->level].name);
+    if (gp->mode == 1) snprintf(buf, sizeof(buf), "%s", tr("Duel local"));
+    else snprintf(buf, sizeof(buf), tr("Niveau : %s"), level_name(gp->level));
     set_text_if(gs->h_level, buf);
 
     // Pendules
@@ -768,7 +773,8 @@ static void update_hud(bool force) {
                 gs->c_clock[c] = sec;
                 char t[16], line[32];
                 fmt_clock(gp->clock[c], t, sizeof(t));
-                snprintf(line, sizeof(line), "%s %s", c == 0 ? "B" : "N", t);
+                // Initiale du camp : B(lancs) / N(oirs) ; contexte « pendule » (lettre seule).
+                snprintf(line, sizeof(line), "%s %s", c == 0 ? tr_ctx("pendule", "B") : tr_ctx("pendule", "N"), t);
                 set_text_if(c == 0 ? gs->h_clock_w : gs->h_clock_b, line);
                 lv_obj_t* lab = (c == 0) ? gs->h_clock_w : gs->h_clock_b;
                 const bool active = gp->running && (cidx(gp->pos.side) == c);
@@ -788,7 +794,7 @@ static void update_hud(bool force) {
         if (force) {
             int e = eval(gp->pos);
             if (gp->pos.side == BLACK) e = -e;
-            snprintf(buf, sizeof(buf), "Eval %+.1f", e / 100.0f);
+            snprintf(buf, sizeof(buf), tr("Eval %+.1f"), e / 100.0f);
             set_text_if(gs->h_eval, buf);
             set_text_color_if(gs->h_eval, e > 80 ? Pal::GOOD : (e < -80 ? Pal::DANGER : Pal::TXT_DIM));
         }
@@ -800,8 +806,8 @@ static void update_hud(bool force) {
     const char* st = "";
     uint32_t stc = Pal::DANGER;
     if (gp->msg_until && (int32_t)(esphome::millis() - gp->msg_until) < 0) { st = gp->msg; stc = Pal::TXT_DIM; }
-    else if (gp->check_sq != NO_SQ) { st = "ECHEC !"; stc = Pal::DANGER; }
-    else if (gs->ai_think)          { st = "Le Tab reflechit"; stc = Pal::THINK; }
+    else if (gp->check_sq != NO_SQ) { st = tr("ECHEC !"); stc = Pal::DANGER; }
+    else if (gs->ai_think)          { st = tr("Le Tab reflechit"); stc = Pal::THINK; }
     set_text_if(gs->h_status, st);
     set_text_color_if(gs->h_status, stc);
 }
@@ -851,81 +857,83 @@ static void go_hub() {
     gs->ai_think = false;
     menu_on(true);
     char body[128];
-    snprintf(body, sizeof(body), "Classement local : %u Elo   ·   %u parties jouees",
+    snprintf(body, sizeof(body), tr("Classement local : %u Elo   ·   %u parties jouees"),
              (unsigned) gs->save.elo, (unsigned) gs->save.games);
-    panel_text("ROI NOIR", "Echiquier du Tab — regles FIDE, IA embarquee, 100 % local", body,
-               "Toucher le bandeau du haut pendant la partie ouvre le menu de pause.");
+    // « ROI NOIR » : nom de la console, jamais traduit.
+    panel_text("ROI NOIR", tr("Echiquier du Tab — regles FIDE, IA embarquee, 100 % local"), body,
+               tr("Toucher le bandeau du haut pendant la partie ouvre le menu de pause."));
 
     int i = 0;
-    slot_list(i++, "Nouvelle partie", "Choix du mode, de la couleur, du niveau et de la pendule", Pal::ACCENT, true);
+    slot_list(i++, tr("Nouvelle partie"), tr("Choix du mode, de la couleur, du niveau et de la pendule"), Pal::ACCENT, true);
     if (gs->save.resume_valid) {
         char d[96];
-        snprintf(d, sizeof(d), "%s · niveau %s · %u demi-coups joues",
-                 MODE_NAME[gs->save.r_mode < 3 ? gs->save.r_mode : 0],
-                 AI_LEVELS[gs->save.r_level < CHESS_NLEVELS ? gs->save.r_level : 0].name,
+        snprintf(d, sizeof(d), tr("%s · niveau %s · %u demi-coups joues"),
+                 tr(MODE_NAME[gs->save.r_mode < 3 ? gs->save.r_mode : 0]),
+                 level_name(gs->save.r_level < CHESS_NLEVELS ? gs->save.r_level : 0),
                  (unsigned) gs->save.r_plies);
-        slot_list(i++, "Reprendre la partie", d, Pal::GOOD, true);
+        slot_list(i++, tr("Reprendre la partie"), d, Pal::GOOD, true);
     }
-    slot_list(i++, "Statistiques", "Bilan par niveau, records, classement local", Pal::TXT, true);
-    slot_list(i++, "Reglages", "Gestes, regle des 50 coups, evaluation, vitesse de demo", Pal::TXT, true);
-    slot_list(i++, "Quitter", "Retour au tableau de bord", Pal::TXT_DIM, true);
+    slot_list(i++, tr("Statistiques"), tr("Bilan par niveau, records, classement local"), Pal::TXT, true);
+    slot_list(i++, tr("Reglages"), tr("Gestes, regle des 50 coups, evaluation, vitesse de demo"), Pal::TXT, true);
+    slot_list(i++, tr("Quitter"), tr("Retour au tableau de bord"), Pal::TXT_DIM, true);
     slots_hide_from(i);
 }
 
 static void go_setup() {
     g_state = ST_SETUP;
     menu_on(true);
-    panel_text("NOUVELLE PARTIE", "Toucher une ligne pour changer sa valeur", "", "");
+    panel_text(tr("NOUVELLE PARTIE"), tr("Toucher une ligne pour changer sa valeur"), "", "");
 
     char d[96];
     int i = 0;
-    slot_list(i++, "Mode de jeu", MODE_NAME[gs->save.mode], Pal::ACCENT, true);
+    slot_list(i++, tr("Mode de jeu"), tr(MODE_NAME[gs->save.mode]), Pal::ACCENT, true);
 
     if (gs->save.mode == 0) {
-        snprintf(d, sizeof(d), "%s — vous ouvrez %s",
-                 gs->save.human_side == 0 ? "Blancs" : "Noirs",
-                 gs->save.human_side == 0 ? "la partie" : "en second");
-        slot_list(i++, "Votre couleur", d, Pal::TXT, true);
+        // Contexte « ouvrir » : « la partie » vaut ici « en premier » (anglais : first).
+        snprintf(d, sizeof(d), tr("%s — vous ouvrez %s"),
+                 tr(gs->save.human_side == 0 ? "Blancs" : "Noirs"),
+                 gs->save.human_side == 0 ? tr_ctx("ouvrir", "la partie") : tr_ctx("ouvrir", "en second"));
+        slot_list(i++, tr("Votre couleur"), d, Pal::TXT, true);
     } else {
-        slot_list(i++, "Votre couleur", "Sans objet dans ce mode", Pal::TXT_MUTED, false);
+        slot_list(i++, tr("Votre couleur"), tr("Sans objet dans ce mode"), Pal::TXT_MUTED, false);
     }
 
     if (gs->save.mode == 1) {
-        slot_list(i++, "Niveau du Tab", "Sans objet : duel entre deux humains", Pal::TXT_MUTED, false);
+        slot_list(i++, tr("Niveau du Tab"), tr("Sans objet : duel entre deux humains"), Pal::TXT_MUTED, false);
     } else {
-        snprintf(d, sizeof(d), "%s — %s", AI_LEVELS[gs->save.level].name, AI_LEVELS[gs->save.level].desc);
-        slot_list(i++, "Niveau du Tab", d, Pal::TXT, true);
+        snprintf(d, sizeof(d), "%s — %s", level_name(gs->save.level), tr(AI_LEVELS[gs->save.level].desc));
+        slot_list(i++, tr("Niveau du Tab"), d, Pal::TXT, true);
     }
 
-    slot_list(i++, "Pendule", CLOCKS[gs->save.clock_opt].name, Pal::TXT, true);
-    slot_list(i++, "Commencer", "Lance la partie avec ces reglages", Pal::GOOD, true);
-    slot_list(i++, "Retour", "Revenir au menu principal", Pal::TXT_DIM, true);
+    slot_list(i++, tr("Pendule"), tr(CLOCKS[gs->save.clock_opt].name), Pal::TXT, true);
+    slot_list(i++, tr("Commencer"), tr("Lance la partie avec ces reglages"), Pal::GOOD, true);
+    slot_list(i++, tr("Retour"), tr("Revenir au menu principal"), Pal::TXT_DIM, true);
     slots_hide_from(i);
 }
 
 static void go_settings() {
     g_state = ST_SETTINGS;
     menu_on(true);
-    panel_text("REGLAGES", "Conserves en NVS, valables pour toutes les parties", "", "");
+    panel_text(tr("REGLAGES"), tr("Conserves en NVS, valables pour toutes les parties"), "", "");
 
     int i = 0;
-    slot_list(i++, "Gestes IMU",
-              gs->save.gestures ? "Actives — une secousse franche demande un indice"
-                              : "Desactives — l'inclinaison est ignoree",
+    slot_list(i++, tr("Gestes IMU"),
+              gs->save.gestures ? tr("Actives — une secousse franche demande un indice")
+                                : tr("Desactives — l'inclinaison est ignoree"),
               gs->save.gestures ? Pal::GOOD : Pal::TXT_MUTED, true);
-    slot_list(i++, "Regle des 50 coups",
-              gs->save.rule50 ? "Nulle automatique apres 50 coups sans prise ni pion"
-                            : "Desactivee — la partie continue",
+    slot_list(i++, tr("Regle des 50 coups"),
+              gs->save.rule50 ? tr("Nulle automatique apres 50 coups sans prise ni pion")
+                              : tr("Desactivee — la partie continue"),
               gs->save.rule50 ? Pal::GOOD : Pal::TXT_MUTED, true);
-    slot_list(i++, "Evaluation au HUD",
-              gs->save.show_eval ? "Affichee — estimation en pions, indicative"
-                               : "Masquee",
+    slot_list(i++, tr("Evaluation au HUD"),
+              gs->save.show_eval ? tr("Affichee — estimation en pions, indicative")
+                                 : tr("Masquee"),
               gs->save.show_eval ? Pal::GOOD : Pal::TXT_MUTED, true);
     char d[64];
-    snprintf(d, sizeof(d), "%s — cadence du mode Tab contre Tab", DEMO_NAME[gs->save.demo_speed]);
-    slot_list(i++, "Vitesse de demo", d, Pal::TXT, true);
-    slot_list(i++, "Effacer les statistiques", "Remet a zero le bilan et le classement local", Pal::DANGER, true);
-    slot_list(i++, "Retour", "Revenir au menu principal", Pal::TXT_DIM, true);
+    snprintf(d, sizeof(d), tr("%s — cadence du mode Tab contre Tab"), tr(DEMO_NAME[gs->save.demo_speed]));
+    slot_list(i++, tr("Vitesse de demo"), d, Pal::TXT, true);
+    slot_list(i++, tr("Effacer les statistiques"), tr("Remet a zero le bilan et le classement local"), Pal::DANGER, true);
+    slot_list(i++, tr("Retour"), tr("Revenir au menu principal"), Pal::TXT_DIM, true);
     slots_hide_from(i);
 }
 
@@ -934,7 +942,7 @@ static void go_stats() {
     menu_on(true);
 
     char sub[96];
-    snprintf(sub, sizeof(sub), "Classement local : %u Elo   ·   %u parties contre le Tab",
+    snprintf(sub, sizeof(sub), tr("Classement local : %u Elo   ·   %u parties contre le Tab"),
              (unsigned) gs->save.elo, (unsigned) gs->save.games);
 
     // Bilan par niveau, en une seule etiquette multi-lignes.
@@ -950,18 +958,19 @@ static void go_stats() {
         if (n < 0) return;
         k = (n >= (int) sizeof(body) - k) ? (int) sizeof(body) - 1 : k + n;
     };
-    append("%s", "Niveau            V / N / D\n");
+    // V / N / D = victoires / nulles / defaites, dans l'ordre des colonnes ci-dessous.
+    append("%s", tr("Niveau            V / N / D\n"));
     for (int l = 0; l < CHESS_NLEVELS; l++) {
-        append("%-10s   %u / %u / %u\n", AI_LEVELS[l].name,
+        append("%-10s   %u / %u / %u\n", level_name(l),
                (unsigned) gs->save.wins[l], (unsigned) gs->save.draws[l],
                (unsigned) gs->save.losses[l]);
     }
-    append("\nPlus longue partie : %u demi-coups\n", (unsigned) gs->save.longest_plies);
-    append("Temps de jeu cumule : %u min", (unsigned)(gs->save.total_ms / 60000u));
+    append(tr("\nPlus longue partie : %u demi-coups\n"), (unsigned) gs->save.longest_plies);
+    append(tr("Temps de jeu cumule : %u min"), (unsigned)(gs->save.total_ms / 60000u));
     lv_obj_set_style_text_align(gs->m_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    panel_text("STATISTIQUES", sub, body, "");
+    panel_text(tr("STATISTIQUES"), sub, body, "");
 
-    slot_list(0, "Retour", "Revenir au menu principal", Pal::TXT_DIM, true);
+    slot_list(0, tr("Retour"), tr("Revenir au menu principal"), Pal::TXT_DIM, true);
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -80);
     slots_hide_from(1);
 }
@@ -971,8 +980,8 @@ static void show_confirm(uint8_t kind, const char* title, const char* question) 
     g_state = ST_CONFIRM;
     menu_on(true);
     panel_text(title, question, "", "");
-    slot_list(0, "Confirmer", "", Pal::DANGER, true);
-    slot_list(1, "Annuler", "", Pal::TXT_DIM, true);
+    slot_list(0, tr("Confirmer"), "", Pal::DANGER, true);
+    slot_list(1, tr("Annuler"), "", Pal::TXT_DIM, true);    // bouton de dialogue (Cancel)
     slots_hide_from(2);
 }
 
@@ -981,7 +990,7 @@ static void show_promo() {
     // 82 % d'opacite : on garde le plateau visible derriere, c'est utile pour
     // decider entre dame et cavalier.
     menu_on(true, (lv_opa_t) 209);
-    panel_text("PROMOTION", "Le pion atteint la derniere rangee — choisir la piece", "", "");
+    panel_text(tr("PROMOTION"), tr("Le pion atteint la derniere rangee — choisir la piece"), "", "");
 
     // La couleur promue est celle du camp AU TRAIT (le pion n'a pas encore bouge).
     const bool white = (gp->pos.side == WHITE);
@@ -994,46 +1003,46 @@ static void show_promo() {
 static void show_pause() {
     g_state = ST_PAUSE;
     menu_on(true, (lv_opa_t) 235);
-    panel_text("PAUSE", "La pendule est arretee", "", "");
+    panel_text(tr("PAUSE"), tr("La pendule est arretee"), "", "");
     int i = 0;
-    slot_list(i++, "Reprendre", "Retour a la partie", Pal::GOOD, true);
-    slot_list(i++, "Annuler le dernier coup", gp->mode == 0 ? "Annule votre coup et la reponse du Tab"
-                                                          : "Annule le dernier demi-coup",
+    slot_list(i++, tr("Reprendre"), tr("Retour a la partie"), Pal::GOOD, true);
+    slot_list(i++, tr("Annuler le dernier coup"), gp->mode == 0 ? tr("Annule votre coup et la reponse du Tab")
+                                                              : tr("Annule le dernier demi-coup"),
               gp->nply > 0 ? Pal::TXT : Pal::TXT_MUTED, gp->nply > 0);
-    slot_list(i++, "Proposer nulle", gp->mode == 0 ? "Le Tab accepte s'il n'est pas mieux"
-                                                 : "Accord entre les deux joueurs", Pal::TXT, true);
-    slot_list(i++, "Abandonner", "La partie est perdue et comptabilisee", Pal::DANGER, true);
-    slot_list(i++, "Reglages", "Gestes, regles, affichage", Pal::TXT_DIM, true);
-    slot_list(i++, "Quitter le jeu", "La partie en cours est sauvegardee", Pal::TXT_DIM, true);
+    slot_list(i++, tr("Proposer nulle"), gp->mode == 0 ? tr("Le Tab accepte s'il n'est pas mieux")
+                                                     : tr("Accord entre les deux joueurs"), Pal::TXT, true);
+    slot_list(i++, tr_ctx("plateau", "Abandonner"), tr("La partie est perdue et comptabilisee"), Pal::DANGER, true);
+    slot_list(i++, tr("Reglages"), tr("Gestes, regles, affichage"), Pal::TXT_DIM, true);
+    slot_list(i++, tr("Quitter le jeu"), tr("La partie en cours est sauvegardee"), Pal::TXT_DIM, true);
     slots_hide_from(i);
 }
 
 static void show_over() {
     g_state = ST_OVER;
     menu_on(true);
-    const char* t = "PARTIE NULLE";
+    const char* t = tr("PARTIE NULLE");
     uint32_t col = Pal::TXT;
     if (gs->result != RES_DRAW) {
         if (gp->mode == 0) {
             const bool human_won = (gs->result == RES_WHITE) ? (gp->human == WHITE) : (gp->human == BLACK);
-            t = human_won ? "VICTOIRE" : "DEFAITE";
+            t = tr(human_won ? "VICTOIRE" : "DEFAITE");
             col = human_won ? Pal::GOOD : Pal::DANGER;
         } else {
-            t = (gs->result == RES_WHITE) ? "LES BLANCS GAGNENT" : "LES NOIRS GAGNENT";
+            t = tr((gs->result == RES_WHITE) ? "LES BLANCS GAGNENT" : "LES NOIRS GAGNENT");
             col = Pal::ACCENT;
         }
     }
     char body[160];
     if (gp->mode == 0)
-        snprintf(body, sizeof(body), "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo",
-                 gp->nply, AI_LEVELS[gp->level].name, (unsigned) gs->save.elo);
+        snprintf(body, sizeof(body), tr("%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"),
+                 gp->nply, level_name(gp->level), (unsigned) gs->save.elo);
     else
-        snprintf(body, sizeof(body), "%d demi-coups joues", gp->nply);
-    panel_text(t, gs->reason, body, "", col);
+        snprintf(body, sizeof(body), tr("%d demi-coups joues"), gp->nply);
+    panel_text(t, gs->reason, body, "", col);   // gs->reason : deja traduite (appels de end_game)
 
     int i = 0;
-    slot_list(i++, "Rejouer", "Meme mode, memes reglages", Pal::ACCENT, true);
-    slot_list(i++, "Menu principal", "", Pal::TXT_DIM, true);
+    slot_list(i++, tr("Rejouer"), tr("Meme mode, memes reglages"), Pal::ACCENT, true);
+    slot_list(i++, tr("Menu principal"), "", Pal::TXT_DIM, true);
     slots_hide_from(i);
 }
 
@@ -1110,21 +1119,21 @@ static void end_game(uint8_t res, const char* reason) {
 static void check_game_end() {
     recompute_legal();
     if (gp->nall == 0) {
-        if (gp->check_sq != NO_SQ) end_game(gp->pos.side == WHITE ? RES_BLACK : RES_WHITE, "Echec et mat");
-        else                     end_game(RES_DRAW, "Pat — le roi n'est pas en echec mais aucun coup n'est jouable");
+        if (gp->check_sq != NO_SQ) end_game(gp->pos.side == WHITE ? RES_BLACK : RES_WHITE, tr("Echec et mat"));
+        else                     end_game(RES_DRAW, tr("Pat — le roi n'est pas en echec mais aucun coup n'est jouable"));
         return;
     }
-    if (insufficient_material(gp->pos)) { end_game(RES_DRAW, "Materiel insuffisant pour mater"); return; }
+    if (insufficient_material(gp->pos)) { end_game(RES_DRAW, tr("Materiel insuffisant pour mater")); return; }
     if (gs->save.rule50 && gp->pos.halfmove >= 100) {
-        end_game(RES_DRAW, "Regle des 50 coups"); return;
+        end_game(RES_DRAW, tr("Regle des 50 coups")); return;
     }
-    if (repetition_count() >= 3) { end_game(RES_DRAW, "Triple repetition de la position"); return; }
+    if (repetition_count() >= 3) { end_game(RES_DRAW, tr("Triple repetition de la position")); return; }
 }
 
 // Applique un coup au modele puis declenche le rendu et l'animation.
 static void play_move(const Move& m) {
     if (gp->nply >= MAX_HIST) {          // garde-fou : historique plein
-        end_game(RES_DRAW, "Partie interrompue : historique plein");
+        end_game(RES_DRAW, tr("Partie interrompue : historique plein"));
         return;
     }
     move_to_san(gp->pos, m, gh->hist_san[gp->nply], 12);
@@ -1318,19 +1327,19 @@ static void store_running_game() {
 // Proposition de nulle. Contre le Tab, il accepte s'il n'est pas mieux : une
 // recherche courte (profondeur 2, 30 ms max) donne son avis.
 static void offer_draw() {
-    if (gp->mode == 1) { end_game(RES_DRAW, "Nulle par accord entre les joueurs"); return; }
-    if (gp->mode == 2) { end_game(RES_DRAW, "Nulle declaree en mode demo"); return; }
+    if (gp->mode == 1) { end_game(RES_DRAW, tr("Nulle par accord entre les joueurs")); return; }
+    if (gp->mode == 2) { end_game(RES_DRAW, tr("Nulle declaree en mode demo")); return; }
     int sc = 0;
     search_quick(gp->pos, 2, 30, &sc);
     // `sc` est du point de vue du trait. Si c'est au Tab de jouer, un score
     // positif signifie qu'il est mieux : il refuse.
     const int tab_score = (gp->pos.side == gp->human) ? -sc : sc;
-    if (tab_score <= 40) end_game(RES_DRAW, "Le Tab accepte la nulle");
+    if (tab_score <= 40) end_game(RES_DRAW, tr("Le Tab accepte la nulle"));
     else {
         g_state = ST_PLAY;
         menu_on(false);
         gs->clock_last = esphome::millis();
-        toast("Le Tab refuse la nulle", 3000);
+        toast(tr("Le Tab refuse la nulle"), 3000);
         update_hud(true);
     }
 }
@@ -1358,7 +1367,7 @@ void ai_step() {
         if (pct > 100u) pct = 100u;
         lv_obj_set_width(gs->think_fill, (int)(504u * pct / 100u));
         char b[64];
-        snprintf(b, sizeof(b), "Le Tab reflechit — profondeur %d, %u k noeuds",
+        snprintf(b, sizeof(b), tr("Le Tab reflechit — profondeur %d, %u k noeuds"),
                  search_depth_done(), (unsigned)(search_nodes() / 1000u));
         set_text_if(gs->think_lbl, b);
         return;
@@ -1376,7 +1385,7 @@ static void do_hint() {
     if (g_state != ST_PLAY || !gp->running || gs->ai_think || gs->anim_on) return;
     const uint32_t now = esphome::millis();
     if (gp->hint_ready_at && (int32_t)(now - gp->hint_ready_at) < 0) {
-        toast("Indice en recharge", 1500);
+        toast(tr("Indice en recharge"), 1500);
         return;
     }
     int sc = 0;
@@ -1500,7 +1509,7 @@ static void slot_event_cb(lv_event_t* e) {
             else if (i == 1) { gs->save.rule50 ^= 1; go_settings(); }
             else if (i == 2) { gs->save.show_eval ^= 1; go_settings(); }
             else if (i == 3) { gs->save.demo_speed = (uint8_t)((gs->save.demo_speed + 1) % 3); go_settings(); }
-            else if (i == 4) { show_confirm(1, "EFFACER LES STATISTIQUES", "Bilan, records et classement local seront remis a zero."); }
+            else if (i == 4) { show_confirm(1, tr("EFFACER LES STATISTIQUES"), tr("Bilan, records et classement local seront remis a zero.")); }
             else if (i == 5) {
                 persist_save();
                 if (gs->settings_from == ST_PAUSE) show_pause(); else go_hub();
@@ -1551,7 +1560,7 @@ static void slot_event_cb(lv_event_t* e) {
             else if (i == 2) { offer_draw(); }
             else if (i == 3) {
                 const uint8_t loser = (gp->mode == 0) ? gp->human : gp->pos.side;
-                end_game(loser == WHITE ? RES_BLACK : RES_WHITE, "Abandon");
+                end_game(loser == WHITE ? RES_BLACK : RES_WHITE, tr_ctx("raison", "Abandon"));
             }
             else if (i == 4) { gs->settings_from = ST_PAUSE; go_settings(); }
             else if (i == 5) { close(); }
@@ -1582,8 +1591,8 @@ static void update_clocks(uint32_t now) {
     if (gp->clock[s] <= dt) {
         gp->clock[s] = 0;
         // Chute de pendule. Si l'adversaire ne peut plus mater, c'est nulle.
-        if (insufficient_material(gp->pos)) end_game(RES_DRAW, "Temps ecoule — materiel insuffisant pour mater");
-        else end_game(gp->pos.side == WHITE ? RES_BLACK : RES_WHITE, "Temps ecoule");
+        if (insufficient_material(gp->pos)) end_game(RES_DRAW, tr("Temps ecoule — materiel insuffisant pour mater"));
+        else end_game(gp->pos.side == WHITE ? RES_BLACK : RES_WHITE, tr("Temps ecoule"));
         return;
     }
     gp->clock[s] -= dt;

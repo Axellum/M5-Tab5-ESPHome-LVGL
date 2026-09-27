@@ -6,15 +6,16 @@
     python tools/i18n_keys.py            # liste les clés, et celles qui manquent à chaque langue
 
 Deux sources :
-  - les littéraux passés à tr(), tr_ctx(), tr_fill() (C++ et lambdas YAML), y compris
-    les deux branches d'un ternaire `tr(x ? "a" : "b")` ;
+  - les littéraux passés à tr(), tr_ctx(), tr_fill() et tr_noop() (C++ et lambdas
+    YAML), y compris les deux branches d'un ternaire `tr(x ? "a" : "b")`. tr_noop()
+    marque les textes rangés dans une table, traduits plus tard par tr(table[i]) ;
   - les textes posés par le YAML des écrans (`text: "…"` et les `vars:` d'include
     qui en tiennent lieu : title, name, state_text…), que i18n_apply_boot() traduit
-    au démarrage. Les fichiers des jeux sont exclus tant qu'ils ne sont pas traduits
-    (JEUX_NON_TRADUITS, lot 4b).
-Les clés qui passent par une variable (set_toggle, hint, noms de mélodie…) ne sont
-pas relevées ici : tests/test_i18n.py vérifie au moins qu'aucune clé d'une langue
-n'est orpheline (elle doit exister comme littéral quelque part).
+    au démarrage. Les échappements YAML (`\\n`) sont décodés : la clé est le texte
+    affiché. Seules les questions du quiz restent hors traduction (JEUX_NON_TRADUITS).
+Les clés qui passent par une variable sans tr_noop() (set_toggle, hint, noms de
+mélodie…) ne sont pas relevées ici : tests/test_i18n.py vérifie au moins qu'aucune clé
+d'une langue n'est orpheline (elle doit exister comme littéral quelque part).
 """
 from __future__ import annotations
 
@@ -25,12 +26,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 
-# Écrans pas encore traduits (lot 4b) : ni leurs tr() ni leurs textes ne sont exigés.
-JEUX_NON_TRADUITS = (
-    "marble_game", "arkanoid_game", "pinball_game", "lode_game", "go_game", "go_ai",
-    "trivia_game", "chess_game", "chess_ai", "draughts_game", "draughts_ai",
-    "game_selector", "tab5_registry", "trivia_questions",
-)
+# Fichiers hors traduction : les questions du quiz restent en français (choix d'Axel,
+# lot 4). Les jeux eux-mêmes sont traduits depuis le lot 4b (27/09/2026).
+JEUX_NON_TRADUITS = ("trivia_questions",)
 # Clés d'include qui portent un texte affiché (vars: { title: "…" }).
 VARS_TEXTE = ("title", "name", "state_text", "label_text", "subtitle", "day_label",
               "text", "pot_nom")
@@ -42,10 +40,14 @@ NON_TRADUITS = {
     "Ok Nabu: ON", "Ok Nabu : ON", "Ok Nabu: OFF", "Ok Nabu : OFF", "Home Assistant",
     "Netflix", "Prime", "YouTube", "CANAL+", "Boost", "Flash", "Sys", "LEDs",
     "On / Off", "Menu", "Source", "HA", "PC", "TV", "OK", "SRAM", "PSRAM", "Wi-Fi", "MIN",
+    # Noms des consoles : des noms propres, et le libellé « Écran courant » que lit HA
+    # (GameRegistry, tab5_registry.cpp). « ARCADE » s'écrit pareil dans les deux langues.
+    "Fil d'Or", "Arcanoïde", "Coureur d'Or", "Go Tab", "Trial Poursuite", "Dames Tab",
+    "Roi Noir", "Neon Apron", "ARCADE",
 }
 
 RE_LIT = r'"((?:[^"\\]|\\.)*)"'
-RE_APPEL = re.compile(r"\btr(?:_ctx|_fill)?\s*\(")
+RE_APPEL = re.compile(r"\btr(?:_ctx|_fill|_noop)?\s*\(")
 RE_TEXT = re.compile(r'\b(?:text|' + "|".join(VARS_TEXTE) + r')\s*:\s*' + RE_LIT)
 
 
@@ -150,8 +152,10 @@ def textes_yaml(fichiers: list[Path] | None = None) -> dict[str, list[str]]:
             if ligne.lstrip().startswith("#"):
                 continue
             for m in RE_TEXT.finditer(ligne):
-                t = m.group(1)
-                if "\\U000F" in t or "${" in t or not re.search(r"[A-Za-zÀ-ÿ]{2,}", t):
+                if "\\U000F" in m.group(1):
+                    continue
+                t = c_decode(m.group(1))  # « \n » YAML → retour à la ligne affiché
+                if "${" in t or not re.search(r"[A-Za-zÀ-ÿ]{2,}", t):
                     continue
                 if t in NON_TRADUITS:
                     continue

@@ -764,10 +764,10 @@ static void add_score(uint32_t pts) {
     gs->ball_score += gain;
     if (!gs->bonus1 && gs->score >= BONUS_BALL_1) {
         gs->bonus1 = true; gs->balls_total++;
-        toast("BILLE BONUS", 1800);
+        toast(tr("BILLE BONUS"), 1800);
     } else if (!gs->bonus2 && gs->score >= BONUS_BALL_2) {
         gs->bonus2 = true; gs->balls_total++;
-        toast("BILLE BONUS", 1800);
+        toast(tr("BILLE BONUS"), 1800);
     }
 }
 
@@ -1124,7 +1124,7 @@ static void build_actors(lv_obj_t* field) {
     lv_obj_set_width(gs->plunger_hint, 300);
     lv_obj_set_style_text_align(gs->plunger_hint, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_set_pos(gs->plunger_hint, 210, 1020);
-    lv_label_set_text(gs->plunger_hint, "Maintiens ici pour armer,\nrelache pour tirer");
+    lv_label_set_text(gs->plunger_hint, tr("Maintiens ici pour armer,\nrelache pour tirer"));
     show(gs->plunger_hint, false);
 
     // Banniere de mode, au centre de l'arche (zone la plus lisible du plateau).
@@ -1315,7 +1315,17 @@ static void rot_hint(bool v, int body_y) {
 // 15. Ecrans
 // ===========================================================================
 
-static const char* NUDGE_NAMES[5] = {"Tres douce", "Douce", "Normale", "Vive", "Tres vive"};
+// Noms des 5 crans de sensibilite du nudge (index = gs->save.nudge_sens, borne par
+// persist_load). tr_ctx et pas tr_noop + tr(table[i]) : « Douce » (sonnerie du
+// reveil) et « Vive » (vitesse de Coureur d'Or) ont deja un autre sens a l'ecran,
+// et tr_noop ne porte pas de contexte. Appele seulement a l'affichage des reglages.
+static const char* nudge_name(uint8_t i) {
+    const char* const noms[5] = {
+        tr_ctx("nudge", "Tres douce"), tr_ctx("nudge", "Douce"), tr_ctx("nudge", "Normale"),
+        tr_ctx("nudge", "Vive"), tr_ctx("nudge", "Tres vive"),
+    };
+    return noms[i];
+}
 
 static void go_hub() {
     g_state = ST_HUB;
@@ -1323,25 +1333,26 @@ static void go_hub() {
     rot_hint(true, 336);   // sous le pictogramme d'orientation
 
     auto& sub = gs->hub_sub;
-    snprintf(sub, sizeof(sub), "%lu partie(s) - %lu multiball(s) - %lu tilt(s)",
+    snprintf(sub, sizeof(sub), tr("%lu partie(s) - %lu multiball(s) - %lu tilt(s)"),
              (unsigned long) gs->save.games, (unsigned long) gs->save.multiballs,
              (unsigned long) gs->save.tilts);
 
     auto& best = gs->hub_best;
     if (best_score() > 0) {
         char sc[24]; fmt_score(sc, sizeof(sc), best_score());
-        snprintf(best, sizeof(best), "Record : %s", sc);
+        snprintf(best, sizeof(best), tr("Record : %s"), sc);
     } else {
-        snprintf(best, sizeof(best), "Aucun score enregistre");
+        snprintf(best, sizeof(best), "%s", tr("Aucun score enregistre"));
     }
 
-    panel_text("NEON APRON", sub, "Tournez la tablette a la verticale",
-        "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\n"
-        "Secouez la tablette pour pousser la bille — trois abus de suite et c'est TILT.");
-    gs->slots.row(0, "Jouer", "3 billes - lanceur en bas de l'ecran", Pal::AMBER);
-    gs->slots.row(1, "Classement", best, Pal::CYAN);
-    gs->slots.row(2, "Reglages", "Nudge, sens de l'ecran, calibration", Pal::MAGENTA);
-    gs->slots.row(3, "Quitter", "Retour au tableau de bord (paysage)", Pal::TEXT_DIM);
+    // Pied en UN litteral sur une ligne : tools/i18n_keys.py ne releve que les appels
+    // tr() d'une ligne (un littéral coupé en deux lignes n'y serait vu qu'à moitié).
+    panel_text("NEON APRON", sub, tr("Tournez la tablette a la verticale"),
+        tr("Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."));
+    gs->slots.row(0, tr("Jouer"), tr("3 billes - lanceur en bas de l'ecran"), Pal::AMBER);
+    gs->slots.row(1, tr("Classement"), best, Pal::CYAN);
+    gs->slots.row(2, tr("Reglages"), tr("Nudge, sens de l'ecran, calibration"), Pal::MAGENTA);
+    gs->slots.row(3, tr("Quitter"), tr("Retour au tableau de bord (paysage)"), Pal::TEXT_DIM);
     gs->slots.hide_from(4);
     tick_period_sync();
 }
@@ -1366,14 +1377,14 @@ static void go_scores() {
         if (w <= 0 || (size_t) w >= sizeof(body) - o) break;
         o += (size_t) w;
     }
-    if (!any) snprintf(body, sizeof(body), "Aucun score pour l'instant.\nLance une partie !");
+    if (!any) snprintf(body, sizeof(body), "%s", tr("Aucun score pour l'instant.\nLance une partie !"));
 
     auto& sub = gs->scores_sub;
-    snprintf(sub, sizeof(sub), "Cumul carriere : %lu points",
+    snprintf(sub, sizeof(sub), tr("Cumul carriere : %lu points"),
              (unsigned long) gs->save.total_score);
 
-    panel_text("CLASSEMENT", sub, body, "b = billes jouees, MB = multiball declenche.");
-    gs->slots.row(0, "Retour", "", Pal::TEXT_DIM);
+    panel_text(tr("CLASSEMENT"), sub, body, tr("b = billes jouees, MB = multiball declenche."));
+    gs->slots.row(0, tr("Retour"), "", Pal::TEXT_DIM);
     gs->slots.hide_from(1);
     // Le classement est long : on remonte les slots sous le texte.
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -110);
@@ -1388,18 +1399,19 @@ static void go_settings() {
     auto& t0 = gs->settings_t0;
     auto& t1 = gs->settings_t1;
     auto& t2 = gs->settings_t2;
-    snprintf(t0, sizeof(t0), "Sensibilite du nudge : %s", NUDGE_NAMES[gs->save.nudge_sens]);
-    snprintf(t1, sizeof(t1), "Sens du nudge : %s", gs->save.invert_nudge ? "inverse" : "normal");
-    snprintf(t2, sizeof(t2), "Orientation : %s", gs->save.flip_screen ? "retournee" : "normale");
+    snprintf(t0, sizeof(t0), tr("Sensibilite du nudge : %s"), nudge_name(gs->save.nudge_sens));
+    snprintf(t1, sizeof(t1), tr("Sens du nudge : %s"), tr(gs->save.invert_nudge ? "inverse" : "normal"));
+    snprintf(t2, sizeof(t2), tr("Orientation : %s"), tr(gs->save.flip_screen ? "retournee" : "normale"));
 
-    panel_text("REGLAGES", "Tout est enregistre et survit au redemarrage.", "",
-        "Calibre a plat AVANT de jouer : le nudge mesure l'ecart avec cette reference,\n"
-        "pas l'inclinaison absolue. Poser la tablette, puis appuyer.");
-    gs->slots.row(0, t0, "Force de la secousse necessaire", Pal::CYAN);
-    gs->slots.row(1, t1, "Si la bille part du mauvais cote", Pal::CYAN);
-    gs->slots.row(2, t2, "Si l'ecran est a l'envers dans vos mains", Pal::MAGENTA);
-    gs->slots.row(3, "Calibrer a plat", "Poser la tablette puis appuyer", Pal::AMBER);
-    gs->slots.row(4, "Retour", "", Pal::TEXT_DIM);
+    // Pied en UN litteral sur une ligne : tools/i18n_keys.py ne releve que les appels
+    // tr() d'une ligne, et le "" qui precede fausse le recollage de littéraux adjacents.
+    panel_text(tr("REGLAGES"), tr("Tout est enregistre et survit au redemarrage."), "",
+        tr("Calibre a plat AVANT de jouer : le nudge mesure l'ecart avec cette reference,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."));
+    gs->slots.row(0, t0, tr("Force de la secousse necessaire"), Pal::CYAN);
+    gs->slots.row(1, t1, tr("Si la bille part du mauvais cote"), Pal::CYAN);
+    gs->slots.row(2, t2, tr("Si l'ecran est a l'envers dans vos mains"), Pal::MAGENTA);
+    gs->slots.row(3, tr("Calibrer a plat"), tr("Poser la tablette puis appuyer"), Pal::AMBER);
+    gs->slots.row(4, tr("Retour"), "", Pal::TEXT_DIM);
     gs->slots.hide_from(5);
     tick_period_sync();
 }
@@ -1411,13 +1423,13 @@ static void go_pause() {
 
     auto& sub = gs->pause_sub;
     char sc[24]; fmt_score(sc, sizeof(sc), gs->score);
-    snprintf(sub, sizeof(sub), "Score %s - bille %d / %d", sc, gs->ball_num, gs->balls_total);
+    snprintf(sub, sizeof(sub), tr("Score %s - bille %d / %d"), sc, gs->ball_num, gs->balls_total);
 
-    panel_text("PAUSE", sub, "", "La partie reprend exactement ou elle s'est arretee.");
-    gs->slots.row(0, "Reprendre", "", Pal::AMBER);
-    gs->slots.row(1, "Recalibrer a plat", "Poser la tablette puis appuyer", Pal::CYAN);
-    gs->slots.row(2, "Abandonner", "La partie est enregistree telle quelle", Pal::MAGENTA);
-    gs->slots.row(3, "Quitter le flipper", "Retour au tableau de bord", Pal::TEXT_DIM);
+    panel_text(tr("PAUSE"), sub, "", tr("La partie reprend exactement ou elle s'est arretee."));
+    gs->slots.row(0, tr("Reprendre"), "", Pal::AMBER);
+    gs->slots.row(1, tr("Recalibrer a plat"), tr("Poser la tablette puis appuyer"), Pal::CYAN);
+    gs->slots.row(2, tr("Abandonner"), tr("La partie est enregistree telle quelle"), Pal::MAGENTA);
+    gs->slots.row(3, tr("Quitter le flipper"), tr("Retour au tableau de bord"), Pal::TEXT_DIM);
     gs->slots.hide_from(4);
     tick_period_sync();
 }
@@ -1446,16 +1458,16 @@ static void end_game() {
 
     auto& sub = gs->end_sub;
     char sc[24]; fmt_score(sc, sizeof(sc), gs->score);
-    snprintf(sub, sizeof(sub), "Score final : %s", sc);
+    snprintf(sub, sizeof(sub), tr("Score final : %s"), sc);
 
     auto& body = gs->end_body;
-    if (rank == 0)      snprintf(body, sizeof(body), "NOUVEAU RECORD !");
-    else if (rank > 0)  snprintf(body, sizeof(body), "%de au classement", rank + 1);
-    else                snprintf(body, sizeof(body), "Hors du top %d", PINBALL_NSCORES);
+    if (rank == 0)      snprintf(body, sizeof(body), "%s", tr("NOUVEAU RECORD !"));
+    else if (rank > 0)  snprintf(body, sizeof(body), tr("%de au classement"), rank + 1);
+    else                snprintf(body, sizeof(body), tr("Hors du top %d"), PINBALL_NSCORES);
 
-    panel_text("FIN DE PARTIE", sub, body, gs->game_tilted ? "Partie marquee TILT." : "");
-    gs->slots.row(0, "Rejouer", "Nouvelle partie, 3 billes", Pal::AMBER);
-    gs->slots.row(1, "Classement", "", Pal::CYAN);
+    panel_text(tr("FIN DE PARTIE"), sub, body, gs->game_tilted ? tr("Partie marquee TILT.") : "");
+    gs->slots.row(0, tr("Rejouer"), tr("Nouvelle partie, 3 billes"), Pal::AMBER);
+    gs->slots.row(1, tr("Classement"), "", Pal::CYAN);
     gs->slots.row(2, "Hub", "", Pal::TEXT_DIM);
     gs->slots.hide_from(3);
     tick_period_sync();
@@ -1538,7 +1550,7 @@ static void ball_drained(Ball& b) {
         if (gs->active_balls == 1 && gs->mb_active) {
             gs->mb_active = false;
             gs->multiplier = 1;
-            toast("MULTIBALL TERMINE", 1400);
+            toast(tr("MULTIBALL TERMINE"), 1400);
         }
         return;
     }
@@ -1552,7 +1564,7 @@ static void ball_drained(Ball& b) {
     }
     gs->ball_num++;
     gs->serve_at = lv_tick_get() + 900;   // court temps mort avant la relance
-    toast("BILLE PERDUE", 800);
+    toast(tr("BILLE PERDUE"), 800);
 }
 
 // ===========================================================================
@@ -1893,11 +1905,13 @@ static void hud_sync(uint32_t now) {
     if (gs->ball_num != gs->c_ball) {
         gs->c_ball = gs->ball_num;
         auto& bl = gs->hud_bl;
-        snprintf(bl, sizeof(bl), "BILLE %d / %d", gs->ball_num, gs->balls_total);
+        // tr() seulement quand la bille change, pas a chaque tick. Libelles en
+        // f_led (roboto_22, Latin-1 complet) : seul le score passe en roboto_55_b.
+        snprintf(bl, sizeof(bl), tr("BILLE %d / %d"), gs->ball_num, gs->balls_total);
         set_text_if(gs->hud_ball, bl);
         auto& be = gs->hud_be;
         char sc[24]; fmt_score(sc, sizeof(sc), best_score());
-        snprintf(be, sizeof(be), "RECORD %s", sc);
+        snprintf(be, sizeof(be), tr("RECORD %s"), sc);
         set_text_if(gs->hud_best, be);
     }
     // Pastilles : une par bille restante (les billes bonus au-dela de 3 ne sont

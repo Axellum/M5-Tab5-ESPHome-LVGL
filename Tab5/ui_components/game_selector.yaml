@@ -115,7 +115,8 @@ obj:
 
     # ─── Pied de page ───
     - label:
-        text: "Sortie de chaque jeu : hub → « Quitter »"
+        # Pas de « → » : absent des polices (jeu &latin1), il ne pouvait pas s'afficher.
+        text: "Sortie de chaque jeu : hub, puis « Quitter »"
         align: BOTTOM_MID
         y: -22
         text_color: color_arcade_footer

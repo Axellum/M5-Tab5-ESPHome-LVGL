@@ -22,6 +22,7 @@
 #include "esphome/core/preferences.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
 #include "esp_heap_caps.h"
+#include "tab5_i18n.h"  // tr() : textes des jeux traduits (lot 4b), pur, sans dépendance
 #include <cmath>
 #include <cstdint>
 #include <cstring>
