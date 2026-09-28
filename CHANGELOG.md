@@ -4,6 +4,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 (soir) — Site : chaque déploiement compte, même sur un commit déjà déployé
+
+- La pré-release v3.2.0-rc.1 visait `de1cd42`, que le push de #230 sur `main` venait de
+  déployer (galerie du rendu, dans `docs/images/`). Son déploiement s'est dit réussi,
+  mais le site servi est resté celui du push : le canal bêta proposait encore 3.1.0, et
+  la page d'installation aussi.
+- Cause : `actions/deploy-pages` donne le commit comme version du déploiement
+  (`pages_build_version`), que l'API de GitHub veut unique. `site.yml` fait maintenant
+  lui-même les mêmes appels (jeton OIDC, création, suivi jusqu'à « succeed », 10 min
+  au plus), avec une version par run : `<commit>-<run>-<tentative>`.
+- Test `tests/test_publication.py` ; ADR-0022, une ligne dans l'amendement du 28/09.
+
 ### 2026-09-28 (soir) — Pièces : retours d'Axel sur la tablette
 
 - **Volet** : la pause remarche (le blueprint lançait le script du volet à course simulée

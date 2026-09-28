@@ -301,6 +301,26 @@ def test_site_deploye_sans_compiler():
     assert appel["permissions"] == job["permissions"]
 
 
+def test_site_une_version_de_deploiement_par_run():
+    """La version d'un déploiement Pages doit être unique. actions/deploy-pages donne le
+    commit : une release sur le commit qu'un push venait de déployer (v3.2.0-rc.1, 28/09)
+    s'est dite déployée, et le site est resté celui du push. site.yml appelle l'API avec
+    une version par run, et l'URL de l'environnement vient de cette étape."""
+    flux = yaml.safe_load((REPO / ".github" / "workflows" / "site.yml").read_text(encoding="utf-8"))
+    job = flux["jobs"]["pages"]
+    etapes = job["steps"]
+    assert not any(str(e.get("uses", "")).startswith("actions/deploy-pages") for e in etapes)
+    deploiement = next(e for e in etapes if e.get("id") == "deploiement")
+    script = deploiement["run"]
+    assert 'version="$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"' in script
+    assert "pages_build_version: $version" in script
+    assert "pages/deployments" in script and "succeed)" in script and "page_url=" in script
+    artefact = next(e for e in etapes if str(e.get("uses", "")).startswith("actions/upload-pages-artifact"))
+    assert deploiement["env"]["ARTEFACT"] == "${{ steps.%s.outputs.artifact_id }}" % artefact["id"]
+    assert job["environment"]["url"] == "${{ steps.deploiement.outputs.page_url }}"
+    assert job["permissions"]["id-token"] == "write" and job["permissions"]["pages"] == "write"
+
+
 # --- Archive Home Assistant de la release (ADR-0024, 28/09/2026) ---
 
 def test_archive_ha_arborescence_de_config(tmp_path):
