@@ -823,10 +823,16 @@ void bouton_ha_peindre() {
     ui_hidden(u.bouton_ha, aucun_appareil());
     if (u.bouton_ha == nullptr || s_bouton_actif == g_central_ctx.ha_mode) return;
     s_bouton_actif = g_central_ctx.ha_mode;
-    highlight_button_border(u.bouton_ha, s_bouton_actif, UIColor::ACCENT, 3);
-    if (u.icone_ha == nullptr) return;
-    if (s_bouton_actif) ui_text_color(u.icone_ha, UIColor::ACCENT);
-    else lv_obj_remove_local_style_prop(u.icone_ha, LV_STYLE_TEXT_COLOR, LV_PART_MAIN);
+    if (s_bouton_actif) {
+        highlight_button_border(u.bouton_ha, true, UIColor::ACCENT, 3);
+        ui_text_color(u.icone_ha, UIColor::ACCENT);
+        return;
+    }
+    // Retour exact au style du bouton (style_clim_btn_page : liseré à 35 %), pas au gris
+    // « inactif » de highlight_button_border (40 %) : le rendu hors tablette le voyait.
+    for (lv_style_prop_t p : {LV_STYLE_BORDER_COLOR, LV_STYLE_BORDER_OPA, LV_STYLE_BORDER_WIDTH})
+        lv_obj_remove_local_style_prop(u.bouton_ha, p, LV_PART_MAIN);
+    if (u.icone_ha != nullptr) lv_obj_remove_local_style_prop(u.icone_ha, LV_STYLE_TEXT_COLOR, LV_PART_MAIN);
 }
 
 // Change de page sans toucher aux calques météo (mode HA) : global, contexte, pastilles.
@@ -896,7 +902,7 @@ void popup_lumiere_arc() {
     int arcv = (!lumiere_allumee(r, t) || std::isnan(v)) ? 0 : static_cast<int>(v);
     arcv = std::max(0, std::min(255, arcv));
     lv_arc_set_value(u.lum_arc, arcv);
-    char buf[8];
+    char buf[12];
     snprintf(buf, sizeof(buf), "%d %%", arcv * 100 / 255);
     ui_text(u.lum_pct, buf);
 }
