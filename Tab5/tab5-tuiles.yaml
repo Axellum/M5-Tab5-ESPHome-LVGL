@@ -93,6 +93,28 @@ script:
           u.carte_etat[4] = id(lbl_sw4_state);
           u.popup_tv = id(tv_remote_popup);
           u.popup_clim = id(clim_options_popup);
+          // Popup lumière : les lumières de la pièce.
+          u.lum_popup = id(light_options_popup);
+          u.lum_titre = id(popup_light_title);
+          u.lum_sel[0] = id(btn_light_sel_0);
+          u.lum_sel[1] = id(btn_light_sel_1);
+          u.lum_sel[2] = id(btn_light_sel_2);
+          u.lum_sel[3] = id(btn_light_sel_3);
+          u.lum_sel[4] = id(btn_light_sel_4);
+          u.lum_sel_icone[0] = id(icon_light_sel_0);
+          u.lum_sel_icone[1] = id(icon_light_sel_1);
+          u.lum_sel_icone[2] = id(icon_light_sel_2);
+          u.lum_sel_icone[3] = id(icon_light_sel_3);
+          u.lum_sel_icone[4] = id(icon_light_sel_4);
+          u.lum_sel_nom[0] = id(lbl_light_sel_0);
+          u.lum_sel_nom[1] = id(lbl_light_sel_1);
+          u.lum_sel_nom[2] = id(lbl_light_sel_2);
+          u.lum_sel_nom[3] = id(lbl_light_sel_3);
+          u.lum_sel_nom[4] = id(lbl_light_sel_4);
+          u.lum_power = id(btn_light_power_icon);
+          u.lum_arc = id(arc_light_brightness);
+          u.lum_pct = id(lbl_light_brightness_val);
+          u.lum_cle = &id(current_light_slot);
           u.volet_sens = &id(volet_target_open);
           u.envoyer = [](const char* e, const char* a, const char* v) {
             id(tab5_action).execute(std::string(e), std::string(a), std::string(v));

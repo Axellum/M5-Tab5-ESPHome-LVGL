@@ -36,9 +36,6 @@ script:
           u.btn_ha = id(btn_control_ha);
           u.btn_sys = id(btn_control_console);
           u.btn_tv = id(btn_control_tv);
-          u.light_sel[0] = id(btn_light_sel_0);
-          u.light_sel[1] = id(btn_light_sel_1);
-          u.light_sel[2] = id(btn_light_sel_2);
           u.clim_zone = id(climate_controls_zone);
           u.icon_salon = id(icon_salon);
           u.val_salon = id(val_temp_salon);

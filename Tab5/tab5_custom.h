@@ -455,35 +455,10 @@ void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]);
 enum class PotMetric { CONDUCTIVITY, ILLUMINANCE, TEMPERATURE, BATTERY };
 void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric);
 
-// Met a jour l'icone carte (epaule j2/j3/j4), l'icone/label du switch associe et le
-// bouton popup power si c'est la lampe actuellement affichee. Factorise depuis les 3
-// blocs identiques light_chambre_state/light_salon_state/light_led_state (#T164).
-void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* icon_switch,
-    lv_obj_t* lbl_switch_state, lv_obj_t* btn_power_icon,
-    const std::string& current_light_slot, const std::string& this_slot, bool is_on);
-
-// Icone du selecteur du popup lumiere (lit/canape/ruban LED) : doree si allumee.
-void update_light_selector_icon(lv_obj_t* icon, bool is_on);
-
-// Reflete l'attribut brightness HA (0-255, NAN si eteinte) sur l'arc + le label %
-// du popup lumiere. Inerte si le popup est ferme ou pendant un drag utilisateur.
-void sync_light_popup_brightness(lv_obj_t* popup, lv_obj_t* arc, lv_obj_t* pct_lbl,
-    float brightness);
-
 // Affichage optimiste de la cible clim (label + arc du popup) avant le retour HA.
 // Appele par l'arc et les boutons -/+ du popup clim ; le retour reel arrive ensuite
 // par le service tab5_maj_clim qui reecrit les memes widgets.
 void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target);
-
-// Ouvre/resynchronise le popup lumiere sur light_idx (0=Chambre 1=Salon 2=LEDs) :
-// titre, bordure cyan du selecteur, icones d'etat, icone power, arc + % depuis
-// l'etat HA reel. Appele par script tab5_light_popup_show (tab5-scripts.yaml).
-void show_light_popup_ui(int light_idx, const char* const titles[3],
-    const bool is_on[3], const float brightness[3],
-    lv_obj_t* popup, lv_obj_t* title_lbl,
-    lv_obj_t* btn0, lv_obj_t* btn1, lv_obj_t* btn2,
-    lv_obj_t* icon0, lv_obj_t* icon1, lv_obj_t* icon2,
-    lv_obj_t* power_icon, lv_obj_t* arc, lv_obj_t* pct_lbl);
 
 // Tap tuile météo : affiche le planning/horaires du jour dans la carte centrale (6s).
 // Le timer de restauration rétablit ctx.current_panel (le tap l'a mis à 0).
@@ -723,8 +698,8 @@ struct ZonesUI {
     lv_obj_t* btn_ha = nullptr;        // rangée HA / Sys / TV
     lv_obj_t* btn_sys = nullptr;
     lv_obj_t* btn_tv = nullptr;
-    // Les cartes du calque « HA » sont des tuiles de pièce depuis l'ADR-0023 (g_tuiles_ui).
-    lv_obj_t* light_sel[3] = {};       // sélecteur du popup lumière
+    // Les cartes du calque « HA » et le sélecteur du popup lumière suivent les pièces
+    // depuis l'ADR-0023 (g_tuiles_ui, tab5_tuiles.cpp).
     lv_obj_t* clim_zone = nullptr;     // − / consigne / +
     lv_obj_t* icon_salon = nullptr;
     lv_obj_t* val_salon = nullptr;
@@ -822,6 +797,16 @@ struct TuilesUI {
     // Popups qu'une tuile ouvre (télécommande de la TV, climatisation du blueprint).
     lv_obj_t* popup_tv = nullptr;
     lv_obj_t* popup_clim = nullptr;
+    // Popup lumière (light_popup.yaml) : sélecteur des lumières de la pièce (5 au plus).
+    lv_obj_t* lum_popup = nullptr;        // light_options_popup
+    lv_obj_t* lum_titre = nullptr;        // popup_light_title
+    lv_obj_t* lum_sel[5] = {};            // btn_light_sel_N
+    lv_obj_t* lum_sel_icone[5] = {};      // icon_light_sel_N
+    lv_obj_t* lum_sel_nom[5] = {};        // lbl_light_sel_N
+    lv_obj_t* lum_power = nullptr;        // btn_light_power_icon
+    lv_obj_t* lum_arc = nullptr;          // arc_light_brightness
+    lv_obj_t* lum_pct = nullptr;          // lbl_light_brightness_val
+    std::string* lum_cle = nullptr;       // &id(current_light_slot) : cible des commandes
     // Volet 3.x (mode héritage) : sens de la prochaine commande.
     bool* volet_sens = nullptr;           // &id(volet_target_open)
     // Commandes, posées par le script (lambdas sans capture) : événement
@@ -846,10 +831,21 @@ void tuiles_mode_ha(bool actif);
 void tuiles_heritage_pc(bool actif);
 void tuiles_heritage_tv(bool actif);
 void tuiles_heritage_lumiere(int i, bool allumee);
+// Luminosité 0-255 (NaN éteinte) de lumiere_1..3 : l'arc du popup s'il la montre.
+void tuiles_heritage_luminosite(int i, float luminosite);
 // Renvoie vrai si le volet est en mouvement (volet_en_mouvement).
 bool tuiles_heritage_volet(const std::string& etat_physique);
 // Bouton btn_j1_dir (haut de la tuile du volet, mode héritage) : inverse le sens de la
 // prochaine commande (volet_target_open) et repeint la flèche.
 void tuiles_heritage_volet_sens();
+
+// Popup lumière (ouvert par l'appui long d'une tuile lum) : ses lignes sont les lumières
+// de la pièce, dans l'ordre des tuiles. Choisit la ligne `idx` (script
+// tab5_light_popup_show, boutons du sélecteur) : titre, surbrillance, arc, et
+// current_light_slot = clé de la tuile (tRT, ou lumiere_N en mode héritage).
+void popup_lumiere_choisir(int idx);
+// « Tout éteindre » : pR / eteindre (toutes les lumières de la pièce), lumieres /
+// eteindre en mode héritage.
+void popup_lumiere_tout_eteindre();
 
 // UIColor (couleurs sémantiques) : voir tab5_tokens.h.

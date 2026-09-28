@@ -399,33 +399,17 @@ script:
                   alert_id: !lambda 'return id(temp_dismiss_alert_id);'
             - script.execute: tab5_central_rotator_auto
 
-  # Popup lumière : sélection + synchro complète (titre, surbrillance sélecteur, icônes
-  # d'état, icône power, arc luminosité depuis l'attribut brightness HA) puis affichage.
-  # Appelé par forecast_daily.yaml (long_press cartes j2/j3/j4) et par les 3 boutons du
-  # sélecteur interne du popup. light_idx : 0=Chambre, 1=Salon, 2=LEDs.
+  # Popup lumière : choisit la ligne light_idx du sélecteur (0-4 = rang de la lumière
+  # dans la pièce, ADR-0023) — titre, surbrillance, icône power, arc depuis la
+  # luminosité reçue, et current_light_slot = clé de la tuile (tRT, ou lumiere_N en mode
+  # héritage). Appelé par les boutons du sélecteur (light_sel_btn.yaml). L'ouverture
+  # vient de l'appui long d'une tuile lum (tuile_appui, tab5_tuiles.cpp).
   - id: tab5_light_popup_show
     mode: restart
     parameters:
       light_idx: int
     then:
-      - lambda: |-
-          if (light_idx < 0 || light_idx > 2) return;
-          static const char* const kTitles[3] = {"Ampoule Chambre", "Ampoule Salon", "Ampoule LEDs"};
-          // Emplacement (lot 6a, ADR-0019) : les commandes du popup partent en
-          // esphome.tab5_action, le blueprint trouve l'entité.
-          static const char* const kSlots[3] = {"lumiere_1", "lumiere_2", "lumiere_3"};
-          id(current_light_slot) = kSlots[light_idx];
-          const bool is_on[3] = { id(light_chambre_state).state == "on",
-                                  id(light_salon_state).state == "on",
-                                  id(light_led_state).state == "on" };
-          const float brightness[3] = { id(light_chambre_brightness).state,
-                                        id(light_salon_brightness).state,
-                                        id(light_led_brightness).state };
-          show_light_popup_ui(light_idx, kTitles, is_on, brightness,
-              id(light_options_popup), id(popup_light_title),
-              id(btn_light_sel_0), id(btn_light_sel_1), id(btn_light_sel_2),
-              id(icon_light_sel_0), id(icon_light_sel_1), id(icon_light_sel_2),
-              id(btn_light_power_icon), id(arc_light_brightness), id(lbl_light_brightness_val));
+      - lambda: 'popup_lumiere_choisir(light_idx);'
 
   # Touche physique de la télécommande TV (tv_remote_popup.yaml et ses gabarits
   # tv_pad_btn.yaml / tv_transport_btn.yaml) : une seule commande paramétrée au

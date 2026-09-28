@@ -258,6 +258,7 @@ struct Heritage {
     bool tv = false;
     bool lum[3] = {};
     bool lum_recu[3] = {};
+    float lum_val[3] = {NAN, NAN, NAN};  // luminosité 0-255 (arc du popup)
     char volet[kEtat] = "";      // dernier etat_physique (En_mouvement, Ouvert, Ferme…)
     int8_t volet_ouvert = -1;    // dernier état connu hors mouvement : 1 ouvert, 0 fermé
 };
@@ -330,6 +331,15 @@ const char* heritage_glyphe_epaule(int t, bool volet_ferme) {
     switch (t) {
         case 0: return "\U000F07C0";   // desktop-classic : la TV (le PC sans TV)
         case 1: return volet_ferme ? "\U000F111C" : "\U000F111E";
+        case 2: return "\U000F02E3";   // bed
+        case 3: return "\U000F04B9";   // sofa
+        default: return "\U000F1051";  // led-strip-variant
+    }
+}
+
+// … dans le sélecteur du popup lumière (45 px, tuiles 2 à 4)…
+const char* heritage_glyphe_selecteur(int t) {
+    switch (t) {
         case 2: return "\U000F02E3";   // bed
         case 3: return "\U000F04B9";   // sofa
         default: return "\U000F1051";  // led-strip-variant
@@ -781,9 +791,13 @@ void peindre_meteo() {
     ui_hidden(g_tuiles_ui.jour_sens, !(heritage() && r == 0 && tuile_presente(0, 1)));
 }
 
+void popup_lumiere_etat(int r, int t);
+
 // Une tuile a changé (état, minuterie) : la repeindre là où elle est affichée.
 void peindre_tuile(int r, int t) {
-    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles || r != piece_courante()) return;
+    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return;
+    popup_lumiere_etat(r, t);
+    if (r != piece_courante()) return;
     if (g_central_ctx.ha_mode) {
         if (tuile_presente(r, t)) peindre_carte(r, t);
         return;
@@ -820,6 +834,140 @@ void aller_page(int page) {
     pagination_afficher(u.pastilles, page);
 }
 
+// ─── Popup lumière : les lumières de la pièce (ADR-0023) ─────────────────────────────
+
+struct PopupLumiere {
+    int piece = 0;
+    int n = 0;                 // lignes du sélecteur
+    int tuiles[kTuiles] = {};  // tuile de chaque ligne, dans l'ordre des tuiles
+    int choix = 0;             // ligne pilotée (current_light_slot)
+};
+PopupLumiere s_pl;
+
+// Une lumière pilotable de la pièce : tuile lum sans option r ; en mode héritage,
+// lumiere_1..3 (tuiles 2 à 4) que HA n'a pas déclarées absentes.
+bool est_lumiere(int r, int t) {
+    if (!tuile_presente(r, t)) return false;
+    if (heritage()) return r == 0 && t >= 2;
+    const Def& d = s_m.tuiles[r][t];
+    return d.type == static_cast<uint8_t>(Type::LUM) && !(d.options & OPT_R);
+}
+
+bool lumiere_allumee(int r, int t) {
+    return heritage() ? s_h.lum[t - 2] : est(s_etats[r][t].brut, "on");
+}
+
+float lumiere_luminosite(int r, int t) {
+    return heritage() ? s_h.lum_val[t - 2] : s_etats[r][t].valeur;
+}
+
+const char* lumiere_nom(int r, int t) {
+    if (!heritage()) return s_m.tuiles[r][t].nom;
+    return t == 2 ? tr("Chambre") : (t == 3 ? tr("Salon") : "LEDs");
+}
+
+// Clé des commandes du popup : tRT, ou lumiere_N en mode héritage (commandes 3.x).
+void lumiere_cle(int r, int t, std::string& out) {
+    if (heritage()) {
+        out = kHeritageLumieres[t - 2];
+        return;
+    }
+    const char cle[4] = {'t', static_cast<char>('0' + r), static_cast<char>('0' + t), '\0'};
+    out = cle;
+}
+
+bool popup_ouvert() {
+    const lv_obj_t* p = g_tuiles_ui.lum_popup;
+    return p != nullptr && !lv_obj_has_flag(p, LV_OBJ_FLAG_HIDDEN);
+}
+
+// Arc et « NN % » de la ligne choisie ; pas pendant un glissement (le retour de HA
+// ferait sauter le curseur sous le doigt). Éteinte : 0.
+void popup_lumiere_arc() {
+    const TuilesUI& u = g_tuiles_ui;
+    if (s_pl.n == 0 || u.lum_arc == nullptr || u.lum_pct == nullptr) return;
+    if (lv_obj_has_state(u.lum_arc, LV_STATE_PRESSED)) return;
+    const int r = s_pl.piece, t = s_pl.tuiles[s_pl.choix];
+    const float v = lumiere_luminosite(r, t);
+    int arcv = (!lumiere_allumee(r, t) || std::isnan(v)) ? 0 : static_cast<int>(v);
+    arcv = std::max(0, std::min(255, arcv));
+    lv_arc_set_value(u.lum_arc, arcv);
+    char buf[8];
+    snprintf(buf, sizeof(buf), "%d %%", arcv * 100 / 255);
+    ui_text(u.lum_pct, buf);
+}
+
+// Une ligne du sélecteur : icône (palette ou 3.1) dorée si allumée, nom coupé.
+void popup_lumiere_ligne(int i) {
+    const TuilesUI& u = g_tuiles_ui;
+    const int r = s_pl.piece, t = s_pl.tuiles[i];
+    const bool on = lumiere_allumee(r, t);
+    const char* icone = heritage() ? heritage_glyphe_selecteur(t) : tuile_icone(s_m.tuiles[r][t].icone, on, "lum");
+    ui_text(u.lum_sel_icone[i], icone);
+    ui_text_color(u.lum_sel_icone[i], on ? UIColor::INFO : UIColor::TEXT_DIM);
+    ui_texte_coupe(u.lum_sel_nom[i], lumiere_nom(r, t), 244);  // 342 − 88 − marge
+}
+
+// Tout le popup : lignes (serrées au-delà de trois), surbrillance, titre, bouton
+// marche/arrêt et arc de la ligne choisie.
+void popup_lumiere_peindre() {
+    const TuilesUI& u = g_tuiles_ui;
+    if (u.lum_popup == nullptr) return;
+    const bool serre = s_pl.n > 3;
+    const int32_t hauteur = serre ? 54 : 86, pas = serre ? 60 : 96;
+    for (int i = 0; i < kTuiles; i++) {
+        lv_obj_t* b = u.lum_sel[i];
+        const bool visible = i < s_pl.n;
+        ui_hidden(b, !visible);
+        if (!visible || b == nullptr) continue;
+        ui_y(b, 50 + i * pas);
+        if (lv_obj_get_style_height(b, LV_PART_MAIN) != hauteur) lv_obj_set_height(b, hauteur);
+        highlight_button_border(b, i == s_pl.choix, UIColor::ACCENT, 3);
+        popup_lumiere_ligne(i);
+    }
+    if (s_pl.n == 0) return;
+    const int r = s_pl.piece, t = s_pl.tuiles[s_pl.choix];
+    if (heritage()) {
+        const char* titre = t == 2 ? tr("Ampoule Chambre") : (t == 3 ? tr("Ampoule Salon") : tr("Ampoule LEDs"));
+        ui_text(u.lum_titre, titre);
+    } else {
+        ui_text(u.lum_titre, lumiere_nom(r, t));
+    }
+    ui_text_color(u.lum_power, lumiere_allumee(r, t) ? UIColor::INFO : UIColor::TEXT_DIM);
+    popup_lumiere_arc();
+}
+
+// Lumières de la pièce `r`, ligne choisie = celle de la tuile `t` (appui long).
+void popup_lumiere_ouvrir(int r, int t) {
+    const TuilesUI& u = g_tuiles_ui;
+    if (u.lum_popup == nullptr) return;
+    s_pl = PopupLumiere{};
+    s_pl.piece = r;
+    for (int i = 0; i < kTuiles; i++)
+        if (est_lumiere(r, i)) {
+            if (i == t) s_pl.choix = s_pl.n;
+            s_pl.tuiles[s_pl.n++] = i;
+        }
+    if (s_pl.n == 0) return;
+    if (u.lum_cle != nullptr) lumiere_cle(r, s_pl.tuiles[s_pl.choix], *u.lum_cle);
+    popup_lumiere_peindre();
+    animate_popup_open(u.lum_popup);
+}
+
+// Un état a changé : la ligne de cette tuile si le popup la montre.
+void popup_lumiere_etat(int r, int t) {
+    if (!popup_ouvert() || r != s_pl.piece) return;
+    const TuilesUI& u = g_tuiles_ui;
+    for (int i = 0; i < s_pl.n; i++) {
+        if (s_pl.tuiles[i] != t) continue;
+        popup_lumiere_ligne(i);
+        if (i == s_pl.choix) {
+            ui_text_color(u.lum_power, lumiere_allumee(r, t) ? UIColor::INFO : UIColor::TEXT_DIM);
+            popup_lumiere_arc();
+        }
+    }
+}
+
 // ─── Commandes ──────────────────────────────────────────────────────────────────────
 
 void envoyer(const char* emplacement, const char* action) {
@@ -846,7 +994,8 @@ void appui_heritage(int t, bool long_appui) {
             if (!long_appui && g_tuiles_ui.volet_tap != nullptr) g_tuiles_ui.volet_tap();
             return;
         default:
-            if (!long_appui) envoyer(kHeritageLumieres[t - 2], "basculer");
+            if (long_appui) popup_lumiere_ouvrir(0, t);
+            else envoyer(kHeritageLumieres[t - 2], "basculer");
             return;
     }
 }
@@ -1040,7 +1189,10 @@ void tuile_appui(int t, bool long_appui) {
     const char* action = nullptr;
     switch (type) {
         case Type::LUM:
-            if (long_appui) return;
+            if (long_appui) {
+                popup_lumiere_ouvrir(r, t);
+                return;
+            }
             action = (d.options & OPT_O) ? "allumer" : "basculer";
             break;
         case Type::INT:
@@ -1098,6 +1250,33 @@ void tuiles_heritage_lumiere(int i, bool allumee) {
     s_h.lum[i] = allumee;
     s_h.lum_recu[i] = true;
     peindre_heritage(2 + i);
+}
+
+void tuiles_heritage_luminosite(int i, float luminosite) {
+    if (i < 0 || i > 2) return;
+    charger();
+    s_h.lum_val[i] = luminosite;
+    if (heritage()) popup_lumiere_etat(0, 2 + i);
+}
+
+void popup_lumiere_choisir(int idx) {
+    charger();
+    const TuilesUI& u = g_tuiles_ui;
+    if (idx < 0 || idx >= s_pl.n || u.lum_popup == nullptr) return;
+    s_pl.choix = idx;
+    if (u.lum_cle != nullptr) lumiere_cle(s_pl.piece, s_pl.tuiles[idx], *u.lum_cle);
+    popup_lumiere_peindre();
+    if (!popup_ouvert()) animate_popup_open(u.lum_popup);
+}
+
+void popup_lumiere_tout_eteindre() {
+    charger();
+    if (heritage()) {
+        envoyer("lumieres", "eteindre");
+        return;
+    }
+    const char cle[3] = {'p', static_cast<char>('0' + s_pl.piece), '\0'};
+    envoyer(cle, "eteindre");
 }
 
 bool tuiles_heritage_volet(const std::string& etat) {

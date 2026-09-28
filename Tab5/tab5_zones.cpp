@@ -215,17 +215,8 @@ void zones_apply_ui() {
     // page (ADR-0023) — tuiles_appliquer_ui(), en fin de fonction ; en mode héritage,
     // elles suivent ces zones (zone_tuile_absente).
 
-    // Popup lumière : sélecteur réduit aux lampes présentes, tassé vers le haut.
-    {
-        int32_t y = 50;
-        for (int i = 0; i < 3; i++) {
-            const bool absente = zone_absente(zone_lumiere(i));
-            ui_hidden(u.light_sel[i], absente);
-            if (absente || u.light_sel[i] == nullptr) continue;
-            ui_y(u.light_sel[i], y);
-            y += 96;
-        }
-    }
+    // Popup lumière : son sélecteur liste les lumières de la pièce, à l'ouverture
+    // (tab5_tuiles.cpp) ; en mode héritage, les lampes présentes.
 
     // Carte clim : − / consigne / + (le popup s'ouvre depuis la consigne).
     ui_hidden(u.clim_zone, zone_absente(Zone::CLIM));
