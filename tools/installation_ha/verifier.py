@@ -649,20 +649,32 @@ async def capturer(ha: HA, dossier: Path, nom: str, rapport: Rapport) -> None:
     rapport.ok(f"capture d'écran demandée par HA : {nom}.png")
 
 
-async def journal_ha(ha: HA, rapport: Rapport) -> None:
-    """Avertissements et erreurs du journal de HA (informatif), ceux qui citent le Tab5
-    en tête."""
-    try:
-        entrees = await ha.ws.commande("system_log/list")
-    except Echec:
-        return
-    lignes = []
-    for e in entrees:
-        message = " / ".join(e.get("message") or [])
-        lignes.append((("tab5" not in message.lower() and "esphome" not in (e.get("name") or "")),
-                       f"{e.get('level')} {e.get('name')} ×{e.get('count', 1)} : {message[:300]}"))
-    for _, texte in sorted(lignes):
-        rapport.info(f"journal HA — {texte}")
+def concerne_le_tab5(entree: dict) -> bool:
+    """Entrée du journal de HA (system_log) qui parle du Tab5 : ses packages, son
+    blueprint, ses entités ou l'intégration ESPHome."""
+    texte = (" ".join(entree.get("message") or []) + " " + (entree.get("name") or "")).lower()
+    return any(mot in texte for mot in ("tab5", "m5stack", "esphome"))
+
+
+async def journal_ha(ha: HA, connexion: float, rapport: Rapport) -> None:
+    """Journal de HA : une ERREUR qui concerne le Tab5, survenue après que la tablette
+    s'est connectée, fait échouer le job ; le reste est rapporté (avant la connexion,
+    les actions esphome.tab5_ha_hmi_* n'existent pas encore : les poussées lancées au
+    démarrage de HA échouent, c'est attendu dans l'ordre de docs/installation.md)."""
+    entrees = await ha.ws.commande("system_log/list")
+    autres = 0
+    for e in sorted(entrees, key=lambda e: e.get("timestamp") or 0):
+        if not concerne_le_tab5(e):
+            autres += 1
+            continue
+        message = " / ".join(e.get("message") or [])[:400]
+        texte = f"{e.get('level')} {e.get('name')} ×{e.get('count', 1)} : {message}"
+        apres = (e.get("timestamp") or 0) >= connexion
+        if apres and e.get("level") in ("ERROR", "CRITICAL"):
+            rapport.echec(f"journal HA, après la connexion de la tablette — {texte}")
+        else:
+            rapport.info(f"journal HA, {'après' if apres else 'avant'} la connexion — {texte}")
+    rapport.info(f"journal HA : {autres} autre(s) entrée(s) sans rapport avec le Tab5 (demo, traductions…)")
 
 
 async def scenario(args, rapport: Rapport) -> None:
@@ -698,8 +710,9 @@ async def scenario(args, rapport: Rapport) -> None:
             if not rapport.verifier(evt is not None, "esphome.tab5_connected reçu après la clé (connexion chiffrée)",
                                     "rien en 120 s : HA s'est-il reconnecté avec la clé ? (docker logs)"):
                 raise Echec("la tablette n'est pas reconnectée à HA après la clé")
+            connexion = horodatage(evt["time_fired"])
             rapport.info(f"clé vue {vue - debut:.1f} s après l'ajout, tab5_connected "
-                         f"{horodatage(evt['time_fired']) - debut:.1f} s après")
+                         f"{connexion - debut:.1f} s après")
             await autoriser_actions(ha, entry_id, rapport)
             await attendre_traces(ha, debut, rapport)
             etat = await attendre_etat(ha, f"sensor.{PREFIXE_ENTITES}_zones_masquees", ZONES_ABSENTES)
@@ -722,7 +735,7 @@ async def scenario(args, rapport: Rapport) -> None:
             await attendre_traces(ha, relance, rapport)
             await asyncio.sleep(3)
             await capturer(ha, args.captures, "installation-ha-2", rapport)
-            await journal_ha(ha, rapport)
+            await journal_ha(ha, connexion, rapport)
     finally:
         await tablette.arreter()
 

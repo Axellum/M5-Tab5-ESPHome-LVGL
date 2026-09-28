@@ -129,3 +129,7 @@ def test_fonctions_pures():
                        "action/1": [{"path": "action/1", "error": "Action esphome.x not found"}]}}
     assert verifier.erreurs_de_trace(trace) == ["action/1 : Action esphome.x not found"]
     assert verifier.erreurs_de_trace({"error": "boum", "trace": {}}) == ["passage : boum"]
+    assert verifier.concerne_le_tab5({"name": "homeassistant.components.script.tab5_push_alertes", "message": []})
+    assert verifier.concerne_le_tab5({"name": "x", "message": ["Action esphome.tab5_ha_hmi_y not found"]})
+    assert not verifier.concerne_le_tab5({"name": "homeassistant.helpers.translation",
+                                          "message": ["Invalid domain demo.weather"]})

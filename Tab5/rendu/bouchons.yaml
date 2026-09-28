@@ -87,10 +87,13 @@ binary_sensor:
   - id: !extend headphone_detect
     platform: template
     pin: !remove
-  # Liaison avec HA : celle de l'API du rendu (le mode démo s'y connecte).
+  # Liaison avec HA : celle de l'API du rendu (le mode démo s'y connecte). Même nom que
+  # sur la tablette (tab5-sensors-diagnostics.yaml) : la poussée complète de
+  # packages/tab5_push.yaml lit binary_sensor.<appareil>_ha_api_status à la connexion,
+  # et sa condition échoue quand l'entité manque (job installation-ha, 28/09/2026).
   - platform: status
+    name: "HA API Status"
     id: status_ha
-    internal: true
 
 # Capteurs lus par la console système : valeurs fixes, sans Wi-Fi ni sonde.
 sensor:
