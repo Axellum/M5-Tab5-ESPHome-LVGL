@@ -101,6 +101,30 @@ def test_canaux_stable_et_beta():
     assert pages.choisir(releases) == {"stable": "v3.1.0", "beta": "v3.1.0"}
 
 
+def test_release_sans_ses_fichiers_ignoree():
+    """28/09/2026 : #219 mergée pendant la compilation de v3.1.0 ; le site l'a prise pour
+    la stable et a échoué (« no assets to download »). Sans ses manifestes, une release
+    est ignorée : les canaux restent sur la précédente."""
+    complets = [f"manifest-{e}.json" for e in pages.ECRANS] + ["tab5-ha-hmi-st7123.ota.bin"]
+    releases = [
+        dict(_rel("v3.0.1", date="2026-09-28T09:00:00Z"), assets=complets),
+        dict(_rel("v3.1.0", date="2026-09-28T11:29:00Z"), assets=[]),
+    ]
+    assert pages.choisir(releases) == {"stable": "v3.0.1", "beta": "v3.0.1"}
+    releases[1]["assets"] = complets[:2]  # une révision encore en cours
+    assert pages.choisir(releases) == {"stable": "v3.0.1", "beta": "v3.0.1"}
+    releases[1]["assets"] = complets
+    assert pages.choisir(releases) == {"stable": "v3.1.0", "beta": "v3.1.0"}
+
+
+def test_site_lit_les_fichiers_des_releases():
+    """Le déploiement du site lit l'API des releases, avec leurs fichiers : c'est ce qui
+    permet à choisir() d'écarter une release encore en compilation."""
+    site = (REPO / ".github" / "workflows" / "site.yml").read_text(encoding="utf-8")
+    assert 'gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100"' in site
+    assert "assets: [.assets[].name]" in site
+
+
 def test_premiere_pre_release_sans_stable():
     releases = [_rel("v2.2.0"), _rel("v3.0.0-rc.1", pre=True, date="2026-10-02T00:00:00Z")]
     assert pages.choisir(releases) == {"stable": None, "beta": "v3.0.0-rc.1"}
