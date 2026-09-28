@@ -7,18 +7,21 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
       (.github/workflows/installation-ha.yml). Le conteneur Home Assistant tourne déjà sur
       le dossier écrit par preparer_config.py ; ce script lance la tablette virtuelle (le rendu
       hors tablette compilé sous le nom de la vraie, tab5-rendu-host.yaml), puis fait ce
-      que docs/installation.md fait faire à la souris :
-        1. créer le compte (onboarding), fuseau Europe/Paris ;
-        2. un agenda de travail (Calendrier local) et l'automatisation du blueprint
-           « Tab5 — emplacements » (étape 4, point 6), avec des entités de test ;
-        3. ajouter la tablette (étape 6 : ESPHome, hôte + port), puis cocher
-           « Autoriser l'appareil à effectuer des actions Home Assistant ».
+      que docs/installation.md (« Sans compiler », dans cet ordre) fait faire à la souris :
+        1. créer le compte (onboarding), fuseau Europe/Paris ; un agenda de travail
+           (Calendrier local) ; le blueprint est déjà dans config/ (preparer_config.py) ;
+        2. ajouter la tablette (ESPHome, hôte + port), puis cocher « Autoriser
+           l'appareil à effectuer des actions Home Assistant » ;
+        3. créer l'automatisation du blueprint « Tab5 — emplacements », avec des entités
+           de test ; puis redémarrer la tablette.
       et vérifie : clé API créée par HA et gardée (jamais affichée), refus de la clé
       nulle et du clair une fois la clé posée, esphome.tab5_connected reçu APRÈS la clé,
-      traces des automatisations (blueprint, poussée complète) terminées sans erreur,
-      zones masquées renvoyées par la tablette, capture d'écran demandée PAR HA
-      (action esphome.tab5_ha_hmi_rendu_capture), puis la même chose après un
-      redémarrage de la tablette (la clé persiste, HA se reconnecte en chiffré).
+      poussée complète terminée sans erreur ; puis, après le redémarrage (la clé
+      persiste, HA se reconnecte en chiffré), traces du blueprint et de la poussée sans
+      erreur, zones masquées renvoyées par la tablette, capture d'écran demandée PAR HA
+      (action esphome.tab5_ha_hmi_rendu_capture), journal de HA sans erreur Tab5. Ce que
+      montre l'écran entre la création de l'automatisation et le redémarrage est
+      rapporté (capture 1), sans faire échouer.
 @contraintes Le mot de passe du compte est tiré au hasard ici et n'est jamais affiché ;
       la clé API est lue dans .storage par `docker exec` (fichiers de root dans le
       conteneur) et n'est jamais affichée non plus, seulement sa longueur.
@@ -94,15 +97,25 @@ EMPLACEMENTS = {
 # Texte du capteur « Zones masquées » attendu (zones_texte_masquees(), tab5_zones.cpp :
 # ordre de kCles, séparateur « , »).
 ZONES_ABSENTES = "pot_4, pot_5"
+ZONES_ENTITE = f"sensor.{PREFIXE_ENTITES}_zones_masquees"
 
 # Automatisations dont les traces doivent être « finished » sans erreur après une
-# connexion de la tablette : (id, déclencheur attendu dans la trace).
+# connexion de la tablette : (id, déclencheur attendu dans la trace). À l'ajout, le
+# blueprint n'a pas encore d'automatisation (ordre « Sans compiler ») : la poussée
+# complète seulement ; après le redémarrage, les trois.
 ID_POUSSEE = "tab5_ha_hmi_updater"          # packages/tab5_push.yaml
+TRACES_A_L_AJOUT = (
+    (ID_POUSSEE, "esphome.tab5_connected"),
+)
 TRACES_ATTENDUES = (
     (ID_AUTOMATISATION, "esphome.tab5_connected"),
     (ID_AUTOMATISATION, "esphome.tab5_zones"),
     (ID_POUSSEE, "esphome.tab5_connected"),
 )
+
+# Après la création de l'automatisation, sans reconnexion : temps laissé au blueprint
+# pour pousser ce qu'il peut, avant de rapporter l'état de l'écran.
+ATTENTE_APRES_CREATION = 20.0
 
 # Tolérance sur « reçu après la clé » : HA écrit .storage une seconde après le
 # changement (Store, SAVE_DELAY), et ce script le relit toutes les 0,25 s.
@@ -480,8 +493,8 @@ async def creer_agenda(ha: HA, rapport: Rapport) -> None:
     rapport.ok(f"agenda de travail {AGENDA} (Calendrier local) avec deux journées « Travail »")
 
 
-async def creer_automatisation(ha: HA, rapport: Rapport) -> None:
-    """Étape 4, point 6 : une automatisation depuis le blueprint, entités choisies."""
+async def verifier_blueprint(ha: HA, rapport: Rapport) -> None:
+    """Le blueprint copié dans config/ (étape 4, point 6) est lu par HA sans erreur."""
     liste = await ha.ws.commande("blueprint/list", domain="automation")
     if CHEMIN_BLUEPRINT not in liste:
         raise Echec(f"blueprint {CHEMIN_BLUEPRINT} absent de la liste de HA : {sorted(liste)}")
@@ -489,6 +502,9 @@ async def creer_automatisation(ha: HA, rapport: Rapport) -> None:
         raise Echec(f"blueprint {CHEMIN_BLUEPRINT} refusé par HA : {erreur}")
     rapport.ok(f"blueprint {CHEMIN_BLUEPRINT} chargé par HA")
 
+
+async def creer_automatisation(ha: HA, rapport: Rapport) -> None:
+    """« Vos appareils » : une automatisation depuis le blueprint, entités choisies."""
     etats = await ha.etats()
     manquantes = [e for e in EMPLACEMENTS.values() if e not in etats]
     if manquantes:
@@ -588,14 +604,14 @@ def resume_passage(t: dict) -> str:
             f"{t.get('script_execution')} (étape {t.get('last_step')}){' — ' + t['error'] if t.get('error') else ''}")
 
 
-async def attendre_traces(ha: HA, apres: float, rapport: Rapport, delai: float = 150.0) -> None:
-    """Chaque automatisation de TRACES_ATTENDUES : ses passages déclenchés par son
-    événement depuis `apres`, jugés quand l'un a abouti et qu'aucun ne tourne encore.
-    Au moins un « finished », aucune étape en erreur, et aucun passage en erreur ni
-    arrêté par ses conditions (le cas de la poussée complète sans l'entité
-    « HA API Status », vu le 28/09/2026)."""
+async def attendre_traces(ha: HA, apres: float, rapport: Rapport, attendues=TRACES_ATTENDUES,
+                          delai: float = 150.0) -> None:
+    """Chaque (automatisation, déclencheur) de `attendues` : ses passages depuis `apres`,
+    jugés quand l'un a abouti et qu'aucun ne tourne encore. Au moins un « finished »,
+    aucune étape en erreur, et aucun passage en erreur ni arrêté par ses conditions (le
+    cas de la poussée complète sans l'entité « HA API Status », vu le 28/09/2026)."""
     fin = time.monotonic() + delai
-    restantes = list(TRACES_ATTENDUES)
+    restantes = list(attendues)
     vus: dict[tuple[str, str], list[dict]] = {}
     while restantes and time.monotonic() < fin:
         for item_id, declencheur in list(restantes):
@@ -626,6 +642,22 @@ async def juger_passages(ha: HA, item_id: str, declencheur: str, passages: list[
         elif erreurs := erreurs_de_trace(await ha.trace(item_id, t["run_id"])):
             fautifs.append(f"{resume_passage(t)} : " + " ; ".join(erreurs[:5]))
     rapport.verifier(not fautifs, f"trace {item_id} ({declencheur}) terminée sans erreur", " | ".join(fautifs))
+
+
+async def rapporter_apres_creation(ha: HA, cree: float, rapport: Rapport) -> None:
+    """Ce que le blueprint a fait depuis la création de son automatisation, sans
+    reconnexion de la tablette : ses déclencheurs sont la connexion, la demande des
+    zones (une par connexion), les changements d'état et les mesures toutes les
+    5 minutes. Rapporté, pas jugé : c'est l'état de l'écran juste après l'étape 6 de
+    « Sans compiler »."""
+    passages = [t for t in await ha.traces(ID_AUTOMATISATION)
+                if horodatage((t.get("timestamp") or {}).get("start")) >= cree]
+    declencheurs = sorted({t.get("trigger") or "?" for t in passages})
+    zones = (await ha.etats()).get(ZONES_ENTITE, {}).get("state")
+    rapport.info(f"automatisation créée après l'ajout (ordre « Sans compiler ») : "
+                 f"{ATTENTE_APRES_CREATION:.0f} s plus tard, sans reconnexion, {len(passages)} passage(s) "
+                 f"du blueprint ({', '.join(declencheurs) or 'aucun'}) et « Zones masquées » = {zones!r} "
+                 f"(attendu après une connexion : {ZONES_ABSENTES!r}) — capture installation-ha-1")
 
 
 async def attendre_etat(ha: HA, entity_id: str, attendu: str, delai: float = 60.0) -> str | None:
@@ -747,11 +779,12 @@ async def scenario(args, rapport: Rapport) -> None:
             for evenement in ("esphome.tab5_connected", "esphome.tab5_zones"):
                 await ws.abonner(evenement)
 
-            # Étape 4 : ce qu'un utilisateur prépare avant d'ajouter la tablette.
+            # « Sans compiler », 1 : Home Assistant d'abord. Packages et blueprint sont
+            # déjà dans config/ (preparer_config.py) ; un agenda, comme chez l'utilisateur.
             await creer_agenda(ha, rapport)
-            await creer_automatisation(ha, rapport)
+            await verifier_blueprint(ha, rapport)
 
-            # Étape 6 : ajout de la tablette, dans sa fenêtre d'appairage.
+            # 4 et 5 : ajout de la tablette dans sa fenêtre d'appairage, actions HA.
             await tablette.attendre_port()
             debut = time.time()
             entry_id = await ajouter_tablette(ha, rapport)
@@ -765,14 +798,18 @@ async def scenario(args, rapport: Rapport) -> None:
             rapport.info(f"clé vue {vue - debut:.1f} s après l'ajout, tab5_connected "
                          f"{connexion - debut:.1f} s après")
             await autoriser_actions(ha, entry_id, rapport)
-            await attendre_traces(ha, debut, rapport)
-            etat = await attendre_etat(ha, f"sensor.{PREFIXE_ENTITES}_zones_masquees", ZONES_ABSENTES)
-            rapport.verifier(etat == ZONES_ABSENTES, f"la tablette masque les emplacements vides ({ZONES_ABSENTES})",
-                             f"capteur « Zones masquées » = {etat!r}")
-            await asyncio.sleep(3)
+            await attendre_traces(ha, debut, rapport, TRACES_A_L_AJOUT)
+
+            # 6 : « Vos appareils », l'automatisation du blueprint, APRÈS l'ajout. Ce que
+            # l'écran en reçoit avant toute reconnexion est rapporté, pas jugé.
+            cree = time.time()
+            await creer_automatisation(ha, rapport)
+            await asyncio.sleep(ATTENTE_APRES_CREATION)
+            await rapporter_apres_creation(ha, cree, rapport)
             await capturer(ha, args.captures, "installation-ha-1", rapport)
 
-            # Redémarrage de la tablette : la clé persiste, HA revient en chiffré.
+            # Redémarrage de la tablette : la clé persiste, HA revient en chiffré, et
+            # l'automatisation du blueprint voit enfin une connexion.
             await tablette.arreter()
             relance = tablette.demarrer()
             await tablette.attendre_port()
@@ -784,6 +821,9 @@ async def scenario(args, rapport: Rapport) -> None:
             rapport.verifier((r := await essayer_connexion(ZERO_NOISE_PSK)) == "InvalidEncryptionKeyAPIError",
                              "après le redémarrage, la clé est toujours là (clé nulle refusée)", f"résultat : {r}")
             await attendre_traces(ha, relance, rapport)
+            etat = await attendre_etat(ha, ZONES_ENTITE, ZONES_ABSENTES)
+            rapport.verifier(etat == ZONES_ABSENTES, f"la tablette masque les emplacements vides ({ZONES_ABSENTES})",
+                             f"capteur « Zones masquées » = {etat!r}")
             await asyncio.sleep(3)
             await capturer(ha, args.captures, "installation-ha-2", rapport)
             await journal_ha(ha, connexion, rapport)
