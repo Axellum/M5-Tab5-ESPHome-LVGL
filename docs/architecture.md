@@ -146,7 +146,7 @@ page_main (1280×720, the whole dashboard)
 │                                   every 8s, tab5-globals.yaml `interval:`; paused
 │                                   while off the default forecast window)
 ├── bottom card region — one of two, toggled by `btn_control_ha` (house icon, top right):
-│   ├── switches card   (`layer_switches` — PC/volet/light switches, 5 tabs)
+│   ├── HA mode cards   (`layer_switches` — the 5 devices of the current room, ADR-0023)
 │   └── forecast card   (`layer_forecast_daily` / `layer_forecast_hourly` — weather, 5 tabs)
 ├── climate_popup   (near-fullscreen modal, opened by tapping the climate card)
 ├── light_popup     (near-fullscreen modal, opened by tapping a light switch card)
@@ -164,11 +164,11 @@ separate pages, outside the dashboard flow (all `skip: true` — see §6):
     page_trivia / page_chess / page_draughts      (one per console)
 ```
 
-Navigation is by touch (opening/closing the climate/light popups and the console button, and toggling the bottom card region between switches and weather) and by swipe gesture, handled in C++ (`handle_swipe_gesture()` in `tab5_central.cpp`):
-- swipe left/right on the lower band of the screen (`y ≥ 333`) → cycle through the 5 forecast pages (2 hourly windows + 3 daily windows, non-wrapping 0↔4) — only when the bottom region is in forecast mode; the switches card doesn't paginate via swipe
+Navigation is by touch (opening/closing the climate/light popups and the console button, and toggling the bottom card region between the weather mode and the HA mode) and by swipe gesture, handled in C++ (`handle_swipe_gesture()` in `tab5_central.cpp`):
+- swipe left/right on the lower band of the screen (`y ≥ 333`) → cycle through the 5 forecast pages (2 hourly windows + 3 daily windows, with the deliberate wrap documented in `forecast_page_suivante()`) in weather mode; in HA mode, the same gesture goes to the next / previous **room** that has a device, in the same page order, and never shows the weather layers again under the cards
 - since the 14/07/2026 rework there is **no** up/down swipe anymore — the console opens via its dedicated button only
 
-The `show_switches` global (`tab5-globals.yaml`) tracks which of the two is currently visible; the other is hidden via `LV_OBJ_FLAG_HIDDEN` rather than removed, so the toggle button (`tab5-lvgl.yaml`, `btn_control_ha`) just flips which layer is shown/hidden — see the `[AI-CONTEXT]` header in `ui_components/switches_card.yaml` for the source-level note.
+Since 3.2 ([ADR-0023](decisions/0023-rooms-generic-tiles.md)) each forecast page is also a room of up to five devices described by Home Assistant (`tab5_tuiles.cpp`). The HA mode flag is `g_central_ctx.ha_mode` (the former `show_switches` global is gone); `tuiles_mode_ha()` crossfades the weather layer and `layer_switches` (hidden via `LV_OBJ_FLAG_HIDDEN`, never removed), paints the five cards of the current room, puts the room title in the central card and highlights the « HA » button (`tab5-lvgl.yaml`, `btn_control_ha`). See the `[AI-CONTEXT]` headers of `Tab5/tab5_tuiles.cpp` and `ui_components/switches_card.yaml` for the source-level notes.
 
 All style references point to IDs defined in `tab5-styles.yaml`. No inline style properties.
 
@@ -377,7 +377,7 @@ page_main (1280×720, tout le dashboard)
 │                                        de tab5-globals.yaml ; en pause hors
 │                                        de la fenêtre prévisions par défaut)
 ├── zone carte du bas — l'une des deux, basculée par `btn_control_ha` (icône maison, en haut à droite) :
-│   ├── carte switches   (`layer_switches` — switches PC/volet/lumières, 5 onglets)
+│   ├── cartes du mode HA (`layer_switches` — les 5 appareils de la pièce courante, ADR-0023)
 │   └── carte prévisions (`layer_forecast_daily` / `layer_forecast_hourly` — météo, 5 onglets)
 ├── climate_popup   (modale quasi plein écran, ouverte au tap sur la carte clim)
 ├── light_popup     (modale quasi plein écran, ouverte au tap sur une carte switch lumière)
@@ -395,11 +395,11 @@ pages séparées, hors parcours dashboard (toutes en `skip: true` — voir §6) 
     page_trivia / page_chess / page_draughts      (une par console)
 ```
 
-La navigation se fait au tactile (ouverture/fermeture des popups clim/lumière et du bouton console, et bascule de la zone du bas entre switches et météo) et par geste swipe, géré en C++ (`handle_swipe_gesture()` dans `tab5_central.cpp`) :
-- swipe gauche/droite sur la bande basse de l'écran (`y ≥ 333`) → cycle les 5 pages de prévisions (2 fenêtres horaires + 3 fenêtres journalières, sans bouclage 0↔4) — uniquement quand la zone du bas est en mode météo ; la carte switches ne se pagine pas au swipe
+La navigation se fait au tactile (ouverture/fermeture des popups clim/lumière et du bouton console, et bascule de la zone du bas entre le mode météo et le mode HA) et par geste swipe, géré en C++ (`handle_swipe_gesture()` dans `tab5_central.cpp`) :
+- swipe gauche/droite sur la bande basse de l'écran (`y ≥ 333`) → cycle les 5 pages de prévisions (2 fenêtres horaires + 3 fenêtres journalières, avec le bouclage volontaire documenté dans `forecast_page_suivante()`) en mode météo ; en mode HA, le même geste va à la **pièce** suivante / précédente qui a un appareil, dans le même ordre de pages, sans jamais réafficher les calques météo sous les cartes
 - depuis la refonte du 14/07/2026 il n'y a **plus** de swipe haut/bas — la console s'ouvre uniquement par son bouton dédié
 
-Le global `show_switches` (`tab5-globals.yaml`) suit laquelle des deux est actuellement visible ; l'autre est cachée via `LV_OBJ_FLAG_HIDDEN` plutôt que retirée, donc le bouton de bascule (`tab5-lvgl.yaml`, `btn_control_ha`) ne fait que basculer quel layer est affiché/caché — voir le bloc `[AI-CONTEXT]` de `ui_components/switches_card.yaml` pour la note au niveau du code source.
+Depuis la 3.2 ([ADR-0023](decisions/0023-rooms-generic-tiles.md)), chaque page de prévisions est aussi une pièce de cinq appareils au plus, décrite par Home Assistant (`tab5_tuiles.cpp`). Le drapeau du mode HA est `g_central_ctx.ha_mode` (l'ancien global `show_switches` a disparu) ; `tuiles_mode_ha()` fait le fondu entre le calque météo et `layer_switches` (cachés via `LV_OBJ_FLAG_HIDDEN`, jamais retirés), peint les cinq cartes de la pièce courante, met le titre de la pièce dans la carte centrale et met en valeur le bouton « HA » (`tab5-lvgl.yaml`, `btn_control_ha`) — voir les blocs `[AI-CONTEXT]` de `Tab5/tab5_tuiles.cpp` et de `ui_components/switches_card.yaml`.
 
 Toutes les références de style pointent vers des IDs définis dans `tab5-styles.yaml`. Aucune propriété de style inline.
 

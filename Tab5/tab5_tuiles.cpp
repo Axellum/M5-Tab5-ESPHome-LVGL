@@ -47,7 +47,7 @@ constexpr int kNbTypes = sizeof(kTypes) / sizeof(kTypes[0]);
 // Options : une lettre chacune, bit i = lettre i de kLettresOptions.
 //   d graduable, c couleur, o allumer seulement, k confirmer, r lecture seule,
 //   t télécommande TV du blueprint, m climatisation du blueprint.
-constexpr char kLettresOptions[] = "dcoktrm";
+constexpr char kLettresOptions[] = "dcokrtm";
 enum : uint8_t { OPT_D = 1, OPT_C = 2, OPT_O = 4, OPT_K = 8, OPT_R = 16, OPT_T = 32, OPT_M = 64 };
 
 // Taille des champs gardés (octets, zéro final compris).

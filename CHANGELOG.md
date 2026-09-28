@@ -4,6 +4,40 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — Firmware : les pièces et leurs tuiles (ADR-0023, côté tablette)
+
+- **Modèle** (`Tab5/tab5_tuiles.cpp`, nouvelle unité) : 5 pièces × 5 tuiles (type, icône
+  de la palette, options, complément, nom gardé sur 24 octets et filtré aux glyphes des
+  polices ; état, valeur, couleur). Nouvelle action **`tab5_maj_tuiles`** (instantané
+  complet, grammaire de l'ADR) ; les états `tRT|état|valeur|couleur` passent par
+  `tab5_maj_emplacements`, routés avant la table des emplacements 3.x. Définitions
+  gardées en NVS (magie `TUI1`, écrites seulement si elles changent) : les pièces se
+  dessinent avant que HA réponde ; les états ne sont pas gardés (« -- » grisé).
+- **Mode héritage** : tant qu'aucune définition n'est arrivée (firmware mis à jour avant
+  le blueprint), la pièce 0 est construite depuis les emplacements 3.x — PC/TV, volet,
+  trois lumières — avec leurs noms, icônes, gestes et commandes 3.x.
+- **Mode météo** : sur chaque page, une tuile qui porte un appareil de la pièce de la page
+  le montre dans ses épaules (icône colorée par l'état ; ampoule ou flèche du prochain
+  mouvement du volet) et reçoit son bouton invisible — les tuiles horaires aussi
+  (`forecast_hour_card.yaml`). Appui court / long selon le type, options `o k r t m`
+  (confirmation `k` : second appui dans les 3 s, « Confirmer ? »).
+- **Mode HA** : les cinq cartes montrent la pièce de la page (icône de la palette, nom
+  coupé avec « … », état traduit, couleur par type et état, cartes vides masquées et
+  les autres centrées) ; la carte centrale affiche « Pièce n/N » et le nom de la pièce.
+  **Le swipe change de pièce** (suivante / précédente qui a des appareils) et ne
+  réaffiche plus la météo sous les cartes (bug) ; entrée sur une page vide → la pièce
+  la plus proche ; le bouton « HA » montre le mode actif et disparaît sans appareil ;
+  « Aller à l'écran → Accueil » quitte le mode HA. Le global `show_switches` disparaît
+  (`g_central_ctx.ha_mode`, seule source).
+- **Popup lumière** : le sélecteur liste les lumières de la pièce (5 au plus), s'ouvre
+  sur la lumière appuyée ; « Tout éteindre » → `pR / eteindre`.
+- Version par défaut `3.2.0-dev`, rendu `3.2.0-rendu` : le blueprint envoie les pièces.
+  L'`on_boot` n'est pas touché (widgets posés par `tab5-tuiles.yaml`, lancé depuis
+  `tab5_zones_apply`). 10 textes nouveaux, traduits dans les 5 langues.
+- Tests : `tests/test_tuiles_firmware.py` (types, options, pièces, commandes, filtre des
+  noms, routage, version, boutons contre l'ADR) — il a trouvé `t` et `r` inversés dans
+  la table des options avant tout essai.
+
 ### 2026-09-28 — Blueprint : les pièces (ADR-0023, côté Home Assistant)
 
 - **Cinq pièces de cinq appareils** dans le blueprint « Tab5 — emplacements » (même

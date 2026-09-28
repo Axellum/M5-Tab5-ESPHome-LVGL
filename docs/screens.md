@@ -14,7 +14,7 @@ There is a **single 1280×720 page** (`page_main`), not a tab-navigated set of s
 
 1. **Home area** — always visible: clock, indoor sensors, quick actions, compact climate card, plant moisture card.
 2. **Central card** — a small area that automatically rotates between planning, rain forecast, weather alerts and an info panel (calendar recap / alert text).
-3. **Bottom card region** — either the 5-card weather forecast, or 5 quick-action switch cards, whichever is currently selected.
+3. **Bottom card region** — either the 5-card weather forecast (with the devices of each page's room in the tiles' shoulders), or, in HA mode, the 5 device cards of the current room.
 
 ![The single main page on the real device (July 2026)](images/tab5_photo_home.jpg)
 
@@ -64,11 +64,13 @@ If neither rain, MF alerts, info nor HA alert slots are active, the rotation jus
 
 ---
 
-## Bottom card region
+## Bottom card region — rooms
 
-One `btn_control_ha` button (top right, house-shaped icon) toggles the entire bottom region between two independent views (`show_switches` global, `tab5-lvgl.yaml`). Toggling is stateful — leaving and returning to a view restores what was showing before.
+Since 3.2 ([ADR-0023](decisions/0023-rooms-generic-tiles.md)) each of the 5 pages of the bottom row is also a **room** of up to 5 devices, described by Home Assistant (blueprint « Tab5 — emplacements », action `tab5_maj_tuiles`; states through `tab5_maj_emplacements`, keys `tRT`). Room 0 is the home page (days 0-4), rooms 1 and 2 the next daily pages (swipe left), rooms 3 and 4 the hourly pages (swipe right); tile T is the visual position, 0 = left. The definitions are kept in NVS, so the rooms are drawn before HA answers; the states are not (greyed « -- » until the first push). Model and drawing: `tab5_tuiles.cpp`.
 
-### Weather view (default)
+The `btn_control_ha` button (top right, « HA ») toggles the region between the **weather mode** and the **HA mode** (`tuiles_mode_ha()`, flag `g_central_ctx.ha_mode`). It shows an accent border and icon while HA mode is on, and is hidden when no room has a device. « Aller à l'écran → Accueil » (the Home Assistant select) leaves HA mode.
+
+### Weather mode (default)
 
 5 cards, navigated by **left/right swipe**, in 5 windows: 2 hourly + 3 daily (non-wrapping — swiping past the last window does not loop back to the first; see the [false positives note](troubleshooting.md#false-positives-worth-knowing-about-dont-fix-these-again) in `docs/troubleshooting.md`).
 
@@ -79,23 +81,29 @@ One `btn_control_ha` button (top right, house-shaped icon) toggles the entire bo
 - Weather condition icon (same two-layer system)
 - Max and min temperature, individually color-coded — **tapping this shows that day's schedule in the central card for 6 seconds** (see above)
 
-**Each of the 5 daily cards also permanently doubles as a quick action button**, independent of the weather content shown on it: tapping the card's icon area triggers one specific Home Assistant action, always the same one per card position — card 1 (today): PC/TV toggle; card 2 (tomorrow): roller shutter; card 3: bedroom light; card 4: living room light; card 5: office LEDs. This works via an invisible button layered over the always-visible weather icon (`btn_j0_action`…`btn_j4_action`), so the weather data keeps showing normally — nothing swaps or disappears when you tap it. This is a separate mechanism from the `btn_control_ha` toggle above: that one replaces the *entire* row with dedicated switch cards; this one is a per-card shortcut that coexists with the weather display.
+**Device shoulders and quick action.** On every page, a tile that holds a device of that page's room shows it in its two « shoulders », left and right of the title tab — left: the device's icon ([palette](tiles_icons.md)) coloured by its state; right: a bulb (light) or the arrow of a shutter's next move (pause while it moves), nothing for the other types — and an invisible button over the weather icon (`btn_jN_action` on the daily pages, `btn_hN_action` on the hourly ones) sends the tile's command; the weather keeps showing. A page without devices looks as before 3.2.
 
-**Roller shutter card (card 2 / "tomorrow") has one extra control:** tapping its **title** area flips which direction the *next* tap on the action icon will send (open vs. close) and updates the small arrow icon in the card's top-right corner to match — this only changes the on-screen indicator, it does not move the shutter by itself. Tapping the **action icon** (the invisible button over the weather icon, same one as above) sends the actual command: if the shutter is currently moving, it sends `stop`; otherwise it sends `open` or `close` depending on the direction set by the title tap. The arrow icon always shows the *next possible action*, not the shutter's current position.
+| Type | Tap | Long press |
+|------|-----|------------|
+| `lum` light | toggle (`allumer` with option `o`) | light popup, on this light |
+| `int` switch, fan… | toggle (`allumer` with `o`) | — |
+| `vol` cover, valve | moving → stop; open → close; else open | the other of open / close |
+| `med` media player | toggle | TV remote (option `t`) |
+| `act` scene, script, button | run — the state line shows « OK » for 1 s | — |
+| `cap` sensor, `bin` binary sensor | read only | — |
+| `cli` climate | climate popup (option `m`) | — |
 
-### Switches view
+Option `k` asks for a second tap within 3 s (the state line asks « Confirmer ? », the icon turns amber); option `r` makes the tile read only.
 
-Toggled in by `btn_control_ha`. 5 dedicated cards, each with a visible icon, a state label (`Allumé`/`Éteint`/`Ouvert`/`Fermé`), and one action button:
+**Legacy mode (3.x blueprint).** Until the first definitions arrive (a firmware updated before its blueprint), room 0 is built from the 3.x slots and looks as in 3.1: card 1 PC/TV (shoulder = TV state, or PC state without a TV; long press = TV remote), card 2 the shutter, cards 3-5 the bedroom, living room and LED lights (long press = light popup), with the 3.x commands. On the shutter card, tapping the **title** flips the direction the next tap will send (the arrow in the top-right corner shows it); tapping the icon sends stop while the shutter moves, else open or close.
 
-| Card | Action |
-|------|--------|
-| PC Bureau | Calls `script.allumer_pc_tv` (PC + TV toggle) |
-| Volet | Same shutter logic as the roller shutter card above: stop if moving, else open/close based on the last-set target direction |
-| Chambre | Toggle bedroom light (`light.toggle`) |
-| Salon | Toggle living room light (`light.toggle`) |
-| LEDs Bureau | Calls `script.allumer_leds` (office LEDs) |
+### HA mode
 
-![Switches view on the real device](images/tab5_photo_domo.jpg)
+The 5 cards (`switches_card.yaml`) show the room of the current page: icon from the palette (70 px), name (title tab, cut with « … »), a state line translated by the tablet — « 60 % », « Allumé » / « Éteint », « Mouvement » / « 45 % » / « Ouvert » / « Fermé », « Lecture » / « Pause », « Lancer », a sensor's value and unit, « Détecté » / « Présent » / « Verrouillé »… by device class, a climate's room temperature; « Hors ligne », greyed, when the entity is unavailable — and a colour by type and state (a light's own colour when it reports one). Empty tiles are hidden and the others centred. The central card shows « Pièce n/N » above the room's name; the rotator pauses. Tap and long press as in the table above.
+
+**Swipe in HA mode** goes to the next / previous room that has a device, in the order of the weather pages (same wrap); the weather layers stay hidden and the pagination dots follow. With one room only, a swipe does nothing. Entering HA mode on a page without devices jumps to the nearest room that has some; leaving it shows the weather of the current page.
+
+![HA mode on the real device (3.1, before rooms)](images/tab5_photo_domo.jpg)
 
 ---
 
@@ -218,13 +226,13 @@ It is **not** a log viewer (use `tools/tab5_logs.py` for payloads and events). S
 
 ## Light popup — long press
 
-Long-pressing the bedroom, living room, or office-LEDs daily-forecast card (instead of the short tap that just toggles the light) opens a near-fullscreen modal (1250×690 card, 15 px from the screen edges), organized in three glass cards:
-- **AMPOULE** (left): a selector for the 3 lights (Chambre / Salon / LEDs — icons colored by on/off state, cyan border on the selection) to switch lights without closing the popup, a large **On/Off** button (`light.toggle`) and **Tout éteindre** (all 3 entities at once)
+Long-pressing a light tile — its weather shoulders or its HA-mode card — (instead of the short tap that just toggles it) opens a near-fullscreen modal (1250×690 card, 15 px from the screen edges), organized in three glass cards:
+- **AMPOULE** (left): a selector listing **the lights of the room** (up to 5, in tile order, rows tightened beyond three; icons colored by on/off state, cyan border on the selection, the pressed light selected) to switch lights without closing the popup, a large **On/Off** button and **Tout éteindre** (every light of the room, `pR / eteindre`; in legacy mode the three 3.x lights)
 - **LUMINOSITÉ** (center): a **320 px brightness arc** (0–255) with the **% value shown live** in the center — synced from the HA `brightness` attribute at open time and live (never during a drag), debounced 200 ms so one drag sends a single `light.turn_on` — plus 4 shortcuts 10/35/65/100 %
 - **COULEURS** (right): 3 named whites (Chaud/Crème/Froid) and a 4×3 grid of **12 round color swatches** (each sends `light.turn_on` with the matching `color_name`, factorized via `light_color_preset_btn.yaml`)
 - Tapping the dark overlay or the × button (a real 96×64 glass button) closes the modal
 
-The popup is context-aware: opening and selection go through `script.tab5_light_popup_show(light_idx)`, which sets the `current_light_slot` global and syncs the title, selector, power icon and arc — the same popup component handles all three light entities without duplication.
+The popup is context-aware: the long press opens it on the pressed light, and the selector goes through `script.tab5_light_popup_show(light_idx)` (`popup_lumiere_choisir()`, `tab5_tuiles.cpp`), which sets the `current_light_slot` global to the tile's key (`tRT`, or `lumiere_N` in legacy mode) and syncs the title, selector, power icon and arc — one popup for every light of every room.
 
 ![Light popup on the real device](images/tab5_photo_light_popup_v2.jpg)
 
@@ -232,7 +240,7 @@ The popup is context-aware: opening and selection go through `script.tab5_light_
 
 ## TV remote popup
 
-A near-fullscreen Samsung TV remote (`tv_remote_popup.yaml`, 1250×690 card — the shared modal tokens of ADR-0009, 15 px from the screen edges): power, navigation pad, volume and channel columns, and a bottom row (Play/Pause · Retour · Accueil · Muet). Opened by long-pressing the PC switches card or via the TV button (`btn_control_tv`); every key sends `remote.send_command` (or `remote.toggle` for power) to the `${entity_tv_remote}` Home Assistant entity — the Tab5 carries no IR hardware, HA's Samsung integration does the work. Tapping the dark overlay closes it.
+A near-fullscreen Samsung TV remote (`tv_remote_popup.yaml`, 1250×690 card — the shared modal tokens of ADR-0009, 15 px from the screen edges): power, navigation pad, volume and channel columns, and a bottom row (Play/Pause · Retour · Accueil · Muet). Opened by long-pressing a media tile with the TV option (`t`; the PC card in legacy mode) or via the TV button (`btn_control_tv`); every key sends `remote.send_command` (or `remote.toggle` for power) to the `${entity_tv_remote}` Home Assistant entity — the Tab5 carries no IR hardware, HA's Samsung integration does the work. Tapping the dark overlay closes it.
 
 ![TV remote popup on the real device](images/tab5_photo_tv_remote.jpg)
 
@@ -264,11 +272,7 @@ All color constants live in the `UIColor` namespace in `tab5_tokens.h` (included
 
 ## Roller shutter control
 
-Two independent places control the same shutter, both calling `script.tab5_volet_action`:
-- The **switches view**'s "Volet" card (see above)
-- The **weather view**'s "tomorrow" forecast card, which has both the direction-flip (tap the title) and the action button (tap the icon) described above
-
-A `volet_en_mouvement` global tracks whether the shutter is currently moving (a tap sends `stop`); when idle, `volet_target_open` tracks which direction the next tap will send (`open`/`close`). Both places read the same two globals, so they stay in sync with each other.
+Since 3.2 every `vol` tile is a shutter or a valve of its own (tap: stop while it moves, else close if open, open otherwise; long press: the other of open / close; the right shoulder shows the arrow of the next move). In legacy mode, the 3.x shutter (`tab5_maj_volet_etat`) is tile 1 of the home page: its weather card has both the direction flip (tap the title) and the action button (tap the icon) described above, and its HA-mode card shares the same `script.tab5_volet_tap`.
 
 ---
 
@@ -314,7 +318,7 @@ Il y a une **page unique 1280×720** (`page_main`), pas un jeu d'écrans navigu�
 
 1. **Zone d'accueil** — toujours visible : horloge, capteurs intérieurs, actions rapides, carte clim compacte, carte humidité plantes.
 2. **Carte centrale** — une petite zone qui alterne automatiquement entre planning, prévision de pluie, alertes météo et un panneau info (récap calendrier / texte d'alerte).
-3. **Zone de cartes du bas** — soit les 5 cartes prévisions météo, soit 5 cartes d'action rapide, selon ce qui est sélectionné.
+3. **Zone de cartes du bas** — soit les 5 cartes prévisions météo (avec, dans leurs épaules, les appareils de la pièce de chaque page), soit, en mode HA, les 5 cartes d'appareil de la pièce courante.
 
 ![La page unique sur l'appareil réel (juillet 2026)](images/tab5_photo_home.jpg)
 
@@ -364,11 +368,13 @@ Si ni pluie, ni alertes MF, ni info, ni slots HA ne sont actifs, la rotation gar
 
 ---
 
-## Zone de cartes du bas
+## Zone de cartes du bas — les pièces
 
-Un bouton `btn_control_ha` (en haut à droite, icône en forme de maison) bascule toute la zone du bas entre deux vues indépendantes (global `show_switches`, `tab5-lvgl.yaml`). La bascule est étatée — quitter puis revenir à une vue restaure ce qui était affiché avant.
+Depuis la 3.2 ([ADR-0023](decisions/0023-rooms-generic-tiles.md)), chacune des 5 pages du bas est aussi une **pièce** de 5 appareils au plus, décrite par Home Assistant (blueprint « Tab5 — emplacements », action `tab5_maj_tuiles` ; états par `tab5_maj_emplacements`, clés `tRT`). La pièce 0 est l'accueil (jours 0-4), les pièces 1 et 2 les pages journalières suivantes (swipe vers la gauche), les pièces 3 et 4 les pages horaires (swipe vers la droite) ; la tuile T est la position visuelle, 0 = gauche. Les définitions sont gardées en NVS : les pièces se dessinent avant que HA réponde ; pas les états (« -- » grisé jusqu'à la première poussée). Modèle et dessin : `tab5_tuiles.cpp`.
 
-### Vue météo (par défaut)
+Le bouton `btn_control_ha` (en haut à droite, « HA ») bascule la zone entre le **mode météo** et le **mode HA** (`tuiles_mode_ha()`, drapeau `g_central_ctx.ha_mode`). Il prend une bordure et une icône d'accent quand le mode HA est actif, et disparaît quand aucune pièce n'a d'appareil. « Aller à l'écran → Accueil » (le select de Home Assistant) quitte le mode HA.
+
+### Mode météo (par défaut)
 
 5 cartes, navigables par **swipe gauche/droite**, sur 5 fenêtres : 2 horaires + 3 journalières (sans bouclage — swiper au-delà de la dernière fenêtre ne revient pas à la première ; voir la [note faux positifs](troubleshooting.md#false-positives-worth-knowing-about-dont-fix-these-again) dans `docs/troubleshooting.md`).
 
@@ -379,23 +385,29 @@ Un bouton `btn_control_ha` (en haut à droite, icône en forme de maison) bascul
 - Icône météo (même système double couche)
 - Températures max et min, chacune avec code couleur — **taper dessus affiche le planning de ce jour dans la carte centrale pendant 6 secondes** (voir ci-dessus)
 
-**Chacune des 5 cartes journalières double aussi en permanence comme bouton d'action rapide**, indépendamment du contenu météo affiché : taper sur la zone icône de la carte déclenche une action Home Assistant précise, toujours la même selon la position de la carte — carte 1 (aujourd'hui) : bascule PC/TV ; carte 2 (demain) : volet roulant ; carte 3 : lumière chambre ; carte 4 : lumière salon ; carte 5 : LEDs bureau. Ça fonctionne via un bouton invisible superposé à l'icône météo toujours visible (`btn_j0_action`…`btn_j4_action`), donc la donnée météo continue de s'afficher normalement — rien ne change ni ne disparaît visuellement quand on tape. C'est un mécanisme séparé de la bascule `btn_control_ha` ci-dessus : celle-ci remplace *toute* la rangée par des cartes switches dédiées ; celui-ci est un raccourci par carte qui coexiste avec l'affichage météo.
+**Épaules et action rapide.** Sur chaque page, une tuile qui porte un appareil de la pièce de la page le montre dans ses deux « épaules », de part et d'autre de l'onglet titre — à gauche l'icône de l'appareil ([palette](tiles_icons.md)) colorée par son état ; à droite une ampoule (lumière) ou la flèche du prochain mouvement d'un volet (pause pendant la course), rien pour les autres types — et un bouton invisible sur l'icône météo (`btn_jN_action` sur les pages journalières, `btn_hN_action` sur les horaires) envoie la commande de la tuile ; la météo reste affichée. Une page sans appareil est comme avant la 3.2.
 
-**La carte volet roulant (carte 2 / "demain") a un contrôle supplémentaire :** taper sur son **titre** inverse le sens que le *prochain* tap sur l'icône d'action enverra (ouvrir vs fermer) et met à jour la petite icône flèche en haut à droite de la carte en conséquence — ça change seulement l'indicateur affiché, ça ne fait pas bouger le volet en soi. Taper sur l'**icône d'action** (le bouton invisible sur l'icône météo, le même que ci-dessus) envoie la vraie commande : si le volet est en mouvement, ça envoie `stop` ; sinon ça envoie `open` ou `close` selon le sens réglé par le tap sur le titre. L'icône flèche montre toujours l'*action possible suivante*, pas la position actuelle du volet.
+| Type | Appui court | Appui long |
+|------|-------------|------------|
+| `lum` lumière | bascule (`allumer` avec l'option `o`) | popup lumière, sur cette lumière |
+| `int` interrupteur, ventilateur… | bascule (`allumer` avec `o`) | — |
+| `vol` volet, vanne | en mouvement → arrêter ; ouvert → fermer ; sinon ouvrir | l'autre de ouvrir / fermer |
+| `med` lecteur multimédia | bascule | télécommande TV (option `t`) |
+| `act` scène, script, bouton | lancer — la ligne d'état montre « OK » 1 s | — |
+| `cap` capteur, `bin` capteur binaire | lecture seule | — |
+| `cli` climatisation | popup clim (option `m`) | — |
 
-### Vue switches
+L'option `k` demande un second appui dans les 3 s (la ligne d'état demande « Confirmer ? », l'icône passe à l'ambre) ; l'option `r` met la tuile en lecture seule.
 
-Activée par `btn_control_ha`. 5 cartes dédiées, chacune avec une icône visible, un label d'état (`Allumé`/`Éteint`/`Ouvert`/`Fermé`), et un bouton d'action :
+**Mode héritage (blueprint 3.x).** Tant qu'aucune définition n'est arrivée (firmware mis à jour avant son blueprint), la pièce 0 est construite depuis les emplacements 3.x et ressemble à la 3.1 : carte 1 PC/TV (épaule = état de la TV, ou du PC sans TV ; appui long = télécommande), carte 2 le volet, cartes 3 à 5 les lumières chambre, salon et LEDs (appui long = popup lumière), avec les commandes 3.x. Sur la carte du volet, taper le **titre** inverse le sens que le prochain appui enverra (la flèche en haut à droite le montre) ; taper l'icône envoie « arrêter » si le volet bouge, sinon ouvrir ou fermer.
 
-| Carte | Action |
-|-------|--------|
-| PC Bureau | Appelle `script.allumer_pc_tv` (bascule PC + TV) |
-| Volet | Même logique que la carte volet roulant ci-dessus : stop si en mouvement, sinon ouvre/ferme selon le dernier sens réglé |
-| Chambre | Bascule la lumière chambre (`light.toggle`) |
-| Salon | Bascule la lumière salon (`light.toggle`) |
-| LEDs Bureau | Appelle `script.allumer_leds` |
+### Mode HA
 
-![Vue switches sur l'appareil réel](images/tab5_photo_domo.jpg)
+Les 5 cartes (`switches_card.yaml`) montrent la pièce de la page courante : icône de la palette (70 px), nom (onglet titre, coupé avec « … »), ligne d'état traduite par la tablette — « 60 % », « Allumé » / « Éteint », « Mouvement » / « 45 % » / « Ouvert » / « Fermé », « Lecture » / « Pause », « Lancer », la valeur et l'unité d'un capteur, « Détecté » / « Présent » / « Verrouillé »… selon la classe d'appareil, la température de la pièce d'une clim ; « Hors ligne », grisé, quand l'entité est indisponible — et une couleur selon le type et l'état (la couleur propre d'une lumière quand elle en donne une). Les tuiles vides sont masquées et les autres centrées. La carte centrale affiche « Pièce n/N » au-dessus du nom de la pièce ; le rotateur est en pause. Appui court et long comme dans le tableau ci-dessus.
+
+**Swipe en mode HA** : pièce suivante / précédente qui a un appareil, dans l'ordre des pages météo (même bouclage) ; les calques météo restent masqués et les pastilles suivent. Avec une seule pièce, un swipe ne fait rien. Entrer en mode HA sur une page sans appareil saute à la pièce la plus proche qui en a ; en sortir montre la météo de la page courante.
+
+![Mode HA sur l'appareil réel (3.1, avant les pièces)](images/tab5_photo_domo.jpg)
 
 ---
 
@@ -518,13 +530,13 @@ Ce n'est **pas** un visualiseur de logs (utiliser `tools/tab5_logs.py` pour les 
 
 ## Popup lumière — appui long
 
-Un appui long sur la carte prévision journalière chambre, salon ou LEDs bureau (au lieu du tap court qui bascule juste la lumière) ouvre un modal quasi plein écran (carte 1250×690, 15 px des bords), organisé en trois cartes de verre :
-- **AMPOULE** (gauche) : sélecteur des 3 lumières (Chambre / Salon / LEDs — icônes colorées selon l'état on/off, bordure cyan sur la sélection) pour changer de lumière sans fermer le popup, gros bouton **On/Off** (`light.toggle`) et **Tout éteindre** (les 3 entités d'un coup)
+Un appui long sur une tuile lumière — ses épaules météo ou sa carte du mode HA — (au lieu du tap court qui la bascule) ouvre un modal quasi plein écran (carte 1250×690, 15 px des bords), organisé en trois cartes de verre :
+- **AMPOULE** (gauche) : sélecteur des **lumières de la pièce** (5 au plus, dans l'ordre des tuiles, lignes resserrées au-delà de trois ; icônes colorées selon l'état on/off, bordure cyan sur la sélection, la lumière appuyée sélectionnée) pour changer de lumière sans fermer le popup, gros bouton **On/Off** et **Tout éteindre** (toutes les lumières de la pièce, `pR / eteindre` ; en mode héritage, les trois lumières 3.x)
 - **LUMINOSITÉ** (centre) : **arc 320 px** (0–255) avec la valeur **% affichée en direct** au centre — synchronisée depuis l'attribut `brightness` HA à l'ouverture et en live (jamais pendant un drag), débouncée 200 ms pour qu'un glissement n'envoie qu'un seul `light.turn_on` — plus 4 raccourcis 10/35/65/100 %
 - **COULEURS** (droite) : 3 blancs nommés (Chaud/Crème/Froid) et une grille 4×3 de **12 pastilles rondes** (chaque pastille envoie `light.turn_on` avec le `color_name` correspondant, factorisées via `light_color_preset_btn.yaml`)
 - Taper l'overlay sombre ou le bouton × (vrai bouton de verre 96×64) ferme le modal
 
-Le popup est contextuel : ouverture et sélection passent par `script.tab5_light_popup_show(light_idx)` qui règle la globale `current_light_slot` et synchronise titre, sélecteur, icône power et arc — le même composant popup gère les trois entités lumière sans duplication.
+Le popup est contextuel : l'appui long l'ouvre sur la lumière appuyée, et le sélecteur passe par `script.tab5_light_popup_show(light_idx)` (`popup_lumiere_choisir()`, `tab5_tuiles.cpp`) qui règle la globale `current_light_slot` sur la clé de la tuile (`tRT`, ou `lumiere_N` en mode héritage) et synchronise titre, sélecteur, icône power et arc — un seul popup pour toutes les lumières de toutes les pièces.
 
 ![Popup lumière sur l'appareil réel](images/tab5_photo_light_popup_v2.jpg)
 
@@ -532,7 +544,7 @@ Le popup est contextuel : ouverture et sélection passent par `script.tab5_light
 
 ## Popup télécommande TV
 
-Une télécommande Samsung quasi plein écran (`tv_remote_popup.yaml`, carte 1250×690 — les tokens modaux partagés de l'ADR-0009, 15 px des bords) : power, pad de navigation, colonnes volume et chaînes, et une rangée basse (Play/Pause · Retour · Accueil · Muet). Ouverte par appui long sur la carte switches PC ou via le bouton TV (`btn_control_tv`) ; chaque touche envoie `remote.send_command` (ou `remote.toggle` pour le power) à l'entité Home Assistant `${entity_tv_remote}` — le Tab5 n'a aucun matériel IR, c'est l'intégration Samsung de HA qui fait le travail. Taper l'overlay sombre ferme le popup.
+Une télécommande Samsung quasi plein écran (`tv_remote_popup.yaml`, carte 1250×690 — les tokens modaux partagés de l'ADR-0009, 15 px des bords) : power, pad de navigation, colonnes volume et chaînes, et une rangée basse (Play/Pause · Retour · Accueil · Muet). Ouverte par appui long sur une tuile multimédia avec l'option TV (`t` ; la carte PC en mode héritage) ou via le bouton TV (`btn_control_tv`) ; chaque touche envoie `remote.send_command` (ou `remote.toggle` pour le power) à l'entité Home Assistant `${entity_tv_remote}` — le Tab5 n'a aucun matériel IR, c'est l'intégration Samsung de HA qui fait le travail. Taper l'overlay sombre ferme le popup.
 
 ![Popup télécommande TV sur l'appareil réel](images/tab5_photo_tv_remote.jpg)
 
@@ -564,11 +576,7 @@ Toutes les constantes de couleur vivent dans le namespace `UIColor` de `tab5_tok
 
 ## Contrôle du volet roulant
 
-Deux endroits indépendants contrôlent le même volet, appelant tous deux `script.tab5_volet_action` :
-- La carte "Volet" de la **vue switches** (voir ci-dessus)
-- La carte prévision "demain" de la **vue météo**, qui a à la fois l'inversion de sens (tap sur le titre) et le bouton d'action (tap sur l'icône) décrits ci-dessus
-
-Une globale `volet_en_mouvement` suit si le volet est en mouvement (un tap envoie `stop`) ; à l'arrêt, `volet_target_open` suit quel sens le prochain tap enverra (`open`/`close`). Les deux endroits lisent les mêmes deux globales, donc ils restent synchronisés entre eux.
+Depuis la 3.2, chaque tuile `vol` est un volet ou une vanne à elle seule (appui court : arrêter s'il bouge, sinon fermer s'il est ouvert, ouvrir sinon ; appui long : l'autre de ouvrir / fermer ; l'épaule droite montre la flèche du prochain mouvement). En mode héritage, le volet 3.x (`tab5_maj_volet_etat`) est la tuile 1 de l'accueil : sa carte météo a l'inversion de sens (tap sur le titre) et le bouton d'action (tap sur l'icône) décrits plus haut, et sa carte du mode HA partage le même `script.tab5_volet_tap`.
 
 ---
 
