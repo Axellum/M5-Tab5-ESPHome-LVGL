@@ -4,6 +4,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-29 — Arcanoïde : la raquette ne repart plus dans l'ancien sens
+
+- Retour d'Axel : en changeant de sens, la raquette partait d'abord dans l'ancien
+  sens. En mode « Mix » (défaut), sa vitesse restait en mémoire quand on relâchait
+  (la raquette s'arrêtait, pas sa vitesse) et resservait au prochain appui ; et, sans
+  relâcher, l'inertie la gardait ~7 images (≈ 80 px à pleine vitesse) dans l'ancien sens.
+- La vitesse est remise à zéro sans commande en mode « Mix », et annulée dès qu'une
+  commande va dans l'autre sens (`arkanoid_game.cpp`, déplacement de la raquette).
+  L'inclinaison garde son inertie tant qu'on va dans le même sens.
+
 ### 2026-09-28 (nuit) — Boutons : les transitions du thème LVGL enfin coupées
 
 - Le 26/09 (audit ressources, lot 6), `CONFIG_LV_THEME_DEFAULT_TRANSITION_TIME: "0"` avait
