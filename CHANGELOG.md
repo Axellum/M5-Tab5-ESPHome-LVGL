@@ -4,6 +4,90 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — Blueprint : les pièces (ADR-0023, côté Home Assistant)
+
+- **Cinq pièces de cinq appareils** dans le blueprint « Tab5 — emplacements » (même
+  fichier, un ré-import suffit) : une section par pièce (la 1, l'accueil, ouverte ; les
+  autres repliées), un nom et une liste d'appareils réordonnable, filtrée sur les
+  domaines du contrat ; une section « Personnaliser des tuiles » (nom, icône,
+  comportement : allumer seulement, confirmer, lecture seule). Les entrées 3.x
+  (`lumiere_1..3`, `pc`, `volet`) gardent leurs noms, dans une section repliée
+  « Tuiles de l'accueil (réglage 3.x) » : les automatisations existantes continuent.
+- **Définitions** (`tab5_maj_tuiles`, à la connexion, au rechargement, à la demande des
+  zones) : type par domaine, icône (personnalisée, attribut `icon`, classe, domaine, via
+  le bloc généré `icones_mdi` / `icones_defaut`), options `d c o k r t m`, complément
+  (unité ≤ 7 octets, classe), nom sans celui de la pièce ; nom de pièce saisi, sinon
+  l'aire de ses appareils. Pièce 1 vide : l'accueil vient des entrées 3.x, et la tuile
+  PC garde son comportement PC + TV.
+- **États** `tRT|état|valeur|couleur` : tous après les définitions, une tuile quand ce que
+  montre l'écran change (état, luminosité, `rgb_color`, position), les capteurs avec les
+  mesures de 5 minutes. Cinq déclencheurs par pièce : un capteur qui change, la position
+  GPS d'une personne ou le volume d'un lecteur ne réveillent pas l'automatisation.
+- **Protocole** lu dans le `sw_version` de la tablette (« 3.1.0 (ESPHome 2026.9.0) ») : en
+  dessous de 3.2.0, ou illisible, jamais `tab5_maj_tuiles`, seulement les clés 3.x.
+- **Commandes** `tRT` et `pR / eteindre` aiguillées par le domaine de l'entité de la
+  tuile ; seulement sur les entités placées dans une tuile. Le volet suivi par
+  `volet_serre_tracking.yaml` passe toujours par son script, et sa tuile montre l'état
+  tenu par le package (le moteur reste « unknown »).
+- Tests : `tests/test_tuiles_blueprint.py` rend les vrais modèles Jinja du blueprint dans
+  le bac à sable de Jinja (types, options, commandes = tableaux de l'ADR, protocole,
+  définitions, états, un seul chemin de poussée, aiguillage) ; `jinja2` rejoint
+  `requirements-dev.txt`. Le job « Installation dans un HA neuf » configure deux pièces
+  et relit dans la trace les définitions calculées, sans `tab5_maj_tuiles` au protocole 1.
+- Docs : « Adapt to your home » / « Adapter à sa maison », `HomeAssistant_Config/README.md`.
+
+### 2026-09-28 — Pièces : la palette des icônes des tuiles (ADR-0023)
+
+- **`Tab5/tuiles_icones.yaml`, source unique** : 51 codes (lumières, pièces, appareils,
+  ouvrants, capteurs, actions), chacun avec son glyphe éteint / allumé (variantes -on,
+  -off, -open, fermé / ouvert de MDI quand elles existent, sinon un seul glyphe), les
+  303 noms `mdi:` qu'il représente et ses défauts : un par type de tuile (lum, int, vol,
+  med, act, cap, bin, cli) et par domaine ou « domaine.classe » HA (`cover.garage`,
+  `binary_sensor.door`, `sensor.temperature`…). `lit`, `canape`, `led`, `ordinateur` et
+  `volet` gardent les glyphes de la 3.1.
+- **Aucun point de code deviné** : le TTF du projet est Material Design Icons 7.4.47
+  (mêmes 7 447 points de code que le `meta.json` de `@mdi/svg@7.4.47`) ; chaque couple
+  nom ↔ point de code est vérifié contre ce `meta.json` (`--meta`) et contre le cmap du
+  TTF (test, hors ligne).
+- **`tools/gen_tuiles_icones.py`** écrit `Tab5/tab5_tuiles_icones.h` (même API
+  `tuile_icone(code, actif, type)`), les 80 glyphes dans `mdi_font_70`, `mdi_font_45` et
+  `mdi_font_32` (entre `# >>> tuiles` et `# <<< tuiles`, sans ceux que la police liste
+  déjà), `icones_mdi` / `icones_defaut` du blueprint (entre ses marqueurs) et le tableau
+  de `docs/tiles_icons.md` ; `--check` échoue si une partie est périmée, sans rien écrire.
+  Les fins de ligne de chaque fichier sont gardées (même résultat sous Windows et Linux).
+- Règle 7 : la table est rattachée aux cartes du mode HA (`icon_sw?`), aux épaules des
+  tuiles (`icon_card_*`) et au sélecteur du popup lumière (`icon_light_sel_*`).
+- **Coût mesuré par la CI** (job `build`, contre `main` @ `e6b81db`, dernier firmware
+  compilé sur `main`) : image 3 239 558 → 3 290 102 octets, **+50 544 octets (≈ 49 Kio)**
+  pour 215 glyphes ajoutés (75 à 70 px, 72 à 45 px, 68 à 32 px), soit ~235 octets
+  chacun ; RAM inchangée (171 002 octets) ; flash 39,9 % → 40,5 %.
+- Doc `docs/tiles_icons.md` (EN + FR) : la palette, comment l'icône est choisie, comment
+  en demander une. Tests `tests/test_tuiles_icones.py`.
+
+### 2026-09-28 — Pièces : la démo et le rendu montrent une maison de cinq pièces (ADR-0023)
+
+- **Mode démo** : une maison de cinq pièces et vingt appareils, de tous les types du
+  contrat (lampe couleur à variateur, interrupteur, volet en mouvement, média, scène et
+  script, capteurs avec unité, porte, mouvement, présence, clim), avec un nom que la
+  tablette coupe, des accents, un appareil hors ligne et une pièce de deux tuiles. Elle
+  n'est poussée qu'à une tablette qui a l'action `tab5_maj_tuiles` (firmware 3.2) : les
+  définitions, puis les états à la suite des emplacements (clés `tRT`) ; un firmware 3.x
+  ne reçoit rien de plus, comme avec le blueprint. La maison minimale n'a qu'une pièce
+  (le PC et deux lampes). Les commandes des tuiles sont journalisées avec leur pièce et
+  leur nom. La tuile de la clim suit la carte clim de chaque scène.
+- **Rendu hors tablette** : le mode HA de chaque pièce (`accueil-ha-piece-1` à `-5`,
+  qui remplacent `accueil-interrupteurs`), par des gestes partis du bord de l'écran,
+  seul endroit libre quel que soit le nombre de cartes ; chaque écran revient de
+  lui-même à l'accueil en mode météo. Les pages 3-4 et horaires montrent les épaules
+  des pièces en mode météo. Tant que le firmware des pièces n'est pas fusionné, ces
+  captures montrent l'ancien affichage.
+- Tests : `tests/test_demo_pieces.py` relit la grammaire dans l'ADR-0023 (types,
+  options, code d'icône, longueurs, table pièce ↔ page) et y confronte les payloads,
+  l'échappement (`|` → `/`, `;` → `,`), la cohérence des états et la palette ;
+  `tests/test_demo.py` (pièces seulement avec l'action, définitions avant les états,
+  journal) ; `tests/test_rendu_ecrans.py` (un écran HA par pièce, retour à l'accueil,
+  gestes hors des boutons, boutons du haut).
+
 ### 2026-09-28 — Site : une release n'est retenue qu'avec ses binaires (suite de #221)
 
 - `pages.py choisir` exigeait les trois manifestes, sans leurs binaires. Les neuf

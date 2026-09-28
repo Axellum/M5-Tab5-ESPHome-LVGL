@@ -8,7 +8,9 @@ Tab5/tab5-api-logic.yaml). Depuis le lot 6a (ADR-0019), les appareils de la mais
 arrivent eux aussi par une poussée, `tab5_maj_emplacements`, que le blueprint HA
 envoie normalement. Ce script se fait passer pour HA via `aioesphomeapi` (la même
 librairie que l'intégration ESPHome de HA) — sans jamais installer ni configurer
-de vrai Home Assistant.
+de vrai Home Assistant. Depuis la 3.2 (ADR-0023), les tuiles du bas sont des pièces
+décrites par HA : la démo pousse les siennes (`tab5_maj_tuiles`, puis leurs états)
+quand la tablette a cette action, et rien de plus à un firmware 3.x.
 
 Ne touche à aucun fichier du firmware (Tab5/*.yaml, tab5_custom.cpp/.h) ni à
 Tab5/user_entities.yaml : flashez avec Tab5/user_entities.example.yaml tel
@@ -43,11 +45,15 @@ from scenarios import (
     SCENES,
     build_alerte_payload,
     build_emplacements_payload,
+    build_etats_tuiles,
+    build_tuiles_payload,
     build_zones_absentes,
     code_pluie,
     build_heures_bulk_payload,
     build_pluie_1h_bulk_payload,
     build_jours_bulk_payload,
+    decrire_emplacement,
+    pieces_de,
 )
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -69,6 +75,10 @@ SERVICES_ATTENDUS = (
     "tab5_maj_clim", "tab5_maj_volet_etat", "tab5_maj_info_texte", "tab5_maj_zones",
     "tab5_maj_emplacements",
 )
+# Pièces (ADR-0023, firmware 3.2) : absente d'un firmware 3.x, qui garde ses cinq
+# tuiles fixes. Comme le blueprint, la démo ne l'appelle alors pas et ne pousse pas les
+# états des tuiles (clés tRT) : les emplacements 3.x suffisent.
+SERVICE_TUILES = "tab5_maj_tuiles"
 
 
 def _lire_cle_demo() -> str | None:
@@ -116,8 +126,10 @@ async def _donner_une_cle(host: str) -> str:
 
 def _dry_run(absentes: frozenset) -> None:
     """Affiche les payloads de chaque scène sans se connecter à un appareil."""
+    pieces = pieces_de(absentes)
     print("tab5_maj_zones:", {"absentes": build_zones_absentes(absentes)})
     print("tab5_maj_emplacements:", build_emplacements_payload(absentes))
+    print(f"{SERVICE_TUILES} (firmware 3.2, pièces) :", build_tuiles_payload(pieces))
     for scene in SCENES:
         print(f"\n=== Scène : {scene.nom} ===")
         print("tab5_maj_meteo_actuelle:", {
@@ -136,7 +148,15 @@ def _dry_run(absentes: frozenset) -> None:
         print("tab5_maj_clim:", "(zone absente, rien)" if "clim" in absentes else scene.clim)
         print("tab5_maj_volet_etat:", "(zone absente, rien)" if "volet" in absentes else scene.volet_etat)
         print("tab5_maj_info_texte:", scene.info_texte)
+        # Firmware 3.2 : les emplacements 3.x ci-dessus, puis les états des tuiles.
+        print("tab5_maj_emplacements, clés tRT (firmware 3.2) :",
+              build_etats_tuiles(pieces, _clim_poussee(scene, absentes)))
     print("\nOK — tous les payloads respectent le contrat (assertions dans scenarios.py).")
+
+
+def _clim_poussee(scene, absentes: frozenset) -> dict | None:
+    """La clim de la scène, si elle est poussée : la tuile de la clim du blueprint la suit."""
+    return None if "clim" in absentes else scene.clim
 
 
 async def _appeler(client, services_par_nom: dict, nom: str, **data: str) -> None:
@@ -161,7 +181,11 @@ async def _appeler(client, services_par_nom: dict, nom: str, **data: str) -> Non
 
 async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozenset) -> None:
     """Appelle les services tab5_maj_* d'une scène, avec le pacing de prod. Comme le
-    package HA (lot 5b), rien pour la clim ni le volet quand leur zone est absente."""
+    package HA (lot 5b), rien pour la clim ni le volet quand leur zone est absente.
+    Les définitions des pièces (tab5_maj_tuiles) partent à chaque scène, juste avant
+    les états : la tablette ne réécrit ses définitions en NVS que si elles changent
+    (ADR-0023), et le rendu (tools/rendu/capturer.py) n'a pas d'autre moment pour les
+    recevoir."""
 
     async def appeler(nom: str, **data: str) -> None:
         await _appeler(client, services_par_nom, nom, **data)
@@ -209,11 +233,21 @@ async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozen
     await appeler("tab5_maj_info_texte", texte=texte, couleur=couleur, meteo_id=meteo_id)
     await asyncio.sleep(DELAI_ENTRE_BLOCS)
 
+    # Pièces (ADR-0023) : les définitions d'abord, puis les emplacements 3.x suivis des
+    # états des tuiles (clés tRT), comme le blueprint à chaque connexion. Sans l'action
+    # (firmware 3.x), les emplacements seuls.
+    pieces = None
+    if SERVICE_TUILES in services_par_nom:
+        pieces = pieces_de(absentes)
+        await appeler(SERVICE_TUILES, payload=build_tuiles_payload(pieces))
+        await asyncio.sleep(DELAI_ENTRE_BLOCS)
+
     # Emplacements de la maison (lot 6a), comme le blueprint à chaque connexion.
-    await appeler("tab5_maj_emplacements", payload=build_emplacements_payload(absentes))
+    await appeler("tab5_maj_emplacements",
+                  payload=build_emplacements_payload(absentes, pieces, _clim_poussee(scene, absentes)))
 
 
-def _gerer_appel_service(interactive: bool, repondre_zones):
+def _gerer_appel_service(interactive: bool, repondre_zones, pieces: dict | None = None):
     """Callback appelé quand le firmware envoie un homeassistant.service: (bouton pressé)
     ou un homeassistant.event:.
 
@@ -224,6 +258,9 @@ def _gerer_appel_service(interactive: bool, repondre_zones):
     id(current_light_slot), un global interne au firmware réglé par appui
     long — invisible depuis le protocole natif. On loggue l'intention (preuve
     que le tactile fonctionne) sans simuler d'état de retour à l'écran.
+
+    `pieces` : celles poussées (firmware 3.2), pour nommer la tuile (« tRT ») ou la
+    pièce (« pR ») d'une commande dans le journal.
     """
 
     def _gerer(call) -> None:
@@ -233,9 +270,15 @@ def _gerer_appel_service(interactive: bool, repondre_zones):
         if not interactive:
             return
         if getattr(call, "is_event", False) and call.service == "esphome.tab5_action":
-            # Commande d'un emplacement (lot 6a) : le blueprint l'appliquerait à
-            # l'entité choisie ; la démo la journalise seulement.
-            logger.info("Commande -> %s", dict(call.data))
+            # Commande d'un emplacement (lot 6a) ou d'une tuile de pièce (ADR-0023) : le
+            # blueprint l'appliquerait à l'entité choisie ; la démo la journalise seulement.
+            data = dict(call.data)
+            cle = data.get("emplacement", "")
+            if pieces is not None and cle:
+                logger.info("Commande -> %s : %s %s", decrire_emplacement(cle, pieces),
+                            data.get("action", ""), data.get("valeur", ""))
+            else:
+                logger.info("Commande -> %s", data)
             return
         logger.info("Bouton pressé -> %s %s", call.service, dict(call.data))
 
@@ -256,6 +299,13 @@ async def _run(host: str, key: str | None, interval: float, interactive: bool, a
     manquants = set(SERVICES_ATTENDUS) - services_par_nom.keys()
     if manquants:
         logger.warning("Services absents du device (firmware différent du contrat attendu) : %s", manquants)
+    pieces = pieces_de(absentes) if SERVICE_TUILES in services_par_nom else None
+    if pieces is None:
+        logger.info("Pas d'action %s (firmware d'avant la 3.2) : les tuiles gardent leurs "
+                    "emplacements 3.x, pièces non poussées", SERVICE_TUILES)
+    else:
+        logger.info("Pièces (ADR-0023) : %d pièce(s), %d tuile(s) poussées avant les états",
+                    len(pieces), sum(len(p.tuiles) for p in pieces.values()))
 
     # Zones (lot 5) : la tablette ne redemande qu'une fois par connexion de HA, et
     # garde sa dernière liste en NVS. On répond donc aussi d'office au démarrage :
@@ -274,7 +324,7 @@ async def _run(host: str, key: str | None, interval: float, interactive: bool, a
     # branché pour un firmware plus ancien, sans rien y répondre.
     client.subscribe_home_assistant_states_and_services(
         on_state=lambda state: None,
-        on_service_call=_gerer_appel_service(interactive, repondre_zones),
+        on_service_call=_gerer_appel_service(interactive, repondre_zones, pieces),
         on_state_sub=lambda entity_id, attribute: logger.info(
             "Abonnement à %s demandé par un firmware d'avant le lot 6a — ignoré", entity_id),
     )
@@ -305,8 +355,9 @@ def main() -> None:
                          help="Ignore les appuis, se contente du push passif")
     parser.add_argument("--maison-minimale", action="store_true",
                          help="Zones optionnelles (lot 5) : sans clim, TV, téléphone, LEDs, serre, "
-                              "pots 3 à 5, volet ni planning. Redémarrer la tablette en passant "
-                              "d'une démo complète à celle-ci : une donnée déjà reçue garde sa zone")
+                              "pots 3 à 5, volet ni planning ; en 3.2, une seule pièce (PC et deux "
+                              "lampes). Redémarrer la tablette en passant d'une démo complète à "
+                              "celle-ci : une donnée déjà reçue garde sa zone")
     parser.add_argument("--dry-run", action="store_true",
                          help="Affiche les payloads sans se connecter (aucune dépendance requise)")
     args = parser.parse_args()

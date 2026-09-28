@@ -300,7 +300,11 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_services.cpp", "update_rain_predict_icon_ui"): ("icon_rain_predict",),
     ("tab5_zones.cpp", "zones_apply_ui"): ("icon_serre",),
     # Palette des tuiles de pièce (ADR-0023) : table au niveau du fichier, d'où la fonction vide.
-    ("tab5_tuiles_icones.h", ""): ("icon_sw?",),
+    # Ses glyphes s'affichent sur les cartes du mode HA (icon_sw*, mdi_font_70), dans les
+    # épaules des tuiles (icon_card_*, mdi_font_32) et dans le sélecteur du popup lumière
+    # (icon_light_sel_*, mdi_font_45) : tools/gen_tuiles_icones.py les écrit dans ces trois
+    # polices (POLICES), à garder d'accord avec cette ligne.
+    ("tab5_tuiles_icones.h", ""): ("icon_sw?", "icon_card_*", "icon_light_sel_*"),
     ("tab5-sensors-domotique.yaml", "moisture_1"): ("icon_pot_s*",),
 }
 

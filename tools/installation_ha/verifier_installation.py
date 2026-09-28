@@ -13,13 +13,17 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
         2. ajouter la tablette (ESPHome, hôte + port), puis cocher « Autoriser
            l'appareil à effectuer des actions Home Assistant » ;
         3. créer l'automatisation du blueprint « Tab5 — emplacements », avec des entités
-           de test ; puis redémarrer la tablette.
+           de test (emplacements 3.x, deux pièces, une personnalisation, ADR-0023) ;
+           puis redémarrer la tablette.
       et vérifie : clé API créée par HA et gardée (jamais affichée), refus de la clé
       nulle et du clair une fois la clé posée, esphome.tab5_connected reçu APRÈS la clé,
       poussée complète terminée sans erreur ; puis, après le redémarrage (la clé
       persiste, HA se reconnecte en chiffré), traces du blueprint et de la poussée sans
       erreur, zones masquées renvoyées par la tablette, capture d'écran demandée PAR HA
-      (action esphome.tab5_ha_hmi_rendu_capture), journal de HA sans erreur Tab5. Ce que
+      (action esphome.tab5_ha_hmi_rendu_capture), journal de HA sans erreur Tab5 ;
+      pièces : définitions et états des tuiles calculés à la connexion (relus dans la
+      trace), tab5_maj_tuiles jamais appelée si la tablette est en dessous de 3.2.0
+      (protocole 1), appelée avec les définitions sinon. Ce que
       montre l'écran entre la création de l'automatisation et le redémarrage est
       rapporté (capture 1), sans faire échouer.
 @contraintes Le mot de passe du compte est tiré au hasard ici et n'est jamais affiché ;
@@ -93,6 +97,44 @@ EMPLACEMENTS = {
     "pot_2": "sensor.pot_ci_2",
     "pot_3": "sensor.pot_ci_3",
     "agenda_travail": AGENDA,
+}
+# Pièces (ADR-0023) : la pièce 1 reste vide, l'accueil est donc construit depuis les
+# entrées 3.x ci-dessus (t00 = PC, t01 = volet, t02..t04 = lumières) ; les pièces 2 et 3
+# sont choisies (la 2 a six appareils : le sixième n'a pas de tuile) ; 4 et 5 vides.
+# « Kitchen » est retiré des noms (« Kitchen Lights » → « Lights »). Une même entité
+# (kitchen_lights) est dans deux tuiles.
+PIECES = {
+    "piece_2_nom": "Kitchen",
+    "piece_2_tuiles": ["light.kitchen_lights", "cover.kitchen_window", "sensor.outside_temperature",
+                       "lock.front_door", "climate.hvac", "valve.front_garden"],
+    "piece_3_tuiles": ["media_player.living_room", "binary_sensor.movement_backyard",
+                       "light.office_rgbw_lights", "button.push"],
+}
+PERSONNALISATION = [
+    {"entite": "light.office_rgbw_lights", "nom": "Bureau | CI; test", "icone": "mdi:led-strip-variant",
+     "comportement": "confirmer"},
+]
+# Type de tuile par domaine : variables.types_par_domaine du blueprint
+# (tests/test_installation_ha.py compare).
+TYPES_PAR_DOMAINE = {
+    "light": "lum", "switch": "int", "input_boolean": "int", "fan": "int", "humidifier": "int",
+    "automation": "int", "cover": "vol", "valve": "vol", "media_player": "med", "scene": "act",
+    "script": "act", "button": "act", "input_button": "act", "sensor": "cap", "number": "cap",
+    "input_number": "cap", "binary_sensor": "bin", "device_tracker": "bin", "person": "bin",
+    "lock": "bin", "climate": "cli",
+}
+# Ce que le blueprint doit calculer pour ces tuiles, au-delà de la clé et du type :
+# {clé: {champ: valeur}} (champs : icone, options, complement, nom). L'icône de la
+# personnalisation est lue dans le bloc généré du blueprint (icone_du_blueprint).
+TUILES_DETAILS = {
+    "t10": {"options": "dc", "nom": "Lights"},
+    "t11": {"nom": "Window"},
+    "t12": {"complement": "°C"},
+    "t13": {"complement": "lock"},
+    "t14": {"options": "m"},
+    "t20": {"options": "t"},
+    "t21": {"complement": "motion"},
+    "t22": {"options": "dck", "nom": "Bureau / CI, test", "icone": "mdi:led-strip-variant"},
 }
 # Texte du capteur « Zones masquées » attendu (zones_texte_masquees(), tab5_zones.cpp :
 # ordre de kCles, séparateur « , »).
@@ -217,9 +259,107 @@ def erreurs_de_trace(trace: dict) -> list[str]:
     return erreurs
 
 
-def entrees_blueprint() -> dict[str, str]:
-    """Entrées de l'automatisation (use_blueprint.input) : les emplacements choisis."""
-    return dict(EMPLACEMENTS)
+def entrees_blueprint() -> dict[str, Any]:
+    """Entrées de l'automatisation (use_blueprint.input) : emplacements 3.x, pièces et
+    personnalisation."""
+    return {**EMPLACEMENTS, **PIECES, "personnalisation": PERSONNALISATION}
+
+
+def entites_de_test() -> list[str]:
+    """Toutes les entités que les entrées nomment (elles doivent exister dans HA)."""
+    entites = set(EMPLACEMENTS.values())
+    for cle, valeur in PIECES.items():
+        if cle.endswith("_tuiles"):
+            entites.update(valeur)
+    entites.update(p["entite"] for p in PERSONNALISATION)
+    return sorted(entites)
+
+
+def protocole_de(version: str | None) -> int:
+    """Protocole de la tablette selon son sw_version (« 3.1.0 (ESPHome 2026.9.0) ») :
+    2 (tuiles) à partir de 3.2.0, 1 sinon ou illisible — la règle du blueprint
+    (variable `protocole`)."""
+    m = re.match(r" *([0-9]+)[.]([0-9]+)[.]([0-9]+)", version or "")
+    return 2 if m and tuple(int(x) for x in m.groups()) >= (3, 2, 0) else 1
+
+
+def tuiles_attendues() -> list[tuple[str, str]]:
+    """(clé, type) des tuiles que le blueprint doit décrire pour ces entrées : la pièce 1
+    depuis les entrées 3.x (places fixes), puis les cinq premières entités de chaque
+    pièce choisie."""
+    tuiles = []
+    premiere = "pc" if EMPLACEMENTS.get("pc") else "tv"
+    for t, source in enumerate([premiere, "volet", "lumiere_1", "lumiere_2", "lumiere_3"]):
+        if entite := EMPLACEMENTS.get(source):
+            tuiles.append((f"t0{t}", TYPES_PAR_DOMAINE[entite.split(".")[0]]))
+    for n in range(2, 6):
+        for t, entite in enumerate(PIECES.get(f"piece_{n}_tuiles", [])[:5]):
+            tuiles.append((f"t{n - 1}{t}", TYPES_PAR_DOMAINE[entite.split(".")[0]]))
+    return tuiles
+
+
+def entrees_de(payload: str) -> list[list[str]]:
+    """« a|b;c|d; » → [['a', 'b'], ['c', 'd']] (définitions et états des tuiles)."""
+    return [e.split("|") for e in (payload or "").split(";") if e]
+
+
+def juger_definitions(definitions: str, icones_mdi: dict[str, str]) -> list[str]:
+    """Écarts entre les définitions calculées par le blueprint et ce qu'on attend."""
+    problemes = []
+    entrees = entrees_de(definitions)
+    pieces = {e[0]: e for e in entrees if e[0].startswith("p")}
+    tuiles = {e[0]: e for e in entrees if e[0].startswith("t")}
+    if mauvaises := [e for e in entrees if (len(e) != 2 if e[0].startswith("p") else len(e) != 6)]:
+        problemes.append(f"entrées mal formées : {mauvaises}")
+    attendues = tuiles_attendues()
+    if [(cle, e[1]) for cle, e in tuiles.items()] != attendues:
+        problemes.append(f"tuiles {[(c, e[1]) for c, e in tuiles.items()]} au lieu de {attendues}")
+    pieces_attendues = sorted({f"p{cle[1]}" for cle, _ in attendues})
+    if sorted(pieces) != pieces_attendues:
+        problemes.append(f"pièces {sorted(pieces)} au lieu de {pieces_attendues}")
+    if pieces.get("p1", ["", ""])[1] != PIECES["piece_2_nom"]:
+        problemes.append(f"nom de la pièce 2 : {pieces.get('p1')}")
+    champs = {"icone": 2, "options": 3, "complement": 4, "nom": 5}
+    for cle, details in TUILES_DETAILS.items():
+        for champ, attendu in details.items():
+            if champ == "icone":
+                attendu = icones_mdi.get(attendu, "")
+            vu = tuiles.get(cle, [""] * 6)[champs[champ]]
+            if vu != attendu:
+                problemes.append(f"{cle}.{champ} = {vu!r} au lieu de {attendu!r}")
+    return problemes
+
+
+def variables_de_trace(trace: dict) -> dict[str, Any]:
+    """Variables d'un passage (trace/get) : celles du déclencheur (les variables du
+    blueprint) puis celles de chaque étape `variables:`."""
+    variables: dict[str, Any] = {}
+    for elements in (trace.get("trace") or {}).values():
+        for element in elements:
+            variables.update(element.get("changed_variables") or {})
+    return variables
+
+
+def appels_de_trace(trace: dict) -> list[dict]:
+    """Actions appelées pendant un passage : {domain, service, service_data}."""
+    appels = []
+    for elements in (trace.get("trace") or {}).values():
+        for element in elements:
+            params = ((element.get("result") or {}).get("params")) or {}
+            if params.get("domain") and params.get("service"):
+                appels.append(params)
+    return appels
+
+
+def icones_du_blueprint(texte: str) -> dict[str, str]:
+    """« mdi:nom » → code, lu entre les marqueurs du bloc généré du blueprint (un YAML
+    autonome une fois désindenté ; le reste du blueprint a des !input)."""
+    import textwrap
+
+    import yaml  # tiré par esphome dans le job, par requirements-dev.txt en local
+
+    bloc = texte.split("# >>> icones", 1)[1].split("\n", 1)[1].split("# <<< icones", 1)[0]
+    return (yaml.safe_load(textwrap.dedent(bloc)) or {}).get("icones_mdi") or {}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -511,7 +651,7 @@ async def verifier_blueprint(ha: HA, rapport: Rapport) -> None:
 async def creer_automatisation(ha: HA, rapport: Rapport) -> None:
     """« Vos appareils » : une automatisation depuis le blueprint, entités choisies."""
     etats = await ha.etats()
-    manquantes = [e for e in EMPLACEMENTS.values() if e not in etats]
+    manquantes = [e for e in entites_de_test() if e not in etats]
     if manquantes:
         domaines = sorted({e.split(".")[0] for e in manquantes})
         existantes = sorted(e for e in etats if e.split(".")[0] in domaines)
@@ -786,6 +926,73 @@ async def journal_ha(ha: HA, connexion: float, deconnexions: list[tuple[float, f
     rapport.info(f"journal HA : {autres} avertissement(s) ou erreur(s) sans rapport avec le Tab5 (demo, traductions…)")
 
 
+async def version_tablette(ha: HA) -> str | None:
+    """sw_version de la tablette dans le registre des appareils (trouvée par son modèle,
+    comme le fait le blueprint)."""
+    appareils = await ha.ws.commande("config/device_registry/list")
+    for appareil in appareils:
+        if appareil.get("model") == "tab5-ha-hmi":
+            return appareil.get("sw_version")
+    return None
+
+
+async def verifier_tuiles(ha: HA, cree: float, connexion: float, rapport: Rapport) -> None:
+    """Pièces (ADR-0023) : ce que le blueprint calcule à la connexion (définitions et
+    états des tuiles, dans la trace), et ce qu'il appelle selon la version de la
+    tablette. Protocole 1 (tablette virtuelle « rendu », firmware 3.0/3.1) :
+    tab5_maj_tuiles ne doit JAMAIS partir (action absente : erreur que
+    continue_on_error n'attrape pas) ; protocole 2 : elle part, avec les définitions."""
+    version = await version_tablette(ha)
+    protocole = protocole_de(version)
+    rapport.info(f"tablette {version!r} : protocole {protocole} "
+                 f"({'tuiles' if protocole == 2 else 'clés 3.x seulement, pas de tab5_maj_tuiles'})")
+    passages = [t for t in await ha.traces(ID_AUTOMATISATION)
+                if horodatage((t.get("timestamp") or {}).get("start")) >= cree]
+    traces = {t["run_id"]: await ha.trace(ID_AUTOMATISATION, t["run_id"]) for t in passages}
+
+    a_la_connexion = [t for t in passages if "esphome.tab5_connected" in (t.get("trigger") or "")
+                      and horodatage((t.get("timestamp") or {}).get("start")) >= connexion
+                      and t.get("script_execution") == "finished"]
+    if not a_la_connexion:
+        rapport.echec("pièces : aucun passage du blueprint abouti à la connexion, rien à relire")
+        return
+    variables = variables_de_trace(traces[a_la_connexion[-1]["run_id"]])
+    definitions = variables.get("definitions")
+    if not rapport.verifier(isinstance(definitions, str) and definitions != "",
+                            "pièces : le blueprint calcule les définitions des tuiles à la connexion",
+                            f"variable definitions = {definitions!r}"):
+        return
+    racine = Path(__file__).resolve().parents[2]
+    icones = icones_du_blueprint((racine / "HomeAssistant_Config" / "blueprints" / "automation"
+                                  / CHEMIN_BLUEPRINT).read_text(encoding="utf-8"))
+    problemes = juger_definitions(definitions, icones)
+    tuiles = [cle for cle, _ in tuiles_attendues()]
+    rapport.verifier(not problemes,
+                     f"pièces : définitions conformes ({len(tuiles)} tuiles ; pièce 1 depuis les entrées 3.x, "
+                     "pièces 2 et 3 choisies, cinq tuiles au plus, nom de pièce retiré, personnalisation)",
+                     " ; ".join(problemes))
+    rapport.info(f"définitions : {definitions}")
+    etats = variables.get("etats_tuiles") or ""
+    rapport.verifier([e[0] for e in entrees_de(etats)] == tuiles and all(len(e) == 4 for e in entrees_de(etats)),
+                     "pièces : l'état de chaque tuile est calculé après les définitions (tRT|état|valeur|couleur)",
+                     f"etats_tuiles = {etats!r}")
+
+    appels = [(run_id, a) for run_id, trace in traces.items() for a in appels_de_trace(trace)
+              if str(a.get("service", "")).endswith("_tab5_maj_tuiles")]
+    if protocole == 1:
+        rapport.verifier(not appels, f"protocole 1 : aucun appel de tab5_maj_tuiles ({len(traces)} passage(s) relus)",
+                         f"{len(appels)} appel(s)")
+        # Et les états tRT ne partent pas non plus.
+        trt = [a for _, trace in traces.items() for a in appels_de_trace(trace)
+               if str(a.get("service", "")).endswith("_tab5_maj_emplacements")
+               and re.search(r"(^|;)t[0-4][0-4][|]", str((a.get("service_data") or {}).get("payload", "")))]
+        rapport.verifier(not trt, "protocole 1 : aucun état de tuile (tRT) poussé", f"{len(trt)} poussée(s)")
+    else:
+        charges = [(a.get("service_data") or {}).get("payload") for _, a in appels]
+        rapport.verifier(definitions in charges, "protocole 2 : tab5_maj_tuiles appelée avec les définitions",
+                         f"{len(appels)} appel(s)")
+
+
 async def rapporter_traces(ha: HA, item_id: str, depuis: float, rapport: Rapport) -> None:
     """Passages d'une automatisation depuis `depuis` : déclencheur et issue (informatif)."""
     passages = [t for t in await ha.traces(item_id)
@@ -869,6 +1076,7 @@ async def scenario(args, rapport: Rapport) -> None:
             rapport.verifier((r := await essayer_connexion(ZERO_NOISE_PSK)) == "InvalidEncryptionKeyAPIError",
                              "après le redémarrage, la clé est toujours là (clé nulle refusée)", f"résultat : {r}")
             await attendre_traces(ha, relance, rapport)
+            await verifier_tuiles(ha, cree, relance, rapport)
             etat = await attendre_etat(ha, ZONES_ENTITE, ZONES_ABSENTES)
             rapport.verifier(etat == ZONES_ABSENTES, f"la tablette masque les emplacements vides ({ZONES_ABSENTES})",
                              f"capteur « Zones masquées » = {etat!r}")
