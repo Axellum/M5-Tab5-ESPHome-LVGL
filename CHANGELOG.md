@@ -4,6 +4,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — Blueprint des emplacements : mesures regroupées toutes les 5 minutes
+
+- `blueprints/automation/tab5/tab5_emplacements.yaml` : l'automatisation tournait
+  ~1 300 fois par jour chez l'auteur, dont 775 pour une température de serre qui oscille
+  d'un dixième toutes les 40 s (capteur BLE). L'écran affiche ce dixième : ne pousser que
+  la valeur affichée n'aurait rien retiré.
+  - **Mesures lentes** (téléphone, température et humidité de la pièce, serre, pots) :
+    plus de déclencheur par capteur, mais un passage toutes les 5 minutes qui pousse en
+    un seul envoi celles qui ont changé. Un pot part avec ses 4 détails si l'un des 5 a
+    changé : conductivité, lumière, température et batterie suivent désormais leurs
+    propres changements, et plus seulement ceux de l'humidité.
+  - **Lumières, PC, TV** : toujours immédiats, mais seulement quand l'état ou la
+    luminosité change, pas pour un autre attribut (couleur, lecture en cours).
+  - Un passage sans rien de neuf s'arrête à la condition, sans ligne au journal.
+  - `min_version` du blueprint : 2026.8.0, celle que demande le firmware 3.0.
+  - Test : chaque emplacement a un seul chemin de poussée, et la fenêtre couvre la période.
+
 ### 2026-09-27 — La garde « reboot inattendu » ignore les redémarrages demandés
 
 - `packages/tab5_health.yaml`, garde (b) : elle notifiait à chaque nouveau démarrage, mise à

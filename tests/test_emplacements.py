@@ -97,3 +97,22 @@ def test_chaque_commande_de_l_ecran_a_sa_branche():
 def test_plus_aucun_abonnement_a_une_entite_de_la_maison():
     for nom in ("tab5-sensors-domotique.yaml", "pot_sensors.yaml"):
         assert "platform: homeassistant\n" not in _lire(os.path.join(REPO, "Tab5", nom)), nom
+
+
+def test_chaque_emplacement_a_un_seul_chemin_de_poussee():
+    """Mesures groupées (28/09/2026) : un emplacement part soit à son déclencheur d'état
+    (lumières, PC, TV), soit au passage « mesures » toutes les 5 min (températures,
+    humidité, pots, batterie) ; jamais les deux, jamais aucun."""
+    bp = _blueprint()
+    variables = bp["variables"]
+    etats = {t["id"] for t in bp["triggers"] if t["trigger"] == "state"}
+    mesures = set(variables["cles_mesures"])
+    emplacements = set(variables["cles_emplacements"])
+    assert not etats & mesures, f"poussées deux fois : {sorted(etats & mesures)}"
+    assert emplacements <= etats | mesures, f"jamais poussées : {sorted(emplacements - etats - mesures)}"
+    assert mesures <= emplacements
+    passage = [t for t in bp["triggers"] if t.get("id") == "mesures"]
+    assert len(passage) == 1 and passage[0]["trigger"] == "time_pattern"
+    periode = int(passage[0]["minutes"].lstrip("/")) * 60
+    # La fenêtre couvre la période (rien de perdu entre deux passages), sans en couvrir deux.
+    assert periode < variables["fenetre_mesures"] < 2 * periode
