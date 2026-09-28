@@ -1,10 +1,12 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par switches_card.yaml.
-# Vars: idx, state_text (texte initial seulement). `lbl_swN_state` recoloré/retexté
-# dynamiquement par les lambdas C++ (update_light_card_ui, etc.) — ne pas dupliquer.
+# Vars: idx, state_text (texte initial seulement). `lbl_swN_state` = ligne d'état de la
+# tuile (ADR-0023 : « 60 % », « Mouvement », « 21.4 °C », « Confirmer ? »…), écrite et
+# recolorée par tab5_tuiles.cpp — ne pas dupliquer. 200 px comme l'onglet titre (130
+# jusqu'au 28/09/2026 : « Mouvement » débordait déjà).
 obj:
   align: BOTTOM_MID
   y: 0
-  width: 130
+  width: 200
   height: 45
   styles: style_meteo_card_page
   widgets:

@@ -21,12 +21,20 @@
 #       - vigilances : Météo-France (`sensor.<dept>_weather_alert`, 9 phénomènes) ou
 #         MeteoAlarm (39 pays européens, `binary_sensor`, UNE seule alerte : la
 #         bibliothèque s'arrête à la première ; `on` seulement si elle n'a pas expiré).
+# @detection Depuis le 28/09/2026 (ADR-0024), plus de placeholder : les entités de
+#       chaque fournisseur sont TROUVÉES par `sensor.tab5_sources_meteo` (capteur à
+#       déclencheurs, plus bas) : Météo-France = la ville de l'entité météo choisie
+#       si elle est de Météo-France, sinon la première ville Météo-France, et ses
+#       capteurs sur le même appareil (noms anglais fixes de l'intégration :
+#       `_next_rain`, `_weather_alert`, `_uv`, `_freeze_chance`, `_snow_chance`) ;
+#       OpenWeatherMap = l'entité météo choisie si elle en est, sinon la première ;
+#       MeteoAlarm = le binary_sensor signé « Information provided by MeteoAlarm »
+#       (attribution fixe de l'intégration ; plateforme YAML sans unique_id, donc
+#       absente du registre des entités et d'integration_entities()).
+#       Une source choisie sans entité donne « pas de données » (pluie) ou aucune
+#       vigilance ; « Aucune » masque la carte.
 # @install `homeassistant: packages: !include_dir_named packages`, puis ce fichier
-#       (rendu) dans config/packages/. Placeholders (placeholders.example.yaml) :
-#       VOTRE_VILLE et VOTRE_DEPARTEMENT (Météo-France), VOTRE_METEO_OWM (entity_id COMPLET
-#       de la météo OpenWeatherMap, mode v3.0), VOTRE_METEOALARM (entity_id COMPLET
-#       du binary_sensor MeteoAlarm). Une source choisie dont l'entité n'existe pas donne « pas de
-#       données » (pluie) ou aucune vigilance ; « Aucune » masque la carte.
+#       dans config/packages/. Rien à renseigner.
 # @ai_warning Les options des input_select sont lues par les modèles ci-dessous :
 #       les renommer demande de changer les comparaisons (`source == '…'`).
 # ============================================================================
@@ -50,7 +58,8 @@ input_select:
 # Source des prévisions (lot 4c-3) : mémorise l'entité weather.* choisie dans la
 # liste « Tab5 · source des prévisions » (template select plus bas, dont les options
 # sont les entités météo présentes). Sans `initial` : HA garde le choix au redémarrage.
-# Vide ou entité disparue : weather.VOTRE_VILLE, sinon la première entité météo.
+# Vide ou entité disparue : la première entité Météo-France, sinon la première
+# entité météo (sensor.tab5_sources_meteo, attribut `meteo`).
 input_text:
   tab5_meteo_previsions:
     name: "Tab5 · entité météo choisie"
@@ -59,13 +68,89 @@ input_text:
 
 template:
   # ──────────────────────────────────────────────────────────────────────────
+  # Sources détectées — capteur à DÉCLENCHEURS : il parcourt les capteurs de la
+  # maison, ce qu'un modèle ordinaire referait à chaque changement de l'un d'eux.
+  # Recalculé au démarrage, au rechargement des modèles, à l'ajout ou au
+  # renommage d'une entité et au changement de l'entité météo choisie.
+  # ──────────────────────────────────────────────────────────────────────────
+  - triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+      - trigger: event
+        event_type: entity_registry_updated
+      - trigger: state
+        entity_id: input_text.tab5_meteo_previsions
+    variables:
+      meteos: "{{ states.weather | map(attribute='entity_id') | list }}"
+      choix: "{{ states('input_text.tab5_meteo_previsions') }}"
+      mf_meteos: "{{ integration_entities('meteo_france') | select('match', 'weather[.]') | list }}"
+      owm_meteos: "{{ integration_entities('openweathermap') | select('match', 'weather[.]') | list }}"
+      meteo: "{{ choix if choix in meteos else (mf_meteos | first if mf_meteos else (meteos | first | default(''))) }}"
+      mf_ville: "{{ meteo if meteo in mf_meteos else (mf_meteos | first | default('')) }}"
+      mf_capteurs: "{{ device_entities(device_id(mf_ville)) | select('match', 'sensor[.]') | list if mf_ville else [] }}"
+      # Sans intégration Météo-France, une entité météo et ses capteurs nommés comme
+      # elle (weather.<ville>, sensor.<ville>_next_rain…) : ceux du test « HA neuf ».
+      meme_nom: "{{ 'sensor.' ~ meteo.split('.', 1)[1] if meteo else '' }}"
+      meteoalarm: >-
+        {{ states.binary_sensor | selectattr('attributes.attribution', 'defined')
+           | selectattr('attributes.attribution', 'eq', 'Information provided by MeteoAlarm')
+           | map(attribute='entity_id') | first | default('') }}
+    sensor:
+      - name: "Tab5 · sources météo"
+        unique_id: tab5_sources_meteo
+        icon: mdi:weather-cloudy-clock
+        state: >-
+          {%- set l = (['Météo-France'] if mf_ville else []) + (['OpenWeatherMap'] if owm_meteos else [])
+                      + (['MeteoAlarm'] if meteoalarm else []) -%}
+          {{ l | join(', ') if l else 'aucune' }}
+        attributes:
+          meteo: "{{ meteo }}"
+          meteo_france: "{{ mf_ville }}"
+          mf_pluie: >-
+            {%- set l = mf_capteurs | select('match', '.*_next_rain$') | list -%}
+            {%- set l = l if l else (integration_entities('meteo_france') | select('match', 'sensor[.].*_next_rain$') | list) -%}
+            {{ l | first if l else (meme_nom ~ '_next_rain' if meme_nom and expand(meme_nom ~ '_next_rain') | count > 0 else '') }}
+          mf_vigilance: >-
+            {%- set l = mf_capteurs | select('match', '.*_weather_alert$') | list -%}
+            {%- set l = l if l else (integration_entities('meteo_france') | select('match', 'sensor[.].*_weather_alert$') | list) -%}
+            {%- set l = l if l else (states.sensor | map(attribute='entity_id') | select('match', 'sensor[.].*_weather_alert$') | list) -%}
+            {{ l | first | default('') }}
+          mf_uv: >-
+            {%- set l = mf_capteurs | select('match', '.*_uv$') | list -%}
+            {{ l | first if l else (meme_nom ~ '_uv' if meme_nom and expand(meme_nom ~ '_uv') | count > 0 else '') }}
+          mf_gel: >-
+            {%- set l = mf_capteurs | select('match', '.*_freeze_chance$') | list -%}
+            {{ l | first if l else (meme_nom ~ '_freeze_chance' if meme_nom and expand(meme_nom ~ '_freeze_chance') | count > 0 else '') }}
+          mf_neige: >-
+            {%- set l = mf_capteurs | select('match', '.*_snow_chance$') | list -%}
+            {{ l | first if l else (meme_nom ~ '_snow_chance' if meme_nom and expand(meme_nom ~ '_snow_chance') | count > 0 else '') }}
+          owm: "{{ meteo if meteo in owm_meteos else (owm_meteos | first | default('')) }}"
+          meteoalarm: "{{ meteoalarm }}"
+
+  # Relevé de la pluie Météo-France : change à chaque mise à jour du capteur
+  # (état et `forecast_time_ref`, toutes les 5 min) et déclenche le capteur de pluie
+  # aussitôt, comme le faisait un déclencheur `state:` sur sensor.<ville>_next_rain.
+  - sensor:
+      - name: "Tab5 · relevé pluie Météo-France"
+        unique_id: tab5_releve_pluie_meteo_france
+        icon: mdi:weather-rainy
+        state: >-
+          {%- set e = state_attr('sensor.tab5_sources_meteo', 'mf_pluie') or '' -%}
+          {{ (states(e) ~ ' ' ~ (state_attr(e, 'forecast_time_ref') or ''))[:250] if e else 'aucun' }}
+
+  # ──────────────────────────────────────────────────────────────────────────
   # Pluie dans l'heure — capteur à déclencheurs : il peut appeler l'action
   # d'OpenWeatherMap (`actions:`), dont la réponse (`owm`) sert aux modèles.
   # ──────────────────────────────────────────────────────────────────────────
   - triggers:
       # Météo-France : état ET attributs (`1_hour_forecast` change toutes les 5 min).
       - trigger: state
-        entity_id: sensor.VOTRE_VILLE_next_rain
+        entity_id: sensor.tab5_releve_pluie_meteo_france
+      # Sources détectées de nouveau (entité ajoutée, autre ville choisie).
+      - trigger: state
+        entity_id: sensor.tab5_sources_meteo
       # OpenWeatherMap : HA l'interroge toutes les 10 min ; 5 min ici pour que les
       # créneaux, calculés par rapport à maintenant, restent justes.
       - trigger: time_pattern
@@ -76,6 +161,9 @@ template:
         event: start
       - trigger: event
         event_type: event_template_reloaded
+    variables:
+      mf_pluie: "{{ state_attr('sensor.tab5_sources_meteo', 'mf_pluie') or '' }}"
+      owm_meteo: "{{ state_attr('sensor.tab5_sources_meteo', 'owm') or '' }}"
     actions:
       # Garde has_value() : sans l'intégration OpenWeatherMap, l'action n'existe pas
       # et HA lève « Action … not found », que continue_on_error ne rattrape PAS
@@ -86,11 +174,11 @@ template:
             entity_id: input_select.tab5_source_pluie
             state: "OpenWeatherMap"
           - condition: template
-            value_template: "{{ has_value('VOTRE_METEO_OWM') }}"
+            value_template: "{{ has_value(owm_meteo) }}"
         then:
           - action: openweathermap.get_minute_forecast
             target:
-              entity_id: VOTRE_METEO_OWM
+              entity_id: "{{ owm_meteo }}"
             response_variable: owm
             continue_on_error: true
     sensor:
@@ -111,7 +199,7 @@ template:
                forme nue { forecast: [...] } est acceptée aussi. Seuils en mm/h :
                < 0,1 sec, < 2,5 faible, < 7,6 modérée, < 50 forte, au-delà très forte
                (classes usuelles « light / moderate / heavy / violent »). #}
-            {% set r = (owm.get('VOTRE_METEO_OWM', owm) if owm is defined and owm is mapping else {}) %}
+            {% set r = (owm.get(owm_meteo, owm) if owm is defined and owm is mapping else {}) %}
             {% set m = r.get('forecast', []) if r is mapping else [] %}
             {% if m | length == 0 %}
               @-1,0
@@ -134,10 +222,10 @@ template:
           {% else %}
             {# Météo-France — même logique que l'ancien capteur « Phrase Prochaine
                Pluie » (vérifiée à l'identique le 27/09/2026, lot 4c-1). #}
-            {% set ent = 'sensor.VOTRE_VILLE_next_rain' %}
+            {% set ent = mf_pluie %}
             {% set niv = {'Temps sec': 0, 'Pluie faible': 1, 'Pluie modérée': 2, 'Pluie forte': 3,
                           'Pluie très forte': 4, 'Pluie trés forte': 4} %}
-            {% if states[ent] is none %}
+            {% if ent == '' %}
               {# Pas d'intégration Météo-France (choix par défaut de la liste) : aucune
                  source, comme « Aucune » — et non « temps sec » (lot 5b). #}
               @-
@@ -168,12 +256,12 @@ template:
           barres: >
             {% set source = states('input_select.tab5_source_pluie') %}
             {% set ns = namespace(r='') %}
-            {% if source == 'Météo-France' and state_attr('sensor.VOTRE_VILLE_next_rain', '1_hour_forecast') is mapping %}
-              {% set fc = state_attr('sensor.VOTRE_VILLE_next_rain', '1_hour_forecast') %}
+            {% if source == 'Météo-France' and state_attr(mf_pluie, '1_hour_forecast') is mapping %}
+              {% set fc = state_attr(mf_pluie, '1_hour_forecast') %}
               {% set cles = ['0 min', '5 min', '10 min', '15 min', '20 min', '25 min', '35 min', '45 min', '55 min'] %}
               {% for k in cles %}{% set ns.r = ns.r ~ loop.index0 ~ '|' ~ fc.get(k, 'Inconnu') ~ ';' %}{% endfor %}
             {% elif source == 'OpenWeatherMap' %}
-              {% set r = (owm.get('VOTRE_METEO_OWM', owm) if owm is defined and owm is mapping else {}) %}
+              {% set r = (owm.get(owm_meteo, owm) if owm is defined and owm is mapping else {}) %}
               {% set m = r.get('forecast', []) if r is mapping else [] %}
               {% set bornes = [0, 5, 10, 15, 20, 25, 35, 45, 55, 60] %}
               {% set maintenant = now().timestamp() %}
@@ -204,14 +292,15 @@ template:
         # et par le bandeau info, jamais traduits).
         state: >
           {% set source = states('input_select.tab5_source_vigilance') %}
+          {% set alerte = state_attr('sensor.tab5_sources_meteo', 'meteoalarm') or '' %}
           {% if source == 'Météo-France' %}
-            {% set v = states('sensor.VOTRE_DEPARTEMENT_weather_alert') | capitalize %}
+            {% set v = states(state_attr('sensor.tab5_sources_meteo', 'mf_vigilance') or '') | capitalize %}
             {{ v if v in ['Vert', 'Jaune', 'Orange', 'Rouge'] else 'Vert' }}
-          {% elif source == 'MeteoAlarm' and is_state('VOTRE_METEOALARM', 'on') %}
+          {% elif source == 'MeteoAlarm' and is_state(alerte, 'on') %}
             {# awareness_level « 3; orange; Severe » : 2 jaune, 3 orange, 4 rouge ; un
                1 (vert) alors que l'alerte est active compte comme jaune, comme le fait
                la carte HACS MeteoalarmCard. #}
-            {% set n = (state_attr('VOTRE_METEOALARM', 'awareness_level') | string).split(';')[0] | int(0) %}
+            {% set n = (state_attr(alerte, 'awareness_level') | string).split(';')[0] | int(0) %}
             {{ 'Rouge' if n >= 4 else 'Orange' if n == 3 else 'Jaune' }}
           {% else %}
             Vert
@@ -222,23 +311,23 @@ template:
           # vagues-submersion, canicule, avalanches, brouillard, feux de forêt.
           phenomenes: >
             {% set source = states('input_select.tab5_source_vigilance') %}
+            {% set alerte = state_attr('sensor.tab5_sources_meteo', 'meteoalarm') or '' %}
             {% if source == 'Météo-France' %}
-              {% set ent = 'sensor.VOTRE_DEPARTEMENT_weather_alert' %}
+              {% set ent = state_attr('sensor.tab5_sources_meteo', 'mf_vigilance') or '' %}
               {% set ns = namespace(l=[]) %}
               {% for ph in ['Vent violent', 'Inondation', 'Orages', 'Pluie-inondation', 'Neige-verglas',
                             'Grand-froid', 'Vagues-submersion', 'Canicule', 'Avalanches'] %}
                 {% set ns.l = ns.l + [state_attr(ent, ph) | default('Vert', true) | capitalize] %}
               {% endfor %}
               {{ (ns.l + ['Vert', 'Vert']) | join('|') }}
-            {% elif source == 'MeteoAlarm' and is_state('VOTRE_METEOALARM', 'on') %}
+            {% elif source == 'MeteoAlarm' and is_state(alerte, 'on') %}
               {# awareness_type « 8; forest-fire » → case de la tablette. Codes
                  MeteoAlarm : 1 vent, 2 neige-verglas, 3 orages, 4 brouillard,
                  5 canicule, 6 grand froid, 7 submersion, 8 feux de forêt,
                  9 avalanches, 10 pluie, 12 inondation, 13 pluie-inondation. #}
-              {% set ent = 'VOTRE_METEOALARM' %}
-              {% set n = (state_attr(ent, 'awareness_level') | string).split(';')[0] | int(0) %}
+              {% set n = (state_attr(alerte, 'awareness_level') | string).split(';')[0] | int(0) %}
               {% set niveau = 'Rouge' if n >= 4 else 'Orange' if n == 3 else 'Jaune' %}
-              {% set t = (state_attr(ent, 'awareness_type') | string).split(';')[0] | int(0) %}
+              {% set t = (state_attr(alerte, 'awareness_type') | string).split(';')[0] | int(0) %}
               {% set case = {1: 0, 2: 4, 3: 2, 4: 9, 5: 7, 6: 5, 7: 6, 8: 10, 9: 8, 10: 3, 12: 1, 13: 3} %}
               {% set ns = namespace(l=['Vert'] * 11) %}
               {% if t in case %}
@@ -272,40 +361,33 @@ template:
         icon: mdi:weather-partly-cloudy
         # État = condition du moment de l'entité choisie (codes HA standard : sunny,
         # rainy… — ce que lit la tablette). Attributs : ce que lisent les poussées.
-        # L'entité est recalculée dans CHAQUE modèle (même ligne en tête) : `this`
-        # porterait l'état précédent, et un changement de source n'aurait pris effet
-        # qu'au rendu suivant. Choix vide ou entité disparue : weather.VOTRE_VILLE,
-        # sinon la première entité météo.
+        # L'entité est relue dans CHAQUE modèle (même ligne en tête) : `this`
+        # porterait l'état précédent. Elle vient de sensor.tab5_sources_meteo
+        # (attribut `meteo`), recalculé dès que le choix change.
         state: >
-          {% set d = states.weather | map(attribute='entity_id') | list %}{% set c = states('input_text.tab5_meteo_previsions') %}{% set e = c if c in d else ('weather.VOTRE_VILLE' if 'weather.VOTRE_VILLE' in d else (d | first | default('weather.VOTRE_VILLE'))) %}
+          {% set e = state_attr('sensor.tab5_sources_meteo', 'meteo') or '' %}
           {{ states(e) }}
         attributes:
-          entite: >
-            {% set d = states.weather | map(attribute='entity_id') | list %}{% set c = states('input_text.tab5_meteo_previsions') %}{% set e = c if c in d else ('weather.VOTRE_VILLE' if 'weather.VOTRE_VILLE' in d else (d | first | default('weather.VOTRE_VILLE'))) %}
-            {{ e }}
-          temperature: >
-            {% set d = states.weather | map(attribute='entity_id') | list %}{% set c = states('input_text.tab5_meteo_previsions') %}{% set e = c if c in d else ('weather.VOTRE_VILLE' if 'weather.VOTRE_VILLE' in d else (d | first | default('weather.VOTRE_VILLE'))) %}
-            {{ state_attr(e, 'temperature') }}
-          humidite: >
-            {% set d = states.weather | map(attribute='entity_id') | list %}{% set c = states('input_text.tab5_meteo_previsions') %}{% set e = c if c in d else ('weather.VOTRE_VILLE' if 'weather.VOTRE_VILLE' in d else (d | first | default('weather.VOTRE_VILLE'))) %}
-            {{ state_attr(e, 'humidity') }}
+          entite: "{{ state_attr('sensor.tab5_sources_meteo', 'meteo') or '' }}"
+          temperature: "{{ state_attr(state_attr('sensor.tab5_sources_meteo', 'meteo') or '', 'temperature') }}"
+          humidite: "{{ state_attr(state_attr('sensor.tab5_sources_meteo', 'meteo') or '', 'humidity') }}"
           # Ce que l'entité sait fournir (WeatherEntityFeature : 1 jours, 2 heures,
           # 4 demi-journées, vérifié dans le code de HA 2026.9.3). Les poussées ne
           # demandent jamais un type non géré.
           type_jours: >
-            {% set d = states.weather | map(attribute='entity_id') | list %}{% set c = states('input_text.tab5_meteo_previsions') %}{% set e = c if c in d else ('weather.VOTRE_VILLE' if 'weather.VOTRE_VILLE' in d else (d | first | default('weather.VOTRE_VILLE'))) %}
-            {% set f = state_attr(e, 'supported_features') | int(0) %}
+            {% set f = state_attr(state_attr('sensor.tab5_sources_meteo', 'meteo') or '', 'supported_features') | int(0) %}
             {{ 'daily' if f | bitwise_and(1) else 'twice_daily' if f | bitwise_and(4) else 'hourly' if f | bitwise_and(2) else '' }}
           heures_ok: >
-            {% set d = states.weather | map(attribute='entity_id') | list %}{% set c = states('input_text.tab5_meteo_previsions') %}{% set e = c if c in d else ('weather.VOTRE_VILLE' if 'weather.VOTRE_VILLE' in d else (d | first | default('weather.VOTRE_VILLE'))) %}
-            {{ (state_attr(e, 'supported_features') | int(0)) | bitwise_and(2) > 0 }}
-          # Probabilités : capteurs Météo-France s'ils existent (sensor.<ville>_…),
-          # sinon ce que donne l'entité choisie. La neige ne sert qu'à l'icône flocon
-          # (≥ 5) : sans capteur, 100 si la condition du moment est neigeuse.
+            {{ (state_attr(state_attr('sensor.tab5_sources_meteo', 'meteo') or '', 'supported_features') | int(0)) | bitwise_and(2) > 0 }}
+          # Probabilités : capteurs Météo-France s'ils existent (même ville), sinon ce
+          # que donne l'entité choisie. La neige ne sert qu'à l'icône flocon (≥ 5) :
+          # sans capteur, 100 si la condition du moment est neigeuse.
           uv: >
-            {% set d = states.weather | map(attribute='entity_id') | list %}{% set c = states('input_text.tab5_meteo_previsions') %}{% set e = c if c in d else ('weather.VOTRE_VILLE' if 'weather.VOTRE_VILLE' in d else (d | first | default('weather.VOTRE_VILLE'))) %}
-            {{ states('sensor.VOTRE_VILLE_uv') | int(0) if has_value('sensor.VOTRE_VILLE_uv') else state_attr(e, 'uv_index') | int(0) }}
-          gel: "{{ states('sensor.VOTRE_VILLE_freeze_chance') | int(0) }}"
+            {% set e = state_attr('sensor.tab5_sources_meteo', 'meteo') or '' %}
+            {% set u = state_attr('sensor.tab5_sources_meteo', 'mf_uv') or '' %}
+            {{ states(u) | int(0) if has_value(u) else state_attr(e, 'uv_index') | int(0) }}
+          gel: "{{ states(state_attr('sensor.tab5_sources_meteo', 'mf_gel') or '') | int(0) }}"
           neige: >
-            {% set d = states.weather | map(attribute='entity_id') | list %}{% set c = states('input_text.tab5_meteo_previsions') %}{% set e = c if c in d else ('weather.VOTRE_VILLE' if 'weather.VOTRE_VILLE' in d else (d | first | default('weather.VOTRE_VILLE'))) %}
-            {{ states('sensor.VOTRE_VILLE_snow_chance') | int(0) if has_value('sensor.VOTRE_VILLE_snow_chance') else (100 if states(e) in ['snowy', 'snowy-rainy'] else 0) }}
+            {% set e = state_attr('sensor.tab5_sources_meteo', 'meteo') or '' %}
+            {% set n = state_attr('sensor.tab5_sources_meteo', 'mf_neige') or '' %}
+            {{ states(n) | int(0) if has_value(n) else (100 if states(e) in ['snowy', 'snowy-rainy'] else 0) }}

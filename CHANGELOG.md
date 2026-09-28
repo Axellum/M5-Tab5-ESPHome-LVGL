@@ -4,6 +4,211 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 (soir) — Pièces : retours d'Axel sur la tablette
+
+- **Volet** : la pause remarche (le blueprint lançait le script du volet à course simulée
+  et attendait sa fin, 26 s, en retenant toute commande suivante) ; le sens se choisit de
+  nouveau d'un toucher sur le titre de la tuile, flèche comprise, comme en 3.1, sur toutes
+  les tuiles volet et aussi en mode HA (la ligne d'état dit « Ouvrir » / « Fermer »).
+- **Mode HA** : le glisser passe par les cinq pages, pièces vides comprises (« Aucun
+  appareil ») ; le bouton « HA » est entouré de bleu quand le mode est actif, comme le
+  bouton « Domo », et son icône garde la couleur de la connexion à HA.
+- Blueprint : nom de pièce seulement si l'aire couvre au moins la moitié de ses
+  appareils ; tuile PC du réglage 3.x en écran ; lampe allumée à luminosité 0 = « Allumé ».
+
+### 2026-09-28 — Firmware : les pièces et leurs tuiles (ADR-0023, côté tablette)
+
+- **Modèle** (`Tab5/tab5_tuiles.cpp`, nouvelle unité) : 5 pièces × 5 tuiles (type, icône
+  de la palette, options, complément, nom gardé sur 24 octets et filtré aux glyphes des
+  polices ; état, valeur, couleur). Nouvelle action **`tab5_maj_tuiles`** (instantané
+  complet, grammaire de l'ADR) ; les états `tRT|état|valeur|couleur` passent par
+  `tab5_maj_emplacements`, routés avant la table des emplacements 3.x. Définitions
+  gardées en NVS (magie `TUI1`, écrites seulement si elles changent) : les pièces se
+  dessinent avant que HA réponde ; les états ne sont pas gardés (« -- » grisé).
+- **Mode héritage** : tant qu'aucune définition n'est arrivée (firmware mis à jour avant
+  le blueprint), la pièce 0 est construite depuis les emplacements 3.x — PC/TV, volet,
+  trois lumières — avec leurs noms, icônes, gestes et commandes 3.x.
+- **Mode météo** : sur chaque page, une tuile qui porte un appareil de la pièce de la page
+  le montre dans ses épaules (icône colorée par l'état ; ampoule ou flèche du prochain
+  mouvement du volet) et reçoit son bouton invisible — les tuiles horaires aussi
+  (`forecast_hour_card.yaml`). Appui court / long selon le type, options `o k r t m`
+  (confirmation `k` : second appui dans les 3 s, « Confirmer ? »).
+- **Mode HA** : les cinq cartes montrent la pièce de la page (icône de la palette, nom
+  coupé avec « … », état traduit, couleur par type et état, cartes vides masquées et
+  les autres centrées) ; la carte centrale affiche « Pièce n/N » et le nom de la pièce.
+  **Le swipe change de pièce** (suivante / précédente qui a des appareils) et ne
+  réaffiche plus la météo sous les cartes (bug) ; entrée sur une page vide → la pièce
+  la plus proche ; le bouton « HA » montre le mode actif et disparaît sans appareil ;
+  « Aller à l'écran → Accueil » quitte le mode HA. Le global `show_switches` disparaît
+  (`g_central_ctx.ha_mode`, seule source).
+- **Popup lumière** : le sélecteur liste les lumières de la pièce (5 au plus), s'ouvre
+  sur la lumière appuyée ; « Tout éteindre » → `pR / eteindre`.
+- Version par défaut `3.2.0-dev`, rendu `3.2.0-rendu` : le blueprint envoie les pièces.
+  L'`on_boot` n'est pas touché (widgets posés par `tab5-tuiles.yaml`, lancé depuis
+  `tab5_zones_apply`). 10 textes nouveaux, traduits dans les 5 langues.
+- Tests : `tests/test_tuiles_firmware.py` (types, options, pièces, commandes, filtre des
+  noms, routage, version, boutons contre l'ADR) — il a trouvé `t` et `r` inversés dans
+  la table des options avant tout essai.
+
+### 2026-09-28 — Blueprint : les pièces (ADR-0023, côté Home Assistant)
+
+- **Cinq pièces de cinq appareils** dans le blueprint « Tab5 — emplacements » (même
+  fichier, un ré-import suffit) : une section par pièce (la 1, l'accueil, ouverte ; les
+  autres repliées), un nom et une liste d'appareils réordonnable, filtrée sur les
+  domaines du contrat ; une section « Personnaliser des tuiles » (nom, icône,
+  comportement : allumer seulement, confirmer, lecture seule). Les entrées 3.x
+  (`lumiere_1..3`, `pc`, `volet`) gardent leurs noms, dans une section repliée
+  « Tuiles de l'accueil (réglage 3.x) » : les automatisations existantes continuent.
+- **Définitions** (`tab5_maj_tuiles`, à la connexion, au rechargement, à la demande des
+  zones) : type par domaine, icône (personnalisée, attribut `icon`, classe, domaine, via
+  le bloc généré `icones_mdi` / `icones_defaut`), options `d c o k r t m`, complément
+  (unité ≤ 7 octets, classe), nom sans celui de la pièce ; nom de pièce saisi, sinon
+  l'aire de ses appareils. Pièce 1 vide : l'accueil vient des entrées 3.x, et la tuile
+  PC garde son comportement PC + TV.
+- **États** `tRT|état|valeur|couleur` : tous après les définitions, une tuile quand ce que
+  montre l'écran change (état, luminosité, `rgb_color`, position), les capteurs avec les
+  mesures de 5 minutes. Cinq déclencheurs par pièce : un capteur qui change, la position
+  GPS d'une personne ou le volume d'un lecteur ne réveillent pas l'automatisation.
+- **Protocole** lu dans le `sw_version` de la tablette (« 3.1.0 (ESPHome 2026.9.0) ») : en
+  dessous de 3.2.0, ou illisible, jamais `tab5_maj_tuiles`, seulement les clés 3.x.
+- **Commandes** `tRT` et `pR / eteindre` aiguillées par le domaine de l'entité de la
+  tuile ; seulement sur les entités placées dans une tuile. Le volet suivi par
+  `volet_serre_tracking.yaml` passe toujours par son script, et sa tuile montre l'état
+  tenu par le package (le moteur reste « unknown »).
+- Tests : `tests/test_tuiles_blueprint.py` rend les vrais modèles Jinja du blueprint dans
+  le bac à sable de Jinja (types, options, commandes = tableaux de l'ADR, protocole,
+  définitions, états, un seul chemin de poussée, aiguillage) ; `jinja2` rejoint
+  `requirements-dev.txt`. Le job « Installation dans un HA neuf » configure deux pièces
+  et relit dans la trace les définitions calculées, sans `tab5_maj_tuiles` au protocole 1.
+- Docs : « Adapt to your home » / « Adapter à sa maison », `HomeAssistant_Config/README.md`.
+
+### 2026-09-28 — Pièces : la palette des icônes des tuiles (ADR-0023)
+
+- **`Tab5/tuiles_icones.yaml`, source unique** : 51 codes (lumières, pièces, appareils,
+  ouvrants, capteurs, actions), chacun avec son glyphe éteint / allumé (variantes -on,
+  -off, -open, fermé / ouvert de MDI quand elles existent, sinon un seul glyphe), les
+  303 noms `mdi:` qu'il représente et ses défauts : un par type de tuile (lum, int, vol,
+  med, act, cap, bin, cli) et par domaine ou « domaine.classe » HA (`cover.garage`,
+  `binary_sensor.door`, `sensor.temperature`…). `lit`, `canape`, `led`, `ordinateur` et
+  `volet` gardent les glyphes de la 3.1.
+- **Aucun point de code deviné** : le TTF du projet est Material Design Icons 7.4.47
+  (mêmes 7 447 points de code que le `meta.json` de `@mdi/svg@7.4.47`) ; chaque couple
+  nom ↔ point de code est vérifié contre ce `meta.json` (`--meta`) et contre le cmap du
+  TTF (test, hors ligne).
+- **`tools/gen_tuiles_icones.py`** écrit `Tab5/tab5_tuiles_icones.h` (même API
+  `tuile_icone(code, actif, type)`), les 80 glyphes dans `mdi_font_70`, `mdi_font_45` et
+  `mdi_font_32` (entre `# >>> tuiles` et `# <<< tuiles`, sans ceux que la police liste
+  déjà), `icones_mdi` / `icones_defaut` du blueprint (entre ses marqueurs) et le tableau
+  de `docs/tiles_icons.md` ; `--check` échoue si une partie est périmée, sans rien écrire.
+  Les fins de ligne de chaque fichier sont gardées (même résultat sous Windows et Linux).
+- Règle 7 : la table est rattachée aux cartes du mode HA (`icon_sw?`), aux épaules des
+  tuiles (`icon_card_*`) et au sélecteur du popup lumière (`icon_light_sel_*`).
+- **Coût mesuré par la CI** (job `build`, contre `main` @ `e6b81db`, dernier firmware
+  compilé sur `main`) : image 3 239 558 → 3 290 102 octets, **+50 544 octets (≈ 49 Kio)**
+  pour 215 glyphes ajoutés (75 à 70 px, 72 à 45 px, 68 à 32 px), soit ~235 octets
+  chacun ; RAM inchangée (171 002 octets) ; flash 39,9 % → 40,5 %.
+- Doc `docs/tiles_icons.md` (EN + FR) : la palette, comment l'icône est choisie, comment
+  en demander une. Tests `tests/test_tuiles_icones.py`.
+
+### 2026-09-28 — Pièces : la démo et le rendu montrent une maison de cinq pièces (ADR-0023)
+
+- **Mode démo** : une maison de cinq pièces et vingt appareils, de tous les types du
+  contrat (lampe couleur à variateur, interrupteur, volet en mouvement, média, scène et
+  script, capteurs avec unité, porte, mouvement, présence, clim), avec un nom que la
+  tablette coupe, des accents, un appareil hors ligne et une pièce de deux tuiles. Elle
+  n'est poussée qu'à une tablette qui a l'action `tab5_maj_tuiles` (firmware 3.2) : les
+  définitions, puis les états à la suite des emplacements (clés `tRT`) ; un firmware 3.x
+  ne reçoit rien de plus, comme avec le blueprint. La maison minimale n'a qu'une pièce
+  (le PC et deux lampes). Les commandes des tuiles sont journalisées avec leur pièce et
+  leur nom. La tuile de la clim suit la carte clim de chaque scène.
+- **Rendu hors tablette** : le mode HA de chaque pièce (`accueil-ha-piece-1` à `-5`,
+  qui remplacent `accueil-interrupteurs`), par des gestes partis du bord de l'écran,
+  seul endroit libre quel que soit le nombre de cartes ; chaque écran revient de
+  lui-même à l'accueil en mode météo. Les pages 3-4 et horaires montrent les épaules
+  des pièces en mode météo. Tant que le firmware des pièces n'est pas fusionné, ces
+  captures montrent l'ancien affichage.
+- Tests : `tests/test_demo_pieces.py` relit la grammaire dans l'ADR-0023 (types,
+  options, code d'icône, longueurs, table pièce ↔ page) et y confronte les payloads,
+  l'échappement (`|` → `/`, `;` → `,`), la cohérence des états et la palette ;
+  `tests/test_demo.py` (pièces seulement avec l'action, définitions avant les états,
+  journal) ; `tests/test_rendu_ecrans.py` (un écran HA par pièce, retour à l'accueil,
+  gestes hors des boutons, boutons du haut).
+
+### 2026-09-28 — Événements seulement : plus d'option « actions HA » à cocher (ADR-0025)
+
+- **Le firmware n'appelle plus aucune action de Home Assistant.** Ses 13 derniers
+  `homeassistant.service` (briefing du réveil, annonces, calendrier mois et jour, alertes
+  lues, interruption de la voix, choix du pipeline, « MAJ Écran », « Recharger autos »,
+  « Redémarrer HA ») deviennent des événements `esphome.tab5_*`. L'étape d'installation
+  « Autoriser l'appareil à effectuer des actions Home Assistant » disparaît ; l'option
+  peut être décochée, ce qui ferme à la tablette l'accès à *toutes* les actions de HA.
+- **Nouveau package `packages/tab5_evenements.yaml`** : une automatisation traduit ces
+  événements en une liste blanche d'actions, pour un appareil de modèle `tab5-ha-hmi`
+  seulement, sur les entités de CETTE tablette (`device_entities`) ; aucun nom d'action
+  ni d'entité ne vient de l'événement. `homeassistant.restart` ne part que de
+  l'événement de confirmation, émis par le seul bouton « Confirmer ». Le pipeline n'est
+  choisi que si l'option existe (plus d'erreur au démarrage sans « Discussion LLM »).
+- **Plus d'entité à régler** : les substitutions `entity_tab5_satellite`,
+  `_media_player`, `_pipeline_select`, `entity_primary_active` et `entity_push_automation`
+  sont supprimées (une ligne restée dans `user_entities.yaml` est ignorée) ; un
+  renommage de la tablette ou de l'automatisation de poussée ne casse plus rien.
+- **Mise à jour depuis la 3.1** : déployer le package d'abord (inactif avec une 3.1),
+  puis le firmware, puis décocher l'option. Un firmware récent sans le package ne plante
+  pas mais ses demandes se perdent (détail dans `docs/installation.md`).
+- Tests : `tests/test_actions_ha.py` réécrit (aucune action dans le firmware, chaque
+  événement émis a un consommateur et inversement, liste blanche, garde du modèle,
+  redémarrage sur confirmation seulement). Job « Installation dans un HA neuf » : sans
+  l'option, calendrier ouvert par le select « Aller à l'écran » et « MAJ Écran » touché
+  par le doigt virtuel, de bout en bout ; un redémarrage forgé par un autre appareil est
+  ignoré ; aucune réparation « service_calls_not_allowed ». Le job se relance aussi sur
+  les fichiers du firmware qui émettent ces demandes.
+- Docs : guide d'installation (étape retirée, section « Passer d'une 3.1 à la suite »),
+  ADR-0025, contrat des événements dans `Tab5/README.md`, README HA, assistant vocal,
+  dépannage, site (vitrine et page d'installation, avec la note pour la 3.1).
+
+### 2026-09-28 — Popup calendrier : chaque demande de mois a sa réponse
+
+- `tab5_calendrier_mois` et `tab5_calendrier_jour` (`packages/tab5_calendar.yaml`) passent
+  de `mode: restart` à `mode: queued` (`max: 10`). La tablette demande d'affilée le mois
+  affiché et ses deux voisins (pré-chargement) : en `restart`, chaque demande annulait la
+  précédente et une seule des trois aboutissait (vu par le job « HA neuf »). Chaque
+  réponse porte son mois et va dans le cache de la tablette ; une réponse de jour
+  périmée est déjà ignorée par le firmware. Test : `tests/test_installation_ha.py`.
+
+### 2026-09-28 — Home Assistant sans placeholder : une archive, une ligne de YAML, des choix dans l'interface
+
+Installer le côté Home Assistant ne demande plus ni dépôt ni Python ([ADR-0024](docs/decisions/0024-packages-without-placeholders.md)).
+- **Archive `tab5_home_assistant.zip` jointe aux releases** (`tools/publication/archive_ha.py`,
+  job `home-assistant` de `publication.yml`) : `packages/`, `custom_templates/`, le blueprint
+  et `tab5_optionnel/`, dans l'arborescence de `config/`, avec un LISEZMOI. À décompresser
+  dans `config/`, puis une seule ligne de YAML (`packages: !include_dir_named packages`).
+- **Plus aucun placeholder** dans les packages : chaque valeur de la maison se choisit dans
+  HA, dans des listes « Tab5 · … » (nouveau `packages/tab5_reglages.yaml`) : agenda de
+  travail, des rendez-vous, des anniversaires, des jours fériés, téléphone, capteur de
+  présence ; TV Samsung et son adresse (`tab5_tv.yaml`). Choix par défaut seulement sans
+  ambiguïté ; « Aucun » éteint la fonction, sans erreur. Les agendas `calendar.famille`,
+  `calendar.anniversaires` et des jours fériés ne sont plus écrits en dur ; un agenda de
+  l'intégration Jours fériés compte tous ses événements comme fériés.
+- **Détectés** : la tablette par le modèle de son appareil (`sensor.tab5_tablette` : écran,
+  réveil en cours, micro, satellite, uptime… quel que soit son nom) ; les capteurs
+  Météo-France de la ville, la météo OpenWeatherMap et MeteoAlarm (`sensor.tab5_sources_meteo`).
+- **Plus de configuration HA refusée faute de secret** : `tab5_tv.yaml` n'a plus de
+  `!secret tab5_tv_app_url` ; l'adresse de la TV est un réglage de HA (ou l'IP d'un suivi du
+  routeur), et le package reste inerte tant qu'elle manque (une notification dit quoi régler).
+- **Volet à course simulée optionnel** : `volet_serre_tracking.yaml` passe dans
+  `HomeAssistant_Config/optionnel/` (`tab5_optionnel/` de l'archive), volet choisi dans
+  « Tab5 · volet à course simulée ». Livré par défaut, son script aurait pris au blueprint
+  les boutons du volet de tout le monde.
+- `render_ha_config.py` ne fait plus que copier ; `--check` refuse aussi un placeholder
+  restant. `placeholders.example.yaml` réduit à la liste des valeurs à ne jamais publier.
+- CI « HA neuf » : installation sans rien remplir (plus de `placeholders_ci.yaml` ni de
+  ligne dans `secrets.yaml`), sources choisies par `select.select_option`, tablette détectée
+  par son modèle, `check_config` aussi avec les optionnels. Tests : entités `…tab5_…` lues
+  toutes définies, archive reproductible et identique aux fichiers installés.
+- **Migration depuis la 3.1** : remplacer les fichiers, régler les listes (docs/installation.md,
+  étape 4), « Tab5 · agenda de travail » AVANT de recharger les automatisations, sinon le
+  réveil voit tous les jours en repos.
+
 ### 2026-09-28 — Site : une release n'est retenue qu'avec ses binaires (suite de #221)
 
 - `pages.py choisir` exigeait les trois manifestes, sans leurs binaires. Les neuf

@@ -4,7 +4,8 @@
 Le rendu hors tablette (tab5-rendu-host.yaml, plateforme `host` d'ESPHome) tourne sur
 la machine et dessine l'interface dans un affichage en mémoire. Ce script s'y connecte
 comme Home Assistant, lui pousse chaque scène de tools/demo/scenarios.py (les mêmes
-appels que le mode démo) et lui demande une capture (action `rendu_capture`). Les BMP
+appels que le mode démo, pièces comprises quand le rendu a l'action tab5_maj_tuiles,
+ADR-0023) et lui demande une capture (action `rendu_capture`). Les BMP
 sont écrits par le rendu dans ESPHOME_SNAPSHOT_DIR ; avec Pillow, ce script en fait
 des PNG en paysage (la dalle du Tab5 est en portrait, LVGL tourne l'image de 270°,
 vérifié sur les premières captures). Neon Apron, en portrait, n'est pas tourné.

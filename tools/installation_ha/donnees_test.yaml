@@ -6,9 +6,12 @@
 #       config/packages/ci_donnees_test.yaml. Il remplace les intégrations qu'un
 #       utilisateur aurait (Météo-France, capteurs de plantes…) par des modèles à
 #       valeurs FIXES : la capture d'écran se relit d'un run à l'autre.
-# @contrat Les noms donnent les entity_id attendus par placeholders_ci.yaml
-#       (VOTRE_VILLE = ville_ci, VOTRE_DEPARTEMENT = 99) et par le blueprint
-#       (verifier_installation.py, EMPLACEMENTS) :
+# @contrat Les noms donnent les entity_id choisis par verifier_installation.py (liste
+#       « Tab5 · source des prévisions » = weather.ville_ci, SOURCES) et par le
+#       blueprint (EMPLACEMENTS) ; les capteurs Météo-France sont TROUVÉS par
+#       packages/tab5_meteo_sources.yaml (sensor.tab5_sources_meteo) : sans
+#       l'intégration, ceux qui portent le nom de l'entité météo choisie
+#       (sensor.ville_ci_next_rain) et le seul `*_weather_alert` :
 #         weather.ville_ci, sensor.ville_ci_next_rain, sensor.99_weather_alert,
 #         sensor.serre_ci_temperature, sensor.pot_ci_1 à 3, sensor.telephone_ci_batterie.
 #       Lumières, clim, volet, TV, télécommande et température de la pièce viennent de

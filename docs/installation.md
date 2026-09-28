@@ -10,14 +10,14 @@
 
 Since 3.0, a ready-made, signed firmware installs from the browser. In this order:
 
-1. **Home Assistant side first**: the packages and the blueprint of [Step 4](#step-4--set-up-the-home-assistant-packages). For now this step still needs the repository and Python, once, to fill in your city, calendar and so on.
+1. **Home Assistant side first**: the archive `tab5_home_assistant.zip` of [Step 4](#step-4--set-up-the-home-assistant-packages), unzipped into Home Assistant's `config/` folder, one line in `configuration.yaml`, then your sources picked in Home Assistant with the mouse. No repository, no Python, nothing to fill in.
 2. **Flash** from the [install page](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome or Edge, a USB-C cable that carries data): your display revision, the Stable channel, *Connect and install*. On a new tablet, accept to erase it. In the port list, the tablet is « USB JTAG/serial debug unit »; if several ports have that name, unplug the tablet to see which one disappears.
    - « Failed to initialize… holding the BOOT button »: the Tab5 has no BOOT button. Hold its reset button about 2 s, until the internal green LED blinks fast (download mode), start again, and press reset once at the end to restart it.
    - The tablet already runs the same version: the page shows no *Install*. To start from scratch, « Erase User Data » (in red, at the bottom) erases everything, Wi-Fi, key and settings included, then installs again.
 3. **Wi-Fi**: from the same window (*Connect to Wi-Fi*, over USB), or with a phone on the open « Tab5 Fallback AP » network.
-4. **Add it to Home Assistant** within 30 minutes of its start: *Settings → Devices & services*, the ESPHome device is discovered, *Configure*. Home Assistant gives it its key. A tablet Home Assistant already knows gets a new key by itself, nothing to confirm (checked on 2026-09-28).
-5. **Allow Home Assistant actions**: *ESPHome → Configure*, tick « Allow the device to perform Home Assistant actions ». Voice, calendar and alarm clock need them.
-6. **Your devices**: create the automation from the blueprint ([Step 4](#step-4--set-up-the-home-assistant-packages), item 6).
+4. **Add it to Home Assistant** within 30 minutes of its start: *Settings → Devices & services*, the ESPHome device is discovered, *Configure*. Home Assistant gives it its key. A tablet Home Assistant already knows gets a new key by itself, nothing to confirm (checked on 2026-09-28). Nothing else to allow: the tablet asks Home Assistant for everything through events ([ADR-0025](decisions/0025-events-only.md)).
+   - Firmware 3.1 or older only (the Stable channel until the next release): also tick « Allow the device to perform Home Assistant actions » (*ESPHome → Configure*), which voice, calendar and alarm clock need there.
+5. **Your devices**: create the automation from the blueprint ([Step 4](#step-4--set-up-the-home-assistant-packages), item 5).
 
 Updates then show up in Home Assistant (« Firmware » entity), on the channel you installed; to switch channels, install again from the page without erasing. Over the air, the tablet only accepts a firmware signed with the project key: to switch to your own builds (your own key), flash once over USB.
 
@@ -64,9 +64,7 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 
 **Tab5 revision:** if the display chip on your sticker is not the ST7123, add `tab5_ecran: st7121` or `tab5_ecran: ili9881c` to this file (see [Hardware revisions](hardware.md#hardware-revisions)). Leave it out for the ST7123.
 
-**Your devices (lights, climate, plants, TV…) are not set here any more (since 3.0)**: you pick them in Home Assistant with the mouse, see Step 4 and [Adapt to your home](#adapt-to-your-home); old `entity_light_…` keys in an existing file are simply ignored. The entry point `tab5-ha-hmi.yaml` includes this file via `substitutions: !include Tab5/user_entities.yaml`. The remaining entity keys are commented out in the template, with their defaults in `Tab5/tab5-scripts.yaml`:
-- `entity_tab5_satellite`, `entity_tab5_media_player` and `entity_tab5_pipeline_select` (Domotique / Discussion buttons) hold the entity IDs Home Assistant derives from the device name: set them only if you rename the tablet in HA;
-- `entity_primary_active` and `entity_push_automation` (« MAJ Écran » button of the system console) are the names created by `packages/tab5_push.yaml`: set them only if you changed that package.
+**Your devices (lights, climate, plants, TV…) are not set here any more (since 3.0)**: you pick them in Home Assistant with the mouse, see Step 4 and [Adapt to your home](#adapt-to-your-home); old `entity_light_…` keys in an existing file are simply ignored. The entry point `tab5-ha-hmi.yaml` includes this file via `substitutions: !include Tab5/user_entities.yaml`. No entity key is left: Home Assistant finds the tablet's own entities (voice satellite, media player, pipeline select) and those of the « MAJ Écran » button by itself ([ADR-0025](decisions/0025-events-only.md)); old `entity_tab5_…`, `entity_primary_active` and `entity_push_automation` lines are ignored.
 
 ---
 
@@ -86,21 +84,43 @@ No `secrets.yaml` any more: one left from 2.x is simply not read (see [Upgrading
 
 ## Step 4 — Set up the Home Assistant packages
 
-Everything on the Home Assistant side is a **package** in `HomeAssistant_Config/packages/`:
+The whole Home Assistant side is one archive, **`tab5_home_assistant.zip`**, attached to the [releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases) (from the first one after 3.1.0). **Nothing to fill in**: every value of your home is picked afterwards in Home Assistant, with the mouse ([ADR-0024](decisions/0024-packages-without-placeholders.md)).
 
-1. Enable packages in `configuration.yaml`: `homeassistant: packages: !include_dir_named packages`.
-2. Copy `HomeAssistant_Config/placeholders.example.yaml` to `placeholders.yaml` (gitignored) and fill in your real entity IDs (`VOTRE_VILLE`, `VOTRE_DEPARTEMENT`, `VOTRE_EMAIL_gmail_com`…).
-3. Render: `python tools/render_ha_config.py` writes the deployable copies to `HomeAssistant_Config/rendered/`.
-4. Copy `rendered/packages/*.yaml` into your HA `config/packages/`, and `rendered/custom_templates/` into `config/custom_templates/`. `packages/tab5_tv.yaml` (Samsung TV apps) needs a `tab5_tv_app_url` line in HA's `secrets.yaml` (see the top of that file): without it, Home Assistant rejects its **whole** configuration. No Samsung TV? Don't copy that package.
-5. Reload Automations, Scripts, Template entities, Input booleans and Input texts (or restart HA).
-6. **Choose your devices**: *Settings → Automations & scenes → Blueprints → Import blueprint*, paste
-   `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml`,
-   then *Create automation* and pick an entity for each slot (all optional). Or copy the file into
-   `config/blueprints/automation/tab5/`. One automation per tablet.
+1. **Download** `tab5_home_assistant.zip` from the latest release and **unzip it into Home Assistant's `config/` folder**, the one holding `configuration.yaml` (Samba share, or the File editor / Studio Code Server add-on). It adds `packages/`, `custom_templates/` and `blueprints/automation/tab5/`; the `tab5_optionnel/` folder is not loaded (see below).
+2. **One line in `configuration.yaml`: the only YAML you write** (skip it if it is already there):
+   ```yaml
+   homeassistant:
+     packages: !include_dir_named packages
+   ```
+   If `homeassistant:` already exists, add only the `packages:` line under it.
+3. *Developer tools → YAML → Check configuration*, then **restart** Home Assistant. Later, replacing the same files only needs *Developer tools → YAML → All YAML configuration*.
+4. **Pick your sources**: *Settings → Devices & services → Entities*, search **« Tab5 · »**, open a list and choose. Each list offers what your Home Assistant has:
 
-Start with `packages/tab5_push.yaml` (push automations, shared scripts, the scripts the Tab5 calls, the optional-zones answer) and `packages/tab5_meteo_sources.yaml` (weather, rain and warning sources, required since 2.2.0) — the others add optional features. See [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) for what each package does and the full placeholder list.
+   | List | What it drives | Chosen by default |
+   |---|---|---|
+   | Tab5 · source des prévisions | forecasts and current weather (any `weather.*`) | the Météo-France city, otherwise the first weather entity |
+   | Tab5 · source de la pluie dans l'heure | rain card: Météo-France, OpenWeatherMap or Aucune (none) | Météo-France |
+   | Tab5 · source des vigilances | warning icons: Météo-France, MeteoAlarm or Aucune | Météo-France |
+   | Tab5 · agenda de travail | « Travail… » events: planning, rest days and the **alarm time** | nothing |
+   | Tab5 · agenda des rendez-vous | calendar popup, appointment reminders, morning briefing | nothing |
+   | Tab5 · agenda des anniversaires | birthdays in the calendar popup | the only calendar named « anniversaires » (or birthday…) |
+   | Tab5 · agenda des jours fériés | public holidays in the calendar popup | the only public-holiday calendar (Holiday integration, or its name says so) |
+   | Tab5 · téléphone | screen on when you come home, off when you leave | the only phone of the companion app |
+   | Tab5 · capteur de présence | screen on at presence, off after 15 min without | nothing |
+   | Tab5 · TV Samsung, Tab5 · adresse de la TV | app buttons of the TV popup (Samsung Tizen) | the only Samsung Smart TV; the address given by a router tracker when it reports one, otherwise type its IP |
 
-> These packages are exactly what runs on the author's Home Assistant (rendered with the author's own values) since 2026-09-26. There are no private versions and nothing to merge into `automations.yaml` or `scripts.yaml`.
+   Left on « Aucun », a feature simply stays off, without errors. The weather providers' own entities (Météo-France rain and warning sensors, OpenWeatherMap, MeteoAlarm) and the tablet's entities (screen, alarm, microphone…) are found by themselves; the tablet by its device model, whatever you named it.
+5. **Choose your devices**: *Settings → Automations & scenes → Blueprints*, « Tab5 — emplacements de l'écran » (unzipped with the rest; or *Import blueprint* with
+   `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml`),
+   then *Create automation* and pick an entity for each slot (all optional). One automation per tablet. Its « Agenda de travail » can stay empty: it then takes the one of « Tab5 · agenda de travail ».
+
+`tab5_optionnel/volet_serre_tracking.yaml` is only for a shutter that reports neither its position nor its travel (the author's Tuya motor): copy it into `packages/`, reload, and pick the shutter in « Tab5 · volet à course simulée ». It is not installed by default because, once present, it takes over the shutter buttons from the blueprint.
+
+The same files are in the repository (`HomeAssistant_Config/packages/`, `custom_templates/`, `blueprints/`, `optionnel/`); see [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) for what each package does.
+
+> These packages are exactly what runs on the author's Home Assistant since 2026-09-26, with no per-home edit since 2026-09-28. There are no private versions and nothing to merge into `automations.yaml` or `scripts.yaml`.
+
+**Coming from packages with placeholders (3.1.0 and earlier)?** Replace the files, then set each list to your old value: `VOTRE_EMAIL_gmail_com` → « Tab5 · agenda de travail », `calendar.famille` → rendez-vous, `calendar.anniversaires` and the public-holiday calendar (usually picked by default), `VOTRE_TELEPHONE` → téléphone, `VOTRE_CAPTEUR_PRESENCE` → capteur de présence, `VOTRE_TV` → TV Samsung, and the IP of the `tab5_tv_app_url` line of `secrets.yaml` → « Tab5 · adresse de la TV » (the line can then go). The weather choice is kept. Keep `volet_serre_tracking.yaml` in `config/packages/` if you use it, and pick your shutter in its list. **Set « Tab5 · agenda de travail » before the new automations run**: reload *Input texts* and *Template entities* first, choose, then reload *Scripts*, *Automations* and *REST commands*. Until it is set, every day counts as a rest day, and the alarm clock follows.
 
 ---
 
@@ -125,7 +145,7 @@ The network is kept across updates. The fallback AP comes back whenever the tabl
 **Within 30 minutes of the tablet's start** (its pairing window): *Settings → Devices & services*, the tablet shows up as discovered (ESPHome). *Configure*, then *Submit*. Home Assistant creates the encryption key, gives it to the tablet and keeps it: nothing to copy.
 
 - Window missed? Restart the tablet: it reopens for 30 minutes. Once it has its key, the window never opens again.
-- Then, in the device's options (*ESPHome → Configure*), tick **« Allow the device to perform Home Assistant actions »**: voice, calendar and alarm clock use them.
+- Nothing else to allow. The tablet never calls a Home Assistant action: it sends events, which `packages/tab5_evenements.yaml` turns into a fixed list of actions, for a Tab5 only ([ADR-0025](decisions/0025-events-only.md)). The « Allow the device to perform Home Assistant actions » option stays unticked (firmware 3.1 or older still needs it, see [Upgrading from 3.1](#upgrading-from-31)).
 
 ---
 
@@ -145,11 +165,23 @@ A tablet installed from the [web flasher](https://axellum.github.io/M5-Tab5-ESPH
 
 ---
 
+## Upgrading from 3.1
+
+After 3.1 the tablet no longer calls Home Assistant actions: it sends events, which the new package `packages/tab5_evenements.yaml` turns into actions ([ADR-0025](decisions/0025-events-only.md)). In this order:
+
+1. **Package first**: render and copy `tab5_evenements.yaml` like the others (Step 4, items 3 to 5), then reload Automations. A 3.1 tablet sends none of these events: the package just waits, nothing changes.
+2. **Then the firmware** (« Firmware » entity, or your own build).
+3. **Then untick** « Allow the device to perform Home Assistant actions » (*ESPHome → Configure*): the tablet no longer needs it, and without it Home Assistant refuses any action the device would ask for.
+
+A new firmware **without** the package does not crash and logs nothing, but what it asks Home Assistant is lost: the calendar popup shows only its local grid (no work hours, holidays or appointments; a tapped day stays on « Chargement... »), nothing is spoken (appointments, alarm briefing, « Volet arrêté »), the Domotique / Discussion buttons no longer change the pipeline, a dismissed alert is hidden on the tablet only, until its next restart, and « MAJ Écran », « Recharger autos » and « Redémarrer HA » do nothing.
+
+---
+
 ## Upgrading from 2.x
 
 3.0 changes how the tablet is protected ([ADR-0020](decisions/0020-no-secret-firmware-signed-ota.md)). Once, in person (Steps 3 and 4 below must happen within 30 minutes of the tablet's start):
 
-1. **Before flashing**, set up Home Assistant for 3.0: the blueprint of Step 4, item 6 (the tablet no longer knows your entities, [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
+1. **Before flashing**, set up Home Assistant for 3.0: the blueprint of Step 4, item 5 (the tablet no longer knows your entities, [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
 2. **Signing key** (Step 3), then compile: `esphome compile tab5-ha-hmi.yaml`.
 3. **Flash.** The 2.x firmware refuses a plain upload, so this one goes out encrypted with your old key (`api_encryption_key` of your `secrets.yaml`, never printed):
    ```bash
@@ -167,17 +199,17 @@ Then `secrets.yaml` can go (keep the old key only if you may flash 2.x again), a
 
 The screen does not depend on one weather service (since lot 4c, 2026-09-27).
 
-**Forecasts and current weather** (hourly and daily pages, the humidity drop) come from any `weather.*` entity, picked in Home Assistant from the select « Tab5 · source des prévisions », which lists the weather entities you have (`VOTRE_VILLE` is only the default). The Tab5 asks each entity only for what it declares: daily forecasts, or else twice-daily ones (NWS) or hourly ones (free OpenWeatherMap) grouped by date; without hourly forecasts (Buienradar), the hourly page stays empty. Hours are shown in local time.
+**Forecasts and current weather** (hourly and daily pages, the humidity drop) come from any `weather.*` entity, picked in Home Assistant from the select « Tab5 · source des prévisions », which lists the weather entities you have (by default the Météo-France city, otherwise the first weather entity). The Tab5 asks each entity only for what it declares: daily forecasts, or else twice-daily ones (NWS) or hourly ones (free OpenWeatherMap) grouped by date; without hourly forecasts (Buienradar), the hourly page stays empty. Hours are shown in local time.
 
 **Rain in the next hour and weather warnings** are optional. Their source is chosen **in Home Assistant**, with the two selects of `packages/tab5_meteo_sources.yaml`, without editing YAML:
 
 | Card | Select « Tab5 · source … » | What it needs |
 |---|---|---|
 | Rain in the next hour (bars and sentence) | Météo-France | the Météo-France integration (France): `sensor.<city>_next_rain` |
-| | OpenWeatherMap | the OpenWeatherMap integration in **v3.0** mode, which needs a One Call subscription (1,000 calls a day free; HA polls every 10 min). Set `VOTRE_METEO_OWM` to its full entity id (`weather.openweathermap` by default) |
+| | OpenWeatherMap | the OpenWeatherMap integration in **v3.0** mode, which needs a One Call subscription (1,000 calls a day free; HA polls every 10 min). Found by itself: the chosen weather entity if it is OpenWeatherMap's, otherwise its first one |
 | | Aucune (none) | the rain card is hidden |
-| Weather warnings | Météo-France | `sensor.<department>_weather_alert` (set `VOTRE_DEPARTEMENT`) |
-| | MeteoAlarm | the MeteoAlarm integration (YAML only, 39 European countries, one alert at a time). Set `VOTRE_METEOALARM` to its full entity id (`binary_sensor.meteoalarm` by default) |
+| Weather warnings | Météo-France | `sensor.<department>_weather_alert`, found by itself (the department of the Météo-France city) |
+| | MeteoAlarm | the MeteoAlarm integration (YAML only, 39 European countries, one alert at a time), found by itself (its binary sensor « Information provided by MeteoAlarm ») |
 | | Aucune (none) | no warning icons |
 
 Honest limits:
@@ -189,31 +221,50 @@ Honest limits:
 
 ## Adapt to your home
 
-The screen was drawn around the author's home: three lights, a climate unit, a greenhouse shutter, a TV, five plant sensors. **What you don't have disappears**, with its buttons ([ADR-0018](decisions/0018-optional-zones-confirmed-by-ha.md), [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
+The screen was first drawn around the author's home. Everything is chosen in Home Assistant, in the « Tab5 — emplacements » automation (the blueprint of Step 4): changing a device is an edit in HA's UI, no flash, no restart.
 
-- **Your devices are chosen in Home Assistant**, in the « Tab5 — emplacements » automation (the blueprint of Step 4). Changing one is an edit in HA's UI: no flash, no restart.
+### Rooms (firmware 3.2 and later)
+
+The five tiles at the bottom of the screen are **rooms** you fill yourself ([ADR-0023](decisions/0023-rooms-generic-tiles.md)):
+
+- **Up to 5 rooms of 5 devices**, one per page of the bottom row. Room 1 is the home page (today to day 4); rooms 2 and 3 are one and two swipes to the left (days 5-9, 10-14); rooms 4 and 5 one and two swipes to the right (next hours). In each room, pick the devices in the order of the tiles, left to right (they can be dragged); only the first five are used. A device may be in several rooms.
+- **Devices that fit on a tile**: lights; switches, fans, humidifiers, input booleans and automations; covers and valves; media players; scenes, scripts and buttons; sensors and numbers (shown, not controlled); binary sensors, people, trackers and locks (shown); climate.
+- **Names and icons come from Home Assistant.** A room takes the name you type, otherwise the area its devices share, otherwise « Pièce n ». A tile takes the entity's name without the room's name (« Lampe du salon » in « Salon » becomes « Lampe »), and the icon chosen in the entity's settings, otherwise one for its kind.
+- **Customise a tile** (folded section « Personnaliser des tuiles »): another name, another icon, or a behaviour — *on only* (never switched off from the screen), *confirm* (a second tap within 3 s), *read only*.
+- The « HA » button shows the current page's room; a swipe goes to the next room that has devices.
+- A sensor's value is sent with the other measurements, every 5 minutes; the other devices are sent as soon as what the screen shows changes.
+- **Room 1 left empty**: the home page keeps the 3.x setup (folded section « Tuiles de l'accueil (réglage 3.x) »: PC or TV, shutter, three lights), with the PC tile's PC + TV behaviour. Nothing to redo after the update.
+- **Firmware 3.0 or 3.1**: the blueprint reads the tablet's version and then only uses the 3.x setup; the rooms show up once the firmware is updated. The firmware and the blueprint can be updated in either order.
+
+### Other zones
+
+**What you don't have disappears**, with its buttons ([ADR-0018](decisions/0018-optional-zones-confirmed-by-ha.md), [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
+
 - **Remove a zone: leave its slot empty.** An empty slot, or an entity that doesn't exist, is absent. An entity that exists but is `unavailable` keeps its zone (« -- », « Hors ligne »). **Without the blueprint's automation, nothing disappears** (and nothing of your devices is shown).
 - **A zone missing by mistake?** The tablet's diagnostic sensor « Zones masquées » lists what disappeared.
 - A zone comes back by itself as soon as its entity sends a value.
 
 | Zone | Blueprint input | Hidden when empty |
 |---|---|---|
-| Lights (up to 3) | Lumière 1 to 3 | Icons of tiles 3 to 5, card of the « HA » layer, light-popup selector, « Tout éteindre » |
-| PC | PC (a switch turns it on; a presence tracker only shows it) | Status icon, « PC Bureau » card; the first tile too if there is no TV either |
 | TV | TV, and Télécommande de la TV for the remote keys | TV button and remote; « HA » and « Sys » move one column right |
 | Phone | Batterie du téléphone | Status icon |
 | Room | Température de la pièce (and Humidité de la pièce) | Its temperature |
 | Greenhouse | Seconde température (serre) | Its temperature; the icon becomes a gamepad, the arcade entrance stays |
 | Plants (0 to 5) | Pot 1 to 5: the moisture sensor; conductivity, light, temperature and battery are taken from the same device | Up to 4 plants: one slot each; 5: the « driest / median / wettest » summary. Popup cards, re-centred |
 | Climate | Climatisation | − / setpoint / + and the popup |
-| Shutter | Volet (and the `volet_serre_tracking.yaml` package for a shutter that doesn't report its travel) | Icons of tile 2, card of the « HA » layer |
 | Work planning | Agenda de travail | Planning panel of the central card |
+| Lights (3.x setup) | Lumière 1 to 3 | Icons of tiles 3 to 5, card of the « HA » layer, light-popup selector, « Tout éteindre » |
+| PC (3.x setup) | PC (a switch turns it on; a presence tracker only shows it) | Status icon, « PC Bureau » card; the first tile too if there is no TV either |
+| Shutter (3.x setup) | Volet (and the optional `volet_serre_tracking.yaml` package, `tab5_optionnel/` of the archive, for a shutter that doesn't report its travel) | Icons of tile 2, card of the « HA » layer |
 
-The planning hours themselves still come from the `tab5_push.yaml` package (`VOTRE_EMAIL_gmail_com`): pick the same calendar in both.
+The « 3.x setup » rows are the home page of a 3.0 or 3.1 firmware, and of a 3.2 firmware while room 1 is empty. The planning hours and the alarm time come from the list « Tab5 · agenda de travail » (Step 4); leave the blueprint's « Agenda de travail » empty and it takes the same one.
 
 Limits:
-- **More than 3 lights, or another device on a tile**: not yet. The tiles are 5 fixed places (PC/TV, shutter, three lights).
-- **Calendars written in the packages**: `calendar.famille`, `calendar.anniversaires` and the French public-holiday calendar (`tab5_reveil.yaml`, `tab5_calendar.yaml`) are to be edited by hand, see [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md).
+- **Icons**: the screen holds a limited palette ([tile icons](tiles_icons.md)). An icon outside it shows the default of its kind; adding one means a line in `Tab5/tuiles_icones.yaml` and a new release.
+- **Names**: the screen's fonts cover Latin alphabets only; other characters are dropped, and long names are cut.
+- **Renaming an entity**: its tile follows at the tablet's next connection, or as soon as the automation is saved again.
+- **A shutter followed by `volet_serre_tracking.yaml`** (it doesn't report its travel): keep it in the « Volet » input of the 3.x section too, even if it is in a room; its tile then shows the state the package keeps, and its commands go through the package's script.
+- **One calendar per role**: work, appointments, birthdays and public holidays are the four « Tab5 · agenda … » lists. The school-holiday table is the French Zone A (Bordeaux), written in `tab5_calendar.yaml`.
 - To see a smaller home without touching yours: [demo mode](demo_mode.md#minimal-home-optional-zones), option `--maison-minimale`.
 
 ---
@@ -230,14 +281,14 @@ Limits:
 
 Depuis la 3.0, un firmware prêt à l'emploi et signé s'installe depuis le navigateur. Dans cet ordre :
 
-1. **Home Assistant d'abord** : les packages et le blueprint de l'[étape 4](#étape-4--installer-les-packages-home-assistant). Pour l'instant, cette étape demande encore le dépôt et Python, une fois, pour renseigner votre ville, votre agenda, etc.
+1. **Home Assistant d'abord** : l'archive `tab5_home_assistant.zip` de l'[étape 4](#étape-4--installer-les-packages-home-assistant), décompressée dans le dossier `config/` de Home Assistant, une ligne dans `configuration.yaml`, puis vos sources choisies dans Home Assistant à la souris. Ni dépôt, ni Python, rien à remplir.
 2. **Flasher** depuis la [page d'installation](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome ou Edge, un câble USB-C qui transmet les données) : votre révision d'écran, le canal Stable, *Connecter et installer*. Sur une tablette neuve, acceptez de l'effacer. Dans la liste des ports, la tablette s'appelle « USB JTAG/serial debug unit » ; si plusieurs ports portent ce nom, débranchez la tablette pour voir lequel disparaît.
    - « Failed to initialize… holding the BOOT button » : le Tab5 n'a pas de bouton BOOT. Maintenez son bouton reset environ 2 s, jusqu'à ce que la LED verte interne clignote vite (mode téléchargement), recommencez, puis un appui court sur reset à la fin pour la redémarrer.
    - La tablette a déjà la même version : la page n'affiche pas *Install*. Pour repartir de zéro, « Erase User Data » (en rouge, en bas) efface tout, Wi-Fi, clé et réglages compris, puis réinstalle.
 3. **Wi-Fi** : depuis la même fenêtre (*Connect to Wi-Fi*, par l'USB), ou avec un téléphone sur le réseau ouvert « Tab5 Fallback AP ».
-4. **L'ajouter à Home Assistant** dans les 30 minutes qui suivent son démarrage : *Paramètres → Appareils et services*, l'appareil ESPHome est découvert, *Configurer*. Home Assistant lui donne sa clé. Une tablette que Home Assistant connaît déjà reçoit une nouvelle clé toute seule, rien à confirmer (vérifié le 28/09/2026).
-5. **Autoriser les actions Home Assistant** : *ESPHome → Configurer*, cochez l'option qui autorise l'appareil à effectuer des actions Home Assistant. La voix, le calendrier et le réveil en ont besoin.
-6. **Vos appareils** : créez l'automatisation depuis le blueprint ([étape 4](#étape-4--installer-les-packages-home-assistant), point 6).
+4. **L'ajouter à Home Assistant** dans les 30 minutes qui suivent son démarrage : *Paramètres → Appareils et services*, l'appareil ESPHome est découvert, *Configurer*. Home Assistant lui donne sa clé. Une tablette que Home Assistant connaît déjà reçoit une nouvelle clé toute seule, rien à confirmer (vérifié le 28/09/2026). Rien d'autre à autoriser : la tablette demande tout à Home Assistant par des événements ([ADR-0025](decisions/0025-events-only.md)).
+   - Firmware 3.1 ou plus ancien seulement (le canal Stable jusqu'à la prochaine version) : cochez aussi « Autoriser l'appareil à effectuer des actions Home Assistant » (*ESPHome → Configurer*), dont la voix, le calendrier et le réveil ont besoin sur ces versions.
+5. **Vos appareils** : créez l'automatisation depuis le blueprint ([étape 4](#étape-4--installer-les-packages-home-assistant), point 5).
 
 Les mises à jour arrivent ensuite dans Home Assistant (entité « Firmware »), sur le canal installé ; pour changer de canal, réinstallez depuis la page sans effacer. Par le réseau, la tablette n'accepte qu'un firmware signé par la clé du projet : pour passer à vos propres compilations (votre clé), flashez une fois par USB.
 
@@ -282,9 +333,7 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 
 **Révision du Tab5 :** si la puce écran de votre autocollant n'est pas la ST7123, ajoutez `tab5_ecran: st7121` ou `tab5_ecran: ili9881c` dans ce fichier (voir [Révisions matérielles](hardware.md#révisions-matérielles)). Pour la ST7123, ne mettez rien.
 
-`Tab5/user_entities.yaml` est gitignoré (ne jamais le committer). Pour une installation standard, rien n'y est à remplacer : toutes les lignes sont facultatives. **Vos appareils (lumières, clim, plantes, TV…) ne se règlent plus ici (depuis la 3.0)** : vous les choisissez dans Home Assistant, à la souris, voir l'étape 4 et [Adapter à sa maison](#adapter-à-sa-maison) ; les anciennes clés `entity_light_…` d'un fichier existant sont simplement ignorées. Le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`. Les clés d'entités qui restent sont commentées dans le modèle, avec leurs défauts dans `Tab5/tab5-scripts.yaml` :
-- `entity_tab5_satellite`, `entity_tab5_media_player` et `entity_tab5_pipeline_select` (boutons Domotique / Discussion) portent les identifiants qu'HA dérive du nom de la tablette : à régler seulement si vous la renommez dans HA ;
-- `entity_primary_active` et `entity_push_automation` (bouton « MAJ Écran » de la console système) sont les noms que crée `packages/tab5_push.yaml` : à régler seulement si vous avez modifié ce package.
+`Tab5/user_entities.yaml` est gitignoré (ne jamais le committer). Pour une installation standard, rien n'y est à remplacer : toutes les lignes sont facultatives. **Vos appareils (lumières, clim, plantes, TV…) ne se règlent plus ici (depuis la 3.0)** : vous les choisissez dans Home Assistant, à la souris, voir l'étape 4 et [Adapter à sa maison](#adapter-à-sa-maison) ; les anciennes clés `entity_light_…` d'un fichier existant sont simplement ignorées. Le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`. Il ne reste aucune clé d'entité : Home Assistant retrouve seul les entités de la tablette (satellite vocal, lecteur média, select de pipeline) et celles du bouton « MAJ Écran » ([ADR-0025](decisions/0025-events-only.md)) ; d'anciennes lignes `entity_tab5_…`, `entity_primary_active` et `entity_push_automation` sont ignorées.
 
 ---
 
@@ -304,21 +353,43 @@ Plus de `secrets.yaml` : celui d'une 2.x n'est simplement plus lu (voir [Passer 
 
 ## Étape 4 — Installer les packages Home Assistant
 
-Tout le côté Home Assistant est en **packages**, dans `HomeAssistant_Config/packages/` :
+Tout le côté Home Assistant tient dans une archive, **`tab5_home_assistant.zip`**, jointe aux [releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases) (à partir de la première après la 3.1.0). **Rien à remplir** : chaque valeur de votre maison se choisit ensuite dans Home Assistant, à la souris ([ADR-0024](decisions/0024-packages-without-placeholders.md)).
 
-1. Activez les packages dans `configuration.yaml` : `homeassistant: packages: !include_dir_named packages`.
-2. Copiez `HomeAssistant_Config/placeholders.example.yaml` vers `placeholders.yaml` (gitignoré) et renseignez vos vrais entity IDs (`VOTRE_VILLE`, `VOTRE_DEPARTEMENT`, `VOTRE_EMAIL_gmail_com`…).
-3. Rendez : `python tools/render_ha_config.py` écrit les copies déployables dans `HomeAssistant_Config/rendered/`.
-4. Copiez `rendered/packages/*.yaml` dans le `config/packages/` de HA, et `rendered/custom_templates/` dans `config/custom_templates/`. `packages/tab5_tv.yaml` (applications d'une TV Samsung) demande une ligne `tab5_tv_app_url` dans le `secrets.yaml` de HA (voir l'en-tête de ce fichier) : sans elle, Home Assistant refuse **toute** sa configuration. Pas de TV Samsung ? Ne copiez pas ce package.
-5. Rechargez Automatisations, Scripts, Entités de template, Entrées booléennes et Entrées de texte (ou redémarrez HA).
-6. **Choisissez vos appareils** : *Paramètres → Automatisations et scènes → Blueprints → Importer un blueprint*, collez
-   `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml`,
-   puis *Créer une automatisation* et choisissez une entité pour chaque emplacement (tous facultatifs). Ou copiez
-   le fichier dans `config/blueprints/automation/tab5/`. Une automatisation par tablette.
+1. **Téléchargez** `tab5_home_assistant.zip` depuis la dernière release et **décompressez-la dans le dossier `config/` de Home Assistant**, celui de `configuration.yaml` (partage Samba, ou module File editor / Studio Code Server). Elle y ajoute `packages/`, `custom_templates/` et `blueprints/automation/tab5/` ; le dossier `tab5_optionnel/` n'est pas chargé (voir plus bas).
+2. **Une ligne dans `configuration.yaml` : c'est la seule ligne de YAML à écrire** (rien à faire si elle y est déjà) :
+   ```yaml
+   homeassistant:
+     packages: !include_dir_named packages
+   ```
+   Si `homeassistant:` existe déjà, ajoutez seulement la ligne `packages:` dessous.
+3. *Outils de développement → YAML → Vérifier la configuration*, puis **redémarrez** Home Assistant. Plus tard, remplacer ces mêmes fichiers demande seulement *Outils de développement → YAML → Toute la configuration YAML*.
+4. **Choisissez vos sources** : *Paramètres → Appareils et services → Entités*, cherchez **« Tab5 · »**, ouvrez une liste et choisissez. Chaque liste propose ce que votre Home Assistant possède :
 
-Commencez par `packages/tab5_push.yaml` (automatisations de poussée, scripts partagés, scripts appelés par le Tab5, réponse des zones optionnelles) et `packages/tab5_meteo_sources.yaml` (sources de la météo, de la pluie et des vigilances, obligatoire depuis la 2.2.0) ; les autres ajoutent des fonctions optionnelles. Voir [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) pour le rôle de chaque package et la liste complète des placeholders.
+   | Liste | Ce qu'elle règle | Choix par défaut |
+   |---|---|---|
+   | Tab5 · source des prévisions | prévisions et météo du moment (n'importe quelle entité `weather.*`) | la ville Météo-France, sinon la première entité météo |
+   | Tab5 · source de la pluie dans l'heure | carte pluie : Météo-France, OpenWeatherMap ou Aucune | Météo-France |
+   | Tab5 · source des vigilances | icônes de vigilance : Météo-France, MeteoAlarm ou Aucune | Météo-France |
+   | Tab5 · agenda de travail | événements « Travail… » : planning, jours de repos et **heure du réveil** | rien |
+   | Tab5 · agenda des rendez-vous | popup calendrier, rappels de rendez-vous, briefing du matin | rien |
+   | Tab5 · agenda des anniversaires | anniversaires du popup calendrier | le seul agenda nommé « anniversaires » (ou birthday…) |
+   | Tab5 · agenda des jours fériés | jours fériés du popup calendrier | le seul agenda de jours fériés (intégration Jours fériés, ou son nom le dit) |
+   | Tab5 · téléphone | écran allumé à votre retour, éteint à votre départ | le seul téléphone de l'application mobile |
+   | Tab5 · capteur de présence | écran allumé à la présence, éteint après 15 min sans | rien |
+   | Tab5 · TV Samsung, Tab5 · adresse de la TV | boutons d'applications du popup TV (Samsung Tizen) | la seule TV Samsung Smart TV ; l'adresse donnée par un suivi du routeur s'il la connaît, sinon tapez son IP |
 
-> Ces packages sont exactement ce qui tourne sur le Home Assistant de l'auteur (rendus avec ses valeurs) depuis le 26/09/2026. Il n'y a pas de version privée, ni rien à fusionner dans `automations.yaml` ou `scripts.yaml`.
+   Laissée sur « Aucun », une fonction reste simplement éteinte, sans erreur. Les entités des fournisseurs météo (capteurs de pluie et de vigilance Météo-France, OpenWeatherMap, MeteoAlarm) et celles de la tablette (écran, réveil, micro…) sont trouvées seules ; la tablette par le modèle de son appareil, quel que soit le nom que vous lui avez donné.
+5. **Choisissez vos appareils** : *Paramètres → Automatisations et scènes → Blueprints*, « Tab5 — emplacements de l'écran » (décompressé avec le reste ; ou *Importer un blueprint* avec
+   `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml`),
+   puis *Créer une automatisation* et choisissez une entité pour chaque emplacement (tous facultatifs). Une automatisation par tablette. Son « Agenda de travail » peut rester vide : il prend alors celui de « Tab5 · agenda de travail ».
+
+`tab5_optionnel/volet_serre_tracking.yaml` ne sert qu'à un volet qui ne signale ni sa position ni sa course (le moteur Tuya de l'auteur) : copiez-le dans `packages/`, rechargez, et choisissez le volet dans « Tab5 · volet à course simulée ». Il n'est pas installé par défaut car, une fois présent, il prend au blueprint les boutons du volet.
+
+Les mêmes fichiers sont dans le dépôt (`HomeAssistant_Config/packages/`, `custom_templates/`, `blueprints/`, `optionnel/`) ; voir [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md#version-française) pour le rôle de chaque package.
+
+> Ces packages sont exactement ce qui tourne sur le Home Assistant de l'auteur depuis le 26/09/2026, sans aucune retouche propre à sa maison depuis le 28/09/2026. Il n'y a pas de version privée, ni rien à fusionner dans `automations.yaml` ou `scripts.yaml`.
+
+**Vous aviez les packages à placeholders (3.1.0 et avant) ?** Remplacez les fichiers, puis réglez chaque liste sur votre ancienne valeur : `VOTRE_EMAIL_gmail_com` → « Tab5 · agenda de travail », `calendar.famille` → rendez-vous, `calendar.anniversaires` et l'agenda des jours fériés (en général choisis par défaut), `VOTRE_TELEPHONE` → téléphone, `VOTRE_CAPTEUR_PRESENCE` → capteur de présence, `VOTRE_TV` → TV Samsung, et l'IP de la ligne `tab5_tv_app_url` de `secrets.yaml` → « Tab5 · adresse de la TV » (la ligne peut ensuite partir). Le choix météo est gardé. Gardez `volet_serre_tracking.yaml` dans `config/packages/` si vous l'utilisez, et choisissez votre volet dans sa liste. **Réglez « Tab5 · agenda de travail » avant que les nouvelles automatisations tournent** : rechargez d'abord *Entrées de texte* et *Entités de template*, choisissez, puis rechargez *Scripts*, *Automatisations* et *Commandes REST*. Tant qu'il n'est pas choisi, tous les jours comptent comme des jours de repos, et le réveil suit.
 
 ---
 
@@ -343,7 +414,7 @@ Le réseau est gardé d'une mise à jour à l'autre. L'AP de secours revient dè
 **Dans les 30 minutes qui suivent le démarrage de la tablette** (sa fenêtre d'appairage) : *Paramètres → Appareils et services*, la tablette apparaît comme découverte (ESPHome). *Configurer*, puis *Valider*. Home Assistant crée la clé de chiffrement, la donne à la tablette et la garde : rien à recopier.
 
 - Fenêtre ratée ? Redémarrez la tablette : elle se rouvre pour 30 minutes. Une fois la clé reçue, elle ne s'ouvre plus.
-- Ensuite, dans les options de l'appareil (*ESPHome → Configurer*), cochez **« Autoriser l'appareil à effectuer des actions Home Assistant »** : la voix, l'agenda et le réveil s'en servent.
+- Rien d'autre à autoriser. La tablette n'appelle jamais d'action de Home Assistant : elle envoie des événements, que `packages/tab5_evenements.yaml` traduit en une liste fixe d'actions, pour un Tab5 seulement ([ADR-0025](decisions/0025-events-only.md)). L'option « Autoriser l'appareil à effectuer des actions Home Assistant » reste décochée (un firmware 3.1 ou plus ancien en a encore besoin, voir [Passer d'une 3.1 à la suite](#passer-dune-31-à-la-suite)).
 
 ---
 
@@ -363,11 +434,23 @@ Une tablette installée depuis le [flasheur web](https://axellum.github.io/M5-Ta
 
 ---
 
+## Passer d'une 3.1 à la suite
+
+Après la 3.1, la tablette n'appelle plus d'action de Home Assistant : elle envoie des événements, que le nouveau package `packages/tab5_evenements.yaml` traduit en actions ([ADR-0025](decisions/0025-events-only.md)). Dans cet ordre :
+
+1. **Le package d'abord** : rendez et copiez `tab5_evenements.yaml` comme les autres (étape 4, points 3 à 5), puis rechargez les automatisations. Une tablette en 3.1 n'envoie aucun de ces événements : le package attend, rien ne change.
+2. **Puis le firmware** (entité « Firmware », ou votre propre compilation).
+3. **Puis décochez** « Autoriser l'appareil à effectuer des actions Home Assistant » (*ESPHome → Configurer*) : la tablette n'en a plus besoin, et sans elle Home Assistant refuse toute action que l'appareil demanderait.
+
+Un firmware récent **sans** le package ne plante pas et n'écrit rien au journal, mais ce qu'il demande à Home Assistant se perd : le popup calendrier n'affiche que sa grille locale (ni horaires, ni fériés, ni rendez-vous ; un jour touché reste sur « Chargement... »), rien n'est dit (rendez-vous, briefing du réveil, « Volet arrêté »), les boutons Domotique / Discussion ne changent plus le pipeline, une alerte touchée n'est masquée que sur la tablette, jusqu'à son prochain redémarrage, et « MAJ Écran », « Recharger autos » et « Redémarrer HA » ne font rien.
+
+---
+
 ## Passer à la 3.0
 
 La 3.0 change la façon dont la tablette est protégée ([ADR-0020](decisions/0020-no-secret-firmware-signed-ota.md)). Une fois, sur place (les étapes 3 et 4 ci-dessous doivent tenir dans les 30 minutes qui suivent le démarrage de la tablette) :
 
-1. **Avant de flasher**, préparez Home Assistant pour la 3.0 : le blueprint de l'étape 4, point 6 (la tablette ne connaît plus vos entités, [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
+1. **Avant de flasher**, préparez Home Assistant pour la 3.0 : le blueprint de l'étape 4, point 5 (la tablette ne connaît plus vos entités, [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
 2. **Clé de signature** (étape 3), puis compilez : `esphome compile tab5-ha-hmi.yaml`.
 3. **Flashez.** Le firmware 2.x refuse un envoi en clair : celui-ci part donc chiffré avec votre ancienne clé (`api_encryption_key` de votre `secrets.yaml`, jamais affichée) :
    ```bash
@@ -385,17 +468,17 @@ Ensuite, `secrets.yaml` peut partir (gardez l'ancienne clé seulement si vous ri
 
 L'écran ne dépend plus d'un seul service météo (lot 4c, 27/09/2026).
 
-Les **prévisions et la météo du moment** (pages horaires et journalières, goutte d'humidité) viennent de n'importe quelle entité `weather.*`, choisie dans Home Assistant avec la liste « Tab5 · source des prévisions », qui propose les entités météo présentes (`VOTRE_VILLE` n'est que le choix par défaut). Le Tab5 ne demande à chaque entité que ce qu'elle déclare : les prévisions journalières, sinon les demi-journées (NWS) ou les horaires (OpenWeatherMap gratuit) regroupées par date ; sans prévisions horaires (Buienradar), la page horaire reste vide. Les heures sont affichées en heure locale.
+Les **prévisions et la météo du moment** (pages horaires et journalières, goutte d'humidité) viennent de n'importe quelle entité `weather.*`, choisie dans Home Assistant avec la liste « Tab5 · source des prévisions », qui propose les entités météo présentes (par défaut la ville Météo-France, sinon la première entité météo). Le Tab5 ne demande à chaque entité que ce qu'elle déclare : les prévisions journalières, sinon les demi-journées (NWS) ou les horaires (OpenWeatherMap gratuit) regroupées par date ; sans prévisions horaires (Buienradar), la page horaire reste vide. Les heures sont affichées en heure locale.
 
 La **pluie dans l'heure** et les **vigilances** sont facultatives. Leur source se choisit **dans Home Assistant**, avec les deux listes de `packages/tab5_meteo_sources.yaml`, sans toucher au YAML :
 
 | Carte | Liste « Tab5 · source … » | Ce qu'il faut |
 |---|---|---|
 | Pluie dans l'heure (barres et phrase) | Météo-France | l'intégration Météo-France (France) : `sensor.<ville>_next_rain` |
-| | OpenWeatherMap | l'intégration OpenWeatherMap en mode **v3.0**, qui demande l'abonnement One Call (1 000 appels par jour gratuits ; HA interroge toutes les 10 min). Réglez `VOTRE_METEO_OWM` sur l'entity_id complet (`weather.openweathermap` par défaut) |
+| | OpenWeatherMap | l'intégration OpenWeatherMap en mode **v3.0**, qui demande l'abonnement One Call (1 000 appels par jour gratuits ; HA interroge toutes les 10 min). Trouvée seule : l'entité météo choisie si elle est d'OpenWeatherMap, sinon sa première |
 | | Aucune | la carte pluie est masquée |
-| Vigilances | Météo-France | `sensor.<département>_weather_alert` (réglez `VOTRE_DEPARTEMENT`) |
-| | MeteoAlarm | l'intégration MeteoAlarm (en YAML seulement, 39 pays européens, une alerte à la fois). Réglez `VOTRE_METEOALARM` sur l'entity_id complet (`binary_sensor.meteoalarm` par défaut) |
+| Vigilances | Météo-France | `sensor.<département>_weather_alert`, trouvé seul (le département de la ville Météo-France) |
+| | MeteoAlarm | l'intégration MeteoAlarm (en YAML seulement, 39 pays européens, une alerte à la fois), trouvée seule (son capteur « Information provided by MeteoAlarm ») |
 | | Aucune | pas d'icônes de vigilance |
 
 Limites, en toute franchise :
@@ -407,29 +490,48 @@ Limites, en toute franchise :
 
 ## Adapter à sa maison
 
-L'écran a été dessiné autour de la maison de l'auteur : trois lumières, une clim, un volet de serre, une TV, cinq capteurs de plantes. **Ce que vous n'avez pas disparaît**, avec ses boutons ([ADR-0018](decisions/0018-optional-zones-confirmed-by-ha.md), [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
+L'écran a d'abord été dessiné autour de la maison de l'auteur. Tout se choisit dans Home Assistant, dans l'automatisation « Tab5 — emplacements » (le blueprint de l'étape 4) : changer d'appareil se fait dans l'interface de HA, ni flash ni redémarrage.
 
-- **Vos appareils se choisissent dans Home Assistant**, dans l'automatisation « Tab5 — emplacements » (le blueprint de l'étape 4). En changer se fait dans l'interface de HA : ni flash, ni redémarrage.
+### Pièces (firmware 3.2 et plus)
+
+Les cinq tuiles du bas de l'écran sont des **pièces** que vous remplissez vous-même ([ADR-0023](decisions/0023-rooms-generic-tiles.md)) :
+
+- **Jusqu'à 5 pièces de 5 appareils**, une par page de la rangée du bas. La pièce 1 est l'accueil (aujourd'hui à J+4) ; les pièces 2 et 3 sont à un et deux glissements vers la gauche (J+5 à J+9, J+10 à J+14) ; les pièces 4 et 5 à un et deux glissements vers la droite (prochaines heures). Dans chaque pièce, choisissez les appareils dans l'ordre des tuiles, de gauche à droite (ils se déplacent à la souris) ; seuls les cinq premiers servent. Un appareil peut être dans plusieurs pièces.
+- **Ce qui trouve place sur une tuile** : lumières ; interrupteurs, ventilateurs, humidificateurs, entrées booléennes et automatisations ; volets et vannes ; lecteurs multimédia ; scènes, scripts et boutons ; capteurs et nombres (affichés, pas commandés) ; capteurs binaires, personnes, suivis de présence et serrures (affichés) ; climatisation.
+- **Noms et icônes viennent de Home Assistant.** Une pièce prend le nom que vous saisissez, sinon l'aire que partagent ses appareils, sinon « Pièce n ». Une tuile prend le nom de l'entité sans celui de la pièce (« Lampe du salon » dans « Salon » devient « Lampe »), et l'icône choisie dans les réglages de l'entité, sinon celle de son genre.
+- **Personnaliser une tuile** (section repliée « Personnaliser des tuiles ») : un autre nom, une autre icône, ou un comportement — *allumer seulement* (jamais éteint depuis l'écran), *confirmer* (un second appui dans les 3 s), *lecture seule*.
+- Le bouton « HA » montre la pièce de la page affichée ; un glissement passe à la pièce suivante qui a des appareils.
+- La valeur d'un capteur part avec les autres mesures, toutes les 5 minutes ; les autres appareils partent dès que ce que montre l'écran change.
+- **Pièce 1 laissée vide** : l'accueil garde le réglage 3.x (section repliée « Tuiles de l'accueil (réglage 3.x) » : PC ou TV, volet, trois lumières), avec le comportement PC + TV de la tuile PC. Rien à refaire après la mise à jour.
+- **Firmware 3.0 ou 3.1** : le blueprint lit la version de la tablette et n'utilise alors que le réglage 3.x ; les pièces apparaissent une fois le firmware mis à jour. Firmware et blueprint se mettent à jour dans n'importe quel ordre.
+
+### Autres zones
+
+**Ce que vous n'avez pas disparaît**, avec ses boutons ([ADR-0018](decisions/0018-optional-zones-confirmed-by-ha.md), [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
+
 - **Retirer une zone : laissez son emplacement vide.** Un emplacement vide, ou une entité qui n'existe pas, est absent. Une entité qui existe mais est `unavailable` garde sa zone (« -- », « Hors ligne »). **Sans l'automatisation du blueprint, rien ne disparaît** (et aucun de vos appareils ne s'affiche).
 - **Une zone manque par erreur ?** Le capteur de diagnostic « Zones masquées » de la tablette liste ce qui a disparu.
 - Une zone revient d'elle-même dès que son entité envoie une valeur.
 
 | Zone | Entrée du blueprint | Masqué quand elle est vide |
 |---|---|---|
-| Lumières (jusqu'à 3) | Lumière 1 à 3 | Icônes des tuiles 3 à 5, carte du calque « HA », sélecteur du popup lumière, « Tout éteindre » |
-| PC | PC (un interrupteur l'allume ; un suivi de présence l'affiche seulement) | Icône d'état, carte « PC Bureau » ; la première tuile aussi s'il n'y a pas non plus de TV |
 | TV | TV, et Télécommande de la TV pour les touches | Bouton TV et télécommande ; « HA » et « Sys » glissent d'une colonne |
 | Téléphone | Batterie du téléphone | Icône d'état |
 | Pièce | Température de la pièce (et Humidité de la pièce) | Sa température |
 | Serre | Seconde température (serre) | Sa température ; l'icône devient une manette, l'entrée de l'arcade reste |
 | Pots (0 à 5) | Pot 1 à 5 : le capteur d'humidité ; conductivité, éclairement, température et batterie sont pris sur le même appareil | Jusqu'à 4 pots : un emplacement chacun ; à 5 : le résumé « plus secs / médiane / plus humide ». Cartes du popup, recentrées |
 | Clim | Climatisation | − / consigne / + et le popup |
-| Volet | Volet (et le package `volet_serre_tracking.yaml` pour un volet qui ne signale pas sa course) | Icônes de la tuile 2, carte du calque « HA » |
 | Planning de travail | Agenda de travail | Panneau planning de la carte centrale |
+| Lumières (réglage 3.x) | Lumière 1 à 3 | Icônes des tuiles 3 à 5, carte du calque « HA », sélecteur du popup lumière, « Tout éteindre » |
+| PC (réglage 3.x) | PC (un interrupteur l'allume ; un suivi de présence l'affiche seulement) | Icône d'état, carte « PC Bureau » ; la première tuile aussi s'il n'y a pas non plus de TV |
+| Volet (réglage 3.x) | Volet (et le package optionnel `volet_serre_tracking.yaml`, `tab5_optionnel/` de l'archive, pour un volet qui ne signale pas sa course) | Icônes de la tuile 2, carte du calque « HA » |
 
-Les horaires du planning viennent encore du package `tab5_push.yaml` (`VOTRE_EMAIL_gmail_com`) : choisissez le même agenda des deux côtés.
+Les lignes « réglage 3.x » sont l'accueil d'un firmware 3.0 ou 3.1, et d'un firmware 3.2 tant que la pièce 1 est vide. Les horaires du planning et l'heure du réveil viennent de la liste « Tab5 · agenda de travail » (étape 4) ; laissez vide l'« Agenda de travail » du blueprint et il prend le même.
 
 Limites :
-- **Plus de 3 lumières, ou un autre appareil sur une tuile** : pas encore. Les tuiles sont 5 places fixes (PC/TV, volet, trois lumières).
-- **Agendas écrits dans les packages** : `calendar.famille`, `calendar.anniversaires` et l'agenda des jours fériés français (`tab5_reveil.yaml`, `tab5_calendar.yaml`) se corrigent à la main, voir [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md#version-française).
+- **Icônes** : l'écran en connaît une palette limitée ([icônes des tuiles](tiles_icons.md#version-française)). Une icône hors palette montre celle de son genre ; en ajouter une demande une ligne dans `Tab5/tuiles_icones.yaml` et une nouvelle version.
+- **Noms** : les polices de l'écran ne couvrent que les alphabets latins ; les autres caractères disparaissent, et un nom trop long est coupé.
+- **Renommer une entité** : sa tuile suit à la prochaine connexion de la tablette, ou dès que l'automatisation est de nouveau enregistrée.
+- **Un volet suivi par `volet_serre_tracking.yaml`** (il ne signale pas sa course) : laissez-le aussi dans l'entrée « Volet » de la section 3.x, même s'il est dans une pièce ; sa tuile montre alors l'état que tient le package, et ses commandes passent par le script du package.
+- **Un agenda par rôle** : travail, rendez-vous, anniversaires et jours fériés sont les quatre listes « Tab5 · agenda … ». La table des vacances scolaires est celle de la Zone A (Bordeaux), écrite dans `tab5_calendar.yaml`.
 - Pour voir une maison plus petite sans toucher à la vôtre : [mode démo](demo_mode.md#maison-minimale-zones-optionnelles), option `--maison-minimale`.

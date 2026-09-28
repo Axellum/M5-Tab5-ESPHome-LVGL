@@ -1,8 +1,8 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file packages/tab5_health.yaml
-# @role Package HA de surveillance santé du Tab5 (exemple public — adapter les
-#       noms d'entités à votre installation). Cinq gardes : instance primaire
+# @role Package HA de surveillance santé du Tab5 (aucun nom d'entité à adapter
+#       depuis le 28/09/2026 : voir « ENTITÉS DE LA TABLETTE »). Cinq gardes : instance primaire
 #       bloquée OFF, reboot inattendu (nouvel horodatage de démarrage), API ESPHome
 #       déconnectée, erreur de rendu d'un template dans une poussée écran,
 #       journal des démarrages et coupures envoyé par le Tab5.
@@ -33,16 +33,18 @@
 #       Sans `fire_event`, la garde (d) est chargée mais ne se déclenche jamais.
 # ============================================================================
 #
-# PRÉFIXE DES ENTITÉS (piège réel, 06/08/2026) : les ids ne dérivent PAS du
-# nom d'appareil ESPHome (`tab5-ha-hmi`) mais du `friendly_name` tel que Home
-# Assistant l'a enregistré — avec celui livré (« M5Stack Tab5 Home Assistant
-# HMI ») : `sensor.m5stack_tab5_home_assistant_hmi_tab5_uptime` et
-# `binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status`, utilisés
-# ci-dessous. Une première version visait `sensor.tab5_uptime` /
+# ENTITÉS DE LA TABLETTE (piège réel, 06/08/2026) : leurs ids ne dérivent PAS du
+# nom d'appareil ESPHome (`tab5-ha-hmi`) mais du nom que Home Assistant a
+# enregistré, préfixe de pièce compris (`salon_…` chez l'auteur, pour une partie
+# d'entre elles seulement). Une première version visait `sensor.tab5_uptime` /
 # `binary_sensor.tab5_ha_hmi_ha_api_status`, qui N'EXISTAIENT PAS : les gardes
 # (b) et (c) étaient `on` dans HA et ne pouvaient JAMAIS se déclencher — un
-# filet de sécurité muet est pire que pas de filet. Vérifiez ces deux ids dans
-# Outils de développement → États (préfixe de pièce `salon_…` possible).
+# filet de sécurité muet est pire que pas de filet. Depuis le 28/09/2026
+# (ADR-0024), plus aucun id écrit ici : la tablette est trouvée par le modèle de
+# son appareil (sensor.tab5_tablette, packages/tab5_reglages.yaml), et les gardes
+# se déclenchent sur ses miroirs `sensor.tab5_demarrage` (« Tab5 Uptime ») et
+# `binary_sensor.tab5_connectee` (« HA API Status »). Vérification : les attributs
+# de « Tab5 · tablette » dans Outils de développement → États.
 #
 # Reste à adapter si vous réutilisez ce package ailleurs :
 #   - notify.notify → votre service réel (ex : notify.mobile_app_votre_telephone)
@@ -178,28 +180,36 @@ automation:
       jour, un redémarrage demandé ou un changement de langue ne notifient pas.
     mode: single
     trigger:
+      # Miroir de « Tab5 Uptime » (tab5_reglages.yaml) : mêmes états, même
+      # indisponibilité, au même instant.
       - platform: state
-        entity_id: sensor.m5stack_tab5_home_assistant_hmi_tab5_uptime
+        entity_id: sensor.tab5_demarrage
     condition:
+      # Précédent état sans attribut `source` : le miroir n'avait pas encore de
+      # tablette (HA neuf, tablette ajoutée à l'instant). Comme la création de
+      # l'entité d'origine (from_state absent), ce n'est pas un redémarrage.
       - condition: template
         value_template: >-
           {% set to_ts = as_timestamp(trigger.to_state.state, none)
              if trigger.to_state is not none else none %}
           {% set from_ts = as_timestamp(trigger.from_state.state, none)
              if trigger.from_state is not none else none %}
-          {% if to_ts is none or trigger.from_state is none %}false
+          {% set connue = trigger.from_state is not none
+             and (trigger.from_state.attributes.get('source') or '') != '' %}
+          {% if to_ts is none or not connue %}false
           {% elif from_ts is not none %}{{ to_ts > from_ts + 60 }}
           {% else %}{{ to_ts >= as_timestamp(trigger.from_state.last_changed) - 300 }}
           {% endif %}
     action:
+      # « Raison du redémarrage » de la tablette détectée (sensor.tab5_tablette).
       - wait_template: >-
-          {% set r = states.sensor.m5stack_tab5_home_assistant_hmi_tab5_raison_du_redemarrage %}
+          {% set r = expand(state_attr('sensor.tab5_tablette', 'raison') or '') | first | default(none) %}
           {{ r is not none and r.state not in ['unavailable', 'unknown']
              and as_timestamp(r.last_changed) >= as_timestamp(trigger.to_state.last_changed) - 60 }}
         timeout: "00:01:00"
         continue_on_timeout: true
       - variables:
-          raison: "{{ states('sensor.m5stack_tab5_home_assistant_hmi_tab5_raison_du_redemarrage') }}"
+          raison: "{{ states(state_attr('sensor.tab5_tablette', 'raison') or '') }}"
           demande: >-
             {{ wait.completed and (raison is match('Reboot request from ')
                or raison is match('First boot after install')
@@ -232,7 +242,9 @@ automation:
   # Le capteur `platform: status` passe à `off` quand la connexion API native
   # tombe ; selon les versions/configurations, l'intégration ESPHome peut
   # aussi marquer l'entité `unavailable` quand l'appareil disparaît du réseau.
-  # Le déclencheur couvre les deux cas.
+  # Son miroir `binary_sensor.tab5_connectee` (tab5_reglages.yaml) vaut `off`
+  # dans les deux cas, et n'est indisponible que sans tablette dans HA : pas
+  # d'alerte sur un HA où la tablette n'est pas encore ajoutée.
   # ==========================================================================
   - id: tab5_health_api_off_2min
     alias: "Tab5 Santé — API ESPHome déconnectée depuis 2 min"
@@ -242,10 +254,8 @@ automation:
     mode: single
     trigger:
       - platform: state
-        entity_id: binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status
-        to:
-          - "off"
-          - "unavailable"
+        entity_id: binary_sensor.tab5_connectee
+        to: "off"
         for: "00:02:00"
     action:
       - action: script.tab5_health_notify
@@ -255,7 +265,7 @@ automation:
           titre_court: "⚠️ Tab5 : API déconnectée"
           message: >-
             Le Tab5 est déconnecté de l'API native depuis plus de 2 minutes
-            (état : {{ trigger.to_state.state }}). Vérifier le Wi-Fi,
+            (état : {{ states(state_attr('sensor.tab5_tablette', 'api') or '') }}). Vérifier le Wi-Fi,
             l'alimentation, ou si l'appareil a planté. Toutes les poussées
             vers l'écran échouent pendant la coupure.
           message_court: >-

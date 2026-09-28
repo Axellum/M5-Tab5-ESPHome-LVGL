@@ -19,8 +19,9 @@ obj:
     # 5 cartes identiques factorisees via forecast_hour_card.yaml (#T164) : seul x_pos
     # (position horizontale) et idx (suffixe id hN_*) varient. Note : ordre visuel
     # gauche->droite = index donnees decroissant (carte 0 = index 4, carte 4 = index 0).
-    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "25", idx: "4" } }
-    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "275", idx: "3" } }
-    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "525", idx: "2" } }
-    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "775", idx: "1" } }
-    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "1025", idx: "0" } }
+    # `tuile` = position visuelle des pièces (ADR-0023) : 4 − idx.
+    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "25", idx: "4", tuile: "0" } }
+    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "275", idx: "3", tuile: "1" } }
+    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "525", idx: "2", tuile: "2" } }
+    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "775", idx: "1", tuile: "3" } }
+    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "1025", idx: "0", tuile: "4" } }

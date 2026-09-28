@@ -21,7 +21,9 @@ falsifiables sur le dépôt réel :
      de `user_entities.yaml` (`${entity_…}`) ou un `!lambda`. Les entités que la
      tablette expose elle-même (`assist_satellite.*`, `media_player.*`) sont
      dérivées de son nom dans HA : un renommage cassait l'interruption vocale et
-     l'annonce des rendez-vous sans aucune erreur (audit §4.1 point 15).
+     l'annonce des rendez-vous sans aucune erreur (audit §4.1 point 15). Depuis
+     l'ADR-0025, le firmware n'en nomme plus aucune : il émet des événements et HA
+     retrouve ces entités par l'appareil (tests/test_actions_ha.py).
   5. **Métadonnées sur chaque action du contrat API** (`tab5-api-logic.yaml`) :
      toute action porte une `description:`, et chaque variable la forme longue
      `type:` + `description:` + `example:` (ESPHome 2026.9.0, amont #18881). Ce
@@ -285,12 +287,26 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("alarm_render.cpp", "alarm_ring_show"): ("icon_alarm_ring",),
     ("alarm_render.cpp", "alarm_render_status_icon"): ("icon_alarm_status",),
     ("tab5_calendar.cpp", "cal_detail_type_style"): ("cal_det_icon_*",),
-    ("tab5_cards.cpp", "update_light_card_ui"): ("icon_card_light_j*",),
     ("tab5_console.cpp", "ui_sync_mute_icons"): ("icon_mute", "icon_assist_mute"),
-    ("tab5_services.cpp", "update_volet_ui"): ("icon_card_shutter_arrow", "icon_card_shutter1"),
+    # Pièces (ADR-0023) : icônes 3.1 du mode héritage (cartes du mode HA, épaules gauches
+    # de l'accueil), ampoule et flèche du volet sur les épaules droites de toutes les tuiles.
+    ("tab5_tuiles.cpp", "heritage_glyphe_carte"): ("icon_sw?",),
+    ("tab5_tuiles.cpp", "heritage_glyphe_selecteur"): ("icon_light_sel_*",),
+    ("tab5_tuiles.cpp", "heritage_glyphe_epaule"): (
+        "icon_card_pc", "icon_card_shutter1", "icon_card_lit_j2", "icon_card_salon_j3", "icon_card_led_j4"),
+    ("tab5_tuiles.cpp", "glyphe_ampoule"): (
+        "icon_card_droite_j0", "icon_card_shutter_arrow", "icon_card_light_j*", "icon_card_h*_d"),
+    ("tab5_tuiles.cpp", "glyphe_fleche"): (
+        "icon_card_droite_j0", "icon_card_shutter_arrow", "icon_card_light_j*", "icon_card_h*_d"),
     ("tab5_services.cpp", "parse_and_update_vigilance"): ("alerte_slot_*",),
     ("tab5_services.cpp", "update_rain_predict_icon_ui"): ("icon_rain_predict",),
     ("tab5_zones.cpp", "zones_apply_ui"): ("icon_serre",),
+    # Palette des tuiles de pièce (ADR-0023) : table au niveau du fichier, d'où la fonction vide.
+    # Ses glyphes s'affichent sur les cartes du mode HA (icon_sw*, mdi_font_70), dans les
+    # épaules des tuiles (icon_card_*, mdi_font_32) et dans le sélecteur du popup lumière
+    # (icon_light_sel_*, mdi_font_45) : tools/gen_tuiles_icones.py les écrit dans ces trois
+    # polices (POLICES), à garder d'accord avec cette ligne.
+    ("tab5_tuiles_icones.h", ""): ("icon_sw?", "icon_card_*", "icon_light_sel_*"),
     ("tab5-sensors-domotique.yaml", "moisture_1"): ("icon_pot_s*",),
 }
 

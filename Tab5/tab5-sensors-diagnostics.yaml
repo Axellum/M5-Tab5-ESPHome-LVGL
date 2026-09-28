@@ -6,7 +6,7 @@
 #       température coeur, horloge SNTP et intervals de la console système.
 # @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
 #                         Les blocs on_value: doivent se contenter d'appeler des fonctions
-#                         C++ depuis tab5_custom.cpp (ex: update_light_card_ui(...) ).
+#                         C++ depuis tab5_custom.cpp (ex: update_console_diagnostics_ui(...) ).
 # @anti_pattern_evité Ne pas utiliser std::string ou to_string() ici (hot-path).
 # @ai_instruction Fichier issu de la scission de tab5-sensors.yaml (14/07/2026).
 #                 Les entités domotique (plantes, lumières, capteurs HA, audio)

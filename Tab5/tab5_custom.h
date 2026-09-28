@@ -40,7 +40,9 @@ struct WeatherDaySlot {
     lv_obj_t* min_lbl;
     lv_obj_t* icon_l1;
     lv_obj_t* icon_l2;
-    // Pointers for action widgets
+    // Bouton et épaules d'appareil : plus lus depuis l'ADR-0023 (pièces) — ces widgets
+    // sont dans g_tuiles_ui (tab5_tuiles.cpp). Les champs restent : l'on_boot de
+    // tab5-ha-hmi.yaml, intouchable, initialise la structure entière.
     lv_obj_t* action_btn;
     lv_obj_t* action_icon1;
     lv_obj_t* action_icon2;
@@ -201,6 +203,10 @@ struct CentralPanelCtx {
     int forecast_page = 2;
     bool vocal_shown = false;
     lv_obj_t* vocal_wrap = nullptr;   // posé par show_vocal_response_ui
+    // Mode HA (bouton « HA », ADR-0023) : les cartes montrent la pièce de la page
+    // courante, la carte centrale son titre ; le rotateur n'a pas la main. Seule source
+    // (plus de global show_switches), basculé par tuiles_mode_ha() (tab5_tuiles.cpp).
+    bool ha_mode = false;
 };
 
 // Contexte global unique (initialise dans tab5-ha-hmi.yaml on_boot ou premier usage).
@@ -208,7 +214,8 @@ extern CentralPanelCtx g_central_ctx;
 
 // Gestion du geste de swipe (page_main.on_gesture) : pagination previsions
 // horaires/journalieres (0-4) dans la bande centrale+basse (y >= 333). Console diag :
-// uniquement via btn_control_console (plus de swipe haut/bas).
+// uniquement via btn_control_console (plus de swipe haut/bas). En mode HA (ADR-0023) :
+// pièce suivante / précédente qui a des appareils, les calques météo restent masqués.
 void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
@@ -290,21 +297,8 @@ void tab5_dismiss_local_add(std::string& store, const std::string& id);
 // (hors lv_obj_has_flag, lecture pure).
 // -----------------------------------------------------------------------------
 
-// Carte volet : flèche (mouvement / sens de la dernière commande), icône du
-// volet, et la ligne « Volet » du panneau switches (sw_icon / sw_label peuvent
-// être nuls : la ligne est optionnelle).
-struct VoletUI {
-    lv_obj_t* arrow;     // icon_card_shutter_arrow
-    lv_obj_t* shutter;   // icon_card_shutter1
-    lv_obj_t* sw_icon;   // icon_sw1
-    lv_obj_t* sw_label;  // lbl_sw1_state
-};
-
-// etat_physique poussé par HA : "En_mouvement", "Ouvert" / "Partiel" / "open",
-// "Ferme" / "closed" (autre valeur : flèche au repos, icône du volet inchangée).
-// target_open = sens de la dernière commande (volet_target_open). Retourne true
-// si le volet est en mouvement — à stocker dans volet_en_mouvement.
-bool update_volet_ui(const std::string& etat_physique, bool target_open, const VoletUI& ui);
+// Volet (tab5_maj_volet_etat) : voir « Pièces et tuiles » plus bas — le volet 3.x est
+// la tuile 1 de la pièce 0 du mode héritage (tuiles_heritage_volet).
 
 // Vigilance Météo-France : phrase pluie, date recolorée, 4 slots d'icônes.
 struct VigilanceUI {
@@ -440,9 +434,9 @@ uint32_t get_battery_color(float x);
 void set_icon_color_ui(lv_obj_t* icon, uint32_t color);
 void set_icon_active_ui(lv_obj_t* icon, bool active, uint32_t color_on, uint32_t color_off);
 
-// Carte PC (text_sensor pc_status) : icône du bandeau + interrupteur 0 de la carte
-// switches (icône et libellé « Allumé » / « Éteint »). Ne fait rien sans icon_pc.
-void update_pc_status_ui(bool active, lv_obj_t* icon_pc, lv_obj_t* icon_sw, lv_obj_t* lbl_sw_state);
+// PC (text_sensor pc_status) : icône du bandeau d'état. La carte du mode HA est la
+// tuile 0 de la pièce 0 en mode héritage (tuiles_heritage_pc). Ne fait rien sans icon_pc.
+void update_pc_status_ui(bool active, lv_obj_t* icon_pc);
 
 // Popup détails pots (appui long sur les slots pots) : 5 cartes FIXES, carte N =
 // capteur moisture_N (pas de tri dynamique, contrairement au dashboard).
@@ -461,35 +455,10 @@ void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]);
 enum class PotMetric { CONDUCTIVITY, ILLUMINANCE, TEMPERATURE, BATTERY };
 void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric);
 
-// Met a jour l'icone carte (epaule j2/j3/j4), l'icone/label du switch associe et le
-// bouton popup power si c'est la lampe actuellement affichee. Factorise depuis les 3
-// blocs identiques light_chambre_state/light_salon_state/light_led_state (#T164).
-void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* icon_switch,
-    lv_obj_t* lbl_switch_state, lv_obj_t* btn_power_icon,
-    const std::string& current_light_slot, const std::string& this_slot, bool is_on);
-
-// Icone du selecteur du popup lumiere (lit/canape/ruban LED) : doree si allumee.
-void update_light_selector_icon(lv_obj_t* icon, bool is_on);
-
-// Reflete l'attribut brightness HA (0-255, NAN si eteinte) sur l'arc + le label %
-// du popup lumiere. Inerte si le popup est ferme ou pendant un drag utilisateur.
-void sync_light_popup_brightness(lv_obj_t* popup, lv_obj_t* arc, lv_obj_t* pct_lbl,
-    float brightness);
-
 // Affichage optimiste de la cible clim (label + arc du popup) avant le retour HA.
 // Appele par l'arc et les boutons -/+ du popup clim ; le retour reel arrive ensuite
 // par le service tab5_maj_clim qui reecrit les memes widgets.
 void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target);
-
-// Ouvre/resynchronise le popup lumiere sur light_idx (0=Chambre 1=Salon 2=LEDs) :
-// titre, bordure cyan du selecteur, icones d'etat, icone power, arc + % depuis
-// l'etat HA reel. Appele par script tab5_light_popup_show (tab5-scripts.yaml).
-void show_light_popup_ui(int light_idx, const char* const titles[3],
-    const bool is_on[3], const float brightness[3],
-    lv_obj_t* popup, lv_obj_t* title_lbl,
-    lv_obj_t* btn0, lv_obj_t* btn1, lv_obj_t* btn2,
-    lv_obj_t* icon0, lv_obj_t* icon1, lv_obj_t* icon2,
-    lv_obj_t* power_icon, lv_obj_t* arc, lv_obj_t* pct_lbl);
 
 // Tap tuile météo : affiche le planning/horaires du jour dans la carte centrale (6s).
 // Le timer de restauration rétablit ctx.current_panel (le tap l'a mis à 0).
@@ -729,8 +698,8 @@ struct ZonesUI {
     lv_obj_t* btn_ha = nullptr;        // rangée HA / Sys / TV
     lv_obj_t* btn_sys = nullptr;
     lv_obj_t* btn_tv = nullptr;
-    lv_obj_t* sw_card[5] = {};         // cartes du calque « HA »
-    lv_obj_t* light_sel[3] = {};       // sélecteur du popup lumière
+    // Les cartes du calque « HA » et le sélecteur du popup lumière suivent les pièces
+    // depuis l'ADR-0023 (g_tuiles_ui, tab5_tuiles.cpp).
     lv_obj_t* clim_zone = nullptr;     // − / consigne / +
     lv_obj_t* icon_salon = nullptr;
     lv_obj_t* val_salon = nullptr;
@@ -778,8 +747,113 @@ struct EmplacementCible {
     esphome::text_sensor::TextSensor* texte;  // état HA tel quel (on, off, home…), ou nullptr
     esphome::sensor::Sensor* valeur;          // nombre affiché, NaN pour « nan » ou illisible, ou nullptr
 };
-// Applique la chaîne aux capteurs de la table ; une clé inconnue est ignorée.
+// Applique la chaîne aux capteurs de la table ; une clé inconnue est ignorée. Les clés
+// de tuile « tRT » (ADR-0023) vont d'abord aux pièces (tab5_tuiles.cpp).
 // Renvoie le nombre d'entrées appliquées.
 int emplacements_appliquer(const std::string& payload, const EmplacementCible* cibles, size_t n);
+
+// =============================================================================
+// Pièces et tuiles génériques (tab5_tuiles.cpp, ADR-0023) : chaque page du bas est une
+// pièce de cinq appareils au plus, décrits par Home Assistant. Pièce R ↔ page : R0 = 2
+// (accueil), R1 = 3, R2 = 4, R3 = 1, R4 = 0 ; tuile T = position visuelle (0 = gauche).
+// Tant qu'aucune définition n'est arrivée (drapeau en NVS), la pièce 0 est construite
+// depuis les emplacements 3.x (mode héritage).
+// =============================================================================
+// Action tab5_maj_tuiles : instantané complet « pR|nom;tRT|type|icône|options|complément|
+// nom;… » (ce qui n'est pas listé est vide). Gardé en NVS s'il change. Vrai si changé.
+bool tuiles_definir(const std::string& payload);
+
+// Widgets des pièces, posés par le script tab5_tuiles_ui (tab5-tuiles.yaml), que
+// tab5_zones_apply lance à la fin du setup, avant la première image : id() n'existe que
+// dans les lambdas YAML, et l'on_boot n'est pas à nous (tab5-ha-hmi.yaml).
+struct TuilesUI {
+    // Navigation : calques du bas, pastilles, titre de la carte centrale, bouton « HA ».
+    lv_obj_t* calque_jours = nullptr;     // layer_forecast_daily
+    lv_obj_t* calque_heures = nullptr;    // layer_forecast_hourly
+    lv_obj_t* calque_ha = nullptr;        // layer_switches
+    lv_obj_t* pastilles[5] = {};          // pbar_0 … pbar_4
+    lv_obj_t* titre_cadre = nullptr;      // page_title_wrapper
+    lv_obj_t* titre = nullptr;            // lbl_page_title
+    lv_obj_t* bouton_ha = nullptr;        // btn_control_ha
+    lv_obj_t* icone_ha = nullptr;         // icon_ha
+    int* page = nullptr;                  // &id(forecast_page_index)
+    esphome::font::Font* police_meteo = nullptr;         // font_meteo_card
+    esphome::font::Font* police_meteo_petite = nullptr;  // font_meteo_card_small
+    // Mode météo : épaules (icône à gauche, ampoule ou flèche à droite) et bouton
+    // invisible de chaque tuile, par position visuelle T (0 = gauche). Journalières :
+    // mêmes objets sur les pages 2 à 4 ; horaires : l'objet h(4−T).
+    lv_obj_t* jour_g[5] = {};
+    lv_obj_t* jour_d[5] = {};
+    lv_obj_t* jour_bouton[5] = {};
+    lv_obj_t* jour_sens = nullptr;        // btn_j1_dir : sens du volet 3.x (mode héritage)
+    lv_obj_t* heure_g[5] = {};
+    lv_obj_t* heure_d[5] = {};
+    lv_obj_t* heure_bouton[5] = {};
+    // Libellés des onglets de titre (leur parent devient cliquable : sens d'un volet).
+    lv_obj_t* jour_titre[5] = {};          // j{T}_day
+    lv_obj_t* heure_titre[5] = {};         // h(4−T)_time
+    // Cartes du mode HA (switches_card.yaml) : carte T = tuile T de la pièce courante.
+    lv_obj_t* carte[5] = {};
+    lv_obj_t* carte_icone[5] = {};
+    lv_obj_t* carte_nom[5] = {};
+    lv_obj_t* carte_etat[5] = {};
+    // Popups qu'une tuile ouvre (télécommande de la TV, climatisation du blueprint).
+    lv_obj_t* popup_tv = nullptr;
+    lv_obj_t* popup_clim = nullptr;
+    // Popup lumière (light_popup.yaml) : sélecteur des lumières de la pièce (5 au plus).
+    lv_obj_t* lum_popup = nullptr;        // light_options_popup
+    lv_obj_t* lum_titre = nullptr;        // popup_light_title
+    lv_obj_t* lum_sel[5] = {};            // btn_light_sel_N
+    lv_obj_t* lum_sel_icone[5] = {};      // icon_light_sel_N
+    lv_obj_t* lum_sel_nom[5] = {};        // lbl_light_sel_N
+    lv_obj_t* lum_power = nullptr;        // btn_light_power_icon
+    lv_obj_t* lum_arc = nullptr;          // arc_light_brightness
+    lv_obj_t* lum_pct = nullptr;          // lbl_light_brightness_val
+    std::string* lum_cle = nullptr;       // &id(current_light_slot) : cible des commandes
+    // Volet 3.x (mode héritage) : sens de la prochaine commande.
+    bool* volet_sens = nullptr;           // &id(volet_target_open)
+    // Commandes, posées par le script (lambdas sans capture) : événement
+    // esphome.tab5_action (script tab5_action) et tap du volet 3.x (tab5_volet_tap).
+    void (*envoyer)(const char* emplacement, const char* action, const char* valeur) = nullptr;
+    void (*volet_tap)() = nullptr;
+};
+extern TuilesUI g_tuiles_ui;
+
+// Appui sur la tuile T de la pièce de la page courante (tuile météo ou carte du mode
+// HA) : commande selon le type et les options (tableau de l'ADR-0023), popup, ou rien.
+void tuile_appui(int tuile, bool long_appui);
+
+// Toucher du titre de la tuile T : bascule le sens d'un volet (flèche, puis appui).
+void tuile_titre_appui(int tuile);
+// Rend cliquables les onglets de titre (une fois, depuis tab5_tuiles_ui).
+void tuiles_brancher_titres();
+
+// Mode HA (bouton « HA », « Aller à l'écran → Accueil ») : cartes de la pièce de la page
+// courante, ou de la plus proche qui a des appareils ; titre de la pièce dans la carte
+// centrale ; en sortant, la météo de la page courante.
+void tuiles_mode_ha(bool actif);
+
+// Mode héritage (blueprint 3.x) : les emplacements 3.x forment la pièce 0 — PC/TV
+// (tuile 0), volet (1), lumiere_1..3 (2-4). Appelés par leurs capteurs
+// (tab5-sensors-domotique.yaml) et par tab5_maj_volet_etat, quel que soit le mode.
+void tuiles_heritage_pc(bool actif);
+void tuiles_heritage_tv(bool actif);
+void tuiles_heritage_lumiere(int i, bool allumee);
+// Luminosité 0-255 (NaN éteinte) de lumiere_1..3 : l'arc du popup s'il la montre.
+void tuiles_heritage_luminosite(int i, float luminosite);
+// Renvoie vrai si le volet est en mouvement (volet_en_mouvement).
+bool tuiles_heritage_volet(const std::string& etat_physique);
+// Bouton btn_j1_dir (haut de la tuile du volet, mode héritage) : inverse le sens de la
+// prochaine commande (volet_target_open) et repeint la flèche.
+void tuiles_heritage_volet_sens();
+
+// Popup lumière (ouvert par l'appui long d'une tuile lum) : ses lignes sont les lumières
+// de la pièce, dans l'ordre des tuiles. Choisit la ligne `idx` (script
+// tab5_light_popup_show, boutons du sélecteur) : titre, surbrillance, arc, et
+// current_light_slot = clé de la tuile (tRT, ou lumiere_N en mode héritage).
+void popup_lumiere_choisir(int idx);
+// « Tout éteindre » : pR / eteindre (toutes les lumières de la pièce), lumieres /
+// eteindre en mode héritage.
+void popup_lumiere_tout_eteindre();
 
 // UIColor (couleurs sémantiques) : voir tab5_tokens.h.

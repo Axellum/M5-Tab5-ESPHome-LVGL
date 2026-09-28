@@ -46,7 +46,7 @@
 
 ## Quick start
 
-**No compiling (3.0 and later):** [install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome or Edge, USB-C cable). Set up the Home Assistant packages and the blueprint, pick your display revision, flash, set the Wi-Fi, add the tablet in Home Assistant: the six steps, and what to do if the page cannot reach the tablet, are in [Without compiling](docs/installation.md#without-compiling-install-page). Updates then show up in Home Assistant.
+**No compiling (3.0 and later):** [install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome or Edge, USB-C cable). Set up the Home Assistant packages and the blueprint, pick your display revision, flash, set the Wi-Fi, add the tablet in Home Assistant: the five steps, and what to do if the page cannot reach the tablet, are in [Without compiling](docs/installation.md#without-compiling-install-page). Updates then show up in Home Assistant.
 
 **Or build your own firmware:**
 
@@ -205,6 +205,7 @@ The engine is optional for the screen UI (push dashboard works without it). It i
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Wake word pipeline, audio chain, visual feedback states |
 | [`docs/installation.md`](docs/installation.md) | Prerequisites, web flasher or build, signing key, Home Assistant, updates, upgrading from 2.x |
 | [`docs/translations.md`](docs/translations.md) | Screen language (French, English, German, Dutch, Spanish, Italian), adding a language |
+| [`docs/tiles_icons.md`](docs/tiles_icons.md) | Icons of the room tiles: the palette, how an icon is chosen, asking for one |
 | [`docs/demo_mode.md`](docs/demo_mode.md) | Try it in minutes, no Home Assistant required |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Symptom → root cause → fix log for incidents already diagnosed |
 | [`docs/debugging.md`](docs/debugging.md) | How to observe/diagnose the device (logs, console overlay, marker technique) |
@@ -261,20 +262,20 @@ The engine is optional for the screen UI (push dashboard works without it). It i
 │   ├── trivia_game.h/.cpp    # Game: Trial Poursuite (quiz)
 │   ├── draughts_ai/game.*    # Game: Dames Tab (draughts)
 │   └── chess_ai/game.*       # Game: Roi Noir (chess)
-├── HomeAssistant_Config/     # HA packages (placeholders) — rendered, they are what runs on the author's HA
-├── tests/                    # pytest: secrets checker, HA placeholder renderer, content guards
+├── HomeAssistant_Config/     # HA packages, no placeholder (choices made in HA) — what runs on the author's HA, zipped in each release
+├── tests/                    # pytest: secrets checker, HA leak guard and install, content guards
 ├── tools/
 │   ├── demo/                 # Standalone demo pusher (no HA required)
 │   ├── check_*.py            # Content guards read the real C++/YAML (modal chrome, registry, code rules, Marble, Lode)
 │   ├── cartographie_counts.py  # Line counts of CARTOGRAPHIE_TAB5.md (check / --write)
-│   ├── render_ha_config.py   # Public HA files + placeholders.yaml → deployable rendered/ (--check: no real ID leaked)
+│   ├── render_ha_config.py   # Copies the public HA files to rendered/ (--check: no real ID, no placeholder leaked)
 │   ├── verifier_secrets_config.py  # No secret in any tracked file (pre-commit + CI)
 │   ├── test_go_engine.py/.cpp  # Host tests: Go rules (Python mirror locally, real C++ with g++ in CI)
 │   ├── test_alarm_clock.cpp  # Host tests: alarm engine, simulated clock, Europe/Paris DST (g++ in CI)
 │   ├── test_chess_perft.py   # Host tests: chess move generator vs the perft suite
 │   ├── test_draughts_engine.py  # Host tests: draughts move generator vs reference perft (10×10 and 8×8)
 │   └── make_chess_font.py    # Builds ChessPieces.ttf
-├── .pre-commit-config.yaml   # yamllint, BOM, secrets, HA placeholders — replayed by CI
+├── .pre-commit-config.yaml   # yamllint, BOM, secrets, HA leak guard — replayed by CI
 ├── pyproject.toml            # pytest config (testpaths: tests, tools)
 ├── web/                      # GitHub Pages site: showcase page and web installer (install/), built by tools/publication/pages.py
 └── docs/                     # Extended documentation — arcade.md (games), decisions/ (ADR), press/ (publication kit)
@@ -384,7 +385,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 ## Démarrage rapide
 
-**Sans compiler (3.0 et suivantes) :** [installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome ou Edge, câble USB-C). Installez les packages Home Assistant et le blueprint, choisissez votre révision d'écran, flashez, réglez le Wi-Fi, ajoutez la tablette dans Home Assistant : les six étapes, et que faire si la page n'atteint pas la tablette, sont dans [Sans compiler](docs/installation.md#sans-compiler-page-dinstallation). Les mises à jour arrivent ensuite dans Home Assistant.
+**Sans compiler (3.0 et suivantes) :** [installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome ou Edge, câble USB-C). Installez les packages Home Assistant et le blueprint, choisissez votre révision d'écran, flashez, réglez le Wi-Fi, ajoutez la tablette dans Home Assistant : les cinq étapes, et que faire si la page n'atteint pas la tablette, sont dans [Sans compiler](docs/installation.md#sans-compiler-page-dinstallation). Les mises à jour arrivent ensuite dans Home Assistant.
 
 **Ou compiler votre propre firmware :**
 
@@ -529,6 +530,7 @@ Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Pipeline wake-word, chaîne audio, états de retour visuel |
 | [`docs/installation.md`](docs/installation.md) | Prérequis, page de flashage ou compilation, clé de signature, Home Assistant, mises à jour, passage à la 3.0 |
 | [`docs/translations.md`](docs/translations.md#version-française) | Langue de l'écran (français, anglais, allemand, néerlandais, espagnol, italien), ajouter une langue |
+| [`docs/tiles_icons.md`](docs/tiles_icons.md#version-française) | Icônes des tuiles de pièce : la palette, le choix d'une icône, en demander une |
 | [`docs/demo_mode.md`](docs/demo_mode.md) | Tester en quelques minutes, sans Home Assistant |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Journal symptôme → cause racine → correctif des incidents déjà diagnostiqués |
 | [`docs/debugging.md`](docs/debugging.md) | Comment observer/diagnostiquer l'appareil (logs, overlay console, technique des marqueurs) |

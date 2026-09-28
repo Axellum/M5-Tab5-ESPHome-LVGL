@@ -24,6 +24,9 @@ script:
   # réponse de HA, et quand une donnée fait revenir une zone.
   - id: tab5_zones_apply
     then:
+      # Widgets des pièces (ADR-0023, tab5-tuiles.yaml) : zones_apply_ui() les redessine
+      # (le premier appel charge les pièces gardées en NVS), avant la première image.
+      - script.execute: tab5_tuiles_ui
       - lambda: |-
           ZonesUI& u = g_zones_ui;
           u.icon_pc = id(icon_pc);
@@ -33,14 +36,6 @@ script:
           u.btn_ha = id(btn_control_ha);
           u.btn_sys = id(btn_control_console);
           u.btn_tv = id(btn_control_tv);
-          u.sw_card[0] = id(sw_card_0);
-          u.sw_card[1] = id(sw_card_1);
-          u.sw_card[2] = id(sw_card_2);
-          u.sw_card[3] = id(sw_card_3);
-          u.sw_card[4] = id(sw_card_4);
-          u.light_sel[0] = id(btn_light_sel_0);
-          u.light_sel[1] = id(btn_light_sel_1);
-          u.light_sel[2] = id(btn_light_sel_2);
           u.clim_zone = id(climate_controls_zone);
           u.icon_salon = id(icon_salon);
           u.val_salon = id(val_temp_salon);

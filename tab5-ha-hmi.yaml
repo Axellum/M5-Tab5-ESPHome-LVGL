@@ -19,7 +19,7 @@ esphome:
   # que l'entité de mise à jour compare au manifeste.
   project:
     name: axellum.tab5-ha-hmi
-    version: ${ tab5_version | default('3.0.0-dev') }
+    version: ${ tab5_version | default('3.2.0-dev') }
   # [2026.7.0] Plancher DUR d'origine : st7123 officiel + audio zero-copy + VAD + PSRAM SDIO.
   # [2026.8.1] Relevé le 26/08/2026. Le code compile encore tel quel en 2026.7.x — ce
   # plancher n'est donc pas une dépendance d'API, c'est un choix : 2026.8 corrige trois
@@ -53,6 +53,8 @@ esphome:
     # Jetons sans dépendance (UIColor/UIAnim/UIIdle), inclus par tab5_custom.h et par
     # les deux jeux qui en ont besoin (25/09/2026, audit lot 8a).
     - Tab5/tab5_tokens.h
+    # Palette des icônes des tuiles de pièce (ADR-0023), écrite par tools/gen_tuiles_icones.py.
+    - Tab5/tab5_tuiles_icones.h
     # Langue de l'écran (lot 4, 27/09/2026) : tr() pur, compilé aussi sur PC par les
     # tests du réveil, et ses tables générées par tools/gen_i18n.py depuis
     # Tab5/lang/*.yaml. Avant tab5_core, qui s'en sert pour les dates.
@@ -81,6 +83,8 @@ esphome:
     - Tab5/tab5_journal.cpp
     # Zones optionnelles : ce qui disparaît quand l'entité manque dans HA (lot 5, 27/09/2026).
     - Tab5/tab5_zones.cpp
+    # Pièces et tuiles génériques décrites par HA (ADR-0023, 28/09/2026).
+    - Tab5/tab5_tuiles.cpp
     # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
     # NvsSlot<T>) — lot (f), ADR-0014. Header-only.
     - Tab5/game_common.h
@@ -317,6 +321,8 @@ packages:
   # Reveil matin + annonce des rendez-vous. Comme ci-dessus : APRES tab5_lvgl
   # (ses scripts referencent les ids de alarm_popup.yaml / alarm_ring_overlay.yaml).
   tab5_alarm: !include Tab5/tab5-alarm.yaml
+  # Pièces et tuiles (ADR-0023) : APRES tab5_lvgl (widgets), script lancé par tab5_zones_apply.
+  tab5_tuiles: !include Tab5/tab5-tuiles.yaml
   # Zones optionnelles (lot 5) : APRES tab5_lvgl (widgets). Ses substitutions sont les
   # valeurs par défaut des entity_… : une clé de Tab5/user_entities.yaml l'emporte.
   tab5_zones: !include Tab5/tab5-zones.yaml

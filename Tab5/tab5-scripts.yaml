@@ -13,26 +13,16 @@
 # ============================================================================
 # tab5-scripts.yaml — Scripts ESPHome reutilisables (sequences temporisees,
 # debounce). Preferer un script ici a un delay:+action duplique inline.
-# Entités que la tablette expose ELLE-MÊME dans HA (satellite vocal, lecteur
-# média). ESPHome ne peut pas les calculer : HA les dérive du nom de l'appareil.
-# Valeurs par défaut ici ; `user_entities.yaml` (racine, fusion prioritaire —
-# cf. l'en-tête de tab5-ui-tokens.yaml) les surcharge si la tablette est
-# renommée dans HA. Avant (audit 06/09 §4.1 point 15) elles étaient écrites en
-# dur à cinq endroits : un renommage cassait l'interruption vocale et l'annonce
-# des rendez-vous sans la moindre erreur.
 #
-# Même règle (lot 6c, 27/09/2026) pour les trois entités qu'un binaire publié ne peut
-# pas demander : le select de pipeline de la tablette (dérivé du nom de l'appareil,
-# boutons Domotique / Discussion) ; le garde-fou et l'automatisation de poussée du
-# package public `tab5_push.yaml` (bouton « MAJ Écran » de la console). Ce sont les
-# noms que ce package et HA créent : rien à régler, sauf tablette renommée ou
-# package modifié.
-substitutions:
-  entity_tab5_satellite: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
-  entity_tab5_media_player: media_player.m5stack_tab5_home_assistant_hmi_tab5_media_player
-  entity_tab5_pipeline_select: select.m5stack_tab5_home_assistant_hmi_assistant
-  entity_primary_active: input_boolean.is_primary_active
-  entity_push_automation: automation.maj_ecran_tab5_esphome_push
+# ÉVÉNEMENTS SEULEMENT (ADR-0025, 28/09/2026) : le firmware n'appelle plus aucune
+# action de HA (`homeassistant.service` / `homeassistant.action`) ; il émet des
+# événements `esphome.tab5_*`, que packages/tab5_evenements.yaml (HA) traduit en une
+# liste blanche d'actions. Plus d'option « autoriser l'appareil à effectuer des
+# actions HA » à cocher, et plus d'entité de la tablette à nommer ici : les
+# substitutions entity_tab5_satellite / _media_player / _pipeline_select,
+# entity_primary_active et entity_push_automation ont disparu, HA retrouve ces
+# entités par l'appareil qui a émis l'événement. Une ligne restée dans un ancien
+# user_entities.yaml est simplement ignorée. tests/test_actions_ha.py le vérifie.
 
 script:
   # Remplit le registre des fenêtres modales (ModalRegistry, tab5_registry.h).
@@ -111,10 +101,11 @@ script:
     then:
       - voice_assistant.stop:
           id: va
-      - homeassistant.service:
-          service: assist_satellite.announce
+      # Événement (ADR-0025) : HA l'annonce sur le satellite de cette tablette
+      # (packages/tab5_evenements.yaml).
+      - homeassistant.event:
+          event: esphome.tab5_annonce
           data:
-            entity_id: ${entity_tab5_satellite}
             # Phrase dite par la tablette : dans la langue de l'écran (lot 4).
             message: !lambda 'return std::string(tr("Volet arrêté."));'
 
@@ -359,8 +350,9 @@ script:
                       id(temp_dismiss_alert_id) = id(info_meteo_dismiss_id);
                       tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
                       dismiss_central_info_immediate(id(lbl_info_text), g_central_ctx);
-                  - homeassistant.service:
-                      service: script.tab5_dismiss_alert
+                  # Événement (ADR-0025) → script.tab5_dismiss_alert.
+                  - homeassistant.event:
+                      event: esphome.tab5_alerte_lue
                       data:
                         alert_id: !lambda 'return id(temp_dismiss_alert_id);'
                   - globals.set:
@@ -393,39 +385,24 @@ script:
           condition:
             lambda: 'return id(temp_dismiss_alert_id).size() > 0;'
           then:
-            - homeassistant.service:
-                service: script.tab5_dismiss_alert
+            # Événement (ADR-0025) → script.tab5_dismiss_alert.
+            - homeassistant.event:
+                event: esphome.tab5_alerte_lue
                 data:
                   alert_id: !lambda 'return id(temp_dismiss_alert_id);'
             - script.execute: tab5_central_rotator_auto
 
-  # Popup lumière : sélection + synchro complète (titre, surbrillance sélecteur, icônes
-  # d'état, icône power, arc luminosité depuis l'attribut brightness HA) puis affichage.
-  # Appelé par forecast_daily.yaml (long_press cartes j2/j3/j4) et par les 3 boutons du
-  # sélecteur interne du popup. light_idx : 0=Chambre, 1=Salon, 2=LEDs.
+  # Popup lumière : choisit la ligne light_idx du sélecteur (0-4 = rang de la lumière
+  # dans la pièce, ADR-0023) — titre, surbrillance, icône power, arc depuis la
+  # luminosité reçue, et current_light_slot = clé de la tuile (tRT, ou lumiere_N en mode
+  # héritage). Appelé par les boutons du sélecteur (light_sel_btn.yaml). L'ouverture
+  # vient de l'appui long d'une tuile lum (tuile_appui, tab5_tuiles.cpp).
   - id: tab5_light_popup_show
     mode: restart
     parameters:
       light_idx: int
     then:
-      - lambda: |-
-          if (light_idx < 0 || light_idx > 2) return;
-          static const char* const kTitles[3] = {"Ampoule Chambre", "Ampoule Salon", "Ampoule LEDs"};
-          // Emplacement (lot 6a, ADR-0019) : les commandes du popup partent en
-          // esphome.tab5_action, le blueprint trouve l'entité.
-          static const char* const kSlots[3] = {"lumiere_1", "lumiere_2", "lumiere_3"};
-          id(current_light_slot) = kSlots[light_idx];
-          const bool is_on[3] = { id(light_chambre_state).state == "on",
-                                  id(light_salon_state).state == "on",
-                                  id(light_led_state).state == "on" };
-          const float brightness[3] = { id(light_chambre_brightness).state,
-                                        id(light_salon_brightness).state,
-                                        id(light_led_brightness).state };
-          show_light_popup_ui(light_idx, kTitles, is_on, brightness,
-              id(light_options_popup), id(popup_light_title),
-              id(btn_light_sel_0), id(btn_light_sel_1), id(btn_light_sel_2),
-              id(icon_light_sel_0), id(icon_light_sel_1), id(icon_light_sel_2),
-              id(btn_light_power_icon), id(arc_light_brightness), id(lbl_light_brightness_val));
+      - lambda: 'popup_lumiere_choisir(light_idx);'
 
   # Touche physique de la télécommande TV (tv_remote_popup.yaml et ses gabarits
   # tv_pad_btn.yaml / tv_transport_btn.yaml) : une seule commande paramétrée au
@@ -498,7 +475,7 @@ interval:
 
           if (idle < UIIdle::FORECAST_MS) return;
           if (id(forecast_page_index) == 2) return;   // déjà au panneau principal
-          if (id(show_switches)) return;              // panneau HA affiché à la demande
+          if (g_central_ctx.ha_mode) return;          // mode HA (pièces) affiché à la demande
 
           lv_obj_t* pbars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4)};
           reset_forecast_to_main_page(id(forecast_page_index),

@@ -3,8 +3,11 @@
 vérifie sans conteneur ni tablette.
 
 - preparer_config.py écrit une installation complète : configuration.yaml avec la ligne des
-  packages de docs/installation.md, TOUS les packages publics rendus sans qu'il reste un
-  placeholder (placeholders_ci.yaml doit suivre les packages), le blueprint tel quel ;
+  packages de docs/installation.md, TOUS les packages publics tels quels (ADR-0024 : aucun
+  placeholder, aucun `!secret`), le blueprint tel quel ; les optionnels seulement sur demande ;
+- chaque entité `…tab5_…` que lisent les packages est définie par un package (listes
+  « Tab5 · … », miroirs, capteurs) : son entity_id vient de son NOM, une faute ne se
+  verrait qu'à l'exécution ;
 - les entrées données au blueprint par verifier_installation.py en sont bien des entrées, et la
   chaîne « Zones masquées » attendue est celle que la tablette écrira ;
 - la tablette virtuelle porte le nom de la vraie (préfixe des actions des packages) ;
@@ -41,45 +44,91 @@ def test_preparer_ecrit_une_installation_complete(tmp_path):
     assert "packages: !include_dir_named packages" in config  # docs/installation.md, étape 4
     assert "automation: !include automations.yaml" in config  # l'API des automatisations écrit là
     publics = sorted(p.name for p in (preparer.HA_DIR / "packages").glob("*.yaml"))
-    rendus = sorted(p.name for p in (sortie / "packages").glob("*.yaml"))
-    assert rendus == sorted(publics + ["ci_donnees_test.yaml"])
+    installes = sorted(p.name for p in (sortie / "packages").glob("*.yaml"))
+    assert installes == sorted(publics + ["ci_donnees_test.yaml"])
+    for source in (preparer.HA_DIR / "packages").glob("*.yaml"):
+        assert (sortie / "packages" / source.name).read_bytes() == source.read_bytes(), source.name
     assert (sortie / "custom_templates" / "tab5_calendar.jinja").exists()
     copie = sortie / "blueprints" / "automation" / preparer.CHEMIN_BLUEPRINT
     assert copie.read_bytes() == preparer.BLUEPRINT.read_bytes()
     assert (sortie / "automations.yaml").read_text(encoding="utf-8").strip() == "[]"
+    # Package optionnel (volet à course simulée) : pas par défaut, il prendrait la main
+    # sur le volet du blueprint (variable volet_par_package).
+    assert not (sortie / "packages" / "volet_serre_tracking.yaml").exists()
 
 
-def test_placeholders_ci_couvrent_tous_les_packages(tmp_path):
-    """Un placeholder ajouté à un package sans valeur dans placeholders_ci.yaml ferait
-    charger à HA une entité « VOTRE_… » : le job testerait une installation ratée."""
+def test_preparer_avec_les_optionnels(tmp_path):
     sortie = tmp_path / "config"
-    preparer.preparer(sortie)
-    restes = []
+    preparer.preparer(sortie, optionnels=True)
+    for source in (preparer.HA_DIR / "optionnel").glob("*.yaml"):
+        assert (sortie / "packages" / source.name).read_bytes() == source.read_bytes()
+
+
+def test_installation_sans_rien_remplir(tmp_path):
+    """ADR-0024 : ni placeholder ni `!secret` dans ce qu'on installe. Un `!secret` sans
+    sa ligne dans secrets.yaml fait refuser à HA TOUTE sa configuration (tab5_tv.yaml,
+    vu par le job le 28/09/2026) ; un placeholder ferait charger une entité « VOTRE_… »."""
+    sortie = tmp_path / "config"
+    preparer.preparer(sortie, optionnels=True)
+    restes, secrets = [], []
     for fichier in list((sortie / "packages").glob("*.yaml")) + list((sortie / "custom_templates").iterdir()):
         for n, ligne in enumerate(fichier.read_text(encoding="utf-8").splitlines(), 1):
             code = ligne.split("#", 1)[0] if fichier.suffix == ".yaml" else ligne
             if "VOTRE_" in code:
                 restes.append(f"{fichier.name}:{n}")
-    assert not restes, f"placeholders sans valeur dans placeholders_ci.yaml : {restes[:10]}"
-
-
-def test_chaque_secret_des_packages_est_dans_secrets_yaml(tmp_path):
-    """Un `!secret` sans sa ligne dans secrets.yaml fait refuser à HA TOUTE sa
-    configuration (tab5_tv.yaml, vu par le job le 28/09/2026)."""
-    sortie = tmp_path / "config"
-    preparer.preparer(sortie)
-    secrets = yaml.safe_load((sortie / "secrets.yaml").read_text(encoding="utf-8"))
-    demandes = set()
-    for fichier in (sortie / "packages").glob("*.yaml"):
-        for ligne in fichier.read_text(encoding="utf-8").splitlines():
-            demandes.update(re.findall(r"!secret\s+(\w+)", ligne.split("#", 1)[0]))
-    assert demandes, "plus aucun !secret : retirer SECRETS de preparer_config.py"
-    assert demandes <= set(secrets), demandes - set(secrets)
+            if re.search(r"!secret\b", code):
+                secrets.append(f"{fichier.name}:{n}")
+    assert not restes, f"placeholders : {restes[:10]}"
+    assert not secrets, f"!secret : {secrets[:10]}"
+    assert "tab5" not in (sortie / "secrets.yaml").read_text(encoding="utf-8")
 
 
 def test_donnees_de_test_et_configuration_se_lisent():
-    for nom in ("donnees_test.yaml", "configuration.yaml", "placeholders_ci.yaml"):
+    for nom in ("donnees_test.yaml", "configuration.yaml"):
         yaml.load(_lire("tools", "installation_ha", nom), Loader=_Chargeur)
+
+
+def _slug(nom: str) -> str:
+    """entity_id tiré d'un nom par Home Assistant (util.slugify : accents retirés,
+    ponctuation en « _ »)."""
+    import unicodedata
+
+    texte = unicodedata.normalize("NFKD", nom).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", "_", texte).strip("_")
+
+
+def _definies() -> set[str]:
+    """entity_id des entités définies par les packages et les optionnels."""
+    definies = set()
+    fichiers = sorted((preparer.HA_DIR / "packages").glob("*.yaml")) + sorted((preparer.HA_DIR / "optionnel").glob("*.yaml"))
+    for fichier in fichiers:
+        paquet = yaml.load(fichier.read_text(encoding="utf-8"), Loader=_Chargeur) or {}
+        for domaine in ("input_text", "input_select", "input_boolean", "script", "rest_command"):
+            definies |= {f"{domaine}.{cle}" for cle in (paquet.get(domaine) or {})}
+        for bloc in paquet.get("template") or []:
+            for domaine in ("sensor", "binary_sensor", "select", "weather"):
+                for entite in bloc.get(domaine) or []:
+                    definies.add(f"{domaine}.{_slug(entite['name'])}")
+    return definies
+
+
+def test_entites_tab5_lues_sont_definies():
+    """Les packages se lisent entre eux par entity_id (listes « Tab5 · … », miroirs de
+    tab5_reglages.yaml, capteurs météo). Celui d'un modèle vient de son NOM : une faute
+    (« select.tab5_agenda_travail » pour « Tab5 · agenda de travail ») ne se verrait
+    qu'à l'exécution, en silence."""
+    definies = _definies()
+    fichiers = sorted((preparer.HA_DIR / "packages").glob("*.yaml")) + sorted((preparer.HA_DIR / "optionnel").glob("*.yaml"))
+    lues = set()
+    for fichier in fichiers:
+        # Hors commentaires YAML (ils citent d'anciens noms, pour mémoire).
+        texte = "\n".join(ligne for ligne in fichier.read_text(encoding="utf-8").splitlines()
+                          if not ligne.lstrip().startswith("#"))
+        lues |= set(re.findall(r"\b((?:sensor|binary_sensor|select|input_text|input_select|input_boolean)\.tab5_[a-z0-9_]+)", texte))
+    assert lues, "aucune entité tab5_ lue"
+    assert not lues - definies, sorted(lues - definies)
+    assert set(verifier.SOURCES) <= definies
+    assert {e for e, _ in verifier.DEDUITS} <= definies
 
 
 def test_entrees_du_blueprint_et_zones_attendues():
@@ -98,6 +147,69 @@ def test_entrees_du_blueprint_et_zones_attendues():
     ordre = re.findall(r'"(\w+)"', kcles)
     assert ordre == blueprint["variables"]["cles_zones"]
     assert verifier.ZONES_ABSENTES == ", ".join(z for z in ordre if z not in presentes)
+
+
+def test_pieces_du_job_et_protocole():
+    """Pièces (ADR-0023) : le job configure au moins deux pièces, la pièce 1 vide (accueil
+    depuis les entrées 3.x), et lit le protocole comme le blueprint."""
+    remplies = [k for k, v in verifier.PIECES.items() if k.endswith("_tuiles") and v]
+    assert len(remplies) >= 2 and "piece_1_tuiles" not in verifier.PIECES
+    assert any(len(v) > 5 for k, v in verifier.PIECES.items() if k.endswith("_tuiles")), "la limite de 5 est éprouvée"
+    blueprint = yaml.load(_lire("HomeAssistant_Config", "blueprints", "automation", "tab5",
+                                "tab5_emplacements.yaml"), Loader=_Chargeur)
+    assert verifier.TYPES_PAR_DOMAINE == blueprint["variables"]["types_par_domaine"]
+    assert verifier.icones_du_blueprint(_lire("HomeAssistant_Config", "blueprints", "automation", "tab5",
+                                              "tab5_emplacements.yaml")) == blueprint["variables"]["icones_mdi"]
+    for version, attendu in (("3.1.0 (ESPHome 2026.9.0)", 1), ("3.2.0-rendu (ESPHome 2026.9.0)", 2),
+                             ("rendu (ESPHome 2026.9.0)", 1), (None, 1), ("3.10.0", 2)):
+        assert verifier.protocole_de(version) == attendu, version
+    cles = [c for c, _ in verifier.tuiles_attendues()]
+    assert cles[:5] == ["t00", "t01", "t02", "t03", "t04"] and "t15" not in cles
+
+
+def test_ce_que_le_job_attend_est_ce_que_calcule_le_blueprint():
+    """Le blueprint, rendu ici (tests/test_tuiles_blueprint.py) avec les entrées du job
+    et des états imitant l'intégration demo, donne exactement ce que
+    verifier_installation.py attend : un écart se voit avant la CI."""
+    sys.path.insert(0, os.path.join(REPO, "tests"))
+    import test_tuiles_blueprint as tuiles
+
+    attributs = {
+        "light.kitchen_lights": {"supported_color_modes": ["color_temp", "hs"]},
+        "light.office_rgbw_lights": {"supported_color_modes": ["rgbw"]},
+        "light.bed_light": {"supported_color_modes": ["color_temp", "hs"]},
+        "light.ceiling_lights": {"supported_color_modes": ["color_temp", "hs"]},
+        "sensor.outside_temperature": {"unit_of_measurement": "°C", "device_class": "temperature"},
+        "binary_sensor.movement_backyard": {"device_class": "motion"},
+    }
+    etats = []
+    for entite in verifier.entites_de_test():
+        nom = entite.split(".", 1)[1].replace("_", " ").title()
+        etats.append(tuiles.Etat(entite, "on", friendly_name=nom, **attributs.get(entite, {})))
+    passage = tuiles.Passage(verifier.entrees_blueprint(), etats, {"id": "connexion"},
+                             tuiles._tablette("rendu (ESPHome 2026.9.0)"))
+    assert passage["protocole"] == 1
+    definitions = passage.definitions()
+    icones = verifier.icones_du_blueprint(_lire("HomeAssistant_Config", "blueprints", "automation", "tab5",
+                                                "tab5_emplacements.yaml"))
+    assert verifier.juger_definitions(definitions, icones) == []
+    etats_tuiles = verifier.entrees_de(passage.etats_tuiles())
+    assert [e[0] for e in etats_tuiles] == [c for c, _ in verifier.tuiles_attendues()]
+    # Et le juge voit un écart.
+    assert verifier.juger_definitions(definitions.replace("|Lights;", "|Kitchen Lights;"), icones)
+
+
+def test_trace_variables_et_appels():
+    trace = {"trace": {
+        "trigger/0": [{"path": "trigger/0", "changed_variables": {"tuiles": [], "protocole": 1}}],
+        "action/2/then/0": [{"path": "action/2/then/0", "changed_variables": {"definitions": "p0|;"}}],
+        "action/1/default/0/then/0": [{"path": "x", "result": {"params": {
+            "domain": "esphome", "service": "tab5_ha_hmi_tab5_maj_emplacements",
+            "service_data": {"payload": "tv|on|nan;"}, "target": {}}, "running_script": False}}],
+    }}
+    assert verifier.variables_de_trace(trace) == {"tuiles": [], "protocole": 1, "definitions": "p0|;"}
+    assert [a["service"] for a in verifier.appels_de_trace(trace)] == ["tab5_ha_hmi_tab5_maj_emplacements"]
+    assert verifier.entrees_de("p0|Salon;t00|lum||dc||Lampe;") == [["p0", "Salon"], ["t00", "lum", "", "dc", "", "Lampe"]]
 
 
 def test_la_tablette_virtuelle_porte_le_nom_de_la_vraie():
@@ -121,6 +233,31 @@ def test_memes_chemins_sur_main_et_en_pr():
     declencheurs = workflow.get("on") or workflow[True]  # « on » lu comme un booléen
     assert declencheurs["push"]["paths"] == declencheurs["pull_request"]["paths"]
     assert "tools/installation_ha/**" in declencheurs["pull_request"]["paths"]
+
+
+def test_plus_d_option_actions_ha():
+    """ADR-0025 : « Autoriser l'appareil à effectuer des actions Home Assistant » n'est plus
+    une étape. La CI ne la coche plus (et vérifie qu'elle reste décochée) ; le guide ne la
+    donne plus comme étape ; les demandes de la tablette sont exercées de bout en bout,
+    et leurs fichiers relancent le job."""
+    verif = _lire("tools", "installation_ha", "verifier_installation.py")
+    assert '"allow_service_calls": True' not in verif and "verifier_option_decochee(" in verif
+    assert "demandes_de_la_tablette(ha, ws, rapport)" in verif
+    guide = _lire("docs", "installation.md")
+    for etape in ("**Allow Home Assistant actions**", "**Autoriser les actions Home Assistant**"):
+        assert etape not in guide, etape
+    # Les événements écoutés par le vérificateur sont bien émis par le firmware.
+    for evt in (verifier.EVT_MOIS, verifier.EVT_MAJ_ECRAN, verifier.EVT_REDEMARRAGE):
+        assert f"event: {evt}" in "".join(_lire(*c) for c in (
+            ("Tab5", "tab5-calendar.yaml"), ("Tab5", "ui_components", "console_sys.yaml")))
+    assert f"id: {verifier.ID_EVENEMENTS}" in _lire("HomeAssistant_Config", "packages", "tab5_evenements.yaml")
+    assert verifier.SELECT_ECRAN.endswith("_aller_a_l_ecran")
+    assert "name: \"Aller à l'écran\"" in _lire("Tab5", "tab5-ha-controls.yaml")
+    chemins = yaml.safe_load(_lire(".github", "workflows", "installation-ha.yml"))
+    chemins = (chemins.get("on") or chemins[True])["pull_request"]["paths"]
+    for fichier in ("Tab5/tab5-alarm.yaml", "Tab5/tab5-assist.yaml", "Tab5/tab5-calendar.yaml",
+                    "Tab5/tab5-ha-controls.yaml", "Tab5/ui_components/console_sys.yaml"):
+        assert fichier in chemins, fichier
 
 
 def test_fonctions_pures():
@@ -208,3 +345,16 @@ def test_chaque_poussee_attend_la_tablette():
     assert "not_to: [unavailable, unknown]" in reveil
     blueprint = _lire("HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
     assert "event_type: automation_reloaded" in blueprint and garde in blueprint
+
+
+def test_calendrier_chaque_demande_a_sa_reponse():
+    """La tablette demande d'affilée le mois affiché et ses voisins (pré-chargement
+    M-1 / M+1, Tab5/tab5-calendar.yaml) : en `mode: restart`, une seule des trois
+    demandes aboutissait (job « HA neuf », 28/09/2026). Les deux scripts appelés par
+    le popup calendrier sont en file, assez longue pour ces trois demandes."""
+    assert "M-1, M+1" in _lire("Tab5", "tab5-calendar.yaml"), "pré-chargement des mois voisins disparu ?"
+    paquet = yaml.load(_lire("HomeAssistant_Config", "packages", "tab5_calendar.yaml"), Loader=_Chargeur)
+    for script in ("tab5_calendrier_mois", "tab5_calendrier_jour"):
+        corps = paquet["script"][script]
+        assert corps["mode"] == "queued", f"{script} : mode {corps['mode']}"
+        assert corps.get("max", 10) >= 3, f"{script} : max {corps.get('max')}"

@@ -2,17 +2,18 @@
 # [AI-CONTEXT]
 # @file light_popup.yaml
 # @role Popup plein écran contrôle lumière (carte 1250×690, 15 px des bords écran 1280×720).
-#       3 cartes de verre : AMPOULE (sélecteur Chambre/Salon/LEDs + On/Off + Tout éteindre),
-#       LUMINOSITÉ (arc 320 px + valeur % live + 4 raccourcis) et COULEURS (3 blancs nommés
-#       + 12 pastilles rondes). Ouvert par on_long_press des cartes lumière
-#       (forecast_daily.yaml j2/j3/j4) ou par le sélecteur interne — les deux passent par
-#       script.tab5_light_popup_show (tab5-scripts.yaml) qui synchronise titre, surbrillance
-#       du sélecteur, icône power et arc de luminosité depuis l'état HA réel.
+#       3 cartes de verre : AMPOULE (sélecteur des lumières de la pièce + On/Off + Tout
+#       éteindre), LUMINOSITÉ (arc 320 px + valeur % live + 4 raccourcis) et COULEURS (3
+#       blancs nommés + 12 pastilles rondes). Ouvert par l'appui long d'une tuile lum
+#       (tuile météo ou carte du mode HA, tuile_appui → tab5_tuiles.cpp), sur la lumière
+#       appuyée ; le sélecteur passe par script.tab5_light_popup_show → popup_lumiere_choisir().
+#       Pièces (ADR-0023) : le sélecteur liste les lumières de la pièce (5 au plus) ; en mode
+#       héritage, lumiere_1..3 comme en 3.1.
 # @architecture_constraint Toutes les actions ciblent id(current_light_slot) — PAS une
-#       entité en dur — car ce popup est partagé par les 3 lumières. Ne pas renommer
-#       btn_light_power_icon / arc_light_brightness / lbl_light_brightness_val : mis à jour
-#       par update_light_card_ui() (tab5_custom.cpp) et par les capteurs light_*_brightness
-#       (tab5-sensors-domotique.yaml).
+#       entité en dur — : la clé de la tuile choisie (tRT, ou lumiere_N en mode héritage).
+#       Ne pas renommer btn_light_power_icon / arc_light_brightness / lbl_light_brightness_val
+#       / popup_light_title : posés dans g_tuiles_ui (tab5-tuiles.yaml) et repeints par
+#       tab5_tuiles.cpp à chaque état reçu.
 # @ai_instruction Cadre modal v4 (ADR-0009) : modal_scrim.yaml + modal_header.yaml
 #       (barre de titre 52 px + 20 px d'air, corps à y=72). `scrollable: false` partout — NE PAS retirer.
 #       Les 12 pastilles couleur via light_color_preset_btn.yaml (#T164) ; sélecteur,
@@ -54,13 +55,17 @@ obj:
               widgets:
                 - label: { text: "AMPOULE", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
 
-                # Sélecteur — surbrillance (bordure cyan) posée par tab5_light_popup_show,
-                # icônes recolorées en direct par light_*_state (tab5-sensors-domotique.yaml)
+                # Sélecteur (ADR-0023) : une ligne par lumière de la pièce, 5 au plus —
+                # position, hauteur (serrées au-delà de trois), icône, nom et surbrillance
+                # posés par tab5_tuiles.cpp (popup_lumiere_peindre). Textes et glyphes
+                # d'ici : ceux d'avant la première ouverture.
                 - !include { file: light_sel_btn.yaml, vars: { idx: 0, y: 50, icon: "\U000F02E3", name: "Chambre" } }
                 - !include { file: light_sel_btn.yaml, vars: { idx: 1, y: 146, icon: "\U000F04B9", name: "Salon" } }
                 - !include { file: light_sel_btn.yaml, vars: { idx: 2, y: 242, icon: "\U000F1051", name: "LEDs" } }
+                - !include { file: light_sel_btn.yaml, vars: { idx: 3, y: 290, icon: "\U000F1051", name: "" } }
+                - !include { file: light_sel_btn.yaml, vars: { idx: 4, y: 350, icon: "\U000F1051", name: "" } }
 
-                # On/Off de la lumière sélectionnée (icône recolorée par update_light_card_ui)
+                # On/Off de la lumière sélectionnée (icône recolorée par tab5_tuiles.cpp)
                 - button:
                     align: TOP_LEFT
                     x: 22
@@ -76,8 +81,9 @@ obj:
                       - label: { id: btn_light_power_icon, text: "\U000F0425", align: LEFT_MID, x: 28, text_font: mdi_font_56, text_color: color_text_dim }
                       - label: { text: "On / Off", align: LEFT_MID, x: 110, text_font: roboto_32_b }
 
-                # Tout éteindre — les lumières présentes d'un coup (coucher). Une lampe
-                # absente de la maison (zone, lot 5) n'est pas envoyée à HA.
+                # Tout éteindre — les lumières de la pièce d'un coup (coucher) : pR / eteindre
+                # (ADR-0023), lumieres / eteindre en mode héritage (le blueprint 3.x saute
+                # les lampes absentes).
                 - button:
                     align: TOP_LEFT
                     x: 22
@@ -88,7 +94,7 @@ obj:
                     pressed:
                       bg_opa: 30%
                     on_short_click:
-                      - script.execute: { id: tab5_action, emplacement: lumieres, commande: eteindre, valeur: "" }
+                      - lambda: 'popup_lumiere_tout_eteindre();'
                     widgets:
                       - label: { text: "\U000F0425", align: LEFT_MID, x: 28, text_font: mdi_font_32, text_color: color_error }
                       - label: { text: "Tout éteindre", align: LEFT_MID, x: 80, text_color: color_text_dim }

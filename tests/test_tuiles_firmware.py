@@ -1,0 +1,293 @@
+# -*- coding: utf-8 -*-
+"""Pièces et tuiles génériques (ADR-0023), côté firmware : Tab5/tab5_tuiles.cpp lit les
+définitions (action tab5_maj_tuiles) et les états (clés tRT de tab5_maj_emplacements), et
+envoie les commandes (événement esphome.tab5_action). Aucun compilateur ne compare ces
+chaînes au contrat ; ce fichier lit le C++ et le YAML, comme les autres tests statiques :
+
+- types, options, grammaire des clés, pièce de chaque page = tableaux de l'ADR ;
+- commandes émises (appui court / long par type, « Tout éteindre ») = tableau de l'ADR ;
+  commandes du mode héritage = celles de la 3.x, que le blueprint connaît toujours ;
+- noms filtrés aux glyphes des polices (&latin1 de tab5-styles.yaml), 24 octets ;
+- états routés avant la table des emplacements 3.x ; action tab5_maj_tuiles décrite et
+  son exemple conforme à la grammaire ; définitions en NVS sous la magie « TUI1 » ;
+- boutons des tuiles à leur position visuelle T (ordre inversé des horaires), widgets
+  posés par tab5-tuiles.yaml sans toucher à l'on_boot ;
+- version annoncée (sw_version) ≥ 3.2.0 : le blueprint parle alors le protocole des pièces."""
+import os
+import re
+import sys
+from pathlib import Path
+
+REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(REPO, "tools"))
+
+from check_tab5_code_rules import font_glyphs  # noqa: E402
+
+ADR = os.path.join(REPO, "docs", "decisions", "0023-rooms-generic-tiles.md")
+BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
+
+
+def _lire(*chemin):
+    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
+        return f.read()
+
+
+def _cpp():
+    return _lire("Tab5", "tab5_tuiles.cpp")
+
+
+def _fonction(source, nom):
+    """Corps d'une fonction C++ (de sa signature à l'accolade fermante en colonne 0)."""
+    m = re.search(rf"^[^\n;]*\b{nom}\([^;{{]*\)\s*{{\n(.*?)^}}", source, re.M | re.S)
+    assert m, f"fonction {nom} introuvable"
+    return m.group(1)
+
+
+def _constexpr(nom):
+    """Valeur d'une constante de tab5_tuiles.cpp (`nom` sans ses crochets)."""
+    m = re.search(rf"constexpr [^=;]*?\b{re.escape(nom)}\b\s*(?:\[[^\]]*\])?\s*= ([^;]+);", _cpp())
+    assert m, f"constexpr {nom} introuvable"
+    return m.group(1).strip()
+
+
+def _types_de_l_adr():
+    """Types du tableau « Type | HA domains | Tap | Long press » : {type: (tap, long)}."""
+    texte = _lire(ADR).split("| Type | HA domains |", 1)[1].split("\n\n", 1)[0]
+    types = {}
+    for ligne in texte.splitlines()[2:]:
+        c = [x.strip() for x in ligne.strip("|").split("|")]
+        types[c[0].strip("`")] = (c[2], c[3])
+    return types
+
+
+def _commandes_de_l_adr():
+    texte = _lire(ADR).split("| `action` | `valeur` | For |", 1)[1].split("\n\n", 1)[0]
+    commandes = set()
+    for ligne in texte.splitlines()[2:]:
+        premiere = ligne.strip("|").split("|")[0]
+        commandes.update(c for c in re.findall(r"`(\w+)`", premiere) if c != "pR")
+    return commandes
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Contrat : types, options, pièces, champs
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_types_egaux_a_la_grammaire_et_au_tableau_de_l_adr():
+    kTypes = re.findall(r'"(\w*)"', _constexpr("kTypes"))
+    assert kTypes[0] == "", "l'indice 0 est la tuile vide"
+    grammaire = re.search(r"^type\s+:= (.+)$", _lire(ADR), re.M).group(1)
+    assert kTypes[1:] == [t.strip() for t in grammaire.split("|")]
+    assert set(kTypes[1:]) == set(_types_de_l_adr())
+    enum = re.search(r"enum class Type : uint8_t \{([^}]*)\}", _cpp()).group(1)
+    assert [e.strip().lower() for e in enum.split(",")] == ["vide"] + kTypes[1:], "enum Type dans l'ordre de kTypes"
+
+
+def test_options_egales_a_l_adr_bit_par_lettre():
+    lettres = re.findall(r"`([a-z])` ", next(l for l in _lire(ADR).splitlines() if l.startswith("Options:")))
+    assert _constexpr("kLettresOptions") == '"' + "".join(lettres) + '"'
+    bits = dict(re.findall(r"OPT_([A-Z]) = (\d+)", _cpp()))
+    assert {k.lower(): int(v) for k, v in bits.items()} == {l: 1 << i for i, l in enumerate(lettres)}
+
+
+def test_piece_de_chaque_page_selon_l_adr():
+    texte = _lire(ADR).split("| Room `R` | Page |", 1)[1].split("\n\n", 1)[0]
+    page_de = {}
+    for ligne in texte.splitlines()[2:]:
+        r, p = (int(x) for x in re.findall(r"^\|\s*(\d)\s*\|\s*(\d)\s*\|", ligne.strip())[0])
+        page_de[r] = p
+    kPieceDePage = [int(x) for x in re.findall(r"\d", _constexpr("kPieceDePage"))]
+    assert kPieceDePage == [r for p in range(5) for r, pp in page_de.items() if pp == p]
+    # La tablette et le blueprint dans le même ordre que le rendu (tools/rendu/ecrans.py).
+    assert "PAGE_DE_LA_PIECE" in _lire("tools", "rendu", "ecrans.py")
+
+
+def test_champs_gardes_selon_l_adr():
+    assert _constexpr("kNom") == "25", "nom : 24 octets au plus, zéro final compris"
+    assert _constexpr("kIcone") == "16", "code de palette : [a-z0-9_]{1,15}"
+    assert int(_constexpr("kComplement")) >= 8, "unité d'un cap : 7 octets au plus"
+    # Coupé sur une frontière de caractère : on n'ajoute un caractère que s'il tient entier.
+    assert "if (k + w >= cap) break;" in _fonction(_cpp(), "copier_texte")
+
+
+def test_noms_filtres_aux_glyphes_des_polices():
+    """Le filtre des noms (glyphe_disponible) = les glyphes &latin1 de roboto_32_b, la
+    police des onglets : un caractère gardé s'affiche, aucun affichable n'est jeté."""
+    table = [int(x, 16) for x in re.findall(r"0x([0-9A-F]{4})", _constexpr("kHorsLatin1"))]
+    garde = set(range(0x20, 0x7F)) | (set(range(0xA1, 0x100)) - {0xAD}) | set(table)
+    corps = _fonction(_cpp(), "glyphe_disponible")
+    assert "cp >= 0x20 && cp <= 0x7E" in corps and "cp >= 0xA1 && cp <= 0xFF" in corps and "0xAD" in corps
+    polices = font_glyphs(Path(REPO, "Tab5", "tab5-styles.yaml"))
+    assert {ord(c) for c in polices["roboto_32_b"]} == garde
+
+
+def test_magie_nvs_des_definitions():
+    assert int(_constexpr("kMagic"), 16) == int.from_bytes(b"TUI1", "big")
+    definir = _fonction(_cpp(), "tuiles_definir")
+    # Écrites seulement si elles changent, comparées octet par octet.
+    assert definir.index("memcmp") < definir.index("s_pref.save")
+    # Chargées là où les zones le sont (zones_apply_ui → tuiles_appliquer_ui → charger).
+    assert "tuiles_appliquer_ui();" in _fonction(_lire("Tab5", "tab5_zones.cpp"), "zones_apply_ui")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Commandes émises
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_commandes_par_type_egales_au_tableau_de_l_adr():
+    cpp = _cpp()
+    adr = _commandes_de_l_adr()
+    types = _types_de_l_adr()
+    appui = _fonction(cpp, "tuile_appui")
+    # Toute commande de tuile émise est dans le tableau « What the tablet sends ».
+    emises = set(re.findall(r'action = [^;]*?"(\w+)"', appui)) | set(re.findall(r'\? "(\w+)" : "(\w+)"', appui)[0])
+    emises |= set(re.findall(r'return "(\w+)"', _fonction(cpp, "vol_appui")))
+    emises |= set(re.findall(r'"(ouvrir|fermer|arreter)"', _fonction(cpp, "vol_appui_long")))
+    assert emises and emises <= adr, emises - adr
+    # lum / int / med : basculer, allumer avec l'option o ; act : lancer.
+    for t in ("lum", "int", "med"):
+        assert "`basculer`" in types[t][0]
+    assert '(d.options & OPT_O) ? "allumer" : "basculer"' in appui
+    assert "`lancer`" in types["act"][0] and 'action = "lancer";' in appui
+    # vol : en mouvement arrêter (pause), sinon le sens choisi par le titre (au départ,
+    # ouvert → fermer) ; long : l'autre (mise à jour du 28/09, retour de la 3.1).
+    assert all(f"`{c}`" in types["vol"][0] for c in ("arreter", "fermer", "ouvrir"))
+    vol = _fonction(cpp, "vol_appui")
+    assert 'if (vol_mouvement(e.brut)) return "arreter";' in vol
+    assert 'return vol_sens(e) == SENS_FERMER ? "fermer" : "ouvrir";' in vol
+    assert 'return vol_sens(e) == SENS_FERMER ? "ouvrir" : "fermer";' in _fonction(cpp, "vol_appui_long")
+    assert 'return est(e.brut, "open") ? SENS_FERMER : SENS_OUVRIR;' in _fonction(cpp, "vol_sens")
+    # Le titre de chaque tuile (jours, heures, cartes HA) bascule le sens.
+    titres = _fonction(cpp, "tuiles_brancher_titres")
+    assert "u.jour_titre[t], u.heure_titre[t], u.carte_nom[t]" in titres and "LV_EVENT_SHORT_CLICKED" in titres
+    # cap / bin : lecture seule (aucun bouton) ; cli : popup avec m ; med : télécommande avec t.
+    agit = _fonction(cpp, "type_agit")
+    assert "case Type::CLI: return (options & OPT_M) != 0;" in agit
+    assert "default: return false;" in agit and "OPT_R" in agit
+    assert "if (d.options & OPT_T) ouvrir_popup(g_tuiles_ui.popup_tv);" in appui
+    # Option k : un second appui dans les 3 s.
+    assert "kConfirmationMs = 3000" in cpp and "OPT_K" in appui
+
+
+def test_tout_eteindre_de_la_piece():
+    assert "pR` + `eteindre`" in _lire(ADR)
+    corps = _fonction(_cpp(), "popup_lumiere_tout_eteindre")
+    assert "{'p', static_cast<char>('0' + s_pl.piece), '\\0'}" in corps and 'envoyer(cle, "eteindre")' in corps
+    assert "popup_lumiere_tout_eteindre();" in _lire("Tab5", "ui_components", "light_popup.yaml")
+
+
+def test_cles_des_commandes_de_tuile():
+    cpp = _cpp()
+    assert "{'t', static_cast<char>('0' + r), static_cast<char>('0' + t), '\\0'}" in _fonction(cpp, "envoyer_tuile")
+    # L'événement esphome.tab5_action du script tab5_action, emplacement / action / valeur.
+    tuiles_yaml = _lire("Tab5", "tab5-tuiles.yaml")
+    assert "id(tab5_action).execute(std::string(e), std::string(a), std::string(v));" in tuiles_yaml
+    scripts = _lire("Tab5", "tab5-scripts.yaml").split("- id: tab5_action", 1)[1].split("- id:", 1)[0]
+    assert re.findall(r"^\s+(\w+): string$", scripts, re.M) == ["emplacement", "commande", "valeur"]
+
+
+def test_commandes_du_mode_heritage_connues_du_blueprint():
+    """Tant qu'aucune définition n'est arrivée, les tuiles envoient les commandes 3.x :
+    le blueprint (3.x ou 3.2) doit toujours avoir leur branche."""
+    cpp = _cpp()
+    paires = set(re.findall(r'envoyer\("(\w+)", "(\w+)"\)', cpp))
+    paires |= {(l, "basculer") for l in re.findall(r'"(lumiere_\d)"', _constexpr("kHeritageLumieres"))}
+    assert paires == {("pc", "basculer"), ("lumieres", "eteindre"), ("lumiere_1", "basculer"),
+                      ("lumiere_2", "basculer"), ("lumiere_3", "basculer")}
+    bp = _lire(BLUEPRINT)
+    for emp, cmd in paires:
+        assert f"'{cmd}'" in bp, cmd
+        assert f"emplacement == '{emp}'" in bp or (
+            emp.startswith("lumiere_") and "emplacement.startswith('lumiere_')" in bp), emp
+    # Le volet 3.x garde son script (volet / arreter, ouvrir, fermer, tab5-scripts.yaml).
+    assert "u.volet_tap = []() { id(tab5_volet_tap).execute(); };" in _lire("Tab5", "tab5-tuiles.yaml")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Protocole : action, routage, version
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _action(nom):
+    api = _lire("Tab5", "tab5-api-logic.yaml")
+    return api.split(f"- service: {nom}\n", 1)[1].split("\n    - service:", 1)[0].split("\nprovisioning:", 1)[0]
+
+
+def test_action_tab5_maj_tuiles_et_son_exemple():
+    bloc = _action("tab5_maj_tuiles")
+    assert "tuiles_definir(payload);" in bloc
+    exemple = re.search(r'example: "([^"]+)"', bloc).group(1)
+    types = set(_types_de_l_adr())
+    lettres = set("dcoktrm")
+    for entree in filter(None, exemple.split(";")):
+        champs = entree.split("|")
+        if re.fullmatch(r"p[0-4]", champs[0]):
+            assert len(champs) == 2, entree
+            continue
+        assert re.fullmatch(r"t[0-4][0-4]", champs[0]) and len(champs) == 6, entree
+        assert champs[1] in types and re.fullmatch(r"[a-z0-9_]{0,15}", champs[2]), entree
+        assert set(champs[3]) <= lettres, entree
+
+
+def test_etats_routes_avant_les_emplacements_3x():
+    corps = _fonction(_lire("Tab5", "tab5_zones.cpp"), "emplacements_appliquer")
+    assert corps.index("tuiles_etat_recu(") < corps.index("for (size_t i = 0; i < n; i++)")
+    recu = _fonction(_cpp(), "tuiles_etat_recu")
+    # « tRT » : trois caractères, R et T de 0 à 4 ; puis état | valeur | couleur (6 hex).
+    assert "n_cle != 3 || cle[0] != 't'" in recu and "decouper(reste, n_reste, f, 3)" in recu
+    assert "f[2].n == 6" in recu
+    # Découpage champ par champ, champs vides compris (pas de strtok).
+    assert "strtok" not in _cpp()
+
+
+def test_version_annoncee_au_blueprint():
+    """Le blueprint lit sw_version : à partir de 3.2.0, il envoie tab5_maj_tuiles."""
+    version = re.search(r"default\('([^']+)'\)", _lire("tab5-ha-hmi.yaml").split("project:", 1)[1]).group(1)
+    rendu = re.search(r"^\s+version: (\S+)$", _lire("tab5-rendu-host.yaml"), re.M).group(1)
+    for v in (version, rendu):
+        assert tuple(int(x) for x in re.match(r"(\d+)\.(\d+)\.(\d+)", v).groups()) >= (3, 2, 0), v
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Écran : boutons, widgets, mode HA
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_boutons_des_tuiles_a_leur_position_visuelle():
+    horaires = _lire("Tab5", "ui_components", "forecast_hourly.yaml")
+    inclus = re.findall(r'idx: "(\d)", tuile: "(\d)"', horaires)
+    assert len(inclus) == 5 and all(int(t) == 4 - int(i) for i, t in inclus), "tuile T = objet h(4−T)"
+    carte = _lire("Tab5", "ui_components", "forecast_hour_card.yaml")
+    assert "tuile_appui(${tuile}, false);" in carte and "tuile_appui(${tuile}, true);" in carte
+    for fichier in ("forecast_daily.yaml", "switches_card.yaml"):
+        texte = _lire("Tab5", "ui_components", fichier)
+        assert re.findall(r"tuile_appui\((\d), false\)", texte) == list("01234"), fichier
+        assert re.findall(r"tuile_appui\((\d), true\)", texte) == list("01234"), fichier
+    # Plus aucune commande 3.x écrite en dur sur une tuile : tout passe par tuile_appui().
+    assert "id: tab5_action" not in _lire("Tab5", "ui_components", "forecast_daily.yaml")
+    assert "id: tab5_action" not in _lire("Tab5", "ui_components", "switches_card.yaml")
+
+
+def test_widgets_poses_sans_toucher_a_l_on_boot():
+    tuiles = _lire("Tab5", "tab5-tuiles.yaml")
+    for t in range(5):
+        assert f"u.heure_g[{t}] = id(icon_card_h{4 - t}_g);" in tuiles
+        assert f"u.heure_bouton[{t}] = id(btn_h{4 - t}_action);" in tuiles
+        assert f"u.carte_nom[{t}] = id(lbl_sw{t}_title);" in tuiles
+        assert f"u.lum_sel[{t}] = id(btn_light_sel_{t});" in tuiles
+    zones = _lire("Tab5", "tab5-zones.yaml").split("- id: tab5_zones_apply", 1)[1]
+    assert zones.index("script.execute: tab5_tuiles_ui") < zones.index("zones_apply_ui();")
+    on_boot = _lire("tab5-ha-hmi.yaml").split("  on_boot:", 1)[1].split("\npackages:", 1)[0]
+    assert "tuile" not in on_boot and "ha_mode" not in on_boot
+    assert "tab5_tuiles: !include Tab5/tab5-tuiles.yaml" in _lire("tab5-ha-hmi.yaml")
+
+
+def test_mode_ha_seule_source_et_swipe_par_piece():
+    assert "show_switches" not in _lire("Tab5", "tab5-globals.yaml").split("globals:", 1)[1].split("#", 1)[0]
+    central = _lire("Tab5", "tab5_central.cpp")
+    swipe = _fonction(central, "handle_swipe_gesture")
+    # En mode HA, le swipe change de pièce et ne passe jamais par apply_forecast_page
+    # (qui réaffichait le calque météo sous les cartes).
+    assert swipe.index("if (ctx.ha_mode)") < swipe.index("apply_forecast_page(")
+    assert "!ctx.ha_mode" in _fonction(central, "rotator_owns_card")
+    assert "if (g_central_ctx.ha_mode) return;" in _lire("Tab5", "tab5-scripts.yaml")
+    assert "if (i == 1) tuiles_mode_ha(false);" in _lire("Tab5", "tab5-ha-controls.yaml")
+    assert "tuiles_mode_ha(!g_central_ctx.ha_mode);" in _lire("Tab5", "tab5-lvgl.yaml")

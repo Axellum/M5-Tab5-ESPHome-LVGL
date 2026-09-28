@@ -7,6 +7,9 @@
 #       sorti de tab5-scripts.yaml le 25/09/2026 (audit, lot 8c), contenu inchangé.
 #       La grille est calculée localement (cal_render_month, tab5_calendar.cpp) ;
 #       HA n'enrichit qu'à la demande (script.tab5_calendrier_mois / _jour).
+#       Depuis l'ADR-0025, la tablette le demande par événement
+#       (esphome.tab5_calendrier_mois / _jour) : packages/tab5_evenements.yaml lance
+#       le script, qui répond comme avant (tab5_maj_calendrier_mois / _jour).
 #       Une demande de mois = tab5_cal_request ; « mois ± 1 » = cal_shift_month()
 #       (tab5_calendar.cpp) — ne pas recopier l'appel ni le calcul (lot 7.3).
 #       Chargé APRÈS tab5_lvgl (références aux widgets du popup).
@@ -35,8 +38,9 @@ script:
           animate_popup_open(id(calendar_popup));
       - script.execute: tab5_cal_render
 
-  # Demande un mois à HA (script.tab5_calendrier_mois, qui répond par le service
-  # tab5_maj_calendrier_mois). SEUL envoi de cette requête : avant le lot 7.3 de
+  # Demande un mois à HA (événement esphome.tab5_calendrier_mois → script
+  # tab5_calendrier_mois, qui répond par le service tab5_maj_calendrier_mois).
+  # SEUL envoi de cette requête : avant le lot 7.3 de
   # l'audit (26/09/2026), l'appel et son calcul M±1 étaient recopiés cinq fois
   # dans ce fichier. Appelé depuis les lambdas par id(tab5_cal_request).execute(a, m).
   # `parallel` : chaque demande va au bout (aucun délai), comme l'action en
@@ -47,8 +51,8 @@ script:
       annee: int
       mois: int
     then:
-      - homeassistant.service:
-          service: script.tab5_calendrier_mois
+      - homeassistant.event:
+          event: esphome.tab5_calendrier_mois
           data:
             annee: !lambda 'return to_string(annee);'
             mois: !lambda 'return to_string(mois);'
@@ -169,7 +173,9 @@ script:
               sscanf(id(cal_detail_date).c_str(), "%d-%d-%d", &y, &m, &d);
               return !cal_day_has_embedded_detail(y, m, d);
           then:
-            - homeassistant.service:
-                service: script.tab5_calendrier_jour
+            # Événement (ADR-0025) → script.tab5_calendrier_jour, qui répond par
+            # tab5_maj_calendrier_jour.
+            - homeassistant.event:
+                event: esphome.tab5_calendrier_jour
                 data:
                   date: !lambda 'return id(cal_detail_date);'

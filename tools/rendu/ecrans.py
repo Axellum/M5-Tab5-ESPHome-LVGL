@@ -6,7 +6,9 @@ rendu (Toucher, Glisser : coordonnées LOGIQUES, celles des captures PNG, paysag
 1280×720, portrait 720×1280 dans Neon Apron), ou select HA « Aller à l'écran » (Aller),
 ou une poussée de HA (Service). tools/rendu/capturer.py joue les étapes, capture, joue
 `fermer` puis revient à l'accueil par « Aller à l'écran » → Accueil, qui referme
-fenêtres, sous-fenêtres et jeu en cours.
+fenêtres, sous-fenêtres et jeu en cours. Ce retour ne remet ni la page des prévisions
+ni, avant la 3.2, le mode HA : un écran qui les change les rétablit dans `fermer`
+(page 2, mode météo ; tests/test_rendu_ecrans.py le vérifie).
 
 Les coordonnées viennent des captures et des positions déclarées dans Tab5/*.yaml,
 Tab5/ui_components/*.yaml et les *_game.cpp (inventaire du 27/09/2026). Si la mise en
@@ -23,7 +25,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
-from scenarios import SCENES, build_alerte_payload, code_pluie  # noqa: E402
+from scenarios import PAGE_DE_LA_PIECE, PIECES, SCENES, build_alerte_payload, code_pluie  # noqa: E402
 
 
 @dataclass(frozen=True)
@@ -151,17 +153,54 @@ def _panneau(n: int) -> Service:
 HORLOGE = (640, 105)          # court : Réveil · long : Calendrier
 MICRO = (206, 145)            # long : Assistant vocal
 DOMO, DISCU = (72, 150), (340, 150)
+# Rangée du haut avec la TV : le rendu pousse une maison complète (capturer.py, aucune
+# zone absente). Sans TV, HA et Sys glisseraient d'une colonne (zones_apply_ui).
+# tests/test_rendu_ecrans.py les compare aux boutons de Tab5/tab5-lvgl.yaml.
 BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
 POTS = (640, 270)             # long : Plantes
 SERRE = (1172, 158)           # court : Arcade
 CONSIGNE_CLIM = (1061, 251)   # court : Climatisation
 TUILE_J1_TEMP = (390, 684)    # court : planning de ce jour, 6 s
-TUILES = {"chambre": (640, 572), "salon": (890, 572)}  # long : Lumières
+# Long : Lumières. Avec les pièces (ADR-0023), les lampes T2 et T3 de la pièce de
+# l'accueil (tools/demo/scenarios.py) : le popup liste les lumières de la pièce.
+TUILES = {"chambre": (640, 572), "salon": (890, 572)}
 
-# Gestes sur les prévisions : départ et arrivée entre deux tuiles, pas sur un bouton
-# (un bouton garde l'appui et se déclencherait au relâché).
+# Gestes sur les prévisions (mode météo) : départ et arrivée entre deux tuiles, pas sur
+# un bouton (un bouton garde l'appui et se déclencherait au relâché).
 VERS_LA_GAUCHE = Glisser(1015, 520, 265, 520)   # page 2 → 3 → 4 (journalières)
 VERS_LA_DROITE = Glisser(265, 520, 1015, 520)   # page 2 → 1 → 0 (horaires)
+# En mode HA, les cartes de la pièce sont centrées (formule des zones, ADR-0018 et
+# ADR-0023) : leur place dépend du nombre d'appareils, et à quatre cartes x = 265 tombe
+# sur le bouton de la première. Seuls les bords (x < 25, x > 1255) restent libres
+# quelle que soit la pièce.
+HA_VERS_LA_GAUCHE = Glisser(1265, 520, 15, 520)   # pièce suivante (page + 1)
+HA_VERS_LA_DROITE = Glisser(15, 520, 1265, 520)   # pièce précédente (page − 1)
+
+
+def ecrans_des_pieces(pieces: dict) -> tuple:
+    """Le mode HA sur chaque pièce de la démo (ADR-0023) : « HA » depuis l'accueil (pièce
+    0, page 2), puis un geste par pièce occupée jusqu'à la bonne (le mode HA saute les
+    pages sans appareil ; la pièce 0 doit en avoir, sinon « HA » sauterait à la plus
+    proche). Retour : « HA » (la météo de la même page), puis les gestes météo jusqu'à
+    la page 2, qui passent par toutes les pages : on ne compte pas sur « Aller à
+    l'écran → Accueil » pour quitter le mode HA. Nom : « accueil-ha-piece-n », n = R + 1
+    comme les pièces du blueprint."""
+    occupees = sorted(PAGE_DE_LA_PIECE[r] for r, p in pieces.items() if p.tuiles)
+    assert PAGE_DE_LA_PIECE[0] in occupees, "la pièce de l'accueil (R = 0) doit avoir un appareil"
+    ecrans = []
+    for r in sorted(pieces):
+        page = PAGE_DE_LA_PIECE[r]
+        if page not in occupees:
+            continue
+        if page >= 2:
+            aller = (HA_VERS_LA_GAUCHE,) * sum(1 for p in occupees if 2 < p <= page)
+            retour = (VERS_LA_DROITE,) * (page - 2)
+        else:
+            aller = (HA_VERS_LA_DROITE,) * sum(1 for p in occupees if page <= p < 2)
+            retour = (VERS_LA_GAUCHE,) * (2 - page)
+        ecrans.append(Ecran(f"accueil-ha-piece-{r + 1}", (Toucher(*BOUTON_HA),) + aller,
+                            (Toucher(*BOUTON_HA),) + retour))
+    return tuple(ecrans)
 
 REVEIL_TESTER = (550, 641)
 SONNERIE_ARRETER = (440, 540)
@@ -238,11 +277,15 @@ ROI_RETOUR = (_menu(311),)
 
 ECRANS: tuple[Ecran, ...] = (
     # --- Écran principal : variantes -----------------------------------------------
+    # Mode météo. Avec les pièces (ADR-0023), chaque page montre aussi, dans les épaules
+    # de ses tuiles, les appareils de sa pièce (tools/demo/scenarios.py, PIECES).
     Ecran("accueil-previsions-jours-2", (VERS_LA_GAUCHE,), (VERS_LA_DROITE,)),
     Ecran("accueil-previsions-jours-3", (VERS_LA_GAUCHE, VERS_LA_GAUCHE), (VERS_LA_DROITE, VERS_LA_DROITE)),
     Ecran("accueil-previsions-heures-1", (VERS_LA_DROITE,), (VERS_LA_GAUCHE,)),
     Ecran("accueil-previsions-heures-2", (VERS_LA_DROITE, VERS_LA_DROITE), (VERS_LA_GAUCHE, VERS_LA_GAUCHE)),
-    Ecran("accueil-interrupteurs", (Toucher(*BOUTON_HA),), (Toucher(*BOUTON_HA),)),
+    # Mode HA : les cartes de chaque pièce (remplace « accueil-interrupteurs », les cinq
+    # cartes fixes d'avant la 3.2, devenu « accueil-ha-piece-1 »).
+    *ecrans_des_pieces(PIECES),
     Ecran("accueil-mode-discussion", (Toucher(*DISCU),), (Toucher(*DOMO),)),
     Ecran("accueil-vigilance",
           (Service("tab5_maj_alerte_meteo_france", (("payload", VIGILANCE_ORANGE),)), _panneau(2)),
