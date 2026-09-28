@@ -2,13 +2,13 @@
 """Job « installation dans un HA neuf » (.github/workflows/installation-ha.yml) : ce qui se
 vérifie sans conteneur ni tablette.
 
-- preparer.py écrit une installation complète : configuration.yaml avec la ligne des
+- preparer_config.py écrit une installation complète : configuration.yaml avec la ligne des
   packages de docs/installation.md, TOUS les packages publics rendus sans qu'il reste un
   placeholder (placeholders_ci.yaml doit suivre les packages), le blueprint tel quel ;
-- les entrées données au blueprint par verifier.py en sont bien des entrées, et la
+- les entrées données au blueprint par verifier_installation.py en sont bien des entrées, et la
   chaîne « Zones masquées » attendue est celle que la tablette écrira ;
 - la tablette virtuelle porte le nom de la vraie (préfixe des actions des packages) ;
-- les fonctions pures de verifier.py (clé, traces, horodatages)."""
+- les fonctions pures de verifier_installation.py (clé, traces, horodatages)."""
 import os
 import re
 import sys
@@ -18,8 +18,8 @@ import yaml
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(REPO, "tools", "installation_ha"))
 
-import preparer  # noqa: E402
-import verifier  # noqa: E402
+import preparer_config as preparer  # noqa: E402
+import verifier_installation as verifier  # noqa: E402
 
 
 def _lire(*chemin):
@@ -73,7 +73,7 @@ def test_chaque_secret_des_packages_est_dans_secrets_yaml(tmp_path):
     for fichier in (sortie / "packages").glob("*.yaml"):
         for ligne in fichier.read_text(encoding="utf-8").splitlines():
             demandes.update(re.findall(r"!secret\s+(\w+)", ligne.split("#", 1)[0]))
-    assert demandes, "plus aucun !secret : retirer SECRETS de preparer.py"
+    assert demandes, "plus aucun !secret : retirer SECRETS de preparer_config.py"
     assert demandes <= set(secrets), demandes - set(secrets)
 
 

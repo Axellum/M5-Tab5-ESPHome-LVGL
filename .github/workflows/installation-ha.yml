@@ -4,10 +4,10 @@ name: Installation dans un HA neuf
 # un Home Assistant NEUF en conteneur, la tablette virtuelle (le rendu hors tablette,
 # tab5-rendu-host.yaml, compilé pour la plateforme `host` sous le nom de la vraie), puis
 # l'installation complète et des vérifications qui font échouer le job :
-#   - tools/installation_ha/preparer.py : config/ d'une installation neuve + TOUS les
+#   - tools/installation_ha/preparer_config.py : config/ d'une installation neuve + TOUS les
 #     packages rendus avec des valeurs factices (placeholders_ci.yaml), le blueprint,
 #     des données de test (demo, donnees_test.yaml) ; check_config de HA dessus ;
-#   - tools/installation_ha/verifier.py : compte (onboarding), agenda, automatisation du
+#   - tools/installation_ha/verifier_installation.py : compte (onboarding), agenda, automatisation du
 #     blueprint, ajout de la tablette (clé API donnée par HA), puis clé gardée et refus
 #     de la clé nulle, esphome.tab5_connected après la clé, traces sans erreur, zones
 #     masquées, capture d'écran demandée par HA, et tout ça encore après un redémarrage
@@ -93,7 +93,7 @@ jobs:
           esphome -s rendu_nom tab5-ha-hmi -s rendu_nom_affiche "M5Stack Tab5 Home Assistant HMI" \
             compile tab5-rendu-host.yaml
       - name: Configuration du Home Assistant neuf (packages rendus, blueprint, données de test)
-        run: python tools/installation_ha/preparer.py --sortie ha-config
+        run: python tools/installation_ha/preparer_config.py --sortie ha-config
       - name: check_config de Home Assistant
         run: |
           docker pull -q "$HA_IMAGE"
@@ -107,7 +107,7 @@ jobs:
         run: |
           prog=$(find .esphome/build/tab5-ha-hmi -name program -type f | head -n 1)
           echo "Programme : $prog"
-          python tools/installation_ha/verifier.py --programme "$prog" \
+          python tools/installation_ha/verifier_installation.py --programme "$prog" \
             --prefs "$RUNNER_TEMP/prefs" --captures captures --conteneur homeassistant
       - name: Journaux (Home Assistant, tablette)
         if: always()

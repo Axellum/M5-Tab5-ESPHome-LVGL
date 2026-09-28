@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""tools/installation_ha/preparer.py — Le dossier config/ d'un Home Assistant neuf, installé
+"""tools/installation_ha/preparer_config.py — Le dossier config/ d'un Home Assistant neuf, installé
 comme le fait un nouvel utilisateur (docs/installation.md, étape 4).
 
 [AI-CONTEXT]
 @role Première moitié du job « installation dans un HA neuf »
       (.github/workflows/installation-ha.yml) : écrit, sans rien lancer, le dossier que le
-      conteneur Home Assistant monte en /config. La seconde moitié (verifier.py) crée le
+      conteneur Home Assistant monte en /config. La seconde moitié (verifier_installation.py) crée le
       compte, ajoute la tablette virtuelle et vérifie.
 @contenu
       - configuration.yaml : celui d'une installation neuve + la ligne des packages
@@ -22,7 +22,7 @@ comme le fait un nouvel utilisateur (docs/installation.md, étape 4).
       dossier temporaire. Les snippets/ ne sont pas copiés : HA ne les charge pas.
 
 Usage :
-    python tools/installation_ha/preparer.py --sortie ha-config
+    python tools/installation_ha/preparer_config.py --sortie ha-config
 """
 from __future__ import annotations
 

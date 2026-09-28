@@ -5,7 +5,7 @@
 #       dans un HA neuf » (.github/workflows/installation-ha.yml). Même format que
 #       HomeAssistant_Config/placeholders.example.yaml, lu par
 #       tools/render_ha_config.py (--map). Aucune valeur réelle : ce sont les entités
-#       de test de donnees_test.yaml, de l'intégration demo et de verifier.py.
+#       de test de donnees_test.yaml, de l'intégration demo et de verifier_installation.py.
 # @ai_instruction Un placeholder ajouté dans un package doit l'être ici aussi :
 #       tests/test_installation_ha.py rend les packages avec ce fichier et échoue s'il
 #       reste un « VOTRE_ ».
@@ -25,4 +25,4 @@ VOTRE_TELEPHONE: telephone_ci                      # device_tracker absent
 VOTRE_CAPTEUR_PRESENCE: presence_ci                # binary_sensor absent
 
 # --- Calendriers ---
-VOTRE_EMAIL_gmail_com: travail_ci                  # calendar.travail_ci (Calendrier local créé par verifier.py)
+VOTRE_EMAIL_gmail_com: travail_ci                  # calendar.travail_ci (Calendrier local créé par verifier_installation.py)

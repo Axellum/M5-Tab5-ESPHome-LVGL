@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""tools/installation_ha/verifier.py — Installer le Tab5 dans un Home Assistant neuf, sans
+"""tools/installation_ha/verifier_installation.py — Installer le Tab5 dans un Home Assistant neuf, sans
 matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
 
 [AI-CONTEXT]
 @role Seconde moitié du job « installation dans un HA neuf »
       (.github/workflows/installation-ha.yml). Le conteneur Home Assistant tourne déjà sur
-      le dossier écrit par preparer.py ; ce script lance la tablette virtuelle (le rendu
+      le dossier écrit par preparer_config.py ; ce script lance la tablette virtuelle (le rendu
       hors tablette compilé sous le nom de la vraie, tab5-rendu-host.yaml), puis fait ce
       que docs/installation.md fait faire à la souris :
         1. créer le compte (onboarding), fuseau Europe/Paris ;
@@ -28,7 +28,7 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
       lève Echec.
 
 Usage (voir le workflow) :
-    python tools/installation_ha/verifier.py --programme .esphome/build/tab5-ha-hmi/.../program \\
+    python tools/installation_ha/verifier_installation.py --programme .esphome/build/tab5-ha-hmi/.../program \\
         --prefs "$RUNNER_TEMP/prefs" --captures captures --conteneur homeassistant
 """
 from __future__ import annotations
@@ -498,7 +498,7 @@ async def creer_automatisation(ha: HA, rapport: Rapport) -> None:
 
     await ha.post(f"/api/config/automation/config/{ID_AUTOMATISATION}", {
         "alias": "Tab5 — emplacements (CI)",
-        "description": "Créée par tools/installation_ha/verifier.py",
+        "description": "Créée par tools/installation_ha/verifier_installation.py",
         "use_blueprint": {"path": CHEMIN_BLUEPRINT, "input": entrees_blueprint()},
     })
     for _ in range(40):

@@ -4,7 +4,7 @@
 # @role configuration.yaml du Home Assistant NEUF du job « installation dans un HA
 #       neuf » (.github/workflows/installation-ha.yml) : celui qu'écrit Home Assistant
 #       à sa première installation, plus ce que docs/installation.md (étape 4) fait
-#       ajouter, et la source des données de test. Copié tel quel par preparer.py.
+#       ajouter, et la source des données de test. Copié tel quel par preparer_config.py.
 # @ai_instruction Rester au plus près du fichier d'un utilisateur : toute ligne ajoutée
 #       ici et absente de la documentation fausserait le test. Les données de test
 #       (demo, ci_donnees_test.yaml) sont signalées comme telles.
