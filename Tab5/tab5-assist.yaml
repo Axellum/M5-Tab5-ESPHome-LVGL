@@ -222,7 +222,11 @@ script:
           then:
             - script.execute: tab5_stop_model_release
 
-  # Interruption : coupe pipeline local + satellite HA + TTS (sans relancer l'écoute).
+  # Interruption : coupe le pipeline (voice_assistant.stop prévient HA, qui clôt la
+  # session du satellite) + TTS (sans relancer l'écoute). Plus d'appel à
+  # `assist_satellite.stop` : cette action n'existe pas dans HA (seulement announce,
+  # start_conversation, ask_question) ; chaque interruption écrivait « Action
+  # assist_satellite.stop not found » dans le journal de HA (vu le 28/09/2026).
   - id: tab5_vocal_interrupt
     mode: restart
     then:
@@ -233,10 +237,6 @@ script:
           id: va
       - media_player.stop:
           id: speaker_player
-      - homeassistant.service:
-          service: assist_satellite.stop
-          data:
-            entity_id: ${entity_tab5_satellite}
       - homeassistant.service:
           service: media_player.media_stop
           data:

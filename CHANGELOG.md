@@ -4,6 +4,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — Voix : plus d'appel à une action inexistante de HA en interrompant
+
+- `Tab5/tab5-assist.yaml`, `tab5_vocal_interrupt` (taper le micro pendant une réponse,
+  Stop vocal, réveil) : le firmware appelait `assist_satellite.stop`, qui n'existe pas
+  dans HA (le domaine n'a que `announce`, `start_conversation`, `ask_question`). Chaque
+  interruption écrivait « Action assist_satellite.stop not found » dans le journal de
+  HA (vu le 28/09 à 12:27). L'appel est retiré : `voice_assistant.stop` arrête déjà le
+  pipeline, et HA clôt la session du satellite de lui-même.
+- Test `tests/test_actions_ha.py` : chaque action HA appelée par le firmware est une
+  action vérifiée dans HA 2026.9 ou un script défini par un package du projet.
+- Docs : `screens.md` et `voice_assistant.md` (EN/FR) ne citent plus cette action.
+
 ### 2026-09-28 — HA attend la tablette : les défauts trouvés par le test « HA neuf »
 
 Quatre défauts relevés par le nouveau test d'installation dans un Home Assistant neuf
