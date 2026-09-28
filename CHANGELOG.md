@@ -4,6 +4,30 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — Pièces : la palette des icônes des tuiles (ADR-0023)
+
+- **`Tab5/tuiles_icones.yaml`, source unique** : 51 codes (lumières, pièces, appareils,
+  ouvrants, capteurs, actions), chacun avec son glyphe éteint / allumé (variantes -on,
+  -off, -open, fermé / ouvert de MDI quand elles existent, sinon un seul glyphe), les
+  303 noms `mdi:` qu'il représente et ses défauts : un par type de tuile (lum, int, vol,
+  med, act, cap, bin, cli) et par domaine ou « domaine.classe » HA (`cover.garage`,
+  `binary_sensor.door`, `sensor.temperature`…). `lit`, `canape`, `led`, `ordinateur` et
+  `volet` gardent les glyphes de la 3.1.
+- **Aucun point de code deviné** : le TTF du projet est Material Design Icons 7.4.47
+  (mêmes 7 447 points de code que le `meta.json` de `@mdi/svg@7.4.47`) ; chaque couple
+  nom ↔ point de code est vérifié contre ce `meta.json` (`--meta`) et contre le cmap du
+  TTF (test, hors ligne).
+- **`tools/gen_tuiles_icones.py`** écrit `Tab5/tab5_tuiles_icones.h` (même API
+  `tuile_icone(code, actif, type)`), les 80 glyphes dans `mdi_font_70`, `mdi_font_45` et
+  `mdi_font_32` (entre `# >>> tuiles` et `# <<< tuiles`, sans ceux que la police liste
+  déjà), `icones_mdi` / `icones_defaut` du blueprint (entre ses marqueurs) et le tableau
+  de `docs/tiles_icons.md` ; `--check` échoue si une partie est périmée, sans rien écrire.
+  Les fins de ligne de chaque fichier sont gardées (même résultat sous Windows et Linux).
+- Règle 7 : la table est rattachée aux cartes du mode HA (`icon_sw?`), aux épaules des
+  tuiles (`icon_card_*`) et au sélecteur du popup lumière (`icon_light_sel_*`).
+- Doc `docs/tiles_icons.md` (EN + FR) : la palette, comment l'icône est choisie, comment
+  en demander une. Tests `tests/test_tuiles_icones.py`.
+
 ### 2026-09-28 — Site : une release n'est retenue qu'avec ses binaires (suite de #221)
 
 - `pages.py choisir` exigeait les trois manifestes, sans leurs binaires. Les neuf
