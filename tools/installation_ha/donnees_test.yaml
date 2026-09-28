@@ -1,0 +1,107 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tools/installation_ha/donnees_test.yaml
+# @role Package Home Assistant de DONNÉES DE TEST du job « installation dans un HA
+#       neuf » (.github/workflows/installation-ha.yml), copié par preparer_config.py dans
+#       config/packages/ci_donnees_test.yaml. Il remplace les intégrations qu'un
+#       utilisateur aurait (Météo-France, capteurs de plantes…) par des modèles à
+#       valeurs FIXES : la capture d'écran se relit d'un run à l'autre.
+# @contrat Les noms donnent les entity_id attendus par placeholders_ci.yaml
+#       (VOTRE_VILLE = ville_ci, VOTRE_DEPARTEMENT = 99) et par le blueprint
+#       (verifier_installation.py, EMPLACEMENTS) :
+#         weather.ville_ci, sensor.ville_ci_next_rain, sensor.99_weather_alert,
+#         sensor.serre_ci_temperature, sensor.pot_ci_1 à 3, sensor.telephone_ci_batterie.
+#       Lumières, clim, volet, TV, télécommande et température de la pièce viennent de
+#       l'intégration demo (tools/installation_ha/configuration.yaml).
+# @ai_instruction Les formes imitent celles des vraies intégrations lues par les
+#       packages (packages/tab5_meteo_sources.yaml) : état horodaté + attributs
+#       `forecast_time_ref` et `1_hour_forecast` pour la pluie de Météo-France,
+#       niveau + un attribut par phénomène pour sa vigilance.
+# ============================================================================
+
+template:
+  # Météo du moment et prévisions (15 jours, 24 heures), comme une entité weather.*
+  # qui sait fournir les deux types (supported_features 1 + 2).
+  - weather:
+      - name: "Ville CI"
+        unique_id: ci_ville
+        condition: "partlycloudy"
+        temperature: "{{ 18.5 }}"
+        temperature_unit: "°C"
+        humidity: "{{ 62 }}"
+        uv_index: "{{ 4 }}"
+        forecast_daily: >-
+          {%- set conds = ['sunny', 'partlycloudy', 'rainy', 'cloudy', 'lightning-rainy', 'snowy', 'fog'] -%}
+          {%- set ns = namespace(l=[]) -%}
+          {%- for i in range(15) -%}
+            {%- set ns.l = ns.l + [{'datetime': (today_at('12:00') + timedelta(days=i)).isoformat(), 'condition': conds[i % 7], 'temperature': 20 + i % 6, 'templow': 9 + i % 4, 'precipitation': (i % 3) * 1.5}] -%}
+          {%- endfor -%}
+          {{ ns.l }}
+        forecast_hourly: >-
+          {%- set conds = ['sunny', 'partlycloudy', 'cloudy', 'rainy'] -%}
+          {%- set h0 = now().replace(minute=0, second=0, microsecond=0) -%}
+          {%- set ns = namespace(l=[]) -%}
+          {%- for i in range(24) -%}
+            {%- set ns.l = ns.l + [{'datetime': (h0 + timedelta(hours=i)).isoformat(), 'condition': conds[(i // 3) % 4], 'temperature': 15 + (i % 8) * 0.5, 'precipitation': 0.4 if (i // 3) % 4 == 3 else 0}] -%}
+          {%- endfor -%}
+          {{ ns.l }}
+
+  # Pluie dans l'heure, forme de Météo-France (sensor.<ville>_next_rain) : pluie faible
+  # dans 20 minutes. Calculée une fois au démarrage (capteur à déclencheurs) : un modèle
+  # avec now() changerait chaque minute et relancerait la poussée complète à chaque fois.
+  - triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+    sensor:
+      - name: "Ville CI next rain"
+        unique_id: ci_ville_next_rain
+        device_class: timestamp
+        state: "{{ (now().replace(second=0, microsecond=0) + timedelta(minutes=20)).isoformat() }}"
+        attributes:
+          forecast_time_ref: "{{ now().replace(second=0, microsecond=0).isoformat() }}"
+          1_hour_forecast: >-
+            {{ {'0 min': 'Temps sec', '5 min': 'Temps sec', '10 min': 'Temps sec', '15 min': 'Temps sec', '20 min': 'Pluie faible', '25 min': 'Pluie modérée', '35 min': 'Pluie modérée', '45 min': 'Pluie faible', '55 min': 'Temps sec'} }}
+
+  - sensor:
+      # Vigilance, forme de Météo-France (sensor.<département>_weather_alert) : jaune orages.
+      - name: "99 Weather alert"
+        unique_id: ci_99_weather_alert
+        state: "Jaune"
+        attributes:
+          Vent violent: "Vert"
+          Inondation: "Vert"
+          Orages: "Jaune"
+          Pluie-inondation: "Vert"
+          Neige-verglas: "Vert"
+          Grand-froid: "Vert"
+          Vagues-submersion: "Vert"
+          Canicule: "Vert"
+          Avalanches: "Vert"
+      # Emplacements du blueprint que demo n'a pas.
+      - name: "Serre CI température"
+        unique_id: ci_serre_temperature
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: "{{ 23.4 }}"
+      - name: "Téléphone CI batterie"
+        unique_id: ci_telephone_batterie
+        device_class: battery
+        unit_of_measurement: "%"
+        state: "{{ 76 }}"
+      - name: "Pot CI 1"
+        unique_id: ci_pot_1
+        device_class: moisture
+        unit_of_measurement: "%"
+        state: "{{ 41 }}"
+      - name: "Pot CI 2"
+        unique_id: ci_pot_2
+        device_class: moisture
+        unit_of_measurement: "%"
+        state: "{{ 12 }}"
+      - name: "Pot CI 3"
+        unique_id: ci_pot_3
+        device_class: moisture
+        unit_of_measurement: "%"
+        state: "{{ 63 }}"

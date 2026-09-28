@@ -91,7 +91,7 @@ Everything on the Home Assistant side is a **package** in `HomeAssistant_Config/
 1. Enable packages in `configuration.yaml`: `homeassistant: packages: !include_dir_named packages`.
 2. Copy `HomeAssistant_Config/placeholders.example.yaml` to `placeholders.yaml` (gitignored) and fill in your real entity IDs (`VOTRE_VILLE`, `VOTRE_DEPARTEMENT`, `VOTRE_EMAIL_gmail_com`…).
 3. Render: `python tools/render_ha_config.py` writes the deployable copies to `HomeAssistant_Config/rendered/`.
-4. Copy `rendered/packages/*.yaml` into your HA `config/packages/`, and `rendered/custom_templates/` into `config/custom_templates/`.
+4. Copy `rendered/packages/*.yaml` into your HA `config/packages/`, and `rendered/custom_templates/` into `config/custom_templates/`. `packages/tab5_tv.yaml` (Samsung TV apps) needs a `tab5_tv_app_url` line in HA's `secrets.yaml` (see the top of that file): without it, Home Assistant rejects its **whole** configuration. No Samsung TV? Don't copy that package.
 5. Reload Automations, Scripts, Template entities, Input booleans and Input texts (or restart HA).
 6. **Choose your devices**: *Settings → Automations & scenes → Blueprints → Import blueprint*, paste
    `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml`,
@@ -309,7 +309,7 @@ Tout le côté Home Assistant est en **packages**, dans `HomeAssistant_Config/pa
 1. Activez les packages dans `configuration.yaml` : `homeassistant: packages: !include_dir_named packages`.
 2. Copiez `HomeAssistant_Config/placeholders.example.yaml` vers `placeholders.yaml` (gitignoré) et renseignez vos vrais entity IDs (`VOTRE_VILLE`, `VOTRE_DEPARTEMENT`, `VOTRE_EMAIL_gmail_com`…).
 3. Rendez : `python tools/render_ha_config.py` écrit les copies déployables dans `HomeAssistant_Config/rendered/`.
-4. Copiez `rendered/packages/*.yaml` dans le `config/packages/` de HA, et `rendered/custom_templates/` dans `config/custom_templates/`.
+4. Copiez `rendered/packages/*.yaml` dans le `config/packages/` de HA, et `rendered/custom_templates/` dans `config/custom_templates/`. `packages/tab5_tv.yaml` (applications d'une TV Samsung) demande une ligne `tab5_tv_app_url` dans le `secrets.yaml` de HA (voir l'en-tête de ce fichier) : sans elle, Home Assistant refuse **toute** sa configuration. Pas de TV Samsung ? Ne copiez pas ce package.
 5. Rechargez Automatisations, Scripts, Entités de template, Entrées booléennes et Entrées de texte (ou redémarrez HA).
 6. **Choisissez vos appareils** : *Paramètres → Automatisations et scènes → Blueprints → Importer un blueprint*, collez
    `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml`,

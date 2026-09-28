@@ -114,6 +114,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_meme_code.py` | `tests/` | Unitaire | Même code qu'une image publiée (`tools/publication/meme_code.py`) : signature SBv2 et heure de compilation ignorées, taille différente ou code déplacé refusés, image non signée refusée. |
 | `test_improv_serie.py` | `tests/` | Unitaire | Wi-Fi par Improv sur l'USB (`tools/improv_serie.py`, `migrer_vers_3.py --port`) : paquets conformes (en-tête, longueur, somme de contrôle, saut de ligne), lecture au milieu du journal, réglage réussi / réseau introuvable / tablette muette face à une fausse liaison série, mot de passe jamais affiché, `secrets.yaml` lu en YAML. |
 | `test_render_ha_config.py` | `tests/` | Unitaire | Rendu placeholders → valeurs et détection de fuite d'identifiants réels (`tools/render_ha_config.py`). |
+| `test_installation_ha.py` | `tests/` | Unitaire + contenu | Job « installation dans un HA neuf » sans conteneur : `preparer_config.py` écrit une installation complète (ligne des packages, tous les packages, blueprint identique), plus aucun `VOTRE_` après rendu avec `placeholders_ci.yaml`, chaque `!secret` des packages fourni, entrées du blueprint et « Zones masquées » attendues, tablette virtuelle au nom de la vraie, mêmes chemins sur `main` et en PR ; fonctions pures de `verifier_installation.py` (clé, traces, journal de HA). |
 | `test_guards.py` | `tests/` | Contenu | Joue les 6 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, registre, règles de code, salles Marble, niveaux Lode, comptes de la cartographie). |
 | `__init__.py` | `tests/` | — | Marqueur de package. |
 
@@ -132,6 +133,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | Fichier | Emplacement | Type | Rôle |
 |---|---|---|---|
 | `tools/demo/demo_pusher.py` | `tools/demo/` | Intégration (dry-run) | Valide chaque payload push contre le contrat firmware. |
+| `tools/installation_ha/` | `tools/installation_ha/` | Intégration (CI) | Installation dans un Home Assistant neuf, sans matériel (`.github/workflows/installation-ha.yml`) : `preparer_config.py` (dossier `config/` d'une installation neuve : `configuration.yaml`, packages rendus avec `placeholders_ci.yaml`, `donnees_test.yaml`, blueprint), `verifier_installation.py` (ordre « Sans compiler » : onboarding, ajout ESPHome de la tablette virtuelle, clé API, option « actions HA », automatisation du blueprint, redémarrage ; traces, zones, captures demandées par HA, journal de HA). |
 | `tools/verifier_secrets_config.py` | `tools/` | Outil | Analyse les fichiers suivis par git (`.yaml`, `.yml`, `.example`, `.jinja`, `.md`) pour détecter des secrets en clair. |
 | `tools/render_ha_config.py` | `tools/` | Outil | Rend les fichiers HA publics avec les identifiants réels (`rendered/`) ; `--check` = garde-fou de fuite. |
 | `tools/check_tab5_modal_chrome.py` | `tools/` | Garde-fou | ADR-0009 : chrome modal partagé sur chaque popup (rapatrié du workspace le 06/09/2026). |
@@ -179,6 +181,12 @@ python tools/demo/demo_pusher.py --dry-run
 │   │   ├── demo_pusher.py
 │   │   ├── requirements.txt
 │   │   └── scenarios.py
+│   ├── installation_ha/   (job « installation dans un HA neuf »)
+│   │   ├── configuration.yaml
+│   │   ├── donnees_test.yaml
+│   │   ├── placeholders_ci.yaml
+│   │   ├── preparer_config.py
+│   │   └── verifier_installation.py
 │   ├── test_go_engine.py
 │   ├── test_go_engine.cpp
 │   ├── test_alarm_clock.cpp
@@ -194,7 +202,8 @@ python tools/demo/demo_pusher.py --dry-run
 │   ├── render_ha_config.py
 │   └── verifier_secrets_config.py
 └── .github/workflows/
-    └── esphome-tab5.yml   (CI : jobs python + build + build-min, voir § 5)
+    ├── esphome-tab5.yml   (CI : jobs python + build + build-min, voir § 5)
+    └── installation-ha.yml   (installation dans un HA neuf, voir § 5)
 ```
 
 ---
@@ -204,4 +213,5 @@ python tools/demo/demo_pusher.py --dry-run
 - **Pas de suite de tests unitaires pour la HMI** : la logique LVGL (`tab5_*.cpp`) n'a pas de tests hôte. Seuls les moteurs de jeux (Go, échecs, dames) disposent de tests exécutables sur PC.
 - **Les tests Go/échecs/dames sont des miroirs Python** du C++ : toute modification du C++ doit être reflétée dans le miroir Python, sinon le test ne prouve plus rien. Exception : `test_go_engine.cpp` compile le vrai moteur Go (g++, en CI).
 - **CI GitHub Actions** (`.github/workflows/esphome-tab5.yml`, PR + push sur `main`) : job `python` (pre-commit, `pytest`, moteur Go C++, dry-run démo) ; job `build` (secrets factices + `esphome/build-action@v8.1.0`, image `latest` = canari amont voulu, ADR-0016, ccache conservé entre runs) seulement si `tab5-ha-hmi.yaml`, `Tab5/` (hors `.md`) ou le workflow changent ; job `build-min`, même compilation avec la version plancher lue dans `min_version:` (26/09/2026). `python`, `build` et `build-min` sont des checks requis de `main` ; `build` reste présent et passe en « skipped » sinon. Artefact `tab5-firmware` publié sur `main`.
+- **Installation dans un HA neuf** (`.github/workflows/installation-ha.yml`, 28/09/2026, ~3 min, non requis) : Home Assistant figé en conteneur (`HA_IMAGE`) + la tablette virtuelle (`tab5-rendu-host.yaml` compilé sous le nom `tab5-ha-hmi`), installés comme par un nouvel utilisateur (`tools/installation_ha/`) : tous les packages rendus et `check_config`, puis l'ordre « Sans compiler » du guide (onboarding, ajout ESPHome, option « actions HA », automatisation du blueprint) et un redémarrage de la tablette. Échoue si la clé API n'est pas donnée et gardée par HA, si la clé nulle ou le clair passent encore, si `esphome.tab5_connected` n'arrive pas après la clé, si une trace du blueprint ou de la poussée complète n'aboutit pas, si « Zones masquées » diffère, si la capture demandée par HA manque, si la clé ne survit pas au redémarrage, ou si le journal de HA a une erreur Tab5 après la connexion (hors « Not connected » pendant une déconnexion voulue, rapportée). Artefact `installation-ha` : deux captures (juste après l'automatisation du blueprint, puis après le redémarrage), journaux de HA et de la tablette. Sur les PR et `main` qui touchent HA, l'API ou la tablette virtuelle, et à la main. Ne teste pas l'interface de HA cliquée par un humain, la page de flashage ni le vrai matériel.
 - **Fichiers gitignorés** : `secrets.yaml` (2.x), `*.pem` / `*.key` (clé de signature), `tools/demo/cle_demo.txt`, `Tab5/user_entities.yaml`, `HomeAssistant_Config/placeholders.yaml`, `HomeAssistant_Config/rendered/`, les anciennes copies privées `automations_tab5.yaml` / `scripts_tab5.yaml` / `template_sensors_meteo_tab5.yaml` (obsolètes, gardées ignorées), `Tab5/tts_library*/`, `archives/`.

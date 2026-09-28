@@ -4,6 +4,55 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — CI : installer le Tab5 dans un Home Assistant neuf, sans matériel
+
+- **`.github/workflows/installation-ha.yml`** (~3 min, non requis) fait ce que fait un
+  nouvel utilisateur : un Home Assistant 2026.9.4 **neuf** en conteneur et la tablette
+  virtuelle (le rendu hors tablette compilé sous le nom `tab5-ha-hmi`).
+  `tools/installation_ha/preparer_config.py` écrit la configuration (celle d'une installation
+  neuve, **tous** les packages rendus avec des valeurs factices, le blueprint, des données
+  de test : intégration `demo` et `donnees_test.yaml`), `check_config` la valide ;
+  `verifier_installation.py` suit l'ordre « Sans compiler » du guide : compte, agenda,
+  ajout de la tablette par le flux ESPHome (hôte, port), « actions Home Assistant »,
+  automatisation du blueprint, puis redémarrage de la tablette.
+- Le job échoue si : la clé API n'est pas créée par HA sans rien saisir, gardée (jamais
+  affichée) et capable d'ouvrir la tablette ; la clé nulle ou le clair passent encore ensuite ;
+  `esphome.tab5_connected` n'arrive pas après la clé ; une trace du blueprint (connexion,
+  zones) ou de la poussée complète n'aboutit pas ; « Zones masquées » ne vaut pas
+  `pot_4, pot_5` ; la capture demandée **par HA** (`rendu_capture`) manque ; l'un de ces
+  points rate après un redémarrage de la tablette ; le journal de HA a une erreur Tab5
+  après la connexion (hors « Not connected » pendant une déconnexion voulue, rapportée).
+  Artefact `installation-ha` : deux captures (juste après l'étape 6, puis après le
+  redémarrage), journaux de HA et de la tablette.
+- **Trouvé par le job** :
+  - `packages/tab5_tv.yaml` exige `tab5_tv_app_url` dans `secrets.yaml`, sans quoi HA
+    refuse **toute** sa configuration ; seule l'en-tête du package le disait.
+    `docs/installation.md` (étape 4) le dit maintenant ;
+  - la poussée complète ne part pas à la (re)connexion quand
+    `binary_sensor.<appareil>_ha_api_status` n'existe pas : sa condition échoue
+    (« unknown entity », un simple avertissement) au lieu de laisser passer, et l'écran
+    reste sans prévisions jusqu'au passage des 10 minutes. Sans effet avec le nom livré ;
+    en suspens pour un appareil renommé (cette entité n'est pas dans
+    `placeholders.example.yaml`) ;
+  - dans l'ordre de la documentation (packages, puis tablette), chaque poussée lancée
+    avant l'ajout de la tablette écrit une ERREUR « Action esphome.tab5_ha_hmi_… not
+    found » dans le journal de HA (`continue_on_error` ne la rattrape pas) ;
+  - « Sans compiler » fait créer l'automatisation du blueprint **après** l'ajout de la
+    tablette : ses déclencheurs (connexion, demande des zones, une par connexion) sont
+    passés. Jusqu'à la prochaine reconnexion, l'écran garde températures « -- », clim
+    vide, pots en attente et aucune zone masquée (capture 1 du job : aucun passage du
+    blueprint en 20 s, au mieux celui des mesures toutes les 5 minutes ou d'une lumière
+    qui change). En suspens : redémarrer la tablette après l'étape 6, ou créer
+    l'automatisation avant l'ajout (ordre de l'étape 4) ;
+  - `tab5_rdv_push` (`packages/tab5_reveil.yaml`) se déclenche quand le `number`
+    « Rendez-vous : annoncer avant » passe à `unavailable`, donc à chaque déconnexion de
+    la tablette ; son attente sur « HA API Status » passe encore (l'entité n'est pas
+    encore marquée indisponible) et l'envoi écrit une ERREUR « Not connected ». Rapporté
+    par le job avec ses traces, en suspens (piste : `not_to: [unavailable, unknown]`).
+- Rendu hors tablette : nom de l'appareil en substitution (`rendu_nom`, défaut
+  `tab5-rendu`) ; `status_ha` des bouchons nommé « HA API Status » comme sur la tablette.
+- Tests : `tests/test_installation_ha.py` (préparation, placeholders et secrets couverts,
+  entrées du blueprint, nom de la tablette virtuelle, lecture des traces et du journal).
 ### 2026-09-28 — L'écran parle aussi espagnol et italien
 
 - **`Tab5/lang/es.yaml`** (Español, index 4) et **`Tab5/lang/it.yaml`** (Italiano,

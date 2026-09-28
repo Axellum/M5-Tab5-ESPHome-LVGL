@@ -1,0 +1,129 @@
+name: Installation dans un HA neuf
+
+# Ce que fait un nouvel utilisateur (docs/installation.md, étapes 4 et 6), sans matériel :
+# un Home Assistant NEUF en conteneur, la tablette virtuelle (le rendu hors tablette,
+# tab5-rendu-host.yaml, compilé pour la plateforme `host` sous le nom de la vraie), puis
+# l'installation complète et des vérifications qui font échouer le job :
+#   - tools/installation_ha/preparer_config.py : config/ d'une installation neuve + TOUS les
+#     packages rendus avec des valeurs factices (placeholders_ci.yaml), le blueprint,
+#     des données de test (demo, donnees_test.yaml) ; check_config de HA dessus ;
+#   - tools/installation_ha/verifier_installation.py, dans l'ordre « Sans compiler » de
+#     docs/installation.md : compte (onboarding), agenda, ajout de la tablette (clé API
+#     donnée par HA), option « actions HA », automatisation du blueprint, puis
+#     redémarrage de la tablette. Vérifie : clé gardée, refus de la clé nulle et du
+#     clair, esphome.tab5_connected après la clé, traces sans erreur, zones masquées,
+#     capture d'écran demandée par HA, journal de HA sans erreur Tab5.
+# Ne teste PAS : l'interface de HA cliquée par un humain, la page de flashage, le vrai
+# matériel (Wi-Fi, écran, audio). Check non requis. ~3 min.
+#
+# Déclenché par ce qui touche au contrat entre HA et la tablette : les fichiers HA, le
+# nom et la version de l'appareil (tab5-ha-hmi.yaml), les actions et événements de
+# l'API (tab5-api-logic, -zones, -scripts, capteurs des emplacements, réponse des
+# zones), la tablette virtuelle et l'outil. Sur `main` aussi : l'état de `main` est
+# connu avant une publication. À la main : `workflow_dispatch`.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    # Même liste que pull_request, plus bas.
+    paths:
+      - '.github/workflows/installation-ha.yml'
+      - 'HomeAssistant_Config/**'
+      - 'tab5-ha-hmi.yaml'
+      - 'Tab5/tab5-api-logic.yaml'
+      - 'Tab5/tab5-zones.yaml'
+      - 'Tab5/tab5_zones.cpp'
+      - 'Tab5/tab5-scripts.yaml'
+      - 'Tab5/tab5-sensors-domotique.yaml'
+      - 'Tab5/rendu/**'
+      - 'tab5-rendu-host.yaml'
+      - 'tools/installation_ha/**'
+      - 'tools/render_ha_config.py'
+      - '!**/*.md'
+  pull_request:
+    paths:
+      - '.github/workflows/installation-ha.yml'
+      - 'HomeAssistant_Config/**'
+      - 'tab5-ha-hmi.yaml'
+      - 'Tab5/tab5-api-logic.yaml'
+      - 'Tab5/tab5-zones.yaml'
+      - 'Tab5/tab5_zones.cpp'
+      - 'Tab5/tab5-scripts.yaml'
+      - 'Tab5/tab5-sensors-domotique.yaml'
+      - 'Tab5/rendu/**'
+      - 'tab5-rendu-host.yaml'
+      - 'tools/installation_ha/**'
+      - 'tools/render_ha_config.py'
+      - '!**/*.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Version de Home Assistant du test : figée, relevée à la main (même logique que
+  # ESPHOME_PUBLICATION dans publication.yml).
+  HA_IMAGE: ghcr.io/home-assistant/home-assistant:2026.9.4
+
+jobs:
+  installation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Image de Home Assistant (téléchargée pendant la compilation)
+        run: nohup docker pull -q "$HA_IMAGE" > "$RUNNER_TEMP/pull.log" 2>&1 &
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: ESPHome à la version plancher (min_version de tab5-ha-hmi.yaml), outils du vérificateur
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          echo "ESPHome $v, $HA_IMAGE" >> "$GITHUB_STEP_SUMMARY"
+          pip install "esphome==$v" pillow aiohttp aioesphomeapi
+      - name: Compiler la tablette virtuelle (plateforme host, nom de la vraie tablette)
+        # Le fuseau d'une horloge `host` est celui de la compilation (le runner est en UTC).
+        # Nom de la vraie tablette : les packages appellent esphome.tab5_ha_hmi_… en dur.
+        env:
+          TZ: Europe/Paris
+        run: |
+          esphome -s rendu_nom tab5-ha-hmi -s rendu_nom_affiche "M5Stack Tab5 Home Assistant HMI" \
+            compile tab5-rendu-host.yaml
+      - name: Configuration du Home Assistant neuf (packages rendus, blueprint, données de test)
+        run: python tools/installation_ha/preparer_config.py --sortie ha-config
+      - name: check_config de Home Assistant
+        run: |
+          docker pull -q "$HA_IMAGE"
+          docker run --rm --entrypoint python3 -v "$PWD/ha-config:/config" "$HA_IMAGE" \
+            -m homeassistant --script check_config -c /config
+      - name: Démarrer Home Assistant
+        run: |
+          docker run -d --name homeassistant --network host -e TZ=Europe/Paris \
+            -v "$PWD/ha-config:/config" "$HA_IMAGE"
+      - name: Installer la tablette dans HA et vérifier
+        run: |
+          prog=$(find .esphome/build/tab5-ha-hmi -name program -type f | head -n 1)
+          echo "Programme : $prog"
+          python tools/installation_ha/verifier_installation.py --programme "$prog" \
+            --prefs "$RUNNER_TEMP/prefs" --captures captures --conteneur homeassistant
+      - name: Journaux (Home Assistant, tablette)
+        if: always()
+        run: |
+          mkdir -p captures
+          docker logs homeassistant > captures/home-assistant.log 2>&1 || true
+          tail -n 150 captures/home-assistant.log || true
+          for f in captures/tablette-*.log; do echo "=== $f"; tail -n 60 "$f"; done || true
+      - name: Captures et journaux
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: installation-ha
+          path: |
+            captures/
+            !captures/*.bmp
+          if-no-files-found: warn
+          retention-days: 14
