@@ -237,10 +237,10 @@ script:
           id: va
       - media_player.stop:
           id: speaker_player
-      - homeassistant.service:
-          service: media_player.media_stop
-          data:
-            entity_id: ${entity_tab5_media_player}
+      # Événement (ADR-0025) : HA arrête le lecteur de CETTE tablette, trouvé par son
+      # appareil (packages/tab5_evenements.yaml, media_player.media_stop).
+      - homeassistant.event:
+          event: esphome.tab5_voix_stop
       - lambda: 'assist_set_mic_state(id(icon_mic_status), AssistState::IDLE);'
 
   # Interruption puis ré-écoute immédiate (tap micro / barge-in Discussion).
@@ -423,6 +423,10 @@ script:
 
   # Choix du cerveau (pipeline HA). discussion=true => LLM libre, false => domotique.
   # Centralise la mise à jour des boutons du dashboard ET du popup (source unique).
+  # Événement (ADR-0025) : HA choisit l'option dans le select de pipeline de CETTE
+  # tablette (packages/tab5_evenements.yaml), seulement si elle existe — un pipeline
+  # « Discussion LLM » absent ne fait plus d'erreur dans le journal de HA. Aussi émis
+  # à chaque démarrage (on_boot) : l'événement part seulement si HA est connecté.
   - id: tab5_set_assist_mode
     mode: restart
     parameters:
@@ -431,10 +435,9 @@ script:
       - globals.set:
           id: conversation_mode
           value: !lambda 'return discussion;'
-      - homeassistant.service:
-          service: select.select_option
+      - homeassistant.event:
+          event: esphome.tab5_mode_assistant
           data:
-            entity_id: ${entity_tab5_pipeline_select}
             option: !lambda 'return discussion ? std::string("Discussion LLM") : std::string("preferred");'
       - lambda: |-
           highlight_button_border(id(btn_mode_domo), !discussion, UIColor::INFO);

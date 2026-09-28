@@ -14,21 +14,21 @@
 #       « @maj: » / « @indispo: ») que la tablette compose dans SA langue. Déployer ce
 #       package APRÈS le firmware du lot 4c : un firmware plus ancien afficherait les
 #       codes tels quels.
-# @source_unique Depuis le 26/09/2026 (lot 3 de l'audit « ouverture »), la copie
-#       RENDUE de ce fichier (tools/render_ha_config.py → rendered/packages/) est ce
-#       qui tourne sur le HA de l'auteur. Il remplace les trois fichiers d'exemples
-#       à fusionner à la main (automations_examples.yaml.example, scripts_examples.yaml,
+# @source_unique Depuis le 26/09/2026 (lot 3 de l'audit « ouverture »), ce fichier
+#       est ce qui tourne sur le HA de l'auteur : tel quel depuis le 28/09/2026
+#       (ADR-0024, plus de placeholder ; tools/render_ha_config.py n'est plus qu'une
+#       copie). Il remplace les trois fichiers d'exemples à fusionner à la main
+#       (automations_examples.yaml.example, scripts_examples.yaml,
 #       template_sensors_examples.yaml) et les copies privées dont ils étaient tirés.
 #       Ne plus modifier ces automatisations dans l'interface HA : elles y sont en
-#       lecture seule ; modifier ce fichier, rendre, déployer.
+#       lecture seule ; modifier ce fichier, déployer.
 # @install `homeassistant: packages: !include_dir_named packages` dans
-#       configuration.yaml, puis ce fichier (rendu) dans config/packages/.
-#       Placeholders à remplacer (placeholders.example.yaml) : VOTRE_VILLE (entité
-#       weather.* par défaut ; la source des prévisions se change ensuite dans HA,
-#       « Tab5 · source des prévisions », lot 4c-3), VOTRE_TELEPHONE,
-#       VOTRE_CAPTEUR_PRESENCE, VOTRE_EMAIL_gmail_com ; et les
-#       entités du Tab5 lui-même si votre appareil n'a pas le nom par défaut
-#       (ex. préfixe de pièce `salon_…`, cf. placeholders.example.yaml).
+#       configuration.yaml, puis ce fichier dans config/packages/. Rien à renseigner
+#       (ADR-0024) : l'agenda de travail, le téléphone et le capteur de présence se
+#       choisissent dans HA (listes « Tab5 · … », packages/tab5_reglages.yaml), la
+#       source des prévisions aussi (« Tab5 · source des prévisions »), et les
+#       entités de la tablette sont trouvées par le modèle de l'appareil
+#       (sensor.tab5_tablette), quel que soit son nom.
 # @architecture_constraint Chaque `action: esphome.tab5_ha_hmi_tab5_maj_*` correspond à
 #       un service `api: services:` déclaré dans Tab5/tab5-api-logic.yaml. Ne
 #       JAMAIS renommer un service ici sans renommer le pendant firmware (et
@@ -67,7 +67,7 @@ automation:
       météo actuelle, probabilités, clim et volet seulement à la (re)connexion (ils ont
       leurs automatisations au changement, plus bas).
     trigger:
-      # PAS de déclencheur `state:` sur weather.VOTRE_VILLE ici (retiré le 26/08/2026) :
+      # PAS de déclencheur `state:` sur l'entité weather.* ici (retiré le 26/08/2026) :
       # `weather.*` et `sensor.*_next_rain` viennent du même coordinateur
       # Météo-France et se déclenchent à ~0,8 s d'intervalle — le second tombait
       # toujours pendant l'exécution du premier et était abandonné
@@ -88,8 +88,12 @@ automation:
       - platform: event
         event_type: esphome.tab5_connected
         id: tab5_connected
+      # Agenda de travail choisi (« Tab5 · agenda de travail ») : un événement commence,
+      # finit, ou le suivant change. Miroir sensor.tab5_agendas (tab5_reglages.yaml) :
+      # un déclencheur `state:` ne prend pas d'entity_id calculé.
       - platform: state
-        entity_id: calendar.VOTRE_EMAIL_gmail_com
+        entity_id: sensor.tab5_agendas
+        attribute: travail
       # Retour du garde-fou `is_primary_active` (packages/tab5_health.yaml) : aucune
       # poussée n'est partie pendant qu'il était à `off`, on resynchronise tout.
       - platform: state
@@ -189,25 +193,42 @@ automation:
       # Jamais un type non géré : HA lèverait une erreur à chaque passage (rattrapée
       # par continue_on_error, mais écrite dans le journal). Variables AU NIVEAU de la
       # séquence : une variable posée dans un if/then n'en sortirait pas.
+      # Agenda de travail : celui de la liste « Tab5 · agenda de travail », vide s'il
+      # n'est pas choisi ou n'existe plus (tous les jours en repos, planning vide).
+      # Chaque appel est sous un `if` : une cible vide lève une erreur que
+      # continue_on_error ne rattrape pas (script.py de HA : NoEntitySpecifiedError).
+      # La réponse d'un appel dans un `if` reste lisible après : une variable nouvelle
+      # est créée au niveau de la séquence (ScriptRunVariables._assign, HA 2026.9).
       - variables:
-          meteo: "{{ state_attr('sensor.tab5_meteo', 'entite') or 'weather.VOTRE_VILLE' }}"
+          meteo: "{{ state_attr('sensor.tab5_meteo', 'entite') or '' }}"
           type_jours: "{{ state_attr('sensor.tab5_meteo', 'type_jours') or '' }}"
           heures_ok: "{{ state_attr('sensor.tab5_meteo', 'heures_ok') | default(false, true) }}"
-      - action: calendar.get_events
-        continue_on_error: true
-        data:
-          start_date_time: "{{ now().strftime('%Y-%m-%d 00:00:00') }}"
-          end_date_time: "{{ (now() + timedelta(days=15)).strftime('%Y-%m-%d 23:59:59') }}"
-        target:
-          entity_id: calendar.VOTRE_EMAIL_gmail_com
-        response_variable: agenda_events
-      - action: weather.get_forecasts
-        continue_on_error: true
-        data:
-          type: "{{ type_jours or 'daily' }}"
-        target:
-          entity_id: "{{ meteo }}"
-        response_variable: daily_var
+          agenda: >-
+            {%- set a = states('select.tab5_agenda_de_travail') -%}
+            {{ a if a.startswith('calendar.') and expand(a) | count > 0 else '' }}
+      - if:
+          - condition: template
+            value_template: "{{ agenda != '' }}"
+        then:
+          - action: calendar.get_events
+            continue_on_error: true
+            data:
+              start_date_time: "{{ now().strftime('%Y-%m-%d 00:00:00') }}"
+              end_date_time: "{{ (now() + timedelta(days=15)).strftime('%Y-%m-%d 23:59:59') }}"
+            target:
+              entity_id: "{{ agenda }}"
+            response_variable: agenda_events
+      - if:
+          - condition: template
+            value_template: "{{ meteo != '' }}"
+        then:
+          - action: weather.get_forecasts
+            continue_on_error: true
+            data:
+              type: "{{ type_jours or 'daily' }}"
+            target:
+              entity_id: "{{ meteo }}"
+            response_variable: daily_var
       - action: esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk
         continue_on_error: true
         data:
@@ -267,8 +288,8 @@ automation:
               {% set est_passe = 'false' if i < fcasts|length else 'true' %}
               {% set est_dimanche = target_dt.strftime('%w') == '0' %}
               {% set ns_travail = namespace(found=false, heures="") %}
-              {% if agenda_events is defined and agenda_events['calendar.VOTRE_EMAIL_gmail_com'] is defined %}
-                {% for event in agenda_events['calendar.VOTRE_EMAIL_gmail_com'].events %}
+              {% if agenda_events is defined and agenda in agenda_events %}
+                {% for event in agenda_events[agenda].events %}
                   {% set ev_start = event.start | default(event.start_time, '') | string %}
                   {% set ev_end = event.end | default(event.end_time, '') | string %}
                   {% set ev_msg = event.summary | default(event.message, '') | string %}
@@ -308,13 +329,17 @@ automation:
       # ====== 8. PREVISIONS HORAIRES (BULK - 2 chunks de 5 via repeat) ======
       # Sans prévisions horaires (Buienradar…), on demande un type géré et on ignore
       # la réponse (heures_ok faux) : tuiles vides, aucune erreur dans le journal.
-      - action: weather.get_forecasts
-        continue_on_error: true
-        data:
-          type: "{{ 'hourly' if heures_ok else (type_jours or 'daily') }}"
-        target:
-          entity_id: "{{ meteo }}"
-        response_variable: hourly_var_tab5
+      - if:
+          - condition: template
+            value_template: "{{ meteo != '' }}"
+        then:
+          - action: weather.get_forecasts
+            continue_on_error: true
+            data:
+              type: "{{ 'hourly' if heures_ok else (type_jours or 'daily') }}"
+            target:
+              entity_id: "{{ meteo }}"
+            response_variable: hourly_var_tab5
       # 2 chunks de 5 créneaux (0-4, 5-9) — l'ancienne triple copie du même bloc ne
       # différait que par les bornes range() (#3). base = (repeat.index-1)*5.
       # 2 et non plus 3 (25/09/2026) : l'écran n'a que deux pages horaires (créneaux
@@ -428,60 +453,66 @@ automation:
     # firmware met LVGL en pause ; un toucher ou une tape sur la dalle le rallume.
     # Remis en place le 26/09/2026 : la version de production avait perdu les
     # déclencheurs du capteur, et n'éteignait plus qu'au départ du téléphone.
+    # Capteur et téléphone choisis dans HA (« Tab5 · capteur de présence »,
+    # « Tab5 · téléphone ») et lus sur leurs miroirs (tab5_reglages.yaml) : sans choix,
+    # les miroirs restent indisponibles et rien ne se déclenche. L'écran et « réveil en
+    # cours » sont ceux de la tablette détectée (sensor.tab5_tablette).
     description: "Allume l'écran à la détection d'une présence ou au retour du téléphone ; l'éteint après 15 min sans présence ou au départ du téléphone, sauf réveil en cours"
     mode: queued
     max: 5
     trigger:
       - platform: state
-        entity_id: binary_sensor.VOTRE_CAPTEUR_PRESENCE
+        entity_id: binary_sensor.tab5_presence
         to: 'on'
         id: "allumer"
       - platform: state
-        entity_id: device_tracker.VOTRE_TELEPHONE
+        entity_id: sensor.tab5_telephone_suivi
         to: 'home'
         id: "allumer"
       # Capteur radar : il repasse off quelques secondes à chaque sortie de la
       # pièce, d'où les 15 min avant d'éteindre.
       - platform: state
-        entity_id: binary_sensor.VOTRE_CAPTEUR_PRESENCE
+        entity_id: binary_sensor.tab5_presence
         to: 'off'
         for: "00:15:00"
         id: "eteindre"
       - platform: state
-        entity_id: device_tracker.VOTRE_TELEPHONE
+        entity_id: sensor.tab5_telephone_suivi
         to: 'not_home'
         id: "eteindre"
+    variables:
+      ecran: "{{ state_attr('sensor.tab5_tablette', 'ecran') or '' }}"
+      reveil: "{{ state_attr('sensor.tab5_tablette', 'reveil_en_cours') or '' }}"
     condition:
       - condition: state
         entity_id: input_boolean.is_primary_active
         state: "on"
+      - condition: template
+        value_template: "{{ ecran != '' }}"
     action:
       - choose:
           - conditions:
               - condition: trigger
                 id: "allumer"
-              - condition: state
-                entity_id: light.m5stack_tab5_home_assistant_hmi_display_backlight
-                state: "off"
+              - condition: template
+                value_template: "{{ is_state(ecran, 'off') }}"
             sequence:
               - action: light.turn_on
                 target:
-                  entity_id: light.m5stack_tab5_home_assistant_hmi_display_backlight
+                  entity_id: "{{ ecran }}"
           - conditions:
               - condition: trigger
                 id: "eteindre"
-              - condition: state
-                entity_id: light.m5stack_tab5_home_assistant_hmi_display_backlight
-                state: "on"
+              - condition: template
+                value_template: "{{ is_state(ecran, 'on') }}"
               # Ne jamais éteindre un réveil qui sonne (le firmware rallume l'écran
               # à la sonnerie).
-              - condition: state
-                entity_id: binary_sensor.m5stack_tab5_home_assistant_hmi_reveil_en_cours
-                state: "off"
+              - condition: template
+                value_template: "{{ not is_state(reveil, 'on') }}"
             sequence:
               - action: light.turn_off
                 target:
-                  entity_id: light.m5stack_tab5_home_assistant_hmi_display_backlight
+                  entity_id: "{{ ecran }}"
 
 
   - id: force_primary_active_on_boot
@@ -635,9 +666,10 @@ script:
     alias: "Tab5 — pousser l'état du volet de la serre"
     description: >-
       En_mouvement pendant la course, sinon l'état mémorisé. Appelé au changement
-      (tab5_volet_updater) et à la (re)connexion (tab5_ha_hmi_updater). Sans volet
-      ou sans le package volet_serre_tracking.yaml, rien : la tablette masque sa
-      tuile (zone « volet », lot 5), et recevait jusque-là « unknown » ou « Ferme ».
+      (tab5_volet_updater) et à la (re)connexion (tab5_ha_hmi_updater). Seulement avec
+      le package optionnel volet_serre_tracking.yaml ET un volet choisi dans
+      « Tab5 · volet à course simulée » ; sinon le blueprint « Tab5 — emplacements »
+      pousse le volet lui-même, ou la tablette masque sa tuile (zone « volet »).
     mode: queued
     max: 10
     sequence:
@@ -647,7 +679,8 @@ script:
         value_template: *tab5_connectee
       - condition: template
         value_template: >-
-          {{ states['cover.VOTRE_VOLET'] is not none and states['script.tab5_volet_action'] is not none }}
+          {%- set v = states('select.tab5_volet_a_course_simulee') -%}
+          {{ v.startswith('cover.') and expand(v) | count > 0 and states['script.tab5_volet_action'] is not none }}
       - action: esphome.tab5_ha_hmi_tab5_maj_volet_etat
         continue_on_error: true
         data:

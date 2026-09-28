@@ -115,30 +115,24 @@ def test_identite_de_projet():
     assert re.fullmatch(r"\d+\.\d+\.\d+-dev", defaut.group(1))
 
 
-def _slug(texte):
-    """Identifiant d'entité que HA tire d'un nom (minuscules, `_` pour le reste)."""
-    return re.sub(r"[^a-z0-9]+", "_", texte.lower()).strip("_")
-
-
-def test_entites_par_defaut_generiques():
-    """Un binaire publié ne lit pas de user_entities.yaml : les entités HA qu'il appelle
-    doivent avoir des défauts qui existent chez tout le monde (lot 6c). Celles de la
-    tablette dérivent du nom livré de l'appareil, les autres viennent du package
-    public tab5_push.yaml ; le modèle ne garde aucune valeur active à remplacer."""
-    defauts = _yaml("Tab5", "tab5-scripts.yaml")["substitutions"]
-    appareil = _slug(_yaml("tab5-ha-hmi.yaml")["esphome"]["friendly_name"])
-    for cle in ("entity_tab5_satellite", "entity_tab5_media_player", "entity_tab5_pipeline_select"):
-        assert defauts[cle].split(".", 1)[1].startswith(appareil + "_"), cle
-
-    push = _yaml("HomeAssistant_Config", "packages", "tab5_push.yaml")
-    assert defauts["entity_primary_active"].split(".", 1) == ["input_boolean", "is_primary_active"]
-    assert "is_primary_active" in push["input_boolean"]
-    alias = {_slug(a["alias"]) for a in push["automation"] if a.get("id") == "tab5_ha_hmi_updater"}
-    assert defauts["entity_push_automation"] == "automation." + alias.pop()
-
+def test_aucune_entite_a_regler_pour_un_binaire_publie():
+    """Un binaire publié ne lit pas de user_entities.yaml (lot 6c). Depuis l'ADR-0025 il
+    ne nomme plus aucune entité HA : HA retrouve celles de la tablette par l'appareil qui
+    émet l'événement, et le garde-fou et l'automatisation de poussée du bouton « MAJ
+    Écran » par leurs noms dans le package public tab5_push.yaml (celui-ci doit donc
+    toujours les définir)."""
+    assert not [k for k in (_yaml("Tab5", "tab5-scripts.yaml").get("substitutions") or {})
+                if k.startswith("entity_")]
     modele = _yaml("Tab5", "user_entities.example.yaml")
     actives = sorted(k for k in modele if k.startswith("entity_"))
-    assert actives == [], f"à commenter (défauts dans tab5-scripts.yaml) : {actives}"
+    assert actives == [], f"clé active inutile dans le modèle : {actives}"
+
+    push = _yaml("HomeAssistant_Config", "packages", "tab5_push.yaml")
+    assert "is_primary_active" in push["input_boolean"]
+    assert [a for a in push["automation"] if a.get("id") == "tab5_ha_hmi_updater"]
+    evenements = _lire("HomeAssistant_Config", "packages", "tab5_evenements.yaml")
+    assert "selectattr('attributes.id', 'eq', 'tab5_ha_hmi_updater')" in evenements
+    assert "input_boolean.is_primary_active" in evenements
 
 
 def test_ci_sans_secrets_factices():

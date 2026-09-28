@@ -9,21 +9,30 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
       hors tablette compilé sous le nom de la vraie, tab5-rendu-host.yaml), puis fait ce
       que docs/installation.md (« Sans compiler », dans cet ordre) fait faire à la souris :
         1. créer le compte (onboarding), fuseau Europe/Paris ; un agenda de travail
-           (Calendrier local) ; le blueprint est déjà dans config/ (preparer_config.py) ;
-        2. ajouter la tablette (ESPHome, hôte + port), puis cocher « Autoriser
-           l'appareil à effectuer des actions Home Assistant » ;
+           (Calendrier local) ; les listes « Tab5 · … » réglées à la souris (SOURCES,
+           plus aucun placeholder à remplir, ADR-0024) et ce qu'en déduisent les
+           packages ; le blueprint est déjà dans config/ (preparer_config.py) ;
+        2. ajouter la tablette (ESPHome, hôte + port). L'option « Autoriser l'appareil
+           à effectuer des actions Home Assistant » n'est plus une étape (ADR-0025) :
+           elle reste décochée, et c'est vérifié ;
         3. créer l'automatisation du blueprint « Tab5 — emplacements », avec des entités
            de test (emplacements 3.x, deux pièces, une personnalisation, ADR-0023) ;
            puis redémarrer la tablette.
       et vérifie : clé API créée par HA et gardée (jamais affichée), refus de la clé
       nulle et du clair une fois la clé posée, esphome.tab5_connected reçu APRÈS la clé,
+      tablette trouvée par le modèle de son appareil (sensor.tab5_tablette),
       poussée complète terminée sans erreur ; puis, après le redémarrage (la clé
       persiste, HA se reconnecte en chiffré), traces du blueprint et de la poussée sans
       erreur, zones masquées renvoyées par la tablette, capture d'écran demandée PAR HA
-      (action esphome.tab5_ha_hmi_rendu_capture), journal de HA sans erreur Tab5 ;
-      pièces : définitions et états des tuiles calculés à la connexion (relus dans la
-      trace), tab5_maj_tuiles jamais appelée si la tablette est en dessous de 3.2.0
-      (protocole 1), appelée avec les définitions sinon. Ce que
+      (action esphome.tab5_ha_hmi_rendu_capture) ; les demandes de la tablette
+      SANS l'option (packages/tab5_evenements.yaml) : calendrier ouvert par le select
+      « Aller à l'écran » (événement tab5_calendrier_mois), « MAJ Écran » touché par le
+      doigt virtuel (tab5_maj_ecran, la poussée complète repart), un redémarrage forgé
+      par un autre appareil ignoré, aucune action refusée par HA (réparation
+      « service_calls_not_allowed ») ; pièces : définitions et états des tuiles
+      calculés à la connexion (relus dans la trace), tab5_maj_tuiles jamais appelée si
+      la tablette est en dessous de 3.2.0 (protocole 1), appelée avec les définitions
+      sinon ; journal de HA sans erreur Tab5. Ce que
       montre l'écran entre la création de l'automatisation et le redémarrage est
       rapporté (capture 1), sans faire échouer.
 @contraintes Le mot de passe du compte est tiré au hasard ici et n'est jamais affiché ;
@@ -70,10 +79,24 @@ FUSEAU = "Europe/Paris"
 PREFIXE_ACTIONS = "tab5_ha_hmi"
 PREFIXE_ENTITES = "m5stack_tab5_home_assistant_hmi"
 
-# Agenda de travail (Calendrier local) : calendar.travail_ci = VOTRE_EMAIL_gmail_com
-# dans placeholders_ci.yaml.
+# Agenda de travail (Calendrier local), choisi dans « Tab5 · agenda de travail » (SOURCES).
 NOM_AGENDA = "Travail CI"
 AGENDA = "calendar.travail_ci"
+
+# Sources choisies dans les listes « Tab5 · … » (ADR-0024 : plus de placeholder, tout se
+# règle à la souris), comme le fait docs/installation.md, étape 4. Le reste (téléphone,
+# présence, TV, autres agendas) reste sur « Aucun » : un HA neuf doit marcher sans.
+SOURCES = {
+    "select.tab5_source_des_previsions": "weather.ville_ci",
+    "select.tab5_agenda_de_travail": AGENDA,
+}
+# Ce que les packages en déduisent (packages/tab5_meteo_sources.yaml) : les capteurs
+# Météo-France de donnees_test.yaml, trouvés sans placeholder.
+DEDUITS = {
+    ("sensor.tab5_meteo", "entite"): "weather.ville_ci",
+    ("sensor.tab5_sources_meteo", "mf_pluie"): "sensor.ville_ci_next_rain",
+    ("sensor.tab5_sources_meteo", "mf_vigilance"): "sensor.99_weather_alert",
+}
 
 # Automatisation créée depuis le blueprint (étape 4, point 6) et ses entrées : des
 # entités de l'intégration demo et de donnees_test.yaml. Pots 4 et 5 laissés vides :
@@ -163,6 +186,18 @@ TRACES_ATTENDUES = (
 # Après la création de l'automatisation, sans reconnexion : temps laissé au blueprint
 # pour pousser ce qu'il peut, avant de rapporter l'état de l'écran.
 ATTENTE_APRES_CREATION = 20.0
+
+# Demandes de la tablette par événements (ADR-0025) : l'automatisation qui les traduit
+# en actions (packages/tab5_evenements.yaml), le select qui ouvre une fenêtre depuis HA
+# (tab5-ha-controls.yaml), et le bouton « MAJ Écran » de la console système, touché par
+# le doigt virtuel : carte GESTION, juste au-dessus de « Redémarrer HA » (801, 588) de
+# tools/rendu/ecrans.py (console_sys.yaml : y 46 et 146, hauteur 86).
+ID_EVENEMENTS = "tab5_evenements"
+SELECT_ECRAN = f"select.{PREFIXE_ENTITES}_aller_a_l_ecran"
+MAJ_ECRAN = (801, 488)
+EVT_MOIS = "esphome.tab5_calendrier_mois"
+EVT_MAJ_ECRAN = "esphome.tab5_maj_ecran"
+EVT_REDEMARRAGE = "esphome.tab5_redemarrage_ha_confirme"
 
 # Tolérance sur « reçu après la clé » : HA écrit .storage une seconde après le
 # changement (Store, SAVE_DELAY), et ce script le relit toutes les 0,25 s.
@@ -603,11 +638,11 @@ class HA:
             return None
         return json.loads(sortie)
 
-    async def traces(self, item_id: str) -> list[dict]:
-        return await self.ws.commande("trace/list", domain="automation", item_id=item_id)
+    async def traces(self, item_id: str, domaine: str = "automation") -> list[dict]:
+        return await self.ws.commande("trace/list", domain=domaine, item_id=item_id)
 
-    async def trace(self, item_id: str, run_id: str) -> dict:
-        return await self.ws.commande("trace/get", domain="automation", item_id=item_id, run_id=run_id)
+    async def trace(self, item_id: str, run_id: str, domaine: str = "automation") -> dict:
+        return await self.ws.commande("trace/get", domain=domaine, item_id=item_id, run_id=run_id)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -636,6 +671,60 @@ async def creer_agenda(ha: HA, rapport: Rapport) -> None:
             "start_date_time": f"{jour} 09:00:00", "end_date_time": f"{jour} 17:30:00",
         })
     rapport.ok(f"agenda de travail {AGENDA} (Calendrier local) avec deux journées « Travail »")
+
+
+async def attendre_attribut(ha: HA, entity_id: str, attribut: str | None, attendu: str,
+                            delai: float = 30.0) -> Any:
+    """État (attribut None) ou attribut d'une entité, dès qu'il vaut `attendu` ; sinon
+    la dernière valeur lue au bout de `delai`."""
+    fin = time.monotonic() + delai
+    valeur = None
+    while time.monotonic() < fin:
+        etat = (await ha.etats()).get(entity_id) or {}
+        valeur = etat.get("state") if attribut is None else (etat.get("attributes") or {}).get(attribut)
+        if valeur == attendu:
+            break
+        await asyncio.sleep(0.5)
+    return valeur
+
+
+async def choisir_sources(ha: HA, rapport: Rapport) -> None:
+    """« Tab5 · … » : chaque liste de SOURCES réglée comme à la souris (select.select_option),
+    puis ce que les packages en déduisent (DEDUITS). Les listes sont des modèles à
+    déclencheurs : une entité ajoutée (l'agenda) n'y apparaît qu'après
+    entity_registry_updated, d'où l'attente de l'option."""
+    for liste, option in SOURCES.items():
+        fin = time.monotonic() + 30
+        options: list = []
+        while time.monotonic() < fin:
+            options = ((await ha.etats()).get(liste) or {}).get("attributes", {}).get("options") or []
+            if option in options:
+                break
+            await asyncio.sleep(0.5)
+        else:
+            raise Echec(f"liste {liste} : option {option} absente ({options})")
+        await ha.post("/api/services/select/select_option", {"entity_id": liste, "option": option})
+        etat = await attendre_attribut(ha, liste, None, option)
+        rapport.verifier(etat == option, f"liste {liste} réglée sur {option}", f"état {etat!r}")
+    for (entity_id, attribut), attendu in DEDUITS.items():
+        valeur = await attendre_attribut(ha, entity_id, attribut, attendu)
+        rapport.verifier(valeur == attendu, f"{entity_id} ({attribut}) = {attendu}, trouvé sans placeholder",
+                         f"valeur {valeur!r}")
+
+
+async def verifier_tablette_detectee(ha: HA, rapport: Rapport) -> None:
+    """La tablette ajoutée est trouvée par le modèle de son appareil (sensor.tab5_tablette),
+    sans nom d'entité écrit dans les packages, et son miroir de liaison est `on`."""
+    api = f"binary_sensor.{PREFIXE_ENTITES}_ha_api_status"
+    trouve = await attendre_attribut(ha, "sensor.tab5_tablette", "api", api)
+    rapport.verifier(trouve == api, f"tablette détectée par son modèle (sensor.tab5_tablette : {api})",
+                     f"attribut api = {trouve!r}")
+    liaison = await attendre_attribut(ha, "binary_sensor.tab5_connectee", None, "on")
+    rapport.verifier(liaison == "on", "miroir binary_sensor.tab5_connectee à on", f"état {liaison!r}")
+    attributs = ((await ha.etats()).get("sensor.tab5_tablette") or {}).get("attributes", {})
+    rapport.info("entités de la tablette détectées : " + ", ".join(
+        f"{cle}={valeur or '—'}" for cle, valeur in attributs.items()
+        if cle not in ("friendly_name", "icon")))
 
 
 async def verifier_blueprint(ha: HA, rapport: Rapport) -> None:
@@ -703,19 +792,14 @@ async def attendre_cle(ha: HA, entry_id: str, delai: float = 60.0) -> tuple[str,
                 f"{delai:.0f} s après l'ajout (voir docker logs : provisioning)")
 
 
-async def autoriser_actions(ha: HA, entry_id: str, rapport: Rapport) -> None:
-    """« Autoriser l'appareil à effectuer des actions Home Assistant » (étape 6)."""
-    resultat = await ha.flux("/api/config/config_entries/options/flow", entry_id,
-                             {"allow_service_calls": True})
-    if resultat.get("type") != "create_entry":
-        raise Echec(f"options ESPHome : {resultat}")
-    for _ in range(20):
-        entree = entree_esphome(await ha.storage("core.config_entries") or {}, entry_id)
-        if (entree or {}).get("options", {}).get("allow_service_calls") is True:
-            rapport.ok("option « autoriser les actions Home Assistant » cochée et enregistrée")
-            return
-        await asyncio.sleep(0.5)
-    rapport.echec("option allow_service_calls absente de core.config_entries après le flux d'options")
+async def verifier_option_decochee(ha: HA, entry_id: str, rapport: Rapport) -> None:
+    """ADR-0025 : « Autoriser l'appareil à effectuer des actions Home Assistant » n'est
+    plus une étape du guide. Elle doit rester à sa valeur par défaut (décochée) :
+    cochée, le test ne prouverait plus que la tablette s'en passe."""
+    entree = entree_esphome(await ha.storage("core.config_entries") or {}, entry_id) or {}
+    rapport.verifier(entree.get("options", {}).get("allow_service_calls") is not True,
+                     "option « actions HA » laissée décochée : plus une étape de l'installation (ADR-0025)",
+                     "cochée dans core.config_entries")
 
 
 async def verifier_cle(ha: HA, entry_id: str, cle: str, rapport: Rapport) -> None:
@@ -738,9 +822,9 @@ async def verifier_cle(ha: HA, entry_id: str, cle: str, rapport: Rapport) -> Non
 
 
 # Issues d'un passage refusé parce qu'un autre tourne (mode single, max atteint) : la
-# poussée complète est en `mode: single`, et une deuxième connexion rapprochée (le
-# rechargement qui suit l'option « actions HA ») tombe pendant la première. Rapportées,
-# pas fautives, si un autre passage du même déclencheur a abouti.
+# poussée complète est en `mode: single`, et une deuxième connexion rapprochée (autrefois
+# le rechargement qui suivait l'option « actions HA ») tombe pendant la première.
+# Rapportées, pas fautives, si un autre passage du même déclencheur a abouti.
 REFUS_DE_MODE = ("failed_single", "failed_max_runs")
 
 
@@ -876,8 +960,8 @@ def classer_journal(entrees: list[dict], connexion: float,
     Fautive : une ERREUR qui concerne le Tab5, avant comme après la première connexion
     de la tablette (avant : poussées vers une tablette pas encore ajoutée, « Action …
     not found », défaut 3 du 28/09/2026 : les packages doivent l'attendre). Sauf « Not connected to … » pendant une déconnexion VOULUE (`deconnexions`,
-    intervalles d'epoch : rechargement après l'option « actions HA », redémarrage de la
-    tablette) : une poussée partie vers une tablette hors ligne, rapportée à part."""
+    intervalles d'epoch : redémarrage de la tablette) : une poussée partie vers une
+    tablette hors ligne, rapportée à part."""
     fautives: list[str] = []
     groupes: dict[tuple, int] = {}
     autres = 0
@@ -993,6 +1077,87 @@ async def verifier_tuiles(ha: HA, cree: float, connexion: float, rapport: Rappor
                          f"{len(appels)} appel(s)")
 
 
+async def entite_automatisation(ha: HA, item_id: str) -> dict | None:
+    """L'état de l'automatisation d'id `item_id` (son entity_id suit son nom)."""
+    for etat in (await ha.etats()).values():
+        if etat["entity_id"].startswith("automation.") and etat["attributes"].get("id") == item_id:
+            return etat
+    return None
+
+
+async def attendre_passage_refuse(ha: HA, declencheur: str, apres: float, delai: float = 15.0) -> dict | None:
+    """Le passage de tab5_evenements déclenché par `declencheur` depuis `apres`, une fois
+    terminé (arrêté par ses conditions ou non)."""
+    fin = time.monotonic() + delai
+    while time.monotonic() < fin:
+        for t in await ha.traces(ID_EVENEMENTS):
+            if (declencheur in (t.get("trigger") or "") and t.get("state") == "stopped"
+                    and horodatage((t.get("timestamp") or {}).get("start")) >= apres):
+                return t
+        await asyncio.sleep(0.5)
+    return None
+
+
+async def demandes_de_la_tablette(ha: HA, ws: WS, rapport: Rapport) -> None:
+    """ADR-0025 : la tablette ne demande plus rien par une action HA (l'option « actions
+    HA » est restée décochée), elle émet des événements que packages/tab5_evenements.yaml
+    traduit en une liste blanche d'actions. Deux demandes réelles, de bout en bout,
+    comme sur la dalle : le calendrier (ouvert par le select « Aller à l'écran ») et
+    « MAJ Écran » (touché par le doigt virtuel) ; puis un redémarrage forgé par un autre
+    appareil, qui doit être ignoré ; enfin aucune action refusée par HA."""
+    if SELECT_ECRAN not in await ha.etats():
+        rapport.echec(f"{SELECT_ECRAN} absent : impossible d'ouvrir le calendrier depuis HA")
+        return
+
+    # Calendrier : le mois affiché et ses voisins, demandés par événement ; HA lance
+    # script.tab5_calendrier_mois, qui répond à la tablette (tab5_maj_calendrier_mois).
+    debut = time.time()
+    await ha.post("/api/services/select/select_option", {"entity_id": SELECT_ECRAN, "option": "Calendrier"})
+    evt = await ws.attendre_evenement(EVT_MOIS, debut, 30)
+    if rapport.verifier(evt is not None, f"calendrier ouvert : la tablette demande le mois par un événement ({EVT_MOIS})",
+                        "rien en 30 s (tab5_cal_request, tab5-calendar.yaml)"):
+        rapport.info(f"{EVT_MOIS} : {json.dumps({k: v for k, v in evt.get('data', {}).items() if k != 'device_id'})}")
+        await attendre_traces(ha, debut, rapport, ((ID_EVENEMENTS, EVT_MOIS),), delai=60)
+        for t in await ha.traces("tab5_calendrier_mois", "script"):
+            if horodatage((t.get("timestamp") or {}).get("start")) >= debut:
+                rapport.info(f"script.tab5_calendrier_mois lancé par l'événement — {resume_passage(t)}")
+
+    # « MAJ Écran » : HA remet le garde-fou à on et relance la poussée complète.
+    await ha.post("/api/services/select/select_option", {"entity_id": SELECT_ECRAN, "option": "Console système"})
+    await asyncio.sleep(2)
+    debut = time.time()
+    await ha.post(f"/api/services/esphome/{PREFIXE_ACTIONS}_rendu_toucher",
+                  {"x": MAJ_ECRAN[0], "y": MAJ_ECRAN[1], "duree": 150})
+    evt = await ws.attendre_evenement(EVT_MAJ_ECRAN, debut, 30)
+    if rapport.verifier(evt is not None, f"« MAJ Écran » touché : la tablette émet {EVT_MAJ_ECRAN}",
+                        f"rien en 30 s (bouton en {MAJ_ECRAN} de la console système ?)"):
+        await attendre_traces(ha, debut, rapport, ((ID_EVENEMENTS, EVT_MAJ_ECRAN),), delai=90)
+        poussee = await entite_automatisation(ha, ID_POUSSEE) or {}
+        declenchee = horodatage((poussee.get("attributes") or {}).get("last_triggered"))
+        rapport.verifier(declenchee >= debut - TOLERANCE_CLE,
+                         "« MAJ Écran » relance la poussée complète (automation.trigger fait par HA)",
+                         f"{poussee.get('entity_id')} : dernier déclenchement {declenchee - debut:+.1f} s")
+    await ha.post("/api/services/select/select_option", {"entity_id": SELECT_ECRAN, "option": "Accueil"})
+
+    # Un autre appareil qui enverrait l'événement de redémarrage : ignoré par la garde du
+    # modèle. Un événement tiré par l'API porte le device_id qu'on lui donne.
+    debut = time.time()
+    await ws.commande("fire_event", event_type=EVT_REDEMARRAGE, event_data={"device_id": "pas_une_tablette"})
+    t = await attendre_passage_refuse(ha, EVT_REDEMARRAGE, debut)
+    rapport.verifier(t is not None and t.get("script_execution") == "failed_conditions",
+                     "redémarrage demandé par un appareil qui n'est pas une tablette Tab5 : ignoré (conditions)",
+                     resume_passage(t) if t else "aucune trace en 15 s")
+
+    # Aucune action refusée : HA crée cette réparation au premier appel d'action d'un
+    # appareil sans l'option (manager.py de l'intégration ESPHome).
+    issues = (await ws.commande("repairs/list_issues") or {}).get("issues", [])
+    refus = [i for i in issues if i.get("domain") == "esphome"
+             and "service_calls_not_allowed" in (i.get("translation_key") or i.get("issue_id") or "")]
+    rapport.verifier(not refus, "aucune action de la tablette refusée par HA (pas de réparation "
+                     "« service_calls_not_allowed ») : elle n'en appelle plus",
+                     "; ".join(str(i.get("issue_id")) for i in refus))
+
+
 async def rapporter_traces(ha: HA, item_id: str, depuis: float, rapport: Rapport) -> None:
     """Passages d'une automatisation depuis `depuis` : déclencheur et issue (informatif)."""
     passages = [t for t in await ha.traces(item_id)
@@ -1017,15 +1182,18 @@ async def scenario(args, rapport: Rapport) -> None:
             await ws.commande("config/core/update", time_zone=FUSEAU, country="FR",
                               language="fr", currency="EUR", unit_system="metric")
             await ha.terminer_onboarding()
-            for evenement in ("esphome.tab5_connected", "esphome.tab5_zones"):
+            for evenement in ("esphome.tab5_connected", "esphome.tab5_zones", EVT_MOIS, EVT_MAJ_ECRAN):
                 await ws.abonner(evenement)
 
             # « Sans compiler », 1 : Home Assistant d'abord. Packages et blueprint sont
-            # déjà dans config/ (preparer_config.py) ; un agenda, comme chez l'utilisateur.
+            # déjà dans config/ (preparer_config.py) ; un agenda, comme chez l'utilisateur,
+            # puis les sources choisies dans les listes « Tab5 · … » (étape 4).
             await creer_agenda(ha, rapport)
+            await choisir_sources(ha, rapport)
             await verifier_blueprint(ha, rapport)
 
-            # 4 et 5 : ajout de la tablette dans sa fenêtre d'appairage, actions HA.
+            # 4 : ajout de la tablette dans sa fenêtre d'appairage (plus d'option « actions
+            # HA » depuis l'ADR-0025 : elle reste décochée).
             await tablette.attendre_port()
             debut = time.time()
             entry_id = await ajouter_tablette(ha, rapport)
@@ -1038,15 +1206,10 @@ async def scenario(args, rapport: Rapport) -> None:
             connexion = horodatage(evt["time_fired"])
             rapport.info(f"clé vue {vue - debut:.1f} s après l'ajout, tab5_connected "
                          f"{connexion - debut:.1f} s après")
-            # L'option recharge l'intégration : HA se déconnecte puis revient (une
-            # déconnexion voulue, comme le redémarrage plus bas).
+            await verifier_tablette_detectee(ha, rapport)
+            # Déconnexions voulues de la tablette (son redémarrage, plus bas).
             deconnexions: list[tuple[float, float]] = []
-            option = time.time()
-            await autoriser_actions(ha, entry_id, rapport)
-            retour = await ws.attendre_evenement("esphome.tab5_connected", option, 60)
-            deconnexions.append((option, (horodatage(retour["time_fired"]) if retour else time.time()) + 1))
-            rapport.info("après l'option, HA revient : tab5_connected " + (
-                f"{horodatage(retour['time_fired']) - option:.1f} s après" if retour else "non reçu en 60 s"))
+            await verifier_option_decochee(ha, entry_id, rapport)
             await attendre_traces(ha, debut, rapport, TRACES_A_L_AJOUT)
 
             # 6 : « Vos appareils », l'automatisation du blueprint, APRÈS l'ajout : elle
@@ -1082,6 +1245,8 @@ async def scenario(args, rapport: Rapport) -> None:
                              f"capteur « Zones masquées » = {etat!r}")
             await asyncio.sleep(3)
             await capturer(ha, args.captures, "installation-ha-2", rapport)
+            # Les demandes de la tablette, sans l'option « actions HA » (ADR-0025).
+            await demandes_de_la_tablette(ha, ws, rapport)
             # Rendez-vous (packages/tab5_reveil.yaml) : ses passages et leurs déclencheurs,
             # pour relire une erreur « Not connected » du journal.
             await rapporter_traces(ha, "tab5_rdv_push", debut, rapport)

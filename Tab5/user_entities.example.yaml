@@ -39,21 +39,12 @@
 #     Créer la clé : python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem ---
 # tab5_cle_signature: tab5_signature.pem
 
-# --- Entités exposées par la tablette ELLE-MÊME (satellite vocal, lecteur média,
-#     select de pipeline des boutons Domotique / Discussion). HA les dérive du nom
-#     de l'appareil ; les défauts (tab5-scripts.yaml) valent pour le nom livré
-#     « M5Stack Tab5 Home Assistant HMI ». À décommenter et adapter SEULEMENT si
-#     vous avez renommé la tablette dans HA — sinon l'interruption vocale, l'annonce
-#     des rendez-vous et le choix du pipeline échouent en silence. ---
-# entity_tab5_satellite: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
-# entity_tab5_media_player: media_player.m5stack_tab5_home_assistant_hmi_tab5_media_player
-# entity_tab5_pipeline_select: select.m5stack_tab5_home_assistant_hmi_assistant
-
-# --- Console Système, bouton « MAJ Écran » : le garde-fou et l'automatisation de
-#     poussée que crée packages/tab5_push.yaml (défauts dans tab5-scripts.yaml). À
-#     décommenter seulement si vous avez modifié ce package. ---
-# entity_primary_active: input_boolean.is_primary_active
-# entity_push_automation: automation.maj_ecran_tab5_esphome_push
+# --- Entités de la tablette elle-même (satellite vocal, lecteur média, select de
+#     pipeline) et du bouton « MAJ Écran » : plus rien à régler depuis l'ADR-0025.
+#     La tablette envoie des événements ; Home Assistant retrouve ces entités par
+#     l'appareil qui les émet (packages/tab5_evenements.yaml). Les anciennes clés
+#     entity_tab5_satellite, entity_tab5_media_player, entity_tab5_pipeline_select,
+#     entity_primary_active et entity_push_automation sont simplement ignorées. ---
 
 # --- Layout météo (généralement inchangé) ---
 meteo_cell_width: "230"

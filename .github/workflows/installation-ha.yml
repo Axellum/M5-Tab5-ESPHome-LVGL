@@ -5,22 +5,28 @@ name: Installation dans un HA neuf
 # tab5-rendu-host.yaml, compilé pour la plateforme `host` sous le nom de la vraie), puis
 # l'installation complète et des vérifications qui font échouer le job :
 #   - tools/installation_ha/preparer_config.py : config/ d'une installation neuve + TOUS les
-#     packages rendus avec des valeurs factices (placeholders_ci.yaml), le blueprint,
-#     des données de test (demo, donnees_test.yaml) ; check_config de HA dessus ;
+#     packages tels quels (ce que donne l'archive tab5_home_assistant.zip d'une release,
+#     plus de placeholder depuis l'ADR-0024), le blueprint, des données de test (demo,
+#     donnees_test.yaml) ; check_config de HA dessus, puis sur la même installation avec
+#     les packages optionnels (volet à course simulée) ;
 #   - tools/installation_ha/verifier_installation.py, dans l'ordre « Sans compiler » de
-#     docs/installation.md : compte (onboarding), agenda, ajout de la tablette (clé API
-#     donnée par HA), option « actions HA », automatisation du blueprint, puis
-#     redémarrage de la tablette. Vérifie : clé gardée, refus de la clé nulle et du
-#     clair, esphome.tab5_connected après la clé, traces sans erreur, zones masquées,
-#     capture d'écran demandée par HA, journal de HA sans erreur Tab5.
+#     docs/installation.md : compte (onboarding), agenda, sources choisies dans les listes
+#     « Tab5 · … », ajout de la tablette (clé API donnée par HA, option « actions HA »
+#     laissée décochée, ADR-0025), automatisation du blueprint, puis redémarrage de la
+#     tablette. Vérifie : clé gardée, refus de la clé nulle et du clair,
+#     esphome.tab5_connected après la clé, traces sans erreur, zones masquées, capture
+#     d'écran demandée par HA, demandes de la tablette par événements (calendrier,
+#     « MAJ Écran », redémarrage forgé ignoré, aucune action refusée), journal de HA
+#     sans erreur Tab5.
 # Ne teste PAS : l'interface de HA cliquée par un humain, la page de flashage, le vrai
 # matériel (Wi-Fi, écran, audio). Check non requis. ~3 min.
 #
 # Déclenché par ce qui touche au contrat entre HA et la tablette : les fichiers HA, le
 # nom et la version de l'appareil (tab5-ha-hmi.yaml), les actions et événements de
 # l'API (tab5-api-logic, -zones, -scripts, capteurs des emplacements, réponse des
-# zones), la tablette virtuelle et l'outil. Sur `main` aussi : l'état de `main` est
-# connu avant une publication. À la main : `workflow_dispatch`.
+# zones ; réveil, voix, calendrier, select « Aller à l'écran » et console système,
+# qui émettent les demandes de la tablette), la tablette virtuelle et l'outil. Sur `main`
+# aussi : l'état de `main` est connu avant une publication. À la main : `workflow_dispatch`.
 
 on:
   workflow_dispatch:
@@ -36,10 +42,16 @@ on:
       - 'Tab5/tab5_zones.cpp'
       - 'Tab5/tab5-scripts.yaml'
       - 'Tab5/tab5-sensors-domotique.yaml'
+      - 'Tab5/tab5-alarm.yaml'
+      - 'Tab5/tab5-assist.yaml'
+      - 'Tab5/tab5-calendar.yaml'
+      - 'Tab5/tab5-ha-controls.yaml'
+      - 'Tab5/ui_components/console_sys.yaml'
       - 'Tab5/rendu/**'
       - 'tab5-rendu-host.yaml'
       - 'tools/installation_ha/**'
       - 'tools/render_ha_config.py'
+      - 'tools/publication/archive_ha.py'
       - '!**/*.md'
   pull_request:
     paths:
@@ -51,10 +63,16 @@ on:
       - 'Tab5/tab5_zones.cpp'
       - 'Tab5/tab5-scripts.yaml'
       - 'Tab5/tab5-sensors-domotique.yaml'
+      - 'Tab5/tab5-alarm.yaml'
+      - 'Tab5/tab5-assist.yaml'
+      - 'Tab5/tab5-calendar.yaml'
+      - 'Tab5/tab5-ha-controls.yaml'
+      - 'Tab5/ui_components/console_sys.yaml'
       - 'Tab5/rendu/**'
       - 'tab5-rendu-host.yaml'
       - 'tools/installation_ha/**'
       - 'tools/render_ha_config.py'
+      - 'tools/publication/archive_ha.py'
       - '!**/*.md'
 
 permissions:
@@ -96,10 +114,16 @@ jobs:
             compile tab5-rendu-host.yaml
       - name: Configuration du Home Assistant neuf (packages rendus, blueprint, données de test)
         run: python tools/installation_ha/preparer_config.py --sortie ha-config
-      - name: check_config de Home Assistant
+      - name: check_config de Home Assistant (installation par défaut, puis avec les optionnels)
+        # Les optionnels (HomeAssistant_Config/optionnel/, tab5_optionnel/ de l'archive) ne
+        # sont pas installés par défaut : le volet à course simulée prendrait la main sur
+        # le volet du blueprint. Leur configuration est quand même vérifiée par HA.
         run: |
           docker pull -q "$HA_IMAGE"
           docker run --rm --entrypoint python3 -v "$PWD/ha-config:/config" "$HA_IMAGE" \
+            -m homeassistant --script check_config -c /config
+          python tools/installation_ha/preparer_config.py --sortie "$RUNNER_TEMP/ha-config-optionnels" --optionnels
+          docker run --rm --entrypoint python3 -v "$RUNNER_TEMP/ha-config-optionnels:/config" "$HA_IMAGE" \
             -m homeassistant --script check_config -c /config
       - name: Démarrer Home Assistant
         run: |

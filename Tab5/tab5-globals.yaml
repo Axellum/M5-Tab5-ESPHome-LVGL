@@ -189,7 +189,7 @@ globals:
     initial_value: '0'
     restore_value: true
   # Tampons de passage vers les services HA (même motif que temp_dismiss_alert_id) :
-  # une lambda remplit, l'action homeassistant.service qui suit relit.
+  # une lambda remplit, l'événement homeassistant.event qui suit relit (ADR-0025).
   - id: alarm_rdv_speech
     type: std::string
     initial_value: '""'

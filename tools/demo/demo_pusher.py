@@ -248,8 +248,9 @@ async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozen
 
 
 def _gerer_appel_service(interactive: bool, repondre_zones, pieces: dict | None = None):
-    """Callback appelé quand le firmware envoie un homeassistant.service: (bouton pressé)
-    ou un homeassistant.event:.
+    """Callback appelé quand le firmware envoie un homeassistant.event: (bouton pressé,
+    demande à HA ; depuis l'ADR-0025 il n'envoie plus de homeassistant.service:, un
+    firmware 3.1 ou plus ancien si).
 
     L'événement esphome.tab5_zones (lot 5) reçoit la réponse que ferait le package HA
     (automatisation tab5_zones_reponse) : repondre_zones() la planifie.

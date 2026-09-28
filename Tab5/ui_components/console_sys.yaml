@@ -27,9 +27,12 @@
 #       exposé à Home Assistant — ne pas écrire `system_volume` ni appeler
 #       `media_player.volume_set` directement dans `on_value` : le premier fait
 #       diverger les trois affichages, le second sature l'I2S à chaque tick de
-#       glissement (le debounce est dans le script). Les boutons GESTION passent par
-#       `homeassistant.service` (option "appels de service" de l'intégration
-#       ESPHome requise — active depuis le 04/07/2026).
+#       glissement (le debounce est dans le script). Les boutons GESTION émettent
+#       des événements `esphome.tab5_*` (ADR-0025, 28/09/2026), que
+#       packages/tab5_evenements.yaml traduit en actions : plus d'option « actions
+#       HA » à cocher. Le redémarrage de HA part seulement de « Confirmer »
+#       (esphome.tab5_redemarrage_ha_confirme), seul événement que HA traduit en
+#       homeassistant.restart.
 # ============================================================================
 obj:
   id: layer_console_sys
@@ -201,6 +204,9 @@ obj:
 
                 # MAJ Écran — remet le flag de push à on (cause récurrente d'écran
                 # figé, cf. bug is_primary_active du 04/07) puis force un push complet.
+                # Les deux actions sont faites par HA sur l'événement tab5_maj_ecran
+                # (packages/tab5_evenements.yaml), qui trouve l'automatisation de
+                # poussée par son id (tab5_ha_hmi_updater), pas par son nom.
                 - button:
                     id: btn_sync_screen
                     align: TOP_LEFT
@@ -212,14 +218,8 @@ obj:
                     pressed:
                       bg_opa: 30%
                     on_short_click:
-                      - homeassistant.service:
-                          service: input_boolean.turn_on
-                          data:
-                            entity_id: ${entity_primary_active}
-                      - homeassistant.service:
-                          service: automation.trigger
-                          data:
-                            entity_id: ${entity_push_automation}
+                      - homeassistant.event:
+                          event: esphome.tab5_maj_ecran
                     widgets:
                       - label: { text: "\U000F0379", align: CENTER, y: -18, text_font: mdi_font_32, text_color: color_info }
                       - label: { text: "MAJ Écran", align: CENTER, y: 22 }
@@ -236,8 +236,8 @@ obj:
                     pressed:
                       bg_opa: 30%
                     on_short_click:
-                      - homeassistant.service:
-                          service: automation.reload
+                      - homeassistant.event:
+                          event: esphome.tab5_recharger_automatisations
                     widgets:
                       - label: { text: "\U000F0450", align: CENTER, y: -18, text_font: mdi_font_32, text_color: color_info }
                       - label: { text: "Recharger autos", align: CENTER, y: 22 }
@@ -336,8 +336,10 @@ obj:
                                   lv_label_set_text(id(lbl_sys_ha_val), tr("Redemarrage..."));
                                   lv_obj_set_style_text_color(id(lbl_sys_ha_val), lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
                                 }
-                            - homeassistant.service:
-                                service: homeassistant.restart
+                            # Seul chemin vers homeassistant.restart : HA ne redémarre
+                            # que sur cet événement, émis après « Confirmer » (ADR-0025).
+                            - homeassistant.event:
+                                event: esphome.tab5_redemarrage_ha_confirme
                           widgets:
                             - label: { text: "Confirmer", align: CENTER, text_font: roboto_32_b, text_color: color_error }
 
