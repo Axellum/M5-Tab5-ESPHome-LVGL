@@ -41,7 +41,7 @@ repos:
         pass_filenames: false
         always_run: true
       - id: render-ha-config-check
-        name: aucun identifiant HA réel dans un fichier public (tools/render_ha_config.py --check)
+        name: ni identifiant HA réel ni placeholder dans un fichier public (tools/render_ha_config.py --check)
         entry: python tools/render_ha_config.py --check
         language: system
         pass_filenames: false

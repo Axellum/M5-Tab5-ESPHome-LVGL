@@ -1,6 +1,6 @@
 # ADR-0017: Public HA files hold placeholders only — real IDs live in `placeholders.yaml`, HA runs `rendered/`
 
-**Status:** Accepted (2026-09-06)
+**Status:** Accepted (2026-09-06) — placeholders and rendering **superseded by [ADR-0024](0024-packages-without-placeholders.md)** (2026-09-28): the public files have none and install as they are; `render_ha_config.py` only copies, and `--check` (leak guard, below) stays.
 **Date:** 2026-09-25 (written retroactively from `tools/render_ha_config.py`, `AGENTS.md` and the 2026-09-06 CHANGELOG entry)
 
 ## Context

@@ -32,7 +32,7 @@ esphome_live_logs.txt
 
 # Anciennes copies privees de la config HA, OBSOLETES depuis le 26/09/2026 (lot 3 de
 # l'audit « ouverture ») : la production tourne sur packages/tab5_push.yaml et
-# packages/volet_serre_tracking.yaml rendus. Gardees ignorees pour qu'une copie
+# optionnel/volet_serre_tracking.yaml. Gardees ignorees pour qu'une copie
 # locale restante ne soit jamais commitee.
 HomeAssistant_Config/automations_tab5.yaml
 HomeAssistant_Config/scripts_tab5.yaml
@@ -51,9 +51,10 @@ audio_lib/
 # volume distinct — la racine unique du workspace est H:\AuxFilsDesIdees.)
 Tab5/Tab5/
 
-# Identifiants HA reels (placeholder -> valeur) et rendu deployable produit par
-# tools/render_ha_config.py. Les fichiers publics ne contiennent que des
-# placeholders ; modele suivi : HomeAssistant_Config/placeholders.example.yaml
+# Identifiants HA reels de l'auteur (nom -> valeur), cherches par
+# tools/render_ha_config.py --check, et copie produite par ce script. Les fichiers
+# publics n'ont ni valeur reelle ni placeholder (ADR-0024) ; modele suivi :
+# HomeAssistant_Config/placeholders.example.yaml
 HomeAssistant_Config/placeholders.yaml
 HomeAssistant_Config/rendered/
 

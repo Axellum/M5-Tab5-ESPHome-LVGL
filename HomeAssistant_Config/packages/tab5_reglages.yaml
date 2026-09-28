@@ -1,0 +1,317 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_reglages.yaml
+# @role Les RÉGLAGES du Tab5 côté Home Assistant, choisis à la souris (ADR-0024,
+#       28/09/2026) : plus aucun identifiant de la maison n'est écrit dans les
+#       packages. Trois parties :
+#         1. les listes « Tab5 · … » (agendas, téléphone, capteur de présence), à
+#            régler dans Paramètres → Appareils et services → Entités (chercher
+#            « Tab5 · »), ou sur un tableau de bord ;
+#         2. la tablette elle-même, DÉTECTÉE par le modèle de son appareil
+#            (tab5-ha-hmi, bloc `project:` du firmware) : ses entités (écran, réveil
+#            en cours, micro, satellite…) quel que soit le nom donné à l'appareil ;
+#         3. des « miroirs » : un déclencheur `state:` exige un entity_id écrit dans
+#            le YAML, alors les automatisations se déclenchent sur ces capteurs, qui
+#            recopient l'entité choisie ou détectée.
+# @architecture_constraint Une liste = un template select À DÉCLENCHEURS + un
+#       input_text qui garde le choix (sans `initial` : HA le restaure au
+#       redémarrage). Déclencheurs plutôt qu'un modèle ordinaire : parcourir
+#       `states.binary_sensor` dans un modèle ordinaire le ferait recalculer à chaque
+#       changement d'un capteur de la maison (jusqu'à une fois par seconde).
+#       Ici : au démarrage, au rechargement des modèles, quand une entité est
+#       ajoutée ou renommée (entity_registry_updated) et quand un choix change.
+# @contrat État d'une liste = entity_id choisi, ou « Aucun ». Les packages lisent
+#       `states('select.tab5_…')` et vérifient l'existence (`expand(x) | count > 0`,
+#       qui ne lève jamais d'erreur, contrairement à `states[x]` sur « Aucun »).
+#       Choix par défaut (liste jamais réglée) seulement quand il n'y a pas
+#       d'ambiguïté : le seul agenda dont le nom dit « anniversaires » (ou
+#       birthday…), le seul agenda de jours fériés (intégration Jours fériés, ou nom
+#       qui le dit), le seul téléphone de l'application mobile. Agenda de travail,
+#       agenda des rendez-vous et capteur de présence : jamais devinés.
+# @ai_warning Renommer une liste change son entity_id (dérivé du nom) : les
+#       packages la lisent par cet entity_id. Idem pour les miroirs.
+# @install Avec les autres packages (`homeassistant: packages: !include_dir_named
+#       packages`). Rien à renseigner dans ce fichier.
+# ============================================================================
+
+input_text:
+  # Mémoire des listes ci-dessous : écrite par la liste, pas à la main.
+  tab5_choix_agenda_travail:
+    name: "Tab5 · mémoire · agenda de travail"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_agenda_rdv:
+    name: "Tab5 · mémoire · agenda des rendez-vous"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_agenda_anniversaires:
+    name: "Tab5 · mémoire · agenda des anniversaires"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_agenda_feries:
+    name: "Tab5 · mémoire · agenda des jours fériés"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_telephone:
+    name: "Tab5 · mémoire · téléphone"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_presence:
+    name: "Tab5 · mémoire · capteur de présence"
+    icon: mdi:content-save-outline
+    max: 255
+
+template:
+  # ──────────────────────────────────────────────────────────────────────────
+  # 1. Les listes de choix
+  # ──────────────────────────────────────────────────────────────────────────
+  - triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+      - trigger: event
+        event_type: entity_registry_updated
+      - trigger: state
+        entity_id:
+          - input_text.tab5_choix_agenda_travail
+          - input_text.tab5_choix_agenda_rdv
+          - input_text.tab5_choix_agenda_anniversaires
+          - input_text.tab5_choix_agenda_feries
+          - input_text.tab5_choix_telephone
+          - input_text.tab5_choix_presence
+    variables:
+      agendas: "{{ states.calendar | map(attribute='entity_id') | list }}"
+      # Suivi du téléphone : device_tracker ou personne (états home / not_home).
+      suivis: "{{ (states.device_tracker | map(attribute='entity_id') | list) + (states.person | map(attribute='entity_id') | list) }}"
+      presences: >-
+        {{ states.binary_sensor | selectattr('attributes.device_class', 'defined')
+           | selectattr('attributes.device_class', 'in', ['occupancy', 'presence', 'motion'])
+           | map(attribute='entity_id') | list }}
+      # Choix par défaut (voir @contrat) : une liste d'UN seul candidat, sinon rien.
+      auto_anniversaires: "{{ agendas | select('search', 'anniversaire|birthday|geburtstag|verjaardag|cumplea|compleann') | list }}"
+      auto_feries: >-
+        {{ ((integration_entities('holiday') | select('match', 'calendar[.]') | list)
+            + (agendas | select('search', 'ferie|holiday|feiertag|feestdag|festiv') | list)) | unique | list }}
+      auto_telephones: "{{ integration_entities('mobile_app') | select('match', 'device_tracker[.]') | list }}"
+    select:
+      - name: "Tab5 · agenda de travail"
+        unique_id: tab5_agenda_de_travail
+        icon: mdi:briefcase-clock
+        # Événements « Travail… » horodatés : horaires du planning et heure du réveil
+        # (calculée par la tablette), jours de repos. Ses autres événements comptent
+        # comme des rendez-vous.
+        options: >-
+          {%- set m = states('input_text.tab5_choix_agenda_travail') -%}
+          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_agenda_travail') -%}
+          {{ m if m.startswith('calendar.') else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_agenda_travail
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · agenda des rendez-vous"
+        unique_id: tab5_agenda_des_rendez_vous
+        icon: mdi:calendar-account
+        # Rendez-vous du popup calendrier, annonces et briefing du réveil.
+        options: >-
+          {%- set m = states('input_text.tab5_choix_agenda_rdv') -%}
+          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_agenda_rdv') -%}
+          {{ m if m.startswith('calendar.') else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_agenda_rdv
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · agenda des anniversaires"
+        unique_id: tab5_agenda_des_anniversaires
+        icon: mdi:cake-variant
+        options: >-
+          {%- set m = states('input_text.tab5_choix_agenda_anniversaires') -%}
+          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_agenda_anniversaires') -%}
+          {{ m if m.startswith('calendar.') else ('Aucun' if m == 'Aucun' or auto_anniversaires | count != 1 else auto_anniversaires[0]) }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_agenda_anniversaires
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · agenda des jours fériés"
+        unique_id: tab5_agenda_des_jours_feries
+        icon: mdi:calendar-star
+        # Agenda de l'intégration « Jours fériés » (holiday) : tous ses événements sont
+        # fériés. Autre agenda (Google « Jours fériés et autres fêtes ») : seuls les
+        # intitulés de la liste blanche de packages/tab5_calendar.yaml.
+        options: >-
+          {%- set m = states('input_text.tab5_choix_agenda_feries') -%}
+          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_agenda_feries') -%}
+          {{ m if m.startswith('calendar.') else ('Aucun' if m == 'Aucun' or auto_feries | count != 1 else auto_feries[0]) }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_agenda_feries
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · téléphone"
+        unique_id: tab5_telephone
+        icon: mdi:cellphone-marker
+        # Allume l'écran à son retour, l'éteint à son départ (packages/tab5_push.yaml).
+        options: >-
+          {%- set m = states('input_text.tab5_choix_telephone') -%}
+          {{ suivis + ([m] if '.' in m and m not in suivis else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_telephone') -%}
+          {{ m if m.startswith('device_tracker.') or m.startswith('person.') else ('Aucun' if m == 'Aucun' or auto_telephones | count != 1 else auto_telephones[0]) }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_telephone
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · capteur de présence"
+        unique_id: tab5_capteur_de_presence
+        icon: mdi:motion-sensor
+        # Allume l'écran à la détection, l'éteint après 15 min sans présence.
+        options: >-
+          {%- set m = states('input_text.tab5_choix_presence') -%}
+          {{ presences + ([m] if m.startswith('binary_sensor.') and m not in presences else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_presence') -%}
+          {{ m if m.startswith('binary_sensor.') else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_presence
+            data:
+              value: "{{ option }}"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # 2. La tablette, détectée par le modèle de son appareil
+  # ──────────────────────────────────────────────────────────────────────────
+  # Même recherche que la garde « tablette connectée » des packages (#215) : le
+  # capteur « HA API Status » d'un appareil ESPHome de modèle tab5-ha-hmi (le
+  # connecté s'il y en a plusieurs), puis les entités de CET appareil par la fin de
+  # leur entity_id, qui vient des noms du firmware (jamais traduits). Le préfixe,
+  # lui, dépend du nom de l'appareil dans HA (« salon_… » chez l'auteur pour une
+  # partie des entités) : il n'est plus écrit nulle part.
+  - triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+      # Tablette ajoutée (packages installés d'abord, comme le dit le guide),
+      # renommée, ou entité renommée.
+      - trigger: event
+        event_type: entity_registry_updated
+      - trigger: event
+        event_type: device_registry_updated
+      - trigger: event
+        event_type: esphome.tab5_connected
+    variables:
+      api: >-
+        {%- set ns = namespace(api='') -%}
+        {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') -%}
+          {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and (ns.api == '' or is_state(e, 'on')) -%}
+            {%- set ns.api = e -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {{ ns.api }}
+      entites: "{{ device_entities(device_id(api)) if api else [] }}"
+    sensor:
+      - name: "Tab5 · tablette"
+        unique_id: tab5_tablette
+        icon: mdi:tablet-dashboard
+        # Nom de l'appareil dans HA, ou « absente » (pas encore ajoutée).
+        state: "{{ (device_attr(api, 'name_by_user') or device_attr(api, 'name')) if api else 'absente' }}"
+        attributes:
+          api: "{{ api }}"
+          ecran: "{{ entites | select('match', 'light[.].*_display_backlight$') | first | default('') }}"
+          reveil_en_cours: "{{ entites | select('match', 'binary_sensor[.].*_reveil_en_cours$') | first | default('') }}"
+          raison: "{{ entites | select('match', 'sensor[.].*_raison_du_redemarrage$') | first | default('') }}"
+          demarrage: "{{ entites | select('match', 'sensor[.].*_uptime$') | first | default('') }}"
+          micro: "{{ entites | select('match', 'switch[.].*_wake_word_active$') | first | default('') }}"
+          satellite: "{{ entites | select('match', 'assist_satellite[.]') | first | default('') }}"
+          rdv_avant: "{{ entites | select('match', 'number[.].*_rendez_vous_annoncer_avant$') | first | default('') }}"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # 3. Miroirs, pour les déclencheurs des automatisations
+  # ──────────────────────────────────────────────────────────────────────────
+  # Modèles ordinaires : ils suivent l'entité choisie (ou détectée) à l'instant où
+  # elle change. Indisponibles tant que rien n'est choisi : aucun déclencheur ne part.
+  - binary_sensor:
+      - name: "Tab5 · présence"
+        unique_id: tab5_presence
+        device_class: occupancy
+        state: >-
+          {%- set e = states('select.tab5_capteur_de_presence') -%}
+          {{ e.startswith('binary_sensor.') and is_state(e, 'on') }}
+        availability: >-
+          {%- set e = states('select.tab5_capteur_de_presence') -%}
+          {{ e.startswith('binary_sensor.') and has_value(e) }}
+      # Liaison API de la tablette (« HA API Status ») : `off` aussi quand la tablette
+      # est indisponible ; indisponible seulement sans tablette dans HA (aucune
+      # alerte de déconnexion sur un HA qui ne la connaît pas encore).
+      - name: "Tab5 · connectée"
+        unique_id: tab5_connectee
+        device_class: connectivity
+        state: "{{ is_state(state_attr('sensor.tab5_tablette', 'api') or '', 'on') }}"
+        availability: "{{ (state_attr('sensor.tab5_tablette', 'api') or '') != '' }}"
+    sensor:
+      - name: "Tab5 · téléphone suivi"
+        unique_id: tab5_telephone_suivi
+        icon: mdi:home-account
+        state: "{{ states(states('select.tab5_telephone')) }}"
+        availability: >-
+          {%- set e = states('select.tab5_telephone') -%}
+          {{ (e.startswith('device_tracker.') or e.startswith('person.')) and has_value(e) }}
+      # Heure du dernier démarrage de la tablette (« Tab5 Uptime ») : garde (b) de
+      # packages/tab5_health.yaml, qui lit ses from_state / to_state. État recopié
+      # tel quel, `unavailable` compris, avec l'attribut `source` : indisponible SANS
+      # `source` = pas encore de tablette dans HA (son arrivée n'est pas un
+      # redémarrage) ; `unavailable` AVEC `source` = tablette perdue par HA.
+      - name: "Tab5 · démarrage"
+        unique_id: tab5_demarrage
+        icon: mdi:restart
+        state: "{{ states(state_attr('sensor.tab5_tablette', 'demarrage') or '') }}"
+        availability: "{{ (state_attr('sensor.tab5_tablette', 'demarrage') or '') != '' }}"
+        attributes:
+          source: "{{ state_attr('sensor.tab5_tablette', 'demarrage') or '' }}"
+      # « Rendez-vous : annoncer avant » (number du firmware) : packages/tab5_reveil.yaml
+      # republie les rendez-vous quand il change.
+      - name: "Tab5 · rendez-vous : annoncer avant"
+        unique_id: tab5_rendez_vous_annoncer_avant
+        icon: mdi:timer-outline
+        state: "{{ states(state_attr('sensor.tab5_tablette', 'rdv_avant') or '') }}"
+        availability: "{{ has_value(state_attr('sensor.tab5_tablette', 'rdv_avant') or '') }}"
+      # Nombre d'agendas choisis ; attributs = signature (état, début, fin, titre de
+      # l'événement en cours ou suivant) : ils changent quand un événement commence,
+      # finit, ou que le suivant change, comme l'état d'un agenda. `travail` relance
+      # la poussée complète (tab5_push.yaml), `rendez_vous` la liste des
+      # rendez-vous (tab5_reveil.yaml).
+      - name: "Tab5 · agendas"
+        unique_id: tab5_agendas
+        icon: mdi:calendar-sync
+        state: >-
+          {{ [states('select.tab5_agenda_de_travail'), states('select.tab5_agenda_des_rendez_vous'),
+              states('select.tab5_agenda_des_anniversaires'), states('select.tab5_agenda_des_jours_feries')]
+             | select('search', '^calendar[.]') | list | count }}
+        attributes:
+          travail: >-
+            {%- set a = states('select.tab5_agenda_de_travail') -%}
+            {{ states(a) }}|{{ state_attr(a, 'start_time') }}|{{ state_attr(a, 'end_time') }}|{{ state_attr(a, 'message') }}
+          rendez_vous: >-
+            {%- set ns = namespace(s='') -%}
+            {%- for a in [states('select.tab5_agenda_des_rendez_vous'), states('select.tab5_agenda_de_travail')] -%}
+              {%- set ns.s = ns.s ~ states(a) ~ '|' ~ state_attr(a, 'start_time') ~ '|' ~ state_attr(a, 'message') ~ ';' -%}
+            {%- endfor -%}
+            {{ ns.s }}
