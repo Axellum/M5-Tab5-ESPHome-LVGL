@@ -22,7 +22,6 @@
 #include <ctime>
 #include <cstring>
 #include <vector>
-#include <map>
 
 // =============================================================================
 // Geste de swipe (page_main.on_gesture) : pagination previsions (y >= carte centrale)
@@ -39,6 +38,16 @@ static constexpr int FORECAST_MAIN_PAGE = 2;
 // (temp_planning_active() est déclarée dans tab5_custom.h, les scripts la lisent).
 static void end_temporary_planning(CentralPanelCtx& ctx);
 
+// Qui occupe la carte centrale (enfants de central_card, tab5-lvgl.yaml) :
+//   - planning du tap : planning_wrap avec le texte du jour, 6 s (temp_planning_active()) ;
+//   - réponse vocale : vocal_wrap, 8 s, accueil seulement (ctx.vocal_shown) ;
+//   - titre de la pièce : page_title_wrap, mode HA, toutes les pages (ctx.ha_mode) ;
+//   - titre de page : page_title_wrap, pages de prévisions 0, 1, 3, 4 ;
+//   - rotateur : sur l'accueil, le panneau ctx.current_panel s'il est actif, sinon rien.
+// Les deux premiers prennent la carte (prendre_carte) et la rendent à leur fin ;
+// changer de page ou de mode les termine (liberer_carte) puis pose le titre ou le
+// panneau de la nouvelle page (update_central_forecast_page_ui).
+//
 // Le rotateur (panneaux 0-7) n'a la main sur la carte centrale que sur l'accueil
 // (page 2), hors planning temporaire et hors réponse vocale. Ailleurs la carte
 // appartient au titre de page ou à l'overlay : une mise à jour de drapeaux (push
@@ -172,13 +181,13 @@ static void hide_central_panel(lv_obj_t* wrap) {
 }
 
 static void sync_central_panel_visibility(CentralPanelCtx& ctx) {
-    bool any = central_panel_is_active(ctx.current_panel, ctx);
-    if (!any) {
+    // Panneau courant devenu inactif : le premier actif dans l'ordre des index, ou 0
+    // s'il n'y en a aucun (0 est alors inactif lui aussi : planning absent, lot 5).
+    if (!central_panel_is_active(ctx.current_panel, ctx)) {
         ctx.current_panel = 0;
         for (int p = 0; p < kCentralPanelCount; p++) {
             if (central_panel_is_active(p, ctx)) {
                 ctx.current_panel = p;
-                any = true;
                 break;
             }
         }
@@ -190,7 +199,7 @@ static void sync_central_panel_visibility(CentralPanelCtx& ctx) {
     for (lv_obj_t* w : central_wraps(ctx)) hide_central_panel(w);
 
     // Rien à montrer (sans planning, lot 5) : la carte reste vide.
-    if (!any) return;
+    if (!central_panel_is_active(ctx.current_panel, ctx)) return;
     lv_obj_t* active = central_panel_wrapper(ctx.current_panel, ctx);
     if (active) lv_obj_remove_flag(active, LV_OBJ_FLAG_HIDDEN);
 }
@@ -599,6 +608,20 @@ void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase) {
     lv_label_set_text(lbl, t.c_str());
 }
 
+// Changer de page ou de mode (météo ↔ HA) met fin aux overlays de la carte centrale
+// (audit du 25/09/2026, §2.4) : sans ça, le timer du planning temporaire réaffichait
+// 6 s plus tard le titre de la page d'ORIGINE sur la nouvelle page (ou sur la pièce),
+// et la réponse vocale restait visible sous le nouveau titre. Le script YAML de la
+// réponse vocale finit son délai sans effet visible (masquer un objet masqué ; la
+// synchro ne réaffiche que si le rotateur a la main). L'appelant pose ensuite
+// l'occupant de la nouvelle page (update_central_forecast_page_ui).
+static void liberer_carte(CentralPanelCtx& ctx) {
+    end_temporary_planning(ctx);
+    if (ctx.vocal_shown) {
+        if (ctx.vocal_wrap) lv_obj_add_flag(ctx.vocal_wrap, LV_OBJ_FLAG_HIDDEN);
+        ctx.vocal_shown = false;
+    }
+}
 
 // Applique une page de previsions : donnees, calque, pastilles, carte centrale.
 // Factorise entre les deux seules facons de changer de page — le swipe manuel
@@ -614,17 +637,7 @@ static void apply_forecast_page(int old_page, int page, lv_dir_t dir,
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx) {
 
-        // Changer de page met fin aux overlays de la carte centrale (audit du
-        // 25/09/2026, §2.4) : sans ça, le timer du planning temporaire réaffichait
-        // 6 s plus tard le titre de la page d'ORIGINE sur la nouvelle page, et la
-        // réponse vocale restait visible sous le nouveau titre. Le script YAML de
-        // la réponse vocale finit son délai sans effet visible (masquer un objet
-        // masqué ; la synchro ne réaffiche que si le rotateur a la main).
-        end_temporary_planning(ctx);
-        if (ctx.vocal_shown) {
-            if (ctx.vocal_wrap) lv_obj_add_flag(ctx.vocal_wrap, LV_OBJ_FLAG_HIDDEN);
-            ctx.vocal_shown = false;
-        }
+        liberer_carte(ctx);
         ctx.forecast_page = page;
 
         // Detection de changement de layer (horaire <-> journalier).
@@ -694,11 +707,7 @@ int forecast_page_suivante(int page, bool gauche) {
 void central_mode_ha(lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, CentralPanelCtx& ctx) {
     // Comme un changement de page : le planning du tap et la réponse vocale cèdent la
     // carte (sinon le timer de 6 s réaffichait l'ancien titre par-dessus la pièce).
-    end_temporary_planning(ctx);
-    if (ctx.vocal_shown) {
-        if (ctx.vocal_wrap) lv_obj_add_flag(ctx.vocal_wrap, LV_OBJ_FLAG_HIDDEN);
-        ctx.vocal_shown = false;
-    }
+    liberer_carte(ctx);
     update_central_forecast_page_ui(ctx.forecast_page, page_title_wrap, lbl_page_title, ctx);
 }
 
@@ -847,6 +856,21 @@ static void planning_restore_timer_cb(lv_timer_t* /*timer*/) {
     }
 }
 
+// Planning du tap ou réponse vocale prennent la carte : animations coupées sur les 8
+// panneaux et le titre (une transition du rotateur en cours masquerait ou déplacerait
+// un panneau à sa fin), titre masqué, panneaux masqués sauf `garder` (nullptr : tous).
+static void prendre_carte(lv_obj_t* page_title_wrap, CentralPanelCtx& ctx, lv_obj_t* garder) {
+    const auto wraps = central_wraps(ctx);
+    for (lv_obj_t* w : wraps)
+        if (w) lv_anim_delete(w, nullptr);
+    if (page_title_wrap) {
+        lv_anim_delete(page_title_wrap, nullptr);
+        lv_obj_add_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
+    }
+    for (lv_obj_t* w : wraps)
+        if (w) lv_obj_set_flag(w, LV_OBJ_FLAG_HIDDEN, w != garder);
+}
+
 void show_temporary_planning(int tuile, lv_obj_t* lbl_planning,
                              lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
                              const std::string& plan_l1, const std::string& plan_l2,
@@ -870,16 +894,8 @@ void show_temporary_planning(int tuile, lv_obj_t* lbl_planning,
     std::string text = get_day_planning_display_text(jour);
     set_label_text_utf8(lbl_planning, text.c_str());
 
-    // Stoppe les animations LVGL en cours sur les panneaux centraux, puis ne
-    // laisse visible que le planning.
-    const auto wraps = central_wraps(ctx);
-    for (lv_obj_t* w : wraps)
-        if (w) lv_anim_delete(w, nullptr);
-    if (page_title_wrap) lv_anim_delete(page_title_wrap, nullptr);
-
-    if (page_title_wrap) lv_obj_add_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
-    for (lv_obj_t* w : wraps)
-        if (w) lv_obj_set_flag(w, LV_OBJ_FLAG_HIDDEN, w != ctx.planning_wrap);
+    // Seul le planning reste visible.
+    prendre_carte(page_title_wrap, ctx, ctx.planning_wrap);
 
     tp.plan_l1 = plan_l1;
     tp.plan_l2 = plan_l2;
@@ -896,12 +912,6 @@ void show_temporary_planning(int tuile, lv_obj_t* lbl_planning,
     tp.restore_timer = lv_timer_create(planning_restore_timer_cb, 6000, nullptr);
 }
 
-static void hide_all_central_panels_for_overlay(lv_obj_t* page_title_wrap, CentralPanelCtx& ctx) {
-    if (page_title_wrap) lv_obj_add_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
-    for (lv_obj_t* w : central_wraps(ctx))
-        if (w) lv_obj_add_flag(w, LV_OBJ_FLAG_HIDDEN);
-}
-
 void show_vocal_response_ui(const std::string& texte,
     lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal,
     lv_obj_t* page_title_wrap, CentralPanelCtx& ctx,
@@ -912,12 +922,8 @@ void show_vocal_response_ui(const std::string& texte,
     const std::string t = trim_ws(normalize_text_utf8(texte));
     if (t.empty()) return;
 
-    for (lv_obj_t* w : central_wraps(ctx))
-        if (w) lv_anim_delete(w, nullptr);
-    if (vocal_wrap) lv_anim_delete(vocal_wrap, nullptr);
-    if (page_title_wrap) lv_anim_delete(page_title_wrap, nullptr);
-
-    hide_all_central_panels_for_overlay(page_title_wrap, ctx);
+    lv_anim_delete(vocal_wrap, nullptr);
+    prendre_carte(page_title_wrap, ctx, nullptr);
 
     if (font) {
         esphome::lvgl::lv_obj_set_style_text_font(lbl_vocal, font, LV_PART_MAIN);
