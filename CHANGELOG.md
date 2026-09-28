@@ -25,6 +25,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   Les fins de ligne de chaque fichier sont gardées (même résultat sous Windows et Linux).
 - Règle 7 : la table est rattachée aux cartes du mode HA (`icon_sw?`), aux épaules des
   tuiles (`icon_card_*`) et au sélecteur du popup lumière (`icon_light_sel_*`).
+- **Coût mesuré par la CI** (job `build`, contre `main` @ `e6b81db`, dernier firmware
+  compilé sur `main`) : image 3 239 558 → 3 290 102 octets, **+50 544 octets (≈ 49 Kio)**
+  pour 215 glyphes ajoutés (75 à 70 px, 72 à 45 px, 68 à 32 px), soit ~235 octets
+  chacun ; RAM inchangée (171 002 octets) ; flash 39,9 % → 40,5 %.
 - Doc `docs/tiles_icons.md` (EN + FR) : la palette, comment l'icône est choisie, comment
   en demander une. Tests `tests/test_tuiles_icones.py`.
 
