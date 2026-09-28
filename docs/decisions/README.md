@@ -26,9 +26,10 @@ Format: **Context / Decision / Consequences**. One page max. Add a new one whene
 | [0014](0014-game-common-helpers-local-palettes.md) | The 8 consoles share `game_common.h`; every console keeps its palette local; every engine has a Python mirror |
 | [0015](0015-ota-encrypted-with-api-key.md) | ~~OTA encrypted with the API key — plain uploads refused, no OTA password~~ (superseded by 0020) |
 | [0016](0016-ci-esphome-latest-canary.md) | CI compiles with ESPHome `latest` on purpose — a free upstream canary |
-| [0017](0017-ha-placeholders-rendered-copies.md) | Public HA files hold placeholders only — real IDs in `placeholders.yaml`, HA runs `rendered/` |
+| [0017](0017-ha-placeholders-rendered-copies.md) | ~~Public HA files hold placeholders only — real IDs in `placeholders.yaml`, HA runs `rendered/`~~ (placeholders superseded by 0024; the leak guard stays) |
 | [0018](0018-optional-zones-confirmed-by-ha.md) | Optional zones — a zone disappears only when HA confirms its entity does not exist |
 | [0019](0019-logical-slots-blueprint.md) | Logical slots — the device knows slots, a Home Assistant blueprint maps them to entities |
 | [0020](0020-no-secret-firmware-signed-ota.md) | No secret in the firmware — Home Assistant provisions the API key, OTA images are signed |
 | [0021](0021-host-render-stubs.md) | The screen is rendered off the tablet — the `host` platform, stubbed hardware, no firmware change |
 | [0022](0022-published-firmware-pages-channels.md) | Published firmware — signed in CI, a web flasher on GitHub Pages, stable and beta channels |
+| [0024](0024-packages-without-placeholders.md) | Packages without placeholders — every home value is picked in Home Assistant, the tablet is detected by its model |

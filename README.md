@@ -261,20 +261,20 @@ The engine is optional for the screen UI (push dashboard works without it). It i
 │   ├── trivia_game.h/.cpp    # Game: Trial Poursuite (quiz)
 │   ├── draughts_ai/game.*    # Game: Dames Tab (draughts)
 │   └── chess_ai/game.*       # Game: Roi Noir (chess)
-├── HomeAssistant_Config/     # HA packages (placeholders) — rendered, they are what runs on the author's HA
-├── tests/                    # pytest: secrets checker, HA placeholder renderer, content guards
+├── HomeAssistant_Config/     # HA packages, no placeholder (choices made in HA) — what runs on the author's HA, zipped in each release
+├── tests/                    # pytest: secrets checker, HA leak guard and install, content guards
 ├── tools/
 │   ├── demo/                 # Standalone demo pusher (no HA required)
 │   ├── check_*.py            # Content guards read the real C++/YAML (modal chrome, registry, code rules, Marble, Lode)
 │   ├── cartographie_counts.py  # Line counts of CARTOGRAPHIE_TAB5.md (check / --write)
-│   ├── render_ha_config.py   # Public HA files + placeholders.yaml → deployable rendered/ (--check: no real ID leaked)
+│   ├── render_ha_config.py   # Copies the public HA files to rendered/ (--check: no real ID, no placeholder leaked)
 │   ├── verifier_secrets_config.py  # No secret in any tracked file (pre-commit + CI)
 │   ├── test_go_engine.py/.cpp  # Host tests: Go rules (Python mirror locally, real C++ with g++ in CI)
 │   ├── test_alarm_clock.cpp  # Host tests: alarm engine, simulated clock, Europe/Paris DST (g++ in CI)
 │   ├── test_chess_perft.py   # Host tests: chess move generator vs the perft suite
 │   ├── test_draughts_engine.py  # Host tests: draughts move generator vs reference perft (10×10 and 8×8)
 │   └── make_chess_font.py    # Builds ChessPieces.ttf
-├── .pre-commit-config.yaml   # yamllint, BOM, secrets, HA placeholders — replayed by CI
+├── .pre-commit-config.yaml   # yamllint, BOM, secrets, HA leak guard — replayed by CI
 ├── pyproject.toml            # pytest config (testpaths: tests, tools)
 ├── web/                      # GitHub Pages site: showcase page and web installer (install/), built by tools/publication/pages.py
 └── docs/                     # Extended documentation — arcade.md (games), decisions/ (ADR), press/ (publication kit)

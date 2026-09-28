@@ -18,10 +18,13 @@
 #       doit être déployé dans config/custom_templates/ et rechargé
 #       (homeassistant.reload_custom_templates) AVANT ce package, sinon les
 #       deux scripts échouent à la ligne d'import. Ne pas recopier ces lignes ici.
-# @data_sources calendar.VOTRE_EMAIL_gmail_com ("Planing boulo", événements "Travail*"
-#       horodatés), calendar.jours_feries_et_autres_fetes_en_france (Google, contient
-#       aussi des fêtes NON fériées -> liste blanche feries_connus),
-#       calendar.famille + calendar.anniversaires (RDV / anniversaires).
+# @data_sources Quatre agendas choisis dans HA (listes « Tab5 · agenda … »,
+#       packages/tab5_reglages.yaml, ADR-0024) : travail (événements « Travail* »
+#       horodatés ; ses autres événements sont des RDV), jours fériés, rendez-vous,
+#       anniversaires. Un agenda non choisi est simplement absent. Fériés : un agenda
+#       de l'intégration « Jours fériés » (holiday) ne contient que des jours fériés ;
+#       un autre (Google « Jours fériés et autres fêtes en France ») mélange fériés et
+#       fêtes civiles -> liste blanche feries_connus.
 # @ai_warning Vacances scolaires Zone A (académie de Bordeaux, Landes) : table
 #       STATIQUE vérifiée sur data.education.gouv.fr (fr-en-calendrier-scolaire)
 #       le 19/07/2026 — intervalle [d, f[ en dates locales. La fin de l'été 2027
@@ -101,6 +104,24 @@ script:
             - "La Toussaint"
             - "L'Armistice"
             - "Noël"
+      # Agendas choisis dans HA : entity_id, ou '' s'il n'est pas choisi ou n'existe
+      # plus. `agendas` = ceux à interroger (sans doublon : un même agenda peut servir
+      # à deux rôles).
+      - variables: &agendas_choisis
+          ag_travail: >-
+            {%- set a = states('select.tab5_agenda_de_travail') -%}
+            {{ a if a.startswith('calendar.') and expand(a) | count > 0 else '' }}
+          ag_feries: >-
+            {%- set a = states('select.tab5_agenda_des_jours_feries') -%}
+            {{ a if a.startswith('calendar.') and expand(a) | count > 0 else '' }}
+          ag_rdv: >-
+            {%- set a = states('select.tab5_agenda_des_rendez_vous') -%}
+            {{ a if a.startswith('calendar.') and expand(a) | count > 0 else '' }}
+          ag_anniv: >-
+            {%- set a = states('select.tab5_agenda_des_anniversaires') -%}
+            {{ a if a.startswith('calendar.') and expand(a) | count > 0 else '' }}
+          agendas: "{{ [ag_travail, ag_feries, ag_rdv, ag_anniv] | reject('eq', '') | unique | list }}"
+          tous_feries: "{{ ag_feries != '' and ag_feries in integration_entities('holiday') }}"
       - variables:
           # Mois civil [1er, 1er suivant[ ; get_events borné à aujourd'hui si mois courant.
           # Mois entièrement passé → mois civil complet (voir `debut` plus bas).
@@ -131,18 +152,21 @@ script:
             {% else %}
               {{ debut_mois }}
             {% endif %}
-      - action: calendar.get_events
-        continue_on_error: true
-        data:
-          start_date_time: "{{ debut }}"
-          end_date_time: "{{ fin }}"
-        target:
-          entity_id:
-            - calendar.VOTRE_EMAIL_gmail_com
-            - calendar.jours_feries_et_autres_fetes_en_france
-            - calendar.famille
-            - calendar.anniversaires
-        response_variable: ev
+      # Aucun agenda choisi : pas d'appel (une cible vide lève une erreur que
+      # continue_on_error ne rattrape pas) ; `ev` reste indéfini, seules les vacances
+      # scolaires colorent la grille.
+      - if:
+          - condition: template
+            value_template: "{{ agendas | count > 0 }}"
+        then:
+          - action: calendar.get_events
+            continue_on_error: true
+            data:
+              start_date_time: "{{ debut }}"
+              end_date_time: "{{ fin }}"
+            target:
+              entity_id: "{{ agendas }}"
+            response_variable: ev
       - action: esphome.tab5_ha_hmi_tab5_maj_calendrier_mois
         continue_on_error: true
         data:
@@ -150,10 +174,10 @@ script:
           mois: "{{ m }}"
           codes: >-
             {% from 'tab5_calendar.jinja' import couvre, ev_start, ev_end, ev_summary %}
-            {% set trav = ev['calendar.VOTRE_EMAIL_gmail_com'].events if ev is defined and 'calendar.VOTRE_EMAIL_gmail_com' in ev else [] %}
-            {% set fer = ev['calendar.jours_feries_et_autres_fetes_en_france'].events if ev is defined and 'calendar.jours_feries_et_autres_fetes_en_france' in ev else [] %}
-            {% set fam = ev['calendar.famille'].events if ev is defined and 'calendar.famille' in ev else [] %}
-            {% set ann = ev['calendar.anniversaires'].events if ev is defined and 'calendar.anniversaires' in ev else [] %}
+            {% set trav = ev[ag_travail].events if ev is defined and ag_travail in ev else [] %}
+            {% set fer = ev[ag_feries].events if ev is defined and ag_feries in ev else [] %}
+            {% set fam = ev[ag_rdv].events if ev is defined and ag_rdv in ev and ag_rdv != ag_travail else [] %}
+            {% set ann = ev[ag_anniv].events if ev is defined and ag_anniv in ev else [] %}
             {% set ns = namespace(out='') %}
             {% for d in range(1, 32) %}
               {% set f = namespace(trav=false, ferie=false, vac=false, rdv=false, anniv=false) %}
@@ -176,7 +200,7 @@ script:
                     {% endif %}
                   {% endfor %}
                   {% for e in fer %}
-                    {% if couvre(e, ds) and ev_summary(e) in feries_connus %}
+                    {% if couvre(e, ds) and (tous_feries or ev_summary(e) in feries_connus) %}
                       {% set f.ferie = true %}
                     {% endif %}
                   {% endfor %}
@@ -198,7 +222,7 @@ script:
             {{ ns.out }}
           heures: >-
             {% from 'tab5_calendar.jinja' import couvre, ev_start, ev_end, ev_summary %}
-            {% set trav = ev['calendar.VOTRE_EMAIL_gmail_com'].events if ev is defined and 'calendar.VOTRE_EMAIL_gmail_com' in ev else [] %}
+            {% set trav = ev[ag_travail].events if ev is defined and ag_travail in ev else [] %}
             {% set ns = namespace(out='') %}
             {% for d in range(1, 32) %}
               {% set h = namespace(txt='') %}
@@ -244,35 +268,38 @@ script:
           ds: "{{ date | string }}"
           vacances_zone_a: *vacances_zone_a
           feries_connus: *feries_connus
+      - variables: *agendas_choisis
       - variables:
           fin_jour: "{{ ((ds ~ ' 00:00:00') | as_datetime + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S') }}"
-      - action: calendar.get_events
-        continue_on_error: true
-        data:
-          start_date_time: "{{ ds }} 00:00:00"
-          end_date_time: "{{ fin_jour }}"
-        target:
-          entity_id:
-            - calendar.VOTRE_EMAIL_gmail_com
-            - calendar.jours_feries_et_autres_fetes_en_france
-            - calendar.famille
-            - calendar.anniversaires
-        response_variable: ev
+      - if:
+          - condition: template
+            value_template: "{{ agendas | count > 0 }}"
+        then:
+          - action: calendar.get_events
+            continue_on_error: true
+            data:
+              start_date_time: "{{ ds }} 00:00:00"
+              end_date_time: "{{ fin_jour }}"
+            target:
+              entity_id: "{{ agendas }}"
+            response_variable: ev
       - action: esphome.tab5_ha_hmi_tab5_maj_calendrier_jour
         continue_on_error: true
         data:
           date: "{{ ds }}"
           payload: >-
             {% from 'tab5_calendar.jinja' import couvre, ev_start, ev_end, ev_summary %}
-            {% set trav = ev['calendar.VOTRE_EMAIL_gmail_com'].events if ev is defined and 'calendar.VOTRE_EMAIL_gmail_com' in ev else [] %}
-            {% set fer = ev['calendar.jours_feries_et_autres_fetes_en_france'].events if ev is defined and 'calendar.jours_feries_et_autres_fetes_en_france' in ev else [] %}
-            {% set fam = ev['calendar.famille'].events if ev is defined and 'calendar.famille' in ev else [] %}
-            {% set ann = ev['calendar.anniversaires'].events if ev is defined and 'calendar.anniversaires' in ev else [] %}
+            {% set trav = ev[ag_travail].events if ev is defined and ag_travail in ev else [] %}
+            {% set fer = ev[ag_feries].events if ev is defined and ag_feries in ev else [] %}
+            {# Même agenda pour le travail et les rendez-vous : ses rendez-vous sont
+               déjà lus avec le travail, pas deux fois. #}
+            {% set fam = ev[ag_rdv].events if ev is defined and ag_rdv in ev and ag_rdv != ag_travail else [] %}
+            {% set ann = ev[ag_anniv].events if ev is defined and ag_anniv in ev else [] %}
             {% set ns = namespace(lines=[]) %}
             {% for e in fer %}
               {% set summ = ev_summary(e) %}
               {% set txt = summ | replace('|', '/') | replace(';', ',') | replace('~', '-') %}
-              {% if couvre(e, ds) and summ in feries_connus %}
+              {% if couvre(e, ds) and (tous_feries or summ in feries_connus) %}
                 {% set ns.lines = ns.lines + ['ferie|' ~ txt] %}
               {% endif %}
             {% endfor %}
@@ -326,7 +353,7 @@ script:
             {% for e in fer %}
               {% set summ = ev_summary(e) %}
               {% set txt = summ | replace('|', '/') | replace(';', ',') | replace('~', '-') %}
-              {% if couvre(e, ds) and summ not in feries_connus %}
+              {% if couvre(e, ds) and not tous_feries and summ not in feries_connus %}
                 {% set ns.lines = ns.lines + ['fete|' ~ txt] %}
               {% endif %}
             {% endfor %}

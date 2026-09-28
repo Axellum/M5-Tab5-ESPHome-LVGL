@@ -3,8 +3,11 @@
 vérifie sans conteneur ni tablette.
 
 - preparer_config.py écrit une installation complète : configuration.yaml avec la ligne des
-  packages de docs/installation.md, TOUS les packages publics rendus sans qu'il reste un
-  placeholder (placeholders_ci.yaml doit suivre les packages), le blueprint tel quel ;
+  packages de docs/installation.md, TOUS les packages publics tels quels (ADR-0024 : aucun
+  placeholder, aucun `!secret`), le blueprint tel quel ; les optionnels seulement sur demande ;
+- chaque entité `…tab5_…` que lisent les packages est définie par un package (listes
+  « Tab5 · … », miroirs, capteurs) : son entity_id vient de son NOM, une faute ne se
+  verrait qu'à l'exécution ;
 - les entrées données au blueprint par verifier_installation.py en sont bien des entrées, et la
   chaîne « Zones masquées » attendue est celle que la tablette écrira ;
 - la tablette virtuelle porte le nom de la vraie (préfixe des actions des packages) ;
@@ -41,45 +44,91 @@ def test_preparer_ecrit_une_installation_complete(tmp_path):
     assert "packages: !include_dir_named packages" in config  # docs/installation.md, étape 4
     assert "automation: !include automations.yaml" in config  # l'API des automatisations écrit là
     publics = sorted(p.name for p in (preparer.HA_DIR / "packages").glob("*.yaml"))
-    rendus = sorted(p.name for p in (sortie / "packages").glob("*.yaml"))
-    assert rendus == sorted(publics + ["ci_donnees_test.yaml"])
+    installes = sorted(p.name for p in (sortie / "packages").glob("*.yaml"))
+    assert installes == sorted(publics + ["ci_donnees_test.yaml"])
+    for source in (preparer.HA_DIR / "packages").glob("*.yaml"):
+        assert (sortie / "packages" / source.name).read_bytes() == source.read_bytes(), source.name
     assert (sortie / "custom_templates" / "tab5_calendar.jinja").exists()
     copie = sortie / "blueprints" / "automation" / preparer.CHEMIN_BLUEPRINT
     assert copie.read_bytes() == preparer.BLUEPRINT.read_bytes()
     assert (sortie / "automations.yaml").read_text(encoding="utf-8").strip() == "[]"
+    # Package optionnel (volet à course simulée) : pas par défaut, il prendrait la main
+    # sur le volet du blueprint (variable volet_par_package).
+    assert not (sortie / "packages" / "volet_serre_tracking.yaml").exists()
 
 
-def test_placeholders_ci_couvrent_tous_les_packages(tmp_path):
-    """Un placeholder ajouté à un package sans valeur dans placeholders_ci.yaml ferait
-    charger à HA une entité « VOTRE_… » : le job testerait une installation ratée."""
+def test_preparer_avec_les_optionnels(tmp_path):
     sortie = tmp_path / "config"
-    preparer.preparer(sortie)
-    restes = []
+    preparer.preparer(sortie, optionnels=True)
+    for source in (preparer.HA_DIR / "optionnel").glob("*.yaml"):
+        assert (sortie / "packages" / source.name).read_bytes() == source.read_bytes()
+
+
+def test_installation_sans_rien_remplir(tmp_path):
+    """ADR-0024 : ni placeholder ni `!secret` dans ce qu'on installe. Un `!secret` sans
+    sa ligne dans secrets.yaml fait refuser à HA TOUTE sa configuration (tab5_tv.yaml,
+    vu par le job le 28/09/2026) ; un placeholder ferait charger une entité « VOTRE_… »."""
+    sortie = tmp_path / "config"
+    preparer.preparer(sortie, optionnels=True)
+    restes, secrets = [], []
     for fichier in list((sortie / "packages").glob("*.yaml")) + list((sortie / "custom_templates").iterdir()):
         for n, ligne in enumerate(fichier.read_text(encoding="utf-8").splitlines(), 1):
             code = ligne.split("#", 1)[0] if fichier.suffix == ".yaml" else ligne
             if "VOTRE_" in code:
                 restes.append(f"{fichier.name}:{n}")
-    assert not restes, f"placeholders sans valeur dans placeholders_ci.yaml : {restes[:10]}"
-
-
-def test_chaque_secret_des_packages_est_dans_secrets_yaml(tmp_path):
-    """Un `!secret` sans sa ligne dans secrets.yaml fait refuser à HA TOUTE sa
-    configuration (tab5_tv.yaml, vu par le job le 28/09/2026)."""
-    sortie = tmp_path / "config"
-    preparer.preparer(sortie)
-    secrets = yaml.safe_load((sortie / "secrets.yaml").read_text(encoding="utf-8"))
-    demandes = set()
-    for fichier in (sortie / "packages").glob("*.yaml"):
-        for ligne in fichier.read_text(encoding="utf-8").splitlines():
-            demandes.update(re.findall(r"!secret\s+(\w+)", ligne.split("#", 1)[0]))
-    assert demandes, "plus aucun !secret : retirer SECRETS de preparer_config.py"
-    assert demandes <= set(secrets), demandes - set(secrets)
+            if re.search(r"!secret\b", code):
+                secrets.append(f"{fichier.name}:{n}")
+    assert not restes, f"placeholders : {restes[:10]}"
+    assert not secrets, f"!secret : {secrets[:10]}"
+    assert "tab5" not in (sortie / "secrets.yaml").read_text(encoding="utf-8")
 
 
 def test_donnees_de_test_et_configuration_se_lisent():
-    for nom in ("donnees_test.yaml", "configuration.yaml", "placeholders_ci.yaml"):
+    for nom in ("donnees_test.yaml", "configuration.yaml"):
         yaml.load(_lire("tools", "installation_ha", nom), Loader=_Chargeur)
+
+
+def _slug(nom: str) -> str:
+    """entity_id tiré d'un nom par Home Assistant (util.slugify : accents retirés,
+    ponctuation en « _ »)."""
+    import unicodedata
+
+    texte = unicodedata.normalize("NFKD", nom).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", "_", texte).strip("_")
+
+
+def _definies() -> set[str]:
+    """entity_id des entités définies par les packages et les optionnels."""
+    definies = set()
+    fichiers = sorted((preparer.HA_DIR / "packages").glob("*.yaml")) + sorted((preparer.HA_DIR / "optionnel").glob("*.yaml"))
+    for fichier in fichiers:
+        paquet = yaml.load(fichier.read_text(encoding="utf-8"), Loader=_Chargeur) or {}
+        for domaine in ("input_text", "input_select", "input_boolean", "script", "rest_command"):
+            definies |= {f"{domaine}.{cle}" for cle in (paquet.get(domaine) or {})}
+        for bloc in paquet.get("template") or []:
+            for domaine in ("sensor", "binary_sensor", "select", "weather"):
+                for entite in bloc.get(domaine) or []:
+                    definies.add(f"{domaine}.{_slug(entite['name'])}")
+    return definies
+
+
+def test_entites_tab5_lues_sont_definies():
+    """Les packages se lisent entre eux par entity_id (listes « Tab5 · … », miroirs de
+    tab5_reglages.yaml, capteurs météo). Celui d'un modèle vient de son NOM : une faute
+    (« select.tab5_agenda_travail » pour « Tab5 · agenda de travail ») ne se verrait
+    qu'à l'exécution, en silence."""
+    definies = _definies()
+    fichiers = sorted((preparer.HA_DIR / "packages").glob("*.yaml")) + sorted((preparer.HA_DIR / "optionnel").glob("*.yaml"))
+    lues = set()
+    for fichier in fichiers:
+        # Hors commentaires YAML (ils citent d'anciens noms, pour mémoire).
+        texte = "\n".join(ligne for ligne in fichier.read_text(encoding="utf-8").splitlines()
+                          if not ligne.lstrip().startswith("#"))
+        lues |= set(re.findall(r"\b((?:sensor|binary_sensor|select|input_text|input_select|input_boolean)\.tab5_[a-z0-9_]+)", texte))
+    assert lues, "aucune entité tab5_ lue"
+    assert not lues - definies, sorted(lues - definies)
+    assert set(verifier.SOURCES) <= definies
+    assert {e for e, _ in verifier.DEDUITS} <= definies
 
 
 def test_entrees_du_blueprint_et_zones_attendues():

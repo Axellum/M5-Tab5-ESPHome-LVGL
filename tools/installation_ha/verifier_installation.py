@@ -9,13 +9,16 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
       hors tablette compilé sous le nom de la vraie, tab5-rendu-host.yaml), puis fait ce
       que docs/installation.md (« Sans compiler », dans cet ordre) fait faire à la souris :
         1. créer le compte (onboarding), fuseau Europe/Paris ; un agenda de travail
-           (Calendrier local) ; le blueprint est déjà dans config/ (preparer_config.py) ;
+           (Calendrier local) ; les listes « Tab5 · … » réglées à la souris (SOURCES,
+           plus aucun placeholder à remplir, ADR-0024) et ce qu'en déduisent les
+           packages ; le blueprint est déjà dans config/ (preparer_config.py) ;
         2. ajouter la tablette (ESPHome, hôte + port), puis cocher « Autoriser
            l'appareil à effectuer des actions Home Assistant » ;
         3. créer l'automatisation du blueprint « Tab5 — emplacements », avec des entités
            de test ; puis redémarrer la tablette.
       et vérifie : clé API créée par HA et gardée (jamais affichée), refus de la clé
       nulle et du clair une fois la clé posée, esphome.tab5_connected reçu APRÈS la clé,
+      tablette trouvée par le modèle de son appareil (sensor.tab5_tablette),
       poussée complète terminée sans erreur ; puis, après le redémarrage (la clé
       persiste, HA se reconnecte en chiffré), traces du blueprint et de la poussée sans
       erreur, zones masquées renvoyées par la tablette, capture d'écran demandée PAR HA
@@ -66,10 +69,24 @@ FUSEAU = "Europe/Paris"
 PREFIXE_ACTIONS = "tab5_ha_hmi"
 PREFIXE_ENTITES = "m5stack_tab5_home_assistant_hmi"
 
-# Agenda de travail (Calendrier local) : calendar.travail_ci = VOTRE_EMAIL_gmail_com
-# dans placeholders_ci.yaml.
+# Agenda de travail (Calendrier local), choisi dans « Tab5 · agenda de travail » (SOURCES).
 NOM_AGENDA = "Travail CI"
 AGENDA = "calendar.travail_ci"
+
+# Sources choisies dans les listes « Tab5 · … » (ADR-0024 : plus de placeholder, tout se
+# règle à la souris), comme le fait docs/installation.md, étape 4. Le reste (téléphone,
+# présence, TV, autres agendas) reste sur « Aucun » : un HA neuf doit marcher sans.
+SOURCES = {
+    "select.tab5_source_des_previsions": "weather.ville_ci",
+    "select.tab5_agenda_de_travail": AGENDA,
+}
+# Ce que les packages en déduisent (packages/tab5_meteo_sources.yaml) : les capteurs
+# Météo-France de donnees_test.yaml, trouvés sans placeholder.
+DEDUITS = {
+    ("sensor.tab5_meteo", "entite"): "weather.ville_ci",
+    ("sensor.tab5_sources_meteo", "mf_pluie"): "sensor.ville_ci_next_rain",
+    ("sensor.tab5_sources_meteo", "mf_vigilance"): "sensor.99_weather_alert",
+}
 
 # Automatisation créée depuis le blueprint (étape 4, point 6) et ses entrées : des
 # entités de l'intégration demo et de donnees_test.yaml. Pots 4 et 5 laissés vides :
@@ -498,6 +515,60 @@ async def creer_agenda(ha: HA, rapport: Rapport) -> None:
     rapport.ok(f"agenda de travail {AGENDA} (Calendrier local) avec deux journées « Travail »")
 
 
+async def attendre_attribut(ha: HA, entity_id: str, attribut: str | None, attendu: str,
+                            delai: float = 30.0) -> Any:
+    """État (attribut None) ou attribut d'une entité, dès qu'il vaut `attendu` ; sinon
+    la dernière valeur lue au bout de `delai`."""
+    fin = time.monotonic() + delai
+    valeur = None
+    while time.monotonic() < fin:
+        etat = (await ha.etats()).get(entity_id) or {}
+        valeur = etat.get("state") if attribut is None else (etat.get("attributes") or {}).get(attribut)
+        if valeur == attendu:
+            break
+        await asyncio.sleep(0.5)
+    return valeur
+
+
+async def choisir_sources(ha: HA, rapport: Rapport) -> None:
+    """« Tab5 · … » : chaque liste de SOURCES réglée comme à la souris (select.select_option),
+    puis ce que les packages en déduisent (DEDUITS). Les listes sont des modèles à
+    déclencheurs : une entité ajoutée (l'agenda) n'y apparaît qu'après
+    entity_registry_updated, d'où l'attente de l'option."""
+    for liste, option in SOURCES.items():
+        fin = time.monotonic() + 30
+        options: list = []
+        while time.monotonic() < fin:
+            options = ((await ha.etats()).get(liste) or {}).get("attributes", {}).get("options") or []
+            if option in options:
+                break
+            await asyncio.sleep(0.5)
+        else:
+            raise Echec(f"liste {liste} : option {option} absente ({options})")
+        await ha.post("/api/services/select/select_option", {"entity_id": liste, "option": option})
+        etat = await attendre_attribut(ha, liste, None, option)
+        rapport.verifier(etat == option, f"liste {liste} réglée sur {option}", f"état {etat!r}")
+    for (entity_id, attribut), attendu in DEDUITS.items():
+        valeur = await attendre_attribut(ha, entity_id, attribut, attendu)
+        rapport.verifier(valeur == attendu, f"{entity_id} ({attribut}) = {attendu}, trouvé sans placeholder",
+                         f"valeur {valeur!r}")
+
+
+async def verifier_tablette_detectee(ha: HA, rapport: Rapport) -> None:
+    """La tablette ajoutée est trouvée par le modèle de son appareil (sensor.tab5_tablette),
+    sans nom d'entité écrit dans les packages, et son miroir de liaison est `on`."""
+    api = f"binary_sensor.{PREFIXE_ENTITES}_ha_api_status"
+    trouve = await attendre_attribut(ha, "sensor.tab5_tablette", "api", api)
+    rapport.verifier(trouve == api, f"tablette détectée par son modèle (sensor.tab5_tablette : {api})",
+                     f"attribut api = {trouve!r}")
+    liaison = await attendre_attribut(ha, "binary_sensor.tab5_connectee", None, "on")
+    rapport.verifier(liaison == "on", "miroir binary_sensor.tab5_connectee à on", f"état {liaison!r}")
+    attributs = ((await ha.etats()).get("sensor.tab5_tablette") or {}).get("attributes", {})
+    rapport.info("entités de la tablette détectées : " + ", ".join(
+        f"{cle}={valeur or '—'}" for cle, valeur in attributs.items()
+        if cle not in ("friendly_name", "icon")))
+
+
 async def verifier_blueprint(ha: HA, rapport: Rapport) -> None:
     """Le blueprint copié dans config/ (étape 4, point 6) est lu par HA sans erreur."""
     liste = await ha.ws.commande("blueprint/list", domain="automation")
@@ -814,8 +885,10 @@ async def scenario(args, rapport: Rapport) -> None:
                 await ws.abonner(evenement)
 
             # « Sans compiler », 1 : Home Assistant d'abord. Packages et blueprint sont
-            # déjà dans config/ (preparer_config.py) ; un agenda, comme chez l'utilisateur.
+            # déjà dans config/ (preparer_config.py) ; un agenda, comme chez l'utilisateur,
+            # puis les sources choisies dans les listes « Tab5 · … » (étape 4).
             await creer_agenda(ha, rapport)
+            await choisir_sources(ha, rapport)
             await verifier_blueprint(ha, rapport)
 
             # 4 et 5 : ajout de la tablette dans sa fenêtre d'appairage, actions HA.
@@ -831,6 +904,7 @@ async def scenario(args, rapport: Rapport) -> None:
             connexion = horodatage(evt["time_fired"])
             rapport.info(f"clé vue {vue - debut:.1f} s après l'ajout, tab5_connected "
                          f"{connexion - debut:.1f} s après")
+            await verifier_tablette_detectee(ha, rapport)
             # L'option recharge l'intégration : HA se déconnecte puis revient (une
             # déconnexion voulue, comme le redémarrage plus bas).
             deconnexions: list[tuple[float, float]] = []

@@ -15,6 +15,11 @@
 # @ai_instruction Présence = zone.home (nombre de personnes suivies à la maison) :
 #       aucun identifiant personnel dans ce fichier public. Pour ne suivre qu'une
 #       personne, remplacer zone.home par une condition sur person.<vous>.
+# @ai_instruction L'interrupteur « Tab5 Wake Word Active » est celui de la tablette
+#       détectée par le modèle de son appareil (attribut `micro` de
+#       sensor.tab5_tablette, packages/tab5_reglages.yaml), la reconnexion est lue
+#       sur son miroir binary_sensor.tab5_connectee : aucun entity_id de la tablette
+#       écrit ici (ADR-0024). Sans tablette dans HA, l'automatisation ne fait rien.
 # @ai_warning Respecte un choix manuel : le micro n'est rallumé au retour QUE si
 #       c'est cette automation qui l'a coupé (input_boolean ci-dessous). Un
 #       « Ok Nabu » coupé à la main reste coupé.
@@ -58,12 +63,17 @@ automation:
       # Tablette reconnectée (redémarrage, OTA, Wi-Fi) ou HA redémarré : l'appel
       # a pu échouer pendant la coupure, on refait le point.
       - trigger: state
-        entity_id: binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status
+        entity_id: binary_sensor.tab5_connectee
         to: "on"
         id: resync
       - trigger: homeassistant
         event: start
         id: resync
+    variables:
+      micro: "{{ state_attr('sensor.tab5_tablette', 'micro') or '' }}"
+    conditions:
+      - condition: template
+        value_template: "{{ micro != '' }}"
     actions:
       - choose:
           # Maison vide et « Ok Nabu » actif : on coupe, et on s'en souvient.
@@ -75,13 +85,12 @@ automation:
               - condition: numeric_state
                 entity_id: zone.home
                 below: 1
-              - condition: state
-                entity_id: switch.m5stack_tab5_home_assistant_hmi_tab5_wake_word_active
-                state: "on"
+              - condition: template
+                value_template: "{{ is_state(micro, 'on') }}"
             sequence:
               - action: switch.turn_off
                 target:
-                  entity_id: switch.m5stack_tab5_home_assistant_hmi_tab5_wake_word_active
+                  entity_id: "{{ micro }}"
               - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.tab5_micro_coupe_absence
@@ -99,7 +108,7 @@ automation:
             sequence:
               - action: switch.turn_on
                 target:
-                  entity_id: switch.m5stack_tab5_home_assistant_hmi_tab5_wake_word_active
+                  entity_id: "{{ micro }}"
               - action: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.tab5_micro_coupe_absence

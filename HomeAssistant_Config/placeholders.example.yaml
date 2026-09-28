@@ -1,49 +1,26 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file placeholders.example.yaml — MODÈLE public de `placeholders.yaml` (gitignoré).
-# @role Table `placeholder: valeur réelle` lue par `tools/render_ha_config.py`,
-#       qui produit `HomeAssistant_Config/rendered/` : la copie déployable sur
-#       Home Assistant des fichiers publics de ce dossier (packages/, snippets/,
-#       custom_templates/). Les fichiers suivis par git ne contiennent QUE les
-#       placeholders de la colonne de gauche.
+# @role Depuis le 28/09/2026 (ADR-0024), les fichiers Home Assistant publics n'ont
+#       PLUS de placeholder : chaque valeur de la maison se choisit dans Home
+#       Assistant (listes « Tab5 · … »), la tablette est trouvée par le modèle de son
+#       appareil. Pour INSTALLER, ce fichier ne sert à rien : prendre l'archive
+#       `tab5_home_assistant.zip` d'une release (docs/installation.md, étape 4).
+#       Il ne sert plus qu'aux contributeurs qui font tourner les packages chez eux :
+#       `placeholders.yaml` liste LEURS identifiants réels, et
+#       `python tools/render_ha_config.py --check` (hook pre-commit, et la CI avec le
+#       secret HA_PLACEHOLDERS) échoue si l'un d'eux retombe dans un fichier public.
+#       Il n'affiche jamais la valeur, seulement le nom de la clé, le fichier et la
+#       ligne.
 # @install cp HomeAssistant_Config/placeholders.example.yaml HomeAssistant_Config/placeholders.yaml
-#          puis remplacer chaque valeur ; `python tools/render_ha_config.py`
-#          écrit le rendu, `--check` vérifie qu'aucune valeur réelle n'est
-#          retombée dans un fichier public (utilisable en CI, n'affiche jamais
-#          la valeur).
-# @ai_instruction Une clé = un IDENTIFIANT complet ou un JETON qui apparaît tel
-#       quel dans les fichiers publics. Les clés sont remplacées de la plus
-#       longue à la plus courte, texte brut, sans notion de YAML.
+#          puis une ligne `nom: valeur réelle` par identifiant à ne jamais publier.
+# @ai_instruction Une valeur = un identifiant complet ou un JETON distinctif (ville,
+#       adresse e-mail d'un agenda, nom d'un appareil) ; 6 caractères au moins,
+#       sinon elle est ignorée (trop ambiguë). Les noms sont libres (les anciens
+#       noms `VOTRE_…` restent valables).
 # ============================================================================
 
-# --- Météo (packages/tab5_push.yaml, packages/tab5_meteo_sources.yaml) ---
-# La source de la pluie dans l'heure et celle des vigilances se choisissent ensuite
-# dans HA (input_select « Tab5 · source … ») ; une source non installée reste inutilisée.
-VOTRE_VILLE: your_city                      # weather.<ville> : source des prévisions PAR DÉFAUT (se change dans HA, « Tab5 · source des prévisions ») ; Météo-France : sensor.<ville>_next_rain / _uv / _snow_chance / _freeze_chance
-VOTRE_DEPARTEMENT: "40"                     # Météo-France : sensor.<dept>_weather_alert (numéro de département)
-# entity_id COMPLETS : « openweathermap » seul se retrouverait aussi dans le nom de
-# l'action openweathermap.get_minute_forecast, et --check y verrait une fuite.
-VOTRE_METEO_OWM: weather.openweathermap     # OpenWeatherMap (mode v3.0) : la pluie minute par minute
-VOTRE_METEOALARM: binary_sensor.meteoalarm  # MeteoAlarm : vigilances (39 pays européens)
-
-# --- Domotique ---
-# Les appareils affichés par l'écran (lumières, clim, PC, TV, téléphone, températures,
-# plantes) se choisissent dans le blueprint « Tab5 — emplacements » (lot 6a) : plus de
-# placeholder pour eux. Restent ceux des packages suivants.
-VOTRE_VOLET: your_roller_shutter                # cover.<…> (package volet_serre_tracking : volet à course simulée)
-VOTRE_TV: your_samsung_tv                       # media_player.<…> ET remote.<…> (package tab5_tv : applications)
-VOTRE_TELEPHONE: your_phone                     # device_tracker.<…> (allumage/extinction écran)
-VOTRE_CAPTEUR_PRESENCE: your_presence_sensor    # binary_sensor.<…>
-
-# --- Calendriers ---
-VOTRE_EMAIL_gmail_com: your_email_gmail_com     # calendar.<…> (planning de travail, événements « Travail* »)
-
-# --- Entités dérivées du nom de l'appareil ESPHome ---
-# Avec le `friendly_name` livré (« M5Stack Tab5 Home Assistant HMI »), Home
-# Assistant nomme les entités `…m5stack_tab5_home_assistant_hmi_…`. Si votre
-# appareil a été créé sous un autre nom (ou préfixé par sa pièce, ex. `salon_`),
-# mettez ici l'entity_id COMPLET tel qu'il apparaît dans Outils de développement.
-number.m5stack_tab5_home_assistant_hmi_rendez_vous_annoncer_avant: number.m5stack_tab5_home_assistant_hmi_rendez_vous_annoncer_avant
-binary_sensor.m5stack_tab5_home_assistant_hmi_reveil_en_cours: binary_sensor.m5stack_tab5_home_assistant_hmi_reveil_en_cours
-sensor.m5stack_tab5_home_assistant_hmi_tab5_raison_du_redemarrage: sensor.m5stack_tab5_home_assistant_hmi_tab5_raison_du_redemarrage  # garde (b) de tab5_health.yaml
-binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status: binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status  # gardes de tab5_health.yaml et tab5_micro_absence.yaml
+# --- Exemples (à remplacer par vos valeurs) ---
+MA_VILLE: ma_ville                         # weather.ma_ville, sensor.ma_ville_next_rain…
+MON_AGENDA: mon_adresse_gmail_com          # calendar.mon_adresse_gmail_com
+MA_TV: ma_tv_samsung                       # media_player.ma_tv_samsung

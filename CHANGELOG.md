@@ -4,6 +4,40 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — Home Assistant sans placeholder : une archive, une ligne de YAML, des choix dans l'interface
+
+Installer le côté Home Assistant ne demande plus ni dépôt ni Python ([ADR-0024](docs/decisions/0024-packages-without-placeholders.md)).
+- **Archive `tab5_home_assistant.zip` jointe aux releases** (`tools/publication/archive_ha.py`,
+  job `home-assistant` de `publication.yml`) : `packages/`, `custom_templates/`, le blueprint
+  et `tab5_optionnel/`, dans l'arborescence de `config/`, avec un LISEZMOI. À décompresser
+  dans `config/`, puis une seule ligne de YAML (`packages: !include_dir_named packages`).
+- **Plus aucun placeholder** dans les packages : chaque valeur de la maison se choisit dans
+  HA, dans des listes « Tab5 · … » (nouveau `packages/tab5_reglages.yaml`) : agenda de
+  travail, des rendez-vous, des anniversaires, des jours fériés, téléphone, capteur de
+  présence ; TV Samsung et son adresse (`tab5_tv.yaml`). Choix par défaut seulement sans
+  ambiguïté ; « Aucun » éteint la fonction, sans erreur. Les agendas `calendar.famille`,
+  `calendar.anniversaires` et des jours fériés ne sont plus écrits en dur ; un agenda de
+  l'intégration Jours fériés compte tous ses événements comme fériés.
+- **Détectés** : la tablette par le modèle de son appareil (`sensor.tab5_tablette` : écran,
+  réveil en cours, micro, satellite, uptime… quel que soit son nom) ; les capteurs
+  Météo-France de la ville, la météo OpenWeatherMap et MeteoAlarm (`sensor.tab5_sources_meteo`).
+- **Plus de configuration HA refusée faute de secret** : `tab5_tv.yaml` n'a plus de
+  `!secret tab5_tv_app_url` ; l'adresse de la TV est un réglage de HA (ou l'IP d'un suivi du
+  routeur), et le package reste inerte tant qu'elle manque (une notification dit quoi régler).
+- **Volet à course simulée optionnel** : `volet_serre_tracking.yaml` passe dans
+  `HomeAssistant_Config/optionnel/` (`tab5_optionnel/` de l'archive), volet choisi dans
+  « Tab5 · volet à course simulée ». Livré par défaut, son script aurait pris au blueprint
+  les boutons du volet de tout le monde.
+- `render_ha_config.py` ne fait plus que copier ; `--check` refuse aussi un placeholder
+  restant. `placeholders.example.yaml` réduit à la liste des valeurs à ne jamais publier.
+- CI « HA neuf » : installation sans rien remplir (plus de `placeholders_ci.yaml` ni de
+  ligne dans `secrets.yaml`), sources choisies par `select.select_option`, tablette détectée
+  par son modèle, `check_config` aussi avec les optionnels. Tests : entités `…tab5_…` lues
+  toutes définies, archive reproductible et identique aux fichiers installés.
+- **Migration depuis la 3.1** : remplacer les fichiers, régler les listes (docs/installation.md,
+  étape 4), « Tab5 · agenda de travail » AVANT de recharger les automatisations, sinon le
+  réveil voit tous les jours en repos.
+
 ### 2026-09-28 — Site : une release n'est retenue qu'avec ses binaires (suite de #221)
 
 - `pages.py choisir` exigeait les trois manifestes, sans leurs binaires. Les neuf
