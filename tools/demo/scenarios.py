@@ -161,47 +161,47 @@ PIECES: dict = {
     # « lumieres-chambre » et « lumieres-salon » (tools/rendu/ecrans.py) y ouvre le
     # popup des lumières de la pièce.
     0: Piece("Salon", {
-        0: Tuile("med", "Télévision", options="t"),
-        1: Tuile("vol", "Volet du salon", etat="opening", valeur="45"),
+        0: Tuile("med", "Télévision", "tv", "t"),
+        1: Tuile("vol", "Volet du salon", "volet", etat="opening", valeur="45"),
         2: Tuile("lum", "Lampe d'ambiance", "canape", "dc", etat="on", valeur="180", couleur="FF8C1A"),
-        3: Tuile("lum", "Plafonnier", options="d"),
+        3: Tuile("lum", "Plafonnier", "plafonnier", "d"),
         # Une scène a pour état l'heure de sa dernière activation.
-        4: Tuile("act", "Soirée cinéma", etat="2026-06-15T20:45:00+00:00"),
+        4: Tuile("act", "Soirée cinéma", "scene", etat="2026-06-15T20:45:00+00:00"),
     }),
     # Jours 5-9.
     1: Piece("Entrée", {
-        0: Tuile("bin", "Porte d'entrée", complement="door"),
-        1: Tuile("bin", "Mouvement du couloir", complement="motion", etat="on"),
+        0: Tuile("bin", "Porte d'entrée", "porte", complement="door"),
+        1: Tuile("bin", "Mouvement du couloir", "mouvement", complement="motion", etat="on"),
         # Lecture seule : c'est le détecteur qui l'allume.
-        2: Tuile("lum", "Applique", options="r", etat="on"),
+        2: Tuile("lum", "Applique", "applique", "r", etat="on"),
         # Script à confirmer : un second appui dans les 3 s l'envoie.
         3: Tuile("act", "Je pars", options="k"),
-        4: Tuile("int", "Prise du portail", etat="unavailable"),
+        4: Tuile("int", "Prise du portail", "prise", etat="unavailable"),
     }),
     # Jours 10-14. Nom de 26 octets (la tablette en garde 24) ; trois tuiles espacées,
     # côte à côte et centrées en mode HA.
     2: Piece("Chambre d'amis à l'étage", {
         0: Tuile("lum", "Chevet", "lit", "d", etat="on", valeur="90"),
         # La clim du blueprint : état et température suivent tab5_maj_clim (etat_tuile).
-        2: Tuile("cli", "Climatisation", options="m", etat="cool", valeur="23.5"),
-        4: Tuile("bin", "Présence", complement="presence"),
+        2: Tuile("cli", "Climatisation", "clim", "m", etat="cool", valeur="23.5"),
+        4: Tuile("bin", "Présence", "presence", complement="presence"),
     }),
     # Heures 0-4. Deux tuiles à gauche : recentrées en mode HA.
     3: Piece("Bureau", {
         # Jamais éteint depuis l'écran (réveil par le réseau).
         0: Tuile("int", "Ordinateur", "ordinateur", "o", etat="on"),
-        1: Tuile("cap", "Consommation", complement="W", etat="126", valeur="126"),
+        1: Tuile("cap", "Consommation", "energie", complement="W", etat="126", valeur="126"),
     }),
     # Heures 5-9.
     4: Piece("Jardin", {
-        0: Tuile("vol", "Store de la terrasse", etat="open", valeur="60"),
-        1: Tuile("cap", "Humidité du sol", complement="%", etat="34", valeur="34"),
-        2: Tuile("med", "Enceinte", etat="playing"),
+        0: Tuile("vol", "Store de la terrasse", "store", etat="open", valeur="60"),
+        1: Tuile("cap", "Humidité du sol", "plante", complement="%", etat="34", valeur="34"),
+        2: Tuile("med", "Enceinte", "enceinte", etat="playing"),
         # 36 octets, coupé ; indigo, trop sombre pour le fond : la tablette l'éclaircit.
-        3: Tuile("lum", "Guirlande lumineuse de la terrasse", "led", "dc", etat="on", valeur="255",
+        3: Tuile("lum", "Guirlande lumineuse de la terrasse", "guirlande", "dc", etat="on", valeur="255",
                  couleur="4B0082"),
         # 24 octets tout juste : gardé en entier.
-        4: Tuile("cap", "Température extérieure", complement="°C", etat="17.8", valeur="17.8"),
+        4: Tuile("cap", "Température extérieure", "thermometre", complement="°C", etat="17.8", valeur="17.8"),
     }),
 }
 
