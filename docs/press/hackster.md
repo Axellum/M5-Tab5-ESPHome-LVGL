@@ -11,7 +11,7 @@
 ## Project header (Hackster metadata)
 
 - **Title:** Tab5 Voice HMI — Push-Only Home Assistant Dashboard on ESP32-P4
-- **Subtitle:** A 60 FPS native LVGL dashboard + local voice satellite on the M5Stack Tab5 V2 — every line of code written by AI, steered by a human.
+- **Subtitle:** A native LVGL dashboard + local voice satellite on the M5Stack Tab5 V2 — every line of code written by AI, steered by a human.
 - **Difficulty:** Intermediate
 - **Type:** Full instructions provided
 - **Time:** ~4 hours (dashboard) · a weekend (voice + engine)
@@ -102,7 +102,7 @@ Wanna find out how it works? Read along. Spoiler: this is **not** a web dashboar
 
 Most DIY wall panels run a browser, reload dashboards, and hammer the server with requests. This project turns that upside down:
 
-- The UI is **LVGL 9.5 compiled into the ESP32-P4 firmware**. Layout is computed once at boot; updates only redraw the label that changed. It renders at 60 FPS from a ~1.8 MB framebuffer in PSRAM, over a MIPI-DSI bus with DMA.
+- The UI is **LVGL 9.5 compiled into the ESP32-P4 firmware**. Layout is computed once at boot; updates only redraw the label that changed. It renders from a ~1.8 MB framebuffer in PSRAM, over a MIPI-DSI bus with DMA: a changed value in under 10 ms, the whole screen in 133 ms (measured on firmware 3.2.0).
 - The Tab5 **never asks Home Assistant for anything**. HA automations detect changes and **push** data to the device through 12 native ESPHome services (`tab5_maj_*`). When nothing changes, the network is silent and the CPU is nearly idle.
 - Complex payloads (a 15-day forecast!) are **packed into one delimited string** on the HA side and parsed by C++ on the device — one network call instead of dozens.
 - If Wi-Fi drops or HA restarts, the screen just keeps showing the last known state. No spinner, no blank page, ever.
@@ -123,7 +123,7 @@ The Tab5 V2 packs everything this project needs into one finished device — no 
 
 | Inside the Tab5 | Role in this project |
 |------|----------------|
-| ESP32-P4 (dual-core RISC-V 400 MHz) | Runs LVGL + wake-word inference |
+| ESP32-P4 (dual-core RISC-V, 360 MHz) | Runs LVGL + wake-word inference |
 | 5" 1280×720 MIPI-DSI + ST7123 touch | The dashboard |
 | ES7210 ADC + onboard mic | Voice capture (16 kHz / 16-bit I2S) |
 | ES8388 DAC + speaker | TTS playback |

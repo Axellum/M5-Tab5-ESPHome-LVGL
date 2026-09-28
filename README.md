@@ -19,7 +19,7 @@
 
 ---
 
-**A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen draws it at 60 FPS in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, TV remote, alarm clock — and 8 offline games.
+**A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen redraws only that, in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, TV remote, alarm clock — and 8 offline games.
 
 ![Animated tour of the M5Stack Tab5 Home Assistant screen: home, devices, plants, climate, lights, TV remote and console](docs/images/tab5_ui_tour.gif)
 
@@ -32,7 +32,7 @@
 - **Push-only, zero polling.** Home Assistant sends only what changed; the tablet never asks for anything ([ADR-0001](docs/decisions/0001-push-only-zero-polling.md)).
 - **Voice starts on the device.** "Okay Nabu" and a "Stop" word for the roller shutter are detected on the tablet; audio leaves it only after the wake word.
 - **Keeps working when Home Assistant doesn't.** Clock, alarm clock, games and the diagnostics console stay usable on their own.
-- **Documented and tested like a product.** 22 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome.
+- **Documented and tested like a product.** 25 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome.
 - **Runs on the ST7123 revision, and builds for the ST7121 and the original ILI9881C**, while most published Tab5 examples only cover the original one.
 
 ## Before you start
@@ -129,7 +129,7 @@ A single 1280×720 page organized in functional areas, all driven by Home Assist
 
 ## Arcade — 8 game consoles (experimental)
 
-> **Status: early prototypes.** These are first-pass, AI-generated games built to test what LVGL + C++ can do on an ESP32-P4 at 60 FPS. They are functional but not polished — think "proof of concept" rather than "finished product." The goal was to see how far AI code generation can go on embedded hardware, not to ship retail-quality games.
+> **Status: early prototypes.** These are first-pass, AI-generated games built to test what LVGL + C++ can do on an ESP32-P4. They are functional but not polished — think "proof of concept" rather than "finished product." The goal was to see how far AI code generation can go on embedded hardware, not to ship retail-quality games.
 
 All 8 consoles share the same architecture: each one is its **own fullscreen LVGL page** (`page_marble`, `page_chess`… declared `skip: true` so swipe navigation can't reach them), not an overlay stacked on the dashboard — the only documented exception to the modal chrome rule (ADR-0009). YAML reduced to empty containers, all content built in C++, `lv_timer` created on open / destroyed on close, NVS persistence, **zero Home Assistant or network dependency**.
 
@@ -165,8 +165,8 @@ All 8 consoles share the same architecture: each one is its **own fullscreen LVG
 ## Key design decisions
 
 - **Push-only, zero polling.** The device never requests state from Home Assistant. Automations on the HA side detect changes and push data to the screen via native ESPHome service calls. CPU stays near zero when nothing changes.
-- **Modular YAML.** The ESPHome configuration is split across fifteen files by concern (tokens, hardware, diagnostics sensors, home-automation sensors, API logic, styles, UI, globals, scripts, arcade, calendar, voice assistant, IMU, HA controls, alarm clock), each independently readable. Most stay under 500 lines; only the three largest (`tab5-alarm.yaml`, `tab5-lvgl.yaml`, `tab5-styles.yaml`) go beyond, and the UI is further split into 45 reusable `ui_components/*.yaml`.
-- **Native LVGL, no web stack.** Rendering runs at 60 FPS directly in the ESP32-P4's PSRAM. Vector fonts (Material Design Icons) replace image files entirely.
+- **Modular YAML.** The ESPHome configuration is split across nineteen files by concern (tokens, hardware, screen revision, publication channel, diagnostics sensors, home-automation sensors, API logic, styles, globals, scripts, UI, arcade, calendar, voice assistant, IMU, HA controls, alarm clock, rooms and tiles, zones), each independently readable. Most stay under 500 lines; only the four largest (`tab5-alarm.yaml`, `tab5-styles.yaml`, `tab5-lvgl.yaml`, `tab5-api-logic.yaml`) go beyond, and the UI is further split into 45 reusable `ui_components/*.yaml`.
+- **Native LVGL, no web stack.** LVGL refreshes up to 60 times a second from a framebuffer in the ESP32-P4's PSRAM and redraws only what changed. Measured on the tablet (firmware 3.2.0, 2026-09-28): a changed value or the clock's minute redraws in under 10 ms, the rotating panel in the middle in 15-21 ms per frame, the whole screen in 133 ms, and a popup opens in 126-197 ms. Vector fonts (Material Design Icons) replace image files entirely.
 - **Data packing.** Complex payloads (15-day forecast, hourly forecast, weather alerts) are serialized as delimited strings on the HA side and parsed in C++ on the device — one network call, zero subsequent requests.
 - **Offline resilience.** All C++ lambdas check `api.connected()` and `has_state()` before touching the UI. If HA restarts, the last known state stays on screen — and the device stays usable on its own (clock, arcade, diagnostics console). It only reboots itself after a full hour without any API client (`api: reboot_timeout: 60min`), a deliberate anti-"zombie" safety net rather than a reaction to a short HA outage.
 
@@ -202,6 +202,7 @@ The engine is optional for the screen UI (push dashboard works without it). It i
 | [`docs/architecture.md`](docs/architecture.md) | Modular YAML structure, push paradigm, data packing, boot guards |
 | [`docs/hardware.md`](docs/hardware.md) | Tab5 hardware revisions (which ones are supported), ESP32-P4 specs, GPIO mapping, ES8388 DAC, PSRAM, power |
 | [`docs/ui_design.md`](docs/ui_design.md) | LVGL rendering, vector fonts, dynamic color, CPU optimizations |
+| [`docs/performance.md`](docs/performance.md) | Measured frame times, popup openings, restart, RAM — and how they were measured |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Wake word pipeline, audio chain, visual feedback states |
 | [`docs/installation.md`](docs/installation.md) | Prerequisites, web flasher or build, signing key, Home Assistant, updates, upgrading from 2.x |
 | [`docs/translations.md`](docs/translations.md) | Screen language (French, English, German, Dutch, Spanish, Italian), adding a language |
@@ -360,7 +361,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 ---
 
-**Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran le dessine à 60 FPS en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, télécommande TV, réveil — et 8 jeux hors ligne.
+**Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran ne redessine que ça, en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, télécommande TV, réveil — et 8 jeux hors ligne.
 
 **[Site](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/)** · **[Installer](#démarrage-rapide)** · **[Essayer sans Home Assistant](docs/demo_mode.md)** · **[Compatibilité matérielle](#compatibilité-matérielle)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)** · **[L'histoire du projet](#note-personnelle)**
 
@@ -371,7 +372,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 - **Push uniquement, zéro polling.** Home Assistant n'envoie que ce qui a changé ; la tablette ne demande jamais rien ([ADR-0001](docs/decisions/0001-push-only-zero-polling.md)).
 - **La voix démarre sur l'appareil.** « Okay Nabu » et un mot « Stop » pour le volet roulant sont détectés sur la tablette ; l'audio n'en sort qu'après le mot d'activation.
 - **Continue de marcher quand Home Assistant ne marche plus.** Horloge, réveil, jeux et console de diagnostic restent utilisables seuls.
-- **Documenté et testé comme un produit.** 22 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome.
+- **Documenté et testé comme un produit.** 25 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome.
 - **Tourne sur la révision ST7123, et compile pour la ST7121 et l'ILI9881C d'origine**, alors que la plupart des exemples Tab5 publiés ne couvrent que celle d'origine.
 
 ## Avant de commencer
@@ -443,8 +444,8 @@ L'interface est compilée en C++ et embarquée dans le firmware de l'appareil. E
 ## Choix de conception
 
 - **Push uniquement, zéro polling.** L'appareil ne demande jamais son état à Home Assistant. Les automations côté HA détectent les changements et poussent les données vers l'écran via des appels de service ESPHome natifs. Le CPU reste proche de zéro quand rien ne change.
-- **YAML modulaire.** La configuration ESPHome est découpée en quinze fichiers par domaine (tokens, hardware, capteurs diagnostics, capteurs domotique, logique API, styles, UI, globales, scripts, arcade, calendrier, assistant vocal, IMU, entités HA, réveil), chacun lisible indépendamment. La plupart tiennent sous 500 lignes ; seuls les trois plus gros (`tab5-alarm.yaml`, `tab5-lvgl.yaml`, `tab5-styles.yaml`) sont plus gros, et l'UI est encore découpée en 45 `ui_components/*.yaml` réutilisables.
-- **LVGL natif, pas de stack web.** Le rendu tourne à 60 FPS directement dans la PSRAM de l'ESP32-P4. Les polices vectorielles (Material Design Icons) remplacent complètement les fichiers image.
+- **YAML modulaire.** La configuration ESPHome est découpée en dix-neuf fichiers par domaine (tokens, hardware, révision d'écran, canal de publication, capteurs diagnostics, capteurs domotique, logique API, styles, globales, scripts, UI, arcade, calendrier, assistant vocal, IMU, entités HA, réveil, pièces et tuiles, zones), chacun lisible indépendamment. La plupart tiennent sous 500 lignes ; seuls les quatre plus gros (`tab5-alarm.yaml`, `tab5-styles.yaml`, `tab5-lvgl.yaml`, `tab5-api-logic.yaml`) dépassent, et l'UI est encore découpée en 45 `ui_components/*.yaml` réutilisables.
+- **LVGL natif, pas de stack web.** LVGL rafraîchit jusqu'à 60 fois par seconde, depuis un framebuffer en PSRAM, et ne redessine que ce qui a changé. Mesuré sur la tablette (firmware 3.2.0, 28/09/2026) : une valeur ou la minute de l'horloge se redessine en moins de 10 ms, le panneau tournant du centre en 15 à 21 ms par image, l'écran entier en 133 ms, et un popup s'ouvre en 126 à 197 ms. Les polices vectorielles (Material Design Icons) remplacent complètement les fichiers image.
 - **Compression de données.** Les payloads complexes (prévisions 15 jours, prévisions horaires, alertes météo) sont sérialisés en chaînes délimitées côté HA et parsés en C++ sur l'appareil — un seul appel réseau, zéro requête suivante.
 - **Résilience hors-ligne.** Toutes les lambdas C++ vérifient `api.connected()` et `has_state()` avant de toucher l'UI. Si HA redémarre, le dernier état connu reste affiché — et l'appareil reste utilisable seul (horloge, arcade, console diag). Il ne se redémarre de lui-même qu'après une heure entière sans aucun client API (`api: reboot_timeout: 60min`), un filet anti-« zombie » assumé, pas une réaction à une coupure HA passagère.
 
@@ -478,7 +479,7 @@ Une page unique 1280×720 organisée en zones fonctionnelles, toutes alimentées
 
 ## Arcade — 8 consoles de jeu (expérimental)
 
-> **Statut : prototypes précoces.** Ce sont des jeux générés par IA en premier jet, construits pour tester ce que LVGL + C++ peut faire sur un ESP32-P4 à 60 FPS. Ils sont fonctionnels mais non finalisés — pensez « preuve de concept » plutôt que « produit fini ». L'objectif était de voir jusqu'où la génération de code par IA peut aller sur du hardware embarqué, pas de livrer des jeux qualité retail.
+> **Statut : prototypes précoces.** Ce sont des jeux générés par IA en premier jet, construits pour tester ce que LVGL + C++ peut faire sur un ESP32-P4. Ils sont fonctionnels mais non finalisés — pensez « preuve de concept » plutôt que « produit fini ». L'objectif était de voir jusqu'où la génération de code par IA peut aller sur du hardware embarqué, pas de livrer des jeux qualité retail.
 
 Les 8 consoles partagent la même architecture : chacune est sa **propre page LVGL plein écran** (`page_marble`, `page_chess`… déclarées `skip: true` pour que le swipe ne puisse pas y naviguer), et non un overlay empilé sur le dashboard — seule exception documentée à la règle du chrome modal (ADR-0009). YAML réduit à des conteneurs vides, tout le contenu construit en C++, `lv_timer` créé à l'ouverture / détruit à la fermeture, persistance NVS, **zéro dépendance Home Assistant ou réseau**.
 
@@ -527,6 +528,7 @@ Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui
 | [`docs/architecture.md`](docs/architecture.md) | Structure YAML modulaire, paradigme push, data packing, boot guards |
 | [`docs/hardware.md`](docs/hardware.md) | Révisions matérielles du Tab5 (lesquelles sont prises en charge), specs ESP32-P4, mapping GPIO, DAC ES8388, PSRAM, alimentation |
 | [`docs/ui_design.md`](docs/ui_design.md) | Rendu LVGL, polices vectorielles, couleur dynamique, optimisations CPU |
+| [`docs/performance.md`](docs/performance.md#version-française) | Temps d'image, ouvertures des popups, redémarrage, RAM, mesurés — et comment |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Pipeline wake-word, chaîne audio, états de retour visuel |
 | [`docs/installation.md`](docs/installation.md) | Prérequis, page de flashage ou compilation, clé de signature, Home Assistant, mises à jour, passage à la 3.0 |
 | [`docs/translations.md`](docs/translations.md#version-française) | Langue de l'écran (français, anglais, allemand, néerlandais, espagnol, italien), ajouter une langue |

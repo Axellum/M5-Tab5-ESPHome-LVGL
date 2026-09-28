@@ -12,7 +12,7 @@ The alternative to a native LVGL interface would be a web dashboard running in a
 - The browser's layout engine re-renders on each update, triggering full repaints
 - If the network is unreliable, the screen shows a loading spinner or a blank page
 
-LVGL compiles into the firmware. The screen layout is computed once at boot. Updates are surgical: when a temperature value changes, only the label for that value is invalidated and redrawn. The rest of the screen is untouched. On a 400 MHz RISC-V core with 16 MB of PSRAM for the framebuffer, this runs at 60 FPS under normal workload.
+LVGL compiles into the firmware. The screen layout is computed once at boot. Updates are surgical: when a temperature value changes, only the label for that value is invalidated and redrawn. The rest of the screen is untouched. On the 360 MHz RISC-V core, with the framebuffer in 32 MB of PSRAM, a changed value redraws in under 10 ms; the whole screen takes 133 ms (measured on the tablet, firmware 3.2.0, 2026-09-28).
 
 An added side effect: if the Wi-Fi drops or Home Assistant restarts, the last known state stays on screen exactly as it was.
 
@@ -86,7 +86,7 @@ This overlays a grey tint on the element without hiding it. The layout stays sym
 
 A few LVGL patterns that look innocent but are expensive on a microcontroller:
 
-**Rounded corners on transparent objects.** If an object has `bg_opa: 0` (transparent background) and `radius > 0`, LVGL still computes the clipping mask for the rounded corners on every render pass. On a 400 MHz CPU rendering at 60 FPS, that's 24000 unnecessary computations per second per widget. Fix: set `radius: 0` on transparent containers, or remove `bg_opa: 0` if the object has no visual background.
+**Rounded corners on transparent objects.** If an object has `bg_opa: 0` (transparent background) and `radius > 0`, LVGL still computes the clipping mask for the rounded corners every time the widget is redrawn, for nothing. Fix: set `radius: 0` on transparent containers, or remove `bg_opa: 0` if the object has no visual background.
 
 **Unused padding.** Every non-zero padding value causes LVGL to include the widget in collision detection passes. Containers that are purely structural (used for positioning children, not for display) should have `pad_all: 0` and `border_width: 0`.
 
@@ -108,7 +108,7 @@ L'alternative à une interface LVGL native serait un dashboard web tournant dans
 - Le moteur de layout du navigateur re-rend à chaque mise à jour, déclenchant des repeintures complètes
 - Si le réseau est instable, l'écran affiche un spinner de chargement ou une page blanche
 
-LVGL est compilé dans le firmware. La mise en page de l'écran est calculée une fois au boot. Les mises à jour sont chirurgicales : quand une valeur de température change, seul le label pour cette valeur est invalidé et redessiné. Le reste de l'écran est inchangé. Sur un core RISC-V à 400 MHz avec 16 MB de PSRAM pour le framebuffer, ça tourne à 60 FPS sous charge normale.
+LVGL est compilé dans le firmware. La mise en page de l'écran est calculée une fois au boot. Les mises à jour sont chirurgicales : quand une valeur de température change, seul le label pour cette valeur est invalidé et redessiné. Le reste de l'écran est inchangé. Sur le cœur RISC-V à 360 MHz, avec le framebuffer dans 32 Mo de PSRAM, une valeur modifiée se redessine en moins de 10 ms ; l'écran entier prend 133 ms (mesuré sur la tablette, firmware 3.2.0, 28/09/2026).
 
 Un effet de bord appréciable : si le Wi-Fi tombe ou que Home Assistant redémarre, le dernier état connu reste affiché exactement comme il était.
 
@@ -182,7 +182,7 @@ lv_obj_set_style_img_recolor_opa(obj, 180, LV_PART_MAIN);
 
 Quelques patterns LVGL qui semblent anodins mais sont coûteux sur un microcontrôleur :
 
-**Coins arrondis sur objets transparents.** Si un objet a `bg_opa: 0` et `radius > 0`, LVGL calcule quand même le masque de clipping pour les coins arrondis à chaque passe de rendu. À 60 FPS, c'est 24000 calculs inutiles par seconde par widget. Correction : mettre `radius: 0` sur les conteneurs transparents.
+**Coins arrondis sur objets transparents.** Si un objet a `bg_opa: 0` et `radius > 0`, LVGL calcule quand même le masque de clipping pour les coins arrondis à chaque fois que le widget est redessiné, pour rien. Correction : mettre `radius: 0` sur les conteneurs transparents.
 
 **Padding inutilisé.** Toute valeur de padding non nulle fait inclure le widget dans les passes de détection de collision. Les conteneurs purement structurels devraient avoir `pad_all: 0` et `border_width: 0`.
 
