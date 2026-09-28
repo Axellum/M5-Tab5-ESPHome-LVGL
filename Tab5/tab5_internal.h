@@ -104,3 +104,9 @@ void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase);
 void day_slots_apply_actions(WeatherDaySlot slots[], int page_index);
 // tab5_zones.cpp : état du PC, repeint sur l'épaule de J0 quand la TV manque.
 void zones_note_pc(bool actif);
+
+// --- Pièces et tuiles (tab5_tuiles.cpp, ADR-0023) ---
+// emplacements_appliquer (tab5_zones.cpp) : une entrée « tRT|état|valeur|couleur » (clé
+// dans cle[0..n_cle), le reste après le premier '|'). Faux si la clé n'est pas celle d'une
+// tuile : l'entrée suit alors la table des emplacements 3.x.
+bool tuiles_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n_reste);

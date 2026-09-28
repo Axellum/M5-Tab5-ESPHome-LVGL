@@ -153,6 +153,14 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
         size_t fin = payload.find(';', debut);
         if (fin == std::string::npos) fin = payload.size();
         const size_t p1 = payload.find('|', debut);
+        // Tuiles de pièce (ADR-0023) : « tRT|état|valeur|couleur », quatre champs, avant
+        // la table des emplacements 3.x (tab5_tuiles.cpp).
+        if (p1 != std::string::npos && p1 < fin &&
+            tuiles_etat_recu(payload.data() + debut, p1 - debut, payload.data() + p1 + 1, fin - p1 - 1)) {
+            appliquees++;
+            debut = fin + 1;
+            continue;
+        }
         if (p1 != std::string::npos && p1 < fin) {
             const size_t p2 = payload.find('|', p1 + 1);
             const bool trois = (p2 != std::string::npos && p2 < fin);

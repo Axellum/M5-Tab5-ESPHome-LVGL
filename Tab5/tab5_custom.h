@@ -778,8 +778,20 @@ struct EmplacementCible {
     esphome::text_sensor::TextSensor* texte;  // état HA tel quel (on, off, home…), ou nullptr
     esphome::sensor::Sensor* valeur;          // nombre affiché, NaN pour « nan » ou illisible, ou nullptr
 };
-// Applique la chaîne aux capteurs de la table ; une clé inconnue est ignorée.
+// Applique la chaîne aux capteurs de la table ; une clé inconnue est ignorée. Les clés
+// de tuile « tRT » (ADR-0023) vont d'abord aux pièces (tab5_tuiles.cpp).
 // Renvoie le nombre d'entrées appliquées.
 int emplacements_appliquer(const std::string& payload, const EmplacementCible* cibles, size_t n);
+
+// =============================================================================
+// Pièces et tuiles génériques (tab5_tuiles.cpp, ADR-0023) : chaque page du bas est une
+// pièce de cinq appareils au plus, décrits par Home Assistant. Pièce R ↔ page : R0 = 2
+// (accueil), R1 = 3, R2 = 4, R3 = 1, R4 = 0 ; tuile T = position visuelle (0 = gauche).
+// Tant qu'aucune définition n'est arrivée (drapeau en NVS), la pièce 0 est construite
+// depuis les emplacements 3.x (mode héritage).
+// =============================================================================
+// Action tab5_maj_tuiles : instantané complet « pR|nom;tRT|type|icône|options|complément|
+// nom;… » (ce qui n'est pas listé est vide). Gardé en NVS s'il change. Vrai si changé.
+bool tuiles_definir(const std::string& payload);
 
 // UIColor (couleurs sémantiques) : voir tab5_tokens.h.

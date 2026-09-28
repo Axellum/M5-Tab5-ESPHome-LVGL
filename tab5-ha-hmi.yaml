@@ -83,6 +83,8 @@ esphome:
     - Tab5/tab5_journal.cpp
     # Zones optionnelles : ce qui disparaît quand l'entité manque dans HA (lot 5, 27/09/2026).
     - Tab5/tab5_zones.cpp
+    # Pièces et tuiles génériques décrites par HA (ADR-0023, 28/09/2026).
+    - Tab5/tab5_tuiles.cpp
     # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
     # NvsSlot<T>) — lot (f), ADR-0014. Header-only.
     - Tab5/game_common.h
