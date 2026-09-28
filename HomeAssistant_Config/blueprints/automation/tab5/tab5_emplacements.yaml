@@ -1028,7 +1028,7 @@ variables:
     - cli
   # Emplacements à pousser pour ce déclenchement.
   cles: >-
-    {%- if trigger.id in ['connexion', 'rechargement'] -%}
+    {%- if trigger.id in ['connexion', 'rechargement', 'maj_ecran'] -%}
       {%- set ns = namespace(l=[]) -%}
       {%- for c in cles_emplacements -%}
         {%- set ns.l = ns.l + [c] + ([c ~ '_ec', c ~ '_lux', c ~ '_temp', c ~ '_bat'] if c.startswith('pot_') else []) -%}
@@ -1073,7 +1073,7 @@ variables:
   # types_mesures avec les mesures lentes. Calculées quel que soit le protocole (la
   # trace montre ce qui partirait), poussées seulement au protocole 2.
   tuiles_a_pousser: >-
-    {%- if trigger.id in ['connexion', 'rechargement', 'zones'] or redefinir -%}
+    {%- if trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'zones'] or redefinir -%}
       {{ tuiles | map(attribute='cle') | list }}
     {%- elif trigger.id == 'mesures' -%}
       {%- set ns = namespace(l=[]) -%}
@@ -1299,6 +1299,12 @@ triggers:
   - trigger: event
     event_type: automation_reloaded
     id: rechargement
+  # Bouton « MAJ Écran » de la console système (événement de la tablette, ADR-0025) :
+  # il relançait la poussée complète de tab5_push.yaml, pas les emplacements ni les
+  # tuiles ; même traitement qu'un rechargement, zones comprises.
+  - trigger: event
+    event_type: esphome.tab5_maj_ecran
+    id: maj_ecran
 
 conditions:
   # Garde-fou des packages (ADR-0008) : absent, il laisse passer.
@@ -1317,7 +1323,7 @@ conditions:
   # prouvent d'eux-mêmes qu'elle est là.
   - condition: template
     value_template: >-
-      {{ trigger.id in ['connexion', 'zones', 'action']
+      {{ trigger.id in ['connexion', 'zones', 'action', 'maj_ecran']
          or integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
             | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
             | list | count > 0 }}
@@ -1661,7 +1667,7 @@ actions:
             data:
               payload: "{{ payload }}"
             continue_on_error: true
-      - if: "{{ trigger.id in ['connexion', 'rechargement'] and clim != '' }}"
+      - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran'] and clim != '' }}"
         then:
           - delay: "00:00:01"
           - action: "esphome.{{ tablette }}_tab5_maj_clim"
@@ -1673,7 +1679,7 @@ actions:
               fan: "{{ state_attr(clim, 'fan_mode') | default('auto', true) }}"
               swing: "{{ state_attr(clim, 'swing_mode') | default('stop', true) }}"
             continue_on_error: true
-      - if: "{{ trigger.id in ['connexion', 'rechargement'] and volet != '' and not volet_par_package }}"
+      - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran'] and volet != '' and not volet_par_package }}"
         then:
           - delay: "00:00:01"
           - action: "esphome.{{ tablette }}_tab5_maj_volet_etat"
@@ -1684,7 +1690,7 @@ actions:
       # Après un rechargement, les zones aussi : un emplacement vidé ou rempli dans
       # l'automatisation doit disparaître ou revenir sans attendre que la tablette les
       # redemande (elle ne le fait qu'à sa connexion, ADR-0018).
-      - if: "{{ trigger.id == 'rechargement' }}"
+      - if: "{{ trigger.id in ['rechargement', 'maj_ecran'] }}"
         then:
           - action: "esphome.{{ tablette }}_tab5_maj_zones"
             data:
@@ -1695,7 +1701,7 @@ actions:
   # Définitions : un instantané complet (ce qui n'y est pas est vide), avant les états.
   # Calculées à chaque connexion quel que soit le protocole (la trace montre ce qui
   # partirait), envoyées seulement à une tablette 3.2 ou plus.
-  - if: "{{ trigger.id in ['connexion', 'rechargement', 'zones'] or redefinir }}"
+  - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'zones'] or redefinir }}"
     then:
       - variables:
           # Nom de chaque pièce : saisi, sinon l'aire de ses appareils quand ceux qui en
