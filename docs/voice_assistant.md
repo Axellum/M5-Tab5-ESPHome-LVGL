@@ -36,7 +36,7 @@ A second microWakeWord model (`Stop`) is declared alongside `okay_nabu` in `tab5
 
 ### Interrupting a running reply
 
-Tapping the mic icon while TTS is playing stops the satellite (`assist_satellite.stop`), aborts the current session and immediately restarts listening (`tab5_vocal_interrupt_and_listen`, `tab5-scripts.yaml`). This is the firmware-side answer to barge-in: while the Assist pipeline is in its responding phase the microphone belongs to the pipeline and the wake word is inactive, so a voice "stop" cannot work there — the tap can.
+Tapping the mic icon while TTS is playing stops the pipeline (`voice_assistant.stop`, which Home Assistant follows) and the speaker, aborts the current session and immediately restarts listening (`tab5_vocal_interrupt_and_listen`, `tab5-scripts.yaml`). This is the firmware-side answer to barge-in: while the Assist pipeline is in its responding phase the microphone belongs to the pipeline and the wake word is inactive, so a voice "stop" cannot work there — the tap can.
 
 ---
 
@@ -150,7 +150,7 @@ Un second modèle microWakeWord (`Stop`) est déclaré à côté de `okay_nabu` 
 
 ### Interrompre une réponse en cours
 
-Taper l'icône micro pendant que le TTS joue arrête le satellite (`assist_satellite.stop`), interrompt la session en cours et relance immédiatement l'écoute (`tab5_vocal_interrupt_and_listen`, `tab5-scripts.yaml`). C'est la réponse côté firmware au barge-in : pendant la phase de réponse du pipeline Assist, le micro appartient au pipeline et le wake word est inactif — un « stop » vocal ne peut pas marcher là, le tap si.
+Taper l'icône micro pendant que le TTS joue arrête le pipeline (`voice_assistant.stop`, que Home Assistant suit) et le haut-parleur, interrompt la session en cours et relance immédiatement l'écoute (`tab5_vocal_interrupt_and_listen`, `tab5-scripts.yaml`). C'est la réponse côté firmware au barge-in : pendant la phase de réponse du pipeline Assist, le micro appartient au pipeline et le wake word est inactif — un « stop » vocal ne peut pas marcher là, le tap si.
 
 ---
 
