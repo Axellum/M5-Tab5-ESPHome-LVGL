@@ -1,0 +1,1181 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file lang/it.yaml — Italian translation of the Tab5 screen.
+# @role Flat mapping « French text as written in the code » → « Italian ».
+#       tools/gen_i18n.py turns it into Tab5/tab5_i18n_data.h (see its header for
+#       adding a language: copy en.yaml, change _langue/_code/_index, translate).
+#       Same keys, same order and same section comments as en.yaml.
+# @ai_instruction
+#   - The KEY must be byte-for-byte the French text of the code (accents, spaces,
+#     punctuation). A key that no longer exists anywhere fails tests/test_i18n.py.
+#   - Keep printf specifiers (%d, %s, %02d…) in the same order, and {names} as is.
+#   - Only characters of the fonts' `&latin1` set (tab5-styles.yaml): Latin-1
+#     (à è é ì ò ù ° « » included) plus the Windows-1252 punctuation (“ ” ‘ ’ … – —).
+#     Arrows and other symbols are not. Italian quotes « » (no inner spaces).
+#   - "context|text" keys disambiguate a word with two meanings (tr_ctx in code).
+#   - Never translate what Home Assistant reads (entity names, select options,
+#     payload codes): only what the screen shows or the tablet says.
+#   - Style: informal « tu », short imperatives on buttons (Annulla, Chiudi…).
+#     The screen is small: a text should not be wider than the widest of the
+#     French, English, German and Dutch ones (usual abbreviations: Temp., max,
+#     min, liv., Appunt.…).
+# ============================================================================
+_langue: Italiano
+_code: it
+_index: 5
+_statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
+
+# --- Dates (tab5_core.cpp) ---------------------------------------------------
+# « Mar » vaut martedì ET marzo en italien, comme « Mar » (mardi) et « Mars » en
+# français : deux clés distinctes, même abréviation.
+"Dim": "Dom"
+"Lun": "Lun"
+"Mar": "Mar"
+"Mer": "Mer"
+"Jeu": "Gio"
+"Ven": "Ven"
+"Sam": "Sab"
+"Janv": "Gen"
+"Févr": "Feb"
+"Mars": "Mar"
+"Avr": "Apr"
+"Mai": "Mag"
+"Juin": "Giu"
+"Juil": "Lug"
+"Août": "Ago"
+"Sept": "Set"
+"Oct": "Ott"
+"Nov": "Nov"
+"Déc": "Dic"
+"dimanche": "domenica"
+"lundi": "lunedì"
+"mardi": "martedì"
+"mercredi": "mercoledì"
+"jeudi": "giovedì"
+"vendredi": "venerdì"
+"samedi": "sabato"
+"janvier": "gennaio"
+"février": "febbraio"
+"mars": "marzo"
+"avril": "aprile"
+"mai": "maggio"
+"juin": "giugno"
+"juillet": "luglio"
+"août": "agosto"
+"septembre": "settembre"
+"octobre": "ottobre"
+"novembre": "novembre"
+"décembre": "dicembre"
+# Le premier du mois s'écrit « 1° » en italien (« lunedì 1° giugno »).
+"1er": "1°"
+"{jour} {quantieme} {mois}": "{jour} {quantieme} {mois}"
+"Jeu 02 Avr": "Gio 02 Apr"
+# Day initials of the alarm chips: « M » is both Tuesday and Wednesday in French
+# (and in Italian: martedì / mercoledì).
+"lundi|L": "L"
+"mardi|M": "M"
+"mercredi|M": "M"
+"jeudi|J": "G"
+"vendredi|V": "V"
+"samedi|S": "S"
+"dimanche|D": "D"
+
+# --- Home screen, forecast, central card --------------------------------------
+# « Dem. » : pas de « Dom. » (déjà domenica + « . » dans la même liste) : « Domani ».
+"Synchronisation...": "Sincronizzo..."
+"Domo": "Casa"
+"Discu": "Chat"
+"Journee": "Oggi"
+"Demain": "Domani"
+"2 Jours": "2 giorni"
+"3 Jours": "3 giorni"
+"4 Jours": "4 giorni"
+"Prévisions journalières · %d/3": "Previsioni giornaliere · %d/3"
+"Prévisions horaires · %d/2": "Previsioni orarie · %d/2"
+"Du %s au %s": "Da %s a %s"
+"De %s à %s%s": "Dalle %s alle %s%s"
+" le lendemain": " di domani"
+"Jour hors plage": "Giorno non valido"
+"Auj.": "Oggi"
+"Dem.": "Domani"
+# Nom de jour envoyé par HA pour aujourd'hui (tuiles météo de l'accueil), sans point.
+"Auj": "Oggi"
+"Aucun travail de prevu": "Nessun lavoro previsto"
+"Jour": "Giorno"
+"{jour} : {horaire}": "{jour}: {horaire}"
+"{jour} : #fb923c {horaire}#": "{jour}: #fb923c {horaire}#"
+"{jour} : repos": "{jour}: riposo"
+"{jour} : pas d'horaire": "{jour}: nessun orario"
+"Alerte Météo Rouge en cours ! Restez prudent.": "Allerta meteo rossa in corso! Fai attenzione."
+"Alerte Météo Orange en cours ! Restez prudent.": "Allerta meteo arancione in corso! Fai attenzione."
+# Composés par la tablette depuis les codes de HA (lot 4c) : bandeau info, alertes HA,
+# phrase de pluie (décomptée sur la tablette).
+"Vigilance Jaune": "Allerta gialla"
+"1 MAJ · %s": "1 aggiorn. · %s"
+"%d MAJ": "%d aggiorn."
+"1 erreur": "1 errore"
+"%d erreurs": "%d errori"
+"%d indispo": "%d non disp."
+"Temps sec": "Asciutto"
+"Pas de données": "Nessun dato"
+"Pluie faible": "Pioggia debole"
+"Pluie modérée": "Pioggia moderata"
+"Averses": "Rovesci"
+"Pluie": "Pioggia"
+"%s dans %ld mn": "%s tra %ld min"
+
+# --- Switch card, shutter, plants ---------------------------------------------
+# Onglet titre : 200 px en roboto_32_b (switch_card_title_tab.yaml) : « Soggiorno »
+# (148 px) y tient. Onglet d'état : 130 px : « In moto » plutôt qu'« In movimento ».
+# « Ouvert » / « Fermé » : état du volet (la tapparella, féminin).
+"PC Bureau": "PC Studio"
+"Volet": "Tapparella"
+"Chambre": "Camera"
+"Salon": "Soggiorno"
+"Allumé": "Acceso"
+"Éteint": "Spento"
+"Ouvert": "Aperta"
+"Fermé": "Chiusa"
+"Mouvement": "In moto"
+"Volet arrêté.": "Tapparella fermata."
+"Moy:": "Media:"
+"Pot %d": "Vaso %d"
+"Pot -": "Vaso -"
+"Hors ligne": "Offline"
+"À arroser !": "Da annaffiare!"
+"Bientôt sec": "Quasi secco"
+"Mes Plantes": "Piante"
+"Pot 1": "Vaso 1"
+"Pot 2": "Vaso 2"
+"Pot 3": "Vaso 3"
+"Pot 4": "Vaso 4"
+"Pot 5": "Vaso 5"
+"Fertilité": "Nutrienti"
+"Lumière": "Luce"
+"Température": "Temperatura"
+"Batterie": "Batteria"
+
+# --- Lights popup ---------------------------------------------------------------
+"Ampoule": "Lampadina"
+"AMPOULE": "LUCI"
+"Ampoule Chambre": "Lampadina camera"
+"Ampoule Salon": "Lampadina soggiorno"
+"Ampoule LEDs": "Striscia LED"
+"Tout éteindre": "Spegni tutto"
+"LUMINOSITÉ": "LUMINOSITÀ"
+"COULEURS": "COLORI"
+"Chaud": "Caldo"
+"Crème": "Crema"
+# « Froid » sert aussi au mode Freddo de la clim (climate_popup.yaml) : « Freddo »
+# convient aux deux (bianco freddo / climatizzatore).
+"Froid": "Freddo"
+
+# --- Climate popup --------------------------------------------------------------
+# Vocabulaire des télécommandes de clim en Italie : Caldo, Freddo, Deumidificazione,
+# Ventilazione.
+"Climatisation Salon": "Clima soggiorno"
+"MODE": "MODALITÀ"
+"clim|Chaud": "Caldo"
+"Sec": "Deumidif."
+"Ventilation": "Ventilazione"
+"TEMPÉRATURE": "TEMPERATURA"
+"Pièce": "Stanza"
+"OPTIONS": "OPZIONI"
+"Presets": "Preset"
+"Éco": "Eco"
+"Silence": "Silenzioso"
+"Flux d'air": "Flusso d'aria"
+"Oscillation": "Oscillazione"
+"Brise": "Brezza"
+
+# --- TV remote ------------------------------------------------------------------
+"Télécommande TV": "Telecomando TV"
+"Marche / Arrêt": "On / Off"
+"Lecture": "Riproduci"
+"Pause": "Pausa"
+"Retour": "Indietro"
+"Accueil": "Home"
+
+# --- Calendar popup -------------------------------------------------------------
+"Calendrier": "Calendario"
+"Aujourd'hui": "Oggi"
+"Travail": "Lavoro"
+"Férié": "Festivo"
+"Vac. scolaires": "Vacanze scol."
+"RDV": "Appunt."
+"Anniv.": "Compl."
+"Chargement...": "Caricamento..."
+"Home Assistant hors ligne": "Home Assistant offline"
+"Rien de prévu ce jour": "Nessun evento quel giorno"
+
+# --- Voice assistant ------------------------------------------------------------
+# « Réglages » : « Opzioni » (comme Optionen / Opties) plutôt qu'« Impostazioni »,
+# trop large pour les boutons et les titres.
+"Assistant vocal": "Assistente vocale"
+"Réglages": "Opzioni"
+"Cerveau / LLM": "Cervello / LLM"
+"Taille du texte": "Dimensione testo"
+"VOTRE DEMANDE": "RICHIESTA"
+"Appuyez sur le micro puis parlez…": "Tocca il microfono, poi parla…"
+"RÉPONSE": "RISPOSTA"
+"Prêt": "Pronto"
+"Parler": "Parla"
+"Reflexion...": "Elaboro..."
+"Écoute…": "Ascolto…"
+"Analyse…": "Analisi…"
+"Réponse": "Risposta"
+"Erreur": "Errore"
+"Chargement image...": "Carico l'immagine..."
+"Image indisponible": "Nessuna immagine"
+
+# --- System console -------------------------------------------------------------
+"CONSOLE SYSTÈME": "CONSOLE SISTEMA"
+"MÉMOIRE": "MEMORIA"
+"Bloc max": "Blocco max"
+"RÉSEAU": "RETE"
+"Adresse IP": "Indirizzo IP"
+"Signal": "Segnale"
+"SYSTÈME": "SISTEMA"
+"Temps actif": "Tempo attivo"
+"Temp. CPU": "Temp. CPU"
+"Temps de boucle": "Tempo di ciclo"
+"GESTION": "GESTIONE"
+"MAJ Écran": "Aggiorna schermo"
+"Recharger autos": "Ricarica autom."
+"Redémarrer HA": "Riavvia HA"
+"Reboot tablette": "Riavvia tablet"
+"Redémarrer Home Assistant ?": "Riavviare Home Assistant?"
+"Le serveur sera indisponible ~1 minute.": "Il server sarà offline per ~1 minuto."
+"Redémarrer la tablette ?": "Riavviare il tablet?"
+"L'écran redémarre immédiatement.": "Lo schermo si riavvia subito."
+"Annuler": "Annulla"
+"Confirmer": "Conferma"
+"Redemarrage...": "Riavvio..."
+"Connecté": "Connesso"
+
+# --- Alarm clock: popup ---------------------------------------------------------
+# « Répétition » (snooze) = « Posticipo » ; le bouton « Répéter » = « Posponi »
+# (usage des réveils Android en italien).
+"Réveil": "Sveglia"
+"Réveil actif": "Sveglia attiva"
+"Réveil éteint": "Sveglia spenta"
+"Heure fixe": "Ora fissa"
+"Jours (heure fixe uniquement)": "Giorni (solo con ora fissa)"
+"Mode": "Modalità"
+"Fixe": "Fissa"
+"Ouverture": "Inizio turno"
+"Délai": "Anticipo"
+"Pas avant": "Non prima"
+"Pas après": "Non dopo"
+"Repos mini": "Riposo min."
+"PROCHAINE SONNERIE": "PROSSIMA SVEGLIA"
+"Repos : heure fixe": "Riposo: ora fissa"
+"Repos : silence": "Riposo: silenzio"
+"Sonnerie": "Suoneria"
+"Douce": "Dolce"
+"Classique": "Classica"
+"Insistante": "Insistente"
+"Carillon": "Carillon"
+"Progressif": "Progressivo"
+"Volume constant": "Volume costante"
+"Répétition": "Posticipo"
+"Durée max": "Durata max"
+"RDV avant": "Preavviso"
+"Annonce parlée": "Annuncio vocale"
+"Sonnerie seule": "Solo suoneria"
+"Annonce des RDV": "Annuncia appunt."
+"RDV silencieux": "Appunt. muti"
+"Tester": "Prova"
+"Fermer": "Chiudi"
+"9 min": "9 min"
+"15 min": "15 min"
+"%d min": "%d min"
+"%dh%02d": "%dh%02d"
+"Sonne à l'heure fixe, les jours cochés ci-dessus.": "Suona all'ora fissa, nei giorni selezionati sopra."
+"Sonne à l'heure fixe, uniquement les jours travaillés.": "Suona all'ora fissa, solo nei giorni lavorativi."
+"Sonne avant l'ouverture lue dans le calendrier.": "Suona prima dell'inizio turno letto nel calendario."
+
+# --- Alarm clock: next ring, ringing screen, reminders ---------------------------
+# « Arrêter » (bouton) = « Ferma » ; le mot à PRONONCER reste le mot-clé vocal « Stop ».
+# « Répéter » : le bouton affiche aussi la durée (« Posponi · 15 min », 241 px) dans
+# ~242 px en roboto_32_b ; « Posticipa · 15 min » (258 px) ne tiendrait pas.
+"Désactivé": "Disattivata"
+"Aucune sonnerie prévue": "Nessuna sveglia prevista"
+"Aujourd'hui {heure}": "Oggi {heure}"
+"Demain {heure}": "Domani {heure}"
+"Répétition %02d:%02d (%d min)": "Posticipo %02d:%02d (%d min)"
+"Répétition n°%d · « Arrêter » pour reprendre le cycle normal": "Posticipo n. %d · «Ferma» per riprendere il ciclo normale"
+"Touchez l'interrupteur pour l'armer": "Tocca l'interruttore per attivarla"
+"Aucun jour retenu dans les 8 prochains": "Nessun giorno scelto nei prossimi 8"
+"en attente du calendrier": "in attesa del calendario"
+"repos": "riposo"
+"Travail (horaire inconnu)": "Lavoro (orario ignoto)"
+"Heure non synchronisée": "Ora non sincronizzata"
+"Aucun rendez-vous à venir": "Nessun appuntamento"
+"Arrêter": "Ferma"
+"Répéter": "Posponi"
+"Répéter · %d min": "Posponi · %d min"
+"Répétition %d": "Posticipo %d"
+"Touchez l'écran ou dites « Stop » pour arrêter": "Tocca lo schermo o di' «Stop» per fermarla"
+"%s · %s (dans %d min)": "%s · %s (tra %d min)"
+"%s · %s (maintenant)": "%s · %s (ora)"
+# Spoken by the tablet (TTS): « alle 14 », « alle 14 e 30 » (lu « quattordici e
+# trenta »). Seule 1 h se lit mal (« alle 1 » au lieu de « all'una ») : rare.
+"%d heures": "%d"
+"%d heures %d": "%d e %d"
+"Rappel : %s, à %s, dans %d minute.": "Promemoria: %s, alle %s, tra %d minuto."
+"Rappel : %s, à %s, dans %d minutes.": "Promemoria: %s, alle %s, tra %d minuti."
+"Rappel : %s, c'est maintenant.": "Promemoria: %s, è ora."
+
+# --- Arcade page (ui_components/game_selector.yaml) ----------------------------
+# Console names (Fil d'Or, Roi Noir…) stay as they are: proper names, and the
+# « Écran courant » label that Home Assistant reads (tools/i18n_keys.py, NON_TRADUITS).
+# Casse-briques = « rompimattoni » (nom italien du genre Breakout).
+"8 consoles — une seule à la fois": "8 console — una alla volta"
+"Roguelite de bille\n6 salles · à l'inclinaison": "Roguelite con biglia\n6 stanze · a inclinazione"
+"Casse-briques Atari\n8 niveaux · power-ups": "Rompimattoni Atari\n8 livelli · power-up"
+"Flipper néon · 3 billes\nTablette à la verticale": "Flipper al neon · 3 palline\nTablet in verticale"
+"Lode Runner 1983\nCreuse · grimpe · fuis": "Lode Runner 1983\nScava · sali · fuggi"
+"Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5": "Go 9×9 / 13×13 / 19×19\nRegole cinesi · komi 6,5"
+"Quiz rétro-salon\n1 à 6 équipes": "Quiz retrò da salotto\n1-6 squadre · in francese"
+"Internationales 10×10\nPrise majoritaire · rafles": "Internazionale 10×10\nPresa massima · a catena"
+"Échecs FIDE complets\n5 niveaux d'IA embarquée": "Scacchi FIDE completi\n5 livelli di IA integrata"
+"Sortie de chaque jeu : hub, puis « Quitter »": "Per uscire da un gioco: hub, poi «Esci»"
+
+# --- Fil d'Or — marble roguelite (marble_game.cpp) -----------------------------
+# Le nom de la console (« FIL D'OR » en titre du hub) ne se traduit pas.
+# Vocabulaire : la bille = la biglia, le dédale = il Labirinto (personnifié, donc
+# en majuscule), âmes = anime, PV = PV (punti vita, même sigle qu'en français),
+# caractéristique = attributo, objet = oggetto, emplacement = slot, run = la run
+# (usage des joueurs italiens), feu de camp = Falò (le Bonfire de Dark Souls en
+# italien), mode dieu = modalità Dio.
+# --- Salles (ROOMS : littéraux nus, lus par tools/check_marble_rooms.py) --------
+# Traduits à l'affichage par tr(r.name) / tr(r.goal), non relevés par i18n_keys.py.
+# « Forge » n'a pas d'entrée dans en.yaml : reste « Forge » (compréhensible).
+"Seuil": "Soglia"
+"Couloirs": "Corridoi"
+"Sanctuaire": "Santuario"
+"Némésis": "Nemesi"
+"Trone": "Trono"
+"Rejoins le portail": "Raggiungi il portale"
+"Reunis les runes": "Raccogli le rune"
+# --- Bonus de run (boons) -------------------------------------------------------
+"Main d'Ariane": "Mano di Arianna"
+"Réponse à l'inclinaison +18 %": "Risposta all'inclinazione +18%"
+"Cœur de braise": "Cuore di brace"
+"+1 point de vie, soigne aussitôt": "+1 PV, cura immediata"
+"Bourse tressée": "Borsa intrecciata"
+"+40 % d'âmes ramassées": "+40% di anime raccolte"
+"Aimant mineur": "Magnete minore"
+"Attire les bonus alentour": "Attira i bonus vicini"
+"Semelles lourdes": "Suole pesanti"
+"Freinage nettement plus mordant": "Frenata molto più decisa"
+"Élan": "Slancio"
+"Vitesse maximale +170": "Velocità massima +170"
+"Peau de bronze": "Pelle di bronzo"
+"Un bouclier à chaque nouvelle salle": "Uno scudo a ogni nuova stanza"
+"Œil du dédale": "Occhio del Labirinto"
+"Le portail pulse et se voit de loin": "Il portale pulsa, visibile da lontano"
+"Seconde chance": "Seconda chance"
+"Relevé une fois dans la run": "Ti rialza una volta nella run"
+"Pas de velours": "Passo di velluto"
+"3 s d'invulnérabilité par salle": "3 s di invulnerabilità per stanza"
+# --- Difficultés ----------------------------------------------------------------
+# Accordées avec « difficoltà » (féminin) : Calma, Normale, Spietata.
+"Calme": "Calma"
+"+1 PV, pièges lents, longue invulnérabilité": "+1 PV, trappole lente, lunga invulnerabilità"
+"Normal": "Normale"
+"L'équilibre de référence": "L'equilibrio standard"
+"Impitoyable": "Spietata"
+"-1 PV, pièges rapides, mais +60 % d'âmes": "-1 PV, trappole rapide, ma +60% di anime"
+# --- Caractéristiques (Feu de camp) ---------------------------------------------
+"Vitalité": "Vitalità"
+"+1 point de vie par niveau": "+1 PV per livello"
+"Résistance": "Resistenza"
+"+300 ms d'invulnérabilité ; bouclier des 3": "+300 ms di invulnerabilità; scudo dal liv. 3"
+"Finesse": "Finezza"
+"-1 px de rayon : bille plus difficile à toucher": "-1 px di raggio: biglia più difficile da colpire"
+"Agilité": "Agilità"
+"+12 % de réponse à l'inclinaison par niveau": "+12% di risposta all'inclinazione per livello"
+"+60 de vitesse maximale par niveau": "+60 di velocità massima per livello"
+"Découverte": "Scoperta"
+"+15 % d'âmes et +12 % de butin en coffre": "+15% anime e +12% bottino negli scrigni"
+# --- Objets (Marchand, Équipement, coffres, boss) -------------------------------
+"Anneau de fer": "Anello di ferro"
+"+1 point de vie": "+1 PV"
+"Talisman du filon": "Talismano del filone"
+"+25 % d'âmes ramassées": "+25% di anime raccolte"
+"Plume de suie": "Piuma di fuliggine"
+"+70 de vitesse maximale": "+70 di velocità massima"
+"Gantelet poli": "Guanto lucido"
+"+15 % de réponse à l'inclinaison": "+15% di risposta all'inclinazione"
+"Écaille de bronze": "Scaglia di bronzo"
+"Un bouclier à chaque salle": "Uno scudo in ogni stanza"
+"Œil de rune": "Occhio runico"
+"Pierre de sang": "Pietra di sangue"
+"Relevé une fois par run": "Ti rialza una volta per run"
+"Aimant du mineur": "Magnete del minatore"
+"Semelle de plomb": "Suola di piombo"
+"Couronne fêlée": "Corona incrinata"
+"+50 % d'âmes, mais -1 point de vie": "+50% di anime, ma -1 PV"
+# --- Répliques (mort, récompense) -----------------------------------------------
+"Le fil se rompt. Il en reste toujours un bout.": "Il filo si spezza. Ne resta sempre un pezzo."
+"La pierre gagne cette manche.": "La pietra vince questo round."
+"Tu rouleras encore.": "Rotolerai ancora."
+"Le dédale te garde un peu plus longtemps.": "Il Labirinto ti trattiene ancora un po'."
+"Chute nette. Reprends ton souffle.": "Caduta netta. Riprendi fiato."
+"Le dédale consent.": "Il Labirinto accetta."
+"Un serment de plus.": "Un giuramento in più."
+"Prends. Tu en auras besoin.": "Prendi. Ti servirà."
+# --- Hub ------------------------------------------------------------------------
+"Niveau %u   -   %u âmes   -   salle %u/6   -   %s%s": "Livello %u   -   %u anime   -   stanza %u/6   -   %s%s"
+"   -   MODE DIEU": "   -   MODALITÀ DIO"
+"6 salles. 2 à 5 minutes.  Difficulté : %s": "6 stanze. Da 2 a 5 minuti.  Difficoltà: %s"
+"%d objet(s) trouvé(s) sur %d": "Oggetti trovati: %d su %d"
+"Incline la tablette pour guider la bille. L'écran tactile ne sert qu'aux menus.": "Inclina il tablet per guidare la biglia. Il touch serve solo per i menu."
+"Lancer une run": "Inizia una run"
+"Feu de camp": "Falò"
+"Dépenser les âmes en caractéristiques": "Spendi le anime in attributi"
+"Marchand": "Mercante"
+"Acheter et revendre des objets": "Compra e rivendi oggetti"
+"Équipement": "Equipaggiamento"
+"Difficulté, mode dieu, teinte, calibration": "Difficoltà, modalità Dio, colore, calibrazione"
+"Statistiques": "Statistiche"
+"Runs, victoires, records": "Run, vittorie, record"
+"Quitter": "Esci"
+"Retour au tableau de bord": "Torna alla dashboard"
+# --- Réglages -------------------------------------------------------------------
+"Difficulté : %s": "Difficoltà: %s"
+"Mode dieu : %s": "Modalità Dio: %s"
+"ACTIF": "ATTIVA"
+"inactif": "inattiva"
+"Ces réglages s'appliquent au lancement de la prochaine run.": "Queste opzioni valgono dall'inizio della prossima run."
+"Le mode dieu rend invulnérable : la run reste jouable mais ne rapporte aucun fragment et n'entre pas dans les statistiques.": "La modalità Dio rende invulnerabili: la run resta giocabile ma non frutta frammenti e non entra nelle statistiche."
+"Invulnérable - hors concours": "Invulnerabile - fuori classifica"
+"Jouer sans jamais mourir": "Gioca senza mai morire"
+"Or": "Oro"
+"Argent": "Argento"
+"Cuivre": "Rame"
+"Teinte de la bille : %s": "Colore della biglia: %s"
+"Purement cosmétique": "Puramente estetico"
+"Calibrer à plat": "Calibra in piano"
+"Pose la tablette et appuie": "Appoggia il tablet e tocca"
+"Calibration prise. La tablette est désormais « à plat ».": "Calibrato. Ora il tablet è «in piano»."
+# --- Feu de camp (montée de niveau) ---------------------------------------------
+"Niveau %u   -   %u âmes   -   prochain point : %u âmes": "Livello %u   -   %u anime   -   prossimo punto: %u anime"
+"Le coût dépend du niveau TOTAL : monter une caractéristique renchérit toutes les autres. Il faut choisir une orientation.": "Il costo dipende dal livello TOTALE: alzare un attributo rincara tutti gli altri. Scegli una direzione."
+"%s  -  au maximum": "%s  -  al massimo"
+"%s  -  %u âmes": "%s  -  %u anime"
+# --- Marchand -------------------------------------------------------------------
+"%u âmes   -   page %d/%d": "%u anime   -   pagina %d/%d"
+"Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement.": "Tocca un oggetto posseduto per rivenderlo a metà prezzo. Un oggetto rivenduto viene anche tolto dall'equipaggiamento."
+"  (possédé)": "  (tuo)"
+"%s  -  revendre : %u âmes": "%s  -  rivendi: %u anime"
+"Page suivante": "Pagina seguente"
+# --- Équipement -----------------------------------------------------------------
+"%d objet(s) en votre possession   -   %d emplacement(s)": "Oggetti posseduti: %d   -   Slot: %d"
+"Appuyer sur un emplacement le fait passer à l'objet suivant.": "Tocca uno slot per passare all'oggetto successivo."
+"Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand.": "Nessun oggetto: apri forzieri, sconfiggi i boss o passa dal mercante."
+"Emplacement %d : vide": "Slot %d: vuoto"
+"Aucun effet actif": "Nessun effetto attivo"
+"Emplacement %d : %s": "Slot %d: %s"
+# --- Statistiques ---------------------------------------------------------------
+"aucun": "nessuno"
+"Runs lancées : %u\nVictoires : %u\nSalle la plus profonde : %u/6\nMeilleur temps : %s\nNiveau total : %u\nÂmes disponibles : %u\nObjets découverts : %d/%d": "Run iniziate: %u\nVittorie: %u\nStanza più profonda: %u/6\nTempo migliore: %s\nLivello totale: %u\nAnime disponibili: %u\nOggetti scoperti: %d/%d"
+"Les runs jouées en mode dieu ne sont pas comptabilisées ici.": "Le run in modalità Dio non sono conteggiate qui."
+# --- Récompense (choix d'un boon) -----------------------------------------------
+"Le dédale offre": "Il Labirinto offre"
+"Un seul choix. Il te suivra jusqu'à la fin de la run.": "Una sola scelta. Ti seguirà fino alla fine della run."
+# --- Fin de run -----------------------------------------------------------------
+"Salles franchies : %d/6\nTemps : %u:%02u\nMode dieu — run hors concours": "Stanze superate: %d/6\nTempo: %u:%02u\nModalità Dio — run fuori classifica"
+"Salles franchies : %d/6\nTemps : %u:%02u\nDifficulté : %s\nÂmes rapportées : %d": "Stanze superate: %d/6\nTempo: %u:%02u\nDifficoltà: %s\nAnime guadagnate: %d"
+"Le fil tient": "Il filo regge"
+"Fin de la run": "Fine della run"
+"Tu sors du dédale. Il te laisse partir.": "Esci dal Labirinto. Ti lascia andare."
+"Aucune âme créditée : le mode dieu ne compte pas.": "Nessuna anima accreditata: la modalità Dio non conta."
+"Les âmes sont déjà mises de côté.": "Le anime sono già al sicuro."
+"Relancer une run": "Nuova run"
+"Retour au hub": "Torna all'hub"
+# --- Pause (« Pause » et « Retour » : déjà plus haut) -----------------------------
+"Le dédale patiente.": "Il Labirinto attende."
+"Reprendre": "Riprendi"
+"Recalibrer à plat": "Ricalibra in piano"
+"Pose la tablette avant d'appuyer": "Appoggia il tablet, poi tocca"
+"Abandonner la run": "Abbandona la run"
+"Les âmes sont conservées": "Le anime restano tue"
+"Calibration prise.": "Calibrato."
+# --- HUD (colonnes à largeur réservée : voir build_ui) ----------------------------
+"Salle %d/%d  -  %s  %.*s%s": "Stanza %d/%d  -  %s  %.*s%s"
+"   [ DIEU ]": "   [ DIO ]"
+"PV invulnérable": "PV invulnerabile"
+"PV %d/%d%s": "PV %d/%d%s"
+"  +BOUCLIER": "  +SCUDO"
+"Or %d": "Oro %d"
+"Portail ouvert !": "Portale aperto!"
+"Runes %d/%u": "Rune %d/%u"
+# --- Bannières (coffres, butin de boss) ------------------------------------------
+"%s cède : %s": "%s cede: %s"
+"%s cède 120 âmes": "%s cede 120 anime"
+"Le Trône": "Il Trono"
+"Coffre : %s !": "Scrigno: %s!"
+"Coffre : %d âmes": "Scrigno: %d anime"
+
+# --- Arcanoïde — brick breaker (arkanoid_game.cpp) -----------------------------
+# Lot 4b — Arcanoïde (Tab5/arkanoid_game.cpp) : français du code → italien.
+# « ARCANOIDE » (nom de la console) n'est pas traduit. « Retour » et « Pause »
+# reprennent la traduction commune (Indietro / Pausa).
+# --- Noms des niveaux (LEVEL_NAMES, tr_noop) ---
+"Mur plein": "Muro pieno"
+"Pyramide": "Piramide"
+"Colonnes": "Colonne"
+"Damier": "Scacchiera"
+"Forteresse": "Fortezza"
+"Zigzag": "Zigzag"
+"Boss final": "Boss finale"
+# --- Mode de contrôle ---
+"Inclinaison": "Inclinazione"
+"Boutons": "Pulsanti"
+"Les deux": "Entrambi"
+# --- Hub ---
+"Meilleur score : %u   -   Contrôle : %s": "Record: %u   -   Controllo: %s"
+"Casse toutes les briques. Ne laisse pas tomber la balle.": "Rompi tutti i mattoncini. Non far cadere la pallina."
+"Jouer": "Gioca"
+"8 niveaux, 3 vies, power-ups": "8 livelli, 3 vite, power-up"
+"Classement": "Classifica"
+"Top 10 local": "Top 10 locale"
+"Contrôle, sensibilité, calibration, SFX": "Controllo, sensibilità, calibrazione, SFX"
+# --- Réglages ---
+"Contrôle : %s": "Controllo: %s"
+"Sensibilité IMU : %d/5": "Sensibilità IMU: %d/5"
+"Ces réglages sont sauvegardés automatiquement.": "Le opzioni vengono salvate automaticamente."
+"Inclinaison / Boutons / Les deux": "Inclinazione / Pulsanti / Entrambi"
+"Vitesse de réponse à l'inclinaison": "Reattività all'inclinazione"
+"SFX : coupés": "SFX: spenti"
+"SFX : actifs": "SFX: accesi"
+"Bips sonores (casse, mort, niveau)": "Bip (mattoncini, vita persa, livello)"
+"Calibration prise. Tablette = plat.": "Calibrato. Tablet = in piano."
+# --- Classement ---
+# En-tête aligné sur les lignes : « Pos. » (4 car.) comme « Rang », « Punti » (5)
+# comme « Score », « Liv » comme « Niv ». « Btn » est la dernière colonne :
+# « Pulsanti » y tient sans rien décaler.
+"Rang  Score      Niv  Contrôle\n": "Pos.  Punti      Liv  Controllo\n"
+"IMU": "IMU"
+"Btn": "Pulsanti"
+"Mix": "Mix"
+"\n  Aucun score enregistre.": "\n  Nessun punteggio salvato."
+"Top 10 local (NVS)": "Top 10 locale (NVS)"
+"Effacer les scores": "Cancella punteggi"
+# « Demande confirmation », « Oui, tout effacer », « Annuler » et
+# « Cette action est irreversible. » : déjà plus bas (Coureur d'Or).
+"Effacer les scores ?": "Cancellare i punteggi?"
+"Tout le Top 10 local, meilleur score compris.": "Tutta la Top 10 locale, record compreso."
+# --- Pause ---
+"Le jeu attend.": "Gioco in pausa."
+"Abandonner": "Abbandona"
+"Le score est enregistré": "Il punteggio viene salvato"
+# --- Fin de niveau / game over ---
+"Niveau %d — %s\nScore : %d": "Livello %d — %s\nPunti: %d"
+"Niveau terminé !": "Livello superato!"
+"Niveau suivant": "Prossimo livello"
+"Score : %d\nNiveau atteint : %d/8 — %s%s": "Punti: %d\nLivello raggiunto: %d/8 — %s%s"
+"\n*** Nouveau record ! ***": "\n*** Nuovo record! ***"
+"GAME OVER": "GAME OVER"
+"Rejouer": "Rigioca"
+# --- HUD ---
+"Score %d": "Punti %d"
+"Vies %d": "Vite %d"
+"Niv %d/8": "Liv %d/8"
+"Record %u": "Record %u"
+
+# --- Neon Apron — pinball (pinball_game.cpp) -----------------------------------
+# Pinball terms already in English stay as they are, unwrapped (TILT, MULTIBALL,
+# SKILL SHOT, BUMPER FRENZY, FRENZY / MULTI / SKILL inserts, "N E O N   A P R O N").
+# The DMD score is drawn in roboto_55_b (digits only): no text goes through it.
+# Italien : le flipper = il flipper (même mot), la bille = la palla / la pallina.
+# « b » et « MB » sont écrits tels quels par le classement : l'explication les garde.
+# --- Toasts (roboto_45_b, above the arch) ---
+"BILLE BONUS": "PALLA EXTRA"
+"MULTIBALL TERMINÉ": "MULTIBALL FINITO"
+"BILLE PERDUE": "PALLA PERSA"
+# --- Table and DMD labels (roboto_22) ---
+"Maintiens ici pour armer,\nrelâche pour tirer": "Tieni premuto per caricare,\nrilascia per lanciare"
+"BILLE %d / %d": "PALLA %d / %d"
+"RECORD %s": "RECORD %s"
+# --- Hub ---
+"%lu partie(s) - %lu multiball(s) - %lu tilt(s)": "Partite: %lu - multiball: %lu - tilt: %lu"
+"Record : %s": "Record: %s"
+"Aucun score enregistré": "Nessun punteggio"
+"Tournez la tablette à la verticale": "Ruota il tablet in verticale"
+"Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT.": "Zona sinistra / destra = flipper (tieni premuto). In basso al centro = lanciatore.\nScuoti il tablet per spingere la palla — tre volte di troppo di fila ed è TILT."
+"3 billes - lanceur en bas de l'écran": "3 palle - lanciatore in basso"
+"Nudge, sens de l'écran, calibration": "Nudge, orientamento, calibrazione"
+"Retour au tableau de bord (paysage)": "Torna alla dashboard (orizzontale)"
+# --- Leaderboard ---
+"CLASSEMENT": "CLASSIFICA"
+"Aucun score pour l'instant.\nLance une partie !": "Ancora nessun punteggio.\nInizia una partita!"
+"Cumul carrière : %lu points": "Totale carriera: %lu punti"
+"b = billes jouées, MB = multiball déclenché.": "b = palle giocate, MB = multiball attivato."
+# --- Settings ---
+"Tout est enregistré et survit au redémarrage.": "Tutto viene salvato e resta dopo un riavvio."
+"Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer.": "Calibra in piano PRIMA di giocare: il nudge si misura da questo riferimento,\nnon dall'inclinazione assoluta. Appoggia il tablet, poi tocca."
+"Sensibilité du nudge : %s": "Sensibilità del nudge: %s"
+# Nudge sensitivity steps: context "nudge" (« Douce » is an alarm sound, « Vive » a Lode Runner speed).
+"nudge|Très douce": "Molto bassa"
+"nudge|Douce": "Bassa"
+"nudge|Normale": "Normale"
+"nudge|Vive": "Alta"
+"nudge|Très vive": "Molto alta"
+"Force de la secousse nécessaire": "Forza di scossa necessaria"
+"Sens du nudge : %s": "Verso del nudge: %s"
+"inverse": "invertito"
+"normal": "normale"
+"Si la bille part du mauvais côté": "Se la palla va dalla parte sbagliata"
+"Orientation : %s": "Orientamento: %s"
+"retournée": "capovolto"
+"normale": "normale"
+"Si l'écran est à l'envers dans vos mains": "Se lo schermo ti appare capovolto"
+"Poser la tablette puis appuyer": "Appoggia il tablet, poi tocca"
+# --- Pause ---
+"PAUSE": "PAUSA"
+"Score %s - bille %d / %d": "Punti %s - palla %d / %d"
+"La partie reprend exactement où elle s'est arrêtée.": "La partita riprende da dove si era fermata."
+"La partie est enregistrée telle quelle": "La partita viene registrata così com'è"
+"Quitter le flipper": "Esci dal flipper"
+# --- Game over ---
+"FIN DE PARTIE": "FINE PARTITA"
+"Score final : %s": "Punteggio: %s"
+"NOUVEAU RECORD !": "NUOVO RECORD!"
+"%de au classement": "%d° in classifica"
+"Hors du top %d": "Non in top %d"
+"Partie marquée TILT.": "Partita segnata TILT."
+"Nouvelle partie, 3 billes": "Nuova partita, 3 palle"
+
+# --- Coureur d'Or — Lode Runner (lode_game.cpp) --------------------------------
+# Coureur d'Or (Tab5/lode_game.cpp) — lot 4b, FR → IT.
+# « COUREUR D'OR » (nom de la console) n'est pas traduit.
+# --- Vitesses (Reglages > Vitesse, pause) ---
+# Accordées avec « velocità » (féminin) : Normale < Svelta < Rapida < Rapidissima
+# < Fulminea, choisies pour que les suffixes du classement tiennent en 8 caractères.
+"Normale": "Normale"
+"Vive": "Svelta"
+"Rapide": "Rapida"
+"Très rapide": "Rapidissima"
+"Fulgurante": "Fulminea"
+"4,4 cases/s - rythme d'origine": "4,4 caselle/s - ritmo originale"
+"5,7 cases/s": "5,7 caselle/s"
+"6,7 cases/s": "6,7 caselle/s"
+"8,0 cases/s": "8,0 caselle/s"
+"10,0 cases/s - réflexes exigés": "10,0 caselle/s - riflessi pronti"
+# Suffixes compacts de la colonne vitesse du classement (%-8s : 8 caractères au plus)
+"vive": "svelta"
+"rapide": "rapida"
+"t.rapide": "rapidiss"
+"fulgur.": "fulminea"
+# --- Noms des niveaux ---
+"Premier filon": "Primo filone"
+"Escalier": "Scala"
+"Le pendu": "L'impiccato"
+"Le puits": "Il pozzo"
+"Le peigne": "Il pettine"
+"Faux chemin": "Falsa pista"
+"Le nid": "Il nido"
+"Cathédrale": "Cattedrale"
+"Dédale": "Dedalo"
+"Coffre-fort": "Cassaforte"
+# --- Modes de contrôle ---
+# « Inclinazione » (12 caractères) déborde d'un caractère la colonne %-11s du
+# classement ; la police est proportionnelle, l'alignement y est déjà approximatif.
+"Mixte": "Misto"
+"D-pad + 2 boutons creuser": "D-pad + 2 pulsanti scava"
+"Inclinaison 4 directions + 2 boutons creuser": "Inclinazione a 4 direzioni + 2 pulsanti scava"
+"Inclinaison ET D-pad, le doigt prime": "Inclinazione E D-pad, prevale il dito"
+# --- Partie : HUD, pad, messages ---
+"CREUSER": "SCAVA"
+"Sortie ouverte ! Grimpe tout en haut.": "Uscita aperta! Sali fino in cima."
+"Score %lu": "Punti %lu"
+"Vies  oo": "Vite  oo"
+"Vies  %d": "Vite  %d"
+"Niveau %d/%d  %s": "Livello %d/%d  %s"
+"Or restant %d": "Oro rimasto %d"
+"SORTIE OUVERTE": "USCITA APERTA"
+"Record %lu": "Record %lu"
+"Niveau %d - %s": "Livello %d - %s"
+# --- Fin de niveau / fin de partie ---
+"Score : %lu     Vies : %d": "Punti: %lu     Vite: %d"
+"TOUS LES NIVEAUX !": "TUTTI I LIVELLI!"
+"NIVEAU TERMINÉ": "LIVELLO SUPERATO"
+"Voir le classement": "Vedi la classifica"
+"Score : %lu%s": "Punti: %lu%s"
+"   (hors classement)": "   (fuori classifica)"
+"PARTIE TERMINÉE": "PARTITA FINITA"
+# --- Hub ---
+"Ramasse tout l'or, échappe aux gardes, grimpe en haut.": "Raccogli tutto l'oro, sfuggi alle guardie, sali in cima."
+"Pendant une partie : touche le bandeau du haut pour mettre en pause.": "Durante la partita, tocca la barra in alto per la pausa."
+"%d/%d débloqués": "%d/%d sbloccati"
+"Meilleur score : %lu": "Record: %lu"
+"Contrôle : %s   -   Vitesse : %s": "Controllo: %s   -   Velocità: %s"
+"Niveaux": "Livelli"
+# --- Niveaux ---
+"NIVEAUX": "LIVELLI"
+"Un niveau se débloque en terminant le précédent.": "Completa un livello per sbloccare il successivo."
+"Un niveau terminé débloque le suivant, définitivement.": "Ogni livello completato sblocca il successivo, per sempre."
+"Jouable": "Giocabile"
+"Verrouillé": "Bloccato"
+# --- Réglages ---
+"Le Tab5 n'a pas de croix physique : ce sont des zones tactiles.": "Il Tab5 non ha una croce fisica: sono zone touch."
+"Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant.": "Un solo tocco alla volta: in modalità Pulsanti si scava da fermi. La modalità Misto libera il dito per scavare camminando."
+"%d / 5 (plus haut = plus sensible)": "%d / 5 (più alto = più sensibile)"
+"%s - hors classement": "%s - fuori classifica"
+"Activé": "Attiva"
+"%s : %s": "%s: %s"
+"Contrôle": "Controllo"
+"Sensibilité": "Sensibilità"
+"Vitesse": "Velocità"
+"Pose la tablette PUIS appuie": "Appoggia il tablet, POI tocca"
+"Mode entraînement": "Modalità allenamento"
+"Effacer scores et progression": "Cancella punteggi e progressi"
+# --- Classement ---
+# « liv » = livello ; « F.C. » = fuori classifica (mode entraînement).
+"Aucun score enregistré pour l'instant.": "Ancora nessun punteggio salvato."
+"%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n": "%2d.  %7lu   liv %2d   %-11s  %s  %-8s%s\n"
+"H.C.": "F.C."
+"Top 10 local - conservé en NVS, survit aux reboots et aux OTA.": "Top 10 locale - salvata in NVS, resiste a riavvii e OTA."
+"Demande confirmation": "Chiede conferma"
+# --- Confirmation d'effacement ---
+"TOUT EFFACER ?": "CANCELLARE TUTTO?"
+"Scores, meilleur score ET progression des niveaux.": "Punteggi, record E progressi dei livelli."
+"Cette action est irréversible.": "Questa azione è irreversibile."
+"Oui, tout effacer": "Sì, cancella tutto"
+# --- Pause ---
+"Score : %lu     Vies : %d     Or restant : %d": "Punti: %lu     Vite: %d     Oro rimasto: %d"
+"Relancer le niveau": "Ricomincia livello"
+"Sans perdre de vie": "Senza perdere vite"
+"Quitter la partie": "Esci dalla partita"
+
+# --- Go Tab (go_game.cpp, go_ai.cpp) -------------------------------------------
+# « Go Tab » (nom de la console) n'est pas traduit. Coordonnées (A1, D4…) et
+# tailles (9x9…) non plus. Vocabulaire : Nero / Bianco, mossa, passare, abbandonare,
+# komi, prigionieri, handicap, territorio. Indice : le BOUTON « Indice » = « Aiuto »
+# (bouton de 96 px en roboto_22 aux dames : « Suggerimento » n'y tient pas), le
+# conseil lui-même = « suggerimento » (« Suggerimento: D4 », Go / dames / échecs).
+# --- Go : niveaux de l'IA (go_ai.cpp, tr_noop) ----------------------------------
+"Débutant": "Principiante"
+"Amateur": "Amatore"
+"Confirmé": "Avanzato"
+"Expert": "Esperto"
+# --- Go : modes, joueurs --------------------------------------------------------
+"Joueur contre Tab": "Giocatore vs Tab"
+"Joueur contre joueur": "Giocatore vs giocatore"
+"Tab contre Tab": "Tab vs Tab"
+"Joueur %s": "Giocatore %s"
+"Vous": "Tu"
+"Noir": "Nero"
+"Blanc": "Bianco"
+# --- Go : HUD -------------------------------------------------------------------
+# %.0s avale le « s » du pluriel français : l'italien dit « catture: N » quel que
+# soit N (évite « 1 catture »). Même ordre d'arguments.
+"%s  ·  %d prise%s": "%s  ·  catture: %d%.0s"
+"Noir %.1f   contre   Blanc %.1f": "Nero %.1f   contro   Bianco %.1f"
+"Coup %u  ·  komi %.1f": "Mossa %u  ·  komi %.1f"
+"Le Tab réfléchit...": "Il Tab pensa..."
+"Touchez les groupes MORTS, puis Valider": "Tocca i gruppi MORTI, poi Conferma"
+"Touchez à nouveau %s pour valider": "Tocca di nuovo %s per confermare"
+"Au tour de Noir": "Tocca al Nero"
+"Au tour de Blanc": "Tocca al Bianco"
+# --- Go : panneau latéral -------------------------------------------------------
+"COUPS": "MOSSE"
+"passe": "passo"
+"Passer": "Passa"
+"coup|Annuler": "Annulla"
+"Indice": "Aiuto"
+"Tout vivant": "Tutti vivi"
+"Valider le score": "Conferma punteggio"
+"Jouer %s": "Gioca %s"
+"Réflexion  %d %%": "Calcolo  %d %%"
+# --- Go : messages de statut ----------------------------------------------------
+"Coup illégal": "Mossa illegale"
+"Le Tab passe": "Il Tab passa"
+"Passe — fin de partie": "Passo — fine partita"
+"Passe": "Passo"
+"Rien à annuler": "Niente da annullare"
+"Coup annulé": "Mossa annullata"
+"Indice : passer": "Suggerimento: passa"
+"Indice : %s": "Suggerimento: %s"
+"Deux passes : marquez les groupes morts": "Entrambi passano: segna i gruppi morti"
+"Partie reprise": "Partita ripresa"
+"Intersection occupée": "Punto occupato"
+"Coup interdit (ko ou suicide)": "Mossa vietata (ko o suicidio)"
+"Le Tab abandonne": "Il Tab abbandona"
+# --- Go : menu principal --------------------------------------------------------
+"Score chinois d'aire  ·  komi %.1f  ·  ko simple": "Conteggio cinese  ·  komi %.1f  ·  ko semplice"
+"Toutes les parties et les réglages sont conservés dans le Tab.": "Partite e opzioni restano salvate nel Tab."
+"Reprendre la partie": "Riprendi la partita"
+"Retour au goban": "Torna al goban"
+"%dx%d, coup %u": "%dx%d, mossa %u"
+"Reprendre la sauvegarde": "Carica il salvataggio"
+"Nouvelle partie": "Nuova partita"
+"Taille, mode, niveau, handicap": "Goban, modalità, livello, handicap"
+"Bilan face au Tab": "Bilancio contro il Tab"
+"Confirmation, coordonnées, secousse": "Conferma, coordinate, scossa"
+"Retour à l'arcade": "Torna all'arcade"
+# --- Go : menu pause ------------------------------------------------------------
+"%s  ·  %s  ·  coup %u": "%s  ·  %s  ·  mossa %u"
+"Le goban vous attend.": "Il goban ti aspetta."
+"Changer les réglages": "Cambia le opzioni"
+"plateau|Abandonner": "Abbandona"
+"L'adversaire gagne": "Vince l'avversario"
+"Quitter le jeu": "Esci dal gioco"
+"La partie est sauvegardée": "La partita viene salvata"
+# --- Go : nouvelle partie -------------------------------------------------------
+# « Vous jouez %s » reçoit « Noir (premier) » ou « Blanc » : « Giochi con il Nero (inizi) ».
+"Touchez une ligne pour changer sa valeur.": "Tocca una riga per cambiarne il valore."
+"Taille du goban  —  9x9 / 13x13 / 19x19": "Goban  —  9x9 / 13x13 / 19x19"
+"Adversaire": "Avversario"
+"Vous jouez %s": "Giochi col %s"
+"Noir (premier)": "Nero (inizi)"
+"Couleur du joueur": "Colore del giocatore"
+"Niveau : %s": "Livello: %s"
+"Force du Tab": "Forza del Tab"
+"Handicap : %d pierres": "Handicap: %d pietre"
+"Handicap : aucun": "Handicap: nessuno"
+"Pierres offertes à Noir (Blanc commence)": "Pietre di handicap al Nero (inizia il Bianco)"
+"Jouer !": "Gioca!"
+"Komi 0,5 pour Blanc": "Komi 0,5 al Bianco"
+"Komi 6,5 pour Blanc": "Komi 6,5 al Bianco"
+# --- Go : statistiques ----------------------------------------------------------
+"%u parties  ·  %u min de jeu": "Partite: %u  ·  %u min di gioco"
+"Comptabilise uniquement le mode Joueur contre Tab.": "Conta solo la modalità Giocatore vs Tab."
+# %.0s : même principe que les prises (« Vittorie 0 », « Sconfitte 1 »…).
+"%u victoire%s  ·  %u nulle%s  ·  %u défaite%s": "Vittorie %u%.0s  ·  Pareggi %u%.0s  ·  Sconfitte %u%.0s"
+"Taille affichée : %s": "Goban mostrato: %s"
+"Toucher pour changer": "Tocca per cambiare"
+"Remettre les compteurs à zéro": "Azzera i contatori"
+"Effacer les statistiques ?": "Cancellare le statistiche?"
+"Victoires, nulles et défaites de toutes les tailles": "Vittorie, pareggi e sconfitte di ogni dimensione"
+"Cette action est définitive.": "Questa azione è definitiva."
+# --- Go : réglages --------------------------------------------------------------
+"Options locales, conservées dans le Tab": "Opzioni locali, salvate nel Tab"
+"Confirmation du coup : ACTIVÉE": "Conferma mossa: ATTIVA"
+"Confirmation du coup : DÉSACTIVÉE": "Conferma mossa: DISATTIVATA"
+"Un premier toucher place un fantôme, le second valide": "Il primo tocco piazza un fantasma, il secondo conferma"
+"Coordonnées : AFFICHÉES": "Coordinate: VISIBILI"
+"Coordonnées : MASQUÉES": "Coordinate: NASCOSTE"
+"Lettres A..T et chiffres autour du goban": "Lettere A..T e numeri attorno al goban"
+"Dernier coup : MARQUÉ": "Ultima mossa: SEGNATA"
+"Dernier coup : NON MARQUÉ": "Ultima mossa: NON SEGNATA"
+"Anneau rouge sur la dernière pierre posée": "Anello rosso sull'ultima pietra giocata"
+"Aperçu du territoire : ACTIVÉ": "Anteprima territorio: ATTIVA"
+"Aperçu du territoire : DÉSACTIVÉ": "Anteprima territorio: DISATTIVATA"
+"Pastilles de territoire pendant le comptage": "Pallini di territorio durante il conteggio"
+"Secousse = indice : ACTIVÉE": "Scossa = suggerimento: ATTIVA"
+"Secousse = indice : DÉSACTIVÉE": "Scossa = suggerimento: DISATTIVATA"
+"Détection BMI270": "Rilevamento BMI270"
+# --- Go : carte de fin de partie ------------------------------------------------
+"Noir l'emporte": "Vince il Nero"
+"Blanc l'emporte": "Vince il Bianco"
+"Partie nulle": "Pareggio"
+"Abandon  —  comptage indicatif : %.1f contre %.1f": "Abbandono  —  conteggio indicativo: %.1f a %.1f"
+"%.1f  contre  %.1f      (écart %.1f)": "%.1f  a  %.1f      (scarto %.1f)"
+# Même alignement que le français : « Nero » + 3 espaces = « Bianco » + 1 espace.
+"Noir   pierres %d   territoire %d": "Nero   pietre %d   territorio %d"
+"Blanc  pierres %d   territoire %d   komi %.1f": "Bianco pietre %d   territorio %d   komi %.1f"
+# Les compteurs de Score (go_engine.h) sont des PIERRES mortes, pas des groupes.
+"Groupes morts retirés : %d noirs, %d blancs": "Pietre morte rimosse: %d nere, %d bianche"
+"Points neutres (dame) : %d": "Punti neutri (dame): %d"
+"Prisonniers de la partie : Noir %u, Blanc %u": "Prigionieri: Nero %u, Bianco %u"
+"%s  ·  %s  ·  %u coups": "%s  ·  %s  ·  %u mosse"
+"Revanche": "Rivincita"
+"Menu principal": "Menu principale"
+
+# --- Trial Poursuite — quiz interface; the questions stay French (trivia_game.cpp) ---
+# Lot 4b — interface du quiz « Trial Poursuite » (Tab5/trivia_game.cpp).
+# Les questions et réponses (Tab5/trivia_questions.h) restent en français.
+# Déjà plus haut, non répétées ici : Réglages, Retour, Confirmer, Annuler.
+# Italien : part de camembert = spicchio (vocabulaire du Trivial Pursuit italien,
+# plutôt que « triangolino », familier), case = casella, dé = dado, équipe = squadra.
+# Catégories de l'édition italienne : Geografia, Spettacolo, Storia, Arte e
+# Letteratura, Scienze e Natura, Sport e Tempo libero.
+# --- Catégories (CAT_NAMES, CAT_SHORT) ---
+"Géographie": "Geografia"
+"Divertissement": "Spettacolo"
+"Histoire": "Storia"
+"Arts & Littérature": "Arte & Letteratura"
+"Sciences & Nature": "Scienze & Natura"
+"Sports & Loisirs": "Sport & Tempo libero"
+"Divertis.": "Spettacolo"
+"Arts": "Arte"
+"Sciences": "Scienze"
+"Sports": "Sport"
+# --- Difficulté et temps de réponse ---
+"Facile": "Facile"
+"Moyen": "Medio"
+"Difficile": "Difficile"
+"Questions faciles": "Domande facili"
+"Faciles + moyennes": "Facili + medie"
+"Moyennes + difficiles": "Medie + difficili"
+"Illimité": "Illimitato"
+# --- Règles du jeu ---
+"RÈGLES DU JEU": "REGOLE"
+"Réunissez les 6 parts de camembert, puis rejoignez le centre pour la question finale.\n\nLancez le dé avec le bouton, ou secouez la tablette.\nTouchez ensuite l'une des cases surlignées : vous choisissez votre direction,\nmais jamais de demi-tour en cours de déplacement.\n\nBonne réponse : vous rejouez.   Mauvaise réponse : au suivant.\n\nLes 6 grandes cases cerclées de blanc sont les QG de catégorie :\nelles seules rapportent une part de camembert.\nUne case violette à point blanc = Rejouer, relancez immédiatement le dé.\nLe centre sans les 6 parts = question de la catégorie de votre choix.\nLe centre avec les 6 parts = finale : l'équipe suivante choisit la catégorie,\net une bonne réponse remporte la partie.": "Raccogli i 6 spicchi, poi raggiungi il centro per la domanda finale.\n\nTira il dado con il pulsante, o scuoti il tablet.\nPoi tocca una delle caselle evidenziate: scegli tu la direzione,\nma senza mai tornare indietro durante lo spostamento.\n\nRisposta esatta: tiri ancora.   Risposta sbagliata: passi la mano.\n\nLe 6 grandi caselle cerchiate di bianco sono le sedi di categoria:\nsolo loro fanno vincere uno spicchio.\nUna casella viola con un punto bianco = Tira ancora, ritira subito il dado.\nIl centro senza i 6 spicchi = domanda della categoria che preferisci.\nIl centro con i 6 spicchi = finale: la squadra successiva sceglie la categoria,\ne una risposta esatta vince la partita."
+# --- Plateau : dé, bandeau d'état, HUD ---
+"LANCER LE DÉ": "TIRA IL DADO"
+"ou secouez la tablette": "o scuoti il tablet"
+"Aucune partie en cours": "Nessuna partita in corso"
+"Le dé roule…": "Il dado rotola…"
+"Déplacement…": "Spostamento…"
+"Dé : %u — touchez une case surlignée": "Dado: %u — tocca una casella evidenziata"
+"À %s de lancer le dé": "%s, tira il dado"
+"Tour %u": "Turno %u"
+"Équipe : %s": "Squadra: %s"
+# --- Messages de tour ---
+"Case Rejouer — relancez le dé !": "Tira ancora — ritira il dado!"
+"Finale manquée — il faudra revenir au centre.": "Finale mancata — torna al centro."
+"Part gagnée ! Vous rejouez.": "Spicchio vinto! Tira ancora."
+"Bonne réponse — vous rejouez.": "Risposta esatta — tira ancora."
+"Que la partie commence !": "Che la partita abbia inizio!"
+"Partie reprise.": "Partita ripresa."
+"Aucun déplacement possible — au suivant.": "Nessuna mossa possibile — passa la mano."
+# --- Menu d'accueil du jeu ---
+"Le quiz rétro-salon — 720 questions, 6 catégories": "Il quiz retrò da salotto — 720 domande in francese, 6 categorie"
+"1 à 6 équipes": "1–6 squadre"
+"%u équipes · tour %u": "%u squadre · turno %u"
+"Aucune partie sauvegardée": "Nessuna partita salvata"
+"%u parties · %u %% de réussite": "%u partite · %u %% esatte"
+"Aucune question jouée": "Nessuna domanda giocata"
+"Règles du jeu": "Regole"
+"Comment gagner ses 6 parts": "Come vincere i 6 spicchi"
+"Retour au Tab": "Torna al Tab"
+# --- Nouvelle partie (composition des équipes) et réglages ---
+"NOUVELLE PARTIE": "NUOVA PARTITA"
+"Composez les équipes, puis réglez les questions": "Forma le squadre, poi imposta le domande"
+"Touchez un nom pour le changer, la pastille pour la couleur": "Tocca un nome per cambiarlo, il pallino per il colore"
+"ÉQUIPES": "SQUADRE"
+"+ Ajouter une équipe": "+ Aggiungi squadra"
+"DIFFICULTÉ": "DIFFICOLTÀ"
+"TEMPS DE RÉPONSE": "TEMPO DI RISPOSTA"
+"SECOUSSE = LANCER LE DÉ": "SCOSSA = TIRA IL DADO"
+"Activée": "Attiva"
+"Désactivée": "Disattivata"
+"COMMENCER LA PARTIE": "INIZIA LA PARTITA"
+"Retour au menu": "Torna al menu"
+"RÉGLAGES": "OPZIONI"
+"Ces réglages s'appliquent à la prochaine question": "Le opzioni valgono dalla prossima domanda"
+# --- Statistiques ---
+"STATISTIQUES": "STATISTICHE"
+"%u parties · %u questions · %u %% de réussite · %u parts gagnées": "%u partite · %u domande · %u %% esatte · %u spicchi vinti"
+"Aucune question jouée pour le moment": "Ancora nessuna domanda giocata"
+"Victoire la plus rapide : %u tours": "Vittoria più rapida: %u turni"
+"Effacer les statistiques": "Cancella le statistiche"
+# --- Pause et confirmation ---
+"Tour %u · au tour de %s": "Turno %u · tocca a %s"
+"Abandonner la partie": "Abbandona la partita"
+"Retour au menu principal": "Torna al menu principale"
+"La partie sera reprise plus tard": "Potrai riprendere la partita dopo"
+"CONFIRMER": "CONFERMA"
+"Abandonner la partie en cours ?\nLes parts gagnées seront perdues.": "Abbandonare la partita in corso?\nGli spicchi vinti andranno persi."
+"Effacer toutes les statistiques ?\nCette action est définitive.": "Cancellare tutte le statistiche?\nQuesta azione è definitiva."
+# --- Case centrale : choix de la catégorie, finale ---
+"%s a ses 6 parts — %s choisit la catégorie": "%s ha i 6 spicchi — %s sceglie la categoria"
+"%s a ses 6 parts — choisissez votre catégorie finale": "%s ha i 6 spicchi — scegli la categoria finale"
+"%s est au centre : choisissez une catégorie": "%s è al centro: scegli una categoria"
+"QUESTION FINALE": "DOMANDA FINALE"
+"CATÉGORIE AU CHOIX": "CATEGORIA A SCELTA"
+"Bonne réponse = victoire": "Risposta esatta = vittoria"
+# --- Carte question : bandeau et verdict ---
+"FINALE — %s": "FINALE — %s"
+"Exact — %s remporte la partie !": "Esatto — %s vince la partita!"
+"Bravo ! Part « %s » gagnée — vous rejouez.": "Bravo! Spicchio «%s» vinto — tira ancora."
+"Temps écoulé — la réponse était : %s": "Tempo scaduto — la risposta era: %s"
+"Raté — la réponse était : %s": "Sbagliato — la risposta era: %s"
+# --- Victoire ---
+"VICTOIRE !": "VITTORIA!"
+"%s remporte la partie": "%s vince la partita"
+"Partie bouclée en %u tours · %u bonnes réponses sur %u": "Partita chiusa in %u turni · %u risposte esatte su %u"
+"Rejouer avec les mêmes équipes": "Rigioca con le stesse squadre"
+
+# --- Dames Tab — draughts (draughts_game.cpp, draughts_ai.cpp) -----------------
+# Fragment lot 4b — « Dames Tab » (draughts_game.cpp).
+# Clé = texte français du code, octet pour octet. Vocabulaire de la dama en
+# italien : pedina (pion) / dama (pièce promue) / presa (prise) ; le jeu = la dama.
+# « Blancs » / « Noirs » : le camp (« il Bianco », « il Nero »), repris par
+# « Trait : %s », « Vous jouez les %s » et, aux échecs, « Trait aux %s ».
+# --- Noms : niveaux de l'IA, variantes, modes ---------------------------------
+"Internationales 10×10": "Internaz. 10x10"
+"Anglaises 8×8": "Inglese 8x8"
+"Blancs": "Bianco"
+"Noirs": "Nero"
+# --- HUD (bandeau) et statut ----------------------------------------------------
+"IA : %s": "IA: %s"
+"Prise x%d": "Presa x%d"
+"Prise obligatoire": "Presa obbligatoria"
+"À vous": "Tocca a te"
+"Indice affiché": "Suggerimento mostrato"
+# --- Hub ----------------------------------------------------------------------
+"Dames internationales — dames volantes": "Dama internazionale — dame volanti"
+"Variante, mode, niveau": "Variante, modalità, livello"
+"Reprendre (vide)": "Riprendi (vuoto)"
+"Position sauvegardée": "Posizione salvata"
+"Victoires, nulles, défaites contre le Tab": "Vittorie, pareggi, sconfitte vs Tab"
+# V = vittorie, P = pareggi, S = sconfitte.
+"%s — %u V · %u N · %u D": "%s — %u V · %u P · %u S"
+"Secousse = indice, remise à zéro des stats": "Scossa = suggerimento, azzera statistiche"
+# --- Nouvelle partie (setup) ------------------------------------------------------
+"Touchez : internationales 10×10 ou anglaises 8×8": "Tocca: internaz. 10x10 / inglese 8x8"
+"Joueur contre Tab / contre joueur / Tab contre Tab": "Giocatore vs Tab / PvP / Tab vs Tab"
+"Vous jouez les %s": "Giochi col %s"
+"Couleur (contre le Tab)": "Colore (contro il Tab)"
+"Niveau IA": "Livello IA"
+"Lance la partie": "Avvia la partita"
+# --- Statistiques, réglages -------------------------------------------------------
+"Bilan contre le Tab (par variante et niveau)": "Bilancio vs Tab (per variante e livello)"
+"Changer de variante": "Cambia variante"
+"Options locales (NVS)": "Opzioni locali (NVS)"
+"Remettre les statistiques à zéro": "Azzera le statistiche"
+"Remettre les stats à zéro ?": "Azzerare le statistiche?"
+"Irréversible": "Irreversibile"
+"Confirmer la remise à zéro": "Conferma l'azzeramento"
+# --- Fin de partie ------------------------------------------------------------------
+"Victoire des Blancs": "Vince il Bianco"
+"Victoire des Noirs": "Vince il Nero"
+"Mêmes réglages": "Stesse opzioni"
+# Raisons de nulle (FMJD / WCDF) : « sans pion » = aucune pedina n'a bougé, seules
+# les dame ont joué ; « chacun » = coups de chaque camp (« a testa »).
+"25 coups sans pion ni prise": "25 mosse di sole dame, senza prese"
+"40 coups sans pion ni prise": "40 mosse di sole dame, senza prese"
+"Fin de partie : 5 coups chacun": "Finale: 5 mosse a testa"
+"Fin de partie : 16 coups chacun": "Finale: 16 mosse a testa"
+"Position répétée 3 fois": "Posizione ripetuta 3 volte"
+# --- Boutons latéraux en partie -----------------------------------------------------
+"Abandon": "Abbandona"
+"Nouvelle": "Nuova"
+
+# --- Roi Noir — chess (chess_game.cpp, chess_ai.cpp) ---------------------------
+# Lot 4b — jeu « Roi Noir » (chess_game.cpp, chess_ai.cpp) : français → italien.
+# « Roi Noir » / « ROI NOIR » (nom de la console) n'est pas traduit.
+# Vocabulaire : pedone, cavallo, alfiere, torre, donna, re ; patta (nulle),
+# stallo (pat), semimossa (demi-coup), traversa (rangée).
+# --- Pieces (contexte « echecs » : la Dame des echecs n'est pas celle des dames) ---
+"echecs|Pion": "Pedone"
+"echecs|Cavalier": "Cavallo"
+"echecs|Fou": "Alfiere"
+"echecs|Tour": "Torre"
+"echecs|Dame": "Donna"
+"echecs|Roi": "Re"
+# --- Notation SAN (contexte « san » : lettre seule de la piece, notation italienne) ---
+"san|R": "R"
+"san|D": "D"
+"san|T": "T"
+"san|F": "A"
+"san|C": "C"
+# --- Niveaux du Tab (descriptions, chess_ai.cpp) ---
+"Débutant : ne voit qu'un coup, se trompe": "Principiante: vede una sola mossa, sbaglia"
+"Voit les prises simples et les répond": "Vede le prese semplici e risponde"
+"Calcule 3 coups + les prises en chaîne": "Calcola 3 mosse + le prese a catena"
+"Calcule 4 coups, tactique correcte": "Calcola 4 mosse, tattica discreta"
+"Effort maximal du Tab (5 coups visés)": "Massimo sforzo del Tab (punta a 5 mosse)"
+# --- Tables : pendules, modes, vitesse de demo ---
+"Sans limite": "Senza limite"
+"Blitz 5 min": "Blitz 5 min"
+"Rapide 10 min": "Rapid 10 min"
+"15 min + 10 s": "15 min + 10 s"
+"Lente": "Lenta"
+# --- Panneau lateral et boutons de partie ---
+"PARTIE": "PARTITA"
+"Menu": "Menu"
+# --- HUD ---
+# « Trait : %s » reçoit aussi « Blancs » / « Noirs » (dames) : « Turno: Bianco »,
+# « Turno: tuo », « Turno: del Tab ». Pendules : B = Bianco, N = Nero.
+"Trait aux %s": "Muove il %s"
+"Démo — %s": "Demo — %s"
+"Trait : %s": "Turno: %s"
+"à vous": "tuo"
+"au Tab": "del Tab"
+"Duel local": "Duello locale"
+"pendule|B": "B"
+"pendule|N": "N"
+"Eval %+.1f": "Val %+.1f"
+"ÉCHEC !": "SCACCO!"
+"Le Tab réfléchit": "Il Tab pensa"
+"Le Tab refuse la nulle": "Il Tab rifiuta la patta"
+"Indice en recharge": "Suggerimento in ricarica"
+"Le Tab réfléchit — profondeur %d, %u k nœuds": "Il Tab pensa — profondità %d, %u k nodi"
+# --- Hub ---
+"Classement local : %u Elo   ·   %u parties jouées": "Punteggio locale: %u Elo   ·   %u partite giocate"
+"Échiquier du Tab — règles FIDE, IA embarquée, 100 % local": "La scacchiera del Tab — regole FIDE, IA integrata, 100% locale"
+"Toucher le bandeau du haut pendant la partie ouvre le menu de pause.": "Tocca la barra in alto durante la partita per il menu di pausa."
+"Choix du mode, de la couleur, du niveau et de la pendule": "Scegli modalità, colore, livello e orologio"
+"%s · niveau %s · %u demi-coups joués": "%s · livello %s · %u semimosse giocate"
+"Bilan par niveau, records, classement local": "Bilancio per livello, record, punteggio locale"
+"Gestes, règle des 50 coups, évaluation, vitesse de démo": "Gesti, regola delle 50 mosse, valutazione, velocità demo"
+# --- Nouvelle partie ---
+# « %s — vous ouvrez %s » : « Bianco — muovi per primo ».
+"Toucher une ligne pour changer sa valeur": "Tocca una riga per cambiarne il valore"
+"Mode de jeu": "Modalità"
+"%s — vous ouvrez %s": "%s — muovi %s"
+"ouvrir|la partie": "per primo"
+"ouvrir|en second": "per secondo"
+"Votre couleur": "Il tuo colore"
+"Sans objet dans ce mode": "Non usato in questa modalità"
+"Niveau du Tab": "Livello del Tab"
+"Sans objet : duel entre deux humains": "Non usato: duello tra due persone"
+"Pendule": "Orologio"
+"Commencer": "Inizia"
+"Lance la partie avec ces réglages": "Avvia con queste opzioni"
+"Revenir au menu principal": "Torna al menu principale"
+# --- Reglages ---
+"Conservés en NVS, valables pour toutes les parties": "Salvate in NVS, valide per tutte le partite"
+"Gestes IMU": "Gesti IMU"
+"Activés — une secousse franche demande un indice": "Attivi — una scossa decisa chiede un suggerimento"
+"Désactivés — l'inclinaison est ignorée": "Disattivati — l'inclinazione è ignorata"
+"Règle des 50 coups": "Regola 50 mosse"
+"Nulle automatique après 50 coups sans prise ni pion": "Patta automatica dopo 50 mosse senza prese né pedoni"
+"Désactivée — la partie continue": "Disattivata — la partita continua"
+"Évaluation au HUD": "Valutazione HUD"
+"Affichée — estimation en pions, indicative": "Mostrata — stima indicativa in pedoni"
+"Masquée": "Nascosta"
+"%s — cadence du mode Tab contre Tab": "%s — ritmo del Tab vs Tab"
+"Vitesse de démo": "Velocità demo"
+"Remet à zéro le bilan et le classement local": "Azzera bilancio e punteggio locale"
+"EFFACER LES STATISTIQUES": "CANCELLA LE STATISTICHE"
+"Bilan, records et classement local seront remis à zéro.": "Bilancio, record e punteggio locale saranno azzerati."
+# --- Statistiques ---
+"Classement local : %u Elo   ·   %u parties contre le Tab": "Punteggio locale: %u Elo   ·   %u partite contro il Tab"
+"Victoires / nulles / défaites par niveau\n": "Vittorie / patte / sconfitte per livello\n"
+"%s : %u / %u / %u\n": "%s: %u / %u / %u\n"
+"\nPlus longue partie : %u demi-coups\n": "\nPartita più lunga: %u semimosse\n"
+"Temps de jeu cumulé : %u min": "Tempo di gioco totale: %u min"
+# --- Promotion ---
+"PROMOTION": "PROMOZIONE"
+"Le pion atteint la dernière rangée — choisir la pièce": "Il pedone è sull'ultima traversa — scegli il pezzo"
+# --- Pause ---
+"La pendule est arrêtée": "L'orologio è fermo"
+"Retour à la partie": "Torna alla partita"
+"Annuler le dernier coup": "Annulla l'ultima mossa"
+"Annule votre coup et la réponse du Tab": "Annulla la tua mossa e la risposta del Tab"
+"Annule le dernier demi-coup": "Annulla l'ultima semimossa"
+"Proposer nulle": "Proponi patta"
+"Le Tab accepte s'il n'est pas mieux": "Il Tab accetta se non è in vantaggio"
+"Accord entre les deux joueurs": "Accordo tra i due giocatori"
+"La partie est perdue et comptabilisée": "La partita è persa e conteggiata"
+"Gestes, règles, affichage": "Gesti, regole, schermo"
+"La partie en cours est sauvegardée": "La partita in corso viene salvata"
+# --- Fin de partie ---
+"PARTIE NULLE": "PATTA"
+"VICTOIRE": "VITTORIA"
+"DÉFAITE": "SCONFITTA"
+"LES BLANCS GAGNENT": "VINCE IL BIANCO"
+"LES NOIRS GAGNENT": "VINCE IL NERO"
+"%d demi-coups  ·  niveau %s  ·  classement local : %u Elo": "%d semimosse  ·  livello %s  ·  punteggio locale: %u Elo"
+"%d demi-coups joués": "%d semimosse giocate"
+"Même mode, mêmes réglages": "Stessa modalità, stesse opzioni"
+"Échec et mat": "Scacco matto"
+"Pat — le roi n'est pas en échec mais aucun coup n'est jouable": "Stallo — il re non è sotto scacco ma nessuna mossa è possibile"
+"Matériel insuffisant pour mater": "Materiale insufficiente per il matto"
+"Triple répétition de la position": "Triplice ripetizione della posizione"
+"Partie interrompue : historique plein": "Partita interrotta: cronologia piena"
+"Nulle par accord entre les joueurs": "Patta d'accordo tra i giocatori"
+"Nulle déclarée en mode démo": "Patta dichiarata in modalità demo"
+"Le Tab accepte la nulle": "Il Tab accetta la patta"
+"raison|Abandon": "Abbandono"
+"Temps écoulé — matériel insuffisant pour mater": "Tempo scaduto — materiale insufficiente"
+"Temps écoulé": "Tempo scaduto"

@@ -28,7 +28,7 @@ REFERENCES = Path(__file__).resolve().parent.parent.parent / "docs" / "images" /
 
 def dans_la_galerie(nom: str) -> bool:
     """Scène du mode démo (« 1-journee-ensoleillee »), en français ou en anglais."""
-    return nom[:1].isdigit() and nom.rsplit("-", 1)[-1] not in ("de", "nl")
+    return nom[:1].isdigit() and nom.rsplit("-", 1)[-1] not in ("de", "nl", "es", "it")
 
 
 def main() -> int:
