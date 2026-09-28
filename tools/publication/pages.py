@@ -78,11 +78,23 @@ IMAGES = {
 IMAGE_DE_PAGE = re.compile(r'<img\b[^>]*\bsrc="((?:\.\./)*images/[^"]+)"')
 
 
+def fichiers_joints(fichiers: set[str]) -> bool:
+    """Le site peut servir la release : le manifeste de l'écran de référence (ECRANS[0], le
+    seul essayé sur une tablette) et, pour chaque manifeste, ses deux binaires (noms de
+    preparer.py). gh release upload envoie les fichiers en parallèle : un manifeste peut
+    être joint avant ses binaires, et _canal() échoue alors. Un autre écran absent ne
+    l'écarte pas : une révision ajoutée à ECRANS après une release n'a pas de fichiers
+    dans celle-ci, et les exiger tous viderait les canaux jusqu'à la release suivante."""
+    ecrans = [e for e in ECRANS if f"manifest-{e}.json" in fichiers]
+    return ECRANS[0] in ecrans and all(
+        f"tab5-ha-hmi-{e}.{image}.bin" in fichiers for e in ecrans for image in ("factory", "ota"))
+
+
 def choisir(releases: list[dict]) -> dict[str, str | None]:
     """Tags des canaux stable et bêta parmi les releases publiées (API des releases).
 
-    Une release dont les manifestes ne sont pas encore joints est ignorée : juste après
-    sa création, publication.yml compile encore ses binaires (~12 min). Un déploiement
+    Une release dont les fichiers ne sont pas encore joints (fichiers_joints) est ignorée :
+    juste après sa création, publication.yml compile encore ses binaires (~12 min). Un déploiement
     du site lancé entre-temps (push sur main, 28/09/2026 : #219 mergée 4 min après la
     création de v3.1.0) la prenait pour la stable et échouait sur « no assets to
     download ». `assets` absent : pas de filtre (liste déjà vérifiée)."""
@@ -91,7 +103,7 @@ def choisir(releases: list[dict]) -> dict[str, str | None]:
         m = TAG.match(r.get("tagName", ""))
         if r.get("isDraft") or not m or int(m.group(1)) < MAJEURE_MINI:
             continue
-        if "assets" in r and not all(f"manifest-{e}.json" in r["assets"] for e in ECRANS):
+        if "assets" in r and not fichiers_joints(set(r["assets"])):
             continue
         candidates.append(r)
     candidates.sort(key=lambda r: r["publishedAt"], reverse=True)

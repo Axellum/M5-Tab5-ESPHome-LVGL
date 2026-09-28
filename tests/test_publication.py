@@ -82,6 +82,12 @@ def test_preparer_refuse_un_binaire_modifie(tmp_path):
         preparer.preparer(source, "st7123", "3.0.0", tmp_path / "publie")
 
 
+# Fichiers qu'une release 3.x porte une fois publication.yml passé (écrits par preparer.py,
+# vérifié dans test_site_assemble_depuis_les_fichiers_des_releases).
+FICHIERS = [f for e in pages.ECRANS
+            for f in (f"manifest-{e}.json", f"tab5-ha-hmi-{e}.factory.bin", f"tab5-ha-hmi-{e}.ota.bin")]
+
+
 def _rel(tag, pre=False, date="2026-10-01T00:00:00Z", brouillon=False):
     return {"tagName": tag, "isPrerelease": pre, "isDraft": brouillon, "publishedAt": date}
 
@@ -103,26 +109,36 @@ def test_canaux_stable_et_beta():
 
 def test_release_sans_ses_fichiers_ignoree():
     """28/09/2026 : #219 mergée pendant la compilation de v3.1.0 ; le site l'a prise pour
-    la stable et a échoué (« no assets to download »). Sans ses manifestes, une release
+    la stable et a échoué (« no assets to download »). Sans ses fichiers, une release
     est ignorée : les canaux restent sur la précédente."""
-    complets = [f"manifest-{e}.json" for e in pages.ECRANS] + ["tab5-ha-hmi-st7123.ota.bin"]
     releases = [
-        dict(_rel("v3.0.1", date="2026-09-28T09:00:00Z"), assets=complets),
+        dict(_rel("v3.0.1", date="2026-09-28T09:00:00Z"), assets=FICHIERS),
         dict(_rel("v3.1.0", date="2026-09-28T11:29:00Z"), assets=[]),
     ]
     assert pages.choisir(releases) == {"stable": "v3.0.1", "beta": "v3.0.1"}
-    releases[1]["assets"] = complets[:2]  # une révision encore en cours
-    assert pages.choisir(releases) == {"stable": "v3.0.1", "beta": "v3.0.1"}
-    releases[1]["assets"] = complets
-    assert pages.choisir(releases) == {"stable": "v3.1.0", "beta": "v3.1.0"}
+    incompletes = {
+        "une révision encore en cours": FICHIERS[:4],
+        # gh release upload envoie en parallèle : les manifestes peuvent précéder les binaires.
+        "manifestes sans leurs binaires": [f for f in FICHIERS if f.startswith("manifest-")],
+        "sans l'écran de référence": [f for f in FICHIERS if "st7123" not in f],
+    }
+    for cas, fichiers in incompletes.items():
+        releases[1]["assets"] = fichiers
+        assert pages.choisir(releases) == {"stable": "v3.0.1", "beta": "v3.0.1"}, cas
+    # Tout joint : servie. Un autre écran absent (révision ajoutée à ECRANS après la
+    # release) ne l'écarte pas, sinon ajouter un écran viderait les canaux.
+    for fichiers in (FICHIERS, [f for f in FICHIERS if "ili9881c" not in f]):
+        releases[1]["assets"] = fichiers
+        assert pages.choisir(releases) == {"stable": "v3.1.0", "beta": "v3.1.0"}
 
 
 def test_site_lit_les_fichiers_des_releases():
-    """Le déploiement du site lit l'API des releases, avec leurs fichiers : c'est ce qui
-    permet à choisir() d'écarter une release encore en compilation."""
+    """Le déploiement du site lit l'API des releases, avec leurs fichiers déjà envoyés
+    (état « uploaded ») : c'est ce qui permet à choisir() d'écarter une release encore
+    en compilation."""
     site = (REPO / ".github" / "workflows" / "site.yml").read_text(encoding="utf-8")
     assert 'gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100"' in site
-    assert "assets: [.assets[].name]" in site
+    assert 'assets: [.assets[] | select(.state == "uploaded") | .name]' in site
 
 
 def test_premiere_pre_release_sans_stable():
@@ -138,6 +154,8 @@ def test_site_assemble_depuis_les_fichiers_des_releases(tmp_path):
         for ecran in preparer.ECRANS:
             source = _build_action(tmp_path / "builds" / tag / ecran, version=version)
             preparer.preparer(source, ecran, version, tmp_path / "assets" / tag)
+        # Les fichiers que choisir() attend sont ceux que preparer.py écrit.
+        assert sorted(p.name for p in (tmp_path / "assets" / tag).iterdir()) == sorted(FICHIERS)
     versions = pages.assembler(web, tmp_path / "assets", "v3.0.0", "v3.1.0-rc.1", tmp_path / "site")
     assert versions["stable"] == {"tag": "v3.0.0", "version": "3.0.0", "ecrans": list(preparer.ECRANS)}
     assert versions["beta"]["version"] == "3.1.0-rc.1"
