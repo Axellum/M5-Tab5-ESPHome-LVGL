@@ -555,6 +555,10 @@ def test_nom_de_piece_par_l_aire_seulement_si_elle_est_unique():
     assert _defs(_passage(entrees=entrees, etats=etats).definitions())[0] == ["p0", "Chambre"]
     entrees = {"piece_1_tuiles": ["light.chevet", "switch.prise_pc"]}
     assert _defs(_passage(entrees=entrees, etats=etats).definitions())[0] == ["p0", ""]
+    # Une seule aire, mais sur un appareil de trois seulement : pas de nom (cas vu chez
+    # l'auteur le 28/09 : la seule lampe rangée dans « Chambre » nommait tout l'accueil).
+    entrees = {"piece_1_tuiles": ["light.chevet", "light.guirlande", "person.alice"]}
+    assert _defs(_passage(entrees=entrees, etats=etats).definitions())[0] == ["p0", ""]
 
 
 def test_nom_de_tuile_sans_la_piece():
@@ -588,7 +592,8 @@ def test_sans_piece_1_l_accueil_vient_des_entrees_3x():
     defs = _defs(p.definitions())
     assert defs[:5] == [
         ["p0", ""],
-        ["t00", "int", _icone(bp, "mdi:icone-hors-palette", "switch"), "k", "", "Prise PC"],
+        # Tuile PC du réglage 3.x : une icône hors palette retombe sur l'écran de la 3.1.
+        ["t00", "int", "ordinateur", "k", "", "Prise PC"],
         ["t01", "vol", _icone(bp, domaine="cover", classe="curtain"), "", "", "Volet serre"],
         ["t02", "lum", _icone(bp, domaine="light"), "dc", "", "Lampe Chambre"],
         ["t03", "lum", _icone(bp, "mdi:led-strip-variant", "light"), "o", "", "Sapin / Noël, 2026"],

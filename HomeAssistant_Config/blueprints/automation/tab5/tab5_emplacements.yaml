@@ -65,7 +65,7 @@ blueprint:
       input:
         piece_1_nom:
           name: Nom de la pièce
-          description: Vide = l'aire de ses appareils, s'ils en ont une seule, sinon « Pièce 1 ».
+          description: Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié l'a), sinon « Pièce 1 ».
           default: ""
           selector:
             text:
@@ -110,7 +110,7 @@ blueprint:
       input:
         piece_2_nom:
           name: Nom de la pièce
-          description: Vide = l'aire de ses appareils, s'ils en ont une seule, sinon « Pièce 2 ».
+          description: Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié l'a), sinon « Pièce 2 ».
           default: ""
           selector:
             text:
@@ -132,7 +132,7 @@ blueprint:
       input:
         piece_3_nom:
           name: Nom de la pièce
-          description: Vide = l'aire de ses appareils, s'ils en ont une seule, sinon « Pièce 3 ».
+          description: Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié l'a), sinon « Pièce 3 ».
           default: ""
           selector:
             text:
@@ -154,7 +154,7 @@ blueprint:
       input:
         piece_4_nom:
           name: Nom de la pièce
-          description: Vide = l'aire de ses appareils, s'ils en ont une seule, sinon « Pièce 4 ».
+          description: Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié l'a), sinon « Pièce 4 ».
           default: ""
           selector:
             text:
@@ -176,7 +176,7 @@ blueprint:
       input:
         piece_5_nom:
           name: Nom de la pièce
-          description: Vide = l'aire de ses appareils, s'ils en ont une seule, sinon « Pièce 5 ».
+          description: Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié l'a), sinon « Pièce 5 ».
           default: ""
           selector:
             text:
@@ -1705,13 +1705,18 @@ actions:
     then:
       - variables:
           # Nom de chaque pièce : saisi, sinon l'aire de ses appareils quand ceux qui en
-          # ont une en ont une seule, sinon vide (la tablette écrit « Pièce n »).
+          # ont une en ont une seule ET qu'elle couvre au moins la moitié des appareils
+          # (une seule lampe rangée dans « Chambre » ne nomme pas une pièce de cinq
+          # appareils, vu chez l'auteur le 28/09), sinon vide (la tablette écrit « Pièce n »).
           noms_pieces: >-
             {%- set ns = namespace(l=[]) -%}
             {%- for n in range(5) -%}
               {%- set saisi = (noms_saisis[n] or '') | string | trim -%}
-              {%- set aires = tuiles | selectattr('r', 'eq', n) | map(attribute='e') | map('area_name') | reject('none') | unique | list -%}
-              {%- set ns.l = ns.l + [saisi if saisi else (aires[0] if aires | count == 1 else '')] -%}
+              {%- set es = tuiles | selectattr('r', 'eq', n) | map(attribute='e') | list -%}
+              {%- set avec = es | map('area_name') | reject('none') | list -%}
+              {%- set aires = avec | unique | list -%}
+              {%- set commune = aires[0] if aires | count == 1 and (avec | count) * 2 >= (es | count) else '' -%}
+              {%- set ns.l = ns.l + [saisi if saisi else commune] -%}
             {%- endfor -%}
             {{ ns.l }}
           # « pR|nom; » puis « tRT|type|icône|options|complément|nom; » (ADR-0023).
@@ -1729,6 +1734,9 @@ actions:
                   {#- Icône : personnalisée, sinon l'attribut icon, sinon la classe, sinon le
                       domaine ; un « mdi: » hors palette prend le défaut du domaine. -#}
                   {%- set defaut = icones_defaut.get(dom ~ '.' ~ classe, icones_defaut.get(dom, '')) if classe else icones_defaut.get(dom, '') -%}
+                  {#- Tuile PC du réglage 3.x : l'écran d'ordinateur de la 3.1, pas l'icône
+                      générique d'un interrupteur. -#}
+                  {%- set defaut = 'ordinateur' if t.s == 'pc' else defaut -%}
                   {%- set mdi = (p.get('icone') or state_attr(t.e, 'icon') or '') | string -%}
                   {%- set icone = icones_mdi.get(mdi, defaut) if mdi else defaut -%}
                   {#- Options : d (luminosité) et c (couleur) des modes de couleur ; o, k, r
