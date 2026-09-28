@@ -195,6 +195,7 @@ The screen was drawn around the author's home: three lights, a climate unit, a g
 - **Remove a zone: leave its slot empty.** An empty slot, or an entity that doesn't exist, is absent. An entity that exists but is `unavailable` keeps its zone (« -- », « Hors ligne »). **Without the blueprint's automation, nothing disappears** (and nothing of your devices is shown).
 - **A zone missing by mistake?** The tablet's diagnostic sensor « Zones masquées » lists what disappeared.
 - A zone comes back by itself as soon as its entity sends a value.
+- **Icons of the room tiles**: taken from a palette, see [tile icons](tiles_icons.md).
 
 | Zone | Blueprint input | Hidden when empty |
 |---|---|---|
@@ -413,6 +414,7 @@ L'écran a été dessiné autour de la maison de l'auteur : trois lumières, une
 - **Retirer une zone : laissez son emplacement vide.** Un emplacement vide, ou une entité qui n'existe pas, est absent. Une entité qui existe mais est `unavailable` garde sa zone (« -- », « Hors ligne »). **Sans l'automatisation du blueprint, rien ne disparaît** (et aucun de vos appareils ne s'affiche).
 - **Une zone manque par erreur ?** Le capteur de diagnostic « Zones masquées » de la tablette liste ce qui a disparu.
 - Une zone revient d'elle-même dès que son entité envoie une valeur.
+- **Icônes des tuiles de pièce** : prises dans une palette, voir [icônes des tuiles](tiles_icons.md#version-française).
 
 | Zone | Entrée du blueprint | Masqué quand elle est vide |
 |---|---|---|

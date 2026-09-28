@@ -1,0 +1,318 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tuiles_icones.yaml
+# @role SOURCE UNIQUE de la palette des icônes des tuiles de pièce (ADR-0023, section
+#       « Icons: one palette, generated »). Ce n'est PAS un package ESPHome : rien ne
+#       l'inclut ; tools/gen_tuiles_icones.py le lit et écrit trois choses :
+#       - Tab5/tab5_tuiles_icones.h : la table C++ `tuile_icone(code, actif, type)` ;
+#       - Tab5/tab5-styles.yaml : les glyphes de la palette dans mdi_font_70, mdi_font_45
+#         et mdi_font_32 (entre `# >>> tuiles` et `# <<< tuiles`) ;
+#       - le blueprint tab5_emplacements.yaml : `icones_mdi` (nom « mdi:… » → code) et
+#         `icones_defaut` (domaine ou « domaine.classe » → code), entre ses marqueurs.
+#       `python tools/gen_tuiles_icones.py --check` échoue si l'un d'eux est périmé
+#       (tests/test_tuiles_icones.py le joue).
+# @architecture_constraint
+#       - Police : Tab5/materialdesignicons-webfont.ttf = Material Design Icons 7.4.47
+#         (7 447 glyphes, mêmes points de code que meta.json de @mdi/svg@7.4.47).
+#         Chaque glyphe ci-dessous est écrit « FXXXX nom » ; le couple a été VÉRIFIÉ le
+#         28/09/2026 contre ce meta.json ET le cmap du TTF (fontTools), jamais deviné.
+#         Revérifier après un ajout :
+#           curl -sL https://cdn.jsdelivr.net/npm/@mdi/svg@7.4.47/meta.json -o meta.json
+#           python tools/gen_tuiles_icones.py --meta meta.json
+#         Sans réseau, le test compare au cmap et aux noms de glyphes du TTF.
+#       - Un glyphe coûte ~0,5 Ko de flash par taille (70, 45 et 32 px, bpp 1) : une
+#         variante allumée distincte n'est prise que si MDI en a une (-on, -off, -open,
+#         fermé / ouvert, -alert). Sinon `allume` est omis (= `eteint`) et la couleur
+#         de l'état suffit.
+#       - lit, canape, led, ordinateur et volet gardent exactement les glyphes de la 3.1
+#         (compatibilité de la pièce 1 construite depuis les emplacements 3.x, ADR-0023).
+#       - `code` : [a-z0-9_]{1,15}, en français, jamais renommé (HA l'envoie, la tablette
+#         le garde en NVS). Retirer un code = le laisser retomber sur le défaut du type.
+#       - `mdi` : les noms d'icônes HA (sans « mdi: ») que ce code représente ; un nom
+#         n'appartient qu'à un code. Noms canoniques de MDI 7.4.47, non dépréciés.
+#       - `types` : type de tuile dont c'est l'icône par défaut (lum int vol med act cap
+#         bin cli, un code par type). `domaines` : domaine HA ou « domaine.classe »
+#         (device_class) dont c'est l'icône par défaut.
+#       - `actif` (côté firmware) = allumé / ouvert / en marche / détecté / présent /
+#         déverrouillé : c'est la variante `allume` qui s'affiche.
+# @ai_instruction Ajouter une icône = une entrée ici (points de code relevés dans le
+#       meta.json de la MÊME version que le TTF), puis `python tools/gen_tuiles_icones.py`
+#       et une release (le firmware embarque les glyphes). Docs : docs/tiles_icons.md.
+# ============================================================================
+
+# Code montré quand ni l'icône reçue ni le type de la tuile ne sont connus.
+repli: etat
+
+icones:
+  # --- Lumières -------------------------------------------------------------
+  - code: ampoule
+    eteint: F0335 lightbulb
+    allume: F06E8 lightbulb-on
+    mdi: [lightbulb, lightbulb-outline, lightbulb-on, lightbulb-on-outline, lightbulb-off,
+          lightbulb-off-outline, lightbulb-variant, lightbulb-variant-outline, lightbulb-night,
+          lightbulb-spot, lightbulb-group, lightbulb-group-outline, lightbulb-multiple,
+          lightbulb-multiple-outline]
+    types: [lum]
+    domaines: [light, binary_sensor.light]
+  - code: plafonnier
+    eteint: F0769 ceiling-light
+    mdi: [ceiling-light, ceiling-light-outline, ceiling-light-multiple,
+          ceiling-light-multiple-outline, light-recessed, ceiling-fan-light]
+  - code: lampadaire
+    eteint: F08DD floor-lamp
+    mdi: [floor-lamp, floor-lamp-outline, floor-lamp-dual, floor-lamp-dual-outline,
+          floor-lamp-torchiere, floor-lamp-torchiere-outline, floor-lamp-torchiere-variant,
+          floor-lamp-torchiere-variant-outline]
+  - code: lampe
+    eteint: F06B5 lamp
+    mdi: [lamp, lamp-outline, lamps, lamps-outline]
+  - code: lampe_bureau
+    eteint: F095F desk-lamp
+    allume: F1B20 desk-lamp-on
+    mdi: [desk-lamp, desk-lamp-on, desk-lamp-off]
+  # Glyphe unique : c'est l'icône « LEDs » de la 3.1 (tuile 5), qui ne change pas.
+  - code: led
+    eteint: F1051 led-strip-variant
+    mdi: [led-strip-variant, led-strip-variant-off, led-strip, led-on, led-off, led-outline,
+          led-variant-on, led-variant-off]
+  - code: guirlande
+    eteint: F12BB string-lights-off
+    allume: F12BA string-lights
+    mdi: [string-lights, string-lights-off]
+  - code: applique
+    eteint: F091C wall-sconce
+    mdi: [wall-sconce, wall-sconce-outline, wall-sconce-flat, wall-sconce-flat-outline,
+          wall-sconce-flat-variant, wall-sconce-flat-variant-outline, wall-sconce-round,
+          wall-sconce-round-outline, wall-sconce-round-variant,
+          wall-sconce-round-variant-outline]
+  - code: lustre
+    eteint: F1793 chandelier
+    mdi: [chandelier]
+
+  # --- Pièces (icônes de la 3.1 : « Chambre », « Salon ») -------------------
+  - code: lit
+    eteint: F02E3 bed
+    mdi: [bed, bed-outline, bed-empty, bed-double, bed-double-outline, bed-king, bed-queen,
+          bed-single, bed-single-outline]
+  - code: canape
+    eteint: F04B9 sofa
+    mdi: [sofa, sofa-outline, sofa-single, sofa-single-outline]
+
+  # --- Appareils ------------------------------------------------------------
+  - code: prise
+    eteint: F06A6 power-plug-off
+    allume: F06A5 power-plug
+    mdi: [power-plug, power-plug-off, power-plug-outline, power-plug-off-outline, power-socket,
+          power-socket-eu, power-socket-fr, power-socket-de, power-socket-uk, power-socket-us,
+          power-socket-it, power-socket-ch]
+    domaines: [switch.outlet, binary_sensor.plug]
+  - code: interrupteur
+    eteint: F1A26 toggle-switch-variant-off
+    allume: F1A25 toggle-switch-variant
+    mdi: [toggle-switch-variant, toggle-switch-variant-off, toggle-switch, toggle-switch-off,
+          toggle-switch-outline, toggle-switch-off-outline, light-switch, light-switch-off,
+          electric-switch, electric-switch-closed]
+    types: [int]
+    domaines: [switch, switch.switch, input_boolean, automation]
+  # Glyphe unique : c'est l'icône « PC Bureau » de la 3.1 (tuile 1), qui ne change pas.
+  - code: ordinateur
+    eteint: F0379 monitor
+    mdi: [monitor, monitor-off, monitor-shimmer, desktop-classic, desktop-tower,
+          desktop-tower-monitor, laptop, laptop-off]
+  - code: tv
+    eteint: F083B television-off
+    allume: F0502 television
+    mdi: [television, television-off, television-classic, television-classic-off,
+          television-box, television-ambient-light, cast, cast-off, cast-connected,
+          cast-variant]
+    types: [med]
+    domaines: [media_player, media_player.tv]
+  - code: enceinte
+    eteint: F04C4 speaker-off
+    allume: F04C3 speaker
+    mdi: [speaker, speaker-off, speaker-wireless, speaker-multiple, speaker-bluetooth,
+          cast-audio, cast-audio-variant, soundbar, audio-video, audio-video-off]
+    domaines: [media_player.speaker, media_player.receiver]
+  - code: console
+    eteint: F02B5 controller-off
+    allume: F02B4 controller
+    mdi: [controller, controller-off, controller-classic, controller-classic-outline, gamepad,
+          gamepad-variant, gamepad-variant-outline]
+  - code: cafetiere
+    eteint: F109F coffee-maker
+    mdi: [coffee-maker, coffee-maker-outline, coffee-maker-check, coffee-maker-check-outline,
+          coffee, coffee-outline, coffee-off, coffee-off-outline, kettle, kettle-outline]
+  - code: lave_linge
+    eteint: F11BD washing-machine-off
+    allume: F072A washing-machine
+    mdi: [washing-machine, washing-machine-off, washing-machine-alert, tumble-dryer,
+          tumble-dryer-off]
+  - code: lave_vaisselle
+    eteint: F11B9 dishwasher-off
+    allume: F0AAC dishwasher
+    mdi: [dishwasher, dishwasher-off, dishwasher-alert]
+  - code: aspirateur
+    eteint: F1C01 robot-vacuum-off
+    allume: F070D robot-vacuum
+    mdi: [robot-vacuum, robot-vacuum-off, robot-vacuum-variant, robot-vacuum-variant-off,
+          robot-vacuum-alert, vacuum, vacuum-outline]
+  - code: ventilateur
+    eteint: F081D fan-off
+    allume: F0210 fan
+    mdi: [fan, fan-off, fan-auto, ceiling-fan, air-purifier, air-purifier-off]
+    domaines: [fan]
+  - code: clim
+    eteint: F001B air-conditioner
+    mdi: [air-conditioner, hvac, hvac-off, thermostat, thermostat-box, thermostat-auto,
+          home-thermometer, home-thermometer-outline]
+    types: [cli]
+    domaines: [climate]
+  - code: radiateur
+    eteint: F0AD8 radiator-off
+    allume: F0438 radiator
+    mdi: [radiator, radiator-off, radiator-disabled, heat-wave, fireplace, fireplace-off]
+  - code: chauffe_eau
+    eteint: F11B4 water-boiler-off
+    allume: F0F92 water-boiler
+    mdi: [water-boiler, water-boiler-off, water-boiler-auto]
+  - code: pompe
+    eteint: F1B22 pump-off
+    allume: F1402 pump
+    mdi: [pump, pump-off, water-pump, water-pump-off]
+  - code: arrosage
+    eteint: F1060 sprinkler-variant
+    mdi: [sprinkler, sprinkler-variant, watering-can, watering-can-outline]
+  - code: vanne
+    eteint: F1067 valve-closed
+    allume: F1068 valve-open
+    mdi: [valve, valve-open, valve-closed, pipe-valve]
+    domaines: [valve, valve.water, valve.gas]
+  - code: humidificateur
+    eteint: F1466 air-humidifier-off
+    allume: F1099 air-humidifier
+    mdi: [air-humidifier, air-humidifier-off]
+    domaines: [humidifier]
+
+  # --- Ouvrants (allumé = ouvert) -------------------------------------------
+  # Les deux glyphes de la 3.1 (fermé / ouvert, update_volet_ui).
+  - code: volet
+    eteint: F111C window-shutter
+    allume: F111E window-shutter-open
+    mdi: [window-shutter, window-shutter-open, window-shutter-alert, window-shutter-auto,
+          window-shutter-settings, window-shutter-cog]
+    types: [vol]
+    domaines: [cover, cover.shutter]
+  - code: rideau
+    eteint: F1847 curtains-closed
+    allume: F1846 curtains
+    mdi: [curtains, curtains-closed]
+    domaines: [cover.curtain]
+  - code: store
+    eteint: F00AC blinds
+    allume: F1011 blinds-open
+    mdi: [blinds, blinds-open, blinds-horizontal, blinds-horizontal-closed, blinds-vertical,
+          blinds-vertical-closed, roller-shade, roller-shade-closed, awning, awning-outline]
+    domaines: [cover.blind, cover.shade, cover.awning]
+  - code: garage
+    eteint: F06D9 garage
+    allume: F06DA garage-open
+    mdi: [garage, garage-open, garage-variant, garage-open-variant]
+    domaines: [cover.garage, binary_sensor.garage_door]
+  - code: portail
+    eteint: F0299 gate
+    allume: F116A gate-open
+    mdi: [gate, gate-open, gate-arrow-right]
+    domaines: [cover.gate]
+  - code: porte
+    eteint: F081B door-closed
+    allume: F081C door-open
+    mdi: [door, door-closed, door-open, door-sliding, door-sliding-open]
+    domaines: [cover.door, binary_sensor.door, binary_sensor.opening]
+  - code: fenetre
+    eteint: F05AE window-closed
+    allume: F05B1 window-open
+    mdi: [window-closed, window-open, window-closed-variant, window-open-variant]
+    domaines: [cover.window, binary_sensor.window]
+  # Allumé = déverrouillé (binary_sensor.lock : « on » veut dire déverrouillé).
+  - code: serrure
+    eteint: F033E lock
+    allume: F033F lock-open
+    mdi: [lock, lock-open, lock-outline, lock-open-outline, lock-open-variant,
+          lock-open-variant-outline, lock-smart]
+    domaines: [lock, binary_sensor.lock]
+
+  # --- Capteurs ---------------------------------------------------------------
+  - code: thermometre
+    eteint: F050F thermometer
+    mdi: [thermometer, thermometer-lines, thermometer-auto]
+    domaines: [sensor.temperature]
+  - code: humidite
+    eteint: F058E water-percent
+    mdi: [water-percent, water-percent-alert, water-outline]
+    domaines: [sensor.humidity, binary_sensor.moisture]
+  - code: batterie
+    eteint: F0079 battery
+    mdi: [battery, battery-outline, battery-off, battery-alert, battery-high, battery-medium,
+          battery-low, battery-charging]
+    domaines: [sensor.battery, binary_sensor.battery]
+  - code: mouvement
+    eteint: F1435 motion-sensor-off
+    allume: F0D91 motion-sensor
+    mdi: [motion-sensor, motion-sensor-off, run, run-fast, walk]
+    domaines: [binary_sensor.motion, binary_sensor.moving]
+  # Comme HA pour binary_sensor.presence : maison pleine = présent.
+  - code: presence
+    eteint: F06A1 home-outline
+    allume: F02DC home
+    mdi: [home, home-outline, home-account, account, account-outline, account-off,
+          account-off-outline]
+    domaines: [person, device_tracker, binary_sensor.presence, binary_sensor.occupancy]
+  - code: energie
+    eteint: F0241 flash
+    mdi: [flash, flash-outline, flash-off, lightning-bolt, lightning-bolt-outline,
+          meter-electric, meter-electric-outline, transmission-tower, home-lightning-bolt,
+          home-lightning-bolt-outline, solar-power, solar-power-variant, solar-panel]
+    domaines: [sensor.power, sensor.energy, sensor.voltage, sensor.current,
+               sensor.apparent_power, binary_sensor.power]
+  # sensor.moisture : l'humidité du sol des capteurs de plantes (Flower Care…).
+  - code: plante
+    eteint: F024A flower
+    mdi: [flower, flower-outline, sprout, sprout-outline, leaf, cactus]
+    domaines: [sensor.moisture]
+  - code: co2
+    eteint: F07E4 molecule-co2
+    mdi: [molecule-co2, molecule-co]
+    domaines: [sensor.carbon_dioxide]
+  - code: fumee
+    eteint: F0392 smoke-detector
+    allume: F192E smoke-detector-alert
+    mdi: [smoke-detector, smoke-detector-alert, smoke-detector-variant,
+          smoke-detector-variant-alert, smoke-detector-off, fire-alert]
+    domaines: [binary_sensor.smoke, binary_sensor.gas, binary_sensor.carbon_monoxide]
+  - code: mesure
+    eteint: F029A gauge
+    mdi: [gauge, gauge-empty, gauge-full, eye, eye-outline, ray-vertex]
+    types: [cap]
+    domaines: [sensor, number, input_number]
+  - code: etat
+    eteint: F0130 checkbox-blank-circle-outline
+    allume: F0133 checkbox-marked-circle
+    mdi: [checkbox-blank-circle-outline, checkbox-marked-circle, checkbox-marked-circle-outline,
+          radiobox-marked]
+    types: [bin]
+    domaines: [binary_sensor]
+
+  # --- Actions ----------------------------------------------------------------
+  - code: scene
+    eteint: F03D8 palette
+    mdi: [palette, palette-outline]
+    domaines: [scene]
+  - code: script
+    eteint: F0BC2 script-text
+    mdi: [script, script-text, script-text-outline, script-text-play, script-text-play-outline]
+    domaines: [script]
+  - code: bouton
+    eteint: F12A8 gesture-tap-button
+    mdi: [gesture-tap-button, gesture-tap, button-pointer, button-cursor]
+    types: [act]
+    domaines: [button, input_button]
