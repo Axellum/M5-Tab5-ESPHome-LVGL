@@ -4,6 +4,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — Installer sans compiler : un parcours court, les pièges de la page
+
+Tirés de l'installation à neuf du 28/09, tablette effacée, par la page :
+- **Guide** (`docs/installation.md`, EN/FR) : une section « Sans compiler » en six
+  étapes dans l'ordre (HA d'abord, flash, Wi-Fi, ajout dans HA, actions HA, blueprint),
+  à la place de l'encadré qui renvoyait aux étapes 4 et 6. ESPHome n'est plus un
+  prérequis pour qui ne compile pas.
+- **Page `/install/`** :
+  - reconnaître la tablette dans la liste des ports ;
+  - les trois cas : première installation (effacer), mise à jour (sans effacer), même
+    version déjà installée (pas de bouton « Install », seulement « Erase User Data ») ;
+  - « Failed to initialize… BOOT button » : le Tab5 n'a pas de bouton BOOT ; maintenir
+    reset ~2 s jusqu'au clignotement rapide de la LED verte (mode téléchargement,
+    procédure M5Stack), puis un appui sur reset à la fin ;
+  - changer de canal = réinstaller sans effacer ;
+  - une tablette déjà connue de HA reçoit une nouvelle clé toute seule ;
+  - l'option « actions Home Assistant » à cocher (voix, calendrier, réveil).
+- README : le démarrage rapide renvoie à ce parcours.
 ### 2026-09-28 — Plus de fausse alerte au premier démarrage après une installation
 
 Vu à l'installation à neuf du 28/09 (page d'installation, mode téléchargement, flash
