@@ -4,6 +4,35 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — Le site raconte le projet, pas seulement l'installation
+
+La page d'accueil du site (`web/index.html`) reprend une partie du README et de `docs/`,
+en français et en anglais :
+- **nouvelles sections** : pourquoi celui-ci, démarrer en six étapes (le parcours « sans
+  compiler »), matériel (les trois puces d'écran et leur statut), comment ça marche
+  (schéma Home Assistant ⇄ Tab5), assistant vocal (les deux pipelines, Domotique et
+  Discussion, la chaîne en cinq étapes, les couleurs du micro), arcade (les 8 jeux),
+  nouveautés, l'histoire, la documentation, questions ;
+- **« Ce qu'il fait »** : 12 fonctions au lieu de 6 (télécommande TV et volet séparés) ;
+- **sommaire** qui suit la lecture sur grand écran, barre de navigation en haut ;
+- **version stable** affichée en tête, lue dans `versions.json` : rien à changer à chaque
+  release ;
+- **vidéo de démo** lue sur place, depuis YouTube en mode sans cookie, seulement au clic ;
+  le tour animé des écrans (`tab5_ui_tour_hq.webp`) ajouté aux images du site ;
+- **pluie dans l'heure et vigilances** : une section qui les explique, avec deux
+  recadrages de rendus de la CI (scène « pluie + vigilance orange », en français et en
+  anglais, dans `docs/images/site/`, hors de `docs/images/rendu/` que
+  `maj_references.py` vide) et deux mini-écrans dessinés en HTML aux couleurs du code :
+  les 9 barres sur l'heure et leurs 4 intensités, les couleurs des icônes et de la date ;
+- **visionneuse** : une photo des galeries (tablette, jeux, rendus, météo) s'ouvre en
+  grand au clic, avec sa légende ; flèches, clavier, balayage sur téléphone ;
+- **typographie** : espace insécable avant « ; : ? » et dans les guillemets ;
+- **langues** : la carte annonçait six langues sous un titre « Quatre langues » ; titre
+  corrigé (« Six langues »).
+- **Qui a écrit les langues** (site, README, `docs/translations.md`) : toutes par une IA,
+  comme le reste du projet ; le français relu par l'auteur, l'anglais pas encore, comme
+  les quatre autres. Les docs laissaient croire que seules ces quatre venaient d'une IA.
+
 ## [3.1.0] — 2026-09-28
 
 De `v3.0.1` à aujourd'hui : 5 pull requests (#210, #214 → #217), plus celle de la

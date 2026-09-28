@@ -4,7 +4,9 @@
   Les images `images/…` sont copiées depuis docs/images/ sous un nom parlant à l'assemblage
   (tools/publication/pages.py, IMAGES) : c'est ici, pas sur github.com (robots.txt :
   `Disallow: /*/raw/`), que les moteurs de recherche peuvent les indexer.
-  La page d'installation est dans install/.
+  La page d'installation est dans install/. La version stable affichée en tête est lue dans
+  versions.json (écrit par pages.py) : rien à changer ici à chaque release.
+  Les textes reprennent le README et docs/ : les garder d'accord quand ceux-ci changent.
 -->
 <html lang="en" data-lang="en">
 <head>
@@ -39,240 +41,973 @@
 </script>
 <style>
   :root {
-    --fond: #f6f7f9; --carte: #ffffff; --texte: #1d2330; --doux: #5b6475;
-    --bord: #d9dee7; --accent: #0b6bcb; --accent-texte: #ffffff;
+    --fond: #f6f7f9; --fond-2: #eceff4; --carte: #ffffff; --texte: #1d2330; --doux: #5b6475;
+    --bord: #d9dee7; --accent: #0b6bcb; --accent-doux: #e3eefb; --accent-texte: #ffffff;
+    --ok: #1a7f37; --ok-fond: #e5f4ea; --essai: #8a5a00; --essai-fond: #fbf0d6;
+    --tab5: #1a7f5a; --tab5-doux: #e2f3ec;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --fond: #11151c; --carte: #1a2029; --texte: #e6e9ef; --doux: #9aa3b2;
-      --bord: #2c3440; --accent: #4ea1f3; --accent-texte: #0b1220;
+      --fond: #11151c; --fond-2: #161b23; --carte: #1a2029; --texte: #e6e9ef; --doux: #9aa3b2;
+      --bord: #2c3440; --accent: #4ea1f3; --accent-doux: #16283d; --accent-texte: #0b1220;
+      --ok: #5fd08a; --ok-fond: #14301f; --essai: #f0b64d; --essai-fond: #33280f;
+      --tab5: #4fc99a; --tab5-doux: #12302a;
     }
   }
   * { box-sizing: border-box; }
+  html { scroll-padding-top: 76px; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
   body { margin: 0; background: var(--fond); color: var(--texte);
-    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
-  header { display: flex; justify-content: flex-end; }
-  h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); line-height: 1.2; margin: 8px 0 12px; }
-  h2 { font-size: 1.3rem; margin: 40px 0 6px; }
-  h3 { font-size: 1.02rem; margin: 0 0 4px; }
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--accent); }
   p { margin: 0 0 12px; }
-  .chapeau { font-size: 1.1rem; max-width: 720px; }
-  .doux { color: var(--doux); }
-  .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0 28px; }
-  .bouton { display: inline-block; border-radius: 8px; padding: 12px 22px; font-weight: 600; text-decoration: none; }
-  .principal { background: var(--accent); color: var(--accent-texte); }
-  .secondaire { border: 1px solid var(--bord); color: var(--texte); background: var(--carte); }
-  button.langue { background: none; border: 1px solid var(--bord); color: var(--texte); border-radius: 6px;
-    padding: 4px 10px; cursor: pointer; }
+  ul { padding-left: 1.3em; margin: 8px 0 0; }
+  li { margin: 6px 0; }
+  code { font-size: 0.9em; background: var(--fond-2); border-radius: 4px; padding: 1px 5px; }
   figure { margin: 0; }
   img { display: block; width: 100%; height: auto; border-radius: 8px; background: var(--bord); }
   figcaption { color: var(--doux); font-size: 0.92rem; margin-top: 6px; }
-  .heros { max-width: 900px; }
-  .fonctions { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 12px; }
-  .fonction { background: var(--carte); border: 1px solid var(--bord); border-radius: 10px; padding: 14px 16px; }
-  .fonction p { margin: 0; }
-  .galerie { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px 16px; margin-top: 16px; }
-  .rendus { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px 16px; margin-top: 16px; }
-  ul { padding-left: 1.3em; margin: 8px 0 0; }
-  li { margin: 6px 0; }
-  a { color: var(--accent); }
-  footer { color: var(--doux); font-size: 0.9rem; margin-top: 48px; border-top: 1px solid var(--bord); padding-top: 16px; }
+  .doux { color: var(--doux); }
   html[data-lang="fr"] [lang="en"], html[data-lang="en"] [lang="fr"] { display: none; }
+
+  /* Barre du haut */
+  .barre { position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--bord);
+    background: color-mix(in srgb, var(--fond) 88%, transparent); backdrop-filter: blur(8px); }
+  .barre-int { max-width: 1120px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 16px; }
+  .marque { font-weight: 700; color: var(--texte); text-decoration: none; white-space: nowrap; }
+  .barre nav { display: flex; gap: 18px; margin-left: auto; }
+  .barre nav a { color: var(--texte); text-decoration: none; font-size: 0.95rem; white-space: nowrap; }
+  .barre nav a:hover { color: var(--accent); }
+  button.langue { background: none; border: 1px solid var(--bord); color: var(--texte); border-radius: 6px;
+    padding: 4px 10px; cursor: pointer; font: inherit; font-size: 0.9rem; }
+  @media (max-width: 720px) { .barre nav .large { display: none; } }
+  @media (max-width: 420px) { .marque { display: none; } .barre nav { margin-left: 0; } .barre-int { justify-content: space-between; } }
+
+  /* En-tête de page */
+  .tete { max-width: 1120px; margin: 0 auto; padding: 36px 16px 8px; display: grid; gap: 32px; align-items: center; }
+  @media (min-width: 900px) { .tete { grid-template-columns: 1.05fr 1fr; } }
+  h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); line-height: 1.15; margin: 0 0 14px; }
+  .chapeau { font-size: 1.1rem; }
+  .etiquettes { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; padding: 0; list-style: none; }
+  .etiquettes li { margin: 0; font-size: 0.85rem; border: 1px solid var(--bord); background: var(--carte);
+    border-radius: 999px; padding: 2px 10px; color: var(--doux); }
+  .etiquettes li b { color: var(--texte); }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 22px 0 0; }
+  .bouton { display: inline-block; border-radius: 8px; padding: 11px 20px; font-weight: 600; text-decoration: none; }
+  .principal { background: var(--accent); color: var(--accent-texte); }
+  .secondaire { border: 1px solid var(--bord); color: var(--texte); background: var(--carte); }
+
+  /* Corps : contenu + sommaire */
+  .corps { max-width: 1120px; margin: 0 auto; padding: 0 16px 48px; display: grid; gap: 48px; }
+  @media (min-width: 1040px) { .corps { grid-template-columns: minmax(0, 1fr) 210px; } }
+  main { min-width: 0; }
+  .sommaire { display: none; }
+  @media (min-width: 1040px) {
+    .sommaire { display: block; position: sticky; top: 76px; align-self: start; padding-top: 40px; font-size: 0.9rem; }
+  }
+  .sommaire p { font-weight: 600; margin-bottom: 8px; }
+  .sommaire ul { list-style: none; padding: 0; margin: 0; border-left: 1px solid var(--bord); }
+  .sommaire li { margin: 0; }
+  .sommaire a { display: block; padding: 4px 0 4px 12px; margin-left: -1px; color: var(--doux); text-decoration: none;
+    border-left: 2px solid transparent; }
+  .sommaire a:hover { color: var(--texte); }
+  .sommaire a.actif { color: var(--accent); border-left-color: var(--accent); }
+
+  section.bloc { padding-top: 40px; }
+  h2 { font-size: 1.45rem; line-height: 1.25; margin: 0 0 6px; }
+  h3 { font-size: 1.02rem; margin: 0 0 4px; }
+  .intro { color: var(--doux); margin-bottom: 16px; }
+  .suite { margin-top: 14px; }
+
+  .grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+  @media (min-width: 560px) { .grille.par-2 { grid-template-columns: 1fr 1fr; } }
+  .carte { background: var(--carte); border: 1px solid var(--bord); border-radius: 10px; padding: 14px 16px; }
+  .carte p { margin: 0; }
+  .carte h3 .ico { margin-right: 6px; }
+
+  /* Étapes numérotées */
+  ol.etapes { list-style: none; counter-reset: etape; padding: 0; margin: 0; display: grid; gap: 10px; }
+  ol.etapes > li { counter-increment: etape; position: relative; margin: 0; padding: 12px 16px 12px 58px;
+    background: var(--carte); border: 1px solid var(--bord); border-radius: 10px; }
+  ol.etapes > li::before { content: counter(etape); position: absolute; left: 14px; top: 12px; width: 30px; height: 30px;
+    border-radius: 50%; background: var(--accent-doux); color: var(--accent); font-weight: 700;
+    display: grid; place-items: center; }
+  ol.etapes p { margin: 0; }
+  .encart { border-left: 3px solid var(--accent); background: var(--accent-doux); border-radius: 0 8px 8px 0;
+    padding: 10px 14px; margin-top: 14px; }
+
+  /* Tableaux */
+  .tableau { overflow-x: auto; border: 1px solid var(--bord); border-radius: 10px; background: var(--carte); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--bord); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  th { font-size: 0.85rem; color: var(--doux); font-weight: 600; background: var(--fond-2); }
+  @media (max-width: 480px) { th, td { padding: 8px 7px; } table { font-size: 0.9rem; } }
+  .statut { display: inline-block; border-radius: 999px; padding: 1px 9px; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+  .statut.ok { color: var(--ok); background: var(--ok-fond); }
+  .statut.essai { color: var(--essai); background: var(--essai-fond); }
+
+  /* Schéma : Home Assistant ⇄ Tab5 */
+  .schema { display: grid; gap: 12px; align-items: center; margin: 4px 0 18px; }
+  @media (min-width: 700px) { .schema { grid-template-columns: 1fr minmax(160px, 0.8fr) 1fr; } }
+  .boite { border-radius: 12px; padding: 14px 16px; border: 1px solid var(--bord); background: var(--carte); height: 100%; }
+  .boite.ha { border-top: 4px solid var(--accent); }
+  .boite.tab5 { border-top: 4px solid var(--tab5); }
+  .boite ul { margin: 6px 0 0; font-size: 0.93rem; }
+  .boite li { margin: 3px 0; }
+  .fleches { display: grid; gap: 10px; font-size: 0.88rem; text-align: center; }
+  .fleche { border-radius: 8px; padding: 6px 8px; }
+  .fleche b { display: block; font-size: 1.2rem; line-height: 1; }
+  .fleche.aller { background: var(--accent-doux); color: var(--accent); }
+  .fleche.retour { background: var(--tab5-doux); color: var(--tab5); }
+  .fleche .v { display: none; }
+  @media (max-width: 699px) { .fleche .h { display: none; } .fleche .v { display: inline; } }
+
+  /* Chaîne vocale */
+  ol.chaine { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+  ol.chaine li { margin: 0; background: var(--carte); border: 1px solid var(--bord); border-radius: 10px; padding: 10px 12px; font-size: 0.93rem; }
+  ol.chaine .ou { display: inline-block; font-size: 0.78rem; font-weight: 600; border-radius: 999px; padding: 0 8px; margin-bottom: 4px; }
+  ol.chaine .ou.t { color: var(--tab5); background: var(--tab5-doux); }
+  ol.chaine .ou.h { color: var(--accent); background: var(--accent-doux); }
+  ol.chaine b { display: block; }
+  .micro { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 0; margin: 8px 0 0; list-style: none; font-size: 0.93rem; }
+  .micro li { margin: 0; display: flex; align-items: center; gap: 7px; }
+  .micro i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+
+  /* Pluie et vigilances : images, mini-écrans aux couleurs de la tablette */
+  h3.sous { font-size: 1.12rem; margin: 24px 0 10px; }
+  .vue { margin-bottom: 14px; }
+  ul.sans-marge { margin: 0; }
+  .ecran-mini { background: #0d1422; color: #e6e9ef; border-radius: 10px; padding: 14px 16px; font-size: 0.88rem; align-self: start; }
+  .ecran-mini p { margin: 0 0 6px; color: #9aa3b2; }
+  .ecran-mini p + ul + p { margin-top: 12px; }
+  .barres { display: flex; align-items: stretch; gap: 5px; height: 70px; }
+  .barres i { flex: 1; position: relative; overflow: hidden; border-radius: 4px; background: #4a596e; }
+  .barres i.long { flex: 2; }
+  .barres i::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--h, 0); background: var(--c, transparent); }
+  .axe { display: flex; justify-content: space-between; margin-top: 5px; color: #9aa3b2; }
+  ul.legende { display: flex; flex-wrap: wrap; gap: 4px 14px; list-style: none; padding: 0; margin: 12px 0 0; }
+  .ecran-mini p + ul.legende { margin-top: 0; }
+  ul.legende li { margin: 0; display: flex; align-items: center; gap: 6px; }
+  ul.legende i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  ul.dates { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; list-style: none; padding: 0; margin: 0; }
+  ul.dates li { margin: 0; color: #9aa3b2; background: #16203a; border-radius: 6px; padding: 5px 8px; font-size: 0.8rem; }
+  ul.dates b { display: block; font-size: 1rem; }
+
+  /* Images */
+  .galerie { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 20px 16px; }
+  .deux { display: grid; gap: 20px 16px; }
+  @media (min-width: 700px) { .deux { grid-template-columns: 1fr 1fr; } }
+  a.agrandir { display: block; border-radius: 8px; cursor: zoom-in; }
+  a.agrandir:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  a.agrandir img { transition: filter 0.15s; }
+  a.agrandir:hover img { filter: brightness(1.1); }
+  .rendus { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px 16px; }
+  /* Vidéo : une affiche dessinée (aux couleurs de l'écran), YouTube seulement au clic */
+  .video { position: relative; aspect-ratio: 4 / 3; border-radius: 8px; overflow: hidden;
+    background: radial-gradient(circle at 30% 20%, #1f4a9a 0%, #10224a 45%, #070d1c 100%); }
+  .video button { all: unset; cursor: pointer; position: absolute; inset: 0; display: block; }
+  .video button:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+  .video .affiche { position: absolute; left: 0; right: 0; bottom: 18%; text-align: center; color: #c9d8f5; font-size: 0.95rem; }
+  .video .affiche b { display: block; color: #ffffff; font-size: 1.35rem; margin-bottom: 2px; }
+  .video .jouer { position: absolute; left: 50%; top: 38%; width: 76px; height: 54px; margin: -27px 0 0 -38px;
+    border-radius: 14px; background: #e5484d; transition: transform 0.15s; }
+  .video button:hover .jouer { transform: scale(1.08); }
+  .video .jouer::after { content: ""; position: absolute; left: 30px; top: 16px; border-style: solid;
+    border-width: 11px 0 11px 19px; border-color: transparent transparent transparent #fff; }
+  .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+  .histoire { background: var(--carte); border: 1px solid var(--bord); border-radius: 12px; padding: 18px 20px; }
+  .histoire ul { margin-bottom: 12px; }
+  .docs a { text-decoration: none; display: block; height: 100%; color: var(--texte); }
+  .docs a:hover { border-color: var(--accent); }
+  .docs a b { color: var(--accent); }
+  .docs p { color: var(--doux); font-size: 0.92rem; }
+
+  /* Visionneuse : une photo en grand (créée par le script en bas de page) */
+  html:has(dialog.visionneuse[open]) { overflow: hidden; }
+  dialog.visionneuse { width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none; margin: 0;
+    padding: 0; border: 0; background: #07090d; color: #e6e9ef; outline: none; }
+  dialog.visionneuse[open] { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+  dialog.visionneuse::backdrop { background: transparent; }
+  dialog.visionneuse img { width: auto; height: auto; max-width: min(92vw, 1600px); max-height: 80vh; max-height: 80dvh;
+    object-fit: contain; border-radius: 8px; background: none; }
+  dialog.visionneuse p { margin: 0 16px; font-size: 0.95rem; text-align: center; color: #c3cad6; }
+  dialog.visionneuse button { position: absolute; width: 46px; height: 46px; border: 0; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.14); color: #ffffff; font-size: 1.7rem; line-height: 1; cursor: pointer; }
+  dialog.visionneuse button:hover { background: rgba(255, 255, 255, 0.26); }
+  dialog.visionneuse button:focus-visible { outline: 3px solid #4ea1f3; }
+  .v-fermer { top: 14px; right: 14px; }
+  .v-prec, .v-suiv { top: 50%; transform: translateY(-50%); }
+  .v-prec { left: 14px; }
+  .v-suiv { right: 14px; }
+  @media (max-width: 600px) { .v-prec, .v-suiv { top: auto; bottom: 16px; transform: none; } }
+
+  footer { max-width: 1120px; margin: 0 auto; padding: 16px 16px 40px; color: var(--doux); font-size: 0.9rem; }
+  footer .ligne { border-top: 1px solid var(--bord); padding-top: 16px; }
 </style>
 </head>
 <body>
-<main>
-  <header>
+<header class="barre">
+  <div class="barre-int">
+    <a class="marque" href="./">Tab5 · Home Assistant</a>
+    <nav>
+      <a class="large" href="#start"><span lang="en">Get started</span><span lang="fr">Démarrer</span></a>
+      <a href="install/"><span lang="en">Install</span><span lang="fr">Installer</span></a>
+      <a class="large" href="#docs">Documentation</a>
+      <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL">GitHub</a>
+    </nav>
     <button class="langue" id="langue" type="button"><span lang="fr">English</span><span lang="en">Français</span></button>
-  </header>
-
-  <h1><span lang="en">M5Stack Tab5 — a Home Assistant wall screen</span><span lang="fr">M5Stack Tab5 — un écran mural Home Assistant</span></h1>
-  <p class="chapeau">
-    <span lang="en">Firmware for the M5Stack Tab5 (ESP32-P4), built with ESPHome and LVGL. Home Assistant pushes what changed and the tablet draws it itself: no browser, no polling. It is my everyday screen, shared in case it is useful to someone.</span>
-    <span lang="fr">Un firmware pour la M5Stack Tab5 (ESP32-P4), construit avec ESPHome et LVGL. Home Assistant pousse ce qui a changé et la tablette le dessine elle-même : pas de navigateur, pas de polling. C'est mon écran de tous les jours, partagé au cas où il serve à quelqu'un.</span>
-  </p>
-  <div class="actions">
-    <a class="bouton principal" href="install/"><span lang="en">Install from the browser</span><span lang="fr">Installer depuis le navigateur</span></a>
-    <a class="bouton secondaire" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL"><span lang="en">Source code on GitHub</span><span lang="fr">Code source sur GitHub</span></a>
   </div>
+</header>
 
-  <figure class="heros">
+<div class="tete">
+  <div>
+    <h1><span lang="en">M5Stack Tab5 — a Home Assistant wall screen</span><span lang="fr">M5Stack Tab5 — un écran mural Home Assistant</span></h1>
+    <p class="chapeau">
+      <span lang="en">Firmware for the M5Stack Tab5 (ESP32-P4), built with ESPHome and LVGL. Home Assistant pushes what changed and the tablet draws it itself: no browser, no polling. It is my everyday screen, shared in case it is useful to someone.</span>
+      <span lang="fr">Un firmware pour la M5Stack Tab5 (ESP32-P4), construit avec ESPHome et LVGL. Home Assistant pousse ce qui a changé et la tablette le dessine elle-même&nbsp;: pas de navigateur, pas de polling. C'est mon écran de tous les jours, partagé au cas où il serve à quelqu'un.</span>
+    </p>
+    <ul class="etiquettes">
+      <li id="version" hidden><span lang="en">Stable</span><span lang="fr">Stable</span> <b></b></li>
+      <li>ESP32-P4</li>
+      <li>ESPHome</li>
+      <li>LVGL 9.5</li>
+      <li><span lang="en">MIT licence</span><span lang="fr">Licence MIT</span></li>
+    </ul>
+    <div class="actions">
+      <a class="bouton principal" href="install/"><span lang="en">Install from the browser</span><span lang="fr">Installer depuis le navigateur</span></a>
+      <a class="bouton secondaire" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL"><span lang="en">Source code on GitHub</span><span lang="fr">Code source sur GitHub</span></a>
+    </div>
+  </div>
+  <figure>
     <img src="images/m5stack-tab5-home-assistant-wall-screen.jpg" width="1200" height="900"
       alt="M5Stack Tab5 on a stand showing a Home Assistant screen with the time, a climate setpoint, work hours and a 5-day weather forecast">
     <figcaption>
       <span lang="en">The author's Tab5: clock, microphone, climate, work hours and the 5-day forecast.</span>
-      <span lang="fr">La Tab5 de l'auteur : horloge, micro, clim, horaires de travail et prévisions à 5 jours.</span>
+      <span lang="fr">La Tab5 de l'auteur&nbsp;: horloge, micro, clim, horaires de travail et prévisions à 5 jours.</span>
     </figcaption>
   </figure>
+</div>
 
-  <h2><span lang="en">What it does</span><span lang="fr">Ce qu'il fait</span></h2>
-  <div class="fonctions">
-    <section class="fonction">
-      <h3><span lang="en">Weather</span><span lang="fr">Météo</span></h3>
-      <p><span lang="en">Rain in the next hour, hourly and 15-day forecast, weather warnings. Météo-France by default; OpenWeatherMap, MeteoAlarm or any Home Assistant weather entity can be chosen instead.</span><span lang="fr">Pluie dans l'heure, prévisions horaires et à 15 jours, vigilances. Météo-France par défaut ; OpenWeatherMap, MeteoAlarm ou n'importe quelle entité météo de Home Assistant au choix.</span></p>
-    </section>
-    <section class="fonction">
-      <h3><span lang="en">Home</span><span lang="fr">Maison</span></h3>
-      <p><span lang="en">Climate, up to 3 lights, a roller shutter, a Samsung TV remote, up to 5 BLE plant sensors. You pick them in Home Assistant with a blueprint; what you don't have disappears from the screen.</span><span lang="fr">Clim, jusqu'à 3 lumières, un volet roulant, une télécommande TV Samsung, jusqu'à 5 capteurs de plantes BLE. Vous les choisissez dans Home Assistant avec un blueprint ; ce que vous n'avez pas disparaît de l'écran.</span></p>
-    </section>
-    <section class="fonction">
-      <h3><span lang="en">Voice</span><span lang="fr">Voix</span></h3>
-      <p><span lang="en">“Okay Nabu” is detected on the tablet: audio leaves it only after the wake word. Requests and replies go through the Home Assistant Assist pipeline.</span><span lang="fr">« Okay Nabu » est détecté sur la tablette : l'audio n'en sort qu'après le mot d'activation. Demandes et réponses passent par le pipeline Assist de Home Assistant.</span></p>
-    </section>
-    <section class="fonction">
-      <h3><span lang="en">Every day</span><span lang="fr">Au quotidien</span></h3>
-      <p><span lang="en">Alarm clock, monthly calendar with work hours, diagnostics console. They keep working when Home Assistant does not answer.</span><span lang="fr">Réveil, calendrier du mois avec les horaires, console de diagnostic. Ils restent utilisables quand Home Assistant ne répond plus.</span></p>
-    </section>
-    <section class="fonction">
-      <h3><span lang="en">8 offline games</span><span lang="fr">8 jeux hors ligne</span></h3>
-      <p><span lang="en">Experimental: chess, draughts, Go, breakout, pinball, Lode Runner, a marble roguelite and a quiz, all on the tablet.</span><span lang="fr">Expérimentaux : échecs, dames, go, casse-briques, flipper, Lode Runner, un roguelite de bille et un quiz, tous sur la tablette.</span></p>
-    </section>
-    <section class="fonction">
-      <h3><span lang="en">Four languages</span><span lang="fr">Quatre langues</span></h3>
-      <p><span lang="en">French, English, German, Dutch, Spanish or Italian, switched from Home Assistant. German, Dutch, Spanish and Italian were made by an AI and are not reviewed by a native speaker yet.</span><span lang="fr">Français, anglais, allemand, néerlandais, espagnol ou italien, au choix depuis Home Assistant. L'allemand, le néerlandais, l'espagnol et l'italien ont été faits par une IA, pas encore relus par une personne dont c'est la langue.</span></p>
-    </section>
-  </div>
+<div class="corps">
+<main>
 
-  <h2><span lang="en">On the tablet</span><span lang="fr">Sur la tablette</span></h2>
-  <p class="doux"><span lang="en">Photos of the author's tablet (July 2026, French interface).</span><span lang="fr">Photos de la tablette de l'auteur (juillet 2026).</span></p>
-  <div class="galerie">
-    <figure>
-      <img src="images/m5stack-tab5-home-assistant-device-buttons.jpg" width="1024" height="771" loading="lazy"
-        alt="M5Stack Tab5 Home Assistant screen with buttons for a desk PC, a roller shutter, bedroom and living-room lights and LEDs">
-      <figcaption><span lang="en">Device buttons, one tap each.</span><span lang="fr">Les boutons des appareils, un appui chacun.</span></figcaption>
-    </figure>
-    <figure>
-      <img src="images/m5stack-tab5-plant-sensors-soil-moisture.jpg" width="1024" height="771" loading="lazy"
-        alt="M5Stack Tab5 popup with five BLE plant sensors: soil moisture, fertility, light, temperature and battery">
-      <figcaption><span lang="en">Plant sensors: moisture, fertility, light, temperature, battery.</span><span lang="fr">Capteurs de plantes : humidité, fertilité, lumière, température, batterie.</span></figcaption>
-    </figure>
-    <figure>
-      <img src="images/m5stack-tab5-home-assistant-climate-control.jpg" width="1024" height="771" loading="lazy"
-        alt="M5Stack Tab5 climate popup with modes, a thermostat arc set to 23 °C, presets and airflow options">
-      <figcaption><span lang="en">Climate: modes, thermostat arc, presets, airflow.</span><span lang="fr">Clim : modes, arc du thermostat, préréglages, flux d'air.</span></figcaption>
-    </figure>
-    <figure>
-      <img src="images/m5stack-tab5-home-assistant-light-control.jpg" width="1024" height="771" loading="lazy"
-        alt="M5Stack Tab5 light popup with a light selector, a brightness arc at 100 % and colour swatches">
-      <figcaption><span lang="en">Lights: brightness arc, whites and colours.</span><span lang="fr">Lumières : arc de luminosité, blancs et couleurs.</span></figcaption>
-    </figure>
-    <figure>
-      <img src="images/m5stack-tab5-samsung-tv-remote.jpg" width="1024" height="771" loading="lazy"
-        alt="M5Stack Tab5 showing a Samsung TV remote with power, source, direction pad, volume and playback buttons">
-      <figcaption><span lang="en">Samsung TV remote, through Home Assistant.</span><span lang="fr">Télécommande TV Samsung, par Home Assistant.</span></figcaption>
-    </figure>
-    <figure>
-      <img src="images/m5stack-tab5-esphome-diagnostics-console.jpg" width="1024" height="771" loading="lazy"
-        alt="M5Stack Tab5 diagnostics console with memory, Wi-Fi, uptime, CPU temperature and Home Assistant actions">
-      <figcaption><span lang="en">Diagnostics console: memory, Wi-Fi, uptime, Home Assistant actions.</span><span lang="fr">Console de diagnostic : mémoire, Wi-Fi, temps de marche, actions Home Assistant.</span></figcaption>
-    </figure>
-    <figure>
-      <img src="images/m5stack-tab5-calendar-work-hours.jpg" width="2000" height="1505" loading="lazy"
-        alt="M5Stack Tab5 monthly calendar with work hours, public holidays, school holidays and appointments">
-      <figcaption><span lang="en">Monthly calendar: work hours, holidays, appointments.</span><span lang="fr">Calendrier du mois : horaires, fériés, vacances, rendez-vous.</span></figcaption>
-    </figure>
-    <figure>
-      <img src="images/m5stack-tab5-voice-assistant-reply.jpg" width="2000" height="1505" loading="lazy"
-        alt="M5Stack Tab5 voice assistant popup showing the spoken request and a formatted reply">
-      <figcaption><span lang="en">Voice assistant: the request and its reply.</span><span lang="fr">Assistant vocal : la demande et sa réponse.</span></figcaption>
-    </figure>
-    <figure>
-      <img src="images/m5stack-tab5-arcade-games-lvgl.jpg" width="2000" height="1505" loading="lazy"
-        alt="M5Stack Tab5 arcade menu with eight offline games drawn with LVGL">
-      <figcaption><span lang="en">The 8 offline games.</span><span lang="fr">Les 8 jeux hors ligne.</span></figcaption>
-    </figure>
-    <figure>
-      <img src="images/m5stack-tab5-chess-game-esp32-p4.jpg" width="2000" height="1505" loading="lazy"
-        alt="Chess game Roi Noir running on the M5Stack Tab5 ESP32-P4 with its embedded engine">
-      <figcaption><span lang="en">Roi Noir: chess with an engine running on the tablet.</span><span lang="fr">Roi Noir : des échecs avec un moteur qui tourne sur la tablette.</span></figcaption>
-    </figure>
-    <figure>
-      <img src="images/m5stack-tab5-lode-runner-game.jpg" width="2000" height="1505" loading="lazy"
-        alt="Coureur d'Or, a Lode Runner style platform game, running on the M5Stack Tab5">
-      <figcaption><span lang="en">Coureur d'Or: dig and climb, Lode Runner style.</span><span lang="fr">Coureur d'Or : creuser et grimper, façon Lode Runner.</span></figcaption>
-    </figure>
-    <figure>
-      <img src="images/m5stack-tab5-breakout-game-tilt.jpg" width="2000" height="1505" loading="lazy"
-        alt="Arcanoïde, a breakout game on the M5Stack Tab5, played by tilting the tablet">
-      <figcaption><span lang="en">Arcanoïde: a breakout played by tilting the tablet.</span><span lang="fr">Arcanoïde : un casse-briques qu'on joue en inclinant la tablette.</span></figcaption>
-    </figure>
-  </div>
+  <section class="bloc" id="why">
+    <h2><span lang="en">Why this one</span><span lang="fr">Pourquoi celui-ci</span></h2>
+    <p class="intro"><span lang="en">What sets it apart from a dashboard in a browser.</span><span lang="fr">Ce qui le distingue d'un tableau de bord dans un navigateur.</span></p>
+    <div class="grille">
+      <div class="carte">
+        <h3><span lang="en">Push only, no polling</span><span lang="fr">Push uniquement, zéro polling</span></h3>
+        <p><span lang="en">Home Assistant sends only what changed; the tablet never asks for anything. At rest, the processor stays close to idle.</span><span lang="fr">Home Assistant n'envoie que ce qui a changé&nbsp;; la tablette ne demande jamais rien. Au repos, le processeur reste presque inactif.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Voice starts on the device</span><span lang="fr">La voix démarre sur l'appareil</span></h3>
+        <p><span lang="en">“Okay Nabu” and a “Stop” word for the roller shutter are detected on the tablet: audio leaves it only after the wake word.</span><span lang="fr">«&nbsp;Okay Nabu&nbsp;» et un mot «&nbsp;Stop&nbsp;» pour le volet roulant sont détectés sur la tablette&nbsp;: l'audio n'en sort qu'après le mot d'activation.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Works without Home Assistant</span><span lang="fr">Marche sans Home Assistant</span></h3>
+        <p><span lang="en">The last known state stays on screen; clock, alarm clock, calendar, games and the diagnostics console stay usable on their own.</span><span lang="fr">Le dernier état connu reste affiché&nbsp;; horloge, réveil, calendrier, jeux et console de diagnostic restent utilisables seuls.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Native, no web stack</span><span lang="fr">Natif, sans pile web</span></h3>
+        <p><span lang="en">Drawn in C++ with LVGL 9.5 at 60 FPS. Icons are vector fonts: there is no image file on the screen.</span><span lang="fr">Dessiné en C++ avec LVGL 9.5 à 60 FPS. Les icônes sont des polices vectorielles&nbsp;: aucun fichier image à l'écran.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Installs without compiling</span><span lang="fr">S'installe sans compiler</span></h3>
+        <p><span lang="en">A signed firmware installs from the browser; updates are then offered in Home Assistant.</span><span lang="fr">Un firmware signé s'installe depuis le navigateur&nbsp;; les mises à jour sont ensuite proposées dans Home Assistant.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Documented and tested</span><span lang="fr">Documenté et testé</span></h3>
+        <p><span lang="en">22 architecture decision records, host tests for the game and alarm engines, a CI that compiles against the minimum and the latest ESPHome and draws the screens without a tablet.</span><span lang="fr">22 décisions d'architecture écrites, des tests sur PC des moteurs des jeux et du réveil, une CI qui compile avec la version minimale et la dernière d'ESPHome et dessine les écrans sans tablette.</span></p>
+      </div>
+    </div>
+  </section>
 
-  <h2><span lang="en">Rendered off the device</span><span lang="fr">Rendus hors tablette</span></h2>
-  <p class="doux"><span lang="en">The same firmware, run on a PC by the CI with demo data, captures each screen in the six languages. Three of them:</span><span lang="fr">Le même firmware, lancé sur un PC par la CI avec des données de démonstration, capture chaque écran dans les six langues. Trois d'entre eux :</span></p>
-  <div class="rendus">
-    <figure lang="en">
-      <img src="images/m5stack-tab5-lvgl-screen-sunny-day-en.png" width="1280" height="720" loading="lazy"
-        alt="Rendered M5Stack Tab5 Home Assistant screen in English on a sunny workday: clock, work hours and 5-day forecast">
-      <figcaption>A sunny workday.</figcaption>
-    </figure>
-    <figure lang="en">
-      <img src="images/m5stack-tab5-lvgl-screen-rain-warning-en.png" width="1280" height="720" loading="lazy"
-        alt="Rendered M5Stack Tab5 screen in English with rain expected within the hour and an orange weather warning">
-      <figcaption>Rain within the hour, orange warning.</figcaption>
-    </figure>
-    <figure lang="en">
-      <img src="images/m5stack-tab5-lvgl-screen-day-off-plants-en.png" width="1280" height="720" loading="lazy"
-        alt="Rendered M5Stack Tab5 screen in English on a day off, with a Home Assistant banner and plants to watch">
-      <figcaption>A day off, plants to watch.</figcaption>
-    </figure>
-    <figure lang="fr">
-      <img src="images/m5stack-tab5-lvgl-screen-sunny-day-fr.png" width="1280" height="720" loading="lazy"
-        alt="Écran Home Assistant de la M5Stack Tab5 rendu en français, un jour de travail ensoleillé : horloge, horaires et prévisions à 5 jours">
-      <figcaption>Une journée de travail ensoleillée.</figcaption>
-    </figure>
-    <figure lang="fr">
-      <img src="images/m5stack-tab5-lvgl-screen-rain-warning-fr.png" width="1280" height="720" loading="lazy"
-        alt="Écran de la M5Stack Tab5 rendu en français, pluie dans l'heure et vigilance orange">
-      <figcaption>Pluie dans l'heure, vigilance orange.</figcaption>
-    </figure>
-    <figure lang="fr">
-      <img src="images/m5stack-tab5-lvgl-screen-day-off-plants-fr.png" width="1280" height="720" loading="lazy"
-        alt="Écran de la M5Stack Tab5 rendu en français, jour de repos, bandeau Home Assistant et plantes à surveiller">
-      <figcaption>Jour de repos, plantes à surveiller.</figcaption>
-    </figure>
-  </div>
+  <section class="bloc" id="start">
+    <h2><span lang="en">Get started</span><span lang="fr">Démarrer</span></h2>
+    <p class="intro"><span lang="en">Without compiling, since 3.0. You need a Tab5, a USB-C cable that carries data, Chrome or Edge on a computer, and Home Assistant 2026.8 or later.</span><span lang="fr">Sans compiler, depuis la 3.0. Il faut une Tab5, un câble USB-C qui transmet les données, Chrome ou Edge sur un ordinateur, et Home Assistant 2026.8 ou plus récent.</span></p>
+    <ol class="etapes">
+      <li>
+        <h3><span lang="en">Home Assistant first</span><span lang="fr">Home Assistant d'abord</span></h3>
+        <p><span lang="en">Set up the project's packages and its blueprint. For now this still needs the repository and Python, once, to fill in your city, calendar and so on.</span><span lang="fr">Installez les packages du projet et son blueprint. Pour l'instant, cela demande encore le dépôt et Python, une fois, pour renseigner votre ville, votre agenda, etc.</span></p>
+      </li>
+      <li>
+        <h3><span lang="en">Flash from the browser</span><span lang="fr">Flasher depuis le navigateur</span></h3>
+        <p><span lang="en">On the <a href="install/">install page</a>: your display revision, the Stable channel, <em>Connect and install</em>. On a new tablet, accept to erase it.</span><span lang="fr">Sur la <a href="install/">page d'installation</a>&nbsp;: votre révision d'écran, le canal Stable, <em>Connecter et installer</em>. Sur une tablette neuve, acceptez de l'effacer.</span></p>
+      </li>
+      <li>
+        <h3>Wi-Fi</h3>
+        <p><span lang="en">From the same window, over USB, or with a phone on the open “Tab5 Fallback AP” network.</span><span lang="fr">Depuis la même fenêtre, par l'USB, ou avec un téléphone sur le réseau ouvert «&nbsp;Tab5 Fallback AP&nbsp;».</span></p>
+      </li>
+      <li>
+        <h3><span lang="en">Add it to Home Assistant</span><span lang="fr">L'ajouter à Home Assistant</span></h3>
+        <p><span lang="en">Within 30 minutes of its start: <em>Settings → Devices &amp; services</em>, the ESPHome device is discovered, <em>Configure</em>. Home Assistant gives it its key.</span><span lang="fr">Dans les 30 minutes qui suivent son démarrage&nbsp;: <em>Paramètres → Appareils et services</em>, l'appareil ESPHome est découvert, <em>Configurer</em>. Home Assistant lui donne sa clé.</span></p>
+      </li>
+      <li>
+        <h3><span lang="en">Allow Home Assistant actions</span><span lang="fr">Autoriser les actions Home Assistant</span></h3>
+        <p><span lang="en">In the ESPHome options of the device. Voice, calendar and alarm clock need them.</span><span lang="fr">Dans les options ESPHome de l'appareil. La voix, le calendrier et le réveil en ont besoin.</span></p>
+      </li>
+      <li>
+        <h3><span lang="en">Pick your devices</span><span lang="fr">Choisir vos appareils</span></h3>
+        <p><span lang="en">Create the automation from the blueprint, with the mouse. What you don't have disappears from the screen; changing a device needs no flash.</span><span lang="fr">Créez l'automatisation depuis le blueprint, à la souris. Ce que vous n'avez pas disparaît de l'écran&nbsp;; changer d'appareil ne demande pas de flash.</span></p>
+      </li>
+    </ol>
+    <p class="suite">
+      <span lang="en">Updates then show up in Home Assistant (“Firmware” entity). Over the air, the tablet only accepts a firmware signed with the project key.</span>
+      <span lang="fr">Les mises à jour arrivent ensuite dans Home Assistant (entité «&nbsp;Firmware&nbsp;»). Par le réseau, la tablette n'accepte qu'un firmware signé par la clé du projet.</span>
+    </p>
+    <div class="actions">
+      <a class="bouton principal" href="install/"><span lang="en">Install from the browser</span><span lang="fr">Installer depuis le navigateur</span></a>
+      <a class="bouton secondaire" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md"><span lang="en">Full guide, or build your own</span><span lang="fr">Guide complet, ou compiler le vôtre</span></a>
+    </div>
+    <p class="encart">
+      <span lang="en">Just want to see it running? The <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/demo_mode.md">demo mode</a> pushes demo data to a flashed tablet with a small script: no Home Assistant, nothing left to clean up.</span>
+      <span lang="fr">Envie de le voir tourner d'abord&nbsp;? Le <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/demo_mode.md#version-française">mode démo</a> pousse des données de démonstration vers une tablette flashée avec un petit script&nbsp;: sans Home Assistant, rien à nettoyer ensuite.</span>
+    </p>
+  </section>
 
-  <h2><span lang="en">Good to know</span><span lang="fr">À savoir</span></h2>
-  <ul>
-    <li lang="en">Used every day on the <strong>ST7123</strong> display revision. The ST7121 and the original ILI9881C are built but not tested with this firmware (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/hardware.md#hardware-revisions">how to tell them apart</a>).</li>
-    <li lang="fr">Utilisé tous les jours sur la révision d'écran <strong>ST7123</strong>. La ST7121 et l'ILI9881C d'origine sont compilées mais pas essayées avec ce firmware (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/hardware.md#révisions-matérielles">les reconnaître</a>).</li>
-    <li lang="en">The layout follows the author's home: missing devices are hidden, but more than 3 lights or another device per tile is not possible yet.</li>
-    <li lang="fr">La disposition suit la maison de l'auteur : les appareils absents sont masqués, mais plus de 3 lumières ou un autre appareil par tuile n'est pas encore possible.</li>
-    <li lang="en">Updates are offered in Home Assistant. Over the air, the tablet only accepts a firmware signed with the project key.</li>
-    <li lang="fr">Les mises à jour sont proposées dans Home Assistant. En OTA, la tablette n'accepte qu'un firmware signé par la clé du projet.</li>
-    <li lang="en">The code was written by AI tools, steered and tested by the author (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/related_projects.md">the story</a>).</li>
-    <li lang="fr">Le code a été écrit par des outils d'IA, orientés et testés par l'auteur (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/related_projects.md">l'histoire</a>).</li>
-  </ul>
+  <section class="bloc" id="features">
+    <h2><span lang="en">What it does</span><span lang="fr">Ce qu'il fait</span></h2>
+    <p class="intro"><span lang="en">A single 1280×720 page: popups open with a tap, a long press or a swipe.</span><span lang="fr">Une seule page de 1280×720&nbsp;: les popups s'ouvrent d'un appui, d'un appui long ou d'un glissement.</span></p>
+    <div class="grille">
+      <div class="carte">
+        <h3><span lang="en">Weather</span><span lang="fr">Météo</span></h3>
+        <p><span lang="en">Rain in the next hour, hourly and 15-day forecast, weather warnings. Météo-France by default; OpenWeatherMap, MeteoAlarm or any Home Assistant weather entity can be chosen instead (<a href="#weather">below</a>).</span><span lang="fr">Pluie dans l'heure, prévisions horaires et à 15 jours, vigilances. Météo-France par défaut&nbsp;; OpenWeatherMap, MeteoAlarm ou n'importe quelle entité météo de Home Assistant au choix (<a href="#weather">plus bas</a>).</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Central card</span><span lang="fr">Carte centrale</span></h3>
+        <p><span lang="en">Every 8 s: work hours, rain graph, warnings, a 3-day calendar recap and up to 4 banners pushed by Home Assistant. A tap dismisses a banner.</span><span lang="fr">Toutes les 8 s&nbsp;: horaires, graphe de pluie, vigilances, récap du calendrier sur 3 jours et jusqu'à 4 bandeaux poussés par Home Assistant. Un appui masque un bandeau.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Climate</span><span lang="fr">Clim</span></h3>
+        <p><span lang="en">Modes, a thermostat arc, presets and airflow. Controls are dimmed, not hidden, when the unit is off.</span><span lang="fr">Modes, arc de thermostat, préréglages et flux d'air. Les commandes sont grisées, pas masquées, quand la clim est éteinte.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Lights</span><span lang="fr">Lumières</span></h3>
+        <p><span lang="en">Up to 3 lights: brightness arc with shortcuts, 3 whites and 12 colours, switch light without closing the popup.</span><span lang="fr">Jusqu'à 3 lumières&nbsp;: arc de luminosité avec raccourcis, 3 blancs et 12 couleurs, changer de lumière sans fermer le popup.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Plants</span><span lang="fr">Plantes</span></h3>
+        <p><span lang="en">Up to 5 BLE sensors, coloured by soil moisture. A long press shows fertility, light, temperature and battery.</span><span lang="fr">Jusqu'à 5 capteurs BLE, colorés selon l'humidité du sol. Un appui long montre fertilité, lumière, température et batterie.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">TV remote</span><span lang="fr">Télécommande TV</span></h3>
+        <p><span lang="en">A full-screen Samsung remote: power, pad, volume, channels, playback, mute. Commands go through Home Assistant.</span><span lang="fr">Une télécommande Samsung plein écran&nbsp;: marche, croix, volume, chaînes, lecture, muet. Les commandes passent par Home Assistant.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Roller shutter</span><span lang="fr">Volet roulant</span></h3>
+        <p><span lang="en">Open, close or a position, from the home screen. While it moves, “Stop” said aloud halts it at once.</span><span lang="fr">Ouvrir, fermer ou une position, depuis l'accueil. Pendant qu'il bouge, «&nbsp;Stop&nbsp;» dit à voix haute l'arrête tout de suite.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Voice</span><span lang="fr">Voix</span></h3>
+        <p><span lang="en">“Okay Nabu” detected on the tablet, or a tap on the microphone. Two Assist pipelines, chosen from the screen: home control, or a Discussion mode with an LLM (<a href="#voice">below</a>).</span><span lang="fr">«&nbsp;Okay Nabu&nbsp;» détecté sur la tablette, ou un appui sur le micro. Deux pipelines Assist, au choix depuis l'écran&nbsp;: la domotique, ou un mode Discussion avec un LLM (<a href="#voice">plus bas</a>).</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Calendar and alarm clock</span><span lang="fr">Calendrier et réveil</span></h3>
+        <p><span lang="en">A monthly calendar computed on the tablet, with work hours, holidays and appointments; an alarm clock with spoken reminders.</span><span lang="fr">Un calendrier du mois calculé sur la tablette, avec horaires, fériés, vacances et rendez-vous&nbsp;; un réveil avec rappels parlés.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Diagnostics console</span><span lang="fr">Console de diagnostic</span></h3>
+        <p><span lang="en">Memory, Wi-Fi, uptime, volume; reload automations, restart Home Assistant or the tablet, behind a confirmation.</span><span lang="fr">Mémoire, Wi-Fi, temps de marche, volume&nbsp;; recharger les automatisations, redémarrer Home Assistant ou la tablette, après confirmation.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">8 offline games</span><span lang="fr">8 jeux hors ligne</span></h3>
+        <p><span lang="en">Experimental: chess, draughts, Go, breakout, pinball, Lode Runner, a marble roguelite and a quiz (<a href="#games">below</a>).</span><span lang="fr">Expérimentaux&nbsp;: échecs, dames, go, casse-briques, flipper, Lode Runner, un roguelite de bille et un quiz (<a href="#games">plus bas</a>).</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Six languages</span><span lang="fr">Six langues</span></h3>
+        <p><span lang="en">French, English, German, Dutch, Spanish or Italian, switched from Home Assistant. All written by an AI, like the rest of the project; the author checked the French, the others are not reviewed yet.</span><span lang="fr">Français, anglais, allemand, néerlandais, espagnol ou italien, au choix depuis Home Assistant. Toutes écrites par une IA, comme le reste du projet&nbsp;; l'auteur a relu le français, les autres ne sont pas encore relues.</span></p>
+      </div>
+    </div>
+  </section>
 
-  <h2><span lang="en">Try it</span><span lang="fr">L'essayer</span></h2>
-  <p>
-    <span lang="en">You need a Tab5, a USB-C cable, Chrome or Edge on a computer, then Home Assistant with the project's packages and blueprint.</span>
-    <span lang="fr">Il faut une Tab5, un câble USB-C, Chrome ou Edge sur un ordinateur, puis Home Assistant avec les packages et le blueprint du projet.</span>
-  </p>
-  <div class="actions">
-    <a class="bouton principal" href="install/"><span lang="en">Install from the browser</span><span lang="fr">Installer depuis le navigateur</span></a>
-    <a class="bouton secondaire" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md"><span lang="en">Build your own firmware</span><span lang="fr">Compiler son firmware</span></a>
-  </div>
-  <p class="doux">
-    <span lang="en">Or watch the <a href="https://www.youtube.com/watch?v=ygNhgtMffu4">demo video</a> (July 2026), or push demo data to a flashed tablet without Home Assistant (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/demo_mode.md">demo mode</a>).</span>
-    <span lang="fr">Ou regardez la <a href="https://www.youtube.com/watch?v=ygNhgtMffu4">vidéo de démo</a> (juillet 2026), ou poussez des données de démonstration vers une tablette flashée, sans Home Assistant (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/demo_mode.md#version-française">mode démo</a>).</span>
-  </p>
+  <section class="bloc" id="weather">
+    <h2><span lang="en">Rain in the next hour, weather warnings</span><span lang="fr">Pluie dans l'heure, vigilances</span></h2>
+    <p class="intro"><span lang="en">What the screen was first made for: seeing at a glance whether rain is coming before leaving. Both panels join the rotation of the central card only when there is something to show. The pictures are renders of the firmware with demo data: moderate rain in 10 minutes, an orange warning.</span><span lang="fr">Ce pour quoi l'écran a d'abord été fait&nbsp;: voir d'un coup d'œil s'il va pleuvoir avant de partir. Les deux panneaux n'entrent dans la rotation de la carte centrale que s'il y a quelque chose à montrer. Les images sont des rendus du firmware avec des données de démonstration&nbsp;: pluie modérée dans 10 minutes, vigilance orange.</span></p>
 
-  <footer>
-    <p lang="en">MIT licence · <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL">source code</a> · questions and your own builds in the <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions">Discussions</a>.</p>
-    <p lang="fr">Licence MIT · <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL">code source</a> · questions et montages dans les <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions">Discussions</a>.</p>
-  </footer>
+    <h3 class="sous"><span lang="en">Rain in the next hour</span><span lang="fr">Pluie dans l'heure</span></h3>
+    <div class="vue">
+      <figure lang="en">
+        <a class="agrandir" href="images/m5stack-tab5-rain-next-hour-en.png"><img src="images/m5stack-tab5-rain-next-hour-en.png" width="1280" height="430" loading="lazy"
+          alt="M5Stack Tab5 screen in English: nine rain bars for the next hour and the sentence Moderate rain in 10 min, the date in orange"></a>
+      </figure>
+      <figure lang="fr">
+        <a class="agrandir" href="images/m5stack-tab5-rain-next-hour-fr.png"><img src="images/m5stack-tab5-rain-next-hour-fr.png" width="1280" height="430" loading="lazy"
+          alt="Écran de la M5Stack Tab5 en français&nbsp;: neuf barres de pluie pour l'heure qui vient et la phrase Pluie modérée dans 10 mn, la date en orange"></a>
+      </figure>
+    </div>
+    <div class="deux">
+      <ul class="sans-marge">
+        <li><span lang="en"><b>9 bars, the whole next hour</b>: one every 5 minutes for half an hour, then one every 10 minutes.</span><span lang="fr"><b>9 barres, toute l'heure qui vient</b>&nbsp;: une toutes les 5 minutes pendant une demi-heure, puis une toutes les 10 minutes.</span></li>
+        <li><span lang="en">The taller and darker the bar, the heavier the rain; an empty bar is dry.</span><span lang="fr">Plus la barre est haute et foncée, plus la pluie est forte&nbsp;; une barre vide, c'est sec.</span></li>
+        <li><span lang="en">The sentence is written by the tablet, in its language, and counts the minutes down by itself.</span><span lang="fr">La phrase est écrite par la tablette, dans sa langue, et décompte les minutes toute seule.</span></li>
+        <li><span lang="en">Source: Météo-France in France; elsewhere OpenWeatherMap (One Call subscription, with a free tier); or none, and the panel goes away.</span><span lang="fr">Source&nbsp;: Météo-France en France&nbsp;; ailleurs OpenWeatherMap (abonnement One Call, avec un palier gratuit)&nbsp;; ou aucune, et le panneau disparaît.</span></li>
+      </ul>
+      <div class="ecran-mini">
+        <div class="barres">
+          <i style="--h:26%;--c:#81d4fa"></i><i style="--h:50%;--c:#29b6f6"></i><i style="--h:50%;--c:#29b6f6"></i><i style="--h:76%;--c:#0277bd"></i><i style="--h:76%;--c:#0277bd"></i><i style="--h:50%;--c:#29b6f6"></i><i class="long" style="--h:26%;--c:#81d4fa"></i><i class="long"></i><i class="long"></i>
+        </div>
+        <div class="axe"><span lang="en">now</span><span lang="fr">maintenant</span><span>+30 min</span><span>+1 h</span></div>
+        <ul class="legende">
+          <li><i style="background:#81d4fa"></i><span lang="en">light</span><span lang="fr">faible</span></li>
+          <li><i style="background:#29b6f6"></i><span lang="en">moderate</span><span lang="fr">modérée</span></li>
+          <li><i style="background:#0277bd"></i><span lang="en">heavy</span><span lang="fr">forte</span></li>
+          <li><i style="background:#01579b"></i><span lang="en">very heavy</span><span lang="fr">très forte</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="sous"><span lang="en">Weather warnings</span><span lang="fr">Vigilances</span></h3>
+    <div class="vue">
+      <figure lang="en">
+        <a class="agrandir" href="images/m5stack-tab5-weather-warnings-en.png"><img src="images/m5stack-tab5-weather-warnings-en.png" width="1280" height="430" loading="lazy"
+          alt="M5Stack Tab5 screen in English with two weather warning icons, a yellow thunderstorm and an orange rain-flood, and the date in orange"></a>
+      </figure>
+      <figure lang="fr">
+        <a class="agrandir" href="images/m5stack-tab5-weather-warnings-fr.png"><img src="images/m5stack-tab5-weather-warnings-fr.png" width="1280" height="430" loading="lazy"
+          alt="Écran de la M5Stack Tab5 en français avec deux icônes de vigilance, orages en jaune et pluie-inondation en orange, et la date en orange"></a>
+      </figure>
+    </div>
+    <div class="deux">
+      <ul class="sans-marge">
+        <li><span lang="en"><b>One icon per warning in force</b>, up to 4: wind, rain-flood, thunderstorms, floods, snow-ice, extreme cold, heatwave, avalanches, waves-flooding; fog and forest fires with MeteoAlarm.</span><span lang="fr"><b>Une icône par vigilance en cours</b>, 4 au plus&nbsp;: vent, pluie-inondation, orages, crues, neige-verglas, grand froid, canicule, avalanches, vagues-submersion&nbsp;; brouillard et feux de forêt avec MeteoAlarm.</span></li>
+        <li><span lang="en">Each icon has the colour of its own level. The date under the clock takes the colour of the day's overall level, even while another panel is shown.</span><span lang="fr">Chaque icône a la couleur de son propre niveau. La date sous l'horloge prend la couleur du niveau global de la journée, même quand un autre panneau est affiché.</span></li>
+        <li><span lang="en">Source: Météo-France for your department; elsewhere in Europe MeteoAlarm (39 countries, one warning at a time, tried with simulated data only); or none.</span><span lang="fr">Source&nbsp;: Météo-France pour votre département&nbsp;; ailleurs en Europe MeteoAlarm (39 pays, une vigilance à la fois, essayé seulement avec des données simulées)&nbsp;; ou aucune.</span></li>
+      </ul>
+      <div class="ecran-mini">
+        <p><span lang="en">Icons</span><span lang="fr">Icônes</span></p>
+        <ul class="legende">
+          <li><i style="background:#ffff00"></i><span lang="en">yellow</span><span lang="fr">jaune</span></li>
+          <li><i style="background:#fbbf24"></i>orange</li>
+          <li><i style="background:#ff0000"></i><span lang="en">red</span><span lang="fr">rouge</span></li>
+        </ul>
+        <p><span lang="en">Date under the clock</span><span lang="fr">Date sous l'horloge</span></p>
+        <ul class="dates">
+          <li><b style="color:#34d399"><span lang="en">Tue 16 Jun</span><span lang="fr">Mar 16 Juin</span></b><span lang="en">none</span><span lang="fr">aucune</span></li>
+          <li><b style="color:#fcf3cf"><span lang="en">Tue 16 Jun</span><span lang="fr">Mar 16 Juin</span></b><span lang="en">yellow</span><span lang="fr">jaune</span></li>
+          <li><b style="color:#f8c471"><span lang="en">Tue 16 Jun</span><span lang="fr">Mar 16 Juin</span></b>orange</li>
+          <li><b style="color:#f1948a"><span lang="en">Tue 16 Jun</span><span lang="fr">Mar 16 Juin</span></b><span lang="en">red</span><span lang="fr">rouge</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloc" id="gallery">
+    <h2><span lang="en">On the tablet</span><span lang="fr">Sur la tablette</span></h2>
+    <p class="intro"><span lang="en">Photos of the author's tablet (July 2026, French interface).</span><span lang="fr">Photos de la tablette de l'auteur (juillet 2026).</span></p>
+    <div class="galerie">
+      <figure>
+        <a class="agrandir" href="images/m5stack-tab5-home-assistant-device-buttons.jpg"><img src="images/m5stack-tab5-home-assistant-device-buttons.jpg" width="1024" height="771" loading="lazy"
+          alt="M5Stack Tab5 Home Assistant screen with buttons for a desk PC, a roller shutter, bedroom and living-room lights and LEDs"></a>
+        <figcaption><span lang="en">Device buttons, one tap each.</span><span lang="fr">Les boutons des appareils, un appui chacun.</span></figcaption>
+      </figure>
+      <figure>
+        <a class="agrandir" href="images/m5stack-tab5-plant-sensors-soil-moisture.jpg"><img src="images/m5stack-tab5-plant-sensors-soil-moisture.jpg" width="1024" height="771" loading="lazy"
+          alt="M5Stack Tab5 popup with five BLE plant sensors: soil moisture, fertility, light, temperature and battery"></a>
+        <figcaption><span lang="en">Plant sensors: moisture, fertility, light, temperature, battery.</span><span lang="fr">Capteurs de plantes&nbsp;: humidité, fertilité, lumière, température, batterie.</span></figcaption>
+      </figure>
+      <figure>
+        <a class="agrandir" href="images/m5stack-tab5-home-assistant-climate-control.jpg"><img src="images/m5stack-tab5-home-assistant-climate-control.jpg" width="1024" height="771" loading="lazy"
+          alt="M5Stack Tab5 climate popup with modes, a thermostat arc set to 23 °C, presets and airflow options"></a>
+        <figcaption><span lang="en">Climate: modes, thermostat arc, presets, airflow.</span><span lang="fr">Clim&nbsp;: modes, arc du thermostat, préréglages, flux d'air.</span></figcaption>
+      </figure>
+      <figure>
+        <a class="agrandir" href="images/m5stack-tab5-home-assistant-light-control.jpg"><img src="images/m5stack-tab5-home-assistant-light-control.jpg" width="1024" height="771" loading="lazy"
+          alt="M5Stack Tab5 light popup with a light selector, a brightness arc at 100 % and colour swatches"></a>
+        <figcaption><span lang="en">Lights: brightness arc, whites and colours.</span><span lang="fr">Lumières&nbsp;: arc de luminosité, blancs et couleurs.</span></figcaption>
+      </figure>
+      <figure>
+        <a class="agrandir" href="images/m5stack-tab5-samsung-tv-remote.jpg"><img src="images/m5stack-tab5-samsung-tv-remote.jpg" width="1024" height="771" loading="lazy"
+          alt="M5Stack Tab5 showing a Samsung TV remote with power, source, direction pad, volume and playback buttons"></a>
+        <figcaption><span lang="en">Samsung TV remote, through Home Assistant.</span><span lang="fr">Télécommande TV Samsung, par Home Assistant.</span></figcaption>
+      </figure>
+      <figure>
+        <a class="agrandir" href="images/m5stack-tab5-esphome-diagnostics-console.jpg"><img src="images/m5stack-tab5-esphome-diagnostics-console.jpg" width="1024" height="771" loading="lazy"
+          alt="M5Stack Tab5 diagnostics console with memory, Wi-Fi, uptime, CPU temperature and Home Assistant actions"></a>
+        <figcaption><span lang="en">Diagnostics console: memory, Wi-Fi, uptime, Home Assistant actions.</span><span lang="fr">Console de diagnostic&nbsp;: mémoire, Wi-Fi, temps de marche, actions Home Assistant.</span></figcaption>
+      </figure>
+      <figure>
+        <a class="agrandir" href="images/m5stack-tab5-calendar-work-hours.jpg"><img src="images/m5stack-tab5-calendar-work-hours.jpg" width="2000" height="1505" loading="lazy"
+          alt="M5Stack Tab5 monthly calendar with work hours, public holidays, school holidays and appointments"></a>
+        <figcaption><span lang="en">Monthly calendar: work hours, holidays, appointments.</span><span lang="fr">Calendrier du mois&nbsp;: horaires, fériés, vacances, rendez-vous.</span></figcaption>
+      </figure>
+      <figure>
+        <a class="agrandir" href="images/m5stack-tab5-voice-assistant-reply.jpg"><img src="images/m5stack-tab5-voice-assistant-reply.jpg" width="2000" height="1505" loading="lazy"
+          alt="M5Stack Tab5 voice assistant popup showing the spoken request and a formatted reply"></a>
+        <figcaption><span lang="en">Voice assistant: the request and its reply.</span><span lang="fr">Assistant vocal&nbsp;: la demande et sa réponse.</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="bloc" id="demo">
+    <h2><span lang="en">See it move</span><span lang="fr">Le voir bouger</span></h2>
+    <p class="intro"><span lang="en">The demo video (provisional cut, July 2026: voice, touch, TV remote, climate) and an animated tour of the screens.</span><span lang="fr">La vidéo de démo (version provisoire, juillet 2026&nbsp;: voix, tactile, télécommande TV, clim) et un tour animé des écrans.</span></p>
+    <div class="deux">
+      <figure>
+        <div class="video" id="video">
+          <button type="button" id="lire">
+            <span class="affiche">
+              <b><span lang="en">Demo video</span><span lang="fr">Vidéo de démo</span></b>
+              <span lang="en">voice · touch · TV remote · climate</span><span lang="fr">voix · tactile · télécommande TV · clim</span>
+            </span>
+            <span class="jouer" aria-hidden="true"></span>
+          </button>
+        </div>
+        <figcaption>
+          <span lang="en">Plays from YouTube (no-cookie mode) when you click. <a href="https://www.youtube.com/watch?v=ygNhgtMffu4">Open on YouTube</a>.</span>
+          <span lang="fr">Lue depuis YouTube (mode sans cookie) quand vous cliquez. <a href="https://www.youtube.com/watch?v=ygNhgtMffu4">Ouvrir sur YouTube</a>.</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <img src="images/m5stack-tab5-home-assistant-ui-tour.webp" width="1200" height="900" loading="lazy"
+          alt="Animated tour of the M5Stack Tab5 Home Assistant screen: home, devices, plants, climate, lights, TV remote and console">
+        <figcaption><span lang="en">Home, devices, plants, climate, lights, TV, console.</span><span lang="fr">Accueil, appareils, plantes, clim, lumières, TV, console.</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="bloc" id="hardware">
+    <h2><span lang="en">Hardware</span><span lang="fr">Matériel</span></h2>
+    <p class="intro"><span lang="en">M5Stack has shipped the Tab5 with three display chips. Each needs its own firmware: the install page offers the three.</span><span lang="fr">M5Stack a livré la Tab5 avec trois puces d'écran. Chacune demande son firmware&nbsp;: la page d'installation propose les trois.</span></p>
+    <div class="tableau">
+      <table>
+        <thead>
+          <tr>
+            <th><span lang="en">Display chip</span><span lang="fr">Puce d'écran</span></th>
+            <th><span lang="en">Units made</span><span lang="fr">Fabriquées</span></th>
+            <th><span lang="en">Status</span><span lang="fr">Statut</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>ST7123</b></td>
+            <td><span lang="en">14 Oct 2025 → 28 Apr 2026</span><span lang="fr">14/10/2025 → 28/04/2026</span></td>
+            <td><span class="statut ok"><span lang="en">Supported</span><span lang="fr">Prise en charge</span></span> <span lang="en">the author's tablet, in daily use</span><span lang="fr">la tablette de l'auteur, tous les jours</span></td>
+          </tr>
+          <tr>
+            <td><b>ST7121</b></td>
+            <td><span lang="en">from 28 Apr 2026</span><span lang="fr">depuis le 28/04/2026</span></td>
+            <td><span class="statut essai"><span lang="en">Built, untested</span><span lang="fr">Compilée, non essayée</span></span> <span lang="en">the same display and touch settings were reported working by another user</span><span lang="fr">les mêmes réglages d'écran et de tactile ont été signalés fonctionnels par un autre utilisateur</span></td>
+          </tr>
+          <tr>
+            <td><b>ILI9881C</b> <span class="doux">+ GT911</span></td>
+            <td><span lang="en">9 May 2025 → 14 Oct 2025</span><span lang="fr">09/05/2025 → 14/10/2025</span></td>
+            <td><span class="statut essai"><span lang="en">Built, untested</span><span lang="fr">Compilée, non essayée</span></span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="suite">
+      <span lang="en">The chip is printed on the sticker on the back, above the Espressif logo (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/hardware.md#hardware-revisions">how to tell them apart</a>). Tried an ST7121 or an ILI9881C? Saying how it went in the <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility">Discussions</a> helps the next person.</span>
+      <span lang="fr">La puce est imprimée sur l'autocollant au dos, au-dessus du logo Espressif (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/hardware.md#révisions-matérielles">les reconnaître</a>). Essayé une ST7121 ou une ILI9881C&nbsp;? Le dire dans les <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility">Discussions</a> aide la personne suivante.</span>
+    </p>
+    <div class="grille par-2">
+      <div class="carte">
+        <h3>ESP32-P4</h3>
+        <p><span lang="en">Dual-core RISC-V up to 400 MHz, 32 MB of PSRAM (the LVGL framebuffer lives there), 16 MB of flash.</span><span lang="fr">RISC-V double cœur jusqu'à 400 MHz, 32 Mo de PSRAM (le framebuffer LVGL y vit), 16 Mo de flash.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">5" screen</span><span lang="fr">Écran 5"</span></h3>
+        <p><span lang="en">1280×720 over MIPI-DSI, capacitive multi-touch.</span><span lang="fr">1280×720 en MIPI-DSI, tactile capacitif multipoint.</span></p>
+      </div>
+      <div class="carte">
+        <h3>ESP32-C6</h3>
+        <p><span lang="en">The radio of the P4: Wi-Fi 6 and Bluetooth LE, through ESP-Hosted. It keeps its factory firmware.</span><span lang="fr">La radio du P4&nbsp;: Wi-Fi 6 et Bluetooth LE, par ESP-Hosted. Il garde son firmware d'usine.</span></p>
+      </div>
+      <div class="carte">
+        <h3><span lang="en">Audio, motion, clock</span><span lang="fr">Audio, mouvement, horloge</span></h3>
+        <p><span lang="en">ES8388 speaker DAC, ES7210 microphone ADC, BMI270 IMU (tilt games, tap to wake), RX8130CE clock kept by a supercapacitor.</span><span lang="fr">DAC ES8388 pour le haut-parleur, ADC ES7210 pour le micro, IMU BMI270 (jeux à inclinaison, réveil au tapotement), horloge RX8130CE tenue par un supercondensateur.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloc" id="how">
+    <h2><span lang="en">How it works</span><span lang="fr">Comment ça marche</span></h2>
+    <p class="intro"><span lang="en">Home Assistant does the thinking; the tablet only draws and listens.</span><span lang="fr">Home Assistant réfléchit&nbsp;; la tablette dessine et écoute.</span></p>
+    <div class="schema">
+      <div class="boite ha">
+        <h3>Home Assistant</h3>
+        <ul>
+          <li><span lang="en">the project's packages: automations that push</span><span lang="fr">les packages du projet&nbsp;: des automatisations qui poussent</span></li>
+          <li><span lang="en">your devices, picked with the blueprint</span><span lang="fr">vos appareils, choisis avec le blueprint</span></li>
+          <li><span lang="en">weather, calendars</span><span lang="fr">météo, agendas</span></li>
+          <li><span lang="en">Assist: two voice pipelines</span><span lang="fr">Assist&nbsp;: deux pipelines vocaux</span></li>
+        </ul>
+      </div>
+      <div class="fleches">
+        <div class="fleche aller"><b><span class="h">→</span><span class="v">↓</span></b><span lang="en">only what changed</span><span lang="fr">seulement ce qui a changé</span></div>
+        <div class="fleche retour"><b><span class="h">←</span><span class="v">↑</span></b><span lang="en">a tap: a Home Assistant action</span><span lang="fr">un appui&nbsp;: une action Home Assistant</span></div>
+        <div class="fleche retour"><b><span class="h">←</span><span class="v">↑</span></b><span lang="en">voice, after “Okay Nabu” only</span><span lang="fr">la voix, après «&nbsp;Okay Nabu&nbsp;» seulement</span></div>
+      </div>
+      <div class="boite tab5">
+        <h3>Tab5 · ESP32-P4</h3>
+        <ul>
+          <li><span lang="en">LVGL 9.5 screen drawn in C++</span><span lang="fr">écran LVGL 9.5 dessiné en C++</span></li>
+          <li><span lang="en">wake words detected locally</span><span lang="fr">mots d'activation détectés sur place</span></li>
+          <li><span lang="en">clock, alarm, calendar, games, console on its own</span><span lang="fr">horloge, réveil, calendrier, jeux, console en autonomie</span></li>
+        </ul>
+      </div>
+    </div>
+    <ul>
+      <li><span lang="en"><b>Push only.</b> Automations on the Home Assistant side notice a change and call the tablet's ESPHome actions; the tablet never requests a state (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/decisions/0001-push-only-zero-polling.md">ADR-0001</a>).</span><span lang="fr"><b>Push uniquement.</b> Côté Home Assistant, des automatisations remarquent un changement et appellent les actions ESPHome de la tablette&nbsp;; celle-ci ne demande jamais un état (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/decisions/0001-push-only-zero-polling.md">ADR-0001</a>).</span></li>
+      <li><span lang="en"><b>Packed data.</b> A 15-day forecast or the weather warnings arrive as one delimited string, parsed in C++: one call, nothing else asked.</span><span lang="fr"><b>Données groupées.</b> Des prévisions à 15 jours ou les vigilances arrivent en une chaîne délimitée, lue en C++&nbsp;: un appel, rien d'autre à demander.</span></li>
+      <li><span lang="en"><b>Offline resilience.</b> If Home Assistant restarts, the last state stays on screen. The tablet reboots itself only after a full hour without any Home Assistant connection.</span><span lang="fr"><b>Résilience hors ligne.</b> Si Home Assistant redémarre, le dernier état reste affiché. La tablette ne redémarre d'elle-même qu'après une heure entière sans aucune connexion de Home Assistant.</span></li>
+      <li><span lang="en"><b>Signed updates.</b> Published firmwares read their updates from this site; Home Assistant offers them, and the tablet refuses an image not signed with the project key.</span><span lang="fr"><b>Mises à jour signées.</b> Les firmwares publiés lisent leurs mises à jour sur ce site&nbsp;; Home Assistant les propose, et la tablette refuse une image non signée par la clé du projet.</span></li>
+    </ul>
+    <p class="suite doux"><span lang="en">More in <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/architecture.md">architecture</a> and <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/ui_design.md">UI design</a>.</span><span lang="fr">Plus de détails&nbsp;: <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/architecture.md#version-française">architecture</a> et <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/ui_design.md#version-française">conception de l'interface</a>.</span></p>
+  </section>
+
+  <section class="bloc" id="voice">
+    <h2><span lang="en">Voice assistant</span><span lang="fr">Assistant vocal</span></h2>
+    <p class="intro"><span lang="en">The Tab5 is an Assist satellite: it listens, shows where the request is, and plays the reply. Understanding happens in Home Assistant, in one of two pipelines chosen from the screen (a button on the home screen, or the assistant popup).</span><span lang="fr">La Tab5 est un satellite Assist&nbsp;: elle écoute, montre où en est la demande et joue la réponse. La compréhension se fait dans Home Assistant, dans l'un des deux pipelines choisis depuis l'écran (un bouton de l'accueil, ou le popup de l'assistant).</span></p>
+    <div class="grille par-2">
+      <div class="carte">
+        <h3><span lang="en">Home control</span><span lang="fr">Domotique</span></h3>
+        <p><span lang="en">Home Assistant's own conversation agent: switch devices, read sensors, trigger automations.</span><span lang="fr">L'agent de conversation de Home Assistant&nbsp;: piloter les appareils, lire les capteurs, lancer des automatisations.</span></p>
+      </div>
+      <div class="carte">
+        <h3>Discussion</h3>
+        <p><span lang="en">A second pipeline whose agent talks to <a href="https://github.com/Axellum/vromvrom-engine">vromvrom-engine</a>, the author's companion engine: short home commands matched locally, open chat through a light LLM, local or cloud. Optional: the screen works without it.</span><span lang="fr">Un second pipeline dont l'agent parle à <a href="https://github.com/Axellum/vromvrom-engine">vromvrom-engine</a>, le moteur compagnon de l'auteur&nbsp;: commandes domotiques courtes reconnues en local, conversation libre par un LLM léger, local ou cloud. Optionnel&nbsp;: l'écran marche sans lui.</span></p>
+      </div>
+    </div>
+    <p class="suite"><span lang="en">Either way, the same chain:</span><span lang="fr">Dans les deux cas, la même chaîne&nbsp;:</span></p>
+    <ol class="chaine">
+      <li><span class="ou t">Tab5</span><b><span lang="en">Wake word</span><span lang="fr">Mot d'activation</span></b><span lang="en">“Okay Nabu”, detected on the device</span><span lang="fr">«&nbsp;Okay Nabu&nbsp;», détecté sur l'appareil</span></li>
+      <li><span class="ou h">Home Assistant</span><b><span lang="en">Speech to text</span><span lang="fr">Parole en texte</span></b><span lang="en">for example Whisper, local</span><span lang="fr">par exemple Whisper, en local</span></li>
+      <li><span class="ou h">Home Assistant</span><b><span lang="en">Intent, reply</span><span lang="fr">Intention, réponse</span></b><span lang="en">the agent of the chosen pipeline</span><span lang="fr">l'agent du pipeline choisi</span></li>
+      <li><span class="ou h">Home Assistant</span><b><span lang="en">Text to speech</span><span lang="fr">Synthèse vocale</span></b><span lang="en">for example Piper, local</span><span lang="fr">par exemple Piper, en local</span></li>
+      <li><span class="ou t">Tab5</span><b><span lang="en">Playback</span><span lang="fr">Lecture</span></b><span lang="en">on the built-in speaker</span><span lang="fr">sur le haut-parleur intégré</span></li>
+    </ol>
+    <p><span lang="en">The microphone icon follows the pipeline:</span><span lang="fr">L'icône du micro suit le pipeline&nbsp;:</span></p>
+    <ul class="micro">
+      <li><i style="background:#8a94a6"></i><span lang="en">idle</span><span lang="fr">repos</span></li>
+      <li><i style="background:#2fb86a"></i><span lang="en">listening</span><span lang="fr">écoute</span></li>
+      <li><i style="background:#f08c2e"></i><span lang="en">processing</span><span lang="fr">traitement</span></li>
+      <li><i style="background:#3b8eea"></i><span lang="en">speaking</span><span lang="fr">réponse</span></li>
+      <li><i style="background:#e5484d"></i><span lang="en">error</span><span lang="fr">erreur</span></li>
+    </ul>
+    <p class="suite"><span lang="en">A second word, “Stop”, is armed only while the roller shutter moves and halts it at once, with no round trip. The popup shows the request and a Markdown reply, with the volume, the wake word switch and the text size at hand (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/voice_assistant.md">voice assistant</a>).</span><span lang="fr">Un second mot, «&nbsp;Stop&nbsp;», n'est armé que pendant que le volet bouge et l'arrête tout de suite, sans aller-retour. Le popup montre la demande et une réponse en Markdown, avec le volume, le mot d'activation et la taille du texte à portée de main (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/voice_assistant.md#version-française">assistant vocal</a>).</span></p>
+  </section>
+
+  <section class="bloc" id="games">
+    <h2><span lang="en">Arcade: 8 offline games</span><span lang="fr">Arcade&nbsp;: 8 jeux hors ligne</span></h2>
+    <p class="intro"><span lang="en">Experimental: first-pass games written by AI to see what LVGL and C++ can do on an ESP32-P4. They work, they are not polished. All on the tablet, no network; progress is saved. Tap the greenhouse temperature to open them.</span><span lang="fr">Expérimentaux&nbsp;: des jeux écrits par l'IA en premier jet, pour voir ce que LVGL et le C++ peuvent faire sur un ESP32-P4. Ils marchent, sans être finis. Tout sur la tablette, sans réseau&nbsp;; la progression est gardée. Un appui sur la température de la serre les ouvre.</span></p>
+    <div class="tableau">
+      <table>
+        <thead>
+          <tr><th><span lang="en">Game</span><span lang="fr">Jeu</span></th><th>Type</th><th><span lang="en">Controls</span><span lang="fr">Commandes</span></th></tr>
+        </thead>
+        <tbody>
+          <tr><td><b>Fil d'Or</b></td><td><span lang="en">Marble roguelite, 6 rooms</span><span lang="fr">Roguelite de bille, 6 salles</span></td><td><span lang="en">Tilt</span><span lang="fr">Inclinaison</span></td></tr>
+          <tr><td><b>Arcanoïde</b></td><td><span lang="en">Breakout, 8 levels, power-ups</span><span lang="fr">Casse-briques, 8 niveaux, bonus</span></td><td><span lang="en">Tilt and touch</span><span lang="fr">Inclinaison et tactile</span></td></tr>
+          <tr><td><b>Neon Apron</b></td><td><span lang="en">Pinball, in portrait</span><span lang="fr">Flipper, en portrait</span></td><td><span lang="en">Touch zones, nudge</span><span lang="fr">Zones tactiles, secousse</span></td></tr>
+          <tr><td><b>Coureur d'Or</b></td><td><span lang="en">Lode Runner, 10 levels</span><span lang="fr">Lode Runner, 10 niveaux</span></td><td><span lang="en">On-screen D-pad</span><span lang="fr">Croix tactile</span></td></tr>
+          <tr><td><b>Go Tab</b></td><td><span lang="en">Go 9×9, 13×13, 19×19</span><span lang="fr">Go 9×9, 13×13, 19×19</span></td><td><span lang="en">Touch</span><span lang="fr">Tactile</span></td></tr>
+          <tr><td><b>Trial Poursuite</b></td><td><span lang="en">Quiz, 1 to 6 teams (questions in French)</span><span lang="fr">Quiz, 1 à 6 équipes</span></td><td><span lang="en">Touch</span><span lang="fr">Tactile</span></td></tr>
+          <tr><td><b>Dames Tab</b></td><td><span lang="en">Draughts 10×10, with an engine</span><span lang="fr">Dames 10×10, avec un moteur</span></td><td><span lang="en">Touch</span><span lang="fr">Tactile</span></td></tr>
+          <tr><td><b>Roi Noir</b></td><td><span lang="en">FIDE chess, 5 engine levels</span><span lang="fr">Échecs FIDE, 5 niveaux de moteur</span></td><td><span lang="en">Touch</span><span lang="fr">Tactile</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="galerie suite">
+      <figure>
+        <a class="agrandir" href="images/m5stack-tab5-arcade-games-lvgl.jpg"><img src="images/m5stack-tab5-arcade-games-lvgl.jpg" width="2000" height="1505" loading="lazy"
+          alt="M5Stack Tab5 arcade menu with eight offline games drawn with LVGL"></a>
+        <figcaption><span lang="en">The game menu.</span><span lang="fr">Le menu des jeux.</span></figcaption>
+      </figure>
+      <figure>
+        <a class="agrandir" href="images/m5stack-tab5-chess-game-esp32-p4.jpg"><img src="images/m5stack-tab5-chess-game-esp32-p4.jpg" width="2000" height="1505" loading="lazy"
+          alt="Chess game Roi Noir running on the M5Stack Tab5 ESP32-P4 with its embedded engine"></a>
+        <figcaption><span lang="en">Roi Noir: chess with an engine running on the tablet.</span><span lang="fr">Roi Noir&nbsp;: des échecs avec un moteur qui tourne sur la tablette.</span></figcaption>
+      </figure>
+      <figure>
+        <a class="agrandir" href="images/m5stack-tab5-lode-runner-game.jpg"><img src="images/m5stack-tab5-lode-runner-game.jpg" width="2000" height="1505" loading="lazy"
+          alt="Coureur d'Or, a Lode Runner style platform game, running on the M5Stack Tab5"></a>
+        <figcaption><span lang="en">Coureur d'Or: dig and climb, Lode Runner style.</span><span lang="fr">Coureur d'Or&nbsp;: creuser et grimper, façon Lode Runner.</span></figcaption>
+      </figure>
+      <figure>
+        <a class="agrandir" href="images/m5stack-tab5-breakout-game-tilt.jpg"><img src="images/m5stack-tab5-breakout-game-tilt.jpg" width="2000" height="1505" loading="lazy"
+          alt="Arcanoïde, a breakout game on the M5Stack Tab5, played by tilting the tablet"></a>
+        <figcaption><span lang="en">Arcanoïde: a breakout played by tilting the tablet.</span><span lang="fr">Arcanoïde&nbsp;: un casse-briques qu'on joue en inclinant la tablette.</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="bloc" id="renders">
+    <h2><span lang="en">Rendered off the device</span><span lang="fr">Rendus hors tablette</span></h2>
+    <p class="intro"><span lang="en">The same firmware, run on a PC by the CI with demo data, captures each screen in the six languages. Three of them:</span><span lang="fr">Le même firmware, lancé sur un PC par la CI avec des données de démonstration, capture chaque écran dans les six langues. Trois d'entre eux&nbsp;:</span></p>
+    <div class="rendus">
+      <figure lang="en">
+        <a class="agrandir" href="images/m5stack-tab5-lvgl-screen-sunny-day-en.png"><img src="images/m5stack-tab5-lvgl-screen-sunny-day-en.png" width="1280" height="720" loading="lazy"
+          alt="Rendered M5Stack Tab5 Home Assistant screen in English on a sunny workday: clock, work hours and 5-day forecast"></a>
+        <figcaption>A sunny workday.</figcaption>
+      </figure>
+      <figure lang="en">
+        <a class="agrandir" href="images/m5stack-tab5-lvgl-screen-rain-warning-en.png"><img src="images/m5stack-tab5-lvgl-screen-rain-warning-en.png" width="1280" height="720" loading="lazy"
+          alt="Rendered M5Stack Tab5 screen in English with rain expected within the hour and an orange weather warning"></a>
+        <figcaption>Rain within the hour, orange warning.</figcaption>
+      </figure>
+      <figure lang="en">
+        <a class="agrandir" href="images/m5stack-tab5-lvgl-screen-day-off-plants-en.png"><img src="images/m5stack-tab5-lvgl-screen-day-off-plants-en.png" width="1280" height="720" loading="lazy"
+          alt="Rendered M5Stack Tab5 screen in English on a day off, with a Home Assistant banner and plants to watch"></a>
+        <figcaption>A day off, plants to watch.</figcaption>
+      </figure>
+      <figure lang="fr">
+        <a class="agrandir" href="images/m5stack-tab5-lvgl-screen-sunny-day-fr.png"><img src="images/m5stack-tab5-lvgl-screen-sunny-day-fr.png" width="1280" height="720" loading="lazy"
+          alt="Écran Home Assistant de la M5Stack Tab5 rendu en français, un jour de travail ensoleillé&nbsp;: horloge, horaires et prévisions à 5 jours"></a>
+        <figcaption>Une journée de travail ensoleillée.</figcaption>
+      </figure>
+      <figure lang="fr">
+        <a class="agrandir" href="images/m5stack-tab5-lvgl-screen-rain-warning-fr.png"><img src="images/m5stack-tab5-lvgl-screen-rain-warning-fr.png" width="1280" height="720" loading="lazy"
+          alt="Écran de la M5Stack Tab5 rendu en français, pluie dans l'heure et vigilance orange"></a>
+        <figcaption>Pluie dans l'heure, vigilance orange.</figcaption>
+      </figure>
+      <figure lang="fr">
+        <a class="agrandir" href="images/m5stack-tab5-lvgl-screen-day-off-plants-fr.png"><img src="images/m5stack-tab5-lvgl-screen-day-off-plants-fr.png" width="1280" height="720" loading="lazy"
+          alt="Écran de la M5Stack Tab5 rendu en français, jour de repos, bandeau Home Assistant et plantes à surveiller"></a>
+        <figcaption>Jour de repos, plantes à surveiller.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="bloc" id="news">
+    <h2><span lang="en">What's new</span><span lang="fr">Nouveautés</span></h2>
+    <div class="grille">
+      <div class="carte">
+        <h3>3.1 <span class="doux">· <span lang="en">28 Sep 2026</span><span lang="fr">28/09/2026</span></span></h3>
+        <ul>
+          <li><span lang="en">Spanish and Italian.</span><span lang="fr">Espagnol et italien.</span></li>
+          <li><span lang="en">Installing into a brand-new Home Assistant is tested by the CI, without hardware; five defects found and fixed.</span><span lang="fr">L'installation dans un Home Assistant neuf est testée par la CI, sans matériel&nbsp;; cinq défauts trouvés et corrigés.</span></li>
+          <li><span lang="en">Voice: no more call to a missing Home Assistant action when interrupting.</span><span lang="fr">Voix&nbsp;: plus d'appel à une action inexistante de Home Assistant en interrompant.</span></li>
+        </ul>
+      </div>
+      <div class="carte">
+        <h3>3.0.1 <span class="doux">· <span lang="en">28 Sep 2026</span><span lang="fr">28/09/2026</span></span></h3>
+        <ul>
+          <li><span lang="en">No false “crash” alert on the first start after an install.</span><span lang="fr">Plus de fausse alerte «&nbsp;plantage&nbsp;» au premier démarrage après une installation.</span></li>
+          <li><span lang="en">A shorter install path, and the pitfalls of the install page.</span><span lang="fr">Un parcours d'installation plus court, et les pièges de la page.</span></li>
+        </ul>
+      </div>
+      <div class="carte">
+        <h3>3.0 <span class="doux">· <span lang="en">28 Sep 2026</span><span lang="fr">28/09/2026</span></span></h3>
+        <ul>
+          <li><span lang="en">Install without compiling, updates in Home Assistant.</span><span lang="fr">Installer sans compiler, mises à jour dans Home Assistant.</span></li>
+          <li><span lang="en">No secret in the firmware: Home Assistant gives the key, updates are signed.</span><span lang="fr">Aucun secret dans le firmware&nbsp;: Home Assistant donne la clé, les mises à jour sont signées.</span></li>
+          <li><span lang="en">Devices picked with a blueprint; what is missing disappears.</span><span lang="fr">Les appareils se choisissent avec un blueprint&nbsp;; ce qui manque disparaît.</span></li>
+          <li><span lang="en">German and Dutch.</span><span lang="fr">Allemand et néerlandais.</span></li>
+        </ul>
+      </div>
+    </div>
+    <p class="suite doux"><span lang="en">Every change, with what to do when updating and the known issues: <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases">releases</a> and <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/CHANGELOG.md">changelog</a>.</span><span lang="fr">Chaque changement, avec quoi faire en mettant à jour et les problèmes connus&nbsp;: <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases">releases</a> et <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/CHANGELOG.md">journal des modifications</a>.</span></p>
+  </section>
+
+  <section class="bloc" id="know">
+    <h2><span lang="en">Good to know</span><span lang="fr">À savoir</span></h2>
+    <ul>
+      <li lang="en">Used every day on the <strong>ST7123</strong> revision only; the two others are built but not tried with this firmware.</li>
+      <li lang="fr">Utilisé tous les jours sur la révision <strong>ST7123</strong> seulement&nbsp;; les deux autres sont compilées mais pas essayées avec ce firmware.</li>
+      <li lang="en">The layout follows the author's home: missing devices are hidden, but more than 3 lights or another device per tile is not possible yet.</li>
+      <li lang="fr">La disposition suit la maison de l'auteur&nbsp;: les appareils absents sont masqués, mais plus de 3 lumières ou un autre appareil par tuile n'est pas encore possible.</li>
+      <li lang="en">The rain graph and warnings are made for France first (Météo-France); elsewhere, OpenWeatherMap and MeteoAlarm. MeteoAlarm has only been tried with simulated data.</li>
+      <li lang="fr">Le graphe de pluie et les vigilances sont d'abord faits pour la France (Météo-France)&nbsp;; ailleurs, OpenWeatherMap et MeteoAlarm. MeteoAlarm n'a été essayé qu'avec des données simulées.</li>
+      <li lang="en">A fresh install from the page has been done once, by the author. Each release lists its known issues.</li>
+      <li lang="fr">Une installation à neuf par la page a été faite une fois, par l'auteur. Chaque release liste ses problèmes connus.</li>
+      <li lang="en">The code was written by AI tools, steered and tested by the author (<a href="#story">the story</a>).</li>
+      <li lang="fr">Le code a été écrit par des outils d'IA, orientés et testés par l'auteur (<a href="#story">l'histoire</a>).</li>
+    </ul>
+  </section>
+
+  <section class="bloc" id="story">
+    <h2><span lang="en">The story</span><span lang="fr">L'histoire</span></h2>
+    <div class="histoire">
+      <div lang="en">
+        <p>Having heard a lot about AI for coding, I wanted to see for myself what it could do. I needed a project, and my old Nextion screen (mostly weather, already on ESPHome and Météo-France) was starting to feel dated. So I replaced it, with a lot more home automation, on a far more capable display, and with AI writing the code from end to end.</p>
+        <p>The goals of the old screen stayed:</p>
+        <ul>
+          <li>be a clock;</li>
+          <li>show at a glance whether rain is coming within the hour: do I leave 15 minutes early, do I take an umbrella?</li>
+          <li>show the forecast for the next few days;</li>
+          <li>stay on at a reasonable power, with complete freedom over layout, design and logic.</li>
+        </ul>
+        <p>Then, little by little: plant moisture, the TV and the PC, the lights, the air conditioner, the roller shutter, “Okay Nabu”, the work schedule, a TV remote. With a few design rules: no images, gentle pushes on the Home Assistant side (mine runs on a Freebox), a fast start and a screen that feels smooth.</p>
+        <p>I started with Antigravity, then DeepSeek, MiniMax and Z.ai, then Claude, and Cursor more recently. Not a line typed by hand: I set the goal, test, reject and steer, more its architect than its author. If something in the code is weird, it might be an AI quirk. If something works surprisingly well, same answer.</p>
+      </div>
+      <div lang="fr">
+        <p>Ayant beaucoup entendu parler de l'IA pour le codage, j'ai voulu voir par moi-même ce qu'elle donnait. Il me fallait un projet, et mon vieil écran Nextion (plutôt météo, déjà avec ESPHome et Météo-France) commençait à dater. Je l'ai donc renouvelé, avec bien plus de domotique, sur un écran bien plus puissant, et avec l'IA qui écrit le code de bout en bout.</p>
+        <p>Les objectifs de l'ancien écran sont restés&nbsp;:</p>
+        <ul>
+          <li>faire office d'horloge&nbsp;;</li>
+          <li>voir au premier coup d'œil si des averses sont prévues dans l'heure&nbsp;: je pars 15 min en avance&nbsp;? Je prends le parapluie&nbsp;?</li>
+          <li>avoir la prévision sur quelques jours&nbsp;;</li>
+          <li>rester allumé pour une consommation raisonnable, avec une liberté totale sur la disposition, le design et la logique.</li>
+        </ul>
+        <p>Puis, petit à petit&nbsp;: l'humidité des plantes, la TV et l'ordi, les lumières, la clim, le volet roulant, «&nbsp;Ok Nabu&nbsp;», le planning de travail, une télécommande TV. Avec quelques règles&nbsp;: pas d'images, des envois doux côté Home Assistant (le mien tourne sur une Freebox), un démarrage rapide et un écran fluide.</p>
+        <p>J'ai commencé avec Antigravity, puis DeepSeek, MiniMax et Z.ai, puis Claude, et Cursor plus récemment. Pas une ligne tapée à la main&nbsp;: je fixe le but, je teste, je refuse et j'oriente, plus architecte qu'auteur. Si quelque chose dans le code est bizarre, c'est peut-être une bizarrerie d'IA. Si quelque chose marche étonnamment bien, même réponse.</p>
+      </div>
+    </div>
+    <p class="suite doux"><span lang="en">The full note is in the <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL#a-short-personal-note">README</a>; the linked projects in <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/related_projects.md">related projects</a>.</span><span lang="fr">La note complète est dans le <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL#note-personnelle">README</a>&nbsp;; les projets liés dans <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/related_projects.md">projets liés</a>.</span></p>
+  </section>
+
+  <section class="bloc" id="docs">
+    <h2>Documentation</h2>
+    <p class="intro"><span lang="en">On GitHub, in English and French (games and some internals in French only).</span><span lang="fr">Sur GitHub, en anglais et en français (jeux et quelques détails internes en français seulement).</span></p>
+    <div class="grille docs">
+      <a class="carte" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md"><b><span lang="en">Installation</span><span lang="fr">Installation</span></b><p><span lang="en">Install page or your own build, signing key, Home Assistant, updates, adapting to your home.</span><span lang="fr">Page d'installation ou compilation, clé de signature, Home Assistant, mises à jour, adapter à sa maison.</span></p></a>
+      <a class="carte" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/screens.md"><b><span lang="en">Screens</span><span lang="fr">Écrans</span></b><p><span lang="en">Every area and popup, one by one.</span><span lang="fr">Chaque zone et chaque popup, une par une.</span></p></a>
+      <a class="carte" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/hardware.md"><b><span lang="en">Hardware</span><span lang="fr">Matériel</span></b><p><span lang="en">Revisions, ESP32-P4, audio, clock, power.</span><span lang="fr">Révisions, ESP32-P4, audio, horloge, alimentation.</span></p></a>
+      <a class="carte" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/voice_assistant.md"><b><span lang="en">Voice assistant</span><span lang="fr">Assistant vocal</span></b><p><span lang="en">Wake words, audio chain, pipeline states.</span><span lang="fr">Mots d'activation, chaîne audio, états du pipeline.</span></p></a>
+      <a class="carte" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/translations.md"><b><span lang="en">Translations</span><span lang="fr">Traductions</span></b><p><span lang="en">Choosing the screen language, adding one.</span><span lang="fr">Choisir la langue de l'écran, en ajouter une.</span></p></a>
+      <a class="carte" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/demo_mode.md"><b><span lang="en">Demo mode</span><span lang="fr">Mode démo</span></b><p><span lang="en">See the screen without Home Assistant.</span><span lang="fr">Voir l'écran sans Home Assistant.</span></p></a>
+      <a class="carte" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/troubleshooting.md"><b><span lang="en">Troubleshooting</span><span lang="fr">Dépannage</span></b><p><span lang="en">Symptoms already met, their cause and the fix.</span><span lang="fr">Symptômes déjà rencontrés, leur cause et le correctif.</span></p></a>
+      <a class="carte" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/architecture.md"><b>Architecture</b><p><span lang="en">YAML packages, C++ units, push, data packing.</span><span lang="fr">Packages YAML, unités C++, push, données groupées.</span></p></a>
+      <a class="carte" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/arcade.md"><b><span lang="en">Games</span><span lang="fr">Jeux</span></b><p><span lang="en">The 8 consoles in detail (in French).</span><span lang="fr">Les 8 consoles en détail.</span></p></a>
+      <a class="carte" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/decisions/README.md"><b><span lang="en">Decisions</span><span lang="fr">Décisions</span></b><p><span lang="en">Why the non-obvious choices were made (ADR).</span><span lang="fr">Le pourquoi des choix non évidents (ADR, en anglais).</span></p></a>
+      <a class="carte" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/README.md"><b><span lang="en">Home Assistant packages</span><span lang="fr">Packages Home Assistant</span></b><p><span lang="en">The automations, scripts and helpers that push to the screen.</span><span lang="fr">Les automatisations, scripts et helpers qui poussent vers l'écran.</span></p></a>
+      <a class="carte" href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/CHANGELOG.md"><b><span lang="en">Changelog</span><span lang="fr">Journal des modifications</span></b><p><span lang="en">Every change, day by day.</span><span lang="fr">Chaque changement, jour par jour.</span></p></a>
+    </div>
+  </section>
+
+  <section class="bloc" id="community">
+    <h2><span lang="en">Questions and feedback</span><span lang="fr">Questions et retours</span></h2>
+    <ul>
+      <li><span lang="en">Questions, ideas, your own build: the <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions">Discussions</a>.</span><span lang="fr">Questions, idées, votre montage&nbsp;: les <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions">Discussions</a>.</span></li>
+      <li><span lang="en">Something broken: an <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/issues/new/choose">issue</a>; the form asks for your display chip.</span><span lang="fr">Quelque chose ne marche pas&nbsp;: une <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/issues/new/choose">issue</a>&nbsp;; le formulaire demande votre puce d'écran.</span></li>
+      <li><span lang="en">A security issue: privately, see the <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/SECURITY.md">security policy</a>.</span><span lang="fr">Une faille de sécurité&nbsp;: en privé, voir la <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/SECURITY.md#version-française">politique de sécurité</a>.</span></li>
+    </ul>
+    <p class="suite doux"><span lang="en">English or French, both are welcome.</span><span lang="fr">Anglais ou français, les deux sont bienvenus.</span></p>
+  </section>
+
 </main>
+<aside class="sommaire" aria-label="Sommaire">
+  <p><span lang="en">On this page</span><span lang="fr">Sur cette page</span></p>
+  <ul>
+    <li><a href="#why"><span lang="en">Why this one</span><span lang="fr">Pourquoi celui-ci</span></a></li>
+    <li><a href="#start"><span lang="en">Get started</span><span lang="fr">Démarrer</span></a></li>
+    <li><a href="#features"><span lang="en">What it does</span><span lang="fr">Ce qu'il fait</span></a></li>
+    <li><a href="#weather"><span lang="en">Rain, warnings</span><span lang="fr">Pluie, vigilances</span></a></li>
+    <li><a href="#gallery"><span lang="en">On the tablet</span><span lang="fr">Sur la tablette</span></a></li>
+    <li><a href="#demo"><span lang="en">See it move</span><span lang="fr">Le voir bouger</span></a></li>
+    <li><a href="#hardware"><span lang="en">Hardware</span><span lang="fr">Matériel</span></a></li>
+    <li><a href="#how"><span lang="en">How it works</span><span lang="fr">Comment ça marche</span></a></li>
+    <li><a href="#voice"><span lang="en">Voice assistant</span><span lang="fr">Assistant vocal</span></a></li>
+    <li><a href="#games"><span lang="en">Games</span><span lang="fr">Jeux</span></a></li>
+    <li><a href="#renders"><span lang="en">Off the device</span><span lang="fr">Hors tablette</span></a></li>
+    <li><a href="#news"><span lang="en">What's new</span><span lang="fr">Nouveautés</span></a></li>
+    <li><a href="#know"><span lang="en">Good to know</span><span lang="fr">À savoir</span></a></li>
+    <li><a href="#story"><span lang="en">The story</span><span lang="fr">L'histoire</span></a></li>
+    <li><a href="#docs">Documentation</a></li>
+    <li><a href="#community"><span lang="en">Questions</span><span lang="fr">Questions</span></a></li>
+  </ul>
+</aside>
+</div>
+
+<footer>
+  <div class="ligne">
+    <p lang="en">MIT licence · <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL">source code</a> · <a href="install/">install page</a> · questions and your own builds in the <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions">Discussions</a>.</p>
+    <p lang="fr">Licence MIT · <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL">code source</a> · <a href="install/">page d'installation</a> · questions et montages dans les <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions">Discussions</a>.</p>
+  </div>
+</footer>
 <script>
   const racine = document.documentElement;
   function langue(code) {
     racine.dataset.lang = code;
     racine.lang = code;
+    document.getElementById("lire").setAttribute("aria-label",
+      code === "fr" ? "Lire la vidéo de démo" : "Play the demo video");
   }
   langue((navigator.language || "en").toLowerCase().startsWith("fr") ? "fr" : "en");
   document.getElementById("langue").addEventListener("click", () => langue(racine.dataset.lang === "fr" ? "en" : "fr"));
+
+  // Version stable publiée : versions.json est écrit par pages.py à chaque déploiement.
+  fetch("versions.json").then(r => r.ok ? r.json() : null).then(v => {
+    if (!v || !v.stable) return;
+    const etiquette = document.getElementById("version");
+    etiquette.querySelector("b").textContent = v.stable.version;
+    etiquette.hidden = false;
+  }).catch(() => {});
+
+  // La vidéo ne charge rien de YouTube avant le clic.
+  document.getElementById("lire").addEventListener("click", () => {
+    const cadre = document.createElement("iframe");
+    cadre.src = "https://www.youtube-nocookie.com/embed/ygNhgtMffu4?autoplay=1";
+    cadre.title = racine.dataset.lang === "fr" ? "Vidéo de démo du Tab5" : "Tab5 demo video";
+    cadre.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+    cadre.allowFullscreen = true;
+    document.getElementById("video").replaceChildren(cadre);
+  });
+
+  // Visionneuse : une photo des galeries s'ouvre en grand au clic ; flèches (écran ou
+  // clavier), balayage sur téléphone, Échap ou clic à côté pour fermer. Sans script, le
+  // lien ouvre simplement l'image.
+  const vision = document.createElement("dialog");
+  vision.className = "visionneuse";
+  vision.tabIndex = -1;  // le focus va à la visionneuse, pas au bouton « fermer »
+  const vImage = document.createElement("img");
+  const vLegende = document.createElement("p");
+  vision.append(vImage, vLegende);
+  function bouton(classe, texte) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = classe;
+    b.textContent = texte;
+    vision.append(b);
+    return b;
+  }
+  const bFermer = bouton("v-fermer", "×"), bPrec = bouton("v-prec", "‹"), bSuiv = bouton("v-suiv", "›");
+  document.body.append(vision);
+  let serie = [], rang = 0;
+  function montrer(i) {
+    rang = (i + serie.length) % serie.length;
+    const lien = serie[rang];
+    vImage.src = lien.href;
+    vImage.alt = lien.querySelector("img").alt;
+    const legende = lien.closest("figure").querySelector("figcaption");
+    vLegende.textContent = (legende ? legende.innerText + " " : "") + `(${rang + 1}/${serie.length})`;
+  }
+  for (const lien of document.querySelectorAll("a.agrandir")) {
+    lien.addEventListener("click", e => {
+      e.preventDefault();
+      // Les photos visibles du même groupe (les rendus de l'autre langue sont masqués).
+      serie = [...lien.closest(".galerie, .rendus, .vue").querySelectorAll("a.agrandir")].filter(a => a.offsetParent);
+      const fr = racine.dataset.lang === "fr";
+      bFermer.setAttribute("aria-label", fr ? "Fermer" : "Close");
+      bPrec.setAttribute("aria-label", fr ? "Photo précédente" : "Previous photo");
+      bSuiv.setAttribute("aria-label", fr ? "Photo suivante" : "Next photo");
+      bPrec.hidden = bSuiv.hidden = serie.length < 2;
+      montrer(serie.indexOf(lien));
+      vision.showModal();
+      vision.focus();
+    });
+  }
+  bFermer.addEventListener("click", () => vision.close());
+  bPrec.addEventListener("click", () => montrer(rang - 1));
+  bSuiv.addEventListener("click", () => montrer(rang + 1));
+  vision.addEventListener("click", e => { if (e.target === vision) vision.close(); });
+  vision.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft") montrer(rang - 1);
+    if (e.key === "ArrowRight") montrer(rang + 1);
+  });
+  let departX = null;
+  vision.addEventListener("touchstart", e => { departX = e.touches[0].clientX; }, { passive: true });
+  vision.addEventListener("touchend", e => {
+    if (departX === null) return;
+    const dx = e.changedTouches[0].clientX - departX;
+    if (Math.abs(dx) > 50) montrer(rang + (dx < 0 ? 1 : -1));
+    departX = null;
+  });
+
+  // Sommaire : met en évidence la section en cours de lecture.
+  const liens = new Map([...document.querySelectorAll(".sommaire a")].map(a => [a.hash.slice(1), a]));
+  const visibles = new Set();
+  const observateur = new IntersectionObserver(entrees => {
+    for (const e of entrees) e.isIntersecting ? visibles.add(e.target.id) : visibles.delete(e.target.id);
+    const courante = [...liens.keys()].find(id => visibles.has(id));
+    if (!courante) return;
+    for (const [id, a] of liens) a.classList.toggle("actif", id === courante);
+  }, { rootMargin: "-80px 0px -55% 0px" });
+  for (const id of liens.keys()) observateur.observe(document.getElementById(id));
 </script>
 </body>
 </html>

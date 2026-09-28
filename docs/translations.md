@@ -6,7 +6,7 @@
 
 The Tab5 screen speaks **French** (the source language), **English**, **German**, **Dutch**, **Spanish** or **Italian**. Everything the screen shows or the tablet says follows the chosen language: popups, cards, dates, the alarm clock and its spoken reminders, and the eight games. Two exceptions: the **quiz questions** of Trial Poursuite stay French (more than 720 of them), and the **console names** (Fil d'Or, Roi Noir…) are proper names, kept as they are.
 
-The German, Dutch, Spanish and Italian translations were made with an AI (Claude), from the French and English texts, and no native speaker has reviewed them yet. Corrections are welcome: an issue, or a pull request on `Tab5/lang/de.yaml`, `nl.yaml`, `es.yaml` or `it.yaml`.
+Every language was written by an AI, like the rest of the project. The author checked the French; the English, and the German, Dutch, Spanish and Italian translations (made with Claude from the French and English texts) have not been reviewed yet. Corrections are welcome: an issue, or a pull request on `Tab5/lang/en.yaml`, `de.yaml`, `nl.yaml`, `es.yaml` or `it.yaml`.
 
 ## Choosing the language
 
@@ -57,7 +57,7 @@ Each language is one file, `Tab5/lang/<code>.yaml`: a flat mapping `"French text
 
 L'écran du Tab5 parle **français** (la langue source), **anglais**, **allemand**, **néerlandais**, **espagnol** ou **italien**. Tout ce que l'écran affiche ou que la tablette dit suit la langue choisie : popups, cartes, dates, le réveil et ses rappels parlés, et les huit jeux. Deux exceptions : les **questions du quiz** de Trial Poursuite restent en français (plus de 720), et les **noms des consoles** (Fil d'Or, Roi Noir…) sont des noms propres, gardés tels quels.
 
-Les traductions allemande, néerlandaise, espagnole et italienne ont été faites par une IA (Claude), à partir des textes français et anglais, et aucune personne dont c'est la langue ne les a encore relues. Les corrections sont bienvenues : une issue, ou une pull request sur `Tab5/lang/de.yaml`, `nl.yaml`, `es.yaml` ou `it.yaml`.
+Toutes les langues ont été écrites par une IA, comme le reste du projet. L'auteur a relu le français ; l'anglais, et les traductions allemande, néerlandaise, espagnole et italienne (faites avec Claude à partir des textes français et anglais), ne sont pas encore relus. Les corrections sont bienvenues : une issue, ou une pull request sur `Tab5/lang/en.yaml`, `de.yaml`, `nl.yaml`, `es.yaml` ou `it.yaml`.
 
 ## Choisir la langue
 
