@@ -7,13 +7,15 @@
 #       - décrit les pièces (firmware 3.2 et plus, ADR-0023) : jusqu'à 5 pièces de 5
 #         tuiles, une par page de la rangée du bas. Définitions (tab5_maj_tuiles :
 #         type, icône, options, complément, nom) à la connexion, au rechargement des
-#         automatisations et à la demande des zones ; puis états « tRT|état|valeur|couleur »
-#         par tab5_maj_emplacements : tous après les définitions, une tuile quand son
-#         appareil change, les capteurs (cap) avec les mesures lentes de 5 minutes ;
+#         automatisations, au démarrage de HA et à la demande des zones ; puis états
+#         « tRT|état|valeur|couleur » par tab5_maj_emplacements : tous après les
+#         définitions, une tuile quand son appareil change, les capteurs (cap) avec les
+#         mesures lentes de 5 minutes ;
 #       - pousse l'état des emplacements 3.x (action tab5_maj_emplacements, « clé|état|valeur;… ») :
-#         tous à la connexion (esphome.tab5_connected) ; lumières, PC et TV quand ce que
-#         montre l'écran change ; les mesures lentes (températures, humidités, pots,
-#         batterie) groupées toutes les 5 minutes, celles qui ont changé seulement ;
+#         tous à la connexion (esphome.tab5_connected) et au démarrage de HA ; lumières,
+#         PC et TV quand ce que montre l'écran change ; les mesures lentes (températures,
+#         humidités, pots, batterie) groupées toutes les 5 minutes, celles qui ont changé
+#         seulement ;
 #       - pousse la clim (tab5_maj_clim) et un volet qui signale sa course (tab5_maj_volet_etat) ;
 #       - exécute les commandes de l'écran (événement esphome.tab5_action) : clés 3.x vers
 #         l'entité choisie, tuiles (tRT) et pièces (pR) selon le DOMAINE de l'entité de la
@@ -42,9 +44,9 @@ blueprint:
     pages atteintes d'un glissement) ; le nom, l'icône et le type de chaque tuile viennent
     de Home Assistant. Firmware 3.0 et 3.1 : les réglages 3.x (section repliée) servent
     toujours. Un emplacement laissé vide disparaît de l'écran, avec ses boutons. Une seule
-    automatisation par tablette. Les états sont poussés à la connexion, puis à chaque
-    changement visible ; les mesures (températures, humidités, plantes, batterie,
-    capteurs des pièces) sont regroupées toutes les 5 minutes.
+    automatisation par tablette. Les états sont poussés à la connexion et au démarrage de
+    Home Assistant, puis à chaque changement visible ; les mesures (températures,
+    humidités, plantes, batterie, capteurs des pièces) sont regroupées toutes les 5 minutes.
   domain: automation
   author: Axellum
   source_url: https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml
@@ -1028,7 +1030,7 @@ variables:
     - cli
   # Emplacements à pousser pour ce déclenchement.
   cles: >-
-    {%- if trigger.id in ['connexion', 'rechargement', 'maj_ecran'] -%}
+    {%- if trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha'] -%}
       {%- set ns = namespace(l=[]) -%}
       {%- for c in cles_emplacements -%}
         {%- set ns.l = ns.l + [c] + ([c ~ '_ec', c ~ '_lux', c ~ '_temp', c ~ '_bat'] if c.startswith('pot_') else []) -%}
@@ -1073,7 +1075,7 @@ variables:
   # types_mesures avec les mesures lentes. Calculées quel que soit le protocole (la
   # trace montre ce qui partirait), poussées seulement au protocole 2.
   tuiles_a_pousser: >-
-    {%- if trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'zones'] or redefinir -%}
+    {%- if trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha', 'zones'] or redefinir -%}
       {{ tuiles | map(attribute='cle') | list }}
     {%- elif trigger.id == 'mesures' -%}
       {%- set ns = namespace(l=[]) -%}
@@ -1305,6 +1307,23 @@ triggers:
   - trigger: event
     event_type: esphome.tab5_maj_ecran
     id: maj_ecran
+  # Démarrage de HA : la tablette, restée allumée, se reconnecte souvent AVANT que les
+  # automatisations soient actives ; son tab5_connected est alors perdu (HA 2026.9.4
+  # le 28/09/2026 : entités de la tablette revenues à 21:11:12, tab5_connected vers
+  # 21:11:14, automatisations actives à 21:11:16, aucune exécution jusqu'au
+  # rechargement de 21:13). Un appareil changé pendant la coupure restait faux à
+  # l'écran jusqu'à son prochain changement. Ce déclencheur part au moment où les
+  # automatisations deviennent actives et rejoue la connexion perdue : définitions,
+  # tous les états, clim, volet. Pas les zones : la tablette ne les demande qu'avec la
+  # première poussée des prévisions (tab5-api-logic.yaml), qui vient d'une
+  # automatisation active. Tablette pas encore reconnectée : la condition « tablette
+  # connectée » arrête ici, et son tab5_connected, émis plus tard, sera entendu. Pas de
+  # délai : les variables (tuiles, protocole) sont calculées au déclenchement ; une
+  # entité d'une intégration encore en chargement revient seule (redefinir, ou le
+  # déclencheur de son emplacement).
+  - trigger: homeassistant
+    event: start
+    id: demarrage_ha
 
 conditions:
   # Garde-fou des packages (ADR-0008) : absent, il laisse passer.
@@ -1316,7 +1335,7 @@ conditions:
     value_template: >-
       {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet'] or cles | count > 0
          or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0)) }}
-  # Déclencheurs venus de HA (rechargement, mesures, changements d'état) : seulement
+  # Déclencheurs venus de HA (rechargement, démarrage, mesures, changements d'état) : seulement
   # si une tablette est connectée, sinon « Action … not found » (pas encore ajoutée)
   # ou « Not connected » (hors ligne). Elle est trouvée par le modèle de l'appareil
   # (bloc `project:` du firmware), pas par son nom. Les événements de la tablette
@@ -1681,7 +1700,7 @@ actions:
             data:
               payload: "{{ payload }}"
             continue_on_error: true
-      - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran'] and clim != '' }}"
+      - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha'] and clim != '' }}"
         then:
           - delay: "00:00:01"
           - action: "esphome.{{ tablette }}_tab5_maj_clim"
@@ -1693,7 +1712,7 @@ actions:
               fan: "{{ state_attr(clim, 'fan_mode') | default('auto', true) }}"
               swing: "{{ state_attr(clim, 'swing_mode') | default('stop', true) }}"
             continue_on_error: true
-      - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran'] and volet != '' and not volet_par_package }}"
+      - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha'] and volet != '' and not volet_par_package }}"
         then:
           - delay: "00:00:01"
           - action: "esphome.{{ tablette }}_tab5_maj_volet_etat"
@@ -1715,7 +1734,7 @@ actions:
   # Définitions : un instantané complet (ce qui n'y est pas est vide), avant les états.
   # Calculées à chaque connexion quel que soit le protocole (la trace montre ce qui
   # partirait), envoyées seulement à une tablette 3.2 ou plus.
-  - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'zones'] or redefinir }}"
+  - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha', 'zones'] or redefinir }}"
     then:
       - variables:
           # Nom de chaque pièce : saisi, sinon l'aire de ses appareils quand ceux qui en

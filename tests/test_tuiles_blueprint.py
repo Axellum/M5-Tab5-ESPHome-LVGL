@@ -648,6 +648,60 @@ def test_les_definitions_partent_seulement_au_protocole_2(protocole_version):
     assert p.definitions().startswith("p0|")
 
 
+DEMARRAGE_HA = {"id": "demarrage_ha", "platform": "homeassistant", "event": "start"}
+
+
+def _gardes_du_declencheur(noeud):
+    """Les modèles des actions (`if:`, `conditions:` d'un choose) qui lisent trigger.id."""
+    if isinstance(noeud, str):
+        return [noeud] if "trigger.id" in noeud else []
+    if isinstance(noeud, dict):
+        return [g for v in noeud.values() for g in _gardes_du_declencheur(v)]
+    if isinstance(noeud, list):
+        return [g for v in noeud for g in _gardes_du_declencheur(v)]
+    return []
+
+
+def test_demarrage_de_ha_rejoue_la_connexion_perdue():
+    """HA 2026.9.4 (28/09/2026) : la tablette s'est reconnectée avant que les
+    automatisations soient actives, son tab5_connected était perdu et rien ne partait
+    jusqu'au rechargement manuel. Le démarrage de HA fait ce qu'aurait fait la
+    connexion : définitions, tous les états, clim, volet. Pas les zones : la tablette
+    les demande avec la première poussée des prévisions (tab5-api-logic.yaml), qui
+    vient d'une automatisation active."""
+    bp = _blueprint()
+    assert [t for t in bp["triggers"] if t.get("id") == "demarrage_ha"] == [
+        {"trigger": "homeassistant", "event": "start", "id": "demarrage_ha"}]
+    gardes = _gardes_du_declencheur(bp["actions"])
+    assert len(gardes) >= 8, gardes
+    for g in gardes + [bp["variables"]["cles"], bp["variables"]["tuiles_a_pousser"]]:
+        if "'connexion'" in g:
+            assert "'demarrage_ha'" in g, f"le démarrage de HA manque dans : {g}"
+    # Si la tablette demandait ses zones à la connexion, la demande serait perdue elle
+    # aussi, et le démarrage devrait y répondre comme un rechargement.
+    api = _lire(os.path.join(REPO, "Tab5", "tab5-api-logic.yaml"))
+    jours = api.split("- service: tab5_maj_previsions_jours_bulk", 1)[1].split("- service:", 1)[0]
+    assert "id(tab5_zones_demande).execute()" in jours
+    demarrage, connexion = _passage(DEMARRAGE_HA), _passage(_evenement("connexion"))
+    assert demarrage.conditions()
+    for nom in ("cles", "redefinir", "tuiles_a_pousser"):
+        assert demarrage[nom] == connexion[nom], nom
+    assert demarrage["tuiles_a_pousser"] == [t["cle"] for t in demarrage["tuiles"]]
+    assert demarrage.definitions() == connexion.definitions() != ""
+    assert demarrage.etats_tuiles() == connexion.etats_tuiles() != ""
+    for p in (demarrage, connexion):
+        p.variables_du_bloc("volet")
+    assert [demarrage.modele(g) for g in gardes] == [connexion.modele(g) for g in gardes]
+
+
+def test_demarrage_de_ha_sans_tablette_connectee_ne_pousse_rien():
+    """Tablette pas encore reconnectée quand HA démarre : arrêt à la garde « tablette
+    connectée » (sinon « Not connected ») ; son tab5_connected, émis plus tard, sera
+    entendu, les automatisations étant alors actives."""
+    hors_ligne = _tablette("3.2.0 (ESPHome 2026.9.0)", connectee=False)
+    assert not _passage(DEMARRAGE_HA, tablettes=hors_ligne).conditions()
+
+
 def _changement(entite, avant, apres, id_):
     return _declencheur(id_, avant, apres, entite)
 
