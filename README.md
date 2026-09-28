@@ -203,7 +203,7 @@ The engine is optional for the screen UI (push dashboard works without it). It i
 | [`docs/hardware.md`](docs/hardware.md) | Tab5 hardware revisions (which ones are supported), ESP32-P4 specs, GPIO mapping, ES8388 DAC, PSRAM, power |
 | [`docs/ui_design.md`](docs/ui_design.md) | LVGL rendering, vector fonts, dynamic color, CPU optimizations |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Wake word pipeline, audio chain, visual feedback states |
-| [`docs/installation.md`](docs/installation.md) | Prerequisites, `user_entities.yaml`, secrets, flash & OTA |
+| [`docs/installation.md`](docs/installation.md) | Prerequisites, web flasher or build, signing key, Home Assistant, updates, upgrading from 2.x |
 | [`docs/translations.md`](docs/translations.md) | Screen language (French, English, German, Dutch), adding a language |
 | [`docs/demo_mode.md`](docs/demo_mode.md) | Try it in minutes, no Home Assistant required |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Symptom → root cause → fix log for incidents already diagnosed |
@@ -526,7 +526,7 @@ Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui
 | [`docs/hardware.md`](docs/hardware.md) | Révisions matérielles du Tab5 (lesquelles sont prises en charge), specs ESP32-P4, mapping GPIO, DAC ES8388, PSRAM, alimentation |
 | [`docs/ui_design.md`](docs/ui_design.md) | Rendu LVGL, polices vectorielles, couleur dynamique, optimisations CPU |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Pipeline wake-word, chaîne audio, états de retour visuel |
-| [`docs/installation.md`](docs/installation.md) | Prérequis, `user_entities.yaml`, secrets, flash & OTA |
+| [`docs/installation.md`](docs/installation.md) | Prérequis, page de flashage ou compilation, clé de signature, Home Assistant, mises à jour, passage à la 3.0 |
 | [`docs/translations.md`](docs/translations.md#version-française) | Langue de l'écran (français, anglais, allemand, néerlandais), ajouter une langue |
 | [`docs/demo_mode.md`](docs/demo_mode.md) | Tester en quelques minutes, sans Home Assistant |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Journal symptôme → cause racine → correctif des incidents déjà diagnostiqués |
