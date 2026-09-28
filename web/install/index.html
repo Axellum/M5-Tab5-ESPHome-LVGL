@@ -78,6 +78,8 @@
       <li lang="en">A Tab5 connected to the computer with a USB-C cable that carries data.</li>
       <li lang="fr">Chrome ou Edge sur ordinateur (Web Serial) ; le bouton le signale sinon.</li>
       <li lang="en">Chrome or Edge on a computer (Web Serial); the button tells you otherwise.</li>
+      <li lang="fr">Dans la liste des ports, la tablette s'appelle « USB JTAG/serial debug unit ». Si plusieurs ports portent ce nom, débranchez la tablette : celui qui disparaît est le sien.</li>
+      <li lang="en">In the port list, the tablet is named "USB JTAG/serial debug unit". If several ports have that name, unplug the tablet: the one that disappears is hers.</li>
       <li lang="fr">Home Assistant, avec les packages et le blueprint du projet (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md#version-française">guide</a>).</li>
       <li lang="en">Home Assistant, with the project's packages and blueprint (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md">guide</a>).</li>
     </ul>
@@ -116,6 +118,10 @@
         <span id="version-beta"></span> ·
         <span lang="fr">pour essayer avant la stable ; passe à la stable suivante</span>
         <span lang="en">to try before the stable one; moves on to the next stable</span></span></span></label>
+    <p class="etat">
+      <span lang="fr">La tablette suit ensuite le canal installé : ses mises à jour arrivent dans Home Assistant. Pour changer de canal, réinstallez depuis cette page, sans effacer.</span>
+      <span lang="en">The tablet then follows the channel you installed: its updates arrive in Home Assistant. To switch channels, install again from this page, without erasing.</span>
+    </p>
   </section>
 
   <section class="carte">
@@ -129,10 +135,18 @@
         <span lang="fr">La page doit être ouverte en HTTPS.</span>
         <span lang="en">The page must be opened over HTTPS.</span></span>
     </esp-web-install-button>
-    <p class="etat">
-      <span lang="fr">À une première installation, acceptez d'effacer la flash (un Tab5 neuf porte la démo de M5Stack). Pour une tablette déjà installée, ne l'effacez pas : elle garde son Wi-Fi et sa clé de Home Assistant. Fermer la fenêtre redémarre la tablette une fois : c'est normal.</span>
-      <span lang="en">On a first install, accept to erase the flash (a new Tab5 carries M5Stack's demo). For a tablet already set up, do not erase it: it keeps its Wi-Fi and its Home Assistant key. Closing the window restarts the tablet once: that is normal.</span>
-    </p>
+    <ul class="etat">
+      <li lang="fr"><strong>Première installation</strong> (un Tab5 neuf porte la démo de M5Stack) : « Install », puis acceptez d'effacer l'appareil.</li>
+      <li lang="en"><strong>First install</strong> (a new Tab5 carries M5Stack's demo): "Install", then accept to erase the device.</li>
+      <li lang="fr"><strong>Mise à jour d'une tablette déjà installée</strong> : « Update », sans effacer : elle garde son Wi-Fi, sa clé de Home Assistant et ses réglages.</li>
+      <li lang="en"><strong>Updating a tablet already set up</strong>: "Update", without erasing: it keeps its Wi-Fi, its Home Assistant key and its settings.</li>
+      <li lang="fr"><strong>Même version déjà installée</strong> : pas de bouton « Install ». Pour repartir de zéro, « Erase User Data » (en rouge, en bas) efface tout, Wi-Fi, clé et réglages compris, puis réinstalle.</li>
+      <li lang="en"><strong>Same version already installed</strong>: there is no "Install" button. To start from scratch, "Erase User Data" (in red, at the bottom) erases everything, Wi-Fi, key and settings included, then installs again.</li>
+      <li lang="fr"><strong>« Failed to initialize… holding the BOOT button »</strong> : le Tab5 n'a pas de bouton BOOT. Maintenez son bouton reset environ 2 s, jusqu'à ce que la LED verte interne clignote vite : la tablette est en mode téléchargement. Relancez « Connecter et installer » ; à la fin, un appui court sur reset la redémarre.</li>
+      <li lang="en"><strong>"Failed to initialize… holding the BOOT button"</strong>: the Tab5 has no BOOT button. Hold its reset button for about 2 s, until the internal green LED blinks fast: the tablet is in download mode. Start "Connect and install" again; at the end, a short press on reset restarts it.</li>
+      <li lang="fr">Fermer la fenêtre redémarre la tablette une fois : c'est normal.</li>
+      <li lang="en">Closing the window restarts the tablet once: that is normal.</li>
+    </ul>
   </section>
 
   <section class="carte">
@@ -140,8 +154,10 @@
     <ol>
       <li lang="fr"><strong>Wi-Fi</strong> : juste après l'installation, le même bouton propose de le régler (Improv par l'USB). Sinon, connectez un téléphone au réseau ouvert « Tab5 Fallback AP » et choisissez votre réseau.</li>
       <li lang="en"><strong>Wi-Fi</strong>: right after installing, the same button offers to set it (Improv over USB). Otherwise, connect a phone to the open network "Tab5 Fallback AP" and pick your network.</li>
-      <li lang="fr"><strong>Home Assistant</strong> découvre la tablette (intégration ESPHome) : ajoutez-la dans les 30 minutes qui suivent son démarrage, HA lui donne sa clé tout seul.</li>
-      <li lang="en"><strong>Home Assistant</strong> discovers the tablet (ESPHome integration): add it within 30 minutes of its boot, HA gives it its key by itself.</li>
+      <li lang="fr"><strong>Home Assistant</strong> découvre la tablette (intégration ESPHome) : ajoutez-la dans les 30 minutes qui suivent son démarrage, HA lui donne sa clé tout seul. Une tablette que HA connaît déjà reçoit une nouvelle clé sans rien demander.</li>
+      <li lang="en"><strong>Home Assistant</strong> discovers the tablet (ESPHome integration): add it within 30 minutes of its boot, HA gives it its key by itself. A tablet HA already knows gets a new key without asking anything.</li>
+      <li lang="fr"><strong>Actions HA</strong> : dans Appareils et services → ESPHome → Configurer, cochez l'option qui autorise l'appareil à effectuer des actions Home Assistant. Sans elles, la voix, le calendrier et le réveil ne marchent pas.</li>
+      <li lang="en"><strong>HA actions</strong>: in Devices &amp; services → ESPHome → Configure, tick "Allow the device to perform Home Assistant actions". Without them, voice, calendar and alarm clock do not work.</li>
       <li lang="fr"><strong>Vos appareils</strong> se choisissent dans le blueprint « Tab5 — emplacements ».</li>
       <li lang="en"><strong>Your devices</strong> are picked in the "Tab5 — emplacements" blueprint.</li>
       <li lang="fr"><strong>Mises à jour</strong> : l'entité « Firmware » de la tablette les propose dans HA.</li>
