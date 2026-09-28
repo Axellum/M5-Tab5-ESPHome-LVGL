@@ -36,7 +36,7 @@ namespace {
 
 constexpr int kPieces = 5;
 constexpr int kTuiles = 5;
-// Pièce de chaque page du bas (index = forecast_page_index) : R0 = page 2 (accueil),
+// Pièce de chaque page du bas (index = g_central_ctx.forecast_page) : R0 = page 2 (accueil),
 // R1 = 3, R2 = 4, R3 = 1, R4 = 0 — l'ordre où un swipe les atteint depuis l'accueil.
 constexpr int kPieceDePage[kPieces] = {4, 3, 0, 1, 2};
 
@@ -865,11 +865,11 @@ void bouton_ha_peindre() {
         lv_obj_remove_local_style_prop(u.bouton_ha, p, LV_PART_MAIN);
 }
 
-// Change de page sans toucher aux calques météo (mode HA) : global, contexte, pastilles.
+// Change de page sans toucher aux calques météo (mode HA) : contexte (seule source de la
+// page depuis le 28/09/2026), pastilles.
 void aller_page(int page) {
-    TuilesUI& u = g_tuiles_ui;
+    const TuilesUI& u = g_tuiles_ui;
     if (page < 0 || page >= kPieces) return;
-    if (u.page != nullptr) *u.page = page;
     g_central_ctx.forecast_page = page;
     pagination_afficher(u.pastilles, page);
 }

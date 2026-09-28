@@ -35,7 +35,6 @@ script:
           g_central_ctx.page_title_sub = id(lbl_page_title_sub);
           u.bouton_ha = id(btn_control_ha);
           u.icone_ha = id(icon_ha);
-          u.page = &id(forecast_page_index);
           u.police_meteo = id(font_meteo_card);
           u.police_meteo_petite = id(font_meteo_card_small);
           // Mode météo, par position visuelle T (tuiles horaires : l'objet h(4−T)).

@@ -1,9 +1,9 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file forecast_hourly.yaml
-# @role Conteneur des 5 cartes prévisions horaires. Visible quand `forecast_page_index`
-#       (tab5-globals.yaml) est < 2, piloté par `handle_swipe_gesture()` (tab5_custom.cpp),
-#       alterne avec forecast_daily.yaml (sibling, page_index >= 2).
+# @role Conteneur des 5 cartes prévisions horaires. Visible quand `g_central_ctx.forecast_page`
+#       est < 2, piloté par `handle_swipe_gesture()` (tab5_central.cpp),
+#       alterne avec forecast_daily.yaml (sibling, page >= 2).
 # ============================================================================
 obj:
   id: layer_forecast_hourly

@@ -31,7 +31,7 @@
 static constexpr int32_t FORECAST_SWIPE_Y_MIN = 333;  // haut de central_card (tab5-lvgl.yaml)
 
 // Page de repos des previsions : journalier J0-J4, celle du boot
-// (forecast_page_index initial_value: 2) et celle ou la carte centrale reprend
+// (CentralPanelCtx::forecast_page = 2) et celle ou la carte centrale reprend
 // son rotateur planning/pluie/alertes. C'est la cible du retour automatique.
 static constexpr int FORECAST_MAIN_PAGE = 2;
 
@@ -706,7 +706,7 @@ void central_mode_ha(lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, Centra
     update_central_forecast_page_ui(ctx.forecast_page, page_title_wrap, lbl_page_title, ctx);
 }
 
-void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
+void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_card, esphome::font::Font* f_card_s,
@@ -720,7 +720,7 @@ void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
     // panneau titre dans tab5-lvgl.yaml), pas dans cette fonction.
     // Le logger du projet tourne en `level: INFO` (tab5-hardware.yaml) : passer
     // temporairement a DEBUG pour voir cette trace, elle est muette autrement.
-    ESP_LOGD("TAB5", "swipe: dir=%d y=%d page=%d", (int) dir, (int) pt_y, forecast_page_index);
+    ESP_LOGD("TAB5", "swipe: dir=%d y=%d page=%d", (int) dir, (int) pt_y, ctx.forecast_page);
 
     if (pt_y < FORECAST_SWIPE_Y_MIN) return;
     if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;
@@ -732,10 +732,10 @@ void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
         return;
     }
 
-    int old_page = forecast_page_index;
+    const int old_page = ctx.forecast_page;
     // Bouclage volontaire : [AI-WARNING] de forecast_page_suivante() ci-dessus.
-    int page = forecast_page_suivante(old_page, dir == LV_DIR_LEFT);
-    forecast_page_index = page;
+    // apply_forecast_page() pose ctx.forecast_page.
+    const int page = forecast_page_suivante(old_page, dir == LV_DIR_LEFT);
 
     apply_forecast_page(old_page, page, dir,
         layer_forecast_daily, layer_forecast_hourly, day_slots, hour_slots,
@@ -743,7 +743,7 @@ void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
         page_title_wrap, lbl_page_title, ctx);
 }
 
-void reset_forecast_to_main_page(int& forecast_page_index,
+void reset_forecast_to_main_page(
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_card, esphome::font::Font* f_card_s,
@@ -751,9 +751,8 @@ void reset_forecast_to_main_page(int& forecast_page_index,
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx) {
 
-    const int old_page = forecast_page_index;
+    const int old_page = ctx.forecast_page;
     if (old_page == FORECAST_MAIN_PAGE) return;  // deja au panneau principal
-    forecast_page_index = FORECAST_MAIN_PAGE;
 
     // Sens de l'animation : depuis l'horaire (0/1) le calque journalier arrive
     // par la droite, comme un swipe vers la gauche ; depuis 3/4 on recule, donc
@@ -852,11 +851,18 @@ static void planning_restore_timer_cb(lv_timer_t* /*timer*/) {
     }
 }
 
-void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
-                             lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, int forecast_page,
+void show_temporary_planning(int tuile, lv_obj_t* lbl_planning,
+                             lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
                              const std::string& plan_l1, const std::string& plan_l2,
                              CentralPanelCtx& ctx) {
     if (!lbl_planning) return;
+
+    // Jour de la tuile, aligné sur refresh_daily_forecast() : page journalière 2-4
+    // (bornée, comme le faisait la lambda de forecast_day_temp_tab.yaml).
+    int page = ctx.forecast_page;
+    if (page < 2) page = 2;
+    if (page > 4) page = 4;
+    const int jour = (page - 2) * 5 + tuile;
 
     TempPlanningCtx& tp = s_temp_planning;
     // Second tap pendant les 6 s : garder le panneau d'ORIGINE, le premier tap a
@@ -882,7 +888,7 @@ void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
     tp.plan_l1 = plan_l1;
     tp.plan_l2 = plan_l2;
     tp.lbl_planning = lbl_planning;
-    tp.forecast_page_restore = forecast_page;
+    tp.forecast_page_restore = ctx.forecast_page;
     tp.page_title_wrap = page_title_wrap;
     tp.lbl_page_title = lbl_page_title;
 

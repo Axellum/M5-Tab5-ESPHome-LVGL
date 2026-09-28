@@ -26,7 +26,7 @@ lvgl:
                   lv_dir_t d = lv_indev_get_gesture_dir(indev);
 
                   lv_obj_t* pbars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4)};
-                  handle_swipe_gesture(d, pt.y, id(forecast_page_index),
+                  handle_swipe_gesture(d, pt.y,
                       id(layer_forecast_daily), id(layer_forecast_hourly),
                       g_day_slots, g_hour_slots,
                       id(font_meteo_card), id(font_meteo_card_small),

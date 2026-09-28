@@ -3,7 +3,7 @@
 # @file forecast_daily.yaml
 # @role 5 cartes prévisions journalières (fenêtre glissante sur 15 jours, cf.
 #       `cal_jours_data[15]`/`refresh_daily_forecast()` dans tab5_custom.cpp). Visible quand
-#       `forecast_page_index` (tab5-globals.yaml) est >= 2, piloté par `handle_swipe_gesture()`.
+#       `g_central_ctx.forecast_page` est >= 2, piloté par `handle_swipe_gesture()`.
 # @architecture_constraint Onglet Titre (`forecast_day_title_tab.yaml`) et Onglet Température
 #                          (`forecast_day_temp_tab.yaml`) sont factorisés (#T164, même motif x5).
 #                          Pièces (ADR-0023) : sur les pages 2 à 4, ces mêmes objets montrent
