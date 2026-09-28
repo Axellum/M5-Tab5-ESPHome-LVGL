@@ -4,6 +4,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-29 — Accéléromètre : la position ne sert plus qu'aux jeux
+
+- Demande d'Axel : la tablette ne change jamais de sens, la position ne sert qu'aux jeux.
+  « Tab5 Pitch », « Tab5 Roll » et « Tab5 IMU Temperature » ne sont plus envoyés à HA
+  (≈ 120 lignes par heure en moins dans la base) ; leurs trois cartes du tableau de bord
+  de l'auteur sont retirées.
+- L'IMU n'est plus lue du tout écran allumé hors jeu (1 fois par seconde avant, pour ces
+  seuls capteurs). Inchangé : 10 Hz écran éteint pour le réveil par une tape, 10 Hz ou
+  30 Hz jeu ouvert.
+
 ### 2026-09-29 — Docs : où part le temps d'une image, essai du dessin sur deux cœurs
 
 - `docs/performance.md` (EN/FR) : part d'envoi (rotation + copie, ~59 ms fixes pour un
