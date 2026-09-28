@@ -75,7 +75,40 @@ jobs:
             --sortie site | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
+        id: artefact
         with:
           path: site
-      - id: deploiement
-        uses: actions/deploy-pages@v5
+      # Pas actions/deploy-pages : il donne le commit (GITHUB_SHA) comme version du
+      # déploiement, que l'API veut unique. Le 28/09/2026, la release v3.2.0-rc.1 visait le
+      # commit que le push de #230 sur main venait de déployer : son déploiement s'est dit
+      # réussi, mais le site servi est resté celui du push (canal bêta sur 3.1.0). Mêmes
+      # appels à l'API que l'action (jeton OIDC, création, suivi jusqu'à « succeed », 10 min
+      # au plus), avec une version propre à chaque run.
+      - name: Déploiement
+        id: deploiement
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTEFACT: ${{ steps.artefact.outputs.artifact_id }}
+        run: |
+          version="$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          jeton=$(curl -sSf -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+                    "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq -r .value)
+          reponse=$(jq -n --argjson artefact "$ARTEFACT" --arg version "$version" --arg jeton "$jeton" \
+                      '{artifact_id: $artefact, pages_build_version: $version, oidc_token: $jeton}' \
+                    | gh api -X POST "repos/$GITHUB_REPOSITORY/pages/deployments" --input -)
+          echo "page_url=$(jq -r '.page_url // empty' <<<"$reponse")" >> "$GITHUB_OUTPUT"
+          id=$(jq -r '.id // (.status_url // "" | split("/") | last) // empty' <<<"$reponse")
+          id=${id:-$version}
+          echo "Déploiement $id (version $version)"
+          for _ in $(seq 120); do
+            sleep 5
+            etat=$(gh api "repos/$GITHUB_REPOSITORY/pages/deployments/$id" --jq .status || echo "illisible")
+            case "$etat" in
+              succeed) echo "Site déployé : $version"; exit 0 ;;
+              deployment_failed|deployment_content_failed|deployment_cancelled|deployment_lost)
+                echo "::error title=Site::déploiement $version : $etat"; exit 1 ;;
+              *) echo "état : $etat" ;;
+            esac
+          done
+          echo "::error title=Site::déploiement $version toujours en cours après 10 min"
+          exit 1
