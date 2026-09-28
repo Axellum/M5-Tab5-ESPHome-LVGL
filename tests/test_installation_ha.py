@@ -100,6 +100,69 @@ def test_entrees_du_blueprint_et_zones_attendues():
     assert verifier.ZONES_ABSENTES == ", ".join(z for z in ordre if z not in presentes)
 
 
+def test_pieces_du_job_et_protocole():
+    """Pièces (ADR-0023) : le job configure au moins deux pièces, la pièce 1 vide (accueil
+    depuis les entrées 3.x), et lit le protocole comme le blueprint."""
+    remplies = [k for k, v in verifier.PIECES.items() if k.endswith("_tuiles") and v]
+    assert len(remplies) >= 2 and "piece_1_tuiles" not in verifier.PIECES
+    assert any(len(v) > 5 for k, v in verifier.PIECES.items() if k.endswith("_tuiles")), "la limite de 5 est éprouvée"
+    blueprint = yaml.load(_lire("HomeAssistant_Config", "blueprints", "automation", "tab5",
+                                "tab5_emplacements.yaml"), Loader=_Chargeur)
+    assert verifier.TYPES_PAR_DOMAINE == blueprint["variables"]["types_par_domaine"]
+    assert verifier.icones_du_blueprint(_lire("HomeAssistant_Config", "blueprints", "automation", "tab5",
+                                              "tab5_emplacements.yaml")) == blueprint["variables"]["icones_mdi"]
+    for version, attendu in (("3.1.0 (ESPHome 2026.9.0)", 1), ("3.2.0-rendu (ESPHome 2026.9.0)", 2),
+                             ("rendu (ESPHome 2026.9.0)", 1), (None, 1), ("3.10.0", 2)):
+        assert verifier.protocole_de(version) == attendu, version
+    cles = [c for c, _ in verifier.tuiles_attendues()]
+    assert cles[:5] == ["t00", "t01", "t02", "t03", "t04"] and "t15" not in cles
+
+
+def test_ce_que_le_job_attend_est_ce_que_calcule_le_blueprint():
+    """Le blueprint, rendu ici (tests/test_tuiles_blueprint.py) avec les entrées du job
+    et des états imitant l'intégration demo, donne exactement ce que
+    verifier_installation.py attend : un écart se voit avant la CI."""
+    sys.path.insert(0, os.path.join(REPO, "tests"))
+    import test_tuiles_blueprint as tuiles
+
+    attributs = {
+        "light.kitchen_lights": {"supported_color_modes": ["color_temp", "hs"]},
+        "light.office_rgbw_lights": {"supported_color_modes": ["rgbw"]},
+        "light.bed_light": {"supported_color_modes": ["color_temp", "hs"]},
+        "light.ceiling_lights": {"supported_color_modes": ["color_temp", "hs"]},
+        "sensor.outside_temperature": {"unit_of_measurement": "°C", "device_class": "temperature"},
+        "binary_sensor.movement_backyard": {"device_class": "motion"},
+    }
+    etats = []
+    for entite in verifier.entites_de_test():
+        nom = entite.split(".", 1)[1].replace("_", " ").title()
+        etats.append(tuiles.Etat(entite, "on", friendly_name=nom, **attributs.get(entite, {})))
+    passage = tuiles.Passage(verifier.entrees_blueprint(), etats, {"id": "connexion"},
+                             tuiles._tablette("rendu (ESPHome 2026.9.0)"))
+    assert passage["protocole"] == 1
+    definitions = passage.definitions()
+    icones = verifier.icones_du_blueprint(_lire("HomeAssistant_Config", "blueprints", "automation", "tab5",
+                                                "tab5_emplacements.yaml"))
+    assert verifier.juger_definitions(definitions, icones) == []
+    etats_tuiles = verifier.entrees_de(passage.etats_tuiles())
+    assert [e[0] for e in etats_tuiles] == [c for c, _ in verifier.tuiles_attendues()]
+    # Et le juge voit un écart.
+    assert verifier.juger_definitions(definitions.replace("|Lights;", "|Kitchen Lights;"), icones)
+
+
+def test_trace_variables_et_appels():
+    trace = {"trace": {
+        "trigger/0": [{"path": "trigger/0", "changed_variables": {"tuiles": [], "protocole": 1}}],
+        "action/2/then/0": [{"path": "action/2/then/0", "changed_variables": {"definitions": "p0|;"}}],
+        "action/1/default/0/then/0": [{"path": "x", "result": {"params": {
+            "domain": "esphome", "service": "tab5_ha_hmi_tab5_maj_emplacements",
+            "service_data": {"payload": "tv|on|nan;"}, "target": {}}, "running_script": False}}],
+    }}
+    assert verifier.variables_de_trace(trace) == {"tuiles": [], "protocole": 1, "definitions": "p0|;"}
+    assert [a["service"] for a in verifier.appels_de_trace(trace)] == ["tab5_ha_hmi_tab5_maj_emplacements"]
+    assert verifier.entrees_de("p0|Salon;t00|lum||dc||Lampe;") == [["p0", "Salon"], ["t00", "lum", "", "dc", "", "Lampe"]]
+
+
 def test_la_tablette_virtuelle_porte_le_nom_de_la_vraie():
     tablette = _lire("tab5-ha-hmi.yaml")
     nom = re.search(r"^  name: (\S+)$", tablette, re.M).group(1)

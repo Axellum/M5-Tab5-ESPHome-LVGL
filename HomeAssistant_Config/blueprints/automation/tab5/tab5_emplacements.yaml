@@ -1,79 +1,251 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file tab5_emplacements.yaml
-# @role Blueprint HA (lot 6a de l'audit « ouverture », ADR-0019) : choisir à la souris
-#       l'appareil de chaque emplacement de l'écran du M5Stack Tab5. Une automatisation
+# @role Blueprint HA (lot 6a de l'audit « ouverture », ADR-0019 ; pièces, ADR-0023) :
+#       choisir à la souris les appareils de l'écran du M5Stack Tab5. Une automatisation
 #       par tablette. Elle :
-#       - pousse l'état des emplacements (action tab5_maj_emplacements, « clé|état|valeur;… ») :
+#       - décrit les pièces (firmware 3.2 et plus, ADR-0023) : jusqu'à 5 pièces de 5
+#         tuiles, une par page de la rangée du bas. Définitions (tab5_maj_tuiles :
+#         type, icône, options, complément, nom) à la connexion, au rechargement des
+#         automatisations et à la demande des zones ; puis états « tRT|état|valeur|couleur »
+#         par tab5_maj_emplacements : tous après les définitions, une tuile quand son
+#         appareil change, les capteurs (cap) avec les mesures lentes de 5 minutes ;
+#       - pousse l'état des emplacements 3.x (action tab5_maj_emplacements, « clé|état|valeur;… ») :
 #         tous à la connexion (esphome.tab5_connected) ; lumières, PC et TV quand ce que
 #         montre l'écran change ; les mesures lentes (températures, humidités, pots,
 #         batterie) groupées toutes les 5 minutes, celles qui ont changé seulement ;
 #       - pousse la clim (tab5_maj_clim) et un volet qui signale sa course (tab5_maj_volet_etat) ;
-#       - exécute les commandes de l'écran (événement esphome.tab5_action) sur l'entité choisie ;
+#       - exécute les commandes de l'écran (événement esphome.tab5_action) : clés 3.x vers
+#         l'entité choisie, tuiles (tRT) et pièces (pR) selon le DOMAINE de l'entité de la
+#         tuile, jamais sur une entité qu'aucune tuile ne porte ;
 #       - répond à la demande des zones (esphome.tab5_zones → tab5_maj_zones) : un
 #         emplacement vide, ou dont l'entité n'existe pas, disparaît de l'écran (ADR-0018).
 # @architecture_constraint Aucun placeholder : ce fichier est générique, il s'importe tel
 #       quel. Les clés d'emplacement et les commandes sont celles du firmware
-#       (tab5-api-logic.yaml, script tab5_action) ; tests/test_emplacements.py compare.
+#       (tab5-api-logic.yaml, script tab5_action) ; tests/test_emplacements.py et
+#       tests/test_tuiles_blueprint.py comparent (tableaux de l'ADR-0023 compris).
 #       Les événements esphome.* n'exigent pas l'option « autoriser l'appareil à effectuer
 #       des actions HA » (manager.py de l'intégration ESPHome).
+#       Protocole (ADR-0023, Compatibilité) : la version du projet se lit dans le
+#       sw_version de l'appareil (« 3.1.0 (ESPHome 2026.9.0) ») ; 3.2.0 ou plus =
+#       tuiles ; en dessous, illisible ou aucune tablette = jamais tab5_maj_tuiles (une
+#       action absente est une erreur que continue_on_error n'attrape pas).
+# @ai_instruction Les entrées 3.x (lumiere_1..3, pc, volet) gardent leurs noms : des
+#       automatisations existantes les référencent. Le bloc « icones » entre les
+#       marqueurs est écrit par tools/gen_tuiles_icones.py : ne pas l'éditer à la main.
 # ============================================================================
 blueprint:
   name: "Tab5 — emplacements de l'écran"
   description: >-
-    Choisissez l'appareil de chaque emplacement de l'écran du M5Stack Tab5 (firmware
-    3.0 et plus). Un emplacement laissé vide disparaît de l'écran, avec ses boutons.
-    Une seule automatisation par tablette. Les états sont poussés à la connexion, puis à
-    chaque changement visible (lumières, PC, TV, clim, volet) ; les mesures
-    (températures, humidités, plantes, batterie) sont regroupées toutes les 5 minutes.
-    Les boutons de l'écran commandent l'entité choisie.
+    Choisissez les appareils de l'écran du M5Stack Tab5. Firmware 3.2 et plus : jusqu'à
+    cinq pièces de cinq appareils, une par page de la rangée du bas (l'accueil, puis les
+    pages atteintes d'un glissement) ; le nom, l'icône et le type de chaque tuile viennent
+    de Home Assistant. Firmware 3.0 et 3.1 : les réglages 3.x (section repliée) servent
+    toujours. Un emplacement laissé vide disparaît de l'écran, avec ses boutons. Une seule
+    automatisation par tablette. Les états sont poussés à la connexion, puis à chaque
+    changement visible ; les mesures (températures, humidités, plantes, batterie,
+    capteurs des pièces) sont regroupées toutes les 5 minutes.
   domain: automation
   author: Axellum
   source_url: https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml
   homeassistant:
     # Celle que demande le firmware 3.0 (clé API fournie par HA, docs/installation.md).
+    # Elle couvre aussi les sélecteurs des pièces : objet à champs (2025.7) et entités
+    # réordonnables (2025.8), relevés dans l'historique de homeassistant/helpers/selector.py.
     min_version: 2026.8.0
   input:
-    lumieres:
-      name: Lumières
-      icon: mdi:lightbulb-group
-      description: Les trois tuiles de droite de l'accueil, et le popup lumière.
+    # Pièce n ↔ page de la rangée du bas, dans l'ordre où un glissement les atteint
+    # depuis l'accueil (ADR-0023) : R = n − 1.
+    piece_1:
+      name: "Pièce 1 — accueil (aujourd'hui → J+4)"
+      icon: mdi:home
+      description: >-
+        Les cinq tuiles de l'accueil (firmware 3.2 et plus). Laissée vide, elle reprend
+        les réglages de la section « Tuiles de l'accueil (réglage 3.x) ».
       input:
-        lumiere_1:
-          name: Lumière 1 (tuile 3)
+        piece_1_nom:
+          name: Nom de la pièce
+          description: Vide = l'aire de ses appareils, s'ils en ont une seule, sinon « Pièce 1 ».
+          default: ""
+          selector:
+            text:
+        piece_1_tuiles:
+          name: Appareils
+          description: >-
+            Cinq au plus, dans l'ordre des tuiles (de gauche à droite). Lumières,
+            interrupteurs, volets, lecteurs, scènes et scripts, capteurs, climatisation.
           default: []
           selector:
             entity:
+              multiple: true
+              reorder: true
               filter:
-                - domain: light
-        lumiere_2:
-          name: Lumière 2 (tuile 4)
+                - domain: &domaines_tuiles
+                    - light
+                    - switch
+                    - input_boolean
+                    - fan
+                    - humidifier
+                    - automation
+                    - cover
+                    - valve
+                    - media_player
+                    - scene
+                    - script
+                    - button
+                    - input_button
+                    - sensor
+                    - number
+                    - input_number
+                    - binary_sensor
+                    - device_tracker
+                    - person
+                    - lock
+                    - climate
+    piece_2:
+      name: "Pièce 2 — J+5 → J+9"
+      icon: mdi:home-outline
+      description: Un glissement vers la gauche depuis l'accueil.
+      collapsed: true
+      input:
+        piece_2_nom:
+          name: Nom de la pièce
+          description: Vide = l'aire de ses appareils, s'ils en ont une seule, sinon « Pièce 2 ».
+          default: ""
+          selector:
+            text:
+        piece_2_tuiles:
+          name: Appareils
+          description: Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
           default: []
           selector:
             entity:
+              multiple: true
+              reorder: true
               filter:
-                - domain: light
-        lumiere_3:
-          name: Lumière 3 (tuile 5)
+                - domain: *domaines_tuiles
+    piece_3:
+      name: "Pièce 3 — J+10 → J+14"
+      icon: mdi:home-outline
+      description: Deux glissements vers la gauche depuis l'accueil.
+      collapsed: true
+      input:
+        piece_3_nom:
+          name: Nom de la pièce
+          description: Vide = l'aire de ses appareils, s'ils en ont une seule, sinon « Pièce 3 ».
+          default: ""
+          selector:
+            text:
+        piece_3_tuiles:
+          name: Appareils
+          description: Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
           default: []
           selector:
             entity:
+              multiple: true
+              reorder: true
               filter:
-                - domain: light
+                - domain: *domaines_tuiles
+    piece_4:
+      name: "Pièce 4 — prochaines heures"
+      icon: mdi:home-outline
+      description: Un glissement vers la droite depuis l'accueil.
+      collapsed: true
+      input:
+        piece_4_nom:
+          name: Nom de la pièce
+          description: Vide = l'aire de ses appareils, s'ils en ont une seule, sinon « Pièce 4 ».
+          default: ""
+          selector:
+            text:
+        piece_4_tuiles:
+          name: Appareils
+          description: Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain: *domaines_tuiles
+    piece_5:
+      name: "Pièce 5 — heures suivantes"
+      icon: mdi:home-outline
+      description: Deux glissements vers la droite depuis l'accueil.
+      collapsed: true
+      input:
+        piece_5_nom:
+          name: Nom de la pièce
+          description: Vide = l'aire de ses appareils, s'ils en ont une seule, sinon « Pièce 5 ».
+          default: ""
+          selector:
+            text:
+        piece_5_tuiles:
+          name: Appareils
+          description: Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain: *domaines_tuiles
+    personnaliser:
+      name: Personnaliser des tuiles
+      icon: mdi:palette-outline
+      description: >-
+        Facultatif. Sans réglage, une tuile prend le nom de l'appareil (sans le nom de la
+        pièce) et son icône dans Home Assistant.
+      collapsed: true
+      input:
+        personnalisation:
+          name: Personnalisations
+          description: >-
+            Une ligne par appareil. L'icône doit être dans la palette de l'écran ; sinon,
+            celle de son type. « Confirmer » : un second appui dans les 3 s envoie la commande.
+          default: []
+          selector:
+            object:
+              multiple: true
+              label_field: entite
+              description_field: nom
+              fields:
+                entite:
+                  label: Appareil
+                  required: true
+                  selector:
+                    entity:
+                      filter:
+                        - domain: *domaines_tuiles
+                nom:
+                  label: Nom sur l'écran
+                  selector:
+                    text:
+                icone:
+                  label: Icône
+                  selector:
+                    icon:
+                comportement:
+                  label: Comportement
+                  selector:
+                    select:
+                      mode: dropdown
+                      options:
+                        - label: Normal
+                          value: normal
+                        - label: Allumer seulement (jamais éteint depuis l'écran)
+                          value: allumer_seulement
+                        - label: Confirmer (un second appui dans les 3 s)
+                          value: confirmer
+                        - label: Lecture seule (aucun appui)
+                          value: lecture_seule
     appareils:
-      name: PC, TV, téléphone
-      icon: mdi:monitor
+      name: TV, téléphone
+      icon: mdi:television
       input:
-        pc:
-          name: PC
-          description: Une prise ou un interrupteur (allumé par la tuile 1), ou un suivi de présence (affichage seul).
-          default: []
-          selector:
-            entity:
-              filter:
-                - domain: [switch, input_boolean, device_tracker, binary_sensor]
         tv:
           name: TV
+          description: Le bouton « TV » ; placée dans une pièce, sa tuile ouvre la télécommande (appui long).
           default: []
           selector:
             entity:
@@ -125,28 +297,18 @@ blueprint:
               filter:
                 - domain: sensor
                   device_class: temperature
-    clim_volet:
-      name: Climatisation et volet
+    climatisation:
+      name: Climatisation
       icon: mdi:air-conditioner
       input:
         clim:
           name: Climatisation
+          description: − / consigne / + et le popup ; placée dans une pièce, sa tuile ouvre aussi le popup.
           default: []
           selector:
             entity:
               filter:
                 - domain: climate
-        volet:
-          name: Volet
-          description: >-
-            Tuile 2. Un volet qui signale sa course (opening/closing) est poussé ici ;
-            avec le package volet_serre_tracking.yaml (volet qui ne la signale pas),
-            c'est le package qui pousse son état.
-          default: []
-          selector:
-            entity:
-              filter:
-                - domain: cover
     plantes:
       name: Plantes
       icon: mdi:sprout
@@ -208,6 +370,61 @@ blueprint:
             entity:
               filter:
                 - domain: calendar
+    # Réglage 3.x (ADR-0019) : les cinq places fixes de l'accueil. Lu par un firmware
+    # 3.0/3.1, et par un firmware 3.2 tant que la pièce 1 est vide (ADR-0023).
+    accueil_3x:
+      name: Tuiles de l'accueil (réglage 3.x)
+      icon: mdi:lightbulb-group
+      description: >-
+        Les cinq places fixes de l'accueil d'avant la 3.2 : PC ou TV, volet, trois lumières.
+        Un firmware 3.0 ou 3.1 n'affiche que celles-ci ; un firmware 3.2 les montre tant
+        que la pièce 1 est vide (et la tuile PC garde alors son comportement PC + TV).
+      collapsed: true
+      input:
+        lumiere_1:
+          name: Lumière 1 (tuile 3)
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: light
+        lumiere_2:
+          name: Lumière 2 (tuile 4)
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: light
+        lumiere_3:
+          name: Lumière 3 (tuile 5)
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: light
+        pc:
+          name: PC
+          description: >-
+            Une prise ou un interrupteur (allumé par la tuile 1), ou un suivi de présence
+            (affichage seul). La tuile 1 éteint la TV allumée, sinon allume PC et TV.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: [switch, input_boolean, device_tracker, binary_sensor]
+        volet:
+          name: Volet
+          description: >-
+            Tuile 2. Un volet qui signale sa course (opening/closing) est poussé ici ;
+            avec le package volet_serre_tracking.yaml (volet qui ne la signale pas),
+            c'est le package qui pousse son état. Laissez ici le volet que suit ce package,
+            même s'il est aussi dans une pièce : ses commandes passent alors par le script
+            du package et sa tuile montre l'état que le package tient.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: cover
     avance:
       name: Avancé
       icon: mdi:cog
@@ -623,6 +840,20 @@ variables:
     pot_4: !input pot_4
     pot_5: !input pot_5
     planning: !input agenda_travail
+  # Pièces (ADR-0023) : pieces[n] = entités de la pièce n + 1, dans l'ordre choisi.
+  pieces:
+    - !input piece_1_tuiles
+    - !input piece_2_tuiles
+    - !input piece_3_tuiles
+    - !input piece_4_tuiles
+    - !input piece_5_tuiles
+  noms_saisis:
+    - !input piece_1_nom
+    - !input piece_2_nom
+    - !input piece_3_nom
+    - !input piece_4_nom
+    - !input piece_5_nom
+  personnalisation: !input personnalisation
   # clé -> entité (chaîne vide si rien n'est choisi). Les détails des pots viennent de
   # l'appareil du capteur d'humidité, par classe (vérifié sur des Flower Care).
   sources: >-
@@ -639,6 +870,88 @@ variables:
       {%- endfor -%}
     {%- endfor -%}
     {{ ns.d }}
+  # Type de tuile par domaine : le tableau « Type | HA domains » de l'ADR-0023
+  # (tests/test_tuiles_blueprint.py compare). Un autre domaine n'a pas de tuile.
+  types_par_domaine:
+    light: lum
+    switch: int
+    input_boolean: int
+    fan: int
+    humidifier: int
+    automation: int
+    cover: vol
+    valve: vol
+    media_player: med
+    scene: act
+    script: act
+    button: act
+    input_button: act
+    sensor: cap
+    number: cap
+    input_number: cap
+    binary_sensor: bin
+    device_tracker: bin
+    person: bin
+    lock: bin
+    climate: cli
+  # entité -> {nom, icone, comportement} de la section « Personnaliser des tuiles » ;
+  # la première ligne d'une entité compte.
+  perso: >-
+    {%- set ns = namespace(d={}) -%}
+    {%- set lignes = personnalisation if personnalisation is iterable and personnalisation is not string and personnalisation is not mapping else [] -%}
+    {%- for p in lignes -%}
+      {%- if p is mapping and p.get('entite') is string and p.get('entite') not in ns.d -%}
+        {%- set ns.d = dict(ns.d, **{p.get('entite'): {'nom': (p.get('nom') or '') | string, 'icone': (p.get('icone') or '') | string, 'comportement': (p.get('comportement') or 'normal') | string}}) -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {{ ns.d }}
+  # Protocole de la tablette : 2 (tuiles) si sa version de projet est 3.2.0 ou plus,
+  # sinon 1. sw_version = « 3.1.0 (ESPHome 2026.9.0) », « 3.2.0-dev (…) » ; « rendu »
+  # ou illisible = 1. Plusieurs tablettes : la plus ancienne décide (jamais une action
+  # qu'une tablette n'a pas).
+  protocole: >-
+    {%- set ns = namespace(p=0) -%}
+    {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') -%}
+      {%- if device_attr(e, 'model') == 'tab5-ha-hmi' -%}
+        {%- set m = (device_attr(e, 'sw_version') or '') | string | regex_findall('^ *([0-9]+)[.]([0-9]+)[.]([0-9]+)') -%}
+        {%- set p = 2 if m and (m[0][0] | int(0)) * 1000000 + (m[0][1] | int(0)) * 1000 + (m[0][2] | int(0)) >= 3002000 else 1 -%}
+        {%- set ns.p = p if ns.p == 0 else [ns.p, p] | min -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {{ ns.p if ns.p else 1 }}
+  # Tuiles : [{cle: 'tRT', r: R, e: entité, type, s: entrée 3.x d'origine ou ''}].
+  # Les cinq premières entités de chaque pièce qui existent et dont le domaine a un
+  # type, dans l'ordre choisi. Pièce 1 vide : les entrées 3.x, à leurs places
+  # (t00 = PC, à défaut TV ; t01 = volet ; t02..t04 = lumières 1 à 3). Une même
+  # entité peut être dans plusieurs tuiles.
+  tuiles: >-
+    {%- set ns = namespace(l=[], t=0) -%}
+    {%- for n in range(5) -%}
+      {%- set brut = pieces[n] -%}
+      {%- set liste = [brut] if brut is string else (brut if brut else []) -%}
+      {%- set ns.t = 0 -%}
+      {%- for e in liste -%}
+        {%- if ns.t < 5 and e is string and e.split('.')[0] in types_par_domaine and states[e] is not none -%}
+          {%- set ns.l = ns.l + [{'cle': 't' ~ n ~ ns.t, 'r': n, 'e': e, 'type': types_par_domaine[e.split('.')[0]], 's': ''}] -%}
+          {%- set ns.t = ns.t + 1 -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {%- if n == 0 and ns.t == 0 -%}
+        {%- set premiere = 'pc' if sources.pc and states[sources.pc] is not none else 'tv' -%}
+        {%- for s in [premiere, 'volet', 'lumiere_1', 'lumiere_2', 'lumiere_3'] -%}
+          {%- set e = sources.get(s, '') -%}
+          {%- if e and e.split('.')[0] in types_par_domaine and states[e] is not none -%}
+            {%- set ns.l = ns.l + [{'cle': 't0' ~ loop.index0, 'r': 0, 'e': e, 'type': types_par_domaine[e.split('.')[0]], 's': s}] -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {{ ns.l }}
+  volet_par_package: "{{ states['script.tab5_volet_action'] is not none }}"
+  # Le volet que suit le package volet_serre_tracking.yaml : l'entrée Volet (3.x). Sa
+  # tuile montre l'état tenu par le package (input_text.volet_serre_etat), ses
+  # commandes passent par script.tab5_volet_action.
+  volet_suivi: "{{ sources.volet if volet_par_package and sources.volet else '' }}"
   # Clés poussées par tab5_maj_emplacements (clim et volet ont leurs actions).
   cles_emplacements:
     - lumiere_1
@@ -673,7 +986,6 @@ variables:
     - clim
     - volet
     - planning
-  volet_par_package: "{{ states['script.tab5_volet_action'] is not none }}"
   # Mesures lentes : poussées ensemble toutes les 5 minutes (déclencheur « mesures »),
   # celles qui ont changé seulement ; un pot part avec ses 4 détails si l'un des 5 a
   # changé. Poussées à chaque changement, elles faisaient ~1 300 exécutions par jour
@@ -693,6 +1005,20 @@ variables:
   # Période du déclencheur « mesures » (300 s), plus une marge : une mesure changée
   # juste au moment d'un passage repart au suivant, jamais perdue.
   fenetre_mesures: 310
+  # Tuiles dont la valeur part avec les mesures lentes : les capteurs (état = la mesure)
+  # et la température de la pièce d'une clim (current_temperature). Une clim part
+  # aussi à chaque changement de mode ; un capteur, jamais.
+  types_mesures:
+    - cap
+    - cli
+  types_immediats:
+    - lum
+    - int
+    - vol
+    - med
+    - act
+    - bin
+    - cli
   # Emplacements à pousser pour ce déclenchement.
   cles: >-
     {%- if trigger.id in ['connexion', 'rechargement'] -%}
@@ -729,6 +1055,46 @@ variables:
     {%- else -%}
       {{ [] }}
     {%- endif -%}
+  # Une entité d'une tuile apparaît ou disparaît : les définitions changent, elles
+  # repartent (avec tous les états), sans attendre une reconnexion.
+  redefinir: >-
+    {{ protocole == 2
+       and (trigger.id.startswith('piece_') or trigger.id in ['pc', 'tv', 'volet', 'lumiere_1', 'lumiere_2', 'lumiere_3'])
+       and trigger.from_state is defined and (trigger.from_state is none or trigger.to_state is none) }}
+  # Tuiles à pousser (clés tRT). Toutes après les définitions ; une tuile quand son
+  # entité change ce que l'écran montre (état, luminosité, couleur, position) ; les
+  # types_mesures avec les mesures lentes. Calculées quel que soit le protocole (la
+  # trace montre ce qui partirait), poussées seulement au protocole 2.
+  tuiles_a_pousser: >-
+    {%- if trigger.id in ['connexion', 'rechargement', 'zones'] or redefinir -%}
+      {{ tuiles | map(attribute='cle') | list }}
+    {%- elif trigger.id == 'mesures' -%}
+      {%- set ns = namespace(l=[]) -%}
+      {%- for t in tuiles if t.type in types_mesures and states[t.e] is not none -%}
+        {%- set depuis = states[t.e].last_changed if t.type == 'cap' else states[t.e].last_updated -%}
+        {%- if (now() - depuis).total_seconds() < fenetre_mesures -%}{%- set ns.l = ns.l + [t.cle] -%}{%- endif -%}
+      {%- endfor -%}
+      {{ ns.l }}
+    {%- elif trigger.id == 'volet_suivi' -%}
+      {{ (tuiles | selectattr('e', 'eq', volet_suivi) | map(attribute='cle') | list) if volet_suivi else [] }}
+    {%- elif trigger.from_state is defined and (trigger.id.startswith('piece_') or trigger.id in ['pc', 'tv', 'volet', 'lumiere_1', 'lumiere_2', 'lumiere_3']) -%}
+      {%- set avant = trigger.from_state -%}
+      {%- set apres = trigger.to_state -%}
+      {%- set ns = namespace(vu=avant is none or apres is none or avant.state != apres.state) -%}
+      {%- for a in ['brightness', 'rgb_color', 'current_position'] -%}
+        {%- if not ns.vu and avant.attributes.get(a) != apres.attributes.get(a) -%}{%- set ns.vu = true -%}{%- endif -%}
+      {%- endfor -%}
+      {%- if not ns.vu -%}
+        {{ [] }}
+      {%- elif trigger.id.startswith('piece_') -%}
+        {{ tuiles | selectattr('r', 'eq', trigger.id[6] | int - 1) | selectattr('e', 'eq', trigger.entity_id)
+           | selectattr('type', 'in', types_immediats) | map(attribute='cle') | list }}
+      {%- else -%}
+        {{ tuiles | selectattr('s', 'eq', trigger.id) | selectattr('type', 'in', types_immediats) | map(attribute='cle') | list }}
+      {%- endif -%}
+    {%- else -%}
+      {{ [] }}
+    {%- endif -%}
 
 triggers:
   - trigger: event
@@ -761,7 +1127,159 @@ triggers:
   - trigger: state
     entity_id: !input volet
     id: volet
-  # Téléphone, températures, humidité de la pièce et pots : voir cles_mesures.
+  # Pièces (ADR-0023), cinq déclencheurs par pièce, pour ne jamais réveiller
+  # l'automatisation sur un capteur qui change (une mesure part avec les mesures
+  # lentes) ni sur un attribut que l'écran ne montre pas (position GPS d'une personne,
+  # volume d'un lecteur) :
+  #   piece_n          l'état passe à un état qui n'est pas une mesure (etats_visibles) ;
+  #   piece_n_sortie   il en sort vers un autre (zone d'une personne, retour d'une mesure) ;
+  #   piece_n_luminosite / _couleur / _position  l'attribut change pendant que l'appareil
+  #                    reste allumé ou en place (not_from / not_to [null] : l'allumage et
+  #                    l'extinction sont déjà vus par piece_n, sans passage en double).
+  # « on » et « off » entre guillemets : sans eux, YAML 1.1 lit des booléens, que le
+  # schéma du déclencheur refuse.
+  - trigger: state
+    entity_id: !input piece_1_tuiles
+    to: &etats_visibles ["on", "off", open, closed, opening, closing, playing, paused, idle, standby, buffering, home, not_home, locked, unlocked, locking, unlocking, jammed, heat, cool, heat_cool, auto, dry, fan_only, unavailable, unknown]
+    id: piece_1
+  - trigger: state
+    entity_id: !input piece_1_tuiles
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: piece_1_sortie
+  - trigger: state
+    entity_id: !input piece_1_tuiles
+    attribute: brightness
+    not_from: [null]
+    not_to: [null]
+    id: piece_1_luminosite
+  - trigger: state
+    entity_id: !input piece_1_tuiles
+    attribute: rgb_color
+    not_from: [null]
+    not_to: [null]
+    id: piece_1_couleur
+  - trigger: state
+    entity_id: !input piece_1_tuiles
+    attribute: current_position
+    not_from: [null]
+    not_to: [null]
+    id: piece_1_position
+  - trigger: state
+    entity_id: !input piece_2_tuiles
+    to: *etats_visibles
+    id: piece_2
+  - trigger: state
+    entity_id: !input piece_2_tuiles
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: piece_2_sortie
+  - trigger: state
+    entity_id: !input piece_2_tuiles
+    attribute: brightness
+    not_from: [null]
+    not_to: [null]
+    id: piece_2_luminosite
+  - trigger: state
+    entity_id: !input piece_2_tuiles
+    attribute: rgb_color
+    not_from: [null]
+    not_to: [null]
+    id: piece_2_couleur
+  - trigger: state
+    entity_id: !input piece_2_tuiles
+    attribute: current_position
+    not_from: [null]
+    not_to: [null]
+    id: piece_2_position
+  - trigger: state
+    entity_id: !input piece_3_tuiles
+    to: *etats_visibles
+    id: piece_3
+  - trigger: state
+    entity_id: !input piece_3_tuiles
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: piece_3_sortie
+  - trigger: state
+    entity_id: !input piece_3_tuiles
+    attribute: brightness
+    not_from: [null]
+    not_to: [null]
+    id: piece_3_luminosite
+  - trigger: state
+    entity_id: !input piece_3_tuiles
+    attribute: rgb_color
+    not_from: [null]
+    not_to: [null]
+    id: piece_3_couleur
+  - trigger: state
+    entity_id: !input piece_3_tuiles
+    attribute: current_position
+    not_from: [null]
+    not_to: [null]
+    id: piece_3_position
+  - trigger: state
+    entity_id: !input piece_4_tuiles
+    to: *etats_visibles
+    id: piece_4
+  - trigger: state
+    entity_id: !input piece_4_tuiles
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: piece_4_sortie
+  - trigger: state
+    entity_id: !input piece_4_tuiles
+    attribute: brightness
+    not_from: [null]
+    not_to: [null]
+    id: piece_4_luminosite
+  - trigger: state
+    entity_id: !input piece_4_tuiles
+    attribute: rgb_color
+    not_from: [null]
+    not_to: [null]
+    id: piece_4_couleur
+  - trigger: state
+    entity_id: !input piece_4_tuiles
+    attribute: current_position
+    not_from: [null]
+    not_to: [null]
+    id: piece_4_position
+  - trigger: state
+    entity_id: !input piece_5_tuiles
+    to: *etats_visibles
+    id: piece_5
+  - trigger: state
+    entity_id: !input piece_5_tuiles
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: piece_5_sortie
+  - trigger: state
+    entity_id: !input piece_5_tuiles
+    attribute: brightness
+    not_from: [null]
+    not_to: [null]
+    id: piece_5_luminosite
+  - trigger: state
+    entity_id: !input piece_5_tuiles
+    attribute: rgb_color
+    not_from: [null]
+    not_to: [null]
+    id: piece_5_couleur
+  - trigger: state
+    entity_id: !input piece_5_tuiles
+    attribute: current_position
+    not_from: [null]
+    not_to: [null]
+    id: piece_5_position
+  # Volet suivi par le package volet_serre_tracking.yaml : son état est dans le
+  # package (le moteur ne donne pas de position). Sans le package, ne se déclenche jamais.
+  - trigger: state
+    entity_id: input_text.volet_serre_etat
+    id: volet_suivi
+  # Téléphone, températures, humidité de la pièce, pots et tuiles « mesures » : voir
+  # cles_mesures et types_mesures.
   - trigger: time_pattern
     minutes: "/5"
     id: mesures
@@ -779,10 +1297,12 @@ conditions:
   # Garde-fou des packages (ADR-0008) : absent, il laisse passer.
   - condition: template
     value_template: "{{ states('input_boolean.is_primary_active') != 'off' }}"
-  # Rien de neuf pour l'écran (aucune mesure changée, attribut invisible) : arrêt ici,
-  # sans ligne au journal.
+  # Rien de neuf pour l'écran (aucune mesure changée, attribut invisible, tuile d'un
+  # firmware qui n'en a pas) : arrêt ici, sans ligne au journal.
   - condition: template
-    value_template: "{{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet'] or cles | count > 0 }}"
+    value_template: >-
+      {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet'] or cles | count > 0
+         or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0)) }}
   # Déclencheurs venus de HA (rechargement, mesures, changements d'état) : seulement
   # si une tablette est connectée, sinon « Action … not found » (pas encore ajoutée)
   # ou « Not connected » (hors ligne). Elle est trouvée par le modèle de l'appareil
@@ -841,6 +1361,21 @@ actions:
               commande: "{{ trigger.event.data.action | default('') }}"
               valeur: "{{ trigger.event.data.valeur | default('') }}"
               cible: "{{ sources.get(emplacement, '') }}"
+              # Tuile tRT (ADR-0023) : son entité, si elle existe encore. Le blueprint
+              # est la liste blanche : une clé sans tuile ne commande rien.
+              tuile: "{{ tuiles | selectattr('cle', 'eq', emplacement) | first | default({}, true) }}"
+              t_entite: "{{ tuile.e if tuile and states[tuile.e] is not none else '' }}"
+              t_domaine: "{{ t_entite.split('.')[0] if t_entite else '' }}"
+              # Comportement personnalisé : lecture seule = rien ; allumer seulement =
+              # basculer allume, éteindre ne fait rien (le firmware n'envoie déjà que
+              # « allumer », ceci en est la garde côté HA).
+              t_commande: >-
+                {%- set c = perso.get(t_entite, {}).get('comportement', 'normal') if t_entite else 'lecture_seule' -%}
+                {%- if c == 'lecture_seule' -%}
+                {%- elif c == 'allumer_seulement' and commande in ['basculer', 'allumer'] -%}allumer
+                {%- elif c == 'allumer_seulement' and commande == 'eteindre' -%}
+                {%- else -%}{{ commande }}
+                {%- endif -%}
           - choose:
               - alias: "Lumière : basculer"
                 conditions: "{{ emplacement.startswith('lumiere_') and commande == 'basculer' and cible != '' }}"
@@ -889,8 +1424,12 @@ actions:
                       - action: light.turn_off
                         target:
                           entity_id: "{{ lampes }}"
+              # La tuile PC d'un accueil construit depuis les entrées 3.x (t00 venu de
+              # l'entrée PC) garde ce comportement.
               - alias: "PC : la TV allumée s'éteint, sinon PC et TV s'allument"
-                conditions: "{{ emplacement == 'pc' and commande == 'basculer' }}"
+                conditions: >-
+                  {{ (emplacement == 'pc' and commande == 'basculer')
+                     or (tuile.get('s', '') == 'pc' and t_commande == 'basculer') }}
                 sequence:
                   - variables:
                       tv: "{{ sources.tv }}"
@@ -1008,6 +1547,82 @@ actions:
                             target:
                               entity_id: "{{ volet }}"
 
+              # ---- Tuiles et pièces (ADR-0023), par domaine de l'entité de la tuile ----
+              - alias: "Tuile : basculer, allumer, éteindre (lum, int, med)"
+                conditions: >-
+                  {{ t_commande in ['basculer', 'allumer', 'eteindre']
+                     and t_domaine in ['light', 'switch', 'input_boolean', 'fan', 'humidifier', 'automation', 'media_player'] }}
+                sequence:
+                  - action: "{{ t_domaine }}.{{ {'basculer': 'toggle', 'allumer': 'turn_on', 'eteindre': 'turn_off'}[t_commande] }}"
+                    target:
+                      entity_id: "{{ t_entite }}"
+              - alias: "Tuile : ouvrir, fermer, arrêter (vol)"
+                conditions: "{{ t_commande in ['ouvrir', 'fermer', 'arreter'] and t_domaine in ['cover', 'valve'] }}"
+                sequence:
+                  - variables:
+                      sens: "{{ {'ouvrir': 'open', 'fermer': 'close', 'arreter': 'stop'}[t_commande] }}"
+                  - choose:
+                      - alias: "Volet suivi par le package (course simulée)"
+                        conditions: "{{ t_entite == volet_suivi }}"
+                        sequence:
+                          - action: script.tab5_volet_action
+                            data:
+                              action: "{{ sens }}"
+                    default:
+                      - action: "{{ t_domaine }}.{{ sens }}_{{ t_domaine }}"
+                        target:
+                          entity_id: "{{ t_entite }}"
+              - alias: "Tuile : lancer (act)"
+                conditions: "{{ t_commande == 'lancer' and t_domaine in ['scene', 'script', 'button', 'input_button'] }}"
+                sequence:
+                  - action: >-
+                      {{ {'scene': 'scene.turn_on', 'script': 'script.turn_on', 'button': 'button.press',
+                          'input_button': 'input_button.press'}[t_domaine] }}
+                    target:
+                      entity_id: "{{ t_entite }}"
+              - alias: "Tuile lumière : luminosité 0-255"
+                conditions: "{{ t_commande == 'luminosite' and t_domaine == 'light' }}"
+                sequence:
+                  - action: light.turn_on
+                    target:
+                      entity_id: "{{ t_entite }}"
+                    data:
+                      brightness: "{{ valeur | int(0) }}"
+              - alias: "Tuile lumière : luminosité en %"
+                conditions: "{{ t_commande == 'luminosite_pct' and t_domaine == 'light' }}"
+                sequence:
+                  - action: light.turn_on
+                    target:
+                      entity_id: "{{ t_entite }}"
+                    data:
+                      brightness_pct: "{{ valeur | int(0) }}"
+              - alias: "Tuile lumière : couleur"
+                conditions: "{{ t_commande == 'couleur' and t_domaine == 'light' }}"
+                sequence:
+                  - action: light.turn_on
+                    target:
+                      entity_id: "{{ t_entite }}"
+                    data:
+                      color_name: "{{ valeur }}"
+              - alias: "Pièce : tout éteindre (ses lumières)"
+                conditions: "{{ emplacement is match('^p[0-4]$') and commande == 'eteindre' }}"
+                sequence:
+                  - variables:
+                      lampes: >-
+                        {%- set ns = namespace(l=[]) -%}
+                        {%- for t in tuiles | selectattr('r', 'eq', emplacement[1] | int) | selectattr('type', 'eq', 'lum') -%}
+                          {%- if states[t.e] is not none and t.e not in ns.l
+                                and perso.get(t.e, {}).get('comportement', 'normal') not in ['allumer_seulement', 'lecture_seule'] -%}
+                            {%- set ns.l = ns.l + [t.e] -%}
+                          {%- endif -%}
+                        {%- endfor -%}
+                        {{ ns.l }}
+                  - if: "{{ lampes | count > 0 }}"
+                    then:
+                      - action: light.turn_off
+                        target:
+                          entity_id: "{{ lampes }}"
+
       - alias: "Clim : son état a changé"
         conditions: "{{ trigger.id == 'clim' and clim != '' }}"
         sequence:
@@ -1067,4 +1682,124 @@ actions:
           - action: "esphome.{{ tablette }}_tab5_maj_zones"
             data:
               absentes: "{{ absentes }}"
+            continue_on_error: true
+
+  # ---- Tuiles des pièces (ADR-0023) ----
+  # Définitions : un instantané complet (ce qui n'y est pas est vide), avant les états.
+  # Calculées à chaque connexion quel que soit le protocole (la trace montre ce qui
+  # partirait), envoyées seulement à une tablette 3.2 ou plus.
+  - if: "{{ trigger.id in ['connexion', 'rechargement', 'zones'] or redefinir }}"
+    then:
+      - variables:
+          # Nom de chaque pièce : saisi, sinon l'aire de ses appareils quand ceux qui en
+          # ont une en ont une seule, sinon vide (la tablette écrit « Pièce n »).
+          noms_pieces: >-
+            {%- set ns = namespace(l=[]) -%}
+            {%- for n in range(5) -%}
+              {%- set saisi = (noms_saisis[n] or '') | string | trim -%}
+              {%- set aires = tuiles | selectattr('r', 'eq', n) | map(attribute='e') | map('area_name') | reject('none') | unique | list -%}
+              {%- set ns.l = ns.l + [saisi if saisi else (aires[0] if aires | count == 1 else '')] -%}
+            {%- endfor -%}
+            {{ ns.l }}
+          # « pR|nom; » puis « tRT|type|icône|options|complément|nom; » (ADR-0023).
+          definitions: >-
+            {%- set ns = namespace(r='') -%}
+            {%- for n in range(5) -%}
+              {%- set dans = tuiles | selectattr('r', 'eq', n) | list -%}
+              {%- if dans | count > 0 -%}
+                {%- set piece = noms_pieces[n] | string -%}
+                {%- set ns.r = ns.r ~ 'p' ~ n ~ '|' ~ (piece | replace('|', '/') | replace(';', ',')) ~ ';' -%}
+                {%- for t in dans -%}
+                  {%- set dom = t.e.split('.')[0] -%}
+                  {%- set p = perso.get(t.e, {}) -%}
+                  {%- set classe = (state_attr(t.e, 'device_class') or '') | string -%}
+                  {#- Icône : personnalisée, sinon l'attribut icon, sinon la classe, sinon le
+                      domaine ; un « mdi: » hors palette prend le défaut du domaine. -#}
+                  {%- set defaut = icones_defaut.get(dom ~ '.' ~ classe, icones_defaut.get(dom, '')) if classe else icones_defaut.get(dom, '') -%}
+                  {%- set mdi = (p.get('icone') or state_attr(t.e, 'icon') or '') | string -%}
+                  {%- set icone = icones_mdi.get(mdi, defaut) if mdi else defaut -%}
+                  {#- Options : d (luminosité) et c (couleur) des modes de couleur ; o, k, r
+                      du comportement ; t = la TV du blueprint ; m = sa clim. -#}
+                  {%- set modes = state_attr(t.e, 'supported_color_modes') or [] -%}
+                  {%- set c = p.get('comportement', 'normal') -%}
+                  {%- set options = ('d' if t.type == 'lum' and modes | reject('in', ['onoff', 'unknown']) | list | count > 0 else '')
+                                  ~ ('c' if t.type == 'lum' and modes | select('in', ['hs', 'xy', 'rgb', 'rgbw', 'rgbww']) | list | count > 0 else '')
+                                  ~ ('o' if c == 'allumer_seulement' else '')
+                                  ~ ('k' if c == 'confirmer' else '')
+                                  ~ ('r' if c == 'lecture_seule' else '')
+                                  ~ ('t' if t.type == 'med' and t.e == sources.tv else '')
+                                  ~ ('m' if t.type == 'cli' and t.e == sources.clim else '') -%}
+                  {#- Complément : unité d'un capteur (7 octets au plus), classe d'un bin. -#}
+                  {%- if t.type == 'cap' -%}
+                    {%- set u = namespace(s=(state_attr(t.e, 'unit_of_measurement') or '') | string) -%}
+                    {%- for i in range(8) -%}{%- if u.s.encode('utf-8') | length > 7 -%}{%- set u.s = u.s[:-1] -%}{%- endif -%}{%- endfor -%}
+                    {%- set complement = u.s -%}
+                  {%- elif t.type == 'bin' -%}
+                    {%- set complement = 'presence' if dom in ['device_tracker', 'person'] else ('lock' if dom == 'lock' else classe) -%}
+                  {%- else -%}
+                    {%- set complement = '' -%}
+                  {%- endif -%}
+                  {#- Nom : personnalisé, sinon le nom de l'entité sans celui de la pièce (mot
+                      entier, casse ignorée, liaison « du », « de la »… qui reste en bout
+                      retirée), sinon le nom de l'entité. -#}
+                  {%- set fn = (state_attr(t.e, 'friendly_name') or t.e) | string | trim -%}
+                  {%- set nom = namespace(s=(p.get('nom') or '') | string | trim) -%}
+                  {%- if not nom.s -%}
+                    {%- set nom.s = fn -%}
+                    {%- set i = (fn | lower).find(piece | lower) if piece else -1 -%}
+                    {%- set j = i + (piece | length) -%}
+                    {%- if i >= 0 and (i == 0 or not fn[i - 1].isalnum()) and (j >= fn | length or not fn[j].isalnum()) -%}
+                      {%- set reste = namespace(s=(fn[:i] ~ ' ' ~ fn[j:]).split() | join(' ')) -%}
+                      {%- for m in [' de la', " de l'", ' du', ' des', ' de', " d'", ' la', ' le', ' les', " l'"] -%}
+                        {%- if (reste.s | lower).endswith(m) -%}{%- set reste.s = reste.s[:(reste.s | length) - (m | length)] -%}{%- endif -%}
+                      {%- endfor -%}
+                      {%- set reste.s = reste.s | trim(' -–:,') -%}
+                      {%- if reste.s -%}{%- set nom.s = reste.s -%}{%- endif -%}
+                    {%- endif -%}
+                  {%- endif -%}
+                  {%- set ns.r = ns.r ~ t.cle ~ '|' ~ t.type ~ '|' ~ icone ~ '|' ~ options ~ '|'
+                                ~ (complement | replace('|', '/') | replace(';', ',')) ~ '|'
+                                ~ (nom.s | replace('|', '/') | replace(';', ',')) ~ ';' -%}
+                {%- endfor -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {{ ns.r }}
+      - if: "{{ protocole == 2 }}"
+        then:
+          - action: "esphome.{{ tablette }}_tab5_maj_tuiles"
+            data:
+              payload: "{{ definitions }}"
+            continue_on_error: true
+  # États : « tRT|état|valeur|couleur; » (ADR-0023). Valeur = luminosité 0-255 (lum),
+  # position (vol), la mesure (cap), la température de la pièce (cli), nan sinon ;
+  # couleur = « RRGGBB » d'une lumière allumée qui donne rgb_color.
+  - if: "{{ tuiles_a_pousser | count > 0 }}"
+    then:
+      - variables:
+          etats_tuiles: >-
+            {%- set ns = namespace(r='') -%}
+            {%- for t in tuiles if t.cle in tuiles_a_pousser and states[t.e] is not none -%}
+              {%- set st = states[t.e] -%}
+              {%- if t.e == volet_suivi -%}
+                {%- set etat = {'En_mouvement': 'opening', 'Ouvert': 'open', 'Ferme': 'closed', 'Partiel': 'open'}.get(states('input_text.volet_serre_etat'), st.state) -%}
+                {%- set v = 'nan' -%}
+              {%- else -%}
+                {%- set etat = st.state -%}
+                {%- set brut = st.attributes.get('brightness') if t.type == 'lum'
+                          else st.attributes.get('current_position') if t.type == 'vol'
+                          else st.state if t.type == 'cap'
+                          else st.attributes.get('current_temperature') if t.type == 'cli'
+                          else none -%}
+                {%- set v = brut | float('nan') -%}
+              {%- endif -%}
+              {%- set rgb = st.attributes.get('rgb_color') if t.type == 'lum' and st.state == 'on' else none -%}
+              {%- set couleur = ('%02X%02X%02X' | format(rgb[0] | int(0), rgb[1] | int(0), rgb[2] | int(0))) if rgb and rgb | count == 3 else '' -%}
+              {%- set ns.r = ns.r ~ t.cle ~ '|' ~ (etat | string | replace('|', '/') | replace(';', ',')) ~ '|' ~ v ~ '|' ~ couleur ~ ';' -%}
+            {%- endfor -%}
+            {{ ns.r }}
+      - if: "{{ protocole == 2 and etats_tuiles != '' }}"
+        then:
+          - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
+            data:
+              payload: "{{ etats_tuiles }}"
             continue_on_error: true
