@@ -108,21 +108,21 @@ automation:
         state: "on"
       # Seul un vrai (re)démarrage de la liaison compte : liaison `on` depuis moins de
       # 3 min. Le firmware n'émet l'événement qu'à la connexion depuis le 25/09/2026 ;
-      # la garde reste contre un événement réémis. Adapter l'id du capteur de statut
-      # au nom de votre appareil.
+      # la garde reste contre un événement réémis. Le capteur « HA API Status » est
+      # cherché par le modèle de l'appareil (tab5-ha-hmi, bloc `project:` du firmware),
+      # pas par son nom : une condition d'état sur une entité absente (tablette
+      # renommée) bloquait toute la poussée complète (test « HA neuf », 28/09/2026).
       - alias: "tab5_connected : seulement si la liaison API vient de (re)demarrer (garde contre un evenement reemis)"
-        condition: or
-        conditions:
-          - condition: not
-            conditions:
-              - condition: trigger
-                id: tab5_connected
-          - condition: not
-            conditions:
-              - condition: state
-                entity_id: binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status
-                state: "on"
-                for: "00:03:00"
+        condition: template
+        value_template: >-
+          {%- set ns = namespace(depuis=none) -%}
+          {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') -%}
+            {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and is_state(e, 'on') -%}
+              {%- set ns.depuis = states[e].last_changed -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ trigger.id != 'tab5_connected' or ns.depuis is none
+             or (now() - ns.depuis).total_seconds() < 180 }}
 
     action:
       # ====== 0. RECONNEXION : attendre que la liaison API soit prête ======
@@ -135,9 +135,18 @@ automation:
           - condition: trigger
             id: tab5_connected
         then:
-          - wait_template: "{{ is_state('binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status', 'on') }}"
+          - wait_template: &tab5_connectee >-
+              {{ integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
+                 | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
+                 | list | count > 0 }}
             timeout: "00:00:10"
             continue_on_timeout: true
+      # Tablette absente (pas encore ajoutée dans HA, packages installés d'abord comme
+      # le dit le guide) ou hors ligne : on s'arrête ici, sans erreur. Sans cette
+      # garde, chaque démarrage de HA écrivait une dizaine d'ERREURS « Action …
+      # not found » (test « HA neuf », 28/09/2026).
+      - condition: template
+        value_template: *tab5_connectee
 
       # ====== 1, 7, 7b. VIGILANCE + BANDEAU INFO + ALERTES HA ======
       # Script partagé avec la poussée légère (section `script:`) : une seule copie
@@ -516,6 +525,10 @@ script:
         selector:
           boolean:
     sequence:
+      # Tablette absente ou hors ligne : rien à pousser, pas d'erreur (voir la poussée
+      # complète, section 0).
+      - condition: template
+        value_template: *tab5_connectee
       - action: esphome.tab5_ha_hmi_tab5_maj_alerte_meteo_france
         continue_on_error: true
         data:
@@ -601,6 +614,10 @@ script:
     mode: queued
     max: 10
     sequence:
+      # Tablette absente ou hors ligne : rien à pousser, pas d'erreur (voir la poussée
+      # complète, section 0).
+      - condition: template
+        value_template: *tab5_connectee
       - action: esphome.tab5_ha_hmi_tab5_maj_meteo_actuelle
         continue_on_error: true
         data:
@@ -624,6 +641,10 @@ script:
     mode: queued
     max: 10
     sequence:
+      # Tablette absente ou hors ligne : rien à pousser, pas d'erreur (voir la poussée
+      # complète, section 0).
+      - condition: template
+        value_template: *tab5_connectee
       - condition: template
         value_template: >-
           {{ states['cover.VOTRE_VOLET'] is not none and states['script.tab5_volet_action'] is not none }}

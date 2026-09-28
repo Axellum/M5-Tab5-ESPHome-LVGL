@@ -46,3 +46,4 @@ VOTRE_EMAIL_gmail_com: your_email_gmail_com     # calendar.<…> (planning de tr
 number.m5stack_tab5_home_assistant_hmi_rendez_vous_annoncer_avant: number.m5stack_tab5_home_assistant_hmi_rendez_vous_annoncer_avant
 binary_sensor.m5stack_tab5_home_assistant_hmi_reveil_en_cours: binary_sensor.m5stack_tab5_home_assistant_hmi_reveil_en_cours
 sensor.m5stack_tab5_home_assistant_hmi_tab5_raison_du_redemarrage: sensor.m5stack_tab5_home_assistant_hmi_tab5_raison_du_redemarrage  # garde (b) de tab5_health.yaml
+binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status: binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status  # gardes de tab5_health.yaml et tab5_micro_absence.yaml

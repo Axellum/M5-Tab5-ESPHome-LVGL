@@ -107,6 +107,11 @@ ID_POUSSEE = "tab5_ha_hmi_updater"          # packages/tab5_push.yaml
 TRACES_A_L_AJOUT = (
     (ID_POUSSEE, "esphome.tab5_connected"),
 )
+# Création de l'automatisation du blueprint, tablette déjà connectée : il pousse tout,
+# zones comprises, sur le rechargement des automatisations (défaut 4 du 28/09/2026).
+TRACES_A_LA_CREATION = (
+    (ID_AUTOMATISATION, "automation_reloaded"),
+)
 TRACES_ATTENDUES = (
     (ID_AUTOMATISATION, "esphome.tab5_connected"),
     (ID_AUTOMATISATION, "esphome.tab5_zones"),
@@ -647,9 +652,9 @@ async def juger_passages(ha: HA, item_id: str, declencheur: str, passages: list[
 async def rapporter_apres_creation(ha: HA, cree: float, rapport: Rapport) -> None:
     """Ce que le blueprint a fait depuis la création de son automatisation, sans
     reconnexion de la tablette : ses déclencheurs sont la connexion, la demande des
-    zones (une par connexion), les changements d'état et les mesures toutes les
-    5 minutes. Rapporté, pas jugé : c'est l'état de l'écran juste après l'étape 6 de
-    « Sans compiler »."""
+    zones (une par connexion), le rechargement des automatisations (sa propre
+    création), les changements d'état et les mesures toutes les 5 minutes. Rapporté
+    pour relecture ; le rechargement et les zones sont jugés dans scenario()."""
     passages = [t for t in await ha.traces(ID_AUTOMATISATION)
                 if horodatage((t.get("timestamp") or {}).get("start")) >= cree]
     declencheurs = sorted({t.get("trigger") or "?" for t in passages})
@@ -728,8 +733,9 @@ def classer_journal(entrees: list[dict], connexion: float,
                     deconnexions: list[tuple[float, float]]) -> tuple[list[str], dict[tuple, int], int]:
     """(erreurs fautives, groupes rapportés, nombre d'entrées sans rapport avec le Tab5).
 
-    Fautive : une ERREUR qui concerne le Tab5, après la première connexion de la
-    tablette. Sauf « Not connected to … » pendant une déconnexion VOULUE (`deconnexions`,
+    Fautive : une ERREUR qui concerne le Tab5, avant comme après la première connexion
+    de la tablette (avant : poussées vers une tablette pas encore ajoutée, « Action …
+    not found », défaut 3 du 28/09/2026 : les packages doivent l'attendre). Sauf « Not connected to … » pendant une déconnexion VOULUE (`deconnexions`,
     intervalles d'epoch : rechargement après l'option « actions HA », redémarrage de la
     tablette) : une poussée partie vers une tablette hors ligne, rapportée à part."""
     fautives: list[str] = []
@@ -742,9 +748,11 @@ def classer_journal(entrees: list[dict], connexion: float,
             autres += 1
             continue
         premiere = e["message"].splitlines()[0][:220]
-        if e["quand"] < connexion:
-            moment = "avant la connexion"
-        elif e["niveau"] == "WARNING":
+        if e["niveau"] == "WARNING":
+            moment = "avant la connexion" if e["quand"] < connexion else "après la connexion"
+        elif e["quand"] < connexion:
+            fautives.append(f"(avant la connexion) {e['niveau']} [{e['logger']}] {e['message'][:600]}")
+            continue
             moment = "après la connexion"
         elif "Not connected to" in e["message"] and any(a <= e["quand"] <= b for a, b in deconnexions):
             moment = "pendant une déconnexion voulue de la tablette"
@@ -759,8 +767,8 @@ def classer_journal(entrees: list[dict], connexion: float,
 async def journal_ha(ha: HA, connexion: float, deconnexions: list[tuple[float, float]], rapport: Rapport) -> None:
     """Journal de HA (docker logs) jugé par classer_journal. Avant la connexion, les
     actions esphome.tab5_ha_hmi_* n'existent pas : dans l'ordre de docs/installation.md
-    (packages, puis tablette), les poussées lancées au démarrage de HA échouent
-    (« Action … not found ») ; c'est rapporté."""
+    (packages, puis tablette), les poussées doivent attendre la tablette au lieu
+    d'échouer (« Action … not found »)."""
     proc = await asyncio.create_subprocess_exec("docker", "logs", ha.conteneur, stdout=subprocess.PIPE,
                                                 stderr=subprocess.STDOUT)
     sortie, _ = await proc.communicate()
@@ -772,7 +780,7 @@ async def journal_ha(ha: HA, connexion: float, deconnexions: list[tuple[float, f
         return
     fautives, groupes, autres = classer_journal(entrees, connexion, deconnexions)
     for texte in fautives:
-        rapport.echec(f"journal HA après la connexion de la tablette — {texte}")
+        rapport.echec(f"journal HA, erreur Tab5 — {texte}")
     for (moment, niveau, logger_, premiere), n in groupes.items():
         rapport.info(f"journal HA, {moment} — {niveau} ×{n} [{logger_}] {premiere}")
     rapport.info(f"journal HA : {autres} avertissement(s) ou erreur(s) sans rapport avec le Tab5 (demo, traductions…)")
@@ -834,11 +842,15 @@ async def scenario(args, rapport: Rapport) -> None:
                 f"{horodatage(retour['time_fired']) - option:.1f} s après" if retour else "non reçu en 60 s"))
             await attendre_traces(ha, debut, rapport, TRACES_A_L_AJOUT)
 
-            # 6 : « Vos appareils », l'automatisation du blueprint, APRÈS l'ajout. Ce que
-            # l'écran en reçoit avant toute reconnexion est rapporté, pas jugé.
+            # 6 : « Vos appareils », l'automatisation du blueprint, APRÈS l'ajout : elle
+            # doit remplir l'écran tout de suite, sans attendre une reconnexion.
             cree = time.time()
             await creer_automatisation(ha, rapport)
-            await asyncio.sleep(ATTENTE_APRES_CREATION)
+            await attendre_traces(ha, cree, rapport, TRACES_A_LA_CREATION)
+            etat = await attendre_etat(ha, ZONES_ENTITE, ZONES_ABSENTES, ATTENTE_APRES_CREATION)
+            rapport.verifier(etat == ZONES_ABSENTES,
+                             f"dès la création de l'automatisation, sans reconnexion, la tablette masque "
+                             f"les emplacements vides ({ZONES_ABSENTES})", f"capteur « Zones masquées » = {etat!r}")
             await rapporter_apres_creation(ha, cree, rapport)
             await capturer(ha, args.captures, "installation-ha-1", rapport)
 

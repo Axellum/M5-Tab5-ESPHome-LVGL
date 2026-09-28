@@ -44,6 +44,14 @@ script:
       dernière demande compte.
     mode: restart
     sequence:
+      # Tablette absente (pas encore ajoutée dans HA) ou hors ligne : rien à pousser,
+      # pas d'erreur « Action … not found » / « Not connected » (test « HA neuf »,
+      # 28/09/2026). Tablette trouvée par le modèle de l'appareil, pas par son nom.
+      - condition: template
+        value_template: &tab5_connectee >-
+          {{ integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
+             | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
+             | list | count > 0 }}
       - variables:
           debut: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
           fin: "{{ (now() + timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S') }}"
@@ -188,8 +196,14 @@ automation:
       # inexistante, donc déclencheur mort (corrigé le 06/08/2026). Si votre
       # appareil est préfixé par sa pièce (ex. `salon_…`), mettez l'entity_id
       # complet dans placeholders.yaml (cf. placeholders.example.yaml).
+      # Seulement un vrai changement de valeur : le `number` passe à `unavailable` à
+      # chaque déconnexion de la tablette, puis revient à sa valeur ; ces passages
+      # appelaient la tablette hors ligne (ERREUR « Not connected », test « HA
+      # neuf », 28/09/2026). La reconnexion a son propre déclencheur.
       - platform: state
         entity_id: number.m5stack_tab5_home_assistant_hmi_rendez_vous_annoncer_avant
+        not_from: [unavailable, unknown]
+        not_to: [unavailable, unknown]
     condition:
       # Même garde-fou que les autres automations d'écran (cf. l'@ai_warning en
       # tête de packages/tab5_push.yaml : ce booléen s'est déjà retrouvé bloqué à
@@ -203,7 +217,7 @@ automation:
       # « Authenticated connection not ready yet » — 66 fois les 25-26/09/2026).
       # Même attente que la poussée complète : passe tout de suite si la liaison
       # est `on`, sinon s'arrête sans erreur après 10 s ; la reconnexion relance.
-      - wait_template: "{{ is_state('binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status', 'on') }}"
+      - wait_template: *tab5_connectee
         timeout: "00:00:10"
         continue_on_timeout: false
       - action: script.tab5_rdv_prochains

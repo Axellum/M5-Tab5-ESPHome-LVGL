@@ -58,6 +58,14 @@ script:
         selector:
           text:
     sequence:
+      # Tablette absente (pas encore ajoutée dans HA) ou hors ligne : rien à pousser,
+      # pas d'erreur « Action … not found » / « Not connected » (test « HA neuf »,
+      # 28/09/2026). Tablette trouvée par le modèle de l'appareil, pas par son nom.
+      - condition: template
+        value_template: &tab5_connectee >-
+          {{ integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
+             | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
+             | list | count > 0 }}
       - variables:
           y: "{{ annee | int }}"
           m: "{{ mois | int }}"
@@ -229,6 +237,9 @@ script:
         selector:
           text:
     sequence:
+      # Tablette absente ou hors ligne : voir tab5_calendrier_mois.
+      - condition: template
+        value_template: *tab5_connectee
       - variables:
           ds: "{{ date | string }}"
           vacances_zone_a: *vacances_zone_a

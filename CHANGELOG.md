@@ -4,6 +4,37 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — HA attend la tablette : les défauts trouvés par le test « HA neuf »
+
+Quatre défauts relevés par le nouveau test d'installation dans un Home Assistant neuf
+(#210), corrigés côté HA, sans flash :
+- **La tablette est reconnue par son modèle** (`tab5-ha-hmi`, bloc `project:` du
+  firmware) et non plus par le nom de son capteur « HA API Status » :
+  `integration_entities('esphome')` → capteur `…_ha_api_status` à `on` → modèle.
+- **Poussée complète bloquée si l'appareil est renommé** : sa garde « événement
+  réémis » était une condition d'état sur `binary_sensor.m5stack_…_ha_api_status` ;
+  absente, elle arrêtait tout. Elle passe par le modèle (`packages/tab5_push.yaml`).
+- **Erreurs « Action … not found » au démarrage de HA** (packages installés avant la
+  tablette, comme le dit le guide) et « Not connected » (tablette hors ligne) : la
+  poussée complète et les scripts qui appellent la tablette (alertes, météo, volet,
+  calendrier, rendez-vous) commencent par la garde « tablette connectée » et
+  s'arrêtent sans erreur.
+- **Écran vide après la création du blueprint** (automatisation créée après l'ajout de
+  la tablette) : le blueprint pousse tout, zones comprises, au rechargement des
+  automatisations (`automation_reloaded`) — donc aussi quand on change un emplacement.
+  Ses déclencheurs venus de HA attendent eux aussi une tablette connectée.
+- **Rendez-vous poussés vers une tablette déconnectée** : le `number` « Rendez-vous :
+  annoncer avant » passait par `unavailable` à chaque déconnexion ; le déclencheur
+  ignore maintenant ces passages (`not_from` / `not_to`).
+- `placeholders.example.yaml` : correspondance du capteur « HA API Status » (gardes de
+  `tab5_health.yaml` et `tab5_micro_absence.yaml`) pour une tablette renommée.
+- Tablette virtuelle : même bloc `project:` que la vraie, donc même modèle.
+- **Test « HA neuf »** : une ERREUR Tab5 avant la connexion de la tablette fait
+  maintenant échouer le job ; il vérifie aussi que le blueprint remplit l'écran (zones
+  masquées) dès la création de son automatisation, sans reconnexion. Tests pytest : la
+  garde ouvre chaque script qui appelle la tablette ; même modèle pour la tablette
+  virtuelle.
+
 ### 2026-09-28 — CI : installer le Tab5 dans un Home Assistant neuf, sans matériel
 
 - **`.github/workflows/installation-ha.yml`** (~3 min, non requis) fait ce que fait un

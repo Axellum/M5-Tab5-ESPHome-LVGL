@@ -156,13 +156,15 @@ def test_journal_de_ha():
 
 
 def test_classer_le_journal():
-    """Erreur Tab5 après la connexion : fautive, sauf « Not connected » pendant une
-    déconnexion voulue de la tablette ; avant la connexion : rapportée."""
+    """Erreur Tab5 : fautive avant comme après la connexion (défaut 3 du 28/09/2026 :
+    les poussées attendent la tablette), sauf « Not connected » pendant une déconnexion
+    voulue ; avertissements : rapportés."""
     def e(quand, niveau, message):
         return {"quand": quand, "niveau": niveau, "logger": "homeassistant.components.script.tab5_x",
                 "message": message}
     entrees = [
-        e(10, "ERROR", "Action esphome.tab5_ha_hmi_y not found"),           # avant : rapportée
+        e(10, "ERROR", "Action esphome.tab5_ha_hmi_y not found"),           # avant : fautive
+        e(20, "WARNING", "Can't connect to ESPHome API for tab5-ha-hmi"),    # avant : rapportée
         e(120, "ERROR", "Failed … tab5_maj_rdv_prochains: Not connected to tab5-ha-hmi"),  # pendant : rapportée
         e(130, "WARNING", "Already running"),                                # avertissement : rapporté
         e(200, "ERROR", "Failed … Not connected to tab5-ha-hmi"),            # hors fenêtre : fautive
@@ -170,7 +172,39 @@ def test_classer_le_journal():
         {"quand": 220, "niveau": "ERROR", "logger": "homeassistant.helpers.translation", "message": "demo"},
     ]
     fautives, groupes, autres = verifier.classer_journal(entrees, connexion=100, deconnexions=[(115, 125)])
-    assert len(fautives) == 2 and "Not connected" in fautives[0] and "Error rendering" in fautives[1]
+    assert len(fautives) == 3
+    assert "(avant la connexion)" in fautives[0] and "not found" in fautives[0]
+    assert "Not connected" in fautives[1] and "Error rendering" in fautives[2]
     assert sorted(m for m, *_ in groupes) == ["après la connexion", "avant la connexion",
                                               "pendant une déconnexion voulue de la tablette"]
     assert autres == 1
+
+
+def test_la_tablette_virtuelle_porte_le_modele_de_la_vraie():
+    """Les packages et le blueprint reconnaissent la tablette par le modèle de l'appareil
+    (bloc `project:`), pas par son nom : la tablette virtuelle doit porter le même."""
+    projet = re.search(r"^  project:\n    name: (\S+)", _lire("tab5-ha-hmi.yaml"), re.M).group(1)
+    assert re.search(r"^  project:\n    name: " + re.escape(projet) + "$", _lire("tab5-rendu-host.yaml"), re.M)
+    modele = projet.split(".", 1)[1]
+    assert modele == "tab5-ha-hmi"
+
+
+def test_chaque_poussee_attend_la_tablette():
+    """Défauts 2, 3 et 5 du 28/09/2026 : chaque script qui appelle une action de la
+    tablette commence par la garde « tablette connectée » (trouvée par son modèle), et
+    le blueprint pousse aussi au rechargement des automatisations (défaut 4)."""
+    garde = "select('eq', 'tab5-ha-hmi')"
+    for nom in ("tab5_push", "tab5_calendar", "tab5_reveil"):
+        paquet = yaml.load(_lire("HomeAssistant_Config", "packages", f"{nom}.yaml"), Loader=_Chargeur)
+        for script, corps in (paquet.get("script") or {}).items():
+            if "esphome.tab5_ha_hmi_" not in yaml.dump(corps, allow_unicode=True):
+                continue
+            premiere = corps["sequence"][0]
+            assert premiere.get("condition") == "template" and garde in premiere["value_template"], \
+                f"{nom}.yaml, script {script} : la garde « tablette connectée » doit ouvrir la séquence"
+    push = _lire("HomeAssistant_Config", "packages", "tab5_push.yaml")
+    assert "entity_id: binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status" not in push
+    reveil = _lire("HomeAssistant_Config", "packages", "tab5_reveil.yaml")
+    assert "not_to: [unavailable, unknown]" in reveil
+    blueprint = _lire("HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
+    assert "event_type: automation_reloaded" in blueprint and garde in blueprint
