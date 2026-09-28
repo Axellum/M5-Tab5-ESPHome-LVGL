@@ -6,12 +6,27 @@
 
 > **Just want to try it first?** [`docs/demo_mode.md`](demo_mode.md) shows the full dashboard on a flashed device in a few minutes, with no Home Assistant install at all. Come back here when you're ready for the real install.
 
-> **No compiling (3.0 and later):** the [web flasher](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) installs a ready-made, signed firmware from Chrome or Edge, for your display revision, then sets its Wi-Fi. You still need the Home Assistant side (Step 4) and to add the tablet (Step 6); Steps 1, 2, 3 and 5 are for building your own firmware. The tablet then offers its updates in Home Assistant (« Firmware » entity). It only accepts, over the air, a firmware signed with the project key: to switch to your own builds (your own key), flash once over USB.
+## Without compiling (install page)
+
+Since 3.0, a ready-made, signed firmware installs from the browser. In this order:
+
+1. **Home Assistant side first**: the packages and the blueprint of [Step 4](#step-4--set-up-the-home-assistant-packages). For now this step still needs the repository and Python, once, to fill in your city, calendar and so on.
+2. **Flash** from the [install page](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome or Edge, a USB-C cable that carries data): your display revision, the Stable channel, *Connect and install*. On a new tablet, accept to erase it. In the port list, the tablet is « USB JTAG/serial debug unit »; if several ports have that name, unplug the tablet to see which one disappears.
+   - « Failed to initialize… holding the BOOT button »: the Tab5 has no BOOT button. Hold its reset button about 2 s, until the internal green LED blinks fast (download mode), start again, and press reset once at the end to restart it.
+   - The tablet already runs the same version: the page shows no *Install*. To start from scratch, « Erase User Data » (in red, at the bottom) erases everything, Wi-Fi, key and settings included, then installs again.
+3. **Wi-Fi**: from the same window (*Connect to Wi-Fi*, over USB), or with a phone on the open « Tab5 Fallback AP » network.
+4. **Add it to Home Assistant** within 30 minutes of its start: *Settings → Devices & services*, the ESPHome device is discovered, *Configure*. Home Assistant gives it its key. A tablet Home Assistant already knows gets a new key by itself, nothing to confirm (checked on 2026-09-28).
+5. **Allow Home Assistant actions**: *ESPHome → Configure*, tick « Allow the device to perform Home Assistant actions ». Voice, calendar and alarm clock need them.
+6. **Your devices**: create the automation from the blueprint ([Step 4](#step-4--set-up-the-home-assistant-packages), item 6).
+
+Updates then show up in Home Assistant (« Firmware » entity), on the channel you installed; to switch channels, install again from the page without erasing. Over the air, the tablet only accepts a firmware signed with the project key: to switch to your own builds (your own key), flash once over USB.
+
+The steps below are for building your own firmware; Steps 4 and 6 are for everyone.
 
 ## Prerequisites
 
 - A working **Home Assistant** instance, **2026.8 or newer** (it gives the tablet its encryption key, see Step 6), any installation method
-- The **ESPHome** add-on or standalone ESPHome CLI (`pip install esphome`)
+- To build your own firmware only: the **ESPHome** add-on or standalone ESPHome CLI (`pip install esphome`)
 - ESPHome version **≥ 2026.9.0** — enforced by `min_version:` in `tab5-ha-hmi.yaml`, so an older ESPHome refuses to compile. 2026.7.0 brought the official `st7123` touchscreen platform (no more `external_components`), zero-copy audio, VAD and PSRAM-over-SDIO; the floor was raised to 2026.8.1 on 2026-08-26 for the API, voice-assistant and crash-handler fixes this project exercises daily, then to 2026.9.0 on 2026-09-16; the pairing window, the key given by Home Assistant and signed firmware (3.0) are checked on it (reasoning in the comment above `min_version:`)
 - A M5Stack Tab5. The **ST7123** display chip (sticker on the back) is the one tested daily; the ST7121 and the original ILI9881C revisions compile but have never been run on a device — see [Hardware revisions](hardware.md#hardware-revisions), and Step 2 to pick yours
 
@@ -211,12 +226,27 @@ Limits:
 
 > **Envie de tester d'abord ?** [`docs/demo_mode.md`](demo_mode.md) montre le tableau de bord complet sur un appareil flashé en quelques minutes, sans aucune installation Home Assistant. Revenez ici quand vous êtes prêt pour l'installation réelle.
 
-> **Sans compiler (3.0 et suivantes) :** le [flasheur web](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) installe depuis Chrome ou Edge un firmware prêt à l'emploi et signé, pour votre révision d'écran, puis règle son Wi-Fi. Il reste le côté Home Assistant (étape 4) et l'ajout de la tablette (étape 6) ; les étapes 1, 2, 3 et 5 servent à compiler son propre firmware. La tablette propose ensuite ses mises à jour dans Home Assistant (entité « Firmware »). Par le réseau, elle n'accepte qu'un firmware signé par la clé du projet : pour passer à vos propres compilations (votre clé), flashez une fois par USB.
+## Sans compiler (page d'installation)
+
+Depuis la 3.0, un firmware prêt à l'emploi et signé s'installe depuis le navigateur. Dans cet ordre :
+
+1. **Home Assistant d'abord** : les packages et le blueprint de l'[étape 4](#étape-4--installer-les-packages-home-assistant). Pour l'instant, cette étape demande encore le dépôt et Python, une fois, pour renseigner votre ville, votre agenda, etc.
+2. **Flasher** depuis la [page d'installation](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome ou Edge, un câble USB-C qui transmet les données) : votre révision d'écran, le canal Stable, *Connecter et installer*. Sur une tablette neuve, acceptez de l'effacer. Dans la liste des ports, la tablette s'appelle « USB JTAG/serial debug unit » ; si plusieurs ports portent ce nom, débranchez la tablette pour voir lequel disparaît.
+   - « Failed to initialize… holding the BOOT button » : le Tab5 n'a pas de bouton BOOT. Maintenez son bouton reset environ 2 s, jusqu'à ce que la LED verte interne clignote vite (mode téléchargement), recommencez, puis un appui court sur reset à la fin pour la redémarrer.
+   - La tablette a déjà la même version : la page n'affiche pas *Install*. Pour repartir de zéro, « Erase User Data » (en rouge, en bas) efface tout, Wi-Fi, clé et réglages compris, puis réinstalle.
+3. **Wi-Fi** : depuis la même fenêtre (*Connect to Wi-Fi*, par l'USB), ou avec un téléphone sur le réseau ouvert « Tab5 Fallback AP ».
+4. **L'ajouter à Home Assistant** dans les 30 minutes qui suivent son démarrage : *Paramètres → Appareils et services*, l'appareil ESPHome est découvert, *Configurer*. Home Assistant lui donne sa clé. Une tablette que Home Assistant connaît déjà reçoit une nouvelle clé toute seule, rien à confirmer (vérifié le 28/09/2026).
+5. **Autoriser les actions Home Assistant** : *ESPHome → Configurer*, cochez l'option qui autorise l'appareil à effectuer des actions Home Assistant. La voix, le calendrier et le réveil en ont besoin.
+6. **Vos appareils** : créez l'automatisation depuis le blueprint ([étape 4](#étape-4--installer-les-packages-home-assistant), point 6).
+
+Les mises à jour arrivent ensuite dans Home Assistant (entité « Firmware »), sur le canal installé ; pour changer de canal, réinstallez depuis la page sans effacer. Par le réseau, la tablette n'accepte qu'un firmware signé par la clé du projet : pour passer à vos propres compilations (votre clé), flashez une fois par USB.
+
+Les étapes suivantes servent à compiler son propre firmware ; les étapes 4 et 6 concernent tout le monde.
 
 ## Prérequis
 
 - Une instance **Home Assistant** fonctionnelle, **2026.8 ou plus récente** (c'est elle qui donne sa clé de chiffrement à la tablette, voir l'étape 6), toute méthode d'installation
-- L'add-on **ESPHome** ou la CLI ESPHome standalone (`pip install esphome`)
+- Pour compiler son propre firmware seulement : l'add-on **ESPHome** ou la CLI ESPHome standalone (`pip install esphome`)
 - ESPHome version **≥ 2026.9.0** — imposée par le `min_version:` de `tab5-ha-hmi.yaml` : une version antérieure refuse de compiler. La 2026.7.0 a apporté la plateforme tactile `st7123` officielle (plus besoin d'`external_components`), l'audio zero-copy, le VAD et la PSRAM via SDIO ; le plancher est passé à 2026.8.1 le 26/08/2026 pour les correctifs API, assistant vocal et handler de crash que ce projet exerce tous les jours, puis à 2026.9.0 le 16/09/2026 ; la fenêtre d'appairage, la clé donnée par Home Assistant et les firmwares signés (3.0) y sont vérifiés (raisons dans le commentaire au-dessus de `min_version:`)
 - Un M5Stack Tab5. La puce écran **ST7123** (autocollant au dos) est celle testée tous les jours ; les révisions ST7121 et ILI9881C d'origine compilent mais n'ont jamais tourné sur une tablette — voir [Révisions matérielles](hardware.md#révisions-matérielles), et l'étape 2 pour choisir la vôtre
 

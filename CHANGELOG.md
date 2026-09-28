@@ -22,6 +22,70 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 - **CI** : le rendu hors tablette dessine aussi l'espagnol et l'italien (six tâches).
 - Docs (README, traductions, installation, débogage, site), cartographie.
 
+## [3.0.1] — 2026-09-28
+
+Correctif tiré de la première installation à neuf de la 3.0.0 par la page (28/09 au
+matin, tablette effacée) : #209, #211 et #212, plus celle de la release.
+- **Plus de fausse alerte « plantage »** au premier démarrage après une installation
+  par l'USB (#211) ;
+- **page `/install/` et guide** : parcours court « sans compiler » et pièges de la page
+  (#212) ; la page a déménagé dans `/install/`, la racine du site est une vitrine (#209).
+
+### À faire en mettant à jour depuis 3.0.0
+
+- **Firmware** : depuis HA (entité « Firmware »). Rien d'autre ne change sur la tablette.
+- **HA** : reprendre `packages/tab5_health.yaml` si vous l'utilisez. L'ordre est libre.
+
+### Mesures de la version
+
+- Compilation de la CI (ESPHome 2026.9.0) : image 3 188 470 → 3 191 110 o (+2,6 Ko),
+  RAM statique 170 626 → 171 066 o (+440 o) ; aucun avertissement dans notre code.
+- Rendu hors tablette : identique aux références (#211).
+
+### Problèmes connus
+
+Ceux de la 3.0.0, sauf l'installation à neuf, faite une fois par l'auteur. En plus :
+- un flash en mode téléchargement **sans** effacement, sur une tablette déjà en 3.0.1,
+  reste signalé comme « other watchdogs ».
+
+### 2026-09-28 — Installer sans compiler : un parcours court, les pièges de la page
+
+Tirés de l'installation à neuf du 28/09, tablette effacée, par la page :
+- **Guide** (`docs/installation.md`, EN/FR) : une section « Sans compiler » en six
+  étapes dans l'ordre (HA d'abord, flash, Wi-Fi, ajout dans HA, actions HA, blueprint),
+  à la place de l'encadré qui renvoyait aux étapes 4 et 6. ESPHome n'est plus un
+  prérequis pour qui ne compile pas.
+- **Page `/install/`** :
+  - reconnaître la tablette dans la liste des ports ;
+  - les trois cas : première installation (effacer), mise à jour (sans effacer), même
+    version déjà installée (pas de bouton « Install », seulement « Erase User Data ») ;
+  - « Failed to initialize… BOOT button » : le Tab5 n'a pas de bouton BOOT ; maintenir
+    reset ~2 s jusqu'au clignotement rapide de la LED verte (mode téléchargement,
+    procédure M5Stack), puis un appui sur reset à la fin ;
+  - changer de canal = réinstaller sans effacer ;
+  - une tablette déjà connue de HA reçoit une nouvelle clé toute seule ;
+  - l'option « actions Home Assistant » à cocher (voix, calendrier, réveil).
+- README : le démarrage rapide renvoie à ce parcours.
+### 2026-09-28 — Plus de fausse alerte au premier démarrage après une installation
+
+Vu à l'installation à neuf du 28/09 (page d'installation, mode téléchargement, flash
+effacée) : le flash finit par un reset du chien de garde RTC (`ESP_RST_WDT`, « other
+watchdogs » pour ESPHome). La garde « reboot inattendu » et le journal des démarrages
+ont alors signalé un « plantage (chien de garde) », sur le téléphone.
+
+- **Firmware** (`tab5_journal.cpp`) : une marque en NVS, écrite au premier démarrage,
+  absente juste après un effacement. Marque absente **et** `ESP_RST_WDT` : c'est
+  l'installation, pas un plantage (repère « premier démarrage après installation »).
+  Une panique ou un chien de garde de tâche alertent toujours, même au premier
+  démarrage. Sur une tablette neuve, le Wi-Fi pas encore réglé et HA qui tarde à
+  l'ajouter ne sont plus des anomalies, tant qu'elle n'a jamais vu son réseau.
+- Le capteur « Tab5 Raison du redémarrage » publie alors « First boot after install
+  (other watchdogs) » (filtre `journal_raison_ha`).
+- **HA** (`packages/tab5_health.yaml`) : la garde « reboot inattendu » laisse passer
+  cette raison.
+- Test `tests/test_premier_demarrage.py` : le préfixe du firmware est celui que lit la
+  garde, et seul le chien de garde RTC est excusé.
+
 ### 2026-09-28 — Site du projet : une vitrine, des images que Google peut indexer
 
 - **Pourquoi les images du README ne sortaient pas dans Google** : github.com les sert en
