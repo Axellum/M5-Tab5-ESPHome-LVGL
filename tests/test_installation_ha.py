@@ -123,6 +123,31 @@ def test_memes_chemins_sur_main_et_en_pr():
     assert "tools/installation_ha/**" in declencheurs["pull_request"]["paths"]
 
 
+def test_plus_d_option_actions_ha():
+    """ADR-0025 : « Autoriser l'appareil à effectuer des actions Home Assistant » n'est plus
+    une étape. La CI ne la coche plus (et vérifie qu'elle reste décochée) ; le guide ne la
+    donne plus comme étape ; les demandes de la tablette sont exercées de bout en bout,
+    et leurs fichiers relancent le job."""
+    verif = _lire("tools", "installation_ha", "verifier_installation.py")
+    assert '"allow_service_calls": True' not in verif and "verifier_option_decochee(" in verif
+    assert "demandes_de_la_tablette(ha, ws, rapport)" in verif
+    guide = _lire("docs", "installation.md")
+    for etape in ("**Allow Home Assistant actions**", "**Autoriser les actions Home Assistant**"):
+        assert etape not in guide, etape
+    # Les événements écoutés par le vérificateur sont bien émis par le firmware.
+    for evt in (verifier.EVT_MOIS, verifier.EVT_MAJ_ECRAN, verifier.EVT_REDEMARRAGE):
+        assert f"event: {evt}" in "".join(_lire(*c) for c in (
+            ("Tab5", "tab5-calendar.yaml"), ("Tab5", "ui_components", "console_sys.yaml")))
+    assert f"id: {verifier.ID_EVENEMENTS}" in _lire("HomeAssistant_Config", "packages", "tab5_evenements.yaml")
+    assert verifier.SELECT_ECRAN.endswith("_aller_a_l_ecran")
+    assert "name: \"Aller à l'écran\"" in _lire("Tab5", "tab5-ha-controls.yaml")
+    chemins = yaml.safe_load(_lire(".github", "workflows", "installation-ha.yml"))
+    chemins = (chemins.get("on") or chemins[True])["pull_request"]["paths"]
+    for fichier in ("Tab5/tab5-alarm.yaml", "Tab5/tab5-assist.yaml", "Tab5/tab5-calendar.yaml",
+                    "Tab5/tab5-ha-controls.yaml", "Tab5/ui_components/console_sys.yaml"):
+        assert fichier in chemins, fichier
+
+
 def test_fonctions_pures():
     assert verifier.longueur_cle("") == 0
     assert verifier.longueur_cle("pas de la base64 !") == 0

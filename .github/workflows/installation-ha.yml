@@ -9,18 +9,21 @@ name: Installation dans un HA neuf
 #     des données de test (demo, donnees_test.yaml) ; check_config de HA dessus ;
 #   - tools/installation_ha/verifier_installation.py, dans l'ordre « Sans compiler » de
 #     docs/installation.md : compte (onboarding), agenda, ajout de la tablette (clé API
-#     donnée par HA), option « actions HA », automatisation du blueprint, puis
-#     redémarrage de la tablette. Vérifie : clé gardée, refus de la clé nulle et du
-#     clair, esphome.tab5_connected après la clé, traces sans erreur, zones masquées,
-#     capture d'écran demandée par HA, journal de HA sans erreur Tab5.
+#     donnée par HA, option « actions HA » laissée décochée, ADR-0025), automatisation
+#     du blueprint, puis redémarrage de la tablette. Vérifie : clé gardée, refus de la
+#     clé nulle et du clair, esphome.tab5_connected après la clé, traces sans erreur,
+#     zones masquées, capture d'écran demandée par HA, demandes de la tablette par
+#     événements (calendrier, « MAJ Écran », redémarrage forgé ignoré, aucune action
+#     refusée), journal de HA sans erreur Tab5.
 # Ne teste PAS : l'interface de HA cliquée par un humain, la page de flashage, le vrai
 # matériel (Wi-Fi, écran, audio). Check non requis. ~3 min.
 #
 # Déclenché par ce qui touche au contrat entre HA et la tablette : les fichiers HA, le
 # nom et la version de l'appareil (tab5-ha-hmi.yaml), les actions et événements de
 # l'API (tab5-api-logic, -zones, -scripts, capteurs des emplacements, réponse des
-# zones), la tablette virtuelle et l'outil. Sur `main` aussi : l'état de `main` est
-# connu avant une publication. À la main : `workflow_dispatch`.
+# zones ; réveil, voix, calendrier, select « Aller à l'écran » et console système,
+# qui émettent les demandes de la tablette), la tablette virtuelle et l'outil. Sur `main`
+# aussi : l'état de `main` est connu avant une publication. À la main : `workflow_dispatch`.
 
 on:
   workflow_dispatch:
@@ -36,6 +39,11 @@ on:
       - 'Tab5/tab5_zones.cpp'
       - 'Tab5/tab5-scripts.yaml'
       - 'Tab5/tab5-sensors-domotique.yaml'
+      - 'Tab5/tab5-alarm.yaml'
+      - 'Tab5/tab5-assist.yaml'
+      - 'Tab5/tab5-calendar.yaml'
+      - 'Tab5/tab5-ha-controls.yaml'
+      - 'Tab5/ui_components/console_sys.yaml'
       - 'Tab5/rendu/**'
       - 'tab5-rendu-host.yaml'
       - 'tools/installation_ha/**'
@@ -51,6 +59,11 @@ on:
       - 'Tab5/tab5_zones.cpp'
       - 'Tab5/tab5-scripts.yaml'
       - 'Tab5/tab5-sensors-domotique.yaml'
+      - 'Tab5/tab5-alarm.yaml'
+      - 'Tab5/tab5-assist.yaml'
+      - 'Tab5/tab5-calendar.yaml'
+      - 'Tab5/tab5-ha-controls.yaml'
+      - 'Tab5/ui_components/console_sys.yaml'
       - 'Tab5/rendu/**'
       - 'tab5-rendu-host.yaml'
       - 'tools/installation_ha/**'

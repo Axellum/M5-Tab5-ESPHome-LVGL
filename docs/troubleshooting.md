@@ -48,6 +48,8 @@ Format: **Symptom → Root cause → Fix**. Entries are chronological, most rece
 
 **Fix:** enable "Allow service calls" in the ESPHome integration's options flow for this device in Home Assistant. Check this before assuming a hardware/firmware touch bug.
 
+**Since [ADR-0025](decisions/0025-events-only.md) (after 3.1)** the firmware calls no action at all, so this rejection cannot happen any more: the screen's commands and requests are events. The same symptom on a recent firmware means their consumer is missing — the blueprint « Tab5 — emplacements » for the tiles, `packages/tab5_evenements.yaml` for the calendar, announcements and system console.
+
 ---
 
 ### A calendar/weather push silently breaks the rest of the same automation
@@ -187,6 +189,8 @@ Format : **Symptôme → Cause racine → Correctif**.
 **Cause racine :** HA rejetait les appels de service de l'appareil (`Service call ... rejected`).
 
 **Correctif :** cocher "Autoriser les appels de service" dans l'options flow de l'intégration ESPHome pour cet appareil.
+
+**Depuis l'[ADR-0025](decisions/0025-events-only.md) (après la 3.1)**, le firmware n'appelle plus aucune action : ce refus ne peut plus arriver, les commandes et demandes de l'écran sont des événements. Le même symptôme sur un firmware récent veut dire que leur consommateur manque — le blueprint « Tab5 — emplacements » pour les tuiles, `packages/tab5_evenements.yaml` pour le calendrier, les annonces et la console système.
 
 ### Un push calendrier/météo casse silencieusement le reste de la même automation
 

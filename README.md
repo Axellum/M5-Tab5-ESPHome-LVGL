@@ -46,7 +46,7 @@
 
 ## Quick start
 
-**No compiling (3.0 and later):** [install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome or Edge, USB-C cable). Set up the Home Assistant packages and the blueprint, pick your display revision, flash, set the Wi-Fi, add the tablet in Home Assistant: the six steps, and what to do if the page cannot reach the tablet, are in [Without compiling](docs/installation.md#without-compiling-install-page). Updates then show up in Home Assistant.
+**No compiling (3.0 and later):** [install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome or Edge, USB-C cable). Set up the Home Assistant packages and the blueprint, pick your display revision, flash, set the Wi-Fi, add the tablet in Home Assistant: the five steps, and what to do if the page cannot reach the tablet, are in [Without compiling](docs/installation.md#without-compiling-install-page). Updates then show up in Home Assistant.
 
 **Or build your own firmware:**
 
@@ -384,7 +384,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 ## Démarrage rapide
 
-**Sans compiler (3.0 et suivantes) :** [installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome ou Edge, câble USB-C). Installez les packages Home Assistant et le blueprint, choisissez votre révision d'écran, flashez, réglez le Wi-Fi, ajoutez la tablette dans Home Assistant : les six étapes, et que faire si la page n'atteint pas la tablette, sont dans [Sans compiler](docs/installation.md#sans-compiler-page-dinstallation). Les mises à jour arrivent ensuite dans Home Assistant.
+**Sans compiler (3.0 et suivantes) :** [installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome ou Edge, câble USB-C). Installez les packages Home Assistant et le blueprint, choisissez votre révision d'écran, flashez, réglez le Wi-Fi, ajoutez la tablette dans Home Assistant : les cinq étapes, et que faire si la page n'atteint pas la tablette, sont dans [Sans compiler](docs/installation.md#sans-compiler-page-dinstallation). Les mises à jour arrivent ensuite dans Home Assistant.
 
 **Ou compiler votre propre firmware :**
 

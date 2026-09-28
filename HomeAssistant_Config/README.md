@@ -38,7 +38,7 @@ Room temperatures, lights, PC, TV, phone and plants do **not** go through this p
 
 ---
 
-**Scripts.** Since 3.0 the Tab5 calls no script for your devices: its commands go to the blueprint (see below). It still calls `script.tab5_volet_action` (shutter package, through the blueprint), `script.tab5_tv_app` (TV package), the calendar, alarm and dismiss scripts.
+**Scripts.** Since 3.0 the Tab5 calls no script for your devices: its commands go to the blueprint (see below). The blueprint still calls `script.tab5_volet_action` (shutter package) and `script.tab5_tv_app` (TV package); the calendar, alarm and dismiss scripts are started by `packages/tab5_evenements.yaml` when the tablet asks (see below). The tablet itself calls no action at all ([ADR-0025](../docs/decisions/0025-events-only.md)).
 
 Also the **push scripts** `tab5_push_alertes` (sections 1, 7 and 7b: Météo-France vigilance, info banner, HA alert rotator — updates, `problem` sensors and the unavailable count are read once per run), `tab5_push_meteo` and `tab5_push_volet`. These are called *by the automations*, not by the Tab5: each block exists once instead of being copied into the full push and into its on-change automation.
 
@@ -59,6 +59,23 @@ The Tab5 knows no entity of your home any more ([ADR-0019](../docs/decisions/001
 - answers the zones request (`esphome.tab5_zones`, [ADR-0018](../docs/decisions/0018-optional-zones-confirmed-by-ha.md)): an empty slot, or an entity that doesn't exist, disappears from the screen.
 
 No placeholder: the file is generic. Changing a device is an edit of the automation in HA's UI — no flash, no restart.
+
+### `packages/tab5_evenements.yaml` — the tablet's requests (events only)
+Since [ADR-0025](../docs/decisions/0025-events-only.md) the firmware never calls a Home Assistant action: the « Allow the device to perform Home Assistant actions » option is no longer needed. The tablet sends `esphome.tab5_*` events, and this package's single automation (`tab5_evenements`, `mode: parallel`) turns each one into a **fixed** action, for a device of model `tab5-ha-hmi` only, on that tablet's own entities (found with `device_entities`, no entity to configure):
+
+| Event (data) | Action |
+|---|---|
+| `tab5_reveil_annonce` | `script.tab5_reveil_annonce` (below) |
+| `tab5_annonce` (`message`) | `assist_satellite.announce` on the tablet's satellite (appointments, « Volet arrêté ») |
+| `tab5_calendrier_mois` (`annee`, `mois`), `tab5_calendrier_jour` (`date`) | `script.tab5_calendrier_mois` / `_jour` (below) |
+| `tab5_alerte_lue` (`alert_id`) | `script.tab5_dismiss_alert` (below) |
+| `tab5_voix_stop` | `media_player.media_stop` on the tablet's player |
+| `tab5_mode_assistant` (`option`) | `select.select_option` on the tablet's pipeline select, only if the option exists |
+| `tab5_maj_ecran` | « MAJ Écran »: `input_boolean.is_primary_active` on, then `automation.trigger` of the full push (found by its id, `tab5_ha_hmi_updater`) |
+| `tab5_recharger_automatisations` | `automation.reload` |
+| `tab5_redemarrage_ha_confirme` | `homeassistant.restart` — sent only by « Confirmer » on the tablet's confirmation screen |
+
+No action name or entity comes from the event itself. A missing script (package not installed) or option is skipped silently. **Deploy it before a firmware newer than 3.1**; with 3.1 or older (which still calls actions) it simply waits. See [Upgrading from 3.1](../docs/installation.md#upgrading-from-31). No placeholder: the file is generic.
 
 ### `packages/tab5_meteo_sources.yaml`
 Weather adapters (lot 4c-2, 2026-09-27). Two selects pick the source **in Home Assistant, without YAML**: « Tab5 · source de la pluie dans l'heure » (Météo-France / OpenWeatherMap / Aucune) and « Tab5 · source des vigilances » (Météo-France / MeteoAlarm / Aucune). Two normalized sensors turn any source into what the Tab5 reads, and the pushes only read them:
@@ -96,7 +113,7 @@ Then adapt the entity names at the top of the file (`notify.notify`, the `tab5_h
 ---
 
 ### `packages/tab5_calendar.yaml`
-Backend of the firmware's **calendar popup** (long press on the clock). Two scripts called *by the device* (`homeassistant.service:`), both `mode: restart`:
+Backend of the firmware's **calendar popup** (long press on the clock). Two scripts requested *by the device* (events `esphome.tab5_calendrier_mois` / `_jour`, started by `packages/tab5_evenements.yaml`), both `mode: restart`:
 
 - **`tab5_calendrier_mois`** (`annee`, `mois`) — reads the work / public-holidays / family / birthdays calendars over the requested month and pushes back `esphome.<device>_tab5_maj_calendrier_mois`: a 62-hex-char string (2 per day — bits: work / public holiday / school holiday / appointment / birthday) plus 31 `|`-separated work-hour fields and a `details` field (day-detail lines, `~`-separated — required by the firmware since the 25/07/2026 schema, sent empty here)
 - **`tab5_calendrier_jour`** (`date`) — builds the day-detail lines (`type|text;...`, max 6) and pushes `esphome.<device>_tab5_maj_calendrier_jour`
@@ -111,7 +128,7 @@ The four Jinja macros shared by its templates (`ev_start`, `ev_end`, `ev_summary
 What Home Assistant adds to the firmware's **alarm clock** — and nothing more. **The alarm itself does not depend on this file**: the device computes its ring time from the SNTP clock and the work hours it already caches, and rings a locally synthesised melody. Stop HA and the alarm still goes off; only the spoken briefing and the appointment reminders go missing. Never move the decision to ring in here.
 
 - **`tab5_rdv_prochains`** — pushes the next 24 h of *timed* appointments to `esphome.<device>_tab5_maj_rdv_prochains` as `epoch|title~epoch|title~…` (8 max). Work events are excluded: their hours already drive the alarm time, and they are not appointments. **The device runs the countdown itself**, so an HA outage between the push and the deadline misses nothing.
-- **`tab5_reveil_annonce`** — the spoken morning briefing (time, today's shift, next appointment, temperature), called *by the firmware* when `switch.tab5_alarm_tts` is on, and only on the first ring — not on snoozes.
+- **`tab5_reveil_annonce`** — the spoken morning briefing (time, today's shift, next appointment, temperature), requested *by the firmware* (event `esphome.tab5_reveil_annonce`, through `packages/tab5_evenements.yaml`) when `switch.tab5_alarm_tts` is on, and only on the first ring — not on snoozes.
 - **automation `tab5_rdv_push`** — keeps the list fresh: every 5 min, on calendar changes, on `esphome.tab5_connected` (otherwise the list stays empty after a device reboot), and when the lead time changes.
 
 Edit the two calendar entity IDs at the top of each `calendar.get_events` call to match yours. Same package install as above.
@@ -119,7 +136,7 @@ Edit the two calendar entity IDs at the top of each `calendar.get_events` call t
 ---
 
 ### `packages/tab5_alerts.yaml`
-Backend of the **HA alert queue** — panels 4 to 7 of the central rotating card. Provides the `input_text.tab5_alerts_dismissed` helper (the dismiss list), the `tab5_dismiss_alert` script the device calls when you tap a banner or the info panel, the `sensor.tab5_unavailable_count` counter and a nightly cleanup of stale ids. The `tab5_maj_alertes_ha_bulk` payload itself (max 4 banners, already-dismissed ids filtered out) is built by the `tab5_push_alertes` script.
+Backend of the **HA alert queue** — panels 4 to 7 of the central rotating card. Provides the `input_text.tab5_alerts_dismissed` helper (the dismiss list), the `tab5_dismiss_alert` script the device asks for (event `esphome.tab5_alerte_lue`, through `packages/tab5_evenements.yaml`) when you tap a banner or the info panel, the `sensor.tab5_unavailable_count` counter and a nightly cleanup of stale ids. The `tab5_maj_alertes_ha_bulk` payload itself (max 4 banners, already-dismissed ids filtered out) is built by the `tab5_push_alertes` script.
 
 After a dismiss, the refresh comes from the light push automation (`tab5_ha_hmi_alerts_push` in `packages/tab5_push.yaml`): it triggers on `input_text.tab5_alerts_dismissed` and re-pushes sections 1, 7 and 7b filtered by the dismiss list. The dismiss script no longer triggers the full push automation (it did until 2026-09-08 — a second, heavy push for nothing). Removed on 2026-09-26 for lack of callers: the `tab5_dismiss_info_panel` script and the automation listening to `esphome.tab5_alert_dismiss`, an event the firmware never fires.
 
@@ -240,7 +257,7 @@ Les températures, les lumières, le PC, la TV, le téléphone et les plantes ne
 
 ---
 
-**Scripts.** Depuis la 3.0, le Tab5 n'appelle plus de script pour vos appareils : ses commandes vont au blueprint (voir plus bas). Il appelle encore `script.tab5_volet_action` (package du volet, via le blueprint), `script.tab5_tv_app` (package TV), et les scripts d'agenda, de réveil et d'acquittement.
+**Scripts.** Depuis la 3.0, le Tab5 n'appelle plus de script pour vos appareils : ses commandes vont au blueprint (voir plus bas). Le blueprint appelle encore `script.tab5_volet_action` (package du volet) et `script.tab5_tv_app` (package TV) ; les scripts d'agenda, de réveil et d'acquittement sont lancés par `packages/tab5_evenements.yaml` quand la tablette le demande (voir plus bas). La tablette elle-même n'appelle plus aucune action ([ADR-0025](../docs/decisions/0025-events-only.md)).
 
 Il contient aussi les **scripts de poussée** `tab5_push_alertes` (sections 1, 7 et 7b : vigilance Météo-France, bandeau info, rotateur d'alertes HA — MAJ, capteurs `problem` et compte d'indisponibles relevés une fois par passage), `tab5_push_meteo` et `tab5_push_volet`. Ceux-là sont appelés *par les automatisations*, pas par le Tab5 : chaque bloc n'existe qu'une fois au lieu d'être recopié dans la poussée complète et dans son automatisation au changement.
 
@@ -261,6 +278,23 @@ Le Tab5 ne connaît plus aucune entité de votre maison ([ADR-0019](../docs/deci
 - répond à la demande des zones (`esphome.tab5_zones`, [ADR-0018](../docs/decisions/0018-optional-zones-confirmed-by-ha.md)) : un emplacement vide, ou une entité qui n'existe pas, disparaît de l'écran.
 
 Aucun placeholder : le fichier est générique. Changer d'appareil = modifier l'automatisation dans l'interface de HA, ni flash ni redémarrage.
+
+### `packages/tab5_evenements.yaml` — les demandes de la tablette (événements seulement)
+Depuis l'[ADR-0025](../docs/decisions/0025-events-only.md), le firmware n'appelle plus aucune action de Home Assistant : l'option « Autoriser l'appareil à effectuer des actions Home Assistant » n'est plus nécessaire. La tablette envoie des événements `esphome.tab5_*`, et l'unique automatisation de ce package (`tab5_evenements`, `mode: parallel`) traduit chacun en une action **fixe**, pour un appareil de modèle `tab5-ha-hmi` seulement, sur les entités de cette tablette (trouvées par `device_entities`, aucune entité à régler) :
+
+| Événement (données) | Action |
+|---|---|
+| `tab5_reveil_annonce` | `script.tab5_reveil_annonce` (plus bas) |
+| `tab5_annonce` (`message`) | `assist_satellite.announce` sur le satellite de la tablette (rendez-vous, « Volet arrêté ») |
+| `tab5_calendrier_mois` (`annee`, `mois`), `tab5_calendrier_jour` (`date`) | `script.tab5_calendrier_mois` / `_jour` (plus bas) |
+| `tab5_alerte_lue` (`alert_id`) | `script.tab5_dismiss_alert` (plus bas) |
+| `tab5_voix_stop` | `media_player.media_stop` sur le lecteur de la tablette |
+| `tab5_mode_assistant` (`option`) | `select.select_option` sur le select de pipeline de la tablette, seulement si l'option existe |
+| `tab5_maj_ecran` | « MAJ Écran » : `input_boolean.is_primary_active` à on, puis `automation.trigger` de la poussée complète (trouvée par son id, `tab5_ha_hmi_updater`) |
+| `tab5_recharger_automatisations` | `automation.reload` |
+| `tab5_redemarrage_ha_confirme` | `homeassistant.restart` — envoyé seulement par « Confirmer » de l'écran de confirmation de la tablette |
+
+Aucun nom d'action ni d'entité ne vient de l'événement. Un script absent (package non installé) ou une option absente sont ignorés sans bruit. **À déployer avant un firmware plus récent que la 3.1** ; avec une 3.1 ou plus ancienne (qui appelle encore les actions), il attend simplement. Voir [Passer d'une 3.1 à la suite](../docs/installation.md#passer-dune-31-à-la-suite). Aucun placeholder : le fichier est générique.
 
 ### `packages/tab5_meteo_sources.yaml`
 Adaptateurs météo (lot 4c-2, 27/09/2026). Deux listes choisissent la source **dans Home Assistant, sans YAML** : « Tab5 · source de la pluie dans l'heure » (Météo-France / OpenWeatherMap / Aucune) et « Tab5 · source des vigilances » (Météo-France / MeteoAlarm / Aucune). Deux capteurs normalisés ramènent n'importe quelle source à ce que lit le Tab5, et les poussées ne lisent qu'eux :
@@ -298,7 +332,7 @@ Puis adaptez les noms d'entités en tête de fichier (`notify.notify`, le préfi
 ---
 
 ### `packages/tab5_calendar.yaml`
-Backend du **popup calendrier** du firmware (appui long sur l'horloge). Deux scripts appelés *par l'appareil* (`homeassistant.service:`), tous deux `mode: restart` :
+Backend du **popup calendrier** du firmware (appui long sur l'horloge). Deux scripts demandés *par l'appareil* (événements `esphome.tab5_calendrier_mois` / `_jour`, lancés par `packages/tab5_evenements.yaml`), tous deux `mode: restart` :
 
 - **`tab5_calendrier_mois`** (`annee`, `mois`) — lit les calendriers boulot / jours fériés / famille / anniversaires sur le mois demandé et repousse `esphome.<device>_tab5_maj_calendrier_mois` : chaîne de 62 hex (2 par jour — bits : travail / férié / vacances scolaires / RDV / anniversaire) + 31 champs d'heures de travail séparés par `|` + un champ `details` (lignes de détail jour séparées par `~` — exigé par le firmware depuis le schéma du 25/07/2026, envoyé vide ici)
 - **`tab5_calendrier_jour`** (`date`) — construit les lignes de détail du jour (`type|texte;...`, max 6) et pousse `esphome.<device>_tab5_maj_calendrier_jour`
@@ -313,7 +347,7 @@ Les quatre macros Jinja partagées par ses templates (`ev_start`, `ev_end`, `ev_
 Ce que Home Assistant apporte au **réveil** du firmware — et rien de plus. **Le réveil lui-même ne dépend pas de ce fichier** : l'appareil calcule son heure depuis l'horloge SNTP et les horaires de travail qu'il garde déjà en cache, et sonne une mélodie synthétisée localement. Arrêtez HA, le réveil sonne quand même ; seuls le briefing parlé et les rappels de rendez-vous manquent. Ne jamais déplacer ici la décision de sonner.
 
 - **`tab5_rdv_prochains`** — pousse les rendez-vous *horodatés* des 24 prochaines heures vers `esphome.<device>_tab5_maj_rdv_prochains`, au format `epoch|titre~epoch|titre~…` (8 maximum). Les événements « Travail » sont exclus : leurs horaires servent déjà à calculer l'heure de réveil, et ce ne sont pas des rendez-vous. **C'est l'appareil qui tient le compte à rebours**, donc une coupure HA entre la poussée et l'échéance ne fait rien rater.
-- **`tab5_reveil_annonce`** — le briefing parlé du matin (heure, horaires du jour, prochain rendez-vous, température), appelé *par le firmware* quand `switch.tab5_alarm_tts` est actif, et uniquement au premier déclenchement — pas aux répétitions.
+- **`tab5_reveil_annonce`** — le briefing parlé du matin (heure, horaires du jour, prochain rendez-vous, température), demandé *par le firmware* (événement `esphome.tab5_reveil_annonce`, via `packages/tab5_evenements.yaml`) quand `switch.tab5_alarm_tts` est actif, et uniquement au premier déclenchement — pas aux répétitions.
 - **automation `tab5_rdv_push`** — entretient la liste : toutes les 5 min, sur changement de calendrier, sur `esphome.tab5_connected` (sinon la liste reste vide après un redémarrage de la tablette), et quand le délai d'annonce change.
 
 Adaptez les deux IDs de calendrier en tête de chaque `calendar.get_events` aux vôtres. Même installation package que ci-dessus.
@@ -321,7 +355,7 @@ Adaptez les deux IDs de calendrier en tête de chaque `calendar.get_events` aux 
 ---
 
 ### `packages/tab5_alerts.yaml`
-Backend de la **file d'alertes HA** — panneaux 4 à 7 de la carte centrale rotative. Fournit le helper `input_text.tab5_alerts_dismissed` (liste de dismiss), le script `tab5_dismiss_alert` que l'appareil appelle au tap sur un bandeau ou sur le panneau info, le compteur `sensor.tab5_unavailable_count` et une purge nocturne des ids périmés. Le payload `tab5_maj_alertes_ha_bulk` lui-même (4 bandeaux max, ids déjà masqués filtrés) est construit par le script `tab5_push_alertes`.
+Backend de la **file d'alertes HA** — panneaux 4 à 7 de la carte centrale rotative. Fournit le helper `input_text.tab5_alerts_dismissed` (liste de dismiss), le script `tab5_dismiss_alert` que l'appareil demande (événement `esphome.tab5_alerte_lue`, via `packages/tab5_evenements.yaml`) au tap sur un bandeau ou sur le panneau info, le compteur `sensor.tab5_unavailable_count` et une purge nocturne des ids périmés. Le payload `tab5_maj_alertes_ha_bulk` lui-même (4 bandeaux max, ids déjà masqués filtrés) est construit par le script `tab5_push_alertes`.
 
 Après un acquittement, le rafraîchissement vient de l'automation « push léger » (`tab5_ha_hmi_alerts_push` dans `packages/tab5_push.yaml`) : elle se déclenche sur `input_text.tab5_alerts_dismissed` et repousse les sections 1, 7 et 7b filtrées par la liste. Le script d'acquittement ne déclenche plus l'automation de push complète (il le faisait jusqu'au 08/09/2026 — un second push, lourd, pour rien). Retirés le 26/09/2026 faute d'appelant : le script `tab5_dismiss_info_panel` et l'automation qui écoutait `esphome.tab5_alert_dismiss`, un événement que le firmware n'émet jamais.
 

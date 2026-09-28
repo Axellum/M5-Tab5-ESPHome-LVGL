@@ -13,26 +13,16 @@
 # ============================================================================
 # tab5-scripts.yaml — Scripts ESPHome reutilisables (sequences temporisees,
 # debounce). Preferer un script ici a un delay:+action duplique inline.
-# Entités que la tablette expose ELLE-MÊME dans HA (satellite vocal, lecteur
-# média). ESPHome ne peut pas les calculer : HA les dérive du nom de l'appareil.
-# Valeurs par défaut ici ; `user_entities.yaml` (racine, fusion prioritaire —
-# cf. l'en-tête de tab5-ui-tokens.yaml) les surcharge si la tablette est
-# renommée dans HA. Avant (audit 06/09 §4.1 point 15) elles étaient écrites en
-# dur à cinq endroits : un renommage cassait l'interruption vocale et l'annonce
-# des rendez-vous sans la moindre erreur.
 #
-# Même règle (lot 6c, 27/09/2026) pour les trois entités qu'un binaire publié ne peut
-# pas demander : le select de pipeline de la tablette (dérivé du nom de l'appareil,
-# boutons Domotique / Discussion) ; le garde-fou et l'automatisation de poussée du
-# package public `tab5_push.yaml` (bouton « MAJ Écran » de la console). Ce sont les
-# noms que ce package et HA créent : rien à régler, sauf tablette renommée ou
-# package modifié.
-substitutions:
-  entity_tab5_satellite: assist_satellite.m5stack_tab5_home_assistant_hmi_satellite_assist
-  entity_tab5_media_player: media_player.m5stack_tab5_home_assistant_hmi_tab5_media_player
-  entity_tab5_pipeline_select: select.m5stack_tab5_home_assistant_hmi_assistant
-  entity_primary_active: input_boolean.is_primary_active
-  entity_push_automation: automation.maj_ecran_tab5_esphome_push
+# ÉVÉNEMENTS SEULEMENT (ADR-0025, 28/09/2026) : le firmware n'appelle plus aucune
+# action de HA (`homeassistant.service` / `homeassistant.action`) ; il émet des
+# événements `esphome.tab5_*`, que packages/tab5_evenements.yaml (HA) traduit en une
+# liste blanche d'actions. Plus d'option « autoriser l'appareil à effectuer des
+# actions HA » à cocher, et plus d'entité de la tablette à nommer ici : les
+# substitutions entity_tab5_satellite / _media_player / _pipeline_select,
+# entity_primary_active et entity_push_automation ont disparu, HA retrouve ces
+# entités par l'appareil qui a émis l'événement. Une ligne restée dans un ancien
+# user_entities.yaml est simplement ignorée. tests/test_actions_ha.py le vérifie.
 
 script:
   # Remplit le registre des fenêtres modales (ModalRegistry, tab5_registry.h).
@@ -111,10 +101,11 @@ script:
     then:
       - voice_assistant.stop:
           id: va
-      - homeassistant.service:
-          service: assist_satellite.announce
+      # Événement (ADR-0025) : HA l'annonce sur le satellite de cette tablette
+      # (packages/tab5_evenements.yaml).
+      - homeassistant.event:
+          event: esphome.tab5_annonce
           data:
-            entity_id: ${entity_tab5_satellite}
             # Phrase dite par la tablette : dans la langue de l'écran (lot 4).
             message: !lambda 'return std::string(tr("Volet arrêté."));'
 
@@ -359,8 +350,9 @@ script:
                       id(temp_dismiss_alert_id) = id(info_meteo_dismiss_id);
                       tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
                       dismiss_central_info_immediate(id(lbl_info_text), g_central_ctx);
-                  - homeassistant.service:
-                      service: script.tab5_dismiss_alert
+                  # Événement (ADR-0025) → script.tab5_dismiss_alert.
+                  - homeassistant.event:
+                      event: esphome.tab5_alerte_lue
                       data:
                         alert_id: !lambda 'return id(temp_dismiss_alert_id);'
                   - globals.set:
@@ -393,8 +385,9 @@ script:
           condition:
             lambda: 'return id(temp_dismiss_alert_id).size() > 0;'
           then:
-            - homeassistant.service:
-                service: script.tab5_dismiss_alert
+            # Événement (ADR-0025) → script.tab5_dismiss_alert.
+            - homeassistant.event:
+                event: esphome.tab5_alerte_lue
                 data:
                   alert_id: !lambda 'return id(temp_dismiss_alert_id);'
             - script.execute: tab5_central_rotator_auto

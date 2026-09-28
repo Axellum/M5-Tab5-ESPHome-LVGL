@@ -15,9 +15,9 @@ Since 3.0, a ready-made, signed firmware installs from the browser. In this orde
    - « Failed to initialize… holding the BOOT button »: the Tab5 has no BOOT button. Hold its reset button about 2 s, until the internal green LED blinks fast (download mode), start again, and press reset once at the end to restart it.
    - The tablet already runs the same version: the page shows no *Install*. To start from scratch, « Erase User Data » (in red, at the bottom) erases everything, Wi-Fi, key and settings included, then installs again.
 3. **Wi-Fi**: from the same window (*Connect to Wi-Fi*, over USB), or with a phone on the open « Tab5 Fallback AP » network.
-4. **Add it to Home Assistant** within 30 minutes of its start: *Settings → Devices & services*, the ESPHome device is discovered, *Configure*. Home Assistant gives it its key. A tablet Home Assistant already knows gets a new key by itself, nothing to confirm (checked on 2026-09-28).
-5. **Allow Home Assistant actions**: *ESPHome → Configure*, tick « Allow the device to perform Home Assistant actions ». Voice, calendar and alarm clock need them.
-6. **Your devices**: create the automation from the blueprint ([Step 4](#step-4--set-up-the-home-assistant-packages), item 6).
+4. **Add it to Home Assistant** within 30 minutes of its start: *Settings → Devices & services*, the ESPHome device is discovered, *Configure*. Home Assistant gives it its key. A tablet Home Assistant already knows gets a new key by itself, nothing to confirm (checked on 2026-09-28). Nothing else to allow: the tablet asks Home Assistant for everything through events ([ADR-0025](decisions/0025-events-only.md)).
+   - Firmware 3.1 or older only (the Stable channel until the next release): also tick « Allow the device to perform Home Assistant actions » (*ESPHome → Configure*), which voice, calendar and alarm clock need there.
+5. **Your devices**: create the automation from the blueprint ([Step 4](#step-4--set-up-the-home-assistant-packages), item 6).
 
 Updates then show up in Home Assistant (« Firmware » entity), on the channel you installed; to switch channels, install again from the page without erasing. Over the air, the tablet only accepts a firmware signed with the project key: to switch to your own builds (your own key), flash once over USB.
 
@@ -64,9 +64,7 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 
 **Tab5 revision:** if the display chip on your sticker is not the ST7123, add `tab5_ecran: st7121` or `tab5_ecran: ili9881c` to this file (see [Hardware revisions](hardware.md#hardware-revisions)). Leave it out for the ST7123.
 
-**Your devices (lights, climate, plants, TV…) are not set here any more (since 3.0)**: you pick them in Home Assistant with the mouse, see Step 4 and [Adapt to your home](#adapt-to-your-home); old `entity_light_…` keys in an existing file are simply ignored. The entry point `tab5-ha-hmi.yaml` includes this file via `substitutions: !include Tab5/user_entities.yaml`. The remaining entity keys are commented out in the template, with their defaults in `Tab5/tab5-scripts.yaml`:
-- `entity_tab5_satellite`, `entity_tab5_media_player` and `entity_tab5_pipeline_select` (Domotique / Discussion buttons) hold the entity IDs Home Assistant derives from the device name: set them only if you rename the tablet in HA;
-- `entity_primary_active` and `entity_push_automation` (« MAJ Écran » button of the system console) are the names created by `packages/tab5_push.yaml`: set them only if you changed that package.
+**Your devices (lights, climate, plants, TV…) are not set here any more (since 3.0)**: you pick them in Home Assistant with the mouse, see Step 4 and [Adapt to your home](#adapt-to-your-home); old `entity_light_…` keys in an existing file are simply ignored. The entry point `tab5-ha-hmi.yaml` includes this file via `substitutions: !include Tab5/user_entities.yaml`. No entity key is left: Home Assistant finds the tablet's own entities (voice satellite, media player, pipeline select) and those of the « MAJ Écran » button by itself ([ADR-0025](decisions/0025-events-only.md)); old `entity_tab5_…`, `entity_primary_active` and `entity_push_automation` lines are ignored.
 
 ---
 
@@ -98,7 +96,7 @@ Everything on the Home Assistant side is a **package** in `HomeAssistant_Config/
    then *Create automation* and pick an entity for each slot (all optional). Or copy the file into
    `config/blueprints/automation/tab5/`. One automation per tablet.
 
-Start with `packages/tab5_push.yaml` (push automations, shared scripts, the scripts the Tab5 calls, the optional-zones answer) and `packages/tab5_meteo_sources.yaml` (weather, rain and warning sources, required since 2.2.0) — the others add optional features. See [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) for what each package does and the full placeholder list.
+Start with `packages/tab5_push.yaml` (push automations, shared scripts, the scripts the Tab5 calls, the optional-zones answer), `packages/tab5_evenements.yaml` (the tablet's requests — announcements, calendar, dismissed alerts, voice, system console — turned into a fixed list of actions, [ADR-0025](decisions/0025-events-only.md)) and `packages/tab5_meteo_sources.yaml` (weather, rain and warning sources, required since 2.2.0) — the others add optional features. See [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) for what each package does and the full placeholder list.
 
 > These packages are exactly what runs on the author's Home Assistant (rendered with the author's own values) since 2026-09-26. There are no private versions and nothing to merge into `automations.yaml` or `scripts.yaml`.
 
@@ -125,7 +123,7 @@ The network is kept across updates. The fallback AP comes back whenever the tabl
 **Within 30 minutes of the tablet's start** (its pairing window): *Settings → Devices & services*, the tablet shows up as discovered (ESPHome). *Configure*, then *Submit*. Home Assistant creates the encryption key, gives it to the tablet and keeps it: nothing to copy.
 
 - Window missed? Restart the tablet: it reopens for 30 minutes. Once it has its key, the window never opens again.
-- Then, in the device's options (*ESPHome → Configure*), tick **« Allow the device to perform Home Assistant actions »**: voice, calendar and alarm clock use them.
+- Nothing else to allow. The tablet never calls a Home Assistant action: it sends events, which `packages/tab5_evenements.yaml` turns into a fixed list of actions, for a Tab5 only ([ADR-0025](decisions/0025-events-only.md)). The « Allow the device to perform Home Assistant actions » option stays unticked (firmware 3.1 or older still needs it, see [Upgrading from 3.1](#upgrading-from-31)).
 
 ---
 
@@ -142,6 +140,18 @@ The transfer is not encrypted any more (there is no key in the YAML); the tablet
 A tablet installed from the [web flasher](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) gets its updates from Home Assistant instead: its « Firmware » entity reads the published manifest every 6 hours, and « Install » downloads the image, which the tablet checks against the project key ([ADR-0022](decisions/0022-published-firmware-pages-channels.md)). A firmware you compile yourself has no such entity.
 
 **Logs:** `esphome logs` looks for the key in the YAML and no longer finds one. Use `python tools/tab5_logs.py --host 192.168.x.x --config-ha \\<ha-ip>\config`: it reads the key Home Assistant keeps (`.storage/core.config_entries`, or the `TAB5_CLE_API` variable) and never prints it.
+
+---
+
+## Upgrading from 3.1
+
+After 3.1 the tablet no longer calls Home Assistant actions: it sends events, which the new package `packages/tab5_evenements.yaml` turns into actions ([ADR-0025](decisions/0025-events-only.md)). In this order:
+
+1. **Package first**: render and copy `tab5_evenements.yaml` like the others (Step 4, items 3 to 5), then reload Automations. A 3.1 tablet sends none of these events: the package just waits, nothing changes.
+2. **Then the firmware** (« Firmware » entity, or your own build).
+3. **Then untick** « Allow the device to perform Home Assistant actions » (*ESPHome → Configure*): the tablet no longer needs it, and without it Home Assistant refuses any action the device would ask for.
+
+A new firmware **without** the package does not crash and logs nothing, but what it asks Home Assistant is lost: the calendar popup shows only its local grid (no work hours, holidays or appointments; a tapped day stays on « Chargement... »), nothing is spoken (appointments, alarm briefing, « Volet arrêté »), the Domotique / Discussion buttons no longer change the pipeline, a dismissed alert is hidden on the tablet only, until its next restart, and « MAJ Écran », « Recharger autos » and « Redémarrer HA » do nothing.
 
 ---
 
@@ -235,9 +245,9 @@ Depuis la 3.0, un firmware prêt à l'emploi et signé s'installe depuis le navi
    - « Failed to initialize… holding the BOOT button » : le Tab5 n'a pas de bouton BOOT. Maintenez son bouton reset environ 2 s, jusqu'à ce que la LED verte interne clignote vite (mode téléchargement), recommencez, puis un appui court sur reset à la fin pour la redémarrer.
    - La tablette a déjà la même version : la page n'affiche pas *Install*. Pour repartir de zéro, « Erase User Data » (en rouge, en bas) efface tout, Wi-Fi, clé et réglages compris, puis réinstalle.
 3. **Wi-Fi** : depuis la même fenêtre (*Connect to Wi-Fi*, par l'USB), ou avec un téléphone sur le réseau ouvert « Tab5 Fallback AP ».
-4. **L'ajouter à Home Assistant** dans les 30 minutes qui suivent son démarrage : *Paramètres → Appareils et services*, l'appareil ESPHome est découvert, *Configurer*. Home Assistant lui donne sa clé. Une tablette que Home Assistant connaît déjà reçoit une nouvelle clé toute seule, rien à confirmer (vérifié le 28/09/2026).
-5. **Autoriser les actions Home Assistant** : *ESPHome → Configurer*, cochez l'option qui autorise l'appareil à effectuer des actions Home Assistant. La voix, le calendrier et le réveil en ont besoin.
-6. **Vos appareils** : créez l'automatisation depuis le blueprint ([étape 4](#étape-4--installer-les-packages-home-assistant), point 6).
+4. **L'ajouter à Home Assistant** dans les 30 minutes qui suivent son démarrage : *Paramètres → Appareils et services*, l'appareil ESPHome est découvert, *Configurer*. Home Assistant lui donne sa clé. Une tablette que Home Assistant connaît déjà reçoit une nouvelle clé toute seule, rien à confirmer (vérifié le 28/09/2026). Rien d'autre à autoriser : la tablette demande tout à Home Assistant par des événements ([ADR-0025](decisions/0025-events-only.md)).
+   - Firmware 3.1 ou plus ancien seulement (le canal Stable jusqu'à la prochaine version) : cochez aussi « Autoriser l'appareil à effectuer des actions Home Assistant » (*ESPHome → Configurer*), dont la voix, le calendrier et le réveil ont besoin sur ces versions.
+5. **Vos appareils** : créez l'automatisation depuis le blueprint ([étape 4](#étape-4--installer-les-packages-home-assistant), point 6).
 
 Les mises à jour arrivent ensuite dans Home Assistant (entité « Firmware »), sur le canal installé ; pour changer de canal, réinstallez depuis la page sans effacer. Par le réseau, la tablette n'accepte qu'un firmware signé par la clé du projet : pour passer à vos propres compilations (votre clé), flashez une fois par USB.
 
@@ -282,9 +292,7 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 
 **Révision du Tab5 :** si la puce écran de votre autocollant n'est pas la ST7123, ajoutez `tab5_ecran: st7121` ou `tab5_ecran: ili9881c` dans ce fichier (voir [Révisions matérielles](hardware.md#révisions-matérielles)). Pour la ST7123, ne mettez rien.
 
-`Tab5/user_entities.yaml` est gitignoré (ne jamais le committer). Pour une installation standard, rien n'y est à remplacer : toutes les lignes sont facultatives. **Vos appareils (lumières, clim, plantes, TV…) ne se règlent plus ici (depuis la 3.0)** : vous les choisissez dans Home Assistant, à la souris, voir l'étape 4 et [Adapter à sa maison](#adapter-à-sa-maison) ; les anciennes clés `entity_light_…` d'un fichier existant sont simplement ignorées. Le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`. Les clés d'entités qui restent sont commentées dans le modèle, avec leurs défauts dans `Tab5/tab5-scripts.yaml` :
-- `entity_tab5_satellite`, `entity_tab5_media_player` et `entity_tab5_pipeline_select` (boutons Domotique / Discussion) portent les identifiants qu'HA dérive du nom de la tablette : à régler seulement si vous la renommez dans HA ;
-- `entity_primary_active` et `entity_push_automation` (bouton « MAJ Écran » de la console système) sont les noms que crée `packages/tab5_push.yaml` : à régler seulement si vous avez modifié ce package.
+`Tab5/user_entities.yaml` est gitignoré (ne jamais le committer). Pour une installation standard, rien n'y est à remplacer : toutes les lignes sont facultatives. **Vos appareils (lumières, clim, plantes, TV…) ne se règlent plus ici (depuis la 3.0)** : vous les choisissez dans Home Assistant, à la souris, voir l'étape 4 et [Adapter à sa maison](#adapter-à-sa-maison) ; les anciennes clés `entity_light_…` d'un fichier existant sont simplement ignorées. Le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`. Il ne reste aucune clé d'entité : Home Assistant retrouve seul les entités de la tablette (satellite vocal, lecteur média, select de pipeline) et celles du bouton « MAJ Écran » ([ADR-0025](decisions/0025-events-only.md)) ; d'anciennes lignes `entity_tab5_…`, `entity_primary_active` et `entity_push_automation` sont ignorées.
 
 ---
 
@@ -316,7 +324,7 @@ Tout le côté Home Assistant est en **packages**, dans `HomeAssistant_Config/pa
    puis *Créer une automatisation* et choisissez une entité pour chaque emplacement (tous facultatifs). Ou copiez
    le fichier dans `config/blueprints/automation/tab5/`. Une automatisation par tablette.
 
-Commencez par `packages/tab5_push.yaml` (automatisations de poussée, scripts partagés, scripts appelés par le Tab5, réponse des zones optionnelles) et `packages/tab5_meteo_sources.yaml` (sources de la météo, de la pluie et des vigilances, obligatoire depuis la 2.2.0) ; les autres ajoutent des fonctions optionnelles. Voir [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) pour le rôle de chaque package et la liste complète des placeholders.
+Commencez par `packages/tab5_push.yaml` (automatisations de poussée, scripts partagés, scripts appelés par le Tab5, réponse des zones optionnelles), `packages/tab5_evenements.yaml` (les demandes de la tablette — annonces, calendrier, alertes lues, voix, console système — traduites en une liste fixe d'actions, [ADR-0025](decisions/0025-events-only.md)) et `packages/tab5_meteo_sources.yaml` (sources de la météo, de la pluie et des vigilances, obligatoire depuis la 2.2.0) ; les autres ajoutent des fonctions optionnelles. Voir [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md) pour le rôle de chaque package et la liste complète des placeholders.
 
 > Ces packages sont exactement ce qui tourne sur le Home Assistant de l'auteur (rendus avec ses valeurs) depuis le 26/09/2026. Il n'y a pas de version privée, ni rien à fusionner dans `automations.yaml` ou `scripts.yaml`.
 
@@ -343,7 +351,7 @@ Le réseau est gardé d'une mise à jour à l'autre. L'AP de secours revient dè
 **Dans les 30 minutes qui suivent le démarrage de la tablette** (sa fenêtre d'appairage) : *Paramètres → Appareils et services*, la tablette apparaît comme découverte (ESPHome). *Configurer*, puis *Valider*. Home Assistant crée la clé de chiffrement, la donne à la tablette et la garde : rien à recopier.
 
 - Fenêtre ratée ? Redémarrez la tablette : elle se rouvre pour 30 minutes. Une fois la clé reçue, elle ne s'ouvre plus.
-- Ensuite, dans les options de l'appareil (*ESPHome → Configurer*), cochez **« Autoriser l'appareil à effectuer des actions Home Assistant »** : la voix, l'agenda et le réveil s'en servent.
+- Rien d'autre à autoriser. La tablette n'appelle jamais d'action de Home Assistant : elle envoie des événements, que `packages/tab5_evenements.yaml` traduit en une liste fixe d'actions, pour un Tab5 seulement ([ADR-0025](decisions/0025-events-only.md)). L'option « Autoriser l'appareil à effectuer des actions Home Assistant » reste décochée (un firmware 3.1 ou plus ancien en a encore besoin, voir [Passer d'une 3.1 à la suite](#passer-dune-31-à-la-suite)).
 
 ---
 
@@ -360,6 +368,18 @@ L'envoi n'est plus chiffré (il n'y a pas de clé dans le YAML) ; la tablette v�
 Une tablette installée depuis le [flasheur web](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) reçoit plutôt ses mises à jour par Home Assistant : son entité « Firmware » lit le manifeste publié toutes les 6 h, et « Installer » télécharge l'image, que la tablette vérifie avec la clé du projet ([ADR-0022](decisions/0022-published-firmware-pages-channels.md)). Un firmware compilé soi-même n'a pas cette entité.
 
 **Journaux :** `esphome logs` cherche la clé dans le YAML et n'en trouve plus. Utilisez `python tools/tab5_logs.py --host 192.168.x.x --config-ha \\<ip-de-ha>\config` : il lit la clé que garde Home Assistant (`.storage/core.config_entries`, ou la variable `TAB5_CLE_API`) et ne l'affiche jamais.
+
+---
+
+## Passer d'une 3.1 à la suite
+
+Après la 3.1, la tablette n'appelle plus d'action de Home Assistant : elle envoie des événements, que le nouveau package `packages/tab5_evenements.yaml` traduit en actions ([ADR-0025](decisions/0025-events-only.md)). Dans cet ordre :
+
+1. **Le package d'abord** : rendez et copiez `tab5_evenements.yaml` comme les autres (étape 4, points 3 à 5), puis rechargez les automatisations. Une tablette en 3.1 n'envoie aucun de ces événements : le package attend, rien ne change.
+2. **Puis le firmware** (entité « Firmware », ou votre propre compilation).
+3. **Puis décochez** « Autoriser l'appareil à effectuer des actions Home Assistant » (*ESPHome → Configurer*) : la tablette n'en a plus besoin, et sans elle Home Assistant refuse toute action que l'appareil demanderait.
+
+Un firmware récent **sans** le package ne plante pas et n'écrit rien au journal, mais ce qu'il demande à Home Assistant se perd : le popup calendrier n'affiche que sa grille locale (ni horaires, ni fériés, ni rendez-vous ; un jour touché reste sur « Chargement... »), rien n'est dit (rendez-vous, briefing du réveil, « Volet arrêté »), les boutons Domotique / Discussion ne changent plus le pipeline, une alerte touchée n'est masquée que sur la tablette, jusqu'à son prochain redémarrage, et « MAJ Écran », « Recharger autos » et « Redémarrer HA » ne font rien.
 
 ---
 

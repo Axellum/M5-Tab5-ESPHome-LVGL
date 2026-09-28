@@ -4,6 +4,38 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — Événements seulement : plus d'option « actions HA » à cocher (ADR-0025)
+
+- **Le firmware n'appelle plus aucune action de Home Assistant.** Ses 13 derniers
+  `homeassistant.service` (briefing du réveil, annonces, calendrier mois et jour, alertes
+  lues, interruption de la voix, choix du pipeline, « MAJ Écran », « Recharger autos »,
+  « Redémarrer HA ») deviennent des événements `esphome.tab5_*`. L'étape d'installation
+  « Autoriser l'appareil à effectuer des actions Home Assistant » disparaît ; l'option
+  peut être décochée, ce qui ferme à la tablette l'accès à *toutes* les actions de HA.
+- **Nouveau package `packages/tab5_evenements.yaml`** : une automatisation traduit ces
+  événements en une liste blanche d'actions, pour un appareil de modèle `tab5-ha-hmi`
+  seulement, sur les entités de CETTE tablette (`device_entities`) ; aucun nom d'action
+  ni d'entité ne vient de l'événement. `homeassistant.restart` ne part que de
+  l'événement de confirmation, émis par le seul bouton « Confirmer ». Le pipeline n'est
+  choisi que si l'option existe (plus d'erreur au démarrage sans « Discussion LLM »).
+- **Plus d'entité à régler** : les substitutions `entity_tab5_satellite`,
+  `_media_player`, `_pipeline_select`, `entity_primary_active` et `entity_push_automation`
+  sont supprimées (une ligne restée dans `user_entities.yaml` est ignorée) ; un
+  renommage de la tablette ou de l'automatisation de poussée ne casse plus rien.
+- **Mise à jour depuis la 3.1** : déployer le package d'abord (inactif avec une 3.1),
+  puis le firmware, puis décocher l'option. Un firmware récent sans le package ne plante
+  pas mais ses demandes se perdent (détail dans `docs/installation.md`).
+- Tests : `tests/test_actions_ha.py` réécrit (aucune action dans le firmware, chaque
+  événement émis a un consommateur et inversement, liste blanche, garde du modèle,
+  redémarrage sur confirmation seulement). Job « Installation dans un HA neuf » : sans
+  l'option, calendrier ouvert par le select « Aller à l'écran » et « MAJ Écran » touché
+  par le doigt virtuel, de bout en bout ; un redémarrage forgé par un autre appareil est
+  ignoré ; aucune réparation « service_calls_not_allowed ». Le job se relance aussi sur
+  les fichiers du firmware qui émettent ces demandes.
+- Docs : guide d'installation (étape retirée, section « Passer d'une 3.1 à la suite »),
+  ADR-0025, contrat des événements dans `Tab5/README.md`, README HA, assistant vocal,
+  dépannage, site (vitrine et page d'installation, avec la note pour la 3.1).
+
 ### 2026-09-28 — Site : une release n'est retenue qu'avec ses binaires (suite de #221)
 
 - `pages.py choisir` exigeait les trois manifestes, sans leurs binaires. Les neuf
