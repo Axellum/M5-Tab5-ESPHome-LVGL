@@ -1550,9 +1550,16 @@ actions:
                       - alias: "Volet suivi par le package (course simulée)"
                         conditions: "{{ volet_par_package }}"
                         sequence:
-                          - action: script.tab5_volet_action
+                          # script.turn_on : sans attendre la fin de la course (26 s). Appelé
+                          # directement, le script retenait l'automatisation (mode queued) : la
+                          # commande suivante, dont « arrêter », n'arrivait qu'une fois le volet au
+                          # bout (vu le 28/09 : une lampe basculée 2 min après l'appui).
+                          - action: script.turn_on
+                            target:
+                              entity_id: script.tab5_volet_action
                             data:
-                              action: "{{ sens }}"
+                              variables:
+                                action: "{{ sens }}"
                       - alias: "Volet qui signale sa course"
                         conditions: "{{ volet != '' }}"
                         sequence:
@@ -1578,9 +1585,16 @@ actions:
                       - alias: "Volet suivi par le package (course simulée)"
                         conditions: "{{ t_entite == volet_suivi }}"
                         sequence:
-                          - action: script.tab5_volet_action
+                          # script.turn_on : sans attendre la fin de la course (26 s). Appelé
+                          # directement, le script retenait l'automatisation (mode queued) : la
+                          # commande suivante, dont « arrêter », n'arrivait qu'une fois le volet au
+                          # bout (vu le 28/09 : une lampe basculée 2 min après l'appui).
+                          - action: script.turn_on
+                            target:
+                              entity_id: script.tab5_volet_action
                             data:
-                              action: "{{ sens }}"
+                              variables:
+                                action: "{{ sens }}"
                     default:
                       - action: "{{ t_domaine }}.{{ sens }}_{{ t_domaine }}"
                         target:

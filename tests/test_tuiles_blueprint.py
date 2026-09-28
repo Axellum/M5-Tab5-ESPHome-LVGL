@@ -761,7 +761,9 @@ def _action_rendue(p, sequence):
     if "choose" in etape:  # volet : package ou entité
         for b in etape["choose"]:
             if p.modele(b["conditions"]):
-                return p.modele(b["sequence"][0]["action"]), None
+                choisie = b["sequence"][0]
+                cible = choisie.get("target", {}).get("entity_id")
+                return p.modele(choisie["action"]), (p.modele(cible) if cible else None)
         etape = etape["default"][0]
     if "variables" in etape:
         for cle, valeur in etape["variables"].items():
@@ -785,8 +787,10 @@ def _action_rendue(p, sequence):
     ("t32", "lancer", ("scene.turn_on", "scene.soiree")),
     ("t33", "lancer", ("script.turn_on", "script.cafe")),
     ("t34", "lancer", ("button.press", "button.sonnette")),
-    # Volet suivi par le package : son script.
-    ("t41", "ouvrir", ("script.tab5_volet_action", None)),
+    # Volet suivi par le package : son script, lancé sans l'attendre (script.turn_on),
+    # sinon « arrêter » attend la fin de la course.
+    ("t41", "ouvrir", ("script.turn_on", "script.tab5_volet_action")),
+    ("t41", "arreter", ("script.turn_on", "script.tab5_volet_action")),
     # Allumer seulement : basculer allume, éteindre ne fait rien.
     ("t02", "basculer", ("light.turn_on", "light.guirlande")),
     ("t02", "eteindre", None),
