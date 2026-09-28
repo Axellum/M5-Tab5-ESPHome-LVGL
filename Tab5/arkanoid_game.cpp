@@ -1066,8 +1066,15 @@ static void tick_cb(lv_timer_t*) {
     pad_input = clampf(pad_input, -1.0f, 1.0f);
 
     // Déplacement raquette
+    // Mode mixte sans commande : la raquette s'arrête, et sa vitesse avec. Gardée en
+    // mémoire, elle repartait dans l'ancien sens au prochain appui (retour d'Axel,
+    // 28/09/2026 : « un mouvement à gauche avant d'aller à droite »).
+    if (gs->save.ctrl_mode == 2 && fabsf(pad_input) <= 0.01f) gs->pad_vx = 0.0f;
     if (gs->save.ctrl_mode == 0 || (gs->save.ctrl_mode == 2 && fabsf(pad_input) > 0.01f)) {
-        // Mode IMU : accélération + friction
+        // Mode IMU : accélération + friction. Une commande de sens opposé annule d'abord
+        // la vitesse : sans ça, l'inertie emmenait la raquette ~7 images (≈ 80 px à
+        // pleine vitesse) dans l'ancien sens avant qu'elle reparte.
+        if (pad_input * gs->pad_vx < 0.0f) gs->pad_vx = 0.0f;
         gs->pad_vx += pad_input * PAD_ACCEL_IMU * DT;
         gs->pad_vx *= PAD_FRICTION;
         gs->pad_vx = clampf(gs->pad_vx, -PAD_MAX_IMU, PAD_MAX_IMU);
