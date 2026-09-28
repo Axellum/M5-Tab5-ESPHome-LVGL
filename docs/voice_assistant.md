@@ -26,7 +26,7 @@ The device runs `micro_wake_word` — ESPHome's TensorFlow Lite Micro integratio
 
 When the model detects the wake phrase with sufficient confidence, it fires an internal event that ESPHome forwards to the Home Assistant Voice pipeline.
 
-**Resource cost:** the micro_wake_word model runs at roughly 5–8% CPU on the ESP32-P4 at 400 MHz, continuously. This is acceptable, but it means the remaining ~92% must cover LVGL rendering, I2S handling, and Wi-Fi. On this hardware, that's comfortable. On an ESP32-S3, headroom would be tighter.
+**Resource cost:** the micro_wake_word model runs at roughly 5–8% CPU on the ESP32-P4 at 360 MHz, continuously. This is acceptable, but it means the remaining ~92% must cover LVGL rendering, I2S handling, and Wi-Fi. On this hardware, that's comfortable. On an ESP32-S3, headroom would be tighter.
 
 Wake-word detection can be toggled via a UI button (`tab5_wake_word_active` switch entity). When off, the device acts as a manual push-to-talk panel only.
 
@@ -140,7 +140,7 @@ L'appareil fait tourner `micro_wake_word` — l'intégration TensorFlow Lite Mic
 
 Quand le modèle détecte la phrase d'activation avec une confiance suffisante, il déclenche un événement interne qu'ESPHome transmet au pipeline Voice de Home Assistant.
 
-**Coût ressources :** le modèle micro_wake_word tourne à environ 5–8% CPU sur l'ESP32-P4 à 400 MHz, en continu. C'est acceptable, mais ça signifie que les ~92% restants doivent couvrir le rendu LVGL, la gestion I2S et le Wi-Fi. Sur ce matériel, c'est confortable. Sur un ESP32-S3, la marge serait plus serrée.
+**Coût ressources :** le modèle micro_wake_word tourne à environ 5–8% CPU sur l'ESP32-P4 à 360 MHz, en continu. C'est acceptable, mais ça signifie que les ~92% restants doivent couvrir le rendu LVGL, la gestion I2S et le Wi-Fi. Sur ce matériel, c'est confortable. Sur un ESP32-S3, la marge serait plus serrée.
 
 La détection du wake-word peut être basculée via un bouton UI (switch `tab5_wake_word_active`). Quand désactivé, l'appareil fonctionne uniquement en mode push-to-talk manuel.
 

@@ -4,6 +4,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 (nuit) — Docs : performances mesurées, chiffres faux corrigés
+
+- **`docs/performance.md`** (nouvelle, EN/FR) : mesures de la 3.2.0 sur la tablette le
+  28/09 — image la plus longue au repos 16,7-20,4 ms, écran entier 133 ms, popups
+  126-197 ms, reconnexion à HA 16,4-17,0 s après un redémarrage, RAM interne libre
+  286,5-287,3 Ko —, la méthode (capteur Draw Max, actions depuis HA au milieu d'une
+  minute) et les limites. Le coût au repos vient du panneau tournant de la carte centrale
+  (bandeau de 1180 × 86 px redessiné 6-7 fois toutes les 8 s), vu avec un build de
+  diagnostic local ; un firmware du 27/09 mesuré le même soir donne les mêmes 20 ms.
+- Plus de « 60 FPS » (README, site, `ui_design.md`, kit Hackster) : les chiffres mesurés
+  à la place. LVGL rafraîchit jusqu'à 60 fois par seconde, mais un redessin complet prend
+  133 ms.
+- Corrigés : 25 ADR (22), 19 fichiers YAML par domaine (15), 360 MHz (400 : la puce du
+  Tab5 est en révision v1.3), 32 Mo de PSRAM (16) ; description du dépôt GitHub :
+  6 langues (4).
+
 ### 2026-09-28 (soir) — HA : tout repousser au démarrage de Home Assistant
 
 Constaté en passant HA Core de 2026.9.3 à 2026.9.4 : la tablette, restée allumée, s'est
