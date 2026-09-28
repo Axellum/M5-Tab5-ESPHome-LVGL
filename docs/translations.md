@@ -4,13 +4,13 @@
 
 ---
 
-The Tab5 screen speaks **French** (the source language), **English**, **German** or **Dutch**. Everything the screen shows or the tablet says follows the chosen language: popups, cards, dates, the alarm clock and its spoken reminders, and the eight games. Two exceptions: the **quiz questions** of Trial Poursuite stay French (more than 720 of them), and the **console names** (Fil d'Or, Roi Noir…) are proper names, kept as they are.
+The Tab5 screen speaks **French** (the source language), **English**, **German**, **Dutch**, **Spanish** or **Italian**. Everything the screen shows or the tablet says follows the chosen language: popups, cards, dates, the alarm clock and its spoken reminders, and the eight games. Two exceptions: the **quiz questions** of Trial Poursuite stay French (more than 720 of them), and the **console names** (Fil d'Or, Roi Noir…) are proper names, kept as they are.
 
-The German and Dutch translations were made with an AI (Claude), from the French and English texts, and no native speaker has reviewed them yet. Corrections are welcome: an issue, or a pull request on `Tab5/lang/de.yaml` or `Tab5/lang/nl.yaml`.
+The German, Dutch, Spanish and Italian translations were made with an AI (Claude), from the French and English texts, and no native speaker has reviewed them yet. Corrections are welcome: an issue, or a pull request on `Tab5/lang/de.yaml`, `nl.yaml`, `es.yaml` or `it.yaml`.
 
 ## Choosing the language
 
-- **From Home Assistant:** the tablet exposes a select entity **« Langue »** (Configuration). Pick `Français`, `English`, `Deutsch` or `Nederlands`: the tablet restarts and comes back in the new language. It remembers the choice.
+- **From Home Assistant:** the tablet exposes a select entity **« Langue »** (Configuration). Pick `Français`, `English`, `Deutsch`, `Nederlands`, `Español` or `Italiano`: the tablet restarts and comes back in the new language. It remembers the choice.
 - **Spoken sentences** (alarm reminders, « shutter stopped ») follow the screen language, but the voice that reads them is the one of the tablet's voice pipeline in Home Assistant: give it a voice of the same language.
 - **Default of a first boot:** `tab5_langue: English` in `Tab5/user_entities.yaml` (the native name of the language). Without that line, French.
 
@@ -30,8 +30,8 @@ Each language is one file, `Tab5/lang/<code>.yaml`: a flat mapping `"French text
 
 ## Adding a language
 
-1. Copy `Tab5/lang/en.yaml` to `Tab5/lang/<code>.yaml` (for example `es.yaml`).
-2. Change `_langue` (the native name, as shown in the select: `Español`), `_code` (`es`) and `_index` (**the next free number**: the tablet stores the index, so existing languages never move). Remove `_statut: complet` until the translation is complete: missing texts then show in English, so a partial language is usable (English stays complete for that reason).
+1. Copy `Tab5/lang/en.yaml` to `Tab5/lang/<code>.yaml` (for example `pt.yaml`).
+2. Change `_langue` (the native name, as shown in the select: `Português`), `_code` (`pt`) and `_index` (**the next free number**: the tablet stores the index, so existing languages never move). Remove `_statut: complet` until the translation is complete: missing texts then show in English, so a partial language is usable (English stays complete for that reason).
 3. Translate the right-hand side of each line. Keep the `%d`/`%s` in the same order and the `{names}` as they are.
 4. Add the native name at the **end** of the `options:` of the select « Langue » (`Tab5/tab5-ha-controls.yaml`).
 5. Run:
@@ -46,7 +46,7 @@ Each language is one file, `Tab5/lang/<code>.yaml`: a flat mapping `"French text
 
 ## Rules for contributors
 
-- A new text **on the screen** is written in French in the code, wrapped in `tr()` (C++, lambdas) or laid out by the YAML, and gets its line in each complete language file. `tests/test_i18n.py` fails if a complete language (English, German, Dutch) misses it. Keep the literal on the same line as `tr(`: the key finder reads one line at a time.
+- A new text **on the screen** is written in French in the code, wrapped in `tr()` (C++, lambdas) or laid out by the YAML, and gets its line in each complete language file. `tests/test_i18n.py` fails if a complete language (English, German, Dutch, Spanish, Italian) misses it. Keep the literal on the same line as `tr(`: the key finder reads one line at a time.
 - The French text itself must use only characters the fonts carry: the tests check French too.
 - Never translate what Home Assistant reads: entity `name:`, select options, text-sensor states, payload codes (`En_mouvement`, `Rouge`…). A HA value shown on screen is translated **at display time**: `tr(state.c_str())`.
 - A key that no longer matches any text of the code fails the tests: change the key when you change the French text.
@@ -55,13 +55,13 @@ Each language is one file, `Tab5/lang/<code>.yaml`: a flat mapping `"French text
 
 ## Version Française
 
-L'écran du Tab5 parle **français** (la langue source), **anglais**, **allemand** ou **néerlandais**. Tout ce que l'écran affiche ou que la tablette dit suit la langue choisie : popups, cartes, dates, le réveil et ses rappels parlés, et les huit jeux. Deux exceptions : les **questions du quiz** de Trial Poursuite restent en français (plus de 720), et les **noms des consoles** (Fil d'Or, Roi Noir…) sont des noms propres, gardés tels quels.
+L'écran du Tab5 parle **français** (la langue source), **anglais**, **allemand**, **néerlandais**, **espagnol** ou **italien**. Tout ce que l'écran affiche ou que la tablette dit suit la langue choisie : popups, cartes, dates, le réveil et ses rappels parlés, et les huit jeux. Deux exceptions : les **questions du quiz** de Trial Poursuite restent en français (plus de 720), et les **noms des consoles** (Fil d'Or, Roi Noir…) sont des noms propres, gardés tels quels.
 
-Les traductions allemande et néerlandaise ont été faites par une IA (Claude), à partir des textes français et anglais, et aucune personne dont c'est la langue ne les a encore relues. Les corrections sont bienvenues : une issue, ou une pull request sur `Tab5/lang/de.yaml` ou `Tab5/lang/nl.yaml`.
+Les traductions allemande, néerlandaise, espagnole et italienne ont été faites par une IA (Claude), à partir des textes français et anglais, et aucune personne dont c'est la langue ne les a encore relues. Les corrections sont bienvenues : une issue, ou une pull request sur `Tab5/lang/de.yaml`, `nl.yaml`, `es.yaml` ou `it.yaml`.
 
 ## Choisir la langue
 
-- **Depuis Home Assistant :** la tablette expose un select **« Langue »** (Configuration). Choisissez `Français`, `English`, `Deutsch` ou `Nederlands` : la tablette redémarre et revient dans la nouvelle langue. Elle garde ce choix.
+- **Depuis Home Assistant :** la tablette expose un select **« Langue »** (Configuration). Choisissez `Français`, `English`, `Deutsch`, `Nederlands`, `Español` ou `Italiano` : la tablette redémarre et revient dans la nouvelle langue. Elle garde ce choix.
 - **Les phrases parlées** (rappels du réveil, « Volet arrêté ») suivent la langue de l'écran, mais la voix qui les lit est celle du pipeline vocal de la tablette dans Home Assistant : donnez-lui une voix de la même langue.
 - **Au premier démarrage :** `tab5_langue: English` dans `Tab5/user_entities.yaml` (le nom de la langue dans la langue elle-même). Sans cette ligne, le français.
 
@@ -81,8 +81,8 @@ Chaque langue est un fichier, `Tab5/lang/<code>.yaml` : un mapping plat `"texte 
 
 ## Ajouter une langue
 
-1. Copiez `Tab5/lang/en.yaml` en `Tab5/lang/<code>.yaml` (par exemple `es.yaml`).
-2. Changez `_langue` (le nom dans la langue elle-même, tel qu'affiché dans le select : `Español`), `_code` (`es`) et `_index` (**le numéro suivant** : la tablette mémorise l'index, les langues existantes ne bougent donc jamais). Retirez `_statut: complet` tant que la traduction n'est pas finie : les textes manquants s'affichent alors en anglais, donc une langue partielle est utilisable (c'est pourquoi l'anglais doit rester complet).
+1. Copiez `Tab5/lang/en.yaml` en `Tab5/lang/<code>.yaml` (par exemple `pt.yaml`).
+2. Changez `_langue` (le nom dans la langue elle-même, tel qu'affiché dans le select : `Português`), `_code` (`pt`) et `_index` (**le numéro suivant** : la tablette mémorise l'index, les langues existantes ne bougent donc jamais). Retirez `_statut: complet` tant que la traduction n'est pas finie : les textes manquants s'affichent alors en anglais, donc une langue partielle est utilisable (c'est pourquoi l'anglais doit rester complet).
 3. Traduisez la partie droite de chaque ligne. Gardez les `%d`/`%s` dans le même ordre et les `{noms}` tels quels.
 4. Ajoutez le nom natif à la **fin** des `options:` du select « Langue » (`Tab5/tab5-ha-controls.yaml`).
 5. Lancez :
@@ -97,7 +97,7 @@ Chaque langue est un fichier, `Tab5/lang/<code>.yaml` : un mapping plat `"texte 
 
 ## Règles pour contribuer
 
-- Un nouveau texte **à l'écran** s'écrit en français dans le code, passe par `tr()` (C++, lambdas) ou est posé par le YAML, et reçoit sa ligne dans chaque fichier de langue complet. `tests/test_i18n.py` échoue si une langue complète (anglais, allemand, néerlandais) ne l'a pas. Gardez le littéral sur la même ligne que `tr(` : l'outil qui relève les clés lit ligne par ligne.
+- Un nouveau texte **à l'écran** s'écrit en français dans le code, passe par `tr()` (C++, lambdas) ou est posé par le YAML, et reçoit sa ligne dans chaque fichier de langue complet. `tests/test_i18n.py` échoue si une langue complète (anglais, allemand, néerlandais, espagnol, italien) ne l'a pas. Gardez le littéral sur la même ligne que `tr(` : l'outil qui relève les clés lit ligne par ligne.
 - Le texte français lui-même ne doit utiliser que des caractères des polices : les tests vérifient aussi le français.
 - Ne jamais traduire ce que lit Home Assistant : `name:` d'entité, options de select, états de text_sensor, codes des payloads (`En_mouvement`, `Rouge`…). Une valeur HA affichée à l'écran se traduit **au moment de l'affichage** : `tr(etat.c_str())`.
 - Une clé qui ne correspond plus à aucun texte du code fait échouer les tests : changez la clé quand vous changez le texte français.

@@ -1,0 +1,1213 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file lang/es.yaml — Spanish translation of the Tab5 screen.
+# @role Flat mapping « French text as written in the code » → « Spanish ».
+#       tools/gen_i18n.py turns it into Tab5/tab5_i18n_data.h (see its header for
+#       adding a language: copy en.yaml, change _langue/_code/_index, translate).
+#       Same keys, same order and same section comments as en.yaml.
+# @ai_instruction
+#   - The KEY must be byte-for-byte the French text of the code (accents, spaces,
+#     punctuation). A key that no longer exists anywhere fails tests/test_i18n.py.
+#   - Keep printf specifiers (%d, %s, %02d…) in the same order, and {names} as is.
+#   - Only characters of the fonts' `&latin1` set (tab5-styles.yaml): Latin-1 plus
+#     the Windows-1252 punctuation (“ ” ‘ ’ … – —). Spanish needs nothing more:
+#     á é í ó ú ñ ü ¿ ¡ º ª « » are all Latin-1.
+#   - "context|text" keys disambiguate a word with two meanings (tr_ctx in code).
+#   - Never translate what Home Assistant reads (entity names, select options,
+#     payload codes): only what the screen shows or the tablet says.
+#   - Style: neutral Spanish, understood in Spain and Latin America. Informal « tú »
+#     when a pronoun cannot be avoided (never « vosotros » nor « usted »), short
+#     imperatives, infinitives on buttons (« Cancelar », « Cerrar »). The screen is
+#     small: a text should not be wider than the French, English, German or Dutch
+#     one (usual abbreviations: Temp., máx., mín., Vac.…).
+# ============================================================================
+_langue: Español
+_code: es
+_index: 4
+_statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
+
+# --- Dates (tab5_core.cpp) ---------------------------------------------------
+# Abréviations de trois lettres (usage RAE / CLDR « es ») ; jours et mois en toutes
+# lettres en minuscules, comme en français.
+"Dim": "Dom"
+"Lun": "Lun"
+"Mar": "Mar"
+"Mer": "Mié"
+"Jeu": "Jue"
+"Ven": "Vie"
+"Sam": "Sáb"
+"Janv": "Ene"
+"Févr": "Feb"
+"Mars": "Mar"
+"Avr": "Abr"
+"Mai": "May"
+"Juin": "Jun"
+"Juil": "Jul"
+"Août": "Ago"
+"Sept": "Sept"
+"Oct": "Oct"
+"Nov": "Nov"
+"Déc": "Dic"
+"dimanche": "domingo"
+"lundi": "lunes"
+"mardi": "martes"
+"mercredi": "miércoles"
+"jeudi": "jueves"
+"vendredi": "viernes"
+"samedi": "sábado"
+"janvier": "enero"
+"février": "febrero"
+"mars": "marzo"
+"avril": "abril"
+"mai": "mayo"
+"juin": "junio"
+"juillet": "julio"
+"août": "agosto"
+"septembre": "septiembre"
+"octobre": "octubre"
+"novembre": "noviembre"
+"décembre": "diciembre"
+"1er": "1"
+# « lunes 5 de octubre » : forme espagnole courante. Plus large affichage : « Del
+# sábado 26 de septiembre al miércoles 30 de septiembre » (titre des prévisions,
+# carte centrale de 1180 px) ≈ la version allemande.
+"{jour} {quantieme} {mois}": "{jour} {quantieme} de {mois}"
+"Jeu 02 Avr": "Jue 02 Abr"
+# Day initials of the alarm chips: « M » is both Tuesday and Wednesday in French.
+# Espagnol : X pour miércoles (usage des calendriers espagnols), M reste martes.
+"lundi|L": "L"
+"mardi|M": "M"
+"mercredi|M": "X"
+"jeudi|J": "J"
+"vendredi|V": "V"
+"samedi|S": "S"
+"dimanche|D": "D"
+
+# --- Home screen, forecast, central card --------------------------------------
+"Synchronisation...": "Sincronizando..."
+"Domo": "Casa"
+"Discu": "Chat"
+"Journee": "Hoy"
+"Demain": "Mañana"
+"2 Jours": "2 días"
+"3 Jours": "3 días"
+"4 Jours": "4 días"
+"Prévisions journalières · %d/3": "Previsión diaria · %d/3"
+"Prévisions horaires · %d/2": "Previsión por horas · %d/2"
+"Du %s au %s": "Del %s al %s"
+"De %s à %s%s": "De %s a %s%s"
+" le lendemain": " del día siguiente"
+"Jour hors plage": "Día fuera de rango"
+"Auj.": "Hoy"
+# « Dem. » : ligne du planning (« 2/ Mañana : 06:45-15:30 »), mot entier plutôt
+# qu'une abréviation inhabituelle (« Mañ. »).
+"Dem.": "Mañana"
+# Nom de jour envoyé par HA pour aujourd'hui (tuiles météo de l'accueil), sans point.
+"Auj": "Hoy"
+"Aucun travail de prevu": "Sin trabajo previsto"
+"Jour": "Día"
+"{jour} : {horaire}": "{jour}: {horaire}"
+"{jour} : #fb923c {horaire}#": "{jour}: #fb923c {horaire}#"
+"{jour} : repos": "{jour}: libre"
+"{jour} : pas d'horaire": "{jour}: sin horario"
+"Alerte Météo Rouge en cours ! Restez prudent.": "¡Alerta meteorológica roja! Ten cuidado."
+"Alerte Météo Orange en cours ! Restez prudent.": "¡Alerta meteorológica naranja! Ten cuidado."
+# Composés par la tablette depuis les codes de HA (lot 4c) : bandeau info, alertes HA,
+# phrase de pluie (décomptée sur la tablette).
+"Vigilance Jaune": "Alerta amarilla"
+# « MAJ » en toutes lettres : bandeau info en roboto_45_b dans la carte de 1180 px ;
+# la ligne la plus longue (« 3 actualizaciones · 2 errores · 5 no disponibles ») fait 933 px.
+"1 MAJ · %s": "1 actualización · %s"
+"%d MAJ": "%d actualizaciones"
+"1 erreur": "1 error"
+"%d erreurs": "%d errores"
+"%d indispo": "%d no disponibles"
+"Temps sec": "Tiempo seco"
+"Pas de données": "Sin datos"
+"Pluie faible": "Lluvia débil"
+"Pluie modérée": "Lluvia moderada"
+"Averses": "Chubascos"
+"Pluie": "Lluvia"
+"%s dans %ld mn": "%s en %ld min"
+
+# --- Switch card, shutter, plants ---------------------------------------------
+# « Chambre » / « Salon » : onglets de 200 px en roboto_32_b (switch_card_title_tab.yaml) :
+# « Dormitorio » (154 px) y tient en entier.
+# États (« Allumé », « Ouvert »…) : onglet de 130 px en roboto_32_b
+# (switch_card_state_tab.yaml). « Encendido » (150 px) serait rogné : « ON » / « OFF »,
+# comme le « Ok Nabu : ON » de l'assistant ; « Apagado » (128 px) tenait tout juste.
+# « Ouvert » / « Fermé » ne servent qu'au volet (la persiana) : féminin. « Moviendo »
+# (141 px) reste plus étroit que le « Mouvement » français (171 px) du même onglet.
+# « Pot %d » : case de 90 px en roboto_22 (moisture_sensors.yaml) où « Maceta 5 »
+# (91 px) déborde ; « Planta 5 » (81 px) y tient.
+"PC Bureau": "PC oficina"
+"Volet": "Persiana"
+"Chambre": "Dormitorio"
+"Salon": "Salón"
+"Allumé": "ON"
+"Éteint": "OFF"
+"Ouvert": "Abierta"
+"Fermé": "Cerrada"
+"Mouvement": "Moviendo"
+"Volet arrêté.": "Persiana detenida."
+"Moy:": "Media:"
+"Pot %d": "Planta %d"
+"Pot -": "Planta -"
+"Hors ligne": "Sin conexión"
+"À arroser !": "¡Regar!"
+"Bientôt sec": "Casi seca"
+"Mes Plantes": "Mis plantas"
+"Pot 1": "Planta 1"
+"Pot 2": "Planta 2"
+"Pot 3": "Planta 3"
+"Pot 4": "Planta 4"
+"Pot 5": "Planta 5"
+"Fertilité": "Fertilidad"
+"Lumière": "Luz"
+"Température": "Temperatura"
+"Batterie": "Batería"
+
+# --- Lights popup ---------------------------------------------------------------
+# « Ampoule » = « Lámpara » : « bombilla » (Espagne), « foco » (Mexique),
+# « ampolleta » (Chili)… n'ont pas de forme commune ; « lámpara » se comprend partout.
+"Ampoule": "Lámpara"
+"AMPOULE": "LÁMPARA"
+"Ampoule Chambre": "Lámpara dormitorio"
+"Ampoule Salon": "Lámpara salón"
+"Ampoule LEDs": "Tira LED"
+"Tout éteindre": "Apagar todo"
+"LUMINOSITÉ": "BRILLO"
+"COULEURS": "COLORES"
+"Chaud": "Cálido"
+"Crème": "Crema"
+# « Froid » sert aussi au mode Froid de la clim (climate_popup.yaml) : « Frío »
+# convient aux deux (blanco frío / modo frío).
+"Froid": "Frío"
+
+# --- Climate popup --------------------------------------------------------------
+"Climatisation Salon": "Climatización salón"
+"MODE": "MODO"
+"clim|Chaud": "Calor"
+"Sec": "Seco"
+"Ventilation": "Ventilación"
+"TEMPÉRATURE": "TEMPERATURA"
+# « Pièce » (température de la pièce) : libellé entre l'icône et la valeur
+# (climate_popup.yaml) ; « Interior » y tient, « Ambiente » touchait l'icône.
+"Pièce": "Interior"
+"OPTIONS": "OPCIONES"
+"Presets": "Presets"
+"Éco": "Eco"
+"Silence": "Silencio"
+"Flux d'air": "Flujo de aire"
+"Oscillation": "Oscilación"
+"Brise": "Brisa"
+
+# --- TV remote ------------------------------------------------------------------
+"Télécommande TV": "Control remoto TV"
+"Marche / Arrêt": "Encender / Apagar"
+"Lecture": "Reproducir"
+"Pause": "Pausa"
+"Retour": "Volver"
+"Accueil": "Inicio"
+
+# --- Calendar popup -------------------------------------------------------------
+"Calendrier": "Calendario"
+"Aujourd'hui": "Hoy"
+"Travail": "Trabajo"
+"Férié": "Festivo"
+"Vac. scolaires": "Vac. escolares"
+"RDV": "Cita"
+"Anniv.": "Cumple"
+"Chargement...": "Cargando..."
+"Home Assistant hors ligne": "Home Assistant sin conexión"
+"Rien de prévu ce jour": "Nada previsto este día"
+
+# --- Voice assistant ------------------------------------------------------------
+"Assistant vocal": "Asistente de voz"
+"Réglages": "Ajustes"
+"Cerveau / LLM": "Cerebro / LLM"
+"Taille du texte": "Tamaño del texto"
+"VOTRE DEMANDE": "TU PREGUNTA"
+"Appuyez sur le micro puis parlez…": "Toca el micro y habla…"
+"RÉPONSE": "RESPUESTA"
+"Prêt": "Listo"
+"Parler": "Hablar"
+"Reflexion...": "Pensando..."
+"Écoute…": "Escuchando…"
+"Analyse…": "Analizando…"
+"Réponse": "Respuesta"
+"Erreur": "Error"
+"Chargement image...": "Cargando imagen..."
+"Image indisponible": "Imagen no disponible"
+
+# --- System console -------------------------------------------------------------
+"CONSOLE SYSTÈME": "CONSOLA DEL SISTEMA"
+"MÉMOIRE": "MEMORIA"
+# « Bloc max » : 123 px avant la valeur (console_sys.yaml, x 22 → 145, roboto_22) ;
+# « Bloque máx. » (121 px) la touchait.
+"Bloc max": "Bloq. máx."
+"RÉSEAU": "RED"
+"Adresse IP": "Dirección IP"
+"Signal": "Señal"
+"SYSTÈME": "SISTEMA"
+"Temps actif": "Tiempo activo"
+"Temp. CPU": "Temp. CPU"
+"Temps de boucle": "Tiempo de bucle"
+"GESTION": "GESTIÓN"
+"MAJ Écran": "Refrescar pantalla"
+"Recharger autos": "Recargar autom."
+"Redémarrer HA": "Reiniciar HA"
+"Reboot tablette": "Reiniciar tableta"
+"Redémarrer Home Assistant ?": "¿Reiniciar Home Assistant?"
+"Le serveur sera indisponible ~1 minute.": "El servidor no estará disponible ~1 minuto."
+"Redémarrer la tablette ?": "¿Reiniciar la tableta?"
+"L'écran redémarre immédiatement.": "La pantalla se reinicia de inmediato."
+"Annuler": "Cancelar"
+"Confirmer": "Confirmar"
+"Redemarrage...": "Reiniciando..."
+"Connecté": "Conectado"
+
+# --- Alarm clock: popup ---------------------------------------------------------
+# « Réveil » = « Alarma » (nom de l'appli sur les téléphones hispanophones), plus
+# court que « Despertador ». « Ouverture » (mode calé sur le début du travail lu
+# dans le calendrier) = « Turno ».
+"Réveil": "Alarma"
+"Réveil actif": "Alarma activa"
+"Réveil éteint": "Alarma apagada"
+"Heure fixe": "Hora fija"
+"Jours (heure fixe uniquement)": "Días (solo hora fija)"
+"Mode": "Modo"
+"Fixe": "Fija"
+"Ouverture": "Turno"
+"Délai": "Antelación"
+"Pas avant": "No antes"
+"Pas après": "No después"
+# « Repos mini » (repos minimum après la fermeture de la veille) : colonne de 131 px
+# en roboto_22 où « Descanso mín. » (146 px) déborde ; « Sueño mín. » = 110 px.
+"Repos mini": "Sueño mín."
+"PROCHAINE SONNERIE": "PRÓXIMA ALARMA"
+"Repos : heure fixe": "Libre: hora fija"
+"Repos : silence": "Libre: silencio"
+"Sonnerie": "Tono"
+"Douce": "Suave"
+"Classique": "Clásico"
+"Insistante": "Insistente"
+"Carillon": "Carillón"
+"Progressif": "Progresivo"
+"Volume constant": "Volumen constante"
+"Répétition": "Aplazar"
+"Durée max": "Duración máx."
+"RDV avant": "Antes de cita"
+"Annonce parlée": "Anuncio de voz"
+"Sonnerie seule": "Solo tono"
+"Annonce des RDV": "Anunciar citas"
+"RDV silencieux": "Citas en silencio"
+"Tester": "Probar"
+"Fermer": "Cerrar"
+"9 min": "9 min"
+"15 min": "15 min"
+"%d min": "%d min"
+"%dh%02d": "%dh%02d"
+"Sonne à l'heure fixe, les jours cochés ci-dessus.": "Suena a la hora fija, los días marcados arriba."
+"Sonne à l'heure fixe, uniquement les jours travaillés.": "Suena a la hora fija, solo los días laborables."
+"Sonne avant l'ouverture lue dans le calendrier.": "Suena antes del turno leído en el calendario."
+
+# --- Alarm clock: next ring, ringing screen, reminders ---------------------------
+# « Arrêter » (bouton) = « Detener » ; le mot à PRONONCER reste le mot-clé vocal « Stop ».
+# « Répéter » : le bouton affiche aussi la durée (« Aplazar · 15 min », 234 px) dans
+# 242 px en roboto_32_b, où « Posponer · 15 min » (262 px) ne tient pas. D'où la
+# famille « aplazar » : Aplazar (bouton, réglage), Aplazada (prochaine sonnerie),
+# Aplazamiento (titre de l'écran de sonnerie).
+# « Désactivé » sert au réveil et au mode entraînement de Coureur d'Or (el modo) :
+# masculin, comme « Activado ».
+"Désactivé": "Desactivado"
+"Aucune sonnerie prévue": "Ninguna alarma prevista"
+"Aujourd'hui {heure}": "Hoy {heure}"
+"Demain {heure}": "Mañana {heure}"
+"Répétition %02d:%02d (%d min)": "Aplazada %02d:%02d (%d min)"
+"Répétition n°%d · « Arrêter » pour reprendre le cycle normal": "Aplazamiento n.º %d · «Detener» vuelve al ciclo normal"
+"Touchez l'interrupteur pour l'armer": "Toca el interruptor para activarla"
+"Aucun jour retenu dans les 8 prochains": "Ningún día elegido en los próximos 8"
+"en attente du calendrier": "esperando el calendario"
+"repos": "libre"
+"Travail (horaire inconnu)": "Trabajo (sin horario)"
+"Heure non synchronisée": "Hora no sincronizada"
+"Aucun rendez-vous à venir": "No hay citas próximas"
+"Arrêter": "Detener"
+"Répéter": "Aplazar"
+"Répéter · %d min": "Aplazar · %d min"
+"Répétition %d": "Aplazamiento %d"
+"Touchez l'écran ou dites « Stop » pour arrêter": "Toca la pantalla o di «Stop» para detenerla"
+"%s · %s (dans %d min)": "%s · %s (en %d min)"
+"%s · %s (maintenant)": "%s · %s (ahora)"
+# Spoken by the tablet (TTS): times read as « a las 14 horas », « a las 14 y 30 ».
+"%d heures": "%d horas"
+"%d heures %d": "%d y %d"
+"Rappel : %s, à %s, dans %d minute.": "Recordatorio: %s, a las %s, en %d minuto."
+"Rappel : %s, à %s, dans %d minutes.": "Recordatorio: %s, a las %s, en %d minutos."
+"Rappel : %s, c'est maintenant.": "Recordatorio: %s, es ahora."
+
+# --- Arcade page (ui_components/game_selector.yaml) ----------------------------
+# Console names (Fil d'Or, Roi Noir…) stay as they are: proper names, and the
+# « Écran courant » label that Home Assistant reads (tools/i18n_keys.py, NON_TRADUITS).
+"8 consoles — une seule à la fois": "8 consolas — una a la vez"
+"Roguelite de bille\n6 salles · à l'inclinaison": "Roguelite de canica\n6 salas · por inclinación"
+"Casse-briques Atari\n8 niveaux · power-ups": "Rompeladrillos Atari\n8 niveles · power-ups"
+"Flipper néon · 3 billes\nTablette à la verticale": "Pinball neón · 3 bolas\nTableta en vertical"
+"Lode Runner 1983\nCreuse · grimpe · fuis": "Lode Runner 1983\nCava · trepa · huye"
+"Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5": "Go 9×9 / 13×13 / 19×19\nConteo chino · komi 6,5"
+"Quiz rétro-salon\n1 à 6 équipes": "Quiz retro de salón\n1 a 6 equipos · en francés"
+# Sous-titres des cartes : 266 px en roboto_22 sur deux lignes (arcade_card.yaml) ;
+# « Captura máxima · en cadena » (278 px) passerait sur trois.
+"Internationales 10×10\nPrise majoritaire · rafles": "Internacionales 10×10\nCaptura máxima · cadenas"
+"Échecs FIDE complets\n5 niveaux d'IA embarquée": "Ajedrez FIDE completo\n5 niveles de IA integrada"
+"Sortie de chaque jeu : hub, puis « Quitter »": "Para salir de un juego: hub y luego «Salir»"
+
+# --- Fil d'Or — marble roguelite (marble_game.cpp) -----------------------------
+# Le nom de la console (« FIL D'OR » en titre du hub) ne se traduit pas.
+# Vocabulaire : la bille = la canica, le dédale = el Laberinto (personnifié, donc en
+# majuscule), âmes = almas, PV = PV (puntos de vida, même sigle qu'en français),
+# caractéristique = atributo, objet = objeto, emplacement = ranura, feu de camp =
+# Hoguera (le nom du Bonfire de Dark Souls en espagnol). « run » est gardé, au
+# féminin (« la run »), comme le disent les joueurs hispanophones de roguelites.
+# --- Salles (ROOMS : littéraux nus, lus par tools/check_marble_rooms.py) --------
+# Traduits à l'affichage par tr(r.name) / tr(r.goal), non relevés par i18n_keys.py.
+# « Forge » n'a pas d'entrée dans en.yaml : reste « Forge » (compréhensible).
+"Seuil": "Umbral"
+"Couloirs": "Pasillos"
+"Sanctuaire": "Santuario"
+"Némésis": "Némesis"
+"Trone": "Trono"
+"Rejoins le portail": "Llega al portal"
+"Reunis les runes": "Reúne las runas"
+# --- Bonus de run (boons) -------------------------------------------------------
+"Main d'Ariane": "Mano de Ariadna"
+"Réponse à l'inclinaison +18 %": "Respuesta a la inclinación +18 %"
+"Cœur de braise": "Corazón de brasa"
+"+1 point de vie, soigne aussitôt": "+1 PV, cura al instante"
+"Bourse tressée": "Bolsa trenzada"
+"+40 % d'âmes ramassées": "+40 % de almas recogidas"
+"Aimant mineur": "Imán menor"
+"Attire les bonus alentour": "Atrae los bonus cercanos"
+"Semelles lourdes": "Suelas pesadas"
+"Freinage nettement plus mordant": "Frenado mucho más firme"
+"Élan": "Impulso"
+"Vitesse maximale +170": "Velocidad máxima +170"
+"Peau de bronze": "Piel de bronce"
+"Un bouclier à chaque nouvelle salle": "Un escudo en cada sala nueva"
+"Œil du dédale": "Ojo del Laberinto"
+"Le portail pulse et se voit de loin": "El portal late y se ve de lejos"
+"Seconde chance": "Segunda vida"
+"Relevé une fois dans la run": "Te revive una vez en la run"
+"Pas de velours": "Paso de seda"
+"3 s d'invulnérabilité par salle": "3 s de invulnerabilidad por sala"
+# --- Difficultés ----------------------------------------------------------------
+"Calme": "Calma"
+"+1 PV, pièges lents, longue invulnérabilité": "+1 PV, trampas lentas, invulnerabilidad larga"
+"Normal": "Normal"
+"L'équilibre de référence": "El equilibrio de referencia"
+"Impitoyable": "Implacable"
+"-1 PV, pièges rapides, mais +60 % d'âmes": "-1 PV, trampas rápidas, pero +60 % de almas"
+# --- Caractéristiques (Feu de camp) ---------------------------------------------
+"Vitalité": "Vitalidad"
+"+1 point de vie par niveau": "+1 PV por nivel"
+"Résistance": "Resistencia"
+"+300 ms d'invulnérabilité ; bouclier des 3": "+300 ms de invulnerabilidad; escudo desde el 3"
+"Finesse": "Sutileza"
+"-1 px de rayon : bille plus difficile à toucher": "-1 px de radio: canica más difícil de alcanzar"
+"Agilité": "Agilidad"
+"+12 % de réponse à l'inclinaison par niveau": "+12 % de respuesta a la inclinación por nivel"
+"+60 de vitesse maximale par niveau": "+60 de velocidad máxima por nivel"
+"Découverte": "Hallazgo"
+"+15 % d'âmes et +12 % de butin en coffre": "+15 % de almas y +12 % de botín en cofres"
+# --- Objets (Marchand, Équipement, coffres, boss) -------------------------------
+"Anneau de fer": "Anillo de hierro"
+"+1 point de vie": "+1 PV"
+"Talisman du filon": "Talismán de la veta"
+"+25 % d'âmes ramassées": "+25 % de almas recogidas"
+"Plume de suie": "Pluma de hollín"
+"+70 de vitesse maximale": "+70 de velocidad máxima"
+"Gantelet poli": "Guantelete pulido"
+"+15 % de réponse à l'inclinaison": "+15 % de respuesta a la inclinación"
+"Écaille de bronze": "Escama de bronce"
+"Un bouclier à chaque salle": "Un escudo en cada sala"
+"Œil de rune": "Ojo rúnico"
+"Pierre de sang": "Piedra de sangre"
+"Relevé une fois par run": "Te revive una vez por run"
+"Aimant du mineur": "Imán del minero"
+"Semelle de plomb": "Suela de plomo"
+"Couronne fêlée": "Corona agrietada"
+"+50 % d'âmes, mais -1 point de vie": "+50 % de almas, pero -1 PV"
+# --- Répliques (mort, récompense) -----------------------------------------------
+"Le fil se rompt. Il en reste toujours un bout.": "El hilo se rompe. Siempre queda un cabo."
+"La pierre gagne cette manche.": "La piedra gana esta ronda."
+"Tu rouleras encore.": "Volverás a rodar."
+"Le dédale te garde un peu plus longtemps.": "El Laberinto te retiene un poco más."
+"Chute nette. Reprends ton souffle.": "Caída limpia. Recupera el aliento."
+"Le dédale consent.": "El Laberinto consiente."
+"Un serment de plus.": "Un juramento más."
+"Prends. Tu en auras besoin.": "Toma. Lo necesitarás."
+# --- Hub ------------------------------------------------------------------------
+"Niveau %u   -   %u âmes   -   salle %u/6   -   %s%s": "Nivel %u   -   %u almas   -   sala %u/6   -   %s%s"
+"   -   MODE DIEU": "   -   MODO DIOS"
+"6 salles. 2 à 5 minutes.  Difficulté : %s": "6 salas. De 2 a 5 minutos.  Dificultad: %s"
+"%d objet(s) trouvé(s) sur %d": "%d de %d objetos encontrados"
+"Incline la tablette pour guider la bille. L'écran tactile ne sert qu'aux menus.": "Inclina la tableta para guiar la canica. La pantalla táctil solo sirve para los menús."
+"Lancer une run": "Iniciar una run"
+"Feu de camp": "Hoguera"
+"Dépenser les âmes en caractéristiques": "Gastar almas en atributos"
+"Marchand": "Mercader"
+"Acheter et revendre des objets": "Comprar y vender objetos"
+"Équipement": "Equipo"
+"Difficulté, mode dieu, teinte, calibration": "Dificultad, modo dios, color, calibración"
+"Statistiques": "Estadísticas"
+"Runs, victoires, records": "Runs, victorias, récords"
+"Quitter": "Salir"
+"Retour au tableau de bord": "Volver al panel"
+# --- Réglages -------------------------------------------------------------------
+"Difficulté : %s": "Dificultad: %s"
+"Mode dieu : %s": "Modo dios: %s"
+"ACTIF": "ACTIVO"
+"inactif": "inactivo"
+"Ces réglages s'appliquent au lancement de la prochaine run.": "Estos ajustes se aplican al iniciar la próxima run."
+"Le mode dieu rend invulnérable : la run reste jouable mais ne rapporte aucun fragment et n'entre pas dans les statistiques.": "El modo dios te hace invulnerable: la run sigue siendo jugable, pero no da fragmentos ni cuenta en las estadísticas."
+"Invulnérable - hors concours": "Invulnerable - fuera de concurso"
+"Jouer sans jamais mourir": "Jugar sin morir nunca"
+"Or": "Oro"
+"Argent": "Plata"
+"Cuivre": "Cobre"
+"Teinte de la bille : %s": "Color de la canica: %s"
+"Purement cosmétique": "Puramente estético"
+"Calibrer à plat": "Calibrar en plano"
+"Pose la tablette et appuie": "Apoya la tableta y toca"
+"Calibration prise. La tablette est désormais « à plat ».": "Calibrado. La tableta cuenta ahora como «plana»."
+# --- Feu de camp (montée de niveau) ---------------------------------------------
+"Niveau %u   -   %u âmes   -   prochain point : %u âmes": "Nivel %u   -   %u almas   -   siguiente punto: %u almas"
+"Le coût dépend du niveau TOTAL : monter une caractéristique renchérit toutes les autres. Il faut choisir une orientation.": "El precio depende del nivel TOTAL: subir un atributo encarece todos los demás. Hay que elegir una orientación."
+"%s  -  au maximum": "%s  -  al máximo"
+"%s  -  %u âmes": "%s  -  %u almas"
+# --- Marchand -------------------------------------------------------------------
+"%u âmes   -   page %d/%d": "%u almas   -   página %d/%d"
+"Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement.": "Tocar un objeto que ya tienes lo vende a mitad de precio. Un objeto vendido también se quita del equipo."
+"  (possédé)": "  (tuyo)"
+"%s  -  revendre : %u âmes": "%s  -  vender: %u almas"
+"Page suivante": "Página siguiente"
+# --- Équipement -----------------------------------------------------------------
+"%d objet(s) en votre possession   -   %d emplacement(s)": "%d objeto(s) en tu poder   -   %d ranura(s)"
+"Appuyer sur un emplacement le fait passer à l'objet suivant.": "Tocar una ranura la cambia al objeto siguiente."
+"Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand.": "Ningún objeto: abre cofres, derrota a los jefes o visita al mercader."
+"Emplacement %d : vide": "Ranura %d: vacía"
+"Aucun effet actif": "Sin efecto activo"
+"Emplacement %d : %s": "Ranura %d: %s"
+# --- Statistiques ---------------------------------------------------------------
+# « aucun » remplace le meilleur temps (el mejor tiempo) : masculin.
+"aucun": "ninguno"
+"Runs lancées : %u\nVictoires : %u\nSalle la plus profonde : %u/6\nMeilleur temps : %s\nNiveau total : %u\nÂmes disponibles : %u\nObjets découverts : %d/%d": "Runs iniciadas: %u\nVictorias: %u\nSala más profunda: %u/6\nMejor tiempo: %s\nNivel total: %u\nAlmas disponibles: %u\nObjetos descubiertos: %d/%d"
+"Les runs jouées en mode dieu ne sont pas comptabilisées ici.": "Las runs en modo dios no cuentan aquí."
+# --- Récompense (choix d'un boon) -----------------------------------------------
+"Le dédale offre": "El Laberinto ofrece"
+"Un seul choix. Il te suivra jusqu'à la fin de la run.": "Una sola elección. Te acompañará hasta el final de la run."
+# --- Fin de run -----------------------------------------------------------------
+"Salles franchies : %d/6\nTemps : %u:%02u\nMode dieu — run hors concours": "Salas superadas: %d/6\nTiempo: %u:%02u\nModo dios — run fuera de concurso"
+"Salles franchies : %d/6\nTemps : %u:%02u\nDifficulté : %s\nÂmes rapportées : %d": "Salas superadas: %d/6\nTiempo: %u:%02u\nDificultad: %s\nAlmas obtenidas: %d"
+"Le fil tient": "El hilo aguanta"
+"Fin de la run": "Fin de la run"
+"Tu sors du dédale. Il te laisse partir.": "Sales del Laberinto. Te deja marchar."
+"Aucune âme créditée : le mode dieu ne compte pas.": "No se suman almas: el modo dios no cuenta."
+"Les âmes sont déjà mises de côté.": "Las almas ya están a salvo."
+"Relancer une run": "Otra run"
+"Retour au hub": "Volver al hub"
+# --- Pause (« Pause » et « Retour » : déjà plus haut) -----------------------------
+"Le dédale patiente.": "El Laberinto espera."
+"Reprendre": "Reanudar"
+"Recalibrer à plat": "Recalibrar en plano"
+"Pose la tablette avant d'appuyer": "Apoya la tableta antes de tocar"
+"Abandonner la run": "Abandonar la run"
+"Les âmes sont conservées": "Conservas las almas"
+"Calibration prise.": "Calibrado."
+# --- HUD (colonnes à largeur réservée : voir build_ui) ----------------------------
+"Salle %d/%d  -  %s  %.*s%s": "Sala %d/%d  -  %s  %.*s%s"
+"   [ DIEU ]": "   [ DIOS ]"
+"PV invulnérable": "PV invulnerable"
+"PV %d/%d%s": "PV %d/%d%s"
+"  +BOUCLIER": "  +ESCUDO"
+"Or %d": "Oro %d"
+"Portail ouvert !": "¡Portal abierto!"
+"Runes %d/%u": "Runas %d/%u"
+# --- Bannières (coffres, butin de boss) ------------------------------------------
+# « cède » = « suelta » (le boss lâche son butin, vocabulaire des jeux).
+"%s cède : %s": "%s suelta: %s"
+"%s cède 120 âmes": "%s suelta 120 almas"
+"Le Trône": "El Trono"
+"Coffre : %s !": "¡Cofre: %s!"
+"Coffre : %d âmes": "Cofre: %d almas"
+
+# --- Arcanoïde — brick breaker (arkanoid_game.cpp) -----------------------------
+# Lot 4b — Arcanoïde (Tab5/arkanoid_game.cpp) : français du code → espagnol.
+# « ARCANOIDE » (nom de la console) n'est pas traduit. « Retour » et « Pause »
+# reprennent la traduction commune (Volver / Pausa).
+# Espagnol : score = puntuación (mot compris partout ; « puntaje » est latino-américain),
+# record = récord, la balle = la bola.
+# --- Noms des niveaux (LEVEL_NAMES, tr_noop) ---
+"Mur plein": "Muro sólido"
+"Pyramide": "Pirámide"
+"Colonnes": "Columnas"
+"Damier": "Damero"
+"Forteresse": "Fortaleza"
+"Zigzag": "Zigzag"
+"Boss final": "Jefe final"
+# --- Mode de contrôle ---
+"Inclinaison": "Inclinación"
+"Boutons": "Botones"
+"Les deux": "Ambos"
+# --- Hub ---
+"Meilleur score : %u   -   Contrôle : %s": "Récord: %u   -   Control: %s"
+"Casse toutes les briques. Ne laisse pas tomber la balle.": "Rompe todos los ladrillos. No dejes caer la bola."
+"Jouer": "Jugar"
+"8 niveaux, 3 vies, power-ups": "8 niveles, 3 vidas, power-ups"
+"Classement": "Clasificación"
+"Top 10 local": "Top 10 local"
+"Contrôle, sensibilité, calibration, SFX": "Control, sensibilidad, calibración, SFX"
+# --- Réglages ---
+"Contrôle : %s": "Control: %s"
+"Sensibilité IMU : %d/5": "Sensibilidad IMU: %d/5"
+"Ces réglages sont sauvegardés automatiquement.": "Estos ajustes se guardan automáticamente."
+"Inclinaison / Boutons / Les deux": "Inclinación / Botones / Ambos"
+"Vitesse de réponse à l'inclinaison": "Rapidez de respuesta a la inclinación"
+"SFX : coupés": "SFX: apagados"
+"SFX : actifs": "SFX: activos"
+"Bips sonores (casse, mort, niveau)": "Pitidos (ladrillo, bola perdida, nivel)"
+"Calibration prise. Tablette = plat.": "Calibrado. Tableta = plana."
+# --- Classement ---
+# En-tête aligné sur la ligne « %2d   %7u    %d    %s » : « Pos. » + « Puntos »
+# gardent les 17 caractères avant « Niv ». « Btn » est la dernière colonne du
+# tableau : « Botones » y tient sans rien décaler.
+"Rang  Score      Niv  Contrôle\n": "Pos.  Puntos     Niv  Control\n"
+"IMU": "IMU"
+"Btn": "Botones"
+"Mix": "Mix"
+"\n  Aucun score enregistre.": "\n  Ninguna puntuación guardada."
+"Top 10 local (NVS)": "Top 10 local (NVS)"
+"Effacer les scores": "Borrar puntuaciones"
+# « Demande confirmation », « Oui, tout effacer », « Annuler » et
+# « Cette action est irreversible. » : déjà plus bas (Coureur d'Or).
+"Effacer les scores ?": "¿Borrar puntuaciones?"
+"Tout le Top 10 local, meilleur score compris.": "Todo el Top 10 local, récord incluido."
+# --- Pause ---
+"Le jeu attend.": "El juego espera."
+"Abandonner": "Abandonar"
+"Le score est enregistré": "La puntuación se guarda"
+# --- Fin de niveau / game over ---
+"Niveau %d — %s\nScore : %d": "Nivel %d — %s\nPuntos: %d"
+"Niveau terminé !": "¡Nivel completado!"
+"Niveau suivant": "Siguiente nivel"
+"Score : %d\nNiveau atteint : %d/8 — %s%s": "Puntos: %d\nNivel alcanzado: %d/8 — %s%s"
+"\n*** Nouveau record ! ***": "\n*** ¡Nuevo récord! ***"
+"GAME OVER": "GAME OVER"
+"Rejouer": "Otra vez"
+# --- HUD ---
+"Score %d": "Puntos %d"
+"Vies %d": "Vidas %d"
+"Niv %d/8": "Niv %d/8"
+"Record %u": "Récord %u"
+
+# --- Neon Apron — pinball (pinball_game.cpp) -----------------------------------
+# Pinball terms already in English stay as they are, unwrapped (TILT, MULTIBALL,
+# SKILL SHOT, BUMPER FRENZY, FRENZY / MULTI / SKILL inserts, "N E O N   A P R O N").
+# The DMD score is drawn in roboto_55_b (digits only): no text goes through it.
+# Espagnol : la bille du flipper = la bola, le flipper (jeu) = el pinball, les
+# flippers = las paletas, le lanceur = el lanzador.
+# --- Toasts (roboto_45_b, above the arch) ---
+"BILLE BONUS": "BOLA EXTRA"
+"MULTIBALL TERMINÉ": "FIN DEL MULTIBALL"
+"BILLE PERDUE": "BOLA PERDIDA"
+# --- Table and DMD labels (roboto_22) ---
+"Maintiens ici pour armer,\nrelâche pour tirer": "Mantén aquí para cargar,\nsuelta para lanzar"
+"BILLE %d / %d": "BOLA %d / %d"
+"RECORD %s": "RÉCORD %s"
+# --- Hub ---
+"%lu partie(s) - %lu multiball(s) - %lu tilt(s)": "%lu partida(s) - %lu multiball(s) - %lu tilt(s)"
+"Record : %s": "Récord: %s"
+"Aucun score enregistré": "Sin puntuaciones"
+"Tournez la tablette à la verticale": "Gira la tableta en vertical"
+"Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT.": "Zona izquierda / derecha = paletas (mantener). Abajo al centro = lanzador.\nSacude la tableta para empujar la bola — tres abusos seguidos y es TILT."
+"3 billes - lanceur en bas de l'écran": "3 bolas - lanzador abajo"
+"Nudge, sens de l'écran, calibration": "Nudge, orientación, calibración"
+"Retour au tableau de bord (paysage)": "Volver al panel (horizontal)"
+# --- Leaderboard ---
+"CLASSEMENT": "CLASIFICACIÓN"
+"Aucun score pour l'instant.\nLance une partie !": "Aún no hay puntuaciones.\n¡Empieza una partida!"
+"Cumul carrière : %lu points": "Total de carrera: %lu puntos"
+"b = billes jouées, MB = multiball déclenché.": "b = bolas jugadas, MB = multiball activado."
+# --- Settings ---
+"Tout est enregistré et survit au redémarrage.": "Todo se guarda y sobrevive al reinicio."
+"Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer.": "Calibra en plano ANTES de jugar: el nudge se mide desde esta referencia,\nno desde la inclinación absoluta. Apoya la tableta y toca."
+"Sensibilité du nudge : %s": "Sensibilidad del nudge: %s"
+# Nudge sensitivity steps: context "nudge" (« Douce » is an alarm sound, « Vive » a Lode Runner speed).
+# Espagnol : accordés avec « sensibilidad » (féminin).
+"nudge|Très douce": "Muy baja"
+"nudge|Douce": "Baja"
+"nudge|Normale": "Normal"
+"nudge|Vive": "Alta"
+"nudge|Très vive": "Muy alta"
+"Force de la secousse nécessaire": "Fuerza de sacudida necesaria"
+# Accords : « invertido » va avec « sentido » (masc.), « girada » avec « orientación ».
+"Sens du nudge : %s": "Sentido del nudge: %s"
+"inverse": "invertido"
+"normal": "normal"
+"Si la bille part du mauvais côté": "Si la bola va al lado contrario"
+"Orientation : %s": "Orientación: %s"
+"retournée": "girada"
+"normale": "normal"
+"Si l'écran est à l'envers dans vos mains": "Si la pantalla está al revés en tus manos"
+"Poser la tablette puis appuyer": "Apoya la tableta y toca"
+# --- Pause ---
+"PAUSE": "PAUSA"
+"Score %s - bille %d / %d": "Puntos %s - bola %d / %d"
+"La partie reprend exactement où elle s'est arrêtée.": "La partida sigue justo donde se detuvo."
+"La partie est enregistrée telle quelle": "La partida se guarda tal cual"
+"Quitter le flipper": "Salir del pinball"
+# --- Game over ---
+"FIN DE PARTIE": "FIN DE PARTIDA"
+"Score final : %s": "Puntuación: %s"
+"NOUVEAU RECORD !": "¡NUEVO RÉCORD!"
+"%de au classement": "Puesto %d"
+"Hors du top %d": "Fuera del top %d"
+"Partie marquée TILT.": "Partida con TILT."
+"Nouvelle partie, 3 billes": "Nueva partida, 3 bolas"
+
+# --- Coureur d'Or — Lode Runner (lode_game.cpp) --------------------------------
+# Coureur d'Or (Tab5/lode_game.cpp) — lot 4b, FR → ES.
+# « COUREUR D'OR » (nom de la console) n'est pas traduit.
+# Espagnol : creuser = cavar, case = casilla, D-pad / croix = cruceta.
+# --- Vitesses (Reglages > Vitesse, pause) ---
+# Échelle accordée avec « velocidad » (féminin) : Normal < Ágil < Rápida < Muy rápida
+# < Fulgurante.
+"Normale": "Normal"
+"Vive": "Ágil"
+"Rapide": "Rápida"
+"Très rapide": "Muy rápida"
+"Fulgurante": "Fulgurante"
+"4,4 cases/s - rythme d'origine": "4,4 casillas/s - ritmo original"
+"5,7 cases/s": "5,7 casillas/s"
+"6,7 cases/s": "6,7 casillas/s"
+"8,0 cases/s": "8,0 casillas/s"
+"10,0 cases/s - réflexes exigés": "10,0 casillas/s - reflejos rápidos"
+# Suffixes compacts de la colonne vitesse du classement (%-8s : 8 caractères au plus)
+# « m.rápida » = muy rápida (8 caractères ; %-8s compte les octets, le « á » en vaut
+# deux : même effet que le « t.rapide » français, collé au « N.C. » qui suit).
+"vive": "ágil"
+"rapide": "rápida"
+"t.rapide": "m.rápida"
+"fulgur.": "fulgur."
+# --- Noms des niveaux ---
+"Premier filon": "Primera veta"
+"Escalier": "Escalera"
+"Le pendu": "El ahorcado"
+"Le puits": "El pozo"
+"Le peigne": "El peine"
+"Faux chemin": "Camino falso"
+"Le nid": "El nido"
+"Cathédrale": "Catedral"
+"Dédale": "Laberinto"
+"Coffre-fort": "Caja fuerte"
+# --- Modes de contrôle ---
+# « Inclinación » (11 caractères) tient dans le %-11s du classement.
+"Mixte": "Mixto"
+"D-pad + 2 boutons creuser": "Cruceta + 2 botones de cavar"
+"Inclinaison 4 directions + 2 boutons creuser": "Inclinación 4 direcciones + 2 botones de cavar"
+"Inclinaison ET D-pad, le doigt prime": "Inclinación Y cruceta, manda el dedo"
+# --- Partie : HUD, pad, messages ---
+"CREUSER": "CAVAR"
+"Sortie ouverte ! Grimpe tout en haut.": "¡Salida abierta! Trepa hasta arriba."
+"Score %lu": "Puntos %lu"
+"Vies  oo": "Vidas  oo"
+"Vies  %d": "Vidas  %d"
+"Niveau %d/%d  %s": "Nivel %d/%d  %s"
+"Or restant %d": "Oro restante %d"
+"SORTIE OUVERTE": "SALIDA ABIERTA"
+"Record %lu": "Récord %lu"
+"Niveau %d - %s": "Nivel %d - %s"
+# --- Fin de niveau / fin de partie ---
+"Score : %lu     Vies : %d": "Puntos: %lu     Vidas: %d"
+"TOUS LES NIVEAUX !": "¡TODOS LOS NIVELES!"
+"NIVEAU TERMINÉ": "NIVEL COMPLETADO"
+"Voir le classement": "Ver clasificación"
+"Score : %lu%s": "Puntos: %lu%s"
+"   (hors classement)": "   (sin clasificar)"
+"PARTIE TERMINÉE": "FIN DE PARTIDA"
+# --- Hub ---
+"Ramasse tout l'or, échappe aux gardes, grimpe en haut.": "Recoge todo el oro, esquiva a los guardias, trepa arriba."
+"Pendant une partie : touche le bandeau du haut pour mettre en pause.": "Durante la partida, toca la barra superior para pausar."
+"%d/%d débloqués": "%d/%d desbloqueados"
+"Meilleur score : %lu": "Récord: %lu"
+"Contrôle : %s   -   Vitesse : %s": "Control: %s   -   Velocidad: %s"
+"Niveaux": "Niveles"
+# --- Niveaux ---
+"NIVEAUX": "NIVELES"
+"Un niveau se débloque en terminant le précédent.": "Un nivel se desbloquea al completar el anterior."
+"Un niveau terminé débloque le suivant, définitivement.": "Cada nivel completado desbloquea el siguiente para siempre."
+"Jouable": "Jugable"
+"Verrouillé": "Bloqueado"
+# --- Réglages ---
+"Le Tab5 n'a pas de croix physique : ce sont des zones tactiles.": "El Tab5 no tiene cruceta física: son zonas táctiles."
+"Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant.": "Un solo toque a la vez: en modo Botones se cava estando quieto. El modo Mixto libera el dedo para cavar en marcha."
+"%d / 5 (plus haut = plus sensible)": "%d / 5 (más alto = más sensible)"
+"%s - hors classement": "%s - sin clasificar"
+"Activé": "Activado"
+"%s : %s": "%s: %s"
+"Contrôle": "Control"
+"Sensibilité": "Sensibilidad"
+"Vitesse": "Velocidad"
+"Pose la tablette PUIS appuie": "Apoya la tableta Y LUEGO toca"
+"Mode entraînement": "Modo entrenamiento"
+"Effacer scores et progression": "Borrar puntuaciones y progreso"
+# --- Classement ---
+"Aucun score enregistré pour l'instant.": "Aún no hay puntuaciones guardadas."
+"%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n": "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
+# « H.C. » (hors classement) = « N.C. » (no clasificado, sigle des résultats sportifs).
+"H.C.": "N.C."
+"Top 10 local - conservé en NVS, survit aux reboots et aux OTA.": "Top 10 local - guardado en NVS, sobrevive a reinicios y OTA."
+"Demande confirmation": "Pide confirmación"
+# --- Confirmation d'effacement ---
+"TOUT EFFACER ?": "¿BORRAR TODO?"
+"Scores, meilleur score ET progression des niveaux.": "Puntuaciones, récord Y progreso de niveles."
+"Cette action est irréversible.": "Esta acción es irreversible."
+"Oui, tout effacer": "Sí, borrar todo"
+# --- Pause ---
+"Score : %lu     Vies : %d     Or restant : %d": "Puntos: %lu     Vidas: %d     Oro restante: %d"
+"Relancer le niveau": "Reiniciar nivel"
+"Sans perdre de vie": "Sin perder vida"
+"Quitter la partie": "Salir de la partida"
+
+# --- Go Tab (go_game.cpp, go_ai.cpp) -------------------------------------------
+# « Go Tab » (nom de la console) n'est pas traduit. Coordonnées (A1, D4…) et
+# tailles (9x9…) non plus. Vocabulaire : Negro / Blanco (les joueurs, au masculin
+# comme dans les textes de go espagnols), jugada, pasar, rendirse, komi,
+# prisioneros, hándicap, territorio.
+# --- Go : niveaux de l'IA (go_ai.cpp, tr_noop) ----------------------------------
+"Débutant": "Novato"
+"Amateur": "Aficionado"
+"Confirmé": "Avanzado"
+"Expert": "Experto"
+# --- Go : modes, joueurs --------------------------------------------------------
+"Joueur contre Tab": "Jugador contra Tab"
+"Joueur contre joueur": "Jugador contra jugador"
+"Tab contre Tab": "Tab contra Tab"
+"Joueur %s": "Jugador %s"
+"Vous": "Tú"
+"Noir": "Negro"
+"Blanc": "Blanco"
+# --- Go : HUD -------------------------------------------------------------------
+# %.0s avale le « s » du pluriel français : l'espagnol dit « capturas: N » quel que
+# soit N (évite « 0 captura »). Même ordre d'arguments.
+"%s  ·  %d prise%s": "%s  ·  capturas: %d%.0s"
+"Noir %.1f   contre   Blanc %.1f": "Negro %.1f   contra   Blanco %.1f"
+"Coup %u  ·  komi %.1f": "Jugada %u  ·  komi %.1f"
+"Le Tab réfléchit...": "El Tab piensa..."
+"Touchez les groupes MORTS, puis Valider": "Toca los grupos MUERTOS y luego Validar"
+"Touchez à nouveau %s pour valider": "Toca %s otra vez para confirmar"
+"Au tour de Noir": "Turno de Negro"
+"Au tour de Blanc": "Turno de Blanco"
+# --- Go : panneau latéral -------------------------------------------------------
+# « COUPS » : titre du relevé en roboto_22 à x 16, l'en-tête « Negro » commence à
+# x 108 ; « JUGADAS » (100 px) le chevaucherait, d'où l'abréviation « JUG. ».
+"COUPS": "JUG."
+"passe": "pasa"
+"Passer": "Pasar"
+"coup|Annuler": "Deshacer"
+"Indice": "Pista"
+"Tout vivant": "Todo vivo"
+"Valider le score": "Validar resultado"
+"Jouer %s": "Jugar %s"
+"Réflexion  %d %%": "Pensando  %d %%"
+# --- Go : messages de statut ----------------------------------------------------
+"Coup illégal": "Jugada ilegal"
+"Le Tab passe": "El Tab pasa"
+"Passe — fin de partie": "Pasa — fin de la partida"
+"Passe": "Pasa"
+"Rien à annuler": "Nada que deshacer"
+"Coup annulé": "Jugada deshecha"
+"Indice : passer": "Pista: pasar"
+"Indice : %s": "Pista: %s"
+"Deux passes : marquez les groupes morts": "Dos pases: marca los grupos muertos"
+"Partie reprise": "Partida reanudada"
+"Intersection occupée": "Intersección ocupada"
+"Coup interdit (ko ou suicide)": "Jugada prohibida (ko o suicidio)"
+"Le Tab abandonne": "El Tab se rinde"
+# --- Go : menu principal --------------------------------------------------------
+"Score chinois d'aire  ·  komi %.1f  ·  ko simple": "Conteo chino por área  ·  komi %.1f  ·  ko simple"
+"Toutes les parties et les réglages sont conservés dans le Tab.": "Todas las partidas y ajustes se guardan en el Tab."
+"Reprendre la partie": "Reanudar la partida"
+"Retour au goban": "Volver al goban"
+"%dx%d, coup %u": "%dx%d, jugada %u"
+"Reprendre la sauvegarde": "Cargar partida guardada"
+"Nouvelle partie": "Nueva partida"
+"Taille, mode, niveau, handicap": "Tamaño, modo, nivel, hándicap"
+"Bilan face au Tab": "Balance contra el Tab"
+"Confirmation, coordonnées, secousse": "Confirmación, coordenadas, sacudida"
+"Retour à l'arcade": "Volver al arcade"
+# --- Go : menu pause ------------------------------------------------------------
+"%s  ·  %s  ·  coup %u": "%s  ·  %s  ·  jugada %u"
+"Le goban vous attend.": "El goban te espera."
+"Changer les réglages": "Cambiar ajustes"
+"plateau|Abandonner": "Rendirse"
+"L'adversaire gagne": "Gana el rival"
+"Quitter le jeu": "Salir del juego"
+"La partie est sauvegardée": "La partida se guarda"
+# --- Go : nouvelle partie -------------------------------------------------------
+"Touchez une ligne pour changer sa valeur.": "Toca una fila para cambiar su valor."
+"Taille du goban  —  9x9 / 13x13 / 19x19": "Tamaño del goban  —  9x9 / 13x13 / 19x19"
+"Adversaire": "Rival"
+# « Vous jouez %s » reçoit « Noir (premier) » ou « Blanc » : « Juegas: Negro (empieza) ».
+"Vous jouez %s": "Juegas: %s"
+"Noir (premier)": "Negro (empieza)"
+"Couleur du joueur": "Color del jugador"
+"Niveau : %s": "Nivel: %s"
+"Force du Tab": "Fuerza del Tab"
+"Handicap : %d pierres": "Hándicap: %d piedras"
+"Handicap : aucun": "Hándicap: ninguno"
+"Pierres offertes à Noir (Blanc commence)": "Piedras para Negro (empieza Blanco)"
+"Jouer !": "¡Jugar!"
+"Komi 0,5 pour Blanc": "Komi 0,5 para Blanco"
+"Komi 6,5 pour Blanc": "Komi 6,5 para Blanco"
+# --- Go : statistiques ----------------------------------------------------------
+"%u parties  ·  %u min de jeu": "%u partidas  ·  %u min de juego"
+"Comptabilise uniquement le mode Joueur contre Tab.": "Solo cuenta el modo Jugador contra Tab."
+# %.0s : même principe que les prises (« Victorias 0 », « Derrotas 1 »…).
+"%u victoire%s  ·  %u nulle%s  ·  %u défaite%s": "Victorias %u%.0s  ·  Empates %u%.0s  ·  Derrotas %u%.0s"
+"Taille affichée : %s": "Tamaño mostrado: %s"
+"Toucher pour changer": "Toca para cambiar"
+"Remettre les compteurs à zéro": "Poner los contadores a cero"
+"Effacer les statistiques ?": "¿Borrar las estadísticas?"
+"Victoires, nulles et défaites de toutes les tailles": "Victorias, empates y derrotas de todos los tamaños"
+"Cette action est définitive.": "Esta acción es definitiva."
+# --- Go : réglages --------------------------------------------------------------
+"Options locales, conservées dans le Tab": "Opciones locales, guardadas en el Tab"
+"Confirmation du coup : ACTIVÉE": "Confirmar jugada: SÍ"
+"Confirmation du coup : DÉSACTIVÉE": "Confirmar jugada: NO"
+"Un premier toucher place un fantôme, le second valide": "Un toque pone una piedra fantasma, otro la confirma"
+"Coordonnées : AFFICHÉES": "Coordenadas: VISIBLES"
+"Coordonnées : MASQUÉES": "Coordenadas: OCULTAS"
+"Lettres A..T et chiffres autour du goban": "Letras A..T y números alrededor del goban"
+"Dernier coup : MARQUÉ": "Última jugada: MARCADA"
+"Dernier coup : NON MARQUÉ": "Última jugada: SIN MARCAR"
+"Anneau rouge sur la dernière pierre posée": "Anillo rojo en la última piedra jugada"
+"Aperçu du territoire : ACTIVÉ": "Vista del territorio: SÍ"
+"Aperçu du territoire : DÉSACTIVÉ": "Vista del territorio: NO"
+"Pastilles de territoire pendant le comptage": "Puntos de territorio durante el conteo"
+"Secousse = indice : ACTIVÉE": "Sacudida = pista: SÍ"
+"Secousse = indice : DÉSACTIVÉE": "Sacudida = pista: NO"
+"Détection BMI270": "Detección BMI270"
+# --- Go : carte de fin de partie ------------------------------------------------
+"Noir l'emporte": "Gana Negro"
+"Blanc l'emporte": "Gana Blanco"
+# « Partie nulle » sert au go et aux dames : « Empate » convient aux deux.
+"Partie nulle": "Empate"
+"Abandon  —  comptage indicatif : %.1f contre %.1f": "Abandono  —  conteo orientativo: %.1f contra %.1f"
+"%.1f  contre  %.1f      (écart %.1f)": "%.1f  contra  %.1f      (diferencia %.1f)"
+"Noir   pierres %d   territoire %d": "Negro  piedras %d   territorio %d"
+"Blanc  pierres %d   territoire %d   komi %.1f": "Blanco piedras %d   territorio %d   komi %.1f"
+# Les compteurs de Score (go_engine.h) sont des PIERRES mortes, pas des groupes.
+"Groupes morts retirés : %d noirs, %d blancs": "Piedras muertas: %d negras, %d blancas"
+"Points neutres (dame) : %d": "Puntos neutrales (dame): %d"
+"Prisonniers de la partie : Noir %u, Blanc %u": "Prisioneros: Negro %u, Blanco %u"
+"%s  ·  %s  ·  %u coups": "%s  ·  %s  ·  %u jugadas"
+"Revanche": "Revancha"
+"Menu principal": "Menú principal"
+
+# --- Trial Poursuite — quiz interface; the questions stay French (trivia_game.cpp) ---
+# Lot 4b — interface du quiz « Trial Poursuite » (Tab5/trivia_game.cpp).
+# Les questions et réponses (Tab5/trivia_questions.h) restent en français.
+# Déjà plus haut, non répétées ici : Réglages, Retour, Confirmer, Annuler.
+# Espagnol : part de camembert = quesito (vocabulaire du Trivial Pursuit espagnol),
+# case = casilla, dé = dado, équipe = equipo, case « Rejouer » = « Otra tirada ».
+# Catégories : celles de l'édition espagnole, sauf « Deportes y Ocio » : le choix de
+# catégorie est une case de 340 px en roboto_32_b où « Deportes y Pasatiempos »
+# (349 px) ne tient pas.
+# --- Catégories (CAT_NAMES, CAT_SHORT) ---
+"Géographie": "Geografía"
+"Divertissement": "Espectáculos"
+"Histoire": "Historia"
+"Arts & Littérature": "Arte y Literatura"
+"Sciences & Nature": "Ciencia y Naturaleza"
+"Sports & Loisirs": "Deportes y Ocio"
+"Divertis.": "Espect."
+"Arts": "Arte"
+"Sciences": "Ciencia"
+"Sports": "Deportes"
+# --- Difficulté et temps de réponse ---
+# Accordés avec « dificultad » (féminin) : Fácil / Media / Difícil.
+"Facile": "Fácil"
+"Moyen": "Media"
+"Difficile": "Difícil"
+"Questions faciles": "Preguntas fáciles"
+"Faciles + moyennes": "Fáciles + medias"
+"Moyennes + difficiles": "Medias + difíciles"
+# « Illimité » : puce de 123 px en roboto_32_b ; « Ilimitado » (125 px d'avance, moins
+# d'encre) y tient comme le « Onbeperkt » néerlandais (150 px), en plus étroit.
+"Illimité": "Ilimitado"
+# --- Règles du jeu ---
+"RÈGLES DU JEU": "REGLAS DEL JUEGO"
+"Réunissez les 6 parts de camembert, puis rejoignez le centre pour la question finale.\n\nLancez le dé avec le bouton, ou secouez la tablette.\nTouchez ensuite l'une des cases surlignées : vous choisissez votre direction,\nmais jamais de demi-tour en cours de déplacement.\n\nBonne réponse : vous rejouez.   Mauvaise réponse : au suivant.\n\nLes 6 grandes cases cerclées de blanc sont les QG de catégorie :\nelles seules rapportent une part de camembert.\nUne case violette à point blanc = Rejouer, relancez immédiatement le dé.\nLe centre sans les 6 parts = question de la catégorie de votre choix.\nLe centre avec les 6 parts = finale : l'équipe suivante choisit la catégorie,\net une bonne réponse remporte la partie.": "Reúne los 6 quesitos y luego ve al centro para la pregunta final.\n\nTira el dado con el botón o sacude la tableta.\nDespués toca una de las casillas resaltadas: tú eliges la dirección,\npero nunca puedes dar media vuelta durante el movimiento.\n\nAcierto: vuelves a tirar.   Fallo: turno del siguiente.\n\nLas 6 casillas grandes con borde blanco son las sedes de categoría:\nsolo ellas dan un quesito.\nCasilla violeta con punto blanco = Otra tirada: tira el dado de nuevo.\nEl centro sin los 6 quesitos = pregunta de la categoría que elijas.\nEl centro con los 6 quesitos = final: el equipo siguiente elige la categoría,\ny una respuesta correcta gana la partida."
+# --- Plateau : dé, bandeau d'état, HUD ---
+"LANCER LE DÉ": "TIRAR EL DADO"
+"ou secouez la tablette": "o sacude la tableta"
+"Aucune partie en cours": "Ninguna partida en curso"
+"Le dé roule…": "El dado rueda…"
+"Déplacement…": "Moviendo…"
+"Dé : %u — touchez une case surlignée": "Dado: %u — toca una casilla resaltada"
+"À %s de lancer le dé": "%s, tira el dado"
+"Tour %u": "Ronda %u"
+"Équipe : %s": "Equipo: %s"
+# --- Messages de tour ---
+"Case Rejouer — relancez le dé !": "Otra tirada — ¡tira de nuevo!"
+"Finale manquée — il faudra revenir au centre.": "Final fallada — hay que volver al centro."
+"Part gagnée ! Vous rejouez.": "¡Quesito ganado! Vuelves a tirar."
+"Bonne réponse — vous rejouez.": "Correcto — vuelves a tirar."
+"Que la partie commence !": "¡Que empiece la partida!"
+"Partie reprise.": "Partida reanudada."
+"Aucun déplacement possible — au suivant.": "Sin movimiento posible — turno del siguiente."
+# --- Menu d'accueil du jeu ---
+"Le quiz rétro-salon — 720 questions, 6 catégories": "El quiz retro de salón — 720 preguntas en francés, 6 categorías"
+"1 à 6 équipes": "1 a 6 equipos"
+"%u équipes · tour %u": "%u equipos · ronda %u"
+"Aucune partie sauvegardée": "Ninguna partida guardada"
+"%u parties · %u %% de réussite": "%u partidas · %u %% de aciertos"
+"Aucune question jouée": "Sin preguntas jugadas"
+"Règles du jeu": "Reglas del juego"
+"Comment gagner ses 6 parts": "Cómo ganar los 6 quesitos"
+"Retour au Tab": "Volver al Tab"
+# --- Nouvelle partie (composition des équipes) et réglages ---
+"NOUVELLE PARTIE": "NUEVA PARTIDA"
+"Composez les équipes, puis réglez les questions": "Forma los equipos y luego ajusta las preguntas"
+"Touchez un nom pour le changer, la pastille pour la couleur": "Toca un nombre para cambiarlo, el punto para el color"
+"ÉQUIPES": "EQUIPOS"
+"+ Ajouter une équipe": "+ Añadir equipo"
+"DIFFICULTÉ": "DIFICULTAD"
+"TEMPS DE RÉPONSE": "TIEMPO DE RESPUESTA"
+"SECOUSSE = LANCER LE DÉ": "SACUDIR = TIRAR EL DADO"
+"Activée": "Activada"
+"Désactivée": "Desactivada"
+"COMMENCER LA PARTIE": "EMPEZAR LA PARTIDA"
+"Retour au menu": "Volver al menú"
+"RÉGLAGES": "AJUSTES"
+"Ces réglages s'appliquent à la prochaine question": "Estos ajustes se aplican desde la próxima pregunta"
+# --- Statistiques ---
+"STATISTIQUES": "ESTADÍSTICAS"
+"%u parties · %u questions · %u %% de réussite · %u parts gagnées": "%u partidas · %u preguntas · %u %% de aciertos · %u quesitos"
+"Aucune question jouée pour le moment": "Aún no hay preguntas jugadas"
+"Victoire la plus rapide : %u tours": "Victoria más rápida: %u rondas"
+"Effacer les statistiques": "Borrar estadísticas"
+# --- Pause et confirmation ---
+"Tour %u · au tour de %s": "Ronda %u · turno de %s"
+"Abandonner la partie": "Abandonar la partida"
+"Retour au menu principal": "Volver al menú principal"
+"La partie sera reprise plus tard": "Podrás reanudarla más tarde"
+"CONFIRMER": "CONFIRMAR"
+"Abandonner la partie en cours ?\nLes parts gagnées seront perdues.": "¿Abandonar la partida en curso?\nSe perderán los quesitos ganados."
+"Effacer toutes les statistiques ?\nCette action est définitive.": "¿Borrar todas las estadísticas?\nEsta acción es definitiva."
+# --- Case centrale : choix de la catégorie, finale ---
+"%s a ses 6 parts — %s choisit la catégorie": "%s tiene los 6 quesitos — %s elige la categoría"
+"%s a ses 6 parts — choisissez votre catégorie finale": "%s tiene los 6 quesitos — elige tu categoría final"
+"%s est au centre : choisissez une catégorie": "%s está en el centro: elige una categoría"
+"QUESTION FINALE": "PREGUNTA FINAL"
+"CATÉGORIE AU CHOIX": "CATEGORÍA A ELEGIR"
+"Bonne réponse = victoire": "Acierto = victoria"
+# --- Carte question : bandeau et verdict ---
+"FINALE — %s": "FINAL — %s"
+"Exact — %s remporte la partie !": "Correcto — ¡%s gana la partida!"
+"Bravo ! Part « %s » gagnée — vous rejouez.": "¡Bravo! Quesito «%s» ganado — vuelves a tirar."
+"Temps écoulé — la réponse était : %s": "Tiempo agotado — la respuesta era: %s"
+"Raté — la réponse était : %s": "Fallo — la respuesta era: %s"
+# --- Victoire ---
+"VICTOIRE !": "¡VICTORIA!"
+"%s remporte la partie": "%s gana la partida"
+"Partie bouclée en %u tours · %u bonnes réponses sur %u": "Partida acabada en %u rondas · %u aciertos de %u"
+"Rejouer avec les mêmes équipes": "Otra partida, mismos equipos"
+
+# --- Dames Tab — draughts (draughts_game.cpp, draughts_ai.cpp) -----------------
+# Fragment lot 4b — « Dames Tab » (draughts_game.cpp).
+# Clé = texte français du code, octet pour octet. Vocabulaire des damas en espagnol :
+# peón (pion) / dama (pièce promue) / captura (prise) / tablas (nulle) ; le jeu =
+# Damas ; les camps = las blancas / las negras.
+# --- Noms : niveaux de l'IA, variantes, modes ---------------------------------
+"Internationales 10×10": "Int. 10x10"
+"Anglaises 8×8": "Inglesas 8x8"
+"Blancs": "Blancas"
+"Noirs": "Negras"
+# --- HUD (bandeau) et statut ----------------------------------------------------
+"IA : %s": "IA: %s"
+"Prise x%d": "Captura x%d"
+"Prise obligatoire": "Captura obligatoria"
+"À vous": "Tu turno"
+"Indice affiché": "Pista mostrada"
+# --- Hub ----------------------------------------------------------------------
+"Dames internationales — dames volantes": "Damas internacionales — damas voladoras"
+"Variante, mode, niveau": "Variante, modo, nivel"
+"Reprendre (vide)": "Reanudar (vacío)"
+"Position sauvegardée": "Posición guardada"
+"Victoires, nulles, défaites contre le Tab": "Victorias / tablas / derrotas vs Tab"
+# V = victorias, T = tablas, D = derrotas.
+"%s — %u V · %u N · %u D": "%s — %u V · %u T · %u D"
+"Secousse = indice, remise à zéro des stats": "Sacudida = pista, reiniciar estadísticas"
+# --- Nouvelle partie (setup) ------------------------------------------------------
+"Touchez : internationales 10×10 ou anglaises 8×8": "Toca: Int. 10x10 / Inglesas 8x8"
+"Joueur contre Tab / contre joueur / Tab contre Tab": "Jugador vs Tab / JvJ / Tab vs Tab"
+"Vous jouez les %s": "Juegas con las %s"
+"Couleur (contre le Tab)": "Color (contra el Tab)"
+"Niveau IA": "Nivel IA"
+"Lance la partie": "Empieza la partida"
+# --- Statistiques, réglages -------------------------------------------------------
+"Bilan contre le Tab (par variante et niveau)": "Balance vs Tab (por variante y nivel)"
+"Changer de variante": "Cambiar de variante"
+"Options locales (NVS)": "Opciones locales (NVS)"
+"Remettre les statistiques à zéro": "Reiniciar estadísticas"
+"Remettre les stats à zéro ?": "¿Reiniciar estadísticas?"
+"Irréversible": "Irreversible"
+"Confirmer la remise à zéro": "Confirmar el reinicio"
+# --- Fin de partie ------------------------------------------------------------------
+"Victoire des Blancs": "Ganan las blancas"
+"Victoire des Noirs": "Ganan las negras"
+"Mêmes réglages": "Mismos ajustes"
+# Raisons de nulle (FMJD / WCDF) : « sans pion » = aucun pion (peón) n'a bougé,
+# seules les dames ont joué ; « chacun » = coups de chaque camp.
+"25 coups sans pion ni prise": "25 jugadas sin mover peón ni capturar"
+"40 coups sans pion ni prise": "40 jugadas sin mover peón ni capturar"
+"Fin de partie : 5 coups chacun": "Final: 5 jugadas cada uno"
+"Fin de partie : 16 coups chacun": "Final: 16 jugadas cada uno"
+"Position répétée 3 fois": "Posición repetida 3 veces"
+# --- Boutons latéraux en partie -----------------------------------------------------
+"Abandon": "Rendirse"
+"Nouvelle": "Nueva"
+
+# --- Roi Noir — chess (chess_game.cpp, chess_ai.cpp) ---------------------------
+# Lot 4b — jeu « Roi Noir » (chess_game.cpp, chess_ai.cpp) : français → espagnol.
+# « Roi Noir » / « ROI NOIR » (nom de la console) n'est pas traduit.
+# Vocabulaire : jugada (coup), media jugada (demi-coup), tablas (nulle), jaque,
+# ahogado (pat), coronación (promotion), reloj (pendule).
+# --- Pieces (contexte « echecs » : la Dame des echecs n'est pas celle des dames) ---
+"echecs|Pion": "Peón"
+"echecs|Cavalier": "Caballo"
+"echecs|Fou": "Alfil"
+"echecs|Tour": "Torre"
+"echecs|Dame": "Dama"
+"echecs|Roi": "Rey"
+# --- Notation SAN (contexte « san » : lettre seule de la piece, notation espagnole) ---
+"san|R": "R"
+"san|D": "D"
+"san|T": "T"
+"san|F": "A"
+"san|C": "C"
+# --- Niveaux du Tab (descriptions, chess_ai.cpp) ---
+"Débutant : ne voit qu'un coup, se trompe": "Principiante: ve una jugada, se equivoca"
+"Voit les prises simples et les répond": "Ve las capturas simples y las responde"
+"Calcule 3 coups + les prises en chaîne": "Calcula 3 jugadas + capturas en cadena"
+"Calcule 4 coups, tactique correcte": "Calcula 4 jugadas, táctica correcta"
+"Effort maximal du Tab (5 coups visés)": "Máximo esfuerzo del Tab (hasta 5 jugadas)"
+# --- Tables : pendules, modes, vitesse de demo ---
+"Sans limite": "Sin límite"
+"Blitz 5 min": "Blitz 5 min"
+"Rapide 10 min": "Rápida 10 min"
+"15 min + 10 s": "15 min + 10 s"
+"Lente": "Lenta"
+# --- Panneau lateral et boutons de partie ---
+"PARTIE": "PARTIDA"
+"Menu": "Menú"
+# --- HUD ---
+# « Trait : %s » reçoit « à vous » / « au Tab » (échecs) ou « Blancs » / « Noirs »
+# (dames) : « Turno: tuyo », « Turno: del Tab », « Turno: Blancas ».
+# Pendules : B = blancas, N = negras.
+"Trait aux %s": "Juegan %s"
+"Démo — %s": "Demo — %s"
+"Trait : %s": "Turno: %s"
+"à vous": "tuyo"
+"au Tab": "del Tab"
+"Duel local": "Duelo local"
+"pendule|B": "B"
+"pendule|N": "N"
+"Eval %+.1f": "Eval %+.1f"
+"ÉCHEC !": "¡JAQUE!"
+"Le Tab réfléchit": "El Tab piensa"
+"Le Tab refuse la nulle": "El Tab rechaza tablas"
+"Indice en recharge": "Pista recargándose"
+"Le Tab réfléchit — profondeur %d, %u k nœuds": "El Tab piensa — profundidad %d, %u k nodos"
+# --- Hub ---
+"Classement local : %u Elo   ·   %u parties jouées": "Clasificación local: %u Elo   ·   %u partidas jugadas"
+"Échiquier du Tab — règles FIDE, IA embarquée, 100 % local": "Tablero del Tab — reglas FIDE, IA integrada, 100 % local"
+"Toucher le bandeau du haut pendant la partie ouvre le menu de pause.": "Tocar la barra superior durante la partida abre el menú de pausa."
+"Choix du mode, de la couleur, du niveau et de la pendule": "Elige modo, color, nivel y reloj"
+"%s · niveau %s · %u demi-coups joués": "%s · nivel %s · %u medias jugadas"
+"Bilan par niveau, records, classement local": "Balance por nivel, récords, clasificación local"
+"Gestes, règle des 50 coups, évaluation, vitesse de démo": "Gestos, regla de 50 jugadas, evaluación, velocidad de demo"
+# --- Nouvelle partie ---
+"Toucher une ligne pour changer sa valeur": "Toca una fila para cambiar su valor"
+"Mode de jeu": "Modo de juego"
+"%s — vous ouvrez %s": "%s — juegas %s"
+"ouvrir|la partie": "primero"
+"ouvrir|en second": "segundo"
+"Votre couleur": "Tu color"
+"Sans objet dans ce mode": "No se usa en este modo"
+"Niveau du Tab": "Nivel del Tab"
+"Sans objet : duel entre deux humains": "No se usa: duelo entre dos humanos"
+"Pendule": "Reloj"
+"Commencer": "Empezar"
+"Lance la partie avec ces réglages": "Empieza con estos ajustes"
+"Revenir au menu principal": "Volver al menú principal"
+# --- Reglages ---
+"Conservés en NVS, valables pour toutes les parties": "Guardados en NVS, válidos para todas las partidas"
+"Gestes IMU": "Gestos IMU"
+"Activés — une secousse franche demande un indice": "Activados — una sacudida firme pide una pista"
+"Désactivés — l'inclinaison est ignorée": "Desactivados — se ignora la inclinación"
+"Règle des 50 coups": "Regla de 50 jugadas"
+"Nulle automatique après 50 coups sans prise ni pion": "Tablas automáticas tras 50 jugadas sin captura ni peón"
+"Désactivée — la partie continue": "Desactivada — la partida sigue"
+"Évaluation au HUD": "Evaluación en el HUD"
+"Affichée — estimation en pions, indicative": "Visible — estimación en peones, orientativa"
+"Masquée": "Oculta"
+"%s — cadence du mode Tab contre Tab": "%s — ritmo del modo Tab contra Tab"
+"Vitesse de démo": "Velocidad de demo"
+"Remet à zéro le bilan et le classement local": "Pone a cero el balance y la clasificación local"
+"EFFACER LES STATISTIQUES": "BORRAR ESTADÍSTICAS"
+"Bilan, records et classement local seront remis à zéro.": "Balance, récords y clasificación local se pondrán a cero."
+# --- Statistiques ---
+"Classement local : %u Elo   ·   %u parties contre le Tab": "Clasificación local: %u Elo   ·   %u partidas contra el Tab"
+"Victoires / nulles / défaites par niveau\n": "Victorias / tablas / derrotas por nivel\n"
+"%s : %u / %u / %u\n": "%s: %u / %u / %u\n"
+"\nPlus longue partie : %u demi-coups\n": "\nPartida más larga: %u medias jugadas\n"
+"Temps de jeu cumulé : %u min": "Tiempo de juego total: %u min"
+# --- Promotion ---
+"PROMOTION": "CORONACIÓN"
+"Le pion atteint la dernière rangée — choisir la pièce": "El peón llega a la última fila — elige la pieza"
+# --- Pause ---
+"La pendule est arrêtée": "El reloj está parado"
+"Retour à la partie": "Volver a la partida"
+"Annuler le dernier coup": "Deshacer la última jugada"
+"Annule votre coup et la réponse du Tab": "Deshace tu jugada y la respuesta del Tab"
+"Annule le dernier demi-coup": "Deshace la última media jugada"
+"Proposer nulle": "Ofrecer tablas"
+"Le Tab accepte s'il n'est pas mieux": "El Tab acepta si no va ganando"
+"Accord entre les deux joueurs": "Acuerdo entre los dos jugadores"
+"La partie est perdue et comptabilisée": "La partida se da por perdida y cuenta"
+"Gestes, règles, affichage": "Gestos, reglas, pantalla"
+"La partie en cours est sauvegardée": "La partida en curso se guarda"
+# --- Fin de partie ---
+"PARTIE NULLE": "TABLAS"
+"VICTOIRE": "VICTORIA"
+"DÉFAITE": "DERROTA"
+"LES BLANCS GAGNENT": "GANAN LAS BLANCAS"
+"LES NOIRS GAGNENT": "GANAN LAS NEGRAS"
+"%d demi-coups  ·  niveau %s  ·  classement local : %u Elo": "%d medias jugadas  ·  nivel %s  ·  clasificación local: %u Elo"
+"%d demi-coups joués": "%d medias jugadas"
+"Même mode, mêmes réglages": "Mismo modo, mismos ajustes"
+"Échec et mat": "Jaque mate"
+"Pat — le roi n'est pas en échec mais aucun coup n'est jouable": "Ahogado — el rey no está en jaque pero no tiene jugada legal"
+"Matériel insuffisant pour mater": "Material insuficiente para dar mate"
+"Triple répétition de la position": "Triple repetición de la posición"
+"Partie interrompue : historique plein": "Partida interrumpida: historial lleno"
+"Nulle par accord entre les joueurs": "Tablas por mutuo acuerdo"
+"Nulle déclarée en mode démo": "Tablas declaradas en modo demo"
+"Le Tab accepte la nulle": "El Tab acepta tablas"
+"raison|Abandon": "Abandono"
+"Temps écoulé — matériel insuffisant pour mater": "Tiempo agotado — material insuficiente para dar mate"
+"Temps écoulé": "Tiempo agotado"

@@ -3,7 +3,7 @@ name: Rendu hors tablette
 # Lot 7 de l'audit « ouverture » (ADR-0021) : l'interface de la tablette compilée pour
 # la plateforme `host` d'ESPHome (tab5-rendu-host.yaml), lancée sur le runner puis
 # capturée : les scènes du mode démo, puis chaque fenêtre, sous-fenêtre, écran de jeu
-# (tools/rendu/capturer.py, plan dans tools/rendu/ecrans.py), dans les quatre langues
+# (tools/rendu/capturer.py, plan dans tools/rendu/ecrans.py), dans les six langues
 # de l'écran, une tâche par langue en parallèle. Les captures sont comparées
 # (tools/rendu/comparer.py) à celles du dernier run réussi sur main, et les scènes à la
 # galerie versionnée docs/images/rendu/ : INFORMATIF, un écart est signalé sans faire
@@ -13,8 +13,8 @@ on:
   workflow_dispatch:
     inputs:
       langues:
-        description: "Langues, en JSON (fr, en, de, nl)"
-        default: '["fr", "en", "de", "nl"]'
+        description: "Langues, en JSON (fr, en, de, nl, es, it)"
+        default: '["fr", "en", "de", "nl", "es", "it"]'
       seulement:
         description: "Mise au point : ces écrans seulement (noms de tools/rendu/ecrans.py, séparés par des espaces), sans les scènes"
         default: ""
@@ -42,7 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        langue: ${{ fromJSON(inputs.langues || '["fr", "en", "de", "nl"]') }}
+        langue: ${{ fromJSON(inputs.langues || '["fr", "en", "de", "nl", "es", "it"]') }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -87,6 +87,8 @@ jobs:
             en) nom="English" ;;
             de) nom="Deutsch" ;;
             nl) nom="Nederlands" ;;
+            es) nom="Español" ;;
+            it) nom="Italiano" ;;
             *) echo "Langue inconnue : $LANGUE"; exit 1 ;;
           esac
 
@@ -133,7 +135,7 @@ jobs:
         with:
           python-version: "3.13"
       - run: pip install pillow
-      - name: Réunir les captures des quatre langues
+      - name: Réunir les captures des six langues
         uses: actions/download-artifact@v7
         with:
           pattern: rendu-captures-*
