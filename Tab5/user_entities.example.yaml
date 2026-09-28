@@ -23,7 +23,7 @@
 # tab5_ecran: st7123
 
 # --- Langue de l'écran au PREMIER démarrage : « Français » (défaut), « English »,
-#     « Deutsch » ou « Nederlands ».
+#     « Deutsch », « Nederlands », « Español » ou « Italiano ».
 #     Ensuite, elle se change depuis Home Assistant (select « Langue » de la
 #     tablette), sans recompiler. ---
 # tab5_langue: Français

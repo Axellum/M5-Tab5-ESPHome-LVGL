@@ -53,6 +53,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   `tab5-rendu`) ; `status_ha` des bouchons nommé « HA API Status » comme sur la tablette.
 - Tests : `tests/test_installation_ha.py` (préparation, placeholders et secrets couverts,
   entrées du blueprint, nom de la tablette virtuelle, lecture des traces et du journal).
+### 2026-09-28 — L'écran parle aussi espagnol et italien
+
+- **`Tab5/lang/es.yaml`** (Español, index 4) et **`Tab5/lang/it.yaml`** (Italiano,
+  index 5), complets : les 937 textes, jeux compris, sauf les questions du quiz. Traduits
+  par une IA, pas encore relus par une personne dont c'est la langue.
+  - Espagnol neutre (Espagne et Amérique latine), tutoiement ; italien, tutoiement.
+  - Jours en trois lettres, comme en français et en anglais : Lun Mar Mié Jue Vie Sáb
+    Dom, Lun Mar Mer Gio Ven Sab Dom. L'allemand (Mo Di Mi) et le néerlandais (Ma Di Wo)
+    restent en deux lettres : c'est leur usage.
+  - Initiales du réveil : X pour miércoles en espagnol (usage des calendriers) ; en
+    italien, martedì et mercoledì partagent le M, comme en français.
+  - Place mesurée en pixels (Roboto 700) contre la plus large des quatre langues déjà
+    en place ; ce qui dépasse a été raccourci, ou vérifié dans le code (zone plus large,
+    texte qui passe à la ligne).
+- Select « Langue » : Español et Italiano ajoutés à la fin (index gardés).
+- **CI** : le rendu hors tablette dessine aussi l'espagnol et l'italien (six tâches).
+- Docs (README, traductions, installation, débogage, site), cartographie.
 
 ## [3.0.1] — 2026-09-28
 
