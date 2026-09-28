@@ -102,7 +102,7 @@ Only `notify.notify` may need adapting (the notification channel). The tablet's 
 ---
 
 ### `packages/tab5_calendar.yaml`
-Backend of the firmware's **calendar popup** (long press on the clock). Two scripts called *by the device* (`homeassistant.service:`), both `mode: restart`:
+Backend of the firmware's **calendar popup** (long press on the clock). Two scripts called *by the device* (`homeassistant.service:`), both `mode: queued` (`max: 10`; until 2026-09-28 `restart`, which let only one of the three requests the tablet sends in a row — the shown month and its neighbours — get an answer):
 
 - **`tab5_calendrier_mois`** (`annee`, `mois`) — reads the four calendars chosen in the « Tab5 · agenda … » lists (work, public holidays, appointments, birthdays; one left on « Aucun » is skipped) over the requested month and pushes back `esphome.<device>_tab5_maj_calendrier_mois`: a 62-hex-char string (2 per day — bits: work / public holiday / school holiday / appointment / birthday) plus 31 `|`-separated work-hour fields and a `details` field (day-detail lines, `~`-separated — required by the firmware since the 25/07/2026 schema, sent empty here)
 - **`tab5_calendrier_jour`** (`date`) — builds the day-detail lines (`type|text;...`, max 6) and pushes `esphome.<device>_tab5_maj_calendrier_jour`
@@ -301,7 +301,7 @@ Seul `notify.notify` peut demander à être adapté (le canal de notification). 
 ---
 
 ### `packages/tab5_calendar.yaml`
-Backend du **popup calendrier** du firmware (appui long sur l'horloge). Deux scripts appelés *par l'appareil* (`homeassistant.service:`), tous deux `mode: restart` :
+Backend du **popup calendrier** du firmware (appui long sur l'horloge). Deux scripts appelés *par l'appareil* (`homeassistant.service:`), tous deux `mode: queued` (`max: 10` ; `restart` jusqu'au 28/09/2026, qui ne laissait aboutir qu'une des trois demandes que la tablette envoie d'affilée — le mois affiché et ses voisins) :
 
 - **`tab5_calendrier_mois`** (`annee`, `mois`) — lit les quatre agendas choisis dans les listes « Tab5 · agenda … » (travail, jours fériés, rendez-vous, anniversaires ; un agenda laissé sur « Aucun » est sauté) sur le mois demandé et repousse `esphome.<device>_tab5_maj_calendrier_mois` : chaîne de 62 hex (2 par jour — bits : travail / férié / vacances scolaires / RDV / anniversaire) + 31 champs d'heures de travail séparés par `|` + un champ `details` (lignes de détail jour séparées par `~` — exigé par le firmware depuis le schéma du 25/07/2026, envoyé vide ici)
 - **`tab5_calendrier_jour`** (`date`) — construit les lignes de détail du jour (`type|texte;...`, max 6) et pousse `esphome.<device>_tab5_maj_calendrier_jour`

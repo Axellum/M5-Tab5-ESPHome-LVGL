@@ -257,3 +257,16 @@ def test_chaque_poussee_attend_la_tablette():
     assert "not_to: [unavailable, unknown]" in reveil
     blueprint = _lire("HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
     assert "event_type: automation_reloaded" in blueprint and garde in blueprint
+
+
+def test_calendrier_chaque_demande_a_sa_reponse():
+    """La tablette demande d'affilée le mois affiché et ses voisins (pré-chargement
+    M-1 / M+1, Tab5/tab5-calendar.yaml) : en `mode: restart`, une seule des trois
+    demandes aboutissait (job « HA neuf », 28/09/2026). Les deux scripts appelés par
+    le popup calendrier sont en file, assez longue pour ces trois demandes."""
+    assert "M-1, M+1" in _lire("Tab5", "tab5-calendar.yaml"), "pré-chargement des mois voisins disparu ?"
+    paquet = yaml.load(_lire("HomeAssistant_Config", "packages", "tab5_calendar.yaml"), Loader=_Chargeur)
+    for script in ("tab5_calendrier_mois", "tab5_calendrier_jour"):
+        corps = paquet["script"][script]
+        assert corps["mode"] == "queued", f"{script} : mode {corps['mode']}"
+        assert corps.get("max", 10) >= 3, f"{script} : max {corps.get('max')}"

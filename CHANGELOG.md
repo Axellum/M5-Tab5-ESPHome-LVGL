@@ -4,6 +4,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — Popup calendrier : chaque demande de mois a sa réponse
+
+- `tab5_calendrier_mois` et `tab5_calendrier_jour` (`packages/tab5_calendar.yaml`) passent
+  de `mode: restart` à `mode: queued` (`max: 10`). La tablette demande d'affilée le mois
+  affiché et ses deux voisins (pré-chargement) : en `restart`, chaque demande annulait la
+  précédente et une seule des trois aboutissait (vu par le job « HA neuf »). Chaque
+  réponse porte son mois et va dans le cache de la tablette ; une réponse de jour
+  périmée est déjà ignorée par le firmware. Test : `tests/test_installation_ha.py`.
+
 ### 2026-09-28 — Home Assistant sans placeholder : une archive, une ligne de YAML, des choix dans l'interface
 
 Installer le côté Home Assistant ne demande plus ni dépôt ni Python ([ADR-0024](docs/decisions/0024-packages-without-placeholders.md)).

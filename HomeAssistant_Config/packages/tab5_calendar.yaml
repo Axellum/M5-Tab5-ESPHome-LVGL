@@ -46,9 +46,16 @@ script:
     description: >-
       Calcule pour le mois demandé le bitmask jour par jour (travail, férié,
       vacances scolaires Zone A, RDV, anniversaire) + les heures de travail, et
-      pousse le tout vers le Tab5. mode restart : en navigation rapide entre
-      mois, seule la dernière demande compte.
-    mode: restart
+      pousse le tout vers le Tab5. mode queued : chaque demande a sa réponse.
+    # queued, pas restart (28/09/2026) : la tablette demande d'affilée le mois
+    # affiché ET ses voisins (pré-chargement M-1 / M+1, tab5_cal_render de
+    # Tab5/tab5-calendar.yaml). En restart, chaque demande annulait la précédente :
+    # une seule des trois aboutissait (job « HA neuf »), les deux autres mois
+    # restaient sans travail ni fériés. Chaque réponse porte son année et son mois,
+    # la tablette range chacune dans son cache. max 10 : une navigation rapide
+    # (quelques mois, trois demandes chacun) sans file sans fin.
+    mode: queued
+    max: 10
     fields:
       annee:
         description: "Année demandée (ex: 2026)"
@@ -253,7 +260,12 @@ script:
       Construit les lignes de détail du jour tapé (férié nommé, vacances
       scolaires, horaires de travail, RDV, anniversaires, fêtes civiles) et les
       pousse vers le sous-popup du Tab5.
-    mode: restart
+    # queued, comme tab5_calendrier_mois : aucune demande n'en annule une autre. La
+    # tablette ignore une réponse dont la date n'est plus celle du détail affiché
+    # (tab5_maj_calendrier_jour, Tab5/tab5-api-logic.yaml) : taper vite plusieurs
+    # jours n'affiche que le dernier.
+    mode: queued
+    max: 10
     fields:
       date:
         description: "Jour demandé (YYYY-MM-DD)"
