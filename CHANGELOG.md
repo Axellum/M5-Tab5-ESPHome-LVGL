@@ -39,9 +39,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
     found » dans le journal de HA (`continue_on_error` ne la rattrape pas) ;
   - « Sans compiler » fait créer l'automatisation du blueprint **après** l'ajout de la
     tablette : ses déclencheurs (connexion, demande des zones, une par connexion) sont
-    passés, et rien n'arrive à l'écran avant la prochaine reconnexion — températures
-    « -- », clim vide, pots en attente, aucune zone masquée (capture 1 du job, 0 passage
-    du blueprint en 20 s). En suspens : redémarrer la tablette après l'étape 6, ou créer
+    passés. Jusqu'à la prochaine reconnexion, l'écran garde températures « -- », clim
+    vide, pots en attente et aucune zone masquée (capture 1 du job : aucun passage du
+    blueprint en 20 s, au mieux celui des mesures toutes les 5 minutes ou d'une lumière
+    qui change). En suspens : redémarrer la tablette après l'étape 6, ou créer
     l'automatisation avant l'ajout (ordre de l'étape 4) ;
   - `tab5_rdv_push` (`packages/tab5_reveil.yaml`) se déclenche quand le `number`
     « Rendez-vous : annoncer avant » passe à `unavailable`, donc à chaque déconnexion de
