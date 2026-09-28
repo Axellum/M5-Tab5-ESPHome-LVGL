@@ -205,6 +205,7 @@ The engine is optional for the screen UI (push dashboard works without it). It i
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Wake word pipeline, audio chain, visual feedback states |
 | [`docs/installation.md`](docs/installation.md) | Prerequisites, web flasher or build, signing key, Home Assistant, updates, upgrading from 2.x |
 | [`docs/translations.md`](docs/translations.md) | Screen language (French, English, German, Dutch, Spanish, Italian), adding a language |
+| [`docs/tiles_icons.md`](docs/tiles_icons.md) | Icons of the room tiles: the palette, how an icon is chosen, asking for one |
 | [`docs/demo_mode.md`](docs/demo_mode.md) | Try it in minutes, no Home Assistant required |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Symptom → root cause → fix log for incidents already diagnosed |
 | [`docs/debugging.md`](docs/debugging.md) | How to observe/diagnose the device (logs, console overlay, marker technique) |
@@ -529,6 +530,7 @@ Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Pipeline wake-word, chaîne audio, états de retour visuel |
 | [`docs/installation.md`](docs/installation.md) | Prérequis, page de flashage ou compilation, clé de signature, Home Assistant, mises à jour, passage à la 3.0 |
 | [`docs/translations.md`](docs/translations.md#version-française) | Langue de l'écran (français, anglais, allemand, néerlandais, espagnol, italien), ajouter une langue |
+| [`docs/tiles_icons.md`](docs/tiles_icons.md#version-française) | Icônes des tuiles de pièce : la palette, le choix d'une icône, en demander une |
 | [`docs/demo_mode.md`](docs/demo_mode.md) | Tester en quelques minutes, sans Home Assistant |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Journal symptôme → cause racine → correctif des incidents déjà diagnostiqués |
 | [`docs/debugging.md`](docs/debugging.md) | Comment observer/diagnostiquer l'appareil (logs, overlay console, technique des marqueurs) |

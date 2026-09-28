@@ -228,7 +228,7 @@ The five tiles at the bottom of the screen are **rooms** you fill yourself ([ADR
 The « 3.x setup » rows are the home page of a 3.0 or 3.1 firmware, and of a 3.2 firmware while room 1 is empty. The planning hours themselves still come from the `tab5_push.yaml` package (`VOTRE_EMAIL_gmail_com`): pick the same calendar in both.
 
 Limits:
-- **Icons**: the screen holds a limited palette. An icon outside it shows the default of its kind; adding one means a line in `Tab5/tuiles_icones.yaml` and a new release.
+- **Icons**: the screen holds a limited palette ([tile icons](tiles_icons.md)). An icon outside it shows the default of its kind; adding one means a line in `Tab5/tuiles_icones.yaml` and a new release.
 - **Names**: the screen's fonts cover Latin alphabets only; other characters are dropped, and long names are cut.
 - **Renaming an entity**: its tile follows at the tablet's next connection, or as soon as the automation is saved again.
 - **A shutter followed by `volet_serre_tracking.yaml`** (it doesn't report its travel): keep it in the « Volet » input of the 3.x section too, even if it is in a room; its tile then shows the state the package keeps, and its commands go through the package's script.
@@ -465,7 +465,7 @@ Les cinq tuiles du bas de l'écran sont des **pièces** que vous remplissez vous
 Les lignes « réglage 3.x » sont l'accueil d'un firmware 3.0 ou 3.1, et d'un firmware 3.2 tant que la pièce 1 est vide. Les horaires du planning viennent encore du package `tab5_push.yaml` (`VOTRE_EMAIL_gmail_com`) : choisissez le même agenda des deux côtés.
 
 Limites :
-- **Icônes** : l'écran en connaît une palette limitée. Une icône hors palette montre celle de son genre ; en ajouter une demande une ligne dans `Tab5/tuiles_icones.yaml` et une nouvelle version.
+- **Icônes** : l'écran en connaît une palette limitée ([icônes des tuiles](tiles_icons.md#version-française)). Une icône hors palette montre celle de son genre ; en ajouter une demande une ligne dans `Tab5/tuiles_icones.yaml` et une nouvelle version.
 - **Noms** : les polices de l'écran ne couvrent que les alphabets latins ; les autres caractères disparaissent, et un nom trop long est coupé.
 - **Renommer une entité** : sa tuile suit à la prochaine connexion de la tablette, ou dès que l'automatisation est de nouveau enregistrée.
 - **Un volet suivi par `volet_serre_tracking.yaml`** (il ne signale pas sa course) : laissez-le aussi dans l'entrée « Volet » de la section 3.x, même s'il est dans une pièce ; sa tuile montre alors l'état que tient le package, et ses commandes passent par le script du package.
