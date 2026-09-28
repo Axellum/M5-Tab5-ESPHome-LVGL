@@ -1812,6 +1812,9 @@ actions:
                           else st.attributes.get('current_temperature') if t.type == 'cli'
                           else none -%}
                 {%- set v = brut | float('nan') -%}
+                {#- Lampe allumée qui annonce une luminosité de 0 (Govee, vu chez l'auteur) :
+                    pas de « 0 % » à l'écran, « Allumé ». -#}
+                {%- set v = 'nan' if t.type == 'lum' and not ((v | float(0)) > 0) else v -%}
               {%- endif -%}
               {%- set rgb = st.attributes.get('rgb_color') if t.type == 'lum' and st.state == 'on' else none -%}
               {%- set couleur = ('%02X%02X%02X' | format(rgb[0] | int(0), rgb[1] | int(0), rgb[2] | int(0))) if rgb and rgb | count == 3 else '' -%}
