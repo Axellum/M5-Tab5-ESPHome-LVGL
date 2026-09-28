@@ -36,6 +36,23 @@ Compared with the last run of the same kind (2.x, 2026-09-26): the whole screen 
 - **Where the time goes**: a local diagnostic build logs, for every frame of 8 ms or more, its duration and the rectangles LVGL redrew (`inv_areas` of the display at `LV_EVENT_RENDER_START`). That is how the rotating panel (a 1180 × 86 px band redrawn by its 190 ms slide and fade) was found to be the idle cost.
 - **Restart**: button « Redémarrage système », then time until `ha_api_status` is `on` again in Home Assistant.
 
+## Where the time goes (2026-09-29)
+
+A local diagnostic build timed, for every frame of 8 ms or more, the part spent sending it to the screen (LVGL `LV_EVENT_FLUSH_START` → `FLUSH_FINISH`: ESPHome rotates the frame with the P4's 2D accelerator, then copies it to the framebuffer) and the part spent drawing it.
+
+| Frame | Sending | Drawing, 1 core | Drawing, 2 cores |
+|---|---|---|---|
+| Whole screen | 58.7 ms | 74.4 ms | 67.8 ms |
+| Climate popup | 59 ms | 130.4 ms | 116.3 ms |
+| System console | 59 ms | 107.5 ms | 98.0 ms |
+| Calendar | 59 ms | 67.2 ms | 62.8 ms |
+| Rotating panel (one frame) | 8.4 ms | 7.4 ms | 7.1 ms |
+| Pinball (portrait, no rotation) | 1.2 ms | 9.2 ms | 8.7 ms |
+
+- **Sending a whole screen costs a fixed ~59 ms** (1.8 MB rotated then copied in PSRAM), whatever the content.
+- **Drawing on the P4's two cores** (`LV_USE_OS` FreeRTOS, 2 draw units, only through `esphome: platformio_options: build_flags` in ESPHome 2026.9) works, with no visible artefact, but saves only 4 to 11 % of the drawing: not adopted (LVGL 9.5 has known multi-thread drawing bugs, fixed in 9.6; 16 KB more internal RAM).
+- **The main loop only waits for LVGL**: ESPHome's `runtime_stats` shows, idle, a longest iteration of 28 ms, all of it LVGL (one step of the rotating panel); API, Wi-Fi and sensors stay under 0.3 ms. The « Tab5 Loop Time » sensor adds the wait between iterations. The rotating panel only turns when it has two things to show — rain in the next hour is one of them —, which is why the idle numbers change with the weather.
+
 ## Limits
 
 - One tablet, one screen revision, one evening.
@@ -77,6 +94,23 @@ Par rapport à la dernière campagne du même type (2.x, 26/09/2026) : l'écran 
 - **Les actions** partent de Home Assistant au milieu d'une fenêtre d'une minute (rétroéclairage éteint puis rallumé, select « Aller à l'écran »), jamais dans une minute où le blueprint pousse ses mesures de 5 minutes. Les popups ouverts ainsi ne sont pas appuyés : l'effet d'appui des boutons n'est pas dans ces chiffres.
 - **Où part le temps** : un build de diagnostic local écrit au journal, pour chaque image de 8 ms ou plus, sa durée et les rectangles que LVGL a redessinés (`inv_areas` du display à `LV_EVENT_RENDER_START`). C'est ainsi que le panneau tournant (un bandeau de 1180 × 86 px redessiné par son glissement et son fondu de 190 ms) a été identifié comme le coût au repos.
 - **Redémarrage** : bouton « Redémarrage système », puis temps jusqu'au retour de `ha_api_status` à `on` dans Home Assistant.
+
+## Où part le temps (29/09/2026)
+
+Un build de diagnostic local a chronométré, pour chaque image de 8 ms ou plus, la part d'envoi à l'écran (`LV_EVENT_FLUSH_START` → `FLUSH_FINISH` de LVGL : ESPHome tourne l'image avec l'accélérateur 2D du P4, puis la copie dans le framebuffer) et la part de dessin.
+
+| Image | Envoi | Dessin, 1 cœur | Dessin, 2 cœurs |
+|---|---|---|---|
+| Écran entier | 58,7 ms | 74,4 ms | 67,8 ms |
+| Popup clim | 59 ms | 130,4 ms | 116,3 ms |
+| Console système | 59 ms | 107,5 ms | 98,0 ms |
+| Calendrier | 59 ms | 67,2 ms | 62,8 ms |
+| Panneau tournant (une image) | 8,4 ms | 7,4 ms | 7,1 ms |
+| Flipper (portrait, sans rotation) | 1,2 ms | 9,2 ms | 8,7 ms |
+
+- **Envoyer un écran entier coûte ~59 ms fixes** (1,8 Mo tournés puis copiés en PSRAM), quel que soit le contenu.
+- **Le dessin sur les deux cœurs du P4** (`LV_USE_OS` FreeRTOS, 2 unités de dessin, seulement par `esphome: platformio_options: build_flags` en ESPHome 2026.9) marche, sans défaut visible, mais ne gagne que 4 à 11 % du dessin : pas retenu (LVGL 9.5 a des bugs connus en dessin multi-cœur, corrigés en 9.6 ; 16 Ko de RAM interne en plus).
+- **La boucle principale n'attend que LVGL** : `runtime_stats` d'ESPHome donne, au repos, un tour le plus long de 28 ms, entièrement LVGL (un pas du panneau tournant) ; API, Wi-Fi et capteurs restent sous 0,3 ms. Le capteur « Tab5 Loop Time » y ajoute l'attente entre deux tours. Le panneau tournant ne tourne que s'il a deux choses à montrer — la pluie dans l'heure en est une —, d'où des chiffres au repos qui changent avec la météo.
 
 ## Limites
 

@@ -4,6 +4,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-29 — Docs : où part le temps d'une image, essai du dessin sur deux cœurs
+
+- `docs/performance.md` (EN/FR) : part d'envoi (rotation + copie, ~59 ms fixes pour un
+  écran entier) et part de dessin, mesurées image par image ; essai du dessin LVGL sur les
+  deux cœurs (4 à 11 % de gain, pas retenu) ; `runtime_stats` : au repos la boucle
+  n'attend que LVGL (28 ms, un pas du panneau tournant, que la pluie fait tourner).
+
 ### 2026-09-29 — Arcanoïde : la raquette ne repart plus dans l'ancien sens
 
 - Retour d'Axel : en changeant de sens, la raquette partait d'abord dans l'ancien
