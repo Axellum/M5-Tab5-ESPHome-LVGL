@@ -16,7 +16,7 @@ Since 3.0, a ready-made, signed firmware installs from the browser. In this orde
    - The tablet already runs the same version: the page shows no *Install*. To start from scratch, « Erase User Data » (in red, at the bottom) erases everything, Wi-Fi, key and settings included, then installs again.
 3. **Wi-Fi**: from the same window (*Connect to Wi-Fi*, over USB), or with a phone on the open « Tab5 Fallback AP » network.
 4. **Add it to Home Assistant** within 30 minutes of its start: *Settings → Devices & services*, the ESPHome device is discovered, *Configure*. Home Assistant gives it its key. A tablet Home Assistant already knows gets a new key by itself, nothing to confirm (checked on 2026-09-28). Nothing else to allow: the tablet asks Home Assistant for everything through events ([ADR-0025](decisions/0025-events-only.md)).
-   - Firmware 3.1 or older only (the Stable channel until the next release): also tick « Allow the device to perform Home Assistant actions » (*ESPHome → Configure*), which voice, calendar and alarm clock need there.
+   - Firmware 3.1 or older only: also tick « Allow the device to perform Home Assistant actions » (*ESPHome → Configure*), which voice, calendar and alarm clock need there.
 5. **Your devices**: create the automation from the blueprint ([Step 4](#step-4--set-up-the-home-assistant-packages), item 5).
 
 Updates then show up in Home Assistant (« Firmware » entity), on the channel you installed; to switch channels, install again from the page without erasing. Over the air, the tablet only accepts a firmware signed with the project key: to switch to your own builds (your own key), flash once over USB.
@@ -84,7 +84,7 @@ No `secrets.yaml` any more: one left from 2.x is simply not read (see [Upgrading
 
 ## Step 4 — Set up the Home Assistant packages
 
-The whole Home Assistant side is one archive, **`tab5_home_assistant.zip`**, attached to the [releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases) (from the first one after 3.1.0). **Nothing to fill in**: every value of your home is picked afterwards in Home Assistant, with the mouse ([ADR-0024](decisions/0024-packages-without-placeholders.md)).
+The whole Home Assistant side is one archive, **`tab5_home_assistant.zip`**, attached to the [releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases) (since 3.2.0). **Nothing to fill in**: every value of your home is picked afterwards in Home Assistant, with the mouse ([ADR-0024](decisions/0024-packages-without-placeholders.md)).
 
 1. **Download** `tab5_home_assistant.zip` from the latest release and **unzip it into Home Assistant's `config/` folder**, the one holding `configuration.yaml` (Samba share, or the File editor / Studio Code Server add-on). It adds `packages/`, `custom_templates/` and `blueprints/automation/tab5/`; the `tab5_optionnel/` folder is not loaded (see below).
 2. **One line in `configuration.yaml`: the only YAML you write** (skip it if it is already there):
@@ -287,7 +287,7 @@ Depuis la 3.0, un firmware prêt à l'emploi et signé s'installe depuis le navi
    - La tablette a déjà la même version : la page n'affiche pas *Install*. Pour repartir de zéro, « Erase User Data » (en rouge, en bas) efface tout, Wi-Fi, clé et réglages compris, puis réinstalle.
 3. **Wi-Fi** : depuis la même fenêtre (*Connect to Wi-Fi*, par l'USB), ou avec un téléphone sur le réseau ouvert « Tab5 Fallback AP ».
 4. **L'ajouter à Home Assistant** dans les 30 minutes qui suivent son démarrage : *Paramètres → Appareils et services*, l'appareil ESPHome est découvert, *Configurer*. Home Assistant lui donne sa clé. Une tablette que Home Assistant connaît déjà reçoit une nouvelle clé toute seule, rien à confirmer (vérifié le 28/09/2026). Rien d'autre à autoriser : la tablette demande tout à Home Assistant par des événements ([ADR-0025](decisions/0025-events-only.md)).
-   - Firmware 3.1 ou plus ancien seulement (le canal Stable jusqu'à la prochaine version) : cochez aussi « Autoriser l'appareil à effectuer des actions Home Assistant » (*ESPHome → Configurer*), dont la voix, le calendrier et le réveil ont besoin sur ces versions.
+   - Firmware 3.1 ou plus ancien seulement : cochez aussi « Autoriser l'appareil à effectuer des actions Home Assistant » (*ESPHome → Configurer*), dont la voix, le calendrier et le réveil ont besoin sur ces versions.
 5. **Vos appareils** : créez l'automatisation depuis le blueprint ([étape 4](#étape-4--installer-les-packages-home-assistant), point 5).
 
 Les mises à jour arrivent ensuite dans Home Assistant (entité « Firmware »), sur le canal installé ; pour changer de canal, réinstallez depuis la page sans effacer. Par le réseau, la tablette n'accepte qu'un firmware signé par la clé du projet : pour passer à vos propres compilations (votre clé), flashez une fois par USB.
@@ -353,7 +353,7 @@ Plus de `secrets.yaml` : celui d'une 2.x n'est simplement plus lu (voir [Passer 
 
 ## Étape 4 — Installer les packages Home Assistant
 
-Tout le côté Home Assistant tient dans une archive, **`tab5_home_assistant.zip`**, jointe aux [releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases) (à partir de la première après la 3.1.0). **Rien à remplir** : chaque valeur de votre maison se choisit ensuite dans Home Assistant, à la souris ([ADR-0024](decisions/0024-packages-without-placeholders.md)).
+Tout le côté Home Assistant tient dans une archive, **`tab5_home_assistant.zip`**, jointe aux [releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases) (depuis la 3.2.0). **Rien à remplir** : chaque valeur de votre maison se choisit ensuite dans Home Assistant, à la souris ([ADR-0024](decisions/0024-packages-without-placeholders.md)).
 
 1. **Téléchargez** `tab5_home_assistant.zip` depuis la dernière release et **décompressez-la dans le dossier `config/` de Home Assistant**, celui de `configuration.yaml` (partage Samba, ou module File editor / Studio Code Server). Elle y ajoute `packages/`, `custom_templates/` et `blueprints/automation/tab5/` ; le dossier `tab5_optionnel/` n'est pas chargé (voir plus bas).
 2. **Une ligne dans `configuration.yaml` : c'est la seule ligne de YAML à écrire** (rien à faire si elle y est déjà) :
