@@ -26,6 +26,14 @@
  * @memory_constraint 32 lignes de 104 o en `.noinit` (≈ 3,3 Ko de RAM interne).
  * Numérotation : #1 = premier démarrage depuis le dernier envoi ; #0 = la suite du
  * démarrage déjà signalé (ce qui arrive après l'envoi, sans redémarrer).
+ * Tablette neuve (28/09/2026) : une marque en NVS, absente juste après un effacement.
+ * Le flash par l'USB (page d'installation en mode téléchargement) finit par un reset du
+ * chien de garde RTC : ESP_RST_WDT, « other watchdogs » pour ESPHome. Sans la marque,
+ * le premier démarrage d'une installation passait pour un plantage (alerte sur le
+ * téléphone, vu à l'installation à neuf du 28/09). Seul ce cas est excusé : une panique
+ * ou un chien de garde de tâche alertent toujours, même au premier démarrage. Le Wi-Fi
+ * pas encore réglé et HA qui tarde à ajouter la tablette ne sont pas des anomalies non
+ * plus, tant que la tablette n'a jamais vu son réseau.
  */
 #include "tab5_custom.h"
 #include <esp_attr.h>
@@ -38,6 +46,11 @@ namespace {
 
 constexpr uint32_t kMagic = 0x4A524E31;  // « JRN1 »
 constexpr uint32_t kPrefKey = 0x7A6A726E;
+constexpr uint32_t kMarqueKey = 0x7A6A6D71;  // marque « déjà démarrée ici »
+constexpr const char* kTexteInstallation = "premier démarrage après installation";
+// Préfixe lu par la garde « reboot inattendu » (packages/tab5_health.yaml) : ne pas le
+// changer sans elle (tests/test_premier_demarrage.py compare les deux).
+constexpr const char* kRaisonInstallationHa = "First boot after install";
 constexpr int kLignes = 32;
 constexpr int kTexte = 96;
 
@@ -78,7 +91,12 @@ uint32_t s_wifi_absent_depuis = 0;
 uint32_t s_derniere_copie = 0;
 uint16_t s_nb_copie = 0xFFFF;
 esphome::ESPPreferenceObject s_pref;
+esphome::ESPPreferenceObject s_pref_marque;
 bool s_pref_ok = false;
+bool s_neuve = false;           // marque absente au démarrage (flash effacée)
+bool s_marque_a_ecrire = false;
+bool s_installation = false;    // neuve ET relancée par le chien de garde RTC
+bool s_wifi_vu = false;         // réseau joint au moins une fois depuis le démarrage
 
 bool raison_anormale(esp_reset_reason_t r) {
     return r == ESP_RST_PANIC || r == ESP_RST_INT_WDT || r == ESP_RST_TASK_WDT ||
@@ -152,6 +170,7 @@ void ajouter(char niveau, const char* texte) {
 void preparer_pref() {
     if (s_pref_ok) return;
     s_pref = esphome::global_preferences->make_preference<Journal>(kPrefKey);
+    s_pref_marque = esphome::global_preferences->make_preference<uint32_t>(kMarqueKey);
     s_pref_ok = true;
 }
 
@@ -176,12 +195,18 @@ void ouvrir_session() {
         }
     }
     heap_caps_free(copie);
+    // Lue seulement ici ; écrite par journal_tick(), hors du chemin du logger.
+    uint32_t marque = 0;
+    s_neuve = !(s_pref_marque.load(&marque) && marque == kMagic);
+    s_marque_a_ecrire = s_neuve;
     const esp_reset_reason_t r = esp_reset_reason();
+    s_installation = s_neuve && r == ESP_RST_WDT;
     if (s_j.demarrages < 0xFFFF) s_j.demarrages++;
     // kPlantage et kWifi d'un démarrage précédent restent posés jusqu'à l'envoi.
-    if (raison_anormale(r)) s_j.anomalie |= kPlantage;
+    if (raison_anormale(r) && !s_installation) s_j.anomalie |= kPlantage;
     char repere[kTexte];
-    snprintf(repere, sizeof(repere), "démarrage, raison : %s", raison_texte(r));
+    snprintf(repere, sizeof(repere), "démarrage, raison : %s",
+             s_installation ? kTexteInstallation : raison_texte(r));
     ajouter('>', repere);
 }
 
@@ -197,7 +222,8 @@ void copier_en_nvs() {
 void marquer_ha_vu() {
     if (s_ha_vu) return;
     s_ha_vu = true;
-    if (esphome::millis() > kSeuilMs) s_j.anomalie |= kLent;
+    // Tablette neuve : le temps de régler le Wi-Fi puis de l'ajouter dans HA.
+    if (esphome::millis() > kSeuilMs && !s_neuve) s_j.anomalie |= kLent;
 }
 
 }  // namespace
@@ -228,13 +254,22 @@ void journal_log_message(uint8_t level, const char* tag, const char* message) {
 
 void journal_tick() {
     ouvrir_session();
+    if (s_marque_a_ecrire) {
+        s_marque_a_ecrire = false;
+        const uint32_t marque = kMagic;
+        s_pref_marque.save(&marque);
+        esphome::global_preferences->sync();
+    }
     const uint32_t maintenant = esphome::millis();
     if (ha_connecte()) marquer_ha_vu();
     // HA absent mais Wi-Fi présent (HA redémarre, maintenance) : rien à signaler.
     if (esphome::network::is_connected()) {
+        s_wifi_vu = true;
         s_wifi_absent_depuis = 0;
         return;
     }
+    // Tablette neuve qui n'a jamais vu de réseau : Wi-Fi pas encore réglé, pas une panne.
+    if (s_neuve && !s_wifi_vu) return;
     if (s_wifi_absent_depuis == 0) {
         s_wifi_absent_depuis = maintenant == 0 ? 1 : maintenant;
         return;
@@ -262,7 +297,14 @@ bool journal_is_serious() {
 }
 
 std::string journal_reset_reason() {
-    return raison_texte(esp_reset_reason());
+    ouvrir_session();
+    return s_installation ? kTexteInstallation : raison_texte(esp_reset_reason());
+}
+
+std::string journal_raison_ha(const std::string& raison) {
+    ouvrir_session();
+    if (!s_installation) return raison;
+    return std::string(kRaisonInstallationHa) + " (" + raison + ")";
 }
 
 std::string journal_boot_count() {

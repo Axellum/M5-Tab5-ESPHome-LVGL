@@ -164,7 +164,11 @@ automation:
   # qu'elle soit celle de CE démarrage (elle repasse par `unavailable` à chaque
   # coupure), au plus 1 min. Raisons « demandées » : « Reboot request from … »
   # (ESPHome : esphome.ota, http_request.update, api…), « software via esp_restart »
-  # (le firmware, ex. le select Langue), « USB peripheral ». Sans raison fraîche
+  # (le firmware, ex. le select Langue), « USB peripheral », et depuis la 3.0.1
+  # « First boot after install (…) » : premier démarrage après une installation par
+  # l'USB, flash effacée, que le flash termine par un reset du chien de garde RTC
+  # (« other watchdogs », fausse alerte à l'installation à neuf du 28/09/2026 ; le
+  # firmware ne l'excuse que si sa mémoire vient d'être effacée). Sans raison fraîche
   # (délai dépassé), on notifie : mieux vaut une alerte de trop qu'un plantage muet.
   - id: tab5_health_unexpected_reboot
     alias: "Tab5 Santé — reboot inattendu (nouveau démarrage)"
@@ -198,6 +202,7 @@ automation:
           raison: "{{ states('sensor.m5stack_tab5_home_assistant_hmi_tab5_raison_du_redemarrage') }}"
           demande: >-
             {{ wait.completed and (raison is match('Reboot request from ')
+               or raison is match('First boot after install')
                or raison in ['software via esp_restart', 'USB peripheral']) }}
       - condition: template
         value_template: "{{ not demande }}"

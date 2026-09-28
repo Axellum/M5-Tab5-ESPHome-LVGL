@@ -675,6 +675,9 @@ void journal_tick();
 bool journal_has_report();          // autre chose qu'un démarrage normal
 bool journal_is_serious();          // plantage, erreur ou démarrage sans HA
 std::string journal_reset_reason(); // raison du dernier démarrage, en clair
+// Filtre du capteur « Tab5 Raison du redémarrage » : premier démarrage après une
+// installation par l'USB (flash effacée) → « First boot after install (…) ».
+std::string journal_raison_ha(const std::string& raison);
 std::string journal_boot_count();   // démarrages depuis le dernier envoi
 std::string journal_report_text();  // lignes en attente, une par ligne
 void journal_mark_delivered();      // vide le journal (et sa copie NVS)
