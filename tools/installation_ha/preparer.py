@@ -9,7 +9,8 @@ comme le fait un nouvel utilisateur (docs/installation.md, étape 4).
       compte, ajoute la tablette virtuelle et vérifie.
 @contenu
       - configuration.yaml : celui d'une installation neuve + la ligne des packages
-        (tools/installation_ha/configuration.yaml) ;
+        (tools/installation_ha/configuration.yaml) ; secrets.yaml avec la ligne
+        qu'exige packages/tab5_tv.yaml (SECRETS) ;
       - packages/ : TOUS les packages publics, rendus avec les valeurs factices de
         placeholders_ci.yaml par tools/render_ha_config.py (« copiez
         rendered/packages/*.yaml », étape 4, point 4), plus les données de test
@@ -48,6 +49,18 @@ CHEMIN_BLUEPRINT = "tab5/tab5_emplacements.yaml"
 # Fichiers qu'écrit HA à sa première installation, à côté de configuration.yaml.
 FICHIERS_VIDES = {"automations.yaml": "[]\n", "scripts.yaml": "", "scenes.yaml": ""}
 
+# secrets.yaml d'une installation neuve, plus la ligne qu'exige packages/tab5_tv.yaml
+# (son en-tête, @install) : sans elle, HA refuse TOUTE sa configuration (« Secret
+# tab5_tv_app_url not defined », vu par ce job le 28/09/2026). Adresse factice : aucune
+# TV derrière (port 9, « discard »).
+SECRETS = (
+    "# Use this file to store secrets like usernames and passwords.\n"
+    "# Learn more at https://www.home-assistant.io/docs/configuration/secrets/\n"
+    "some_password: welcome\n"
+    "# packages/tab5_tv.yaml (@install) : URL de lancement des applications de la TV.\n"
+    'tab5_tv_app_url: "http://127.0.0.1:9/api/v2/applications/{{ app_id }}"\n'
+)
+
 
 def preparer(sortie: Path, carte: Path = CARTE_CI) -> list[Path]:
     """Écrit le dossier config/ dans `sortie` (créé, doit être vide ou absent)."""
@@ -58,7 +71,7 @@ def preparer(sortie: Path, carte: Path = CARTE_CI) -> list[Path]:
 
     shutil.copyfile(CONFIGURATION, sortie / "configuration.yaml")
     ecrits.append(sortie / "configuration.yaml")
-    for nom, contenu in FICHIERS_VIDES.items():
+    for nom, contenu in {**FICHIERS_VIDES, "secrets.yaml": SECRETS}.items():
         (sortie / nom).write_text(contenu, encoding="utf-8", newline="\n")
         ecrits.append(sortie / nom)
     (sortie / "themes").mkdir()
