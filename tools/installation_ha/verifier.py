@@ -40,6 +40,7 @@ import datetime as dt
 import json
 import logging
 import os
+import re
 import secrets
 import subprocess
 import sys
@@ -575,46 +576,56 @@ async def verifier_cle(ha: HA, entry_id: str, cle: str, rapport: Rapport) -> Non
                      "connexion en clair refusée une fois la clé posée", f"résultat : {r}")
 
 
+# Issues d'un passage refusé parce qu'un autre tourne (mode single, max atteint) : la
+# poussée complète est en `mode: single`, et une deuxième connexion rapprochée (le
+# rechargement qui suit l'option « actions HA ») tombe pendant la première. Rapportées,
+# pas fautives, si un autre passage du même déclencheur a abouti.
+REFUS_DE_MODE = ("failed_single", "failed_max_runs")
+
+
+def resume_passage(t: dict) -> str:
+    return (f"{(t.get('timestamp') or {}).get('start', '?')[11:19]} {t.get('state')}/"
+            f"{t.get('script_execution')} (étape {t.get('last_step')}){' — ' + t['error'] if t.get('error') else ''}")
+
+
 async def attendre_traces(ha: HA, apres: float, rapport: Rapport, delai: float = 150.0) -> None:
-    """Chaque automatisation de TRACES_ATTENDUES a un passage déclenché par son
-    événement depuis `apres`, terminé (« finished ») et sans erreur dans ses étapes."""
+    """Chaque automatisation de TRACES_ATTENDUES : ses passages déclenchés par son
+    événement depuis `apres`, jugés quand l'un a abouti et qu'aucun ne tourne encore.
+    Au moins un « finished », aucune étape en erreur, et aucun passage en erreur ni
+    arrêté par ses conditions (le cas de la poussée complète sans l'entité
+    « HA API Status », vu le 28/09/2026)."""
     fin = time.monotonic() + delai
     restantes = list(TRACES_ATTENDUES)
-    vues: dict[tuple[str, str], dict] = {}
+    vus: dict[tuple[str, str], list[dict]] = {}
     while restantes and time.monotonic() < fin:
         for item_id, declencheur in list(restantes):
             passages = [t for t in await ha.traces(item_id)
                         if declencheur in (t.get("trigger") or "")
                         and horodatage((t.get("timestamp") or {}).get("start")) >= apres]
-            if passages:
-                vues[(item_id, declencheur)] = passages[-1]
-            termines = [t for t in passages if t.get("state") == "stopped"]
-            if termines:
+            vus[(item_id, declencheur)] = passages
+            finis = any(t.get("script_execution") == "finished" for t in passages)
+            if finis and all(t.get("state") == "stopped" for t in passages):
                 restantes.remove((item_id, declencheur))
-                await juger_trace(ha, item_id, declencheur, termines, rapport)
+                await juger_passages(ha, item_id, declencheur, passages, rapport)
         if restantes:
             await asyncio.sleep(2)
     for item_id, declencheur in restantes:
-        derniere = vues.get((item_id, declencheur))
-        rapport.echec(f"{item_id} ({declencheur}) : aucun passage terminé en {delai:.0f} s"
-                      + (f", dernier état {derniere.get('state')}/{derniere.get('script_execution')}"
-                         if derniere else ", aucun passage"))
+        passages = vus.get((item_id, declencheur)) or []
+        rapport.echec(f"{item_id} ({declencheur}) : aucun passage abouti en {delai:.0f} s — "
+                      + ("; ".join(resume_passage(t) for t in passages) or "aucun passage"))
 
 
-async def juger_trace(ha: HA, item_id: str, declencheur: str, termines: list[dict], rapport: Rapport) -> None:
-    # Mode single de la poussée complète : un passage lancé par le déclencheur toutes
-    # les 10 min juste avant la connexion fait refuser celui de la connexion
-    # (« failed_single »). Accepté si un autre passage de ce déclencheur a abouti.
-    finis = [t for t in termines if t.get("script_execution") == "finished"]
-    if not finis:
-        t = termines[-1]
-        rapport.echec(f"{item_id} ({declencheur}) : {t.get('script_execution')} "
-                      f"à l'étape {t.get('last_step')} — {t.get('error', '')}")
-        return
-    complete = await ha.trace(item_id, finis[-1]["run_id"])
-    erreurs = erreurs_de_trace(complete)
-    rapport.verifier(not erreurs, f"trace {item_id} ({declencheur}) terminée sans erreur",
-                     " ; ".join(erreurs[:5]))
+async def juger_passages(ha: HA, item_id: str, declencheur: str, passages: list[dict], rapport: Rapport) -> None:
+    fautifs = []
+    for t in passages:
+        execution = t.get("script_execution")
+        if execution in REFUS_DE_MODE:
+            rapport.info(f"{item_id} ({declencheur}) : un passage refusé ({execution}), un autre tournait")
+        elif execution != "finished":
+            fautifs.append(resume_passage(t))
+        elif erreurs := erreurs_de_trace(await ha.trace(item_id, t["run_id"])):
+            fautifs.append(f"{resume_passage(t)} : " + " ; ".join(erreurs[:5]))
+    rapport.verifier(not fautifs, f"trace {item_id} ({declencheur}) terminée sans erreur", " | ".join(fautifs))
 
 
 async def attendre_etat(ha: HA, entity_id: str, attendu: str, delai: float = 60.0) -> str | None:
@@ -649,32 +660,64 @@ async def capturer(ha: HA, dossier: Path, nom: str, rapport: Rapport) -> None:
     rapport.ok(f"capture d'écran demandée par HA : {nom}.png")
 
 
+# Ligne du journal de HA (docker logs) : « 2026-09-28 11:17:49.794 ERROR (MainThread)
+# [logger] message », à l'heure locale du conteneur (TZ=Europe/Paris) ; les lignes
+# suivantes sans en-tête (pile d'appels, détail d'une condition) prolongent le message.
+LIGNE_JOURNAL = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{3}) (DEBUG|INFO|WARNING|ERROR|CRITICAL) "
+                           r"\([^)]*\) \[([^\]]+)\] (.*)$")
+
+
+def lignes_du_journal(texte: str) -> list[dict]:
+    """Entrées du journal de HA : epoch, niveau, logger, message (suite comprise)."""
+    from zoneinfo import ZoneInfo
+
+    fuseau = ZoneInfo(FUSEAU)
+    entrees: list[dict] = []
+    for ligne in texte.splitlines():
+        if m := LIGNE_JOURNAL.match(ligne):
+            quand = dt.datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=fuseau)
+            entrees.append({"quand": quand.timestamp(), "niveau": m.group(2),
+                            "logger": m.group(3), "message": m.group(4)})
+        elif entrees and ligne.strip():
+            entrees[-1]["message"] += "\n" + ligne.rstrip()
+    return entrees
+
+
 def concerne_le_tab5(entree: dict) -> bool:
-    """Entrée du journal de HA (system_log) qui parle du Tab5 : ses packages, son
-    blueprint, ses entités ou l'intégration ESPHome."""
-    texte = (" ".join(entree.get("message") or []) + " " + (entree.get("name") or "")).lower()
+    """Entrée du journal qui parle du Tab5 : ses packages, son blueprint, ses entités ou
+    l'intégration ESPHome."""
+    texte = (entree.get("logger", "") + " " + entree.get("message", "")).lower()
     return any(mot in texte for mot in ("tab5", "m5stack", "esphome"))
 
 
 async def journal_ha(ha: HA, connexion: float, rapport: Rapport) -> None:
     """Journal de HA : une ERREUR qui concerne le Tab5, survenue après que la tablette
-    s'est connectée, fait échouer le job ; le reste est rapporté (avant la connexion,
-    les actions esphome.tab5_ha_hmi_* n'existent pas encore : les poussées lancées au
-    démarrage de HA échouent, c'est attendu dans l'ordre de docs/installation.md)."""
-    entrees = await ha.ws.commande("system_log/list")
+    s'est connectée, fait échouer le job ; les avertissements, et ce qui précède la
+    connexion, sont rapportés. Avant elle, les actions esphome.tab5_ha_hmi_* n'existent
+    pas : dans l'ordre de docs/installation.md (packages, puis tablette), les poussées
+    lancées au démarrage de HA échouent (« Action … not found »)."""
+    proc = await asyncio.create_subprocess_exec("docker", "logs", ha.conteneur, stdout=subprocess.PIPE,
+                                                stderr=subprocess.STDOUT)
+    sortie, _ = await proc.communicate()
+    groupes: dict[tuple, int] = {}
     autres = 0
-    for e in sorted(entrees, key=lambda e: e.get("timestamp") or 0):
+    for e in lignes_du_journal(sortie.decode("utf-8", "replace")):
+        if e["niveau"] not in ("WARNING", "ERROR", "CRITICAL"):
+            continue
         if not concerne_le_tab5(e):
             autres += 1
             continue
-        message = " / ".join(e.get("message") or [])[:400]
-        texte = f"{e.get('level')} {e.get('name')} ×{e.get('count', 1)} : {message}"
-        apres = (e.get("timestamp") or 0) >= connexion
-        if apres and e.get("level") in ("ERROR", "CRITICAL"):
-            rapport.echec(f"journal HA, après la connexion de la tablette — {texte}")
-        else:
-            rapport.info(f"journal HA, {'après' if apres else 'avant'} la connexion — {texte}")
-    rapport.info(f"journal HA : {autres} autre(s) entrée(s) sans rapport avec le Tab5 (demo, traductions…)")
+        apres = e["quand"] >= connexion
+        premiere = e["message"].splitlines()[0][:220]
+        if apres and e["niveau"] != "WARNING":
+            rapport.echec(f"journal HA après la connexion de la tablette — {e['niveau']} [{e['logger']}] "
+                          f"{e['message'][:600]}")
+            continue
+        cle = ("après" if apres else "avant", e["niveau"], e["logger"], premiere)
+        groupes[cle] = groupes.get(cle, 0) + 1
+    for (moment, niveau, logger_, premiere), n in groupes.items():
+        rapport.info(f"journal HA, {moment} la connexion — {niveau} ×{n} [{logger_}] {premiere}")
+    rapport.info(f"journal HA : {autres} avertissement(s) ou erreur(s) sans rapport avec le Tab5 (demo, traductions…)")
 
 
 async def scenario(args, rapport: Rapport) -> None:

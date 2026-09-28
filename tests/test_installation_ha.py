@@ -129,7 +129,20 @@ def test_fonctions_pures():
                        "action/1": [{"path": "action/1", "error": "Action esphome.x not found"}]}}
     assert verifier.erreurs_de_trace(trace) == ["action/1 : Action esphome.x not found"]
     assert verifier.erreurs_de_trace({"error": "boum", "trace": {}}) == ["passage : boum"]
-    assert verifier.concerne_le_tab5({"name": "homeassistant.components.script.tab5_push_alertes", "message": []})
-    assert verifier.concerne_le_tab5({"name": "x", "message": ["Action esphome.tab5_ha_hmi_y not found"]})
-    assert not verifier.concerne_le_tab5({"name": "homeassistant.helpers.translation",
-                                          "message": ["Invalid domain demo.weather"]})
+
+
+
+def test_journal_de_ha():
+    journal = (
+        "s6-rc: info: service legacy-services successfully started\n"
+        "2026-09-28 11:17:49.794 ERROR (MainThread) [homeassistant.components.script.tab5_push_alertes] "
+        "Tab5 — pousser: Error executing script. Service not found for call_service at pos 1\n"
+        "2026-09-28 11:17:50.000 WARNING (MainThread) [homeassistant.components.automation] Error evaluating condition:\n"
+        "  In 'state' condition: unknown entity binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status\n"
+        "2026-09-28 11:17:51.000 WARNING (MainThread) [homeassistant.helpers.translation] Invalid domain demo.weather\n"
+    )
+    entrees = verifier.lignes_du_journal(journal)
+    assert [e["niveau"] for e in entrees] == ["ERROR", "WARNING", "WARNING"]
+    assert entrees[0]["quand"] == 1790587069.794  # 09:17:49.794 UTC (heure d'été de Paris)
+    assert "unknown entity" in entrees[1]["message"]
+    assert [verifier.concerne_le_tab5(e) for e in entrees] == [True, True, False]
