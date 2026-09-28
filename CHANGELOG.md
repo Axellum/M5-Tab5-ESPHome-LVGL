@@ -32,6 +32,30 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 - Doc `docs/tiles_icons.md` (EN + FR) : la palette, comment l'icône est choisie, comment
   en demander une. Tests `tests/test_tuiles_icones.py`.
 
+### 2026-09-28 — Pièces : la démo et le rendu montrent une maison de cinq pièces (ADR-0023)
+
+- **Mode démo** : une maison de cinq pièces et vingt appareils, de tous les types du
+  contrat (lampe couleur à variateur, interrupteur, volet en mouvement, média, scène et
+  script, capteurs avec unité, porte, mouvement, présence, clim), avec un nom que la
+  tablette coupe, des accents, un appareil hors ligne et une pièce de deux tuiles. Elle
+  n'est poussée qu'à une tablette qui a l'action `tab5_maj_tuiles` (firmware 3.2) : les
+  définitions, puis les états à la suite des emplacements (clés `tRT`) ; un firmware 3.x
+  ne reçoit rien de plus, comme avec le blueprint. La maison minimale n'a qu'une pièce
+  (le PC et deux lampes). Les commandes des tuiles sont journalisées avec leur pièce et
+  leur nom. La tuile de la clim suit la carte clim de chaque scène.
+- **Rendu hors tablette** : le mode HA de chaque pièce (`accueil-ha-piece-1` à `-5`,
+  qui remplacent `accueil-interrupteurs`), par des gestes partis du bord de l'écran,
+  seul endroit libre quel que soit le nombre de cartes ; chaque écran revient de
+  lui-même à l'accueil en mode météo. Les pages 3-4 et horaires montrent les épaules
+  des pièces en mode météo. Tant que le firmware des pièces n'est pas fusionné, ces
+  captures montrent l'ancien affichage.
+- Tests : `tests/test_demo_pieces.py` relit la grammaire dans l'ADR-0023 (types,
+  options, code d'icône, longueurs, table pièce ↔ page) et y confronte les payloads,
+  l'échappement (`|` → `/`, `;` → `,`), la cohérence des états et la palette ;
+  `tests/test_demo.py` (pièces seulement avec l'action, définitions avant les états,
+  journal) ; `tests/test_rendu_ecrans.py` (un écran HA par pièce, retour à l'accueil,
+  gestes hors des boutons, boutons du haut).
+
 ### 2026-09-28 — Site : une release n'est retenue qu'avec ses binaires (suite de #221)
 
 - `pages.py choisir` exigeait les trois manifestes, sans leurs binaires. Les neuf

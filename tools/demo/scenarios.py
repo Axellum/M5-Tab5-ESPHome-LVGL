@@ -12,6 +12,7 @@ sans revérifier contre le firmware réel.
 from __future__ import annotations
 
 import datetime as _dt
+import re
 from dataclasses import dataclass, field
 
 # ---------------------------------------------------------------------------
@@ -58,11 +59,16 @@ def zone_de(cle: str) -> str:
     return "salon" if cle == "salon_hum" else cle
 
 
-def build_emplacements_payload(absentes: frozenset = frozenset()) -> str:
+def build_emplacements_payload(absentes: frozenset = frozenset(), pieces: dict | None = None,
+                               clim: dict | None = None) -> str:
     """tab5_maj_emplacements : tous les emplacements, sauf ceux d'une zone retirée
-    (`--maison-minimale` : comme le blueprint, rien n'est poussé pour une case vide)."""
+    (`--maison-minimale` : comme le blueprint, rien n'est poussé pour une case vide).
+    Avec `pieces` (firmware qui a tab5_maj_tuiles), les états des tuiles suivent (clés
+    tRT, build_etats_tuiles) ; `clim` = celle de la scène, pour la tuile de la clim."""
     payload = "".join(f"{cle}|{etat}|{valeur};" for cle, (etat, valeur) in EMPLACEMENTS.items()
                       if zone_de(cle) not in absentes)
+    if pieces is not None:
+        payload += build_etats_tuiles(pieces, clim)
     assert len(payload.encode("utf-8")) < 32 * 1024, "au-delà d'un message API ESPHome (32 Kio)"
     return payload
 
@@ -93,6 +99,252 @@ def build_zones_absentes(absentes: frozenset) -> str:
     inconnues = set(absentes) - set(ordre)
     assert not inconnues, f"clés de zone inconnues de la tablette : {sorted(inconnues)}"
     return ",".join(c for c in ordre if c in absentes)
+
+
+# ---------------------------------------------------------------------------
+# Pièces et tuiles (ADR-0023, firmware 3.2) : chaque page des cinq tuiles du bas est
+# une pièce de cinq appareils au plus, décrits par HA. Le blueprint pousse d'abord les
+# DÉFINITIONS (action tab5_maj_tuiles, instantané complet : ce qui n'est pas listé est
+# vide), puis les ÉTATS dans tab5_maj_emplacements, sous des clés tRT à quatre champs.
+# La démo fait de même, mais seulement si la tablette a l'action (demo_pusher.py) :
+# comme le blueprint, qui n'appelle jamais une action absente (erreur que
+# continue_on_error ne rattrape pas). Grammaire relue dans l'ADR par
+# tests/test_demo_pieces.py.
+# ---------------------------------------------------------------------------
+
+TYPES_TUILE = ("lum", "int", "vol", "med", "act", "cap", "bin", "cli")
+OPTIONS_TUILE = "dcokrtm"
+# Lettres réservées à un type : variateur et couleur (lampe), TV du blueprint (média),
+# clim du blueprint (clim). o, k et r valent pour tous.
+OPTIONS_DU_TYPE = {"d": "lum", "c": "lum", "t": "med", "m": "cli"}
+# Le firmware garde 24 octets d'un nom (coupé entre deux caractères) ; une unité en
+# fait 7 au plus (« °C », « kWh »…).
+NOM_OCTETS_GARDES = 24
+UNITE_OCTETS_MAX = 7
+# Pièce R ↔ page de la rangée du bas, dans l'ordre où un geste les atteint depuis
+# l'accueil (page 2) : 3 et 4 vers la gauche, 1 et 0 vers la droite.
+PAGE_DE_LA_PIECE = {0: 2, 1: 3, 2: 4, 3: 1, 4: 0}
+
+_CODE_ICONE = re.compile(r"[a-z0-9_]{0,15}")
+_CLASSE_APPAREIL = re.compile(r"[a-z_]+")
+_COULEUR = re.compile(r"[0-9A-F]{6}")
+_HORS_LIGNE = ("unavailable", "unknown")
+_ETATS_VOLET = ("open", "closed", "opening", "closing")
+
+
+@dataclass(frozen=True)
+class Tuile:
+    """Un appareil d'une pièce : sa définition (tab5_maj_tuiles) et son état (clé tRT)."""
+    type: str              # TYPES_TUILE
+    nom: str               # texte affiché : le firmware en garde NOM_OCTETS_GARDES octets
+    icone: str = ""        # code de la palette (Tab5/tab5_tuiles_icones.h), '' = défaut du type
+    options: str = ""      # lettres parmi OPTIONS_TUILE
+    complement: str = ""   # cap : unité ; bin : classe d'appareil ; sinon ''
+    etat: str = "off"      # état HA tel quel
+    valeur: str = "nan"    # lum : luminosité 0-255 ; vol : position 0-100 ; cap : le nombre ;
+                           # cli : température de la pièce ; sinon nan
+    couleur: str = ""      # lum allumée qui donne sa rgb_color : « RRGGBB »
+
+
+@dataclass(frozen=True)
+class Piece:
+    nom: str      # '' : pas d'entrée « p », la tablette écrit « Pièce n » dans sa langue
+    tuiles: dict  # position T (0 = gauche … 4 = droite, sur toutes les pages) -> Tuile
+
+
+# La maison de la démo : cinq pièces, tous les types et toutes les options, un nom que
+# la tablette coupe, des accents, un appareil hors ligne, une pièce de deux tuiles
+# (recentrées en mode HA) et une de trois tuiles espacées. États cohérents avec les
+# emplacements 3.x ci-dessus : TV éteinte (« tv »), PC allumé (« pc »).
+PIECES: dict = {
+    # Accueil (jours 0-4). Les deux lampes en T2 et T3 : l'appui long des captures
+    # « lumieres-chambre » et « lumieres-salon » (tools/rendu/ecrans.py) y ouvre le
+    # popup des lumières de la pièce.
+    0: Piece("Salon", {
+        0: Tuile("med", "Télévision", options="t"),
+        1: Tuile("vol", "Volet du salon", etat="opening", valeur="45"),
+        2: Tuile("lum", "Lampe d'ambiance", "canape", "dc", etat="on", valeur="180", couleur="FF8C1A"),
+        3: Tuile("lum", "Plafonnier", options="d"),
+        # Une scène a pour état l'heure de sa dernière activation.
+        4: Tuile("act", "Soirée cinéma", etat="2026-06-15T20:45:00+00:00"),
+    }),
+    # Jours 5-9.
+    1: Piece("Entrée", {
+        0: Tuile("bin", "Porte d'entrée", complement="door"),
+        1: Tuile("bin", "Mouvement du couloir", complement="motion", etat="on"),
+        # Lecture seule : c'est le détecteur qui l'allume.
+        2: Tuile("lum", "Applique", options="r", etat="on"),
+        # Script à confirmer : un second appui dans les 3 s l'envoie.
+        3: Tuile("act", "Je pars", options="k"),
+        4: Tuile("int", "Prise du portail", etat="unavailable"),
+    }),
+    # Jours 10-14. Nom de 26 octets (la tablette en garde 24) ; trois tuiles espacées,
+    # côte à côte et centrées en mode HA.
+    2: Piece("Chambre d'amis à l'étage", {
+        0: Tuile("lum", "Chevet", "lit", "d", etat="on", valeur="90"),
+        # La clim du blueprint : état et température suivent tab5_maj_clim (etat_tuile).
+        2: Tuile("cli", "Climatisation", options="m", etat="cool", valeur="23.5"),
+        4: Tuile("bin", "Présence", complement="presence"),
+    }),
+    # Heures 0-4. Deux tuiles à gauche : recentrées en mode HA.
+    3: Piece("Bureau", {
+        # Jamais éteint depuis l'écran (réveil par le réseau).
+        0: Tuile("int", "Ordinateur", "ordinateur", "o", etat="on"),
+        1: Tuile("cap", "Consommation", complement="W", etat="126", valeur="126"),
+    }),
+    # Heures 5-9.
+    4: Piece("Jardin", {
+        0: Tuile("vol", "Store de la terrasse", etat="open", valeur="60"),
+        1: Tuile("cap", "Humidité du sol", complement="%", etat="34", valeur="34"),
+        2: Tuile("med", "Enceinte", etat="playing"),
+        # 36 octets, coupé ; indigo, trop sombre pour le fond : la tablette l'éclaircit.
+        3: Tuile("lum", "Guirlande lumineuse de la terrasse", "led", "dc", etat="on", valeur="255",
+                 couleur="4B0082"),
+        # 24 octets tout juste : gardé en entier.
+        4: Tuile("cap", "Température extérieure", complement="°C", etat="17.8", valeur="17.8"),
+    }),
+}
+
+# `--maison-minimale` : ses appareils (le PC et deux lampes) dans une seule pièce, sans
+# nom (« Pièce 1 » à l'écran), aux places qu'ils ont en 3.x. Glisser en mode HA ne
+# change rien : il n'y a pas d'autre pièce.
+PIECES_MINIMALES: dict = {
+    0: Piece("", {
+        0: Tuile("int", "PC", "ordinateur", etat="on"),
+        2: Tuile("lum", "Chambre", "lit", "d"),
+        3: Tuile("lum", "Salon", "canape", "d", etat="on", valeur="180"),
+    }),
+}
+
+
+def pieces_de(absentes: frozenset) -> dict:
+    """Les pièces poussées : la maison minimale (des zones retirées) a les siennes."""
+    return PIECES_MINIMALES if absentes else PIECES
+
+
+def echapper(texte: str) -> str:
+    """Champ texte d'un payload : « | » devient « / » et « ; » devient « , », comme le
+    blueprint (tab5_emplacements.yaml) et le contrat (ADR-0023)."""
+    return texte.replace("|", "/").replace(";", ",")
+
+
+def _nombre(texte: str) -> float | None:
+    try:
+        v = float(texte)
+    except ValueError:
+        return None
+    return None if v != v else v  # « nan » n'est pas un nombre
+
+
+def verifier_definition(cle: str, tuile: Tuile) -> None:
+    """Assertions du contrat (ADR-0023) sur la définition d'une tuile."""
+    assert tuile.type in TYPES_TUILE, f"{cle} : type inconnu {tuile.type!r}"
+    assert _CODE_ICONE.fullmatch(tuile.icone), f"{cle} : code d'icône hors palette {tuile.icone!r}"
+    assert set(tuile.options) <= set(OPTIONS_TUILE), f"{cle} : option inconnue dans {tuile.options!r}"
+    assert len(set(tuile.options)) == len(tuile.options), f"{cle} : option répétée"
+    for lettre, type_ in OPTIONS_DU_TYPE.items():
+        assert lettre not in tuile.options or tuile.type == type_, f"{cle} : option {lettre} hors {type_}"
+    if tuile.type == "cap":
+        assert 0 < len(tuile.complement.encode("utf-8")) <= UNITE_OCTETS_MAX, f"{cle} : unité"
+    elif tuile.type == "bin":
+        assert _CLASSE_APPAREIL.fullmatch(tuile.complement), f"{cle} : classe d'appareil"
+    else:
+        assert tuile.complement == "", f"{cle} : complément réservé à cap et bin"
+    assert tuile.nom.strip(), f"{cle} : nom vide"
+
+
+def etat_tuile(tuile: Tuile, clim: dict | None = None) -> tuple:
+    """(état, valeur, couleur) poussés pour une tuile. La clim du blueprint (option m)
+    est celle de tab5_maj_clim : la tuile et la carte clim disent la même chose."""
+    if tuile.type == "cli" and "m" in tuile.options and clim:
+        return clim["mode"], clim["current"], ""
+    return tuile.etat, tuile.valeur, tuile.couleur
+
+
+def verifier_etat(cle: str, tuile: Tuile, etat: str, valeur: str, couleur: str) -> None:
+    """Assertions du contrat (ADR-0023) sur l'état d'une tuile, selon son type."""
+    assert etat, f"{cle} : état vide"
+    v = _nombre(valeur)
+    assert v is not None or valeur == "nan", f"{cle} : valeur {valeur!r} ni nombre ni nan"
+    assert couleur == "" or (tuile.type == "lum" and etat == "on" and "c" in tuile.options
+                             and _COULEUR.fullmatch(couleur)), f"{cle} : couleur {couleur!r}"
+    if etat in _HORS_LIGNE:
+        assert valeur == "nan" and couleur == "", f"{cle} : hors ligne sans valeur"
+    elif tuile.type == "lum":
+        if etat == "on" and "d" in tuile.options:
+            assert v is not None and 0 <= v <= 255 and v == int(v), f"{cle} : luminosité 0-255"
+        else:
+            assert valeur == "nan", f"{cle} : luminosité sans variateur allumé"
+    elif tuile.type == "vol":
+        assert etat in _ETATS_VOLET, f"{cle} : état de volet {etat!r}"
+        assert valeur == "nan" or 0 <= v <= 100, f"{cle} : position 0-100"
+    elif tuile.type == "cap":
+        assert v is not None, f"{cle} : un capteur a une valeur"
+    elif tuile.type != "cli":
+        assert valeur == "nan", f"{cle} : pas de valeur pour {tuile.type}"
+
+
+def _tuiles_de(pieces: dict):
+    """(clé « tRT », tuile) vérifiée, pièce par pièce dans l'ordre de R, tuiles dans
+    l'ordre de T."""
+    for r, piece in sorted(pieces.items()):
+        assert r in PAGE_DE_LA_PIECE, f"pièce {r} : R va de 0 à 4"
+        assert piece.tuiles, f"pièce {r} sans appareil : ne pas la déclarer"
+        for t, tuile in sorted(piece.tuiles.items()):
+            assert 0 <= t <= 4, f"pièce {r} : T va de 0 à 4"
+            verifier_definition(f"t{r}{t}", tuile)
+            yield f"t{r}{t}", tuile
+
+
+def build_tuiles_payload(pieces: dict) -> str:
+    """tab5_maj_tuiles : « pR|nom;tRT|type|icône|options|complément|nom;… » (ADR-0023).
+    Instantané complet : une tuile ou une pièce absente est vide. Une pièce sans nom n'a
+    pas d'entrée « p » (la tablette écrit « Pièce n »)."""
+    entrees = []
+    for r, piece in sorted(pieces.items()):
+        if piece.nom:
+            entrees.append(f"p{r}|{echapper(piece.nom)}")
+        for cle, tuile in _tuiles_de({r: piece}):
+            entrees.append("|".join((cle, tuile.type, tuile.icone, tuile.options,
+                                     echapper(tuile.complement), echapper(tuile.nom))))
+    payload = "".join(f"{e};" for e in entrees)
+    assert len(payload.encode("utf-8")) < 32 * 1024, "au-delà d'un message API ESPHome (32 Kio)"
+    return payload
+
+
+def build_etats_tuiles(pieces: dict, clim: dict | None = None) -> str:
+    """Clés tRT de tab5_maj_emplacements : « tRT|état|valeur|couleur;… », toutes les
+    tuiles, comme le blueprint juste après les définitions. `clim` : voir etat_tuile."""
+    parts = []
+    for cle, tuile in _tuiles_de(pieces):
+        etat, valeur, couleur = etat_tuile(tuile, clim)
+        verifier_etat(cle, tuile, etat, valeur, couleur)
+        parts.append(f"{cle}|{echapper(etat)}|{valeur}|{couleur};")
+    return "".join(parts)
+
+
+def nom_de_la_piece(r: int, piece: Piece) -> str:
+    return piece.nom or f"Pièce {r + 1}"
+
+
+def decrire_emplacement(cle: str, pieces: dict) -> str:
+    """Pour le journal des commandes de l'écran : « t02 (Salon › Lampe d'ambiance, lum) »."""
+    m = re.fullmatch(r"t([0-4])([0-4])", cle)
+    if m:
+        r, t = int(m.group(1)), int(m.group(2))
+        piece = pieces.get(r)
+        tuile = piece.tuiles.get(t) if piece else None
+        if tuile is None:
+            return f"{cle} (tuile vide : absente des définitions poussées)"
+        return f"{cle} ({nom_de_la_piece(r, piece)} › {tuile.nom}, {tuile.type})"
+    m = re.fullmatch(r"p([0-4])", cle)
+    if m:
+        r = int(m.group(1))
+        piece = pieces.get(r)
+        if piece is None:
+            return f"{cle} (pièce vide : absente des définitions poussées)"
+        return f"{cle} ({nom_de_la_piece(r, piece)}, toutes ses lumières)"
+    return cle
 
 
 # ---------------------------------------------------------------------------

@@ -9,12 +9,18 @@ ne se voit qu'une fois flashé est vérifié ici :
 - la « maison minimale » ne pousse rien pour ses zones retirées ;
 - les deux modes, complet et « maison minimale », passent à blanc ;
 - les codes du lot 4c (pluie « @niveau,début », bandeau « @ha|… ») et le format des
-  horaires suivent le contrat."""
+  horaires suivent le contrat ;
+- les pièces (ADR-0023) ne partent qu'à un firmware qui a `tab5_maj_tuiles`, les
+  définitions avant les états, et les commandes des tuiles sont journalisées par leur
+  nom (grammaire des payloads : tests/test_demo_pieces.py)."""
+import asyncio
 import contextlib
 import io
+import logging
 import os
 import re
 import sys
+from types import SimpleNamespace
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(REPO, "tools", "demo"))
@@ -59,6 +65,65 @@ def test_deux_modes_a_blanc():
         with contextlib.redirect_stdout(sortie):
             demo_pusher._dry_run(absentes)
         assert "OK" in sortie.getvalue()
+        assert "tab5_maj_tuiles" in sortie.getvalue()
+
+
+class _Tablette:
+    """Client aioesphomeapi factice : note chaque action appelée."""
+
+    def __init__(self):
+        self.appels = []
+
+    async def execute_service(self, service, data):
+        self.appels.append((service.name, dict(data)))
+
+
+def _pousser(monkeypatch, avec_tuiles, absentes=frozenset()):
+    async def instant(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(demo_pusher.asyncio, "sleep", instant)
+    noms = list(demo_pusher.SERVICES_ATTENDUS) + ([demo_pusher.SERVICE_TUILES] if avec_tuiles else [])
+    services = {n: SimpleNamespace(name=n, args=[SimpleNamespace(name="payload")]
+                                   if n in ("tab5_maj_emplacements", demo_pusher.SERVICE_TUILES) else [])
+                for n in noms}
+    tablette = _Tablette()
+    asyncio.run(demo_pusher._pousser_scene(tablette, services, scenarios.SCENES[2], absentes))
+    return tablette.appels
+
+
+def test_firmware_3x_sans_pieces(monkeypatch):
+    """Comme le blueprint : sans l'action, ni définitions ni clés tRT."""
+    appels = _pousser(monkeypatch, avec_tuiles=False)
+    assert demo_pusher.SERVICE_TUILES not in [nom for nom, _ in appels]
+    (payload,) = [d["payload"] for nom, d in appels if nom == "tab5_maj_emplacements"]
+    assert payload == scenarios.build_emplacements_payload()
+
+
+def test_firmware_3_2_definitions_puis_etats(monkeypatch):
+    for absentes in (frozenset(), scenarios.MAISON_MINIMALE):
+        appels = _pousser(monkeypatch, avec_tuiles=True, absentes=absentes)
+        noms = [nom for nom, _ in appels]
+        assert noms.index(demo_pusher.SERVICE_TUILES) < noms.index("tab5_maj_emplacements")
+        pieces = scenarios.pieces_de(absentes)
+        donnees = dict(appels)
+        assert donnees[demo_pusher.SERVICE_TUILES]["payload"] == scenarios.build_tuiles_payload(pieces)
+        clim = None if "clim" in absentes else scenarios.SCENES[2].clim
+        assert donnees["tab5_maj_emplacements"]["payload"] == scenarios.build_emplacements_payload(
+            absentes, pieces, clim)
+        assert re.search(r"(^|;)t00\|", donnees["tab5_maj_emplacements"]["payload"])
+
+
+def test_commandes_des_tuiles_journalisees(caplog):
+    gerer = demo_pusher._gerer_appel_service(True, lambda: None, scenarios.PIECES)
+    with caplog.at_level(logging.INFO, logger="demo_pusher"):
+        for cle, action in (("t43", "basculer"), ("p0", "eteindre"), ("lumiere_2", "basculer")):
+            gerer(SimpleNamespace(is_event=True, service="esphome.tab5_action",
+                                  data={"emplacement": cle, "action": action, "valeur": ""}))
+    texte = caplog.text
+    assert "t43 (Jardin › Guirlande lumineuse de la terrasse, lum) : basculer" in texte
+    assert "p0 (Salon, toutes ses lumières) : eteindre" in texte
+    assert "lumiere_2 : basculer" in texte
 
 
 def test_codes_du_lot_4c():
