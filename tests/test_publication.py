@@ -6,7 +6,9 @@
 - tools/publication/pages.py : canaux stable et bêta choisis parmi les releases 3.x,
   site reconstruit depuis leurs fichiers ;
 - cohérence entre le workflow, les révisions d'écran, la page et les packages de
-  publication (mise à jour dans les seuls firmwares publiés)."""
+  publication (mise à jour dans les seuls firmwares publiés) ;
+- tools/publication/archive_ha.py : l'archive Home Assistant de la release
+  (tab5_home_assistant.zip, ADR-0024), jointe par le workflow."""
 import hashlib
 import json
 import os
@@ -22,6 +24,7 @@ sys.path.insert(0, str(REPO / "tools" / "publication"))
 
 import preparer  # noqa: E402
 import pages  # noqa: E402
+import archive_ha  # noqa: E402
 
 
 class _Chargeur(yaml.SafeLoader):
@@ -296,3 +299,66 @@ def test_site_deploye_sans_compiler():
     appel = publication["jobs"]["pages"]
     assert appel["uses"] == "./.github/workflows/site.yml" and appel["needs"] == "release"
     assert appel["permissions"] == job["permissions"]
+
+
+# --- Archive Home Assistant de la release (ADR-0024, 28/09/2026) ---
+
+def test_archive_ha_arborescence_de_config(tmp_path):
+    """tab5_home_assistant.zip = l'arborescence de config/ : packages, custom_templates,
+    blueprint, les optionnels à part (tab5_optionnel/, pas chargés par HA) et le LISEZMOI.
+    Octet pour octet les fichiers du dépôt, qui n'ont plus de placeholder."""
+    import zipfile
+
+    archive = archive_ha.construire("3.2.0", tmp_path)
+    assert archive.name == "tab5_home_assistant.zip"
+    with zipfile.ZipFile(archive) as z:
+        noms = z.namelist()
+        attendus = [chemin for _, chemin in archive_ha.fichiers()] + [archive_ha.LISEZMOI]
+        assert noms == attendus
+        for source, chemin in archive_ha.fichiers():
+            assert z.read(chemin) == source.read_bytes(), chemin
+        lisezmoi = z.read(archive_ha.LISEZMOI).decode("utf-8")
+    ha = REPO / "HomeAssistant_Config"
+    assert {f"packages/{p.name}" for p in (ha / "packages").glob("*.yaml")} <= set(noms)
+    assert "custom_templates/tab5_calendar.jinja" in noms
+    assert "blueprints/automation/tab5/tab5_emplacements.yaml" in noms
+    assert "tab5_optionnel/volet_serre_tracking.yaml" in noms
+    assert not any(n.startswith("packages/volet") for n in noms)
+    assert "3.2.0" in lisezmoi and "packages: !include_dir_named packages" in lisezmoi
+    assert archive_ha.placeholders() == []
+
+
+def test_archive_ha_reproductible(tmp_path):
+    a = archive_ha.construire("3.2.0", tmp_path / "a").read_bytes()
+    b = archive_ha.construire("3.2.0", tmp_path / "b").read_bytes()
+    assert a == b
+
+
+def test_archive_ha_refuse_un_ancien_tag(tmp_path, monkeypatch, capsys):
+    """Un tag d'avant l'ADR-0024 (placeholders) : code 3, rien d'écrit, le workflow
+    n'envoie pas d'archive sans échouer."""
+    base = tmp_path / "HomeAssistant_Config"
+    (base / "packages").mkdir(parents=True)
+    (base / "packages" / "tab5_push.yaml").write_text("x: weather.VOTRE_VILLE\n", encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["archive_ha.py", "--version", "3.1.0", "--base", str(base),
+                                      "--sortie", str(tmp_path / "sortie")])
+    assert archive_ha.main() == 3
+    assert not (tmp_path / "sortie").exists()
+    assert "::warning::" in capsys.readouterr().out
+    with pytest.raises(SystemExit):
+        archive_ha.construire("v3.2", tmp_path)
+
+
+def test_workflow_joint_l_archive_ha():
+    """Job home-assistant : outil du commit du workflow, fichiers du tag, archive jointe à la
+    release ; le site ne télécharge toujours que manifestes et binaires."""
+    flux = yaml.safe_load((REPO / ".github" / "workflows" / "publication.yml").read_text(encoding="utf-8"))
+    job = flux["jobs"]["home-assistant"]
+    assert job["needs"] == "preparation" and job["permissions"] == {"contents": "write"}
+    texte = yaml.dump(job, allow_unicode=True)
+    assert "outils-workflow/tools/publication/archive_ha.py" in texte
+    assert "--base tag/HomeAssistant_Config" in texte
+    assert "gh release upload \"$TAG\" publie-ha/tab5_home_assistant.zip" in texte
+    assert "home-assistant" not in str(flux["jobs"]["release"].get("needs"))
+    site = (REPO / ".github" / "workflows" / "site.yml").read_text(encoding="utf-8")
+    assert "--pattern 'manifest-*.json' --pattern 'tab5-ha-hmi-*.bin'" in site

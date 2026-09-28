@@ -908,6 +908,8 @@ script:
   # ─── Annonce parlée du réveil (confort, nécessite HA) ─────────────────────
   # Déportée dans un script HA (packages/tab5_reveil.yaml) : c'est lui qui a
   # accès à la météo, au planning et au moteur TTS. Silencieux si HA est absent.
+  # Demandée par un ÉVÉNEMENT, pas une action (ADR-0025) : packages/tab5_evenements.yaml
+  # lance le script. Plus besoin de l'option « actions HA » de l'intégration ESPHome.
   - id: tab5_alarm_speak
     mode: restart
     then:
@@ -931,8 +933,8 @@ script:
                 condition:
                   lambda: 'return id(alarm_ringing);'
                 then:
-                  - homeassistant.service:
-                      service: script.tab5_reveil_annonce
+                  - homeassistant.event:
+                      event: esphome.tab5_reveil_annonce
 
   # ─── Annonce d'un rendez-vous ─────────────────────────────────────────────
   - id: tab5_rdv_announce
@@ -950,10 +952,12 @@ script:
               - binary_sensor.is_on: status_ha
               - lambda: 'return !id(system_muted);'
           then:
-            - homeassistant.service:
-                service: assist_satellite.announce
+            # Événement (ADR-0025) : HA l'annonce sur le satellite de CETTE tablette,
+            # trouvé par son appareil (packages/tab5_evenements.yaml). Plus d'entité
+            # à régler si la tablette est renommée.
+            - homeassistant.event:
+                event: esphome.tab5_annonce
                 data:
-                  entity_id: ${entity_tab5_satellite}
                   message: !lambda 'return id(alarm_rdv_speech);'
       - lambda: 'id(tab5_rdv_next_sensor).update();'
 

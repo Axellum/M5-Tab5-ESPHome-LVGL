@@ -1,10 +1,18 @@
 # ============================================================================
 # [AI-CONTEXT]
-# @file packages/volet_serre_tracking.yaml
+# @file optionnel/volet_serre_tracking.yaml
 # @role Suivi d'un volet a moteur « aveugle » (Tuya sans retour de position) :
 #       helpers d'etat, script central appele par le Tab5, synchro de l'ecran,
 #       et suivi des commandes envoyees au volet par d'autres chemins.
-# @install Necessite `homeassistant: packages: !include_dir_named packages`.
+# @install OPTIONNEL (ADR-0024) : seulement pour un volet qui ne signale ni sa
+#       position ni sa course. Copier ce fichier dans config/packages/ (a cote des
+#       autres), recharger, puis choisir le volet dans la liste « Tab5 · volet a
+#       course simulee ». Un volet qui signale opening/closing n'en a pas besoin :
+#       le blueprint « Tab5 — emplacements » le pilote et pousse son etat.
+# @ai_warning Pas dans packages/ : des que `script.tab5_volet_action` existe, le
+#       blueprint lui confie les commandes du volet (variable `volet_par_package`)
+#       au lieu de piloter l'entite choisie dans l'automatisation. Livre par
+#       defaut, ce package aurait rendu muet le volet de tous les autres.
 #
 # @architecture_constraint Le moteur ne renvoie NI position NI fin de course. On
 #       maintient donc l'etat cote HA : un input_boolean « en mouvement » arme
@@ -20,10 +28,43 @@
 #       echouer HA au demarrage avec « expected a dictionary » — c'est
 #       exactement le piege documente dans HomeAssistant_Config/README.md.
 #
-# @ai_instruction Remplacer `VOTRE_VOLET` par votre entite cover. La duree 26 s
-#       (`delay`) est la course complete mesuree : trop courte, l'ecran repasse
-#       a l'arret avant la fin ; trop longue, il reste bloque sur « Mouvement ».
+# @ai_instruction Le volet se choisit dans HA (liste « Tab5 · volet a course
+#       simulee », rien a ecrire ici). Sans choix, le script ne commande rien. La
+#       duree 26 s (`delay`) est la course complete mesuree : trop courte, l'ecran
+#       repasse a l'arret avant la fin ; trop longue, il reste bloque sur
+#       « Mouvement ».
 # ============================================================================
+
+template:
+  # Liste « Tab5 · volet à course simulée » (même principe que
+  # packages/tab5_reglages.yaml) : les volets (cover.*) présents, ou « Aucun ».
+  - triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+      - trigger: event
+        event_type: entity_registry_updated
+      - trigger: state
+        entity_id: input_text.tab5_choix_volet
+    variables:
+      volets: "{{ states.cover | map(attribute='entity_id') | list }}"
+    select:
+      - name: "Tab5 · volet à course simulée"
+        unique_id: tab5_volet_a_course_simulee
+        icon: mdi:window-shutter
+        options: >-
+          {%- set m = states('input_text.tab5_choix_volet') -%}
+          {{ volets + ([m] if m.startswith('cover.') and m not in volets else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_volet') -%}
+          {{ m if m.startswith('cover.') else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_volet
+            data:
+              value: "{{ option }}"
 
 input_boolean:
   volet_serre_mouvement:
@@ -35,6 +76,11 @@ input_text:
     name: "Etat Volet Serre"
     # Repart sur « Ferme » à chaque démarrage : le moteur ne donne pas sa position.
     initial: "Ferme"
+  # Mémoire de la liste « Tab5 · volet à course simulée » : écrite par la liste.
+  tab5_choix_volet:
+    name: "Tab5 · mémoire · volet à course simulée"
+    icon: mdi:content-save-outline
+    max: 255
 
 script:
   tab5_volet_action:
@@ -49,6 +95,13 @@ script:
           select:
             options: ["open", "close", "stop"]
     sequence:
+      - variables:
+          volet: >-
+            {%- set v = states('select.tab5_volet_a_course_simulee') -%}
+            {{ v if v.startswith('cover.') and expand(v) | count > 0 else '' }}
+      # Aucun volet choisi : rien à commander (une cible vide lèverait une erreur).
+      - condition: template
+        value_template: "{{ volet != '' }}"
       - choose:
           # ---- STOP : arret immediat, position intermediaire inconnue ----
           - conditions:
@@ -57,7 +110,7 @@ script:
             sequence:
               - action: cover.stop_cover
                 target:
-                  entity_id: cover.VOTRE_VOLET
+                  entity_id: "{{ volet }}"
               - action: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.volet_serre_mouvement
@@ -73,7 +126,7 @@ script:
             sequence:
               - action: cover.open_cover
                 target:
-                  entity_id: cover.VOTRE_VOLET
+                  entity_id: "{{ volet }}"
               - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.volet_serre_mouvement
@@ -100,7 +153,7 @@ script:
             sequence:
               - action: cover.close_cover
                 target:
-                  entity_id: cover.VOTRE_VOLET
+                  entity_id: "{{ volet }}"
               - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.volet_serre_mouvement
@@ -153,10 +206,12 @@ automation:
         event_data:
           domain: cover
     conditions:
+      # Le volet choisi dans « Tab5 · volet à course simulée » (aucun : jamais vrai).
       - condition: template
         value_template: >
+          {% set v = states('select.tab5_volet_a_course_simulee') %}
           {% set eid = trigger.event.data.service_data.entity_id | default('') %}
-          {{ eid == 'cover.VOTRE_VOLET' or (eid is iterable and 'cover.VOTRE_VOLET' in eid) }}
+          {{ v.startswith('cover.') and (eid == v or (eid is iterable and eid is not string and v in eid)) }}
       - condition: template
         value_template: "{{ trigger.event.data.service in ['open_cover', 'close_cover', 'stop_cover'] }}"
       - condition: state

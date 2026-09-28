@@ -363,8 +363,9 @@ blueprint:
         agenda_travail:
           name: Agenda de travail
           description: >-
-            Sans agenda, le panneau planning sort de la carte centrale. Les horaires
-            eux-mêmes viennent encore du package tab5_push.yaml (VOTRE_EMAIL).
+            Laissé vide : celui de la liste « Tab5 · agenda de travail » (package
+            tab5_reglages), qui donne aussi les horaires et l'heure du réveil. Sans agenda
+            du tout, le panneau planning sort de la carte centrale.
           default: []
           selector:
             entity:
@@ -869,6 +870,12 @@ variables:
         {%- set ns.d = dict(ns.d, **{'pot_' ~ n ~ '_' ~ suffixe: e}) -%}
       {%- endfor -%}
     {%- endfor -%}
+    {#- Agenda de travail laissé vide ici : celui de la liste « Tab5 · agenda de travail »
+        (packages/tab5_reglages.yaml, ADR-0024), pour ne le choisir qu'une fois. -#}
+    {%- set liste = states('select.tab5_agenda_de_travail') -%}
+    {%- if not ns.d.get('planning') and liste.startswith('calendar.') and states[liste] is not none -%}
+      {%- set ns.d = dict(ns.d, planning=liste) -%}
+    {%- endif -%}
     {{ ns.d }}
   # Type de tuile par domaine : le tableau « Type | HA domains » de l'ADR-0023
   # (tests/test_tuiles_blueprint.py compare). Un autre domaine n'a pas de tuile.

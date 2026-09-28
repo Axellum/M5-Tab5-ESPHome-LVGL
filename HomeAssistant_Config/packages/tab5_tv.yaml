@@ -28,14 +28,19 @@
 #       sait interroger et ARRÊTER une app par son nom, mais son POST de
 #       lancement ne répond 201 que pour Netflix (404 ailleurs) : inutilisable.
 #
-# @ai_instruction L'IP de la TV ne vit PLUS dans ce fichier : elle est passée
-#       en `!secret tab5_tv_app_url` (voir @install ci-dessous). Ce fichier est
-#       suivi dans un dépôt public — l'IP y était en clair, et le vérificateur
-#       `tools/verifier_secrets_config.py` la signalait à chaque passage.
-#       La TV est en ETHERNET (`networkType: wired`), donc l'IP est stable ; si
-#       elle change, corriger le SECRET, pas ce fichier, puis vérifier avec
-#       `curl http://<ip>:8001/api/v2/applications/3201907018807` (doit répondre
-#       le JSON de Netflix). Idéalement, poser un bail DHCP fixe.
+# @ai_instruction La TV et son adresse se choisissent dans HA (ADR-0024), jamais
+#       dans ce fichier public : liste « Tab5 · TV Samsung » (par défaut la seule
+#       TV de l'intégration Samsung Smart TV) et texte « Tab5 · adresse de la TV »
+#       (adresse IP locale ou nom d'hôte). Adresse vide : celle que donne un suivi réseau
+#       (device_tracker d'un routeur, attribut `ip`) de la même adresse MAC que la
+#       TV, s'il y en a un. La télécommande (remote.*) est celle du même appareil.
+#       Tant que la TV ou son adresse manque, le script ne fait rien (une
+#       notification persistante dit quoi régler) : plus de `!secret`, donc plus
+#       de configuration HA refusée faute de secret (piège du 28/09/2026 : sans la
+#       ligne `tab5_tv_app_url` dans secrets.yaml, HA refusait TOUTE sa
+#       configuration). Adresse qui change : poser un bail DHCP fixe, puis
+#       vérifier avec `curl http://<ip>:8001/api/v2/applications/3201907018807`
+#       (doit répondre le JSON de Netflix).
 #
 # @ai_instruction Pour retrouver l'id d'une app : la TV ne sait PLUS lister ses
 #       applications (Samsung a retiré `ed.installedApp.get` sur les modèles
@@ -44,23 +49,63 @@
 #       → renvoie {"id","name","running","version"} si installée, 404 sinon.
 #       Le nom exact d'une app peut se lire par DIAL :
 #         curl http://<ip-de-la-tv>:8080/ws/app/CANAL+
-# @install Nécessite homeassistant.packages: !include_dir_named packages
-#       ET, dans le `secrets.yaml` de Home Assistant, la ligne :
-#         tab5_tv_app_url: "http://<ip-de-la-tv>:8001/api/v2/applications/{{ app_id }}"
-#       L'URL ENTIÈRE va dans le secret, template compris : `!secret` est résolu
-#       au chargement du YAML, bien avant le rendu Jinja, donc on ne peut pas
-#       l'insérer au milieu d'une chaîne (`"http://!secret …"` ne marche pas).
-#       `rest_command` rend ensuite `url` comme un template, et `{{ app_id }}`
-#       est substitué à l'appel comme avant.
-#       Sans ce secret, HA refuse de démarrer sur ce package.
+# @install Nécessite homeassistant.packages: !include_dir_named packages. Rien
+#       à écrire dans secrets.yaml ; sans TV Samsung, le package reste inerte.
+#       Migration depuis la 3.1 : l'IP de la ligne `tab5_tv_app_url` de secrets.yaml
+#       va dans « Tab5 · adresse de la TV » ; la ligne peut ensuite partir.
 # ============================================================================
+
+input_text:
+  # IP ou nom de la TV, tapé dans HA (Paramètres → Appareils et services →
+  # Entrées, ou sur un tableau de bord). Le port 8001 est ajouté s'il manque.
+  tab5_tv_adresse:
+    name: "Tab5 · adresse de la TV"
+    icon: mdi:ip-network
+    max: 100
+  # Mémoire de la liste « Tab5 · TV Samsung » : écrite par la liste.
+  tab5_choix_tv:
+    name: "Tab5 · mémoire · TV Samsung"
+    icon: mdi:content-save-outline
+    max: 255
+
+template:
+  # Liste « Tab5 · TV Samsung » : à déclencheurs, comme celles de tab5_reglages.yaml.
+  # Par défaut, la seule TV de l'intégration Samsung Smart TV (samsungtv).
+  - triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+      - trigger: event
+        event_type: entity_registry_updated
+      - trigger: state
+        entity_id: input_text.tab5_choix_tv
+    variables:
+      tvs: "{{ states.media_player | map(attribute='entity_id') | list }}"
+      samsung: "{{ integration_entities('samsungtv') | select('match', 'media_player[.]') | list }}"
+    select:
+      - name: "Tab5 · TV Samsung"
+        unique_id: tab5_tv_samsung
+        icon: mdi:television
+        options: >-
+          {%- set m = states('input_text.tab5_choix_tv') -%}
+          {{ tvs + ([m] if m.startswith('media_player.') and m not in tvs else []) + ['Aucune'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_tv') -%}
+          {{ m if m.startswith('media_player.') else ('Aucune' if m == 'Aucune' or samsung | count != 1 else samsung[0]) }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_tv
+            data:
+              value: "{{ option }}"
 
 rest_command:
   # Lance une application Tizen par son id. Corps vide obligatoire : sans
-  # Content-Length, la TV répond 411 Length Required.
+  # Content-Length, la TV répond 411 Length Required. `hote` (ip:port) et `app_id`
+  # viennent du script ci-dessous : l'adresse est un réglage de HA, pas un secret.
   tab5_tv_lancer_app:
-    # URL entière en secret (hôte + chemin + template) : voir @install en tête.
-    url: !secret tab5_tv_app_url
+    url: "http://{{ hote }}/api/v2/applications/{{ app_id }}"
     method: post
     payload: ""
     timeout: 10
@@ -139,24 +184,66 @@ script:
           cible: "{{ app | lower | trim }}"
           app_id: "{{ catalogue.get(cible, '') }}"
           sequence_touches: "{{ sequences.get(cible, []) }}"
+          # TV choisie dans HA (« Tab5 · TV Samsung »), '' si aucune ou disparue.
+          tv: >-
+            {%- set t = states('select.tab5_tv_samsung') -%}
+            {{ t if t.startswith('media_player.') and expand(t) | count > 0 else '' }}
+          # Télécommande : le remote.* du même appareil, sinon celui du même nom.
+          telecommande: >-
+            {%- set r = (device_entities(device_id(tv)) | select('match', 'remote[.]') | first | default('')) if tv else '' -%}
+            {%- set n = 'remote.' ~ tv.split('.', 1)[1] if tv else '' -%}
+            {{ r if r else (n if n and expand(n) | count > 0 else '') }}
+          # hôte:port de l'API REST Tizen : « Tab5 · adresse de la TV » (schéma et chemin
+          # retirés, port 8001 par défaut), sinon l'`ip` d'un suivi réseau qui porte
+          # l'adresse MAC de la TV.
+          hote: >-
+            {%- set brut = states('input_text.tab5_tv_adresse') | trim -%}
+            {%- set brut = '' if brut in ['unknown', 'unavailable'] else brut -%}
+            {%- if brut == '' and tv -%}
+              {%- set macs = (device_attr(device_id(tv), 'connections') or []) | selectattr(0, 'eq', 'mac') | map(attribute=1) | map('lower') | list -%}
+              {%- set ns = namespace(ip='') -%}
+              {%- for s in states.device_tracker if ns.ip == '' and s.attributes.ip is defined and (s.attributes.mac | default('') | lower) in macs -%}
+                {%- set ns.ip = s.attributes.ip | string -%}
+              {%- endfor -%}
+              {%- set brut = ns.ip -%}
+            {%- endif -%}
+            {%- set h = brut | regex_replace('^[a-zA-Z]+://', '') -%}
+            {%- set h = h.split('/')[0] -%}
+            {{ '' if h == '' else (h if ':' in h else h ~ ':8001') }}
 
       # Nom inconnu des deux tables : on s'arrête ici plutôt que de POSTer une
       # URL vide (la TV répondrait 404 et on ne saurait pas pourquoi).
       - condition: template
         value_template: "{{ app_id != '' or (sequence_touches | length > 0) }}"
 
+      # Réglages manquants : rien n'est envoyé, et une notification dit quoi régler
+      # (le bouton de l'écran ne ferait sinon rien, sans explication).
+      - if:
+          - condition: template
+            value_template: >-
+              {{ tv == '' or (app_id != '' and hote == '') or (app_id == '' and telecommande == '') }}
+        then:
+          - action: persistent_notification.create
+            data:
+              notification_id: tab5_tv_reglages
+              title: "Tab5 : TV à régler dans Home Assistant"
+              message: >-
+                {{ "Aucune TV choisie dans la liste « Tab5 · TV Samsung »." if tv == '' else
+                   ("Adresse de la TV inconnue : renseignez « Tab5 · adresse de la TV » (son adresse IP sur le réseau local)." if app_id != '' and hote == ''
+                    else "Pas de télécommande (remote.*) pour " ~ tv ~ " : l'intégration Samsung Smart TV la crée.") }}
+          - stop: "TV ou adresse à régler (notification tab5_tv_reglages)"
+
       # TV éteinte : l'allumer et lui laisser le temps de monter sa pile réseau,
       # sinon la commande part avant que la TV ne réponde.
       - if:
-          - condition: state
-            entity_id: media_player.VOTRE_TV
-            state: "off"
+          - condition: template
+            value_template: "{{ is_state(tv, 'off') }}"
         then:
           - action: media_player.turn_on
             target:
-              entity_id: media_player.VOTRE_TV
+              entity_id: "{{ tv }}"
           - wait_template: >-
-              {{ not is_state('media_player.VOTRE_TV', 'off') }}
+              {{ not is_state(tv, 'off') }}
             timeout: "00:00:15"
             continue_on_timeout: true
           - delay: "00:00:03"
@@ -169,6 +256,7 @@ script:
             sequence:
               - action: rest_command.tab5_tv_lancer_app
                 data:
+                  hote: "{{ hote }}"
                   app_id: "{{ app_id }}"
           # Entrée physique → séquence de touches de la télécommande
           - conditions:
@@ -182,7 +270,7 @@ script:
               # Ne pas descendre sous 0,5 s sans le vérifier à l'écran.
               - action: remote.send_command
                 target:
-                  entity_id: remote.VOTRE_TV
+                  entity_id: "{{ telecommande }}"
                 data:
                   command: "{{ sequence_touches }}"
                   delay_secs: 0.6

@@ -122,6 +122,81 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   journal) ; `tests/test_rendu_ecrans.py` (un écran HA par pièce, retour à l'accueil,
   gestes hors des boutons, boutons du haut).
 
+### 2026-09-28 — Événements seulement : plus d'option « actions HA » à cocher (ADR-0025)
+
+- **Le firmware n'appelle plus aucune action de Home Assistant.** Ses 13 derniers
+  `homeassistant.service` (briefing du réveil, annonces, calendrier mois et jour, alertes
+  lues, interruption de la voix, choix du pipeline, « MAJ Écran », « Recharger autos »,
+  « Redémarrer HA ») deviennent des événements `esphome.tab5_*`. L'étape d'installation
+  « Autoriser l'appareil à effectuer des actions Home Assistant » disparaît ; l'option
+  peut être décochée, ce qui ferme à la tablette l'accès à *toutes* les actions de HA.
+- **Nouveau package `packages/tab5_evenements.yaml`** : une automatisation traduit ces
+  événements en une liste blanche d'actions, pour un appareil de modèle `tab5-ha-hmi`
+  seulement, sur les entités de CETTE tablette (`device_entities`) ; aucun nom d'action
+  ni d'entité ne vient de l'événement. `homeassistant.restart` ne part que de
+  l'événement de confirmation, émis par le seul bouton « Confirmer ». Le pipeline n'est
+  choisi que si l'option existe (plus d'erreur au démarrage sans « Discussion LLM »).
+- **Plus d'entité à régler** : les substitutions `entity_tab5_satellite`,
+  `_media_player`, `_pipeline_select`, `entity_primary_active` et `entity_push_automation`
+  sont supprimées (une ligne restée dans `user_entities.yaml` est ignorée) ; un
+  renommage de la tablette ou de l'automatisation de poussée ne casse plus rien.
+- **Mise à jour depuis la 3.1** : déployer le package d'abord (inactif avec une 3.1),
+  puis le firmware, puis décocher l'option. Un firmware récent sans le package ne plante
+  pas mais ses demandes se perdent (détail dans `docs/installation.md`).
+- Tests : `tests/test_actions_ha.py` réécrit (aucune action dans le firmware, chaque
+  événement émis a un consommateur et inversement, liste blanche, garde du modèle,
+  redémarrage sur confirmation seulement). Job « Installation dans un HA neuf » : sans
+  l'option, calendrier ouvert par le select « Aller à l'écran » et « MAJ Écran » touché
+  par le doigt virtuel, de bout en bout ; un redémarrage forgé par un autre appareil est
+  ignoré ; aucune réparation « service_calls_not_allowed ». Le job se relance aussi sur
+  les fichiers du firmware qui émettent ces demandes.
+- Docs : guide d'installation (étape retirée, section « Passer d'une 3.1 à la suite »),
+  ADR-0025, contrat des événements dans `Tab5/README.md`, README HA, assistant vocal,
+  dépannage, site (vitrine et page d'installation, avec la note pour la 3.1).
+
+### 2026-09-28 — Popup calendrier : chaque demande de mois a sa réponse
+
+- `tab5_calendrier_mois` et `tab5_calendrier_jour` (`packages/tab5_calendar.yaml`) passent
+  de `mode: restart` à `mode: queued` (`max: 10`). La tablette demande d'affilée le mois
+  affiché et ses deux voisins (pré-chargement) : en `restart`, chaque demande annulait la
+  précédente et une seule des trois aboutissait (vu par le job « HA neuf »). Chaque
+  réponse porte son mois et va dans le cache de la tablette ; une réponse de jour
+  périmée est déjà ignorée par le firmware. Test : `tests/test_installation_ha.py`.
+
+### 2026-09-28 — Home Assistant sans placeholder : une archive, une ligne de YAML, des choix dans l'interface
+
+Installer le côté Home Assistant ne demande plus ni dépôt ni Python ([ADR-0024](docs/decisions/0024-packages-without-placeholders.md)).
+- **Archive `tab5_home_assistant.zip` jointe aux releases** (`tools/publication/archive_ha.py`,
+  job `home-assistant` de `publication.yml`) : `packages/`, `custom_templates/`, le blueprint
+  et `tab5_optionnel/`, dans l'arborescence de `config/`, avec un LISEZMOI. À décompresser
+  dans `config/`, puis une seule ligne de YAML (`packages: !include_dir_named packages`).
+- **Plus aucun placeholder** dans les packages : chaque valeur de la maison se choisit dans
+  HA, dans des listes « Tab5 · … » (nouveau `packages/tab5_reglages.yaml`) : agenda de
+  travail, des rendez-vous, des anniversaires, des jours fériés, téléphone, capteur de
+  présence ; TV Samsung et son adresse (`tab5_tv.yaml`). Choix par défaut seulement sans
+  ambiguïté ; « Aucun » éteint la fonction, sans erreur. Les agendas `calendar.famille`,
+  `calendar.anniversaires` et des jours fériés ne sont plus écrits en dur ; un agenda de
+  l'intégration Jours fériés compte tous ses événements comme fériés.
+- **Détectés** : la tablette par le modèle de son appareil (`sensor.tab5_tablette` : écran,
+  réveil en cours, micro, satellite, uptime… quel que soit son nom) ; les capteurs
+  Météo-France de la ville, la météo OpenWeatherMap et MeteoAlarm (`sensor.tab5_sources_meteo`).
+- **Plus de configuration HA refusée faute de secret** : `tab5_tv.yaml` n'a plus de
+  `!secret tab5_tv_app_url` ; l'adresse de la TV est un réglage de HA (ou l'IP d'un suivi du
+  routeur), et le package reste inerte tant qu'elle manque (une notification dit quoi régler).
+- **Volet à course simulée optionnel** : `volet_serre_tracking.yaml` passe dans
+  `HomeAssistant_Config/optionnel/` (`tab5_optionnel/` de l'archive), volet choisi dans
+  « Tab5 · volet à course simulée ». Livré par défaut, son script aurait pris au blueprint
+  les boutons du volet de tout le monde.
+- `render_ha_config.py` ne fait plus que copier ; `--check` refuse aussi un placeholder
+  restant. `placeholders.example.yaml` réduit à la liste des valeurs à ne jamais publier.
+- CI « HA neuf » : installation sans rien remplir (plus de `placeholders_ci.yaml` ni de
+  ligne dans `secrets.yaml`), sources choisies par `select.select_option`, tablette détectée
+  par son modèle, `check_config` aussi avec les optionnels. Tests : entités `…tab5_…` lues
+  toutes définies, archive reproductible et identique aux fichiers installés.
+- **Migration depuis la 3.1** : remplacer les fichiers, régler les listes (docs/installation.md,
+  étape 4), « Tab5 · agenda de travail » AVANT de recharger les automatisations, sinon le
+  réveil voit tous les jours en repos.
+
 ### 2026-09-28 — Site : une release n'est retenue qu'avec ses binaires (suite de #221)
 
 - `pages.py choisir` exigeait les trois manifestes, sans leurs binaires. Les neuf

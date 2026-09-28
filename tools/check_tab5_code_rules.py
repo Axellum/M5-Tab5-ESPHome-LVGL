@@ -21,7 +21,9 @@ falsifiables sur le dépôt réel :
      de `user_entities.yaml` (`${entity_…}`) ou un `!lambda`. Les entités que la
      tablette expose elle-même (`assist_satellite.*`, `media_player.*`) sont
      dérivées de son nom dans HA : un renommage cassait l'interruption vocale et
-     l'annonce des rendez-vous sans aucune erreur (audit §4.1 point 15).
+     l'annonce des rendez-vous sans aucune erreur (audit §4.1 point 15). Depuis
+     l'ADR-0025, le firmware n'en nomme plus aucune : il émet des événements et HA
+     retrouve ces entités par l'appareil (tests/test_actions_ha.py).
   5. **Métadonnées sur chaque action du contrat API** (`tab5-api-logic.yaml`) :
      toute action porte une `description:`, et chaque variable la forme longue
      `type:` + `description:` + `example:` (ESPHome 2026.9.0, amont #18881). Ce
