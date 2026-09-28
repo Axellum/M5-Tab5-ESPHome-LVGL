@@ -153,3 +153,24 @@ def test_journal_de_ha():
     assert entrees[0]["quand"] == 1790587069.794  # 09:17:49.794 UTC (heure d'été de Paris)
     assert "unknown entity" in entrees[1]["message"]
     assert [verifier.concerne_le_tab5(e) for e in entrees] == [True, True, False]
+
+
+def test_classer_le_journal():
+    """Erreur Tab5 après la connexion : fautive, sauf « Not connected » pendant une
+    déconnexion voulue de la tablette ; avant la connexion : rapportée."""
+    def e(quand, niveau, message):
+        return {"quand": quand, "niveau": niveau, "logger": "homeassistant.components.script.tab5_x",
+                "message": message}
+    entrees = [
+        e(10, "ERROR", "Action esphome.tab5_ha_hmi_y not found"),           # avant : rapportée
+        e(120, "ERROR", "Failed … tab5_maj_rdv_prochains: Not connected to tab5-ha-hmi"),  # pendant : rapportée
+        e(130, "WARNING", "Already running"),                                # avertissement : rapporté
+        e(200, "ERROR", "Failed … Not connected to tab5-ha-hmi"),            # hors fenêtre : fautive
+        e(210, "ERROR", "Error rendering"),                                  # fautive
+        {"quand": 220, "niveau": "ERROR", "logger": "homeassistant.helpers.translation", "message": "demo"},
+    ]
+    fautives, groupes, autres = verifier.classer_journal(entrees, connexion=100, deconnexions=[(115, 125)])
+    assert len(fautives) == 2 and "Not connected" in fautives[0] and "Error rendering" in fautives[1]
+    assert sorted(m for m, *_ in groupes) == ["après la connexion", "avant la connexion",
+                                              "pendant une déconnexion voulue de la tablette"]
+    assert autres == 1

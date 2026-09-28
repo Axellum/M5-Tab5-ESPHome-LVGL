@@ -724,12 +724,43 @@ def concerne_le_tab5(entree: dict) -> bool:
     return any(mot in texte for mot in ("tab5", "m5stack", "esphome"))
 
 
-async def journal_ha(ha: HA, connexion: float, rapport: Rapport) -> None:
-    """Journal de HA : une ERREUR qui concerne le Tab5, survenue après que la tablette
-    s'est connectée, fait échouer le job ; les avertissements, et ce qui précède la
-    connexion, sont rapportés. Avant elle, les actions esphome.tab5_ha_hmi_* n'existent
-    pas : dans l'ordre de docs/installation.md (packages, puis tablette), les poussées
-    lancées au démarrage de HA échouent (« Action … not found »)."""
+def classer_journal(entrees: list[dict], connexion: float,
+                    deconnexions: list[tuple[float, float]]) -> tuple[list[str], dict[tuple, int], int]:
+    """(erreurs fautives, groupes rapportés, nombre d'entrées sans rapport avec le Tab5).
+
+    Fautive : une ERREUR qui concerne le Tab5, après la première connexion de la
+    tablette. Sauf « Not connected to … » pendant une déconnexion VOULUE (`deconnexions`,
+    intervalles d'epoch : rechargement après l'option « actions HA », redémarrage de la
+    tablette) : une poussée partie vers une tablette hors ligne, rapportée à part."""
+    fautives: list[str] = []
+    groupes: dict[tuple, int] = {}
+    autres = 0
+    for e in entrees:
+        if e["niveau"] not in ("WARNING", "ERROR", "CRITICAL"):
+            continue
+        if not concerne_le_tab5(e):
+            autres += 1
+            continue
+        premiere = e["message"].splitlines()[0][:220]
+        if e["quand"] < connexion:
+            moment = "avant la connexion"
+        elif e["niveau"] == "WARNING":
+            moment = "après la connexion"
+        elif "Not connected to" in e["message"] and any(a <= e["quand"] <= b for a, b in deconnexions):
+            moment = "pendant une déconnexion voulue de la tablette"
+        else:
+            fautives.append(f"{e['niveau']} [{e['logger']}] {e['message'][:600]}")
+            continue
+        cle = (moment, e["niveau"], e["logger"], premiere)
+        groupes[cle] = groupes.get(cle, 0) + 1
+    return fautives, groupes, autres
+
+
+async def journal_ha(ha: HA, connexion: float, deconnexions: list[tuple[float, float]], rapport: Rapport) -> None:
+    """Journal de HA (docker logs) jugé par classer_journal. Avant la connexion, les
+    actions esphome.tab5_ha_hmi_* n'existent pas : dans l'ordre de docs/installation.md
+    (packages, puis tablette), les poussées lancées au démarrage de HA échouent
+    (« Action … not found ») ; c'est rapporté."""
     proc = await asyncio.create_subprocess_exec("docker", "logs", ha.conteneur, stdout=subprocess.PIPE,
                                                 stderr=subprocess.STDOUT)
     sortie, _ = await proc.communicate()
@@ -739,25 +770,20 @@ async def journal_ha(ha: HA, connexion: float, rapport: Rapport) -> None:
     if not any(e["logger"].startswith("homeassistant.components.esphome") for e in entrees):
         rapport.echec(f"journal HA illisible : {len(entrees)} ligne(s) reconnue(s), aucune de l'intégration ESPHome")
         return
-    groupes: dict[tuple, int] = {}
-    autres = 0
-    for e in entrees:
-        if e["niveau"] not in ("WARNING", "ERROR", "CRITICAL"):
-            continue
-        if not concerne_le_tab5(e):
-            autres += 1
-            continue
-        apres = e["quand"] >= connexion
-        premiere = e["message"].splitlines()[0][:220]
-        if apres and e["niveau"] != "WARNING":
-            rapport.echec(f"journal HA après la connexion de la tablette — {e['niveau']} [{e['logger']}] "
-                          f"{e['message'][:600]}")
-            continue
-        cle = ("après" if apres else "avant", e["niveau"], e["logger"], premiere)
-        groupes[cle] = groupes.get(cle, 0) + 1
+    fautives, groupes, autres = classer_journal(entrees, connexion, deconnexions)
+    for texte in fautives:
+        rapport.echec(f"journal HA après la connexion de la tablette — {texte}")
     for (moment, niveau, logger_, premiere), n in groupes.items():
-        rapport.info(f"journal HA, {moment} la connexion — {niveau} ×{n} [{logger_}] {premiere}")
+        rapport.info(f"journal HA, {moment} — {niveau} ×{n} [{logger_}] {premiere}")
     rapport.info(f"journal HA : {autres} avertissement(s) ou erreur(s) sans rapport avec le Tab5 (demo, traductions…)")
+
+
+async def rapporter_traces(ha: HA, item_id: str, depuis: float, rapport: Rapport) -> None:
+    """Passages d'une automatisation depuis `depuis` : déclencheur et issue (informatif)."""
+    passages = [t for t in await ha.traces(item_id)
+                if horodatage((t.get("timestamp") or {}).get("start")) >= depuis]
+    for t in passages:
+        rapport.info(f"{item_id} : {t.get('trigger')} — {resume_passage(t)}")
 
 
 async def scenario(args, rapport: Rapport) -> None:
@@ -797,7 +823,15 @@ async def scenario(args, rapport: Rapport) -> None:
             connexion = horodatage(evt["time_fired"])
             rapport.info(f"clé vue {vue - debut:.1f} s après l'ajout, tab5_connected "
                          f"{connexion - debut:.1f} s après")
+            # L'option recharge l'intégration : HA se déconnecte puis revient (une
+            # déconnexion voulue, comme le redémarrage plus bas).
+            deconnexions: list[tuple[float, float]] = []
+            option = time.time()
             await autoriser_actions(ha, entry_id, rapport)
+            retour = await ws.attendre_evenement("esphome.tab5_connected", option, 60)
+            deconnexions.append((option, (horodatage(retour["time_fired"]) if retour else time.time()) + 1))
+            rapport.info("après l'option, HA revient : tab5_connected " + (
+                f"{horodatage(retour['time_fired']) - option:.1f} s après" if retour else "non reçu en 60 s"))
             await attendre_traces(ha, debut, rapport, TRACES_A_L_AJOUT)
 
             # 6 : « Vos appareils », l'automatisation du blueprint, APRÈS l'ajout. Ce que
@@ -810,10 +844,12 @@ async def scenario(args, rapport: Rapport) -> None:
 
             # Redémarrage de la tablette : la clé persiste, HA revient en chiffré, et
             # l'automatisation du blueprint voit enfin une connexion.
+            arret = time.time()
             await tablette.arreter()
             relance = tablette.demarrer()
             await tablette.attendre_port()
             evt = await ws.attendre_evenement("esphome.tab5_connected", relance, 120)
+            deconnexions.append((arret, (horodatage(evt["time_fired"]) if evt else time.time()) + 1))
             rapport.verifier(evt is not None, "après un redémarrage de la tablette, HA se reconnecte (tab5_connected)",
                              "rien en 120 s")
             from aioesphomeapi import ZERO_NOISE_PSK
@@ -826,7 +862,10 @@ async def scenario(args, rapport: Rapport) -> None:
                              f"capteur « Zones masquées » = {etat!r}")
             await asyncio.sleep(3)
             await capturer(ha, args.captures, "installation-ha-2", rapport)
-            await journal_ha(ha, connexion, rapport)
+            # Rendez-vous (packages/tab5_reveil.yaml) : ses passages et leurs déclencheurs,
+            # pour relire une erreur « Not connected » du journal.
+            await rapporter_traces(ha, "tab5_rdv_push", debut, rapport)
+            await journal_ha(ha, connexion, deconnexions, rapport)
     finally:
         await tablette.arreter()
 
