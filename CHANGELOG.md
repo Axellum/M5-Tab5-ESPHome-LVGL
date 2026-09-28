@@ -24,9 +24,10 @@ planning du tap et réponse vocale.
 - Bilan : −33 lignes de code (hors commentaires), deux globals, cinq paramètres et un
   pointeur de `TuilesUI` en moins. L'`on_boot` n'est pas touché.
 - Cas limites relevés, **pas corrigés** (ce serait changer ce qu'on voit) : un tap sur
-  une tuile pendant la réponse vocale superpose le planning et la réponse ; un tap
-  pendant les 190 ms d'une rotation peut laisser un panneau à mi-fondu jusqu'au tour
-  suivant ; la fin de la pluie ou de la vigilance ne retire leur panneau qu'au tour
+  une tuile pendant la réponse vocale superpose le planning et la réponse ; un tap sur
+  une température pendant les 190 ms d'une rotation fige les deux panneaux à mi-course
+  (visible 6 s si l'un est le planning, ou après un aller-retour de pages jusqu'au tour
+  suivant) ; la fin de la pluie ou de la vigilance ne retire leur panneau qu'au tour
   suivant du rotateur (jusqu'à 8 s).
 - `docs/screens.md` (EN/FR) : le rotateur est le script `tab5_central_rotator_auto`
   (pas un `interval:` de `tab5-globals.yaml`), jusqu'à huit panneaux, planning absent
