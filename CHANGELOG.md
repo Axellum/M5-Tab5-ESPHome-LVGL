@@ -4,6 +4,66 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [3.2.0] — 2026-09-28
+
+De `v3.1.0` à aujourd'hui : 8 pull requests (#219 → #223, #230 → #232 ; #223 regroupe
+#224 → #229), plus celle de la release.
+- **Pièces** (ADR-0023) : jusqu'à 5 pièces de 5 appareils, une par page du bas, choisies
+  dans le blueprint ; noms, icônes et couleurs venus de HA. En mode HA, le glisser passe
+  de pièce en pièce ; en mode météo, chaque tuile montre l'appareil de sa page dans ses
+  épaules. Une lampe à variateur affiche sa luminosité en %.
+- **Home Assistant sans placeholder** (ADR-0024) : une archive `tab5_home_assistant.zip`
+  jointe à la release, une ligne de YAML, les valeurs de la maison choisies dans les
+  listes « Tab5 · … ».
+- **Plus d'option « actions HA » à cocher** (ADR-0025) : la tablette envoie des
+  événements, que `tab5_evenements.yaml` traduit en une liste fixe d'actions.
+- **Corrigés** : le popup calendrier n'obtenait qu'une demande de mois sur trois ; la
+  pause du volet retenait toute commande pendant la course simulée (26 s).
+- **Site** : la page d'accueil raconte le projet (#219) ; un canal ne sert qu'une release
+  dont les fichiers sont joints (#221, #222) ; plus de faux succès de déploiement (#231,
+  #232).
+
+**Version mineure** : nouvelles fonctions, compatibles dans les deux sens. Un firmware
+3.2 avec l'ancien blueprint garde l'accueil de la 3.1 ; un blueprint 3.2 avec un
+firmware 3.1 ne pousse que les clés 3.x. Les fichiers HA changent (ci-dessous).
+
+### À faire en mettant à jour depuis 3.1.0
+
+Dans cet ordre (détail dans « Passer d'une 3.1 à la suite » de `docs/installation.md`) :
+1. **HA d'abord** : remplacer les fichiers par ceux de `tab5_home_assistant.zip`, puis
+   régler les listes « Tab5 · … » sur les anciennes valeurs des placeholders, et
+   « Tab5 · agenda de travail » **avant** de recharger les automatisations (sinon tous
+   les jours comptent comme des jours de repos, et le réveil suit).
+   `volet_serre_tracking.yaml` vient maintenant de `tab5_optionnel/` : le garder dans
+   `packages/` seulement si on s'en sert.
+2. **Puis le firmware** (entité « Firmware »).
+3. **Puis décocher** « Autoriser l'appareil à effectuer des actions Home Assistant »
+   (*ESPHome → Configurer*).
+4. **Ré-importer le blueprint** quand on veut, pour les pièces. La pièce 1 laissée vide
+   garde l'accueil 3.x (PC ou TV, volet, trois lumières).
+5. La ligne `tab5_tv_app_url` de `secrets.yaml` peut partir, une fois son IP reportée
+   dans « Tab5 · adresse de la TV ».
+
+### Mesures de la version
+
+- Compilations de publication (ESPHome 2026.9.0, ST7123), `v3.1.0` contre
+  `v3.2.0-rc.1`, même firmware que ce tag hors numéro de version : image
+  3 280 330 → 3 358 098 o (+78 Ko : pièces, 80 glyphes d'icônes, textes), RAM statique
+  171 526 → 172 430 o (+904 o). Aucun avertissement de compilation dans notre code.
+- Rendu hors tablette : six langues, galerie mise à jour (#230).
+- Test « installation dans un HA neuf » : vert, avec deux pièces (définitions relues
+  dans la trace, rien envoyé au protocole 1).
+- Tablette de l'auteur (ST7123) : 3.2.0-dev depuis le 28/09 17:11, rc.1 installée à
+  19:10 (capture série propre, entité « Firmware » revenue), essayée le soir même.
+
+### Problèmes connus
+
+Ceux de la 3.1.0. En plus :
+- les nouveaux textes en allemand, néerlandais, espagnol et italien sont traduits par
+  une IA, pas encore relus ;
+- un autre appareil ESPHome déjà ajouté à HA pourrait envoyer les événements de la
+  tablette (écrit dans l'ADR-0025).
+
 ### 2026-09-28 (soir) — Site : plus de faux succès sur un commit déjà déployé
 
 - La pré-release v3.2.0-rc.1 visait `de1cd42`, que le push de #230 sur `main` venait de
