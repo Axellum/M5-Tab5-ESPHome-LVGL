@@ -321,7 +321,7 @@ variables:
   fenetre_mesures: 310
   # Emplacements à pousser pour ce déclenchement.
   cles: >-
-    {%- if trigger.id == 'connexion' -%}
+    {%- if trigger.id in ['connexion', 'rechargement'] -%}
       {%- set ns = namespace(l=[]) -%}
       {%- for c in cles_emplacements -%}
         {%- set ns.l = ns.l + [c] + ([c ~ '_ec', c ~ '_lux', c ~ '_temp', c ~ '_bat'] if c.startswith('pot_') else []) -%}
@@ -391,6 +391,15 @@ triggers:
   - trigger: time_pattern
     minutes: "/5"
     id: mesures
+  # Automatisation créée ou modifiée (un emplacement changé, par exemple) alors que
+  # la tablette est déjà connectée : tout repousser, zones comprises, sans attendre
+  # sa reconnexion. Dans l'ordre « Sans compiler » du guide, elle est créée après
+  # l'ajout de la tablette : l'écran restait vide jusqu'à la reconnexion suivante
+  # (test « HA neuf », 28/09/2026). L'événement suit tout rechargement des
+  # automatisations : une poussée de plus, sans effet visible.
+  - trigger: event
+    event_type: automation_reloaded
+    id: rechargement
 
 conditions:
   # Garde-fou des packages (ADR-0008) : absent, il laisse passer.
@@ -400,6 +409,17 @@ conditions:
   # sans ligne au journal.
   - condition: template
     value_template: "{{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet'] or cles | count > 0 }}"
+  # Déclencheurs venus de HA (rechargement, mesures, changements d'état) : seulement
+  # si une tablette est connectée, sinon « Action … not found » (pas encore ajoutée)
+  # ou « Not connected » (hors ligne). Elle est trouvée par le modèle de l'appareil
+  # (bloc `project:` du firmware), pas par son nom. Les événements de la tablette
+  # prouvent d'eux-mêmes qu'elle est là.
+  - condition: template
+    value_template: >-
+      {{ trigger.id in ['connexion', 'zones', 'action']
+         or integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
+            | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
+            | list | count > 0 }}
 
 actions:
   - variables:
@@ -645,7 +665,7 @@ actions:
             data:
               payload: "{{ payload }}"
             continue_on_error: true
-      - if: "{{ trigger.id == 'connexion' and clim != '' }}"
+      - if: "{{ trigger.id in ['connexion', 'rechargement'] and clim != '' }}"
         then:
           - delay: "00:00:01"
           - action: "esphome.{{ tablette }}_tab5_maj_clim"
@@ -657,11 +677,20 @@ actions:
               fan: "{{ state_attr(clim, 'fan_mode') | default('auto', true) }}"
               swing: "{{ state_attr(clim, 'swing_mode') | default('stop', true) }}"
             continue_on_error: true
-      - if: "{{ trigger.id == 'connexion' and volet != '' and not volet_par_package }}"
+      - if: "{{ trigger.id in ['connexion', 'rechargement'] and volet != '' and not volet_par_package }}"
         then:
           - delay: "00:00:01"
           - action: "esphome.{{ tablette }}_tab5_maj_volet_etat"
             data:
               etat_physique: >-
                 {{ {'opening': 'En_mouvement', 'closing': 'En_mouvement', 'open': 'Ouvert', 'closed': 'Ferme'}.get(states(volet), states(volet)) }}
+            continue_on_error: true
+      # Après un rechargement, les zones aussi : un emplacement vidé ou rempli dans
+      # l'automatisation doit disparaître ou revenir sans attendre que la tablette les
+      # redemande (elle ne le fait qu'à sa connexion, ADR-0018).
+      - if: "{{ trigger.id == 'rechargement' }}"
+        then:
+          - action: "esphome.{{ tablette }}_tab5_maj_zones"
+            data:
+              absentes: "{{ absentes }}"
             continue_on_error: true
