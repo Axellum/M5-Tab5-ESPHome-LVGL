@@ -4,6 +4,32 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [3.0.1] — 2026-09-28
+
+Correctif tiré de la première installation à neuf de la 3.0.0 par la page (28/09 au
+matin, tablette effacée) : #209, #211 et #212, plus celle de la release.
+- **Plus de fausse alerte « plantage »** au premier démarrage après une installation
+  par l'USB (#211) ;
+- **page `/install/` et guide** : parcours court « sans compiler » et pièges de la page
+  (#212) ; la page a déménagé dans `/install/`, la racine du site est une vitrine (#209).
+
+### À faire en mettant à jour depuis 3.0.0
+
+- **Firmware** : depuis HA (entité « Firmware »). Rien d'autre ne change sur la tablette.
+- **HA** : reprendre `packages/tab5_health.yaml` si vous l'utilisez. L'ordre est libre.
+
+### Mesures de la version
+
+- Compilation de la CI (ESPHome 2026.9.0) : image 3 188 470 → 3 191 110 o (+2,6 Ko),
+  RAM statique 170 626 → 171 066 o (+440 o) ; aucun avertissement dans notre code.
+- Rendu hors tablette : identique aux références (#211).
+
+### Problèmes connus
+
+Ceux de la 3.0.0, sauf l'installation à neuf, faite une fois par l'auteur. En plus :
+- un flash en mode téléchargement **sans** effacement, sur une tablette déjà en 3.0.1,
+  reste signalé comme « other watchdogs ».
+
 ### 2026-09-28 — Installer sans compiler : un parcours court, les pièges de la page
 
 Tirés de l'installation à neuf du 28/09, tablette effacée, par la page :
