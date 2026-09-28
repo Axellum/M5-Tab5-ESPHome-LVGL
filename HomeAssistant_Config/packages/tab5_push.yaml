@@ -64,8 +64,9 @@ automation:
     id: tab5_ha_hmi_updater
     description: >-
       Poussée complète du Tab5. Prévisions jours/heures et pluie à chaque passage ;
-      météo actuelle, probabilités, clim et volet seulement à la (re)connexion (ils ont
-      leurs automatisations au changement, plus bas).
+      météo actuelle, probabilités et volet seulement à la (re)connexion et au
+      démarrage de HA (ils ont leurs automatisations au changement, plus bas ; la clim
+      est dans le blueprint « Tab5 — emplacements »).
     trigger:
       # PAS de déclencheur `state:` sur l'entité weather.* ici (retiré le 26/08/2026) :
       # `weather.*` et `sensor.*_next_rain` viennent du même coordinateur
@@ -88,6 +89,18 @@ automation:
       - platform: event
         event_type: esphome.tab5_connected
         id: tab5_connected
+      # Démarrage de HA : la tablette, restée allumée, se reconnecte souvent AVANT que
+      # les automatisations soient actives, et son tab5_connected est perdu (HA 2026.9.4
+      # le 28/09/2026 : événement vers 21:11:14, automatisations actives à 21:11:16).
+      # Prévisions et pluie repartaient au passage des 10 min, mais la météo actuelle,
+      # les probabilités et le volet restaient ceux d'avant la coupure jusqu'à leur
+      # prochain changement. Ce déclencheur part au moment où les automatisations
+      # deviennent actives et suit le chemin de la reconnexion. Tablette pas encore
+      # reconnectée : la garde « tablette connectée » arrête, et son tab5_connected,
+      # émis plus tard, sera entendu.
+      - platform: homeassistant
+        event: start
+        id: demarrage_ha
       # Agenda de travail choisi (« Tab5 · agenda de travail ») : un événement commence,
       # finit, ou le suivant change. Miroir sensor.tab5_agendas (tab5_reglages.yaml) :
       # un déclencheur `state:` ne prend pas d'entity_id calculé.
@@ -116,6 +129,8 @@ automation:
       # cherché par le modèle de l'appareil (tab5-ha-hmi, bloc `project:` du firmware),
       # pas par son nom : une condition d'état sur une entité absente (tablette
       # renommée) bloquait toute la poussée complète (test « HA neuf », 28/09/2026).
+      # Elle ne regarde que tab5_connected : au démarrage de HA (demarrage_ha), la
+      # liaison peut être `on` depuis plus longtemps, la poussée part quand même.
       - alias: "tab5_connected : seulement si la liaison API vient de (re)demarrer (garde contre un evenement reemis)"
         condition: template
         value_template: >-
@@ -162,11 +177,12 @@ automation:
           vigilance_seule: false
 
       # ====== 3-4. METEO ACTUELLE + PROBABILITES : seulement à la (re)connexion ======
-      # Au changement : tab5_ha_hmi_meteo_push. Avant le 26/09/2026, ces deux envois
-      # partaient toutes les 10 min et le firmware les repeignait à chaque fois.
+      # (ou au démarrage de HA). Au changement : tab5_ha_hmi_meteo_push. Avant le
+      # 26/09/2026, ces deux envois partaient toutes les 10 min et le firmware les
+      # repeignait à chaque fois.
       - if:
           - condition: trigger
-            id: [tab5_connected, resync]
+            id: [tab5_connected, resync, demarrage_ha]
         then:
           - delay: "00:00:01"
           - action: script.tab5_push_meteo
@@ -309,13 +325,13 @@ automation:
               {% set ns.result = ns.result ~ i ~ "|" ~ nom_jour ~ "|" ~ condition ~ "|" ~ tmin ~ "|" ~ tmax ~ "|" ~ ("1" if est_repos else "0") ~ "|" ~ ("1" if est_dimanche else "0") ~ "|" ~ ("1" if est_passe == 'true' else "0") ~ "|" ~ ns_travail.heures ~ ";" %}
             {% endfor %}
             {{ ns.result }}
-      # ====== 6 + X. VOLET : seulement à la (re)connexion ======
+      # ====== 6 + X. VOLET : seulement à la (re)connexion (ou au démarrage de HA) ======
       # Au changement : tab5_volet_updater (volet_serre_tracking.yaml). La clim et
       # les appareils de la maison sont poussés par le blueprint « Tab5 —
       # emplacements » depuis le lot 6a (ADR-0019).
       - if:
           - condition: trigger
-            id: [tab5_connected, resync]
+            id: [tab5_connected, resync, demarrage_ha]
         then:
           - delay: "00:00:01"
           - action: script.tab5_push_volet

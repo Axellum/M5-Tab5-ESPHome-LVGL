@@ -4,6 +4,32 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 (soir) — HA : tout repousser au démarrage de Home Assistant
+
+Constaté en passant HA Core de 2026.9.3 à 2026.9.4 : la tablette, restée allumée, s'est
+reconnectée **avant** que les automatisations soient actives (entités revenues à
+21:11:12, `esphome.tab5_connected` vers 21:11:14, automatisations actives à 21:11:16).
+L'événement était perdu : le blueprint « Tab5 — emplacements » n'a rien poussé jusqu'au
+rechargement manuel des automatisations (21:13:21), et un appareil changé pendant la
+coupure restait faux à l'écran jusqu'à son prochain changement. Côté HA seulement, sans
+flash :
+- **Blueprint** : déclencheur `homeassistant` / `start` (`demarrage_ha`), qui rejoue la
+  connexion perdue : définitions des pièces, tous les états, clim, volet. Pas les zones :
+  la tablette ne les demande qu'avec la première poussée des prévisions, qui vient d'une
+  automatisation active. Tablette pas encore reconnectée : la garde « tablette
+  connectée » arrête, et son `tab5_connected`, émis plus tard, est entendu.
+- **Poussée complète** (`packages/tab5_push.yaml`) : même déclencheur. Prévisions et
+  pluie repartaient au passage des 10 minutes, mais la météo actuelle, les probabilités
+  et le volet restaient ceux d'avant la coupure. La garde « liaison `on` depuis moins de
+  3 min » ne regarde que `tab5_connected` : elle laisse passer le démarrage.
+- Tests : le démarrage suit le chemin de la connexion dans le blueprint (rendu des
+  modèles, chaque garde des actions comparée) et dans la poussée complète ; la garde des
+  3 min, rendue, bloque un `tab5_connected` réémis mais pas le démarrage.
+- `CARTOGRAPHIE_TAB5.md` : `tab5_push.yaml` n'a plus `tab5_push_clim` ni les scripts
+  `allumer_leds` / `allumer_pc_tv` (retirés par #193).
+
+Mise à jour : remplacer `packages/tab5_push.yaml` et ré-importer le blueprint.
+
 ## [3.2.0] — 2026-09-28
 
 De `v3.1.0` à aujourd'hui : 8 pull requests (#219 → #223, #230 → #232 ; #223 regroupe
