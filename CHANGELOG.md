@@ -4,6 +4,33 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 (nuit) — Carte centrale : logique simplifiée, rien ne change à l'écran
+
+Refactor demandé par Axel (« on laisse l'anim comme ça […] la logique de gestion est
+complexe à force ») : même animation (`transition_widgets()`, 190 ms, non touchée), même
+période (8 s), mêmes règles de priorité entre rotateur, titre de page, titre de pièce,
+planning du tap et réponse vocale.
+- **Deux globals miroirs retirés** : `is_showing_temp_planning` recopiait le timer de 6 s
+  du planning du tap (les scripts lisent maintenant `temp_planning_active()`), et
+  `forecast_page_index` recopiait `g_central_ctx.forecast_page`, écrit juste avant par le
+  swipe, le retour automatique et le mode HA. `handle_swipe_gesture()`,
+  `reset_forecast_to_main_page()` et `show_temporary_planning()` perdent leurs paramètres
+  de page ; `show_temporary_planning()` reçoit la tuile et calcule le jour elle-même.
+- **Code recopié nommé une fois** (`tab5_central.cpp`) : `liberer_carte()` (changement de
+  page ou de mode HA), `prendre_carte()` (planning du tap, réponse vocale),
+  `retirer_panneau()` (acquittement au tap d'une info ou d'une alerte HA) ;
+  `update_info_text_ui()` reçoit le contexte ; la couleur du bandeau info reprend celle
+  des alertes HA. En tête du fichier, la liste des occupants de la carte.
+- Bilan : −33 lignes de code (hors commentaires), deux globals, cinq paramètres et un
+  pointeur de `TuilesUI` en moins. L'`on_boot` n'est pas touché.
+- Cas limites relevés, **pas corrigés** (ce serait changer ce qu'on voit) : un tap sur
+  une tuile pendant la réponse vocale superpose le planning et la réponse ; un tap
+  pendant les 190 ms d'une rotation peut laisser un panneau à mi-fondu jusqu'au tour
+  suivant ; la fin de la pluie ou de la vigilance ne retire leur panneau qu'au tour
+  suivant du rotateur (jusqu'à 8 s).
+- `docs/screens.md` (EN/FR) : le rotateur est le script `tab5_central_rotator_auto`
+  (pas un `interval:` de `tab5-globals.yaml`), jusqu'à huit panneaux, planning absent
+  sans agenda de travail, un seul script d'acquittement des alertes HA.
 ### 2026-09-29 — Fil d'Or : l'élan part d'une secousse, plus tout seul
 
 - Retour d'Axel : « la bille saute de temps en temps toute seule ». C'était l'élan (dash) :
