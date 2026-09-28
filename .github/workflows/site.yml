@@ -51,10 +51,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           # L'API, pas `gh release list` : elle dit quels fichiers sont déjà joints (une
-          # release dont publication.yml compile encore les binaires est ignorée).
+          # release dont publication.yml compile encore les binaires est ignorée). Un
+          # fichier en cours d'envoi a l'état « open » : pas encore joint.
           gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '[.[] | {tagName: .tag_name,
             isPrerelease: .prerelease, isDraft: .draft, publishedAt: .published_at,
-            assets: [.assets[].name]}]' > releases.json
+            assets: [.assets[] | select(.state == "uploaded") | .name]}]' > releases.json
           python tools/publication/pages.py choisir --releases releases.json | tee -a "$GITHUB_OUTPUT"
       - name: Fichiers des releases retenues
         env:

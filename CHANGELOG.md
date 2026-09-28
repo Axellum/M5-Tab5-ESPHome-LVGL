@@ -4,6 +4,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — Site : une release n'est retenue qu'avec ses binaires (suite de #221)
+
+- `pages.py choisir` exigeait les trois manifestes, sans leurs binaires. Les neuf
+  fichiers de v3.1.0 sont arrivés dans la même seconde (11:41:12-13 UTC, envoyés en
+  parallèle par `gh release upload`) : un manifeste peut être joint avant ses binaires,
+  et l'assemblage du site échoue alors (« binaire manquant »). Il faut maintenant le
+  manifeste ST7123 et, pour chaque manifeste, ses deux binaires ; `site.yml` ne compte
+  que les fichiers entièrement envoyés (état « uploaded » dans l'API).
+- Les trois manifestes ne sont plus tous exigés : ajouter une révision à `ECRANS`
+  (`pages.py`, qui redéploie le site) aurait écarté toutes les releases existantes et
+  vidé les canaux stable et bêta jusqu'à la release suivante.
+- Tests `tests/test_publication.py` : manifestes sans binaires, sans l'écran ST7123,
+  autre écran absent ; les noms attendus sont ceux qu'écrit `preparer.py`. ADR-0022 :
+  une ligne dans l'amendement du 28/09.
+
 ### 2026-09-28 — CI : le rendu hors tablette ne tourne plus pour rien
 
 Le rendu (`rendu-host.yml`, 13 min, six langues en parallèle) était de loin le plus long
