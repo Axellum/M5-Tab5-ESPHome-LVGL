@@ -124,6 +124,7 @@ static std::array<lv_obj_t*, kCentralPanelCount> central_wraps(const CentralPane
     return {ctx.planning_wrap, ctx.rain_wrap, ctx.alert_cont, ctx.info_wrap,
             ctx.ha_wrap[0], ctx.ha_wrap[1], ctx.ha_wrap[2], ctx.ha_wrap[3]};
 }
+static constexpr int kInfoPanel = 3;  // info_wrap dans central_wraps()
 
 static lv_obj_t* central_panel_wrapper(int panel, CentralPanelCtx& ctx) {
     if (panel < 0 || panel >= kCentralPanelCount) return nullptr;
@@ -309,18 +310,25 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
     }
 }
 
-void dismiss_central_info_immediate(lv_obj_t* lbl_info, CentralPanelCtx& ctx) {
-    ctx.has_info = false;
-    if (lbl_info) {
-        lv_label_set_recolor(lbl_info, false);
-        lv_label_set_text(lbl_info, "");
+// Tap d'acquittement (info, alerte HA ; drapeau déjà baissé par l'appelant) : le
+// panneau quitte la carte sans attendre HA. Affiché → le suivant, avec la transition
+// du rotateur ; sinon une synchro (sans effet visible si la carte est occupée).
+static void retirer_panneau(int panel, lv_obj_t* lbl, lv_obj_t* wrap, CentralPanelCtx& ctx) {
+    if (lbl) {
+        lv_label_set_recolor(lbl, false);
+        lv_label_set_text(lbl, "");
     }
-    if (ctx.info_wrap) lv_obj_add_flag(ctx.info_wrap, LV_OBJ_FLAG_HIDDEN);
-    if (ctx.current_panel == 3) {
+    if (wrap) lv_obj_add_flag(wrap, LV_OBJ_FLAG_HIDDEN);
+    if (ctx.current_panel == panel) {
         advance_central_panel_rotator(ctx);
     } else {
         sync_central_panel_visibility(ctx);
     }
+}
+
+void dismiss_central_info_immediate(lv_obj_t* lbl_info, CentralPanelCtx& ctx) {
+    ctx.has_info = false;
+    retirer_panneau(kInfoPanel, lbl_info, ctx.info_wrap, ctx);
 }
 
 void dismiss_ha_alert_slot_immediate(int slot_idx, lv_obj_t* wrap, lv_obj_t* lbl,
@@ -329,17 +337,7 @@ void dismiss_ha_alert_slot_immediate(int slot_idx, lv_obj_t* wrap, lv_obj_t* lbl
     if (slot_idx < 0 || slot_idx >= kHaAlertSlotCount) return;
     id_store.clear();
     ctx.has_ha[slot_idx] = false;
-    if (lbl) {
-        lv_label_set_recolor(lbl, false);
-        lv_label_set_text(lbl, "");
-    }
-    if (wrap) lv_obj_add_flag(wrap, LV_OBJ_FLAG_HIDDEN);
-    const int dismissed_panel = kHaAlertPanelBase + slot_idx;
-    if (ctx.current_panel == dismissed_panel) {
-        advance_central_panel_rotator(ctx);
-    } else {
-        sync_central_panel_visibility(ctx);
-    }
+    retirer_panneau(kHaAlertPanelBase + slot_idx, lbl, wrap, ctx);
 }
 
 // Pose les deux lignes du titre sans rien decider de la visibilite : chapeau
@@ -462,7 +460,7 @@ static std::string compose_info_code(const std::string& code, const std::string&
 
 void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
     const std::string& texte, const std::string& couleur, const std::string& meteo_id,
-    std::string& dismissed_local, bool& has_info, int& current_panel,
+    std::string& dismissed_local, CentralPanelCtx& ctx,
     esphome::font::Font* font_small, esphome::font::Font* font_large) {
 
     if (!lbl_info) return;
@@ -476,7 +474,7 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
         // Ancien package HA : bannière vigilance selon la couleur (comportement d'avant).
         if (!meteo_id.empty() && tab5_dismiss_local_has(dismissed_local, meteo_id)) {
             if (t.empty()) {
-                has_info = false;
+                ctx.has_info = false;
                 lv_label_set_recolor(lbl_info, false);
                 lv_label_set_text(lbl_info, "");
                 return;
@@ -489,19 +487,19 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
         t = normalize_text_utf8(t);
     }
 
-    has_info = !t.empty();
+    ctx.has_info = !t.empty();
     if (t.empty()) {
         lv_label_set_text(lbl_info, "");
-        if (current_panel == 3 && info_wrap && planning_wrap) {
-            if (g_central_ctx.planning_off) {
+        if (ctx.current_panel == kInfoPanel && info_wrap && planning_wrap) {
+            if (ctx.planning_off) {
                 // Pas de planning (lot 5) : le panneau actif suivant, ou une carte vide.
-                sync_central_panel_visibility(g_central_ctx);
+                sync_central_panel_visibility(ctx);
                 return;
             }
             // Transition visible seulement si le rotateur a la carte : sinon elle
             // faisait surgir le panneau planning par-dessus le titre de page.
-            if (rotator_owns_card(g_central_ctx)) transition_widgets(info_wrap, planning_wrap);
-            current_panel = 0;
+            if (rotator_owns_card(ctx)) transition_widgets(info_wrap, planning_wrap);
+            ctx.current_panel = 0;
         }
         return;
     }
@@ -513,10 +511,8 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
         esphome::lvgl::lv_obj_set_style_text_font(lbl_info, font, LV_PART_MAIN);
     }
 
-    uint32_t c = UIColor::TEXT_PRIMARY;
-    if (couleur.find("Rouge") != std::string::npos) c = UIColor::ALERT_RED;
-    else if (couleur.find("Orange") != std::string::npos) c = UIColor::WARNING;
-    lv_obj_set_style_text_color(lbl_info, lv_color_hex(c), LV_PART_MAIN);
+    // Même règle de couleur que les bandeaux d'alertes HA (Rouge, Orange, sinon blanc).
+    lv_obj_set_style_text_color(lbl_info, lv_color_hex(ha_alert_color_from_couleur(couleur)), LV_PART_MAIN);
 
     lv_label_set_recolor(lbl_info, has_recolor_markup);
     lv_label_set_text(lbl_info, t.c_str());

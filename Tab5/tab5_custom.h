@@ -254,9 +254,10 @@ void refresh_forecast_page_title_ui(int forecast_page,
 
 // Panneau info central (récap calendrier ou bannière alerte) — logique déplacée
 // depuis tab5-api-logic.yaml pour fiabiliser polices LVGL et accents UTF-8.
+// Pose ctx.has_info ; bandeau vidé alors qu'il est affiché → retour au planning.
 void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
     const std::string& texte, const std::string& couleur, const std::string& meteo_id,
-    std::string& dismissed_local, bool& has_info, int& current_panel,
+    std::string& dismissed_local, CentralPanelCtx& ctx,
     esphome::font::Font* font_small, esphome::font::Font* font_large);
 
 // Phrase pluie (lot 4c, 27/09/2026) : HA envoie un code « @niveau,début » ; la
