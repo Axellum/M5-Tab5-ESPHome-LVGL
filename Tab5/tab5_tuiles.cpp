@@ -25,6 +25,7 @@
 #include "tab5_internal.h"
 #include "tab5_tuiles_icones.h"
 #include "lvgl.h"
+#include <esp_attr.h>
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -84,8 +85,11 @@ struct Etat {
 constexpr uint32_t kMagic = 0x54554931;    // « TUI1 »
 constexpr uint32_t kPrefKey = 0x7475696C;  // « tuil »
 
-Modele s_m{};
-Etat s_etats[kPieces][kTuiles];
+// ~2,3 Ko lus au dessin et aux poussées seulement : en PSRAM (BSS externe, remise à zéro
+// au démarrage, CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY), pas dans les ~226 Ko de
+// RAM interne libre.
+EXT_RAM_BSS_ATTR Modele s_m;
+EXT_RAM_BSS_ATTR Etat s_etats[kPieces][kTuiles];
 bool s_charge = false;
 esphome::ESPPreferenceObject s_pref;
 
