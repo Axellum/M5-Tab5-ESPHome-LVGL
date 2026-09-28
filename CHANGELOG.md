@@ -4,6 +4,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — Site : une release encore en compilation n'est plus choisie
+
+- #219 a été mergée quatre minutes après la création de la release v3.1.0, pendant que
+  `publication.yml` compilait encore ses binaires : le déploiement du site l'a prise
+  pour la stable, n'a trouvé aucun fichier (« no assets to download ») et a échoué
+  (croix rouge sur `main` @ `4195e89`, page d'accueil de #219 pas mise en ligne).
+- `site.yml` lit l'API des releases, avec leurs fichiers, au lieu de `gh release list` ;
+  `pages.py choisir` écarte une release dont les trois manifestes ne sont pas encore
+  joints : les canaux restent sur la précédente jusqu'à la fin de la publication.
+- Tests : release sans fichiers ou incomplète ignorée ; `site.yml` lit bien les
+  fichiers.
+
 ### 2026-09-28 — Le site raconte le projet, pas seulement l'installation
 
 La page d'accueil du site (`web/index.html`) reprend une partie du README et de `docs/`,

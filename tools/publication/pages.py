@@ -79,11 +79,19 @@ IMAGE_DE_PAGE = re.compile(r'<img\b[^>]*\bsrc="((?:\.\./)*images/[^"]+)"')
 
 
 def choisir(releases: list[dict]) -> dict[str, str | None]:
-    """Tags des canaux stable et bêta parmi les releases publiées (gh release list)."""
+    """Tags des canaux stable et bêta parmi les releases publiées (API des releases).
+
+    Une release dont les manifestes ne sont pas encore joints est ignorée : juste après
+    sa création, publication.yml compile encore ses binaires (~12 min). Un déploiement
+    du site lancé entre-temps (push sur main, 28/09/2026 : #219 mergée 4 min après la
+    création de v3.1.0) la prenait pour la stable et échouait sur « no assets to
+    download ». `assets` absent : pas de filtre (liste déjà vérifiée)."""
     candidates = []
     for r in releases:
         m = TAG.match(r.get("tagName", ""))
         if r.get("isDraft") or not m or int(m.group(1)) < MAJEURE_MINI:
+            continue
+        if "assets" in r and not all(f"manifest-{e}.json" in r["assets"] for e in ECRANS):
             continue
         candidates.append(r)
     candidates.sort(key=lambda r: r["publishedAt"], reverse=True)
