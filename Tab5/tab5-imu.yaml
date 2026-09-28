@@ -7,13 +7,14 @@
 # @architecture_constraint Bus I2C bsp_bus (GPIO31/32 @ 400 kHz), adresse 0x68.
 #     Aucun conflit avec le PI4IOE (0x43/0x44). Composant natif ESPHome (motion:).
 #     Les 3 axes d'accélération sont `internal: true` : à 10-30 Hz ils
-#     saturaient l'API HA pour rien (~50 msg/s). Seuls pitch/roll/température
-#     remontent à HA, fortement throttlés (diagnostic, pas télémétrie).
+#     saturaient l'API HA pour rien (~50 msg/s). Rien ne remonte à HA : la
+#     position ne sert qu'aux jeux (tangage, roulis et température retirés le
+#     29/09/2026 à la demande d'Axel : la tablette ne change jamais de sens).
 # @ai_instruction Ne pas modifier l'adresse I2C ni le bus. Ne pas retirer
 #     `internal: true` des axes d'accélération. La cadence de poll est pilotée
-#     dynamiquement par l'interval en bas de fichier : 1 s écran allumé sans jeu,
-#     100 ms écran éteint (tap-to-wake) ou jeu ouvert, 33 ms pour un jeu
-#     `imu_fast`. Ne pas la figer.
+#     dynamiquement par l'interval en bas de fichier : aucune lecture écran allumé
+#     sans jeu, 100 ms écran éteint (tap-to-wake) ou jeu ouvert, 33 ms pour un
+#     jeu `imu_fast`. Ne pas la figer.
 # ============================================================================
 
 # --- Plateforme motion (BMI270) ---
@@ -80,39 +81,10 @@ sensor:
                 call.perform();
             }
 
-  # --- Diagnostic HA : orientation + température, throttlés ------------------
-  # Publiés seulement quand la valeur bouge vraiment (audit du 26/09/2026, lot 3) :
-  # à 2 décimales, le bruit changeait la valeur à chaque minute — ≈ 60 lignes/h
-  # chacun dans la base HA pour une tablette posée. Un point au moins toutes les
-  # 15 min (throttle du `or`) garde les tuiles et l'historique vivants.
-  - platform: motion
-    type: pitch
-    name: "Tab5 Pitch"
-    id: imu_pitch
-    filters:
-      - throttle: 60s
-      - or:
-          - throttle: 15min
-          - delta: 2.0
-
-  - platform: motion
-    type: roll
-    name: "Tab5 Roll"
-    id: imu_roll
-    filters:
-      - throttle: 60s
-      - or:
-          - throttle: 15min
-          - delta: 2.0
-
-  - platform: bmi270
-    name: "Tab5 IMU Temperature"
-    id: imu_temp
-    filters:
-      - throttle: 60s
-      - or:
-          - throttle: 15min
-          - delta: 0.5
+  # Plus de tangage, roulis ni température envoyés à HA (29/09/2026) : la tablette
+  # ne change jamais de sens et la position ne sert qu'aux jeux. C'était ≈ 120
+  # lignes par heure dans la base HA, et la seule raison de lire l'IMU écran
+  # allumé hors jeu.
 
 # --- Switch : activer/désactiver le tap-to-wake ---
 switch:
@@ -124,9 +96,9 @@ switch:
 
 # --- Cadence de poll adaptative -------------------------------------------
 # Le jeu a besoin d'une entrée réactive (~30 Hz) ; écran éteint, 10 Hz suffit
-# largement au tap-to-wake ; écran allumé sans jeu, l'IMU ne sert plus qu'au
-# diagnostic (tangage, roulis, température) : 1 Hz (audit du 26/09/2026, lot 3 :
-# 24 octets lus sur bsp_bus à chaque lecture). `set_update_interval()` seul ne suffit pas :
+# largement au tap-to-wake ; écran allumé sans jeu, l'IMU ne sert à rien : plus
+# aucune lecture (29/09/2026 ; 1 Hz depuis le lot 3 du 26/09, 10 Hz avant).
+# 24 octets lus sur bsp_bus à chaque lecture. `set_update_interval()` seul ne suffit pas :
 # PollingComponent enregistre son interval une fois pour toutes dans
 # call_setup(), il faut donc relancer le poller pour que la nouvelle valeur
 # prenne effet (stop_poller/start_poller sont publics et prévus pour ça).
@@ -147,12 +119,13 @@ interval:
           // raterait la moitié des coups de hanche.
           // Écran éteint : on écoute le tap-to-wake (s'il est activé). Un jeu
           // ouvert (« Dames », « Go », « Trial Poursuite ») lit une secousse à 10 Hz.
-          uint32_t want = 1000;
+          uint32_t want = 0;   // 0 = pas de lecture (écran allumé, aucun jeu)
           if (GameRegistry::any_imu_fast_open()) want = 33;
           else if (GameRegistry::any_open()) want = 100;
           else if (!id(backlight).current_values.is_on() && id(tab5_tap_to_wake).state) want = 100;
           if (want == cur) return;
           cur = want;
-          id(tab5_imu).set_update_interval(want);
           id(tab5_imu).stop_poller();
+          if (want == 0) return;
+          id(tab5_imu).set_update_interval(want);
           id(tab5_imu).start_poller();
