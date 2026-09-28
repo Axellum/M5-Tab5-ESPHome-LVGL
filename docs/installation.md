@@ -169,7 +169,7 @@ A tablet installed from the [web flasher](https://axellum.github.io/M5-Tab5-ESPH
 
 After 3.1 the tablet no longer calls Home Assistant actions: it sends events, which the new package `packages/tab5_evenements.yaml` turns into actions ([ADR-0025](decisions/0025-events-only.md)). In this order:
 
-1. **Package first**: render and copy `tab5_evenements.yaml` like the others (Step 4, items 3 to 5), then reload Automations. A 3.1 tablet sends none of these events: the package just waits, nothing changes.
+1. **Home Assistant files first**: replace them with those of `tab5_home_assistant.zip` (Step 4), which bring `tab5_evenements.yaml`, and set the « Tab5 · … » lists as told in « Coming from packages with placeholders » at the end of Step 4. A 3.1 tablet sends none of these events: the package just waits, nothing changes.
 2. **Then the firmware** (« Firmware » entity, or your own build).
 3. **Then untick** « Allow the device to perform Home Assistant actions » (*ESPHome → Configure*): the tablet no longer needs it, and without it Home Assistant refuses any action the device would ask for.
 
@@ -438,7 +438,7 @@ Une tablette installée depuis le [flasheur web](https://axellum.github.io/M5-Ta
 
 Après la 3.1, la tablette n'appelle plus d'action de Home Assistant : elle envoie des événements, que le nouveau package `packages/tab5_evenements.yaml` traduit en actions ([ADR-0025](decisions/0025-events-only.md)). Dans cet ordre :
 
-1. **Le package d'abord** : rendez et copiez `tab5_evenements.yaml` comme les autres (étape 4, points 3 à 5), puis rechargez les automatisations. Une tablette en 3.1 n'envoie aucun de ces événements : le package attend, rien ne change.
+1. **Les fichiers Home Assistant d'abord** : remplacez-les par ceux de `tab5_home_assistant.zip` (étape 4), qui apportent `tab5_evenements.yaml`, et réglez les listes « Tab5 · … » comme le dit « Vous aviez les packages à placeholders » à la fin de l'étape 4. Une tablette en 3.1 n'envoie aucun de ces événements : le package attend, rien ne change.
 2. **Puis le firmware** (entité « Firmware », ou votre propre compilation).
 3. **Puis décochez** « Autoriser l'appareil à effectuer des actions Home Assistant » (*ESPHome → Configurer*) : la tablette n'en a plus besoin, et sans elle Home Assistant refuse toute action que l'appareil demanderait.
 
