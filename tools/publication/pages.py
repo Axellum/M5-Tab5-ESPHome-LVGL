@@ -49,6 +49,7 @@ SITE = "https://axellum.github.io/M5-Tab5-ESPHome-LVGL/"
 IMAGES = {
     "m5stack-tab5-home-assistant-screen-card.jpg": "tab5_social_preview.jpg",
     "m5stack-tab5-home-assistant-wall-screen.jpg": "tab5_hero_4x3.jpg",
+    "m5stack-tab5-home-assistant-ui-tour.webp": "tab5_ui_tour_hq.webp",
     "m5stack-tab5-home-assistant-device-buttons.jpg": "tab5_photo_domo.jpg",
     "m5stack-tab5-plant-sensors-soil-moisture.jpg": "tab5_photo_plants.jpg",
     "m5stack-tab5-home-assistant-climate-control.jpg": "tab5_photo_climate_popup_v2.jpg",
@@ -61,6 +62,12 @@ IMAGES = {
     "m5stack-tab5-chess-game-esp32-p4.jpg": "tab5_photo_chess.jpg",
     "m5stack-tab5-lode-runner-game.jpg": "tab5_photo_lode_runner.jpg",
     "m5stack-tab5-breakout-game-tilt.jpg": "tab5_photo_arkanoid.jpg",
+    # Recadrages de rendus de la CI (scène « pluie + vigilance orange »), propres au site :
+    # hors de docs/images/rendu/, que tools/rendu/maj_references.py vide à chaque mise à jour.
+    "m5stack-tab5-rain-next-hour-fr.png": "site/pluie-dans-l-heure.png",
+    "m5stack-tab5-rain-next-hour-en.png": "site/pluie-dans-l-heure-en.png",
+    "m5stack-tab5-weather-warnings-fr.png": "site/vigilances.png",
+    "m5stack-tab5-weather-warnings-en.png": "site/vigilances-en.png",
     "m5stack-tab5-lvgl-screen-sunny-day-en.png": "rendu/1-journee-ensoleillee-en.png",
     "m5stack-tab5-lvgl-screen-sunny-day-fr.png": "rendu/1-journee-ensoleillee.png",
     "m5stack-tab5-lvgl-screen-rain-warning-en.png": "rendu/2-pluie-alerte-orange-en.png",
