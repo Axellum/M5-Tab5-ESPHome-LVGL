@@ -13,16 +13,43 @@ name: Installation dans un HA neuf
 #     masquées, capture d'écran demandée par HA, et tout ça encore après un redémarrage
 #     de la tablette.
 # Ne teste PAS : l'interface de HA cliquée par un humain, la page de flashage, le vrai
-# matériel (Wi-Fi, écran, audio). Check non requis.
+# matériel (Wi-Fi, écran, audio). Check non requis. ~3 min.
+#
+# Déclenché par ce qui touche au contrat entre HA et la tablette : les fichiers HA, le
+# nom et la version de l'appareil (tab5-ha-hmi.yaml), les actions et événements de
+# l'API (tab5-api-logic, -zones, -scripts, capteurs des emplacements, réponse des
+# zones), la tablette virtuelle et l'outil. Sur `main` aussi : l'état de `main` est
+# connu avant une publication. À la main : `workflow_dispatch`.
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    # Même liste que pull_request, plus bas.
+    paths:
+      - '.github/workflows/installation-ha.yml'
+      - 'HomeAssistant_Config/**'
+      - 'tab5-ha-hmi.yaml'
+      - 'Tab5/tab5-api-logic.yaml'
+      - 'Tab5/tab5-zones.yaml'
+      - 'Tab5/tab5_zones.cpp'
+      - 'Tab5/tab5-scripts.yaml'
+      - 'Tab5/tab5-sensors-domotique.yaml'
+      - 'Tab5/rendu/**'
+      - 'tab5-rendu-host.yaml'
+      - 'tools/installation_ha/**'
+      - 'tools/render_ha_config.py'
+      - '!**/*.md'
   pull_request:
     paths:
       - '.github/workflows/installation-ha.yml'
       - 'HomeAssistant_Config/**'
+      - 'tab5-ha-hmi.yaml'
       - 'Tab5/tab5-api-logic.yaml'
       - 'Tab5/tab5-zones.yaml'
+      - 'Tab5/tab5_zones.cpp'
+      - 'Tab5/tab5-scripts.yaml'
+      - 'Tab5/tab5-sensors-domotique.yaml'
       - 'Tab5/rendu/**'
       - 'tab5-rendu-host.yaml'
       - 'tools/installation_ha/**'
@@ -34,7 +61,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   # Version de Home Assistant du test : figée, relevée à la main (même logique que

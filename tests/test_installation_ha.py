@@ -116,6 +116,13 @@ def test_la_tablette_virtuelle_porte_le_nom_de_la_vraie():
         "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
 
 
+def test_memes_chemins_sur_main_et_en_pr():
+    workflow = yaml.safe_load(_lire(".github", "workflows", "installation-ha.yml"))
+    declencheurs = workflow.get("on") or workflow[True]  # « on » lu comme un booléen
+    assert declencheurs["push"]["paths"] == declencheurs["pull_request"]["paths"]
+    assert "tools/installation_ha/**" in declencheurs["pull_request"]["paths"]
+
+
 def test_fonctions_pures():
     assert verifier.longueur_cle("") == 0
     assert verifier.longueur_cle("pas de la base64 !") == 0
@@ -135,8 +142,8 @@ def test_fonctions_pures():
 def test_journal_de_ha():
     journal = (
         "s6-rc: info: service legacy-services successfully started\n"
-        "2026-09-28 11:17:49.794 ERROR (MainThread) [homeassistant.components.script.tab5_push_alertes] "
-        "Tab5 — pousser: Error executing script. Service not found for call_service at pos 1\n"
+        "\x1b[31m2026-09-28 11:17:49.794 ERROR (MainThread) [homeassistant.components.script.tab5_push_alertes] "
+        "Tab5 — pousser: Error executing script. Service not found for call_service at pos 1\x1b[0m\n"
         "2026-09-28 11:17:50.000 WARNING (MainThread) [homeassistant.components.automation] Error evaluating condition:\n"
         "  In 'state' condition: unknown entity binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status\n"
         "2026-09-28 11:17:51.000 WARNING (MainThread) [homeassistant.helpers.translation] Invalid domain demo.weather\n"

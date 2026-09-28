@@ -665,6 +665,8 @@ async def capturer(ha: HA, dossier: Path, nom: str, rapport: Rapport) -> None:
 # suivantes sans en-tête (pile d'appels, détail d'une condition) prolongent le message.
 LIGNE_JOURNAL = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{3}) (DEBUG|INFO|WARNING|ERROR|CRITICAL) "
                            r"\([^)]*\) \[([^\]]+)\] (.*)$")
+# Couleurs de la console de HA (« \x1b[31m » devant chaque ligne d'erreur).
+COULEURS = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def lignes_du_journal(texte: str) -> list[dict]:
@@ -673,7 +675,7 @@ def lignes_du_journal(texte: str) -> list[dict]:
 
     fuseau = ZoneInfo(FUSEAU)
     entrees: list[dict] = []
-    for ligne in texte.splitlines():
+    for ligne in COULEURS.sub("", texte).splitlines():
         if m := LIGNE_JOURNAL.match(ligne):
             quand = dt.datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=fuseau)
             entrees.append({"quand": quand.timestamp(), "niveau": m.group(2),
@@ -699,9 +701,15 @@ async def journal_ha(ha: HA, connexion: float, rapport: Rapport) -> None:
     proc = await asyncio.create_subprocess_exec("docker", "logs", ha.conteneur, stdout=subprocess.PIPE,
                                                 stderr=subprocess.STDOUT)
     sortie, _ = await proc.communicate()
+    entrees = lignes_du_journal(sortie.decode("utf-8", "replace"))
+    # Au moins les lignes d'info de l'intégration ESPHome (logger: dans configuration.yaml) :
+    # un journal où rien n'est reconnu ne doit pas passer pour un journal propre.
+    if not any(e["logger"].startswith("homeassistant.components.esphome") for e in entrees):
+        rapport.echec(f"journal HA illisible : {len(entrees)} ligne(s) reconnue(s), aucune de l'intégration ESPHome")
+        return
     groupes: dict[tuple, int] = {}
     autres = 0
-    for e in lignes_du_journal(sortie.decode("utf-8", "replace")):
+    for e in entrees:
         if e["niveau"] not in ("WARNING", "ERROR", "CRITICAL"):
             continue
         if not concerne_le_tab5(e):
