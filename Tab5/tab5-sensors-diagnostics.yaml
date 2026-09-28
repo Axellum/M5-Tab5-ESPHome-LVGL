@@ -102,9 +102,15 @@ text_sensor:
   # « Software Reset », « Exception », « Task Watchdog », « Brownout », « Power On »…
   # L'historique HA dit si un redémarrage était un plantage (26/09/2026, journal des
   # démarrages, voir Tab5/tab5_journal.cpp).
+  # Premier démarrage après une installation par l'USB, flash effacée (28/09/2026) : le
+  # flash finit par un reset du chien de garde RTC, « other watchdogs » devient « First
+  # boot after install (other watchdogs) », que la garde « reboot inattendu » de
+  # packages/tab5_health.yaml ne signale pas (voir Tab5/tab5_journal.cpp).
   - platform: debug
     reset_reason:
       name: "Tab5 Raison du redémarrage"
+      filters:
+        - lambda: return journal_raison_ha(x);
 
   # Version du logiciel ESP-Hosted du co-processeur Wi-Fi (ESP32-C6), qu'ESPHome ne met
   # pas à jour : celle installée en usine tant que personne ne l'a reflashé. Lue une

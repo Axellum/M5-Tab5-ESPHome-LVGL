@@ -22,6 +22,25 @@ Tirés de l'installation à neuf du 28/09, tablette effacée, par la page :
   - une tablette déjà connue de HA reçoit une nouvelle clé toute seule ;
   - l'option « actions Home Assistant » à cocher (voix, calendrier, réveil).
 - README : le démarrage rapide renvoie à ce parcours.
+### 2026-09-28 — Plus de fausse alerte au premier démarrage après une installation
+
+Vu à l'installation à neuf du 28/09 (page d'installation, mode téléchargement, flash
+effacée) : le flash finit par un reset du chien de garde RTC (`ESP_RST_WDT`, « other
+watchdogs » pour ESPHome). La garde « reboot inattendu » et le journal des démarrages
+ont alors signalé un « plantage (chien de garde) », sur le téléphone.
+
+- **Firmware** (`tab5_journal.cpp`) : une marque en NVS, écrite au premier démarrage,
+  absente juste après un effacement. Marque absente **et** `ESP_RST_WDT` : c'est
+  l'installation, pas un plantage (repère « premier démarrage après installation »).
+  Une panique ou un chien de garde de tâche alertent toujours, même au premier
+  démarrage. Sur une tablette neuve, le Wi-Fi pas encore réglé et HA qui tarde à
+  l'ajouter ne sont plus des anomalies, tant qu'elle n'a jamais vu son réseau.
+- Le capteur « Tab5 Raison du redémarrage » publie alors « First boot after install
+  (other watchdogs) » (filtre `journal_raison_ha`).
+- **HA** (`packages/tab5_health.yaml`) : la garde « reboot inattendu » laisse passer
+  cette raison.
+- Test `tests/test_premier_demarrage.py` : le préfixe du firmware est celui que lit la
+  garde, et seul le chien de garde RTC est excusé.
 
 ### 2026-09-28 — Site du projet : une vitrine, des images que Google peut indexer
 
