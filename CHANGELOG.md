@@ -15,6 +15,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 - Test `tests/test_actions_ha.py` : chaque action HA appelée par le firmware est une
   action vérifiée dans HA 2026.9 ou un script défini par un package du projet.
 - Docs : `screens.md` et `voice_assistant.md` (EN/FR) ne citent plus cette action.
+### 2026-09-28 — CI : l'installation pip réessaie, plus de croix rouge venue de PyPI
+
+- PyPI répondait parfois « Could not find a version that satisfies the requirement
+  esphome==2026.9.0 (from versions: none) » : un ou deux jobs de rendu (six langues en
+  parallèle depuis #214) ou le job d'installation dans un HA neuf ratait l'installation
+  d'ESPHome, pendant que les autres la réussissaient. Croix rouges sur `main` à
+  `e89bc76` et `09bd0ee`, sans rapport avec le code.
+- `tools/ci/pip_reessai.sh` : 4 essais (20, 40 puis 60 s d'attente), avec les réessais
+  de pip sur les erreurs de connexion. Utilisé par `esphome-tab5.yml`,
+  `installation-ha.yml` et `rendu-host.yml`. `publication.yml` porte sa propre boucle :
+  il peut reconstruire un ancien tag, qui n'a pas le script.
+- `.gitattributes` : les scripts `.sh` restent en LF, même dans un checkout Windows.
+- Test `tests/test_ci_pip.py` : chaque `pip install` d'un workflow réessaie.
 
 ### 2026-09-28 — HA attend la tablette : les défauts trouvés par le test « HA neuf »
 

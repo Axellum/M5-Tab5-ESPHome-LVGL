@@ -84,7 +84,8 @@ jobs:
         run: |
           v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
           echo "ESPHome $v, $HA_IMAGE" >> "$GITHUB_STEP_SUMMARY"
-          pip install "esphome==$v" pillow aiohttp aioesphomeapi
+          # Réessais : PyPI répond parfois « from versions: none » (tools/ci/pip_reessai.sh).
+          bash tools/ci/pip_reessai.sh "esphome==$v" pillow aiohttp aioesphomeapi
       - name: Compiler la tablette virtuelle (plateforme host, nom de la vraie tablette)
         # Le fuseau d'une horloge `host` est celui de la compilation (le runner est en UTC).
         # Nom de la vraie tablette : les packages appellent esphome.tab5_ha_hmi_… en dur.
