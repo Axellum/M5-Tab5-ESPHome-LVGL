@@ -4,6 +4,44 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [3.1.0] — 2026-09-28
+
+De `v3.0.1` à aujourd'hui : 5 pull requests (#210, #214 → #217), plus celle de la
+release.
+- **L'écran parle aussi espagnol et italien** (#214), au choix dans le select
+  « Langue » ;
+- **installation dans un Home Assistant neuf, testée en CI** sans matériel (#210) ;
+  le test a trouvé cinq défauts côté HA, corrigés (#215) ;
+- **voix** : plus d'appel à une action inexistante de HA en interrompant (#217) ;
+- CI : l'installation pip réessaie (#216).
+
+**Version mineure** : une nouvelle fonction (deux langues), rien à changer dans une
+installation existante hors les packages HA ci-dessous.
+
+### À faire en mettant à jour depuis 3.0.1
+
+- **Firmware** : depuis HA (entité « Firmware »).
+- **HA** : reprendre `tab5_push.yaml`, `tab5_calendar.yaml`, `tab5_reveil.yaml` et le
+  blueprint `tab5_emplacements.yaml`, puis recharger scripts et automatisations. L'ordre
+  est libre. Le blueprint repousse tout l'écran au rechargement.
+- `tab5_tv.yaml` exige la ligne `tab5_tv_app_url` dans `secrets.yaml` (déjà le cas
+  avant, maintenant écrit dans le guide).
+
+### Mesures de la version
+
+- Compilations de la CI (ESPHome 2026.9.0), firmware de `v3.0.1` contre celui de ce
+  tag : image 3 191 110 → 3 239 558 o (+47 Ko, l'espagnol et l'italien), RAM statique
+  171 066 → 171 002 o (−64 o) ; aucun avertissement dans notre code.
+- Rendu hors tablette : identique aux références dans les six langues (#217).
+- Test « installation dans un HA neuf » : vert (#215, #216).
+
+### Problèmes connus
+
+Ceux de la 3.0.1. En plus :
+- **Espagnol et italien** : traduits par une IA, pas encore relus par une personne dont
+  c'est la langue ; vus seulement sur le rendu hors tablette, pas encore sur la
+  tablette.
+
 ### 2026-09-28 — Voix : plus d'appel à une action inexistante de HA en interrompant
 
 - `Tab5/tab5-assist.yaml`, `tab5_vocal_interrupt` (taper le micro pendant une réponse,
