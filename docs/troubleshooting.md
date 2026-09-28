@@ -85,7 +85,7 @@ Format: **Symptom → Root cause → Fix**. Entries are chronological, most rece
 
 **Fix:** keep the pressed properties out of `style_definitions`, but share them anyway: put them in a normal style and reference it from the widget with `pressed: { styles: style_x }`. ESPHome accepts that form on a widget and generates `lv_obj_add_style(obj, style_x, LV_STATE_PRESSED)` (verified in `schemas.py` / `widgets/__init__.py` of ESPHome 2026.9, 2026-09-26). The earlier advice "repeat the block on every button, it cannot be shared" was wrong.
 
-**Related:** press/release no longer animate. The default LVGL theme used to fade every button over 80 ms, plus a 70 ms delay on release. `CONFIG_LV_THEME_DEFAULT_TRANSITION_TIME: "0"` (`Tab5/tab5-hardware.yaml`) removes those transitions, and the project's own pressed style (`tab5_anim.cpp`, 94 % scale) is applied instantly.
+**Related:** press/release no longer animate. The default LVGL theme used to fade every button over 80 ms, plus a 70 ms delay on release. `-DLV_THEME_DEFAULT_TRANSITION_TIME=0` (`build_flags` in `tab5-ha-hmi.yaml`) removes those transitions (a `CONFIG_LV_*` line in the sdkconfig has no effect: ESPHome builds LVGL with `LV_KCONFIG_IGNORE`; the first attempt, on 2026-09-26, went there and never applied), and the project's own pressed style (`tab5_anim.cpp`, 94 % scale) is applied instantly.
 
 ---
 

@@ -4,6 +4,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 (nuit) — Boutons : les transitions du thème LVGL enfin coupées
+
+- Le 26/09 (audit ressources, lot 6), `CONFIG_LV_THEME_DEFAULT_TRANSITION_TIME: "0"` avait
+  été posé dans le sdkconfig pour des boutons instantanés. Il n'a jamais agi : ESPHome
+  compile LVGL avec `-DLV_KCONFIG_IGNORE`, qui ignore tous les `CONFIG_LV_*`. Le binaire
+  de la 3.2.0 animait toujours chaque appui en 80 ms et chaque relâchement en 80 ms après
+  70 ms de délai (`lv_theme_default_init`, vu au désassemblage).
+- La macro passe maintenant par `esphome: build_flags` (`-DLV_THEME_DEFAULT_TRANSITION_TIME=0`,
+  absente des `LV_DEFINES` d'ESPHome, donc pas écrasée) ; la ligne du sdkconfig est
+  retirée, commentaires et `docs/troubleshooting.md` corrigés.
+- Trouvé en analysant les PR d'ESPHome sur la rapidité d'affichage du P4 (esphome#16853,
+  #16863).
+- Vérifié le 28/09 : `lv_theme_default_init` n'appelle plus `lv_style_transition_dsc_init`
+  (0 appel dans tout le binaire, 2 avant). Build de mesure sur la tablette : repos
+  20,2-20,3 ms, écran rallumé 133,3 ms, calendrier 126,1 ms, comme la 3.2.0 (ouvertures
+  commandées depuis HA, sans appui : le gain se voit au doigt, pas dans ces chiffres).
+
 ### 2026-09-28 (nuit) — Docs : performances mesurées, chiffres faux corrigés
 
 - **`docs/performance.md`** (nouvelle, EN/FR) : mesures de la 3.2.0 sur la tablette le
