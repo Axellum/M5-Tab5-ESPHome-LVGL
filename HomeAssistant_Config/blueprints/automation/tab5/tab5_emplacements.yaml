@@ -1817,7 +1817,9 @@ actions:
               {%- set st = states[t.e] -%}
               {%- if t.e == volet_suivi -%}
                 {%- set etat = {'En_mouvement': 'opening', 'Ouvert': 'open', 'Ferme': 'closed', 'Partiel': 'open'}.get(states('input_text.volet_serre_etat'), st.state) -%}
-                {%- set v = 'nan' -%}
+                {#- Position pour la flèche de la tablette : au bout (100 / 0), le sens repart
+                    dans l'autre ; « Partiel » (-1, arrêté en route) garde le sens choisi. -#}
+                {%- set v = {'Ouvert': 100, 'Ferme': 0, 'Partiel': -1}.get(states('input_text.volet_serre_etat'), 'nan') -%}
               {%- else -%}
                 {%- set etat = st.state -%}
                 {%- set brut = st.attributes.get('brightness') if t.type == 'lum'

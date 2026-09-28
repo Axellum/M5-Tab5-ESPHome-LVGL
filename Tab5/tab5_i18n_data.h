@@ -8,9 +8,11 @@
 static const uint8_t kI18nLangCount = 6;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it"};
-static const uint16_t kI18nKeyCount = 947;
+static const uint16_t kI18nKeyCount = 949;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
     "",
     "",
     "",
@@ -1109,6 +1111,7 @@ static const char* const kI18nKeys[] = {
     "Attire les bonus alentour",
     "Au tour de Blanc",
     "Au tour de Noir",
+    "Aucun appareil",
     "Aucun déplacement possible — au suivant.",
     "Aucun effet actif",
     "Aucun jour retenu dans les 8 prochains",
@@ -1507,6 +1510,7 @@ static const char* const kI18nKeys[] = {
     "Oui, tout effacer",
     "Ouvert",
     "Ouverture",
+    "Ouvrir",
     "PARTIE",
     "PARTIE NULLE",
     "PARTIE TERMINÉE",
@@ -2060,6 +2064,7 @@ static const char* const kI18n_en[] = {
     "Pulls in nearby pickups",  // "Attire les bonus alentour"
     "White to play",  // "Au tour de Blanc"
     "Black to play",  // "Au tour de Noir"
+    "No device",  // "Aucun appareil"
     "No move possible — next team.",  // "Aucun déplacement possible — au suivant."
     "No active effect",  // "Aucun effet actif"
     "No day selected in the next 8",  // "Aucun jour retenu dans les 8 prochains"
@@ -2458,6 +2463,7 @@ static const char* const kI18n_en[] = {
     "Yes, clear everything",  // "Oui, tout effacer"
     "Open",  // "Ouvert"
     "Shift start",  // "Ouverture"
+    "Open",  // "Ouvrir"
     "GAME",  // "PARTIE"
     "DRAW",  // "PARTIE NULLE"
     "GAME OVER",  // "PARTIE TERMINÉE"
@@ -3011,6 +3017,7 @@ static const char* const kI18n_de[] = {
     "Zieht Boni in der Nähe an",  // "Attire les bonus alentour"
     "Weiß am Zug",  // "Au tour de Blanc"
     "Schwarz am Zug",  // "Au tour de Noir"
+    "Kein Gerät",  // "Aucun appareil"
     "Kein Zug möglich — nächstes Team.",  // "Aucun déplacement possible — au suivant."
     "Kein aktiver Effekt",  // "Aucun effet actif"
     "Kein Tag in den nächsten 8 gewählt",  // "Aucun jour retenu dans les 8 prochains"
@@ -3409,6 +3416,7 @@ static const char* const kI18n_de[] = {
     "Ja, alles löschen",  // "Oui, tout effacer"
     "Offen",  // "Ouvert"
     "Schicht",  // "Ouverture"
+    "Öffnen",  // "Ouvrir"
     "PARTIE",  // "PARTIE"
     "REMIS",  // "PARTIE NULLE"
     "SPIEL VORBEI",  // "PARTIE TERMINÉE"
@@ -3962,6 +3970,7 @@ static const char* const kI18n_nl[] = {
     "Trekt nabije bonussen aan",  // "Attire les bonus alentour"
     "Wit aan zet",  // "Au tour de Blanc"
     "Zwart aan zet",  // "Au tour de Noir"
+    "Geen apparaat",  // "Aucun appareil"
     "Geen zet mogelijk — volgende team.",  // "Aucun déplacement possible — au suivant."
     "Geen actief effect",  // "Aucun effet actif"
     "Geen dag gekozen in de komende 8",  // "Aucun jour retenu dans les 8 prochains"
@@ -4360,6 +4369,7 @@ static const char* const kI18n_nl[] = {
     "Ja, alles wissen",  // "Oui, tout effacer"
     "Open",  // "Ouvert"
     "Werkbegin",  // "Ouverture"
+    "Openen",  // "Ouvrir"
     "PARTIJ",  // "PARTIE"
     "REMISE",  // "PARTIE NULLE"
     "SPEL VOORBIJ",  // "PARTIE TERMINÉE"
@@ -4913,6 +4923,7 @@ static const char* const kI18n_es[] = {
     "Atrae los bonus cercanos",  // "Attire les bonus alentour"
     "Turno de Blanco",  // "Au tour de Blanc"
     "Turno de Negro",  // "Au tour de Noir"
+    "Ningún dispositivo",  // "Aucun appareil"
     "Sin movimiento posible — turno del siguiente.",  // "Aucun déplacement possible — au suivant."
     "Sin efecto activo",  // "Aucun effet actif"
     "Ningún día elegido en los próximos 8",  // "Aucun jour retenu dans les 8 prochains"
@@ -5311,6 +5322,7 @@ static const char* const kI18n_es[] = {
     "Sí, borrar todo",  // "Oui, tout effacer"
     "Abierta",  // "Ouvert"
     "Turno",  // "Ouverture"
+    "Abrir",  // "Ouvrir"
     "PARTIDA",  // "PARTIE"
     "TABLAS",  // "PARTIE NULLE"
     "FIN DE PARTIDA",  // "PARTIE TERMINÉE"
@@ -5864,6 +5876,7 @@ static const char* const kI18n_it[] = {
     "Attira i bonus vicini",  // "Attire les bonus alentour"
     "Tocca al Bianco",  // "Au tour de Blanc"
     "Tocca al Nero",  // "Au tour de Noir"
+    "Nessun dispositivo",  // "Aucun appareil"
     "Nessuna mossa possibile — passa la mano.",  // "Aucun déplacement possible — au suivant."
     "Nessun effetto attivo",  // "Aucun effet actif"
     "Nessun giorno scelto nei prossimi 8",  // "Aucun jour retenu dans les 8 prochains"
@@ -6262,6 +6275,7 @@ static const char* const kI18n_it[] = {
     "Sì, cancella tutto",  // "Oui, tout effacer"
     "Aperta",  // "Ouvert"
     "Inizio turno",  // "Ouverture"
+    "Apri",  // "Ouvrir"
     "PARTITA",  // "PARTIE"
     "PATTA",  // "PARTIE NULLE"
     "PARTITA FINITA",  // "PARTIE TERMINÉE"

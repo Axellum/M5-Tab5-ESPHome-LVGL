@@ -70,6 +70,16 @@ script:
           u.heure_bouton[2] = id(btn_h2_action);
           u.heure_bouton[3] = id(btn_h1_action);
           u.heure_bouton[4] = id(btn_h0_action);
+          u.jour_titre[0] = id(j0_day);
+          u.jour_titre[1] = id(j1_day);
+          u.jour_titre[2] = id(j2_day);
+          u.jour_titre[3] = id(j3_day);
+          u.jour_titre[4] = id(j4_day);
+          u.heure_titre[0] = id(h4_time);
+          u.heure_titre[1] = id(h3_time);
+          u.heure_titre[2] = id(h2_time);
+          u.heure_titre[3] = id(h1_time);
+          u.heure_titre[4] = id(h0_time);
           // Mode HA : carte T = tuile T.
           u.carte[0] = id(sw_card_0);
           u.carte[1] = id(sw_card_1);
@@ -120,3 +130,5 @@ script:
             id(tab5_action).execute(std::string(e), std::string(a), std::string(v));
           };
           u.volet_tap = []() { id(tab5_volet_tap).execute(); };
+          // Toucher d'un titre = sens d'un volet (28/09) ; une fois, les pointeurs posés.
+          tuiles_brancher_titres();

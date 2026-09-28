@@ -152,6 +152,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Volet arrêté.": "Persiana detenida."
 # Rooms and tiles (ADR-0023): room title, state lines of the HA cards
 "Pièce %d/%d": "Estancia %d/%d"
+"Aucun appareil": "Ningún dispositivo"
+"Ouvrir": "Abrir"
 "Pièce %d": "Estancia %d"
 "Lancer": "Iniciar"
 "Détecté": "Detectado"

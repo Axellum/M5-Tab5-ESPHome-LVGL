@@ -789,6 +789,9 @@ struct TuilesUI {
     lv_obj_t* heure_g[5] = {};
     lv_obj_t* heure_d[5] = {};
     lv_obj_t* heure_bouton[5] = {};
+    // Libellés des onglets de titre (leur parent devient cliquable : sens d'un volet).
+    lv_obj_t* jour_titre[5] = {};          // j{T}_day
+    lv_obj_t* heure_titre[5] = {};         // h(4−T)_time
     // Cartes du mode HA (switches_card.yaml) : carte T = tuile T de la pièce courante.
     lv_obj_t* carte[5] = {};
     lv_obj_t* carte_icone[5] = {};
@@ -819,6 +822,11 @@ extern TuilesUI g_tuiles_ui;
 // Appui sur la tuile T de la pièce de la page courante (tuile météo ou carte du mode
 // HA) : commande selon le type et les options (tableau de l'ADR-0023), popup, ou rien.
 void tuile_appui(int tuile, bool long_appui);
+
+// Toucher du titre de la tuile T : bascule le sens d'un volet (flèche, puis appui).
+void tuile_titre_appui(int tuile);
+// Rend cliquables les onglets de titre (une fois, depuis tab5_tuiles_ui).
+void tuiles_brancher_titres();
 
 // Mode HA (bouton « HA », « Aller à l'écran → Accueil ») : cartes de la pièce de la page
 // courante, ou de la plus proche qui a des appareils ; titre de la pièce dans la carte

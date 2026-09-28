@@ -4,6 +4,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 (soir) — Pièces : retours d'Axel sur la tablette
+
+- **Volet** : la pause remarche (le blueprint lançait le script du volet à course simulée
+  et attendait sa fin, 26 s, en retenant toute commande suivante) ; le sens se choisit de
+  nouveau d'un toucher sur le titre de la tuile, flèche comprise, comme en 3.1, sur toutes
+  les tuiles volet et aussi en mode HA (la ligne d'état dit « Ouvrir » / « Fermer »).
+- **Mode HA** : le glisser passe par les cinq pages, pièces vides comprises (« Aucun
+  appareil ») ; le bouton « HA » est entouré de bleu quand le mode est actif, comme le
+  bouton « Domo », et son icône garde la couleur de la connexion à HA.
+- Blueprint : nom de pièce seulement si l'aire couvre au moins la moitié de ses
+  appareils ; tuile PC du réglage 3.x en écran ; lampe allumée à luminosité 0 = « Allumé ».
+
 ### 2026-09-28 — Firmware : les pièces et leurs tuiles (ADR-0023, côté tablette)
 
 - **Modèle** (`Tab5/tab5_tuiles.cpp`, nouvelle unité) : 5 pièces × 5 tuiles (type, icône

@@ -149,12 +149,17 @@ def test_commandes_par_type_egales_au_tableau_de_l_adr():
         assert "`basculer`" in types[t][0]
     assert '(d.options & OPT_O) ? "allumer" : "basculer"' in appui
     assert "`lancer`" in types["act"][0] and 'action = "lancer";' in appui
-    # vol : en mouvement arrêter, ouvert fermer, sinon ouvrir ; long : l'autre.
+    # vol : en mouvement arrêter (pause), sinon le sens choisi par le titre (au départ,
+    # ouvert → fermer) ; long : l'autre (mise à jour du 28/09, retour de la 3.1).
     assert all(f"`{c}`" in types["vol"][0] for c in ("arreter", "fermer", "ouvrir"))
     vol = _fonction(cpp, "vol_appui")
-    assert 'if (vol_mouvement(s)) return "arreter";' in vol
-    assert 'return est(s, "open") ? "fermer" : "ouvrir";' in vol
-    assert 'return est(s, "open") ? "ouvrir" : "fermer";' in _fonction(cpp, "vol_appui_long")
+    assert 'if (vol_mouvement(e.brut)) return "arreter";' in vol
+    assert 'return vol_sens(e) == SENS_FERMER ? "fermer" : "ouvrir";' in vol
+    assert 'return vol_sens(e) == SENS_FERMER ? "ouvrir" : "fermer";' in _fonction(cpp, "vol_appui_long")
+    assert 'return est(e.brut, "open") ? SENS_FERMER : SENS_OUVRIR;' in _fonction(cpp, "vol_sens")
+    # Le titre de chaque tuile (jours, heures, cartes HA) bascule le sens.
+    titres = _fonction(cpp, "tuiles_brancher_titres")
+    assert "u.jour_titre[t], u.heure_titre[t], u.carte_nom[t]" in titres and "LV_EVENT_SHORT_CLICKED" in titres
     # cap / bin : lecture seule (aucun bouton) ; cli : popup avec m ; med : télécommande avec t.
     agit = _fonction(cpp, "type_agit")
     assert "case Type::CLI: return (options & OPT_M) != 0;" in agit

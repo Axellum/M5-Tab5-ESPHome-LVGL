@@ -49,7 +49,7 @@ In every text field `|` becomes `/` and `;` becomes `,` (as today).
 |---|---|---|---|
 | `lum` | `light` | `basculer` | light popup (the room's `lum` tiles) |
 | `int` | `switch`, `input_boolean`, `fan`, `humidifier`, `automation` | `basculer` (`allumer` only, with `o`) | — |
-| `vol` | `cover`, `valve` | moving → `arreter`; open → `fermer`; else `ouvrir` | the other one of `ouvrir`/`fermer` |
+| `vol` | `cover`, `valve` | moving → `arreter` (pause); else the chosen direction (`ouvrir` / `fermer`, see below) | the other one of `ouvrir`/`fermer` |
 | `med` | `media_player` | `basculer` | TV remote, with `t` |
 | `act` | `scene`, `script`, `button`, `input_button` | `lancer` | — |
 | `cap` | `sensor`, `number`, `input_number` | — (read only) | — |
@@ -87,9 +87,10 @@ HA dispatches by the **domain of the tile's entity**, and acts only on entities 
 
 - **Weather mode** (as today): on **every** page, a tile holding a device shows it in its « shoulders » — left: the device's icon coloured by its state; right: a bulb (`lum`) or the arrow of the next move (`vol`), nothing for the other types — and its invisible action button (tap / long press above). A page without devices looks as today.
 - **HA mode** (button « HA »): the five cards show the current page's room: icon (palette, 70 px), name (title tab, cut with « … »), state line (translated by the tablet), colour by type and state. Empty tiles are hidden and the others centred (the zones formula, ADR-0018). The central card shows the title panel: small line « Pièce n/N », main line the room's name (« Pièce n » if it has none); the rotator does not own the card in HA mode.
-- **Swipe in HA mode** goes to the next / previous room that has at least one device, in the weather order above; the forecast layers stay hidden; the pagination dots follow. One room only: a swipe does nothing. Entering HA mode on a page without devices jumps to the nearest room that has some.
-- Leaving HA mode shows the weather of the current page. The « HA » button shows that HA mode is on. « Aller à l'écran → Accueil » leaves HA mode. No device at all: the « HA » button is hidden.
+- **Swipe in HA mode** goes to the next / previous page in the weather order, empty rooms included (small line « Pièce n/5 », main line « Aucun appareil »); the forecast layers stay hidden; the pagination dots follow. Entering HA mode on a page without devices jumps to the nearest room that has some. *(Update 2026-09-28: empty rooms used to be skipped; with a single configured room the swipe did nothing, which read as broken on the author's tablet.)*
+- Leaving HA mode shows the weather of the current page. The « HA » button gets a blue border while HA mode is on, like the voice « Domo » button; its icon keeps showing whether Home Assistant is connected. « Aller à l'écran → Accueil » leaves HA mode. No device at all: the « HA » button is hidden.
 - State lines (`tr()`): `lum` « 60 % » (dimmable, on) / « Allumé » / « Éteint » ; `int` « Allumé » / « Éteint » ; `vol` « Mouvement » / « 45 % » (partly open) / « Ouvert » / « Fermé » ; `med` « Lecture » / « Pause » / « Allumé » / « Éteint » ; `act` « Lancer », then « OK » for 1 s ; `cap` the value and its unit ; `bin` by device class (« Ouvert »/« Fermé », « Détecté »/« Rien », « Présent »/« Absent », « Verrouillé »/« Ouvert », else « Actif »/« Inactif ») ; `cli` the room temperature. `unavailable`/`unknown`: « Hors ligne », greyed.
+- **Shutter direction** (update 2026-09-28, as in 3.1): each `vol` tile keeps a chosen direction; touching the tile's title (weather tab or HA card name) flips it, the right shoulder shows it (arrow up / down, pause while moving) and the HA card's state line says « Ouvrir » / « Fermer » for 2 s. At the end of a course the direction flips by itself (closed → open, fully open → close); stopped half-way (position 1-99, or -1 for the simulated shutter's « Partiel ») it stays.
 - Colours are `UIColor` tokens (ADR-0004), except a light's own colour, lightened when too dark for the background.
 
 ### Compatibility

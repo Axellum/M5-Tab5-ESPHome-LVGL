@@ -80,7 +80,14 @@ struct Etat {
     uint32_t couleur;     // couleur propre d'une lumière (rgb_color)
     bool a_couleur;
     bool recu;
+    uint8_t sens;         // volet : SENS_INCONNU, SENS_OUVRIR, SENS_FERMER (toucher du titre)
 };
+
+// Sens d'un volet à l'arrêt (28/09/2026, retour de la 3.1 demandé par Axel) : un toucher
+// sur le titre de la tuile le bascule, la flèche le montre, l'appui suivant le suit.
+constexpr uint8_t SENS_INCONNU = 0;
+constexpr uint8_t SENS_OUVRIR = 1;
+constexpr uint8_t SENS_FERMER = 2;
 
 constexpr uint32_t kMagic = 0x54554931;    // « TUI1 »
 constexpr uint32_t kPrefKey = 0x7475696C;  // « tuil »
@@ -384,8 +391,10 @@ struct Minuterie {
 };
 Minuterie s_confirmation;
 Minuterie s_ok;
+Minuterie s_sens;  // sens d'un volet basculé : « Ouvrir » / « Fermer » sur la ligne d'état
 constexpr uint32_t kConfirmationMs = 3000;
 constexpr uint32_t kOkMs = 1000;
+constexpr uint32_t kSensMs = 2000;
 
 bool minuterie_sur(const Minuterie& m, int r, int t) { return m.timer != nullptr && m.r == r && m.t == t; }
 
@@ -453,16 +462,30 @@ Famille famille_bin(const char* classe) {
 
 // Volet / vanne : « ouvert » = état open (même entrouvert), mouvement = opening / closing.
 bool vol_mouvement(const char* s) { return est(s, "opening") || est(s, "closing"); }
-// Appui court (ADR-0023) : en mouvement → arrêter ; ouvert → fermer ; sinon ouvrir.
-const char* vol_appui(const char* s) {
-    if (vol_mouvement(s)) return "arreter";
-    return est(s, "open") ? "fermer" : "ouvrir";
+// Sens à l'arrêt : celui choisi par le titre, sinon d'après l'état (ouvert → fermer).
+uint8_t vol_sens(const Etat& e) {
+    if (e.sens != SENS_INCONNU) return e.sens;
+    return est(e.brut, "open") ? SENS_FERMER : SENS_OUVRIR;
+}
+// Au bout de sa course, le sens repart dans l'autre : fermé → ouvrir ; tout à fait ouvert
+// (position 100, ou volet qui n'en donne pas) → fermer. Arrêté en route (position 1-99, ou
+// -1 pour le volet à course simulée, « Partiel ») : le sens choisi reste.
+void vol_sens_suivre(Etat& e) {
+    if (vol_mouvement(e.brut)) return;
+    if (est(e.brut, "closed")) e.sens = SENS_OUVRIR;
+    else if (est(e.brut, "open") && (std::isnan(e.valeur) || e.valeur >= 100.0f)) e.sens = SENS_FERMER;
+}
+// Appui court (ADR-0023, mise à jour du 28/09) : en mouvement → arrêter (pause) ; sinon
+// dans le sens choisi.
+const char* vol_appui(const Etat& e) {
+    if (vol_mouvement(e.brut)) return "arreter";
+    return vol_sens(e) == SENS_FERMER ? "fermer" : "ouvrir";
 }
 // Appui long : l'autre de ouvrir / fermer (en mouvement, le sens contraire).
-const char* vol_appui_long(const char* s) {
-    if (est(s, "opening")) return "fermer";
-    if (est(s, "closing")) return "ouvrir";
-    return est(s, "open") ? "ouvrir" : "fermer";
+const char* vol_appui_long(const Etat& e) {
+    if (est(e.brut, "opening")) return "fermer";
+    if (est(e.brut, "closing")) return "ouvrir";
+    return vol_sens(e) == SENS_FERMER ? "ouvrir" : "fermer";
 }
 
 // Un appui fait-il quelque chose ? (sinon le bouton de la tuile météo est masqué). Option
@@ -476,13 +499,14 @@ bool type_agit(Type type, uint8_t options) {
     }
 }
 
-// Épaule droite d'un volet : la flèche de ce qu'un appui ferait.
-void vue_fleche_volet(const char* s, Vue& v) {
-    if (vol_mouvement(s)) {
+// Épaule droite d'un volet : la flèche de ce qu'un appui ferait (pause en mouvement,
+// sinon le sens choisi), comme la 3.1.
+void vue_fleche_volet(const Etat& e, Vue& v) {
+    if (vol_mouvement(e.brut)) {
         v.droite = glyphe_fleche(0);
         v.couleur_droite = UIColor::INFO;
     } else {
-        v.droite = glyphe_fleche(est(s, "open") ? -1 : 1);
+        v.droite = glyphe_fleche(vol_sens(e) == SENS_FERMER ? -1 : 1);
         v.couleur_droite = UIColor::TEXT_DIM;
     }
 }
@@ -528,7 +552,7 @@ void vue_nouvelle(int r, int t, Vue& v) {
             } else {
                 snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Fermé"));
             }
-            vue_fleche_volet(s, v);
+            vue_fleche_volet(e, v);
             break;
         case Type::MED:
             actif = !est(s, "off") && !est(s, "standby");
@@ -603,6 +627,12 @@ void vue_nouvelle(int r, int t, Vue& v) {
         snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Hors ligne"));
     } else if (type == Type::CLI && !std::isnan(e.valeur)) {
         c_ligne = get_temperature_color(e.valeur);
+    }
+    // Sens d'un volet basculé par le titre : la ligne d'état le dit 2 s (en mode HA, la
+    // carte n'a pas de flèche).
+    if (type == Type::VOL && e.recu && !vol_mouvement(s) && minuterie_sur(s_sens, r, t)) {
+        c_ligne = UIColor::ACCENT;
+        snprintf(v.ligne, sizeof(v.ligne), "%s", vol_sens(e) == SENS_FERMER ? tr("Fermer") : tr("Ouvrir"));
     }
     // Option k : le premier appui arme, la ligne d'état demande le second (3 s).
     if (minuterie_sur(s_confirmation, r, t)) {
@@ -815,8 +845,10 @@ void peindre_heritage(int t) {
     if (heritage()) peindre_tuile(0, t);
 }
 
-// Bouton « HA » : masqué sans aucun appareil ; bordure et icône en couleur d'accent
-// quand le mode HA est actif. Ne touche au style qu'au changement.
+// Bouton « HA » : masqué sans aucun appareil ; entouré de bleu quand le mode HA est actif,
+// comme le bouton « Domo » du micro (tab5-assist.yaml). Son ICÔNE n'est pas touchée : sa
+// couleur dit si HA est connecté (tab5-sensors-diagnostics.yaml), demande d'Axel du
+// 28/09. Ne touche au style qu'au changement.
 bool s_bouton_actif = false;
 void bouton_ha_peindre() {
     const TuilesUI& u = g_tuiles_ui;
@@ -824,15 +856,13 @@ void bouton_ha_peindre() {
     if (u.bouton_ha == nullptr || s_bouton_actif == g_central_ctx.ha_mode) return;
     s_bouton_actif = g_central_ctx.ha_mode;
     if (s_bouton_actif) {
-        highlight_button_border(u.bouton_ha, true, UIColor::ACCENT, 3);
-        ui_text_color(u.icone_ha, UIColor::ACCENT);
+        highlight_button_border(u.bouton_ha, true, UIColor::INFO);
         return;
     }
     // Retour exact au style du bouton (style_clim_btn_page : liseré à 35 %), pas au gris
     // « inactif » de highlight_button_border (40 %) : le rendu hors tablette le voyait.
     for (lv_style_prop_t p : {LV_STYLE_BORDER_COLOR, LV_STYLE_BORDER_OPA, LV_STYLE_BORDER_WIDTH})
         lv_obj_remove_local_style_prop(u.bouton_ha, p, LV_PART_MAIN);
-    if (u.icone_ha != nullptr) lv_obj_remove_local_style_prop(u.icone_ha, LV_STYLE_TEXT_COLOR, LV_PART_MAIN);
 }
 
 // Change de page sans toucher aux calques météo (mode HA) : global, contexte, pastilles.
@@ -1045,6 +1075,7 @@ bool tuiles_definir(const std::string& payload) {
     // Une minuterie peut viser une tuile qui n'existe plus.
     minuterie_arreter(s_confirmation);
     minuterie_arreter(s_ok);
+    minuterie_arreter(s_sens);
     tuiles_appliquer_ui();
     return true;
 }
@@ -1081,6 +1112,7 @@ bool tuiles_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n
         }
     }
     e.recu = true;
+    if (s_m.tuiles[r][t].type == static_cast<uint8_t>(Type::VOL)) vol_sens_suivre(e);
     if (!heritage()) peindre_tuile(r, t);
     return true;
 }
@@ -1094,8 +1126,8 @@ void tuiles_appliquer_ui() {
             tuiles_mode_ha(false);
             return;
         }
-        // La pièce affichée a pu se vider (nouvelles définitions, zone absente).
-        if (!piece_non_vide(piece_courante())) aller_page(page_non_vide_proche(ctx.forecast_page));
+        // Une pièce vide reste affichée (« Aucun appareil ») : le swipe passe par les cinq
+        // pages (28/09, demande d'Axel, une seule pièce configurée = swipe muet sinon).
         peindre_cartes();
         // Titre (nom ou nombre de pièces changé) ; une réponse vocale garde la carte.
         if (!ctx.vocal_shown) update_central_forecast_page_ui(ctx.forecast_page, u.titre_cadre, u.titre, ctx);
@@ -1146,41 +1178,73 @@ void tuiles_mode_ha(bool actif) {
     bouton_ha_peindre();
 }
 
+// Mode HA : la page suivante dans l'ordre de la météo, pièce vide comprise (elle dit
+// « Aucun appareil ») — comme les cinq pages de prévisions. Avant le 28/09, les pièces
+// vides étaient sautées : avec une seule pièce configurée, le swipe ne faisait rien.
 void tuiles_swipe_ha(bool gauche) {
     charger();
-    const int depart = g_central_ctx.forecast_page;
-    int p = depart;
-    // Au plus deux tours : depuis une page horaire, la gauche ne revient jamais au départ.
-    for (int i = 0; i < 2 * kPieces; i++) {
-        p = forecast_page_suivante(p, gauche);
-        if (p == depart) return;  // tour complet : la seule pièce qui a des appareils
-        if (!piece_non_vide(kPieceDePage[p])) continue;
-        aller_page(p);
-        peindre_cartes();
-        central_mode_ha(g_tuiles_ui.titre_cadre, g_tuiles_ui.titre, g_central_ctx);
-        return;
-    }
+    aller_page(forecast_page_suivante(g_central_ctx.forecast_page, gauche));
+    peindre_cartes();
+    central_mode_ha(g_tuiles_ui.titre_cadre, g_tuiles_ui.titre, g_central_ctx);
 }
 
+// « Pièce n/5 » (n = numéro de la pièce dans le blueprint), puis son nom, « Pièce n »
+// sans nom, ou « Aucun appareil » pour une pièce vide.
 bool tuiles_titre_piece(std::string& chapeau, std::string& titre) {
     charger();
     const int r = piece_courante();
-    int n = 0, rang = 0;
-    for (int i = 0; i < kPieces; i++) {
-        if (!piece_non_vide(i)) continue;
-        n++;
-        if (i == r) rang = n;
-    }
     char buf[48];
-    snprintf(buf, sizeof(buf), tr("Pièce %d/%d"), rang, n);
+    snprintf(buf, sizeof(buf), tr("Pièce %d/%d"), r + 1, kPieces);
     chapeau = buf;
-    if (!heritage() && s_m.pieces[r][0] != '\0') {
+    if (!piece_non_vide(r)) {
+        titre = tr("Aucun appareil");
+    } else if (!heritage() && s_m.pieces[r][0] != '\0') {
         titre = s_m.pieces[r];
     } else {
         snprintf(buf, sizeof(buf), tr("Pièce %d"), r + 1);
         titre = buf;
     }
     return true;
+}
+
+// Toucher du titre d'une tuile (mode météo : l'onglet du jour ou de l'heure ; mode HA :
+// l'onglet du nom) : bascule le sens d'un volet, comme le bouton de titre de la 3.1.
+void tuile_titre_appui(int t) {
+    charger();
+    const int r = piece_courante();
+    if (heritage()) {
+        if (r == 0 && t == 1 && tuile_presente(0, 1)) tuiles_heritage_volet_sens();
+        return;
+    }
+    if (!tuile_presente(r, t)) return;
+    const Def& d = s_m.tuiles[r][t];
+    if (static_cast<Type>(d.type) != Type::VOL || (d.options & OPT_R)) return;
+    Etat& e = s_etats[r][t];
+    e.sens = vol_sens(e) == SENS_FERMER ? SENS_OUVRIR : SENS_FERMER;
+    minuterie_armer(s_sens, r, t, kSensMs);  // repeint : flèche, et la ligne d'état 2 s
+}
+
+static void titre_rappel(lv_event_t* ev) {
+    tuile_titre_appui(static_cast<int>(reinterpret_cast<intptr_t>(lv_event_get_user_data(ev))));
+}
+
+// Rend cliquables les onglets de titre des tuiles (jours, heures, cartes HA). Une seule
+// fois : tab5_tuiles_ui est rejoué à chaque réponse des zones.
+void tuiles_brancher_titres() {
+    static bool fait = false;
+    if (fait) return;
+    fait = true;
+    const TuilesUI& u = g_tuiles_ui;
+    for (int t = 0; t < kTuiles; t++) {
+        for (lv_obj_t* libelle : {u.jour_titre[t], u.heure_titre[t], u.carte_nom[t]}) {
+            if (libelle == nullptr) continue;
+            lv_obj_t* onglet = lv_obj_get_parent(libelle);
+            if (onglet == nullptr) continue;
+            lv_obj_add_flag(onglet, LV_OBJ_FLAG_CLICKABLE);
+            lv_obj_add_event_cb(onglet, titre_rappel, LV_EVENT_SHORT_CLICKED,
+                                reinterpret_cast<void*>(static_cast<intptr_t>(t)));
+        }
+    }
 }
 
 void tuile_appui(int t, bool long_appui) {
@@ -1210,7 +1274,7 @@ void tuile_appui(int t, bool long_appui) {
             action = (d.options & OPT_O) ? "allumer" : "basculer";
             break;
         case Type::VOL:
-            action = long_appui ? vol_appui_long(e.brut) : vol_appui(e.brut);
+            action = long_appui ? vol_appui_long(e) : vol_appui(e);
             break;
         case Type::MED:
             if (long_appui) {

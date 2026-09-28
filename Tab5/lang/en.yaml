@@ -127,6 +127,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Volet arrêté.": "Shutter stopped."
 # Rooms and tiles (ADR-0023): room title, state lines of the HA cards
 "Pièce %d/%d": "Room %d/%d"
+"Aucun appareil": "No device"
+"Ouvrir": "Open"
 "Pièce %d": "Room %d"
 "Lancer": "Run"
 "Détecté": "Detected"

@@ -140,6 +140,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Volet arrêté.": "Tapparella fermata."
 # Rooms and tiles (ADR-0023): room title, state lines of the HA cards
 "Pièce %d/%d": "Stanza %d/%d"
+"Aucun appareil": "Nessun dispositivo"
+"Ouvrir": "Apri"
 "Pièce %d": "Stanza %d"
 "Lancer": "Avvia"
 "Détecté": "Rilevato"
