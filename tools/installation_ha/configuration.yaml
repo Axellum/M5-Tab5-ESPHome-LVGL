@@ -1,0 +1,40 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tools/installation_ha/configuration.yaml
+# @role configuration.yaml du Home Assistant NEUF du job « installation dans un HA
+#       neuf » (.github/workflows/installation-ha.yml) : celui qu'écrit Home Assistant
+#       à sa première installation, plus ce que docs/installation.md (étape 4) fait
+#       ajouter, et la source des données de test. Copié tel quel par preparer.py.
+# @ai_instruction Rester au plus près du fichier d'un utilisateur : toute ligne ajoutée
+#       ici et absente de la documentation fausserait le test. Les données de test
+#       (demo, ci_donnees_test.yaml) sont signalées comme telles.
+# ============================================================================
+
+# --- Fichier par défaut d'une installation neuve de Home Assistant ---
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# --- docs/installation.md, étape 4, point 1 : les packages du Tab5 ---
+homeassistant:
+  packages: !include_dir_named packages
+
+# --- Données de test, pas chez un utilisateur ---
+# Lumières, clim, volet, TV, télécommande, capteurs : l'intégration de démonstration de
+# Home Assistant. La météo, la pluie, la vigilance, la serre et les pots viennent du
+# package packages/ci_donnees_test.yaml (tools/installation_ha/donnees_test.yaml).
+demo:
+
+# Journal de l'intégration ESPHome au niveau info : l'ajout de la tablette, la clé
+# donnée, la reconnexion chiffrée se lisent dans `docker logs` du job.
+logger:
+  default: warning
+  logs:
+    homeassistant.components.esphome: info
