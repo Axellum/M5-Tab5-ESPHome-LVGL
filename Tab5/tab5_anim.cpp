@@ -484,8 +484,8 @@ void update_clock_date_ui(lv_obj_t* lbl_date,
 // `pressed:` est refusé dans style_definitions, mais `pressed: { styles: x }` est
 // accepté sur un widget (vérifié le 26/09/2026) : ce qui reste en C++, c'est le
 // pivot au centre, qui dépend de la taille de chaque bouton.
-// Aucune transition : CONFIG_LV_THEME_DEFAULT_TRANSITION_TIME = 0
-// (tab5-hardware.yaml, 26/09/2026) — le thème LVGL animait l'appui en 80 ms et le
+// Aucune transition : -DLV_THEME_DEFAULT_TRANSITION_TIME=0 (build_flags de
+// tab5-ha-hmi.yaml ; voulu le 26/09/2026, effectif le 28/09/2026) — le thème LVGL animait l'appui en 80 ms et le
 // relâchement en 80 ms après 70 ms de délai. Échelle et assombrissement sont
 // désormais appliqués d'une image à l'autre.
 // =============================================================================
