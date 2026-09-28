@@ -181,7 +181,8 @@ def test_page_suit_le_manifeste_du_site():
 
 # --- Site : vitrine, images et référencement (révision de l'ADR-0022, 28/09/2026) ---
 
-PAGES_WEB = sorted((REPO / "web").rglob("*.html"))
+# Les fichiers google*.html sont ceux de vérification de Google Search Console, pas des pages.
+PAGES_WEB = sorted(p for p in (REPO / "web").rglob("*.html") if not p.name.startswith("google"))
 
 
 def _url_de_page(page: Path) -> str:
@@ -228,6 +229,7 @@ def test_plan_du_site_avec_les_images(tmp_path):
     plan = (tmp_path / "site" / "sitemap.xml").read_text(encoding="utf-8")
     locs = re.findall(r"<loc>([^<]+)</loc>", plan)
     assert pages.SITE in locs and pages.SITE + "install/" in locs
+    assert not any("google" in url for url in locs), "fichier de vérification hors du plan"
     images = re.findall(r"<image:loc>([^<]+)</image:loc>", plan)
     assert pages.SITE + "images/m5stack-tab5-home-assistant-wall-screen.jpg" in images
     for url in images:

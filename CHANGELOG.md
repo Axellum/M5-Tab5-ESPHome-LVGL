@@ -21,10 +21,86 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   page recompilait les trois firmwares et remplaçait les fichiers de la release.
 - `docs/images/tab5_social_preview.jpg` (1280×640) : image de partage du dépôt et du site.
 - README : titre avec « Home Assistant », textes alternatifs des images, 22 ADR et 45
-  composants (et non 17 et 35/40), plus de « pas de firmware précompilé » (la 3.0, en bêta,
-  s'installe depuis le navigateur), liens vers `install/` (doc d'installation, brouillons
+  composants (et non 17 et 35/40), plus de « pas de firmware précompilé » (la 3.0 s'installe
+  depuis le navigateur), liens vers `install/` (doc d'installation, brouillons
   Hackster et forum HA compris).
 - ADR-0022 amendée ; tests : images, balises de chaque page, sitemap, site sans compilation.
+
+## [3.0.0] — 2026-09-28
+
+De `v2.2.0` (27/09, 11:14) à aujourd'hui : 19 pull requests (#189 → #207),
+plus celle de la release. Les lots 5 à 8 de l'audit « ouverture » sont terminés :
+- **installer sans compiler** : une page de flashage dans le navigateur (3 révisions
+  d'écran, Wi-Fi par Improv), puis les mises à jour proposées dans Home Assistant ;
+- **aucun secret dans le firmware** : la clé API est donnée par HA, les mises à jour
+  sont signées par la clé du projet ;
+- **les appareils se choisissent dans HA, à la souris** (blueprint), et ce qui manque
+  disparaît de l'écran ;
+- l'écran parle aussi **allemand et néerlandais** ; la CI dessine **80 écrans en quatre
+  langues** sans tablette.
+
+**Version majeure** : le firmware ne connaît plus les entités de la maison (le blueprint
+devient obligatoire), la clé API et le Wi-Fi ne sont plus compilés, et une 2.x refuse une
+OTA en clair. Le passage se fait une fois, sur place.
+
+### À faire en mettant à jour depuis 2.2.0
+
+Le guide pas à pas : [« Passer à la 3.0 »](docs/installation.md#passer-à-la-30).
+- **Home Assistant 2026.8 ou plus récent** : c'est lui qui donne sa clé à la tablette.
+- **HA d'abord** : reprendre `tab5_push.yaml`, `tab5_health.yaml` et
+  `tab5_meteo_sources.yaml`, importer le blueprint `tab5_emplacements` et créer
+  l'automatisation avec vos appareils. Les placeholders `VOTRE_CLIMATISATION`,
+  `VOTRE_LEDS` et `VOTRE_PC` disparaissent.
+- **Firmware** : `tools/migrer_vers_3.py` l'envoie chiffré avec l'ancienne clé
+  (`api_encryption_key` de `secrets.yaml`) et redonne le Wi-Fi par l'USB (`--port`).
+  Pour compiler vous-même, il faut d'abord une clé de signature (étape 3 du guide).
+- **Dans les 30 minutes après le démarrage** : confirmer dans HA la réauthentification
+  « chiffrement désactivé ». HA donne alors une nouvelle clé ; entités, automatisations
+  et historique ne changent pas.
+- Ensuite, `secrets.yaml` n'est plus lu et `tab5_fuseau:` est ignoré (fuseau de HA).
+- **Entités orphelines** : trois anciennes entités peuvent rester dans le registre, en
+  « indisponible » (vu chez l'auteur, supprimées le 28/09) :
+  `automation.maj_ecran_tab5_climatisation_push_rapide`, `script.tab5_push_clim`,
+  `automation.tab5_zones_presentes_reponse_a_la_tablette`.
+- **Nouveau** : l'entité « Firmware » (mise à jour) dans les binaires publiés, le
+  select « Langue » à quatre choix.
+
+### Mesures de la version
+
+- **Compilations de la CI** (ESPHome 2026.9.0), firmware de `v2.2.0` contre celui de ce
+  tag (`5bf704a`, aucun fichier du firmware changé depuis) :
+  - image 3 122 396 → 3 188 470 o (+65 Ko). L'allemand et le néerlandais en font
+    l'essentiel (≈ 45 Ko), les emplacements en rendent 12,6 Ko ;
+  - RAM statique 170 992 → 170 626 o (−366 o) ;
+  - aucun avertissement dans notre code.
+- Les binaires publiés embarquent en plus la mise à jour par HTTP (+64 Kio, mesuré sur
+  la rc.1).
+- **Home Assistant** : l'automatisation des emplacements tourne au plus 288 fois par jour
+  pour les mesures, au lieu de ~1 150 (#207).
+- **Chaîne de publication essayée sur la tablette de l'auteur** : 3.0.0-rc.1 flashée par
+  la page (27/09), puis rc.2 et rc.3 installées depuis HA. La 3.0.0 a le même code que la
+  rc.3 ; seul le numéro de version change.
+
+### Problèmes connus
+
+- **Installation à neuf** : jamais faite sur une tablette effacée, ni par quelqu'un
+  d'autre que l'auteur. La page a été essayée sans effacement, sur une tablette déjà en
+  3.0.
+- **Fin de mise à jour depuis HA** : un plantage vu une fois (rc.1 → rc.2), pas
+  reproduit sous capture (rc.2 → rc.3). `tools/capture_serie.py` le capture
+  ([débogage](docs/debugging.md)).
+- **ST7121** : signalée fonctionnelle par un tiers avec la configuration d'ESPHome, notre
+  firmware jamais essayé dessus. **ILI9881C** : jamais essayée.
+- **Allemand et néerlandais** : traduits par une IA, pas encore relus par une personne
+  dont c'est la langue. **Questions du quiz** : en français, par choix.
+- **Annonce parlée du réveil** : composée en français par HA (`tab5_reveil.yaml`).
+- **Disposition** : pas plus de 3 lumières, pas d'autre type d'appareil par tuile ; le
+  bouton « Brise » de la clim est le préréglage Daikin `windnice`.
+- **Au démarrage**, « Prochain réveil » affiche « Demain 07:00 » environ 50 s, le temps
+  que HA envoie le planning.
+- **Météo** : OpenWeatherMap ne prévoit que 8 jours (fin des pages de 15 jours vide) ;
+  MeteoAlarm et le regroupement NWS n'ont été testés qu'avec des données simulées.
+- **Flipper** : en portrait, les logs LVGL sont inondés tant qu'un doigt est posé.
 
 ### 2026-09-28 — Blueprint des emplacements : mesures regroupées toutes les 5 minutes
 
