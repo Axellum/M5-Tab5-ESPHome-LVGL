@@ -7,11 +7,12 @@ name: Installation dans un HA neuf
 #   - tools/installation_ha/preparer_config.py : config/ d'une installation neuve + TOUS les
 #     packages rendus avec des valeurs factices (placeholders_ci.yaml), le blueprint,
 #     des données de test (demo, donnees_test.yaml) ; check_config de HA dessus ;
-#   - tools/installation_ha/verifier_installation.py : compte (onboarding), agenda, automatisation du
-#     blueprint, ajout de la tablette (clé API donnée par HA), puis clé gardée et refus
-#     de la clé nulle, esphome.tab5_connected après la clé, traces sans erreur, zones
-#     masquées, capture d'écran demandée par HA, et tout ça encore après un redémarrage
-#     de la tablette.
+#   - tools/installation_ha/verifier_installation.py, dans l'ordre « Sans compiler » de
+#     docs/installation.md : compte (onboarding), agenda, ajout de la tablette (clé API
+#     donnée par HA), option « actions HA », automatisation du blueprint, puis
+#     redémarrage de la tablette. Vérifie : clé gardée, refus de la clé nulle et du
+#     clair, esphome.tab5_connected après la clé, traces sans erreur, zones masquées,
+#     capture d'écran demandée par HA, journal de HA sans erreur Tab5.
 # Ne teste PAS : l'interface de HA cliquée par un humain, la page de flashage, le vrai
 # matériel (Wi-Fi, écran, audio). Check non requis. ~3 min.
 #
