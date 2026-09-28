@@ -353,13 +353,8 @@ void set_icon_active_ui(lv_obj_t* icon, bool active, uint32_t color_on, uint32_t
     set_icon_color_ui(icon, active ? color_on : color_off);
 }
 
-void update_pc_status_ui(bool active, lv_obj_t* icon_pc, lv_obj_t* icon_sw, lv_obj_t* lbl_sw_state) {
+void update_pc_status_ui(bool active, lv_obj_t* icon_pc) {
     if (icon_pc == nullptr) return;
     set_icon_active_ui(icon_pc, active, UIColor::SUCCESS, UIColor::TEXT_PRIMARY);
     zones_note_pc(active);  // épaule de J0 quand il n'y a pas de TV (lot 5)
-    if (icon_sw == nullptr || lbl_sw_state == nullptr) return;
-    const uint32_t c = active ? UIColor::SUCCESS : UIColor::TEXT_DIM;
-    set_icon_color_ui(icon_sw, c);
-    ui_text(lbl_sw_state, tr(active ? "Allumé" : "Éteint"));
-    set_icon_color_ui(lbl_sw_state, c);
 }

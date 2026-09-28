@@ -190,4 +190,5 @@ packages:
   tab5_calendar: !include Tab5/tab5-calendar.yaml
   tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml
   tab5_alarm: !include Tab5/tab5-alarm.yaml
+  tab5_tuiles: !include Tab5/tab5-tuiles.yaml
   tab5_zones: !include Tab5/tab5-zones.yaml

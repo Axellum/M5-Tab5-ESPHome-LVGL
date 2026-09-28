@@ -110,3 +110,22 @@ void zones_note_pc(bool actif);
 // dans cle[0..n_cle), le reste après le premier '|'). Faux si la clé n'est pas celle d'une
 // tuile : l'entrée suit alors la table des emplacements 3.x.
 bool tuiles_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n_reste);
+// zones_apply_ui (tab5_zones.cpp) : tout redessiner (définitions chargées de la NVS au
+// premier appel, zones du mode héritage, bouton « HA », cartes, titre de la pièce).
+void tuiles_appliquer_ui();
+// tab5_central.cpp : titre de la carte centrale en mode HA — « Pièce n/N » et le nom de
+// la pièce de la page courante (« Pièce n » sans nom).
+bool tuiles_titre_piece(std::string& chapeau, std::string& titre);
+// tab5_central.cpp (handle_swipe_gesture en mode HA) : pièce suivante ou précédente
+// qui a des appareils, dans l'ordre des pages météo ; une seule pièce : rien.
+void tuiles_swipe_ha(bool gauche);
+
+// --- tab5_central.cpp, pour les pièces ---
+// Page atteinte par un swipe depuis `page` (bouclage volontaire, [AI-WARNING] de
+// handle_swipe_gesture) : gauche 0→1→2→3→4→2, droite 4→3→2→1→0→2.
+int forecast_page_suivante(int page, bool gauche);
+// Pastilles de pagination : la page courante large et opaque.
+void pagination_afficher(lv_obj_t* const pbars[5], int page);
+// Carte centrale au changement de mode HA (ctx.ha_mode déjà posé) : fin du planning
+// temporaire et de la réponse vocale, puis titre de la pièce ou panneaux habituels.
+void central_mode_ha(lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, CentralPanelCtx& ctx);

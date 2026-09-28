@@ -8,9 +8,19 @@
 static const uint8_t kI18nLangCount = 6;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it"};
-static const uint16_t kI18nKeyCount = 937;
+static const uint16_t kI18nKeyCount = 947;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1052,9 +1062,11 @@ static const char* const kI18nKeys[] = {
     "Abandonner la partie",
     "Abandonner la partie en cours ?\nLes parts gagnées seront perdues.",
     "Abandonner la run",
+    "Absent",
     "Accord entre les deux joueurs",
     "Accueil",
     "Acheter et revendre des objets",
+    "Actif",
     "Activé",
     "Activée",
     "Activés — une secousse franche demande un indice",
@@ -1195,6 +1207,7 @@ static const char* const kI18nKeys[] = {
     "Confirmation du coup : DÉSACTIVÉE",
     "Confirmation, coordonnées, secousse",
     "Confirmer",
+    "Confirmer ?",
     "Confirmer la remise à zéro",
     "Confirmé",
     "Connecté",
@@ -1257,6 +1270,7 @@ static const char* const kI18nKeys[] = {
     "Désactivée — la partie continue",
     "Désactivés — l'inclinaison est ignorée",
     "Détection BMI270",
+    "Détecté",
     "EFFACER LES STATISTIQUES",
     "Effacer les scores",
     "Effacer les scores ?",
@@ -1320,6 +1334,7 @@ static const char* const kI18nKeys[] = {
     "Illimité",
     "Image indisponible",
     "Impitoyable",
+    "Inactif",
     "Inclinaison",
     "Inclinaison / Boutons / Les deux",
     "Inclinaison 4 directions + 2 boutons creuser",
@@ -1373,6 +1388,7 @@ static const char* const kI18nKeys[] = {
     "La pierre gagne cette manche.",
     "Lance la partie",
     "Lance la partie avec ces réglages",
+    "Lancer",
     "Lancer une run",
     "Le Tab abandonne",
     "Le Tab accepte la nulle",
@@ -1525,6 +1541,8 @@ static const char* const kI18nKeys[] = {
     "Pierre de sang",
     "Pierres offertes à Noir (Blanc commence)",
     "Pièce",
+    "Pièce %d",
+    "Pièce %d/%d",
     "Pluie",
     "Pluie faible",
     "Pluie modérée",
@@ -1552,6 +1570,7 @@ static const char* const kI18nKeys[] = {
     "Prisonniers de la partie : Noir %u, Blanc %u",
     "Progressif",
     "Proposer nulle",
+    "Présent",
     "Prévisions horaires · %d/2",
     "Prévisions journalières · %d/3",
     "Prêt",
@@ -1619,6 +1638,7 @@ static const char* const kI18nKeys[] = {
     "Reunis les runes",
     "Revanche",
     "Revenir au menu principal",
+    "Rien",
     "Rien de prévu ce jour",
     "Rien à annuler",
     "Roguelite de bille\n6 salles · à l'inclinaison",
@@ -1993,9 +2013,11 @@ static const char* const kI18n_en[] = {
     "Abandon game",  // "Abandonner la partie"
     "Abandon the current game?\nWedges won will be lost.",  // "Abandonner la partie en cours ?\nLes parts gagnées seront perdues."
     "Abandon the run",  // "Abandonner la run"
+    "Away",  // "Absent"
     "Both players must agree",  // "Accord entre les deux joueurs"
     "Home",  // "Accueil"
     "Buy and sell items",  // "Acheter et revendre des objets"
+    "Active",  // "Actif"
     "On",  // "Activé"
     "On",  // "Activée"
     "On — a firm shake asks for a hint",  // "Activés — une secousse franche demande un indice"
@@ -2136,6 +2158,7 @@ static const char* const kI18n_en[] = {
     "Move confirmation: OFF",  // "Confirmation du coup : DÉSACTIVÉE"
     "Confirmation, coordinates, shake",  // "Confirmation, coordonnées, secousse"
     "Confirm",  // "Confirmer"
+    "Confirm?",  // "Confirmer ?"
     "Confirm reset",  // "Confirmer la remise à zéro"
     "Advanced",  // "Confirmé"
     "Connected",  // "Connecté"
@@ -2198,6 +2221,7 @@ static const char* const kI18n_en[] = {
     "Off — the game goes on",  // "Désactivée — la partie continue"
     "Off — tilt is ignored",  // "Désactivés — l'inclinaison est ignorée"
     "BMI270 detection",  // "Détection BMI270"
+    "Detected",  // "Détecté"
     "CLEAR STATISTICS",  // "EFFACER LES STATISTIQUES"
     "Clear scores",  // "Effacer les scores"
     "Clear scores?",  // "Effacer les scores ?"
@@ -2261,6 +2285,7 @@ static const char* const kI18n_en[] = {
     "No limit",  // "Illimité"
     "Image unavailable",  // "Image indisponible"
     "Merciless",  // "Impitoyable"
+    "Inactive",  // "Inactif"
     "Tilt",  // "Inclinaison"
     "Tilt / Buttons / Both",  // "Inclinaison / Boutons / Les deux"
     "4-way tilt + 2 dig buttons",  // "Inclinaison 4 directions + 2 boutons creuser"
@@ -2314,6 +2339,7 @@ static const char* const kI18n_en[] = {
     "The stone wins this round.",  // "La pierre gagne cette manche."
     "Starts the game",  // "Lance la partie"
     "Start with these settings",  // "Lance la partie avec ces réglages"
+    "Run",  // "Lancer"
     "Start a run",  // "Lancer une run"
     "Tab resigns",  // "Le Tab abandonne"
     "Tab accepts the draw",  // "Le Tab accepte la nulle"
@@ -2466,6 +2492,8 @@ static const char* const kI18n_en[] = {
     "Bloodstone",  // "Pierre de sang"
     "Handicap stones for Black (White starts)",  // "Pierres offertes à Noir (Blanc commence)"
     "Room",  // "Pièce"
+    "Room %d",  // "Pièce %d"
+    "Room %d/%d",  // "Pièce %d/%d"
     "Rain",  // "Pluie"
     "Light rain",  // "Pluie faible"
     "Moderate rain",  // "Pluie modérée"
@@ -2493,6 +2521,7 @@ static const char* const kI18n_en[] = {
     "Captures: Black %u, White %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Gradual",  // "Progressif"
     "Offer a draw",  // "Proposer nulle"
+    "Home",  // "Présent"
     "Hourly forecast · %d/2",  // "Prévisions horaires · %d/2"
     "Daily forecast · %d/3",  // "Prévisions journalières · %d/3"
     "Ready",  // "Prêt"
@@ -2560,6 +2589,7 @@ static const char* const kI18n_en[] = {
     "Gather the runes",  // "Reunis les runes"
     "Rematch",  // "Revanche"
     "Back to the main menu",  // "Revenir au menu principal"
+    "Clear",  // "Rien"
     "Nothing planned this day",  // "Rien de prévu ce jour"
     "Nothing to undo",  // "Rien à annuler"
     "Marble roguelite\n6 rooms · tilt to steer",  // "Roguelite de bille\n6 salles · à l'inclinaison"
@@ -2934,9 +2964,11 @@ static const char* const kI18n_de[] = {
     "Spiel abbrechen",  // "Abandonner la partie"
     "Laufendes Spiel abbrechen?\nGewonnene Ecken gehen verloren.",  // "Abandonner la partie en cours ?\nLes parts gagnées seront perdues."
     "Run abbrechen",  // "Abandonner la run"
+    "Abwesend",  // "Absent"
     "Beide Spieler müssen zustimmen",  // "Accord entre les deux joueurs"
     "Start",  // "Accueil"
     "Gegenstände kaufen und verkaufen",  // "Acheter et revendre des objets"
+    "Aktiv",  // "Actif"
     "An",  // "Activé"
     "An",  // "Activée"
     "An — kräftiges Schütteln fordert einen Tipp an",  // "Activés — une secousse franche demande un indice"
@@ -3077,6 +3109,7 @@ static const char* const kI18n_de[] = {
     "Zugbestätigung: AUS",  // "Confirmation du coup : DÉSACTIVÉE"
     "Bestätigung, Koordinaten, Schütteln",  // "Confirmation, coordonnées, secousse"
     "Bestätigen",  // "Confirmer"
+    "Bestätigen?",  // "Confirmer ?"
     "Reset bestätigen",  // "Confirmer la remise à zéro"
     "Erfahren",  // "Confirmé"
     "Verbunden",  // "Connecté"
@@ -3139,6 +3172,7 @@ static const char* const kI18n_de[] = {
     "Aus — die Partie geht weiter",  // "Désactivée — la partie continue"
     "Aus — Neigung wird ignoriert",  // "Désactivés — l'inclinaison est ignorée"
     "BMI270-Erkennung",  // "Détection BMI270"
+    "Erkannt",  // "Détecté"
     "STATISTIK LÖSCHEN",  // "EFFACER LES STATISTIQUES"
     "Scores löschen",  // "Effacer les scores"
     "Scores löschen?",  // "Effacer les scores ?"
@@ -3202,6 +3236,7 @@ static const char* const kI18n_de[] = {
     "Endlos",  // "Illimité"
     "Bild nicht verfügbar",  // "Image indisponible"
     "Gnadenlos",  // "Impitoyable"
+    "Inaktiv",  // "Inactif"
     "Neigung",  // "Inclinaison"
     "Neigung / Tasten / Beides",  // "Inclinaison / Boutons / Les deux"
     "4-Wege-Neigung + 2 Grabetasten",  // "Inclinaison 4 directions + 2 boutons creuser"
@@ -3255,6 +3290,7 @@ static const char* const kI18n_de[] = {
     "Der Stein gewinnt diese Runde.",  // "La pierre gagne cette manche."
     "Startet die Partie",  // "Lance la partie"
     "Startet mit diesen Einstellungen",  // "Lance la partie avec ces réglages"
+    "Starten",  // "Lancer"
     "Run starten",  // "Lancer une run"
     "Tab gibt auf",  // "Le Tab abandonne"
     "Tab nimmt Remis an",  // "Le Tab accepte la nulle"
@@ -3407,6 +3443,8 @@ static const char* const kI18n_de[] = {
     "Blutstein",  // "Pierre de sang"
     "Vorgabesteine für Schwarz (Weiß beginnt)",  // "Pierres offertes à Noir (Blanc commence)"
     "Raum",  // "Pièce"
+    "Raum %d",  // "Pièce %d"
+    "Raum %d/%d",  // "Pièce %d/%d"
     "Regen",  // "Pluie"
     "Leichter Regen",  // "Pluie faible"
     "Mäßiger Regen",  // "Pluie modérée"
@@ -3434,6 +3472,7 @@ static const char* const kI18n_de[] = {
     "Gefangene: Schwarz %u, Weiß %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Ansteigend",  // "Progressif"
     "Remis anbieten",  // "Proposer nulle"
+    "Anwesend",  // "Présent"
     "Stundenvorhersage · %d/2",  // "Prévisions horaires · %d/2"
     "Tagesvorhersage · %d/3",  // "Prévisions journalières · %d/3"
     "Bereit",  // "Prêt"
@@ -3501,6 +3540,7 @@ static const char* const kI18n_de[] = {
     "Sammle die Runen",  // "Reunis les runes"
     "Revanche",  // "Revanche"
     "Zurück zum Hauptmenü",  // "Revenir au menu principal"
+    "Frei",  // "Rien"
     "Nichts geplant an diesem Tag",  // "Rien de prévu ce jour"
     "Noch kein Zug",  // "Rien à annuler"
     "Kugel-Roguelite\n6 Räume · per Neigung",  // "Roguelite de bille\n6 salles · à l'inclinaison"
@@ -3875,9 +3915,11 @@ static const char* const kI18n_nl[] = {
     "Spel opgeven",  // "Abandonner la partie"
     "Het lopende spel opgeven?\nGewonnen partjes gaan verloren.",  // "Abandonner la partie en cours ?\nLes parts gagnées seront perdues."
     "Run opgeven",  // "Abandonner la run"
+    "Afwezig",  // "Absent"
     "Beide spelers moeten akkoord zijn",  // "Accord entre les deux joueurs"
     "Home",  // "Accueil"
     "Voorwerpen kopen en verkopen",  // "Acheter et revendre des objets"
+    "Actief",  // "Actif"
     "Aan",  // "Activé"
     "Aan",  // "Activée"
     "Aan — flink schudden vraagt een hint",  // "Activés — une secousse franche demande un indice"
@@ -4018,6 +4060,7 @@ static const char* const kI18n_nl[] = {
     "Zetbevestiging: UIT",  // "Confirmation du coup : DÉSACTIVÉE"
     "Bevestiging, coördinaten, schudden",  // "Confirmation, coordonnées, secousse"
     "Bevestigen",  // "Confirmer"
+    "Bevestigen?",  // "Confirmer ?"
     "Reset bevestigen",  // "Confirmer la remise à zéro"
     "Gevorderd",  // "Confirmé"
     "Verbonden",  // "Connecté"
@@ -4080,6 +4123,7 @@ static const char* const kI18n_nl[] = {
     "Uit — de partij gaat door",  // "Désactivée — la partie continue"
     "Uit — kantelen wordt genegeerd",  // "Désactivés — l'inclinaison est ignorée"
     "BMI270-detectie",  // "Détection BMI270"
+    "Gedetecteerd",  // "Détecté"
     "STATISTIEKEN WISSEN",  // "EFFACER LES STATISTIQUES"
     "Scores wissen",  // "Effacer les scores"
     "Scores wissen?",  // "Effacer les scores ?"
@@ -4143,6 +4187,7 @@ static const char* const kI18n_nl[] = {
     "Onbeperkt",  // "Illimité"
     "Geen afbeelding",  // "Image indisponible"
     "Genadeloos",  // "Impitoyable"
+    "Inactief",  // "Inactif"
     "Kantelen",  // "Inclinaison"
     "Kantelen / Knoppen / Beide",  // "Inclinaison / Boutons / Les deux"
     "Kantelen in 4 richtingen + 2 graafknoppen",  // "Inclinaison 4 directions + 2 boutons creuser"
@@ -4196,6 +4241,7 @@ static const char* const kI18n_nl[] = {
     "De steen wint deze ronde.",  // "La pierre gagne cette manche."
     "Start de partij",  // "Lance la partie"
     "Start met deze opties",  // "Lance la partie avec ces réglages"
+    "Starten",  // "Lancer"
     "Start een run",  // "Lancer une run"
     "Tab geeft op",  // "Le Tab abandonne"
     "Tab accepteert remise",  // "Le Tab accepte la nulle"
@@ -4348,6 +4394,8 @@ static const char* const kI18n_nl[] = {
     "Bloedsteen",  // "Pierre de sang"
     "Handicapstenen voor Zwart (Wit begint)",  // "Pierres offertes à Noir (Blanc commence)"
     "Kamer",  // "Pièce"
+    "Kamer %d",  // "Pièce %d"
+    "Kamer %d/%d",  // "Pièce %d/%d"
     "Regen",  // "Pluie"
     "Lichte regen",  // "Pluie faible"
     "Matige regen",  // "Pluie modérée"
@@ -4375,6 +4423,7 @@ static const char* const kI18n_nl[] = {
     "Gevangen stenen: Zwart %u, Wit %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Oplopend",  // "Progressif"
     "Remise aanbieden",  // "Proposer nulle"
+    "Aanwezig",  // "Présent"
     "Verwachting per uur · %d/2",  // "Prévisions horaires · %d/2"
     "Verwachting per dag · %d/3",  // "Prévisions journalières · %d/3"
     "Klaar",  // "Prêt"
@@ -4442,6 +4491,7 @@ static const char* const kI18n_nl[] = {
     "Verzamel de runen",  // "Reunis les runes"
     "Revanche",  // "Revanche"
     "Terug naar hoofdmenu",  // "Revenir au menu principal"
+    "Vrij",  // "Rien"
     "Niets gepland op deze dag",  // "Rien de prévu ce jour"
     "Geen vorige zet",  // "Rien à annuler"
     "Knikker-roguelite\n6 kamers · kantelbesturing",  // "Roguelite de bille\n6 salles · à l'inclinaison"
@@ -4816,9 +4866,11 @@ static const char* const kI18n_es[] = {
     "Abandonar la partida",  // "Abandonner la partie"
     "¿Abandonar la partida en curso?\nSe perderán los quesitos ganados.",  // "Abandonner la partie en cours ?\nLes parts gagnées seront perdues."
     "Abandonar la run",  // "Abandonner la run"
+    "Ausente",  // "Absent"
     "Acuerdo entre los dos jugadores",  // "Accord entre les deux joueurs"
     "Inicio",  // "Accueil"
     "Comprar y vender objetos",  // "Acheter et revendre des objets"
+    "Activo",  // "Actif"
     "Activado",  // "Activé"
     "Activada",  // "Activée"
     "Activados — una sacudida firme pide una pista",  // "Activés — une secousse franche demande un indice"
@@ -4959,6 +5011,7 @@ static const char* const kI18n_es[] = {
     "Confirmar jugada: NO",  // "Confirmation du coup : DÉSACTIVÉE"
     "Confirmación, coordenadas, sacudida",  // "Confirmation, coordonnées, secousse"
     "Confirmar",  // "Confirmer"
+    "¿Confirmar?",  // "Confirmer ?"
     "Confirmar el reinicio",  // "Confirmer la remise à zéro"
     "Avanzado",  // "Confirmé"
     "Conectado",  // "Connecté"
@@ -5021,6 +5074,7 @@ static const char* const kI18n_es[] = {
     "Desactivada — la partida sigue",  // "Désactivée — la partie continue"
     "Desactivados — se ignora la inclinación",  // "Désactivés — l'inclinaison est ignorée"
     "Detección BMI270",  // "Détection BMI270"
+    "Detectado",  // "Détecté"
     "BORRAR ESTADÍSTICAS",  // "EFFACER LES STATISTIQUES"
     "Borrar puntuaciones",  // "Effacer les scores"
     "¿Borrar puntuaciones?",  // "Effacer les scores ?"
@@ -5084,6 +5138,7 @@ static const char* const kI18n_es[] = {
     "Ilimitado",  // "Illimité"
     "Imagen no disponible",  // "Image indisponible"
     "Implacable",  // "Impitoyable"
+    "Inactivo",  // "Inactif"
     "Inclinación",  // "Inclinaison"
     "Inclinación / Botones / Ambos",  // "Inclinaison / Boutons / Les deux"
     "Inclinación 4 direcciones + 2 botones de cavar",  // "Inclinaison 4 directions + 2 boutons creuser"
@@ -5137,6 +5192,7 @@ static const char* const kI18n_es[] = {
     "La piedra gana esta ronda.",  // "La pierre gagne cette manche."
     "Empieza la partida",  // "Lance la partie"
     "Empieza con estos ajustes",  // "Lance la partie avec ces réglages"
+    "Iniciar",  // "Lancer"
     "Iniciar una run",  // "Lancer une run"
     "El Tab se rinde",  // "Le Tab abandonne"
     "El Tab acepta tablas",  // "Le Tab accepte la nulle"
@@ -5289,6 +5345,8 @@ static const char* const kI18n_es[] = {
     "Piedra de sangre",  // "Pierre de sang"
     "Piedras para Negro (empieza Blanco)",  // "Pierres offertes à Noir (Blanc commence)"
     "Interior",  // "Pièce"
+    "Estancia %d",  // "Pièce %d"
+    "Estancia %d/%d",  // "Pièce %d/%d"
     "Lluvia",  // "Pluie"
     "Lluvia débil",  // "Pluie faible"
     "Lluvia moderada",  // "Pluie modérée"
@@ -5316,6 +5374,7 @@ static const char* const kI18n_es[] = {
     "Prisioneros: Negro %u, Blanco %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Progresivo",  // "Progressif"
     "Ofrecer tablas",  // "Proposer nulle"
+    "Presente",  // "Présent"
     "Previsión por horas · %d/2",  // "Prévisions horaires · %d/2"
     "Previsión diaria · %d/3",  // "Prévisions journalières · %d/3"
     "Listo",  // "Prêt"
@@ -5383,6 +5442,7 @@ static const char* const kI18n_es[] = {
     "Reúne las runas",  // "Reunis les runes"
     "Revancha",  // "Revanche"
     "Volver al menú principal",  // "Revenir au menu principal"
+    "Libre",  // "Rien"
     "Nada previsto este día",  // "Rien de prévu ce jour"
     "Nada que deshacer",  // "Rien à annuler"
     "Roguelite de canica\n6 salas · por inclinación",  // "Roguelite de bille\n6 salles · à l'inclinaison"
@@ -5757,9 +5817,11 @@ static const char* const kI18n_it[] = {
     "Abbandona la partita",  // "Abandonner la partie"
     "Abbandonare la partita in corso?\nGli spicchi vinti andranno persi.",  // "Abandonner la partie en cours ?\nLes parts gagnées seront perdues."
     "Abbandona la run",  // "Abandonner la run"
+    "Assente",  // "Absent"
     "Accordo tra i due giocatori",  // "Accord entre les deux joueurs"
     "Home",  // "Accueil"
     "Compra e rivendi oggetti",  // "Acheter et revendre des objets"
+    "Attivo",  // "Actif"
     "Attiva",  // "Activé"
     "Attiva",  // "Activée"
     "Attivi — una scossa decisa chiede un suggerimento",  // "Activés — une secousse franche demande un indice"
@@ -5900,6 +5962,7 @@ static const char* const kI18n_it[] = {
     "Conferma mossa: DISATTIVATA",  // "Confirmation du coup : DÉSACTIVÉE"
     "Conferma, coordinate, scossa",  // "Confirmation, coordonnées, secousse"
     "Conferma",  // "Confirmer"
+    "Confermare?",  // "Confirmer ?"
     "Conferma l'azzeramento",  // "Confirmer la remise à zéro"
     "Avanzato",  // "Confirmé"
     "Connesso",  // "Connecté"
@@ -5962,6 +6025,7 @@ static const char* const kI18n_it[] = {
     "Disattivata — la partita continua",  // "Désactivée — la partie continue"
     "Disattivati — l'inclinazione è ignorata",  // "Désactivés — l'inclinaison est ignorée"
     "Rilevamento BMI270",  // "Détection BMI270"
+    "Rilevato",  // "Détecté"
     "CANCELLA LE STATISTICHE",  // "EFFACER LES STATISTIQUES"
     "Cancella punteggi",  // "Effacer les scores"
     "Cancellare i punteggi?",  // "Effacer les scores ?"
@@ -6025,6 +6089,7 @@ static const char* const kI18n_it[] = {
     "Illimitato",  // "Illimité"
     "Nessuna immagine",  // "Image indisponible"
     "Spietata",  // "Impitoyable"
+    "Inattivo",  // "Inactif"
     "Inclinazione",  // "Inclinaison"
     "Inclinazione / Pulsanti / Entrambi",  // "Inclinaison / Boutons / Les deux"
     "Inclinazione a 4 direzioni + 2 pulsanti scava",  // "Inclinaison 4 directions + 2 boutons creuser"
@@ -6078,6 +6143,7 @@ static const char* const kI18n_it[] = {
     "La pietra vince questo round.",  // "La pierre gagne cette manche."
     "Avvia la partita",  // "Lance la partie"
     "Avvia con queste opzioni",  // "Lance la partie avec ces réglages"
+    "Avvia",  // "Lancer"
     "Inizia una run",  // "Lancer une run"
     "Il Tab abbandona",  // "Le Tab abandonne"
     "Il Tab accetta la patta",  // "Le Tab accepte la nulle"
@@ -6230,6 +6296,8 @@ static const char* const kI18n_it[] = {
     "Pietra di sangue",  // "Pierre de sang"
     "Pietre di handicap al Nero (inizia il Bianco)",  // "Pierres offertes à Noir (Blanc commence)"
     "Stanza",  // "Pièce"
+    "Stanza %d",  // "Pièce %d"
+    "Stanza %d/%d",  // "Pièce %d/%d"
     "Pioggia",  // "Pluie"
     "Pioggia debole",  // "Pluie faible"
     "Pioggia moderata",  // "Pluie modérée"
@@ -6257,6 +6325,7 @@ static const char* const kI18n_it[] = {
     "Prigionieri: Nero %u, Bianco %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Progressivo",  // "Progressif"
     "Proponi patta",  // "Proposer nulle"
+    "Presente",  // "Présent"
     "Previsioni orarie · %d/2",  // "Prévisions horaires · %d/2"
     "Previsioni giornaliere · %d/3",  // "Prévisions journalières · %d/3"
     "Pronto",  // "Prêt"
@@ -6324,6 +6393,7 @@ static const char* const kI18n_it[] = {
     "Raccogli le rune",  // "Reunis les runes"
     "Rivincita",  // "Revanche"
     "Torna al menu principale",  // "Revenir au menu principal"
+    "Libero",  // "Rien"
     "Nessun evento quel giorno",  // "Rien de prévu ce jour"
     "Niente da annullare",  // "Rien à annuler"
     "Roguelite con biglia\n6 stanze · a inclinazione",  // "Roguelite de bille\n6 salles · à l'inclinaison"

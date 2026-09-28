@@ -249,27 +249,11 @@ lvgl:
             pressed:
               bg_opa: 52%
             on_short_click:
-              # Bascule prévisions <-> switches HA : fondu croisé (I-2) au lieu
-              # d'un basculement sec de flags. Les deux calques occupent la même
-              # zone -> fondu pur, pas de glissement (qui ferait "sauter" le
-              # contenu). Le calque sortant est masqué en fin d'animation.
-              - lambda: |-
-                  bool state = id(show_switches);
-                  id(show_switches) = !state;
-                  const bool daily = (id(forecast_page_index) >= 2);
-                  lv_obj_t* fc_visible = daily ? id(layer_forecast_daily) : id(layer_forecast_hourly);
-                  lv_obj_t* fc_autre   = daily ? id(layer_forecast_hourly) : id(layer_forecast_daily);
-                  // Coupe un swipe en cours sur le calque non actif (sinon X/opa
-                  // continuent sous HIDDEN et polluent le prochain affichage).
-                  lv_anim_delete(fc_autre, nullptr);
-                  lv_obj_set_x(fc_autre, 0);
-                  lv_obj_set_style_opa(fc_autre, LV_OPA_COVER, LV_PART_MAIN);
-                  lv_obj_add_flag(fc_autre, LV_OBJ_FLAG_HIDDEN);
-                  if (id(show_switches)) {
-                      animate_crossfade_layers(fc_visible, id(layer_switches));
-                  } else {
-                      animate_crossfade_layers(id(layer_switches), fc_visible);
-                  }
+              # Mode HA (ADR-0023) : les cartes de la pièce de la page courante (ou de la
+              # plus proche qui a des appareils), fondu croisé avec la météo, titre de la
+              # pièce dans la carte centrale, bouton en couleur d'accent. Masqué sans
+              # aucun appareil. Tout est dans tuiles_mode_ha() (tab5_tuiles.cpp).
+              - lambda: 'tuiles_mode_ha(!g_central_ctx.ha_mode);'
             widgets:
               - label: { id: icon_ha, text: "\U000F07D0", align: CENTER, y: -12, text_font: mdi_font_45 }
               - label: { text: "HA", align: CENTER, y: 22 }

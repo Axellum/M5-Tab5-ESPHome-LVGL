@@ -185,6 +185,8 @@ select:
           // exactement le même état derrière soi.
           ModalRegistry::close_all();
           id(assist_popup_open) = false;
+          // « Accueil » quitte aussi le mode HA (ADR-0023) : la météo de la page revient.
+          if (i == 1) tuiles_mode_ha(false);
 
           switch (i) {
             case 2:  // L'assistant a son propre script : il arme aussi l'état

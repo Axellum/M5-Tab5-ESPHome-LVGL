@@ -498,7 +498,7 @@ interval:
 
           if (idle < UIIdle::FORECAST_MS) return;
           if (id(forecast_page_index) == 2) return;   // déjà au panneau principal
-          if (id(show_switches)) return;              // panneau HA affiché à la demande
+          if (g_central_ctx.ha_mode) return;          // mode HA (pièces) affiché à la demande
 
           lv_obj_t* pbars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4)};
           reset_forecast_to_main_page(id(forecast_page_index),

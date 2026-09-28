@@ -321,6 +321,8 @@ packages:
   # Reveil matin + annonce des rendez-vous. Comme ci-dessus : APRES tab5_lvgl
   # (ses scripts referencent les ids de alarm_popup.yaml / alarm_ring_overlay.yaml).
   tab5_alarm: !include Tab5/tab5-alarm.yaml
+  # Pièces et tuiles (ADR-0023) : APRES tab5_lvgl (widgets), script lancé par tab5_zones_apply.
+  tab5_tuiles: !include Tab5/tab5-tuiles.yaml
   # Zones optionnelles (lot 5) : APRES tab5_lvgl (widgets). Ses substitutions sont les
   # valeurs par défaut des entity_… : une clé de Tab5/user_entities.yaml l'emporte.
   tab5_zones: !include Tab5/tab5-zones.yaml

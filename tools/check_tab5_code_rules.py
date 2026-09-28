@@ -287,6 +287,8 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_calendar.cpp", "cal_detail_type_style"): ("cal_det_icon_*",),
     ("tab5_cards.cpp", "update_light_card_ui"): ("icon_card_light_j*",),
     ("tab5_console.cpp", "ui_sync_mute_icons"): ("icon_mute", "icon_assist_mute"),
+    # Pièces (ADR-0023) : icônes 3.1 du mode héritage sur les cartes du mode HA.
+    ("tab5_tuiles.cpp", "heritage_glyphe_carte"): ("icon_sw?",),
     ("tab5_services.cpp", "update_volet_ui"): ("icon_card_shutter_arrow", "icon_card_shutter1"),
     ("tab5_services.cpp", "parse_and_update_vigilance"): ("alerte_slot_*",),
     ("tab5_services.cpp", "update_rain_predict_icon_ui"): ("icon_rain_predict",),

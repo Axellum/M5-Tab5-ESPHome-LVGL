@@ -1,5 +1,6 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par switches_card.yaml.
-# Var: title (texte statique, pas d'id — ce titre ne change jamais après le boot).
+# Vars: idx, title (texte initial seulement). `lbl_swN_title` porte le nom de la tuile
+# (ADR-0023), écrit par tab5_tuiles.cpp et coupé avec « … » au-delà de 188 px.
 # 200 px (et non 130 comme les jours) : « PC Bureau » 152 px, « Woonkamer » 173 px en
 # Roboto 32 gras (mesuré le 27/09/2026) ; la carte fait 230.
 obj:
@@ -9,4 +10,4 @@ obj:
   height: 40
   styles: style_meteo_card_page
   widgets:
-    - label: { text: "${title}", align: CENTER, text_font: roboto_32_b }
+    - label: { id: "lbl_sw${idx}_title", text: "${title}", align: CENTER, text_font: roboto_32_b }

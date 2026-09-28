@@ -201,6 +201,10 @@ struct CentralPanelCtx {
     int forecast_page = 2;
     bool vocal_shown = false;
     lv_obj_t* vocal_wrap = nullptr;   // posé par show_vocal_response_ui
+    // Mode HA (bouton « HA », ADR-0023) : les cartes montrent la pièce de la page
+    // courante, la carte centrale son titre ; le rotateur n'a pas la main. Seule source
+    // (plus de global show_switches), basculé par tuiles_mode_ha() (tab5_tuiles.cpp).
+    bool ha_mode = false;
 };
 
 // Contexte global unique (initialise dans tab5-ha-hmi.yaml on_boot ou premier usage).
@@ -208,7 +212,8 @@ extern CentralPanelCtx g_central_ctx;
 
 // Gestion du geste de swipe (page_main.on_gesture) : pagination previsions
 // horaires/journalieres (0-4) dans la bande centrale+basse (y >= 333). Console diag :
-// uniquement via btn_control_console (plus de swipe haut/bas).
+// uniquement via btn_control_console (plus de swipe haut/bas). En mode HA (ADR-0023) :
+// pièce suivante / précédente qui a des appareils, les calques météo restent masqués.
 void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
@@ -440,9 +445,9 @@ uint32_t get_battery_color(float x);
 void set_icon_color_ui(lv_obj_t* icon, uint32_t color);
 void set_icon_active_ui(lv_obj_t* icon, bool active, uint32_t color_on, uint32_t color_off);
 
-// Carte PC (text_sensor pc_status) : icône du bandeau + interrupteur 0 de la carte
-// switches (icône et libellé « Allumé » / « Éteint »). Ne fait rien sans icon_pc.
-void update_pc_status_ui(bool active, lv_obj_t* icon_pc, lv_obj_t* icon_sw, lv_obj_t* lbl_sw_state);
+// PC (text_sensor pc_status) : icône du bandeau d'état. La carte du mode HA est la
+// tuile 0 de la pièce 0 en mode héritage (tuiles_heritage_pc). Ne fait rien sans icon_pc.
+void update_pc_status_ui(bool active, lv_obj_t* icon_pc);
 
 // Popup détails pots (appui long sur les slots pots) : 5 cartes FIXES, carte N =
 // capteur moisture_N (pas de tri dynamique, contrairement au dashboard).
@@ -729,7 +734,7 @@ struct ZonesUI {
     lv_obj_t* btn_ha = nullptr;        // rangée HA / Sys / TV
     lv_obj_t* btn_sys = nullptr;
     lv_obj_t* btn_tv = nullptr;
-    lv_obj_t* sw_card[5] = {};         // cartes du calque « HA »
+    // Les cartes du calque « HA » sont des tuiles de pièce depuis l'ADR-0023 (g_tuiles_ui).
     lv_obj_t* light_sel[3] = {};       // sélecteur du popup lumière
     lv_obj_t* clim_zone = nullptr;     // − / consigne / +
     lv_obj_t* icon_salon = nullptr;
@@ -793,5 +798,56 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
 // Action tab5_maj_tuiles : instantané complet « pR|nom;tRT|type|icône|options|complément|
 // nom;… » (ce qui n'est pas listé est vide). Gardé en NVS s'il change. Vrai si changé.
 bool tuiles_definir(const std::string& payload);
+
+// Widgets des pièces, posés par le script tab5_tuiles_ui (tab5-tuiles.yaml), que
+// tab5_zones_apply lance à la fin du setup, avant la première image : id() n'existe que
+// dans les lambdas YAML, et l'on_boot n'est pas à nous (tab5-ha-hmi.yaml).
+struct TuilesUI {
+    // Navigation : calques du bas, pastilles, titre de la carte centrale, bouton « HA ».
+    lv_obj_t* calque_jours = nullptr;     // layer_forecast_daily
+    lv_obj_t* calque_heures = nullptr;    // layer_forecast_hourly
+    lv_obj_t* calque_ha = nullptr;        // layer_switches
+    lv_obj_t* pastilles[5] = {};          // pbar_0 … pbar_4
+    lv_obj_t* titre_cadre = nullptr;      // page_title_wrapper
+    lv_obj_t* titre = nullptr;            // lbl_page_title
+    lv_obj_t* bouton_ha = nullptr;        // btn_control_ha
+    lv_obj_t* icone_ha = nullptr;         // icon_ha
+    int* page = nullptr;                  // &id(forecast_page_index)
+    esphome::font::Font* police_meteo = nullptr;         // font_meteo_card
+    esphome::font::Font* police_meteo_petite = nullptr;  // font_meteo_card_small
+    // Cartes du mode HA (switches_card.yaml) : carte T = tuile T de la pièce courante.
+    lv_obj_t* carte[5] = {};
+    lv_obj_t* carte_icone[5] = {};
+    lv_obj_t* carte_nom[5] = {};
+    lv_obj_t* carte_etat[5] = {};
+    // Popups qu'une tuile ouvre (télécommande de la TV, climatisation du blueprint).
+    lv_obj_t* popup_tv = nullptr;
+    lv_obj_t* popup_clim = nullptr;
+    // Volet 3.x (mode héritage) : sens de la prochaine commande.
+    bool* volet_sens = nullptr;           // &id(volet_target_open)
+    // Commandes, posées par le script (lambdas sans capture) : événement
+    // esphome.tab5_action (script tab5_action) et tap du volet 3.x (tab5_volet_tap).
+    void (*envoyer)(const char* emplacement, const char* action, const char* valeur) = nullptr;
+    void (*volet_tap)() = nullptr;
+};
+extern TuilesUI g_tuiles_ui;
+
+// Appui sur la tuile T de la pièce de la page courante (tuile météo ou carte du mode
+// HA) : commande selon le type et les options (tableau de l'ADR-0023), popup, ou rien.
+void tuile_appui(int tuile, bool long_appui);
+
+// Mode HA (bouton « HA », « Aller à l'écran → Accueil ») : cartes de la pièce de la page
+// courante, ou de la plus proche qui a des appareils ; titre de la pièce dans la carte
+// centrale ; en sortant, la météo de la page courante.
+void tuiles_mode_ha(bool actif);
+
+// Mode héritage (blueprint 3.x) : les emplacements 3.x forment la pièce 0 — PC/TV
+// (tuile 0), volet (1), lumiere_1..3 (2-4). Appelés par leurs capteurs
+// (tab5-sensors-domotique.yaml) et par tab5_maj_volet_etat, quel que soit le mode.
+void tuiles_heritage_pc(bool actif);
+void tuiles_heritage_tv(bool actif);
+void tuiles_heritage_lumiere(int i, bool allumee);
+// Renvoie vrai si le volet est en mouvement (volet_en_mouvement).
+bool tuiles_heritage_volet(const std::string& etat_physique);
 
 // UIColor (couleurs sémantiques) : voir tab5_tokens.h.

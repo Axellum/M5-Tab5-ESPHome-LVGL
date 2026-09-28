@@ -46,8 +46,10 @@ static void end_temporary_planning(CentralPanelCtx& ctx);
 // panneau transparent par-dessus (audit du 25/09/2026, §2.4). Seuls les drapeaux et
 // l'index sont alors tenus à jour ; l'affichage revient au rotateur quand il
 // retrouve la main (retour sur la page 2, fin du planning ou de la réponse vocale).
+// En mode HA (ADR-0023), la carte porte le titre de la pièce, sur toutes les pages.
 static bool rotator_owns_card(const CentralPanelCtx& ctx) {
-    return ctx.forecast_page == FORECAST_MAIN_PAGE && !ctx.vocal_shown && !temp_planning_active();
+    return ctx.forecast_page == FORECAST_MAIN_PAGE && !ctx.vocal_shown && !temp_planning_active() &&
+           !ctx.ha_mode;
 }
 
 // Titre de la carte centrale sur les pages de previsions autres que l'accueil.
@@ -296,8 +298,10 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
 
     sync_central_panel_visibility(ctx);
 
-    // 1E : Anime l'entree du bandeau si une nouvelle alerte est active.
-    if (new_alert_slot >= 0) {
+    // 1E : Anime l'entree du bandeau si une nouvelle alerte est active — seulement si le
+    // rotateur a la carte : l'animation démasque le bandeau, qui passait sinon par-dessus
+    // le titre de page (ou de pièce, en mode HA).
+    if (new_alert_slot >= 0 && rotator_owns_card(ctx)) {
         int alert_panel = kHaAlertPanelBase + new_alert_slot;
         if (ctx.current_panel == alert_panel && slots[new_alert_slot].wrap) {
             animate_alert_enter(slots[new_alert_slot].wrap);
@@ -346,7 +350,10 @@ void dismiss_ha_alert_slot_immediate(int slot_idx, lv_obj_t* wrap, lv_obj_t* lbl
 static bool set_forecast_page_title_text(int forecast_page, lv_obj_t* lbl_page_title,
                                          CentralPanelCtx& ctx) {
     std::string chapeau, plage;
-    if (!forecast_page_title_parts(forecast_page, chapeau, plage)) return false;
+    // Mode HA : « Pièce n/N » et le nom de la pièce (tab5_tuiles.cpp), sur toutes les pages.
+    const bool a_titre = ctx.ha_mode ? tuiles_titre_piece(chapeau, plage)
+                                     : forecast_page_title_parts(forecast_page, chapeau, plage);
+    if (!a_titre) return false;
 
     const bool deux_lignes = !plage.empty();
     if (ctx.page_title_sub) {
@@ -368,7 +375,7 @@ void update_central_forecast_page_ui(int forecast_page,
         if (w) lv_obj_add_flag(w, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
 
-    if (forecast_page == 2) {
+    if (forecast_page == 2 && !ctx.ha_mode) {
         // Panneau courant inactif (planning retiré, lot 5) : la synchro choisit le
         // suivant, ou laisse la carte vide.
         if (!central_panel_is_active(ctx.current_panel, ctx)) {
@@ -392,7 +399,8 @@ void refresh_forecast_page_title_ui(int forecast_page,
     // reponse vocale) : un push HA ne doit jamais reprendre la carte centrale a
     // ce qui l'occupe. On se contente de reecrire le texte, sans toucher a la
     // visibilite des panneaux — contrairement a update_central_forecast_page_ui().
-    if (lv_obj_has_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN)) return;
+    // En mode HA, le titre est celui de la pièce : les prévisions n'y touchent pas.
+    if (ctx.ha_mode || lv_obj_has_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN)) return;
     set_forecast_page_title_text(forecast_page, lbl_page_title, ctx);
 }
 
@@ -654,17 +662,45 @@ static void apply_forecast_page(int old_page, int page, lv_dir_t dir,
             }
         }
 
-        for (int i = 0; i < 5; i++) {
-            if (i == page) {
-                lv_obj_set_width(pbars[i], 30);
-                lv_obj_set_style_bg_opa(pbars[i], 255, LV_PART_MAIN);
-            } else {
-                lv_obj_set_width(pbars[i], 16);
-                lv_obj_set_style_bg_opa(pbars[i], 100, LV_PART_MAIN);
-            }
-        }
+        pagination_afficher(pbars, page);
 
         update_central_forecast_page_ui(page, page_title_wrap, lbl_page_title, ctx);
+}
+
+void pagination_afficher(lv_obj_t* const pbars[5], int page) {
+    for (int i = 0; i < 5; i++) {
+        if (pbars[i] == nullptr) continue;
+        if (i == page) {
+            lv_obj_set_width(pbars[i], 30);
+            lv_obj_set_style_bg_opa(pbars[i], 255, LV_PART_MAIN);
+        } else {
+            lv_obj_set_width(pbars[i], 16);
+            lv_obj_set_style_bg_opa(pbars[i], 100, LV_PART_MAIN);
+        }
+    }
+}
+
+// [AI-WARNING] NE PAS "corriger" en wrap 0<->4 : comportement volontaire, deja teste et
+// valide par Axel (revert du 05/07/2026 d'un changement fait a tort suite a
+// un audit LLM qui l'avait signale comme un bug de pagination "confuse").
+// Pages 0-1 = horaire, 2-4 = journalier. LEFT boucle sur 2/3/4 une fois
+// dans le journalier (ne revient pas seul vers l'horaire) ; RIGHT traverse
+// tout vers le bas et boucle 0->2 (retour au debut du journalier, pas un
+// tour complet vers 4). Le mode HA (pièces, ADR-0023) suit le même ordre.
+int forecast_page_suivante(int page, bool gauche) {
+    if (gauche) return page >= 4 ? 2 : page + 1;
+    return page <= 0 ? 2 : page - 1;
+}
+
+void central_mode_ha(lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, CentralPanelCtx& ctx) {
+    // Comme un changement de page : le planning du tap et la réponse vocale cèdent la
+    // carte (sinon le timer de 6 s réaffichait l'ancien titre par-dessus la pièce).
+    end_temporary_planning(ctx);
+    if (ctx.vocal_shown) {
+        if (ctx.vocal_wrap) lv_obj_add_flag(ctx.vocal_wrap, LV_OBJ_FLAG_HIDDEN);
+        ctx.vocal_shown = false;
+    }
+    update_central_forecast_page_ui(ctx.forecast_page, page_title_wrap, lbl_page_title, ctx);
 }
 
 void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
@@ -686,22 +722,16 @@ void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
     if (pt_y < FORECAST_SWIPE_Y_MIN) return;
     if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;
 
-    int old_page = forecast_page_index;
-    int page = old_page;
-    // NE PAS "corriger" en wrap 0<->4 : comportement volontaire, deja teste et
-    // valide par Axel (revert du 05/07/2026 d'un changement fait a tort suite a
-    // un audit LLM qui l'avait signale comme un bug de pagination "confuse").
-    // Pages 0-1 = horaire, 2-4 = journalier. LEFT boucle sur 2/3/4 une fois
-    // dans le journalier (ne revient pas seul vers l'horaire) ; RIGHT traverse
-    // tout vers le bas et boucle 0->2 (retour au debut du journalier, pas un
-    // tour complet vers 4).
-    if (dir == LV_DIR_LEFT) {
-        if (page >= 4) page = 2;
-        else page = page + 1;
-    } else if (dir == LV_DIR_RIGHT) {
-        if (page <= 0) page = 2;
-        else page = page - 1;
+    // Mode HA (ADR-0023) : le swipe change de pièce, jamais de calque météo — il
+    // réaffichait les prévisions sous les cartes (bug relevé le 28/09/2026).
+    if (ctx.ha_mode) {
+        tuiles_swipe_ha(dir == LV_DIR_LEFT);
+        return;
     }
+
+    int old_page = forecast_page_index;
+    // Bouclage volontaire : [AI-WARNING] de forecast_page_suivante() ci-dessus.
+    int page = forecast_page_suivante(old_page, dir == LV_DIR_LEFT);
     forecast_page_index = page;
 
     apply_forecast_page(old_page, page, dir,
@@ -917,6 +947,11 @@ void hide_vocal_response_ui(lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal, CentralPa
     if (vocal_wrap) lv_obj_add_flag(vocal_wrap, LV_OBJ_FLAG_HIDDEN);
     ctx.vocal_shown = false;
 
+    // Mode HA : la réponse avait masqué le titre de la pièce, il revient.
+    if (ctx.ha_mode) {
+        update_central_forecast_page_ui(ctx.forecast_page, g_tuiles_ui.titre_cadre, g_tuiles_ui.titre, ctx);
+        return;
+    }
     // Ne réaffiche un panneau du rotateur que s'il a la main (page 2, pas de
     // planning temporaire) : si l'on a balayé pendant les 8 s, la carte est au titre.
     sync_central_panel_visibility(ctx);

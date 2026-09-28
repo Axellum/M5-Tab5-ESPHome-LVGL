@@ -83,8 +83,11 @@ text_sensor:
     on_value:
       - lambda: |-
           if (zone_vue(Zone::PC)) id(tab5_zones_apply).execute();
-          // Accepte device_tracker (home) et switch (on)
-          update_pc_status_ui(x == "home" || x == "on", id(icon_pc), id(icon_sw0), id(lbl_sw0_state));
+          // Accepte device_tracker (home) et switch (on). La carte du mode HA est la
+          // tuile 0 de la pièce 0 du mode héritage (ADR-0023, tab5_tuiles.cpp).
+          const bool actif = x == "home" || x == "on";
+          update_pc_status_ui(actif, id(icon_pc));
+          tuiles_heritage_pc(actif);
 
   # TV → icône moniteur existante sur la carte J0 (icon_card_pc), pas une 4e icône bandeau
   - platform: template
@@ -95,6 +98,7 @@ text_sensor:
           if (zone_vue(Zone::TV)) id(tab5_zones_apply).execute();
           bool active = (x == "home" || x == "on" || x == "playing" || x == "idle" || x == "paused");
           set_icon_active_ui(id(icon_card_pc), active, UIColor::SUCCESS, UIColor::TEXT_DIM);
+          tuiles_heritage_tv(active);
 
   - platform: template
     id: light_chambre_state
@@ -103,9 +107,10 @@ text_sensor:
       # Bloc factorise dans update_light_card_ui() (#T164, ex-triplique chambre/salon/led)
       - lambda: |-
           if (zone_vue(Zone::LUMIERE_1)) id(tab5_zones_apply).execute();
-          update_light_card_ui(id(icon_card_lit_j2), id(icon_card_light_j2), id(icon_sw2), id(lbl_sw2_state),
+          update_light_card_ui(id(icon_card_lit_j2), id(icon_card_light_j2), nullptr, nullptr,
               id(btn_light_power_icon), id(current_light_slot), "lumiere_1", x == "on");
           update_light_selector_icon(id(icon_light_sel_0), x == "on");
+          tuiles_heritage_lumiere(0, x == "on");
 
   - platform: template
     id: light_salon_state
@@ -113,9 +118,10 @@ text_sensor:
     on_value:
       - lambda: |-
           if (zone_vue(Zone::LUMIERE_2)) id(tab5_zones_apply).execute();
-          update_light_card_ui(id(icon_card_salon_j3), id(icon_card_light_j3), id(icon_sw3), id(lbl_sw3_state),
+          update_light_card_ui(id(icon_card_salon_j3), id(icon_card_light_j3), nullptr, nullptr,
               id(btn_light_power_icon), id(current_light_slot), "lumiere_2", x == "on");
           update_light_selector_icon(id(icon_light_sel_1), x == "on");
+          tuiles_heritage_lumiere(1, x == "on");
 
   - platform: template
     id: light_led_state
@@ -123,9 +129,10 @@ text_sensor:
     on_value:
       - lambda: |-
           if (zone_vue(Zone::LUMIERE_3)) id(tab5_zones_apply).execute();
-          update_light_card_ui(id(icon_card_led_j4), id(icon_card_light_j4), id(icon_sw4), id(lbl_sw4_state),
+          update_light_card_ui(id(icon_card_led_j4), id(icon_card_light_j4), nullptr, nullptr,
               id(btn_light_power_icon), id(current_light_slot), "lumiere_3", x == "on");
           update_light_selector_icon(id(icon_light_sel_2), x == "on");
+          tuiles_heritage_lumiere(2, x == "on");
 
 # Détails pots (popup appui long) : les 4 capteurs × 5 pots viennent d'UN
 # package paramétré (pot_sensors.yaml, règle 5) inclus 5 fois — ESPHome

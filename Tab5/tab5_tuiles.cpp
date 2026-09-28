@@ -23,6 +23,7 @@
  *       des polices (Latin-1 + cp1252, table kHorsLatin1).
  */
 #include "tab5_internal.h"
+#include "tab5_tuiles_icones.h"
 #include "lvgl.h"
 #include <algorithm>
 #include <cmath>
@@ -34,6 +35,9 @@ namespace {
 
 constexpr int kPieces = 5;
 constexpr int kTuiles = 5;
+// Pièce de chaque page du bas (index = forecast_page_index) : R0 = page 2 (accueil),
+// R1 = 3, R2 = 4, R3 = 1, R4 = 0 — l'ordre où un swipe les atteint depuis l'accueil.
+constexpr int kPieceDePage[kPieces] = {4, 3, 0, 1, 2};
 
 // Types de tuile (ADR-0023), dans l'ordre de kTypes.
 enum class Type : uint8_t { VIDE, LUM, INT, VOL, MED, ACT, CAP, BIN, CLI };
@@ -246,7 +250,502 @@ void lire_entree(const char* s, size_t n, Modele& m) {
     if (d.type == static_cast<uint8_t>(Type::VIDE)) d = Def{};
 }
 
+// ─── Mode héritage : les emplacements 3.x forment la pièce 0 ─────────────────────────
+
+struct Heritage {
+    bool pc = false;
+    bool pc_recu = false;
+    bool tv = false;
+    bool lum[3] = {};
+    bool lum_recu[3] = {};
+    char volet[kEtat] = "";      // dernier etat_physique (En_mouvement, Ouvert, Ferme…)
+    int8_t volet_ouvert = -1;    // dernier état connu hors mouvement : 1 ouvert, 0 fermé
+};
+Heritage s_h;
+
+// Commandes 3.x des trois lumières (tuiles 2 à 4), comme les boutons de la 3.1.
+constexpr const char* kHeritageLumieres[3] = {"lumiere_1", "lumiere_2", "lumiere_3"};
+
+bool heritage() { return s_m.recues == 0; }
+
+bool est(const char* a, const char* b) { return std::strcmp(a, b) == 0; }
+
+// Tuile présente : un appareil défini — en mode héritage, un emplacement 3.x que HA n'a
+// pas déclaré absent (zones, ADR-0018), dans la pièce 0 seulement.
+bool tuile_presente(int r, int t) {
+    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return false;
+    if (heritage()) return r == 0 && !zone_tuile_absente(t);
+    return s_m.tuiles[r][t].type != static_cast<uint8_t>(Type::VIDE);
+}
+
+bool piece_non_vide(int r) {
+    for (int t = 0; t < kTuiles; t++)
+        if (tuile_presente(r, t)) return true;
+    return false;
+}
+
+bool aucun_appareil() {
+    for (int r = 0; r < kPieces; r++)
+        if (piece_non_vide(r)) return false;
+    return true;
+}
+
+int piece_courante() {
+    const int p = g_central_ctx.forecast_page;
+    return (p >= 0 && p < kPieces) ? kPieceDePage[p] : 0;
+}
+
+// Page la plus proche de `page` dont la pièce a des appareils (à égalité, la plus proche
+// de l'accueil) ; -1 s'il n'y en a aucune.
+int page_non_vide_proche(int page) {
+    int choix = -1, d_choix = 99, h_choix = 99;
+    for (int p = 0; p < kPieces; p++) {
+        if (!piece_non_vide(kPieceDePage[p])) continue;
+        const int d = std::abs(p - page), h = std::abs(p - 2);
+        if (d < d_choix || (d == d_choix && h < h_choix)) {
+            choix = p;
+            d_choix = d;
+            h_choix = h;
+        }
+    }
+    return choix;
+}
+
+// ─── Glyphes posés d'ici (règle 7 : MDI_CODE_TARGETS de check_tab5_code_rules.py) ────
+
+// Mode héritage : les icônes de la 3.1 sur les cartes du mode HA (70 px).
+const char* heritage_glyphe_carte(int t) {
+    switch (t) {
+        case 0: return "\U000F0379";   // monitor
+        case 1: return "\U000F111E";   // window-shutter-open
+        case 2: return "\U000F02E3";   // bed
+        case 3: return "\U000F04B9";   // sofa
+        default: return "\U000F1051";  // led-strip-variant
+    }
+}
+
+// ─── Ce qu'une tuile montre, selon son type et son état (ADR-0023) ────────────────────
+
+struct Vue {
+    const char* icone = nullptr;        // épaule gauche (32 px) ; nullptr : inchangée
+    uint32_t couleur = UIColor::INACTIVE;
+    const char* icone_carte = nullptr;  // carte du mode HA (70 px) ; nullptr : inchangée
+    uint32_t couleur_carte = UIColor::INACTIVE;
+    const char* droite = nullptr;       // épaule droite ; nullptr : masquée
+    uint32_t couleur_droite = UIColor::TEXT_DIM;
+    const char* nom = "";
+    char ligne[40] = "";                // ligne d'état de la carte
+    uint32_t couleur_ligne = UIColor::INACTIVE;
+    bool agit = false;                  // un appui fait quelque chose
+};
+
+// Minuteries d'une tuile : confirmation (option k, 3 s) et « OK » après « lancer » (1 s).
+struct Minuterie {
+    int r = -1;
+    int t = -1;
+    lv_timer_t* timer = nullptr;
+};
+Minuterie s_confirmation;
+Minuterie s_ok;
+constexpr uint32_t kConfirmationMs = 3000;
+constexpr uint32_t kOkMs = 1000;
+
+bool minuterie_sur(const Minuterie& m, int r, int t) { return m.timer != nullptr && m.r == r && m.t == t; }
+
+void peindre_tuile(int r, int t);
+
+void minuterie_fin(lv_timer_t* timer) {
+    Minuterie* m = static_cast<Minuterie*>(lv_timer_get_user_data(timer));
+    const int r = m->r, t = m->t;
+    m->timer = nullptr;  // un seul tour : LVGL supprime le timer après ce rappel
+    m->r = m->t = -1;
+    peindre_tuile(r, t);
+}
+
+void minuterie_arreter(Minuterie& m) {
+    if (m.timer == nullptr) return;
+    lv_timer_delete(m.timer);
+    const int r = m.r, t = m.t;
+    m.timer = nullptr;
+    m.r = m.t = -1;
+    peindre_tuile(r, t);
+}
+
+void minuterie_armer(Minuterie& m, int r, int t, uint32_t ms) {
+    minuterie_arreter(m);
+    m.r = r;
+    m.t = t;
+    m.timer = lv_timer_create(minuterie_fin, ms, &m);
+    lv_timer_set_repeat_count(m.timer, 1);
+    peindre_tuile(r, t);
+}
+
+// Couleur propre d'une lumière (rgb_color), éclaircie vers le blanc si elle se perdrait
+// sur le fond ardoise des cartes (luminance < 110 sur 255).
+uint32_t couleur_lisible(uint32_t c) {
+    const int r = (c >> 16) & 0xFF, g = (c >> 8) & 0xFF, b = c & 0xFF;
+    const int y = (2126 * r + 7152 * g + 722 * b) / 10000;
+    constexpr int kMin = 110;
+    if (y >= kMin) return c;
+    const int k = (kMin - y) * 256 / (255 - y);
+    auto vers_blanc = [k](int v) { return v + ((255 - v) * k) / 256; };
+    return (static_cast<uint32_t>(vers_blanc(r)) << 16) | (static_cast<uint32_t>(vers_blanc(g)) << 8) |
+           static_cast<uint32_t>(vers_blanc(b));
+}
+
+// « 21.4 °C », « 45 % », « 1250 W » : une décimale sous 100 si elle compte.
+void formater_mesure(char* out, size_t n, float v, const char* unite) {
+    const bool entier = std::fabs(v) >= 100.0f || std::fabs(v - std::round(v)) < 0.05f;
+    if (unite[0] != '\0') snprintf(out, n, entier ? "%.0f %s" : "%.1f %s", v, unite);
+    else snprintf(out, n, entier ? "%.0f" : "%.1f", v);
+}
+
+// Familles de classes d'appareil d'un `bin` : quels mots pour « actif » / « inactif ».
+enum class Famille : uint8_t { OUVERTURE, DETECTION, PRESENCE, VERROU, AUTRE };
+Famille famille_bin(const char* classe) {
+    static constexpr const char* kOuverture[] = {"door", "window", "opening", "garage_door"};
+    static constexpr const char* kDetection[] = {"motion", "occupancy", "moving", "vibration", "sound"};
+    for (const char* c : kOuverture)
+        if (est(classe, c)) return Famille::OUVERTURE;
+    for (const char* c : kDetection)
+        if (est(classe, c)) return Famille::DETECTION;
+    if (est(classe, "presence")) return Famille::PRESENCE;
+    if (est(classe, "lock")) return Famille::VERROU;
+    return Famille::AUTRE;
+}
+
+// Volet / vanne : « ouvert » = état open (même entrouvert), mouvement = opening / closing.
+bool vol_mouvement(const char* s) { return est(s, "opening") || est(s, "closing"); }
+// Appui court (ADR-0023) : en mouvement → arrêter ; ouvert → fermer ; sinon ouvrir.
+const char* vol_appui(const char* s) {
+    if (vol_mouvement(s)) return "arreter";
+    return est(s, "open") ? "fermer" : "ouvrir";
+}
+// Appui long : l'autre de ouvrir / fermer (en mouvement, le sens contraire).
+const char* vol_appui_long(const char* s) {
+    if (est(s, "opening")) return "fermer";
+    if (est(s, "closing")) return "ouvrir";
+    return est(s, "open") ? "ouvrir" : "fermer";
+}
+
+bool type_agit(Type type, uint8_t options) {
+    if (options & OPT_R) return false;
+    switch (type) {
+        case Type::LUM: case Type::INT: case Type::VOL: case Type::MED: case Type::ACT: return true;
+        case Type::CLI: return (options & OPT_M) != 0;
+        default: return false;
+    }
+}
+
+void vue_nouvelle(int r, int t, Vue& v) {
+    const Def& d = s_m.tuiles[r][t];
+    const Etat& e = s_etats[r][t];
+    const Type type = static_cast<Type>(d.type);
+    const char* s = e.brut;
+    bool actif = false;
+    uint32_t c = UIColor::TEXT_DIM;
+    v.nom = d.nom;
+    v.agit = type_agit(type, d.options);
+    switch (type) {
+        case Type::LUM:
+            actif = est(s, "on");
+            if (actif && (d.options & OPT_D) && !std::isnan(e.valeur)) {
+                const int pct = std::max(1, std::min(100, static_cast<int>(std::lround(e.valeur * 100.0f / 255.0f))));
+                snprintf(v.ligne, sizeof(v.ligne), "%d %%", pct);
+            } else {
+                snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? tr("Allumé") : tr("Éteint"));
+            }
+            c = actif ? (e.a_couleur ? couleur_lisible(e.couleur) : UIColor::INFO) : UIColor::TEXT_DIM;
+            break;
+        case Type::INT:
+            actif = est(s, "on");
+            snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? tr("Allumé") : tr("Éteint"));
+            c = actif ? UIColor::SUCCESS : UIColor::TEXT_DIM;
+            break;
+        case Type::VOL:
+            actif = !est(s, "closed");
+            if (vol_mouvement(s)) {
+                snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Mouvement"));
+                c = UIColor::INFO;
+            } else if (est(s, "open")) {
+                if (!std::isnan(e.valeur) && e.valeur > 0.0f && e.valeur < 100.0f)
+                    snprintf(v.ligne, sizeof(v.ligne), "%.0f %%", e.valeur);
+                else
+                    snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Ouvert"));
+                c = UIColor::SUCCESS;
+            } else {
+                snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Fermé"));
+            }
+            break;
+        case Type::MED:
+            actif = !est(s, "off") && !est(s, "standby");
+            if (est(s, "playing")) snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Lecture"));
+            else if (est(s, "paused")) snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Pause"));
+            else snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? tr("Allumé") : tr("Éteint"));
+            c = actif ? UIColor::SUCCESS : UIColor::TEXT_DIM;
+            break;
+        case Type::ACT:
+            actif = minuterie_sur(s_ok, r, t);
+            snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? "OK" : tr("Lancer"));
+            c = actif ? UIColor::SUCCESS : UIColor::ACCENT;
+            break;
+        case Type::CAP:
+            actif = true;
+            if (!std::isnan(e.valeur)) formater_mesure(v.ligne, sizeof(v.ligne), e.valeur, d.complement);
+            else snprintf(v.ligne, sizeof(v.ligne), "%s", s);
+            c = (d.complement[0] != '\0' && std::strncmp(d.complement, "\xC2\xB0", 2) == 0 && !std::isnan(e.valeur))
+                    ? get_temperature_color(e.valeur) : UIColor::INFO;
+            break;
+        case Type::BIN: {
+            const Famille f = famille_bin(d.complement);
+            if (f == Famille::VERROU) {
+                // binary_sensor « lock » : on = déverrouillé ; entité lock : locked / unlocked.
+                const bool verrouille = est(s, "locked") || est(s, "off");
+                snprintf(v.ligne, sizeof(v.ligne), "%s", verrouille ? tr("Verrouillé") : tr("Ouvert"));
+                actif = !verrouille;
+                c = verrouille ? UIColor::SUCCESS : UIColor::WARNING;
+                break;
+            }
+            actif = est(s, "on") || est(s, "home");
+            switch (f) {
+                case Famille::OUVERTURE:
+                    snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? tr("Ouvert") : tr("Fermé"));
+                    break;
+                case Famille::DETECTION:
+                    snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? tr("Détecté") : tr("Rien"));
+                    break;
+                case Famille::PRESENCE:
+                    snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? tr("Présent") : tr("Absent"));
+                    break;
+                default:
+                    snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? tr("Actif") : tr("Inactif"));
+                    break;
+            }
+            c = actif ? (f == Famille::PRESENCE ? UIColor::SUCCESS : UIColor::WARNING) : UIColor::TEXT_DIM;
+            break;
+        }
+        case Type::CLI:
+            actif = !est(s, "off");
+            if (!std::isnan(e.valeur)) snprintf(v.ligne, sizeof(v.ligne), "%.1f \xC2\xB0", e.valeur);
+            else snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? "--" : tr("Éteint"));
+            if (est(s, "cool")) c = UIColor::CLIM_COOL_ACTIVE;
+            else if (est(s, "heat")) c = UIColor::CLIM_HEAT_ACTIVE;
+            else c = actif ? UIColor::SUCCESS : UIColor::TEXT_DIM;
+            break;
+        default:
+            break;
+    }
+    uint32_t c_ligne = c;
+    // Pas encore d'état depuis le démarrage (les états ne sont pas gardés) : « -- » grisé.
+    // unavailable / unknown : « Hors ligne », grisé (un script ou une scène n'en a pas).
+    if (!e.recu) {
+        actif = false;
+        c = c_ligne = UIColor::INACTIVE;
+        snprintf(v.ligne, sizeof(v.ligne), "--");
+    } else if (est(s, "unavailable") || (est(s, "unknown") && type != Type::ACT)) {
+        actif = false;
+        c = c_ligne = UIColor::INACTIVE;
+        snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Hors ligne"));
+    } else if (type == Type::CLI && !std::isnan(e.valeur)) {
+        c_ligne = get_temperature_color(e.valeur);
+    }
+    // Option k : le premier appui arme, la ligne d'état demande le second (3 s).
+    if (minuterie_sur(s_confirmation, r, t)) {
+        c = c_ligne = UIColor::WARNING;
+        snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Confirmer ?"));
+    }
+    const char* icone = tuile_icone(d.icone, actif, kTypes[d.type]);
+    v.icone = v.icone_carte = icone;
+    v.couleur = v.couleur_carte = c;
+    v.couleur_ligne = c_ligne;
+}
+
+// Mode héritage : ce que la 3.1 montrait, à l'identique (ou presque : « -- » avant la
+// première donnée, comme les tuiles).
+void vue_heritage(int t, Vue& v) {
+    v.agit = true;
+    switch (t) {
+        case 0: {
+            v.nom = tr("PC Bureau");
+            v.icone_carte = heritage_glyphe_carte(0);
+            const uint32_t c = s_h.pc ? UIColor::SUCCESS : UIColor::TEXT_DIM;
+            v.couleur_carte = s_h.pc_recu ? c : UIColor::INACTIVE;
+            if (s_h.pc_recu) snprintf(v.ligne, sizeof(v.ligne), "%s", s_h.pc ? tr("Allumé") : tr("Éteint"));
+            else snprintf(v.ligne, sizeof(v.ligne), "--");
+            v.couleur_ligne = v.couleur_carte;
+            break;
+        }
+        case 1: {
+            v.nom = tr("Volet");
+            v.icone_carte = heritage_glyphe_carte(1);
+            const int8_t o = s_h.volet_ouvert;
+            if (est(s_h.volet, "En_mouvement")) {
+                snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Mouvement"));
+                v.couleur_carte = UIColor::INFO;
+            } else if (o >= 0) {
+                snprintf(v.ligne, sizeof(v.ligne), "%s", o == 1 ? tr("Ouvert") : tr("Fermé"));
+                v.couleur_carte = o == 1 ? UIColor::SUCCESS : UIColor::TEXT_DIM;
+            } else {
+                snprintf(v.ligne, sizeof(v.ligne), "--");
+            }
+            v.couleur_ligne = v.couleur_carte;
+            break;
+        }
+        default: {
+            const int i = t - 2;
+            v.nom = i == 0 ? tr("Chambre") : (i == 1 ? tr("Salon") : "LEDs");
+            v.icone_carte = heritage_glyphe_carte(t);
+            const uint32_t c = s_h.lum[i] ? UIColor::INFO : UIColor::TEXT_DIM;
+            v.couleur_carte = s_h.lum_recu[i] ? c : UIColor::INACTIVE;
+            if (s_h.lum_recu[i]) snprintf(v.ligne, sizeof(v.ligne), "%s", s_h.lum[i] ? tr("Allumé") : tr("Éteint"));
+            else snprintf(v.ligne, sizeof(v.ligne), "--");
+            v.couleur_ligne = v.couleur_carte;
+            break;
+        }
+    }
+}
+
+void vue(int r, int t, Vue& v) {
+    if (heritage()) vue_heritage(t, v);
+    else vue_nouvelle(r, t, v);
+}
+
+// ─── Dessin ─────────────────────────────────────────────────────────────────────────
+
+// Texte sur une ligne, coupé avec « … » s'il dépasse `largeur` px dans la police du label.
+void ui_texte_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur) {
+    if (lbl == nullptr || txt == nullptr) return;
+    const lv_font_t* f = lv_obj_get_style_text_font(lbl, LV_PART_MAIN);
+    if (f == nullptr) {
+        ui_text(lbl, txt);
+        return;
+    }
+    const int32_t esp = lv_obj_get_style_text_letter_space(lbl, LV_PART_MAIN);
+    const int32_t w_points = lv_font_get_glyph_width(f, 0x2026, 0) + esp;
+    const char* fin = txt + std::strlen(txt);
+    const char* p = txt;
+    const char* coupe = txt;  // dernière coupure où le texte et « … » tiennent encore
+    int32_t w = 0;
+    while (p < fin) {
+        const uint32_t cp = utf8_suivant(p, fin);
+        const char* q = p;
+        const uint32_t suivant = q < fin ? utf8_suivant(q, fin) : 0;
+        w += lv_font_get_glyph_width(f, cp, suivant) + esp;
+        if (w + w_points <= largeur) coupe = p;
+    }
+    if (w <= largeur) {
+        ui_text(lbl, txt);
+        return;
+    }
+    char buf[64];
+    const size_t n = std::min<size_t>(static_cast<size_t>(coupe - txt), sizeof(buf) - 4);
+    std::memcpy(buf, txt, n);
+    std::memcpy(buf + n, "\xE2\x80\xA6", 4);  // « … » et le zéro final
+    ui_text(lbl, buf);
+}
+
+// Onglets titre et état des cartes : 200 px, 6 px de marge de chaque côté.
+constexpr int32_t kLargeurOnglet = 188;
+
+void peindre_carte(int r, int t) {
+    const TuilesUI& u = g_tuiles_ui;
+    if (u.carte_icone[t] == nullptr) return;
+    Vue v;
+    vue(r, t, v);
+    if (v.icone_carte != nullptr) ui_text(u.carte_icone[t], v.icone_carte);
+    ui_text_color(u.carte_icone[t], v.couleur_carte);
+    ui_texte_coupe(u.carte_nom[t], v.nom, kLargeurOnglet);
+    ui_texte_coupe(u.carte_etat[t], v.ligne, kLargeurOnglet);
+    ui_text_color(u.carte_etat[t], v.couleur_ligne);
+}
+
+// Cartes du mode HA : la pièce de la page courante, cartes vides masquées et les autres
+// centrées (formule des zones, ADR-0018 : pas de 250 px).
+void peindre_cartes() {
+    const TuilesUI& u = g_tuiles_ui;
+    if (!g_central_ctx.ha_mode) return;
+    const int r = piece_courante();
+    int n = 0;
+    for (int t = 0; t < kTuiles; t++)
+        if (u.carte[t] != nullptr && tuile_presente(r, t)) n++;
+    int32_t x = (1280 - (n * 250 - 20)) / 2;
+    for (int t = 0; t < kTuiles; t++) {
+        const bool presente = tuile_presente(r, t);
+        ui_hidden(u.carte[t], !presente);
+        if (!presente || u.carte[t] == nullptr) continue;
+        ui_x(u.carte[t], x);
+        x += 250;
+        peindre_carte(r, t);
+    }
+}
+
+// Une tuile a changé (état, minuterie) : la repeindre là où elle est affichée.
+void peindre_tuile(int r, int t) {
+    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return;
+    if (g_central_ctx.ha_mode && r == piece_courante() && tuile_presente(r, t)) peindre_carte(r, t);
+}
+
+void peindre_heritage(int t) {
+    if (heritage()) peindre_tuile(0, t);
+}
+
+// Bouton « HA » : masqué sans aucun appareil ; bordure et icône en couleur d'accent
+// quand le mode HA est actif. Ne touche au style qu'au changement.
+bool s_bouton_actif = false;
+void bouton_ha_peindre() {
+    const TuilesUI& u = g_tuiles_ui;
+    ui_hidden(u.bouton_ha, aucun_appareil());
+    if (u.bouton_ha == nullptr || s_bouton_actif == g_central_ctx.ha_mode) return;
+    s_bouton_actif = g_central_ctx.ha_mode;
+    highlight_button_border(u.bouton_ha, s_bouton_actif, UIColor::ACCENT, 3);
+    if (u.icone_ha == nullptr) return;
+    if (s_bouton_actif) ui_text_color(u.icone_ha, UIColor::ACCENT);
+    else lv_obj_remove_local_style_prop(u.icone_ha, LV_STYLE_TEXT_COLOR, LV_PART_MAIN);
+}
+
+// Change de page sans toucher aux calques météo (mode HA) : global, contexte, pastilles.
+void aller_page(int page) {
+    TuilesUI& u = g_tuiles_ui;
+    if (page < 0 || page >= kPieces) return;
+    if (u.page != nullptr) *u.page = page;
+    g_central_ctx.forecast_page = page;
+    pagination_afficher(u.pastilles, page);
+}
+
+// ─── Commandes ──────────────────────────────────────────────────────────────────────
+
+void envoyer(const char* emplacement, const char* action) {
+    if (g_tuiles_ui.envoyer != nullptr) g_tuiles_ui.envoyer(emplacement, action, "");
+}
+
+void envoyer_tuile(int r, int t, const char* action) {
+    const char cle[4] = {'t', static_cast<char>('0' + r), static_cast<char>('0' + t), '\0'};
+    envoyer(cle, action);
+}
+
+void ouvrir_popup(lv_obj_t* popup) {
+    if (popup != nullptr) animate_popup_open(popup);
+}
+
+// Mode héritage : les gestes de la 3.1 (tuile 0 PC + télécommande, 1 volet, 2-4 lumières).
+void appui_heritage(int t, bool long_appui) {
+    switch (t) {
+        case 0:
+            if (!long_appui) envoyer("pc", "basculer");
+            else if (!zone_absente(Zone::TV)) ouvrir_popup(g_tuiles_ui.popup_tv);
+            return;
+        case 1:
+            if (!long_appui && g_tuiles_ui.volet_tap != nullptr) g_tuiles_ui.volet_tap();
+            return;
+        default:
+            if (!long_appui) envoyer(kHeritageLumieres[t - 2], "basculer");
+            return;
+    }
+}
+
 }  // namespace
+
+TuilesUI g_tuiles_ui;
 
 bool tuiles_definir(const std::string& payload) {
     charger();
@@ -276,6 +775,10 @@ bool tuiles_definir(const std::string& payload) {
             if (d.type != static_cast<uint8_t>(Type::VIDE)) n++;
     ESP_LOGI("tab5.tuiles", "Définitions reçues : %d appareil(s)%s", n,
              premiere ? " (fin du mode héritage)" : "");
+    // Une minuterie peut viser une tuile qui n'existe plus.
+    minuterie_arreter(s_confirmation);
+    minuterie_arreter(s_ok);
+    tuiles_appliquer_ui();
     return true;
 }
 
@@ -311,5 +814,184 @@ bool tuiles_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n
         }
     }
     e.recu = true;
+    if (!heritage()) peindre_tuile(r, t);
     return true;
+}
+
+void tuiles_appliquer_ui() {
+    charger();
+    CentralPanelCtx& ctx = g_central_ctx;
+    const TuilesUI& u = g_tuiles_ui;
+    if (ctx.ha_mode) {
+        if (aucun_appareil()) {
+            tuiles_mode_ha(false);
+            return;
+        }
+        // La pièce affichée a pu se vider (nouvelles définitions, zone absente).
+        if (!piece_non_vide(piece_courante())) aller_page(page_non_vide_proche(ctx.forecast_page));
+        peindre_cartes();
+        // Titre (nom ou nombre de pièces changé) ; une réponse vocale garde la carte.
+        if (!ctx.vocal_shown) update_central_forecast_page_ui(ctx.forecast_page, u.titre_cadre, u.titre, ctx);
+    }
+    bouton_ha_peindre();
+}
+
+void tuiles_mode_ha(bool actif) {
+    charger();
+    CentralPanelCtx& ctx = g_central_ctx;
+    const TuilesUI& u = g_tuiles_ui;
+    if (actif == ctx.ha_mode) return;
+    if (u.calque_ha == nullptr || u.calque_jours == nullptr || u.calque_heures == nullptr) return;
+    const int page = ctx.forecast_page;
+    lv_obj_t* meteo = page >= 2 ? u.calque_jours : u.calque_heures;
+    lv_obj_t* autre = page >= 2 ? u.calque_heures : u.calque_jours;
+    if (actif) {
+        // Page sans appareil : la pièce la plus proche qui en a.
+        const int cible = page_non_vide_proche(page);
+        if (cible < 0) return;  // aucun appareil : le bouton est masqué
+        ctx.ha_mode = true;
+        if (cible != page) aller_page(cible);
+        peindre_cartes();
+    } else {
+        ctx.ha_mode = false;
+        // La météo de la page courante : on a pu changer de pièce en mode HA.
+        g_forecast_roll_suppress = true;
+        if (page >= 2) refresh_daily_forecast(g_day_slots, page - 2, u.police_meteo, u.police_meteo_petite);
+        else refresh_hourly_forecast(g_hour_slots, 1 - page, u.police_meteo, u.police_meteo_petite);
+        g_forecast_roll_suppress = false;
+    }
+    // L'autre calque météo : animation coupée, remis en place et masqué (un swipe en cours
+    // continuerait sinon sous HIDDEN et polluerait le prochain affichage).
+    lv_anim_delete(autre, nullptr);
+    lv_obj_set_x(autre, 0);
+    lv_obj_set_style_opa(autre, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_add_flag(autre, LV_OBJ_FLAG_HIDDEN);
+    if (actif) animate_crossfade_layers(meteo, u.calque_ha);
+    else animate_crossfade_layers(u.calque_ha, meteo);
+    central_mode_ha(u.titre_cadre, u.titre, ctx);
+    bouton_ha_peindre();
+}
+
+void tuiles_swipe_ha(bool gauche) {
+    charger();
+    const int depart = g_central_ctx.forecast_page;
+    int p = depart;
+    // Au plus deux tours : depuis une page horaire, la gauche ne revient jamais au départ.
+    for (int i = 0; i < 2 * kPieces; i++) {
+        p = forecast_page_suivante(p, gauche);
+        if (p == depart) return;  // tour complet : la seule pièce qui a des appareils
+        if (!piece_non_vide(kPieceDePage[p])) continue;
+        aller_page(p);
+        peindre_cartes();
+        central_mode_ha(g_tuiles_ui.titre_cadre, g_tuiles_ui.titre, g_central_ctx);
+        return;
+    }
+}
+
+bool tuiles_titre_piece(std::string& chapeau, std::string& titre) {
+    charger();
+    const int r = piece_courante();
+    int n = 0, rang = 0;
+    for (int i = 0; i < kPieces; i++) {
+        if (!piece_non_vide(i)) continue;
+        n++;
+        if (i == r) rang = n;
+    }
+    char buf[48];
+    snprintf(buf, sizeof(buf), tr("Pièce %d/%d"), rang, n);
+    chapeau = buf;
+    if (!heritage() && s_m.pieces[r][0] != '\0') {
+        titre = s_m.pieces[r];
+    } else {
+        snprintf(buf, sizeof(buf), tr("Pièce %d"), r + 1);
+        titre = buf;
+    }
+    return true;
+}
+
+void tuile_appui(int t, bool long_appui) {
+    charger();
+    const int r = piece_courante();
+    if (!tuile_presente(r, t)) return;
+    if (heritage()) {
+        appui_heritage(t, long_appui);
+        return;
+    }
+    const Def& d = s_m.tuiles[r][t];
+    const Etat& e = s_etats[r][t];
+    const Type type = static_cast<Type>(d.type);
+    if (!type_agit(type, d.options) && type != Type::MED) return;
+    // Tableau de l'ADR-0023 : appui court, puis appui long.
+    const char* action = nullptr;
+    switch (type) {
+        case Type::LUM:
+            if (long_appui) return;
+            action = (d.options & OPT_O) ? "allumer" : "basculer";
+            break;
+        case Type::INT:
+            if (long_appui) return;
+            action = (d.options & OPT_O) ? "allumer" : "basculer";
+            break;
+        case Type::VOL:
+            action = long_appui ? vol_appui_long(e.brut) : vol_appui(e.brut);
+            break;
+        case Type::MED:
+            if (long_appui) {
+                if (d.options & OPT_T) ouvrir_popup(g_tuiles_ui.popup_tv);
+                return;
+            }
+            if (d.options & OPT_R) return;
+            action = (d.options & OPT_O) ? "allumer" : "basculer";
+            break;
+        case Type::ACT:
+            if (long_appui) return;
+            action = "lancer";
+            break;
+        case Type::CLI:
+            if (!long_appui) ouvrir_popup(g_tuiles_ui.popup_clim);  // option m (type_agit)
+            return;
+        default:
+            return;  // cap, bin : lecture seule
+    }
+    // Option k : un second appui dans les 3 s envoie ; la ligne d'état le demande.
+    if (d.options & OPT_K) {
+        if (!minuterie_sur(s_confirmation, r, t)) {
+            minuterie_armer(s_confirmation, r, t, kConfirmationMs);
+            return;
+        }
+        minuterie_arreter(s_confirmation);
+    }
+    envoyer_tuile(r, t, action);
+    if (type == Type::ACT) minuterie_armer(s_ok, r, t, kOkMs);
+}
+
+void tuiles_heritage_pc(bool actif) {
+    charger();
+    s_h.pc = actif;
+    s_h.pc_recu = true;
+    peindre_heritage(0);
+}
+
+void tuiles_heritage_tv(bool actif) {
+    charger();
+    s_h.tv = actif;
+    peindre_heritage(0);
+}
+
+void tuiles_heritage_lumiere(int i, bool allumee) {
+    if (i < 0 || i > 2) return;
+    charger();
+    s_h.lum[i] = allumee;
+    s_h.lum_recu[i] = true;
+    peindre_heritage(2 + i);
+}
+
+bool tuiles_heritage_volet(const std::string& etat) {
+    charger();
+    std::memset(s_h.volet, 0, sizeof(s_h.volet));
+    std::memcpy(s_h.volet, etat.data(), std::min(etat.size(), kEtat - 1));
+    if (etat == "Ouvert" || etat == "Partiel" || etat == "open") s_h.volet_ouvert = 1;
+    else if (etat == "Ferme" || etat == "closed") s_h.volet_ouvert = 0;
+    peindre_heritage(1);
+    return etat == "En_mouvement";
 }

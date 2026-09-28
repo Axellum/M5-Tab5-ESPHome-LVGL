@@ -226,22 +226,8 @@ void zones_apply_ui() {
     day_slots_apply_actions(g_day_slots, g_central_ctx.forecast_page - 2);
     if (sans_tv && !zone_absente(Zone::PC)) peindre_epaule_j0();
 
-    // Calque « HA » : les cartes présentes, centrées (pas de 250 px, 25 px de marge à 5).
-    {
-        const bool absente[5] = {zone_absente(Zone::PC), zone_absente(Zone::VOLET),
-                                 zone_absente(Zone::LUMIERE_1), zone_absente(Zone::LUMIERE_2),
-                                 zone_absente(Zone::LUMIERE_3)};
-        int n = 0;
-        for (int i = 0; i < 5; i++)
-            if (u.sw_card[i] && !absente[i]) n++;
-        int32_t x = (1280 - (n * 250 - 20)) / 2;
-        for (int i = 0; i < 5; i++) {
-            ui_hidden(u.sw_card[i], absente[i]);
-            if (absente[i] || u.sw_card[i] == nullptr) continue;
-            ui_x(u.sw_card[i], x);
-            x += 250;
-        }
-    }
+    // Calque « HA » : ses cartes sont les tuiles de la pièce courante (ADR-0023) —
+    // tuiles_appliquer_ui(), en fin de fonction.
 
     // Popup lumière : sélecteur réduit aux lampes présentes, tassé vers le haut.
     {
@@ -291,4 +277,8 @@ void zones_apply_ui() {
 
     // Planning : hors du rotateur de la carte centrale sans agenda de travail.
     central_planning_set_off(zone_absente(Zone::PLANNING));
+
+    // Pièces et tuiles (ADR-0023) : en mode héritage, leurs tuiles suivent ces zones ;
+    // bouton « HA », cartes et titre de la pièce.
+    tuiles_appliquer_ui();
 }
