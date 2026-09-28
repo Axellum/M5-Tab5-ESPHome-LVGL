@@ -79,7 +79,8 @@ jobs:
           python-version: "3.13"
           cache: pip
       - name: Dépendances des outils
-        run: pip install -r requirements-dev.txt
+        # Réessais : PyPI répond parfois « from versions: none » (tools/ci/pip_reessai.sh).
+        run: bash tools/ci/pip_reessai.sh -r requirements-dev.txt
       - name: Correspondances réelles des placeholders HA (secret du dépôt)
         # Sans placeholders.yaml, `render_ha_config.py --check` n'a rien à
         # chercher et répond 0 : le hook passait sans rien vérifier. Le fichier

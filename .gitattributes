@@ -1,0 +1,3 @@
+# Scripts shell lancés par la CI Linux : jamais de CRLF, même dans un checkout Windows
+# (tools/ci/pip_reessai.sh, 28/09/2026).
+*.sh text eol=lf

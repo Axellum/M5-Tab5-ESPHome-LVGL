@@ -87,7 +87,15 @@ jobs:
         with:
           python-version: "3.13"
       - name: esptool (espsecure)
-        run: pip install "esptool>=5"
+        # Réessais écrits ici, pas dans tools/ci/pip_reessai.sh : ce workflow peut
+        # reconstruire un ancien tag, qui n'a pas le script. PyPI répond parfois
+        # « from versions: none » (28/09/2026).
+        run: |
+          for essai in 1 2 3 4; do
+            pip install --retries 5 --timeout 30 "esptool>=5" && exit 0
+            [ "$essai" -lt 4 ] && { echo "::warning::pip install a échoué (essai $essai/4)"; sleep $((essai * 20)); }
+          done
+          echo "::error::pip install a échoué 4 fois"; exit 1
       - name: Clé de signature du projet (secret), vérifiée par son empreinte
         env:
           CLE: ${{ secrets.TAB5_CLE_SIGNATURE }}
