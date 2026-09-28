@@ -16,6 +16,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   retirée, commentaires et `docs/troubleshooting.md` corrigés.
 - Trouvé en analysant les PR d'ESPHome sur la rapidité d'affichage du P4 (esphome#16853,
   #16863).
+- Vérifié le 28/09 : `lv_theme_default_init` n'appelle plus `lv_style_transition_dsc_init`
+  (0 appel dans tout le binaire, 2 avant). Build de mesure sur la tablette : repos
+  20,2-20,3 ms, écran rallumé 133,3 ms, calendrier 126,1 ms, comme la 3.2.0 (ouvertures
+  commandées depuis HA, sans appui : le gain se voit au doigt, pas dans ces chiffres).
 
 ### 2026-09-28 (nuit) — Docs : performances mesurées, chiffres faux corrigés
 
