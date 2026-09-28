@@ -313,7 +313,30 @@ int page_non_vide_proche(int page) {
 
 // ─── Glyphes posés d'ici (règle 7 : MDI_CODE_TARGETS de check_tab5_code_rules.py) ────
 
-// Mode héritage : les icônes de la 3.1 sur les cartes du mode HA (70 px).
+// Épaule droite (32 px) : l'ampoule d'une lumière…
+const char* glyphe_ampoule(bool allumee) {
+    return allumee ? "\U000F06E8" : "\U000F0335";
+}
+
+// … ou la flèche du prochain mouvement d'un volet : 0 arrêter (pause), 1 ouvrir,
+// -1 fermer.
+const char* glyphe_fleche(int sens) {
+    if (sens == 0) return "\U000F03E4";
+    return sens > 0 ? "\U000F005D" : "\U000F0045";
+}
+
+// Mode héritage : les icônes de la 3.1 sur les épaules gauches de l'accueil (32 px)…
+const char* heritage_glyphe_epaule(int t, bool volet_ferme) {
+    switch (t) {
+        case 0: return "\U000F07C0";   // desktop-classic : la TV (le PC sans TV)
+        case 1: return volet_ferme ? "\U000F111C" : "\U000F111E";
+        case 2: return "\U000F02E3";   // bed
+        case 3: return "\U000F04B9";   // sofa
+        default: return "\U000F1051";  // led-strip-variant
+    }
+}
+
+// … et sur les cartes du mode HA (70 px).
 const char* heritage_glyphe_carte(int t) {
     switch (t) {
         case 0: return "\U000F0379";   // monitor
@@ -428,12 +451,25 @@ const char* vol_appui_long(const char* s) {
     return est(s, "open") ? "ouvrir" : "fermer";
 }
 
+// Un appui fait-il quelque chose ? (sinon le bouton de la tuile météo est masqué). Option
+// r : aucun appui du tout.
 bool type_agit(Type type, uint8_t options) {
     if (options & OPT_R) return false;
     switch (type) {
         case Type::LUM: case Type::INT: case Type::VOL: case Type::MED: case Type::ACT: return true;
         case Type::CLI: return (options & OPT_M) != 0;
         default: return false;
+    }
+}
+
+// Épaule droite d'un volet : la flèche de ce qu'un appui ferait.
+void vue_fleche_volet(const char* s, Vue& v) {
+    if (vol_mouvement(s)) {
+        v.droite = glyphe_fleche(0);
+        v.couleur_droite = UIColor::INFO;
+    } else {
+        v.droite = glyphe_fleche(est(s, "open") ? -1 : 1);
+        v.couleur_droite = UIColor::TEXT_DIM;
     }
 }
 
@@ -456,6 +492,8 @@ void vue_nouvelle(int r, int t, Vue& v) {
                 snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? tr("Allumé") : tr("Éteint"));
             }
             c = actif ? (e.a_couleur ? couleur_lisible(e.couleur) : UIColor::INFO) : UIColor::TEXT_DIM;
+            v.droite = glyphe_ampoule(actif);
+            v.couleur_droite = c;
             break;
         case Type::INT:
             actif = est(s, "on");
@@ -476,6 +514,7 @@ void vue_nouvelle(int r, int t, Vue& v) {
             } else {
                 snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Fermé"));
             }
+            vue_fleche_volet(s, v);
             break;
         case Type::MED:
             actif = !est(s, "off") && !est(s, "standby");
@@ -541,10 +580,12 @@ void vue_nouvelle(int r, int t, Vue& v) {
     if (!e.recu) {
         actif = false;
         c = c_ligne = UIColor::INACTIVE;
+        v.droite = nullptr;
         snprintf(v.ligne, sizeof(v.ligne), "--");
     } else if (est(s, "unavailable") || (est(s, "unknown") && type != Type::ACT)) {
         actif = false;
         c = c_ligne = UIColor::INACTIVE;
+        v.droite = nullptr;
         snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Hors ligne"));
     } else if (type == Type::CLI && !std::isnan(e.valeur)) {
         c_ligne = get_temperature_color(e.valeur);
@@ -567,6 +608,10 @@ void vue_heritage(int t, Vue& v) {
     switch (t) {
         case 0: {
             v.nom = tr("PC Bureau");
+            // Épaule : l'état de la TV, ou celui du PC quand il n'y a pas de TV (lot 5).
+            const bool epaule = (zone_absente(Zone::TV) && !zone_absente(Zone::PC)) ? s_h.pc : s_h.tv;
+            v.icone = heritage_glyphe_epaule(0, false);
+            v.couleur = epaule ? UIColor::SUCCESS : UIColor::TEXT_DIM;
             v.icone_carte = heritage_glyphe_carte(0);
             const uint32_t c = s_h.pc ? UIColor::SUCCESS : UIColor::TEXT_DIM;
             v.couleur_carte = s_h.pc_recu ? c : UIColor::INACTIVE;
@@ -579,7 +624,16 @@ void vue_heritage(int t, Vue& v) {
             v.nom = tr("Volet");
             v.icone_carte = heritage_glyphe_carte(1);
             const int8_t o = s_h.volet_ouvert;
-            if (est(s_h.volet, "En_mouvement")) {
+            const bool mouvement = est(s_h.volet, "En_mouvement");
+            // Épaule gauche : dernier état connu hors mouvement (la 3.1 la laissait telle
+            // quelle pendant la course) ; droite : pause en mouvement, sinon le sens de la
+            // prochaine commande (volet_target_open, basculé par btn_j1_dir).
+            v.icone = heritage_glyphe_epaule(1, o == 0);
+            v.couleur = o == 1 ? UIColor::SUCCESS : (o == 0 ? UIColor::ERROR : UIColor::TEXT_DIM);
+            const bool ouvrir = g_tuiles_ui.volet_sens == nullptr || *g_tuiles_ui.volet_sens;
+            v.droite = glyphe_fleche(mouvement ? 0 : (ouvrir ? 1 : -1));
+            v.couleur_droite = mouvement ? UIColor::INFO : UIColor::TEXT_DIM;
+            if (mouvement) {
                 snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Mouvement"));
                 v.couleur_carte = UIColor::INFO;
             } else if (o >= 0) {
@@ -596,6 +650,10 @@ void vue_heritage(int t, Vue& v) {
             v.nom = i == 0 ? tr("Chambre") : (i == 1 ? tr("Salon") : "LEDs");
             v.icone_carte = heritage_glyphe_carte(t);
             const uint32_t c = s_h.lum[i] ? UIColor::INFO : UIColor::TEXT_DIM;
+            v.icone = heritage_glyphe_epaule(t, false);
+            v.couleur = c;
+            v.droite = glyphe_ampoule(s_h.lum[i]);
+            v.couleur_droite = c;
             v.couleur_carte = s_h.lum_recu[i] ? c : UIColor::INACTIVE;
             if (s_h.lum_recu[i]) snprintf(v.ligne, sizeof(v.ligne), "%s", s_h.lum[i] ? tr("Allumé") : tr("Éteint"));
             else snprintf(v.ligne, sizeof(v.ligne), "--");
@@ -679,10 +737,60 @@ void peindre_cartes() {
     }
 }
 
+// Mode météo : les épaules et le bouton d'une tuile (masqués sans appareil ; bouton
+// masqué aussi quand un appui ne ferait rien : cap, bin, option r).
+void peindre_epaules(int r, int t, lv_obj_t* gauche, lv_obj_t* droite, lv_obj_t* bouton) {
+    const bool presente = tuile_presente(r, t);
+    Vue v;
+    if (presente) vue(r, t, v);
+    ui_hidden(bouton, !presente || !v.agit);
+    ui_hidden(gauche, !presente);
+    ui_hidden(droite, !presente || v.droite == nullptr);
+    if (!presente) return;
+    if (gauche != nullptr) {
+        if (v.icone != nullptr) ui_text(gauche, v.icone);
+        ui_text_color(gauche, v.couleur);
+    }
+    if (droite != nullptr && v.droite != nullptr) {
+        ui_text(droite, v.droite);
+        ui_text_color(droite, v.couleur_droite);
+    }
+}
+
+// Widgets de la tuile T sur le calque météo de la page courante (journalier : pages 2 à
+// 4, mêmes objets ; horaire : pages 0 et 1).
+void widgets_meteo(int t, lv_obj_t*& gauche, lv_obj_t*& droite, lv_obj_t*& bouton) {
+    const TuilesUI& u = g_tuiles_ui;
+    const bool jours = g_central_ctx.forecast_page >= 2;
+    gauche = jours ? u.jour_g[t] : u.heure_g[t];
+    droite = jours ? u.jour_d[t] : u.heure_d[t];
+    bouton = jours ? u.jour_bouton[t] : u.heure_bouton[t];
+}
+
+// Mode météo : les appareils de la pièce de la page courante (ADR-0023). Sur un calque
+// masqué (mode HA), rien à faire : la sortie du mode HA repeint.
+void peindre_meteo() {
+    if (g_central_ctx.ha_mode) return;
+    const int r = piece_courante();
+    for (int t = 0; t < kTuiles; t++) {
+        lv_obj_t *g, *d, *b;
+        widgets_meteo(t, g, d, b);
+        peindre_epaules(r, t, g, d, b);
+    }
+    // Sens du volet 3.x : tuile 1 de l'accueil, mode héritage seulement.
+    ui_hidden(g_tuiles_ui.jour_sens, !(heritage() && r == 0 && tuile_presente(0, 1)));
+}
+
 // Une tuile a changé (état, minuterie) : la repeindre là où elle est affichée.
 void peindre_tuile(int r, int t) {
-    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return;
-    if (g_central_ctx.ha_mode && r == piece_courante() && tuile_presente(r, t)) peindre_carte(r, t);
+    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles || r != piece_courante()) return;
+    if (g_central_ctx.ha_mode) {
+        if (tuile_presente(r, t)) peindre_carte(r, t);
+        return;
+    }
+    lv_obj_t *g, *d, *b;
+    widgets_meteo(t, g, d, b);
+    peindre_epaules(r, t, g, d, b);
 }
 
 void peindre_heritage(int t) {
@@ -833,7 +941,13 @@ void tuiles_appliquer_ui() {
         // Titre (nom ou nombre de pièces changé) ; une réponse vocale garde la carte.
         if (!ctx.vocal_shown) update_central_forecast_page_ui(ctx.forecast_page, u.titre_cadre, u.titre, ctx);
     }
+    peindre_meteo();
     bouton_ha_peindre();
+}
+
+void tuiles_peindre_meteo() {
+    charger();
+    peindre_meteo();
 }
 
 void tuiles_mode_ha(bool actif) {
@@ -859,6 +973,7 @@ void tuiles_mode_ha(bool actif) {
         if (page >= 2) refresh_daily_forecast(g_day_slots, page - 2, u.police_meteo, u.police_meteo_petite);
         else refresh_hourly_forecast(g_hour_slots, 1 - page, u.police_meteo, u.police_meteo_petite);
         g_forecast_roll_suppress = false;
+        peindre_meteo();
     }
     // L'autre calque météo : animation coupée, remis en place et masqué (un swipe en cours
     // continuerait sinon sous HIDDEN et polluerait le prochain affichage).
@@ -920,7 +1035,7 @@ void tuile_appui(int t, bool long_appui) {
     const Def& d = s_m.tuiles[r][t];
     const Etat& e = s_etats[r][t];
     const Type type = static_cast<Type>(d.type);
-    if (!type_agit(type, d.options) && type != Type::MED) return;
+    if (!type_agit(type, d.options)) return;  // cap, bin, option r, cli sans m
     // Tableau de l'ADR-0023 : appui court, puis appui long.
     const char* action = nullptr;
     switch (type) {
@@ -940,7 +1055,6 @@ void tuile_appui(int t, bool long_appui) {
                 if (d.options & OPT_T) ouvrir_popup(g_tuiles_ui.popup_tv);
                 return;
             }
-            if (d.options & OPT_R) return;
             action = (d.options & OPT_O) ? "allumer" : "basculer";
             break;
         case Type::ACT:
@@ -951,7 +1065,7 @@ void tuile_appui(int t, bool long_appui) {
             if (!long_appui) ouvrir_popup(g_tuiles_ui.popup_clim);  // option m (type_agit)
             return;
         default:
-            return;  // cap, bin : lecture seule
+            return;
     }
     // Option k : un second appui dans les 3 s envoie ; la ligne d'état le demande.
     if (d.options & OPT_K) {
@@ -994,4 +1108,12 @@ bool tuiles_heritage_volet(const std::string& etat) {
     else if (etat == "Ferme" || etat == "closed") s_h.volet_ouvert = 0;
     peindre_heritage(1);
     return etat == "En_mouvement";
+}
+
+void tuiles_heritage_volet_sens() {
+    charger();
+    bool* sens = g_tuiles_ui.volet_sens;
+    if (sens == nullptr) return;
+    *sens = !*sens;
+    peindre_heritage(1);
 }

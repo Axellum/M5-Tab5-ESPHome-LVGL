@@ -46,7 +46,6 @@ bool s_charge = false;
 // Vrai au démarrage : la première poussée des prévisions demande l'état des zones,
 // même au mode démo (qui n'est pas « Home Assistant »). Réarmé à chaque connexion de HA.
 bool s_demande = true;
-bool s_pc_actif = false;
 esphome::ESPPreferenceObject s_pref;
 
 constexpr uint32_t bit_de(Zone z) { return 1u << static_cast<int>(z); }
@@ -65,11 +64,6 @@ void charger() {
 void sauver() {
     Sauvegarde s{kMagic, s_absentes};
     s_pref.save(&s);
-}
-
-// Épaule de la tuile J0 : l'état de la TV, ou celui du PC quand il n'y a pas de TV.
-void peindre_epaule_j0() {
-    set_icon_active_ui(g_day_slots[0].action_icon1, s_pc_actif, UIColor::SUCCESS, UIColor::TEXT_DIM);
 }
 
 }  // namespace
@@ -194,11 +188,6 @@ bool zones_demande_a_envoyer() {
     return true;
 }
 
-void zones_note_pc(bool actif) {
-    s_pc_actif = actif;
-    if (zone_absente(Zone::TV) && !zone_absente(Zone::PC)) peindre_epaule_j0();
-}
-
 void zones_apply_ui() {
     charger();
     const ZonesUI& u = g_zones_ui;
@@ -222,12 +211,9 @@ void zones_apply_ui() {
     ui_x(u.btn_ha, sans_tv ? 999 : 855);
     ui_x(u.btn_sys, sans_tv ? 1143 : 999);
 
-    // Tuiles de l'accueil : boutons et épaules des appareils présents.
-    day_slots_apply_actions(g_day_slots, g_central_ctx.forecast_page - 2);
-    if (sans_tv && !zone_absente(Zone::PC)) peindre_epaule_j0();
-
-    // Calque « HA » : ses cartes sont les tuiles de la pièce courante (ADR-0023) —
-    // tuiles_appliquer_ui(), en fin de fonction.
+    // Tuiles (épaules, boutons) et calque « HA » : ce sont les tuiles de la pièce de la
+    // page (ADR-0023) — tuiles_appliquer_ui(), en fin de fonction ; en mode héritage,
+    // elles suivent ces zones (zone_tuile_absente).
 
     // Popup lumière : sélecteur réduit aux lampes présentes, tassé vers le haut.
     {

@@ -664,6 +664,9 @@ static void apply_forecast_page(int old_page, int page, lv_dir_t dir,
 
         pagination_afficher(pbars, page);
 
+        // Épaules et boutons des appareils de la pièce de cette page (ADR-0023).
+        tuiles_peindre_meteo();
+
         update_central_forecast_page_ui(page, page_title_wrap, lbl_page_title, ctx);
 }
 

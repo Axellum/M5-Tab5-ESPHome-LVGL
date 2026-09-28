@@ -31,12 +31,12 @@ void update_light_card_ui(lv_obj_t* icon_room, lv_obj_t* icon_light, lv_obj_t* i
     lv_obj_t* lbl_switch_state, lv_obj_t* btn_power_icon,
     const std::string& current_light_slot, const std::string& this_slot, bool is_on) {
 
-    if (icon_room == nullptr || icon_light == nullptr) return;
-
     uint32_t color = is_on ? UIColor::INFO : UIColor::TEXT_DIM;
-    ui_text_color(icon_room, color);
-    ui_text_color(icon_light, color);
-    ui_text(icon_light, is_on ? "\U000F06E8" : "\U000F0335");
+    if (icon_room != nullptr && icon_light != nullptr) {
+        ui_text_color(icon_room, color);
+        ui_text_color(icon_light, color);
+        ui_text(icon_light, is_on ? "\U000F06E8" : "\U000F0335");
+    }
 
     if (icon_switch != nullptr && lbl_switch_state != nullptr) {
         ui_text_color(icon_switch, color);
@@ -356,5 +356,4 @@ void set_icon_active_ui(lv_obj_t* icon, bool active, uint32_t color_on, uint32_t
 void update_pc_status_ui(bool active, lv_obj_t* icon_pc) {
     if (icon_pc == nullptr) return;
     set_icon_active_ui(icon_pc, active, UIColor::SUCCESS, UIColor::TEXT_PRIMARY);
-    zones_note_pc(active);  // épaule de J0 quand il n'y a pas de TV (lot 5)
 }

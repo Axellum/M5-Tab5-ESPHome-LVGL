@@ -98,13 +98,6 @@ void tab5_dismiss_local_prune(std::string& store, const std::vector<std::string>
 
 void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase);
 
-// --- Zones optionnelles (lot 5) ---
-// tab5_forecast.cpp : boutons et épaules d'appareil des 5 tuiles (accueil seulement,
-// appareil présent seulement). Appelé par refresh_daily_forecast et zones_apply_ui.
-void day_slots_apply_actions(WeatherDaySlot slots[], int page_index);
-// tab5_zones.cpp : état du PC, repeint sur l'épaule de J0 quand la TV manque.
-void zones_note_pc(bool actif);
-
 // --- Pièces et tuiles (tab5_tuiles.cpp, ADR-0023) ---
 // emplacements_appliquer (tab5_zones.cpp) : une entrée « tRT|état|valeur|couleur » (clé
 // dans cle[0..n_cle), le reste après le premier '|'). Faux si la clé n'est pas celle d'une
@@ -113,6 +106,9 @@ bool tuiles_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n
 // zones_apply_ui (tab5_zones.cpp) : tout redessiner (définitions chargées de la NVS au
 // premier appel, zones du mode héritage, bouton « HA », cartes, titre de la pièce).
 void tuiles_appliquer_ui();
+// apply_forecast_page (tab5_central.cpp) : épaules et boutons des tuiles de la page
+// courante, en mode météo (la pièce de la page, ou rien).
+void tuiles_peindre_meteo();
 // tab5_central.cpp : titre de la carte centrale en mode HA — « Pièce n/N » et le nom de
 // la pièce de la page courante (« Pièce n » sans nom).
 bool tuiles_titre_piece(std::string& chapeau, std::string& titre);

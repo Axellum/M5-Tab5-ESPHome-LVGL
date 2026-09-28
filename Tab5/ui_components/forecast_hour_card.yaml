@@ -1,6 +1,10 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par forecast_hourly.yaml.
-# Vars: x_pos, idx. `hN_*` mis à jour par refresh_hourly_forecast() (tab5_custom.cpp) —
-# attention, l'ordre visuel gauche->droite est l'INVERSE de idx (cf. forecast_hourly.yaml).
+# Vars: x_pos, idx, tuile. `hN_*` mis à jour par refresh_hourly_forecast() (tab5_custom.cpp) —
+# attention, l'ordre visuel gauche->droite est l'INVERSE de idx (cf. forecast_hourly.yaml) :
+# `tuile` = position visuelle T = 4 − idx, celle des pièces (ADR-0023).
+# Épaules (`icon_card_hN_g` / `_d`) et bouton invisible (`btn_hN_action`) : l'appareil de
+# la tuile T de la pièce de la page horaire (pièces 3 et 4), posés par tab5_tuiles.cpp ;
+# masqués sans appareil. Ids en `icon_card_*` : motif de la règle 7 pour la palette.
 obj:
   x: ${x_pos}
   y: ${meteo_cell_y}
@@ -19,6 +23,18 @@ obj:
         widgets:
           - label: { id: "h${idx}_icon_layer1", text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
           - label: { id: "h${idx}_icon_layer2", text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
+          - button:
+              id: "btn_h${idx}_action"
+              align: CENTER
+              y: 0
+              width: 140
+              height: 130
+              hidden: true
+              styles: style_invisible
+              on_short_click:
+                - lambda: 'tuile_appui(${tuile}, false);'
+              on_long_press:
+                - lambda: 'tuile_appui(${tuile}, true);'
 
     # Onglet Titre
     - obj:
@@ -35,6 +51,10 @@ obj:
               text: "--:--"
               align: CENTER
               text_font: roboto_32_b
+    # Épaules de l'appareil de la tuile, de part et d'autre de l'onglet titre (comme les
+    # tuiles journalières) : icône à gauche, ampoule ou flèche du volet à droite.
+    - label: { id: "icon_card_h${idx}_g", text: "\U000F0335", hidden: true, align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
+    - label: { id: "icon_card_h${idx}_d", text: "\U000F0335", hidden: true, align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
     # Onglet Température & Pluie. 210 px : pictogramme (x 5) + « 0.5mm » (101 px, x 34)
     # + « -12° » (61 px) en Roboto 32 gras ; à 140, la pluie recouvrait la température
     # (rendu hors tablette, 27/09/2026).

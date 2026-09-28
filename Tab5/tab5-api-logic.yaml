@@ -151,12 +151,10 @@ api:
           description: "État du volet : « En_mouvement » pendant une manœuvre, sinon le dernier état connu (Ouvert, Ferme, Stoppe…)."
           example: "En_mouvement"
       then:
-        - lambda: |-
-            if (id(icon_card_shutter_arrow) == nullptr) return;
-            VoletUI ui{id(icon_card_shutter_arrow), id(icon_card_shutter1), nullptr, nullptr};
-            id(volet_en_mouvement) = update_volet_ui(etat_physique, id(volet_target_open), ui);
-            // Carte du mode HA : tuile 1 de la pièce 0 du mode héritage (ADR-0023).
-            tuiles_heritage_volet(etat_physique);
+        # Volet 3.x = tuile 1 de la pièce 0 du mode héritage (ADR-0023) : épaules de la
+        # tuile météo et carte du mode HA, dessinées par tab5_tuiles.cpp. Le drapeau de
+        # mouvement arme le mot « Stop » dans tous les modes.
+        - lambda: 'id(volet_en_mouvement) = tuiles_heritage_volet(etat_physique);'
         - if:
             condition:
               lambda: 'return etat_physique == "En_mouvement";'

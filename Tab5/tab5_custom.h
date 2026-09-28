@@ -40,7 +40,9 @@ struct WeatherDaySlot {
     lv_obj_t* min_lbl;
     lv_obj_t* icon_l1;
     lv_obj_t* icon_l2;
-    // Pointers for action widgets
+    // Bouton et épaules d'appareil : plus lus depuis l'ADR-0023 (pièces) — ces widgets
+    // sont dans g_tuiles_ui (tab5_tuiles.cpp). Les champs restent : l'on_boot de
+    // tab5-ha-hmi.yaml, intouchable, initialise la structure entière.
     lv_obj_t* action_btn;
     lv_obj_t* action_icon1;
     lv_obj_t* action_icon2;
@@ -295,21 +297,8 @@ void tab5_dismiss_local_add(std::string& store, const std::string& id);
 // (hors lv_obj_has_flag, lecture pure).
 // -----------------------------------------------------------------------------
 
-// Carte volet : flèche (mouvement / sens de la dernière commande), icône du
-// volet, et la ligne « Volet » du panneau switches (sw_icon / sw_label peuvent
-// être nuls : la ligne est optionnelle).
-struct VoletUI {
-    lv_obj_t* arrow;     // icon_card_shutter_arrow
-    lv_obj_t* shutter;   // icon_card_shutter1
-    lv_obj_t* sw_icon;   // icon_sw1
-    lv_obj_t* sw_label;  // lbl_sw1_state
-};
-
-// etat_physique poussé par HA : "En_mouvement", "Ouvert" / "Partiel" / "open",
-// "Ferme" / "closed" (autre valeur : flèche au repos, icône du volet inchangée).
-// target_open = sens de la dernière commande (volet_target_open). Retourne true
-// si le volet est en mouvement — à stocker dans volet_en_mouvement.
-bool update_volet_ui(const std::string& etat_physique, bool target_open, const VoletUI& ui);
+// Volet (tab5_maj_volet_etat) : voir « Pièces et tuiles » plus bas — le volet 3.x est
+// la tuile 1 de la pièce 0 du mode héritage (tuiles_heritage_volet).
 
 // Vigilance Météo-France : phrase pluie, date recolorée, 4 slots d'icônes.
 struct VigilanceUI {
@@ -815,6 +804,16 @@ struct TuilesUI {
     int* page = nullptr;                  // &id(forecast_page_index)
     esphome::font::Font* police_meteo = nullptr;         // font_meteo_card
     esphome::font::Font* police_meteo_petite = nullptr;  // font_meteo_card_small
+    // Mode météo : épaules (icône à gauche, ampoule ou flèche à droite) et bouton
+    // invisible de chaque tuile, par position visuelle T (0 = gauche). Journalières :
+    // mêmes objets sur les pages 2 à 4 ; horaires : l'objet h(4−T).
+    lv_obj_t* jour_g[5] = {};
+    lv_obj_t* jour_d[5] = {};
+    lv_obj_t* jour_bouton[5] = {};
+    lv_obj_t* jour_sens = nullptr;        // btn_j1_dir : sens du volet 3.x (mode héritage)
+    lv_obj_t* heure_g[5] = {};
+    lv_obj_t* heure_d[5] = {};
+    lv_obj_t* heure_bouton[5] = {};
     // Cartes du mode HA (switches_card.yaml) : carte T = tuile T de la pièce courante.
     lv_obj_t* carte[5] = {};
     lv_obj_t* carte_icone[5] = {};
@@ -849,5 +848,8 @@ void tuiles_heritage_tv(bool actif);
 void tuiles_heritage_lumiere(int i, bool allumee);
 // Renvoie vrai si le volet est en mouvement (volet_en_mouvement).
 bool tuiles_heritage_volet(const std::string& etat_physique);
+// Bouton btn_j1_dir (haut de la tuile du volet, mode héritage) : inverse le sens de la
+// prochaine commande (volet_target_open) et repeint la flèche.
+void tuiles_heritage_volet_sens();
 
 // UIColor (couleurs sémantiques) : voir tab5_tokens.h.
