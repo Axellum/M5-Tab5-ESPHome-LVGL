@@ -25,3 +25,7 @@ Checked in ESPHome 2026.9.0: a `homeassistant` sensor's `entity_id` is fixed at 
 - The blueprint is the contract's second half: its keys are tested against the firmware's, as ADR-0018's are (`tests/test_zones.py`).
 - The blueprint needs the 3.0 firmware: with an older one, `esphome.tab5_ha_hmi_tab5_maj_emplacements` doesn't exist, and `continue_on_error` does not catch a missing action (HA logs an error at each change).
 - Weather, calendars and presence still come from packages with placeholders. Folding them into the blueprint (true no-YAML install) is a decision for later in lot 6.
+
+## Update — 2026-09-28: slow measurements are batched
+
+"One slot on each change" pushed a greenhouse temperature that flips by 0.1 °C every 40 s: about 1,300 runs a day at the author's home, 775 of them for that one sensor. The screen shows the tenth, so filtering on the displayed value would not have helped. Slow measurements (`telephone`, `salon`, `salon_hum`, `serre`, `pot_1..5` with their details) now have no state trigger: a `time_pattern` every 5 minutes pushes, in one action, those whose `last_changed` falls in the last 310 s. Lights, PC and TV are still pushed at once, but only when their state or brightness changes. `tests/test_emplacements.py` checks that each slot has exactly one push path.
