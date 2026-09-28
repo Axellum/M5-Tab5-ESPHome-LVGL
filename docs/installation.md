@@ -6,7 +6,7 @@
 
 > **Just want to try it first?** [`docs/demo_mode.md`](demo_mode.md) shows the full dashboard on a flashed device in a few minutes, with no Home Assistant install at all. Come back here when you're ready for the real install.
 
-> **No compiling (3.0 and later):** the [web flasher](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/) installs a ready-made, signed firmware from Chrome or Edge, for your display revision, then sets its Wi-Fi. You still need the Home Assistant side (Step 4) and to add the tablet (Step 6); Steps 1, 2, 3 and 5 are for building your own firmware. The tablet then offers its updates in Home Assistant (« Firmware » entity). It only accepts, over the air, a firmware signed with the project key: to switch to your own builds (your own key), flash once over USB.
+> **No compiling (3.0 and later):** the [web flasher](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) installs a ready-made, signed firmware from Chrome or Edge, for your display revision, then sets its Wi-Fi. You still need the Home Assistant side (Step 4) and to add the tablet (Step 6); Steps 1, 2, 3 and 5 are for building your own firmware. The tablet then offers its updates in Home Assistant (« Firmware » entity). It only accepts, over the air, a firmware signed with the project key: to switch to your own builds (your own key), flash once over USB.
 
 ## Prerequisites
 
@@ -98,7 +98,7 @@ esphome run tab5-ha-hmi.yaml
 ```
 
 The tablet has no Wi-Fi network yet. Give it yours, either way:
-- **over USB**, right after the flash: the project's [web flasher](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/) (Chrome or Edge), *Connect and install*, then its Wi-Fi button, or [ESPHome Web](https://web.esphome.io), *Connect*, then *Configure Wi-Fi*. Both use Improv and work with a firmware you built yourself. Closing that window restarts the tablet once: that is normal;
+- **over USB**, right after the flash: the project's [web flasher](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome or Edge), *Connect and install*, then its Wi-Fi button, or [ESPHome Web](https://web.esphome.io), *Connect*, then *Configure Wi-Fi*. Both use Improv and work with a firmware you built yourself. Closing that window restarts the tablet once: that is normal;
 - **without a cable**: join the open **« Tab5 Fallback AP »** network with a phone; a page opens (otherwise go to `http://192.168.4.1`) to pick your network. <!-- pragma: allowlist secret -->
 
 The network is kept across updates. The fallback AP comes back whenever the tablet loses its Wi-Fi for a minute, to set a new one.
@@ -124,7 +124,7 @@ esphome run tab5-ha-hmi.yaml --device 192.168.x.x
 
 The transfer is not encrypted any more (there is no key in the YAML); the tablet checks the signature and refuses a firmware signed by another key. Your builds are signed by your key at compile time, nothing else to do.
 
-A tablet installed from the [web flasher](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/) gets its updates from Home Assistant instead: its « Firmware » entity reads the published manifest every 6 hours, and « Install » downloads the image, which the tablet checks against the project key ([ADR-0022](decisions/0022-published-firmware-pages-channels.md)). A firmware you compile yourself has no such entity.
+A tablet installed from the [web flasher](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) gets its updates from Home Assistant instead: its « Firmware » entity reads the published manifest every 6 hours, and « Install » downloads the image, which the tablet checks against the project key ([ADR-0022](decisions/0022-published-firmware-pages-channels.md)). A firmware you compile yourself has no such entity.
 
 **Logs:** `esphome logs` looks for the key in the YAML and no longer finds one. Use `python tools/tab5_logs.py --host 192.168.x.x --config-ha \\<ha-ip>\config`: it reads the key Home Assistant keeps (`.storage/core.config_entries`, or the `TAB5_CLE_API` variable) and never prints it.
 
@@ -211,7 +211,7 @@ Limits:
 
 > **Envie de tester d'abord ?** [`docs/demo_mode.md`](demo_mode.md) montre le tableau de bord complet sur un appareil flashé en quelques minutes, sans aucune installation Home Assistant. Revenez ici quand vous êtes prêt pour l'installation réelle.
 
-> **Sans compiler (3.0 et suivantes) :** le [flasheur web](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/) installe depuis Chrome ou Edge un firmware prêt à l'emploi et signé, pour votre révision d'écran, puis règle son Wi-Fi. Il reste le côté Home Assistant (étape 4) et l'ajout de la tablette (étape 6) ; les étapes 1, 2, 3 et 5 servent à compiler son propre firmware. La tablette propose ensuite ses mises à jour dans Home Assistant (entité « Firmware »). Par le réseau, elle n'accepte qu'un firmware signé par la clé du projet : pour passer à vos propres compilations (votre clé), flashez une fois par USB.
+> **Sans compiler (3.0 et suivantes) :** le [flasheur web](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) installe depuis Chrome ou Edge un firmware prêt à l'emploi et signé, pour votre révision d'écran, puis règle son Wi-Fi. Il reste le côté Home Assistant (étape 4) et l'ajout de la tablette (étape 6) ; les étapes 1, 2, 3 et 5 servent à compiler son propre firmware. La tablette propose ensuite ses mises à jour dans Home Assistant (entité « Firmware »). Par le réseau, elle n'accepte qu'un firmware signé par la clé du projet : pour passer à vos propres compilations (votre clé), flashez une fois par USB.
 
 ## Prérequis
 
@@ -301,7 +301,7 @@ esphome run tab5-ha-hmi.yaml
 ```
 
 La tablette n'a pas encore de réseau Wi-Fi. Donnez-lui le vôtre, au choix :
-- **par l'USB**, juste après le flash : le [flasheur web](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/) du projet (Chrome ou Edge), *Connecter et installer*, puis son bouton Wi-Fi, ou [ESPHome Web](https://web.esphome.io), *Connect*, puis *Configure Wi-Fi*. Les deux passent par Improv et marchent avec un firmware compilé soi-même. Fermer cette fenêtre redémarre la tablette une fois : c'est normal ;
+- **par l'USB**, juste après le flash : le [flasheur web](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) du projet (Chrome ou Edge), *Connecter et installer*, puis son bouton Wi-Fi, ou [ESPHome Web](https://web.esphome.io), *Connect*, puis *Configure Wi-Fi*. Les deux passent par Improv et marchent avec un firmware compilé soi-même. Fermer cette fenêtre redémarre la tablette une fois : c'est normal ;
 - **sans câble** : connectez un téléphone au réseau ouvert **« Tab5 Fallback AP »** ; une page s'ouvre (sinon allez sur `http://192.168.4.1`) pour choisir votre réseau. <!-- pragma: allowlist secret -->
 
 Le réseau est gardé d'une mise à jour à l'autre. L'AP de secours revient dès que la tablette perd son Wi-Fi une minute, pour en donner un autre.
@@ -327,7 +327,7 @@ esphome run tab5-ha-hmi.yaml --device 192.168.x.x
 
 L'envoi n'est plus chiffré (il n'y a pas de clé dans le YAML) ; la tablette vérifie la signature et refuse un firmware signé par une autre clé. Vos compilations sont signées par votre clé, rien d'autre à faire.
 
-Une tablette installée depuis le [flasheur web](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/) reçoit plutôt ses mises à jour par Home Assistant : son entité « Firmware » lit le manifeste publié toutes les 6 h, et « Installer » télécharge l'image, que la tablette vérifie avec la clé du projet ([ADR-0022](decisions/0022-published-firmware-pages-channels.md)). Un firmware compilé soi-même n'a pas cette entité.
+Une tablette installée depuis le [flasheur web](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) reçoit plutôt ses mises à jour par Home Assistant : son entité « Firmware » lit le manifeste publié toutes les 6 h, et « Installer » télécharge l'image, que la tablette vérifie avec la clé du projet ([ADR-0022](decisions/0022-published-firmware-pages-channels.md)). Un firmware compilé soi-même n'a pas cette entité.
 
 **Journaux :** `esphome logs` cherche la clé dans le YAML et n'en trouve plus. Utilisez `python tools/tab5_logs.py --host 192.168.x.x --config-ha \\<ip-de-ha>\config` : il lit la clé que garde Home Assistant (`.storage/core.config_entries`, ou la variable `TAB5_CLE_API`) et ne l'affiche jamais.
 

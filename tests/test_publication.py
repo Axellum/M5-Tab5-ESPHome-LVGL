@@ -131,7 +131,7 @@ def test_memes_revisions_partout():
     assert sorted(preparer.ECRANS) == fichiers == sorted(pages.ECRANS)
     flux = _yaml(".github", "workflows", "publication.yml")
     assert sorted(flux["jobs"]["firmware"]["strategy"]["matrix"]["ecran"]) == fichiers
-    page = (REPO / "web" / "index.html").read_text(encoding="utf-8")
+    page = (REPO / "web" / "install" / "index.html").read_text(encoding="utf-8")
     assert sorted(re.findall(r'name="ecran" value="([a-z0-9]+)"', page)) == fichiers
 
 
@@ -172,7 +172,85 @@ def test_mise_a_jour_seulement_dans_les_firmwares_publies():
 
 
 def test_page_suit_le_manifeste_du_site():
-    page = (REPO / "web" / "index.html").read_text(encoding="utf-8")
+    """La page de flashage est dans install/ ; canaux et versions.json à la racine du site."""
+    page = (REPO / "web" / "install" / "index.html").read_text(encoding="utf-8")
     assert re.search(r"esp-web-tools@\d+\.\d+\.\d+/", page), "version d'ESP Web Tools figée"
-    assert "`${canal}/${ecran}/manifest.json`" in page
-    assert 'fetch("versions.json"' in page
+    assert "`../${canal}/${ecran}/manifest.json`" in page
+    assert 'fetch("../versions.json"' in page
+
+
+# --- Site : vitrine, images et référencement (révision de l'ADR-0022, 28/09/2026) ---
+
+# Les fichiers google*.html sont ceux de vérification de Google Search Console, pas des pages.
+PAGES_WEB = sorted(p for p in (REPO / "web").rglob("*.html") if not p.name.startswith("google"))
+
+
+def _url_de_page(page: Path) -> str:
+    return pages.SITE + page.relative_to(REPO / "web").as_posix().removesuffix("index.html")
+
+
+def test_site_meme_adresse_que_les_firmwares():
+    source = _yaml("Tab5", "publication-commune.yaml")["update"][0]["source"]
+    assert source.startswith(pages.SITE)
+
+
+def test_images_du_site():
+    """Chaque image citée par une page est dans IMAGES, chaque image d'IMAGES sert, et
+    son fichier existe dans docs/images/."""
+    citees = set()
+    for page in PAGES_WEB:
+        texte = page.read_text(encoding="utf-8")
+        citees |= {s.rsplit("images/", 1)[1] for s in pages.IMAGE_DE_PAGE.findall(texte)}
+        citees |= set(re.findall(r'content="' + re.escape(pages.SITE) + r'images/([^"]+)"', texte))
+    assert citees == set(pages.IMAGES)
+    for fichier in pages.IMAGES.values():
+        assert (REPO / "docs" / "images" / fichier).is_file(), fichier
+
+
+@pytest.mark.parametrize("page", PAGES_WEB, ids=lambda p: p.relative_to(REPO / "web").as_posix())
+def test_page_referencable(page):
+    """Titre, description, adresse canonique, image de partage ; texte alternatif partout."""
+    texte = page.read_text(encoding="utf-8")
+    titre = re.search(r"<title>([^<]+)</title>", texte)
+    assert titre and "M5Stack Tab5" in titre.group(1) and "Home Assistant" in titre.group(1)
+    description = re.search(r'<meta name="description" content="([^"]+)"', texte)
+    assert description and 70 <= len(description.group(1)) <= 300
+    assert f'<link rel="canonical" href="{_url_de_page(page)}">' in texte
+    assert f'<meta property="og:url" content="{_url_de_page(page)}">' in texte
+    assert re.search(r'<meta property="og:image" content="' + re.escape(pages.SITE) + r'images/', texte)
+    for img in re.findall(r"<img\b[^>]*>", texte):
+        alt = re.search(r'alt="([^"]*)"', img)
+        assert alt and len(alt.group(1)) >= 20, img
+        assert re.search(r'width="\d+" height="\d+"', img), img
+
+
+def test_plan_du_site_avec_les_images(tmp_path):
+    pages.assembler(REPO / "web", tmp_path / "assets", None, None, tmp_path / "site", REPO / "docs" / "images")
+    plan = (tmp_path / "site" / "sitemap.xml").read_text(encoding="utf-8")
+    locs = re.findall(r"<loc>([^<]+)</loc>", plan)
+    assert pages.SITE in locs and pages.SITE + "install/" in locs
+    assert not any("google" in url for url in locs), "fichier de vérification hors du plan"
+    images = re.findall(r"<image:loc>([^<]+)</image:loc>", plan)
+    assert pages.SITE + "images/m5stack-tab5-home-assistant-wall-screen.jpg" in images
+    for url in images:
+        assert (tmp_path / "site" / url.removeprefix(pages.SITE)).is_file(), url
+    assert json.loads((tmp_path / "site" / "versions.json").read_text(encoding="utf-8")) == {"stable": None, "beta": None}
+
+
+def test_site_deploye_sans_compiler():
+    """site.yml déploie le site seul (push, à la main) et après une publication ; il ne
+    compile rien et ne touche pas aux fichiers des releases."""
+    texte = (REPO / ".github" / "workflows" / "site.yml").read_text(encoding="utf-8")
+    flux = yaml.safe_load(texte)
+    declencheurs = flux[True]  # « on: » lu comme un booléen par YAML 1.1
+    assert "workflow_call" in declencheurs and "workflow_dispatch" in declencheurs
+    for chemin in ("web/**", "docs/images/**", "tools/publication/pages.py"):
+        assert chemin in declencheurs["push"]["paths"]
+    assert "build-action" not in texte and "release upload" not in texte
+    assert "--images docs/images" in texte
+    job = flux["jobs"]["pages"]
+    assert job["environment"]["name"] == "github-pages"
+    publication = yaml.safe_load((REPO / ".github" / "workflows" / "publication.yml").read_text(encoding="utf-8"))
+    appel = publication["jobs"]["pages"]
+    assert appel["uses"] == "./.github/workflows/site.yml" and appel["needs"] == "release"
+    assert appel["permissions"] == job["permissions"]

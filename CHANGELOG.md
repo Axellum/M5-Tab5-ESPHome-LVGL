@@ -4,6 +4,28 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — Site du projet : une vitrine, des images que Google peut indexer
+
+- **Pourquoi les images du README ne sortaient pas dans Google** : github.com les sert en
+  `/<owner>/<repo>/raw/main/…`, chemin interdit à tous les robots par son `robots.txt`
+  (`Disallow: /*/raw/`). Le site GitHub Pages, lui, n'a pas de `robots.txt`.
+- `web/index.html` devient une **vitrine** (français et anglais) : ce que fait l'écran,
+  12 photos légendées et les rendus hors tablette, limites dites simplement, balises de
+  partage (Open Graph), adresse canonique, JSON-LD. **La page de flashage passe dans
+  `install/`** ; les dossiers des canaux restent à la racine, les firmwares publiés lisent
+  leur mise à jour à la même adresse.
+- `tools/publication/pages.py` copie les images de `docs/images/` sous un nom parlant
+  (`IMAGES`) et écrit `sitemap.xml` (pages et images).
+- **`.github/workflows/site.yml`** redéploie le site sans rien compiler : après une
+  publication, à chaque push sur `main` qui touche le site, ou à la main. Avant, corriger la
+  page recompilait les trois firmwares et remplaçait les fichiers de la release.
+- `docs/images/tab5_social_preview.jpg` (1280×640) : image de partage du dépôt et du site.
+- README : titre avec « Home Assistant », textes alternatifs des images, 22 ADR et 45
+  composants (et non 17 et 35/40), plus de « pas de firmware précompilé » (la 3.0 s'installe
+  depuis le navigateur), liens vers `install/` (doc d'installation, brouillons
+  Hackster et forum HA compris).
+- ADR-0022 amendée ; tests : images, balises de chaque page, sitemap, site sans compilation.
+
 ## [3.0.0] — 2026-09-28
 
 De `v2.2.0` (27/09, 11:14) à aujourd'hui : 19 pull requests (#189 → #207),

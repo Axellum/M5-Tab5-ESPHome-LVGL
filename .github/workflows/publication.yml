@@ -4,7 +4,7 @@ name: Publication (release, page de flashage)
 #   1. les trois révisions d'écran sont compilées, SIGNÉES par la clé du projet (secret
 #      TAB5_CLE_SIGNATURE, posé par Axel) — jamais une clé jetable comme en PR ;
 #   2. leurs binaires et manifestes sont joints à la release ;
-#   3. la page de flashage (GitHub Pages) est reconstruite à partir des fichiers des
+#   3. le site GitHub Pages est reconstruit par site.yml à partir des fichiers des
 #      releases : `stable/` = dernière release 3.x non « pre-release », `beta/` = la plus
 #      récente. Les firmwares publiés y lisent leur mise à jour (Tab5/publication-*.yaml).
 # Une pre-release compile en canal `beta` (son entité de mise à jour lit `beta/`).
@@ -176,52 +176,12 @@ jobs:
           ls -l publie
           gh release upload "$TAG" publie/* --clobber --repo "$GITHUB_REPOSITORY"
 
+  # Le site (vitrine, page de flashage, canaux) est reconstruit par site.yml, qui sert aussi
+  # à le redéployer seul, sans recompiler ni remplacer les fichiers de la release.
   pages:
     needs: release
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/site.yml
     permissions:
       contents: read
       pages: write
       id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deploiement.outputs.page_url }}
-    steps:
-      # La page (web/) et l'outil viennent de la branche par défaut : une correction de la
-      # page n'attend pas la release suivante (relancer ce workflow suffit).
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.repository.default_branch }}
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.13"
-      - name: Canaux stable et bêta
-        id: canaux
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 \
-            --json tagName,isPrerelease,isDraft,publishedAt > releases.json
-          python tools/publication/pages.py choisir --releases releases.json | tee -a "$GITHUB_OUTPUT"
-      - name: Fichiers des releases retenues
-        env:
-          GH_TOKEN: ${{ github.token }}
-          STABLE: ${{ steps.canaux.outputs.stable }}
-          BETA: ${{ steps.canaux.outputs.beta }}
-        run: |
-          for tag in $(printf '%s\n' "$STABLE" "$BETA" | sort -u); do
-            [[ -n "$tag" ]] || continue
-            gh release download "$tag" --repo "$GITHUB_REPOSITORY" --dir "assets/$tag" \
-              --pattern 'manifest-*.json' --pattern 'tab5-ha-hmi-*.bin'
-          done
-      - name: Site
-        run: |
-          python tools/publication/pages.py assembler --web web --assets assets \
-            --stable "${{ steps.canaux.outputs.stable }}" --beta "${{ steps.canaux.outputs.beta }}" \
-            --sortie site | tee -a "$GITHUB_STEP_SUMMARY"
-      - uses: actions/configure-pages@v6
-      - uses: actions/upload-pages-artifact@v5
-        with:
-          path: site
-      - id: deploiement
-        uses: actions/deploy-pages@v5
