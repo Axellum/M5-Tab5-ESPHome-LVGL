@@ -32,5 +32,4 @@ obj:
               int jour = (page - 2) * 5 + ${idx};
               show_temporary_planning(jour, id(lbl_planning_text),
                                       id(page_title_wrapper), id(lbl_page_title), id(forecast_page_index),
-                                      id(plan_ligne_1), id(plan_ligne_2), id(is_showing_temp_planning),
-                                      g_central_ctx);
+                                      id(plan_ligne_1), id(plan_ligne_2), g_central_ctx);

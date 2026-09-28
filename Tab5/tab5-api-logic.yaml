@@ -136,7 +136,7 @@ api:
             // sur le planning précédent jusqu'au filet des 60 s.
             alarm_invalidate();
             // Bandeau planning dérivé localement (plus de push HA tab5_maj_planning)
-            if (!id(is_showing_temp_planning) && id(lbl_planning_text) != nullptr) {
+            if (!temp_planning_active() && id(lbl_planning_text) != nullptr) {
               std::string l1, l2;
               build_planning_lines_from_jours(l1, l2);
               update_planning_text_ui(id(lbl_planning_text), l1, l2,

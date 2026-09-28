@@ -465,7 +465,10 @@ void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target);
 void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
                              lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, int forecast_page,
                              const std::string& plan_l1, const std::string& plan_l2,
-                             bool& is_showing_temp, CentralPanelCtx& ctx);
+                             CentralPanelCtx& ctx);
+// Vrai pendant les 6 s du planning du tap (son timer tourne). Lu par les scripts du
+// rotateur et par la poussée des prévisions (bandeau planning laissé tel quel).
+bool temp_planning_active();
 
 // Réponse vocale IA : carte centrale dédiée (8s), défilement si phrase longue.
 void show_vocal_response_ui(const std::string& texte,

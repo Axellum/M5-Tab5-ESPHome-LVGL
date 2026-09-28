@@ -35,8 +35,8 @@ static constexpr int32_t FORECAST_SWIPE_Y_MIN = 333;  // haut de central_card (t
 // son rotateur planning/pluie/alertes. C'est la cible du retour automatique.
 static constexpr int FORECAST_MAIN_PAGE = 2;
 
-// Planning temporaire (tap tuile, 6 s) : définis plus bas, avec TempPlanningCtx.
-static bool temp_planning_active();
+// Planning temporaire (tap tuile, 6 s) : défini plus bas, avec TempPlanningCtx
+// (temp_planning_active() est déclarée dans tab5_custom.h, les scripts la lisent).
 static void end_temporary_planning(CentralPanelCtx& ctx);
 
 // Le rotateur (panneaux 0-7) n'a la main sur la carte centrale que sur l'accueil
@@ -805,7 +805,6 @@ struct TempPlanningCtx {
     std::string plan_l1;                   // bandeau planning à restaurer, ligne 1
     std::string plan_l2;                   // ... et ligne 2 (vide si absente)
     lv_obj_t* lbl_planning = nullptr;
-    bool* is_showing_temp = nullptr;       // global ESPHome is_showing_temp_planning
     int forecast_page_restore = 2;         // page prévisions à rétablir (2 = journalière)
     lv_obj_t* page_title_wrap = nullptr;
     lv_obj_t* lbl_page_title = nullptr;
@@ -813,7 +812,9 @@ struct TempPlanningCtx {
 };
 static TempPlanningCtx s_temp_planning;
 
-static bool temp_planning_active() { return s_temp_planning.restore_timer != nullptr; }
+// Seule source de « planning du tap affiché » : son timer de 6 s tourne. Le global
+// ESPHome is_showing_temp_planning, qui recopiait ce timer, est retiré (28/09/2026).
+bool temp_planning_active() { return s_temp_planning.restore_timer != nullptr; }
 
 // Termine le planning temporaire en cours : supprime le timer, rend le texte normal
 // du bandeau et le panneau d'origine. Ne décide PAS de la visibilité — l'appelant
@@ -824,7 +825,6 @@ static void end_temporary_planning(CentralPanelCtx& ctx) {
     if (tp.restore_timer == nullptr) return;
     lv_timer_delete(tp.restore_timer);
     tp.restore_timer = nullptr;
-    if (tp.is_showing_temp) *tp.is_showing_temp = false;
     ctx.current_panel = tp.central_panel_restore;
     // Texte normal rendu dans tous les cas : un tap sur la page 3 ou 4 laissait le
     // texte du tap dans le bandeau planning, réaffiché tel quel au retour sur 2.
@@ -855,7 +855,7 @@ static void planning_restore_timer_cb(lv_timer_t* /*timer*/) {
 void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
                              lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, int forecast_page,
                              const std::string& plan_l1, const std::string& plan_l2,
-                             bool& is_showing_temp, CentralPanelCtx& ctx) {
+                             CentralPanelCtx& ctx) {
     if (!lbl_planning) return;
 
     TempPlanningCtx& tp = s_temp_planning;
@@ -863,7 +863,6 @@ void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
     // déjà mis le panneau courant à 0 (on restaurait le planning au lieu du
     // panneau d'avant — observation du 08/09/2026).
     if (tp.restore_timer == nullptr) tp.central_panel_restore = ctx.current_panel;
-    is_showing_temp = true;
     ctx.current_panel = 0;
 
     std::string text = get_day_planning_display_text(jour);
@@ -883,7 +882,6 @@ void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
     tp.plan_l1 = plan_l1;
     tp.plan_l2 = plan_l2;
     tp.lbl_planning = lbl_planning;
-    tp.is_showing_temp = &is_showing_temp;
     tp.forecast_page_restore = forecast_page;
     tp.page_title_wrap = page_title_wrap;
     tp.lbl_page_title = lbl_page_title;

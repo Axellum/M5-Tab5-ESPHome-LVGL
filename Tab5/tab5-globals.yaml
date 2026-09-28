@@ -107,9 +107,9 @@ globals:
   - id: volume_push_ts
     type: uint32_t
     initial_value: '0'
-  - id: is_showing_temp_planning
-    type: bool
-    initial_value: 'false'
+  # Planning du tap (6 s) : plus de global, temp_planning_active() lit son timer
+  # (tab5_central.cpp, 28/09/2026). La réponse vocale garde le sien : il couvre les
+  # 8 s du script tab5_show_vocal_response, pas seulement l'affichage.
   - id: is_showing_vocal_response
     type: bool
     initial_value: 'false'
