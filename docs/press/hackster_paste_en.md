@@ -123,7 +123,7 @@ Just one heads-up: several critical pins (display reset, amplifier enable) are *
 
 ### Step 2: Flash the firmware
 
-The easy way: plug the Tab5 into your computer over USB and flash it from the browser (Chrome or Edge): https://axellum.github.io/M5-Tab5-ESPHome-LVGL/. The same page sets the Wi-Fi right after the flash. Then add the tablet in Home Assistant, which gives it its encryption key: there is no secret in the firmware, and updates must be signed.
+The easy way: plug the Tab5 into your computer over USB and flash it from the browser (Chrome or Edge): https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/. The same page sets the Wi-Fi right after the flash. Then add the tablet in Home Assistant, which gives it its encryption key: there is no secret in the firmware, and updates must be signed.
 
 Or compile it yourself:
 

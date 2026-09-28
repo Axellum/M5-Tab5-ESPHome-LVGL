@@ -41,3 +41,12 @@ Checked on 2026-09-27 (ESPHome 2026.9.0 installed on the dev PC, `esphome/build-
 - Relaunching the workflow for a tag rebuilds and replaces its files (`--clobber`); relaunching it for any tag republishes the page with the current `web/`.
 - The download is protected by the signature, not by HTTPS (`verify_ssl: false`).
 - Only the ST7123 has been tried on a device; the page says so for the other two revisions.
+
+## Amendment (2026-09-28): a showcase page, the installer under `install/`, a site deployed on its own
+
+The site was only the installer, and only `publication.yml` deployed it: fixing the page meant compiling the three firmwares again and replacing the release files. Search engines did not index the project's pictures either. Checked on 2026-09-28 (`curl`): github.com serves the images of a README as `/<owner>/<repo>/raw/main/…`, and its `robots.txt` has `Disallow: /*/raw/` for every crawler; `axellum.github.io` has no `robots.txt`, so the Pages site is the one place where they can be indexed.
+
+- **`web/index.html` is a showcase page** (French and English, photos with captions and alt texts, the host renders of ADR-0021, `canonical`, Open Graph, JSON-LD `SoftwareSourceCode`); **the installer moves to `web/install/index.html`** and reads `../versions.json` and `../<channel>/<revision>/manifest.json`. The channel folders stay at the root of the site: published firmwares keep reading their updates at the same address.
+- **Pictures under a descriptive name**: `tools/publication/pages.py` copies the files of `docs/images/` listed in `IMAGES` to `images/` (`m5stack-tab5-…`); the repository keeps its own names (README, docs, press kit). It also writes `sitemap.xml`: every page, with the images it shows.
+- **`.github/workflows/site.yml` deploys the site without compiling anything**: called by `publication.yml` once the files are attached to a release, on every push to `main` that touches `web/`, `docs/images/` or `pages.py`, or by hand. Relaunching `publication.yml` for a tag still rebuilds and replaces its files; it is no longer needed to update the page.
+- `tests/test_publication.py` checks that every picture a page shows is listed in `IMAGES` and exists, that each page has a title, a description, its canonical address, a sharing image and alt texts, and that `site.yml` compiles nothing.

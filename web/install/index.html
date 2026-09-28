@@ -1,0 +1,207 @@
+<!doctype html>
+<!--
+  Page de flashage du Tab5 (lot 6c, ADR-0022), publiée sur GitHub Pages par
+  .github/workflows/site.yml sous install/, à côté de versions.json et des dossiers
+  stable/ et beta/ de la racine (tools/publication/pages.py). Aucune dépendance hors
+  ESP Web Tools (version figée).
+-->
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install the M5Stack Tab5 Home Assistant firmware from the browser</title>
+<meta name="description" content="Flash the Tab5 Home Assistant screen firmware (ESPHome, LVGL) on an M5Stack Tab5 from Chrome or Edge over USB: ST7123, ST7121 or ILI9881C display, signed updates from Home Assistant.">
+<link rel="canonical" href="https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Install the M5Stack Tab5 Home Assistant firmware from the browser">
+<meta property="og:description" content="Flash the Tab5 Home Assistant screen firmware on an M5Stack Tab5 from Chrome or Edge over USB.">
+<meta property="og:url" content="https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/">
+<meta property="og:image" content="https://axellum.github.io/M5-Tab5-ESPHome-LVGL/images/m5stack-tab5-home-assistant-screen-card.jpg">
+<meta property="og:image:alt" content="M5Stack Tab5 showing a Home Assistant screen: clock, climate, work hours and 5-day forecast">
+<meta name="twitter:card" content="summary_large_image">
+<script type="module" src="https://cdn.jsdelivr.net/npm/esp-web-tools@10.4.0/dist/web/install-button.js"></script>
+<style>
+  :root {
+    --fond: #f6f7f9; --carte: #ffffff; --texte: #1d2330; --doux: #5b6475;
+    --bord: #d9dee7; --accent: #0b6bcb; --accent-texte: #ffffff; --alerte: #8a5a00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fond: #11151c; --carte: #1a2029; --texte: #e6e9ef; --doux: #9aa3b2;
+      --bord: #2c3440; --accent: #4ea1f3; --accent-texte: #0b1220; --alerte: #f0b64d;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fond); color: var(--texte);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .accueil { color: var(--doux); text-decoration: none; font-size: 0.95rem; }
+  h1 { font-size: 1.6rem; margin: 4px 0 0; }
+  h2 { font-size: 1.1rem; margin: 0 0 8px; }
+  .sous-titre { color: var(--doux); margin: 4px 0 24px; }
+  .carte { background: var(--carte); border: 1px solid var(--bord); border-radius: 10px; padding: 16px 18px; margin: 0 0 16px; }
+  label.choix { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; cursor: pointer; }
+  label.choix input { margin-top: 5px; }
+  .etat { color: var(--doux); font-size: 0.92rem; display: block; }
+  .note { color: var(--alerte); }
+  button.installer { background: var(--accent); color: var(--accent-texte); border: 0; border-radius: 8px;
+    padding: 12px 22px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+  button.langue { background: none; border: 1px solid var(--bord); color: var(--texte); border-radius: 6px;
+    padding: 4px 10px; cursor: pointer; }
+  ol { padding-left: 1.3em; margin: 0; }
+  li { margin: 4px 0; }
+  a { color: var(--accent); }
+  code { font-size: 0.92em; }
+  footer { color: var(--doux); font-size: 0.9rem; margin-top: 24px; }
+  html[data-lang="fr"] [lang="en"], html[data-lang="en"] [lang="fr"] { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <a class="accueil" href="../">← M5Stack Tab5 · Home Assistant</a>
+      <h1><span lang="fr">Installer depuis le navigateur</span><span lang="en">Install from the browser</span></h1>
+    </div>
+    <button class="langue" id="langue" type="button"><span lang="fr">English</span><span lang="en">Français</span></button>
+  </header>
+  <p class="sous-titre">
+    <span lang="fr">Installer le firmware sur une M5Stack Tab5 depuis le navigateur. Partagé au cas où il serve à quelqu'un.</span>
+    <span lang="en">Install the firmware on an M5Stack Tab5 from your browser. Shared in case it is useful to someone.</span>
+  </p>
+
+  <section class="carte">
+    <h2><span lang="fr">1. Ce qu'il faut</span><span lang="en">1. What you need</span></h2>
+    <ul>
+      <li lang="fr">Une Tab5 reliée à l'ordinateur par un câble USB-C qui transmet les données.</li>
+      <li lang="en">A Tab5 connected to the computer with a USB-C cable that carries data.</li>
+      <li lang="fr">Chrome ou Edge sur ordinateur (Web Serial) ; le bouton le signale sinon.</li>
+      <li lang="en">Chrome or Edge on a computer (Web Serial); the button tells you otherwise.</li>
+      <li lang="fr">Home Assistant, avec les packages et le blueprint du projet (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md#version-française">guide</a>).</li>
+      <li lang="en">Home Assistant, with the project's packages and blueprint (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md">guide</a>).</li>
+    </ul>
+  </section>
+
+  <section class="carte">
+    <h2><span lang="fr">2. Votre révision d'écran</span><span lang="en">2. Your display revision</span></h2>
+    <p class="etat">
+      <span lang="fr">La puce d'écran est écrite sur l'autocollant au dos, au-dessus du logo Espressif. Une étiquette « ST7123 » peut porter une ST7121 : dans le doute, essayez l'une puis l'autre (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/hardware.md#révisions-matérielles">détails</a>).</span>
+      <span lang="en">The display chip is printed on the sticker on the back, above the Espressif logo. A unit labelled "ST7123" may carry an ST7121: if unsure, try one then the other (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/hardware.md#hardware-revisions">details</a>).</span>
+    </p>
+    <label class="choix"><input type="radio" name="ecran" value="st7123" checked>
+      <span><strong>ST7123</strong> <span class="etat">
+        <span lang="fr">octobre 2025 → avril 2026 · celle de l'auteur, utilisée tous les jours</span>
+        <span lang="en">October 2025 → April 2026 · the author's unit, used every day</span></span></span></label>
+    <label class="choix"><input type="radio" name="ecran" value="st7121">
+      <span><strong>ST7121</strong> <span class="etat">
+        <span lang="fr">depuis avril 2026 · compilée, jamais essayée avec ce firmware ; les mêmes réglages sont signalés fonctionnels par un autre utilisateur</span>
+        <span lang="en">since April 2026 · built, never run with this firmware; the same settings were reported working by another user</span></span></span></label>
+    <label class="choix"><input type="radio" name="ecran" value="ili9881c">
+      <span><strong>ILI9881C</strong> <span class="etat">
+        <span lang="fr">mai → octobre 2025 · compilée, jamais essayée</span>
+        <span lang="en">May → October 2025 · built, never tested</span></span></span></label>
+  </section>
+
+  <section class="carte" id="carte-canal">
+    <h2><span lang="fr">3. Version</span><span lang="en">3. Version</span></h2>
+    <p id="aucune" class="note" hidden>
+      <span lang="fr">Aucune version publiée pour l'instant.</span>
+      <span lang="en">No version published yet.</span>
+    </p>
+    <label class="choix" id="choix-stable" hidden><input type="radio" name="canal" value="stable">
+      <span><strong lang="fr">Stable</strong><strong lang="en">Stable</strong> <span class="etat" id="version-stable"></span></span></label>
+    <label class="choix" id="choix-beta" hidden><input type="radio" name="canal" value="beta">
+      <span><strong lang="fr">Bêta</strong><strong lang="en">Beta</strong> <span class="etat">
+        <span id="version-beta"></span> ·
+        <span lang="fr">pour essayer avant la stable ; passe à la stable suivante</span>
+        <span lang="en">to try before the stable one; moves on to the next stable</span></span></span></label>
+  </section>
+
+  <section class="carte">
+    <h2><span lang="fr">4. Installer</span><span lang="en">4. Install</span></h2>
+    <esp-web-install-button id="installeur">
+      <button slot="activate" class="installer" type="button"><span lang="fr">Connecter et installer</span><span lang="en">Connect and install</span></button>
+      <span slot="unsupported">
+        <span lang="fr">Ce navigateur ne gère pas Web Serial : utilisez Chrome ou Edge sur ordinateur.</span>
+        <span lang="en">This browser has no Web Serial: use Chrome or Edge on a computer.</span></span>
+      <span slot="not-allowed">
+        <span lang="fr">La page doit être ouverte en HTTPS.</span>
+        <span lang="en">The page must be opened over HTTPS.</span></span>
+    </esp-web-install-button>
+    <p class="etat">
+      <span lang="fr">À une première installation, acceptez d'effacer la flash (un Tab5 neuf porte la démo de M5Stack). Pour une tablette déjà installée, ne l'effacez pas : elle garde son Wi-Fi et sa clé de Home Assistant. Fermer la fenêtre redémarre la tablette une fois : c'est normal.</span>
+      <span lang="en">On a first install, accept to erase the flash (a new Tab5 carries M5Stack's demo). For a tablet already set up, do not erase it: it keeps its Wi-Fi and its Home Assistant key. Closing the window restarts the tablet once: that is normal.</span>
+    </p>
+  </section>
+
+  <section class="carte">
+    <h2><span lang="fr">5. Ensuite</span><span lang="en">5. Then</span></h2>
+    <ol>
+      <li lang="fr"><strong>Wi-Fi</strong> : juste après l'installation, le même bouton propose de le régler (Improv par l'USB). Sinon, connectez un téléphone au réseau ouvert « Tab5 Fallback AP » et choisissez votre réseau.</li>
+      <li lang="en"><strong>Wi-Fi</strong>: right after installing, the same button offers to set it (Improv over USB). Otherwise, connect a phone to the open network "Tab5 Fallback AP" and pick your network.</li>
+      <li lang="fr"><strong>Home Assistant</strong> découvre la tablette (intégration ESPHome) : ajoutez-la dans les 30 minutes qui suivent son démarrage, HA lui donne sa clé tout seul.</li>
+      <li lang="en"><strong>Home Assistant</strong> discovers the tablet (ESPHome integration): add it within 30 minutes of its boot, HA gives it its key by itself.</li>
+      <li lang="fr"><strong>Vos appareils</strong> se choisissent dans le blueprint « Tab5 — emplacements ».</li>
+      <li lang="en"><strong>Your devices</strong> are picked in the "Tab5 — emplacements" blueprint.</li>
+      <li lang="fr"><strong>Mises à jour</strong> : l'entité « Firmware » de la tablette les propose dans HA.</li>
+      <li lang="en"><strong>Updates</strong>: the tablet's "Firmware" entity offers them in HA.</li>
+    </ol>
+  </section>
+
+  <footer>
+    <p lang="fr">Firmware signé : en OTA, la tablette n'accepte qu'un firmware signé par la clé du projet. Pour compiler le vôtre, voir le <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL">dépôt</a> (licence MIT).</p>
+    <p lang="en">Signed firmware: over the air, the tablet only accepts a firmware signed with the project key. To build your own, see the <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL">repository</a> (MIT licence).</p>
+  </footer>
+</main>
+<script>
+  const racine = document.documentElement;
+  const installeur = document.getElementById("installeur");
+  let versions = { stable: null, beta: null };
+
+  function langue(code) {
+    racine.dataset.lang = code;
+    racine.lang = code;
+  }
+  langue((navigator.language || "fr").toLowerCase().startsWith("fr") ? "fr" : "en");
+  document.getElementById("langue").addEventListener("click", () => langue(racine.dataset.lang === "fr" ? "en" : "fr"));
+
+  function choisi(nom) {
+    const coche = document.querySelector(`input[name="${nom}"]:checked`);
+    return coche ? coche.value : null;
+  }
+
+  function majBouton() {
+    const canal = choisi("canal");
+    const ecran = choisi("ecran");
+    const info = canal && versions[canal];
+    const dispo = info && info.ecrans.includes(ecran);
+    installeur.hidden = !dispo;
+    if (dispo) installeur.manifest = `../${canal}/${ecran}/manifest.json`;
+  }
+
+  fetch("../versions.json", { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : { stable: null, beta: null }))
+    .catch(() => ({ stable: null, beta: null }))
+    .then((v) => {
+      versions = v;
+      const stable = v.stable, beta = v.beta;
+      if (stable) {
+        document.getElementById("choix-stable").hidden = false;
+        document.getElementById("version-stable").textContent = stable.version;
+      }
+      // La bêta n'est proposée que si elle diffère de la stable.
+      if (beta && (!stable || beta.tag !== stable.tag)) {
+        document.getElementById("choix-beta").hidden = false;
+        document.getElementById("version-beta").textContent = beta.version;
+      }
+      const defaut = document.querySelector(`input[name="canal"][value="${stable ? "stable" : "beta"}"]`);
+      if (stable || beta) defaut.checked = true;
+      document.getElementById("aucune").hidden = Boolean(stable || beta);
+      majBouton();
+    });
+
+  document.querySelectorAll('input[name="ecran"], input[name="canal"]').forEach((e) => e.addEventListener("change", majBouton));
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+name: Site (vitrine et page de flashage)
+
+# ADR-0022, révisée le 28/09/2026. Reconstruit le site GitHub Pages sans rien compiler :
+# la vitrine et la page de flashage (web/, branche par défaut), leurs images (docs/images/,
+# sous un nom parlant) et les fichiers des releases retenues pour les canaux stable et
+# bêta (tools/publication/pages.py). Lancé :
+#   - par publication.yml, une fois les fichiers joints à une release ;
+#   - à chaque push sur main qui touche le site ;
+#   - à la main (workflow_dispatch).
+# Avant, seul publication.yml déployait le site : corriger la page recompilait les trois
+# firmwares et remplaçait les fichiers de la release.
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'docs/images/**'
+      - 'tools/publication/pages.py'
+      - '.github/workflows/site.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      # La page et l'outil viennent de la branche par défaut, même lancé pour un tag.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Canaux stable et bêta
+        id: canaux
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 \
+            --json tagName,isPrerelease,isDraft,publishedAt > releases.json
+          python tools/publication/pages.py choisir --releases releases.json | tee -a "$GITHUB_OUTPUT"
+      - name: Fichiers des releases retenues
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STABLE: ${{ steps.canaux.outputs.stable }}
+          BETA: ${{ steps.canaux.outputs.beta }}
+        run: |
+          for tag in $(printf '%s\n' "$STABLE" "$BETA" | sort -u); do
+            [[ -n "$tag" ]] || continue
+            gh release download "$tag" --repo "$GITHUB_REPOSITORY" --dir "assets/$tag" \
+              --pattern 'manifest-*.json' --pattern 'tab5-ha-hmi-*.bin'
+          done
+      - name: Site
+        run: |
+          python tools/publication/pages.py assembler --web web --assets assets --images docs/images \
+            --stable "${{ steps.canaux.outputs.stable }}" --beta "${{ steps.canaux.outputs.beta }}" \
+            --sortie site | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+      - id: deploiement
+        uses: actions/deploy-pages@v5
