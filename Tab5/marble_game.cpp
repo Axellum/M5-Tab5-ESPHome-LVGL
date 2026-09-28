@@ -50,8 +50,12 @@ static constexpr float FRICTION      = 0.990f;  // par frame (converti en sous-p
 static constexpr float MAX_SPEED     = 650.0f;  // px/s
 static constexpr float BOUNCE        = 0.42f;   // restitution sur les murs
 
-// Dash : declenche par une inclinaison franche, avec recharge.
-static constexpr float DASH_TILT     = 0.62f;
+// Dash (elan) : declenche par une SECOUSSE breve (passe-haut, comme le coup de
+// hanche du flipper), avec recharge. Jusqu'au 29/09/2026 il partait tout seul des
+// qu'on penchait a plus de ~38 deg (0,62 g), sans que le jeu le dise : « la bille
+// saute toute seule » (Axel). Une inclinaison tenue, meme forte, ne declenche plus rien.
+static constexpr float DASH_SHAKE    = 0.35f;   // secousse (g) au-dessus de la tendance
+static constexpr float DASH_HP       = 0.12f;   // coupure du passe-haut (par tick)
 static constexpr uint32_t DASH_CD_MS = 900;
 static constexpr float DASH_IMPULSE  = 620.0f;
 
@@ -382,6 +386,7 @@ static State g_state = ST_OFF;
 // --- IMU / inclinaison ---
 static float g_raw_x = 0.0f, g_raw_y = 0.0f;   // dernier echantillon brut (g)
 static float g_tilt_x = 0.0f, g_tilt_y = 0.0f; // valeur lissee, offset applique
+static float g_slow_x = 0.0f, g_slow_y = 0.0f; // composante lente du passe-haut (elan)
 
 // --- Tailles des pools LVGL (constantes) ---
 // Decor de salle : peint SOUS les entites, jamais collisionnable. Recycle d'une
@@ -417,6 +422,8 @@ struct Mem {
     float bx, by, vx, vy;
     uint32_t invuln_until = 0;
     uint32_t dash_ready_at = 0;
+    bool     dash_hp_pret = false;  // passe-haut amorce (sinon une tablette deja
+                                    // penchee a l'ouverture ferait un elan fantome)
 
     // --- Entites ---
     Ent ent[MAX_ENT];
@@ -1919,11 +1926,27 @@ static void tick_cb(lv_timer_t*) {
         }
     }
 
-    // --- Dash : inclinaison franche, avec recharge ---------------------------
-    if (mag_sq > DASH_TILT * DASH_TILT && now >= gs->dash_ready_at) {
-        gs->dash_ready_at = now + DASH_CD_MS;
-        float n = sqrtf(ax * ax + ay * ay);
-        if (n > 0.001f) { gs->vx += ax / n * DASH_IMPULSE; gs->vy += ay / n * DASH_IMPULSE; }
+    // --- Dash : secousse breve, avec recharge ---------------------------------
+    // Passe-haut sur l'ecart a la calibration : une inclinaison tenue glisse dans la
+    // composante lente, seule une secousse depasse DASH_SHAKE. L'elan part dans le
+    // sens de l'inclinaison, a defaut dans celui de la bille ; sinon rien.
+    {
+        const float sx = g_raw_x - gs->save.cal_x / 1000.0f;
+        const float sy = g_raw_y - gs->save.cal_y / 1000.0f;
+        if (!gs->dash_hp_pret) { g_slow_x = sx; g_slow_y = sy; gs->dash_hp_pret = true; }
+        g_slow_x += (sx - g_slow_x) * DASH_HP;
+        g_slow_y += (sy - g_slow_y) * DASH_HP;
+        const float jx = sx - g_slow_x, jy = sy - g_slow_y;
+        if (jx * jx + jy * jy > DASH_SHAKE * DASH_SHAKE && now >= gs->dash_ready_at) {
+            float dx = ax, dy = ay;
+            if (dx * dx + dy * dy < 1e-6f) { dx = gs->vx; dy = gs->vy; }
+            const float n = sqrtf(dx * dx + dy * dy);
+            if (n > 0.001f) {
+                gs->dash_ready_at = now + DASH_CD_MS;
+                gs->vx += dx / n * DASH_IMPULSE;
+                gs->vy += dy / n * DASH_IMPULSE;
+            }
+        }
     }
 
     float acc_x = ax * ACCEL_SCALE * gs->ctrl_mul;
