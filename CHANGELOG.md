@@ -4,6 +4,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — CI : le rendu hors tablette ne tourne plus pour rien
+
+Le rendu (`rendu-host.yml`, 13 min, six langues en parallèle) était de loin le plus long
+des checks, et le seul qui n'annulait rien :
+- **un nouveau commit sur une PR annule le rendu en cours**, comme les deux autres
+  workflows : trois pushes en dix minutes lançaient trois rendus complets (18 jobs) ;
+- **sur `main`, seulement quand l'écran change** : même liste de chemins que pour les
+  PR. Un merge de doc seule relançait 13 min de rendu. Les runs de `main` se suivent au
+  lieu de se chevaucher : le 28/09, une PR et un merge simultanés dépassaient la limite
+  de jobs de GitHub, 4 jobs attendaient 17 min et le rendu durait 30 min ;
+- rien de moins n'est vérifié : mêmes écrans, mêmes langues, mêmes références ;
+- test `tests/test_rendu_host.py` : mêmes chemins sur `main` et en PR, annulation en PR.
+
 ### 2026-09-28 — Site : une release encore en compilation n'est plus choisie
 
 - #219 a été mergée quatre minutes après la création de la release v3.1.0, pendant que

@@ -20,6 +20,19 @@ on:
         default: ""
   push:
     branches: [main]
+    # Même liste que pull_request, plus bas. Sans elle, un merge de doc seule relançait
+    # 13 min de rendu sur main (28/09/2026). Les références des PR restent les captures
+    # du dernier run réussi sur main : justes, puisque l'écran n'a pas changé depuis.
+    # Gardées 90 jours ; au-delà, comparer.py n'a plus que la galerie (scènes seulement).
+    paths:
+      - 'tab5-ha-hmi.yaml'
+      - 'tab5-rendu-host.yaml'
+      - 'Tab5/**'
+      - 'tools/rendu/**'
+      - 'tools/demo/**'
+      - 'docs/images/rendu/**'
+      - '.github/workflows/rendu-host.yml'
+      - '!**/*.md'
   pull_request:
     paths:
       - 'tab5-ha-hmi.yaml'
@@ -30,6 +43,14 @@ on:
       - 'docs/images/rendu/**'
       - '.github/workflows/rendu-host.yml'
       - '!**/*.md'
+
+# Un nouveau commit sur une PR annule le rendu devenu inutile : trois pushes en dix
+# minutes lançaient trois rendus complets (18 jobs de 13 min, 28/09/2026), et les jobs
+# en trop faisaient attendre 17 min ceux des autres runs. Sur main, les runs se suivent
+# au lieu de se chevaucher ; un run en attente est remplacé par le plus récent.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read

@@ -8,6 +8,8 @@ vérifie aussi que les bouchons ne partent jamais dans le firmware de la tablett
 import os
 import re
 
+import yaml
+
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
@@ -86,3 +88,13 @@ def test_chaque_package_de_la_tablette_repris_ou_materiel():
         if package.startswith(MATERIEL):
             continue
         assert package in rendu, f"{package} : à reprendre dans tab5-rendu-host.yaml (ou matériel ?)"
+
+
+def test_workflow_seulement_si_l_ecran_change_et_annule_sur_pr():
+    """rendu-host.yml (28/09/2026) : un merge de doc seule ne relance pas 13 min de rendu
+    sur main, et un nouveau commit sur une PR annule le run devenu inutile."""
+    workflow = yaml.safe_load(_lire(".github", "workflows", "rendu-host.yml"))
+    declencheurs = workflow.get("on") or workflow[True]  # « on » lu comme un booléen
+    assert declencheurs["push"]["paths"] == declencheurs["pull_request"]["paths"]
+    assert "Tab5/**" in declencheurs["pull_request"]["paths"]
+    assert workflow["concurrency"]["cancel-in-progress"] == "${{ github.event_name == 'pull_request' }}"
