@@ -151,10 +151,10 @@ api:
           description: "État du volet : « En_mouvement » pendant une manœuvre, sinon le dernier état connu (Ouvert, Ferme, Stoppe…)."
           example: "En_mouvement"
       then:
-        - lambda: |-
-            if (id(icon_card_shutter_arrow) == nullptr) return;
-            VoletUI ui{id(icon_card_shutter_arrow), id(icon_card_shutter1), id(icon_sw1), id(lbl_sw1_state)};
-            id(volet_en_mouvement) = update_volet_ui(etat_physique, id(volet_target_open), ui);
+        # Volet 3.x = tuile 1 de la pièce 0 du mode héritage (ADR-0023) : épaules de la
+        # tuile météo et carte du mode HA, dessinées par tab5_tuiles.cpp. Le drapeau de
+        # mouvement arme le mot « Stop » dans tous les modes.
+        - lambda: 'id(volet_en_mouvement) = tuiles_heritage_volet(etat_physique);'
         - if:
             condition:
               lambda: 'return etat_physique == "En_mouvement";'
@@ -544,8 +544,8 @@ api:
       variables:
         payload:
           type: string
-          description: "« clé|état|valeur » séparés par ; — clés lumiere_1 à lumiere_3, pc, tv, telephone, salon, salon_hum, serre, pot_1 à pot_5 et pot_N_ec, _lux, _temp, _bat. État = état Home Assistant tel quel ; valeur = nombre affiché (luminosité 0-255, %, °C, µS/cm, lx), nan s'il n'y en a pas."
-          example: "lumiere_1|on|180;salon|21.4|21.4;pot_3|45|45;"
+          description: "« clé|état|valeur » séparés par ; — clés lumiere_1 à lumiere_3, pc, tv, telephone, salon, salon_hum, serre, pot_1 à pot_5 et pot_N_ec, _lux, _temp, _bat. État = état Home Assistant tel quel ; valeur = nombre affiché (luminosité 0-255, %, °C, µS/cm, lx), nan s'il n'y en a pas. Tuiles de pièce (ADR-0023, depuis 3.2.0) : « tRT|état|valeur|couleur », R pièce et T tuile de 0 à 4, valeur = luminosité 0-255, position 0-100, mesure ou température de la pièce (nan sinon), couleur = RRGGBB d'une lumière allumée, vide sinon."
+          example: "lumiere_1|on|180;salon|21.4|21.4;t02|on|128|FFB347;t01|open|45|;"
       then:
         - lambda: |-
             static const EmplacementCible kCibles[] = {
@@ -575,6 +575,22 @@ api:
                 {"pot_5_temp", nullptr, id(pot5_temp)}, {"pot_5_bat", nullptr, id(pot5_bat)},
             };
             emplacements_appliquer(payload, kCibles, sizeof(kCibles) / sizeof(kCibles[0]));
+
+    # Pièces et tuiles (ADR-0023, 3.2.0) — définitions poussées par le blueprint
+    # « Tab5 — emplacements » à la (re)connexion, au rechargement des automatisations et à
+    # la demande des zones, AVANT les états (clés tRT de tab5_maj_emplacements). Un
+    # blueprint 3.2 ne l'appelle que si la tablette annonce au moins 3.2.0 (sw_version) :
+    # une action absente est une erreur que continue_on_error ne rattrape pas. Modèle,
+    # NVS et dessin : tab5_tuiles.cpp.
+    - service: tab5_maj_tuiles
+      description: "Pièces de l'écran (ADR-0023) : cinq pièces de cinq appareils au plus, une par page du bas. Instantané complet, envoyé avant les états ; ce qui n'est pas listé est vide."
+      variables:
+        payload:
+          type: string
+          description: "Entrées séparées par ; — « pR|nom » (nom de la pièce R, 0 à 4) et « tRT|type|icône|options|complément|nom » (tuile T, 0 = gauche). Types lum, int, vol, med, act, cap, bin, cli ; icône = code de palette ([a-z0-9_], vide = défaut du type) ; options = lettres parmi d (graduable), c (couleur), o (allumer seulement), k (confirmer), r (lecture seule), t (télécommande TV), m (climatisation) ; complément = unité d'un cap, classe d'appareil d'un bin ; nom gardé sur 24 octets. Dans chaque champ, | devient / et ; devient ,."
+          example: "p0|Salon;t00|lum|lampadaire|d||Lampadaire;t01|vol||||Volet;t02|cap|thermometre||°C|Température;"
+      then:
+        - lambda: 'tuiles_definir(payload);'
 
 # Fenêtre d'appairage (lot 6b, ADR-0020) : une tablette qui n'a pas encore de clé API
 # (neuve, ou jamais ajoutée à HA) n'accepte le premier contact de HA que pendant les

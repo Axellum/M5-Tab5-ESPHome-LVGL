@@ -13,7 +13,7 @@
 #       le blueprint (tests/test_emplacements.py compare).
 # @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
 #                         Les blocs on_value: doivent se contenter d'appeler des fonctions
-#                         C++ depuis tab5_custom.cpp (ex: update_light_card_ui(...) ).
+#                         C++ depuis tab5_custom.cpp (ex: tuiles_heritage_lumiere(...) ).
 # @anti_pattern_evité Ne pas utiliser std::string ou to_string() ici (hot-path).
 # @ai_instruction Nouveau capteur de température : un `platform: template` (voir plus
 #                 haut), et dans on_value, appeler simplement update_temp_ui(id(mon_label), x);
@@ -83,8 +83,11 @@ text_sensor:
     on_value:
       - lambda: |-
           if (zone_vue(Zone::PC)) id(tab5_zones_apply).execute();
-          // Accepte device_tracker (home) et switch (on)
-          update_pc_status_ui(x == "home" || x == "on", id(icon_pc), id(icon_sw0), id(lbl_sw0_state));
+          // Accepte device_tracker (home) et switch (on). La carte du mode HA est la
+          // tuile 0 de la pièce 0 du mode héritage (ADR-0023, tab5_tuiles.cpp).
+          const bool actif = x == "home" || x == "on";
+          update_pc_status_ui(actif, id(icon_pc));
+          tuiles_heritage_pc(actif);
 
   # TV → icône moniteur existante sur la carte J0 (icon_card_pc), pas une 4e icône bandeau
   - platform: template
@@ -93,19 +96,18 @@ text_sensor:
     on_value:
       - lambda: |-
           if (zone_vue(Zone::TV)) id(tab5_zones_apply).execute();
-          bool active = (x == "home" || x == "on" || x == "playing" || x == "idle" || x == "paused");
-          set_icon_active_ui(id(icon_card_pc), active, UIColor::SUCCESS, UIColor::TEXT_DIM);
+          // Épaule de la tuile 0 de l'accueil en mode héritage (ADR-0023, tab5_tuiles.cpp).
+          tuiles_heritage_tv(x == "home" || x == "on" || x == "playing" || x == "idle" || x == "paused");
 
   - platform: template
     id: light_chambre_state
     update_interval: never
     on_value:
-      # Bloc factorise dans update_light_card_ui() (#T164, ex-triplique chambre/salon/led)
+      # Lumières 3.x = tuiles 2 à 4 de la pièce 0 du mode héritage (ADR-0023) : épaules,
+      # carte du mode HA et popup dessinés par tab5_tuiles.cpp.
       - lambda: |-
           if (zone_vue(Zone::LUMIERE_1)) id(tab5_zones_apply).execute();
-          update_light_card_ui(id(icon_card_lit_j2), id(icon_card_light_j2), id(icon_sw2), id(lbl_sw2_state),
-              id(btn_light_power_icon), id(current_light_slot), "lumiere_1", x == "on");
-          update_light_selector_icon(id(icon_light_sel_0), x == "on");
+          tuiles_heritage_lumiere(0, x == "on");
 
   - platform: template
     id: light_salon_state
@@ -113,9 +115,7 @@ text_sensor:
     on_value:
       - lambda: |-
           if (zone_vue(Zone::LUMIERE_2)) id(tab5_zones_apply).execute();
-          update_light_card_ui(id(icon_card_salon_j3), id(icon_card_light_j3), id(icon_sw3), id(lbl_sw3_state),
-              id(btn_light_power_icon), id(current_light_slot), "lumiere_2", x == "on");
-          update_light_selector_icon(id(icon_light_sel_1), x == "on");
+          tuiles_heritage_lumiere(1, x == "on");
 
   - platform: template
     id: light_led_state
@@ -123,9 +123,7 @@ text_sensor:
     on_value:
       - lambda: |-
           if (zone_vue(Zone::LUMIERE_3)) id(tab5_zones_apply).execute();
-          update_light_card_ui(id(icon_card_led_j4), id(icon_card_light_j4), id(icon_sw4), id(lbl_sw4_state),
-              id(btn_light_power_icon), id(current_light_slot), "lumiere_3", x == "on");
-          update_light_selector_icon(id(icon_light_sel_2), x == "on");
+          tuiles_heritage_lumiere(2, x == "on");
 
 # Détails pots (popup appui long) : les 4 capteurs × 5 pots viennent d'UN
 # package paramétré (pot_sensors.yaml, règle 5) inclus 5 fois — ESPHome
@@ -139,35 +137,25 @@ packages:
   pot_sensors_5: !include { file: pot_sensors.yaml, vars: { n: 5 } }
 
 sensor:
-  # Luminosité (attribut brightness 0-255) des 3 lumières — synchronise l'arc du popup
-  # lumière quand il est ouvert sur cette entité (helper inerte popup fermé / pendant
-  # un drag utilisateur — voir sync_light_popup_brightness, tab5_custom.cpp).
+  # Luminosité (attribut brightness 0-255) des 3 lumières 3.x — l'arc du popup lumière
+  # quand il la montre (inerte popup fermé ou pendant un glissement, tab5_tuiles.cpp).
   - platform: template
     id: light_chambre_brightness
     update_interval: never
     on_value:
-      - lambda: |-
-          if (id(current_light_slot) == "lumiere_1")
-            sync_light_popup_brightness(id(light_options_popup), id(arc_light_brightness),
-                id(lbl_light_brightness_val), x);
+      - lambda: 'tuiles_heritage_luminosite(0, x);'
 
   - platform: template
     id: light_salon_brightness
     update_interval: never
     on_value:
-      - lambda: |-
-          if (id(current_light_slot) == "lumiere_2")
-            sync_light_popup_brightness(id(light_options_popup), id(arc_light_brightness),
-                id(lbl_light_brightness_val), x);
+      - lambda: 'tuiles_heritage_luminosite(1, x);'
 
   - platform: template
     id: light_led_brightness
     update_interval: never
     on_value:
-      - lambda: |-
-          if (id(current_light_slot) == "lumiere_3")
-            sync_light_popup_brightness(id(light_options_popup), id(arc_light_brightness),
-                id(lbl_light_brightness_val), x);
+      - lambda: 'tuiles_heritage_luminosite(2, x);'
 
   - platform: template
     id: phone_battery

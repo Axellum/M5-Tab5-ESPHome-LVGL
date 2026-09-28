@@ -64,48 +64,8 @@ bool push_unchanged(PushChannel ch, const std::string& payload) {
 // gardes contre les pointeurs nuls ont été étendues à chaque widget.
 // -----------------------------------------------------------------------------
 
-bool update_volet_ui(const std::string& etat, bool target_open, const VoletUI& ui) {
-    if (ui.arrow == nullptr) return false;
-    const bool has_sw = ui.sw_icon != nullptr && ui.sw_label != nullptr;
-
-    if (etat == "En_mouvement") {
-        lv_label_set_text(ui.arrow, "\U000F03E4");
-        lv_obj_set_style_text_color(ui.arrow, lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-        if (has_sw) {
-            lv_obj_set_style_text_color(ui.sw_icon, lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-            lv_label_set_text(ui.sw_label, tr("Mouvement"));
-            lv_obj_set_style_text_color(ui.sw_label, lv_color_hex(UIColor::INFO), LV_PART_MAIN);
-        }
-        return true;
-    }
-
-    // Au repos : la flèche montre le sens de la dernière commande, en gris.
-    lv_label_set_text(ui.arrow, target_open ? "\U000F005D" : "\U000F0045");
-    lv_obj_set_style_text_color(ui.arrow, lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-
-    if (etat == "Ouvert" || etat == "Partiel" || etat == "open") {
-        if (ui.shutter != nullptr) {
-            lv_label_set_text(ui.shutter, "\U000F111E");
-            lv_obj_set_style_text_color(ui.shutter, lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-        }
-        if (has_sw) {
-            lv_obj_set_style_text_color(ui.sw_icon, lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-            lv_label_set_text(ui.sw_label, tr("Ouvert"));
-            lv_obj_set_style_text_color(ui.sw_label, lv_color_hex(UIColor::SUCCESS), LV_PART_MAIN);
-        }
-    } else if (etat == "Ferme" || etat == "closed") {
-        if (ui.shutter != nullptr) {
-            lv_label_set_text(ui.shutter, "\U000F111C");
-            lv_obj_set_style_text_color(ui.shutter, lv_color_hex(UIColor::ERROR), LV_PART_MAIN);
-        }
-        if (has_sw) {
-            lv_obj_set_style_text_color(ui.sw_icon, lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-            lv_label_set_text(ui.sw_label, tr("Fermé"));
-            lv_obj_set_style_text_color(ui.sw_label, lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
-        }
-    }
-    return false;
-}
+// Volet : update_volet_ui() a rejoint les pièces le 28/09/2026 (ADR-0023) — le volet 3.x
+// est la tuile 1 de la pièce 0 du mode héritage (tuiles_heritage_volet, tab5_tuiles.cpp).
 
 bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& ui) {
     if (ui.lbl_phrase == nullptr) return false;

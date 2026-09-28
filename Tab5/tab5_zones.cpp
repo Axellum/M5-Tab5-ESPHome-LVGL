@@ -46,7 +46,6 @@ bool s_charge = false;
 // Vrai au démarrage : la première poussée des prévisions demande l'état des zones,
 // même au mode démo (qui n'est pas « Home Assistant »). Réarmé à chaque connexion de HA.
 bool s_demande = true;
-bool s_pc_actif = false;
 esphome::ESPPreferenceObject s_pref;
 
 constexpr uint32_t bit_de(Zone z) { return 1u << static_cast<int>(z); }
@@ -65,11 +64,6 @@ void charger() {
 void sauver() {
     Sauvegarde s{kMagic, s_absentes};
     s_pref.save(&s);
-}
-
-// Épaule de la tuile J0 : l'état de la TV, ou celui du PC quand il n'y a pas de TV.
-void peindre_epaule_j0() {
-    set_icon_active_ui(g_day_slots[0].action_icon1, s_pc_actif, UIColor::SUCCESS, UIColor::TEXT_DIM);
 }
 
 }  // namespace
@@ -153,6 +147,14 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
         size_t fin = payload.find(';', debut);
         if (fin == std::string::npos) fin = payload.size();
         const size_t p1 = payload.find('|', debut);
+        // Tuiles de pièce (ADR-0023) : « tRT|état|valeur|couleur », quatre champs, avant
+        // la table des emplacements 3.x (tab5_tuiles.cpp).
+        if (p1 != std::string::npos && p1 < fin &&
+            tuiles_etat_recu(payload.data() + debut, p1 - debut, payload.data() + p1 + 1, fin - p1 - 1)) {
+            appliquees++;
+            debut = fin + 1;
+            continue;
+        }
         if (p1 != std::string::npos && p1 < fin) {
             const size_t p2 = payload.find('|', p1 + 1);
             const bool trois = (p2 != std::string::npos && p2 < fin);
@@ -186,11 +188,6 @@ bool zones_demande_a_envoyer() {
     return true;
 }
 
-void zones_note_pc(bool actif) {
-    s_pc_actif = actif;
-    if (zone_absente(Zone::TV) && !zone_absente(Zone::PC)) peindre_epaule_j0();
-}
-
 void zones_apply_ui() {
     charger();
     const ZonesUI& u = g_zones_ui;
@@ -214,38 +211,12 @@ void zones_apply_ui() {
     ui_x(u.btn_ha, sans_tv ? 999 : 855);
     ui_x(u.btn_sys, sans_tv ? 1143 : 999);
 
-    // Tuiles de l'accueil : boutons et épaules des appareils présents.
-    day_slots_apply_actions(g_day_slots, g_central_ctx.forecast_page - 2);
-    if (sans_tv && !zone_absente(Zone::PC)) peindre_epaule_j0();
+    // Tuiles (épaules, boutons) et calque « HA » : ce sont les tuiles de la pièce de la
+    // page (ADR-0023) — tuiles_appliquer_ui(), en fin de fonction ; en mode héritage,
+    // elles suivent ces zones (zone_tuile_absente).
 
-    // Calque « HA » : les cartes présentes, centrées (pas de 250 px, 25 px de marge à 5).
-    {
-        const bool absente[5] = {zone_absente(Zone::PC), zone_absente(Zone::VOLET),
-                                 zone_absente(Zone::LUMIERE_1), zone_absente(Zone::LUMIERE_2),
-                                 zone_absente(Zone::LUMIERE_3)};
-        int n = 0;
-        for (int i = 0; i < 5; i++)
-            if (u.sw_card[i] && !absente[i]) n++;
-        int32_t x = (1280 - (n * 250 - 20)) / 2;
-        for (int i = 0; i < 5; i++) {
-            ui_hidden(u.sw_card[i], absente[i]);
-            if (absente[i] || u.sw_card[i] == nullptr) continue;
-            ui_x(u.sw_card[i], x);
-            x += 250;
-        }
-    }
-
-    // Popup lumière : sélecteur réduit aux lampes présentes, tassé vers le haut.
-    {
-        int32_t y = 50;
-        for (int i = 0; i < 3; i++) {
-            const bool absente = zone_absente(zone_lumiere(i));
-            ui_hidden(u.light_sel[i], absente);
-            if (absente || u.light_sel[i] == nullptr) continue;
-            ui_y(u.light_sel[i], y);
-            y += 96;
-        }
-    }
+    // Popup lumière : son sélecteur liste les lumières de la pièce, à l'ouverture
+    // (tab5_tuiles.cpp) ; en mode héritage, les lampes présentes.
 
     // Carte clim : − / consigne / + (le popup s'ouvre depuis la consigne).
     ui_hidden(u.clim_zone, zone_absente(Zone::CLIM));
@@ -283,4 +254,8 @@ void zones_apply_ui() {
 
     // Planning : hors du rotateur de la carte centrale sans agenda de travail.
     central_planning_set_off(zone_absente(Zone::PLANNING));
+
+    // Pièces et tuiles (ADR-0023) : en mode héritage, leurs tuiles suivent ces zones ;
+    // bouton « HA », cartes et titre de la pièce.
+    tuiles_appliquer_ui();
 }

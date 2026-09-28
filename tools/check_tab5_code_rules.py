@@ -287,9 +287,17 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("alarm_render.cpp", "alarm_ring_show"): ("icon_alarm_ring",),
     ("alarm_render.cpp", "alarm_render_status_icon"): ("icon_alarm_status",),
     ("tab5_calendar.cpp", "cal_detail_type_style"): ("cal_det_icon_*",),
-    ("tab5_cards.cpp", "update_light_card_ui"): ("icon_card_light_j*",),
     ("tab5_console.cpp", "ui_sync_mute_icons"): ("icon_mute", "icon_assist_mute"),
-    ("tab5_services.cpp", "update_volet_ui"): ("icon_card_shutter_arrow", "icon_card_shutter1"),
+    # Pièces (ADR-0023) : icônes 3.1 du mode héritage (cartes du mode HA, épaules gauches
+    # de l'accueil), ampoule et flèche du volet sur les épaules droites de toutes les tuiles.
+    ("tab5_tuiles.cpp", "heritage_glyphe_carte"): ("icon_sw?",),
+    ("tab5_tuiles.cpp", "heritage_glyphe_selecteur"): ("icon_light_sel_*",),
+    ("tab5_tuiles.cpp", "heritage_glyphe_epaule"): (
+        "icon_card_pc", "icon_card_shutter1", "icon_card_lit_j2", "icon_card_salon_j3", "icon_card_led_j4"),
+    ("tab5_tuiles.cpp", "glyphe_ampoule"): (
+        "icon_card_droite_j0", "icon_card_shutter_arrow", "icon_card_light_j*", "icon_card_h*_d"),
+    ("tab5_tuiles.cpp", "glyphe_fleche"): (
+        "icon_card_droite_j0", "icon_card_shutter_arrow", "icon_card_light_j*", "icon_card_h*_d"),
     ("tab5_services.cpp", "parse_and_update_vigilance"): ("alerte_slot_*",),
     ("tab5_services.cpp", "update_rain_predict_icon_ui"): ("icon_rain_predict",),
     ("tab5_zones.cpp", "zones_apply_ui"): ("icon_serre",),

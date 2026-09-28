@@ -60,10 +60,8 @@ globals:
     type: bool
     initial_value: 'false'
     restore_value: true
-  - id: show_switches
-    type: bool
-    initial_value: 'false'
-    restore_value: false
+  # Mode HA (ex-global show_switches) : g_central_ctx.ha_mode, seule source depuis
+  # l'ADR-0023 (tuiles_mode_ha, tab5_tuiles.cpp).
 
   - id: current_light_slot
     type: std::string

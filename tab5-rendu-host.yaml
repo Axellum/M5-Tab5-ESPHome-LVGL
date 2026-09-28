@@ -26,10 +26,12 @@ esphome:
   friendly_name: ${rendu_nom_affiche}
   # Même projet que la vraie tablette (tab5-ha-hmi.yaml) : HA voit le modèle
   # « tab5-ha-hmi », par lequel les packages et le blueprint la reconnaissent (job
-  # « installation dans un HA neuf »). Rien ne l'affiche à l'écran.
+  # « installation dans un HA neuf »). Rien ne l'affiche à l'écran. La version est lue
+  # par le blueprint (sw_version) pour choisir son protocole : à partir de 3.2.0, il
+  # envoie les pièces (tab5_maj_tuiles, ADR-0023) ; le rendu les connaît.
   project:
     name: axellum.tab5-ha-hmi
-    version: rendu
+    version: 3.2.0-rendu
   includes:
     # En-têtes d'ESP-IDF, d'ESP-Hosted et de FreeRTOS remplacés pour la plateforme host
     # (Tab5/rendu/hote/, Tab5/rendu/freertos/) : les sources du projet restent celles
@@ -61,6 +63,7 @@ esphome:
     - Tab5/tab5_calendar.cpp
     - Tab5/tab5_journal.cpp
     - Tab5/tab5_zones.cpp
+    - Tab5/tab5_tuiles.cpp
     - Tab5/game_common.h
     - Tab5/marble_game.h
     - Tab5/marble_game.cpp
@@ -187,4 +190,5 @@ packages:
   tab5_calendar: !include Tab5/tab5-calendar.yaml
   tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml
   tab5_alarm: !include Tab5/tab5-alarm.yaml
+  tab5_tuiles: !include Tab5/tab5-tuiles.yaml
   tab5_zones: !include Tab5/tab5-zones.yaml
