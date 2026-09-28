@@ -4,16 +4,20 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
-### 2026-09-28 (soir) — Site : chaque déploiement compte, même sur un commit déjà déployé
+### 2026-09-28 (soir) — Site : plus de faux succès sur un commit déjà déployé
 
 - La pré-release v3.2.0-rc.1 visait `de1cd42`, que le push de #230 sur `main` venait de
   déployer (galerie du rendu, dans `docs/images/`). Son déploiement s'est dit réussi,
   mais le site servi est resté celui du push : le canal bêta proposait encore 3.1.0, et
   la page d'installation aussi.
-- Cause : `actions/deploy-pages` donne le commit comme version du déploiement
-  (`pages_build_version`), que l'API de GitHub veut unique. `site.yml` fait maintenant
-  lui-même les mêmes appels (jeton OIDC, création, suivi jusqu'à « succeed », 10 min
-  au plus), avec une version par run : `<commit>-<run>-<tentative>`.
+- Cause : GitHub Pages garde un déploiement par commit (`actions/deploy-pages` donne le
+  commit comme `pages_build_version`). #231 donnait une version par run
+  (`<commit>-<run>-<tentative>`) : l'API la refuse (404), et le déploiement depuis
+  `main` a échoué ; il revient à `actions/deploy-pages`.
+- `site.yml` échoue maintenant avant de déployer un commit qui a déjà un déploiement
+  réussi, avec la marche à suivre : publier la release sur un nouveau commit, ou
+  déployer depuis un nouveau commit de `main`. Le merge de ce correctif est un nouveau
+  commit qui touche le site : il redéploie le site, avec la rc.1 sur le canal bêta.
 - Test `tests/test_publication.py` ; ADR-0022, une ligne dans l'amendement du 28/09.
 
 ### 2026-09-28 (soir) — Pièces : retours d'Axel sur la tablette
