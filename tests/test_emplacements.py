@@ -10,7 +10,10 @@ compilateur ne compare :
   emplacement et sa commande) doit avoir une branche dans le blueprint, sinon le
   bouton ne fait rien ;
 - le blueprint se lit, tous ses emplacements sont facultatifs, et le firmware ne
-  s'abonne plus à aucune entité de la maison."""
+  s'abonne plus à aucune entité de la maison.
+
+Les pièces et tuiles (ADR-0023 : tab5_maj_tuiles, clés tRT/pR) sont vérifiées par
+tests/test_tuiles_blueprint.py, qui rend les modèles du blueprint."""
 import os
 import re
 
@@ -65,7 +68,11 @@ def test_le_blueprint_se_lit_et_tout_est_facultatif():
     for section in bp["blueprint"]["input"].values():
         for nom, entree in section["input"].items():
             assert "default" in entree, f"entrée {nom} obligatoire"
-            if nom != "tablette":
+            if nom == "tablette":
+                continue
+            if "text" in entree["selector"]:  # nom d'une pièce (ADR-0023)
+                assert entree["default"] == "", f"{nom} : un nom vide doit valoir \"\""
+            else:
                 assert entree["default"] == [], f"{nom} : un emplacement vide doit valoir []"
 
 
@@ -88,6 +95,12 @@ def test_chaque_commande_de_l_ecran_a_sa_branche():
             f"commande {cmd!r} ({emp}) sans branche dans le blueprint"
         if "current_light_slot" in emp:
             assert "emplacement.startswith('lumiere_')" in texte
+        elif emp.startswith("!lambda"):
+            # Clé calculée à l'exécution : une tuile tRT ou une pièce pR (ADR-0023),
+            # aiguillée par le domaine de l'entité de la tuile (tests/test_tuiles_blueprint.py).
+            assert re.search(rf"t_commande (== |in \[[^\]]*)'{cmd}'", texte) or (
+                cmd == "eteindre" and "emplacement is match('^p[0-4]$')" in texte), \
+                f"commande {cmd!r} d'une tuile ({emp}) sans branche dans le blueprint"
         else:
             assert f"emplacement == '{emp}'" in texte or (
                 emp.startswith("lumiere_") and "emplacement.startswith('lumiere_')" in texte), \

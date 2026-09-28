@@ -189,30 +189,49 @@ Honest limits:
 
 ## Adapt to your home
 
-The screen was drawn around the author's home: three lights, a climate unit, a greenhouse shutter, a TV, five plant sensors. **What you don't have disappears**, with its buttons ([ADR-0018](decisions/0018-optional-zones-confirmed-by-ha.md), [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
+The screen was first drawn around the author's home. Everything is chosen in Home Assistant, in the « Tab5 — emplacements » automation (the blueprint of Step 4): changing a device is an edit in HA's UI, no flash, no restart.
 
-- **Your devices are chosen in Home Assistant**, in the « Tab5 — emplacements » automation (the blueprint of Step 4). Changing one is an edit in HA's UI: no flash, no restart.
+### Rooms (firmware 3.2 and later)
+
+The five tiles at the bottom of the screen are **rooms** you fill yourself ([ADR-0023](decisions/0023-rooms-generic-tiles.md)):
+
+- **Up to 5 rooms of 5 devices**, one per page of the bottom row. Room 1 is the home page (today to day 4); rooms 2 and 3 are one and two swipes to the left (days 5-9, 10-14); rooms 4 and 5 one and two swipes to the right (next hours). In each room, pick the devices in the order of the tiles, left to right (they can be dragged); only the first five are used. A device may be in several rooms.
+- **Devices that fit on a tile**: lights; switches, fans, humidifiers, input booleans and automations; covers and valves; media players; scenes, scripts and buttons; sensors and numbers (shown, not controlled); binary sensors, people, trackers and locks (shown); climate.
+- **Names and icons come from Home Assistant.** A room takes the name you type, otherwise the area its devices share, otherwise « Pièce n ». A tile takes the entity's name without the room's name (« Lampe du salon » in « Salon » becomes « Lampe »), and the icon chosen in the entity's settings, otherwise one for its kind.
+- **Customise a tile** (folded section « Personnaliser des tuiles »): another name, another icon, or a behaviour — *on only* (never switched off from the screen), *confirm* (a second tap within 3 s), *read only*.
+- The « HA » button shows the current page's room; a swipe goes to the next room that has devices.
+- A sensor's value is sent with the other measurements, every 5 minutes; the other devices are sent as soon as what the screen shows changes.
+- **Room 1 left empty**: the home page keeps the 3.x setup (folded section « Tuiles de l'accueil (réglage 3.x) »: PC or TV, shutter, three lights), with the PC tile's PC + TV behaviour. Nothing to redo after the update.
+- **Firmware 3.0 or 3.1**: the blueprint reads the tablet's version and then only uses the 3.x setup; the rooms show up once the firmware is updated. The firmware and the blueprint can be updated in either order.
+
+### Other zones
+
+**What you don't have disappears**, with its buttons ([ADR-0018](decisions/0018-optional-zones-confirmed-by-ha.md), [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
+
 - **Remove a zone: leave its slot empty.** An empty slot, or an entity that doesn't exist, is absent. An entity that exists but is `unavailable` keeps its zone (« -- », « Hors ligne »). **Without the blueprint's automation, nothing disappears** (and nothing of your devices is shown).
 - **A zone missing by mistake?** The tablet's diagnostic sensor « Zones masquées » lists what disappeared.
 - A zone comes back by itself as soon as its entity sends a value.
 
 | Zone | Blueprint input | Hidden when empty |
 |---|---|---|
-| Lights (up to 3) | Lumière 1 to 3 | Icons of tiles 3 to 5, card of the « HA » layer, light-popup selector, « Tout éteindre » |
-| PC | PC (a switch turns it on; a presence tracker only shows it) | Status icon, « PC Bureau » card; the first tile too if there is no TV either |
 | TV | TV, and Télécommande de la TV for the remote keys | TV button and remote; « HA » and « Sys » move one column right |
 | Phone | Batterie du téléphone | Status icon |
 | Room | Température de la pièce (and Humidité de la pièce) | Its temperature |
 | Greenhouse | Seconde température (serre) | Its temperature; the icon becomes a gamepad, the arcade entrance stays |
 | Plants (0 to 5) | Pot 1 to 5: the moisture sensor; conductivity, light, temperature and battery are taken from the same device | Up to 4 plants: one slot each; 5: the « driest / median / wettest » summary. Popup cards, re-centred |
 | Climate | Climatisation | − / setpoint / + and the popup |
-| Shutter | Volet (and the `volet_serre_tracking.yaml` package for a shutter that doesn't report its travel) | Icons of tile 2, card of the « HA » layer |
 | Work planning | Agenda de travail | Planning panel of the central card |
+| Lights (3.x setup) | Lumière 1 to 3 | Icons of tiles 3 to 5, card of the « HA » layer, light-popup selector, « Tout éteindre » |
+| PC (3.x setup) | PC (a switch turns it on; a presence tracker only shows it) | Status icon, « PC Bureau » card; the first tile too if there is no TV either |
+| Shutter (3.x setup) | Volet (and the `volet_serre_tracking.yaml` package for a shutter that doesn't report its travel) | Icons of tile 2, card of the « HA » layer |
 
-The planning hours themselves still come from the `tab5_push.yaml` package (`VOTRE_EMAIL_gmail_com`): pick the same calendar in both.
+The « 3.x setup » rows are the home page of a 3.0 or 3.1 firmware, and of a 3.2 firmware while room 1 is empty. The planning hours themselves still come from the `tab5_push.yaml` package (`VOTRE_EMAIL_gmail_com`): pick the same calendar in both.
 
 Limits:
-- **More than 3 lights, or another device on a tile**: not yet. The tiles are 5 fixed places (PC/TV, shutter, three lights).
+- **Icons**: the screen holds a limited palette. An icon outside it shows the default of its kind; adding one means a line in `Tab5/tuiles_icones.yaml` and a new release.
+- **Names**: the screen's fonts cover Latin alphabets only; other characters are dropped, and long names are cut.
+- **Renaming an entity**: its tile follows at the tablet's next connection, or as soon as the automation is saved again.
+- **A shutter followed by `volet_serre_tracking.yaml`** (it doesn't report its travel): keep it in the « Volet » input of the 3.x section too, even if it is in a room; its tile then shows the state the package keeps, and its commands go through the package's script.
 - **Calendars written in the packages**: `calendar.famille`, `calendar.anniversaires` and the French public-holiday calendar (`tab5_reveil.yaml`, `tab5_calendar.yaml`) are to be edited by hand, see [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md).
 - To see a smaller home without touching yours: [demo mode](demo_mode.md#minimal-home-optional-zones), option `--maison-minimale`.
 
@@ -407,29 +426,48 @@ Limites, en toute franchise :
 
 ## Adapter à sa maison
 
-L'écran a été dessiné autour de la maison de l'auteur : trois lumières, une clim, un volet de serre, une TV, cinq capteurs de plantes. **Ce que vous n'avez pas disparaît**, avec ses boutons ([ADR-0018](decisions/0018-optional-zones-confirmed-by-ha.md), [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
+L'écran a d'abord été dessiné autour de la maison de l'auteur. Tout se choisit dans Home Assistant, dans l'automatisation « Tab5 — emplacements » (le blueprint de l'étape 4) : changer d'appareil se fait dans l'interface de HA, ni flash ni redémarrage.
 
-- **Vos appareils se choisissent dans Home Assistant**, dans l'automatisation « Tab5 — emplacements » (le blueprint de l'étape 4). En changer se fait dans l'interface de HA : ni flash, ni redémarrage.
+### Pièces (firmware 3.2 et plus)
+
+Les cinq tuiles du bas de l'écran sont des **pièces** que vous remplissez vous-même ([ADR-0023](decisions/0023-rooms-generic-tiles.md)) :
+
+- **Jusqu'à 5 pièces de 5 appareils**, une par page de la rangée du bas. La pièce 1 est l'accueil (aujourd'hui à J+4) ; les pièces 2 et 3 sont à un et deux glissements vers la gauche (J+5 à J+9, J+10 à J+14) ; les pièces 4 et 5 à un et deux glissements vers la droite (prochaines heures). Dans chaque pièce, choisissez les appareils dans l'ordre des tuiles, de gauche à droite (ils se déplacent à la souris) ; seuls les cinq premiers servent. Un appareil peut être dans plusieurs pièces.
+- **Ce qui trouve place sur une tuile** : lumières ; interrupteurs, ventilateurs, humidificateurs, entrées booléennes et automatisations ; volets et vannes ; lecteurs multimédia ; scènes, scripts et boutons ; capteurs et nombres (affichés, pas commandés) ; capteurs binaires, personnes, suivis de présence et serrures (affichés) ; climatisation.
+- **Noms et icônes viennent de Home Assistant.** Une pièce prend le nom que vous saisissez, sinon l'aire que partagent ses appareils, sinon « Pièce n ». Une tuile prend le nom de l'entité sans celui de la pièce (« Lampe du salon » dans « Salon » devient « Lampe »), et l'icône choisie dans les réglages de l'entité, sinon celle de son genre.
+- **Personnaliser une tuile** (section repliée « Personnaliser des tuiles ») : un autre nom, une autre icône, ou un comportement — *allumer seulement* (jamais éteint depuis l'écran), *confirmer* (un second appui dans les 3 s), *lecture seule*.
+- Le bouton « HA » montre la pièce de la page affichée ; un glissement passe à la pièce suivante qui a des appareils.
+- La valeur d'un capteur part avec les autres mesures, toutes les 5 minutes ; les autres appareils partent dès que ce que montre l'écran change.
+- **Pièce 1 laissée vide** : l'accueil garde le réglage 3.x (section repliée « Tuiles de l'accueil (réglage 3.x) » : PC ou TV, volet, trois lumières), avec le comportement PC + TV de la tuile PC. Rien à refaire après la mise à jour.
+- **Firmware 3.0 ou 3.1** : le blueprint lit la version de la tablette et n'utilise alors que le réglage 3.x ; les pièces apparaissent une fois le firmware mis à jour. Firmware et blueprint se mettent à jour dans n'importe quel ordre.
+
+### Autres zones
+
+**Ce que vous n'avez pas disparaît**, avec ses boutons ([ADR-0018](decisions/0018-optional-zones-confirmed-by-ha.md), [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
+
 - **Retirer une zone : laissez son emplacement vide.** Un emplacement vide, ou une entité qui n'existe pas, est absent. Une entité qui existe mais est `unavailable` garde sa zone (« -- », « Hors ligne »). **Sans l'automatisation du blueprint, rien ne disparaît** (et aucun de vos appareils ne s'affiche).
 - **Une zone manque par erreur ?** Le capteur de diagnostic « Zones masquées » de la tablette liste ce qui a disparu.
 - Une zone revient d'elle-même dès que son entité envoie une valeur.
 
 | Zone | Entrée du blueprint | Masqué quand elle est vide |
 |---|---|---|
-| Lumières (jusqu'à 3) | Lumière 1 à 3 | Icônes des tuiles 3 à 5, carte du calque « HA », sélecteur du popup lumière, « Tout éteindre » |
-| PC | PC (un interrupteur l'allume ; un suivi de présence l'affiche seulement) | Icône d'état, carte « PC Bureau » ; la première tuile aussi s'il n'y a pas non plus de TV |
 | TV | TV, et Télécommande de la TV pour les touches | Bouton TV et télécommande ; « HA » et « Sys » glissent d'une colonne |
 | Téléphone | Batterie du téléphone | Icône d'état |
 | Pièce | Température de la pièce (et Humidité de la pièce) | Sa température |
 | Serre | Seconde température (serre) | Sa température ; l'icône devient une manette, l'entrée de l'arcade reste |
 | Pots (0 à 5) | Pot 1 à 5 : le capteur d'humidité ; conductivité, éclairement, température et batterie sont pris sur le même appareil | Jusqu'à 4 pots : un emplacement chacun ; à 5 : le résumé « plus secs / médiane / plus humide ». Cartes du popup, recentrées |
 | Clim | Climatisation | − / consigne / + et le popup |
-| Volet | Volet (et le package `volet_serre_tracking.yaml` pour un volet qui ne signale pas sa course) | Icônes de la tuile 2, carte du calque « HA » |
 | Planning de travail | Agenda de travail | Panneau planning de la carte centrale |
+| Lumières (réglage 3.x) | Lumière 1 à 3 | Icônes des tuiles 3 à 5, carte du calque « HA », sélecteur du popup lumière, « Tout éteindre » |
+| PC (réglage 3.x) | PC (un interrupteur l'allume ; un suivi de présence l'affiche seulement) | Icône d'état, carte « PC Bureau » ; la première tuile aussi s'il n'y a pas non plus de TV |
+| Volet (réglage 3.x) | Volet (et le package `volet_serre_tracking.yaml` pour un volet qui ne signale pas sa course) | Icônes de la tuile 2, carte du calque « HA » |
 
-Les horaires du planning viennent encore du package `tab5_push.yaml` (`VOTRE_EMAIL_gmail_com`) : choisissez le même agenda des deux côtés.
+Les lignes « réglage 3.x » sont l'accueil d'un firmware 3.0 ou 3.1, et d'un firmware 3.2 tant que la pièce 1 est vide. Les horaires du planning viennent encore du package `tab5_push.yaml` (`VOTRE_EMAIL_gmail_com`) : choisissez le même agenda des deux côtés.
 
 Limites :
-- **Plus de 3 lumières, ou un autre appareil sur une tuile** : pas encore. Les tuiles sont 5 places fixes (PC/TV, volet, trois lumières).
+- **Icônes** : l'écran en connaît une palette limitée. Une icône hors palette montre celle de son genre ; en ajouter une demande une ligne dans `Tab5/tuiles_icones.yaml` et une nouvelle version.
+- **Noms** : les polices de l'écran ne couvrent que les alphabets latins ; les autres caractères disparaissent, et un nom trop long est coupé.
+- **Renommer une entité** : sa tuile suit à la prochaine connexion de la tablette, ou dès que l'automatisation est de nouveau enregistrée.
+- **Un volet suivi par `volet_serre_tracking.yaml`** (il ne signale pas sa course) : laissez-le aussi dans l'entrée « Volet » de la section 3.x, même s'il est dans une pièce ; sa tuile montre alors l'état que tient le package, et ses commandes passent par le script du package.
 - **Agendas écrits dans les packages** : `calendar.famille`, `calendar.anniversaires` et l'agenda des jours fériés français (`tab5_reveil.yaml`, `tab5_calendar.yaml`) se corrigent à la main, voir [`HomeAssistant_Config/README.md`](../HomeAssistant_Config/README.md#version-française).
 - Pour voir une maison plus petite sans toucher à la vôtre : [mode démo](demo_mode.md#maison-minimale-zones-optionnelles), option `--maison-minimale`.

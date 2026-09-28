@@ -4,6 +4,38 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-28 — Blueprint : les pièces (ADR-0023, côté Home Assistant)
+
+- **Cinq pièces de cinq appareils** dans le blueprint « Tab5 — emplacements » (même
+  fichier, un ré-import suffit) : une section par pièce (la 1, l'accueil, ouverte ; les
+  autres repliées), un nom et une liste d'appareils réordonnable, filtrée sur les
+  domaines du contrat ; une section « Personnaliser des tuiles » (nom, icône,
+  comportement : allumer seulement, confirmer, lecture seule). Les entrées 3.x
+  (`lumiere_1..3`, `pc`, `volet`) gardent leurs noms, dans une section repliée
+  « Tuiles de l'accueil (réglage 3.x) » : les automatisations existantes continuent.
+- **Définitions** (`tab5_maj_tuiles`, à la connexion, au rechargement, à la demande des
+  zones) : type par domaine, icône (personnalisée, attribut `icon`, classe, domaine, via
+  le bloc généré `icones_mdi` / `icones_defaut`), options `d c o k r t m`, complément
+  (unité ≤ 7 octets, classe), nom sans celui de la pièce ; nom de pièce saisi, sinon
+  l'aire de ses appareils. Pièce 1 vide : l'accueil vient des entrées 3.x, et la tuile
+  PC garde son comportement PC + TV.
+- **États** `tRT|état|valeur|couleur` : tous après les définitions, une tuile quand ce que
+  montre l'écran change (état, luminosité, `rgb_color`, position), les capteurs avec les
+  mesures de 5 minutes. Cinq déclencheurs par pièce : un capteur qui change, la position
+  GPS d'une personne ou le volume d'un lecteur ne réveillent pas l'automatisation.
+- **Protocole** lu dans le `sw_version` de la tablette (« 3.1.0 (ESPHome 2026.9.0) ») : en
+  dessous de 3.2.0, ou illisible, jamais `tab5_maj_tuiles`, seulement les clés 3.x.
+- **Commandes** `tRT` et `pR / eteindre` aiguillées par le domaine de l'entité de la
+  tuile ; seulement sur les entités placées dans une tuile. Le volet suivi par
+  `volet_serre_tracking.yaml` passe toujours par son script, et sa tuile montre l'état
+  tenu par le package (le moteur reste « unknown »).
+- Tests : `tests/test_tuiles_blueprint.py` rend les vrais modèles Jinja du blueprint dans
+  le bac à sable de Jinja (types, options, commandes = tableaux de l'ADR, protocole,
+  définitions, états, un seul chemin de poussée, aiguillage) ; `jinja2` rejoint
+  `requirements-dev.txt`. Le job « Installation dans un HA neuf » configure deux pièces
+  et relit dans la trace les définitions calculées, sans `tab5_maj_tuiles` au protocole 1.
+- Docs : « Adapt to your home » / « Adapter à sa maison », `HomeAssistant_Config/README.md`.
+
 ### 2026-09-28 — Site : une release n'est retenue qu'avec ses binaires (suite de #221)
 
 - `pages.py choisir` exigeait les trois manifestes, sans leurs binaires. Les neuf
