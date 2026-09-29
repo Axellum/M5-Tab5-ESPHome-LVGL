@@ -615,12 +615,15 @@ void cal_shift_month(int& year, int& month, int delta);
 void cal_store_month_data(const std::string& annee, const std::string& mois,
     const std::string& codes, const std::string& heures, const std::string& details = "");
 
-// Construit les 42 cellules de la grille (168×86, lundi en tête) dans le parent
-// de `anchor`, juste avant lui (la légende) : même rang, mêmes propriétés que
-// l'ancien gabarit cal_day_cell.yaml (lot 8, 26/09/2026). `grid_y` = ${cal_grid_y}.
-// Un tap court sur la cellule i appelle on_tap(i). Une seule fois : false si la
-// grille existe déjà (appeler à chaque ouverture ne coûte rien).
-bool cal_grid_build(lv_obj_t* anchor, int32_t grid_y, const esphome::font::Font* font_num,
+// Construit les 42 cellules de la grille (168 px de large, lundi en tête) dans le
+// parent de `anchor`, juste avant lui (la légende) : même rang que l'ancien gabarit
+// cal_day_cell.yaml (lot 8, 26/09/2026). `grid_y` = ${cal_grid_y}, `grid_h` =
+// ${cal_grid_h} : la hauteur et le y des lignes sont posés par cal_render_month()
+// selon le nombre de semaines du mois. Un tap court sur la cellule i appelle
+// on_tap(i). Une seule fois : false si la grille existe déjà (appeler à chaque
+// ouverture ne coûte rien).
+bool cal_grid_build(lv_obj_t* anchor, int32_t grid_y, int32_t grid_h,
+                    const esphome::font::Font* font_num,
                     const esphome::font::Font* font_text, void (*on_tap)(int));
 
 // Rendu complet du mois affiché dans la grille : numéros + alignement lundi-dimanche

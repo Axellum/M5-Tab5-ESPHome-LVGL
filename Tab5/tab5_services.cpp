@@ -270,7 +270,7 @@ void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::st
 
 // Bandeau planning vide, en gris (recolor LVGL « #aaaaaa …# »).
 static std::string planning_vide() {
-    return std::string("#aaaaaa ") + tr("Aucun travail de prevu") + "#";
+    return std::string("#aaaaaa ") + tr("Aucun travail de prévu") + "#";
 }
 
 void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {

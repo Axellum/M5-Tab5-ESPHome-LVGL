@@ -19,9 +19,10 @@
 #       Eviction : max 3 mois en cache (cal_cache_evict_distant).
 # @ai_instruction Cadre modal v4 (ADR-0009) : barre de titre modal_header.yaml, grille
 #       à partir de y=72. Cellules : cal_grid_build() (tab5_calendar.cpp), à la
-#       première ouverture (tab5_calendar_open), juste avant cal_legend ; lignes
-#       ${cal_grid_y}+r*90, colonnes 25+c*172. Depuis le lot 8 de l'audit du
-#       26/09/2026 : les 42 !include de cal_day_cell.yaml coûtaient ≈ 45 Ko de
+#       première ouverture (tab5_calendar_open), juste avant cal_legend ; colonnes
+#       25+c*172, lignes réparties par cal_render_month() sur ${cal_grid_h} selon le
+#       nombre de semaines du mois (4 à 6), les lignes en trop masquées. Depuis le
+#       lot 8 de l'audit du 26/09/2026 : les 42 !include de cal_day_cell.yaml coûtaient ≈ 45 Ko de
 #       setup() et un bouton invisible par cellule.
 # ═══════════════════════════════════════════════════════
 obj:
@@ -105,11 +106,13 @@ obj:
                 - label: { text: "Aujourd'hui", align: CENTER }
 
           # ═══ TÊTE DE GRILLE (jours de la semaine) ═══
-          - label: { text: "Lun", align: TOP_LEFT, x: 25, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
-          - label: { text: "Mar", align: TOP_LEFT, x: 197, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
-          - label: { text: "Mer", align: TOP_LEFT, x: 369, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
-          - label: { text: "Jeu", align: TOP_LEFT, x: 541, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
-          - label: { text: "Ven", align: TOP_LEFT, x: 713, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
+          # En semaine : couleur du thème (blanc) ; samedi et dimanche estompés, comme
+          # leurs numéros. Chaque nom est centré sur sa colonne, les numéros aussi.
+          - label: { text: "Lun", align: TOP_LEFT, x: 25, y: "${modal_body_y}", width: 168, text_align: CENTER }
+          - label: { text: "Mar", align: TOP_LEFT, x: 197, y: "${modal_body_y}", width: 168, text_align: CENTER }
+          - label: { text: "Mer", align: TOP_LEFT, x: 369, y: "${modal_body_y}", width: 168, text_align: CENTER }
+          - label: { text: "Jeu", align: TOP_LEFT, x: 541, y: "${modal_body_y}", width: 168, text_align: CENTER }
+          - label: { text: "Ven", align: TOP_LEFT, x: 713, y: "${modal_body_y}", width: 168, text_align: CENTER }
           - label: { text: "Sam", align: TOP_LEFT, x: 885, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
           - label: { text: "Dim", align: TOP_LEFT, x: 1057, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
 
