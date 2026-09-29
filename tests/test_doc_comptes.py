@@ -41,6 +41,7 @@ ARCHITECTURE = REPO / "docs" / "architecture.md"
 CARTOGRAPHIE = REPO / "CARTOGRAPHIE_TAB5.md"
 README = REPO / "README.md"
 README_TAB5 = REPO / "Tab5" / "README.md"
+INVENTAIRE = REPO / "docs" / "INVENTAIRE_CONFIGS_TESTS.md"
 SITE = REPO / "web" / "index.html"
 LVGL = REPO / "Tab5" / "tab5-lvgl.yaml"
 UI = REPO / "Tab5" / "ui_components"
@@ -201,8 +202,12 @@ def _ui_directs():
     (ARCHITECTURE, r"soit (\d+) fichiers de composants au total", _ui_total),
     (README, r"split into (\d+) reusable `ui_components", _ui_total),
     (README, r"découpée en (\d+) `ui_components/\*\.yaml` réutilisables", _ui_total),
+    (README_TAB5, r"Les (\d+) composants et templates LVGL", _ui_total),
+    (INVENTAIRE, r"\((\d+) composants UI dont", _ui_total),
+    (INVENTAIRE, r"composants UI dont (\d+) inclus par", _ui_directs),
 ], ids=["schema-total", "schema-directs", "carto-total", "carto-directs", "archi-en-directs",
-        "archi-en-total", "archi-fr-directs", "archi-fr-total", "readme-en", "readme-fr"])
+        "archi-en-total", "archi-fr-directs", "archi-fr-total", "readme-en", "readme-fr",
+        "readme-tab5", "inventaire-total", "inventaire-directs"])
 def test_nombre_de_composants_ui(chemin, motif, compte):
     assert _ui_directs() > 10, "le motif ne reconnaît plus les !include de tab5-lvgl.yaml"
     assert set(_nombres(chemin, motif)) == {compte()}
@@ -217,6 +222,14 @@ def test_nombre_de_composants_ui(chemin, motif, compte):
 ], ids=["schema", "fichier", "readme-tab5"])
 def test_cartographie_nombre_de_services(motif):
     assert set(_nombres(CARTOGRAPHIE, motif)) == {len(_services())}
+
+
+@pytest.mark.parametrize("motif", [
+    r"inclus par `tab5-lvgl\.yaml`, (\d+) services",   # en-tête de l'inventaire
+    r"bloc `api: services:` \((\d+) services",         # ligne de tab5-api-logic.yaml
+], ids=["entete", "fichier"])
+def test_inventaire_nombre_de_services(motif):
+    assert set(_nombres(INVENTAIRE, motif)) == {len(_services())}
 
 
 def test_table_des_services_du_readme_tab5():
