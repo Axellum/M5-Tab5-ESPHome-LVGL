@@ -4,6 +4,61 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [3.3.0] — 2026-09-29
+
+De `v3.2.2` à aujourd'hui : six pull requests (#252 → #257), plus celle de la release.
+L'écran et Home Assistant s'adaptent à d'autres maisons que celle de l'auteur.
+- **Clim de toutes marques** (#257, [ADR-0026](docs/decisions/0026-climate-from-device.md)) :
+  bornes, pas, °C ou °F, boutons et nom viennent de l'appareil ; les commandes sont
+  traduites vers ses vrais modes. La Daikin de l'auteur reçoit les mêmes commandes qu'avant.
+- **Home Assistant** (#256) : mot des événements de travail, vacances scolaires prises
+  dans un agenda (la table de la zone A disparaît), pipeline du mode Discussion au choix
+  (boutons Domo / Discu masqués sans pipeline, #257), briefing du réveil dans la langue
+  de l'écran, listes et blueprint en français et en anglais, alerte quand les fichiers HA
+  sont plus anciens que le firmware.
+- **Météo hors de France** : vigilances DWD et CAP Alerts (#253, #255), pluie dans l'heure
+  sans clé par Buienradar, DWD, Met.no ou Open-Meteo (#254).
+- **Flipper** : plus de rafales d'avertissements LVGL « X/Y is … greater than res » après
+  la bascule d'orientation (#252).
+
+**Version mineure, compatible dans les deux sens** : le firmware 3.3.0 marche avec les
+fichiers HA de la 3.2 (popup clim et boutons vocaux comme avant), et les fichiers HA de
+la 3.3.0 avec un firmware 3.2 (réglages de la clim et zone « discussion » ignorés).
+
+### À faire en mettant à jour depuis 3.2
+
+1. **Home Assistant d'abord** : remplacer les fichiers par ceux de
+   `tab5_home_assistant.zip`, puis **avant de recharger** les modèles, les scripts et les
+   automatisations :
+   - agenda de travail qui contient aussi d'autres événements : taper son mot dans « Tab5 ·
+     mot des événements de travail » (`Travail` pour garder le comportement d'avant ;
+     vide, tout l'agenda compte comme du travail) ;
+   - choisir un agenda dans « Tab5 · agenda des vacances scolaires » (en France, le fichier
+     ICS du ministère par l'intégration Remote Calendar, `docs/installation.md`) ;
+   - choisir son pipeline dans « Tab5 · pipeline de discussion » (avant : un pipeline
+     nommé exactement « Discussion LLM »).
+2. **Firmware** : entité « Firmware » dans Home Assistant.
+
+### Mesures de la version
+
+- Tablette de l'auteur (ST7123) : même code que ce tag (hors numéro de version et
+  documentation) depuis le 29/09 19:25 ; fichiers HA déployés à 19:10 (blueprint à 19:27).
+  La tablette a reçu les réglages de sa clim (`18.0-32.0, pas 0.50, C, [chdfebqsw]`).
+- Compilation locale du même code : image 3 321 506 o (40,9 % de la partition), RAM
+  statique 171 742 o.
+- Compilations requises de la CI, installation dans un HA neuf et rendu des écrans
+  (« identique aux références », six langues) : verts.
+
+### Problèmes connus
+
+Ceux de la 3.2.2, et :
+- boutons Domo / Discu masqués : leur place reste vide à l'accueil et dans le popup
+  assistant ;
+- le briefing du réveil n'est relu qu'en français ; il n'a pas encore été entendu en vrai
+  sur la 3.3.0 ;
+- une seule clim a son popup (celle du blueprint) ; les autres tuiles de clim affichent
+  leur température.
+
 ### 2026-09-29 — Clim de toutes marques, mode Discussion sans pipeline masqué
 
 - **Le popup clim suit l'appareil** ([ADR-0026](docs/decisions/0026-climate-from-device.md)).
