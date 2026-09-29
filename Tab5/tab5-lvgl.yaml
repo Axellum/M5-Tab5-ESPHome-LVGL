@@ -345,6 +345,7 @@ lvgl:
                   width: SIZE_CONTENT
                   height: SIZE_CONTENT
                   styles: style_transparent
+                  scrollbar_mode: "OFF"  # le texte déborde en glissant (transition_widgets)
                   hidden: true
                   widgets:
                     - obj:
@@ -379,6 +380,7 @@ lvgl:
                   width: SIZE_CONTENT
                   height: SIZE_CONTENT
                   styles: style_transparent
+                  scrollbar_mode: "OFF"  # le texte déborde en glissant (transition_widgets)
                   hidden: true
                   widgets:
                     - obj:
@@ -461,6 +463,7 @@ lvgl:
                   width: SIZE_CONTENT
                   height: 100%
                   styles: style_transparent
+                  scrollbar_mode: "OFF"  # le texte déborde en glissant (transition_widgets)
                   widgets:
                     - label: { id: lbl_planning_text, text: "", align: CENTER, y: 0, text_font: roboto_45_b }
                     - button:
@@ -508,6 +511,7 @@ lvgl:
                   width: SIZE_CONTENT
                   height: 100%
                   styles: style_transparent
+                  scrollbar_mode: "OFF"  # le texte déborde en glissant (transition_widgets)
                   hidden: true
                   widgets:
                     - label: { id: lbl_info_text, text: "", align: CENTER, text_font: roboto_45_b }
