@@ -4,6 +4,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-29 — Pluie dans l'heure hors de France, sans clé
+
+- « Tab5 · source de la pluie dans l'heure » propose aussi quatre services **sans clé et
+  sans rien à installer**, interrogés par Home Assistant (`rest_command.tab5_pluie`)
+  toutes les 5 min, seulement quand ils sont choisis :
+  - radar **Buienradar** : Pays-Bas, Belgique ;
+  - radar du **DWD** par Bright Sky : Allemagne et pays voisins ;
+  - radar **Met.no** Nowcast : pays nordiques ;
+  - **Open-Meteo** : partout, mais un modèle au pas de 15 min.
+- Les coordonnées du domicile sont arrondies à 0,01° (environ 1 km) et envoyées au seul
+  service choisi. Hors de sa zone, un service donne « pas de données ».
+- Toutes les sources à la minute ou au radar, OpenWeatherMap compris, passent par une
+  même série (début, durée, mm/h). OpenWeatherMap donne les mêmes codes qu'avant
+  (vérifié sur sa réponse réelle et sur une averse simulée).
+- Essais : les quatre services interrogés le 29/09 (jour sec) et leurs réponses lues par
+  les modèles dans le moteur de Home Assistant 2026.9.4, pluie simulée, hors zone, erreur
+  HTTP, panne réseau : 20 cas. La CI d'installation à neuf interroge Open-Meteo.
+
 ### 2026-09-29 — Vigilances hors de France : DWD et CAP Alerts
 
 - « Tab5 · source des vigilances » propose aussi **DWD** (Allemagne, intégration
