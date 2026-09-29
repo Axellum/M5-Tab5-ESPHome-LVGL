@@ -4,6 +4,50 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [3.2.2] — 2026-09-29
+
+De `v3.2.1` à aujourd'hui : une pull request (#250), plus celle de la release.
+- **Météo** : changer de fournisseur (prévisions, pluie dans l'heure, vigilances) a été
+  essayé avec les vraies données de Météo-France, d'OpenWeatherMap et de MeteoAlarm.
+  Aucun défaut de format ; trois défauts corrigés (#250) : une averse finie depuis
+  quelques minutes restait « en cours » avec OpenWeatherMap ; les tuiles attendaient
+  jusqu'à 10 min après un changement de source des prévisions ; la condition
+  `exceptional` (fumée, poussière, sable chez OpenWeatherMap) s'affichait comme un nuage.
+
+**Version corrective** : aucune nouvelle fonction, rien d'incompatible. Le firmware 3.2.2
+marche avec les fichiers HA de la 3.2.1, et inversement.
+
+### À faire en mettant à jour depuis 3.2.1
+
+1. **Firmware** : entité « Firmware » dans Home Assistant (icône `exceptional`).
+2. **Home Assistant, facultatif** (pluie OpenWeatherMap, changement de source) : remplacer
+   `packages/tab5_meteo_sources.yaml` et `packages/tab5_push.yaml` par ceux de
+   `tab5_home_assistant.zip`, recharger les modèles et les automatisations.
+
+### Mesures de la version
+
+- Tablette de l'auteur (ST7123) : même code que ce tag (hors numéro de version et
+  documentation) depuis le 29/09 12:12 ; fichiers HA déployés depuis 12:06.
+- Compilations requises de la CI et installation dans un HA neuf : vertes.
+
+### Problèmes connus
+
+Ceux de la 3.2.0, et une limite de MeteoAlarm : la bibliothèque de Home Assistant ne lit
+que la première alerte de la zone, même expirée.
+
+### 2026-09-29 — Fournisseurs météo essayés avec leurs vraies données
+
+- Demande d'Axel : vérifier qu'un autre fournisseur donne des données que la tablette sait
+  lire. Les modèles du dépôt ont été rendus dans le moteur de Home Assistant 2026.9.4 avec
+  les réponses réelles de Météo-France et d'OpenWeatherMap, les alertes MeteoAlarm du jour
+  (lues par `meteoalertapi` 0.3.1) et des cas simulés (pluie à venir, en cours, très forte,
+  réponse vide, entité façon NWS), puis décodés comme sur la tablette : aucun défaut de
+  format sur 30 cas.
+- Pluie OpenWeatherMap : la série vient du cache de l'intégration, rafraîchi toutes les
+  10 min ; les minutes déjà passées sont ignorées.
+- Changer « Tab5 · source des prévisions » relance la poussée complète.
+- `exceptional` prend l'icône du brouillard (glyphe déjà dans la police).
+
 ## [3.2.1] — 2026-09-29
 
 De `v3.2.0` à aujourd'hui : 14 pull requests (#234 → #248, sans #242, mise à jour des
