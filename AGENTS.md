@@ -70,6 +70,17 @@ python tools/cartographie_counts.py        # comptes de lignes de la cartographi
 8. No hardcoded Home Assistant entity ID in firmware YAML — always a `user_entities.yaml` substitution (`${entity_…}`) or a `!lambda`. Since [ADR-0025](docs/decisions/0025-events-only.md) the firmware names none at all and **never calls a Home Assistant action** (no `homeassistant.service` / `homeassistant.action`): it emits `esphome.tab5_*` events, and `HomeAssistant_Config/packages/tab5_evenements.yaml` maps them to a whitelist of actions on the tablet's own entities (found by its device). A new request = an event + a branch there. Enforced by `tools/check_tab5_code_rules.py` and `tests/test_actions_ha.py`.
 9. Every MDI icon shown on screen must be in the `glyphs:` list of its widget's `mdi_*` font (`Tab5/tab5-styles.yaml`), and every glyph listed there must be shown somewhere — a missing glyph renders blank with no build error. An icon set from C++ on a widget passed as a parameter needs its function in `MDI_CODE_TARGETS` (`tools/check_tab5_code_rules.py`, rule 7, run by `pytest`).
 
+## Product preferences (the author's taste — keep them)
+
+Not enforced by a test, but every change is judged against them on the real screen:
+
+- **Instant transitions, no fade** on popups, pages and buttons. The only animation kept on purpose is the centre card rotation (short slide + fade, kept by the author on 2026-09-29 after the "text only" trial).
+- **Popups to the pixel**: same glass everywhere, the whole useful area used, nothing overflowing or clipped.
+- **French accents and "°" always**, on screen and in the voice answers; an MDI icon never shows as an empty rectangle (rule 9).
+- **Voice and screen say short sentences**, never an entity ID, a code or a raw HA state.
+- The screen must come back on by itself after an OTA or a reboot.
+- **Single source**: one reused component or builder rather than N copies (rule 5).
+
 ## Boundaries — do not
 
 - Do not read or write `secrets.yaml` or a signing key (`tab5_signature.pem`, any `*.pem`/`*.key`; repo root, gitignored). Since 3.0 (lot 6b, [ADR-0020](docs/decisions/0020-no-secret-firmware-signed-ota.md)) the firmware reads no `!secret` at all — a `secrets.yaml` left from 2.x is only used once, by `tools/migrer_vers_3.py`, to send the first 3.0 firmware with the old API key. Never add a `!secret` back (`tests/test_sans_secret.py` fails). The API key lives in Home Assistant: tools that talk to the tablet get it through `tools/tab5_cle_api.py` and never print it.
