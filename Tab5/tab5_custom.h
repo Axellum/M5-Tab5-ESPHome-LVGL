@@ -340,7 +340,8 @@ void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite);
 // Clim, retour HA (service tab5_maj_clim) : cible (carte + popup + arc) et
 // température intérieure du popup. Les modes restent dans les globals,
 // recolorés par le script tab5_clim_recolor. Distinct de update_clim_target_ui()
-// (affichage optimiste local, plus bas), qui n'écrit que la cible.
+// (affichage optimiste local, plus bas), qui n'écrit que la cible. Format de la
+// cible et unité : réglages de la clim (ADR-0026, tab5_cards.cpp).
 void update_clim_from_ha_ui(lv_obj_t* lbl_target, lv_obj_t* lbl_target_popup, lv_obj_t* arc,
     lv_obj_t* lbl_current, float target, float current);
 
@@ -469,6 +470,60 @@ void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric);
 // Appele par l'arc et les boutons -/+ du popup clim ; le retour reel arrive ensuite
 // par le service tab5_maj_clim qui reecrit les memes widgets.
 void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target);
+
+// =============================================================================
+// Réglages de la clim venus de l'appareil (tab5_cards.cpp, ADR-0026) : clé « climr »
+// de tab5_maj_emplacements, « climr|min|max|pas|unité|capacités|nom », que le
+// blueprint pousse avant tab5_maj_clim. Bornes et pas des boutons − / + et de l'arc,
+// °C ou °F, boutons que l'appareil gère, nom de la clim en titre du popup. Tant que
+// rien n'est reçu (blueprint plus ancien), rien ne change : 16-30, pas de 0,5, °C,
+// tous les boutons, titre du YAML. Pas de NVS : le blueprint les renvoie à chaque
+// connexion.
+// =============================================================================
+// Widgets adaptés, posés par le script tab5_clim_ui (tab5-scripts.yaml), que lance
+// tab5_zones_apply à la fin du setup.
+struct ClimUI {
+    lv_obj_t* consigne_carte = nullptr;     // clim_target (carte de l'accueil)
+    lv_obj_t* consigne_popup = nullptr;     // clim_target_popup
+    lv_obj_t* arc = nullptr;                // arc_temp_popup
+    lv_obj_t* unite = nullptr;              // clim_unite_popup (sous la cible du popup)
+    lv_obj_t* piece = nullptr;              // val_temp_int_popup (température de la pièce)
+    lv_obj_t* titre = nullptr;              // popup_clim_title
+    // Carte MODE (pile flex : un bouton masqué ne laisse pas de trou).
+    lv_obj_t* mode_froid = nullptr;         // popup_btn_clim_cool
+    lv_obj_t* mode_chaud = nullptr;         // popup_btn_clim_heat
+    lv_obj_t* mode_sec = nullptr;           // popup_btn_clim_dry
+    lv_obj_t* mode_ventilation = nullptr;   // popup_btn_clim_fan
+    // Carte OPTIONS (positions absolues, recalculées : les sections s'empilent).
+    lv_obj_t* titre_presets = nullptr;      // clim_titre_presets
+    lv_obj_t* rangee_presets = nullptr;     // clim_rangee_presets (rangée flex Éco / Boost)
+    lv_obj_t* eco = nullptr;                // popup_btn_clim_eco
+    lv_obj_t* boost = nullptr;              // popup_btn_clim_boost
+    lv_obj_t* titre_ventilation = nullptr;  // clim_titre_ventilation
+    lv_obj_t* silence = nullptr;            // popup_btn_clim_quiet
+    lv_obj_t* titre_flux = nullptr;         // clim_titre_flux
+    lv_obj_t* oscillation = nullptr;        // popup_btn_clim_swing
+    lv_obj_t* brise = nullptr;              // popup_btn_clim_windnice
+};
+extern ClimUI g_clim_ui;
+
+// Boutons − / + (carte et popup) : un pas de plus (sens > 0) ou de moins, borné aux
+// limites de l'appareil. NaN reste NaN (consigne inconnue).
+float clim_consigne_suivante(float t, int sens);
+// Consigne envoyée à HA (script tab5_debounce_clim_temp) : deux décimales au plus, sans
+// zéro final (« 21.5 », « 72 », « 21.25 ») ; le blueprint la relit en nombre.
+std::string clim_consigne_texte(float t);
+
+// Bascules du popup et coloration (tab5_clim_recolor) : un mode « actif » sous tous
+// les noms que lui donnent les appareils, les mêmes que les listes du blueprint
+// (clim_eco, clim_silence, clim_oscillation ; tests/test_clim.py compare). La bascule
+// envoie alors none / auto / stop, sinon away / quiet / swing : le blueprint traduit
+// vers le mode que l'appareil connaît.
+bool clim_eco_actif(const std::string& preset);
+bool clim_silence_actif(const std::string& fan);
+bool clim_oscillation_actif(const std::string& swing);
+// Bouton de préréglage `bouton` (away = Éco, boost) : actif sur ce préréglage.
+bool clim_preset_actif(const std::string& preset, const char* bouton);
 
 // Tap tuile météo : affiche le planning/horaires du jour dans la carte centrale (6s).
 // tuile = position 0-4 sur le calque journalier ; le jour (0-14) se déduit de
@@ -703,6 +758,10 @@ enum class Zone : uint8_t {
     POT_1, POT_2, POT_3, POT_4, POT_5,
     // Décidées par HA seul (entités du package, pas de la tablette).
     CLIM, VOLET, PLANNING,
+    // Pipeline de discussion (29/09/2026) : absente quand la liste « Tab5 · pipeline de
+    // discussion » vaut « Aucun » ; masque les boutons Domo / Discu. Toute nouvelle zone
+    // s'ajoute ICI, à la fin : les bits sont gardés en NVS dans cet ordre.
+    DISCUSSION,
     COUNT
 };
 constexpr int kZonesSuivies = static_cast<int>(Zone::CLIM);
@@ -726,6 +785,13 @@ struct ZonesUI {
     lv_obj_t* pots_row = nullptr;      // rangée des pots de l'accueil
     lv_obj_t* pots_zone = nullptr;     // sa zone d'appui long
     lv_obj_t* pot_card[5] = {};        // cartes du popup « Mes Plantes »
+    // Mode vocal Domotique / Discussion (zone DISCUSSION) : boutons de l'accueil, du
+    // popup assistant, et le titre « Cerveau / LLM » de ce dernier.
+    lv_obj_t* btn_domo = nullptr;          // btn_mode_domo
+    lv_obj_t* btn_discu = nullptr;         // btn_mode_discu
+    lv_obj_t* assist_domo = nullptr;       // btn_assist_pipe_domo
+    lv_obj_t* assist_discu = nullptr;      // btn_assist_pipe_discu
+    lv_obj_t* assist_cerveau = nullptr;    // lbl_assist_cerveau
 };
 extern ZonesUI g_zones_ui;
 

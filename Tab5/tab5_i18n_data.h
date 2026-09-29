@@ -8,9 +8,10 @@
 static const uint8_t kI18nLangCount = 6;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it"};
-static const uint16_t kI18nKeyCount = 949;
+static const uint16_t kI18nKeyCount = 950;
 
 static const char* const kI18nCtx[] = {
+    "",
     "",
     "",
     "",
@@ -1197,6 +1198,7 @@ static const char* const kI18nKeys[] = {
     "Classement local : %u Elo   ·   %u parties contre le Tab",
     "Classement local : %u Elo   ·   %u parties jouées",
     "Classique",
+    "Climatisation",
     "Climatisation Salon",
     "Coffre : %d âmes",
     "Coffre : %s !",
@@ -2150,6 +2152,7 @@ static const char* const kI18n_en[] = {
     "Local rating: %u Elo   ·   %u games vs Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Local rating: %u Elo   ·   %u games played",  // "Classement local : %u Elo   ·   %u parties jouées"
     "Classic",  // "Classique"
+    "Air conditioning",  // "Climatisation"
     "Living room AC",  // "Climatisation Salon"
     "Chest: %d souls",  // "Coffre : %d âmes"
     "Chest: %s!",  // "Coffre : %s !"
@@ -3103,6 +3106,7 @@ static const char* const kI18n_de[] = {
     "Lokale Wertung: %u Elo   ·   %u Partien gegen den Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Lokale Wertung: %u Elo   ·   %u Partien gespielt",  // "Classement local : %u Elo   ·   %u parties jouées"
     "Klassisch",  // "Classique"
+    "Klimaanlage",  // "Climatisation"
     "Klima Wohnzimmer",  // "Climatisation Salon"
     "Truhe: %d Seelen",  // "Coffre : %d âmes"
     "Truhe: %s!",  // "Coffre : %s !"
@@ -4056,6 +4060,7 @@ static const char* const kI18n_nl[] = {
     "Lokale rating: %u Elo   ·   %u partijen tegen de Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Lokale rating: %u Elo   ·   %u partijen gespeeld",  // "Classement local : %u Elo   ·   %u parties jouées"
     "Klassiek",  // "Classique"
+    "Airco",  // "Climatisation"
     "Airco woonkamer",  // "Climatisation Salon"
     "Kist: %d zielen",  // "Coffre : %d âmes"
     "Kist: %s!",  // "Coffre : %s !"
@@ -5009,6 +5014,7 @@ static const char* const kI18n_es[] = {
     "Clasificación local: %u Elo   ·   %u partidas contra el Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Clasificación local: %u Elo   ·   %u partidas jugadas",  // "Classement local : %u Elo   ·   %u parties jouées"
     "Clásico",  // "Classique"
+    "Climatización",  // "Climatisation"
     "Climatización salón",  // "Climatisation Salon"
     "Cofre: %d almas",  // "Coffre : %d âmes"
     "¡Cofre: %s!",  // "Coffre : %s !"
@@ -5962,6 +5968,7 @@ static const char* const kI18n_it[] = {
     "Punteggio locale: %u Elo   ·   %u partite contro il Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Punteggio locale: %u Elo   ·   %u partite giocate",  // "Classement local : %u Elo   ·   %u parties jouées"
     "Classica",  // "Classique"
+    "Climatizzatore",  // "Climatisation"
     "Clima soggiorno",  // "Climatisation Salon"
     "Scrigno: %d anime",  // "Coffre : %d âmes"
     "Scrigno: %s!",  // "Coffre : %s !"

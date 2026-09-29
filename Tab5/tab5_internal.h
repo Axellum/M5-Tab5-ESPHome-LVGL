@@ -118,6 +118,18 @@ bool tuiles_titre_piece(std::string& chapeau, std::string& titre);
 // tab5_central.cpp (handle_swipe_gesture en mode HA) : pièce suivante ou précédente
 // qui a des appareils, dans l'ordre des pages météo ; une seule pièce : rien.
 void tuiles_swipe_ha(bool gauche);
+// Texte venu de HA, mêmes règles que les noms des tuiles (tab5_cards.cpp : titre du popup
+// clim, ADR-0026). texte_ha_copier : UTF-8 valide, sans les caractères que les polices
+// n'ont pas, coupé sur une frontière de caractère (`cap` octets, zéro final compris).
+// texte_ha_coupe : une ligne, coupée avec « … » au-delà de `largeur` px (60 octets au plus).
+void texte_ha_copier(char* dst, size_t cap, const char* src, size_t n);
+void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur);
+
+// --- Clim (tab5_cards.cpp, ADR-0026) ---
+// emplacements_appliquer (tab5_zones.cpp) : entrée « climr|min|max|pas|unité|capacités|nom »
+// (`reste` = ce qui suit « climr| »). Range les réglages et les applique aux widgets de
+// g_clim_ui.
+void clim_reglages_recu(const char* reste, size_t n);
 
 // --- tab5_central.cpp, pour les pièces ---
 // Page atteinte par un swipe depuis `page` (bouclage volontaire, [AI-WARNING] de

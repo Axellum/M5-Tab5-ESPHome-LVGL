@@ -281,6 +281,7 @@ The five tiles at the bottom of the screen are **rooms** you fill yourself ([ADR
 | Plants (0 to 5) | Pot 1 to 5: the moisture sensor; conductivity, light, temperature and battery are taken from the same device | Up to 4 plants: one slot each; 5: the « driest / median / wettest » summary. Popup cards, re-centred |
 | Climate | Climatisation | − / setpoint / + and the popup |
 | Work planning | Agenda de travail | Planning panel of the central card |
+| Voice « Discussion » mode | none: the list « Tab5 · pipeline de discussion » set to « Aucun » (without the list, the zone stays) | Domo / Discu buttons of the home page and of the assistant popup; the tablet goes back to Domo |
 | Lights (3.x setup) | Lumière 1 to 3 | Icons of tiles 3 to 5, card of the « HA » layer, light-popup selector, « Tout éteindre » |
 | PC (3.x setup) | PC (a switch turns it on; a presence tracker only shows it) | Status icon, « PC Bureau » card; the first tile too if there is no TV either |
 | Shutter (3.x setup) | Volet (and the optional `volet_serre_tracking.yaml` package, `tab5_optionnel/` of the archive, for a shutter that doesn't report its travel) | Icons of tile 2, card of the « HA » layer |
@@ -291,6 +292,7 @@ Limits:
 - **Icons**: the screen holds a limited palette ([tile icons](tiles_icons.md)). An icon outside it shows the default of its kind; adding one means a line in `Tab5/tuiles_icones.yaml` and a new release.
 - **Names**: the screen's fonts cover Latin alphabets only; other characters are dropped, and long names are cut.
 - **Renaming an entity**: its tile follows at the tablet's next connection, or as soon as the automation is saved again.
+- **Climate** ([ADR-0026](decisions/0026-climate-from-device.md)): any brand. The blueprint sends the unit's bounds, step, unit (°C or °F, that of your weather entity) and modes; the popup takes its name as title, and a button the unit cannot do disappears. The screen has buttons for cool, heat, dry, fan and off, Éco, Boost, Silence, Oscillation and Brise only: other modes (heat/cool, auto, fan speeds, sleep…) stay in Home Assistant (a unit in heat/cool or auto lights no mode button). With a blueprint older than the firmware, the popup stays as before (16-30 °C, steps of 0.5, every button).
 - **A shutter followed by `volet_serre_tracking.yaml`** (it doesn't report its travel): keep it in the « Volet » input of the 3.x section too, even if it is in a room; its tile then shows the state the package keeps, and its commands go through the package's script.
 - **One calendar per role**: work, appointments, birthdays, public holidays and school holidays are the five « Tab5 · agenda … » lists.
 - **Spoken morning briefing**: in the screen's language (French, English, German, Dutch, Spanish, Italian); only the French text has been reviewed.
@@ -579,6 +581,7 @@ Les cinq tuiles du bas de l'écran sont des **pièces** que vous remplissez vous
 | Pots (0 à 5) | Pot 1 à 5 : le capteur d'humidité ; conductivité, éclairement, température et batterie sont pris sur le même appareil | Jusqu'à 4 pots : un emplacement chacun ; à 5 : le résumé « plus secs / médiane / plus humide ». Cartes du popup, recentrées |
 | Clim | Climatisation | − / consigne / + et le popup |
 | Planning de travail | Agenda de travail | Panneau planning de la carte centrale |
+| Mode vocal « Discussion » | aucune : la liste « Tab5 · pipeline de discussion » à « Aucun » (sans la liste, la zone reste) | Boutons Domo / Discu de l'accueil et du popup assistant ; la tablette repasse en Domo |
 | Lumières (réglage 3.x) | Lumière 1 à 3 | Icônes des tuiles 3 à 5, carte du calque « HA », sélecteur du popup lumière, « Tout éteindre » |
 | PC (réglage 3.x) | PC (un interrupteur l'allume ; un suivi de présence l'affiche seulement) | Icône d'état, carte « PC Bureau » ; la première tuile aussi s'il n'y a pas non plus de TV |
 | Volet (réglage 3.x) | Volet (et le package optionnel `volet_serre_tracking.yaml`, `tab5_optionnel/` de l'archive, pour un volet qui ne signale pas sa course) | Icônes de la tuile 2, carte du calque « HA » |
@@ -589,6 +592,7 @@ Limites :
 - **Icônes** : l'écran en connaît une palette limitée ([icônes des tuiles](tiles_icons.md#version-française)). Une icône hors palette montre celle de son genre ; en ajouter une demande une ligne dans `Tab5/tuiles_icones.yaml` et une nouvelle version.
 - **Noms** : les polices de l'écran ne couvrent que les alphabets latins ; les autres caractères disparaissent, et un nom trop long est coupé.
 - **Renommer une entité** : sa tuile suit à la prochaine connexion de la tablette, ou dès que l'automatisation est de nouveau enregistrée.
+- **Clim** ([ADR-0026](decisions/0026-climate-from-device.md)) : toutes marques. Le blueprint envoie les bornes, le pas, l'unité (°C ou °F, celle de votre entité météo) et les modes de l'appareil ; le popup prend son nom pour titre, et un bouton que l'appareil ne sait pas faire disparaît. L'écran n'a de boutons que pour froid, chaud, sec, ventilation et arrêt, Éco, Boost, Silence, Oscillation et Brise : les autres modes (chaud/froid, auto, vitesses de ventilation, nuit…) restent dans Home Assistant (un appareil en chaud/froid ou auto n'allume aucun bouton de mode). Avec un blueprint plus ancien que le firmware, le popup reste comme avant (16-30 °C, pas de 0,5, tous les boutons).
 - **Un volet suivi par `volet_serre_tracking.yaml`** (il ne signale pas sa course) : laissez-le aussi dans l'entrée « Volet » de la section 3.x, même s'il est dans une pièce ; sa tuile montre alors l'état que tient le package, et ses commandes passent par le script du package.
 - **Un agenda par rôle** : travail, rendez-vous, anniversaires, jours fériés et vacances scolaires sont les cinq listes « Tab5 · agenda … ».
 - **Briefing parlé du matin** : dans la langue de l'écran (français, anglais, allemand, néerlandais, espagnol, italien) ; seul le texte français a été relu.

@@ -193,8 +193,9 @@ TUILES_DETAILS = {
     "t22": {"options": "dck", "nom": "Bureau / CI, test", "icone": "mdi:led-strip-variant"},
 }
 # Texte du capteur « Zones masquées » attendu (zones_texte_masquees(), tab5_zones.cpp :
-# ordre de kCles, séparateur « , »).
-ZONES_ABSENTES = "pot_4, pot_5"
+# ordre de kCles, séparateur « , »). « discussion » : un HA neuf n'a choisi aucun pipeline
+# de discussion (« Tab5 · pipeline de discussion » = « Aucun », ADR-0026).
+ZONES_ABSENTES = "pot_4, pot_5, discussion"
 ZONES_ENTITE = f"sensor.{PREFIXE_ENTITES}_zones_masquees"
 
 # Automatisations dont les traces doivent être « finished » sans erreur après une

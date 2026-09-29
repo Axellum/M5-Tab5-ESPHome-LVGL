@@ -3,14 +3,16 @@
  * @file tab5_zones.cpp
  * @role Zones optionnelles (lot 5 de l'audit « ouverture », 27/09/2026) : quelles zones
  *       de l'écran masquer, et le masquage lui-même. Et, depuis le lot 6a (ADR-0019),
- *       emplacements_appliquer() : les valeurs des emplacements poussées par HA. Contrat et raisons dans
+ *       emplacements_appliquer() : les valeurs des emplacements poussées par HA (les tuiles
+ *       « tRT » et les réglages de la clim « climr », ADR-0026, d'abord). Contrat et raisons dans
  *       tab5_custom.h (« Zones optionnelles ») ; échanges avec HA dans tab5-zones.yaml.
  * @architecture_constraint Rien ne disparaît sans réponse de HA : la tablette seule ne
  *       sait pas distinguer une entité absente d'une entité pas encore transmise. Une
  *       donnée reçue fait toujours réapparaître sa zone (zone_vue), même si HA l'a
  *       déclarée absente.
- * @ai_instruction Une zone de plus : valeur dans l'enum Zone (tab5_custom.h), clé dans
- *       kCles ci-dessous (même ordre), puis ses widgets dans zones_apply_ui(). Les clés
+ * @ai_instruction Une zone de plus : valeur À LA FIN de l'enum Zone (tab5_custom.h : les
+ *       bits des zones absentes sont gardés en NVS dans cet ordre), clé à la fin de kCles
+ *       ci-dessous (même ordre), puis ses widgets dans zones_apply_ui(). Les clés
  *       sont lues par HA (package tab5_push.yaml) : ne jamais les traduire ni les renommer
  *       sans le package. tests/test_zones.py vérifie qu'elles concordent.
  */
@@ -29,8 +31,12 @@ constexpr int kNbZones = static_cast<int>(Zone::COUNT);
 // l'ordre de l'enum Zone.
 constexpr const char* kCles[kNbZones] = {
     "lumiere_1", "lumiere_2", "lumiere_3", "pc", "tv", "telephone", "salon", "serre",
-    "pot_1", "pot_2", "pot_3", "pot_4", "pot_5", "clim", "volet", "planning",
+    "pot_1", "pot_2", "pot_3", "pot_4", "pot_5", "clim", "volet", "planning", "discussion",
 };
+
+// Réglages de la clim dans tab5_maj_emplacements (ADR-0026) : « climr|min|max|pas|unité|
+// capacités|nom ». Lue par le blueprint : ne pas la renommer sans lui (tests/test_clim.py).
+constexpr char kCleClimReglages[] = "climr";
 
 constexpr uint32_t kMagic = 0x5A4F4E31;    // « ZON1 »
 constexpr uint32_t kPrefKey = 0x7A6F6E65;  // « zone »
@@ -155,6 +161,14 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
             debut = fin + 1;
             continue;
         }
+        // Réglages de la clim (ADR-0026), eux aussi avant la table 3.x, qui les ignorerait.
+        if (p1 != std::string::npos && p1 < fin && p1 - debut == sizeof(kCleClimReglages) - 1 &&
+            payload.compare(debut, p1 - debut, kCleClimReglages) == 0) {
+            clim_reglages_recu(payload.data() + p1 + 1, fin - p1 - 1);
+            appliquees++;
+            debut = fin + 1;
+            continue;
+        }
         if (p1 != std::string::npos && p1 < fin) {
             const size_t p2 = payload.find('|', p1 + 1);
             const bool trois = (p2 != std::string::npos && p2 < fin);
@@ -254,6 +268,13 @@ void zones_apply_ui() {
 
     // Planning : hors du rotateur de la carte centrale sans agenda de travail.
     central_planning_set_off(zone_absente(Zone::PLANNING));
+
+    // Mode vocal : sans pipeline de discussion (« Aucun » dans HA), plus de choix entre
+    // Domotique et Discussion — les deux boutons de l'accueil et ceux du popup assistant,
+    // avec leur titre. Le retour au mode Domotique est fait par tab5_zones_apply.
+    const bool sans_discussion = zone_absente(Zone::DISCUSSION);
+    for (lv_obj_t* o : {u.btn_domo, u.btn_discu, u.assist_domo, u.assist_discu, u.assist_cerveau})
+        ui_hidden(o, sans_discussion);
 
     // Pièces et tuiles (ADR-0023) : en mode héritage, leurs tuiles suivent ces zones ;
     // bouton « HA », cartes et titre de la pièce.

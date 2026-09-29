@@ -1,12 +1,13 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_cards.cpp
- * @role Cartes domotique : cible
- *       clim optimiste, tri dynamique des 5 plantes vers 4 slots, popup détails pots
- *       (EC / lux / température / batterie), température colorée.
+ * @role Cartes domotique : clim (cible optimiste et retour de HA, réglages venus de
+ *       l'appareil — clé « climr », ADR-0026), tri dynamique des 5 plantes vers 4 slots,
+ *       popup détails pots (EC / lux / température / batterie), température colorée.
  *       Unité de compilation issue de la scission de tab5_custom.cpp (lot (e) de
  *       l'audit du 06/09/2026, faite le 08/09/2026) : mêmes fonctions, même ordre,
- *       aucune logique modifiée.
+ *       aucune logique modifiée. update_clim_from_ha_ui() y est venue de
+ *       tab5_services.cpp le 29/09/2026 (ADR-0026) : tout l'affichage de la clim ici.
  * @regle_absolue Seul point de contact avec l'API LVGL, comme avant : les YAML
  *                n'appellent que des helpers déclarés dans tab5_custom.h. Les
  *                helpers partagés entre unités sont déclarés dans tab5_internal.h.
@@ -17,6 +18,8 @@
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <ctime>
 #include <cstring>
 #include <vector>
@@ -26,23 +29,277 @@
 // épaules des tuiles, cartes du mode HA, sélecteur des lumières de la pièce.
 
 // =============================================================================
-// Popup clim v2 : affichage optimiste de la cible (arc + boutons -/+)
+// Clim : réglages de l'appareil (ADR-0026), cible optimiste (arc + boutons -/+) et
+// retour de HA (tab5_maj_clim)
 // =============================================================================
+
+// ─── Réglages venus de l'appareil (ADR-0026) ─────────────────────────────────────
+// Clé « climr » de tab5_maj_emplacements : « climr|min|max|pas|unité|capacités|nom »,
+// poussée par le blueprint avant tab5_maj_clim (connexion, rechargement, changement de
+// la clim). Pas de NVS. Tant que rien n'est reçu, les valeurs par défaut ci-dessous
+// sont celles de la 3.2 (Daikin de l'auteur) et aucun widget n'est touché : un
+// blueprint plus ancien garde l'écran d'avant.
+namespace {
+
+struct ClimReglages {
+    float min = 16.0f;
+    float max = 30.0f;
+    float pas = 0.5f;
+    bool fahrenheit = false;
+    // Lettres des boutons que l'appareil gère (tableau de l'ADR-0026) : c froid, h chaud,
+    // d sec, f ventilation, e Éco, b Boost, q Silence, s Oscillation, w Brise.
+    char capacites[16] = "chdfebqsw";
+    char nom[49] = "";  // friendly_name de la clim, 48 octets au plus
+    bool recu = false;
+};
+ClimReglages s_clim;
+// Dernières valeurs affichées : reposées quand les réglages changent (bornes de l'arc,
+// format de la cible, unité de la pièce).
+float s_clim_consigne = NAN;
+float s_clim_piece = NAN;
+
+// Titre du popup : de x = 52 (modal_header.yaml) à la croix (80 px à 10 px du bord de la
+// carte de 1250), avec de l'air.
+constexpr int32_t kLargeurTitreClim = 1080;
+
+// Positions de la carte OPTIONS (climate_popup.yaml, tout affiché) : titre de section,
+// son contenu 26 px dessous ; rangée des préréglages 92 px, bouton 88 px, 10 px entre deux
+// boutons, 24 px entre deux sections.
+constexpr int32_t kOptionsY0 = 50;
+constexpr int32_t kOptionsSousTitre = 26;
+constexpr int32_t kOptionsRangee = 92;
+constexpr int32_t kOptionsBouton = 88;
+constexpr int32_t kOptionsEntreBoutons = 10;
+constexpr int32_t kOptionsEntreSections = 24;
+
+bool clim_capacite(char lettre) {
+    return lettre != '\0' && std::strchr(s_clim.capacites, lettre) != nullptr;
+}
+
+// Format de la cible : « %.1f » si le pas est fractionnaire (0,5), « %.0f » sinon (1 °F).
+bool clim_pas_entier() {
+    return std::fabs(s_clim.pas - std::round(s_clim.pas)) < 0.001f;
+}
+
+const char* clim_unite() {
+    return s_clim.fahrenheit ? "\xC2\xB0" "F" : "\xC2\xB0" "C";
+}
+
+// Consigne inconnue (capteur HA indisponible = NaN) : « -- », comme au boot — "%.1f"
+// écrirait « nan », sans glyphe dans roboto_55_b.
+void clim_format_consigne(char* buf, size_t n, float t) {
+    if (std::isnan(t)) snprintf(buf, n, "--");
+    else snprintf(buf, n, clim_pas_entier() ? "%.0f" : "%.1f", t);
+}
+
+// Nombre d'un champ (point décimal) ; `defaut` s'il est vide ou illisible.
+float lire_nombre(const char* p, size_t n, float defaut) {
+    char tmp[16];
+    if (n == 0 || n >= sizeof(tmp)) return defaut;
+    std::memcpy(tmp, p, n);
+    tmp[n] = '\0';
+    char* bout = nullptr;
+    const float v = strtof(tmp, &bout);
+    return (bout == tmp || std::isnan(v) || std::isinf(v)) ? defaut : v;
+}
+
+// Carte OPTIONS : les sections qui ont un bouton visible s'empilent depuis le haut, une
+// section sans bouton disparaît avec son titre. Dans la rangée flex des préréglages et
+// dans la pile des modes, LVGL saute les objets masqués : pas de trou.
+void clim_options_empiler() {
+    const ClimUI& u = g_clim_ui;
+    const bool eco = clim_capacite('e');
+    const bool boost = clim_capacite('b');
+    const bool silence = clim_capacite('q');
+    const bool oscillation = clim_capacite('s');
+    const bool brise = clim_capacite('w');
+    int32_t y = kOptionsY0;
+
+    const bool presets = eco || boost;
+    ui_hidden(u.eco, !eco);
+    ui_hidden(u.boost, !boost);
+    ui_hidden(u.titre_presets, !presets);
+    ui_hidden(u.rangee_presets, !presets);
+    if (presets) {
+        ui_y(u.titre_presets, y);
+        ui_y(u.rangee_presets, y + kOptionsSousTitre);
+        y += kOptionsSousTitre + kOptionsRangee + kOptionsEntreSections;
+    }
+
+    ui_hidden(u.silence, !silence);
+    ui_hidden(u.titre_ventilation, !silence);
+    if (silence) {
+        ui_y(u.titre_ventilation, y);
+        ui_y(u.silence, y + kOptionsSousTitre);
+        y += kOptionsSousTitre + kOptionsBouton + kOptionsEntreSections;
+    }
+
+    const bool flux = oscillation || brise;
+    ui_hidden(u.oscillation, !oscillation);
+    ui_hidden(u.brise, !brise);
+    ui_hidden(u.titre_flux, !flux);
+    if (flux) {
+        ui_y(u.titre_flux, y);
+        int32_t yb = y + kOptionsSousTitre;
+        if (oscillation) {
+            ui_y(u.oscillation, yb);
+            yb += kOptionsBouton + kOptionsEntreBoutons;
+        }
+        if (brise) ui_y(u.brise, yb);
+    }
+}
+
+void clim_reglages_appliquer_ui() {
+    if (!s_clim.recu) return;
+    const ClimUI& u = g_clim_ui;
+
+    // Arc : bornes entières qui englobent celles de l'appareil, puis la consigne de
+    // nouveau (lv_arc_set_range la ramène dans les anciennes bornes ; aucun des deux
+    // n'émet LV_EVENT_VALUE_CHANGED, donc pas de on_value ni d'envoi à HA).
+    if (u.arc != nullptr) {
+        const int32_t bas = static_cast<int32_t>(std::floor(s_clim.min));
+        const int32_t haut = static_cast<int32_t>(std::ceil(s_clim.max));
+        if (lv_arc_get_min_value(u.arc) != bas || lv_arc_get_max_value(u.arc) != haut)
+            lv_arc_set_range(u.arc, bas, haut);
+        if (!std::isnan(s_clim_consigne)) lv_arc_set_value(u.arc, static_cast<int32_t>(s_clim_consigne));
+    }
+
+    // Cible (format du pas) et températures (unité). Consigne pas encore reçue : les
+    // labels gardent leur texte de démarrage (tab5_maj_clim suit juste après).
+    if (!std::isnan(s_clim_consigne)) {
+        char buf[16];
+        clim_format_consigne(buf, sizeof(buf), s_clim_consigne);
+        ui_text(u.consigne_carte, buf);
+        ui_text(u.consigne_popup, buf);
+    }
+    ui_text(u.unite, clim_unite());
+    if (!std::isnan(s_clim_piece) && u.piece != nullptr) {
+        char piece[20];
+        snprintf(piece, sizeof(piece), "%.1f %s", s_clim_piece, clim_unite());
+        ui_text(u.piece, piece);
+    }
+
+    // Titre : le nom de la clim dans HA ; sans nom, « Climatisation ».
+    texte_ha_coupe(u.titre, s_clim.nom[0] != '\0' ? s_clim.nom : tr("Climatisation"), kLargeurTitreClim);
+
+    // Carte MODE : les modes que l'appareil n'a pas disparaissent (« Éteint » reste).
+    ui_hidden(u.mode_froid, !clim_capacite('c'));
+    ui_hidden(u.mode_chaud, !clim_capacite('h'));
+    ui_hidden(u.mode_sec, !clim_capacite('d'));
+    ui_hidden(u.mode_ventilation, !clim_capacite('f'));
+
+    clim_options_empiler();
+}
+
+}  // namespace
+
+ClimUI g_clim_ui;
+
+void clim_reglages_recu(const char* reste, size_t n) {
+    // Six champs : min, max, pas, unité, capacités, puis le nom (tout le reste : le
+    // blueprint y a remplacé « | » par « / »).
+    const char* champ[6] = {};
+    size_t taille[6] = {};
+    int k = 0;
+    size_t debut = 0;
+    for (size_t i = 0; i <= n && k < 6; i++) {
+        if (i == n || (reste[i] == '|' && k < 5)) {
+            champ[k] = reste + debut;
+            taille[k] = i - debut;
+            k++;
+            debut = i + 1;
+        }
+    }
+    if (k < 5) {
+        ESP_LOGW("tab5.clim", "Reglages de la clim illisibles (%d champs) : ignores", k);
+        return;
+    }
+    const float mn = lire_nombre(champ[0], taille[0], s_clim.min);
+    const float mx = lire_nombre(champ[1], taille[1], s_clim.max);
+    if (mn < mx) {
+        s_clim.min = mn;
+        s_clim.max = mx;
+    }
+    const float pas = lire_nombre(champ[2], taille[2], s_clim.pas);
+    if (pas > 0.0f && pas <= 10.0f) s_clim.pas = pas;
+    // « °F » ou « °C » (UTF-8) : la dernière lettre suffit.
+    s_clim.fahrenheit = taille[3] > 0 && champ[3][taille[3] - 1] == 'F';
+    size_t j = 0;
+    for (size_t i = 0; i < taille[4] && j + 1 < sizeof(s_clim.capacites); i++)
+        if (champ[4][i] >= 'a' && champ[4][i] <= 'z') s_clim.capacites[j++] = champ[4][i];
+    s_clim.capacites[j] = '\0';
+    if (k == 6) texte_ha_copier(s_clim.nom, sizeof(s_clim.nom), champ[5], taille[5]);
+    else s_clim.nom[0] = '\0';
+    s_clim.recu = true;
+    ESP_LOGI("tab5.clim", "Reglages de la clim : %.1f-%.1f, pas %.2f, %s, [%s]",
+             s_clim.min, s_clim.max, s_clim.pas, s_clim.fahrenheit ? "F" : "C", s_clim.capacites);
+    clim_reglages_appliquer_ui();
+}
+
+float clim_consigne_suivante(float t, int sens) {
+    float v = t + (sens < 0 ? -s_clim.pas : s_clim.pas);
+    if (v < s_clim.min) v = s_clim.min;
+    if (v > s_clim.max) v = s_clim.max;
+    return v;
+}
+
+std::string clim_consigne_texte(float t) {
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%.2f", t);
+    // « 21.50 » → « 21.5 », « 72.00 » → « 72 » (« nan » reste « nan »).
+    if (std::strchr(buf, '.') != nullptr) {
+        size_t n = std::strlen(buf);
+        while (n > 0 && buf[n - 1] == '0') buf[--n] = '\0';
+        if (n > 0 && buf[n - 1] == '.') buf[--n] = '\0';
+    }
+    return std::string(buf);
+}
+
+bool clim_eco_actif(const std::string& preset) {
+    return preset == "eco" || preset == "away";
+}
+
+bool clim_silence_actif(const std::string& fan) {
+    return fan == "quiet" || fan == "silence" || fan == "Silence" || fan == "low";
+}
+
+bool clim_oscillation_actif(const std::string& swing) {
+    return swing == "swing" || swing == "on" || swing == "both" || swing == "vertical" ||
+           swing == "3d" || swing == "horizontal";
+}
+
+bool clim_preset_actif(const std::string& preset, const char* bouton) {
+    return std::strcmp(bouton, "away") == 0 ? clim_eco_actif(preset) : preset == bouton;
+}
+
+// ─── Cible et températures ───────────────────────────────────────────────────────
 
 // arc peut etre nullptr : la carte clim de l'accueil (climate_card.yaml) a le label
 // cible mais pas d'arc — on met a jour le label sans toucher a l'arc dans ce cas.
-// Consigne inconnue (capteur HA indisponible = NaN) : « -- », comme au boot, et
-// l'arc reste où il est — "%.1f" écrirait « nan », sans glyphe dans roboto_55_b.
+// Consigne inconnue : « -- », et l'arc reste où il est.
 void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target) {
     if (lbl_target == nullptr) return;
-    if (std::isnan(target)) {
-        ui_text(lbl_target, "--");
-        return;
-    }
-    char buf[8];
-    snprintf(buf, sizeof(buf), "%.1f", target);
+    s_clim_consigne = target;
+    char buf[16];
+    clim_format_consigne(buf, sizeof(buf), target);
     ui_text(lbl_target, buf);
+    if (std::isnan(target)) return;
     if (arc != nullptr) lv_arc_set_value(arc, (int) target);
+}
+
+void update_clim_from_ha_ui(lv_obj_t* lbl_target, lv_obj_t* lbl_target_popup, lv_obj_t* arc,
+    lv_obj_t* lbl_current, float target, float current) {
+    s_clim_consigne = target;
+    s_clim_piece = current;
+    const bool known = !std::isnan(target);
+    char buf_target[16];
+    clim_format_consigne(buf_target, sizeof(buf_target), target);
+    if (lbl_target != nullptr)       lv_label_set_text(lbl_target, buf_target);
+    if (lbl_target_popup != nullptr) lv_label_set_text(lbl_target_popup, buf_target);
+    if (arc != nullptr && known)     lv_arc_set_value(arc, (int)target);
+    char buf_curr[20];
+    snprintf(buf_curr, sizeof(buf_curr), "%.1f %s", current, clim_unite());
+    if (lbl_current != nullptr) lv_label_set_text(lbl_current, buf_curr);
 }
 
 // =============================================================================

@@ -167,6 +167,13 @@ def test_entrees_du_blueprint_et_zones_attendues():
     # n'est pas choisie. Nom de l'entrée → clé de zone.
     vers_zone = {"salon_temperature": "salon", "serre_temperature": "serre", "agenda_travail": "planning"}
     presentes = {vers_zone.get(e, e) for e in choisies}
+    # « discussion » n'est pas une entrée (29/09/2026) : absente quand la liste « Tab5 ·
+    # pipeline de discussion » vaut « Aucun », présente sans cette liste. Tant qu'aucun
+    # package ne la définit, le HA neuf du job ne l'a pas : la zone reste. Une fois la
+    # liste livrée, un HA neuf n'a choisi aucun pipeline (« Aucun ») : ZONES_ABSENTES de
+    # verifier_installation.py doit alors finir par « discussion ».
+    if "select.tab5_pipeline_de_discussion" not in _definies():
+        presentes.add("discussion")
     kcles = re.search(r"kCles\[kNbZones\] = \{(.*?)\};", _lire("Tab5", "tab5_zones.cpp"), re.S).group(1)
     ordre = re.findall(r'"(\w+)"', kcles)
     assert ordre == blueprint["variables"]["cles_zones"]

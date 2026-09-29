@@ -118,6 +118,13 @@ class Etats:
     def __getitem__(self, entity_id):
         return self.d.get(entity_id)
 
+    def __getattr__(self, domaine):
+        """`states.weather` : les états d'un domaine (le blueprint y cherche l'unité de
+        température, clé climr de l'ADR-0026)."""
+        if domaine.startswith("_") or domaine == "d":
+            raise AttributeError(domaine)
+        return [e for e in self.d.values() if e.entity_id.split(".")[0] == domaine]
+
     def attr(self, entity_id, nom):
         e = self.d.get(entity_id)
         return e.attributes.get(nom) if e else None

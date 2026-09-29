@@ -167,15 +167,15 @@ api:
               - script.execute: tab5_stop_model_release
 
     - service: tab5_maj_clim
-      description: "État de la climatisation du salon : carte d'accueil et popup."
+      description: "État de la climatisation : carte d'accueil et popup. Ses bornes, son pas, son unité et ses boutons arrivent juste avant, par la clé climr de tab5_maj_emplacements."
       variables:
         target:
           type: string
-          description: "Consigne en degrés Celsius."
+          description: "Consigne, dans l'unité de température de Home Assistant (°C ou °F)."
           example: "21.5"
         current:
           type: string
-          description: "Température mesurée par la climatisation, en degrés Celsius."
+          description: "Température mesurée par la climatisation, dans l'unité de Home Assistant."
           example: "20.8"
         mode:
           type: string
@@ -525,7 +525,7 @@ api:
       variables:
         absentes:
           type: string
-          description: "Clés des zones absentes, séparées par des virgules : lumiere_1, lumiere_2, lumiere_3, pc, tv, telephone, salon, serre, pot_1 à pot_5, clim, volet, planning. Vide : tout est là."
+          description: "Clés des zones absentes, séparées par des virgules : lumiere_1, lumiere_2, lumiere_3, pc, tv, telephone, salon, serre, pot_1 à pot_5, clim, volet, planning, discussion (aucun pipeline de discussion : boutons Domo / Discu masqués). Vide : tout est là."
           example: "clim,pot_4,pot_5"
       then:
         - lambda: 'zones_reponse_ha(absentes);'
@@ -537,14 +537,15 @@ api:
     # tous à la connexion, un seul à chaque changement de son entité. La tablette ne
     # connaît plus d'entité ; chaque clé est publiée dans le capteur interne qui la
     # porte (tab5-sensors-domotique.yaml, pot_sensors.yaml), dont les on_value n'ont
-    # pas changé. Clé inconnue : ignorée. tests/test_emplacements.py compare cette
+    # pas changé. Clé inconnue : ignorée (c'est ce qui rend « climr », ADR-0026, sans
+    # risque pour un firmware plus ancien). tests/test_emplacements.py compare cette
     # table au blueprint.
     - service: tab5_maj_emplacements
       description: "Emplacements de la maison choisis dans le blueprint « Tab5 — emplacements » : état et valeur de chacun. Tous à la connexion, un seul à chaque changement."
       variables:
         payload:
           type: string
-          description: "« clé|état|valeur » séparés par ; — clés lumiere_1 à lumiere_3, pc, tv, telephone, salon, salon_hum, serre, pot_1 à pot_5 et pot_N_ec, _lux, _temp, _bat. État = état Home Assistant tel quel ; valeur = nombre affiché (luminosité 0-255, %, °C, µS/cm, lx), nan s'il n'y en a pas. Tuiles de pièce (ADR-0023, depuis 3.2.0) : « tRT|état|valeur|couleur », R pièce et T tuile de 0 à 4, valeur = luminosité 0-255, position 0-100, mesure ou température de la pièce (nan sinon), couleur = RRGGBB d'une lumière allumée, vide sinon."
+          description: "« clé|état|valeur » séparés par ; — clés lumiere_1 à lumiere_3, pc, tv, telephone, salon, salon_hum, serre, pot_1 à pot_5 et pot_N_ec, _lux, _temp, _bat. État = état Home Assistant tel quel ; valeur = nombre affiché (luminosité 0-255, %, °C, µS/cm, lx), nan s'il n'y en a pas. Tuiles de pièce (ADR-0023, depuis 3.2.0) : « tRT|état|valeur|couleur », R pièce et T tuile de 0 à 4, valeur = luminosité 0-255, position 0-100, mesure ou température de la pièce (nan sinon), couleur = RRGGBB d'une lumière allumée, vide sinon. Réglages de la clim (ADR-0026, avant tab5_maj_clim) : « climr|min|max|pas|unité|capacités|nom », nombres à point décimal, unité °C ou °F, capacités = lettres des boutons gérés parmi c, h, d, f (froid, chaud, sec, ventilation), e (Éco), b (Boost), q (Silence), s (Oscillation), w (Brise)."
           example: "lumiere_1|on|180;salon|21.4|21.4;t02|on|128|FFB347;t01|open|45|;"
       then:
         - lambda: |-
