@@ -59,7 +59,7 @@ input_text:
   # IP ou nom de la TV, tapé dans HA (Paramètres → Appareils et services →
   # Entrées, ou sur un tableau de bord). Le port 8001 est ajouté s'il manque.
   tab5_tv_adresse:
-    name: "Tab5 · adresse de la TV"
+    name: "Tab5 · adresse de la TV · TV address"
     icon: mdi:ip-network
     max: 100
   # Mémoire de la liste « Tab5 · TV Samsung » : écrite par la liste.
@@ -84,8 +84,9 @@ template:
       tvs: "{{ states.media_player | map(attribute='entity_id') | list }}"
       samsung: "{{ integration_entities('samsungtv') | select('match', 'media_player[.]') | list }}"
     select:
-      - name: "Tab5 · TV Samsung"
+      - name: "Tab5 · TV Samsung · Samsung TV"
         unique_id: tab5_tv_samsung
+        default_entity_id: select.tab5_tv_samsung
         icon: mdi:television
         options: >-
           {%- set m = states('input_text.tab5_choix_tv') -%}

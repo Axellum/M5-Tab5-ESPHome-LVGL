@@ -14,6 +14,11 @@ redémarrer, puis choisir ses sources dans les listes « Tab5 · … » (docs/in
                                                      dans packages/ seulement au besoin)
     LISEZMOI-Tab5.txt                               (ces étapes, en français et en anglais)
 
+Version : la seule ligne des packages qui finit par le marqueur `# >>> version de l'archive`
+(capteur « Tab5 · version des fichiers HA », packages/tab5_health.yaml) prend la version de la
+release à la place de « dépôt » : HA compare ainsi ses fichiers au firmware de la tablette et
+prévient s'ils sont plus anciens (garde (f)). Un ancien tag, sans marqueur, s'archive tel quel.
+
 Contrôles : un fichier qui contient encore un placeholder (`VOTRE_…`, versions ≤ 3.1) ne
 s'installe pas tel quel → code de sortie 3 et rien n'est écrit (le workflow n'envoie
 alors pas d'archive, sans échouer : cas d'un ancien tag republié). L'archive est
@@ -44,6 +49,8 @@ CONTENU = (
 )
 LISEZMOI = "LISEZMOI-Tab5.txt"
 PLACEHOLDER = re.compile(r"VOTRE_[A-Z]")
+# Valeur de la version des fichiers (voir le docstring), remplacée par celle de la release.
+MARQUEUR_VERSION = re.compile(r"\"dépôt\"(?=  # >>> version de l'archive$)", re.M)
 # Date fixe des entrées (zip reproductible) : 1er janvier 2026.
 DATE = (2026, 1, 1, 0, 0, 0)
 
@@ -65,7 +72,7 @@ FRANÇAIS
    adresse). Ce qui n'est pas choisi reste simplement absent de l'écran.
 5. Vos appareils (lumières, clim, TV…) : Paramètres → Automatisations et scènes →
    Blueprints →
-   « Tab5 — emplacements de l'écran » → Créer une automatisation.
+   « Tab5 — emplacements de l'écran · screen slots » → Créer une automatisation.
 tab5_optionnel/ : un volet qui ne signale pas sa course ? Copiez
 volet_serre_tracking.yaml dans packages/, puis choisissez-le dans
 « Tab5 · volet à course simulée ». Sinon, ignorez ce dossier.
@@ -82,7 +89,7 @@ ENGLISH
    holidays, phone, presence sensor, Samsung TV (and its address). Anything left
    unset simply stays off the screen.
 5. Your devices (lights, climate, TV…): Settings → Automations & scenes →
-   Blueprints → "Tab5 — emplacements de l'écran" → Create automation.
+   Blueprints → "Tab5 — emplacements de l'écran · screen slots" → Create automation.
 tab5_optionnel/: a shutter that doesn't report its travel? Copy
 volet_serre_tracking.yaml into packages/, then pick it in
 "Tab5 · volet à course simulée". Otherwise ignore this folder.
@@ -117,7 +124,16 @@ def construire(version: str, sortie: Path, base: Path = HA_DIR) -> Path:
         raise SystemExit(f"{base} : aucun package")
     sortie.mkdir(parents=True, exist_ok=True)
     archive = sortie / NOM
-    entrees = [(chemin, source.read_bytes()) for source, chemin in liste]
+    entrees, marques = [], 0
+    for source, chemin in liste:
+        donnees = source.read_bytes()
+        if chemin.startswith("packages/"):
+            texte, n = MARQUEUR_VERSION.subn(f'"{version}"', donnees.decode("utf-8"))
+            if n:
+                donnees, marques = texte.encode("utf-8"), marques + n
+        entrees.append((chemin, donnees))
+    if marques > 1:
+        raise SystemExit(f"{marques} lignes portent la version des fichiers : une seule attendue")
     entrees.append((LISEZMOI, TEXTE_LISEZMOI.format(version=version).encode("utf-8")))
     with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as z:
         for chemin, donnees in entrees:

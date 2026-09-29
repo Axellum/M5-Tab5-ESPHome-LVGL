@@ -37,7 +37,10 @@
 #       marqueurs est écrit par tools/gen_tuiles_icones.py : ne pas l'éditer à la main.
 # ============================================================================
 blueprint:
-  name: "Tab5 — emplacements de l'écran"
+  # Libellés en deux langues, « français · english » (29/09/2026) : un blueprint n'a pas
+  # de traductions, et l'écran s'installe aussi hors de France. Les clés des entrées ne
+  # changent pas (des automatisations existantes les référencent).
+  name: "Tab5 — emplacements de l'écran · screen slots"
   description: >-
     Choisissez les appareils de l'écran du M5Stack Tab5. Firmware 3.2 et plus : jusqu'à
     cinq pièces de cinq appareils, une par page de la rangée du bas (l'accueil, puis les
@@ -47,6 +50,15 @@ blueprint:
     automatisation par tablette. Les états sont poussés à la connexion et au démarrage de
     Home Assistant, puis à chaque changement visible ; les mesures (températures,
     humidités, plantes, batterie, capteurs des pièces) sont regroupées toutes les 5 minutes.
+
+
+    Pick the devices of the M5Stack Tab5 screen. Firmware 3.2 and later: up to five rooms
+    of five devices, one per page of the bottom row (the home page, then the pages a swipe
+    reaches); each tile's name, icon and kind come from Home Assistant. Firmware 3.0 and
+    3.1: the 3.x settings (folded section) still apply. An empty slot disappears from the
+    screen, with its buttons. One automation per tablet. States are pushed on connection
+    and when Home Assistant starts, then on every visible change; measurements
+    (temperatures, humidity, plants, battery, room sensors) are grouped every 5 minutes.
   domain: automation
   author: Axellum
   source_url: https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml
@@ -59,23 +71,37 @@ blueprint:
     # Pièce n ↔ page de la rangée du bas, dans l'ordre où un glissement les atteint
     # depuis l'accueil (ADR-0023) : R = n − 1.
     piece_1:
-      name: "Pièce 1 — accueil (aujourd'hui → J+4)"
+      name: "Pièce 1 — accueil (aujourd'hui → J+4) · Room 1 — home (today → day 4)"
       icon: mdi:home
       description: >-
         Les cinq tuiles de l'accueil (firmware 3.2 et plus). Laissée vide, elle reprend
         les réglages de la section « Tuiles de l'accueil (réglage 3.x) ».
+
+
+        The five tiles of the home page (firmware 3.2 and later). Left empty, it takes the
+        settings of the « Home tiles (3.x setup) » section.
       input:
         piece_1_nom:
-          name: Nom de la pièce
-          description: Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié l'a), sinon « Pièce 1 ».
+          name: Nom de la pièce · Room name
+          description: >-
+            Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié
+            l'a), sinon « Pièce 1 ».
+
+
+            Empty = the area of its devices, if they share one (and at least half have
+            it), else « Pièce 1 ».
           default: ""
           selector:
             text:
         piece_1_tuiles:
-          name: Appareils
+          name: Appareils · Devices
           description: >-
             Cinq au plus, dans l'ordre des tuiles (de gauche à droite). Lumières,
             interrupteurs, volets, lecteurs, scènes et scripts, capteurs, climatisation.
+
+
+            Five at most, in tile order (left to right). Lights, switches, covers, media
+            players, scenes and scripts, sensors, climate.
           default: []
           selector:
             entity:
@@ -105,20 +131,34 @@ blueprint:
                     - lock
                     - climate
     piece_2:
-      name: "Pièce 2 — J+5 → J+9"
+      name: "Pièce 2 — J+5 → J+9 · Room 2 — day 5 → 9"
       icon: mdi:home-outline
-      description: Un glissement vers la gauche depuis l'accueil.
+      description: >-
+        Un glissement vers la gauche depuis l'accueil.
+
+
+        One swipe left from the home page.
       collapsed: true
       input:
         piece_2_nom:
-          name: Nom de la pièce
-          description: Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié l'a), sinon « Pièce 2 ».
+          name: Nom de la pièce · Room name
+          description: >-
+            Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié
+            l'a), sinon « Pièce 2 ».
+
+
+            Empty = the area of its devices, if they share one (and at least half have
+            it), else « Pièce 2 ».
           default: ""
           selector:
             text:
         piece_2_tuiles:
-          name: Appareils
-          description: Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
+          name: Appareils · Devices
+          description: >-
+            Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
+
+
+            Five at most, in tile order (left to right).
           default: []
           selector:
             entity:
@@ -127,20 +167,34 @@ blueprint:
               filter:
                 - domain: *domaines_tuiles
     piece_3:
-      name: "Pièce 3 — J+10 → J+14"
+      name: "Pièce 3 — J+10 → J+14 · Room 3 — day 10 → 14"
       icon: mdi:home-outline
-      description: Deux glissements vers la gauche depuis l'accueil.
+      description: >-
+        Deux glissements vers la gauche depuis l'accueil.
+
+
+        Two swipes left from the home page.
       collapsed: true
       input:
         piece_3_nom:
-          name: Nom de la pièce
-          description: Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié l'a), sinon « Pièce 3 ».
+          name: Nom de la pièce · Room name
+          description: >-
+            Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié
+            l'a), sinon « Pièce 3 ».
+
+
+            Empty = the area of its devices, if they share one (and at least half have
+            it), else « Pièce 3 ».
           default: ""
           selector:
             text:
         piece_3_tuiles:
-          name: Appareils
-          description: Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
+          name: Appareils · Devices
+          description: >-
+            Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
+
+
+            Five at most, in tile order (left to right).
           default: []
           selector:
             entity:
@@ -149,20 +203,34 @@ blueprint:
               filter:
                 - domain: *domaines_tuiles
     piece_4:
-      name: "Pièce 4 — prochaines heures"
+      name: "Pièce 4 — prochaines heures · Room 4 — next hours"
       icon: mdi:home-outline
-      description: Un glissement vers la droite depuis l'accueil.
+      description: >-
+        Un glissement vers la droite depuis l'accueil.
+
+
+        One swipe right from the home page.
       collapsed: true
       input:
         piece_4_nom:
-          name: Nom de la pièce
-          description: Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié l'a), sinon « Pièce 4 ».
+          name: Nom de la pièce · Room name
+          description: >-
+            Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié
+            l'a), sinon « Pièce 4 ».
+
+
+            Empty = the area of its devices, if they share one (and at least half have
+            it), else « Pièce 4 ».
           default: ""
           selector:
             text:
         piece_4_tuiles:
-          name: Appareils
-          description: Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
+          name: Appareils · Devices
+          description: >-
+            Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
+
+
+            Five at most, in tile order (left to right).
           default: []
           selector:
             entity:
@@ -171,20 +239,34 @@ blueprint:
               filter:
                 - domain: *domaines_tuiles
     piece_5:
-      name: "Pièce 5 — heures suivantes"
+      name: "Pièce 5 — heures suivantes · Room 5 — later hours"
       icon: mdi:home-outline
-      description: Deux glissements vers la droite depuis l'accueil.
+      description: >-
+        Deux glissements vers la droite depuis l'accueil.
+
+
+        Two swipes right from the home page.
       collapsed: true
       input:
         piece_5_nom:
-          name: Nom de la pièce
-          description: Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié l'a), sinon « Pièce 5 ».
+          name: Nom de la pièce · Room name
+          description: >-
+            Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié
+            l'a), sinon « Pièce 5 ».
+
+
+            Empty = the area of its devices, if they share one (and at least half have
+            it), else « Pièce 5 ».
           default: ""
           selector:
             text:
         piece_5_tuiles:
-          name: Appareils
-          description: Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
+          name: Appareils · Devices
+          description: >-
+            Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
+
+
+            Five at most, in tile order (left to right).
           default: []
           selector:
             entity:
@@ -193,18 +275,26 @@ blueprint:
               filter:
                 - domain: *domaines_tuiles
     personnaliser:
-      name: Personnaliser des tuiles
+      name: Personnaliser des tuiles · Customise tiles
       icon: mdi:palette-outline
       description: >-
         Facultatif. Sans réglage, une tuile prend le nom de l'appareil (sans le nom de la
         pièce) et son icône dans Home Assistant.
+
+
+        Optional. Without it, a tile takes the device's name (without the room's name)
+        and its icon in Home Assistant.
       collapsed: true
       input:
         personnalisation:
-          name: Personnalisations
+          name: Personnalisations · Customisations
           description: >-
             Une ligne par appareil. L'icône doit être dans la palette de l'écran ; sinon,
             celle de son type. « Confirmer » : un second appui dans les 3 s envoie la commande.
+
+
+            One line per device. The icon must be in the screen's palette; otherwise, the
+            one of its kind. « Confirm »: a second tap within 3 s sends the command.
           default: []
           selector:
             object:
@@ -213,56 +303,67 @@ blueprint:
               description_field: nom
               fields:
                 entite:
-                  label: Appareil
+                  label: Appareil · Device
                   required: true
                   selector:
                     entity:
                       filter:
                         - domain: *domaines_tuiles
                 nom:
-                  label: Nom sur l'écran
+                  label: Nom sur l'écran · Name on the screen
                   selector:
                     text:
                 icone:
-                  label: Icône
+                  label: Icône · Icon
                   selector:
                     icon:
                 comportement:
-                  label: Comportement
+                  label: Comportement · Behaviour
                   selector:
                     select:
                       mode: dropdown
                       options:
                         - label: Normal
                           value: normal
-                        - label: Allumer seulement (jamais éteint depuis l'écran)
+                        - label: Allumer seulement (jamais éteint depuis l'écran) · On only (never switched off from the screen)
                           value: allumer_seulement
-                        - label: Confirmer (un second appui dans les 3 s)
+                        - label: Confirmer (un second appui dans les 3 s) · Confirm (a second tap within 3 s)
                           value: confirmer
-                        - label: Lecture seule (aucun appui)
+                        - label: Lecture seule (aucun appui) · Read only (no tap)
                           value: lecture_seule
     appareils:
-      name: TV, téléphone
+      name: TV, téléphone · TV, phone
       icon: mdi:television
       input:
         tv:
           name: TV
-          description: Le bouton « TV » ; placée dans une pièce, sa tuile ouvre la télécommande (appui long).
+          description: >-
+            Le bouton « TV » ; placée dans une pièce, sa tuile ouvre la télécommande (appui
+            long).
+
+
+            The « TV » button; placed in a room, its tile opens the remote (long press).
           default: []
           selector:
             entity:
               filter:
                 - domain: media_player
         tv_telecommande:
-          name: Télécommande de la TV
-          description: Pour les touches du popup TV. Les applications passent par le script tab5_tv_app, s'il existe.
+          name: Télécommande de la TV · TV remote
+          description: >-
+            Pour les touches du popup TV. Les applications passent par le script
+            tab5_tv_app, s'il existe.
+
+
+            For the keys of the TV popup. Apps go through the tab5_tv_app script, if it
+            exists.
           default: []
           selector:
             entity:
               filter:
                 - domain: remote
         telephone:
-          name: Batterie du téléphone
+          name: Batterie du téléphone · Phone battery
           default: []
           selector:
             entity:
@@ -270,11 +371,11 @@ blueprint:
                 - domain: sensor
                   device_class: battery
     temperatures:
-      name: Températures
+      name: Températures · Temperatures
       icon: mdi:thermometer
       input:
         salon_temperature:
-          name: Température de la pièce
+          name: Température de la pièce · Room temperature
           default: []
           selector:
             entity:
@@ -282,8 +383,12 @@ blueprint:
                 - domain: sensor
                   device_class: temperature
         salon_humidite:
-          name: Humidité de la pièce
-          description: Colore l'icône de la pièce.
+          name: Humidité de la pièce · Room humidity
+          description: >-
+            Colore l'icône de la pièce.
+
+
+            Colours the room's icon.
           default: []
           selector:
             entity:
@@ -291,8 +396,12 @@ blueprint:
                 - domain: sensor
                   device_class: humidity
         serre_temperature:
-          name: Seconde température (serre)
-          description: Sans elle, une manette ouvre l'arcade à sa place.
+          name: Seconde température (serre) · Second temperature (greenhouse)
+          description: >-
+            Sans elle, une manette ouvre l'arcade à sa place.
+
+
+            Without it, a gamepad opens the arcade in its place.
           default: []
           selector:
             entity:
@@ -300,23 +409,32 @@ blueprint:
                 - domain: sensor
                   device_class: temperature
     climatisation:
-      name: Climatisation
+      name: Climatisation · Climate
       icon: mdi:air-conditioner
       input:
         clim:
-          name: Climatisation
-          description: − / consigne / + et le popup ; placée dans une pièce, sa tuile ouvre aussi le popup.
+          name: Climatisation · Climate
+          description: >-
+            − / consigne / + et le popup ; placée dans une pièce, sa tuile ouvre aussi le
+            popup.
+
+
+            − / setpoint / + and the popup; placed in a room, its tile opens the popup too.
           default: []
           selector:
             entity:
               filter:
                 - domain: climate
     plantes:
-      name: Plantes
+      name: Plantes · Plants
       icon: mdi:sprout
       description: >-
         Le capteur d'humidité de chaque pot. Conductivité, éclairement, température et
         batterie sont pris sur le même appareil (capteurs Flower Care et semblables).
+
+
+        The moisture sensor of each pot. Conductivity, light, temperature and battery are
+        taken from the same device (Flower Care sensors and the like).
       input:
         pot_1:
           name: Pot 1
@@ -359,15 +477,20 @@ blueprint:
                 - domain: sensor
                   device_class: moisture
     planning:
-      name: Planning de travail
+      name: Planning de travail · Work schedule
       icon: mdi:calendar-clock
       input:
         agenda_travail:
-          name: Agenda de travail
+          name: Agenda de travail · Work calendar
           description: >-
             Laissé vide : celui de la liste « Tab5 · agenda de travail » (package
             tab5_reglages), qui donne aussi les horaires et l'heure du réveil. Sans agenda
             du tout, le panneau planning sort de la carte centrale.
+
+
+            Left empty: the one of the « Tab5 · agenda de travail · work calendar » list
+            (tab5_reglages package), which also gives the hours and the alarm time. With no
+            calendar at all, the planning panel leaves the central card.
           default: []
           selector:
             entity:
@@ -376,30 +499,35 @@ blueprint:
     # Réglage 3.x (ADR-0019) : les cinq places fixes de l'accueil. Lu par un firmware
     # 3.0/3.1, et par un firmware 3.2 tant que la pièce 1 est vide (ADR-0023).
     accueil_3x:
-      name: Tuiles de l'accueil (réglage 3.x)
+      name: Tuiles de l'accueil (réglage 3.x) · Home tiles (3.x setup)
       icon: mdi:lightbulb-group
       description: >-
         Les cinq places fixes de l'accueil d'avant la 3.2 : PC ou TV, volet, trois lumières.
         Un firmware 3.0 ou 3.1 n'affiche que celles-ci ; un firmware 3.2 les montre tant
         que la pièce 1 est vide (et la tuile PC garde alors son comportement PC + TV).
+
+
+        The five fixed places of the home page before 3.2: PC or TV, shutter, three lights.
+        A 3.0 or 3.1 firmware shows only these; a 3.2 firmware shows them while room 1 is
+        empty (and the PC tile then keeps its PC + TV behaviour).
       collapsed: true
       input:
         lumiere_1:
-          name: Lumière 1 (tuile 3)
+          name: Lumière 1 (tuile 3) · Light 1 (tile 3)
           default: []
           selector:
             entity:
               filter:
                 - domain: light
         lumiere_2:
-          name: Lumière 2 (tuile 4)
+          name: Lumière 2 (tuile 4) · Light 2 (tile 4)
           default: []
           selector:
             entity:
               filter:
                 - domain: light
         lumiere_3:
-          name: Lumière 3 (tuile 5)
+          name: Lumière 3 (tuile 5) · Light 3 (tile 5)
           default: []
           selector:
             entity:
@@ -410,32 +538,49 @@ blueprint:
           description: >-
             Une prise ou un interrupteur (allumé par la tuile 1), ou un suivi de présence
             (affichage seul). La tuile 1 éteint la TV allumée, sinon allume PC et TV.
+
+
+            A plug or a switch (turned on by tile 1), or a presence tracker (shown only).
+            Tile 1 turns the TV off when it is on, otherwise turns the PC and the TV on.
           default: []
           selector:
             entity:
               filter:
                 - domain: [switch, input_boolean, device_tracker, binary_sensor]
         volet:
-          name: Volet
+          name: Volet · Shutter
           description: >-
             Tuile 2. Un volet qui signale sa course (opening/closing) est poussé ici ;
             avec le package volet_serre_tracking.yaml (volet qui ne la signale pas),
             c'est le package qui pousse son état. Laissez ici le volet que suit ce package,
             même s'il est aussi dans une pièce : ses commandes passent alors par le script
             du package et sa tuile montre l'état que le package tient.
+
+
+            Tile 2. A shutter that reports its travel (opening/closing) is pushed here; with
+            the volet_serre_tracking.yaml package (a shutter that does not report it), the
+            package pushes its state. Keep here the shutter that package follows, even if it
+            is also in a room: its commands then go through the package's script, and its
+            tile shows the state the package keeps.
           default: []
           selector:
             entity:
               filter:
                 - domain: cover
     avance:
-      name: Avancé
+      name: Avancé · Advanced
       icon: mdi:cog
       collapsed: true
       input:
         tablette:
-          name: Nom de la tablette dans ESPHome
-          description: Préfixe de ses actions (esphome.<nom>_tab5_maj_…). Ne changer que si l'appareil a été renommé.
+          name: Nom de la tablette dans ESPHome · Tablet name in ESPHome
+          description: >-
+            Préfixe de ses actions (esphome.<nom>_tab5_maj_…). Ne changer que si l'appareil a
+            été renommé.
+
+
+            Prefix of its actions (esphome.<name>_tab5_maj_…). Change it only if the device
+            was renamed.
           default: tab5_ha_hmi
           selector:
             text:

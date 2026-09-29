@@ -150,9 +150,9 @@ A **long press on the clock/date tile** opens a near-fullscreen monthly calendar
 
 Home Assistant then enriches each viewed month **on demand** (`script.tab5_calendrier_mois` → `tab5_maj_calendrier_mois`, cached per month, cache cleared on open):
 
-- **work hours printed inside each day cell** ("09:30-20:15", pink when the shift starts before 9 am — same convention as the central planning banner), from the work Google calendar ("Travail*" events)
+- **work hours printed inside each day cell** ("09:30-20:15", pink when the shift starts before 9 am — same convention as the central planning banner), from the work calendar (the events whose title holds the « Tab5 · mot des événements de travail » keyword, or all of them)
 - **public holidays** — day number turns rose (whitelist of real French holidays; civil observances like Mother's Day only appear in the day detail)
-- **school holidays (Zone A)** — soft violet cell background, from a static table verified against data.education.gouv.fr (through summer 2027)
+- **school holidays** — soft violet cell background, from the calendar chosen in « Tab5 · agenda des vacances scolaires » (in France, the ministry's ICS file of your zone; until 2026-09-29, a static Zone A table)
 - **appointments** (gold dot) and **birthdays** (pink dot) from the family/birthday calendars
 
 **Tapping a day** opens a 780×540 detail sub-popup (`script.tab5_calendrier_jour`): "Mardi 21 Juillet" title and up to 6 typed lines with colored MDI icons — holiday name, school-holiday label, work hours, timed appointments, birthdays, civil observances — with "Chargement...", "Rien de prévu ce jour" and "Home Assistant hors ligne" states. Closing follows the v2 popup recipe (real 96×64 glass × buttons, `scrollable: false` everywhere). Components: `calendar_popup.yaml` + `cal_grid_build()` (42 cells built in C++) + HA package `HomeAssistant_Config/packages/tab5_calendar.yaml`.
@@ -454,9 +454,9 @@ Un **appui long sur la tuile horloge/date** ouvre un calendrier mensuel quasi pl
 
 Home Assistant enrichit ensuite chaque mois consulté **à la demande** (`script.tab5_calendrier_mois` → `tab5_maj_calendrier_mois`, cache par mois vidé à l'ouverture) :
 
-- **heures de travail imprimées dans les cases** (« 09:30-20:15 », en rose si l'embauche est avant 9 h — même convention que le bandeau planning central), depuis le calendrier Google boulot (événements « Travail* »)
+- **heures de travail imprimées dans les cases** (« 09:30-20:15 », en rose si l'embauche est avant 9 h — même convention que le bandeau planning central), depuis l'agenda de travail (les événements dont le titre contient le mot de « Tab5 · mot des événements de travail », ou tous)
 - **jours fériés** — numéro en rose (liste blanche des vrais fériés français ; les fêtes civiles type Fête des Mères n'apparaissent que dans le détail du jour)
-- **vacances scolaires (Zone A)** — fond de case violet doux, table statique vérifiée sur data.education.gouv.fr (jusqu'à l'été 2027)
+- **vacances scolaires** — fond de case violet doux, depuis l'agenda choisi dans « Tab5 · agenda des vacances scolaires » (en France, le fichier ICS du ministère pour votre zone ; jusqu'au 29/09/2026, une table fixe de la zone A)
 - **RDV** (pastille dorée) et **anniversaires** (pastille rose) depuis les calendriers famille/anniversaires
 
 **Taper un jour** ouvre un sous-popup détail 780×540 (`script.tab5_calendrier_jour`) : titre « Mardi 21 Juillet » et jusqu'à 6 lignes typées avec icônes MDI colorées — nom du férié, libellé des vacances scolaires, horaires de travail, RDV horodatés, anniversaires, fêtes civiles — avec les états « Chargement... », « Rien de prévu ce jour » et « Home Assistant hors ligne ». La fermeture suit la recette popups v2 (croix = vrais boutons de verre 96×64, `scrollable: false` partout). Composants : `calendar_popup.yaml` + `cal_grid_build()` (42 cellules construites en C++) + package HA `HomeAssistant_Config/packages/tab5_calendar.yaml`.
@@ -602,7 +602,7 @@ Ouvert par **appui long sur l'horloge/date** (`btn_clock_calendar_zone`, zone ta
 - **En-tête** : icône calendrier + titre « Calendrier », navigation ◀ mois ▶, bouton « Aujourd'hui », croix de fermeture
 - **Grille mensuelle 7×6** (lundi en tête) : 42 cellules construites en C++ (`cal_grid_build()`, à la première ouverture) avec numéro du jour, **heures de travail** affichées dans la case, pastilles colorées (dorée = RDV, rose = anniversaire), fond violet doux = vacances scolaires, numéro rose = férié, bordure cyan = aujourd'hui
 - **Légende** en bas : Aujourd'hui / Travail / Férié / Vac. scolaires / RDV / Anniv.
-- **Tap sur un jour** → sous-popup détail 780×540 : titre « Mardi 21 Juillet », lignes typées (férié, vacances scolaires Zone A, horaires travail, RDV, anniversaire, fête civile) avec icônes MDI colorées
+- **Tap sur un jour** → sous-popup détail 780×540 : titre « Mardi 21 Juillet », lignes typées (férié, vacances scolaires, horaires travail, RDV, anniversaire, fête civile) avec icônes MDI colorées
 
 La grille est calculée **localement** depuis SNTP (algorithme de Sakamoto). HA enrichit chaque mois à la demande via `tab5_maj_calendrier_mois` (bitmask 2 hex/jour + 31 champs d'heures) avec cache par mois.
 

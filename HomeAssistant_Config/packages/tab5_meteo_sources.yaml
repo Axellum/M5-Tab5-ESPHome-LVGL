@@ -54,7 +54,7 @@
 
 input_select:
   tab5_source_pluie:
-    name: "Tab5 · source de la pluie dans l'heure"
+    name: "Tab5 · source de la pluie dans l'heure · next-hour rain source"
     icon: mdi:weather-pouring
     options:
       - "Météo-France"
@@ -65,7 +65,7 @@ input_select:
       - "Open-Meteo"
       - "Aucune"
   tab5_source_vigilance:
-    name: "Tab5 · source des vigilances"
+    name: "Tab5 · source des vigilances · weather warnings source"
     icon: mdi:alert-outline
     options:
       - "Météo-France"
@@ -510,8 +510,9 @@ template:
   # Prévisions et météo du moment (lot 4c-3) : n'importe quelle entité weather.*.
   # ──────────────────────────────────────────────────────────────────────────
   - select:
-      - name: "Tab5 · source des prévisions"
+      - name: "Tab5 · source des prévisions · forecast source"
         unique_id: tab5_source_previsions
+        default_entity_id: select.tab5_source_des_previsions
         icon: mdi:weather-partly-cloudy
         options: "{{ states.weather | map(attribute='entity_id') | list }}"
         state: "{{ state_attr('sensor.tab5_meteo', 'entite') }}"

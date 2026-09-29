@@ -101,18 +101,23 @@ The whole Home Assistant side is one archive, **`tab5_home_assistant.zip`**, att
    | Tab5 · source des prévisions | forecasts and current weather (any `weather.*`) | the Météo-France city, otherwise the first weather entity |
    | Tab5 · source de la pluie dans l'heure | rain card: Météo-France, OpenWeatherMap, Buienradar, DWD, Met.no, Open-Meteo or Aucune (none) | Météo-France |
    | Tab5 · source des vigilances | warning icons: Météo-France, MeteoAlarm, DWD, CAP Alerts or Aucune | Météo-France |
-   | Tab5 · agenda de travail | « Travail… » events: planning, rest days and the **alarm time** | nothing |
+   | Tab5 · agenda de travail | work events: planning, rest days and the **alarm time** (which events: see the keyword below) | nothing |
    | Tab5 · agenda des rendez-vous | calendar popup, appointment reminders, morning briefing | nothing |
    | Tab5 · agenda des anniversaires | birthdays in the calendar popup | the only calendar named « anniversaires » (or birthday…) |
    | Tab5 · agenda des jours fériés | public holidays in the calendar popup | the only public-holiday calendar (Holiday integration, or its name says so) |
+   | Tab5 · agenda des vacances scolaires | school holidays in the calendar popup (every event of this calendar) | the only calendar whose name says so (« calendrier scolaire », « vacances scolaires », school…) |
    | Tab5 · téléphone | screen on when you come home, off when you leave | the only phone of the companion app |
    | Tab5 · capteur de présence | screen on at presence, off after 15 min without | nothing |
    | Tab5 · TV Samsung, Tab5 · adresse de la TV | app buttons of the TV popup (Samsung Tizen) | the only Samsung Smart TV; the address given by a router tracker when it reports one, otherwise type its IP |
+   | Tab5 · pipeline de discussion | the Assist pipeline of the screen's « Discu » mode | nothing: the Domo / Discu buttons are then hidden |
 
-   Left on « Aucun », a feature simply stays off, without errors. The weather providers' own entities (Météo-France rain and warning sensors, OpenWeatherMap, MeteoAlarm, DWD, CAP Alerts) and the tablet's entities (screen, alarm, microphone…) are found by themselves; the tablet by its device model, whatever you named it.
-5. **Choose your devices**: *Settings → Automations & scenes → Blueprints*, « Tab5 — emplacements de l'écran » (unzipped with the rest; or *Import blueprint* with
+   Each list has a two-language name, « français · english » (« Tab5 · agenda de travail · work calendar »), and keeps its entity id. Left on « Aucun », a feature simply stays off, without errors.
+
+   - **Which events are work**: the text « Tab5 · mot des événements de travail · work event keyword » holds the words that make an event of the work calendar a work shift, comma-separated, in any case, looked for in the title. **Empty = every event of the work calendar**, for a calendar that holds only your shifts. The author's work calendar also holds his appointments: he types `Travail`.
+   - **School holidays**: any calendar of yours. In France, the ministry publishes one ICS file per zone: *Settings → Devices & services → Add integration → Remote Calendar*, name « Calendrier scolaire » (the list then picks it by itself), URL `https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-A.ics` (`Zone-B.ics`, `Zone-C.ics` for the other zones; checked on 2026-09-29, until summer 2028). The weather providers' own entities (Météo-France rain and warning sensors, OpenWeatherMap, MeteoAlarm, DWD, CAP Alerts) and the tablet's entities (screen, alarm, microphone…) are found by themselves; the tablet by its device model, whatever you named it.
+5. **Choose your devices**: *Settings → Automations & scenes → Blueprints*, « Tab5 — emplacements de l'écran · screen slots » (unzipped with the rest; or *Import blueprint* with
    `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml`),
-   then *Create automation* and pick an entity for each slot (all optional). One automation per tablet. Its « Agenda de travail » can stay empty: it then takes the one of « Tab5 · agenda de travail ».
+   then *Create automation* and pick an entity for each slot (all optional); its labels are in French and English. One automation per tablet. Its « Agenda de travail » can stay empty: it then takes the one of « Tab5 · agenda de travail ».
 
 `tab5_optionnel/volet_serre_tracking.yaml` is only for a shutter that reports neither its position nor its travel (the author's Tuya motor): copy it into `packages/`, reload, and pick the shutter in « Tab5 · volet à course simulée ». It is not installed by default because, once present, it takes over the shutter buttons from the blueprint.
 
@@ -161,9 +166,21 @@ The transfer is not encrypted any more (there is no key in the YAML); the tablet
 
 A tablet installed from the [web flasher](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) gets its updates from Home Assistant instead: its « Firmware » entity reads the published manifest every 6 hours, and « Install » downloads the image, which the tablet checks against the project key ([ADR-0022](decisions/0022-published-firmware-pages-channels.md)). A firmware you compile yourself has no such entity.
 
+**The Home Assistant files do not update themselves**: replace them with those of `tab5_home_assistant.zip` from the same release (Step 4). The files of an archive know their version: when the tablet runs a newer release, Home Assistant says so (notification « Tab5 : fichiers Home Assistant à mettre à jour », sensor « Tab5 · fichiers HA en retard »). Files copied from the repository have no version and are never compared.
+
 **Logs:** `esphome logs` looks for the key in the YAML and no longer finds one. Use `python tools/tab5_logs.py --host 192.168.x.x --config-ha \\<ha-ip>\config`: it reads the key Home Assistant keeps (`.storage/core.config_entries`, or the `TAB5_CLE_API` variable) and never prints it.
 
 ---
+
+## Upgrading from 3.2
+
+Replace the Home Assistant files with those of the new `tab5_home_assistant.zip` (Step 4), then check three lists:
+
+1. **Work calendar holding other events?** Type your word in « Tab5 · mot des événements de travail » (the author: `Travail`). Up to 3.2, only titles containing « Travail » counted; left empty, every event of the work calendar now counts as work.
+2. **School holidays** no longer come from a table of the French Zone A: pick a calendar in « Tab5 · agenda des vacances scolaires » (Step 4).
+3. **Discussion mode**: pick its pipeline in « Tab5 · pipeline de discussion ». Up to 3.2, the tablet asked for a pipeline named exactly « Discussion LLM ».
+
+The lists keep their entity ids, so your dashboards and automations need nothing.
 
 ## Upgrading from 3.1
 
@@ -275,7 +292,8 @@ Limits:
 - **Names**: the screen's fonts cover Latin alphabets only; other characters are dropped, and long names are cut.
 - **Renaming an entity**: its tile follows at the tablet's next connection, or as soon as the automation is saved again.
 - **A shutter followed by `volet_serre_tracking.yaml`** (it doesn't report its travel): keep it in the « Volet » input of the 3.x section too, even if it is in a room; its tile then shows the state the package keeps, and its commands go through the package's script.
-- **One calendar per role**: work, appointments, birthdays and public holidays are the four « Tab5 · agenda … » lists. The school-holiday table is the French Zone A (Bordeaux), written in `tab5_calendar.yaml`.
+- **One calendar per role**: work, appointments, birthdays, public holidays and school holidays are the five « Tab5 · agenda … » lists.
+- **Spoken morning briefing**: in the screen's language (French, English, German, Dutch, Spanish, Italian); only the French text has been reviewed.
 - To see a smaller home without touching yours: [demo mode](demo_mode.md#minimal-home-optional-zones), option `--maison-minimale`.
 
 ---
@@ -381,18 +399,23 @@ Tout le côté Home Assistant tient dans une archive, **`tab5_home_assistant.zip
    | Tab5 · source des prévisions | prévisions et météo du moment (n'importe quelle entité `weather.*`) | la ville Météo-France, sinon la première entité météo |
    | Tab5 · source de la pluie dans l'heure | carte pluie : Météo-France, OpenWeatherMap, Buienradar, DWD, Met.no, Open-Meteo ou Aucune | Météo-France |
    | Tab5 · source des vigilances | icônes de vigilance : Météo-France, MeteoAlarm, DWD, CAP Alerts ou Aucune | Météo-France |
-   | Tab5 · agenda de travail | événements « Travail… » : planning, jours de repos et **heure du réveil** | rien |
+   | Tab5 · agenda de travail | événements de travail : planning, jours de repos et **heure du réveil** (lesquels : voir le mot plus bas) | rien |
    | Tab5 · agenda des rendez-vous | popup calendrier, rappels de rendez-vous, briefing du matin | rien |
    | Tab5 · agenda des anniversaires | anniversaires du popup calendrier | le seul agenda nommé « anniversaires » (ou birthday…) |
    | Tab5 · agenda des jours fériés | jours fériés du popup calendrier | le seul agenda de jours fériés (intégration Jours fériés, ou son nom le dit) |
+   | Tab5 · agenda des vacances scolaires | vacances scolaires du popup calendrier (tous les événements de cet agenda) | le seul agenda dont le nom le dit (« calendrier scolaire », « vacances scolaires », school…) |
    | Tab5 · téléphone | écran allumé à votre retour, éteint à votre départ | le seul téléphone de l'application mobile |
    | Tab5 · capteur de présence | écran allumé à la présence, éteint après 15 min sans | rien |
    | Tab5 · TV Samsung, Tab5 · adresse de la TV | boutons d'applications du popup TV (Samsung Tizen) | la seule TV Samsung Smart TV ; l'adresse donnée par un suivi du routeur s'il la connaît, sinon tapez son IP |
+   | Tab5 · pipeline de discussion | le pipeline Assist du mode « Discu » de l'écran | rien : les boutons Domo / Discu sont alors masqués |
 
-   Laissée sur « Aucun », une fonction reste simplement éteinte, sans erreur. Les entités des fournisseurs météo (capteurs de pluie et de vigilance Météo-France, OpenWeatherMap, MeteoAlarm, DWD, CAP Alerts) et celles de la tablette (écran, réveil, micro…) sont trouvées seules ; la tablette par le modèle de son appareil, quel que soit le nom que vous lui avez donné.
-5. **Choisissez vos appareils** : *Paramètres → Automatisations et scènes → Blueprints*, « Tab5 — emplacements de l'écran » (décompressé avec le reste ; ou *Importer un blueprint* avec
+   Chaque liste porte un nom en deux langues, « français · english » (« Tab5 · agenda de travail · work calendar »), et garde son identifiant d'entité. Laissée sur « Aucun », une fonction reste simplement éteinte, sans erreur.
+
+   - **Quels événements sont du travail** : le texte « Tab5 · mot des événements de travail · work event keyword » contient les mots qui font d'un événement de l'agenda de travail un poste, séparés par des virgules, sans tenir compte des majuscules, cherchés dans le titre. **Vide = tous les événements de l'agenda de travail**, pour un agenda qui ne contient que vos postes. L'agenda de travail de l'auteur contient aussi ses rendez-vous : il y tape `Travail`.
+   - **Vacances scolaires** : n'importe quel agenda. En France, le ministère publie un fichier ICS par zone : *Paramètres → Appareils et services → Ajouter une intégration → Remote Calendar*, nom « Calendrier scolaire » (la liste le prend alors seule), URL `https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-A.ics` (`Zone-B.ics`, `Zone-C.ics` pour les autres zones ; vérifié le 29/09/2026, jusqu'à l'été 2028). Les entités des fournisseurs météo (capteurs de pluie et de vigilance Météo-France, OpenWeatherMap, MeteoAlarm, DWD, CAP Alerts) et celles de la tablette (écran, réveil, micro…) sont trouvées seules ; la tablette par le modèle de son appareil, quel que soit le nom que vous lui avez donné.
+5. **Choisissez vos appareils** : *Paramètres → Automatisations et scènes → Blueprints*, « Tab5 — emplacements de l'écran · screen slots » (décompressé avec le reste ; ou *Importer un blueprint* avec
    `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml`),
-   puis *Créer une automatisation* et choisissez une entité pour chaque emplacement (tous facultatifs). Une automatisation par tablette. Son « Agenda de travail » peut rester vide : il prend alors celui de « Tab5 · agenda de travail ».
+   puis *Créer une automatisation* et choisissez une entité pour chaque emplacement (tous facultatifs) ; ses libellés sont en français et en anglais. Une automatisation par tablette. Son « Agenda de travail » peut rester vide : il prend alors celui de « Tab5 · agenda de travail ».
 
 `tab5_optionnel/volet_serre_tracking.yaml` ne sert qu'à un volet qui ne signale ni sa position ni sa course (le moteur Tuya de l'auteur) : copiez-le dans `packages/`, rechargez, et choisissez le volet dans « Tab5 · volet à course simulée ». Il n'est pas installé par défaut car, une fois présent, il prend au blueprint les boutons du volet.
 
@@ -441,9 +464,21 @@ L'envoi n'est plus chiffré (il n'y a pas de clé dans le YAML) ; la tablette v�
 
 Une tablette installée depuis le [flasheur web](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) reçoit plutôt ses mises à jour par Home Assistant : son entité « Firmware » lit le manifeste publié toutes les 6 h, et « Installer » télécharge l'image, que la tablette vérifie avec la clé du projet ([ADR-0022](decisions/0022-published-firmware-pages-channels.md)). Un firmware compilé soi-même n'a pas cette entité.
 
+**Les fichiers Home Assistant ne se mettent pas à jour seuls** : remplacez-les par ceux de `tab5_home_assistant.zip` de la même release (étape 4). Les fichiers d'une archive connaissent leur version : quand la tablette tourne une release plus récente, Home Assistant le dit (notification « Tab5 : fichiers Home Assistant à mettre à jour », capteur « Tab5 · fichiers HA en retard »). Des fichiers copiés depuis le dépôt n'ont pas de version et ne sont jamais comparés.
+
 **Journaux :** `esphome logs` cherche la clé dans le YAML et n'en trouve plus. Utilisez `python tools/tab5_logs.py --host 192.168.x.x --config-ha \\<ip-de-ha>\config` : il lit la clé que garde Home Assistant (`.storage/core.config_entries`, ou la variable `TAB5_CLE_API`) et ne l'affiche jamais.
 
 ---
+
+## Passer d'une 3.2 à la suite
+
+Remplacez les fichiers Home Assistant par ceux du nouveau `tab5_home_assistant.zip` (étape 4), puis vérifiez trois listes :
+
+1. **Votre agenda de travail contient d'autres événements ?** Tapez votre mot dans « Tab5 · mot des événements de travail » (l'auteur : `Travail`). Jusqu'à la 3.2, seuls les titres contenant « Travail » comptaient ; laissé vide, tout l'agenda de travail compte désormais comme du travail.
+2. **Les vacances scolaires** ne viennent plus d'une table de la zone A : choisissez un agenda dans « Tab5 · agenda des vacances scolaires » (étape 4).
+3. **Mode Discussion** : choisissez son pipeline dans « Tab5 · pipeline de discussion ». Jusqu'à la 3.2, la tablette demandait un pipeline nommé exactement « Discussion LLM ».
+
+Les listes gardent leurs identifiants d'entité : vos tableaux de bord et automatisations n'ont rien à changer.
 
 ## Passer d'une 3.1 à la suite
 
@@ -555,5 +590,6 @@ Limites :
 - **Noms** : les polices de l'écran ne couvrent que les alphabets latins ; les autres caractères disparaissent, et un nom trop long est coupé.
 - **Renommer une entité** : sa tuile suit à la prochaine connexion de la tablette, ou dès que l'automatisation est de nouveau enregistrée.
 - **Un volet suivi par `volet_serre_tracking.yaml`** (il ne signale pas sa course) : laissez-le aussi dans l'entrée « Volet » de la section 3.x, même s'il est dans une pièce ; sa tuile montre alors l'état que tient le package, et ses commandes passent par le script du package.
-- **Un agenda par rôle** : travail, rendez-vous, anniversaires et jours fériés sont les quatre listes « Tab5 · agenda … ». La table des vacances scolaires est celle de la Zone A (Bordeaux), écrite dans `tab5_calendar.yaml`.
+- **Un agenda par rôle** : travail, rendez-vous, anniversaires, jours fériés et vacances scolaires sont les cinq listes « Tab5 · agenda … ».
+- **Briefing parlé du matin** : dans la langue de l'écran (français, anglais, allemand, néerlandais, espagnol, italien) ; seul le texte français a été relu.
 - Pour voir une maison plus petite sans toucher à la vôtre : [mode démo](demo_mode.md#maison-minimale-zones-optionnelles), option `--maison-minimale`.

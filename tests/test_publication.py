@@ -323,7 +323,8 @@ def test_site_refuse_un_commit_deja_deploye():
 def test_archive_ha_arborescence_de_config(tmp_path):
     """tab5_home_assistant.zip = l'arborescence de config/ : packages, custom_templates,
     blueprint, les optionnels à part (tab5_optionnel/, pas chargés par HA) et le LISEZMOI.
-    Octet pour octet les fichiers du dépôt, qui n'ont plus de placeholder."""
+    Octet pour octet les fichiers du dépôt, qui n'ont plus de placeholder, sauf la ligne
+    de la version des fichiers (« dépôt » → version de la release)."""
     import zipfile
 
     archive = archive_ha.construire("3.2.0", tmp_path)
@@ -333,7 +334,10 @@ def test_archive_ha_arborescence_de_config(tmp_path):
         attendus = [chemin for _, chemin in archive_ha.fichiers()] + [archive_ha.LISEZMOI]
         assert noms == attendus
         for source, chemin in archive_ha.fichiers():
-            assert z.read(chemin) == source.read_bytes(), chemin
+            attendu = source.read_bytes()
+            if chemin == "packages/tab5_health.yaml":
+                attendu = attendu.replace('"dépôt"  # >>>'.encode("utf-8"), b'"3.2.0"  # >>>')
+            assert z.read(chemin) == attendu, chemin
         lisezmoi = z.read(archive_ha.LISEZMOI).decode("utf-8")
     ha = REPO / "HomeAssistant_Config"
     assert {f"packages/{p.name}" for p in (ha / "packages").glob("*.yaml")} <= set(noms)
@@ -343,6 +347,24 @@ def test_archive_ha_arborescence_de_config(tmp_path):
     assert not any(n.startswith("packages/volet") for n in noms)
     assert "3.2.0" in lisezmoi and "packages: !include_dir_named packages" in lisezmoi
     assert archive_ha.placeholders() == []
+
+
+def test_archive_ha_porte_sa_version(tmp_path):
+    """Garde (f) de tab5_health.yaml : dans l'archive, « Tab5 · version des fichiers HA »
+    vaut la version de la release ; dans le dépôt, « dépôt » (jamais comparé). Une seule
+    ligne porte le marqueur."""
+    import zipfile
+
+    sante = (REPO / "HomeAssistant_Config" / "packages" / "tab5_health.yaml").read_text(encoding="utf-8")
+    assert len(archive_ha.MARQUEUR_VERSION.findall(sante)) == 1
+    marques = sum(len(archive_ha.MARQUEUR_VERSION.findall(p.read_text(encoding="utf-8")))
+                  for p in (REPO / "HomeAssistant_Config" / "packages").glob("*.yaml"))
+    assert marques == 1
+    archive = archive_ha.construire("3.3.0-rc.1", tmp_path)
+    with zipfile.ZipFile(archive) as z:
+        texte = z.read("packages/tab5_health.yaml").decode("utf-8")
+    assert "state: \"3.3.0-rc.1\"  # >>> version de l'archive" in texte
+    assert '"dépôt"' not in texte
 
 
 def test_archive_ha_reproductible(tmp_path):

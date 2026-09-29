@@ -227,6 +227,11 @@ automation:
           agenda: >-
             {%- set a = states('select.tab5_agenda_de_travail') -%}
             {{ a if a.startswith('calendar.') and expand(a) | count > 0 else '' }}
+          # Mots des événements de travail (« Tab5 · mot des événements de travail »,
+          # tab5_reglages.yaml), en minuscules ; liste vide = tout l'agenda de travail.
+          mots_travail: >-
+            {%- set m = states('input_text.tab5_mot_travail') -%}
+            {{ [] if m in ['unknown', 'unavailable'] else m.split(',') | map('trim') | map('lower') | reject('eq', '') | list }}
       - if:
           - condition: template
             value_template: "{{ agenda != '' }}"
@@ -315,7 +320,7 @@ automation:
                   {% set ev_end = event.end | default(event.end_time, '') | string %}
                   {% set ev_msg = event.summary | default(event.message, '') | string %}
                   {% if target_date in ev_start or target_date in ev_end %}
-                    {% if 'TRAVAIL' in ev_msg.upper() %}
+                    {% if mots_travail | count == 0 or mots_travail | select('in', ev_msg | lower) | list | count > 0 %}
                       {% set ns_travail.found = true %}
                       {% if target_date in ev_start %}
                         {% set start_dt = ev_start | as_datetime %}

@@ -22,8 +22,10 @@
 #       firmware : `rdv_store()` dans Tab5/alarm_clock.cpp.
 # @data_sources Les agendas choisis dans HA (ADR-0024, packages/tab5_reglages.yaml) :
 #       « Tab5 · agenda des rendez-vous » + « Tab5 · agenda de travail », dont on
-#       EXCLUT les événements « Travail » : ce ne sont pas des rendez-vous, et leurs
-#       horaires servent déjà au calcul de l'heure de réveil. Seuls les événements
+#       EXCLUT les événements de travail (titre contenant un des mots de « Tab5 · mot
+#       des événements de travail », ou tous si la liste est vide) : ce ne sont pas des
+#       rendez-vous, et leurs horaires servent déjà au calcul de l'heure de réveil.
+#       Seuls les événements
 #       HORODATÉS sont retenus — un événement journée entière n'a pas d'heure à
 #       annoncer. Aucun agenda choisi : liste vide poussée (aucun rappel).
 # @ai_warning L'HEURE du réveil vient des horaires de l'agenda de travail, poussés
@@ -32,6 +34,11 @@
 #       réveil ne sonne plus que les jours de repos si « Réveil : sonner les jours
 #       de repos » est actif. À régler AVANT de recharger les automatisations lors
 #       d'une migration depuis les placeholders.
+# @i18n Le briefing parlé suit la langue de l'écran (select « Langue » du firmware,
+#       trouvé par sensor.tab5_tablette) : français, anglais, allemand, néerlandais,
+#       espagnol, italien ; une langue inconnue parle français. Le texte français est
+#       celui d'avant le 29/09/2026, mot pour mot. Heures dites « 8 heures 05 » en
+#       français, « 8:05 » ailleurs (les voix lisent ce format comme une heure).
 # @ai_warning Ne JAMAIS passer `now()` brut à un service (`{{ now() }}`) —
 #       toujours via `.strftime(...)`. Un `calendar.get_events` avec un datetime
 #       brut (microsecondes incluses) a déjà cassé silencieusement toute une
@@ -71,6 +78,11 @@ script:
             {%- set a = states('select.tab5_agenda_de_travail') -%}
             {{ a if a.startswith('calendar.') and expand(a) | count > 0 else '' }}
           agendas: "{{ [ag_rdv, ag_travail] | reject('eq', '') | unique | list }}"
+          # Mots des événements de travail, en minuscules (tab5_reglages.yaml) ; liste
+          # vide = tout l'agenda de travail est du travail.
+          mots_travail: >-
+            {%- set m = states('input_text.tab5_mot_travail') -%}
+            {{ [] if m in ['unknown', 'unavailable'] else m.split(',') | map('trim') | map('lower') | reject('eq', '') | list }}
       # Sans agenda, pas d'appel (une cible vide lève une erreur que continue_on_error
       # ne rattrape pas) : `ev` reste indéfini et la liste poussée est vide.
       - if:
@@ -97,7 +109,7 @@ script:
               {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
               {# 'T' dans le début = événement horodaté. Une journée entière n'a
                  pas d'heure à annoncer, on la saute. #}
-              {% if 'T' in st and 'Travail' not in summ %}
+              {% if 'T' in st and not (mots_travail | count == 0 or mots_travail | select('in', summ | lower) | list | count > 0) %}
                 {% set ts = st | as_datetime | as_timestamp | int(0) %}
                 {% if ts > 0 %}
                   {# Titre nettoyé des trois séparateurs du protocole, puis
@@ -158,17 +170,31 @@ script:
         data:
           entity_id: "{{ satellite }}"
           message: >-
-            {% set h = now().hour %}
-            {% set m = now().minute %}
+            {% set langue = states(state_attr('sensor.tab5_tablette', 'langue') or '') %}
+            {# Phrases par langue : bonjour + heure, travail (début, fin), repos,
+               rendez-vous (titre, heure), température. Une langue inconnue parle
+               français (@i18n). #}
+            {% set phrases = {
+                 'English': ['Good morning. It is %s.', ' You work from %s to %s.', ' No work today.', ' Appointment: %s, at %s.', ' It will be %d degrees.'],
+                 'Deutsch': ['Guten Morgen. Es ist %s.', ' Sie arbeiten von %s bis %s.', ' Heute keine Arbeit.', ' Termin: %s, um %s.', ' Es werden %d Grad.'],
+                 'Nederlands': ['Goedemorgen. Het is %s.', ' U werkt van %s tot %s.', ' Vandaag geen werk.', ' Afspraak: %s, om %s.', ' Het wordt %d graden.'],
+                 'Español': ['Buenos días. Son las %s.', ' Trabaja de %s a %s.', ' Hoy no hay trabajo.', ' Cita: %s, a las %s.', ' Hará %d grados.'],
+                 'Italiano': ['Buongiorno. Sono le %s.', ' Lavora dalle %s alle %s.', ' Oggi niente lavoro.', ' Appuntamento: %s, alle %s.', ' Ci saranno %d gradi.'],
+               } %}
+            {% set fr = langue not in phrases %}
+            {% set p = ['Bonjour. Il est %s.', ' Vous travaillez de %s à %s.', " Pas de travail aujourd'hui.", ' Rendez-vous : %s, à %s.', ' Il fera %d degrés.'] if fr else phrases[langue] %}
             {% set boulo = ev_jour[ag_travail].events if ev_jour is defined and ag_travail in ev_jour else [] %}
             {% set fam = ev_jour[ag_rdv].events if ev_jour is defined and ag_rdv in ev_jour and ag_rdv != ag_travail else [] %}
-            {% set ns = namespace(travail='', rdv='', best_ts=none) %}
+            {% set ns = namespace(debut='', fin='', rdv='', rdv_h='', best_ts=none) %}
             {% for e in boulo %}
               {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
               {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
               {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
-              {% if ns.travail == '' and 'Travail' in summ and 'T' in st %}
-                {% set ns.travail = (st | as_datetime).strftime('%H heures %M') ~ ' à ' ~ (en | as_datetime).strftime('%H heures %M') %}
+              {% if ns.debut == '' and (mots_travail | count == 0 or mots_travail | select('in', summ | lower) | list | count > 0) and 'T' in st %}
+                {% set d = st | as_datetime %}
+                {% set f = en | as_datetime %}
+                {% set ns.debut = d.strftime('%H heures %M') if fr else d.hour ~ ':' ~ '%02d' | format(d.minute) %}
+                {% set ns.fin = f.strftime('%H heures %M') if fr else f.hour ~ ':' ~ '%02d' | format(f.minute) %}
               {% endif %}
             {% endfor %}
             {% for e in (fam + boulo) %}
@@ -176,23 +202,26 @@ script:
               {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
               {# Premier = le plus TÔT chronologiquement, pas le premier de la
                  liste calendrier (ordre d'API non garanti). #}
-              {% if 'T' in st and 'Travail' not in summ %}
+              {% if 'T' in st and not (mots_travail | count == 0 or mots_travail | select('in', summ | lower) | list | count > 0) %}
                 {% set ts = st | as_datetime | as_timestamp %}
                 {% if ns.best_ts is none or ts < ns.best_ts %}
+                  {% set d = st | as_datetime %}
                   {% set ns.best_ts = ts %}
-                  {% set ns.rdv = summ ~ ', à ' ~ (st | as_datetime).strftime('%H heures %M') %}
+                  {% set ns.rdv = summ %}
+                  {% set ns.rdv_h = d.strftime('%H heures %M') if fr else d.hour ~ ':' ~ '%02d' | format(d.minute) %}
                 {% endif %}
               {% endif %}
             {% endfor %}
             {# Source des prévisions choisie dans HA (sensor.tab5_meteo, lot 4c-3). #}
             {% set tmax = state_attr('sensor.tab5_meteo', 'temperature') %}
-            Bonjour. Il est {{ h }} heures {{ m }}.
-            {%- if ns.travail != '' %} Vous travaillez de {{ ns.travail }}.
-            {%- else %} Pas de travail aujourd'hui.
+            {% set maintenant = (now().hour ~ ' heures ' ~ now().minute) if fr else (now().hour ~ ':' ~ '%02d' | format(now().minute)) %}
+            {{ p[0] | format(maintenant) }}
+            {%- if ns.debut != '' %}{{ p[1] | format(ns.debut, ns.fin) }}
+            {%- else %}{{ p[2] }}
             {%- endif %}
-            {%- if ns.rdv != '' %} Rendez-vous : {{ ns.rdv }}.
+            {%- if ns.rdv != '' %}{{ p[3] | format(ns.rdv, ns.rdv_h) }}
             {%- endif %}
-            {%- if tmax is not none %} Il fera {{ tmax | round(0) | int }} degrés.
+            {%- if tmax is not none %}{{ p[4] | format(tmax | round(0) | int) }}
             {%- endif %}
 
 automation:
