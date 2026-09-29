@@ -8,11 +8,11 @@
 
 The ESPHome configuration is split into twelve YAML packages imported by a single entry-point file. This avoids a monolithic file that becomes impossible to navigate once you're past 1000 lines. Each package has a clearly defined responsibility and can be edited, tested, or replaced in isolation.
 
-### Push-only data flow
+### Data flow: HA pushes, the tablet sends events
 
-Home Assistant never waits for the Tab5 to poll. Automations detect changes and call ESPHome API services (`tab5_maj_*`); the firmware parses the payload and updates LVGL in one pass.
+The Tab5 never polls Home Assistant's state ([ADR-0001](decisions/0001-push-only-zero-polling.md)). The "screen slots" blueprint and the `tab5_*` packages detect changes and call the firmware's ESPHome actions (`tab5_maj_*`, declared in `Tab5/tab5-api-logic.yaml`); the firmware parses the payload and updates LVGL in one pass. In the other direction the tablet calls no Home Assistant action: a tapped tile, a request (calendar month, announcement, console button) or its (re)connection becomes an `esphome.tab5_*` event, which the blueprint or `packages/tab5_evenements.yaml` turns into an action from a fixed whitelist ([ADR-0025](decisions/0025-events-only.md)).
 
-![Push-only architecture](images/push_only_architecture_diagram.png)
+![How Home Assistant and the Tab5 talk: HA pushes data with the tab5_maj_* actions, the tablet answers with esphome.tab5_* events](images/flux_ha_tab5_en.svg)
 
 ---
 
@@ -56,7 +56,7 @@ Shared dimensional tokens, loaded first so every other package can reference the
 
 ### `tab5-hardware.yaml`
 Low-level hardware configuration:
-- Display driver (MIPI-DSI, `M5STACK-TAB5-V2`), touch controller (`st7123`, I2C — an official ESPHome platform since 2026.7.0; the old `external_components` shim is gone)
+- Display and touch settings shared by the three Tab5 revisions (MIPI-DSI, pins, calibration); the display model and the touch platform come from `Tab5/ecran-<revision>.yaml` (default: `M5STACK-TAB5-ST7123` and the official `st7123` I2C platform, since ESPHome 2026.7.0; the old `external_components` shim is gone) — see [`docs/hardware.md`](hardware.md#hardware-revisions)
 - I2C bus, PI4IOE5V6408 GPIO expanders (display/touch reset lines)
 - ES8388 DAC (`audio_dac:` platform) and ES7210 microphone ADC (`audio_adc:`)
 - `esp32_hosted` — ESP32-C6 Wi-Fi co-processor over SDIO
@@ -273,11 +273,11 @@ Navigation goes through `lvgl.page.show:` (YAML) or `lv_scr_load()` (C++); the s
 
 La configuration ESPHome est découpée en douze packages YAML importés par un fichier d'entrée unique. Cela évite un fichier monolithique qui devient impossible à naviguer au-delà de 1000 lignes. Chaque package a une responsabilité clairement définie et peut être édité, testé, ou remplacé de façon isolée.
 
-### Flux push-only
+### Flux de données : HA pousse, la tablette émet des événements
 
-Home Assistant ne laisse jamais le Tab5 interroger l'état. Les automations détectent les changements et appellent les services API ESPHome (`tab5_maj_*`) ; le firmware parse le payload et met à jour LVGL en une passe.
+Le Tab5 n'interroge jamais l'état de Home Assistant ([ADR-0001](decisions/0001-push-only-zero-polling.md)). Le blueprint « emplacements » et les packages `tab5_*` détectent les changements et appellent les actions ESPHome du firmware (`tab5_maj_*`, déclarées dans `Tab5/tab5-api-logic.yaml`) ; le firmware parse le payload et met à jour LVGL en une passe. Dans l'autre sens, la tablette n'appelle aucune action de Home Assistant : une tuile touchée, une demande (mois du calendrier, annonce, bouton de la console) ou sa (re)connexion devient un événement `esphome.tab5_*`, que le blueprint ou `packages/tab5_evenements.yaml` traduit en une action d'une liste blanche fixe ([ADR-0025](decisions/0025-events-only.md)).
 
-![Architecture push-only](images/push_only_architecture_diagram.png)
+![Comment Home Assistant et la Tab5 se parlent : HA pousse les données par les actions tab5_maj_*, la tablette répond par des événements esphome.tab5_*](images/flux_ha_tab5.svg)
 
 ---
 
@@ -302,7 +302,7 @@ Tokens dimensionnels partagés, chargés en premier pour que tous les autres pac
 
 ### `tab5-hardware.yaml`
 Configuration matérielle bas niveau :
-- Driver affichage (MIPI-DSI, `M5STACK-TAB5-V2`), contrôleur tactile (`st7123`, I2C — plateforme officielle ESPHome depuis 2026.7.0 ; l'ancien shim `external_components` a disparu)
+- Réglages écran et tactile communs aux trois révisions du Tab5 (MIPI-DSI, broches, calibration) ; le modèle d'écran et la plateforme tactile viennent de `Tab5/ecran-<révision>.yaml` (par défaut : `M5STACK-TAB5-ST7123` et la plateforme I2C officielle `st7123`, depuis ESPHome 2026.7.0 ; l'ancien shim `external_components` a disparu) — voir [`docs/hardware.md`](hardware.md#révisions-matérielles)
 - Bus I2C, expanders GPIO PI4IOE5V6408 (lignes de reset écran/tactile)
 - DAC ES8388 (plateforme `audio_dac:`) et ADC micro ES7210 (`audio_adc:`)
 - `esp32_hosted` — co-processeur Wi-Fi ESP32-C6 via SDIO

@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" width="960" height="720" role="img" aria-labelledby="titre desc" xml:lang="en">
+  <title id="titre">Home Assistant pushes, the tablet sends events</title>
+  <desc id="desc">Home Assistant pushes data to the M5Stack Tab5 through the ESPHome actions tab5_maj_*: on change, slow readings in 5-minute batches, everything on connection. The tablet answers with esphome.tab5_* events: connection, tapped tiles, requests, boot journal. The tab5_evenements.yaml package turns requests into actions from a whitelist. Example: tapping a light's tile sends esphome.tab5_action, the blueprint turns the light on, then HA pushes the new state back with tab5_maj_emplacements.</desc>
+  <style>
+    .fond{fill:#f6f7f9}
+    .carte{fill:#ffffff;stroke:#d9dee7;stroke-width:1.5}
+    .boite{fill:#f6f7f9;stroke:#d9dee7;stroke-width:1.5}
+    .t{fill:#1d2330}
+    .d{fill:#5b6475}
+    .ha-fond{fill:#e3eefb}
+    .ha-texte{fill:#0b6bcb}
+    .ha-trait{stroke:#0b6bcb}
+    .ha-pointe{fill:#0b6bcb}
+    .tab-fond{fill:#e5f4ea}
+    .tab-texte{fill:#1a7f37}
+    .tab-trait{stroke:#1a7f37}
+    .tab-pointe{fill:#1a7f37}
+    .pointille{fill:none;stroke:#d9dee7;stroke-width:1.5;stroke-dasharray:6 5}
+    .etape-ha{fill:#e3eefb;stroke:#0b6bcb;stroke-width:1.5}
+    .etape-tab{fill:#e5f4ea;stroke:#1a7f37;stroke-width:1.5}
+    .lien{stroke:#5b6475;stroke-width:2}
+    .lien-pointe{fill:#5b6475}
+    text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+    .m{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;font-size:.93em}
+    @media (prefers-color-scheme: dark){
+      .fond{fill:#11151c}
+      .carte{fill:#1a2029;stroke:#2c3440}
+      .boite{fill:#11151c;stroke:#2c3440}
+      .t{fill:#e6e9ef}
+      .d{fill:#9aa3b2}
+      .ha-fond{fill:#16283d}
+      .ha-texte{fill:#4ea1f3}
+      .ha-trait{stroke:#4ea1f3}
+      .ha-pointe{fill:#4ea1f3}
+      .tab-fond{fill:#14301f}
+      .tab-texte{fill:#5fd08a}
+      .tab-trait{stroke:#5fd08a}
+      .tab-pointe{fill:#5fd08a}
+      .pointille{stroke:#2c3440}
+      .etape-ha{fill:#16283d;stroke:#4ea1f3}
+      .etape-tab{fill:#14301f;stroke:#5fd08a}
+      .lien{stroke:#9aa3b2}
+      .lien-pointe{fill:#9aa3b2}
+    }
+  </style>
+  <defs>
+    <marker id="pointe-ha" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" class="ha-pointe"/>
+    </marker>
+    <marker id="pointe-tab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" class="tab-pointe"/>
+    </marker>
+    <marker id="pointe-lien" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" class="lien-pointe"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="960" height="720" rx="18" class="fond"/>
+  <text x="480" y="56" class="t" font-size="26" font-weight="700" text-anchor="middle">Home Assistant pushes, the tablet sends events</text>
+  <text x="480" y="86" class="d" font-size="15" text-anchor="middle">The tablet does not poll HA's state (ADR-0001) and calls none of its actions (ADR-0025)</text>
+  <rect x="32" y="112" width="300" height="440" rx="14" class="carte"/>
+  <rect x="44" y="124" width="276" height="42" rx="9" class="ha-fond"/>
+  <text x="182" y="151" class="ha-texte" font-size="19" font-weight="700" text-anchor="middle">Home Assistant</text>
+  <rect x="44" y="180" width="276" height="112" rx="10" class="boite"/>
+  <text x="58" y="210" class="t" font-size="15" font-weight="700">“Screen slots” blueprint</text>
+  <text x="58" y="234" class="d" font-size="14">pushes rooms and tiles,</text>
+  <text x="58" y="255" class="d" font-size="14">climate, cover; runs the</text>
+  <text x="58" y="276" class="d" font-size="14">commands of tapped tiles</text>
+  <rect x="44" y="304" width="276" height="112" rx="10" class="boite"/>
+  <text x="58" y="334" class="t" font-size="15" font-weight="700"><tspan class="m">tab5_*.yaml</tspan> packages</text>
+  <text x="58" y="358" class="d" font-size="14">push weather, warnings,</text>
+  <text x="58" y="379" class="d" font-size="14">alerts, schedule, calendar</text>
+  <text x="58" y="400" class="d" font-size="14">and upcoming appointments</text>
+  <rect x="44" y="428" width="276" height="112" rx="10" class="boite"/>
+  <text x="58" y="458" class="t" font-size="15" font-weight="700"><tspan class="m">tab5_evenements.yaml</tspan></text>
+  <text x="58" y="482" class="d" font-size="14">turns the tablet's requests</text>
+  <text x="58" y="503" class="d" font-size="14">into actions from a</text>
+  <text x="58" y="524" class="d" font-size="14">whitelist</text>
+  <rect x="628" y="112" width="300" height="440" rx="14" class="carte"/>
+  <rect x="640" y="124" width="276" height="42" rx="9" class="tab-fond"/>
+  <text x="778" y="151" class="tab-texte" font-size="19" font-weight="700" text-anchor="middle">M5Stack Tab5 · ESP32-P4</text>
+  <rect x="640" y="180" width="276" height="112" rx="10" class="boite"/>
+  <text x="654" y="210" class="t" font-size="15" font-weight="700"><tspan class="m">tab5_maj_*</tspan> API actions</text>
+  <text x="654" y="234" class="d" font-size="14">one per kind of data,</text>
+  <text x="654" y="255" class="d" font-size="14">declared in</text>
+  <text x="654" y="276" class="d" font-size="14"><tspan class="m">tab5-api-logic.yaml</tspan></text>
+  <rect x="640" y="304" width="276" height="112" rx="10" class="boite"/>
+  <text x="654" y="334" class="t" font-size="15" font-weight="700">C++, then LVGL</text>
+  <text x="654" y="358" class="d" font-size="14">splits the payload</text>
+  <text x="654" y="379" class="d" font-size="14">(delimited strings, ADR-0003)</text>
+  <text x="654" y="400" class="d" font-size="14">and updates the screen</text>
+  <rect x="640" y="428" width="276" height="112" rx="10" class="boite"/>
+  <text x="654" y="458" class="t" font-size="15" font-weight="700">Tiles, popups, console</text>
+  <text x="654" y="482" class="d" font-size="14">a tapped tile, a request</text>
+  <text x="654" y="503" class="d" font-size="14">(calendar, voice, console)</text>
+  <text x="654" y="524" class="d" font-size="14">→ <tspan class="m">homeassistant.event</tspan></text>
+  <text x="480" y="214" class="ha-texte" font-size="16" font-weight="700" text-anchor="middle"><tspan class="m">tab5_maj_*</tspan> actions</text>
+  <line x1="340" y1="236" x2="612" y2="236" class="ha-trait" stroke-width="4" marker-end="url(#pointe-ha)"/>
+  <text x="480" y="262" class="d" font-size="14" text-anchor="middle">on change (slow readings</text>
+  <text x="480" y="282" class="d" font-size="14" text-anchor="middle">in 5-minute batches),</text>
+  <text x="480" y="302" class="d" font-size="14" text-anchor="middle">everything on connection</text>
+  <rect x="364" y="338" width="232" height="84" rx="10" class="pointille"/>
+  <text x="480" y="362" class="d" font-size="13.5" text-anchor="middle">one connection:</text>
+  <text x="480" y="383" class="d" font-size="13.5" text-anchor="middle">ESPHome's native API,</text>
+  <text x="480" y="404" class="d" font-size="13.5" text-anchor="middle">encrypted (key given by HA)</text>
+  <text x="480" y="462" class="tab-texte" font-size="16" font-weight="700" text-anchor="middle"><tspan class="m">esphome.tab5_*</tspan> events</text>
+  <line x1="620" y1="484" x2="348" y2="484" class="tab-trait" stroke-width="4" marker-end="url(#pointe-tab)"/>
+  <text x="480" y="510" class="d" font-size="14" text-anchor="middle">connection, tapped tiles,</text>
+  <text x="480" y="530" class="d" font-size="14" text-anchor="middle">requests, boot journal</text>
+  <text x="32" y="594" class="d" font-size="14" font-weight="700">Example: a command's round trip</text>
+  <rect x="32" y="606" width="203" height="70" rx="10" class="etape-tab"/>
+  <text x="133.5" y="635" class="t" font-size="13.5" text-anchor="middle">A light's tile</text>
+  <text x="133.5" y="656" class="t" font-size="13.5" text-anchor="middle">is tapped</text>
+  <line x1="240" y1="641" x2="260" y2="641" class="lien" marker-end="url(#pointe-lien)"/>
+  <rect x="263" y="606" width="203" height="70" rx="10" class="etape-tab"/>
+  <text x="364.5" y="635" class="t" font-size="13.5" text-anchor="middle">event</text>
+  <text x="364.5" y="656" class="t" font-size="13.5" text-anchor="middle"><tspan class="m">esphome.tab5_action</tspan></text>
+  <line x1="471" y1="641" x2="491" y2="641" class="lien" marker-end="url(#pointe-lien)"/>
+  <rect x="494" y="606" width="203" height="70" rx="10" class="etape-ha"/>
+  <text x="595.5" y="635" class="t" font-size="13.5" text-anchor="middle">the blueprint turns</text>
+  <text x="595.5" y="656" class="t" font-size="13.5" text-anchor="middle">the light on in HA</text>
+  <line x1="702" y1="641" x2="722" y2="641" class="lien" marker-end="url(#pointe-lien)"/>
+  <rect x="725" y="606" width="203" height="70" rx="10" class="etape-ha"/>
+  <text x="826.5" y="635" class="t" font-size="13.5" text-anchor="middle"><tspan class="m">tab5_maj_emplacements</tspan></text>
+  <text x="826.5" y="656" class="t" font-size="13.5" text-anchor="middle">the tile updates</text>
+</svg>
