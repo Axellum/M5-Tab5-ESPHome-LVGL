@@ -1120,7 +1120,7 @@ static const char* const kI18nKeys[] = {
     "Aucun score enregistré",
     "Aucun score enregistré pour l'instant.",
     "Aucun score pour l'instant.\nLance une partie !",
-    "Aucun travail de prevu",
+    "Aucun travail de prévu",
     "Aucune partie en cours",
     "Aucune partie sauvegardée",
     "Aucune question jouée",
@@ -2073,7 +2073,7 @@ static const char* const kI18n_en[] = {
     "No score recorded",  // "Aucun score enregistré"
     "No scores recorded yet.",  // "Aucun score enregistré pour l'instant."
     "No scores yet.\nStart a game!",  // "Aucun score pour l'instant.\nLance une partie !"
-    "No work scheduled",  // "Aucun travail de prevu"
+    "No work scheduled",  // "Aucun travail de prévu"
     "No game in progress",  // "Aucune partie en cours"
     "No saved game",  // "Aucune partie sauvegardée"
     "No questions played",  // "Aucune question jouée"
@@ -3026,7 +3026,7 @@ static const char* const kI18n_de[] = {
     "Kein Score gespeichert",  // "Aucun score enregistré"
     "Noch keine Scores gespeichert.",  // "Aucun score enregistré pour l'instant."
     "Noch keine Scores.\nStarte ein Spiel!",  // "Aucun score pour l'instant.\nLance une partie !"
-    "Keine Arbeit geplant",  // "Aucun travail de prevu"
+    "Keine Arbeit geplant",  // "Aucun travail de prévu"
     "Kein laufendes Spiel",  // "Aucune partie en cours"
     "Kein gespeichertes Spiel",  // "Aucune partie sauvegardée"
     "Keine Fragen gespielt",  // "Aucune question jouée"
@@ -3979,7 +3979,7 @@ static const char* const kI18n_nl[] = {
     "Geen score opgeslagen",  // "Aucun score enregistré"
     "Nog geen scores opgeslagen.",  // "Aucun score enregistré pour l'instant."
     "Nog geen scores.\nStart een spel!",  // "Aucun score pour l'instant.\nLance une partie !"
-    "Geen werk gepland",  // "Aucun travail de prevu"
+    "Geen werk gepland",  // "Aucun travail de prévu"
     "Geen spel bezig",  // "Aucune partie en cours"
     "Geen opgeslagen spel",  // "Aucune partie sauvegardée"
     "Geen vragen gespeeld",  // "Aucune question jouée"
@@ -4932,7 +4932,7 @@ static const char* const kI18n_es[] = {
     "Sin puntuaciones",  // "Aucun score enregistré"
     "Aún no hay puntuaciones guardadas.",  // "Aucun score enregistré pour l'instant."
     "Aún no hay puntuaciones.\n¡Empieza una partida!",  // "Aucun score pour l'instant.\nLance une partie !"
-    "Sin trabajo previsto",  // "Aucun travail de prevu"
+    "Sin trabajo previsto",  // "Aucun travail de prévu"
     "Ninguna partida en curso",  // "Aucune partie en cours"
     "Ninguna partida guardada",  // "Aucune partie sauvegardée"
     "Sin preguntas jugadas",  // "Aucune question jouée"
@@ -5885,7 +5885,7 @@ static const char* const kI18n_it[] = {
     "Nessun punteggio",  // "Aucun score enregistré"
     "Ancora nessun punteggio salvato.",  // "Aucun score enregistré pour l'instant."
     "Ancora nessun punteggio.\nInizia una partita!",  // "Aucun score pour l'instant.\nLance une partie !"
-    "Nessun lavoro previsto",  // "Aucun travail de prevu"
+    "Nessun lavoro previsto",  // "Aucun travail de prévu"
     "Nessuna partita in corso",  // "Aucune partie en cours"
     "Nessuna partita salvata",  // "Aucune partie sauvegardée"
     "Nessuna domanda giocata",  // "Aucune question jouée"

@@ -33,7 +33,7 @@ script:
           cal_cache_evict_distant(t.year, t.month);
           // Grille : 42 cellules créées à la première ouverture (sans effet ensuite).
           // Tap court sur la cellule i -> tab5_cal_day_tap(i).
-          cal_grid_build(id(cal_legend), ${cal_grid_y}, id(roboto_32_b), id(roboto_22),
+          cal_grid_build(id(cal_legend), ${cal_grid_y}, ${cal_grid_h}, id(roboto_32_b), id(roboto_22),
                          [](int i) { id(tab5_cal_day_tap).execute(i); });
           animate_popup_open(id(calendar_popup));
       - script.execute: tab5_cal_render
