@@ -24,6 +24,13 @@
  *    LvglComponent::rotate_coordinates() qui lit la rotation COURANTE a chaque
  *    lecture d'indev. Aucune recalibration a faire, la calibration native
  *    720x1280 de tab5-hardware.yaml reste la bonne dans les deux sens.
+ *    SAUF le dernier point, doigt leve : LVGL relit alors `last_raw_point`
+ *    (lv_indev.c, indev_read_core) — celui du tap qui a ouvert ou ferme le jeu,
+ *    dans l'ANCIEN repere — et le compare a la nouvelle resolution a chaque
+ *    lecture, jusqu'a la touche suivante : « X is 832 which is greater than hor.
+ *    res » a l'ouverture, « Y is 743 … ver. res » a la fermeture, ~60 lignes/s
+ *    relayees jusqu'au journal de HA (29/09/2026). screen_portrait() le ramene
+ *    dans l'ecran apres chaque bascule (recadrer_dernier_point()).
  *  - Les conteneurs de ui_components/pinball_game.yaml sont deja declares en
  *    720x1280. Tant que le jeu est ferme ils sont HIDDEN, et LVGL ignore les
  *    enfants HIDDEN dans le calcul de scroll : aucun debordement parasite sur
@@ -89,6 +96,7 @@
 #include "pinball_game.h"
 #include "game_common.h"
 #include "esphome/core/preferences.h"
+#include "lvgl_private.h"  // lv_indev_t::pointer.last_raw_point (recadrer_dernier_point)
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
@@ -675,11 +683,27 @@ static lv_obj_t* mk_arc(lv_obj_t* parent, float cx, float cy, float r,
 // [AI-CONTEXT] Voir le bloc ORIENTATION en tete de fichier. `portrait=false`
 // remet EXACTEMENT la rotation de repos du dashboard (270), jamais autre chose.
 
+// Dernier point de chaque entree pointeur ramene dans la resolution courante (voir
+// ORIENTATION en tete de fichier). Doigt leve, ce point ne declenche rien : seule
+// sa validite compte, un simple recadrage suffit. Le prochain appui l'ecrase.
+static void recadrer_dernier_point() {
+    for (lv_indev_t* in = lv_indev_get_next(nullptr); in != nullptr; in = lv_indev_get_next(in)) {
+        if (lv_indev_get_type(in) != LV_INDEV_TYPE_POINTER) continue;
+        lv_display_t* d = lv_indev_get_display(in);
+        const int32_t w = lv_display_get_horizontal_resolution(d);
+        const int32_t h = lv_display_get_vertical_resolution(d);
+        lv_point_t& p = in->pointer.last_raw_point;
+        p.x = LV_CLAMP(0, p.x, w - 1);
+        p.y = LV_CLAMP(0, p.y, h - 1);
+    }
+}
+
 static void screen_portrait(bool portrait) {
     if (!gs->ui.lvgl) return;
     int angle = 270;
     if (portrait) angle = gs->save.flip_screen ? 180 : 0;
     gs->ui.lvgl->set_rotation(angle);
+    recadrer_dernier_point();
 }
 
 // ===========================================================================
