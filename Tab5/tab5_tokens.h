@@ -18,7 +18,7 @@
 // =============================================================================
 // Helpers d'animation LVGL (popups, swipe, alertes)
 // Réutilisent les patterns lv_anim_t de transition_widgets() (callbacks
-// anim_y_cb/anim_opa_cb/anim_x_cb/anim_ty_cb).
+// anim_opa_cb/anim_x_cb/anim_ty_cb).
 //
 // [28/07/2026] Passe « animations légères » : toutes les durées et amplitudes
 // sont regroupées ici (UIAnim) — c'était la seule façon de les régler d'un

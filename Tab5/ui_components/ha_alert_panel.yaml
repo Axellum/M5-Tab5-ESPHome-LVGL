@@ -21,6 +21,10 @@ obj:
   styles: style_transparent
   hidden: true
   widgets:
+    # Le texte en PREMIER enfant, à côté du bouton et pas dedans : c'est lui que la
+    # transition du rotateur fait glisser (transition_widgets, tab5_anim.cpp), comme
+    # pour les autres panneaux de la carte centrale.
+    - label: { id: "lbl_ha_alert_${n}", text: "", align: CENTER, text_font: roboto_45_b }
     - button:
         id: btn_ha_alert_tap_${n}
         align: CENTER
@@ -31,5 +35,3 @@ obj:
           - script.execute:
               id: tab5_dismiss_ha_alert
               slot: ${n}
-        widgets:
-          - label: { id: "lbl_ha_alert_${n}", text: "", align: CENTER, text_font: roboto_45_b }
