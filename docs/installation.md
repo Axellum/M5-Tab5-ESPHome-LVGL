@@ -100,7 +100,7 @@ The whole Home Assistant side is one archive, **`tab5_home_assistant.zip`**, att
    |---|---|---|
    | Tab5 · source des prévisions | forecasts and current weather (any `weather.*`) | the Météo-France city, otherwise the first weather entity |
    | Tab5 · source de la pluie dans l'heure | rain card: Météo-France, OpenWeatherMap or Aucune (none) | Météo-France |
-   | Tab5 · source des vigilances | warning icons: Météo-France, MeteoAlarm or Aucune | Météo-France |
+   | Tab5 · source des vigilances | warning icons: Météo-France, MeteoAlarm, DWD, CAP Alerts or Aucune | Météo-France |
    | Tab5 · agenda de travail | « Travail… » events: planning, rest days and the **alarm time** | nothing |
    | Tab5 · agenda des rendez-vous | calendar popup, appointment reminders, morning briefing | nothing |
    | Tab5 · agenda des anniversaires | birthdays in the calendar popup | the only calendar named « anniversaires » (or birthday…) |
@@ -109,7 +109,7 @@ The whole Home Assistant side is one archive, **`tab5_home_assistant.zip`**, att
    | Tab5 · capteur de présence | screen on at presence, off after 15 min without | nothing |
    | Tab5 · TV Samsung, Tab5 · adresse de la TV | app buttons of the TV popup (Samsung Tizen) | the only Samsung Smart TV; the address given by a router tracker when it reports one, otherwise type its IP |
 
-   Left on « Aucun », a feature simply stays off, without errors. The weather providers' own entities (Météo-France rain and warning sensors, OpenWeatherMap, MeteoAlarm) and the tablet's entities (screen, alarm, microphone…) are found by themselves; the tablet by its device model, whatever you named it.
+   Left on « Aucun », a feature simply stays off, without errors. The weather providers' own entities (Météo-France rain and warning sensors, OpenWeatherMap, MeteoAlarm, DWD, CAP Alerts) and the tablet's entities (screen, alarm, microphone…) are found by themselves; the tablet by its device model, whatever you named it.
 5. **Choose your devices**: *Settings → Automations & scenes → Blueprints*, « Tab5 — emplacements de l'écran » (unzipped with the rest; or *Import blueprint* with
    `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml`),
    then *Create automation* and pick an entity for each slot (all optional). One automation per tablet. Its « Agenda de travail » can stay empty: it then takes the one of « Tab5 · agenda de travail ».
@@ -210,12 +210,16 @@ The screen does not depend on one weather service (since lot 4c, 2026-09-27).
 | | Aucune (none) | the rain card is hidden |
 | Weather warnings | Météo-France | `sensor.<department>_weather_alert`, found by itself (the department of the Météo-France city) |
 | | MeteoAlarm | the MeteoAlarm integration (YAML only, 39 European countries, one alert at a time), found by itself (its binary sensor « Information provided by MeteoAlarm ») |
+| | DWD | Germany: the *Deutscher Wetterdienst (DWD) Weather Warnings* integration (built in, set up from the UI with the name or ID of your DWD warning cell, or a device tracker). All the warnings of the region, not the pre-warnings (« Vorabinformation ») |
+| | CAP Alerts | the [CAP Alerts](https://github.com/seevee/cap_alerts) integration (HACS, custom repository), one entity per alert: MeteoAlarm (Europe, every alert of your region), NWS (United States), Environment Canada, and about 100 national services through the WMO |
 | | Aucune (none) | no warning icons |
+
+With DWD and CAP Alerts, a warning counts while it is in force or starts within 24 hours; the overall level is the highest of them. Both are read by `custom_templates/tab5_vigilance.jinja`, which comes with the archive (Météo-France and MeteoAlarm work without it). The hazard slot comes from the DWD code, the MeteoAlarm hazard type, or the icon CAP Alerts gives the alert; a hazard with no slot (drought, air quality…) only raises the overall level.
 
 Honest limits:
 - OpenWeatherMap was tried on the author's installation on 2026-09-27 (forecasts and rain in the next hour, on a dry day); its daily forecast covers 8 days, so the last days of the 15-day pages stay empty. MeteoAlarm and the twice-daily grouping (NWS) were tested with simulated data only.
+- DWD was added to the author's Home Assistant on 2026-09-29 (Berlin, a day without warnings): entities found, dates read. The warnings themselves, and everything from CAP Alerts, were tested with simulated data in Home Assistant's template engine and in the fresh-install CI.
 - Frost probability exists only at Météo-France. The snowflake icon reads `sensor.<city>_snow_chance` when it exists; otherwise it follows the current condition (snowy).
-- Other warning sources (DWD, Environment Canada, NWS Alerts…) are not wired yet.
 
 ---
 
@@ -369,7 +373,7 @@ Tout le côté Home Assistant tient dans une archive, **`tab5_home_assistant.zip
    |---|---|---|
    | Tab5 · source des prévisions | prévisions et météo du moment (n'importe quelle entité `weather.*`) | la ville Météo-France, sinon la première entité météo |
    | Tab5 · source de la pluie dans l'heure | carte pluie : Météo-France, OpenWeatherMap ou Aucune | Météo-France |
-   | Tab5 · source des vigilances | icônes de vigilance : Météo-France, MeteoAlarm ou Aucune | Météo-France |
+   | Tab5 · source des vigilances | icônes de vigilance : Météo-France, MeteoAlarm, DWD, CAP Alerts ou Aucune | Météo-France |
    | Tab5 · agenda de travail | événements « Travail… » : planning, jours de repos et **heure du réveil** | rien |
    | Tab5 · agenda des rendez-vous | popup calendrier, rappels de rendez-vous, briefing du matin | rien |
    | Tab5 · agenda des anniversaires | anniversaires du popup calendrier | le seul agenda nommé « anniversaires » (ou birthday…) |
@@ -378,7 +382,7 @@ Tout le côté Home Assistant tient dans une archive, **`tab5_home_assistant.zip
    | Tab5 · capteur de présence | écran allumé à la présence, éteint après 15 min sans | rien |
    | Tab5 · TV Samsung, Tab5 · adresse de la TV | boutons d'applications du popup TV (Samsung Tizen) | la seule TV Samsung Smart TV ; l'adresse donnée par un suivi du routeur s'il la connaît, sinon tapez son IP |
 
-   Laissée sur « Aucun », une fonction reste simplement éteinte, sans erreur. Les entités des fournisseurs météo (capteurs de pluie et de vigilance Météo-France, OpenWeatherMap, MeteoAlarm) et celles de la tablette (écran, réveil, micro…) sont trouvées seules ; la tablette par le modèle de son appareil, quel que soit le nom que vous lui avez donné.
+   Laissée sur « Aucun », une fonction reste simplement éteinte, sans erreur. Les entités des fournisseurs météo (capteurs de pluie et de vigilance Météo-France, OpenWeatherMap, MeteoAlarm, DWD, CAP Alerts) et celles de la tablette (écran, réveil, micro…) sont trouvées seules ; la tablette par le modèle de son appareil, quel que soit le nom que vous lui avez donné.
 5. **Choisissez vos appareils** : *Paramètres → Automatisations et scènes → Blueprints*, « Tab5 — emplacements de l'écran » (décompressé avec le reste ; ou *Importer un blueprint* avec
    `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml`),
    puis *Créer une automatisation* et choisissez une entité pour chaque emplacement (tous facultatifs). Une automatisation par tablette. Son « Agenda de travail » peut rester vide : il prend alors celui de « Tab5 · agenda de travail ».
@@ -479,12 +483,16 @@ La **pluie dans l'heure** et les **vigilances** sont facultatives. Leur source s
 | | Aucune | la carte pluie est masquée |
 | Vigilances | Météo-France | `sensor.<département>_weather_alert`, trouvé seul (le département de la ville Météo-France) |
 | | MeteoAlarm | l'intégration MeteoAlarm (en YAML seulement, 39 pays européens, une alerte à la fois), trouvée seule (son capteur « Information provided by MeteoAlarm ») |
+| | DWD | Allemagne : l'intégration *Deutscher Wetterdienst (DWD) Weather Warnings* (fournie avec HA, réglée dans l'interface avec le nom ou le numéro de votre cellule d'alerte DWD, ou un suivi d'appareil). Toutes les alertes de la région, pas les préavis (« Vorabinformation ») |
+| | CAP Alerts | l'intégration [CAP Alerts](https://github.com/seevee/cap_alerts) (HACS, dépôt personnalisé), une entité par alerte : MeteoAlarm (Europe, toutes les alertes de votre région), NWS (États-Unis), Environnement Canada, et une centaine de services nationaux par l'OMM |
 | | Aucune | pas d'icônes de vigilance |
+
+Avec DWD et CAP Alerts, une alerte compte tant qu'elle est en cours ou si elle commence dans les 24 h ; le niveau global est la plus forte. Les deux sont lues par `custom_templates/tab5_vigilance.jinja`, fourni dans l'archive (Météo-France et MeteoAlarm marchent sans lui). La case du phénomène vient du code du DWD, du type de phénomène de MeteoAlarm ou de l'icône que CAP Alerts donne à l'alerte ; un phénomène sans case (sécheresse, qualité de l'air…) ne fait que monter le niveau global.
 
 Limites, en toute franchise :
 - OpenWeatherMap a été essayé sur l'installation de l'auteur le 27/09/2026 (prévisions et pluie dans l'heure, un jour sec) ; ses prévisions journalières couvrent 8 jours, les derniers jours des pages de 15 jours restent donc vides. MeteoAlarm et le regroupement des demi-journées (NWS) n'ont été testés qu'avec des données simulées.
+- Le DWD a été ajouté au Home Assistant de l'auteur le 29/09/2026 (Berlin, un jour sans alerte) : entités trouvées, dates lues. Les alertes elles-mêmes, et tout CAP Alerts, n'ont été testés qu'avec des données simulées, dans le moteur de modèles de Home Assistant et dans la CI d'installation à neuf.
 - La probabilité de gel n'existe que chez Météo-France. L'icône flocon lit `sensor.<ville>_snow_chance` quand il existe ; sinon, elle suit la condition du moment (neige).
-- Les autres sources d'alertes (DWD, Environment Canada, NWS Alerts…) ne sont pas encore branchées.
 
 ---
 

@@ -11,7 +11,9 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
         1. créer le compte (onboarding), fuseau Europe/Paris ; un agenda de travail
            (Calendrier local) ; les listes « Tab5 · … » réglées à la souris (SOURCES,
            plus aucun placeholder à remplir, ADR-0024) et ce qu'en déduisent les
-           packages ; le blueprint est déjà dans config/ (preparer_config.py) ;
+           packages ; chaque source de vigilances (VIGILANCES : DWD et CAP Alerts par
+           la macro de custom_templates/, Aucune, puis Météo-France) et ce qu'en tire
+           « Tab5 Vigilance » ; le blueprint est déjà dans config/ (preparer_config.py) ;
         2. ajouter la tablette (ESPHome, hôte + port). L'option « Autoriser l'appareil
            à effectuer des actions Home Assistant » n'est plus une étape (ADR-0025) :
            elle reste décochée, et c'est vérifié ;
@@ -97,6 +99,26 @@ DEDUITS = {
     ("sensor.tab5_sources_meteo", "mf_pluie"): "sensor.ville_ci_next_rain",
     ("sensor.tab5_sources_meteo", "mf_vigilance"): "sensor.99_weather_alert",
 }
+# Vigilances DWD et CAP Alerts (listes : l'ordre des états n'est pas garanti, comparées
+# triées) puis ce que « Tab5 Vigilance » en tire pour chaque source de la liste « Tab5 ·
+# source des vigilances » (packages/tab5_meteo_sources.yaml et la macro de
+# custom_templates/tab5_vigilance.jinja), sur les données de donnees_test.yaml. La
+# dernière remet la source par défaut, avant l'ajout de la tablette.
+DEDUITS_LISTES = {
+    ("sensor.tab5_sources_meteo", "dwd"): ["sensor.ville_ci_niveau_d_alerte_actuel",
+                                           "sensor.ville_ci_niveau_d_alerte_anticipee"],
+    ("sensor.tab5_sources_meteo", "cap"): ["sensor.cap_ci_brouillard", "sensor.cap_ci_feu_futur",
+                                           "sensor.cap_ci_seisme", "sensor.cap_ci_vent"],
+}
+LISTE_VIGILANCES = "input_select.tab5_source_vigilance"
+VIGILANCES = (
+    # (option, niveau global, 11 cases : vent, inondation, orages, pluie-inondation,
+    #  neige-verglas, grand froid, vagues-submersion, canicule, avalanches, brouillard, feux)
+    ("DWD", "Orange", "Orange|Vert|Vert|Vert|Jaune|Vert|Vert|Vert|Vert|Vert|Vert"),
+    ("CAP Alerts", "Orange", "Orange|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Jaune|Vert"),
+    ("Aucune", "Vert", "|".join(["Vert"] * 11)),
+    ("Météo-France", "Jaune", "Vert|Vert|Jaune|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert"),
+)
 
 # Automatisation créée depuis le blueprint (étape 4, point 6) et ses entrées : des
 # entités de l'intégration demo et de donnees_test.yaml. Pots 4 et 5 laissés vides :
@@ -712,6 +734,39 @@ async def choisir_sources(ha: HA, rapport: Rapport) -> None:
                          f"valeur {valeur!r}")
 
 
+async def verifier_vigilances(ha: HA, rapport: Rapport) -> None:
+    """Les vigilances DWD et CAP Alerts trouvées (DEDUITS_LISTES), puis chaque source de
+    VIGILANCES choisie comme à la souris et ce qu'en tire « Tab5 Vigilance » (état et
+    `phenomenes`). DWD et CAP Alerts passent par la macro importée de custom_templates/ :
+    c'est aussi la preuve que l'import marche dans un HA neuf."""
+    for (entity_id, attribut), attendu in DEDUITS_LISTES.items():
+        fin = time.monotonic() + 30
+        valeur: Any = None
+        while time.monotonic() < fin:
+            valeur = ((await ha.etats()).get(entity_id) or {}).get("attributes", {}).get(attribut)
+            if isinstance(valeur, list) and sorted(valeur) == attendu:
+                break
+            await asyncio.sleep(0.5)
+        rapport.verifier(isinstance(valeur, list) and sorted(valeur) == attendu,
+                         f"{entity_id} ({attribut}) = {attendu}, trouvés à leurs attributs", f"valeur {valeur!r}")
+    for option, globale, phenomenes in VIGILANCES:
+        await ha.post("/api/services/input_select/select_option", {"entity_id": LISTE_VIGILANCES, "option": option})
+        fin = time.monotonic() + 30
+        etat: dict = {}
+        while time.monotonic() < fin:
+            etat = (await ha.etats()).get("sensor.tab5_vigilance") or {}
+            if (etat.get("state") == globale
+                    and (etat.get("attributes") or {}).get("phenomenes") == phenomenes
+                    and (etat.get("attributes") or {}).get("source") == option):
+                break
+            await asyncio.sleep(0.5)
+        attributs = etat.get("attributes") or {}
+        rapport.verifier(etat.get("state") == globale and attributs.get("phenomenes") == phenomenes,
+                         f"vigilances « {option} » : {globale}, {phenomenes}",
+                         f"état {etat.get('state')!r}, phenomenes {attributs.get('phenomenes')!r}, "
+                         f"source {attributs.get('source')!r}")
+
+
 async def verifier_tablette_detectee(ha: HA, rapport: Rapport) -> None:
     """La tablette ajoutée est trouvée par le modèle de son appareil (sensor.tab5_tablette),
     sans nom d'entité écrit dans les packages, et son miroir de liaison est `on`."""
@@ -1190,6 +1245,7 @@ async def scenario(args, rapport: Rapport) -> None:
             # puis les sources choisies dans les listes « Tab5 · … » (étape 4).
             await creer_agenda(ha, rapport)
             await choisir_sources(ha, rapport)
+            await verifier_vigilances(ha, rapport)
             await verifier_blueprint(ha, rapport)
 
             # 4 : ajout de la tablette dans sa fenêtre d'appairage (plus d'option « actions

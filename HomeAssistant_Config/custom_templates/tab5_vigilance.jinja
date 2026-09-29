@@ -1,0 +1,112 @@
+{#-
+  Vigilances DWD et CAP Alerts du Tab5, importées par packages/tab5_meteo_sources.yaml
+  (capteur « Tab5 Vigilance ») :
+    {% from 'tab5_vigilance.jinja' import tab5_vigilance %}
+
+  tab5_vigilance(source, dwd, cap) rend 12 champs séparés par « | » : le niveau
+  global, puis les 11 cases du Tab5 (vent, inondation, orages, pluie-inondation,
+  neige-verglas, grand froid, vagues-submersion, canicule, avalanches, brouillard,
+  feux de forêt), chacun Vert, Jaune, Orange ou Rouge. L'état du capteur prend le
+  premier champ, son attribut `phenomenes` les 11 autres : une seule logique pour les
+  deux (un capteur ordinaire ne partage pas de variables entre ses modèles).
+
+  Ne comptent que les alertes en cours ou qui commencent dans les 24 h : ces sources
+  publient des alertes datées, pas une carte du jour comme Météo-France. Le niveau
+  global est le plus fort de ces alertes, même pour un phénomène sans case.
+
+  - source « DWD » : `dwd` = les capteurs de l'intégration dwd_weather_warnings, deux
+    par région (HA 2026.9.4 : warning_count, puis warning_<i>_type = code `ii` du DWD,
+    warning_<i>_level = 1 à 4 d'après la sévérité CAP, warning_<i>_start et _end, et
+    warning_<i> = l'alerte entière, dont `urgency`). Seule la région du premier
+    capteur est lue. Les préavis (« Vorabinformation », urgency « future », tous sur
+    le second capteur) sont écartés par l'urgence : l'identifiant des capteurs suit la
+    langue de HA. Niveau 1 → Jaune, 2 → Orange, 3 et 4 → Rouge (échelle du DWD :
+    jaune, orange, rouge, violet). Codes rangés d'après la table du DWD
+    (warning_codes_pdf, état 01.02.2024) ; 98 et 99 (essais) et 246 (UV, qu'aucune
+    autre source n'émet) ignorés.
+  - source « CAP Alerts » : `cap` = les capteurs de l'intégration HACS cap_alerts
+    (v0.5.1 : une entité par alerte, reconnue à l'attribut incident_platform_version).
+    Niveau : l'awareness_level de MeteoAlarm quand il est là (2 jaune, 3 orange,
+    4 rouge), sinon l'état, sévérité normalisée (minor et moderate → Jaune, severe →
+    Orange, extreme → Rouge, unknown ignoré). Case : l'awareness_type de MeteoAlarm
+    (même table que la branche MeteoAlarm du package, plus 14 marin), sinon l'icône que
+    l'intégration déduit du phénomène (icons.py de cap_alerts). GDACS (séismes,
+    volcans…), les alertes d'essai et celles qui ne sont plus en cours sont ignorées.
+
+  Déploiement : ce fichier va dans config/custom_templates/ de Home Assistant, puis
+  homeassistant.reload_custom_templates (ou redémarrage). Seules les sources DWD et
+  CAP Alerts l'importent : sans lui, Météo-France et MeteoAlarm marchent encore.
+-#}
+{%- macro tab5_vigilance(source, dwd, cap) -%}
+  {%- set mots = ['Vert', 'Jaune', 'Orange', 'Rouge'] -%}
+  {%- set ns = namespace(g=0, l=[0] * 11) -%}
+  {%- set t = now().timestamp() -%}
+  {%- set limite = t + 24 * 3600 -%}
+  {%- if source == 'DWD' and dwd -%}
+    {#- Région du premier capteur de la liste (ordre du registre ; expand() trierait par
+        identifiant). -#}
+    {%- set r = namespace(id=none) -%}
+    {%- for e in dwd if r.id is none -%}{%- set r.id = state_attr(e, 'region_id') -%}{%- endfor -%}
+    {%- for e in dwd if r.id is not none and state_attr(e, 'region_id') == r.id -%}
+    {%- for i in range(1, (state_attr(e, 'warning_count') | int(0)) + 1) -%}
+      {%- set w = state_attr(e, 'warning_' ~ i) -%}
+      {%- set urgence = w.get('urgency', 'immediate') if w is mapping else 'immediate' -%}
+      {%- set code = state_attr(e, 'warning_' ~ i ~ '_type') | int(0) -%}
+      {%- set n = [state_attr(e, 'warning_' ~ i ~ '_level') | int(0), 3] | min -%}
+      {%- set debut = as_timestamp(state_attr(e, 'warning_' ~ i ~ '_start'), 0) -%}
+      {%- set fin = as_timestamp(state_attr(e, 'warning_' ~ i ~ '_end'), 0) -%}
+      {%- if n > 0 and urgence != 'future' and code not in [98, 99, 246]
+            and debut < limite and (fin == 0 or fin > t) -%}
+        {%- set ns.g = [ns.g, n] | max -%}
+        {#- Vent (côtes, haute mer et lacs compris), orages, pluie et dégel, neige et
+            verglas, gel, chaleur, brouillard. -#}
+        {%- set c = 0 if code in [11, 12, 13, 14, 15, 16, 51, 52, 53, 54, 55, 56, 57, 58]
+               else 2 if (code >= 31 and code <= 49) or (code >= 90 and code <= 96)
+               else 3 if (code >= 61 and code <= 66) or code in [88, 89]
+               else 4 if (code >= 70 and code <= 76) or (code >= 84 and code <= 87)
+               else 5 if code in [22, 82]
+               else 7 if code in [247, 248]
+               else 9 if code == 59
+               else -1 -%}
+        {%- if c >= 0 -%}
+          {%- set ns.l = ns.l[:c] + [[ns.l[c], n] | max] + ns.l[c + 1:] -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {%- endfor -%}
+  {%- elif source == 'CAP Alerts' and cap -%}
+    {#- awareness_type de MeteoAlarm → case (1 vent, 2 neige-verglas, 3 orages,
+        4 brouillard, 5 canicule, 6 grand froid, 7 côtier, 8 feux de forêt,
+        9 avalanches, 10 pluie, 12 inondation, 13 pluie-inondation, 14 marin). -#}
+    {%- set types = {'1': 0, '2': 4, '3': 2, '4': 9, '5': 7, '6': 5, '7': 6, '8': 10, '9': 8,
+                     '10': 3, '12': 1, '13': 3, '14': 6} -%}
+    {%- set icones = {'mdi:weather-windy': 0, 'mdi:weather-hurricane': 0, 'mdi:home-flood': 1,
+                      'mdi:weather-lightning': 2, 'mdi:weather-tornado': 2, 'mdi:weather-pouring': 3,
+                      'mdi:water': 3, 'mdi:snowflake': 4, 'mdi:snowflake-alert': 4,
+                      'mdi:snowflake-melt': 4, 'mdi:snowflake-thermometer': 5, 'mdi:waves': 6,
+                      'mdi:tsunami': 6, 'mdi:weather-sunny-alert': 7, 'mdi:weather-fog': 9,
+                      'mdi:fire': 10} -%}
+    {%- set severites = {'minor': 1, 'moderate': 1, 'severe': 2, 'extreme': 3} -%}
+    {%- for s in expand(cap) if s.attributes.incident_platform_version is defined -%}
+      {%- set a = s.attributes -%}
+      {%- set p = a.parameters if a.parameters is mapping else {} -%}
+      {%- set eveil = (p.get('awareness_level', '') | string).split(';')[0] | trim | int(0) -%}
+      {%- set n = [eveil - 1, 3] | min if eveil > 0 else severites.get(s.state, 0) -%}
+      {%- set debut = as_timestamp(a.onset, 0) if a.onset is defined else 0 -%}
+      {%- set fin = as_timestamp(a.expires, 0) if a.expires is defined else 0 -%}
+      {%- if n > 0 and a.provider | default('') != 'gdacs'
+            and a.phase | default('new') in ['new', 'update']
+            and a.status | default('Actual') == 'Actual'
+            and debut < limite and (fin == 0 or fin > t)
+            and not (debut > 0 and fin > 0 and fin <= debut) -%}
+        {%- set ns.g = [ns.g, n] | max -%}
+        {%- set code = (p.get('awareness_type', '') | string).split(';')[0] | trim -%}
+        {%- set c = types.get(code, icones.get(a.icon | default(''), -1)) -%}
+        {%- if c >= 0 -%}
+          {%- set ns.l = ns.l[:c] + [[ns.l[c], n] | max] + ns.l[c + 1:] -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+  {{- mots[ns.g] -}}{%- for n in ns.l -%}|{{ mots[n] }}{%- endfor -%}
+{%- endmacro -%}

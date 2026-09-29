@@ -4,6 +4,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-29 — Vigilances hors de France : DWD et CAP Alerts
+
+- « Tab5 · source des vigilances » propose aussi **DWD** (Allemagne, intégration
+  *DWD Weather Warnings* fournie avec Home Assistant) et **CAP Alerts** (intégration HACS
+  `seevee/cap_alerts` : MeteoAlarm avec toutes les alertes de la région, NWS, Environnement
+  Canada, une centaine de services nationaux par l'OMM). Contrairement à MeteoAlarm dans
+  Home Assistant, les deux donnent **toutes** les alertes en cours.
+- Une alerte compte si elle est en cours ou commence dans les 24 h. Le niveau global est
+  la plus forte. La case vient du code du DWD, du type de phénomène MeteoAlarm ou de
+  l'icône que CAP Alerts donne à l'alerte. Les préavis du DWD, les séismes GDACS et les
+  alertes d'essai sont ignorés.
+- Nouveau fichier `custom_templates/tab5_vigilance.jinja` (macro lue par ces deux sources
+  seulement : Météo-France et MeteoAlarm marchent sans lui).
+- Essais : le DWD ajouté au Home Assistant de l'auteur (Berlin, jour sans alerte), entités
+  trouvées alors que leurs identifiants sont en français (`…_niveau_d_alerte_actuel`) ;
+  alertes simulées rendues dans le moteur de Home Assistant 2026.9.4 (11 cas) et dans la
+  CI d'installation à neuf, qui essaie maintenant chaque source de vigilances.
+
 ## [3.2.2] — 2026-09-29
 
 De `v3.2.1` à aujourd'hui : une pull request (#250), plus celle de la release.
