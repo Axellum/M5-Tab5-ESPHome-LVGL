@@ -191,7 +191,7 @@ All style references point to IDs defined in `tab5-styles.yaml`. No inline style
 ---
 
 ### `tab5-scripts.yaml`
-*Since 2026-09-25 (audit lot 8c), the game, calendar and voice/assistant scripts live in their own packages: `tab5-arcade.yaml`, `tab5-calendar.yaml`, `tab5-assist.yaml`.* Short ESPHome script blocks for reusable multi-step actions called from lambdas or HA. Keeps `tab5-api-logic.yaml` from becoming cluttered with repeated patterns. Grouped by family: modal registry init, debounces (volume 150 ms, brightness 200 ms, climate 250 ms — one HA call per gesture instead of one per tick), volume (single entry point `tab5_volume_apply`), climate recolouring and widgets, central rotator + dismiss, shutter, light popup, TV remote keys, and a 1 s `interval:` that returns to the home screen.
+*Since 2026-09-25 (audit lot 8c), the game, calendar and voice/assistant scripts live in their own packages: `tab5-arcade.yaml`, `tab5-calendar.yaml`, `tab5-assist.yaml`.* Short ESPHome script blocks for reusable multi-step actions called from lambdas or HA. Keeps `tab5-api-logic.yaml` from becoming cluttered with repeated patterns. Grouped by family: modal registry init, debounces (volume 150 ms, brightness 200 ms, climate 250 ms — one HA call per gesture instead of one per tick), volume (single entry point `tab5_volume_apply`), climate widgets (`tab5_clim_ui`; the recolouring is in C++, `clim_recolorer()`), central rotator + dismiss, shutter, light popup, TV remote keys, and a 1 s `interval:` that returns to the home screen.
 
 ---
 
@@ -457,7 +457,7 @@ Toutes les références de style pointent vers des IDs définis dans `tab5-style
 ---
 
 ### `tab5-scripts.yaml`
-*Depuis le 25/09/2026 (audit, lot 8c), les scripts des jeux, du calendrier et de la voix/assistant vivent dans leurs packages : `tab5-arcade.yaml`, `tab5-calendar.yaml`, `tab5-assist.yaml`.* Blocs `script:` ESPHome réutilisables pour les actions multi-étapes appelées depuis les lambdas ou depuis HA. Évite que `tab5-api-logic.yaml` se remplisse de motifs répétés. Regroupés par famille : init du registre des modales, debounces (volume 150 ms, luminosité 200 ms, clim 250 ms — un appel HA par geste au lieu d'un par tick), volume (point d'entrée unique `tab5_volume_apply`), recoloration et widgets de la clim, rotateur central + dismiss, volet, popup lumière, touches de la télécommande TV, et un `interval:` de 1 s qui ramène à l'accueil.
+*Depuis le 25/09/2026 (audit, lot 8c), les scripts des jeux, du calendrier et de la voix/assistant vivent dans leurs packages : `tab5-arcade.yaml`, `tab5-calendar.yaml`, `tab5-assist.yaml`.* Blocs `script:` ESPHome réutilisables pour les actions multi-étapes appelées depuis les lambdas ou depuis HA. Évite que `tab5-api-logic.yaml` se remplisse de motifs répétés. Regroupés par famille : init du registre des modales, debounces (volume 150 ms, luminosité 200 ms, clim 250 ms — un appel HA par geste au lieu d'un par tick), volume (point d'entrée unique `tab5_volume_apply`), widgets de la clim (`tab5_clim_ui` ; la recoloration est en C++, `clim_recolorer()`), rotateur central + dismiss, volet, popup lumière, touches de la télécommande TV, et un `interval:` de 1 s qui ramène à l'accueil.
 
 ---
 
