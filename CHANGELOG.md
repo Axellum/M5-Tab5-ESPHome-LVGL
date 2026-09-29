@@ -4,7 +4,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
-### 2026-09-28 (nuit) — Carte centrale : logique simplifiée, rien ne change à l'écran
+### 2026-09-29 — Carte centrale : logique simplifiée, rien ne change à l'écran
 
 Refactor demandé par Axel (« on laisse l'anim comme ça […] la logique de gestion est
 complexe à force ») : même animation (`transition_widgets()`, 190 ms, non touchée), même
