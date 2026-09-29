@@ -107,6 +107,11 @@ automation:
       - platform: state
         entity_id: sensor.tab5_agendas
         attribute: travail
+      # Autre source des prévisions choisie (« Tab5 · source des prévisions ») : les
+      # tuiles jours et heures suivent tout de suite, pas au passage des 10 min.
+      - platform: state
+        entity_id: sensor.tab5_meteo
+        attribute: entite
       # Retour du garde-fou `is_primary_active` (packages/tab5_health.yaml) : aucune
       # poussée n'est partie pendant qu'il était à `off`, on resynchronise tout.
       - platform: state
