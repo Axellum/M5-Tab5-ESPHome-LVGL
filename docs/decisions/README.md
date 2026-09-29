@@ -36,3 +36,4 @@ Format: **Context / Decision / Consequences**. One page max. Add a new one whene
 | [0024](0024-packages-without-placeholders.md) | Packages without placeholders — every home value is picked in Home Assistant, the tablet is detected by its model |
 | [0025](0025-events-only.md) | Events only — the device never calls a Home Assistant action, one HA package maps its events to a whitelist |
 | [0026](0026-climate-from-device.md) | The climate popup follows the device — settings pushed by HA (key `climr`), the screen's commands translated by the blueprint |
+| [0027](0027-climate-per-tile.md) | Every climate tile opens the climate popup for its own unit — settings (`crRT`) and state (`ceRT`) per tile, one translation of the commands |

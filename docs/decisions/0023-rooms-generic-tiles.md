@@ -54,9 +54,9 @@ In every text field `|` becomes `/` and `;` becomes `,` (as today).
 | `act` | `scene`, `script`, `button`, `input_button` | `lancer` | — |
 | `cap` | `sensor`, `number`, `input_number` | — (read only) | — |
 | `bin` | `binary_sensor`, `device_tracker`, `person`, `lock` | — (read only) | — |
-| `cli` | `climate` | climate popup, with `m`; else nothing | — |
+| `cli` | `climate` | climate popup: the blueprint's with `m`, else its own once HA sent its settings ([ADR-0027](0027-climate-per-tile.md)) | — |
 
-Options: `d` dimmable (brightness), `c` colour, `o` on only (never switched off from the screen), `k` confirm (a second tap within 3 s sends; the state line asks for it), `r` read only (no tap at all), `t` this media player is the blueprint's TV (remote), `m` this climate is the blueprint's climate (popup).
+Options: `d` dimmable (brightness), `c` colour, `o` on only (never switched off from the screen), `k` confirm (a second tap within 3 s sends; the state line asks for it), `r` read only (no tap at all), `t` this media player is the blueprint's TV (remote), `m` this climate is the blueprint's climate (popup; without `m`, the tile's own climate, [ADR-0027](0027-climate-per-tile.md)).
 
 **States** — the existing `tab5_maj_emplacements(payload)`, new keys with a fourth field:
 
@@ -119,3 +119,7 @@ Per room `n` = 1..5 (section « Pièce n — … », room 1 open, the others fol
 - The light popup lists the room's lights (up to 5) instead of three fixed ones; « Tout éteindre » acts on the room.
 - Tests: the firmware's keys, types, options and commands against the blueprint's (`tests/test_emplacements.py`, new tests for the tiles and the palette), the demo scenes and the host rendering capture every room in HA mode.
 - Released as a minor version (3.2.0): both directions stay compatible (above).
+
+## Update — 2026-09-29: every climate tile has its popup
+
+A `cli` tile without `m` used to do nothing on tap. [ADR-0027](0027-climate-per-tile.md): the blueprint pushes its unit's settings (`crRT`) and state (`ceRT`) with the tiles, and the tap opens the climate popup on that unit; its commands go with `emplacement: tRT`, translated by the same « Clim : … » branches as the blueprint's climate.

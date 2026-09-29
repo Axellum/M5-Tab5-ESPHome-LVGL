@@ -47,7 +47,8 @@ constexpr int kNbTypes = sizeof(kTypes) / sizeof(kTypes[0]);
 
 // Options : une lettre chacune, bit i = lettre i de kLettresOptions.
 //   d graduable, c couleur, o allumer seulement, k confirmer, r lecture seule,
-//   t télécommande TV du blueprint, m climatisation du blueprint.
+//   t télécommande TV du blueprint, m climatisation du blueprint (sans m, une tuile cli a
+//   sa propre clim dans le popup dès que HA en a envoyé les réglages, ADR-0027).
 constexpr char kLettresOptions[] = "dcokrtm";
 enum : uint8_t { OPT_D = 1, OPT_C = 2, OPT_O = 4, OPT_K = 8, OPT_R = 16, OPT_T = 32, OPT_M = 64 };
 
@@ -489,12 +490,13 @@ const char* vol_appui_long(const Etat& e) {
 }
 
 // Un appui fait-il quelque chose ? (sinon le bouton de la tuile météo est masqué). Option
-// r : aucun appui du tout.
-bool type_agit(Type type, uint8_t options) {
+// r : aucun appui du tout. Une clim : celle du blueprint (option m), ou la sienne quand la
+// tablette en a les réglages (clé crRT, ADR-0027 ; `clim_connue`).
+bool type_agit(Type type, uint8_t options, bool clim_connue) {
     if (options & OPT_R) return false;
     switch (type) {
         case Type::LUM: case Type::INT: case Type::VOL: case Type::MED: case Type::ACT: return true;
-        case Type::CLI: return (options & OPT_M) != 0;
+        case Type::CLI: return (options & OPT_M) != 0 || clim_connue;
         default: return false;
     }
 }
@@ -519,7 +521,7 @@ void vue_nouvelle(int r, int t, Vue& v) {
     bool actif = false;
     uint32_t c = UIColor::TEXT_DIM;
     v.nom = d.nom;
-    v.agit = type_agit(type, d.options);
+    v.agit = type_agit(type, d.options, type == Type::CLI && clim_tuile_connue(r, t));
     switch (type) {
         case Type::LUM:
             actif = est(s, "on");
@@ -1065,9 +1067,13 @@ bool tuiles_definir(const std::string& payload) {
     }
     if (std::memcmp(neuf.get(), &s_m, sizeof(Modele)) == 0) return false;
     // Une tuile qui change d'appareil repart grisée : l'état reçu était celui de l'ancien.
+    // Sa clim aussi est oubliée (ADR-0027) : le blueprint renvoie ses réglages juste après.
     for (int r = 0; r < kPieces; r++)
         for (int t = 0; t < kTuiles; t++)
-            if (std::memcmp(&neuf->tuiles[r][t], &s_m.tuiles[r][t], sizeof(Def)) != 0) etat_vider(s_etats[r][t]);
+            if (std::memcmp(&neuf->tuiles[r][t], &s_m.tuiles[r][t], sizeof(Def)) != 0) {
+                etat_vider(s_etats[r][t]);
+                clim_tuile_oublier(r, t);
+            }
     const bool premiere = s_m.recues == 0;
     s_m = *neuf;
     s_pref.save(&s_m);
@@ -1144,6 +1150,11 @@ void tuiles_appliquer_ui() {
 void tuiles_peindre_meteo() {
     charger();
     peindre_meteo();
+}
+
+void tuiles_repeindre(int r, int t) {
+    charger();
+    if (!heritage()) peindre_tuile(r, t);
 }
 
 void tuiles_mode_ha(bool actif) {
@@ -1263,7 +1274,8 @@ void tuile_appui(int t, bool long_appui) {
     const Def& d = s_m.tuiles[r][t];
     const Etat& e = s_etats[r][t];
     const Type type = static_cast<Type>(d.type);
-    if (!type_agit(type, d.options)) return;  // cap, bin, option r, cli sans m
+    // cap, bin, option r, cli sans m dont la tablette n'a pas les réglages
+    if (!type_agit(type, d.options, type == Type::CLI && clim_tuile_connue(r, t))) return;
     // Tableau de l'ADR-0023 : appui court, puis appui long.
     const char* action = nullptr;
     switch (type) {
@@ -1293,7 +1305,12 @@ void tuile_appui(int t, bool long_appui) {
             action = "lancer";
             break;
         case Type::CLI:
-            if (!long_appui) ouvrir_popup(g_tuiles_ui.popup_clim);  // option m (type_agit)
+            // Option m : la clim du blueprint ; sinon celle de la tuile (ADR-0027), que
+            // type_agit sait connue. Le popup revient à la clim du blueprint à sa fermeture.
+            if (long_appui) return;
+            if (d.options & OPT_M) clim_afficher_blueprint();
+            else if (!clim_afficher_tuile(r, t)) return;
+            ouvrir_popup(g_tuiles_ui.popup_clim);
             return;
         default:
             return;

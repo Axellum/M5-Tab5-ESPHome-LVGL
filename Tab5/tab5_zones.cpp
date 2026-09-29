@@ -4,7 +4,8 @@
  * @role Zones optionnelles (lot 5 de l'audit « ouverture », 27/09/2026) : quelles zones
  *       de l'écran masquer, et le masquage lui-même. Et, depuis le lot 6a (ADR-0019),
  *       emplacements_appliquer() : les valeurs des emplacements poussées par HA (les tuiles
- *       « tRT » et les réglages de la clim « climr », ADR-0026, d'abord). Contrat et raisons dans
+ *       « tRT », les réglages de la clim « climr », ADR-0026, et les clims des tuiles
+ *       « crRT » / « ceRT », ADR-0027, d'abord). Contrat et raisons dans
  *       tab5_custom.h (« Zones optionnelles ») ; échanges avec HA dans tab5-zones.yaml.
  * @architecture_constraint Rien ne disparaît sans réponse de HA : la tablette seule ne
  *       sait pas distinguer une entité absente d'une entité pas encore transmise. Une
@@ -165,6 +166,13 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
         if (p1 != std::string::npos && p1 < fin && p1 - debut == sizeof(kCleClimReglages) - 1 &&
             payload.compare(debut, p1 - debut, kCleClimReglages) == 0) {
             clim_reglages_recu(payload.data() + p1 + 1, fin - p1 - 1);
+            appliquees++;
+            debut = fin + 1;
+            continue;
+        }
+        // Clims des tuiles (ADR-0027) : « crRT|réglages » et « ceRT|état » (tab5_cards.cpp).
+        if (p1 != std::string::npos && p1 < fin &&
+            clim_tuile_recu(payload.data() + debut, p1 - debut, payload.data() + p1 + 1, fin - p1 - 1)) {
             appliquees++;
             debut = fin + 1;
             continue;

@@ -95,6 +95,10 @@ def test_chaque_commande_de_l_ecran_a_sa_branche():
             f"commande {cmd!r} ({emp}) sans branche dans le blueprint"
         if "current_light_slot" in emp:
             assert "emplacement.startswith('lumiere_')" in texte
+        elif "clim_affichee_cle()" in emp or "clim_tuile_attente_cle()" in emp:
+            # Popup clim (ADR-0027) : « clim » ou la tuile tRT d'une clim, traduites par les
+            # mêmes branches « Clim : … » (tests/test_clim.py).
+            assert f"clim_commande == '{cmd}'" in texte, f"commande {cmd!r} du popup clim sans branche"
         elif emp.startswith("!lambda"):
             # Clé calculée à l'exécution : une tuile tRT ou une pièce pR (ADR-0023),
             # aiguillée par le domaine de l'entité de la tuile (tests/test_tuiles_blueprint.py).

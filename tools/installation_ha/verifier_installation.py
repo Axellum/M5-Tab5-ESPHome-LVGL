@@ -36,7 +36,8 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
       « service_calls_not_allowed ») ; pièces : définitions et états des tuiles
       calculés à la connexion (relus dans la trace), tab5_maj_tuiles jamais appelée si
       la tablette est en dessous de 3.2.0 (protocole 1), appelée avec les définitions
-      sinon ; journal de HA sans erreur Tab5. Ce que
+      sinon ; la clim d'une tuile sans l'option m (ADR-0027) : ses réglages (crRT) et son
+      état (ceRT) calculés et poussés avec les tuiles ; journal de HA sans erreur Tab5. Ce que
       montre l'écran entre la création de l'automatisation et le redémarrage est
       rapporté (capture 1), sans faire échouer.
 @contraintes Le mot de passe du compte est tiré au hasard ici et n'est jamais affiché ;
@@ -158,13 +159,14 @@ EMPLACEMENTS = {
 # entrées 3.x ci-dessus (t00 = PC, t01 = volet, t02..t04 = lumières) ; les pièces 2 et 3
 # sont choisies (la 2 a six appareils : le sixième n'a pas de tuile) ; 4 et 5 vides.
 # « Kitchen » est retiré des noms (« Kitchen Lights » → « Lights »). Une même entité
-# (kitchen_lights) est dans deux tuiles.
+# (kitchen_lights) est dans deux tuiles. Deux clims de l'intégration demo : Hvac, la clim
+# du blueprint (t14, option m), et HeatPump, une clim de tuile (t24, ADR-0027).
 PIECES = {
     "piece_2_nom": "Kitchen",
     "piece_2_tuiles": ["light.kitchen_lights", "cover.kitchen_window", "sensor.outside_temperature",
                        "lock.front_door", "climate.hvac", "valve.front_garden"],
     "piece_3_tuiles": ["media_player.living_room", "binary_sensor.movement_backyard",
-                       "light.office_rgbw_lights", "button.push"],
+                       "light.office_rgbw_lights", "button.push", "climate.heatpump"],
 }
 PERSONNALISATION = [
     {"entite": "light.office_rgbw_lights", "nom": "Bureau | CI; test", "icone": "mdi:led-strip-variant",
@@ -191,7 +193,12 @@ TUILES_DETAILS = {
     "t20": {"options": "t"},
     "t21": {"complement": "motion"},
     "t22": {"options": "dck", "nom": "Bureau / CI, test", "icone": "mdi:led-strip-variant"},
+    "t24": {"options": ""},
 }
+# Clim de tuile sans l'option m (ADR-0027) : ses clés « crRT » (réglages, les champs de
+# climr) et « ceRT » (état, les champs de tab5_maj_clim) partent avec les tuiles ; la clim
+# du blueprint (t14) n'en a pas.
+CLIM_DE_TUILE = "t24"
 # Texte du capteur « Zones masquées » attendu (zones_texte_masquees(), tab5_zones.cpp :
 # ordre de kCles, séparateur « , »). « discussion » : un HA neuf n'a choisi aucun pipeline
 # de discussion (« Tab5 · pipeline de discussion » = « Aucun », ADR-0026).
@@ -396,6 +403,24 @@ def juger_definitions(definitions: str, icones_mdi: dict[str, str]) -> list[str]
             vu = tuiles.get(cle, [""] * 6)[champs[champ]]
             if vu != attendu:
                 problemes.append(f"{cle}.{champ} = {vu!r} au lieu de {attendu!r}")
+    return problemes
+
+
+def juger_clims(reglages: str, etats: str) -> list[str]:
+    """Écarts des clés des clims de tuile (variables reglages_tuiles et etats_clims d'un
+    passage à la connexion) : exactement CLIM_DE_TUILE, champs bien formés."""
+    problemes = []
+    nombre = re.compile(r"-?\d+(\.\d+)?")
+    cr, ce = entrees_de(reglages), entrees_de(etats)
+    if [e[0] for e in cr] != ["cr" + CLIM_DE_TUILE[1:]]:
+        problemes.append(f"réglages pour {[e[0] for e in cr]} au lieu de cr{CLIM_DE_TUILE[1:]}")
+    elif (len(cr[0]) != 7 or not all(nombre.fullmatch(x) for x in cr[0][1:4]) or cr[0][4] not in ("°C", "°F")
+          or not re.fullmatch(r"[chdfebqsw]*", cr[0][5]) or float(cr[0][1]) >= float(cr[0][2])):
+        problemes.append(f"réglages mal formés : {cr[0]}")
+    if [e[0] for e in ce] != ["ce" + CLIM_DE_TUILE[1:]]:
+        problemes.append(f"état pour {[e[0] for e in ce]} au lieu de ce{CLIM_DE_TUILE[1:]}")
+    elif len(ce[0]) != 7 or not all(x == "nan" or nombre.fullmatch(x) for x in ce[0][1:3]) or not all(ce[0][3:]):
+        problemes.append(f"état mal formé : {ce[0]}")
     return problemes
 
 
@@ -1153,21 +1178,35 @@ async def verifier_tuiles(ha: HA, cree: float, connexion: float, rapport: Rappor
     rapport.verifier([e[0] for e in entrees_de(etats)] == tuiles and all(len(e) == 4 for e in entrees_de(etats)),
                      "pièces : l'état de chaque tuile est calculé après les définitions (tRT|état|valeur|couleur)",
                      f"etats_tuiles = {etats!r}")
+    reglages_clims = variables.get("reglages_tuiles") or ""
+    etats_clims = variables.get("etats_clims") or ""
+    problemes = juger_clims(reglages_clims, etats_clims)
+    rapport.verifier(not problemes,
+                     f"clims des tuiles : réglages (cr) et état (ce) de {CLIM_DE_TUILE} calculés à la connexion, "
+                     "rien pour la clim du blueprint (ADR-0027)", " ; ".join(problemes))
+    rapport.info(f"clims des tuiles : {reglages_clims}{etats_clims}")
 
     appels = [(run_id, a) for run_id, trace in traces.items() for a in appels_de_trace(trace)
               if str(a.get("service", "")).endswith("_tab5_maj_tuiles")]
     if protocole == 1:
         rapport.verifier(not appels, f"protocole 1 : aucun appel de tab5_maj_tuiles ({len(traces)} passage(s) relus)",
                          f"{len(appels)} appel(s)")
-        # Et les états tRT ne partent pas non plus.
+        # Et les états tRT ne partent pas non plus, ni les clims des tuiles (crRT, ceRT).
         trt = [a for _, trace in traces.items() for a in appels_de_trace(trace)
                if str(a.get("service", "")).endswith("_tab5_maj_emplacements")
-               and re.search(r"(^|;)t[0-4][0-4][|]", str((a.get("service_data") or {}).get("payload", "")))]
-        rapport.verifier(not trt, "protocole 1 : aucun état de tuile (tRT) poussé", f"{len(trt)} poussée(s)")
+               and re.search(r"(^|;)(t|cr|ce)[0-4][0-4][|]", str((a.get("service_data") or {}).get("payload", "")))]
+        rapport.verifier(not trt, "protocole 1 : aucun état de tuile (tRT, crRT, ceRT) poussé", f"{len(trt)} poussée(s)")
     else:
         charges = [(a.get("service_data") or {}).get("payload") for _, a in appels]
         rapport.verifier(definitions in charges, "protocole 2 : tab5_maj_tuiles appelée avec les définitions",
                          f"{len(appels)} appel(s)")
+        # Réglages des clims des tuiles, états des tuiles, états des clims : une poussée.
+        poussees = [str((a.get("service_data") or {}).get("payload", ""))
+                    for a in appels_de_trace(traces[a_la_connexion[-1]["run_id"]])
+                    if str(a.get("service", "")).endswith("_tab5_maj_emplacements")]
+        rapport.verifier(reglages_clims + etats + etats_clims in poussees,
+                         "protocole 2 : clims des tuiles poussées avec les états des tuiles (crRT, tRT, ceRT)",
+                         f"{len(poussees)} poussée(s) de tab5_maj_emplacements")
 
 
 async def entite_automatisation(ha: HA, item_id: str) -> dict | None:

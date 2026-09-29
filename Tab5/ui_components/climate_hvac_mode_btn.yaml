@@ -1,7 +1,8 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 4x par climate_popup.yaml
 # (cool/heat/dry/fan — pile flex de la carte MODE, 342×88). Vars: suffix, hvac_mode, icon,
 # label_text. Ne pas dupliquer manuellement — ajouter un !include supplémentaire pour un
-# nouveau mode HVAC. L'icône popup_icon_clim_${suffix} est recolorée par tab5_maj_clim.
+# nouveau mode HVAC. L'icône popup_icon_clim_${suffix} est recolorée par clim_recolorer()
+# (tab5_cards.cpp) ; le mode et la commande vont à la clim affichée (ADR-0027).
 button:
   id: popup_btn_clim_${suffix}
   width: 342
@@ -11,11 +12,11 @@ button:
   pressed:
     bg_opa: 30%
   on_short_click:
-    # Optimiste : pose le mode + recolore l'icône immédiatement (avant le retour
-    # HA/Daikin cloud qui peut prendre plusieurs secondes). tab5_maj_clim corrigera.
-    - lambda: 'id(clim_hvac_mode) = "${hvac_mode}";'
-    - script.execute: tab5_clim_recolor
-    - script.execute: { id: tab5_action, emplacement: clim, commande: mode, valeur: "${hvac_mode}" }
+    # Optimiste : pose le mode sur la clim affichée + recolore l'icône immédiatement
+    # (avant le retour HA/Daikin cloud qui peut prendre plusieurs secondes). Le retour de
+    # HA (tab5_maj_clim, ou clé ceRT d'une tuile) corrigera.
+    - lambda: 'clim_popup_mode("${hvac_mode}");'
+    - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: mode, valeur: "${hvac_mode}" }
   widgets:
     - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
     - label: { id: "popup_lbl_clim_${suffix}", text: "${label_text}", align: LEFT_MID, x: 88, text_font: roboto_32_b }

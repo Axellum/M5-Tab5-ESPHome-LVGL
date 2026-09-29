@@ -19,6 +19,30 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   HA pousse par les actions `tab5_maj_*`, la tablette répond par des événements
   `esphome.tab5_*` (ADR-0025).
 
+### 2026-09-29 — Toutes les clims ont leur popup
+
+- **Chaque tuile de clim ouvre le popup pour SA clim** ([ADR-0027](docs/decisions/0027-climate-per-tile.md)).
+  Jusqu'ici, seule la clim du blueprint (option `m`) ouvrait le popup ; une autre clim
+  placée dans une pièce ne montrait que sa température. Le blueprint pousse désormais,
+  avec les tuiles, les réglages de chaque clim de tuile (clé `crRT`, les champs de
+  `climr`) et son état (clé `ceRT`, les champs de `tab5_maj_clim`) : bornes, pas, unité,
+  boutons gérés, nom en titre, consigne, modes. Ses boutons envoient les mêmes commandes
+  avec `emplacement: tRT`, traduites par les mêmes branches « Clim : … » que la clim du
+  blueprint (une seule traduction, sur l'entité de la tuile).
+- **Deux états séparés** : la carte − / consigne / + de l'accueil reste la clim du
+  blueprint, même quand le popup montre une autre clim ; un retour de HA pour l'une ne
+  touche jamais l'autre. Fermer le popup (croix, voile) revient à la clim du blueprint.
+  La coloration du popup est passée du YAML au C++ (`clim_recolorer()`).
+- **Rythme** : consigne et mode d'une clim de tuile arrivent tout de suite (nouveau
+  déclencheur par pièce sur l'attribut `temperature`) ; ventilation, oscillation,
+  préréglage et température de la pièce avec les mesures (5 minutes), pour ne pas
+  réveiller l'automatisation à chaque dixième de degré.
+- **Compatible dans les deux sens** : un firmware plus ancien ignore `crRT` / `ceRT` (la
+  tuile ne fait rien, comme avant) ; sans ces clés (blueprint plus ancien), rien ne change.
+  La clim du blueprint reçoit exactement les mêmes commandes et poussées (ancien et
+  nouveau blueprint rendus : 2 080 commandes et 400 poussées, 0 écart). Test « HA neuf » :
+  la clim `climate.heatpump` de l'intégration demo dans la pièce 3.
+
 ## [3.3.0] — 2026-09-29
 
 De `v3.2.2` à aujourd'hui : six pull requests (#252 → #257), plus celle de la release.
