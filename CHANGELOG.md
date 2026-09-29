@@ -4,6 +4,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+- **Deux garde-fous de plus, joués par `pytest` et la CI** (audit du 25/09, §7). Une valeur
+  oubliée dans un niveau d'Arcanoïde ou une question supprimée de Trial Poursuite compilait sans
+  erreur (le C++ complète avec des zéros, soit une question nulle). `tools/check_arkanoid_levels.py`
+  vérifie les 8 niveaux (rangées complètes, valeurs connues, aucune brique emmurée par des
+  indestructibles, `LEVELS` et fin de partie cohérents) ; `tools/check_trivia_questions.py` la
+  banque de 720 questions (autant d'entrées que chaque `#define`, catégorie et difficulté valides,
+  ni texte vide, ni leurre égal à la réponse, ni doublon). Les deux attrapent une erreur injectée
+  (`tests/test_guards.py`). Rien ne change sur l'écran.
 - **Documentation : schéma de la cartographie complet.** Le schéma Mermaid de
   `CARTOGRAPHIE_TAB5.md` n'avait pas de nœud pour `ecran-*.yaml`, `publication-*.yaml`,
   `tab5-tuiles.yaml` et `tab5-zones.yaml`, ni d'arête `packages:` vers l'arcade, le calendrier

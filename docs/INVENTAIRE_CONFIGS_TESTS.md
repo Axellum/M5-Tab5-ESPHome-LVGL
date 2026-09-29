@@ -119,7 +119,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_improv_serie.py` | `tests/` | Unitaire | Wi-Fi par Improv sur l'USB (`tools/improv_serie.py`, `migrer_vers_3.py --port`) : paquets conformes (en-tête, longueur, somme de contrôle, saut de ligne), lecture au milieu du journal, réglage réussi / réseau introuvable / tablette muette face à une fausse liaison série, mot de passe jamais affiché, `secrets.yaml` lu en YAML. |
 | `test_render_ha_config.py` | `tests/` | Unitaire | Copie des fichiers HA publics, détection de fuite d'identifiants réels et de placeholder restant (`tools/render_ha_config.py`) ; aucun placeholder dans le dépôt. |
 | `test_installation_ha.py` | `tests/` | Unitaire + contenu | Job « installation dans un HA neuf » sans conteneur : `preparer_config.py` écrit une installation complète (ligne des packages, tous les packages, blueprint identique), ni placeholder ni `!secret` installés, optionnels seulement sur demande, chaque entité `…tab5_…` lue par un package définie par un package, entrées du blueprint et « Zones masquées » attendues, tablette virtuelle au nom de la vraie, mêmes chemins sur `main` et en PR ; fonctions pures de `verifier_installation.py` (clé, traces, journal de HA). |
-| `test_guards.py` | `tests/` | Contenu | Joue les 6 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, registre, règles de code, salles Marble, niveaux Lode, comptes de la cartographie). |
+| `test_guards.py` | `tests/` | Contenu | Joue les 8 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, registre, règles de code, salles Marble, niveaux Lode, niveaux d'Arcanoïde, questions de Trial Poursuite, comptes de la cartographie). |
 | `__init__.py` | `tests/` | — | Marqueur de package. |
 
 ### 3.2 Tests moteurs de jeux (`tools/`)
@@ -144,6 +144,8 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `tools/check_tab5_modal_chrome.py` | `tools/` | Garde-fou | ADR-0009 : chrome modal partagé sur chaque popup (rapatrié du workspace le 06/09/2026). |
 | `tools/check_marble_rooms.py` | `tools/` | Garde-fou | Les 6 salles de « Fil d'Or » lues dans `marble_game.cpp` restent traversables (numpy). |
 | `tools/check_lode_levels.py` | `tools/` | Garde-fou | Les 10 niveaux de « Coureur d'Or » lus dans `lode_game.cpp` restent jouables. |
+| `tools/check_arkanoid_levels.py` | `tools/` | Garde-fou | Les 8 niveaux d'« Arcanoïde » lus dans `arkanoid_game.cpp` : rangées complètes, valeurs connues, aucune brique destructible emmurée, `LEVELS`/`LEVEL_NAMES`/fin de partie cohérents. |
+| `tools/check_trivia_questions.py` | `tools/` | Garde-fou | La banque de « Trial Poursuite » (`trivia_questions.h`) : autant d'entrées que chaque `#define`, catégorie et difficulté valides, ni texte vide, ni leurre égal à la réponse, ni question en double. |
 | `tools/check_tab5_registry.py` | `tools/` | Garde-fou | ADR-0013 : chaque `*_game.h` figure dans `GameRegistry::kGames`, aucune liste de jeux recopiée dans un YAML. |
 | `tools/check_tab5_code_rules.py` | `tools/` | Garde-fou | Règles de code : `snprintf` partout, aucun `lv_*` dans le contrat API, aucun global orphelin, aucune entité HA en dur, glyphes de la date (`roboto_45`), icônes MDI couvertes par la police de leur widget sans glyphe mort (règle 7). |
 | `tools/cartographie_counts.py` | `tools/` | Garde-fou | Comptes de lignes de `CARTOGRAPHIE_TAB5.md` à 20 % près ; `--write` les recalcule. |
@@ -196,11 +198,13 @@ python tools/demo/demo_pusher.py --dry-run
 │   ├── test_alarm_clock.cpp
 │   ├── test_chess_perft.py
 │   ├── test_draughts_engine.py
+│   ├── check_arkanoid_levels.py
 │   ├── check_lode_levels.py
 │   ├── check_marble_rooms.py
 │   ├── check_tab5_code_rules.py
 │   ├── check_tab5_modal_chrome.py
 │   ├── check_tab5_registry.py
+│   ├── check_trivia_questions.py
 │   ├── cartographie_counts.py
 │   ├── make_chess_font.py
 │   ├── render_ha_config.py
