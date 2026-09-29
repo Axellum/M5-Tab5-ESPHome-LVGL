@@ -119,7 +119,9 @@ template:
   # Vigilances CAP Alerts, forme de l'intégration HACS cap_alerts v0.5.1 (une entité par
   # alerte, état = sévérité normalisée, attributs CAP dont incident_platform_version) :
   # vent orange de MeteoAlarm en cours, brouillard « minor » du NWS ; un séisme GDACS et
-  # un feu dans 30 h, à ne pas compter.
+  # un feu dans 30 h, à ne pas compter. BBK (v0.6.0, parameters.bbk_channel) : grêle du
+  # canal DWD et crue MoWaS de catégorie « Met, Safety », comptées ; incendie MoWaS
+  # (catégorie « Fire », protection civile), à ne pas compter.
   - triggers:
       - trigger: homeassistant
         event: start
@@ -170,6 +172,46 @@ template:
           event: "Fire danger"
           onset: "{{ (now() + timedelta(hours=30)).isoformat() }}"
           expires: "{{ (now() + timedelta(hours=40)).isoformat() }}"
+      - name: "CAP CI grêle"
+        unique_id: ci_cap_grele
+        icon: mdi:weather-hail
+        state: "moderate"
+        attributes:
+          incident_platform_version: "1.0"
+          provider: "bbk"
+          phase: "new"
+          status: "Actual"
+          category: "Met"
+          event: "GEWITTER mit HAGEL"
+          onset: "{{ (now() - timedelta(hours=1)).isoformat() }}"
+          expires: "{{ (now() + timedelta(hours=3)).isoformat() }}"
+          parameters: "{{ {'II': '46', 'bbk_channel': 'dwd'} }}"
+      - name: "CAP CI crue"
+        unique_id: ci_cap_crue
+        icon: mdi:home-flood
+        state: "moderate"
+        attributes:
+          incident_platform_version: "1.0"
+          provider: "bbk"
+          phase: "new"
+          status: "Actual"
+          category: "Met, Safety"
+          event: "Gefahreninformation"
+          headline: "Flood"
+          parameters: "{{ {'bbk_channel': 'mowas'} }}"
+      - name: "CAP CI incendie"
+        unique_id: ci_cap_incendie
+        icon: mdi:fire
+        state: "extreme"
+        attributes:
+          incident_platform_version: "1.0"
+          provider: "bbk"
+          phase: "new"
+          status: "Actual"
+          category: "Fire"
+          event: "Gefahreninformation"
+          headline: "Fumes from fire"
+          parameters: "{{ {'bbk_channel': 'mowas'} }}"
 
   - sensor:
       # Vigilance, forme de Météo-France (sensor.<département>_weather_alert) : jaune orages.

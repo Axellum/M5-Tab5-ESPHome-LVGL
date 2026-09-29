@@ -109,15 +109,17 @@ DEDUITS = {
 DEDUITS_LISTES = {
     ("sensor.tab5_sources_meteo", "dwd"): ["sensor.ville_ci_niveau_d_alerte_actuel",
                                            "sensor.ville_ci_niveau_d_alerte_anticipee"],
-    ("sensor.tab5_sources_meteo", "cap"): ["sensor.cap_ci_brouillard", "sensor.cap_ci_feu_futur",
-                                           "sensor.cap_ci_seisme", "sensor.cap_ci_vent"],
+    ("sensor.tab5_sources_meteo", "cap"): ["sensor.cap_ci_brouillard", "sensor.cap_ci_crue",
+                                           "sensor.cap_ci_feu_futur", "sensor.cap_ci_grele",
+                                           "sensor.cap_ci_incendie", "sensor.cap_ci_seisme",
+                                           "sensor.cap_ci_vent"],
 }
 LISTE_VIGILANCES = "input_select.tab5_source_vigilance"
 VIGILANCES = (
     # (option, niveau global, 11 cases : vent, inondation, orages, pluie-inondation,
     #  neige-verglas, grand froid, vagues-submersion, canicule, avalanches, brouillard, feux)
     ("DWD", "Orange", "Orange|Vert|Vert|Vert|Jaune|Vert|Vert|Vert|Vert|Vert|Vert"),
-    ("CAP Alerts", "Orange", "Orange|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Jaune|Vert"),
+    ("CAP Alerts", "Orange", "Orange|Jaune|Jaune|Vert|Vert|Vert|Vert|Vert|Vert|Jaune|Vert"),
     ("Aucune", "Vert", "|".join(["Vert"] * 11)),
     ("Météo-France", "Jaune", "Vert|Vert|Jaune|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert"),
 )
