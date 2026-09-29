@@ -158,7 +158,7 @@ jobs:
           python-version: "3.13"
       - run: bash tools/ci/pip_reessai.sh pillow
       - name: Réunir les captures des six langues
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: rendu-captures-*
           merge-multiple: true
