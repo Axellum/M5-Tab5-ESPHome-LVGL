@@ -15,6 +15,46 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   français, pour chaque package (sept manquaient), et celle de `tab5-scripts.yaml` ne lui prête
   plus les scripts partis dans l'arcade, le calendrier et l'assistant.
   `tests/test_doc_comptes.py` vérifie ces points.
+
+## [3.3.1] — 2026-09-29
+
+De `v3.3.0` à aujourd'hui : une pull request de fonction (#263) et trois de documentation
+(#259 → #261), plus celle de la release.
+- **Toutes les clims ont leur popup** (#263, [ADR-0027](docs/decisions/0027-climate-per-tile.md)) :
+  une tuile de clim placée dans une pièce ouvre le popup pour sa propre clim (réglages,
+  état, commandes), et plus seulement la clim du blueprint. La carte de l'accueil reste
+  celle du blueprint. La clim du blueprint reçoit les mêmes commandes qu'en 3.3.0.
+- **Documentation** : comptes remis au code et vérifiés par un test (#260), deux images
+  fausses remplacées (#259), `CLAUDE.md` qui importe `AGENTS.md` (#261).
+
+**Compatible dans les deux sens** : un firmware plus ancien ignore les clés `crRT` / `ceRT`
+(la tuile de clim ne fait rien au toucher, comme avant) ; un firmware 3.3.1 avec le
+blueprint de la 3.3.0 se comporte comme la 3.3.0.
+
+### À faire en mettant à jour depuis 3.3.0
+
+1. **Home Assistant** : seul le blueprint change. Remplacer
+   `blueprints/automation/tab5/tab5_emplacements.yaml` par celui de
+   `tab5_home_assistant.zip`, puis recharger les automatisations.
+2. **Firmware** : entité « Firmware » dans Home Assistant.
+
+### Mesures de la version
+
+- Compilation locale du même code : image 3 331 298 o (41,0 % de la partition), RAM
+  statique 171 702 o (−40 o) ; la table des clims de tuile (4 600 o) n'est prise en PSRAM
+  que si une maison en a.
+- Test d'installation dans un HA neuf : la clim `climate.heatpump` de l'intégration demo,
+  placée dans la pièce 3, reçoit `cr24|7.0|35.0|0.5|°C|h|HeatPump` et son état.
+- Compilations requises de la CI (dernière ESPHome et 2026.9.0) : vertes.
+
+### Problèmes connus
+
+Ceux de la 3.3.0, sauf le popup réservé à une seule clim, et : pour une clim de tuile, un
+changement de ventilation, d'oscillation ou de préréglage fait hors de l'écran arrive
+dans le popup au plus tard 5 minutes après.
+
+### 2026-09-29 — Documentation remise au code
+
 - **Documentation : comptes remis au code.** `docs/architecture.md` annonçait douze packages
   et en listait quinze : la vue d'ensemble ne donne plus de nombre, et la liste reprend les
   dix-neuf de `tab5-ha-hmi.yaml` (`tab5_ecran`, `tab5_publication`, `tab5_tuiles` et
