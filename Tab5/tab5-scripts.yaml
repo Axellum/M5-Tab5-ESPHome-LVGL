@@ -1,8 +1,8 @@
 # [AI-CONTEXT]
 # @file tab5-scripts.yaml
 # @role Scripts ESPHome transverses : registre des fenêtres modales, volet (dont le
-#       tap de sa carte), volume, debounces (lumière, clim), recoloration clim et
-#       widgets que les réglages de l'appareil adaptent (tab5_clim_ui, ADR-0026),
+#       tap de sa carte), volume, debounces (lumière, clim du blueprint, clim d'une
+#       tuile), widgets de la clim (tab5_clim_ui, ADR-0026 et ADR-0027),
 #       rotateur de la carte centrale, popup lumière, touches de la télécommande TV,
 #       retour automatique à l'accueil.
 # @architecture_constraint Depuis le 25/09/2026 (audit, lot 8c), les familles qui
@@ -194,13 +194,15 @@ script:
           commande: luminosite
           valeur: !lambda 'return to_string(lv_arc_get_value(id(arc_light_brightness)));'
 
-  # Debounce de la cible clim (arc + boutons ± du popup clim) : un seul
-  # climate.set_temperature par geste — les taps rapides ± sont groupés, la
-  # cible affichée est optimiste (update_clim_target_ui) en attendant le retour
-  # HA via tab5_maj_clim. Si la clim est éteinte, le blueprint allume le premier mode
-  # de consigne qu'elle connaît (froid d'abord : Daikin refuse set_temperature en mode
-  # off), et il borne la consigne aux limites de l'appareil (ADR-0026). Valeur en texte
-  # court (« 21.5 », pas « 21.500000 ») : le blueprint la relit en nombre, pareil.
+  # Debounce de la cible de la clim du blueprint (boutons ± de la carte de l'accueil,
+  # arc et boutons ± du popup quand il la montre) : un seul climate.set_temperature par
+  # geste — les taps rapides ± sont groupés, la cible affichée est optimiste en attendant
+  # le retour HA via tab5_maj_clim. Si la clim est éteinte, le blueprint allume le premier
+  # mode de consigne qu'elle connaît (froid d'abord : Daikin refuse set_temperature en
+  # mode off), et il borne la consigne aux limites de l'appareil (ADR-0026). Valeur en
+  # texte court (« 21.5 », pas « 21.500000 ») : le blueprint la relit en nombre, pareil.
+  # Lancé par la carte (climate_card.yaml) et, pour le popup, par clim_popup_consigne()
+  # / clim_popup_pas() (tab5_cards.cpp, pointeur posé par tab5_clim_ui).
   - id: tab5_debounce_clim_temp
     mode: restart
     then:
@@ -211,115 +213,39 @@ script:
           commande: consigne
           valeur: !lambda 'return clim_consigne_texte(id(clim_target_temp));'
 
-  # Recoloration centralisée des icônes clim (source unique de vérité) — lit les 4
-  # globals clim_hvac_mode / clim_preset_mode / clim_fan_mode / clim_swing_mode et
-  # applique toutes les couleurs (mode, presets, silence, oscillation, brise + couleur
-  # de la cible). Appelé par le service tab5_maj_clim (retour HA, autoritaire) ET par
-  # chaque bouton du popup (affichage OPTIMISTE au tap, avant le round-trip HA/Daikin
-  # cloud qui peut prendre plusieurs secondes). Ainsi taper un bouton recolore l'icône
-  # instantanément ; le retour HA re-applique l'état réel et corrige tout écart.
-  # NB: display logic exceptionnellement en YAML ici (accès id() requis pour ~12 objets)
-  # — même approche que l'ancienne coloration inline de tab5_maj_clim qu'il remplace.
-  - id: tab5_clim_recolor
+  # Debounce de la cible d'une clim de tuile (popup ouvert par une tuile cli sans
+  # l'option m, ADR-0027) : même délai, mais l'emplacement (« tRT ») et la valeur sont
+  # pris au geste (tab5_cards.cpp), pour que la consigne parte à sa clim même si le popup
+  # a été refermé entre-temps. Le blueprint la traduit comme celle de la clim du
+  # blueprint, sur l'entité de la tuile. Clé vide : la tuile a changé d'appareil entre
+  # le geste et l'envoi (clim_tuile_oublier), rien ne part.
+  - id: tab5_debounce_clim_tuile
     mode: restart
     then:
-      - lambda: |-
-          if (id(popup_icon_clim_cool) == nullptr) return;
+      - delay: 250ms
+      - if:
+          condition:
+            lambda: 'return clim_tuile_attente_cle()[0] != 0;'
+          then:
+            - script.execute:
+                id: tab5_action
+                emplacement: !lambda 'return clim_tuile_attente_cle();'
+                commande: consigne
+                valeur: !lambda 'return clim_tuile_attente_texte();'
 
-          // « Chaud » est aussi un blanc de lampe (« Warm » en anglais) : le mode de
-          // la clim a sa propre traduction (« Heat »), clé « clim|Chaud » (lot 4).
-          ui_text(id(popup_lbl_clim_heat), tr_ctx("clim", "Chaud"));
-
-          const std::string& mode  = id(clim_hvac_mode);
-          const std::string& preset = id(clim_preset_mode);
-          const std::string& fan   = id(clim_fan_mode);
-          const std::string& swing = id(clim_swing_mode);
-
-          uint32_t c_cool_active   = UIColor::CLIM_COOL_ACTIVE;
-          uint32_t c_cool_inactive = UIColor::CLIM_COOL_INACTIVE;
-          uint32_t c_heat_active   = UIColor::CLIM_HEAT_ACTIVE;
-          uint32_t c_heat_inactive = UIColor::CLIM_HEAT_INACTIVE;
-          uint32_t c_off_active    = UIColor::CLIM_OFF_ACTIVE;
-          uint32_t c_off_inactive  = UIColor::CLIM_OFF_INACTIVE;
-          uint32_t c_inactive      = UIColor::CLIM_TRACK_INACTIVE;
-          uint32_t c_eco           = UIColor::CLIM_ECO;
-
-          // Couleur de la cible (Bleu si froid, Rouge si chaud, Blanc sinon)
-          uint32_t c_target_color = UIColor::TEXT_PRIMARY;
-          if (mode == "cool") c_target_color = UIColor::CLIM_COOL_ACTIVE;
-          else if (mode == "heat") c_target_color = UIColor::CLIM_HEAT_ACTIVE;
-          if (id(clim_target) != nullptr)
-            lv_obj_set_style_text_color(id(clim_target), lv_color_hex(c_target_color), LV_PART_MAIN);
-          if (id(clim_target_popup) != nullptr)
-            lv_obj_set_style_text_color(id(clim_target_popup), lv_color_hex(c_target_color), LV_PART_MAIN);
-
-          // Mode (Cool/Heat/Dry/Fan/Off)
-          lv_obj_set_style_text_color(id(popup_icon_clim_cool), lv_color_hex(c_cool_inactive), LV_PART_MAIN);
-          lv_obj_set_style_text_color(id(popup_icon_clim_heat), lv_color_hex(c_heat_inactive), LV_PART_MAIN);
-          lv_obj_set_style_text_color(id(popup_icon_clim_dry),  lv_color_hex(c_cool_inactive), LV_PART_MAIN);
-          lv_obj_set_style_text_color(id(popup_icon_clim_fan),  lv_color_hex(c_inactive), LV_PART_MAIN);
-          lv_obj_set_style_text_color(id(popup_icon_clim_off),  lv_color_hex(c_off_inactive), LV_PART_MAIN);
-
-          if (mode == "cool") {
-            lv_obj_set_style_text_color(id(popup_icon_clim_cool), lv_color_hex(c_cool_active), LV_PART_MAIN);
-          } else if (mode == "heat") {
-            lv_obj_set_style_text_color(id(popup_icon_clim_heat), lv_color_hex(c_heat_active), LV_PART_MAIN);
-          } else if (mode == "dry") {
-            lv_obj_set_style_text_color(id(popup_icon_clim_dry), lv_color_hex(c_cool_active), LV_PART_MAIN);
-          } else if (mode == "fan_only") {
-            lv_obj_set_style_text_color(id(popup_icon_clim_fan), lv_color_hex(c_eco), LV_PART_MAIN);
-          } else if (mode == "off" || mode == "unavailable" || mode == "unknown") {
-            lv_obj_set_style_text_color(id(popup_icon_clim_off), lv_color_hex(c_off_active), LV_PART_MAIN);
-          }
-          // Autre mode (heat_cool, auto… : pas de bouton, ADR-0026) : aucun ne s'allume,
-          // plutôt que « Éteint » sur une clim qui tourne.
-
-          // Actif ou non : clim_*_actif() (tab5_cards.cpp), les mêmes que les bascules du
-          // popup et que les listes du blueprint (ADR-0026, tests/test_clim.py).
-          // Eco (preset "eco"/"away")
-          if (clim_eco_actif(preset)) {
-            lv_obj_set_style_text_color(id(popup_icon_clim_eco), lv_color_hex(c_eco), LV_PART_MAIN);
-          } else {
-            lv_obj_set_style_text_color(id(popup_icon_clim_eco), lv_color_hex(c_inactive), LV_PART_MAIN);
-          }
-
-          // Boost
-          if (preset == "boost") {
-            lv_obj_set_style_text_color(id(popup_icon_clim_boost), lv_color_hex(c_heat_active), LV_PART_MAIN);
-          } else {
-            lv_obj_set_style_text_color(id(popup_icon_clim_boost), lv_color_hex(c_inactive), LV_PART_MAIN);
-          }
-
-          // Silence / Auto (quiet, silence, Silence, low)
-          if (clim_silence_actif(fan)) {
-            lv_obj_set_style_text_color(id(popup_icon_clim_quiet), lv_color_hex(c_cool_active), LV_PART_MAIN);
-          } else {
-            lv_obj_set_style_text_color(id(popup_icon_clim_quiet), lv_color_hex(c_inactive), LV_PART_MAIN);
-          }
-
-          // Oscillation (swing, on, both, vertical, 3d, horizontal ; windnice exclu :
-          // bouton "Brise" séparé)
-          if (clim_oscillation_actif(swing)) {
-            lv_obj_set_style_text_color(id(popup_icon_clim_swing), lv_color_hex(c_cool_active), LV_PART_MAIN);
-          } else {
-            lv_obj_set_style_text_color(id(popup_icon_clim_swing), lv_color_hex(c_inactive), LV_PART_MAIN);
-          }
-
-          // Brise (Daikin Onecta "windnice")
-          if (swing == "windnice") {
-            lv_obj_set_style_text_color(id(popup_icon_clim_windnice), lv_color_hex(c_cool_active), LV_PART_MAIN);
-          } else {
-            lv_obj_set_style_text_color(id(popup_icon_clim_windnice), lv_color_hex(c_inactive), LV_PART_MAIN);
-          }
-
-  # Widgets de la clim que les réglages de l'appareil adaptent (clé climr, ADR-0026 :
-  # bornes de l'arc, unité, titre, boutons gérés, sections des options), posés dans
-  # g_clim_ui : id() n'existe que dans les lambdas YAML. Lancé par tab5_zones_apply à la
+  # Widgets de la clim (ADR-0026, ADR-0027) posés dans g_clim_ui : ceux que les réglages
+  # de l'appareil adaptent (bornes de l'arc, unité, titre, boutons gérés, sections des
+  # options), ceux que clim_recolorer() colore (icônes des modes et options, libellé
+  # « Chaud »), l'état de la clim du blueprint (ses globals) et les deux débounces de la
+  # consigne. id() n'existe que dans les lambdas YAML. Lancé par tab5_zones_apply à la
   # fin du setup, avant toute poussée de HA, comme tab5_tuiles_ui. Aucun lv_* ici.
+  # La coloration (ancien script tab5_clim_recolor) est dans le C++ depuis le 29/09/2026 :
+  # la carte suit la clim du blueprint, le popup la clim affichée.
   - id: tab5_clim_ui
     then:
       - lambda: |-
           ClimUI& u = g_clim_ui;
+          u.popup = id(clim_options_popup);
           u.consigne_carte = id(clim_target);
           u.consigne_popup = id(clim_target_popup);
           u.arc = id(arc_temp_popup);
@@ -339,6 +265,24 @@ script:
           u.titre_flux = id(clim_titre_flux);
           u.oscillation = id(popup_btn_clim_swing);
           u.brise = id(popup_btn_clim_windnice);
+          u.icone_froid = id(popup_icon_clim_cool);
+          u.icone_chaud = id(popup_icon_clim_heat);
+          u.icone_sec = id(popup_icon_clim_dry);
+          u.icone_ventilation = id(popup_icon_clim_fan);
+          u.icone_eteint = id(popup_icon_clim_off);
+          u.icone_eco = id(popup_icon_clim_eco);
+          u.icone_boost = id(popup_icon_clim_boost);
+          u.icone_silence = id(popup_icon_clim_quiet);
+          u.icone_oscillation = id(popup_icon_clim_swing);
+          u.icone_brise = id(popup_icon_clim_windnice);
+          u.libelle_chaud = id(popup_lbl_clim_heat);
+          u.consigne_bp = &id(clim_target_temp);
+          u.mode_bp = &id(clim_hvac_mode);
+          u.preset_bp = &id(clim_preset_mode);
+          u.ventilation_bp = &id(clim_fan_mode);
+          u.oscillation_bp = &id(clim_swing_mode);
+          u.debounce_blueprint = []() { id(tab5_debounce_clim_temp).execute(); };
+          u.debounce_tuile = []() { id(tab5_debounce_clim_tuile).execute(); };
 
   # Rotateur central auto (8s) — mode restart : tout tap/advance remet le délai à zéro.
   # Pas de rotation sous un popup ouvert (audit 25/09/2026, lot 3) : la transition

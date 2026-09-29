@@ -13,7 +13,9 @@
 #                 (accumulation dans clim_target_temp, un seul set_temperature par geste via
 #                 tab5_debounce_clim_temp). Pas et bornes : clim_consigne_suivante() (réglages
 #                 de l'appareil, ADR-0026), jamais de 0.5f / 16 / 30 en dur. Le clic sur la
-#                 cible ouvre le popup. Conteneur parent = transparent (ids conservés).
+#                 cible ouvre le popup sur la clim du blueprint (ADR-0027 : il peut aussi
+#                 montrer celle d'une tuile). Conteneur parent = transparent (ids conservés).
+#                 La carte montre TOUJOURS la clim du blueprint (ses globals clim_*).
 # ═══════════════════════════════════════════════════════
 obj:
   id: climate_card
@@ -79,7 +81,10 @@ obj:
               height: 68
               styles: style_invisible
               on_short_click:
+                # Le popup montre la clim du blueprint, celle de cette carte (il a pu
+                # montrer celle d'une tuile, ADR-0027).
                 - lambda: |-
+                    clim_afficher_blueprint();
                     animate_popup_open(id(clim_options_popup));
 
           - button:

@@ -226,8 +226,16 @@ def test_ce_que_le_job_attend_est_ce_que_calcule_le_blueprint():
     assert verifier.juger_definitions(definitions, icones) == []
     etats_tuiles = verifier.entrees_de(passage.etats_tuiles())
     assert [e[0] for e in etats_tuiles] == [c for c, _ in verifier.tuiles_attendues()]
+    # Clim de tuile (ADR-0027) : ses clés cr/ce, pas celles de la clim du blueprint.
+    reglages, clims = passage["reglages_tuiles"], passage["etats_clims"]
+    assert verifier.juger_clims(reglages, clims) == []
+    assert (verifier.CLIM_DE_TUILE, "cli") in verifier.tuiles_attendues()
+    assert verifier.EMPLACEMENTS["clim"] not in [t["e"] for t in passage["tuiles_clim"]]
     # Et le juge voit un écart.
     assert verifier.juger_definitions(definitions.replace("|Lights;", "|Kitchen Lights;"), icones)
+    assert verifier.juger_clims(reglages.replace("cr24", "cr14"), clims)
+    assert verifier.juger_clims(reglages, "")
+    assert verifier.juger_clims(reglages.replace("|°C|", "|C|"), clims)
 
 
 def test_trace_variables_et_appels():

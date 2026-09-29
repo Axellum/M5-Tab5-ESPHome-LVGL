@@ -201,6 +201,11 @@ select:
                      // « Prochaine sonnerie » montrerait un état périmé.
               id(tab5_alarm_open).execute();
               break;
+            case 5:  // La clim du blueprint : le popup a pu montrer celle d'une
+                     // tuile (ADR-0027) et être refermé par close_all() ci-dessus.
+              clim_afficher_blueprint();
+              if (target != nullptr) animate_popup_open(target);
+              break;
             case 8:  // La console est un layer plein cadre : pas d'animation
                      // d'ouverture, comme son bouton (tab5-lvgl.yaml).
               lv_obj_remove_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);

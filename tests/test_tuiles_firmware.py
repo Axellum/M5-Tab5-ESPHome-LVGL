@@ -160,9 +160,10 @@ def test_commandes_par_type_egales_au_tableau_de_l_adr():
     # Le titre de chaque tuile (jours, heures, cartes HA) bascule le sens.
     titres = _fonction(cpp, "tuiles_brancher_titres")
     assert "u.jour_titre[t], u.heure_titre[t], u.carte_nom[t]" in titres and "LV_EVENT_SHORT_CLICKED" in titres
-    # cap / bin : lecture seule (aucun bouton) ; cli : popup avec m ; med : télécommande avec t.
+    # cap / bin : lecture seule (aucun bouton) ; cli : popup avec m, ou sur sa propre clim
+    # quand la tablette en a les réglages (ADR-0027) ; med : télécommande avec t.
     agit = _fonction(cpp, "type_agit")
-    assert "case Type::CLI: return (options & OPT_M) != 0;" in agit
+    assert "case Type::CLI: return (options & OPT_M) != 0 || clim_connue;" in agit
     assert "default: return false;" in agit and "OPT_R" in agit
     assert "if (d.options & OPT_T) ouvrir_popup(g_tuiles_ui.popup_tv);" in appui
     # Option k : un second appui dans les 3 s.

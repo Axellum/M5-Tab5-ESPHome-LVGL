@@ -223,7 +223,12 @@ class Passage:
         return self.variables_du_bloc("definitions")
 
     def etats_tuiles(self):
-        return self.variables_du_bloc("etats_tuiles") if self["tuiles_a_pousser"] else ""
+        """États des tuiles (tRT) ; le premier bloc des actions d'abord : les clims des
+        tuiles, dans le même bloc, y lisent reglages_clims et reglages_changes."""
+        if not self["tuiles_a_pousser"]:
+            return ""
+        self.variables_du_bloc("reglages_clims")
+        return self.variables_du_bloc("etats_tuiles")
 
     def aiguillage(self):
         """(alias, actions) de la branche que choisit une commande de l'écran."""
@@ -448,13 +453,15 @@ def test_declencheurs_des_pieces():
     for n in range(1, 6):
         mes = [t for t in bp["triggers"] if t["id"].startswith(f"piece_{n}")]
         assert [t["id"] for t in mes] == [f"piece_{n}", f"piece_{n}_sortie", f"piece_{n}_luminosite",
-                                         f"piece_{n}_couleur", f"piece_{n}_position"]
+                                         f"piece_{n}_couleur", f"piece_{n}_position", f"piece_{n}_consigne"]
         assert all(t["entity_id"].nom == f"piece_{n}_tuiles" for t in mes)
         visibles = mes[0]["to"]
         # « on »/« off » sans guillemets seraient des booléens, refusés par le schéma.
         assert all(isinstance(e, str) for e in visibles) and {"on", "off"} <= set(visibles)
         assert mes[1]["from"] == visibles and mes[1]["not_to"] == visibles
-        assert [t.get("attribute") for t in mes[2:]] == ["brightness", "rgb_color", "current_position"]
+        # Consigne d'une clim (attribut temperature, ADR-0027) ; jamais current_temperature,
+        # la température de la pièce, qui part avec les mesures.
+        assert [t.get("attribute") for t in mes[2:]] == ["brightness", "rgb_color", "current_position", "temperature"]
         assert all(t["not_from"] == [None] and t["not_to"] == [None] for t in mes[2:])
     # Aucun état de mesure dans la liste : un capteur ne réveille jamais l'automatisation.
     assert not [e for e in visibles if re.fullmatch(r"-?[0-9.]+", e)]
