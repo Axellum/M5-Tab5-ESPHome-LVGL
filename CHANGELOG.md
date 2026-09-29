@@ -33,7 +33,7 @@ blueprint de la 3.3.0 se comporte comme la 3.3.0.
   que si une maison en a.
 - Test d'installation dans un HA neuf : la clim `climate.heatpump` de l'intégration demo,
   placée dans la pièce 3, reçoit `cr24|7.0|35.0|0.5|°C|h|HeatPump` et son état.
-- Compilations requises de la CI et rendu des écrans : verts.
+- Compilations requises de la CI (dernière ESPHome et 2026.9.0) : vertes.
 
 ### Problèmes connus
 
