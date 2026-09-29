@@ -4,6 +4,65 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [3.2.1] — 2026-09-29
+
+De `v3.2.0` à aujourd'hui : 14 pull requests (#234 → #248, sans #242, mise à jour des
+actions GitHub), plus celle de la release.
+- **Carte centrale** : la rotation ne redessine plus que le texte (−13 à −20 % par
+  rotation, #244) ; sa logique est simplifiée (#237) ; trois défauts corrigés (#243) : tap
+  pendant une réponse vocale ou une rotation, fin de la pluie qui restait à l'écran.
+- **Écran** : tout l'affichage pouvait rester décalé après un swipe des prévisions ; le
+  calendrier est centré en hauteur et plus lisible ; « Aucun travail de prévu » a son
+  accent (#245).
+- **Boutons** : les transitions du thème LVGL (80 ms à l'appui) sont enfin coupées (#235).
+- **Jeux** : la raquette d'Arcanoïde ne repart plus dans l'ancien sens (#238) ; l'élan de
+  Fil d'Or part d'une secousse, plus d'une inclinaison (#240).
+- **Accéléromètre** : il ne sert plus qu'aux jeux ; trois capteurs de moins dans HA
+  (« Tab5 Pitch », « Tab5 Roll », « Tab5 IMU Temperature », #239).
+- **Home Assistant** : tout est repoussé au démarrage de HA, même si la tablette s'est
+  reconnectée avant les automatisations (#234).
+- **Docs** : performances mesurées (#236, #241), vérifications pour les testeurs ST7121
+  (#246).
+
+**Version corrective** : aucune nouvelle fonction, rien d'incompatible. Le firmware 3.2.1
+marche avec les fichiers HA de la 3.2.0, et inversement.
+
+### À faire en mettant à jour depuis 3.2.0
+
+1. **Firmware** : entité « Firmware » dans Home Assistant.
+2. **Home Assistant, facultatif** (pour le démarrage de HA, #234) : remplacer
+   `packages/tab5_push.yaml` par celui de `tab5_home_assistant.zip`, ré-importer le
+   blueprint « Tab5 — emplacements », recharger les automatisations.
+3. Les trois capteurs de position (« Tab5 Pitch », « Tab5 Roll », « Tab5 IMU
+   Temperature ») deviennent indisponibles : les retirer des tableaux de bord qui les
+   affichent.
+
+### Mesures de la version
+
+- Carte centrale, même tablette, même matinée : 107,8 → 86,4-93,4 ms par rotation
+  (`docs/performance.md`).
+- Tablette de l'auteur (ST7123) : même code que ce tag (hors numéro de version et
+  documentation) depuis le 29/09 10:43, essayé par l'auteur (swipe, calendrier, carte
+  centrale). Rendu hors tablette : calendrier vérifié (juin 2026).
+- Compilations requises de la CI (dernière ESPHome et 2026.9.0) : vertes.
+
+### Problèmes connus
+
+Ceux de la 3.2.0.
+
+### 2026-09-29 — Écran décalé au swipe, calendrier, « prévu »
+
+- Retour d'Axel, photos à l'appui : passer des prévisions par heure à l'accueil pouvait
+  décaler tout l'écran vers la droite. Pendant un swipe, le calque entrant part à ±110 px
+  (`animate_swipe_horizontal()`) : `page_main` devenait défilable et le doigt encore posé
+  la faisait glisser ; le décalage restait ensuite. `page_main` n'est plus défilable
+  (`scrollable: false`) ; le geste n'en dépend pas.
+- Calendrier : autant de lignes que de semaines dans le mois (4 à 6), réparties sur toute
+  la hauteur et centrées (`cal_grid_h`) ; numéros centrés sous le nom du jour (74 px
+  d'écart avant) ; chaque jour sur un fond de verre, plus pâle s'il est passé ; jours
+  passés en gris clair au lieu de l'ardoise ; noms des jours de semaine en blanc.
+- « Aucun travail de prévu » : l'accent manquait dans la clé française et ses traductions.
+
 ### 2026-09-29 — Carte centrale : la rotation ne redessine plus que le texte
 
 - Demande d'Axel : essayer de ne redessiner que le texte. Chaque panneau du rotateur fait
