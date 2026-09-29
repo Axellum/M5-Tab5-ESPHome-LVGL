@@ -8,7 +8,7 @@ compilateur ne compare :
   tablette suit, dans l'ordre de l'enum ;
 - la réponse de HA : depuis le lot 6a (ADR-0019), le blueprint « Tab5 — emplacements »
   (liste `cles_zones`), qui ajoute les zones qu'il est seul à connaître (clim, volet,
-  planning).
+  planning, discussion — celle-ci rendue par tests/test_clim.py).
 
 Une clé qui diverge ferait masquer la mauvaise zone, ou jamais la bonne, sans aucune
 erreur. On vérifie aussi que chaque capteur de zone signale ses données (zone_vue)."""
@@ -57,6 +57,17 @@ def _liste_yaml(texte, nom):
 
 def test_cles_suivent_l_enum():
     assert _kcles() == [n.lower() for n in _enum_zone()]
+
+
+def test_une_zone_ne_change_jamais_de_place():
+    """Les zones absentes sont gardées en NVS, un bit par zone dans l'ordre de l'enum : une
+    zone insérée au milieu décalerait celles d'après au démarrage suivant (la clim
+    masquée à la place du volet…). Une nouvelle zone s'ajoute à la fin (« discussion »,
+    29/09/2026, boutons Domo / Discu sans pipeline de discussion)."""
+    historiques = ["lumiere_1", "lumiere_2", "lumiere_3", "pc", "tv", "telephone", "salon", "serre",
+                   "pot_1", "pot_2", "pot_3", "pot_4", "pot_5", "clim", "volet", "planning", "discussion"]
+    assert _kcles()[:len(historiques)] == historiques
+    assert len(_kcles()) <= 32, "s_absentes est un uint32_t"
 
 
 def test_demande_dans_l_ordre_des_zones_suivies():

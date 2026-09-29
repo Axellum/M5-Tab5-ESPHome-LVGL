@@ -63,7 +63,9 @@ obj:
                 # ne touche pas au contenu interne). Barre de son ANCREE EN BAS du
                 # panneau (marge 24 px, symetrique de la marge haute) plutot que
                 # juste sous Ok Nabu : c'est ce qui etait demande.
-                - label: { text: "Cerveau / LLM", align: TOP_LEFT, x: 16, y: 68, text_color: color_text_dim }
+                # Titre et deux boutons masqués sans pipeline de discussion dans HA (zone
+                # « discussion », zones_apply_ui) : l'espace reste vide, rien ne remonte.
+                - label: { id: lbl_assist_cerveau, text: "Cerveau / LLM", align: TOP_LEFT, x: 16, y: 68, text_color: color_text_dim }
                 - button:
                     id: btn_assist_pipe_domo
                     align: TOP_LEFT

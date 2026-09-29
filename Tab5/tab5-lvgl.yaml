@@ -60,7 +60,8 @@ lvgl:
               # Appui long sur la zone micro -> popup Assistant vocal plein écran
               - script.execute: tab5_assist_open
 
-        # Bouton Domo
+        # Bouton Domo (et Discu ci-dessous) : masqués sans pipeline de discussion dans HA
+        # (zone « discussion », zones_apply_ui) ; le micro reste au milieu.
         - button:
             id: btn_mode_domo
             align: TOP_LEFT

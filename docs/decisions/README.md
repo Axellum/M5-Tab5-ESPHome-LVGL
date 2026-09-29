@@ -35,3 +35,4 @@ Format: **Context / Decision / Consequences**. One page max. Add a new one whene
 | [0023](0023-rooms-generic-tiles.md) | Rooms — each page of the five bottom tiles is a room of up to five devices, described by Home Assistant |
 | [0024](0024-packages-without-placeholders.md) | Packages without placeholders — every home value is picked in Home Assistant, the tablet is detected by its model |
 | [0025](0025-events-only.md) | Events only — the device never calls a Home Assistant action, one HA package maps its events to a whitelist |
+| [0026](0026-climate-from-device.md) | The climate popup follows the device — settings pushed by HA (key `climr`), the screen's commands translated by the blueprint |

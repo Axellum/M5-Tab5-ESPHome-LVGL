@@ -50,7 +50,8 @@ CONTENU = (
 LISEZMOI = "LISEZMOI-Tab5.txt"
 PLACEHOLDER = re.compile(r"VOTRE_[A-Z]")
 # Valeur de la version des fichiers (voir le docstring), remplacée par celle de la release.
-MARQUEUR_VERSION = re.compile(r"\"dépôt\"(?=  # >>> version de l'archive$)", re.M)
+# Fin de ligne CRLF tolérée : un checkout Windows (core.autocrlf) en a.
+MARQUEUR_VERSION = re.compile(r"\"dépôt\"(?=  # >>> version de l'archive\r?$)", re.M)
 # Date fixe des entrées (zip reproductible) : 1er janvier 2026.
 DATE = (2026, 1, 1, 0, 0, 0)
 

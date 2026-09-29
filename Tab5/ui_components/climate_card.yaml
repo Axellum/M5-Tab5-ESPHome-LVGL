@@ -11,8 +11,9 @@
 #                          tap ± ci-dessous (21/07) via update_clim_target_ui + débounce.
 # @ai_instruction Les boutons +/- reprennent le mécanisme optimiste+débounce du popup
 #                 (accumulation dans clim_target_temp, un seul set_temperature par geste via
-#                 tab5_debounce_clim_temp). Le clic sur la cible ouvre le popup. Conteneur
-#                 parent = transparent (ids conservés).
+#                 tab5_debounce_clim_temp). Pas et bornes : clim_consigne_suivante() (réglages
+#                 de l'appareil, ADR-0026), jamais de 0.5f / 16 / 30 en dur. Le clic sur la
+#                 cible ouvre le popup. Conteneur parent = transparent (ids conservés).
 # ═══════════════════════════════════════════════════════
 obj:
   id: climate_card
@@ -96,10 +97,10 @@ obj:
                 # clim_target_temp, on met à jour le label tout de suite, et un seul
                 # set_temperature part une fois le doigt immobile. Avant, l'appel HA direct
                 # ne mettait jamais à jour le global → taps rapides = même valeur renvoyée +
-                # aucun retour visuel avant le push HA.
+                # aucun retour visuel avant le push HA. Pas et bornes : ceux de l'appareil
+                # (clé climr, ADR-0026), 0,5 entre 16 et 30 tant que HA ne les a pas donnés.
                 - lambda: |-
-                    float t = id(clim_target_temp) - 0.5f;
-                    if (t < 16.0f) t = 16.0f;
+                    const float t = clim_consigne_suivante(id(clim_target_temp), -1);
                     id(clim_target_temp) = t;
                     update_clim_target_ui(id(clim_target), nullptr, t);
                 - script.execute: tab5_debounce_clim_temp
@@ -119,8 +120,7 @@ obj:
               on_short_click:
                 # Optimiste + débounce (même mécanisme que le popup) — voir bouton −.
                 - lambda: |-
-                    float t = id(clim_target_temp) + 0.5f;
-                    if (t > 30.0f) t = 30.0f;
+                    const float t = clim_consigne_suivante(id(clim_target_temp), +1);
                     id(clim_target_temp) = t;
                     update_clim_target_ui(id(clim_target), nullptr, t);
                 - script.execute: tab5_debounce_clim_temp

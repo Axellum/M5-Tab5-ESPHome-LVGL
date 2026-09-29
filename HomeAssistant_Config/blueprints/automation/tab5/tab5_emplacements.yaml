@@ -1122,7 +1122,9 @@ variables:
     - pot_3
     - pot_4
     - pot_5
-  # Clés des zones de l'écran (kCles de Tab5/tab5_zones.cpp).
+  # Clés des zones de l'écran (kCles de Tab5/tab5_zones.cpp). « discussion » n'est pas une
+  # entrée : absente quand la liste « Tab5 · pipeline de discussion » vaut « Aucun »
+  # (variable absentes, plus bas).
   cles_zones:
     - lumiere_1
     - lumiere_2
@@ -1140,6 +1142,22 @@ variables:
     - clim
     - volet
     - planning
+    - discussion
+  # Clim de n'importe quelle marque (ADR-0026) : les boutons de l'écran envoient les
+  # noms de la Daikin de l'auteur (away pour Éco, quiet / auto, swing / stop, windnice) ;
+  # les branches « Clim : … » envoient le premier de ces modes que l'appareil connaît, et
+  # la clé climr dit à l'écran quels boutons montrer. Les mêmes listes que les fonctions
+  # clim_*_actif() du firmware (tab5_cards.cpp ; tests/test_clim.py compare). « on » et
+  # « off » entre guillemets : sans eux, YAML 1.1 lit des booléens.
+  clim_modes_consigne: [cool, heat, heat_cool, auto]
+  clim_eco: [eco, away]
+  clim_silence: [quiet, silence, Silence, low]
+  clim_ventilation_normale: [medium, mid, middle, high]
+  clim_oscillation: [swing, "on", both, vertical, 3d, horizontal]
+  clim_arret_oscillation: [stop, "off"]
+  # Attributs qui changent les réglages de la clim : climr repart quand l'un d'eux change,
+  # pas à chaque degré de la pièce.
+  clim_attributs_reglages: [min_temp, max_temp, target_temp_step, hvac_modes, preset_modes, fan_modes, swing_modes, friendly_name]
   # Mesures lentes : poussées ensemble toutes les 5 minutes (déclencheur « mesures »),
   # celles qui ont changé seulement ; un pot part avec ses 4 détails si l'un des 5 a
   # changé. Poussées à chaque changement, elles faisaient ~1 300 exécutions par jour
@@ -1432,6 +1450,12 @@ triggers:
   - trigger: state
     entity_id: input_text.volet_serre_etat
     id: volet_suivi
+  # Pipeline de discussion choisi, ou remis à « Aucun » (liste du package) : la réponse
+  # des zones repart, sans attendre que la tablette la redemande (boutons Domo / Discu).
+  # Sans la liste (package plus ancien), ne se déclenche jamais.
+  - trigger: state
+    entity_id: select.tab5_pipeline_de_discussion
+    id: pipeline_discussion
   # Téléphone, températures, humidité de la pièce, pots et tuiles « mesures » : voir
   # cles_mesures et types_mesures.
   - trigger: time_pattern
@@ -1478,7 +1502,7 @@ conditions:
   # firmware qui n'en a pas) : arrêt ici, sans ligne au journal.
   - condition: template
     value_template: >-
-      {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet'] or cles | count > 0
+      {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'pipeline_discussion'] or cles | count > 0
          or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0)) }}
   # Déclencheurs venus de HA (rechargement, démarrage, mesures, changements d'état) : seulement
   # si une tablette est connectée, sinon « Action … not found » (pas encore ajoutée)
@@ -1515,15 +1539,59 @@ actions:
       absentes: >-
         {%- set ns = namespace(l=[]) -%}
         {%- for c in cles_zones -%}
-          {%- set x = sources.get(c, '') -%}
-          {%- if not x or states[x] is none -%}{%- set ns.l = ns.l + [c] -%}{%- endif -%}
+          {%- if c == 'discussion' -%}
+            {#- Pas une entrée : la liste « Tab5 · pipeline de discussion ». « Aucun » masque
+                les boutons Domo / Discu ; sans la liste (package plus ancien), ils restent. -#}
+            {%- if states('select.tab5_pipeline_de_discussion') == 'Aucun' -%}{%- set ns.l = ns.l + [c] -%}{%- endif -%}
+          {%- else -%}
+            {%- set x = sources.get(c, '') -%}
+            {%- if not x or states[x] is none -%}{%- set ns.l = ns.l + [c] -%}{%- endif -%}
+          {%- endif -%}
         {%- endfor -%}
         {{ ns.l | join(',') }}
       clim: "{{ sources.clim if sources.clim and states[sources.clim] is not none else '' }}"
       volet: "{{ sources.volet if sources.volet and states[sources.volet] is not none else '' }}"
+      # Réglages de la clim (ADR-0026) : « climr|min|max|pas|unité|capacités|nom; », poussés
+      # par tab5_maj_emplacements juste avant tab5_maj_clim. Un firmware plus ancien ignore
+      # la clé (clé inconnue) ; sans elle, le nouveau garde 16-30, 0,5, °C et tous les boutons.
+      # Unité : celle d'une entité weather.*, qui suit le système d'unités de HA comme les
+      # attributs de la clim (min_temp, temperature…) ; sans météo, une borne basse de 40
+      # ou plus ne peut être qu'en °F. Pas : target_temp_step, sinon 1 en °F, 0,5 en °C.
+      # Capacités : une lettre par bouton de l'écran que l'appareil sait faire (ADR-0026).
+      clim_reglages: >-
+        {%- if clim -%}
+          {%- set mn = state_attr(clim, 'min_temp') | float(16.0) -%}
+          {%- set mx = state_attr(clim, 'max_temp') | float(30.0) -%}
+          {%- set u = namespace(s='') -%}
+          {%- for w in states.weather if not u.s -%}
+            {%- set t = w.attributes.get('temperature_unit', '') | string -%}
+            {%- if t in ['°C', '°F'] -%}{%- set u.s = t -%}{%- endif -%}
+          {%- endfor -%}
+          {%- set unite = u.s if u.s else ('°F' if mn >= 40 else '°C') -%}
+          {%- set pas = state_attr(clim, 'target_temp_step') | float(0) -%}
+          {%- set pas = pas if pas > 0 else (1.0 if unite == '°F' else 0.5) -%}
+          {%- set hvac = state_attr(clim, 'hvac_modes') or [] -%}
+          {%- set pm = state_attr(clim, 'preset_modes') or [] -%}
+          {%- set fm = state_attr(clim, 'fan_modes') or [] -%}
+          {%- set sm = state_attr(clim, 'swing_modes') or [] -%}
+          {%- set capacites = ('c' if 'cool' in hvac else '')
+                            ~ ('h' if 'heat' in hvac else '')
+                            ~ ('d' if 'dry' in hvac else '')
+                            ~ ('f' if 'fan_only' in hvac else '')
+                            ~ ('e' if clim_eco | select('in', pm) | list | count > 0 else '')
+                            ~ ('b' if 'boost' in pm else '')
+                            ~ ('q' if clim_silence | select('in', fm) | list | count > 0 else '')
+                            ~ ('s' if clim_oscillation | select('in', sm) | list | count > 0
+                                     and clim_arret_oscillation | select('in', sm) | list | count > 0 else '')
+                            ~ ('w' if 'windnice' in sm else '') -%}
+          {%- set nom = (state_attr(clim, 'friendly_name') or '') | string | replace('|', '/') | replace(';', ',') -%}
+          {{ 'climr|' ~ mn ~ '|' ~ mx ~ '|' ~ pas ~ '|' ~ unite ~ '|' ~ capacites ~ '|' ~ nom ~ ';' }}
+        {%- endif -%}
   - choose:
+      # Aussi quand le pipeline de discussion change : même réponse, sans attendre la
+      # demande de la tablette (une fois par connexion).
       - alias: "La tablette demande quelles zones sont absentes"
-        conditions: "{{ trigger.id == 'zones' }}"
+        conditions: "{{ trigger.id in ['zones', 'pipeline_discussion'] }}"
         sequence:
           - action: "esphome.{{ tablette }}_tab5_maj_zones"
             data:
@@ -1628,53 +1696,119 @@ actions:
                           - action: media_player.turn_on
                             target:
                               entity_id: "{{ tv }}"
-              - alias: "Clim : consigne (mode froid si elle est éteinte)"
+              # Clim (ADR-0026) : l'écran parle comme la Daikin de l'auteur ; chaque branche
+              # envoie le mode équivalent que l'appareil connaît, ou rien (une valeur
+              # inconnue de l'appareil est une erreur de HA).
+              - alias: "Clim : consigne (bornée ; éteinte : froid, sinon chaud, chaud/froid, auto)"
                 conditions: "{{ emplacement == 'clim' and commande == 'consigne' and clim != '' }}"
                 sequence:
-                  - action: climate.set_temperature
-                    target:
-                      entity_id: "{{ clim }}"
-                    data:
-                      temperature: "{{ valeur | float(20) }}"
-                      hvac_mode: "{{ 'cool' if states(clim) in ['off', 'unknown', 'unavailable'] else states(clim) }}"
+                  - variables:
+                      # HA refuse une consigne hors de min_temp / max_temp.
+                      consigne: >-
+                        {%- set t = valeur | float(20) -%}
+                        {%- set mn = state_attr(clim, 'min_temp') | float(t) -%}
+                        {%- set mx = state_attr(clim, 'max_temp') | float(t) -%}
+                        {{ [[t, mn] | max, mx] | min }}
+                      # Allumée : son mode. Éteinte (Daikin refuse set_temperature en off) : le
+                      # premier mode de consigne qu'elle connaît, froid d'abord comme avant ;
+                      # aucun : sans hvac_mode.
+                      mode_consigne: >-
+                        {%- if states(clim) in ['off', 'unknown', 'unavailable'] -%}
+                          {{ clim_modes_consigne | select('in', state_attr(clim, 'hvac_modes') or []) | first | default('') }}
+                        {%- else -%}
+                          {{ states(clim) }}
+                        {%- endif -%}
+                  - if: "{{ mode_consigne != '' }}"
+                    then:
+                      - action: climate.set_temperature
+                        target:
+                          entity_id: "{{ clim }}"
+                        data:
+                          temperature: "{{ consigne }}"
+                          hvac_mode: "{{ mode_consigne }}"
+                    else:
+                      - action: climate.set_temperature
+                        target:
+                          entity_id: "{{ clim }}"
+                        data:
+                          temperature: "{{ consigne }}"
               - alias: "Clim : éteindre"
                 conditions: "{{ emplacement == 'clim' and commande == 'eteindre' and clim != '' }}"
                 sequence:
                   - action: climate.turn_off
                     target:
                       entity_id: "{{ clim }}"
-              - alias: "Clim : mode"
-                conditions: "{{ emplacement == 'clim' and commande == 'mode' and clim != '' }}"
+              - alias: "Clim : mode (s'il existe sur l'appareil)"
+                conditions: >-
+                  {{ emplacement == 'clim' and commande == 'mode' and clim != ''
+                     and valeur in (state_attr(clim, 'hvac_modes') or []) }}
                 sequence:
                   - action: climate.set_hvac_mode
                     target:
                       entity_id: "{{ clim }}"
                     data:
                       hvac_mode: "{{ valeur }}"
-              - alias: "Clim : préréglage"
+              - alias: "Clim : préréglage (Éco = eco ou away ; aucun = none, home ou comfort)"
                 conditions: "{{ emplacement == 'clim' and commande == 'preset' and clim != '' }}"
                 sequence:
-                  - action: climate.set_preset_mode
-                    target:
-                      entity_id: "{{ clim }}"
-                    data:
-                      preset_mode: "{{ valeur }}"
-              - alias: "Clim : ventilation"
+                  - variables:
+                      preset: >-
+                        {%- set pm = state_attr(clim, 'preset_modes') or [] -%}
+                        {%- if valeur == 'away' -%}
+                          {{ clim_eco | select('in', pm) | first | default('') }}
+                        {%- elif valeur == 'none' -%}
+                          {{ ['none', 'home', 'comfort'] | select('in', pm) | first | default('') }}
+                        {%- elif valeur in pm -%}
+                          {{ valeur }}
+                        {%- endif -%}
+                  - if: "{{ preset != '' }}"
+                    then:
+                      - action: climate.set_preset_mode
+                        target:
+                          entity_id: "{{ clim }}"
+                        data:
+                          preset_mode: "{{ preset }}"
+              - alias: "Clim : ventilation (silence : quiet, silence, low… ; auto, sinon moyenne)"
                 conditions: "{{ emplacement == 'clim' and commande == 'ventilation' and clim != '' }}"
                 sequence:
-                  - action: climate.set_fan_mode
-                    target:
-                      entity_id: "{{ clim }}"
-                    data:
-                      fan_mode: "{{ valeur }}"
-              - alias: "Clim : oscillation"
+                  - variables:
+                      # Fin du silence (auto) : auto, sinon une vitesse moyenne, sinon le
+                      # premier mode qui n'est pas un silence (sinon le premier tout court).
+                      ventilation: >-
+                        {%- set fm = (state_attr(clim, 'fan_modes') or []) | list -%}
+                        {%- if valeur == 'quiet' -%}
+                          {{ clim_silence | select('in', fm) | first | default('') }}
+                        {%- elif valeur == 'auto' -%}
+                          {%- set bruyants = fm | reject('in', clim_silence) | list -%}
+                          {{ ((['auto'] + clim_ventilation_normale) | select('in', fm) | list + bruyants + fm) | first | default('') }}
+                        {%- endif -%}
+                  - if: "{{ ventilation != '' }}"
+                    then:
+                      - action: climate.set_fan_mode
+                        target:
+                          entity_id: "{{ clim }}"
+                        data:
+                          fan_mode: "{{ ventilation }}"
+              - alias: "Clim : oscillation (arrêt : stop ou off ; marche : swing, on, both…)"
                 conditions: "{{ emplacement == 'clim' and commande == 'oscillation' and clim != '' }}"
                 sequence:
-                  - action: climate.set_swing_mode
-                    target:
-                      entity_id: "{{ clim }}"
-                    data:
-                      swing_mode: "{{ valeur }}"
+                  - variables:
+                      oscillation: >-
+                        {%- set sm = state_attr(clim, 'swing_modes') or [] -%}
+                        {%- if valeur == 'stop' -%}
+                          {{ clim_arret_oscillation | select('in', sm) | first | default('') }}
+                        {%- elif valeur == 'swing' -%}
+                          {{ clim_oscillation | select('in', sm) | first | default('') }}
+                        {%- elif valeur == 'windnice' and 'windnice' in sm -%}
+                          windnice
+                        {%- endif -%}
+                  - if: "{{ oscillation != '' }}"
+                    then:
+                      - action: climate.set_swing_mode
+                        target:
+                          entity_id: "{{ clim }}"
+                        data:
+                          swing_mode: "{{ oscillation }}"
               - alias: "TV : marche / arrêt"
                 conditions: "{{ emplacement == 'tv' and commande == 'alimentation' }}"
                 sequence:
@@ -1817,6 +1951,24 @@ actions:
       - alias: "Clim : son état a changé"
         conditions: "{{ trigger.id == 'clim' and clim != '' }}"
         sequence:
+          # Réglages d'abord (ADR-0026), s'ils ont pu changer : la clim apparaît, revient
+          # d'une panne, ou l'un des attributs de clim_attributs_reglages change. Pas à
+          # chaque degré de la pièce.
+          - variables:
+              reglages_changes: >-
+                {%- set avant = trigger.from_state -%}
+                {%- set apres = trigger.to_state -%}
+                {%- set ns = namespace(v=avant is none or apres is none or avant.state in ['unavailable', 'unknown']) -%}
+                {%- for a in clim_attributs_reglages if not ns.v -%}
+                  {%- if avant.attributes.get(a) != apres.attributes.get(a) -%}{%- set ns.v = true -%}{%- endif -%}
+                {%- endfor -%}
+                {{ ns.v }}
+          - if: "{{ clim_reglages != '' and reglages_changes }}"
+            then:
+              - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
+                data:
+                  payload: "{{ clim_reglages }}"
+                continue_on_error: true
           - action: "esphome.{{ tablette }}_tab5_maj_clim"
             data:
               target: "{{ state_attr(clim, 'temperature') | float(20) }}"
@@ -1848,6 +2000,12 @@ actions:
       - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha'] and clim != '' }}"
         then:
           - delay: "00:00:01"
+          # Réglages de la clim (clé climr, ADR-0026) avant son état : bornes, pas et
+          # unité sont en place quand la consigne arrive.
+          - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
+            data:
+              payload: "{{ clim_reglages }}"
+            continue_on_error: true
           - action: "esphome.{{ tablette }}_tab5_maj_clim"
             data:
               target: "{{ state_attr(clim, 'temperature') | float(20) }}"

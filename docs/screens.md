@@ -114,8 +114,9 @@ Two levels of control, both driving the same Home Assistant `climate` entity:
 - **Compact card** (always visible in the home area) — current temperature and target with +/− buttons.
 - **Climate popup** (near-fullscreen, 1250×690 card 15 px from the screen edges, opened by tapping the compact card) — three glass cards:
   - **MODE**: Froid / Chaud / Sec / Ventilation / Éteint, stacked full-width (icons colored by the active mode, driven by `tab5_maj_clim`)
-  - **TEMPÉRATURE**: a 320 px arc thermostat (16–30 °C) with the target shown large in the center, − / + buttons, and the actual room temperature at the bottom. The target updates **immediately** (optimistic) and a single `climate.set_temperature` is sent once the gesture ends (250 ms debounce — rapid ± taps are grouped)
+  - **TEMPÉRATURE**: a 320 px arc thermostat with the target shown large in the center, − / + buttons, and the actual room temperature at the bottom. Bounds, step and unit are the unit's own (16–30 °C and 0.5 until Home Assistant sends them, see below). The target updates **immediately** (optimistic) and a single `climate.set_temperature` is sent once the gesture ends (250 ms debounce — rapid ± taps are grouped)
   - **OPTIONS**: Éco / Boost presets (toggle), Silence (fan quiet), and airflow **Oscillation** / **Brise** (`windnice`, a Daikin Onecta mode previously unreachable from the screen)
+  - **Any brand** ([ADR-0026](decisions/0026-climate-from-device.md)): the blueprint sends the unit's settings (key `climr`: `min_temp`/`max_temp`, `target_temp_step`, °C or °F, the modes it has, its name). The title becomes the unit's name, the arc and the ± buttons follow its bounds and step, and a button the unit cannot do disappears — an OPTIONS section left without a button disappears with its title and the others move up. The buttons still send the Daikin names (Éco = `away`, Silence = `quiet`, `swing` / `stop`), and the blueprint translates them to the unit's own (`eco`, `low`, `off`, `vertical`…), or sends nothing when the unit has no equivalent.
   - Tapping the dark overlay or the × button (a real 96×64 glass button) closes the modal. 6 of the 10 buttons are factorized templates (cool/heat/fan/dry, eco/boost); the remaining 4 (off/swing/windnice/quiet) and the ± buttons are deliberately left as individual YAML — see [ADR-0007](decisions/0007-climate-popup-not-factorized.md).
 
 The controls are dimmed (not hidden) when the AC is off, so the layout stays stable.
@@ -201,6 +202,8 @@ The microphone icon on the home screen is the visual interface for the voice ass
 **Mode selector:** a small button next to the microphone toggles between two modes:
 - **Home Assistant mode** — commands go to the standard HA conversation agent
 - **Conversation mode** — commands go to an LLM-backed pipeline for free-form conversation
+
+When the list « Tab5 · pipeline de discussion » is set to « Aucun » (no conversation pipeline), the two mode buttons (home screen and assistant popup) disappear and the tablet stays in Home Assistant mode (zone `discussion`, [installation](installation.md#other-zones)).
 
 The mode is saved across reboots via the HA `select` entity (`select.m5stack_tab5_home_assistant_hmi_assistant`).
 
@@ -418,8 +421,9 @@ Deux niveaux de contrôle, pilotant tous deux la même entité `climate` de Home
 - **Carte compacte** (toujours visible en zone d'accueil) — température actuelle et cible avec boutons +/−.
 - **Popup clim** (quasi plein écran, carte 1250×690 à 15 px des bords, ouvert en tapant la carte compacte) — trois cartes de verre :
   - **MODE** : Froid / Chaud / Sec / Ventilation / Éteint, empilés pleine largeur (icônes colorées selon le mode actif, pilotées par `tab5_maj_clim`)
-  - **TEMPÉRATURE** : arc thermostat 320 px (16–30 °C) avec la cible affichée en grand au centre, boutons − / +, et la température réelle de la pièce en bas. La cible s'affiche **immédiatement** (optimiste) et un seul `climate.set_temperature` part une fois le geste terminé (débounce 250 ms — les taps rapides ± sont groupés)
+  - **TEMPÉRATURE** : arc thermostat 320 px avec la cible affichée en grand au centre, boutons − / +, et la température réelle de la pièce en bas. Bornes, pas et unité sont ceux de l'appareil (16–30 °C et 0,5 tant que Home Assistant ne les a pas envoyés, voir plus bas). La cible s'affiche **immédiatement** (optimiste) et un seul `climate.set_temperature` part une fois le geste terminé (débounce 250 ms — les taps rapides ± sont groupés)
   - **OPTIONS** : presets Éco / Boost (toggle), Silence (fan quiet), et flux d'air **Oscillation** / **Brise** (`windnice`, mode Daikin Onecta auparavant inaccessible depuis l'écran)
+  - **Toutes marques** ([ADR-0026](decisions/0026-climate-from-device.md)) : le blueprint envoie les réglages de l'appareil (clé `climr` : `min_temp`/`max_temp`, `target_temp_step`, °C ou °F, les modes qu'il a, son nom). Le titre devient le nom de l'appareil, l'arc et les boutons ± suivent ses bornes et son pas, et un bouton que l'appareil ne sait pas faire disparaît — une section OPTIONS restée sans bouton disparaît avec son titre, les autres remontent. Les boutons envoient toujours les noms de la Daikin (Éco = `away`, Silence = `quiet`, `swing` / `stop`), et le blueprint les traduit vers ceux de l'appareil (`eco`, `low`, `off`, `vertical`…), ou n'envoie rien quand l'appareil n'a pas d'équivalent.
   - Taper l'overlay sombre ou le bouton × (vrai bouton de verre 96×64) ferme le modal. 6 des 10 boutons sont des templates factorisés (froid/chaud/ventil/sec, éco/boost) ; les 4 restants (éteint/oscill/brise/silence) et les boutons ± sont volontairement laissés en YAML individuel — voir [ADR-0007](decisions/0007-climate-popup-not-factorized.md).
 
 Les contrôles sont estompés (non cachés) quand le clim est éteint, pour garder la mise en page stable.
@@ -505,6 +509,8 @@ L'icône microphone sur l'écran d'accueil est l'interface visuelle de l'assista
 **Sélecteur de mode :** un petit bouton à côté du microphone bascule entre deux modes :
 - **Mode Home Assistant** — les commandes vont vers l'agent de conversation standard de HA
 - **Mode Conversation** — les commandes vont vers un pipeline basé sur un LLM
+
+Quand la liste « Tab5 · pipeline de discussion » vaut « Aucun » (pas de pipeline de discussion), les deux boutons de mode (accueil et popup assistant) disparaissent et la tablette reste en mode Home Assistant (zone `discussion`, [installation](installation.md#autres-zones)).
 
 Le mode est sauvegardé entre les redémarrages via l'entité HA `select` (`select.m5stack_tab5_home_assistant_hmi_assistant`).
 

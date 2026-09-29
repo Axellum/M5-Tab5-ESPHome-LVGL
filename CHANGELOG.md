@@ -4,6 +4,32 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-29 — Clim de toutes marques, mode Discussion sans pipeline masqué
+
+- **Le popup clim suit l'appareil** ([ADR-0026](docs/decisions/0026-climate-from-device.md)).
+  Le blueprint envoie ses réglages dans `tab5_maj_emplacements` (nouvelle clé `climr`,
+  avant `tab5_maj_clim`) : bornes, pas, °C ou °F (l'unité de l'entité météo de HA), modes
+  gérés et nom. L'arc et les boutons − / + suivent les bornes et le pas, le titre devient
+  le nom de la clim, un bouton que l'appareil ne sait pas faire disparaît, et une section
+  OPTIONS sans bouton disparaît avec son titre (les autres remontent).
+- **Commandes traduites par le blueprint** : l'écran envoie toujours les noms de la Daikin
+  (Éco = `away`, Silence = `quiet`, `swing` / `stop`, `windnice`) ; le blueprint envoie
+  l'équivalent que l'appareil connaît (`eco`, `low`, `off`, `vertical`…) ou rien. Une
+  consigne est bornée aux limites de l'appareil ; clim éteinte, il l'allume en froid, à
+  défaut en chaud, chaud/froid ou auto (un chauffage seul prend enfin une consigne).
+- **Bascules corrigées** : Silence, Oscillation et Éco reconnaissent leur état actif sous
+  tous ses noms (`low`, `on`, `eco`…) ; un appareil dans l'un de ces modes ne pouvait plus
+  en sortir depuis l'écran. Un mode sans bouton (chaud/froid, auto) n'allume plus « Éteint ».
+- **Zone `discussion`** : quand la liste « Tab5 · pipeline de discussion » vaut « Aucun »,
+  les boutons Domo / Discu (accueil et popup assistant) disparaissent et la tablette
+  repasse en Domotique. Sans la liste (package plus ancien), rien ne change. Le blueprint
+  renvoie les zones dès que la liste change.
+- **Calendrier** : dans le détail d'un jour, « Travail » suit la langue de l'écran.
+- **Compatible dans les deux sens** : un firmware plus ancien ignore `climr` ; sans
+  `climr` (blueprint plus ancien), le popup reste tel qu'avant (16-30 °C, pas de 0,5, tous
+  les boutons). La Daikin de l'auteur reçoit exactement les mêmes commandes
+  (`tests/test_clim.py`) ; son arc passe à ses bornes (18-32) et son titre à son nom.
+
 ### 2026-09-29 — Home Assistant : la maison des autres
 
 Côté Home Assistant seulement (aucun flash). Ce qui restait réglé pour la maison de

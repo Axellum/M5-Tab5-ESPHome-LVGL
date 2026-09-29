@@ -82,8 +82,9 @@ def build_emplacements_payload(absentes: frozenset = frozenset(), pieces: dict |
 # Zones suivies par la tablette, dans l'ordre de l'enum Zone.
 ZONES_SUIVIES = ("lumiere_1", "lumiere_2", "lumiere_3", "pc", "tv", "telephone", "salon",
                  "serre", "pot_1", "pot_2", "pot_3", "pot_4", "pot_5")
-# Zones que seul HA connaît : il les ajoute lui-même à sa réponse.
-ZONES_HA = ("clim", "volet", "planning")
+# Zones que seul HA connaît : il les ajoute lui-même à sa réponse (« discussion » :
+# aucun pipeline de discussion, boutons Domo / Discu masqués ; la maison minimale la garde).
+ZONES_HA = ("clim", "volet", "planning", "discussion")
 
 # `--maison-minimale` : la même maison que l'essai du 27/09/2026 sur la tablette de
 # l'auteur (clim, TV, téléphone, LEDs, serre, pots 3 à 5 retirés), plus le volet et

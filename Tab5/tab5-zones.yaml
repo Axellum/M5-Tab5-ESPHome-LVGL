@@ -27,6 +27,9 @@ script:
       # Widgets des pièces (ADR-0023, tab5-tuiles.yaml) : zones_apply_ui() les redessine
       # (le premier appel charge les pièces gardées en NVS), avant la première image.
       - script.execute: tab5_tuiles_ui
+      # Widgets de la clim (ADR-0026, tab5-scripts.yaml) : posés avant que HA pousse ses
+      # réglages (clé climr).
+      - script.execute: tab5_clim_ui
       - lambda: |-
           ZonesUI& u = g_zones_ui;
           u.icon_pc = id(icon_pc);
@@ -48,13 +51,29 @@ script:
           u.pot_card[2] = id(pot_card_3);
           u.pot_card[3] = id(pot_card_4);
           u.pot_card[4] = id(pot_card_5);
+          u.btn_domo = id(btn_mode_domo);
+          u.btn_discu = id(btn_mode_discu);
+          u.assist_domo = id(btn_assist_pipe_domo);
+          u.assist_discu = id(btn_assist_pipe_discu);
+          u.assist_cerveau = id(lbl_assist_cerveau);
           zones_apply_ui();
           id(tab5_zones_masquees).publish_state(zones_texte_masquees());
+      # Zone « discussion » absente (aucun pipeline de discussion dans HA) : ses boutons
+      # sont masqués, rien ne permettrait plus de quitter le mode Discussion (popup ouvert
+      # à chaque demande) — retour au mode Domotique.
+      - if:
+          condition:
+            lambda: 'return zone_absente(Zone::DISCUSSION) && id(conversation_mode);'
+          then:
+            - script.execute:
+                id: tab5_set_assist_mode
+                discussion: false
 
   # Demande à HA quelles zones sont absentes. Depuis le lot 6a (ADR-0019), la tablette
   # ne connaît plus les entités : elle envoie seulement les clés de ses emplacements
   # (ordre de l'enum Zone), et le blueprint « Tab5 — emplacements », qui sait lesquels
-  # sont choisis, répond, en y ajoutant clim, volet et planning. Lancé par la première
+  # sont choisis, répond, en y ajoutant clim, volet, planning et discussion (il répond
+  # aussi seul quand le pipeline de discussion change). Lancé par la première
   # poussée des prévisions après chaque connexion (tab5-api-logic.yaml) : elle prouve
   # que les automatisations de HA tournent, ce qui n'est pas le cas pendant son
   # démarrage.

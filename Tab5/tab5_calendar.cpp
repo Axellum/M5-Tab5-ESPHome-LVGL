@@ -436,7 +436,13 @@ void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
             cal_detail_type_style(tok, &icon, &color);
             lv_label_set_text(lines[line_count].icon, icon);
             lv_obj_set_style_text_color(lines[line_count].icon, lv_color_hex(color), LV_PART_MAIN);
-            const std::string txt = normalize_text_utf8(std::string(sep + 1));
+            std::string txt = normalize_text_utf8(std::string(sep + 1));
+            // Ligne de travail : HA l'écrit en français, « Travail 08:00 – 16:00 »
+            // (packages/tab5_calendar.yaml) ; le mot suit la langue de l'écran.
+            if (strcmp(tok, "travail") == 0 && txt.compare(0, 7, "Travail") == 0 &&
+                (txt.size() == 7 || txt[7] == ' ')) {
+                txt.replace(0, 7, tr("Travail"));
+            }
             set_label_text_utf8(lines[line_count].txt, txt.c_str());
             lv_obj_remove_flag(lines[line_count].icon, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(lines[line_count].txt, LV_OBJ_FLAG_HIDDEN);

@@ -24,3 +24,7 @@ Hiding a zone because its entity stayed silent was also rejected. Checked in HA'
 - The keys (`lumiere_1` … `planning`) are a contract written in four places: the `Zone` enum, `kCles`, the request string and the HA automation. `tests/test_zones.py` compares them.
 - A typo in an entity ID now hides its zone instead of showing a fake state. The « Zones masquées » diagnostic sensor lists what disappeared.
 - More than 3 lights, or a different device per tile, is out of reach: the tiles are 5 fixed places. That is lot 6 (logical slots), which will replace the detection with a mapping pushed by HA.
+
+## Update — 2026-09-29: a zone decided from a list, not an entry
+
+`discussion` (added at the end of the `Zone` enum: the hidden set is kept in NVS as bits, in enum order) is not a blueprint entry: the blueprint answers it absent when the list « Tab5 · pipeline de discussion » says « Aucun », and present when the list does not exist (an older package). It hides the Domo / Discu buttons of the home page and of the assistant popup, and the tablet goes back to Domo. The blueprint also answers the zones when that list changes, without waiting for the tablet's next request. `tests/test_zones.py` freezes the order of the keys.

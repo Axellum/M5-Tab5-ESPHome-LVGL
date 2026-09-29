@@ -187,6 +187,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # Vocabulaire des télécommandes de clim en Italie : Caldo, Freddo, Deumidificazione,
 # Ventilazione.
 "Climatisation Salon": "Clima soggiorno"
+"Climatisation": "Climatizzatore"
 "MODE": "MODALITÀ"
 "clim|Chaud": "Caldo"
 "Sec": "Deumidif."

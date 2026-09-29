@@ -1044,6 +1044,11 @@ void appui_heritage(int t, bool long_appui) {
 
 TuilesUI g_tuiles_ui;
 
+// Pour les autres unités (titre du popup clim, ADR-0026) : un nom venu de HA suit les
+// mêmes règles que ceux des tuiles. Déclarées dans tab5_internal.h.
+void texte_ha_copier(char* dst, size_t cap, const char* src, size_t n) { copier_texte(dst, cap, src, n); }
+void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur) { ui_texte_coupe(lbl, txt, largeur); }
+
 bool tuiles_definir(const std::string& payload) {
     charger();
     // Instantané complet : ce qui n'est pas listé est vide. Construit à part (tas, le temps

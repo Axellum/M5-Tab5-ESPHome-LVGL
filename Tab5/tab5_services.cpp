@@ -2,8 +2,9 @@
  * [AI-CONTEXT]
  * @file tab5_services.cpp
  * @role Services HA (tab5-api-logic.yaml) : volet, vigilance Météo-France, pluie 1 h,
- *       icône neige/pluie, cible clim depuis HA, texte du planning. Logique sortie des
- *       lambdas le 08/09/2026 (lot (a)), à l'identique.
+ *       icône neige/pluie, texte du planning. Logique sortie des lambdas le 08/09/2026
+ *       (lot (a)), à l'identique. La cible clim depuis HA est dans tab5_cards.cpp
+ *       depuis le 29/09/2026 (ADR-0026).
  *       Unité de compilation issue de la scission de tab5_custom.cpp (lot (e) de
  *       l'audit du 06/09/2026, faite le 08/09/2026) : mêmes fonctions, même ordre,
  *       aucune logique modifiée.
@@ -231,20 +232,8 @@ void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite) {
     }
 }
 
-void update_clim_from_ha_ui(lv_obj_t* lbl_target, lv_obj_t* lbl_target_popup, lv_obj_t* arc,
-    lv_obj_t* lbl_current, float target, float current) {
-    // Consigne inconnue : « -- » (roboto_55_b n'a pas les lettres de « nan »).
-    const bool known = !std::isnan(target);
-    char buf_target[16];
-    if (known) snprintf(buf_target, sizeof(buf_target), "%.1f", target);
-    else       snprintf(buf_target, sizeof(buf_target), "--");
-    if (lbl_target != nullptr)       lv_label_set_text(lbl_target, buf_target);
-    if (lbl_target_popup != nullptr) lv_label_set_text(lbl_target_popup, buf_target);
-    if (arc != nullptr && known)     lv_arc_set_value(arc, (int)target);
-    char buf_curr[16];
-    snprintf(buf_curr, sizeof(buf_curr), "%.1f \xC2\xB0" "C", current);
-    if (lbl_current != nullptr) lv_label_set_text(lbl_current, buf_curr);
-}
+// update_clim_from_ha_ui() : tab5_cards.cpp depuis le 29/09/2026 (ADR-0026), avec les
+// réglages de la clim qui fixent le format de la cible et l'unité.
 
 void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::string& l2,
     std::string& plan_ligne_1, std::string& plan_ligne_2) {
