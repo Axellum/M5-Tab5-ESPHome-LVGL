@@ -4,6 +4,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-29 — Carte centrale : la rotation ne redessine plus que le texte
+
+- Demande d'Axel : essayer de ne redessiner que le texte. Chaque panneau du rotateur fait
+  toute la largeur de la carte (bouton invisible de 1180 px) ; c'est maintenant son
+  contenu qui glisse (`translate_y`), pas le panneau. Même animation (190 ms, 28 px).
+- Mesuré sur la tablette, même matinée : 107,8 → 86,4-93,4 ms par rotation (−13 à −20 %
+  selon la largeur du texte), 604 000 → 447 000-475 000 pixels. Détail dans
+  `docs/performance.md`.
+- Le texte des bandeaux d'alertes HA sort du bouton (premier enfant du panneau, comme
+  ailleurs) ; plus de barre de défilement quand le texte déborde en glissant.
+
 ### 2026-09-29 — Carte centrale : trois défauts corrigés
 
 Relevés en cartographiant la carte centrale (#237), corrigés à la demande d'Axel :

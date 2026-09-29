@@ -22,18 +22,6 @@
 #include <vector>
 #include <map>
 
-// Callback d'animation de position Y (#T225 : evite cast ABI lv_obj_set_y).
-static void anim_y_cb(void* obj, int32_t v) {
-    lv_obj_set_y((lv_obj_t*)obj, (int32_t)v);
-}
-
-static void anim_out_y_ready_cb(lv_anim_t* a) {
-    lv_obj_t* o = (lv_obj_t*)a->var;
-    lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_set_y(o, 0);
-    lv_obj_set_style_opa(o, LV_OPA_COVER, LV_PART_MAIN);
-}
-
 // Callback d'animation d'opacite : signature compatible lv_anim_exec_xcb_t (void*, int32_t).
 // lv_obj_set_style_opa() prend 3 arguments et ne peut donc pas etre castee directement.
 static void anim_opa_cb(void* obj, int32_t v) {
@@ -45,7 +33,8 @@ static void anim_x_cb(void* obj, int32_t v) {
     lv_obj_set_x((lv_obj_t*)obj, (int32_t)v);
 }
 
-// Callback d'animation de translate_y (rouleaux : horloge, icones meteo).
+// Callback d'animation de translate_y (rouleaux : horloge, icones meteo ; contenu des
+// panneaux du rotateur central).
 // On anime translate_y et non y : les icones meteo posent deja un offset de
 // base via lv_obj_set_style_translate_y() dans update_meteo_icon(), et les
 // labels de l'horloge sont alignes (align + y). L'offset de base est integre
@@ -80,7 +69,7 @@ static void anim_swipe_out_ready_cb(lv_anim_t* a) {
 // les valeurs que pose déjà lv_anim_init() (memzero) : les passer laisse le
 // descripteur identique à celui des anciens blocs qui ne les posaient pas.
 // Les trois callbacks de fin restent distincts : ils ne remettent pas à zéro
-// les mêmes propriétés (y des panneaux, x des calques, échelle du fondu), et les
+// les mêmes propriétés (contenu des panneaux, x des calques, échelle du fondu), et les
 // calques de prévisions sont posés à y = 430 — un y = 0 commun les déplacerait.
 static void start_anim(void* var, int32_t from, int32_t to, uint32_t dur,
                        lv_anim_path_cb_t path, lv_anim_exec_xcb_t exec,
@@ -97,36 +86,73 @@ static void start_anim(void* var, int32_t from, int32_t to, uint32_t dur,
     lv_anim_start(&a);
 }
 
-// Transition "verre depoli" : glissement vertical + fondu croise.
+// Contenu d'un panneau du rotateur central : son premier enfant (libellé, ou rangée
+// d'icônes et de barres). Le panneau lui-même fait toute la largeur de la carte, à
+// cause du bouton invisible de 1180 px posé en dernier (tab5-lvgl.yaml, [AI-WARNING]
+// du titre de page) : c'est le contenu qui glisse, pour que LVGL ne redessine que la
+// largeur du texte à chaque image, pas les 1180 px du bandeau (essai du 29/09/2026 ;
+// avant, 6-7 images de 1180 × 86 px à 13-21 ms par rotation).
+static lv_obj_t* contenu_panneau(lv_obj_t* wrap) {
+    return wrap ? lv_obj_get_child(wrap, 0) : nullptr;
+}
+
+// Fin de la sortie : le panneau est masqué, son contenu remis à sa place pour la
+// prochaine entrée.
+static void anim_out_contenu_ready_cb(lv_anim_t* a) {
+    lv_obj_t* c = (lv_obj_t*)a->var;
+    lv_obj_t* wrap = lv_obj_get_parent(c);
+    if (wrap) lv_obj_add_flag(wrap, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_style_translate_y(c, 0, LV_PART_MAIN);
+    lv_obj_set_style_opa(c, LV_OPA_COVER, LV_PART_MAIN);
+}
+
+// Transition "verre depoli" du rotateur central : glissement vertical + fondu croise.
 //   - Sortie : descend en accelerant (ease_in) tout en s'effacant.
 //   - Entree : arrive du haut en decelerant (ease_out) tout en apparaissant.
 // Duree/amplitude : UIAnim::PANEL_* (190ms / 28px depuis le 28/07 — etait
 // 450ms / 84px, trop lent pour un rotateur qui tourne toutes les 8s).
 // Pas de transform_scale (trop couteux sur les grands objets).
-void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj) {
-    if (out_obj == in_obj) return;
+// Anime le CONTENU des panneaux (translate_y, qui ne change pas leur taille), pas les
+// panneaux : seuls leur apparition et leur masquage redessinent toute la largeur.
+void transition_widgets(lv_obj_t* out_wrap, lv_obj_t* in_wrap) {
+    if (out_wrap == in_wrap) return;
 
     const uint32_t DUR    = UIAnim::PANEL_DUR;
     const int32_t  OFFSET = UIAnim::PANEL_OFFSET;
 
-    if (out_obj) {
-        start_anim(out_obj, 0, OFFSET, DUR, lv_anim_path_ease_in, anim_y_cb, anim_out_y_ready_cb);
-        start_anim(out_obj, LV_OPA_COVER, LV_OPA_TRANSP, DUR, lv_anim_path_ease_in, anim_opa_cb);
+    if (lv_obj_t* c = contenu_panneau(out_wrap)) {
+        start_anim(c, 0, OFFSET, DUR, lv_anim_path_ease_in, anim_ty_cb, anim_out_contenu_ready_cb);
+        start_anim(c, LV_OPA_COVER, LV_OPA_TRANSP, DUR, lv_anim_path_ease_in, anim_opa_cb);
+    } else if (out_wrap) {
+        lv_obj_add_flag(out_wrap, LV_OBJ_FLAG_HIDDEN);
     }
 
-    if (in_obj) {
-        lv_obj_remove_flag(in_obj, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_set_y(in_obj, -OFFSET);
-        lv_obj_set_style_opa(in_obj, LV_OPA_TRANSP, LV_PART_MAIN);
-
-        start_anim(in_obj, -OFFSET, 0, DUR, lv_anim_path_ease_out, anim_y_cb);
-        start_anim(in_obj, LV_OPA_TRANSP, LV_OPA_COVER, DUR, lv_anim_path_ease_out, anim_opa_cb);
+    if (in_wrap) {
+        if (lv_obj_t* c = contenu_panneau(in_wrap)) {
+            lv_obj_set_style_translate_y(c, -OFFSET, LV_PART_MAIN);
+            lv_obj_set_style_opa(c, LV_OPA_TRANSP, LV_PART_MAIN);
+            start_anim(c, -OFFSET, 0, DUR, lv_anim_path_ease_out, anim_ty_cb);
+            start_anim(c, LV_OPA_TRANSP, LV_OPA_COVER, DUR, lv_anim_path_ease_out, anim_opa_cb);
+        }
+        lv_obj_remove_flag(in_wrap, LV_OBJ_FLAG_HIDDEN);
     }
+}
+
+// Transition coupée (tap, réponse vocale, synchro) : le contenu revient à sa place,
+// opaque. Seules les animations de la transition sont retirées (pas un éventuel
+// défilement de libellé). Ne touche pas au drapeau HIDDEN du panneau.
+void transition_couper(lv_obj_t* wrap) {
+    lv_obj_t* c = contenu_panneau(wrap);
+    if (!c) return;
+    lv_anim_delete(c, anim_ty_cb);
+    lv_anim_delete(c, anim_opa_cb);
+    lv_obj_set_style_translate_y(c, 0, LV_PART_MAIN);
+    lv_obj_set_style_opa(c, LV_OPA_COVER, LV_PART_MAIN);
 }
 
 // =============================================================================
 // Helpers d'animation LVGL (popups, swipe, alertes) — 1A du plan.
-// Reutilisent les callbacks ci-dessus (anim_y_cb/anim_opa_cb/anim_x_cb).
+// Reutilisent les callbacks ci-dessus (anim_opa_cb/anim_x_cb).
 // =============================================================================
 
 // Ouverture d'un popup : affichage instantané (pas de fondu, réactivité

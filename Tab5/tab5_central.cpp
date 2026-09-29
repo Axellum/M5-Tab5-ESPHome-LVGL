@@ -179,11 +179,12 @@ static void couper_animation(lv_obj_t* wrap) {
     lv_anim_delete(wrap, nullptr);
     lv_obj_set_pos(wrap, 0, 0);
     lv_obj_set_style_opa(wrap, LV_OPA_COVER, LV_PART_MAIN);
+    transition_couper(wrap);  // la transition du rotateur anime le contenu du panneau
 }
 
 static void hide_central_panel(lv_obj_t* wrap) {
     if (!wrap) return;
-    // Couper la transition en cours : son callback de fin (anim_out_y_ready_cb)
+    // Couper la transition en cours : son callback de fin (anim_out_contenu_ready_cb)
     // masque le panneau sortant, y compris quand la synchro qui suit vient de le
     // réafficher — la carte restait vide jusqu'au tour suivant du rotateur (8 s).
     lv_obj_add_flag(wrap, LV_OBJ_FLAG_HIDDEN);

@@ -64,7 +64,10 @@ void set_label_text_utf8(lv_obj_t* label, const char* text);
 // --- Sortis de tab5_custom.h le 25/09/2026 (audit, lot 8d) : appelés entre unités
 // C++ mais jamais depuis un YAML — ils ne font pas partie du contrat.
 
-void transition_widgets(lv_obj_t* out_obj, lv_obj_t* in_obj);
+// Rotateur central : fait glisser le contenu (premier enfant) des deux panneaux, pas
+// les panneaux ; transition_couper() la coupe et remet le contenu en place.
+void transition_widgets(lv_obj_t* out_wrap, lv_obj_t* in_wrap);
+void transition_couper(lv_obj_t* wrap);
 
 // Ferme un popup UNIQUEMENT s'il est réellement affiché et qu'aucun fondu n'est
 // déjà en cours dessus. Renvoie true si une fermeture a été lancée.

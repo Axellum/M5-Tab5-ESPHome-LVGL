@@ -53,6 +53,18 @@ A local diagnostic build timed, for every frame of 8 ms or more, the part spent 
 - **Drawing on the P4's two cores** (`LV_USE_OS` FreeRTOS, 2 draw units, only through `esphome: platformio_options: build_flags` in ESPHome 2026.9) works, with no visible artefact, but saves only 4 to 11 % of the drawing: not adopted (LVGL 9.5 has known multi-thread drawing bugs, fixed in 9.6; 16 KB more internal RAM).
 - **The main loop only waits for LVGL**: ESPHome's `runtime_stats` shows, idle, a longest iteration of 28 ms, all of it LVGL (one step of the rotating panel); API, Wi-Fi and sensors stay under 0.3 ms. The « Tab5 Loop Time » sensor adds the wait between iterations. The rotating panel only turns when it has two things to show — rain in the next hour is one of them —, which is why the idle numbers change with the weather.
 
+### Rotating panel: only the text slides (2026-09-29)
+
+Each panel of the rotator spans the whole card (its invisible 1180 px tap button), so sliding the panel redrew the whole band on every frame. Sliding its content instead (`transition_widgets()`, same 190 ms, 28 px animation) redraws only the text's width, except on the first and last frames (panel shown, panel hidden). Same tablet, same morning, a rotation between the schedule and rain in the next hour:
+
+| Rotation (190 ms) | Frames | Time per rotation | Pixels redrawn |
+|---|---|---|---|
+| Whole panel slides | 6-7 | 107.8 ms | 604,000 |
+| Only the text slides (714 px wide) | 7 | 93.4 ms (−13 %) | 475,000 |
+| Only the text slides (616 px wide) | 7 | 86.4 ms (−20 %) | 447,000 |
+
+The gain is in sending (proportional to the area); drawing a half-transparent text costs about as much as drawing the plain band.
+
 ## Limits
 
 - One tablet, one screen revision, one evening.
@@ -111,6 +123,18 @@ Un build de diagnostic local a chronométré, pour chaque image de 8 ms ou plus,
 - **Envoyer un écran entier coûte ~59 ms fixes** (1,8 Mo tournés puis copiés en PSRAM), quel que soit le contenu.
 - **Le dessin sur les deux cœurs du P4** (`LV_USE_OS` FreeRTOS, 2 unités de dessin, seulement par `esphome: platformio_options: build_flags` en ESPHome 2026.9) marche, sans défaut visible, mais ne gagne que 4 à 11 % du dessin : pas retenu (LVGL 9.5 a des bugs connus en dessin multi-cœur, corrigés en 9.6 ; 16 Ko de RAM interne en plus).
 - **La boucle principale n'attend que LVGL** : `runtime_stats` d'ESPHome donne, au repos, un tour le plus long de 28 ms, entièrement LVGL (un pas du panneau tournant) ; API, Wi-Fi et capteurs restent sous 0,3 ms. Le capteur « Tab5 Loop Time » y ajoute l'attente entre deux tours. Le panneau tournant ne tourne que s'il a deux choses à montrer — la pluie dans l'heure en est une —, d'où des chiffres au repos qui changent avec la météo.
+
+### Panneau tournant : seul le texte glisse (29/09/2026)
+
+Chaque panneau du rotateur fait toute la largeur de la carte (son bouton invisible de 1180 px) : faire glisser le panneau redessinait le bandeau entier à chaque image. Faire glisser son contenu (`transition_widgets()`, même animation de 190 ms et 28 px) ne redessine plus que la largeur du texte, sauf à la première et à la dernière image (panneau affiché, panneau masqué). Même tablette, même matinée, une rotation entre le planning et la pluie dans l'heure :
+
+| Rotation (190 ms) | Images | Temps par rotation | Pixels redessinés |
+|---|---|---|---|
+| Le panneau entier glisse | 6-7 | 107,8 ms | 604 000 |
+| Seul le texte glisse (714 px de large) | 7 | 93,4 ms (−13 %) | 475 000 |
+| Seul le texte glisse (616 px de large) | 7 | 86,4 ms (−20 %) | 447 000 |
+
+Le gain vient de l'envoi (proportionnel à la surface) ; dessiner un texte à demi transparent coûte à peu près autant que le bandeau uni.
 
 ## Limites
 
