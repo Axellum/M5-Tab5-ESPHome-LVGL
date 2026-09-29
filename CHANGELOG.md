@@ -4,6 +4,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-29 — Carte centrale : trois défauts corrigés
+
+Relevés en cartographiant la carte centrale (#237), corrigés à la demande d'Axel :
+- **Tap sur une température pendant une réponse vocale** : le planning du jour
+  s'affichait par-dessus la réponse, les deux textes superposés. Le tap termine
+  maintenant la réponse vocale, comme un changement de page.
+- **Tap sur une température pendant les 190 ms d'une rotation** : les deux panneaux
+  restaient figés à mi-course (décalés, à demi transparents), jusqu'à 6 s pour le
+  planning. Couper une animation remet maintenant le panneau à sa place, opaque
+  (`couper_animation()`, `lv_anim_delete()` ne pose pas la valeur finale).
+- **Fin de la pluie ou de la vigilance** : le panneau restait à l'écran, barres vides
+  ou sans icône, jusqu'au tour suivant (≤ 8 s). Il cède maintenant la place tout de
+  suite, avec la transition habituelle ; et une pluie qui commence sur une carte vide
+  s'affiche sans attendre (`central_set_pluie()`, `central_set_vigilance()`).
+
 ### 2026-09-29 — Carte centrale : logique simplifiée, rien ne change à l'écran
 
 Refactor demandé par Axel (« on laisse l'anim comme ça […] la logique de gestion est

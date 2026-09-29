@@ -169,15 +169,25 @@ void advance_central_panel_rotator(CentralPanelCtx& ctx) {
     ctx.current_panel = next_panel;
 }
 
+// Coupe l'animation d'un panneau (transition du rotateur, entrée d'un bandeau d'alerte)
+// et le remet à sa place, opaque. lv_anim_delete() seul ne pose pas la valeur finale
+// (lv_anim.c, LVGL 9.5) : un panneau coupé en route restait décalé et à demi
+// transparent (tap sur une température pendant les 190 ms d'une rotation).
+// Ne touche pas au drapeau HIDDEN.
+static void couper_animation(lv_obj_t* wrap) {
+    if (!wrap) return;
+    lv_anim_delete(wrap, nullptr);
+    lv_obj_set_pos(wrap, 0, 0);
+    lv_obj_set_style_opa(wrap, LV_OPA_COVER, LV_PART_MAIN);
+}
+
 static void hide_central_panel(lv_obj_t* wrap) {
     if (!wrap) return;
     // Couper la transition en cours : son callback de fin (anim_out_y_ready_cb)
     // masque le panneau sortant, y compris quand la synchro qui suit vient de le
     // réafficher — la carte restait vide jusqu'au tour suivant du rotateur (8 s).
-    lv_anim_delete(wrap, nullptr);
     lv_obj_add_flag(wrap, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_set_y(wrap, 0);
-    lv_obj_set_style_opa(wrap, LV_OPA_COVER, LV_PART_MAIN);
+    couper_animation(wrap);
 }
 
 static void sync_central_panel_visibility(CentralPanelCtx& ctx) {
@@ -208,6 +218,32 @@ void central_planning_set_off(bool off) {
     if (g_central_ctx.planning_off == off) return;
     g_central_ctx.planning_off = off;
     sync_central_panel_visibility(g_central_ctx);
+}
+
+// Pluie (1) et vigilance (2) : le drapeau suit les données poussées par HA. Posé seul,
+// il laissait le panneau affiché (barres vides, aucune icône) jusqu'au tour suivant du
+// rotateur, et une carte vide le restait jusqu'au tour suivant.
+static void central_panneau_actif(int panel, bool actif, bool& drapeau, CentralPanelCtx& ctx) {
+    if (drapeau == actif) return;
+    const bool carte_vide = !central_panel_is_active(ctx.current_panel, ctx);
+    drapeau = actif;
+    if (!actif) {
+        if (ctx.current_panel != panel) return;
+        // Le suivant, avec la transition du rotateur ; aucun autre panneau actif :
+        // la synchro vide la carte.
+        advance_central_panel_rotator(ctx);
+        if (ctx.current_panel == panel) sync_central_panel_visibility(ctx);
+    } else if (carte_vide) {
+        sync_central_panel_visibility(ctx);
+    }
+}
+
+void central_set_pluie(bool actif) {
+    central_panneau_actif(1, actif, g_central_ctx.has_rain, g_central_ctx);
+}
+
+void central_set_vigilance(bool actif) {
+    central_panneau_actif(2, actif, g_central_ctx.has_mf_alerts, g_central_ctx);
 }
 
 static void clear_ha_alert_slot(HaAlertSlotUI& slot) {
@@ -615,12 +651,15 @@ void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase) {
 // réponse vocale finit son délai sans effet visible (masquer un objet masqué ; la
 // synchro ne réaffiche que si le rotateur a la main). L'appelant pose ensuite
 // l'occupant de la nouvelle page (update_central_forecast_page_ui).
+static void terminer_reponse_vocale(CentralPanelCtx& ctx) {
+    if (!ctx.vocal_shown) return;
+    if (ctx.vocal_wrap) lv_obj_add_flag(ctx.vocal_wrap, LV_OBJ_FLAG_HIDDEN);
+    ctx.vocal_shown = false;
+}
+
 static void liberer_carte(CentralPanelCtx& ctx) {
     end_temporary_planning(ctx);
-    if (ctx.vocal_shown) {
-        if (ctx.vocal_wrap) lv_obj_add_flag(ctx.vocal_wrap, LV_OBJ_FLAG_HIDDEN);
-        ctx.vocal_shown = false;
-    }
+    terminer_reponse_vocale(ctx);
 }
 
 // Applique une page de previsions : donnees, calque, pastilles, carte centrale.
@@ -858,17 +897,18 @@ static void planning_restore_timer_cb(lv_timer_t* /*timer*/) {
 
 // Planning du tap ou réponse vocale prennent la carte : animations coupées sur les 8
 // panneaux et le titre (une transition du rotateur en cours masquerait ou déplacerait
-// un panneau à sa fin), titre masqué, panneaux masqués sauf `garder` (nullptr : tous).
+// un panneau à sa fin) et panneaux remis à leur place, titre masqué, panneaux masqués
+// sauf `garder` (nullptr : tous).
 static void prendre_carte(lv_obj_t* page_title_wrap, CentralPanelCtx& ctx, lv_obj_t* garder) {
-    const auto wraps = central_wraps(ctx);
-    for (lv_obj_t* w : wraps)
-        if (w) lv_anim_delete(w, nullptr);
     if (page_title_wrap) {
         lv_anim_delete(page_title_wrap, nullptr);
         lv_obj_add_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
     }
-    for (lv_obj_t* w : wraps)
-        if (w) lv_obj_set_flag(w, LV_OBJ_FLAG_HIDDEN, w != garder);
+    for (lv_obj_t* w : central_wraps(ctx)) {
+        if (!w) continue;
+        lv_obj_set_flag(w, LV_OBJ_FLAG_HIDDEN, w != garder);
+        couper_animation(w);
+    }
 }
 
 void show_temporary_planning(int tuile, lv_obj_t* lbl_planning,
@@ -894,7 +934,10 @@ void show_temporary_planning(int tuile, lv_obj_t* lbl_planning,
     std::string text = get_day_planning_display_text(jour);
     set_label_text_utf8(lbl_planning, text.c_str());
 
-    // Seul le planning reste visible.
+    // Seul le planning reste visible. Une réponse vocale à l'écran se termine, comme au
+    // changement de page : elle restait dessous et les deux textes se superposaient.
+    // Le script de la réponse finit ses 8 s sans rien réafficher (hide_vocal_response_ui).
+    terminer_reponse_vocale(ctx);
     prendre_carte(page_title_wrap, ctx, ctx.planning_wrap);
 
     tp.plan_l1 = plan_l1;

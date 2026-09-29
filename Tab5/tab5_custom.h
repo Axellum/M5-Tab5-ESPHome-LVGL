@@ -318,12 +318,18 @@ struct VigilanceUI {
 // pluie-inondation, neige-verglas, grand froid, vagues-submersion, canicule,
 // avalanches. Les 4 premiers phénomènes ≠ Vert remplissent les slots (jaune /
 // orange / rouge). Retourne true si au moins un phénomène est actif — à
-// stocker dans g_central_ctx.has_mf_alerts.
+// passer à central_set_vigilance().
 bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& ui);
 
 // Même chose pour les 9 barres en un appel : payload « idx|intensité;… » (ADR-0003,
-// service tab5_maj_pluie_1h_bulk). Retourne has_rain.
+// service tab5_maj_pluie_1h_bulk). Retourne has_rain, à passer à central_set_pluie().
 bool update_rain_bars_bulk_ui(const std::string& payload, lv_obj_t* const bars[9]);
+
+// Panneaux pluie (1) et vigilance (2) du rotateur : pose has_rain / has_mf_alerts.
+// Fin de la pluie ou de la vigilance → le panneau affiché cède la place tout de
+// suite ; début alors que la carte est vide → il s'affiche sans attendre le tour.
+void central_set_pluie(bool actif);
+void central_set_vigilance(bool actif);
 
 // Icône « pluie prédictive » de la carte centrale : flocon ambre si la
 // probabilité de neige ≥ 5, sinon goutte colorée par l'hygrométrie
