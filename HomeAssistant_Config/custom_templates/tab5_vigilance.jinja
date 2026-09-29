@@ -32,6 +32,11 @@
     (même table que la branche MeteoAlarm du package, plus 14 marin), sinon l'icône que
     l'intégration déduit du phénomène (icons.py de cap_alerts). GDACS (séismes,
     volcans…), les alertes d'essai et celles qui ne sont plus en cours sont ignorées.
+    BBK (Allemagne, v0.6.0) mêle à la météo (canal `dwd`) et aux crues (`lhp`) la
+    protection civile de MoWaS, KATWARN et BIWAPP (eau potable, bombe, gaz, incendie…) :
+    ces trois canaux ne comptent que si la catégorie CAP de l'alerte est « Met ». Le
+    canal est lu dans parameters.bbk_channel, la catégorie dans `category` (« Met,
+    Safety » quand il y en a plusieurs).
 
   Déploiement : ce fichier va dans config/custom_templates/ de Home Assistant, puis
   homeassistant.reload_custom_templates (ou redémarrage). Seules les sources DWD et
@@ -81,7 +86,8 @@
     {%- set types = {'1': 0, '2': 4, '3': 2, '4': 9, '5': 7, '6': 5, '7': 6, '8': 10, '9': 8,
                      '10': 3, '12': 1, '13': 3, '14': 6} -%}
     {%- set icones = {'mdi:weather-windy': 0, 'mdi:weather-hurricane': 0, 'mdi:home-flood': 1,
-                      'mdi:weather-lightning': 2, 'mdi:weather-tornado': 2, 'mdi:weather-pouring': 3,
+                      'mdi:weather-lightning': 2, 'mdi:weather-tornado': 2, 'mdi:weather-hail': 2,
+                      'mdi:weather-pouring': 3,
                       'mdi:water': 3, 'mdi:snowflake': 4, 'mdi:snowflake-alert': 4,
                       'mdi:snowflake-melt': 4, 'mdi:snowflake-thermometer': 5, 'mdi:waves': 6,
                       'mdi:tsunami': 6, 'mdi:weather-sunny-alert': 7, 'mdi:weather-fog': 9,
@@ -94,7 +100,9 @@
       {%- set n = [eveil - 1, 3] | min if eveil > 0 else severites.get(s.state, 0) -%}
       {%- set debut = as_timestamp(a.onset, 0) if a.onset is defined else 0 -%}
       {%- set fin = as_timestamp(a.expires, 0) if a.expires is defined else 0 -%}
-      {%- if n > 0 and a.provider | default('') != 'gdacs'
+      {%- set meteo = a.provider | default('') != 'bbk' or p.get('bbk_channel', '') in ['dwd', 'lhp']
+                      or 'Met' in (a.category | default('') | string).replace(' ', '').split(',') -%}
+      {%- if n > 0 and meteo and a.provider | default('') != 'gdacs'
             and a.phase | default('new') in ['new', 'update']
             and a.status | default('Actual') == 'Actual'
             and debut < limite and (fin == 0 or fin > t)
