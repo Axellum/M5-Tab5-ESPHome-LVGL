@@ -233,7 +233,8 @@ void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite) {
 }
 
 // update_clim_from_ha_ui() : tab5_cards.cpp depuis le 29/09/2026 (ADR-0026), avec les
-// réglages de la clim qui fixent le format de la cible et l'unité.
+// réglages de la clim qui fixent le format de la cible et l'unité ; devenue
+// clim_blueprint_recu() le même jour (clims des tuiles, ADR-0027).
 
 void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::string& l2,
     std::string& plan_ligne_1, std::string& plan_ligne_2) {

@@ -5,21 +5,27 @@
 #       3 cartes de verre : MODE (Froid/Chaud/Sec/Ventil./Éteint), TEMPÉRATURE
 #       (arc 320 px + cible au centre + boutons ± + température pièce) et OPTIONS
 #       (presets Éco/Boost, Silence, flux d'air Oscillation/Brise).
-#       Ouvert en tapant la cible de la carte clim compacte (climate_card.yaml).
+#       Ouvert en tapant la cible de la carte clim compacte (climate_card.yaml), par
+#       « Aller à l'écran → Climatisation », ou par une tuile cli (ADR-0023, ADR-0027).
 # @architecture_constraint NON factorisable au-delà de ce qui l'est déjà (décision explicite,
-#                          #T164, ADR-0007) : chaque bouton restant appelle un service Home
-#                          Assistant DIFFÉRENT (set_swing_mode / set_fan_mode / turn_off) avec
-#                          une logique lambda propre. Seuls 6/10 boutons ont un template commun
+#                          #T164, ADR-0007) : chaque bouton restant envoie une commande
+#                          DIFFÉRENTE (oscillation / ventilation / eteindre) avec son geste
+#                          propre. Seuls 6/10 boutons ont un template commun
 #                          (climate_hvac_mode_btn.yaml ×4, climate_preset_toggle_btn.yaml ×2).
 #                          Ne pas renommer arc_temp_popup / clim_target_popup / val_temp_int_popup
-#                          / popup_icon_clim_* : pilotés par le service `tab5_maj_clim`
-#                          (tab5-api-logic.yaml) via les globals clim_*. La coloration des icônes
-#                          est centralisée dans le script `tab5_clim_recolor` (tab5-scripts.yaml) —
-#                          ne pas la dupliquer inline ; les taps l'appellent en mode optimiste.
+#                          / popup_icon_clim_* : posés dans g_clim_ui (script tab5_clim_ui) et
+#                          peints par tab5_cards.cpp.
+#                          CLIM AFFICHÉE (ADR-0027) : le popup montre la clim du blueprint, ou
+#                          celle d'une tuile cli sans l'option m. Ses gestes (clim_popup_*) et
+#                          ses commandes (emplacement clim_affichee_cle() : « clim » ou « tRT »)
+#                          vont à celle-là ; la carte de l'accueil reste celle du blueprint. À
+#                          la fermeture (croix, voile), le popup revient à la clim du blueprint.
 # @ai_instruction Cadre modal v3 (ADR-0008) : scrim / marque / croix via modal_*.yaml
 #       (en-tête y=6, côtés 10 px). `scrollable: false` partout — NE PAS retirer.
-#       Cible optimiste via update_clim_target_ui() + débounce tab5_debounce_clim_temp.
-#       Boutons Mode/Preset/… : global clim_* + tab5_clim_recolor AVANT l'appel HA.
+#       Cible optimiste via clim_popup_consigne() / clim_popup_pas() (tab5_cards.cpp),
+#       qui lancent le débounce de la clim affichée (tab5_debounce_clim_temp ou _tuile).
+#       Boutons Mode/Preset/… : geste clim_popup_* (état optimiste + couleurs,
+#       clim_recolorer) AVANT l'envoi de la commande.
 #       `pressed: bg_opa: 30%` répété (ESPHome rejette pressed: dans un style partagé).
 #       Réglages de l'appareil (clé climr, ADR-0026, tab5_cards.cpp) : bornes de l'arc,
 #       pas des ±, unité, titre = nom de la clim, boutons que l'appareil n'a pas masqués
@@ -38,7 +44,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(clim_options_popup));" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(clim_options_popup)); clim_afficher_blueprint();" } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -50,7 +56,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F0717", icon_color: "color_info", title: "Climatisation Salon", title_id: "popup_clim_title", close_btn_id: "btn_clim_close", close_lambda: "animate_popup_close(id(clim_options_popup));" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0717", icon_color: "color_info", title: "Climatisation Salon", title_id: "popup_clim_title", close_btn_id: "btn_clim_close", close_lambda: "animate_popup_close(id(clim_options_popup)); clim_afficher_blueprint();" } }
 
           # ═══ CARTE MODE (gauche) : 5 modes HVAC empilés ═══
           - obj:
@@ -93,10 +99,9 @@ obj:
                           pressed:
                             bg_opa: 30%
                           on_short_click:
-                            # Optimiste : mode "off" + recolore avant le retour HA
-                            - lambda: 'id(clim_hvac_mode) = "off";'
-                            - script.execute: tab5_clim_recolor
-                            - script.execute: { id: tab5_action, emplacement: clim, commande: eteindre, valeur: "" }
+                            # Optimiste : mode "off" sur la clim affichée + couleurs avant le retour HA
+                            - lambda: 'clim_popup_mode("off");'
+                            - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: eteindre, valeur: "" }
                           widgets:
                             - label: { id: popup_icon_clim_off, text: "\U000F0425", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
                             - label: { text: "Éteint", align: LEFT_MID, x: 88, text_font: roboto_32_b }
@@ -113,8 +118,8 @@ obj:
               widgets:
                 - label: { text: "TEMPÉRATURE", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
 
-                # Arc thermostat (16-30 °C, puis les bornes de l'appareil : clim_reglages_recu)
-                # — cible optimiste + appel HA débouncé
+                # Arc thermostat (16-30 °C, puis les bornes de la clim affichée) — cible
+                # optimiste + appel HA débouncé
                 - arc:
                     id: arc_temp_popup
                     align: TOP_MID
@@ -135,10 +140,7 @@ obj:
                       bg_color: color_text
                       pad_all: 6
                     on_value:
-                      - lambda: |-
-                          id(clim_target_temp) = x;
-                          update_clim_target_ui(id(clim_target_popup), id(arc_temp_popup), x);
-                      - script.execute: tab5_debounce_clim_temp
+                      - lambda: 'clim_popup_consigne(x);'
 
                 # Cible au centre de l'arc (couleur pilotée par tab5_maj_clim : bleu/rouge/blanc)
                 - label:
@@ -150,8 +152,8 @@ obj:
                 # Unité : °C, ou °F selon HA (clim_reglages_recu).
                 - label: { id: clim_unite_popup, text: "°C", align: TOP_MID, y: 248, text_color: color_text_dim }
 
-                # Boutons − / + (pas de l'appareil, 0,5° par défaut ; groupés par le débounce
-                # si taps rapides)
+                # Boutons − / + (pas de la clim affichée, 0,5° par défaut ; groupés par le
+                # débounce si taps rapides ; consigne inconnue : rien, l'arc la choisit)
                 - button:
                     align: TOP_LEFT
                     x: 22
@@ -163,11 +165,7 @@ obj:
                     pressed:
                       bg_opa: 30%
                     on_short_click:
-                      - lambda: |-
-                          const float t = clim_consigne_suivante(id(clim_target_temp), -1);
-                          id(clim_target_temp) = t;
-                          update_clim_target_ui(id(clim_target_popup), id(arc_temp_popup), t);
-                      - script.execute: tab5_debounce_clim_temp
+                      - lambda: 'clim_popup_pas(-1);'
                     widgets:
                       - label: { text: "\U000F0374", align: CENTER, text_font: mdi_font_56 }
                 - button:
@@ -181,15 +179,11 @@ obj:
                     pressed:
                       bg_opa: 30%
                     on_short_click:
-                      - lambda: |-
-                          const float t = clim_consigne_suivante(id(clim_target_temp), +1);
-                          id(clim_target_temp) = t;
-                          update_clim_target_ui(id(clim_target_popup), id(arc_temp_popup), t);
-                      - script.execute: tab5_debounce_clim_temp
+                      - lambda: 'clim_popup_pas(+1);'
                     widgets:
                       - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56 }
 
-                # Température réelle de la pièce (poussée par tab5_maj_clim)
+                # Température réelle de la pièce (tab5_maj_clim, ou clé ceRT d'une tuile)
                 - label: { text: "\U000F050F", align: BOTTOM_MID, x: -135, y: -20, text_font: mdi_font_32, text_color: color_text_dim }
                 - label: { text: "Pièce", align: BOTTOM_MID, x: -70, y: -20, text_color: color_text_dim }
                 - label:
@@ -251,13 +245,12 @@ obj:
                     pressed:
                       bg_opa: 30%
                     on_short_click:
-                      # Optimiste : calcule le toggle, le pose dans le global, recolore,
-                      # puis le service envoie le global (pas de double-toggle inversé).
-                      # Actif sous tous ses noms (quiet, silence, low…) : sinon un appareil
-                      # en « low » recevait « quiet » à chaque appui, sans jamais s'arrêter.
-                      - lambda: 'id(clim_fan_mode) = clim_silence_actif(id(clim_fan_mode)) ? std::string("auto") : std::string("quiet");'
-                      - script.execute: tab5_clim_recolor
-                      - script.execute: { id: tab5_action, emplacement: clim, commande: ventilation, valeur: !lambda 'return id(clim_fan_mode);' }
+                      # Optimiste : calcule la bascule sur la clim affichée et recolore
+                      # (clim_popup_silence), puis envoie ce qu'elle vient de poser (pas de
+                      # double bascule inversée). Actif sous tous ses noms (quiet, silence,
+                      # low…) : sinon un appareil en « low » recevait « quiet » à chaque appui.
+                      - lambda: 'clim_popup_silence();'
+                      - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: ventilation, valeur: !lambda 'return clim_affichee_ventilation();' }
                     widgets:
                       - label: { id: popup_icon_clim_quiet, text: "\U000F146D", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
                       - label: { text: "Silence", align: LEFT_MID, x: 88, text_font: roboto_32_b }
@@ -277,12 +270,11 @@ obj:
                     pressed:
                       bg_opa: 30%
                     on_short_click:
-                      # Optimiste : calcule le toggle, le pose dans le global, recolore,
-                      # puis le service envoie le global (pas de double-toggle inversé).
-                      # Actif sous tous ses noms (swing, on, both, vertical…), windnice exclu.
-                      - lambda: 'id(clim_swing_mode) = clim_oscillation_actif(id(clim_swing_mode)) ? std::string("stop") : std::string("swing");'
-                      - script.execute: tab5_clim_recolor
-                      - script.execute: { id: tab5_action, emplacement: clim, commande: oscillation, valeur: !lambda 'return id(clim_swing_mode);' }
+                      # Optimiste : bascule sur la clim affichée, couleurs, puis envoi de ce
+                      # qu'elle vient de poser. Actif sous tous ses noms (swing, on, both,
+                      # vertical…), windnice exclu.
+                      - lambda: 'clim_popup_oscillation();'
+                      - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: oscillation, valeur: !lambda 'return clim_affichee_oscillation();' }
                     widgets:
                       - label: { id: popup_icon_clim_swing, text: "\U000F0E79", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
                       - label: { text: "Oscillation", align: LEFT_MID, x: 88, text_font: roboto_32_b }
@@ -298,11 +290,10 @@ obj:
                     pressed:
                       bg_opa: 30%
                     on_short_click:
-                      # Optimiste : calcule le toggle, le pose dans le global, recolore,
-                      # puis le service envoie le global (pas de double-toggle inversé).
-                      - lambda: 'id(clim_swing_mode) = (id(clim_swing_mode) == "windnice") ? std::string("stop") : std::string("windnice");'
-                      - script.execute: tab5_clim_recolor
-                      - script.execute: { id: tab5_action, emplacement: clim, commande: oscillation, valeur: !lambda 'return id(clim_swing_mode);' }
+                      # Optimiste : bascule windnice ↔ stop sur la clim affichée, couleurs,
+                      # puis envoi de ce qu'elle vient de poser.
+                      - lambda: 'clim_popup_brise();'
+                      - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: oscillation, valeur: !lambda 'return clim_affichee_oscillation();' }
                     widgets:
                       - label: { id: popup_icon_clim_windnice, text: "\U000F059D", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
                       - label: { text: "Brise", align: LEFT_MID, x: 88, text_font: roboto_32_b }

@@ -125,11 +125,29 @@ void tuiles_swipe_ha(bool gauche);
 void texte_ha_copier(char* dst, size_t cap, const char* src, size_t n);
 void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur);
 
-// --- Clim (tab5_cards.cpp, ADR-0026) ---
+// --- Clim (tab5_cards.cpp, ADR-0026, ADR-0027) ---
 // emplacements_appliquer (tab5_zones.cpp) : entrée « climr|min|max|pas|unité|capacités|nom »
 // (`reste` = ce qui suit « climr| »). Range les réglages et les applique aux widgets de
 // g_clim_ui.
 void clim_reglages_recu(const char* reste, size_t n);
+// emplacements_appliquer : entrées des clims de tuile, « crRT|min|max|pas|unité|capacités|
+// nom » (réglages, comme climr) et « ceRT|consigne|pièce|mode|préréglage|ventilation|
+// oscillation » (état). Faux si la clé n'est pas l'une d'elles : l'entrée suit alors la
+// table des emplacements 3.x.
+bool clim_tuile_recu(const char* cle, size_t n_cle, const char* reste, size_t n_reste);
+// tab5_tuiles.cpp : la tablette a-t-elle les réglages de la clim de la tuile tRT ? (son
+// appui ouvre alors le popup sur elle).
+bool clim_tuile_connue(int r, int t);
+// tab5_tuiles.cpp, appui d'une tuile cli sans l'option m : le popup montre cette clim.
+// Faux, et rien ne change, sans ses réglages.
+bool clim_afficher_tuile(int r, int t);
+// tab5_tuiles.cpp (tuiles_definir) : la tuile a changé de définition, ses réglages et son
+// état sont oubliés (le blueprint les renvoie juste après) ; si le popup la montrait, il
+// se ferme et revient à la clim du blueprint.
+void clim_tuile_oublier(int r, int t);
+// tab5_cards.cpp, réglages d'une clim de tuile reçus : repeindre la tuile (son bouton
+// apparaît, ADR-0027).
+void tuiles_repeindre(int r, int t);
 
 // --- tab5_central.cpp, pour les pièces ---
 // Page atteinte par un swipe depuis `page` (bouclage volontaire, [AI-WARNING] de

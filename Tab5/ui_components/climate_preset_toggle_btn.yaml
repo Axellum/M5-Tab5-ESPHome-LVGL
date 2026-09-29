@@ -2,8 +2,8 @@
 # (eco/boost — rangée flex Presets de la carte OPTIONS, 164×88). Vars: suffix, preset_name,
 # icon, label_text. Toggle : si le preset de ce bouton est actif, on repasse à "none"
 # (clic à bascule), ne pas simplifier. Actif = clim_preset_actif() (tab5_cards.cpp) : Éco
-# ("away") l'est aussi sur "eco", Boost sur "boost" seulement (ADR-0026). Icône recolorée
-# par tab5_maj_clim.
+# ("away") l'est aussi sur "eco", Boost sur "boost" seulement (ADR-0026). Bascule sur la
+# clim affichée (clim_popup_preset, ADR-0027), icône recolorée par clim_recolorer().
 button:
   id: popup_btn_clim_${suffix}
   width: 164
@@ -13,11 +13,10 @@ button:
   pressed:
     bg_opa: 30%
   on_short_click:
-    # Optimiste : calcule le toggle une seule fois, le pose dans le global, recolore,
-    # puis le service envoie le contenu du global (évite un double-toggle inversé).
-    - lambda: 'id(clim_preset_mode) = clim_preset_actif(id(clim_preset_mode), "${preset_name}") ? std::string("none") : std::string("${preset_name}");'
-    - script.execute: tab5_clim_recolor
-    - script.execute: { id: tab5_action, emplacement: clim, commande: preset, valeur: !lambda 'return id(clim_preset_mode);' }
+    # Optimiste : calcule la bascule une seule fois sur la clim affichée et recolore,
+    # puis envoie ce qu'elle vient de poser (évite un double-toggle inversé).
+    - lambda: 'clim_popup_preset("${preset_name}");'
+    - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: preset, valeur: !lambda 'return clim_affichee_preset();' }
   widgets:
     - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 14, text_font: mdi_font_45, text_color: color_text_dim }
     - label: { text: "${label_text}", align: LEFT_MID, x: 72 }

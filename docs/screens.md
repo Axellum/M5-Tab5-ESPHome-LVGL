@@ -91,7 +91,7 @@ The `btn_control_ha` button (top right, « HA ») toggles the region between the
 | `med` media player | toggle | TV remote (option `t`) |
 | `act` scene, script, button | run — the state line shows « OK » for 1 s | — |
 | `cap` sensor, `bin` binary sensor | read only | — |
-| `cli` climate | climate popup (option `m`) | — |
+| `cli` climate | climate popup: the blueprint's climate (option `m`), else the tile's own ([ADR-0027](decisions/0027-climate-per-tile.md)) | — |
 
 Option `k` asks for a second tap within 3 s (the state line asks « Confirmer ? », the icon turns amber); option `r` makes the tile read only.
 
@@ -109,14 +109,15 @@ The 5 cards (`switches_card.yaml`) show the room of the current page: icon from 
 
 ## Climate
 
-Two levels of control, both driving the same Home Assistant `climate` entity:
+Two levels of control. The compact card drives the blueprint's `climate` entity (input « Climatisation »); the popup drives the same one, or the climate of the tile that opened it:
 
-- **Compact card** (always visible in the home area) — current temperature and target with +/− buttons.
-- **Climate popup** (near-fullscreen, 1250×690 card 15 px from the screen edges, opened by tapping the compact card) — three glass cards:
+- **Compact card** (always visible in the home area) — current temperature and target with +/− buttons. Always the blueprint's climate.
+- **Climate popup** (near-fullscreen, 1250×690 card 15 px from the screen edges, opened by tapping the compact card, a climate tile, or « Aller à l'écran → Climatisation ») — three glass cards:
   - **MODE**: Froid / Chaud / Sec / Ventilation / Éteint, stacked full-width (icons colored by the active mode, driven by `tab5_maj_clim`)
   - **TEMPÉRATURE**: a 320 px arc thermostat with the target shown large in the center, − / + buttons, and the actual room temperature at the bottom. Bounds, step and unit are the unit's own (16–30 °C and 0.5 until Home Assistant sends them, see below). The target updates **immediately** (optimistic) and a single `climate.set_temperature` is sent once the gesture ends (250 ms debounce — rapid ± taps are grouped)
   - **OPTIONS**: Éco / Boost presets (toggle), Silence (fan quiet), and airflow **Oscillation** / **Brise** (`windnice`, a Daikin Onecta mode previously unreachable from the screen)
   - **Any brand** ([ADR-0026](decisions/0026-climate-from-device.md)): the blueprint sends the unit's settings (key `climr`: `min_temp`/`max_temp`, `target_temp_step`, °C or °F, the modes it has, its name). The title becomes the unit's name, the arc and the ± buttons follow its bounds and step, and a button the unit cannot do disappears — an OPTIONS section left without a button disappears with its title and the others move up. The buttons still send the Daikin names (Éco = `away`, Silence = `quiet`, `swing` / `stop`), and the blueprint translates them to the unit's own (`eco`, `low`, `off`, `vertical`…), or sends nothing when the unit has no equivalent.
+  - **Any climate tile** ([ADR-0027](decisions/0027-climate-per-tile.md)): a `cli` tile of a room opens the popup on its own unit — its settings (key `crRT`, same fields as `climr`) and its state (key `ceRT`) come with the tiles, and its buttons send the same commands with `emplacement: tRT`, translated by the blueprint the same way. Its target and mode reach the popup at once, its fan / swing / preset and room temperature within 5 minutes (with the measurements). A tile with option `m` is the blueprint's climate. Until Home Assistant sent the tile's settings (older blueprint), tapping it does nothing. The compact card keeps showing the blueprint's climate meanwhile, and closing the popup brings it back to that one.
   - Tapping the dark overlay or the × button (a real 96×64 glass button) closes the modal. 6 of the 10 buttons are factorized templates (cool/heat/fan/dry, eco/boost); the remaining 4 (off/swing/windnice/quiet) and the ± buttons are deliberately left as individual YAML — see [ADR-0007](decisions/0007-climate-popup-not-factorized.md).
 
 The controls are dimmed (not hidden) when the AC is off, so the layout stays stable.
@@ -398,7 +399,7 @@ Le bouton `btn_control_ha` (en haut à droite, « HA ») bascule la zone entre l
 | `med` lecteur multimédia | bascule | télécommande TV (option `t`) |
 | `act` scène, script, bouton | lancer — la ligne d'état montre « OK » 1 s | — |
 | `cap` capteur, `bin` capteur binaire | lecture seule | — |
-| `cli` climatisation | popup clim (option `m`) | — |
+| `cli` climatisation | popup clim : la clim du blueprint (option `m`), sinon celle de la tuile ([ADR-0027](decisions/0027-climate-per-tile.md)) | — |
 
 L'option `k` demande un second appui dans les 3 s (la ligne d'état demande « Confirmer ? », l'icône passe à l'ambre) ; l'option `r` met la tuile en lecture seule.
 
@@ -416,14 +417,15 @@ Les 5 cartes (`switches_card.yaml`) montrent la pièce de la page courante : ic�
 
 ## Climatisation
 
-Deux niveaux de contrôle, pilotant tous deux la même entité `climate` de Home Assistant :
+Deux niveaux de contrôle. La carte compacte pilote l'entité `climate` du blueprint (entrée « Climatisation ») ; le popup pilote la même, ou la clim de la tuile qui l'a ouvert :
 
-- **Carte compacte** (toujours visible en zone d'accueil) — température actuelle et cible avec boutons +/−.
-- **Popup clim** (quasi plein écran, carte 1250×690 à 15 px des bords, ouvert en tapant la carte compacte) — trois cartes de verre :
+- **Carte compacte** (toujours visible en zone d'accueil) — température actuelle et cible avec boutons +/−. Toujours la clim du blueprint.
+- **Popup clim** (quasi plein écran, carte 1250×690 à 15 px des bords, ouvert en tapant la carte compacte, une tuile de clim, ou « Aller à l'écran → Climatisation ») — trois cartes de verre :
   - **MODE** : Froid / Chaud / Sec / Ventilation / Éteint, empilés pleine largeur (icônes colorées selon le mode actif, pilotées par `tab5_maj_clim`)
   - **TEMPÉRATURE** : arc thermostat 320 px avec la cible affichée en grand au centre, boutons − / +, et la température réelle de la pièce en bas. Bornes, pas et unité sont ceux de l'appareil (16–30 °C et 0,5 tant que Home Assistant ne les a pas envoyés, voir plus bas). La cible s'affiche **immédiatement** (optimiste) et un seul `climate.set_temperature` part une fois le geste terminé (débounce 250 ms — les taps rapides ± sont groupés)
   - **OPTIONS** : presets Éco / Boost (toggle), Silence (fan quiet), et flux d'air **Oscillation** / **Brise** (`windnice`, mode Daikin Onecta auparavant inaccessible depuis l'écran)
   - **Toutes marques** ([ADR-0026](decisions/0026-climate-from-device.md)) : le blueprint envoie les réglages de l'appareil (clé `climr` : `min_temp`/`max_temp`, `target_temp_step`, °C ou °F, les modes qu'il a, son nom). Le titre devient le nom de l'appareil, l'arc et les boutons ± suivent ses bornes et son pas, et un bouton que l'appareil ne sait pas faire disparaît — une section OPTIONS restée sans bouton disparaît avec son titre, les autres remontent. Les boutons envoient toujours les noms de la Daikin (Éco = `away`, Silence = `quiet`, `swing` / `stop`), et le blueprint les traduit vers ceux de l'appareil (`eco`, `low`, `off`, `vertical`…), ou n'envoie rien quand l'appareil n'a pas d'équivalent.
+  - **Toute tuile de clim** ([ADR-0027](decisions/0027-climate-per-tile.md)) : une tuile `cli` d'une pièce ouvre le popup sur son propre appareil — ses réglages (clé `crRT`, les champs de `climr`) et son état (clé `ceRT`) arrivent avec les tuiles, et ses boutons envoient les mêmes commandes avec `emplacement: tRT`, que le blueprint traduit de la même façon. Sa consigne et son mode arrivent tout de suite dans le popup, sa ventilation, son oscillation, son préréglage et la température de la pièce en 5 minutes au plus (avec les mesures). Une tuile avec l'option `m` est la clim du blueprint. Tant que Home Assistant n'a pas envoyé les réglages de la tuile (blueprint plus ancien), la toucher ne fait rien. Pendant ce temps la carte compacte montre toujours la clim du blueprint, et fermer le popup y revient.
   - Taper l'overlay sombre ou le bouton × (vrai bouton de verre 96×64) ferme le modal. 6 des 10 boutons sont des templates factorisés (froid/chaud/ventil/sec, éco/boost) ; les 4 restants (éteint/oscill/brise/silence) et les boutons ± sont volontairement laissés en YAML individuel — voir [ADR-0007](decisions/0007-climate-popup-not-factorized.md).
 
 Les contrôles sont estompés (non cachés) quand le clim est éteint, pour garder la mise en page stable.
