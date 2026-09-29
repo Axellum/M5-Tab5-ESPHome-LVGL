@@ -13,7 +13,10 @@
 #       l'intégration, ceux qui portent le nom de l'entité météo choisie
 #       (sensor.ville_ci_next_rain) et le seul `*_weather_alert` :
 #         weather.ville_ci, sensor.ville_ci_next_rain, sensor.99_weather_alert,
-#         sensor.serre_ci_temperature, sensor.pot_ci_1 à 3, sensor.telephone_ci_batterie.
+#         sensor.serre_ci_temperature, sensor.pot_ci_1 à 3, sensor.telephone_ci_batterie ;
+#       les vigilances DWD et CAP Alerts sont reconnues à leurs attributs (attribution
+#       « Data provided by DWD », incident_platform_version) : capteurs
+#       sensor.ville_ci_niveau_d_alerte_actuel / _anticipee et sensor.cap_ci_*.
 #       Lumières, clim, volet, TV, télécommande et température de la pièce viennent de
 #       l'intégration demo (tools/installation_ha/configuration.yaml).
 # @ai_instruction Les formes imitent celles des vraies intégrations lues par les
@@ -66,6 +69,107 @@ template:
           forecast_time_ref: "{{ now().replace(second=0, microsecond=0).isoformat() }}"
           1_hour_forecast: >-
             {{ {'0 min': 'Temps sec', '5 min': 'Temps sec', '10 min': 'Temps sec', '15 min': 'Temps sec', '20 min': 'Pluie faible', '25 min': 'Pluie modérée', '35 min': 'Pluie modérée', '45 min': 'Pluie faible', '55 min': 'Temps sec'} }}
+
+  # Vigilances DWD, forme de l'intégration dwd_weather_warnings (sensor.py de HA
+  # 2026.9.4) : deux capteurs par région, attributs à plat + warning_<i> (l'alerte
+  # entière, dont l'urgence), identifiants d'un HA en français. Alertes : vent orange
+  # (52) en cours, verglas jaune (84) dans 2 h ; préavis : orage rouge (urgency
+  # « future », à ne pas lire). Choisie dans verifier_installation.py (VIGILANCES).
+  - triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+    sensor:
+      - name: "Ville CI Niveau d'alerte actuel"
+        unique_id: ci_dwd_actuel
+        state: "{{ 2 }}"
+        attributes:
+          attribution: "Data provided by DWD"
+          region_name: "Ville CI"
+          region_id: "{{ 999 }}"
+          warning_count: "{{ 2 }}"
+          warning_1_name: "STURMBÖEN"
+          warning_1_type: "{{ 52 }}"
+          warning_1_level: "{{ 2 }}"
+          warning_1_start: "{{ (now() - timedelta(hours=1)).isoformat() }}"
+          warning_1_end: "{{ (now() + timedelta(hours=5)).isoformat() }}"
+          warning_1: "{{ {'event': 'STURMBÖEN', 'event_code': 52, 'level': 2, 'urgency': 'immediate'} }}"
+          warning_2_name: "GLÄTTE"
+          warning_2_type: "{{ 84 }}"
+          warning_2_level: "{{ 1 }}"
+          warning_2_start: "{{ (now() + timedelta(hours=2)).isoformat() }}"
+          warning_2_end: "{{ (now() + timedelta(hours=8)).isoformat() }}"
+          warning_2: "{{ {'event': 'GLÄTTE', 'event_code': 84, 'level': 1, 'urgency': 'immediate'} }}"
+      - name: "Ville CI Niveau d'alerte anticipée"
+        unique_id: ci_dwd_anticipee
+        state: "{{ 3 }}"
+        attributes:
+          attribution: "Data provided by DWD"
+          region_name: "Ville CI"
+          region_id: "{{ 999 }}"
+          warning_count: "{{ 1 }}"
+          warning_1_name: "VORABINFORMATION SCHWERES GEWITTER"
+          warning_1_type: "{{ 40 }}"
+          warning_1_level: "{{ 3 }}"
+          warning_1_start: "{{ (now() + timedelta(hours=3)).isoformat() }}"
+          warning_1_end: "{{ (now() + timedelta(hours=20)).isoformat() }}"
+          warning_1: "{{ {'event': 'VORABINFORMATION SCHWERES GEWITTER', 'event_code': 40, 'level': 3, 'urgency': 'future'} }}"
+
+  # Vigilances CAP Alerts, forme de l'intégration HACS cap_alerts v0.5.1 (une entité par
+  # alerte, état = sévérité normalisée, attributs CAP dont incident_platform_version) :
+  # vent orange de MeteoAlarm en cours, brouillard « minor » du NWS ; un séisme GDACS et
+  # un feu dans 30 h, à ne pas compter.
+  - triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+    sensor:
+      - name: "CAP CI vent"
+        unique_id: ci_cap_vent
+        icon: mdi:weather-windy
+        state: "severe"
+        attributes:
+          incident_platform_version: "1.0"
+          provider: "meteoalarm"
+          phase: "new"
+          event: "Orange wind warning"
+          onset: "{{ (now() - timedelta(hours=2)).isoformat() }}"
+          expires: "{{ (now() + timedelta(hours=6)).isoformat() }}"
+          parameters: "{{ {'awareness_level': '3; orange; Severe', 'awareness_type': '1; Wind'} }}"
+      - name: "CAP CI brouillard"
+        unique_id: ci_cap_brouillard
+        icon: mdi:weather-fog
+        state: "minor"
+        attributes:
+          incident_platform_version: "1.0"
+          provider: "nws"
+          phase: "update"
+          status: "Actual"
+          event: "Dense Fog Advisory"
+          onset: "{{ (now() - timedelta(hours=1)).isoformat() }}"
+          expires: "{{ (now() + timedelta(hours=4)).isoformat() }}"
+      - name: "CAP CI séisme"
+        unique_id: ci_cap_seisme
+        icon: mdi:pulse
+        state: "extreme"
+        attributes:
+          incident_platform_version: "1.0"
+          provider: "gdacs"
+          phase: "new"
+          event: "Earthquake"
+      - name: "CAP CI feu futur"
+        unique_id: ci_cap_feu_futur
+        icon: mdi:fire
+        state: "extreme"
+        attributes:
+          incident_platform_version: "1.0"
+          provider: "wmo"
+          phase: "new"
+          event: "Fire danger"
+          onset: "{{ (now() + timedelta(hours=30)).isoformat() }}"
+          expires: "{{ (now() + timedelta(hours=40)).isoformat() }}"
 
   - sensor:
       # Vigilance, forme de Météo-France (sensor.<département>_weather_alert) : jaune orages.
