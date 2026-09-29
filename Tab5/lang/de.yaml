@@ -94,7 +94,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Dem.": "Morg."
 # Nom de jour envoyé par HA pour aujourd'hui (tuiles météo de l'accueil), sans point.
 "Auj": "Heute"
-"Aucun travail de prevu": "Keine Arbeit geplant"
+"Aucun travail de prévu": "Keine Arbeit geplant"
 "Jour": "Tag"
 "{jour} : {horaire}": "{jour}: {horaire}"
 "{jour} : #fb923c {horaire}#": "{jour}: #fb923c {horaire}#"

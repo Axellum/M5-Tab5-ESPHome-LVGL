@@ -24,6 +24,10 @@ substitutions:
   modal_bottom_y: "-20"
   # Première ligne de la grille calendrier (modal_body_y + 30 px d'en-tête jours)
   cal_grid_y: "102"
+  # Hauteur réservée à la grille, jusqu'à 10 px au-dessus de la légende (posée
+  # à ${modal_bottom_y} du bas de la carte). cal_render_month() y répartit les
+  # 4 à 6 semaines du mois et centre le tout.
+  cal_grid_h: "528"
   # Carte "Réponse" de l'assistant vocal : sous la carte "Votre demande"
   # (modal_body_y + 104 px de haut + 12 px de respiration). Si modal_body_y
   # change, recalculer cette valeur à la main (ESPHome ne fait pas d'arithmétique

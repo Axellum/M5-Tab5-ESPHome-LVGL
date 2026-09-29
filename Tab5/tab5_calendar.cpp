@@ -169,6 +169,10 @@ struct CalCellUI {
 };
 static CalCellUI s_cal_cells[42] = {};
 static void (*s_cal_on_tap)(int) = nullptr;
+// Zone de la grille (${cal_grid_y} / ${cal_grid_h}) : cal_render_month() y répartit
+// les semaines du mois affiché.
+static int32_t s_cal_grid_y = 0;
+static int32_t s_cal_grid_h = 0;
 
 static void cal_cell_tap_cb(lv_event_t* e) {
     if (s_cal_on_tap) s_cal_on_tap((int) (intptr_t) lv_event_get_user_data(e));
@@ -203,18 +207,22 @@ static lv_obj_t* cal_label_create(lv_obj_t* cell, const esphome::font::Font* fon
     return l;
 }
 
-bool cal_grid_build(lv_obj_t* anchor, int32_t grid_y, const esphome::font::Font* font_num,
+bool cal_grid_build(lv_obj_t* anchor, int32_t grid_y, int32_t grid_h,
+                    const esphome::font::Font* font_num,
                     const esphome::font::Font* font_text, void (*on_tap)(int)) {
     if (s_cal_cells[0].cell != nullptr) return false;   // déjà construite
     lv_obj_t* parent = anchor ? lv_obj_get_parent(anchor) : nullptr;
     if (parent == nullptr) return false;
     s_cal_on_tap = on_tap;
+    s_cal_grid_y = grid_y;
+    s_cal_grid_h = grid_h;
     for (int i = 0; i < 42; i++) {
-        // Cellule 168×86 : colonnes 25 + c×172, lignes grid_y + r×90 (lundi en tête).
+        // Cellule 168 px de large, colonnes 25 + c×172 (lundi en tête). Hauteur et y :
+        // posés au rendu (cal_render_month), selon le nombre de semaines du mois.
         lv_obj_t* c = lv_obj_create(parent);
         lv_obj_move_to_index(c, lv_obj_get_index(anchor));   // même rang qu'en YAML
         lv_obj_set_style_align(c, LV_ALIGN_TOP_LEFT, LV_PART_MAIN);
-        lv_obj_set_style_bg_color(c, lv_color_hex(UIColor::ACCENT_ALT), LV_PART_MAIN);
+        lv_obj_set_style_bg_color(c, lv_color_hex(UIColor::GLASS_RIM), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(c, LV_OPA_TRANSP, LV_PART_MAIN);
         lv_obj_set_style_border_color(c, lv_color_hex(UIColor::ACCENT), LV_PART_MAIN);
         lv_obj_set_style_border_opa(c, LV_OPA_TRANSP, LV_PART_MAIN);
@@ -231,15 +239,16 @@ bool cal_grid_build(lv_obj_t* anchor, int32_t grid_y, const esphome::font::Font*
 
         CalCellUI& ui = s_cal_cells[i];
         ui.cell = c;
-        // Numéro du jour (couleur : blanc / weekend estompé / férié rose / passé ardoise)
+        // Numéro du jour, centré sous le nom du jour de la tête de grille (il était
+        // collé à gauche : 74 px de décalage avec « Lun », « Mar »…). Couleur : blanc /
+        // weekend estompé / férié rose / passé estompé.
         ui.num = cal_label_create(c, font_num, font_text);
-        lv_obj_set_style_align(ui.num, LV_ALIGN_TOP_LEFT, LV_PART_MAIN);
-        lv_obj_set_style_x(ui.num, 10, LV_PART_MAIN);
-        lv_obj_set_style_y(ui.num, 2, LV_PART_MAIN);
+        lv_obj_set_style_align(ui.num, LV_ALIGN_TOP_MID, LV_PART_MAIN);
+        lv_obj_set_style_y(ui.num, 4, LV_PART_MAIN);
         // Heures de travail du jour ("09:30-20:15", orange si embauche < 9h)
         ui.sub = cal_label_create(c, nullptr, font_text);
         lv_obj_set_style_align(ui.sub, LV_ALIGN_BOTTOM_MID, LV_PART_MAIN);
-        lv_obj_set_style_y(ui.sub, -4, LV_PART_MAIN);
+        lv_obj_set_style_y(ui.sub, -6, LV_PART_MAIN);
         // Pastille RDV (dorée) + pastille anniversaire (rose)
         ui.dot = cal_dot_create(c, -8, UIColor::GOLD);
         ui.dot2 = cal_dot_create(c, -28, UIColor::WARM_PINK);
@@ -262,10 +271,27 @@ void cal_render_month(lv_obj_t* lbl_month,
     const auto it = s_cal_month_cache.find(cal_cache_key(view_year, view_month));
     if (it != s_cal_month_cache.end()) data = &it->second;
 
+    // Lignes : autant que de semaines dans le mois (4 à 6), réparties sur toute la
+    // hauteur de la grille et centrées. Avec 6 lignes fixes, un mois de 5 semaines
+    // laissait une bande vide au-dessus de la légende (calendrier « trop haut »).
+    const int rows = (first_col + ndays + 6) / 7;
+    const int32_t gap = 4;
+    const int32_t row_h = (s_cal_grid_h - (rows - 1) * gap) / rows;
+    const int32_t rows_y = s_cal_grid_y + (s_cal_grid_h - (rows * row_h + (rows - 1) * gap)) / 2;
+
     const bool has_today = (today_year > 0);
     for (int i = 0; i < 42; i++) {
         const CalCellUI& c = s_cal_cells[i];
         if (!c.cell || !c.num || !c.sub || !c.dot || !c.dot2) continue;
+
+        const int row = i / 7;
+        if (row >= rows) {
+            lv_obj_add_flag(c.cell, LV_OBJ_FLAG_HIDDEN);
+            continue;
+        }
+        lv_obj_remove_flag(c.cell, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_style_y(c.cell, rows_y + row * (row_h + gap), LV_PART_MAIN);
+        lv_obj_set_style_height(c.cell, row_h, LV_PART_MAIN);
 
         const int day = i - first_col + 1;
         if (day < 1 || day > ndays) {
@@ -304,7 +330,9 @@ void cal_render_month(lv_obj_t* lbl_month,
         uint32_t num_color = UIColor::TEXT_SOFT;
         if (col >= 5) num_color = UIColor::TEXT_DIM;
         if (code & CAL_BIT_FERIE) num_color = UIColor::ERROR;
-        if (is_past) num_color = UIColor::PAST;
+        // Passé : TEXT_DIM, pas PAST (ardoise) — le 29 du mois, presque toute la grille
+        // était en ardoise sur le bleu, illisible. Le fond plus pâle suffit à l'estomper.
+        if (is_past) num_color = UIColor::TEXT_DIM;
         if (is_today) num_color = UIColor::ACCENT;
         lv_obj_set_style_text_color(c.num, lv_color_hex(num_color), LV_PART_MAIN);
 
@@ -316,15 +344,19 @@ void cal_render_month(lv_obj_t* lbl_month,
             if (cal_is_early_shift(heures)) {
                 h_color = UIColor::EARLY;
             }
-            if (is_past) h_color = UIColor::PAST;
+            if (is_past) h_color = UIColor::TEXT_DIM;
             lv_obj_set_style_text_color(c.sub, lv_color_hex(h_color), LV_PART_MAIN);
         } else {
             lv_label_set_text(c.sub, "");
         }
 
-        // Fond violet doux = vacances scolaires ; bordure cyan = aujourd'hui
+        // Fond : violet doux = vacances scolaires, sinon verre (plus pâle si passé) pour
+        // que chaque jour se lise comme une case ; bordure cyan = aujourd'hui
+        const bool vacances = (code & CAL_BIT_VACANCES) != 0;
+        lv_obj_set_style_bg_color(c.cell,
+            lv_color_hex(vacances ? UIColor::ACCENT_ALT : UIColor::GLASS_RIM), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(c.cell,
-            (code & CAL_BIT_VACANCES) ? LV_OPA_30 : LV_OPA_TRANSP, LV_PART_MAIN);
+            vacances ? LV_OPA_30 : (is_past ? LV_OPA_10 : LV_OPA_20), LV_PART_MAIN);
         lv_obj_set_style_border_opa(c.cell,
             is_today ? LV_OPA_COVER : LV_OPA_TRANSP, LV_PART_MAIN);
 
