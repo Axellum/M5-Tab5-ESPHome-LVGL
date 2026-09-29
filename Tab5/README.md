@@ -223,7 +223,7 @@ Historique de vérification : écrit contre le code réel le 05/07/2026, re-vér
 ## Sous-répertoires
 
 ### `ui_components/`
-Les 40 composants et templates LVGL décrits plus haut. Seul sous-répertoire versionné. (`my_components/st7123/` n'existe plus : `st7123` est une plateforme officielle depuis ESPHome 2026.7.0.)
+Les 45 composants et templates LVGL décrits plus haut. Seul sous-répertoire versionné. (`my_components/st7123/` n'existe plus : `st7123` est une plateforme officielle depuis ESPHome 2026.7.0.)
 
 ### `tts_library/`, `tts_library_v2/` — **non versionnés**
 Fichiers audio TTS expérimentaux antérieurs à l'intégration Voice de HA, gitignorés et inutilisés par la config actuelle. Ils n'existent pas dans un clone : ne les cherchez pas.
