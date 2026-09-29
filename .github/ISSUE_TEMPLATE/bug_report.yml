@@ -27,7 +27,7 @@ body:
     id: firmware_version
     attributes:
       label: "Firmware release or commit · Release ou commit du firmware"
-      placeholder: "v3.2.1 or/ou 8fc5b97"
+      placeholder: "v3.2.2 or/ou be18407"
     validations:
       required: true
   - type: input
