@@ -4,6 +4,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+- **Documentation : comptes remis au code.** `docs/architecture.md` annonçait douze packages
+  et en listait quinze : la vue d'ensemble ne donne plus de nombre, et la liste reprend les
+  dix-neuf de `tab5-ha-hmi.yaml` (`tab5_ecran`, `tab5_publication`, `tab5_tuiles` et
+  `tab5_zones` manquaient). La cartographie donnait 18 actions API (19, avec `tab5_maj_tuiles`),
+  le README et le site 25 décisions d'architecture (26). `tests/test_doc_comptes.py` compare
+  ces comptes au code.
 - **Documentation : deux images fausses remplacées.** `gpio_pinout_table.png` (générée par IA
   en juillet 2026 : écran RGB parallèle 1024×600, 16 Mo de PSRAM, GPIO 26 pour BCLK et DOUT)
   laisse place à un tableau des broches dans `docs/hardware.md`, tiré du YAML et vérifié par

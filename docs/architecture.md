@@ -6,7 +6,7 @@
 
 ## Overview
 
-The ESPHome configuration is split into twelve YAML packages imported by a single entry-point file. This avoids a monolithic file that becomes impossible to navigate once you're past 1000 lines. Each package has a clearly defined responsibility and can be edited, tested, or replaced in isolation.
+The ESPHome configuration is split into YAML packages imported by a single entry-point file (listed in section 1). This avoids a monolithic file that becomes impossible to navigate once you're past 1000 lines. Each package has a clearly defined responsibility and can be edited, tested, or replaced in isolation.
 
 ### Data flow: HA pushes, the tablet sends events
 
@@ -30,6 +30,8 @@ The root file does three things:
 packages:
   tab5_ui_tokens:  !include Tab5/tab5-ui-tokens.yaml
   tab5_hardware:   !include Tab5/tab5-hardware.yaml
+  tab5_ecran:      !include Tab5/ecran-${ tab5_ecran | default('st7123') | lower }.yaml  # screen revision
+  tab5_publication: !include Tab5/publication-${ tab5_publication | default('locale') }.yaml  # release channel (ADR-0022)
   tab5_sensors_diagnostics: !include Tab5/tab5-sensors-diagnostics.yaml
   tab5_sensors_domotique: !include Tab5/tab5-sensors-domotique.yaml
   tab5_api_logic:  !include Tab5/tab5-api-logic.yaml
@@ -43,6 +45,8 @@ packages:
   tab5_imu:        !include Tab5/tab5-imu.yaml
   tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml   # after tab5_lvgl: references LVGL widget ids
   tab5_alarm:      !include Tab5/tab5-alarm.yaml          # after tab5_lvgl too
+  tab5_tuiles:     !include Tab5/tab5-tuiles.yaml         # rooms and tiles (ADR-0023), after tab5_lvgl
+  tab5_zones:      !include Tab5/tab5-zones.yaml          # optional zones (ADR-0018), after tab5_lvgl
 ```
 
 ---
@@ -271,7 +275,7 @@ Navigation goes through `lvgl.page.show:` (YAML) or `lv_scr_load()` (C++); the s
 
 ## Vue d'ensemble
 
-La configuration ESPHome est découpée en douze packages YAML importés par un fichier d'entrée unique. Cela évite un fichier monolithique qui devient impossible à naviguer au-delà de 1000 lignes. Chaque package a une responsabilité clairement définie et peut être édité, testé, ou remplacé de façon isolée.
+La configuration ESPHome est découpée en packages YAML importés par un fichier d'entrée unique (la liste : bloc `packages:` de `tab5-ha-hmi.yaml`). Cela évite un fichier monolithique qui devient impossible à naviguer au-delà de 1000 lignes. Chaque package a une responsabilité clairement définie et peut être édité, testé, ou remplacé de façon isolée.
 
 ### Flux de données : HA pousse, la tablette émet des événements
 
