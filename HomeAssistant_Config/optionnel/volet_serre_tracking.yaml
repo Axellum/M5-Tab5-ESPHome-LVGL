@@ -50,8 +50,9 @@ template:
     variables:
       volets: "{{ states.cover | map(attribute='entity_id') | list }}"
     select:
-      - name: "Tab5 · volet à course simulée"
+      - name: "Tab5 · volet à course simulée · shutter with simulated travel"
         unique_id: tab5_volet_a_course_simulee
+        default_entity_id: select.tab5_volet_a_course_simulee
         icon: mdi:window-shutter
         options: >-
           {%- set m = states('input_text.tab5_choix_volet') -%}

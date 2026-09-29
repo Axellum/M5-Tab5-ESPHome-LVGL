@@ -15,6 +15,7 @@
 #       tab5_alerte_lue (alert_id)         → script.tab5_dismiss_alert (tab5_alerts.yaml)
 #       tab5_voix_stop                     → media_player.media_stop, lecteur de la tablette
 #       tab5_mode_assistant (option)       → select.select_option, select de pipeline de la tablette
+#                                            (Discussion : « Tab5 · pipeline de discussion »)
 #       tab5_maj_ecran                     → input_boolean.turn_on (is_primary_active)
 #                                            + automation.trigger (id tab5_ha_hmi_updater)
 #       tab5_recharger_automatisations     → automation.reload
@@ -202,7 +203,19 @@ automation:
                 id: mode_assistant
             sequence:
               - variables:
-                  option: "{{ trigger.event.data.option | default('') | string }}"
+                  # « preferred » (Domotique) ou « Discussion LLM » (Discussion, nom fixé
+                  # par le firmware). Discussion = le pipeline choisi dans « Tab5 · pipeline
+                  # de discussion » (tab5_reglages.yaml) ; « Aucun » = le pipeline préféré
+                  # (les boutons sont alors masqués sur un firmware qui le sait). Liste
+                  # absente (tab5_reglages.yaml plus ancien) : le nom tel quel, comme avant
+                  # le 29/09/2026.
+                  demande: "{{ trigger.event.data.option | default('') | string }}"
+                  choisi: "{{ states('select.tab5_pipeline_de_discussion') }}"
+                  option: >-
+                    {%- if demande == 'preferred' or choisi == 'Aucun' -%}preferred
+                    {%- elif choisi in ['unknown', 'unavailable'] -%}{{ demande }}
+                    {%- else -%}{{ choisi }}
+                    {%- endif -%}
                   # Select de pipeline : ses options commencent par « preferred »
                   # (AssistPipelineSelect de HA). Depuis HA 2025.10, un second
                   # (« Assistant 2 », second mot d'activation) a les mêmes options : le
@@ -216,8 +229,8 @@ automation:
                       {%- endif -%}
                     {%- endfor -%}
                     {{ (ns.l | sort | first) if ns.l else '' }}
-              # Option absente de ce HA (pas de pipeline « Discussion LLM ») : rien,
-              # au lieu d'une erreur dans le journal à chaque démarrage de la tablette.
+              # Option absente de ce HA (pipeline supprimé depuis) : rien, au lieu d'une
+              # erreur dans le journal à chaque démarrage de la tablette.
               - if: "{{ pipeline != '' and option in (state_attr(pipeline, 'options') or []) }}"
                 then:
                   - action: select.select_option

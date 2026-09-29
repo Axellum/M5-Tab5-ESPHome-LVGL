@@ -26,10 +26,17 @@
 #       Choix par défaut (liste jamais réglée) seulement quand il n'y a pas
 #       d'ambiguïté : le seul agenda dont le nom dit « anniversaires » (ou
 #       birthday…), le seul agenda de jours fériés (intégration Jours fériés, ou nom
-#       qui le dit), le seul téléphone de l'application mobile. Agenda de travail,
-#       agenda des rendez-vous et capteur de présence : jamais devinés.
-# @ai_warning Renommer une liste change son entity_id (dérivé du nom) : les
-#       packages la lisent par cet entity_id. Idem pour les miroirs.
+#       qui le dit), le seul téléphone de l'application mobile, le seul agenda dont
+#       le nom dit « vacances scolaires » (ou school holidays…). Agenda de travail,
+#       agenda des rendez-vous, capteur de présence et pipeline de discussion :
+#       jamais devinés.
+# @i18n Noms des listes en deux langues, « français · english » (29/09/2026) : ce
+#       sont eux que cherche un utilisateur non francophone. Les ÉTATS (« Aucun »,
+#       entity_id, noms de pipeline) ne se traduisent jamais : les packages les lisent.
+# @ai_warning L'entity_id d'une liste est fixé par `default_entity_id` : sans lui,
+#       il dériverait du nom (à la première installation), et les packages la lisent
+#       par cet entity_id. Une liste nouvelle en a un aussi. Les miroirs (section 3)
+#       n'en ont pas : renommer un miroir change son entity_id.
 # @install Avec les autres packages (`homeassistant: packages: !include_dir_named
 #       packages`). Rien à renseigner dans ce fichier.
 # ============================================================================
@@ -60,6 +67,24 @@ input_text:
     name: "Tab5 · mémoire · capteur de présence"
     icon: mdi:content-save-outline
     max: 255
+  tab5_choix_agenda_vacances:
+    name: "Tab5 · mémoire · agenda des vacances scolaires"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_pipeline_discussion:
+    name: "Tab5 · mémoire · pipeline de discussion"
+    icon: mdi:content-save-outline
+    max: 255
+  # Réglé à la main (pas une mémoire de liste). Mots qui font d'un événement de
+  # l'agenda de travail un événement de TRAVAIL (horaires du planning, heure du
+  # réveil) : séparés par des virgules, sans casse, cherchés dans le titre. Vide =
+  # tous les événements de l'agenda de travail (un agenda qui ne contient que des
+  # postes). Chez l'auteur, « Travail » : son agenda de travail porte aussi ses
+  # rendez-vous. Sans `initial` : HA garde la valeur au redémarrage.
+  tab5_mot_travail:
+    name: "Tab5 · mot des événements de travail · work event keyword"
+    icon: mdi:briefcase-search
+    max: 255
 
 template:
   # ──────────────────────────────────────────────────────────────────────────
@@ -78,6 +103,7 @@ template:
           - input_text.tab5_choix_agenda_rdv
           - input_text.tab5_choix_agenda_anniversaires
           - input_text.tab5_choix_agenda_feries
+          - input_text.tab5_choix_agenda_vacances
           - input_text.tab5_choix_telephone
           - input_text.tab5_choix_presence
     variables:
@@ -90,13 +116,19 @@ template:
            | map(attribute='entity_id') | list }}
       # Choix par défaut (voir @contrat) : une liste d'UN seul candidat, sinon rien.
       auto_anniversaires: "{{ agendas | select('search', 'anniversaire|birthday|geburtstag|verjaardag|cumplea|compleann') | list }}"
+      # Vacances scolaires : l'agenda d'un fichier ICS (intégration « Calendrier
+      # distant », par ex. celui du ministère pour une zone française), que son nom
+      # désigne souvent. Posé avant les fériés, qu'il ne doit pas grossir : « school
+      # holidays » contient « holiday ».
+      auto_vacances: "{{ agendas | select('search', 'vacances_scolaires|calendrier_scolaire|school|schulferien|schoolvakantie|vacaciones_escolares|vacanze_scolastiche') | list }}"
       auto_feries: >-
         {{ ((integration_entities('holiday') | select('match', 'calendar[.]') | list)
-            + (agendas | select('search', 'ferie|holiday|feiertag|feestdag|festiv') | list)) | unique | list }}
+            + (agendas | select('search', 'ferie|holiday|feiertag|feestdag|festiv') | reject('in', auto_vacances) | list)) | unique | list }}
       auto_telephones: "{{ integration_entities('mobile_app') | select('match', 'device_tracker[.]') | list }}"
     select:
-      - name: "Tab5 · agenda de travail"
+      - name: "Tab5 · agenda de travail · work calendar"
         unique_id: tab5_agenda_de_travail
+        default_entity_id: select.tab5_agenda_de_travail
         icon: mdi:briefcase-clock
         # Événements « Travail… » horodatés : horaires du planning et heure du réveil
         # (calculée par la tablette), jours de repos. Ses autres événements comptent
@@ -113,8 +145,9 @@ template:
               entity_id: input_text.tab5_choix_agenda_travail
             data:
               value: "{{ option }}"
-      - name: "Tab5 · agenda des rendez-vous"
+      - name: "Tab5 · agenda des rendez-vous · appointments calendar"
         unique_id: tab5_agenda_des_rendez_vous
+        default_entity_id: select.tab5_agenda_des_rendez_vous
         icon: mdi:calendar-account
         # Rendez-vous du popup calendrier, annonces et briefing du réveil.
         options: >-
@@ -129,8 +162,9 @@ template:
               entity_id: input_text.tab5_choix_agenda_rdv
             data:
               value: "{{ option }}"
-      - name: "Tab5 · agenda des anniversaires"
+      - name: "Tab5 · agenda des anniversaires · birthdays calendar"
         unique_id: tab5_agenda_des_anniversaires
+        default_entity_id: select.tab5_agenda_des_anniversaires
         icon: mdi:cake-variant
         options: >-
           {%- set m = states('input_text.tab5_choix_agenda_anniversaires') -%}
@@ -144,8 +178,9 @@ template:
               entity_id: input_text.tab5_choix_agenda_anniversaires
             data:
               value: "{{ option }}"
-      - name: "Tab5 · agenda des jours fériés"
+      - name: "Tab5 · agenda des jours fériés · public holidays calendar"
         unique_id: tab5_agenda_des_jours_feries
+        default_entity_id: select.tab5_agenda_des_jours_feries
         icon: mdi:calendar-star
         # Agenda de l'intégration « Jours fériés » (holiday) : tous ses événements sont
         # fériés. Autre agenda (Google « Jours fériés et autres fêtes ») : seuls les
@@ -162,8 +197,28 @@ template:
               entity_id: input_text.tab5_choix_agenda_feries
             data:
               value: "{{ option }}"
-      - name: "Tab5 · téléphone"
+      - name: "Tab5 · agenda des vacances scolaires · school holidays calendar"
+        unique_id: tab5_agenda_des_vacances_scolaires
+        default_entity_id: select.tab5_agenda_des_vacances_scolaires
+        icon: mdi:school-outline
+        # Jours de vacances du popup calendrier (tous ses événements), avec leur titre
+        # dans le détail du jour. Remplace la table fixe de la zone A (Bordeaux) d'avant
+        # le 29/09/2026 : un agenda suit l'année scolaire et le pays de chacun.
+        options: >-
+          {%- set m = states('input_text.tab5_choix_agenda_vacances') -%}
+          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_agenda_vacances') -%}
+          {{ m if m.startswith('calendar.') else ('Aucun' if m == 'Aucun' or auto_vacances | count != 1 else auto_vacances[0]) }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_agenda_vacances
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · téléphone · phone"
         unique_id: tab5_telephone
+        default_entity_id: select.tab5_telephone
         icon: mdi:cellphone-marker
         # Allume l'écran à son retour, l'éteint à son départ (packages/tab5_push.yaml).
         options: >-
@@ -178,8 +233,9 @@ template:
               entity_id: input_text.tab5_choix_telephone
             data:
               value: "{{ option }}"
-      - name: "Tab5 · capteur de présence"
+      - name: "Tab5 · capteur de présence · presence sensor"
         unique_id: tab5_capteur_de_presence
+        default_entity_id: select.tab5_capteur_de_presence
         icon: mdi:motion-sensor
         # Allume l'écran à la détection, l'éteint après 15 min sans présence.
         options: >-
@@ -192,6 +248,34 @@ template:
           - action: input_text.set_value
             target:
               entity_id: input_text.tab5_choix_presence
+            data:
+              value: "{{ option }}"
+
+  # Pipeline du mode « Discussion » de l'écran (bouton « Discu ») : un des pipelines
+  # Assist de HA. Modèle ORDINAIRE, sans déclencheurs : il ne lit que le select de
+  # pipeline de la tablette et sa mémoire, et suit ainsi un pipeline créé ou renommé
+  # (ses options changent sans entity_registry_updated). Jamais deviné : « Aucun »
+  # masque les boutons Domo / Discu d'un firmware qui connaît la zone « discussion »
+  # (blueprint), et le mode Discussion retombe sur le pipeline préféré
+  # (tab5_evenements.yaml). Avant le 29/09/2026, le firmware demandait un pipeline
+  # nommé exactement « Discussion LLM » (celui de l'auteur).
+  - select:
+      - name: "Tab5 · pipeline de discussion · chat pipeline"
+        unique_id: tab5_pipeline_de_discussion
+        default_entity_id: select.tab5_pipeline_de_discussion
+        icon: mdi:chat-processing-outline
+        options: >-
+          {%- set s = state_attr('sensor.tab5_tablette', 'pipeline') or '' -%}
+          {%- set p = ((state_attr(s, 'options') or []) | reject('eq', 'preferred') | list) if s else [] -%}
+          {%- set m = states('input_text.tab5_choix_pipeline_discussion') -%}
+          {{ p + ([m] if m not in ['', 'unknown', 'unavailable', 'Aucun'] and m not in p else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_pipeline_discussion') -%}
+          {{ m if m not in ['', 'unknown', 'unavailable'] else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_pipeline_discussion
             data:
               value: "{{ option }}"
 
@@ -242,6 +326,24 @@ template:
           micro: "{{ entites | select('match', 'switch[.].*_wake_word_active$') | first | default('') }}"
           satellite: "{{ entites | select('match', 'assist_satellite[.]') | first | default('') }}"
           rdv_avant: "{{ entites | select('match', 'number[.].*_rendez_vous_annoncer_avant$') | first | default('') }}"
+          # Select « Langue » du firmware (Français, English, Deutsch…) : langue du
+          # briefing parlé du réveil (tab5_reveil.yaml).
+          langue: "{{ entites | select('match', 'select[.].*_langue$') | first | default('') }}"
+          # Select de pipeline de la tablette (AssistPipelineSelect de HA : ses options
+          # commencent par « preferred ») ; depuis HA 2025.10, un second (« Assistant
+          # 2 ») a les mêmes options : le premier par ordre d'entity_id, comme
+          # tab5_evenements.yaml.
+          pipeline: >-
+            {%- set ns = namespace(l=[]) -%}
+            {%- for e in entites | select('match', 'select[.]') -%}
+              {%- if 'preferred' in (state_attr(e, 'options') or []) -%}
+                {%- set ns.l = ns.l + [e] -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {{ (ns.l | sort | first) if ns.l else '' }}
+          # Version du projet lue dans le sw_version de l'appareil (« 3.2.2 (ESPHome
+          # 2026.9.0) » depuis la 3.0) : premier mot, ou '' si illisible.
+          version: "{{ ((device_attr(api, 'sw_version') or '') | string).split(' ') | first if api else '' }}"
 
   # ──────────────────────────────────────────────────────────────────────────
   # 3. Miroirs, pour les déclencheurs des automatisations
@@ -297,20 +399,22 @@ template:
       # l'événement en cours ou suivant) : ils changent quand un événement commence,
       # finit, ou que le suivant change, comme l'état d'un agenda. `travail` relance
       # la poussée complète (tab5_push.yaml), `rendez_vous` la liste des
-      # rendez-vous (tab5_reveil.yaml).
+      # rendez-vous (tab5_reveil.yaml). Les deux portent aussi le mot des événements
+      # de travail : le changer refait le planning et la liste des rendez-vous.
       - name: "Tab5 · agendas"
         unique_id: tab5_agendas
         icon: mdi:calendar-sync
         state: >-
           {{ [states('select.tab5_agenda_de_travail'), states('select.tab5_agenda_des_rendez_vous'),
-              states('select.tab5_agenda_des_anniversaires'), states('select.tab5_agenda_des_jours_feries')]
+              states('select.tab5_agenda_des_anniversaires'), states('select.tab5_agenda_des_jours_feries'),
+              states('select.tab5_agenda_des_vacances_scolaires')]
              | select('search', '^calendar[.]') | list | count }}
         attributes:
           travail: >-
             {%- set a = states('select.tab5_agenda_de_travail') -%}
-            {{ states(a) }}|{{ state_attr(a, 'start_time') }}|{{ state_attr(a, 'end_time') }}|{{ state_attr(a, 'message') }}
+            {{ states(a) }}|{{ state_attr(a, 'start_time') }}|{{ state_attr(a, 'end_time') }}|{{ state_attr(a, 'message') }}|{{ states('input_text.tab5_mot_travail') }}
           rendez_vous: >-
-            {%- set ns = namespace(s='') -%}
+            {%- set ns = namespace(s=states('input_text.tab5_mot_travail') ~ ';') -%}
             {%- for a in [states('select.tab5_agenda_des_rendez_vous'), states('select.tab5_agenda_de_travail')] -%}
               {%- set ns.s = ns.s ~ states(a) ~ '|' ~ state_attr(a, 'start_time') ~ '|' ~ state_attr(a, 'message') ~ ';' -%}
             {%- endfor -%}

@@ -4,6 +4,39 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-29 — Home Assistant : la maison des autres
+
+Côté Home Assistant seulement (aucun flash). Ce qui restait réglé pour la maison de
+l'auteur se choisit désormais dans Home Assistant.
+
+- **Mot des événements de travail** : le texte « Tab5 · mot des événements de travail »
+  dit quels événements de l'agenda de travail sont des postes (mots séparés par des
+  virgules, sans casse). **Vide = tous** : un agenda qui ne contient que ses postes marche
+  sans rien taper. Avant, seul un titre contenant « Travail » comptait (planning, heure du
+  réveil, jours de repos). **Mise à jour : l'auteur, dont l'agenda de travail porte aussi
+  ses rendez-vous, tape `Travail`.**
+- **Vacances scolaires** : la liste « Tab5 · agenda des vacances scolaires » remplace la
+  table fixe de la zone A (Bordeaux), montrée à tout le monde et arrêtée à l'été 2027. En
+  France, le fichier ICS du ministère pour sa zone, par l'intégration *Remote Calendar*
+  (vérifié le 29/09 : jusqu'à l'été 2028). Un seul agenda dont le nom le dit est choisi
+  tout seul, et il n'est jamais pris pour un agenda de jours fériés.
+- **Pipeline de discussion** : la liste « Tab5 · pipeline de discussion » choisit le
+  pipeline du mode « Discu » parmi ceux de Home Assistant. Avant, il devait s'appeler
+  exactement « Discussion LLM ». « Aucun » ramène au pipeline préféré.
+- **Briefing du réveil** dans la langue de l'écran (français, anglais, allemand,
+  néerlandais, espagnol, italien) ; le texte français ne change pas d'un mot.
+- **Noms en deux langues** : les listes « Tab5 · … » (« Tab5 · agenda de travail · work
+  calendar ») et tous les libellés du blueprint. Les listes gardent leur entity_id
+  (`default_entity_id`, HA 2026.8), les entrées du blueprint leurs clés.
+- **Fichiers HA plus anciens que le firmware** : l'archive `tab5_home_assistant.zip`
+  porte sa version (« Tab5 · version des fichiers HA ») ; quand la tablette tourne une
+  release plus récente, « Tab5 · fichiers HA en retard » s'allume et une notification
+  persistante le dit (garde (f) de `tab5_health.yaml`).
+- Essais : le mot du travail, la détection des agendas scolaires, la comparaison de
+  versions, le briefing dans les 6 langues et les codes et le détail du calendrier rendus
+  dans le moteur de Home Assistant 2026.9.4 de l'auteur, avec de faux événements ; la
+  liste des pipelines lue sur la vraie tablette.
+
 ### 2026-09-29 — Pluie dans l'heure hors de France, sans clé
 
 - « Tab5 · source de la pluie dans l'heure » propose aussi quatre services **sans clé et

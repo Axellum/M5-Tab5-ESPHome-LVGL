@@ -108,8 +108,32 @@ def _definies() -> set[str]:
         for bloc in paquet.get("template") or []:
             for domaine in ("sensor", "binary_sensor", "select", "weather"):
                 for entite in bloc.get(domaine) or []:
-                    definies.add(f"{domaine}.{_slug(entite['name'])}")
+                    # default_entity_id fixe l'entity_id (noms bilingues, 29/09/2026) ;
+                    # sans lui, HA le tire du nom.
+                    fixe = entite.get("default_entity_id")
+                    if fixe:
+                        assert fixe.split(".", 1)[0] == domaine, fixe
+                    definies.add(fixe or f"{domaine}.{_slug(entite['name'])}")
     return definies
+
+
+def test_listes_bilingues_gardent_leur_entity_id():
+    """Une liste « Tab5 · … » au nom bilingue (« français · english ») fixe son entity_id
+    par default_entity_id : sinon, une installation neuve le tirerait du nom complet et
+    les packages ne la trouveraient plus. Celles d'avant gardent l'entity_id d'avant."""
+    fichiers = sorted((preparer.HA_DIR / "packages").glob("*.yaml")) + sorted((preparer.HA_DIR / "optionnel").glob("*.yaml"))
+    bilingues = {}
+    for fichier in fichiers:
+        paquet = yaml.load(fichier.read_text(encoding="utf-8"), Loader=_Chargeur) or {}
+        for bloc in paquet.get("template") or []:
+            for domaine in ("sensor", "binary_sensor", "select"):
+                for entite in bloc.get(domaine) or []:
+                    if entite["name"].count(" · ") >= 2:
+                        assert entite.get("default_entity_id"), entite["name"]
+                        bilingues[entite["default_entity_id"]] = entite["name"]
+    assert {"select.tab5_agenda_de_travail", "select.tab5_source_des_previsions", "select.tab5_tv_samsung",
+            "select.tab5_telephone", "select.tab5_capteur_de_presence",
+            "select.tab5_agenda_des_vacances_scolaires", "select.tab5_pipeline_de_discussion"} <= set(bilingues)
 
 
 def test_entites_tab5_lues_sont_definies():
