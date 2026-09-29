@@ -13,6 +13,11 @@ lvgl:
 
     - id: page_main
       scrollbar_mode: "OFF"
+      # L'écran ne défile jamais. Pendant un swipe des prévisions, le calque entrant
+      # part 110 px hors écran (animate_swipe_horizontal) : la page devenait alors
+      # défilable, le doigt encore posé la faisait glisser, et tout l'affichage
+      # restait décalé (vu le 29/09/2026). Le geste, lui, ne dépend pas du défilement.
+      scrollable: false
 
       on_gesture:
         then:
