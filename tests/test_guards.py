@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Les six garde-fous de contenu, joués par pytest (donc par la CI) :
+"""Les huit garde-fous de contenu, joués par pytest (donc par la CI) :
 
 - cadre modal v4 (ADR-0009) sur chaque popup de Tab5/ui_components/ ;
 - registre unique des consoles et des fenêtres modales (ADR-0013) : aucune
@@ -10,6 +10,9 @@
   mort, icône C++ non rattachée) ;
 - les 6 salles de « Fil d'Or » sont traversables et tout le loot atteignable ;
 - les 10 niveaux de « Coureur d'Or » sont jouables jusqu'à la sortie ;
+- les 8 niveaux d'« Arcanoïde » sont complets et finissables (aucune brique
+  emmurée), et la banque de « Trial Poursuite » n'a ni entrée manquante ni
+  question vide ou en double (une entrée oubliée compile en C++) ;
 - les comptes de lignes de CARTOGRAPHIE_TAB5.md restent à 20 % du réel.
 
 Chaque script reste lançable seul (`python tools/check_*.py`) ; ici on ne fait
@@ -23,11 +26,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from tools import (  # noqa: E402
     cartographie_counts,
+    check_arkanoid_levels,
     check_lode_levels,
     check_marble_rooms,
     check_tab5_code_rules,
     check_tab5_modal_chrome,
     check_tab5_registry,
+    check_trivia_questions,
 )
 
 
@@ -99,6 +104,37 @@ def test_marble_rooms_all_traversable(capsys):
 
 def test_lode_levels_all_playable(capsys):
     assert check_lode_levels.main() == 0, capsys.readouterr().out
+
+
+def test_arkanoid_levels_complete_and_winnable():
+    assert check_arkanoid_levels.scan() == []
+
+
+def test_arkanoid_guard_catches_missing_value_and_walled_brick():
+    """Falsifiabilité : une valeur oubliée, puis une brique emmurée par des indestructibles."""
+    text = check_arkanoid_levels.GAME.read_text(encoding="utf-8")
+    manque = text.replace("    {0,1,1,1,1,1,1,1,1,1,1,0},", "    {0,1,1,1,1,1,1,1,1,1,1},", 1)
+    assert any("LVL2" in p and "valeurs" in p for p in check_arkanoid_levels.scan(manque))
+    # LVL1, coin haut gauche : la brique (1, 1) a un indestructible à droite et un dessous.
+    emmure = text.replace(
+        "    {1,1,1,1,1,1,1,1,1,1,1,1},\n    {1,1,1,1,1,1,1,1,1,1,1,1},",
+        "    {1,3,1,1,1,1,1,1,1,1,1,1},\n    {3,1,1,1,1,1,1,1,1,1,1,1},", 1)
+    problems = check_arkanoid_levels.scan(emmure)
+    assert any("LVL1" in p and "(1, 1)" in p for p in problems), problems
+
+
+def test_trivia_bank_complete():
+    assert check_trivia_questions.scan() == []
+
+
+def test_trivia_guard_catches_missing_and_bad_entries():
+    """Falsifiabilité : une question supprimée (le C++ compilerait une entrée nulle), un leurre identique."""
+    text = check_trivia_questions.BANK.read_text(encoding="utf-8")
+    ligne = '    {0,0,"Quelle est la capitale de la France ?","Paris","Lyon","Marseille","Bordeaux"},\n'
+    assert ligne in text
+    assert any("QUESTIONS_GEO : 119 questions" in p for p in check_trivia_questions.scan(text.replace(ligne, "", 1)))
+    leurre = ligne.replace('"Lyon"', '"paris"')
+    assert any("leurres" in p for p in check_trivia_questions.scan(text.replace(ligne, leurre, 1)))
 
 
 def test_cartographie_line_counts():
