@@ -22,29 +22,33 @@ Un tableau de bord domotique natif (LVGL, redessin des seules zones qui changent
 graph TD
     ENTRY["tab5-ha-hmi.yaml<br/>(point d'entrée)<br/>substitutions (user_entities) + on_boot + packages: + includes:"]
 
-    subgraph PKG["Packages ESPHome (Tab5/*.yaml) — les principaux, liste complète dans packages: de tab5-ha-hmi.yaml ; + pot_sensors.yaml (package paramétré, inclus ×5)"]
+    subgraph PKG["Packages ESPHome (Tab5/*.yaml) — tout le bloc packages: de tab5-ha-hmi.yaml, dans son ordre ; + pot_sensors.yaml (package paramétré, inclus ×5) et publication-commune.yaml (inclus par publication-stable et publication-beta)"]
         TOK["tab5-ui-tokens.yaml<br/>tokens dimensionnels (modal_card_w/h, modal_body_y)"]
         HW["tab5-hardware.yaml<br/>display/touch/i2c/audio (bus I2S, ES7210, ES8388, media_player)/esp32_hosted/ota: signée — zéro lv_* (garde-fou)"]
+        ECRAN["ecran-*.yaml (tab5_ecran : st7123 par défaut, st7121, ili9881c)<br/>ce qui change d'une révision à l'autre : !extend tab5_display (modèle mipi_dsi) + !extend touch (st7123 ou gt911)"]
+        PUB["publication-*.yaml (tab5_publication : locale par défaut, stable, beta)<br/>locale = vide ; stable et beta incluent publication-commune.yaml : ota http_request + update Firmware (manifeste de la page de flashage)"]
         SENSD["tab5-sensors-diagnostics.yaml<br/>wifi: sans identifiants/improv_serial/alim GPIO/status_ha/uptime/RAM/loop time/select:/time: (fuseau de HA)/interval:"]
         SENSO["tab5-sensors-domotique.yaml (+ pot_sensors.yaml ×5)<br/>plantes/lumières (+brightness live)/PC/températures/batterie/audio"]
         API["tab5-api-logic.yaml<br/>api: (clé fournie par HA) + provisioning: + services: (contrat HA, 19 services, zéro lv_* — garde-fou)"]
         STY["tab5-styles.yaml<br/>color:/font:/lvgl: style_definitions + chess_pieces_80"]
         GLOB["tab5-globals.yaml<br/>globals: + rotateur carte centrale (8s, planning/pluie/alertes/info + 4 bandeaux HA)"]
         SCR["tab5-scripts.yaml<br/>script: init ModalRegistry + volume + debounces + rotateur/dismiss + volet + popup lumière + retour accueil"]
+        LVGL["tab5-lvgl.yaml<br/>page_main + swipe prévisions + btns console/TV + !include jeux + sélecteur arcade"]
         ARC["tab5-arcade.yaml<br/>jeux : close_all + 8 × open + page arcade"]
         CALY["tab5-calendar.yaml<br/>popup calendrier : open/render/prev/next/today/day_tap"]
         ASSIST["tab5-assist.yaml<br/>micro_wake_word (okay_nabu + Stop, WakeWord::decide en C++) + voice_assistant + image réponse + scripts vocaux et popup Assistant — pile sans lv_* (garde-fou)"]
-        LVGL["tab5-lvgl.yaml<br/>page_main + swipe prévisions + btns console/TV + !include jeux + sélecteur arcade"]
         IMU["tab5-imu.yaml<br/>BMI270 motion: + poll adaptatif 10/30Hz + tap-to-wake"]
         HACTL["tab5-ha-controls.yaml<br/>number volume + text_sensor écran courant + select aller-à + button recharger calendrier + interval rattrapage volume"]
         ALARM["tab5-alarm.yaml<br/>réveil : rtttl + 20 entités HA (switch/datetime/number/select/text)<br/>+ machine d'état sonnerie + tick 1s (réveil & annonce RDV)"]
+        TUILES["tab5-tuiles.yaml<br/>pièces et tuiles (ADR-0023) : script tab5_tuiles_ui, widgets de g_tuiles_ui dessinés par tab5_tuiles.cpp"]
+        ZONES["tab5-zones.yaml<br/>zones optionnelles (ADR-0018) : tab5_zones_apply + tab5_zones_demande (événement esphome.tab5_zones) + capteur Zones masquées"]
     end
 
     ALARMC["alarm_clock.h/.cpp<br/>moteur réveil PUR : prochaine sonnerie (8 jours),
 règles calendrier ouverture/fermeture, snooze, liste RDV<br/>lit cal_jours_data[] de tab5_core.h — ni ESPHome, ni LVGL, ni réseau<br/>testé sur PC : tools/test_alarm_clock.cpp"]
     ALARMR["alarm_render.h/.cpp<br/>rendu LVGL du réveil (popup, sonnerie, pastille)"]
 
-    subgraph UI["ui_components/*.yaml (40 fichiers, 24 inclus par tab5-lvgl.yaml)"]
+    subgraph UI["ui_components/*.yaml (45 fichiers, 24 inclus par tab5-lvgl.yaml, les autres par ces composants)"]
         MOIST["moisture_sensors.yaml"]
         POTSPOP["pots_popup.yaml + pot_detail_card.yaml<br/>détails plantes : humidité/statut + EC/lux/temp/batterie"]
         CALPOP["calendar_popup.yaml<br/>calendrier mensuel + détail jour<br/>(42 cellules construites en C++)"]
@@ -80,7 +84,7 @@ règles calendrier ouverture/fermeture, snooze, liste RDV<br/>lit cal_jours_data
 
     subgraph HWCOMP["Composants matériels"]
         MIPIDSI["display: mipi_dsi 1280×720"]
-        ST7123TOUCH["st7123 touchscreen (natif ESPHome 2026.7)"]
+        ST7123TOUCH["touchscreen st7123 (natif ESPHome 2026.7), gt911 sur ILI9881C"]
         PI4IOE["pi4ioe5v6408 ×2 (GPIO expander I2C)"]
         ES8388["audio_dac: es8388"]
         ES7210["audio_adc: es7210"]
@@ -92,6 +96,8 @@ règles calendrier ouverture/fermeture, snooze, liste RDV<br/>lit cal_jours_data
 
     ENTRY -->|packages:| TOK
     ENTRY -->|packages:| HW
+    ENTRY -->|packages:| ECRAN
+    ENTRY -->|packages:| PUB
     ENTRY -->|packages:| SENSD
     ENTRY -->|packages:| SENSO
     ENTRY -->|packages:| API
@@ -99,9 +105,14 @@ règles calendrier ouverture/fermeture, snooze, liste RDV<br/>lit cal_jours_data
     ENTRY -->|packages:| GLOB
     ENTRY -->|packages:| SCR
     ENTRY -->|packages:| LVGL
+    ENTRY -->|packages:| ARC
+    ENTRY -->|packages:| CALY
+    ENTRY -->|packages:| ASSIST
     ENTRY -->|packages:| IMU
     ENTRY -->|packages:| HACTL
     ENTRY -->|packages:| ALARM
+    ENTRY -->|packages:| TUILES
+    ENTRY -->|packages:| ZONES
     ENTRY -->|includes:| HFILE
     ENTRY -->|includes:| CFILE
     ENTRY -->|includes:| REG
@@ -124,8 +135,11 @@ règles calendrier ouverture/fermeture, snooze, liste RDV<br/>lit cal_jours_data
     HW --> ES8388
     HW --> ES7210
     HW --> HOSTED
-    HW --> MWW
-    HW --> VA
+    ECRAN -->|!extend| MIPIDSI
+    ECRAN -->|!extend| ST7123TOUCH
+    ASSIST --> MWW
+    ASSIST --> VA
+    ZONES -->|exécute tab5_tuiles_ui| TUILES
     IMU --> BMI270
     IMU -->|on_imu| MARBLE
     IMU -->|on_imu| ARKA
@@ -223,7 +237,7 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 
 **Règle d'architecture vérifiée et respectée dans le code** (`Tab5/README.md:44`) : les `sensor:`/`text_sensor:` YAML ne manipulent jamais `lv_obj_*` directement — ils appellent toujours une fonction de la couche C++ (`tab5_*.cpp`, déclarée dans `tab5_custom.h`). Confirmé par lecture de `tab5-sensors-diagnostics.yaml`/`tab5-sensors-domotique.yaml` (tous les `on_value:` appellent une fonction C++ nommée, sauf les cas triviaux de couleur d'icône à 2-3 lignes qui restent inline).
 
-### 3.4 Composants UI (`ui_components/*.yaml` — 40 fichiers, dont 24 inclus directement par `tab5-lvgl.yaml`)
+### 3.4 Composants UI (`ui_components/*.yaml` — 45 fichiers, dont 24 inclus directement par `tab5-lvgl.yaml`)
 
 Le tableau ci-dessous couvre les composants **domotique**. Les 11 autres fichiers sont traités à part : `game_selector.yaml` + les 8 `*_game.yaml` (§3.4bis), et les deux briques de chrome partagé `modal_scrim.yaml` / `modal_header.yaml` (ADR-0009) incluses avec `vars` par chaque popup.
 

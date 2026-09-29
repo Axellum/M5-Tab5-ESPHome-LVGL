@@ -14,6 +14,17 @@ README (26 dans docs/decisions/). Là où un nombre reste écrit, ce test vérif
   cartographie, et la table de Tab5/README.md, qui les liste chacune une fois ;
 - les ADR de docs/decisions/ : leur nombre dans le README, le site et la cartographie.
 
+Ajouté le même jour (schéma de la cartographie) : le schéma Mermaid n'avait pas de nœud
+pour quatre packages de l'entrée et pas d'arête pour trois autres, annonçait 40
+`ui_components` pour 45, docs/architecture.md « 23 » inclus directs pour 24 et n'avait
+pas de section pour sept packages, et le README comptait « quatre » fichiers de plus de
+500 lignes pour cinq. D'où :
+
+- un nœud et une arête `ENTRY -->|packages:|` par package de l'entrée, dans son ordre ;
+- une section « ### `fichier` » par package dans « Package roles » et « Rôles des packages » ;
+- les fichiers de plus de 500 lignes nommés par le README (EN et FR) ;
+- le nombre de `ui_components/*.yaml`, et de ceux que `tab5-lvgl.yaml` inclut lui-même.
+
 Un texte qui n'a pas besoin du nombre l'omet (vue d'ensemble d'architecture.md) : il
 ne se périme plus. Un motif qui ne trouve plus rien fait échouer le test : le texte a
 changé, il faut adapter le motif, pas le laisser vérifier le vide."""
@@ -31,6 +42,9 @@ CARTOGRAPHIE = REPO / "CARTOGRAPHIE_TAB5.md"
 README = REPO / "README.md"
 README_TAB5 = REPO / "Tab5" / "README.md"
 SITE = REPO / "web" / "index.html"
+LVGL = REPO / "Tab5" / "tab5-lvgl.yaml"
+UI = REPO / "Tab5" / "ui_components"
+GROS = 500   # « Most stay under 500 lines » (README)
 
 _UNITES_EN = ("zero one two three four five six seven eight nine ten eleven twelve thirteen "
               "fourteen fifteen sixteen seventeen eighteen nineteen").split()
@@ -62,7 +76,24 @@ def _packages(texte):
     assert len(debuts) == 1, f"{len(debuts)} blocs `packages:` de premier niveau"
     fin = re.compile(r"^\S", re.M).search(texte, debuts[0].end())
     bloc = texte[debuts[0].end():fin.start() if fin else len(texte)]
-    return re.findall(r"^  (\w+):\s*!include\s+(\S+)", bloc, re.M)
+    # Le chemin va jusqu'au commentaire ou à la fin de ligne : `ecran-${ tab5_ecran | … }.yaml`
+    # contient des espaces.
+    return re.findall(r"^  (\w+):\s*!include\s+(.+?)\s*(?:#.*)?$", bloc, re.M)
+
+
+def _nom(fichier):
+    """Nom d'un package dans la doc : `Tab5/ecran-${ tab5_ecran | … }.yaml` → `ecran-*.yaml`."""
+    return re.sub(r"\$\{[^}]*\}", "*", fichier.rsplit("/", 1)[-1])
+
+
+def _noms_des_packages():
+    return [_nom(f) for _, f in _packages(_lire(ENTREE))]
+
+
+def _schema():
+    texte = _lire(CARTOGRAPHIE)
+    debut = texte.index("```mermaid\n")
+    return texte[debut:texte.index("\n```", debut + 1)]
 
 
 def _services():
@@ -112,6 +143,69 @@ def test_readme_nombre_de_packages():
 def test_cartographie_nombre_de_packages():
     n = len(_packages(_lire(ENTREE)))
     assert set(_nombres(CARTOGRAPHIE, r"YAML modulaire par domaine\*\* \((\d+) packages")) == {n}
+
+
+def test_schema_un_noeud_et_une_arete_par_package():
+    schema = _schema()
+    debut = schema.index("subgraph PKG[")
+    bloc = schema[debut:schema.index("\n    end\n", debut)]
+    # Le libellé d'un nœud commence par le nom du fichier : `ID["nom.yaml<br/>…` ou `ID["nom.yaml (…`.
+    noeuds = re.findall(r'^ +(\w+)\["([^\s"<]+)', bloc, re.M)
+    assert [nom for _, nom in noeuds] == _noms_des_packages(), \
+        "un nœud par package de tab5-ha-hmi.yaml, dans l'ordre du bloc `packages:`"
+    aretes = re.findall(r"^ +ENTRY -->\|packages:\| (\w+)$", schema, re.M)
+    assert aretes == [id_ for id_, _ in noeuds], "une arête `ENTRY -->|packages:|` par nœud du subgraph PKG"
+
+
+def test_architecture_une_section_par_package():
+    texte = _lire(ARCHITECTURE)
+    for nom in _noms_des_packages():
+        titres = re.findall(rf"^### `{re.escape(nom)}`$", texte, re.M)
+        assert len(titres) == 2, f"docs/architecture.md : « ### `{nom}` » {len(titres)} fois, attendu EN + FR"
+
+
+def test_readme_fichiers_de_plus_de_500_lignes():
+    gros = set()
+    for _, fichier in _packages(_lire(ENTREE)):
+        for chemin in (REPO / fichier).parent.glob(_nom(fichier)):
+            with chemin.open(encoding="utf-8") as f:
+                if sum(1 for _ in f) > GROS:
+                    gros.add(chemin.name)
+    assert gros, "plus aucun package de plus de 500 lignes : réécrire la phrase du README"
+    texte = _lire(README)
+    for motif in (r"only the largest \(([^)]*)\) go beyond", r"seuls les plus gros \(([^)]*)\) dépassent"):
+        trouve = re.search(motif, texte)
+        assert trouve, f"README.md : plus rien ne correspond à {motif!r}, adapter le motif"
+        assert set(re.findall(r"`([^`]+)`", trouve.group(1))) == gros
+
+
+# ─── Les composants UI ───────────────────────────────────────────────────────
+
+def _ui_total():
+    return len(list(UI.glob("*.yaml")))
+
+
+def _ui_directs():
+    """Fichiers de ui_components/ que tab5-lvgl.yaml inclut lui-même (un fichier à `vars` compte une fois)."""
+    return len(set(re.findall(r"ui_components/([\w.]+\.yaml)", _lire(LVGL))))
+
+
+@pytest.mark.parametrize("chemin, motif, compte", [
+    (CARTOGRAPHIE, r'subgraph UI\["ui_components/\*\.yaml \((\d+) fichiers', _ui_total),
+    (CARTOGRAPHIE, r"ui_components/\*\.yaml \(\d+ fichiers, (\d+) inclus par tab5-lvgl", _ui_directs),
+    (CARTOGRAPHIE, r"`ui_components/\*\.yaml` — (\d+) fichiers, dont", _ui_total),
+    (CARTOGRAPHIE, r"fichiers, dont (\d+) inclus directement par `tab5-lvgl\.yaml`", _ui_directs),
+    (ARCHITECTURE, r"`!include`s (\d+) `ui_components/\*\.yaml` files directly", _ui_directs),
+    (ARCHITECTURE, r"for (\d+) component files in total", _ui_total),
+    (ARCHITECTURE, r"`!include` directement (\d+) fichiers `ui_components", _ui_directs),
+    (ARCHITECTURE, r"soit (\d+) fichiers de composants au total", _ui_total),
+    (README, r"split into (\d+) reusable `ui_components", _ui_total),
+    (README, r"découpée en (\d+) `ui_components/\*\.yaml` réutilisables", _ui_total),
+], ids=["schema-total", "schema-directs", "carto-total", "carto-directs", "archi-en-directs",
+        "archi-en-total", "archi-fr-directs", "archi-fr-total", "readme-en", "readme-fr"])
+def test_nombre_de_composants_ui(chemin, motif, compte):
+    assert _ui_directs() > 10, "le motif ne reconnaît plus les !include de tab5-lvgl.yaml"
+    assert set(_nombres(chemin, motif)) == {compte()}
 
 
 # ─── Les actions du contrat API ──────────────────────────────────────────────

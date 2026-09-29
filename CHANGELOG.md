@@ -4,6 +4,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+- **Documentation : schéma de la cartographie complet.** Le schéma Mermaid de
+  `CARTOGRAPHIE_TAB5.md` n'avait pas de nœud pour `ecran-*.yaml`, `publication-*.yaml`,
+  `tab5-tuiles.yaml` et `tab5-zones.yaml`, ni d'arête `packages:` vers l'arcade, le calendrier
+  et l'assistant ; la pile vocale y restait rattachée à `tab5-hardware.yaml` (elle est dans
+  `tab5-assist.yaml`). Il montre désormais tout le bloc `packages:` de l'entrée, dans son ordre.
+  Il annonçait 40 `ui_components` (45), `docs/architecture.md` 23 inclus directs par
+  `tab5-lvgl.yaml` (24) ; la phrase du README sur les fichiers de plus de 500 lignes ne
+  donne plus de nombre, et leur liste est vérifiée. `docs/architecture.md` a une section, en anglais et en
+  français, pour chaque package (sept manquaient), et celle de `tab5-scripts.yaml` ne lui prête
+  plus les scripts partis dans l'arcade, le calendrier et l'assistant.
+  `tests/test_doc_comptes.py` vérifie ces points.
+
 ## [3.3.1] — 2026-09-29
 
 De `v3.3.0` à aujourd'hui : une pull request de fonction (#263) et trois de documentation
