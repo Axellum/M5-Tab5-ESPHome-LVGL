@@ -119,7 +119,7 @@ Petit roguelite de bille piloté à l'inclinaison (BMI270), **plein écran 1280�
 | Pause | **Toucher le bandeau HUD** pendant une partie (il n'y a volontairement pas de croix : le jeu est un flux plein cadre) |
 | Calibrer | Hub → **Réglages** → « Calibrer à plat », ou Pause → « Recalibrer à plat ». Poser la tablette **puis** appuyer. |
 
-Le tactile ne sert qu'aux menus — la bille se pilote **uniquement** à l'inclinaison.
+Le tactile ne sert qu'aux menus — la bille se pilote **uniquement** à l'inclinaison. **Élan** : une secousse brève de la tablette relance la bille dans le sens où l'on penche (à défaut, dans le sens où elle roule), avec 0,9 s de recharge ; pencher, même fort, ne le déclenche pas (avant le 29/09/2026, il partait tout seul au-delà de ~38°).
 
 ### Difficulté et mode dieu
 
@@ -170,7 +170,7 @@ Le layout est validé par un `magic` (`SAVE_MAGIC`) : **le modifier oblige à bu
 - **Seed** : `lv_tick_get() ^ 0x9E3779B9 ^ (runs × 2654435761)`, xorshift32. Il pilote (a) le décalage ±28 px des pickups — **annulé si la nouvelle position tombe dans un mur**, (b) le déphasage des scies/orbes, (c) le tirage des 3 boons proposés. Les layouts eux-mêmes restent fixes : c'est le contenu qui varie, pas la lisibilité.
 - **Salles** : 1 Seuil (★☆☆☆, tuto implicite) · 2 Couloirs (★★☆☆, serpentin + scie) · 3 Forge (★★☆☆, tapis d'accélération, or au contact des pointes) · 4 Sanctuaire (★★★☆, route haute sûre vs route basse à trous mieux dotée) · 5 Némésis (★★★★, 2 orbes en orbite + chasseuse + glu) · 6 Trône (★★★★, 3 runes puis portail central gardé).
 - **Pièges (6)** : pointes fixes, scie oscillante, trou/vide, zone de glu, tapis d'accélération, orbe en orbite — plus la **chasseuse** qui poursuit la bille (salles 5-6).
-- **Bonus (6)** : or, bouclier (1 coup), aimant, frein, dash, rune d'objectif.
+- **Bonus (6)** : or, bouclier (1 coup), aimant, frein, dash (recharge l'élan tout de suite), rune d'objectif.
 - **Boons intra-run (10)**, 3 proposés au choix après les salles **2 et 4** : Main d'Ariane, Cœur de braise, Bourse tressée, Aimant mineur, Semelles lourdes, Élan, Peau de bronze, Œil du dédale, Seconde chance, Pas de velours.
 - **Méta (5)** : Vigueur (+1 PV, ×3), Filon (+12 % fragments, ×3), Main sûre (pilotage plus doux, ×2), Relique (bouclier au départ, ×1), Teinte (cosmétique, ×2).
 - **Balance v1** : 3 PV de base (+1 par Vigueur, ± la difficulté), or = 10/pickup, dégât = retour au départ de la salle + invulnérabilité. Salle 1 volontairement généreuse (1 seul piège, sortie visible) ; salle 6 exigeante mais lisible (orbes télégraphiés par leur orbite régulière autour du portail). **Une run perdue rapporte quand même ses fragments** — y compris si le jeu est quitté en cours de partie (sauf en mode dieu).

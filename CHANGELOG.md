@@ -4,6 +4,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-09-29 — Fil d'Or : l'élan part d'une secousse, plus tout seul
+
+- Retour d'Axel : « la bille saute de temps en temps toute seule ». C'était l'élan (dash) :
+  il partait dès qu'on penchait à plus de ~38° (0,62 g), sans que le jeu le dise.
+- Il part maintenant d'une **secousse brève** (passe-haut sur l'écart à la calibration,
+  seuil 0,35 g, comme le coup de hanche du flipper), dans le sens où l'on penche, à défaut
+  dans le sens où roule la bille. Recharge de 0,9 s et bonus « dash » inchangés. Le filtre
+  est amorcé à l'ouverture : une tablette déjà penchée ne donne pas d'élan fantôme.
+- `docs/arcade.md` décrit l'élan.
+
 ### 2026-09-29 — Accéléromètre : la position ne sert plus qu'aux jeux
 
 - Demande d'Axel : la tablette ne change jamais de sens, la position ne sert qu'aux jeux.
