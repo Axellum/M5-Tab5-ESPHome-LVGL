@@ -199,7 +199,9 @@ struct CentralPanelCtx {
     // sur l'accueil (page 2), hors planning temporaire et hors réponse vocale. Tenus à
     // jour côté C++ (apply_forecast_page, show/hide_vocal_response_ui) plutôt que par
     // des pointeurs vers les globals ESPHome, pour ne pas toucher à on_boot.
-    // forecast_page démarre à 2 comme le global forecast_page_index (non restauré).
+    // forecast_page = page des prévisions affichée (0-1 horaire, 2-4 journalier, 2 =
+    // accueil, non restaurée) : seule source depuis le 28/09/2026, le global
+    // forecast_page_index qui la recopiait est retiré. Les lambdas la lisent ici.
     int forecast_page = 2;
     bool vocal_shown = false;
     lv_obj_t* vocal_wrap = nullptr;   // posé par show_vocal_response_ui
@@ -216,7 +218,8 @@ extern CentralPanelCtx g_central_ctx;
 // horaires/journalieres (0-4) dans la bande centrale+basse (y >= 333). Console diag :
 // uniquement via btn_control_console (plus de swipe haut/bas). En mode HA (ADR-0023) :
 // pièce suivante / précédente qui a des appareils, les calques météo restent masqués.
-void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
+// La page courante est ctx.forecast_page.
+void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_card, esphome::font::Font* f_card_s,
@@ -229,7 +232,7 @@ void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
 // cette page (données, calque, pastilles, carte centrale), le chemin est
 // factorisé avec handle_swipe_gesture().
 // Ne fait rien si on y est déjà : c'est appelé une fois par seconde.
-void reset_forecast_to_main_page(int& forecast_page_index,
+void reset_forecast_to_main_page(
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_card, esphome::font::Font* f_card_s,
@@ -251,9 +254,10 @@ void refresh_forecast_page_title_ui(int forecast_page,
 
 // Panneau info central (récap calendrier ou bannière alerte) — logique déplacée
 // depuis tab5-api-logic.yaml pour fiabiliser polices LVGL et accents UTF-8.
+// Pose ctx.has_info ; bandeau vidé alors qu'il est affiché → retour au planning.
 void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
     const std::string& texte, const std::string& couleur, const std::string& meteo_id,
-    std::string& dismissed_local, bool& has_info, int& current_panel,
+    std::string& dismissed_local, CentralPanelCtx& ctx,
     esphome::font::Font* font_small, esphome::font::Font* font_large);
 
 // Phrase pluie (lot 4c, 27/09/2026) : HA envoie un code « @niveau,début » ; la
@@ -461,11 +465,16 @@ void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric);
 void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target);
 
 // Tap tuile météo : affiche le planning/horaires du jour dans la carte centrale (6s).
-// Le timer de restauration rétablit ctx.current_panel (le tap l'a mis à 0).
-void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
-                             lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, int forecast_page,
+// tuile = position 0-4 sur le calque journalier ; le jour (0-14) se déduit de
+// ctx.forecast_page (pages 2-4). Le timer de restauration rétablit ctx.current_panel
+// (le tap l'a mis à 0).
+void show_temporary_planning(int tuile, lv_obj_t* lbl_planning,
+                             lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
                              const std::string& plan_l1, const std::string& plan_l2,
-                             bool& is_showing_temp, CentralPanelCtx& ctx);
+                             CentralPanelCtx& ctx);
+// Vrai pendant les 6 s du planning du tap (son timer tourne). Lu par les scripts du
+// rotateur et par la poussée des prévisions (bandeau planning laissé tel quel).
+bool temp_planning_active();
 
 // Réponse vocale IA : carte centrale dédiée (8s), défilement si phrase longue.
 void show_vocal_response_ui(const std::string& texte,
@@ -779,7 +788,6 @@ struct TuilesUI {
     lv_obj_t* titre = nullptr;            // lbl_page_title
     lv_obj_t* bouton_ha = nullptr;        // btn_control_ha
     lv_obj_t* icone_ha = nullptr;         // icon_ha
-    int* page = nullptr;                  // &id(forecast_page_index)
     esphome::font::Font* police_meteo = nullptr;         // font_meteo_card
     esphome::font::Font* police_meteo_petite = nullptr;  // font_meteo_card_small
     // Mode météo : épaules (icône à gauche, ampoule ou flèche à droite) et bouton

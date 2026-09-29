@@ -316,7 +316,7 @@ script:
           condition:
             and:
               - light.is_on: backlight
-              - lambda: 'return !id(is_showing_temp_planning) && !id(is_showing_vocal_response) && id(forecast_page_index) == 2 && !ModalRegistry::any_popup_visible();'
+              - lambda: 'return !temp_planning_active() && !id(is_showing_vocal_response) && g_central_ctx.forecast_page == 2 && !ModalRegistry::any_popup_visible();'
           then:
             - lambda: |-
                 advance_central_panel_rotator(g_central_ctx);
@@ -328,7 +328,7 @@ script:
     then:
       - if:
           condition:
-            lambda: 'return id(forecast_page_index) == 2 && !id(is_showing_temp_planning);'
+            lambda: 'return g_central_ctx.forecast_page == 2 && !temp_planning_active();'
           then:
             - lambda: |-
                 advance_central_panel_rotator(g_central_ctx);
@@ -340,7 +340,7 @@ script:
     then:
       - if:
           condition:
-            lambda: 'return id(forecast_page_index) == 2 && !id(is_showing_temp_planning) && g_central_ctx.has_info;'
+            lambda: 'return g_central_ctx.forecast_page == 2 && !temp_planning_active() && g_central_ctx.has_info;'
           then:
             - if:
                 condition:
@@ -474,11 +474,11 @@ interval:
           }
 
           if (idle < UIIdle::FORECAST_MS) return;
-          if (id(forecast_page_index) == 2) return;   // déjà au panneau principal
-          if (g_central_ctx.ha_mode) return;          // mode HA (pièces) affiché à la demande
+          if (g_central_ctx.forecast_page == 2) return;  // déjà au panneau principal
+          if (g_central_ctx.ha_mode) return;             // mode HA (pièces) affiché à la demande
 
           lv_obj_t* pbars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4)};
-          reset_forecast_to_main_page(id(forecast_page_index),
+          reset_forecast_to_main_page(
               id(layer_forecast_daily), id(layer_forecast_hourly),
               g_day_slots, g_hour_slots,
               id(font_meteo_card), id(font_meteo_card_small),

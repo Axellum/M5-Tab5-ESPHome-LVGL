@@ -22,7 +22,6 @@
 #include <ctime>
 #include <cstring>
 #include <vector>
-#include <map>
 
 // =============================================================================
 // Geste de swipe (page_main.on_gesture) : pagination previsions (y >= carte centrale)
@@ -31,14 +30,24 @@
 static constexpr int32_t FORECAST_SWIPE_Y_MIN = 333;  // haut de central_card (tab5-lvgl.yaml)
 
 // Page de repos des previsions : journalier J0-J4, celle du boot
-// (forecast_page_index initial_value: 2) et celle ou la carte centrale reprend
+// (CentralPanelCtx::forecast_page = 2) et celle ou la carte centrale reprend
 // son rotateur planning/pluie/alertes. C'est la cible du retour automatique.
 static constexpr int FORECAST_MAIN_PAGE = 2;
 
-// Planning temporaire (tap tuile, 6 s) : définis plus bas, avec TempPlanningCtx.
-static bool temp_planning_active();
+// Planning temporaire (tap tuile, 6 s) : défini plus bas, avec TempPlanningCtx
+// (temp_planning_active() est déclarée dans tab5_custom.h, les scripts la lisent).
 static void end_temporary_planning(CentralPanelCtx& ctx);
 
+// Qui occupe la carte centrale (enfants de central_card, tab5-lvgl.yaml) :
+//   - planning du tap : planning_wrap avec le texte du jour, 6 s (temp_planning_active()) ;
+//   - réponse vocale : vocal_wrap, 8 s, accueil seulement (ctx.vocal_shown) ;
+//   - titre de la pièce : page_title_wrap, mode HA, toutes les pages (ctx.ha_mode) ;
+//   - titre de page : page_title_wrap, pages de prévisions 0, 1, 3, 4 ;
+//   - rotateur : sur l'accueil, le panneau ctx.current_panel s'il est actif, sinon rien.
+// Les deux premiers prennent la carte (prendre_carte) et la rendent à leur fin ;
+// changer de page ou de mode les termine (liberer_carte) puis pose le titre ou le
+// panneau de la nouvelle page (update_central_forecast_page_ui).
+//
 // Le rotateur (panneaux 0-7) n'a la main sur la carte centrale que sur l'accueil
 // (page 2), hors planning temporaire et hors réponse vocale. Ailleurs la carte
 // appartient au titre de page ou à l'overlay : une mise à jour de drapeaux (push
@@ -124,6 +133,7 @@ static std::array<lv_obj_t*, kCentralPanelCount> central_wraps(const CentralPane
     return {ctx.planning_wrap, ctx.rain_wrap, ctx.alert_cont, ctx.info_wrap,
             ctx.ha_wrap[0], ctx.ha_wrap[1], ctx.ha_wrap[2], ctx.ha_wrap[3]};
 }
+static constexpr int kInfoPanel = 3;  // info_wrap dans central_wraps()
 
 static lv_obj_t* central_panel_wrapper(int panel, CentralPanelCtx& ctx) {
     if (panel < 0 || panel >= kCentralPanelCount) return nullptr;
@@ -171,13 +181,13 @@ static void hide_central_panel(lv_obj_t* wrap) {
 }
 
 static void sync_central_panel_visibility(CentralPanelCtx& ctx) {
-    bool any = central_panel_is_active(ctx.current_panel, ctx);
-    if (!any) {
+    // Panneau courant devenu inactif : le premier actif dans l'ordre des index, ou 0
+    // s'il n'y en a aucun (0 est alors inactif lui aussi : planning absent, lot 5).
+    if (!central_panel_is_active(ctx.current_panel, ctx)) {
         ctx.current_panel = 0;
         for (int p = 0; p < kCentralPanelCount; p++) {
             if (central_panel_is_active(p, ctx)) {
                 ctx.current_panel = p;
-                any = true;
                 break;
             }
         }
@@ -189,7 +199,7 @@ static void sync_central_panel_visibility(CentralPanelCtx& ctx) {
     for (lv_obj_t* w : central_wraps(ctx)) hide_central_panel(w);
 
     // Rien à montrer (sans planning, lot 5) : la carte reste vide.
-    if (!any) return;
+    if (!central_panel_is_active(ctx.current_panel, ctx)) return;
     lv_obj_t* active = central_panel_wrapper(ctx.current_panel, ctx);
     if (active) lv_obj_remove_flag(active, LV_OBJ_FLAG_HIDDEN);
 }
@@ -309,18 +319,25 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
     }
 }
 
-void dismiss_central_info_immediate(lv_obj_t* lbl_info, CentralPanelCtx& ctx) {
-    ctx.has_info = false;
-    if (lbl_info) {
-        lv_label_set_recolor(lbl_info, false);
-        lv_label_set_text(lbl_info, "");
+// Tap d'acquittement (info, alerte HA ; drapeau déjà baissé par l'appelant) : le
+// panneau quitte la carte sans attendre HA. Affiché → le suivant, avec la transition
+// du rotateur ; sinon une synchro (sans effet visible si la carte est occupée).
+static void retirer_panneau(int panel, lv_obj_t* lbl, lv_obj_t* wrap, CentralPanelCtx& ctx) {
+    if (lbl) {
+        lv_label_set_recolor(lbl, false);
+        lv_label_set_text(lbl, "");
     }
-    if (ctx.info_wrap) lv_obj_add_flag(ctx.info_wrap, LV_OBJ_FLAG_HIDDEN);
-    if (ctx.current_panel == 3) {
+    if (wrap) lv_obj_add_flag(wrap, LV_OBJ_FLAG_HIDDEN);
+    if (ctx.current_panel == panel) {
         advance_central_panel_rotator(ctx);
     } else {
         sync_central_panel_visibility(ctx);
     }
+}
+
+void dismiss_central_info_immediate(lv_obj_t* lbl_info, CentralPanelCtx& ctx) {
+    ctx.has_info = false;
+    retirer_panneau(kInfoPanel, lbl_info, ctx.info_wrap, ctx);
 }
 
 void dismiss_ha_alert_slot_immediate(int slot_idx, lv_obj_t* wrap, lv_obj_t* lbl,
@@ -329,17 +346,7 @@ void dismiss_ha_alert_slot_immediate(int slot_idx, lv_obj_t* wrap, lv_obj_t* lbl
     if (slot_idx < 0 || slot_idx >= kHaAlertSlotCount) return;
     id_store.clear();
     ctx.has_ha[slot_idx] = false;
-    if (lbl) {
-        lv_label_set_recolor(lbl, false);
-        lv_label_set_text(lbl, "");
-    }
-    if (wrap) lv_obj_add_flag(wrap, LV_OBJ_FLAG_HIDDEN);
-    const int dismissed_panel = kHaAlertPanelBase + slot_idx;
-    if (ctx.current_panel == dismissed_panel) {
-        advance_central_panel_rotator(ctx);
-    } else {
-        sync_central_panel_visibility(ctx);
-    }
+    retirer_panneau(kHaAlertPanelBase + slot_idx, lbl, wrap, ctx);
 }
 
 // Pose les deux lignes du titre sans rien decider de la visibilite : chapeau
@@ -462,7 +469,7 @@ static std::string compose_info_code(const std::string& code, const std::string&
 
 void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
     const std::string& texte, const std::string& couleur, const std::string& meteo_id,
-    std::string& dismissed_local, bool& has_info, int& current_panel,
+    std::string& dismissed_local, CentralPanelCtx& ctx,
     esphome::font::Font* font_small, esphome::font::Font* font_large) {
 
     if (!lbl_info) return;
@@ -476,7 +483,7 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
         // Ancien package HA : bannière vigilance selon la couleur (comportement d'avant).
         if (!meteo_id.empty() && tab5_dismiss_local_has(dismissed_local, meteo_id)) {
             if (t.empty()) {
-                has_info = false;
+                ctx.has_info = false;
                 lv_label_set_recolor(lbl_info, false);
                 lv_label_set_text(lbl_info, "");
                 return;
@@ -489,19 +496,19 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
         t = normalize_text_utf8(t);
     }
 
-    has_info = !t.empty();
+    ctx.has_info = !t.empty();
     if (t.empty()) {
         lv_label_set_text(lbl_info, "");
-        if (current_panel == 3 && info_wrap && planning_wrap) {
-            if (g_central_ctx.planning_off) {
+        if (ctx.current_panel == kInfoPanel && info_wrap && planning_wrap) {
+            if (ctx.planning_off) {
                 // Pas de planning (lot 5) : le panneau actif suivant, ou une carte vide.
-                sync_central_panel_visibility(g_central_ctx);
+                sync_central_panel_visibility(ctx);
                 return;
             }
             // Transition visible seulement si le rotateur a la carte : sinon elle
             // faisait surgir le panneau planning par-dessus le titre de page.
-            if (rotator_owns_card(g_central_ctx)) transition_widgets(info_wrap, planning_wrap);
-            current_panel = 0;
+            if (rotator_owns_card(ctx)) transition_widgets(info_wrap, planning_wrap);
+            ctx.current_panel = 0;
         }
         return;
     }
@@ -513,10 +520,8 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
         esphome::lvgl::lv_obj_set_style_text_font(lbl_info, font, LV_PART_MAIN);
     }
 
-    uint32_t c = UIColor::TEXT_PRIMARY;
-    if (couleur.find("Rouge") != std::string::npos) c = UIColor::ALERT_RED;
-    else if (couleur.find("Orange") != std::string::npos) c = UIColor::WARNING;
-    lv_obj_set_style_text_color(lbl_info, lv_color_hex(c), LV_PART_MAIN);
+    // Même règle de couleur que les bandeaux d'alertes HA (Rouge, Orange, sinon blanc).
+    lv_obj_set_style_text_color(lbl_info, lv_color_hex(ha_alert_color_from_couleur(couleur)), LV_PART_MAIN);
 
     lv_label_set_recolor(lbl_info, has_recolor_markup);
     lv_label_set_text(lbl_info, t.c_str());
@@ -603,6 +608,20 @@ void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase) {
     lv_label_set_text(lbl, t.c_str());
 }
 
+// Changer de page ou de mode (météo ↔ HA) met fin aux overlays de la carte centrale
+// (audit du 25/09/2026, §2.4) : sans ça, le timer du planning temporaire réaffichait
+// 6 s plus tard le titre de la page d'ORIGINE sur la nouvelle page (ou sur la pièce),
+// et la réponse vocale restait visible sous le nouveau titre. Le script YAML de la
+// réponse vocale finit son délai sans effet visible (masquer un objet masqué ; la
+// synchro ne réaffiche que si le rotateur a la main). L'appelant pose ensuite
+// l'occupant de la nouvelle page (update_central_forecast_page_ui).
+static void liberer_carte(CentralPanelCtx& ctx) {
+    end_temporary_planning(ctx);
+    if (ctx.vocal_shown) {
+        if (ctx.vocal_wrap) lv_obj_add_flag(ctx.vocal_wrap, LV_OBJ_FLAG_HIDDEN);
+        ctx.vocal_shown = false;
+    }
+}
 
 // Applique une page de previsions : donnees, calque, pastilles, carte centrale.
 // Factorise entre les deux seules facons de changer de page — le swipe manuel
@@ -618,17 +637,7 @@ static void apply_forecast_page(int old_page, int page, lv_dir_t dir,
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx) {
 
-        // Changer de page met fin aux overlays de la carte centrale (audit du
-        // 25/09/2026, §2.4) : sans ça, le timer du planning temporaire réaffichait
-        // 6 s plus tard le titre de la page d'ORIGINE sur la nouvelle page, et la
-        // réponse vocale restait visible sous le nouveau titre. Le script YAML de
-        // la réponse vocale finit son délai sans effet visible (masquer un objet
-        // masqué ; la synchro ne réaffiche que si le rotateur a la main).
-        end_temporary_planning(ctx);
-        if (ctx.vocal_shown) {
-            if (ctx.vocal_wrap) lv_obj_add_flag(ctx.vocal_wrap, LV_OBJ_FLAG_HIDDEN);
-            ctx.vocal_shown = false;
-        }
+        liberer_carte(ctx);
         ctx.forecast_page = page;
 
         // Detection de changement de layer (horaire <-> journalier).
@@ -698,15 +707,11 @@ int forecast_page_suivante(int page, bool gauche) {
 void central_mode_ha(lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, CentralPanelCtx& ctx) {
     // Comme un changement de page : le planning du tap et la réponse vocale cèdent la
     // carte (sinon le timer de 6 s réaffichait l'ancien titre par-dessus la pièce).
-    end_temporary_planning(ctx);
-    if (ctx.vocal_shown) {
-        if (ctx.vocal_wrap) lv_obj_add_flag(ctx.vocal_wrap, LV_OBJ_FLAG_HIDDEN);
-        ctx.vocal_shown = false;
-    }
+    liberer_carte(ctx);
     update_central_forecast_page_ui(ctx.forecast_page, page_title_wrap, lbl_page_title, ctx);
 }
 
-void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
+void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_card, esphome::font::Font* f_card_s,
@@ -720,7 +725,7 @@ void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
     // panneau titre dans tab5-lvgl.yaml), pas dans cette fonction.
     // Le logger du projet tourne en `level: INFO` (tab5-hardware.yaml) : passer
     // temporairement a DEBUG pour voir cette trace, elle est muette autrement.
-    ESP_LOGD("TAB5", "swipe: dir=%d y=%d page=%d", (int) dir, (int) pt_y, forecast_page_index);
+    ESP_LOGD("TAB5", "swipe: dir=%d y=%d page=%d", (int) dir, (int) pt_y, ctx.forecast_page);
 
     if (pt_y < FORECAST_SWIPE_Y_MIN) return;
     if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;
@@ -732,10 +737,10 @@ void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
         return;
     }
 
-    int old_page = forecast_page_index;
+    const int old_page = ctx.forecast_page;
     // Bouclage volontaire : [AI-WARNING] de forecast_page_suivante() ci-dessus.
-    int page = forecast_page_suivante(old_page, dir == LV_DIR_LEFT);
-    forecast_page_index = page;
+    // apply_forecast_page() pose ctx.forecast_page.
+    const int page = forecast_page_suivante(old_page, dir == LV_DIR_LEFT);
 
     apply_forecast_page(old_page, page, dir,
         layer_forecast_daily, layer_forecast_hourly, day_slots, hour_slots,
@@ -743,7 +748,7 @@ void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y, int& forecast_page_index,
         page_title_wrap, lbl_page_title, ctx);
 }
 
-void reset_forecast_to_main_page(int& forecast_page_index,
+void reset_forecast_to_main_page(
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_card, esphome::font::Font* f_card_s,
@@ -751,9 +756,8 @@ void reset_forecast_to_main_page(int& forecast_page_index,
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx) {
 
-    const int old_page = forecast_page_index;
+    const int old_page = ctx.forecast_page;
     if (old_page == FORECAST_MAIN_PAGE) return;  // deja au panneau principal
-    forecast_page_index = FORECAST_MAIN_PAGE;
 
     // Sens de l'animation : depuis l'horaire (0/1) le calque journalier arrive
     // par la droite, comme un swipe vers la gauche ; depuis 3/4 on recule, donc
@@ -805,7 +809,6 @@ struct TempPlanningCtx {
     std::string plan_l1;                   // bandeau planning à restaurer, ligne 1
     std::string plan_l2;                   // ... et ligne 2 (vide si absente)
     lv_obj_t* lbl_planning = nullptr;
-    bool* is_showing_temp = nullptr;       // global ESPHome is_showing_temp_planning
     int forecast_page_restore = 2;         // page prévisions à rétablir (2 = journalière)
     lv_obj_t* page_title_wrap = nullptr;
     lv_obj_t* lbl_page_title = nullptr;
@@ -813,7 +816,9 @@ struct TempPlanningCtx {
 };
 static TempPlanningCtx s_temp_planning;
 
-static bool temp_planning_active() { return s_temp_planning.restore_timer != nullptr; }
+// Seule source de « planning du tap affiché » : son timer de 6 s tourne. Le global
+// ESPHome is_showing_temp_planning, qui recopiait ce timer, est retiré (28/09/2026).
+bool temp_planning_active() { return s_temp_planning.restore_timer != nullptr; }
 
 // Termine le planning temporaire en cours : supprime le timer, rend le texte normal
 // du bandeau et le panneau d'origine. Ne décide PAS de la visibilité — l'appelant
@@ -824,7 +829,6 @@ static void end_temporary_planning(CentralPanelCtx& ctx) {
     if (tp.restore_timer == nullptr) return;
     lv_timer_delete(tp.restore_timer);
     tp.restore_timer = nullptr;
-    if (tp.is_showing_temp) *tp.is_showing_temp = false;
     ctx.current_panel = tp.central_panel_restore;
     // Texte normal rendu dans tous les cas : un tap sur la page 3 ou 4 laissait le
     // texte du tap dans le bandeau planning, réaffiché tel quel au retour sur 2.
@@ -852,39 +856,51 @@ static void planning_restore_timer_cb(lv_timer_t* /*timer*/) {
     }
 }
 
-void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
-                             lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, int forecast_page,
+// Planning du tap ou réponse vocale prennent la carte : animations coupées sur les 8
+// panneaux et le titre (une transition du rotateur en cours masquerait ou déplacerait
+// un panneau à sa fin), titre masqué, panneaux masqués sauf `garder` (nullptr : tous).
+static void prendre_carte(lv_obj_t* page_title_wrap, CentralPanelCtx& ctx, lv_obj_t* garder) {
+    const auto wraps = central_wraps(ctx);
+    for (lv_obj_t* w : wraps)
+        if (w) lv_anim_delete(w, nullptr);
+    if (page_title_wrap) {
+        lv_anim_delete(page_title_wrap, nullptr);
+        lv_obj_add_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
+    }
+    for (lv_obj_t* w : wraps)
+        if (w) lv_obj_set_flag(w, LV_OBJ_FLAG_HIDDEN, w != garder);
+}
+
+void show_temporary_planning(int tuile, lv_obj_t* lbl_planning,
+                             lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
                              const std::string& plan_l1, const std::string& plan_l2,
-                             bool& is_showing_temp, CentralPanelCtx& ctx) {
+                             CentralPanelCtx& ctx) {
     if (!lbl_planning) return;
+
+    // Jour de la tuile, aligné sur refresh_daily_forecast() : page journalière 2-4
+    // (bornée, comme le faisait la lambda de forecast_day_temp_tab.yaml).
+    int page = ctx.forecast_page;
+    if (page < 2) page = 2;
+    if (page > 4) page = 4;
+    const int jour = (page - 2) * 5 + tuile;
 
     TempPlanningCtx& tp = s_temp_planning;
     // Second tap pendant les 6 s : garder le panneau d'ORIGINE, le premier tap a
     // déjà mis le panneau courant à 0 (on restaurait le planning au lieu du
     // panneau d'avant — observation du 08/09/2026).
     if (tp.restore_timer == nullptr) tp.central_panel_restore = ctx.current_panel;
-    is_showing_temp = true;
     ctx.current_panel = 0;
 
     std::string text = get_day_planning_display_text(jour);
     set_label_text_utf8(lbl_planning, text.c_str());
 
-    // Stoppe les animations LVGL en cours sur les panneaux centraux, puis ne
-    // laisse visible que le planning.
-    const auto wraps = central_wraps(ctx);
-    for (lv_obj_t* w : wraps)
-        if (w) lv_anim_delete(w, nullptr);
-    if (page_title_wrap) lv_anim_delete(page_title_wrap, nullptr);
-
-    if (page_title_wrap) lv_obj_add_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
-    for (lv_obj_t* w : wraps)
-        if (w) lv_obj_set_flag(w, LV_OBJ_FLAG_HIDDEN, w != ctx.planning_wrap);
+    // Seul le planning reste visible.
+    prendre_carte(page_title_wrap, ctx, ctx.planning_wrap);
 
     tp.plan_l1 = plan_l1;
     tp.plan_l2 = plan_l2;
     tp.lbl_planning = lbl_planning;
-    tp.is_showing_temp = &is_showing_temp;
-    tp.forecast_page_restore = forecast_page;
+    tp.forecast_page_restore = ctx.forecast_page;
     tp.page_title_wrap = page_title_wrap;
     tp.lbl_page_title = lbl_page_title;
 
@@ -894,12 +910,6 @@ void show_temporary_planning(int jour, lv_obj_t* lbl_planning,
     }
 
     tp.restore_timer = lv_timer_create(planning_restore_timer_cb, 6000, nullptr);
-}
-
-static void hide_all_central_panels_for_overlay(lv_obj_t* page_title_wrap, CentralPanelCtx& ctx) {
-    if (page_title_wrap) lv_obj_add_flag(page_title_wrap, LV_OBJ_FLAG_HIDDEN);
-    for (lv_obj_t* w : central_wraps(ctx))
-        if (w) lv_obj_add_flag(w, LV_OBJ_FLAG_HIDDEN);
 }
 
 void show_vocal_response_ui(const std::string& texte,
@@ -912,12 +922,8 @@ void show_vocal_response_ui(const std::string& texte,
     const std::string t = trim_ws(normalize_text_utf8(texte));
     if (t.empty()) return;
 
-    for (lv_obj_t* w : central_wraps(ctx))
-        if (w) lv_anim_delete(w, nullptr);
-    if (vocal_wrap) lv_anim_delete(vocal_wrap, nullptr);
-    if (page_title_wrap) lv_anim_delete(page_title_wrap, nullptr);
-
-    hide_all_central_panels_for_overlay(page_title_wrap, ctx);
+    lv_anim_delete(vocal_wrap, nullptr);
+    prendre_carte(page_title_wrap, ctx, nullptr);
 
     if (font) {
         esphome::lvgl::lv_obj_set_style_text_font(lbl_vocal, font, LV_PART_MAIN);

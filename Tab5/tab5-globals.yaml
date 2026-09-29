@@ -52,10 +52,8 @@ globals:
     type: bool
     initial_value: 'false'
     restore_value: false
-  - id: forecast_page_index
-    type: int
-    initial_value: '2'
-    restore_value: false
+  # Page des prévisions (0-4, 2 = accueil) : g_central_ctx.forecast_page, seule source
+  # depuis le 28/09/2026 (le global forecast_page_index la recopiait).
   - id: conversation_mode
     type: bool
     initial_value: 'false'
@@ -107,9 +105,9 @@ globals:
   - id: volume_push_ts
     type: uint32_t
     initial_value: '0'
-  - id: is_showing_temp_planning
-    type: bool
-    initial_value: 'false'
+  # Planning du tap (6 s) : plus de global, temp_planning_active() lit son timer
+  # (tab5_central.cpp, 28/09/2026). La réponse vocale garde le sien : il couvre les
+  # 8 s du script tab5_show_vocal_response, pas seulement l'affichage.
   - id: is_showing_vocal_response
     type: bool
     initial_value: 'false'

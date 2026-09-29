@@ -1,8 +1,8 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par forecast_daily.yaml
 # (j0..j4). Vars: idx, toggle_width (largeur du bouton toggle, varie car le texte
 # tmax/tmin change de largeur). Tap min/max → planning/horaires du jour dans la
-# carte centrale (6s) via show_temporary_planning() — index jour =
-# (forecast_page_index - 2) * 5 + idx (aligné sur refresh_daily_forecast).
+# carte centrale (6s) via show_temporary_planning(idx, …), qui calcule l'index jour
+# (page - 2) * 5 + idx depuis g_central_ctx.forecast_page (aligné sur refresh_daily_forecast).
 # Texte : "Auj. : 08:30-18:30" (orange recolor si embauche < 9h).
 obj:
   align: BOTTOM_MID
@@ -26,11 +26,6 @@ obj:
         outline_width: 0
         on_short_click:
           - lambda: |-
-              int page = id(forecast_page_index);
-              if (page < 2) page = 2;
-              if (page > 4) page = 4;
-              int jour = (page - 2) * 5 + ${idx};
-              show_temporary_planning(jour, id(lbl_planning_text),
-                                      id(page_title_wrapper), id(lbl_page_title), id(forecast_page_index),
-                                      id(plan_ligne_1), id(plan_ligne_2), id(is_showing_temp_planning),
-                                      g_central_ctx);
+              show_temporary_planning(${idx}, id(lbl_planning_text),
+                                      id(page_title_wrapper), id(lbl_page_title),
+                                      id(plan_ligne_1), id(plan_ligne_2), g_central_ctx);

@@ -327,7 +327,7 @@ script:
             - script.execute: tab5_vocal_response_end
       - if:
           condition:
-            lambda: 'return id(forecast_page_index) == 2 && texte.size() > 0;'
+            lambda: 'return g_central_ctx.forecast_page == 2 && texte.size() > 0;'
           then:
             - script.stop: tab5_central_rotator_auto
             - globals.set:
