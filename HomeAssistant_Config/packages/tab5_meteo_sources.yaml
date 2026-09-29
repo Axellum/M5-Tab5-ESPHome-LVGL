@@ -204,9 +204,15 @@ template:
             {% if m | length == 0 %}
               @-1,0
             {% else %}
+              {# Minutes déjà passées ignorées : la série vient du cache de l'intégration,
+                 rafraîchi toutes les 10 min — une averse finie il y a 5 min y figure
+                 encore et donnait « pluie en cours » avec 9 barres vides (banc du
+                 29/09/2026). #}
               {% set ns = namespace(debut=0, mmh=0, trouve=false) %}
+              {% set depuis = now().timestamp() - 60 %}
               {% for e in m %}
-                {% if not ns.trouve and (e.get('precipitation') | float(0)) >= 0.1 %}
+                {% if not ns.trouve and as_timestamp(e.get('datetime'), 0) >= depuis
+                      and (e.get('precipitation') | float(0)) >= 0.1 %}
                   {% set ns.trouve = true %}
                   {% set ns.debut = as_timestamp(e.get('datetime'), 0) | int(0) %}
                   {% set ns.mmh = e.get('precipitation') | float(0) %}

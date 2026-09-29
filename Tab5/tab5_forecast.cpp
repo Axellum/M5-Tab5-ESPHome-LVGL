@@ -46,6 +46,9 @@ static constexpr MeteoIconSpec kMeteoIcons[] = {
     {"clear-night",          MeteoIcon::MOON,  UIColor::METEO_CELESTIAL, nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
     {"cloudy",               MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
     {"fog",                  MeteoIcon::FOG,   UIColor::TEXT_PRIMARY,    nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
+    // OpenWeatherMap : fumée, poussière, sable, cendres (codes 711/731/751/761/762,
+    // const.py de HA 2026.9.4) — un voile, comme le brouillard.
+    {"exceptional",          MeteoIcon::FOG,   UIColor::TEXT_PRIMARY,    nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
     {"Clear",                MeteoIcon::SUNNY, UIColor::METEO_CELESTIAL, nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
     {"sunny",                MeteoIcon::SUNNY, UIColor::METEO_CELESTIAL, nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
     {"partlycloudy",         MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::SUNNY,      UIColor::METEO_CELESTIAL, true,  -19, -19,   0},
