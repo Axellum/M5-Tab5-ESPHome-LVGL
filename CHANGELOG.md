@@ -4,6 +4,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+- **Documentation : deux images fausses remplacées.** `gpio_pinout_table.png` (générée par IA
+  en juillet 2026 : écran RGB parallèle 1024×600, 16 Mo de PSRAM, GPIO 26 pour BCLK et DOUT)
+  laisse place à un tableau des broches dans `docs/hardware.md`, tiré du YAML et vérifié par
+  `tests/test_doc_broches.py` ; le tableau audio, qui donnait BCLK sur GPIO 26 (c'est GPIO 27),
+  est corrigé. `push_only_architecture_diagram.png` (LVGL 8.4 à 60 FPS, 6 écrans, Google
+  Calendar, aucun événement) laisse place à un schéma SVG en français et en anglais :
+  HA pousse par les actions `tab5_maj_*`, la tablette répond par des événements
+  `esphome.tab5_*` (ADR-0025).
+
 ## [3.3.0] — 2026-09-29
 
 De `v3.2.2` à aujourd'hui : six pull requests (#252 → #257), plus celle de la release.

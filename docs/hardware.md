@@ -67,9 +67,40 @@ Address 0x32 on the internal I2C bus (`bsp_bus`, GPIO31/32), backed by a 70 000 
 - **Interface:** MIPI-DSI 16-bit RGB565 (ESP32-P4 LCD peripheral)
 - **Touch:** Capacitive multi-touch via ESPHome's official `st7123` I2C touchscreen platform on the ST7123 revision (since ESPHome 2026.7.0; the former custom `my_components/st7123` was removed on 2026-07-06) — `gt911` on the original ILI9881C revision, see [Hardware revisions](#hardware-revisions)
 
-GPIO pinout reference (display, touch, audio, expanders):
+---
 
-![GPIO pinout table](images/gpio_pinout_table.png)
+## Pin map
+
+Every pin the firmware configures, as written in its YAML. The pins are the same on the three revisions. "PI4IOE 0x43, P1" means pin 1 of the PI4IOE5V6408 I/O expander at address 0x43 on the internal I2C bus; there are two of them (0x43 and 0x44). The MIPI-DSI link itself has no pin in the YAML: the display model of `Tab5/ecran-<revision>.yaml` takes care of it. The last column names the component (its `id`, or the block that has none) and the key: `tests/test_doc_broches.py` checks every row, in both languages, against the YAML, and fails if a pin of the YAML is missing here.
+
+| Function | Pin | In the YAML |
+|---|---|---|
+| Internal I2C bus, SDA (400 kHz) | GPIO 31 | `bsp_bus` · `sda` |
+| Internal I2C bus, SCL | GPIO 32 | `bsp_bus` · `scl` |
+| Display reset | PI4IOE 0x43, P4 | `tab5_display` · `reset_pin` |
+| Touch interrupt | GPIO 23 | `touch` · `interrupt_pin` |
+| Touch reset | PI4IOE 0x43, P5 | `touch` · `reset_pin` |
+| Backlight PWM (LEDC, 1 kHz) | GPIO 22 | `backlight_pwm` · `pin` |
+| I2S bit clock (microphone and speaker) | GPIO 27 | `mic_bus` · `i2s_bclk_pin` |
+| I2S word select (microphone and speaker) | GPIO 29 | `mic_bus` · `i2s_lrclk_pin` |
+| I2S master clock (microphone and speaker) | GPIO 30 | `mic_bus` · `i2s_mclk_pin` |
+| I2S data in, from the ES7210 (microphone) | GPIO 28 | `tab5_microphone` · `i2s_din_pin` |
+| I2S data out, to the ES8388 (speaker) | GPIO 26 | `tab5_speaker` · `i2s_dout_pin` |
+| Speaker amplifier enable | PI4IOE 0x43, P1 | `speaker_enable` · `pin` |
+| Headphone jack detect | PI4IOE 0x43, P7 | `headphone_detect` · `pin` |
+| Wi-Fi antenna, internal or external | PI4IOE 0x43, P0 | `wifi_antenna_int_ext` · `pin` |
+| External 5 V power | PI4IOE 0x43, P2 | `external_5v_power` · `pin` |
+| Wi-Fi power | PI4IOE 0x44, P0 | `wifi_power` · `pin` |
+| USB power | PI4IOE 0x44, P3 | `usb_5v_power` · `pin` |
+| ESP32-C6 link (SDIO), clock | GPIO 12 | `esp32_hosted` · `clk_pin` |
+| ESP32-C6 link (SDIO), command | GPIO 13 | `esp32_hosted` · `cmd_pin` |
+| ESP32-C6 link (SDIO), data 0 | GPIO 11 | `esp32_hosted` · `d0_pin` |
+| ESP32-C6 link (SDIO), data 1 | GPIO 10 | `esp32_hosted` · `d1_pin` |
+| ESP32-C6 link (SDIO), data 2 | GPIO 9 | `esp32_hosted` · `d2_pin` |
+| ESP32-C6 link (SDIO), data 3 | GPIO 8 | `esp32_hosted` · `d3_pin` |
+| ESP32-C6 reset | GPIO 15 | `esp32_hosted` · `reset_pin` |
+
+The firmware declares a single I2C bus (`bsp_bus`), so every I2C chip it drives is on it: the two I/O expanders, the touch controller, the ES8388 and the ES7210, the BMI270 motion sensor (0x68, `Tab5/tab5-imu.yaml`) and the RX8130CE clock (0x32).
 
 ---
 
@@ -79,14 +110,7 @@ The Tab5 integrates an **ES8388** audio codec chip, used here for the DAC path (
 
 ### Connections
 
-| Signal | GPIO |
-|--------|------|
-| I2C SDA (DAC control) | GPIO 31 |
-| I2C SCL (DAC control) | GPIO 32 |
-| I2S BCLK (audio clock) | GPIO 26 (shared) |
-| I2S LRCLK (word select) | GPIO 29 (shared) |
-| I2S DOUT (data to DAC) | GPIO 26 |
-| Amplifier enable | GPIO (software-controlled switch) |
+Both chips are set up over the internal I2C bus and share **one** I2S bus (`mic_bus`): the three clocks are common, each direction has its own data line. Only one of the two can hold that bus at a time ([ADR-0010](decisions/0010-shared-i2s-bus-mic-speaker.md)). The speaker amplifier is switched by the first I/O expander (`speaker_enable`). Pins: [Pin map](#pin-map).
 
 ### Boot sequence issue
 
@@ -104,14 +128,7 @@ This order ensures the I2S clock is stable before the amplifier opens the speake
 
 ## Microphone — ES7210 ADC over I2S
 
-The onboard microphone is captured by the **ES7210** ADC chip (`audio_adc: es7210`), which streams to the ESP32-P4 over I2S (`adc_type: external`).
-
-| Signal | GPIO |
-|--------|------|
-| I2S DIN (data from mic) | GPIO 28 |
-| I2S BCLK | GPIO 27 |
-| I2S LRCLK | GPIO 29 |
-| I2S MCLK | GPIO 30 |
+The onboard microphone is captured by the **ES7210** ADC chip (`audio_adc: es7210`), which streams to the ESP32-P4 over I2S (`adc_type: external`), on the bus it shares with the speaker (pins: [Pin map](#pin-map)).
 
 Capture parameters: **16 kHz, 16-bit mono**. This matches the input format expected by the `micro_wake_word` component and by Home Assistant's voice pipeline.
 
@@ -196,20 +213,48 @@ Adresse 0x32 sur le bus I2C interne (`bsp_bus`, GPIO31/32), sauvegardée par un 
 
 ---
 
+## Broches
+
+Toutes les broches que le firmware configure, telles qu'écrites dans son YAML. Elles sont les mêmes sur les trois révisions. « PI4IOE 0x43, P1 » veut dire la broche 1 de l'expandeur d'E/S PI4IOE5V6408 d'adresse 0x43 sur le bus I2C interne ; il y en a deux (0x43 et 0x44). La liaison MIPI-DSI elle-même n'a aucune broche dans le YAML : le modèle d'écran de `Tab5/ecran-<révision>.yaml` s'en charge. La dernière colonne nomme le composant (son `id`, ou le bloc qui n'en a pas) et la clé : `tests/test_doc_broches.py` compare chaque ligne au YAML, dans les deux langues, et échoue si une broche du YAML manque ici.
+
+| Fonction | Broche | Dans le YAML |
+|---|---|---|
+| Bus I2C interne, SDA (400 kHz) | GPIO 31 | `bsp_bus` · `sda` |
+| Bus I2C interne, SCL | GPIO 32 | `bsp_bus` · `scl` |
+| Reset de l'écran | PI4IOE 0x43, P4 | `tab5_display` · `reset_pin` |
+| Interruption du tactile | GPIO 23 | `touch` · `interrupt_pin` |
+| Reset du tactile | PI4IOE 0x43, P5 | `touch` · `reset_pin` |
+| PWM du rétroéclairage (LEDC, 1 kHz) | GPIO 22 | `backlight_pwm` · `pin` |
+| Horloge bit I2S (micro et haut-parleur) | GPIO 27 | `mic_bus` · `i2s_bclk_pin` |
+| Sélection de mot I2S (micro et haut-parleur) | GPIO 29 | `mic_bus` · `i2s_lrclk_pin` |
+| Horloge maître I2S (micro et haut-parleur) | GPIO 30 | `mic_bus` · `i2s_mclk_pin` |
+| Données I2S entrantes, de l'ES7210 (micro) | GPIO 28 | `tab5_microphone` · `i2s_din_pin` |
+| Données I2S sortantes, vers l'ES8388 (haut-parleur) | GPIO 26 | `tab5_speaker` · `i2s_dout_pin` |
+| Activation de l'ampli du haut-parleur | PI4IOE 0x43, P1 | `speaker_enable` · `pin` |
+| Détection de la prise casque | PI4IOE 0x43, P7 | `headphone_detect` · `pin` |
+| Antenne Wi-Fi, interne ou externe | PI4IOE 0x43, P0 | `wifi_antenna_int_ext` · `pin` |
+| Alimentation 5 V externe | PI4IOE 0x43, P2 | `external_5v_power` · `pin` |
+| Alimentation du Wi-Fi | PI4IOE 0x44, P0 | `wifi_power` · `pin` |
+| Alimentation USB | PI4IOE 0x44, P3 | `usb_5v_power` · `pin` |
+| Liaison ESP32-C6 (SDIO), horloge | GPIO 12 | `esp32_hosted` · `clk_pin` |
+| Liaison ESP32-C6 (SDIO), commande | GPIO 13 | `esp32_hosted` · `cmd_pin` |
+| Liaison ESP32-C6 (SDIO), données 0 | GPIO 11 | `esp32_hosted` · `d0_pin` |
+| Liaison ESP32-C6 (SDIO), données 1 | GPIO 10 | `esp32_hosted` · `d1_pin` |
+| Liaison ESP32-C6 (SDIO), données 2 | GPIO 9 | `esp32_hosted` · `d2_pin` |
+| Liaison ESP32-C6 (SDIO), données 3 | GPIO 8 | `esp32_hosted` · `d3_pin` |
+| Reset de l'ESP32-C6 | GPIO 15 | `esp32_hosted` · `reset_pin` |
+
+Le firmware ne déclare qu'un bus I2C (`bsp_bus`) : toutes les puces I2C qu'il pilote y sont, les deux expandeurs d'E/S, le contrôleur tactile, l'ES8388 et l'ES7210, le capteur de mouvement BMI270 (0x68, `Tab5/tab5-imu.yaml`) et l'horloge RX8130CE (0x32).
+
+---
+
 ## Audio — DAC ES8388
 
 Le Tab5 intègre un codec audio **ES8388**, utilisé ici pour le chemin DAC (sortie haut-parleur) via la plateforme native `audio_dac: es8388` d'ESPHome. L'entrée microphone passe par un chip ADC séparé, l'**ES7210** (`audio_adc: es7210`, 16 kHz / 16 bits), dont l'ESP32-P4 lit la sortie en I2S.
 
 ### Connexions
 
-| Signal | GPIO |
-|--------|------|
-| I2C SDA (contrôle DAC) | GPIO 31 |
-| I2C SCL (contrôle DAC) | GPIO 32 |
-| I2S BCLK (horloge audio) | GPIO 26 (partagé) |
-| I2S LRCLK (word select) | GPIO 29 (partagé) |
-| I2S DOUT (données vers DAC) | GPIO 26 |
-| Activation ampli | GPIO (switch logiciel) |
+Les deux puces se règlent par le bus I2C interne et partagent **un seul** bus I2S (`mic_bus`) : les trois horloges sont communes, chaque sens a sa ligne de données. Une seule des deux peut tenir ce bus à la fois ([ADR-0010](decisions/0010-shared-i2s-bus-mic-speaker.md)). L'ampli du haut-parleur est commandé par le premier expandeur d'E/S (`speaker_enable`). Les broches sont dans [Broches](#broches).
 
 ### Problème de séquence au boot
 
@@ -227,14 +272,7 @@ Cet ordre garantit que l'horloge I2S est stable avant que l'ampli ouvre le chemi
 
 ## Microphone — ADC ES7210 via I2S
 
-Le microphone intégré est capturé par le chip ADC **ES7210** (`audio_adc: es7210`), qui streame vers l'ESP32-P4 en I2S (`adc_type: external`).
-
-| Signal | GPIO |
-|--------|------|
-| I2S DIN (données du micro) | GPIO 28 |
-| I2S BCLK | GPIO 27 |
-| I2S LRCLK | GPIO 29 |
-| I2S MCLK | GPIO 30 |
+Le microphone intégré est capturé par le chip ADC **ES7210** (`audio_adc: es7210`), qui streame vers l'ESP32-P4 en I2S (`adc_type: external`), sur le bus qu'il partage avec le haut-parleur (voir [Broches](#broches)).
 
 Paramètres de capture : **16 kHz, 16-bit mono**. Correspond au format d'entrée attendu par le composant `micro_wake_word` et par le pipeline vocal de Home Assistant.
 
