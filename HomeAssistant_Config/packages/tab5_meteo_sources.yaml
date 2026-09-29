@@ -17,7 +17,10 @@
 #         5 à 10 min) ou OpenWeatherMap en mode « v3.0 » (action
 #         `openweathermap.get_minute_forecast`, série à la minute en mm/h, lue dans
 #         le cache de l'intégration : aucun appel d'API en plus). Aucune autre
-#         intégration officielle n'expose une série exploitable en barres ;
+#         intégration officielle n'expose une série exploitable en barres : depuis le
+#         29/09/2026, quatre services SANS CLÉ sont interrogés directement par
+#         `rest_command.tab5_pluie` (radars Buienradar, DWD par Bright Sky, Met.no ;
+#         modèle Open-Meteo), aux coordonnées de zone.home ;
 #       - vigilances : Météo-France (`sensor.<dept>_weather_alert`, 9 phénomènes),
 #         MeteoAlarm (39 pays européens, `binary_sensor`, UNE seule alerte : la
 #         bibliothèque s'arrête à la première ; `on` seulement si elle n'a pas expiré),
@@ -41,7 +44,8 @@
 #       Sans ces intégrations (données de test du CI), les mêmes formes sont
 #       reconnues à leurs attributs.
 #       Une source choisie sans entité donne « pas de données » (pluie) ou aucune
-#       vigilance ; « Aucune » masque la carte.
+#       vigilance ; « Aucune » masque la carte. Les sources de pluie sans clé n'ont
+#       rien à trouver : hors de leur zone, elles donnent « pas de données ».
 # @install `homeassistant: packages: !include_dir_named packages`, puis ce fichier
 #       dans config/packages/. Rien à renseigner.
 # @ai_warning Les options des input_select sont lues par les modèles ci-dessous :
@@ -55,6 +59,10 @@ input_select:
     options:
       - "Météo-France"
       - "OpenWeatherMap"
+      - "Buienradar"
+      - "DWD"
+      - "Met.no"
+      - "Open-Meteo"
       - "Aucune"
   tab5_source_vigilance:
     name: "Tab5 · source des vigilances"
@@ -76,6 +84,39 @@ input_text:
     name: "Tab5 · entité météo choisie"
     icon: mdi:weather-partly-cloudy
     max: 255
+
+# Pluie dans l'heure des sources radar sans clé (29/09/2026), appelée par « Tab5 Pluie
+# dans l'heure » seulement quand l'une d'elles est choisie. Coordonnées du domicile
+# (zone.home) arrondies à 0,01° (~1 km, la maille des radars), envoyées au seul
+# service choisi. Réponses vérifiées le 29/09/2026 :
+#   - Buienradar : Pays-Bas et Belgique (hors zone : 404), usage non commercial, source
+#     à citer (https://www.buienradar.nl/overbuienradar/gratis-weerdata) ;
+#   - DWD par Bright Sky (https://brightsky.dev) : composite radar du DWD, Allemagne et
+#     pays voisins (hors zone : 404) ; `date` = il y a 5 min, sinon la réponse commence
+#     1 h avant la dernière mesure ; gzip exigé ;
+#   - Met.no Nowcast 2.0 : pays nordiques (hors zone : 422), User-Agent identifiant
+#     exigé, CC BY 4.0 ;
+#   - Open-Meteo : partout, mais un MODÈLE et non le radar, au pas de 15 min (vrai pas
+#     de 15 min en Europe centrale et en Amérique du Nord, interpolé ailleurs) ; usage
+#     non commercial, CC BY 4.0.
+rest_command:
+  tab5_pluie:
+    url: >-
+      {%- set la = '%.2f' | format(lat | float(0)) -%}{%- set lo = '%.2f' | format(lon | float(0)) -%}
+      {%- if source == 'Buienradar' -%}
+        https://gpsgadget.buienradar.nl/data/raintext?lat={{ la }}&lon={{ lo }}
+      {%- elif source == 'DWD' -%}
+        https://api.brightsky.dev/radar?lat={{ la }}&lon={{ lo }}&distance=0&format=plain&date={{ (utcnow() - timedelta(minutes=5)).strftime('%Y-%m-%dT%H:%M') }}
+      {%- elif source == 'Met.no' -%}
+        https://api.met.no/weatherapi/nowcast/2.0/complete?lat={{ la }}&lon={{ lo }}
+      {%- else -%}
+        https://api.open-meteo.com/v1/forecast?latitude={{ la }}&longitude={{ lo }}&minutely_15=precipitation&forecast_minutely_15=6&timeformat=unixtime
+      {%- endif -%}
+    method: get
+    headers:
+      User-Agent: "M5-Tab5-ESPHome-LVGL (https://github.com/Axellum/M5-Tab5-ESPHome-LVGL)"
+      Accept-Encoding: "gzip"
+    timeout: 15
 
 template:
   # ──────────────────────────────────────────────────────────────────────────
@@ -172,7 +213,8 @@ template:
 
   # ──────────────────────────────────────────────────────────────────────────
   # Pluie dans l'heure — capteur à déclencheurs : il peut appeler l'action
-  # d'OpenWeatherMap (`actions:`), dont la réponse (`owm`) sert aux modèles.
+  # d'OpenWeatherMap ou rest_command.tab5_pluie (`actions:`), dont la réponse est
+  # ramenée à une série commune (`serie`) que lisent les modèles.
   # ──────────────────────────────────────────────────────────────────────────
   - triggers:
       # Météo-France : état ET attributs (`1_hour_forecast` change toutes les 5 min).
@@ -182,7 +224,8 @@ template:
       - trigger: state
         entity_id: sensor.tab5_sources_meteo
       # OpenWeatherMap : HA l'interroge toutes les 10 min ; 5 min ici pour que les
-      # créneaux, calculés par rapport à maintenant, restent justes.
+      # créneaux, calculés par rapport à maintenant, restent justes. Sources radar :
+      # une requête toutes les 5 min (leur pas), seulement quand elles sont choisies.
       - trigger: time_pattern
         minutes: "/5"
       - trigger: state
@@ -191,9 +234,19 @@ template:
         event: start
       - trigger: event
         event_type: event_template_reloaded
+    # Le relevé Météo-France ne sert qu'à Météo-France : avec une autre source, il
+    # doublerait les requêtes (et, sans requête, viderait la série).
+    conditions:
+      - condition: template
+        value_template: >-
+          {{ not (trigger.platform == 'state' and trigger.entity_id == 'sensor.tab5_releve_pluie_meteo_france'
+                  and states('input_select.tab5_source_pluie') != 'Météo-France') }}
     variables:
       mf_pluie: "{{ state_attr('sensor.tab5_sources_meteo', 'mf_pluie') or '' }}"
       owm_meteo: "{{ state_attr('sensor.tab5_sources_meteo', 'owm') or '' }}"
+      source: "{{ states('input_select.tab5_source_pluie') }}"
+      lat: "{{ state_attr('zone.home', 'latitude') }}"
+      lon: "{{ state_attr('zone.home', 'longitude') }}"
     actions:
       # Garde has_value() : sans l'intégration OpenWeatherMap, l'action n'existe pas
       # et HA lève « Action … not found », que continue_on_error ne rattrape PAS
@@ -211,6 +264,77 @@ template:
               entity_id: "{{ owm_meteo }}"
             response_variable: owm
             continue_on_error: true
+      # Sources radar sans clé (29/09/2026) : rest_command.tab5_pluie (plus bas), aux
+      # coordonnées du domicile. Hors zone, le service répond 404 ou 422 (« pas de
+      # données ») ; une panne réseau est rattrapée par continue_on_error.
+      - if:
+          - condition: template
+            value_template: >-
+              {{ source in ['Buienradar', 'DWD', 'Met.no', 'Open-Meteo'] and lat is number and lon is number }}
+        then:
+          - action: rest_command.tab5_pluie
+            data:
+              source: "{{ source }}"
+              lat: "{{ lat }}"
+              lon: "{{ lon }}"
+            response_variable: rep
+            continue_on_error: true
+      # Série commune : [début (epoch), durée (min), intensité (mm/h)] par point ;
+      # none = pas de réponse exploitable. Unités d'origine :
+      #   - OpenWeatherMap : points à la minute, `precipitation` en mm/h ; réponse d'une
+      #     action d'entité (clé = entity_id, la forme nue { forecast: [...] } aussi) ;
+      #   - Buienradar : texte « valeur|HH:MM » par 5 min sur 2 h, valeur 0-255 en
+      #     mm/h = 10^((valeur - 109) / 32) (formule de la bibliothèque buienradar) ;
+      #     heure d'Amsterdam, supposée celle de HA (même fuseau en NL, BE, LU, FR, DE) ;
+      #   - DWD (Bright Sky, produit radar RV) : `precipitation_5` en 0,01 mm / 5 min ;
+      #   - Met.no (Nowcast 2.0) : `precipitation_rate` en mm/h par 5 min, seulement si
+      #     `radar_coverage` = ok ;
+      #   - Open-Meteo : `minutely_15.precipitation` = mm tombés dans les 15 min
+      #     PRÉCÉDANT l'heure donnée (epoch, timeformat=unixtime).
+      - variables:
+          serie: >-
+            {%- set ns = namespace(l=[]) -%}
+            {%- if source == 'OpenWeatherMap' -%}
+              {%- set r = (owm.get(owm_meteo, owm) if owm is defined and owm is mapping else {}) -%}
+              {%- for e in (r.get('forecast', []) if r is mapping else []) -%}
+                {%- set ns.l = ns.l + [[as_timestamp(e.get('datetime'), 0) | int(0), 1, e.get('precipitation') | float(0)]] -%}
+              {%- endfor -%}
+            {%- elif rep is defined and rep is mapping and rep.get('status') == 200 -%}
+              {%- set c = rep.get('content') -%}
+              {%- if source == 'Buienradar' and c is string -%}
+                {%- set n0 = now().replace(second=0, microsecond=0) -%}
+                {%- for ligne in c.split('\n') if '|' in ligne -%}
+                  {%- set v = ligne.split('|')[0] | trim | int(-1) -%}
+                  {%- set hm = ligne.split('|')[1] | trim -%}
+                  {%- set d = (hm[:2] | int(0)) * 60 + (hm[3:5] | int(0)) - (n0.hour * 60 + n0.minute) -%}
+                  {%- set d = d + 1440 if d < -720 else (d - 1440 if d > 720 else d) -%}
+                  {%- if v >= 0 -%}
+                    {%- set ns.l = ns.l + [[(n0 + timedelta(minutes=d)).timestamp() | int, 5,
+                                           (10 ** ((v - 109) / 32)) if v > 0 else 0]] -%}
+                  {%- endif -%}
+                {%- endfor -%}
+              {%- elif source == 'DWD' and c is mapping -%}
+                {%- for x in c.get('radar', []) -%}
+                  {%- set v = x.get('precipitation_5', 0) -%}
+                  {%- set v = (v | first | first) if v is iterable and v is not string else v -%}
+                  {%- set ns.l = ns.l + [[as_timestamp(x.get('timestamp'), 0) | int(0), 5, (v | float(0)) * 0.12]] -%}
+                {%- endfor -%}
+              {%- elif source == 'Met.no' and c is mapping
+                    and (c.get('properties') or {}).get('meta', {}).get('radar_coverage') == 'ok' -%}
+                {%- for x in c.get('properties', {}).get('timeseries', []) -%}
+                  {%- set d = ((x.get('data') or {}).get('instant') or {}).get('details') or {} -%}
+                  {%- set ns.l = ns.l + [[as_timestamp(x.get('time'), 0) | int(0), 5, d.get('precipitation_rate', 0) | float(0)]] -%}
+                {%- endfor -%}
+              {%- elif source == 'Open-Meteo' and c is mapping -%}
+                {%- set m = c.get('minutely_15') or {} -%}
+                {%- set p = m.get('precipitation') or [] -%}
+                {%- for t in m.get('time') or [] -%}
+                  {%- set mm = (p[loop.index0] if loop.index0 < p | length else 0) | float(0) -%}
+                  {%- set ns.l = ns.l + [[(t | int(0)) - 900, 15, mm * 4]] -%}
+                {%- endfor -%}
+              {%- endif -%}
+            {%- endif -%}
+            {{ ns.l if ns.l else none }}
     sensor:
       - name: "Tab5 Pluie dans l'heure"
         unique_id: tab5_pluie_dans_l_heure
@@ -224,35 +348,31 @@ template:
           {% set source = states('input_select.tab5_source_pluie') %}
           {% if source == 'Aucune' %}
             @-
-          {% elif source == 'OpenWeatherMap' %}
-            {# Réponse d'une action d'entité : clé = entity_id (forme courante) ; la
-               forme nue { forecast: [...] } est acceptée aussi. Seuils en mm/h :
-               < 0,1 sec, < 2,5 faible, < 7,6 modérée, < 50 forte, au-delà très forte
-               (classes usuelles « light / moderate / heavy / violent »). #}
-            {% set r = (owm.get(owm_meteo, owm) if owm is defined and owm is mapping else {}) %}
-            {% set m = r.get('forecast', []) if r is mapping else [] %}
-            {% if m | length == 0 %}
+          {% elif source in ['OpenWeatherMap', 'Buienradar', 'DWD', 'Met.no', 'Open-Meteo'] %}
+            {# Série commune (variables des actions). Seuils en mm/h : < 0,1 sec,
+               < 2,5 faible, < 7,6 modérée, < 50 forte, au-delà très forte (classes
+               usuelles « light / moderate / heavy / violent »). #}
+            {% if serie is not defined or serie is none or serie | length == 0 %}
               @-1,0
             {% else %}
-              {# Minutes déjà passées ignorées : la série vient du cache de l'intégration,
-                 rafraîchi toutes les 10 min — une averse finie il y a 5 min y figure
-                 encore et donnait « pluie en cours » avec 9 barres vides (banc du
-                 29/09/2026). #}
+              {# Points déjà finis ignorés : la série d'OpenWeatherMap vient du cache de
+                 l'intégration, rafraîchi toutes les 10 min — une averse finie il y a
+                 5 min y figure encore et donnait « pluie en cours » avec 9 barres vides
+                 (banc du 29/09/2026). Un point dure son pas (1, 5 ou 15 min). #}
               {% set ns = namespace(debut=0, mmh=0, trouve=false) %}
-              {% set depuis = now().timestamp() - 60 %}
-              {% for e in m %}
-                {% if not ns.trouve and as_timestamp(e.get('datetime'), 0) >= depuis
-                      and (e.get('precipitation') | float(0)) >= 0.1 %}
+              {% set t = now().timestamp() %}
+              {% for p in serie %}
+                {% if not ns.trouve and p[0] + p[1] * 60 > t and p[2] >= 0.1 %}
                   {% set ns.trouve = true %}
-                  {% set ns.debut = as_timestamp(e.get('datetime'), 0) | int(0) %}
-                  {% set ns.mmh = e.get('precipitation') | float(0) %}
+                  {% set ns.debut = p[0] %}
+                  {% set ns.mmh = p[2] %}
                 {% endif %}
               {% endfor %}
               {% if not ns.trouve %}
                 @0,0
               {% else %}
                 {% set n = 1 if ns.mmh < 2.5 else 2 if ns.mmh < 7.6 else 3 if ns.mmh < 50 else 4 %}
-                @{{ n }},{{ ns.debut if ns.debut > now().timestamp() else 0 }}
+                @{{ n }},{{ ns.debut if ns.debut > t else 0 }}
               {% endif %}
             {% endif %}
           {% else %}
@@ -286,9 +406,10 @@ template:
           {% endif %}
         attributes:
           # 9 barres « idx|intensité; » (idx 0..8 = 0, 5, 10, 15, 20, 25, 35, 45,
-          # 55 min). Météo-France : ses libellés, tels quels. OpenWeatherMap : niveau
-          # 0 à 4, le plus fort de la fenêtre (mêmes seuils que l'état). Aucune source
-          # ou pas de données : 9 barres vides (le panneau Pluie ne tourne pas).
+          # 55 min). Météo-France : ses libellés, tels quels. Autres sources : niveau
+          # 0 à 4, le plus fort des points qui touchent la fenêtre (mêmes seuils que
+          # l'état ; un point de 15 min d'Open-Meteo couvre trois barres). Aucune
+          # source ou pas de données : 9 barres vides (le panneau Pluie ne tourne pas).
           barres: >
             {% set source = states('input_select.tab5_source_pluie') %}
             {% set ns = namespace(r='') %}
@@ -296,17 +417,15 @@ template:
               {% set fc = state_attr(mf_pluie, '1_hour_forecast') %}
               {% set cles = ['0 min', '5 min', '10 min', '15 min', '20 min', '25 min', '35 min', '45 min', '55 min'] %}
               {% for k in cles %}{% set ns.r = ns.r ~ loop.index0 ~ '|' ~ fc.get(k, 'Inconnu') ~ ';' %}{% endfor %}
-            {% elif source == 'OpenWeatherMap' %}
-              {% set r = (owm.get(owm_meteo, owm) if owm is defined and owm is mapping else {}) %}
-              {% set m = r.get('forecast', []) if r is mapping else [] %}
+            {% elif source in ['OpenWeatherMap', 'Buienradar', 'DWD', 'Met.no', 'Open-Meteo']
+                    and serie is defined and serie is not none %}
               {% set bornes = [0, 5, 10, 15, 20, 25, 35, 45, 55, 60] %}
               {% set maintenant = now().timestamp() %}
               {% for i in range(9) %}
                 {% set f = namespace(mx=0) %}
-                {% for e in m %}
-                  {% set rel = (as_timestamp(e.get('datetime'), 0) - maintenant) / 60 %}
-                  {% set p = e.get('precipitation') | float(0) %}
-                  {% if rel >= bornes[i] and rel < bornes[i + 1] and p > f.mx %}{% set f.mx = p %}{% endif %}
+                {% for p in serie %}
+                  {% set rel = (p[0] - maintenant) / 60 %}
+                  {% if rel < bornes[i + 1] and rel + p[1] > bornes[i] and p[2] > f.mx %}{% set f.mx = p[2] %}{% endif %}
                 {% endfor %}
                 {% set n = 0 if f.mx < 0.1 else 1 if f.mx < 2.5 else 2 if f.mx < 7.6 else 3 if f.mx < 50 else 4 %}
                 {% set ns.r = ns.r ~ i ~ '|' ~ n ~ ';' %}

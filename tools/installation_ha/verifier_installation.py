@@ -13,7 +13,9 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
            plus aucun placeholder à remplir, ADR-0024) et ce qu'en déduisent les
            packages ; chaque source de vigilances (VIGILANCES : DWD et CAP Alerts par
            la macro de custom_templates/, Aucune, puis Météo-France) et ce qu'en tire
-           « Tab5 Vigilance » ; le blueprint est déjà dans config/ (preparer_config.py) ;
+           « Tab5 Vigilance » ; la pluie dans l'heure d'Open-Meteo, service sans clé
+           appelé par rest_command (PLUIE_SANS_CLE), puis retour à Météo-France ; le
+           blueprint est déjà dans config/ (preparer_config.py) ;
         2. ajouter la tablette (ESPHome, hôte + port). L'option « Autoriser l'appareil
            à effectuer des actions Home Assistant » n'est plus une étape (ADR-0025) :
            elle reste décochée, et c'est vérifié ;
@@ -119,6 +121,13 @@ VIGILANCES = (
     ("Aucune", "Vert", "|".join(["Vert"] * 11)),
     ("Météo-France", "Jaune", "Vert|Vert|Jaune|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert"),
 )
+# Pluie dans l'heure par un service sans clé (rest_command.tab5_pluie) : Open-Meteo, le
+# seul qui couvre le domicile par défaut d'un HA neuf où qu'il soit. Le code doit être
+# un vrai relevé (sec ou pluie), pas « pas de données » (@-1). Dépend du réseau du
+# runner et du service : le job n'est pas requis.
+LISTE_PLUIE = "input_select.tab5_source_pluie"
+PLUIE_SANS_CLE = "Open-Meteo"
+CODE_RELEVE = re.compile(r"^@[0-4],\d+$")
 
 # Automatisation créée depuis le blueprint (étape 4, point 6) et ses entrées : des
 # entités de l'intégration demo et de donnees_test.yaml. Pots 4 et 5 laissés vides :
@@ -767,6 +776,32 @@ async def verifier_vigilances(ha: HA, rapport: Rapport) -> None:
                          f"source {attributs.get('source')!r}")
 
 
+async def verifier_pluie_sans_cle(ha: HA, rapport: Rapport) -> None:
+    """« Tab5 · source de la pluie dans l'heure » sur PLUIE_SANS_CLE : le capteur à
+    déclencheurs appelle rest_command.tab5_pluie aux coordonnées de zone.home et en tire
+    un relevé et 9 barres ; puis retour à Météo-France (données de test), avant l'ajout
+    de la tablette."""
+    avant = ((await ha.etats()).get("sensor.tab5_pluie_dans_l_heure") or {}).get("state")
+    await ha.post("/api/services/input_select/select_option", {"entity_id": LISTE_PLUIE, "option": PLUIE_SANS_CLE})
+    fin = time.monotonic() + 45
+    etat: dict = {}
+    while time.monotonic() < fin:
+        etat = (await ha.etats()).get("sensor.tab5_pluie_dans_l_heure") or {}
+        attributs = etat.get("attributes") or {}
+        if attributs.get("source") == PLUIE_SANS_CLE and CODE_RELEVE.match(etat.get("state") or ""):
+            break
+        await asyncio.sleep(1)
+    attributs = etat.get("attributes") or {}
+    barres = [b for b in (attributs.get("barres") or "").split(";") if b]
+    rapport.verifier(CODE_RELEVE.match(etat.get("state") or "") is not None and len(barres) == 9,
+                     f"pluie « {PLUIE_SANS_CLE} » (rest_command, sans clé) : relevé {etat.get('state')}, 9 barres",
+                     f"état {etat.get('state')!r}, barres {attributs.get('barres')!r}, source {attributs.get('source')!r} "
+                     "(journal de HA : rest_command, réseau du runner ?)")
+    await ha.post("/api/services/input_select/select_option", {"entity_id": LISTE_PLUIE, "option": "Météo-France"})
+    retour = await attendre_attribut(ha, "sensor.tab5_pluie_dans_l_heure", None, avant)
+    rapport.verifier(retour == avant, f"pluie remise sur Météo-France ({avant})", f"état {retour!r}")
+
+
 async def verifier_tablette_detectee(ha: HA, rapport: Rapport) -> None:
     """La tablette ajoutée est trouvée par le modèle de son appareil (sensor.tab5_tablette),
     sans nom d'entité écrit dans les packages, et son miroir de liaison est `on`."""
@@ -1246,6 +1281,7 @@ async def scenario(args, rapport: Rapport) -> None:
             await creer_agenda(ha, rapport)
             await choisir_sources(ha, rapport)
             await verifier_vigilances(ha, rapport)
+            await verifier_pluie_sans_cle(ha, rapport)
             await verifier_blueprint(ha, rapport)
 
             # 4 : ajout de la tablette dans sa fenêtre d'appairage (plus d'option « actions
