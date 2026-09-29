@@ -100,7 +100,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Dem.": "Domani"
 # Nom de jour envoyé par HA pour aujourd'hui (tuiles météo de l'accueil), sans point.
 "Auj": "Oggi"
-"Aucun travail de prevu": "Nessun lavoro previsto"
+"Aucun travail de prévu": "Nessun lavoro previsto"
 "Jour": "Giorno"
 "{jour} : {horaire}": "{jour}: {horaire}"
 "{jour} : #fb923c {horaire}#": "{jour}: #fb923c {horaire}#"
