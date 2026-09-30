@@ -12,7 +12,11 @@ ne se voit qu'une fois flashé est vérifié ici :
   horaires suivent le contrat ;
 - les pièces (ADR-0023) ne partent qu'à un firmware qui a `tab5_maj_tuiles`, les
   définitions avant les états, et les commandes des tuiles sont journalisées par leur
-  nom (grammaire des payloads : tests/test_demo_pieces.py)."""
+  nom (grammaire des payloads : tests/test_demo_pieces.py) ;
+- chaque appel a exactement les variables déclarées par le firmware : les fausses
+  actions portent les vraies variables de Tab5/tab5-api-logic.yaml, donc la garde de
+  `_appeler` joue enfin ici (audit du 30/09/2026 : sans variables, elle ne se
+  déclenchait jamais), et --dry-run échoue sur une variable renommée."""
 import asyncio
 import contextlib
 import io
@@ -78,18 +82,73 @@ class _Tablette:
         self.appels.append((service.name, dict(data)))
 
 
-def _pousser(monkeypatch, avec_tuiles, absentes=frozenset()):
+def _pousser(monkeypatch, avec_tuiles, absentes=frozenset(), scene=None):
+    """Une scène poussée à une tablette dont les actions ont les VRAIES variables du
+    firmware (Tab5/tab5-api-logic.yaml) : la garde de contrat de `_appeler` joue."""
     async def instant(*_args, **_kwargs):
         return None
 
     monkeypatch.setattr(demo_pusher.asyncio, "sleep", instant)
     noms = list(demo_pusher.SERVICES_ATTENDUS) + ([demo_pusher.SERVICE_TUILES] if avec_tuiles else [])
-    services = {n: SimpleNamespace(name=n, args=[SimpleNamespace(name="payload")]
-                                   if n in ("tab5_maj_emplacements", demo_pusher.SERVICE_TUILES) else [])
-                for n in noms}
+    contrat = demo_pusher.lire_contrat()
+    services = demo_pusher.services_du_contrat({n: contrat[n] for n in noms})
     tablette = _Tablette()
-    asyncio.run(demo_pusher._pousser_scene(tablette, services, scenarios.SCENES[2], absentes))
+    asyncio.run(demo_pusher._pousser_scene(tablette, services, scene or scenarios.SCENES[2], absentes))
     return tablette.appels
+
+
+def test_chaque_appel_a_les_variables_du_firmware(monkeypatch, caplog):
+    """Toutes les scènes, les deux maisons, les deux firmwares : aucun appel écarté par la
+    garde, et les clés de chaque appel sont exactement les variables de l'action."""
+    contrat = demo_pusher.lire_contrat()
+    appeles = set()
+    with caplog.at_level(logging.WARNING, logger="demo_pusher"):
+        for scene in scenarios.SCENES:
+            for absentes in (frozenset(), scenarios.MAISON_MINIMALE):
+                for avec_tuiles in (True, False):
+                    for nom, donnees in _pousser(monkeypatch, avec_tuiles, absentes, scene):
+                        assert sorted(donnees) == sorted(contrat[nom]), nom
+                        appeles.add(nom)
+    assert not caplog.records, [r.getMessage() for r in caplog.records]
+    # Les actions de la démo : SERVICES_ATTENDUS (zones compris, poussé à part) et les pièces.
+    assert appeles | {"tab5_maj_zones"} == set(demo_pusher.SERVICES_ATTENDUS) | {demo_pusher.SERVICE_TUILES}
+
+
+def test_la_garde_refuse_un_argument_manquant_ou_en_trop(caplog):
+    """La garde de `_appeler` : un appel qui n'a pas exactement les variables déclarées
+    n'est pas envoyé (Home Assistant le refuserait aussi), et le journal le dit."""
+    services = demo_pusher.services_du_contrat({"tab5_maj_info_texte": ("texte", "couleur", "meteo_id")})
+    tablette = _Tablette()
+    with caplog.at_level(logging.ERROR, logger="demo_pusher"):
+        asyncio.run(demo_pusher._appeler(tablette, services, "tab5_maj_info_texte", texte="a", couleur="b"))
+        asyncio.run(demo_pusher._appeler(tablette, services, "tab5_maj_info_texte",
+                                         texte="a", couleur="b", meteo_id="", source="x"))
+        asyncio.run(demo_pusher._appeler(tablette, services, "tab5_maj_info_texte",
+                                         texte="a", couleur="b", meteo_id=""))
+    assert tablette.appels == [("tab5_maj_info_texte", {"texte": "a", "couleur": "b", "meteo_id": ""})]
+    messages = [r.getMessage() for r in caplog.records]
+    assert len(messages) == 2
+    assert "manquant(s) ['meteo_id']" in messages[0] and "en trop ['source']" in messages[1]
+
+
+def test_dry_run_echoue_sur_un_contrat_change(monkeypatch, tmp_path):
+    """--dry-run lit le contrat du firmware : une variable renommée dans
+    Tab5/tab5-api-logic.yaml le fait échouer (étape de la CI)."""
+    texte = _lire("Tab5", "tab5-api-logic.yaml")
+    assert texte.count("        meteo_id:\n") == 1
+    faux = tmp_path / "tab5-api-logic.yaml"
+    faux.write_text(texte.replace("        meteo_id:\n", "        meteo_ref:\n"), encoding="utf-8")
+    monkeypatch.setattr(demo_pusher, "API_LOGIC", faux)
+    sortie = io.StringIO()
+    with contextlib.redirect_stdout(sortie):
+        try:
+            demo_pusher._dry_run(frozenset())
+        except SystemExit as fin:
+            assert "écart(s)" in str(fin)
+        else:
+            raise AssertionError("--dry-run aurait dû échouer")
+    assert "ÉCART : tab5_maj_info_texte : argument(s) manquant(s) ['meteo_ref'] ; argument(s) en trop ['meteo_id']" \
+        in sortie.getvalue()
 
 
 def test_firmware_3x_sans_pieces(monkeypatch):
