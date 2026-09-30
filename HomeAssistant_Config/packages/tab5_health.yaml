@@ -405,8 +405,9 @@ automation:
   # --------------------------------------------------------------------------
   # Le firmware se met à jour depuis HA (entité « Firmware ») ; ces fichiers,
   # eux, se remplacent à la main (archive tab5_home_assistant.zip de la même
-  # release). Une tablette plus récente que ses fichiers peut demander ce qu'ils
-  # ne savent pas encore faire, sans aucune erreur visible. Notification
+  # release). Une tablette plus récente que ses fichiers (X.Y : une version
+  # corrective ne compte pas) peut demander ce qu'ils ne savent pas encore
+  # faire, sans aucune erreur visible. Notification
   # persistante seulement (pas de téléphone : rien ne presse), retirée quand
   # les versions se rejoignent.
   # ==========================================================================
@@ -462,17 +463,21 @@ template:
         icon: mdi:package-variant
         state: "dépôt"  # >>> version de l'archive
     binary_sensor:
-      # Allumé quand la tablette tourne une version X.Y.Z plus récente que ces
-      # fichiers (suffixe -rc.N ou -dev ignoré). Éteint si l'une des deux est
-      # illisible : fichiers copiés depuis le dépôt, firmware compilé soi-même
-      # (« 3.2.0-dev » est lisible et sert).
+      # Allumé quand la tablette tourne une version X.Y (majeure, mineure) plus
+      # récente que ces fichiers. Le correctif Z et un suffixe -rc.N ou -dev sont
+      # ignorés : une version corrective ne change pas le contrat, et ne demande
+      # parfois qu'un seul fichier (la 3.3.1 : le blueprint seul), ce qui laissait
+      # ce marqueur à 3.3.0 et l'alerte allumée à tort (audit du 30/09/2026).
+      # Éteint si l'une des deux est illisible : fichiers copiés depuis le dépôt
+      # (« dépôt »), firmware sans version ; « 3.3.1-dev » est lisible et sert.
+      # Rendu par tests/test_version.py.
       - name: "Tab5 · fichiers HA en retard · HA files out of date"
         unique_id: tab5_fichiers_ha_en_retard
         default_entity_id: binary_sensor.tab5_fichiers_ha_en_retard
         device_class: update
         state: >-
-          {%- set f = states('sensor.tab5_version_des_fichiers_ha') | regex_findall('^(\\d+)\\.(\\d+)\\.(\\d+)') -%}
-          {%- set t = (state_attr('sensor.tab5_tablette', 'version') or '') | regex_findall('^(\\d+)\\.(\\d+)\\.(\\d+)') -%}
+          {%- set f = states('sensor.tab5_version_des_fichiers_ha') | regex_findall('^(\\d+)\\.(\\d+)') -%}
+          {%- set t = (state_attr('sensor.tab5_tablette', 'version') or '') | regex_findall('^(\\d+)\\.(\\d+)') -%}
           {{ (f | count > 0 and t | count > 0) and (t[0] | map('int') | list) > (f[0] | map('int') | list) }}
         attributes:
           fichiers: "{{ states('sensor.tab5_version_des_fichiers_ha') }}"

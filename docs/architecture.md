@@ -280,7 +280,7 @@ For the 15-day daily forecast, 15 × 4+ data points (day, condition, max temp, m
 
 The C++ tokenizer splits on `;` in a single pass — O(n) on string length, not O(n) on call count. The LVGL update then happens once, atomically, without intermediate redraws.
 
-Same pattern applies to the hourly forecast (`tab5_maj_previsions_heures_bulk`) and the Météo-France vigilance payload (`tab5_maj_alerte_meteo_france`, 11 `|`-delimited fields).
+Same pattern applies to the hourly forecast (`tab5_maj_previsions_heures_bulk`) and the Météo-France vigilance payload (`tab5_maj_alerte_meteo_france`, 11 to 13 `|`-delimited fields: fog and forest fire at the end are optional).
 
 ---
 
@@ -546,7 +546,7 @@ Pour les prévisions journalières sur 15 jours, 15 × 4+ points de données (jo
 
 Le tokenizer C++ découpe sur `;` en un seul passage — O(n) sur la longueur de chaîne, pas O(n) sur le nombre d'appels. La mise à jour LVGL se fait ensuite une seule fois, de façon atomique, sans redraws intermédiaires.
 
-Même schéma pour les prévisions horaires (`tab5_maj_previsions_heures_bulk`) et le payload de vigilance Météo-France (`tab5_maj_alerte_meteo_france`, 11 champs délimités par `|`).
+Même schéma pour les prévisions horaires (`tab5_maj_previsions_heures_bulk`) et le payload de vigilance Météo-France (`tab5_maj_alerte_meteo_france`, 11 à 13 champs délimités par `|` : brouillard et feux de forêt, en fin, sont facultatifs).
 
 ---
 

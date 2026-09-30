@@ -22,10 +22,12 @@
 #       tab5_redemarrage_ha_confirme       → homeassistant.restart (émis seulement par
 #                                            « Confirmer » de la console système)
 #       Les autres événements de la tablette ont leur consommateur ailleurs :
-#       tab5_connected (tab5_push, tab5_reveil, blueprint), tab5_zones et tab5_action
-#       (blueprint « Tab5 — emplacements »), tab5_journal (tab5_health). Les
+#       tab5_connected (tab5_push, tab5_reveil, tab5_reglages, blueprint), tab5_zones
+#       et tab5_action (blueprint « Tab5 — emplacements »), tab5_journal (tab5_health) ;
+#       le blueprint écoute aussi tab5_maj_ecran (emplacements, tuiles, zones). Les
 #       tab5_alarm_* sont offerts aux automatisations de l'utilisateur.
-#       tests/test_actions_ha.py compare émetteurs et consommateurs.
+#       tests/test_actions_ha.py compare émetteurs et consommateurs,
+#       tests/test_contrat.py les champs émis et lus.
 # @security Seule une tablette de modèle `tab5-ha-hmi` (bloc `project:` du firmware)
 #       est écoutée, reconnue par le device_id de l'événement, que HA ajoute à tout
 #       événement d'un appareil ESPHome. Aucun nom d'action ni d'entité ne vient de

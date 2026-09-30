@@ -12,9 +12,9 @@ de vrai Home Assistant. Depuis la 3.2 (ADR-0023), les tuiles du bas sont des pi�
 décrites par HA : la démo pousse les siennes (`tab5_maj_tuiles`, puis leurs états)
 quand la tablette a cette action, et rien de plus à un firmware 3.x.
 
-Ne touche à aucun fichier du firmware (Tab5/*.yaml, tab5_custom.cpp/.h) ni à
-Tab5/user_entities.yaml : flashez avec Tab5/user_entities.example.yaml tel
-quel (voir docs/demo_mode.md).
+Ne modifie aucun fichier du firmware (Tab5/*.yaml, tab5_custom.cpp/.h ; --dry-run
+lit Tab5/tab5-api-logic.yaml) et ne lit pas Tab5/user_entities.yaml : flashez avec
+Tab5/user_entities.example.yaml tel quel (voir docs/demo_mode.md).
 
 Clé API (lot 6b, ADR-0020) : aucune n'est compilée depuis la 3.0. Sur une tablette
 déjà ajoutée à HA, la démo prend celle que HA garde (--cle, TAB5_CLE_API ou
@@ -27,7 +27,8 @@ Usage :
     python tools/demo/demo_pusher.py --host 192.168.1.42
     python tools/demo/demo_pusher.py --host 192.168.1.42 --config-ha \\\\192.168.1.10\\config
     python tools/demo/demo_pusher.py --host 192.168.1.42 --maison-minimale   # zones optionnelles (lot 5)
-    python tools/demo/demo_pusher.py --dry-run   # vérifie le format des payloads, sans matériel ni dépendance
+    python tools/demo/demo_pusher.py --dry-run   # sans matériel ni dépendance : clés de chaque appel
+                                                 # = variables de Tab5/tab5-api-logic.yaml, format des payloads
 
 Arrêt : Ctrl+C. Rien à nettoyer ailleurs (pas de HA, pas de compte ; seule la clé
 donnée à une tablette neuve est gardée, dans tools/demo/cle_demo.txt).
@@ -37,15 +38,16 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+import re
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 from scenarios import (
     MAISON_MINIMALE,
     SCENES,
     build_alerte_payload,
     build_emplacements_payload,
-    build_etats_tuiles,
     build_tuiles_payload,
     build_zones_absentes,
     code_pluie,
@@ -64,6 +66,9 @@ logger = logging.getLogger("demo_pusher")
 # Clé donnée par la démo à une tablette jamais ajoutée à HA (gitignoré).
 FICHIER_CLE_DEMO = Path(__file__).resolve().parent / "cle_demo.txt"
 
+# Le contrat du firmware : ses actions et leurs variables (lues par --dry-run).
+API_LOGIC = Path(__file__).resolve().parents[2] / "Tab5" / "tab5-api-logic.yaml"
+
 # Pacing repris de HomeAssistant_Config/packages/tab5_push.yaml : évite de
 # saturer le socket TCP de l'ESP32-P4 (partagé avec le flux audio I2S).
 DELAI_ENTRE_BLOCS = 1.0
@@ -79,6 +84,76 @@ SERVICES_ATTENDUS = (
 # tuiles fixes. Comme le blueprint, la démo ne l'appelle alors pas et ne pousse pas les
 # états des tuiles (clés tRT) : les emplacements 3.x suffisent.
 SERVICE_TUILES = "tab5_maj_tuiles"
+
+
+def lire_contrat(chemin: Path = API_LOGIC) -> dict[str, tuple[str, ...]]:
+    """{action: variables} du bloc `api: services:` du firmware, dans l'ordre du fichier.
+
+    Lu ligne à ligne, sans PyYAML (--dry-run ne demande aucune dépendance) : une action
+    est `    - service: nom`, ses variables les clés à 8 espaces sous `      variables:`.
+    tests/test_contrat.py compare ce résultat à une lecture YAML du même fichier."""
+    contrat: dict[str, list[str]] = {}
+    action = None
+    dans_variables = False
+    for ligne in chemin.read_text(encoding="utf-8").splitlines():
+        if not ligne.strip() or ligne.lstrip().startswith("#"):
+            continue
+        retrait = len(ligne) - len(ligne.lstrip(" "))
+        if m := re.fullmatch(r" {4}- service: (\w+)\s*", ligne):
+            action, dans_variables = m.group(1), False
+            contrat[action] = []
+        elif action is None:
+            continue
+        elif retrait < 4:
+            action = None                      # fin du bloc services:
+        elif re.fullmatch(r" {6}variables:\s*", ligne):
+            dans_variables = True
+        elif dans_variables and retrait <= 6:
+            dans_variables = False             # then:, description:…
+        elif dans_variables and (m := re.match(r" {8}(\w+):", ligne)):
+            contrat[action].append(m.group(1))
+    return {nom: tuple(variables) for nom, variables in contrat.items()}
+
+
+def ecart_de_contrat(attendus, donnees) -> str | None:
+    """Ce qui sépare les clés d'un appel des variables déclarées par le firmware, ou None.
+
+    Home Assistant refuse les deux sens (schéma voluptuous sans `extra`) ; aioesphomeapi
+    lève un KeyError brut sur une variable manquante."""
+    attendus, donnees = set(attendus), set(donnees)
+    ecarts = []
+    if manquants := attendus - donnees:
+        ecarts.append(f"argument(s) manquant(s) {sorted(manquants)}")
+    if en_trop := donnees - attendus:
+        ecarts.append(f"argument(s) en trop {sorted(en_trop)}")
+    return " ; ".join(ecarts) or None
+
+
+def services_du_contrat(contrat: dict) -> dict:
+    """Les actions du contrat sous la forme que donne aioesphomeapi (`.name`, `.args[].name`)."""
+    return {nom: SimpleNamespace(name=nom, args=[SimpleNamespace(name=v) for v in variables])
+            for nom, variables in contrat.items()}
+
+
+class _TabletteABlanc:
+    """Client aioesphomeapi factice de --dry-run : note chaque appel."""
+
+    def __init__(self):
+        self.appels: list[tuple[str, dict]] = []
+
+    async def execute_service(self, service, data):
+        self.appels.append((service.name, dict(data)))
+
+
+class _Ecarts(logging.Handler):
+    """Garde les avertissements et erreurs de la démo pendant --dry-run."""
+
+    def __init__(self):
+        super().__init__(logging.WARNING)
+        self.messages: list[str] = []
+
+    def emit(self, record):
+        self.messages.append(record.getMessage())
 
 
 def _lire_cle_demo() -> str | None:
@@ -125,33 +200,54 @@ async def _donner_une_cle(host: str) -> str:
 
 
 def _dry_run(absentes: frozenset) -> None:
-    """Affiche les payloads de chaque scène sans se connecter à un appareil."""
-    pieces = pieces_de(absentes)
-    print("tab5_maj_zones:", {"absentes": build_zones_absentes(absentes)})
-    print("tab5_maj_emplacements:", build_emplacements_payload(absentes))
-    print(f"{SERVICE_TUILES} (firmware 3.2, pièces) :", build_tuiles_payload(pieces))
-    for scene in SCENES:
-        print(f"\n=== Scène : {scene.nom} ===")
-        print("tab5_maj_meteo_actuelle:", {
-            "condition": scene.meteo_condition,
-            "temperature": str(scene.meteo_temperature),
-            "humidite": str(scene.meteo_humidite),
-        })
-        print("tab5_maj_probabilites:", scene.probabilites)
-        print("tab5_maj_alerte_meteo_france:",
-              build_alerte_payload(phrase_pluie=code_pluie(*scene.pluie), **scene.alerte))
-        print("tab5_maj_pluie_1h_bulk:", build_pluie_1h_bulk_payload(scene.pluie_1h))
-        print("tab5_maj_previsions_heures_bulk (2 appels):")
-        for debut in (0, 5):
-            print("  -", build_heures_bulk_payload(scene.heures[debut:debut + 5]))
-        print("tab5_maj_previsions_jours_bulk:", build_jours_bulk_payload(scene.jours))
-        print("tab5_maj_clim:", "(zone absente, rien)" if "clim" in absentes else scene.clim)
-        print("tab5_maj_volet_etat:", "(zone absente, rien)" if "volet" in absentes else scene.volet_etat)
-        print("tab5_maj_info_texte:", scene.info_texte)
-        # Firmware 3.2 : les emplacements 3.x ci-dessus, puis les états des tuiles.
-        print("tab5_maj_emplacements, clés tRT (firmware 3.2) :",
-              build_etats_tuiles(pieces, _clim_poussee(scene, absentes)))
-    print("\nOK — tous les payloads respectent le contrat (assertions dans scenarios.py).")
+    """Joue chaque scène contre le contrat du firmware, sans appareil ni dépendance.
+
+    Les actions et leurs variables sont lues dans Tab5/tab5-api-logic.yaml
+    (lire_contrat) : chaque appel de la démo passe par la même garde que sur une vraie
+    tablette (_appeler), qui refuse une variable manquante ou en trop, et par les
+    assertions de scenarios.py (format des payloads). Deux passes : firmware récent
+    (avec tab5_maj_tuiles, appels affichés) et firmware 3.x (sans, vérifiée seulement).
+    Au moindre écart : message, puis sortie en erreur (étape de la CI)."""
+    contrat = lire_contrat(API_LOGIC)
+    print(f"Contrat du firmware : {API_LOGIC.parent.name}/{API_LOGIC.name}, "
+          f"{len(contrat)} actions.")
+    ecarts = _Ecarts()
+    logger.addHandler(ecarts)
+    try:
+        for avec_tuiles in (True, False):
+            services = services_du_contrat(
+                {n: v for n, v in contrat.items() if avec_tuiles or n != SERVICE_TUILES})
+            tablette = _TabletteABlanc()
+            appels_par_scene = []
+            asyncio.run(_pousser_zones(tablette, services, absentes))
+            for scene in SCENES:
+                debut = len(tablette.appels)
+                asyncio.run(_pousser_scene(tablette, services, scene, absentes, attendre=_sans_attente))
+                appels_par_scene.append((scene.nom, tablette.appels[debut:]))
+            if not avec_tuiles:
+                print()
+                print(f"=== Firmware 3.x (sans {SERVICE_TUILES}) : "
+                      f"{len(tablette.appels)} appels vérifiés, non affichés ===")
+                continue
+            print("tab5_maj_zones:", tablette.appels[0][1])
+            for nom_scene, appels in appels_par_scene:
+                print()
+                print(f"=== Scène : {nom_scene} ===")
+                for nom, donnees in appels:
+                    print(f"{nom}:", donnees)
+    finally:
+        logger.removeHandler(ecarts)
+    print()
+    if ecarts.messages:
+        for message in ecarts.messages:
+            print("ÉCART :", message)
+        raise SystemExit(f"{len(ecarts.messages)} écart(s) entre la démo et le contrat du firmware.")
+    print("OK — chaque appel a exactement les variables déclarées par le firmware, et tous les "
+          "payloads respectent leur format (assertions dans scenarios.py).")
+
+
+async def _sans_attente(_secondes: float) -> None:
+    """--dry-run : pas de pacing."""
 
 
 def _clim_poussee(scene, absentes: frozenset) -> dict | None:
@@ -170,22 +266,29 @@ async def _appeler(client, services_par_nom: dict, nom: str, **data: str) -> Non
     # brut en plein milieu d'une scène. On préfère un message lisible qui
     # nomme le service et l'argument (c'est exactement ce qui est arrivé quand
     # `meteo_id` a été ajouté à tab5_maj_info_texte sans mettre la démo à jour).
-    attendus = {arg.name for arg in service.args}
-    if manquants := attendus - data.keys():
-        logger.error("%s : argument(s) %s manquant(s) — le firmware a changé de "
-                     "contrat, mettre à jour tools/demo/. Appel ignoré.",
-                     nom, sorted(manquants))
+    # Un argument en trop est refusé aussi : Home Assistant le refuserait.
+    if ecart := ecart_de_contrat((arg.name for arg in service.args), data):
+        logger.error("%s : %s — le firmware a changé de contrat, mettre à jour "
+                     "tools/demo/. Appel ignoré.", nom, ecart)
         return
     await client.execute_service(service, data)
 
 
-async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozenset) -> None:
+async def _pousser_zones(client, services_par_nom: dict, absentes: frozenset) -> None:
+    """Réponse de HA à l'événement esphome.tab5_zones (lot 5) : les zones absentes."""
+    await _appeler(client, services_par_nom, "tab5_maj_zones", absentes=build_zones_absentes(absentes))
+
+
+async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozenset,
+                         attendre=None) -> None:
     """Appelle les services tab5_maj_* d'une scène, avec le pacing de prod. Comme le
     package HA (lot 5b), rien pour la clim ni le volet quand leur zone est absente.
     Les définitions des pièces (tab5_maj_tuiles) partent à chaque scène, juste avant
     les états : la tablette ne réécrit ses définitions en NVS que si elles changent
     (ADR-0023), et le rendu (tools/rendu/capturer.py) n'a pas d'autre moment pour les
-    recevoir."""
+    recevoir. `attendre` remplace asyncio.sleep (--dry-run : aucune attente)."""
+
+    attendre = attendre or asyncio.sleep
 
     async def appeler(nom: str, **data: str) -> None:
         await _appeler(client, services_par_nom, nom, **data)
@@ -196,42 +299,42 @@ async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozen
         temperature=str(scene.meteo_temperature),
         humidite=str(scene.meteo_humidite),
     )
-    await asyncio.sleep(DELAI_ENTRE_BLOCS)
+    await attendre(DELAI_ENTRE_BLOCS)
 
     await appeler("tab5_maj_probabilites", **{k: str(v) for k, v in scene.probabilites.items()})
-    await asyncio.sleep(DELAI_ENTRE_BLOCS)
+    await attendre(DELAI_ENTRE_BLOCS)
 
     # Code de pluie calculé maintenant : « dans N mn » part d'un epoch à jour.
     await appeler("tab5_maj_alerte_meteo_france",
                   payload=build_alerte_payload(phrase_pluie=code_pluie(*scene.pluie), **scene.alerte))
-    await asyncio.sleep(DELAI_ENTRE_BLOCS)
+    await attendre(DELAI_ENTRE_BLOCS)
 
     await appeler("tab5_maj_pluie_1h_bulk", payload=build_pluie_1h_bulk_payload(scene.pluie_1h))
-    await asyncio.sleep(DELAI_ENTRE_BLOCS)
+    await attendre(DELAI_ENTRE_BLOCS)
 
     # Deux blocs comme la prod depuis le 25/09/2026 : l'écran n'affiche que les
     # créneaux 0-9 (deux pages horaires), le bloc 10-14 n'était jamais peint.
     for debut in (0, 5):
         payload = build_heures_bulk_payload(scene.heures[debut:debut + 5])
         await appeler("tab5_maj_previsions_heures_bulk", payload=payload)
-        await asyncio.sleep(DELAI_BOUCLE_HEURES)
+        await attendre(DELAI_BOUCLE_HEURES)
 
     await appeler("tab5_maj_previsions_jours_bulk", payload=build_jours_bulk_payload(scene.jours))
-    await asyncio.sleep(DELAI_ENTRE_BLOCS)
+    await attendre(DELAI_ENTRE_BLOCS)
 
     if "clim" not in absentes:
         await appeler("tab5_maj_clim", **scene.clim)
-        await asyncio.sleep(DELAI_ENTRE_BLOCS)
+        await attendre(DELAI_ENTRE_BLOCS)
 
     if "volet" not in absentes:
         await appeler("tab5_maj_volet_etat", etat_physique=scene.volet_etat)
-        await asyncio.sleep(DELAI_ENTRE_BLOCS)
+        await attendre(DELAI_ENTRE_BLOCS)
 
     # Plus de tab5_maj_planning, comme HA depuis le 08/09/2026 : la tablette dérive
     # le bandeau des horaires de la poussée des jours.
     texte, couleur, meteo_id = scene.info_texte
     await appeler("tab5_maj_info_texte", texte=texte, couleur=couleur, meteo_id=meteo_id)
-    await asyncio.sleep(DELAI_ENTRE_BLOCS)
+    await attendre(DELAI_ENTRE_BLOCS)
 
     # Pièces (ADR-0023) : les définitions d'abord, puis les emplacements 3.x suivis des
     # états des tuiles (clés tRT), comme le blueprint à chaque connexion. Sans l'action
@@ -240,7 +343,7 @@ async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozen
     if SERVICE_TUILES in services_par_nom:
         pieces = pieces_de(absentes)
         await appeler(SERVICE_TUILES, payload=build_tuiles_payload(pieces))
-        await asyncio.sleep(DELAI_ENTRE_BLOCS)
+        await attendre(DELAI_ENTRE_BLOCS)
 
     # Emplacements de la maison (lot 6a), comme le blueprint à chaque connexion.
     await appeler("tab5_maj_emplacements",
@@ -317,7 +420,7 @@ async def _run(host: str, key: str | None, interval: float, interactive: bool, a
     def repondre_zones() -> None:
         logger.info("Zones absentes -> %s", reponse or "(aucune)")
         tache = asyncio.get_running_loop().create_task(
-            _appeler(client, services_par_nom, "tab5_maj_zones", absentes=reponse))
+            _pousser_zones(client, services_par_nom, absentes))
         taches.add(tache)
         tache.add_done_callback(taches.discard)
 

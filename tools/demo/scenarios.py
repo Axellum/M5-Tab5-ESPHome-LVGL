@@ -349,10 +349,14 @@ def decrire_emplacement(cle: str, pieces: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Vigilance météo (tab5_maj_alerte_meteo_france, tab5-api-logic.yaml:242-319).
-# Exactement 11 champs '|' — strtok_r fusionne les délimiteurs consécutifs, donc
+# Vigilance météo (tab5_maj_alerte_meteo_france ; format : variable `payload` dans
+# Tab5/tab5-api-logic.yaml, découpage : parse_and_update_vigilance() dans
+# Tab5/tab5_services.cpp). Le firmware lit 11 à 13 champs '|' : la démo envoie les
+# 11 de Météo-France ; brouillard et feux de forêt (MeteoAlarm, lot 4c) sont
+# facultatifs en fin de payload. strtok_r fusionne les délimiteurs consécutifs, donc
 # un champ vide au milieu décale tous les suivants (silencieux). On ne laisse
 # donc jamais un champ vide : "Vert" par défaut pour les 9 niveaux de vigilance.
+# Nombres tenus par tests/test_doc_comptes.py.
 # ---------------------------------------------------------------------------
 
 ALERTE_CHAMPS = (
@@ -360,11 +364,11 @@ ALERTE_CHAMPS = (
     "pluie_inondation", "neige_verglas", "grand_froid",
     "vagues_submersion", "canicule", "avalanches",
 )
-ALERTE_BUF_OCTETS = 1024  # char buf[1024] — tab5-api-logic.yaml:251 (1023 octets utiles)
+ALERTE_BUF_OCTETS = 1024  # char buf[1024] de parse_and_update_vigilance() (1023 octets utiles)
 
 
 def build_alerte_payload(**champs: str) -> str:
-    """Construit le payload 11 champs de tab5_maj_alerte_meteo_france."""
+    """Construit le payload de tab5_maj_alerte_meteo_france, forme Météo-France (11 champs)."""
     valeurs = []
     for nom in ALERTE_CHAMPS:
         defaut = "" if nom == "phrase_pluie" else "Vert"
