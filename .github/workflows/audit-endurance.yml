@@ -1,0 +1,53 @@
+name: Audit endurance (ne pas merger)
+
+# Audit du 30/09/2026, branche audit/qualite-pro (PR brouillon jamais mergée). Séparé de
+# audit-qualite.yml : 3 h de tablette virtuelle qu'un correctif des autres audits ne doit
+# pas annuler. 48 h étaient proposées ; un job hébergé par GitHub s'arrête à 6 h
+# (docs.github.com, « Actions limits », lu le 30/09/2026) : 3 h de charge accélérée à la
+# place. Build normal, sans sanitizer (la quarantaine d'ASan fausserait la mémoire).
+
+on:
+  pull_request:
+    paths:
+      - 'tools/audit/endurance.py'
+      - '.github/workflows/audit-endurance.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  endurance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 250
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: ESPHome à la version plancher, Pillow
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          bash tools/ci/pip_reessai.sh "esphome==$v" pillow
+      - name: Compiler la tablette virtuelle
+        env:
+          TZ: Europe/Paris
+        run: esphome compile tab5-rendu-host.yaml > build.log 2>&1 || { tail -n 60 build.log; exit 1; }
+      - name: Endurance (3 h)
+        env:
+          TZ: Europe/Paris
+          ESPHOME_PREFDIR: ${{ runner.temp }}/prefs
+          ESPHOME_SNAPSHOT_DIR: ${{ runner.temp }}/captures
+        run: |
+          prog=$(find .esphome/build/tab5-rendu -name program -type f | head -n 1)
+          python tools/audit/endurance.py --programme "$prog" --resultats resultats/endurance --minutes 180
+          cat resultats/endurance/endurance.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: audit-endurance
+          path: resultats/
+          retention-days: 30

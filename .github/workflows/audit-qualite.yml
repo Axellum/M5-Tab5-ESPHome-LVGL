@@ -1,0 +1,300 @@
+name: Audit qualité (ne pas merger)
+
+# Audit du 30/09/2026 (demande d'Axel : « code, projet et archi professionnels »), branche
+# audit/qualite-pro, PR brouillon jamais mergée. Le PC de dev n'a ni g++, ni clang, ni
+# WSL, ni Docker : tout ce qui compile tourne ici. Chaque job est INFORMATIF : un constat
+# ne fait pas échouer le job, seul un outil qui ne s'est pas lancé le fait.
+#
+#   moteurs          moteurs de jeu compilables seuls ? vrai moteur d'échecs contre la suite
+#                    perft (au lieu de son miroir Python), tests C++ existants sous ASan/UBSan
+#   analyse-statique avertissements GCC en plus, clang-tidy, cppcheck, mesure clang-format
+#   sanitizers       tablette virtuelle compilée avec ASan/UBSan : fuzzing des services
+#                    (tools/audit/fuzz_services.py), puis tous les écrans ouverts et refermés
+#   codeql           CodeQL C/C++ (build de la tablette virtuelle) et Python, sans envoi
+#   scorecard        OpenSSF Scorecard du dépôt (jamais analysé : l'API renvoyait 404)
+# L'endurance est à part (audit-endurance.yml) : 3 h qu'un correctif ici ne doit pas relancer.
+
+on:
+  pull_request:
+    paths:
+      - 'tools/audit/**'
+      - '!tools/audit/endurance.py'
+      - '.github/workflows/audit-qualite.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  TZ: Europe/Paris
+  SAN_CC: "-fsanitize=address,undefined,float-cast-overflow -fno-sanitize=vptr -fno-omit-frame-pointer -g"
+  SAN_LD: "-fsanitize=address,undefined,float-cast-overflow -fno-sanitize=vptr"
+
+jobs:
+  moteurs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Quels moteurs se compilent seuls (stub esphome.h minimal) ?
+        run: |
+          mkdir -p resultats/moteurs
+          {
+            echo "## Moteurs compilés sur PC avec le stub minimal tools/audit/hote/esphome.h"
+            echo ""
+            echo "| Fichier | Compile seul | Première erreur |"
+            echo "|---|---|---|"
+            for f in chess_ai go_ai go_engine draughts_ai draughts_game alarm_clock tab5_core tab5_i18n; do
+              if g++ -std=c++20 -fsyntax-only -Wall -Wextra -I tools/audit/hote -I Tab5/rendu/hote -I Tab5 \
+                  "Tab5/$f.cpp" > "resultats/moteurs/$f.log" 2>&1; then
+                echo "| \`$f.cpp\` | oui | |"
+              else
+                echo "| \`$f.cpp\` | non | $(grep -m1 -E 'error' "resultats/moteurs/$f.log" | sed 's/|/\\|/g' | cut -c1-160) |"
+              fi
+            done
+          } | tee -a "$GITHUB_STEP_SUMMARY" resultats/moteurs/compilation.md
+      - name: Vrai moteur d'échecs contre la suite perft, sous ASan/UBSan
+        continue-on-error: true
+        run: |
+          # shellcheck disable=SC2086 # drapeaux séparés par des espaces, voulu
+          g++ -std=c++20 -O1 $SAN_CC -Wall -Wextra -I tools/audit/hote -I Tab5/rendu/hote -I Tab5 \
+            tools/audit/moteur_echecs.cpp Tab5/chess_ai.cpp Tab5/tab5_i18n.cpp $SAN_LD \
+            -o "$RUNNER_TEMP/moteur_echecs" 2>&1 | tee resultats/moteurs/echecs-build.log
+          set +e
+          "$RUNNER_TEMP/moteur_echecs" > resultats/moteurs/echecs.log 2>&1
+          code=$?
+          set -e
+          { echo ""; echo "## Échecs : vrai chess_ai.cpp (code de sortie $code)"; echo '```'; tail -n 30 resultats/moteurs/echecs.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit "$code"
+      - name: Tests C++ existants (Go, réveil) rejoués sous ASan/UBSan
+        continue-on-error: true
+        run: |
+          set +e
+          # shellcheck disable=SC2086
+          g++ -std=c++17 -O1 $SAN_CC -Wall -Wextra -I Tab5 -o "$RUNNER_TEMP/go" \
+            tools/test_go_engine.cpp Tab5/go_engine.cpp $SAN_LD
+          "$RUNNER_TEMP/go" > resultats/moteurs/go-asan.log 2>&1; go=$?
+          # shellcheck disable=SC2086
+          g++ -std=c++17 -O1 $SAN_CC -Wall -Wextra -I Tab5 -o "$RUNNER_TEMP/reveil" \
+            tools/test_alarm_clock.cpp Tab5/alarm_clock.cpp Tab5/tab5_core.cpp Tab5/tab5_i18n.cpp $SAN_LD
+          "$RUNNER_TEMP/reveil" > resultats/moteurs/reveil-asan.log 2>&1; reveil=$?
+          {
+            echo ""; echo "## Tests C++ existants sous ASan/UBSan"
+            echo "- Go : code $go, rapports sanitizer : $(grep -cE 'runtime error|ERROR: AddressSanitizer' resultats/moteurs/go-asan.log)"
+            echo "- Réveil : code $reveil, rapports sanitizer : $(grep -cE 'runtime error|ERROR: AddressSanitizer' resultats/moteurs/reveil-asan.log)"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: audit-moteurs
+          path: resultats/
+          retention-days: 30
+
+  analyse-statique:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: ESPHome à la version plancher, clang-tidy, cppcheck, clang-format
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          bash tools/ci/pip_reessai.sh "esphome==$v"
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends clang-tidy cppcheck clang-format
+          { echo "ESPHome $v"; clang-tidy --version | head -n 2; cppcheck --version; clang-format --version; } | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Compiler la tablette virtuelle avec des avertissements en plus
+        env:
+          AUDIT_CCFLAGS: "-Wall -Wextra -Wshadow -Wformat=2 -Wnull-dereference -Wduplicated-cond -Wlogical-op -Wcast-align"
+        run: |
+          python tools/audit/variante.py tab5-audit.yaml
+          esphome compile tab5-audit.yaml 2>&1 | tee build.log
+      - name: Analyse (GCC, clang-tidy, cppcheck, clang-format)
+        run: |
+          python tools/audit/analyse_statique.py --build .esphome/build/tab5-rendu --journal build.log \
+            --resultats resultats/analyse
+          cat resultats/analyse/analyse.md >> "$GITHUB_STEP_SUMMARY"
+          cp build.log resultats/analyse/
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: audit-analyse-statique
+          path: resultats/
+          retention-days: 30
+
+  sanitizers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: ESPHome à la version plancher, Pillow
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          bash tools/ci/pip_reessai.sh "esphome==$v" pillow
+      - name: Compiler la tablette virtuelle avec ASan + UBSan
+        env:
+          AUDIT_CCFLAGS: ${{ env.SAN_CC }}
+          AUDIT_LINKFLAGS: ${{ env.SAN_LD }}
+        run: |
+          python tools/audit/variante.py tab5-audit.yaml
+          set +e
+          esphome compile tab5-audit.yaml > build.log 2>&1
+          code=$?
+          set -e
+          grep -m 3 -F '[audit]' build.log || echo "::warning::script d'audit PlatformIO non lancé"
+          if [ "$code" -ne 0 ]; then tail -n 80 build.log; exit "$code"; fi
+          prog=$(find .esphome/build/tab5-rendu -name program -type f | head -n 1)
+          echo "Symboles ASan dans le programme : $(nm "$prog" | grep -c __asan_)" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "PROG=$prog" >> "$GITHUB_ENV"
+      - name: Fuzzing des services
+        env:
+          ESPHOME_PREFDIR: ${{ runner.temp }}/prefs
+          ESPHOME_SNAPSHOT_DIR: ${{ runner.temp }}/captures
+          AUDIT_SAN_DIR: ${{ runner.temp }}/san-fuzz
+          ASAN_OPTIONS: "log_path=${{ runner.temp }}/san-fuzz/san:detect_leaks=0:halt_on_error=1:symbolize=1"
+          UBSAN_OPTIONS: "log_path=${{ runner.temp }}/san-fuzz/san:print_stacktrace=1:symbolize=1"
+        run: |
+          mkdir -p "$AUDIT_SAN_DIR" "$ESPHOME_SNAPSHOT_DIR"
+          python tools/audit/fuzz_services.py --programme "$PROG" --resultats resultats/fuzz --appels 800
+          cat resultats/fuzz/fuzz.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Tous les écrans ouverts et refermés sous ASan/UBSan
+        env:
+          ESPHOME_PREFDIR: ${{ runner.temp }}/prefs
+          ESPHOME_SNAPSHOT_DIR: ${{ runner.temp }}/captures
+          ASAN_OPTIONS: "log_path=${{ runner.temp }}/san-ecrans/san:detect_leaks=0:halt_on_error=1:symbolize=1"
+          UBSAN_OPTIONS: "log_path=${{ runner.temp }}/san-ecrans/san:print_stacktrace=1:symbolize=1"
+        run: |
+          mkdir -p "$RUNNER_TEMP/san-ecrans" resultats/ecrans
+          "$PROG" > resultats/ecrans/tablette.log 2>&1 &
+          pid=$!
+          sleep 10
+          set +e
+          timeout 40m python tools/rendu/capturer.py --dossier "$ESPHOME_SNAPSHOT_DIR" > resultats/ecrans/capturer.log 2>&1
+          cap=$?
+          if kill -0 "$pid" 2>/dev/null; then vivante=oui; kill "$pid"; else vivante="NON (code $(wait "$pid"; echo $?))"; fi
+          set -e
+          cp -r "$RUNNER_TEMP/san-ecrans" resultats/ecrans/ || true
+          {
+            echo ""; echo "## Écrans sous ASan/UBSan"
+            echo "- capturer.py : code $cap ; tablette vivante à la fin : $vivante"
+            echo "- Rapports sanitizer : $(cat "$RUNNER_TEMP"/san-ecrans/san* 2>/dev/null | grep -cE 'runtime error|ERROR: AddressSanitizer')"
+            echo '```'
+            cat "$RUNNER_TEMP"/san-ecrans/san* 2>/dev/null | grep -E 'runtime error|ERROR: AddressSanitizer|SUMMARY' | sort | uniq -c | sort -rn | head -n 40
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Rapports du fuzzing (résumé)
+        if: always()
+        run: |
+          cp -r "$RUNNER_TEMP/san-fuzz" resultats/fuzz/ 2>/dev/null || true
+          {
+            echo ""; echo "## Rapports sanitizer du fuzzing (lignes distinctes)"
+            echo '```'
+            cat "$RUNNER_TEMP"/san-fuzz/san* 2>/dev/null | grep -E 'runtime error|ERROR: AddressSanitizer|SUMMARY' | sort | uniq -c | sort -rn | head -n 60
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: audit-sanitizers
+          path: |
+            resultats/
+            build.log
+          retention-days: 30
+
+  codeql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: read
+      security-events: write   # exigé par l'action même sans envoi des résultats
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - langage: c-cpp
+            mode: manual
+          - langage: python
+            mode: none
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.langage }}
+          build-mode: ${{ matrix.mode }}
+          queries: security-and-quality
+      - name: Compiler la tablette virtuelle (C/C++ seulement)
+        if: matrix.langage == 'c-cpp'
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          bash tools/ci/pip_reessai.sh "esphome==$v"
+          esphome compile tab5-rendu-host.yaml > build.log 2>&1 || { tail -n 60 build.log; exit 1; }
+      - uses: github/codeql-action/analyze@v4
+        with:
+          upload: never
+          output: sarif
+      - name: Résumé (nos fichiers seulement)
+        run: |
+          python - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import collections, glob, json
+          regles, fichiers, lignes = collections.Counter(), collections.Counter(), []
+          for chemin in glob.glob("sarif/*.sarif"):
+              for run in json.load(open(chemin))["runs"]:
+                  for r in run.get("results", []):
+                      loc = r["locations"][0]["physicalLocation"]
+                      uri = loc["artifactLocation"]["uri"]
+                      if any(x in uri for x in (".platformio", "/esphome/", "lvgl")):
+                          continue
+                      regles[r["ruleId"]] += 1
+                      fichiers[uri] += 1
+                      lignes.append(f"{uri}:{loc.get('region', {}).get('startLine')} [{r['ruleId']}] {r['message']['text'][:140]}")
+          print(f"## CodeQL ${{ matrix.langage }} : {sum(regles.values())} constats dans nos fichiers\n")
+          print("Par règle : " + ", ".join(f"`{k}` {v}" for k, v in regles.most_common(30)) + "\n")
+          print("Par fichier : " + ", ".join(f"{k} {v}" for k, v in fichiers.most_common(15)) + "\n")
+          print("```")
+          print("\n".join(lignes[:80]))
+          print("```")
+          EOF
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: audit-codeql-${{ matrix.langage }}
+          path: sarif/
+          retention-days: 30
+
+  scorecard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: OpenSSF Scorecard (image officielle, jeton en lecture seule)
+        env:
+          GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p resultats
+          docker run --rm -e GITHUB_AUTH_TOKEN gcr.io/openssf/scorecard:v5.5.0 \
+            --repo="github.com/${{ github.repository }}" --format=json --show-details > resultats/scorecard.json
+          python3 - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          r = json.load(open("resultats/scorecard.json"))
+          print(f"## OpenSSF Scorecard : {r['score']} / 10 ({r['date']})\n")
+          print("| Contrôle | Score | Raison |\n|---|---|---|")
+          for c in sorted(r["checks"], key=lambda c: c["score"]):
+              print(f"| {c['name']} | {c['score']} | {c['reason']} |")
+          EOF
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: audit-scorecard
+          path: resultats/
+          retention-days: 30
