@@ -354,6 +354,16 @@ automation:
     trigger:
       - platform: event
         event_type: esphome.tab5_journal
+    # Garde d'origine (audit sécurité du 30/09/2026) : seulement le journal d'une
+    # tablette, reconnue au modèle de son appareil comme dans tab5_evenements.yaml.
+    # Sans elle, un autre appareil ESPHome pouvait créer une notification par
+    # événement, et une alerte téléphone au titre choisi (`grave: oui`).
+    # tests/test_garde_origine.py.
+    condition:
+      - condition: template
+        value_template: >-
+          {%- set d = trigger.event.data.device_id | default('', true) | string -%}
+          {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
     variables:
       raison: "{{ trigger.event.data.raison | default('inconnue') }}"
       demarrages: "{{ trigger.event.data.demarrages | default('?') }}"
