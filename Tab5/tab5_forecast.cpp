@@ -95,8 +95,8 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& st
 }
 
 uint32_t get_humidity_color(float x) {
-    if (std::isnan(x)) return UIColor::MOISTURE_NAN;
-    int val = (int)x;
+    if (!std::isfinite(x)) return UIColor::MOISTURE_NAN;
+    const int val = tab5_float_vers_int(x, 0, 100, 0);
     if (val <= 14) return UIColor::ALERT_RED;
     if (val >= 80) return UIColor::HUMIDITY_WET;
     if (val >= 30) {

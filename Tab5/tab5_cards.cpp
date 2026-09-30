@@ -55,6 +55,11 @@
 // blueprint plus ancien garde l'écran d'avant.
 namespace {
 
+// Plage plausible des bornes d'une clim, en °C comme en °F : des « min|max » reçus
+// au-delà sont ignorés, et l'arc n'en reçoit jamais d'autres (lot A, audit du 30/09/2026).
+constexpr int kClimBorneBasse = -100;
+constexpr int kClimBorneHaute = 200;
+
 struct ClimReglages {
     float min = 16.0f;
     float max = 30.0f;
@@ -255,7 +260,9 @@ int lire_reglages(const char* reste, size_t n, ClimReglages& r) {
     if (k < 5) return k;
     const float mn = lire_nombre(champ[0], taille[0], r.min);
     const float mx = lire_nombre(champ[1], taille[1], r.max);
-    if (mn < mx) {
+    // Bornes hors de toute clim réelle (« -1e30 ») ignorées : elles deviendraient celles
+    // de l'arc (lot A de l'audit du 30/09/2026).
+    if (mn < mx && mn >= kClimBorneBasse && mx <= kClimBorneHaute) {
         r.min = mn;
         r.max = mx;
     }
@@ -342,9 +349,9 @@ void popup_consigne_ui(float t, bool depuis_ha) {
     char buf[16];
     clim_format_consigne(vue_reglages(), buf, sizeof(buf), t);
     ui_text(u.consigne_popup, buf);
-    if (std::isnan(t) || u.arc == nullptr) return;
+    if (!std::isfinite(t) || u.arc == nullptr) return;
     if (depuis_ha && lv_obj_has_state(u.arc, LV_STATE_PRESSED)) return;
-    lv_arc_set_value(u.arc, static_cast<int32_t>(t));
+    lv_arc_set_value(u.arc, tab5_float_vers_int(t, lv_arc_get_min_value(u.arc), lv_arc_get_max_value(u.arc), 0));
 }
 
 // Température de la pièce (popup), dans l'unité de la clim affichée ; inconnue : « -- ».
@@ -365,11 +372,11 @@ void popup_reglages_ui(float consigne) {
     // nouveau (lv_arc_set_range la ramène dans les anciennes bornes ; aucun des deux
     // n'émet LV_EVENT_VALUE_CHANGED, donc pas de on_value ni d'envoi à HA).
     if (u.arc != nullptr) {
-        const int32_t bas = static_cast<int32_t>(std::floor(r.min));
-        const int32_t haut = static_cast<int32_t>(std::ceil(r.max));
+        const int32_t bas = tab5_float_vers_int(std::floor(r.min), kClimBorneBasse, kClimBorneHaute, kClimBorneBasse);
+        const int32_t haut = tab5_float_vers_int(std::ceil(r.max), kClimBorneBasse, kClimBorneHaute, kClimBorneHaute);
         if (lv_arc_get_min_value(u.arc) != bas || lv_arc_get_max_value(u.arc) != haut)
             lv_arc_set_range(u.arc, bas, haut);
-        if (!std::isnan(consigne)) lv_arc_set_value(u.arc, static_cast<int32_t>(consigne));
+        if (std::isfinite(consigne)) lv_arc_set_value(u.arc, tab5_float_vers_int(consigne, bas, haut, bas));
     }
     ui_text(u.unite, clim_unite(r));
 
@@ -630,8 +637,9 @@ void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target) {
     char buf[16];
     clim_format_consigne(s_clim, buf, sizeof(buf), target);
     ui_text(lbl_target, buf);
-    if (std::isnan(target)) return;
-    if (arc != nullptr) lv_arc_set_value(arc, (int) target);
+    if (!std::isfinite(target)) return;
+    if (arc != nullptr)
+        lv_arc_set_value(arc, tab5_float_vers_int(target, lv_arc_get_min_value(arc), lv_arc_get_max_value(arc), 0));
 }
 
 void clim_blueprint_recu(float consigne, float piece) {

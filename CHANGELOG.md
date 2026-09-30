@@ -39,7 +39,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   (et non 11), 12 services appelés par la démo et 7 non (dont `tab5_maj_planning`), consommateurs
   de `tab5_connected` et `tab5_maj_ecran` dans la table des événements. Rien ne change sur l'écran.
   Côté HA, seul `tab5_health.yaml` change de comportement : à déployer.
-
+- **Nombres absurdes venus de Home Assistant : plus aucune conversion hors bornes** (lot A de
+  l'audit du 30/09). Une consigne de clim, une luminosité ou une humidité reçue en `inf` ou
+  `1e30`, ou des bornes de clim en `-1e30`, étaient converties en entier sans limite :
+  comportement indéfini relevé par UBSan sur la tablette virtuelle (6 endroits, dont un calcul
+  qui débordait ensuite dans LVGL). Sur la tablette, la conversion saturait : pas de plantage,
+  mais un arc faux. Toute valeur de HA convertie en entier passe maintenant par
+  `tab5_float_vers_int` (bornée, troncature inchangée pour une valeur normale) ; `inf` est
+  traité comme une valeur inconnue (« -- ») et des bornes de clim hors de −100…200 sont
+  ignorées. Testé sur PC par `tools/test_alarm_clock.cpp`. Rien ne change pour des valeurs
+  normales.
 - **Deux garde-fous de plus, joués par `pytest` et la CI** (audit du 25/09, §7). Une valeur
   oubliée dans un niveau d'Arcanoïde ou une question supprimée de Trial Poursuite compilait sans
   erreur (le C++ complète avec des zéros, soit une question nulle). `tools/check_arkanoid_levels.py`

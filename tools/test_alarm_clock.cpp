@@ -9,7 +9,8 @@
  * heure fixe, jours cochés, sonnerie consommée une seule fois, répétition,
  * arrêt, fenêtre de grâce au démarrage, mode embauche (délai, bornes, repos
  * minimum), calendrier daté par son jour d'ancrage (bug §2.2 de l'audit),
- * changements d'heure, rendez-vous.
+ * changements d'heure, rendez-vous. Aussi les conversions des nombres reçus de HA
+ * (tab5_float_vers_int : « inf » ou « 1e30 » → entier borné, lot A de l'audit du 30/09).
  *
  * Build & run (CI, job `python`) :
  *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5 -o test_alarm_clock \
@@ -450,6 +451,26 @@ static void test_langue() {
     expect_str(ha_day_name("Auj"), "Auj", "nom de jour HA : inchangé en français");
 }
 
+// Nombres reçus de HA (lot A, audit du 30/09/2026) : UBSan avait relevé des conversions
+// float → int hors bornes (consigne de clim « inf », bornes « -1e30 », humidité, luminosité).
+static void test_nombres_de_ha() {
+    expect(std::isnan(tab5_fini_ou_nan(INFINITY)), "inf → NAN");
+    expect(std::isnan(tab5_fini_ou_nan(-INFINITY)), "-inf → NAN");
+    expect(std::isnan(tab5_fini_ou_nan(NAN)), "NAN reste NAN");
+    expect(tab5_fini_ou_nan(21.5f) == 21.5f, "nombre fini inchangé");
+    expect(tab5_fini_ou_nan(1e30f) == 1e30f, "grand nombre fini inchangé (borné plus tard)");
+    expect(tab5_float_vers_int(21.9f, 7, 35, 0) == 21, "troncature, comme un cast");
+    expect(tab5_float_vers_int(-0.5f, -10, 10, 3) == 0, "troncature vers zéro");
+    expect(tab5_float_vers_int(INFINITY, 0, 255, 7) == 7, "inf → défaut");
+    expect(tab5_float_vers_int(-INFINITY, 0, 255, 7) == 7, "-inf → défaut");
+    expect(tab5_float_vers_int(NAN, 0, 255, 7) == 7, "NAN → défaut");
+    expect(tab5_float_vers_int(1e30f, 0, 100, 0) == 100, "1e30 → borne haute");
+    expect(tab5_float_vers_int(-1e30f, -100, 200, 0) == -100, "-1e30 → borne basse");
+    expect(tab5_float_vers_int(2.56256e32f, 16, 30, 0) == 30, "valeur du fuzz → borne haute");
+    expect(tab5_float_vers_int(255.0f, 0, 255, 0) == 255, "borne haute atteinte");
+    expect(tab5_float_vers_int(0.0f, 0, 255, 9) == 0, "borne basse atteinte (pas le défaut)");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -469,6 +490,7 @@ int main() {
     test_rendez_vous();
     test_prereglages_et_volume();
     test_langue();
+    test_nombres_de_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;
