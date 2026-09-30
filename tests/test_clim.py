@@ -490,7 +490,9 @@ def test_carte_de_l_accueil_reste_la_clim_du_blueprint():
     recu = _corps_fonction(cartes, "clim_blueprint_recu")
     assert "carte_consigne_ui(consigne);" in recu and "if (!vue_tuile()) {" in recu
     api = _lire("Tab5", "tab5-api-logic.yaml").split("- service: tab5_maj_clim", 1)[1].split("\n    - service:", 1)[0]
-    assert "clim_blueprint_recu(id(clim_target_temp), atof(current.c_str()));" in api
+    assert "clim_blueprint_recu(id(clim_target_temp), tab5_fini_ou_nan(atof(current.c_str())));" in api
+    # « inf » reçu = consigne inconnue, jamais convertie en entier (lot A, audit du 30/09/2026).
+    assert "id(clim_target_temp) = tab5_fini_ou_nan(atof(target.c_str()));" in api
     # Les clés d'une tuile ne touchent jamais la carte, et le popup seulement s'il la montre.
     tuile = _corps_fonction(cartes, "clim_tuile_recu")
     assert "consigne_carte" not in tuile and "carte_consigne_ui" not in tuile and "if (affichee)" in tuile

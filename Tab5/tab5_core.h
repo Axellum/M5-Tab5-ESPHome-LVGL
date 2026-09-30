@@ -119,3 +119,14 @@ std::string trim_ws(const std::string& s);
 // Au plus `max` champs : le séparateur qui suit le dernier est lui aussi coupé,
 // le reste de la chaîne est ignoré. Renvoie n (0 si max <= 0).
 int split_fields(char* s, char sep, char* out[], int max);
+
+// ─── Nombres reçus de Home Assistant (audit du 30/09/2026, lot A) ───
+// Convertir en entier un flottant hors des bornes de `int` (« inf », « 1e30 »…) est un
+// comportement indéfini en C++ : UBSan l'a relevé sur la tablette virtuelle pour la
+// consigne et les bornes de la clim, la luminosité d'une lampe et l'humidité (sur la
+// tablette la conversion sature, sur PC elle donne INT_MIN et LVGL déborde ensuite).
+// `v` s'il est fini, NAN sinon : un « inf » reçu est traité comme une valeur inconnue.
+float tab5_fini_ou_nan(float v);
+// Partie entière de `v` (troncature, comme un cast) bornée à [bas, haut] ; `defaut`
+// si `v` n'est pas fini. Toute valeur de HA convertie en entier passe par ici.
+int tab5_float_vers_int(float v, int bas, int haut, int defaut);

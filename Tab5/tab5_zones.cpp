@@ -190,6 +190,7 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
                     char* bout = nullptr;
                     float v = strtof(valeur.c_str(), &bout);
                     if (valeur.empty() || bout == valeur.c_str()) v = NAN;  // « unavailable »…
+                    v = tab5_fini_ou_nan(v);  // « inf » : inconnue aussi (lot A, audit du 30/09)
                     cibles[i].valeur->publish_state(v);
                 }
                 if (cibles[i].texte != nullptr) cibles[i].texte->publish_state(etat);

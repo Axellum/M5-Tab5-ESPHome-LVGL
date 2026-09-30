@@ -198,12 +198,13 @@ api:
         # montre (pas quand il montre la clim d'une tuile, ADR-0027) et les couleurs
         # (clim_blueprint_recu, tab5_cards.cpp : même code que les gestes optimistes).
         - lambda: |-
-            id(clim_target_temp) = atof(target.c_str());
+            // « inf »/« -inf » → NAN (« -- ») : jamais converti en entier (lot A, audit du 30/09).
+            id(clim_target_temp) = tab5_fini_ou_nan(atof(target.c_str()));
             id(clim_hvac_mode) = mode;
             id(clim_preset_mode) = preset;
             id(clim_fan_mode) = fan;
             id(clim_swing_mode) = swing;
-            clim_blueprint_recu(id(clim_target_temp), atof(current.c_str()));
+            clim_blueprint_recu(id(clim_target_temp), tab5_fini_ou_nan(atof(current.c_str())));
 
     # Nom historique : depuis le lot 4c (27/09/2026), la vigilance peut venir d'un autre
     # fournisseur (MeteoAlarm…), ramené à ces cases par les adaptateurs côté HA.
@@ -273,7 +274,7 @@ api:
       then:
         - lambda: |-
             if (id(icon_rain_predict) == nullptr) return;
-            id(global_humidite) = atof(humidite.c_str());
+            id(global_humidite) = tab5_fini_ou_nan(atof(humidite.c_str()));
             update_rain_predict_icon_ui(id(icon_rain_predict), id(global_neige), (float) id(global_humidite));
 
     # Les 9 barres en UN appel (ADR-0003, audit §4.1 point 3) : payload

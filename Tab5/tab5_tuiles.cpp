@@ -931,8 +931,7 @@ void popup_lumiere_arc() {
     if (lv_obj_has_state(u.lum_arc, LV_STATE_PRESSED)) return;
     const int r = s_pl.piece, t = s_pl.tuiles[s_pl.choix];
     const float v = lumiere_luminosite(r, t);
-    int arcv = (!lumiere_allumee(r, t) || std::isnan(v)) ? 0 : static_cast<int>(v);
-    arcv = std::max(0, std::min(255, arcv));
+    const int arcv = lumiere_allumee(r, t) ? tab5_float_vers_int(v, 0, 255, 0) : 0;
     lv_arc_set_value(u.lum_arc, arcv);
     char buf[12];
     snprintf(buf, sizeof(buf), "%d %%", arcv * 100 / 255);

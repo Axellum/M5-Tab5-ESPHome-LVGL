@@ -9,6 +9,7 @@
 #include "tab5_core.h"
 #include "tab5_i18n.h"
 
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -180,4 +181,15 @@ int split_fields(char* s, char sep, char* out[], int max) {
         p = next + 1;
     }
     return n;
+}
+
+// ─── Nombres reçus de Home Assistant (lot A de l'audit du 30/09/2026) ───
+
+float tab5_fini_ou_nan(float v) { return std::isfinite(v) ? v : NAN; }
+
+int tab5_float_vers_int(float v, int bas, int haut, int defaut) {
+    if (!std::isfinite(v)) return defaut;
+    if (v <= static_cast<float>(bas)) return bas;
+    if (v >= static_cast<float>(haut)) return haut;
+    return static_cast<int>(v);
 }
