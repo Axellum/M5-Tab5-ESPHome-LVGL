@@ -20,8 +20,16 @@ jobs:
         env:
           GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          docker run --rm -e GITHUB_AUTH_TOKEN gcr.io/openssf/scorecard:v5.5.0 \
-            --repo="github.com/${{ github.repository }}" --format=json --show-details > scorecard.json
+          # gcr.io/openssf/scorecard refuse le téléchargement depuis le 01/10/2026
+          # (« requires billing ») : ghcr.io, sinon la même version compilée par Go.
+          if docker pull -q ghcr.io/ossf/scorecard:v5.5.0; then
+            docker run --rm -e GITHUB_AUTH_TOKEN ghcr.io/ossf/scorecard:v5.5.0 \
+              --repo="github.com/${{ github.repository }}" --format=json --show-details > scorecard.json
+          else
+            go install github.com/ossf/scorecard/v5@v5.5.0
+            "$(go env GOPATH)/bin/scorecard" \
+              --repo="github.com/${{ github.repository }}" --format=json --show-details > scorecard.json
+          fi
           python3 - <<'EOF' | tee -a "$GITHUB_STEP_SUMMARY"
           import json
           r = json.load(open("scorecard.json"))
