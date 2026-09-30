@@ -90,6 +90,20 @@ def test_variante_branche_le_script_sous_esphome():
     assert "extra_scripts" in variante.variante(variante.SOURCE.read_text(encoding="utf-8"))
 
 
+def test_cas_cibles_au_contrat_du_firmware():
+    # _appeler (tools/demo) ignore, avec un simple log, un appel dont les variables
+    # diffèrent de celles du firmware : un cas périmé ne serait jamais envoyé et le
+    # job resterait vert sans rien avoir essayé. Le fuzzing, lui, lit les variables
+    # sur la tablette.
+    sys.path[:0] = [str(REPO / "tools" / "demo"), str(REPO / "tools" / "rendu")]
+    import cibles_ub
+    import demo_pusher
+
+    contrat = demo_pusher.lire_contrat()
+    for nom, service, donnees, _ecran in cibles_ub.CAS:
+        assert demo_pusher.ecart_de_contrat(contrat[service], donnees) is None, nom
+
+
 def test_le_workflow_garde_le_temoin_et_lit_le_journal():
     wf = (REPO / ".github" / "workflows" / "sanitizers.yml").read_text(encoding="utf-8")
     assert "tools/sanitizers/rapports.py --temoin" in wf  # la détection est prouvée à chaque run
