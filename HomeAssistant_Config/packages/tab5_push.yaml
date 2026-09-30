@@ -128,6 +128,19 @@ automation:
       - condition: state
         entity_id: input_boolean.is_primary_active
         state: "on"
+      # Garde d'origine (audit sécurité du 30/09/2026) : tab5_connected ne compte que
+      # s'il vient d'une tablette, reconnue au modèle de son appareil comme dans
+      # tab5_evenements.yaml ; un autre appareil ESPHome ne relance pas la chaîne. Les
+      # autres déclencheurs passent. tests/test_garde_origine.py.
+      - alias: "tab5_connected : seulement depuis une tablette (modele tab5-ha-hmi)"
+        condition: template
+        value_template: >-
+          {%- if trigger.id == 'tab5_connected' -%}
+            {%- set d = trigger.event.data.device_id | default('', true) | string -%}
+            {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
+          {%- else -%}
+            {{ true }}
+          {%- endif -%}
       # Seul un vrai (re)démarrage de la liaison compte : liaison `on` depuis moins de
       # 3 min. Le firmware n'émet l'événement qu'à la connexion depuis le 25/09/2026 ;
       # la garde reste contre un événement réémis. Le capteur « HA API Status » est

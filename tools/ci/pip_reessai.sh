@@ -10,8 +10,9 @@
 #       pip lui-même sur les erreurs de connexion.
 # @usage  bash tools/ci/pip_reessai.sh "esphome==$v" pillow
 #         (mêmes arguments que `pip install`)
-# @contrainte publication.yml n'utilise PAS ce script : il peut reconstruire un
-#       ancien tag, qui ne l'a pas. Sa boucle est écrite dans le workflow.
+# @contrainte publication.yml peut reconstruire un ancien tag, qui n'a pas ce script :
+#       il le prend dans le commit du workflow (outils-workflow/tools/ci/, 30/09/2026),
+#       jamais dans le tag compilé.
 set -u
 
 essais=4

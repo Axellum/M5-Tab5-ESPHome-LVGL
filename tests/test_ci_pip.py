@@ -4,8 +4,8 @@
 PyPI répond parfois « Could not find a version … (from versions: none) » : un ou deux
 jobs rataient l'installation d'ESPHome et mettaient une croix rouge sur `main` sans
 rapport avec le code. Chaque `pip install` d'un workflow passe donc par
-tools/ci/pip_reessai.sh, sauf publication.yml, qui peut reconstruire un ancien tag
-sans ce script et porte sa propre boucle."""
+tools/ci/pip_reessai.sh. publication.yml, qui peut reconstruire un ancien tag sans ce
+script, le prend dans le commit du workflow (outils-workflow/tools/ci/, 30/09/2026)."""
 import re
 import shutil
 import subprocess
@@ -26,14 +26,15 @@ def test_chaque_pip_install_des_workflows_reessaie():
             appel = ligne.split("echo", 1)[0]
             if ligne.lstrip().startswith("#") or not re.search(r"(^|[\s;&|(])pip install\b", appel):
                 continue
-            if chemin.name == "publication.yml":
-                assert "--retries" in ligne, f"{chemin.name} : {ligne.strip()}"
-                assert "for essai in" in texte
-            else:
-                pytest.fail(f"{chemin.name} : pip install sans réessai → {ligne.strip()}")
-        if chemin.name != "publication.yml":
-            for appel in re.findall(r"bash tools/ci/pip_reessai\.sh[^\n]*", texte):
-                assert appel.split("pip_reessai.sh", 1)[1].strip(), f"{chemin.name} : appel sans paquet"
+            pytest.fail(f"{chemin.name} : pip install sans réessai → {ligne.strip()}")
+        # « bash tools/ci/pip_reessai.sh … » ou « bash "$o/ci/pip_reessai.sh" … » (o=tools,
+        # o=outils-workflow/tools) : toujours avec quelque chose à installer.
+        appels = re.findall(r'bash "?[^\s"]*ci/pip_reessai\.sh"?([^\n]*)', texte)
+        for appel in appels:
+            assert appel.strip(), f"{chemin.name} : appel sans paquet"
+        if chemin.name == "publication.yml":
+            assert appels and "outils-workflow/tools" in texte, \
+                "publication.yml : le script vient du commit du workflow (un ancien tag ne l'a pas)"
 
 
 def test_le_script_est_en_lf_et_se_lit():

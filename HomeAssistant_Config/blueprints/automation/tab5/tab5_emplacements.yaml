@@ -31,7 +31,9 @@
 #       (tab5-api-logic.yaml, script tab5_action) ; tests/test_emplacements.py et
 #       tests/test_tuiles_blueprint.py comparent (tableaux de l'ADR-0023 compris).
 #       Les événements esphome.* n'exigent pas l'option « autoriser l'appareil à effectuer
-#       des actions HA » (manager.py de l'intégration ESPHome).
+#       des actions HA » (manager.py de l'intégration ESPHome) : n'importe quel appareil
+#       ESPHome peut donc les émettre. Première condition = garde d'origine (modèle
+#       tab5-ha-hmi de l'appareil émetteur) ; tests/test_garde_origine.py.
 #       Protocole (ADR-0023, Compatibilité) : la version du projet se lit dans le
 #       sw_version de l'appareil (« 3.1.0 (ESPHome 2026.9.0) ») ; 3.2.0 ou plus =
 #       tuiles ; en dessous, illisible ou aucune tablette = jamais tab5_maj_tuiles (une
@@ -1542,6 +1544,22 @@ triggers:
     id: demarrage_ha
 
 conditions:
+  # Garde d'origine (audit sécurité du 30/09/2026) : un événement esphome.tab5_* ne
+  # compte que s'il vient d'une tablette, reconnue au modèle de son appareil comme dans
+  # packages/tab5_evenements.yaml. Sans elle, n'importe quel autre appareil ESPHome de
+  # la maison pouvait émettre esphome.tab5_action et piloter toutes les tuiles. Un
+  # événement sans device_id (tiré à la main) ou dont le device_id est une entité est
+  # ignoré ; `| string` parce que device_attr() refuse autre chose qu'un texte. Les
+  # autres déclencheurs (état, heure, démarrage, rechargement) passent.
+  # tests/test_garde_origine.py vérifie cette garde sur chaque automatisation.
+  - condition: template
+    value_template: >-
+      {%- if trigger.id in ['connexion', 'zones', 'action', 'maj_ecran'] -%}
+        {%- set d = trigger.event.data.device_id | default('', true) | string -%}
+        {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
+      {%- else -%}
+        {{ true }}
+      {%- endif -%}
   # Garde-fou des packages (ADR-0008) : absent, il laisse passer.
   - condition: template
     value_template: "{{ states('input_boolean.is_primary_active') != 'off' }}"

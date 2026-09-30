@@ -4,6 +4,26 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+- **Sécurité : seule la tablette pilote ses tuiles, et la CI ne dépend plus d'un tag qui
+  bouge** (audit du 30/09, §6, lot C ; rien ne change sur l'écran ni dans le firmware).
+  - Home Assistant : un événement `esphome.*` n'exige aucune option, donc n'importe quel autre
+    appareil ESPHome de la maison pouvait émettre `esphome.tab5_action` et commander toutes les
+    tuiles du blueprint « Tab5 — emplacements », ou `esphome.tab5_journal` et créer des
+    notifications. Le blueprint, `tab5_push.yaml` et `tab5_reveil.yaml` (`tab5_connected`) et
+    `tab5_health.yaml` (`tab5_journal`) vérifient désormais, comme `tab5_evenements.yaml`, que
+    l'appareil émetteur est une tablette (modèle `tab5-ha-hmi`) ; les autres déclencheurs ne
+    changent pas. `tests/test_garde_origine.py` rend chaque garde et échoue si une
+    automatisation écoutant un événement de la tablette n'en a pas. À redéployer dans HA
+    (packages et blueprint).
+  - CI : les 39 `uses:` des cinq workflows sont figés par le SHA complet de leur commit, le tag
+    en commentaire (mêmes versions) ; l'image `esphome:latest` du canari reste voulue
+    (ADR-0016). `esphome-tab5.yml` déclare `permissions: contents: read` (plus
+    `pull-requests: read` pour le filtre de chemins). La publication installe esptool, qui
+    tourne à côté de la clé de signature, depuis `tools/publication/requirements-esptool*.txt`
+    (esptool 5.4.0 et toutes ses dépendances, versions exactes et empreintes,
+    `--require-hashes`) au lieu de `esptool>=5` ; chaque PR rejoue cette installation sur
+    Linux. `tests/test_ci_securite.py` tient ces trois règles.
+
 - **Deux garde-fous de plus, joués par `pytest` et la CI** (audit du 25/09, §7). Une valeur
   oubliée dans un niveau d'Arcanoïde ou une question supprimée de Trial Poursuite compilait sans
   erreur (le C++ complète avec des zéros, soit une question nulle). `tools/check_arkanoid_levels.py`

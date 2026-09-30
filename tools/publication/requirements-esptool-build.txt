@@ -1,0 +1,19 @@
+# setuptools qui construit esptool (publié seulement en sdist, build-backend
+# setuptools.build_meta, « requires = ["setuptools>=64"] » dans son pyproject.toml) :
+# version exacte et empreintes, installé AVANT requirements-esptool.txt, qui s'installe
+# ensuite sans isolation. Sans lui, pip téléchargerait setuptools pour la construction
+# dans un environnement isolé, sans vérifier d'empreinte (audit sécurité du 30/09/2026).
+#
+# Cible : le job `firmware` de .github/workflows/publication.yml, runner ubuntu-latest,
+# Linux x86-64, Python 3.13 (sa version de setup-python). Fichier pris dans le commit du
+# workflow (dossier outils-workflow/), pas dans le tag compilé : un ancien tag ne l'a pas.
+# Installé par tools/ci/pip_reessai.sh avec --require-hashes : une version ou un fichier
+# qui ne correspond pas à une empreinte ci-dessous arrête la publication.
+#
+# Régénérer (monter la version : la changer dans la commande), depuis la racine du dépôt,
+# en bash ou en PowerShell, puis remplacer tout ce qui suit cet en-tête par la sortie :
+#   "setuptools==84.0.0" | uv pip compile - --generate-hashes --python-version 3.13 --python-platform x86_64-manylinux_2_28 --no-header -o <fichier temporaire>
+
+setuptools==84.0.0 \
+    --hash=sha256:51a52592b3b99e102b609654876bd65f19f999935166d1352678931132b0c670 \
+    --hash=sha256:f4695c21257f0d9b537ec2692c941d02ee143b7cc1276941349a546573b2ef73

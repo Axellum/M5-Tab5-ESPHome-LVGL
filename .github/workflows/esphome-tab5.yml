@@ -44,16 +44,28 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Jeton du run en lecture seule, écrit ici plutôt que tiré du réglage du dépôt (audit
+# sécurité du 30/09/2026) : checkout lit le code ; cache et upload-artifact passent
+# par le jeton d'exécution d'Actions, pas par celui-ci ; build-action ne s'en sert pas.
+permissions:
+  contents: read
+
 jobs:
   changes:
     runs-on: ubuntu-latest
+    # dorny/paths-filter, sur une PR, lit la liste des fichiers modifiés par l'API
+    # (« Requires pull-requests: read », README de l'action). Un bloc de job remplace
+    # celui du workflow : contents est redonné.
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       firmware: ${{ steps.filter.outputs.firmware }}
       ecrans: ${{ steps.filter.outputs.ecrans }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - id: filter
-        uses: dorny/paths-filter@v4
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
         with:
           # Inclus si un motif positif correspond ET aucun motif `!` : une PR
           # qui ne touche que Tab5/README.md ne recompile plus le firmware.
@@ -73,14 +85,28 @@ jobs:
   python:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
           cache: pip
       - name: Dépendances des outils
         # Réessais : PyPI répond parfois « from versions: none » (tools/ci/pip_reessai.sh).
         run: bash tools/ci/pip_reessai.sh -r requirements-dev.txt
+      - name: esptool (espsecure), versions et empreintes figées
+        # Les mêmes commandes que publication.yml (tests/test_ci_securite.py les
+        # compare), qui ne tourne qu'à une release : chaque PR vérifie ici, sur Linux,
+        # que les fichiers figés s'installent encore (versions, empreintes, roues).
+        # Dans un venv à part : les outils du job gardent leurs versions.
+        run: |
+          python -m venv "$RUNNER_TEMP/esptool"
+          export PATH="$RUNNER_TEMP/esptool/bin:$PATH"
+          o=tools
+          bash "$o/ci/pip_reessai.sh" --require-hashes --only-binary :all: \
+            -r "$o/publication/requirements-esptool-build.txt"
+          bash "$o/ci/pip_reessai.sh" --require-hashes --no-build-isolation --only-binary :all: --no-binary esptool \
+            -r "$o/publication/requirements-esptool.txt"
+          python -m espsecure --help >/dev/null
       - name: Correspondances réelles des placeholders HA (secret du dépôt)
         # Sans placeholders.yaml, `render_ha_config.py --check` n'a rien à
         # chercher et répond 0 : le hook passait sans rien vérifier. Le fichier
@@ -121,7 +147,7 @@ jobs:
     if: needs.changes.outputs.firmware == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: user_entities.yaml du modèle et clé de signature jetable
         run: |
           cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
@@ -137,7 +163,7 @@ jobs:
       # runner.temp est donc le même dedans et dehors. Clé unique par run ; la
       # restauration prend le plus récent (celui de la branche, sinon de main).
       - name: Cache ccache (objets de la compilation précédente)
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ runner.temp }}/ccache
           key: ccache-esp32p4-${{ github.run_id }}
@@ -152,7 +178,7 @@ jobs:
           printf 'max_size = 2G\ncompiler_check = content\n' > "$RUNNER_TEMP/ccache/ccache.conf"
       - name: Build ESPHome Firmware
         id: esphome-build
-        uses: esphome/build-action@v8.1.0
+        uses: esphome/build-action@ae5408cdbc4f70692bf8e345c4982bca05a93667 # v8.1.0
         with:
           yaml-file: tab5-ha-hmi.yaml
       - name: Statistiques ccache
@@ -181,7 +207,7 @@ jobs:
         # binaires à distribuer sont ceux des releases, signés par la clé du projet
         # (publication.yml, lot 6c, ADR-0022).
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: tab5-firmware
           path: ${{ steps.esphome-build.outputs.name }}
@@ -193,7 +219,7 @@ jobs:
     if: needs.changes.outputs.firmware == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Version plancher (min_version de tab5-ha-hmi.yaml)
         id: plancher
         # Lue dans le fichier plutôt que recopiée ici : relever le plancher dans
@@ -216,7 +242,7 @@ jobs:
       # Cache ccache à part : les objets d'une autre version d'ESPHome (ou d'ESP-IDF)
       # ne resserviraient pas, et chaque job écraserait le cache de l'autre.
       - name: Cache ccache (objets de la compilation précédente)
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ runner.temp }}/ccache
           key: ccache-p4-min-${{ steps.plancher.outputs.version }}-${{ github.run_id }}
@@ -227,7 +253,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/ccache"
           printf 'max_size = 2G\ncompiler_check = content\n' > "$RUNNER_TEMP/ccache/ccache.conf"
       - name: Build ESPHome Firmware (version plancher)
-        uses: esphome/build-action@v8.1.0
+        uses: esphome/build-action@ae5408cdbc4f70692bf8e345c4982bca05a93667 # v8.1.0
         with:
           yaml-file: tab5-ha-hmi.yaml
           version: ${{ steps.plancher.outputs.version }}
@@ -248,7 +274,7 @@ jobs:
       matrix:
         ecran: [st7121, ili9881c]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: user_entities.yaml (révision ${{ matrix.ecran }}) et clé de signature jetable
         run: |
           cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
@@ -258,7 +284,7 @@ jobs:
           # binaire signé avec elle est refusé en OTA par une tablette du projet.
           openssl genrsa -out tab5_signature.pem 3072
       - name: Cache ccache (restauré depuis build, jamais sauvegardé)
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ runner.temp }}/ccache
           key: ccache-esp32p4-${{ github.run_id }}
@@ -269,6 +295,6 @@ jobs:
           mkdir -p "$RUNNER_TEMP/ccache"
           printf 'max_size = 2G\ncompiler_check = content\n' > "$RUNNER_TEMP/ccache/ccache.conf"
       - name: Build ESPHome Firmware (révision ${{ matrix.ecran }})
-        uses: esphome/build-action@v8.1.0
+        uses: esphome/build-action@ae5408cdbc4f70692bf8e345c4982bca05a93667 # v8.1.0
         with:
           yaml-file: tab5-ha-hmi.yaml
