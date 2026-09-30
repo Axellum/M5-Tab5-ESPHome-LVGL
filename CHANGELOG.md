@@ -23,6 +23,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
     (esptool 5.4.0 et toutes ses dépendances, versions exactes et empreintes,
     `--require-hashes`) au lieu de `esptool>=5` ; chaque PR rejoue cette installation sur
     Linux. `tests/test_ci_securite.py` tient ces trois règles.
+- **Contrat Home Assistant ↔ tablette vérifié champ par champ, et deux correctifs** (audit du
+  30/09/2026, lot D). Home Assistant refuse l'appel d'une action de la tablette qui a une variable
+  manquante ou en trop, ou un nom inconnu (« Action … not found ») ; l'erreur n'est que dans son
+  journal et arrête le script, donc les poussées suivantes ne partent pas. `tests/test_contrat.py`
+  compare désormais les clés de chaque appel (packages, blueprint, snippets, rendu hors tablette)
+  aux `variables:` de `Tab5/tab5-api-logic.yaml`, et chaque champ `trigger.event.data.*` lu pour
+  un événement `esphome.tab5_*` à ceux que le firmware émet. `tools/demo/demo_pusher.py --dry-run`
+  lit enfin ce même contrat (l'étape de la CI l'annonçait sans le faire) et échoue sur un écart ;
+  sa garde refuse aussi une variable en trop. Correctifs : `binary_sensor.tab5_fichiers_ha_en_retard`
+  ne compare plus que X.Y, une tablette en 3.3.1 avec des fichiers 3.3.0 n'est plus signalée (la
+  3.3.1 ne demandait que le blueprint) ; la version par défaut d'un firmware compilé soi-même
+  passe de 3.2.0-dev à 3.3.1-dev, et un test exige qu'elle suive la dernière version publiée.
+  Documentation corrigée et tenue par `tests/test_doc_comptes.py` : 11 à 13 champs de vigilance
+  (et non 11), 12 services appelés par la démo et 7 non (dont `tab5_maj_planning`), consommateurs
+  de `tab5_connected` et `tab5_maj_ecran` dans la table des événements. Rien ne change sur l'écran.
+  Côté HA, seul `tab5_health.yaml` change de comportement : à déployer.
 
 - **Deux garde-fous de plus, joués par `pytest` et la CI** (audit du 25/09, §7). Une valeur
   oubliée dans un niveau d'Arcanoïde ou une question supprimée de Trial Poursuite compilait sans
