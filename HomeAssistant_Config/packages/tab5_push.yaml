@@ -30,9 +30,12 @@
 #       entités de la tablette sont trouvées par le modèle de l'appareil
 #       (sensor.tab5_tablette), quel que soit son nom.
 # @architecture_constraint Chaque `action: esphome.tab5_ha_hmi_tab5_maj_*` correspond à
-#       un service `api: services:` déclaré dans Tab5/tab5-api-logic.yaml. Ne
-#       JAMAIS renommer un service ici sans renommer le pendant firmware (et
-#       vice-versa) — sinon la poussée échoue silencieusement (pas d'erreur HA visible).
+#       un service `api: services:` déclaré dans Tab5/tab5-api-logic.yaml, et ses clés
+#       `data:` à ses `variables:`, ni plus ni moins. Ne JAMAIS renommer un service ou
+#       une variable ici sans le pendant firmware (et vice-versa) : HA refuse l'appel
+#       (« Action … not found », argument manquant ou en trop), l'erreur n'est que
+#       dans son journal, et le script s'arrête là (continue_on_error ne la rattrape
+#       pas) : les poussées suivantes ne partent pas. tests/test_contrat.py compare.
 # @payload_contract Les payloads bulk (jours/heures/pluie 1h/alerte météo) sont des
 #       chaînes délimitées par `;`/`|` — le format doit matcher EXACTEMENT ce que
 #       parse_and_update_*_bulk() (Tab5/tab5_*.cpp) attend en nombre de champs.
