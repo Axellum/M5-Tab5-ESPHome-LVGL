@@ -85,17 +85,17 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ env.TAG }}
           path: tag
       # L'outil vient du commit du workflow (comme meme_code.py plus bas) : un ancien
       # tag ne l'a pas.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           path: outils-workflow
           sparse-checkout: tools/publication
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
       - name: Archive tab5_home_assistant.zip
@@ -124,22 +124,34 @@ jobs:
       matrix:
         ecran: [st7123, st7121, ili9881c]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ env.TAG }}
-      - uses: actions/setup-python@v7
+      # Les sources compilées sont celles du tag ; les outils (réessais pip, dépendances
+      # figées d'esptool, comparaison de l'ELF) viennent du commit du workflow, à part :
+      # une version publiée avant eux ne les a pas.
+      - name: Outils du workflow (pip, esptool figé, comparaison)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: outils-workflow
+          sparse-checkout: |
+            tools/ci
+            tools/publication
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
-      - name: esptool (espsecure)
-        # Réessais écrits ici, pas dans tools/ci/pip_reessai.sh : ce workflow peut
-        # reconstruire un ancien tag, qui n'a pas le script. PyPI répond parfois
-        # « from versions: none » (28/09/2026).
+      - name: esptool (espsecure), versions et empreintes figées
+        # espsecure lit la clé du projet à l'étape suivante : ni « esptool>=5 » ni paquet
+        # sans empreinte (audit sécurité du 30/09/2026). setuptools figé d'abord, qui
+        # construit esptool (sdist seulement) sans isolation ; le reste en roues.
+        # Réessais : PyPI répond parfois « from versions: none » (28/09/2026).
         run: |
-          for essai in 1 2 3 4; do
-            pip install --retries 5 --timeout 30 "esptool>=5" && exit 0
-            [ "$essai" -lt 4 ] && { echo "::warning::pip install a échoué (essai $essai/4)"; sleep $((essai * 20)); }
-          done
-          echo "::error::pip install a échoué 4 fois"; exit 1
+          o=outils-workflow/tools
+          bash "$o/ci/pip_reessai.sh" --require-hashes --only-binary :all: \
+            -r "$o/publication/requirements-esptool-build.txt"
+          bash "$o/ci/pip_reessai.sh" --require-hashes --no-build-isolation --only-binary :all: --no-binary esptool \
+            -r "$o/publication/requirements-esptool.txt"
+          python -m espsecure --help >/dev/null
       - name: Clé de signature du projet (secret), vérifiée par son empreinte
         env:
           CLE: ${{ secrets.TAB5_CLE_SIGNATURE }}
@@ -153,7 +165,7 @@ jobs:
           cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
       - name: Compilation (${{ matrix.ecran }}, canal ${{ needs.preparation.outputs.canal }})
         id: esphome-build
-        uses: esphome/build-action@v8.1.0
+        uses: esphome/build-action@ae5408cdbc4f70692bf8e345c4982bca05a93667 # v8.1.0
         with:
           yaml-file: tab5-ha-hmi.yaml
           version: ${{ env.ESPHOME_PUBLICATION }}
@@ -171,20 +183,14 @@ jobs:
           ota=$(ls "${{ steps.esphome-build.outputs.name }}"/*.ota.bin)
           python -m espsecure verify-signature --version 2 --keyfile tab5_signature.pem "$ota"
       - name: ELF gardé (décoder un plantage de ce firmware)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: elf-${{ matrix.ecran }}
           path: ${{ steps.esphome-build.outputs.name }}/*.elf
           if-no-files-found: error
           retention-days: 90
-      # Les sources compilées sont celles du tag : une version publiée avant cet outil ne
-      # l'a pas. On le prend dans le commit du workflow, à part.
-      - name: Outil de comparaison (ELF seulement)
-        if: inputs.elf_seulement
-        uses: actions/checkout@v7
-        with:
-          path: outils-workflow
-          sparse-checkout: tools/publication
+      # meme_code.py : dans outils-workflow/ (commit du workflow, étape « Outils du
+      # workflow »), une version publiée avant cet outil ne l'a pas.
       - name: Même code que l'image publiée (ELF seulement)
         if: inputs.elf_seulement
         env:
@@ -201,7 +207,7 @@ jobs:
           python tools/publication/preparer.py --source "${{ steps.esphome-build.outputs.name }}" \
             --ecran ${{ matrix.ecran }} --version ${{ needs.preparation.outputs.version }} --sortie publie
           ls -l publie
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: ${{ !inputs.elf_seulement }}
         with:
           name: publie-${{ matrix.ecran }}
@@ -216,7 +222,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: publie-*
           path: publie

@@ -65,8 +65,8 @@ jobs:
       matrix:
         langue: ${{ fromJSON(inputs.langues || '["fr", "en", "de", "nl", "es", "it"]') }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
       - name: ESPHome à la version plancher (min_version de tab5-ha-hmi.yaml), Pillow, faketime
@@ -137,7 +137,7 @@ jobs:
         run: tail -n 80 captures/rendu-*.log || true
       - name: Captures (${{ matrix.langue }})
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: rendu-captures-${{ matrix.langue }}
           path: |
@@ -152,13 +152,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
       - run: bash tools/ci/pip_reessai.sh pillow
       - name: Réunir les captures des six langues
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: rendu-captures-*
           merge-multiple: true
@@ -182,7 +182,7 @@ jobs:
           python tools/rendu/comparer.py --captures captures "${refs[@]}"
       - name: Captures
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: rendu-captures
           path: |
