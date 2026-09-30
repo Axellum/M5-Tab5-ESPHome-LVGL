@@ -21,6 +21,8 @@ import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 
 REPO = Path(__file__).resolve().parent.parent
+ENTREE = REPO / "tab5-ha-hmi.yaml"
+CHANGELOG = REPO / "CHANGELOG.md"
 HEALTH = REPO / "HomeAssistant_Config" / "packages" / "tab5_health.yaml"
 
 CAPTEUR = "binary_sensor.tab5_fichiers_ha_en_retard"
@@ -30,6 +32,33 @@ TABLETTE = "sensor.tab5_tablette"
 
 def _lire(chemin):
     return chemin.read_text(encoding="utf-8")
+
+
+# ─── Version par défaut du firmware ──────────────────────────────────────────
+
+def _derniere_version_publiee():
+    """Première entrée `## [X.Y.Z]` du CHANGELOG ([Unreleased] n'en est pas une)."""
+    trouve = re.search(r"^## \[(\d+\.\d+\.\d+)\]", _lire(CHANGELOG), re.M)
+    assert trouve, "CHANGELOG.md : plus aucune entrée « ## [X.Y.Z] », adapter le motif"
+    return trouve.group(1)
+
+
+def _version_par_defaut():
+    projet = _lire(ENTREE).split("  project:\n", 1)[1]
+    trouve = re.search(r"version: \$\{ tab5_version \| default\('([^']+)'\) \}", projet)
+    assert trouve, "tab5-ha-hmi.yaml : plus de `version: ${ tab5_version | default('…') }`, adapter le motif"
+    return trouve.group(1)
+
+
+def test_version_par_defaut_egale_a_la_derniere_publiee():
+    defaut = _version_par_defaut()
+    publiee = _derniere_version_publiee()
+    assert re.fullmatch(r"\d+\.\d+\.\d+-dev", defaut), defaut
+    assert defaut.removesuffix("-dev") == publiee, (
+        f"tab5-ha-hmi.yaml : project: version par défaut « {defaut} », mais la dernière version "
+        f"publiée du CHANGELOG est {publiee}. À chaque release (PR chore(release)), relever le "
+        f"défaut à « {publiee}-dev » : un firmware compilé soi-même annonce cette version à HA "
+        "(sw_version), que le blueprint et tab5_health.yaml comparent.")
 
 
 # ─── L'alerte « fichiers HA en retard » ─────────────────────────────────────
