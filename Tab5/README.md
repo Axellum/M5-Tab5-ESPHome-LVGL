@@ -125,7 +125,7 @@ Garde-fou : `tools/check_tab5_registry.py`.
 | `tab5_maj_clim` | target, current, mode, preset, fan, swing (strings) | État de la clim du blueprint : ses globals, puis `clim_blueprint_recu()` (carte de l'accueil ; popup s'il montre cette clim ; couleurs). Unité, bornes et boutons : clé `climr` de `tab5_maj_emplacements`, poussée juste avant (ADR-0026). Clims des tuiles : clés `crRT` / `ceRT` de `tab5_maj_emplacements` (ADR-0027) |
 | `tab5_maj_volet_etat` | etat_physique (string) | Volet 3.x (ouvert/fermé/en mouvement) : tuile 1 de la pièce 0 du mode héritage (`tuiles_heritage_volet()`, ADR-0023) ; pose `volet_en_mouvement` et arme/désarme le wake word « Stop » dans tous les modes |
 | `tab5_maj_planning` | ligne1, ligne2 (strings) | Texte planning affiché dans la carte centrale |
-| `tab5_maj_alerte_meteo_france` | payload (string, 11 champs `\|`-delimited) | Alertes météo France (vent, inondation, orages...) + recoloration de la date — `parse_and_update_vigilance()` |
+| `tab5_maj_alerte_meteo_france` | payload (string, 11 à 13 champs séparés par `\|` ; brouillard et feux de forêt, en fin, facultatifs) | Alertes météo France (vent, inondation, orages...) + recoloration de la date — `parse_and_update_vigilance()` |
 | `tab5_maj_meteo_actuelle` | condition, temperature, humidite | Hygrométrie → couleur de la goutte « pluie prédictive » (`update_rain_predict_icon_ui()`). `condition` et `temperature` sont **réservés** : reçus, non exploités depuis le retrait de la grosse icône météo centrale ; le contrat n'est pas rétréci (3 appelants HA) |
 | `tab5_maj_probabilites` | uv, gel, neige (strings) | Flocon si probabilité de neige ≥ 5, sinon goutte (`update_rain_predict_icon_ui()`, partagée avec la météo actuelle). `uv` et `gel` sont **réservés** : reçus, non exploités |
 | `tab5_maj_pluie_1h_bulk` | payload (string, `idx\|intensité;…` × 9) | Les 9 barres du graphe pluie 1h en un appel (ADR-0003) ; met à jour `has_rain` (`update_rain_bars_bulk_ui()` puis `central_set_pluie()`) — ce que HA appelle depuis le 08/09/2026 |
@@ -144,11 +144,11 @@ Garde-fou : `tools/check_tab5_registry.py`.
 
 ## Événements émis vers HA (`homeassistant.event`)
 
-L'autre moitié du contrat. **Le firmware n'appelle aucune action de HA** (plus de `homeassistant.service` / `homeassistant.action` depuis l'[ADR-0025](../docs/decisions/0025-events-only.md)) : il émet des événements `esphome.tab5_*`, que HA reçoit sans l'option « autoriser l'appareil à effectuer des actions Home Assistant », avec le `device_id` de la tablette. Le package `HomeAssistant_Config/packages/tab5_evenements.yaml` traduit les demandes en une liste blanche d'actions, pour une tablette de modèle `tab5-ha-hmi` seulement, sur ses propres entités (`device_entities`). `tests/test_actions_ha.py` vérifie que chaque événement émis a un consommateur, et inversement.
+L'autre moitié du contrat. **Le firmware n'appelle aucune action de HA** (plus de `homeassistant.service` / `homeassistant.action` depuis l'[ADR-0025](../docs/decisions/0025-events-only.md)) : il émet des événements `esphome.tab5_*`, que HA reçoit sans l'option « autoriser l'appareil à effectuer des actions Home Assistant », avec le `device_id` de la tablette. Le package `HomeAssistant_Config/packages/tab5_evenements.yaml` traduit les demandes en une liste blanche d'actions, pour une tablette de modèle `tab5-ha-hmi` seulement, sur ses propres entités (`device_entities`). `tests/test_actions_ha.py` vérifie que chaque événement émis a un consommateur, et inversement ; `tests/test_contrat.py`, que chaque champ lu est émis (et chaque champ émis lu, sauf `zones`) ; `tests/test_doc_comptes.py`, les colonnes « Données » et « Consommateur » de cette table.
 
 | Événement | Données | Émis par | Consommateur (HA) → action |
 |---|---|---|---|
-| `tab5_connected` | — | connexion de HA (`on_boot`, `on_client_connected`) | `tab5_push.yaml`, `tab5_reveil.yaml`, blueprint : poussées complètes |
+| `tab5_connected` | — | connexion de HA (`on_boot`, `on_client_connected`) | `tab5_push.yaml`, `tab5_reveil.yaml`, blueprint : poussées complètes ; `tab5_reglages.yaml` : retrouve la tablette (`sensor.tab5_tablette`) |
 | `tab5_zones` | zones | `tab5_zones_demande` | blueprint → `tab5_maj_zones` |
 | `tab5_action` | emplacement, action, valeur | script `tab5_action` | blueprint → entité de l'emplacement |
 | `tab5_journal` | raison, demarrages, grave, lignes | `tab5_journal_envoi` | `tab5_health.yaml` → notification |
@@ -159,7 +159,7 @@ L'autre moitié du contrat. **Le firmware n'appelle aucune action de HA** (plus 
 | `tab5_alerte_lue` | alert_id | `tab5_dismiss_info_tap`, `tab5_dismiss_ha_alert` | `tab5_evenements.yaml` → `script.tab5_dismiss_alert` |
 | `tab5_voix_stop` | — | `tab5_vocal_interrupt` | `tab5_evenements.yaml` → `media_player.media_stop` (lecteur de la tablette) |
 | `tab5_mode_assistant` | option (`preferred` / `Discussion LLM`) | `tab5_set_assist_mode` (boutons, et au démarrage) | `tab5_evenements.yaml` → `select.select_option` (select de pipeline de la tablette, si l'option existe) |
-| `tab5_maj_ecran` | — | console, « MAJ Écran » | `tab5_evenements.yaml` → `input_boolean.turn_on` (`is_primary_active`) + `automation.trigger` (id `tab5_ha_hmi_updater`) |
+| `tab5_maj_ecran` | — | console, « MAJ Écran » | `tab5_evenements.yaml` → `input_boolean.turn_on` (`is_primary_active`) + `automation.trigger` (id `tab5_ha_hmi_updater`) ; blueprint : emplacements, tuiles et zones |
 | `tab5_recharger_automatisations` | — | console, « Recharger autos » | `tab5_evenements.yaml` → `automation.reload` |
 | `tab5_redemarrage_ha_confirme` | — | console, « Confirmer » de l'écran de confirmation | `tab5_evenements.yaml` → `homeassistant.restart` (seul chemin) |
 | `tab5_alarm_start` / `_stop` / `_snooze` / `_timeout` | — | réveil | aucun dans le projet : pour les automatisations de l'utilisateur |

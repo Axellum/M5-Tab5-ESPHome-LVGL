@@ -25,11 +25,16 @@ pas de section pour sept packages, et le README comptait « quatre » fichiers d
 - les fichiers de plus de 500 lignes nommés par le README (EN et FR) ;
 - le nombre de `ui_components/*.yaml`, et de ceux que `tab5-lvgl.yaml` inclut lui-même.
 
+Ajouté le 30/09/2026 (lot D de l'audit, contrat HA ↔ tablette) : le nombre de champs
+de la vigilance, les services appelés ou non par la démo (AGENTS.md, docs/demo_mode.md)
+et la table des événements de Tab5/README.md (données émises, consommateurs).
+
 Un texte qui n'a pas besoin du nombre l'omet (vue d'ensemble d'architecture.md) : il
 ne se périme plus. Un motif qui ne trouve plus rien fait échouer le test : le texte a
 changé, il faut adapter le motif, pas le laisser vérifier le vide."""
 import pathlib
 import re
+import sys
 
 import pytest
 
@@ -255,3 +260,119 @@ def test_table_des_services_du_readme_tab5():
 def test_nombre_d_adr(chemin, motif):
     assert len(_adr()) > 20, "docs/decisions/ ne contient plus les ADR numérotés"
     assert set(_nombres(chemin, motif)) == {len(_adr())}
+
+
+# ─── Le contrat HA ↔ tablette (audit du 30/09/2026, lot D) ───────────────────
+# Constatés faux ce jour-là : « 11 champs » de vigilance (le parseur en lit jusqu'à 13),
+# « 10 dashboard push services » et « 6 other services » dans AGENTS.md (la démo en
+# appelle 12, et 7 non, dont tab5_maj_planning oublié), tab5_maj_rdv_prochains et
+# tab5_maj_planning absents des services hors démo de docs/demo_mode.md, et dans la table
+# des événements de Tab5/README.md, le blueprint (tab5_maj_ecran) et tab5_reglages.yaml
+# (tab5_connected) absents des consommateurs. Champs et appels eux-mêmes :
+# tests/test_contrat.py.
+
+AGENTS = REPO / "AGENTS.md"
+DEMO_MODE = REPO / "docs" / "demo_mode.md"
+SERVICES_CPP = REPO / "Tab5" / "tab5_services.cpp"
+sys.path.insert(0, str(REPO / "tools" / "demo"))
+
+import demo_pusher  # noqa: E402
+import scenarios  # noqa: E402
+from tests.test_actions_ha import _consommateurs  # noqa: E402
+from tests.test_contrat import champs_emis  # noqa: E402
+
+
+def _vigilance_min_max():
+    """(champs de la forme Météo-France, champs lus au plus par parse_and_update_vigilance)."""
+    corps = _lire(SERVICES_CPP).split("bool parse_and_update_vigilance(", 1)[1].split("\n}\n", 1)[0]
+    lus = re.search(r"const char\* fields\[(\d+)\];", corps)
+    assert lus, "parse_and_update_vigilance : plus de `const char* fields[N]`, adapter le motif"
+    tampon = re.search(r"char buf\[(\d+)\];", corps)
+    assert tampon and int(tampon.group(1)) == scenarios.ALERTE_BUF_OCTETS, \
+        "tools/demo/scenarios.py : ALERTE_BUF_OCTETS = le tampon de parse_and_update_vigilance"
+    return len(scenarios.ALERTE_CHAMPS), int(lus.group(1))
+
+
+@pytest.mark.parametrize("chemin, motif", [
+    (README_TAB5, r"`tab5_maj_alerte_meteo_france` \| payload \(string, (\d+) à (\d+) champs"),
+    (ARCHITECTURE, r"`tab5_maj_alerte_meteo_france`, (\d+) to (\d+) `\|`-delimited fields"),
+    (ARCHITECTURE, r"`tab5_maj_alerte_meteo_france`, (\d+) à (\d+) champs délimités"),
+    (API, r"// (\d+) à (\d+) champs « \| »"),
+], ids=["readme-tab5", "archi-en", "archi-fr", "api-logic"])
+def test_champs_de_vigilance(chemin, motif):
+    trouves = re.findall(motif, _lire(chemin))
+    assert trouves, f"{chemin.name} : plus rien ne correspond à {motif!r}, adapter le motif"
+    assert {(int(a), int(b)) for a, b in trouves} == {_vigilance_min_max()}
+
+
+def _demo():
+    """Actions appelées par la démo (tests/test_demo.py le vérifie en la jouant)."""
+    return set(demo_pusher.SERVICES_ATTENDUS) | {demo_pusher.SERVICE_TUILES}
+
+
+def _noms(texte):
+    """Noms d'actions entre accents graves ; « `_jour` » reprend le préfixe du précédent."""
+    noms = []
+    for nom in re.findall(r"`(\w+)`", texte):
+        if nom.startswith("_") and noms:
+            nom = noms[-1].rsplit("_", 1)[0] + nom
+        noms.append(nom)
+    return [n for n in noms if n.startswith("tab5_")]
+
+
+def test_agents_services_de_la_demo():
+    texte = _lire(AGENTS)
+    appeles = re.search(r"the \*\*(\d+) push services\*\* the demo calls", texte)
+    autres = re.search(r"The (\d+) other services \(([^)]*)\) are out of its scope", texte)
+    assert appeles and autres, "AGENTS.md : phrase du --dry-run changée, adapter les motifs"
+    hors_demo = set(_services()) - _demo()
+    assert int(appeles.group(1)) == len(_demo())
+    assert int(autres.group(1)) == len(hors_demo)
+    assert sorted(_noms(autres.group(2))) == sorted(hors_demo)
+
+
+@pytest.mark.parametrize("motif_nombre, motif_restants, langue", [
+    (r"driving ([a-z]+) dashboard push services",
+     r"The remaining services are out of scope by design (.*?)\n", 0),
+    (r"qui pilotent ([a-zé]+) services de push du dashboard",
+     r"Les services restants sont hors périmètre par choix (.*?)\n", 1),
+], ids=["en", "fr"])
+def test_demo_mode_services(motif_nombre, motif_restants, langue):
+    """« nine dashboard push services » + zones + emplacements + tuiles, nommées à part ;
+    les services restants, tous nommés."""
+    texte = _lire(DEMO_MODE)
+    nombre, restants = re.search(motif_nombre, texte), re.search(motif_restants, texte)
+    assert nombre and restants, "docs/demo_mode.md : phrase changée, adapter les motifs"
+    a_part = {"tab5_maj_zones", "tab5_maj_emplacements", demo_pusher.SERVICE_TUILES}
+    assert nombre.group(1) == _en_lettres(len(_demo() - a_part))[langue]
+    assert sorted(set(_noms(restants.group(1)))) == sorted(set(_services()) - _demo())
+
+
+def _table_des_evenements():
+    """{événement: (données, consommateurs)} de la table de Tab5/README.md."""
+    texte = _lire(README_TAB5)
+    debut = texte.index("## Événements émis vers HA")
+    section = texte[debut:texte.index("\n## ", debut + 1)]
+    lignes = {}
+    for evenements, donnees, _, consommateurs in re.findall(
+            r"^\| (`tab5_[^|]+) \| ([^|]*) \| ([^|]*) \| ([^|]*) \|$", section, re.M):
+        noms = re.findall(r"`(tab5_\w+)`", evenements)
+        # « `tab5_alarm_start` / `_stop` / … » : même préfixe.
+        noms += [noms[0].rsplit("_", 1)[0] + s for s in re.findall(r"`(_\w+)`", evenements)]
+        for nom in noms:
+            lignes["esphome." + nom] = (donnees, consommateurs)
+    return lignes
+
+
+def test_table_des_evenements_du_readme_tab5():
+    table = _table_des_evenements()
+    emis = champs_emis()
+    assert len(emis) > 15 and sorted(table) == sorted(emis), "une ligne par événement émis"
+    consommateurs = _consommateurs()
+    for evt, (donnees, qui) in sorted(table.items()):
+        # Données : « a, b », « option (`preferred` / …) » ou « — ».
+        champs = {c.strip().split(" ")[0] for c in donnees.split(",")} - {"—"}
+        assert champs == set(emis[evt]), f"{evt} : « {donnees} », le firmware émet {sorted(emis[evt])}"
+        for fichier in consommateurs.get(evt, []):
+            nom = "blueprint" if "/blueprints/" in fichier else f"`{fichier.rsplit('/', 1)[1]}`"
+            assert nom in qui, f"{evt} : {nom} l'écoute, absent de la colonne « Consommateur » ({qui})"
