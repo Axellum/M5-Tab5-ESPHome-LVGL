@@ -39,4 +39,9 @@ jobs:
           print("| Contrôle | Score | Raison |\n|---|---|---|")
           for c in sorted(r["checks"], key=lambda c: c["score"]):
               print(f"| {c['name']} | {c['score']} | {c['reason']} |")
+          for c in r["checks"]:
+              if c["name"] in ("Vulnerabilities", "Pinned-Dependencies"):
+                  print(f"\n### {c['name']}\n")
+                  for d in (c.get("details") or [])[:40]:
+                      print("- " + d.replace("\n", " ")[:300])
           EOF
