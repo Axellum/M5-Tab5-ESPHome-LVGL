@@ -64,6 +64,7 @@ STYLES = {
         "AlignConsecutiveDeclarations: Consecutive, AlignTrailingComments: true, ReflowComments: false}"),
 }
 
+ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")  # couleurs de PlatformIO dans le journal
 DIAG = re.compile(r"^(?P<fichier>[^:\n]+):(?P<ligne>\d+):(?P<col>\d+): (?P<niveau>warning|error|note|style|performance|portability|information): (?P<msg>.*?)(?: \[(?P<id>[^\]]+)\])?$")
 
 
@@ -80,7 +81,7 @@ def a_nous(chemin: str, noms: set[str]) -> bool:
 
 def lire_diags(texte: str, noms: set[str]) -> list[dict]:
     vus, sortie = set(), []
-    for ligne in texte.splitlines():
+    for ligne in ANSI.sub("", texte).splitlines():
         m = DIAG.match(ligne.strip())
         if not m or m["niveau"] == "note" or not a_nous(m["fichier"], noms):
             continue
@@ -111,6 +112,9 @@ def base_compilation(build: Path, cpp: set[str], sortie: Path) -> Path | None:
     for e in entrees:  # les commandes de GCC en liste, pour pouvoir retirer un drapeau refusé par clang
         if "command" in e:
             e["arguments"] = shlex.split(e.pop("command"))
+        # PlatformIO écrit « src/x.cpp » relatif à `directory` : clang-tidy, lancé depuis
+        # la racine du dépôt, ne le trouvait pas (1er run du 30/09 : 0 fichier analysé).
+        e["file"] = str(Path(e["directory"], e["file"]).resolve())
     dossier = sortie / "cc"
     dossier.mkdir(parents=True, exist_ok=True)
     (dossier / "compile_commands.json").write_text(json.dumps(entrees, indent=1))

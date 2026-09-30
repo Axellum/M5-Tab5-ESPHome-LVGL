@@ -1,0 +1,90 @@
+name: Audit relances (branche d'audit, ne pas merger)
+
+# Audit du 30/09/2026. Relance des jobs corrigés SANS toucher la PR d'audit #268 : un
+# push sur la PR relancerait tous ses workflows et annulerait l'endurance de 3 h en cours.
+# Déclenché par un push sur cette branche seulement (aucun autre workflow ne l'écoute).
+#   analyse-statique  journal GCC sans couleurs, chemins absolus pour clang-tidy
+#   scorecard         binaire officiel vérifié ; sans Branch-Protection ni Webhooks, que le
+#                     jeton de la CI ne peut pas lire (la protection de main a été lue
+#                     à part, par l'API, avec le jeton d'Axel)
+
+on:
+  push:
+    branches: [audit/relances]
+
+permissions:
+  contents: read
+
+env:
+  TZ: Europe/Paris
+
+jobs:
+  analyse-statique:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: ESPHome à la version plancher, clang-tidy, cppcheck, clang-format
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          bash tools/ci/pip_reessai.sh "esphome==$v"
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends clang-tidy cppcheck clang-format
+      - name: Compiler la tablette virtuelle avec des avertissements en plus
+        env:
+          AUDIT_CCFLAGS: "-Wall -Wextra -Wshadow -Wformat=2 -Wnull-dereference -Wduplicated-cond -Wlogical-op -Wcast-align"
+        run: |
+          python tools/audit/variante.py tab5-audit.yaml
+          esphome compile tab5-audit.yaml > build.log 2>&1 || { tail -n 80 build.log; exit 1; }
+      - name: Analyse (GCC, clang-tidy, cppcheck, clang-format)
+        run: |
+          python tools/audit/analyse_statique.py --build .esphome/build/tab5-rendu --journal build.log \
+            --resultats resultats/analyse
+          cat resultats/analyse/analyse.md >> "$GITHUB_STEP_SUMMARY"
+          cp build.log resultats/analyse/
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: audit-analyse-statique
+          path: resultats/
+          retention-days: 30
+
+  scorecard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: OpenSSF Scorecard v5.5.0 (binaire officiel, somme vérifiée)
+        env:
+          GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          V: "5.5.0"
+        run: |
+          mkdir -p resultats sc
+          base="https://github.com/ossf/scorecard/releases/download/v$V"
+          curl -sSfL -o "sc/scorecard_${V}_linux_amd64.tar.gz" "$base/scorecard_${V}_linux_amd64.tar.gz"
+          curl -sSfL -o sc/sommes.txt "$base/scorecard_checksums.txt"
+          (cd sc && grep " scorecard_${V}_linux_amd64.tar.gz$" sommes.txt | sha256sum -c -)
+          tar -xzf "sc/scorecard_${V}_linux_amd64.tar.gz" -C sc
+          prog=$(find sc -type f -name 'scorecard*' ! -name '*.tar.gz' ! -name '*.txt' | head -n 1)
+          chmod +x "$prog"
+          checks="Binary-Artifacts,CI-Tests,CII-Best-Practices,Code-Review,Contributors,Dangerous-Workflow"
+          checks="$checks,Dependency-Update-Tool,Fuzzing,License,Maintained,Packaging,Pinned-Dependencies"
+          checks="$checks,SAST,Security-Policy,Signed-Releases,Token-Permissions,Vulnerabilities"
+          "$prog" --repo="github.com/${{ github.repository }}" --checks="$checks" --format=json --show-details \
+            > resultats/scorecard.json
+          python3 - <<'PY' | tee -a "$GITHUB_STEP_SUMMARY" resultats/scorecard.md
+          import json
+          r = json.load(open("resultats/scorecard.json"))
+          print(f"## OpenSSF Scorecard : {r['score']} / 10 ({r['date']}, sans Branch-Protection ni Webhooks)\n")
+          print("| Contrôle | Score | Raison |\n|---|---|---|")
+          for c in sorted(r["checks"], key=lambda c: c["score"]):
+              print(f"| {c['name']} | {c['score']} | {c['reason']} |")
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: audit-scorecard
+          path: resultats/
+          retention-days: 30
