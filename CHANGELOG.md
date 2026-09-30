@@ -49,6 +49,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   traité comme une valeur inconnue (« -- ») et des bornes de clim hors de −100…200 sont
   ignorées. Testé sur PC par `tools/test_alarm_clock.cpp`. Rien ne change pour des valeurs
   normales.
+- **Nouveau job CI « Sanitizers (tablette virtuelle) », non requis** (lot B de l'audit du 30/09).
+  La tablette virtuelle (`tab5-rendu-host.yaml`) est compilée avec AddressSanitizer et
+  UndefinedBehaviorSanitizer (`tools/sanitizers/variante.py` + `pio_drapeaux.py`), puis les 19
+  services de HA sont fuzzés (`fuzz_services.py`), les cas de conversions hors bornes rejoués
+  fenêtre ouverte (`cibles_ub.py`) et tous les écrans ouverts. Le job échoue au premier rapport,
+  lu dans le journal de la tablette (`rapports.py`) : UBSan ignore `log_path` et écrit sur la
+  sortie d'erreur, ce qui avait fait conclure « 0 rapport » à tort au premier passage de l'audit.
+  Un témoin positif (`temoin.cpp`) prouve à chaque run que la détection marche.
+  Tests : `tests/test_sanitizers.py`.
 - **Deux garde-fous de plus, joués par `pytest` et la CI** (audit du 25/09, §7). Une valeur
   oubliée dans un niveau d'Arcanoïde ou une question supprimée de Trial Poursuite compilait sans
   erreur (le C++ complète avec des zéros, soit une question nulle). `tools/check_arkanoid_levels.py`

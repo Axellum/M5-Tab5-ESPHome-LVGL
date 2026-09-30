@@ -1,0 +1,145 @@
+name: Sanitizers (tablette virtuelle)
+
+# Lot B de l'audit du 30/09/2026. La tablette virtuelle (tab5-rendu-host.yaml, plateforme
+# `host`) compilée avec AddressSanitizer et UndefinedBehaviorSanitizer, puis :
+#   1. un témoin positif prouve que la détection marche (sinon « 0 rapport » ne prouve rien) ;
+#   2. les 19 services de HA sont fuzzés (tools/sanitizers/fuzz_services.py) ;
+#   3. les cas ciblés, fenêtres ouvertes (tools/sanitizers/cibles_ub.py) ;
+#   4. tous les écrans sont ouverts et refermés (tools/rendu/capturer.py).
+# Chaque étape échoue au premier rapport ASan/UBSan, lu dans le journal de la tablette
+# (tools/sanitizers/rapports.py) : UBSan ignore `log_path` et écrit sur la sortie d'erreur.
+# C'est ce chemin qui a trouvé les conversions float → int corrigées au lot A.
+# NON REQUIS pour merger (≈ 20 min) : un rouge ici se lit avant de merger un lot C++.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tab5-ha-hmi.yaml'
+      - 'tab5-rendu-host.yaml'
+      - 'Tab5/**'
+      - 'tools/sanitizers/**'
+      - 'tools/rendu/**'
+      - 'tools/demo/**'
+      - '.github/workflows/sanitizers.yml'
+      - '!**/*.md'
+  pull_request:
+    paths:
+      - 'tab5-ha-hmi.yaml'
+      - 'tab5-rendu-host.yaml'
+      - 'Tab5/**'
+      - 'tools/sanitizers/**'
+      - 'tools/rendu/**'
+      - 'tools/demo/**'
+      - '.github/workflows/sanitizers.yml'
+      - '!**/*.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  SAN_CC: "-fsanitize=address,undefined,float-cast-overflow -fno-sanitize=vptr -fno-omit-frame-pointer -g"
+  SAN_LD: "-fsanitize=address,undefined,float-cast-overflow -fno-sanitize=vptr"
+  # Aucun chemin de rapport : tout va au journal de la tablette (voir l'en-tête).
+  ASAN_OPTIONS: "detect_leaks=0:halt_on_error=1:symbolize=1"
+  UBSAN_OPTIONS: "print_stacktrace=1:symbolize=1"
+
+jobs:
+  sanitizers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: ESPHome à la version plancher (min_version de tab5-ha-hmi.yaml), Pillow
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          echo "ESPHome $v" >> "$GITHUB_STEP_SUMMARY"
+          bash tools/ci/pip_reessai.sh "esphome==$v" pillow
+      - name: Témoin positif (même compilateur, mêmes drapeaux, même lecture du journal)
+        run: |
+          # shellcheck disable=SC2086 # drapeaux séparés par des espaces
+          g++ -O1 $SAN_CC tools/sanitizers/temoin.cpp $SAN_LD -o "$RUNNER_TEMP/temoin"
+          "$RUNNER_TEMP/temoin" > "$RUNNER_TEMP/temoin.log" 2>&1
+          python tools/sanitizers/rapports.py --temoin "$RUNNER_TEMP/temoin.log"
+      - name: Compiler la tablette virtuelle avec ASan + UBSan
+        env:
+          TZ: Europe/Paris
+          TAB5_SAN_CCFLAGS: ${{ env.SAN_CC }}
+          TAB5_SAN_LINKFLAGS: ${{ env.SAN_LD }}
+        run: |
+          python tools/sanitizers/variante.py tab5-sanitizers.yaml
+          set +e
+          esphome compile tab5-sanitizers.yaml > build.log 2>&1
+          code=$?
+          set -e
+          if [ "$code" -ne 0 ]; then tail -n 80 build.log; exit "$code"; fi
+          grep -q -F '[sanitizers]' build.log || { echo "::error::script PlatformIO des sanitizers non lancé"; exit 1; }
+          prog=$(find .esphome/build/tab5-rendu -name program -type f | head -n 1)
+          asan=$(nm "$prog" | grep -c __asan_report || true)
+          flot=$(nm "$prog" | grep -c __ubsan_handle_float_cast_overflow || true)
+          echo "Programme : \`$prog\` ; fonctions ASan : $asan ; UBSan float → int : $flot" >> "$GITHUB_STEP_SUMMARY"
+          [ "$asan" -gt 0 ] && [ "$flot" -gt 0 ] || { echo "::error::programme compilé sans sanitizers"; exit 1; }
+          echo "PROG=$prog" >> "$GITHUB_ENV"
+      - name: Fuzzing des 19 services
+        if: always() && env.PROG != ''
+        env:
+          ESPHOME_PREFDIR: ${{ runner.temp }}/prefs
+          ESPHOME_SNAPSHOT_DIR: ${{ runner.temp }}/captures
+        run: |
+          set +e
+          python tools/sanitizers/fuzz_services.py --programme "$PROG" --resultats resultats/fuzz --appels 800
+          code=$?
+          set -e
+          cat resultats/fuzz/fuzz.md >> "$GITHUB_STEP_SUMMARY" || true
+          exit "$code"
+      - name: Cas ciblés, fenêtres ouvertes
+        if: always() && env.PROG != ''
+        env:
+          ESPHOME_PREFDIR: ${{ runner.temp }}/prefs
+          ESPHOME_SNAPSHOT_DIR: ${{ runner.temp }}/captures
+        run: |
+          set +e
+          python tools/sanitizers/cibles_ub.py --programme "$PROG" --resultats resultats/cibles
+          code=$?
+          set -e
+          cat resultats/cibles/cibles.md >> "$GITHUB_STEP_SUMMARY" || true
+          exit "$code"
+      - name: Tous les écrans ouverts et refermés
+        if: always() && env.PROG != ''
+        env:
+          ESPHOME_PREFDIR: ${{ runner.temp }}/prefs
+          ESPHOME_SNAPSHOT_DIR: ${{ runner.temp }}/captures
+        run: |
+          mkdir -p resultats/ecrans "$ESPHOME_SNAPSHOT_DIR"
+          "$PROG" > resultats/ecrans/tablette.log 2>&1 &
+          pid=$!
+          sleep 10
+          set +e
+          timeout 40m python tools/rendu/capturer.py --dossier "$ESPHOME_SNAPSHOT_DIR" > resultats/ecrans/capturer.log 2>&1
+          cap=$?
+          if kill -0 "$pid" 2>/dev/null; then vivante=oui; kill "$pid"; else vivante=NON; fi
+          python tools/sanitizers/rapports.py resultats/ecrans/tablette.log > resultats/ecrans/rapports.txt
+          san=$?
+          set -e
+          {
+            echo ""; echo "## Écrans sous ASan/UBSan"
+            echo "- capturer.py : code $cap ; tablette vivante à la fin : $vivante"
+            echo '```'; cat resultats/ecrans/rapports.txt; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          [ "$cap" -eq 0 ] && [ "$vivante" = oui ] && [ "$san" -eq 0 ]
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: sanitizers
+          path: |
+            resultats/
+            build.log
+          retention-days: 14
