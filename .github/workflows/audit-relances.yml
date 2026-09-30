@@ -11,6 +11,9 @@ name: Audit relances (branche d'audit, ne pas merger)
 on:
   push:
     branches: [audit/relances]
+    # Seulement si l'analyse change : les cas ciblés (audit-cibles.yml) ont leur propre workflow.
+    paths:
+      - 'tools/audit/analyse_statique.py'
 
 permissions:
   contents: read

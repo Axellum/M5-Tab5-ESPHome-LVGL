@@ -1,0 +1,90 @@
+name: Audit cas ciblés UB (branche d'audit, ne pas merger)
+
+# Audit du 30/09/2026. Le fuzzing n'ouvre aucune fenêtre : les conversions float → entier
+# repérées à la lecture du code (popups clim et lumière) ne pouvaient pas s'exécuter.
+# Ici : témoin positif (prouve que UBSan écrit bien ses rapports avec ces drapeaux et ce
+# log_path), puis tools/audit/cibles_ub.py sur la tablette virtuelle ASan/UBSan.
+# Push sur la branche audit/relances seulement, sans PR (l'endurance de #268 tourne).
+
+on:
+  push:
+    branches: [audit/relances]
+    paths:
+      - 'tools/audit/cibles_ub.py'
+      - '.github/workflows/audit-cibles.yml'
+
+permissions:
+  contents: read
+
+env:
+  TZ: Europe/Paris
+  SAN_CC: "-fsanitize=address,undefined,float-cast-overflow -fno-sanitize=vptr -fno-omit-frame-pointer -g"
+  SAN_LD: "-fsanitize=address,undefined,float-cast-overflow -fno-sanitize=vptr"
+
+jobs:
+  cibles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: ESPHome à la version plancher, Pillow
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          bash tools/ci/pip_reessai.sh "esphome==$v" pillow
+      - name: Témoin positif (float → int hors bornes, mêmes drapeaux, même log_path)
+        run: |
+          mkdir -p "$RUNNER_TEMP/san-temoin"
+          cat > "$RUNNER_TEMP/temoin.cpp" <<'CPP'
+          #include <cstdio>
+          int main(int argc, char **) {
+              volatile float f = argc > 0 ? 1e30f : 0.0f;
+              volatile int i = (int) f;
+              std::printf("%d\n", i);
+              return 0;
+          }
+          CPP
+          # shellcheck disable=SC2086
+          g++ -O1 $SAN_CC "$RUNNER_TEMP/temoin.cpp" $SAN_LD -o "$RUNNER_TEMP/temoin"
+          UBSAN_OPTIONS="log_path=$RUNNER_TEMP/san-temoin/san:print_stacktrace=1" "$RUNNER_TEMP/temoin"
+          if grep -qh "runtime error" "$RUNNER_TEMP"/san-temoin/san* 2>/dev/null; then
+            t="rapport écrit : $(grep -h 'runtime error' "$RUNNER_TEMP"/san-temoin/san* | head -n 1 | sed 's/.*runtime error/runtime error/')"
+          else
+            t="AUCUN rapport : la chaîne de détection ne marche pas"
+          fi
+          echo "$t"
+          echo "TEMOIN=$t" >> "$GITHUB_ENV"
+      - name: Compiler la tablette virtuelle avec ASan + UBSan
+        env:
+          AUDIT_CCFLAGS: ${{ env.SAN_CC }}
+          AUDIT_LINKFLAGS: ${{ env.SAN_LD }}
+        run: |
+          python tools/audit/variante.py tab5-audit.yaml
+          esphome compile tab5-audit.yaml > build.log 2>&1 || { tail -n 80 build.log; exit 1; }
+          prog=$(find .esphome/build/tab5-rendu -name program -type f | head -n 1)
+          {
+            echo "Gestionnaires UBSan dans le programme : $(nm "$prog" | grep -c '__ubsan_handle_')"
+            echo "dont float-cast-overflow : $(nm "$prog" | grep -c '__ubsan_handle_float_cast_overflow')"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "PROG=$prog" >> "$GITHUB_ENV"
+      - name: Cas ciblés, popups ouvertes
+        env:
+          ESPHOME_PREFDIR: ${{ runner.temp }}/prefs
+          ESPHOME_SNAPSHOT_DIR: ${{ runner.temp }}/captures
+          AUDIT_SAN_DIR: ${{ runner.temp }}/san-cibles
+          ASAN_OPTIONS: "log_path=${{ runner.temp }}/san-cibles/san:detect_leaks=0:halt_on_error=1:symbolize=1"
+          UBSAN_OPTIONS: "log_path=${{ runner.temp }}/san-cibles/san:print_stacktrace=1:symbolize=1"
+        run: |
+          mkdir -p "$AUDIT_SAN_DIR" "$ESPHOME_SNAPSHOT_DIR"
+          python tools/audit/cibles_ub.py --programme "$PROG" --resultats resultats/cibles --temoin "$TEMOIN"
+          cat resultats/cibles/cibles.md >> "$GITHUB_STEP_SUMMARY"
+          cp -r "$AUDIT_SAN_DIR" resultats/cibles/ || true
+          cp "$ESPHOME_SNAPSHOT_DIR"/*.png resultats/cibles/ 2>/dev/null || true
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: audit-cibles
+          path: resultats/
+          retention-days: 30
