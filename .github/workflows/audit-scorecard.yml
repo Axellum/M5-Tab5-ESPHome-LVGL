@@ -1,0 +1,32 @@
+name: Scorecard (contre-épreuve du lot C, ne pas merger)
+
+# Branche temporaire : OpenSSF Scorecard rejoué sur `main` après le lot C (#271),
+# même image que l'audit du 30/09/2026 (5,2/10). La PR est fermée sans merge.
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/audit-scorecard.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  scorecard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: OpenSSF Scorecard (image officielle, jeton en lecture seule)
+        env:
+          GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          docker run --rm -e GITHUB_AUTH_TOKEN gcr.io/openssf/scorecard:v5.5.0 \
+            --repo="github.com/${{ github.repository }}" --format=json --show-details > scorecard.json
+          python3 - <<'EOF' | tee -a "$GITHUB_STEP_SUMMARY"
+          import json
+          r = json.load(open("scorecard.json"))
+          print(f"## OpenSSF Scorecard : {r['score']} / 10 ({r['date']}, {r['repo']['commit'][:7]})\n")
+          print("| Contrôle | Score | Raison |\n|---|---|---|")
+          for c in sorted(r["checks"], key=lambda c: c["score"]):
+              print(f"| {c['name']} | {c['score']} | {c['reason']} |")
+          EOF
