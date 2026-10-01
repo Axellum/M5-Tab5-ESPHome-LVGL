@@ -66,7 +66,7 @@ TTS responses play through the ES8388 DAC → amplifier → built-in speaker. Th
 
 **Boot sequence:** the amplifier enable switch is activated *after* the backlight and the `media_player` volume have been set (and only then does the device wait for the HA API connection). Enabling the amplifier before the I2S clock is stable produces an audible pop. The `on_boot` sequence in `tab5-ha-hmi.yaml` enforces this order.
 
-**Interaction with LVGL traffic pacing:** when TTS is playing, the I2S DMA is actively consuming CPU cycles and memory bandwidth. The traffic pacing delays (1 s between push service blocks, 150 ms within forecast loops) prevent simultaneous large payload pushes from colliding with the active audio stream.
+**Pushes during TTS:** Home Assistant no longer paces its pushes (the 1 s pauses between blocks were removed on 2026-10-01, see `docs/architecture.md`). A full push is 8 bulk calls of a few hundred bytes; outside a reconnection it runs every 10 minutes.
 
 **Playback format — this is a Home Assistant setting, not an output setting.** The `announcement_pipeline` block of the `media_player` declares the *preferred format advertised to HA*, i.e. what HA transcodes the TTS to before sending it. It must therefore match the TTS engine, not the DAC:
 
@@ -180,7 +180,7 @@ Les réponses TTS sont jouées via le DAC ES8388 → amplificateur → haut-parl
 
 **Séquence de boot :** le switch d'activation de l'amplificateur est activé *après* le rétroéclairage et le réglage du volume du `media_player` (et c'est seulement ensuite que l'appareil attend la connexion API HA). Activer l'ampli avant que l'horloge I2S soit stable produit un pop audible. La séquence `on_boot` dans `tab5-ha-hmi.yaml` garantit cet ordre.
 
-**Interaction avec le traffic pacing LVGL :** quand le TTS joue, le DMA I2S consomme activement des cycles CPU et de la bande passante mémoire. Les délais de traffic pacing (1 s entre les blocs de service push, 150 ms dans les boucles de prévisions) empêchent les push de gros payloads simultanés d'entrer en collision avec le flux audio actif.
+**Poussées pendant le TTS :** Home Assistant n'espace plus ses envois (les pauses d'une seconde entre les blocs ont été retirées le 01/10/2026, voir `docs/architecture.md`). Une poussée complète, c'est 8 envois groupés de quelques centaines d'octets ; hors reconnexion, elle part toutes les 10 minutes.
 
 **Format de lecture — c'est un réglage Home Assistant, pas un réglage de sortie.** Le bloc `announcement_pipeline` du `media_player` déclare le *format préféré annoncé à HA*, c'est-à-dire ce vers quoi HA transcode le TTS avant de l'envoyer. Il doit donc coller au moteur TTS, pas au DAC :
 
