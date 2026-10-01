@@ -19,6 +19,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
     60 ms en parallèle. L'ordre des envois est gardé par la séquence ; les payloads groupés
     restent découpés (la tablette refuse plus de 2048 octets). Documentation corrigée :
     README de `HomeAssistant_Config/`, `docs/architecture.md`, `docs/voice_assistant.md`.
+  - Mesuré après déploiement sur le HA de l'auteur, 5 redémarrages par le bouton HA
+    « Redémarrage Système » : toute la poussée part en 0,13 à 0,19 s après
+    `tab5_connected` (6,1 s avant), et l'écran est complet 17,5 à 17,8 s après la coupure
+    (24,5 s avant). Aucune nouvelle erreur dans le journal de HA, écran vérifié par
+    l'auteur.
 
 ## [3.3.2] — 2026-10-01
 
