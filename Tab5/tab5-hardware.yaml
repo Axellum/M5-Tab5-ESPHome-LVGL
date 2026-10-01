@@ -66,6 +66,12 @@ esp32:
       # PSRAM défaillante ne bloquerait plus le démarrage par un abandon : elle
       # planterait plus tard, et le journal des démarrages le dirait.
       CONFIG_SPIRAM_MEMTEST: "n"
+      # DHCP : l'adresse donnée par le serveur est prise tout de suite, sans les deux
+      # requêtes ARP de vérification d'ESP-IDF (« This process lasts 1 - 2 seconds »,
+      # lwipopts.h d'ESP-IDF 5.5). Contrepartie : un conflit avec un appareil réglé à
+      # la main sur la même adresse ne serait plus détecté par la tablette.
+      CONFIG_LWIP_DHCP_DOES_ARP_CHECK: "n"
+      CONFIG_LWIP_DHCP_DOES_NOT_CHECK_OFFERED_IP: "y"
       # Pas de réglage LVGL ici : ESPHome compile LVGL avec -DLV_KCONFIG_IGNORE, les
       # CONFIG_LV_* du sdkconfig sont ignorés (la transition du thème, posée ici le
       # 26/09/2026, n'a jamais agi : 80 ms toujours dans le binaire, vu le 28/09). Les
