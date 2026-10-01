@@ -29,6 +29,35 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 - **Hors firmware** : rien à mettre à jour dans Home Assistant (l'automation de poussée
   attendait déjà, 10 s au plus, que la liaison de la tablette soit `on`).
 
+### 2026-10-01 — Réveil : le prochain rendez-vous ne passe plus sous « Tester »
+
+- **Popup du réveil, barre du bas** : la ligne « prochain rendez-vous » faisait 500 px de
+  large alors que le bouton « Tester » commence à 401 px ; un titre de plus d'une
+  trentaine de caractères passait sous ce bouton translucide. La ligne tient maintenant
+  sur une ligne et se coupe avec « … » à 380 px (`texte_ha_coupe()`, comme les tuiles).
+  `tests/test_alarme_popup.py` refait le calcul depuis `alarm_popup.yaml` : déplacer le
+  bouton ou élargir la barre sans revoir la limite le fait échouer. Trouvé par l'audit
+  des conteneurs du 01/10.
+
+### 2026-10-01 — L'horloge n'est plus coupée au démarrage
+
+- **Firmware : la géométrie de l'horloge à rouleau est écrite dans `Tab5/tab5-lvgl.yaml`
+  seulement.** Jusqu'ici, `layout_clock_roller()` la recalculait en C++ depuis la police,
+  2 s après la fin du démarrage, et les cadres provisoires du YAML (105 px de haut, alors
+  que l'encre des chiffres descend à 123 px) coupaient le bas des chiffres en attendant.
+  - Vu par l'auteur au démarrage ; mesuré sur le journal série d'un redémarrage de la
+    3.3.2 : première image à 33,1 s, horloge recalée à 34,6 s, soit ~1,5 s d'horloge
+    coupée. Les valeurs que le C++ calculait (cadres 75 × 104, chiffres à y −23, « : » à
+    x 181) sont désormais celles du YAML : l'horloge est juste dès la première image, à la
+    même place qu'avant.
+  - `layout_clock_roller()` et sa mesure de texte sont retirés (≈ 80 lignes de C++) ; le
+    rouleau lit sa course dans la hauteur du cadre. `on_boot` ne fait plus que poser les
+    pointeurs du rouleau (accord de l'auteur pour toucher la séquence).
+  - Nouveau test `tests/test_horloge.py` : il refait le calcul depuis les métriques de
+    Roboto 700 et vérifie le YAML (encre entière dans chaque cadre, largeur d'un chiffre,
+    HH:MM centré, « : » aligné). Contre-épreuve : sur les valeurs d'avant, il échoue sur
+    « encre jusqu'à 123 px, cadre de 105 px ».
+
 ### 2026-10-01 — L'écran se remplit 6 s plus vite après un redémarrage
 
 - **Home Assistant : plus de pause d'une seconde entre les envois vers la tablette** (rien

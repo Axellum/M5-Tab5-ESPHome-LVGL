@@ -374,7 +374,10 @@ obj:
               styles: style_transparent
               scrollable: false
               widgets:
-                - label: { id: lbl_alarm_rdv_next, text: "", align: LEFT_MID, x: 8, width: 500, text_color: color_text_dim }
+                # Prochain RDV : une ligne, coupée en C++ (kLargeurRdvSuivant, alarm_render.cpp)
+                # avant le bouton « Tester ». Pas de `width` : avec 500 px, un titre long
+                # passait sous ce bouton translucide (audit du 01/10/2026).
+                - label: { id: lbl_alarm_rdv_next, text: "", align: LEFT_MID, x: 8, text_color: color_text_dim }
 
                 # Test grandeur nature : passe par la VRAIE machine d'état
                 # (overlay, crescendo, arrêt à la voix), pas par un raccourci —
