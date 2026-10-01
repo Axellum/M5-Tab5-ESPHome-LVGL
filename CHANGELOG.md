@@ -4,6 +4,55 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [3.3.2] — 2026-10-01
+
+De `v3.3.1` à aujourd'hui : les lots A à D de l'audit du 30/09 (#269 → #272), la clé de
+publication dans un environnement protégé (#275), deux garde-fous et de la documentation
+(#262, #265 → #267), plus la pull request de la release.
+- **Firmware** : un nombre absurde venu de Home Assistant (`inf`, `1e30`) n'est plus
+  converti en entier sans limite (#269) ; il s'affiche « -- ». C'est le seul changement du
+  firmware, rien ne change pour des valeurs normales.
+- **Home Assistant** : seule la tablette peut commander les tuiles et créer des
+  notifications par ses événements (#271) ; l'alerte « fichiers HA en retard » ne compare
+  plus que X.Y (#272).
+- **Projet** : le contrat HA ↔ tablette est vérifié champ par champ, la tablette virtuelle
+  passe sous ASan et UBSan à chaque PR, les actions de la CI sont figées par SHA, et la clé
+  qui signe les firmwares publiés n'est lue que depuis `main` ou un tag, avec l'accord du
+  mainteneur.
+
+**Compatible dans les deux sens** : un firmware 3.3.1 avec les fichiers HA de la 3.3.2 passe
+la nouvelle garde (elle lit le modèle de l'appareil, `tab5-ha-hmi` ; vérifié sur une
+tablette en 3.3.1 le 01/10) ; un firmware 3.3.2 avec les fichiers de la 3.3.1 marche
+comme avant, sans la garde.
+
+### À faire en mettant à jour depuis 3.3.1
+
+1. **Home Assistant** : remplacer par ceux de `tab5_home_assistant.zip` le blueprint
+   `blueprints/automation/tab5/tab5_emplacements.yaml` et les packages `tab5_push.yaml`,
+   `tab5_reveil.yaml`, `tab5_health.yaml` (et `tab5_evenements.yaml`, qui ne change que par
+   ses commentaires), puis recharger les automatisations et les entités de modèle (ou
+   redémarrer Home Assistant).
+2. **Firmware** : entité « Firmware » dans Home Assistant.
+
+### Mesures de la version
+
+- Compilation locale du même code firmware (`main` @ `6fd0ac9` ; la release ne change
+  ensuite que la version par défaut de `tab5-ha-hmi.yaml`) : image 3 331 682 o (41,0 % de la partition, +384 o), RAM statique
+  171 702 o (inchangée). Ce build tourne sur la tablette de l'auteur depuis le 01/10 à
+  8 h 30 (version lue par l'API), sans redémarrage inattendu.
+- Job « Sanitizers (tablette virtuelle) » sur l'arbre final : 0 rapport ASan/UBSan (19
+  services fuzzés, 8 cas ciblés, tous les écrans) ; sans le correctif du lot A, 6 rapports.
+- Relance de la publication de la 3.3.1 avec la clé lue dans l'environnement protégé
+  (ELF seulement) : empreinte, signature et même code que l'image publiée, sur les trois
+  révisions d'écran.
+- Compilations requises de la CI (dernière ESPHome et 2026.9.0) : vertes.
+
+### Problèmes connus
+
+Ceux de la 3.3.1.
+
+### 2026-10-01 — Clé de publication dans un environnement protégé
+
 - **Sécurité : la clé qui signe les firmwares publiés n'est plus lisible par n'importe quel
   workflow** (audit du 30/09, S2 ; rien ne change sur la tablette).
   - Le job `firmware` de `publication.yml` tourne dans l'environnement protégé `publication`,
@@ -14,6 +63,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   - Réglages du dépôt du même jour : les tags `v*` ne peuvent plus être supprimés ni
     déplacés (règle « Tags de version immuables »), la protection de `main` s'applique aussi
     aux administrateurs, et l'analyse CodeQL par défaut de GitHub est active.
+
+### 2026-10-01 — Audit du 30/09 : lots A à D
+
 - **Sécurité : seule la tablette pilote ses tuiles, et la CI ne dépend plus d'un tag qui
   bouge** (audit du 30/09, §6, lot C ; rien ne change sur l'écran ni dans le firmware).
   - Home Assistant : un événement `esphome.*` n'exige aucune option, donc n'importe quel autre
@@ -68,6 +120,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   sortie d'erreur, ce qui avait fait conclure « 0 rapport » à tort au premier passage de l'audit.
   Un témoin positif (`temoin.cpp`) prouve à chaque run que la détection marche.
   Tests : `tests/test_sanitizers.py`.
+
+### 2026-09-29 et 30 — Garde-fous et documentation
+
 - **Deux garde-fous de plus, joués par `pytest` et la CI** (audit du 25/09, §7). Une valeur
   oubliée dans un niveau d'Arcanoïde ou une question supprimée de Trial Poursuite compilait sans
   erreur (le C++ complète avec des zéros, soit une question nulle). `tools/check_arkanoid_levels.py`
