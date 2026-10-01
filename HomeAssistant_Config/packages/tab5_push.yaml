@@ -41,9 +41,15 @@
 #       parse_and_update_*_bulk() (Tab5/tab5_*.cpp) attend en nombre de champs.
 #       HA retire les espaces en tête et en fin du rendu d'un template (vérifié le
 #       26/09/2026) : les retours à la ligne entre les `{% set %}` ne partent pas.
-# @ai_instruction `delay: 1s` entre les blocs + `delay: 150ms`/`50ms` dans les boucles
-#       ne sont PAS du remplissage : ils évitent de saturer le socket TCP de l'ESP32-P4
-#       en même temps que le flux audio I2S actif. Ne pas les retirer pour "accélérer".
+# @ai_instruction Pas de `delay:` entre les envois (retirés le 01/10/2026). Les six
+#       pauses d'une seconde dataient de juillet, quand une poussée faisait une
+#       vingtaine d'appels en boucle ; leur raison (« ne pas saturer le socket TCP avec
+#       le flux audio ») n'a jamais été mesurée. Avec 8 envois groupés, elles ne
+#       faisaient que retarder l'écran : complet 6 s après tab5_connected au
+#       redémarrage du 01/10 (19:51), alors que le blueprint envoyait déjà 6 appels en
+#       60 ms en parallèle. L'ordre des envois, lui, est garanti par la séquence.
+#       Le découpage en blocs reste : le firmware rejette un payload de plus de 2048 o
+#       (tab5_forecast.cpp).
 # @ai_warning `now()` ne doit JAMAIS être passé brut à un service HA (`{{ now() }}`) —
 #       toujours via `.strftime(...)` explicite. Un datetime brut (microsecondes
 #       incluses) peut casser silencieusement toute la suite de l'automation.
@@ -205,10 +211,8 @@ automation:
           - condition: trigger
             id: [tab5_connected, resync, demarrage_ha]
         then:
-          - delay: "00:00:01"
           - action: script.tab5_push_meteo
             continue_on_error: true
-      - delay: "00:00:01"
 
       # ====== 4b. METEO PLUIE 1H (9 barres en UN appel : 0,5,10,15,20,25 puis 35,45,55) ======
       # Payload « idx|intensité;… » (ADR-0003), construit par le capteur normalisé
@@ -219,8 +223,6 @@ automation:
         data:
           payload: >
             {{ state_attr('sensor.tab5_pluie_dans_l_heure', 'barres') or '0|0;1|0;2|0;3|0;4|0;5|0;6|0;7|0;8|0;' }}
-
-      - delay: "00:00:01"
 
       # ====== 5. PREVISIONS JOURS (BULK - 1 seul appel au lieu de 15) ======
       # Source des prévisions (lot 4c-3) : l'entité weather.* choisie dans HA, lue sur
@@ -359,14 +361,12 @@ automation:
           - condition: trigger
             id: [tab5_connected, resync, demarrage_ha]
         then:
-          - delay: "00:00:01"
           - action: script.tab5_push_volet
             continue_on_error: true
 
       # ====== Y. PLANNING HORAIRE ======
       # SUPPRIMÉ : bandeau dérivé sur le Tab depuis le bulk jours
       # (build_planning_lines_from_jours). Service tab5_maj_planning conservé en compat.
-      - delay: "00:00:01"
 
       # ====== 8. PREVISIONS HORAIRES (BULK - 2 chunks de 5 via repeat) ======
       # Sans prévisions horaires (Buienradar…), on demande un type géré et on ignore
@@ -417,12 +417,6 @@ automation:
                     {% set ns.result = ns.result ~ i ~ "|" ~ heure_texte ~ "|" ~ condition ~ "|" ~ temp ~ "|" ~ pluvio ~ ";" %}
                   {% endfor %}
                   {{ ns.result }}
-            - if:
-                condition:
-                  - condition: template
-                    value_template: "{{ repeat.index < 2 }}"
-              then:
-                - delay: "00:00:01"
 
 
   # ============================================================================

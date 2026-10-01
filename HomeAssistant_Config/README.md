@@ -40,7 +40,7 @@ Room temperatures, lights, PC, TV, phone and plants do **not** go through this p
 
 **No periodic re-push of unchanged state (2026-09-26):** current weather, probabilities, climate and shutter used to be re-sent every 10 min on top of their on-change pushes (576 calls a day, each one repainted by the device). The full push now sends them only on (re)connection, when Home Assistant starts (the tablet often reconnects before automations are active, and its `esphome.tab5_connected` is then lost) and when `input_boolean.is_primary_active` comes back `on`.
 
-**Traffic pacing:** the automation uses `delay: 1s` between each push block and `delay: 150ms` within forecast loops. This prevents multiple large payloads from overwhelming the ESP32-P4's TCP socket buffer simultaneously with the active I2S audio stream.
+**No pauses between pushes (2026-10-01):** the automation sends its blocks one after the other. The `delay: 1s` between blocks dated from July, when a push made about twenty calls in loops; their stated reason (not overwhelming the device's TCP socket alongside the audio stream) was never measured, and with 8 bulk calls they only delayed the screen by 6 s after each reboot. Bulk payloads stay split in blocks: the device rejects one larger than 2048 bytes.
 
 ---
 
@@ -265,7 +265,7 @@ Les températures, les lumières, le PC, la TV, le téléphone et les plantes ne
 
 **Plus de renvoi périodique d'un état inchangé (26/09/2026) :** météo actuelle, probabilités, clim et volet repartaient toutes les 10 min en plus de leurs poussées au changement (576 appels par jour, chacun repeint par l'appareil). La poussée complète ne les envoie plus qu'à la (re)connexion, au démarrage de Home Assistant (la tablette se reconnecte souvent avant que les automatisations soient actives, et son `esphome.tab5_connected` est alors perdu) et au retour à `on` de `input_boolean.is_primary_active`.
 
-**Traffic pacing :** l'automatisation utilise `delay: 1s` entre chaque bloc push et `delay: 150ms` dans les boucles de prévisions. Cela empêche plusieurs gros payloads de saturer le buffer de sockets TCP de l'ESP32-P4 simultanément avec le flux audio I2S actif.
+**Pas de pause entre les envois (01/10/2026) :** l'automatisation envoie ses blocs à la suite. Les `delay: 1s` entre les blocs dataient de juillet, quand une poussée faisait une vingtaine d'appels en boucle ; leur raison (ne pas saturer le socket TCP de la tablette en même temps que le flux audio) n'a jamais été mesurée, et avec 8 envois groupés ils ne faisaient que retarder l'écran de 6 s à chaque redémarrage. Les payloads groupés restent découpés en blocs : la tablette refuse un payload de plus de 2048 octets.
 
 ---
 

@@ -266,7 +266,7 @@ State change detected
                                        LVGL labels updated
 ```
 
-**Traffic pacing on the HA side:** the push automation inserts a 1-second delay between each service block, and 150 ms between items within forecast loops. This prevents the ESP32's TCP stack from running out of sockets when multiple large payloads arrive simultaneously alongside the I2S audio stream.
+**No pauses on the HA side (2026-10-01):** the push automation sends its service blocks one after the other; the sequence keeps them in order. The 1-second pauses it used to insert dated from a time when a push made about twenty calls in loops, and only delayed the screen by 6 s after each reboot. Bulk payloads stay split in blocks: the device rejects one larger than 2048 bytes.
 
 ---
 
@@ -532,7 +532,7 @@ Changement d'état détecté
                                            labels LVGL mis à jour
 ```
 
-**Traffic pacing côté HA :** l'automatisation de push insère un délai de 1 seconde entre chaque bloc de service, et 150 ms entre les éléments dans les boucles de prévisions. Cela empêche la pile TCP de l'ESP32 de manquer de sockets quand plusieurs payloads larges arrivent simultanément avec le flux audio I2S.
+**Pas de pause côté HA (01/10/2026) :** l'automatisation de push envoie ses blocs de service à la suite ; la séquence garde leur ordre. Les pauses d'une seconde qu'elle insérait dataient de l'époque où une poussée faisait une vingtaine d'appels en boucle, et ne faisaient que retarder l'écran de 6 s à chaque redémarrage. Les payloads groupés restent découpés en blocs : la tablette refuse un payload de plus de 2048 octets.
 
 ---
 

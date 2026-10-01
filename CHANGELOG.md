@@ -4,6 +4,27 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-01 — L'écran se remplit 6 s plus vite après un redémarrage
+
+- **Home Assistant : plus de pause d'une seconde entre les envois vers la tablette** (rien
+  ne change dans le firmware).
+  - Mesuré au redémarrage du 01/10 à 19 h 51 (flash de la 3.3.2), dans la base de HA : HA
+    reconnecté 16,4 s après la coupure, `esphome.tab5_connected` 2 s plus tard, puis la
+    poussée complète étalée sur 6,1 s par six `delay: 1s` de `packages/tab5_push.yaml`,
+    alors que les appels eux-mêmes (agenda, prévisions) répondent en 10 ms environ. Le
+    blueprint « Tab5 — emplacements » attendait aussi 1 s avant la clim et le volet.
+  - Ces pauses dataient de juillet, quand une poussée faisait une vingtaine d'appels en
+    boucle. Leur raison écrite (ne pas saturer le socket TCP de la tablette en même temps
+    que le flux audio) n'avait jamais été mesurée, et le blueprint envoyait déjà 6 appels en
+    60 ms en parallèle. L'ordre des envois est gardé par la séquence ; les payloads groupés
+    restent découpés (la tablette refuse plus de 2048 octets). Documentation corrigée :
+    README de `HomeAssistant_Config/`, `docs/architecture.md`, `docs/voice_assistant.md`.
+  - Mesuré après déploiement sur le HA de l'auteur, 5 redémarrages par le bouton HA
+    « Redémarrage Système » : toute la poussée part en 0,13 à 0,19 s après
+    `tab5_connected` (6,1 s avant), et l'écran est complet 17,5 à 17,8 s après la coupure
+    (24,5 s avant). Aucune nouvelle erreur dans le journal de HA, écran vérifié par
+    l'auteur.
+
 ## [3.3.2] — 2026-10-01
 
 De `v3.3.1` à aujourd'hui : les lots A à D de l'audit du 30/09 (#269 → #272), la clé de

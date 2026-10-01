@@ -2080,7 +2080,8 @@ actions:
             continue_on_error: true
 
     # Connexion ou changement d'un emplacement : ses valeurs ; à la connexion, aussi la
-    # clim et le volet (sans package), un peu après pour ne pas saturer la tablette.
+    # clim et le volet (sans package), à la suite, sans pause (retirée le 01/10/2026 :
+    # elle ne faisait que retarder l'écran, comme celles de packages/tab5_push.yaml).
     default:
       - if: "{{ payload != '' }}"
         then:
@@ -2090,7 +2091,6 @@ actions:
             continue_on_error: true
       - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha'] and clim != '' }}"
         then:
-          - delay: "00:00:01"
           # Réglages de la clim (clé climr, ADR-0026) avant son état : bornes, pas et
           # unité sont en place quand la consigne arrive.
           - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
@@ -2108,7 +2108,6 @@ actions:
             continue_on_error: true
       - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha'] and volet != '' and not volet_par_package }}"
         then:
-          - delay: "00:00:01"
           - action: "esphome.{{ tablette }}_tab5_maj_volet_etat"
             data:
               etat_physique: >-
