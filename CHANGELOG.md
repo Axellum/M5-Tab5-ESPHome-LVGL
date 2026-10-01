@@ -4,6 +4,30 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-01 — Dettes de l'audit des conteneurs (rien ne change à l'écran)
+
+- **Une seule source pour ce qui était recopié** (règle 5), même rendu :
+  - les 4 rouleaux de l'horloge viennent du gabarit `ui_components/clock_roller.yaml` et
+    les 9 barres de pluie de `ui_components/rain_bar.yaml` (ids inchangés) ;
+  - les touches « Pause » et « CANAL+ » de la télécommande rejoignent leurs gabarits
+    (`tv_transport_btn.yaml`, `tv_app_btn.yaml`) : leur couleur, celle du thème, y est
+    passée en clair (`color_text`) ;
+  - la largeur 1180 des panneaux de la carte centrale devient le jeton `${central_w}`
+    (`tab5-ui-tokens.yaml`, 7 emplois) ; le C++ la reprend dans
+    `kLargeurPanneauCentral`.
+- **Calendrier** : les 42 cases partagent leurs styles (`lv_style_t` de
+  `tab5_calendar.cpp`) au lieu de 39 propriétés locales chacune (≈ 1 600 en tout) ; ne
+  restent en local que la place de la case, la police et ce que le rendu du mois pose.
+  Les colonnes (`kCalColX0`, `kCalColPas`, `kCalColW`) sont nommées.
+- **Appui des boutons verre (D6)** : 68 `pressed: { bg_opa: 30% }` (52 % pour les trois
+  boutons du haut) répétaient exactement ce que `apply_pressed_scale_to_tree()` pose déjà
+  sur tout bouton cliquable de rayon 18 ; ils sont retirés. Les 72 autres disent autre
+  chose (rayon 12, autre opacité, bordure) et restent. Seule différence : pendant les 2 s
+  qui suivent le démarrage, avant cet appel, ces boutons ne s'assombrissent pas à l'appui.
+- Nouveau test `tests/test_geometrie_partagee.py` : jeton et constante C++ égaux, en-têtes
+  « Lun »…« Dim » sur les colonnes des cases, grille centrée dans la carte (contre-épreuve :
+  une colonne de 171 px au lieu de 172 le fait échouer). `tests/test_horloge.py` déplie
+  le gabarit et vérifie que les 4 rouleaux en viennent.
 ### 2026-10-01 — Le firmware rejoint Home Assistant 6 s plus tôt au démarrage
 
 - **Firmware : quatre attentes retirées du démarrage**, trouvées en lisant le démarrage
