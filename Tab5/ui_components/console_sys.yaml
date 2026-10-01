@@ -215,8 +215,6 @@ obj:
                     width: 247
                     height: 86
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       - homeassistant.event:
                           event: esphome.tab5_maj_ecran
@@ -233,8 +231,6 @@ obj:
                     width: 247
                     height: 86
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       - homeassistant.event:
                           event: esphome.tab5_recharger_automatisations
@@ -253,8 +249,6 @@ obj:
                     styles: style_clim_btn
                     border_color: color_error
                     border_opa: 45%
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       - lambda: |-
                           lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
@@ -275,8 +269,6 @@ obj:
                     styles: style_clim_btn
                     border_color: color_error
                     border_opa: 45%
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       - lambda: |-
                           lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
@@ -312,8 +304,6 @@ obj:
                           width: 212
                           height: 72
                           styles: style_clim_btn
-                          pressed:
-                            bg_opa: 30%
                           on_short_click:
                             - lambda: 'lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);'
                           widgets:
@@ -327,8 +317,6 @@ obj:
                           styles: style_clim_btn
                           border_color: color_error
                           border_opa: 60%
-                          pressed:
-                            bg_opa: 30%
                           on_short_click:
                             - lambda: |-
                                 lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
@@ -369,8 +357,6 @@ obj:
                           width: 212
                           height: 72
                           styles: style_clim_btn
-                          pressed:
-                            bg_opa: 30%
                           on_short_click:
                             - lambda: 'lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);'
                           widgets:
@@ -384,8 +370,6 @@ obj:
                           styles: style_clim_btn
                           border_color: color_error
                           border_opa: 60%
-                          pressed:
-                            bg_opa: 30%
                           on_short_click:
                             - lambda: 'lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);'
                             - button.press: btn_restart

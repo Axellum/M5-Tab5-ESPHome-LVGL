@@ -169,6 +169,13 @@ struct CalCellUI {
 };
 static CalCellUI s_cal_cells[42] = {};
 static void (*s_cal_on_tap)(int) = nullptr;
+// Colonnes de la grille, lundi en tête : case c à x = kCalColX0 + c × kCalColPas, large
+// de kCalColW. Les en-têtes « Lun »…« Dim » de calendar_popup.yaml sont écrits sur les
+// mêmes colonnes (x et width en clair) : tests/test_geometrie_partagee.py vérifie qu'ils
+// restent alignés sur ces trois valeurs.
+static constexpr int32_t kCalColX0 = 25;
+static constexpr int32_t kCalColPas = 172;
+static constexpr int32_t kCalColW = 168;
 // Zone de la grille (${cal_grid_y} / ${cal_grid_h}) : cal_render_month() y répartit
 // les semaines du mois affiché.
 static int32_t s_cal_grid_y = 0;
@@ -178,17 +185,67 @@ static void cal_cell_tap_cb(lv_event_t* e) {
     if (s_cal_on_tap) s_cal_on_tap((int) (intptr_t) lv_event_get_user_data(e));
 }
 
-// Pastille 14 px en haut à droite, masquée tant que le rendu ne l'allume pas.
-static lv_obj_t* cal_dot_create(lv_obj_t* cell, int32_t x, uint32_t color) {
+// Styles partagés des 42 cases (audit des conteneurs du 01/10/2026) : ce qui est commun
+// à toutes les cases est posé une fois, au lieu de 39 propriétés locales par case
+// (≈ 1 600 en tout). Ne reste en local que ce qui varie : x et y de la case, police des
+// libellés, puis ce que cal_render_month() pose à chaque rendu (y, hauteur, fond,
+// bordure, couleur des textes). Un style local passe toujours avant un style ajouté,
+// et un style ajouté passe avant ceux du thème posés à la création : rendu identique.
+static lv_style_t s_cal_style_case;
+static lv_style_t s_cal_style_num;
+static lv_style_t s_cal_style_sub;
+static lv_style_t s_cal_style_pastille_rdv;
+static lv_style_t s_cal_style_pastille_anniv;
+
+// Pastille 14 px en haut à droite (décalée de x depuis le bord droit).
+static void cal_style_pastille(lv_style_t* st, int32_t x, uint32_t color) {
+    lv_style_init(st);
+    lv_style_set_align(st, LV_ALIGN_TOP_RIGHT);
+    lv_style_set_bg_color(st, lv_color_hex(color));
+    lv_style_set_border_width(st, 0);
+    lv_style_set_height(st, 14);
+    lv_style_set_radius(st, 7);
+    lv_style_set_width(st, 14);
+    lv_style_set_x(st, x);
+    lv_style_set_y(st, 6);
+}
+
+// Libellé de case : la couleur que le `theme:` ESPHome pose sur un label YAML
+// (color_text), puis sa place dans la case.
+static void cal_style_libelle(lv_style_t* st, lv_align_t align, int32_t y) {
+    lv_style_init(st);
+    lv_style_set_text_color(st, lv_color_hex(UIColor::TEXT_SOFT));
+    lv_style_set_align(st, align);
+    lv_style_set_y(st, y);
+}
+
+static void cal_styles_init() {
+    // Case : fond (teinte vacances scolaires) et bordure (aujourd'hui) éteints jusqu'au
+    // rendu ; hauteur provisoire, recalculée par cal_render_month().
+    lv_style_init(&s_cal_style_case);
+    lv_style_set_align(&s_cal_style_case, LV_ALIGN_TOP_LEFT);
+    lv_style_set_bg_color(&s_cal_style_case, lv_color_hex(UIColor::GLASS_RIM));
+    lv_style_set_bg_opa(&s_cal_style_case, LV_OPA_TRANSP);
+    lv_style_set_border_color(&s_cal_style_case, lv_color_hex(UIColor::ACCENT));
+    lv_style_set_border_opa(&s_cal_style_case, LV_OPA_TRANSP);
+    lv_style_set_border_width(&s_cal_style_case, 2);
+    lv_style_set_height(&s_cal_style_case, 86);
+    lv_style_set_pad_all(&s_cal_style_case, 0);
+    lv_style_set_radius(&s_cal_style_case, 12);
+    lv_style_set_width(&s_cal_style_case, kCalColW);
+    // Numéro du jour, centré sous le nom du jour de la tête de grille ; heures de
+    // travail en bas de la case.
+    cal_style_libelle(&s_cal_style_num, LV_ALIGN_TOP_MID, 4);
+    cal_style_libelle(&s_cal_style_sub, LV_ALIGN_BOTTOM_MID, -6);
+    // Pastille RDV (dorée), pastille anniversaire (rose) à sa gauche.
+    cal_style_pastille(&s_cal_style_pastille_rdv, -8, UIColor::GOLD);
+    cal_style_pastille(&s_cal_style_pastille_anniv, -28, UIColor::WARM_PINK);
+}
+
+// Pastille masquée tant que le rendu ne l'allume pas.
+static lv_obj_t* cal_dot_create(lv_obj_t* cell, const lv_style_t* style) {
     lv_obj_t* d = lv_obj_create(cell);
-    lv_obj_set_style_align(d, LV_ALIGN_TOP_RIGHT, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(d, lv_color_hex(color), LV_PART_MAIN);
-    lv_obj_set_style_border_width(d, 0, LV_PART_MAIN);
-    lv_obj_set_style_height(d, 14, LV_PART_MAIN);
-    lv_obj_set_style_radius(d, 7, LV_PART_MAIN);
-    lv_obj_set_style_width(d, 14, LV_PART_MAIN);
-    lv_obj_set_style_x(d, x, LV_PART_MAIN);
-    lv_obj_set_style_y(d, 6, LV_PART_MAIN);
+    lv_obj_add_style(d, style, LV_PART_MAIN);
     lv_obj_add_flag(d, LV_OBJ_FLAG_HIDDEN);
     // Plus de bouton par-dessus : une pastille cliquable garderait le tap pour
     // elle, et le jour ne s'ouvrirait pas.
@@ -196,12 +253,13 @@ static lv_obj_t* cal_dot_create(lv_obj_t* cell, int32_t x, uint32_t color) {
     return d;
 }
 
-// Les libellés reçoivent en local ce que le `theme:` ESPHome pose sur un label
-// YAML (couleur color_text, police roboto_22), puis leurs propriétés propres.
-static lv_obj_t* cal_label_create(lv_obj_t* cell, const esphome::font::Font* font,
+// Libellé : son style partagé, et la police en local (roboto_22, celle du `theme:`
+// ESPHome, quand la sienne n'est pas donnée).
+static lv_obj_t* cal_label_create(lv_obj_t* cell, const lv_style_t* style,
+                                  const esphome::font::Font* font,
                                   const esphome::font::Font* font_theme) {
     lv_obj_t* l = lv_label_create(cell);
-    lv_obj_set_style_text_color(l, lv_color_hex(UIColor::TEXT_SOFT), LV_PART_MAIN);
+    lv_obj_add_style(l, style, LV_PART_MAIN);
     esphome::lvgl::lv_obj_set_style_text_font(l, font ? font : font_theme, LV_PART_MAIN);
     lv_label_set_text(l, "");
     return l;
@@ -216,22 +274,14 @@ bool cal_grid_build(lv_obj_t* anchor, int32_t grid_y, int32_t grid_h,
     s_cal_on_tap = on_tap;
     s_cal_grid_y = grid_y;
     s_cal_grid_h = grid_h;
+    cal_styles_init();
     for (int i = 0; i < 42; i++) {
-        // Cellule 168 px de large, colonnes 25 + c×172 (lundi en tête). Hauteur et y :
+        // Case de kCalColW de large dans la colonne i % 7 (lundi en tête). Hauteur et y :
         // posés au rendu (cal_render_month), selon le nombre de semaines du mois.
         lv_obj_t* c = lv_obj_create(parent);
         lv_obj_move_to_index(c, lv_obj_get_index(anchor));   // même rang qu'en YAML
-        lv_obj_set_style_align(c, LV_ALIGN_TOP_LEFT, LV_PART_MAIN);
-        lv_obj_set_style_bg_color(c, lv_color_hex(UIColor::GLASS_RIM), LV_PART_MAIN);
-        lv_obj_set_style_bg_opa(c, LV_OPA_TRANSP, LV_PART_MAIN);
-        lv_obj_set_style_border_color(c, lv_color_hex(UIColor::ACCENT), LV_PART_MAIN);
-        lv_obj_set_style_border_opa(c, LV_OPA_TRANSP, LV_PART_MAIN);
-        lv_obj_set_style_border_width(c, 2, LV_PART_MAIN);
-        lv_obj_set_style_height(c, 86, LV_PART_MAIN);
-        lv_obj_set_style_pad_all(c, 0, LV_PART_MAIN);
-        lv_obj_set_style_radius(c, 12, LV_PART_MAIN);
-        lv_obj_set_style_width(c, 168, LV_PART_MAIN);
-        lv_obj_set_style_x(c, 25 + (i % 7) * 172, LV_PART_MAIN);
+        lv_obj_add_style(c, &s_cal_style_case, LV_PART_MAIN);
+        lv_obj_set_style_x(c, kCalColX0 + (i % 7) * kCalColPas, LV_PART_MAIN);
         lv_obj_set_style_y(c, grid_y + (i / 7) * 90, LV_PART_MAIN);
         lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
         // Tap court -> détail du jour (ex-bouton invisible, on_short_click).
@@ -242,16 +292,12 @@ bool cal_grid_build(lv_obj_t* anchor, int32_t grid_y, int32_t grid_h,
         // Numéro du jour, centré sous le nom du jour de la tête de grille (il était
         // collé à gauche : 74 px de décalage avec « Lun », « Mar »…). Couleur : blanc /
         // weekend estompé / férié rose / passé estompé.
-        ui.num = cal_label_create(c, font_num, font_text);
-        lv_obj_set_style_align(ui.num, LV_ALIGN_TOP_MID, LV_PART_MAIN);
-        lv_obj_set_style_y(ui.num, 4, LV_PART_MAIN);
+        ui.num = cal_label_create(c, &s_cal_style_num, font_num, font_text);
         // Heures de travail du jour ("09:30-20:15", orange si embauche < 9h)
-        ui.sub = cal_label_create(c, nullptr, font_text);
-        lv_obj_set_style_align(ui.sub, LV_ALIGN_BOTTOM_MID, LV_PART_MAIN);
-        lv_obj_set_style_y(ui.sub, -6, LV_PART_MAIN);
+        ui.sub = cal_label_create(c, &s_cal_style_sub, nullptr, font_text);
         // Pastille RDV (dorée) + pastille anniversaire (rose)
-        ui.dot = cal_dot_create(c, -8, UIColor::GOLD);
-        ui.dot2 = cal_dot_create(c, -28, UIColor::WARM_PINK);
+        ui.dot = cal_dot_create(c, &s_cal_style_pastille_rdv);
+        ui.dot2 = cal_dot_create(c, &s_cal_style_pastille_anniv);
     }
     return true;
 }

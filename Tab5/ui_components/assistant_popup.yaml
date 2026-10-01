@@ -75,8 +75,6 @@ obj:
                     height: 72
                     radius: 18
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       - script.execute:
                           id: tab5_set_assist_mode
@@ -92,8 +90,6 @@ obj:
                     height: 72
                     radius: 18
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       - script.execute:
                           id: tab5_set_assist_mode
@@ -111,8 +107,6 @@ obj:
                     height: 56
                     radius: 18
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       - switch.toggle: tab5_wake_word_active
                       - script.execute: tab5_assist_sync_settings
@@ -133,8 +127,6 @@ obj:
                     height: 52
                     radius: 18
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       - script.execute:
                           id: tab5_assist_set_text_size
@@ -150,8 +142,6 @@ obj:
                     height: 52
                     radius: 18
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       - script.execute:
                           id: tab5_assist_set_text_size
@@ -173,8 +163,6 @@ obj:
                     height: 60
                     radius: 18
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       - if:
                           condition:

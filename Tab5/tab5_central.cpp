@@ -29,6 +29,11 @@
 
 static constexpr int32_t FORECAST_SWIPE_Y_MIN = 333;  // haut de central_card (tab5-lvgl.yaml)
 
+// Largeur des panneaux de la carte centrale : ${central_w} de tab5-ui-tokens.yaml,
+// recopiée ici (le C++ ne lit pas les substitutions) et tenue égale par
+// tests/test_geometrie_partagee.py.
+static constexpr int32_t kLargeurPanneauCentral = 1180;
+
 // Page de repos des previsions : journalier J0-J4, celle du boot
 // (CentralPanelCtx::forecast_page = 2) et celle ou la carte centrale reprend
 // son rotateur planning/pluie/alertes. C'est la cible du retour automatique.
@@ -978,7 +983,7 @@ void show_vocal_response_ui(const std::string& texte,
     // Phrase longue : défilement horizontal sur la largeur carte centrale.
     constexpr size_t kScrollMinChars = 42;
     if (t.size() > kScrollMinChars) {
-        lv_obj_set_width(lbl_vocal, 1180);
+        lv_obj_set_width(lbl_vocal, kLargeurPanneauCentral);
         lv_label_set_long_mode(lbl_vocal, LV_LABEL_LONG_MODE_SCROLL_CIRCULAR);
     } else {
         lv_obj_set_width(lbl_vocal, LV_SIZE_CONTENT);

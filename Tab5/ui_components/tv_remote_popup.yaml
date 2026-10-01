@@ -22,9 +22,10 @@
 #       entrées du source_list) et `media_player.play_media` type `app` échoue
 #       en SILENCE sur ce firmware 2022. Voir packages/tab5_tv.yaml côté HA.
 # @ai_instruction Gabarits (lot 7.3 de l'audit, 26/09/2026) : tv_pad_btn.yaml (flèches),
-#       tv_transport_btn.yaml (lecture/retour/accueil), tv_app_btn.yaml (raccourcis).
-#       Les touches à géométrie ou couleur propre (Marche/Arrêt, Source, Menu, OK,
-#       Pause, volume, Muet, CANAL+) restent écrites ici.
+#       tv_transport_btn.yaml (lecture/pause/retour/accueil), tv_app_btn.yaml (les 5
+#       raccourcis). Pause et CANAL+ y sont depuis le 01/10/2026 (couleur du thème,
+#       color_text, passée en clair). Les touches à géométrie propre (Marche/Arrêt,
+#       Source, Menu, OK, volume, Muet) restent écrites ici.
 # ═══════════════════════════════════════════════════════
 obj:
   id: tv_remote_popup
@@ -80,8 +81,6 @@ obj:
                           height: 128
                           radius: 18
                           styles: style_clim_btn
-                          pressed:
-                            bg_opa: 30%
                           on_short_click:
                             - script.execute: { id: tab5_action, emplacement: tv, commande: alimentation, valeur: "" }
                           widgets:
@@ -93,8 +92,6 @@ obj:
                           height: 128
                           radius: 18
                           styles: style_clim_btn
-                          pressed:
-                            bg_opa: 30%
                           on_short_click:
                             - script.execute: { id: tab5_tv_key, touche: "KEY_SOURCE" }
                           widgets:
@@ -106,8 +103,6 @@ obj:
                           height: 128
                           radius: 18
                           styles: style_clim_btn
-                          pressed:
-                            bg_opa: 30%
                           on_short_click:
                             - script.execute: { id: tab5_tv_key, touche: "KEY_MENU" }
                           widgets:
@@ -191,20 +186,7 @@ obj:
                           scrollable: false
                           widgets:
                             - !include { file: tv_transport_btn.yaml, vars: { x: 0, touche: "KEY_PLAY", icon: "\U000F040A", icon_color: "color_success", text: "Lecture" } }
-                            # Pause : icône sans couleur propre (thème) — hors gabarit, voir tv_transport_btn.yaml
-                            - button:
-                                x: 133
-                                width: 121
-                                height: 100
-                                radius: 18
-                                styles: style_clim_btn
-                                pressed:
-                                  bg_opa: 30%
-                                on_short_click:
-                                  - script.execute: { id: tab5_tv_key, touche: "KEY_PAUSE" }
-                                widgets:
-                                  - label: { text: "\U000F03E4", align: CENTER, y: -16, text_font: mdi_font_45 }
-                                  - label: { text: "Pause", align: CENTER, y: 26 }
+                            - !include { file: tv_transport_btn.yaml, vars: { x: 133, touche: "KEY_PAUSE", icon: "\U000F03E4", icon_color: "color_text", text: "Pause" } }
                             - !include { file: tv_transport_btn.yaml, vars: { x: 266, touche: "KEY_RETURN", icon: "\U000F054C", icon_color: "color_text_dim", text: "Retour" } }
                             - !include { file: tv_transport_btn.yaml, vars: { x: 399, touche: "KEY_HOME", icon: "\U000F02DC", icon_color: "color_text_dim", text: "Accueil" } }
 
@@ -301,19 +283,7 @@ obj:
                 # complet fait ~198 px pour 189 px utiles dans le bouton.
                 - !include { file: tv_app_btn.yaml, vars: { x: 237, app: "prime", text: "Prime", color: "color_info" } }
                 - !include { file: tv_app_btn.yaml, vars: { x: 474, app: "youtube", text: "YouTube", color: "color_warning" } }
-                # CANAL+ : libellé sans couleur propre (thème) — hors gabarit, voir tv_app_btn.yaml
-                - button:
-                    x: 711
-                    width: 221
-                    height: 102
-                    radius: 18
-                    styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
-                    on_short_click:
-                      - script.execute: { id: tab5_action, emplacement: tv, commande: appli, valeur: canal }
-                    widgets:
-                      - label: { text: "CANAL+", align: CENTER, text_font: roboto_32_b }
+                - !include { file: tv_app_btn.yaml, vars: { x: 711, app: "canal", text: "CANAL+", color: "color_text" } }
                 # [AI-WARNING] « PC » ne passe PAS par select_source. Le
                 # source_list de la TV ne contient que "TV" et "HDMI", et "HDMI"
                 # retombe sur la FREEBOX, pas sur le PC — l'ancien bouton

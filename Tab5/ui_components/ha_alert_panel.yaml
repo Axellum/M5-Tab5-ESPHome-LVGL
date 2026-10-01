@@ -29,7 +29,7 @@ obj:
     - button:
         id: btn_ha_alert_tap_${n}
         align: CENTER
-        width: 1180
+        width: ${central_w}
         height: 80
         styles: style_invisible
         on_short_click:
