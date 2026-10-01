@@ -196,6 +196,23 @@ def test_workflow_signe_avec_la_cle_du_projet():
     assert build["with"]["version"] == "${{ env.ESPHOME_PUBLICATION }}"
 
 
+def test_cle_lue_seulement_dans_l_environnement_protege():
+    """S2 (audit du 30/09/2026) : la clé de signature n'est lue que par le job `firmware`,
+    dans l'environnement `publication` (`main` et tags `v*`, accord d'Axel). Un autre job ou
+    un autre workflow qui la lirait échapperait à cette protection."""
+    flux = _yaml(".github", "workflows", "publication.yml")
+    assert flux["jobs"]["firmware"]["environment"] == "publication"
+    for nom, job in flux["jobs"].items():
+        if nom != "firmware":
+            assert "TAB5_CLE_SIGNATURE" not in yaml.safe_dump(job, allow_unicode=True), nom
+    autres = [
+        p.name
+        for p in (REPO / ".github" / "workflows").glob("*.y*ml")
+        if p.name != "publication.yml" and "TAB5_CLE_SIGNATURE" in p.read_text(encoding="utf-8")
+    ]
+    assert autres == []
+
+
 def test_esphome_des_releases_pas_sous_le_plancher():
     flux = yaml.safe_load((REPO / ".github" / "workflows" / "publication.yml").read_text(encoding="utf-8"))
     fige = tuple(int(x) for x in flux["env"]["ESPHOME_PUBLICATION"].split("."))

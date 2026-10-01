@@ -94,10 +94,12 @@ Hors périmètre — à signaler aux projets concernés :
   (`tab5_signature.pem`) est ce qui permet de la flasher par le réseau : jamais dans git, avec
   une copie hors de votre ordinateur. Si elle fuite, créez-en une autre et reflashez en USB.
 - Les firmwares publiés (flasheur web, mises à jour par Home Assistant) sont signés dans GitHub
-  Actions avec la clé du projet, gardée dans un secret du dépôt. Avant de signer, le workflow
+  Actions avec la clé du projet, gardée dans un environnement protégé : lue seulement depuis
+  `main` ou un tag `v*`, après l'accord du mainteneur. Avant de signer, le workflow
   vérifie l'empreinte publique de la clé (SBv2, écrite dans `.github/workflows/publication.yml`) ;
   le téléchargement est protégé par cette signature, pas par le certificat HTTPS
-  ([ADR-0022](docs/decisions/0022-published-firmware-pages-channels.md)).
+  ([ADR-0022](docs/decisions/0022-published-firmware-pages-channels.md)). Les tags de version
+  (`v*`) ne peuvent être ni supprimés ni déplacés.
 - Le point d'accès de secours (« Tab5 Fallback AP », qui sert à donner le Wi-Fi) est ouvert.
   Quelqu'un à portée peut changer le réseau d'une tablette qui a perdu le sien ; il ne peut ni
   la flasher ni parler à son API.
