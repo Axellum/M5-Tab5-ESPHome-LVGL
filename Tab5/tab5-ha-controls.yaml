@@ -277,13 +277,16 @@ select:
 button:
   # Recharge le mois courant + M+1 du calendrier (même script que le pré-fetch
   # de boot). À utiliser quand un RDV ajouté dans HA n'apparaît pas encore.
+  # `force` : redemande même un mois reçu il y a moins de 30 s (tab5-calendar.yaml).
   - platform: template
     id: tab5_reload_calendar
     name: "Recharger le calendrier"
     icon: mdi:calendar-refresh
     entity_category: config
     on_press:
-      - script.execute: tab5_cal_prefetch_boot
+      - script.execute:
+          id: tab5_cal_prefetch
+          force: true
 
 interval:
   # Rattrapage du volume changé côté HA directement sur le media_player (slider
