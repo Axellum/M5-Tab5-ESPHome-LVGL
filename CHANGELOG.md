@@ -25,7 +25,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   - Mesuré sur la tablette de l'auteur : Wi-Fi connecté 10,55 s après la coupure (14,85 s
     en 3.3.2, 3 démarrages de chaque), `tab5_connected` reçu par HA à 12,0 s (18,2-18,4 s),
     poussée complète 0,25 s plus tard. Détail phase par phase dans `docs/performance.md`.
-    Écran : à vérifier par l'auteur.
+    Écran validé par l'auteur sur le build d'essai avec l'horloge du même jour.
 - **Hors firmware** : rien à mettre à jour dans Home Assistant (l'automation de poussée
   attendait déjà, 10 s au plus, que la liaison de la tablette soit `on`).
 
