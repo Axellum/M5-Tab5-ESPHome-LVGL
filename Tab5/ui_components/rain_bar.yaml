@@ -1,0 +1,26 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 9× par tab5-lvgl.yaml (panneau
+# pluie de la carte centrale, rain_bar_container) : une barre de la pluie de l'heure à
+# venir. Le fond (rb_${n}) garde sa hauteur de 50 px ; la barre intérieure (rb_${n}_in),
+# collée en bas, prend la hauteur et la couleur de l'intensité, posées par
+# update_rain_bar_ui() (tab5_services.cpp).
+# vars : n (0-8 — suffixe des ids rb_${n} et rb_${n}_in), w (largeur : 25 px pour les
+#        6 tranches de 5 min, 55 px pour les 3 tranches de 10 min).
+# Sorti de tab5-lvgl.yaml le 01/10/2026 (audit des conteneurs, règle 5) : 9 copies.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: rb_${n}
+  width: ${w}
+  height: 50
+  bg_color: color_bar_inactive
+  border_width: 0
+  pad_all: 0
+  widgets:
+    - obj:
+        id: rb_${n}_in
+        align: BOTTOM_MID
+        width: ${w}
+        height: 0
+        bg_color: color_bar_inactive
+        border_width: 0
+        radius: 0

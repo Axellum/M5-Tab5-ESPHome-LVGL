@@ -163,7 +163,8 @@ lvgl:
               # 27 à 123 px) pendant ~1,5 s au démarrage. Valeurs de roboto_130_b
               # (Roboto 700, 130 px) : chiffre 75 px de large (tabulaire), « : »
               # 37 px, encre des chiffres à 27-123 px du haut du label.
-              #   - cadre 75 × 104 : l'encre + 4 px de marge en haut et en bas. Plus
+              #   - cadre 75 × 104 (clock_roller.yaml, gabarit des 4 rouleaux) : l'encre
+              #     + 4 px de marge en haut et en bas. Plus
               #     court que le label (152 px), sinon le chiffre qui arrive, posé
               #     un cadre plus bas, déborderait sur la date ;
               #   - label à y -23 : remonte l'encre dans le cadre (même place à
@@ -175,55 +176,11 @@ lvgl:
               # la taille de police ou une valeur ici sans les autres le fait échouer.
               # Ne pas remettre un label unique `lbl_time` : le C++ pilote ces
               # 8 labels via g_clock_roller.
-              - obj:
-                  id: clock_roll_h10
-                  align: TOP_LEFT
-                  x: 27
-                  y: 33
-                  width: 75
-                  height: 104
-                  styles: style_transparent
-                  scrollable: false
-                  widgets:
-                    - label: { id: lbl_time_h10_a, text: "1", align: TOP_MID, y: -23, text_font: roboto_130_b }
-                    - label: { id: lbl_time_h10_b, text: "1", align: TOP_MID, y: -23, text_font: roboto_130_b }
-              - obj:
-                  id: clock_roll_h1
-                  align: TOP_LEFT
-                  x: 102
-                  y: 33
-                  width: 75
-                  height: 104
-                  styles: style_transparent
-                  scrollable: false
-                  widgets:
-                    - label: { id: lbl_time_h1_a, text: "9", align: TOP_MID, y: -23, text_font: roboto_130_b }
-                    - label: { id: lbl_time_h1_b, text: "9", align: TOP_MID, y: -23, text_font: roboto_130_b }
+              - !include { file: ui_components/clock_roller.yaml, vars: { d: h10, x: 27, chiffre: "1" } }
+              - !include { file: ui_components/clock_roller.yaml, vars: { d: h1, x: 102, chiffre: "9" } }
               - label: { id: lbl_time_colon, text: ":", align: TOP_LEFT, x: 181, y: 10, text_font: roboto_130_b }
-              - obj:
-                  id: clock_roll_m10
-                  align: TOP_LEFT
-                  x: 222
-                  y: 33
-                  width: 75
-                  height: 104
-                  styles: style_transparent
-                  scrollable: false
-                  widgets:
-                    - label: { id: lbl_time_m10_a, text: "5", align: TOP_MID, y: -23, text_font: roboto_130_b }
-                    - label: { id: lbl_time_m10_b, text: "5", align: TOP_MID, y: -23, text_font: roboto_130_b }
-              - obj:
-                  id: clock_roll_m1
-                  align: TOP_LEFT
-                  x: 297
-                  y: 33
-                  width: 75
-                  height: 104
-                  styles: style_transparent
-                  scrollable: false
-                  widgets:
-                    - label: { id: lbl_time_m1_a, text: "0", align: TOP_MID, y: -23, text_font: roboto_130_b }
-                    - label: { id: lbl_time_m1_b, text: "0", align: TOP_MID, y: -23, text_font: roboto_130_b }
+              - !include { file: ui_components/clock_roller.yaml, vars: { d: m10, x: 222, chiffre: "5" } }
+              - !include { file: ui_components/clock_roller.yaml, vars: { d: m1, x: 297, chiffre: "0" } }
               - label: { id: lbl_date, text: "Jeu 02 Avr", align: TOP_MID, y: 140, text_font: roboto_45_b }
 
         # Zone tactile invisible par-dessus l'horloge/date. Deux gestes sur la
@@ -427,15 +384,15 @@ lvgl:
                                 flex_align_main: CENTER
                                 flex_align_cross: END
                               widgets:
-                                - obj: { id: rb_0, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_0_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                                - obj: { id: rb_1, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_1_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                                - obj: { id: rb_2, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_2_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                                - obj: { id: rb_3, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_3_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                                - obj: { id: rb_4, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_4_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                                - obj: { id: rb_5, width: 25, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_5_in, align: BOTTOM_MID, width: 25, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                                - obj: { id: rb_6, width: 55, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_6_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                                - obj: { id: rb_7, width: 55, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_7_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
-                                - obj: { id: rb_8, width: 55, height: 50, bg_color: color_bar_inactive, border_width: 0, pad_all: 0, widgets: [{ obj: { id: rb_8_in, align: BOTTOM_MID, width: 55, height: 0, bg_color: color_bar_inactive, border_width: 0, radius: 0 } }] }
+                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 0, w: 25 } }
+                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 1, w: 25 } }
+                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 2, w: 25 } }
+                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 3, w: 25 } }
+                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 4, w: 25 } }
+                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 5, w: 25 } }
+                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 6, w: 55 } }
+                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 7, w: 55 } }
+                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 8, w: 55 } }
                           - obj:
                               width: SIZE_CONTENT
                               height: 100%

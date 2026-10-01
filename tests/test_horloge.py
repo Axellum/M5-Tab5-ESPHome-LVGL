@@ -35,6 +35,17 @@ class _Chargeur(yaml.SafeLoader):
     pass
 
 
+class _Inclusion(dict):
+    """Un `!include` laissé tel quel au chargement, déplié par _deplier()."""
+
+
+def _inclusion(chargeur, noeud):
+    if isinstance(noeud, yaml.MappingNode):
+        return _Inclusion(chargeur.construct_mapping(noeud, deep=True))
+    return _Inclusion(file=chargeur.construct_scalar(noeud))
+
+
+_Chargeur.add_constructor("!include", _inclusion)
 _Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: None)
 
 
@@ -43,9 +54,22 @@ def _charger(*chemin):
         return yaml.load(f, Loader=_Chargeur)
 
 
+def _deplier(entree):
+    """Un `!include { file, vars }` de tab5-lvgl.yaml, déplié comme ESPHome : le gabarit
+    (chemin relatif à Tab5/) avec chaque ${var} remplacé."""
+    if not isinstance(entree, _Inclusion):
+        return entree
+    with open(os.path.join(REPO, "Tab5", entree["file"]), encoding="utf-8") as f:
+        texte = f.read()
+    for nom, valeur in (entree.get("vars") or {}).items():
+        texte = texte.replace("${%s}" % nom, str(valeur))
+    return yaml.load(texte, Loader=_Chargeur)
+
+
 def _widgets(liste):
     """Parcourt l'arbre : (type, propriétés) de chaque widget."""
     for entree in liste or []:
+        entree = _deplier(entree)
         if not isinstance(entree, dict):
             continue
         for type_, props in entree.items():
@@ -85,7 +109,7 @@ def _px():
 def _enfants(tuile):
     rouleaux, deux_points, date = {}, None, None
     for entree in tuile["widgets"]:
-        (type_, props), = entree.items()
+        (type_, props), = _deplier(entree).items()
         if type_ == "obj" and str(props.get("id", "")).startswith("clock_roll_"):
             rouleaux[props["id"]] = props
         elif props.get("id") == "lbl_time_colon":
@@ -95,6 +119,13 @@ def _enfants(tuile):
     assert list(rouleaux) == ["clock_roll_h10", "clock_roll_h1", "clock_roll_m10", "clock_roll_m1"]
     assert deux_points and date
     return list(rouleaux.values()), deux_points, date
+
+
+def test_un_gabarit_pour_les_quatre_rouleaux():
+    # Règle 5 : les 4 rouleaux viennent de clock_roller.yaml, pas de 4 copies.
+    inclusions = [e for e in _tuile()["widgets"] if isinstance(e, _Inclusion)]
+    assert [e["file"] for e in inclusions] == ["ui_components/clock_roller.yaml"] * 4
+    assert [e["vars"]["d"] for e in inclusions] == ["h10", "h1", "m10", "m1"]
 
 
 def test_police_de_l_horloge():

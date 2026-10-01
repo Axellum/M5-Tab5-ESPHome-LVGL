@@ -1,0 +1,35 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 4× par tab5-lvgl.yaml (tuile
+# horloge) : le rouleau d'UN chiffre de HH:MM. Le cadre rogne ses deux labels (le chiffre
+# affiché + celui qui arrive, posé un cadre plus bas) : c'est l'effet de rouleau, piloté
+# par update_clock_date_ui() (tab5_anim.cpp) via g_clock_roller.
+# vars : d (h10, h1, m10 ou m1 — suffixe des ids clock_roll_${d}, lbl_time_${d}_a et
+#        lbl_time_${d}_b, relus par on_boot), x (position dans la tuile),
+#        chiffre (affiché tant que l'heure n'est pas connue).
+# [AI-WARNING] Cadre 75 × 104 et label à y -23 : valeurs de roboto_130_b, expliquées sur
+# la tuile horloge (tab5-lvgl.yaml) et recalculées depuis la police par
+# tests/test_horloge.py. La hauteur du cadre EST la course du rouleau (lue par le C++).
+# Sorti de tab5-lvgl.yaml le 01/10/2026 (audit des conteneurs, règle 5) : 4 copies.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: clock_roll_${d}
+  align: TOP_LEFT
+  x: ${x}
+  y: 33
+  width: 75
+  height: 104
+  styles: style_transparent
+  scrollable: false
+  widgets:
+    - label:
+        id: lbl_time_${d}_a
+        text: "${chiffre}"
+        align: TOP_MID
+        y: -23
+        text_font: roboto_130_b
+    - label:
+        id: lbl_time_${d}_b
+        text: "${chiffre}"
+        align: TOP_MID
+        y: -23
+        text_font: roboto_130_b
