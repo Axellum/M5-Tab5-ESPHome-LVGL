@@ -4,6 +4,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+- **Sécurité : la clé qui signe les firmwares publiés n'est plus lisible par n'importe quel
+  workflow** (audit du 30/09, S2 ; rien ne change sur la tablette).
+  - Le job `firmware` de `publication.yml` tourne dans l'environnement protégé `publication`,
+    seul à garder le secret `TAB5_CLE_SIGNATURE` : il ne part que de `main` ou d'un tag `v*`
+    et attend l'accord du mainteneur dans Actions (« Review deployments »),
+    administrateurs compris. `tests/test_publication.py` échoue si un autre job ou un autre
+    workflow lit la clé.
+  - Réglages du dépôt du même jour : les tags `v*` ne peuvent plus être supprimés ni
+    déplacés (règle « Tags de version immuables »), la protection de `main` s'applique aussi
+    aux administrateurs, et l'analyse CodeQL par défaut de GitHub est active.
 - **Sécurité : seule la tablette pilote ses tuiles, et la CI ne dépend plus d'un tag qui
   bouge** (audit du 30/09, §6, lot C ; rien ne change sur l'écran ni dans le firmware).
   - Home Assistant : un événement `esphome.*` n'exige aucune option, donc n'importe quel autre

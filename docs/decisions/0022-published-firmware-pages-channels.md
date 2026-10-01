@@ -36,7 +36,7 @@ Checked on 2026-09-27 (ESPHome 2026.9.0 installed on the dev PC, `esphome/build-
 
 ## Consequences
 
-- **Axel sets the secret once** (`gh secret set TAB5_CLE_SIGNATURE < C:\Users\axell\.tab5\tab5_signature.pem`); an AI never types a key. Pages must be enabled with the « GitHub Actions » source.
+- **Axel sets the secret once**, in the `publication` environment since 2026-10-01 (`gh secret set TAB5_CLE_SIGNATURE --env publication < C:\Users\axell\.tab5\tab5_signature.pem`, from `cmd`: PowerShell has no `<`); an AI never types a key. Pages must be enabled with the « GitHub Actions » source.
 - A **lost or leaked key**: the secret and the digest in the workflow change together, and published tablets can only be flashed again over USB (ADR-0020).
 - Relaunching the workflow for a tag rebuilds and replaces its files (`--clobber`); relaunching it for any tag republishes the page with the current `web/`.
 - The download is protected by the signature, not by HTTPS (`verify_ssl: false`).
@@ -52,3 +52,12 @@ The site was only the installer, and only `publication.yml` deployed it: fixing 
 - **A channel only serves a release whose files are attached** (#221 and its follow-up): `site.yml` lists the releases through the REST API (`gh api …/releases`, which gives their files and their upload state; `gh release list` does not), and `pages.py choisir` skips a release without the ST7123 manifest, or with a manifest but not yet its two binaries; the previous release is served meanwhile. `publication.yml` attaches the files after compiling (v3.1.0: published 11:29 UTC, files 11:41), and a push to `main` in between failed with « no assets to download » (2026-09-28). Another missing revision does not skip a release: one added to `ECRANS` later has no files in the older releases.
 - **One Pages deployment per commit**: `actions/deploy-pages` gives the commit as `pages_build_version`, and the API rejects a version that is not a commit (404, tried in #231). On 2026-09-28, v3.2.0-rc.1 targeted the commit a push to `main` had just deployed: its deployment reported success, and the site kept serving the push's build (beta channel still on 3.1.0). `site.yml` now fails before deploying a commit that already has a successful deployment; publish the release on a new commit, or deploy from a new commit of `main`.
 - `tests/test_publication.py` checks that every picture a page shows is listed in `IMAGES` and exists, that each page has a title, a description, its canonical address, a sharing image and alt texts, and that `site.yml` compiles nothing.
+
+## Amendment (2026-10-01): the key in a protected environment
+
+The audit of 2026-09-30 (S2) found the signing key in a repository secret: a workflow of any branch could read it.
+
+- **The `firmware` job of `publication.yml` runs in the `publication` environment**, the only place that holds `TAB5_CLE_SIGNATURE`. The environment deploys only from `main` (a run started by hand) and from tags `v*` (a published release), and waits for Axel's approval (« Review deployments »), administrators included. The repository secret is removed.
+- **Tags `v*` can no longer be deleted or moved** (repository ruleset « Tags de version immuables », checked on 2026-10-01 with a throwaway tag: creation accepted, force-push and deletion refused). A release built from the wrong commit gets a new version number; relaunching the workflow for the same tag still works.
+- `tests/test_publication.py` fails if another job or another workflow reads the key.
+- A release now waits for one approval in Actions before anything is compiled.

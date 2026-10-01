@@ -2,7 +2,9 @@ name: Publication (release, page de flashage)
 
 # Lot 6c, ADR-0022. À la publication d'une release (ou relancé à la main pour un tag) :
 #   1. les trois révisions d'écran sont compilées, SIGNÉES par la clé du projet (secret
-#      TAB5_CLE_SIGNATURE, posé par Axel) — jamais une clé jetable comme en PR ;
+#      TAB5_CLE_SIGNATURE de l'environnement protégé `publication`, posé par Axel : lu
+#      seulement depuis `main` ou un tag `v*`, après son accord dans Actions) — jamais
+#      une clé jetable comme en PR ;
 #   2. leurs binaires et manifestes sont joints à la release, avec l'archive Home
 #      Assistant tab5_home_assistant.zip (job home-assistant, ADR-0024) ;
 #   3. le site GitHub Pages est reconstruit par site.yml à partir des fichiers des
@@ -119,6 +121,9 @@ jobs:
   firmware:
     needs: preparation
     runs-on: ubuntu-latest
+    # Seul job qui lit la clé (S2, audit du 30/09/2026) : l'environnement attend l'accord
+    # d'Axel (« Review deployments ») et refuse toute autre branche que `main` et les tags `v*`.
+    environment: publication
     strategy:
       fail-fast: true
       matrix:
