@@ -8,10 +8,9 @@
 static const uint8_t kI18nLangCount = 6;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it"};
-static const uint16_t kI18nKeyCount = 950;
+static const uint16_t kI18nKeyCount = 949;
 
 static const char* const kI18nCtx[] = {
-    "",
     "",
     "",
     "",
@@ -1358,7 +1357,6 @@ static const char* const kI18nKeys[] = {
     "Irréversible",
     "Janv",
     "Jeu",
-    "Jeu 02 Avr",
     "Jouable",
     "Jouer",
     "Jouer !",
@@ -2312,7 +2310,6 @@ static const char* const kI18n_en[] = {
     "Irreversible",  // "Irréversible"
     "Jan",  // "Janv"
     "Thu",  // "Jeu"
-    "Thu 02 Apr",  // "Jeu 02 Avr"
     "Playable",  // "Jouable"
     "Play",  // "Jouer"
     "Play!",  // "Jouer !"
@@ -3266,7 +3263,6 @@ static const char* const kI18n_de[] = {
     "Unumkehrbar",  // "Irréversible"
     "Jan",  // "Janv"
     "Do",  // "Jeu"
-    "Do 02 Apr",  // "Jeu 02 Avr"
     "Spielbar",  // "Jouable"
     "Spielen",  // "Jouer"
     "Los!",  // "Jouer !"
@@ -4220,7 +4216,6 @@ static const char* const kI18n_nl[] = {
     "Onomkeerbaar",  // "Irréversible"
     "Jan",  // "Janv"
     "Do",  // "Jeu"
-    "Do 02 Apr",  // "Jeu 02 Avr"
     "Speelbaar",  // "Jouable"
     "Spelen",  // "Jouer"
     "Spelen!",  // "Jouer !"
@@ -5174,7 +5169,6 @@ static const char* const kI18n_es[] = {
     "Irreversible",  // "Irréversible"
     "Ene",  // "Janv"
     "Jue",  // "Jeu"
-    "Jue 02 Abr",  // "Jeu 02 Avr"
     "Jugable",  // "Jouable"
     "Jugar",  // "Jouer"
     "¡Jugar!",  // "Jouer !"
@@ -6128,7 +6122,6 @@ static const char* const kI18n_it[] = {
     "Irreversibile",  // "Irréversible"
     "Gen",  // "Janv"
     "Gio",  // "Jeu"
-    "Gio 02 Apr",  // "Jeu 02 Avr"
     "Giocabile",  // "Jouable"
     "Gioca",  // "Jouer"
     "Gioca!",  // "Jouer !"

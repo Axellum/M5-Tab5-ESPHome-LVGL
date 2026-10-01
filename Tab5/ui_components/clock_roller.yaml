@@ -4,8 +4,10 @@
 # affiché + celui qui arrive, posé un cadre plus bas) : c'est l'effet de rouleau, piloté
 # par update_clock_date_ui() (tab5_anim.cpp) via g_clock_roller.
 # vars : d (h10, h1, m10 ou m1 — suffixe des ids clock_roll_${d}, lbl_time_${d}_a et
-#        lbl_time_${d}_b, relus par on_boot), x (position dans la tuile),
-#        chiffre (affiché tant que l'heure n'est pas connue).
+#        lbl_time_${d}_b, relus par on_boot), x (position dans la tuile).
+# Labels VIDES tant que l'heure n'est pas connue (01/10/2026) : avant, le YAML affichait
+# « 19:50 », une heure fausse, jusqu'au premier update_clock_date_ui(). Le premier chiffre
+# est posé sans rouler (set_clock_digit_immediate), quel que soit le texte de départ.
 # [AI-WARNING] Cadre 75 × 104 et label à y -23 : valeurs de roboto_130_b, expliquées sur
 # la tuile horloge (tab5-lvgl.yaml) et recalculées depuis la police par
 # tests/test_horloge.py. La hauteur du cadre EST la course du rouleau (lue par le C++).
@@ -23,13 +25,13 @@ obj:
   widgets:
     - label:
         id: lbl_time_${d}_a
-        text: "${chiffre}"
+        text: ""
         align: TOP_MID
         y: -23
         text_font: roboto_130_b
     - label:
         id: lbl_time_${d}_b
-        text: "${chiffre}"
+        text: ""
         align: TOP_MID
         y: -23
         text_font: roboto_130_b

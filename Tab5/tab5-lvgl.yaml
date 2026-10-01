@@ -176,12 +176,12 @@ lvgl:
               # la taille de police ou une valeur ici sans les autres le fait échouer.
               # Ne pas remettre un label unique `lbl_time` : le C++ pilote ces
               # 8 labels via g_clock_roller.
-              - !include { file: ui_components/clock_roller.yaml, vars: { d: h10, x: 27, chiffre: "1" } }
-              - !include { file: ui_components/clock_roller.yaml, vars: { d: h1, x: 102, chiffre: "9" } }
+              - !include { file: ui_components/clock_roller.yaml, vars: { d: h10, x: 27 } }
+              - !include { file: ui_components/clock_roller.yaml, vars: { d: h1, x: 102 } }
               - label: { id: lbl_time_colon, text: ":", align: TOP_LEFT, x: 181, y: 10, text_font: roboto_130_b }
-              - !include { file: ui_components/clock_roller.yaml, vars: { d: m10, x: 222, chiffre: "5" } }
-              - !include { file: ui_components/clock_roller.yaml, vars: { d: m1, x: 297, chiffre: "0" } }
-              - label: { id: lbl_date, text: "Jeu 02 Avr", align: TOP_MID, y: 140, text_font: roboto_45_b }
+              - !include { file: ui_components/clock_roller.yaml, vars: { d: m10, x: 222 } }
+              - !include { file: ui_components/clock_roller.yaml, vars: { d: m1, x: 297 } }
+              - label: { id: lbl_date, text: "", align: TOP_MID, y: 140, text_font: roboto_45_b }
 
         # Zone tactile invisible par-dessus l'horloge/date. Deux gestes sur la
         # même tuile, dans l'ordre qui va de soi quand on regarde une horloge :

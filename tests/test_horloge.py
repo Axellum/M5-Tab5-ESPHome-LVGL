@@ -128,6 +128,14 @@ def test_un_gabarit_pour_les_quatre_rouleaux():
     assert [e["vars"]["d"] for e in inclusions] == ["h10", "h1", "m10", "m1"]
 
 
+def test_pas_d_heure_factice_avant_l_heure_reelle():
+    # Jusqu'au premier update_clock_date_ui(), le YAML affichait « 19:50 » et
+    # « Jeu 02 Avr », une heure et une date fausses : tout reste vide jusqu'à l'heure réelle.
+    rouleaux, _, date = _enfants(_tuile())
+    assert [l["label"]["text"] for r in rouleaux for l in r["widgets"]] == [""] * 8
+    assert date["text"] == ""
+
+
 def test_police_de_l_horloge():
     tuile = _tuile()
     rouleaux, deux_points, _ = _enfants(tuile)

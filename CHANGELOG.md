@@ -4,6 +4,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-01 — Plus d'heure fausse au démarrage
+
+- **Accueil, tuile horloge** : jusqu'à ce que la tablette connaisse l'heure, le YAML
+  affichait « 19:50 » et « Jeu 02 Avr », une heure et une date fausses. Chiffres et date
+  restent maintenant vides (le « : » reste) jusqu'au premier affichage de l'heure réelle,
+  posé sans rouler comme avant. Trouvé par l'audit des conteneurs du 01/10.
+  `tests/test_horloge.py` le vérifie ; la clé de traduction « Jeu 02 Avr » est retirée
+  des 5 langues.
+
 ### 2026-10-01 — Dettes de l'audit des conteneurs (rien ne change à l'écran)
 
 - **Une seule source pour ce qui était recopié** (règle 5), même rendu :
