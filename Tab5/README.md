@@ -55,7 +55,7 @@ Cross-cutting ESPHome `script:` blocks: the **modal registry** (`tab5_modal_regi
 Game scripts: `tab5_games_close_all` (closes whatever console is open, list read from `GameRegistry::kGames`), one `tab5_<game>_open` per console (injects the LVGL pointers and fonts only reachable through `id()`), and `tab5_arcade_open` (the `page_arcade` selector). See [`docs/arcade.md`](../docs/arcade.md).
 
 ### `tab5-calendar.yaml`
-Calendar popup scripts: `tab5_calendar_open`, `tab5_cal_render`, `tab5_cal_prev`/`tab5_cal_next`/`tab5_cal_today`, `tab5_cal_prefetch_boot`, `tab5_cal_day_tap`. The month grid is computed locally (`cal_render_month()`); HA only enriches it on demand.
+Calendar popup scripts: `tab5_calendar_open`, `tab5_cal_render`, `tab5_cal_prev`/`tab5_cal_next`/`tab5_cal_today`, `tab5_cal_prefetch_boot` → `tab5_cal_prefetch` (a month received less than 30 s ago is not asked again; the "Recharger le calendrier" button forces), `tab5_cal_day_tap`. The month grid is computed locally (`cal_render_month()`); HA only enriches it on demand.
 
 ### `tab5-zones.yaml`
 Optional zones (lot 5, ADR-0018): default values for every `entity_…` key (commenting a line in `user_entities.yaml` removes that zone), the `esphome.tab5_zones` request sent to HA once per connection, the `tab5_zones_apply` script and the « Zones masquées » diagnostic sensor. HA answers with `tab5_maj_zones`; the decision lives in `tab5_zones.cpp`.
