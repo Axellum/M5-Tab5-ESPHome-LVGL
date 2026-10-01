@@ -15,8 +15,6 @@ button:
   height: 102
   radius: 18
   styles: style_clim_btn
-  pressed:
-    bg_opa: 30%
   on_short_click:
     - script.execute: { id: tab5_action, emplacement: tv, commande: appli, valeur: "${app}" }
   widgets:

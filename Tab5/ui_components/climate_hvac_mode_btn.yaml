@@ -9,8 +9,6 @@ button:
   height: 88
   radius: 18
   styles: style_clim_btn
-  pressed:
-    bg_opa: 30%
   on_short_click:
     # Optimiste : pose le mode sur la clim affichée + recolore l'icône immédiatement
     # (avant le retour HA/Daikin cloud qui peut prendre plusieurs secondes). Le retour de

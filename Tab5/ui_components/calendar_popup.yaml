@@ -58,8 +58,6 @@ obj:
               width: 80
               height: 44
               styles: style_clim_btn
-              pressed:
-                bg_opa: 30%
               on_short_click:
                 - script.execute: tab5_cal_prev
               widgets:
@@ -82,8 +80,6 @@ obj:
               width: 80
               height: 44
               styles: style_clim_btn
-              pressed:
-                bg_opa: 30%
               on_short_click:
                 - script.execute: tab5_cal_next
               widgets:
@@ -98,8 +94,6 @@ obj:
               width: 150
               height: 44
               styles: style_clim_btn
-              pressed:
-                bg_opa: 30%
               on_short_click:
                 - script.execute: tab5_cal_today
               widgets:

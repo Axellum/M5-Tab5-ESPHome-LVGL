@@ -212,7 +212,7 @@ Format : **Symptôme → Cause racine → Correctif**.
 
 **Cause racine :** limitation confirmée dans le code source du composant LVGL d'ESPHome — `pressed:` n'est valide que sur le widget lui-même.
 
-**Correctif :** répéter le bloc `pressed:` sur chaque bouton "verre" individuel — pas un refacto à pousser plus loin.
+**Correctif :** le partager sur le widget par `pressed: { styles: style_x }` (version anglaise ci-dessus ; l'ancien conseil « le répéter sur chaque bouton » était faux). Un bouton verre cliquable de rayon 18 n'a besoin de rien : `apply_pressed_scale_to_tree()` (`tab5_anim.cpp`) lui pose l'appui, et les `pressed:` qui le répétaient sont retirés depuis le 01/10/2026.
 
 ### Connexions API ESPHome épuisées
 

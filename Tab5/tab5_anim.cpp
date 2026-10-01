@@ -462,6 +462,10 @@ static void setup_button_press_animation(lv_obj_t* btn) {
     lv_obj_add_style(btn, opaque ? &style_btn_pressed_opaque : &style_btn_pressed, LV_STATE_PRESSED);
 }
 
+// Source unique de l'appui des boutons verre de rayon 18 : depuis le 01/10/2026 (D6,
+// audit des conteneurs) aucun `pressed:` YAML ne le répète, 68 ont été retirés. Un
+// `pressed:` YAML ne reste que là où l'appui diffère (rayon ≠ 18, autre opacité, bordure).
+// Pendant les 2 s qui précèdent cet appel (on_boot), ces boutons ne marquent pas l'appui.
 void apply_pressed_scale_to_tree(lv_obj_t* root) {
     if (!root) return;
     // Heuristique : objet clickable + radius 18 = bouton verre (style_clim_btn).

@@ -10,8 +10,6 @@ button:
   height: 88
   radius: 18
   styles: style_clim_btn
-  pressed:
-    bg_opa: 30%
   on_short_click:
     # Optimiste : calcule la bascule une seule fois sur la clim affichée et recolore,
     # puis envoie ce qu'elle vient de poser (évite un double-toggle inversé).

@@ -15,8 +15,6 @@ button:
   width: 106
   height: 92
   styles: style_clim_btn
-  pressed:
-    bg_opa: 30%
   on_short_click:
     - script.execute: { id: tab5_action, emplacement: !lambda 'return id(current_light_slot);', commande: couleur, valeur: "${color_name}" }
   widgets:

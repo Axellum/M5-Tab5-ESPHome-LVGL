@@ -48,8 +48,6 @@ obj:
         width: 80
         height: 44
         styles: style_clim_btn
-        pressed:
-          bg_opa: 30%
         on_short_click:
           - lambda: '${close_lambda}'
         widgets:

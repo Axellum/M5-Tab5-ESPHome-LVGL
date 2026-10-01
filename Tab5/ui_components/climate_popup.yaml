@@ -26,7 +26,8 @@
 #       qui lancent le débounce de la clim affichée (tab5_debounce_clim_temp ou _tuile).
 #       Boutons Mode/Preset/… : geste clim_popup_* (état optimiste + couleurs,
 #       clim_recolorer) AVANT l'envoi de la commande.
-#       `pressed: bg_opa: 30%` répété (ESPHome rejette pressed: dans un style partagé).
+#       Appui : aucun `pressed:` ici, apply_pressed_scale_to_tree() (tab5_anim.cpp) le pose
+#       sur tout bouton cliquable de rayon 18 (D6, audit des conteneurs du 01/10/2026).
 #       Réglages de l'appareil (clé climr, ADR-0026, tab5_cards.cpp) : bornes de l'arc,
 #       pas des ±, unité, titre = nom de la clim, boutons que l'appareil n'a pas masqués
 #       et sections de la carte OPTIONS ré-empilées (leurs y ci-dessous sont ceux de
@@ -96,8 +97,6 @@ obj:
                           height: 88
                           radius: 18
                           styles: style_clim_btn
-                          pressed:
-                            bg_opa: 30%
                           on_short_click:
                             # Optimiste : mode "off" sur la clim affichée + couleurs avant le retour HA
                             - lambda: 'clim_popup_mode("off");'
@@ -162,8 +161,6 @@ obj:
                     height: 84
                     radius: 18
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       - lambda: 'clim_popup_pas(-1);'
                     widgets:
@@ -176,8 +173,6 @@ obj:
                     height: 84
                     radius: 18
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       - lambda: 'clim_popup_pas(+1);'
                     widgets:
@@ -242,8 +237,6 @@ obj:
                     height: 88
                     radius: 18
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       # Optimiste : calcule la bascule sur la clim affichée et recolore
                       # (clim_popup_silence), puis envoie ce qu'elle vient de poser (pas de
@@ -267,8 +260,6 @@ obj:
                     height: 88
                     radius: 18
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       # Optimiste : bascule sur la clim affichée, couleurs, puis envoi de ce
                       # qu'elle vient de poser. Actif sous tous ses noms (swing, on, both,
@@ -287,8 +278,6 @@ obj:
                     height: 88
                     radius: 18
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       # Optimiste : bascule windnice ↔ stop sur la clim affichée, couleurs,
                       # puis envoi de ce qu'elle vient de poser.

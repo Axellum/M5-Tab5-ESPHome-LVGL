@@ -73,8 +73,6 @@ obj:
                     width: 342
                     height: 96
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       - script.execute: { id: tab5_action, emplacement: !lambda 'return id(current_light_slot);', commande: basculer, valeur: "" }
                     widgets:
@@ -91,8 +89,6 @@ obj:
                     width: 342
                     height: 76
                     styles: style_clim_btn
-                    pressed:
-                      bg_opa: 30%
                     on_short_click:
                       - lambda: 'popup_lumiere_tout_eteindre();'
                     widgets:

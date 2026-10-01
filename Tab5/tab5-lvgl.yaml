@@ -223,8 +223,6 @@ lvgl:
             height: 90
             radius: 18
             styles: style_clim_btn_page
-            pressed:
-              bg_opa: 52%
             on_short_click:
               # Mode HA (ADR-0023) : les cartes de la pièce de la page courante (ou de la
               # plus proche qui a des appareils), fondu croisé avec la météo, titre de la
@@ -244,8 +242,6 @@ lvgl:
             height: 90
             radius: 18
             styles: style_clim_btn_page
-            pressed:
-              bg_opa: 52%
             on_short_click:
               - lambda: |-
                   lv_obj_remove_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
@@ -274,8 +270,6 @@ lvgl:
             height: 90
             radius: 18
             styles: style_clim_btn_page
-            pressed:
-              bg_opa: 52%
             on_short_click:
               - lambda: |-
                   animate_popup_open(id(tv_remote_popup));
