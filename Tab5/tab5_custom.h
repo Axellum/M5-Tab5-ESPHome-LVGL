@@ -123,8 +123,9 @@ extern bool g_forecast_roll_suppress;
 // repeinte par frame qu'un rouleau à deux chiffres.
 // Repose sur des chiffres tabulaires (même avance pour 0-9, vrai pour Roboto :
 // 75 px en 130 gras) — sinon les chiffres danseraient horizontalement.
-// La géométrie (avance des chiffres, hauteur d'encre, centrage dans la tuile)
-// est mesurée au boot depuis la police réelle : rien n'est codé en dur.
+// La géométrie (cadres, position des labels et du « : ») est posée dans
+// tab5-lvgl.yaml seulement, vérifiée par tests/test_horloge.py ; la course du
+// rouleau est la hauteur du cadre, lue dans son style.
 // =============================================================================
 struct ClockDigitRoller {
     lv_obj_t* wrap = nullptr;
@@ -135,18 +136,8 @@ struct ClockDigitRoller {
 
 struct ClockRollerCtx {
     ClockDigitRoller d[4];    // HH:MM -> d[0] d[1] : d[2] d[3]
-    lv_obj_t* colon = nullptr;
-    int       box_h = 0;      // hauteur de la boîte de rognage = course du rouleau
-    bool      ready = false;  // layout mesuré
 };
 extern ClockRollerCtx g_clock_roller;
-
-// Dimensionne/centre les deux rouleaux + le « : » dans la tuile horloge, à
-// partir des métriques réelles de la police (hauteur de ligne, ligne de base,
-// hauteur de capitale). `clock_font` doit être la police posée sur les 4 labels
-// dans le YAML. À appeler une fois après le layout LVGL (interval one-shot du
-// boot, comme apply_pressed_scale_to_tree).
-void layout_clock_roller(lv_obj_t* clock_tile, esphome::font::Font* clock_font);
 
 // --- 1D : Micro-interactions boutons verre ---
 

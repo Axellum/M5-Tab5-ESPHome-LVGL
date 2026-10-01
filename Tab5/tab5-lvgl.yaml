@@ -157,59 +157,73 @@ lvgl:
               # Horloge à rouleau : UN conteneur qui rogne PAR CHIFFRE (H H : M M),
               # 2 labels chacun (l'affiché + celui qui arrive), et le ":" fixe.
               # De 22 à 23 mn, seul le dernier chiffre tourne.
-              # Tailles/positions réelles posées au boot par layout_clock_roller()
-              # (mesurées sur la police) — les valeurs ici ne servent qu'avant.
+              # [AI-WARNING] Géométrie posée ICI seulement (01/10/2026). Jusque-là
+              # layout_clock_roller() la recalculait en C++ 2 s après le boot, et ces
+              # cadres provisoires de 105 px coupaient le bas des chiffres (encre de
+              # 27 à 123 px) pendant ~1,5 s au démarrage. Valeurs de roboto_130_b
+              # (Roboto 700, 130 px) : chiffre 75 px de large (tabulaire), « : »
+              # 37 px, encre des chiffres à 27-123 px du haut du label.
+              #   - cadre 75 × 104 : l'encre + 4 px de marge en haut et en bas. Plus
+              #     court que le label (152 px), sinon le chiffre qui arrive, posé
+              #     un cadre plus bas, déborderait sur la date ;
+              #   - label à y -23 : remonte l'encre dans le cadre (même place à
+              #     l'écran que l'ancien label à y 10) ;
+              #   - x : HH:MM centré dans les 399 px de la tuile (bordure 1 px),
+              #     4 px de respiration de chaque côté du « : ».
+              # La hauteur du cadre EST la course du rouleau (lue par le C++).
+              # tests/test_horloge.py refait ces calculs depuis la police : changer
+              # la taille de police ou une valeur ici sans les autres le fait échouer.
               # Ne pas remettre un label unique `lbl_time` : le C++ pilote ces
               # 8 labels via g_clock_roller.
               - obj:
                   id: clock_roll_h10
                   align: TOP_LEFT
-                  x: 28
-                  y: 10
+                  x: 27
+                  y: 33
                   width: 75
-                  height: 105
+                  height: 104
                   styles: style_transparent
                   scrollable: false
                   widgets:
-                    - label: { id: lbl_time_h10_a, text: "1", align: TOP_MID, y: 0, text_font: roboto_130_b }
-                    - label: { id: lbl_time_h10_b, text: "1", align: TOP_MID, y: 0, text_font: roboto_130_b }
+                    - label: { id: lbl_time_h10_a, text: "1", align: TOP_MID, y: -23, text_font: roboto_130_b }
+                    - label: { id: lbl_time_h10_b, text: "1", align: TOP_MID, y: -23, text_font: roboto_130_b }
               - obj:
                   id: clock_roll_h1
                   align: TOP_LEFT
-                  x: 103
-                  y: 10
+                  x: 102
+                  y: 33
                   width: 75
-                  height: 105
+                  height: 104
                   styles: style_transparent
                   scrollable: false
                   widgets:
-                    - label: { id: lbl_time_h1_a, text: "9", align: TOP_MID, y: 0, text_font: roboto_130_b }
-                    - label: { id: lbl_time_h1_b, text: "9", align: TOP_MID, y: 0, text_font: roboto_130_b }
-              - label: { id: lbl_time_colon, text: ":", align: TOP_LEFT, x: 182, y: 10, text_font: roboto_130_b }
+                    - label: { id: lbl_time_h1_a, text: "9", align: TOP_MID, y: -23, text_font: roboto_130_b }
+                    - label: { id: lbl_time_h1_b, text: "9", align: TOP_MID, y: -23, text_font: roboto_130_b }
+              - label: { id: lbl_time_colon, text: ":", align: TOP_LEFT, x: 181, y: 10, text_font: roboto_130_b }
               - obj:
                   id: clock_roll_m10
                   align: TOP_LEFT
-                  x: 223
-                  y: 10
+                  x: 222
+                  y: 33
                   width: 75
-                  height: 105
+                  height: 104
                   styles: style_transparent
                   scrollable: false
                   widgets:
-                    - label: { id: lbl_time_m10_a, text: "5", align: TOP_MID, y: 0, text_font: roboto_130_b }
-                    - label: { id: lbl_time_m10_b, text: "5", align: TOP_MID, y: 0, text_font: roboto_130_b }
+                    - label: { id: lbl_time_m10_a, text: "5", align: TOP_MID, y: -23, text_font: roboto_130_b }
+                    - label: { id: lbl_time_m10_b, text: "5", align: TOP_MID, y: -23, text_font: roboto_130_b }
               - obj:
                   id: clock_roll_m1
                   align: TOP_LEFT
-                  x: 298
-                  y: 10
+                  x: 297
+                  y: 33
                   width: 75
-                  height: 105
+                  height: 104
                   styles: style_transparent
                   scrollable: false
                   widgets:
-                    - label: { id: lbl_time_m1_a, text: "0", align: TOP_MID, y: 0, text_font: roboto_130_b }
-                    - label: { id: lbl_time_m1_b, text: "0", align: TOP_MID, y: 0, text_font: roboto_130_b }
+                    - label: { id: lbl_time_m1_a, text: "0", align: TOP_MID, y: -23, text_font: roboto_130_b }
+                    - label: { id: lbl_time_m1_b, text: "0", align: TOP_MID, y: -23, text_font: roboto_130_b }
               - label: { id: lbl_date, text: "Jeu 02 Avr", align: TOP_MID, y: 140, text_font: roboto_45_b }
 
         # Zone tactile invisible par-dessus l'horloge/date. Deux gestes sur la
