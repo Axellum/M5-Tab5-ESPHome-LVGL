@@ -337,99 +337,11 @@ void animate_icon_roll_in(lv_obj_t* l1, lv_obj_t* l2, uint32_t delay_ms) {
 // =============================================================================
 ClockRollerCtx g_clock_roller;
 
-// Mesure la largeur d'un texte dans la police du label, sans toucher aux
-// internes de la police : on ecrit le texte, on relance le layout, on lit la
-// largeur, on remet l'ancien texte. Le label est en taille-contenu (defaut
-// ESPHome pour un label sans width).
-static int measure_label_text_w(lv_obj_t* lbl, const char* probe) {
-    if (!lbl) return 0;
-    char saved[16];
-    const char* cur = lv_label_get_text(lbl);
-    snprintf(saved, sizeof(saved), "%s", cur ? cur : "");
-    lv_label_set_text(lbl, probe);
-    lv_obj_update_layout(lbl);
-    const int w = lv_obj_get_width(lbl);
-    lv_label_set_text(lbl, saved);
-    lv_obj_update_layout(lbl);
-    return w;
-}
-
-void layout_clock_roller(lv_obj_t* clock_tile, esphome::font::Font* clock_font) {
-    ClockRollerCtx& c = g_clock_roller;
-    if (c.ready) return;
-    if (!clock_tile || !clock_font || !c.colon) return;
-    for (int i = 0; i < 4; i++) {
-        if (!c.d[i].wrap || !c.d[i].lbl[0] || !c.d[i].lbl[1]) return;
-    }
-
-    lv_obj_update_layout(clock_tile);
-
-    // --- Metriques exactes de la police (ESPHome les calcule au build) ---
-    // clock_font DOIT etre la police posee sur les 4 labels en YAML.
-    // Les chiffres montent exactement a la hauteur de capitale : capheight
-    // donne donc la hauteur d'encre reelle, sans ratio devine.
-    const int line_h     = clock_font->get_height();     // hauteur de ligne (152 @130b)
-    const int baseline_y = clock_font->get_baseline();   // haut de boite -> ligne de base (121)
-    const int cap_h      = clock_font->get_capheight();  // hauteur des chiffres (92)
-    const int ink_top    = baseline_y - cap_h;           // marge vide au-dessus des chiffres (29)
-
-    // Boite de rognage : juste l'encre + une marge de 6px en haut et en bas.
-    // Elle doit rester plus courte que la boite du label, sinon le chiffre qui
-    // arrive deborderait sur la date (posee 130px plus bas dans la tuile).
-    const int pad = 6;
-    const int box_h = cap_h + 2 * pad;
-    const int lbl_y = -(ink_top - pad);              // recale l'encre dans la boite
-
-    // Avance d'un chiffre (identique pour 0-9 : chiffres tabulaires).
-    const int w_digit = measure_label_text_w(c.d[0].lbl[0], "8");
-    const int w_colon = measure_label_text_w(c.colon, ":");
-    if (w_digit <= 0 || box_h <= 0) return;
-
-    // --- Centrage de HH:MM dans la tuile ---
-    // Les deux chiffres d'un groupe sont colles (leur avance fait deja
-    // l'espacement) ; seul le ":" recoit une respiration de chaque cote.
-    const int gap = 4;
-    const int total_w = 4 * w_digit + w_colon + 2 * gap;
-    const int tile_w = lv_obj_get_content_width(clock_tile);
-    const int x0 = (tile_w - total_w) / 2;
-    // y de reference : celui pose en YAML sur le 1er wrap, corrige de la marge
-    // d'encre supprimee (on veut les chiffres exactement ou ils etaient).
-    const int y0 = lv_obj_get_y(c.d[0].wrap) + (ink_top - pad);
-
-    const int x_digit[4] = {
-        x0,
-        x0 + w_digit,
-        x0 + 2 * w_digit + gap + w_colon + gap,
-        x0 + 3 * w_digit + gap + w_colon + gap,
-    };
-
-    for (int i = 0; i < 4; i++) {
-        ClockDigitRoller& r = c.d[i];
-        lv_obj_set_size(r.wrap, w_digit, box_h);
-        lv_obj_set_pos(r.wrap, x_digit[i], y0);
-        // Le rognage des enfants par le parent EST le rouleau : sans lui les
-        // deux chiffres se verraient l'un au-dessus de l'autre pendant la
-        // rotation. (Defaut LVGL, mis explicitement pour ne pas en dependre.)
-        lv_obj_remove_flag(r.wrap, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
-
-        for (int k = 0; k < 2; k++) {
-            lv_obj_set_y(r.lbl[k], lbl_y);
-            // Le label en attente patiente hors de la boite (juste en dessous).
-            lv_obj_set_style_translate_y(r.lbl[k], k == 0 ? 0 : box_h, LV_PART_MAIN);
-        }
-        r.cur = 0;
-    }
-    lv_obj_set_pos(c.colon, x0 + 2 * w_digit + gap, y0 + lbl_y);
-
-    c.box_h = box_h;
-    c.ready = true;
-
-    // Trace unique au boot : la geometrie est deduite de la police, donc non
-    // verifiable en lisant le YAML. Ces valeurs permettent de controler le
-    // rendu sans avoir la dalle sous les yeux.
-    ESP_LOGI("TAB5", "Rouleau horloge: line_h=%d baseline=%d cap=%d ink_top=%d box_h=%d "
-                     "w_digit=%d w_colon=%d x0=%d y0=%d lbl_y=%d",
-             line_h, baseline_y, cap_h, ink_top, box_h, w_digit, w_colon, x0, y0, lbl_y);
+// Géométrie : tout est posé dans tab5-lvgl.yaml (tuile clock_tile), plus rien
+// n'est calculé ici depuis le 01/10/2026. La course du rouleau = la hauteur du
+// cadre qui rogne, lue dans son style (valeur YAML, disponible avant tout layout).
+static int clock_box_h(const ClockDigitRoller& r) {
+    return lv_obj_get_style_height(r.wrap, LV_PART_MAIN);
 }
 
 // Fait tourner un chiffre vers sa nouvelle valeur. Les deux labels glissent
@@ -454,10 +366,9 @@ static void roll_clock_digit(ClockDigitRoller& r, int box_h, char digit) {
     r.shown = digit;
 }
 
-// Pose un chiffre sans animation (premier affichage, ou layout pas encore pret).
-// Les DEUX labels recoivent le texte : tant que layout_clock_roller() n'a pas
-// tourne, box_h vaut 0 et le label en attente se superpose a l'affiche — avec
-// le meme texte ca ne se voit pas, avec deux valeurs differentes si.
+// Pose un chiffre sans animation (premier affichage). Les DEUX labels reçoivent
+// le texte, et celui en attente repart sous le cadre : tant qu'aucun chiffre
+// n'a été peint, les deux labels du YAML sont superposés (même texte).
 static void set_clock_digit_immediate(ClockDigitRoller& r, int box_h, char digit) {
     if (!r.lbl[r.cur]) return;
     const char text[2] = {digit, '\0'};
@@ -475,17 +386,18 @@ static void set_clock_digit_immediate(ClockDigitRoller& r, int box_h, char digit
 void update_clock_date_ui(lv_obj_t* lbl_date,
     int hour, int minute, int day_of_week, int day_of_month, int month) {
     ClockRollerCtx& c = g_clock_roller;
-    if (c.d[0].lbl[0]) {
+    if (c.d[0].wrap && c.d[0].lbl[0]) {
         char hhmm[5];
         snprintf(hhmm, sizeof(hhmm), "%02d%02d", hour, minute);
 
         // Un rouleau par chiffre : de 22 a 23 mn, seule l'unite tourne.
-        // shown == 0 (jamais peint) ou layout pas encore mesure -> pose directe.
+        // shown == 0 (jamais peint) -> pose directe.
         for (int i = 0; i < 4; i++) {
             ClockDigitRoller& r = c.d[i];
-            if (r.shown == hhmm[i] && c.ready) continue;
-            if (r.shown == 0 || !c.ready) set_clock_digit_immediate(r, c.box_h, hhmm[i]);
-            else                          roll_clock_digit(r, c.box_h, hhmm[i]);
+            if (r.shown == hhmm[i] || !r.wrap) continue;
+            const int box_h = clock_box_h(r);
+            if (r.shown == 0) set_clock_digit_immediate(r, box_h, hhmm[i]);
+            else              roll_clock_digit(r, box_h, hhmm[i]);
         }
     }
     if (lbl_date) {
