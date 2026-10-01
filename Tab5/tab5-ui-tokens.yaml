@@ -34,3 +34,9 @@ substitutions:
   # dans les substitutions) — sinon "Réponse" chevauche "Votre demande" sans
   # qu'aucun garde-fou ne le détecte.
   assist_resp_y: "188"
+  # Largeur des panneaux de la carte centrale (central_card, tab5-lvgl.yaml : 1198 px
+  # utiles = 1240 - 2 × 20 de marge - 2 × 1 de bordure) : boutons invisibles d'appui
+  # des panneaux (tab5-lvgl.yaml, ha_alert_panel.yaml) et réponse vocale longue. Le C++
+  # la reprend (kLargeurPanneauCentral, tab5_central.cpp) : tests/test_geometrie_partagee.py
+  # vérifie que les deux restent égales.
+  central_w: "1180"

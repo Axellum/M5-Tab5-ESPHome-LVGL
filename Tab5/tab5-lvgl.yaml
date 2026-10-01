@@ -344,7 +344,7 @@ lvgl:
                     - button:
                         id: btn_alerts_mf_tap
                         align: CENTER
-                        width: 1180
+                        width: ${central_w}
                         height: 80
                         styles: style_invisible
                         on_short_click:
@@ -410,7 +410,7 @@ lvgl:
                     - button:
                         id: btn_rain_tap
                         align: CENTER
-                        width: 1180
+                        width: ${central_w}
                         height: 80
                         styles: style_invisible
                         on_short_click:
@@ -429,7 +429,7 @@ lvgl:
                         id: lbl_vocal_text
                         align: CENTER
                         y: 0
-                        width: 1180
+                        width: ${central_w}
                         text: ""
                         text_font: roboto_45_b
 
@@ -446,7 +446,7 @@ lvgl:
                     - button:
                         id: btn_planning_tap
                         align: CENTER
-                        width: 1180
+                        width: ${central_w}
                         height: 80
                         styles: style_invisible
                         on_short_click:
@@ -459,7 +459,7 @@ lvgl:
               # centres dans les 84 px de la carte.
               # [AI-WARNING] Ce panneau doit rester structurellement IDENTIQUE a ses freres de
               # central_card (planning / pluie / alertes / info) : wrapper SIZE_CONTENT + bouton
-              # invisible 1180x80 pose en dernier. Le bouton n'est pas decoratif — c'est lui qui
+              # invisible ${central_w}x80 pose en dernier. Le bouton n'est pas decoratif — c'est lui qui
               # recoit l'appui, et cette structure est celle qui laisse le swipe paginer (verifie :
               # sur l'accueil, ou le panneau planning est actif, la pagination marche). Une version
               # 31/07/2026 sans bouton, avec un wrapper a largeur fixe, faisait deriver le contenu
@@ -477,7 +477,7 @@ lvgl:
                     - button:
                         id: btn_page_title_tap
                         align: CENTER
-                        width: 1180
+                        width: ${central_w}
                         height: 80
                         styles: style_invisible
 
@@ -495,7 +495,7 @@ lvgl:
                     - button:
                         id: btn_info_tap
                         align: CENTER
-                        width: 1180
+                        width: ${central_w}
                         height: 80
                         styles: style_invisible
                         on_short_click:
