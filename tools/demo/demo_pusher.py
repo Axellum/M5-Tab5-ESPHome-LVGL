@@ -69,8 +69,9 @@ FICHIER_CLE_DEMO = Path(__file__).resolve().parent / "cle_demo.txt"
 # Le contrat du firmware : ses actions et leurs variables (lues par --dry-run).
 API_LOGIC = Path(__file__).resolve().parents[2] / "Tab5" / "tab5-api-logic.yaml"
 
-# Pacing repris de HomeAssistant_Config/packages/tab5_push.yaml : évite de
-# saturer le socket TCP de l'ESP32-P4 (partagé avec le flux audio I2S).
+# Pauses entre les envois d'une scène de la démo. La poussée de HA n'en a plus depuis le
+# 01/10/2026 (packages/tab5_push.yaml) ; celles-ci restent telles quelles : le
+# rendu hors tablette (tools/rendu/) et tools/sanitizers/ passent aussi par ici.
 DELAI_ENTRE_BLOCS = 1.0
 DELAI_BOUCLE_HEURES = 0.15
 
