@@ -72,7 +72,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # sábado 26 de septiembre al miércoles 30 de septiembre » (titre des prévisions,
 # carte centrale de 1180 px) ≈ la version allemande.
 "{jour} {quantieme} {mois}": "{jour} {quantieme} de {mois}"
-"Jeu 02 Avr": "Jue 02 Abr"
 # Day initials of the alarm chips: « M » is both Tuesday and Wednesday in French.
 # Espagnol : X pour miércoles (usage des calendriers espagnols), M reste martes.
 "lundi|L": "L"

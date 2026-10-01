@@ -69,7 +69,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # Le premier du mois s'écrit « 1° » en italien (« lunedì 1° giugno »).
 "1er": "1°"
 "{jour} {quantieme} {mois}": "{jour} {quantieme} {mois}"
-"Jeu 02 Avr": "Gio 02 Apr"
 # Day initials of the alarm chips: « M » is both Tuesday and Wednesday in French
 # (and in Italian: martedì / mercoledì).
 "lundi|L": "L"

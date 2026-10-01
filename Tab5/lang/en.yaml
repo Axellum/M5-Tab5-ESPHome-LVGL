@@ -61,7 +61,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "décembre": "December"
 "1er": "1"
 "{jour} {quantieme} {mois}": "{jour}, {mois} {quantieme}"
-"Jeu 02 Avr": "Thu 02 Apr"
 # Day initials of the alarm chips: « M » is both Tuesday and Wednesday in French.
 "lundi|L": "M"
 "mardi|M": "T"
