@@ -4,6 +4,28 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-01 — Verre plein dans les popups, ouverture 8 à 16 % plus rapide
+
+- **Écran : plus de transparence dans les popups.** Cartes de verre (`style_glass_card`,
+  80 %), boutons de verre (`style_clim_btn`, 58 %), cadres de la télécommande
+  (`style_meteo_card`, 58 %), carte d'un popup empilé (`style_modal_card_verre`, 88 %),
+  boutons cyan « Tester », « Parler » et « OK » (`style_pill_accent`, 18 %) et panneaux de
+  la console (96 %) passent à 100 %. Verre plein, plus clair qu'avant : choix de l'auteur
+  après l'essai sur la tablette (« c'était plus joli »). Sur le tableau de bord, seuls − et +
+  de la carte clim changent ; ses tuiles étaient déjà opaques (verre pré-mélangé, #166).
+- **Cases du calendrier** : opaques aussi, mais avec la teinte qu'elles avaient en
+  transparence, calculée sur la carte du popup (`cal_fond_case()`). Passées telles quelles à
+  100 %, elles devenaient gris clair sous des chiffres gris : week-end et jours passés
+  illisibles.
+- **Mesuré sur la tablette de l'auteur** (build de mesure, ouverture par l'API, médiane de 5,
+  avant → après) : réveil 199,7 → 167,8 ms, clim 181,8 → 158,4, télécommande
+  173,4 → 151,5, console 170,3 → 150,9, assistant 163,7 → 144,1, calendrier 163,2 → 145,0,
+  plantes 172,1 → 158,3. Écran entier et fermeture d'un popup : inchangés (≈ 135 ms). Ces
+  chiffres viennent de l'essai, où les cases du calendrier étaient opaques sans
+  pré-mélange (même dessin : un fond opaque, seule la couleur change).
+- **Appui** : un bouton de verre désormais opaque prend l'appui des surfaces opaques
+  (52 % au lieu de 30 %, `tab5_anim.cpp`), sans autre changement.
+
 ### 2026-10-01 — Plus d'heure fausse au démarrage
 
 - **Accueil, tuile horloge** : jusqu'à ce que la tablette connaisse l'heure, le YAML

@@ -289,7 +289,7 @@ obj:
                     hidden: true
                     scrollable: false
                     bg_color: color_console_bg
-                    bg_opa: 96%
+                    bg_opa: 100%
                     radius: 20
                     border_width: 2
                     border_color: color_error
@@ -342,7 +342,7 @@ obj:
                     hidden: true
                     scrollable: false
                     bg_color: color_console_bg
-                    bg_opa: 96%
+                    bg_opa: 100%
                     radius: 20
                     border_width: 2
                     border_color: color_error

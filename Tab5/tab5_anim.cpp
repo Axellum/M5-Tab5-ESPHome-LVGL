@@ -457,7 +457,8 @@ static void setup_button_press_animation(lv_obj_t* btn) {
     // Pivot au centre pour un scale symetrique (pas depuis le coin haut-gauche).
     lv_obj_set_style_transform_pivot_x(btn, lv_obj_get_width(btn) / 2, LV_PART_MAIN);
     lv_obj_set_style_transform_pivot_y(btn, lv_obj_get_height(btn) / 2, LV_PART_MAIN);
-    // Surface opaque (verre pré-mélangé) : opacité d'appui recalée, même teinte.
+    // Surface opaque (verre pré-mélangé du tableau de bord, ou verre plein des popups
+    // depuis le 01/10/2026) : opacité d'appui recalée à 52 %.
     const bool opaque = lv_obj_get_style_bg_opa(btn, LV_PART_MAIN) == LV_OPA_COVER;
     lv_obj_add_style(btn, opaque ? &style_btn_pressed_opaque : &style_btn_pressed, LV_STATE_PRESSED);
 }

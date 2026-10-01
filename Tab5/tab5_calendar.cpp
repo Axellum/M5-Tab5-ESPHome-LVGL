@@ -185,6 +185,27 @@ static void cal_cell_tap_cb(lv_event_t* e) {
     if (s_cal_on_tap) s_cal_on_tap((int) (intptr_t) lv_event_get_user_data(e));
 }
 
+// Fond d'une case, opaque depuis le 01/10/2026 : la teinte qu'elle avait en transparence
+// (`teinte` à `opa` sur la carte du popup), calculée ici une fois pour toutes, comme le
+// verre pré-mélangé de tab5-styles.yaml. Une case simplement passée à 100 % serait gris
+// clair sous des chiffres gris (week-end, jours passés : TEXT_DIM), illisibles.
+// La carte (style_modal_card) est un dégradé vertical : sa couleur est relue sur son style
+// à la hauteur du milieu de la ligne, puis mélangée comme LVGL le fait (lv_color_mix).
+static lv_color_t cal_fond_case(lv_obj_t* carte, int32_t y_milieu, uint32_t teinte, lv_opa_t opa) {
+    int32_t h = lv_obj_get_height(carte);
+    if (h <= 0) h = lv_obj_get_style_height(carte, LV_PART_MAIN);
+    // y de la case : depuis le bord intérieur de la carte ; le dégradé part du bord extérieur.
+    const int32_t y = y_milieu + lv_obj_get_style_border_width(carte, LV_PART_MAIN);
+    const int32_t y0 = h * lv_obj_get_style_bg_main_stop(carte, LV_PART_MAIN) / 255;
+    const int32_t y1 = h * lv_obj_get_style_bg_grad_stop(carte, LV_PART_MAIN) / 255;
+    lv_opa_t part_bas = LV_OPA_TRANSP;
+    if (y >= y1) part_bas = LV_OPA_COVER;
+    else if (y > y0 && y1 > y0) part_bas = (lv_opa_t) ((y - y0) * 255 / (y1 - y0));
+    const lv_color_t fond = lv_color_mix(lv_obj_get_style_bg_grad_color(carte, LV_PART_MAIN),
+                                         lv_obj_get_style_bg_color(carte, LV_PART_MAIN), part_bas);
+    return lv_color_mix(lv_color_hex(teinte), fond, opa);
+}
+
 // Styles partagés des 42 cases (audit des conteneurs du 01/10/2026) : ce qui est commun
 // à toutes les cases est posé une fois, au lieu de 39 propriétés locales par case
 // (≈ 1 600 en tout). Ne reste en local que ce qui varie : x et y de la case, police des
@@ -397,12 +418,15 @@ void cal_render_month(lv_obj_t* lbl_month,
         }
 
         // Fond : violet doux = vacances scolaires, sinon verre (plus pâle si passé) pour
-        // que chaque jour se lise comme une case ; bordure cyan = aujourd'hui
+        // que chaque jour se lise comme une case ; bordure cyan = aujourd'hui. Opaque,
+        // pré-mélangé sur la carte (cal_fond_case).
         const bool vacances = (code & CAL_BIT_VACANCES) != 0;
         lv_obj_set_style_bg_color(c.cell,
-            lv_color_hex(vacances ? UIColor::ACCENT_ALT : UIColor::GLASS_RIM), LV_PART_MAIN);
-        lv_obj_set_style_bg_opa(c.cell,
-            vacances ? LV_OPA_30 : (is_past ? LV_OPA_10 : LV_OPA_20), LV_PART_MAIN);
+            cal_fond_case(lv_obj_get_parent(c.cell), rows_y + row * (row_h + gap) + row_h / 2,
+                          vacances ? UIColor::ACCENT_ALT : UIColor::GLASS_RIM,
+                          vacances ? LV_OPA_30 : (is_past ? LV_OPA_10 : LV_OPA_20)),
+            LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(c.cell, LV_OPA_COVER, LV_PART_MAIN);
         lv_obj_set_style_border_opa(c.cell,
             is_today ? LV_OPA_COVER : LV_OPA_TRANSP, LV_PART_MAIN);
 
