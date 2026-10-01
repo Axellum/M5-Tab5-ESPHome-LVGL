@@ -4,6 +4,63 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [3.4.0] — 2026-10-02
+
+De `v3.3.2` à aujourd'hui : huit pull requests du soir du 01/10 (#277, #279 → #285), plus
+celle de la release.
+- **Écran** : verre plein dans les popups (#285) : cartes, boutons et cadres sans
+  transparence, plus clairs qu'avant, et chaque popup s'ouvre 8 à 16 % plus vite. L'horloge
+  n'est plus coupée au démarrage (#279) et n'affiche plus d'heure ni de date fausses avant
+  l'heure réelle (#284) ; dans le popup du réveil, le prochain rendez-vous ne passe plus
+  sous « Tester » (#280).
+- **Démarrage** : le firmware rejoint Home Assistant 6 s plus tôt (#281), Home Assistant
+  envoie tout l'écran sans pause d'une seconde entre les envois (#277), et chaque mois du
+  calendrier n'est demandé qu'une fois (#282).
+- **Code** : dettes de l'audit des conteneurs (#283), rien ne change à l'écran.
+
+**Compatible dans les deux sens** : un firmware 3.3.2 avec les fichiers HA de la 3.4.0
+reçoit la poussée sans pauses (c'est ainsi qu'elle a été mesurée, #277) ; un firmware 3.4.0
+avec les fichiers de la 3.3.2 la reçoit avec ses pauses, comme avant (lu dans le code, pas
+essayé).
+
+### À faire en mettant à jour depuis 3.3.2
+
+1. **Home Assistant** : remplacer par ceux de `tab5_home_assistant.zip` le package
+   `tab5_push.yaml` et le blueprint `blueprints/automation/tab5/tab5_emplacements.yaml`,
+   puis recharger les automatisations et les scripts. Sans cela tout marche, avec les
+   pauses d'avant, et la notification « Tab5 : fichiers Home Assistant à mettre à jour »
+   le rappelle (elle compare X.Y : 3.4 contre 3.3).
+2. **Firmware** : entité « Firmware » dans Home Assistant.
+
+### Mesures de la version
+
+Sur la tablette de l'auteur, chaque gain mesuré par son lot (les deux gains du démarrage
+n'ont pas été mesurés ensemble) :
+- **Ouverture d'un popup** (#285, build de mesure, ouverture par l'API, médiane de 5) :
+  réveil 199,7 → 167,8 ms, clim 181,8 → 158,4, télécommande 173,4 → 151,5, console
+  170,3 → 150,9, assistant 163,7 → 144,1, calendrier 163,2 → 145,0, plantes 172,1 → 158,3.
+  Écran entier et fermeture d'un popup inchangés (≈ 135 ms).
+- **Démarrage du firmware** (#281, 3 démarrages de chaque) : Wi-Fi connecté 10,55 s après
+  la coupure (14,85 s en 3.3.2), `esphome.tab5_connected` reçu par HA à 12,0 s
+  (18,2-18,4 s).
+- **Poussée de HA** (#277, firmware 3.3.2, 5 redémarrages) : toute la poussée part en 0,13
+  à 0,19 s (6,1 s avant) ; écran complet 17,5 à 17,8 s après la coupure (24,5 s avant).
+- Compilation locale du code de `main` @ `7953a19` (canal bêta et ESPHome 2026.9.0,
+  comme les binaires publiés ; la release ne change ensuite que la version par défaut de
+  `tab5-ha-hmi.yaml`) : image 3 371 322 o (41,5 % de la partition), RAM statique
+  172 254 o ; code et constantes −984 o par rapport à l'ELF publié de la 3.3.2. Ce build
+  tourne sur la tablette de l'auteur depuis le 01/10 à 22 h 54 (version lue par l'API).
+- Compilations requises de la CI (dernière ESPHome et 2026.9.0) : vertes.
+
+### Problèmes connus
+
+Ceux de la 3.3.2, et :
+- les captures de la galerie (`docs/screens.md`) montrent encore le verre translucide ;
+- pendant les 2 s qui suivent le démarrage, les boutons de verre ne s'assombrissent pas à
+  l'appui (#283) ;
+- un conflit d'adresse avec un appareil réglé à la main sur la même IP n'est plus détecté
+  au DHCP (#281).
+
 ### 2026-10-01 — Verre plein dans les popups, ouverture 8 à 16 % plus rapide
 
 - **Écran : plus de transparence dans les popups.** Cartes de verre (`style_glass_card`,
@@ -59,6 +116,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   « Lun »…« Dim » sur les colonnes des cases, grille centrée dans la carte (contre-épreuve :
   une colonne de 171 px au lieu de 172 le fait échouer). `tests/test_horloge.py` déplie
   le gabarit et vérifie que les 4 rouleaux en viennent.
+
 ### 2026-10-01 — Le firmware rejoint Home Assistant 6 s plus tôt au démarrage
 
 - **Firmware : quatre attentes retirées du démarrage**, trouvées en lisant le démarrage

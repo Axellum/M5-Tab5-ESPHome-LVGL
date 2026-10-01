@@ -20,7 +20,7 @@ esphome:
   # du CHANGELOG + « -dev » : à relever à chaque release (tests/test_version.py).
   project:
     name: axellum.tab5-ha-hmi
-    version: ${ tab5_version | default('3.3.2-dev') }
+    version: ${ tab5_version | default('3.4.0-dev') }
   # [2026.7.0] Plancher DUR d'origine : st7123 officiel + audio zero-copy + VAD + PSRAM SDIO.
   # [2026.8.1] Relevé le 26/08/2026. Le code compile encore tel quel en 2026.7.x — ce
   # plancher n'est donc pas une dépendance d'API, c'est un choix : 2026.8 corrige trois
