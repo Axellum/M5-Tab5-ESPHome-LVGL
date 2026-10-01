@@ -1,12 +1,12 @@
 # ═══════════════════════════════════════════════════════
-# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 3× par tv_remote_popup.yaml :
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 4× par tv_remote_popup.yaml :
 # une touche de la rangée transport sous la raquette (icône colorée + mot), qui envoie
 # sa touche par script.tab5_tv_key (tab5-scripts.yaml).
 # vars : x (position dans la rangée de 520 px), touche (code Samsung KEY_*), icon (glyphe
 #        MDI en mdi_font_45 : il doit figurer dans la liste `glyphs` de mdi_font_45),
 #        icon_color (jeton color_*), text (le mot sous l'icône).
-# « Pause » reste écrite en entier dans le popup : son icône n'a pas de couleur propre
-# (celle du thème) et un gabarit lui imposerait un text_color explicite.
+# « Pause » a la couleur du thème : icon_color = color_text, la couleur que le `theme:`
+# donne à tout label (tab5-styles.yaml), même rendu (dans le gabarit depuis le 01/10/2026).
 # Sorti de tv_remote_popup.yaml le 26/09/2026 (audit, lot 7.3), rendu inchangé.
 # ═══════════════════════════════════════════════════════
 button:
