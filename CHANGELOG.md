@@ -4,6 +4,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-01 — Réveil : le prochain rendez-vous ne passe plus sous « Tester »
+
+- **Popup du réveil, barre du bas** : la ligne « prochain rendez-vous » faisait 500 px de
+  large alors que le bouton « Tester » commence à 401 px ; un titre de plus d'une
+  trentaine de caractères passait sous ce bouton translucide. La ligne tient maintenant
+  sur une ligne et se coupe avec « … » à 380 px (`texte_ha_coupe()`, comme les tuiles).
+  `tests/test_alarme_popup.py` refait le calcul depuis `alarm_popup.yaml` : déplacer le
+  bouton ou élargir la barre sans revoir la limite le fait échouer. Trouvé par l'audit
+  des conteneurs du 01/10.
+
 ### 2026-10-01 — L'horloge n'est plus coupée au démarrage
 
 - **Firmware : la géométrie de l'horloge à rouleau est écrite dans `Tab5/tab5-lvgl.yaml`
