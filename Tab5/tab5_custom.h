@@ -714,6 +714,11 @@ struct CalDetailLineUI {
 bool cal_month_needs_fetch(int year, int month);
 // true si le mois est en cache mais plus vieux que ttl_ms (refresh silencieux conseillé)
 bool cal_month_is_stale(int year, int month, uint32_t ttl_ms = 600000);  // défaut 10 min
+// Pré-fetch du démarrage et de la reconnexion (tab5_cal_prefetch, tab5-calendar.yaml) :
+// un mois reçu il y a moins de 30 s n'est pas redemandé. Au démarrage, on_boot et
+// status_ha lancent tous deux le pré-fetch, à 3 s d'écart ; une reconnexion de HA
+// plus tard redemande le mois, reçu il y a plus de 30 s.
+constexpr uint32_t CAL_PREFETCH_FRESH_MS = 30000;
 // Évince les mois distants de >1 par rapport à (year, month) — garde max 3 entrées.
 void cal_cache_evict_distant(int year, int month);
 // Décale (year, month) de `delta` mois en passant l'année (déc. + 1 = janv. suivant).

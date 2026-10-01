@@ -4,6 +4,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-01 — Calendrier : chaque mois demandé une seule fois au démarrage
+
+- **Pré-fetch du calendrier** : base de HA, chaque démarrage du 01/10 demandait octobre,
+  novembre, puis encore octobre et novembre (4 événements `esphome.tab5_calendrier_mois`
+  et 4 lancements de `script.tab5_calendrier_mois` au lieu de 2). `on_boot` et le front
+  montant de `status_ha` lancent tous deux le pré-fetch, à 3 s d'écart, et le script
+  repartait de zéro (`restart`).
+  - Le corps passe dans `tab5_cal_prefetch` (`tab5-calendar.yaml`). Il ne redemande pas
+    un mois reçu il y a moins de 30 s (`CAL_PREFETCH_FRESH_MS`, `tab5_custom.h`) ; HA
+    répond en 70 à 110 ms par mois. Il est en mode `queued` : un second appel attend la
+    fin du premier au lieu de le couper pendant son délai.
+  - `tab5_cal_prefetch_boot` garde son nom et n'a pas de paramètre : `on_boot` n'est pas
+    modifié. Le bouton « Recharger le calendrier » force (`force: true`). Une
+    reconnexion de HA redemande toujours, le mois ayant été reçu plus de 30 s avant.
+  - `tests/test_calendrier_prefetch.py` tient la structure. Mesure sur la tablette :
+    non faite (pas de flash de ce lot).
+
 ### 2026-10-01 — Réveil : le prochain rendez-vous ne passe plus sous « Tester »
 
 - **Popup du réveil, barre du bas** : la ligne « prochain rendez-vous » faisait 500 px de

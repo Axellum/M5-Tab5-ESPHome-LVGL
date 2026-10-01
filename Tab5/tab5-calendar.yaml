@@ -112,10 +112,29 @@ script:
           lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);
       - script.execute: tab5_cal_render
 
-  # Pré-fetch au boot / reconnect HA : charge le mois courant + ses adjacents en
-  # arrière-plan (sans ouvrir le popup). Appelé par on_boot et status_ha rising edge.
+  # Pré-fetch au boot / reconnect HA : charge le mois courant + M+1 en
+  # arrière-plan (sans ouvrir le popup). Appelé par on_boot et par le front
+  # montant de status_ha (tab5-sensors-diagnostics.yaml) : au démarrage, les DEUX
+  # tirent, 3 s d'écart. Avant le 01/10/2026, chaque démarrage demandait donc
+  # chaque mois deux fois (base de HA : octobre, novembre, octobre, novembre).
+  # Sans paramètre : on_boot l'appelle sans argument (ESPHome refuse un
+  # script.execute qui n'a pas tous les paramètres) ; le corps est tab5_cal_prefetch.
   - id: tab5_cal_prefetch_boot
-    mode: restart
+    then:
+      - script.execute:
+          id: tab5_cal_prefetch
+          force: false
+
+  # Corps du pré-fetch. Ne redemande pas un mois reçu il y a moins de
+  # CAL_PREFETCH_FRESH_MS (tab5_custom.h) ; `force` (bouton « Recharger le
+  # calendrier », tab5-ha-controls.yaml) redemande tout. `queued` : un second
+  # appel attend la fin du premier, au lieu de le couper pendant son délai
+  # (`restart` perdait alors la demande de M+1), puis ne redemande que ce qui
+  # n'est pas arrivé entre-temps.
+  - id: tab5_cal_prefetch
+    mode: queued
+    parameters:
+      force: bool
     then:
       - if:
           condition:
@@ -125,14 +144,16 @@ script:
           then:
             - lambda: |-
                 auto t = id(sntp_time).now();
-                id(tab5_cal_request).execute(t.year, t.month);
+                if (force || cal_month_is_stale(t.year, t.month, CAL_PREFETCH_FRESH_MS))
+                  id(tab5_cal_request).execute(t.year, t.month);
             - delay: 2s
             # Mois suivant (le plus probable en navigation)
             - lambda: |-
                 auto t = id(sntp_time).now();
                 int y = t.year, m = t.month;
                 cal_shift_month(y, m, 1);
-                id(tab5_cal_request).execute(y, m);
+                if (force || cal_month_is_stale(y, m, CAL_PREFETCH_FRESH_MS))
+                  id(tab5_cal_request).execute(y, m);
 
   # Tap sur une cellule : ouvre le sous-popup détail. Si le champ ~ de CE jour
   # est non vide → rendu instantané. Sinon "Chargement..." + script.tab5_calendrier_jour
