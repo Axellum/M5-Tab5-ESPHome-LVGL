@@ -8,7 +8,9 @@
 # -----------------------------------------------------------------------------
 # Base ardoise (Tailwind Slate) + accents HSL vibrants (cyan / violet / emeraude).
 # L'effet "verre depoli" est simule sur ESP32-P4 (pas de backdrop-blur materiel) :
-#   - surfaces semi-transparentes (bg_opa)
+#   - surfaces OPAQUES depuis le 01/10/2026 (verre plein, choix d'Axel après l'essai :
+#     « c'était plus joli », et 14 à 32 ms de moins à l'ouverture des popups) ;
+#     le tableau de bord garde son verre pré-mélangé (essai D7, même rendu qu'à 58 %)
 #   - degrade vertical (haut clair -> bas sombre) = reflet de verre
 #   - liseré fin lumineux (border_opa) = arête de verre
 #   - ombre portee douce = profondeur / flottement
@@ -738,11 +740,12 @@ lvgl:
     # tuiles météo horaires/jours + page HA. pad/scrollbar conservés (conteneurs).
     # (Version d'avant l'essai : dans l'historique git du 16/07/2026 — le dossier
     #  docs/essais_design/ a ete retire du depot.)
+    # Opaque depuis le 01/10/2026 (était à 58 %) : verre plein, voir l'en-tête.
     - id: style_meteo_card
       bg_color: color_glass_hi
       bg_grad_color: color_glass_lo
       bg_grad_dir: VER
-      bg_opa: 58%
+      bg_opa: 100%
       border_width: 1
       border_color: color_glass_rim
       border_opa: 35%
@@ -796,11 +799,13 @@ lvgl:
       pad_all: 0
 
     # --- Bouton climatisation : pastille de verre ---
+    # Opaque depuis le 01/10/2026 (était à 58 %). L'appui (tab5_anim.cpp) voit un
+    # fond opaque et passe à 52 % au lieu de 30 %.
     - id: style_clim_btn
       bg_color: color_glass_hi
       bg_grad_color: color_glass_lo
       bg_grad_dir: VER
-      bg_opa: 58%
+      bg_opa: 100%
       border_width: 1
       border_color: color_glass_rim
       border_opa: 35%
@@ -814,8 +819,8 @@ lvgl:
     # --- Carte modale "verre" flottante ---
     # Essai D7 (26/09/2026) : posée sur un voile désormais OPAQUE, elle est
     # pré-mélangée (même rendu, opaque) — LVGL ne mélange plus 860 000 px à chaque
-    # ouverture. Un popup empilé sur un autre (voile à 60 %) garde la version
-    # translucide style_modal_card_verre, son fond n'étant pas uni.
+    # ouverture. Un popup empilé sur un autre (voile à 60 %) prend
+    # style_modal_card_verre : verre plein, opaque depuis le 01/10/2026 (88 % avant).
     - id: style_modal_card
       bg_color: color_glass_hi_modal
       bg_grad_color: color_glass_lo_modal
@@ -836,7 +841,7 @@ lvgl:
       bg_grad_dir: VER
       bg_main_stop: 20
       bg_grad_stop: 245
-      bg_opa: 88%
+      bg_opa: 100%
       border_width: 2
       border_color: color_glass_rim
       border_opa: 60%
@@ -845,13 +850,14 @@ lvgl:
       pad_all: 0
 
     # --- NOUVEAU : carte de verre generique (reutilisable) ---
+    # Opaque depuis le 01/10/2026 (était à 80 %).
     - id: style_glass_card
       bg_color: color_glass_hi
       bg_grad_color: color_glass_lo
       bg_grad_dir: VER
       bg_main_stop: 25
       bg_grad_stop: 240
-      bg_opa: 80%
+      bg_opa: 100%
       border_width: 2
       border_color: color_glass_rim
       border_opa: 55%
@@ -860,9 +866,10 @@ lvgl:
       pad_all: 0
 
     # --- NOUVEAU : pastille / chip d'accent (cyan) ---
+    # Cyan plein depuis le 01/10/2026 (était à 18 %) : « Tester », « Parler », « OK ».
     - id: style_pill_accent
       bg_color: color_accent
-      bg_opa: 18%
+      bg_opa: 100%
       border_width: 1
       border_color: color_accent
       border_opa: 70%
