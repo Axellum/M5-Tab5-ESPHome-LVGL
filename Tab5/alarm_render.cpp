@@ -8,12 +8,18 @@
  */
 #include "alarm_render.h"
 #include "tab5_custom.h"
+#include "tab5_internal.h"   // texte_ha_coupe()
 
 #include <cstdio>
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Rendu LVGL
 // ═══════════════════════════════════════════════════════════════════════════
+
+// Ligne « prochain RDV » de la barre du bas (alarm_popup.yaml) : du label (x 8) au bouton
+// « Tester » (centré à x −90, 220 px, dans la barre de 1202 : bord gauche à 401), moins
+// 13 px d'air. tests/test_alarme_popup.py refait ce calcul depuis le YAML.
+constexpr int32_t kLargeurRdvSuivant = 380;
 
 // Bascule visuelle commune aux 5 interrupteurs du popup : bordure colorée
 // (highlight_button_border, déjà utilisé par l'assistant vocal) + libellé
@@ -149,7 +155,11 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
   }
   if (ui.lbl_rdv_next != nullptr) {
     const std::string n = rdv_next_label(now);
-    lv_label_set_text(ui.lbl_rdv_next, n.empty() ? tr("Aucun rendez-vous \xC3\xA0 venir") : n.c_str());
+    // Une ligne, coupée avec « … » avant le bouton « Tester » (alarm_popup.yaml, barre du
+    // bas) : à 500 px de large, un titre de rendez-vous long passait sous ce bouton
+    // translucide (audit des conteneurs du 01/10/2026).
+    texte_ha_coupe(ui.lbl_rdv_next, n.empty() ? tr("Aucun rendez-vous \xC3\xA0 venir") : n.c_str(),
+                   kLargeurRdvSuivant);
     lv_obj_set_style_text_color(ui.lbl_rdv_next,
                                 lv_color_hex(n.empty() ? UIColor::TEXT_DIM : UIColor::TEXT_SOFT),
                                 LV_PART_MAIN);
