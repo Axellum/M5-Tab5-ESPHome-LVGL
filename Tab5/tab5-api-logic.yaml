@@ -56,7 +56,10 @@ api:
   # l'événement et boot_complete est encore faux quand HA se connecte : pas de doublon.
   # Filtre client_info : `esphome logs` (« ESPHome Logs … ») ne relance pas le push.
   # 2 s + api.connected(state_subscription_only) : laisser HA finir son abonnement,
-  # sinon l'événement part dans le vide. Côté HA, l'automation ne laisse passer
+  # sinon l'événement part dans le vide. Ces 2 s restent ici (le démarrage n'en a plus,
+  # tab5-ha-hmi.yaml) : à une reconnexion, une ancienne connexion pas encore fermée
+  # (coupure Wi-Fi) peut déjà être abonnée, et un `wait_until` passerait avant que la
+  # nouvelle le soit. Côté HA, l'automation ne laisse passer
   # tab5_connected que si la liaison est `on` depuis moins de 3 min — vrai ici.
   on_client_connected:
     - if:
