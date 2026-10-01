@@ -188,14 +188,22 @@ esphome:
         # s'ouvre au premier client venu (HA à peine connecté, ou `esphome logs`),
         # et l'événement partait alors avant l'abonnement de HA — perdu 2 boots sur 3
         # le 25/09/2026 (écran sans agenda ni météo jusqu'au cycle HA /10 min, réveil
-        # en repli sur l'heure fixe). Même garde + 2 s que on_client_connected
+        # en repli sur l'heure fixe). Même garde que on_client_connected
         # (tab5-api-logic.yaml), qui ne tire pas au boot (boot_complete encore faux).
+        # Plus de `delay: 2s` ici (01/10/2026, accord d'Axel) : l'événement part dès
+        # l'abonnement. HA (≥ 2025.9, plancher du projet 2026.8) envoie l'abonnement aux
+        # états ET aux actions dans un seul paquet (aioesphomeapi,
+        # subscribe_home_assistant_states_and_services) et l'API d'ESPHome lit jusqu'à
+        # 10 messages par passage de boucle : quand l'abonnement aux états est vu,
+        # celui aux actions l'est aussi. Au démarrage, aucune ancienne connexion ne
+        # peut fausser la garde (on_client_connected garde ses 2 s pour ce cas).
+        # Un événement perdu se verrait au journal : « Home Assistant event
+        # 'esphome.tab5_connected' dropped; client has not subscribed to actions (yet) ».
         - wait_until:
             condition:
               api.connected:
                 state_subscription_only: true
             timeout: 30s
-        - delay: 2s
         - if:
             condition:
               api.connected:

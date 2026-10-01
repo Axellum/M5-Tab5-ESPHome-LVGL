@@ -60,6 +60,18 @@ esp32:
       # cache est pris sur la RAM interne (SRAM_START = 0x4FF00000 + taille du cache),
       # RAM libre 356 → 226 Ko. 5 redémarrages de contrôle : écran affiché, API en 16,5-16,8 s.
       CONFIG_CACHE_L2_CACHE_256KB: "y"
+      # Pas de test des 32 Mo de PSRAM à chaque démarrage (01/10/2026, mesure du
+      # démarrage) : ESP-IDF écrit puis relit toute la PSRAM avant de lancer le
+      # firmware (« Disable this for slightly faster startup », aide de l'option). Une
+      # PSRAM défaillante ne bloquerait plus le démarrage par un abandon : elle
+      # planterait plus tard, et le journal des démarrages le dirait.
+      CONFIG_SPIRAM_MEMTEST: "n"
+      # DHCP : l'adresse donnée par le serveur est prise tout de suite, sans les deux
+      # requêtes ARP de vérification d'ESP-IDF (« This process lasts 1 - 2 seconds »,
+      # lwipopts.h d'ESP-IDF 5.5). Contrepartie : un conflit avec un appareil réglé à
+      # la main sur la même adresse ne serait plus détecté par la tablette.
+      CONFIG_LWIP_DHCP_DOES_ARP_CHECK: "n"
+      CONFIG_LWIP_DHCP_DOES_NOT_CHECK_OFFERED_IP: "y"
       # Pas de réglage LVGL ici : ESPHome compile LVGL avec -DLV_KCONFIG_IGNORE, les
       # CONFIG_LV_* du sdkconfig sont ignorés (la transition du thème, posée ici le
       # 26/09/2026, n'a jamais agi : 80 ms toujours dans le binaire, vu le 28/09). Les

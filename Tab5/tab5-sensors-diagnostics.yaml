@@ -20,6 +20,13 @@
 # la config : ils ne passeraient pas d'un firmware à l'autre.
 wifi:
   power_save_mode: NONE
+  # Connexion sans balayage (01/10/2026, mesure du démarrage) : la tablette retourne
+  # directement au point d'accès et au canal de sa dernière connexion, gardés en NVS
+  # (réécrits seulement s'ils changent, emplacement fixe sans identifiants compilés).
+  # Avant, le C6 balayait tous les canaux à chaque démarrage : ~2 s mesurées par le
+  # port USB, entre « scanning for networks » et la liste des réseaux. Premier
+  # démarrage, point d'accès éteint ou autre réseau : ESPHome repasse au balayage.
+  fast_connect: true
   # Point d'accès de secours, conservé à dessein (audit du 06/09/2026, §4.1
   # point 16) : avec `captive_portal:` (tab5-ha-hmi.yaml), c'est le chemin sans câble
   # USB pour donner ou changer le réseau Wi-Fi. Il démarre tout de suite sur une
