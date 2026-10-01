@@ -65,6 +65,24 @@ Each panel of the rotator spans the whole card (its invisible 1180 px tap button
 
 The gain is in sending (proportional to the area); drawing a half-transparent text costs about as much as drawing the plain band.
 
+## Boot, phase by phase (2026-10-01)
+
+USB console read without resetting the chip (`tools/capture_serie.py` recipe, each line timestamped when received), restarts from the « Redémarrage Système » button in Home Assistant. Time zero: the tablet closes its API link (`Rebooting safely`), the moment Home Assistant marks it unavailable. Seconds, identical within 0.05 s from one restart to the next.
+
+| Step | 3.3.2 (3 restarts) | Since 2026-10-01 (3) |
+|---|---|---|
+| Bootloader done, firmware loaded (3.3 MB) | 0.83 | 0.82 |
+| ESP-IDF started (PSRAM, code copied to PSRAM) | 2.25 | 1.56 (no PSRAM test) |
+| Screen built (LVGL objects, before `setup()`) | 3.44 | 2.76 |
+| `setup()` done (1 s blocking wait included, display, audio) | 8.43 | 7.80 |
+| First frame on screen (0.85 s of drawing) | 9.29 | 8.65 |
+| Wi-Fi: connection starts | 11.03 (after a 1.7 s scan) | 7.71 (during `setup()`) |
+| Wi-Fi connected (address obtained) | 14.85 | 10.55 (no ARP check) |
+| `esphome.tab5_connected` received by Home Assistant | 18.2-18.4 | 12.0 |
+| Full push received | 18.4-18.6 | 12.3 |
+
+What is left: `setup()` (5 s, including the 1 s wait the screen needs after a software restart, `[AI-WARNING]` in `tab5-ha-hmi.yaml`), the Wi-Fi association through the ESP32-C6 (2.8 s), and Home Assistant's own reconnection (1.4 s after the Wi-Fi is up, not driven by the tablet).
+
 ## Limits
 
 - One tablet, one screen revision, one evening.
@@ -135,6 +153,24 @@ Chaque panneau du rotateur fait toute la largeur de la carte (son bouton invisib
 | Seul le texte glisse (616 px de large) | 7 | 86,4 ms (−20 %) | 447 000 |
 
 Le gain vient de l'envoi (proportionnel à la surface) ; dessiner un texte à demi transparent coûte à peu près autant que le bandeau uni.
+
+## Démarrage, phase par phase (01/10/2026)
+
+Console USB lue sans réinitialiser la puce (recette de `tools/capture_serie.py`, chaque ligne horodatée à sa réception), redémarrages par le bouton « Redémarrage Système » de Home Assistant. Origine : la tablette ferme sa liaison API (`Rebooting safely`), au moment où Home Assistant la marque indisponible. En secondes, identiques à 0,05 s près d'un redémarrage à l'autre.
+
+| Étape | 3.3.2 (3 redémarrages) | Depuis le 01/10/2026 (3) |
+|---|---|---|
+| Chargeur fini, firmware chargé (3,3 Mo) | 0,83 | 0,82 |
+| ESP-IDF lancé (PSRAM, code copié en PSRAM) | 2,25 | 1,56 (sans test de la PSRAM) |
+| Écran construit (objets LVGL, avant `setup()`) | 3,44 | 2,76 |
+| `setup()` fini (attente bloquante de 1 s comprise, écran, audio) | 8,43 | 7,80 |
+| Première image à l'écran (0,85 s de dessin) | 9,29 | 8,65 |
+| Wi-Fi : début de la connexion | 11,03 (après 1,7 s de balayage) | 7,71 (pendant `setup()`) |
+| Wi-Fi connecté (adresse obtenue) | 14,85 | 10,55 (sans vérification ARP) |
+| `esphome.tab5_connected` reçu par Home Assistant | 18,2-18,4 | 12,0 |
+| Poussée complète reçue | 18,4-18,6 | 12,3 |
+
+Ce qui reste : `setup()` (5 s, dont l'attente de 1 s dont l'écran a besoin après un redémarrage logiciel, `[AI-WARNING]` dans `tab5-ha-hmi.yaml`), l'association Wi-Fi par l'ESP32-C6 (2,8 s) et la reconnexion de Home Assistant elle-même (1,4 s après le Wi-Fi, pas pilotée par la tablette).
 
 ## Limites
 

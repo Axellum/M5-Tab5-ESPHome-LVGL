@@ -4,6 +4,31 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-01 — Le firmware rejoint Home Assistant 6 s plus tôt au démarrage
+
+- **Firmware : quatre attentes retirées du démarrage**, trouvées en lisant le démarrage
+  sur le port USB, chaque ligne horodatée à sa réception (redémarrages par le bouton HA
+  « Redémarrage Système », origine = la coupure de la liaison API).
+  - `esphome.tab5_connected` part dès que HA est abonné, sans les 2 s d'attente d'on_boot :
+    HA (≥ 2025.9) s'abonne aux états et aux actions dans un seul paquet, et l'API
+    d'ESPHome lit les deux dans le même passage. `on_client_connected` (reconnexion sans
+    redémarrage) garde ses 2 s : une ancienne connexion pas encore fermée peut y tromper
+    la garde. Reçu par HA aux 10 démarrages des deux builds d'essai, aucun « event
+    dropped » dans les 9 journaux USB.
+  - Wi-Fi `fast_connect` : retour direct au point d'accès et au canal de la dernière
+    connexion, sans balayer les canaux (1,7 s) ; la connexion part pendant le setup au
+    lieu d'attendre la première image de l'écran. Point d'accès éteint : ESPHome balaie
+    après un essai manqué (lu dans son code, pas essayé).
+  - Plus de test des 32 Mo de PSRAM avant le lancement du firmware (0,7 s).
+  - DHCP sans les deux requêtes ARP de vérification d'ESP-IDF (1,0 s). Contrepartie : un
+    conflit avec un appareil réglé à la main sur la même adresse ne serait plus détecté.
+  - Mesuré sur la tablette de l'auteur : Wi-Fi connecté 10,55 s après la coupure (14,85 s
+    en 3.3.2, 3 démarrages de chaque), `tab5_connected` reçu par HA à 12,0 s (18,2-18,4 s),
+    poussée complète 0,25 s plus tard. Détail phase par phase dans `docs/performance.md`.
+    Écran : à vérifier par l'auteur.
+- **Hors firmware** : rien à mettre à jour dans Home Assistant (l'automation de poussée
+  attendait déjà, 10 s au plus, que la liaison de la tablette soit `on`).
+
 ### 2026-10-01 — L'écran se remplit 6 s plus vite après un redémarrage
 
 - **Home Assistant : plus de pause d'une seconde entre les envois vers la tablette** (rien
