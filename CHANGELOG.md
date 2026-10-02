@@ -4,6 +4,20 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-02 — Les sept langues mises en avant
+
+- **README** (EN et FR) : « en sept langues » dans la phrase d'accroche, et une puce dans
+  « Pourquoi celui-ci » (menus, jeux, dates, textes de Home Assistant et briefing du réveil
+  dans chaque langue ; traduites par une IA, seul le français relu). La phrase météo de
+  « Avant de commencer » suit les sources d'aujourd'hui : prévisions de n'importe quelle
+  entité météo, pluie de Météo-France ou d'Open-Meteo tout seul, DWD, CAP Alerts…
+- **Site** : « Six langues » corrigé en « Sept langues » (la liste en comptait déjà sept),
+  étiquette « 7 langues » en haut de page, langues citées dans la description et l'aperçu
+  des liens. Description et sujets du dépôt GitHub mis à jour aussi (« 6 languages »).
+- `tests/test_doc_comptes.py` compte les fichiers de `Tab5/lang/` et vérifie le nombre
+  écrit à ces huit endroits, en chiffres ou en lettres. Contre-épreuves : « Six » remis
+  sur le site, puis une huitième langue ajoutée → échecs.
+
 ## [3.5.0] — 2026-10-02
 
 De `v3.4.0` à aujourd'hui : trois pull requests du 02/10 (#292 → #294), nées du retour d'un

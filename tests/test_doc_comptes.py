@@ -29,6 +29,9 @@ Ajouté le 30/09/2026 (lot D de l'audit, contrat HA ↔ tablette) : le nombre de
 de la vigilance, les services appelés ou non par la démo (AGENTS.md, docs/demo_mode.md)
 et la table des événements de Tab5/README.md (données émises, consommateurs).
 
+Ajouté le 02/10/2026 (après le turc) : le nombre de langues de Tab5/lang/ dans le README
+(EN et FR) et sur le site, titres, étiquette et descriptions compris.
+
 Un texte qui n'a pas besoin du nombre l'omet (vue d'ensemble d'architecture.md) : il
 ne se périme plus. Un motif qui ne trouve plus rien fait échouer le test : le texte a
 changé, il faut adapter le motif, pas le laisser vérifier le vide."""
@@ -260,6 +263,46 @@ def test_table_des_services_du_readme_tab5():
 def test_nombre_d_adr(chemin, motif):
     assert len(_adr()) > 20, "docs/decisions/ ne contient plus les ADR numérotés"
     assert set(_nombres(chemin, motif)) == {len(_adr())}
+
+
+# ─── Les langues de l'écran (02/10/2026) ─────────────────────────────────────
+# Constaté faux ce jour-là, après l'ajout du turc : « Six languages / Six langues » sur
+# le site au-dessus d'une liste de sept. Le nombre se compte dans Tab5/lang/ ; écrit en
+# chiffres ou en lettres, avec ou sans majuscule.
+
+def _langues():
+    return sorted((REPO / "Tab5" / "lang").glob("*.yaml"))
+
+
+def _nombres_ecrits(chemin, motif):
+    """Comme _nombres, mais « 7 », « seven », « Sept »… valent tous un nombre."""
+    trouves = re.findall(motif, _lire(chemin))
+    assert trouves, f"{chemin.name} : plus rien ne correspond à {motif!r}, adapter le motif"
+    nombres = []
+    for mot in trouves:
+        mot = mot.lower()
+        if mot.isdigit():
+            nombres.append(int(mot))
+        else:
+            assert mot in _UNITES_EN or mot in _UNITES_FR, f"{chemin.name} : nombre inconnu {mot!r}"
+            nombres.append(_UNITES_EN.index(mot) if mot in _UNITES_EN else _UNITES_FR.index(mot))
+    return nombres
+
+
+@pytest.mark.parametrize("chemin, motif", [
+    (README, r"in (\w+) languages\."),
+    (README, r"\*\*(\w+) languages, down to the details"),
+    (README, r"en (\w+) langues\."),
+    (README, r"\*\*(\w+) langues, jusque dans les détails"),
+    (SITE, r'lang="en">(\w+) languages</span>'),
+    (SITE, r'lang="fr">(\w+) langues</span>'),
+    (SITE, r"(\w+) languages, web installer"),
+    (SITE, r'in (\w+) languages\.">'),
+], ids=["readme-en-accroche", "readme-en-pourquoi", "readme-fr-accroche", "readme-fr-pourquoi",
+        "site-en", "site-fr", "site-description", "site-apercu"])
+def test_nombre_de_langues(chemin, motif):
+    assert len(_langues()) > 5, "Tab5/lang/ ne contient plus les fichiers de langue"
+    assert set(_nombres_ecrits(chemin, motif)) == {len(_langues())}
 
 
 # ─── Le contrat HA ↔ tablette (audit du 30/09/2026, lot D) ───────────────────

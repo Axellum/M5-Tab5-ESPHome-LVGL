@@ -19,7 +19,7 @@
 
 ---
 
-**A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen redraws only that, in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, TV remote, alarm clock — and 8 offline games.
+**A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen redraws only that, in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, TV remote, alarm clock — and 8 offline games, in seven languages.
 
 ![Animated tour of the M5Stack Tab5 Home Assistant screen: home, devices, plants, climate, lights, TV remote and console](docs/images/tab5_ui_tour.gif)
 
@@ -31,6 +31,7 @@
 
 - **Push-only, zero polling.** Home Assistant sends only what changed; the tablet never asks for anything ([ADR-0001](docs/decisions/0001-push-only-zero-polling.md)).
 - **Voice starts on the device.** "Okay Nabu" and a "Stop" word for the roller shutter are detected on the tablet; audio leaves it only after the wake word.
+- **Seven languages, down to the details.** French, English, German, Dutch, Spanish, Italian and Turkish, switched from Home Assistant: menus, games, dates, the texts Home Assistant sends and the spoken alarm briefing. Translated by an AI; the author only checked the French ([translations](docs/translations.md)).
 - **Keeps working when Home Assistant doesn't.** Clock, alarm clock, games and the diagnostics console stay usable on their own.
 - **Documented and tested like a product.** 27 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome.
 - **Runs on the ST7123 revision, and builds for the ST7121 and the original ILI9881C**, while most published Tab5 examples only cover the original one.
@@ -39,7 +40,7 @@
 
 - A Tab5: the **ST7123** display chip is the one tested daily; the ST7121 and the original ILI9881C compile but are untested — see [hardware compatibility](#hardware-compatibility).
 - Home Assistant. Since 3.0 a ready-made, signed firmware installs from the browser; to build your own, ESPHome **≥ 2026.9.0**.
-- The screen speaks **French, English, German, Dutch, Spanish, Italian or Turkish**, switchable from Home Assistant ([translations](docs/translations.md); all written by an AI like the rest of the project, the French checked by the author, the others not reviewed yet), games and texts sent by Home Assistant included (rain sentence, banners); only the quiz questions stay in French. The documentation is bilingual. The one-hour rain graph and the weather warnings come from **Météo-France** by default; OpenWeatherMap (rain, worldwide, subscription with a free tier) and MeteoAlarm (warnings, 39 European countries) can be chosen from Home Assistant, as can the forecast source (any weather entity). OpenWeatherMap was tried by the author, MeteoAlarm only with simulated data ([weather providers](docs/installation.md#weather-providers)).
+- The screen speaks **French, English, German, Dutch, Spanish, Italian or Turkish**, switchable from Home Assistant ([translations](docs/translations.md); all written by an AI like the rest of the project, the French checked by the author, the others not reviewed yet), games and texts sent by Home Assistant included (rain sentence, banners); only the quiz questions stay in French. The documentation is bilingual. The forecasts come from any weather entity of Home Assistant (Météo-France, Met.no, OpenWeatherMap…). The one-hour rain graph comes from **Météo-France**, or by itself from **Open-Meteo** (no key, worldwide) when Home Assistant has no Météo-France; OpenWeatherMap, Buienradar, DWD or the Nordic Met.no radar can be chosen instead. Weather warnings: Météo-France, MeteoAlarm, DWD or CAP Alerts, chosen from Home Assistant. Météo-France and OpenWeatherMap were tried on the author's installation; the others with real answers read by the same templates, or with simulated data ([weather providers](docs/installation.md#weather-providers)).
 - The layout was designed around the author's home: 3 lights, one air conditioner, up to 5 BLE plant sensors, a Samsung TV, one roller shutter. Since 3.0 you pick your devices in Home Assistant with the mouse (a blueprint), and what you don't have disappears from the screen (see [Adapt to your home](docs/installation.md#adapt-to-your-home)); more than 3 lights or a different device per tile is not possible yet.
 
 ---
@@ -363,7 +364,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 ---
 
-**Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran ne redessine que ça, en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, télécommande TV, réveil — et 8 jeux hors ligne.
+**Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran ne redessine que ça, en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, télécommande TV, réveil — et 8 jeux hors ligne, en sept langues.
 
 **[Site](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/)** · **[Installer](#démarrage-rapide)** · **[Essayer sans Home Assistant](docs/demo_mode.md)** · **[Compatibilité matérielle](#compatibilité-matérielle)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)** · **[L'histoire du projet](#note-personnelle)**
 
@@ -373,6 +374,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 - **Push uniquement, zéro polling.** Home Assistant n'envoie que ce qui a changé ; la tablette ne demande jamais rien ([ADR-0001](docs/decisions/0001-push-only-zero-polling.md)).
 - **La voix démarre sur l'appareil.** « Okay Nabu » et un mot « Stop » pour le volet roulant sont détectés sur la tablette ; l'audio n'en sort qu'après le mot d'activation.
+- **Sept langues, jusque dans les détails.** Français, anglais, allemand, néerlandais, espagnol, italien et turc, au choix depuis Home Assistant : menus, jeux, dates, textes envoyés par Home Assistant et briefing parlé du réveil. Traduites par une IA ; l'auteur n'a relu que le français ([traductions](docs/translations.md#version-française)).
 - **Continue de marcher quand Home Assistant ne marche plus.** Horloge, réveil, jeux et console de diagnostic restent utilisables seuls.
 - **Documenté et testé comme un produit.** 27 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome.
 - **Tourne sur la révision ST7123, et compile pour la ST7121 et l'ILI9881C d'origine**, alors que la plupart des exemples Tab5 publiés ne couvrent que celle d'origine.
@@ -381,7 +383,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 - Un Tab5 : la puce écran **ST7123** est celle testée tous les jours ; la ST7121 et l'ILI9881C d'origine compilent mais ne sont pas testées — voir la [compatibilité matérielle](#compatibilité-matérielle).
 - Home Assistant. Depuis la 3.0, un firmware prêt à l'emploi et signé s'installe depuis le navigateur ; pour compiler le vôtre, ESPHome **≥ 2026.9.0**.
-- L'écran parle **français, anglais, allemand, néerlandais, espagnol, italien ou turc**, au choix depuis Home Assistant ([traductions](docs/translations.md#version-française) ; toutes écrites par une IA comme le reste du projet, le français relu par l'auteur, les autres pas encore relues), jeux et textes envoyés par Home Assistant compris (phrase de pluie, bandeaux) ; seules les questions du quiz restent en français. La documentation est bilingue. Le graphe de pluie dans l'heure et les vigilances viennent de **Météo-France** par défaut ; OpenWeatherMap (pluie, monde entier, abonnement avec palier gratuit) et MeteoAlarm (vigilances, 39 pays européens) se choisissent depuis Home Assistant, comme la source des prévisions (n'importe quelle entité météo). OpenWeatherMap a été essayé par l'auteur, MeteoAlarm seulement avec des données simulées ([fournisseurs météo](docs/installation.md#fournisseurs-météo)).
+- L'écran parle **français, anglais, allemand, néerlandais, espagnol, italien ou turc**, au choix depuis Home Assistant ([traductions](docs/translations.md#version-française) ; toutes écrites par une IA comme le reste du projet, le français relu par l'auteur, les autres pas encore relues), jeux et textes envoyés par Home Assistant compris (phrase de pluie, bandeaux) ; seules les questions du quiz restent en français. La documentation est bilingue. Les prévisions viennent de n'importe quelle entité météo de Home Assistant (Météo-France, Met.no, OpenWeatherMap…). Le graphe de pluie dans l'heure vient de **Météo-France**, ou tout seul d'**Open-Meteo** (sans clé, partout) quand Home Assistant n'a pas Météo-France ; OpenWeatherMap, Buienradar, le DWD ou le radar nordique de Met.no peuvent le remplacer. Vigilances : Météo-France, MeteoAlarm, DWD ou CAP Alerts, au choix depuis Home Assistant. Météo-France et OpenWeatherMap ont été essayés sur l'installation de l'auteur ; les autres avec de vraies réponses lues par les mêmes modèles, ou des données simulées ([fournisseurs météo](docs/installation.md#fournisseurs-météo)).
 - La disposition a été pensée pour la maison de l'auteur : 3 lumières, une clim, jusqu'à 5 capteurs de plantes BLE, une TV Samsung, un volet roulant. Depuis la 3.0, vous choisissez vos appareils dans Home Assistant, à la souris (un blueprint), et ce que vous n'avez pas disparaît de l'écran (voir [Adapter à sa maison](docs/installation.md#adapter-à-sa-maison)) ; plus de 3 lumières ou un autre appareil par tuile n'est pas encore possible.
 
 ---
