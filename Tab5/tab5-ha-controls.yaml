@@ -91,7 +91,7 @@ select:
   # Volontairement absents : « Lumières » (le popup dépend de
   # `current_light_slot`, positionné par la carte qui l'ouvre — l'ouvrir à
   # froid afficherait les réglages de la dernière lampe touchée) et « Arcade »
-  # (lancer un jeu à distance sur la tablette n'a pas d'usage).
+  # (lancer un jeu à distance sur une tablette murale n'a pas d'usage).
   - platform: template
     id: tab5_goto_screen
     name: "Aller à l'écran"
