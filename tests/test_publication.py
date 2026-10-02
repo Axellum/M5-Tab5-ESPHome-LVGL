@@ -293,7 +293,7 @@ def test_plan_du_site_avec_les_images(tmp_path):
     assert pages.SITE in locs and pages.SITE + "install/" in locs
     assert not any("google" in url for url in locs), "fichier de vérification hors du plan"
     images = re.findall(r"<image:loc>([^<]+)</image:loc>", plan)
-    assert pages.SITE + "images/m5stack-tab5-home-assistant-wall-screen.jpg" in images
+    assert pages.SITE + "images/m5stack-tab5-home-assistant-screen.jpg" in images
     for url in images:
         assert (tmp_path / "site" / url.removeprefix(pages.SITE)).is_file(), url
     assert json.loads((tmp_path / "site" / "versions.json").read_text(encoding="utf-8")) == {"stable": None, "beta": None}
