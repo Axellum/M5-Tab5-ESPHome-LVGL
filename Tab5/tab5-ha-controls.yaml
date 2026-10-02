@@ -258,6 +258,7 @@ select:
       - "Nederlands"
       - "Español"
       - "Italiano"
+      - "Türkçe"
     # Défaut d'un premier démarrage : `tab5_langue:` dans Tab5/user_entities.yaml
     # (nom natif, par ex. « English »), sinon le français.
     initial_option: "${ tab5_langue | default('Français') }"

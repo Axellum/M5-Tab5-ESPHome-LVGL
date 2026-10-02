@@ -3,7 +3,7 @@ name: Rendu hors tablette
 # Lot 7 de l'audit « ouverture » (ADR-0021) : l'interface de la tablette compilée pour
 # la plateforme `host` d'ESPHome (tab5-rendu-host.yaml), lancée sur le runner puis
 # capturée : les scènes du mode démo, puis chaque fenêtre, sous-fenêtre, écran de jeu
-# (tools/rendu/capturer.py, plan dans tools/rendu/ecrans.py), dans les six langues
+# (tools/rendu/capturer.py, plan dans tools/rendu/ecrans.py), dans les sept langues
 # de l'écran, une tâche par langue en parallèle. Les captures sont comparées
 # (tools/rendu/comparer.py) à celles du dernier run réussi sur main, et les scènes à la
 # galerie versionnée docs/images/rendu/ : INFORMATIF, un écart est signalé sans faire
@@ -13,8 +13,8 @@ on:
   workflow_dispatch:
     inputs:
       langues:
-        description: "Langues, en JSON (fr, en, de, nl, es, it)"
-        default: '["fr", "en", "de", "nl", "es", "it"]'
+        description: "Langues, en JSON (fr, en, de, nl, es, it, tr)"
+        default: '["fr", "en", "de", "nl", "es", "it", "tr"]'
       seulement:
         description: "Mise au point : ces écrans seulement (noms de tools/rendu/ecrans.py, séparés par des espaces), sans les scènes"
         default: ""
@@ -63,7 +63,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        langue: ${{ fromJSON(inputs.langues || '["fr", "en", "de", "nl", "es", "it"]') }}
+        langue: ${{ fromJSON(inputs.langues || '["fr", "en", "de", "nl", "es", "it", "tr"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -111,6 +111,7 @@ jobs:
             nl) nom="Nederlands" ;;
             es) nom="Español" ;;
             it) nom="Italiano" ;;
+            tr) nom="Türkçe" ;;
             *) echo "Langue inconnue : $LANGUE"; exit 1 ;;
           esac
 
@@ -157,7 +158,7 @@ jobs:
         with:
           python-version: "3.13"
       - run: bash tools/ci/pip_reessai.sh pillow
-      - name: Réunir les captures des six langues
+      - name: Réunir les captures des sept langues
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: rendu-captures-*

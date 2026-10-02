@@ -20,7 +20,7 @@
  * @ai_instruction Les types, options, clés et commandes sont un contrat avec le blueprint :
  *       tests/test_tuiles_firmware.py les compare aux tableaux de l'ADR-0023. Un texte
  *       affiché passe par tr() ; un nom venu de HA s'affiche tel quel, filtré aux glyphes
- *       des polices (Latin-1 + cp1252, table kHorsLatin1).
+ *       des polices (Latin-1 + cp1252 + lettres turques, table kHorsLatin1).
  */
 #include "tab5_internal.h"
 #include "tab5_tuiles_icones.h"
@@ -125,12 +125,14 @@ void charger() {
 // ─── Texte venu de HA : glyphes des polices, 24 octets au plus ───────────────────────
 
 // Hors Latin-1, les caractères que les polices &latin1 dessinent (tab5-styles.yaml) :
-// la ponctuation de Windows-1252 et İ ō ř (questions de Trial Poursuite).
+// la ponctuation de Windows-1252, İ ō ř (questions de Trial Poursuite) et Ğ ğ ı Ş ş
+// (écran en turc, 02/10/2026).
 // tests/test_tuiles_firmware.py compare cette table à la liste des glyphes.
 constexpr uint16_t kHorsLatin1[] = {
     0x20AC, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021, 0x02C6, 0x2030, 0x0160,
     0x2039, 0x0152, 0x017D, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014,
     0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x017E, 0x0178, 0x0130, 0x014D, 0x0159,
+    0x011E, 0x011F, 0x0131, 0x015E, 0x015F,
 };
 
 bool glyphe_disponible(uint32_t cp) {

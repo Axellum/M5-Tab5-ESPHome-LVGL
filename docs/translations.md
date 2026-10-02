@@ -4,13 +4,13 @@
 
 ---
 
-The Tab5 screen speaks **French** (the source language), **English**, **German**, **Dutch**, **Spanish** or **Italian**. Everything the screen shows or the tablet says follows the chosen language: popups, cards, dates, the alarm clock and its spoken reminders, and the eight games. Two exceptions: the **quiz questions** of Trial Poursuite stay French (more than 720 of them), and the **console names** (Fil d'Or, Roi Noir…) are proper names, kept as they are.
+The Tab5 screen speaks **French** (the source language), **English**, **German**, **Dutch**, **Spanish**, **Italian** or **Turkish**. Everything the screen shows or the tablet says follows the chosen language: popups, cards, dates, the alarm clock and its spoken reminders, and the eight games. Two exceptions: the **quiz questions** of Trial Poursuite stay French (more than 720 of them), and the **console names** (Fil d'Or, Roi Noir…) are proper names, kept as they are.
 
-Every language was written by an AI, like the rest of the project. The author checked the French; the English, and the German, Dutch, Spanish and Italian translations (made with Claude from the French and English texts) have not been reviewed yet. Corrections are welcome: an issue, or a pull request on `Tab5/lang/en.yaml`, `de.yaml`, `nl.yaml`, `es.yaml` or `it.yaml`.
+Every language was written by an AI, like the rest of the project. The author checked the French; the English, and the German, Dutch, Spanish, Italian and Turkish translations (made with Claude from the French and English texts) have not been reviewed yet. Corrections are welcome: an issue, or a pull request on `Tab5/lang/en.yaml`, `de.yaml`, `nl.yaml`, `es.yaml`, `it.yaml` or `tr.yaml`.
 
 ## Choosing the language
 
-- **From Home Assistant:** the tablet exposes a select entity **« Langue »** (Configuration). Pick `Français`, `English`, `Deutsch`, `Nederlands`, `Español` or `Italiano`: the tablet restarts and comes back in the new language. It remembers the choice.
+- **From Home Assistant:** the tablet exposes a select entity **« Langue »** (Configuration). Pick `Français`, `English`, `Deutsch`, `Nederlands`, `Español`, `Italiano` or `Türkçe`: the tablet restarts and comes back in the new language. It remembers the choice.
 - **Spoken sentences** (alarm reminders, « shutter stopped ») follow the screen language, but the voice that reads them is the one of the tablet's voice pipeline in Home Assistant: give it a voice of the same language.
 - **Default of a first boot:** `tab5_langue: English` in `Tab5/user_entities.yaml` (the native name of the language). Without that line, French.
 
@@ -42,11 +42,11 @@ Each language is one file, `Tab5/lang/<code>.yaml`: a flat mapping `"French text
    python -m pytest tests/test_i18n.py
    ```
 
-**Characters:** the screen fonts carry Latin-1 plus the Windows-1252 punctuation (`&latin1` in `Tab5/tab5-styles.yaml`). That covers English, German, Spanish, Italian, Portuguese, Dutch and the Nordic languages. Polish, Czech, Turkish, Cyrillic or Greek need that glyph set extended first (it costs flash on every text font); `tests/test_i18n.py` refuses a translation whose characters the fonts don't have — they would show as empty boxes.
+**Characters:** the screen fonts carry Latin-1, the Windows-1252 punctuation and the Turkish letters Ğ ğ İ ı Ş ş (`&latin1` in `Tab5/tab5-styles.yaml`). That covers English, German, Spanish, Italian, Portuguese, Dutch, Turkish and the Nordic languages. Polish, Czech, Cyrillic or Greek need that glyph set extended first: it costs flash on every text font (the five Turkish letters added 2,464 bytes to the firmware); the names Home Assistant sends for the tiles are filtered to the same set (`kHorsLatin1` in `Tab5/tab5_tuiles.cpp`, kept equal by `tests/test_tuiles_firmware.py`); `tests/test_i18n.py` refuses a translation whose characters the fonts don't have — they would show as empty boxes.
 
 ## Rules for contributors
 
-- A new text **on the screen** is written in French in the code, wrapped in `tr()` (C++, lambdas) or laid out by the YAML, and gets its line in each complete language file. `tests/test_i18n.py` fails if a complete language (English, German, Dutch, Spanish, Italian) misses it. Keep the literal on the same line as `tr(`: the key finder reads one line at a time.
+- A new text **on the screen** is written in French in the code, wrapped in `tr()` (C++, lambdas) or laid out by the YAML, and gets its line in each complete language file. `tests/test_i18n.py` fails if a complete language (English, German, Dutch, Spanish, Italian, Turkish) misses it. Keep the literal on the same line as `tr(`: the key finder reads one line at a time.
 - The French text itself must use only characters the fonts carry: the tests check French too.
 - Never translate what Home Assistant reads: entity `name:`, select options, text-sensor states, payload codes (`En_mouvement`, `Rouge`…). A HA value shown on screen is translated **at display time**: `tr(state.c_str())`.
 - A key that no longer matches any text of the code fails the tests: change the key when you change the French text.
@@ -55,13 +55,13 @@ Each language is one file, `Tab5/lang/<code>.yaml`: a flat mapping `"French text
 
 ## Version Française
 
-L'écran du Tab5 parle **français** (la langue source), **anglais**, **allemand**, **néerlandais**, **espagnol** ou **italien**. Tout ce que l'écran affiche ou que la tablette dit suit la langue choisie : popups, cartes, dates, le réveil et ses rappels parlés, et les huit jeux. Deux exceptions : les **questions du quiz** de Trial Poursuite restent en français (plus de 720), et les **noms des consoles** (Fil d'Or, Roi Noir…) sont des noms propres, gardés tels quels.
+L'écran du Tab5 parle **français** (la langue source), **anglais**, **allemand**, **néerlandais**, **espagnol**, **italien** ou **turc**. Tout ce que l'écran affiche ou que la tablette dit suit la langue choisie : popups, cartes, dates, le réveil et ses rappels parlés, et les huit jeux. Deux exceptions : les **questions du quiz** de Trial Poursuite restent en français (plus de 720), et les **noms des consoles** (Fil d'Or, Roi Noir…) sont des noms propres, gardés tels quels.
 
-Toutes les langues ont été écrites par une IA, comme le reste du projet. L'auteur a relu le français ; l'anglais, et les traductions allemande, néerlandaise, espagnole et italienne (faites avec Claude à partir des textes français et anglais), ne sont pas encore relus. Les corrections sont bienvenues : une issue, ou une pull request sur `Tab5/lang/en.yaml`, `de.yaml`, `nl.yaml`, `es.yaml` ou `it.yaml`.
+Toutes les langues ont été écrites par une IA, comme le reste du projet. L'auteur a relu le français ; l'anglais, et les traductions allemande, néerlandaise, espagnole, italienne et turque (faites avec Claude à partir des textes français et anglais), ne sont pas encore relus. Les corrections sont bienvenues : une issue, ou une pull request sur `Tab5/lang/en.yaml`, `de.yaml`, `nl.yaml`, `es.yaml`, `it.yaml` ou `tr.yaml`.
 
 ## Choisir la langue
 
-- **Depuis Home Assistant :** la tablette expose un select **« Langue »** (Configuration). Choisissez `Français`, `English`, `Deutsch`, `Nederlands`, `Español` ou `Italiano` : la tablette redémarre et revient dans la nouvelle langue. Elle garde ce choix.
+- **Depuis Home Assistant :** la tablette expose un select **« Langue »** (Configuration). Choisissez `Français`, `English`, `Deutsch`, `Nederlands`, `Español`, `Italiano` ou `Türkçe` : la tablette redémarre et revient dans la nouvelle langue. Elle garde ce choix.
 - **Les phrases parlées** (rappels du réveil, « Volet arrêté ») suivent la langue de l'écran, mais la voix qui les lit est celle du pipeline vocal de la tablette dans Home Assistant : donnez-lui une voix de la même langue.
 - **Au premier démarrage :** `tab5_langue: English` dans `Tab5/user_entities.yaml` (le nom de la langue dans la langue elle-même). Sans cette ligne, le français.
 
@@ -93,11 +93,11 @@ Chaque langue est un fichier, `Tab5/lang/<code>.yaml` : un mapping plat `"texte 
    python -m pytest tests/test_i18n.py
    ```
 
-**Caractères :** les polices de l'écran portent le Latin-1 plus la ponctuation Windows-1252 (`&latin1` dans `Tab5/tab5-styles.yaml`). Ça couvre l'anglais, l'allemand, l'espagnol, l'italien, le portugais, le néerlandais et les langues nordiques. Le polonais, le tchèque, le turc, le cyrillique ou le grec demandent d'abord d'étendre ce jeu de glyphes (ça coûte de la flash sur chaque police de texte) ; `tests/test_i18n.py` refuse une traduction dont les polices n'ont pas les caractères — ils s'afficheraient en carrés vides.
+**Caractères :** les polices de l'écran portent le Latin-1, la ponctuation Windows-1252 et les lettres turques Ğ ğ İ ı Ş ş (`&latin1` dans `Tab5/tab5-styles.yaml`). Ça couvre l'anglais, l'allemand, l'espagnol, l'italien, le portugais, le néerlandais, le turc et les langues nordiques. Le polonais, le tchèque, le cyrillique ou le grec demandent d'abord d'étendre ce jeu de glyphes : ça coûte de la flash sur chaque police de texte (les cinq lettres turques ont ajouté 2 464 octets au firmware) ; les noms que Home Assistant envoie pour les tuiles sont filtrés au même jeu (`kHorsLatin1` dans `Tab5/tab5_tuiles.cpp`, tenu égal par `tests/test_tuiles_firmware.py`) ; `tests/test_i18n.py` refuse une traduction dont les polices n'ont pas les caractères — ils s'afficheraient en carrés vides.
 
 ## Règles pour contribuer
 
-- Un nouveau texte **à l'écran** s'écrit en français dans le code, passe par `tr()` (C++, lambdas) ou est posé par le YAML, et reçoit sa ligne dans chaque fichier de langue complet. `tests/test_i18n.py` échoue si une langue complète (anglais, allemand, néerlandais, espagnol, italien) ne l'a pas. Gardez le littéral sur la même ligne que `tr(` : l'outil qui relève les clés lit ligne par ligne.
+- Un nouveau texte **à l'écran** s'écrit en français dans le code, passe par `tr()` (C++, lambdas) ou est posé par le YAML, et reçoit sa ligne dans chaque fichier de langue complet. `tests/test_i18n.py` échoue si une langue complète (anglais, allemand, néerlandais, espagnol, italien, turc) ne l'a pas. Gardez le littéral sur la même ligne que `tr(` : l'outil qui relève les clés lit ligne par ligne.
 - Le texte français lui-même ne doit utiliser que des caractères des polices : les tests vérifient aussi le français.
 - Ne jamais traduire ce que lit Home Assistant : `name:` d'entité, options de select, états de text_sensor, codes des payloads (`En_mouvement`, `Rouge`…). Une valeur HA affichée à l'écran se traduit **au moment de l'affichage** : `tr(etat.c_str())`.
 - Une clé qui ne correspond plus à aucun texte du code fait échouer les tests : changez la clé quand vous changez le texte français.
