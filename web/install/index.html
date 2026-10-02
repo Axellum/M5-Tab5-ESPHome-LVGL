@@ -49,6 +49,8 @@
     padding: 12px 22px; font-size: 1rem; font-weight: 600; cursor: pointer; }
   button.langue { background: none; border: 1px solid var(--bord); color: var(--texte); border-radius: 6px;
     padding: 4px 10px; cursor: pointer; }
+  a.bouton { display: inline-block; margin: 6px 0 2px; padding: 8px 14px; border: 1px solid var(--accent);
+    border-radius: 8px; font-weight: 600; text-decoration: none; }
   ol { padding-left: 1.3em; margin: 0; }
   li { margin: 4px 0; }
   a { color: var(--accent); }
@@ -154,12 +156,20 @@
     <ol>
       <li lang="fr"><strong>Wi-Fi</strong> : juste après l'installation, le même bouton propose de le régler (Improv par l'USB). Sinon, connectez un téléphone au réseau ouvert « Tab5 Fallback AP » et choisissez votre réseau.</li>
       <li lang="en"><strong>Wi-Fi</strong>: right after installing, the same button offers to set it (Improv over USB). Otherwise, connect a phone to the open network "Tab5 Fallback AP" and pick your network.</li>
-      <li lang="fr"><strong>Home Assistant</strong> découvre la tablette (intégration ESPHome) : ajoutez-la dans les 30 minutes qui suivent son démarrage, HA lui donne sa clé tout seul. Une tablette que HA connaît déjà reçoit une nouvelle clé sans rien demander.</li>
-      <li lang="en"><strong>Home Assistant</strong> discovers the tablet (ESPHome integration): add it within 30 minutes of its boot, HA gives it its key by itself. A tablet HA already knows gets a new key without asking anything.</li>
+      <li lang="fr"><strong>Fichiers Home Assistant</strong>, s'ils ne sont pas déjà en place (Home Assistant 2026.8 ou plus récent) : téléchargez <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/latest/download/tab5_home_assistant.zip"><code>tab5_home_assistant.zip</code></a> et décompressez-le dans le dossier <code>config/</code> de Home Assistant, celui de <code>configuration.yaml</code> ; ajoutez la ligne <code>packages: !include_dir_named packages</code> sous <code>homeassistant:</code> dans <code>configuration.yaml</code> ; Outils de développement → YAML → Vérifier la configuration, puis redémarrez Home Assistant. Choisissez ensuite vos sources dans les listes « Tab5 · … » (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md#étape-4--installer-les-packages-home-assistant">guide, étape 4</a>).</li>
+      <li lang="en"><strong>Home Assistant files</strong>, if they are not in place yet (Home Assistant 2026.8 or newer): download <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/latest/download/tab5_home_assistant.zip"><code>tab5_home_assistant.zip</code></a> and unzip it into Home Assistant's <code>config/</code> folder, the one holding <code>configuration.yaml</code>; add the line <code>packages: !include_dir_named packages</code> under <code>homeassistant:</code> in <code>configuration.yaml</code>; Developer tools → YAML → Check configuration, then restart Home Assistant. Then pick your sources in the "Tab5 · …" lists (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md#step-4--set-up-the-home-assistant-packages">guide, step 4</a>).</li>
+      <li lang="fr"><strong>Home Assistant</strong> découvre la tablette (Paramètres → Appareils et services, intégration ESPHome) : ajoutez-la dans les 30 minutes qui suivent son démarrage, HA lui donne sa clé tout seul. Une tablette que HA connaît déjà reçoit une nouvelle clé sans rien demander.</li>
+      <li lang="en"><strong>Home Assistant</strong> discovers the tablet (Settings → Devices &amp; services, ESPHome integration): add it within 30 minutes of its boot, HA gives it its key by itself. A tablet HA already knows gets a new key without asking anything.</li>
       <li lang="fr"><strong>Rien d'autre à autoriser</strong> : la tablette n'envoie que des événements, que le package <code>tab5_evenements.yaml</code> traduit en actions. Seul un firmware 3.1 ou plus ancien demande encore de cocher, dans Appareils et services → ESPHome → Configurer, l'option qui autorise l'appareil à effectuer des actions Home Assistant (la voix, le calendrier et le réveil en ont besoin sur ces versions).</li>
       <li lang="en"><strong>Nothing else to allow</strong>: the tablet only sends events, which the <code>tab5_evenements.yaml</code> package turns into actions. Only a 3.1 or older firmware still needs "Allow the device to perform Home Assistant actions" ticked, in Devices &amp; services → ESPHome → Configure (voice, calendar and alarm clock need it on those versions).</li>
-      <li lang="fr"><strong>Vos appareils</strong> se choisissent dans le blueprint « Tab5 — emplacements ».</li>
-      <li lang="en"><strong>Your devices</strong> are picked in the "Tab5 — emplacements" blueprint.</li>
+      <li lang="fr"><strong>Vos appareils</strong> : Paramètres → Automatisations et scènes → Blueprints, « Tab5 — emplacements de l'écran · screen slots » (installé par l'archive), puis « Créer une automatisation » : jusqu'à cinq appareils dans « Pièce 1 », le reste est facultatif ; enregistrez. Une seule automatisation par tablette.
+        <br>Blueprint absent de la liste (archive pas installée) :
+        <br><a class="bouton" href="https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FAxellum%2FM5-Tab5-ESPHome-LVGL%2Fblob%2Fmain%2FHomeAssistant_Config%2Fblueprints%2Fautomation%2Ftab5%2Ftab5_emplacements.yaml">Importer le blueprint dans Home Assistant</a>
+        <span class="etat">Le bouton passe par My Home Assistant, qui demande l'adresse de votre Home Assistant la première fois.</span></li>
+      <li lang="en"><strong>Your devices</strong>: Settings → Automations &amp; scenes → Blueprints, "Tab5 — emplacements de l'écran · screen slots" (installed by the archive), then "Create automation": up to five devices in "Room 1", everything else is optional; save. One automation per tablet.
+        <br>Blueprint not in the list (archive not installed):
+        <br><a class="bouton" href="https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FAxellum%2FM5-Tab5-ESPHome-LVGL%2Fblob%2Fmain%2FHomeAssistant_Config%2Fblueprints%2Fautomation%2Ftab5%2Ftab5_emplacements.yaml">Import the blueprint into Home Assistant</a>
+        <span class="etat">The button goes through My Home Assistant, which asks for your Home Assistant address the first time.</span></li>
       <li lang="fr"><strong>Mises à jour</strong> : l'entité « Firmware » de la tablette les propose dans HA.</li>
       <li lang="en"><strong>Updates</strong>: the tablet's "Firmware" entity offers them in HA.</li>
     </ol>
