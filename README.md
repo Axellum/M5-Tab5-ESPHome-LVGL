@@ -1,4 +1,4 @@
-# M5Stack Tab5 — Home Assistant wall screen with ESPHome and LVGL
+# M5Stack Tab5 — Home Assistant screen with ESPHome and LVGL
 
 <div align="center">
 
@@ -19,7 +19,7 @@
 
 ---
 
-**A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen redraws only that, in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, TV remote, alarm clock — and 8 offline games, in seven languages.
+**A Home Assistant screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen redraws only that, in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, TV remote, alarm clock — and 8 offline games, in seven languages.
 
 ![Animated tour of the M5Stack Tab5 Home Assistant screen: home, devices, plants, climate, lights, TV remote and console](docs/images/tab5_ui_tour.gif)
 
@@ -364,7 +364,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 ---
 
-**Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran ne redessine que ça, en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, télécommande TV, réveil — et 8 jeux hors ligne, en sept langues.
+**Un écran Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran ne redessine que ça, en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, télécommande TV, réveil — et 8 jeux hors ligne, en sept langues.
 
 **[Site](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/)** · **[Installer](#démarrage-rapide)** · **[Essayer sans Home Assistant](docs/demo_mode.md)** · **[Compatibilité matérielle](#compatibilité-matérielle)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)** · **[L'histoire du projet](#note-personnelle)**
 
