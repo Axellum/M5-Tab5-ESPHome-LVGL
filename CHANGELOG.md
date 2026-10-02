@@ -27,6 +27,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   nouveau texte de l'écran devra aussi être traduit en turc (`_statut: complet`).
 - Docs (README, traductions, installation, débogage, site, README HA), cartographie.
 
+### 2026-10-02 — Pluie dans l'heure hors de France sans rien régler
+
+- **Carte pluie** : la liste « Tab5 · source de la pluie dans l'heure » démarre sur
+  Météo-France, qui ne couvre que la France. Sans capteur de pluie Météo-France dans Home
+  Assistant, elle passe maintenant sur **Open-Meteo** (sans compte ni clé, partout, un
+  modèle au pas de 15 min) au lieu de masquer la carte. La liste garde le choix : Météo-France
+  ajouté plus tard reprend la main tout seul, « Aucune » n'envoie rien, et l'attribut
+  `source` de « Tab5 Pluie dans l'heure » montre la source vraiment utilisée. Chez qui a
+  Météo-France, rien ne change. Les vigilances laissées sur Météo-France sans l'intégration
+  restaient déjà toutes vertes, comme « Aucune » : c'est maintenant écrit dans le guide.
+  Retour d'un utilisateur en Turquie (discussion #278), dont l'écran n'affichait rien.
+- `tests/test_pluie_sans_meteo_france.py` rend les vrais modèles du package : source
+  effective, état et barres remplis par Open-Meteo. Contre-épreuve sur le package de `main` :
+  les trois tests du changement échouent. Rendu aussi dans le moteur Jinja de Home Assistant
+  (installation de l'auteur, lecture seule).
+
 ## [3.4.0] — 2026-10-02
 
 De `v3.3.2` à aujourd'hui : huit pull requests du soir du 01/10 (#277, #279 → #285), la
