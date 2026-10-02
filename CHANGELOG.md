@@ -11,8 +11,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   c'est la langue.
   - Jours en trois lettres (Pzt Sal Çar Per Cum Cmt Paz) ; noms longs des jours et des
     mois écrits avec leur majuscule, comme dans une date turque (le firmware ne met en
-    majuscule qu'une première lettre ASCII) ; dates dans l'ordre turc (« 2 Ekim
-    Perşembe »).
+    majuscule qu'une première lettre ASCII) ; dates dans l'ordre turc (« 2 Ekim Cuma »,
+    et « 02 Eki Cum » sous l'horloge de l'accueil : l'ordre de cette date courte est
+    devenu un modèle traduisible, `{jour_court} {quantieme} {mois_court}`, que les autres
+    langues gardent dans l'ordre français ; vu par l'auteur sur la tablette le 02/10).
   - Place mesurée en pixels (Roboto 700) contre la plus large des langues française,
     anglaise, allemande et néerlandaise ; ce qui dépasse a été raccourci, ou vérifié dans
     le code (zone plus large, texte qui passe à la ligne).

@@ -80,6 +80,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "1er": "1"
 # Ordre turc : jour du mois, mois, jour de la semaine (« 2 Ekim Perşembe »).
 "{jour} {quantieme} {mois}": "{quantieme} {mois} {jour}"
+"{jour_court} {quantieme} {mois_court}": "{quantieme} {mois_court} {jour_court}"
 # Day initials of the alarm chips: P S Ç P C C P (Pazartesi, Salı, Çarşamba,
 # Perşembe, Cuma, Cumartesi, Pazar) : P et C se répètent, comme M en français.
 "lundi|L": "P"

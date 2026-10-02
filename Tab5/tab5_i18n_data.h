@@ -8,9 +8,10 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 949;
+static const uint16_t kI18nKeyCount = 950;
 
 static const char* const kI18nCtx[] = {
+    "",
     "",
     "",
     "",
@@ -1857,6 +1858,7 @@ static const char* const kI18nKeys[] = {
     "t.rapide",
     "vendredi",
     "vive",
+    "{jour_court} {quantieme} {mois_court}",
     "{jour} : #fb923c {horaire}#",
     "{jour} : pas d'horaire",
     "{jour} : repos",
@@ -2810,6 +2812,7 @@ static const char* const kI18n_en[] = {
     "v.fast",  // "t.rapide"
     "Friday",  // "vendredi"
     "brisk",  // "vive"
+    "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
     "{jour}: #fb923c {horaire}#",  // "{jour} : #fb923c {horaire}#"
     "{jour}: no hours",  // "{jour} : pas d'horaire"
     "{jour}: day off",  // "{jour} : repos"
@@ -3763,6 +3766,7 @@ static const char* const kI18n_de[] = {
     "rasant",  // "t.rapide"
     "Freitag",  // "vendredi"
     "flott",  // "vive"
+    "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
     "{jour}: #fb923c {horaire}#",  // "{jour} : #fb923c {horaire}#"
     "{jour}: keine Zeiten",  // "{jour} : pas d'horaire"
     "{jour}: frei",  // "{jour} : repos"
@@ -4716,6 +4720,7 @@ static const char* const kI18n_nl[] = {
     "z.snel",  // "t.rapide"
     "vrijdag",  // "vendredi"
     "vlot",  // "vive"
+    "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
     "{jour}: #fb923c {horaire}#",  // "{jour} : #fb923c {horaire}#"
     "{jour}: geen tijden",  // "{jour} : pas d'horaire"
     "{jour}: vrij",  // "{jour} : repos"
@@ -5669,6 +5674,7 @@ static const char* const kI18n_es[] = {
     "m.rápida",  // "t.rapide"
     "viernes",  // "vendredi"
     "ágil",  // "vive"
+    "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
     "{jour}: #fb923c {horaire}#",  // "{jour} : #fb923c {horaire}#"
     "{jour}: sin horario",  // "{jour} : pas d'horaire"
     "{jour}: libre",  // "{jour} : repos"
@@ -6622,6 +6628,7 @@ static const char* const kI18n_it[] = {
     "rapidiss",  // "t.rapide"
     "venerdì",  // "vendredi"
     "svelta",  // "vive"
+    "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
     "{jour}: #fb923c {horaire}#",  // "{jour} : #fb923c {horaire}#"
     "{jour}: nessun orario",  // "{jour} : pas d'horaire"
     "{jour}: riposo",  // "{jour} : repos"
@@ -7575,6 +7582,7 @@ static const char* const kI18n_tr[] = {
     "ç.hızlı",  // "t.rapide"
     "Cuma",  // "vendredi"
     "canlı",  // "vive"
+    "{quantieme} {mois_court} {jour_court}",  // "{jour_court} {quantieme} {mois_court}"
     "{jour}: #fb923c {horaire}#",  // "{jour} : #fb923c {horaire}#"
     "{jour}: saat yok",  // "{jour} : pas d'horaire"
     "{jour}: izin",  // "{jour} : repos"
