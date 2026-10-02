@@ -46,6 +46,13 @@
 #       Une source choisie sans entité donne « pas de données » (pluie) ou aucune
 #       vigilance ; « Aucune » masque la carte. Les sources de pluie sans clé n'ont
 #       rien à trouver : hors de leur zone, elles donnent « pas de données ».
+# @defaut Météo-France est le premier choix des deux listes, donc celui d'une
+#       installation neuve. Sans capteur de pluie Météo-France, la pluie laissée sur
+#       Météo-France passe sur Open-Meteo, seul service qui répond partout (variable
+#       `source` du capteur de pluie ; 02/10/2026, retour d'un utilisateur en Turquie,
+#       discussion #278). Les vigilances laissées sur Météo-France sans l'intégration
+#       restent toutes vertes, comme « Aucune ». La liste garde le choix de
+#       l'utilisateur : Météo-France ajouté plus tard reprend la main tout seul.
 # @install `homeassistant: packages: !include_dir_named packages`, puis ce fichier
 #       dans config/packages/. Rien à renseigner.
 # @ai_warning Les options des input_select sont lues par les modèles ci-dessous :
@@ -86,7 +93,8 @@ input_text:
     max: 255
 
 # Pluie dans l'heure des sources radar sans clé (29/09/2026), appelée par « Tab5 Pluie
-# dans l'heure » seulement quand l'une d'elles est choisie. Coordonnées du domicile
+# dans l'heure » seulement quand l'une d'elles est choisie (Open-Meteo aussi quand la
+# liste est restée sur Météo-France sans l'intégration, voir @defaut). Coordonnées du domicile
 # (zone.home) arrondies à 0,01° (~1 km, la maille des radars), envoyées au seul
 # service choisi. Réponses vérifiées le 29/09/2026 :
 #   - Buienradar : Pays-Bas et Belgique (hors zone : 404), usage non commercial, source
@@ -244,7 +252,11 @@ template:
     variables:
       mf_pluie: "{{ state_attr('sensor.tab5_sources_meteo', 'mf_pluie') or '' }}"
       owm_meteo: "{{ state_attr('sensor.tab5_sources_meteo', 'owm') or '' }}"
-      source: "{{ states('input_select.tab5_source_pluie') }}"
+      # Source effective, lue par les actions ET par les modèles du capteur (jamais la
+      # liste elle-même) : Météo-France sans capteur de pluie → Open-Meteo (@defaut).
+      source: >-
+        {%- set choix = states('input_select.tab5_source_pluie') -%}
+        {{ 'Open-Meteo' if choix == 'Météo-France' and mf_pluie == '' else choix }}
       lat: "{{ state_attr('zone.home', 'latitude') }}"
       lon: "{{ state_attr('zone.home', 'longitude') }}"
     actions:
@@ -344,8 +356,8 @@ template:
         # inconnue ; début = epoch UTC du début de la pluie, 0 s'il pleut déjà ;
         # « @- » = aucune source (phrase et carte masquées). La tablette compose la
         # phrase dans sa langue et décompte les minutes elle-même.
+        # `source` = la source effective (variables plus haut), pas la liste.
         state: >
-          {% set source = states('input_select.tab5_source_pluie') %}
           {% if source == 'Aucune' %}
             @-
           {% elif source in ['OpenWeatherMap', 'Buienradar', 'DWD', 'Met.no', 'Open-Meteo'] %}
@@ -382,8 +394,9 @@ template:
             {% set niv = {'Temps sec': 0, 'Pluie faible': 1, 'Pluie modérée': 2, 'Pluie forte': 3,
                           'Pluie très forte': 4, 'Pluie trés forte': 4} %}
             {% if ent == '' %}
-              {# Pas d'intégration Météo-France (choix par défaut de la liste) : aucune
-                 source, comme « Aucune » — et non « temps sec » (lot 5b). #}
+              {# Sans capteur de pluie Météo-France, la source effective est Open-Meteo
+                 (@defaut, 02/10/2026) : branche gardée pour un état inattendu de la
+                 liste. Aucune source, comme « Aucune » — et non « temps sec » (lot 5b). #}
               @-
             {% elif not has_value(ent) %}
               @0,0
@@ -411,7 +424,6 @@ template:
           # l'état ; un point de 15 min d'Open-Meteo couvre trois barres). Aucune
           # source ou pas de données : 9 barres vides (le panneau Pluie ne tourne pas).
           barres: >
-            {% set source = states('input_select.tab5_source_pluie') %}
             {% set ns = namespace(r='') %}
             {% if source == 'Météo-France' and state_attr(mf_pluie, '1_hour_forecast') is mapping %}
               {% set fc = state_attr(mf_pluie, '1_hour_forecast') %}
@@ -434,7 +446,9 @@ template:
               {% for i in range(9) %}{% set ns.r = ns.r ~ i ~ '|0;' %}{% endfor %}
             {% endif %}
             {{ ns.r }}
-          source: "{{ states('input_select.tab5_source_pluie') }}"
+          # Source effective : « Open-Meteo » quand la liste, restée sur Météo-France,
+          # n'a pas de capteur Météo-France à lire.
+          source: "{{ source }}"
 
   # ──────────────────────────────────────────────────────────────────────────
   # Vigilances — capteur ordinaire : il se recalcule dès qu'une entité lue change.

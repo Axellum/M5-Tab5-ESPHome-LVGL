@@ -99,8 +99,8 @@ The whole Home Assistant side is one archive, **`tab5_home_assistant.zip`**, att
    | List | What it drives | Chosen by default |
    |---|---|---|
    | Tab5 · source des prévisions | forecasts and current weather (any `weather.*`) | the Météo-France city, otherwise the first weather entity |
-   | Tab5 · source de la pluie dans l'heure | rain card: Météo-France, OpenWeatherMap, Buienradar, DWD, Met.no, Open-Meteo or Aucune (none) | Météo-France |
-   | Tab5 · source des vigilances | warning icons: Météo-France, MeteoAlarm, DWD, CAP Alerts or Aucune | Météo-France |
+   | Tab5 · source de la pluie dans l'heure | rain card: Météo-France, OpenWeatherMap, Buienradar, DWD, Met.no, Open-Meteo or Aucune (none) | Météo-France; without the Météo-France integration, Open-Meteo is used |
+   | Tab5 · source des vigilances | warning icons: Météo-France, MeteoAlarm, DWD, CAP Alerts or Aucune | Météo-France; without the Météo-France integration, no icons (as Aucune) |
    | Tab5 · agenda de travail | work events: planning, rest days and the **alarm time** (which events: see the keyword below) | nothing |
    | Tab5 · agenda des rendez-vous | calendar popup, appointment reminders, morning briefing | nothing |
    | Tab5 · agenda des anniversaires | birthdays in the calendar popup | the only calendar named « anniversaires » (or birthday…) |
@@ -235,7 +235,7 @@ The screen does not depend on one weather service (since lot 4c, 2026-09-27).
 | | CAP Alerts | the [CAP Alerts](https://github.com/seevee/cap_alerts) integration (HACS, custom repository), one entity per alert: MeteoAlarm (Europe, every alert of your region), NWS (United States), Environment Canada, and about 100 national services through the WMO |
 | | Aucune (none) | no warning icons |
 
-Buienradar, DWD, Met.no and Open-Meteo are queried by Home Assistant itself (`rest_command.tab5_pluie` in the package), every 5 min and only while chosen, at your home location (`zone.home`) rounded to 0.01° (about 1 km). Outside their area they answer « no data ».
+Buienradar, DWD, Met.no and Open-Meteo are queried by Home Assistant itself (`rest_command.tab5_pluie` in the package), every 5 min and only while chosen, at your home location (`zone.home`) rounded to 0.01° (about 1 km). Outside their area they answer « no data ». Open-Meteo is also used when the rain list is left on Météo-France (its default) and Home Assistant has no Météo-France rain sensor, for example outside France: the rain card then works with nothing to set. Choose « Aucune » to send nothing; add the Météo-France integration later and it takes over by itself.
 
 With DWD and CAP Alerts, a warning counts while it is in force or starts within 24 hours; the overall level is the highest of them. Both are read by `custom_templates/tab5_vigilance.jinja`, which comes with the archive (Météo-France and MeteoAlarm work without it). The hazard slot comes from the DWD code, the MeteoAlarm hazard type, or the icon CAP Alerts gives the alert; a hazard with no slot (drought, air quality…) only raises the overall level.
 
@@ -399,8 +399,8 @@ Tout le côté Home Assistant tient dans une archive, **`tab5_home_assistant.zip
    | Liste | Ce qu'elle règle | Choix par défaut |
    |---|---|---|
    | Tab5 · source des prévisions | prévisions et météo du moment (n'importe quelle entité `weather.*`) | la ville Météo-France, sinon la première entité météo |
-   | Tab5 · source de la pluie dans l'heure | carte pluie : Météo-France, OpenWeatherMap, Buienradar, DWD, Met.no, Open-Meteo ou Aucune | Météo-France |
-   | Tab5 · source des vigilances | icônes de vigilance : Météo-France, MeteoAlarm, DWD, CAP Alerts ou Aucune | Météo-France |
+   | Tab5 · source de la pluie dans l'heure | carte pluie : Météo-France, OpenWeatherMap, Buienradar, DWD, Met.no, Open-Meteo ou Aucune | Météo-France ; sans l'intégration Météo-France, Open-Meteo prend le relais |
+   | Tab5 · source des vigilances | icônes de vigilance : Météo-France, MeteoAlarm, DWD, CAP Alerts ou Aucune | Météo-France ; sans l'intégration Météo-France, aucune icône (comme Aucune) |
    | Tab5 · agenda de travail | événements de travail : planning, jours de repos et **heure du réveil** (lesquels : voir le mot plus bas) | rien |
    | Tab5 · agenda des rendez-vous | popup calendrier, rappels de rendez-vous, briefing du matin | rien |
    | Tab5 · agenda des anniversaires | anniversaires du popup calendrier | le seul agenda nommé « anniversaires » (ou birthday…) |
@@ -535,7 +535,7 @@ La **pluie dans l'heure** et les **vigilances** sont facultatives. Leur source s
 | | CAP Alerts | l'intégration [CAP Alerts](https://github.com/seevee/cap_alerts) (HACS, dépôt personnalisé), une entité par alerte : MeteoAlarm (Europe, toutes les alertes de votre région), NWS (États-Unis), Environnement Canada, et une centaine de services nationaux par l'OMM |
 | | Aucune | pas d'icônes de vigilance |
 
-Buienradar, DWD, Met.no et Open-Meteo sont interrogés par Home Assistant lui-même (`rest_command.tab5_pluie` du package), toutes les 5 min et seulement quand ils sont choisis, aux coordonnées du domicile (`zone.home`) arrondies à 0,01° (environ 1 km). Hors de leur zone, ils répondent « pas de données ».
+Buienradar, DWD, Met.no et Open-Meteo sont interrogés par Home Assistant lui-même (`rest_command.tab5_pluie` du package), toutes les 5 min et seulement quand ils sont choisis, aux coordonnées du domicile (`zone.home`) arrondies à 0,01° (environ 1 km). Hors de leur zone, ils répondent « pas de données ». Open-Meteo sert aussi quand la liste de la pluie est restée sur Météo-France (son choix par défaut) et que Home Assistant n'a pas de capteur de pluie Météo-France, par exemple hors de France : la carte pluie marche alors sans rien régler. Choisissez « Aucune » pour ne rien envoyer ; l'intégration Météo-France ajoutée plus tard reprend la main toute seule.
 
 Avec DWD et CAP Alerts, une alerte compte tant qu'elle est en cours ou si elle commence dans les 24 h ; le niveau global est la plus forte. Les deux sont lues par `custom_templates/tab5_vigilance.jinja`, fourni dans l'archive (Météo-France et MeteoAlarm marchent sans lui). La case du phénomène vient du code du DWD, du type de phénomène de MeteoAlarm ou de l'icône que CAP Alerts donne à l'alerte ; un phénomène sans case (sécheresse, qualité de l'air…) ne fait que monter le niveau global.
 
