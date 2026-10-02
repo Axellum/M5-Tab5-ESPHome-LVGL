@@ -6,8 +6,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [3.4.0] — 2026-10-02
 
-De `v3.3.2` à aujourd'hui : huit pull requests du soir du 01/10 (#277, #279 → #285), plus
-celle de la release.
+De `v3.3.2` à aujourd'hui : huit pull requests du soir du 01/10 (#277, #279 → #285), la
+page d'installation du 02/10 (#291) et celle de la release.
 - **Écran** : verre plein dans les popups (#285) : cartes, boutons et cadres sans
   transparence, plus clairs qu'avant, et chaque popup s'ouvre 8 à 16 % plus vite. L'horloge
   n'est plus coupée au démarrage (#279) et n'affiche plus d'heure ni de date fausses avant
@@ -17,6 +17,8 @@ celle de la release.
   envoie tout l'écran sans pause d'une seconde entre les envois (#277), et chaque mois du
   calendrier n'est demandé qu'une fois (#282).
 - **Code** : dettes de l'audit des conteneurs (#283), rien ne change à l'écran.
+- **Page d'installation** : la suite côté Home Assistant en clair (fichiers, ajout de la
+  tablette, blueprint pas à pas) et un bouton pour importer le blueprint (#291).
 
 **Compatible dans les deux sens** : un firmware 3.3.2 avec les fichiers HA de la 3.4.0
 reçoit la poussée sans pauses (c'est ainsi qu'elle a été mesurée, #277) ; un firmware 3.4.0
@@ -60,6 +62,18 @@ Ceux de la 3.3.2, et :
   l'appui (#283) ;
 - un conflit d'adresse avec un appareil réglé à la main sur la même IP n'est plus détecté
   au DHCP (#281).
+
+### 2026-10-02 — Page d'installation : la suite côté Home Assistant en clair
+
+- **Page `/install/`, étape 5 « Ensuite »** : les fichiers Home Assistant (lien direct vers
+  `tab5_home_assistant.zip` de la dernière release, ligne `packages:`, vérification,
+  redémarrage, Home Assistant 2026.8 ou plus récent), le chemin pour ajouter la tablette, et
+  le blueprint pas à pas (où le trouver, « Créer une automatisation », cinq appareils au plus
+  dans « Pièce 1 ») avec un bouton **Importer le blueprint** (redirection
+  `blueprint_import` de My Home Assistant) quand l'archive n'est pas installée. Avant, la
+  page disait seulement « vos appareils se choisissent dans le blueprint », sans lien : un
+  premier utilisateur d'une ST7121 n'a pas su le configurer (forum Home Assistant, discussion
+  #278).
 
 ### 2026-10-01 — Verre plein dans les popups, ouverture 8 à 16 % plus rapide
 
