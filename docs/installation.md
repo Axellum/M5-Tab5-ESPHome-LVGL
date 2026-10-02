@@ -216,7 +216,7 @@ Then `secrets.yaml` can go (keep the old key only if you may flash 2.x again), a
 
 The screen does not depend on one weather service (since lot 4c, 2026-09-27).
 
-**Forecasts and current weather** (hourly and daily pages, the humidity drop) come from any `weather.*` entity, picked in Home Assistant from the select « Tab5 · source des prévisions », which lists the weather entities you have (by default the Météo-France city, otherwise the first weather entity). The Tab5 asks each entity only for what it declares: daily forecasts, or else twice-daily ones (NWS) or hourly ones (free OpenWeatherMap) grouped by date; without hourly forecasts (Buienradar), the hourly page stays empty. Hours are shown in local time.
+**Forecasts and current weather** (hourly and daily pages, the humidity drop) come from any `weather.*` entity, picked in Home Assistant from the select « Tab5 · source des prévisions », which lists the weather entities you have (by default the Météo-France city, otherwise the first weather entity, for example Met.no, which Home Assistant sets up by itself). The Tab5 asks each entity only for what it declares: daily forecasts, or else twice-daily ones (NWS) or hourly ones (free OpenWeatherMap) grouped by date; without hourly forecasts (Buienradar), the hourly page stays empty. Hours are shown in local time.
 
 **Rain in the next hour and weather warnings** are optional. Their source is chosen **in Home Assistant**, with the two selects of `packages/tab5_meteo_sources.yaml`, without editing YAML:
 
@@ -241,6 +241,7 @@ With DWD and CAP Alerts, a warning counts while it is in force or starts within 
 
 Honest limits:
 - OpenWeatherMap was tried on the author's installation on 2026-09-27 (forecasts and rain in the next hour, on a dry day); its daily forecast covers 8 days, so the last days of the 15-day pages stay empty. MeteoAlarm and the twice-daily grouping (NWS) were tested with simulated data only.
+- Met.no, Home Assistant's default weather, gives 6 days (today included) and 48 hours through its integration: the two following pages of the 15-day forecast only show the 6th day. Checked on 2026-10-02 with a real answer for Istanbul run through the code of Home Assistant 2026.9.4, by the templates in Home Assistant's engine and by `tests/test_meteo_sans_meteo_france.py`; not yet tried on a real installation.
 - Buienradar, DWD, Met.no and Open-Meteo were queried on 2026-09-29 (Amsterdam, Berlin, Oslo, south-west France; a dry day) and their answers read by the same templates in Home Assistant's engine; rain itself was simulated. Open-Meteo is also queried by the fresh-install CI.
 - DWD was added to the author's Home Assistant on 2026-09-29 (Berlin, a day without warnings): entities found, dates read. The warnings themselves, and everything from CAP Alerts, were tested with simulated data in Home Assistant's template engine and in the fresh-install CI.
 - Frost probability exists only at Météo-France. The snowflake icon reads `sensor.<city>_snow_chance` when it exists; otherwise it follows the current condition (snowy).
@@ -516,7 +517,7 @@ Ensuite, `secrets.yaml` peut partir (gardez l'ancienne clé seulement si vous ri
 
 L'écran ne dépend plus d'un seul service météo (lot 4c, 27/09/2026).
 
-Les **prévisions et la météo du moment** (pages horaires et journalières, goutte d'humidité) viennent de n'importe quelle entité `weather.*`, choisie dans Home Assistant avec la liste « Tab5 · source des prévisions », qui propose les entités météo présentes (par défaut la ville Météo-France, sinon la première entité météo). Le Tab5 ne demande à chaque entité que ce qu'elle déclare : les prévisions journalières, sinon les demi-journées (NWS) ou les horaires (OpenWeatherMap gratuit) regroupées par date ; sans prévisions horaires (Buienradar), la page horaire reste vide. Les heures sont affichées en heure locale.
+Les **prévisions et la météo du moment** (pages horaires et journalières, goutte d'humidité) viennent de n'importe quelle entité `weather.*`, choisie dans Home Assistant avec la liste « Tab5 · source des prévisions », qui propose les entités météo présentes (par défaut la ville Météo-France, sinon la première entité météo, par exemple Met.no, que Home Assistant installe tout seul). Le Tab5 ne demande à chaque entité que ce qu'elle déclare : les prévisions journalières, sinon les demi-journées (NWS) ou les horaires (OpenWeatherMap gratuit) regroupées par date ; sans prévisions horaires (Buienradar), la page horaire reste vide. Les heures sont affichées en heure locale.
 
 La **pluie dans l'heure** et les **vigilances** sont facultatives. Leur source se choisit **dans Home Assistant**, avec les deux listes de `packages/tab5_meteo_sources.yaml`, sans toucher au YAML :
 
@@ -541,6 +542,7 @@ Avec DWD et CAP Alerts, une alerte compte tant qu'elle est en cours ou si elle c
 
 Limites, en toute franchise :
 - OpenWeatherMap a été essayé sur l'installation de l'auteur le 27/09/2026 (prévisions et pluie dans l'heure, un jour sec) ; ses prévisions journalières couvrent 8 jours, les derniers jours des pages de 15 jours restent donc vides. MeteoAlarm et le regroupement des demi-journées (NWS) n'ont été testés qu'avec des données simulées.
+- Met.no, la météo installée d'office par Home Assistant, donne 6 jours (aujourd'hui compris) et 48 heures par son intégration : les deux pages suivantes des prévisions sur 15 jours ne montrent que le 6e jour. Vérifié le 02/10/2026 avec une vraie réponse pour Istanbul passée par le code de Home Assistant 2026.9.4, par les modèles dans le moteur de Home Assistant et par `tests/test_meteo_sans_meteo_france.py` ; pas encore essayé sur une vraie installation.
 - Buienradar, DWD, Met.no et Open-Meteo ont été interrogés le 29/09/2026 (Amsterdam, Berlin, Oslo, Landes ; un jour sec) et leurs réponses lues par les mêmes modèles dans le moteur de Home Assistant ; la pluie elle-même a été simulée. Open-Meteo est aussi interrogé par la CI d'installation à neuf.
 - Le DWD a été ajouté au Home Assistant de l'auteur le 29/09/2026 (Berlin, un jour sans alerte) : entités trouvées, dates lues. Les alertes elles-mêmes, et tout CAP Alerts, n'ont été testés qu'avec des données simulées, dans le moteur de modèles de Home Assistant et dans la CI d'installation à neuf.
 - La probabilité de gel n'existe que chez Météo-France. L'icône flocon lit `sensor.<ville>_snow_chance` quand il existe ; sinon, elle suit la condition du moment (neige).
