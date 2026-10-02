@@ -4,6 +4,51 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [3.5.0] — 2026-10-02
+
+De `v3.4.0` à aujourd'hui : trois pull requests du 02/10 (#292 → #294), nées du retour d'un
+utilisateur en Turquie (discussion #278), et celle de la release.
+- **Écran en turc** (#293) : Türkçe dans le select « Langue », les 953 textes, jeux
+  compris, sauf les questions du quiz ; dates dans l'ordre turc. Traduit par une IA, pas
+  encore relu par une personne dont c'est la langue.
+- **Météo hors de France** : sans Météo-France dans Home Assistant, la carte pluie passe
+  toute seule sur Open-Meteo, sans compte ni clé (#292), au lieu de rester masquée. Les
+  prévisions venaient déjà de n'importe quelle entité météo ; avec Met.no, celle que Home
+  Assistant installe d'office, toute la chaîne est maintenant tenue par un test (#294).
+
+**Compatible dans les deux sens** (lu dans le code, pas essayé) : un firmware 3.5.0 avec les
+fichiers HA de la 3.4.0 marche, en turc aussi, mais hors de France la carte pluie reste
+masquée tant qu'Open-Meteo n'est pas choisi à la main, et le briefing du réveil en turc parle
+français ; un firmware 3.4.0 avec les fichiers de la 3.5.0 a la pluie d'Open-Meteo, sans le
+turc.
+
+### À faire en mettant à jour depuis 3.4.0
+
+1. **Home Assistant** : remplacer par ceux de `tab5_home_assistant.zip` les packages
+   `tab5_meteo_sources.yaml` (pluie) et `tab5_reveil.yaml` (briefing en turc), avec
+   `tab5_health.yaml` qui porte la version des fichiers, puis recharger toute la
+   configuration YAML (Outils de développement → YAML). Sans cela, la notification « Tab5 : fichiers Home Assistant à
+   mettre à jour » le rappelle (elle compare X.Y : 3.5 contre 3.4).
+2. **Firmware** : entité « Firmware » dans Home Assistant.
+
+### Mesures de la version
+
+- Firmware : seul #293 le change. Compilations locales du lot (ESPHome 2026.9) : image
+  +26 096 o, dont 2 464 pour les cinq lettres turques des polices ; RAM statique
+  inchangée. Le même code (build local) tourne sur la tablette de l'auteur depuis le 02/10
+  à 19 h 43 (version et heure de compilation lues par l'API), sans redémarrage depuis.
+- Compilations requises de la CI (dernière ESPHome et 2026.9.0) : vertes sur `main`.
+
+### Problèmes connus
+
+Ceux de la 3.4.0, et :
+- le turc n'a pas été relu par une personne dont c'est la langue ;
+- avec Met.no, les deux pages suivantes des prévisions sur 15 jours ne montrent que le
+  6e jour (l'intégration de HA n'en donne que 6) ;
+- la page des jours prend les prévisions dans l'ordre reçu, sans lire leur date : avec
+  Met.no, qui recalcule sa liste environ toutes les heures, elle peut commencer par la
+  veille pendant au plus une heure après minuit (lu dans le code, pas vu).
+
 ### 2026-10-02 — Météo de Home Assistant sans Météo-France, prouvée par un test
 
 - `tests/test_meteo_sans_meteo_france.py` rend toute la chaîne des prévisions avec la seule
