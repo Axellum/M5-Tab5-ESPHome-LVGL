@@ -4,6 +4,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-02 — L'écran parle aussi turc
+
+- **`Tab5/lang/tr.yaml`** (Türkçe, index 6), complet : les 953 textes, jeux compris,
+  sauf les questions du quiz. Traduit par une IA, pas encore relu par une personne dont
+  c'est la langue.
+  - Jours en trois lettres (Pzt Sal Çar Per Cum Cmt Paz) ; noms longs des jours et des
+    mois écrits avec leur majuscule, comme dans une date turque (le firmware ne met en
+    majuscule qu'une première lettre ASCII) ; dates dans l'ordre turc (« 2 Ekim
+    Perşembe »).
+  - Place mesurée en pixels (Roboto 700) contre la plus large des langues française,
+    anglaise, allemande et néerlandaise ; ce qui dépasse a été raccourci, ou vérifié dans
+    le code (zone plus large, texte qui passe à la ligne).
+- **Polices** : Ğ ğ ı Ş ş ajoutés au jeu `&latin1` (roboto_32_b, roboto_45_b,
+  roboto_22 ; İ, ç, ö, ü, â, î, û y étaient déjà) : +2 464 octets de firmware. Le filtre
+  des noms de tuiles envoyés par HA (`kHorsLatin1`, `tab5_tuiles.cpp`) les garde aussi.
+- Select « Langue » : Türkçe ajouté à la fin (index gardés). Le briefing parlé du réveil
+  (`packages/tab5_reveil.yaml`) a ses phrases turques.
+- **CI** : le rendu hors tablette dessine aussi le turc (sept tâches).
+- Mesure (compilations locales, ESPHome 2026.9) : image 3 331 882 → 3 357 978 o
+  (+26 096 o, dont 2 464 pour les polices), RAM statique inchangée (171 798 o). Tout
+  nouveau texte de l'écran devra aussi être traduit en turc (`_statut: complet`).
+- Docs (README, traductions, installation, débogage, site, README HA), cartographie.
+
 ## [3.4.0] — 2026-10-02
 
 De `v3.3.2` à aujourd'hui : huit pull requests du soir du 01/10 (#277, #279 → #285), la
