@@ -36,7 +36,7 @@
 #       d'une migration depuis les placeholders.
 # @i18n Le briefing parlé suit la langue de l'écran (select « Langue » du firmware,
 #       trouvé par sensor.tab5_tablette) : français, anglais, allemand, néerlandais,
-#       espagnol, italien ; une langue inconnue parle français. Le texte français est
+#       espagnol, italien, turc ; une langue inconnue parle français. Le texte français est
 #       celui d'avant le 29/09/2026, mot pour mot. Heures dites « 8 heures 05 » en
 #       français, « 8:05 » ailleurs (les voix lisent ce format comme une heure).
 # @ai_warning Ne JAMAIS passer `now()` brut à un service (`{{ now() }}`) —
@@ -180,6 +180,7 @@ script:
                  'Nederlands': ['Goedemorgen. Het is %s.', ' U werkt van %s tot %s.', ' Vandaag geen werk.', ' Afspraak: %s, om %s.', ' Het wordt %d graden.'],
                  'Español': ['Buenos días. Son las %s.', ' Trabaja de %s a %s.', ' Hoy no hay trabajo.', ' Cita: %s, a las %s.', ' Hará %d grados.'],
                  'Italiano': ['Buongiorno. Sono le %s.', ' Lavora dalle %s alle %s.', ' Oggi niente lavoro.', ' Appuntamento: %s, alle %s.', ' Ci saranno %d gradi.'],
+                 'Türkçe': ['Günaydın. Saat %s.', ' Bugün %s ile %s arası çalışıyorsunuz.', ' Bugün iş yok.', ' Randevu: %s, saat %s.', ' Hava %d derece olacak.'],
                } %}
             {% set fr = langue not in phrases %}
             {% set p = ['Bonjour. Il est %s.', ' Vous travaillez de %s à %s.', " Pas de travail aujourd'hui.", ' Rendez-vous : %s, à %s.', ' Il fera %d degrés.'] if fr else phrases[langue] %}

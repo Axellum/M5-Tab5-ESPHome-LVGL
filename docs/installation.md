@@ -58,7 +58,7 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 
 `Tab5/user_entities.yaml` is gitignored (never committed). For a standard install there is nothing to replace in it: every line is optional.
 
-**Screen language:** French by default; add `tab5_langue: English` (or `Deutsch`, `Nederlands`, `Español`, `Italiano`) for another language on the first boot. It can then be changed from Home Assistant (select « Langue »), see [translations](translations.md).
+**Screen language:** French by default; add `tab5_langue: English` (or `Deutsch`, `Nederlands`, `Español`, `Italiano`, `Türkçe`) for another language on the first boot. It can then be changed from Home Assistant (select « Langue »), see [translations](translations.md).
 
 **Time zone:** nothing to set since 3.0. The tablet takes Home Assistant's time zone and keeps the last one it received, so the alarm clock stays right when HA is down after a power cut. An old `tab5_fuseau` line is ignored.
 
@@ -295,7 +295,7 @@ Limits:
 - **Climate** ([ADR-0026](decisions/0026-climate-from-device.md)): any brand. The blueprint sends the unit's bounds, step, unit (°C or °F, that of your weather entity) and modes; the popup takes its name as title, and a button the unit cannot do disappears. **Several units** ([ADR-0027](decisions/0027-climate-per-tile.md)): put each one in a room; its tile opens the popup for it, with its own bounds, modes and name. A change made outside the screen (remote, app) shows in the popup at once for the setpoint and the mode, within 5 minutes for fan, swing, preset and room temperature. With a firmware older than the blueprint, such a tile only shows its temperature. The screen has buttons for cool, heat, dry, fan and off, Éco, Boost, Silence, Oscillation and Brise only: other modes (heat/cool, auto, fan speeds, sleep…) stay in Home Assistant (a unit in heat/cool or auto lights no mode button). With a blueprint older than the firmware, the popup stays as before (16-30 °C, steps of 0.5, every button).
 - **A shutter followed by `volet_serre_tracking.yaml`** (it doesn't report its travel): keep it in the « Volet » input of the 3.x section too, even if it is in a room; its tile then shows the state the package keeps, and its commands go through the package's script.
 - **One calendar per role**: work, appointments, birthdays, public holidays and school holidays are the five « Tab5 · agenda … » lists.
-- **Spoken morning briefing**: in the screen's language (French, English, German, Dutch, Spanish, Italian); only the French text has been reviewed.
+- **Spoken morning briefing**: in the screen's language (French, English, German, Dutch, Spanish, Italian, Turkish); only the French text has been reviewed.
 - To see a smaller home without touching yours: [demo mode](demo_mode.md#minimal-home-optional-zones), option `--maison-minimale`.
 
 ---
@@ -358,7 +358,7 @@ Copiez le modèle :
 cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 ```
 
-**Langue de l'écran :** le français par défaut ; ajoutez `tab5_langue: English` (ou `Deutsch`, `Nederlands`, `Español`, `Italiano`) pour une autre langue au premier démarrage. Elle se change ensuite depuis Home Assistant (select « Langue »), voir [traductions](translations.md#version-française).
+**Langue de l'écran :** le français par défaut ; ajoutez `tab5_langue: English` (ou `Deutsch`, `Nederlands`, `Español`, `Italiano`, `Türkçe`) pour une autre langue au premier démarrage. Elle se change ensuite depuis Home Assistant (select « Langue »), voir [traductions](translations.md#version-française).
 
 **Fuseau horaire :** rien à régler depuis la 3.0. La tablette prend celui de Home Assistant et garde le dernier reçu : le réveil reste juste quand HA manque après une coupure de courant. Une ancienne ligne `tab5_fuseau` est ignorée.
 
@@ -595,5 +595,5 @@ Limites :
 - **Clim** ([ADR-0026](decisions/0026-climate-from-device.md)) : toutes marques. Le blueprint envoie les bornes, le pas, l'unité (°C ou °F, celle de votre entité météo) et les modes de l'appareil ; le popup prend son nom pour titre, et un bouton que l'appareil ne sait pas faire disparaît. **Plusieurs appareils** ([ADR-0027](decisions/0027-climate-per-tile.md)) : placez chacun dans une pièce ; sa tuile ouvre le popup pour lui, avec ses bornes, ses modes et son nom. Un changement fait hors de l'écran (télécommande, application) se voit tout de suite dans le popup pour la consigne et le mode, en 5 minutes au plus pour la ventilation, l'oscillation, le préréglage et la température de la pièce. Avec un firmware plus ancien que le blueprint, une telle tuile montre seulement sa température. L'écran n'a de boutons que pour froid, chaud, sec, ventilation et arrêt, Éco, Boost, Silence, Oscillation et Brise : les autres modes (chaud/froid, auto, vitesses de ventilation, nuit…) restent dans Home Assistant (un appareil en chaud/froid ou auto n'allume aucun bouton de mode). Avec un blueprint plus ancien que le firmware, le popup reste comme avant (16-30 °C, pas de 0,5, tous les boutons).
 - **Un volet suivi par `volet_serre_tracking.yaml`** (il ne signale pas sa course) : laissez-le aussi dans l'entrée « Volet » de la section 3.x, même s'il est dans une pièce ; sa tuile montre alors l'état que tient le package, et ses commandes passent par le script du package.
 - **Un agenda par rôle** : travail, rendez-vous, anniversaires, jours fériés et vacances scolaires sont les cinq listes « Tab5 · agenda … ».
-- **Briefing parlé du matin** : dans la langue de l'écran (français, anglais, allemand, néerlandais, espagnol, italien) ; seul le texte français a été relu.
+- **Briefing parlé du matin** : dans la langue de l'écran (français, anglais, allemand, néerlandais, espagnol, italien, turc) ; seul le texte français a été relu.
 - Pour voir une maison plus petite sans toucher à la vôtre : [mode démo](demo_mode.md#maison-minimale-zones-optionnelles), option `--maison-minimale`.
