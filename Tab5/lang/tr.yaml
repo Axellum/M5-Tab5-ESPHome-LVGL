@@ -1,0 +1,1188 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file lang/tr.yaml — Turkish translation of the Tab5 screen.
+# @role Flat mapping « French text as written in the code » → « Turkish ».
+#       tools/gen_i18n.py turns it into Tab5/tab5_i18n_data.h (see its header for
+#       adding a language: copy en.yaml, change _langue/_code/_index, translate).
+#       Same keys, same order and same section comments as en.yaml.
+# @ai_instruction
+#   - The KEY must be byte-for-byte the French text of the code (accents, spaces,
+#     punctuation). A key that no longer exists anywhere fails tests/test_i18n.py.
+#   - Keep printf specifiers (%d, %s, %02d…) in the same order, and {names} as is
+#     (a {name} may move inside the sentence: Turkish word order differs).
+#   - Only characters of the fonts' `&latin1` set (tab5-styles.yaml): Latin-1
+#     (ç Ç ö Ö ü Ü included) plus the Windows-1252 punctuation (“ ” ‘ ’ … – —),
+#     plus the Turkish letters ğ Ğ ı İ ş Ş added to the glyph set. Nothing else
+#     (no lira sign, no arrows).
+#   - Capitals are written by hand, Turkish way: i → İ and ı → I (« AYARLAR »,
+#     « İPTAL », « SİSTEM », « KAPALI »). Never rely on an automatic upper-casing.
+#   - Long day and month names are written WITH an initial capital (Pazartesi,
+#     Ağustos): the firmware only capitalizes an ASCII first letter (fr_capitalized).
+#   - Never glue a suffix to a variable text or number (%d'de, %s'den…): the vowel
+#     harmony depends on the value. Rephrase (« Saat: %s », « sonra »).
+#   - "context|text" keys disambiguate a word with two meanings (tr_ctx in code).
+#   - Never translate what Home Assistant reads (entity names, select options,
+#     payload codes): only what the screen shows or the tablet says.
+#   - Style: informal « sen » when a pronoun cannot be avoided, short imperatives
+#     on buttons (İptal, Kapat, Tamam…). The screen is small: a text should not be
+#     wider than the widest of the French, English, German and Dutch ones (usual
+#     abbreviations: Maks., Min., Sıc., Sev., dk, sn…).
+# ============================================================================
+_langue: Türkçe
+_code: tr
+_index: 6
+_statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
+
+# --- Dates (tab5_core.cpp) ---------------------------------------------------
+# Jours abrégés : Paz Pzt Sal Çar Per Cum Cmt (usage des calendriers turcs).
+# « Mar » = Salı (jour) ET Mart (mois) : deux clés distinctes, deux abréviations.
+# Noms longs avec majuscule initiale : fr_capitalized() ne gère qu'une lettre ASCII
+# (Çarşamba, Şubat, Ağustos… ne seraient jamais mis en majuscule par le firmware).
+"Dim": "Paz"
+"Lun": "Pzt"
+"Mar": "Sal"
+"Mer": "Çar"
+"Jeu": "Per"
+"Ven": "Cum"
+"Sam": "Cmt"
+"Janv": "Oca"
+"Févr": "Şub"
+"Mars": "Mar"
+"Avr": "Nis"
+"Mai": "May"
+"Juin": "Haz"
+"Juil": "Tem"
+"Août": "Ağu"
+"Sept": "Eyl"
+"Oct": "Eki"
+"Nov": "Kas"
+"Déc": "Ara"
+"dimanche": "Pazar"
+"lundi": "Pazartesi"
+"mardi": "Salı"
+"mercredi": "Çarşamba"
+"jeudi": "Perşembe"
+"vendredi": "Cuma"
+"samedi": "Cumartesi"
+"janvier": "Ocak"
+"février": "Şubat"
+"mars": "Mart"
+"avril": "Nisan"
+"mai": "Mayıs"
+"juin": "Haziran"
+"juillet": "Temmuz"
+"août": "Ağustos"
+"septembre": "Eylül"
+"octobre": "Ekim"
+"novembre": "Kasım"
+"décembre": "Aralık"
+# Pas d'ordinal en turc dans une date (« 1 Ekim Perşembe »).
+"1er": "1"
+# Ordre turc : jour du mois, mois, jour de la semaine (« 2 Ekim Perşembe »).
+"{jour} {quantieme} {mois}": "{quantieme} {mois} {jour}"
+# Day initials of the alarm chips: P S Ç P C C P (Pazartesi, Salı, Çarşamba,
+# Perşembe, Cuma, Cumartesi, Pazar) : P et C se répètent, comme M en français.
+"lundi|L": "P"
+"mardi|M": "S"
+"mercredi|M": "Ç"
+"jeudi|J": "P"
+"vendredi|V": "C"
+"samedi|S": "C"
+"dimanche|D": "P"
+
+# --- Home screen, forecast, central card --------------------------------------
+"Synchronisation...": "Eşitleniyor..."
+"Domo": "Ev"
+"Discu": "Sohbet"
+"Journee": "Bugün"
+"Demain": "Yarın"
+"2 Jours": "2 Gün"
+"3 Jours": "3 Gün"
+"4 Jours": "4 Gün"
+"Prévisions journalières · %d/3": "Günlük tahmin · %d/3"
+"Prévisions horaires · %d/2": "Saatlik tahmin · %d/2"
+# Titre de période : « 2 Ekim Perşembe – 3 Ekim Cuma arası » ; l'horaire s'écrit
+# « 08:00 – 16:00 » et « ertesi gün » (le lendemain) s'ajoute en suffixe.
+"Du %s au %s": "%s – %s arası"
+"De %s à %s%s": "%s – %s%s"
+" le lendemain": " ertesi gün"
+"Jour hors plage": "Gün aralık dışı"
+"Auj.": "Bugün"
+"Dem.": "Yarın"
+# Nom de jour envoyé par HA pour aujourd'hui (tuiles météo de l'accueil), sans point.
+"Auj": "Bugün"
+"Aucun travail de prévu": "Planlı iş yok"
+"Jour": "Gün"
+"{jour} : {horaire}": "{jour}: {horaire}"
+"{jour} : #fb923c {horaire}#": "{jour}: #fb923c {horaire}#"
+"{jour} : repos": "{jour}: izin"
+"{jour} : pas d'horaire": "{jour}: saat yok"
+"Alerte Météo Rouge en cours ! Restez prudent.": "Kırmızı hava uyarısı sürüyor! Dikkatli ol."
+"Alerte Météo Orange en cours ! Restez prudent.": "Turuncu hava uyarısı sürüyor! Dikkatli ol."
+# Composés par la tablette depuis les codes de HA (lot 4c) : bandeau info, alertes HA,
+# phrase de pluie (décomptée sur la tablette).
+"Vigilance Jaune": "Sarı uyarı"
+"1 MAJ · %s": "1 güncelleme · %s"
+"%d MAJ": "%d güncelleme"
+"1 erreur": "1 hata"
+"%d erreurs": "%d hata"
+"%d indispo": "%d erişilemez"
+"Temps sec": "Kuru"
+"Pas de données": "Veri yok"
+"Pluie faible": "Hafif yağmur"
+"Pluie modérée": "Orta yağmur"
+"Averses": "Sağanak"
+"Pluie": "Yağmur"
+"%s dans %ld mn": "%s %ld dk sonra"
+
+# --- Switch card, shutter, plants ---------------------------------------------
+"PC Bureau": "Ofis PC"
+"Volet": "Panjur"
+"Chambre": "Yatak odası"
+"Salon": "Salon"
+"Allumé": "Açık"
+"Éteint": "Kapalı"
+"Ouvert": "Açık"
+"Fermé": "Kapalı"
+"Mouvement": "Hareket"
+"Volet arrêté.": "Panjur durdu."
+# Rooms and tiles (ADR-0023): room title, state lines of the HA cards
+"Pièce %d/%d": "Oda %d/%d"
+"Aucun appareil": "Cihaz yok"
+"Ouvrir": "Aç"
+"Pièce %d": "Oda %d"
+"Lancer": "Başlat"
+"Détecté": "Algılandı"
+"Rien": "Yok"
+"Présent": "Evde"
+"Absent": "Dışarıda"
+"Actif": "Etkin"
+"Inactif": "Pasif"
+"Confirmer ?": "Onayla?"
+"Moy:": "Ort:"
+"Pot %d": "Saksı %d"
+"Pot -": "Saksı -"
+"Hors ligne": "Çevrimdışı"
+"À arroser !": "Sulanmalı!"
+"Bientôt sec": "Kurumak üzere"
+"Mes Plantes": "Bitkilerim"
+"Pot 1": "Saksı 1"
+"Pot 2": "Saksı 2"
+"Pot 3": "Saksı 3"
+"Pot 4": "Saksı 4"
+"Pot 5": "Saksı 5"
+"Fertilité": "Besin"
+"Lumière": "Işık"
+"Température": "Sıcaklık"
+"Batterie": "Pil"
+
+# --- Lights popup ---------------------------------------------------------------
+"Ampoule": "Ampul"
+"AMPOULE": "AMPUL"
+"Ampoule Chambre": "Yatak odası ampulü"
+"Ampoule Salon": "Salon ampulü"
+"Ampoule LEDs": "LED şerit"
+"Tout éteindre": "Hepsini kapat"
+"LUMINOSITÉ": "PARLAKLIK"
+"COULEURS": "RENKLER"
+"Chaud": "Sıcak"
+"Crème": "Krem"
+# « Froid » sert aussi au mode Froid de la clim (climate_popup.yaml) : « Soğuk »
+# convient aux deux (soğuk beyaz / klima).
+"Froid": "Soğuk"
+
+# --- Climate popup --------------------------------------------------------------
+"Climatisation Salon": "Salon klima"
+"Climatisation": "Klima"
+"MODE": "MOD"
+"clim|Chaud": "Isıtma"
+"Sec": "Kuru"
+"Ventilation": "Fan"
+"TEMPÉRATURE": "SICAKLIK"
+"Pièce": "Oda"
+"OPTIONS": "SEÇENEKLER"
+"Presets": "Hazır ayar"
+"Éco": "Eko"
+"Silence": "Sessiz"
+"Flux d'air": "Hava akışı"
+"Oscillation": "Salınım"
+"Brise": "Esinti"
+
+# --- TV remote ------------------------------------------------------------------
+"Télécommande TV": "TV kumandası"
+"Marche / Arrêt": "Güç"
+"Lecture": "Oynat"
+"Pause": "Duraklat"
+"Retour": "Geri"
+"Accueil": "Ana sayfa"
+
+# --- Calendar popup -------------------------------------------------------------
+"Calendrier": "Takvim"
+"Aujourd'hui": "Bugün"
+"Travail": "İş"
+"Férié": "Tatil"
+"Vac. scolaires": "Okul tatili"
+"RDV": "Randevu"
+"Anniv.": "Doğum günü"
+"Chargement...": "Yükleniyor..."
+"Home Assistant hors ligne": "Home Assistant çevrimdışı"
+"Rien de prévu ce jour": "O gün için plan yok"
+
+# --- Voice assistant ------------------------------------------------------------
+"Assistant vocal": "Sesli asistan"
+"Réglages": "Ayarlar"
+"Cerveau / LLM": "Beyin / LLM"
+"Taille du texte": "Metin boyutu"
+"VOTRE DEMANDE": "İSTEĞİN"
+"Appuyez sur le micro puis parlez…": "Mikrofona dokun, sonra konuş…"
+"RÉPONSE": "YANIT"
+"Prêt": "Hazır"
+"Parler": "Konuş"
+"Reflexion...": "Düşünüyor..."
+"Écoute…": "Dinliyor…"
+"Analyse…": "Analiz…"
+"Réponse": "Yanıt"
+"Erreur": "Hata"
+"Chargement image...": "Görsel yükleniyor..."
+"Image indisponible": "Görsel yok"
+
+# --- System console -------------------------------------------------------------
+"CONSOLE SYSTÈME": "SİSTEM KONSOLU"
+"MÉMOIRE": "BELLEK"
+"Bloc max": "Maks. blok"
+"RÉSEAU": "AĞ"
+"Adresse IP": "IP adresi"
+"Signal": "Sinyal"
+"SYSTÈME": "SİSTEM"
+"Temps actif": "Açık kalma"
+"Temp. CPU": "CPU sıc."
+"Temps de boucle": "Döngü süresi"
+"GESTION": "YÖNETİM"
+"MAJ Écran": "Ekranı yenile"
+"Recharger autos": "Otomasyonları yenile"
+"Redémarrer HA": "HA'yı yeniden başlat"
+"Reboot tablette": "Tableti yeniden başlat"
+# Titre en roboto_32_b dans 550 px (console_sys.yaml) : « Home Assistant yeniden
+# başlatılsın mı? » (565 px) déborderait ; « HA » est le mot du bouton qui l'ouvre.
+"Redémarrer Home Assistant ?": "HA yeniden başlatılsın mı?"
+"Le serveur sera indisponible ~1 minute.": "Sunucu ~1 dakika erişilemez olacak."
+"Redémarrer la tablette ?": "Tablet yeniden başlatılsın mı?"
+"L'écran redémarre immédiatement.": "Ekran hemen yeniden başlar."
+"Annuler": "İptal"
+"Confirmer": "Onayla"
+"Redemarrage...": "Yeniden başlıyor..."
+"Connecté": "Bağlı"
+
+# --- Alarm clock: popup ---------------------------------------------------------
+# « Répétition » (snooze) = « Erteleme » ; le bouton « Répéter » = « Ertele ».
+"Réveil": "Alarm"
+"Réveil actif": "Alarm açık"
+"Réveil éteint": "Alarm kapalı"
+"Heure fixe": "Sabit saat"
+"Jours (heure fixe uniquement)": "Günler (yalnız sabit saat)"
+"Mode": "Mod"
+"Fixe": "Sabit"
+"Ouverture": "Mesai başı"
+"Délai": "Ön süre"
+"Pas avant": "En erken"
+"Pas après": "En geç"
+"Repos mini": "Min. izin"
+"PROCHAINE SONNERIE": "SONRAKİ ALARM"
+"Repos : heure fixe": "İzin: sabit saat"
+"Repos : silence": "İzin: sessiz"
+"Sonnerie": "Zil sesi"
+"Douce": "Yumuşak"
+"Classique": "Klasik"
+"Insistante": "Israrlı"
+"Carillon": "Çan sesi"
+"Progressif": "Kademeli"
+"Volume constant": "Sabit ses"
+"Répétition": "Erteleme"
+"Durée max": "Maks. süre"
+"RDV avant": "Randevu ön."
+"Annonce parlée": "Sesli duyuru"
+"Sonnerie seule": "Yalnız zil"
+"Annonce des RDV": "Randevu duyur"
+"RDV silencieux": "Sessiz randevu"
+"Tester": "Dene"
+"Fermer": "Kapat"
+"9 min": "9 dk"
+"15 min": "15 dk"
+"%d min": "%d dk"
+"%dh%02d": "%d:%02d"
+"Sonne à l'heure fixe, les jours cochés ci-dessus.": "Yukarıda işaretli günlerde sabit saatte çalar."
+"Sonne à l'heure fixe, uniquement les jours travaillés.": "Yalnızca çalışılan günlerde sabit saatte çalar."
+"Sonne avant l'ouverture lue dans le calendrier.": "Takvimden okunan mesai başından önce çalar."
+
+# --- Alarm clock: next ring, ringing screen, reminders ---------------------------
+# « Arrêter » (bouton) = « Durdur » ; le mot à PRONONCER reste le mot-clé vocal « Stop ».
+"Désactivé": "Kapalı"
+"Aucune sonnerie prévue": "Planlı alarm yok"
+"Aujourd'hui {heure}": "Bugün {heure}"
+"Demain {heure}": "Yarın {heure}"
+"Répétition %02d:%02d (%d min)": "Erteleme %02d:%02d (%d dk)"
+"Répétition n°%d · « Arrêter » pour reprendre le cycle normal": "Erteleme no. %d · Normal döngü için “Durdur”"
+"Touchez l'interrupteur pour l'armer": "Kurmak için anahtara dokun"
+"Aucun jour retenu dans les 8 prochains": "Önümüzdeki 8 günde seçili gün yok"
+"en attente du calendrier": "takvim bekleniyor"
+"repos": "izin"
+"Travail (horaire inconnu)": "İş (saat bilinmiyor)"
+"Heure non synchronisée": "Saat eşitlenmedi"
+"Aucun rendez-vous à venir": "Yaklaşan randevu yok"
+"Arrêter": "Durdur"
+"Répéter": "Ertele"
+"Répéter · %d min": "Ertele · %d dk"
+"Répétition %d": "Erteleme %d"
+"Touchez l'écran ou dites « Stop » pour arrêter": "Durdurmak için ekrana dokun ya da “Stop” de"
+"%s · %s (dans %d min)": "%s · %s (%d dk sonra)"
+"%s · %s (maintenant)": "%s · %s (şimdi)"
+# Spoken by the tablet (TTS): times read as "14:30" (« 14:00 » pour une heure pile).
+"%d heures": "%d:00"
+"%d heures %d": "%d:%02d"
+"Rappel : %s, à %s, dans %d minute.": "Hatırlatma: %s, saat %s, %d dakika sonra."
+"Rappel : %s, à %s, dans %d minutes.": "Hatırlatma: %s, saat %s, %d dakika sonra."
+"Rappel : %s, c'est maintenant.": "Hatırlatma: %s, şimdi."
+
+# --- Arcade page (ui_components/game_selector.yaml) ----------------------------
+# Console names (Fil d'Or, Roi Noir…) stay as they are: proper names, and the
+# « Écran courant » label that Home Assistant reads (tools/i18n_keys.py, NON_TRADUITS).
+# Pinball : « pinball » tel quel (« langırt » désigne le baby-foot en turc).
+"8 consoles — une seule à la fois": "8 konsol — aynı anda yalnız biri"
+"Roguelite de bille\n6 salles · à l'inclinaison": "Bilyeli roguelite\n6 oda · eğerek yönlendir"
+"Casse-briques Atari\n8 niveaux · power-ups": "Atari tuğla kırma\n8 seviye · güçlendirme"
+"Flipper néon · 3 billes\nTablette à la verticale": "Neon pinball · 3 bilye\nTableti dik tut"
+"Lode Runner 1983\nCreuse · grimpe · fuis": "Lode Runner 1983\nKaz · tırman · kaç"
+"Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5": "Go 9×9 / 13×13 / 19×19\nÇin sayımı · komi 6,5"
+"Quiz rétro-salon\n1 à 6 équipes": "Retro salon yarışması\n1-6 takım · Fransızca"
+"Internationales 10×10\nPrise majoritaire · rafles": "Uluslararası 10×10\nÇoğunluk alma · zincir"
+"Échecs FIDE complets\n5 niveaux d'IA embarquée": "Tam FIDE satranç\n5 seviye yerleşik YZ"
+"Sortie de chaque jeu : hub, puis « Quitter »": "Oyundan çıkış: merkez, sonra “Çık”"
+
+# --- Fil d'Or — marble roguelite (marble_game.cpp) -----------------------------
+# Le nom de la console (« FIL D'OR » en titre du hub) ne se traduit pas.
+# Vocabulaire : la bille = bilye, le dédale = Labirent (personnifié, donc en
+# majuscule), âmes = ruh, PV = can, caractéristique = özellik, objet = eşya,
+# emplacement = yuva, run = sefer, feu de camp = Kamp ateşi (clin d'œil Dark Souls),
+# mode dieu = tanrı modu. Pourcentage turc : « %18 » devant le nombre.
+# --- Salles (ROOMS : littéraux nus, lus par tools/check_marble_rooms.py) --------
+# Traduits à l'affichage par tr(r.name) / tr(r.goal), non relevés par i18n_keys.py.
+# « Forge » n'a pas d'entrée dans en.yaml : reste « Forge » (compréhensible).
+"Seuil": "Eşik"
+"Couloirs": "Koridorlar"
+"Sanctuaire": "Sığınak"
+"Némésis": "Nemesis"
+"Trone": "Taht"
+"Rejoins le portail": "Portala ulaş"
+"Reunis les runes": "Rünleri topla"
+# --- Bonus de run (boons) -------------------------------------------------------
+"Main d'Ariane": "Ariadne'nin Eli"
+"Réponse à l'inclinaison +18 %": "Eğim tepkisi +%18"
+"Cœur de braise": "Kor Yürek"
+"+1 point de vie, soigne aussitôt": "+1 can, hemen iyileştirir"
+"Bourse tressée": "Örme Kese"
+"+40 % d'âmes ramassées": "+%40 toplanan ruh"
+"Aimant mineur": "Küçük Mıknatıs"
+"Attire les bonus alentour": "Yakındaki bonusları çeker"
+"Semelles lourdes": "Ağır Tabanlar"
+"Freinage nettement plus mordant": "Çok daha sert frenleme"
+"Élan": "Atılım"
+"Vitesse maximale +170": "Azami hız +170"
+"Peau de bronze": "Tunç Deri"
+"Un bouclier à chaque nouvelle salle": "Her yeni odada bir kalkan"
+"Œil du dédale": "Labirentin Gözü"
+"Le portail pulse et se voit de loin": "Portal atar, uzaktan görünür"
+"Seconde chance": "İkinci Şans"
+"Relevé une fois dans la run": "Seferde bir kez ayağa kalkarsın"
+"Pas de velours": "Kadife Adım"
+"3 s d'invulnérabilité par salle": "Oda başına 3 sn dokunulmazlık"
+# --- Difficultés ----------------------------------------------------------------
+"Calme": "Sakin"
+"+1 PV, pièges lents, longue invulnérabilité": "+1 can, yavaş tuzaklar, uzun dokunulmazlık"
+"Normal": "Normal"
+"L'équilibre de référence": "Referans denge"
+"Impitoyable": "Acımasız"
+"-1 PV, pièges rapides, mais +60 % d'âmes": "-1 can, hızlı tuzaklar, ama +%60 ruh"
+# --- Caractéristiques (Feu de camp) ---------------------------------------------
+"Vitalité": "Canlılık"
+"+1 point de vie par niveau": "Seviye başına +1 can"
+"Résistance": "Direnç"
+"+300 ms d'invulnérabilité ; bouclier des 3": "+300 ms dokunulmazlık; 3. seviyeden kalkan"
+"Finesse": "İncelik"
+"-1 px de rayon : bille plus difficile à toucher": "-1 px yarıçap: bilye daha zor vurulur"
+"Agilité": "Çeviklik"
+"+12 % de réponse à l'inclinaison par niveau": "Seviye başına +%12 eğim tepkisi"
+"+60 de vitesse maximale par niveau": "Seviye başına +60 azami hız"
+"Découverte": "Keşif"
+"+15 % d'âmes et +12 % de butin en coffre": "+%15 ruh ve +%12 sandık ganimeti"
+# --- Objets (Marchand, Équipement, coffres, boss) -------------------------------
+"Anneau de fer": "Demir Yüzük"
+"+1 point de vie": "+1 can"
+"Talisman du filon": "Damar Tılsımı"
+"+25 % d'âmes ramassées": "+%25 toplanan ruh"
+"Plume de suie": "Kurum Tüyü"
+"+70 de vitesse maximale": "Azami hız +70"
+"Gantelet poli": "Parlak Eldiven"
+"+15 % de réponse à l'inclinaison": "+%15 eğim tepkisi"
+"Écaille de bronze": "Tunç Pul"
+"Un bouclier à chaque salle": "Her odada bir kalkan"
+"Œil de rune": "Rün Gözü"
+"Pierre de sang": "Kan Taşı"
+"Relevé une fois par run": "Sefer başına bir kez ayağa kalkarsın"
+"Aimant du mineur": "Madenci Mıknatısı"
+"Semelle de plomb": "Kurşun Taban"
+"Couronne fêlée": "Çatlak Taç"
+"+50 % d'âmes, mais -1 point de vie": "+%50 ruh, ama -1 can"
+# --- Répliques (mort, récompense) -----------------------------------------------
+"Le fil se rompt. Il en reste toujours un bout.": "İp kopar. Hep bir ucu kalır."
+"La pierre gagne cette manche.": "Bu eli taş kazandı."
+"Tu rouleras encore.": "Yine yuvarlanacaksın."
+"Le dédale te garde un peu plus longtemps.": "Labirent seni biraz daha tutuyor."
+"Chute nette. Reprends ton souffle.": "Temiz bir düşüş. Nefes al."
+"Le dédale consent.": "Labirent razı oldu."
+"Un serment de plus.": "Bir yemin daha."
+"Prends. Tu en auras besoin.": "Al. İhtiyacın olacak."
+# --- Hub ------------------------------------------------------------------------
+"Niveau %u   -   %u âmes   -   salle %u/6   -   %s%s": "Seviye %u   -   %u ruh   -   oda %u/6   -   %s%s"
+"   -   MODE DIEU": "   -   TANRI MODU"
+"6 salles. 2 à 5 minutes.  Difficulté : %s": "6 oda. 2-5 dakika.  Zorluk: %s"
+"%d objet(s) trouvé(s) sur %d": "%d / %d eşya bulundu"
+"Incline la tablette pour guider la bille. L'écran tactile ne sert qu'aux menus.": "Bilyeyi yönlendirmek için tableti eğ. Dokunmatik ekran yalnız menüler içindir."
+"Lancer une run": "Sefer başlat"
+"Feu de camp": "Kamp ateşi"
+"Dépenser les âmes en caractéristiques": "Ruhları özelliklere harca"
+"Marchand": "Tüccar"
+"Acheter et revendre des objets": "Eşya al ve geri sat"
+"Équipement": "Teçhizat"
+"Difficulté, mode dieu, teinte, calibration": "Zorluk, tanrı modu, renk, kalibrasyon"
+"Statistiques": "İstatistikler"
+"Runs, victoires, records": "Seferler, zaferler, rekorlar"
+"Quitter": "Çık"
+"Retour au tableau de bord": "Panoya dön"
+# --- Réglages -------------------------------------------------------------------
+"Difficulté : %s": "Zorluk: %s"
+"Mode dieu : %s": "Tanrı modu: %s"
+"ACTIF": "AÇIK"
+"inactif": "kapalı"
+"Ces réglages s'appliquent au lancement de la prochaine run.": "Bu ayarlar sonraki sefer başlarken uygulanır."
+"Le mode dieu rend invulnérable : la run reste jouable mais ne rapporte aucun fragment et n'entre pas dans les statistiques.": "Tanrı modu seni dokunulmaz yapar: sefer oynanabilir kalır ama parça kazandırmaz ve istatistiklere girmez."
+"Invulnérable - hors concours": "Dokunulmaz - sıralama dışı"
+"Jouer sans jamais mourir": "Hiç ölmeden oyna"
+"Or": "Altın"
+"Argent": "Gümüş"
+"Cuivre": "Bakır"
+"Teinte de la bille : %s": "Bilye rengi: %s"
+"Purement cosmétique": "Tamamen kozmetik"
+"Calibrer à plat": "Düz kalibre et"
+"Pose la tablette et appuie": "Tableti yatır ve dokun"
+"Calibration prise. La tablette est désormais « à plat ».": "Kalibrasyon tamam. Tablet artık “düz” sayılıyor."
+# --- Feu de camp (montée de niveau) ---------------------------------------------
+"Niveau %u   -   %u âmes   -   prochain point : %u âmes": "Seviye %u   -   %u ruh   -   sonraki puan: %u ruh"
+"Le coût dépend du niveau TOTAL : monter une caractéristique renchérit toutes les autres. Il faut choisir une orientation.": "Maliyet TOPLAM seviyeye bağlıdır: bir özelliği yükseltmek diğerlerini pahalılaştırır. Bir yön seçmelisin."
+"%s  -  au maximum": "%s  -  azami"
+"%s  -  %u âmes": "%s  -  %u ruh"
+# --- Marchand -------------------------------------------------------------------
+"%u âmes   -   page %d/%d": "%u ruh   -   sayfa %d/%d"
+"Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement.": "Sahip olunan bir eşyaya dokunmak onu fiyatının yarısına geri satar. Satılan eşya teçhizattan da çıkarılır."
+"  (possédé)": "  (sende)"
+"%s  -  revendre : %u âmes": "%s  -  sat: %u ruh"
+"Page suivante": "Sonraki sayfa"
+# --- Équipement -----------------------------------------------------------------
+"%d objet(s) en votre possession   -   %d emplacement(s)": "%d eşya sende   -   %d yuva"
+"Appuyer sur un emplacement le fait passer à l'objet suivant.": "Bir yuvaya dokunmak onu sonraki eşyaya geçirir."
+"Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand.": "Eşya yok: sandık aç, boss yen ya da tüccara uğra."
+"Emplacement %d : vide": "Yuva %d: boş"
+"Aucun effet actif": "Etkin efekt yok"
+"Emplacement %d : %s": "Yuva %d: %s"
+# --- Statistiques ---------------------------------------------------------------
+"aucun": "yok"
+"Runs lancées : %u\nVictoires : %u\nSalle la plus profonde : %u/6\nMeilleur temps : %s\nNiveau total : %u\nÂmes disponibles : %u\nObjets découverts : %d/%d": "Başlatılan sefer: %u\nZafer: %u\nEn derin oda: %u/6\nEn iyi süre: %s\nToplam seviye: %u\nKullanılabilir ruh: %u\nKeşfedilen eşya: %d/%d"
+"Les runs jouées en mode dieu ne sont pas comptabilisées ici.": "Tanrı modunda oynanan seferler burada sayılmaz."
+# --- Récompense (choix d'un boon) -----------------------------------------------
+"Le dédale offre": "Labirent sunar"
+"Un seul choix. Il te suivra jusqu'à la fin de la run.": "Tek seçim. Seferin sonuna kadar seninle kalır."
+# --- Fin de run -----------------------------------------------------------------
+"Salles franchies : %d/6\nTemps : %u:%02u\nMode dieu — run hors concours": "Geçilen oda: %d/6\nSüre: %u:%02u\nTanrı modu — sıralama dışı sefer"
+"Salles franchies : %d/6\nTemps : %u:%02u\nDifficulté : %s\nÂmes rapportées : %d": "Geçilen oda: %d/6\nSüre: %u:%02u\nZorluk: %s\nKazanılan ruh: %d"
+"Le fil tient": "İp dayanıyor"
+"Fin de la run": "Seferin sonu"
+"Tu sors du dédale. Il te laisse partir.": "Labirentten çıkıyorsun. Gitmene izin veriyor."
+"Aucune âme créditée : le mode dieu ne compte pas.": "Ruh eklenmedi: tanrı modu sayılmaz."
+"Les âmes sont déjà mises de côté.": "Ruhlar zaten kenara ayrıldı."
+"Relancer une run": "Yeni sefer"
+"Retour au hub": "Merkeze dön"
+# --- Pause (« Pause » et « Retour » : déjà plus haut) -----------------------------
+"Le dédale patiente.": "Labirent bekliyor."
+"Reprendre": "Devam"
+"Recalibrer à plat": "Düz yeniden kalibre et"
+"Pose la tablette avant d'appuyer": "Dokunmadan önce tableti yatır"
+"Abandonner la run": "Seferi bırak"
+"Les âmes sont conservées": "Ruhlar korunur"
+"Calibration prise.": "Kalibrasyon tamam."
+# --- HUD (colonnes à largeur réservée : voir build_ui) ----------------------------
+"Salle %d/%d  -  %s  %.*s%s": "Oda %d/%d  -  %s  %.*s%s"
+"   [ DIEU ]": "   [ TANRI ]"
+"PV invulnérable": "Can dokunulmaz"
+"PV %d/%d%s": "Can %d/%d%s"
+"  +BOUCLIER": "  +KALKAN"
+"Or %d": "Altın %d"
+"Portail ouvert !": "Portal açık!"
+"Runes %d/%u": "Rünler %d/%u"
+# --- Bannières (coffres, butin de boss) ------------------------------------------
+"%s cède : %s": "%s verir: %s"
+"%s cède 120 âmes": "%s 120 ruh verir"
+"Le Trône": "Taht"
+"Coffre : %s !": "Sandık: %s!"
+"Coffre : %d âmes": "Sandık: %d ruh"
+
+# --- Arcanoïde — brick breaker (arkanoid_game.cpp) -----------------------------
+# Lot 4b — Arcanoïde (Tab5/arkanoid_game.cpp) : français du code → turc.
+# « ARCANOIDE » (nom de la console) n'est pas traduit. « Retour » et « Pause »
+# reprennent la traduction commune (Geri / Duraklat).
+# --- Noms des niveaux (LEVEL_NAMES, tr_noop) ---
+"Mur plein": "Düz duvar"
+"Pyramide": "Piramit"
+"Colonnes": "Sütunlar"
+"Damier": "Damalı"
+"Forteresse": "Kale"
+"Zigzag": "Zikzak"
+"Boss final": "Son boss"
+# --- Mode de contrôle ---
+"Inclinaison": "Eğim"
+"Boutons": "Düğmeler"
+"Les deux": "İkisi"
+# --- Hub ---
+"Meilleur score : %u   -   Contrôle : %s": "En iyi skor: %u   -   Kontrol: %s"
+"Casse toutes les briques. Ne laisse pas tomber la balle.": "Tüm tuğlaları kır. Topu düşürme."
+"Jouer": "Oyna"
+"8 niveaux, 3 vies, power-ups": "8 seviye, 3 can, güçlendirme"
+"Classement": "Sıralama"
+"Top 10 local": "Yerel ilk 10"
+"Contrôle, sensibilité, calibration, SFX": "Kontrol, hassasiyet, kalibrasyon, SFX"
+# --- Réglages ---
+"Contrôle : %s": "Kontrol: %s"
+"Sensibilité IMU : %d/5": "IMU hassasiyeti: %d/5"
+"Ces réglages sont sauvegardés automatiquement.": "Ayarlar otomatik kaydedilir."
+"Inclinaison / Boutons / Les deux": "Eğim / Düğmeler / İkisi"
+"Vitesse de réponse à l'inclinaison": "Eğim tepki hızı"
+"SFX : coupés": "SFX: kapalı"
+"SFX : actifs": "SFX: açık"
+"Bips sonores (casse, mort, niveau)": "Sesli bip (kırma, kayıp, seviye)"
+"Calibration prise. Tablette = plat.": "Kalibrasyon tamam. Tablet = düz."
+# --- Classement ---
+# « Düğme » est la dernière colonne du tableau : il y tient sans rien décaler.
+"Rang  Score      Niv  Contrôle\n": "Sıra  Skor      Sev  Kontrol\n"
+"IMU": "IMU"
+"Btn": "Düğme"
+"Mix": "Karma"
+"\n  Aucun score enregistre.": "\n  Kayıtlı skor yok."
+"Top 10 local (NVS)": "Yerel ilk 10 (NVS)"
+"Effacer les scores": "Skorları sil"
+# « Demande confirmation », « Oui, tout effacer », « Annuler » et
+# « Cette action est irreversible. » : déjà plus bas (Coureur d'Or).
+"Effacer les scores ?": "Skorlar silinsin mi?"
+"Tout le Top 10 local, meilleur score compris.": "Yerel ilk 10'un tamamı, en iyi skor dahil."
+# --- Pause ---
+"Le jeu attend.": "Oyun bekliyor."
+"Abandonner": "Bırak"
+"Le score est enregistré": "Skor kaydedilir"
+# --- Fin de niveau / game over ---
+"Niveau %d — %s\nScore : %d": "Seviye %d — %s\nSkor: %d"
+"Niveau terminé !": "Seviye bitti!"
+"Niveau suivant": "Sonraki seviye"
+"Score : %d\nNiveau atteint : %d/8 — %s%s": "Skor: %d\nUlaşılan seviye: %d/8 — %s%s"
+"\n*** Nouveau record ! ***": "\n*** Yeni rekor! ***"
+# « GAME OVER » devient « OYUN BİTTİ » (İ majuscule du turc).
+"GAME OVER": "OYUN BİTTİ"
+"Rejouer": "Tekrar oyna"
+# --- HUD ---
+"Score %d": "Skor %d"
+"Vies %d": "Can %d"
+"Niv %d/8": "Sev %d/8"
+"Record %u": "Rekor %u"
+
+# --- Neon Apron — pinball (pinball_game.cpp) -----------------------------------
+# Pinball terms already in English stay as they are, unwrapped (TILT, MULTIBALL,
+# SKILL SHOT, BUMPER FRENZY, FRENZY / MULTI / SKILL inserts, "N E O N   A P R O N").
+# The DMD score is drawn in roboto_55_b (digits only): no text goes through it.
+# Turc : la bille du flipper = bilye ; « nudge » = dürtme (secousse pour pousser la bille).
+# --- Toasts (roboto_45_b, above the arch) ---
+"BILLE BONUS": "EKSTRA BİLYE"
+"MULTIBALL TERMINÉ": "MULTIBALL BİTTİ"
+"BILLE PERDUE": "BİLYE KAYBOLDU"
+# --- Table and DMD labels (roboto_22) ---
+"Maintiens ici pour armer,\nrelâche pour tirer": "Kurmak için basılı tut,\nfırlatmak için bırak"
+"BILLE %d / %d": "BİLYE %d / %d"
+"RECORD %s": "REKOR %s"
+# --- Hub ---
+"%lu partie(s) - %lu multiball(s) - %lu tilt(s)": "%lu oyun - %lu multiball - %lu tilt"
+"Record : %s": "Rekor: %s"
+"Aucun score enregistré": "Kayıtlı skor yok"
+"Tournez la tablette à la verticale": "Tableti dik çevir"
+"Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT.": "Sol bölge / sağ bölge = flipperler (basılı tut). Alt orta = fırlatıcı.\nBilyeyi itmek için tableti salla — üst üste üç kez abartırsan TILT olur."
+"3 billes - lanceur en bas de l'écran": "3 bilye - fırlatıcı ekranın altında"
+"Nudge, sens de l'écran, calibration": "Dürtme, ekran yönü, kalibrasyon"
+"Retour au tableau de bord (paysage)": "Panoya dön (yatay)"
+# --- Leaderboard ---
+"CLASSEMENT": "SIRALAMA"
+"Aucun score pour l'instant.\nLance une partie !": "Henüz skor yok.\nBir oyun başlat!"
+"Cumul carrière : %lu points": "Kariyer toplamı: %lu puan"
+"b = billes jouées, MB = multiball déclenché.": "b = oynanan bilye, MB = multiball tetiklendi."
+# --- Settings ---
+"Tout est enregistré et survit au redémarrage.": "Her şey kaydedilir, yeniden başlatmada korunur."
+"Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer.": "Oynamadan ÖNCE düz kalibre et: dürtme bu referanstan ölçülür,\nmutlak eğimden değil. Tableti yatır, sonra dokun."
+"Sensibilité du nudge : %s": "Dürtme hassasiyeti: %s"
+# Nudge sensitivity steps: context "nudge" (« Douce » is an alarm sound, « Vive » a Lode Runner speed).
+"nudge|Très douce": "Çok düşük"
+"nudge|Douce": "Düşük"
+"nudge|Normale": "Normal"
+"nudge|Vive": "Yüksek"
+"nudge|Très vive": "Çok yüksek"
+"Force de la secousse nécessaire": "Gereken sallama gücü"
+"Sens du nudge : %s": "Dürtme yönü: %s"
+"inverse": "ters"
+"normal": "normal"
+"Si la bille part du mauvais côté": "Bilye yanlış tarafa gidiyorsa"
+"Orientation : %s": "Yön: %s"
+"retournée": "ters"
+"normale": "normal"
+"Si l'écran est à l'envers dans vos mains": "Ekran elinde ters duruyorsa"
+"Poser la tablette puis appuyer": "Tableti yatır, sonra dokun"
+# --- Pause ---
+"PAUSE": "DURAKLATILDI"
+"Score %s - bille %d / %d": "Skor %s - bilye %d / %d"
+"La partie reprend exactement où elle s'est arrêtée.": "Oyun kaldığı yerden devam eder."
+"La partie est enregistrée telle quelle": "Oyun olduğu gibi kaydedilir"
+"Quitter le flipper": "Pinball'dan çık"
+# --- Game over ---
+"FIN DE PARTIE": "OYUN BİTTİ"
+"Score final : %s": "Final skoru: %s"
+"NOUVEAU RECORD !": "YENİ REKOR!"
+# « %de au classement » : « 3e » = « 3. » en turc (« Sıralamada 3. »).
+"%de au classement": "Sıralamada %d."
+"Hors du top %d": "İlk %d dışında"
+"Partie marquée TILT.": "Oyun TILT olarak işaretlendi."
+"Nouvelle partie, 3 billes": "Yeni oyun, 3 bilye"
+
+# --- Coureur d'Or — Lode Runner (lode_game.cpp) --------------------------------
+# Coureur d'Or (Tab5/lode_game.cpp) — lot 4b, FR → TR.
+# « COUREUR D'OR » (nom de la console) n'est pas traduit.
+# --- Vitesses (Reglages > Vitesse, pause) ---
+# Échelle turque : Normal < Canlı < Hızlı < Çok hızlı < Şimşek, choisie pour que les
+# suffixes compacts du classement tiennent en 8 caractères.
+"Normale": "Normal"
+"Vive": "Canlı"
+"Rapide": "Hızlı"
+"Très rapide": "Çok hızlı"
+"Fulgurante": "Şimşek"
+"4,4 cases/s - rythme d'origine": "4,4 kare/sn - özgün tempo"
+"5,7 cases/s": "5,7 kare/sn"
+"6,7 cases/s": "6,7 kare/sn"
+"8,0 cases/s": "8,0 kare/sn"
+"10,0 cases/s - réflexes exigés": "10,0 kare/sn - refleks şart"
+# Suffixes compacts de la colonne vitesse du classement (%-8s : 8 caractères au plus)
+"vive": "canlı"
+"rapide": "hızlı"
+"t.rapide": "ç.hızlı"
+"fulgur.": "şimşek"
+# --- Noms des niveaux ---
+"Premier filon": "İlk Damar"
+"Escalier": "Merdiven"
+"Le pendu": "Asılan Adam"
+"Le puits": "Kuyu"
+"Le peigne": "Tarak"
+"Faux chemin": "Yanlış Yol"
+"Le nid": "Yuva"
+"Cathédrale": "Katedral"
+"Dédale": "Labirent"
+"Coffre-fort": "Kasa"
+# --- Modes de contrôle ---
+"Mixte": "Karma"
+"D-pad + 2 boutons creuser": "Yön tuşları + 2 kazma düğmesi"
+"Inclinaison 4 directions + 2 boutons creuser": "4 yönlü eğim + 2 kazma düğmesi"
+"Inclinaison ET D-pad, le doigt prime": "Eğim VE yön tuşları, dokunuş öncelikli"
+# --- Partie : HUD, pad, messages ---
+"CREUSER": "KAZ"
+"Sortie ouverte ! Grimpe tout en haut.": "Çıkış açık! En tepeye tırman."
+"Score %lu": "Skor %lu"
+"Vies  oo": "Can  oo"
+"Vies  %d": "Can  %d"
+"Niveau %d/%d  %s": "Seviye %d/%d  %s"
+"Or restant %d": "Kalan altın %d"
+"SORTIE OUVERTE": "ÇIKIŞ AÇIK"
+"Record %lu": "Rekor %lu"
+"Niveau %d - %s": "Seviye %d - %s"
+# --- Fin de niveau / fin de partie ---
+"Score : %lu     Vies : %d": "Skor: %lu     Can: %d"
+"TOUS LES NIVEAUX !": "TÜM SEVİYELER!"
+"NIVEAU TERMINÉ": "SEVİYE BİTTİ"
+"Voir le classement": "Sıralamayı gör"
+"Score : %lu%s": "Skor: %lu%s"
+"   (hors classement)": "   (sıralama dışı)"
+"PARTIE TERMINÉE": "OYUN BİTTİ"
+# --- Hub ---
+"Ramasse tout l'or, échappe aux gardes, grimpe en haut.": "Tüm altını topla, muhafızlardan kaç, tepeye tırman."
+"Pendant une partie : touche le bandeau du haut pour mettre en pause.": "Oyun sırasında duraklatmak için üst banda dokun."
+"%d/%d débloqués": "%d/%d açıldı"
+"Meilleur score : %lu": "En iyi skor: %lu"
+"Contrôle : %s   -   Vitesse : %s": "Kontrol: %s   -   Hız: %s"
+"Niveaux": "Seviyeler"
+# --- Niveaux ---
+"NIVEAUX": "SEVİYELER"
+"Un niveau se débloque en terminant le précédent.": "Bir seviye, öncekini bitirince açılır."
+"Un niveau terminé débloque le suivant, définitivement.": "Biten her seviye sonrakini kalıcı olarak açar."
+"Jouable": "Oynanabilir"
+"Verrouillé": "Kilitli"
+# --- Réglages ---
+"Le Tab5 n'a pas de croix physique : ce sont des zones tactiles.": "Tab5'te fiziksel yön tuşu yok: bunlar dokunmatik alanlar."
+"Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant.": "Aynı anda tek dokunuş: Düğmeler modunda dururken kazılır. Karma mod, yürürken kazmak için parmağı serbest bırakır."
+"%d / 5 (plus haut = plus sensible)": "%d / 5 (yüksek = daha hassas)"
+"%s - hors classement": "%s - sıralama dışı"
+"Activé": "Açık"
+"%s : %s": "%s: %s"
+"Contrôle": "Kontrol"
+"Sensibilité": "Hassasiyet"
+"Vitesse": "Hız"
+"Pose la tablette PUIS appuie": "Tableti yatır SONRA dokun"
+"Mode entraînement": "Antrenman modu"
+"Effacer scores et progression": "Skorları ve ilerlemeyi sil"
+# --- Classement ---
+# « sev » = seviye ; « S.D. » = sıralama dışı (mode entraînement).
+"Aucun score enregistré pour l'instant.": "Henüz kayıtlı skor yok."
+"%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n": "%2d.  %7lu   sev %2d   %-11s  %s  %-8s%s\n"
+"H.C.": "S.D."
+"Top 10 local - conservé en NVS, survit aux reboots et aux OTA.": "Yerel ilk 10 - NVS'de saklanır, yeniden başlatma ve OTA'da korunur."
+"Demande confirmation": "Onay ister"
+# --- Confirmation d'effacement ---
+"TOUT EFFACER ?": "HEPSİ SİLİNSİN Mİ?"
+"Scores, meilleur score ET progression des niveaux.": "Skorlar, en iyi skor VE seviye ilerlemesi."
+"Cette action est irréversible.": "Bu işlem geri alınamaz."
+"Oui, tout effacer": "Evet, hepsini sil"
+# --- Pause ---
+"Score : %lu     Vies : %d     Or restant : %d": "Skor: %lu     Can: %d     Kalan altın: %d"
+"Relancer le niveau": "Seviyeyi yeniden başlat"
+"Sans perdre de vie": "Can kaybetmeden"
+"Quitter la partie": "Oyundan çık"
+
+# --- Go Tab (go_game.cpp, go_ai.cpp) -------------------------------------------
+# « Go Tab » (nom de la console) n'est pas traduit. Coordonnées (A1, D4…) et
+# tailles (9x9…) non plus. Vocabulaire : Siyah / Beyaz, hamle, pas, pes etmek,
+# komi, esir (prisonniers), handikap, alan (territoire). Les coordonnées (%s) ne
+# prennent aucun suffixe (harmonie vocalique impossible à prévoir).
+# --- Go : niveaux de l'IA (go_ai.cpp, tr_noop) ----------------------------------
+"Débutant": "Başlangıç"
+"Amateur": "Amatör"
+"Confirmé": "İleri"
+"Expert": "Uzman"
+# --- Go : modes, joueurs --------------------------------------------------------
+"Joueur contre Tab": "Oyuncu - Tab"
+"Joueur contre joueur": "Oyuncu - Oyuncu"
+"Tab contre Tab": "Tab - Tab"
+"Joueur %s": "Oyuncu %s"
+"Vous": "Sen"
+"Noir": "Siyah"
+"Blanc": "Beyaz"
+# --- Go : HUD -------------------------------------------------------------------
+# %.0s avale le « s » du pluriel français : le turc dit « esir: N » quel que soit N.
+# Même ordre d'arguments.
+"%s  ·  %d prise%s": "%s  ·  esir: %d%.0s"
+"Noir %.1f   contre   Blanc %.1f": "Siyah %.1f   -   Beyaz %.1f"
+"Coup %u  ·  komi %.1f": "Hamle %u  ·  komi %.1f"
+"Le Tab réfléchit...": "Tab düşünüyor..."
+"Touchez les groupes MORTS, puis Valider": "ÖLÜ grupları seç, sonra Onayla"
+"Touchez à nouveau %s pour valider": "Onaylamak için tekrar dokun: %s"
+"Au tour de Noir": "Sıra: Siyah"
+"Au tour de Blanc": "Sıra: Beyaz"
+# --- Go : panneau latéral -------------------------------------------------------
+# Titre du panneau à x=16, la colonne « Siyah » commence à x=108 (92 px, roboto_22) :
+# « HAMLELER » (113 px) la chevaucherait.
+"COUPS": "HAMLE"
+"passe": "pas"
+"Passer": "Pas"
+"coup|Annuler": "Geri al"
+"Indice": "İpucu"
+"Tout vivant": "Hepsi canlı"
+"Valider le score": "Skoru onayla"
+"Jouer %s": "Oyna %s"
+"Réflexion  %d %%": "Düşünme  %d %%"
+# --- Go : messages de statut ----------------------------------------------------
+"Coup illégal": "Geçersiz hamle"
+"Le Tab passe": "Tab pas geçti"
+"Passe — fin de partie": "Pas — oyun bitti"
+"Passe": "Pas"
+"Rien à annuler": "Geri alınacak bir şey yok"
+"Coup annulé": "Hamle geri alındı"
+"Indice : passer": "İpucu: pas"
+"Indice : %s": "İpucu: %s"
+"Deux passes : marquez les groupes morts": "İki pas: ölü grupları işaretle"
+"Partie reprise": "Oyuna devam edildi"
+"Intersection occupée": "Kesişim dolu"
+"Coup interdit (ko ou suicide)": "Yasak hamle (ko veya intihar)"
+"Le Tab abandonne": "Tab pes etti"
+# --- Go : menu principal --------------------------------------------------------
+"Score chinois d'aire  ·  komi %.1f  ·  ko simple": "Çin alan sayımı  ·  komi %.1f  ·  basit ko"
+"Toutes les parties et les réglages sont conservés dans le Tab.": "Tüm oyunlar ve ayarlar Tab'da saklanır."
+"Reprendre la partie": "Oyuna devam et"
+"Retour au goban": "Tahtaya dön"
+"%dx%d, coup %u": "%dx%d, hamle %u"
+"Reprendre la sauvegarde": "Kayda devam et"
+"Nouvelle partie": "Yeni oyun"
+"Taille, mode, niveau, handicap": "Boyut, mod, seviye, handikap"
+"Bilan face au Tab": "Tab karşısında sonuçlar"
+"Confirmation, coordonnées, secousse": "Onay, koordinatlar, sallama"
+"Retour à l'arcade": "Oyun salonuna dön"
+# --- Go : menu pause ------------------------------------------------------------
+"%s  ·  %s  ·  coup %u": "%s  ·  %s  ·  hamle %u"
+"Le goban vous attend.": "Tahta seni bekliyor."
+"Changer les réglages": "Ayarları değiştir"
+"plateau|Abandonner": "Pes et"
+"L'adversaire gagne": "Rakip kazanır"
+"Quitter le jeu": "Oyundan çık"
+"La partie est sauvegardée": "Oyun kaydedilir"
+# --- Go : nouvelle partie -------------------------------------------------------
+# « Vous jouez %s » reçoit « Noir (premier) » ou « Blanc » : « Oynadığın taş: Siyah (ilk) ».
+"Touchez une ligne pour changer sa valeur.": "Değerini değiştirmek için bir satıra dokun."
+"Taille du goban  —  9x9 / 13x13 / 19x19": "Tahta boyutu  —  9x9 / 13x13 / 19x19"
+"Adversaire": "Rakip"
+"Vous jouez %s": "Oynadığın taş: %s"
+"Noir (premier)": "Siyah (ilk)"
+"Couleur du joueur": "Oyuncu rengi"
+"Niveau : %s": "Seviye: %s"
+"Force du Tab": "Tab gücü"
+"Handicap : %d pierres": "Handikap: %d taş"
+"Handicap : aucun": "Handikap: yok"
+"Pierres offertes à Noir (Blanc commence)": "Siyaha verilen taşlar (Beyaz başlar)"
+"Jouer !": "Oyna!"
+"Komi 0,5 pour Blanc": "Beyaz için komi 0,5"
+"Komi 6,5 pour Blanc": "Beyaz için komi 6,5"
+# --- Go : statistiques ----------------------------------------------------------
+"%u parties  ·  %u min de jeu": "Oyun: %u  ·  %u dk oynandı"
+"Comptabilise uniquement le mode Joueur contre Tab.": "Yalnız Oyuncu - Tab modu sayılır."
+# %.0s : même principe que les prises (« Galibiyet 0 », « Mağlubiyet 1 »…).
+"%u victoire%s  ·  %u nulle%s  ·  %u défaite%s": "Galibiyet %u%.0s  ·  Beraberlik %u%.0s  ·  Mağlubiyet %u%.0s"
+"Taille affichée : %s": "Gösterilen boyut: %s"
+"Toucher pour changer": "Değiştirmek için dokun"
+"Remettre les compteurs à zéro": "Sayaçları sıfırla"
+"Effacer les statistiques ?": "İstatistikler silinsin mi?"
+"Victoires, nulles et défaites de toutes les tailles": "Tüm boyutların galibiyet, beraberlik ve mağlubiyetleri"
+"Cette action est définitive.": "Bu işlem kalıcıdır."
+# --- Go : réglages --------------------------------------------------------------
+"Options locales, conservées dans le Tab": "Yerel seçenekler, Tab'da saklanır"
+"Confirmation du coup : ACTIVÉE": "Hamle onayı: AÇIK"
+"Confirmation du coup : DÉSACTIVÉE": "Hamle onayı: KAPALI"
+"Un premier toucher place un fantôme, le second valide": "İlk dokunuş hayalet taş koyar, ikincisi onaylar"
+"Coordonnées : AFFICHÉES": "Koordinatlar: GÖRÜNÜR"
+"Coordonnées : MASQUÉES": "Koordinatlar: GİZLİ"
+"Lettres A..T et chiffres autour du goban": "Tahtanın çevresinde A..T harfleri ve rakamlar"
+"Dernier coup : MARQUÉ": "Son hamle: İŞARETLİ"
+"Dernier coup : NON MARQUÉ": "Son hamle: İŞARETSİZ"
+"Anneau rouge sur la dernière pierre posée": "Son konan taşta kırmızı halka"
+"Aperçu du territoire : ACTIVÉ": "Alan önizlemesi: AÇIK"
+"Aperçu du territoire : DÉSACTIVÉ": "Alan önizlemesi: KAPALI"
+"Pastilles de territoire pendant le comptage": "Sayım sırasında alan noktaları"
+"Secousse = indice : ACTIVÉE": "Sallama = ipucu: AÇIK"
+"Secousse = indice : DÉSACTIVÉE": "Sallama = ipucu: KAPALI"
+"Détection BMI270": "BMI270 algılama"
+# --- Go : carte de fin de partie ------------------------------------------------
+"Noir l'emporte": "Siyah kazandı"
+"Blanc l'emporte": "Beyaz kazandı"
+"Partie nulle": "Berabere"
+"Abandon  —  comptage indicatif : %.1f contre %.1f": "Pes  —  tahmini sayım: %.1f - %.1f"
+"%.1f  contre  %.1f      (écart %.1f)": "%.1f  -  %.1f      (fark %.1f)"
+# Même alignement : « Siyah » et « Beyaz » ont la même longueur (5 lettres) + 2 espaces.
+"Noir   pierres %d   territoire %d": "Siyah  taş %d   alan %d"
+"Blanc  pierres %d   territoire %d   komi %.1f": "Beyaz  taş %d   alan %d   komi %.1f"
+# Les compteurs de Score (go_engine.h) sont des PIERRES mortes, pas des groupes.
+"Groupes morts retirés : %d noirs, %d blancs": "Alınan ölü taş: %d siyah, %d beyaz"
+"Points neutres (dame) : %d": "Nötr noktalar (dame): %d"
+"Prisonniers de la partie : Noir %u, Blanc %u": "Oyundaki esirler: Siyah %u, Beyaz %u"
+"%s  ·  %s  ·  %u coups": "%s  ·  %s  ·  %u hamle"
+"Revanche": "Rövanş"
+"Menu principal": "Ana menü"
+
+# --- Trial Poursuite — quiz interface; the questions stay French (trivia_game.cpp) ---
+# Lot 4b — interface du quiz « Trial Poursuite » (Tab5/trivia_game.cpp).
+# Les questions et réponses (Tab5/trivia_questions.h) restent en français.
+# Déjà plus haut, non répétées ici : Réglages, Retour, Confirmer, Annuler.
+# Turc : part de camembert = dilim (le « pasta dilimi » du Trivial Pursuit), case =
+# kare, dé = zar, équipe = takım. Le quiz et ses questions restent en français.
+# --- Catégories (CAT_NAMES, CAT_SHORT) ---
+"Géographie": "Coğrafya"
+"Divertissement": "Eğlence"
+"Histoire": "Tarih"
+"Arts & Littérature": "Sanat & Edebiyat"
+"Sciences & Nature": "Bilim & Doğa"
+"Sports & Loisirs": "Spor & Hobi"
+"Divertis.": "Eğlence"
+"Arts": "Sanat"
+"Sciences": "Bilim"
+"Sports": "Spor"
+# --- Difficulté et temps de réponse ---
+"Facile": "Kolay"
+"Moyen": "Orta"
+"Difficile": "Zor"
+"Questions faciles": "Kolay sorular"
+"Faciles + moyennes": "Kolay + orta"
+"Moyennes + difficiles": "Orta + zor"
+"Illimité": "Sınırsız"
+# --- Règles du jeu ---
+"RÈGLES DU JEU": "OYUN KURALLARI"
+"Réunissez les 6 parts de camembert, puis rejoignez le centre pour la question finale.\n\nLancez le dé avec le bouton, ou secouez la tablette.\nTouchez ensuite l'une des cases surlignées : vous choisissez votre direction,\nmais jamais de demi-tour en cours de déplacement.\n\nBonne réponse : vous rejouez.   Mauvaise réponse : au suivant.\n\nLes 6 grandes cases cerclées de blanc sont les QG de catégorie :\nelles seules rapportent une part de camembert.\nUne case violette à point blanc = Rejouer, relancez immédiatement le dé.\nLe centre sans les 6 parts = question de la catégorie de votre choix.\nLe centre avec les 6 parts = finale : l'équipe suivante choisit la catégorie,\net une bonne réponse remporte la partie.": "6 dilimi topla, sonra final sorusu için merkeze ulaş.\n\nZarı düğmeyle at ya da tableti salla.\nSonra vurgulanan karelerden birine dokun: yönü sen seçersin,\nama hareket sırasında asla geri dönemezsin.\n\nDoğru yanıt: tekrar atarsın.   Yanlış yanıt: sıra sonrakinde.\n\nBeyaz halkalı 6 büyük kare kategori merkezleridir:\nyalnız bunlar dilim kazandırır.\nBeyaz noktalı mor kare = Tekrar at, zarı hemen yeniden at.\n6 dilim yokken merkez = istediğin kategoriden soru.\n6 dilimle merkez = final: sıradaki takım kategoriyi seçer,\nve doğru yanıt oyunu kazandırır."
+# --- Plateau : dé, bandeau d'état, HUD ---
+"LANCER LE DÉ": "ZARI AT"
+"ou secouez la tablette": "ya da tableti salla"
+"Aucune partie en cours": "Devam eden oyun yok"
+"Le dé roule…": "Zar yuvarlanıyor…"
+"Déplacement…": "Hareket ediyor…"
+"Dé : %u — touchez une case surlignée": "Zar: %u — vurgulu bir kareye dokun"
+"À %s de lancer le dé": "Zarı atma sırası: %s"
+"Tour %u": "Tur %u"
+"Équipe : %s": "Takım: %s"
+# --- Messages de tour ---
+"Case Rejouer — relancez le dé !": "Tekrar at karesi — zarı yeniden at!"
+"Finale manquée — il faudra revenir au centre.": "Final kaçtı — merkeze dönmen gerek."
+"Part gagnée ! Vous rejouez.": "Dilim kazanıldı! Tekrar atıyorsun."
+"Bonne réponse — vous rejouez.": "Doğru yanıt — tekrar atıyorsun."
+"Que la partie commence !": "Oyun başlasın!"
+"Partie reprise.": "Oyuna devam edildi."
+"Aucun déplacement possible — au suivant.": "Hamle yok — sıra sonrakinde."
+# --- Menu d'accueil du jeu ---
+"Le quiz rétro-salon — 720 questions, 6 catégories": "Retro salon yarışması — 720 soru (Fransızca), 6 kategori"
+"1 à 6 équipes": "1-6 takım"
+"%u équipes · tour %u": "%u takım · tur %u"
+"Aucune partie sauvegardée": "Kayıtlı oyun yok"
+"%u parties · %u %% de réussite": "%u oyun · %u %% başarı"
+"Aucune question jouée": "Oynanan soru yok"
+"Règles du jeu": "Oyun kuralları"
+"Comment gagner ses 6 parts": "6 dilim nasıl kazanılır"
+"Retour au Tab": "Tab'a dön"
+# --- Nouvelle partie (composition des équipes) et réglages ---
+"NOUVELLE PARTIE": "YENİ OYUN"
+"Composez les équipes, puis réglez les questions": "Takımları kur, sonra soruları ayarla"
+"Touchez un nom pour le changer, la pastille pour la couleur": "Adı değiştirmek için ada, rengi için noktaya dokun"
+"ÉQUIPES": "TAKIMLAR"
+"+ Ajouter une équipe": "+ Takım ekle"
+"DIFFICULTÉ": "ZORLUK"
+"TEMPS DE RÉPONSE": "YANIT SÜRESİ"
+"SECOUSSE = LANCER LE DÉ": "SALLAMA = ZAR AT"
+"Activée": "Açık"
+"Désactivée": "Kapalı"
+"COMMENCER LA PARTIE": "OYUNA BAŞLA"
+"Retour au menu": "Menüye dön"
+"RÉGLAGES": "AYARLAR"
+"Ces réglages s'appliquent à la prochaine question": "Bu ayarlar sonraki soruda geçerli olur"
+# --- Statistiques ---
+"STATISTIQUES": "İSTATİSTİKLER"
+"%u parties · %u questions · %u %% de réussite · %u parts gagnées": "%u oyun · %u soru · %u %% başarı · %u dilim kazanıldı"
+"Aucune question jouée pour le moment": "Henüz oynanan soru yok"
+"Victoire la plus rapide : %u tours": "En hızlı zafer: %u tur"
+"Effacer les statistiques": "İstatistikleri sil"
+# --- Pause et confirmation ---
+"Tour %u · au tour de %s": "Tur %u · sıra: %s"
+"Abandonner la partie": "Oyunu bırak"
+"Retour au menu principal": "Ana menüye dön"
+"La partie sera reprise plus tard": "Oyuna sonra devam edebilirsin"
+"CONFIRMER": "ONAYLA"
+"Abandonner la partie en cours ?\nLes parts gagnées seront perdues.": "Devam eden oyun bırakılsın mı?\nKazanılan dilimler kaybolur."
+"Effacer toutes les statistiques ?\nCette action est définitive.": "Tüm istatistikler silinsin mi?\nBu işlem kalıcıdır."
+# --- Case centrale : choix de la catégorie, finale ---
+"%s a ses 6 parts — %s choisit la catégorie": "%s 6 dilimi topladı — kategoriyi %s seçer"
+"%s a ses 6 parts — choisissez votre catégorie finale": "%s 6 dilimi topladı — final kategorini seç"
+"%s est au centre : choisissez une catégorie": "%s merkezde: bir kategori seç"
+"QUESTION FINALE": "FİNAL SORUSU"
+"CATÉGORIE AU CHOIX": "KATEGORİ SEÇ"
+"Bonne réponse = victoire": "Doğru yanıt = zafer"
+# --- Carte question : bandeau et verdict ---
+"FINALE — %s": "FİNAL — %s"
+"Exact — %s remporte la partie !": "Doğru — oyunu %s kazandı!"
+"Bravo ! Part « %s » gagnée — vous rejouez.": "Bravo! “%s” dilimi kazanıldı — tekrar atıyorsun."
+"Temps écoulé — la réponse était : %s": "Süre doldu — yanıt: %s"
+"Raté — la réponse était : %s": "Yanlış — yanıt: %s"
+# --- Victoire ---
+"VICTOIRE !": "ZAFER!"
+"%s remporte la partie": "Oyunu %s kazandı"
+"Partie bouclée en %u tours · %u bonnes réponses sur %u": "Oyun %u turda bitti · %u doğru yanıt, toplam %u"
+"Rejouer avec les mêmes équipes": "Aynı takımlarla tekrar oyna"
+
+# --- Dames Tab — draughts (draughts_game.cpp, draughts_ai.cpp) -----------------
+# Fragment lot 4b — « Dames Tab » (draughts_game.cpp).
+# Clé = texte français du code, octet pour octet. Vocabulaire de la dama turque :
+# taş (pion) / dama (pièce promue) / alma (prise) ; le jeu s'appelle « dama ».
+# --- Noms : niveaux de l'IA, variantes, modes ---------------------------------
+"Internationales 10×10": "Uluslararası 10x10"
+"Anglaises 8×8": "İngiliz 8x8"
+"Blancs": "Beyaz"
+"Noirs": "Siyah"
+# --- HUD (bandeau) et statut ----------------------------------------------------
+"IA : %s": "YZ: %s"
+"Prise x%d": "Alma x%d"
+"Prise obligatoire": "Alma zorunlu"
+"À vous": "Sıra sende"
+"Indice affiché": "İpucu gösterildi"
+# --- Hub ----------------------------------------------------------------------
+"Dames internationales — dames volantes": "Uluslararası dama — uçan damalar"
+"Variante, mode, niveau": "Varyant, mod, seviye"
+"Reprendre (vide)": "Devam (boş)"
+"Position sauvegardée": "Kayıtlı konum"
+"Victoires, nulles, défaites contre le Tab": "Tab karşısında galibiyet / beraberlik / yenilgi"
+"%s — %u V · %u N · %u D": "%s — %u G · %u B · %u M"
+"Secousse = indice, remise à zéro des stats": "Sallama = ipucu, istatistik sıfırlama"
+# --- Nouvelle partie (setup) ------------------------------------------------------
+"Touchez : internationales 10×10 ou anglaises 8×8": "Dokun: uluslararası 10x10 / İngiliz 8x8"
+"Joueur contre Tab / contre joueur / Tab contre Tab": "Oyuncu - Tab / Oyuncu - Oyuncu / Tab - Tab"
+"Vous jouez les %s": "Sen oynuyorsun: %s"
+"Couleur (contre le Tab)": "Renk (Tab'a karşı)"
+"Niveau IA": "YZ seviyesi"
+"Lance la partie": "Oyunu başlatır"
+# --- Statistiques, réglages -------------------------------------------------------
+"Bilan contre le Tab (par variante et niveau)": "Tab'a karşı sonuçlar (varyant ve seviyeye göre)"
+"Changer de variante": "Varyantı değiştir"
+"Options locales (NVS)": "Yerel seçenekler (NVS)"
+"Remettre les statistiques à zéro": "İstatistikleri sıfırla"
+"Remettre les stats à zéro ?": "İstatistikler sıfırlansın mı?"
+"Irréversible": "Geri alınamaz"
+"Confirmer la remise à zéro": "Sıfırlamayı onayla"
+# --- Fin de partie ------------------------------------------------------------------
+"Victoire des Blancs": "Beyaz kazandı"
+"Victoire des Noirs": "Siyah kazandı"
+"Mêmes réglages": "Aynı ayarlar"
+# Raisons de nulle (FMJD / WCDF) : « sans pion » = aucun taş (pion) n'a bougé,
+# seules les damas ont joué ; « chacun » = coups de chaque camp.
+"25 coups sans pion ni prise": "Taş hamlesi ve alma yok: 25 hamle"
+"40 coups sans pion ni prise": "Taş hamlesi ve alma yok: 40 hamle"
+"Fin de partie : 5 coups chacun": "Oyun sonu: her biri 5 hamle"
+"Fin de partie : 16 coups chacun": "Oyun sonu: her biri 16 hamle"
+"Position répétée 3 fois": "Konum 3 kez tekrarlandı"
+# --- Boutons latéraux en partie -----------------------------------------------------
+"Abandon": "Pes"
+"Nouvelle": "Yeni"
+
+# --- Roi Noir — chess (chess_game.cpp, chess_ai.cpp) ---------------------------
+# Lot 4b — jeu « Roi Noir » (chess_game.cpp, chess_ai.cpp) : français → turc.
+# « Roi Noir » / « ROI NOIR » (nom de la console) n'est pas traduit.
+# Vocabulaire : piyon, at, fil, kale, vezir, şah ; beraberlik (nulle), pat,
+# yarım hamle (demi-coup), sıra (rangée).
+# --- Pieces (contexte « echecs » : la Dame des echecs n'est pas celle des dames) ---
+"echecs|Pion": "Piyon"
+"echecs|Cavalier": "At"
+"echecs|Fou": "Fil"
+"echecs|Tour": "Kale"
+"echecs|Dame": "Vezir"
+"echecs|Roi": "Şah"
+# --- Notation SAN (contexte « san » : lettre seule de la piece, notation turque) ---
+"san|R": "Ş"
+"san|D": "V"
+"san|T": "K"
+"san|F": "F"
+"san|C": "A"
+# --- Niveaux du Tab (descriptions, chess_ai.cpp) ---
+"Débutant : ne voit qu'un coup, se trompe": "Başlangıç: tek hamle görür, hata yapar"
+"Voit les prises simples et les répond": "Basit almaları görür, karşılık verir"
+"Calcule 3 coups + les prises en chaîne": "3 hamle + zincir almaları hesaplar"
+"Calcule 4 coups, tactique correcte": "4 hamle hesaplar, düzgün taktik"
+"Effort maximal du Tab (5 coups visés)": "Tab'ın tam gücü (5 hamle hedefler)"
+# --- Tables : pendules, modes, vitesse de demo ---
+"Sans limite": "Sınırsız"
+"Blitz 5 min": "Blitz 5 dk"
+"Rapide 10 min": "Hızlı 10 dk"
+"15 min + 10 s": "15 dk + 10 sn"
+"Lente": "Yavaş"
+# --- Panneau lateral et boutons de partie ---
+"PARTIE": "OYUN"
+"Menu": "Menü"
+# --- HUD ---
+# Pendules : B = Beyaz, S = Siyah.
+"Trait aux %s": "Sıra: %s"
+"Démo — %s": "Demo — %s"
+"Trait : %s": "Sıra: %s"
+"à vous": "sende"
+"au Tab": "Tab'da"
+"Duel local": "Yerel düello"
+"pendule|B": "B"
+"pendule|N": "S"
+"Eval %+.1f": "Değ. %+.1f"
+"ÉCHEC !": "ŞAH!"
+"Le Tab réfléchit": "Tab düşünüyor"
+"Le Tab refuse la nulle": "Tab beraberliği reddetti"
+"Indice en recharge": "İpucu hazırlanıyor"
+"Le Tab réfléchit — profondeur %d, %u k nœuds": "Tab düşünüyor — derinlik %d, %u b düğüm"
+# --- Hub ---
+"Classement local : %u Elo   ·   %u parties jouées": "Yerel derece: %u Elo   ·   %u oyun oynandı"
+"Échiquier du Tab — règles FIDE, IA embarquée, 100 % local": "Tab'ın satranç tahtası — FIDE kuralları, yerleşik YZ, %100 yerel"
+"Toucher le bandeau du haut pendant la partie ouvre le menu de pause.": "Oyun sırasında üst banda dokunmak duraklatma menüsünü açar."
+"Choix du mode, de la couleur, du niveau et de la pendule": "Mod, renk, seviye ve saat seçimi"
+"%s · niveau %s · %u demi-coups joués": "%s · seviye %s · %u yarım hamle oynandı"
+"Bilan par niveau, records, classement local": "Seviyeye göre sonuçlar, rekorlar, yerel derece"
+"Gestes, règle des 50 coups, évaluation, vitesse de démo": "Hareketler, 50 hamle kuralı, değerlendirme, demo hızı"
+# --- Nouvelle partie ---
+# « %s — vous ouvrez %s » : « Beyaz — ilk oynarsın » / « Beyaz — ikinci oynarsın ».
+"Toucher une ligne pour changer sa valeur": "Değerini değiştirmek için bir satıra dokun"
+"Mode de jeu": "Oyun modu"
+"%s — vous ouvrez %s": "%s — %s oynarsın"
+"ouvrir|la partie": "ilk"
+"ouvrir|en second": "ikinci"
+"Votre couleur": "Rengin"
+"Sans objet dans ce mode": "Bu modda geçersiz"
+"Niveau du Tab": "Tab seviyesi"
+"Sans objet : duel entre deux humains": "Geçersiz: iki insan arasında düello"
+"Pendule": "Saat"
+"Commencer": "Başla"
+"Lance la partie avec ces réglages": "Oyunu bu ayarlarla başlatır"
+"Revenir au menu principal": "Ana menüye dön"
+# --- Reglages ---
+"Conservés en NVS, valables pour toutes les parties": "NVS'de saklanır, tüm oyunlar için geçerli"
+"Gestes IMU": "IMU hareketleri"
+"Activés — une secousse franche demande un indice": "Açık — sert bir sallama ipucu ister"
+"Désactivés — l'inclinaison est ignorée": "Kapalı — eğim yok sayılır"
+"Règle des 50 coups": "50 hamle kuralı"
+"Nulle automatique après 50 coups sans prise ni pion": "Alma veya piyon hamlesi olmadan 50 hamlede otomatik beraberlik"
+"Désactivée — la partie continue": "Kapalı — oyun sürer"
+"Évaluation au HUD": "Ekranda değerlendirme"
+"Affichée — estimation en pions, indicative": "Açık — piyon cinsinden tahmin, yaklaşık"
+"Masquée": "Gizli"
+"%s — cadence du mode Tab contre Tab": "%s — Tab - Tab modunun temposu"
+"Vitesse de démo": "Demo hızı"
+"Remet à zéro le bilan et le classement local": "Sonuçları ve yerel dereceyi sıfırlar"
+"EFFACER LES STATISTIQUES": "İSTATİSTİKLERİ SİL"
+"Bilan, records et classement local seront remis à zéro.": "Sonuçlar, rekorlar ve yerel derece sıfırlanacak."
+# --- Statistiques ---
+"Classement local : %u Elo   ·   %u parties contre le Tab": "Yerel derece: %u Elo   ·   Tab'a karşı %u oyun"
+"Victoires / nulles / défaites par niveau\n": "Seviyeye göre galibiyet / beraberlik / yenilgi\n"
+"%s : %u / %u / %u\n": "%s: %u / %u / %u\n"
+"\nPlus longue partie : %u demi-coups\n": "\nEn uzun oyun: %u yarım hamle\n"
+"Temps de jeu cumulé : %u min": "Toplam oyun süresi: %u dk"
+# --- Promotion ---
+"PROMOTION": "TERFİ"
+"Le pion atteint la dernière rangée — choisir la pièce": "Piyon son sıraya ulaştı — taşı seç"
+# --- Pause ---
+"La pendule est arrêtée": "Saat durduruldu"
+"Retour à la partie": "Oyuna dön"
+"Annuler le dernier coup": "Son hamleyi geri al"
+"Annule votre coup et la réponse du Tab": "Hamleni ve Tab'ın yanıtını geri alır"
+"Annule le dernier demi-coup": "Son yarım hamleyi geri alır"
+"Proposer nulle": "Beraberlik öner"
+"Le Tab accepte s'il n'est pas mieux": "Tab, önde değilse kabul eder"
+"Accord entre les deux joueurs": "İki oyuncunun anlaşması gerekir"
+"La partie est perdue et comptabilisée": "Oyun kaybedilir ve sayılır"
+"Gestes, règles, affichage": "Hareketler, kurallar, görünüm"
+"La partie en cours est sauvegardée": "Devam eden oyun kaydedilir"
+# --- Fin de partie ---
+# Majuscules écrites à la main : « BERABERLİK », « YENİLGİ » (İ et non I).
+"PARTIE NULLE": "BERABERLİK"
+"VICTOIRE": "ZAFER"
+"DÉFAITE": "YENİLGİ"
+"LES BLANCS GAGNENT": "BEYAZ KAZANDI"
+"LES NOIRS GAGNENT": "SİYAH KAZANDI"
+"%d demi-coups  ·  niveau %s  ·  classement local : %u Elo": "%d yarım hamle  ·  seviye %s  ·  yerel derece: %u Elo"
+"%d demi-coups joués": "%d yarım hamle oynandı"
+"Même mode, mêmes réglages": "Aynı mod, aynı ayarlar"
+"Échec et mat": "Şah mat"
+"Pat — le roi n'est pas en échec mais aucun coup n'est jouable": "Pat — şah tehdit altında değil ama oynanabilir hamle yok"
+"Matériel insuffisant pour mater": "Mat için yetersiz materyal"
+"Triple répétition de la position": "Konumun üç kez tekrarı"
+"Partie interrompue : historique plein": "Oyun kesildi: geçmiş dolu"
+"Nulle par accord entre les joueurs": "Oyuncuların anlaşmasıyla beraberlik"
+"Nulle déclarée en mode démo": "Demo modunda beraberlik ilan edildi"
+"Le Tab accepte la nulle": "Tab beraberliği kabul etti"
+"raison|Abandon": "Pes"
+"Temps écoulé — matériel insuffisant pour mater": "Süre doldu — mat için yetersiz materyal"
+"Temps écoulé": "Süre doldu"
