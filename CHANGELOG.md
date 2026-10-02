@@ -4,6 +4,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-02 — Page d'installation : la suite côté Home Assistant en clair
+
+- **Page `/install/`, étape 5 « Ensuite »** : les fichiers Home Assistant (lien direct vers
+  `tab5_home_assistant.zip` de la dernière release, ligne `packages:`, vérification,
+  redémarrage, Home Assistant 2026.8 ou plus récent), le chemin pour ajouter la tablette, et
+  le blueprint pas à pas (où le trouver, « Créer une automatisation », cinq appareils au plus
+  dans « Pièce 1 ») avec un bouton **Importer le blueprint** (redirection
+  `blueprint_import` de My Home Assistant) quand l'archive n'est pas installée. Avant, la
+  page disait seulement « vos appareils se choisissent dans le blueprint », sans lien : un
+  premier utilisateur d'une ST7121 n'a pas su le configurer (forum Home Assistant, discussion
+  #278).
+
 ### 2026-10-01 — Verre plein dans les popups, ouverture 8 à 16 % plus rapide
 
 - **Écran : plus de transparence dans les popups.** Cartes de verre (`style_glass_card`,
