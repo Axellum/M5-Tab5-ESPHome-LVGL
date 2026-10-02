@@ -4,6 +4,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-02 — Météo de Home Assistant sans Météo-France, prouvée par un test
+
+- `tests/test_meteo_sans_meteo_france.py` rend toute la chaîne des prévisions avec la seule
+  météo que Home Assistant installe d'office, Met.no : l'entité est prise sans rien
+  choisir, puis les 15 jours, les 10 heures (à l'heure locale), la météo du moment et les
+  probabilités envoyés à la tablette. Prévisions = vraie réponse de Met.no pour Istanbul
+  passée par le code de l'intégration de HA 2026.9.4. Contre-épreuve : cinq erreurs
+  introduites dans les packages, cinq échecs. Les trois payloads rendus aussi dans le
+  moteur Jinja de Home Assistant (installation de l'auteur, lecture seule) : identiques.
+- **Fait corrigé** : l'intégration Met.no de HA ne donne que **6 jours** (aujourd'hui
+  compris) et 48 heures, pas une dizaine de jours ; les deux pages suivantes des 15 jours
+  ne montrent que le 6e. Écrit dans les limites du guide d'installation.
+
 ### 2026-10-02 — Pluie dans l'heure hors de France sans rien régler
 
 - **Carte pluie** : la liste « Tab5 · source de la pluie dans l'heure » démarre sur
