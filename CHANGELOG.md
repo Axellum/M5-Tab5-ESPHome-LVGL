@@ -4,17 +4,6 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
-### 2026-10-02 — Un écran Home Assistant, pas forcément mural
-
-La tablette peut être posée sur un socle ou un bureau (celle de l'auteur est sur un socle) :
-« wall screen » et « écran mural » retirés du titre du README, des phrases d'accroche (EN et
-FR), du titre, du `h1`, de la description, de l'aperçu des liens et du JSON-LD du site. La
-photo d'en-tête du site est publiée sous `m5stack-tab5-home-assistant-screen.jpg` (et non
-plus `…-wall-screen.jpg`), et l'image de partage dit « Home Assistant / screen » (seule la
-ligne repeinte, même police Roboto Bold). La description du dépôt GitHub suit. Restent
-volontairement : « heure murale » et « temps mural » dans le code (*wall-clock time*),
-et les textes déjà publiés archivés dans `docs/press/`.
-
 ### 2026-10-02 — Les sept langues mises en avant
 
 - **README** (EN et FR) : « en sept langues » dans la phrase d'accroche, et une puce dans

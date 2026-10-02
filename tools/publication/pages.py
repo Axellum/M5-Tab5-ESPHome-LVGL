@@ -48,7 +48,7 @@ SITE = "https://axellum.github.io/M5-Tab5-ESPHome-LVGL/"
 # de recherche ; les fichiers du dépôt gardent le leur (README, docs, kit de presse).
 IMAGES = {
     "m5stack-tab5-home-assistant-screen-card.jpg": "tab5_social_preview.jpg",
-    "m5stack-tab5-home-assistant-screen.jpg": "tab5_hero_4x3.jpg",
+    "m5stack-tab5-home-assistant-wall-screen.jpg": "tab5_hero_4x3.jpg",
     "m5stack-tab5-home-assistant-ui-tour.webp": "tab5_ui_tour_hq.webp",
     "m5stack-tab5-home-assistant-device-buttons.jpg": "tab5_photo_domo.jpg",
     "m5stack-tab5-plant-sensors-soil-moisture.jpg": "tab5_photo_plants.jpg",
