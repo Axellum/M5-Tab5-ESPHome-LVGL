@@ -964,7 +964,7 @@ static const char* const kI18nCtx[] = {
 };
 
 static const char* const kI18nKeys[] = {
-    "\n  Aucun score enregistre.",
+    "\n  Aucun score enregistré.",
     "\n*** Nouveau record ! ***",
     "\nPlus longue partie : %u demi-coups\n",
     "   (hors classement)",
@@ -1918,7 +1918,7 @@ static const char* const kI18nKeys[] = {
 
 // English (en.yaml)
 static const char* const kI18n_en[] = {
-    "\n  No scores saved.",  // "\n  Aucun score enregistre."
+    "\n  No scores saved.",  // "\n  Aucun score enregistré."
     "\n*** New high score! ***",  // "\n*** Nouveau record ! ***"
     "\nLongest game: %u half-moves\n",  // "\nPlus longue partie : %u demi-coups\n"
     "   (unranked)",  // "   (hors classement)"
@@ -2872,7 +2872,7 @@ static const char* const kI18n_en[] = {
 
 // Deutsch (de.yaml)
 static const char* const kI18n_de[] = {
-    "\n  Noch kein Score gespeichert.",  // "\n  Aucun score enregistre."
+    "\n  Noch kein Score gespeichert.",  // "\n  Aucun score enregistré."
     "\n*** Neuer Rekord! ***",  // "\n*** Nouveau record ! ***"
     "\nLängste Partie: %u Halbzüge\n",  // "\nPlus longue partie : %u demi-coups\n"
     "   (außer Wertung)",  // "   (hors classement)"
@@ -3826,7 +3826,7 @@ static const char* const kI18n_de[] = {
 
 // Nederlands (nl.yaml)
 static const char* const kI18n_nl[] = {
-    "\n  Geen scores opgeslagen.",  // "\n  Aucun score enregistre."
+    "\n  Geen scores opgeslagen.",  // "\n  Aucun score enregistré."
     "\n*** Nieuw record! ***",  // "\n*** Nouveau record ! ***"
     "\nLangste partij: %u halve zetten\n",  // "\nPlus longue partie : %u demi-coups\n"
     "   (telt niet mee)",  // "   (hors classement)"
@@ -4780,7 +4780,7 @@ static const char* const kI18n_nl[] = {
 
 // Español (es.yaml)
 static const char* const kI18n_es[] = {
-    "\n  Ninguna puntuación guardada.",  // "\n  Aucun score enregistre."
+    "\n  Ninguna puntuación guardada.",  // "\n  Aucun score enregistré."
     "\n*** ¡Nuevo récord! ***",  // "\n*** Nouveau record ! ***"
     "\nPartida más larga: %u medias jugadas\n",  // "\nPlus longue partie : %u demi-coups\n"
     "   (sin clasificar)",  // "   (hors classement)"
@@ -5734,7 +5734,7 @@ static const char* const kI18n_es[] = {
 
 // Italiano (it.yaml)
 static const char* const kI18n_it[] = {
-    "\n  Nessun punteggio salvato.",  // "\n  Aucun score enregistre."
+    "\n  Nessun punteggio salvato.",  // "\n  Aucun score enregistré."
     "\n*** Nuovo record! ***",  // "\n*** Nouveau record ! ***"
     "\nPartita più lunga: %u semimosse\n",  // "\nPlus longue partie : %u demi-coups\n"
     "   (fuori classifica)",  // "   (hors classement)"
@@ -6688,7 +6688,7 @@ static const char* const kI18n_it[] = {
 
 // Türkçe (tr.yaml)
 static const char* const kI18n_tr[] = {
-    "\n  Kayıtlı skor yok.",  // "\n  Aucun score enregistre."
+    "\n  Kayıtlı skor yok.",  // "\n  Aucun score enregistré."
     "\n*** Yeni rekor! ***",  // "\n*** Nouveau record ! ***"
     "\nEn uzun oyun: %u yarım hamle\n",  // "\nPlus longue partie : %u demi-coups\n"
     "   (sıralama dışı)",  // "   (hors classement)"
