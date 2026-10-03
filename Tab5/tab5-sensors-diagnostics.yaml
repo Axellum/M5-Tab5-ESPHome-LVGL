@@ -7,7 +7,8 @@
 #       température coeur, horloge SNTP et intervals de la console système.
 # @batterie Batterie d'origine (discussion #278, 03/10/2026) : CHG_EN (pi4ioe2 P7) mis à 1,
 #           charge rapide (P5) à l'arrêt, état CHG_STAT (P6) lu toutes les 10 s, INA226
-#           en 0x41 (0x40 = ES7210). Non testé avec une batterie (l'auteur n'en a pas).
+#           en 0x41 (0x40 = ES7210). Non testé avec une batterie (l'auteur n'en a pas) ;
+#           sans batterie les entités disent « en charge, 100 % » : désactivées par défaut.
 # @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
 #                         Les blocs on_value: doivent se contenter d'appeler des fonctions
 #                         C++ depuis tab5_custom.cpp (ex: update_console_diagnostics_ui(...) ).
@@ -115,12 +116,15 @@ binary_sensor:
   # CHG_STAT (P6), 1 = en charge (M5Unified isCharging, config de référence ESPHome,
   # dont vient le tirage vers le bas). Lu par l'interval de 10 s plus bas ; un
   # changement n'est publié que s'il tient 30 s (battements de fin de charge).
-  # Sans batterie : valeur jamais relevée.
+  # Sans batterie, il dit « en charge » (relevé sur la tablette de l'auteur, 03/10/2026) :
+  # les trois entités de la batterie sont désactivées par défaut dans HA, à activer
+  # quand la batterie est montée.
   - platform: gpio
     id: batterie_en_charge
     name: "Tab5 Batterie en charge"
     device_class: battery_charging
     entity_category: diagnostic
+    disabled_by_default: true
     pin:
       pi4ioe5v6408: pi4ioe2
       number: 6
@@ -281,7 +285,8 @@ sensor:
   # Tension de la batterie (INA226, présent en 0x41 sur la tablette de l'auteur le
   # 26/09/2026 ; 0x40, défaut d'ESPHome, est l'ES7210). Shunt et max_current de la
   # config de référence ESPHome, utiles au seul courant (non publié). Publiée à 50 mV
-  # près (≈ 2 %) ou toutes les 15 min. Sans batterie : valeur jamais relevée.
+  # près (≈ 2 %) ou toutes les 15 min. Sans batterie, elle lit la tension du chargeur :
+  # 8,39 V, donc « 100 % » (tablette de l'auteur, 03/10/2026) ; d'où disabled_by_default.
   - platform: ina226
     i2c_id: bsp_bus
     address: 0x41
@@ -294,6 +299,7 @@ sensor:
       name: "Tab5 Tension batterie"
       accuracy_decimals: 2
       entity_category: diagnostic
+      disabled_by_default: true
       filters:
         - or:
             - throttle: 15min
@@ -310,6 +316,7 @@ sensor:
     unit_of_measurement: "%"
     accuracy_decimals: 0
     entity_category: diagnostic
+    disabled_by_default: true
     filters:
       - lambda: |-
           if (std::isnan(x) || x < 5.0f) return NAN;

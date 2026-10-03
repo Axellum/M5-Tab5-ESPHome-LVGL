@@ -19,8 +19,10 @@ les broches du Wi-Fi et de l'USB étaient posées.
   `Tab5 Batterie` (niveau en %, estimé d'après la tension, 6,0 → 8,23 V ; inconnu sous 5 V).
 - `docs/hardware.md` (broches et section Alimentation, EN et FR), README et cartographie.
 
-**Non testé avec une batterie** : la tablette de l'auteur n'en a pas. Ce que les trois
-entités montrent sans batterie n'a pas été relevé non plus.
+**Non testé avec une batterie** : la tablette de l'auteur n'en a pas. Sans batterie, les
+trois entités disent « en charge », 8,39 V et 100 % (relevé sur sa tablette le 03/10) :
+elles sont donc **désactivées par défaut** dans Home Assistant ; avec la batterie montée,
+les activer sur la page de l'appareil.
 
 ### 2026-10-03 — Icônes de nuit dans les prévisions heure par heure
 
