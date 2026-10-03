@@ -25,7 +25,8 @@ def _on_boot(texte):
 def _lambdas(bloc):
     """Corps des lambdas (bloc `|-` ou ligne simple), espaces de tête retirés."""
     corps = []
-    for m in re.finditer(r"- lambda: \|-\n((?:[ \t]+.*\n|\n)+?)(?=[ \t]*- |\Z)", bloc):
+    # `[ \t].*` et non `[ \t]+.*` : une seule façon de lire chaque ligne, pas de ReDoS (CodeQL py/redos).
+    for m in re.finditer(r"- lambda: \|-\n((?:[ \t].*\n|\n)+?)(?=[ \t]*- |\Z)", bloc):
         lignes = [l.strip() for l in m.group(1).splitlines() if l.strip()]
         corps.append("\n".join(lignes))
     corps += re.findall(r"- lambda: '([^'\n]+)'", bloc)

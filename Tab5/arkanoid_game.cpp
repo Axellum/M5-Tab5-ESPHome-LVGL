@@ -618,16 +618,21 @@ static void go_highscores() {
     panel_on(true);
 
     auto& body = gs->scores_body;
-    int off = 0;
-    off += snprintf(body + off, sizeof(body) - off, "%s", tr("Rang  Score      Niv  Contrôle\n"));
+    // snprintf renvoie la longueur VOULUE : on n'avance `off` que si le texte tient,
+    // sinon `sizeof(body) - off` passerait sous zéro (même garde que Pinball).
+    size_t off = 0;
+    int w = snprintf(body, sizeof(body), "%s", tr("Rang  Score      Niv  Contrôle\n"));
+    if (w > 0) off = ((size_t) w < sizeof(body)) ? (size_t) w : sizeof(body) - 1;
     for (int i = 0; i < gs->save.score_count && i < ARK_MAX_SCORES; i++) {
         const ArkScoreEntry& e = gs->save.scores[i];
         const char* cn = tr((e.ctrl_mode == 0) ? "IMU" : (e.ctrl_mode == 1) ? "Btn" : "Mix");
-        off += snprintf(body + off, sizeof(body) - off, " %2d   %7u    %d    %s\n",
-                        i + 1, (unsigned)e.score, (int)e.level, cn);
+        w = snprintf(body + off, sizeof(body) - off, " %2d   %7u    %d    %s\n",
+                     i + 1, (unsigned)e.score, (int)e.level, cn);
+        if (w <= 0 || (size_t) w >= sizeof(body) - off) break;
+        off += (size_t) w;
     }
     if (gs->save.score_count == 0) {
-        off += snprintf(body + off, sizeof(body) - off, "%s", tr("\n  Aucun score enregistre."));
+        snprintf(body + off, sizeof(body) - off, "%s", tr("\n  Aucun score enregistre."));
     }
 
     panel_text(tr("Classement"), tr("Top 10 local (NVS)"), body, "");
