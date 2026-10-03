@@ -12,9 +12,9 @@
 #                          quel capteur physique tombe dans quel slot change à chaque update.
 # @architecture_constraint La carte contient ses 4 slots : 375 px = 4 × 90 + 5 × 3 (SPACE_EVENLY,
 #                          pad_column à 0). Jusqu'au 03/10/2026 elle faisait 350 px pour
-#                          4 × 90 + 3 × 12 (pad_column du thème) : les slots du bord dépassaient
-#                          de 9-10 px et la carte rognait leur texte (« Planta 2 » en espagnol).
-#                          Mêmes positions qu'avant à 4 slots ; garder la zone d'appui long
+#                          4 × 90 + 3 × 11 (pad_column du thème : 14 px à 130 dpi) : les slots
+#                          du bord dépassaient de 8 et 11 px et la carte rognait leur texte
+#                          (« Planta 2 » en espagnol). Garder la zone d'appui long
 #                          `btn_pots_detail_zone` (tab5-lvgl.yaml) de la même largeur.
 # ============================================================================
 obj:
