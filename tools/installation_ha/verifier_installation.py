@@ -977,12 +977,23 @@ async def attendre_traces(ha: HA, apres: float, rapport: Rapport, attendues=TRAC
                       + ("; ".join(resume_passage(t) for t in passages) or "aucun passage"))
 
 
+def declencheur_meteo(trace: dict) -> bool:
+    """Passage du blueprint lancé par un déclencheur de la météo (meteo_rechargement,
+    meteo_demarrage, meteo_liste : mêmes événements que rechargement et demarrage_ha).
+    Arrêté par les conditions, c'est que la section « Météo » est vide ou les listes déjà à
+    jour : rien à écrire, voulu, ce n'est pas une poussée ratée."""
+    declencheur = variables_de_trace(trace).get("trigger") or {}
+    return str(declencheur.get("id", "")).startswith("meteo_")
+
+
 async def juger_passages(ha: HA, item_id: str, declencheur: str, passages: list[dict], rapport: Rapport) -> None:
     fautifs = []
     for t in passages:
         execution = t.get("script_execution")
         if execution in REFUS_DE_MODE:
             rapport.info(f"{item_id} ({declencheur}) : un passage refusé ({execution}), un autre tournait")
+        elif execution == "failed_conditions" and declencheur_meteo(await ha.trace(item_id, t["run_id"])):
+            rapport.info(f"{item_id} ({declencheur}) : passage de la météo du blueprint, rien à écrire (conditions)")
         elif execution != "finished":
             fautifs.append(resume_passage(t))
         elif erreurs := erreurs_de_trace(await ha.trace(item_id, t["run_id"])):
