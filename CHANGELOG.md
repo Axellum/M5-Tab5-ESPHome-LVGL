@@ -4,6 +4,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-03 — Plantes de l'accueil : plus de nom rogné
+
+- La rangée des 4 plantes sous l'horloge faisait 350 px pour 4 cases de 90 px séparées
+  de 12 px (espacement par défaut du thème) : les deux cases du bord dépassaient de 9-10 px
+  et la carte rognait leur texte. Invisible avec « Pot 2 », visible en espagnol : le « P »
+  de « Planta 2 » coupé à gauche, « Planta 3 » à droite (rendu hors tablette du 03/10).
+  La carte fait maintenant 375 px (4 × 90 + 5 × 3, espacement à 0) : les cases restent au
+  même pixel, et chacune garde ses 90 px entiers. Zone d'appui long de même largeur.
+
 ### 2026-10-02 — Les sept langues mises en avant
 
 - **README** (EN et FR) : « en sept langues » dans la phrase d'accroche, et une puce dans
