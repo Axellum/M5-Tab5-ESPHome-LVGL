@@ -324,8 +324,11 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
     if (page_index < 0 || page_index > 2) return;
 
     for (int i = 0; i < 5; i++) {
-        // Slot i on screen (left-to-right) corresponds to time index: page_index * 5 + (4 - i)
-        int idx = page_index * 5 + (4 - i);
+        // Slot i on screen (left-to-right) corresponds to time index: page_index * 5 + i,
+        // l'heure la plus proche à gauche, comme les jours (discussion #278 ; avant le
+        // 03/10/2026 : 4 - i, les heures se lisaient de droite à gauche). Les objets
+        // restent nommés h4 (gauche) … h0 (droite) : g_hour_slots[i] = h(4 - i).
+        int idx = page_index * 5 + i;
         WeatherHourSlot& slot = slots[i];
         if (!slot.time_lbl) continue;
 
