@@ -288,7 +288,7 @@ lvgl:
             align: TOP_MID
             x: 0
             y: 230
-            width: 350
+            width: 375
             height: 80
             styles: style_invisible
             on_long_press:
