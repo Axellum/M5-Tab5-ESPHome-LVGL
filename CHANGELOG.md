@@ -4,6 +4,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-03 — La batterie d'origine se charge, état et niveau dans Home Assistant
+
+Demande d'un utilisateur (discussion #278) : avec la batterie d'origine, on ne voyait pas
+si elle chargeait. Le firmware ne touchait pas au chargeur : sur l'expandeur 0x44, seules
+les broches du Wi-Fi et de l'USB étaient posées.
+- **Charge activée au démarrage** : CHG_EN (PI4IOE 0x44, P7) à 1, comme la bibliothèque
+  M5Unified de M5Stack et la config de référence ESPHome (PR #1396 de devices.esphome.io).
+  Charge rapide (P5) laissée à l'arrêt, comme cette référence : la tablette reste
+  branchée, et la charge standard demande moins de courant au chargeur USB.
+- **Trois entités de diagnostic** : `Tab5 Batterie en charge` (binary_sensor
+  `battery_charging`, P6 lue toutes les 10 s, changement publié après 30 s),
+  `Tab5 Tension batterie` (INA226 en 0x41, à 50 mV près ou toutes les 15 min) et
+  `Tab5 Batterie` (niveau en %, estimé d'après la tension, 6,0 → 8,23 V ; inconnu sous 5 V).
+- `docs/hardware.md` (broches et section Alimentation, EN et FR), README et cartographie.
+
+**Non testé avec une batterie** : la tablette de l'auteur n'en a pas. Ce que les trois
+entités montrent sans batterie n'a pas été relevé non plus.
+
 ### 2026-10-03 — Icônes de nuit dans les prévisions heure par heure
 
 - **Prévisions horaires** (discussion #278) : la nuit, un créneau « peu nuageux » montrait
