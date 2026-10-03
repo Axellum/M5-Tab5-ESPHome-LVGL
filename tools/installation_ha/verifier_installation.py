@@ -37,7 +37,10 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
       calculés à la connexion (relus dans la trace), tab5_maj_tuiles jamais appelée si
       la tablette est en dessous de 3.2.0 (protocole 1), appelée avec les définitions
       sinon ; la clim d'une tuile sans l'option m (ADR-0027) : ses réglages (crRT) et son
-      état (ceRT) calculés et poussés avec les tuiles ; journal de HA sans erreur Tab5. Ce que
+      état (ceRT) calculés et poussés avec les tuiles ; la section « Météo » du blueprint
+      (discussion #278) : remplie, écrite dans les listes et suivie par la poussée, une
+      liste changée à la main y revient avec une notification, vidée, les listes décident ;
+      journal de HA sans erreur Tab5. Ce que
       montre l'écran entre la création de l'automatisation et le redémarrage est
       rapporté (capture 1), sans faire échouer.
 @contraintes Le mot de passe du compte est tiré au hasard ici et n'est jamais affiché ;
@@ -864,11 +867,7 @@ async def creer_automatisation(ha: HA, rapport: Rapport) -> None:
         existantes = sorted(e for e in etats if e.split(".")[0] in domaines)
         raise Echec(f"entités de test absentes : {manquantes} ; présentes : {existantes}")
 
-    await ha.post(f"/api/config/automation/config/{ID_AUTOMATISATION}", {
-        "alias": "Tab5 — emplacements (CI)",
-        "description": "Créée par tools/installation_ha/verifier_installation.py",
-        "use_blueprint": {"path": CHEMIN_BLUEPRINT, "input": entrees_blueprint()},
-    })
+    await enregistrer_automatisation(ha, entrees_blueprint())
     for _ in range(40):
         automatisations = [e for e in (await ha.etats()).values()
                            if e["entity_id"].startswith("automation.")
@@ -1290,6 +1289,100 @@ async def demandes_de_la_tablette(ha: HA, ws: WS, rapport: Rapport) -> None:
                      "; ".join(str(i.get("issue_id")) for i in refus))
 
 
+async def enregistrer_automatisation(ha: HA, entrees: dict[str, Any]) -> None:
+    """L'automatisation du blueprint enregistrée de nouveau avec ces entrées (ce que fait
+    « Enregistrer » dans l'éditeur ; HA recharge les automatisations)."""
+    await ha.post(f"/api/config/automation/config/{ID_AUTOMATISATION}", {
+        "alias": "Tab5 — emplacements (CI)",
+        "description": "Créée par tools/installation_ha/verifier_installation.py",
+        "use_blueprint": {"path": CHEMIN_BLUEPRINT, "input": entrees},
+    })
+
+
+async def attendre_passage(ha: HA, item_id: str, motif: str, apres: float, delai: float = 30.0) -> dict | None:
+    """Trace complète du premier passage abouti (« finished ») de `item_id` depuis `apres`
+    dont le déclencheur contient `motif` (None au bout de `delai`). Ceux arrêtés par les
+    conditions (« failed_conditions ») sont ignorés."""
+    fin = time.monotonic() + delai
+    while time.monotonic() < fin:
+        for t in await ha.traces(item_id):
+            if (motif in (t.get("trigger") or "") and t.get("script_execution") == "finished"
+                    and horodatage((t.get("timestamp") or {}).get("start")) >= apres):
+                return await ha.trace(item_id, t["run_id"])
+        await asyncio.sleep(1)
+    return None
+
+
+async def verifier_meteo_du_blueprint(ha: HA, rapport: Rapport) -> None:
+    """Section « Météo » du blueprint (discussion #278) : remplie, son choix est écrit
+    dans les listes du package et la poussée le suit ; une liste changée à la main (select
+    « Tab5 · source des prévisions », input_select des vigilances) y revient, avec une
+    notification ; vidée, les listes décident de nouveau. Finit sur l'état d'avant
+    (météo SOURCES, vigilances Météo-France)."""
+    ville = SOURCES["select.tab5_source_des_previsions"]
+    liste_meteo = "input_text.tab5_meteo_previsions"
+    select_meteo = "select.tab5_source_des_previsions"
+    autres = sorted(e for e in await ha.etats() if e.startswith("weather.") and e != ville)
+    if not autres:
+        rapport.echec(f"météo du blueprint : aucune autre entité météo que {ville} (intégration demo ?)")
+        return
+    autre = autres[0]
+
+    # 1. Remplie : écrite à l'enregistrement, suivie par sensor.tab5_meteo et la poussée.
+    debut = time.time()
+    await enregistrer_automatisation(ha, {**entrees_blueprint(), "meteo_previsions": autre,
+                                          "meteo_vigilance": "Aucune"})
+    valeur = await attendre_attribut(ha, liste_meteo, None, autre)
+    rapport.verifier(valeur == autre, f"blueprint « Météo » rempli ({autre}) : écrit dans {liste_meteo}",
+                     f"état {valeur!r} (trace de {ID_AUTOMATISATION}, déclencheur automation_reloaded)")
+    entite = await attendre_attribut(ha, "sensor.tab5_meteo", "entite", autre)
+    rapport.verifier(entite == autre, f"sensor.tab5_meteo suit le blueprint ({autre})", f"entite {entite!r}")
+    vigilance = await attendre_attribut(ha, LISTE_VIGILANCES, None, "Aucune")
+    rapport.verifier(vigilance == "Aucune", f"blueprint « Vigilances » = Aucune : écrit dans {LISTE_VIGILANCES}",
+                     f"état {vigilance!r}")
+    fin = time.monotonic() + 60
+    meteo_poussee = None
+    while time.monotonic() < fin and meteo_poussee != autre:
+        for t in await ha.traces(ID_POUSSEE):
+            if (t.get("script_execution") == "finished"
+                    and horodatage((t.get("timestamp") or {}).get("start")) >= debut):
+                meteo_poussee = variables_de_trace(await ha.trace(ID_POUSSEE, t["run_id"])).get("meteo")
+                if meteo_poussee == autre:
+                    break
+        else:
+            await asyncio.sleep(2)
+    rapport.verifier(meteo_poussee == autre, f"la poussée complète ({ID_POUSSEE}) demande les prévisions de {autre}",
+                     f"variable meteo de sa dernière trace : {meteo_poussee!r}")
+
+    # 2. Changée à la main : la liste revient au blueprint, avec une notification.
+    for liste, service, champ, a_la_main, attendu in (
+            (liste_meteo, "select/select_option", {"entity_id": select_meteo, "option": ville}, ville, autre),
+            (LISTE_VIGILANCES, "input_select/select_option", {"entity_id": LISTE_VIGILANCES, "option": "Météo-France"},
+             "Météo-France", "Aucune")):
+        avant = time.time()
+        await ha.post(f"/api/services/{service}", champ)
+        trace = await attendre_passage(ha, ID_AUTOMATISATION, liste, avant)
+        appels = [f"{a['domain']}.{a['service']}" for a in appels_de_trace(trace or {})]
+        etat = ((await ha.etats()).get(liste) or {}).get("state")
+        rapport.verifier(trace is not None and etat == attendu and "persistent_notification.create" in appels,
+                         f"{liste} réglée à la main sur {a_la_main} : revenue au blueprint ({attendu}), notification",
+                         f"état {etat!r}, trace {'trouvée' if trace else 'absente'}, appels {appels}, "
+                         f"erreurs {erreurs_de_trace(trace) if trace else '—'}")
+
+    # 3. Vidée : rien n'est écrit, la liste décide de nouveau.
+    await enregistrer_automatisation(ha, entrees_blueprint())
+    await asyncio.sleep(5)
+    await ha.post("/api/services/select/select_option", {"entity_id": select_meteo, "option": ville})
+    await ha.post("/api/services/input_select/select_option", {"entity_id": LISTE_VIGILANCES, "option": "Météo-France"})
+    await asyncio.sleep(5)
+    etats = await ha.etats()
+    garde = ((etats.get(liste_meteo) or {}).get("state"), (etats.get(LISTE_VIGILANCES) or {}).get("state"))
+    entite = await attendre_attribut(ha, "sensor.tab5_meteo", "entite", ville)
+    rapport.verifier(garde == (ville, "Météo-France") and entite == ville,
+                     f"blueprint « Météo » vidé : les listes décident de nouveau ({ville}, Météo-France)",
+                     f"listes {garde!r}, sensor.tab5_meteo entite {entite!r}")
+
+
 async def rapporter_traces(ha: HA, item_id: str, depuis: float, rapport: Rapport) -> None:
     """Passages d'une automatisation depuis `depuis` : déclencheur et issue (informatif)."""
     passages = [t for t in await ha.traces(item_id)
@@ -1381,6 +1474,8 @@ async def scenario(args, rapport: Rapport) -> None:
             await capturer(ha, args.captures, "installation-ha-2", rapport)
             # Les demandes de la tablette, sans l'option « actions HA » (ADR-0025).
             await demandes_de_la_tablette(ha, ws, rapport)
+            # Météo choisie dans le blueprint (discussion #278), puis rendue aux listes.
+            await verifier_meteo_du_blueprint(ha, rapport)
             # Rendez-vous (packages/tab5_reveil.yaml) : ses passages et leurs déclencheurs,
             # pour relire une erreur « Not connected » du journal.
             await rapporter_traces(ha, "tab5_rdv_push", debut, rapport)
