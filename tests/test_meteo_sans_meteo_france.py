@@ -135,10 +135,25 @@ def _as_datetime(valeur):
         return None
 
 
-def _environnement(etats):
+_SANS_DEFAUT = object()
+
+
+def _as_timestamp(valeur, defaut=_SANS_DEFAUT):
+    """as_timestamp de HA (fonction et filtre) : une date ou un texte de date donne des
+    secondes depuis 1970 ; sinon le défaut, ou une erreur sans défaut."""
+    date = _as_datetime(valeur) if valeur is not None else None
+    if date is None:
+        if defaut is _SANS_DEFAUT:
+            raise ValueError(f"as_timestamp : {valeur!r} n'est pas une date")
+        return defaut
+    return (date if date.tzinfo else date.replace(tzinfo=ISTANBUL)).timestamp()
+
+
+def _environnement(etats, maintenant=MAINTENANT):
     env = ImmutableSandboxedEnvironment(undefined=jinja2.StrictUndefined)
     env.globals.update(
-        states=etats, state_attr=etats.attr, now=lambda: MAINTENANT, timedelta=dt.timedelta,
+        states=etats, state_attr=etats.attr, now=lambda: maintenant, timedelta=dt.timedelta,
+        as_timestamp=_as_timestamp,
         # Seule Met.no est installée : aucune entité Météo-France, OpenWeatherMap, DWD…
         integration_entities=lambda domaine: [MET_NO] if domaine == "met" else [],
         device_id=lambda e: None, device_entities=lambda d: [],
@@ -146,7 +161,7 @@ def _environnement(etats):
         has_value=lambda e: etats(e) not in ("unknown", "unavailable"),
     )
     env.filters.update(as_datetime=_as_datetime, as_local=lambda d: d.astimezone(ISTANBUL),
-                       bitwise_and=lambda a, b: a & b)
+                       as_timestamp=_as_timestamp, bitwise_and=lambda a, b: a & b)
     env.tests.update(match=lambda v, motif: bool(re.match(motif, str(v))))
     return env
 
@@ -163,7 +178,7 @@ def _rendre(env, valeur, contexte=None):
     return valeur
 
 
-def _maison(choix="", uv_index=0.0):
+def _maison(choix="", uv_index=0.0, maintenant=MAINTENANT):
     """Une installation neuve : Met.no (état et attributs de la réponse réelle), les
     listes des packages sur leur premier choix, rien dans « Tab5 · entité météo
     choisie ». Puis « Tab5 · sources météo » et « Tab5 Météo » rendus dans l'ordre où
@@ -175,7 +190,7 @@ def _maison(choix="", uv_index=0.0):
         Etat("input_select.tab5_source_pluie", "Météo-France"),
         Etat("input_select.tab5_source_vigilance", "Météo-France"),
     ])
-    env = _environnement(etats)
+    env = _environnement(etats, maintenant)
     paquet = _paquet("tab5_meteo_sources.yaml")
     blocs = paquet["template"]
 

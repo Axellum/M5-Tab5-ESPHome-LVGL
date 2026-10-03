@@ -4,6 +4,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-03 — Icônes de nuit dans les prévisions heure par heure
+
+- **Prévisions horaires** (discussion #278) : la nuit, un créneau « peu nuageux » montrait
+  un nuage avec un soleil. Met.no range « beau » et « peu nuageux » de nuit sous
+  `partlycloudy` (les états de Home Assistant n'ont pas de « peu nuageux de nuit ») ;
+  la poussée (`packages/tab5_push.yaml`) envoie maintenant, pour un créneau de nuit,
+  `partlycloudy-night` (nuage + lune) et `clear-night` à la place de `sunny`, deux icônes
+  que la tablette dessine déjà. Jour ou nuit : `is_daytime` du créneau s'il est fourni,
+  sinon le lever et le coucher de `sun.sun` (après minuit et le lendemain compris) ; sans
+  `sun.sun`, rien ne change. Les prévisions par jour ne changent pas.
+- **À installer** : remplacer les fichiers Home Assistant (`tab5_push.yaml`) et recharger
+  les automatisations ; pas de nouveau firmware.
+- `tests/test_meteo_icones_nuit.py` rend le modèle réel (jour, nuit, autour du lever et du
+  coucher, après minuit, pas de 3 h, `is_daytime` présent ou non, sans `sun.sun`, nuit
+  polaire) et le compare à un calcul indépendant ; contre-épreuve : ancien modèle → échecs.
+
 ### 2026-10-02 — Les sept langues mises en avant
 
 - **README** (EN et FR) : « en sept langues » dans la phrase d'accroche, et une puce dans
