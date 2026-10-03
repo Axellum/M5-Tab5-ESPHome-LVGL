@@ -600,7 +600,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "IMU": "IMU"
 "Btn": "Botones"
 "Mix": "Mix"
-"\n  Aucun score enregistre.": "\n  Ninguna puntuación guardada."
+"\n  Aucun score enregistré.": "\n  Ninguna puntuación guardada."
 "Top 10 local (NVS)": "Top 10 local (NVS)"
 "Effacer les scores": "Borrar puntuaciones"
 # « Demande confirmation », « Oui, tout effacer », « Annuler » et

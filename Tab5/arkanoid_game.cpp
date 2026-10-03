@@ -632,7 +632,7 @@ static void go_highscores() {
         off += (size_t) w;
     }
     if (gs->save.score_count == 0) {
-        snprintf(body + off, sizeof(body) - off, "%s", tr("\n  Aucun score enregistre."));
+        snprintf(body + off, sizeof(body) - off, "%s", tr("\n  Aucun score enregistré."));
     }
 
     panel_text(tr("Classement"), tr("Top 10 local (NVS)"), body, "");

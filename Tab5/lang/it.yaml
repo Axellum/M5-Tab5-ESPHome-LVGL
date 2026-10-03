@@ -576,7 +576,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "IMU": "IMU"
 "Btn": "Pulsanti"
 "Mix": "Mix"
-"\n  Aucun score enregistre.": "\n  Nessun punteggio salvato."
+"\n  Aucun score enregistré.": "\n  Nessun punteggio salvato."
 "Top 10 local (NVS)": "Top 10 locale (NVS)"
 "Effacer les scores": "Cancella punteggi"
 # « Demande confirmation », « Oui, tout effacer », « Annuler » et

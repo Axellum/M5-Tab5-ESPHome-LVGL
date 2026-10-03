@@ -575,7 +575,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "IMU": "IMU"
 "Btn": "Düğme"
 "Mix": "Karma"
-"\n  Aucun score enregistre.": "\n  Kayıtlı skor yok."
+"\n  Aucun score enregistré.": "\n  Kayıtlı skor yok."
 "Top 10 local (NVS)": "Yerel ilk 10 (NVS)"
 "Effacer les scores": "Skorları sil"
 # « Demande confirmation », « Oui, tout effacer », « Annuler » et
