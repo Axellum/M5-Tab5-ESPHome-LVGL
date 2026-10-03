@@ -12,6 +12,11 @@
 #           Météo-France, puis Brouillard et Feux de forêt).
 #       La source se choisit dans HA, sans toucher au YAML : input_select
 #       « Tab5 · source de la pluie dans l'heure » et « Tab5 · source des vigilances ».
+#       Depuis le 03/10/2026 (discussion #278), aussi dans la section « Météo » du
+#       blueprint tab5_emplacements : remplie, elle ÉCRIT son choix dans ces listes et dans
+#       input_text.tab5_meteo_previsions (une liste changée à la main y revient, avec une
+#       notification) ; vide, elle n'y touche pas. Les listes restent la seule source lue
+#       ici : rien à changer dans ce fichier pour l'une ou l'autre façon de choisir.
 # @sources Vérifiées dans le code de HA 2026.9.3 le 27/09/2026 :
 #       - pluie dans l'heure : Météo-France (`sensor.<ville>_next_rain`, créneaux de
 #         5 à 10 min) ou OpenWeatherMap en mode « v3.0 » (action
@@ -83,7 +88,8 @@ input_select:
 
 # Source des prévisions (lot 4c-3) : mémorise l'entité weather.* choisie dans la
 # liste « Tab5 · source des prévisions » (template select plus bas, dont les options
-# sont les entités météo présentes). Sans `initial` : HA garde le choix au redémarrage.
+# sont les entités météo présentes), ou écrite par la section « Météo » du blueprint
+# quand elle est remplie. Sans `initial` : HA garde le choix au redémarrage.
 # Vide ou entité disparue : la première entité Météo-France, sinon la première
 # entité météo (sensor.tab5_sources_meteo, attribut `meteo`).
 input_text:
