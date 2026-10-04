@@ -583,6 +583,54 @@ automation:
                   entity_id: "{{ ecran }}"
 
 
+  - id: tab5_theme_jour_nuit
+    alias: "Tab5 — thème jour/nuit"
+    # Mode « Auto » du thème de l'écran (ADR-0029) : la tablette passe en clair le jour,
+    # en sombre la nuit, d'après son interrupteur « Nuit (thème auto) », que cette
+    # automatisation tient à jour sur sun.sun : au lever et au coucher, à chaque
+    # connexion de la tablette et au démarrage de HA. Sans effet hors du mode Auto
+    # (select « Clair ou sombre » de la tablette), et sans sun.sun : rien ne part.
+    description: "Allume l'interrupteur « Nuit (thème auto) » de la tablette quand le soleil est couché, l'éteint quand il est levé"
+    mode: queued
+    max: 3
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: sun.sun
+        to: ["above_horizon", "below_horizon"]
+      - platform: event
+        event_type: esphome.tab5_connected
+        id: tab5_connected
+      # Tablette ajoutée à HA (ou remplacée) : l'interrupteur vient d'être détecté.
+      - platform: state
+        entity_id: sensor.tab5_tablette
+        attribute: theme_nuit
+      - platform: homeassistant
+        event: start
+    variables:
+      nuit: "{{ state_attr('sensor.tab5_tablette', 'theme_nuit') or '' }}"
+    condition:
+      - condition: state
+        entity_id: input_boolean.is_primary_active
+        state: "on"
+      # Garde d'origine (comme « MAJ Ecran Tab5 ESPHome Push ») : tab5_connected ne
+      # compte que venant d'une tablette. tests/test_garde_origine.py.
+      - alias: "tab5_connected : seulement depuis une tablette (modele tab5-ha-hmi)"
+        condition: template
+        value_template: >-
+          {%- if trigger.id == 'tab5_connected' -%}
+            {%- set d = trigger.event.data.device_id | default('', true) | string -%}
+            {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
+          {%- else -%}
+            {{ true }}
+          {%- endif -%}
+      - condition: template
+        value_template: "{{ nuit != '' and states('sun.sun') in ['above_horizon', 'below_horizon'] }}"
+    action:
+      - action: "switch.turn_{{ 'on' if is_state('sun.sun', 'below_horizon') else 'off' }}"
+        target:
+          entity_id: "{{ nuit }}"
+
   - id: force_primary_active_on_boot
     alias: "Force Primary Active on Boot"
     # Au démarrage de HA, remet le garde-fou à `on` : sans lui, un `off` resté d'un
