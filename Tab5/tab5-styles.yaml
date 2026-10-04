@@ -649,8 +649,7 @@ font:
       - "\U000F0379"  # monitor
       - "\U000F0596"  # weather-pouring
       - "\U000F05A9"  # wifi
-      - "\U000F0A72"  # solar-power (production solaire du bandeau, > 0 %)
-      - "\U000F0D9B"  # solar-panel (production solaire nulle, la nuit)
+      - "\U000F0D9B"  # solar-panel (production solaire du bandeau, tous les paliers)
       - "\U000F12A1"  # battery-low (20 à 40 %)
       - "\U000F12A2"  # battery-medium (41 à 80 %)
 

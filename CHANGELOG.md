@@ -10,8 +10,8 @@ Demande d'Axel : au même endroit que les icônes PC, téléphone, Wi-Fi et batt
 production des panneaux solaires en pourcentage de leur maximum, en couleur.
 - **Icône** avant la batterie (qui reste en fin de bandeau). Couleur de
   `get_battery_color()`, comme le téléphone et la batterie : vert au-dessus de 80 %, bleu
-  de 41 à 80 %, ambre de 20 à 40 %, rouge en dessous ; à 0 % (la nuit), un panneau gris
-  (`solar-panel`) au lieu du soleil sur le panneau (`solar-power`). Cachée tant que Home
+  de 41 à 80 %, ambre de 20 à 40 %, rouge en dessous, gris à 0 % (la nuit). Glyphe : le
+  panneau seul (`solar-panel`) à tous les paliers, le plus net à cette taille. Cachée tant que Home
   Assistant n'a rien envoyé, et sans installation solaire (« nan »).
 - **Blueprint « Tab5 — emplacements »**, section « Énergie · Energy » : nouvelle entrée
   facultative **« Puissance crête des panneaux · Panel peak power »** (kWc, 0 = pas

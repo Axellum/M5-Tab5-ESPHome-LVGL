@@ -129,12 +129,13 @@ void batterie_peindre() {
     ui_text_color(icone, get_battery_color(s_batterie.niveau));
 }
 
-// Production solaire : le panneau seul la nuit (0 %), le panneau au soleil dès qu'il
-// produit. Couleur : l'échelle de la batterie (get_battery_color, une seule source :
-// > 80 vert, > 40 bleu, ≥ 20 ambre, en dessous rouge), sauf 0 % : éteint, pas une alerte.
-const char* solaire_glyphe(float pourcent) {
-    return pourcent > 0.0f ? "\U000F0A72"   // solar-power
-                           : "\U000F0D9B";  // solar-panel
+// Production solaire : le panneau seul à tous les paliers, c'est la couleur qui donne la
+// production. Le soleil sur le panneau (solar-power, puis solar-power-variant) se lisait en
+// morceaux à 26 px en bpp 1 (captures comparées, choix d'Axel du 04/10/2026). Couleur :
+// l'échelle de la batterie (get_battery_color, une seule source : > 80 vert, > 40 bleu,
+// ≥ 20 ambre, en dessous rouge), sauf 0 % : gris éteint, pas une alerte.
+const char* solaire_glyphe(float /*pourcent*/) {
+    return "\U000F0D9B";  // solar-panel
 }
 
 uint32_t solaire_couleur(float pourcent) {
