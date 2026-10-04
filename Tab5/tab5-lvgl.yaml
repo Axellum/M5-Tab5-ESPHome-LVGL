@@ -212,12 +212,17 @@ lvgl:
         # pendant une semaine de congés), barrée et éteinte = réveil coupé.
         # Repeinte par alarm_render_status_icon() depuis tab5_alarm_sync_ui.
         - label: { id: icon_alarm_status, text: "\U000F0023", align: TOP_LEFT, x: 115, y: 10, text_font: mdi_font_26, text_color: color_inactive }
+        # Production solaire (04/10/2026) : % de la puissance crête, poussé par le blueprint
+        # (clé « solaire » de tab5_maj_emplacements, section « Énergie »). Cachée tant
+        # qu'aucune valeur n'est reçue, ou sans solaire ; glyphe et couleur posés par
+        # solaire_peindre() (tab5_zones.cpp). Ordre et pas de 35 px : BandeauIcone.
+        - label: { id: icon_solaire, text: "\U000F0D9B", align: TOP_LEFT, x: 150, y: 10, text_font: mdi_font_26, text_color: color_inactive, hidden: true }
         # Batterie de la tablette (04/10/2026), en dernier comme sur un téléphone : la
         # montrer ou la cacher (interrupteur « Tab5 Batterie montée », tab5-ha-controls.yaml)
         # ne déplace aucune autre icône. Cachée jusqu'au premier tab5_zones_apply ;
         # glyphe et couleur posés par batterie_peindre() (tab5_zones.cpp). Ordre et pas
         # de 35 px : BandeauIcone (tab5_custom.h).
-        - label: { id: icon_batterie, text: "\U000F0091", align: TOP_LEFT, x: 150, y: 10, text_font: mdi_font_26, text_color: color_inactive, hidden: true }
+        - label: { id: icon_batterie, text: "\U000F0091", align: TOP_LEFT, x: 185, y: 10, text_font: mdi_font_26, text_color: color_inactive, hidden: true }
 
         # --- Top Right Buttons (même habillage verre que Domo/Discu) ---
         - button:

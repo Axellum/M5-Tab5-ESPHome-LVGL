@@ -43,6 +43,13 @@ constexpr const char* kCles[kNbZones] = {
 // capacités|nom ». Lue par le blueprint : ne pas la renommer sans lui (tests/test_clim.py).
 constexpr char kCleClimReglages[] = "climr";
 
+// Production solaire du bandeau d'état (04/10/2026) dans tab5_maj_emplacements :
+// « solaire|pourcentage » (0 à 100 de la puissance crête ; « nan » ou vide = aucune
+// valeur, l'icône disparaît). Calculée et poussée par le blueprint (section « Énergie »,
+// puissance crête) ; une clé et pas une action, comme climr (ADR-0026) : un firmware
+// plus ancien l'ignore. Ne pas la renommer sans le blueprint (tests/test_solaire.py).
+constexpr char kCleSolaire[] = "solaire";
+
 constexpr uint32_t kMagic = 0x5A4F4E31;    // « ZON1 »
 constexpr uint32_t kPrefKey = 0x7A6F6E65;  // « zone »
 
@@ -72,12 +79,17 @@ struct EtatBatterie {
 };
 EtatBatterie s_batterie;
 
+// Production solaire, en % de la puissance crête (clé solaire) ; NAN = aucune valeur
+// reçue, ou pas de solaire chez l'utilisateur : l'icône est masquée (ADR-0018).
+float s_solaire = NAN;
+
 // Une icône du bandeau est-elle masquée ? Une icône de plus qui peut disparaître :
 // son cas ici (les autres restent toujours affichées).
 bool bandeau_masquee(BandeauIcone i) {
     switch (i) {
         case BANDEAU_PC: return zone_absente(Zone::PC);
         case BANDEAU_TELEPHONE: return zone_absente(Zone::TELEPHONE);
+        case BANDEAU_SOLAIRE: return std::isnan(s_solaire);
         case BANDEAU_BATTERIE: return !s_batterie.montee;
         default: return false;
     }
@@ -115,6 +127,43 @@ void batterie_peindre() {
     if (icone == nullptr) return;
     ui_text(icone, batterie_glyphe(s_batterie.niveau, s_batterie.en_charge));
     ui_text_color(icone, get_battery_color(s_batterie.niveau));
+}
+
+// Production solaire : le panneau seul la nuit (0 %), le panneau au soleil dès qu'il
+// produit. Couleur : l'échelle de la batterie (get_battery_color, une seule source :
+// > 80 vert, > 40 bleu, ≥ 20 ambre, en dessous rouge), sauf 0 % : éteint, pas une alerte.
+const char* solaire_glyphe(float pourcent) {
+    return pourcent > 0.0f ? "\U000F0A72"   // solar-power
+                           : "\U000F0D9B";  // solar-panel
+}
+
+uint32_t solaire_couleur(float pourcent) {
+    return pourcent > 0.0f ? get_battery_color(pourcent) : UIColor::INACTIVE;
+}
+
+void solaire_peindre() {
+    lv_obj_t* const icone = g_zones_ui.bandeau[BANDEAU_SOLAIRE];
+    if (icone == nullptr || std::isnan(s_solaire)) return;
+    ui_text(icone, solaire_glyphe(s_solaire));
+    ui_text_color(icone, solaire_couleur(s_solaire));
+}
+
+// « solaire|pourcentage » : borné à 0-100, illisible = aucune valeur. Montrer ou cacher
+// l'icône resserre le bandeau ; sinon, seul son glyphe et sa couleur changent.
+void solaire_recu(const char* valeur, size_t n) {
+    char tampon[16];
+    const size_t l = n < sizeof(tampon) - 1 ? n : sizeof(tampon) - 1;
+    std::memcpy(tampon, valeur, l);
+    tampon[l] = '\0';
+    char* bout = nullptr;
+    float v = std::strtof(tampon, &bout);
+    if (l == 0 || bout == tampon) v = NAN;
+    v = tab5_fini_ou_nan(v);
+    if (!std::isnan(v)) v = v < 0.0f ? 0.0f : (v > 100.0f ? 100.0f : v);
+    const bool visibilite = std::isnan(v) != std::isnan(s_solaire);
+    s_solaire = v;
+    solaire_peindre();
+    if (visibilite) bandeau_apply_ui();
 }
 
 void charger() {
@@ -227,6 +276,14 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
             debut = fin + 1;
             continue;
         }
+        // Production solaire du bandeau d'état : « solaire|pourcentage ».
+        if (p1 != std::string::npos && p1 < fin && p1 - debut == sizeof(kCleSolaire) - 1 &&
+            payload.compare(debut, p1 - debut, kCleSolaire) == 0) {
+            solaire_recu(payload.data() + p1 + 1, fin - p1 - 1);
+            appliquees++;
+            debut = fin + 1;
+            continue;
+        }
         // Clims des tuiles (ADR-0027) : « crRT|réglages » et « ceRT|état » (tab5_cards.cpp).
         if (p1 != std::string::npos && p1 < fin &&
             clim_tuile_recu(payload.data() + debut, p1 - debut, payload.data() + p1 + 1, fin - p1 - 1)) {
@@ -291,9 +348,11 @@ void zones_apply_ui() {
     const ZonesUI& u = g_zones_ui;
 
     // Bandeau d'état (haut gauche) : les icônes restantes se resserrent, pas de 35 px.
-    // La batterie est peinte ici aussi : son état a pu arriver avant les pointeurs.
+    // La batterie et le solaire sont peints ici aussi : leur état a pu arriver avant les
+    // pointeurs.
     bandeau_apply_ui();
     batterie_peindre();
+    solaire_peindre();
 
     // Rangée HA / Sys / TV (haut droite) : sans TV, HA et Sys glissent d'une colonne.
     const bool sans_tv = zone_absente(Zone::TV);
