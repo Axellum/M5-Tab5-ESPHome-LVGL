@@ -251,6 +251,26 @@ def test_trace_variables_et_appels():
     assert verifier.entrees_de("p0|Salon;t00|lum||dc||Lampe;") == [["p0", "Salon"], ["t00", "lum", "", "dc", "", "Lampe"]]
 
 
+def test_passage_de_la_meteo_reconnu_a_son_declencheur():
+    """Le blueprint a deux déclencheurs sur automation_reloaded : rechargement (poussée,
+    doit aboutir) et meteo_rechargement (section « Météo », arrêté aux conditions quand il
+    n'y a rien à écrire). Seul le second est excusé par juger_passages ; les identifiants
+    sont ceux du blueprint."""
+    def trace(id_):
+        return {"trace": {"trigger/0": [{"path": "trigger/0", "changed_variables": {
+            "trigger": {"id": id_, "platform": "event", "description": "event 'automation_reloaded'"}}}]}}
+
+    assert verifier.declencheur_meteo(trace("meteo_rechargement"))
+    assert not verifier.declencheur_meteo(trace("rechargement"))
+    assert not verifier.declencheur_meteo({"trace": {}})
+    blueprint = yaml.load(_lire("HomeAssistant_Config", "blueprints", "automation", "tab5",
+                                "tab5_emplacements.yaml"), Loader=_Chargeur)
+    ids = [t["id"] for t in blueprint["triggers"]]
+    assert {i for i in ids if i.startswith("meteo_")} == set(blueprint["variables"]["meteo_declencheurs"])
+    assert "rechargement" in ids and not any(verifier.declencheur_meteo(trace(i)) for i in ids
+                                             if i not in blueprint["variables"]["meteo_declencheurs"])
+
+
 def test_la_tablette_virtuelle_porte_le_nom_de_la_vraie():
     tablette = _lire("tab5-ha-hmi.yaml")
     nom = re.search(r"^  name: (\S+)$", tablette, re.M).group(1)

@@ -14,6 +14,26 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 - **`docs/press/forum_ha_en.md`** : mêmes passages mis à jour, et une note signale ce qui date
   encore de la 3.0 (langues).
 
+### 2026-10-03 — Météo choisie dans le blueprint
+
+- **Blueprint « Tab5 — emplacements »** : nouvelle section facultative « Météo · Weather »
+  (idée d'un utilisateur, discussion #278) : l'entité météo des prévisions, la source de la
+  pluie dans l'heure et celle des vigilances se choisissent à la souris, comme les appareils
+  des pièces. Laissée vide, rien ne change : les listes « Tab5 · … » de
+  `tab5_meteo_sources` décident, avec leur repli automatique.
+- **Une seule source à la fois** : remplie, la section **écrit** son choix dans ces listes
+  (à l'enregistrement de l'automatisation et au démarrage de Home Assistant), qui restent
+  la seule chose que lisent les capteurs et les poussées ; l'écran suit sans autre réglage.
+  Le blueprint prime tant que le champ est rempli : une liste changée à la main y revient,
+  avec une notification qui dit où changer ; une écriture faite par une automatisation
+  n'est jamais reprise (pas de va-et-vient entre deux tablettes). Ni le firmware ni les
+  packages ne changent.
+- `tests/test_meteo_blueprint.py` rend les vrais modèles : champ vide = rien d'écrit et la
+  poussée lit la liste ; champ rempli = la poussée demande les prévisions de la météo
+  choisie. Contre-épreuves faites (garde « personne » retirée, écriture retirée, tablette
+  hors ligne). Le job « Installation dans un HA neuf » refait le parcours dans un vrai
+  Home Assistant.
+
 ### 2026-10-03 — Prévisions horaires dans l'ordre, de gauche à droite
 
 - **Prévisions par heure** : les cinq tuiles d'une page horaire se lisent maintenant de

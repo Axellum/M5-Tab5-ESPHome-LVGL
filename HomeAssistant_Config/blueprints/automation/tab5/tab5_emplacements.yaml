@@ -25,7 +25,13 @@
 #         tuile, jamais sur une entité qu'aucune tuile ne porte ; les commandes du popup
 #         clim (« clim » ou « tRT » d'une clim de tuile) par les mêmes branches « Clim : … » ;
 #       - répond à la demande des zones (esphome.tab5_zones → tab5_maj_zones) : un
-#         emplacement vide, ou dont l'entité n'existe pas, disparaît de l'écran (ADR-0018).
+#         emplacement vide, ou dont l'entité n'existe pas, disparaît de l'écran (ADR-0018) ;
+#       - section « Météo » (discussion #278, 03/10/2026), facultative : la météo des
+#         prévisions, la source de la pluie et celle des vigilances. Remplie, elle est ÉCRITE
+#         dans les listes de packages/tab5_meteo_sources.yaml (input_text et input_select),
+#         qui restent la seule source lue par les capteurs et les poussées ; une liste changée
+#         à la main y revient, avec une notification. Vide : rien n'est écrit, les listes font
+#         foi comme avant (déclencheurs meteo_*, variable meteo_a_ecrire).
 # @architecture_constraint Aucun placeholder : ce fichier est générique, il s'importe tel
 #       quel. Les clés d'emplacement et les commandes sont celles du firmware
 #       (tab5-api-logic.yaml, script tab5_action) ; tests/test_emplacements.py et
@@ -503,6 +509,95 @@ blueprint:
             entity:
               filter:
                 - domain: calendar
+    # Météo (discussion #278, 03/10/2026) : les trois sources de packages/tab5_meteo_sources.yaml,
+    # choisies ici comme les appareils. Laissées vides, rien ne change : les listes « Tab5 · … »
+    # de HA font foi. Remplies, le blueprint ÉCRIT son choix dans ces listes (variable
+    # meteo_a_ecrire, branche « Météo choisie dans le blueprint ») et elles restent la seule
+    # chose que lisent les capteurs et les poussées. Options des deux selects = celles des
+    # input_select du package, dans le même ordre, après « liste » (tests/test_meteo_blueprint.py).
+    meteo:
+      name: Météo · Weather
+      icon: mdi:weather-partly-cloudy
+      description: >-
+        Facultatif. Laissés vides, ces choix restent ceux des listes « Tab5 · … » de Home
+        Assistant (package tab5_meteo_sources). Remplis, ils sont écrits dans ces listes et y
+        priment : un changement fait à la main dans la liste revient au choix d'ici, avec une
+        notification ; videz le champ pour choisir de nouveau dans la liste. Ces listes valent
+        pour toute la maison : avec plusieurs tablettes, remplissez-les dans une seule
+        automatisation.
+
+
+        Optional. Left empty, these choices stay those of the « Tab5 · … » lists of Home
+        Assistant (tab5_meteo_sources package). Filled, they are written into these lists and
+        take precedence: a change made by hand in the list goes back to the choice made here,
+        with a notification; empty the field to choose in the list again. These lists apply to
+        the whole home: with several tablets, fill them in one automation only.
+      input:
+        meteo_previsions:
+          name: Météo des prévisions · Forecast weather
+          description: >-
+            Les pages des jours et des heures et la météo du moment : n'importe quelle entité
+            météo. Vide : celle de la liste « Tab5 · source des prévisions » (par défaut la
+            ville Météo-France, sinon la première entité météo).
+
+
+            The day and hour pages and the current weather: any weather entity. Empty: the one
+            of the « Tab5 · source des prévisions · forecast source » list (by default the
+            Météo-France city, otherwise the first weather entity).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: weather
+        meteo_pluie:
+          name: Pluie dans l'heure · Next-hour rain
+          description: >-
+            Sans Météo-France dans Home Assistant, « Météo-France » donne Open-Meteo, qui répond
+            partout sans clé.
+
+
+            Without Météo-France in Home Assistant, « Météo-France » gives Open-Meteo, which
+            answers everywhere without a key.
+          default: liste
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - label: Celle de la liste « Tab5 · source de la pluie dans l'heure » · The one of the HA list
+                  value: liste
+                - label: Météo-France
+                  value: Météo-France
+                - label: OpenWeatherMap
+                  value: OpenWeatherMap
+                - label: Buienradar (Pays-Bas, Belgique · Netherlands, Belgium)
+                  value: Buienradar
+                - label: DWD (Allemagne · Germany)
+                  value: DWD
+                - label: Met.no (pays nordiques · Nordic countries)
+                  value: Met.no
+                - label: Open-Meteo (partout, sans clé · everywhere, no key)
+                  value: Open-Meteo
+                - label: Aucune (carte masquée) · None (card hidden)
+                  value: Aucune
+        meteo_vigilance:
+          name: Vigilances · Weather warnings
+          default: liste
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - label: Celle de la liste « Tab5 · source des vigilances » · The one of the HA list
+                  value: liste
+                - label: Météo-France
+                  value: Météo-France
+                - label: MeteoAlarm
+                  value: MeteoAlarm
+                - label: DWD (Allemagne · Germany)
+                  value: DWD
+                - label: CAP Alerts
+                  value: CAP Alerts
+                - label: Aucune (aucune icône) · None (no icons)
+                  value: Aucune
     # Réglage 3.x (ADR-0019) : les cinq places fixes de l'accueil. Lu par un firmware
     # 3.0/3.1, et par un firmware 3.2 tant que la pièce 1 est vide (ADR-0023).
     accueil_3x:
@@ -1282,6 +1377,47 @@ variables:
     {%- else -%}
       {{ [] }}
     {%- endif -%}
+  # Météo choisie ici (section « Météo », discussion #278). Vide ([] ou « liste ») = rien.
+  meteo_choisie:
+    previsions: !input meteo_previsions
+    pluie: !input meteo_pluie
+    vigilance: !input meteo_vigilance
+  # Déclencheurs de la météo (plus bas) : enregistrement, démarrage de HA, liste changée.
+  meteo_declencheurs: [meteo_rechargement, meteo_demarrage, meteo_liste]
+  # Ce que ces déclencheurs doivent écrire dans les listes du package
+  # tab5_meteo_sources : [{entite, valeur}], seulement les champs remplis dont la liste
+  # existe et dit autre chose. Une seule source fait foi à un instant donné : la liste, que
+  # lisent sensor.tab5_sources_meteo, sensor.tab5_meteo et les capteurs de pluie et de
+  # vigilance ; le blueprint, rempli, la tient à jour.
+  #   - rechargement des automatisations (enregistrement du blueprint) et démarrage de HA :
+  #     toujours ;
+  #   - changement d'une liste : seulement s'il vient d'une personne (context.user_id de
+  #     l'état, renseigné pour l'interface, l'API et le select « Tab5 · source des
+  #     prévisions », qui écrit l'input_text dans le contexte de son appel). L'écriture
+  #     d'une automatisation (celle-ci, ou celle d'une autre tablette réglée autrement) n'en
+  #     a pas : jamais de ping-pong entre deux automatisations.
+  # Météo choisie qui n'existe pas (encore) : rien d'écrit, la liste et son repli restent.
+  # Option absente de la liste (package plus ancien) : rien non plus.
+  meteo_a_ecrire: >-
+    {%- set ns = namespace(l=[]) -%}
+    {%- set par_une_personne = trigger.id != 'meteo_liste'
+          or (trigger.to_state is not none and trigger.to_state.context.user_id is not none) -%}
+    {%- if trigger.id in meteo_declencheurs and par_une_personne -%}
+      {%- set m = meteo_choisie.previsions -%}
+      {%- set m = m if m is string else (m | first if m else '') -%}
+      {%- set liste = 'input_text.tab5_meteo_previsions' -%}
+      {%- if m and states[m] is not none and states[liste] is not none and states(liste) != m -%}
+        {%- set ns.l = ns.l + [{'entite': liste, 'valeur': m}] -%}
+      {%- endif -%}
+      {%- for cle, liste in [('pluie', 'input_select.tab5_source_pluie'), ('vigilance', 'input_select.tab5_source_vigilance')] -%}
+        {%- set v = meteo_choisie[cle] if meteo_choisie[cle] is string else '' -%}
+        {%- if v not in ['', 'liste'] and states[liste] is not none
+              and v in (state_attr(liste, 'options') or []) and states(liste) != v -%}
+          {%- set ns.l = ns.l + [{'entite': liste, 'valeur': v}] -%}
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endif -%}
+    {{ ns.l }}
 
 triggers:
   - trigger: event
@@ -1542,6 +1678,26 @@ triggers:
   - trigger: homeassistant
     event: start
     id: demarrage_ha
+  # Météo choisie dans le blueprint (section « Météo », variable meteo_a_ecrire) : écrite
+  # dans les listes du package à l'enregistrement de l'automatisation, au démarrage de HA,
+  # et remise quand quelqu'un change une liste. Des déclencheurs À PART (mêmes événements
+  # que rechargement et demarrage_ha, un passage de plus) : ceux-là s'arrêtent sans
+  # tablette connectée, les listes doivent suivre quand même. Champs vides, ou listes déjà
+  # à jour : arrêt aux conditions, sans ligne au journal. `to: ~` : l'état seulement (la
+  # liste des options d'un input_select peut changer au rechargement).
+  - trigger: event
+    event_type: automation_reloaded
+    id: meteo_rechargement
+  - trigger: homeassistant
+    event: start
+    id: meteo_demarrage
+  - trigger: state
+    entity_id:
+      - input_text.tab5_meteo_previsions
+      - input_select.tab5_source_pluie
+      - input_select.tab5_source_vigilance
+    to: ~
+    id: meteo_liste
 
 conditions:
   # Garde d'origine (audit sécurité du 30/09/2026) : un événement esphome.tab5_* ne
@@ -1564,19 +1720,24 @@ conditions:
   - condition: template
     value_template: "{{ states('input_boolean.is_primary_active') != 'off' }}"
   # Rien de neuf pour l'écran (aucune mesure changée, attribut invisible, tuile d'un
-  # firmware qui n'en a pas) : arrêt ici, sans ligne au journal.
+  # firmware qui n'en a pas) : arrêt ici, sans ligne au journal. Météo (meteo_declencheurs) :
+  # seulement s'il y a une liste à écrire.
   - condition: template
     value_template: >-
-      {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'pipeline_discussion'] or cles | count > 0
-         or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0)) }}
+      {%- if trigger.id in meteo_declencheurs -%}
+        {{ meteo_a_ecrire | count > 0 }}
+      {%- else -%}
+        {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'pipeline_discussion'] or cles | count > 0
+           or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0)) }}
+      {%- endif -%}
   # Déclencheurs venus de HA (rechargement, démarrage, mesures, changements d'état) : seulement
   # si une tablette est connectée, sinon « Action … not found » (pas encore ajoutée)
   # ou « Not connected » (hors ligne). Elle est trouvée par le modèle de l'appareil
   # (bloc `project:` du firmware), pas par son nom. Les événements de la tablette
-  # prouvent d'eux-mêmes qu'elle est là.
+  # prouvent d'eux-mêmes qu'elle est là. La météo (meteo_declencheurs) n'écrit que dans HA.
   - condition: template
     value_template: >-
-      {{ trigger.id in ['connexion', 'zones', 'action', 'maj_ecran']
+      {{ trigger.id in ['connexion', 'zones', 'action', 'maj_ecran'] + meteo_declencheurs
          or integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
             | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
             | list | count > 0 }}
@@ -1676,6 +1837,48 @@ actions:
           {{ false }}
         {%- endif -%}
   - choose:
+      # Section « Météo » remplie (variable meteo_a_ecrire) : son choix écrit dans les
+      # listes du package, que lisent les capteurs et les poussées (tab5_push.yaml suit
+      # sensor.tab5_meteo, sensor.tab5_pluie_dans_l_heure et sensor.tab5_vigilance). Une
+      # liste changée à la main revient à ce choix : une notification le dit (une seule,
+      # remplacée à chaque fois), pour que les deux réglages ne se contredisent pas en
+      # silence.
+      - alias: "Météo choisie dans le blueprint : l'écrire dans les listes « Tab5 · … »"
+        conditions: "{{ trigger.id in meteo_declencheurs }}"
+        sequence:
+          - repeat:
+              for_each: "{{ meteo_a_ecrire }}"
+              sequence:
+                - if: "{{ repeat.item.entite.startswith('input_text.') }}"
+                  then:
+                    - action: input_text.set_value
+                      target:
+                        entity_id: "{{ repeat.item.entite }}"
+                      data:
+                        value: "{{ repeat.item.valeur }}"
+                  else:
+                    - action: input_select.select_option
+                      target:
+                        entity_id: "{{ repeat.item.entite }}"
+                      data:
+                        option: "{{ repeat.item.valeur }}"
+          - if: "{{ trigger.id == 'meteo_liste' }}"
+            then:
+              - action: persistent_notification.create
+                data:
+                  notification_id: tab5_meteo_blueprint
+                  title: "Tab5 — météo choisie dans le blueprint · weather picked in the blueprint"
+                  message: |-
+                    {%- set noms = {'input_text.tab5_meteo_previsions': 'Tab5 · source des prévisions',
+                                    'input_select.tab5_source_pluie': "Tab5 · source de la pluie dans l'heure",
+                                    'input_select.tab5_source_vigilance': 'Tab5 · source des vigilances'} -%}
+                    {%- set auto = this.attributes.friendly_name | default('Tab5 — emplacements', true) %}
+                    {% for e in meteo_a_ecrire -%}
+                    - « {{ noms.get(e.entite, e.entite) }} » → {{ e.valeur }}
+                    {% endfor %}
+                    Ce choix est fait dans l'automatisation « {{ auto }} » (section Météo) : la liste y revient. Pour choisir dans la liste, videz ce champ de l'automatisation.
+
+                    This choice is made in the « {{ auto }} » automation (Weather section): the list goes back to it. To choose in the list, empty that field of the automation.
       # Aussi quand le pipeline de discussion change : même réponse, sans attendre la
       # demande de la tablette (une fois par connexion).
       - alias: "La tablette demande quelles zones sont absentes"
