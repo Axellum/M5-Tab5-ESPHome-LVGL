@@ -187,6 +187,11 @@ Turns the Tab5 wake word (« Ok Nabu ») **off when nobody is home** and back on
 
 After deploying: reload **Input booleans** and **Automations**.
 
+### `custom_templates/tab5_dashboard.jinja` — the tablet's dashboard (optional)
+Not a package: a Jinja macro that **writes** a Home Assistant dashboard for the tablet, with the entity ids of your home (they change from one home to another: room, device name, entity name). The tablet is found by its device model, each entity by the end of its id, the selects Home Assistant adds (Assist pipeline, wake words, end of speech) by their options, since their ids follow Home Assistant's language. Three views: **Tab5** (brightness, volume, screen shown, alarm, appointments, voice assistant; alert badges only when something is wrong), **Settings** (an « At a glance » table of what is chosen, then every setting and every « Tab5 · … » list) and **Health** (connection, performance graphs, network, pushes, health alerts). A card only appears when its entity exists.
+
+*Developer tools → Template*: `{% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}`, then paste the result into a dashboard's raw configuration editor; details in [docs/installation.md, Step 7](../docs/installation.md#step-7--a-home-assistant-dashboard-for-the-tablet-optional). `tests/test_tableau_de_bord.py` checks that every firmware entity has its card and that every entity it cites exists; the « fresh HA » CI job renders it in a real Home Assistant and saves the dashboard.
+
 ---
 
 ## Adapting to your setup
@@ -423,6 +428,11 @@ Coupe le mot d'activation du Tab5 (« Ok Nabu ») **quand personne n'est à la m
 - Le réveil arme quand même son « Stop » vocal pendant la sonnerie, micro coupé ou non (côté firmware, rien à faire).
 
 Après le déploiement : recharger **Entrées booléennes** et **Automatisations**.
+
+### `custom_templates/tab5_dashboard.jinja` — le tableau de bord de la tablette (facultatif)
+Pas un package : une macro Jinja qui **écrit** un tableau de bord Home Assistant pour la tablette, avec les entity_id de votre maison (ils changent d'une maison à l'autre : pièce, nom de l'appareil, nom de l'entité). La tablette est trouvée par le modèle de son appareil, chaque entité par la fin de son identifiant, les selects qu'ajoute Home Assistant (pipeline Assist, mots d'activation, fin de la parole) par leurs options, car leur identifiant suit la langue de Home Assistant. Trois vues : **Tab5** (luminosité, volume, écran affiché, réveil, rendez-vous, assistant vocal ; des pastilles d'alerte seulement quand quelque chose cloche), **Réglages** (un tableau « En bref » de ce qui est choisi, puis chaque réglage et chaque liste « Tab5 · … ») et **Santé** (liaison, courbes de performances, réseau, poussées, alertes de santé). Une carte n'apparaît que si son entité existe.
+
+*Outils de développement → Modèle* : `{% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}`, puis collez le résultat dans l'éditeur de configuration brute d'un tableau de bord ; le détail dans [docs/installation.md, étape 7](../docs/installation.md#étape-7--un-tableau-de-bord-home-assistant-pour-la-tablette-facultatif). `tests/test_tableau_de_bord.py` vérifie que chaque entité du firmware a sa carte et que chaque entité citée existe ; le job CI « HA neuf » la rend dans un vrai Home Assistant et enregistre le tableau de bord.
 
 ---
 

@@ -4,6 +4,38 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-04 — Tableau de bord Home Assistant de la tablette
+
+Demande d'Axel : tous les réglages de la tablette dans Home Assistant, plus lisibles, et
+partagés avec la façon de l'installer.
+- **`custom_templates/tab5_dashboard.jinja`** (dans l'archive `tab5_home_assistant.zip`) :
+  la macro `tab5_dashboard()` écrit un tableau de bord de trois vues. **Tab5** pour l'usage
+  courant (luminosité, volume, écran affiché, haut-parleur, réveil, rendez-vous, assistant
+  vocal ; pastilles d'alerte seulement quand quelque chose cloche), **Réglages** (tableau
+  « En bref » de ce qui est choisi, puis chaque réglage de la tablette et chaque liste
+  « Tab5 · … ») et **Santé** (liaison, courbes de performances, réseau, matériel,
+  poussées, alertes de santé). Libellés en français ou en anglais selon la langue de
+  l'écran.
+- Pourquoi une macro et pas un fichier : les entity_id de la tablette changent d'une
+  maison à l'autre (pièce + nom de l'appareil + nom de l'entité, vérifié dans le code de
+  HA 2026.9.4), et une entité ajoutée après coup prend la pièce (`m5stack_…` et
+  `<pièce>_m5stack_…` sur la même tablette). La tablette est trouvée par le modèle de son
+  appareil, chaque entité par la fin de son identifiant, les selects ajoutés par HA
+  (pipeline, mots d'activation, fin de la parole) par leurs options, car leur
+  identifiant suit la langue de HA. Une carte n'apparaît que si son entité existe.
+- Installation (`docs/installation.md`, étape 7, et LISEZMOI de l'archive) : un tableau
+  de bord vide « Tab5 », la ligne
+  `{% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}` dans
+  Outils de développement → Modèle, le résultat collé dans l'éditeur de configuration
+  brute.
+- Preuves : `tests/test_tableau_de_bord.py` (chaque entité du firmware a sa carte, sauf
+  le volume en double ; chaque entité citée existe ; rendu avec une fausse maison :
+  préfixes mélangés, HA dans une autre langue, sans package, sans tablette, deux
+  tablettes ; contre-épreuve : quatre erreurs volontaires, chacune vue) ; le job
+  « Installation dans un HA neuf » rend la ligne dans un vrai HA, vérifie les entités et
+  l'absence d'avertissement de modèle, enregistre le tableau de bord et le relit. Chez
+  l'auteur : 3 vues, 134 cartes, 98 entités, aucune absente, en français et en anglais.
+
 ### 2026-10-04 — Icône de la production solaire dans le bandeau d'état
 
 Demande d'Axel : au même endroit que les icônes PC, téléphone, Wi-Fi et batterie, la

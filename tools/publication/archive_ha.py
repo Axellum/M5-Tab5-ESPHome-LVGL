@@ -74,6 +74,12 @@ FRANÇAIS
 5. Vos appareils (lumières, clim, TV…) : Paramètres → Automatisations et scènes →
    Blueprints →
    « Tab5 — emplacements de l'écran · screen slots » → Créer une automatisation.
+6. Le tableau de bord de la tablette (facultatif) : Paramètres → Tableaux de bord →
+   « Ajouter un tableau de bord » → « Nouveau tableau de bord à partir de zéro »,
+   titre « Tab5 ». Outils de développement → Modèle : remplacez le contenu par
+     {{% from 'tab5_dashboard.jinja' import tab5_dashboard %}}{{{{ tab5_dashboard() }}}}
+   et copiez le résultat. Tableau de bord Tab5 → crayon → ⋮ → « Éditeur de
+   configuration brute » : remplacez tout par ce résultat, enregistrez.
 tab5_optionnel/ : un volet qui ne signale pas sa course ? Copiez
 volet_serre_tracking.yaml dans packages/, puis choisissez-le dans
 « Tab5 · volet à course simulée ». Sinon, ignorez ce dossier.
@@ -91,6 +97,12 @@ ENGLISH
    unset simply stays off the screen.
 5. Your devices (lights, climate, TV…): Settings → Automations & scenes →
    Blueprints → "Tab5 — emplacements de l'écran · screen slots" → Create automation.
+6. The tablet's dashboard (optional): Settings → Dashboards → "Add dashboard" →
+   "New dashboard from scratch", title "Tab5". Developer tools → Template: replace
+   the content with
+     {{% from 'tab5_dashboard.jinja' import tab5_dashboard %}}{{{{ tab5_dashboard() }}}}
+   and copy the result. Tab5 dashboard → pencil → ⋮ → "Raw configuration editor":
+   replace everything with that result, save.
 tab5_optionnel/: a shutter that doesn't report its travel? Copy
 volet_serre_tracking.yaml into packages/, then pick it in
 "Tab5 · volet à course simulée". Otherwise ignore this folder.
