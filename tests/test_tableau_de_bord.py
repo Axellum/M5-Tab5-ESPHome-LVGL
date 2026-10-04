@@ -166,6 +166,7 @@ class Etat:
         self.state = state
         self.attributes = attributes
         self.domain = entity_id.split(".", 1)[0]
+        self.name = attributes.get("friendly_name", entity_id)
 
 
 class Etats:
@@ -227,6 +228,9 @@ def _maison(tablettes, packages=True, aides=False, langue="Français"):
         etats += [Etat(f"automation.{_slug(alias)}", "on", id=id_)
                   for id_, alias in _automatisations_des_packages().items()]
         etats.append(Etat("automation.une_autre", "on", id="1790000000000"))
+        # Celle du blueprint « Tab5 — emplacements », nommée par l'utilisateur.
+        etats.append(Etat("automation.ecran_du_bureau", "on", id="1700000000001",
+                          friendly_name="Tab5 — emplacements de l'écran"))
     if aides:
         etats += [Etat(e, "") for e in sorted(HORS_PACKAGES)]
     for e in etats:
@@ -255,6 +259,10 @@ def _rendre(maison, **variables):
         return env.from_string(verifier.APPEL_TABLEAU).render()  # la ligne de la doc, telle quelle
     arguments = ", ".join(f"{nom}={valeur!r}" for nom, valeur in variables.items())
     return env.from_string(verifier.APPEL_TABLEAU.replace("tab5_dashboard()", f"tab5_dashboard({arguments})")).render()
+
+
+def _toutes_les_cartes(tableau):
+    return [c for v in tableau["views"] for s in v["sections"] for c in s["cards"]]
 
 
 def _cartes(noeud):
@@ -294,6 +302,14 @@ def test_rendu_complet(langue):
     assert titres == (["Tab5", "Réglages Tab5", "Santé Tab5"] if langue == "Français"
                       else ["Tab5", "Tab5 settings", "Tab5 health"])
     assert _cartes(tableau) > 120
+    # L'automatisation du blueprint : sa tuile, et le lien vers son éditeur.
+    assert "automation.ecran_du_bureau" in references and "/config/automation/edit/1700000000001" in chemins
+    # Chaque tuile ou raccourci écrit sa largeur, sauf une tuile à commande en ligne
+    # (12 colonnes au minimum) : sans elle, le frontend lui donne 6 colonnes sur 12.
+    sans_largeur = [c.get("entity") or c.get("label") for c in _toutes_les_cartes(tableau)
+                    if c["type"] in ("tile", "shortcut") and "grid_options" not in c
+                    and not (c.get("features_position") == "inline" and c.get("features"))]
+    assert not sans_largeur, sans_largeur
 
 
 def test_langue_forcee_et_adresse_par_defaut():
@@ -309,6 +325,7 @@ def test_tablette_seule_sans_package():
     assert references and not {e for e in references if e not in maison[0].d}
     assert not any("tab5_" in e and APPAREIL not in e for e in references), "carte d'un package absent"
     assert "annonce_vocale" not in str(tableau)
+    assert "/config/blueprint/dashboard" in str(tableau), "sans automatisation du blueprint, le lien va aux blueprints"
 
 
 def test_sans_tablette():

@@ -23,6 +23,9 @@ partagés avec la façon de l'installer.
   appareil, chaque entité par la fin de son identifiant, les selects ajoutés par HA
   (pipeline, mots d'activation, fin de la parole) par leurs options, car leur
   identifiant suit la langue de HA. Une carte n'apparaît que si son entité existe.
+- L'automatisation du blueprint « Tab5 — emplacements » est trouvée par son nom : tuile
+  dans Santé et lien direct vers son éditeur (sinon vers la liste des blueprints). Chaque
+  tuile écrit sa largeur : sans `grid_options`, le frontend lui donne 6 colonnes sur 12.
 - Installation (`docs/installation.md`, étape 7, et LISEZMOI de l'archive) : un tableau
   de bord vide « Tab5 », la ligne
   `{% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}` dans
@@ -34,7 +37,7 @@ partagés avec la façon de l'installer.
   tablettes ; contre-épreuve : quatre erreurs volontaires, chacune vue) ; le job
   « Installation dans un HA neuf » rend la ligne dans un vrai HA, vérifie les entités et
   l'absence d'avertissement de modèle, enregistre le tableau de bord et le relit. Chez
-  l'auteur : 3 vues, 134 cartes, 98 entités, aucune absente, en français et en anglais.
+  l'auteur : 3 vues, 135 cartes, 99 entités, aucune absente, en français et en anglais.
 
 ### 2026-10-04 — Icône de la production solaire dans le bandeau d'état
 

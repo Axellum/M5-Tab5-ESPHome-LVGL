@@ -39,7 +39,9 @@
       motif « domaine[.].*_<fin>$ » sur les entités de l'appareil ; les selects que
       l'intégration ESPHome de HA ajoute, par leurs options), package par son
       entity_id fixe testé dans `present`, automatisation de package par son `id`
-      (table A). tests/test_tableau_de_bord.py rend la macro avec une fausse maison
+      (table A), celle du blueprint par son nom (ns.e). Largeur : une tuile sans
+      commande « en ligne » prend 6 colonnes sur 12 (getGridOptions du frontend) ; on
+      écrit donc `grid_options` sur chacune. tests/test_tableau_de_bord.py rend la macro avec une fausse maison
       et vérifie que chaque entité citée existe ; le job « Installation dans un HA
       neuf » la rend dans un vrai HA avec la tablette virtuelle, puis enregistre le
       tableau de bord.
@@ -50,7 +52,7 @@
 {%- macro tab5_dashboard(adresse='dashboard-tab5', langue='') -%}
 
 {#- ── La tablette, trouvée par le modèle de son appareil ─────────────────────── -#}
-{%- set ns = namespace(api='', t={}, a={}, p=[], m=[], v=[]) -%}
+{%- set ns = namespace(api='', t={}, a={}, p=[], m=[], v=[], e='', e_id='') -%}
 {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') -%}
   {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and (ns.api == '' or is_state(e, 'on')) -%}
     {%- set ns.api = e -%}
@@ -123,6 +125,15 @@
   {%- endif -%}
 {%- endfor -%}
 {%- set A = ns.a -%}
+{#- Automatisation du blueprint « Tab5 — emplacements » : par son nom (aucun attribut ne dit de quel
+    blueprint vient une automatisation). Trouvée : lien vers son éditeur ; sinon, vers les blueprints. -#}
+{%- for a in states.automation | sort(attribute='entity_id') -%}
+  {%- if not ns.e and a.attributes.id is defined
+         and ('emplacement' in (a.entity_id ~ ' ' ~ a.name) | lower or 'screen slot' in a.name | lower) -%}
+    {%- set ns.e = a.entity_id -%}
+    {%- set ns.e_id = a.attributes.id -%}
+  {%- endif -%}
+{%- endfor -%}
 
 {#- `langue` (« Français », « English »…) force la langue des libellés ; vide = celle de l'écran. -#}
 {%- set fr = (langue or (states(T.langue) if T.langue else 'Français')) in ['Français', 'unknown', 'unavailable'] -%}
@@ -241,6 +252,8 @@ views:
             icon: mdi:brightness-6
             features:
               - type: light-brightness
+            grid_options:
+              columns: 12
 {%- endif %}
 {%- if T.lecteur %}
           - type: tile
@@ -250,6 +263,8 @@ views:
             features:
               - type: media-player-volume-slider
                 show_mute_button: true
+            grid_options:
+              columns: 12
 {%- endif %}
 {%- if T.aller_a %}
           - type: tile
@@ -275,6 +290,8 @@ views:
             entity: {{ T.calendrier }}
             name: "{{ t('Recharger le calendrier', 'Reload the calendar') }}"
 {{- bouton(T.calendrier, 'mdi:calendar-refresh') }}
+            grid_options:
+              columns: 12
 {%- endif %}
 {%- if T.reveil %}
       - type: grid
@@ -297,6 +314,8 @@ views:
             entity: {{ T.prochain_reveil }}
             name: "{{ t('Prochaine sonnerie', 'Next alarm') }}"
             icon: mdi:alarm-check
+            grid_options:
+              columns: 12
 {%- endif %}
           - type: tile
             entity: {{ T.reveil }}
@@ -360,6 +379,8 @@ views:
             entity: {{ T.prochain_rdv }}
             name: "{{ t('Prochain rendez-vous', 'Next appointment') }}"
             icon: mdi:calendar-clock
+            grid_options:
+              columns: 12
 {%- if T.annonce_rdv %}
           - type: tile
             entity: {{ T.annonce_rdv }}
@@ -412,6 +433,8 @@ views:
             entity: {{ T.satellite }}
             name: "{{ t('Assistant', 'Assistant') }}"
             icon: mdi:account-voice
+            grid_options:
+              columns: 12
 {%- if T.micro %}
           - type: tile
             entity: {{ T.micro }}
@@ -426,6 +449,8 @@ views:
             entity: input_boolean.tab5_micro_coupe_absence
             name: "{{ t('Micro coupé (absence)', 'Mic off (away)') }}"
             icon: mdi:microphone-off
+            grid_options:
+              columns: 12
 {%- endif %}
 {#- Annonce d'un texte libre : helpers de l'utilisateur, hors packages (carte seulement s'ils existent). #}
 {%- if 'input_text.tab5_annonce_vocale' in present and 'script.tab5_annonce_vocale' in present %}
@@ -433,6 +458,8 @@ views:
             entity: input_text.tab5_annonce_vocale
             name: "{{ t('Texte à annoncer', 'Text to announce') }}"
             icon: mdi:text
+            grid_options:
+              columns: 12
           - type: shortcut
             label: "{{ t('Faire parler la tablette', 'Make the tablet speak') }}"
             description: "{{ t('Lit le texte ci-dessus', 'Reads the text above') }}"
@@ -440,6 +467,8 @@ views:
             tap_action:
               action: perform-action
               perform_action: script.tab5_annonce_vocale
+            grid_options:
+              columns: 12
 {%- endif %}
 {%- endif %}
 
@@ -548,17 +577,21 @@ views:
             heading: "{{ t('Pièces, tuiles, clim, plantes, énergie, météo : automatisation du blueprint', 'Rooms, tiles, climate, plants, energy, weather: the blueprint automation') }}"
             heading_style: subtitle
           - type: shortcut
-            label: "{{ t('Ouvrir les blueprints', 'Open the blueprints') }}"
+            label: "{{ t('Ouvrir les emplacements', 'Open the screen slots') if ns.e_id else t('Ouvrir les blueprints', 'Open the blueprints') }}"
             description: "{{ t("Tab5 — emplacements de l'écran", "Tab5 — emplacements de l'écran (screen slots)") }}"
             icon: mdi:pencil
             tap_action:
               action: navigate
-              navigation_path: /config/blueprint/dashboard
+              navigation_path: {{ '/config/automation/edit/' ~ ns.e_id if ns.e_id else '/config/blueprint/dashboard' }}
+            grid_options:
+              columns: 12
 {%- if T.zones %}
           - type: tile
             entity: {{ T.zones }}
             name: "{{ t('Zones masquées', 'Hidden zones') }}"
             icon: mdi:eye-off-outline
+            grid_options:
+              columns: 12
 {%- endif %}
       - type: grid
         cards:
@@ -582,6 +615,8 @@ views:
             features:
               - type: select-options
                 style: dropdown
+            grid_options:
+              columns: 12
 {%- endif %}
 {%- endfor %}
 {%- if 'sensor.tab5_sources_meteo' in present %}
@@ -589,6 +624,8 @@ views:
             entity: sensor.tab5_sources_meteo
             name: "{{ t('Sources trouvées', 'Sources found') }}"
             icon: mdi:magnify
+            grid_options:
+              columns: 12
 {%- endif %}
           - type: heading
             heading: "{{ t('Maison', 'Home') }}"
@@ -611,6 +648,8 @@ views:
               - type: select-options
                 style: dropdown
 {%- endif %}
+            grid_options:
+              columns: 12
 {%- endif %}
 {%- endfor %}
       - type: grid
@@ -633,6 +672,8 @@ views:
               - type: select-options
                 style: dropdown
 {%- endif %}
+            grid_options:
+              columns: 12
 {%- endif %}
 {%- endfor %}
           - type: heading
@@ -650,6 +691,8 @@ views:
             features:
               - type: select-options
                 style: dropdown
+            grid_options:
+              columns: 12
 {%- endif %}
 {%- endfor %}
       - type: grid
@@ -675,6 +718,8 @@ views:
             features:
               - type: select-options
                 style: dropdown
+            grid_options:
+              columns: 12
 {%- endif %}
 {%- endfor %}
 {%- if T.reveil %}
@@ -724,10 +769,8 @@ views:
               - type: numeric-input
                 style: {{ 'slider' if genre == 'curseur' else 'buttons' }}
 {%- endif %}
-{%- if largeur != 12 %}
             grid_options:
               columns: {{ largeur }}
-{%- endif %}
 {%- endif %}
 {%- endfor %}
 {%- endif %}
@@ -771,6 +814,8 @@ views:
             entity: {{ T.redemarrer }}
             name: "{{ t('Redémarrer la tablette', 'Restart the tablet') }}"
             icon: mdi:restart
+            grid_options:
+              columns: 12
 {%- for action in ['tap_action', 'icon_tap_action'] %}
             {{ action }}:
               action: perform-action
@@ -798,6 +843,8 @@ views:
             features:
               - type: trend-graph
                 hours_to_show: 24
+            grid_options:
+              columns: 12
 {%- endif %}
 {%- endfor %}
       - type: grid
@@ -813,6 +860,8 @@ views:
             features:
               - type: trend-graph
                 hours_to_show: 24
+            grid_options:
+              columns: 12
 {%- endif %}
 {%- for ent, fr_, en_, icone in [(T.ssid, 'Réseau', 'Network', 'mdi:wifi'), (T.ip, 'Adresse IP', 'IP address', 'mdi:ip-network')] %}
 {%- if ent %}
@@ -876,6 +925,8 @@ views:
               perform_action: automation.trigger
               target:
                 entity_id: {{ A.tab5_ha_hmi_updater }}
+            grid_options:
+              columns: 12
 {%- endif %}
           - type: heading
             heading: "{{ t('Automatisations', 'Automations') }}"
@@ -897,6 +948,14 @@ views:
               - type: toggle
 {%- endif %}
 {%- endfor %}
+{%- if ns.e %}
+          - type: tile
+            entity: {{ ns.e }}
+            name: "{{ t("Emplacements de l'écran (blueprint)", 'Screen slots (blueprint)') }}"
+            features_position: inline
+            features:
+              - type: toggle
+{%- endif %}
       - type: grid
         cards:
           - type: heading
@@ -926,6 +985,8 @@ views:
             entity: input_text.tab5_alerts_dismissed
             name: "{{ t("Alertes HA ignorées sur l'écran", 'HA alerts dismissed on screen') }}"
             icon: mdi:bell-off-outline
+            grid_options:
+              columns: 12
 {%- endif %}
 {%- endif %}
 {%- endmacro -%}
