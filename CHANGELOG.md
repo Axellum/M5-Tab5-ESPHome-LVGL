@@ -4,6 +4,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-04 — Les pièces décrites dans le README et sur le site
+
+- **README** (EN et FR) et **site** : la limite d'avant la 3.2 (« plus de 3 lumières ou un
+  autre appareil par tuile n'est pas encore possible ») est remplacée par les pièces : jusqu'à
+  5 pièces de 5 appareils, noms et icônes pris dans Home Assistant ; hors des pièces, une seule
+  place par zone (carte clim de l'accueil, TV, téléphone, deux températures, 5 plantes au plus).
+  Popup lumières : « les lumières de la pièce (5 au plus) » au lieu de « 3 lumières ».
+- **`docs/press/forum_ha_en.md`** : mêmes passages mis à jour, et une note signale ce qui date
+  encore de la 3.0 (langues).
+
 ### 2026-10-03 — Météo choisie dans le blueprint
 
 - **Blueprint « Tab5 — emplacements »** : nouvelle section facultative « Météo · Weather »
