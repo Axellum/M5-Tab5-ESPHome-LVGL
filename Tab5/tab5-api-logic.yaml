@@ -537,14 +537,15 @@ api:
     # connaît plus d'entité ; chaque clé est publiée dans le capteur interne qui la
     # porte (tab5-sensors-domotique.yaml, pot_sensors.yaml), dont les on_value n'ont
     # pas changé. Clé inconnue : ignorée (c'est ce qui rend « climr », ADR-0026, et les
-    # clés « crRT » / « ceRT » des clims de tuile, ADR-0027, sans risque pour un firmware
-    # plus ancien). tests/test_emplacements.py compare cette table au blueprint.
+    # clés « crRT » / « ceRT » des clims de tuile, ADR-0027, et « solaire », icône du
+    # bandeau d'état, sans risque pour un firmware plus ancien).
+    # tests/test_emplacements.py compare cette table au blueprint.
     - service: tab5_maj_emplacements
       description: "Emplacements de la maison choisis dans le blueprint « Tab5 — emplacements » : état et valeur de chacun. Tous à la connexion, un seul à chaque changement."
       variables:
         payload:
           type: string
-          description: "« clé|état|valeur » séparés par ; — clés lumiere_1 à lumiere_3, pc, tv, telephone, salon, salon_hum, serre, pot_1 à pot_5 et pot_N_ec, _lux, _temp, _bat. État = état Home Assistant tel quel ; valeur = nombre affiché (luminosité 0-255, %, °C, µS/cm, lx), nan s'il n'y en a pas. Tuiles de pièce (ADR-0023, depuis 3.2.0) : « tRT|état|valeur|couleur », R pièce et T tuile de 0 à 4, valeur = luminosité 0-255, position 0-100, mesure ou température de la pièce (nan sinon), couleur = RRGGBB d'une lumière allumée, vide sinon. Réglages de la clim (ADR-0026, avant tab5_maj_clim) : « climr|min|max|pas|unité|capacités|nom », nombres à point décimal, unité °C ou °F, capacités = lettres des boutons gérés parmi c, h, d, f (froid, chaud, sec, ventilation), e (Éco), b (Boost), q (Silence), s (Oscillation), w (Brise). Clim d'une tuile cli sans l'option m (ADR-0027) : réglages « crRT|min|max|pas|unité|capacités|nom » (comme climr) et état « ceRT|consigne|pièce|mode|préréglage|ventilation|oscillation » (champs de tab5_maj_clim, nan si inconnu)."
+          description: "« clé|état|valeur » séparés par ; — clés lumiere_1 à lumiere_3, pc, tv, telephone, salon, salon_hum, serre, pot_1 à pot_5 et pot_N_ec, _lux, _temp, _bat. État = état Home Assistant tel quel ; valeur = nombre affiché (luminosité 0-255, %, °C, µS/cm, lx), nan s'il n'y en a pas. Tuiles de pièce (ADR-0023, depuis 3.2.0) : « tRT|état|valeur|couleur », R pièce et T tuile de 0 à 4, valeur = luminosité 0-255, position 0-100, mesure ou température de la pièce (nan sinon), couleur = RRGGBB d'une lumière allumée, vide sinon. Réglages de la clim (ADR-0026, avant tab5_maj_clim) : « climr|min|max|pas|unité|capacités|nom », nombres à point décimal, unité °C ou °F, capacités = lettres des boutons gérés parmi c, h, d, f (froid, chaud, sec, ventilation), e (Éco), b (Boost), q (Silence), s (Oscillation), w (Brise). Clim d'une tuile cli sans l'option m (ADR-0027) : réglages « crRT|min|max|pas|unité|capacités|nom » (comme climr) et état « ceRT|consigne|pièce|mode|préréglage|ventilation|oscillation » (champs de tab5_maj_clim, nan si inconnu). Production solaire du bandeau d'état : « solaire|pourcentage », 0 à 100 de la puissance crête, nan = aucune valeur (icône masquée)."
           example: "lumiere_1|on|180;salon|21.4|21.4;t02|on|128|FFB347;t01|open|45|;"
       then:
         - lambda: |-

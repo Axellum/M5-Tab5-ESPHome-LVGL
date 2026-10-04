@@ -18,6 +18,7 @@ contrat ; ce fichier le fait de deux façons :
   exécute dans un HA en conteneur."""
 import ast
 import datetime as dt
+import math
 import os
 import re
 
@@ -145,6 +146,16 @@ def _analyser(brut):
     return brut if isinstance(valeur, str) else valeur
 
 
+def _est_un_nombre(valeur):
+    """Filtre is_number de Home Assistant : float() réussit et le nombre est fini
+    (icône solaire du bandeau, variable solaire_pourcent)."""
+    try:
+        x = float(valeur)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(x)
+
+
 def _environnement(etats, tablettes):
     env = ImmutableSandboxedEnvironment(extensions=["jinja2.ext.loopcontrols"], undefined=jinja2.StrictUndefined)
 
@@ -157,7 +168,7 @@ def _environnement(etats, tablettes):
         now=lambda: MAINTENANT, device_id=lambda e: None, device_entities=lambda d: [],
     )
     env.filters.update(
-        area_name=etats.aire, device_attr=device_attr,
+        area_name=etats.aire, device_attr=device_attr, is_number=_est_un_nombre,
         regex_findall=lambda v, motif="", ignorecase=False: re.findall(motif, str(v), re.I if ignorecase else 0),
     )
     env.tests.update(

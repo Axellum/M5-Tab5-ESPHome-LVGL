@@ -835,6 +835,7 @@ enum BandeauIcone : uint8_t {
     BANDEAU_TELEPHONE,  // icon_phone : batterie du téléphone (zone TELEPHONE)
     BANDEAU_WIFI,       // icon_wifi
     BANDEAU_REVEIL,     // icon_alarm_status
+    BANDEAU_SOLAIRE,    // icon_solaire : production solaire en % de la crête (clé solaire)
     BANDEAU_BATTERIE,   // icon_batterie : batterie de la tablette, si elle est montée
     BANDEAU_NB
 };

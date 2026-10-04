@@ -4,6 +4,34 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-04 — Icône de la production solaire dans le bandeau d'état
+
+Demande d'Axel : au même endroit que les icônes PC, téléphone, Wi-Fi et batterie, la
+production des panneaux solaires en pourcentage de leur maximum, en couleur.
+- **Icône** avant la batterie (qui reste en fin de bandeau). Couleur de
+  `get_battery_color()`, comme le téléphone et la batterie : vert au-dessus de 80 %, bleu
+  de 41 à 80 %, ambre de 20 à 40 %, rouge en dessous, gris à 0 % (la nuit). Glyphe : le
+  panneau seul (`solar-panel`) à tous les paliers, le plus net à cette taille. Cachée tant que Home
+  Assistant n'a rien envoyé, et sans installation solaire (« nan »).
+- **Blueprint « Tab5 — emplacements »**, section « Énergie · Energy » : nouvelle entrée
+  facultative **« Puissance crête des panneaux · Panel peak power »** (kWc, 0 = pas
+  d'icône). Le blueprint calcule puissance solaire / crête, arrondie et bornée 0-100 (unité
+  du capteur lue : W, kW ou MW), et la pousse dans `tab5_maj_emplacements` sous la clé
+  **`solaire`** : avec tous les états (connexion, rechargement, « MAJ Écran », démarrage
+  de HA), puis avec les mesures lentes toutes les 5 minutes si le capteur a changé ; au
+  plus 12 poussées par heure de soleil, aucune la nuit. Une clé plutôt qu'une nouvelle
+  action : un firmware plus ancien ignore une clé inconnue, alors qu'une action absente
+  arrête le script de HA (même raison que `climr` et `crRT`/`ceRT`). Amendement de
+  l'[ADR-0028](docs/decisions/0028-solar-energy-popup.md).
+- Deux glyphes ajoutés à `mdi_font_26`. `tests/test_solaire.py` : la clé des deux côtés,
+  le chemin firmware, le pourcentage du blueprint contre un calcul Python indépendant, et
+  quand il part. Rendu hors tablette : six captures (`accueil-solaire-nuit`, `-faible`,
+  `-moyen`, `-bon`, `-fort`, et `accueil-solaire-et-batterie`) ; les autres ne changent
+  pas (la démo ne pousse pas la clé). `docs/screens.md` et `docs/installation.md` (EN et
+  FR), `HomeAssistant_Config/README.md`, `Tab5/README.md`.
+
+**Non testé sur la tablette.** Le blueprint est à redéployer sur Home Assistant.
+
 ### 2026-10-04 — Icône de la batterie de la tablette dans le bandeau d'état
 
 Demande d'Axel : la batterie du Tab5 en haut à gauche, avec les icônes PC, téléphone,
