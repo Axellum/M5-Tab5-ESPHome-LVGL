@@ -4,6 +4,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-03 — Prévisions horaires dans l'ordre, de gauche à droite
+
+- **Prévisions par heure** : les cinq tuiles d'une page horaire se lisent maintenant de
+  gauche à droite, l'heure la plus proche à gauche, comme les jours. Elles allaient à
+  rebours depuis le premier commit (bandeau « De 07:00 à 11:00 », tuiles 11:00 … 07:00) ;
+  signalé par husyildiz (discussion #278). Seul l'index du créneau change dans
+  `refresh_hourly_forecast()` (`tab5_forecast.cpp`) : l'ordre des deux pages horaires,
+  le bandeau, les pièces et leurs boutons (posés par position visuelle, ADR-0023) restent
+  tels quels.
+
 ### 2026-10-03 — La batterie d'origine se charge, état et niveau dans Home Assistant
 
 Demande d'un utilisateur (discussion #278) : avec la batterie d'origine, on ne voyait pas
