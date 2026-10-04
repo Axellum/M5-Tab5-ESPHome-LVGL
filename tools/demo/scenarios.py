@@ -114,10 +114,11 @@ def build_zones_absentes(absentes: frozenset) -> str:
 # ---------------------------------------------------------------------------
 
 TYPES_TUILE = ("lum", "int", "vol", "med", "act", "cap", "bin", "cli")
-OPTIONS_TUILE = "dcokrtm"
+OPTIONS_TUILE = "dcokrtme"
 # Lettres réservées à un type : variateur et couleur (lampe), TV du blueprint (média),
-# clim du blueprint (clim). o, k et r valent pour tous.
-OPTIONS_DU_TYPE = {"d": "lum", "c": "lum", "t": "med", "m": "cli"}
+# clim du blueprint (clim), capteur de la section « Énergie » (capteur, ADR-0028). o, k
+# et r valent pour tous.
+OPTIONS_DU_TYPE = {"d": "lum", "c": "lum", "t": "med", "m": "cli", "e": "cap"}
 # Le firmware garde 24 octets d'un nom (coupé entre deux caractères) ; une unité en
 # fait 7 au plus (« °C », « kWh »…).
 NOM_OCTETS_GARDES = 24
@@ -191,7 +192,9 @@ PIECES: dict = {
     3: Piece("Bureau", {
         # Jamais éteint depuis l'écran (réveil par le réseau).
         0: Tuile("int", "Ordinateur", "ordinateur", "o", etat="on"),
-        1: Tuile("cap", "Consommation", "energie", complement="W", etat="126", valeur="126"),
+        # Le capteur solaire de la section « Énergie » (option e, ADR-0028) : son appui
+        # ouvre le popup Énergie. Même valeur que l'instantané (ENERGIE_INSTANTANE).
+        1: Tuile("cap", "Production solaire", "solaire", "e", complement="W", etat="1450", valeur="1450"),
     }),
     # Heures 5-9.
     4: Piece("Jardin", {
@@ -346,6 +349,77 @@ def decrire_emplacement(cle: str, pieces: dict) -> str:
             return f"{cle} (pièce vide : absente des définitions poussées)"
         return f"{cle} ({nom_de_la_piece(r, piece)}, toutes ses lumières)"
     return cle
+
+
+# ---------------------------------------------------------------------------
+# Énergie (ADR-0028, discussion #278) : une maison solaire inventée, avec batterie, au
+# matin du 16 juin (l'heure figée des captures : 07:45). Ce que pousserait
+# script.tab5_energie (HomeAssistant_Config/packages/tab5_energie.yaml) :
+#   - tab5_maj_energie : « solaire|maison|reseau|batterie|batterie_puissance|
+#     batterie_temperature|unite_temperature|jour » — W entiers, réseau + achat / − vente,
+#     batterie + charge / − décharge, jour en kWh ; vide = non choisi, nan = sans valeur ;
+#   - tab5_maj_energie_historique : vue, debut (AAAA-MM-JJ), valeurs en kWh « ; ».
+# Cohérent : solaire 1450 = maison 620 + charge 400 + vente 430.
+# ---------------------------------------------------------------------------
+
+ENERGIE_CHAMPS = ("solaire", "maison", "reseau", "batterie", "batterie_puissance",
+                  "batterie_temperature", "unite_temperature", "jour")
+ENERGIE_VUES = {"heures": 24, "jours": 30, "mois": 12}
+ENERGIE_INSTANTANE = {
+    "solaire": "1450", "maison": "620", "reseau": "-430", "batterie": "64",
+    "batterie_puissance": "400", "batterie_temperature": "21.5", "unite_temperature": "°C",
+    "jour": "1.47",
+}
+# Production de chaque heure du jour (heures à venir vides), des 30 derniers jours et
+# des 12 derniers mois, en kWh. Le dernier créneau est le jour, le mois ou l'heure en
+# cours ; le jour en cours = ENERGIE_INSTANTANE["jour"].
+ENERGIE_HISTORIQUE = {
+    "heures": ["0"] * 6 + ["0.53", "0.94"] + [""] * 16,
+    "jours": ["24.8", "27.1", "18.4", "9.6", "21.3", "29.4", "31.2", "30.6", "26.9", "14.2",
+              "12.7", "22.5", "28.8", "32.1", "33.4", "31.9", "25.6", "19.3", "27.7", "30.2",
+              "33.8", "34.1", "29.5", "16.8", "23.9", "30.7", "32.6", "28.4", "31.5", "1.47"],
+    "mois": ["821", "742", "563", "381", "192", "118", "151", "263", "472", "641", "758", "412"],
+}
+
+
+def _nombre_ou_vide(champ: str, v: str) -> None:
+    assert v == "" or v == "nan" or _nombre(v) is not None, f"{champ} : {v!r} n'est pas un nombre"
+
+
+def build_energie_payload(instantane: dict | None = None) -> str:
+    """tab5_maj_energie : les huit champs dans l'ordre du contrat, séparés par « | »."""
+    e = ENERGIE_INSTANTANE if instantane is None else instantane
+    assert set(e) <= set(ENERGIE_CHAMPS), f"champ inconnu : {set(e) - set(ENERGIE_CHAMPS)}"
+    valeurs = [str(e.get(c, "")) for c in ENERGIE_CHAMPS]
+    for champ, v in zip(ENERGIE_CHAMPS, valeurs):
+        assert "|" not in v and ";" not in v, f"{champ} : séparateur dans {v!r}"
+        if champ != "unite_temperature":
+            _nombre_ou_vide(champ, v)
+    for champ in ("solaire", "maison", "reseau", "batterie_puissance"):
+        assert valeurs[ENERGIE_CHAMPS.index(champ)] in ("", "nan") or             float(valeurs[ENERGIE_CHAMPS.index(champ)]).is_integer(), f"{champ} : W entiers"
+    return "|".join(valeurs)
+
+
+def debut_energie(vue: str, aujourd_hui: _dt.date) -> _dt.date:
+    """Premier créneau d'une vue : le jour même (heures), 29 jours avant (jours), le 1er du
+    mois 11 mois avant (mois) — comme packages/tab5_energie.yaml."""
+    if vue == "heures":
+        return aujourd_hui
+    if vue == "jours":
+        return aujourd_hui - _dt.timedelta(days=29)
+    m = aujourd_hui.month - 11
+    return _dt.date(aujourd_hui.year - (1 if m < 1 else 0), m + (12 if m < 1 else 0), 1)
+
+
+def build_energie_historique(vue: str, aujourd_hui: _dt.date) -> dict:
+    """Variables de tab5_maj_energie_historique pour une vue, datée de `aujourd_hui`."""
+    assert vue in ENERGIE_VUES, vue
+    valeurs = ENERGIE_HISTORIQUE[vue]
+    assert len(valeurs) == ENERGIE_VUES[vue], f"{vue} : {len(valeurs)} valeurs"
+    for v in valeurs:
+        _nombre_ou_vide(vue, v)
+        assert v in ("", "nan") or float(v) >= 0, f"{vue} : production négative {v!r}"
+    return {"vue": vue, "debut": debut_energie(vue, aujourd_hui).isoformat(), "valeurs": ";".join(valeurs)}
 
 
 # ---------------------------------------------------------------------------

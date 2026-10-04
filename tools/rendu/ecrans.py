@@ -207,6 +207,14 @@ SONNERIE_ARRETER = (440, 540)
 CAL_JOUR_18 = (642, 342)      # cellule du jeudi 18 (rangée 2, colonne 3)
 CONSOLE_REDEMARRER_HA, CONSOLE_REBOOT = (801, 588), (1060, 588)
 CONFIRMATION_ANNULER = (813, 596)   # jamais « Confirmer » (1049, 596)
+# Popup Énergie (ADR-0028, energie_popup.yaml) : la tuile du capteur solaire de la démo
+# (pièce « Bureau », page 1 des heures, T1 : deuxième tuile, x 275-505), la croix de
+# l'en-tête (ADR-0009, commune à tous les popups) et les boutons de vue (carte du
+# graphique, y 313-685 à l'écran ; boutons de 150 × 48 à 18, 178 et 338 px de son bord
+# droit).
+TUILE_SOLAIRE = (390, 572)
+FERMER_POPUP = (1215, 41)
+ENERGIE_VUES = {"heures": (828, 347), "jours": (988, 347), "mois": (1148, 347)}
 
 
 # ---------------------------------------------------------------------------
@@ -313,6 +321,12 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("lumieres-salon", (Long(*TUILES["salon"]),)),
     Ecran("climatisation", (Toucher(*CONSIGNE_CLIM),)),
     Ecran("plantes", (Long(*POTS),)),
+    # Énergie (ADR-0028) : ouvert par la tuile solaire de la démo (vue des heures), puis
+    # les vues Jours et Mois par « Aller à l'écran ». Données : la scène (demo_pusher,
+    # _pousser_energie), datée du jour figé des captures.
+    Ecran("energie-heures", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)), (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
+    Ecran("energie-jours", (Aller("Énergie"), Toucher(*ENERGIE_VUES["jours"]))),
+    Ecran("energie-mois", (Aller("Énergie"), Toucher(*ENERGIE_VUES["mois"]))),
     Ecran("telecommande-tv", (Toucher(*BOUTON_TV),)),
     Ecran("console-systeme", (Toucher(*BOUTON_SYS),)),
     Ecran("console-confirmer-redemarrage-ha", (Toucher(*BOUTON_SYS), Toucher(*CONSOLE_REDEMARRER_HA)),
