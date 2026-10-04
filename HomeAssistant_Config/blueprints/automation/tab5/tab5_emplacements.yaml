@@ -37,6 +37,9 @@
 #         (elle ouvre le popup Énergie) ; l'événement esphome.tab5_energie (vue) lance
 #         script.tab5_energie (packages/tab5_energie.yaml) avec ces capteurs. Vide : aucune
 #         tuile e, et une réponse vide (le popup ouvert par « Aller à l'écran » le dit).
+#         Avec la puissance crête (energie_crete, kWc), la production en % de la crête part
+#         dans tab5_maj_emplacements (clé solaire, icône du bandeau d'état) : avec tous les
+#         états, puis avec les mesures lentes si le capteur a changé ; « nan » sinon.
 # @architecture_constraint Aucun placeholder : ce fichier est générique, il s'importe tel
 #       quel. Les clés d'emplacement et les commandes sont celles du firmware
 #       (tab5-api-logic.yaml, script tab5_action) ; tests/test_emplacements.py et
@@ -639,6 +642,27 @@ blueprint:
               filter:
                 - domain: sensor
                   device_class: power
+        energie_crete:
+          name: Puissance crête des panneaux · Panel peak power
+          description: >-
+            En kWc (kilowatts-crête, sur la facture ou l'onduleur). Remplie avec la puissance
+            solaire : une icône du bandeau d'état, en haut à gauche, montre la production en
+            pourcentage de cette crête, par sa couleur (gris la nuit, puis rouge, ambre,
+            bleu, vert). 0 : pas d'icône.
+
+
+            In kWp (kilowatt-peak, on the invoice or the inverter). Filled together with the
+            solar power: an icon of the status strip, top left, shows the production as a
+            percentage of this peak, by its colour (grey at night, then red, amber, blue,
+            green). 0: no icon.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 1000
+              step: 0.01
+              unit_of_measurement: kWc
+              mode: box
         energie_production:
           name: Énergie solaire produite · Solar energy produced
           description: >-
@@ -1582,6 +1606,34 @@ variables:
   energie_capteurs: "{{ energie.values() | select | list }}"
   energie_reseau_inverse: !input energie_reseau_inverse
   energie_batterie_inverse: !input energie_batterie_inverse
+  # Icône solaire du bandeau d'état (clé solaire de tab5_maj_emplacements) : puissance
+  # des panneaux en % de leur crête (energie_crete, kWc), arrondie et bornée 0-100 (un
+  # onduleur qui lit -3 W la nuit donne 0). « nan » sans capteur, sans crête ou sans
+  # valeur : l'icône disparaît. Unité lue sur le capteur (W, kW ou MW ; W sinon).
+  energie_crete: !input energie_crete
+  solaire_pourcent: >-
+    {%- set x = energie.solaire -%}
+    {%- set crete = energie_crete | float(0) -%}
+    {%- if x and crete > 0 and states(x) | is_number -%}
+      {%- set u = state_attr(x, 'unit_of_measurement') | default('W', true) | string -%}
+      {%- set w = states(x) | float * {'kW': 1000, 'MW': 1000000}.get(u, 1) -%}
+      {{ [[(w / (crete * 1000) * 100) | round(0) | int, 0] | max, 100] | min }}
+    {%- else -%}
+      nan
+    {%- endif -%}
+  # Quand la pousser : avec tous les états (connexion, rechargement, MAJ Écran, démarrage
+  # de HA), « nan » compris quand rien n'est choisi ; puis avec les mesures lentes, toutes
+  # les 5 minutes, seulement si le capteur a changé depuis le passage d'avant. Pas à
+  # chaque changement : un onduleur publie toutes les 5 à 30 s, et l'écran ne montre
+  # qu'un palier de couleur. Au plus 12 poussées par heure de soleil, aucune la nuit
+  # (capteur figé à 0), et elles partent dans le passage des mesures qui a lieu de toute
+  # façon. Filtrer sur le palier demanderait de retenir le dernier envoyé (une entrée de
+  # plus dans un package) : 5 minutes de retard au plus sur une couleur ont suffi.
+  solaire_a_pousser: >-
+    {%- set x = energie.solaire -%}
+    {{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha']
+       or (trigger.id == 'mesures' and x != '' and energie_crete | float(0) > 0 and states[x] is not none
+           and (now() - states[x].last_changed).total_seconds() < fenetre_mesures) }}
 
 triggers:
   - trigger: event
@@ -1896,7 +1948,7 @@ conditions:
         {{ meteo_a_ecrire | count > 0 }}
       {%- else -%}
         {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'pipeline_discussion', 'energie'] or cles | count > 0
-           or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0)) }}
+           or solaire_a_pousser or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0)) }}
       {%- endif -%}
   # Déclencheurs venus de HA (rechargement, démarrage, mesures, changements d'état) : seulement
   # si une tablette est connectée, sinon « Action … not found » (pas encore ajoutée)
@@ -1929,6 +1981,11 @@ actions:
             {%- set ns.r = ns.r ~ c ~ '|' ~ (states(x) | replace('|', '/') | replace(';', ',')) ~ '|' ~ v ~ ';' -%}
           {%- endif -%}
         {%- endfor -%}
+        {#- Icône solaire du bandeau : « solaire|pourcentage; » (voir solaire_a_pousser). Un
+            firmware sans cette icône ignore la clé (clé inconnue). -#}
+        {%- if solaire_a_pousser -%}
+          {%- set ns.r = ns.r ~ 'solaire|' ~ solaire_pourcent ~ ';' -%}
+        {%- endif -%}
         {{ ns.r }}
       absentes: >-
         {%- set ns = namespace(l=[]) -%}

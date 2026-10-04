@@ -76,6 +76,8 @@ def test_le_blueprint_se_lit_et_tout_est_facultatif():
                 assert entree["default"] == "liste", f"{nom} : non rempli doit valoir \"liste\""
             elif "boolean" in entree["selector"]:  # Énergie : sens du réseau, de la batterie
                 assert entree["default"] is False, f"{nom} : une case non cochée doit valoir false"
+            elif "number" in entree["selector"]:  # Énergie : puissance crête, 0 = pas d'icône solaire
+                assert entree["default"] == 0, f"{nom} : un nombre non rempli doit valoir 0"
             else:
                 assert entree["default"] == [], f"{nom} : un emplacement vide doit valoir []"
 
