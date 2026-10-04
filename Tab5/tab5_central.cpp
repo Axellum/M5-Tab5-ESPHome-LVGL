@@ -125,10 +125,40 @@ static bool forecast_page_title_parts(int page, std::string& chapeau, std::strin
     return false;
 }
 
-static uint32_t ha_alert_color_from_couleur(const std::string& couleur) {
-    if (couleur.find("Rouge") != std::string::npos) return UIColor.ALERT_RED;
-    if (couleur.find("Orange") != std::string::npos) return UIColor.WARNING;
+// Niveau d'une alerte HA ou du bandeau info : 2 = Rouge, 1 = Orange, 0 = normal.
+static uint8_t ha_alert_niveau(const std::string& couleur) {
+    if (couleur.find("Rouge") != std::string::npos) return 2;
+    if (couleur.find("Orange") != std::string::npos) return 1;
+    return 0;
+}
+
+static uint32_t ha_alert_couleur_niveau(uint8_t niveau) {
+    if (niveau == 2) return UIColor.ALERT_RED;
+    if (niveau == 1) return UIColor.WARNING;
     return UIColor.TEXT_PRIMARY;
+}
+
+// Thèmes (ADR-0029, lot 2) : le niveau posé sur chaque label coloré par un niveau (4
+// alertes HA, bandeau info) et le label de la réponse vocale, pour les repeindre au
+// changement de thème (central_rejouer_theme()).
+struct LabelNiveau {
+    lv_obj_t* lbl = nullptr;
+    uint8_t niveau = 0;
+};
+static LabelNiveau s_label_niveau[kHaAlertSlotCount + 1];  // alertes HA 0..3, puis info
+static lv_obj_t* s_lbl_vocal = nullptr;
+
+static void colorer_niveau(int index, lv_obj_t* lbl, const std::string& couleur) {
+    const uint8_t niveau = ha_alert_niveau(couleur);
+    s_label_niveau[index] = LabelNiveau{lbl, niveau};
+    ui_text_color(lbl, ha_alert_couleur_niveau(niveau));
+}
+
+void central_rejouer_theme() {
+    for (const LabelNiveau& l : s_label_niveau) {
+        if (l.lbl != nullptr) ui_text_color(l.lbl, ha_alert_couleur_niveau(l.niveau));
+    }
+    if (s_lbl_vocal != nullptr) ui_text_color(s_lbl_vocal, UIColor.TEXT_PRIMARY);
 }
 
 // Les 8 panneaux du rotateur, rangés par index (0 planning, 1 pluie, 2 vigilance
@@ -330,7 +360,7 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
             *slots[slot_idx].id_store = aid;
             std::string texte = decode_ha_alert_text(parts[2]);
             ctx.has_ha[slot_idx] = !texte.empty();
-            ui_text_color(slots[slot_idx].lbl, ha_alert_color_from_couleur(parts[1]));
+            colorer_niveau(slot_idx, slots[slot_idx].lbl, parts[1]);
             lv_label_set_recolor(slots[slot_idx].lbl, false);
             ui_text(slots[slot_idx].lbl, texte.c_str());
             // 1E : Detecte si cette alerte est nouvelle (ID absent du precedent batch).
@@ -563,7 +593,7 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
     }
 
     // Même règle de couleur que les bandeaux d'alertes HA (Rouge, Orange, sinon blanc).
-    lv_obj_set_style_text_color(lbl_info, lv_color_hex(ha_alert_color_from_couleur(couleur)), LV_PART_MAIN);
+    colorer_niveau(kHaAlertSlotCount, lbl_info, couleur);
 
     lv_label_set_recolor(lbl_info, has_recolor_markup);
     lv_label_set_text(lbl_info, t.c_str());
@@ -978,6 +1008,7 @@ void show_vocal_response_ui(const std::string& texte,
         esphome::lvgl::lv_obj_set_style_text_font(lbl_vocal, font, LV_PART_MAIN);
     }
     lv_obj_set_style_text_color(lbl_vocal, lv_color_hex(UIColor.TEXT_PRIMARY), LV_PART_MAIN);
+    s_lbl_vocal = lbl_vocal;
     lv_label_set_recolor(lbl_vocal, false);
 
     // Phrase longue : défilement horizontal sur la largeur carte centrale.

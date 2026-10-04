@@ -263,6 +263,21 @@ static void cal_styles_init() {
     cal_style_pastille(&s_cal_style_pastille_anniv, -28, UIColor.WARM_PINK);
 }
 
+// Thèmes (ADR-0029) : les couleurs des styles des cases, en place (les cases gardent leurs
+// styles) ; cal_render_month() repeint ensuite ce qu'il pose en local.
+void cal_styles_repeindre() {
+    if (s_cal_cells[0].cell == nullptr) return;
+    lv_style_set_bg_color(&s_cal_style_case, lv_color_hex(UIColor.GLASS_RIM));
+    lv_style_set_border_color(&s_cal_style_case, lv_color_hex(UIColor.ACCENT));
+    lv_style_set_text_color(&s_cal_style_num, lv_color_hex(UIColor.TEXT_SOFT));
+    lv_style_set_text_color(&s_cal_style_sub, lv_color_hex(UIColor.TEXT_SOFT));
+    lv_style_set_bg_color(&s_cal_style_pastille_rdv, lv_color_hex(UIColor.GOLD));
+    lv_style_set_bg_color(&s_cal_style_pastille_anniv, lv_color_hex(UIColor.WARM_PINK));
+    for (lv_style_t* st : {&s_cal_style_case, &s_cal_style_num, &s_cal_style_sub, &s_cal_style_pastille_rdv,
+                           &s_cal_style_pastille_anniv})
+        lv_obj_report_style_change(st);
+}
+
 // Pastille masquée tant que le rendu ne l'allume pas.
 static lv_obj_t* cal_dot_create(lv_obj_t* cell, const lv_style_t* style) {
     lv_obj_t* d = lv_obj_create(cell);
@@ -483,9 +498,25 @@ void cal_show_day_detail_loading(lv_obj_t* day_popup, lv_obj_t* lbl_title,
     lv_obj_move_to_index(day_popup, -1);
 }
 
+// Thèmes (ADR-0029) : icône et type de chaque ligne du détail affiché, pour
+// cal_detail_rejouer() (nullptr : ligne vide).
+static lv_obj_t* s_detail_icone[6] = {};
+static char s_detail_type[6][12] = {};
+
+void cal_detail_rejouer() {
+    for (int i = 0; i < 6; i++) {
+        if (s_detail_icone[i] == nullptr) continue;
+        const char* icon;
+        uint32_t color;
+        cal_detail_type_style(s_detail_type[i], &icon, &color);
+        lv_obj_set_style_text_color(s_detail_icone[i], lv_color_hex(color), LV_PART_MAIN);
+    }
+}
+
 void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
     CalDetailLineUI lines[6]) {
     if (!lbl_status) return;
+    for (lv_obj_t*& o : s_detail_icone) o = nullptr;
 
     // Payload "type|texte;type|texte;..." construit par script.tab5_calendrier_jour
     // (HA) — textes déjà sanitisés (| et ; remplacés) et limités à 6 lignes.
@@ -506,6 +537,8 @@ void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
             cal_detail_type_style(tok, &icon, &color);
             lv_label_set_text(lines[line_count].icon, icon);
             lv_obj_set_style_text_color(lines[line_count].icon, lv_color_hex(color), LV_PART_MAIN);
+            s_detail_icone[line_count] = lines[line_count].icon;
+            snprintf(s_detail_type[line_count], sizeof(s_detail_type[0]), "%s", tok);
             std::string txt = normalize_text_utf8(std::string(sep + 1));
             // Ligne de travail : HA l'écrit en français, « Travail 08:00 – 16:00 »
             // (packages/tab5_calendar.yaml) ; le mot suit la langue de l'écran.

@@ -1,13 +1,18 @@
-"""Palettes et styles de rôle (thèmes, ADR-0029).
+"""Palettes, catalogue des thèmes et styles de rôle (thèmes, ADR-0029).
 
 La palette (`struct Palette`, Tab5/tab5_tokens.h) est la seule source des couleurs de
 l'interface. Trois listes doivent rester d'accord, et le compilateur n'en surveille
 aucune : un champ omis dans une palette vaut 0x000000 sans un mot (initialiseurs
 désignés), et un style de rôle qui lirait le mauvais champ compilerait aussi.
+
+Lot 2 : les palettes viennent de Tab5/themes/<thème>.yaml, écrites dans THEMES[] par
+tools/gen_themes.py (avec les options du select « Thème » et la repeinture des styles,
+Tab5/tab5-themes.yaml) ; chaque mode doit rester lisible (contrastes minimaux).
 """
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
 
 import yaml
@@ -16,6 +21,10 @@ REPO = Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 TOKENS = TAB5 / "tab5_tokens.h"
 STYLES = TAB5 / "tab5-styles.yaml"
+THEMES_YAML = TAB5 / "tab5-themes.yaml"
+sys.path.insert(0, str(REPO / "tools"))
+
+import gen_themes  # noqa: E402
 RE_LAMBDA = re.compile(r"^return lv_color_hex\(UIColor\.(\w+)\);$")
 RE_ROLE = re.compile(r"^style_(text|bg|border|arc)_(\w+)$")
 
@@ -37,11 +46,14 @@ def _champs() -> list[str]:
 
 
 def _palettes() -> dict[str, list[tuple[str, str]]]:
+    """Chaque palette écrite dans THEMES[] (tab5_tokens.h), « Thème (mode) » → rôles."""
     texte = TOKENS.read_text(encoding="utf-8")
-    return {
-        nom: re.findall(r"^\s*\.(\w+)\s*=\s*(0x[0-9A-Fa-f]{6}),", corps, re.M)
-        for nom, corps in re.findall(r"inline constexpr Palette (PALETTE_\w+) = \{(.*?)\n\};", texte, re.S)
-    }
+    bloc = re.search(r"inline constexpr Theme THEMES\[\] = \{(.*?)\n\};", texte, re.S).group(1)
+    palettes = {}
+    for nom, corps in re.findall(r'\{"([^"]+)",[^\n]*\n(.*?)\n     \}\},', bloc, re.S):
+        for mode, valeurs in re.findall(r"\{  // (sombre|clair)\n(.*?)(?:\n     \}|\Z)", corps, re.S):
+            palettes[f"{nom} ({mode})"] = re.findall(r"^\s*\.(\w+)\s*=\s*(0x[0-9A-Fa-f]{6}),", valeurs, re.M)
+    return palettes
 
 
 def _lvgl() -> dict:
@@ -49,7 +61,7 @@ def _lvgl() -> dict:
 
 
 def _champ_du_role(role: str) -> str:
-    return {"dim": "TEXT_DIM", "soft": "TEXT_SOFT"}.get(role, role.upper())
+    return {"dim": "TEXT_DIM", "soft": "TEXT_SOFT", "on_accent": "TEXT_ON_ACCENT"}.get(role, role.upper())
 
 
 def test_chaque_palette_donne_tous_les_roles_dans_l_ordre():
@@ -57,7 +69,7 @@ def test_chaque_palette_donne_tous_les_roles_dans_l_ordre():
     assert len(champs) > 40, "le motif ne lit plus struct Palette"
     assert len(set(champs)) == len(champs)
     palettes = _palettes()
-    assert "PALETTE_SOMBRE" in palettes
+    assert len(palettes) == 2 * len(gen_themes.charger()), "le motif ne lit plus THEMES[]"
     for nom, valeurs in palettes.items():
         assert [c for c, _ in valeurs] == champs, f"{nom} : rôle manquant, en trop ou hors de l'ordre de struct Palette"
 
@@ -108,3 +120,66 @@ def test_chaque_style_de_role_sert():
     for style in _lvgl()["style_definitions"]:
         if RE_ROLE.match(style["id"]):
             assert re.search(rf"\b{style['id']}\b", corpus), f"{style['id']} n'est posé par aucun widget"
+
+
+def test_catalogue_a_jour():
+    """THEMES[], les options du select « Thème » et la repeinture des styles suivent
+    Tab5/themes/ et tab5-styles.yaml (`python tools/gen_themes.py`)."""
+    assert gen_themes.main(["--check"]) == 0
+
+
+def test_premier_theme_sombre_est_la_palette_des_jeux():
+    texte = TOKENS.read_text(encoding="utf-8")
+    assert "inline constexpr Palette PALETTE_SOMBRE = THEMES[0].sombre;" in texte
+    assert "inline Palette UIColor = PALETTE_SOMBRE;" in texte, "l'écran naît dans la palette sombre"
+
+
+def test_options_du_select_dans_l_ordre_des_themes():
+    """La tablette garde l'INDEX du thème choisi : l'ordre des options ne bouge jamais."""
+    texte = THEMES_YAML.read_text(encoding="utf-8")
+    bloc = re.search(r"# >>> themes[^\n]*\n(.*?)# <<< themes", texte, re.S).group(1)
+    options = re.findall(r'- "([^"]+)"', bloc)
+    assert options == [t.nom for t in gen_themes.charger()]
+
+
+def _luminance(c: int) -> float:
+    def canal(v: int) -> float:
+        v = v / 255
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    return 0.2126 * canal((c >> 16) & 0xFF) + 0.7152 * canal((c >> 8) & 0xFF) + 0.0722 * canal(c & 0xFF)
+
+
+def _contraste(a: int, b: int) -> float:
+    claire, sombre = sorted((_luminance(a), _luminance(b)), reverse=True)
+    return (claire + 0.05) / (sombre + 0.05)
+
+
+# Minimums WCAG sur les surfaces des cartes (tableau de bord et popups) : texte courant
+# 7:1 (AAA), texte secondaire 4,5:1 (AA), couleurs sémantiques (icônes, gros chiffres)
+# 3:1 (contenu non textuel, 1.4.11).
+SURFACES = ("GLASS_HI_PAGE", "GLASS_LO_PAGE", "GLASS_HI_MODAL", "GLASS_LO_MODAL")
+MINIMUMS = {
+    "TEXT_PRIMARY": 7.0, "TEXT_SOFT": 7.0, "TEXT_DIM": 4.5,
+    "ACCENT": 3.0, "SUCCESS": 3.0, "WARNING": 3.0, "ERROR": 3.0, "INFO": 3.0, "GOLD": 3.0,
+    "TEMP_MAX": 3.0, "TEMP_MIN": 3.0, "EARLY": 3.0,
+}
+
+
+def test_chaque_mode_reste_lisible():
+    trop_faibles = []
+    for theme in gen_themes.charger():
+        for mode, p in theme.modes.items():
+            for role, minimum in MINIMUMS.items():
+                for surface in SURFACES:
+                    r = _contraste(p[role], p[surface])
+                    if r < minimum:
+                        trop_faibles.append(f"{theme.nom} ({mode}) : {role} sur {surface} = {r:.2f} < {minimum}")
+    assert not trop_faibles, "\n".join(trop_faibles)
+
+
+def test_texte_sur_l_accent_lisible_en_clair():
+    """Les pastilles accent pleines (Tester, Parler, OK) : en sombre, le texte d'avant ce
+    rôle (choix d'origine de l'écran) ; en clair, 4,5:1 au moins."""
+    for theme in gen_themes.charger():
+        p = theme.modes["clair"]
+        assert _contraste(p["TEXT_ON_ACCENT"], p["ACCENT"]) >= 4.5, theme.nom

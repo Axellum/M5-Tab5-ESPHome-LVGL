@@ -329,6 +329,9 @@ template:
           # Select « Langue » du firmware (Français, English, Deutsch…) : langue du
           # briefing parlé du réveil (tab5_reveil.yaml).
           langue: "{{ entites | select('match', 'select[.].*_langue$') | first | default('') }}"
+          # Interrupteur « Nuit (thème auto) » du firmware : mode Auto du thème de
+          # l'écran, réglé d'après le soleil (tab5_push.yaml, « Tab5 — thème jour/nuit »).
+          theme_nuit: "{{ entites | select('match', 'switch[.].*_nuit_theme_auto$') | first | default('') }}"
           # Select de pipeline de la tablette (AssistPipelineSelect de HA : ses options
           # commencent par « preferred ») ; depuis HA 2025.10, un second (« Assistant
           # 2 ») a les mêmes options : le premier par ordre d'entity_id, comme

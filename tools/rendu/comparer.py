@@ -81,19 +81,21 @@ def main() -> int:
     parser.add_argument("--references", type=Path, action="append",
                         help="dossier de références, répétable (défaut : docs/images/rendu)")
     parser.add_argument("--strict", action="store_true", help="code de sortie 1 en cas d'écart")
+    parser.add_argument("--titre", default="Rendu",
+                        help="titre du résumé (défaut « Rendu » ; le job des thèmes compare deux séries)")
     args = parser.parse_args()
 
     ecarts = comparer(args.captures, args.references or [REFERENCES])
     if ecarts:
-        resume = ["### Rendu : l'écran a changé", "",
+        resume = [f"### {args.titre} : l'écran a changé", "",
                   "Images avant/après dans l'artefact `rendu-captures` (dossier `diff/`). Si c'est "
                   "voulu : rien à faire pour les écrans ; pour les scènes de la galerie, "
                   "`python tools/rendu/maj_references.py --run <id du run>`.", ""]
         resume += [f"- {e}" for e in ecarts]
         for e in ecarts:
-            print(f"::warning title=Rendu::{e}")
+            print(f"::{'error' if args.strict else 'warning'} title={args.titre}::{e}")
     else:
-        resume = ["### Rendu : identique aux références", ""]
+        resume = [f"### {args.titre} : identique aux références", ""]
     texte = "\n".join(resume) + "\n"
     print(texte)
     if os.environ.get("GITHUB_STEP_SUMMARY"):

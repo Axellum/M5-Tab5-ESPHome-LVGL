@@ -40,30 +40,30 @@ struct MeteoIconSpec {
     int8_t      l2_x, l2_y, l1_y;
 };
 static constexpr MeteoIconSpec kMeteoIconDefault =  // nuage seul, aussi pour un état inconnu
-    {"", MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY, nullptr, &Palette::TEXT_PRIMARY, false, 0, 0, 0};
+    {"", MeteoIcon::CLOUD, &Palette::METEO_CLOUD,  nullptr, &Palette::TEXT_PRIMARY, false, 0, 0, 0};
 static constexpr MeteoIconSpec kMeteoIcons[] = {
     // cond                  l1                 l1_color                   l2                     l2_color                   petit  l2_x l2_y l1_y
     {"clear-night",          MeteoIcon::MOON,  &Palette::METEO_CELESTIAL, nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
-    {"cloudy",               MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
-    {"fog",                  MeteoIcon::FOG,   &Palette::TEXT_PRIMARY,    nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"cloudy",               MeteoIcon::CLOUD, &Palette::METEO_CLOUD,     nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"fog",                  MeteoIcon::FOG,   &Palette::METEO_CLOUD,     nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
     // OpenWeatherMap : fumée, poussière, sable, cendres (codes 711/731/751/761/762,
     // const.py de HA 2026.9.4) — un voile, comme le brouillard.
-    {"exceptional",          MeteoIcon::FOG,   &Palette::TEXT_PRIMARY,    nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"exceptional",          MeteoIcon::FOG,   &Palette::METEO_CLOUD,     nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
     {"Clear",                MeteoIcon::SUNNY, &Palette::METEO_CELESTIAL, nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
     {"sunny",                MeteoIcon::SUNNY, &Palette::METEO_CELESTIAL, nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
-    {"partlycloudy",         MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::SUNNY,      &Palette::METEO_CELESTIAL, true,  -19, -19,   0},
-    {"partlycloudy-night",   MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::MOON,       &Palette::METEO_CELESTIAL, true,  -19, -19,   0},
-    {"partlycloudy_night",   MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::MOON,       &Palette::METEO_CELESTIAL, true,  -19, -19,   0},
-    {"hail",                 MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::HAIL,       &Palette::METEO_PRECIP,    false,   0,   0, -13},
-    {"snowy-rainy",          MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::HAIL,       &Palette::METEO_PRECIP,    false,   0,   0, -13},
-    {"lightning",            MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::THUNDER,    &Palette::METEO_THUNDER,   false,   0,   0, -13},
-    {"thunder",              MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::THUNDER,    &Palette::METEO_THUNDER,   false,   0,   0, -13},
-    {"lightning-rainy",      MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::THUNDER,    &Palette::METEO_THUNDER,   false,   0,   0, -13},
-    {"pouring",              MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::HEAVY_RAIN, &Palette::METEO_PRECIP,    false,   0,   0, -13},
-    {"rainy",                MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::RAIN,       &Palette::METEO_PRECIP,    false,   0,   0, -13},
-    {"snowy",                MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::SNOW,       &Palette::METEO_PRECIP,    false,   0,   0, -13},
-    {"windy",                MeteoIcon::WIND,  &Palette::TEXT_PRIMARY,    nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
-    {"windy-variant",        MeteoIcon::WIND,  &Palette::TEXT_PRIMARY,    nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"partlycloudy",         MeteoIcon::CLOUD, &Palette::METEO_CLOUD,     MeteoIcon::SUNNY,      &Palette::METEO_CELESTIAL, true,  -19, -19,   0},
+    {"partlycloudy-night",   MeteoIcon::CLOUD, &Palette::METEO_CLOUD,     MeteoIcon::MOON,       &Palette::METEO_CELESTIAL, true,  -19, -19,   0},
+    {"partlycloudy_night",   MeteoIcon::CLOUD, &Palette::METEO_CLOUD,     MeteoIcon::MOON,       &Palette::METEO_CELESTIAL, true,  -19, -19,   0},
+    {"hail",                 MeteoIcon::CLOUD, &Palette::METEO_CLOUD,     MeteoIcon::HAIL,       &Palette::METEO_PRECIP,    false,   0,   0, -13},
+    {"snowy-rainy",          MeteoIcon::CLOUD, &Palette::METEO_CLOUD,     MeteoIcon::HAIL,       &Palette::METEO_PRECIP,    false,   0,   0, -13},
+    {"lightning",            MeteoIcon::CLOUD, &Palette::METEO_CLOUD,     MeteoIcon::THUNDER,    &Palette::METEO_THUNDER,   false,   0,   0, -13},
+    {"thunder",              MeteoIcon::CLOUD, &Palette::METEO_CLOUD,     MeteoIcon::THUNDER,    &Palette::METEO_THUNDER,   false,   0,   0, -13},
+    {"lightning-rainy",      MeteoIcon::CLOUD, &Palette::METEO_CLOUD,     MeteoIcon::THUNDER,    &Palette::METEO_THUNDER,   false,   0,   0, -13},
+    {"pouring",              MeteoIcon::CLOUD, &Palette::METEO_CLOUD,     MeteoIcon::HEAVY_RAIN, &Palette::METEO_PRECIP,    false,   0,   0, -13},
+    {"rainy",                MeteoIcon::CLOUD, &Palette::METEO_CLOUD,     MeteoIcon::RAIN,       &Palette::METEO_PRECIP,    false,   0,   0, -13},
+    {"snowy",                MeteoIcon::CLOUD, &Palette::METEO_CLOUD,     MeteoIcon::SNOW,       &Palette::METEO_PRECIP,    false,   0,   0, -13},
+    {"windy",                MeteoIcon::WIND,  &Palette::METEO_CLOUD,     nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"windy-variant",        MeteoIcon::WIND,  &Palette::METEO_CLOUD,     nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
 };
 
 void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, esphome::font::Font* f_card, esphome::font::Font* f_card_s) {
@@ -94,47 +94,62 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& st
     }
 }
 
+// D'un ancrage à l'autre, canal par canal (thèmes, ADR-0029, lot 2). `R` = le type du
+// rapport des formules d'avant les rôles (float, ou double pour la dernière tranche
+// de température) : même calcul, même troncature, donc le thème d'origine garde ses
+// couleurs au niveau près (comparé aux anciennes formules, en float32 / float64, pour
+// chaque humidité de 0 à 100 % et chaque température de −20 à 50 °C par 0,05 °C).
+template <typename R>
+static uint32_t degrade(uint32_t a, uint32_t b, R r) {
+    uint32_t out = 0;
+    for (int d = 16; d >= 0; d -= 8) {
+        const int ca = static_cast<int>((a >> d) & 0xFF);
+        const int cb = static_cast<int>((b >> d) & 0xFF);
+        out |= static_cast<uint32_t>(static_cast<int>(ca + (cb - ca) * r) & 0xFF) << d;
+    }
+    return out;
+}
+
+// Ancrages : HUM_GRAD_14 (sec) → HUM_GRAD_22 → HUM_GRAD_30 (confort) → HUMIDITY_WET
+// (80 %), par paliers de 3 % au-dessus de 30 %.
 uint32_t get_humidity_color(float x) {
     if (!std::isfinite(x)) return UIColor.MOISTURE_NAN;
     const int val = tab5_float_vers_int(x, 0, 100, 0);
-    if (val <= 14) return UIColor.ALERT_RED;
+    if (val <= 14) return UIColor.HUM_GRAD_14;
     if (val >= 80) return UIColor.HUMIDITY_WET;
     if (val >= 30) {
         float step = floor((val - 30) / 3.0) * 3.0;
         float ratio = step / 50.0;
-        int r = 255 - (255 * ratio);
-        int g = 255 - (255 * ratio);
-        int b = 255 - ((255 - 204) * ratio);
-        return (r << 16) | (g << 8) | b;
+        return degrade(UIColor.HUM_GRAD_30, UIColor.HUMIDITY_WET, ratio);
     }
     if (val >= 22) {
         float ratio = (val - 22) / 8.0;
-        int b = 255 * ratio;
-        return (255 << 16) | (255 << 8) | b;
+        return degrade(UIColor.HUM_GRAD_22, UIColor.HUM_GRAD_30, ratio);
     }
     float ratio = (val - 14) / 8.0;
-    int g = 255 * ratio;
-    return (255 << 16) | (g << 8) | 0;
+    return degrade(UIColor.HUM_GRAD_14, UIColor.HUM_GRAD_22, ratio);
 }
 
+// Ancrages : TEMP_GRAD_M12 → TEMP_GRAD_0_NEG (0 °C), puis TEMP_GRAD_0_POS → TEMP_GRAD_14
+// → TEMP_GRAD_24 → TEMP_GRAD_35, par paliers de 2 °C.
 uint32_t get_temperature_color(float t) {
     if (std::isnan(t)) return UIColor.TEMP_NAN;
-    if (t <= -12) return UIColor.ALERT_RED;
+    if (t <= -12) return UIColor.TEMP_GRAD_M12;
     if (t <= 0) {
         float r = floor((t + 12) / 2.0) * 2.0 / 12.0;
-        return (255 << 16) | (0 << 8) | (int)(255 * r);
+        return degrade(UIColor.TEMP_GRAD_M12, UIColor.TEMP_GRAD_0_NEG, r);
     }
     if (t <= 14) {
         float r = floor(t / 2.0) * 2.0 / 14.0;
-        return ((int)(255 * r) << 16) | ((int)(255 * r) << 8) | 255;
+        return degrade(UIColor.TEMP_GRAD_0_POS, UIColor.TEMP_GRAD_14, r);
     }
     if (t <= 24) {
         float r = floor((t - 14) / 2.0) * 2.0 / 10.0;
-        return (255 << 16) | ((int)(255 - (255 * r)) << 8) | 255;
+        return degrade(UIColor.TEMP_GRAD_14, UIColor.TEMP_GRAD_24, r);
     }
     float s = floor((t - 24) / 2.0) * 2.0;
     if (s > 11) s = 11;
-    return (255 << 16) | (0 << 8) | (int)(255 - (255 * (s / 11.0)));
+    return degrade(UIColor.TEMP_GRAD_24, UIColor.TEMP_GRAD_35, s / 11.0);
 }
 
 // =============================================================================
@@ -358,4 +373,19 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
         if (ic != IconCond::SAME) update_meteo_icon(slot.icon_l1, slot.icon_l2, data.condition, f_card, f_card_s);
         if (ic == IconCond::CHANGED) animate_icon_roll_in(slot.icon_l1, slot.icon_l2, i * UIAnim::ROLL_STAGGER);
     }
+}
+
+// Thèmes (ADR-0029) : caches d'icônes vidés (la prochaine peinture de chaque tuile les
+// repeint, sans rouleau), puis les tuiles du calque affiché si elles ont déjà été peintes.
+void forecast_rejouer_theme(esphome::font::Font* f_card, esphome::font::Font* f_card_s) {
+    bool jours = false, heures = false;
+    for (int i = 0; i < 5; i++) {
+        jours |= s_day_icon_cond[i][0] != '\0';
+        heures |= s_hour_icon_cond[i][0] != '\0';
+        s_day_icon_cond[i][0] = '\0';
+        s_hour_icon_cond[i][0] = '\0';
+    }
+    const int fp = g_central_ctx.forecast_page;
+    if (fp >= 2 && jours) refresh_daily_forecast(g_day_slots, fp - 2, f_card, f_card_s);
+    else if (fp < 2 && heures) refresh_hourly_forecast(g_hour_slots, 1 - fp, f_card, f_card_s);
 }

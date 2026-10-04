@@ -100,6 +100,8 @@ esphome:
     - Tab5/tab5_tuiles.cpp
     # Popup Énergie : instantané solaire et historique de production (ADR-0028, 04/10/2026).
     - Tab5/tab5_energie.cpp
+    # Thèmes de l'écran : palette active et repeinture des modules (ADR-0029, lot 2).
+    - Tab5/tab5_theme.cpp
     # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
     # NvsSlot<T>) — lot (f), ADR-0014. Header-only.
     - Tab5/game_common.h
@@ -352,6 +354,9 @@ packages:
   # Zones optionnelles (lot 5) : APRES tab5_lvgl (widgets). Ses substitutions sont les
   # valeurs par défaut des entity_… : une clé de Tab5/user_entities.yaml l'emporte.
   tab5_zones: !include Tab5/tab5-zones.yaml
+  # Thèmes (ADR-0029) : EN DERNIER, sa repeinture lit les widgets, les capteurs et les
+  # scripts des packages ci-dessus.
+  tab5_themes: !include Tab5/tab5-themes.yaml
 
 # Portail captif, conservé à dessein (audit du 06/09/2026, §4.1 point 16) : il
 # n'est actif que quand l'AP de secours l'est (`wifi: ap:` dans

@@ -94,6 +94,11 @@ binary_sensor:
   - platform: status
     name: "HA API Status"
     id: status_ha
+    # Icône « HA » colorée à la connexion, comme sur la tablette. Sans elle, la repeinte
+    # du thème la peignait selon la liaison du moment : grise au démarrage à froid
+    # (avant le capturer), bleue à chaud (capturer connecté) — tâche « clair », 04/10/2026.
+    on_state:
+      - lambda: 'set_icon_active_ui(id(icon_ha), x, UIColor.INFO, UIColor.INACTIVE);'
 
 # Capteurs lus par la console système : valeurs fixes, sans Wi-Fi ni sonde.
 sensor:
@@ -204,6 +209,13 @@ api:
               - switch.turn_on: tab5_batterie_montee
             else:
               - switch.turn_off: tab5_batterie_montee
+    # Thèmes (ADR-0029) : la tablette écrit ses préférences toutes les minutes, le rendu
+    # arrêté par `kill` jamais. tools/rendu/capturer.py (--puis-mode-theme) enregistre
+    # ainsi le mode choisi avant l'arrêt : le lancement suivant démarre dans ce mode.
+    - service: rendu_enregistrer
+      description: "Rendu hors tablette : écrit tout de suite les préférences (choix gardés)."
+      then:
+        - lambda: 'global_preferences->sync();'
     - service: rendu_glisser
       description: "Rendu hors tablette : geste de (x1, y1) à (x2, y2), en 10 pas de 30 ms."
       variables:

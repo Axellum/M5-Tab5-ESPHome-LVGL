@@ -8,9 +8,12 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 971;
+static const uint16_t kI18nKeyCount = 974;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1159,6 +1162,7 @@ static const char* const kI18nKeys[] = {
     "Auj.",
     "Aujourd'hui",
     "Aujourd'hui {heure}",
+    "Auto",
     "Averses",
     "Avr",
     "BATTERIE",
@@ -1223,6 +1227,7 @@ static const char* const kI18nKeys[] = {
     "Chaud",
     "Choix du mode, de la couleur, du niveau et de la pendule",
     "Chute nette. Reprends ton souffle.",
+    "Clair",
     "Classement",
     "Classement local : %u Elo   ·   %u parties contre le Tab",
     "Classement local : %u Elo   ·   %u parties jouées",
@@ -1755,6 +1760,7 @@ static const char* const kI18nKeys[] = {
     "Si la bille part du mauvais côté",
     "Signal",
     "Silence",
+    "Sombre",
     "Sonne avant l'ouverture lue dans le calendrier.",
     "Sonne à l'heure fixe, les jours cochés ci-dessus.",
     "Sonne à l'heure fixe, uniquement les jours travaillés.",
@@ -2134,6 +2140,7 @@ static const char* const kI18n_en[] = {
     "Today",  // "Auj."
     "Today",  // "Aujourd'hui"
     "Today {heure}",  // "Aujourd'hui {heure}"
+    "Auto",  // "Auto"
     "Showers",  // "Averses"
     "Apr",  // "Avr"
     "BATTERY",  // "BATTERIE"
@@ -2198,6 +2205,7 @@ static const char* const kI18n_en[] = {
     "Warm",  // "Chaud"
     "Choose mode, color, level and clock",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Clean fall. Catch your breath.",  // "Chute nette. Reprends ton souffle."
+    "Light",  // "Clair"
     "Leaderboard",  // "Classement"
     "Local rating: %u Elo   ·   %u games vs Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Local rating: %u Elo   ·   %u games played",  // "Classement local : %u Elo   ·   %u parties jouées"
@@ -2730,6 +2738,7 @@ static const char* const kI18n_en[] = {
     "If the ball goes the wrong way",  // "Si la bille part du mauvais côté"
     "Signal",  // "Signal"
     "Quiet",  // "Silence"
+    "Dark",  // "Sombre"
     "Rings before the shift start read from the calendar.",  // "Sonne avant l'ouverture lue dans le calendrier."
     "Rings at the fixed time, on the days checked above.",  // "Sonne à l'heure fixe, les jours cochés ci-dessus."
     "Rings at the fixed time, on work days only.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
@@ -3109,6 +3118,7 @@ static const char* const kI18n_de[] = {
     "Heute",  // "Auj."
     "Heute",  // "Aujourd'hui"
     "Heute {heure}",  // "Aujourd'hui {heure}"
+    "Auto",  // "Auto"
     "Schauer",  // "Averses"
     "Apr",  // "Avr"
     "BATTERIE",  // "BATTERIE"
@@ -3173,6 +3183,7 @@ static const char* const kI18n_de[] = {
     "Warm",  // "Chaud"
     "Modus, Farbe, Stufe und Uhr wählen",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Glatter Sturz. Atme durch.",  // "Chute nette. Reprends ton souffle."
+    "Hell",  // "Clair"
     "Bestenliste",  // "Classement"
     "Lokale Wertung: %u Elo   ·   %u Partien gegen den Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Lokale Wertung: %u Elo   ·   %u Partien gespielt",  // "Classement local : %u Elo   ·   %u parties jouées"
@@ -3705,6 +3716,7 @@ static const char* const kI18n_de[] = {
     "Rollt der Ball zur falschen Seite?",  // "Si la bille part du mauvais côté"
     "Signal",  // "Signal"
     "Leise",  // "Silence"
+    "Dunkel",  // "Sombre"
     "Klingelt vor Schichtbeginn laut Kalender.",  // "Sonne avant l'ouverture lue dans le calendrier."
     "Klingelt zur festen Zeit an den oben gewählten Tagen.",  // "Sonne à l'heure fixe, les jours cochés ci-dessus."
     "Klingelt zur festen Zeit, nur an Arbeitstagen.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
@@ -4084,6 +4096,7 @@ static const char* const kI18n_nl[] = {
     "Vand.",  // "Auj."
     "Vandaag",  // "Aujourd'hui"
     "Vandaag {heure}",  // "Aujourd'hui {heure}"
+    "Auto",  // "Auto"
     "Buien",  // "Averses"
     "Apr",  // "Avr"
     "ACCU",  // "BATTERIE"
@@ -4148,6 +4161,7 @@ static const char* const kI18n_nl[] = {
     "Warm",  // "Chaud"
     "Kies modus, kleur, niveau en klok",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Zuivere val. Kom even op adem.",  // "Chute nette. Reprends ton souffle."
+    "Licht",  // "Clair"
     "Ranglijst",  // "Classement"
     "Lokale rating: %u Elo   ·   %u partijen tegen de Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Lokale rating: %u Elo   ·   %u partijen gespeeld",  // "Classement local : %u Elo   ·   %u parties jouées"
@@ -4680,6 +4694,7 @@ static const char* const kI18n_nl[] = {
     "Als de bal de verkeerde kant op gaat",  // "Si la bille part du mauvais côté"
     "Signaal",  // "Signal"
     "Stil",  // "Silence"
+    "Donker",  // "Sombre"
     "Gaat af vóór het werkbegin uit de agenda.",  // "Sonne avant l'ouverture lue dans le calendrier."
     "Gaat af op de vaste tijd, op de dagen hierboven.",  // "Sonne à l'heure fixe, les jours cochés ci-dessus."
     "Gaat af op de vaste tijd, alleen op werkdagen.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
@@ -5059,6 +5074,7 @@ static const char* const kI18n_es[] = {
     "Hoy",  // "Auj."
     "Hoy",  // "Aujourd'hui"
     "Hoy {heure}",  // "Aujourd'hui {heure}"
+    "Auto",  // "Auto"
     "Chubascos",  // "Averses"
     "Abr",  // "Avr"
     "BATERÍA",  // "BATTERIE"
@@ -5123,6 +5139,7 @@ static const char* const kI18n_es[] = {
     "Cálido",  // "Chaud"
     "Elige modo, color, nivel y reloj",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Caída limpia. Recupera el aliento.",  // "Chute nette. Reprends ton souffle."
+    "Claro",  // "Clair"
     "Clasificación",  // "Classement"
     "Clasificación local: %u Elo   ·   %u partidas contra el Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Clasificación local: %u Elo   ·   %u partidas jugadas",  // "Classement local : %u Elo   ·   %u parties jouées"
@@ -5655,6 +5672,7 @@ static const char* const kI18n_es[] = {
     "Si la bola va al lado contrario",  // "Si la bille part du mauvais côté"
     "Señal",  // "Signal"
     "Silencio",  // "Silence"
+    "Oscuro",  // "Sombre"
     "Suena antes del turno leído en el calendario.",  // "Sonne avant l'ouverture lue dans le calendrier."
     "Suena a la hora fija, los días marcados arriba.",  // "Sonne à l'heure fixe, les jours cochés ci-dessus."
     "Suena a la hora fija, solo los días laborables.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
@@ -6034,6 +6052,7 @@ static const char* const kI18n_it[] = {
     "Oggi",  // "Auj."
     "Oggi",  // "Aujourd'hui"
     "Oggi {heure}",  // "Aujourd'hui {heure}"
+    "Auto",  // "Auto"
     "Rovesci",  // "Averses"
     "Apr",  // "Avr"
     "BATTERIA",  // "BATTERIE"
@@ -6098,6 +6117,7 @@ static const char* const kI18n_it[] = {
     "Caldo",  // "Chaud"
     "Scegli modalità, colore, livello e orologio",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Caduta netta. Riprendi fiato.",  // "Chute nette. Reprends ton souffle."
+    "Chiaro",  // "Clair"
     "Classifica",  // "Classement"
     "Punteggio locale: %u Elo   ·   %u partite contro il Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Punteggio locale: %u Elo   ·   %u partite giocate",  // "Classement local : %u Elo   ·   %u parties jouées"
@@ -6630,6 +6650,7 @@ static const char* const kI18n_it[] = {
     "Se la palla va dalla parte sbagliata",  // "Si la bille part du mauvais côté"
     "Segnale",  // "Signal"
     "Silenzioso",  // "Silence"
+    "Scuro",  // "Sombre"
     "Suona prima dell'inizio turno letto nel calendario.",  // "Sonne avant l'ouverture lue dans le calendrier."
     "Suona all'ora fissa, nei giorni selezionati sopra.",  // "Sonne à l'heure fixe, les jours cochés ci-dessus."
     "Suona all'ora fissa, solo nei giorni lavorativi.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
@@ -7009,6 +7030,7 @@ static const char* const kI18n_tr[] = {
     "Bugün",  // "Auj."
     "Bugün",  // "Aujourd'hui"
     "Bugün {heure}",  // "Aujourd'hui {heure}"
+    "Otomatik",  // "Auto"
     "Sağanak",  // "Averses"
     "Nis",  // "Avr"
     "BATARYA",  // "BATTERIE"
@@ -7073,6 +7095,7 @@ static const char* const kI18n_tr[] = {
     "Sıcak",  // "Chaud"
     "Mod, renk, seviye ve saat seçimi",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Temiz bir düşüş. Nefes al.",  // "Chute nette. Reprends ton souffle."
+    "Açık",  // "Clair"
     "Sıralama",  // "Classement"
     "Yerel derece: %u Elo   ·   Tab'a karşı %u oyun",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Yerel derece: %u Elo   ·   %u oyun oynandı",  // "Classement local : %u Elo   ·   %u parties jouées"
@@ -7605,6 +7628,7 @@ static const char* const kI18n_tr[] = {
     "Bilye yanlış tarafa gidiyorsa",  // "Si la bille part du mauvais côté"
     "Sinyal",  // "Signal"
     "Sessiz",  // "Silence"
+    "Koyu",  // "Sombre"
     "Takvimden okunan mesai başından önce çalar.",  // "Sonne avant l'ouverture lue dans le calendrier."
     "Yukarıda işaretli günlerde sabit saatte çalar.",  // "Sonne à l'heure fixe, les jours cochés ci-dessus."
     "Yalnızca çalışılan günlerde sabit saatte çalar.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."

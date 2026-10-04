@@ -1071,4 +1071,26 @@ void popup_lumiere_choisir(int idx);
 // eteindre en mode héritage.
 void popup_lumiere_tout_eteindre();
 
+// =============================================================================
+// Thèmes de l'écran (tab5_theme.cpp, ADR-0029 lot 2 ; entités : tab5-themes.yaml)
+// =============================================================================
+// Règle UIColor sur la palette du thème `theme` (index du select « Thème ») dans le mode
+// `mode` (0 Sombre, 1 Clair, 2 Auto : clair sauf `nuit`). Vrai si la palette a changé.
+bool theme_selectionner(int theme, int mode, bool nuit);
+// Vrai une fois le démarrage fini (tous les setup et les on_boot synchrones) : les
+// modules ont leurs widgets et peuvent repeindre.
+bool theme_ui_pret();
+// Rangée « Thème » de la console système : nom du thème (nom propre, écrit comme dans
+// le select de Home Assistant) et mode (Sombre, Clair, Auto), traduit à l'affichage.
+void theme_console_libelles(lv_obj_t* lbl_theme, lv_obj_t* lbl_mode, int theme, int mode);
+// Après une bascule : chaque module C++ repeint les couleurs qu'il a posées lui-même,
+// depuis son dernier état (les styles partagés sont repeints par tab5-themes.yaml ;
+// les fonctions de chaque module : tab5_internal.h).
+void theme_rejouer_ui();
+// Styles partagés des cases du calendrier (créés à la construction de la grille).
+void cal_styles_repeindre();
+// Tuiles météo de la page courante, icônes comprises (polices du YAML : elles ne sont
+// atteignables que par id()).
+void forecast_rejouer_theme(esphome::font::Font* f_card, esphome::font::Font* f_card_s);
+
 // UIColor (couleurs sémantiques) : voir tab5_tokens.h.

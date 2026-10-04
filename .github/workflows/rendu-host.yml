@@ -8,13 +8,18 @@ name: Rendu hors tablette
 # (tools/rendu/comparer.py) à celles du dernier run réussi sur main, et les scènes à la
 # galerie versionnée docs/images/rendu/ : INFORMATIF, un écart est signalé sans faire
 # échouer le job (choix d'Axel, 27/09/2026). Galerie : tools/rendu/maj_references.py.
+# Tâche « clair » (thèmes, ADR-0029) : les mêmes captures en français (sans les consoles
+# de jeu, qui restent sombres), thème clair, deux
+# fois — peintes en sombre puis basculées à chaud, puis après un démarrage à froid en
+# clair — et les deux séries doivent être identiques au pixel près (seule comparaison
+# qui fait échouer une tâche : un écart veut dire qu'une couleur n'est pas repeinte).
 
 on:
   workflow_dispatch:
     inputs:
       langues:
-        description: "Langues, en JSON (fr, en, de, nl, es, it, tr)"
-        default: '["fr", "en", "de", "nl", "es", "it", "tr"]'
+        description: "Langues, en JSON (fr, en, de, nl, es, it, tr ; « clair » : thème clair, à chaud et à froid)"
+        default: '["fr", "en", "de", "nl", "es", "it", "tr", "clair"]'
       seulement:
         description: "Mise au point : ces écrans seulement (noms de tools/rendu/ecrans.py, séparés par des espaces), sans les scènes"
         default: ""
@@ -63,7 +68,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        langue: ${{ fromJSON(inputs.langues || '["fr", "en", "de", "nl", "es", "it", "tr"]') }}
+        langue: ${{ fromJSON(inputs.langues || '["fr", "en", "de", "nl", "es", "it", "tr", "clair"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -112,8 +117,27 @@ jobs:
             es) nom="Español" ;;
             it) nom="Italiano" ;;
             tr) nom="Türkçe" ;;
+            clair) nom="" ;;
             *) echo "Langue inconnue : $LANGUE"; exit 1 ;;
           esac
+
+          if [ "$LANGUE" = clair ]; then
+            # Passe 1 : démarrage en sombre ; avant chaque capture, « Clair ou sombre »
+            # passe à Clair (bascule à chaud), puis revient à Sombre. À la fin, le mode
+            # Clair est enregistré : la passe suivante démarre à froid en clair.
+            mkdir -p chaud
+            ESPHOME_SNAPSHOT_DIR="$PWD/chaud" faketime -f "$DEPART" "$prog" > "captures/rendu-clair-chaud.log" 2>&1 &
+            pid=$!
+            sleep 8
+            faketime -f "$DEPART" python tools/rendu/capturer.py --dossier chaud --suffixe clair \
+              --bascule Clair --puis-mode-theme Clair --sans-jeux
+            # faketime lance le programme dans un processus fils : tuer faketime ne
+            # l'arrête pas, et la passe suivante ne pourrait pas ouvrir le port de l'API.
+            pkill -f "$prog" 2>/dev/null || true
+            for _ in $(seq 1 20); do pgrep -f "$prog" >/dev/null || break; sleep 1; done
+            pkill -9 -f "$prog" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+          fi
 
           if [ -n "$nom" ]; then
             faketime -f "$DEPART" "$prog" > "captures/rendu-$LANGUE-choix.log" 2>&1 &
@@ -129,10 +153,22 @@ jobs:
           sleep 8
           args=(--dossier captures)
           [ "$LANGUE" != fr ] && args+=(--suffixe "$LANGUE")
+          # Thème clair : même nom de capture qu'à chaud, pour comparer les deux séries ;
+          # sans les consoles, qui restent sombres (les deux passes tiennent en 30 min).
+          [ "$LANGUE" = clair ] && args+=(--sans-jeux)
           # shellcheck disable=SC2206 # noms d'écrans séparés par des espaces
           [ -n "$SEULEMENT" ] && args+=(--seulement $SEULEMENT)
           faketime -f "$DEPART" python tools/rendu/capturer.py "${args[@]}"
           kill "$pid" 2>/dev/null || true
+      - name: "Thème clair : bascule à chaud = démarrage à froid"
+        if: matrix.langue == 'clair'
+        run: |
+          code=0
+          python tools/rendu/comparer.py --captures chaud --references captures --strict \
+            --titre "Thème clair, bascule à chaud contre démarrage à froid" || code=$?
+          # Images des écarts (pixels changés en magenta) dans l'artefact de la tâche.
+          [ -d chaud/diff ] && cp -r chaud/diff captures/diff-bascule
+          exit "$code"
       - name: Journaux du rendu
         if: always()
         run: tail -n 80 captures/rendu-*.log || true

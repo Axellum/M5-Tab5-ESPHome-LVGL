@@ -68,8 +68,34 @@ bool push_unchanged(PushChannel ch, const std::string& payload) {
 // Volet : update_volet_ui() a rejoint les pièces le 28/09/2026 (ADR-0023) — le volet 3.x
 // est la tuile 1 de la pièce 0 du mode héritage (tuiles_heritage_volet, tab5_tuiles.cpp).
 
+// Thèmes (ADR-0029, lot 2) : le dernier payload de vigilance et ses widgets, pour
+// repeindre la date et les icônes au changement de thème (vigilance_rejouer()).
+static std::string s_vigilance_payload;
+static VigilanceUI s_vigilance_ui{};
+
+// Fond clair : le jaune officiel ne se lit pas sur du blanc. L'icône passe en pastille
+// (fond = couleur du niveau, glyphe à l'encre du thème). Fond sombre : aucune
+// propriété posée, comme avant les thèmes.
+static void vigilance_pastille(lv_obj_t* slot, bool pastille, uint32_t couleur) {
+    if (pastille) {
+        lv_obj_set_style_bg_color(slot, lv_color_hex(couleur), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(slot, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_radius(slot, 12, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(slot, 6, LV_PART_MAIN);
+        return;
+    }
+    for (lv_style_prop_t prop : {LV_STYLE_BG_COLOR, LV_STYLE_BG_OPA, LV_STYLE_RADIUS, LV_STYLE_PAD_TOP,
+                                 LV_STYLE_PAD_BOTTOM, LV_STYLE_PAD_LEFT, LV_STYLE_PAD_RIGHT}) {
+        lv_obj_remove_local_style_prop(slot, prop, LV_PART_MAIN);
+    }
+}
+
 bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& ui) {
     if (ui.lbl_phrase == nullptr) return false;
+    if (&payload != &s_vigilance_payload) {
+        s_vigilance_payload = payload;
+        s_vigilance_ui = ui;
+    }
     // 1024 (était 512) : la phrase de vigilance peut être longue, un payload
     // complet dépassait parfois 512 et tronquait les derniers champs (#T165).
     char buf[1024];
@@ -126,6 +152,7 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
         actives[active_count++] = AlertEntry{kIcons[i], state};
     }
 
+    const bool pastille = palette_claire(UIColor);
     for (size_t i = 0; i < 4; i++) {
         lv_obj_t* slot = ui.slots[i];
         if (slot == nullptr) continue;
@@ -133,29 +160,37 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
         if (shown) {
             lv_label_set_text(slot, actives[i].icon);
             uint32_t c = UIColor.ALERT_YELLOW;
-            if (strcmp(actives[i].level, "Orange") == 0)     c = UIColor.WARNING;
+            if (strcmp(actives[i].level, "Orange") == 0)     c = UIColor.ALERT_ORANGE;
             else if (strcmp(actives[i].level, "Rouge") == 0) c = UIColor.ALERT_RED;
-            lv_obj_set_style_text_color(slot, lv_color_hex(c), LV_PART_MAIN);
+            lv_obj_set_style_text_color(slot, lv_color_hex(pastille ? UIColor.TEXT_PRIMARY : c), LV_PART_MAIN);
             lv_obj_set_style_text_opa(slot, 255, LV_PART_MAIN);
+            vigilance_pastille(slot, pastille, c);
         }
         lv_obj_set_flag(slot, LV_OBJ_FLAG_HIDDEN, !shown);
     }
     return active_count > 0;
 }
 
+void vigilance_rejouer() {
+    if (!s_vigilance_payload.empty()) parse_and_update_vigilance(s_vigilance_payload, s_vigilance_ui);
+}
+
 // Intensité → couleur + hauteur (px) d'une barre. Deux écritures acceptées : le
 // libellé Météo-France (« Pluie faible » … « Pluie très forte »), ou un niveau
 // chiffré « 0 » à « 4 » (lot 4c, 27/09/2026) que les adaptateurs des autres
 // fournisseurs calculent côté HA à partir des mm/h. Tout autre texte vide la barre.
-static void rain_level_style(const std::string& intensite, uint32_t& color, int& height) {
+static int rain_level(const std::string& intensite) {
+    if (intensite.size() == 1 && intensite[0] >= '0' && intensite[0] <= '4') return intensite[0] - '0';
+    if (intensite == "Pluie faible")     return 1;
+    if (intensite == "Pluie modérée")    return 2;
+    if (intensite == "Pluie forte")      return 3;
+    if (intensite == "Pluie très forte" || intensite == "Pluie trés forte") return 4;
+    return 0;
+}
+
+static void rain_level_style(int niveau, uint32_t& color, int& height) {
     color = UIColor.CLIM_TRACK_INACTIVE;  // barre vide
     height = 0;
-    int niveau = 0;
-    if (intensite.size() == 1 && intensite[0] >= '0' && intensite[0] <= '4') niveau = intensite[0] - '0';
-    else if (intensite == "Pluie faible")     niveau = 1;
-    else if (intensite == "Pluie modérée")    niveau = 2;
-    else if (intensite == "Pluie forte")      niveau = 3;
-    else if (intensite == "Pluie très forte" || intensite == "Pluie trés forte") niveau = 4;
     switch (niveau) {
         case 1: color = UIColor.RAIN_LIGHT;    height = 13; break;  // ~1/4 hauteur
         case 2: color = UIColor.RAIN_MODERATE; height = 25; break;  // 1/2
@@ -173,6 +208,10 @@ static void rain_level_style(const std::string& intensite, uint32_t& color, int&
 // 08/09/2026 depuis HA : « Pluie forte » poussée, rotation Planning/Info/Alerte
 // inchangée). Le même bilan sert aux deux services (unitaire et bulk).
 static int s_rain_bar_height[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+// Thèmes : niveau et widget de chaque barre déjà posée, pour la repeindre
+// (rain_bars_rejouer()) sans attendre la prochaine poussée.
+static int s_rain_bar_level[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+static lv_obj_t* s_rain_bar_obj[9] = {};
 
 static bool rain_any_bar() {
     for (int i = 0; i < 9; i++) {
@@ -189,12 +228,25 @@ static bool update_rain_bar_ui(int idx, const std::string& intensite, lv_obj_t* 
     if (idx >= 0 && idx < 9 && bars[idx] != nullptr) {
         uint32_t c;
         int h;
-        rain_level_style(intensite, c, h);
+        const int niveau = rain_level(intensite);
+        rain_level_style(niveau, c, h);
         lv_obj_set_style_bg_color(bars[idx], lv_color_hex(c), LV_PART_MAIN);
         lv_obj_set_height(bars[idx], h);
         s_rain_bar_height[idx] = h;
+        s_rain_bar_level[idx] = niveau;
+        s_rain_bar_obj[idx] = bars[idx];
     }
     return rain_any_bar();
+}
+
+void rain_bars_rejouer() {
+    for (int i = 0; i < 9; i++) {
+        if (s_rain_bar_obj[i] == nullptr) continue;
+        uint32_t c;
+        int h;
+        rain_level_style(s_rain_bar_level[i], c, h);
+        lv_obj_set_style_bg_color(s_rain_bar_obj[i], lv_color_hex(c), LV_PART_MAIN);
+    }
 }
 
 // Bulk (ADR-0003) : « idx|intensité;idx|intensité;… », les 9 barres en UN appel HA
@@ -221,8 +273,16 @@ bool update_rain_bars_bulk_ui(const std::string& payload, lv_obj_t* const bars[9
     return rain_any_bar();
 }
 
+// Thèmes : la dernière prédiction posée (rain_predict_rejouer()).
+static lv_obj_t* s_predict_icon = nullptr;
+static int s_predict_neige = 0;
+static float s_predict_humidite = 0.0f;
+
 void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite) {
     if (icon == nullptr) return;
+    s_predict_icon = icon;
+    s_predict_neige = neige;
+    s_predict_humidite = humidite;
     if (neige >= 5) {
         lv_label_set_text(icon, "\U000F0598");  // flocon
         lv_obj_set_style_text_color(icon, lv_color_hex(UIColor.WARNING), LV_PART_MAIN);
@@ -230,6 +290,10 @@ void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite) {
         lv_label_set_text(icon, "\U000F0597");  // goutte
         lv_obj_set_style_text_color(icon, lv_color_hex(get_humidity_color(humidite)), LV_PART_MAIN);
     }
+}
+
+void rain_predict_rejouer() {
+    if (s_predict_icon != nullptr) update_rain_predict_icon_ui(s_predict_icon, s_predict_neige, s_predict_humidite);
 }
 
 // update_clim_from_ha_ui() : tab5_cards.cpp depuis le 29/09/2026 (ADR-0026), avec les

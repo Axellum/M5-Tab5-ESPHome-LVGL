@@ -298,8 +298,8 @@ obj:
                     on_short_click:
                       - script.execute: tab5_assist_toggle
                     widgets:
-                      - label: { text: "\U000F036C", align: LEFT_MID, x: 30, text_font: mdi_assist_36 }
-                      - label: { text: "Parler", align: CENTER, x: 20, text_font: roboto_32_b }
+                      - label: { text: "\U000F036C", align: LEFT_MID, x: 30, text_font: mdi_assist_36, styles: style_text_on_accent }
+                      - label: { text: "Parler", align: CENTER, x: 20, text_font: roboto_32_b, styles: style_text_on_accent }
 
                 # Stop : coupe pipeline + TTS
                 - button:

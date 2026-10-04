@@ -65,6 +65,8 @@
   ('retroeclairage', 'light', 'display_backlight'), ('lecteur', 'media_player', ''),
   ('aller_a', 'select', 'aller_a_l_ecran'), ('haut_parleur', 'switch', 'speaker_enable'),
   ('calendrier', 'button', 'recharger_le_calendrier'), ('langue', 'select', 'langue'),
+  ('theme', 'select', 'theme'), ('theme_mode', 'select', 'clair_ou_sombre'),
+  ('theme_nuit', 'switch', 'nuit_theme_auto'),
   ('tape', 'switch', 'tap_to_wake'), ('batterie_montee', 'switch', 'tab5_batterie_montee'),
   ('dac', 'select', 'tab5_dac_output'), ('antenne', 'select', 'wifi_antenna'),
   ('zones', 'sensor', 'zones_masquees'),
@@ -528,7 +530,9 @@ views:
           - type: heading
             heading: "{{ t('Tablette', 'Tablet') }}"
             icon: mdi:tablet
-{%- for cle, fr_, en_, icone in [('langue', "Langue de l'écran", 'Screen language', 'mdi:translate')] %}
+{%- for cle, fr_, en_, icone in [('langue', "Langue de l'écran", 'Screen language', 'mdi:translate'),
+                                  ('theme', 'Thème', 'Theme', 'mdi:palette'),
+                                  ('theme_mode', 'Clair ou sombre', 'Light or dark', 'mdi:theme-light-dark')] %}
 {%- if T[cle] %}
           - type: tile
             entity: {{ T[cle] }}
@@ -555,6 +559,17 @@ views:
 {%- if T.batterie_montee %}
           - type: heading
             heading: "{{ t("Allumée, l'icône de batterie apparaît dans le bandeau", 'On: the battery icon shows in the status strip') }}"
+            heading_style: subtitle
+{%- endif %}
+{%- if T.theme_nuit %}
+          - type: tile
+            entity: {{ T.theme_nuit }}
+            name: "{{ t('Nuit (thème auto)', 'Night (auto theme)') }}"
+            icon: mdi:weather-night
+            grid_options:
+              columns: 12
+          - type: heading
+            heading: "{{ t('En mode Auto, Home Assistant l’allume au coucher du soleil', 'In Auto mode, Home Assistant turns it on at sunset') }}"
             heading_style: subtitle
 {%- endif %}
 {%- for cle, fr_, en_, icone in [('dac', 'Sortie audio', 'Audio output', 'mdi:audio-input-stereo-minijack'),

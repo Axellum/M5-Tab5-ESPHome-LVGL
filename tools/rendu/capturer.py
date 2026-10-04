@@ -25,6 +25,14 @@ Langue : `--langue Deutsch` choisit seulement la langue dans le select « Langue
 enregistre et redémarre, c'est-à-dire qu'il s'arrête sur la plateforme host : on le
 relance (même ESPHOME_PREFDIR), puis `--suffixe de` pour les captures allemandes.
 
+Thèmes (ADR-0029) : `--bascule Clair` passe le select « Clair ou sombre » à Clair juste
+avant chaque capture, puis le remet à Sombre : l'écran a été peint en sombre, il est
+capturé après la bascule à chaud. `--puis-mode-theme Clair` choisit le mode après les
+captures et enregistre les préférences (action rendu_enregistrer) : relancé, le rendu
+démarre dans ce mode. Le job compare les deux séries au pixel près. `--sans-jeux` saute
+les consoles (« jeu-… », 56 écrans qui restent sombres, ADR-0014) : sans elles, les deux
+passes tiennent dans le délai de la tâche ; le sélecteur Arcade reste, en témoin.
+
 Usage (voir .github/workflows/rendu-host.yml, une tâche par langue) :
     ESPHOME_SNAPSHOT_DIR=captures ESPHOME_PREFDIR=prefs ./program &
     python tools/rendu/capturer.py --dossier captures --langue Deutsch
@@ -66,6 +74,11 @@ ATTENTE_PANNEAU = 5.0
 # Après le retour à l'accueil entre deux écrans : fondu de fermeture des fenêtres.
 ATTENTE_RETOUR = 1.0
 
+# Après un changement de thème : la repeinture est faite dans la boucle, LVGL redessine
+# l'écran à l'image suivante.
+ATTENTE_BASCULE = 1.0
+SELECT_MODE_THEME = "Clair ou sombre"
+
 
 def nom_de(index: int, nom_scene: str, suffixe: str = "") -> str:
     """« 1-journee-ensoleillee » (ou « …-en ») : ASCII, sans espace, dans l'ordre des scènes."""
@@ -100,7 +113,8 @@ def en_png(dossier: Path) -> list[Path]:
 class Rendu:
     """Connexion au rendu : services, selects, captures et contrôle des doublons."""
 
-    def __init__(self, client, entites, services, dossier: Path, suffixe: str):
+    def __init__(self, client, entites, services, dossier: Path, suffixe: str,
+                 bascule: str | None = None):
         from aioesphomeapi import SelectInfo
 
         self.client = client
@@ -108,6 +122,7 @@ class Rendu:
         self.selects = {e.name: e for e in entites if isinstance(e, SelectInfo)}
         self.dossier = dossier
         self.suffixe = suffixe
+        self.bascule = bascule
         self.empreintes: dict[str, str] = {}
         self.alertes: list[str] = []
 
@@ -119,8 +134,14 @@ class Rendu:
 
     async def capturer(self, nom: str) -> None:
         fichier = f"{nom}-{self.suffixe}" if self.suffixe else nom
+        if self.bascule:
+            self.choisir(SELECT_MODE_THEME, self.bascule)
+            await asyncio.sleep(ATTENTE_BASCULE)
         await self.appeler("rendu_capture", fichier=fichier)
         await asyncio.sleep(1.0)
+        if self.bascule:
+            self.choisir(SELECT_MODE_THEME, "Sombre")
+            await asyncio.sleep(ATTENTE_BASCULE)
         bmp = self.dossier / f"{fichier}.bmp"
         if not bmp.exists():
             self.alerter(f"{fichier} : pas de BMP écrit par le rendu")
@@ -159,7 +180,9 @@ class Rendu:
 
 
 async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | None,
-                   seulement: set[str] | None, langue: str | None = None) -> list[str]:
+                   seulement: set[str] | None, langue: str | None = None,
+                   bascule: str | None = None, puis_mode_theme: str | None = None,
+                   sans_jeux: bool = False) -> list[str]:
     from aioesphomeapi import APIClient
 
     cle = _lire_cle_demo() or await _donner_une_cle(hote)
@@ -167,7 +190,7 @@ async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | No
     await client.connect(login=True)
     try:
         entites, services = await client.list_entities_services()
-        rendu = Rendu(client, entites, services, dossier, suffixe)
+        rendu = Rendu(client, entites, services, dossier, suffixe, bascule)
         if langue:
             logger.info("Langue -> %s, sans capture (le rendu enregistre et s'arrête)", langue)
             rendu.choisir("Langue", langue)
@@ -186,6 +209,8 @@ async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | No
         for ecran in ECRANS:
             if seulement is not None and ecran.nom not in seulement:
                 continue
+            if sans_jeux and ecran.nom.startswith("jeu-"):
+                continue
             logger.info("Écran : %s", ecran.nom)
             for etape in ecran.etapes:
                 await rendu.jouer(etape)
@@ -194,6 +219,12 @@ async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | No
             for etape in ecran.fermer:
                 await rendu.jouer(etape)
             await rendu.accueil()
+        if puis_mode_theme:
+            logger.info("Thème -> %s, préférences enregistrées", puis_mode_theme)
+            rendu.choisir(SELECT_MODE_THEME, puis_mode_theme)
+            await asyncio.sleep(ATTENTE_BASCULE)
+            await rendu.appeler("rendu_enregistrer")
+            await asyncio.sleep(1.0)
         if puis_langue:
             logger.info("Langue -> %s (le rendu enregistre et s'arrête)", puis_langue)
             rendu.choisir("Langue", puis_langue)
@@ -214,10 +245,17 @@ def main() -> int:
     parser.add_argument("--seulement", nargs="+", metavar="ECRAN",
                         help="ces écrans seulement (noms de tools/rendu/ecrans.py), sans les scènes")
     parser.add_argument("--langue", help="choisit seulement cette langue (« Deutsch »), sans capture")
+    parser.add_argument("--bascule", metavar="MODE",
+                        help="avant chaque capture, passe « Clair ou sombre » à MODE (« Clair »), puis à Sombre")
+    parser.add_argument("--sans-jeux", action="store_true",
+                        help="sans les consoles (écrans « jeu-… », qui restent sombres)")
+    parser.add_argument("--puis-mode-theme", metavar="MODE",
+                        help="après les captures, choisit ce mode et enregistre les préférences")
     args = parser.parse_args()
 
     alertes = asyncio.run(capturer(args.host, args.dossier, args.suffixe, args.puis_langue,
-                                   set(args.seulement) if args.seulement else None, args.langue))
+                                   set(args.seulement) if args.seulement else None, args.langue,
+                                   args.bascule, args.puis_mode_theme, args.sans_jeux))
     if args.langue:
         return 0
     pngs = en_png(args.dossier)
