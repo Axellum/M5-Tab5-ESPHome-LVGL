@@ -221,7 +221,7 @@ Opened via the console button (`btn_control_console`, top right of the home area
 - **MÉMOIRE** — SRAM/PSRAM usage bars, max free block, flash size
 - **RÉSEAU** — Wi-Fi SSID, IP, signal strength, and HA connection status (`lbl_sys_ha_val`, green/red)
 - **SYSTÈME** — uptime, CPU temperature, loop time, plus the volume slider with a live % readout
-- **GESTION** — HA management buttons: « MAJ Écran » (re-arms the push flag and re-triggers the screen-push automation — the direct remedy for the recurring frozen-screen incident), « Recharger autos » (`automation.reload`), « Redémarrer HA » and « Reboot tablette » — the last two behind Annuler/Confirmer overlays (no more invisible double-tap arming)
+- **GESTION** — HA management buttons: « MAJ Écran » (re-arms the push flag and re-triggers the screen-push automation — the direct remedy for the recurring frozen-screen incident), « Recharger autos » (`automation.reload`), « Redémarrer HA » and « Reboot tablette » — the last two behind Annuler/Confirmer overlays (no more invisible double-tap arming); a middle row picks the theme and the mode (Sombre → Clair → Auto, the screen repaints at once, [ADR-0029](decisions/0029-themes-palette.md))
 
 It is **not** a log viewer (use `tools/tab5_logs.py` for payloads and events). See [`docs/debugging.md`](debugging.md) for more on using it to diagnose issues.
 
@@ -549,7 +549,7 @@ Ouvert via le bouton console (`btn_control_console`, en haut à droite de la zon
 - **MÉMOIRE** — barres SRAM/PSRAM, bloc max, taille flash
 - **RÉSEAU** — SSID Wi-Fi, IP, signal, et état de la connexion HA (`lbl_sys_ha_val`, vert/rouge)
 - **SYSTÈME** — uptime, température CPU, temps de boucle, plus le slider volume avec % affiché en direct
-- **GESTION** — boutons de gestion HA : « MAJ Écran » (réarme le flag de push et redéclenche l'automation de push écran — le remède direct à l'incident récurrent d'écran figé), « Recharger autos » (`automation.reload`), « Redémarrer HA » et « Reboot tablette » — les deux derniers derrière des overlays Annuler/Confirmer (fini l'armement invisible par double-tap)
+- **GESTION** — boutons de gestion HA : « MAJ Écran » (réarme le flag de push et redéclenche l'automation de push écran — le remède direct à l'incident récurrent d'écran figé), « Recharger autos » (`automation.reload`), « Redémarrer HA » et « Reboot tablette » — les deux derniers derrière des overlays Annuler/Confirmer (fini l'armement invisible par double-tap) ; une rangée du milieu choisit le thème et le mode (Sombre → Clair → Auto, l'écran se repeint aussitôt, [ADR-0029](decisions/0029-themes-palette.md))
 
 Ce n'est **pas** un visualiseur de logs (utiliser `tools/tab5_logs.py` pour les payloads et événements). Voir [`docs/debugging.md`](debugging.md) pour plus de détails sur son usage en debug.
 

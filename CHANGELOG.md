@@ -4,6 +4,45 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-04 — Thèmes, lot 2 : mode clair, bascule sans redémarrage, mode Auto
+
+Suite de la demande d'Axel (« un mode clair et sombre pour chacun », une douzaine de
+thèmes au choix, bascule sans redémarrage, mode Auto jour/nuit). Ce lot pose le
+mécanisme avec un premier thème, **Ardoise** (le sombre d'aujourd'hui et un clair) ;
+les douze thèmes viennent au lot 4, les polices propres à quelques thèmes au lot 3
+([ADR-0029](docs/decisions/0029-themes-palette.md), section « lot 2 »).
+- **Trois entités** (`Tab5/tab5-themes.yaml`) : select « Thème », select « Clair ou
+  sombre » (Sombre, Clair, Auto) et interrupteur « Nuit (thème auto) ». En Auto, l'écran
+  est clair le jour et sombre la nuit : Home Assistant allume l'interrupteur au coucher
+  du soleil (automatisation « Tab5 — thème jour/nuit », `packages/tab5_push.yaml` ;
+  la tablette est trouvée par l'attribut `theme_nuit` de `sensor.tab5_tablette`). Sans
+  HA, le dernier état connu reste. Les trois ont leur tuile dans le tableau de bord
+  généré (vue Réglages).
+- **Sur la tablette** : une rangée « Thème » dans la carte GESTION de la console
+  système, un bouton pour le thème suivant, un pour le mode suivant ; l'écran se repeint
+  aussitôt. Les quatre boutons existants passent de 86 à 68 px de haut pour lui faire
+  de la place.
+- **Bascule sans redémarrage** : les styles partagés sont repeints depuis la palette
+  active, puis chaque module C++ repeint les couleurs qu'il a posées lui-même, depuis
+  son dernier état (carte centrale, vigilance, pluie, tuiles, mesures, clim, plantes,
+  énergie, zones, assistant, calendrier, prévisions). Les jeux restent sombres.
+- **Découverte** : ESPHome 2026.9 crée styles et widgets *avant* le setup des
+  composants, et le thème gardé en mémoire est restauré pendant ce setup. Un démarrage
+  en clair passe donc par le même chemin qu'une bascule à chaud, sans toucher à
+  l'`on_boot`.
+- **Catalogue** : un fichier par thème (`Tab5/themes/<thème>.yaml`, mode sombre et mode
+  clair) ; `tools/gen_themes.py` en écrit `THEMES[]`, les options du select et la
+  repeinture des styles. Ajouter un thème = un fichier et une commande, sans C++.
+- **Lisibilité** : douze rôles de couleur de plus (67 en tout), dont le texte sur une
+  pastille accent pleine (« Tester », « Parler », « OK ») et l'orange de vigilance ;
+  `tests/test_themes.py` exige pour chaque mode un contraste de 7:1 pour le texte,
+  4,5:1 pour le texte secondaire et 3:1 pour les couleurs d'état, sur les quatre
+  surfaces des cartes.
+- **Preuve** : le rendu hors tablette gagne une tâche « clair » : chaque écran peint en
+  sombre puis basculé à chaud, contre le même écran après un démarrage à froid en clair,
+  au pixel près (la tâche échoue sur un écart).
+- Textes de l'écran : « Sombre », « Clair », « Auto » traduits dans les six langues.
+
 ### 2026-10-04 — Thèmes, lot 1 : une seule palette pour toutes les couleurs de l'interface
 
 Demande d'Axel : des thèmes, avec un mode sombre et un mode clair. Ce premier lot ne
