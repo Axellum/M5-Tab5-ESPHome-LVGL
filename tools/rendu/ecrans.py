@@ -177,6 +177,17 @@ HA_VERS_LA_GAUCHE = Glisser(1265, 520, 15, 520)   # pièce suivante (page + 1)
 HA_VERS_LA_DROITE = Glisser(15, 520, 1265, 520)   # pièce précédente (page − 1)
 
 
+def _batterie(montee: bool, niveau: float = float("nan"), en_charge: bool = False) -> Service:
+    """rendu_batterie (Tab5/rendu/bouchons.yaml) : interrupteur « Tab5 Batterie montée »,
+    niveau en % et état de charge de la batterie de la tablette (icône du bandeau)."""
+    return Service("rendu_batterie", (("montee", montee), ("niveau", niveau), ("en_charge", en_charge)))
+
+
+# Retour à l'état par défaut (interrupteur éteint, aucune mesure) : les autres écrans
+# restent sans l'icône de la batterie.
+SANS_BATTERIE = (_batterie(False),)
+
+
 def ecrans_des_pieces(pieces: dict) -> tuple:
     """Le mode HA sur chaque pièce de la démo (ADR-0023) : « HA » depuis l'accueil (pièce
     0, page 2), puis un geste par pièce occupée jusqu'à la bonne (le mode HA saute les
@@ -307,6 +318,11 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-reponse-vocale",
           (Service("tab5_maj_reponse_vocale", (("texte", "Le volet de la serre est fermé."),)),),
           (Attendre(8.5), _panneau(3))),
+    # Batterie de la tablette montée : icône en fin de bandeau d'état, glyphe et couleur
+    # selon le niveau (échelle du téléphone), éclair pendant la charge.
+    Ecran("accueil-batterie-pleine", (_batterie(True, 95.0),), SANS_BATTERIE),
+    Ecran("accueil-batterie-faible", (_batterie(True, 12.0),), SANS_BATTERIE),
+    Ecran("accueil-batterie-en-charge", (_batterie(True, 60.0, True),), SANS_BATTERIE),
 
     # --- Fenêtres ---------------------------------------------------------------------
     Ecran("reveil", (Service("tab5_maj_rdv_prochains", (("payload", RDV),)), Toucher(*HORLOGE))),

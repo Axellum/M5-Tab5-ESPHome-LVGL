@@ -184,6 +184,26 @@ api:
         - lambda: 'rendu_doigt_poser(x, y);'
         - delay: !lambda 'return duree;'
         - lambda: 'rendu_doigt_lever();'
+    # Batterie de la tablette (04/10/2026) : tab5-sensors-diagnostics.yaml n'est pas
+    # chargé ici, l'action passe au C++ ce que lui passeraient l'INA226 et CHG_STAT, et
+    # actionne le vrai interrupteur « Tab5 Batterie montée » (tab5-ha-controls.yaml).
+    - service: rendu_batterie
+      description: "Rendu hors tablette : icône de la batterie du bandeau (montée, niveau en %, en charge)."
+      variables:
+        montee: bool
+        niveau: float
+        en_charge: bool
+      then:
+        - lambda: |-
+            batterie_niveau_ui(niveau);
+            batterie_charge_ui(en_charge);
+        - if:
+            condition:
+              lambda: 'return montee;'
+            then:
+              - switch.turn_on: tab5_batterie_montee
+            else:
+              - switch.turn_off: tab5_batterie_montee
     - service: rendu_glisser
       description: "Rendu hors tablette : geste de (x1, y1) à (x2, y2), en 10 pas de 30 ms."
       variables:
