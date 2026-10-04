@@ -2,8 +2,13 @@
 # [AI-CONTEXT]
 # @file tab5-sensors-diagnostics.yaml
 # @role Entités système/diagnostic : WiFi (bloc wifi:, antenne, RSSI, IP/SSID),
-#       alimentations GPIO (internes), statut API HA, uptime, RAM/loop time (debug),
+#       alimentations GPIO (internes), batterie (charge activée, état de charge, tension
+#       et niveau par l'INA226), statut API HA, uptime, RAM/loop time (debug),
 #       température coeur, horloge SNTP et intervals de la console système.
+# @batterie Batterie d'origine (discussion #278, 03/10/2026) : CHG_EN (pi4ioe2 P7) mis à 1,
+#           charge rapide (P5) à l'arrêt, état CHG_STAT (P6) lu toutes les 10 s, INA226
+#           en 0x41 (0x40 = ES7210). Non testé avec une batterie (l'auteur n'en a pas) ;
+#           sans batterie les entités disent « en charge, 100 % » : désactivées par défaut.
 # @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
 #                         Les blocs on_value: doivent se contenter d'appeler des fonctions
 #                         C++ depuis tab5_custom.cpp (ex: update_console_diagnostics_ui(...) ).
@@ -66,6 +71,32 @@ switch:
       number: 3
     restore_mode: ALWAYS_ON
 
+  # Charge de la batterie d'origine (discussion #278, 03/10/2026) : sans CHG_EN (P7) à 1,
+  # rien ne lance le chargeur. À 1 au démarrage comme M5Unified (Power_Class.inl,
+  # OUT_SET de 0x44) et la config de référence ESPHome (PR #1396 de devices.esphome.io).
+  - platform: gpio
+    id: charge_enable
+    name: "Charge Enable"
+    internal: true
+    pin:
+      pi4ioe5v6408: pi4ioe2
+      number: 7
+    restore_mode: ALWAYS_ON
+
+  # nCHG_QC_EN (P5, actif bas) : charge rapide ARRÊTÉE, comme la config de référence
+  # ESPHome (M5Unified l'active au démarrage). La tablette reste branchée, le chargeur
+  # USB fournit déjà jusqu'à 1,5 A (docs/hardware.md) et la charge rapide chauffe plus.
+  # M5Unified appelle les deux modes 500 et 1 000 mA (setChargeCurrent), non mesuré.
+  - platform: gpio
+    id: quick_charge
+    name: "Quick Charge"
+    internal: true
+    pin:
+      pi4ioe5v6408: pi4ioe2
+      number: 5
+      inverted: true
+    restore_mode: ALWAYS_OFF
+
   - platform: gpio
     id: wifi_antenna_int_ext
     pin:
@@ -82,6 +113,25 @@ switch:
     restore_mode: ALWAYS_ON
 
 binary_sensor:
+  # CHG_STAT (P6), 1 = en charge (M5Unified isCharging, config de référence ESPHome,
+  # dont vient le tirage vers le bas). Lu par l'interval de 10 s plus bas ; un
+  # changement n'est publié que s'il tient 30 s (battements de fin de charge).
+  # Sans batterie, il dit « en charge » (relevé sur la tablette de l'auteur, 03/10/2026) :
+  # les trois entités de la batterie sont désactivées par défaut dans HA, à activer
+  # quand la batterie est montée.
+  - platform: gpio
+    id: batterie_en_charge
+    name: "Tab5 Batterie en charge"
+    device_class: battery_charging
+    entity_category: diagnostic
+    disabled_by_default: true
+    pin:
+      pi4ioe5v6408: pi4ioe2
+      number: 6
+      mode: INPUT_PULLDOWN
+    filters:
+      - delayed_on_off: 30s
+
   - platform: status
     name: "HA API Status"
     id: status_ha
@@ -232,6 +282,47 @@ sensor:
     update_interval: 60s
     lambda: 'return (float) uxTaskGetStackHighWaterMark(nullptr);'
 
+  # Tension de la batterie (INA226, présent en 0x41 sur la tablette de l'auteur le
+  # 26/09/2026 ; 0x40, défaut d'ESPHome, est l'ES7210). Shunt et max_current de la
+  # config de référence ESPHome, utiles au seul courant (non publié). Publiée à 50 mV
+  # près (≈ 2 %) ou toutes les 15 min. Sans batterie, elle lit la tension du chargeur :
+  # 8,39 V, donc « 100 % » (tablette de l'auteur, 03/10/2026) ; d'où disabled_by_default.
+  - platform: ina226
+    i2c_id: bsp_bus
+    address: 0x41
+    shunt_resistance: 0.005ohm
+    max_current: 8.192A
+    adc_averaging: 16
+    update_interval: 60s
+    bus_voltage:
+      id: batterie_tension
+      name: "Tab5 Tension batterie"
+      accuracy_decimals: 2
+      entity_category: diagnostic
+      disabled_by_default: true
+      filters:
+        - or:
+            - throttle: 15min
+            - delta: 0.05
+
+  # Niveau d'après la tension, droite de battery-percentage.yaml (référence ESPHome) :
+  # 6,0 V = 0 %, 8,23 V = 100 % ; trop haut pendant la charge. Sous 5 V (pas de
+  # batterie 2S en état de marche) : inconnu plutôt que 0 %.
+  - platform: copy
+    source_id: batterie_tension
+    id: batterie_niveau
+    name: "Tab5 Batterie"
+    device_class: battery
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    disabled_by_default: true
+    filters:
+      - lambda: |-
+          if (std::isnan(x) || x < 5.0f) return NAN;
+          const float p = (x - 6.0f) / (8.23f - 6.0f) * 100.0f;
+          return p < 0.0f ? 0.0f : (p > 100.0f ? 100.0f : p);
+
 select:
   - platform: template
     id: wifi_antenna_select
@@ -344,6 +435,14 @@ interval:
   - interval: 30s
     then:
       - lambda: 'journal_tick();'
+
+  # État de charge : sans interruption sur pi4ioe2, ESPHome relirait l'expandeur en I²C
+  # à chaque tour de boucle. Comme la prise casque (tab5-sensors-domotique.yaml).
+  - interval: 10s
+    then:
+      - lambda: |-
+          id(batterie_en_charge)->disable_loop();
+          id(batterie_en_charge)->loop();
 
   - interval: 5s
     then:

@@ -56,7 +56,7 @@ The C6 has its own RAM (512 KB) and runs Espressif's ESP-Hosted firmware, not ou
 
 ### Real-time clock (RX8130CE)
 
-Address 0x32 on the internal I2C bus (`bsp_bus`, GPIO31/32), backed by a 70 000 µF supercapacitor (M5Stack specification). The firmware reads it once at boot, so the clock and the alarm have the time before the network is up, and writes it back after every NTP sync. It stores UTC. The same bus also carries an INA226 power monitor (0x41), not used by the firmware.
+Address 0x32 on the internal I2C bus (`bsp_bus`, GPIO31/32), backed by a 70 000 µF supercapacitor (M5Stack specification). The firmware reads it once at boot, so the clock and the alarm have the time before the network is up, and writes it back after every NTP sync. It stores UTC. The same bus also carries the INA226 battery monitor (0x41, see [Power](#power)).
 
 ---
 
@@ -92,6 +92,9 @@ Every pin the firmware configures, as written in its YAML. The pins are the same
 | External 5 V power | PI4IOE 0x43, P2 | `external_5v_power` · `pin` |
 | Wi-Fi power | PI4IOE 0x44, P0 | `wifi_power` · `pin` |
 | USB power | PI4IOE 0x44, P3 | `usb_5v_power` · `pin` |
+| Battery quick charge (active low, kept off) | PI4IOE 0x44, P5 | `quick_charge` · `pin` |
+| Battery charging status | PI4IOE 0x44, P6 | `batterie_en_charge` · `pin` |
+| Battery charge enable | PI4IOE 0x44, P7 | `charge_enable` · `pin` |
 | ESP32-C6 link (SDIO), clock | GPIO 12 | `esp32_hosted` · `clk_pin` |
 | ESP32-C6 link (SDIO), command | GPIO 13 | `esp32_hosted` · `cmd_pin` |
 | ESP32-C6 link (SDIO), data 0 | GPIO 11 | `esp32_hosted` · `d0_pin` |
@@ -100,7 +103,7 @@ Every pin the firmware configures, as written in its YAML. The pins are the same
 | ESP32-C6 link (SDIO), data 3 | GPIO 8 | `esp32_hosted` · `d3_pin` |
 | ESP32-C6 reset | GPIO 15 | `esp32_hosted` · `reset_pin` |
 
-The firmware declares a single I2C bus (`bsp_bus`), so every I2C chip it drives is on it: the two I/O expanders, the touch controller, the ES8388 and the ES7210, the BMI270 motion sensor (0x68, `Tab5/tab5-imu.yaml`) and the RX8130CE clock (0x32).
+The firmware declares a single I2C bus (`bsp_bus`), so every I2C chip it drives is on it: the two I/O expanders, the touch controller, the ES8388 and the ES7210, the BMI270 motion sensor (0x68, `Tab5/tab5-imu.yaml`), the RX8130CE clock (0x32) and the INA226 battery monitor (0x41; ESPHome's default address for it, 0x40, is the ES7210's).
 
 ---
 
@@ -139,6 +142,8 @@ Capture parameters: **16 kHz, 16-bit mono**. This matches the input format expec
 The Tab5 is USB-C powered. Peak consumption (Wi-Fi active + 100% backlight + audio playing) can exceed 1.5 A at 5V. A charger rated for at least **5V / 2A** is required to avoid brownout resets.
 
 Backlight brightness is software-controlled via PWM (LEDC output on GPIO 22, `light: monochromatic`) and can be dimmed from Home Assistant to reduce power draw. Touching the screen while the backlight is off turns it back on (`touchscreen: on_release`). There is no ambient light sensor in this configuration.
+
+**Battery.** The Tab5 takes an optional two-cell (2S) lithium battery. Since October 2026 the firmware enables its charger at boot (`charge_enable`, PI4IOE 0x44 P7), like M5Stack's M5Unified library; before that it never did, and a user reported that the battery did not charge ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)). Quick charge (P5) is kept off: the tablet stays plugged in, and standard charge asks less current from the USB charger. Three diagnostic entities reach Home Assistant: **Tab5 Batterie en charge** (charging status, P6, read every 10 s, a change published once it has lasted 30 s), **Tab5 Tension batterie** (voltage measured by the INA226, published on a 50 mV change or every 15 min) and **Tab5 Batterie** (level estimated from the voltage, 6.0 V = 0 %, 8.23 V = 100 %, the line of ESPHome's reference configuration; it reads too high while charging; below 5 V it is "unknown"). Without a battery they say "charging", 8.39 V and 100 % (the charger's voltage, read on the author's tablet on 2026-10-03), so the three entities are **disabled by default** in Home Assistant: with the battery fitted, enable them on the device page. Not tested with a battery: the author's tablet has none.
 
 ---
 
@@ -200,7 +205,7 @@ Le C6 a sa propre RAM (512 Ko) et fait tourner le logiciel ESP-Hosted d'Espressi
 
 ### Horloge temps réel (RX8130CE)
 
-Adresse 0x32 sur le bus I2C interne (`bsp_bus`, GPIO31/32), sauvegardée par un supercondensateur de 70 000 µF (spécification M5Stack). Le firmware la lit une fois au démarrage, pour que l'horloge et le réveil aient l'heure avant le réseau, et la réécrit après chaque synchro NTP. Elle stocke l'heure UTC. Le même bus porte aussi un moniteur d'alimentation INA226 (0x41), non utilisé par le firmware.
+Adresse 0x32 sur le bus I2C interne (`bsp_bus`, GPIO31/32), sauvegardée par un supercondensateur de 70 000 µF (spécification M5Stack). Le firmware la lit une fois au démarrage, pour que l'horloge et le réveil aient l'heure avant le réseau, et la réécrit après chaque synchro NTP. Elle stocke l'heure UTC. Le même bus porte aussi le moniteur de batterie INA226 (0x41, voir [Alimentation](#alimentation)).
 
 ---
 
@@ -236,6 +241,9 @@ Toutes les broches que le firmware configure, telles qu'écrites dans son YAML. 
 | Alimentation 5 V externe | PI4IOE 0x43, P2 | `external_5v_power` · `pin` |
 | Alimentation du Wi-Fi | PI4IOE 0x44, P0 | `wifi_power` · `pin` |
 | Alimentation USB | PI4IOE 0x44, P3 | `usb_5v_power` · `pin` |
+| Charge rapide de la batterie (active à 0, laissée à l'arrêt) | PI4IOE 0x44, P5 | `quick_charge` · `pin` |
+| État de charge de la batterie | PI4IOE 0x44, P6 | `batterie_en_charge` · `pin` |
+| Activation de la charge de la batterie | PI4IOE 0x44, P7 | `charge_enable` · `pin` |
 | Liaison ESP32-C6 (SDIO), horloge | GPIO 12 | `esp32_hosted` · `clk_pin` |
 | Liaison ESP32-C6 (SDIO), commande | GPIO 13 | `esp32_hosted` · `cmd_pin` |
 | Liaison ESP32-C6 (SDIO), données 0 | GPIO 11 | `esp32_hosted` · `d0_pin` |
@@ -244,7 +252,7 @@ Toutes les broches que le firmware configure, telles qu'écrites dans son YAML. 
 | Liaison ESP32-C6 (SDIO), données 3 | GPIO 8 | `esp32_hosted` · `d3_pin` |
 | Reset de l'ESP32-C6 | GPIO 15 | `esp32_hosted` · `reset_pin` |
 
-Le firmware ne déclare qu'un bus I2C (`bsp_bus`) : toutes les puces I2C qu'il pilote y sont, les deux expandeurs d'E/S, le contrôleur tactile, l'ES8388 et l'ES7210, le capteur de mouvement BMI270 (0x68, `Tab5/tab5-imu.yaml`) et l'horloge RX8130CE (0x32).
+Le firmware ne déclare qu'un bus I2C (`bsp_bus`) : toutes les puces I2C qu'il pilote y sont, les deux expandeurs d'E/S, le contrôleur tactile, l'ES8388 et l'ES7210, le capteur de mouvement BMI270 (0x68, `Tab5/tab5-imu.yaml`), l'horloge RX8130CE (0x32) et le moniteur de batterie INA226 (0x41 ; l'adresse qu'ESPHome lui donne par défaut, 0x40, est celle de l'ES7210).
 
 ---
 
@@ -283,3 +291,5 @@ Paramètres de capture : **16 kHz, 16-bit mono**. Correspond au format d'entrée
 Le Tab5 est alimenté en USB-C. La consommation en pointe (Wi-Fi actif + rétroéclairage 100% + audio en lecture) peut dépasser 1,5 A à 5V. Un chargeur d'au moins **5V / 2A** est nécessaire pour éviter les resets par sous-tension.
 
 La luminosité du rétroéclairage est contrôlée logiciellement via PWM (sortie LEDC sur GPIO 22, `light: monochromatic`) et peut être réduite depuis Home Assistant. Toucher l'écran quand le rétroéclairage est éteint le rallume (`touchscreen: on_release`). Il n'y a pas de capteur de luminosité ambiante dans cette configuration.
+
+**Batterie.** Le Tab5 accepte une batterie lithium à deux éléments (2S) en option. Depuis octobre 2026, le firmware active son chargeur au démarrage (`charge_enable`, PI4IOE 0x44 P7), comme la bibliothèque M5Unified de M5Stack ; avant, il ne le faisait jamais, et un utilisateur a signalé que la batterie ne se chargeait pas ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)). La charge rapide (P5) reste à l'arrêt : la tablette reste branchée, et la charge standard demande moins de courant au chargeur USB. Trois entités de diagnostic arrivent dans Home Assistant : **Tab5 Batterie en charge** (état de charge, P6, lu toutes les 10 s, un changement publié quand il a tenu 30 s), **Tab5 Tension batterie** (tension mesurée par l'INA226, publiée quand elle bouge de 50 mV ou toutes les 15 min) et **Tab5 Batterie** (niveau estimé d'après la tension, 6,0 V = 0 %, 8,23 V = 100 %, la droite de la config de référence ESPHome ; il lit trop haut pendant la charge ; sous 5 V, il vaut « inconnu »). Sans batterie, elles disent « en charge », 8,39 V et 100 % (la tension du chargeur, relevée sur la tablette de l'auteur le 03/10/2026) : les trois entités sont donc **désactivées par défaut** dans Home Assistant ; avec la batterie montée, les activer sur la page de l'appareil. Non testé avec une batterie : la tablette de l'auteur n'en a pas.
