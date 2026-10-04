@@ -74,6 +74,8 @@ def test_le_blueprint_se_lit_et_tout_est_facultatif():
                 assert entree["default"] == "", f"{nom} : un nom vide doit valoir \"\""
             elif "select" in entree["selector"]:  # source météo : « liste » = celle de HA
                 assert entree["default"] == "liste", f"{nom} : non rempli doit valoir \"liste\""
+            elif "boolean" in entree["selector"]:  # Énergie : sens du réseau, de la batterie
+                assert entree["default"] is False, f"{nom} : une case non cochée doit valoir false"
             else:
                 assert entree["default"] == [], f"{nom} : un emplacement vide doit valoir []"
 

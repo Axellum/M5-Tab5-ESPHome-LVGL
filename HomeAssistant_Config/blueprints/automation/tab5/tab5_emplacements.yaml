@@ -31,7 +31,12 @@
 #         dans les listes de packages/tab5_meteo_sources.yaml (input_text et input_select),
 #         qui restent la seule source lue par les capteurs et les poussées ; une liste changée
 #         à la main y revient, avec une notification. Vide : rien n'est écrit, les listes font
-#         foi comme avant (déclencheurs meteo_*, variable meteo_a_ecrire).
+#         foi comme avant (déclencheurs meteo_*, variable meteo_a_ecrire) ;
+#       - section « Énergie » (ADR-0028, 04/10/2026, discussion #278), facultative : les
+#         capteurs d'une installation solaire. Une tuile cap de l'un d'eux prend l'option e
+#         (elle ouvre le popup Énergie) ; l'événement esphome.tab5_energie (vue) lance
+#         script.tab5_energie (packages/tab5_energie.yaml) avec ces capteurs. Vide : aucune
+#         tuile e, et une réponse vide (le popup ouvert par « Aller à l'écran » le dit).
 # @architecture_constraint Aucun placeholder : ce fichier est générique, il s'importe tel
 #       quel. Les clés d'emplacement et les commandes sont celles du firmware
 #       (tab5-api-logic.yaml, script tab5_action) ; tests/test_emplacements.py et
@@ -598,6 +603,144 @@ blueprint:
                   value: CAP Alerts
                 - label: Aucune (aucune icône) · None (no icons)
                   value: Aucune
+    # Énergie (ADR-0028, 04/10/2026, discussion #278) : une installation solaire. Vide, rien
+    # n'apparaît. Remplie, une tuile cap de l'un de ces capteurs ouvre le popup Énergie
+    # (option e), dont script.tab5_energie (packages/tab5_energie.yaml) pousse les données.
+    # Signe du réseau : + achat, − vente (case « Inverser » sinon, ou deux capteurs).
+    energie:
+      name: Énergie · Energy
+      icon: mdi:solar-power
+      collapsed: true
+      description: >-
+        Facultatif : une installation solaire, avec ou sans batterie. Laissée vide, l'écran
+        n'a rien de plus. Remplie : placez l'un de ces capteurs dans une pièce (le capteur
+        solaire, par exemple) ; sa tuile montre sa valeur et ouvre au toucher le popup
+        Énergie : solaire, maison, réseau et batterie en direct, et la production en barres
+        par heure, par jour et par mois. Il faut aussi le package tab5_energie. Un champ
+        vide fait disparaître sa carte ou sa ligne.
+
+
+        Optional: a solar installation, with or without a battery. Left empty, the screen
+        shows nothing more. Filled: put one of these sensors in a room (the solar one, for
+        instance); its tile shows its value and opens the Energy popup on tap: solar, home,
+        grid and battery live, and the production as bars per hour, day and month. The
+        tab5_energie package is needed too. An empty field hides its card or line.
+      input:
+        energie_solaire:
+          name: Puissance solaire · Solar power
+          description: >-
+            Ce que produisent les panneaux en ce moment (W ou kW).
+
+
+            What the panels produce right now (W or kW).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: power
+        energie_production:
+          name: Énergie solaire produite · Solar energy produced
+          description: >-
+            Compteur en kWh (celui du tableau Énergie de Home Assistant, avec des
+            statistiques) : le total du jour et les barres viennent de son historique. Vide :
+            pas de graphique.
+
+
+            Meter in kWh (the one of the Home Assistant Energy dashboard, with statistics):
+            the day total and the bars come from its history. Empty: no chart.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: energy
+        energie_reseau:
+          name: Puissance du réseau · Grid power
+          description: >-
+            Positive quand la maison achète (importe), négative quand elle vend (exporte) ;
+            dans l'autre sens, cochez « Inverser ». Compteur qui donne l'achat et la vente à
+            part : l'achat ici, la vente dans le champ suivant.
+
+
+            Positive when the home buys (imports), negative when it sells (exports); the other
+            way round, tick « Invert ». Meter that gives import and export separately: import
+            here, export in the next field.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: power
+        energie_reseau_export:
+          name: Puissance vendue au réseau · Grid export power
+          description: >-
+            Seulement si le compteur donne la vente à part (positive) : le réseau affiché
+            est alors l'achat moins la vente.
+
+
+            Only if the meter gives the export separately (positive): the grid shown is then
+            import minus export.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: power
+        energie_reseau_inverse:
+          name: Inverser le signe du réseau · Invert the grid sign
+          default: false
+          selector:
+            boolean: {}
+        energie_maison:
+          name: Consommation de la maison · Home consumption
+          description: >-
+            Vide : calculée, solaire + réseau − charge de la batterie.
+
+
+            Empty: computed, solar + grid − battery charge.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: power
+        energie_batterie:
+          name: Niveau de la batterie · Battery level
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: battery
+        energie_batterie_puissance:
+          name: Puissance de la batterie · Battery power
+          description: >-
+            Positive en charge, négative en décharge ; dans l'autre sens, cochez
+            « Inverser ».
+
+
+            Positive when charging, negative when discharging; the other way round, tick
+            « Invert ».
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: power
+        energie_batterie_inverse:
+          name: Inverser le signe de la batterie · Invert the battery sign
+          default: false
+          selector:
+            boolean: {}
+        energie_batterie_temperature:
+          name: Température de la batterie · Battery temperature
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
     # Réglage 3.x (ADR-0019) : les cinq places fixes de l'accueil. Lu par un firmware
     # 3.0/3.1, et par un firmware 3.2 tant que la pièce 1 est vide (ADR-0023).
     accueil_3x:
@@ -697,7 +840,7 @@ trace:
 
 variables:
   # >>> icones (généré par tools/gen_tuiles_icones.py, ne pas éditer)
-  # Source : Tab5/tuiles_icones.yaml (51 codes). L'icône d'une tuile : celle
+  # Source : Tab5/tuiles_icones.yaml (52 codes). L'icône d'une tuile : celle
   # de la personnalisation, sinon l'attribut `icon` de l'entité, sinon sa classe, sinon
   # son domaine ; un « mdi: » hors palette retombe sur le défaut de son domaine.
   icones_mdi:
@@ -966,9 +1109,9 @@ variables:
     "mdi:transmission-tower": energie
     "mdi:home-lightning-bolt": energie
     "mdi:home-lightning-bolt-outline": energie
-    "mdi:solar-power": energie
-    "mdi:solar-power-variant": energie
-    "mdi:solar-panel": energie
+    "mdi:solar-power": solaire
+    "mdi:solar-power-variant": solaire
+    "mdi:solar-panel": solaire
     "mdi:flower": plante
     "mdi:flower-outline": plante
     "mdi:sprout": plante
@@ -1418,6 +1561,27 @@ variables:
       {%- endfor -%}
     {%- endif -%}
     {{ ns.l }}
+  # Énergie (ADR-0028) : capteurs de la section « Énergie », texte vide si rien n'est
+  # choisi. Une tuile cap de l'un d'eux (energie_capteurs) prend l'option e ; tous partent
+  # vers script.tab5_energie quand la tablette ouvre son popup (branche « popup Énergie »).
+  energie_choix:
+    solaire: !input energie_solaire
+    production: !input energie_production
+    reseau: !input energie_reseau
+    reseau_export: !input energie_reseau_export
+    maison: !input energie_maison
+    batterie: !input energie_batterie
+    batterie_puissance: !input energie_batterie_puissance
+    batterie_temperature: !input energie_batterie_temperature
+  energie: >-
+    {%- set ns = namespace(d={}) -%}
+    {%- for cle, v in energie_choix.items() -%}
+      {%- set ns.d = dict(ns.d, **{cle: (v if v is string else (v | first if v else ''))}) -%}
+    {%- endfor -%}
+    {{ ns.d }}
+  energie_capteurs: "{{ energie.values() | select | list }}"
+  energie_reseau_inverse: !input energie_reseau_inverse
+  energie_batterie_inverse: !input energie_batterie_inverse
 
 triggers:
   - trigger: event
@@ -1429,6 +1593,10 @@ triggers:
   - trigger: event
     event_type: esphome.tab5_action
     id: action
+  # Popup Énergie (ADR-0028) : ouvert, ou sa vue changée (donnée vue).
+  - trigger: event
+    event_type: esphome.tab5_energie
+    id: energie
   - trigger: state
     entity_id: !input lumiere_1
     id: lumiere_1
@@ -1710,7 +1878,7 @@ conditions:
   # tests/test_garde_origine.py vérifie cette garde sur chaque automatisation.
   - condition: template
     value_template: >-
-      {%- if trigger.id in ['connexion', 'zones', 'action', 'maj_ecran'] -%}
+      {%- if trigger.id in ['connexion', 'zones', 'action', 'maj_ecran', 'energie'] -%}
         {%- set d = trigger.event.data.device_id | default('', true) | string -%}
         {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
       {%- else -%}
@@ -1727,7 +1895,7 @@ conditions:
       {%- if trigger.id in meteo_declencheurs -%}
         {{ meteo_a_ecrire | count > 0 }}
       {%- else -%}
-        {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'pipeline_discussion'] or cles | count > 0
+        {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'pipeline_discussion', 'energie'] or cles | count > 0
            or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0)) }}
       {%- endif -%}
   # Déclencheurs venus de HA (rechargement, démarrage, mesures, changements d'état) : seulement
@@ -1737,7 +1905,7 @@ conditions:
   # prouvent d'eux-mêmes qu'elle est là. La météo (meteo_declencheurs) n'écrit que dans HA.
   - condition: template
     value_template: >-
-      {{ trigger.id in ['connexion', 'zones', 'action', 'maj_ecran'] + meteo_declencheurs
+      {{ trigger.id in ['connexion', 'zones', 'action', 'maj_ecran', 'energie'] + meteo_declencheurs
          or integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
             | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
             | list | count > 0 }}
@@ -1881,6 +2049,35 @@ actions:
                     This choice is made in the « {{ auto }} » automation (Weather section): the list goes back to it. To choose in the list, empty that field of the automation.
       # Aussi quand le pipeline de discussion change : même réponse, sans attendre la
       # demande de la tablette (une fois par connexion).
+      # Popup Énergie (ADR-0028) : la tablette dit quelle vue elle montre ; le script du
+      # package tab5_energie pousse l'historique et l'instantané tant qu'il reste ouvert
+      # (script.turn_on : sans attendre, la file de cette automatisation reste libre).
+      # Section vide : une réponse vide, le popup dit qu'aucun capteur n'est choisi. Sans
+      # le package : rien, le popup attend.
+      - alias: "La tablette ouvre le popup Énergie"
+        conditions: "{{ trigger.id == 'energie' }}"
+        sequence:
+          - if: "{{ energie_capteurs | count == 0 }}"
+            then:
+              - action: "esphome.{{ tablette }}_tab5_maj_energie"
+                data:
+                  payload: "|||||||"
+                continue_on_error: true
+            else:
+              - if: "{{ states['script.tab5_energie'] is not none }}"
+                then:
+                  - action: script.turn_on
+                    target:
+                      entity_id: script.tab5_energie
+                    data:
+                      variables:
+                        appareil: "{{ trigger.event.data.device_id | default('', true) | string }}"
+                        tablette: "{{ tablette }}"
+                        vue: "{{ trigger.event.data.vue | default('heures', true) }}"
+                        capteurs: >-
+                          {{ dict(energie, reseau_inverse=energie_reseau_inverse | bool(false),
+                                  batterie_inverse=energie_batterie_inverse | bool(false)) }}
+
       - alias: "La tablette demande quelles zones sont absentes"
         conditions: "{{ trigger.id in ['zones', 'pipeline_discussion'] }}"
         sequence:
@@ -2366,10 +2563,13 @@ actions:
                   {#- Tuile PC du réglage 3.x : l'écran d'ordinateur de la 3.1, pas l'icône
                       générique d'un interrupteur. -#}
                   {%- set defaut = 'ordinateur' if t.s == 'pc' else defaut -%}
+                  {#- Capteur solaire de la section « Énergie » : le panneau (ADR-0028). -#}
+                  {%- set defaut = 'solaire' if t.e == energie.solaire else defaut -%}
                   {%- set mdi = (p.get('icone') or state_attr(t.e, 'icon') or '') | string -%}
                   {%- set icone = icones_mdi.get(mdi, defaut) if mdi else defaut -%}
                   {#- Options : d (luminosité) et c (couleur) des modes de couleur ; o, k, r
-                      du comportement ; t = la TV du blueprint ; m = sa clim. -#}
+                      du comportement ; t = la TV du blueprint ; m = sa clim ; e = un capteur
+                      de sa section « Énergie » (popup Énergie, ADR-0028). -#}
                   {%- set modes = state_attr(t.e, 'supported_color_modes') or [] -%}
                   {%- set c = p.get('comportement', 'normal') -%}
                   {%- set options = ('d' if t.type == 'lum' and modes | reject('in', ['onoff', 'unknown']) | list | count > 0 else '')
@@ -2378,7 +2578,8 @@ actions:
                                   ~ ('k' if c == 'confirmer' else '')
                                   ~ ('r' if c == 'lecture_seule' else '')
                                   ~ ('t' if t.type == 'med' and t.e == sources.tv else '')
-                                  ~ ('m' if t.type == 'cli' and t.e == sources.clim else '') -%}
+                                  ~ ('m' if t.type == 'cli' and t.e == sources.clim else '')
+                                  ~ ('e' if t.type == 'cap' and t.e in energie_capteurs else '') -%}
                   {#- Complément : unité d'un capteur (7 octets au plus), classe d'un bin. -#}
                   {%- if t.type == 'cap' -%}
                     {%- set u = namespace(s=(state_attr(t.e, 'unit_of_measurement') or '') | string) -%}

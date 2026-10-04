@@ -22,8 +22,9 @@
 #       tab5_redemarrage_ha_confirme       → homeassistant.restart (émis seulement par
 #                                            « Confirmer » de la console système)
 #       Les autres événements de la tablette ont leur consommateur ailleurs :
-#       tab5_connected (tab5_push, tab5_reveil, tab5_reglages, blueprint), tab5_zones
-#       et tab5_action (blueprint « Tab5 — emplacements »), tab5_journal (tab5_health) ;
+#       tab5_connected (tab5_push, tab5_reveil, tab5_reglages, blueprint), tab5_zones,
+#       tab5_action et tab5_energie (blueprint « Tab5 — emplacements », qui connaît les
+#       capteurs ; ce dernier lance script.tab5_energie, ADR-0028), tab5_journal (tab5_health) ;
 #       le blueprint écoute aussi tab5_maj_ecran (emplacements, tuiles, zones). Les
 #       tab5_alarm_* sont offerts aux automatisations de l'utilisateur.
 #       tests/test_actions_ha.py compare émetteurs et consommateurs,
