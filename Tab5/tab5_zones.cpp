@@ -336,6 +336,12 @@ void batterie_charge_ui(bool en_charge) {
     batterie_peindre();
 }
 
+// Thèmes (ADR-0029) : icônes de la batterie (montée) et du solaire (valeur reçue).
+void zones_rejouer_theme() {
+    if (s_batterie.montee) batterie_peindre();
+    solaire_peindre();
+}
+
 void zones_nouvelle_connexion() { s_demande = true; }
 
 bool zones_demande_a_envoyer() {

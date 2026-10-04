@@ -211,22 +211,50 @@ static void assist_state_style(AssistState st, uint32_t& color, const char*& lab
     }
 }
 
+// Thèmes (ADR-0029) : dernier état peint sur l'icône du micro et sur le statut, rejoué
+// par assist_rejouer_theme().
+static lv_obj_t* s_icone_micro = nullptr;
+static AssistState s_etat_micro = AssistState::IDLE;
+static lv_obj_t* s_lbl_statut = nullptr;
+static AssistState s_etat_statut = AssistState::IDLE;
+
 void assist_set_mic_state(lv_obj_t* icon_mic, AssistState st) {
     if (icon_mic == nullptr) return;
     uint32_t color;
     const char* label;
     assist_state_style(st, color, label);
     lv_obj_set_style_text_color(icon_mic, lv_color_hex(color), LV_PART_MAIN);
+    s_icone_micro = icon_mic;
+    s_etat_micro = st;
 }
 
 void assist_set_pipeline_state(lv_obj_t* icon_mic, lv_obj_t* lbl_status, AssistState st) {
     uint32_t color;
     const char* label;
     assist_state_style(st, color, label);
-    if (icon_mic != nullptr) lv_obj_set_style_text_color(icon_mic, lv_color_hex(color), LV_PART_MAIN);
+    if (icon_mic != nullptr) {
+        lv_obj_set_style_text_color(icon_mic, lv_color_hex(color), LV_PART_MAIN);
+        s_icone_micro = icon_mic;
+        s_etat_micro = st;
+    }
     if (lbl_status != nullptr) {
         lv_label_set_text(lbl_status, tr(label));
         lv_obj_set_style_text_color(lbl_status, lv_color_hex(color), LV_PART_MAIN);
+        s_lbl_statut = lbl_status;
+        s_etat_statut = st;
+    }
+}
+
+void assist_rejouer_theme() {
+    uint32_t color;
+    const char* label;
+    if (s_icone_micro != nullptr) {
+        assist_state_style(s_etat_micro, color, label);
+        lv_obj_set_style_text_color(s_icone_micro, lv_color_hex(color), LV_PART_MAIN);
+    }
+    if (s_lbl_statut != nullptr) {
+        assist_state_style(s_etat_statut, color, label);
+        lv_obj_set_style_text_color(s_lbl_statut, lv_color_hex(color), LV_PART_MAIN);
     }
 }
 

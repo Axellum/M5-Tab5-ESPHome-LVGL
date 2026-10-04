@@ -1161,3 +1161,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "En attente de Home Assistant": "Wachten op Home Assistant"
 "Aucun capteur d'énergie choisi": "Geen energiesensor gekozen"
 "Aucun historique": "Geen geschiedenis"
+
+# Thèmes (ADR-0029) : mode de la rangée « Thème » de la console système
+"Sombre": "Donker"
+"Clair": "Licht"
+"Auto": "Auto"

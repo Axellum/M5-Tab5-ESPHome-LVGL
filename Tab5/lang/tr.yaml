@@ -1209,3 +1209,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "En attente de Home Assistant": "Home Assistant bekleniyor"
 "Aucun capteur d'énergie choisi": "Enerji sensörü seçilmedi"
 "Aucun historique": "Geçmiş yok"
+
+# Thèmes (ADR-0029) : mode de la rangée « Thème » de la console système
+"Sombre": "Koyu"
+"Clair": "Açık"
+"Auto": "Otomatik"

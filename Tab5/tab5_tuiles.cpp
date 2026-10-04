@@ -432,10 +432,19 @@ void minuterie_armer(Minuterie& m, int r, int t, uint32_t ms) {
 }
 
 // Couleur propre d'une lumière (rgb_color), éclaircie vers le blanc si elle se perdrait
-// sur le fond ardoise des cartes (luminance < 110 sur 255).
+// sur le fond sombre des cartes (luminance < 110 sur 255) ; sur un thème clair (ADR-0029),
+// assombrie vers le noir si elle se perdrait sur le blanc (luminance > 150).
 uint32_t couleur_lisible(uint32_t c) {
     const int r = (c >> 16) & 0xFF, g = (c >> 8) & 0xFF, b = c & 0xFF;
     const int y = (2126 * r + 7152 * g + 722 * b) / 10000;
+    if (palette_claire(UIColor)) {
+        constexpr int kMax = 150;
+        if (y <= kMax) return c;
+        const int k = kMax * 256 / y;
+        auto vers_noir = [k](int v) { return v * k / 256; };
+        return (static_cast<uint32_t>(vers_noir(r)) << 16) | (static_cast<uint32_t>(vers_noir(g)) << 8) |
+               static_cast<uint32_t>(vers_noir(b));
+    }
     constexpr int kMin = 110;
     if (y >= kMin) return c;
     const int k = (kMin - y) * 256 / (255 - y);
@@ -1157,6 +1166,15 @@ void tuiles_appliquer_ui() {
 void tuiles_peindre_meteo() {
     charger();
     peindre_meteo();
+}
+
+// Thèmes (ADR-0029) : tuiles, cartes, bouton « HA » (sa garde au changement forcée) et
+// popup lumière, depuis le dernier état ; rien avant le premier dessin des tuiles.
+void tuiles_rejouer_theme() {
+    if (!s_charge) return;
+    s_bouton_actif = !g_central_ctx.ha_mode;
+    tuiles_appliquer_ui();
+    if (s_pl.n > 0) popup_lumiere_peindre();
 }
 
 void tuiles_repeindre(int r, int t) {

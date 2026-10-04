@@ -531,3 +531,14 @@ void energie_choisir_vue(int vue) {
     }
     demander();
 }
+
+// Thèmes (ADR-0029) : ce que construire() a peint une fois (repère, libellés), puis le
+// popup s'il est ouvert ; fermé, sa prochaine ouverture repeint cartes et barres.
+void energie_rejouer_theme() {
+    if (s_barres[0] == nullptr) return;
+    lv_obj_set_style_bg_color(s_repere, lv_color_hex(UIColor.GLASS_RIM), LV_PART_MAIN);
+    ui_text_color(s_maximum, UIColor.TEXT_DIM);
+    ui_text_color(s_vide, UIColor.TEXT_DIM);
+    for (lv_obj_t* l : s_axe) ui_text_color(l, UIColor.TEXT_DIM);
+    peindre();
+}

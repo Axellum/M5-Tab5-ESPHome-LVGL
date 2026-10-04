@@ -164,3 +164,18 @@ void pagination_afficher(lv_obj_t* const pbars[5], int page);
 // Carte centrale au changement de mode HA (ctx.ha_mode déjà posé) : fin du planning
 // temporaire et de la réponse vocale, puis titre de la pièce ou panneaux habituels.
 void central_mode_ha(lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, CentralPanelCtx& ctx);
+
+// --- Thèmes (ADR-0029, lot 2), appelées par theme_rejouer_ui() de tab5_theme.cpp ---
+// Repeintures par module, appelées par theme_rejouer_ui() (aucune ne crée de widget ni
+// n'envoie rien à Home Assistant ; chacune ne repeint que ce qu'elle a déjà peint).
+void central_rejouer_theme();
+void vigilance_rejouer();
+void rain_bars_rejouer();
+void rain_predict_rejouer();
+void tuiles_rejouer_theme();
+// Mesures des capteurs (températures, pots, carte PC), clim et plantes de l'accueil.
+void cartes_rejouer_theme();
+void energie_rejouer_theme();
+void zones_rejouer_theme();
+void assist_rejouer_theme();
+void cal_detail_rejouer();

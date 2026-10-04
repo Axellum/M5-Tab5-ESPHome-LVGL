@@ -6,7 +6,8 @@
 #       y=380, 20 px de marge basse) :
 #       MÉMOIRE (SRAM/PSRAM/bloc max/flash), RÉSEAU (Wi-Fi/IP/signal/état HA),
 #       SYSTÈME (uptime/temp CPU/temps de boucle + volume), GESTION (MAJ écran,
-#       recharge automations, redémarrage HA, reboot tablette).
+#       recharge automations ; thème et mode clair/sombre ; redémarrage HA,
+#       reboot tablette : 3 rangées de 2 boutons 247x68, pas de 78 px).
 # @data_contract Les ids `lbl_sys_*` / `bar_sys_*` sont remplis par
 #       tab5-sensors-diagnostics.yaml (interval 2s + capteurs 60s, garde #T222)
 #       et rafraîchis à l'ouverture par tab5-lvgl.yaml (btn_control_console) —
@@ -33,6 +34,10 @@
 #       HA » à cocher. Le redémarrage de HA part seulement de « Confirmer »
 #       (esphome.tab5_redemarrage_ha_confirme), seul événement que HA traduit en
 #       homeassistant.restart.
+#       Rangée « Thème » (ADR-0029) : un appui passe au thème ou au mode suivant
+#       (select.next sur les selects de tab5-themes.yaml, en boucle) ; l'écran se
+#       repeint aussitôt, console comprise. Les libellés `lbl_console_theme*` sont
+#       écrits par script.tab5_theme_console (nom du thème tel quel, mode traduit).
 # ============================================================================
 obj:
   id: layer_console_sys
@@ -213,14 +218,14 @@ obj:
                     x: 22
                     y: 46
                     width: 247
-                    height: 86
+                    height: 68
                     styles: style_clim_btn
                     on_short_click:
                       - homeassistant.event:
                           event: esphome.tab5_maj_ecran
                     widgets:
-                      - label: { text: "\U000F0379", align: CENTER, y: -18, text_font: mdi_font_32, styles: style_text_info }
-                      - label: { text: "MAJ Écran", align: CENTER, y: 22 }
+                      - label: { text: "\U000F0379", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_info }
+                      - label: { text: "MAJ Écran", align: CENTER, y: 16 }
 
                 # Recharge les automations HA (après édition YAML côté Freebox)
                 - button:
@@ -229,23 +234,57 @@ obj:
                     x: 281
                     y: 46
                     width: 247
-                    height: 86
+                    height: 68
                     styles: style_clim_btn
                     on_short_click:
                       - homeassistant.event:
                           event: esphome.tab5_recharger_automatisations
                     widgets:
-                      - label: { text: "\U000F0450", align: CENTER, y: -18, text_font: mdi_font_32, styles: style_text_info }
-                      - label: { text: "Recharger autos", align: CENTER, y: 22 }
+                      - label: { text: "\U000F0450", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_info }
+                      - label: { text: "Recharger autos", align: CENTER, y: 16 }
+
+                # Rangée « Thème » (ADR-0029) : thème suivant, puis mode suivant
+                # (Sombre → Clair → Auto). Un appui = l'écran repeint aussitôt.
+                - button:
+                    id: btn_console_theme
+                    align: TOP_LEFT
+                    x: 22
+                    y: 124
+                    width: 247
+                    height: 68
+                    styles: style_clim_btn
+                    on_short_click:
+                      - select.next:
+                          id: tab5_theme
+                          cycle: true
+                    widgets:
+                      - label: { text: "\U000F03D8", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_accent }
+                      - label: { id: lbl_console_theme, text: "--", align: CENTER, y: 16, width: 225, long_mode: DOT, text_align: CENTER }
+
+                - button:
+                    id: btn_console_theme_mode
+                    align: TOP_LEFT
+                    x: 281
+                    y: 124
+                    width: 247
+                    height: 68
+                    styles: style_clim_btn
+                    on_short_click:
+                      - select.next:
+                          id: tab5_theme_mode
+                          cycle: true
+                    widgets:
+                      - label: { text: "\U000F050E", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_accent }
+                      - label: { id: lbl_console_theme_mode, text: "--", align: CENTER, y: 16, width: 225, long_mode: DOT, text_align: CENTER }
 
                 # Redémarre le serveur HA — confirmation via overlay dédié
                 - button:
                     id: btn_restart_ha
                     align: TOP_LEFT
                     x: 22
-                    y: 146
+                    y: 202
                     width: 247
-                    height: 86
+                    height: 68
                     styles: [style_clim_btn, style_border_error]
                     border_opa: 45%
                     on_short_click:
@@ -254,17 +293,17 @@ obj:
                           lv_obj_remove_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
                           lv_obj_move_to_index(id(overlay_confirm_ha), -1);
                     widgets:
-                      - label: { text: "\U000F07D0", align: CENTER, y: -18, text_font: mdi_font_32, styles: style_text_error }
-                      - label: { text: "Redémarrer HA", align: CENTER, y: 22 }
+                      - label: { text: "\U000F07D0", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_error }
+                      - label: { text: "Redémarrer HA", align: CENTER, y: 16 }
 
                 # Reboot de la tablette — confirmation via overlay dédié
                 - button:
                     id: btn_reboot_sys
                     align: TOP_LEFT
                     x: 281
-                    y: 146
+                    y: 202
                     width: 247
-                    height: 86
+                    height: 68
                     styles: [style_clim_btn, style_border_error]
                     border_opa: 45%
                     on_short_click:
@@ -273,8 +312,8 @@ obj:
                           lv_obj_remove_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
                           lv_obj_move_to_index(id(overlay_confirm_reboot), -1);
                     widgets:
-                      - label: { text: "\U000F0425", align: CENTER, y: -18, text_font: mdi_font_32, styles: style_text_error }
-                      - label: { text: "Reboot tablette", align: CENTER, y: 22 }
+                      - label: { text: "\U000F0425", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_error }
+                      - label: { text: "Reboot tablette", align: CENTER, y: 16 }
 
                 # ── Overlay confirmation : redémarrage Home Assistant ──
                 - obj:

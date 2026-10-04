@@ -474,6 +474,7 @@ font:
       - "\U000F0450"  # refresh
       - "\U000F0474"  # school
       - "\U000F04B9"  # sofa
+      - "\U000F050E"  # theme-light-dark (console système, rangée Thème)
       - "\U000F050F"  # thermometer
       - "\U000F057E"  # volume-high
       - "\U000F0581"  # volume-off
@@ -668,7 +669,10 @@ lvgl:
   color_depth: 16
   byte_order: little_endian
   buffer_size: 100%
-  # Fond de toutes les pages (jeux compris, que leurs conteneurs recouvrent).
+  # Fond de toutes les pages (jeux compris, que leurs conteneurs recouvrent). Évalué à
+  # la création des pages, dans main(), avant que le select « Thème » ne restaure le
+  # thème : toutes naissent dans la palette sombre par défaut, et tab5_theme_repeindre
+  # (tab5-themes.yaml) ne repeint que page_main — les jeux restent sombres (ADR-0029).
   bg_color: !lambda 'return lv_color_hex(UIColor.BG);'
   # Police par défaut (audit ressources du 26/09/2026, lot 6, D5) : aucun texte de
   # l'interface n'utilisait la montserrat_14 d'origine (tous les labels posent leur
@@ -850,6 +854,10 @@ lvgl:
       text_color: !lambda 'return lv_color_hex(UIColor.ACCENT);'
     - id: style_text_accent_alt
       text_color: !lambda 'return lv_color_hex(UIColor.ACCENT_ALT);'
+    # Texte et icône posés sur l'accent plein (style_pill_accent) : sur un thème clair,
+    # l'encre du texte courant ne se lirait pas sur l'accent foncé.
+    - id: style_text_on_accent
+      text_color: !lambda 'return lv_color_hex(UIColor.TEXT_ON_ACCENT);'
     - id: style_text_console_label
       text_color: !lambda 'return lv_color_hex(UIColor.CONSOLE_LABEL);'
     - id: style_text_console_value

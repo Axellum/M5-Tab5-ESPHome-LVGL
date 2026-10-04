@@ -823,7 +823,39 @@ uint32_t get_battery_color(float x) {
     return UIColor.ERROR;
 }
 
+// Thèmes (ADR-0029) : ce que les capteurs ont peint (valeur par label, cartes du popup
+// des pots, carte PC), rejoué par cartes_rejouer_theme().
+struct MesurePeinte {
+    lv_obj_t* lbl;
+    float x;
+    int metrique;  // PotMetric, ou -1 : update_temp_ui()
+};
+static MesurePeinte s_mesures[24] = {};
+static int s_nb_mesures = 0;
+static float s_pots_popup_vals[5] = {};
+static PotDetailUI s_pots_popup_cartes[5] = {};
+static bool s_pots_popup_peint = false;
+static lv_obj_t* s_icone_pc = nullptr;
+static bool s_pc_actif = false;
+
+static void mesure_retenir(lv_obj_t* lbl, float x, int metrique) {
+    for (int i = 0; i < s_nb_mesures; i++) {
+        if (s_mesures[i].lbl == lbl) {
+            s_mesures[i].x = x;
+            s_mesures[i].metrique = metrique;
+            return;
+        }
+    }
+    if (s_nb_mesures < static_cast<int>(sizeof(s_mesures) / sizeof(s_mesures[0])))
+        s_mesures[s_nb_mesures++] = {lbl, x, metrique};
+}
+
 void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]) {
+    for (int i = 0; i < 5; i++) {
+        s_pots_popup_vals[i] = values[i];
+        s_pots_popup_cartes[i] = cards[i];
+    }
+    s_pots_popup_peint = true;
     for (int i = 0; i < 5; i++) {
         if (cards[i].icon_lbl == nullptr || cards[i].moist_lbl == nullptr
             || cards[i].status_lbl == nullptr) {
@@ -859,6 +891,7 @@ void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]) 
 
 void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric) {
     if (value_lbl == nullptr) return;
+    mesure_retenir(value_lbl, x, static_cast<int>(metric));
     if (std::isnan(x)) {
         ui_text(value_lbl, "--");
         ui_text_color(value_lbl, UIColor.INACTIVE);
@@ -890,6 +923,7 @@ void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric) {
 // depuis temp_serre/temp_salon (tab5-sensors-domotique.yaml, Phase 3, #T164).
 void update_temp_ui(lv_obj_t* label, float x) {
     if (label == nullptr) return;
+    mesure_retenir(label, x, -1);
     if (std::isnan(x)) {
         ui_text(label, "-- \xC2\xB0");
         ui_text_color(label, UIColor.TEXT_DIM);
@@ -918,5 +952,25 @@ void set_icon_active_ui(lv_obj_t* icon, bool active, uint32_t color_on, uint32_t
 
 void update_pc_status_ui(bool active, lv_obj_t* icon_pc) {
     if (icon_pc == nullptr) return;
+    s_icone_pc = icon_pc;
+    s_pc_actif = active;
     set_icon_active_ui(icon_pc, active, UIColor.SUCCESS, UIColor.TEXT_PRIMARY);
+}
+
+void cartes_rejouer_theme() {
+    for (int i = 0; i < s_nb_mesures; i++) {
+        const MesurePeinte m = s_mesures[i];
+        if (m.metrique < 0) update_temp_ui(m.lbl, m.x);
+        else update_pot_metric_ui(m.lbl, m.x, static_cast<PotMetric>(m.metrique));
+    }
+    if (s_pots_popup_peint) {
+        const float vals[5] = {s_pots_popup_vals[0], s_pots_popup_vals[1], s_pots_popup_vals[2],
+                               s_pots_popup_vals[3], s_pots_popup_vals[4]};
+        PotDetailUI cartes[5];
+        for (int i = 0; i < 5; i++) cartes[i] = s_pots_popup_cartes[i];
+        update_pots_popup_moisture_ui(vals, cartes);
+    }
+    if (s_icone_pc != nullptr) update_pc_status_ui(s_pc_actif, s_icone_pc);
+    clim_recolorer();
+    moisture_slots_refresh();
 }

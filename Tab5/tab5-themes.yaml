@@ -1,0 +1,241 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# [AI-CONTEXT] Thèmes de l'écran (ADR-0029, lot 2) : le select « Thème », le select
+# « Clair ou sombre » (Sombre, Clair, Auto), l'interrupteur « Nuit (thème auto) » que
+# Home Assistant règle d'après le soleil (packages/tab5_push.yaml, mode Auto), et la
+# repeinture après un changement de palette.
+# - Les palettes : Tab5/themes/<thème>.yaml, écrites dans tab5_tokens.h (THEMES[]) par
+#   tools/gen_themes.py. Les options du select « Thème » et la repeinture des styles
+#   partagés ci-dessous sont générées aussi (entre `>>>` et `<<<`) : NE PAS les
+#   modifier à la main, `python tools/gen_themes.py --check` échoue en CI.
+# - [AI-WARNING] Démarrage : ESPHome 2026.9 crée les styles et les widgets dans main(),
+#   AVANT le setup des composants. Les trois entités publient leur valeur gardée
+#   pendant leur setup (priorité HARDWARE) : un thème clair gardé en mémoire est donc
+#   appliqué à un écran déjà construit en sombre, comme une bascule. tab5_theme_repeindre
+#   repeint les styles tout de suite, puis attend la fin du démarrage (theme_ui_pret())
+#   pour faire repeindre aux modules ce qu'ils ont peint entre-temps. Ne pas « simplifier »
+#   le wait_until : sans lui, un module repeindrait avant d'avoir ses widgets.
+# - En marche, un changement passe par le même chemin. Preuve : le rendu hors tablette
+#   compare la bascule à chaud au démarrage à froid dans le même thème, au pixel près
+#   (tools/rendu/, .github/workflows/rendu-host.yml, job « thèmes »).
+# - Le select « Thème » garde l'INDEX (restore_value) : un nouveau thème s'ajoute à la
+#   fin (`ordre:`). Home Assistant lit les options : jamais traduites (le nom d'un
+#   thème est un nom propre, les modes sont des valeurs que HA écrit).
+# - Les jeux restent sombres (PALETTE_SOMBRE, ADR-0014) : leurs pages naissent avec
+#   le `bg_color` de `lvgl:` (tab5-styles.yaml), évalué avant la restauration du
+#   thème ; seule la page principale est repeinte ici.
+# ═══════════════════════════════════════════════════════════════════════════
+
+select:
+  - platform: template
+    id: tab5_theme
+    name: "Thème"
+    icon: mdi:palette
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      # >>> themes (généré par tools/gen_themes.py, ne pas éditer)
+      - "Ardoise"
+      # <<< themes
+    on_value:
+      - script.execute: tab5_theme_choisir
+
+  # Sombre / Clair : le mode du thème choisi. Auto : clair le jour, sombre la nuit,
+  # d'après l'interrupteur « Nuit (thème auto) » que HA tient à jour.
+  - platform: template
+    id: tab5_theme_mode
+    name: "Clair ou sombre"
+    icon: mdi:theme-light-dark
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - "Sombre"
+      - "Clair"
+      - "Auto"
+    initial_option: "Sombre"
+    on_value:
+      - script.execute: tab5_theme_choisir
+
+switch:
+  # Réglé par Home Assistant (soleil couché = allumé) : packages/tab5_push.yaml,
+  # automatisation « Tab5 — thème jour/nuit ». Sans effet hors du mode Auto. Gardé
+  # d'un démarrage à l'autre ; sans HA, le mode Auto reste sur le dernier état connu.
+  - platform: template
+    id: tab5_theme_nuit
+    name: "Nuit (thème auto)"
+    icon: mdi:weather-night
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - script.execute: tab5_theme_choisir
+    on_turn_off:
+      - script.execute: tab5_theme_choisir
+
+script:
+  # Palette du thème et du mode choisis ; repeint seulement si elle change.
+  - id: tab5_theme_choisir
+    then:
+      - lambda: |-
+          const auto theme = id(tab5_theme).active_index();
+          const auto mode = id(tab5_theme_mode).active_index();
+          if (theme_selectionner(theme.value_or(0), mode.value_or(0), id(tab5_theme_nuit).state))
+            id(tab5_theme_repeindre).execute();
+      # Même sans changement de palette (Sombre → Auto la nuit) : le libellé du mode change.
+      - script.execute: tab5_theme_console
+
+  # Rangée « Thème » de la console système (ui_components/console_sys.yaml) : à chaque
+  # choix et à l'ouverture de la console (btn_control_console, tab5-lvgl.yaml), car
+  # un choix restauré au démarrage peut précéder la langue de l'écran.
+  - id: tab5_theme_console
+    then:
+      - lambda: |-
+          theme_console_libelles(id(lbl_console_theme), id(lbl_console_theme_mode),
+              id(tab5_theme).active_index().value_or(0), id(tab5_theme_mode).active_index().value_or(0));
+
+  # restart : un nouveau changement pendant l'attente du démarrage reprend du début.
+  - id: tab5_theme_repeindre
+    mode: restart
+    then:
+      # >>> styles (généré par tools/gen_themes.py depuis tab5-styles.yaml, ne pas éditer)
+      - lambda: |-
+          lv_style_set_bg_color(id(style_meteo_card), lv_color_hex(UIColor.GLASS_HI));
+          lv_style_set_bg_grad_color(id(style_meteo_card), lv_color_hex(UIColor.GLASS_LO));
+          lv_style_set_border_color(id(style_meteo_card), lv_color_hex(UIColor.GLASS_RIM));
+          lv_obj_report_style_change(id(style_meteo_card));
+          lv_style_set_bg_color(id(style_meteo_card_page), lv_color_hex(UIColor.GLASS_HI_PAGE));
+          lv_style_set_bg_grad_color(id(style_meteo_card_page), lv_color_hex(UIColor.GLASS_LO_PAGE));
+          lv_style_set_border_color(id(style_meteo_card_page), lv_color_hex(UIColor.GLASS_RIM));
+          lv_obj_report_style_change(id(style_meteo_card_page));
+          lv_style_set_bg_color(id(style_clim_btn_page), lv_color_hex(UIColor.GLASS_HI_PAGE));
+          lv_style_set_bg_grad_color(id(style_clim_btn_page), lv_color_hex(UIColor.GLASS_LO_PAGE));
+          lv_style_set_border_color(id(style_clim_btn_page), lv_color_hex(UIColor.GLASS_RIM));
+          lv_obj_report_style_change(id(style_clim_btn_page));
+          lv_style_set_bg_color(id(style_clim_btn), lv_color_hex(UIColor.GLASS_HI));
+          lv_style_set_bg_grad_color(id(style_clim_btn), lv_color_hex(UIColor.GLASS_LO));
+          lv_style_set_border_color(id(style_clim_btn), lv_color_hex(UIColor.GLASS_RIM));
+          lv_obj_report_style_change(id(style_clim_btn));
+          lv_style_set_bg_color(id(style_modal_card), lv_color_hex(UIColor.GLASS_HI_MODAL));
+          lv_style_set_bg_grad_color(id(style_modal_card), lv_color_hex(UIColor.GLASS_LO_MODAL));
+          lv_style_set_border_color(id(style_modal_card), lv_color_hex(UIColor.GLASS_RIM));
+          lv_obj_report_style_change(id(style_modal_card));
+          lv_style_set_bg_color(id(style_modal_card_verre), lv_color_hex(UIColor.GLASS_HI));
+          lv_style_set_bg_grad_color(id(style_modal_card_verre), lv_color_hex(UIColor.GLASS_LO));
+          lv_style_set_border_color(id(style_modal_card_verre), lv_color_hex(UIColor.GLASS_RIM));
+          lv_obj_report_style_change(id(style_modal_card_verre));
+          lv_style_set_bg_color(id(style_glass_card), lv_color_hex(UIColor.GLASS_HI));
+          lv_style_set_bg_grad_color(id(style_glass_card), lv_color_hex(UIColor.GLASS_LO));
+          lv_style_set_border_color(id(style_glass_card), lv_color_hex(UIColor.GLASS_RIM));
+          lv_obj_report_style_change(id(style_glass_card));
+          lv_style_set_bg_color(id(style_pill_accent), lv_color_hex(UIColor.ACCENT));
+          lv_style_set_border_color(id(style_pill_accent), lv_color_hex(UIColor.ACCENT));
+          lv_obj_report_style_change(id(style_pill_accent));
+          lv_style_set_text_color(id(style_text_dim), lv_color_hex(UIColor.TEXT_DIM));
+          lv_obj_report_style_change(id(style_text_dim));
+          lv_style_set_text_color(id(style_text_soft), lv_color_hex(UIColor.TEXT_SOFT));
+          lv_obj_report_style_change(id(style_text_soft));
+          lv_style_set_text_color(id(style_text_accent), lv_color_hex(UIColor.ACCENT));
+          lv_obj_report_style_change(id(style_text_accent));
+          lv_style_set_text_color(id(style_text_accent_alt), lv_color_hex(UIColor.ACCENT_ALT));
+          lv_obj_report_style_change(id(style_text_accent_alt));
+          lv_style_set_text_color(id(style_text_on_accent), lv_color_hex(UIColor.TEXT_ON_ACCENT));
+          lv_obj_report_style_change(id(style_text_on_accent));
+          lv_style_set_text_color(id(style_text_console_label), lv_color_hex(UIColor.CONSOLE_LABEL));
+          lv_obj_report_style_change(id(style_text_console_label));
+          lv_style_set_text_color(id(style_text_console_value), lv_color_hex(UIColor.CONSOLE_VALUE));
+          lv_obj_report_style_change(id(style_text_console_value));
+          lv_style_set_text_color(id(style_text_error), lv_color_hex(UIColor.ERROR));
+          lv_obj_report_style_change(id(style_text_error));
+          lv_style_set_text_color(id(style_text_gold), lv_color_hex(UIColor.GOLD));
+          lv_obj_report_style_change(id(style_text_gold));
+          lv_style_set_text_color(id(style_text_inactive), lv_color_hex(UIColor.INACTIVE));
+          lv_obj_report_style_change(id(style_text_inactive));
+          lv_style_set_text_color(id(style_text_info), lv_color_hex(UIColor.INFO));
+          lv_obj_report_style_change(id(style_text_info));
+          lv_style_set_text_color(id(style_text_rain_value), lv_color_hex(UIColor.RAIN_VALUE));
+          lv_obj_report_style_change(id(style_text_rain_value));
+          lv_style_set_text_color(id(style_text_success), lv_color_hex(UIColor.SUCCESS));
+          lv_obj_report_style_change(id(style_text_success));
+          lv_style_set_text_color(id(style_text_temp_max), lv_color_hex(UIColor.TEMP_MAX));
+          lv_obj_report_style_change(id(style_text_temp_max));
+          lv_style_set_text_color(id(style_text_temp_min), lv_color_hex(UIColor.TEMP_MIN));
+          lv_obj_report_style_change(id(style_text_temp_min));
+          lv_style_set_text_color(id(style_text_warning), lv_color_hex(UIColor.WARNING));
+          lv_obj_report_style_change(id(style_text_warning));
+          lv_style_set_bg_color(id(style_bg_accent), lv_color_hex(UIColor.ACCENT));
+          lv_obj_report_style_change(id(style_bg_accent));
+          lv_style_set_bg_color(id(style_bg_accent_alt), lv_color_hex(UIColor.ACCENT_ALT));
+          lv_obj_report_style_change(id(style_bg_accent_alt));
+          lv_style_set_bg_color(id(style_bg_arc_track), lv_color_hex(UIColor.ARC_TRACK));
+          lv_obj_report_style_change(id(style_bg_arc_track));
+          lv_style_set_bg_color(id(style_bg_bar_inactive), lv_color_hex(UIColor.BAR_INACTIVE));
+          lv_obj_report_style_change(id(style_bg_bar_inactive));
+          lv_style_set_bg_color(id(style_bg_console_bg), lv_color_hex(UIColor.CONSOLE_BG));
+          lv_obj_report_style_change(id(style_bg_console_bg));
+          lv_style_set_bg_color(id(style_bg_dim), lv_color_hex(UIColor.TEXT_DIM));
+          lv_obj_report_style_change(id(style_bg_dim));
+          lv_style_set_bg_color(id(style_bg_gold), lv_color_hex(UIColor.GOLD));
+          lv_obj_report_style_change(id(style_bg_gold));
+          lv_style_set_bg_color(id(style_bg_modal_scrim), lv_color_hex(UIColor.MODAL_SCRIM));
+          lv_obj_report_style_change(id(style_bg_modal_scrim));
+          lv_style_set_bg_color(id(style_bg_soft), lv_color_hex(UIColor.TEXT_SOFT));
+          lv_obj_report_style_change(id(style_bg_soft));
+          lv_style_set_bg_color(id(style_bg_success), lv_color_hex(UIColor.SUCCESS));
+          lv_obj_report_style_change(id(style_bg_success));
+          lv_style_set_bg_color(id(style_bg_warm_pink), lv_color_hex(UIColor.WARM_PINK));
+          lv_obj_report_style_change(id(style_bg_warm_pink));
+          lv_style_set_border_color(id(style_border_accent), lv_color_hex(UIColor.ACCENT));
+          lv_obj_report_style_change(id(style_border_accent));
+          lv_style_set_border_color(id(style_border_error), lv_color_hex(UIColor.ERROR));
+          lv_obj_report_style_change(id(style_border_error));
+          lv_style_set_border_color(id(style_border_glass_rim), lv_color_hex(UIColor.GLASS_RIM));
+          lv_obj_report_style_change(id(style_border_glass_rim));
+          lv_style_set_border_color(id(style_border_soft), lv_color_hex(UIColor.TEXT_SOFT));
+          lv_obj_report_style_change(id(style_border_soft));
+          lv_style_set_arc_color(id(style_arc_arc_track), lv_color_hex(UIColor.ARC_TRACK));
+          lv_obj_report_style_change(id(style_arc_arc_track));
+          lv_style_set_arc_color(id(style_arc_info), lv_color_hex(UIColor.INFO));
+          lv_obj_report_style_change(id(style_arc_info));
+          lv_style_set_arc_color(id(style_arc_warning), lv_color_hex(UIColor.WARNING));
+          lv_obj_report_style_change(id(style_arc_warning));
+      - lvgl.theme.update:
+          label:
+            text_color: !lambda 'return lv_color_hex(UIColor.TEXT_SOFT);'
+      # <<< styles
+      - lambda: |-
+          // Fond de la page principale (les pages des jeux restent sombres) et styles
+          // des cases du calendrier (s'il est construit).
+          lv_obj_set_style_bg_color(id(page_main)->obj, lv_color_hex(UIColor.BG), LV_PART_MAIN);
+          cal_styles_repeindre();
+      - wait_until:
+          condition:
+            lambda: 'return theme_ui_pret();'
+      - lambda: |-
+          // Couleurs posées par les modules C++ (tab5_theme.cpp).
+          theme_rejouer_ui();
+          forecast_rejouer_theme(id(font_meteo_card), id(font_meteo_card_small));
+          if (id(cal_view_year) != 0) {
+            // Grille du mois (sans tab5_cal_render : pas de requête à HA ici).
+            auto t = id(sntp_time).now();
+            cal_render_month(id(lbl_cal_month), id(cal_view_year), id(cal_view_month),
+                t.is_valid() ? t.year : 0, t.is_valid() ? t.month : 0,
+                t.is_valid() ? t.day_of_month : 0);
+          }
+          // Couleurs que les lambdas des capteurs posent (tab5-sensors-domotique.yaml,
+          // tab5-sensors-diagnostics.yaml), depuis leur dernier état.
+          assist_wake_word_indicator_ui(id(lbl_ok_nabu), id(tab5_wake_word_active).state);
+          if (id(phone_battery).has_state())
+            set_icon_color_ui(id(icon_phone), get_battery_color(id(phone_battery).state));
+          if (id(hum_salon).has_state() && !std::isnan(id(hum_salon).state))
+            set_icon_color_ui(id(icon_salon), get_humidity_color(id(hum_salon).state));
+          set_icon_active_ui(id(icon_ha), id(status_ha).state, UIColor.INFO, UIColor.INACTIVE);
+          if (is_console_layer_visible(id(layer_console_sys)))
+            update_console_ha_status_ui(id(lbl_sys_ha_val), id(status_ha).state);
+          // Boutons Domo / Discussion de l'accueil (tab5_set_assist_mode, sans son
+          // événement vers HA).
+          highlight_button_border(id(btn_mode_domo), !id(conversation_mode), UIColor.INFO);
+          highlight_button_border(id(btn_mode_discu), id(conversation_mode), UIColor.SUCCESS);
+      # Réveil (réglages, icône d'état) et assistant (boutons, mot d'activation, muet).
+      - script.execute: tab5_alarm_sync_ui
+      - script.execute: tab5_assist_sync_settings
