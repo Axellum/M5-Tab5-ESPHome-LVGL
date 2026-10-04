@@ -27,7 +27,8 @@ d'affichage ([ADR-0029](docs/decisions/0029-themes-palette.md), « lot 3 »).
 - **Pas repris** : l'état « bouton actif » propre à trois esquisses (Relief doux, Relief
   plat, Néon calme) ; ces boutons gardent la bordure d'accent de l'interface.
 - **Coût** : les ombres allongent le dessin d'un écran entier (mesuré le 04/10 sur la
-  tablette avec des ombres sur les cartes et les boutons : 134 → 169 ms) ; les polices
+  tablette avec les ombres de Relief plat : 134 → 169 ms ; la carte centrale qui
+  tourne n'a pas ralenti) ; les polices
   ajoutent leurs glyphes au firmware.
 - **Galerie** : le rendu hors tablette gagne une tâche « galerie » (accueil et popup de la
   climatisation de chaque thème, dans les deux modes), capturée à chaud puis à froid et
