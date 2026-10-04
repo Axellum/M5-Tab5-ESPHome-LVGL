@@ -8,7 +8,8 @@ name: Rendu hors tablette
 # (tools/rendu/comparer.py) à celles du dernier run réussi sur main, et les scènes à la
 # galerie versionnée docs/images/rendu/ : INFORMATIF, un écart est signalé sans faire
 # échouer le job (choix d'Axel, 27/09/2026). Galerie : tools/rendu/maj_references.py.
-# Tâche « clair » (thèmes, ADR-0029) : les mêmes captures en français, thème clair, deux
+# Tâche « clair » (thèmes, ADR-0029) : les mêmes captures en français (sans les consoles
+# de jeu, qui restent sombres), thème clair, deux
 # fois — peintes en sombre puis basculées à chaud, puis après un démarrage à froid en
 # clair — et les deux séries doivent être identiques au pixel près (seule comparaison
 # qui fait échouer une tâche : un écart veut dire qu'une couleur n'est pas repeinte).
@@ -129,7 +130,7 @@ jobs:
             pid=$!
             sleep 8
             faketime -f "$DEPART" python tools/rendu/capturer.py --dossier chaud --suffixe clair \
-              --bascule Clair --puis-mode-theme Clair
+              --bascule Clair --puis-mode-theme Clair --sans-jeux
             kill "$pid" 2>/dev/null || true
             wait "$pid" 2>/dev/null || true
           fi
@@ -148,7 +149,9 @@ jobs:
           sleep 8
           args=(--dossier captures)
           [ "$LANGUE" != fr ] && args+=(--suffixe "$LANGUE")
-          # Thème clair : même nom de capture qu'à chaud, pour comparer les deux séries.
+          # Thème clair : même nom de capture qu'à chaud, pour comparer les deux séries ;
+          # sans les consoles, qui restent sombres (les deux passes tiennent en 30 min).
+          [ "$LANGUE" = clair ] && args+=(--sans-jeux)
           # shellcheck disable=SC2206 # noms d'écrans séparés par des espaces
           [ -n "$SEULEMENT" ] && args+=(--seulement $SEULEMENT)
           faketime -f "$DEPART" python tools/rendu/capturer.py "${args[@]}"

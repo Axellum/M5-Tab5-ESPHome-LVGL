@@ -29,7 +29,9 @@ Thèmes (ADR-0029) : `--bascule Clair` passe le select « Clair ou sombre » à 
 avant chaque capture, puis le remet à Sombre : l'écran a été peint en sombre, il est
 capturé après la bascule à chaud. `--puis-mode-theme Clair` choisit le mode après les
 captures et enregistre les préférences (action rendu_enregistrer) : relancé, le rendu
-démarre dans ce mode. Le job compare les deux séries au pixel près.
+démarre dans ce mode. Le job compare les deux séries au pixel près. `--sans-jeux` saute
+les consoles (« jeu-… », 56 écrans qui restent sombres, ADR-0014) : sans elles, les deux
+passes tiennent dans le délai de la tâche ; le sélecteur Arcade reste, en témoin.
 
 Usage (voir .github/workflows/rendu-host.yml, une tâche par langue) :
     ESPHOME_SNAPSHOT_DIR=captures ESPHOME_PREFDIR=prefs ./program &
@@ -179,7 +181,8 @@ class Rendu:
 
 async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | None,
                    seulement: set[str] | None, langue: str | None = None,
-                   bascule: str | None = None, puis_mode_theme: str | None = None) -> list[str]:
+                   bascule: str | None = None, puis_mode_theme: str | None = None,
+                   sans_jeux: bool = False) -> list[str]:
     from aioesphomeapi import APIClient
 
     cle = _lire_cle_demo() or await _donner_une_cle(hote)
@@ -205,6 +208,8 @@ async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | No
         # Les écrans s'ouvrent sur la dernière scène, carte centrale arrêtée.
         for ecran in ECRANS:
             if seulement is not None and ecran.nom not in seulement:
+                continue
+            if sans_jeux and ecran.nom.startswith("jeu-"):
                 continue
             logger.info("Écran : %s", ecran.nom)
             for etape in ecran.etapes:
@@ -242,13 +247,15 @@ def main() -> int:
     parser.add_argument("--langue", help="choisit seulement cette langue (« Deutsch »), sans capture")
     parser.add_argument("--bascule", metavar="MODE",
                         help="avant chaque capture, passe « Clair ou sombre » à MODE (« Clair »), puis à Sombre")
+    parser.add_argument("--sans-jeux", action="store_true",
+                        help="sans les consoles (écrans « jeu-… », qui restent sombres)")
     parser.add_argument("--puis-mode-theme", metavar="MODE",
                         help="après les captures, choisit ce mode et enregistre les préférences")
     args = parser.parse_args()
 
     alertes = asyncio.run(capturer(args.host, args.dossier, args.suffixe, args.puis_langue,
                                    set(args.seulement) if args.seulement else None, args.langue,
-                                   args.bascule, args.puis_mode_theme))
+                                   args.bascule, args.puis_mode_theme, args.sans_jeux))
     if args.langue:
         return 0
     pngs = en_png(args.dossier)

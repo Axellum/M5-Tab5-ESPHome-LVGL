@@ -47,7 +47,7 @@ The plan of option C was revised with the author on 2026-10-04: **the switch is 
 
 ### Proof (lot 2)
 
-- The render task « clair » (`.github/workflows/rendu-host.yml`) captures every scene and screen in French twice: painted in dark then switched live to light just before the capture (`capturer.py --bascule Clair`), and after a cold start in light (`--puis-mode-theme Clair`, then a restart with the same preferences). The two series must be identical to the pixel, or the task fails: a difference means a colour that the switch does not repaint.
+- The render task « clair » (`.github/workflows/rendu-host.yml`) captures every scene and screen of the interface in French twice (the consoles, which stay dark, are left out to fit the task's 30 minutes; the Arcade selector stays): painted in dark then switched live to light just before the capture (`capturer.py --bascule Clair`), and after a cold start in light (`--puis-mode-theme Clair`, then a restart with the same preferences). The two series must be identical to the pixel, or the task fails: a difference means a colour that the switch does not repaint.
 - The dark render of the seven languages stays identical to `main`, except the system console (GESTION card re-laid out).
 
 

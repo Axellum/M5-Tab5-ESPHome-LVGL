@@ -40,7 +40,8 @@ les douze thèmes viennent au lot 4, les polices propres à quelques thèmes au 
   surfaces des cartes.
 - **Preuve** : le rendu hors tablette gagne une tâche « clair » : chaque écran peint en
   sombre puis basculé à chaud, contre le même écran après un démarrage à froid en clair,
-  au pixel près (la tâche échoue sur un écart).
+  au pixel près (la tâche échoue sur un écart ; sans les consoles de jeu, qui restent
+  sombres).
 - Textes de l'écran : « Sombre », « Clair », « Auto » traduits dans les six langues.
 
 ### 2026-10-04 — Thèmes, lot 1 : une seule palette pour toutes les couleurs de l'interface
