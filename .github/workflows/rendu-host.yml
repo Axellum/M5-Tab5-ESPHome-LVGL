@@ -131,7 +131,11 @@ jobs:
             sleep 8
             faketime -f "$DEPART" python tools/rendu/capturer.py --dossier chaud --suffixe clair \
               --bascule Clair --puis-mode-theme Clair --sans-jeux
-            kill "$pid" 2>/dev/null || true
+            # faketime lance le programme dans un processus fils : tuer faketime ne
+            # l'arrête pas, et la passe suivante ne pourrait pas ouvrir le port de l'API.
+            pkill -f "$prog" 2>/dev/null || true
+            for _ in $(seq 1 20); do pgrep -f "$prog" >/dev/null || break; sleep 1; done
+            pkill -9 -f "$prog" 2>/dev/null || true
             wait "$pid" 2>/dev/null || true
           fi
 
