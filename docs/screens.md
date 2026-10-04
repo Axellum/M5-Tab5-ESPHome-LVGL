@@ -37,6 +37,7 @@ These pictures are not photos: the CI draws them without a tablet, from the same
 ## Home area
 
 Always-visible content at the top of the screen:
+- **Status icons**, top left, from left to right: PC (green when on), phone (colour of its battery), Wi-Fi, alarm, and the **tablet's own battery** when the device switch **Tab5 Batterie montée** is on (off by default: without a battery the charger reads "charging, 100 %"). The battery glyph follows the level (full above 80 %, half, low, "!" below 20 %, a bolt while charging, "?" with no reading), in the same colours as the phone. A hidden icon leaves no gap: the others close up.
 - Current time and date
 - Indoor temperature and humidity
 - Microphone icon with pipeline state color (see Voice assistant below), and a mode toggle (Home Assistant agent vs. conversation/LLM pipeline)
@@ -280,6 +281,13 @@ Color is used consistently as a primary information channel — to let you read 
 - Gradient green → white-ish — 30–80%
 - Blue — ≥ 80% (too wet)
 
+**Batteries (`get_battery_color()`)** — phone and tablet icons of the status bar, battery line of the plant details popup:
+- Green — above 80 %
+- Blue — 41–80 %
+- Amber — 20–40 %
+- Red — below 20 %
+- Grey — unknown
+
 **Microphone icon:** see Voice assistant above.
 
 All color constants live in the `UIColor` namespace in `tab5_tokens.h` (included by `tab5_custom.h`), with YAML-side counterparts in `tab5-styles.yaml`.
@@ -357,6 +365,7 @@ Ces images ne sont pas des photos : la CI les dessine sans tablette, avec le mê
 ## Zone d'accueil
 
 Contenu toujours visible en haut de l'écran :
+- **Icônes d'état**, en haut à gauche, de gauche à droite : PC (vert allumé), téléphone (couleur de sa batterie), Wi-Fi, réveil, et la **batterie de la tablette** quand l'interrupteur de l'appareil **Tab5 Batterie montée** est allumé (éteint par défaut : sans batterie, le chargeur dit « en charge, 100 % »). Le glyphe suit le niveau (pleine au-dessus de 80 %, moitié, basse, « ! » sous 20 %, un éclair pendant la charge, « ? » sans mesure), avec les couleurs du téléphone. Une icône masquée ne laisse pas de trou : les autres se resserrent.
 - Heure et date actuelles
 - Température et humidité intérieure
 - Icône microphone avec couleur d'état du pipeline (voir Assistant vocal ci-dessous), et un bouton de bascule de mode (agent Home Assistant vs pipeline conversation/LLM)
@@ -599,6 +608,13 @@ La couleur est utilisée de façon systématique comme canal d'information prima
 - Rouge — ≤ 14% (très sec, besoin d'arrosage)
 - Dégradé vert → blanc cassé — 30–80%
 - Bleu — ≥ 80% (trop humide)
+
+**Batteries (`get_battery_color()`)** — icônes du téléphone et de la tablette dans la barre d'état, ligne Batterie du popup détails plantes :
+- Vert — au-dessus de 80 %
+- Bleu — 41 à 80 %
+- Ambre — 20 à 40 %
+- Rouge — sous 20 %
+- Gris — inconnu
 
 **Icône microphone :** voir Assistant vocal ci-dessus.
 
