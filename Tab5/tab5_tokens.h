@@ -98,6 +98,7 @@ struct Palette {
     uint32_t CONSOLE_LABEL;    // libellés de la console système
     uint32_t CONSOLE_VALUE;    // valeurs numériques de la console
     uint32_t ICON_MUTED;       // icône désactivée / placeholder
+    uint32_t TEXT_ON_ACCENT;   // texte et icône posés sur l'accent plein (« Tester », « Parler », « OK »)
     // --- Sémantiques ---
     uint32_t SUCCESS;          // actif, OK
     uint32_t WARNING;          // attention
@@ -114,8 +115,9 @@ struct Palette {
     uint32_t TEMP_MAX;         // température maximale (chaud)
     uint32_t TEMP_MIN;         // température minimale (froid)
     uint32_t RAIN_VALUE;       // valeur de la prévision de pluie
-    // --- Vigilance Météo-France : sémantique officielle, identique dans tous les thèmes ---
+    // --- Vigilance Météo-France : jaune et rouge officiels, identiques dans tous les thèmes ---
     uint32_t ALERT_YELLOW;
+    uint32_t ALERT_ORANGE;     // icône orange du bandeau (sur fond clair : un orange vif en pastille)
     uint32_t ALERT_RED;
     uint32_t ALERT_DATE_YELLOW;
     uint32_t ALERT_DATE_ORANGE;
@@ -135,78 +137,196 @@ struct Palette {
     uint32_t RAIN_HEAVY;
     uint32_t RAIN_EXTREME;
     uint32_t METEO_CELESTIAL;  // soleil / lune des icônes
+    uint32_t METEO_CLOUD;      // nuage, brouillard, vent des icônes
     uint32_t METEO_PRECIP;     // pluie / neige / grêle
     uint32_t METEO_THUNDER;    // orage
     uint32_t MOISTURE_NAN;     // humidité d'une plante indisponible
-    uint32_t HUMIDITY_WET;     // air très humide
+    uint32_t HUMIDITY_WET;     // air très humide (80 % et plus : fin du dégradé d'humidité)
     uint32_t TEMP_NAN;         // température indisponible
+    // --- Dégradés de température et d'humidité : couleur aux points d'ancrage ---
+    // get_temperature_color() / get_humidity_color() (tab5_forecast.cpp) passent de
+    // l'un à l'autre par paliers (2 °C, 3 %). Sur un fond clair, le blanc de 14 °C
+    // serait invisible : chaque thème donne les siens.
+    uint32_t TEMP_GRAD_M12;    // −12 °C et en dessous
+    uint32_t TEMP_GRAD_0_NEG;  // 0 °C, fin de la montée depuis −12 °C
+    uint32_t TEMP_GRAD_0_POS;  // juste au-dessus de 0 °C, début de la montée vers 14 °C
+    uint32_t TEMP_GRAD_14;     // 14 °C (confort)
+    uint32_t TEMP_GRAD_24;     // 24 °C
+    uint32_t TEMP_GRAD_35;     // 35 °C et au-dessus
+    uint32_t HUM_GRAD_14;      // 14 % et en dessous (air très sec)
+    uint32_t HUM_GRAD_22;      // 22 %
+    uint32_t HUM_GRAD_30;      // 30 % (confort ; vers HUMIDITY_WET à 80 %)
 };
 
-// Palette « Dark Mode Slate » (glassmorphism) : base ardoise (Tailwind Slate),
-// accents HSL vibrants. Les jeux la lisent directement : ils restent sombres.
-inline constexpr Palette PALETTE_SOMBRE = {
-    .BG                  = 0x0B1120,  // ardoise profonde
-    .GLASS_HI            = 0x2C3A52,
-    .GLASS_LO            = 0x131C2C,
-    // Pré-mélange exact (c' = (c × a + fond × (255 − a)) / 255, arrondi comme
-    // lv_color_mix) du verre à 58 % (147/255) sur BG, et à 88 % (224/255) sur
-    // MODAL_SCRIM : à recalculer si BG, MODAL_SCRIM ou GLASS_HI/LO changent.
-    .GLASS_HI_PAGE       = 0x1E293D,
-    .GLASS_LO_PAGE       = 0x101727,
-    .GLASS_HI_MODAL      = 0x27344A,
-    .GLASS_LO_MODAL      = 0x111A28,
-    .GLASS_RIM           = 0x93A3BC,
-    .MODAL_SCRIM         = 0x05080F,
-    .CONSOLE_BG          = 0x0A0E16,
-    .ARC_TRACK           = 0x2A2D35,
-    .TEXT_SOFT           = 0xF1F5F9,  // slate-100
-    .TEXT_PRIMARY        = 0xFFFFFF,
-    .TEXT_DIM            = 0x94A3B8,  // slate-400
-    .CONSOLE_LABEL       = 0x8595AD,
-    .CONSOLE_VALUE       = 0xFFFFFF,
-    .ICON_MUTED          = 0x555555,
-    .SUCCESS             = 0x34D399,  // emerald-400
-    .WARNING             = 0xFBBF24,  // amber-400
-    .ERROR               = 0xFB7185,  // rose-400
-    .INFO                = 0x38BDF8,  // sky-400
-    .GOLD                = 0xFCD34D,  // amber-300
-    .INACTIVE            = 0x334155,  // slate-700
-    .BAR_INACTIVE        = 0x334155,  // slate-700
-    .WARM_PINK           = 0xF472B6,  // pink-400
-    .ACCENT              = 0x22D3EE,  // cyan-400
-    .ACCENT_ALT          = 0xA78BFA,  // violet-400
-    .EARLY               = 0xFB923C,  // orange-400
-    .PAST                = 0x64748B,  // slate-500
-    .TEMP_MAX            = 0xF87171,  // red-400
-    .TEMP_MIN            = 0x38BDF8,  // sky-400
-    .RAIN_VALUE          = 0xFB923C,  // orange-400
-    .ALERT_YELLOW        = 0xFFFF00,
-    .ALERT_RED           = 0xFF0000,
-    .ALERT_DATE_YELLOW   = 0xFCF3CF,
-    .ALERT_DATE_ORANGE   = 0xF8C471,
-    .ALERT_DATE_RED      = 0xF1948A,
-    .CLIM_COOL_ACTIVE    = 0x4D94FF,
-    .CLIM_COOL_INACTIVE  = 0x60748F,
-    .CLIM_HEAT_ACTIVE    = 0xFF4D4D,
-    .CLIM_HEAT_INACTIVE  = 0x8F6060,
-    .CLIM_OFF_ACTIVE     = 0xFFA500,
-    .CLIM_OFF_INACTIVE   = 0xB48154,
-    .CLIM_TRACK_INACTIVE = 0x4A596E,
-    .CLIM_ECO            = 0x4CD964,
-    .RAIN_LIGHT          = 0x81D4FA,
-    .RAIN_MODERATE       = 0x29B6F6,
-    .RAIN_HEAVY          = 0x0277BD,
-    .RAIN_EXTREME        = 0x01579B,
-    .METEO_CELESTIAL     = 0xFFD700,
-    .METEO_PRECIP        = 0x8AB4FF,
-    .METEO_THUNDER       = 0xFF6600,
-    .MOISTURE_NAN        = 0x404552,
-    .HUMIDITY_WET        = 0x0000CC,
-    .TEMP_NAN            = 0xA3A8B5,
+// Les palettes des thèmes : Tab5/themes/<thème>.yaml, un mode sombre et un mode clair
+// chacun, écrits ici en C++ par tools/gen_themes.py (THEMES[], THEME_COUNT) entre les
+// deux marques ci-dessous : NE PAS MODIFIER À LA MAIN (`--check` échoue en CI). Le
+// premier thème, en sombre, est la palette d'origine de l'interface.
+struct Theme {
+    const char* nom;  // option du select « Thème » (Home Assistant la lit : jamais traduite)
+    Palette sombre;
+    Palette clair;
 };
+// >>> themes (généré par tools/gen_themes.py depuis Tab5/themes/, ne pas éditer)
+inline constexpr Theme THEMES[] = {
+    {"Ardoise",  // Tab5/themes/ardoise.yaml
+     {  // sombre
+      .BG                  = 0x0B1120,
+      .GLASS_HI            = 0x2C3A52,
+      .GLASS_LO            = 0x131C2C,
+      .GLASS_HI_PAGE       = 0x1E293D,
+      .GLASS_LO_PAGE       = 0x101727,
+      .GLASS_HI_MODAL      = 0x27344A,
+      .GLASS_LO_MODAL      = 0x111A28,
+      .GLASS_RIM           = 0x93A3BC,
+      .MODAL_SCRIM         = 0x05080F,
+      .CONSOLE_BG          = 0x0A0E16,
+      .ARC_TRACK           = 0x2A2D35,
+      .TEXT_SOFT           = 0xF1F5F9,
+      .TEXT_PRIMARY        = 0xFFFFFF,
+      .TEXT_DIM            = 0x94A3B8,
+      .CONSOLE_LABEL       = 0x8595AD,
+      .CONSOLE_VALUE       = 0xFFFFFF,
+      .ICON_MUTED          = 0x555555,
+      .TEXT_ON_ACCENT      = 0xF1F5F9,
+      .SUCCESS             = 0x34D399,
+      .WARNING             = 0xFBBF24,
+      .ERROR               = 0xFB7185,
+      .INFO                = 0x38BDF8,
+      .GOLD                = 0xFCD34D,
+      .INACTIVE            = 0x334155,
+      .BAR_INACTIVE        = 0x334155,
+      .WARM_PINK           = 0xF472B6,
+      .ACCENT              = 0x22D3EE,
+      .ACCENT_ALT          = 0xA78BFA,
+      .EARLY               = 0xFB923C,
+      .PAST                = 0x64748B,
+      .TEMP_MAX            = 0xF87171,
+      .TEMP_MIN            = 0x38BDF8,
+      .RAIN_VALUE          = 0xFB923C,
+      .ALERT_YELLOW        = 0xFFFF00,
+      .ALERT_ORANGE        = 0xFBBF24,
+      .ALERT_RED           = 0xFF0000,
+      .ALERT_DATE_YELLOW   = 0xFCF3CF,
+      .ALERT_DATE_ORANGE   = 0xF8C471,
+      .ALERT_DATE_RED      = 0xF1948A,
+      .CLIM_COOL_ACTIVE    = 0x4D94FF,
+      .CLIM_COOL_INACTIVE  = 0x60748F,
+      .CLIM_HEAT_ACTIVE    = 0xFF4D4D,
+      .CLIM_HEAT_INACTIVE  = 0x8F6060,
+      .CLIM_OFF_ACTIVE     = 0xFFA500,
+      .CLIM_OFF_INACTIVE   = 0xB48154,
+      .CLIM_TRACK_INACTIVE = 0x4A596E,
+      .CLIM_ECO            = 0x4CD964,
+      .RAIN_LIGHT          = 0x81D4FA,
+      .RAIN_MODERATE       = 0x29B6F6,
+      .RAIN_HEAVY          = 0x0277BD,
+      .RAIN_EXTREME        = 0x01579B,
+      .METEO_CELESTIAL     = 0xFFD700,
+      .METEO_CLOUD         = 0xFFFFFF,
+      .METEO_PRECIP        = 0x8AB4FF,
+      .METEO_THUNDER       = 0xFF6600,
+      .MOISTURE_NAN        = 0x404552,
+      .HUMIDITY_WET        = 0x0000CC,
+      .TEMP_NAN            = 0xA3A8B5,
+      .TEMP_GRAD_M12       = 0xFF0000,
+      .TEMP_GRAD_0_NEG     = 0xFF00FF,
+      .TEMP_GRAD_0_POS     = 0x0000FF,
+      .TEMP_GRAD_14        = 0xFFFFFF,
+      .TEMP_GRAD_24        = 0xFF00FF,
+      .TEMP_GRAD_35        = 0xFF0000,
+      .HUM_GRAD_14         = 0xFF0000,
+      .HUM_GRAD_22         = 0xFFFF00,
+      .HUM_GRAD_30         = 0xFFFFFF,
+     },
+     {  // clair
+      .BG                  = 0xE8ECF1,
+      .GLASS_HI            = 0xFFFFFF,
+      .GLASS_LO            = 0xF5F7FA,
+      .GLASS_HI_PAGE       = 0xFFFFFF,
+      .GLASS_LO_PAGE       = 0xF3F5F8,
+      .GLASS_HI_MODAL      = 0xF6F8FA,
+      .GLASS_LO_MODAL      = 0xEAEEF3,
+      .GLASS_RIM           = 0x8D99AA,
+      .MODAL_SCRIM         = 0xC5CDD8,
+      .CONSOLE_BG          = 0x0A0E16,
+      .ARC_TRACK           = 0xD3DAE3,
+      .TEXT_SOFT           = 0x1E2733,
+      .TEXT_PRIMARY        = 0x0E141B,
+      .TEXT_DIM            = 0x4F5A69,
+      .CONSOLE_LABEL       = 0x8595AD,
+      .CONSOLE_VALUE       = 0xFFFFFF,
+      .ICON_MUTED          = 0x98A1AD,
+      .TEXT_ON_ACCENT      = 0xFFFFFF,
+      .SUCCESS             = 0x12785A,
+      .WARNING             = 0x965A00,
+      .ERROR               = 0xBB2C3E,
+      .INFO                = 0x1D5DC2,
+      .GOLD                = 0x8A6600,
+      .INACTIVE            = 0x9AA4B1,
+      .BAR_INACTIVE        = 0xC3CBD5,
+      .WARM_PINK           = 0xB0306F,
+      .ACCENT              = 0x0E6E85,
+      .ACCENT_ALT          = 0x6548BE,
+      .EARLY               = 0xB4500B,
+      .PAST                = 0x6F7988,
+      .TEMP_MAX            = 0xBE1E2D,
+      .TEMP_MIN            = 0x1D5DC2,
+      .RAIN_VALUE          = 0xB4500B,
+      .ALERT_YELLOW        = 0xFFFF00,
+      .ALERT_ORANGE        = 0xFF9F1A,
+      .ALERT_RED           = 0xFF0000,
+      .ALERT_DATE_YELLOW   = 0x8F6C00,
+      .ALERT_DATE_ORANGE   = 0xB05600,
+      .ALERT_DATE_RED      = 0xB8283A,
+      .CLIM_COOL_ACTIVE    = 0x1D62D4,
+      .CLIM_COOL_INACTIVE  = 0x5F7290,
+      .CLIM_HEAT_ACTIVE    = 0xC92F2F,
+      .CLIM_HEAT_INACTIVE  = 0x9E6767,
+      .CLIM_OFF_ACTIVE     = 0xAF6200,
+      .CLIM_OFF_INACTIVE   = 0x8E6A48,
+      .CLIM_TRACK_INACTIVE = 0x6F7988,
+      .CLIM_ECO            = 0x1C8240,
+      .RAIN_LIGHT          = 0x5AA8DA,
+      .RAIN_MODERATE       = 0x2C82C9,
+      .RAIN_HEAVY          = 0x1A5FA6,
+      .RAIN_EXTREME        = 0x0E3F78,
+      .METEO_CELESTIAL     = 0xD66A00,
+      .METEO_CLOUD         = 0x7A879A,
+      .METEO_PRECIP        = 0x2C6AD3,
+      .METEO_THUNDER       = 0xC94A00,
+      .MOISTURE_NAN        = 0x6F7988,
+      .HUMIDITY_WET        = 0x1E4FC2,
+      .TEMP_NAN            = 0x6F7988,
+      .TEMP_GRAD_M12       = 0xA3202B,
+      .TEMP_GRAD_0_NEG     = 0x7B3FB8,
+      .TEMP_GRAD_0_POS     = 0x1D5BD6,
+      .TEMP_GRAD_14        = 0x2A3443,
+      .TEMP_GRAD_24        = 0xB9480E,
+      .TEMP_GRAD_35        = 0xBE1E2D,
+      .HUM_GRAD_14         = 0xC22626,
+      .HUM_GRAD_22         = 0x9C6400,
+      .HUM_GRAD_30         = 0x2A3443,
+     }},
+};
+inline constexpr int THEME_COUNT = static_cast<int>(sizeof(THEMES) / sizeof(THEMES[0]));
+// <<< themes
+
+// Palette sombre du thème d'origine : les jeux la lisent directement, ils restent
+// sombres quel que soit le thème (ADR-0014).
+inline constexpr Palette PALETTE_SOMBRE = THEMES[0].sombre;
 
 // Palette active de l'interface : `lv_color_hex(UIColor.TEXT_DIM)`. Initialisée
-// à la compilation (aucun ordre d'initialisation statique à craindre). Une table
-// `constexpr` qui doit suivre le thème garde un pointeur de membre
-// (`&Palette::TEXT_PRIMARY`, lu par `UIColor.*champ`), pas une valeur.
+// à la compilation (aucun ordre d'initialisation statique à craindre), puis
+// remplacée par le thème choisi (theme_selectionner(), tab5_theme.cpp) avant que
+// LVGL crée ses styles. Une table `constexpr` qui doit suivre le thème garde un
+// pointeur de membre (`&Palette::TEXT_PRIMARY`, lu par `UIColor.*champ`), pas une
+// valeur.
 inline Palette UIColor = PALETTE_SOMBRE;
+
+// Fond clair ? (luminosité perçue du fond, 0,299 R + 0,587 G + 0,114 B, au-dessus de
+// la moitié). Pour ce qui n'est pas une couleur : la pastille sous les icônes de
+// vigilance (un jaune pur ne se lit pas sur du blanc).
+constexpr bool palette_claire(const Palette& p) {
+    return 299u * ((p.BG >> 16) & 0xFF) + 587u * ((p.BG >> 8) & 0xFF) + 114u * (p.BG & 0xFF) > 127500u;
+}
