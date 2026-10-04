@@ -94,6 +94,11 @@ binary_sensor:
   - platform: status
     name: "HA API Status"
     id: status_ha
+    # Icône « HA » colorée à la connexion, comme sur la tablette. Sans elle, la repeinte
+    # du thème la peignait selon la liaison du moment : grise au démarrage à froid
+    # (avant le capturer), bleue à chaud (capturer connecté) — tâche « clair », 04/10/2026.
+    on_state:
+      - lambda: 'set_icon_active_ui(id(icon_ha), x, UIColor.INFO, UIColor.INACTIVE);'
 
 # Capteurs lus par la console système : valeurs fixes, sans Wi-Fi ni sonde.
 sensor:
