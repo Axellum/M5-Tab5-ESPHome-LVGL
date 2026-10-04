@@ -9,6 +9,9 @@
 #           charge rapide (P5) à l'arrêt, état CHG_STAT (P6) lu toutes les 10 s, INA226
 #           en 0x41 (0x40 = ES7210). Non testé avec une batterie (l'auteur n'en a pas) ;
 #           sans batterie les entités disent « en charge, 100 % » : désactivées par défaut.
+#           Icône du bandeau d'état (04/10/2026) : niveau et charge passés au C++
+#           (batterie_niveau_ui, batterie_charge_ui), affichée seulement si
+#           l'interrupteur « Tab5 Batterie montée » (tab5-ha-controls.yaml) est allumé.
 # @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
 #                         Les blocs on_value: doivent se contenter d'appeler des fonctions
 #                         C++ depuis tab5_custom.cpp (ex: update_console_diagnostics_ui(...) ).
@@ -131,6 +134,10 @@ binary_sensor:
       mode: INPUT_PULLDOWN
     filters:
       - delayed_on_off: 30s
+    # Icône de la batterie dans le bandeau d'état (éclair pendant la charge), visible
+    # si l'interrupteur « Tab5 Batterie montée » est allumé (tab5-ha-controls.yaml).
+    on_state:
+      - lambda: 'batterie_charge_ui(x);'
 
   - platform: status
     name: "HA API Status"
@@ -322,6 +329,10 @@ sensor:
           if (std::isnan(x) || x < 5.0f) return NAN;
           const float p = (x - 6.0f) / (8.23f - 6.0f) * 100.0f;
           return p < 0.0f ? 0.0f : (p > 100.0f ? 100.0f : p);
+    # Glyphe et couleur de l'icône du bandeau (même échelle que le téléphone,
+    # get_battery_color) ; NAN = point d'interrogation gris.
+    on_value:
+      - lambda: 'batterie_niveau_ui(x);'
 
 select:
   - platform: template

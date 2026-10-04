@@ -822,12 +822,26 @@ enum class Zone : uint8_t {
 };
 constexpr int kZonesSuivies = static_cast<int>(Zone::CLIM);
 
+// Bandeau d'état (haut gauche) : ses icônes dans l'ordre d'affichage, de gauche à droite.
+// Les icônes visibles se suivent au pas de 35 px depuis x = 10 (bandeau_apply_ui,
+// tab5_zones.cpp) : une icône masquée ne laisse pas de trou. Une icône de plus :
+// 1. sa valeur ici, à sa place dans l'ordre (avant BANDEAU_NB) ;
+// 2. son label dans tab5-lvgl.yaml (mdi_font_26, y: 10, x de sa place) et ses glyphes
+//    dans mdi_font_26 (tab5-styles.yaml, règle 9) ;
+// 3. son pointeur dans le script tab5_zones_apply (tab5-zones.yaml) ;
+// 4. si elle peut disparaître, sa condition dans bandeau_masquee() (tab5_zones.cpp).
+enum BandeauIcone : uint8_t {
+    BANDEAU_PC,         // icon_pc : PC allumé (zone PC)
+    BANDEAU_TELEPHONE,  // icon_phone : batterie du téléphone (zone TELEPHONE)
+    BANDEAU_WIFI,       // icon_wifi
+    BANDEAU_REVEIL,     // icon_alarm_status
+    BANDEAU_BATTERIE,   // icon_batterie : batterie de la tablette, si elle est montée
+    BANDEAU_NB
+};
+
 // Widgets que le masquage touche, posés par le script tab5_zones_apply (tab5-zones.yaml).
 struct ZonesUI {
-    lv_obj_t* icon_pc = nullptr;       // bandeau d'état, dans l'ordre d'affichage
-    lv_obj_t* icon_phone = nullptr;
-    lv_obj_t* icon_wifi = nullptr;
-    lv_obj_t* icon_alarm = nullptr;
+    lv_obj_t* bandeau[BANDEAU_NB] = {};  // bandeau d'état, indexé par BandeauIcone
     lv_obj_t* btn_ha = nullptr;        // rangée HA / Sys / TV
     lv_obj_t* btn_sys = nullptr;
     lv_obj_t* btn_tv = nullptr;
@@ -860,6 +874,18 @@ bool zone_vue(Zone z);
 bool zones_reponse_ha(const std::string& absentes);
 // Applique l'état des zones aux widgets de g_zones_ui et aux tuiles (g_day_slots).
 void zones_apply_ui();
+
+// Batterie de la tablette, icône du bandeau d'état (tab5_zones.cpp). L'icône n'est
+// visible que si l'interrupteur « Tab5 Batterie montée » est allumé
+// (tab5-ha-controls.yaml) : sans batterie, le chargeur dit « en charge, 100 % »
+// (relevé le 03/10/2026), la tablette ne peut donc pas savoir seule qu'il n'y en a
+// pas. Glyphe selon le niveau (et « en charge »), couleur de get_battery_color(),
+// la même échelle que le téléphone. Chaque appel garde sa valeur : appelés avant le
+// premier zones_apply_ui() (restauration de l'interrupteur au setup), ils ne
+// dessinent rien, et zones_apply_ui() peint ensuite l'état gardé.
+void batterie_montee_ui(bool montee);   // on_state de l'interrupteur
+void batterie_niveau_ui(float niveau);  // % de batterie_niveau, NAN = inconnu
+void batterie_charge_ui(bool en_charge);  // batterie_en_charge (CHG_STAT)
 // Tuile i (0 à 4) de l'accueil : son appareil est-il absent ?
 bool zone_tuile_absente(int tuile);
 // Nombre de pots présents (0 à 5).

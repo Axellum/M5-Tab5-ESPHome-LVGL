@@ -7,6 +7,10 @@
  *       « tRT », les réglages de la clim « climr », ADR-0026, et les clims des tuiles
  *       « crRT » / « ceRT », ADR-0027, d'abord). Contrat et raisons dans
  *       tab5_custom.h (« Zones optionnelles ») ; échanges avec HA dans tab5-zones.yaml.
+ *       Et le bandeau d'état du haut gauche (bandeau_apply_ui : une table d'icônes,
+ *       BandeauIcone dans tab5_custom.h), dont l'icône de la batterie de la tablette
+ *       (04/10/2026), qui ne dépend pas de HA mais de l'interrupteur « Tab5 Batterie
+ *       montée ».
  * @architecture_constraint Rien ne disparaît sans réponse de HA : la tablette seule ne
  *       sait pas distinguer une entité absente d'une entité pas encore transmise. Une
  *       donnée reçue fait toujours réapparaître sa zone (zone_vue), même si HA l'a
@@ -59,6 +63,59 @@ constexpr uint32_t bit_de(Zone z) { return 1u << static_cast<int>(z); }
 
 Zone zone_pot(int i) { return static_cast<Zone>(static_cast<int>(Zone::POT_1) + i); }
 Zone zone_lumiere(int i) { return static_cast<Zone>(static_cast<int>(Zone::LUMIERE_1) + i); }
+
+// Batterie de la tablette : dernier état reçu (tab5_custom.h, batterie_*_ui).
+struct EtatBatterie {
+    bool montee = false;
+    float niveau = NAN;
+    bool en_charge = false;
+};
+EtatBatterie s_batterie;
+
+// Une icône du bandeau est-elle masquée ? Une icône de plus qui peut disparaître :
+// son cas ici (les autres restent toujours affichées).
+bool bandeau_masquee(BandeauIcone i) {
+    switch (i) {
+        case BANDEAU_PC: return zone_absente(Zone::PC);
+        case BANDEAU_TELEPHONE: return zone_absente(Zone::TELEPHONE);
+        case BANDEAU_BATTERIE: return !s_batterie.montee;
+        default: return false;
+    }
+}
+
+// Bandeau d'état (haut gauche) : les icônes visibles se suivent au pas de 35 px.
+void bandeau_apply_ui() {
+    int32_t x = 10;
+    for (int i = 0; i < BANDEAU_NB; i++) {
+        lv_obj_t* const icone = g_zones_ui.bandeau[i];
+        if (icone == nullptr) continue;  // avant tab5_zones_apply (setup)
+        const bool masquee = bandeau_masquee(static_cast<BandeauIcone>(i));
+        ui_hidden(icone, masquee);
+        if (masquee) continue;
+        ui_x(icone, x);
+        x += 35;
+    }
+}
+
+// Glyphe de la batterie : quatre paliers alignés sur les seuils de couleur de
+// get_battery_color() (> 80, > 40, ≥ 20, en dessous), un éclair pendant la charge
+// (le niveau, estimé d'après la tension, lit trop haut pendant la charge : un seul
+// glyphe plutôt que des paliers trompeurs), un point d'interrogation sans mesure.
+const char* batterie_glyphe(float niveau, bool en_charge) {
+    if (std::isnan(niveau)) return "\U000F0091";   // battery-unknown
+    if (en_charge) return "\U000F0084";            // battery-charging
+    if (niveau > 80.0f) return "\U000F0079";       // battery
+    if (niveau > 40.0f) return "\U000F12A2";       // battery-medium
+    if (niveau >= 20.0f) return "\U000F12A1";      // battery-low
+    return "\U000F0083";                           // battery-alert
+}
+
+void batterie_peindre() {
+    lv_obj_t* const icone = g_zones_ui.bandeau[BANDEAU_BATTERIE];
+    if (icone == nullptr) return;
+    ui_text(icone, batterie_glyphe(s_batterie.niveau, s_batterie.en_charge));
+    ui_text_color(icone, get_battery_color(s_batterie.niveau));
+}
 
 void charger() {
     if (s_charge) return;
@@ -203,6 +260,24 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
     return appliquees;
 }
 
+void batterie_montee_ui(bool montee) {
+    if (montee == s_batterie.montee) return;
+    s_batterie.montee = montee;
+    ESP_LOGI("TAB5", "Batterie montee : %s (icone du bandeau)", montee ? "oui" : "non");
+    batterie_peindre();
+    bandeau_apply_ui();
+}
+
+void batterie_niveau_ui(float niveau) {
+    s_batterie.niveau = tab5_fini_ou_nan(niveau);
+    batterie_peindre();
+}
+
+void batterie_charge_ui(bool en_charge) {
+    s_batterie.en_charge = en_charge;
+    batterie_peindre();
+}
+
 void zones_nouvelle_connexion() { s_demande = true; }
 
 bool zones_demande_a_envoyer() {
@@ -216,17 +291,9 @@ void zones_apply_ui() {
     const ZonesUI& u = g_zones_ui;
 
     // Bandeau d'état (haut gauche) : les icônes restantes se resserrent, pas de 35 px.
-    {
-        lv_obj_t* const icones[4] = {u.icon_pc, u.icon_phone, u.icon_wifi, u.icon_alarm};
-        const bool masquee[4] = {zone_absente(Zone::PC), zone_absente(Zone::TELEPHONE), false, false};
-        int32_t x = 10;
-        for (int i = 0; i < 4; i++) {
-            ui_hidden(icones[i], masquee[i]);
-            if (masquee[i] || icones[i] == nullptr) continue;
-            ui_x(icones[i], x);
-            x += 35;
-        }
-    }
+    // La batterie est peinte ici aussi : son état a pu arriver avant les pointeurs.
+    bandeau_apply_ui();
+    batterie_peindre();
 
     // Rangée HA / Sys / TV (haut droite) : sans TV, HA et Sys glissent d'une colonne.
     const bool sans_tv = zone_absente(Zone::TV);

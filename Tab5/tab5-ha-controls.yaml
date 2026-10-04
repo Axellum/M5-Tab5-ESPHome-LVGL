@@ -281,6 +281,24 @@ select:
           else:
             - lambda: 'i18n_set_language(i);'
 
+switch:
+  # Batterie de la tablette montée (04/10/2026) : montre son icône dans le bandeau
+  # d'état, en dernier (niveau et charge : tab5-sensors-diagnostics.yaml). Un réglage
+  # et pas une détection : sans batterie, le chargeur dit « en charge » et 8,39 V,
+  # soit 100 % (tablette de l'auteur, 03/10/2026) ; rien de mesuré ne distingue
+  # encore les deux cas. Éteint par défaut, gardé en mémoire d'un démarrage à l'autre.
+  # Ici avec les autres réglages de l'écran : le rendu hors tablette, qui charge ce
+  # fichier mais pas celui des diagnostics, peut ainsi montrer l'icône.
+  - platform: template
+    id: tab5_batterie_montee
+    name: "Tab5 Batterie montée"
+    icon: mdi:battery
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_state:
+      - lambda: 'batterie_montee_ui(x);'
+
 button:
   # Recharge le mois courant + M+1 du calendrier (même script que le pré-fetch
   # de boot). À utiliser quand un RDV ajouté dans HA n'apparaît pas encore.
