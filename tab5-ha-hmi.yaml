@@ -98,6 +98,8 @@ esphome:
     - Tab5/tab5_zones.cpp
     # Pièces et tuiles génériques décrites par HA (ADR-0023, 28/09/2026).
     - Tab5/tab5_tuiles.cpp
+    # Popup Énergie : instantané solaire et historique de production (ADR-0028, 04/10/2026).
+    - Tab5/tab5_energie.cpp
     # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
     # NvsSlot<T>) — lot (f), ADR-0014. Header-only.
     - Tab5/game_common.h
@@ -345,6 +347,8 @@ packages:
   tab5_alarm: !include Tab5/tab5-alarm.yaml
   # Pièces et tuiles (ADR-0023) : APRES tab5_lvgl (widgets), script lancé par tab5_zones_apply.
   tab5_tuiles: !include Tab5/tab5-tuiles.yaml
+  # Popup Énergie (ADR-0028) : APRES tab5_lvgl (widgets), ouvert par une tuile ou par HA.
+  tab5_energie: !include Tab5/tab5-energie.yaml
   # Zones optionnelles (lot 5) : APRES tab5_lvgl (widgets). Ses substitutions sont les
   # valeurs par défaut des entity_… : une clé de Tab5/user_entities.yaml l'emporte.
   tab5_zones: !include Tab5/tab5-zones.yaml

@@ -4,6 +4,35 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-04 — Popup Énergie pour une installation solaire
+
+- **Popup Énergie** (idée d'un utilisateur, discussion #278,
+  [ADR-0028](docs/decisions/0028-solar-energy-popup.md)) : en haut, l'installation en
+  direct, en quatre cartes (solaire et production du jour, maison, réseau acheté ou vendu,
+  batterie avec niveau, charge ou décharge et température) ; en bas, la production en
+  barres par heure (aujourd'hui), par jour (30 jours) et par mois (12 mois), avec le total
+  de la période. Une carte sans capteur disparaît ; sans compteur d'énergie, pas de
+  graphique. Chrome partagé, registre unique, transitions instantanées, sept langues.
+- **Blueprint « Tab5 — emplacements »** : nouvelle section facultative « Énergie ·
+  Energy » (puissance solaire, énergie produite, réseau avec ou sans capteur de vente,
+  maison, batterie ; cases « Inverser » pour les signes). Laissée vide, rien ne change.
+  Remplie, une tuile capteur de l'un de ces capteurs prend la nouvelle option `e` : elle
+  montre sa valeur en W/kW ou kWh et ouvre le popup au toucher ; le capteur solaire prend
+  la nouvelle icône `solaire` (panneau solaire). « Aller à l'écran → Énergie » l'ouvre
+  aussi.
+- **Nouveau package `tab5_energie.yaml`** : `script.tab5_energie`, lancé par le blueprint
+  quand la tablette ouvre le popup (événement `esphome.tab5_energie`), lit l'historique
+  dans les statistiques du recorder (`recorder.get_statistics`, rien de plus en base) et
+  pousse l'instantané à chaque changement tant que le popup est ouvert (15 min au plus).
+  Rien n'est poussé popup fermé.
+- **Firmware** : deux actions de plus, `tab5_maj_energie` et `tab5_maj_energie_historique`
+  (21 au total) ; nouveau `tab5_energie.cpp`. La démo pousse une maison solaire (pièce
+  « Bureau ») et le rendu hors tablette capture le popup dans ses trois vues.
+- `tests/test_energie.py` : contrat et payloads des deux côtés, modèles du package rendus
+  sur des réponses de `get_statistics` simulées et comparés à un calcul Python
+  indépendant, blueprint avec la section vide et remplie. Non essayé sur la tablette ni
+  avec une vraie installation solaire.
+
 ### 2026-10-04 — Les pièces décrites dans le README et sur le site
 
 - **README** (EN et FR) et **site** : la limite d'avant la 3.2 (« plus de 3 lumières ou un

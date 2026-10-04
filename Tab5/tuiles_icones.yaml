@@ -271,9 +271,14 @@ icones:
     eteint: F0241 flash
     mdi: [flash, flash-outline, flash-off, lightning-bolt, lightning-bolt-outline,
           meter-electric, meter-electric-outline, transmission-tower, home-lightning-bolt,
-          home-lightning-bolt-outline, solar-power, solar-power-variant, solar-panel]
+          home-lightning-bolt-outline]
     domaines: [sensor.power, sensor.energy, sensor.voltage, sensor.current,
                sensor.apparent_power, binary_sensor.power]
+  # Production solaire (ADR-0028, 04/10/2026) : aussi l'icône par défaut de la tuile du
+  # capteur solaire choisi dans la section « Énergie » du blueprint.
+  - code: solaire
+    eteint: F0A72 solar-power
+    mdi: [solar-power, solar-power-variant, solar-panel]
   # sensor.moisture : l'humidité du sol des capteurs de plantes (Flower Care…).
   - code: plante
     eteint: F024A flower

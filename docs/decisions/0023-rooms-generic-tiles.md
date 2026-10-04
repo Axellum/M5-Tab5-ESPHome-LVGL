@@ -38,7 +38,7 @@ entry      := 'p' R '|' name
             | 't' R T '|' type '|' icon '|' options '|' complement '|' name
 type       := lum | int | vol | med | act | cap | bin | cli
 icon       := a palette code ([a-z0-9_]{1,15}), '' = the type's default
-options    := letters among d c o k r t m, '' = none
+options    := letters among d c o k r t m e, '' = none
 complement := cap: unit (≤ 7 bytes: '°C', '%', 'W', 'kWh'…) ; bin: device class ('door', 'motion', 'presence'…) ; else ''
 name       := display text; the firmware keeps ≤ 24 bytes (cut on a character boundary) and drops the characters its fonts lack
 ```
@@ -56,7 +56,7 @@ In every text field `|` becomes `/` and `;` becomes `,` (as today).
 | `bin` | `binary_sensor`, `device_tracker`, `person`, `lock` | — (read only) | — |
 | `cli` | `climate` | climate popup: the blueprint's with `m`, else its own once HA sent its settings ([ADR-0027](0027-climate-per-tile.md)) | — |
 
-Options: `d` dimmable (brightness), `c` colour, `o` on only (never switched off from the screen), `k` confirm (a second tap within 3 s sends; the state line asks for it), `r` read only (no tap at all), `t` this media player is the blueprint's TV (remote), `m` this climate is the blueprint's climate (popup; without `m`, the tile's own climate, [ADR-0027](0027-climate-per-tile.md)).
+Options: `d` dimmable (brightness), `c` colour, `o` on only (never switched off from the screen), `k` confirm (a second tap within 3 s sends; the state line asks for it), `r` read only (no tap at all), `t` this media player is the blueprint's TV (remote), `m` this climate is the blueprint's climate (popup; without `m`, the tile's own climate, [ADR-0027](0027-climate-per-tile.md)), `e` this sensor is one of the blueprint's « Énergie » section (a `cap` whose tap opens the Energy popup, [ADR-0028](0028-solar-energy-popup.md); an older firmware ignores the letter and keeps a read-only tile).
 
 **States** — the existing `tab5_maj_emplacements(payload)`, new keys with a fourth field:
 

@@ -46,6 +46,7 @@ packages:
   tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml   # after tab5_lvgl: references LVGL widget ids
   tab5_alarm:      !include Tab5/tab5-alarm.yaml          # after tab5_lvgl too
   tab5_tuiles:     !include Tab5/tab5-tuiles.yaml         # rooms and tiles (ADR-0023), after tab5_lvgl
+  tab5_energie:    !include Tab5/tab5-energie.yaml        # Energy popup (ADR-0028), after tab5_lvgl
   tab5_zones:      !include Tab5/tab5-zones.yaml          # optional zones (ADR-0018), after tab5_lvgl
 ```
 
@@ -147,7 +148,7 @@ Variables here are typed and initialized. Uninitialized globals on ESP32 are und
 ---
 
 ### `tab5-lvgl.yaml`
-The UI layout. Declares the pages, panels, labels, buttons, arcs, and icons, plus swipe gesture handling. It `!include`s 26 `ui_components/*.yaml` files directly (climate card/popup, light popup, TV remote popup, system console, assistant/calendar/plant popups, alarm popup and ring overlay, forecast cards, moisture gauges, switches card, the HA alert banner of the central card — one file included four times with `vars` —, the arcade selector and the 8 games); those in turn include the parametrized sub-templates (`pot_detail_card.yaml`, `modal_header.yaml`…), for 47 component files in total.
+The UI layout. Declares the pages, panels, labels, buttons, arcs, and icons, plus swipe gesture handling. It `!include`s 27 `ui_components/*.yaml` files directly (climate card/popup, light popup, TV remote popup, system console, assistant/calendar/plant popups, alarm popup and ring overlay, forecast cards, moisture gauges, switches card, the HA alert banner of the central card — one file included four times with `vars` —, the arcade selector and the 8 games); those in turn include the parametrized sub-templates (`pot_detail_card.yaml`, `modal_header.yaml`…), for 50 component files in total.
 
 **The dashboard is a single LVGL page, not a multi-page tab-bar layout** ([ADR-0002](decisions/0002-single-page-swipe-navigation.md)) — every home-automation feature lives on one 1280×720 `page_main`, reachable by tap, long-press or swipe. The only other pages are the 9 gaming ones (`page_arcade` + one per console), all declared `skip: true` so swipe navigation can never land on them; they are not part of the dashboard flow.
 
@@ -227,6 +228,9 @@ Alarm clock + appointment reminders: `rtttl:` melody on `tab5_speaker` (outside 
 
 ### `tab5-tuiles.yaml`
 Rooms and tiles ([ADR-0023](decisions/0023-rooms-generic-tiles.md)): the `tab5_tuiles_ui` script hands `g_tuiles_ui` the widgets that `tab5_tuiles.cpp` draws (weather-tile shoulders and buttons of every page, HA-mode cards, light-popup selector, layers, page dots, central-card title, « HA » button) and its two commands (the `esphome.tab5_action` event, the shutter tap). The model, the NVS and the drawing live in `tab5_tuiles.cpp`; definitions arrive through the `tab5_maj_tuiles` action. No `lv_*` here. Run first by `tab5_zones_apply`, before the first frame; loaded after `tab5-lvgl.yaml`.
+
+### `tab5-energie.yaml`
+Energy popup ([ADR-0028](decisions/0028-solar-energy-popup.md)): the `tab5_energie_ouvrir` script hands `g_energie_ui` the widgets of `ui_components/energie_popup.yaml` on the first opening, then calls `energie_ouvrir()` (`tab5_energie.cpp`); `tab5_energie_demande` sends the `esphome.tab5_energie` event (`vue` = `heures`, `jours` or `mois`) when the popup opens and on each view button. Home Assistant answers with the `tab5_maj_energie` (live values) and `tab5_maj_energie_historique` (bars) actions. Opened by a `cap` tile with the `e` option or by « Aller à l'écran → Énergie ». No `lv_*` here; loaded after `tab5-lvgl.yaml`.
 
 ---
 
@@ -411,7 +415,7 @@ Les variables ici sont typées et initialisées. Les globales non initialisées 
 ---
 
 ### `tab5-lvgl.yaml`
-La mise en page UI. Déclare les pages, panneaux, labels, boutons, arcs et icônes, ainsi que la gestion des gestes swipe. Il `!include` directement 26 fichiers `ui_components/*.yaml` (carte/popup clim, popup lumière, popup télécommande TV, console système, popups assistant/calendrier/plantes, fenêtre du réveil et calque de sonnerie, cartes prévisions, jauges humidité, carte switches, le bandeau d'alerte HA de la carte centrale — un fichier inclus quatre fois avec `vars` —, le sélecteur arcade et les 8 jeux) ; ceux-ci incluent à leur tour les sous-templates paramétrés (`pot_detail_card.yaml`, `modal_header.yaml`…), soit 47 fichiers de composants au total.
+La mise en page UI. Déclare les pages, panneaux, labels, boutons, arcs et icônes, ainsi que la gestion des gestes swipe. Il `!include` directement 27 fichiers `ui_components/*.yaml` (carte/popup clim, popup lumière, popup télécommande TV, console système, popups assistant/calendrier/plantes, fenêtre du réveil et calque de sonnerie, cartes prévisions, jauges humidité, carte switches, le bandeau d'alerte HA de la carte centrale — un fichier inclus quatre fois avec `vars` —, le sélecteur arcade et les 8 jeux) ; ceux-ci incluent à leur tour les sous-templates paramétrés (`pot_detail_card.yaml`, `modal_header.yaml`…), soit 50 fichiers de composants au total.
 
 **Le dashboard tient sur une seule page LVGL, pas une navigation multi-pages par onglets** ([ADR-0002](decisions/0002-single-page-swipe-navigation.md)) — toute la domotique vit sur un `page_main` unique en 1280×720, accessible au tap, à l'appui long ou au swipe. Les seules autres pages sont les 9 pages gaming (`page_arcade` + une par console), toutes en `skip: true` pour que le swipe ne puisse jamais y atterrir ; elles ne font pas partie du parcours dashboard.
 
@@ -493,6 +497,9 @@ Réveil + annonce des rendez-vous : mélodie `rtttl:` sur `tab5_speaker` (hors m
 
 ### `tab5-tuiles.yaml`
 Pièces et tuiles ([ADR-0023](decisions/0023-rooms-generic-tiles.md)) : le script `tab5_tuiles_ui` pose dans `g_tuiles_ui` les widgets que dessine `tab5_tuiles.cpp` (épaules et boutons des tuiles météo de toutes les pages, cartes du mode HA, sélecteur du popup lumière, calques, pastilles, titre de la carte centrale, bouton « HA ») et ses deux commandes (événement `esphome.tab5_action`, tap du volet). Le modèle, la NVS et le dessin vivent dans `tab5_tuiles.cpp` ; les définitions arrivent par l'action `tab5_maj_tuiles`. Aucun `lv_*` ici. Lancé en premier par `tab5_zones_apply`, avant la première image ; chargé après `tab5-lvgl.yaml`.
+
+### `tab5-energie.yaml`
+Popup Énergie ([ADR-0028](decisions/0028-solar-energy-popup.md)) : le script `tab5_energie_ouvrir` pose dans `g_energie_ui` les widgets de `ui_components/energie_popup.yaml` à la première ouverture, puis appelle `energie_ouvrir()` (`tab5_energie.cpp`) ; `tab5_energie_demande` émet l'événement `esphome.tab5_energie` (`vue` = `heures`, `jours` ou `mois`) à l'ouverture et à chaque bouton de vue. Home Assistant répond par les actions `tab5_maj_energie` (valeurs en direct) et `tab5_maj_energie_historique` (barres). Ouvert par une tuile `cap` à l'option `e` ou par « Aller à l'écran → Énergie ». Aucun `lv_*` ici ; chargé après `tab5-lvgl.yaml`.
 
 ---
 

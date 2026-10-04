@@ -376,7 +376,7 @@ def test_le_selecteur_des_pieces_suit_les_domaines_des_tuiles():
 
 def test_options_emises_egales_a_celles_de_l_adr():
     lettres = _options_de_l_adr()
-    assert lettres == ["d", "c", "o", "k", "r", "t", "m"]
+    assert lettres == ["d", "c", "o", "k", "r", "t", "m", "e"]
     bloc = _chercher(_blueprint()["actions"], lambda d: "definitions" in (d.get("variables") or {}))
     modele = bloc["variables"]["definitions"]
     emises = re.findall(r"\('([a-z])' if ", modele)

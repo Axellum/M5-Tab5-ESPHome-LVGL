@@ -8,9 +8,29 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 950;
+static const uint16_t kI18nKeyCount = 971;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -939,6 +959,7 @@ static const char* const kI18nCtx[] = {
     "echecs",
     "echecs",
     "echecs",
+    "energie",
     "jeudi",
     "lundi",
     "mardi",
@@ -1039,6 +1060,7 @@ static const char* const kI18nKeys[] = {
     "1 erreur",
     "1 à 6 équipes",
     "10,0 cases/s - réflexes exigés",
+    "12 derniers mois",
     "15 min",
     "15 min + 10 s",
     "1er",
@@ -1047,6 +1069,7 @@ static const char* const kI18nKeys[] = {
     "3 Jours",
     "3 billes - lanceur en bas de l'écran",
     "3 s d'invulnérabilité par salle",
+    "30 derniers jours",
     "4 Jours",
     "4,4 cases/s - rythme d'origine",
     "40 coups sans pion ni prise",
@@ -1110,11 +1133,14 @@ static const char* const kI18nKeys[] = {
     "Arts & Littérature",
     "Assistant vocal",
     "Attire les bonus alentour",
+    "Au repos",
     "Au tour de Blanc",
     "Au tour de Noir",
     "Aucun appareil",
+    "Aucun capteur d'énergie choisi",
     "Aucun déplacement possible — au suivant.",
     "Aucun effet actif",
+    "Aucun historique",
     "Aucun jour retenu dans les 8 prochains",
     "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand.",
     "Aucun rendez-vous à venir",
@@ -1122,6 +1148,7 @@ static const char* const kI18nKeys[] = {
     "Aucun score enregistré pour l'instant.",
     "Aucun score pour l'instant.\nLance une partie !",
     "Aucun travail de prévu",
+    "Aucun échange",
     "Aucune partie en cours",
     "Aucune partie sauvegardée",
     "Aucune question jouée",
@@ -1134,6 +1161,7 @@ static const char* const kI18nKeys[] = {
     "Aujourd'hui {heure}",
     "Averses",
     "Avr",
+    "BATTERIE",
     "BILLE %d / %d",
     "BILLE BONUS",
     "BILLE PERDUE",
@@ -1189,6 +1217,7 @@ static const char* const kI18nKeys[] = {
     "Chambre",
     "Changer de variante",
     "Changer les réglages",
+    "Charge",
     "Chargement image...",
     "Chargement...",
     "Chaud",
@@ -1217,6 +1246,7 @@ static const char* const kI18nKeys[] = {
     "Confirmé",
     "Connecté",
     "Conservés en NVS, valables pour toutes les parties",
+    "Consommation",
     "Contrôle",
     "Contrôle : %s",
     "Contrôle : %s   -   Vitesse : %s",
@@ -1244,6 +1274,7 @@ static const char* const kI18nKeys[] = {
     "Demain",
     "Demain {heure}",
     "Demande confirmation",
+    "Depuis le réseau",
     "Dernier coup : MARQUÉ",
     "Dernier coup : NON MARQUÉ",
     "Deux passes : marquez les groupes morts",
@@ -1264,6 +1295,7 @@ static const char* const kI18nKeys[] = {
     "Débutant",
     "Débutant : ne voit qu'un coup, se trompe",
     "Déc",
+    "Décharge",
     "Découverte",
     "Dédale",
     "Délai",
@@ -1286,6 +1318,7 @@ static const char* const kI18nKeys[] = {
     "Effort maximal du Tab (5 coups visés)",
     "Emplacement %d : %s",
     "Emplacement %d : vide",
+    "En attente de Home Assistant",
     "Erreur",
     "Escalier",
     "Eval %+.1f",
@@ -1330,6 +1363,7 @@ static const char* const kI18nKeys[] = {
     "Handicap : aucun",
     "Heure fixe",
     "Heure non synchronisée",
+    "Heures",
     "Histoire",
     "Home Assistant hors ligne",
     "Hors du top %d",
@@ -1370,6 +1404,7 @@ static const char* const kI18nKeys[] = {
     "Jour",
     "Jour hors plage",
     "Journee",
+    "Jours",
     "Jours (heure fixe uniquement)",
     "Juil",
     "Juin",
@@ -1434,6 +1469,7 @@ static const char* const kI18nKeys[] = {
     "Lode Runner 1983\nCreuse · grimpe · fuis",
     "Lumière",
     "Lun",
+    "MAISON",
     "MAJ Écran",
     "MODE",
     "MULTIBALL TERMINÉ",
@@ -1458,6 +1494,7 @@ static const char* const kI18nKeys[] = {
     "Mode de jeu",
     "Mode dieu : %s",
     "Mode entraînement",
+    "Mois",
     "Mouvement",
     "Moy:",
     "Moyen",
@@ -1573,6 +1610,7 @@ static const char* const kI18nKeys[] = {
     "Prise obligatoire",
     "Prise x%d",
     "Prisonniers de la partie : Noir %u, Blanc %u",
+    "Produit aujourd'hui",
     "Progressif",
     "Proposer nulle",
     "Présent",
@@ -1674,6 +1712,7 @@ static const char* const kI18nKeys[] = {
     "SECOUSSE = LANCER LE DÉ",
     "SFX : actifs",
     "SFX : coupés",
+    "SOLAIRE",
     "SORTIE OUVERTE",
     "STATISTIQUES",
     "SYSTÈME",
@@ -1796,6 +1835,7 @@ static const char* const kI18nKeys[] = {
     "Ven",
     "Ventilation",
     "Verrouillé",
+    "Vers le réseau",
     "Victoire des Blancs",
     "Victoire des Noirs",
     "Victoire la plus rapide : %u tours",
@@ -1876,6 +1916,7 @@ static const char* const kI18nKeys[] = {
     "Éco",
     "Écoute…",
     "Élan",
+    "Énergie",
     "Équipe : %s",
     "Équipement",
     "Éteint",
@@ -1892,6 +1933,7 @@ static const char* const kI18nKeys[] = {
     "Pion",
     "Roi",
     "Tour",
+    "RÉSEAU",
     "J",
     "L",
     "M",
@@ -1993,6 +2035,7 @@ static const char* const kI18n_en[] = {
     "1 error",  // "1 erreur"
     "1 to 6 teams",  // "1 à 6 équipes"
     "10.0 tiles/s - quick reflexes",  // "10,0 cases/s - réflexes exigés"
+    "Last 12 months",  // "12 derniers mois"
     "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1",  // "1er"
@@ -2001,6 +2044,7 @@ static const char* const kI18n_en[] = {
     "3 Days",  // "3 Jours"
     "3 balls - plunger at the bottom",  // "3 billes - lanceur en bas de l'écran"
     "3 s of invulnerability per room",  // "3 s d'invulnérabilité par salle"
+    "Last 30 days",  // "30 derniers jours"
     "4 Days",  // "4 Jours"
     "4.4 tiles/s - original pace",  // "4,4 cases/s - rythme d'origine"
     "40 moves with no man move or capture",  // "40 coups sans pion ni prise"
@@ -2064,11 +2108,14 @@ static const char* const kI18n_en[] = {
     "Arts & Literature",  // "Arts & Littérature"
     "Voice assistant",  // "Assistant vocal"
     "Pulls in nearby pickups",  // "Attire les bonus alentour"
+    "Idle",  // "Au repos"
     "White to play",  // "Au tour de Blanc"
     "Black to play",  // "Au tour de Noir"
     "No device",  // "Aucun appareil"
+    "No energy sensor chosen",  // "Aucun capteur d'énergie choisi"
     "No move possible — next team.",  // "Aucun déplacement possible — au suivant."
     "No active effect",  // "Aucun effet actif"
+    "No history",  // "Aucun historique"
     "No day selected in the next 8",  // "Aucun jour retenu dans les 8 prochains"
     "No items: open chests, defeat bosses, or visit the merchant.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "No upcoming appointment",  // "Aucun rendez-vous à venir"
@@ -2076,6 +2123,7 @@ static const char* const kI18n_en[] = {
     "No scores recorded yet.",  // "Aucun score enregistré pour l'instant."
     "No scores yet.\nStart a game!",  // "Aucun score pour l'instant.\nLance une partie !"
     "No work scheduled",  // "Aucun travail de prévu"
+    "No exchange",  // "Aucun échange"
     "No game in progress",  // "Aucune partie en cours"
     "No saved game",  // "Aucune partie sauvegardée"
     "No questions played",  // "Aucune question jouée"
@@ -2088,6 +2136,7 @@ static const char* const kI18n_en[] = {
     "Today {heure}",  // "Aujourd'hui {heure}"
     "Showers",  // "Averses"
     "Apr",  // "Avr"
+    "BATTERY",  // "BATTERIE"
     "BALL %d / %d",  // "BILLE %d / %d"
     "EXTRA BALL",  // "BILLE BONUS"
     "BALL LOST",  // "BILLE PERDUE"
@@ -2143,6 +2192,7 @@ static const char* const kI18n_en[] = {
     "Bedroom",  // "Chambre"
     "Switch stats variant",  // "Changer de variante"
     "Change settings",  // "Changer les réglages"
+    "Charging",  // "Charge"
     "Loading image...",  // "Chargement image..."
     "Loading...",  // "Chargement..."
     "Warm",  // "Chaud"
@@ -2171,6 +2221,7 @@ static const char* const kI18n_en[] = {
     "Advanced",  // "Confirmé"
     "Connected",  // "Connecté"
     "Saved in NVS, used for every game",  // "Conservés en NVS, valables pour toutes les parties"
+    "Consumption",  // "Consommation"
     "Control",  // "Contrôle"
     "Control: %s",  // "Contrôle : %s"
     "Control: %s   -   Speed: %s",  // "Contrôle : %s   -   Vitesse : %s"
@@ -2198,6 +2249,7 @@ static const char* const kI18n_en[] = {
     "Tomorrow",  // "Demain"
     "Tomorrow {heure}",  // "Demain {heure}"
     "Asks for confirmation",  // "Demande confirmation"
+    "From the grid",  // "Depuis le réseau"
     "Last move: MARKED",  // "Dernier coup : MARQUÉ"
     "Last move: NOT MARKED",  // "Dernier coup : NON MARQUÉ"
     "Two passes: mark the dead groups",  // "Deux passes : marquez les groupes morts"
@@ -2218,6 +2270,7 @@ static const char* const kI18n_en[] = {
     "Beginner",  // "Débutant"
     "Beginner: sees one move, makes mistakes",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dec",  // "Déc"
+    "Discharging",  // "Décharge"
     "Discovery",  // "Découverte"
     "Maze",  // "Dédale"
     "Lead time",  // "Délai"
@@ -2240,6 +2293,7 @@ static const char* const kI18n_en[] = {
     "Tab's full effort (aims for 5 moves)",  // "Effort maximal du Tab (5 coups visés)"
     "Slot %d: %s",  // "Emplacement %d : %s"
     "Slot %d: empty",  // "Emplacement %d : vide"
+    "Waiting for Home Assistant",  // "En attente de Home Assistant"
     "Error",  // "Erreur"
     "Staircase",  // "Escalier"
     "Eval %+.1f",  // "Eval %+.1f"
@@ -2284,6 +2338,7 @@ static const char* const kI18n_en[] = {
     "Handicap: none",  // "Handicap : aucun"
     "Fixed time",  // "Heure fixe"
     "Time not synced",  // "Heure non synchronisée"
+    "Hours",  // "Heures"
     "History",  // "Histoire"
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Not in top %d",  // "Hors du top %d"
@@ -2324,6 +2379,7 @@ static const char* const kI18n_en[] = {
     "Day",  // "Jour"
     "Day out of range",  // "Jour hors plage"
     "Today",  // "Journee"
+    "Days",  // "Jours"
     "Days (fixed time only)",  // "Jours (heure fixe uniquement)"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
@@ -2388,6 +2444,7 @@ static const char* const kI18n_en[] = {
     "Lode Runner 1983\nDig · climb · run",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Light",  // "Lumière"
     "Mon",  // "Lun"
+    "HOME",  // "MAISON"
     "Refresh screen",  // "MAJ Écran"
     "MODE",  // "MODE"
     "MULTIBALL OVER",  // "MULTIBALL TERMINÉ"
@@ -2412,6 +2469,7 @@ static const char* const kI18n_en[] = {
     "Game mode",  // "Mode de jeu"
     "God mode: %s",  // "Mode dieu : %s"
     "Training mode",  // "Mode entraînement"
+    "Months",  // "Mois"
     "Moving",  // "Mouvement"
     "Avg:",  // "Moy:"
     "Medium",  // "Moyen"
@@ -2527,6 +2585,7 @@ static const char* const kI18n_en[] = {
     "Must capture",  // "Prise obligatoire"
     "Capture x%d",  // "Prise x%d"
     "Captures: Black %u, White %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
+    "Produced today",  // "Produit aujourd'hui"
     "Gradual",  // "Progressif"
     "Offer a draw",  // "Proposer nulle"
     "Home",  // "Présent"
@@ -2628,6 +2687,7 @@ static const char* const kI18n_en[] = {
     "SHAKE = ROLL THE DIE",  // "SECOUSSE = LANCER LE DÉ"
     "SFX: on",  // "SFX : actifs"
     "SFX: off",  // "SFX : coupés"
+    "SOLAR",  // "SOLAIRE"
     "EXIT OPEN",  // "SORTIE OUVERTE"
     "STATISTICS",  // "STATISTIQUES"
     "SYSTEM",  // "SYSTÈME"
@@ -2750,6 +2810,7 @@ static const char* const kI18n_en[] = {
     "Fri",  // "Ven"
     "Fan",  // "Ventilation"
     "Locked",  // "Verrouillé"
+    "To the grid",  // "Vers le réseau"
     "White wins",  // "Victoire des Blancs"
     "Black wins",  // "Victoire des Noirs"
     "Fastest win: %u rounds",  // "Victoire la plus rapide : %u tours"
@@ -2830,6 +2891,7 @@ static const char* const kI18n_en[] = {
     "Eco",  // "Éco"
     "Listening…",  // "Écoute…"
     "Momentum",  // "Élan"
+    "Energy",  // "Énergie"
     "Team: %s",  // "Équipe : %s"
     "Equipment",  // "Équipement"
     "Off",  // "Éteint"
@@ -2846,6 +2908,7 @@ static const char* const kI18n_en[] = {
     "Pawn",  // "echecs|Pion"
     "King",  // "echecs|Roi"
     "Rook",  // "echecs|Tour"
+    "GRID",  // "energie|RÉSEAU"
     "T",  // "jeudi|J"
     "M",  // "lundi|L"
     "T",  // "mardi|M"
@@ -2947,6 +3010,7 @@ static const char* const kI18n_de[] = {
     "1 Fehler",  // "1 erreur"
     "1 bis 6 Teams",  // "1 à 6 équipes"
     "10,0 Felder/s - schnelle Reflexe",  // "10,0 cases/s - réflexes exigés"
+    "Letzte 12 Monate",  // "12 derniers mois"
     "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1",  // "1er"
@@ -2955,6 +3019,7 @@ static const char* const kI18n_de[] = {
     "3 Tage",  // "3 Jours"
     "3 Bälle - Abschuss unten am Bildschirm",  // "3 billes - lanceur en bas de l'écran"
     "3 s Unverwundbarkeit pro Raum",  // "3 s d'invulnérabilité par salle"
+    "Letzte 30 Tage",  // "30 derniers jours"
     "4 Tage",  // "4 Jours"
     "4,4 Felder/s - Originaltempo",  // "4,4 cases/s - rythme d'origine"
     "40 Züge ohne Steinzug oder Schlag",  // "40 coups sans pion ni prise"
@@ -3018,11 +3083,14 @@ static const char* const kI18n_de[] = {
     "Kunst & Literatur",  // "Arts & Littérature"
     "Sprachassistent",  // "Assistant vocal"
     "Zieht Boni in der Nähe an",  // "Attire les bonus alentour"
+    "Ruhend",  // "Au repos"
     "Weiß am Zug",  // "Au tour de Blanc"
     "Schwarz am Zug",  // "Au tour de Noir"
     "Kein Gerät",  // "Aucun appareil"
+    "Kein Energiesensor gewählt",  // "Aucun capteur d'énergie choisi"
     "Kein Zug möglich — nächstes Team.",  // "Aucun déplacement possible — au suivant."
     "Kein aktiver Effekt",  // "Aucun effet actif"
+    "Kein Verlauf",  // "Aucun historique"
     "Kein Tag in den nächsten 8 gewählt",  // "Aucun jour retenu dans les 8 prochains"
     "Keine Gegenstände: Truhen öffnen, Bosse besiegen oder zum Händler gehen.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "Keine anstehenden Termine",  // "Aucun rendez-vous à venir"
@@ -3030,6 +3098,7 @@ static const char* const kI18n_de[] = {
     "Noch keine Scores gespeichert.",  // "Aucun score enregistré pour l'instant."
     "Noch keine Scores.\nStarte ein Spiel!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Keine Arbeit geplant",  // "Aucun travail de prévu"
+    "Kein Austausch",  // "Aucun échange"
     "Kein laufendes Spiel",  // "Aucune partie en cours"
     "Kein gespeichertes Spiel",  // "Aucune partie sauvegardée"
     "Keine Fragen gespielt",  // "Aucune question jouée"
@@ -3042,6 +3111,7 @@ static const char* const kI18n_de[] = {
     "Heute {heure}",  // "Aujourd'hui {heure}"
     "Schauer",  // "Averses"
     "Apr",  // "Avr"
+    "BATTERIE",  // "BATTERIE"
     "BALL %d / %d",  // "BILLE %d / %d"
     "EXTRABALL",  // "BILLE BONUS"
     "BALL VERLOREN",  // "BILLE PERDUE"
@@ -3097,6 +3167,7 @@ static const char* const kI18n_de[] = {
     "Schlafz.",  // "Chambre"
     "Variante wechseln",  // "Changer de variante"
     "Einstellungen ändern",  // "Changer les réglages"
+    "Lädt",  // "Charge"
     "Lade Bild...",  // "Chargement image..."
     "Lädt...",  // "Chargement..."
     "Warm",  // "Chaud"
@@ -3125,6 +3196,7 @@ static const char* const kI18n_de[] = {
     "Erfahren",  // "Confirmé"
     "Verbunden",  // "Connecté"
     "In NVS gespeichert, gilt für alle Partien",  // "Conservés en NVS, valables pour toutes les parties"
+    "Verbrauch",  // "Consommation"
     "Steuerung",  // "Contrôle"
     "Steuerung: %s",  // "Contrôle : %s"
     "Steuerung: %s   -   Tempo: %s",  // "Contrôle : %s   -   Vitesse : %s"
@@ -3152,6 +3224,7 @@ static const char* const kI18n_de[] = {
     "Morgen",  // "Demain"
     "Morgen {heure}",  // "Demain {heure}"
     "Mit Rückfrage",  // "Demande confirmation"
+    "Aus dem Netz",  // "Depuis le réseau"
     "Letzter Zug: MARKIERT",  // "Dernier coup : MARQUÉ"
     "Letzter Zug: UNMARKIERT",  // "Dernier coup : NON MARQUÉ"
     "Zweimal gepasst: tote Gruppen markieren",  // "Deux passes : marquez les groupes morts"
@@ -3172,6 +3245,7 @@ static const char* const kI18n_de[] = {
     "Anfänger",  // "Débutant"
     "Anfänger: sieht einen Zug, macht Fehler",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dez",  // "Déc"
+    "Entlädt",  // "Décharge"
     "Entdeckung",  // "Découverte"
     "Gewirr",  // "Dédale"
     "Vorlauf",  // "Délai"
@@ -3194,6 +3268,7 @@ static const char* const kI18n_de[] = {
     "Volle Kraft des Tab (Ziel: 5 Züge)",  // "Effort maximal du Tab (5 coups visés)"
     "Platz %d: %s",  // "Emplacement %d : %s"
     "Platz %d: leer",  // "Emplacement %d : vide"
+    "Warte auf Home Assistant",  // "En attente de Home Assistant"
     "Fehler",  // "Erreur"
     "Treppe",  // "Escalier"
     "Eval %+.1f",  // "Eval %+.1f"
@@ -3238,6 +3313,7 @@ static const char* const kI18n_de[] = {
     "Vorgabe: keine",  // "Handicap : aucun"
     "Feste Zeit",  // "Heure fixe"
     "Zeit nicht synchronisiert",  // "Heure non synchronisée"
+    "Stunden",  // "Heures"
     "Geschichte",  // "Histoire"
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Nicht in Top %d",  // "Hors du top %d"
@@ -3278,6 +3354,7 @@ static const char* const kI18n_de[] = {
     "Tag",  // "Jour"
     "Tag nicht verfügbar",  // "Jour hors plage"
     "Heute",  // "Journee"
+    "Tage",  // "Jours"
     "Tage (nur bei fester Zeit)",  // "Jours (heure fixe uniquement)"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
@@ -3342,6 +3419,7 @@ static const char* const kI18n_de[] = {
     "Lode Runner 1983\nGraben · klettern · fliehen",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Licht",  // "Lumière"
     "Mo",  // "Lun"
+    "HAUS",  // "MAISON"
     "Aktualisieren",  // "MAJ Écran"
     "MODUS",  // "MODE"
     "MULTIBALL VORBEI",  // "MULTIBALL TERMINÉ"
@@ -3366,6 +3444,7 @@ static const char* const kI18n_de[] = {
     "Spielmodus",  // "Mode de jeu"
     "Gottmodus: %s",  // "Mode dieu : %s"
     "Trainingsmodus",  // "Mode entraînement"
+    "Monate",  // "Mois"
     "Fährt",  // "Mouvement"
     "Ø:",  // "Moy:"
     "Mittel",  // "Moyen"
@@ -3481,6 +3560,7 @@ static const char* const kI18n_de[] = {
     "Schlagzwang",  // "Prise obligatoire"
     "Schlag x%d",  // "Prise x%d"
     "Gefangene: Schwarz %u, Weiß %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
+    "Heute erzeugt",  // "Produit aujourd'hui"
     "Ansteigend",  // "Progressif"
     "Remis anbieten",  // "Proposer nulle"
     "Anwesend",  // "Présent"
@@ -3582,6 +3662,7 @@ static const char* const kI18n_de[] = {
     "SCHÜTTELN = WÜRFELN",  // "SECOUSSE = LANCER LE DÉ"
     "SFX: an",  // "SFX : actifs"
     "SFX: aus",  // "SFX : coupés"
+    "SOLAR",  // "SOLAIRE"
     "AUSGANG OFFEN",  // "SORTIE OUVERTE"
     "STATISTIK",  // "STATISTIQUES"
     "SYSTEM",  // "SYSTÈME"
@@ -3704,6 +3785,7 @@ static const char* const kI18n_de[] = {
     "Fr",  // "Ven"
     "Lüften",  // "Ventilation"
     "Gesperrt",  // "Verrouillé"
+    "Ins Netz",  // "Vers le réseau"
     "Weiß gewinnt",  // "Victoire des Blancs"
     "Schwarz gewinnt",  // "Victoire des Noirs"
     "Schnellster Sieg: %u Runden",  // "Victoire la plus rapide : %u tours"
@@ -3784,6 +3866,7 @@ static const char* const kI18n_de[] = {
     "Eco",  // "Éco"
     "Höre zu…",  // "Écoute…"
     "Schwung",  // "Élan"
+    "Energie",  // "Énergie"
     "Team: %s",  // "Équipe : %s"
     "Ausrüstung",  // "Équipement"
     "Aus",  // "Éteint"
@@ -3800,6 +3883,7 @@ static const char* const kI18n_de[] = {
     "Bauer",  // "echecs|Pion"
     "König",  // "echecs|Roi"
     "Turm",  // "echecs|Tour"
+    "NETZ",  // "energie|RÉSEAU"
     "D",  // "jeudi|J"
     "M",  // "lundi|L"
     "D",  // "mardi|M"
@@ -3901,6 +3985,7 @@ static const char* const kI18n_nl[] = {
     "1 fout",  // "1 erreur"
     "1 tot 6 teams",  // "1 à 6 équipes"
     "10,0 vakjes/s - snelle reflexen",  // "10,0 cases/s - réflexes exigés"
+    "Laatste 12 maanden",  // "12 derniers mois"
     "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1",  // "1er"
@@ -3909,6 +3994,7 @@ static const char* const kI18n_nl[] = {
     "3 dagen",  // "3 Jours"
     "3 ballen - plunjer onderaan",  // "3 billes - lanceur en bas de l'écran"
     "3 s onkwetsbaar per kamer",  // "3 s d'invulnérabilité par salle"
+    "Laatste 30 dagen",  // "30 derniers jours"
     "4 dagen",  // "4 Jours"
     "4,4 vakjes/s - origineel tempo",  // "4,4 cases/s - rythme d'origine"
     "40 zetten zonder schijf of slag",  // "40 coups sans pion ni prise"
@@ -3972,11 +4058,14 @@ static const char* const kI18n_nl[] = {
     "Kunst & Literatuur",  // "Arts & Littérature"
     "Spraakassistent",  // "Assistant vocal"
     "Trekt nabije bonussen aan",  // "Attire les bonus alentour"
+    "In rust",  // "Au repos"
     "Wit aan zet",  // "Au tour de Blanc"
     "Zwart aan zet",  // "Au tour de Noir"
     "Geen apparaat",  // "Aucun appareil"
+    "Geen energiesensor gekozen",  // "Aucun capteur d'énergie choisi"
     "Geen zet mogelijk — volgende team.",  // "Aucun déplacement possible — au suivant."
     "Geen actief effect",  // "Aucun effet actif"
+    "Geen geschiedenis",  // "Aucun historique"
     "Geen dag gekozen in de komende 8",  // "Aucun jour retenu dans les 8 prochains"
     "Geen voorwerpen: open kisten, versla eindbazen of ga langs bij de koopman.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "Geen afspraken gepland",  // "Aucun rendez-vous à venir"
@@ -3984,6 +4073,7 @@ static const char* const kI18n_nl[] = {
     "Nog geen scores opgeslagen.",  // "Aucun score enregistré pour l'instant."
     "Nog geen scores.\nStart een spel!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Geen werk gepland",  // "Aucun travail de prévu"
+    "Geen uitwisseling",  // "Aucun échange"
     "Geen spel bezig",  // "Aucune partie en cours"
     "Geen opgeslagen spel",  // "Aucune partie sauvegardée"
     "Geen vragen gespeeld",  // "Aucune question jouée"
@@ -3996,6 +4086,7 @@ static const char* const kI18n_nl[] = {
     "Vandaag {heure}",  // "Aujourd'hui {heure}"
     "Buien",  // "Averses"
     "Apr",  // "Avr"
+    "ACCU",  // "BATTERIE"
     "BAL %d / %d",  // "BILLE %d / %d"
     "EXTRA BAL",  // "BILLE BONUS"
     "BAL KWIJT",  // "BILLE PERDUE"
@@ -4051,6 +4142,7 @@ static const char* const kI18n_nl[] = {
     "Slaapkamer",  // "Chambre"
     "Stats-variant wisselen",  // "Changer de variante"
     "Opties wijzigen",  // "Changer les réglages"
+    "Laden",  // "Charge"
     "Afbeelding laden...",  // "Chargement image..."
     "Laden...",  // "Chargement..."
     "Warm",  // "Chaud"
@@ -4079,6 +4171,7 @@ static const char* const kI18n_nl[] = {
     "Gevorderd",  // "Confirmé"
     "Verbonden",  // "Connecté"
     "Bewaard in NVS, geldig voor alle partijen",  // "Conservés en NVS, valables pour toutes les parties"
+    "Verbruik",  // "Consommation"
     "Besturing",  // "Contrôle"
     "Besturing: %s",  // "Contrôle : %s"
     "Besturing: %s   -   Snelheid: %s",  // "Contrôle : %s   -   Vitesse : %s"
@@ -4106,6 +4199,7 @@ static const char* const kI18n_nl[] = {
     "Morgen",  // "Demain"
     "Morgen {heure}",  // "Demain {heure}"
     "Vraagt bevestiging",  // "Demande confirmation"
+    "Van het net",  // "Depuis le réseau"
     "Laatste zet: GEMARKEERD",  // "Dernier coup : MARQUÉ"
     "Laatste zet: NIET GEMARKEERD",  // "Dernier coup : NON MARQUÉ"
     "Twee passen: markeer de dode groepen",  // "Deux passes : marquez les groupes morts"
@@ -4126,6 +4220,7 @@ static const char* const kI18n_nl[] = {
     "Beginner",  // "Débutant"
     "Beginner: ziet één zet, maakt fouten",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dec",  // "Déc"
+    "Ontladen",  // "Décharge"
     "Ontdekking",  // "Découverte"
     "Doolhof",  // "Dédale"
     "Marge",  // "Délai"
@@ -4148,6 +4243,7 @@ static const char* const kI18n_nl[] = {
     "Maximale inzet van Tab (mikt op 5 zetten)",  // "Effort maximal du Tab (5 coups visés)"
     "Vak %d: %s",  // "Emplacement %d : %s"
     "Vak %d: leeg",  // "Emplacement %d : vide"
+    "Wachten op Home Assistant",  // "En attente de Home Assistant"
     "Fout",  // "Erreur"
     "Trap",  // "Escalier"
     "Eval %+.1f",  // "Eval %+.1f"
@@ -4192,6 +4288,7 @@ static const char* const kI18n_nl[] = {
     "Handicap: geen",  // "Handicap : aucun"
     "Vaste tijd",  // "Heure fixe"
     "Tijd niet gesynchroniseerd",  // "Heure non synchronisée"
+    "Uren",  // "Heures"
     "Historie",  // "Histoire"
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Niet in top %d",  // "Hors du top %d"
@@ -4232,6 +4329,7 @@ static const char* const kI18n_nl[] = {
     "Dag",  // "Jour"
     "Dag buiten bereik",  // "Jour hors plage"
     "Vandaag",  // "Journee"
+    "Dagen",  // "Jours"
     "Dagen (alleen vaste tijd)",  // "Jours (heure fixe uniquement)"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
@@ -4296,6 +4394,7 @@ static const char* const kI18n_nl[] = {
     "Lode Runner 1983\nGraaf · klim · vlucht",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Licht",  // "Lumière"
     "Ma",  // "Lun"
+    "HUIS",  // "MAISON"
     "Scherm verversen",  // "MAJ Écran"
     "MODUS",  // "MODE"
     "MULTIBALL VOORBIJ",  // "MULTIBALL TERMINÉ"
@@ -4320,6 +4419,7 @@ static const char* const kI18n_nl[] = {
     "Spelmodus",  // "Mode de jeu"
     "Godmodus: %s",  // "Mode dieu : %s"
     "Oefenmodus",  // "Mode entraînement"
+    "Maanden",  // "Mois"
     "Beweegt",  // "Mouvement"
     "Gem:",  // "Moy:"
     "Normaal",  // "Moyen"
@@ -4435,6 +4535,7 @@ static const char* const kI18n_nl[] = {
     "Slagplicht",  // "Prise obligatoire"
     "Slag x%d",  // "Prise x%d"
     "Gevangen stenen: Zwart %u, Wit %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
+    "Vandaag opgewekt",  // "Produit aujourd'hui"
     "Oplopend",  // "Progressif"
     "Remise aanbieden",  // "Proposer nulle"
     "Aanwezig",  // "Présent"
@@ -4536,6 +4637,7 @@ static const char* const kI18n_nl[] = {
     "SCHUDDEN = DOBBELEN",  // "SECOUSSE = LANCER LE DÉ"
     "SFX: aan",  // "SFX : actifs"
     "SFX: uit",  // "SFX : coupés"
+    "ZON",  // "SOLAIRE"
     "UITGANG OPEN",  // "SORTIE OUVERTE"
     "STATISTIEKEN",  // "STATISTIQUES"
     "SYSTEEM",  // "SYSTÈME"
@@ -4658,6 +4760,7 @@ static const char* const kI18n_nl[] = {
     "Vr",  // "Ven"
     "Ventilatie",  // "Ventilation"
     "Op slot",  // "Verrouillé"
+    "Naar het net",  // "Vers le réseau"
     "Wit wint",  // "Victoire des Blancs"
     "Zwart wint",  // "Victoire des Noirs"
     "Snelste zege: %u rondes",  // "Victoire la plus rapide : %u tours"
@@ -4738,6 +4841,7 @@ static const char* const kI18n_nl[] = {
     "Eco",  // "Éco"
     "Luistert…",  // "Écoute…"
     "Vaart",  // "Élan"
+    "Energie",  // "Énergie"
     "Team: %s",  // "Équipe : %s"
     "Uitrusting",  // "Équipement"
     "Uit",  // "Éteint"
@@ -4754,6 +4858,7 @@ static const char* const kI18n_nl[] = {
     "Pion",  // "echecs|Pion"
     "Koning",  // "echecs|Roi"
     "Toren",  // "echecs|Tour"
+    "NET",  // "energie|RÉSEAU"
     "D",  // "jeudi|J"
     "M",  // "lundi|L"
     "D",  // "mardi|M"
@@ -4855,6 +4960,7 @@ static const char* const kI18n_es[] = {
     "1 error",  // "1 erreur"
     "1 a 6 equipos",  // "1 à 6 équipes"
     "10,0 casillas/s - reflejos rápidos",  // "10,0 cases/s - réflexes exigés"
+    "Últimos 12 meses",  // "12 derniers mois"
     "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1",  // "1er"
@@ -4863,6 +4969,7 @@ static const char* const kI18n_es[] = {
     "3 días",  // "3 Jours"
     "3 bolas - lanzador abajo",  // "3 billes - lanceur en bas de l'écran"
     "3 s de invulnerabilidad por sala",  // "3 s d'invulnérabilité par salle"
+    "Últimos 30 días",  // "30 derniers jours"
     "4 días",  // "4 Jours"
     "4,4 casillas/s - ritmo original",  // "4,4 cases/s - rythme d'origine"
     "40 jugadas sin mover peón ni capturar",  // "40 coups sans pion ni prise"
@@ -4926,11 +5033,14 @@ static const char* const kI18n_es[] = {
     "Arte y Literatura",  // "Arts & Littérature"
     "Asistente de voz",  // "Assistant vocal"
     "Atrae los bonus cercanos",  // "Attire les bonus alentour"
+    "En reposo",  // "Au repos"
     "Turno de Blanco",  // "Au tour de Blanc"
     "Turno de Negro",  // "Au tour de Noir"
     "Ningún dispositivo",  // "Aucun appareil"
+    "Ningún sensor de energía elegido",  // "Aucun capteur d'énergie choisi"
     "Sin movimiento posible — turno del siguiente.",  // "Aucun déplacement possible — au suivant."
     "Sin efecto activo",  // "Aucun effet actif"
+    "Sin historial",  // "Aucun historique"
     "Ningún día elegido en los próximos 8",  // "Aucun jour retenu dans les 8 prochains"
     "Ningún objeto: abre cofres, derrota a los jefes o visita al mercader.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "No hay citas próximas",  // "Aucun rendez-vous à venir"
@@ -4938,6 +5048,7 @@ static const char* const kI18n_es[] = {
     "Aún no hay puntuaciones guardadas.",  // "Aucun score enregistré pour l'instant."
     "Aún no hay puntuaciones.\n¡Empieza una partida!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Sin trabajo previsto",  // "Aucun travail de prévu"
+    "Sin intercambio",  // "Aucun échange"
     "Ninguna partida en curso",  // "Aucune partie en cours"
     "Ninguna partida guardada",  // "Aucune partie sauvegardée"
     "Sin preguntas jugadas",  // "Aucune question jouée"
@@ -4950,6 +5061,7 @@ static const char* const kI18n_es[] = {
     "Hoy {heure}",  // "Aujourd'hui {heure}"
     "Chubascos",  // "Averses"
     "Abr",  // "Avr"
+    "BATERÍA",  // "BATTERIE"
     "BOLA %d / %d",  // "BILLE %d / %d"
     "BOLA EXTRA",  // "BILLE BONUS"
     "BOLA PERDIDA",  // "BILLE PERDUE"
@@ -5005,6 +5117,7 @@ static const char* const kI18n_es[] = {
     "Dormitorio",  // "Chambre"
     "Cambiar de variante",  // "Changer de variante"
     "Cambiar ajustes",  // "Changer les réglages"
+    "Carga",  // "Charge"
     "Cargando imagen...",  // "Chargement image..."
     "Cargando...",  // "Chargement..."
     "Cálido",  // "Chaud"
@@ -5033,6 +5146,7 @@ static const char* const kI18n_es[] = {
     "Avanzado",  // "Confirmé"
     "Conectado",  // "Connecté"
     "Guardados en NVS, válidos para todas las partidas",  // "Conservés en NVS, valables pour toutes les parties"
+    "Consumo",  // "Consommation"
     "Control",  // "Contrôle"
     "Control: %s",  // "Contrôle : %s"
     "Control: %s   -   Velocidad: %s",  // "Contrôle : %s   -   Vitesse : %s"
@@ -5060,6 +5174,7 @@ static const char* const kI18n_es[] = {
     "Mañana",  // "Demain"
     "Mañana {heure}",  // "Demain {heure}"
     "Pide confirmación",  // "Demande confirmation"
+    "Desde la red",  // "Depuis le réseau"
     "Última jugada: MARCADA",  // "Dernier coup : MARQUÉ"
     "Última jugada: SIN MARCAR",  // "Dernier coup : NON MARQUÉ"
     "Dos pases: marca los grupos muertos",  // "Deux passes : marquez les groupes morts"
@@ -5080,6 +5195,7 @@ static const char* const kI18n_es[] = {
     "Novato",  // "Débutant"
     "Principiante: ve una jugada, se equivoca",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dic",  // "Déc"
+    "Descarga",  // "Décharge"
     "Hallazgo",  // "Découverte"
     "Laberinto",  // "Dédale"
     "Antelación",  // "Délai"
@@ -5102,6 +5218,7 @@ static const char* const kI18n_es[] = {
     "Máximo esfuerzo del Tab (hasta 5 jugadas)",  // "Effort maximal du Tab (5 coups visés)"
     "Ranura %d: %s",  // "Emplacement %d : %s"
     "Ranura %d: vacía",  // "Emplacement %d : vide"
+    "Esperando a Home Assistant",  // "En attente de Home Assistant"
     "Error",  // "Erreur"
     "Escalera",  // "Escalier"
     "Eval %+.1f",  // "Eval %+.1f"
@@ -5146,6 +5263,7 @@ static const char* const kI18n_es[] = {
     "Hándicap: ninguno",  // "Handicap : aucun"
     "Hora fija",  // "Heure fixe"
     "Hora no sincronizada",  // "Heure non synchronisée"
+    "Horas",  // "Heures"
     "Historia",  // "Histoire"
     "Home Assistant sin conexión",  // "Home Assistant hors ligne"
     "Fuera del top %d",  // "Hors du top %d"
@@ -5186,6 +5304,7 @@ static const char* const kI18n_es[] = {
     "Día",  // "Jour"
     "Día fuera de rango",  // "Jour hors plage"
     "Hoy",  // "Journee"
+    "Días",  // "Jours"
     "Días (solo hora fija)",  // "Jours (heure fixe uniquement)"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
@@ -5250,6 +5369,7 @@ static const char* const kI18n_es[] = {
     "Lode Runner 1983\nCava · trepa · huye",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Luz",  // "Lumière"
     "Lun",  // "Lun"
+    "CASA",  // "MAISON"
     "Refrescar pantalla",  // "MAJ Écran"
     "MODO",  // "MODE"
     "FIN DEL MULTIBALL",  // "MULTIBALL TERMINÉ"
@@ -5274,6 +5394,7 @@ static const char* const kI18n_es[] = {
     "Modo de juego",  // "Mode de jeu"
     "Modo dios: %s",  // "Mode dieu : %s"
     "Modo entrenamiento",  // "Mode entraînement"
+    "Meses",  // "Mois"
     "Moviendo",  // "Mouvement"
     "Media:",  // "Moy:"
     "Media",  // "Moyen"
@@ -5389,6 +5510,7 @@ static const char* const kI18n_es[] = {
     "Captura obligatoria",  // "Prise obligatoire"
     "Captura x%d",  // "Prise x%d"
     "Prisioneros: Negro %u, Blanco %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
+    "Producido hoy",  // "Produit aujourd'hui"
     "Progresivo",  // "Progressif"
     "Ofrecer tablas",  // "Proposer nulle"
     "Presente",  // "Présent"
@@ -5490,6 +5612,7 @@ static const char* const kI18n_es[] = {
     "SACUDIR = TIRAR EL DADO",  // "SECOUSSE = LANCER LE DÉ"
     "SFX: activos",  // "SFX : actifs"
     "SFX: apagados",  // "SFX : coupés"
+    "SOLAR",  // "SOLAIRE"
     "SALIDA ABIERTA",  // "SORTIE OUVERTE"
     "ESTADÍSTICAS",  // "STATISTIQUES"
     "SISTEMA",  // "SYSTÈME"
@@ -5612,6 +5735,7 @@ static const char* const kI18n_es[] = {
     "Vie",  // "Ven"
     "Ventilación",  // "Ventilation"
     "Bloqueado",  // "Verrouillé"
+    "Hacia la red",  // "Vers le réseau"
     "Ganan las blancas",  // "Victoire des Blancs"
     "Ganan las negras",  // "Victoire des Noirs"
     "Victoria más rápida: %u rondas",  // "Victoire la plus rapide : %u tours"
@@ -5692,6 +5816,7 @@ static const char* const kI18n_es[] = {
     "Eco",  // "Éco"
     "Escuchando…",  // "Écoute…"
     "Impulso",  // "Élan"
+    "Energía",  // "Énergie"
     "Equipo: %s",  // "Équipe : %s"
     "Equipo",  // "Équipement"
     "OFF",  // "Éteint"
@@ -5708,6 +5833,7 @@ static const char* const kI18n_es[] = {
     "Peón",  // "echecs|Pion"
     "Rey",  // "echecs|Roi"
     "Torre",  // "echecs|Tour"
+    "RED",  // "energie|RÉSEAU"
     "J",  // "jeudi|J"
     "L",  // "lundi|L"
     "M",  // "mardi|M"
@@ -5809,6 +5935,7 @@ static const char* const kI18n_it[] = {
     "1 errore",  // "1 erreur"
     "1–6 squadre",  // "1 à 6 équipes"
     "10,0 caselle/s - riflessi pronti",  // "10,0 cases/s - réflexes exigés"
+    "Ultimi 12 mesi",  // "12 derniers mois"
     "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1°",  // "1er"
@@ -5817,6 +5944,7 @@ static const char* const kI18n_it[] = {
     "3 giorni",  // "3 Jours"
     "3 palle - lanciatore in basso",  // "3 billes - lanceur en bas de l'écran"
     "3 s di invulnerabilità per stanza",  // "3 s d'invulnérabilité par salle"
+    "Ultimi 30 giorni",  // "30 derniers jours"
     "4 giorni",  // "4 Jours"
     "4,4 caselle/s - ritmo originale",  // "4,4 cases/s - rythme d'origine"
     "40 mosse di sole dame, senza prese",  // "40 coups sans pion ni prise"
@@ -5880,11 +6008,14 @@ static const char* const kI18n_it[] = {
     "Arte & Letteratura",  // "Arts & Littérature"
     "Assistente vocale",  // "Assistant vocal"
     "Attira i bonus vicini",  // "Attire les bonus alentour"
+    "A riposo",  // "Au repos"
     "Tocca al Bianco",  // "Au tour de Blanc"
     "Tocca al Nero",  // "Au tour de Noir"
     "Nessun dispositivo",  // "Aucun appareil"
+    "Nessun sensore di energia scelto",  // "Aucun capteur d'énergie choisi"
     "Nessuna mossa possibile — passa la mano.",  // "Aucun déplacement possible — au suivant."
     "Nessun effetto attivo",  // "Aucun effet actif"
+    "Nessuno storico",  // "Aucun historique"
     "Nessun giorno scelto nei prossimi 8",  // "Aucun jour retenu dans les 8 prochains"
     "Nessun oggetto: apri forzieri, sconfiggi i boss o passa dal mercante.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "Nessun appuntamento",  // "Aucun rendez-vous à venir"
@@ -5892,6 +6023,7 @@ static const char* const kI18n_it[] = {
     "Ancora nessun punteggio salvato.",  // "Aucun score enregistré pour l'instant."
     "Ancora nessun punteggio.\nInizia una partita!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Nessun lavoro previsto",  // "Aucun travail de prévu"
+    "Nessuno scambio",  // "Aucun échange"
     "Nessuna partita in corso",  // "Aucune partie en cours"
     "Nessuna partita salvata",  // "Aucune partie sauvegardée"
     "Nessuna domanda giocata",  // "Aucune question jouée"
@@ -5904,6 +6036,7 @@ static const char* const kI18n_it[] = {
     "Oggi {heure}",  // "Aujourd'hui {heure}"
     "Rovesci",  // "Averses"
     "Apr",  // "Avr"
+    "BATTERIA",  // "BATTERIE"
     "PALLA %d / %d",  // "BILLE %d / %d"
     "PALLA EXTRA",  // "BILLE BONUS"
     "PALLA PERSA",  // "BILLE PERDUE"
@@ -5959,6 +6092,7 @@ static const char* const kI18n_it[] = {
     "Camera",  // "Chambre"
     "Cambia variante",  // "Changer de variante"
     "Cambia le opzioni",  // "Changer les réglages"
+    "Carica",  // "Charge"
     "Carico l'immagine...",  // "Chargement image..."
     "Caricamento...",  // "Chargement..."
     "Caldo",  // "Chaud"
@@ -5987,6 +6121,7 @@ static const char* const kI18n_it[] = {
     "Avanzato",  // "Confirmé"
     "Connesso",  // "Connecté"
     "Salvate in NVS, valide per tutte le partite",  // "Conservés en NVS, valables pour toutes les parties"
+    "Consumo",  // "Consommation"
     "Controllo",  // "Contrôle"
     "Controllo: %s",  // "Contrôle : %s"
     "Controllo: %s   -   Velocità: %s",  // "Contrôle : %s   -   Vitesse : %s"
@@ -6014,6 +6149,7 @@ static const char* const kI18n_it[] = {
     "Domani",  // "Demain"
     "Domani {heure}",  // "Demain {heure}"
     "Chiede conferma",  // "Demande confirmation"
+    "Dalla rete",  // "Depuis le réseau"
     "Ultima mossa: SEGNATA",  // "Dernier coup : MARQUÉ"
     "Ultima mossa: NON SEGNATA",  // "Dernier coup : NON MARQUÉ"
     "Entrambi passano: segna i gruppi morti",  // "Deux passes : marquez les groupes morts"
@@ -6034,6 +6170,7 @@ static const char* const kI18n_it[] = {
     "Principiante",  // "Débutant"
     "Principiante: vede una sola mossa, sbaglia",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dic",  // "Déc"
+    "Scarica",  // "Décharge"
     "Scoperta",  // "Découverte"
     "Dedalo",  // "Dédale"
     "Anticipo",  // "Délai"
@@ -6056,6 +6193,7 @@ static const char* const kI18n_it[] = {
     "Massimo sforzo del Tab (punta a 5 mosse)",  // "Effort maximal du Tab (5 coups visés)"
     "Slot %d: %s",  // "Emplacement %d : %s"
     "Slot %d: vuoto",  // "Emplacement %d : vide"
+    "In attesa di Home Assistant",  // "En attente de Home Assistant"
     "Errore",  // "Erreur"
     "Scala",  // "Escalier"
     "Val %+.1f",  // "Eval %+.1f"
@@ -6100,6 +6238,7 @@ static const char* const kI18n_it[] = {
     "Handicap: nessuno",  // "Handicap : aucun"
     "Ora fissa",  // "Heure fixe"
     "Ora non sincronizzata",  // "Heure non synchronisée"
+    "Ore",  // "Heures"
     "Storia",  // "Histoire"
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Non in top %d",  // "Hors du top %d"
@@ -6140,6 +6279,7 @@ static const char* const kI18n_it[] = {
     "Giorno",  // "Jour"
     "Giorno non valido",  // "Jour hors plage"
     "Oggi",  // "Journee"
+    "Giorni",  // "Jours"
     "Giorni (solo con ora fissa)",  // "Jours (heure fixe uniquement)"
     "Lug",  // "Juil"
     "Giu",  // "Juin"
@@ -6204,6 +6344,7 @@ static const char* const kI18n_it[] = {
     "Lode Runner 1983\nScava · sali · fuggi",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Luce",  // "Lumière"
     "Lun",  // "Lun"
+    "CASA",  // "MAISON"
     "Aggiorna schermo",  // "MAJ Écran"
     "MODALITÀ",  // "MODE"
     "MULTIBALL FINITO",  // "MULTIBALL TERMINÉ"
@@ -6228,6 +6369,7 @@ static const char* const kI18n_it[] = {
     "Modalità",  // "Mode de jeu"
     "Modalità Dio: %s",  // "Mode dieu : %s"
     "Modalità allenamento",  // "Mode entraînement"
+    "Mesi",  // "Mois"
     "In moto",  // "Mouvement"
     "Media:",  // "Moy:"
     "Medio",  // "Moyen"
@@ -6343,6 +6485,7 @@ static const char* const kI18n_it[] = {
     "Presa obbligatoria",  // "Prise obligatoire"
     "Presa x%d",  // "Prise x%d"
     "Prigionieri: Nero %u, Bianco %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
+    "Prodotto oggi",  // "Produit aujourd'hui"
     "Progressivo",  // "Progressif"
     "Proponi patta",  // "Proposer nulle"
     "Presente",  // "Présent"
@@ -6444,6 +6587,7 @@ static const char* const kI18n_it[] = {
     "SCOSSA = TIRA IL DADO",  // "SECOUSSE = LANCER LE DÉ"
     "SFX: accesi",  // "SFX : actifs"
     "SFX: spenti",  // "SFX : coupés"
+    "SOLARE",  // "SOLAIRE"
     "USCITA APERTA",  // "SORTIE OUVERTE"
     "STATISTICHE",  // "STATISTIQUES"
     "SISTEMA",  // "SYSTÈME"
@@ -6566,6 +6710,7 @@ static const char* const kI18n_it[] = {
     "Ven",  // "Ven"
     "Ventilazione",  // "Ventilation"
     "Bloccato",  // "Verrouillé"
+    "Verso la rete",  // "Vers le réseau"
     "Vince il Bianco",  // "Victoire des Blancs"
     "Vince il Nero",  // "Victoire des Noirs"
     "Vittoria più rapida: %u turni",  // "Victoire la plus rapide : %u tours"
@@ -6646,6 +6791,7 @@ static const char* const kI18n_it[] = {
     "Eco",  // "Éco"
     "Ascolto…",  // "Écoute…"
     "Slancio",  // "Élan"
+    "Energia",  // "Énergie"
     "Squadra: %s",  // "Équipe : %s"
     "Equipaggiamento",  // "Équipement"
     "Spento",  // "Éteint"
@@ -6662,6 +6808,7 @@ static const char* const kI18n_it[] = {
     "Pedone",  // "echecs|Pion"
     "Re",  // "echecs|Roi"
     "Torre",  // "echecs|Tour"
+    "RETE",  // "energie|RÉSEAU"
     "G",  // "jeudi|J"
     "L",  // "lundi|L"
     "M",  // "mardi|M"
@@ -6763,6 +6910,7 @@ static const char* const kI18n_tr[] = {
     "1 hata",  // "1 erreur"
     "1-6 takım",  // "1 à 6 équipes"
     "10,0 kare/sn - refleks şart",  // "10,0 cases/s - réflexes exigés"
+    "Son 12 ay",  // "12 derniers mois"
     "15 dk",  // "15 min"
     "15 dk + 10 sn",  // "15 min + 10 s"
     "1",  // "1er"
@@ -6771,6 +6919,7 @@ static const char* const kI18n_tr[] = {
     "3 Gün",  // "3 Jours"
     "3 bilye - fırlatıcı ekranın altında",  // "3 billes - lanceur en bas de l'écran"
     "Oda başına 3 sn dokunulmazlık",  // "3 s d'invulnérabilité par salle"
+    "Son 30 gün",  // "30 derniers jours"
     "4 Gün",  // "4 Jours"
     "4,4 kare/sn - özgün tempo",  // "4,4 cases/s - rythme d'origine"
     "Taş hamlesi ve alma yok: 40 hamle",  // "40 coups sans pion ni prise"
@@ -6834,11 +6983,14 @@ static const char* const kI18n_tr[] = {
     "Sanat & Edebiyat",  // "Arts & Littérature"
     "Sesli asistan",  // "Assistant vocal"
     "Yakındaki bonusları çeker",  // "Attire les bonus alentour"
+    "Beklemede",  // "Au repos"
     "Sıra: Beyaz",  // "Au tour de Blanc"
     "Sıra: Siyah",  // "Au tour de Noir"
     "Cihaz yok",  // "Aucun appareil"
+    "Enerji sensörü seçilmedi",  // "Aucun capteur d'énergie choisi"
     "Hamle yok — sıra sonrakinde.",  // "Aucun déplacement possible — au suivant."
     "Etkin efekt yok",  // "Aucun effet actif"
+    "Geçmiş yok",  // "Aucun historique"
     "Önümüzdeki 8 günde seçili gün yok",  // "Aucun jour retenu dans les 8 prochains"
     "Eşya yok: sandık aç, boss yen ya da tüccara uğra.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "Yaklaşan randevu yok",  // "Aucun rendez-vous à venir"
@@ -6846,6 +6998,7 @@ static const char* const kI18n_tr[] = {
     "Henüz kayıtlı skor yok.",  // "Aucun score enregistré pour l'instant."
     "Henüz skor yok.\nBir oyun başlat!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Planlı iş yok",  // "Aucun travail de prévu"
+    "Akış yok",  // "Aucun échange"
     "Devam eden oyun yok",  // "Aucune partie en cours"
     "Kayıtlı oyun yok",  // "Aucune partie sauvegardée"
     "Oynanan soru yok",  // "Aucune question jouée"
@@ -6858,6 +7011,7 @@ static const char* const kI18n_tr[] = {
     "Bugün {heure}",  // "Aujourd'hui {heure}"
     "Sağanak",  // "Averses"
     "Nis",  // "Avr"
+    "BATARYA",  // "BATTERIE"
     "BİLYE %d / %d",  // "BILLE %d / %d"
     "EKSTRA BİLYE",  // "BILLE BONUS"
     "BİLYE KAYBOLDU",  // "BILLE PERDUE"
@@ -6913,6 +7067,7 @@ static const char* const kI18n_tr[] = {
     "Yatak odası",  // "Chambre"
     "Varyantı değiştir",  // "Changer de variante"
     "Ayarları değiştir",  // "Changer les réglages"
+    "Şarj",  // "Charge"
     "Görsel yükleniyor...",  // "Chargement image..."
     "Yükleniyor...",  // "Chargement..."
     "Sıcak",  // "Chaud"
@@ -6941,6 +7096,7 @@ static const char* const kI18n_tr[] = {
     "İleri",  // "Confirmé"
     "Bağlı",  // "Connecté"
     "NVS'de saklanır, tüm oyunlar için geçerli",  // "Conservés en NVS, valables pour toutes les parties"
+    "Tüketim",  // "Consommation"
     "Kontrol",  // "Contrôle"
     "Kontrol: %s",  // "Contrôle : %s"
     "Kontrol: %s   -   Hız: %s",  // "Contrôle : %s   -   Vitesse : %s"
@@ -6968,6 +7124,7 @@ static const char* const kI18n_tr[] = {
     "Yarın",  // "Demain"
     "Yarın {heure}",  // "Demain {heure}"
     "Onay ister",  // "Demande confirmation"
+    "Şebekeden",  // "Depuis le réseau"
     "Son hamle: İŞARETLİ",  // "Dernier coup : MARQUÉ"
     "Son hamle: İŞARETSİZ",  // "Dernier coup : NON MARQUÉ"
     "İki pas: ölü grupları işaretle",  // "Deux passes : marquez les groupes morts"
@@ -6988,6 +7145,7 @@ static const char* const kI18n_tr[] = {
     "Başlangıç",  // "Débutant"
     "Başlangıç: tek hamle görür, hata yapar",  // "Débutant : ne voit qu'un coup, se trompe"
     "Ara",  // "Déc"
+    "Deşarj",  // "Décharge"
     "Keşif",  // "Découverte"
     "Labirent",  // "Dédale"
     "Ön süre",  // "Délai"
@@ -7010,6 +7168,7 @@ static const char* const kI18n_tr[] = {
     "Tab'ın tam gücü (5 hamle hedefler)",  // "Effort maximal du Tab (5 coups visés)"
     "Yuva %d: %s",  // "Emplacement %d : %s"
     "Yuva %d: boş",  // "Emplacement %d : vide"
+    "Home Assistant bekleniyor",  // "En attente de Home Assistant"
     "Hata",  // "Erreur"
     "Merdiven",  // "Escalier"
     "Değ. %+.1f",  // "Eval %+.1f"
@@ -7054,6 +7213,7 @@ static const char* const kI18n_tr[] = {
     "Handikap: yok",  // "Handicap : aucun"
     "Sabit saat",  // "Heure fixe"
     "Saat eşitlenmedi",  // "Heure non synchronisée"
+    "Saatler",  // "Heures"
     "Tarih",  // "Histoire"
     "Home Assistant çevrimdışı",  // "Home Assistant hors ligne"
     "İlk %d dışında",  // "Hors du top %d"
@@ -7094,6 +7254,7 @@ static const char* const kI18n_tr[] = {
     "Gün",  // "Jour"
     "Gün aralık dışı",  // "Jour hors plage"
     "Bugün",  // "Journee"
+    "Günler",  // "Jours"
     "Günler (yalnız sabit saat)",  // "Jours (heure fixe uniquement)"
     "Tem",  // "Juil"
     "Haz",  // "Juin"
@@ -7158,6 +7319,7 @@ static const char* const kI18n_tr[] = {
     "Lode Runner 1983\nKaz · tırman · kaç",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Işık",  // "Lumière"
     "Pzt",  // "Lun"
+    "EV",  // "MAISON"
     "Ekranı yenile",  // "MAJ Écran"
     "MOD",  // "MODE"
     "MULTIBALL BİTTİ",  // "MULTIBALL TERMINÉ"
@@ -7182,6 +7344,7 @@ static const char* const kI18n_tr[] = {
     "Oyun modu",  // "Mode de jeu"
     "Tanrı modu: %s",  // "Mode dieu : %s"
     "Antrenman modu",  // "Mode entraînement"
+    "Aylar",  // "Mois"
     "Hareket",  // "Mouvement"
     "Ort:",  // "Moy:"
     "Orta",  // "Moyen"
@@ -7297,6 +7460,7 @@ static const char* const kI18n_tr[] = {
     "Alma zorunlu",  // "Prise obligatoire"
     "Alma x%d",  // "Prise x%d"
     "Oyundaki esirler: Siyah %u, Beyaz %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
+    "Bugün üretilen",  // "Produit aujourd'hui"
     "Kademeli",  // "Progressif"
     "Beraberlik öner",  // "Proposer nulle"
     "Evde",  // "Présent"
@@ -7398,6 +7562,7 @@ static const char* const kI18n_tr[] = {
     "SALLAMA = ZAR AT",  // "SECOUSSE = LANCER LE DÉ"
     "SFX: açık",  // "SFX : actifs"
     "SFX: kapalı",  // "SFX : coupés"
+    "GÜNEŞ",  // "SOLAIRE"
     "ÇIKIŞ AÇIK",  // "SORTIE OUVERTE"
     "İSTATİSTİKLER",  // "STATISTIQUES"
     "SİSTEM",  // "SYSTÈME"
@@ -7520,6 +7685,7 @@ static const char* const kI18n_tr[] = {
     "Cum",  // "Ven"
     "Fan",  // "Ventilation"
     "Kilitli",  // "Verrouillé"
+    "Şebekeye",  // "Vers le réseau"
     "Beyaz kazandı",  // "Victoire des Blancs"
     "Siyah kazandı",  // "Victoire des Noirs"
     "En hızlı zafer: %u tur",  // "Victoire la plus rapide : %u tours"
@@ -7600,6 +7766,7 @@ static const char* const kI18n_tr[] = {
     "Eko",  // "Éco"
     "Dinliyor…",  // "Écoute…"
     "Atılım",  // "Élan"
+    "Enerji",  // "Énergie"
     "Takım: %s",  // "Équipe : %s"
     "Teçhizat",  // "Équipement"
     "Kapalı",  // "Éteint"
@@ -7616,6 +7783,7 @@ static const char* const kI18n_tr[] = {
     "Piyon",  // "echecs|Pion"
     "Şah",  // "echecs|Roi"
     "Kale",  // "echecs|Tour"
+    "ŞEBEKE",  // "energie|RÉSEAU"
     "P",  // "jeudi|J"
     "P",  // "lundi|L"
     "S",  // "mardi|M"

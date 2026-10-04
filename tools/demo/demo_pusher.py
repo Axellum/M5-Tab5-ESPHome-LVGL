@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import datetime as _dt
 import logging
 import re
 import sys
@@ -50,6 +51,9 @@ from scenarios import (
     build_emplacements_payload,
     build_tuiles_payload,
     build_zones_absentes,
+    build_energie_historique,
+    build_energie_payload,
+    ENERGIE_VUES,
     code_pluie,
     build_heures_bulk_payload,
     build_pluie_1h_bulk_payload,
@@ -85,6 +89,12 @@ SERVICES_ATTENDUS = (
 # tuiles fixes. Comme le blueprint, la démo ne l'appelle alors pas et ne pousse pas les
 # états des tuiles (clés tRT) : les emplacements 3.x suffisent.
 SERVICE_TUILES = "tab5_maj_tuiles"
+# Popup Énergie (ADR-0028) : absent d'un firmware plus ancien. HA ne pousse qu'à
+# l'ouverture du popup (événement esphome.tab5_energie) ; la démo pousse aussi à chaque
+# scène, pour que le rendu (tools/rendu/capturer.py, qui ne répond à aucun événement)
+# trouve ses données.
+SERVICE_ENERGIE = "tab5_maj_energie"
+SERVICE_ENERGIE_HISTORIQUE = "tab5_maj_energie_historique"
 
 
 def lire_contrat(chemin: Path = API_LOGIC) -> dict[str, tuple[str, ...]]:
@@ -280,14 +290,28 @@ async def _pousser_zones(client, services_par_nom: dict, absentes: frozenset) ->
     await _appeler(client, services_par_nom, "tab5_maj_zones", absentes=build_zones_absentes(absentes))
 
 
+async def _pousser_energie(client, services_par_nom: dict, vues=tuple(ENERGIE_VUES),
+                           aujourd_hui: _dt.date | None = None) -> None:
+    """Réponse de script.tab5_energie (packages/tab5_energie.yaml) : l'instantané, puis
+    l'historique de chaque vue de `vues`. Rien sur un firmware sans le popup Énergie."""
+    if SERVICE_ENERGIE not in services_par_nom:
+        return
+    jour = aujourd_hui or _dt.date.today()
+    await _appeler(client, services_par_nom, SERVICE_ENERGIE, payload=build_energie_payload())
+    for vue in vues:
+        await _appeler(client, services_par_nom, SERVICE_ENERGIE_HISTORIQUE,
+                       **build_energie_historique(vue, jour))
+
+
 async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozenset,
-                         attendre=None) -> None:
+                         attendre=None, aujourd_hui: _dt.date | None = None) -> None:
     """Appelle les services tab5_maj_* d'une scène, avec le pacing de prod. Comme le
     package HA (lot 5b), rien pour la clim ni le volet quand leur zone est absente.
     Les définitions des pièces (tab5_maj_tuiles) partent à chaque scène, juste avant
     les états : la tablette ne réécrit ses définitions en NVS que si elles changent
     (ADR-0023), et le rendu (tools/rendu/capturer.py) n'a pas d'autre moment pour les
-    recevoir. `attendre` remplace asyncio.sleep (--dry-run : aucune attente)."""
+    recevoir. `attendre` remplace asyncio.sleep (--dry-run : aucune attente).
+    `aujourd_hui` : date de l'historique de l'énergie (le rendu la fige)."""
 
     attendre = attendre or asyncio.sleep
 
@@ -350,8 +374,14 @@ async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozen
     await appeler("tab5_maj_emplacements",
                   payload=build_emplacements_payload(absentes, pieces, _clim_poussee(scene, absentes)))
 
+    # Popup Énergie (ADR-0028) : la maison solaire de la démo, sauf maison minimale.
+    if not absentes:
+        await attendre(DELAI_ENTRE_BLOCS)
+        await _pousser_energie(client, services_par_nom, aujourd_hui=aujourd_hui)
 
-def _gerer_appel_service(interactive: bool, repondre_zones, pieces: dict | None = None):
+
+def _gerer_appel_service(interactive: bool, repondre_zones, pieces: dict | None = None,
+                        repondre_energie=None):
     """Callback appelé quand le firmware envoie un homeassistant.event: (bouton pressé,
     demande à HA ; depuis l'ADR-0025 il n'envoie plus de homeassistant.service:, un
     firmware 3.1 ou plus ancien si).
@@ -366,11 +396,18 @@ def _gerer_appel_service(interactive: bool, repondre_zones, pieces: dict | None 
 
     `pieces` : celles poussées (firmware 3.2), pour nommer la tuile (« tRT ») ou la
     pièce (« pR ») d'une commande dans le journal.
+
+    L'événement esphome.tab5_energie (popup Énergie ouvert, ou sa vue changée, ADR-0028)
+    reçoit la réponse de script.tab5_energie : repondre_energie(vue) la planifie.
     """
 
     def _gerer(call) -> None:
         if getattr(call, "is_event", False) and call.service == "esphome.tab5_zones":
             repondre_zones()
+            return
+        if getattr(call, "is_event", False) and call.service == "esphome.tab5_energie":
+            if repondre_energie is not None:
+                repondre_energie(dict(call.data).get("vue", "heures"))
             return
         if not interactive:
             return
@@ -425,11 +462,21 @@ async def _run(host: str, key: str | None, interval: float, interactive: bool, a
         taches.add(tache)
         tache.add_done_callback(taches.discard)
 
+    def repondre_energie(vue: str) -> None:
+        if absentes:
+            return   # maison minimale : pas d'installation solaire
+        vues = (vue,) if vue in ENERGIE_VUES else ("heures",)
+        logger.info("Popup Énergie -> instantané et %s", vues[0])
+        tache = asyncio.get_running_loop().create_task(
+            _pousser_energie(client, services_par_nom, vues))
+        taches.add(tache)
+        tache.add_done_callback(taches.discard)
+
     # Plus d'abonnement de la tablette à des entités (lot 6a) : on_state_sub reste
     # branché pour un firmware plus ancien, sans rien y répondre.
     client.subscribe_home_assistant_states_and_services(
         on_state=lambda state: None,
-        on_service_call=_gerer_appel_service(interactive, repondre_zones, pieces),
+        on_service_call=_gerer_appel_service(interactive, repondre_zones, pieces, repondre_energie),
         on_state_sub=lambda entity_id, attribute: logger.info(
             "Abonnement à %s demandé par un firmware d'avant le lot 6a — ignoré", entity_id),
     )

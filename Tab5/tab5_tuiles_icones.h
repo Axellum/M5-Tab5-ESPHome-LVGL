@@ -25,7 +25,7 @@ struct TuileIcone {
 
 namespace tuiles_icones {
 
-// 51 codes, 80 glyphes distincts.
+// 52 codes, 81 glyphes distincts.
 inline constexpr TuileIcone kPalette[] = {
     {"ampoule",        "\U000F0335", "\U000F06E8"},  // lightbulb / lightbulb-on
     {"plafonnier",     "\U000F0769", "\U000F0769"},  // ceiling-light
@@ -70,6 +70,7 @@ inline constexpr TuileIcone kPalette[] = {
     {"mouvement",      "\U000F1435", "\U000F0D91"},  // motion-sensor-off / motion-sensor
     {"presence",       "\U000F06A1", "\U000F02DC"},  // home-outline / home
     {"energie",        "\U000F0241", "\U000F0241"},  // flash
+    {"solaire",        "\U000F0A72", "\U000F0A72"},  // solar-power
     {"plante",         "\U000F024A", "\U000F024A"},  // flower
     {"co2",            "\U000F07E4", "\U000F07E4"},  // molecule-co2
     {"fumee",          "\U000F0392", "\U000F192E"},  // smoke-detector / smoke-detector-alert

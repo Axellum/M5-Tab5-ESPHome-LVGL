@@ -48,9 +48,11 @@ constexpr int kNbTypes = sizeof(kTypes) / sizeof(kTypes[0]);
 // Options : une lettre chacune, bit i = lettre i de kLettresOptions.
 //   d graduable, c couleur, o allumer seulement, k confirmer, r lecture seule,
 //   t télécommande TV du blueprint, m climatisation du blueprint (sans m, une tuile cli a
-//   sa propre clim dans le popup dès que HA en a envoyé les réglages, ADR-0027).
-constexpr char kLettresOptions[] = "dcokrtm";
-enum : uint8_t { OPT_D = 1, OPT_C = 2, OPT_O = 4, OPT_K = 8, OPT_R = 16, OPT_T = 32, OPT_M = 64 };
+//   sa propre clim dans le popup dès que HA en a envoyé les réglages, ADR-0027),
+//   e capteur de la section « Énergie » du blueprint (un cap qui ouvre le popup Énergie,
+//   ADR-0028). Un firmware plus ancien ignore une lettre qu'il ne connaît pas.
+constexpr char kLettresOptions[] = "dcokrtme";
+enum : uint8_t { OPT_D = 1, OPT_C = 2, OPT_O = 4, OPT_K = 8, OPT_R = 16, OPT_T = 32, OPT_M = 64, OPT_E = 128 };
 
 // Taille des champs gardés (octets, zéro final compris).
 constexpr size_t kNom = 25;          // nom affiché : 24 octets au plus
@@ -493,12 +495,14 @@ const char* vol_appui_long(const Etat& e) {
 
 // Un appui fait-il quelque chose ? (sinon le bouton de la tuile météo est masqué). Option
 // r : aucun appui du tout. Une clim : celle du blueprint (option m), ou la sienne quand la
-// tablette en a les réglages (clé crRT, ADR-0027 ; `clim_connue`).
+// tablette en a les réglages (clé crRT, ADR-0027 ; `clim_connue`). Un capteur : seulement
+// celui de la section « Énergie » (option e, ADR-0028), qui ouvre son popup.
 bool type_agit(Type type, uint8_t options, bool clim_connue) {
     if (options & OPT_R) return false;
     switch (type) {
         case Type::LUM: case Type::INT: case Type::VOL: case Type::MED: case Type::ACT: return true;
         case Type::CLI: return (options & OPT_M) != 0 || clim_connue;
+        case Type::CAP: return (options & OPT_E) != 0;
         default: return false;
     }
 }
@@ -572,8 +576,10 @@ void vue_nouvelle(int r, int t, Vue& v) {
             break;
         case Type::CAP:
             actif = true;
-            if (!std::isnan(e.valeur)) formater_mesure(v.ligne, sizeof(v.ligne), e.valeur, d.complement);
-            else snprintf(v.ligne, sizeof(v.ligne), "%s", s);
+            // Option e : W / kW, kWh / MWh en unités courtes (« 3.45 kW »), comme le popup.
+            if (std::isnan(e.valeur)) snprintf(v.ligne, sizeof(v.ligne), "%s", s);
+            else if (!((d.options & OPT_E) && energie_formater(v.ligne, sizeof(v.ligne), e.valeur, d.complement)))
+                formater_mesure(v.ligne, sizeof(v.ligne), e.valeur, d.complement);
             c = (d.complement[0] != '\0' && std::strncmp(d.complement, "\xC2\xB0", 2) == 0 && !std::isnan(e.valeur))
                     ? get_temperature_color(e.valeur) : UIColor::INFO;
             break;
@@ -1275,7 +1281,7 @@ void tuile_appui(int t, bool long_appui) {
     const Def& d = s_m.tuiles[r][t];
     const Etat& e = s_etats[r][t];
     const Type type = static_cast<Type>(d.type);
-    // cap, bin, option r, cli sans m dont la tablette n'a pas les réglages
+    // cap sans e, bin, option r, cli sans m dont la tablette n'a pas les réglages
     if (!type_agit(type, d.options, type == Type::CLI && clim_tuile_connue(r, t))) return;
     // Tableau de l'ADR-0023 : appui court, puis appui long.
     const char* action = nullptr;
@@ -1312,6 +1318,10 @@ void tuile_appui(int t, bool long_appui) {
             if (d.options & OPT_M) clim_afficher_blueprint();
             else if (!clim_afficher_tuile(r, t)) return;
             ouvrir_popup(g_tuiles_ui.popup_clim);
+            return;
+        case Type::CAP:
+            // Option e (type_agit) : le popup Énergie, au toucher comme à l'appui long.
+            if (g_tuiles_ui.energie_ouvrir != nullptr) g_tuiles_ui.energie_ouvrir();
             return;
         default:
             return;

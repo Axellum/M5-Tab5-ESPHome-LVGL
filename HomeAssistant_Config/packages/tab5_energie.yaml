@@ -1,0 +1,292 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_energie.yaml
+# @role Popup « Énergie » de la tablette (ADR-0028, 04/10/2026, discussion #278) :
+#       l'instantané d'une installation solaire et l'historique de sa production.
+#       La tablette émet esphome.tab5_energie (vue = heures | jours | mois) à l'ouverture
+#       du popup et à chaque bouton de vue ; le blueprint « Tab5 — emplacements », qui
+#       connaît les capteurs choisis dans sa section « Énergie », lance script.tab5_energie
+#       avec eux. Le script pousse :
+#         - l'historique de la vue (action tab5_maj_energie_historique) : production de
+#           chaque heure du jour, des 30 derniers jours ou des 12 derniers mois, en kWh,
+#           lue dans les statistiques du recorder (recorder.get_statistics) ;
+#         - l'instantané (action tab5_maj_energie), puis de nouveau à chaque changement
+#           d'un capteur, 5 s au plus souvent, tant que l'« Écran courant » de LA tablette
+#           qui a demandé vaut « Énergie ».
+# @payload_contract tab5_maj_energie : « solaire|maison|reseau|batterie|batterie_puissance|
+#       batterie_temperature|unite_temperature|jour ». Champ vide = capteur non choisi,
+#       « nan » = choisi sans valeur. Puissances en W entiers ; réseau + achat / − vente,
+#       batterie + charge / − décharge (cases « Inverser » du blueprint) ; maison calculée
+#       (solaire + réseau − batterie, jamais négative) quand elle n'est pas choisie et que
+#       solaire et réseau le sont ; jour = production du jour en kWh.
+#       tab5_maj_energie_historique : vue, debut (AAAA-MM-JJ local), valeurs en kWh
+#       séparées par « ; » (vide = pas de donnée : heure à venir, recorder sans ligne).
+# @data_sources Production du jour = somme des « change » des statistiques de 5 minutes
+#       depuis minuit (heure locale), plus le partiel depuis la dernière ligne (état
+#       actuel − dernier « state », converti en kWh). Heures : les mêmes lignes, par heure
+#       locale. Jours : période day depuis aujourd'hui − 29 jours, aujourd'hui remplacé par
+#       la production du jour. Mois : période month depuis le 1er du mois − 11, le mois en
+#       cours complété par les 5 minutes de l'heure en cours et le partiel (les heures
+#       complètes y sont déjà ; juste après le changement d'heure, la dernière peut
+#       manquer quelques minutes, le temps que le recorder la compile).
+#       Le capteur d'énergie doit avoir des statistiques (state_class total_increasing ou
+#       total, comme ceux du tableau Énergie de HA) ; sinon l'historique est vide.
+# @limits mode restart : une nouvelle demande (autre vue, réouverture) remplace la boucle
+#       en cours. Avec deux tablettes qui ouvrent le popup en même temps, la dernière
+#       demande l'emporte ; l'autre garde ses dernières valeurs.
+# @ai_warning Ne JAMAIS passer now() brut à une action : les bornes sont des datetimes
+#       locaux remis à l'heure pile (replace(..., microsecond=0)), envoyés en ISO avec leur
+#       décalage horaire (piège de packages/tab5_push.yaml).
+# @tests tests/test_energie.py rend ces modèles sur des réponses de get_statistics
+#       simulées et compare à un calcul Python indépendant.
+# @install Nécessite homeassistant.packages: !include_dir_named packages
+# ============================================================================
+
+script:
+  tab5_energie:
+    alias: "Tab5 — popup Énergie (instantané et historique)"
+    description: >-
+      Appelé par le blueprint « Tab5 — emplacements » quand la tablette ouvre son popup
+      Énergie ou change de vue. Pousse l'historique de la vue demandée, puis l'instantané
+      tant que le popup reste ouvert (ADR-0028).
+    mode: restart
+    fields:
+      appareil:
+        description: "device_id de la tablette (donnée de l'événement esphome.tab5_energie)"
+      tablette:
+        description: "Préfixe des actions de la tablette (entrée « tablette » du blueprint)"
+        example: tab5_ha_hmi
+      vue:
+        description: "Vue montrée par le popup : heures, jours ou mois"
+        example: heures
+      capteurs:
+        description: >-
+          Capteurs de la section « Énergie » du blueprint : solaire, production, reseau,
+          reseau_export, maison, batterie, batterie_puissance, batterie_temperature (texte
+          vide = non choisi), reseau_inverse et batterie_inverse (booléens).
+    variables:
+      c: "{{ capteurs if capteurs is mapping else {} }}"
+      vue_demandee: "{{ vue if vue in ['heures', 'jours', 'mois'] else 'heures' }}"
+      # « Écran courant » de LA tablette qui a demandé : fin de la boucle quand il quitte
+      # « Énergie ». Sans lui (entité désactivée), un seul passage.
+      ecran: >-
+        {{ (device_entities(appareil) | select('match', 'sensor[.].*_ecran_courant$') | first | default(''))
+           if appareil is string and appareil else '' }}
+      production: >-
+        {%- set p = c.get('production', '') -%}
+        {{ p if p is string and p and states[p] is not none else '' }}
+      # Capteurs dont un changement relance l'instantané.
+      suivis: >-
+        {{ [c.get('solaire'), c.get('reseau'), c.get('reseau_export'), c.get('maison'), c.get('production'),
+            c.get('batterie'), c.get('batterie_puissance'), c.get('batterie_temperature')]
+           | select('string') | reject('eq', '') | list }}
+      debut: "{{ now().timestamp() }}"
+      # L'« Écran courant » se met à jour toutes les 5 s : à l'ouverture, il dit encore
+      # l'écran d'avant pendant ce temps. Il ne compte qu'après cette grâce.
+      grace: 12
+      duree_max: 900
+    sequence:
+      - repeat:
+          sequence:
+            - variables:
+                minuit: "{{ now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat() }}"
+                t_attente: "{{ now().timestamp() }}"
+            # Statistiques de 5 minutes du jour : production du jour et vue des heures.
+            # Toujours appelée, au même niveau que ce qui la lit (une variable posée dans
+            # un if n'en sort pas) : sans capteur d'énergie, sur un autre capteur choisi,
+            # et rien ne lit la réponse (lignes5 est vide sans production).
+            - action: recorder.get_statistics
+              data:
+                start_time: "{{ minuit }}"
+                statistic_ids:
+                  - "{{ production if production else (suivis | first | default('')) }}"
+                period: 5minute
+                types:
+                  - change
+                  - state
+                units:
+                  energy: kWh
+              response_variable: cinq
+              continue_on_error: true
+            - variables:
+                lignes5: >-
+                  {{ (cinq.statistics.get(production, []) if cinq is defined and cinq is mapping
+                      and cinq.statistics is defined else []) if production else [] }}
+                # Production depuis la dernière ligne de 5 minutes (état actuel en kWh −
+                # dernier « state » ; compteur remis à zéro entre-temps : l'état actuel).
+                partiel: >-
+                  {%- set u = (state_attr(production, 'unit_of_measurement') or 'kWh') | string if production else 'kWh' -%}
+                  {%- set k = {'Wh': 0.001, 'kWh': 1, 'MWh': 1000}.get(u, 1) -%}
+                  {%- set actuel = (states(production) | float(none)) if production else none -%}
+                  {%- set dernier = (lignes5 | last).get('state') if lignes5 else none -%}
+                  {%- if actuel is none or dernier is none -%}
+                    {{ 0 }}
+                  {%- else -%}
+                    {%- set d = actuel * k - (dernier | float(0)) -%}
+                    {{ d if d >= 0 else actuel * k }}
+                  {%- endif -%}
+                jour: >-
+                  {%- if not production -%}
+                    {{ '' }}
+                  {%- elif cinq is not defined -%}
+                    {{ 'nan' }}
+                  {%- else -%}
+                    {{ ((lignes5 | map(attribute='change') | map('float', 0) | sum) + partiel) | round(3) }}
+                  {%- endif -%}
+                instantane: >-
+                  {%- macro watts(x, inverse=false) -%}
+                    {%- if not x -%}
+                    {%- elif states[x] is none or (states(x) | float(none)) is none -%}nan
+                    {%- else -%}
+                      {%- set u = (state_attr(x, 'unit_of_measurement') or 'W') | string -%}
+                      {%- set k = {'W': 1, 'kW': 1000, 'MW': 1000000}.get(u, 1) -%}
+                      {{- (states(x) | float * k * (-1 if inverse else 1)) | round(0) | int -}}
+                    {%- endif -%}
+                  {%- endmacro -%}
+                  {%- macro nombre(x) -%}
+                    {%- if not x -%}
+                    {%- elif states[x] is none or (states(x) | float(none)) is none -%}nan
+                    {%- else -%}{{- states(x) | float | round(1) -}}
+                    {%- endif -%}
+                  {%- endmacro -%}
+                  {%- set solaire = watts(c.get('solaire', '')) -%}
+                  {%- if c.get('reseau_export') -%}
+                    {%- set achat = watts(c.get('reseau', '')) -%}
+                    {%- set vente = watts(c.get('reseau_export', '')) -%}
+                    {%- if not c.get('reseau') -%}
+                      {%- set reseau = '' if vente == '' else ('nan' if vente == 'nan' else (-(vente | int)) | string) -%}
+                    {%- elif achat == 'nan' or vente == 'nan' -%}
+                      {%- set reseau = 'nan' -%}
+                    {%- else -%}
+                      {%- set reseau = ((achat | int) - (vente | int)) | string -%}
+                    {%- endif -%}
+                    {%- if c.get('reseau_inverse', false) and reseau not in ['', 'nan'] -%}
+                      {%- set reseau = (-(reseau | int)) | string -%}
+                    {%- endif -%}
+                  {%- else -%}
+                    {%- set reseau = watts(c.get('reseau', ''), c.get('reseau_inverse', false)) -%}
+                  {%- endif -%}
+                  {%- set batterie_p = watts(c.get('batterie_puissance', ''), c.get('batterie_inverse', false)) -%}
+                  {%- if c.get('maison') -%}
+                    {%- set maison = watts(c.get('maison')) -%}
+                  {%- elif solaire != '' and reseau != '' -%}
+                    {%- if 'nan' in [solaire, reseau, batterie_p] -%}
+                      {%- set maison = 'nan' -%}
+                    {%- else -%}
+                      {%- set m = (solaire | int) + (reseau | int) - (batterie_p | int(0)) -%}
+                      {%- set maison = ([m, 0] | max) | string -%}
+                    {%- endif -%}
+                  {%- else -%}
+                    {%- set maison = '' -%}
+                  {%- endif -%}
+                  {%- set temp = c.get('batterie_temperature', '') -%}
+                  {%- set unite = ((state_attr(temp, 'unit_of_measurement') or '°C') | string | replace('|', '/'))[:7] if temp else '' -%}
+                  {{ [solaire, maison, reseau, nombre(c.get('batterie', '')), batterie_p, nombre(temp), unite, jour | string] | join('|') }}
+            - action: "esphome.{{ tablette }}_tab5_maj_energie"
+              data:
+                payload: "{{ instantane }}"
+              continue_on_error: true
+            # Historique : la vue demandée au premier passage ; ensuite les heures seulement
+            # (les lignes de 5 minutes sont déjà là). Jours et mois repartent à la demande
+            # suivante (bouton de vue, réouverture).
+            - if: "{{ production != '' and (repeat.index == 1 or vue_demandee == 'heures') }}"
+              then:
+                - if: "{{ vue_demandee == 'heures' }}"
+                  then:
+                    - action: "esphome.{{ tablette }}_tab5_maj_energie_historique"
+                      data:
+                        vue: heures
+                        debut: "{{ now().strftime('%Y-%m-%d') }}"
+                        valeurs: >-
+                            {%- set ns = namespace(d={}) -%}
+                            {%- for r in lignes5 -%}
+                              {%- set h = (as_local(as_datetime(r.start)).hour) | string -%}
+                              {%- set ns.d = dict(ns.d, **{h: ns.d.get(h, 0) + (r.get('change') | float(0))}) -%}
+                            {%- endfor -%}
+                            {%- set heure = now().hour -%}
+                            {%- set ns2 = namespace(l=[]) -%}
+                            {%- for h in range(24) -%}
+                              {%- if h > heure -%}
+                                {%- set v = '' -%}
+                              {%- elif h == heure -%}
+                                {%- set v = (ns.d.get(h | string, 0) + partiel) | round(3) -%}
+                              {%- else -%}
+                                {%- set v = (ns.d[h | string] | round(3)) if (h | string) in ns.d else '' -%}
+                              {%- endif -%}
+                              {%- set ns2.l = ns2.l + [v | string] -%}
+                            {%- endfor -%}
+                            {{ ns2.l | join(';') }}
+                      continue_on_error: true
+                  else:
+                    - variables:
+                        jours: "{{ vue_demandee == 'jours' }}"
+                        premier: >-
+                          {%- set n = now().replace(hour=0, minute=0, second=0, microsecond=0) -%}
+                          {%- if vue_demandee == 'jours' -%}
+                            {{ (n - timedelta(days=29)).isoformat() }}
+                          {%- else -%}
+                            {%- set m = n.month - 11 -%}
+                            {{ n.replace(year=n.year - (1 if m < 1 else 0), month=m + (12 if m < 1 else 0), day=1).isoformat() }}
+                          {%- endif -%}
+                    - action: recorder.get_statistics
+                      data:
+                        start_time: "{{ premier }}"
+                        statistic_ids:
+                          - "{{ production }}"
+                        period: "{{ 'day' if jours else 'month' }}"
+                        types:
+                          - change
+                        units:
+                          energy: kWh
+                      response_variable: longues
+                      continue_on_error: true
+                    - action: "esphome.{{ tablette }}_tab5_maj_energie_historique"
+                      data:
+                        vue: "{{ vue_demandee }}"
+                        debut: "{{ premier[:10] }}"
+                        valeurs: >-
+                            {%- set lignes = longues.statistics.get(production, []) if longues is defined and longues is mapping and longues.statistics is defined else [] -%}
+                            {%- set p = as_datetime(premier) -%}
+                            {%- set n = now() -%}
+                            {%- set ns = namespace(d={}) -%}
+                            {%- for r in lignes -%}
+                              {%- set s = as_local(as_datetime(r.start)) -%}
+                              {%- set i = ((s.date() - p.date()).days if jours else (s.year * 12 + s.month) - (p.year * 12 + p.month)) | string -%}
+                              {%- set ns.d = dict(ns.d, **{i: r.get('change') | float(0)}) -%}
+                            {%- endfor -%}
+                            {%- set nb = 30 if jours else 12 -%}
+                            {#- Jour ou mois en cours : la production du jour (jours) ; le mois des
+                                heures complètes + l'heure en cours (mois). -#}
+                            {%- set heure_debut = n.replace(minute=0, second=0, microsecond=0) -%}
+                            {%- set ns5 = namespace(s=0) -%}
+                            {%- for r in lignes5 if as_datetime(r.start) >= heure_debut -%}
+                              {%- set ns5.s = ns5.s + (r.get('change') | float(0)) -%}
+                            {%- endfor -%}
+                            {%- set ns2 = namespace(l=[]) -%}
+                            {%- for i in range(nb) -%}
+                              {%- set k = i | string -%}
+                              {%- if i == nb - 1 and jours -%}
+                                {%- set v = (jour | float(0)) | round(3) if jour not in ['', 'nan'] else '' -%}
+                              {%- elif i == nb - 1 -%}
+                                {%- set v = (ns.d.get(k, 0) + ns5.s + partiel) | round(3) -%}
+                              {%- else -%}
+                                {%- set v = (ns.d[k] | round(3)) if k in ns.d else '' -%}
+                              {%- endif -%}
+                              {%- set ns2.l = ns2.l + [v | string] -%}
+                            {%- endfor -%}
+                            {{ ns2.l | join(';') }}
+                      continue_on_error: true
+            # Au plus une poussée toutes les 5 s, puis jusqu'au prochain changement d'un
+            # capteur (une minute au plus) ou la fermeture du popup.
+            - delay: 5
+            - wait_template: >-
+                {%- set ns = namespace(vu=false) -%}
+                {%- for s in expand(suivis) if as_timestamp(s.last_changed) > t_attente -%}
+                  {%- set ns.vu = true -%}
+                {%- endfor -%}
+                {{ ns.vu or not ecran
+                   or (now().timestamp() - debut > grace and states(ecran) != 'Énergie') }}
+              timeout: 60
+          until: >-
+            {{ not ecran or now().timestamp() - debut > duree_max
+               or (now().timestamp() - debut > grace and states(ecran) != 'Énergie') }}

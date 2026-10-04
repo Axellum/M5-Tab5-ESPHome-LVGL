@@ -129,5 +129,7 @@ script:
             id(tab5_action).execute(std::string(e), std::string(a), std::string(v));
           };
           u.volet_tap = []() { id(tab5_volet_tap).execute(); };
+          // Option e (ADR-0028) : une tuile cap ouvre le popup Énergie (tab5-energie.yaml).
+          u.energie_ouvrir = []() { id(tab5_energie_ouvrir).execute(); };
           // Toucher d'un titre = sens d'un volet (28/09) ; une fois, les pointeurs posés.
           tuiles_brancher_titres();

@@ -587,10 +587,41 @@ api:
       variables:
         payload:
           type: string
-          description: "Entrées séparées par ; — « pR|nom » (nom de la pièce R, 0 à 4) et « tRT|type|icône|options|complément|nom » (tuile T, 0 = gauche). Types lum, int, vol, med, act, cap, bin, cli ; icône = code de palette ([a-z0-9_], vide = défaut du type) ; options = lettres parmi d (graduable), c (couleur), o (allumer seulement), k (confirmer), r (lecture seule), t (télécommande TV), m (climatisation) ; complément = unité d'un cap, classe d'appareil d'un bin ; nom gardé sur 24 octets. Dans chaque champ, | devient / et ; devient ,."
+          description: "Entrées séparées par ; — « pR|nom » (nom de la pièce R, 0 à 4) et « tRT|type|icône|options|complément|nom » (tuile T, 0 = gauche). Types lum, int, vol, med, act, cap, bin, cli ; icône = code de palette ([a-z0-9_], vide = défaut du type) ; options = lettres parmi d (graduable), c (couleur), o (allumer seulement), k (confirmer), r (lecture seule), t (télécommande TV), m (climatisation), e (capteur d'énergie : ouvre le popup Énergie) ; complément = unité d'un cap, classe d'appareil d'un bin ; nom gardé sur 24 octets. Dans chaque champ, | devient / et ; devient ,."
           example: "p0|Salon;t00|lum|lampadaire|d||Lampadaire;t01|vol||||Volet;t02|cap|thermometre||°C|Température;"
       then:
         - lambda: 'tuiles_definir(payload);'
+
+    # Énergie (ADR-0028, discussion #278) : réponses à l'événement esphome.tab5_energie
+    # (vue demandée), par script.tab5_energie (packages/tab5_energie.yaml) que lance le
+    # blueprint « Tab5 — emplacements ». Rien n'est gardé : tout repart à l'ouverture.
+    - service: tab5_maj_energie
+      description: "Popup Énergie : l'instantané d'une installation solaire, poussé tant que le popup est ouvert."
+      variables:
+        payload:
+          type: string
+          description: "solaire|maison|reseau|batterie|batterie_puissance|batterie_temperature|unite_temperature|jour — champ vide = capteur non choisi (sa carte ou sa ligne disparaît), nan = choisi sans valeur. Puissances en W (réseau : + achat, − vente ; batterie : + charge, − décharge), batterie en %, température dans son unité, jour = production du jour en kWh."
+          example: "3450|1180|-2270|78|0|24.5|°C|12.4"
+      then:
+        - lambda: 'energie_instantane(payload);'
+
+    - service: tab5_maj_energie_historique
+      description: "Popup Énergie : la production d'une vue en barres (heures du jour, 30 derniers jours, 12 derniers mois)."
+      variables:
+        vue:
+          type: string
+          description: "heures, jours ou mois"
+          example: "heures"
+        debut:
+          type: string
+          description: "AAAA-MM-JJ : le jour des heures, le premier des 30 jours, le 1er du premier des 12 mois"
+          example: "2026-06-16"
+        valeurs:
+          type: string
+          description: "Production de chaque heure, jour ou mois en kWh, séparée par ; (24, 30 ou 12 valeurs ; vide = pas de donnée)"
+          example: "0;0;0;0;0;0;0.05;0.4;1.1;1.9;2.6;3;3.1;;;;;;;;;;;"
+      then:
+        - lambda: 'energie_historique(vue, debut, valeurs);'
 
 # Fenêtre d'appairage (lot 6b, ADR-0020) : une tablette qui n'a pas encore de clé API
 # (neuve, ou jamais ajoutée à HA) n'accepte le premier contact de HA que pendant les
