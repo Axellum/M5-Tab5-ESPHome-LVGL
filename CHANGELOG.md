@@ -4,6 +4,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-04 — Icône de la batterie de la tablette dans le bandeau d'état
+
+Demande d'Axel : la batterie du Tab5 en haut à gauche, avec les icônes PC, téléphone,
+Wi-Fi et réveil, aux couleurs de la batterie du téléphone.
+- **Icône** en fin de bandeau (après la cloche, comme sur un téléphone : la montrer ou la
+  cacher ne déplace aucune autre icône). Glyphe selon le niveau, quatre paliers alignés sur
+  les seuils de couleur : pleine (> 80 %), moitié (41 à 80 %), basse (20 à 40 %), « ! »
+  (< 20 %) ; un éclair pendant la charge, « ? » sans mesure. Couleur de
+  `get_battery_color()`, la même fonction que le téléphone et les capteurs des plantes.
+- **Interrupteur « Tab5 Batterie montée »** (réglage de l'appareil dans Home Assistant,
+  `tab5-ha-controls.yaml`, éteint par défaut, gardé d'un démarrage à l'autre) : éteint,
+  l'icône est cachée. Pas de détection automatique : sans batterie, le chargeur dit « en
+  charge » et 8,39 V, soit 100 % (relevé du 03/10). L'icône lit les capteurs sur la
+  tablette : elle marche même avec les entités de la batterie laissées désactivées.
+- **Bandeau en table** (`BandeauIcone`, `tab5_custom.h`, et `bandeau_apply_ui()`,
+  `tab5_zones.cpp`) : les icônes visibles se resserrent au pas de 35 px ; une icône de plus
+  = une valeur de l'enum, un label, un pointeur et, si elle peut disparaître, sa condition.
+- Six glyphes ajoutés à `mdi_font_26`. Rendu hors tablette : action `rendu_batterie` et
+  trois captures (`accueil-batterie-pleine`, `-faible`, `-en-charge`) ; les autres captures
+  ne changent pas (interrupteur éteint). `docs/hardware.md` et `docs/screens.md` (EN et FR).
+
+**Non testé sur la tablette ni avec une batterie.**
+
 ### 2026-10-04 — Popup Énergie pour une installation solaire
 
 - **Popup Énergie** (idée d'un utilisateur, discussion #278,

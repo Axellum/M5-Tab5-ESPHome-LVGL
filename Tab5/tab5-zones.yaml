@@ -32,10 +32,12 @@ script:
       - script.execute: tab5_clim_ui
       - lambda: |-
           ZonesUI& u = g_zones_ui;
-          u.icon_pc = id(icon_pc);
-          u.icon_phone = id(icon_phone);
-          u.icon_wifi = id(icon_wifi);
-          u.icon_alarm = id(icon_alarm_status);
+          // Bandeau d'état, une ligne par valeur de BandeauIcone (tab5_custom.h).
+          u.bandeau[BANDEAU_PC] = id(icon_pc);
+          u.bandeau[BANDEAU_TELEPHONE] = id(icon_phone);
+          u.bandeau[BANDEAU_WIFI] = id(icon_wifi);
+          u.bandeau[BANDEAU_REVEIL] = id(icon_alarm_status);
+          u.bandeau[BANDEAU_BATTERIE] = id(icon_batterie);
           u.btn_ha = id(btn_control_ha);
           u.btn_sys = id(btn_control_console);
           u.btn_tv = id(btn_control_tv);
