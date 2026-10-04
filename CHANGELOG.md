@@ -4,6 +4,42 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-04 — Thèmes, lot 1 : une seule palette pour toutes les couleurs de l'interface
+
+Demande d'Axel : des thèmes, avec un mode sombre et un mode clair. Ce premier lot ne
+change **rien à l'écran** : il rend les couleurs changeables ([ADR-0029](docs/decisions/0029-themes-palette.md)).
+- **Pourquoi c'était impossible** : ESPHome écrit une couleur YAML en dur dans le C++
+  généré (`lv_color_make(148, 163, 184)`), et 483 couleurs étaient posées widget par
+  widget. Les jetons C++ (`UIColor::X`) étaient des constantes, recopiées à la main du
+  YAML.
+- **Une palette** : `struct Palette` (`Tab5/tab5_tokens.h`), 55 rôles, et
+  `PALETTE_SOMBRE` avec les valeurs d'aujourd'hui. `UIColor` devient la palette active :
+  le C++ et les lambdas lisent `UIColor.X` (264 usages renommés, et 34 dans les jeux vers
+  `PALETTE_SOMBRE.X`). La table des icônes météo garde un pointeur vers le rôle, plus
+  une valeur figée au démarrage.
+- **Les styles lisent la palette** : verre, cartes, thème des labels et fond des pages
+  par une lambda. Les couleurs de l'interface quittent la section `color:` de
+  `tab5-styles.yaml` (restent celles des jeux).
+- **33 styles de rôle** (`style_text_dim`, `style_bg_accent`, `style_border_error`…) :
+  les 248 couleurs posées sur des widgets (33 fichiers YAML) passent par eux, en
+  dernier de leur liste `styles:` (même priorité que la couleur locale remplacée).
+  Migration contrôlée arbre contre arbre, fichier par fichier. Gabarits :
+  `modal_header.yaml` et `tv_transport_btn.yaml` reçoivent `icon_style`, `tv_app_btn.yaml`
+  `style`. Les couleurs propres des ampoules (préréglages du popup lumière) restent des
+  données.
+- **Les jeux restent sombres** : ils lisent `PALETTE_SOMBRE.X` et gardent leurs palettes.
+- **Garde-fous** : règle 8 de `tools/check_tab5_code_rules.py` (aucune couleur figée
+  sur un widget hors jeux, aucune couleur de jeu dans l'interface, aucun jeu sur la
+  palette active) et `tests/test_themes.py` (chaque palette donne tous les rôles dans
+  l'ordre, vigilance Météo-France officielle, chaque style lit la palette, aucun style
+  de rôle mort). `tools/check_tab5_modal_chrome.py` reconnaît le voile par son style
+  (`style_bg_modal_scrim`).
+- Suite prévue : lot 2, la palette claire et un select « Thème » ; lot 3 (au choix
+  d'Axel), la bascule sans redémarrage et un mode automatique jour/nuit.
+
+**Non testé sur la tablette.** Preuve attendue : le rendu hors tablette identique au
+pixel à celui de `main`, dans les sept langues.
+
 ### 2026-10-04 — Icône de la production solaire dans le bandeau d'état
 
 Demande d'Axel : au même endroit que les icônes PC, téléphone, Wi-Fi et batterie, la

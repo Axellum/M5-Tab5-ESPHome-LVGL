@@ -143,7 +143,7 @@ binary_sensor:
     name: "HA API Status"
     id: status_ha
     on_state:
-      - lambda: 'set_icon_active_ui(id(icon_ha), x, UIColor::INFO, UIColor::INACTIVE);'
+      - lambda: 'set_icon_active_ui(id(icon_ha), x, UIColor.INFO, UIColor.INACTIVE);'
       # Pré-fetch calendrier au reconnect HA (rising edge) : recharge le mois
       # courant + M+1 pour que le popup s'ouvre instantanément même après une coupure.
       - if:
@@ -461,9 +461,9 @@ interval:
           condition:
             wifi.connected:
           then:
-            - lambda: 'set_icon_active_ui(id(icon_wifi), true, UIColor::SUCCESS, UIColor::INACTIVE);'
+            - lambda: 'set_icon_active_ui(id(icon_wifi), true, UIColor.SUCCESS, UIColor.INACTIVE);'
           else:
-            - lambda: 'set_icon_active_ui(id(icon_wifi), false, UIColor::SUCCESS, UIColor::INACTIVE);'
+            - lambda: 'set_icon_active_ui(id(icon_wifi), false, UIColor.SUCCESS, UIColor.INACTIVE);'
 
   - interval: 2s
     then:

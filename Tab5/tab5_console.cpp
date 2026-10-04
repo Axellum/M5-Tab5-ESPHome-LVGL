@@ -89,7 +89,7 @@ void ui_sync_volume_widgets(lv_obj_t* slider_console, lv_obj_t* lbl_console_pct,
 // popup assistant). Un seul endroit les met d'accord.
 void ui_sync_mute_icons(lv_obj_t* icon_main, lv_obj_t* icon_assist, bool muted) {
     const char* glyph = muted ? "\U000F0581" : "\U000F057E";
-    const uint32_t color = muted ? UIColor::ERROR : UIColor::TEXT_SOFT;
+    const uint32_t color = muted ? UIColor.ERROR : UIColor.TEXT_SOFT;
     for (lv_obj_t* icon : {icon_main, icon_assist}) {
         if (icon == nullptr) continue;
         ui_text(icon, glyph);
@@ -133,10 +133,10 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
         lv_bar_set_value(bar_psram, psram_pct, LV_ANIM_ON);
 
         auto set_bar_color = [](lv_obj_t* bar, int pct) {
-            lv_color_t color = lv_color_hex(UIColor::SUCCESS); // Vert (Normal)
-            if (pct > 50) color = lv_color_hex(UIColor::INFO); // Bleu (Bien-Rempli)
-            if (pct > 75) color = lv_color_hex(UIColor::WARNING); // Orange (Attention)
-            if (pct > 90) color = lv_color_hex(UIColor::ERROR); // Rouge (Critique)
+            lv_color_t color = lv_color_hex(UIColor.SUCCESS); // Vert (Normal)
+            if (pct > 50) color = lv_color_hex(UIColor.INFO); // Bleu (Bien-Rempli)
+            if (pct > 75) color = lv_color_hex(UIColor.WARNING); // Orange (Attention)
+            if (pct > 90) color = lv_color_hex(UIColor.ERROR); // Rouge (Critique)
             lv_obj_set_style_bg_color(bar, color, LV_PART_INDICATOR);
         };
         set_bar_color(bar_sram, sram_pct);
@@ -168,7 +168,7 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
 void update_console_ha_status_ui(lv_obj_t* lbl, bool ha_ok) {
     if (lbl == nullptr) return;
     ui_text(lbl, tr(ha_ok ? "Connecté" : "Hors ligne"));
-    ui_text_color(lbl, ha_ok ? UIColor::SUCCESS : UIColor::ERROR);
+    ui_text_color(lbl, ha_ok ? UIColor.SUCCESS : UIColor.ERROR);
 }
 
 // =============================================================================

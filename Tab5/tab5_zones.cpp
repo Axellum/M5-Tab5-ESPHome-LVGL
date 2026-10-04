@@ -139,7 +139,7 @@ const char* solaire_glyphe(float /*pourcent*/) {
 }
 
 uint32_t solaire_couleur(float pourcent) {
-    return pourcent > 0.0f ? get_battery_color(pourcent) : UIColor::INACTIVE;
+    return pourcent > 0.0f ? get_battery_color(pourcent) : UIColor.INACTIVE;
 }
 
 void solaire_peindre() {

@@ -30,7 +30,7 @@ static void set_toggle(lv_obj_t* btn, lv_obj_t* lbl, bool on, const char* on_txt
   if (btn != nullptr) highlight_button_border(btn, on, on_color);
   if (lbl != nullptr) {
     lv_label_set_text(lbl, tr(on ? on_txt : off_txt));
-    lv_obj_set_style_text_color(lbl, lv_color_hex(on ? on_color : UIColor::TEXT_DIM), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lbl, lv_color_hex(on ? on_color : UIColor.TEXT_DIM), LV_PART_MAIN);
   }
 }
 
@@ -40,12 +40,12 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
   char buf[96];
 
   set_toggle(ui.btn_enable, ui.lbl_enable, c.enabled, "R\xC3\xA9veil actif", "R\xC3\xA9veil \xC3\xA9teint",
-             UIColor::SUCCESS);
+             UIColor.SUCCESS);
   if (ui.icon_enable != nullptr) {
     // F0020 = alarm, F0023 = alarm-off (codepoints vérifiés dans le TTF du projet).
     lv_label_set_text(ui.icon_enable, c.enabled ? "\U000F0020" : "\U000F0023");
     lv_obj_set_style_text_color(ui.icon_enable,
-                                lv_color_hex(c.enabled ? UIColor::SUCCESS : UIColor::TEXT_DIM), LV_PART_MAIN);
+                                lv_color_hex(c.enabled ? UIColor.SUCCESS : UIColor.TEXT_DIM), LV_PART_MAIN);
   }
 
   if (ui.lbl_time != nullptr) {
@@ -64,18 +64,18 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
   const bool days_govern_all = (c.mode == AlarmMode::FIXE);
   for (int i = 0; i < 7; i++) {
     const bool on = (c.days_mask >> i) & 1;
-    if (ui.day_btn[i] != nullptr) highlight_button_border(ui.day_btn[i], on, UIColor::ACCENT);
+    if (ui.day_btn[i] != nullptr) highlight_button_border(ui.day_btn[i], on, UIColor.ACCENT);
     if (ui.day_lbl[i] != nullptr) {
       lv_label_set_text(ui.day_lbl[i], tr_ctx(kDayCtx[i], kDays[i]));
       lv_obj_set_style_text_color(ui.day_lbl[i],
-                                  lv_color_hex(on ? (days_govern_all ? UIColor::TEXT_SOFT : UIColor::ACCENT)
-                                                  : UIColor::TEXT_DIM),
+                                  lv_color_hex(on ? (days_govern_all ? UIColor.TEXT_SOFT : UIColor.ACCENT)
+                                                  : UIColor.TEXT_DIM),
                                   LV_PART_MAIN);
     }
   }
 
   for (int i = 0; i < AlarmMode::COUNT; i++) {
-    if (ui.mode_btn[i] != nullptr) highlight_button_border(ui.mode_btn[i], c.mode == i, UIColor::INFO);
+    if (ui.mode_btn[i] != nullptr) highlight_button_border(ui.mode_btn[i], c.mode == i, UIColor.INFO);
   }
   if (ui.lbl_mode_hint != nullptr) {
     const char* hint = "";
@@ -117,7 +117,7 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
   }
 
   set_toggle(ui.btn_repos, ui.lbl_repos, c.rest_mode == AlarmRepos::FIXE, "Repos : heure fixe",
-             "Repos : silence", UIColor::WARNING);
+             "Repos : silence", UIColor.WARNING);
 
   if (ui.lbl_next != nullptr) lv_label_set_text(ui.lbl_next, alarm_next_label(now).c_str());
   if (ui.lbl_next_sub != nullptr) lv_label_set_text(ui.lbl_next_sub, alarm_next_detail(now).c_str());
@@ -134,7 +134,7 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
       lv_label_set_text(ui.lbl_vol, buf);
     }
   }
-  set_toggle(ui.btn_cresc, ui.lbl_cresc, crescendo, "Progressif", "Volume constant", UIColor::ACCENT);
+  set_toggle(ui.btn_cresc, ui.lbl_cresc, crescendo, "Progressif", "Volume constant", UIColor.ACCENT);
 
   if (ui.lbl_snooze != nullptr) {
     snprintf(buf, sizeof(buf), tr("%d min"), c.snooze_min);
@@ -145,8 +145,8 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
     lv_label_set_text(ui.lbl_maxring, buf);
   }
 
-  set_toggle(ui.btn_tts, ui.lbl_tts, tts_on, "Annonce parl\xC3\xA9""e", "Sonnerie seule", UIColor::INFO);
-  set_toggle(ui.btn_rdv, ui.lbl_rdv, rdv_on, "Annonce des RDV", "RDV silencieux", UIColor::INFO);
+  set_toggle(ui.btn_tts, ui.lbl_tts, tts_on, "Annonce parl\xC3\xA9""e", "Sonnerie seule", UIColor.INFO);
+  set_toggle(ui.btn_rdv, ui.lbl_rdv, rdv_on, "Annonce des RDV", "RDV silencieux", UIColor.INFO);
   if (ui.lbl_rdv_lead != nullptr) {
     // « avant » est déjà dans le titre du champ (« RDV avant ») : « 15 min avant »
     // passait sur deux lignes.
@@ -161,7 +161,7 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
     texte_ha_coupe(ui.lbl_rdv_next, n.empty() ? tr("Aucun rendez-vous \xC3\xA0 venir") : n.c_str(),
                    kLargeurRdvSuivant);
     lv_obj_set_style_text_color(ui.lbl_rdv_next,
-                                lv_color_hex(n.empty() ? UIColor::TEXT_DIM : UIColor::TEXT_SOFT),
+                                lv_color_hex(n.empty() ? UIColor.TEXT_DIM : UIColor.TEXT_SOFT),
                                 LV_PART_MAIN);
   }
 }
@@ -210,7 +210,7 @@ void alarm_render_status_icon(lv_obj_t* icon, time_t now) {
   if (icon == nullptr) return;
   if (!g_alarm_cfg.enabled) {
     lv_label_set_text(icon, "\U000F0023");  // alarm-off
-    lv_obj_set_style_text_color(icon, lv_color_hex(UIColor::INACTIVE), LV_PART_MAIN);
+    lv_obj_set_style_text_color(icon, lv_color_hex(UIColor.INACTIVE), LV_PART_MAIN);
     return;
   }
   lv_label_set_text(icon, "\U000F0020");  // alarm
@@ -218,5 +218,5 @@ void alarm_render_status_icon(lv_obj_t* icon, time_t now) {
   // réveil est armé mais qu'aucun jour n'est retenu (piège classique : mode
   // « jours travaillés » + semaine de congés, ou tous les jours décochés).
   const bool armed = alarm_next_ring(now) != 0;
-  lv_obj_set_style_text_color(icon, lv_color_hex(armed ? UIColor::SUCCESS : UIColor::WARNING), LV_PART_MAIN);
+  lv_obj_set_style_text_color(icon, lv_color_hex(armed ? UIColor.SUCCESS : UIColor.WARNING), LV_PART_MAIN);
 }

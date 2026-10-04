@@ -817,7 +817,7 @@ static void build_ui() {
     lv_obj_align(gs->hud_gold, LV_ALIGN_LEFT_MID, 650, 0);
     gs->hud_goal = mk_label(gs->ui.hud, gs->ui.f_small, Pal::EXIT);
     lv_obj_align(gs->hud_goal, LV_ALIGN_LEFT_MID, 772, 0);
-    gs->hud_time = mk_label(gs->ui.hud, gs->ui.f_small, UIColor::TEXT_DIM);
+    gs->hud_time = mk_label(gs->ui.hud, gs->ui.f_small, PALETTE_SOMBRE.TEXT_DIM);
     lv_obj_align(gs->hud_time, LV_ALIGN_RIGHT_MID, -18, 0);
 
     // Pastilles de boons actifs (compact : une pastille coloree par boon)
@@ -832,20 +832,20 @@ static void build_ui() {
     // --- Panneau de menus (hub / recompense / pause / fin) ---
     gs->p_title = mk_label(gs->ui.panel, gs->ui.f_big, Pal::BALL);
     lv_obj_align(gs->p_title, LV_ALIGN_TOP_MID, 0, 56);
-    gs->p_sub = mk_label(gs->ui.panel, gs->ui.f_small, UIColor::TEXT_DIM);
+    gs->p_sub = mk_label(gs->ui.panel, gs->ui.f_small, PALETTE_SOMBRE.TEXT_DIM);
     lv_obj_align(gs->p_sub, LV_ALIGN_TOP_MID, 0, 122);
-    gs->p_body = mk_label(gs->ui.panel, gs->ui.f_small, UIColor::TEXT_SOFT);
+    gs->p_body = mk_label(gs->ui.panel, gs->ui.f_small, PALETTE_SOMBRE.TEXT_SOFT);
     lv_obj_set_width(gs->p_body, 900);
     lv_obj_set_style_text_align(gs->p_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_align(gs->p_body, LV_ALIGN_TOP_MID, 0, 170);
-    gs->p_foot = mk_label(gs->ui.panel, gs->ui.f_small, UIColor::TEXT_DIM);
+    gs->p_foot = mk_label(gs->ui.panel, gs->ui.f_small, PALETTE_SOMBRE.TEXT_DIM);
     lv_obj_align(gs->p_foot, LV_ALIGN_BOTTOM_MID, 0, -22);
 
     // Entrees des menus : liste verticale 680x62 a y = 150 + 68 i (slot_list).
     gs->slots.geom = {.w = 680, .h = 62, .top = 150, .pitch = 68, .tx = 22, .t_dy = -13, .d_dy = 15,
-                      .border_opa = LV_OPA_50, .off = UIColor::INACTIVE};
-    gs->slots.build(gs->ui.panel, slot_event_cb, gs->ui.f_mid, UIColor::TEXT_SOFT,
-                    gs->ui.f_small, UIColor::TEXT_DIM, [](lv_obj_t* b, int i) {
+                      .border_opa = LV_OPA_50, .off = PALETTE_SOMBRE.INACTIVE};
+    gs->slots.build(gs->ui.panel, slot_event_cb, gs->ui.f_mid, PALETTE_SOMBRE.TEXT_SOFT,
+                    gs->ui.f_small, PALETTE_SOMBRE.TEXT_DIM, [](lv_obj_t* b, int i) {
         lv_obj_set_style_radius(b, 14, LV_PART_MAIN);
         set_grad(b, Pal::FLOOR_HI, Pal::FLOOR_LO);
         // Retour tactile : le fond s'eclaircit tant que le doigt est pose.
@@ -872,7 +872,7 @@ static void slot_list(int i, const char* title, const char* desc, uint32_t col, 
     // coin arrondi (rayon 14). D'ou x=4 et une hauteur centree hors des arrondis :
     // 62 - 2*14 = 34 px utiles, donc y=14..48.
     detail(gs->slot_a[i], 4, 14, 5, 34, 3);
-    set_bg(gs->slot_a[i], on ? col : UIColor::INACTIVE, on ? LV_OPA_COVER : LV_OPA_40);
+    set_bg(gs->slot_a[i], on ? col : PALETTE_SOMBRE.INACTIVE, on ? LV_OPA_COVER : LV_OPA_40);
 }
 
 // Cartes cote a cote (choix de boon, facon Hades).
@@ -946,7 +946,7 @@ static void go_hub() {
     slot_list(3, tr("Équipement"), eq_desc, Pal::MAGNET, true);
     slot_list(4, tr("Réglages"), tr("Difficulté, mode dieu, teinte, calibration"), Pal::BOOST, true);
     slot_list(5, tr("Statistiques"), tr("Runs, victoires, records"), Pal::EXIT, true);
-    slot_list(6, tr("Quitter"), tr("Retour au tableau de bord"), UIColor::TEXT_DIM, true);
+    slot_list(6, tr("Quitter"), tr("Retour au tableau de bord"), PALETTE_SOMBRE.TEXT_DIM, true);
     gs->slots.hide_from(7);
 }
 
@@ -968,14 +968,14 @@ static void go_settings() {
     slot_list(0, dtitle, tr(d.desc), d.color, true);
     slot_list(1, gtitle,
               tr(gs->save.god ? "Invulnérable - hors concours" : "Jouer sans jamais mourir"),
-              gs->save.god ? Pal::MAGNET : UIColor::TEXT_DIM, true);
+              gs->save.god ? Pal::MAGNET : PALETTE_SOMBRE.TEXT_DIM, true);
     static const char* SKINS[3] = {tr_noop("Or"), tr_noop("Argent"), tr_noop("Cuivre")};
     auto& stitle = gs->settings_stitle;
     snprintf(stitle, sizeof(stitle), tr("Teinte de la bille : %s"),
              tr(SKINS[gs->save.skin < 3 ? gs->save.skin : 0]));
     slot_list(2, stitle, tr("Purement cosmétique"), Pal::BALL, true);
     slot_list(3, tr("Calibrer à plat"), tr("Pose la tablette et appuie"), Pal::BOOST, true);
-    slot_list(4, tr("Retour"), "", UIColor::TEXT_DIM, true);
+    slot_list(4, tr("Retour"), "", PALETTE_SOMBRE.TEXT_DIM, true);
     gs->slots.hide_from(5);
 }
 
@@ -1007,7 +1007,7 @@ static void go_level() {
                   maxed ? Pal::EXIT : s.color,
                   !maxed && gs->save.souls >= cost);
     }
-    slot_list(MARBLE_NSTATS, tr("Retour"), "", UIColor::TEXT_DIM, true);
+    slot_list(MARBLE_NSTATS, tr("Retour"), "", PALETTE_SOMBRE.TEXT_DIM, true);
     gs->slots.hide_from(MARBLE_NSTATS + 1);
 }
 
@@ -1050,7 +1050,7 @@ static void go_shop() {
     // de tap retrouve les memes index.
     gs->shop_rows = n;
     slot_list(n, tr("Page suivante"), "", Pal::BOOST, pages > 1);
-    slot_list(n + 1, tr("Retour"), "", UIColor::TEXT_DIM, true);
+    slot_list(n + 1, tr("Retour"), "", PALETTE_SOMBRE.TEXT_DIM, true);
     gs->slots.hide_from(n + 2);
 }
 
@@ -1075,7 +1075,7 @@ static void go_equip() {
         if (e == 0 || e > N_ITEMS || !(gs->save.items & (1u << (e - 1)))) {
             snprintf(titles[s], sizeof(titles[s]), tr("Emplacement %d : vide"), s + 1);
             snprintf(descs[s], sizeof(descs[s]), "%s", tr("Aucun effet actif"));
-            slot_list(s, titles[s], descs[s], UIColor::TEXT_DIM, owned_n > 0);
+            slot_list(s, titles[s], descs[s], PALETTE_SOMBRE.TEXT_DIM, owned_n > 0);
         } else {
             const ItemDef& it = ITEMS[e - 1];
             snprintf(titles[s], sizeof(titles[s]), tr("Emplacement %d : %s"), s + 1, tr(it.name));
@@ -1083,7 +1083,7 @@ static void go_equip() {
             slot_list(s, titles[s], descs[s], it.color, true);
         }
     }
-    slot_list(MARBLE_NSLOTS, tr("Retour"), "", UIColor::TEXT_DIM, true);
+    slot_list(MARBLE_NSLOTS, tr("Retour"), "", PALETTE_SOMBRE.TEXT_DIM, true);
     gs->slots.hide_from(MARBLE_NSLOTS + 1);
 }
 
@@ -1104,7 +1104,7 @@ static void go_stats() {
              (unsigned) gs->save.deepest, best, (unsigned) total_level(),
              (unsigned) gs->save.souls, owned_n, N_ITEMS);
     panel_text(tr("Statistiques"), "", body, tr("Les runs jouées en mode dieu ne sont pas comptabilisées ici."));
-    slot_list(0, tr("Retour"), "", UIColor::TEXT_DIM, true);
+    slot_list(0, tr("Retour"), "", PALETTE_SOMBRE.TEXT_DIM, true);
     // Le bouton retour est place sous le bloc de texte.
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -90);
     gs->slots.hide_from(1);
@@ -1183,7 +1183,7 @@ static void show_end(bool victory) {
                gs->god ? tr("Aucune âme créditée : le mode dieu ne compte pas.")
                        : tr("Les âmes sont déjà mises de côté."));
     slot_list(0, tr("Relancer une run"), "", Pal::BALL, true);
-    slot_list(1, tr("Retour au hub"), "", UIColor::TEXT_DIM, true);
+    slot_list(1, tr("Retour au hub"), "", PALETTE_SOMBRE.TEXT_DIM, true);
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -180);
     lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -100);
     gs->slots.hide_from(2);
@@ -1249,7 +1249,7 @@ static void style_pickup(Ent& e, uint32_t col, uint32_t rim, int rim_w) {
     int g = e.w * 3 / 10;
     if (g < 3) g = 3;
     detail(e.det, e.w * 22 / 100, e.h * 16 / 100, g, g, LV_RADIUS_CIRCLE);
-    set_bg(e.det, UIColor::TEXT_PRIMARY, 150);
+    set_bg(e.det, PALETTE_SOMBRE.TEXT_PRIMARY, 150);
 }
 
 // Portail de sortie. Sorti de style_entity parce que son etat change EN COURS
@@ -1364,7 +1364,7 @@ static void style_entity(Ent& e) {
                 set_bg(e.det, Pal::BALL_HI, 190);
             }
             break;
-        case K_SHIELD: style_pickup(e, Pal::SHIELD, UIColor::TEXT_PRIMARY, 2); break;
+        case K_SHIELD: style_pickup(e, Pal::SHIELD, PALETTE_SOMBRE.TEXT_PRIMARY, 2); break;
         case K_MAGNET: style_pickup(e, Pal::MAGNET, 0, 0); break;
         case K_BRAKE:  style_pickup(e, Pal::BRAKE,  0, 0); break;
         case K_DASH:   style_pickup(e, Pal::DASH,   0, 0); break;
@@ -1372,7 +1372,7 @@ static void style_entity(Ent& e) {
             // Carre a coins doux : se distingue au premier coup d'oeil des pickups ronds.
             set_grad(o, Pal::RUNE, Pal::RUNE_LO);
             lv_obj_set_style_radius(o, 5, LV_PART_MAIN);
-            set_border(o, UIColor::TEXT_PRIMARY, 3, LV_OPA_90);
+            set_border(o, PALETTE_SOMBRE.TEXT_PRIMARY, 3, LV_OPA_90);
             detail(e.det, 4, 3, e.w - 8 > 0 ? e.w - 8 : 1, 2, 1);
             set_bg(e.det, Pal::BALL_HI, 200);
             break;

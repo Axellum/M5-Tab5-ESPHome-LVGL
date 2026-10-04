@@ -24,7 +24,7 @@
 # @ai_instruction Gabarits (lot 7.3 de l'audit, 26/09/2026) : tv_pad_btn.yaml (flèches),
 #       tv_transport_btn.yaml (lecture/pause/retour/accueil), tv_app_btn.yaml (les 5
 #       raccourcis). Pause et CANAL+ y sont depuis le 01/10/2026 (couleur du thème,
-#       color_text, passée en clair). Les touches à géométrie propre (Marche/Arrêt,
+#       style_text_soft, passée en clair). Les touches à géométrie propre (Marche/Arrêt,
 #       Source, Menu, OK, volume, Muet) restent écrites ici.
 # ═══════════════════════════════════════════════════════
 obj:
@@ -48,7 +48,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F07C0", icon_color: "color_info", title: "Télécommande TV", title_id: "popup_tv_title", close_btn_id: "btn_tv_close", close_lambda: "animate_popup_close(id(tv_remote_popup));" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F07C0", icon_style: "style_text_info", title: "Télécommande TV", title_id: "popup_tv_title", close_btn_id: "btn_tv_close", close_lambda: "animate_popup_close(id(tv_remote_popup));" } }
 
           # ═══ CORPS — grille (laisse place à la rangée basse) ═══
           - obj:
@@ -84,7 +84,7 @@ obj:
                           on_short_click:
                             - script.execute: { id: tab5_action, emplacement: tv, commande: alimentation, valeur: "" }
                           widgets:
-                            - label: { text: "\U000F0425", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_error }
+                            - label: { text: "\U000F0425", align: LEFT_MID, x: 22, text_font: mdi_font_45, styles: style_text_error }
                             - label: { text: "Marche / Arrêt", align: LEFT_MID, x: 82 }
                       - button:
                           y: 180
@@ -95,7 +95,7 @@ obj:
                           on_short_click:
                             - script.execute: { id: tab5_tv_key, touche: "KEY_SOURCE" }
                           widgets:
-                            - label: { text: "\U000F0379", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_info }
+                            - label: { text: "\U000F0379", align: LEFT_MID, x: 22, text_font: mdi_font_45, styles: style_text_info }
                             - label: { text: "Source", align: LEFT_MID, x: 82 }
                       - button:
                           y: 334
@@ -106,7 +106,7 @@ obj:
                           on_short_click:
                             - script.execute: { id: tab5_tv_key, touche: "KEY_MENU" }
                           widgets:
-                            - label: { text: "\U000F035C", align: LEFT_MID, x: 22, text_font: mdi_font_45, text_color: color_text_dim }
+                            - label: { text: "\U000F035C", align: LEFT_MID, x: 22, text_font: mdi_font_45, styles: style_text_dim }
                             - label: { text: "Menu", align: LEFT_MID, x: 82 }
 
                 # ── Colonne centre (520) — anneau directionnel + transport ──
@@ -185,10 +185,10 @@ obj:
                           styles: style_transparent
                           scrollable: false
                           widgets:
-                            - !include { file: tv_transport_btn.yaml, vars: { x: 0, touche: "KEY_PLAY", icon: "\U000F040A", icon_color: "color_success", text: "Lecture" } }
-                            - !include { file: tv_transport_btn.yaml, vars: { x: 133, touche: "KEY_PAUSE", icon: "\U000F03E4", icon_color: "color_text", text: "Pause" } }
-                            - !include { file: tv_transport_btn.yaml, vars: { x: 266, touche: "KEY_RETURN", icon: "\U000F054C", icon_color: "color_text_dim", text: "Retour" } }
-                            - !include { file: tv_transport_btn.yaml, vars: { x: 399, touche: "KEY_HOME", icon: "\U000F02DC", icon_color: "color_text_dim", text: "Accueil" } }
+                            - !include { file: tv_transport_btn.yaml, vars: { x: 0, touche: "KEY_PLAY", icon: "\U000F040A", icon_style: "style_text_success", text: "Lecture" } }
+                            - !include { file: tv_transport_btn.yaml, vars: { x: 133, touche: "KEY_PAUSE", icon: "\U000F03E4", icon_style: "style_text_soft", text: "Pause" } }
+                            - !include { file: tv_transport_btn.yaml, vars: { x: 266, touche: "KEY_RETURN", icon: "\U000F054C", icon_style: "style_text_dim", text: "Retour" } }
+                            - !include { file: tv_transport_btn.yaml, vars: { x: 399, touche: "KEY_HOME", icon: "\U000F02DC", icon_style: "style_text_dim", text: "Accueil" } }
 
                 # ── Colonne droite (290 px) — rocker volume centré dans la colonne ──
                 # (plus de conteneur de centrage : 145 - 75 = 70 px du bord droit)
@@ -207,8 +207,7 @@ obj:
                           width: 150
                           height: 150
                           radius: 75
-                          styles: style_invisible
-                          bg_color: color_accent
+                          styles: [style_invisible, style_bg_accent]
                           pressed:
                             bg_opa: 25%
                           on_short_click:
@@ -229,22 +228,20 @@ obj:
                           width: 150
                           height: 60
                           radius: 30
-                          styles: style_invisible
-                          bg_color: color_accent
+                          styles: [style_invisible, style_bg_accent]
                           pressed:
                             bg_opa: 25%
                           on_short_click:
                             - script.execute: { id: tab5_tv_key, touche: "KEY_MUTE" }
                           widgets:
-                            - label: { text: "\U000F0581", align: CENTER, text_font: mdi_font_45, text_color: color_warning }
+                            - label: { text: "\U000F0581", align: CENTER, text_font: mdi_font_45, styles: style_text_warning }
                       - button:
                           align: BOTTOM_MID
                           y: 0
                           width: 150
                           height: 150
                           radius: 75
-                          styles: style_invisible
-                          bg_color: color_accent
+                          styles: [style_invisible, style_bg_accent]
                           pressed:
                             bg_opa: 25%
                           on_short_click:
@@ -278,12 +275,12 @@ obj:
               styles: style_transparent
               scrollable: false
               widgets:
-                - !include { file: tv_app_btn.yaml, vars: { x: 0, app: "netflix", text: "Netflix", color: "color_error" } }
+                - !include { file: tv_app_btn.yaml, vars: { x: 0, app: "netflix", text: "Netflix", style: "style_text_error" } }
                 # « Prime » et non « Prime Video » : en roboto_32_b le nom
                 # complet fait ~198 px pour 189 px utiles dans le bouton.
-                - !include { file: tv_app_btn.yaml, vars: { x: 237, app: "prime", text: "Prime", color: "color_info" } }
-                - !include { file: tv_app_btn.yaml, vars: { x: 474, app: "youtube", text: "YouTube", color: "color_warning" } }
-                - !include { file: tv_app_btn.yaml, vars: { x: 711, app: "canal", text: "CANAL+", color: "color_text" } }
+                - !include { file: tv_app_btn.yaml, vars: { x: 237, app: "prime", text: "Prime", style: "style_text_info" } }
+                - !include { file: tv_app_btn.yaml, vars: { x: 474, app: "youtube", text: "YouTube", style: "style_text_warning" } }
+                - !include { file: tv_app_btn.yaml, vars: { x: 711, app: "canal", text: "CANAL+", style: "style_text_soft" } }
                 # [AI-WARNING] « PC » ne passe PAS par select_source. Le
                 # source_list de la TV ne contient que "TV" et "HDMI", et "HDMI"
                 # retombe sur la FREEBOX, pas sur le PC — l'ancien bouton
@@ -293,4 +290,4 @@ obj:
                 # la prise a la touche, via le meme point d'entree HA que les
                 # apps : la correspondance PC -> HDMI1 vit dans tab5_tv.yaml,
                 # donc un cable deplace se corrige SANS recompiler ni reflasher.
-                - !include { file: tv_app_btn.yaml, vars: { x: 948, app: "pc", text: "PC", color: "color_success" } }
+                - !include { file: tv_app_btn.yaml, vars: { x: 948, app: "pc", text: "PC", style: "style_text_success" } }

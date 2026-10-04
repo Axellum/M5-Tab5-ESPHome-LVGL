@@ -4,9 +4,9 @@
 # ou une source par script.tab5_tv_app (HA) — JAMAIS par media_player.select_source ni
 # play_media, voir l'en-tête du popup.
 # vars : x (position dans la rangée de 1170 px), app (nom court traduit côté HA,
-#        packages/tab5_tv.yaml), text (libellé), color (jeton color_*).
-# « CANAL+ » a la couleur du thème : color = color_text, la couleur que le `theme:` donne
-# à tout label (tab5-styles.yaml), même rendu (dans le gabarit depuis le 01/10/2026).
+#        packages/tab5_tv.yaml), text (libellé), style (style de rôle style_text_*).
+# « CANAL+ » a la couleur du thème : style = style_text_soft, la couleur que le `theme:`
+# donne à tout label (tab5-styles.yaml), même rendu (dans le gabarit depuis le 01/10/2026).
 # Sorti de tv_remote_popup.yaml le 26/09/2026 (audit, lot 7.3), rendu inchangé.
 # ═══════════════════════════════════════════════════════
 button:
@@ -18,4 +18,4 @@ button:
   on_short_click:
     - script.execute: { id: tab5_action, emplacement: tv, commande: appli, valeur: "${app}" }
   widgets:
-    - label: { text: "${text}", align: CENTER, text_font: roboto_32_b, text_color: "${color}" }
+    - label: { text: "${text}", align: CENTER, text_font: roboto_32_b, styles: "${style}" }

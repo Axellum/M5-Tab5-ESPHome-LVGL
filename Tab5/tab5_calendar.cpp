@@ -232,10 +232,10 @@ static void cal_style_pastille(lv_style_t* st, int32_t x, uint32_t color) {
 }
 
 // Libellé de case : la couleur que le `theme:` ESPHome pose sur un label YAML
-// (color_text), puis sa place dans la case.
+// (TEXT_SOFT), puis sa place dans la case.
 static void cal_style_libelle(lv_style_t* st, lv_align_t align, int32_t y) {
     lv_style_init(st);
-    lv_style_set_text_color(st, lv_color_hex(UIColor::TEXT_SOFT));
+    lv_style_set_text_color(st, lv_color_hex(UIColor.TEXT_SOFT));
     lv_style_set_align(st, align);
     lv_style_set_y(st, y);
 }
@@ -245,9 +245,9 @@ static void cal_styles_init() {
     // rendu ; hauteur provisoire, recalculée par cal_render_month().
     lv_style_init(&s_cal_style_case);
     lv_style_set_align(&s_cal_style_case, LV_ALIGN_TOP_LEFT);
-    lv_style_set_bg_color(&s_cal_style_case, lv_color_hex(UIColor::GLASS_RIM));
+    lv_style_set_bg_color(&s_cal_style_case, lv_color_hex(UIColor.GLASS_RIM));
     lv_style_set_bg_opa(&s_cal_style_case, LV_OPA_TRANSP);
-    lv_style_set_border_color(&s_cal_style_case, lv_color_hex(UIColor::ACCENT));
+    lv_style_set_border_color(&s_cal_style_case, lv_color_hex(UIColor.ACCENT));
     lv_style_set_border_opa(&s_cal_style_case, LV_OPA_TRANSP);
     lv_style_set_border_width(&s_cal_style_case, 2);
     lv_style_set_height(&s_cal_style_case, 86);
@@ -259,8 +259,8 @@ static void cal_styles_init() {
     cal_style_libelle(&s_cal_style_num, LV_ALIGN_TOP_MID, 4);
     cal_style_libelle(&s_cal_style_sub, LV_ALIGN_BOTTOM_MID, -6);
     // Pastille RDV (dorée), pastille anniversaire (rose) à sa gauche.
-    cal_style_pastille(&s_cal_style_pastille_rdv, -8, UIColor::GOLD);
-    cal_style_pastille(&s_cal_style_pastille_anniv, -28, UIColor::WARM_PINK);
+    cal_style_pastille(&s_cal_style_pastille_rdv, -8, UIColor.GOLD);
+    cal_style_pastille(&s_cal_style_pastille_anniv, -28, UIColor.WARM_PINK);
 }
 
 // Pastille masquée tant que le rendu ne l'allume pas.
@@ -394,24 +394,24 @@ void cal_render_month(lv_obj_t* lbl_month,
         const int col = i % 7;  // 5-6 = samedi/dimanche
 
         // Priorités du numéro : aujourd'hui > passé > férié > weekend > normal
-        uint32_t num_color = UIColor::TEXT_SOFT;
-        if (col >= 5) num_color = UIColor::TEXT_DIM;
-        if (code & CAL_BIT_FERIE) num_color = UIColor::ERROR;
+        uint32_t num_color = UIColor.TEXT_SOFT;
+        if (col >= 5) num_color = UIColor.TEXT_DIM;
+        if (code & CAL_BIT_FERIE) num_color = UIColor.ERROR;
         // Passé : TEXT_DIM, pas PAST (ardoise) — le 29 du mois, presque toute la grille
         // était en ardoise sur le bleu, illisible. Le fond plus pâle suffit à l'estomper.
-        if (is_past) num_color = UIColor::TEXT_DIM;
-        if (is_today) num_color = UIColor::ACCENT;
+        if (is_past) num_color = UIColor.TEXT_DIM;
+        if (is_today) num_color = UIColor.ACCENT;
         lv_obj_set_style_text_color(c.num, lv_color_hex(num_color), LV_PART_MAIN);
 
         // Heures de travail dans la case (orange si embauche < 9h — même
         // convention que les tuiles / bandeau, estompé si jour passé)
         if (!heures.empty()) {
             lv_label_set_text(c.sub, heures.c_str());
-            uint32_t h_color = UIColor::TEXT_SOFT;
+            uint32_t h_color = UIColor.TEXT_SOFT;
             if (cal_is_early_shift(heures)) {
-                h_color = UIColor::EARLY;
+                h_color = UIColor.EARLY;
             }
-            if (is_past) h_color = UIColor::TEXT_DIM;
+            if (is_past) h_color = UIColor.TEXT_DIM;
             lv_obj_set_style_text_color(c.sub, lv_color_hex(h_color), LV_PART_MAIN);
         } else {
             lv_label_set_text(c.sub, "");
@@ -423,7 +423,7 @@ void cal_render_month(lv_obj_t* lbl_month,
         const bool vacances = (code & CAL_BIT_VACANCES) != 0;
         lv_obj_set_style_bg_color(c.cell,
             cal_fond_case(lv_obj_get_parent(c.cell), rows_y + row * (row_h + gap) + row_h / 2,
-                          vacances ? UIColor::ACCENT_ALT : UIColor::GLASS_RIM,
+                          vacances ? UIColor.ACCENT_ALT : UIColor.GLASS_RIM,
                           vacances ? LV_OPA_30 : (is_past ? LV_OPA_10 : LV_OPA_20)),
             LV_PART_MAIN);
         lv_obj_set_style_bg_opa(c.cell, LV_OPA_COVER, LV_PART_MAIN);
@@ -448,13 +448,13 @@ std::string cal_date_for_cell(int view_year, int view_month, int cell_idx) {
 
 // Icône MDI + couleur d'une ligne de détail selon son type (payload HA).
 static void cal_detail_type_style(const char* type, const char** icon, uint32_t* color) {
-    if (strcmp(type, "travail") == 0)       { *icon = "\U000F00D6"; *color = UIColor::INFO; }
-    else if (strcmp(type, "ferie") == 0)    { *icon = "\U000F1056"; *color = UIColor::ERROR; }
-    else if (strcmp(type, "vacances") == 0) { *icon = "\U000F0474"; *color = UIColor::ACCENT_ALT; }
-    else if (strcmp(type, "rdv") == 0)      { *icon = "\U000F00F0"; *color = UIColor::GOLD; }
-    else if (strcmp(type, "anniv") == 0)    { *icon = "\U000F00EB"; *color = UIColor::WARM_PINK; }
-    else if (strcmp(type, "fete") == 0)     { *icon = "\U000F09D3"; *color = UIColor::TEXT_DIM; }
-    else                                    { *icon = "\U000F00F0"; *color = UIColor::TEXT_DIM; }
+    if (strcmp(type, "travail") == 0)       { *icon = "\U000F00D6"; *color = UIColor.INFO; }
+    else if (strcmp(type, "ferie") == 0)    { *icon = "\U000F1056"; *color = UIColor.ERROR; }
+    else if (strcmp(type, "vacances") == 0) { *icon = "\U000F0474"; *color = UIColor.ACCENT_ALT; }
+    else if (strcmp(type, "rdv") == 0)      { *icon = "\U000F00F0"; *color = UIColor.GOLD; }
+    else if (strcmp(type, "anniv") == 0)    { *icon = "\U000F00EB"; *color = UIColor.WARM_PINK; }
+    else if (strcmp(type, "fete") == 0)     { *icon = "\U000F09D3"; *color = UIColor.TEXT_DIM; }
+    else                                    { *icon = "\U000F00F0"; *color = UIColor.TEXT_DIM; }
 }
 
 void cal_show_day_detail_loading(lv_obj_t* day_popup, lv_obj_t* lbl_title,

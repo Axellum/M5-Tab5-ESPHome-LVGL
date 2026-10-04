@@ -290,7 +290,7 @@ Color is used consistently as a primary information channel — to let you read 
 
 **Microphone icon:** see Voice assistant above.
 
-All color constants live in the `UIColor` namespace in `tab5_tokens.h` (included by `tab5_custom.h`), with YAML-side counterparts in `tab5-styles.yaml`.
+All interface colours live in one palette, `struct Palette` in `tab5_tokens.h` (included by `tab5_custom.h`); `UIColor` is the active one. The YAML takes them through the role styles of `tab5-styles.yaml` (`style_text_dim`…), the games keep their own dark palettes ([ADR-0029](decisions/0029-themes-palette.md)).
 
 ---
 
@@ -618,7 +618,7 @@ La couleur est utilisée de façon systématique comme canal d'information prima
 
 **Icône microphone :** voir Assistant vocal ci-dessus.
 
-Toutes les constantes de couleur vivent dans le namespace `UIColor` de `tab5_tokens.h` (inclus par `tab5_custom.h`), avec leurs équivalents YAML dans `tab5-styles.yaml`.
+Toutes les couleurs de l'interface vivent dans une palette, `struct Palette` de `tab5_tokens.h` (inclus par `tab5_custom.h`) ; `UIColor` est la palette active. Le YAML les prend par les styles de rôle de `tab5-styles.yaml` (`style_text_dim`…), les jeux gardent leurs palettes sombres ([ADR-0029](decisions/0029-themes-palette.md)).
 
 ---
 

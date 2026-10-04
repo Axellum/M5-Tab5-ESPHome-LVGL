@@ -10,4 +10,4 @@ obj:
   height: 45
   styles: style_meteo_card_page
   widgets:
-    - label: { id: "lbl_sw${idx}_state", text: "${state_text}", align: CENTER, text_font: roboto_32_b, text_color: color_text_dim }
+    - label: { id: "lbl_sw${idx}_state", text: "${state_text}", align: CENTER, text_font: roboto_32_b, styles: style_text_dim }

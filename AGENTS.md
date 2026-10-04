@@ -53,7 +53,7 @@ python tools/check_lode_levels.py          # les 10 niveaux de Coureur d'Or rest
 python tools/check_arkanoid_levels.py      # les 8 niveaux d'Arcanoïde complets, aucune brique emmurée
 python tools/check_trivia_questions.py     # banque de Trial Poursuite : ni entrée manquante, ni question vide ou en double
 python tools/check_tab5_registry.py        # ADR-0013 : registre unique consoles/modales
-python tools/check_tab5_code_rules.py      # règles de code (snprintf, pas de lv_* dans le contrat, pas d'entité HA en dur…)
+python tools/check_tab5_code_rules.py      # règles de code (snprintf, pas de lv_* dans le contrat, pas d'entité HA en dur, couleurs par la palette…)
 python tools/cartographie_counts.py        # comptes de lignes de la cartographie (--write pour les recalculer)
 ```
 
@@ -62,7 +62,7 @@ python tools/cartographie_counts.py        # comptes de lignes de la cartographi
 
 ## Code rules (full detail in `Tab5/README.md`)
 
-1. No hardcoded hex colors in YAML/lambdas — add a token to `UIColor::` (`Tab5/tab5_tokens.h`, included by `tab5_custom.h`).
+1. No hardcoded colour in YAML/lambdas — add a role to `struct Palette` (`Tab5/tab5_tokens.h`, included by `tab5_custom.h`) with a value in every palette. C++ and lambdas read `UIColor.X` (the active palette); a widget takes its colour through a role style (`styles: style_text_dim`, `Tab5/tab5-styles.yaml`), never a `text_color:`/`bg_color:` set on it — ESPHome freezes those at compile time and a theme could not change them ([ADR-0029](docs/decisions/0029-themes-palette.md), rule 8 of `tools/check_tab5_code_rules.py`). Games read `PALETTE_SOMBRE.X` and stay dark.
 2. `sensor:`/`text_sensor:` never touch `lv_obj_*` directly — always call a named C++ function of the C++ layer (`Tab5/tab5_*.cpp`, declared in `tab5_custom.h`).
 3. No `static` inside a lambda for state shared across handlers — use a `globals:` entry instead.
 4. No `std::string` by value or `to_string()` in a hot path (sliders, frequent `on_value`) — use `const std::string&` or a `snprintf` buffer.

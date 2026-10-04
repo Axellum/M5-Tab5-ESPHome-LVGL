@@ -195,19 +195,19 @@ void assist_apply_text_size(lv_obj_t* lbl_response, int size_idx,
     if (lbl_response && f) esphome::lvgl::lv_obj_set_style_text_font(lbl_response, f, LV_PART_MAIN);
     // Bouton de la taille active : bordure INFO 2 px (dessinée à l'intérieur du
     // widget, la position ne bouge pas).
-    highlight_button_border(btn_s, !large, UIColor::INFO);
-    highlight_button_border(btn_l, large, UIColor::INFO);
+    highlight_button_border(btn_s, !large, UIColor.INFO);
+    highlight_button_border(btn_l, large, UIColor.INFO);
 }
 
 // Couleur + libellé d'un état du pipeline (mêmes valeurs que les 5 anciens blocs).
 static void assist_state_style(AssistState st, uint32_t& color, const char*& label) {
     switch (st) {
-        case AssistState::LISTENING: color = UIColor::SUCCESS;  label = "Écoute…";  break;
-        case AssistState::THINKING:  color = UIColor::WARNING;  label = "Analyse…"; break;
-        case AssistState::SPEAKING:  color = UIColor::INFO;     label = "Réponse";  break;
-        case AssistState::ERROR:     color = UIColor::ERROR;    label = "Erreur";   break;
+        case AssistState::LISTENING: color = UIColor.SUCCESS;  label = "Écoute…";  break;
+        case AssistState::THINKING:  color = UIColor.WARNING;  label = "Analyse…"; break;
+        case AssistState::SPEAKING:  color = UIColor.INFO;     label = "Réponse";  break;
+        case AssistState::ERROR:     color = UIColor.ERROR;    label = "Erreur";   break;
         case AssistState::IDLE:
-        default:                     color = UIColor::TEXT_DIM; label = "Prêt";     break;
+        default:                     color = UIColor.TEXT_DIM; label = "Prêt";     break;
     }
 }
 
@@ -251,7 +251,7 @@ void assist_image_state_ui(lv_obj_t* hint, lv_obj_t* img, AssistImage st) {
 void assist_wake_word_indicator_ui(lv_obj_t* lbl, bool on) {
     if (lbl == nullptr) return;
     lv_label_set_text(lbl, on ? "Ok Nabu: ON" : "Ok Nabu: OFF");
-    lv_obj_set_style_text_color(lbl, lv_color_hex(on ? UIColor::SUCCESS : UIColor::TEXT_DIM), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lbl, lv_color_hex(on ? UIColor.SUCCESS : UIColor.TEXT_DIM), LV_PART_MAIN);
 }
 
 // =============================================================================

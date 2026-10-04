@@ -377,14 +377,14 @@ const char* heritage_glyphe_carte(int t) {
 
 struct Vue {
     const char* icone = nullptr;        // épaule gauche (32 px) ; nullptr : inchangée
-    uint32_t couleur = UIColor::INACTIVE;
+    uint32_t couleur = UIColor.INACTIVE;
     const char* icone_carte = nullptr;  // carte du mode HA (70 px) ; nullptr : inchangée
-    uint32_t couleur_carte = UIColor::INACTIVE;
+    uint32_t couleur_carte = UIColor.INACTIVE;
     const char* droite = nullptr;       // épaule droite ; nullptr : masquée
-    uint32_t couleur_droite = UIColor::TEXT_DIM;
+    uint32_t couleur_droite = UIColor.TEXT_DIM;
     const char* nom = "";
     char ligne[40] = "";                // ligne d'état de la carte
-    uint32_t couleur_ligne = UIColor::INACTIVE;
+    uint32_t couleur_ligne = UIColor.INACTIVE;
     bool agit = false;                  // un appui fait quelque chose
 };
 
@@ -512,10 +512,10 @@ bool type_agit(Type type, uint8_t options, bool clim_connue) {
 void vue_fleche_volet(const Etat& e, Vue& v) {
     if (vol_mouvement(e.brut)) {
         v.droite = glyphe_fleche(0);
-        v.couleur_droite = UIColor::INFO;
+        v.couleur_droite = UIColor.INFO;
     } else {
         v.droite = glyphe_fleche(vol_sens(e) == SENS_FERMER ? -1 : 1);
-        v.couleur_droite = UIColor::TEXT_DIM;
+        v.couleur_droite = UIColor.TEXT_DIM;
     }
 }
 
@@ -525,7 +525,7 @@ void vue_nouvelle(int r, int t, Vue& v) {
     const Type type = static_cast<Type>(d.type);
     const char* s = e.brut;
     bool actif = false;
-    uint32_t c = UIColor::TEXT_DIM;
+    uint32_t c = UIColor.TEXT_DIM;
     v.nom = d.nom;
     v.agit = type_agit(type, d.options, type == Type::CLI && clim_tuile_connue(r, t));
     switch (type) {
@@ -537,26 +537,26 @@ void vue_nouvelle(int r, int t, Vue& v) {
             } else {
                 snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? tr("Allumé") : tr("Éteint"));
             }
-            c = actif ? (e.a_couleur ? couleur_lisible(e.couleur) : UIColor::INFO) : UIColor::TEXT_DIM;
+            c = actif ? (e.a_couleur ? couleur_lisible(e.couleur) : UIColor.INFO) : UIColor.TEXT_DIM;
             v.droite = glyphe_ampoule(actif);
             v.couleur_droite = c;
             break;
         case Type::INT:
             actif = est(s, "on");
             snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? tr("Allumé") : tr("Éteint"));
-            c = actif ? UIColor::SUCCESS : UIColor::TEXT_DIM;
+            c = actif ? UIColor.SUCCESS : UIColor.TEXT_DIM;
             break;
         case Type::VOL:
             actif = !est(s, "closed");
             if (vol_mouvement(s)) {
                 snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Mouvement"));
-                c = UIColor::INFO;
+                c = UIColor.INFO;
             } else if (est(s, "open")) {
                 if (!std::isnan(e.valeur) && e.valeur > 0.0f && e.valeur < 100.0f)
                     snprintf(v.ligne, sizeof(v.ligne), "%.0f %%", e.valeur);
                 else
                     snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Ouvert"));
-                c = UIColor::SUCCESS;
+                c = UIColor.SUCCESS;
             } else {
                 snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Fermé"));
             }
@@ -567,12 +567,12 @@ void vue_nouvelle(int r, int t, Vue& v) {
             if (est(s, "playing")) snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Lecture"));
             else if (est(s, "paused")) snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Pause"));
             else snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? tr("Allumé") : tr("Éteint"));
-            c = actif ? UIColor::SUCCESS : UIColor::TEXT_DIM;
+            c = actif ? UIColor.SUCCESS : UIColor.TEXT_DIM;
             break;
         case Type::ACT:
             actif = minuterie_sur(s_ok, r, t);
             snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? "OK" : tr("Lancer"));
-            c = actif ? UIColor::SUCCESS : UIColor::ACCENT;
+            c = actif ? UIColor.SUCCESS : UIColor.ACCENT;
             break;
         case Type::CAP:
             actif = true;
@@ -581,7 +581,7 @@ void vue_nouvelle(int r, int t, Vue& v) {
             else if (!((d.options & OPT_E) && energie_formater(v.ligne, sizeof(v.ligne), e.valeur, d.complement)))
                 formater_mesure(v.ligne, sizeof(v.ligne), e.valeur, d.complement);
             c = (d.complement[0] != '\0' && std::strncmp(d.complement, "\xC2\xB0", 2) == 0 && !std::isnan(e.valeur))
-                    ? get_temperature_color(e.valeur) : UIColor::INFO;
+                    ? get_temperature_color(e.valeur) : UIColor.INFO;
             break;
         case Type::BIN: {
             const Famille f = famille_bin(d.complement);
@@ -590,7 +590,7 @@ void vue_nouvelle(int r, int t, Vue& v) {
                 const bool verrouille = est(s, "locked") || est(s, "off");
                 snprintf(v.ligne, sizeof(v.ligne), "%s", verrouille ? tr("Verrouillé") : tr("Ouvert"));
                 actif = !verrouille;
-                c = verrouille ? UIColor::SUCCESS : UIColor::WARNING;
+                c = verrouille ? UIColor.SUCCESS : UIColor.WARNING;
                 break;
             }
             actif = est(s, "on") || est(s, "home");
@@ -608,16 +608,16 @@ void vue_nouvelle(int r, int t, Vue& v) {
                     snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? tr("Actif") : tr("Inactif"));
                     break;
             }
-            c = actif ? (f == Famille::PRESENCE ? UIColor::SUCCESS : UIColor::WARNING) : UIColor::TEXT_DIM;
+            c = actif ? (f == Famille::PRESENCE ? UIColor.SUCCESS : UIColor.WARNING) : UIColor.TEXT_DIM;
             break;
         }
         case Type::CLI:
             actif = !est(s, "off");
             if (!std::isnan(e.valeur)) snprintf(v.ligne, sizeof(v.ligne), "%.1f \xC2\xB0", e.valeur);
             else snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? "--" : tr("Éteint"));
-            if (est(s, "cool")) c = UIColor::CLIM_COOL_ACTIVE;
-            else if (est(s, "heat")) c = UIColor::CLIM_HEAT_ACTIVE;
-            else c = actif ? UIColor::SUCCESS : UIColor::TEXT_DIM;
+            if (est(s, "cool")) c = UIColor.CLIM_COOL_ACTIVE;
+            else if (est(s, "heat")) c = UIColor.CLIM_HEAT_ACTIVE;
+            else c = actif ? UIColor.SUCCESS : UIColor.TEXT_DIM;
             break;
         default:
             break;
@@ -627,12 +627,12 @@ void vue_nouvelle(int r, int t, Vue& v) {
     // unavailable / unknown : « Hors ligne », grisé (un script ou une scène n'en a pas).
     if (!e.recu) {
         actif = false;
-        c = c_ligne = UIColor::INACTIVE;
+        c = c_ligne = UIColor.INACTIVE;
         v.droite = nullptr;
         snprintf(v.ligne, sizeof(v.ligne), "--");
     } else if (est(s, "unavailable") || (est(s, "unknown") && type != Type::ACT)) {
         actif = false;
-        c = c_ligne = UIColor::INACTIVE;
+        c = c_ligne = UIColor.INACTIVE;
         v.droite = nullptr;
         snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Hors ligne"));
     } else if (type == Type::CLI && !std::isnan(e.valeur)) {
@@ -641,12 +641,12 @@ void vue_nouvelle(int r, int t, Vue& v) {
     // Sens d'un volet basculé par le titre : la ligne d'état le dit 2 s (en mode HA, la
     // carte n'a pas de flèche).
     if (type == Type::VOL && e.recu && !vol_mouvement(s) && minuterie_sur(s_sens, r, t)) {
-        c_ligne = UIColor::ACCENT;
+        c_ligne = UIColor.ACCENT;
         snprintf(v.ligne, sizeof(v.ligne), "%s", vol_sens(e) == SENS_FERMER ? tr("Fermer") : tr("Ouvrir"));
     }
     // Option k : le premier appui arme, la ligne d'état demande le second (3 s).
     if (minuterie_sur(s_confirmation, r, t)) {
-        c = c_ligne = UIColor::WARNING;
+        c = c_ligne = UIColor.WARNING;
         snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Confirmer ?"));
     }
     const char* icone = tuile_icone(d.icone, actif, kTypes[d.type]);
@@ -665,10 +665,10 @@ void vue_heritage(int t, Vue& v) {
             // Épaule : l'état de la TV, ou celui du PC quand il n'y a pas de TV (lot 5).
             const bool epaule = (zone_absente(Zone::TV) && !zone_absente(Zone::PC)) ? s_h.pc : s_h.tv;
             v.icone = heritage_glyphe_epaule(0, false);
-            v.couleur = epaule ? UIColor::SUCCESS : UIColor::TEXT_DIM;
+            v.couleur = epaule ? UIColor.SUCCESS : UIColor.TEXT_DIM;
             v.icone_carte = heritage_glyphe_carte(0);
-            const uint32_t c = s_h.pc ? UIColor::SUCCESS : UIColor::TEXT_DIM;
-            v.couleur_carte = s_h.pc_recu ? c : UIColor::INACTIVE;
+            const uint32_t c = s_h.pc ? UIColor.SUCCESS : UIColor.TEXT_DIM;
+            v.couleur_carte = s_h.pc_recu ? c : UIColor.INACTIVE;
             if (s_h.pc_recu) snprintf(v.ligne, sizeof(v.ligne), "%s", s_h.pc ? tr("Allumé") : tr("Éteint"));
             else snprintf(v.ligne, sizeof(v.ligne), "--");
             v.couleur_ligne = v.couleur_carte;
@@ -683,16 +683,16 @@ void vue_heritage(int t, Vue& v) {
             // quelle pendant la course) ; droite : pause en mouvement, sinon le sens de la
             // prochaine commande (volet_target_open, basculé par btn_j1_dir).
             v.icone = heritage_glyphe_epaule(1, o == 0);
-            v.couleur = o == 1 ? UIColor::SUCCESS : (o == 0 ? UIColor::ERROR : UIColor::TEXT_DIM);
+            v.couleur = o == 1 ? UIColor.SUCCESS : (o == 0 ? UIColor.ERROR : UIColor.TEXT_DIM);
             const bool ouvrir = g_tuiles_ui.volet_sens == nullptr || *g_tuiles_ui.volet_sens;
             v.droite = glyphe_fleche(mouvement ? 0 : (ouvrir ? 1 : -1));
-            v.couleur_droite = mouvement ? UIColor::INFO : UIColor::TEXT_DIM;
+            v.couleur_droite = mouvement ? UIColor.INFO : UIColor.TEXT_DIM;
             if (mouvement) {
                 snprintf(v.ligne, sizeof(v.ligne), "%s", tr("Mouvement"));
-                v.couleur_carte = UIColor::INFO;
+                v.couleur_carte = UIColor.INFO;
             } else if (o >= 0) {
                 snprintf(v.ligne, sizeof(v.ligne), "%s", o == 1 ? tr("Ouvert") : tr("Fermé"));
-                v.couleur_carte = o == 1 ? UIColor::SUCCESS : UIColor::TEXT_DIM;
+                v.couleur_carte = o == 1 ? UIColor.SUCCESS : UIColor.TEXT_DIM;
             } else {
                 snprintf(v.ligne, sizeof(v.ligne), "--");
             }
@@ -703,12 +703,12 @@ void vue_heritage(int t, Vue& v) {
             const int i = t - 2;
             v.nom = i == 0 ? tr("Chambre") : (i == 1 ? tr("Salon") : "LEDs");
             v.icone_carte = heritage_glyphe_carte(t);
-            const uint32_t c = s_h.lum[i] ? UIColor::INFO : UIColor::TEXT_DIM;
+            const uint32_t c = s_h.lum[i] ? UIColor.INFO : UIColor.TEXT_DIM;
             v.icone = heritage_glyphe_epaule(t, false);
             v.couleur = c;
             v.droite = glyphe_ampoule(s_h.lum[i]);
             v.couleur_droite = c;
-            v.couleur_carte = s_h.lum_recu[i] ? c : UIColor::INACTIVE;
+            v.couleur_carte = s_h.lum_recu[i] ? c : UIColor.INACTIVE;
             if (s_h.lum_recu[i]) snprintf(v.ligne, sizeof(v.ligne), "%s", s_h.lum[i] ? tr("Allumé") : tr("Éteint"));
             else snprintf(v.ligne, sizeof(v.ligne), "--");
             v.couleur_ligne = v.couleur_carte;
@@ -866,7 +866,7 @@ void bouton_ha_peindre() {
     if (u.bouton_ha == nullptr || s_bouton_actif == g_central_ctx.ha_mode) return;
     s_bouton_actif = g_central_ctx.ha_mode;
     if (s_bouton_actif) {
-        highlight_button_border(u.bouton_ha, true, UIColor::INFO);
+        highlight_button_border(u.bouton_ha, true, UIColor.INFO);
         return;
     }
     // Retour exact au style du bouton (style_clim_btn_page : liseré à 35 %), pas au gris
@@ -953,7 +953,7 @@ void popup_lumiere_ligne(int i) {
     const bool on = lumiere_allumee(r, t);
     const char* icone = heritage() ? heritage_glyphe_selecteur(t) : tuile_icone(s_m.tuiles[r][t].icone, on, "lum");
     ui_text(u.lum_sel_icone[i], icone);
-    ui_text_color(u.lum_sel_icone[i], on ? UIColor::INFO : UIColor::TEXT_DIM);
+    ui_text_color(u.lum_sel_icone[i], on ? UIColor.INFO : UIColor.TEXT_DIM);
     ui_texte_coupe(u.lum_sel_nom[i], lumiere_nom(r, t), 244);  // 342 − 88 − marge
 }
 
@@ -971,7 +971,7 @@ void popup_lumiere_peindre() {
         if (!visible || b == nullptr) continue;
         ui_y(b, 50 + i * pas);
         if (lv_obj_get_style_height(b, LV_PART_MAIN) != hauteur) lv_obj_set_height(b, hauteur);
-        highlight_button_border(b, i == s_pl.choix, UIColor::ACCENT, 3);
+        highlight_button_border(b, i == s_pl.choix, UIColor.ACCENT, 3);
         popup_lumiere_ligne(i);
     }
     if (s_pl.n == 0) return;
@@ -982,7 +982,7 @@ void popup_lumiere_peindre() {
     } else {
         ui_text(u.lum_titre, lumiere_nom(r, t));
     }
-    ui_text_color(u.lum_power, lumiere_allumee(r, t) ? UIColor::INFO : UIColor::TEXT_DIM);
+    ui_text_color(u.lum_power, lumiere_allumee(r, t) ? UIColor.INFO : UIColor.TEXT_DIM);
     popup_lumiere_arc();
 }
 
@@ -1011,7 +1011,7 @@ void popup_lumiere_etat(int r, int t) {
         if (s_pl.tuiles[i] != t) continue;
         popup_lumiere_ligne(i);
         if (i == s_pl.choix) {
-            ui_text_color(u.lum_power, lumiere_allumee(r, t) ? UIColor::INFO : UIColor::TEXT_DIM);
+            ui_text_color(u.lum_power, lumiere_allumee(r, t) ? UIColor.INFO : UIColor.TEXT_DIM);
             popup_lumiere_arc();
         }
     }

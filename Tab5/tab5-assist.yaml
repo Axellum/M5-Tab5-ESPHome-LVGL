@@ -403,13 +403,13 @@ script:
     then:
       - lambda: |-
           bool discu = id(conversation_mode);
-          highlight_button_border(id(btn_assist_pipe_domo), !discu, UIColor::INFO);
-          highlight_button_border(id(btn_assist_pipe_discu), discu, UIColor::SUCCESS);
+          highlight_button_border(id(btn_assist_pipe_domo), !discu, UIColor.INFO);
+          highlight_button_border(id(btn_assist_pipe_discu), discu, UIColor.SUCCESS);
           if (id(lbl_assist_wake) != nullptr) {
             bool wake = id(tab5_wake_word_active).state;
             lv_label_set_text(id(lbl_assist_wake), wake ? "Ok Nabu : ON" : "Ok Nabu : OFF");
             lv_obj_set_style_text_color(id(lbl_assist_wake),
-                lv_color_hex(wake ? UIColor::SUCCESS : UIColor::TEXT_DIM), LV_PART_MAIN);
+                lv_color_hex(wake ? UIColor.SUCCESS : UIColor.TEXT_DIM), LV_PART_MAIN);
           }
           ui_sync_mute_icons(id(icon_mute), id(icon_assist_mute), id(system_muted));
           // Même helper que script.tab5_volume_apply : à l'ouverture du popup,
@@ -440,10 +440,10 @@ script:
           data:
             option: !lambda 'return discussion ? std::string("Discussion LLM") : std::string("preferred");'
       - lambda: |-
-          highlight_button_border(id(btn_mode_domo), !discussion, UIColor::INFO);
-          highlight_button_border(id(btn_mode_discu), discussion, UIColor::SUCCESS);
-          highlight_button_border(id(btn_assist_pipe_domo), !discussion, UIColor::INFO);
-          highlight_button_border(id(btn_assist_pipe_discu), discussion, UIColor::SUCCESS);
+          highlight_button_border(id(btn_mode_domo), !discussion, UIColor.INFO);
+          highlight_button_border(id(btn_mode_discu), discussion, UIColor.SUCCESS);
+          highlight_button_border(id(btn_assist_pipe_domo), !discussion, UIColor.INFO);
+          highlight_button_border(id(btn_assist_pipe_discu), discussion, UIColor.SUCCESS);
 
   # Taille de la police de réponse : 0=S 2=L (persisté, confort de lecture ; le 1 de
   # l'ancien M, retiré par l'essai D8 du 26/09/2026, est lu comme S).

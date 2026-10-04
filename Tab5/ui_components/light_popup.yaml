@@ -41,7 +41,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F0335", icon_color: "color_gold", title: "Ampoule", title_id: "popup_light_title", close_btn_id: "btn_light_close", close_lambda: "animate_popup_close(id(light_options_popup));" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0335", icon_style: "style_text_gold", title: "Ampoule", title_id: "popup_light_title", close_btn_id: "btn_light_close", close_lambda: "animate_popup_close(id(light_options_popup));" } }
 
           # ═══ CARTE AMPOULE (gauche) : sélecteur 3 lumières + puissance ═══
           - obj:
@@ -53,7 +53,7 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "AMPOULE", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
+                - label: { text: "AMPOULE", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
                 # Sélecteur (ADR-0023) : une ligne par lumière de la pièce, 5 au plus —
                 # position, hauteur (serrées au-delà de trois), icône, nom et surbrillance
@@ -76,7 +76,7 @@ obj:
                     on_short_click:
                       - script.execute: { id: tab5_action, emplacement: !lambda 'return id(current_light_slot);', commande: basculer, valeur: "" }
                     widgets:
-                      - label: { id: btn_light_power_icon, text: "\U000F0425", align: LEFT_MID, x: 28, text_font: mdi_font_56, text_color: color_text_dim }
+                      - label: { id: btn_light_power_icon, text: "\U000F0425", align: LEFT_MID, x: 28, text_font: mdi_font_56, styles: style_text_dim }
                       - label: { text: "On / Off", align: LEFT_MID, x: 110, text_font: roboto_32_b }
 
                 # Tout éteindre — les lumières de la pièce d'un coup (coucher) : pR / eteindre
@@ -92,8 +92,8 @@ obj:
                     on_short_click:
                       - lambda: 'popup_lumiere_tout_eteindre();'
                     widgets:
-                      - label: { text: "\U000F0425", align: LEFT_MID, x: 28, text_font: mdi_font_32, text_color: color_error }
-                      - label: { text: "Tout éteindre", align: LEFT_MID, x: 80, text_color: color_text_dim }
+                      - label: { text: "\U000F0425", align: LEFT_MID, x: 28, text_font: mdi_font_32, styles: style_text_error }
+                      - label: { text: "Tout éteindre", align: LEFT_MID, x: 80, styles: style_text_dim }
 
           # ═══ CARTE LUMINOSITÉ (centre) : arc + % live + raccourcis ═══
           - obj:
@@ -105,7 +105,7 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "LUMINOSITÉ", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
+                - label: { text: "LUMINOSITÉ", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
                 # Arc jauge — synchronisé à l'ouverture (script) et en live (light_*_brightness)
                 - arc:
@@ -117,15 +117,15 @@ obj:
                     min_value: 0
                     max_value: 255
                     value: 128
-                    arc_color: color_arc_track
+                    styles: style_arc_arc_track
                     arc_width: 22
                     adjustable: true
                     indicator:
-                      arc_color: color_warning
+                      styles: style_arc_warning
                       arc_width: 22
                     knob:
                       bg_opa: 100%
-                      bg_color: color_text
+                      styles: style_bg_soft
                       pad_all: 6
                     on_value:
                       # Label % en direct ; l'appel HA est débouncé (un seul light.turn_on
@@ -160,7 +160,7 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "COULEURS", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
+                - label: { text: "COULEURS", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
                 # Blancs nommés (température de blanc via color_name) — gabarit light_white_btn.yaml
                 - !include { file: light_white_btn.yaml, vars: { x: 22, color_name: "warmwhite", icon_color: 0xFFC864, name: "Chaud" } }

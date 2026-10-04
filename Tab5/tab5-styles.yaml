@@ -1,10 +1,15 @@
 # [AI-CONTEXT]
 # @file tab5-styles.yaml
-# @role Définition des styles LVGL (polices, thèmes, bordures).
-# @ai_instruction Interdiction d'utiliser des codes couleurs hexadécimaux en dur. Utiliser UIColor.
-# ============================================================================
+# @role Styles LVGL partagés (verre, styles de rôle, thème des widgets), polices, et
+#       couleurs des jeux.
+# @ai_instruction Aucune couleur de l'interface dans ce fichier : elles vivent dans la
+#       palette C++ (`Palette`, Tab5/tab5_tokens.h ; thèmes : ADR-0029). Un style lit la
+#       palette active par une lambda (`!lambda 'return lv_color_hex(UIColor.X);'`), et un
+#       widget de l'interface prend sa couleur par un style de rôle
+#       (`styles: style_text_dim`), jamais par une couleur posée sur lui
+#       (tools/check_tab5_code_rules.py, règle 8).
 # =============================================================================
-# THEME — "Dark Mode Slate" (Glassmorphism)
+# THÈME — "Dark Mode Slate" (Glassmorphism), valeurs : PALETTE_SOMBRE
 # -----------------------------------------------------------------------------
 # Base ardoise (Tailwind Slate) + accents HSL vibrants (cyan / violet / emeraude).
 # L'effet "verre depoli" est simule sur ESP32-P4 (pas de backdrop-blur materiel) :
@@ -14,80 +19,13 @@
 #   - degrade vertical (haut clair -> bas sombre) = reflet de verre
 #   - liseré fin lumineux (border_opa) = arête de verre
 #   - ombre portee douce = profondeur / flottement
-# IMPORTANT : tous les `id:` couleurs et styles existants sont CONSERVES
-#             (le YAML HMI principal les reference par nom). Valeurs mises a jour
-#             + nouveaux tokens ajoutes en fin de section.
 # =============================================================================
+# Couleurs des JEUX et du sélecteur arcade seulement : ils restent sombres, avec leurs
+# palettes locales (ADR-0014, ADR-0029). Les couleurs de l'interface ont quitté cette
+# section le 04/10/2026 (lot 1 des thèmes) : un `color:` ESPHome est figé à la
+# compilation (ESPHome écrit lv_color_make(r, g, b) dans main.cpp), un thème ne pourrait
+# pas le changer.
 color:
-  # --- Surfaces ardoise (Slate) ---
-  - id: color_bg
-    hex: "0B1120"          # Ardoise profonde (fond application)
-  - id: color_text
-    hex: "F1F5F9"          # Blanc ardoise doux (slate-100)
-  - id: color_text_dim
-    hex: "94A3B8"          # Texte secondaire (slate-400)
-  - id: color_temp_max
-    hex: "F87171"          # Chaud (red-400)
-  - id: color_temp_min
-    hex: "38BDF8"          # Froid (sky-400)
-  - id: color_bar_inactive
-    hex: "334155"          # slate-700
-  - id: color_orange_vif
-    hex: "FB923C"          # orange-400 vibrant
-  # --- Couleurs sémantiques (états) — versions HSL vibrantes ---
-  - id: color_success
-    hex: "34D399"          # emerald-400
-  - id: color_warning
-    hex: "FBBF24"          # amber-400
-  - id: color_error
-    hex: "FB7185"          # rose-400
-  - id: color_info
-    hex: "38BDF8"          # sky-400
-  - id: color_gold
-    hex: "FCD34D"          # amber-300
-  - id: color_inactive
-    hex: "334155"          # slate-700
-  # --- Couleurs console ---
-  - id: color_console_bg
-    hex: "0A0E16"
-  - id: color_console_label
-    hex: "8595AD"
-  # --- NOUVEAUX tokens "Slate Glass" (accents + matiere verre) ---
-  - id: color_accent
-    hex: "22D3EE"          # cyan-400 : accent primaire / halo
-  - id: color_accent_alt
-    hex: "A78BFA"          # violet-400 : accent secondaire
-  - id: color_glass_hi
-    hex: "2C3A52"          # Haut du degrade verre (reflet)
-  - id: color_glass_lo
-    hex: "131C2C"          # Bas du degrade verre (ombre interne)
-  - id: color_glass_rim
-    hex: "93A3BC"          # Liseré lumineux (arête de verre)
-  - id: color_console_value
-    hex: "FFFFFF"          # Valeurs numeriques console
-  - id: color_icon_muted
-    hex: "555555"          # Icone desactivee / placeholder
-  - id: color_arc_track
-    hex: "2A2D35"          # Fond arcslider clim / lumiere
-  # --- Verre pré-mélangé (essai D7, 26/09/2026) ---------------------------------
-  # Même rendu que color_glass_hi/lo en transparence, mais calculé une fois pour
-  # toutes : c' = (c × a + fond × (255 − a)) / 255, arrondi comme lv_color_mix().
-  # Un dégradé posé sur un fond UNI se pré-mélange sans erreur (le mélange est
-  # linéaire) ; les coins arrondis et les bordures aussi.
-  # Sur la page (fond color_bg 0B1120, verre à 58 % = 147/255) :
-  - id: color_glass_hi_page
-    hex: "1E293D"
-  - id: color_glass_lo_page
-    hex: "101727"
-  # Sur le voile opaque des popups (fond color_modal_scrim 05080F, carte à 88 % = 224/255) :
-  - id: color_glass_hi_modal
-    hex: "27344A"
-  - id: color_glass_lo_modal
-    hex: "111A28"
-  - id: color_modal_scrim
-    hex: "05080F"          # Voile modal sombre
-  - id: color_warm_pink
-    hex: "F472B6"          # pink-400 (anniversaires calendrier ; miroir UIColor::WARM_PINK)
   # --- Jeu « Fil d'Or » (marble_game) : miroir des tokens Marble::Pal::* ---
   # Seuls les 3 fonds des conteneurs vivent ici ; toutes les autres couleurs du
   # jeu sont posees en C++ (marble_game.cpp) et n'ont donc pas de token YAML.
@@ -729,7 +667,8 @@ lvgl:
   color_depth: 16
   byte_order: little_endian
   buffer_size: 100%
-  bg_color: color_bg
+  # Fond de toutes les pages (jeux compris, que leurs conteneurs recouvrent).
+  bg_color: !lambda 'return lv_color_hex(UIColor.BG);'
   # Police par défaut (audit ressources du 26/09/2026, lot 6, D5) : aucun texte de
   # l'interface n'utilisait la montserrat_14 d'origine (tous les labels posent leur
   # police, mk_label() des jeux aussi) — elle n'est plus embarquée.
@@ -737,7 +676,7 @@ lvgl:
   # Thème ESPHome : styles partagés posés sur CHAQUE widget du type à sa création,
   # avant ses `styles:` et ses propriétés locales, qui gardent donc la main.
   # - label : le blanc et la police courants de l'interface. Un label n'écrit plus
-  #   `text_color: color_text` / `text_font: roboto_22` que s'il s'en écarte
+  #   `styles: style_text_*` / `text_font: roboto_22` que s'il s'en écarte
   #   (292 réglages locaux retirés des sources).
   # - button : pas d'ombre. Le thème LVGL par défaut en posait une (3 px, décalée de
   #   4 px) sous tout bouton qui ne l'annulait pas — voiles des popups, cartes de
@@ -745,7 +684,7 @@ lvgl:
   theme:
     label:
       text_font: roboto_22
-      text_color: color_text
+      text_color: !lambda 'return lv_color_hex(UIColor.TEXT_SOFT);'
     button:
       shadow_width: 0
   style_definitions:
@@ -760,12 +699,12 @@ lvgl:
     #  docs/essais_design/ a ete retire du depot.)
     # Opaque depuis le 01/10/2026 (était à 58 %) : verre plein, voir l'en-tête.
     - id: style_meteo_card
-      bg_color: color_glass_hi
-      bg_grad_color: color_glass_lo
+      bg_color: !lambda 'return lv_color_hex(UIColor.GLASS_HI);'
+      bg_grad_color: !lambda 'return lv_color_hex(UIColor.GLASS_LO);'
       bg_grad_dir: VER
       bg_opa: 100%
       border_width: 1
-      border_color: color_glass_rim
+      border_color: !lambda 'return lv_color_hex(UIColor.GLASS_RIM);'
       border_opa: 35%
       radius: 18
       shadow_width: 0
@@ -774,19 +713,19 @@ lvgl:
 
     # --- Conteneurs transparents (fonctionnel : inchanges) ---
     # --- Verre du tableau de bord, pré-mélangé sur la page (essai D7) ---
-    # Rendu identique à style_meteo_card / style_clim_btn posés sur color_bg,
+    # Rendu identique à style_meteo_card / style_clim_btn posés sur BG,
     # mais opaque : un repeint du tableau de bord (fermeture d'un popup, swipe)
     # ne mélange plus ≈ 580 000 px. À n'utiliser QUE sur la page elle-même, jamais
-    # dans un popup ni sur le voile (le fond n'y est pas color_bg).
+    # dans un popup ni sur le voile (le fond n'y est pas BG).
     # Appui : l'effet pressé (tab5_anim.cpp) passe l'opacité à 52 % au lieu de
     # 30 % sur un fond opaque, pour la même teinte (30 % × 255 / 147).
     - id: style_meteo_card_page
-      bg_color: color_glass_hi_page
-      bg_grad_color: color_glass_lo_page
+      bg_color: !lambda 'return lv_color_hex(UIColor.GLASS_HI_PAGE);'
+      bg_grad_color: !lambda 'return lv_color_hex(UIColor.GLASS_LO_PAGE);'
       bg_grad_dir: VER
       bg_opa: 100%
       border_width: 1
-      border_color: color_glass_rim
+      border_color: !lambda 'return lv_color_hex(UIColor.GLASS_RIM);'
       border_opa: 35%
       radius: 18
       shadow_width: 0
@@ -794,12 +733,12 @@ lvgl:
       pad_all: 0
 
     - id: style_clim_btn_page
-      bg_color: color_glass_hi_page
-      bg_grad_color: color_glass_lo_page
+      bg_color: !lambda 'return lv_color_hex(UIColor.GLASS_HI_PAGE);'
+      bg_grad_color: !lambda 'return lv_color_hex(UIColor.GLASS_LO_PAGE);'
       bg_grad_dir: VER
       bg_opa: 100%
       border_width: 1
-      border_color: color_glass_rim
+      border_color: !lambda 'return lv_color_hex(UIColor.GLASS_RIM);'
       border_opa: 35%
       radius: 18
       shadow_width: 0
@@ -820,12 +759,12 @@ lvgl:
     # Opaque depuis le 01/10/2026 (était à 58 %). L'appui (tab5_anim.cpp) voit un
     # fond opaque et passe à 52 % au lieu de 30 %.
     - id: style_clim_btn
-      bg_color: color_glass_hi
-      bg_grad_color: color_glass_lo
+      bg_color: !lambda 'return lv_color_hex(UIColor.GLASS_HI);'
+      bg_grad_color: !lambda 'return lv_color_hex(UIColor.GLASS_LO);'
       bg_grad_dir: VER
       bg_opa: 100%
       border_width: 1
-      border_color: color_glass_rim
+      border_color: !lambda 'return lv_color_hex(UIColor.GLASS_RIM);'
       border_opa: 35%
       radius: 18
       shadow_width: 0
@@ -840,28 +779,28 @@ lvgl:
     # ouverture. Un popup empilé sur un autre (voile à 60 %) prend
     # style_modal_card_verre : verre plein, opaque depuis le 01/10/2026 (88 % avant).
     - id: style_modal_card
-      bg_color: color_glass_hi_modal
-      bg_grad_color: color_glass_lo_modal
+      bg_color: !lambda 'return lv_color_hex(UIColor.GLASS_HI_MODAL);'
+      bg_grad_color: !lambda 'return lv_color_hex(UIColor.GLASS_LO_MODAL);'
       bg_grad_dir: VER
       bg_main_stop: 20
       bg_grad_stop: 245
       bg_opa: 100%
       border_width: 2
-      border_color: color_glass_rim
+      border_color: !lambda 'return lv_color_hex(UIColor.GLASS_RIM);'
       border_opa: 60%
       radius: 24
       shadow_width: 0
       pad_all: 0
 
     - id: style_modal_card_verre
-      bg_color: color_glass_hi
-      bg_grad_color: color_glass_lo
+      bg_color: !lambda 'return lv_color_hex(UIColor.GLASS_HI);'
+      bg_grad_color: !lambda 'return lv_color_hex(UIColor.GLASS_LO);'
       bg_grad_dir: VER
       bg_main_stop: 20
       bg_grad_stop: 245
       bg_opa: 100%
       border_width: 2
-      border_color: color_glass_rim
+      border_color: !lambda 'return lv_color_hex(UIColor.GLASS_RIM);'
       border_opa: 60%
       radius: 24
       shadow_width: 0
@@ -870,14 +809,14 @@ lvgl:
     # --- NOUVEAU : carte de verre generique (reutilisable) ---
     # Opaque depuis le 01/10/2026 (était à 80 %).
     - id: style_glass_card
-      bg_color: color_glass_hi
-      bg_grad_color: color_glass_lo
+      bg_color: !lambda 'return lv_color_hex(UIColor.GLASS_HI);'
+      bg_grad_color: !lambda 'return lv_color_hex(UIColor.GLASS_LO);'
       bg_grad_dir: VER
       bg_main_stop: 25
       bg_grad_stop: 240
       bg_opa: 100%
       border_width: 2
-      border_color: color_glass_rim
+      border_color: !lambda 'return lv_color_hex(UIColor.GLASS_RIM);'
       border_opa: 55%
       radius: 20
       shadow_width: 0
@@ -886,10 +825,85 @@ lvgl:
     # --- NOUVEAU : pastille / chip d'accent (cyan) ---
     # Cyan plein depuis le 01/10/2026 (était à 18 %) : « Tester », « Parler », « OK ».
     - id: style_pill_accent
-      bg_color: color_accent
+      bg_color: !lambda 'return lv_color_hex(UIColor.ACCENT);'
       bg_opa: 100%
       border_width: 1
-      border_color: color_accent
+      border_color: !lambda 'return lv_color_hex(UIColor.ACCENT);'
       border_opa: 70%
       radius: 999
       pad_all: 0
+
+    # --- Styles de rôle (lot 1 des thèmes, 04/10/2026, ADR-0029) ---------------
+    # Une couleur de la palette sur une propriété, et rien d'autre. Un widget de
+    # l'interface les prend par `styles:` au lieu de poser `text_color:` sur lui :
+    # LVGL ne garde qu'UN style partagé par rôle, qu'un thème peut repeindre d'un
+    # coup (lv_obj_report_style_change). Nommage : style_<propriété>_<rôle>, avec
+    # dim = TEXT_DIM et soft = TEXT_SOFT ; le reste = le champ de `Palette`.
+    # Dans une liste `styles:`, un style de rôle vient en DERNIER : il l'emporte sur
+    # les styles posés avant lui, comme la couleur locale qu'il remplace.
+    - id: style_text_dim
+      text_color: !lambda 'return lv_color_hex(UIColor.TEXT_DIM);'
+    - id: style_text_soft
+      text_color: !lambda 'return lv_color_hex(UIColor.TEXT_SOFT);'
+    - id: style_text_accent
+      text_color: !lambda 'return lv_color_hex(UIColor.ACCENT);'
+    - id: style_text_accent_alt
+      text_color: !lambda 'return lv_color_hex(UIColor.ACCENT_ALT);'
+    - id: style_text_console_label
+      text_color: !lambda 'return lv_color_hex(UIColor.CONSOLE_LABEL);'
+    - id: style_text_console_value
+      text_color: !lambda 'return lv_color_hex(UIColor.CONSOLE_VALUE);'
+    - id: style_text_error
+      text_color: !lambda 'return lv_color_hex(UIColor.ERROR);'
+    - id: style_text_gold
+      text_color: !lambda 'return lv_color_hex(UIColor.GOLD);'
+    - id: style_text_inactive
+      text_color: !lambda 'return lv_color_hex(UIColor.INACTIVE);'
+    - id: style_text_info
+      text_color: !lambda 'return lv_color_hex(UIColor.INFO);'
+    - id: style_text_rain_value
+      text_color: !lambda 'return lv_color_hex(UIColor.RAIN_VALUE);'
+    - id: style_text_success
+      text_color: !lambda 'return lv_color_hex(UIColor.SUCCESS);'
+    - id: style_text_temp_max
+      text_color: !lambda 'return lv_color_hex(UIColor.TEMP_MAX);'
+    - id: style_text_temp_min
+      text_color: !lambda 'return lv_color_hex(UIColor.TEMP_MIN);'
+    - id: style_text_warning
+      text_color: !lambda 'return lv_color_hex(UIColor.WARNING);'
+    - id: style_bg_accent
+      bg_color: !lambda 'return lv_color_hex(UIColor.ACCENT);'
+    - id: style_bg_accent_alt
+      bg_color: !lambda 'return lv_color_hex(UIColor.ACCENT_ALT);'
+    - id: style_bg_arc_track
+      bg_color: !lambda 'return lv_color_hex(UIColor.ARC_TRACK);'
+    - id: style_bg_bar_inactive
+      bg_color: !lambda 'return lv_color_hex(UIColor.BAR_INACTIVE);'
+    - id: style_bg_console_bg
+      bg_color: !lambda 'return lv_color_hex(UIColor.CONSOLE_BG);'
+    - id: style_bg_dim
+      bg_color: !lambda 'return lv_color_hex(UIColor.TEXT_DIM);'
+    - id: style_bg_gold
+      bg_color: !lambda 'return lv_color_hex(UIColor.GOLD);'
+    - id: style_bg_modal_scrim
+      bg_color: !lambda 'return lv_color_hex(UIColor.MODAL_SCRIM);'
+    - id: style_bg_soft
+      bg_color: !lambda 'return lv_color_hex(UIColor.TEXT_SOFT);'
+    - id: style_bg_success
+      bg_color: !lambda 'return lv_color_hex(UIColor.SUCCESS);'
+    - id: style_bg_warm_pink
+      bg_color: !lambda 'return lv_color_hex(UIColor.WARM_PINK);'
+    - id: style_border_accent
+      border_color: !lambda 'return lv_color_hex(UIColor.ACCENT);'
+    - id: style_border_error
+      border_color: !lambda 'return lv_color_hex(UIColor.ERROR);'
+    - id: style_border_glass_rim
+      border_color: !lambda 'return lv_color_hex(UIColor.GLASS_RIM);'
+    - id: style_border_soft
+      border_color: !lambda 'return lv_color_hex(UIColor.TEXT_SOFT);'
+    - id: style_arc_arc_track
+      arc_color: !lambda 'return lv_color_hex(UIColor.ARC_TRACK);'
+    - id: style_arc_info
+      arc_color: !lambda 'return lv_color_hex(UIColor.INFO);'
+    - id: style_arc_warning
+      arc_color: !lambda 'return lv_color_hex(UIColor.WARNING);'

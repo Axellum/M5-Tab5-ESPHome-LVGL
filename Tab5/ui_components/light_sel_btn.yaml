@@ -22,5 +22,5 @@ button:
   on_short_click:
     - script.execute: { id: tab5_light_popup_show, light_idx: "${idx}" }
   widgets:
-    - label: { id: "icon_light_sel_${idx}", text: "${icon}", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
+    - label: { id: "icon_light_sel_${idx}", text: "${icon}", align: LEFT_MID, x: 20, text_font: mdi_font_45, styles: style_text_dim }
     - label: { id: "lbl_light_sel_${idx}", text: "${name}", align: LEFT_MID, x: 88, text_font: roboto_32_b }

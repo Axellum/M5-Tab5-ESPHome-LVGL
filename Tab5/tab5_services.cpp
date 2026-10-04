@@ -96,10 +96,10 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
     if (ui.lbl_pluie_unit != nullptr) lv_obj_add_flag(ui.lbl_pluie_unit, LV_OBJ_FLAG_HIDDEN);
 
     // Couleur de la date selon la vigilance globale.
-    uint32_t col_date = UIColor::SUCCESS;
-    if (strcmp(globale, "Jaune") == 0)       col_date = UIColor::ALERT_DATE_YELLOW;
-    else if (strcmp(globale, "Orange") == 0) col_date = UIColor::ALERT_DATE_ORANGE;
-    else if (strcmp(globale, "Rouge") == 0)  col_date = UIColor::ALERT_DATE_RED;
+    uint32_t col_date = UIColor.SUCCESS;
+    if (strcmp(globale, "Jaune") == 0)       col_date = UIColor.ALERT_DATE_YELLOW;
+    else if (strcmp(globale, "Orange") == 0) col_date = UIColor.ALERT_DATE_ORANGE;
+    else if (strcmp(globale, "Rouge") == 0)  col_date = UIColor.ALERT_DATE_RED;
     if (ui.lbl_date != nullptr) lv_obj_set_style_text_color(ui.lbl_date, lv_color_hex(col_date), LV_PART_MAIN);
 
     // Phénomènes, dans l'ordre du payload, avec leur glyphe MDI.
@@ -132,9 +132,9 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
         const bool shown = i < active_count;
         if (shown) {
             lv_label_set_text(slot, actives[i].icon);
-            uint32_t c = UIColor::ALERT_YELLOW;
-            if (strcmp(actives[i].level, "Orange") == 0)     c = UIColor::WARNING;
-            else if (strcmp(actives[i].level, "Rouge") == 0) c = UIColor::ALERT_RED;
+            uint32_t c = UIColor.ALERT_YELLOW;
+            if (strcmp(actives[i].level, "Orange") == 0)     c = UIColor.WARNING;
+            else if (strcmp(actives[i].level, "Rouge") == 0) c = UIColor.ALERT_RED;
             lv_obj_set_style_text_color(slot, lv_color_hex(c), LV_PART_MAIN);
             lv_obj_set_style_text_opa(slot, 255, LV_PART_MAIN);
         }
@@ -148,7 +148,7 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
 // chiffré « 0 » à « 4 » (lot 4c, 27/09/2026) que les adaptateurs des autres
 // fournisseurs calculent côté HA à partir des mm/h. Tout autre texte vide la barre.
 static void rain_level_style(const std::string& intensite, uint32_t& color, int& height) {
-    color = UIColor::CLIM_TRACK_INACTIVE;  // barre vide
+    color = UIColor.CLIM_TRACK_INACTIVE;  // barre vide
     height = 0;
     int niveau = 0;
     if (intensite.size() == 1 && intensite[0] >= '0' && intensite[0] <= '4') niveau = intensite[0] - '0';
@@ -157,10 +157,10 @@ static void rain_level_style(const std::string& intensite, uint32_t& color, int&
     else if (intensite == "Pluie forte")      niveau = 3;
     else if (intensite == "Pluie très forte" || intensite == "Pluie trés forte") niveau = 4;
     switch (niveau) {
-        case 1: color = UIColor::RAIN_LIGHT;    height = 13; break;  // ~1/4 hauteur
-        case 2: color = UIColor::RAIN_MODERATE; height = 25; break;  // 1/2
-        case 3: color = UIColor::RAIN_HEAVY;    height = 38; break;  // 3/4
-        case 4: color = UIColor::RAIN_EXTREME;  height = 50; break;  // max
+        case 1: color = UIColor.RAIN_LIGHT;    height = 13; break;  // ~1/4 hauteur
+        case 2: color = UIColor.RAIN_MODERATE; height = 25; break;  // 1/2
+        case 3: color = UIColor.RAIN_HEAVY;    height = 38; break;  // 3/4
+        case 4: color = UIColor.RAIN_EXTREME;  height = 50; break;  // max
         default: break;
     }
 }
@@ -225,7 +225,7 @@ void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite) {
     if (icon == nullptr) return;
     if (neige >= 5) {
         lv_label_set_text(icon, "\U000F0598");  // flocon
-        lv_obj_set_style_text_color(icon, lv_color_hex(UIColor::WARNING), LV_PART_MAIN);
+        lv_obj_set_style_text_color(icon, lv_color_hex(UIColor.WARNING), LV_PART_MAIN);
     } else {
         lv_label_set_text(icon, "\U000F0597");  // goutte
         lv_obj_set_style_text_color(icon, lv_color_hex(get_humidity_color(humidite)), LV_PART_MAIN);
