@@ -1,0 +1,130 @@
+# Thème « Platine et or » : un écrin d'horloger : fond Vantablack, verre anthracite
+# neutre, liseré platine d'un pixel et un seul métal chaud, l'or champagne, réservé au
+# cadran, à la date, aux titres de section, au choix en cours et au cadre des popups ;
+# saphir, émeraude et rubis ne servent que d'états, comme des pierres serties.
+#
+# Esquisse « Platine et or » du 04/10/2026 (Claude Sonnet 5.5, galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), convertie au lot 3 des thèmes (ADR-0029) :
+# couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
+# texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
+nom: Platine et or
+ordre: 15
+herite: ardoise
+zones_sombres: [bandeau]
+polices:
+  horloge: "Bodoni Moda@700"
+  date: "Manrope@700"
+  titre: "Manrope@700"
+
+formes:
+  style_meteo_card_page:
+    radius: 12
+    sombre: {border_opa: 86}
+    clair: {border_opa: 102}
+  style_horloge_page:
+    sombre: {border_color: 0xD5B26A, border_opa: 127}
+    clair: {border_color: 0x7F5F08, border_opa: 140}
+  style_bandeau_page:
+    clair: {bg_color: 0x272834, bg_grad_color: 0x101117, border_color: 0xC9AC66, border_opa: 153}
+  style_clim_btn:
+    radius: 10
+    sombre: {bg_color: 0x22232D, bg_grad_color: 0x0E0F14, border_opa: 86}
+    clair: {bg_color: 0xFDFDFE, bg_grad_color: 0xECEDF3, border_opa: 102}
+  style_modal_card:
+    radius: 16
+    sombre: {border_color: 0xD5B26A}
+    clair: {border_color: 0x835A0A, border_opa: 165}
+  style_glass_card:
+    radius: 12
+    sombre: {border_opa: 127}
+
+sombre:
+  BG: 0x08080B
+  GLASS_HI: 0x32333F
+  GLASS_LO: 0x16171E
+  GLASS_HI_PAGE: 0x22232D
+  GLASS_LO_PAGE: 0x0E0F14
+  GLASS_HI_MODAL: 0x262731
+  GLASS_LO_MODAL: 0x0C0D11
+  GLASS_RIM: 0xD6D9E5
+  MODAL_SCRIM: 0x030305
+  ARC_TRACK: 0x3A3B4A
+  TEXT_SOFT: 0xE9EAF1
+  TEXT_PRIMARY: 0xFAFAFD
+  TEXT_DIM: 0xA3A4B8
+  ICON_MUTED: 0x6C6D7C
+  TEXT_ON_ACCENT: 0x08080B
+  SUCCESS: 0x34D6A1
+  WARNING: 0xFFAE3D
+  ERROR: 0xFF6676
+  INFO: 0x5EA9FF
+  GOLD: 0xF0D58C
+  INACTIVE: 0x3B3C4A
+  BAR_INACTIVE: 0x3B3C4A
+  ACCENT: 0xD5B26A
+  ACCENT_ALT: 0xB6A8E0
+  EARLY: 0xFF8742
+  PAST: 0x747589
+  RAIN_VALUE: 0xFF8742
+  CLIM_COOL_ACTIVE: 0x5B9BFF
+  CLIM_HEAT_ACTIVE: 0xFF5C68
+  CLIM_HEAT_INACTIVE: 0xA8767B
+  CLIM_OFF_ACTIVE: 0xF5A53C
+  CLIM_ECO: 0x38D69A
+  METEO_CELESTIAL: 0xF7C948
+  METEO_CLOUD: 0xE6E8F2
+  METEO_PRECIP: 0x78ADFF
+  HUMIDITY_WET: 0x5B9BFF
+  TEMP_GRAD_0_POS: 0x5B9BFF
+  TEMP_GRAD_14: 0xE6E8F0
+  TEMP_GRAD_24: 0xFF9468
+  TEMP_GRAD_35: 0xFF4D5E
+  HUM_GRAD_14: 0xFF5C68
+  HUM_GRAD_22: 0xFFB347
+  HUM_GRAD_30: 0xE6E8F0
+
+clair:
+  BG: 0xE3E5EB
+  GLASS_HI: 0xF3F4F8
+  GLASS_LO: 0xE4E6EE
+  GLASS_HI_PAGE: 0xFDFDFE
+  GLASS_LO_PAGE: 0xECEDF3
+  GLASS_HI_MODAL: 0xFFFFFF
+  GLASS_LO_MODAL: 0xEEEFF4
+  GLASS_RIM: 0x6D7288
+  MODAL_SCRIM: 0xBDC0CC
+  ARC_TRACK: 0xCBCEDA
+  TEXT_SOFT: 0x1A1C25
+  TEXT_PRIMARY: 0x0A0B10
+  TEXT_DIM: 0x585B6E
+  ICON_MUTED: 0x8A8DA0
+  SUCCESS: 0x097455
+  WARNING: 0xA65A00
+  ERROR: 0xC0213A
+  INFO: 0x1659BA
+  GOLD: 0x9C7609
+  INACTIVE: 0xB9BCCA
+  BAR_INACTIVE: 0xB9BCCA
+  ACCENT: 0x835A0A
+  ACCENT_ALT: 0x6A5AA6
+  EARLY: 0xC4540C
+  PAST: 0x767A8D
+  RAIN_VALUE: 0xC4540C
+  CLIM_COOL_ACTIVE: 0x1A5FD0
+  CLIM_HEAT_ACTIVE: 0xC8283A
+  CLIM_HEAT_INACTIVE: 0xA0707A
+  CLIM_OFF_ACTIVE: 0xB8620A
+  CLIM_ECO: 0x0C8A5C
+  METEO_CELESTIAL: 0xBC7000
+  METEO_CLOUD: 0x78819A
+  METEO_PRECIP: 0x2F6FD8
+  METEO_THUNDER: 0xC84A00
+  HUMIDITY_WET: 0x1A5BCB
+  TEMP_NAN: 0x6F7385
+  TEMP_GRAD_0_POS: 0x1A5FD0
+  TEMP_GRAD_14: 0x3D4052
+  TEMP_GRAD_24: 0xC8501F
+  TEMP_GRAD_35: 0xB01030
+  HUM_GRAD_14: 0xC0213A
+  HUM_GRAD_22: 0xA65A00
+  HUM_GRAD_30: 0x3D4052

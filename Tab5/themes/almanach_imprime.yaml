@@ -1,0 +1,127 @@
+# Thème « Almanach imprimé » : une page d'almanach au mur : papier chaud le jour, nuit
+# d'encre le soir, traits nets de 2 px, chiffres et titres en gros empattement, commandes
+# en bâton, et deux panneaux d'encre (l'horloge et le bandeau central) qui ancrent la
+# page.
+#
+# Esquisse « Almanach » du 04/10/2026 (Claude Sonnet 5.5, galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), convertie au lot 3 des thèmes (ADR-0029) :
+# couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
+# texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
+nom: Almanach imprimé
+ordre: 5
+herite: ardoise
+polices:
+  horloge: "IBM Plex Serif@700"
+  date: "IBM Plex Serif@700"
+  titre: "IBM Plex Serif@700"
+
+formes:
+  style_meteo_card_page:
+    bg_grad_dir: NONE
+    radius: 10
+    border_width: 2
+    sombre: {border_opa: 102}
+    clair: {border_opa: 229}
+  style_clim_btn:
+    bg_grad_dir: NONE
+    radius: 10
+    border_width: 2
+    sombre: {bg_color: 0x211B15, border_opa: 102}
+    clair: {bg_color: 0xFBF6EA, border_opa: 229}
+  style_modal_card:
+    bg_grad_dir: NONE
+    radius: 14
+    clair: {border_opa: 255}
+  style_glass_card:
+    bg_grad_dir: NONE
+    radius: 12
+    sombre: {border_opa: 102}
+
+sombre:
+  BG: 0x16120E
+  GLASS_HI: 0x2B231B
+  GLASS_LO: 0x2B231B
+  GLASS_HI_PAGE: 0x211B15
+  GLASS_LO_PAGE: 0x211B15
+  GLASS_HI_MODAL: 0x1E1812
+  GLASS_LO_MODAL: 0x1E1812
+  GLASS_RIM: 0xD8C7A5
+  MODAL_SCRIM: 0x0A0705
+  ARC_TRACK: 0x3B3329
+  TEXT_SOFT: 0xEBE0CB
+  TEXT_PRIMARY: 0xFFF4DD
+  TEXT_DIM: 0xB2A48C
+  ICON_MUTED: 0x6E6455
+  TEXT_ON_ACCENT: 0x16120E
+  SUCCESS: 0x8FCF9F
+  WARNING: 0xEDB44C
+  ERROR: 0xF28679
+  INFO: 0x84B6E8
+  GOLD: 0xF2C45A
+  INACTIVE: 0x3C3328
+  BAR_INACTIVE: 0x3C3328
+  ACCENT: 0x52CDBF
+  ACCENT_ALT: 0xC7A3DE
+  EARLY: 0xF29A4E
+  PAST: 0x8D806C
+  RAIN_VALUE: 0xF29A4E
+  CLIM_COOL_ACTIVE: 0x6BA6F0
+  CLIM_HEAT_ACTIVE: 0xF06D5E
+  CLIM_HEAT_INACTIVE: 0xAB7F76
+  CLIM_OFF_ACTIVE: 0xF2A03C
+  CLIM_ECO: 0x7CCB7C
+  METEO_CELESTIAL: 0xF4B73A
+  METEO_CLOUD: 0xCDBFA8
+  METEO_PRECIP: 0x7FB4E8
+  HUMIDITY_WET: 0x6BA6F0
+  TEMP_GRAD_0_POS: 0x7FB2EA
+  TEMP_GRAD_14: 0xEBE0CB
+  TEMP_GRAD_24: 0xF2A05A
+  TEMP_GRAD_35: 0xF2705F
+  HUM_GRAD_14: 0xF2705F
+  HUM_GRAD_22: 0xEDB44C
+  HUM_GRAD_30: 0xEBE0CB
+
+clair:
+  BG: 0xF0E7D4
+  GLASS_HI: 0xF1E8D3
+  GLASS_LO: 0xF1E8D3
+  GLASS_HI_PAGE: 0xFBF6EA
+  GLASS_LO_PAGE: 0xFBF6EA
+  GLASS_HI_MODAL: 0xFBF6EA
+  GLASS_LO_MODAL: 0xFBF6EA
+  GLASS_RIM: 0x2A2118
+  MODAL_SCRIM: 0x2A2118
+  ARC_TRACK: 0xD5C8AD
+  TEXT_SOFT: 0x2A2118
+  TEXT_PRIMARY: 0x17100A
+  TEXT_DIM: 0x685A49
+  ICON_MUTED: 0x8A7E6C
+  SUCCESS: 0x2D6A3E
+  WARNING: 0x946300
+  ERROR: 0xB3261E
+  INFO: 0x1D5A91
+  GOLD: 0x9A6C00
+  INACTIVE: 0xCDBFA4
+  BAR_INACTIVE: 0xCDBFA4
+  ACCENT: 0x0B6B66
+  ACCENT_ALT: 0x6B4A86
+  EARLY: 0xB5540E
+  PAST: 0x6E6252
+  RAIN_VALUE: 0xB5540E
+  CLIM_COOL_ACTIVE: 0x1F5FB8
+  CLIM_HEAT_ACTIVE: 0xB8322A
+  CLIM_HEAT_INACTIVE: 0x8E5E57
+  CLIM_OFF_ACTIVE: 0xB05A00
+  CLIM_ECO: 0x2E7D32
+  METEO_CELESTIAL: 0xC77700
+  METEO_CLOUD: 0x7E7060
+  METEO_PRECIP: 0x2D68A3
+  HUMIDITY_WET: 0x1F5FB8
+  TEMP_GRAD_0_POS: 0x1F5FB8
+  TEMP_GRAD_14: 0x3A2E22
+  TEMP_GRAD_24: 0xB5540E
+  TEMP_GRAD_35: 0xB3261E
+  HUM_GRAD_14: 0xB3261E
+  HUM_GRAD_22: 0x946300
+  HUM_GRAD_30: 0x3A2E22

@@ -169,7 +169,9 @@ def jeux_par_role(liste_dates: list[str] | None = None, liste_titres: list[str] 
     liste_titres = titres() if liste_titres is None else liste_titres
     return {
         "horloge": CHIFFRES + ":",
-        "date": "".join(sorted(set("".join(liste_dates)))),
+        # Les dates d'essai ne prennent que les quantièmes les plus larges : les dix
+        # chiffres s'ajoutent (le 15 ne doit pas être à moitié en Roboto).
+        "date": "".join(sorted(set("".join(liste_dates)) | set(CHIFFRES))),
         "titre": "".join(sorted(set("".join(liste_titres)) | set(TITRE_BASE))),
     }
 

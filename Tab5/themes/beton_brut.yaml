@@ -1,0 +1,140 @@
+# Thème « Béton brut » : la signalétique de chantier : angles droits, traits noirs de 4
+# px, ombres dures décalées, et un jaune de sécurité réservé à ce qu'on touche ou choisit.
+#
+# Esquisse « Béton brut » du 04/10/2026 (Claude Sonnet 5.5, galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), convertie au lot 3 des thèmes (ADR-0029) :
+# couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
+# texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
+nom: Béton brut
+ordre: 10
+herite: ardoise
+zones_sombres: [bandeau, horloge]
+polices:
+  horloge: "Barlow Condensed@800"
+  date: "Barlow Semi Condensed@700"
+  titre: "Barlow Semi Condensed@700"
+
+formes:
+  style_meteo_card_page:
+    bg_grad_dir: NONE
+    radius: 0
+    border_width: 4
+    shadow_width: 2
+    shadow_ofs_x: 6
+    shadow_ofs_y: 6
+    border_opa: 255
+    shadow_opa: 255
+    sombre: {shadow_color: 0x46453F}
+    clair: {shadow_color: 0x0A0A0A}
+  style_horloge_page:
+    sombre: {bg_color: 0x000000, shadow_width: 0, border_color: 0xFFCC00}
+    clair: {bg_color: 0x0A0A0A, border_color: 0x0A0A0A, shadow_color: 0xFFCC00}
+  style_bandeau_page:
+    sombre: {bg_color: 0x000000, shadow_width: 0, border_color: 0xFFCC00}
+    clair: {bg_color: 0x0A0A0A, border_color: 0x0A0A0A, shadow_color: 0xFFCC00}
+  style_onglet_jour_page:
+    border_width: 3
+    shadow_width: 0
+    clair: {bg_color: 0xFFCC00}
+  style_clim_btn:
+    bg_grad_dir: NONE
+    radius: 0
+    border_width: 3
+    border_opa: 255
+    sombre: {bg_color: 0x2A2A27}
+    clair: {bg_color: 0xFFFFFF}
+  style_modal_card:
+    bg_grad_dir: NONE
+    radius: 0
+    border_width: 4
+    border_opa: 255
+    sombre: {border_color: 0xFFCC00}
+    clair: {shadow_width: 2, shadow_ofs_x: 8, shadow_ofs_y: 8, shadow_color: 0x0A0A0A, shadow_opa: 255}
+  style_glass_card:
+    bg_grad_dir: NONE
+    radius: 0
+    border_width: 4
+    border_opa: 255
+
+sombre:
+  BG: 0x161614
+  GLASS_HI: 0x232321
+  GLASS_LO: 0x232321
+  GLASS_HI_PAGE: 0x2A2A27
+  GLASS_LO_PAGE: 0x2A2A27
+  GLASS_HI_MODAL: 0x1B1B18
+  GLASS_LO_MODAL: 0x1B1B18
+  GLASS_RIM: 0xCFCBC0
+  MODAL_SCRIM: 0x000000
+  ARC_TRACK: 0x46453F
+  TEXT_SOFT: 0xF2EFE8
+  TEXT_DIM: 0xABA79B
+  ICON_MUTED: 0x7A776E
+  TEXT_ON_ACCENT: 0x161614
+  SUCCESS: 0x3DDC84
+  WARNING: 0xFFA726
+  ERROR: 0xFF6B6B
+  INFO: 0x5CB8FF
+  GOLD: 0xFFD84D
+  INACTIVE: 0x6B6962
+  BAR_INACTIVE: 0x6B6962
+  ACCENT: 0xFFCC00
+  ACCENT_ALT: 0xB9A2FF
+  EARLY: 0xFF9F43
+  PAST: 0x8E8B80
+  RAIN_VALUE: 0xFF9F43
+  CLIM_COOL_ACTIVE: 0x5CA8FF
+  CLIM_HEAT_ACTIVE: 0xFF5C5C
+  CLIM_HEAT_INACTIVE: 0xB07A76
+  CLIM_OFF_ACTIVE: 0xFFA726
+  METEO_CELESTIAL: 0xFFCC00
+  HUMIDITY_WET: 0x5CA8FF
+  TEMP_GRAD_0_POS: 0x5CA8FF
+  TEMP_GRAD_14: 0xF2EFE8
+  TEMP_GRAD_24: 0xFF6FB5
+  TEMP_GRAD_35: 0xFF5C5C
+  HUM_GRAD_14: 0xFF5C5C
+  HUM_GRAD_22: 0xFFD43B
+  HUM_GRAD_30: 0xF2EFE8
+
+clair:
+  BG: 0xEDEAE3
+  GLASS_HI: 0xEDEAE3
+  GLASS_LO: 0xEDEAE3
+  GLASS_LO_PAGE: 0xFFFFFF
+  GLASS_HI_MODAL: 0xFFFFFF
+  GLASS_LO_MODAL: 0xFFFFFF
+  GLASS_RIM: 0x0A0A0A
+  MODAL_SCRIM: 0xFFCC00
+  ARC_TRACK: 0xC9C4B7
+  TEXT_SOFT: 0x0A0A0A
+  TEXT_PRIMARY: 0x0A0A0A
+  TEXT_DIM: 0x55524B
+  ICON_MUTED: 0x85827A
+  SUCCESS: 0x087F37
+  WARNING: 0xD9650A
+  ERROR: 0xCC1F2B
+  INFO: 0x0B63CE
+  GOLD: 0x9A7000
+  INACTIVE: 0x6B6962
+  BAR_INACTIVE: 0x6B6962
+  ACCENT: 0x4A2BDB
+  ACCENT_ALT: 0x7B2FD0
+  EARLY: 0xB35000
+  PAST: 0x6E6B63
+  RAIN_VALUE: 0xB35000
+  CLIM_COOL_ACTIVE: 0x1558D6
+  CLIM_HEAT_ACTIVE: 0xCC1F2B
+  CLIM_HEAT_INACTIVE: 0x9C4A47
+  CLIM_OFF_ACTIVE: 0xCC5C00
+  CLIM_ECO: 0x0C7A36
+  METEO_CELESTIAL: 0xC98200
+  METEO_PRECIP: 0x1558D6
+  HUMIDITY_WET: 0x1558D6
+  TEMP_GRAD_0_POS: 0x1558D6
+  TEMP_GRAD_14: 0x2B2A27
+  TEMP_GRAD_24: 0xB0136B
+  TEMP_GRAD_35: 0xCC1F2B
+  HUM_GRAD_14: 0xCC1F2B
+  HUM_GRAD_22: 0x9A6A00
+  HUM_GRAD_30: 0x3A3935

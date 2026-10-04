@@ -33,6 +33,16 @@ démarre dans ce mode. Le job compare les deux séries au pixel près. `--sans-j
 les consoles (« jeu-… », 56 écrans qui restent sombres, ADR-0014) : sans elles, les deux
 passes tiennent dans le délai de la tâche ; le sélecteur Arcade reste, en témoin.
 
+Galerie des thèmes (lot 3) : `--galerie` pousse la première scène, puis, pour chaque
+thème de Tab5/themes/ et chaque mode (Sombre, Clair), choisit le thème et le mode à
+chaud et capture l'accueil et le popup de la climatisation (« theme-<fichier>-<mode>-
+accueil » / « -clim »). Passés l'un après l'autre, les thèmes montrent aussi ce qu'un
+thème laisserait au suivant. `--galerie-un theme-<fichier>-<mode>` fait les deux mêmes
+captures sans rien choisir (démarrage à froid dans ce thème) ; `--puis-theme NOM`,
+avec `--puis-mode-theme`, prépare le démarrage suivant ; `--preparer` saute toute
+capture. `--liste-galerie` écrit les combinaisons « nom|fichier|mode », une par ligne.
+Le job compare la série à chaud et la série à froid au pixel près.
+
 Usage (voir .github/workflows/rendu-host.yml, une tâche par langue) :
     ESPHOME_SNAPSHOT_DIR=captures ESPHOME_PREFDIR=prefs ./program &
     python tools/rendu/capturer.py --dossier captures --langue Deutsch
@@ -78,6 +88,20 @@ ATTENTE_RETOUR = 1.0
 # l'écran à l'image suivante.
 ATTENTE_BASCULE = 1.0
 SELECT_MODE_THEME = "Clair ou sombre"
+SELECT_THEME = "Thème"
+MODES_THEME = ("Sombre", "Clair")
+
+
+def combinaisons_galerie() -> list[tuple[str, str, str]]:
+    """(nom du thème, fichier, mode) de chaque capture de la galerie, dans l'ordre du select."""
+    sys.path.insert(0, str(RACINE))
+    import gen_themes
+
+    return [(t.nom, t.fichier, m) for t in gen_themes.charger() for m in MODES_THEME]
+
+
+def nom_galerie(fichier: str, mode: str) -> str:
+    return f"theme-{fichier}-{mode.lower()}"
 
 
 def nom_de(index: int, nom_scene: str, suffixe: str = "") -> str:
@@ -178,11 +202,24 @@ class Rendu:
         self.choisir("Aller à l'écran", "Accueil")
         await asyncio.sleep(ATTENTE_RETOUR)
 
+    async def galerie(self, prefixe: str) -> None:
+        """L'accueil et le popup de la climatisation, dans le thème affiché."""
+        await self.capturer(f"{prefixe}-accueil")
+        clim = next(e for e in ECRANS if e.nom == "climatisation")
+        for etape in clim.etapes:
+            await self.jouer(etape)
+        await asyncio.sleep(clim.attente)
+        await self.capturer(f"{prefixe}-clim")
+        for etape in clim.fermer:
+            await self.jouer(etape)
+        await self.accueil()
+
 
 async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | None,
                    seulement: set[str] | None, langue: str | None = None,
                    bascule: str | None = None, puis_mode_theme: str | None = None,
-                   sans_jeux: bool = False) -> list[str]:
+                   sans_jeux: bool = False, galerie: bool = False, galerie_un: str | None = None,
+                   puis_theme: str | None = None, preparer: bool = False) -> list[str]:
     from aioesphomeapi import APIClient
 
     cle = _lire_cle_demo() or await _donner_une_cle(hote)
@@ -196,6 +233,32 @@ async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | No
             rendu.choisir("Langue", langue)
             await asyncio.sleep(3.0)
             return []
+        if galerie or galerie_un or preparer:
+            if not preparer:
+                await rendu.appeler("tab5_maj_zones", absentes=build_zones_absentes(frozenset()))
+                await _pousser_scene(client, rendu.services, SCENES[0], frozenset())
+                await asyncio.sleep(ATTENTE_RENDU)
+                await rendu.appeler("rendu_panneau", panneau=PANNEAUX.get(1, 0))
+                await asyncio.sleep(ATTENTE_PANNEAU)
+            if galerie:
+                for nom, fichier, mode in combinaisons_galerie():
+                    logger.info("Galerie : %s, %s", nom, mode)
+                    rendu.choisir(SELECT_THEME, nom)
+                    rendu.choisir(SELECT_MODE_THEME, mode)
+                    await asyncio.sleep(ATTENTE_BASCULE)
+                    await rendu.galerie(nom_galerie(fichier, mode))
+            if galerie_un:
+                await rendu.galerie(galerie_un)
+            if puis_theme:
+                rendu.choisir(SELECT_THEME, puis_theme)
+            if puis_mode_theme:
+                rendu.choisir(SELECT_MODE_THEME, puis_mode_theme)
+            if puis_theme or puis_mode_theme:
+                logger.info("Thème -> %s, %s, préférences enregistrées", puis_theme, puis_mode_theme)
+                await asyncio.sleep(ATTENTE_BASCULE)
+                await rendu.appeler("rendu_enregistrer")
+                await asyncio.sleep(1.0)
+            return rendu.alertes
         await rendu.appeler("tab5_maj_zones", absentes=build_zones_absentes(frozenset()))
         for index, scene in enumerate(SCENES, 1):
             logger.info("Scène %d : %s", index, scene.nom)
@@ -251,12 +314,27 @@ def main() -> int:
                         help="sans les consoles (écrans « jeu-… », qui restent sombres)")
     parser.add_argument("--puis-mode-theme", metavar="MODE",
                         help="après les captures, choisit ce mode et enregistre les préférences")
+    parser.add_argument("--galerie", action="store_true",
+                        help="accueil et climatisation de chaque thème, dans les deux modes, à chaud")
+    parser.add_argument("--galerie-un", metavar="NOM",
+                        help="accueil et climatisation dans le thème affiché (theme-<fichier>-<mode>)")
+    parser.add_argument("--puis-theme", metavar="NOM",
+                        help="avec la galerie : choisit ce thème à la fin et enregistre les préférences")
+    parser.add_argument("--preparer", action="store_true",
+                        help="aucune capture : seulement --puis-theme / --puis-mode-theme")
+    parser.add_argument("--liste-galerie", action="store_true",
+                        help="écrit « nom|fichier|mode » de chaque capture de la galerie et s'arrête")
     args = parser.parse_args()
 
+    if args.liste_galerie:
+        for nom, fichier, mode in combinaisons_galerie():
+            print(f"{nom}|{fichier}|{mode}")
+        return 0
     alertes = asyncio.run(capturer(args.host, args.dossier, args.suffixe, args.puis_langue,
                                    set(args.seulement) if args.seulement else None, args.langue,
-                                   args.bascule, args.puis_mode_theme, args.sans_jeux))
-    if args.langue:
+                                   args.bascule, args.puis_mode_theme, args.sans_jeux,
+                                   args.galerie, args.galerie_un, args.puis_theme, args.preparer))
+    if args.langue or args.preparer:
         return 0
     pngs = en_png(args.dossier)
     logger.info("%d captures PNG dans %s", len(pngs), args.dossier)

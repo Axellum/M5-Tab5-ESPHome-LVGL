@@ -1,0 +1,145 @@
+# Thème « Néon calme » : le néon n'est plus un décor mais un signal : filets cyan discrets
+# sur ce qui s'affiche, liseré magenta sur ce qui se touche, trait plein seulement pour
+# l'état actif, le tout sur un noir presque total et des angles vifs.
+#
+# Esquisse « Néon calme » du 04/10/2026 (Claude Sonnet 5.5, galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), convertie au lot 3 des thèmes (ADR-0029) :
+# couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
+# texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
+#
+# Non repris : l'état « bouton actif » dessiné par l'esquisse (Domo, mode et ventilation
+# actifs) ; ces boutons gardent la bordure d'accent de l'interface.
+nom: Néon calme
+ordre: 11
+herite: ardoise
+zones_sombres: [bandeau]
+polices:
+  horloge: "Oxanium@700"
+  date: "Oxanium@700"
+  titre: "Oxanium@700"
+
+formes:
+  style_meteo_card_page:
+    radius: 0
+    bg_main_stop: 77
+    bg_grad_stop: 255
+    sombre: {border_opa: 86}
+    clair: {border_opa: 140}
+  style_bandeau_page:
+    border_width: 2
+    border_side: [TOP, BOTTOM]
+    sombre: {bg_color: 0x060A11, bg_grad_color: 0x091B27, border_opa: 140}
+    clair: {bg_color: 0x0B121C, bg_grad_color: 0x0A2432, border_opa: 153}
+  style_onglet_jour_page:
+    border_width: 2
+    border_opa: 191
+    border_side: BOTTOM
+  style_onglet_temp_page:
+    border_width: 2
+    border_opa: 191
+    border_side: TOP
+  style_clim_btn:
+    radius: 0
+    bg_main_stop: 77
+    bg_grad_stop: 255
+    sombre: {bg_color: 0x070C14, bg_grad_color: 0x0A2230, border_color: 0xFF3DC8, border_opa: 117}
+    clair: {bg_color: 0xFAFCFE, bg_grad_color: 0xD6ECF3, border_color: 0xB2007D, border_opa: 153}
+  style_modal_card:
+    radius: 0
+    sombre: {border_opa: 204}
+    clair: {border_opa: 229}
+  style_glass_card:
+    radius: 0
+    border_width: 1
+    sombre: {border_opa: 107}
+
+sombre:
+  BG: 0x04060B
+  GLASS_HI: 0x0B141F
+  GLASS_LO: 0x0D2A3A
+  GLASS_HI_PAGE: 0x070C14
+  GLASS_LO_PAGE: 0x0A2230
+  GLASS_HI_MODAL: 0x09101A
+  GLASS_LO_MODAL: 0x0A2230
+  GLASS_RIM: 0x2AD8EA
+  MODAL_SCRIM: 0x010307
+  ARC_TRACK: 0x1B2A38
+  TEXT_SOFT: 0xD5E7F0
+  TEXT_PRIMARY: 0xF2FBFF
+  TEXT_DIM: 0x7FA6B4
+  ICON_MUTED: 0x64798A
+  TEXT_ON_ACCENT: 0x04060B
+  SUCCESS: 0x39F58F
+  WARNING: 0xFFB020
+  ERROR: 0xFF3B55
+  INFO: 0x3DB5FF
+  GOLD: 0xFFC83D
+  INACTIVE: 0x4B667F
+  BAR_INACTIVE: 0x4B667F
+  ACCENT: 0x1FE3F2
+  ACCENT_ALT: 0xFF3DC8
+  EARLY: 0xFF8226
+  PAST: 0x5F7A8C
+  RAIN_VALUE: 0xFF8226
+  CLIM_COOL_ACTIVE: 0x3D9CFF
+  CLIM_HEAT_ACTIVE: 0xFF4D5E
+  CLIM_HEAT_INACTIVE: 0xA06A78
+  CLIM_OFF_ACTIVE: 0xFFA21F
+  CLIM_ECO: 0x3FF08A
+  METEO_CELESTIAL: 0xFFC72C
+  METEO_CLOUD: 0xE4F4FF
+  METEO_PRECIP: 0x4DB8FF
+  HUMIDITY_WET: 0x3D6BFF
+  TEMP_GRAD_0_POS: 0x3D8BFF
+  TEMP_GRAD_14: 0xD8EEF8
+  TEMP_GRAD_24: 0xFF3DC8
+  TEMP_GRAD_35: 0xFF3B3B
+  HUM_GRAD_14: 0xFF2D2D
+  HUM_GRAD_22: 0xFFE03D
+  HUM_GRAD_30: 0xD8EEF8
+
+clair:
+  BG: 0xDCE3EB
+  GLASS_LO: 0xE4F2F7
+  GLASS_HI_PAGE: 0xFAFCFE
+  GLASS_LO_PAGE: 0xD6ECF3
+  GLASS_HI_MODAL: 0xF6FAFC
+  GLASS_LO_MODAL: 0xD3E9F1
+  GLASS_RIM: 0x0A7C90
+  MODAL_SCRIM: 0x0A1118
+  ARC_TRACK: 0xBCCFDB
+  TEXT_SOFT: 0x0E1828
+  TEXT_PRIMARY: 0x040A14
+  TEXT_DIM: 0x44596C
+  ICON_MUTED: 0x70808E
+  SUCCESS: 0x00744E
+  WARNING: 0xBF6A00
+  ERROR: 0xC4122F
+  INFO: 0x1F7FE6
+  GOLD: 0x9A6B00
+  INACTIVE: 0x4B667F
+  BAR_INACTIVE: 0x4B667F
+  ACCENT: 0x006F82
+  ACCENT_ALT: 0xB2007D
+  EARLY: 0xD4540A
+  PAST: 0x62788A
+  RAIN_VALUE: 0xD4540A
+  ALERT_DATE_YELLOW: 0x7A5F00
+  ALERT_DATE_ORANGE: 0xA84A00
+  ALERT_DATE_RED: 0xB01E2B
+  CLIM_COOL_ACTIVE: 0x0B5FCF
+  CLIM_HEAT_ACTIVE: 0xC8102E
+  CLIM_HEAT_INACTIVE: 0xA25C69
+  CLIM_OFF_ACTIVE: 0xB96300
+  CLIM_ECO: 0x007F49
+  METEO_CELESTIAL: 0xB87400
+  METEO_CLOUD: 0x5B7088
+  METEO_PRECIP: 0x1B63D6
+  HUMIDITY_WET: 0x1D3FD0
+  TEMP_GRAD_0_POS: 0x0A55D6
+  TEMP_GRAD_14: 0x3A4C60
+  TEMP_GRAD_24: 0xB2007D
+  TEMP_GRAD_35: 0xC8102E
+  HUM_GRAD_14: 0xD80F2A
+  HUM_GRAD_22: 0xA27400
+  HUM_GRAD_30: 0x3A4C60

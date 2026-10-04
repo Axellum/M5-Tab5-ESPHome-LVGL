@@ -1,0 +1,138 @@
+# Thème « Zen Sumi » : le décor est d'encre, noir profond ou gravier clair, sans verre ni
+# fond de carte, et la couleur ne sert qu'au sens : matcha, ocre, vermillon et indigo pour
+# les états.
+#
+# Esquisse « Zen Sumi » du 04/10/2026 (Claude Sonnet 5.5, galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), convertie au lot 3 des thèmes (ADR-0029) :
+# couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
+# texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
+nom: Zen Sumi
+ordre: 12
+herite: ardoise
+zones_sombres: [bandeau]
+polices:
+  horloge: "Murecho@300"
+  date: "Murecho@400"
+  titre: "Murecho@400"
+
+formes:
+  style_meteo_card_page:
+    bg_grad_dir: NONE
+    radius: 0
+    border_side: BOTTOM
+    sombre: {border_opa: 102}
+    clair: {border_color: 0x55534E, border_opa: 107}
+  style_bandeau_page:
+    border_width: 0
+    sombre: {bg_color: 0x1C1C1F}
+    clair: {bg_color: 0x17171A}
+  style_clim_btn:
+    bg_grad_dir: NONE
+    radius: 6
+    border_opa: 96
+  style_clim_btn_page:
+    border_side: FULL
+    sombre: {bg_color: 0x19191B, border_opa: 102}
+    clair: {bg_color: 0xF8F7F3, border_opa: 107}
+  style_modal_card:
+    bg_grad_dir: NONE
+    radius: 10
+    border_width: 1
+    sombre: {border_opa: 140}
+  style_glass_card:
+    bg_grad_dir: NONE
+    radius: 0
+    border_width: 1
+    border_opa: 96
+    border_side: TOP
+    sombre: {bg_color: 0x141415}
+    clair: {bg_color: 0xF4F3EF}
+
+sombre:
+  BG: 0x0E0E0F
+  GLASS_HI: 0x202022
+  GLASS_LO: 0x202022
+  GLASS_HI_PAGE: 0x0E0E0F
+  GLASS_LO_PAGE: 0x0E0E0F
+  GLASS_HI_MODAL: 0x141415
+  GLASS_LO_MODAL: 0x141415
+  GLASS_RIM: 0xA4A29B
+  MODAL_SCRIM: 0x040404
+  ARC_TRACK: 0x2C2C2F
+  TEXT_SOFT: 0xE8E6E0
+  TEXT_PRIMARY: 0xFAF8F3
+  TEXT_DIM: 0xA3A19A
+  ICON_MUTED: 0x6F6E6A
+  TEXT_ON_ACCENT: 0x0E0E0F
+  SUCCESS: 0x92D08A
+  WARNING: 0xF0B84A
+  ERROR: 0xFF7A6E
+  INFO: 0x74C4DB
+  GOLD: 0xF0C95A
+  INACTIVE: 0x3A3A3D
+  BAR_INACTIVE: 0x3A3A3D
+  ACCENT: 0xF4F2EC
+  ACCENT_ALT: 0xB9AAE4
+  EARLY: 0xF29555
+  PAST: 0x85837D
+  RAIN_VALUE: 0xF29555
+  CLIM_COOL_ACTIVE: 0x5CA0FF
+  CLIM_HEAT_ACTIVE: 0xFF5E50
+  CLIM_HEAT_INACTIVE: 0xB07B75
+  CLIM_OFF_ACTIVE: 0xF2A33A
+  CLIM_ECO: 0x78D388
+  METEO_CELESTIAL: 0xF6CB4C
+  METEO_CLOUD: 0xE4E2DC
+  METEO_PRECIP: 0x7EB1F6
+  HUMIDITY_WET: 0x6CA9FF
+  TEMP_GRAD_0_POS: 0x6F9CFF
+  TEMP_GRAD_14: 0xE8E6E0
+  TEMP_GRAD_24: 0xF59B6C
+  TEMP_GRAD_35: 0xFF5E50
+  HUM_GRAD_14: 0xFF7062
+  HUM_GRAD_22: 0xE8C04A
+  HUM_GRAD_30: 0xE8E6E0
+
+clair:
+  BG: 0xECEBE6
+  GLASS_HI: 0xFCFBF8
+  GLASS_LO: 0xFCFBF8
+  GLASS_HI_PAGE: 0xECEBE6
+  GLASS_LO_PAGE: 0xECEBE6
+  GLASS_HI_MODAL: 0xF4F3EF
+  GLASS_LO_MODAL: 0xF4F3EF
+  GLASS_RIM: 0x55534E
+  MODAL_SCRIM: 0xC8C7C0
+  ARC_TRACK: 0xD3D2CB
+  TEXT_SOFT: 0x28282B
+  TEXT_PRIMARY: 0x121214
+  TEXT_DIM: 0x5F5D58
+  ICON_MUTED: 0x9A9892
+  SUCCESS: 0x2A7443
+  WARNING: 0x8C5C00
+  ERROR: 0xB3261E
+  INFO: 0x0B6580
+  GOLD: 0x7E5E00
+  INACTIVE: 0xC3C2BC
+  BAR_INACTIVE: 0xC3C2BC
+  ACCENT: 0x151517
+  ACCENT_ALT: 0x5B4BA0
+  EARLY: 0xB04F18
+  PAST: 0x7C7A74
+  RAIN_VALUE: 0xB04F18
+  CLIM_COOL_ACTIVE: 0x1F58C4
+  CLIM_HEAT_ACTIVE: 0xC2291C
+  CLIM_HEAT_INACTIVE: 0x9A5D56
+  CLIM_OFF_ACTIVE: 0x9C5300
+  CLIM_ECO: 0x19732F
+  METEO_CELESTIAL: 0xB06B00
+  METEO_CLOUD: 0x747880
+  METEO_PRECIP: 0x2D63C8
+  HUMIDITY_WET: 0x1D4FC4
+  TEMP_GRAD_0_POS: 0x1F55C4
+  TEMP_GRAD_14: 0x3A3A3F
+  TEMP_GRAD_24: 0xAC4F1E
+  TEMP_GRAD_35: 0xB3261E
+  HUM_GRAD_14: 0xB3261E
+  HUM_GRAD_22: 0x8A5F00
+  HUM_GRAD_30: 0x3A3A3F

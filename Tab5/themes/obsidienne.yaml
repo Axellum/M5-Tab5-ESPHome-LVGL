@@ -1,0 +1,133 @@
+# Thème « Obsidienne » : un noir violacé et des surfaces anthracite qui ne brillent que
+# par leur arête haute, avec un filet champagne comme sur un boîtier de montre :
+# l'éclairage vient toujours du haut, donc une carte posée est liserée en haut et une
+# cuvette de popup est liserée en bas.
+#
+# Esquisse « Obsidienne » du 04/10/2026 (Claude Sonnet 5.5, galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), convertie au lot 3 des thèmes (ADR-0029) :
+# couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
+# texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
+nom: Obsidienne
+ordre: 14
+herite: ardoise
+zones_sombres: [bandeau, horloge]
+polices:
+  horloge: "Gloock@400"
+  date: "Gloock@400"
+  titre: "Gloock@400"
+
+formes:
+  style_meteo_card_page:
+    radius: 14
+    border_width: 2
+    border_side: TOP
+    sombre: {border_opa: 191}
+    clair: {border_opa: 216}
+  style_horloge_page:
+    border_opa: 229
+    clair: {bg_color: 0x29263F, bg_grad_color: 0x131122}
+  style_bandeau_page:
+    border_opa: 229
+    clair: {bg_color: 0x29263F, bg_grad_color: 0x131122}
+  style_clim_btn:
+    radius: 12
+    border_side: FULL
+    sombre: {bg_color: 0x211F31, bg_grad_color: 0x131120, border_opa: 76}
+    clair: {bg_color: 0xFFFEFA, bg_grad_color: 0xF2EEE3, border_opa: 107}
+  style_modal_card:
+    radius: 18
+    border_side: FULL
+    sombre: {border_opa: 140}
+  style_glass_card:
+    radius: 14
+    border_side: BOTTOM
+    sombre: {border_opa: 114}
+
+sombre:
+  BG: 0x0B0A12
+  GLASS_HI: 0x15131F
+  GLASS_LO: 0x1B1929
+  GLASS_HI_PAGE: 0x211F31
+  GLASS_LO_PAGE: 0x131120
+  GLASS_HI_MODAL: 0x2A2742
+  GLASS_LO_MODAL: 0x141226
+  GLASS_RIM: 0xCDB68A
+  MODAL_SCRIM: 0x060509
+  ARC_TRACK: 0x2C2A42
+  TEXT_SOFT: 0xE8E4F0
+  TEXT_PRIMARY: 0xFBF5E6
+  TEXT_DIM: 0xA29DB8
+  ICON_MUTED: 0x5F5C75
+  TEXT_ON_ACCENT: 0x0B0A12
+  SUCCESS: 0x4FD6A2
+  WARNING: 0xF5B94A
+  ERROR: 0xFF7B8E
+  INFO: 0x4CC8E8
+  GOLD: 0xEFCF8C
+  INACTIVE: 0x36334D
+  BAR_INACTIVE: 0x36334D
+  ACCENT: 0xDDBB7A
+  ACCENT_ALT: 0xB8A4F8
+  EARLY: 0xFF9650
+  PAST: 0x7E7A96
+  RAIN_VALUE: 0xFF9650
+  CLIM_COOL_ACTIVE: 0x5AA2FF
+  CLIM_HEAT_ACTIVE: 0xFF5C5C
+  CLIM_HEAT_INACTIVE: 0xA07272
+  CLIM_OFF_ACTIVE: 0xFFA03C
+  CLIM_ECO: 0x56D87C
+  METEO_CELESTIAL: 0xF5C24D
+  METEO_CLOUD: 0xDCE1EF
+  METEO_PRECIP: 0x86B3FF
+  HUMIDITY_WET: 0x5E9BFF
+  TEMP_GRAD_0_POS: 0x6EA8FF
+  TEMP_GRAD_14: 0xEDE6D6
+  TEMP_GRAD_24: 0xF2C26B
+  TEMP_GRAD_35: 0xFF6B5C
+  HUM_GRAD_14: 0xFF6B5C
+  HUM_GRAD_22: 0xF2C26B
+  HUM_GRAD_30: 0xEDE6D6
+
+clair:
+  BG: 0xE9E4D6
+  GLASS_HI: 0xE5DFCE
+  GLASS_LO: 0xEDE8DB
+  GLASS_HI_PAGE: 0xFFFEFA
+  GLASS_LO_PAGE: 0xF2EEE3
+  GLASS_HI_MODAL: 0xFCFAF4
+  GLASS_LO_MODAL: 0xEEE9DC
+  GLASS_RIM: 0x8A6A30
+  MODAL_SCRIM: 0xD5CEBC
+  ARC_TRACK: 0xD6CFBD
+  TEXT_SOFT: 0x26222F
+  TEXT_PRIMARY: 0x14111C
+  TEXT_DIM: 0x5C576D
+  ICON_MUTED: 0x8E8999
+  SUCCESS: 0x0A7752
+  WARNING: 0xA85F00
+  ERROR: 0xC4263E
+  INFO: 0x0A6A86
+  GOLD: 0x75520F
+  INACTIVE: 0xC9C2B0
+  BAR_INACTIVE: 0xC9C2B0
+  ACCENT: 0x8A6416
+  ACCENT_ALT: 0x6A4CCB
+  EARLY: 0xBC4C08
+  PAST: 0x756F8A
+  RAIN_VALUE: 0xBC4C08
+  CLIM_COOL_ACTIVE: 0x1F62D6
+  CLIM_HEAT_ACTIVE: 0xCF2B2B
+  CLIM_HEAT_INACTIVE: 0xA06A6A
+  CLIM_OFF_ACTIVE: 0xBC5A08
+  CLIM_ECO: 0x1B8A3C
+  METEO_CELESTIAL: 0xB87200
+  METEO_CLOUD: 0x77738E
+  METEO_PRECIP: 0x3A70D8
+  HUMIDITY_WET: 0x2457D6
+  TEMP_GRAD_0_POS: 0x2457D6
+  TEMP_GRAD_14: 0x46606F
+  TEMP_GRAD_24: 0xA15C06
+  TEMP_GRAD_35: 0xC42828
+  HUM_GRAD_14: 0xC42828
+  HUM_GRAD_22: 0x9C5C00
+  HUM_GRAD_30: 0x46606F

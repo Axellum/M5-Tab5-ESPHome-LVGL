@@ -1,0 +1,130 @@
+# Thème « Signalisation » : des panneaux routiers : aplats sans dégradé, coins à 10 px,
+# liseré net de 2 px, Overpass (la police des panneaux, dérivée de Highway Gothic),
+# libellés en capitales, et le bandeau central traité comme un afficheur noir.
+#
+# Esquisse « Signalisation » du 04/10/2026 (Claude Fable 5.1, galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), convertie au lot 3 des thèmes (ADR-0029) :
+# couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
+# texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
+nom: Signalisation
+ordre: 16
+herite: ardoise
+zones_sombres: [bandeau]
+polices:
+  horloge: "Overpass@800"
+  date: "Overpass@700"
+  titre: "Overpass@700"
+
+formes:
+  style_meteo_card_page:
+    bg_grad_dir: NONE
+    radius: 10
+    border_width: 2
+    sombre: {border_opa: 216}
+    clair: {border_opa: 255}
+  style_bandeau_page:
+    sombre: {bg_color: 0x0B0D10}
+    clair: {bg_color: 0x0B0F14, border_color: 0x5B6B80}
+  style_onglet_jour_page:
+    radius: 8
+  style_onglet_temp_page:
+    radius: 8
+  style_clim_btn:
+    bg_grad_dir: NONE
+    radius: 10
+    border_width: 2
+    sombre: {bg_color: 0x0C3F8F, border_opa: 216}
+    clair: {bg_color: 0xE4EDF9, border_opa: 255}
+  style_modal_card:
+    bg_grad_dir: NONE
+    radius: 14
+    sombre: {border_opa: 216}
+    clair: {border_opa: 255}
+  style_glass_card:
+    bg_grad_dir: NONE
+    radius: 10
+    sombre: {border_opa: 216}
+    clair: {border_opa: 255}
+
+sombre:
+  BG: 0x15181D
+  GLASS_HI: 0x262B33
+  GLASS_LO: 0x262B33
+  GLASS_HI_PAGE: 0x22262D
+  GLASS_LO_PAGE: 0x22262D
+  GLASS_HI_MODAL: 0x1C2026
+  GLASS_LO_MODAL: 0x1C2026
+  GLASS_RIM: 0xF1F5F9
+  MODAL_SCRIM: 0x0B0D10
+  ARC_TRACK: 0x3A414C
+  TEXT_DIM: 0xA7B4C4
+  ICON_MUTED: 0x5B6572
+  TEXT_ON_ACCENT: 0x15181D
+  SUCCESS: 0x4ADE80
+  WARNING: 0xFFA62B
+  ERROR: 0xFF5A5F
+  INFO: 0x7CB8FF
+  GOLD: 0xFFD200
+  INACTIVE: 0x2B313A
+  BAR_INACTIVE: 0x2B313A
+  ACCENT: 0xFFD200
+  ACCENT_ALT: 0xD8B38A
+  EARLY: 0xFF8A3D
+  PAST: 0x8A97A8
+  RAIN_VALUE: 0xFF8A3D
+  CLIM_COOL_ACTIVE: 0x5AA0FF
+  CLIM_HEAT_ACTIVE: 0xFF5A5F
+  CLIM_HEAT_INACTIVE: 0xB48A8E
+  CLIM_OFF_ACTIVE: 0xFFA62B
+  CLIM_ECO: 0x4ADE80
+  METEO_CELESTIAL: 0xFFD200
+  METEO_PRECIP: 0x7CB8FF
+  HUMIDITY_WET: 0x7CB8FF
+  TEMP_GRAD_0_POS: 0x7CB8FF
+  TEMP_GRAD_24: 0xFFB080
+  TEMP_GRAD_35: 0xFF5A5F
+  HUM_GRAD_14: 0xFF5A5F
+  HUM_GRAD_22: 0xFFD200
+
+clair:
+  BG: 0xECEFF3
+  GLASS_HI: 0xEEF2F7
+  GLASS_LO: 0xEEF2F7
+  GLASS_LO_PAGE: 0xFFFFFF
+  GLASS_HI_MODAL: 0xFFFFFF
+  GLASS_LO_MODAL: 0xFFFFFF
+  GLASS_RIM: 0x5B6B80
+  MODAL_SCRIM: 0xC3CBD6
+  ARC_TRACK: 0xCBD5E1
+  TEXT_SOFT: 0x0F172A
+  TEXT_PRIMARY: 0x0B1220
+  TEXT_DIM: 0x475569
+  ICON_MUTED: 0x9AA5B4
+  SUCCESS: 0x0E6B3A
+  WARNING: 0xA16207
+  ERROR: 0xC8102E
+  INFO: 0x3B82F6
+  GOLD: 0xB45309
+  INACTIVE: 0xC3CBD6
+  BAR_INACTIVE: 0xC3CBD6
+  ACCENT: 0x0B4AA2
+  ACCENT_ALT: 0x7C4A1E
+  EARLY: 0xC2410C
+  PAST: 0x6B7A8F
+  RAIN_VALUE: 0xC2410C
+  CLIM_COOL_ACTIVE: 0x1D4ED8
+  CLIM_HEAT_ACTIVE: 0xC8102E
+  CLIM_HEAT_INACTIVE: 0x9C6B73
+  CLIM_OFF_ACTIVE: 0xC2410C
+  CLIM_ECO: 0x0E6B3A
+  METEO_CELESTIAL: 0xD97706
+  METEO_CLOUD: 0x64748B
+  METEO_PRECIP: 0x2563EB
+  HUMIDITY_WET: 0x1D4ED8
+  TEMP_GRAD_0_POS: 0x1D4ED8
+  TEMP_GRAD_14: 0x0B1220
+  TEMP_GRAD_24: 0xC2410C
+  TEMP_GRAD_35: 0xC8102E
+  HUM_GRAD_14: 0xC8102E
+  HUM_GRAD_22: 0xA16207
+  HUM_GRAD_30: 0x0B1220

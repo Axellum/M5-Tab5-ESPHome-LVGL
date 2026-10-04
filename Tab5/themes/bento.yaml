@@ -1,0 +1,128 @@
+# Thème « Bento » : un plateau gris bleuté et des compartiments à la teinte franche,
+# cernés d'un trait net : chaque zone de l'écran (assistant, horloge, boutons, prévisions)
+# a sa couleur, et le bandeau central reste noir pour que les vigilances jaune et rouge se
+# lisent toujours.
+#
+# Esquisse « Bento » du 04/10/2026 (Claude Sonnet 5.5, galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), convertie au lot 3 des thèmes (ADR-0029) :
+# couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
+# texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
+nom: Bento
+ordre: 13
+herite: ardoise
+polices:
+  horloge: "Familjen Grotesk@700"
+  date: "Familjen Grotesk@700"
+  titre: "Familjen Grotesk@700"
+
+formes:
+  style_meteo_card_page:
+    bg_grad_dir: NONE
+    radius: 20
+    border_width: 2
+    sombre: {border_opa: 91}
+    clair: {border_opa: 255}
+  style_clim_btn:
+    bg_grad_dir: NONE
+    radius: 14
+    border_width: 2
+    sombre: {bg_color: 0x1C2130, border_opa: 91}
+    clair: {bg_color: 0xFFFFFF, border_opa: 255}
+  style_modal_card:
+    bg_grad_dir: NONE
+    radius: 28
+    border_width: 3
+    sombre: {border_opa: 112}
+    clair: {border_opa: 255}
+  style_glass_card:
+    bg_grad_dir: NONE
+    radius: 22
+    sombre: {border_opa: 91}
+    clair: {border_opa: 255}
+
+sombre:
+  BG: 0x0E1117
+  GLASS_HI: 0x123A66
+  GLASS_LO: 0x123A66
+  GLASS_HI_PAGE: 0x1C2130
+  GLASS_LO_PAGE: 0x1C2130
+  GLASS_HI_MODAL: 0x171B26
+  GLASS_LO_MODAL: 0x171B26
+  GLASS_RIM: 0xF2F5FF
+  MODAL_SCRIM: 0x06080C
+  ARC_TRACK: 0x7A6A33
+  TEXT_SOFT: 0xE9EDF5
+  TEXT_DIM: 0xAAB4C8
+  ICON_MUTED: 0x5E687C
+  TEXT_ON_ACCENT: 0x0E1117
+  SUCCESS: 0x4FE39A
+  WARNING: 0xFFC247
+  ERROR: 0xFF7B8B
+  INFO: 0x6CC4FF
+  GOLD: 0xFFD866
+  INACTIVE: 0x5E6A85
+  BAR_INACTIVE: 0x5E6A85
+  ACCENT: 0xB2A6FF
+  ACCENT_ALT: 0xFF8FD2
+  EARLY: 0xFFA24D
+  PAST: 0x7C869B
+  RAIN_VALUE: 0xFFA24D
+  CLIM_COOL_ACTIVE: 0x5DA2FF
+  CLIM_HEAT_ACTIVE: 0xFF6B6B
+  CLIM_HEAT_INACTIVE: 0xB07F7F
+  CLIM_OFF_ACTIVE: 0xFFB020
+  CLIM_ECO: 0x5BE07A
+  METEO_CELESTIAL: 0xFFD43B
+  METEO_CLOUD: 0xEEF2F9
+  METEO_PRECIP: 0x8FBBFF
+  HUMIDITY_WET: 0x5DA2FF
+  TEMP_GRAD_0_POS: 0x5DA2FF
+  TEMP_GRAD_14: 0xA58CFF
+  TEMP_GRAD_24: 0xFF7AD0
+  TEMP_GRAD_35: 0xFF5A6A
+  HUM_GRAD_14: 0xFF6B6B
+  HUM_GRAD_22: 0xFFC247
+  HUM_GRAD_30: 0x5BE79A
+
+clair:
+  BG: 0xE6E9F0
+  GLASS_HI: 0xB9DEFF
+  GLASS_LO: 0xB9DEFF
+  GLASS_LO_PAGE: 0xFFFFFF
+  GLASS_HI_MODAL: 0xFFFFFF
+  GLASS_LO_MODAL: 0xFFFFFF
+  GLASS_RIM: 0x12141B
+  MODAL_SCRIM: 0x222A3D
+  ARC_TRACK: 0xC4CBD8
+  TEXT_SOFT: 0x1B1E29
+  TEXT_PRIMARY: 0x12141B
+  TEXT_DIM: 0x4D576B
+  ICON_MUTED: 0x8E97A8
+  SUCCESS: 0x0A6B3B
+  WARNING: 0xD47000
+  ERROR: 0xC4162A
+  INFO: 0x0B5FC0
+  GOLD: 0x8F6A00
+  INACTIVE: 0x7C869B
+  BAR_INACTIVE: 0x7C869B
+  ACCENT: 0x5B2EE0
+  ACCENT_ALT: 0xB0208A
+  EARLY: 0xB8530A
+  PAST: 0x6A7386
+  RAIN_VALUE: 0xB8530A
+  CLIM_COOL_ACTIVE: 0x1B5BD0
+  CLIM_HEAT_ACTIVE: 0xCF2C2C
+  CLIM_HEAT_INACTIVE: 0x8A5A5A
+  CLIM_OFF_ACTIVE: 0xB35A00
+  CLIM_ECO: 0x1E8A3C
+  METEO_CELESTIAL: 0xB85A00
+  METEO_CLOUD: 0x46577A
+  METEO_PRECIP: 0x1D63E0
+  HUMIDITY_WET: 0x1B4FD8
+  TEMP_GRAD_0_POS: 0x1B4FD8
+  TEMP_GRAD_14: 0x6C3CD6
+  TEMP_GRAD_24: 0xB5239A
+  TEMP_GRAD_35: 0xC1121F
+  HUM_GRAD_14: 0xC1121F
+  HUM_GRAD_22: 0xA85A00
+  HUM_GRAD_30: 0x1E8A3C

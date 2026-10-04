@@ -13,13 +13,17 @@ name: Rendu hors tablette
 # fois — peintes en sombre puis basculées à chaud, puis après un démarrage à froid en
 # clair — et les deux séries doivent être identiques au pixel près (seule comparaison
 # qui fait échouer une tâche : un écart veut dire qu'une couleur n'est pas repeinte).
+# Tâche « galerie » (thèmes, lot 3) : l'accueil et le popup de la climatisation de chaque
+# thème dans ses deux modes, choisis à chaud l'un après l'autre, puis chacun après un
+# démarrage à froid ; les deux séries doivent être identiques au pixel près (un écart =
+# une forme, une police ou une couleur qu'un thème laisse au suivant).
 
 on:
   workflow_dispatch:
     inputs:
       langues:
-        description: "Langues, en JSON (fr, en, de, nl, es, it, tr ; « clair » : thème clair, à chaud et à froid)"
-        default: '["fr", "en", "de", "nl", "es", "it", "tr", "clair"]'
+        description: "Langues, en JSON (fr, en, de, nl, es, it, tr ; « clair » : thème clair, à chaud et à froid ; « galerie » : chaque thème)"
+        default: '["fr", "en", "de", "nl", "es", "it", "tr", "clair", "galerie"]'
       seulement:
         description: "Mise au point : ces écrans seulement (noms de tools/rendu/ecrans.py, séparés par des espaces), sans les scènes"
         default: ""
@@ -64,11 +68,12 @@ permissions:
 jobs:
   rendu:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # La galerie démarre le rendu une fois par thème et par mode (36 démarrages à froid).
+    timeout-minutes: ${{ matrix.langue == 'galerie' && 45 || 30 }}
     strategy:
       fail-fast: false
       matrix:
-        langue: ${{ fromJSON(inputs.langues || '["fr", "en", "de", "nl", "es", "it", "tr", "clair"]') }}
+        langue: ${{ fromJSON(inputs.langues || '["fr", "en", "de", "nl", "es", "it", "tr", "clair", "galerie"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -117,9 +122,51 @@ jobs:
             es) nom="Español" ;;
             it) nom="Italiano" ;;
             tr) nom="Türkçe" ;;
-            clair) nom="" ;;
+            clair|galerie) nom="" ;;
             *) echo "Langue inconnue : $LANGUE"; exit 1 ;;
           esac
+          # faketime lance le programme dans un processus fils : tuer faketime ne
+          # l'arrête pas, et la passe suivante ne pourrait pas ouvrir le port de l'API.
+          arreter() {
+            pkill -f "$prog" 2>/dev/null || true
+            for _ in $(seq 1 20); do pgrep -f "$prog" >/dev/null || break; sleep 1; done
+            pkill -9 -f "$prog" 2>/dev/null || true
+            wait "$1" 2>/dev/null || true
+          }
+
+          if [ "$LANGUE" = galerie ]; then
+            # À chaud : un démarrage, chaque thème et chaque mode choisis l'un après l'autre.
+            mkdir -p chaud
+            ESPHOME_SNAPSHOT_DIR="$PWD/chaud" faketime -f "$DEPART" "$prog" > "captures/rendu-galerie-chaud.log" 2>&1 &
+            pid=$!
+            sleep 8
+            faketime -f "$DEPART" python tools/rendu/capturer.py --dossier chaud --galerie
+            arreter "$pid"
+            # À froid : chaque démarrage capture le thème enregistré par le précédent.
+            mapfile -t combis < <(python tools/rendu/capturer.py --dossier captures --liste-galerie)
+            IFS='|' read -r nom0 _ mode0 <<< "${combis[0]}"
+            faketime -f "$DEPART" "$prog" > "captures/rendu-galerie-0.log" 2>&1 &
+            pid=$!
+            sleep 8
+            faketime -f "$DEPART" python tools/rendu/capturer.py --dossier captures --preparer \
+              --puis-theme "$nom0" --puis-mode-theme "$mode0"
+            arreter "$pid"
+            for i in "${!combis[@]}"; do
+              IFS='|' read -r _ fichier mode <<< "${combis[$i]}"
+              suite=()
+              if [ $((i + 1)) -lt "${#combis[@]}" ]; then
+                IFS='|' read -r nom_s _ mode_s <<< "${combis[$((i + 1))]}"
+                suite=(--puis-theme "$nom_s" --puis-mode-theme "$mode_s")
+              fi
+              faketime -f "$DEPART" "$prog" > "captures/rendu-galerie-$((i + 1)).log" 2>&1 &
+              pid=$!
+              sleep 8
+              faketime -f "$DEPART" python tools/rendu/capturer.py --dossier captures \
+                --galerie-un "theme-$fichier-${mode,,}" "${suite[@]}"
+              arreter "$pid"
+            done
+            exit 0
+          fi
 
           if [ "$LANGUE" = clair ]; then
             # Passe 1 : démarrage en sombre ; avant chaque capture, « Clair ou sombre »
@@ -131,12 +178,7 @@ jobs:
             sleep 8
             faketime -f "$DEPART" python tools/rendu/capturer.py --dossier chaud --suffixe clair \
               --bascule Clair --puis-mode-theme Clair --sans-jeux
-            # faketime lance le programme dans un processus fils : tuer faketime ne
-            # l'arrête pas, et la passe suivante ne pourrait pas ouvrir le port de l'API.
-            pkill -f "$prog" 2>/dev/null || true
-            for _ in $(seq 1 20); do pgrep -f "$prog" >/dev/null || break; sleep 1; done
-            pkill -9 -f "$prog" 2>/dev/null || true
-            wait "$pid" 2>/dev/null || true
+            arreter "$pid"
           fi
 
           if [ -n "$nom" ]; then
@@ -167,6 +209,14 @@ jobs:
           python tools/rendu/comparer.py --captures chaud --references captures --strict \
             --titre "Thème clair, bascule à chaud contre démarrage à froid" || code=$?
           # Images des écarts (pixels changés en magenta) dans l'artefact de la tâche.
+          [ -d chaud/diff ] && cp -r chaud/diff captures/diff-bascule
+          exit "$code"
+      - name: "Galerie des thèmes : bascule à chaud = démarrage à froid"
+        if: matrix.langue == 'galerie'
+        run: |
+          code=0
+          python tools/rendu/comparer.py --captures chaud --references captures --strict \
+            --titre "Galerie des thèmes, bascule à chaud contre démarrage à froid" || code=$?
           [ -d chaud/diff ] && cp -r chaud/diff captures/diff-bascule
           exit "$code"
       - name: Journaux du rendu

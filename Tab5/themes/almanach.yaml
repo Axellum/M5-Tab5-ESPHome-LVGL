@@ -1,0 +1,127 @@
+# Thème « Almanach » : une page d'almanach accrochée au mur : papier crème et encre le
+# jour, « édition de nuit » encre et parchemin le soir, avec une horloge et une date en
+# serif (Fraunces), des cartes plates à filet d'encre, des coins peu arrondis et un ruban
+# d'encre pour le bandeau central.
+#
+# Esquisse « Almanach » du 04/10/2026 (Claude Fable 5.1, galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), convertie au lot 3 des thèmes (ADR-0029) :
+# couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
+# texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
+nom: Almanach
+ordre: 9
+herite: ardoise
+zones_sombres: [bandeau]
+polices:
+  horloge: "Fraunces@700"
+  date: "Fraunces@700"
+  titre: "Figtree@700"
+
+formes:
+  style_meteo_card_page:
+    radius: 10
+    sombre: {border_opa: 45}
+    clair: {border_opa: 61}
+  style_bandeau_page:
+    sombre: {bg_color: 0x0E0C09, bg_grad_dir: NONE, border_opa: 63}
+    clair: {bg_color: 0x2A241E, bg_grad_color: 0x1B1712, border_opa: 0}
+  style_clim_btn:
+    radius: 10
+    sombre: {border_opa: 45}
+    clair: {border_opa: 61}
+  style_modal_card:
+    radius: 14
+    sombre: {border_opa: 76}
+    clair: {border_opa: 89}
+  style_glass_card:
+    radius: 12
+    sombre: {border_opa: 63}
+    clair: {border_opa: 76}
+
+sombre:
+  BG: 0x15110D
+  GLASS_HI: 0x322A22
+  GLASS_LO: 0x251F18
+  GLASS_HI_PAGE: 0x262019
+  GLASS_LO_PAGE: 0x1D1813
+  GLASS_HI_MODAL: 0x2B241D
+  GLASS_LO_MODAL: 0x1F1A14
+  GLASS_RIM: 0xD8CCB6
+  MODAL_SCRIM: 0x0D0B08
+  ARC_TRACK: 0x3B342C
+  TEXT_SOFT: 0xEEE5D3
+  TEXT_PRIMARY: 0xFAF4E6
+  TEXT_DIM: 0xA99E8E
+  ICON_MUTED: 0x5F564A
+  TEXT_ON_ACCENT: 0x15110D
+  SUCCESS: 0x9DC66C
+  WARNING: 0xE6B34D
+  ERROR: 0xEC7D6E
+  INFO: 0x93B8F0
+  GOLD: 0xE2B65A
+  INACTIVE: 0x39322A
+  BAR_INACTIVE: 0x39322A
+  ACCENT: 0x7CC7CE
+  ACCENT_ALT: 0xBBA6E3
+  EARLY: 0xF09C55
+  PAST: 0x8C8172
+  RAIN_VALUE: 0xF09C55
+  CLIM_COOL_ACTIVE: 0x74A4FF
+  CLIM_HEAT_ACTIVE: 0xFF6F60
+  CLIM_HEAT_INACTIVE: 0x8F6D68
+  CLIM_OFF_ACTIVE: 0xF2A447
+  CLIM_ECO: 0x83CD7E
+  METEO_CELESTIAL: 0xF2C650
+  METEO_CLOUD: 0xFAF4E6
+  METEO_PRECIP: 0x93B8F0
+  HUMIDITY_WET: 0x74A4FF
+  TEMP_GRAD_0_POS: 0x74A4FF
+  TEMP_GRAD_14: 0xEEE5D3
+  TEMP_GRAD_24: 0xF08FB3
+  TEMP_GRAD_35: 0xFF6F60
+  HUM_GRAD_14: 0xFF6F60
+  HUM_GRAD_22: 0xE6B34D
+  HUM_GRAD_30: 0xEEE5D3
+
+clair:
+  BG: 0xEDE5D5
+  GLASS_HI: 0xF6F1E7
+  GLASS_LO: 0xEFE9DC
+  GLASS_HI_PAGE: 0xFBF8F1
+  GLASS_LO_PAGE: 0xF6F1E7
+  GLASS_HI_MODAL: 0xFCF9F3
+  GLASS_LO_MODAL: 0xF5F0E5
+  GLASS_RIM: 0x3A3128
+  MODAL_SCRIM: 0xE3DBCA
+  ARC_TRACK: 0xD8CFBE
+  TEXT_SOFT: 0x2A241E
+  TEXT_PRIMARY: 0x17130F
+  TEXT_DIM: 0x655B51
+  ICON_MUTED: 0xA3998C
+  SUCCESS: 0x45762A
+  WARNING: 0xA86A08
+  ERROR: 0xAF3328
+  INFO: 0x2B5CA3
+  GOLD: 0xA4731A
+  INACTIVE: 0xC4B9A3
+  BAR_INACTIVE: 0xC4B9A3
+  ACCENT: 0x1C6B75
+  ACCENT_ALT: 0x6B55A4
+  EARLY: 0xBF5D18
+  PAST: 0x776D63
+  RAIN_VALUE: 0xBF5D18
+  CLIM_COOL_ACTIVE: 0x1F56C4
+  CLIM_HEAT_ACTIVE: 0xC1301E
+  CLIM_HEAT_INACTIVE: 0x967C77
+  CLIM_OFF_ACTIVE: 0xB5600E
+  CLIM_ECO: 0x3C8549
+  METEO_CELESTIAL: 0xB36E0E
+  METEO_CLOUD: 0x6A7682
+  METEO_PRECIP: 0x2A66CB
+  HUMIDITY_WET: 0x1F56C4
+  TEMP_GRAD_0_POS: 0x1F56C4
+  TEMP_GRAD_14: 0x2A241E
+  TEMP_GRAD_24: 0xA9306C
+  TEMP_GRAD_35: 0xB0271E
+  HUM_GRAD_14: 0xB0271E
+  HUM_GRAD_22: 0x9F6208
+  HUM_GRAD_30: 0x2A241E

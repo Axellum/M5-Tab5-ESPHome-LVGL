@@ -166,6 +166,15 @@ def test_options_du_select_dans_l_ordre_des_themes():
     assert options == [t.nom for t in gen_themes.charger()]
 
 
+def test_theme_par_defaut_existe():
+    """initial_option du select « Thème » : une option du catalogue (sinon ESPHome refuse
+    la configuration, et on ne le verrait qu'à la compilation)."""
+    texte = (REPO / "Tab5" / "tab5-themes.yaml").read_text(encoding="utf-8")
+    bloc = re.split(r"id: tab5_theme\r?\n", texte, maxsplit=1)[1].split("on_value:", 1)[0]
+    m = re.search(r'initial_option: "([^"]+)"', bloc)
+    assert m and m.group(1) in [t.nom for t in gen_themes.charger()]
+
+
 def _luminance(c: int) -> float:
     def canal(v: int) -> float:
         v = v / 255

@@ -4,6 +4,37 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Thèmes : les dix-sept thèmes de la galerie, Relief doux par défaut
+
+Demande d'Axel : « mets tous les thèmes qu'on a faits ce soir », Relief doux par défaut.
+Les dix-sept esquisses du 04/10 deviennent des thèmes de l'écran, chacun avec son mode
+sombre et son mode clair, ses formes et, pour treize d'entre eux, ses polices
+d'affichage ([ADR-0029](docs/decisions/0029-themes-palette.md), « lot 3 »).
+- **Dix-huit thèmes** dans le select « Thème » : Ardoise, Relief doux, Relief plat,
+  Graphite, Almanach imprimé, Ardoise douce, Terre cuite, Craie et ardoise, Almanach,
+  Béton brut, Néon calme, Zen Sumi, Bento, Obsidienne, Platine et or, Signalisation,
+  Capsule, Pixel. Un thème déjà choisi sur une tablette reste ; une tablette neuve
+  démarre en **Relief doux**.
+- **Polices** : l'heure, la date et les titres prennent la police du thème (Nunito,
+  IBM Plex Serif, Fraunces, Barlow, Oxanium, Murecho, Familjen Grotesk, Gloock,
+  Bodoni Moda, Manrope, Overpass, Fredoka, Jersey 10) ; le reste du texte reste en
+  Roboto. Un caractère absent d'une police (lettres turques de Fredoka, par exemple)
+  est dessiné en Roboto.
+- **Formes** : ombres, liserés, rayons et aplats des esquisses, sur les cartes, les
+  boutons, les onglets des jours et les cartes des popups ; bandeau central sombre dans le mode clair de douze thèmes
+  (horloge aussi pour Béton brut et Obsidienne). Les ombres des cartes des
+  jours ne sont plus coupées par leur cellule.
+- **Pas repris** : l'état « bouton actif » propre à trois esquisses (Relief doux, Relief
+  plat, Néon calme) ; ces boutons gardent la bordure d'accent de l'interface.
+- **Coût** : les ombres allongent le dessin d'un écran entier (mesuré le 04/10 sur la
+  tablette avec des ombres sur les cartes et les boutons : 134 → 169 ms) ; les polices
+  ajoutent leurs glyphes au firmware.
+- **Galerie** : le rendu hors tablette gagne une tâche « galerie » (accueil et popup de la
+  climatisation de chaque thème, dans les deux modes), capturée à chaud puis à froid et
+  comparée au pixel près.
+- Corrigé au passage : la police de date d'un thème a les dix chiffres (seulement 0, 2,
+  3 et 8 avant, ceux des dates d'essai).
+
 ### 2026-10-05 — Thèmes, lot 3 : formes, zones sombres et polices d'affichage par thème
 
 Suite de la galerie de seize esquisses du 04/10 : un thème change plus que ses couleurs

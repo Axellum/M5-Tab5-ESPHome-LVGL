@@ -38,6 +38,7 @@ obj:
         height: ${meteo_cell_height}
         styles: style_transparent
         scrollbar_mode: "OFF"
+        overflow_visible: true  # ombre des cartes d'un thème (formes, lot 3) : pas coupée à droite
         widgets:
           # Corps Sombre (recouvre les onglets)
           - obj:
@@ -75,6 +76,7 @@ obj:
         height: ${meteo_cell_height}
         styles: style_transparent
         scrollbar_mode: "OFF"
+        overflow_visible: true  # ombre des cartes d'un thème (formes, lot 3) : pas coupée à droite
         widgets:
           # Corps Sombre
           - obj:
@@ -125,6 +127,7 @@ obj:
         height: ${meteo_cell_height}
         styles: style_transparent
         scrollbar_mode: "OFF"
+        overflow_visible: true  # ombre des cartes d'un thème (formes, lot 3) : pas coupée à droite
         widgets:
           # Corps Sombre
           - obj:
@@ -162,6 +165,7 @@ obj:
         height: ${meteo_cell_height}
         styles: style_transparent
         scrollbar_mode: "OFF"
+        overflow_visible: true  # ombre des cartes d'un thème (formes, lot 3) : pas coupée à droite
         widgets:
           # Corps Sombre
           - obj:
@@ -199,6 +203,7 @@ obj:
         height: ${meteo_cell_height}
         styles: style_transparent
         scrollbar_mode: "OFF"
+        overflow_visible: true  # ombre des cartes d'un thème (formes, lot 3) : pas coupée à droite
         widgets:
           # Corps Sombre
           - obj:

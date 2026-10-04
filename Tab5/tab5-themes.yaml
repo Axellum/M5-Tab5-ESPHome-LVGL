@@ -31,6 +31,187 @@
 # ═══════════════════════════════════════════════════════════════════════════
 
 # >>> polices (généré par tools/gen_themes.py depuis Tab5/themes/ et _polices.yaml, ne pas éditer)
+font:
+  - file: gfonts://Barlow Condensed@800
+    id: police_barlow_condensed_800_130
+    size: 130
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://Barlow Semi Condensed@700
+    id: police_barlow_semi_condensed_700_32
+    size: 32
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+  - file: gfonts://Barlow Semi Condensed@700
+    id: police_barlow_semi_condensed_700_45
+    size: 45
+    bpp: 2
+    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+  - file: gfonts://Bodoni Moda@700
+    id: police_bodoni_moda_700_120
+    size: 120
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://Familjen Grotesk@700
+    id: police_familjen_grotesk_700_130
+    size: 130
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://Familjen Grotesk@700
+    id: police_familjen_grotesk_700_32
+    size: 32
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+  - file: gfonts://Familjen Grotesk@700
+    id: police_familjen_grotesk_700_45
+    size: 45
+    bpp: 2
+    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+  - file: gfonts://Figtree@700
+    id: police_figtree_700_31
+    size: 31
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+  - file: gfonts://Fraunces@700
+    id: police_fraunces_700_116
+    size: 116
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://Fraunces@700
+    id: police_fraunces_700_45
+    size: 45
+    bpp: 2
+    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+  - file: gfonts://Fredoka@700
+    id: police_fredoka_700_130
+    size: 130
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://Fredoka@700
+    id: police_fredoka_700_32
+    size: 32
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
+  - file: gfonts://Fredoka@700
+    id: police_fredoka_700_45
+    size: 45
+    bpp: 2
+    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéû'
+  - file: gfonts://Gloock@400
+    id: police_gloock_400_125
+    size: 125
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://Gloock@400
+    id: police_gloock_400_30
+    size: 30
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+  - file: gfonts://Gloock@400
+    id: police_gloock_400_45
+    size: 45
+    bpp: 2
+    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+  - file: gfonts://IBM Plex Serif@700
+    id: police_ibm_plex_serif_700_130
+    size: 130
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://IBM Plex Serif@700
+    id: police_ibm_plex_serif_700_29
+    size: 29
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+  - file: gfonts://IBM Plex Serif@700
+    id: police_ibm_plex_serif_700_45
+    size: 45
+    bpp: 2
+    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+  - file: gfonts://Jersey 10@400
+    id: police_jersey_10_400_130
+    size: 130
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://Jersey 10@400
+    id: police_jersey_10_400_32
+    size: 32
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+  - file: gfonts://Jersey 10@400
+    id: police_jersey_10_400_45
+    size: 45
+    bpp: 2
+    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+  - file: gfonts://Manrope@700
+    id: police_manrope_700_31
+    size: 31
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+  - file: gfonts://Manrope@700
+    id: police_manrope_700_45
+    size: 45
+    bpp: 2
+    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+  - file: gfonts://Murecho@300
+    id: police_murecho_300_130
+    size: 130
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://Murecho@400
+    id: police_murecho_400_32
+    size: 32
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+  - file: gfonts://Murecho@400
+    id: police_murecho_400_45
+    size: 45
+    bpp: 2
+    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+  - file: gfonts://Nunito@800
+    id: police_nunito_800_130
+    size: 130
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://Nunito@800
+    id: police_nunito_800_29
+    size: 29
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+  - file: gfonts://Nunito@800
+    id: police_nunito_800_45
+    size: 45
+    bpp: 2
+    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+  - file: gfonts://Overpass@700
+    id: police_overpass_700_31
+    size: 31
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+  - file: gfonts://Overpass@700
+    id: police_overpass_700_45
+    size: 45
+    bpp: 2
+    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+  - file: gfonts://Overpass@800
+    id: police_overpass_800_119
+    size: 119
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://Oxanium@700
+    id: police_oxanium_700_130
+    size: 130
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://Oxanium@700
+    id: police_oxanium_700_31
+    size: 31
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+  - file: gfonts://Oxanium@700
+    id: police_oxanium_700_45
+    size: 45
+    bpp: 2
+    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
 # <<< polices
 
 select:
@@ -41,9 +222,28 @@ select:
     entity_category: config
     optimistic: true
     restore_value: true
+    # Thème d'une tablette neuve (choix d'Axel, 05/10/2026) ; un thème déjà choisi reste.
+    initial_option: "Relief doux"
     options:
       # >>> themes (généré par tools/gen_themes.py, ne pas éditer)
       - "Ardoise"
+      - "Relief doux"
+      - "Relief plat"
+      - "Graphite"
+      - "Almanach imprimé"
+      - "Ardoise douce"
+      - "Terre cuite"
+      - "Craie et ardoise"
+      - "Almanach"
+      - "Béton brut"
+      - "Néon calme"
+      - "Zen Sumi"
+      - "Bento"
+      - "Obsidienne"
+      - "Platine et or"
+      - "Signalisation"
+      - "Capsule"
+      - "Pixel"
       # <<< themes
     on_value:
       - script.execute: tab5_theme_choisir
@@ -247,10 +447,14 @@ script:
           label:
             text_color: !lambda 'return lv_color_hex(UIColor.TEXT_SOFT);'
       - lambda: |-
+          // Formes du thème (`formes:` de Tab5/themes/<thème>.yaml), par-dessus ses couleurs.
+          lv_style_t* const styles[] = {id(style_meteo_card_page), id(style_horloge_page), id(style_bandeau_page), id(style_clim_carte_page), id(style_onglet_jour_page), id(style_onglet_temp_page), id(style_meteo_card), id(style_clim_btn), id(style_clim_btn_page), id(style_modal_card), id(style_modal_card_verre), id(style_glass_card)};
+          theme_formes(styles, 12);
+      - lambda: |-
           // Polices d'affichage du thème (`polices:`), géométrie de l'horloge comprise.
-          esphome::font::Font* const polices[] = {id(roboto_130_b), id(roboto_45_b), id(roboto_32_b)};
+          esphome::font::Font* const polices[] = {id(roboto_130_b), id(roboto_45_b), id(roboto_32_b), id(police_nunito_800_130), id(police_nunito_800_45), id(police_nunito_800_29), id(police_ibm_plex_serif_700_130), id(police_ibm_plex_serif_700_45), id(police_ibm_plex_serif_700_29), id(police_fraunces_700_116), id(police_fraunces_700_45), id(police_figtree_700_31), id(police_barlow_condensed_800_130), id(police_barlow_semi_condensed_700_45), id(police_barlow_semi_condensed_700_32), id(police_oxanium_700_130), id(police_oxanium_700_45), id(police_oxanium_700_31), id(police_murecho_300_130), id(police_murecho_400_45), id(police_murecho_400_32), id(police_familjen_grotesk_700_130), id(police_familjen_grotesk_700_45), id(police_familjen_grotesk_700_32), id(police_gloock_400_125), id(police_gloock_400_45), id(police_gloock_400_30), id(police_bodoni_moda_700_120), id(police_manrope_700_45), id(police_manrope_700_31), id(police_overpass_800_119), id(police_overpass_700_45), id(police_overpass_700_31), id(police_fredoka_700_130), id(police_fredoka_700_45), id(police_fredoka_700_32), id(police_jersey_10_400_130), id(police_jersey_10_400_45), id(police_jersey_10_400_32)};
           lv_obj_t* const horloge[] = {id(lbl_time_h10_a), id(lbl_time_h10_b), id(lbl_time_h1_a), id(lbl_time_h1_b), id(lbl_time_m10_a), id(lbl_time_m10_b), id(lbl_time_m1_a), id(lbl_time_m1_b), id(lbl_time_colon)};
-          theme_polices(id(style_police_horloge), id(style_police_date), id(style_police_titre), polices, 3, horloge);
+          theme_polices(id(style_police_horloge), id(style_police_date), id(style_police_titre), polices, 39, horloge);
       # <<< styles
       - lambda: |-
           // Fond de la page principale (les pages des jeux restent sombres) et styles
