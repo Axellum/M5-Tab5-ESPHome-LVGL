@@ -6,7 +6,8 @@ lieu de le redupliquer :
 
   1. toute carte `style_modal_card` est précédée d'un include modal_header.yaml
      dans le même fichier (barre de titre : icône + titre + croix) ;
-  2. aucun voile inline : `color_modal_scrim` n'apparaît que dans modal_scrim.yaml ;
+  2. aucun voile inline : le style de rôle du voile (`style_bg_modal_scrim`, couleur
+     MODAL_SCRIM de la palette) n'apparaît que dans modal_scrim.yaml ;
   3. aucune croix inline dans un popup : le glyphe F0156 n'apparaît que dans
      modal_header.yaml (les pages LVGL plein écran, sans carte modale, sont hors
      périmètre : elles fournissent leur propre sortie) ;
@@ -34,6 +35,8 @@ UI = REPO / "Tab5" / "ui_components"
 # Fichiers qui ONT le droit de contenir le chrome (ce sont les templates).
 TEMPLATE_HEADER = "modal_header.yaml"
 TEMPLATE_SCRIM = "modal_scrim.yaml"
+# La couleur du voile, par son style de rôle (tab5-styles.yaml, lot 1 des thèmes).
+SCRIM_STYLE = "style_bg_modal_scrim"
 
 # mdi close — uniquement dans modal_header.yaml. Les YAML du projet écrivent les
 # glyphes en séquence d'échappement ("\U000F0156") ; on couvre aussi le caractère
@@ -76,9 +79,9 @@ def scan(ui_dir: Path = UI) -> list[str]:
                 )
 
         # 2. voile inline
-        if "color_modal_scrim" in text and name != TEMPLATE_SCRIM:
+        if SCRIM_STYLE in text and name != TEMPLATE_SCRIM:
             problems.append(
-                f"{name}: voile inline (color_modal_scrim) — utiliser "
+                f"{name}: voile inline ({SCRIM_STYLE}) — utiliser "
                 f"!include {TEMPLATE_SCRIM} avec scrim_opa"
             )
 

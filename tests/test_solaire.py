@@ -83,7 +83,7 @@ def test_glyphes_listes_et_couleurs_par_jetons():
     for g in glyphes:
         assert f"\\U{g}" in police, f"glyphe U+{g[3:]} absent de mdi_font_26 (règle 9)"
     couleur = _fonction(cpp, "uint32_t solaire_couleur(")
-    assert "get_battery_color(" in couleur and "UIColor::INACTIVE" in couleur
+    assert "get_battery_color(" in couleur and "UIColor.INACTIVE" in couleur
     assert not re.search(r"0x[0-9A-Fa-f]{6}", couleur), "couleur en dur (règle 1)"
     assert '("tab5_zones.cpp", "solaire_glyphe"): ("icon_solaire",)' in _lire(REGLES)
 

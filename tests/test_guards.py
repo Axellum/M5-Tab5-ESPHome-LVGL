@@ -98,6 +98,31 @@ def test_mdi_rule_7_catches_untracked_cpp_icon(tmp_path):
     assert any("nouvelle_icone" in p and "MDI_CODE_TARGETS" in p for p in problems), problems
 
 
+def test_palette_rule_8_catches_frozen_colors(tmp_path):
+    """Règle 8 (thèmes) : une couleur posée en dur sur un widget, une couleur de jeu dans
+    l'interface, un jeu qui lit la palette active, l'interface qui lit la palette sombre fixe
+    ou une couleur littérale."""
+    tab5, entry = _firmware_copy(tmp_path)
+    assert check_tab5_code_rules.palette_colors(tab5, entry) == []
+    popup = tab5 / "ui_components" / "alarm_popup.yaml"
+    text = popup.read_text(encoding="utf-8")
+    assert "styles: style_text_dim }" in text
+    popup.write_text(text.replace("styles: style_text_dim }", "text_color: white }", 1), encoding="utf-8")
+    with open(tab5 / "ui_components" / "climate_card.yaml", "a", encoding="utf-8") as f:
+        f.write("\nessai:\n  - obj: { bg_color: color_marble_void }\n")
+    with open(tab5 / "marble_game.cpp", "a", encoding="utf-8") as f:
+        f.write("\nstatic uint32_t teinte() { return UIColor.TEXT_DIM; }\n")
+    with open(tab5 / "tab5_cards.cpp", "a", encoding="utf-8") as f:
+        f.write("\nstatic lv_color_t a() { return lv_color_hex(PALETTE_SOMBRE.TEXT_DIM); }\n"
+                "static lv_color_t b() { return lv_color_hex(0x94A3B8); }\n")
+    problems = check_tab5_code_rules.palette_colors(tab5, entry)
+    assert any("alarm_popup.yaml" in p and "`text_color: white`" in p for p in problems), problems
+    assert any("climate_card.yaml" in p and "`color_marble_void` est une couleur de jeu" in p for p in problems), problems
+    assert any("marble_game.cpp" in p and "PALETTE_SOMBRE" in p for p in problems), problems
+    assert any("tab5_cards.cpp" in p and "`PALETTE_SOMBRE` hors jeux" in p for p in problems), problems
+    assert any("tab5_cards.cpp" in p and "couleur littérale" in p for p in problems), problems
+
+
 def test_marble_rooms_all_traversable(capsys):
     assert check_marble_rooms.main() == 0, capsys.readouterr().out
 

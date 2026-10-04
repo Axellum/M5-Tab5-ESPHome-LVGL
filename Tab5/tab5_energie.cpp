@@ -217,12 +217,12 @@ void peindre_instant() {
             snprintf(l1, sizeof(l1), "%s", tr("Produit aujourd'hui"));
         }
         const bool produit = !std::isnan(i.solaire.v) && i.solaire.v >= kRepos;
-        peindre_carte(SOLAIRE, v, UIColor::TEXT_PRIMARY, 0, produit ? UIColor::GOLD : UIColor::TEXT_DIM, l1, "",
+        peindre_carte(SOLAIRE, v, UIColor.TEXT_PRIMARY, 0, produit ? UIColor.GOLD : UIColor.TEXT_DIM, l1, "",
                       largeur);
     }
     if (montre[MAISON]) {
         puissance(v, sizeof(v), i.maison.v);
-        peindre_carte(MAISON, v, UIColor::TEXT_PRIMARY, 0, UIColor::INFO, tr("Consommation"), "", largeur);
+        peindre_carte(MAISON, v, UIColor.TEXT_PRIMARY, 0, UIColor.INFO, tr("Consommation"), "", largeur);
     }
     // Réseau : + achat (import), − vente (export) ; la valeur sans son signe.
     if (montre[RESEAU]) {
@@ -230,14 +230,14 @@ void peindre_instant() {
         const int etat = std::isnan(r) || std::fabs(r) < kRepos ? 0 : (r > 0 ? 1 : -1);
         puissance(v, sizeof(v), std::isnan(r) ? NAN : std::fabs(r));
         const char* sens = etat > 0 ? tr("Depuis le réseau") : etat < 0 ? tr("Vers le réseau") : tr("Aucun échange");
-        const uint32_t c = etat > 0 ? UIColor::WARNING : etat < 0 ? UIColor::SUCCESS : UIColor::TEXT_DIM;
-        peindre_carte(RESEAU, v, UIColor::TEXT_PRIMARY, etat, c, std::isnan(r) ? "" : sens, "", largeur);
+        const uint32_t c = etat > 0 ? UIColor.WARNING : etat < 0 ? UIColor.SUCCESS : UIColor.TEXT_DIM;
+        peindre_carte(RESEAU, v, UIColor.TEXT_PRIMARY, etat, c, std::isnan(r) ? "" : sens, "", largeur);
     }
     // Batterie : son niveau (sinon sa puissance), charge / décharge, température.
     if (montre[BATTERIE]) {
         const float p = i.batterie_puissance.v;
         const int etat = std::isnan(p) || std::fabs(p) < kRepos ? 0 : (p > 0 ? 1 : -1);
-        uint32_t couleur = UIColor::TEXT_PRIMARY;
+        uint32_t couleur = UIColor.TEXT_PRIMARY;
         if (i.batterie.choisi) {
             if (std::isnan(i.batterie.v)) snprintf(v, sizeof(v), "--");
             else snprintf(v, sizeof(v), "%.0f %%", i.batterie.v);
@@ -260,7 +260,7 @@ void peindre_instant() {
             else snprintf(x, sizeof(x), "%.1f %s", i.batterie_temperature.v, i.unite_temperature);
             snprintf(l2, sizeof(l2), "%s %s", tr("Température"), x);
         }
-        const uint32_t icone = etat > 0 ? UIColor::SUCCESS : etat < 0 ? UIColor::WARNING : get_battery_color(i.batterie.v);
+        const uint32_t icone = etat > 0 ? UIColor.SUCCESS : etat < 0 ? UIColor.WARNING : get_battery_color(i.batterie.v);
         peindre_carte(BATTERIE, v, couleur, etat, icone, l1, l2, largeur);
     }
 }
@@ -318,7 +318,7 @@ bool libelle_axe(const Serie& s, int k, char* out, size_t n) {
 
 void peindre_graphique() {
     EnergieUI& u = g_energie_ui;
-    for (int v = 0; v < NB_VUES; v++) highlight_button_border(u.vue_btn[v], v == s_vue, UIColor::ACCENT);
+    for (int v = 0; v < NB_VUES; v++) highlight_button_border(u.vue_btn[v], v == s_vue, UIColor.ACCENT);
     if (s_barres[0] == nullptr) return;
     const Serie& s = s_series[s_vue];
     peindre_titre(s);
@@ -357,7 +357,7 @@ void peindre_graphique() {
             if (lv_obj_get_style_height(b, LV_PART_MAIN) != h) lv_obj_set_height(b, h);
             ui_x(b, kBordX + k * pas + (pas - largeur) / 2);
             ui_y(b, kBarresBas - h);
-            const uint32_t c = k == courante ? UIColor::ACCENT : UIColor::GOLD;
+            const uint32_t c = k == courante ? UIColor.ACCENT : UIColor.GOLD;
             lv_style_value_t cur;
             if (lv_obj_get_local_style_prop(b, LV_STYLE_BG_COLOR, &cur, LV_PART_MAIN) != LV_STYLE_RES_FOUND ||
                 !lv_color_eq(cur.color, lv_color_hex(c)))
@@ -393,14 +393,14 @@ void construire() {
     lv_obj_remove_style_all(s_repere);
     lv_obj_set_pos(s_repere, kBordX, kBarresHaut);
     lv_obj_set_size(s_repere, kZoneW - 2 * kBordX, 1);
-    lv_obj_set_style_bg_color(s_repere, lv_color_hex(UIColor::GLASS_RIM), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(s_repere, lv_color_hex(UIColor.GLASS_RIM), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(s_repere, LV_OPA_40, LV_PART_MAIN);
     lv_obj_remove_flag(s_repere, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_flag(s_repere, LV_OBJ_FLAG_HIDDEN);
     auto libelle = [&u](lv_obj_t* parent) {
         lv_obj_t* l = lv_label_create(parent);
         if (u.police != nullptr) esphome::lvgl::lv_obj_set_style_text_font(l, u.police, LV_PART_MAIN);
-        lv_obj_set_style_text_color(l, lv_color_hex(UIColor::TEXT_DIM), LV_PART_MAIN);
+        lv_obj_set_style_text_color(l, lv_color_hex(UIColor.TEXT_DIM), LV_PART_MAIN);
         lv_label_set_text(l, "");
         lv_obj_add_flag(l, LV_OBJ_FLAG_HIDDEN);
         return l;
@@ -413,7 +413,7 @@ void construire() {
         lv_obj_t* b = lv_obj_create(u.zone);
         lv_obj_remove_style_all(b);
         lv_obj_set_style_bg_opa(b, LV_OPA_COVER, LV_PART_MAIN);
-        lv_obj_set_style_bg_color(b, lv_color_hex(UIColor::GOLD), LV_PART_MAIN);
+        lv_obj_set_style_bg_color(b, lv_color_hex(UIColor.GOLD), LV_PART_MAIN);
         lv_obj_set_style_radius(b, 4, LV_PART_MAIN);
         lv_obj_set_size(b, 10, 2);
         lv_obj_remove_flag(b, LV_OBJ_FLAG_CLICKABLE);

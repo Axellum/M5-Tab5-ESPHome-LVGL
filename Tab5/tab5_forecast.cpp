@@ -33,37 +33,37 @@
 struct MeteoIconSpec {
     const char* cond;      // état HA (comparaison exacte, casse comprise)
     const char* l1;        // glyphe principal (police f_card)
-    uint32_t    l1_color;
+    uint32_t Palette::* l1_color;  // rôle de la palette (suit le thème)
     const char* l2;        // glyphe secondaire, nullptr = aucun (l2 masqué)
-    uint32_t    l2_color;
+    uint32_t Palette::* l2_color;
     bool        l2_small;  // l2 en f_card_s (petit soleil / petite lune)
     int8_t      l2_x, l2_y, l1_y;
 };
 static constexpr MeteoIconSpec kMeteoIconDefault =  // nuage seul, aussi pour un état inconnu
-    {"", MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY, nullptr, UIColor::TEXT_PRIMARY, false, 0, 0, 0};
+    {"", MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY, nullptr, &Palette::TEXT_PRIMARY, false, 0, 0, 0};
 static constexpr MeteoIconSpec kMeteoIcons[] = {
-    // cond                  l1                 l1_color                  l2                     l2_color                  petit  l2_x l2_y l1_y
-    {"clear-night",          MeteoIcon::MOON,  UIColor::METEO_CELESTIAL, nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
-    {"cloudy",               MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
-    {"fog",                  MeteoIcon::FOG,   UIColor::TEXT_PRIMARY,    nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
+    // cond                  l1                 l1_color                   l2                     l2_color                   petit  l2_x l2_y l1_y
+    {"clear-night",          MeteoIcon::MOON,  &Palette::METEO_CELESTIAL, nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"cloudy",               MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"fog",                  MeteoIcon::FOG,   &Palette::TEXT_PRIMARY,    nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
     // OpenWeatherMap : fumée, poussière, sable, cendres (codes 711/731/751/761/762,
     // const.py de HA 2026.9.4) — un voile, comme le brouillard.
-    {"exceptional",          MeteoIcon::FOG,   UIColor::TEXT_PRIMARY,    nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
-    {"Clear",                MeteoIcon::SUNNY, UIColor::METEO_CELESTIAL, nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
-    {"sunny",                MeteoIcon::SUNNY, UIColor::METEO_CELESTIAL, nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
-    {"partlycloudy",         MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::SUNNY,      UIColor::METEO_CELESTIAL, true,  -19, -19,   0},
-    {"partlycloudy-night",   MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::MOON,       UIColor::METEO_CELESTIAL, true,  -19, -19,   0},
-    {"partlycloudy_night",   MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::MOON,       UIColor::METEO_CELESTIAL, true,  -19, -19,   0},
-    {"hail",                 MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::HAIL,       UIColor::METEO_PRECIP,    false,   0,   0, -13},
-    {"snowy-rainy",          MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::HAIL,       UIColor::METEO_PRECIP,    false,   0,   0, -13},
-    {"lightning",            MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::THUNDER,    UIColor::METEO_THUNDER,   false,   0,   0, -13},
-    {"thunder",              MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::THUNDER,    UIColor::METEO_THUNDER,   false,   0,   0, -13},
-    {"lightning-rainy",      MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::THUNDER,    UIColor::METEO_THUNDER,   false,   0,   0, -13},
-    {"pouring",              MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::HEAVY_RAIN, UIColor::METEO_PRECIP,    false,   0,   0, -13},
-    {"rainy",                MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::RAIN,       UIColor::METEO_PRECIP,    false,   0,   0, -13},
-    {"snowy",                MeteoIcon::CLOUD, UIColor::TEXT_PRIMARY,    MeteoIcon::SNOW,       UIColor::METEO_PRECIP,    false,   0,   0, -13},
-    {"windy",                MeteoIcon::WIND,  UIColor::TEXT_PRIMARY,    nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
-    {"windy-variant",        MeteoIcon::WIND,  UIColor::TEXT_PRIMARY,    nullptr,               UIColor::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"exceptional",          MeteoIcon::FOG,   &Palette::TEXT_PRIMARY,    nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"Clear",                MeteoIcon::SUNNY, &Palette::METEO_CELESTIAL, nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"sunny",                MeteoIcon::SUNNY, &Palette::METEO_CELESTIAL, nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"partlycloudy",         MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::SUNNY,      &Palette::METEO_CELESTIAL, true,  -19, -19,   0},
+    {"partlycloudy-night",   MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::MOON,       &Palette::METEO_CELESTIAL, true,  -19, -19,   0},
+    {"partlycloudy_night",   MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::MOON,       &Palette::METEO_CELESTIAL, true,  -19, -19,   0},
+    {"hail",                 MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::HAIL,       &Palette::METEO_PRECIP,    false,   0,   0, -13},
+    {"snowy-rainy",          MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::HAIL,       &Palette::METEO_PRECIP,    false,   0,   0, -13},
+    {"lightning",            MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::THUNDER,    &Palette::METEO_THUNDER,   false,   0,   0, -13},
+    {"thunder",              MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::THUNDER,    &Palette::METEO_THUNDER,   false,   0,   0, -13},
+    {"lightning-rainy",      MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::THUNDER,    &Palette::METEO_THUNDER,   false,   0,   0, -13},
+    {"pouring",              MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::HEAVY_RAIN, &Palette::METEO_PRECIP,    false,   0,   0, -13},
+    {"rainy",                MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::RAIN,       &Palette::METEO_PRECIP,    false,   0,   0, -13},
+    {"snowy",                MeteoIcon::CLOUD, &Palette::TEXT_PRIMARY,    MeteoIcon::SNOW,       &Palette::METEO_PRECIP,    false,   0,   0, -13},
+    {"windy",                MeteoIcon::WIND,  &Palette::TEXT_PRIMARY,    nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
+    {"windy-variant",        MeteoIcon::WIND,  &Palette::TEXT_PRIMARY,    nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
 };
 
 void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, esphome::font::Font* f_card, esphome::font::Font* f_card_s) {
@@ -75,7 +75,7 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& st
     if (l1_obj) {
         lv_obj_remove_flag(l1_obj, LV_OBJ_FLAG_HIDDEN);
         lv_label_set_text(l1_obj, s->l1);
-        lv_obj_set_style_text_color(l1_obj, lv_color_hex(s->l1_color), LV_PART_MAIN);
+        lv_obj_set_style_text_color(l1_obj, lv_color_hex(UIColor.*s->l1_color), LV_PART_MAIN);
         lv_obj_set_style_translate_y(l1_obj, s->l1_y, LV_PART_MAIN);
         esphome::lvgl::lv_obj_set_style_text_font(l1_obj, f_card, LV_PART_MAIN);
         if (s->l2 && l2_obj) { lv_obj_move_to_index(l1_obj, -1); }
@@ -84,7 +84,7 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& st
         if (s->l2) {
             lv_obj_remove_flag(l2_obj, LV_OBJ_FLAG_HIDDEN);
             lv_label_set_text(l2_obj, s->l2);
-            lv_obj_set_style_text_color(l2_obj, lv_color_hex(s->l2_color), LV_PART_MAIN);
+            lv_obj_set_style_text_color(l2_obj, lv_color_hex(UIColor.*s->l2_color), LV_PART_MAIN);
             lv_obj_set_style_translate_x(l2_obj, s->l2_x, LV_PART_MAIN);
             lv_obj_set_style_translate_y(l2_obj, s->l2_y, LV_PART_MAIN);
             esphome::lvgl::lv_obj_set_style_text_font(l2_obj, s->l2_small ? f_card_s : f_card, LV_PART_MAIN);
@@ -95,10 +95,10 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& st
 }
 
 uint32_t get_humidity_color(float x) {
-    if (!std::isfinite(x)) return UIColor::MOISTURE_NAN;
+    if (!std::isfinite(x)) return UIColor.MOISTURE_NAN;
     const int val = tab5_float_vers_int(x, 0, 100, 0);
-    if (val <= 14) return UIColor::ALERT_RED;
-    if (val >= 80) return UIColor::HUMIDITY_WET;
+    if (val <= 14) return UIColor.ALERT_RED;
+    if (val >= 80) return UIColor.HUMIDITY_WET;
     if (val >= 30) {
         float step = floor((val - 30) / 3.0) * 3.0;
         float ratio = step / 50.0;
@@ -118,8 +118,8 @@ uint32_t get_humidity_color(float x) {
 }
 
 uint32_t get_temperature_color(float t) {
-    if (std::isnan(t)) return UIColor::TEMP_NAN;
-    if (t <= -12) return UIColor::ALERT_RED;
+    if (std::isnan(t)) return UIColor.TEMP_NAN;
+    if (t <= -12) return UIColor.ALERT_RED;
     if (t <= 0) {
         float r = floor((t + 12) / 2.0) * 2.0 / 12.0;
         return (255 << 16) | (0 << 8) | (int)(255 * r);
@@ -293,14 +293,14 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
 
         // Coloring day names
         uint8_t opa = data.est_passe ? 100 : 255;
-        uint32_t col = UIColor::TEXT_PRIMARY;
+        uint32_t col = UIColor.TEXT_PRIMARY;
         const bool is_early = !data.est_repos && cal_is_early_shift(data.heures_ouverture);
 
-        if (jour == 0) col = UIColor::INFO;                                              // Aujourd'hui : cyan info
-        else if (data.est_dimanche) col = data.est_repos ? UIColor::WARNING : UIColor::ERROR;
-        else if (data.est_repos) col = UIColor::SUCCESS;                                 // Jour de repos : emeraude
-        else if (is_early) col = UIColor::EARLY;                                         // Embauche < 9h : orange
-        if (data.est_passe) col = UIColor::PAST;                                         // Jour passe : ardoise estompee
+        if (jour == 0) col = UIColor.INFO;                                              // Aujourd'hui : cyan info
+        else if (data.est_dimanche) col = data.est_repos ? UIColor.WARNING : UIColor.ERROR;
+        else if (data.est_repos) col = UIColor.SUCCESS;                                 // Jour de repos : emeraude
+        else if (is_early) col = UIColor.EARLY;                                         // Embauche < 9h : orange
+        if (data.est_passe) col = UIColor.PAST;                                         // Jour passe : ardoise estompee
 
         ui_text_color(slot.day_lbl, col);
         lv_obj_set_style_text_opa(slot.day_lbl, opa, LV_PART_MAIN);
@@ -311,8 +311,8 @@ void refresh_daily_forecast(WeatherDaySlot slots[], int page_index,
         
         lv_label_set_recolor(slot.max_lbl, true);
         lv_label_set_recolor(slot.min_lbl, true);
-        ui_text_color(slot.max_lbl, UIColor::TEXT_PRIMARY);
-        ui_text_color(slot.min_lbl, UIColor::TEXT_PRIMARY);
+        ui_text_color(slot.max_lbl, UIColor.TEXT_PRIMARY);
+        ui_text_color(slot.min_lbl, UIColor.TEXT_PRIMARY);
     }
     // Épaules et boutons d'appareil : ceux de la pièce de la page (ADR-0023), posés par
     // tuiles_peindre_meteo() au changement de page — rien à faire ici.
@@ -340,7 +340,7 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
         char b_t[32]; snprintf(b_t, sizeof(b_t), "#%06x %.0f#\xC2\xB0", (unsigned) c_t, data.temp);  // cf. -Wformat plus haut
         ui_text(slot.temp_lbl, b_t);
         lv_label_set_recolor(slot.temp_lbl, true);
-        ui_text_color(slot.temp_lbl, UIColor::TEXT_PRIMARY);
+        ui_text_color(slot.temp_lbl, UIColor.TEXT_PRIMARY);
 
         char b_p[32];
         if (data.pluvio > 0) {
@@ -348,10 +348,10 @@ void refresh_hourly_forecast(WeatherHourSlot slots[], int page_index,
             // (forecast_hour_card.yaml), « 12.5mm » non.
             snprintf(b_p, sizeof(b_p), data.pluvio < 9.95f ? "%.1fmm" : "%.0fmm", data.pluvio);
             ui_text(slot.prob_lbl, b_p);
-            ui_text_color(slot.prob_lbl, UIColor::METEO_PRECIP);
+            ui_text_color(slot.prob_lbl, UIColor.METEO_PRECIP);
         } else {
             ui_text(slot.prob_lbl, "-");
-            ui_text_color(slot.prob_lbl, UIColor::CLIM_TRACK_INACTIVE);
+            ui_text_color(slot.prob_lbl, UIColor.CLIM_TRACK_INACTIVE);
         }
 
         const IconCond ic = icon_cond_update(s_hour_icon_cond[i], data.condition);

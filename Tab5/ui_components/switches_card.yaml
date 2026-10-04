@@ -43,7 +43,7 @@ obj:
               height: 205
               styles: style_meteo_card_page
               widgets:
-                - label: { id: icon_sw0, text: "\U000F0379", align: CENTER, text_font: mdi_font_70, text_color: color_text_dim }
+                - label: { id: icon_sw0, text: "\U000F0379", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
                 - button:
                     id: btn_sw0_action
                     align: CENTER
@@ -76,7 +76,7 @@ obj:
               height: 205
               styles: style_meteo_card_page
               widgets:
-                - label: { id: icon_sw1, text: "\U000F111E", align: CENTER, text_font: mdi_font_70, text_color: color_text_dim }
+                - label: { id: icon_sw1, text: "\U000F111E", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
                 - button:
                     id: btn_sw1_action
                     align: CENTER
@@ -107,7 +107,7 @@ obj:
               height: 205
               styles: style_meteo_card_page
               widgets:
-                - label: { id: icon_sw2, text: "\U000F02E3", align: CENTER, text_font: mdi_font_70, text_color: color_text_dim }
+                - label: { id: icon_sw2, text: "\U000F02E3", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
                 - button:
                     id: btn_sw2_action
                     align: CENTER
@@ -138,7 +138,7 @@ obj:
               height: 205
               styles: style_meteo_card_page
               widgets:
-                - label: { id: icon_sw3, text: "\U000F04B9", align: CENTER, text_font: mdi_font_70, text_color: color_text_dim }
+                - label: { id: icon_sw3, text: "\U000F04B9", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
                 - button:
                     id: btn_sw3_action
                     align: CENTER
@@ -169,7 +169,7 @@ obj:
               height: 205
               styles: style_meteo_card_page
               widgets:
-                - label: { id: icon_sw4, text: "\U000F1051", align: CENTER, text_font: mdi_font_70, text_color: color_text_dim }
+                - label: { id: icon_sw4, text: "\U000F1051", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
                 - button:
                     id: btn_sw4_action
                     align: CENTER

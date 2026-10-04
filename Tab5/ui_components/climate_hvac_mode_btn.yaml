@@ -16,5 +16,5 @@ button:
     - lambda: 'clim_popup_mode("${hvac_mode}");'
     - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: mode, valeur: "${hvac_mode}" }
   widgets:
-    - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
+    - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 20, text_font: mdi_font_45, styles: style_text_dim }
     - label: { id: "popup_lbl_clim_${suffix}", text: "${label_text}", align: LEFT_MID, x: 88, text_font: roboto_32_b }

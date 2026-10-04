@@ -1,16 +1,21 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_tokens.h
- * @role Jetons de design partagés : couleurs sémantiques (UIColor), durées et
- *       amplitudes d'animation (UIAnim), délais d'inactivité (UIIdle).
- * @architecture_constraint AUCUNE dépendance (ni ESPHome, ni LVGL) : que des
- *       `constexpr`. C'est ce qui permet aux jeux de l'inclure sans tirer
- *       `tab5_custom.h` — avant le 25/09/2026 (audit, lot 8a), toute retouche du
- *       HMI recompilait les 8 consoles, qui n'utilisaient que 4 couleurs.
- *       `tab5_custom.h` l'inclut : le contrat YAML ne change pas.
+ * @role Jetons de design partagés : palette de couleurs de l'interface (Palette,
+ *       UIColor = palette active), durées et amplitudes d'animation (UIAnim),
+ *       délais d'inactivité (UIIdle).
+ * @architecture_constraint AUCUNE dépendance (ni ESPHome, ni LVGL) : des
+ *       `constexpr` et une seule variable, `UIColor`. C'est ce qui permet aux jeux
+ *       de l'inclure sans tirer `tab5_custom.h` — avant le 25/09/2026 (audit,
+ *       lot 8a), toute retouche du HMI recompilait les 8 consoles, qui
+ *       n'utilisaient que 4 couleurs. `tab5_custom.h` l'inclut : le contrat YAML
+ *       ne change pas.
  * @ai_instruction Ne JAMAIS recréer des constantes de couleurs ailleurs : ajouter
- *       un jeton ici. Les palettes propres à un jeu restent locales (`<Jeu>::Pal`,
- *       ADR-0014).
+ *       un rôle à `Palette` (et sa valeur à chaque palette). L'interface lit
+ *       `UIColor.X` (palette active, thèmes : ADR-0029) ; le YAML passe par les
+ *       styles de rôle de tab5-styles.yaml, jamais par une couleur posée sur le
+ *       widget. Les jeux lisent `PALETTE_SOMBRE.X` (ils restent sombres) et leurs
+ *       palettes propres restent locales (`<Jeu>::Pal`, ADR-0014).
  */
 #pragma once
 #include <cstdint>
@@ -61,56 +66,147 @@ namespace UIIdle {
     constexpr uint32_t FORECAST_MS = 25000;  // page météo -> retour panneau principal
 }
 
-// Couleurs semantiques centralisees (miroir des tokens YAML color:)
-// Utiliser dans les lambdas C++ au lieu des hex bruts
-// Palette "Dark Mode Slate" : miroir EXACT des tokens YAML color: (les garder synchro).
-namespace UIColor {
-    // --- Semantiques HSL vibrantes ---
-    static constexpr uint32_t SUCCESS      = 0x34D399;  // emerald-400 (actif, OK)
-    static constexpr uint32_t WARNING      = 0xFBBF24;  // amber-400 (attention)
-    static constexpr uint32_t ERROR        = 0xFB7185;  // rose-400 (erreur, critique)
-    static constexpr uint32_t INFO         = 0x38BDF8;  // sky-400 (info, connecte / aujourd'hui)
-    static constexpr uint32_t GOLD         = 0xFCD34D;  // amber-300 (soleil, lune)
-    static constexpr uint32_t TEXT_DIM     = 0x94A3B8;  // slate-400 (texte secondaire / repos)
-    static constexpr uint32_t INACTIVE     = 0x334155;  // slate-700 (hors ligne / NaN)
-    static constexpr uint32_t WARM_PINK    = 0xF472B6;  // pink-400 (temperature interieure chaude)
-    // --- Accents "verre" ---
-    static constexpr uint32_t ACCENT       = 0x22D3EE;  // cyan-400 (accent primaire / halo)
-    static constexpr uint32_t ACCENT_ALT   = 0xA78BFA;  // violet-400 (accent secondaire)
-    static constexpr uint32_t GLASS_RIM    = 0x93A3BC;  // Liseré lumineux (arête de verre)
-    static constexpr uint32_t EARLY        = 0xFB923C;  // orange-400 (embauche < 9h — distinct de ERROR)
-    static constexpr uint32_t PAST         = 0x64748B;  // slate-500 (jour passe, estompe)
-    // --- Vigilance Meteo-France : NE PAS modifier (semantique officielle) ---
-    static constexpr uint32_t ALERT_YELLOW = 0xFFFF00;  // Vigilance jaune MF
-    static constexpr uint32_t ALERT_RED    = 0xFF0000;  // Vigilance rouge MF
-    // --- Climatisation (popup grille 3x3, tab5_maj_clim) : valeurs inchangees,
-    // seulement nommees pour sortir des hex en dur de tab5-api-logic.yaml ---
-    static constexpr uint32_t CLIM_COOL_ACTIVE     = 0x4D94FF;  // Bleu vif
-    static constexpr uint32_t CLIM_COOL_INACTIVE   = 0x60748F;  // Bleu grisatre inactif
-    static constexpr uint32_t CLIM_HEAT_ACTIVE     = 0xFF4D4D;  // Rouge vif
-    static constexpr uint32_t CLIM_HEAT_INACTIVE   = 0x8F6060;  // Rouge grisatre inactif
-    static constexpr uint32_t CLIM_OFF_ACTIVE      = 0xFFA500;  // Orange
-    static constexpr uint32_t CLIM_OFF_INACTIVE    = 0xB48154;  // Orange grise
-    static constexpr uint32_t CLIM_TRACK_INACTIVE  = 0x4A596E;  // Gris (fan/swing/quiet inactifs)
-    static constexpr uint32_t CLIM_ECO             = 0x4CD964;  // Vert standard
-    // --- Forecast / alertes / pluie (tab5-api-logic.yaml) ---
-    static constexpr uint32_t TEXT_PRIMARY         = 0xFFFFFF;  // Blanc labels forecast
-    static constexpr uint32_t ALERT_DATE_YELLOW    = 0xFCF3CF;
-    static constexpr uint32_t ALERT_DATE_ORANGE    = 0xF8C471;
-    static constexpr uint32_t ALERT_DATE_RED       = 0xF1948A;
-    static constexpr uint32_t RAIN_LIGHT           = 0x81D4FA;
-    static constexpr uint32_t RAIN_MODERATE        = 0x29B6F6;
-    static constexpr uint32_t RAIN_HEAVY           = 0x0277BD;
-    static constexpr uint32_t RAIN_EXTREME         = 0x01579B;
-    // --- Icones meteo / humidite / arc (miroir YAML + algorithmes) ---
-    static constexpr uint32_t METEO_CELESTIAL      = 0xFFD700;  // Soleil / lune (IconeMeteo)
-    static constexpr uint32_t METEO_PRECIP         = 0x8AB4FF;  // Pluie / neige / grele
-    static constexpr uint32_t METEO_THUNDER        = 0xFF6600;  // Orage
-    static constexpr uint32_t MOISTURE_NAN         = 0x404552;  // Humidite plante indisponible
-    static constexpr uint32_t HUMIDITY_WET         = 0x0000CC;  // Air tres humide
-    static constexpr uint32_t TEMP_NAN             = 0xA3A8B5;  // Temperature indisponible
-    static constexpr uint32_t TEXT_SOFT            = 0xF1F5F9;  // Miroir color_text
-    static constexpr uint32_t ICON_MUTED           = 0x555555;  // Miroir color_icon_muted
-    static constexpr uint32_t ARC_TRACK            = 0x2A2D35;  // Miroir color_arc_track
-    static constexpr uint32_t MODAL_SCRIM          = 0x05080F;  // Miroir color_modal_scrim
-}
+// =============================================================================
+// Palette de l'interface (thèmes, ADR-0029)
+// -----------------------------------------------------------------------------
+// Un champ par RÔLE de couleur : c'est la seule source des couleurs de
+// l'interface. `UIColor` est la palette active ; le C++ et les lambdas lisent
+// `UIColor.X`, les styles de rôle du YAML (tab5-styles.yaml) aussi, quand LVGL
+// les crée. Une palette de plus = une instance de plus, avec TOUS les champs
+// (tests/test_themes.py vérifie qu'aucun n'est oublié : un champ omis vaudrait
+// 0x000000 sans un mot du compilateur).
+// Deux rôles de même valeur restent deux rôles (INFO et TEMP_MIN, INACTIVE et
+// BAR_INACTIVE) : un autre thème peut les séparer.
+// =============================================================================
+struct Palette {
+    // --- Fonds et verre ---
+    uint32_t BG;               // fond de l'application (pages)
+    uint32_t GLASS_HI;         // verre opaque : haut du dégradé (reflet)
+    uint32_t GLASS_LO;         // verre opaque : bas du dégradé (ombre interne)
+    uint32_t GLASS_HI_PAGE;    // verre pré-mélangé sur BG (essai D7), haut
+    uint32_t GLASS_LO_PAGE;    // verre pré-mélangé sur BG, bas
+    uint32_t GLASS_HI_MODAL;   // verre pré-mélangé sur MODAL_SCRIM, haut
+    uint32_t GLASS_LO_MODAL;   // verre pré-mélangé sur MODAL_SCRIM, bas
+    uint32_t GLASS_RIM;        // liseré lumineux (arête de verre)
+    uint32_t MODAL_SCRIM;      // voile des popups
+    uint32_t CONSOLE_BG;       // fond des zones de la console système
+    uint32_t ARC_TRACK;        // piste des arcs et barres (clim, lumière, console)
+    // --- Texte ---
+    uint32_t TEXT_SOFT;        // texte courant (thème des labels)
+    uint32_t TEXT_PRIMARY;     // blanc pur : prévisions, icônes météo
+    uint32_t TEXT_DIM;         // texte secondaire / repos
+    uint32_t CONSOLE_LABEL;    // libellés de la console système
+    uint32_t CONSOLE_VALUE;    // valeurs numériques de la console
+    uint32_t ICON_MUTED;       // icône désactivée / placeholder
+    // --- Sémantiques ---
+    uint32_t SUCCESS;          // actif, OK
+    uint32_t WARNING;          // attention
+    uint32_t ERROR;            // erreur, critique
+    uint32_t INFO;             // info, connecté, aujourd'hui
+    uint32_t GOLD;             // soleil, lune, réveil
+    uint32_t INACTIVE;         // hors ligne, NaN
+    uint32_t BAR_INACTIVE;     // barre / pastille éteinte
+    uint32_t WARM_PINK;        // température intérieure chaude, anniversaires
+    uint32_t ACCENT;           // accent primaire / halo
+    uint32_t ACCENT_ALT;       // accent secondaire
+    uint32_t EARLY;            // embauche < 9 h (distinct de ERROR)
+    uint32_t PAST;             // jour passé, estompé
+    uint32_t TEMP_MAX;         // température maximale (chaud)
+    uint32_t TEMP_MIN;         // température minimale (froid)
+    uint32_t RAIN_VALUE;       // valeur de la prévision de pluie
+    // --- Vigilance Météo-France : sémantique officielle, identique dans tous les thèmes ---
+    uint32_t ALERT_YELLOW;
+    uint32_t ALERT_RED;
+    uint32_t ALERT_DATE_YELLOW;
+    uint32_t ALERT_DATE_ORANGE;
+    uint32_t ALERT_DATE_RED;
+    // --- Climatisation (popup grille 3x3, tab5_maj_clim) ---
+    uint32_t CLIM_COOL_ACTIVE;
+    uint32_t CLIM_COOL_INACTIVE;
+    uint32_t CLIM_HEAT_ACTIVE;
+    uint32_t CLIM_HEAT_INACTIVE;
+    uint32_t CLIM_OFF_ACTIVE;
+    uint32_t CLIM_OFF_INACTIVE;
+    uint32_t CLIM_TRACK_INACTIVE;  // fan / swing / quiet inactifs
+    uint32_t CLIM_ECO;
+    // --- Pluie, icônes météo, humidité ---
+    uint32_t RAIN_LIGHT;
+    uint32_t RAIN_MODERATE;
+    uint32_t RAIN_HEAVY;
+    uint32_t RAIN_EXTREME;
+    uint32_t METEO_CELESTIAL;  // soleil / lune des icônes
+    uint32_t METEO_PRECIP;     // pluie / neige / grêle
+    uint32_t METEO_THUNDER;    // orage
+    uint32_t MOISTURE_NAN;     // humidité d'une plante indisponible
+    uint32_t HUMIDITY_WET;     // air très humide
+    uint32_t TEMP_NAN;         // température indisponible
+};
+
+// Palette « Dark Mode Slate » (glassmorphism) : base ardoise (Tailwind Slate),
+// accents HSL vibrants. Les jeux la lisent directement : ils restent sombres.
+inline constexpr Palette PALETTE_SOMBRE = {
+    .BG                  = 0x0B1120,  // ardoise profonde
+    .GLASS_HI            = 0x2C3A52,
+    .GLASS_LO            = 0x131C2C,
+    // Pré-mélange exact (c' = (c × a + fond × (255 − a)) / 255, arrondi comme
+    // lv_color_mix) du verre à 58 % (147/255) sur BG, et à 88 % (224/255) sur
+    // MODAL_SCRIM : à recalculer si BG, MODAL_SCRIM ou GLASS_HI/LO changent.
+    .GLASS_HI_PAGE       = 0x1E293D,
+    .GLASS_LO_PAGE       = 0x101727,
+    .GLASS_HI_MODAL      = 0x27344A,
+    .GLASS_LO_MODAL      = 0x111A28,
+    .GLASS_RIM           = 0x93A3BC,
+    .MODAL_SCRIM         = 0x05080F,
+    .CONSOLE_BG          = 0x0A0E16,
+    .ARC_TRACK           = 0x2A2D35,
+    .TEXT_SOFT           = 0xF1F5F9,  // slate-100
+    .TEXT_PRIMARY        = 0xFFFFFF,
+    .TEXT_DIM            = 0x94A3B8,  // slate-400
+    .CONSOLE_LABEL       = 0x8595AD,
+    .CONSOLE_VALUE       = 0xFFFFFF,
+    .ICON_MUTED          = 0x555555,
+    .SUCCESS             = 0x34D399,  // emerald-400
+    .WARNING             = 0xFBBF24,  // amber-400
+    .ERROR               = 0xFB7185,  // rose-400
+    .INFO                = 0x38BDF8,  // sky-400
+    .GOLD                = 0xFCD34D,  // amber-300
+    .INACTIVE            = 0x334155,  // slate-700
+    .BAR_INACTIVE        = 0x334155,  // slate-700
+    .WARM_PINK           = 0xF472B6,  // pink-400
+    .ACCENT              = 0x22D3EE,  // cyan-400
+    .ACCENT_ALT          = 0xA78BFA,  // violet-400
+    .EARLY               = 0xFB923C,  // orange-400
+    .PAST                = 0x64748B,  // slate-500
+    .TEMP_MAX            = 0xF87171,  // red-400
+    .TEMP_MIN            = 0x38BDF8,  // sky-400
+    .RAIN_VALUE          = 0xFB923C,  // orange-400
+    .ALERT_YELLOW        = 0xFFFF00,
+    .ALERT_RED           = 0xFF0000,
+    .ALERT_DATE_YELLOW   = 0xFCF3CF,
+    .ALERT_DATE_ORANGE   = 0xF8C471,
+    .ALERT_DATE_RED      = 0xF1948A,
+    .CLIM_COOL_ACTIVE    = 0x4D94FF,
+    .CLIM_COOL_INACTIVE  = 0x60748F,
+    .CLIM_HEAT_ACTIVE    = 0xFF4D4D,
+    .CLIM_HEAT_INACTIVE  = 0x8F6060,
+    .CLIM_OFF_ACTIVE     = 0xFFA500,
+    .CLIM_OFF_INACTIVE   = 0xB48154,
+    .CLIM_TRACK_INACTIVE = 0x4A596E,
+    .CLIM_ECO            = 0x4CD964,
+    .RAIN_LIGHT          = 0x81D4FA,
+    .RAIN_MODERATE       = 0x29B6F6,
+    .RAIN_HEAVY          = 0x0277BD,
+    .RAIN_EXTREME        = 0x01579B,
+    .METEO_CELESTIAL     = 0xFFD700,
+    .METEO_PRECIP        = 0x8AB4FF,
+    .METEO_THUNDER       = 0xFF6600,
+    .MOISTURE_NAN        = 0x404552,
+    .HUMIDITY_WET        = 0x0000CC,
+    .TEMP_NAN            = 0xA3A8B5,
+};
+
+// Palette active de l'interface : `lv_color_hex(UIColor.TEXT_DIM)`. Initialisée
+// à la compilation (aucun ordre d'initialisation statique à craindre). Une table
+// `constexpr` qui doit suivre le thème garde un pointeur de membre
+// (`&Palette::TEXT_PRIMARY`, lu par `UIColor.*champ`), pas une valeur.
+inline Palette UIColor = PALETTE_SOMBRE;

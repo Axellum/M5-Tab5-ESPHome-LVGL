@@ -34,7 +34,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F036C", icon_color: "color_info", title: "Assistant vocal", title_id: "popup_assist_title", close_btn_id: "btn_assist_close", close_lambda: "id(tab5_assist_close).execute();" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F036C", icon_style: "style_text_info", title: "Assistant vocal", title_id: "popup_assist_title", close_btn_id: "btn_assist_close", close_lambda: "id(tab5_assist_close).execute();" } }
 
           # ═══════════════════════════════════════════════════════════════════
           # COLONNE GAUCHE — RÉGLAGES
@@ -49,7 +49,7 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "\U000F062E", align: TOP_LEFT, x: 16, y: 14, text_font: mdi_assist_36, text_color: color_text_dim }
+                - label: { text: "\U000F062E", align: TOP_LEFT, x: 16, y: 14, text_font: mdi_assist_36, styles: style_text_dim }
                 - label: { text: "Réglages", align: TOP_LEFT, x: 60, y: 18, text_font: roboto_32_b }
 
                 # --- Cerveau / LLM ---
@@ -65,7 +65,7 @@ obj:
                 # juste sous Ok Nabu : c'est ce qui etait demande.
                 # Titre et deux boutons masqués sans pipeline de discussion dans HA (zone
                 # « discussion », zones_apply_ui) : l'espace reste vide, rien ne remonte.
-                - label: { id: lbl_assist_cerveau, text: "Cerveau / LLM", align: TOP_LEFT, x: 16, y: 68, text_color: color_text_dim }
+                - label: { id: lbl_assist_cerveau, text: "Cerveau / LLM", align: TOP_LEFT, x: 16, y: 68, styles: style_text_dim }
                 - button:
                     id: btn_assist_pipe_domo
                     align: TOP_LEFT
@@ -111,13 +111,13 @@ obj:
                       - switch.toggle: tab5_wake_word_active
                       - script.execute: tab5_assist_sync_settings
                     widgets:
-                      - label: { id: lbl_assist_wake, text: "Ok Nabu : ON", align: CENTER, text_color: color_success }
+                      - label: { id: lbl_assist_wake, text: "Ok Nabu : ON", align: CENTER, styles: style_text_success }
 
                 # --- Taille du texte de réponse (remontee : la barre de son est
                 # maintenant ancree au bas du panneau, voir plus bas) ---
                 # Deux tailles depuis l'essai D8 du 26/09/2026 : A- (roboto_32_b) et A+
                 # (roboto_45_b), qui reprennent la largeur de l'ancienne rangée A- / A / A+.
-                - label: { text: "Taille du texte", align: TOP_LEFT, x: 16, y: 276, text_color: color_text_dim }
+                - label: { text: "Taille du texte", align: TOP_LEFT, x: 16, y: 276, styles: style_text_dim }
                 - button:
                     id: btn_assist_size_s
                     align: TOP_LEFT
@@ -216,8 +216,8 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "\U000F0361", align: TOP_LEFT, x: 16, y: 14, text_font: mdi_assist_36, text_color: color_info }
-                - label: { text: "VOTRE DEMANDE", align: TOP_LEFT, x: 60, y: 16, text_color: color_text_dim }
+                - label: { text: "\U000F0361", align: TOP_LEFT, x: 16, y: 14, text_font: mdi_assist_36, styles: style_text_info }
+                - label: { text: "VOTRE DEMANDE", align: TOP_LEFT, x: 60, y: 16, styles: style_text_dim }
                 - label:
                     id: lbl_assist_request
                     align: TOP_LEFT
@@ -236,10 +236,10 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "\U000F021A", align: TOP_LEFT, x: 16, y: 14, text_font: mdi_assist_36, text_color: color_success }
-                - label: { text: "RÉPONSE", align: TOP_LEFT, x: 60, y: 16, text_color: color_text_dim }
-                - label: { text: "\U000F04EB", align: TOP_RIGHT, x: -60, y: 16, text_font: mdi_assist_36, text_color: color_text_dim }
-                - label: { text: "\U000F021F", align: TOP_RIGHT, x: -16, y: 16, text_font: mdi_assist_36, text_color: color_text_dim }
+                - label: { text: "\U000F021A", align: TOP_LEFT, x: 16, y: 14, text_font: mdi_assist_36, styles: style_text_success }
+                - label: { text: "RÉPONSE", align: TOP_LEFT, x: 60, y: 16, styles: style_text_dim }
+                - label: { text: "\U000F04EB", align: TOP_RIGHT, x: -60, y: 16, text_font: mdi_assist_36, styles: style_text_dim }
+                - label: { text: "\U000F021F", align: TOP_RIGHT, x: -16, y: 16, text_font: mdi_assist_36, styles: style_text_dim }
 
                 # Zone défilante : réponse + image (défile verticalement si long)
                 - obj:
@@ -271,7 +271,7 @@ obj:
                           id: assist_img_hint
                           text: ""
                           hidden: true
-                          text_color: color_text_dim
+                          styles: style_text_dim
 
           # ═══ BARRE D'ACTION (bas) ═══
           - obj:
@@ -282,7 +282,7 @@ obj:
               styles: style_transparent
               scrollable: false
               widgets:
-                - label: { id: lbl_assist_status, text: "Prêt", align: LEFT_MID, x: 8, text_color: color_text_dim }
+                - label: { id: lbl_assist_status, text: "Prêt", align: LEFT_MID, x: 8, styles: style_text_dim }
 
                 # Micro : démarre / interrompt + ré-écoute (Click to Converse)
                 - button:
@@ -315,7 +315,7 @@ obj:
                     on_short_click:
                       - script.execute: tab5_vocal_interrupt
                     widgets:
-                      - label: { text: "\U000F04DB", align: CENTER, text_font: mdi_assist_36, text_color: color_error }
+                      - label: { text: "\U000F04DB", align: CENTER, text_font: mdi_assist_36, styles: style_text_error }
 
                 # Fermer
                 - button:

@@ -494,7 +494,7 @@ void apply_pressed_scale_to_tree(lv_obj_t* root) {
 
 void highlight_button_border(lv_obj_t* btn, bool active, uint32_t color, int32_t active_width) {
     if (!btn) return;
-    lv_obj_set_style_border_color(btn, lv_color_hex(active ? color : UIColor::GLASS_RIM), LV_PART_MAIN);
+    lv_obj_set_style_border_color(btn, lv_color_hex(active ? color : UIColor.GLASS_RIM), LV_PART_MAIN);
     lv_obj_set_style_border_opa(btn, active ? LV_OPA_COVER : LV_OPA_40, LV_PART_MAIN);
     lv_obj_set_style_border_width(btn, active ? active_width : 1, LV_PART_MAIN);
 }

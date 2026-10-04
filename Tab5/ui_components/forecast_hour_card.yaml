@@ -53,8 +53,8 @@ obj:
               text_font: roboto_32_b
     # Épaules de l'appareil de la tuile, de part et d'autre de l'onglet titre (comme les
     # tuiles journalières) : icône à gauche, ampoule ou flèche du volet à droite.
-    - label: { id: "icon_card_h${idx}_g", text: "\U000F0335", hidden: true, align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
-    - label: { id: "icon_card_h${idx}_d", text: "\U000F0335", hidden: true, align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, text_color: color_text_dim }
+    - label: { id: "icon_card_h${idx}_g", text: "\U000F0335", hidden: true, align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
+    - label: { id: "icon_card_h${idx}_d", text: "\U000F0335", hidden: true, align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
     # Onglet Température & Pluie. 210 px : pictogramme (x 5) + « 0.5mm » (101 px, x 34)
     # + « -12° » (61 px) en Roboto 32 gras ; à 140, la pluie recouvrait la température
     # (rendu hors tablette, 27/09/2026).
@@ -74,7 +74,7 @@ obj:
               x: 5
               y: -14
               text_font: mdi_font_26
-              text_color: color_temp_min
+              styles: style_text_temp_min
           - label:
               id: h${idx}_prob
               text: "-- %"
@@ -82,7 +82,7 @@ obj:
               x: 34
               y: -7
               text_font: roboto_32_b
-              text_color: color_temp_min
+              styles: style_text_temp_min
           - label:
               id: h${idx}_temp
               text: "-- °"
@@ -90,4 +90,4 @@ obj:
               x: -5
               y: -7
               text_font: roboto_32_b
-              text_color: color_temp_max
+              styles: style_text_temp_max

@@ -13,8 +13,8 @@ obj:
   styles: style_meteo_card_page
   scrollbar_mode: "OFF"
   widgets:
-    - label: { id: "j${idx}_max", text: "-- / ", align: BOTTOM_MID, x: -25, y: -7, text_font: roboto_32_b, text_color: color_temp_max }
-    - label: { id: "j${idx}_min", text: "-- °", align: BOTTOM_MID, x: 35, y: -7, text_font: roboto_32_b, text_color: color_temp_min }
+    - label: { id: "j${idx}_max", text: "-- / ", align: BOTTOM_MID, x: -25, y: -7, text_font: roboto_32_b, styles: style_text_temp_max }
+    - label: { id: "j${idx}_min", text: "-- °", align: BOTTOM_MID, x: 35, y: -7, text_font: roboto_32_b, styles: style_text_temp_min }
     - button:
         id: "btn_tj${idx}_toggle"
         align: CENTER

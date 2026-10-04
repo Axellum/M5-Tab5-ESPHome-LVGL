@@ -522,28 +522,28 @@ static void build_ui() {
     lv_obj_align(gs->hud_lives, LV_ALIGN_LEFT_MID, 280, 0);
     gs->hud_level = mk_label(gs->ui.hud, gs->ui.f_small, Pal::CYAN);
     lv_obj_align(gs->hud_level, LV_ALIGN_LEFT_MID, 450, 0);
-    gs->hud_best  = mk_label(gs->ui.hud, gs->ui.f_small, UIColor::TEXT_DIM);
+    gs->hud_best  = mk_label(gs->ui.hud, gs->ui.f_small, PALETTE_SOMBRE.TEXT_DIM);
     lv_obj_align(gs->hud_best, LV_ALIGN_LEFT_MID, 700, 0);
-    gs->hud_ctrl  = mk_label(gs->ui.hud, gs->ui.f_small, UIColor::TEXT_DIM);
+    gs->hud_ctrl  = mk_label(gs->ui.hud, gs->ui.f_small, PALETTE_SOMBRE.TEXT_DIM);
     lv_obj_align(gs->hud_ctrl, LV_ALIGN_RIGHT_MID, -18, 0);
 
     // --- Panneau de menus ---
     gs->p_title = mk_label(gs->ui.panel, gs->ui.f_big, Pal::BALL);
     lv_obj_align(gs->p_title, LV_ALIGN_TOP_MID, 0, 56);
-    gs->p_sub = mk_label(gs->ui.panel, gs->ui.f_small, UIColor::TEXT_DIM);
+    gs->p_sub = mk_label(gs->ui.panel, gs->ui.f_small, PALETTE_SOMBRE.TEXT_DIM);
     lv_obj_align(gs->p_sub, LV_ALIGN_TOP_MID, 0, 122);
-    gs->p_body = mk_label(gs->ui.panel, gs->ui.f_small, UIColor::TEXT_SOFT);
+    gs->p_body = mk_label(gs->ui.panel, gs->ui.f_small, PALETTE_SOMBRE.TEXT_SOFT);
     lv_obj_set_width(gs->p_body, 900);
     lv_obj_set_style_text_align(gs->p_body, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_align(gs->p_body, LV_ALIGN_TOP_MID, 0, 170);
-    gs->p_foot = mk_label(gs->ui.panel, gs->ui.f_small, UIColor::TEXT_DIM);
+    gs->p_foot = mk_label(gs->ui.panel, gs->ui.f_small, PALETTE_SOMBRE.TEXT_DIM);
     lv_obj_align(gs->p_foot, LV_ALIGN_BOTTOM_MID, 0, -22);
 
     // Entrées des menus : liste verticale 680×62 à y = 150 + 68 i (gs->slots.row).
     gs->slots.geom = {.w = 680, .h = 62, .top = 150, .pitch = 68, .tx = 22, .t_dy = -13, .d_dy = 15,
-                      .border_opa = LV_OPA_50, .off = UIColor::INACTIVE};
-    gs->slots.build(gs->ui.panel, slot_event_cb, gs->ui.f_mid, UIColor::TEXT_SOFT,
-                    gs->ui.f_small, UIColor::TEXT_DIM, [](lv_obj_t* b, int) {
+                      .border_opa = LV_OPA_50, .off = PALETTE_SOMBRE.INACTIVE};
+    gs->slots.build(gs->ui.panel, slot_event_cb, gs->ui.f_mid, PALETTE_SOMBRE.TEXT_SOFT,
+                    gs->ui.f_small, PALETTE_SOMBRE.TEXT_DIM, [](lv_obj_t* b, int) {
         lv_obj_set_style_radius(b, 14, LV_PART_MAIN);
         set_bg(b, Pal::FLOOR, LV_OPA_COVER);
         set_pressed_bg(b, Pal::WALL);
@@ -589,7 +589,7 @@ static void go_hub() {
     gs->slots.row(0, tr("Jouer"), tr("8 niveaux, 3 vies, power-ups"), Pal::BALL, true);
     gs->slots.row(1, tr("Classement"), tr("Top 10 local"), Pal::CYAN, true);
     gs->slots.row(2, tr("Réglages"), tr("Contrôle, sensibilité, calibration, SFX"), Pal::GREEN, true);
-    gs->slots.row(3, tr("Quitter"), tr("Retour au tableau de bord"), UIColor::TEXT_DIM, true);
+    gs->slots.row(3, tr("Quitter"), tr("Retour au tableau de bord"), PALETTE_SOMBRE.TEXT_DIM, true);
     gs->slots.hide_from(4);
 }
 
@@ -609,7 +609,7 @@ static void go_settings() {
     gs->slots.row(2, tr("Calibrer à plat"), tr("Pose la tablette et appuie"), Pal::ORANGE, true);
     gs->slots.row(3, tr(gs->save.muted ? "SFX : coupés" : "SFX : actifs"),
                   tr("Bips sonores (casse, mort, niveau)"), Pal::MAGENTA, true);
-    gs->slots.row(4, tr("Retour"), "", UIColor::TEXT_DIM, true);
+    gs->slots.row(4, tr("Retour"), "", PALETTE_SOMBRE.TEXT_DIM, true);
     gs->slots.hide_from(5);
 }
 
@@ -637,7 +637,7 @@ static void go_highscores() {
 
     panel_text(tr("Classement"), tr("Top 10 local (NVS)"), body, "");
     gs->slots.row(0, tr("Effacer les scores"), tr("Demande confirmation"), Pal::DANGER, true);
-    gs->slots.row(1, tr("Retour"), "", UIColor::TEXT_DIM, true);
+    gs->slots.row(1, tr("Retour"), "", PALETTE_SOMBRE.TEXT_DIM, true);
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -160);
     lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -80);
     gs->slots.hide_from(2);
@@ -652,7 +652,7 @@ static void go_confirm_wipe() {
     panel_text(tr("Effacer les scores ?"), tr("Tout le Top 10 local, meilleur score compris."),
                tr("Cette action est irréversible."), "");
     gs->slots.row(0, tr("Oui, tout effacer"), "", Pal::DANGER, true);
-    gs->slots.row(1, tr("Annuler"), "", UIColor::TEXT_DIM, true);
+    gs->slots.row(1, tr("Annuler"), "", PALETTE_SOMBRE.TEXT_DIM, true);
     lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -160);
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -80);
     gs->slots.hide_from(2);
@@ -695,7 +695,7 @@ static void show_gameover() {
              qualified ? tr("\n*** Nouveau record ! ***") : "");
     panel_text(tr("GAME OVER"), "", body, "");
     gs->slots.row(0, tr("Rejouer"), "", Pal::BALL, true);
-    gs->slots.row(1, tr("Retour au hub"), "", UIColor::TEXT_DIM, true);
+    gs->slots.row(1, tr("Retour au hub"), "", PALETTE_SOMBRE.TEXT_DIM, true);
     lv_obj_align(gs->slots.box[0], LV_ALIGN_BOTTOM_MID, 0, -180);
     lv_obj_align(gs->slots.box[1], LV_ALIGN_BOTTOM_MID, 0, -100);
     gs->slots.hide_from(2);
@@ -877,7 +877,7 @@ static void spawn_powerup(float x, float y) {
         case PU_MULTI:  col = Pal::BALL; break;
         case PU_GLUE:   col = Pal::MAGENTA; break;
         case PU_LIFE:   col = Pal::GREEN; break;
-        default:        col = UIColor::TEXT_DIM; break;
+        default:        col = PALETTE_SOMBRE.TEXT_DIM; break;
     }
     set_bg(pu.obj, col, LV_OPA_COVER);
     set_border(pu.obj, 0xFFFFFF, 1, LV_OPA_60);

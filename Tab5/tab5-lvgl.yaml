@@ -45,7 +45,7 @@ lvgl:
         # --- Top Left: Status Icons (Moved lower) ---
 
         # --- Voice Assistant Panel (Left) ---
-        - label: { id: icon_mic_status, text: "\U000F036C", align: TOP_LEFT, x: 146, y: 85, text_font: mdi_font_120, text_color: color_text_dim }
+        - label: { id: icon_mic_status, text: "\U000F036C", align: TOP_LEFT, x: 146, y: 85, text_font: mdi_font_120, styles: style_text_dim }
         - button:
             id: btn_assist_trigger
             align: TOP_LEFT
@@ -141,7 +141,7 @@ lvgl:
             on_short_click:
               - switch.toggle: tab5_wake_word_active
             widgets:
-              - label: { id: lbl_ok_nabu, text: "Ok Nabu: ON", align: CENTER, text_color: color_success }
+              - label: { id: lbl_ok_nabu, text: "Ok Nabu: ON", align: CENTER, styles: style_text_success }
 
         # --- Centre: Horloge (−6px/côté, −10px haut, remontée 5px) ---
         - obj:
@@ -204,25 +204,25 @@ lvgl:
 
         # --- Top Left: Status Icons (Small) ---
         # TV = icon_card_pc (épaule carte J0, moniteur) — pas d'icône TV ici
-        - label: { id: icon_pc, text: "\U000F0379", align: TOP_LEFT, x: 10, y: 10, text_font: mdi_font_26, text_color: color_text_dim }
-        - label: { id: icon_phone, text: "\U000F011E", align: TOP_LEFT, x: 45, y: 10, text_font: mdi_font_26, text_color: color_text_dim }
-        - label: { id: icon_wifi, text: "\U000F05A9", align: TOP_LEFT, x: 80, y: 10, text_font: mdi_font_26, text_color: color_text_dim }
+        - label: { id: icon_pc, text: "\U000F0379", align: TOP_LEFT, x: 10, y: 10, text_font: mdi_font_26, styles: style_text_dim }
+        - label: { id: icon_phone, text: "\U000F011E", align: TOP_LEFT, x: 45, y: 10, text_font: mdi_font_26, styles: style_text_dim }
+        - label: { id: icon_wifi, text: "\U000F05A9", align: TOP_LEFT, x: 80, y: 10, text_font: mdi_font_26, styles: style_text_dim }
         # Pastille réveil : cloche verte = armé avec une sonnerie calculée,
         # ambre = armé mais aucun jour retenu (piège du mode « jours travaillés »
         # pendant une semaine de congés), barrée et éteinte = réveil coupé.
         # Repeinte par alarm_render_status_icon() depuis tab5_alarm_sync_ui.
-        - label: { id: icon_alarm_status, text: "\U000F0023", align: TOP_LEFT, x: 115, y: 10, text_font: mdi_font_26, text_color: color_inactive }
+        - label: { id: icon_alarm_status, text: "\U000F0023", align: TOP_LEFT, x: 115, y: 10, text_font: mdi_font_26, styles: style_text_inactive }
         # Production solaire (04/10/2026) : % de la puissance crête, poussé par le blueprint
         # (clé « solaire » de tab5_maj_emplacements, section « Énergie »). Cachée tant
         # qu'aucune valeur n'est reçue, ou sans solaire ; glyphe et couleur posés par
         # solaire_peindre() (tab5_zones.cpp). Ordre et pas de 35 px : BandeauIcone.
-        - label: { id: icon_solaire, text: "\U000F0D9B", align: TOP_LEFT, x: 150, y: 10, text_font: mdi_font_26, text_color: color_inactive, hidden: true }
+        - label: { id: icon_solaire, text: "\U000F0D9B", align: TOP_LEFT, x: 150, y: 10, text_font: mdi_font_26, styles: style_text_inactive, hidden: true }
         # Batterie de la tablette (04/10/2026), en dernier comme sur un téléphone : la
         # montrer ou la cacher (interrupteur « Tab5 Batterie montée », tab5-ha-controls.yaml)
         # ne déplace aucune autre icône. Cachée jusqu'au premier tab5_zones_apply ;
         # glyphe et couleur posés par batterie_peindre() (tab5_zones.cpp). Ordre et pas
         # de 35 px : BandeauIcone (tab5_custom.h).
-        - label: { id: icon_batterie, text: "\U000F0091", align: TOP_LEFT, x: 185, y: 10, text_font: mdi_font_26, text_color: color_inactive, hidden: true }
+        - label: { id: icon_batterie, text: "\U000F0091", align: TOP_LEFT, x: 185, y: 10, text_font: mdi_font_26, styles: style_text_inactive, hidden: true }
 
         # --- Top Right Buttons (même habillage verre que Domo/Discu) ---
         - button:
@@ -266,7 +266,7 @@ lvgl:
                     bool ha_ok = id(status_ha).state;
                     lv_label_set_text(id(lbl_sys_ha_val), tr(ha_ok ? "Connecté" : "Hors ligne"));
                     lv_obj_set_style_text_color(id(lbl_sys_ha_val),
-                        lv_color_hex(ha_ok ? UIColor::SUCCESS : UIColor::ERROR), LV_PART_MAIN);
+                        lv_color_hex(ha_ok ? UIColor.SUCCESS : UIColor.ERROR), LV_PART_MAIN);
                   }
             widgets:
               - label: { text: "\U000F0717", align: CENTER, y: -12, text_font: mdi_font_45 }
@@ -377,7 +377,7 @@ lvgl:
                           flex_align_cross: CENTER
                           pad_column: 15
                         widgets:
-                          - label: { id: icon_rain_predict, text: "\U000F0597", text_font: mdi_font_alert, text_color: color_temp_min }
+                          - label: { id: icon_rain_predict, text: "\U000F0597", text_font: mdi_font_alert, styles: style_text_temp_min }
                           - obj:
                               id: rain_bar_container
                               width: SIZE_CONTENT
@@ -410,7 +410,7 @@ lvgl:
                                 pad_column: 6
                               widgets:
                                 - label: { id: lbl_proc_pluie, text: "Synchronisation...", text_font: roboto_45_b, pad_bottom: 15 }
-                                - label: { id: lbl_pluie_val, text: "", text_font: roboto_45_b, text_color: color_orange_vif, pad_bottom: 10 }
+                                - label: { id: lbl_pluie_val, text: "", text_font: roboto_45_b, styles: style_text_rain_value, pad_bottom: 10 }
                                 - label: { id: lbl_pluie_unit, text: "", text_font: roboto_45_b, pad_bottom: 15 }
                     - button:
                         id: btn_rain_tap
@@ -477,7 +477,7 @@ lvgl:
                   styles: style_transparent
                   hidden: true
                   widgets:
-                    - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: -19, text_color: color_text_dim }
+                    - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: -19, styles: style_text_dim }
                     - label: { id: lbl_page_title, text: "", align: CENTER, y: 13, text_font: roboto_32_b }
                     - button:
                         id: btn_page_title_tap
@@ -533,11 +533,11 @@ lvgl:
               flex_align_cross: CENTER
               pad_column: 8
             widgets:
-              - obj: { id: pbar_0, width: 16, height: 4, radius: 2, bg_color: color_text_dim, bg_opa: 40%, border_width: 0 }
-              - obj: { id: pbar_1, width: 16, height: 4, radius: 2, bg_color: color_text_dim, bg_opa: 40%, border_width: 0 }
-              - obj: { id: pbar_2, width: 30, height: 4, radius: 2, bg_color: color_text, bg_opa: 100%, border_width: 0 }
-              - obj: { id: pbar_3, width: 16, height: 4, radius: 2, bg_color: color_text_dim, bg_opa: 40%, border_width: 0 }
-              - obj: { id: pbar_4, width: 16, height: 4, radius: 2, bg_color: color_text_dim, bg_opa: 40%, border_width: 0 }
+              - obj: { id: pbar_0, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+              - obj: { id: pbar_1, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+              - obj: { id: pbar_2, width: 30, height: 4, radius: 2, styles: style_bg_soft, bg_opa: 100%, border_width: 0 }
+              - obj: { id: pbar_3, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+              - obj: { id: pbar_4, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
 
         # ==================== BOTTOM CARDS (FORECAST) ====================
 

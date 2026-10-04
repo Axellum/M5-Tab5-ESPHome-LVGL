@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Règles de code du firmware Tab5, jouées à chaque `pytest` (audit du 06/09/2026,
-§4.1 points 1, 4, 15 et §4.2 point 17 ; ADR-0006). Sept règles, toutes
+§4.1 points 1, 4, 15 et §4.2 point 17 ; ADR-0006). Huit règles, toutes
 falsifiables sur le dépôt réel :
 
   1. **`snprintf` partout** : aucun `sprintf(` brut dans `Tab5/*.cpp`, `*.h`,
@@ -45,6 +45,16 @@ falsifiables sur le dépôt réel :
      le widget en paramètre. Une icône qu'on ne sait pas rattacher fait échouer la
      règle. Trouvé ainsi : la cloche barrée du popup réveil absente de `mdi_font_45`
      (icône vide réveil éteint) et 85 glyphes MDI jamais affichés (≈ 19 Ko).
+  8. **Couleurs de l'interface par la palette** (lot 1 des thèmes, 04/10/2026,
+     ADR-0029) : ESPHome écrit une couleur YAML en dur dans main.cpp, un thème ne
+     pourrait pas la changer. Hors jeux, une propriété couleur LVGL (`text_color:`,
+     `bg_color:`…) ne vaut qu'une lambda (qui lit `UIColor.X`) ou une variable de
+     gabarit : un widget prend sa couleur par un style de rôle (`styles:
+     style_text_dim`). Les couleurs déclarées dans `color:` (celles des jeux) ne
+     servent qu'aux jeux, et les jeux ne lisent pas la palette active (`UIColor.`) :
+     ils restent sombres (`PALETTE_SOMBRE.X`). Hors jeux, ni `PALETTE_SOMBRE` (sauf
+     tab5_tokens.h qui la définit) ni couleur littérale (`lv_color_hex(0x…)`,
+     `lv_color_make(…)`) dans le code : ce serait contourner le thème.
 
 Usage : python tools/check_tab5_code_rules.py   (aussi lancé par `pytest`, tests/test_guards.py)
 Sortie : 0 si tout est conforme, 1 sinon (liste des écarts sur stdout).
@@ -83,6 +93,16 @@ RE_TOP_KEY = re.compile(r"^[a-z_]+:", re.M)
 # type/description/example est attendue. `type: string` ressemble lui-même à une
 # forme courte, d'où l'exclusion du nom `type`.
 RE_API_VAR_SHORTHAND = re.compile(r"^\s+(?!type:)([a-z0-9_]+): (?:string|int|float|bool)\s*$")
+# Règle 8 : sources des jeux (palette sombre fixe) et propriétés couleur de LVGL.
+RE_GAME_SOURCE = re.compile(
+    r"(_game\.(yaml|cpp|h)|^game_common\.h|^game_selector\.yaml|^arcade_card\.yaml|^tab5-arcade\.yaml)$"
+)
+LV_COLOR_PROPS = ("text_color", "bg_color", "bg_grad_color", "border_color", "outline_color",
+                  "shadow_color", "arc_color", "line_color", "image_recolor")
+RE_LV_COLOR_PROP = re.compile(r"(?<![\w.])(" + "|".join(LV_COLOR_PROPS) + r"):[ \t]*([^,}\s][^,}]*)")
+RE_YAML_COLOR_DECL = re.compile(r"^  - id: (color_\w+)\s*$", re.M)
+# Contournements du thème hors jeux : une couleur littérale dans du code, la palette sombre fixe.
+RE_LV_COLOR_LITERAL = re.compile(r"\blv_color_(?:hex\s*\(\s*0x|hex3\s*\(|make\s*\(\s*\d)")
 
 
 def strip_yaml_comments(text: str) -> str:
@@ -503,6 +523,54 @@ def mdi_glyph_coverage(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     return problems
 
 
+def palette_colors(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
+    """Règle 8 : les couleurs de l'interface passent par la palette (`Palette`, tab5_tokens.h)."""
+    problems: list[str] = []
+    declared = set(RE_YAML_COLOR_DECL.findall((tab5 / "tab5-styles.yaml").read_text(encoding="utf-8")))
+    for path in firmware_sources(tab5, entry):
+        game = bool(RE_GAME_SOURCE.search(path.name))
+        text = path.read_text(encoding="utf-8")
+        if not game:
+            code = strip_cpp_comments(strip_yaml_comments(text) if path.suffix == ".yaml" else text)
+            if path.name != "tab5_tokens.h" and "PALETTE_SOMBRE" in code:
+                problems.append(
+                    f"{path.name} : `PALETTE_SOMBRE` hors jeux — l'interface lit la palette active "
+                    f"(`UIColor.X`), sinon le thème ne la change pas (ADR-0029)"
+                )
+            for m in RE_LV_COLOR_LITERAL.finditer(code):
+                problems.append(
+                    f"{path.name} : `{m.group(0)}…` — couleur littérale, ajouter un rôle à "
+                    f"`struct Palette` et lire `UIColor.X` (ADR-0029)"
+                )
+        if path.suffix != ".yaml":
+            if game and "UIColor." in strip_cpp_comments(text):
+                problems.append(
+                    f"{path.name} : un jeu lit la palette active (`UIColor.`) — il reste sombre, "
+                    f"lire `PALETTE_SOMBRE.X` (ADR-0029)"
+                )
+            continue
+        if game:
+            continue
+        for lineno, line in enumerate(text.splitlines(), 1):
+            if line.lstrip().startswith("#") or RE_YAML_COLOR_DECL.match(line):
+                continue
+            for m in RE_LV_COLOR_PROP.finditer(line):
+                value = m.group(2).strip().strip("\"'")
+                if not value.startswith(("!lambda", "${")):
+                    problems.append(
+                        f"{path.name}:{lineno} : `{m.group(1)}: {value}` — couleur figée à la compilation, "
+                        f"prendre un style de rôle (`styles: style_text_dim`, tab5-styles.yaml) ou lire "
+                        f"`UIColor.X` dans une lambda (ADR-0029)"
+                    )
+            for color in re.findall(r"\bcolor_\w+", line):
+                if color in declared:
+                    problems.append(
+                        f"{path.name}:{lineno} : `{color}` est une couleur de jeu (figée) — l'interface "
+                        f"lit la palette (ADR-0029)"
+                    )
+    return problems
+
+
 def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     problems: list[str] = []
     api_logic = tab5 / "tab5-api-logic.yaml"
@@ -593,6 +661,9 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     # 7. icônes MDI : couvertes par la police de leur widget, aucun glyphe mort
     problems += mdi_glyph_coverage(tab5, entry)
 
+    # 8. couleurs de l'interface par la palette (thèmes)
+    problems += palette_colors(tab5, entry)
+
     return problems
 
 
@@ -606,7 +677,8 @@ def main() -> int:
     print(
         "[OK] règles de code Tab5 : snprintf partout, api-logic et hardware sans LVGL, "
         "aucun global orphelin, aucune entité HA en dur, actions API décrites, "
-        "glyphes de la date couverts, icônes MDI couvertes sans glyphe mort"
+        "glyphes de la date couverts, icônes MDI couvertes sans glyphe mort, "
+        "couleurs de l'interface par la palette"
     )
     return 0
 

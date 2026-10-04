@@ -126,9 +126,9 @@ static bool forecast_page_title_parts(int page, std::string& chapeau, std::strin
 }
 
 static uint32_t ha_alert_color_from_couleur(const std::string& couleur) {
-    if (couleur.find("Rouge") != std::string::npos) return UIColor::ALERT_RED;
-    if (couleur.find("Orange") != std::string::npos) return UIColor::WARNING;
-    return UIColor::TEXT_PRIMARY;
+    if (couleur.find("Rouge") != std::string::npos) return UIColor.ALERT_RED;
+    if (couleur.find("Orange") != std::string::npos) return UIColor.WARNING;
+    return UIColor.TEXT_PRIMARY;
 }
 
 // Les 8 panneaux du rotateur, rangés par index (0 planning, 1 pluie, 2 vigilance
@@ -977,7 +977,7 @@ void show_vocal_response_ui(const std::string& texte,
     if (font) {
         esphome::lvgl::lv_obj_set_style_text_font(lbl_vocal, font, LV_PART_MAIN);
     }
-    lv_obj_set_style_text_color(lbl_vocal, lv_color_hex(UIColor::TEXT_PRIMARY), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lbl_vocal, lv_color_hex(UIColor.TEXT_PRIMARY), LV_PART_MAIN);
     lv_label_set_recolor(lbl_vocal, false);
 
     // Phrase longue : défilement horizontal sur la largeur carte centrale.

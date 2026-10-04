@@ -95,7 +95,7 @@ The microphone icon in the UI changes color to reflect the current pipeline stat
 | Error / not understood | Red | Pipeline returned no result |
 | Wake word disabled | Dim grey | Detection switched off |
 
-ESPHome's voice assistant component fires callbacks (`on_listening`, `on_stt_end`, `on_tts_start`, `on_end`, `on_error`) declared in `tab5-assist.yaml`; each one calls `assist_set_pipeline_state()` (`tab5_assist.cpp`), which sets the icon, its `UIColor::` colour and the status label from a single table. There is no separate state variable — the icon color *is* the state indicator.
+ESPHome's voice assistant component fires callbacks (`on_listening`, `on_stt_end`, `on_tts_start`, `on_end`, `on_error`) declared in `tab5-assist.yaml`; each one calls `assist_set_pipeline_state()` (`tab5_assist.cpp`), which sets the icon, its `UIColor.` colour (the active palette) and the status label from a single table. There is no separate state variable — the icon color *is* the state indicator.
 
 ---
 

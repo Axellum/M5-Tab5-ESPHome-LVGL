@@ -29,10 +29,10 @@ obj:
   widgets:
 
     # ═══ Températures pièces — même place, HORS zone verre ═══
-    - label: { id: icon_salon, text: "\U000F04B9", align: TOP_LEFT, x: 18, y: 12, text_font: mdi_font_45, text_color: color_text_dim }
-    - label: { id: val_temp_salon, text: "-- °", align: TOP_LEFT, x: 85, y: 17, text_font: roboto_32_b, text_color: color_temp_max }
-    - label: { id: icon_serre, text: "\U000F002D", align: TOP_RIGHT, x: -124, y: 12, text_font: mdi_font_45, text_color: color_text_dim }
-    - label: { id: current_serre, text: "-- °", align: TOP_RIGHT, x: -18, y: 17, text_font: roboto_32_b, text_color: color_temp_max }
+    - label: { id: icon_salon, text: "\U000F04B9", align: TOP_LEFT, x: 18, y: 12, text_font: mdi_font_45, styles: style_text_dim }
+    - label: { id: val_temp_salon, text: "-- °", align: TOP_LEFT, x: 85, y: 17, text_font: roboto_32_b, styles: style_text_temp_max }
+    - label: { id: icon_serre, text: "\U000F002D", align: TOP_RIGHT, x: -124, y: 12, text_font: mdi_font_45, styles: style_text_dim }
+    - label: { id: current_serre, text: "-- °", align: TOP_RIGHT, x: -18, y: 17, text_font: roboto_32_b, styles: style_text_temp_max }
     # Zone tactile sur la température serre → ouvre le sélecteur de jeux Arcade.
     # [26/07/2026] FIX : la zone était posée à côté de ce qu'elle est censée
     # couvrir. Arithmétique (carte large de 413, alignement TOP_RIGHT donc les
@@ -66,7 +66,7 @@ obj:
         styles: style_meteo_card_page
         scrollbar_mode: "OFF"
         # − et + en verre plein (style_clim_btn, opaque depuis le 01/10/2026) : ils sont
-        # posés sur cette tuile, pas sur la page — un pré-mélange sur color_bg serait faux ici.
+        # posés sur cette tuile, pas sur la page — un pré-mélange sur BG serait faux ici.
         widgets:
           - label:
               id: clim_target

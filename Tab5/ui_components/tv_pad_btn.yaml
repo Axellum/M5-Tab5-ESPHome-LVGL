@@ -18,8 +18,7 @@ button:
   width: ${w}
   height: ${h}
   radius: 36
-  styles: style_invisible
-  bg_color: color_accent
+  styles: [style_invisible, style_bg_accent]
   pressed:
     bg_opa: 25%
   on_short_click:

@@ -16,5 +16,5 @@ button:
     - lambda: 'clim_popup_preset("${preset_name}");'
     - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: preset, valeur: !lambda 'return clim_affichee_preset();' }
   widgets:
-    - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 14, text_font: mdi_font_45, text_color: color_text_dim }
+    - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 14, text_font: mdi_font_45, styles: style_text_dim }
     - label: { text: "${label_text}", align: LEFT_MID, x: 72 }

@@ -10,11 +10,11 @@ button:
   bg_color: ${icon_color}
   bg_opa: 100%
   border_width: 2
-  border_color: color_glass_rim
+  styles: style_border_glass_rim
   border_opa: 45%
   pressed:
     bg_opa: 55%
-    border_color: color_text
+    styles: style_border_soft
     border_opa: 100%
   on_short_click:
     - script.execute: { id: tab5_action, emplacement: !lambda 'return id(current_light_slot);', commande: couleur, valeur: "${color_name}" }

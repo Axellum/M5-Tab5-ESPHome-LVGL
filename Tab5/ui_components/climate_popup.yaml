@@ -57,7 +57,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F0717", icon_color: "color_info", title: "Climatisation Salon", title_id: "popup_clim_title", close_btn_id: "btn_clim_close", close_lambda: "animate_popup_close(id(clim_options_popup)); clim_afficher_blueprint();" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0717", icon_style: "style_text_info", title: "Climatisation Salon", title_id: "popup_clim_title", close_btn_id: "btn_clim_close", close_lambda: "animate_popup_close(id(clim_options_popup)); clim_afficher_blueprint();" } }
 
           # ═══ CARTE MODE (gauche) : 5 modes HVAC empilés ═══
           - obj:
@@ -69,7 +69,7 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "MODE", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
+                - label: { text: "MODE", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
                 # Pile flex : 4 modes via template + Éteint (climate.turn_off, service différent)
                 - obj:
@@ -102,7 +102,7 @@ obj:
                             - lambda: 'clim_popup_mode("off");'
                             - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: eteindre, valeur: "" }
                           widgets:
-                            - label: { id: popup_icon_clim_off, text: "\U000F0425", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
+                            - label: { id: popup_icon_clim_off, text: "\U000F0425", align: LEFT_MID, x: 20, text_font: mdi_font_45, styles: style_text_dim }
                             - label: { text: "Éteint", align: LEFT_MID, x: 88, text_font: roboto_32_b }
 
           # ═══ CARTE TEMPÉRATURE (centre) : arc + cible + ± + pièce ═══
@@ -115,7 +115,7 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "TEMPÉRATURE", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
+                - label: { text: "TEMPÉRATURE", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
                 # Arc thermostat (16-30 °C, puis les bornes de la clim affichée) — cible
                 # optimiste + appel HA débouncé
@@ -128,15 +128,15 @@ obj:
                     min_value: 16
                     max_value: 30
                     value: 22
-                    arc_color: color_arc_track
+                    styles: style_arc_arc_track
                     arc_width: 22
                     adjustable: true
                     indicator:
-                      arc_color: color_info
+                      styles: style_arc_info
                       arc_width: 22
                     knob:
                       bg_opa: 100%
-                      bg_color: color_text
+                      styles: style_bg_soft
                       pad_all: 6
                     on_value:
                       - lambda: 'clim_popup_consigne(x);'
@@ -149,7 +149,7 @@ obj:
                     y: 184
                     text_font: roboto_55_b
                 # Unité : °C, ou °F selon HA (clim_reglages_recu).
-                - label: { id: clim_unite_popup, text: "°C", align: TOP_MID, y: 248, text_color: color_text_dim }
+                - label: { id: clim_unite_popup, text: "°C", align: TOP_MID, y: 248, styles: style_text_dim }
 
                 # Boutons − / + (pas de la clim affichée, 0,5° par défaut ; groupés par le
                 # débounce si taps rapides ; consigne inconnue : rien, l'arc la choisit)
@@ -179,8 +179,8 @@ obj:
                       - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56 }
 
                 # Température réelle de la pièce (tab5_maj_clim, ou clé ceRT d'une tuile)
-                - label: { text: "\U000F050F", align: BOTTOM_MID, x: -135, y: -20, text_font: mdi_font_32, text_color: color_text_dim }
-                - label: { text: "Pièce", align: BOTTOM_MID, x: -70, y: -20, text_color: color_text_dim }
+                - label: { text: "\U000F050F", align: BOTTOM_MID, x: -135, y: -20, text_font: mdi_font_32, styles: style_text_dim }
+                - label: { text: "Pièce", align: BOTTOM_MID, x: -70, y: -20, styles: style_text_dim }
                 - label:
                     id: val_temp_int_popup
                     text: "-- °C"
@@ -199,12 +199,12 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "OPTIONS", align: TOP_LEFT, x: 22, y: 14, text_color: color_accent }
+                - label: { text: "OPTIONS", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
                 # ── Presets (toggle : re-taper = retour à "none") ──
                 # ids des titres et de la rangée : ré-empilés par clim_options_empiler()
                 # (tab5_cards.cpp) quand une section n'a pas de bouton sur l'appareil.
-                - label: { id: clim_titre_presets, text: "Presets", align: TOP_LEFT, x: 22, y: 50, text_color: color_text_dim }
+                - label: { id: clim_titre_presets, text: "Presets", align: TOP_LEFT, x: 22, y: 50, styles: style_text_dim }
                 - obj:
                     id: clim_rangee_presets
                     align: TOP_LEFT
@@ -227,7 +227,7 @@ obj:
                       - !include { file: climate_preset_toggle_btn.yaml, vars: { suffix: "boost", preset_name: "boost", icon: "\U000F14DE", label_text: "Boost" } }
 
                 # ── Ventilation ──
-                - label: { id: clim_titre_ventilation, text: "Ventilation", align: TOP_LEFT, x: 22, y: 192, text_color: color_text_dim }
+                - label: { id: clim_titre_ventilation, text: "Ventilation", align: TOP_LEFT, x: 22, y: 192, styles: style_text_dim }
                 - button:
                     id: popup_btn_clim_quiet
                     align: TOP_LEFT
@@ -245,12 +245,12 @@ obj:
                       - lambda: 'clim_popup_silence();'
                       - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: ventilation, valeur: !lambda 'return clim_affichee_ventilation();' }
                     widgets:
-                      - label: { id: popup_icon_clim_quiet, text: "\U000F146D", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
+                      - label: { id: popup_icon_clim_quiet, text: "\U000F146D", align: LEFT_MID, x: 20, text_font: mdi_font_45, styles: style_text_dim }
                       - label: { text: "Silence", align: LEFT_MID, x: 88, text_font: roboto_32_b }
 
                 # ── Flux d'air (Daikin Onecta : stop / swing / windnice ; ailleurs, le
                 # blueprint traduit vers off, on, both, vertical…) ──
-                - label: { id: clim_titre_flux, text: "Flux d'air", align: TOP_LEFT, x: 22, y: 330, text_color: color_text_dim }
+                - label: { id: clim_titre_flux, text: "Flux d'air", align: TOP_LEFT, x: 22, y: 330, styles: style_text_dim }
                 - button:
                     id: popup_btn_clim_swing
                     align: TOP_LEFT
@@ -267,7 +267,7 @@ obj:
                       - lambda: 'clim_popup_oscillation();'
                       - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: oscillation, valeur: !lambda 'return clim_affichee_oscillation();' }
                     widgets:
-                      - label: { id: popup_icon_clim_swing, text: "\U000F0E79", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
+                      - label: { id: popup_icon_clim_swing, text: "\U000F0E79", align: LEFT_MID, x: 20, text_font: mdi_font_45, styles: style_text_dim }
                       - label: { text: "Oscillation", align: LEFT_MID, x: 88, text_font: roboto_32_b }
                 - button:
                     id: popup_btn_clim_windnice
@@ -284,5 +284,5 @@ obj:
                       - lambda: 'clim_popup_brise();'
                       - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: oscillation, valeur: !lambda 'return clim_affichee_oscillation();' }
                     widgets:
-                      - label: { id: popup_icon_clim_windnice, text: "\U000F059D", align: LEFT_MID, x: 20, text_font: mdi_font_45, text_color: color_text_dim }
+                      - label: { id: popup_icon_clim_windnice, text: "\U000F059D", align: LEFT_MID, x: 20, text_font: mdi_font_45, styles: style_text_dim }
                       - label: { text: "Brise", align: LEFT_MID, x: 88, text_font: roboto_32_b }

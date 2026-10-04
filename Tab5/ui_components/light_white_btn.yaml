@@ -19,4 +19,4 @@ button:
     - script.execute: { id: tab5_action, emplacement: !lambda 'return id(current_light_slot);', commande: couleur, valeur: "${color_name}" }
   widgets:
     - label: { text: "\U000F0335", align: TOP_MID, y: 8, text_font: mdi_font_32, text_color: "${icon_color}" }
-    - label: { text: "${name}", align: BOTTOM_MID, y: -8, text_color: color_text_dim }
+    - label: { text: "${name}", align: BOTTOM_MID, y: -8, styles: style_text_dim }

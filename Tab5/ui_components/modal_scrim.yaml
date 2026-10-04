@@ -10,7 +10,7 @@ button:
   align: CENTER
   width: 100%
   height: 100%
-  bg_color: color_modal_scrim
+  styles: style_bg_modal_scrim
   bg_opa: ${scrim_opa}%
   border_width: 0
   # Coins carrés : un bouton reçoit un rayon du thème LVGL, et un voile arrondi

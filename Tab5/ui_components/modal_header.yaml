@@ -15,11 +15,12 @@
 # ne permet pas d'injecter un sous-arbre de widgets via vars — ils restent des
 # FRÈRES de cet include, en `y: 4, height: 44` (4 + 44/2 = 26 = 52/2 → même axe).
 #
-# vars : icon (glyphe MDI, présent dans mdi_font_32), icon_color (token),
+# vars : icon (glyphe MDI, présent dans mdi_font_32), icon_style (style de rôle
+#        style_text_*, tab5-styles.yaml : la couleur suit le thème),
 #        title, title_id (id LVGL du label titre — obligatoire même si jamais
 #        mis à jour, contrainte ESPHome), close_btn_id, close_lambda (corps C++
 #        une ligne, sans guillemets simples — substitué dans lambda: '...').
-# NOTE : labels en style bloc (pas flow) car ${icon_color} non quotable en flow.
+# NOTE : labels en style bloc (pas flow) car ${icon_style} non quotable en flow.
 # ═══════════════════════════════════════════════════════
 obj:
   align: TOP_MID
@@ -34,7 +35,7 @@ obj:
         align: LEFT_MID
         x: 10
         text_font: mdi_font_32
-        text_color: ${icon_color}
+        styles: ${icon_style}
     - label:
         id: ${title_id}
         text: "${title}"

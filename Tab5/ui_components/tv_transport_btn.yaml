@@ -4,9 +4,10 @@
 # sa touche par script.tab5_tv_key (tab5-scripts.yaml).
 # vars : x (position dans la rangée de 520 px), touche (code Samsung KEY_*), icon (glyphe
 #        MDI en mdi_font_45 : il doit figurer dans la liste `glyphs` de mdi_font_45),
-#        icon_color (jeton color_*), text (le mot sous l'icône).
-# « Pause » a la couleur du thème : icon_color = color_text, la couleur que le `theme:`
-# donne à tout label (tab5-styles.yaml), même rendu (dans le gabarit depuis le 01/10/2026).
+#        icon_style (style de rôle style_text_*), text (le mot sous l'icône).
+# « Pause » a la couleur du thème : icon_style = style_text_soft, la couleur que le
+# `theme:` donne à tout label (tab5-styles.yaml), même rendu (dans le gabarit depuis le
+# 01/10/2026).
 # Sorti de tv_remote_popup.yaml le 26/09/2026 (audit, lot 7.3), rendu inchangé.
 # ═══════════════════════════════════════════════════════
 button:
@@ -18,5 +19,5 @@ button:
   on_short_click:
     - script.execute: { id: tab5_tv_key, touche: "${touche}" }
   widgets:
-    - label: { text: "${icon}", align: CENTER, y: -16, text_font: mdi_font_45, text_color: "${icon_color}" }
+    - label: { text: "${icon}", align: CENTER, y: -16, text_font: mdi_font_45, styles: "${icon_style}" }
     - label: { text: "${text}", align: CENTER, y: 26 }

@@ -446,9 +446,9 @@ void consigne_geste(float t) {
 
 // Couleur d'une cible selon le mode : bleu en froid, rouge en chaud, blanc sinon.
 uint32_t couleur_consigne(const std::string& mode) {
-    if (mode == "cool") return UIColor::CLIM_COOL_ACTIVE;
-    if (mode == "heat") return UIColor::CLIM_HEAT_ACTIVE;
-    return UIColor::TEXT_PRIMARY;
+    if (mode == "cool") return UIColor.CLIM_COOL_ACTIVE;
+    if (mode == "heat") return UIColor.CLIM_HEAT_ACTIVE;
+    return UIColor.TEXT_PRIMARY;
 }
 
 }  // namespace
@@ -679,22 +679,22 @@ void clim_recolorer() {
     // Mode (Cool/Heat/Dry/Fan/Off). Autre mode (heat_cool, auto… : pas de bouton,
     // ADR-0026) : aucun ne s'allume, plutôt que « Éteint » sur une clim qui tourne.
     const bool eteint = mode == "off" || mode == "unavailable" || mode == "unknown";
-    ui_text_color(u.icone_froid, mode == "cool" ? UIColor::CLIM_COOL_ACTIVE : UIColor::CLIM_COOL_INACTIVE);
-    ui_text_color(u.icone_chaud, mode == "heat" ? UIColor::CLIM_HEAT_ACTIVE : UIColor::CLIM_HEAT_INACTIVE);
-    ui_text_color(u.icone_sec, mode == "dry" ? UIColor::CLIM_COOL_ACTIVE : UIColor::CLIM_COOL_INACTIVE);
-    ui_text_color(u.icone_ventilation, mode == "fan_only" ? UIColor::CLIM_ECO : UIColor::CLIM_TRACK_INACTIVE);
-    ui_text_color(u.icone_eteint, eteint ? UIColor::CLIM_OFF_ACTIVE : UIColor::CLIM_OFF_INACTIVE);
+    ui_text_color(u.icone_froid, mode == "cool" ? UIColor.CLIM_COOL_ACTIVE : UIColor.CLIM_COOL_INACTIVE);
+    ui_text_color(u.icone_chaud, mode == "heat" ? UIColor.CLIM_HEAT_ACTIVE : UIColor.CLIM_HEAT_INACTIVE);
+    ui_text_color(u.icone_sec, mode == "dry" ? UIColor.CLIM_COOL_ACTIVE : UIColor.CLIM_COOL_INACTIVE);
+    ui_text_color(u.icone_ventilation, mode == "fan_only" ? UIColor.CLIM_ECO : UIColor.CLIM_TRACK_INACTIVE);
+    ui_text_color(u.icone_eteint, eteint ? UIColor.CLIM_OFF_ACTIVE : UIColor.CLIM_OFF_INACTIVE);
 
     // Actif ou non : clim_*_actif(), les mêmes que les bascules du popup et que les
     // listes du blueprint (ADR-0026, tests/test_clim.py). Éco : eco ou away ; Boost :
     // boost ; Silence : quiet, silence, Silence, low ; Oscillation : swing, on, both,
     // vertical, 3d, horizontal (windnice exclu : bouton « Brise » séparé, Daikin Onecta).
-    ui_text_color(u.icone_eco, clim_eco_actif(preset) ? UIColor::CLIM_ECO : UIColor::CLIM_TRACK_INACTIVE);
-    ui_text_color(u.icone_boost, preset == "boost" ? UIColor::CLIM_HEAT_ACTIVE : UIColor::CLIM_TRACK_INACTIVE);
-    ui_text_color(u.icone_silence, clim_silence_actif(fan) ? UIColor::CLIM_COOL_ACTIVE : UIColor::CLIM_TRACK_INACTIVE);
+    ui_text_color(u.icone_eco, clim_eco_actif(preset) ? UIColor.CLIM_ECO : UIColor.CLIM_TRACK_INACTIVE);
+    ui_text_color(u.icone_boost, preset == "boost" ? UIColor.CLIM_HEAT_ACTIVE : UIColor.CLIM_TRACK_INACTIVE);
+    ui_text_color(u.icone_silence, clim_silence_actif(fan) ? UIColor.CLIM_COOL_ACTIVE : UIColor.CLIM_TRACK_INACTIVE);
     ui_text_color(u.icone_oscillation,
-                  clim_oscillation_actif(swing) ? UIColor::CLIM_COOL_ACTIVE : UIColor::CLIM_TRACK_INACTIVE);
-    ui_text_color(u.icone_brise, swing == "windnice" ? UIColor::CLIM_COOL_ACTIVE : UIColor::CLIM_TRACK_INACTIVE);
+                  clim_oscillation_actif(swing) ? UIColor.CLIM_COOL_ACTIVE : UIColor.CLIM_TRACK_INACTIVE);
+    ui_text_color(u.icone_brise, swing == "windnice" ? UIColor.CLIM_COOL_ACTIVE : UIColor.CLIM_TRACK_INACTIVE);
 }
 
 // =============================================================================
@@ -806,8 +806,8 @@ void moisture_slots_refresh() {
         }
 
         // Couleur colorimetrique (grise hors ligne)
-        ui_text_color(slots[s].icon_lbl, std::isnan(val) ? UIColor::INACTIVE : get_humidity_color(val));
-        ui_text_color(slots[s].val_lbl, UIColor::TEXT_DIM);
+        ui_text_color(slots[s].icon_lbl, std::isnan(val) ? UIColor.INACTIVE : get_humidity_color(val));
+        ui_text_color(slots[s].val_lbl, UIColor.TEXT_DIM);
     }
 }
 
@@ -816,11 +816,11 @@ void moisture_slots_refresh() {
 // =============================================================================
 
 uint32_t get_battery_color(float x) {
-    if (std::isnan(x)) return UIColor::INACTIVE;
-    if (x > 80.0f) return UIColor::SUCCESS;
-    if (x > 40.0f) return UIColor::INFO;
-    if (x >= 20.0f) return UIColor::WARNING;
-    return UIColor::ERROR;
+    if (std::isnan(x)) return UIColor.INACTIVE;
+    if (x > 80.0f) return UIColor.SUCCESS;
+    if (x > 40.0f) return UIColor.INFO;
+    if (x >= 20.0f) return UIColor.WARNING;
+    return UIColor.ERROR;
 }
 
 void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]) {
@@ -834,9 +834,9 @@ void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]) 
         ui_text_color(cards[i].icon_lbl, c);
         if (std::isnan(v)) {
             ui_text(cards[i].moist_lbl, "--");
-            ui_text_color(cards[i].moist_lbl, UIColor::INACTIVE);
+            ui_text_color(cards[i].moist_lbl, UIColor.INACTIVE);
             ui_text(cards[i].status_lbl, tr("Hors ligne"));
-            ui_text_color(cards[i].status_lbl, UIColor::TEXT_DIM);
+            ui_text_color(cards[i].status_lbl, UIColor.TEXT_DIM);
             continue;
         }
         char buf[12];
@@ -846,13 +846,13 @@ void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]) 
         // Seuils alignes sur get_humidity_color : <=14 = zone rouge (ALERT_RED)
         if (v <= 14.0f) {
             ui_text(cards[i].status_lbl, tr("\xC3\x80 arroser !"));
-            ui_text_color(cards[i].status_lbl, UIColor::ERROR);
+            ui_text_color(cards[i].status_lbl, UIColor.ERROR);
         } else if (v <= 20.0f) {
             ui_text(cards[i].status_lbl, tr("Bient\xC3\xB4t sec"));
-            ui_text_color(cards[i].status_lbl, UIColor::WARNING);
+            ui_text_color(cards[i].status_lbl, UIColor.WARNING);
         } else {
             ui_text(cards[i].status_lbl, "OK");
-            ui_text_color(cards[i].status_lbl, UIColor::SUCCESS);
+            ui_text_color(cards[i].status_lbl, UIColor.SUCCESS);
         }
     }
 }
@@ -861,11 +861,11 @@ void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric) {
     if (value_lbl == nullptr) return;
     if (std::isnan(x)) {
         ui_text(value_lbl, "--");
-        ui_text_color(value_lbl, UIColor::INACTIVE);
+        ui_text_color(value_lbl, UIColor.INACTIVE);
         return;
     }
     char buf[16];
-    uint32_t color = UIColor::TEXT_SOFT;
+    uint32_t color = UIColor.TEXT_SOFT;
     switch (metric) {
         case PotMetric::CONDUCTIVITY:
             snprintf(buf, sizeof(buf), "%.0f \xC2\xB5S/cm", x);
@@ -892,7 +892,7 @@ void update_temp_ui(lv_obj_t* label, float x) {
     if (label == nullptr) return;
     if (std::isnan(x)) {
         ui_text(label, "-- \xC2\xB0");
-        ui_text_color(label, UIColor::TEXT_DIM);
+        ui_text_color(label, UIColor.TEXT_DIM);
     } else {
         char buf[32];
         snprintf(buf, sizeof(buf), "%.1f \xC2\xB0", x);
@@ -918,5 +918,5 @@ void set_icon_active_ui(lv_obj_t* icon, bool active, uint32_t color_on, uint32_t
 
 void update_pc_status_ui(bool active, lv_obj_t* icon_pc) {
     if (icon_pc == nullptr) return;
-    set_icon_active_ui(icon_pc, active, UIColor::SUCCESS, UIColor::TEXT_PRIMARY);
+    set_icon_active_ui(icon_pc, active, UIColor.SUCCESS, UIColor.TEXT_PRIMARY);
 }

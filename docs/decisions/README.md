@@ -38,3 +38,4 @@ Format: **Context / Decision / Consequences**. One page max. Add a new one whene
 | [0026](0026-climate-from-device.md) | The climate popup follows the device — settings pushed by HA (key `climr`), the screen's commands translated by the blueprint |
 | [0027](0027-climate-per-tile.md) | Every climate tile opens the climate popup for its own unit — settings (`crRT`) and state (`ceRT`) per tile, one translation of the commands |
 | [0028](0028-solar-energy-popup.md) | An Energy popup for a solar installation — sensors picked in the blueprint, live values and production history (recorder statistics) pushed by HA while the popup is open |
+| [0029](0029-themes-palette.md) | Themes — one C++ palette (`struct Palette`, `UIColor` = the active one), role styles in the YAML instead of colours set on widgets, games stay dark |

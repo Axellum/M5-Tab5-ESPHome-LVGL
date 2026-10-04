@@ -46,7 +46,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F0E17", icon_color: "color_accent", title: "Calendrier", title_id: "popup_cal_title", close_btn_id: "btn_cal_close", close_lambda: "animate_popup_close(id(cal_day_popup)); animate_popup_close(id(calendar_popup));" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0E17", icon_style: "style_text_accent", title: "Calendrier", title_id: "popup_cal_title", close_btn_id: "btn_cal_close", close_lambda: "animate_popup_close(id(cal_day_popup)); animate_popup_close(id(calendar_popup));" } }
 
           # Options d'en-tête : frères de la barre, alignés sur sa ligne (y=4, hauteur 44)
           # Navigation mois : ◀  mois  ▶
@@ -107,8 +107,8 @@ obj:
           - label: { text: "Mer", align: TOP_LEFT, x: 369, y: "${modal_body_y}", width: 168, text_align: CENTER }
           - label: { text: "Jeu", align: TOP_LEFT, x: 541, y: "${modal_body_y}", width: 168, text_align: CENTER }
           - label: { text: "Ven", align: TOP_LEFT, x: 713, y: "${modal_body_y}", width: 168, text_align: CENTER }
-          - label: { text: "Sam", align: TOP_LEFT, x: 885, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
-          - label: { text: "Dim", align: TOP_LEFT, x: 1057, y: "${modal_body_y}", width: 168, text_align: CENTER, text_color: color_text_dim }
+          - label: { text: "Sam", align: TOP_LEFT, x: 885, y: "${modal_body_y}", width: 168, text_align: CENTER, styles: style_text_dim }
+          - label: { text: "Dim", align: TOP_LEFT, x: 1057, y: "${modal_body_y}", width: 168, text_align: CENTER, styles: style_text_dim }
 
           # ═══ GRILLE 7×6 (42 cellules, lundi en premier — idx = ligne*7 + colonne) ═══
           # Construite en C++ par cal_grid_build(), insérée ICI (juste avant la
@@ -130,23 +130,23 @@ obj:
                 flex_align_cross: CENTER
                 pad_column: 10
               widgets:
-                - obj: { width: 18, height: 18, radius: 6, bg_opa: 0%, border_width: 2, border_color: color_accent, pad_all: 0 }
-                - label: { text: "Aujourd'hui", text_color: color_text_dim }
-                - label: { text: "·", text_color: color_text_dim }
+                - obj: { width: 18, height: 18, radius: 6, bg_opa: 0%, border_width: 2, styles: style_border_accent, pad_all: 0 }
+                - label: { text: "Aujourd'hui", styles: style_text_dim }
+                - label: { text: "·", styles: style_text_dim }
                 - label: { text: "9:00-19:00" }
-                - label: { text: "Travail", text_color: color_text_dim }
-                - label: { text: "·", text_color: color_text_dim }
-                - label: { text: "1", text_color: color_error }
-                - label: { text: "Férié", text_color: color_text_dim }
-                - label: { text: "·", text_color: color_text_dim }
-                - obj: { width: 14, height: 14, radius: 4, bg_color: color_accent_alt, bg_opa: 55%, border_width: 0, pad_all: 0 }
-                - label: { text: "Vac. scolaires", text_color: color_text_dim }
-                - label: { text: "·", text_color: color_text_dim }
-                - obj: { width: 14, height: 14, radius: 7, bg_color: color_gold, border_width: 0, pad_all: 0 }
-                - label: { text: "RDV", text_color: color_text_dim }
-                - label: { text: "·", text_color: color_text_dim }
-                - obj: { width: 14, height: 14, radius: 7, bg_color: color_warm_pink, border_width: 0, pad_all: 0 }
-                - label: { text: "Anniv.", text_color: color_text_dim }
+                - label: { text: "Travail", styles: style_text_dim }
+                - label: { text: "·", styles: style_text_dim }
+                - label: { text: "1", styles: style_text_error }
+                - label: { text: "Férié", styles: style_text_dim }
+                - label: { text: "·", styles: style_text_dim }
+                - obj: { width: 14, height: 14, radius: 4, styles: style_bg_accent_alt, bg_opa: 55%, border_width: 0, pad_all: 0 }
+                - label: { text: "Vac. scolaires", styles: style_text_dim }
+                - label: { text: "·", styles: style_text_dim }
+                - obj: { width: 14, height: 14, radius: 7, styles: style_bg_gold, border_width: 0, pad_all: 0 }
+                - label: { text: "RDV", styles: style_text_dim }
+                - label: { text: "·", styles: style_text_dim }
+                - obj: { width: 14, height: 14, radius: 7, styles: style_bg_warm_pink, border_width: 0, pad_all: 0 }
+                - label: { text: "Anniv.", styles: style_text_dim }
 
     # ═══ SOUS-POPUP DÉTAIL DU JOUR (au-dessus de la grille) ═══
     - obj:
@@ -169,10 +169,10 @@ obj:
               styles: style_modal_card_verre
               scrollable: false
               widgets:
-                - !include { file: modal_header.yaml, vars: { icon: "\U000F0E17", icon_color: "color_accent", title: "", title_id: "lbl_cal_day_title", close_btn_id: "btn_cal_day_close", close_lambda: "animate_popup_close(id(cal_day_popup));" } }
+                - !include { file: modal_header.yaml, vars: { icon: "\U000F0E17", icon_style: "style_text_accent", title: "", title_id: "lbl_cal_day_title", close_btn_id: "btn_cal_day_close", close_lambda: "animate_popup_close(id(cal_day_popup));" } }
 
                 # Statut central (Chargement… / Rien de prévu / HA hors ligne)
-                - label: { id: lbl_cal_day_status, text: "", align: CENTER, y: 0, text_font: roboto_32_b, text_color: color_text_dim }
+                - label: { id: lbl_cal_day_status, text: "", align: CENTER, y: 0, text_font: roboto_32_b, styles: style_text_dim }
 
                 # 6 lignes de détail (icône typée + texte), remplies par cal_render_day_detail()
                 - label: { id: cal_det_icon_0, text: "", align: TOP_LEFT, x: 32, y: 72, text_font: mdi_font_32, hidden: true }
