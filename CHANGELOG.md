@@ -11,8 +11,38 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   5 pièces de 5 appareils, noms et icônes pris dans Home Assistant ; hors des pièces, une seule
   place par zone (carte clim de l'accueil, TV, téléphone, deux températures, 5 plantes au plus).
   Popup lumières : « les lumières de la pièce (5 au plus) » au lieu de « 3 lumières ».
-- **docs/press/forum_ha_en.md** : mêmes passages mis à jour, et une note signale ce qui date
+- **`docs/press/forum_ha_en.md`** : mêmes passages mis à jour, et une note signale ce qui date
   encore de la 3.0 (langues).
+
+### 2026-10-03 — Prévisions horaires dans l'ordre, de gauche à droite
+
+- **Prévisions par heure** : les cinq tuiles d'une page horaire se lisent maintenant de
+  gauche à droite, l'heure la plus proche à gauche, comme les jours. Elles allaient à
+  rebours depuis le premier commit (bandeau « De 07:00 à 11:00 », tuiles 11:00 … 07:00) ;
+  signalé par husyildiz (discussion #278). Seul l'index du créneau change dans
+  `refresh_hourly_forecast()` (`tab5_forecast.cpp`) : l'ordre des deux pages horaires,
+  le bandeau, les pièces et leurs boutons (posés par position visuelle, ADR-0023) restent
+  tels quels.
+
+### 2026-10-03 — La batterie d'origine se charge, état et niveau dans Home Assistant
+
+Demande d'un utilisateur (discussion #278) : avec la batterie d'origine, on ne voyait pas
+si elle chargeait. Le firmware ne touchait pas au chargeur : sur l'expandeur 0x44, seules
+les broches du Wi-Fi et de l'USB étaient posées.
+- **Charge activée au démarrage** : CHG_EN (PI4IOE 0x44, P7) à 1, comme la bibliothèque
+  M5Unified de M5Stack et la config de référence ESPHome (PR #1396 de devices.esphome.io).
+  Charge rapide (P5) laissée à l'arrêt, comme cette référence : la tablette reste
+  branchée, et la charge standard demande moins de courant au chargeur USB.
+- **Trois entités de diagnostic** : `Tab5 Batterie en charge` (binary_sensor
+  `battery_charging`, P6 lue toutes les 10 s, changement publié après 30 s),
+  `Tab5 Tension batterie` (INA226 en 0x41, à 50 mV près ou toutes les 15 min) et
+  `Tab5 Batterie` (niveau en %, estimé d'après la tension, 6,0 → 8,23 V ; inconnu sous 5 V).
+- `docs/hardware.md` (broches et section Alimentation, EN et FR), README et cartographie.
+
+**Non testé avec une batterie** : la tablette de l'auteur n'en a pas. Sans batterie, les
+trois entités disent « en charge », 8,39 V et 100 % (relevé sur sa tablette le 03/10) :
+elles sont donc **désactivées par défaut** dans Home Assistant ; avec la batterie montée,
+les activer sur la page de l'appareil.
 
 ### 2026-10-03 — Icônes de nuit dans les prévisions heure par heure
 
