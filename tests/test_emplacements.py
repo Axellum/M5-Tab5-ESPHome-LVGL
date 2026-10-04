@@ -72,6 +72,8 @@ def test_le_blueprint_se_lit_et_tout_est_facultatif():
                 continue
             if "text" in entree["selector"]:  # nom d'une pièce (ADR-0023)
                 assert entree["default"] == "", f"{nom} : un nom vide doit valoir \"\""
+            elif "select" in entree["selector"]:  # source météo : « liste » = celle de HA
+                assert entree["default"] == "liste", f"{nom} : non rempli doit valoir \"liste\""
             else:
                 assert entree["default"] == [], f"{nom} : un emplacement vide doit valoir []"
 
