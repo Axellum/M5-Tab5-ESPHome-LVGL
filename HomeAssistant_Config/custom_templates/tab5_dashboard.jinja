@@ -1,0 +1,992 @@
+{#- ============================================================================
+[AI-CONTEXT]
+@file custom_templates/tab5_dashboard.jinja
+@role Tableau de bord Home Assistant de la tablette (04/10/2026) : une vue « Tab5 » pour
+      l'usage courant (écran, son, réveil, rendez-vous, assistant vocal), une sous-vue
+      « Réglages » (langue, météo, agendas, maison, voix, réveil) et une sous-vue « Santé »
+      (diagnostic, poussées, alertes). La macro tab5_dashboard() ÉCRIT ce tableau de bord
+      (YAML) avec les entités de la maison ; on colle le résultat dans un tableau de bord.
+@pourquoi Les entity_id de la tablette changent d'une maison à l'autre : Home Assistant
+      les forme avec la pièce, le nom de l'appareil et le nom de l'entité (vérifié dans
+      le code de HA 2026.9.4, entity_registry.async_generate_entity_id), et une entité
+      ajoutée par une mise à jour du firmware prend la pièce alors que les anciennes ne
+      l'ont pas (`m5stack_…` et `<pièce>_m5stack_…` sur la même tablette). Un tableau de bord
+      écrit en dur ne marcherait que chez son auteur. Ici, la tablette est TROUVÉE par le
+      modèle de son appareil (tab5-ha-hmi), comme dans packages/tab5_reglages.yaml, et
+      chaque entité par la fin de son entity_id.
+@usage Ce fichier est dans config/custom_templates/ (archive tab5_home_assistant.zip),
+      chargé au démarrage de HA (ou action homeassistant.reload_custom_templates).
+      FRANÇAIS — 1. Paramètres → Tableaux de bord → « Ajouter un tableau de bord » →
+      « Nouveau tableau de bord à partir de zéro », titre « Tab5 » (adresse /dashboard-tab5).
+      2. Outils de développement → Modèle : remplacez le contenu de l'éditeur par
+      {% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}
+      (autre adresse : tab5_dashboard('dashboard-xxx')), copiez le résultat (à droite).
+      3. Ouvrez le tableau de bord Tab5 → crayon → ⋮ → « Éditeur de configuration
+      brute », remplacez tout par le résultat, enregistrez. À refaire après une mise à
+      jour qui ajoute des entités.
+      ENGLISH — 1. Settings → Dashboards → "Add dashboard" → "New dashboard from scratch",
+      title "Tab5" (address /dashboard-tab5). 2. Developer tools → Template: replace the
+      editor content with the line above (other address: tab5_dashboard('dashboard-xxx')),
+      copy the result (right). 3. Open the Tab5 dashboard → pencil → ⋮ → "Raw
+      configuration editor", replace everything with the result, save. Redo after an
+      update that adds entities.
+@langue Libellés en français si la tablette affiche le français (select « Langue »),
+      en anglais sinon ; tab5_dashboard(langue='English') force la langue.
+@prerequis Les packages de HomeAssistant_Config/packages/ (listes « Tab5 · … », poussées,
+      santé) et la tablette ajoutée dans HA. Ce qui manque (volet, TV, batterie, package
+      optionnel…) n'a simplement pas de carte.
+@ai_instruction Une carte = une entité trouvée : tablette par `T.<clé>` (table ENTITES,
+      motif « domaine[.].*_<fin>$ » sur les entités de l'appareil ; les selects que
+      l'intégration ESPHome de HA ajoute, par leurs options), package par son
+      entity_id fixe testé dans `present`, automatisation de package par son `id`
+      (table A), celle du blueprint par son nom (ns.e). Largeur : une tuile sans
+      commande « en ligne » prend 6 colonnes sur 12 (getGridOptions du frontend) ; on
+      écrit donc `grid_options` sur chacune. tests/test_tableau_de_bord.py rend la macro avec une fausse maison
+      et vérifie que chaque entité citée existe ; le job « Installation dans un HA
+      neuf » la rend dans un vrai HA avec la tablette virtuelle, puis enregistre le
+      tableau de bord.
+@ai_warning Les libellés sont entre guillemets doubles (YAML) : n'y mettez pas de « " »,
+      utilisez « … ». Le contenu de la carte Markdown « En bref » est du Jinja rendu
+      par la carte elle-même, à garder entre {% raw %} et {% endraw %}.
+============================================================================ -#}
+{%- macro tab5_dashboard(adresse='dashboard-tab5', langue='') -%}
+
+{#- ── La tablette, trouvée par le modèle de son appareil ─────────────────────── -#}
+{%- set ns = namespace(api='', t={}, a={}, p=[], m=[], v=[], e='', e_id='') -%}
+{%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') -%}
+  {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and (ns.api == '' or is_state(e, 'on')) -%}
+    {%- set ns.api = e -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- set present = states | map(attribute='entity_id') | list -%}
+{%- set tab = (device_entities(device_id(ns.api)) | select('in', present) | list) if ns.api else [] -%}
+{%- set ENTITES = [
+  ('api', 'binary_sensor', 'ha_api_status'), ('ecran_courant', 'sensor', 'ecran_courant'),
+  ('retroeclairage', 'light', 'display_backlight'), ('lecteur', 'media_player', ''),
+  ('aller_a', 'select', 'aller_a_l_ecran'), ('haut_parleur', 'switch', 'speaker_enable'),
+  ('calendrier', 'button', 'recharger_le_calendrier'), ('langue', 'select', 'langue'),
+  ('tape', 'switch', 'tap_to_wake'), ('batterie_montee', 'switch', 'tab5_batterie_montee'),
+  ('dac', 'select', 'tab5_dac_output'), ('antenne', 'select', 'wifi_antenna'),
+  ('zones', 'sensor', 'zones_masquees'),
+  ('reveil_en_cours', 'binary_sensor', 'reveil_en_cours'), ('prochain_reveil', 'sensor', 'prochain_reveil'),
+  ('reveil', 'switch', 'reveil'), ('reveil_mode', 'select', 'reveil_mode'),
+  ('reveil_heure', 'time', 'reveil_heure'), ('reveil_jours', 'select', 'reveil_jours'),
+  ('reveil_tester', 'button', 'reveil_tester'), ('reveil_arreter', 'button', 'reveil_arreter'),
+  ('reveil_repeter', 'button', 'reveil_repeter'), ('reveil_sonnerie', 'select', 'reveil_sonnerie'),
+  ('reveil_volume', 'number', 'reveil_volume'), ('reveil_progressif', 'switch', 'reveil_volume_progressif'),
+  ('reveil_annonce', 'switch', 'reveil_annonce_parlee'), ('reveil_repetition', 'number', 'reveil_repetition'),
+  ('reveil_duree', 'number', 'reveil_duree_max_de_sonnerie'),
+  ('reveil_url', 'text', 'reveil_url_de_sonnerie_option'),
+  ('reveil_delai', 'number', 'reveil_delai_avant_l_ouverture'),
+  ('reveil_avant', 'time', 'reveil_jamais_avant'), ('reveil_apres', 'time', 'reveil_jamais_apres'),
+  ('reveil_repos', 'number', 'reveil_repos_mini_apres_la_fermeture'),
+  ('reveil_jours_repos', 'switch', 'reveil_sonner_les_jours_de_repos'),
+  ('prochain_rdv', 'sensor', 'prochain_rendez_vous'), ('annonce_rdv', 'switch', 'annonce_des_rendez_vous'),
+  ('rdv_avant', 'number', 'rendez_vous_annoncer_avant'),
+  ('satellite', 'assist_satellite', ''), ('micro', 'switch', 'wake_word_active'),
+  ('uptime', 'sensor', 'tab5_uptime'), ('raison', 'sensor', 'raison_du_redemarrage'),
+  ('firmware', 'update', 'firmware'), ('c6', 'sensor', 'tab5_c6_version'),
+  ('redemarrer', 'button', 'redemarrage_systeme'),
+  ('boucle', 'sensor', 'tab5_loop_time'), ('ram', 'sensor', 'tab5_free_ram'),
+  ('temperature', 'sensor', 'tab5_core_temp'), ('pile', 'sensor', 'tab5_stack_free_min'),
+  ('wifi', 'sensor', 'tab5_wifi_signal'), ('ssid', 'sensor', 'tab5_ssid'), ('ip', 'sensor', 'tab5_ip'),
+  ('casque', 'binary_sensor', 'headphone_detect'), ('batterie', 'sensor', 'tab5_batterie'),
+  ('tension', 'sensor', 'tab5_tension_batterie'), ('en_charge', 'binary_sensor', 'tab5_batterie_en_charge'),
+] -%}
+{%- for cle, domaine, fin in ENTITES -%}
+  {%- set motif = domaine ~ '[.]' ~ ('.*_' ~ fin ~ '$' if fin else '') -%}
+  {%- set ns.t = dict(ns.t, **{cle: tab | select('match', motif) | first | default('')}) -%}
+{%- endfor -%}
+{#- Selects créés par l'intégration ESPHome de HA, pas par le firmware : leur entity_id suit la
+    langue de HA (« …_detection_de_fin_de_la_parole » en français), on les reconnaît donc à
+    leurs options. Deux pipelines et deux mots d'activation depuis HA 2025.10 : le premier par
+    ordre d'entity_id, comme packages/tab5_reglages.yaml et tab5_evenements.yaml. -#}
+{%- for e in tab | select('match', 'select[.]') | sort -%}
+  {%- set options = state_attr(e, 'options') or [] -%}
+  {%- if 'preferred' in options -%}{%- set ns.p = ns.p + [e] -%}
+  {%- elif 'no_wake_word' in options -%}{%- set ns.m = ns.m + [e] -%}
+  {%- elif 'relaxed' in options and 'aggressive' in options -%}{%- set ns.v = ns.v + [e] -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- set T = dict(ns.t, pipeline=(ns.p + [''])[0], pipeline_2=(ns.p + ['', ''])[1],
+                 mot=(ns.m + [''])[0], mot_2=(ns.m + ['', ''])[1], fin_parole=(ns.v + [''])[0]) -%}
+
+{#- ── Automatisations des packages, par leur id (leur nom peut changer) ──────── -#}
+{%- set IDS = ['tab5_ha_hmi_updater', 'tab5_ha_hmi_alerts_push', 'tab5_ha_hmi_meteo_push', 'tab5_rdv_push',
+               'tab5_evenements', 'tab5_volet_updater', 'tab5_screen_presence_wifi', 'tab5_micro_absence',
+               'tab5_health_api_off_2min', 'tab5_health_primary_off_5min', 'tab5_health_unexpected_reboot',
+               'tab5_health_template_error', 'tab5_health_fichiers_ha', 'tab5_health_journal',
+               'tab5_alerts_dismissed_cleanup'] -%}
+{#- Chaque id a sa clé, vide si l'automatisation manque : pas d'avertissement dans le journal de HA. -#}
+{%- for id in IDS -%}{%- set ns.a = dict(ns.a, **{id: ''}) -%}{%- endfor -%}
+{%- for a in states.automation -%}
+  {%- if a.attributes.id is defined and a.attributes.id in IDS -%}
+    {%- set ns.a = dict(ns.a, **{a.attributes.id: a.entity_id}) -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- set A = ns.a -%}
+{#- Automatisation du blueprint « Tab5 — emplacements » : par son nom (aucun attribut ne dit de quel
+    blueprint vient une automatisation). Trouvée : lien vers son éditeur ; sinon, vers les blueprints. -#}
+{%- for a in states.automation | sort(attribute='entity_id') -%}
+  {%- if not ns.e and a.attributes.id is defined
+         and ('emplacement' in (a.entity_id ~ ' ' ~ a.name) | lower or 'screen slot' in a.name | lower) -%}
+    {%- set ns.e = a.entity_id -%}
+    {%- set ns.e_id = a.attributes.id -%}
+  {%- endif -%}
+{%- endfor -%}
+
+{#- `langue` (« Français », « English »…) force la langue des libellés ; vide = celle de l'écran. -#}
+{%- set fr = (langue or (states(T.langue) if T.langue else 'Français')) in ['Français', 'unknown', 'unavailable'] -%}
+{%- macro t(francais, anglais) -%}{{ francais if fr else anglais }}{%- endmacro -%}
+{#- Tuile d'un bouton de la tablette : un appui (sur la tuile ou son icône) le presse. -#}
+{%- macro bouton(entite, icone) -%}
+{%- for action in ['tap_action', 'icon_tap_action'] %}
+            {{ action }}:
+              action: perform-action
+              perform_action: button.press
+              target:
+                entity_id: {{ entite }}
+{%- endfor %}
+            icon: {{ icone }}
+{%- endmacro -%}
+
+{%- if not ns.api -%}
+# {{ t("Tablette introuvable : ajoutez-la dans Home Assistant (intégration ESPHome), puis recommencez.",
+       "Tablet not found: add it to Home Assistant (ESPHome integration), then try again.") }}
+{%- else -%}
+views:
+  # ─── Vue principale : l'usage courant ───
+  - title: Tab5
+    path: tab5
+    icon: mdi:tablet-dashboard
+    type: sections
+    max_columns: 4
+    # Pastilles d'alerte seulement : elles n'apparaissent que si quelque chose cloche.
+    badges:
+      - type: entity
+        entity: {{ T.api }}
+        name: "{{ t('Tablette déconnectée', 'Tablet disconnected') }}"
+        show_name: true
+        show_state: false
+        color: red
+        visibility:
+          - condition: state
+            entity: {{ T.api }}
+            state: "off"
+{%- if 'input_boolean.is_primary_active' in present %}
+      - type: entity
+        entity: input_boolean.is_primary_active
+        name: "{{ t('Push HA coupé', 'HA push off') }}"
+        show_name: true
+        show_state: false
+        color: red
+        visibility:
+          - condition: state
+            entity: input_boolean.is_primary_active
+            state: "off"
+{%- endif %}
+{%- if 'binary_sensor.tab5_fichiers_ha_en_retard' in present %}
+      - type: entity
+        entity: binary_sensor.tab5_fichiers_ha_en_retard
+        name: "{{ t('Fichiers HA en retard', 'HA files out of date') }}"
+        show_name: true
+        show_state: false
+        color: orange
+        visibility:
+          - condition: state
+            entity: binary_sensor.tab5_fichiers_ha_en_retard
+            state: "on"
+{%- endif %}
+{%- if T.firmware %}
+      - type: entity
+        entity: {{ T.firmware }}
+        name: "{{ t('Mise à jour du firmware', 'Firmware update') }}"
+        show_name: true
+        show_state: true
+        state_content: latest_version
+        color: amber
+        visibility:
+          - condition: state
+            entity: {{ T.firmware }}
+            state: "on"
+{%- endif %}
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('Tablette', 'Tablet') }}"
+            icon: mdi:tablet
+            badges:
+              - type: entity
+                entity: {{ T.api }}
+                show_state: true
+{%- if T.ecran_courant %}
+              - type: entity
+                entity: {{ T.ecran_courant }}
+                show_state: true
+                icon: mdi:monitor-dashboard
+{%- endif %}
+          - type: shortcut
+            label: "{{ t('Réglages', 'Settings') }}"
+            description: "{{ t('Langue, météo, agendas, maison, voix, réveil', 'Language, weather, calendars, home, voice, alarm') }}"
+            icon: mdi:cog
+            tap_action:
+              action: navigate
+              navigation_path: /{{ adresse }}/tab5-reglages
+            grid_options:
+              columns: 6
+          - type: shortcut
+            label: "{{ t('Santé', 'Health') }}"
+            description: "{{ t('Diagnostic, poussées, alertes', 'Diagnostics, pushes, alerts') }}"
+            icon: mdi:heart-pulse
+            color: red
+            tap_action:
+              action: navigate
+              navigation_path: /{{ adresse }}/tab5-sante
+            grid_options:
+              columns: 6
+{%- if T.retroeclairage %}
+          - type: tile
+            entity: {{ T.retroeclairage }}
+            name: "{{ t('Luminosité', 'Brightness') }}"
+            icon: mdi:brightness-6
+            features:
+              - type: light-brightness
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- if T.lecteur %}
+          - type: tile
+            entity: {{ T.lecteur }}
+            name: Volume
+            icon: mdi:volume-high
+            features:
+              - type: media-player-volume-slider
+                show_mute_button: true
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- if T.aller_a %}
+          - type: tile
+            entity: {{ T.aller_a }}
+            name: "{{ t('Afficher', 'Show') }}"
+            icon: mdi:gesture-tap-button
+            features_position: inline
+            features:
+              - type: select-options
+                style: dropdown
+{%- endif %}
+{%- if T.haut_parleur %}
+          - type: tile
+            entity: {{ T.haut_parleur }}
+            name: "{{ t('Haut-parleur', 'Speaker') }}"
+            icon: mdi:speaker
+            features_position: inline
+            features:
+              - type: toggle
+{%- endif %}
+{%- if T.calendrier %}
+          - type: tile
+            entity: {{ T.calendrier }}
+            name: "{{ t('Recharger le calendrier', 'Reload the calendar') }}"
+{{- bouton(T.calendrier, 'mdi:calendar-refresh') }}
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- if T.reveil %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('Réveil', 'Alarm') }}"
+            icon: mdi:alarm
+{%- if T.reveil_en_cours %}
+            badges:
+              - type: entity
+                entity: {{ T.reveil_en_cours }}
+                show_state: true
+                visibility:
+                  - condition: state
+                    entity: {{ T.reveil_en_cours }}
+                    state: "on"
+{%- endif %}
+{%- if T.prochain_reveil %}
+          - type: tile
+            entity: {{ T.prochain_reveil }}
+            name: "{{ t('Prochaine sonnerie', 'Next alarm') }}"
+            icon: mdi:alarm-check
+            grid_options:
+              columns: 12
+{%- endif %}
+          - type: tile
+            entity: {{ T.reveil }}
+            name: "{{ t('Réveil armé', 'Alarm on') }}"
+            icon: mdi:alarm
+            features_position: inline
+            features:
+              - type: toggle
+{%- if T.reveil_mode %}
+          - type: tile
+            entity: {{ T.reveil_mode }}
+            name: Mode
+            icon: mdi:tune
+            features_position: inline
+            features:
+              - type: select-options
+                style: dropdown
+{%- endif %}
+{%- if T.reveil_heure %}
+          - type: tile
+            entity: {{ T.reveil_heure }}
+            name: "{{ t('Heure fixe', 'Fixed time') }}"
+            icon: mdi:clock-outline
+            grid_options:
+              columns: 6
+{%- endif %}
+{%- if T.reveil_jours %}
+          - type: tile
+            entity: {{ T.reveil_jours }}
+            name: "{{ t('Jours', 'Days') }}"
+            icon: mdi:calendar-week
+            features:
+              - type: select-options
+                style: dropdown
+            grid_options:
+              columns: 6
+{%- endif %}
+{%- for cle, fr_, en_, icone in [('reveil_tester', 'Tester', 'Test', 'mdi:play-circle'),
+                                  ('reveil_arreter', 'Arrêter', 'Stop', 'mdi:alarm-off'),
+                                  ('reveil_repeter', 'Répéter', 'Snooze', 'mdi:alarm-snooze')] %}
+{%- if T[cle] %}
+          - type: tile
+            entity: {{ T[cle] }}
+            name: "{{ t(fr_, en_) }}"
+            grid_options:
+              columns: 4
+{{- bouton(T[cle], icone) }}
+{%- endif %}
+{%- endfor %}
+          - type: heading
+            heading: "{{ t("Sonnerie, volume et mode « avant l'ouverture » : page Réglages", 'Ringtone, volume and before-opening mode: Settings page') }}"
+            heading_style: subtitle
+{%- endif %}
+{%- if T.prochain_rdv %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('Rendez-vous', 'Appointments') }}"
+            icon: mdi:calendar-clock
+          - type: tile
+            entity: {{ T.prochain_rdv }}
+            name: "{{ t('Prochain rendez-vous', 'Next appointment') }}"
+            icon: mdi:calendar-clock
+            grid_options:
+              columns: 12
+{%- if T.annonce_rdv %}
+          - type: tile
+            entity: {{ T.annonce_rdv }}
+            name: "{{ t('Annonce vocale', 'Spoken reminder') }}"
+            icon: mdi:bullhorn
+            features_position: inline
+            features:
+              - type: toggle
+{%- endif %}
+{%- if T.rdv_avant %}
+          - type: tile
+            entity: {{ T.rdv_avant }}
+            name: "{{ t('Annoncer avant', 'Remind before') }}"
+            icon: mdi:timer-sand
+            features_position: inline
+            features:
+              - type: numeric-input
+                style: buttons
+{%- endif %}
+{%- if 'script.tab5_rdv_prochains' in present %}
+          - type: shortcut
+            label: "{{ t('Pousser la liste', 'Push the list') }}"
+            description: "{{ t('Envoie les rendez-vous à la tablette', 'Sends the appointments to the tablet') }}"
+            icon: mdi:calendar-sync
+            tap_action:
+              action: perform-action
+              perform_action: script.tab5_rdv_prochains
+            grid_options:
+              columns: 6
+{%- endif %}
+{%- if 'script.tab5_reveil_annonce' in present %}
+          - type: shortcut
+            label: "{{ t('Briefing parlé', 'Spoken briefing') }}"
+            description: "{{ t("Teste l'annonce du matin", 'Tests the morning briefing') }}"
+            icon: mdi:account-voice
+            tap_action:
+              action: perform-action
+              perform_action: script.tab5_reveil_annonce
+            grid_options:
+              columns: 6
+{%- endif %}
+{%- endif %}
+{%- if T.satellite %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('Assistant vocal', 'Voice assistant') }}"
+            icon: mdi:microphone
+          - type: tile
+            entity: {{ T.satellite }}
+            name: "{{ t('Assistant', 'Assistant') }}"
+            icon: mdi:account-voice
+            grid_options:
+              columns: 12
+{%- if T.micro %}
+          - type: tile
+            entity: {{ T.micro }}
+            name: "{{ t("« Ok Nabu » à l'écoute", 'Ok Nabu listening') }}"
+            icon: mdi:microphone
+            features_position: inline
+            features:
+              - type: toggle
+{%- endif %}
+{%- if 'input_boolean.tab5_micro_coupe_absence' in present %}
+          - type: tile
+            entity: input_boolean.tab5_micro_coupe_absence
+            name: "{{ t('Micro coupé (absence)', 'Mic off (away)') }}"
+            icon: mdi:microphone-off
+            grid_options:
+              columns: 12
+{%- endif %}
+{#- Annonce d'un texte libre : helpers de l'utilisateur, hors packages (carte seulement s'ils existent). #}
+{%- if 'input_text.tab5_annonce_vocale' in present and 'script.tab5_annonce_vocale' in present %}
+          - type: tile
+            entity: input_text.tab5_annonce_vocale
+            name: "{{ t('Texte à annoncer', 'Text to announce') }}"
+            icon: mdi:text
+            grid_options:
+              columns: 12
+          - type: shortcut
+            label: "{{ t('Faire parler la tablette', 'Make the tablet speak') }}"
+            description: "{{ t('Lit le texte ci-dessus', 'Reads the text above') }}"
+            icon: mdi:bullhorn
+            tap_action:
+              action: perform-action
+              perform_action: script.tab5_annonce_vocale
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- endif %}
+
+  # ─── Sous-vue Réglages : ce qu'on règle une fois ───
+  - title: "{{ t('Réglages Tab5', 'Tab5 settings') }}"
+    path: tab5-reglages
+    icon: mdi:cog
+    type: sections
+    max_columns: 4
+    subview: true
+    back_path: /{{ adresse }}/tab5
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('En bref', 'At a glance') }}"
+            icon: mdi:clipboard-text-outline
+          - type: heading
+            heading: "{{ t('Ce que la tablette utilise en ce moment', 'What the tablet uses right now') }}"
+            heading_style: subtitle
+          - type: markdown
+            content: |-
+{%- raw %}
+              {%- macro choix(e) -%}
+              {%- set v = states(e) -%}
+              {%- if v in ['Aucun', 'Aucune', 'unknown', 'unavailable', ''] -%}<font color="#ff9800">{% endraw %}{{ t('non choisi', 'not set') }}{% raw %}</font>
+              {%- elif v.startswith('weather.') and expand(v) | count > 0 -%}
+              {%- set n = state_attr(v, 'friendly_name') or v -%}
+              {{ device_attr(device_id(v), 'manufacturer') or '' }} · {{ n.split('for city ')[1].split(' - ')[0] if 'for city ' in n else n }}
+              {%- elif '.' in v and expand(v) | count > 0 -%}{{ state_attr(v, 'friendly_name') or v }}
+              {%- else -%}{{ v }}{%- endif -%}
+              {%- endmacro %}{% endraw %}
+              | {{ t('Réglage', 'Setting') }} | {{ t('Choix', 'Choice') }} |
+              |:--|:--|
+{%- if T.langue %}
+              | {{ t("Langue de l'écran", 'Screen language') }} | {% raw %}{{ states('{% endraw %}{{ T.langue }}{% raw %}') }}{% endraw %} |
+{%- endif %}
+{%- for e, fr_, en_ in [('select.tab5_source_des_previsions', 'Prévisions', 'Forecasts'),
+                        ('input_select.tab5_source_pluie', "Pluie dans l'heure", 'Next-hour rain'),
+                        ('input_select.tab5_source_vigilance', 'Vigilances', 'Weather warnings'),
+                        ('select.tab5_agenda_de_travail', 'Agenda de travail', 'Work calendar'),
+                        ('select.tab5_agenda_des_rendez_vous', 'Rendez-vous', 'Appointments'),
+                        ('select.tab5_agenda_des_anniversaires', 'Anniversaires', 'Birthdays'),
+                        ('select.tab5_agenda_des_jours_feries', 'Jours fériés', 'Public holidays'),
+                        ('select.tab5_agenda_des_vacances_scolaires', 'Vacances scolaires', 'School holidays'),
+                        ('select.tab5_telephone', 'Téléphone', 'Phone'),
+                        ('select.tab5_capteur_de_presence', 'Capteur de présence', 'Presence sensor'),
+                        ('select.tab5_tv_samsung', 'TV Samsung', 'Samsung TV'),
+                        ('select.tab5_volet_a_course_simulee', 'Volet', 'Shutter'),
+                        ('select.tab5_pipeline_de_discussion', 'Mode « Discu »', 'Discu mode')] %}
+{%- if e in present %}
+              | {{ t(fr_, en_) }} | {% raw %}{{ choix('{% endraw %}{{ e }}{% raw %}') }}{% endraw %}{%- if e == 'select.tab5_agenda_de_travail' and 'input_text.tab5_mot_travail' in present %} ({{ t('mot « ', 'keyword: ') }}{% raw %}{{ states('input_text.tab5_mot_travail') or '{% endraw %}{{ t('tous', 'all') }}{% raw %}' }}{% endraw %}{{ t(' »', '') }}){%- endif %} |
+{%- endif %}
+{%- endfor %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('Tablette', 'Tablet') }}"
+            icon: mdi:tablet
+{%- for cle, fr_, en_, icone in [('langue', "Langue de l'écran", 'Screen language', 'mdi:translate')] %}
+{%- if T[cle] %}
+          - type: tile
+            entity: {{ T[cle] }}
+            name: "{{ t(fr_, en_) }}"
+            icon: {{ icone }}
+            features_position: inline
+            features:
+              - type: select-options
+                style: dropdown
+{%- endif %}
+{%- endfor %}
+{%- for cle, fr_, en_, icone in [('tape', "Rallumer l'écran d'une tape", 'Wake the screen with a tap', 'mdi:gesture-tap'),
+                                  ('batterie_montee', 'Batterie montée', 'Battery fitted', 'mdi:battery')] %}
+{%- if T[cle] %}
+          - type: tile
+            entity: {{ T[cle] }}
+            name: "{{ t(fr_, en_) }}"
+            icon: {{ icone }}
+            features_position: inline
+            features:
+              - type: toggle
+{%- endif %}
+{%- endfor %}
+{%- if T.batterie_montee %}
+          - type: heading
+            heading: "{{ t("Allumée, l'icône de batterie apparaît dans le bandeau", 'On: the battery icon shows in the status strip') }}"
+            heading_style: subtitle
+{%- endif %}
+{%- for cle, fr_, en_, icone in [('dac', 'Sortie audio', 'Audio output', 'mdi:audio-input-stereo-minijack'),
+                                  ('antenne', 'Antenne Wi-Fi', 'Wi-Fi antenna', 'mdi:antenna')] %}
+{%- if T[cle] %}
+          - type: tile
+            entity: {{ T[cle] }}
+            name: "{{ t(fr_, en_) }}"
+            icon: {{ icone }}
+            features_position: inline
+            features:
+              - type: select-options
+                style: dropdown
+{%- endif %}
+{%- endfor %}
+          - type: heading
+            heading: "{{ t('Pièces et tuiles', 'Rooms and tiles') }}"
+            icon: mdi:view-grid-plus
+          - type: heading
+            heading: "{{ t('Pièces, tuiles, clim, plantes, énergie, météo : automatisation du blueprint', 'Rooms, tiles, climate, plants, energy, weather: the blueprint automation') }}"
+            heading_style: subtitle
+          - type: shortcut
+            label: "{{ t('Ouvrir les emplacements', 'Open the screen slots') if ns.e_id else t('Ouvrir les blueprints', 'Open the blueprints') }}"
+            description: "{{ t("Tab5 — emplacements de l'écran", "Tab5 — emplacements de l'écran (screen slots)") }}"
+            icon: mdi:pencil
+            tap_action:
+              action: navigate
+              navigation_path: {{ '/config/automation/edit/' ~ ns.e_id if ns.e_id else '/config/blueprint/dashboard' }}
+            grid_options:
+              columns: 12
+{%- if T.zones %}
+          - type: tile
+            entity: {{ T.zones }}
+            name: "{{ t('Zones masquées', 'Hidden zones') }}"
+            icon: mdi:eye-off-outline
+            grid_options:
+              columns: 12
+{%- endif %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('Météo', 'Weather') }}"
+            icon: mdi:weather-partly-cloudy
+          - type: heading
+            heading: "{{ t('La section « Météo » du blueprint prime si elle est remplie', 'The blueprint Weather section wins when it is filled') }}"
+            heading_style: subtitle
+{%- for e, fr_, en_, icone, ligne in [('select.tab5_source_des_previsions', 'Prévisions', 'Forecasts', 'mdi:weather-partly-cloudy', false),
+                                     ('input_select.tab5_source_pluie', "Pluie dans l'heure", 'Next-hour rain', 'mdi:weather-pouring', true),
+                                     ('input_select.tab5_source_vigilance', 'Vigilances', 'Weather warnings', 'mdi:alert-outline', true)] %}
+{%- if e in present %}
+          - type: tile
+            entity: {{ e }}
+            name: "{{ t(fr_, en_) }}"
+            icon: {{ icone }}
+{%- if ligne %}
+            features_position: inline
+{%- endif %}
+            features:
+              - type: select-options
+                style: dropdown
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- endfor %}
+{%- if 'sensor.tab5_sources_meteo' in present %}
+          - type: tile
+            entity: sensor.tab5_sources_meteo
+            name: "{{ t('Sources trouvées', 'Sources found') }}"
+            icon: mdi:magnify
+            grid_options:
+              columns: 12
+{%- endif %}
+          - type: heading
+            heading: "{{ t('Maison', 'Home') }}"
+            icon: mdi:home-account
+          - type: heading
+            heading: "{{ t("Le téléphone et la présence allument ou éteignent l'écran", 'The phone and presence turn the screen on or off') }}"
+            heading_style: subtitle
+{%- for e, fr_, en_, icone in [('select.tab5_telephone', 'Téléphone', 'Phone', 'mdi:cellphone-marker'),
+                               ('select.tab5_capteur_de_presence', 'Capteur de présence', 'Presence sensor', 'mdi:motion-sensor'),
+                               ('select.tab5_tv_samsung', 'TV Samsung', 'Samsung TV', 'mdi:television'),
+                               ('input_text.tab5_tv_adresse', 'Adresse de la TV', 'TV address', 'mdi:ip-network'),
+                               ('select.tab5_volet_a_course_simulee', 'Volet à course simulée', 'Shutter with simulated travel', 'mdi:window-shutter')] %}
+{%- if e in present %}
+          - type: tile
+            entity: {{ e }}
+            name: "{{ t(fr_, en_) }}"
+            icon: {{ icone }}
+{%- if e.startswith('select.') %}
+            features:
+              - type: select-options
+                style: dropdown
+{%- endif %}
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- endfor %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('Agendas', 'Calendars') }}"
+            icon: mdi:calendar-multiple
+          - type: heading
+            heading: "{{ t('Travail : planning, jours de repos, heure du réveil', 'Work: schedule, days off, alarm time') }}"
+            heading_style: subtitle
+{%- for e, fr_, en_, icone in [('select.tab5_agenda_de_travail', 'Travail', 'Work', 'mdi:briefcase-clock'),
+                               ('input_text.tab5_mot_travail', 'Mot des événements de travail (vide = tous)', 'Work event keyword (empty = all)', 'mdi:briefcase-search')] %}
+{%- if e in present %}
+          - type: tile
+            entity: {{ e }}
+            name: "{{ t(fr_, en_) }}"
+            icon: {{ icone }}
+{%- if e.startswith('select.') %}
+            features:
+              - type: select-options
+                style: dropdown
+{%- endif %}
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- endfor %}
+          - type: heading
+            heading: "{{ t('Popup calendrier, rappels, briefing du matin', 'Calendar popup, reminders, morning briefing') }}"
+            heading_style: subtitle
+{%- for e, fr_, en_, icone in [('select.tab5_agenda_des_rendez_vous', 'Rendez-vous', 'Appointments', 'mdi:calendar-account'),
+                               ('select.tab5_agenda_des_anniversaires', 'Anniversaires', 'Birthdays', 'mdi:cake-variant'),
+                               ('select.tab5_agenda_des_jours_feries', 'Jours fériés', 'Public holidays', 'mdi:calendar-star'),
+                               ('select.tab5_agenda_des_vacances_scolaires', 'Vacances scolaires', 'School holidays', 'mdi:school-outline')] %}
+{%- if e in present %}
+          - type: tile
+            entity: {{ e }}
+            name: "{{ t(fr_, en_) }}"
+            icon: {{ icone }}
+            features:
+              - type: select-options
+                style: dropdown
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- endfor %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('Assistant vocal', 'Voice assistant') }}"
+            icon: mdi:account-voice
+{%- for cle, e, fr_, en_, icone, ligne in [('pipeline', '', 'Mode en cours', 'Current mode', 'mdi:robot', false),
+                                           ('', 'select.tab5_pipeline_de_discussion', 'Pipeline du mode « Discu » (Aucun = boutons masqués)', 'Discu mode pipeline (Aucun = buttons hidden)', 'mdi:chat-processing-outline', false),
+                                           ('mot', '', "Mot d'activation", 'Wake word', 'mdi:account-voice', false),
+                                           ('mot_2', '', "2ᵉ mot d'activation", 'Second wake word', 'mdi:account-voice', false),
+                                           ('pipeline_2', '', 'Pipeline du 2ᵉ mot', 'Second wake word pipeline', 'mdi:robot-outline', false),
+                                           ('fin_parole', '', 'Fin de la parole', 'End of speech', 'mdi:timer-sand-complete', true)] %}
+{%- set ent = T[cle] if cle else (e if e in present else '') %}
+{%- if ent %}
+          - type: tile
+            entity: {{ ent }}
+            name: "{{ t(fr_, en_) }}"
+            icon: {{ icone }}
+{%- if ligne %}
+            features_position: inline
+{%- endif %}
+            features:
+              - type: select-options
+                style: dropdown
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- endfor %}
+{%- if T.reveil %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('Réveil', 'Alarm') }}"
+            icon: mdi:alarm
+          - type: heading
+            heading: "{{ t('Sonnerie', 'Ringtone') }}"
+            heading_style: subtitle
+{%- for cle, genre, fr_, en_, icone, largeur in [
+      ('reveil_sonnerie', 'liste', 'Mélodie', 'Melody', 'mdi:music-note', 12),
+      ('reveil_volume', 'curseur', 'Volume du réveil', 'Alarm volume', 'mdi:volume-high', 12),
+      ('reveil_progressif', 'bascule', 'Volume progressif', 'Gradual volume', 'mdi:volume-plus', 12),
+      ('reveil_annonce', 'bascule', 'Annonce parlée', 'Spoken briefing', 'mdi:account-voice', 12),
+      ('reveil_repetition', 'boutons', 'Répétition', 'Snooze', 'mdi:alarm-snooze', 12),
+      ('reveil_duree', 'boutons', 'Durée max', 'Max duration', 'mdi:timer-outline', 12),
+      ('reveil_url', '', 'URL de sonnerie (option)', 'Ringtone URL (optional)', 'mdi:link-variant', 12),
+      ('', 'titre', "Mode « avant l'ouverture »", 'Before-opening mode', '', 12),
+      ('reveil_delai', 'curseur', "Délai avant l'embauche", 'Lead time before work', 'mdi:timer-sand', 12),
+      ('reveil_avant', '', 'Jamais avant', 'Never before', 'mdi:clock-start', 6),
+      ('reveil_apres', '', 'Jamais après', 'Never after', 'mdi:clock-end', 6),
+      ('reveil_repos', 'boutons', 'Repos mini après la fermeture', 'Minimum rest after closing', 'mdi:sleep', 12),
+      ('reveil_jours_repos', 'bascule', 'Sonner aussi les jours de repos', 'Ring on days off too', 'mdi:calendar-remove', 12)] %}
+{%- if genre == 'titre' %}
+          - type: heading
+            heading: "{{ t(fr_, en_) }}"
+            heading_style: subtitle
+{%- elif T[cle] %}
+          - type: tile
+            entity: {{ T[cle] }}
+            name: "{{ t(fr_, en_) }}"
+            icon: {{ icone }}
+{%- if genre in ['liste', 'bascule', 'boutons'] %}
+            features_position: inline
+{%- endif %}
+{%- if genre == 'liste' %}
+            features:
+              - type: select-options
+                style: dropdown
+{%- elif genre == 'bascule' %}
+            features:
+              - type: toggle
+{%- elif genre in ['curseur', 'boutons'] %}
+            features:
+              - type: numeric-input
+                style: {{ 'slider' if genre == 'curseur' else 'buttons' }}
+{%- endif %}
+            grid_options:
+              columns: {{ largeur }}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+
+  # ─── Sous-vue Santé : quand quelque chose cloche ───
+  - title: "{{ t('Santé Tab5', 'Tab5 health') }}"
+    path: tab5-sante
+    icon: mdi:heart-pulse
+    type: sections
+    max_columns: 4
+    subview: true
+    back_path: /{{ adresse }}/tab5
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('État', 'Status') }}"
+            icon: mdi:heart-pulse
+{%- for ent, fr_, en_, icone, largeur in [
+      (T.api, 'Liaison avec HA', 'Link with HA', '', 6),
+      (T.uptime, 'Démarrée', 'Started', 'mdi:timer-outline', 6),
+      (T.raison, 'Raison du dernier démarrage', 'Last start reason', 'mdi:restart-alert', 12),
+      (T.firmware, 'Firmware', 'Firmware', 'mdi:package-up', 12),
+      ('sensor.tab5_version_des_fichiers_ha' if 'sensor.tab5_version_des_fichiers_ha' in present else '', 'Fichiers HA', 'HA files', 'mdi:file-cog', 6),
+      ('binary_sensor.tab5_fichiers_ha_en_retard' if 'binary_sensor.tab5_fichiers_ha_en_retard' in present else '', 'En retard ?', 'Out of date?', 'mdi:file-alert', 6),
+      (T.c6, 'Puce Wi-Fi (C6)', 'Wi-Fi chip (C6)', 'mdi:chip', 6),
+      ('sensor.tab5_unavailable_count' if 'sensor.tab5_unavailable_count' in present else '', 'Entités HA indispo', 'Unavailable HA entities', 'mdi:alert-circle-outline', 6)] %}
+{%- if ent %}
+          - type: tile
+            entity: {{ ent }}
+            name: "{{ t(fr_, en_) }}"
+{%- if icone %}
+            icon: {{ icone }}
+{%- endif %}
+            grid_options:
+              columns: {{ largeur }}
+{%- endif %}
+{%- endfor %}
+{%- if T.redemarrer %}
+          - type: tile
+            entity: {{ T.redemarrer }}
+            name: "{{ t('Redémarrer la tablette', 'Restart the tablet') }}"
+            icon: mdi:restart
+            grid_options:
+              columns: 12
+{%- for action in ['tap_action', 'icon_tap_action'] %}
+            {{ action }}:
+              action: perform-action
+              perform_action: button.press
+              target:
+                entity_id: {{ T.redemarrer }}
+              confirmation:
+                text: "{{ t('Redémarrer la tablette Tab5 ?', 'Restart the Tab5 tablet?') }}"
+{%- endfor %}
+{%- endif %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('Performances (24 h)', 'Performance (24 h)') }}"
+            icon: mdi:speedometer
+{%- for ent, fr_, en_, icone in [(T.boucle, 'Temps de boucle', 'Loop time', 'mdi:speedometer'),
+                                 (T.ram, 'Mémoire libre', 'Free memory', 'mdi:memory'),
+                                 (T.temperature, 'Température du processeur', 'Processor temperature', 'mdi:thermometer'),
+                                 (T.pile, 'Pile libre (minimum)', 'Free stack (minimum)', 'mdi:layers-outline')] %}
+{%- if ent %}
+          - type: tile
+            entity: {{ ent }}
+            name: "{{ t(fr_, en_) }}"
+            icon: {{ icone }}
+            features:
+              - type: trend-graph
+                hours_to_show: 24
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- endfor %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('Réseau', 'Network') }}"
+            icon: mdi:wifi
+{%- if T.wifi %}
+          - type: tile
+            entity: {{ T.wifi }}
+            name: "{{ t('Signal Wi-Fi', 'Wi-Fi signal') }}"
+            icon: mdi:wifi
+            features:
+              - type: trend-graph
+                hours_to_show: 24
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- for ent, fr_, en_, icone in [(T.ssid, 'Réseau', 'Network', 'mdi:wifi'), (T.ip, 'Adresse IP', 'IP address', 'mdi:ip-network')] %}
+{%- if ent %}
+          - type: tile
+            entity: {{ ent }}
+            name: "{{ t(fr_, en_) }}"
+            icon: {{ icone }}
+            grid_options:
+              columns: 6
+{%- endif %}
+{%- endfor %}
+          - type: heading
+            heading: "{{ t('Matériel', 'Hardware') }}"
+            icon: mdi:chip
+{%- if T.casque %}
+          - type: tile
+            entity: {{ T.casque }}
+            name: "{{ t('Jack casque', 'Headphone jack') }}"
+            icon: mdi:headphones
+            grid_options:
+              columns: 6
+{%- endif %}
+{#- Batterie : entités désactivées par défaut dans HA (à activer), cartes visibles seulement
+    quand « Batterie montée » est allumé. #}
+{%- for ent, fr_, en_ in [(T.batterie, 'Batterie', 'Battery'), (T.tension, 'Tension', 'Voltage'), (T.en_charge, 'En charge', 'Charging')] %}
+{%- if ent %}
+          - type: tile
+            entity: {{ ent }}
+            name: "{{ t(fr_, en_) }}"
+            grid_options:
+              columns: 6
+{%- if T.batterie_montee %}
+            visibility:
+              - condition: state
+                entity: {{ T.batterie_montee }}
+                state: "on"
+{%- endif %}
+{%- endif %}
+{%- endfor %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('Poussées HA → tablette', 'HA → tablet pushes') }}"
+            icon: mdi:upload-network
+{%- if 'input_boolean.is_primary_active' in present %}
+          - type: tile
+            entity: input_boolean.is_primary_active
+            name: "{{ t('Push HA actif', 'HA push on') }}"
+            icon: mdi:upload-network
+            features_position: inline
+            features:
+              - type: toggle
+{%- endif %}
+{%- if A.tab5_ha_hmi_updater %}
+          - type: shortcut
+            label: "{{ t('MAJ écran', 'Refresh screen') }}"
+            description: "{{ t("Pousse tout l'écran maintenant", 'Pushes the whole screen now') }}"
+            icon: mdi:refresh
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: {{ A.tab5_ha_hmi_updater }}
+            grid_options:
+              columns: 12
+{%- endif %}
+          - type: heading
+            heading: "{{ t('Automatisations', 'Automations') }}"
+            heading_style: subtitle
+{%- for id, fr_, en_ in [('tab5_ha_hmi_updater', 'Poussée complète', 'Full push'),
+                         ('tab5_ha_hmi_alerts_push', 'Alertes et santé (léger)', 'Alerts and health (light)'),
+                         ('tab5_ha_hmi_meteo_push', 'Météo actuelle', 'Current weather'),
+                         ('tab5_rdv_push', 'Rendez-vous (5 min)', 'Appointments (5 min)'),
+                         ('tab5_evenements', 'Demandes de la tablette', 'Tablet requests'),
+                         ('tab5_volet_updater', 'Volet', 'Shutter'),
+                         ('tab5_screen_presence_wifi', 'Écran selon le téléphone', 'Screen by phone'),
+                         ('tab5_micro_absence', 'Micro coupé en absence', 'Mic off when away')] %}
+{%- if A[id] %}
+          - type: tile
+            entity: {{ A[id] }}
+            name: "{{ t(fr_, en_) }}"
+            features_position: inline
+            features:
+              - type: toggle
+{%- endif %}
+{%- endfor %}
+{%- if ns.e %}
+          - type: tile
+            entity: {{ ns.e }}
+            name: "{{ t("Emplacements de l'écran (blueprint)", 'Screen slots (blueprint)') }}"
+            features_position: inline
+            features:
+              - type: toggle
+{%- endif %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('Alertes de santé', 'Health alerts') }}"
+            icon: mdi:bell-alert-outline
+          - type: heading
+            heading: "{{ t('À couper pendant une OTA', 'Turn off during an OTA') }}"
+            heading_style: subtitle
+{%- for id, fr_, en_ in [('tab5_health_api_off_2min', 'Tablette déconnectée 2 min', 'Tablet disconnected 2 min'),
+                         ('tab5_health_primary_off_5min', 'Push HA coupé 5 min', 'HA push off 5 min'),
+                         ('tab5_health_unexpected_reboot', 'Redémarrage inattendu', 'Unexpected restart'),
+                         ('tab5_health_template_error', 'Erreur dans une poussée', 'Error in a push'),
+                         ('tab5_health_fichiers_ha', 'Fichiers HA en retard', 'HA files out of date'),
+                         ('tab5_health_journal', 'Journal des démarrages', 'Start log'),
+                         ('tab5_alerts_dismissed_cleanup', 'Purge des alertes ignorées', 'Dismissed alerts cleanup')] %}
+{%- if A[id] %}
+          - type: tile
+            entity: {{ A[id] }}
+            name: "{{ t(fr_, en_) }}"
+            features_position: inline
+            features:
+              - type: toggle
+{%- endif %}
+{%- endfor %}
+{%- if 'input_text.tab5_alerts_dismissed' in present %}
+          - type: tile
+            entity: input_text.tab5_alerts_dismissed
+            name: "{{ t("Alertes HA ignorées sur l'écran", 'HA alerts dismissed on screen') }}"
+            icon: mdi:bell-off-outline
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- endif %}
+{%- endmacro -%}

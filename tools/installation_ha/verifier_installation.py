@@ -40,7 +40,8 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
       état (ceRT) calculés et poussés avec les tuiles ; la section « Météo » du blueprint
       (discussion #278) : remplie, écrite dans les listes et suivie par la poussée, une
       liste changée à la main y revient avec une notification, vidée, les listes décident ;
-      journal de HA sans erreur Tab5. Ce que
+      le tableau de bord de la tablette (custom_templates/tab5_dashboard.jinja) rendu par HA, ses
+      entités toutes présentes, enregistré et relu ; journal de HA sans erreur Tab5. Ce que
       montre l'écran entre la création de l'automatisation et le redémarrage est
       rapporté (capture 1), sans faire échouer.
 @contraintes Le mot de passe du compte est tiré au hasard ici et n'est jamais affiché ;
@@ -1116,15 +1117,20 @@ def classer_journal(entrees: list[dict], connexion: float,
     return fautives, groupes, autres
 
 
+async def lire_journal(ha: HA) -> list[dict]:
+    """Journal de HA (docker logs), en entrées de lignes_du_journal."""
+    proc = await asyncio.create_subprocess_exec("docker", "logs", ha.conteneur, stdout=subprocess.PIPE,
+                                                stderr=subprocess.STDOUT)
+    sortie, _ = await proc.communicate()
+    return lignes_du_journal(sortie.decode("utf-8", "replace"))
+
+
 async def journal_ha(ha: HA, connexion: float, deconnexions: list[tuple[float, float]], rapport: Rapport) -> None:
     """Journal de HA (docker logs) jugé par classer_journal. Avant la connexion, les
     actions esphome.tab5_ha_hmi_* n'existent pas : dans l'ordre de docs/installation.md
     (packages, puis tablette), les poussées doivent attendre la tablette au lieu
     d'échouer (« Action … not found »)."""
-    proc = await asyncio.create_subprocess_exec("docker", "logs", ha.conteneur, stdout=subprocess.PIPE,
-                                                stderr=subprocess.STDOUT)
-    sortie, _ = await proc.communicate()
-    entrees = lignes_du_journal(sortie.decode("utf-8", "replace"))
+    entrees = await lire_journal(ha)
     # Au moins les lignes d'info de l'intégration ESPHome (logger: dans configuration.yaml) :
     # un journal où rien n'est reconnu ne doit pas passer pour un journal propre.
     if not any(e["logger"].startswith("homeassistant.components.esphome") for e in entrees):
@@ -1324,6 +1330,81 @@ async def attendre_passage(ha: HA, item_id: str, motif: str, apres: float, delai
     return None
 
 
+# La ligne que docs/installation.md fait taper dans Outils de développement → Modèle.
+APPEL_TABLEAU = "{% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}"
+# Les listes « Tab5 · … » des packages (sources, agendas, téléphone, TV, volet, pipeline) :
+# chacune a sa carte dans le tableau de bord.
+LISTES_TAB5 = re.compile(r"(select|input_select)\.tab5_")
+
+
+def entites_du_tableau(noeud: Any, trouvees: set[str] | None = None) -> set[str]:
+    """entity_id cités par un tableau de bord : clés entity / entity_id, actions de script,
+    et ceux que lit une carte Markdown (`states('…')`, rendus par la carte elle-même)."""
+    trouvees = set() if trouvees is None else trouvees
+    if isinstance(noeud, dict):
+        for cle, valeur in noeud.items():
+            if cle in ("entity", "entity_id"):
+                trouvees.update([valeur] if isinstance(valeur, str) else valeur)
+            elif cle == "perform_action" and str(valeur).startswith("script."):
+                trouvees.add(valeur)
+            elif cle == "content":
+                trouvees.update(re.findall(r"\('([a-z_]+\.[a-z0-9_]+)'\)", str(valeur)))
+            else:
+                entites_du_tableau(valeur, trouvees)
+    elif isinstance(noeud, list):
+        for valeur in noeud:
+            entites_du_tableau(valeur, trouvees)
+    return trouvees
+
+
+async def verifier_tableau_de_bord(ha: HA, ws: WS, rapport: Rapport) -> None:
+    """Le tableau de bord de la tablette (custom_templates/tab5_dashboard.jinja, copié par
+    l'archive), installé comme le dit son en-tête : la ligne APPEL_TABLEAU rendue par HA
+    (Outils de développement → Modèle, ici /api/template), le résultat enregistré dans un
+    tableau de bord « Tab5 » (/dashboard-tab5).
+    Vérifie : trois vues, chaque entité citée existe, les listes « Tab5 · … » et les
+    automatisations des packages ont leur carte, aucun avertissement de modèle dans le
+    journal, le tableau de bord relu est celui envoyé."""
+    import yaml  # PyYAML, installé avec esphome
+
+    debut = time.time()
+    rendu = await ha.post("/api/template", {"template": APPEL_TABLEAU})
+    try:
+        tableau = yaml.safe_load(rendu) if isinstance(rendu, str) else None
+    except yaml.YAMLError as exc:
+        rapport.echec(f"tableau de bord : le rendu n'est pas du YAML ({str(exc)[:300]})")
+        return
+    vues = [v.get("path") for v in (tableau or {}).get("views", [])]
+    if not rapport.verifier(vues == ["tab5", "tab5-reglages", "tab5-sante"],
+                            "tableau de bord rendu par HA : vues Tab5, Réglages et Santé",
+                            f"vues {vues} ; début du rendu : {str(rendu)[:200]!r}"):
+        return
+    etats = await ha.etats()
+    citees = entites_du_tableau(tableau)
+    absentes = sorted(e for e in citees if e not in etats)
+    rapport.verifier(not absentes, f"tableau de bord : {len(citees)} entités citées, toutes présentes dans HA",
+                     f"absentes : {absentes}")
+    listes = {e for e in etats if LISTES_TAB5.match(e)}
+    rapport.verifier(bool(listes) and listes <= citees, f"tableau de bord : les {len(listes)} listes « Tab5 · … » ont leur carte",
+                     f"sans carte : {sorted(listes - citees)}")
+    automatisations = sorted(e for e in citees if e.startswith("automation."))
+    rapport.verifier(len(automatisations) >= 10, f"tableau de bord : {len(automatisations)} automatisations des packages trouvées par leur id",
+                     "moins de 10 : la table IDS du modèle ne correspond plus aux packages ?")
+    tablette = sorted(e for e in etats if PREFIXE_ENTITES in e)
+    rapport.info(f"tableau de bord : {len([e for e in tablette if e in citees])} entités de la tablette virtuelle "
+                 f"sur {len(tablette)} ont leur carte ; sans carte : {[e for e in tablette if e not in citees]}")
+    avertissements = [e for e in await lire_journal(ha)
+                      if e["quand"] >= debut - 1 and e["message"].startswith("Template variable")]
+    rapport.verifier(not avertissements, "tableau de bord : aucun avertissement de modèle dans le journal de HA",
+                     "; ".join(e["message"].splitlines()[0][:200] for e in avertissements[:3]))
+    await ws.commande("lovelace/dashboards/create", url_path="dashboard-tab5", title="Tab5",
+                      icon="mdi:tablet-dashboard", mode="storage", show_in_sidebar=True, require_admin=False)
+    await ws.commande("lovelace/config/save", url_path="dashboard-tab5", config=tableau)
+    relu = await ws.commande("lovelace/config", url_path="dashboard-tab5", force=True)
+    rapport.verifier(relu == tableau, "tableau de bord « Tab5 » enregistré dans HA et relu à l'identique",
+                     "le tableau relu diffère de celui envoyé")
+
+
 async def verifier_meteo_du_blueprint(ha: HA, rapport: Rapport) -> None:
     """Section « Météo » du blueprint (discussion #278) : remplie, son choix est écrit
     dans les listes du package et la poussée le suit ; une liste changée à la main (select
@@ -1490,6 +1571,8 @@ async def scenario(args, rapport: Rapport) -> None:
             # Rendez-vous (packages/tab5_reveil.yaml) : ses passages et leurs déclencheurs,
             # pour relire une erreur « Not connected » du journal.
             await rapporter_traces(ha, "tab5_rdv_push", debut, rapport)
+            # Tableau de bord de la tablette, rendu par HA et enregistré (custom_templates/).
+            await verifier_tableau_de_bord(ha, ws, rapport)
             await journal_ha(ha, connexion, deconnexions, rapport)
     finally:
         await tablette.arreter()
