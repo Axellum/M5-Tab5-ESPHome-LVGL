@@ -37,5 +37,5 @@ Three ways were weighed with the author:
 
 - One source for the colours of the interface (the palette), and one shared style per role that a theme can repaint in one call.
 - Lot 2 adds a palette: a struct instance, plus the glass pre-mix recomputed for its background (formula in `tab5_tokens.h`), and contrast choices (the vigilance yellow on a light background, `couleur_lisible()` darkening instead of lightening, the pressed opacity).
-- What lot 2 still has to repaint on a switch without a restart (lot 3): the colours set by the C++ (local properties, set at each push), the calendar's C++ styles, and the pages' background (local). With a restart, nothing: everything is created from the active palette.
+- What lot 2 still has to repaint on a switch without a restart (lot 3): the colours set by the C++ (local properties, set at each push), the calendar's C++ styles, and the pages' background (local). With a restart, nothing: everything is created from the active palette. Also for lot 3: `ui_text_color()` (`tab5_internal.h`) compares the new colour with the local property only, so the first push of a colour equal to the role style's sets a local property and the widget stops following its role style; compare the effective colour (`lv_obj_get_style_text_color`) instead.
 - `UIColor.X` costs a load instead of an immediate; the palette is 220 bytes of RAM.

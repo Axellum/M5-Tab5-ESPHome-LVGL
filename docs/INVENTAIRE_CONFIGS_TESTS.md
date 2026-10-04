@@ -29,7 +29,7 @@
 | `tab5-sensors-diagnostics.yaml` | `Tab5/` | WiFi, alimentation GPIO, statut API HA, uptime, RAM, loop time, horloge SNTP. |
 | `tab5-sensors-domotique.yaml` | `Tab5/` | Miroirs d'entités HA : plantes, lumières, PC, températures, batterie, audio. |
 | `tab5-api-logic.yaml` | `Tab5/` | Contrat API HA↔Tab5 : bloc `api: services:` (21 services ; `tab5_maj_pluie_1h_bulk` a remplacé `tab5_maj_pluie_1h` le 08/09/2026). |
-| `tab5-styles.yaml` | `Tab5/` | Thème "Dark Mode Slate" : tokens `color:`, déclarations `font:`, `lvgl: style_definitions:`. |
+| `tab5-styles.yaml` | `Tab5/` | Thème "Dark Mode Slate" : couleurs des jeux (`color:`), déclarations `font:`, `lvgl: style_definitions:` (lisent la palette `UIColor`, ADR-0029). |
 | `tab5-globals.yaml` | `Tab5/` | État partagé (`globals:`) + rotateur carte centrale (interval 8s). |
 | `tab5-scripts.yaml` | `Tab5/` | Scripts transverses : registre des modales, volume, debounces, rotateur, volet, popup lumière, retour à l'accueil. |
 | `tab5-arcade.yaml` | `Tab5/` | Scripts des jeux : fermeture globale, ouverture des 8 consoles, page arcade (lot 8c). |

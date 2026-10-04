@@ -70,14 +70,15 @@ color:
   # Chaque carte = un fond (`_card`) + un accent (`_accent`, bordure et icône).
   # Les fonds des cartes Fil d'Or, Arcanoïde et Trial Poursuite réutilisent le
   # sol du jeu (color_marble_floor / color_arkanoid_floor / color_trivia_floor)
-  # et les titres color_text ; tout le reste vit ici — plus aucun hex en dur dans
+  # et les titres le texte de la palette sombre (PALETTE_SOMBRE.TEXT_SOFT, posé
+  # sur le label : le sélecteur reste sombre) ; tout le reste vit ici — plus aucun hex en dur dans
   # le sélecteur (audit du 06/09/2026, §4.1 point 11).
   - id: color_arcade_bg
     hex: "080810"          # fond de la page arcade
   - id: color_arcade_title
     hex: "FFDD22"          # icône + titre « ARCADE »
   - id: color_arcade_subtitle
-    hex: "8595AD"          # sous-titre et descriptions des cartes (même gris que color_console_label)
+    hex: "8595AD"          # sous-titre et descriptions des cartes (même gris que le rôle CONSOLE_LABEL de la palette sombre)
   - id: color_arcade_footer
     hex: "4A5568"          # pied de page
   - id: color_arcade_close_bg

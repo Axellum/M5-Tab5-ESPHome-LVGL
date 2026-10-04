@@ -102,7 +102,9 @@ def test_chaque_style_de_role_sert():
     """Pas de style mort : chaque style de rôle est posé par au moins un widget."""
     sources = [p for p in list(TAB5.glob("*.yaml")) + list((TAB5 / "ui_components").glob("*.yaml"))
                if p.name != "tab5-styles.yaml"]
-    corpus = "\n".join(p.read_text(encoding="utf-8") for p in sources)
+    # Sans les commentaires : un style cité seulement dans un commentaire n'est posé nulle part.
+    corpus = "\n".join(l for p in sources for l in p.read_text(encoding="utf-8").splitlines()
+                       if not l.lstrip().startswith("#"))
     for style in _lvgl()["style_definitions"]:
         if RE_ROLE.match(style["id"]):
             assert re.search(rf"\b{style['id']}\b", corpus), f"{style['id']} n'est posé par aucun widget"

@@ -12,6 +12,8 @@
 # recopiées à l'identique, 24 lignes chacune.
 # Piège YAML : dans un mapping en ligne `{ … }`, une valeur contenant `${…}` doit être
 # entre guillemets, sinon l'accolade casse la syntaxe (yamllint le signale).
+# Le titre lit PALETTE_SOMBRE.TEXT_SOFT : sans couleur propre, il suivrait le thème des
+# labels (palette active) alors que la carte reste sombre (ADR-0014, ADR-0029).
 # ═══════════════════════════════════════════════════════
 button:
   id: btn_game_${game}
@@ -33,5 +35,5 @@ button:
     - script.execute: tab5_${game}_open
   widgets:
     - label: { text: "${icon}", align: TOP_MID, y: 18, text_font: mdi_font_56, text_color: "color_arcade_${game}_accent" }
-    - label: { text: "${title}", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b }
+    - label: { text: "${title}", align: TOP_MID, y: 84, width: 266, text_align: CENTER, text_font: roboto_32_b, text_color: !lambda 'return lv_color_hex(PALETTE_SOMBRE.TEXT_SOFT);' }
     - label: { text: "${subtitle}", align: TOP_MID, y: 168, width: 266, text_align: CENTER, text_color: color_arcade_subtitle }

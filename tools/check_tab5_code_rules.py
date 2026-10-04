@@ -52,7 +52,9 @@ falsifiables sur le dépôt réel :
      gabarit : un widget prend sa couleur par un style de rôle (`styles:
      style_text_dim`). Les couleurs déclarées dans `color:` (celles des jeux) ne
      servent qu'aux jeux, et les jeux ne lisent pas la palette active (`UIColor.`) :
-     ils restent sombres (`PALETTE_SOMBRE.X`).
+     ils restent sombres (`PALETTE_SOMBRE.X`). Hors jeux, ni `PALETTE_SOMBRE` (sauf
+     tab5_tokens.h qui la définit) ni couleur littérale (`lv_color_hex(0x…)`,
+     `lv_color_make(…)`) dans le code : ce serait contourner le thème.
 
 Usage : python tools/check_tab5_code_rules.py   (aussi lancé par `pytest`, tests/test_guards.py)
 Sortie : 0 si tout est conforme, 1 sinon (liste des écarts sur stdout).
@@ -99,6 +101,8 @@ LV_COLOR_PROPS = ("text_color", "bg_color", "bg_grad_color", "border_color", "ou
                   "shadow_color", "arc_color", "line_color", "image_recolor")
 RE_LV_COLOR_PROP = re.compile(r"(?<![\w.])(" + "|".join(LV_COLOR_PROPS) + r"):[ \t]*([^,}\s][^,}]*)")
 RE_YAML_COLOR_DECL = re.compile(r"^  - id: (color_\w+)\s*$", re.M)
+# Contournements du thème hors jeux : une couleur littérale dans du code, la palette sombre fixe.
+RE_LV_COLOR_LITERAL = re.compile(r"\blv_color_(?:hex\s*\(\s*0x|hex3\s*\(|make\s*\(\s*\d)")
 
 
 def strip_yaml_comments(text: str) -> str:
@@ -526,6 +530,18 @@ def palette_colors(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     for path in firmware_sources(tab5, entry):
         game = bool(RE_GAME_SOURCE.search(path.name))
         text = path.read_text(encoding="utf-8")
+        if not game:
+            code = strip_cpp_comments(strip_yaml_comments(text) if path.suffix == ".yaml" else text)
+            if path.name != "tab5_tokens.h" and "PALETTE_SOMBRE" in code:
+                problems.append(
+                    f"{path.name} : `PALETTE_SOMBRE` hors jeux — l'interface lit la palette active "
+                    f"(`UIColor.X`), sinon le thème ne la change pas (ADR-0029)"
+                )
+            for m in RE_LV_COLOR_LITERAL.finditer(code):
+                problems.append(
+                    f"{path.name} : `{m.group(0)}…` — couleur littérale, ajouter un rôle à "
+                    f"`struct Palette` et lire `UIColor.X` (ADR-0029)"
+                )
         if path.suffix != ".yaml":
             if game and "UIColor." in strip_cpp_comments(text):
                 problems.append(
