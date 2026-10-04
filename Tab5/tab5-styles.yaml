@@ -737,6 +737,77 @@ lvgl:
       outline_width: 0
       pad_all: 0
 
+    # --- Cartes de la page qu'un thème peut dessiner à part (thèmes, lot 3) ---
+    # Copies exactes de style_meteo_card_page : un thème qui ne dit rien les voit
+    # identiques aux cartes météo (tools/gen_themes.py leur reporte les `formes:` de
+    # style_meteo_card_page), un thème peut aussi les dessiner à part (`formes:`
+    # de Tab5/themes/<thème>.yaml) : horloge, bandeau central, carte de la clim et les
+    # deux onglets des prévisions des jours. L'horloge et le bandeau lisent la palette
+    # de leur zone (UIHorloge, UIBandeau : égale à UIColor, sauf en mode clair d'un
+    # thème qui garde la zone sombre, `zones_sombres:`).
+    - id: style_horloge_page
+      bg_color: !lambda 'return lv_color_hex(UIHorloge.GLASS_HI_PAGE);'
+      bg_grad_color: !lambda 'return lv_color_hex(UIHorloge.GLASS_LO_PAGE);'
+      bg_grad_dir: VER
+      bg_opa: 100%
+      border_width: 1
+      border_color: !lambda 'return lv_color_hex(UIHorloge.GLASS_RIM);'
+      border_opa: 35%
+      radius: 18
+      shadow_width: 0
+      outline_width: 0
+      pad_all: 0
+    - id: style_bandeau_page
+      bg_color: !lambda 'return lv_color_hex(UIBandeau.GLASS_HI_PAGE);'
+      bg_grad_color: !lambda 'return lv_color_hex(UIBandeau.GLASS_LO_PAGE);'
+      bg_grad_dir: VER
+      bg_opa: 100%
+      border_width: 1
+      border_color: !lambda 'return lv_color_hex(UIBandeau.GLASS_RIM);'
+      border_opa: 35%
+      radius: 18
+      shadow_width: 0
+      outline_width: 0
+      pad_all: 0
+    - id: style_clim_carte_page
+      bg_color: !lambda 'return lv_color_hex(UIColor.GLASS_HI_PAGE);'
+      bg_grad_color: !lambda 'return lv_color_hex(UIColor.GLASS_LO_PAGE);'
+      bg_grad_dir: VER
+      bg_opa: 100%
+      border_width: 1
+      border_color: !lambda 'return lv_color_hex(UIColor.GLASS_RIM);'
+      border_opa: 35%
+      radius: 18
+      shadow_width: 0
+      outline_width: 0
+      pad_all: 0
+    # Onglets des jours (nom du jour, températures) : sans bordure, comme le
+    # `border_width: 0` que leurs gabarits posaient avant ce style.
+    - id: style_onglet_jour_page
+      bg_color: !lambda 'return lv_color_hex(UIColor.GLASS_HI_PAGE);'
+      bg_grad_color: !lambda 'return lv_color_hex(UIColor.GLASS_LO_PAGE);'
+      bg_grad_dir: VER
+      bg_opa: 100%
+      border_width: 0
+      border_color: !lambda 'return lv_color_hex(UIColor.GLASS_RIM);'
+      border_opa: 35%
+      radius: 18
+      shadow_width: 0
+      outline_width: 0
+      pad_all: 0
+    - id: style_onglet_temp_page
+      bg_color: !lambda 'return lv_color_hex(UIColor.GLASS_HI_PAGE);'
+      bg_grad_color: !lambda 'return lv_color_hex(UIColor.GLASS_LO_PAGE);'
+      bg_grad_dir: VER
+      bg_opa: 100%
+      border_width: 0
+      border_color: !lambda 'return lv_color_hex(UIColor.GLASS_RIM);'
+      border_opa: 35%
+      radius: 18
+      shadow_width: 0
+      outline_width: 0
+      pad_all: 0
+
     - id: style_clim_btn_page
       bg_color: !lambda 'return lv_color_hex(UIColor.GLASS_HI_PAGE);'
       bg_grad_color: !lambda 'return lv_color_hex(UIColor.GLASS_LO_PAGE);'
@@ -916,3 +987,33 @@ lvgl:
       arc_color: !lambda 'return lv_color_hex(UIColor.INFO);'
     - id: style_arc_warning
       arc_color: !lambda 'return lv_color_hex(UIColor.WARNING);'
+
+    # --- Zones qu'un thème clair peut garder sombres (thèmes, lot 3) -------------
+    # Le bandeau central et l'horloge : leurs textes lisent UIBandeau / UIHorloge
+    # (Tab5/tab5_tokens.h), égales à UIColor sauf en mode clair d'un thème à
+    # `zones_sombres:`. Même rôle que style_text_* / style_bg_*, dans la zone.
+    - id: style_bandeau_text_soft
+      text_color: !lambda 'return lv_color_hex(UIBandeau.TEXT_SOFT);'
+    - id: style_bandeau_text_dim
+      text_color: !lambda 'return lv_color_hex(UIBandeau.TEXT_DIM);'
+    - id: style_bandeau_text_rain_value
+      text_color: !lambda 'return lv_color_hex(UIBandeau.RAIN_VALUE);'
+    - id: style_bandeau_text_temp_min
+      text_color: !lambda 'return lv_color_hex(UIBandeau.TEMP_MIN);'
+    - id: style_bandeau_bg_bar_inactive
+      bg_color: !lambda 'return lv_color_hex(UIBandeau.BAR_INACTIVE);'
+    - id: style_horloge_text_soft
+      text_color: !lambda 'return lv_color_hex(UIHorloge.TEXT_SOFT);'
+
+    # --- Polices d'affichage (thèmes, lot 3) -----------------------------------
+    # L'heure (rouleaux, « : » et écran de sonnerie), la date sous l'horloge, les
+    # titres (en-tête des popups, titre de la carte centrale) : un thème peut changer
+    # leur police (`polices:`, theme_polices() dans tab5_theme.cpp). Ici, celles de
+    # l'état compilé ; la géométrie de l'horloge (y des rouleaux, place du « : »)
+    # reste posée sur ses labels (tab5-lvgl.yaml, clock_roller.yaml).
+    - id: style_police_horloge
+      text_font: roboto_130_b
+    - id: style_police_date
+      text_font: roboto_45_b
+    - id: style_police_titre
+      text_font: roboto_32_b

@@ -4,6 +4,27 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Thèmes, lot 3 : formes, zones sombres et polices d'affichage par thème
+
+Suite de la galerie de seize esquisses du 04/10 : un thème change plus que ses couleurs
+(ombres douces sans bordure, horloge en police à empattements, bandeau sombre sur un
+écran clair). Ce lot pose les mécanismes avec Ardoise seul, **rendu inchangé** ; les
+seize thèmes arrivent dans la PR suivante ([ADR-0029](docs/decisions/0029-themes-palette.md), section « lot 3 »).
+- **Formes** (`formes:` d'un fichier de thème) : rayon, bordure, dégradé, ombre et
+  contour de neuf styles partagés (cartes de la page, boutons verre, cartes des popups).
+  Cinq styles de la page de plus, copies exactes des cartes météo : horloge, bandeau
+  central, carte de la clim, onglets des jours. `tools/gen_themes.py` en écrit des
+  tables C++ ; `theme_formes()` repose l'état compilé avant les formes du thème.
+- **Zones sombres** (`zones_sombres: [bandeau, horloge]`) : en mode clair, le bandeau
+  central et l'horloge peuvent rester sombres (palettes `UIBandeau`, `UIHorloge`).
+- **Polices d'affichage** (`polices:`) : l'heure, la date et les titres (en-têtes des
+  popups, titre de la carte centrale), dans une police de Google Fonts choisie par le
+  thème ; le reste reste en Roboto. `tools/police_theme.py` mesure chaque police
+  (taille qui tient dans l'horloge, place du « : », glyphes absents, dessinés par la
+  Roboto du même rôle).
+- **Boutons verre** : l'effet d'appui reconnaît un bouton à son rayon de 18 ; ils sont
+  marqués avant qu'un thème change ce rayon (`on_boot` inchangé).
+
 ### 2026-10-04 — Thèmes, lot 2 : mode clair, bascule sans redémarrage, mode Auto
 
 Suite de la demande d'Axel (« un mode clair et sombre pour chacun », une douzaine de

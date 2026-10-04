@@ -47,7 +47,7 @@ obj:
     - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "id(tab5_alarm_stop).execute();" } }
 
     - label: { id: icon_alarm_ring, text: "\U000F0020", align: CENTER, y: -230, text_font: mdi_font_70, styles: style_text_accent }
-    - label: { id: lbl_alarm_ring_time, text: "00:00", align: CENTER, y: -90, text_font: roboto_130_b }
+    - label: { id: lbl_alarm_ring_time, text: "00:00", align: CENTER, y: -90, styles: style_police_horloge }
     - label: { id: lbl_alarm_ring_title, text: "Réveil", align: CENTER, y: 20, text_font: roboto_45_b, styles: style_text_accent }
     - label: { id: lbl_alarm_ring_sub, text: "", align: CENTER, y: 75, width: 1100, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
 

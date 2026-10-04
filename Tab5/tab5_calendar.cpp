@@ -199,7 +199,10 @@ static lv_color_t cal_fond_case(lv_obj_t* carte, int32_t y_milieu, uint32_t tein
     const int32_t y0 = h * lv_obj_get_style_bg_main_stop(carte, LV_PART_MAIN) / 255;
     const int32_t y1 = h * lv_obj_get_style_bg_grad_stop(carte, LV_PART_MAIN) / 255;
     lv_opa_t part_bas = LV_OPA_TRANSP;
-    if (y >= y1) part_bas = LV_OPA_COVER;
+    // Un thème peut retirer le dégradé (`formes:`, bg_grad_dir NONE) : fond uni. Un
+    // dégradé horizontal est lu comme le vertical (aucun thème n'en met sur cette carte).
+    if (lv_obj_get_style_bg_grad_dir(carte, LV_PART_MAIN) == LV_GRAD_DIR_NONE) part_bas = LV_OPA_TRANSP;
+    else if (y >= y1) part_bas = LV_OPA_COVER;
     else if (y > y0 && y1 > y0) part_bas = (lv_opa_t) ((y - y0) * 255 / (y1 - y0));
     const lv_color_t fond = lv_color_mix(lv_obj_get_style_bg_grad_color(carte, LV_PART_MAIN),
                                          lv_obj_get_style_bg_color(carte, LV_PART_MAIN), part_bas);

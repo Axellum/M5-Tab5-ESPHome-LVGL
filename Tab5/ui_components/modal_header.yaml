@@ -41,7 +41,7 @@ obj:
         text: "${title}"
         align: LEFT_MID
         x: 52
-        text_font: roboto_32_b
+        styles: style_police_titre  # police d'affichage du thème
     - button:
         id: ${close_btn_id}
         align: RIGHT_MID

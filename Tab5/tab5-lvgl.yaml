@@ -151,7 +151,7 @@ lvgl:
             y: 5
             width: 401
             height: 200
-            styles: style_meteo_card_page
+            styles: style_horloge_page
             scrollbar_mode: "OFF"
             widgets:
               # Horloge à rouleau : UN conteneur qui rogne PAR CHIFFRE (H H : M M),
@@ -178,10 +178,10 @@ lvgl:
               # 8 labels via g_clock_roller.
               - !include { file: ui_components/clock_roller.yaml, vars: { d: h10, x: 27 } }
               - !include { file: ui_components/clock_roller.yaml, vars: { d: h1, x: 102 } }
-              - label: { id: lbl_time_colon, text: ":", align: TOP_LEFT, x: 181, y: 10, text_font: roboto_130_b }
+              - label: { id: lbl_time_colon, text: ":", align: TOP_LEFT, x: 181, y: 10, styles: [style_police_horloge, style_horloge_text_soft] }
               - !include { file: ui_components/clock_roller.yaml, vars: { d: m10, x: 222 } }
               - !include { file: ui_components/clock_roller.yaml, vars: { d: m1, x: 297 } }
-              - label: { id: lbl_date, text: "", align: TOP_MID, y: 140, text_font: roboto_45_b }
+              - label: { id: lbl_date, text: "", align: TOP_MID, y: 140, styles: [style_police_date, style_horloge_text_soft] }
 
         # Zone tactile invisible par-dessus l'horloge/date. Deux gestes sur la
         # même tuile, dans l'ordre qui va de soi quand on regarde une horloge :
@@ -318,7 +318,7 @@ lvgl:
             y: 333
             width: 1240
             height: 84
-            styles: style_meteo_card_page
+            styles: style_bandeau_page
             scrollbar_mode: "OFF"
             pad_left: 20
             pad_right: 20
@@ -379,7 +379,7 @@ lvgl:
                           flex_align_cross: CENTER
                           pad_column: 15
                         widgets:
-                          - label: { id: icon_rain_predict, text: "\U000F0597", text_font: mdi_font_alert, styles: style_text_temp_min }
+                          - label: { id: icon_rain_predict, text: "\U000F0597", text_font: mdi_font_alert, styles: style_bandeau_text_temp_min }
                           - obj:
                               id: rain_bar_container
                               width: SIZE_CONTENT
@@ -411,9 +411,9 @@ lvgl:
                                 flex_align_cross: END
                                 pad_column: 6
                               widgets:
-                                - label: { id: lbl_proc_pluie, text: "Synchronisation...", text_font: roboto_45_b, pad_bottom: 15 }
-                                - label: { id: lbl_pluie_val, text: "", text_font: roboto_45_b, styles: style_text_rain_value, pad_bottom: 10 }
-                                - label: { id: lbl_pluie_unit, text: "", text_font: roboto_45_b, pad_bottom: 15 }
+                                - label: { id: lbl_proc_pluie, text: "Synchronisation...", text_font: roboto_45_b, styles: style_bandeau_text_soft, pad_bottom: 15 }
+                                - label: { id: lbl_pluie_val, text: "", text_font: roboto_45_b, styles: style_bandeau_text_rain_value, pad_bottom: 10 }
+                                - label: { id: lbl_pluie_unit, text: "", text_font: roboto_45_b, styles: style_bandeau_text_soft, pad_bottom: 15 }
                     - button:
                         id: btn_rain_tap
                         align: CENTER
@@ -449,7 +449,7 @@ lvgl:
                   styles: style_transparent
                   scrollbar_mode: "OFF"  # le texte déborde en glissant (transition_widgets)
                   widgets:
-                    - label: { id: lbl_planning_text, text: "", align: CENTER, y: 0, text_font: roboto_45_b }
+                    - label: { id: lbl_planning_text, text: "", align: CENTER, y: 0, text_font: roboto_45_b, styles: style_bandeau_text_soft }
                     - button:
                         id: btn_planning_tap
                         align: CENTER
@@ -479,8 +479,8 @@ lvgl:
                   styles: style_transparent
                   hidden: true
                   widgets:
-                    - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: -19, styles: style_text_dim }
-                    - label: { id: lbl_page_title, text: "", align: CENTER, y: 13, text_font: roboto_32_b }
+                    - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: -19, styles: style_bandeau_text_dim }
+                    - label: { id: lbl_page_title, text: "", align: CENTER, y: 13, styles: [style_police_titre, style_bandeau_text_soft] }
                     - button:
                         id: btn_page_title_tap
                         align: CENTER
@@ -498,7 +498,7 @@ lvgl:
                   scrollbar_mode: "OFF"  # le texte déborde en glissant (transition_widgets)
                   hidden: true
                   widgets:
-                    - label: { id: lbl_info_text, text: "", align: CENTER, text_font: roboto_45_b }
+                    - label: { id: lbl_info_text, text: "", align: CENTER, text_font: roboto_45_b, styles: style_bandeau_text_soft }
                     - button:
                         id: btn_info_tap
                         align: CENTER

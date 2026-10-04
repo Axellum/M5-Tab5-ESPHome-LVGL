@@ -23,7 +23,15 @@
 # - Les jeux restent sombres (PALETTE_SOMBRE, ADR-0014) : leurs pages naissent avec
 #   le `bg_color` de `lvgl:` (tab5-styles.yaml), évalué avant la restauration du
 #   thème ; seule la page principale est repeinte ici.
+# - Lot 3 : un thème peut aussi changer les formes des styles partagés (rayons,
+#   bordures, dégradés, ombres : theme_formes), garder sombres le bandeau central et
+#   l'horloge en mode clair (UIBandeau, UIHorloge) et changer trois polices
+#   d'affichage (heure, date, titres : theme_polices). Les polices des thèmes sont
+#   déclarées ci-dessous, générées elles aussi (tailles : tools/police_theme.py).
 # ═══════════════════════════════════════════════════════════════════════════
+
+# >>> polices (généré par tools/gen_themes.py depuis Tab5/themes/ et _polices.yaml, ne pas éditer)
+# <<< polices
 
 select:
   - platform: template
@@ -98,6 +106,10 @@ script:
   - id: tab5_theme_repeindre
     mode: restart
     then:
+      # [AI-WARNING] Avant les formes du thème : le repérage des boutons verre (on_boot,
+      # apply_pressed_scale_to_tree, 2 s après le démarrage) les reconnaît à leur rayon de
+      # 18, qu'un thème peut changer. Ils sont marqués ici, une fois, dans l'état compilé.
+      - lambda: 'boutons_verre_marquer(id(page_main)->obj);'
       # >>> styles (généré par tools/gen_themes.py depuis tab5-styles.yaml, ne pas éditer)
       - lambda: |-
           lv_style_set_bg_color(id(style_meteo_card), lv_color_hex(UIColor.GLASS_HI));
@@ -108,6 +120,26 @@ script:
           lv_style_set_bg_grad_color(id(style_meteo_card_page), lv_color_hex(UIColor.GLASS_LO_PAGE));
           lv_style_set_border_color(id(style_meteo_card_page), lv_color_hex(UIColor.GLASS_RIM));
           lv_obj_report_style_change(id(style_meteo_card_page));
+          lv_style_set_bg_color(id(style_horloge_page), lv_color_hex(UIHorloge.GLASS_HI_PAGE));
+          lv_style_set_bg_grad_color(id(style_horloge_page), lv_color_hex(UIHorloge.GLASS_LO_PAGE));
+          lv_style_set_border_color(id(style_horloge_page), lv_color_hex(UIHorloge.GLASS_RIM));
+          lv_obj_report_style_change(id(style_horloge_page));
+          lv_style_set_bg_color(id(style_bandeau_page), lv_color_hex(UIBandeau.GLASS_HI_PAGE));
+          lv_style_set_bg_grad_color(id(style_bandeau_page), lv_color_hex(UIBandeau.GLASS_LO_PAGE));
+          lv_style_set_border_color(id(style_bandeau_page), lv_color_hex(UIBandeau.GLASS_RIM));
+          lv_obj_report_style_change(id(style_bandeau_page));
+          lv_style_set_bg_color(id(style_clim_carte_page), lv_color_hex(UIColor.GLASS_HI_PAGE));
+          lv_style_set_bg_grad_color(id(style_clim_carte_page), lv_color_hex(UIColor.GLASS_LO_PAGE));
+          lv_style_set_border_color(id(style_clim_carte_page), lv_color_hex(UIColor.GLASS_RIM));
+          lv_obj_report_style_change(id(style_clim_carte_page));
+          lv_style_set_bg_color(id(style_onglet_jour_page), lv_color_hex(UIColor.GLASS_HI_PAGE));
+          lv_style_set_bg_grad_color(id(style_onglet_jour_page), lv_color_hex(UIColor.GLASS_LO_PAGE));
+          lv_style_set_border_color(id(style_onglet_jour_page), lv_color_hex(UIColor.GLASS_RIM));
+          lv_obj_report_style_change(id(style_onglet_jour_page));
+          lv_style_set_bg_color(id(style_onglet_temp_page), lv_color_hex(UIColor.GLASS_HI_PAGE));
+          lv_style_set_bg_grad_color(id(style_onglet_temp_page), lv_color_hex(UIColor.GLASS_LO_PAGE));
+          lv_style_set_border_color(id(style_onglet_temp_page), lv_color_hex(UIColor.GLASS_RIM));
+          lv_obj_report_style_change(id(style_onglet_temp_page));
           lv_style_set_bg_color(id(style_clim_btn_page), lv_color_hex(UIColor.GLASS_HI_PAGE));
           lv_style_set_bg_grad_color(id(style_clim_btn_page), lv_color_hex(UIColor.GLASS_LO_PAGE));
           lv_style_set_border_color(id(style_clim_btn_page), lv_color_hex(UIColor.GLASS_RIM));
@@ -199,9 +231,26 @@ script:
           lv_obj_report_style_change(id(style_arc_info));
           lv_style_set_arc_color(id(style_arc_warning), lv_color_hex(UIColor.WARNING));
           lv_obj_report_style_change(id(style_arc_warning));
+          lv_style_set_text_color(id(style_bandeau_text_soft), lv_color_hex(UIBandeau.TEXT_SOFT));
+          lv_obj_report_style_change(id(style_bandeau_text_soft));
+          lv_style_set_text_color(id(style_bandeau_text_dim), lv_color_hex(UIBandeau.TEXT_DIM));
+          lv_obj_report_style_change(id(style_bandeau_text_dim));
+          lv_style_set_text_color(id(style_bandeau_text_rain_value), lv_color_hex(UIBandeau.RAIN_VALUE));
+          lv_obj_report_style_change(id(style_bandeau_text_rain_value));
+          lv_style_set_text_color(id(style_bandeau_text_temp_min), lv_color_hex(UIBandeau.TEMP_MIN));
+          lv_obj_report_style_change(id(style_bandeau_text_temp_min));
+          lv_style_set_bg_color(id(style_bandeau_bg_bar_inactive), lv_color_hex(UIBandeau.BAR_INACTIVE));
+          lv_obj_report_style_change(id(style_bandeau_bg_bar_inactive));
+          lv_style_set_text_color(id(style_horloge_text_soft), lv_color_hex(UIHorloge.TEXT_SOFT));
+          lv_obj_report_style_change(id(style_horloge_text_soft));
       - lvgl.theme.update:
           label:
             text_color: !lambda 'return lv_color_hex(UIColor.TEXT_SOFT);'
+      - lambda: |-
+          // Polices d'affichage du thème (`polices:`), géométrie de l'horloge comprise.
+          esphome::font::Font* const polices[] = {id(roboto_130_b), id(roboto_45_b), id(roboto_32_b)};
+          lv_obj_t* const horloge[] = {id(lbl_time_h10_a), id(lbl_time_h10_b), id(lbl_time_h1_a), id(lbl_time_h1_b), id(lbl_time_m10_a), id(lbl_time_m10_b), id(lbl_time_m1_a), id(lbl_time_m1_b), id(lbl_time_colon)};
+          theme_polices(id(style_police_horloge), id(style_police_date), id(style_police_titre), polices, 3, horloge);
       # <<< styles
       - lambda: |-
           // Fond de la page principale (les pages des jeux restent sombres) et styles

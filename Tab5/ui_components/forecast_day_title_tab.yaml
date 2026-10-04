@@ -7,8 +7,7 @@ obj:
   y: 7
   width: 130
   height: 46
-  border_width: 0
-  styles: style_meteo_card_page
+  styles: style_onglet_jour_page  # sans bordure (le style)
   scrollbar_mode: "OFF"
   widgets:
     - label: { id: "j${idx}_day", text: "${day_label}", align: CENTER, text_font: roboto_32_b }

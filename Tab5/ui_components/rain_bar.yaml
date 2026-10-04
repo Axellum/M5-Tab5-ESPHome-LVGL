@@ -12,7 +12,7 @@ obj:
   id: rb_${n}
   width: ${w}
   height: 50
-  styles: style_bg_bar_inactive
+  styles: style_bandeau_bg_bar_inactive
   border_width: 0
   pad_all: 0
   widgets:
@@ -21,6 +21,6 @@ obj:
         align: BOTTOM_MID
         width: ${w}
         height: 0
-        styles: style_bg_bar_inactive
+        styles: style_bandeau_bg_bar_inactive
         border_width: 0
         radius: 0

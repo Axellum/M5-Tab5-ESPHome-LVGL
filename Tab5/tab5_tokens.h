@@ -164,12 +164,16 @@ struct Palette {
 // premier thème, en sombre, est la palette d'origine de l'interface.
 struct Theme {
     const char* nom;  // option du select « Thème » (Home Assistant la lit : jamais traduite)
+    // En mode clair, le bandeau central / l'horloge gardent la palette sombre du thème
+    // (`zones_sombres:`) : UIBandeau / UIHorloge (ci-dessous).
+    bool bandeau_sombre;
+    bool horloge_sombre;
     Palette sombre;
     Palette clair;
 };
 // >>> themes (généré par tools/gen_themes.py depuis Tab5/themes/, ne pas éditer)
 inline constexpr Theme THEMES[] = {
-    {"Ardoise",  // Tab5/themes/ardoise.yaml
+    {"Ardoise", false, false,  // Tab5/themes/ardoise.yaml
      {  // sombre
       .BG                  = 0x0B1120,
       .GLASS_HI            = 0x2C3A52,
@@ -323,6 +327,15 @@ inline constexpr Palette PALETTE_SOMBRE = THEMES[0].sombre;
 // pointeur de membre (`&Palette::TEXT_PRIMARY`, lu par `UIColor.*champ`), pas une
 // valeur.
 inline Palette UIColor = PALETTE_SOMBRE;
+
+// Palettes du bandeau central et de l'horloge (thèmes, lot 3) : égales à UIColor, sauf
+// en mode clair d'un thème qui garde ces zones sombres (`zones_sombres:` de
+// Tab5/themes/<thème>.yaml) — elles prennent alors sa palette sombre. Ce qui est peint
+// dans ces zones les lit à la place d'UIColor : styles style_bandeau_* et
+// style_horloge_* (tab5-styles.yaml), et le C++ du bandeau (vigilance, pluie, planning,
+// alertes, réponse vocale).
+inline Palette UIBandeau = PALETTE_SOMBRE;
+inline Palette UIHorloge = PALETTE_SOMBRE;
 
 // Fond clair ? (luminosité perçue du fond, 0,299 R + 0,587 G + 0,114 B, au-dessus de
 // la moitié). Pour ce qui n'est pas une couleur : la pastille sous les icônes de

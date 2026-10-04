@@ -63,7 +63,7 @@ obj:
         y: -10
         width: 340
         height: 88
-        styles: style_meteo_card_page
+        styles: style_clim_carte_page
         scrollbar_mode: "OFF"
         # − et + en verre plein (style_clim_btn, opaque depuis le 01/10/2026) : ils sont
         # posés sur cette tuile, pas sur la page — un pré-mélange sur BG serait faux ici.
