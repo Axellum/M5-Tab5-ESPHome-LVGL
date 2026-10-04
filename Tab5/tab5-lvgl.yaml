@@ -540,6 +540,7 @@ lvgl:
         - !include ui_components/light_popup.yaml
         - !include ui_components/tv_remote_popup.yaml
         - !include ui_components/pots_popup.yaml
+        - !include ui_components/energie_popup.yaml
         - !include ui_components/calendar_popup.yaml
         - !include ui_components/assistant_popup.yaml
         - !include ui_components/alarm_popup.yaml

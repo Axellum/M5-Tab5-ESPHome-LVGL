@@ -1,0 +1,26 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Carte de l'instantané du popup Énergie (ADR-0028), réutilisée 4 fois par
+# energie_popup.yaml : 0 solaire, 1 maison, 2 réseau, 3 batterie.
+# vars : n (0-3, suffixe des ids lus par tab5_energie.cpp via g_energie_ui).
+# Ne rien assigner ici : tab5_energie.cpp écrit le nom (traduit en C++ : « RÉSEAU » a déjà
+# un autre sens, « NETWORK », dans la console système, d'où tr_ctx), montre les cartes dont
+# un capteur est choisi, les répartit sur toute la largeur (x, largeur ; 210 px de haut),
+# et écrit l'icône (mdi_font_45, glyphe_carte → MDI_CODE_TARGETS), la valeur et les deux
+# lignes.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: "energie_carte_${n}"
+  align: TOP_LEFT
+  x: 24
+  y: ${modal_body_y}
+  width: 288
+  height: 210
+  hidden: true
+  styles: style_glass_card
+  scrollable: false
+  widgets:
+    - label: { id: "energie_nom_${n}", text: "", align: TOP_LEFT, x: 22, y: 16, text_color: color_accent }
+    - label: { id: "energie_icone_${n}", text: "", align: TOP_RIGHT, x: -18, y: 12, text_font: mdi_font_45, text_color: color_text_dim }
+    - label: { id: "energie_valeur_${n}", text: "--", align: TOP_LEFT, x: 22, y: 58, text_font: roboto_45_b }
+    - label: { id: "energie_ligne1_${n}", text: "", align: TOP_LEFT, x: 22, y: 126, text_color: color_text_dim }
+    - label: { id: "energie_ligne2_${n}", text: "", align: TOP_LEFT, x: 22, y: 162, text_color: color_text_dim }

@@ -108,6 +108,8 @@ select:
       - "Plantes"
       - "Télécommande TV"
       - "Console système"
+      # ADR-0028 : à la fin, les index des autres options ne bougent pas.
+      - "Énergie"
     on_value:
       # Les popups sont des enfants de `page_main` : si la tablette est sur le
       # sélecteur Arcade ou dans une partie, en ouvrir un jouerait hors écran
@@ -210,6 +212,10 @@ select:
                      // d'ouverture, comme son bouton (tab5-lvgl.yaml).
               lv_obj_remove_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
               lv_obj_move_to_index(id(layer_console_sys), -1);
+              break;
+            case 9:  // Énergie (ADR-0028) : son script pose les widgets à la première
+                     // ouverture et demande ses données à HA.
+              id(tab5_energie_ouvrir).execute();
               break;
             default:
               if (target != nullptr) {

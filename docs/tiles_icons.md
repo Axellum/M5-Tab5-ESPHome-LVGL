@@ -70,7 +70,8 @@ Generated from `Tab5/tuiles_icones.yaml` by `tools/gen_tuiles_icones.py` (do not
 | `batterie` | battery | battery, battery-outline, battery-off, battery-alert, battery-high, battery-medium, battery-low, battery-charging | `sensor.battery`, `binary_sensor.battery` |
 | `mouvement` | motion-sensor-off / motion-sensor | motion-sensor, motion-sensor-off, run, run-fast, walk | `binary_sensor.motion`, `binary_sensor.moving` |
 | `presence` | home-outline / home | home, home-outline, home-account, account, account-outline, account-off, account-off-outline | `person`, `device_tracker`, `binary_sensor.presence`, `binary_sensor.occupancy` |
-| `energie` | flash | flash, flash-outline, flash-off, lightning-bolt, lightning-bolt-outline, meter-electric, meter-electric-outline, transmission-tower, home-lightning-bolt, home-lightning-bolt-outline, solar-power, solar-power-variant, solar-panel | `sensor.power`, `sensor.energy`, `sensor.voltage`, `sensor.current`, `sensor.apparent_power`, `binary_sensor.power` |
+| `energie` | flash | flash, flash-outline, flash-off, lightning-bolt, lightning-bolt-outline, meter-electric, meter-electric-outline, transmission-tower, home-lightning-bolt, home-lightning-bolt-outline | `sensor.power`, `sensor.energy`, `sensor.voltage`, `sensor.current`, `sensor.apparent_power`, `binary_sensor.power` |
+| `solaire` | solar-power | solar-power, solar-power-variant, solar-panel |  |
 | `plante` | flower | flower, flower-outline, sprout, sprout-outline, leaf, cactus | `sensor.moisture` |
 | `co2` | molecule-co2 | molecule-co2, molecule-co | `sensor.carbon_dioxide` |
 | `fumee` | smoke-detector / smoke-detector-alert | smoke-detector, smoke-detector-alert, smoke-detector-variant, smoke-detector-variant-alert, smoke-detector-off, fire-alert | `binary_sensor.smoke`, `binary_sensor.gas`, `binary_sensor.carbon_monoxide` |
@@ -151,7 +152,8 @@ Générée depuis `Tab5/tuiles_icones.yaml` par `tools/gen_tuiles_icones.py` (ne
 | `batterie` | battery | battery, battery-outline, battery-off, battery-alert, battery-high, battery-medium, battery-low, battery-charging | `sensor.battery`, `binary_sensor.battery` |
 | `mouvement` | motion-sensor-off / motion-sensor | motion-sensor, motion-sensor-off, run, run-fast, walk | `binary_sensor.motion`, `binary_sensor.moving` |
 | `presence` | home-outline / home | home, home-outline, home-account, account, account-outline, account-off, account-off-outline | `person`, `device_tracker`, `binary_sensor.presence`, `binary_sensor.occupancy` |
-| `energie` | flash | flash, flash-outline, flash-off, lightning-bolt, lightning-bolt-outline, meter-electric, meter-electric-outline, transmission-tower, home-lightning-bolt, home-lightning-bolt-outline, solar-power, solar-power-variant, solar-panel | `sensor.power`, `sensor.energy`, `sensor.voltage`, `sensor.current`, `sensor.apparent_power`, `binary_sensor.power` |
+| `energie` | flash | flash, flash-outline, flash-off, lightning-bolt, lightning-bolt-outline, meter-electric, meter-electric-outline, transmission-tower, home-lightning-bolt, home-lightning-bolt-outline | `sensor.power`, `sensor.energy`, `sensor.voltage`, `sensor.current`, `sensor.apparent_power`, `binary_sensor.power` |
+| `solaire` | solar-power | solar-power, solar-power-variant, solar-panel |  |
 | `plante` | flower | flower, flower-outline, sprout, sprout-outline, leaf, cactus | `sensor.moisture` |
 | `co2` | molecule-co2 | molecule-co2, molecule-co | `sensor.carbon_dioxide` |
 | `fumee` | smoke-detector / smoke-detector-alert | smoke-detector, smoke-detector-alert, smoke-detector-variant, smoke-detector-variant-alert, smoke-detector-off, fire-alert | `binary_sensor.smoke`, `binary_sensor.gas`, `binary_sensor.carbon_monoxide` |

@@ -1,0 +1,76 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-energie.yaml
+# @role Popup « Énergie » (ADR-0028, 04/10/2026, discussion #278) : pose les widgets que
+#       tab5_energie.cpp dessine (g_energie_ui) et sa demande à Home Assistant.
+#         - tab5_energie_ouvrir : ouvre le popup (tuile cap à l'option e, ou « Aller à
+#           l'écran → Énergie »). Pose les widgets à la première ouverture, puis
+#           energie_ouvrir() : vue des heures, dessin, demande à HA.
+#         - tab5_energie_demande : événement esphome.tab5_energie (vue = heures | jours |
+#           mois), émis à l'ouverture et à chaque bouton de vue. Le blueprint « Tab5 —
+#           emplacements » y répond en lançant script.tab5_energie
+#           (HomeAssistant_Config/packages/tab5_energie.yaml), qui pousse l'historique de la
+#           vue et l'instantané (actions tab5_maj_energie / _historique, tab5-api-logic.yaml)
+#           tant que « Écran courant » vaut « Énergie ».
+# @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
+#       nomme aucune entité, elle dit seulement quelle vue elle montre. Chargé APRÈS
+#       tab5_lvgl : il référence des widgets. Aucun lv_* ici ; la tablette ne garde rien.
+# @ai_instruction Un widget de plus = son champ dans EnergieUI (tab5_custom.h) et sa ligne
+#       ici. La commande est une lambda SANS capture (pointeur de fonction), comme celles
+#       de tab5-tuiles.yaml.
+# ============================================================================
+
+script:
+  - id: tab5_energie_ouvrir
+    then:
+      - lambda: |-
+          EnergieUI& u = g_energie_ui;
+          if (u.popup == nullptr) {
+            u.carte[0] = id(energie_carte_0);
+            u.carte[1] = id(energie_carte_1);
+            u.carte[2] = id(energie_carte_2);
+            u.carte[3] = id(energie_carte_3);
+            u.nom[0] = id(energie_nom_0);
+            u.nom[1] = id(energie_nom_1);
+            u.nom[2] = id(energie_nom_2);
+            u.nom[3] = id(energie_nom_3);
+            u.icone[0] = id(energie_icone_0);
+            u.icone[1] = id(energie_icone_1);
+            u.icone[2] = id(energie_icone_2);
+            u.icone[3] = id(energie_icone_3);
+            u.valeur[0] = id(energie_valeur_0);
+            u.valeur[1] = id(energie_valeur_1);
+            u.valeur[2] = id(energie_valeur_2);
+            u.valeur[3] = id(energie_valeur_3);
+            u.ligne1[0] = id(energie_ligne1_0);
+            u.ligne1[1] = id(energie_ligne1_1);
+            u.ligne1[2] = id(energie_ligne1_2);
+            u.ligne1[3] = id(energie_ligne1_3);
+            u.ligne2[0] = id(energie_ligne2_0);
+            u.ligne2[1] = id(energie_ligne2_1);
+            u.ligne2[2] = id(energie_ligne2_2);
+            u.ligne2[3] = id(energie_ligne2_3);
+            u.graphique = id(energie_graphique);
+            u.titre = id(energie_titre);
+            u.vue_btn[0] = id(energie_vue_0);
+            u.vue_btn[1] = id(energie_vue_1);
+            u.vue_btn[2] = id(energie_vue_2);
+            u.zone = id(energie_zone);
+            u.attente = id(energie_attente);
+            u.police = id(roboto_22);
+            u.demander = [](const char* vue) { id(tab5_energie_demande).execute(std::string(vue)); };
+            // En dernier : energie_ouvrir() ne fait rien tant que popup est nul.
+            u.popup = id(energie_popup);
+          }
+          energie_ouvrir();
+
+  - id: tab5_energie_demande
+    mode: queued
+    max_runs: 3
+    parameters:
+      vue: string
+    then:
+      - homeassistant.event:
+          event: esphome.tab5_energie
+          data:
+            vue: !lambda 'return vue;'

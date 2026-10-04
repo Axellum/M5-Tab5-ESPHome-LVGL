@@ -64,6 +64,7 @@ esphome:
     - Tab5/tab5_journal.cpp
     - Tab5/tab5_zones.cpp
     - Tab5/tab5_tuiles.cpp
+    - Tab5/tab5_energie.cpp
     - Tab5/game_common.h
     - Tab5/marble_game.h
     - Tab5/marble_game.cpp
@@ -189,4 +190,5 @@ packages:
   tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml
   tab5_alarm: !include Tab5/tab5-alarm.yaml
   tab5_tuiles: !include Tab5/tab5-tuiles.yaml
+  tab5_energie: !include Tab5/tab5-energie.yaml
   tab5_zones: !include Tab5/tab5-zones.yaml

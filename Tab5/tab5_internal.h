@@ -125,6 +125,12 @@ void tuiles_swipe_ha(bool gauche);
 void texte_ha_copier(char* dst, size_t cap, const char* src, size_t n);
 void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur);
 
+// --- Énergie (tab5_energie.cpp, ADR-0028) ---
+// Puissance ou énergie en unités courtes : W / kW / MW → « 850 W », « 3.45 kW », « 12.5 kW » ;
+// Wh / kWh / MWh → « 4.20 kWh », « 312 kWh », « 3.85 MWh ». Faux (rien d'écrit) pour
+// une autre unité. Aussi la valeur d'une tuile cap à l'option e (tab5_tuiles.cpp).
+bool energie_formater(char* out, size_t n, float v, const char* unite);
+
 // --- Clim (tab5_cards.cpp, ADR-0026, ADR-0027) ---
 // emplacements_appliquer (tab5_zones.cpp) : entrée « climr|min|max|pas|unité|capacités|nom »
 // (`reste` = ce qui suit « climr| »). Range les réglages et les applique aux widgets de

@@ -295,6 +295,7 @@ font:
       - "\U000F08DD"  # floor-lamp (lampadaire)
       - "\U000F091C"  # wall-sconce (applique)
       - "\U000F095F"  # desk-lamp (lampe_bureau)
+      - "\U000F0A72"  # solar-power (solaire)
       - "\U000F0AAC"  # dishwasher (lave_vaisselle)
       - "\U000F0AD8"  # radiator-off (radiateur)
       - "\U000F0BC2"  # script-text (script)
@@ -350,7 +351,7 @@ font:
       - "\U000F0238"  # fire (feux de forêt, alertes MeteoAlarm — lot 4c)
 
   # 45 px — boutons des popups : télécommande TV, clim (modes, préréglages), lumière,
-  # réveil, rangée des plantes, en-tête de la sélection des consoles.
+  # réveil, rangée des plantes, en-tête de la sélection des consoles, cartes du popup Énergie.
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_45
     size: 45
@@ -391,11 +392,17 @@ font:
       - "\U000F07D0"  # home-assistant
       - "\U000F09F1"  # flower-tulip
       - "\U000F0D08"  # flower-poppy
+      - "\U000F0D3E"  # transmission-tower (popup Énergie, réseau sans échange)
       - "\U000F0E66"  # sprout
       - "\U000F0E79"  # arrow-up-down
       - "\U000F1051"  # led-strip-variant
       - "\U000F146D"  # fan-chevron-down
       - "\U000F14DE"  # rocket-launch
+      - "\U000F17DE"  # battery-arrow-down (popup Énergie, décharge)
+      - "\U000F17E0"  # battery-arrow-up (popup Énergie, charge)
+      - "\U000F1903"  # home-lightning-bolt (popup Énergie, maison)
+      - "\U000F192C"  # transmission-tower-export (popup Énergie, vente)
+      - "\U000F192D"  # transmission-tower-import (popup Énergie, achat)
       # >>> tuiles
       # Palette des tuiles de pièce (ADR-0023), sauf les glyphes déjà listés au-dessus.
       - "\U000F001B"  # air-conditioner (clim)
@@ -438,6 +445,7 @@ font:
       - "\U000F08DD"  # floor-lamp (lampadaire)
       - "\U000F091C"  # wall-sconce (applique)
       - "\U000F095F"  # desk-lamp (lampe_bureau)
+      - "\U000F0A72"  # solar-power (solaire)
       - "\U000F0AAC"  # dishwasher (lave_vaisselle)
       - "\U000F0AD8"  # radiator-off (radiateur)
       - "\U000F0BC2"  # script-text (script)
@@ -583,6 +591,7 @@ font:
       - "\U000F08DD"  # floor-lamp (lampadaire)
       - "\U000F091C"  # wall-sconce (applique)
       - "\U000F095F"  # desk-lamp (lampe_bureau)
+      - "\U000F0A72"  # solar-power (solaire)
       - "\U000F0AAC"  # dishwasher (lave_vaisselle)
       - "\U000F0AD8"  # radiator-off (radiateur)
       - "\U000F0BC2"  # script-text (script)
