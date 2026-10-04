@@ -194,7 +194,7 @@ PIECES: dict = {
         0: Tuile("int", "Ordinateur", "ordinateur", "o", etat="on"),
         # Le capteur solaire de la section « Énergie » (option e, ADR-0028) : son appui
         # ouvre le popup Énergie. Même valeur que l'instantané (ENERGIE_INSTANTANE).
-        1: Tuile("cap", "Production solaire", "solaire", "e", complement="W", etat="1450", valeur="1450"),
+        1: Tuile("cap", "Solaire", "solaire", "e", complement="W", etat="1450", valeur="1450"),
     }),
     # Heures 5-9.
     4: Piece("Jardin", {

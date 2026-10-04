@@ -36,7 +36,7 @@ Constraints that hold: push-only and events-only (ADR-0001, ADR-0025) — the fi
 
 ## Consequences
 
-- One more popup, package, C++ unit (`tab5_energie.cpp`) and two actions; 21 actions in the contract. The demo pushes a solar home (room « Bureau », tile « Production solaire ») and the off-device render captures the popup in its three views.
+- One more popup, package, C++ unit (`tab5_energie.cpp`) and two actions; 21 actions in the contract. The demo pushes a solar home (room « Bureau », tile « Solaire ») and the off-device render captures the popup in its three views.
 - Sign conventions are the user's to set (two « Invert » boxes, or two grid sensors); the project does not guess an integration's convention.
 - With two tablets opening the popup at the same time, the last request wins (`mode: restart`); the other keeps its last values until its next request.
 - The popup closes itself after the usual idle time, which ends the script's loop at the next check.
