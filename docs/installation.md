@@ -265,6 +265,16 @@ The five tiles at the bottom of the screen are **rooms** you fill yourself ([ADR
 - **Room 1 left empty**: the home page keeps the 3.x setup (folded section « Tuiles de l'accueil (réglage 3.x) »: PC or TV, shutter, three lights), with the PC tile's PC + TV behaviour. Nothing to redo after the update.
 - **Firmware 3.0 or 3.1**: the blueprint reads the tablet's version and then only uses the 3.x setup; the rooms show up once the firmware is updated. The firmware and the blueprint can be updated in either order.
 
+### Solar energy (optional)
+
+A solar installation gets its own popup ([ADR-0028](decisions/0028-solar-energy-popup.md)): solar, home, grid and battery live, and the production as bars per hour (today), per day (30 days) and per month (12 months).
+
+1. In the « Tab5 — emplacements » automation, open the folded section **« Énergie · Energy »** and pick what you have: solar power, solar energy produced (the kWh meter of HA's Energy dashboard: the day total and the bars come from its statistics), grid power, home consumption, battery level, power and temperature. Every field is optional. Grid power is positive when the home buys: tick « Invert » if your meter says the opposite, or give the export in its own field if your meter splits them. Battery power is positive when charging (same « Invert » box). Left empty, home consumption is computed (solar + grid − battery charge).
+2. Place one of these sensors in a room (the solar power, for instance): its tile shows the value and opens the popup on tap. The option « Énergie » of the tablet's « Aller à l'écran » select, in Home Assistant, opens it too.
+3. The `tab5_energie.yaml` package (in the archive of Step 4) pushes the values while the popup is open. Without it, the popup says « En attente de Home Assistant ».
+
+Section left empty: nothing changes on the screen.
+
 ### Other zones
 
 **What you don't have disappears**, with its buttons ([ADR-0018](decisions/0018-optional-zones-confirmed-by-ha.md), [ADR-0019](decisions/0019-logical-slots-blueprint.md)).
@@ -565,6 +575,16 @@ Les cinq tuiles du bas de l'écran sont des **pièces** que vous remplissez vous
 - La valeur d'un capteur part avec les autres mesures, toutes les 5 minutes ; les autres appareils partent dès que ce que montre l'écran change.
 - **Pièce 1 laissée vide** : l'accueil garde le réglage 3.x (section repliée « Tuiles de l'accueil (réglage 3.x) » : PC ou TV, volet, trois lumières), avec le comportement PC + TV de la tuile PC. Rien à refaire après la mise à jour.
 - **Firmware 3.0 ou 3.1** : le blueprint lit la version de la tablette et n'utilise alors que le réglage 3.x ; les pièces apparaissent une fois le firmware mis à jour. Firmware et blueprint se mettent à jour dans n'importe quel ordre.
+
+### Énergie solaire (facultatif)
+
+Une installation solaire a son propre popup ([ADR-0028](decisions/0028-solar-energy-popup.md)) : solaire, maison, réseau et batterie en direct, et la production en barres par heure (aujourd'hui), par jour (30 jours) et par mois (12 mois).
+
+1. Dans l'automatisation « Tab5 — emplacements », ouvrez la section repliée **« Énergie · Energy »** et choisissez ce que vous avez : puissance solaire, énergie solaire produite (le compteur en kWh du tableau Énergie de HA : le total du jour et les barres viennent de ses statistiques), puissance du réseau, consommation de la maison, niveau, puissance et température de la batterie. Tous les champs sont facultatifs. La puissance du réseau est positive quand la maison achète : cochez « Inverser » si votre compteur dit l'inverse, ou donnez la vente dans son propre champ si votre compteur les sépare. La puissance de la batterie est positive en charge (même case « Inverser »). Laissée vide, la consommation de la maison est calculée (solaire + réseau − charge de la batterie).
+2. Placez l'un de ces capteurs dans une pièce (la puissance solaire, par exemple) : sa tuile montre la valeur et ouvre le popup au toucher. L'option « Énergie » de la liste « Aller à l'écran » de la tablette, dans Home Assistant, l'ouvre aussi.
+3. Le package `tab5_energie.yaml` (dans l'archive de l'étape 4) pousse les valeurs tant que le popup est ouvert. Sans lui, le popup affiche « En attente de Home Assistant ».
+
+Section laissée vide : rien ne change à l'écran.
 
 ### Autres zones
 

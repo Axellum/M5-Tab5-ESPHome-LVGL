@@ -8,7 +8,7 @@
 > d'extension du projet. Les chemins sont relatifs à la racine du dépôt
 > `H:\AuxFilsDesIdees\00ProjetTab`.
 
-`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-29** (47 composants UI dont 26 inclus par `tab5-lvgl.yaml`, 19 services ; tenus par `tests/test_doc_comptes.py`) · Sources vérifiées directement dans l'arborescence du dépôt.
+`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-29** (50 composants UI dont 27 inclus par `tab5-lvgl.yaml`, 21 services ; tenus par `tests/test_doc_comptes.py`) · Sources vérifiées directement dans l'arborescence du dépôt.
 
 ---
 
@@ -28,7 +28,7 @@
 | `tab5-hardware.yaml` | `Tab5/` | Bas niveau : display MIPI-DSI, tactile ST7123, DAC/ADC audio, media_player, expander GPIO, esp32_hosted, OTA. |
 | `tab5-sensors-diagnostics.yaml` | `Tab5/` | WiFi, alimentation GPIO, statut API HA, uptime, RAM, loop time, horloge SNTP. |
 | `tab5-sensors-domotique.yaml` | `Tab5/` | Miroirs d'entités HA : plantes, lumières, PC, températures, batterie, audio. |
-| `tab5-api-logic.yaml` | `Tab5/` | Contrat API HA↔Tab5 : bloc `api: services:` (19 services ; `tab5_maj_pluie_1h_bulk` a remplacé `tab5_maj_pluie_1h` le 08/09/2026). |
+| `tab5-api-logic.yaml` | `Tab5/` | Contrat API HA↔Tab5 : bloc `api: services:` (21 services ; `tab5_maj_pluie_1h_bulk` a remplacé `tab5_maj_pluie_1h` le 08/09/2026). |
 | `tab5-styles.yaml` | `Tab5/` | Thème "Dark Mode Slate" : tokens `color:`, déclarations `font:`, `lvgl: style_definitions:`. |
 | `tab5-globals.yaml` | `Tab5/` | État partagé (`globals:`) + rotateur carte centrale (interval 8s). |
 | `tab5-scripts.yaml` | `Tab5/` | Scripts transverses : registre des modales, volume, debounces, rotateur, volet, popup lumière, retour à l'accueil. |
@@ -43,7 +43,7 @@
 
 ### 1.3 Composants UI (`Tab5/ui_components/*.yaml`)
 
-47 fichiers, dont 26 inclus directement par `tab5-lvgl.yaml` (recompté le 01/10/2026, après les gabarits de l'horloge et de la pluie). Exemples :
+50 fichiers, dont 27 inclus directement par `tab5-lvgl.yaml` (recompté le 01/10/2026, après les gabarits de l'horloge et de la pluie). Exemples :
 
 | Fichier | Emplacement | Rôle |
 |---|---|---|
