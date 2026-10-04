@@ -14,6 +14,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 - **`docs/press/forum_ha_en.md`** : mêmes passages mis à jour, et une note signale ce qui date
   encore de la 3.0 (langues).
 
+### 2026-10-03 — Plantes de l'accueil : plus de nom rogné
+
+- La rangée des 4 plantes sous l'horloge faisait 350 px pour 4 cases de 90 px séparées
+  de 11 px (espacement par défaut du thème) : les deux cases du bord dépassaient de 8 et
+  11 px et la carte rognait leur texte. Invisible avec « Pot 2 », visible en espagnol : le
+  « P » de « Planta 2 » coupé à gauche, « Planta 3 » à droite (rendu hors tablette du
+  03/10) ; en turc, le « 3 » de « Saksı 3 » perdait 2 px. La carte fait maintenant 375 px
+  (4 × 90 + 5 × 3, espacement à 0) : chaque case garde ses 90 px entiers, la rangée se
+  décale d'1 px vers la gauche et devient centrée. Zone d'appui long de même largeur.
+
 ### 2026-10-03 — Météo choisie dans le blueprint
 
 - **Blueprint « Tab5 — emplacements »** : nouvelle section facultative « Météo · Weather »
