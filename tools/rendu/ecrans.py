@@ -226,7 +226,7 @@ def ecrans_des_pieces(pieces: dict) -> tuple:
 REVEIL_TESTER = (550, 641)
 SONNERIE_ARRETER = (440, 540)
 CAL_JOUR_18 = (642, 342)      # cellule du jeudi 18 (rangée 2, colonne 3)
-CONSOLE_REDEMARRER_HA, CONSOLE_REBOOT = (801, 588), (1060, 588)
+CONSOLE_REDEMARRER_HA, CONSOLE_REBOOT = (801, 631), (1060, 631)
 CONFIRMATION_ANNULER = (813, 596)   # jamais « Confirmer » (1049, 596)
 # Popup Énergie (ADR-0028, energie_popup.yaml) : la tuile du capteur solaire de la démo
 # (pièce « Bureau », page 1 des heures, T1 : deuxième tuile, x 275-505), la croix de
