@@ -188,6 +188,16 @@ def _batterie(montee: bool, niveau: float = float("nan"), en_charge: bool = Fals
 SANS_BATTERIE = (_batterie(False),)
 
 
+def _solaire(pourcent: str) -> Service:
+    """Production solaire du bandeau d'état, comme la pousse le blueprint (clé solaire de
+    tab5_maj_emplacements, % de la puissance crête ; « nan » = aucune valeur)."""
+    return Service("tab5_maj_emplacements", (("payload", f"solaire|{pourcent};"),))
+
+
+# Retour sans l'icône solaire : les autres écrans restent sans elle.
+SANS_SOLAIRE = (_solaire("nan"),)
+
+
 def ecrans_des_pieces(pieces: dict) -> tuple:
     """Le mode HA sur chaque pièce de la démo (ADR-0023) : « HA » depuis l'accueil (pièce
     0, page 2), puis un geste par pièce occupée jusqu'à la bonne (le mode HA saute les
@@ -323,6 +333,15 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-batterie-pleine", (_batterie(True, 95.0),), SANS_BATTERIE),
     Ecran("accueil-batterie-faible", (_batterie(True, 12.0),), SANS_BATTERIE),
     Ecran("accueil-batterie-en-charge", (_batterie(True, 60.0, True),), SANS_BATTERIE),
+    # Production solaire (clé solaire, % de la crête) : icône avant la batterie, couleur
+    # du barème des batteries, panneau gris à 0 % (la nuit). Un écran par palier, puis
+    # les deux icônes ensemble pour l'alignement.
+    Ecran("accueil-solaire-nuit", (_solaire("0"),), SANS_SOLAIRE),
+    Ecran("accueil-solaire-faible", (_solaire("12"),), SANS_SOLAIRE),
+    Ecran("accueil-solaire-moyen", (_solaire("30"),), SANS_SOLAIRE),
+    Ecran("accueil-solaire-bon", (_solaire("60"),), SANS_SOLAIRE),
+    Ecran("accueil-solaire-fort", (_solaire("95"),), SANS_SOLAIRE),
+    Ecran("accueil-solaire-et-batterie", (_batterie(True, 95.0), _solaire("60")), SANS_BATTERIE + SANS_SOLAIRE),
 
     # --- Fenêtres ---------------------------------------------------------------------
     Ecran("reveil", (Service("tab5_maj_rdv_prochains", (("payload", RDV),)), Toucher(*HORLOGE))),
