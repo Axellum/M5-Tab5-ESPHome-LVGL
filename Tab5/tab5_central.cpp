@@ -132,10 +132,11 @@ static uint8_t ha_alert_niveau(const std::string& couleur) {
     return 0;
 }
 
+// Labels du bandeau central : palette UIBandeau.
 static uint32_t ha_alert_couleur_niveau(uint8_t niveau) {
-    if (niveau == 2) return UIColor.ALERT_RED;
-    if (niveau == 1) return UIColor.WARNING;
-    return UIColor.TEXT_PRIMARY;
+    if (niveau == 2) return UIBandeau.ALERT_RED;
+    if (niveau == 1) return UIBandeau.WARNING;
+    return UIBandeau.TEXT_PRIMARY;
 }
 
 // Thèmes (ADR-0029, lot 2) : le niveau posé sur chaque label coloré par un niveau (4
@@ -158,7 +159,7 @@ void central_rejouer_theme() {
     for (const LabelNiveau& l : s_label_niveau) {
         if (l.lbl != nullptr) ui_text_color(l.lbl, ha_alert_couleur_niveau(l.niveau));
     }
-    if (s_lbl_vocal != nullptr) ui_text_color(s_lbl_vocal, UIColor.TEXT_PRIMARY);
+    if (s_lbl_vocal != nullptr) ui_text_color(s_lbl_vocal, UIBandeau.TEXT_PRIMARY);
 }
 
 // Les 8 panneaux du rotateur, rangés par index (0 planning, 1 pluie, 2 vigilance
@@ -1007,7 +1008,7 @@ void show_vocal_response_ui(const std::string& texte,
     if (font) {
         esphome::lvgl::lv_obj_set_style_text_font(lbl_vocal, font, LV_PART_MAIN);
     }
-    lv_obj_set_style_text_color(lbl_vocal, lv_color_hex(UIColor.TEXT_PRIMARY), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lbl_vocal, lv_color_hex(UIBandeau.TEXT_PRIMARY), LV_PART_MAIN);
     s_lbl_vocal = lbl_vocal;
     lv_label_set_recolor(lbl_vocal, false);
 

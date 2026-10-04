@@ -112,22 +112,22 @@ static uint32_t degrade(uint32_t a, uint32_t b, R r) {
 
 // Ancrages : HUM_GRAD_14 (sec) → HUM_GRAD_22 → HUM_GRAD_30 (confort) → HUMIDITY_WET
 // (80 %), par paliers de 3 % au-dessus de 30 %.
-uint32_t get_humidity_color(float x) {
-    if (!std::isfinite(x)) return UIColor.MOISTURE_NAN;
+uint32_t get_humidity_color(float x, const Palette& p) {
+    if (!std::isfinite(x)) return p.MOISTURE_NAN;
     const int val = tab5_float_vers_int(x, 0, 100, 0);
-    if (val <= 14) return UIColor.HUM_GRAD_14;
-    if (val >= 80) return UIColor.HUMIDITY_WET;
+    if (val <= 14) return p.HUM_GRAD_14;
+    if (val >= 80) return p.HUMIDITY_WET;
     if (val >= 30) {
         float step = floor((val - 30) / 3.0) * 3.0;
         float ratio = step / 50.0;
-        return degrade(UIColor.HUM_GRAD_30, UIColor.HUMIDITY_WET, ratio);
+        return degrade(p.HUM_GRAD_30, p.HUMIDITY_WET, ratio);
     }
     if (val >= 22) {
         float ratio = (val - 22) / 8.0;
-        return degrade(UIColor.HUM_GRAD_22, UIColor.HUM_GRAD_30, ratio);
+        return degrade(p.HUM_GRAD_22, p.HUM_GRAD_30, ratio);
     }
     float ratio = (val - 14) / 8.0;
-    return degrade(UIColor.HUM_GRAD_14, UIColor.HUM_GRAD_22, ratio);
+    return degrade(p.HUM_GRAD_14, p.HUM_GRAD_22, ratio);
 }
 
 // Ancrages : TEMP_GRAD_M12 → TEMP_GRAD_0_NEG (0 °C), puis TEMP_GRAD_0_POS → TEMP_GRAD_14

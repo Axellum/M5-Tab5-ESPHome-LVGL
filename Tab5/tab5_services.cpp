@@ -121,11 +121,11 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
     if (ui.lbl_pluie_val != nullptr)  lv_obj_add_flag(ui.lbl_pluie_val, LV_OBJ_FLAG_HIDDEN);
     if (ui.lbl_pluie_unit != nullptr) lv_obj_add_flag(ui.lbl_pluie_unit, LV_OBJ_FLAG_HIDDEN);
 
-    // Couleur de la date selon la vigilance globale.
-    uint32_t col_date = UIColor.SUCCESS;
-    if (strcmp(globale, "Jaune") == 0)       col_date = UIColor.ALERT_DATE_YELLOW;
-    else if (strcmp(globale, "Orange") == 0) col_date = UIColor.ALERT_DATE_ORANGE;
-    else if (strcmp(globale, "Rouge") == 0)  col_date = UIColor.ALERT_DATE_RED;
+    // Couleur de la date (sous l'horloge : palette UIHorloge) selon la vigilance globale.
+    uint32_t col_date = UIHorloge.SUCCESS;
+    if (strcmp(globale, "Jaune") == 0)       col_date = UIHorloge.ALERT_DATE_YELLOW;
+    else if (strcmp(globale, "Orange") == 0) col_date = UIHorloge.ALERT_DATE_ORANGE;
+    else if (strcmp(globale, "Rouge") == 0)  col_date = UIHorloge.ALERT_DATE_RED;
     if (ui.lbl_date != nullptr) lv_obj_set_style_text_color(ui.lbl_date, lv_color_hex(col_date), LV_PART_MAIN);
 
     // Phénomènes, dans l'ordre du payload, avec leur glyphe MDI.
@@ -152,17 +152,18 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
         actives[active_count++] = AlertEntry{kIcons[i], state};
     }
 
-    const bool pastille = palette_claire(UIColor);
+    // Icônes du bandeau central : palette UIBandeau (sombre en clair pour certains thèmes).
+    const bool pastille = palette_claire(UIBandeau);
     for (size_t i = 0; i < 4; i++) {
         lv_obj_t* slot = ui.slots[i];
         if (slot == nullptr) continue;
         const bool shown = i < active_count;
         if (shown) {
             lv_label_set_text(slot, actives[i].icon);
-            uint32_t c = UIColor.ALERT_YELLOW;
-            if (strcmp(actives[i].level, "Orange") == 0)     c = UIColor.ALERT_ORANGE;
-            else if (strcmp(actives[i].level, "Rouge") == 0) c = UIColor.ALERT_RED;
-            lv_obj_set_style_text_color(slot, lv_color_hex(pastille ? UIColor.TEXT_PRIMARY : c), LV_PART_MAIN);
+            uint32_t c = UIBandeau.ALERT_YELLOW;
+            if (strcmp(actives[i].level, "Orange") == 0)     c = UIBandeau.ALERT_ORANGE;
+            else if (strcmp(actives[i].level, "Rouge") == 0) c = UIBandeau.ALERT_RED;
+            lv_obj_set_style_text_color(slot, lv_color_hex(pastille ? UIBandeau.TEXT_PRIMARY : c), LV_PART_MAIN);
             lv_obj_set_style_text_opa(slot, 255, LV_PART_MAIN);
             vigilance_pastille(slot, pastille, c);
         }
@@ -188,14 +189,15 @@ static int rain_level(const std::string& intensite) {
     return 0;
 }
 
+// Barres du bandeau central : palette UIBandeau.
 static void rain_level_style(int niveau, uint32_t& color, int& height) {
-    color = UIColor.CLIM_TRACK_INACTIVE;  // barre vide
+    color = UIBandeau.CLIM_TRACK_INACTIVE;  // barre vide
     height = 0;
     switch (niveau) {
-        case 1: color = UIColor.RAIN_LIGHT;    height = 13; break;  // ~1/4 hauteur
-        case 2: color = UIColor.RAIN_MODERATE; height = 25; break;  // 1/2
-        case 3: color = UIColor.RAIN_HEAVY;    height = 38; break;  // 3/4
-        case 4: color = UIColor.RAIN_EXTREME;  height = 50; break;  // max
+        case 1: color = UIBandeau.RAIN_LIGHT;    height = 13; break;  // ~1/4 hauteur
+        case 2: color = UIBandeau.RAIN_MODERATE; height = 25; break;  // 1/2
+        case 3: color = UIBandeau.RAIN_HEAVY;    height = 38; break;  // 3/4
+        case 4: color = UIBandeau.RAIN_EXTREME;  height = 50; break;  // max
         default: break;
     }
 }
@@ -285,10 +287,10 @@ void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite) {
     s_predict_humidite = humidite;
     if (neige >= 5) {
         lv_label_set_text(icon, "\U000F0598");  // flocon
-        lv_obj_set_style_text_color(icon, lv_color_hex(UIColor.WARNING), LV_PART_MAIN);
+        lv_obj_set_style_text_color(icon, lv_color_hex(UIBandeau.WARNING), LV_PART_MAIN);
     } else {
         lv_label_set_text(icon, "\U000F0597");  // goutte
-        lv_obj_set_style_text_color(icon, lv_color_hex(get_humidity_color(humidite)), LV_PART_MAIN);
+        lv_obj_set_style_text_color(icon, lv_color_hex(get_humidity_color(humidite, UIBandeau)), LV_PART_MAIN);
     }
 }
 

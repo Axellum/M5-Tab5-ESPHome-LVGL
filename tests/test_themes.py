@@ -26,7 +26,10 @@ sys.path.insert(0, str(REPO / "tools"))
 
 import gen_themes  # noqa: E402
 RE_LAMBDA = re.compile(r"^return lv_color_hex\(UIColor\.(\w+)\);$")
+# Lot 3 : le bandeau central et l'horloge lisent la palette de leur zone.
+RE_LAMBDA_ZONE = re.compile(r"^return lv_color_hex\((UIColor|UIBandeau|UIHorloge)\.(\w+)\);$")
 RE_ROLE = re.compile(r"^style_(text|bg|border|arc)_(\w+)$")
+RE_ZONE = re.compile(r"^style_(bandeau|horloge)_(text|bg|border|arc)_(\w+)$")
 
 
 class _Chargeur(yaml.SafeLoader):
@@ -88,8 +91,9 @@ def test_toute_couleur_des_styles_lit_la_palette():
     def visite(noeud, ou):
         for cle, val in noeud.items():
             if cle.endswith("_color"):
-                m = RE_LAMBDA.match(str(val).strip())
-                assert m and m.group(1) in champs, f"{ou}.{cle} = {val!r} : lire `UIColor.X`, X champ de Palette"
+                m = RE_LAMBDA_ZONE.match(str(val).strip())
+                assert m and m.group(2) in champs, (
+                    f"{ou}.{cle} = {val!r} : lire `UIColor.X` (ou UIBandeau / UIHorloge), X champ de Palette")
             elif isinstance(val, dict):
                 visite(val, f"{ou}.{cle}")
 
@@ -110,6 +114,26 @@ def test_styles_de_role_une_seule_couleur_et_le_bon_champ():
         assert m and m.group(1) == _champ_du_role(role), f"{sid} doit lire UIColor.{_champ_du_role(role)}"
 
 
+def test_styles_de_zone_lisent_la_palette_de_leur_zone():
+    """style_bandeau_<prop>_<rôle> lit UIBandeau, style_horloge_<prop>_<rôle> UIHorloge ;
+    les cartes du bandeau et de l'horloge aussi. Une couleur d'UIColor dans le bandeau
+    resterait claire sur le bandeau sombre d'un thème à `zones_sombres:`."""
+    palettes = {"bandeau": "UIBandeau", "horloge": "UIHorloge"}
+    styles = {s["id"]: s for s in _lvgl()["style_definitions"]}
+    zones = {sid: s for sid, s in styles.items() if RE_ZONE.match(sid)}
+    assert len(zones) >= 6, "le motif ne trouve plus les styles de zone"
+    for sid, style in zones.items():
+        zone, prop, role = RE_ZONE.match(sid).groups()
+        props = {k: v for k, v in style.items() if k != "id"}
+        assert list(props) == [f"{prop}_color"], f"{sid} : une seule propriété, {prop}_color"
+        m = RE_LAMBDA_ZONE.match(str(props[f"{prop}_color"]).strip())
+        assert m and m.groups() == (palettes[zone], _champ_du_role(role)), \
+            f"{sid} doit lire {palettes[zone]}.{_champ_du_role(role)}"
+    for sid, zone in (("style_bandeau_page", "bandeau"), ("style_horloge_page", "horloge")):
+        lues = {RE_LAMBDA_ZONE.match(str(v).strip()).group(1) for k, v in styles[sid].items() if k.endswith("_color")}
+        assert lues == {palettes[zone]}, f"{sid} doit lire {palettes[zone]}, lu {lues}"
+
+
 def test_chaque_style_de_role_sert():
     """Pas de style mort : chaque style de rôle est posé par au moins un widget."""
     sources = [p for p in list(TAB5.glob("*.yaml")) + list((TAB5 / "ui_components").glob("*.yaml"))
@@ -118,7 +142,7 @@ def test_chaque_style_de_role_sert():
     corpus = "\n".join(l for p in sources for l in p.read_text(encoding="utf-8").splitlines()
                        if not l.lstrip().startswith("#"))
     for style in _lvgl()["style_definitions"]:
-        if RE_ROLE.match(style["id"]):
+        if RE_ROLE.match(style["id"]) or RE_ZONE.match(style["id"]) or style["id"].startswith("style_police_"):
             assert re.search(rf"\b{style['id']}\b", corpus), f"{style['id']} n'est posé par aucun widget"
 
 

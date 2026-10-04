@@ -11,6 +11,9 @@
 # [AI-WARNING] Cadre 75 × 104 et label à y -23 : valeurs de roboto_130_b, expliquées sur
 # la tuile horloge (tab5-lvgl.yaml) et recalculées depuis la police par
 # tests/test_horloge.py. La hauteur du cadre EST la course du rouleau (lue par le C++).
+# Police par style (style_police_horloge) : un thème peut la changer, theme_polices()
+# (tab5_theme.cpp) repose alors le y des labels (tools/police_theme.py) ; le cadre
+# ne bouge pas.
 # Sorti de tab5-lvgl.yaml le 01/10/2026 (audit des conteneurs, règle 5) : 4 copies.
 # ═══════════════════════════════════════════════════════
 obj:
@@ -28,10 +31,10 @@ obj:
         text: ""
         align: TOP_MID
         y: -23
-        text_font: roboto_130_b
+        styles: [style_police_horloge, style_horloge_text_soft]
     - label:
         id: lbl_time_${d}_b
         text: ""
         align: TOP_MID
         y: -23
-        text_font: roboto_130_b
+        styles: [style_police_horloge, style_horloge_text_soft]

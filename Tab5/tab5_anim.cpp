@@ -468,19 +468,40 @@ static void setup_button_press_animation(lv_obj_t* btn) {
     lv_obj_add_style(btn, opaque ? &style_btn_pressed_opaque : &style_btn_pressed, LV_STATE_PRESSED);
 }
 
+// Heuristique : objet clickable + radius 18 = bouton verre (style_clim_btn).
+// Inclut aussi les tuiles meteo cliquables (effet desirable : feedback tactile).
+static bool est_bouton_verre(lv_obj_t* obj) {
+    return lv_obj_has_flag(obj, LV_OBJ_FLAG_CLICKABLE) && lv_obj_get_style_radius(obj, LV_PART_MAIN) == 18;
+}
+
+// [AI-WARNING] Thèmes (lot 3, 05/10/2026) : un thème peut changer le rayon des styles
+// partagés (theme_formes), dès le démarrage, avant le repérage de 2 s. tab5_theme_repeindre
+// marque donc les boutons verre (rayon 18 de l'état compilé) AVANT de poser les formes
+// d'un thème ; apply_pressed_scale_to_tree retient les marqués comme ceux de rayon 18.
+// Sans ce marquage, les boutons d'un thème à rayon ≠ 18 perdraient l'effet d'appui.
+// Une seule fois : après le premier passage, le rayon peut déjà venir d'un thème.
+static bool s_boutons_verre_marques = false;
+
+static void marquer_arbre(lv_obj_t* root) {
+    if (est_bouton_verre(root)) lv_obj_add_flag(root, LV_OBJ_FLAG_USER_1);
+    const uint32_t cnt = lv_obj_get_child_count(root);
+    for (uint32_t i = 0; i < cnt; i++) marquer_arbre(lv_obj_get_child(root, i));
+}
+
+void boutons_verre_marquer(lv_obj_t* root) {
+    if (s_boutons_verre_marques || !root) return;
+    marquer_arbre(root);
+    s_boutons_verre_marques = true;
+}
+
 // Source unique de l'appui des boutons verre de rayon 18 : depuis le 01/10/2026 (D6,
 // audit des conteneurs) aucun `pressed:` YAML ne le répète, 68 ont été retirés. Un
 // `pressed:` YAML ne reste que là où l'appui diffère (rayon ≠ 18, autre opacité, bordure).
 // Pendant les 2 s qui précèdent cet appel (on_boot), ces boutons ne marquent pas l'appui.
 void apply_pressed_scale_to_tree(lv_obj_t* root) {
     if (!root) return;
-    // Heuristique : objet clickable + radius 18 = bouton verre (style_clim_btn).
-    // Inclut aussi les tuiles meteo cliquables (effet desirable : feedback tactile).
-    if (lv_obj_has_flag(root, LV_OBJ_FLAG_CLICKABLE)) {
-        int32_t radius = lv_obj_get_style_radius(root, LV_PART_MAIN);
-        if (radius == 18) {
-            setup_button_press_animation(root);
-        }
+    if (est_bouton_verre(root) || lv_obj_has_flag(root, LV_OBJ_FLAG_USER_1)) {
+        setup_button_press_animation(root);
     }
     // Recursion dans les enfants
     uint32_t cnt = lv_obj_get_child_count(root);

@@ -273,9 +273,22 @@ def date_glyph_coverage(tab5: Path = TAB5) -> list[str]:
     core_src = strip_cpp_comments(core.read_text(encoding="utf-8"))
     m_days = re.search(r"fr_day_short_utf8\(int wday\)\s*\{.*?days\[\] = \{(.*?)\};", core_src, re.S)
     m_months = re.search(r"clock_month_short_utf8\(int month\)\s*\{.*?months\[\] = \{(.*?)\};", core_src, re.S)
-    m_initial = re.search(r"id: lbl_date, text: \"([^\"]*)\"[^}\n]*text_font: (\w+)",
-                          lvgl.read_text(encoding="utf-8"))
-    font = m_initial.group(2) if m_initial else "?"
+    m_initial = re.search(r"id: lbl_date, text: \"([^\"]*)\"([^}\n]*)", lvgl.read_text(encoding="utf-8"))
+    font = "?"
+    if m_initial:
+        # Police posée sur le label, ou par un de ses styles (style_police_date depuis
+        # les thèmes, lot 3 : celle de l'état compilé ; un thème qui la change dessine
+        # les glyphes absents de sa police avec elle, tab5_theme.cpp).
+        m_font = re.search(r"text_font: (\w+)", m_initial.group(2))
+        if m_font:
+            font = m_font.group(1)
+        else:
+            m_styles = re.search(r"styles: \[?([\w, ]+)\]?", m_initial.group(2))
+            texte_styles = styles.read_text(encoding="utf-8")
+            for sid in (m_styles.group(1).replace(" ", "").split(",") if m_styles else []):
+                m_def = re.search(rf"- id: {sid}\n(?:[ \t]+\w+:.*\n)*?[ \t]+text_font: (\w+)", texte_styles)
+                if m_def:
+                    font = m_def.group(1)
     glyphs = font_glyphs(styles).get(font)
     if not (m_days and m_months and glyphs and m_initial):
         return [f"règle 6 : table des jours, des mois, glyphes de {font} ou texte initial / police de lbl_date introuvable"]

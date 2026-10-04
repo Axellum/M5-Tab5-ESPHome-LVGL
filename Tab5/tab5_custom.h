@@ -24,7 +24,8 @@ namespace esphome { namespace font { class Font; } }
 // Icône météo d'une tuile (police 120 px, 80 px pour le petit calque 2).
 void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, esphome::font::Font* f_card, esphome::font::Font* f_card_s);
 
-uint32_t get_humidity_color(float x);
+// Palette : UIColor, ou UIBandeau dans le bandeau central (icône de la pluie).
+uint32_t get_humidity_color(float x, const Palette& p = UIColor);
 
 struct WeatherHourSlot {
     lv_obj_t* time_lbl;
@@ -145,6 +146,9 @@ extern ClockRollerCtx g_clock_roller;
 // a tout objet clickable avec radius 18 (caracteristique du style_clim_btn verre).
 // Appele une fois au boot via un interval one-shot (apres layout LVGL).
 void apply_pressed_scale_to_tree(lv_obj_t* root);
+// Marque (LV_OBJ_FLAG_USER_1) les boutons verre de l'état compilé, avant qu'un thème
+// change leur rayon : apply_pressed_scale_to_tree les retient (tab5-themes.yaml).
+void boutons_verre_marquer(lv_obj_t* root);
 
 // --- Langue de l'écran (lot 4, 27/09/2026) ---
 
@@ -1074,9 +1078,20 @@ void popup_lumiere_tout_eteindre();
 // =============================================================================
 // Thèmes de l'écran (tab5_theme.cpp, ADR-0029 lot 2 ; entités : tab5-themes.yaml)
 // =============================================================================
-// Règle UIColor sur la palette du thème `theme` (index du select « Thème ») dans le mode
-// `mode` (0 Sombre, 1 Clair, 2 Auto : clair sauf `nuit`). Vrai si la palette a changé.
+// Règle UIColor (et UIBandeau, UIHorloge) sur la palette du thème `theme` (index du
+// select « Thème ») dans le mode `mode` (0 Sombre, 1 Clair, 2 Auto : clair sauf `nuit`).
+// Vrai si le thème ou son mode a changé.
 bool theme_selectionner(int theme, int mode, bool nuit);
+// Formes du thème choisi (`formes:` de Tab5/themes/<thème>.yaml : rayons, bordures,
+// dégradés, ombres) sur les styles partagés `styles` (dans l'ordre des tables générées
+// de tab5_theme.cpp ; tab5_theme_repeindre les passe, eux ne sont atteignables que par id()).
+void theme_formes(lv_style_t* const styles[], int n);
+// Polices d'affichage du thème choisi (`polices:`) sur les styles style_police_horloge,
+// style_police_date et style_police_titre, et géométrie de l'horloge : `polices` = les
+// polices compilées (0-2 : les Roboto des trois rôles, puis celles des thèmes), `horloge`
+// = les 8 labels des rouleaux puis le « : ».
+void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_titre,
+    esphome::font::Font* const polices[], int n, lv_obj_t* const horloge[9]);
 // Vrai une fois le démarrage fini (tous les setup et les on_boot synchrones) : les
 // modules ont leurs widgets et peuvent repeindre.
 bool theme_ui_pret();

@@ -136,12 +136,24 @@ def test_pas_d_heure_factice_avant_l_heure_reelle():
     assert date["text"] == ""
 
 
+def _styles_du(label):
+    s = label.get("styles") or []
+    return [s] if isinstance(s, str) else list(s)
+
+
 def test_police_de_l_horloge():
+    # Par le style partagé style_police_horloge (thèmes, lot 3) : un thème peut changer la
+    # police, theme_polices() repose alors le y des labels (tests/test_polices_themes.py).
+    # Ces calculs-ci valent pour la police de l'état compilé.
     tuile = _tuile()
     rouleaux, deux_points, _ = _enfants(tuile)
     labels = [l["label"] for r in rouleaux for l in r["widgets"]]
     assert len(labels) == 8
-    assert all(l["text_font"] == "roboto_130_b" for l in labels + [deux_points])
+    for l in labels + [deux_points]:
+        assert "text_font" not in l, "police posée sur le label : un thème ne pourrait plus la changer"
+        assert "style_police_horloge" in _styles_du(l)
+    _, styles = _styles()
+    assert styles["style_police_horloge"]["text_font"] == "roboto_130_b"
 
 
 def test_chaque_cadre_contient_l_encre_des_chiffres():
