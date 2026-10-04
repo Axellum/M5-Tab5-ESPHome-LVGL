@@ -26,6 +26,9 @@ import preparer  # noqa: E402
 import pages  # noqa: E402
 import archive_ha  # noqa: E402
 
+sys.path.insert(0, str(REPO / "tools" / "installation_ha"))
+import verifier_installation as verifier  # noqa: E402  (APPEL_TABLEAU : la ligne du tableau de bord)
+
 
 class _Chargeur(yaml.SafeLoader):
     """YAML ESPHome sans résoudre ses balises (!include, !lambda…)."""
@@ -359,10 +362,13 @@ def test_archive_ha_arborescence_de_config(tmp_path):
     ha = REPO / "HomeAssistant_Config"
     assert {f"packages/{p.name}" for p in (ha / "packages").glob("*.yaml")} <= set(noms)
     assert "custom_templates/tab5_calendar.jinja" in noms
+    assert "custom_templates/tab5_dashboard.jinja" in noms
     assert "blueprints/automation/tab5/tab5_emplacements.yaml" in noms
     assert "tab5_optionnel/volet_serre_tracking.yaml" in noms
     assert not any(n.startswith("packages/volet") for n in noms)
     assert "3.2.0" in lisezmoi and "packages: !include_dir_named packages" in lisezmoi
+    # La ligne du tableau de bord, telle que le job « HA neuf » la fait rendre (FR et EN).
+    assert lisezmoi.count(verifier.APPEL_TABLEAU) == 2
     assert archive_ha.placeholders() == []
 
 

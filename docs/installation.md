@@ -18,10 +18,11 @@ Since 3.0, a ready-made, signed firmware installs from the browser. In this orde
 4. **Add it to Home Assistant** within 30 minutes of its start: *Settings → Devices & services*, the ESPHome device is discovered, *Configure*. Home Assistant gives it its key. A tablet Home Assistant already knows gets a new key by itself, nothing to confirm (checked on 2026-09-28). Nothing else to allow: the tablet asks Home Assistant for everything through events ([ADR-0025](decisions/0025-events-only.md)).
    - Firmware 3.1 or older only: also tick « Allow the device to perform Home Assistant actions » (*ESPHome → Configure*), which voice, calendar and alarm clock need there.
 5. **Your devices**: create the automation from the blueprint ([Step 4](#step-4--set-up-the-home-assistant-packages), item 5).
+6. **A dashboard for the tablet** (optional): [Step 7](#step-7--a-home-assistant-dashboard-for-the-tablet-optional).
 
 Updates then show up in Home Assistant (« Firmware » entity), on the channel you installed; to switch channels, install again from the page without erasing. Over the air, the tablet only accepts a firmware signed with the project key: to switch to your own builds (your own key), flash once over USB.
 
-The steps below are for building your own firmware; Steps 4 and 6 are for everyone.
+The steps below are for building your own firmware; Steps 4, 6 and 7 are for everyone.
 
 ## Prerequisites
 
@@ -151,6 +152,20 @@ The network is kept across updates. The fallback AP comes back whenever the tabl
 
 - Window missed? Restart the tablet: it reopens for 30 minutes. Once it has its key, the window never opens again.
 - Nothing else to allow. The tablet never calls a Home Assistant action: it sends events, which `packages/tab5_evenements.yaml` turns into a fixed list of actions, for a Tab5 only ([ADR-0025](decisions/0025-events-only.md)). The « Allow the device to perform Home Assistant actions » option stays unticked (firmware 3.1 or older still needs it, see [Upgrading from 3.1](#upgrading-from-31)).
+
+## Step 7 — A Home Assistant dashboard for the tablet (optional)
+
+Every setting of the tablet in one Home Assistant dashboard: a **Tab5** view for daily use (brightness, volume, screen shown, alarm, appointments, voice assistant; alert badges only when something is wrong), a **Settings** view (an « At a glance » table of what is chosen, then the screen language, weather, calendars, home, voice and alarm settings) and a **Health** view (connection, performance graphs, network, pushes, health alerts). The tablet's entity ids differ from one home to another (Home Assistant builds them from the room, the device name and the entity name), so the dashboard is not a fixed file: the macro `custom_templates/tab5_dashboard.jinja`, unzipped with the archive, writes it with your entities.
+
+1. *Settings → Dashboards → Add dashboard → New dashboard from scratch*, title **Tab5** (its address becomes `/dashboard-tab5`).
+2. *Developer tools → Template*: replace the editor content with this line, then copy the result shown on the right.
+   ```jinja
+   {% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}
+   ```
+   Another address: `tab5_dashboard('dashboard-xxx')`. The labels follow the tablet's screen language (French, otherwise English); `tab5_dashboard(langue='English')` forces English.
+3. Open the Tab5 dashboard → pencil → ⋮ → *Raw configuration editor*: replace everything with the result, *Save*.
+
+A card only appears when its entity exists (TV, shutter, battery…); the battery entities are disabled by default, enable them if a battery is fitted. The rooms and tiles are set in the blueprint automation (a link in Settings). Two settings stay on the tablet only: the text size of the assistant popup and a custom choice of alarm days. After an update that adds entities, do items 2 and 3 again. « TemplateNotFound: tab5_dashboard.jinja »: the macro is loaded when Home Assistant starts; restart it, or run the action `homeassistant.reload_custom_templates`.
 
 ---
 
@@ -331,10 +346,11 @@ Depuis la 3.0, un firmware prêt à l'emploi et signé s'installe depuis le navi
 4. **L'ajouter à Home Assistant** dans les 30 minutes qui suivent son démarrage : *Paramètres → Appareils et services*, l'appareil ESPHome est découvert, *Configurer*. Home Assistant lui donne sa clé. Une tablette que Home Assistant connaît déjà reçoit une nouvelle clé toute seule, rien à confirmer (vérifié le 28/09/2026). Rien d'autre à autoriser : la tablette demande tout à Home Assistant par des événements ([ADR-0025](decisions/0025-events-only.md)).
    - Firmware 3.1 ou plus ancien seulement : cochez aussi « Autoriser l'appareil à effectuer des actions Home Assistant » (*ESPHome → Configurer*), dont la voix, le calendrier et le réveil ont besoin sur ces versions.
 5. **Vos appareils** : créez l'automatisation depuis le blueprint ([étape 4](#étape-4--installer-les-packages-home-assistant), point 5).
+6. **Un tableau de bord pour la tablette** (facultatif) : [étape 7](#étape-7--un-tableau-de-bord-home-assistant-pour-la-tablette-facultatif).
 
 Les mises à jour arrivent ensuite dans Home Assistant (entité « Firmware »), sur le canal installé ; pour changer de canal, réinstallez depuis la page sans effacer. Par le réseau, la tablette n'accepte qu'un firmware signé par la clé du projet : pour passer à vos propres compilations (votre clé), flashez une fois par USB.
 
-Les étapes suivantes servent à compiler son propre firmware ; les étapes 4 et 6 concernent tout le monde.
+Les étapes suivantes servent à compiler son propre firmware ; les étapes 4, 6 et 7 concernent tout le monde.
 
 ## Prérequis
 
@@ -462,6 +478,20 @@ Le réseau est gardé d'une mise à jour à l'autre. L'AP de secours revient dè
 
 - Fenêtre ratée ? Redémarrez la tablette : elle se rouvre pour 30 minutes. Une fois la clé reçue, elle ne s'ouvre plus.
 - Rien d'autre à autoriser. La tablette n'appelle jamais d'action de Home Assistant : elle envoie des événements, que `packages/tab5_evenements.yaml` traduit en une liste fixe d'actions, pour un Tab5 seulement ([ADR-0025](decisions/0025-events-only.md)). L'option « Autoriser l'appareil à effectuer des actions Home Assistant » reste décochée (un firmware 3.1 ou plus ancien en a encore besoin, voir [Passer d'une 3.1 à la suite](#passer-dune-31-à-la-suite)).
+
+## Étape 7 — Un tableau de bord Home Assistant pour la tablette (facultatif)
+
+Tous les réglages de la tablette dans un tableau de bord Home Assistant : une vue **Tab5** pour l'usage courant (luminosité, volume, écran affiché, réveil, rendez-vous, assistant vocal ; des pastilles d'alerte seulement quand quelque chose cloche), une vue **Réglages** (un tableau « En bref » de ce qui est choisi, puis la langue de l'écran, la météo, les agendas, la maison, la voix et le réveil) et une vue **Santé** (liaison, courbes de performances, réseau, poussées, alertes de santé). Les entity_id de la tablette changent d'une maison à l'autre (Home Assistant les forme avec la pièce, le nom de l'appareil et celui de l'entité) : le tableau de bord n'est donc pas un fichier figé, c'est la macro `custom_templates/tab5_dashboard.jinja`, décompressée avec l'archive, qui l'écrit avec vos entités.
+
+1. *Paramètres → Tableaux de bord → Ajouter un tableau de bord → Nouveau tableau de bord à partir de zéro*, titre **Tab5** (son adresse devient `/dashboard-tab5`).
+2. *Outils de développement → Modèle* : remplacez le contenu de l'éditeur par cette ligne, puis copiez le résultat affiché à droite.
+   ```jinja
+   {% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}
+   ```
+   Autre adresse : `tab5_dashboard('dashboard-xxx')`. Les libellés suivent la langue de l'écran de la tablette (français, sinon anglais) ; `tab5_dashboard(langue='English')` force l'anglais.
+3. Ouvrez le tableau de bord Tab5 → crayon → ⋮ → *Éditeur de configuration brute* : remplacez tout par le résultat, *Enregistrer*.
+
+Une carte n'apparaît que si son entité existe (TV, volet, batterie…) ; les entités de la batterie sont désactivées par défaut, activez-les si une batterie est montée. Les pièces et les tuiles se règlent dans l'automatisation du blueprint (un lien dans Réglages). Deux réglages restent sur la tablette seulement : la taille du texte du popup de l'assistant et un choix personnalisé des jours du réveil. Après une mise à jour qui ajoute des entités, refaites les points 2 et 3. « TemplateNotFound: tab5_dashboard.jinja » : la macro est chargée au démarrage de Home Assistant ; redémarrez-le, ou lancez l'action `homeassistant.reload_custom_templates`.
 
 ---
 
