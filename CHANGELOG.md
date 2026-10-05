@@ -12,7 +12,7 @@ centrale ; les titres des pages de prévisions sans « Prévisions horaires 1/2 
 « Prévisions journalières 2/3 », dans la police de la date ; les popups qui avaient une
 autre police de la même taille ; les polices et les textes de langue devenus inutiles.
 - **Horloge** : 32 px entre le bord extérieur de la tuile et l'encre des chiffres en haut,
-  la ligne de base de la date en bas, dans les 18 thèmes ; HH:MM centré en moyenne sur les
+  la ligne de base de la date en bas, dans les 21 thèmes ; HH:MM centré en moyenne sur les
   heures possibles (l'écart gauche / droite dépend des chiffres : un « 1 » est étroit).
   `theme_polices()` pose maintenant les cadres des rouleaux pour chaque police et retranche
   la bordure du thème (0 à 4 px, parfois d'un seul côté : Relief doux, Obsidienne, Terre
@@ -28,9 +28,10 @@ autre police de la même taille ; les polices et les textes de langue devenus in
   disent la page. Popups : valeurs de la lumière, de l'énergie et des pots, prochain réveil,
   sonnerie, « OK » de la télécommande, A+ de l'assistant (avant roboto_45_b en dur).
   Un changement de thème change donc tous ces textes.
-- **Coût** : les 12 polices de date des thèmes passent de 58 à 151 glyphes (ASCII et
-  caractères des 7 langues ; le reste est dessiné par roboto_45_b) : +198 Ko de flash
-  (48,0 → 50,5 %), RAM inchangée (40,3 %). Aucune police ne disparaît : roboto_45_b reste
+- **Coût** : les 15 polices de date des thèmes passent de 58 à 151 glyphes (146 pour
+  Fredoka ; ASCII et caractères des 7 langues, le reste est dessiné par roboto_45_b) :
+  +263 536 o de flash (+257 Ko, 49,6 → 52,9 %), RAM inchangée (40,5 %), mesurés par la
+  compilation `build-min` de la CI (ESPHome 2026.9.0) avant et après. Aucune police ne disparaît : roboto_45_b reste
   la police de date des thèmes Roboto et le repli des autres, roboto_55_b sert encore au
   réveil, au popup clim et au flipper.
 - **Langues** : les deux titres retirés sortent des 6 fichiers de langue ; `Sys`, `HA`,
