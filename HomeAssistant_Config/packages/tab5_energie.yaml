@@ -18,7 +18,8 @@
 #       « nan » = choisi sans valeur. Puissances en W entiers ; réseau + achat / − vente,
 #       batterie + charge / − décharge (cases « Inverser » du blueprint) ; maison calculée
 #       (solaire + réseau − batterie, jamais négative) quand elle n'est pas choisie et que
-#       solaire et réseau le sont ; jour = production du jour en kWh.
+#       solaire et réseau le sont ; jour = production du jour en kWh. Le contrat ne
+#       change pas avec plusieurs sources : solaire et jour sont des sommes.
 #       tab5_maj_energie_historique : vue, debut (AAAA-MM-JJ local), valeurs en kWh
 #       séparées par « ; » (vide = pas de donnée : heure à venir, recorder sans ligne).
 # @data_sources Production du jour = somme des « change » des statistiques de 5 minutes
@@ -31,6 +32,10 @@
 #       manquer quelques minutes, le temps que le recorder la compile).
 #       Le capteur d'énergie doit avoir des statistiques (state_class total_increasing ou
 #       total, comme ceux du tableau Énergie de HA) ; sinon l'historique est vide.
+#       Plusieurs sources (05/10/2026, discussion #278) : solaire = somme des puissances
+#       qui ont une valeur (« nan » si aucune) ; production = somme des compteurs, période
+#       par période (un compteur sans ligne sur une période y compte pour 0), partiel
+#       calculé compteur par compteur.
 # @limits mode restart : une nouvelle demande (autre vue, réouverture) remplace la boucle
 #       en cours. Avec deux tablettes qui ouvrent le popup en même temps, la dernière
 #       demande l'emporte ; l'autre garde ses dernières valeurs.
@@ -63,7 +68,9 @@ script:
         description: >-
           Capteurs de la section « Énergie » du blueprint : solaire, production, reseau,
           reseau_export, maison, batterie, batterie_puissance, batterie_temperature (texte
-          vide = non choisi), reseau_inverse et batterie_inverse (booléens).
+          vide = non choisi), solaires et productions (listes : toutes les sources,
+          additionnées ; solaire et production y sont ajoutés), reseau_inverse et
+          batterie_inverse (booléens).
     variables:
       c: "{{ capteurs if capteurs is mapping else {} }}"
       vue_demandee: "{{ vue if vue in ['heures', 'jours', 'mois'] else 'heures' }}"
@@ -72,14 +79,34 @@ script:
       ecran: >-
         {{ (device_entities(appareil) | select('match', 'sensor[.].*_ecran_courant$') | first | default(''))
            if appareil is string and appareil else '' }}
-      production: >-
-        {%- set p = c.get('production', '') -%}
-        {{ p if p is string and p and states[p] is not none else '' }}
+      # Plusieurs sources solaires (discussion #278, 05/10/2026) : solaire et production
+      # (une entité, ce qu'envoie un blueprint plus ancien) plus solaires et productions
+      # (listes du blueprint actuel, qui les reprennent), sans doublon. Chaîne, liste ou
+      # vide acceptés dans chacun.
+      solaires: >-
+        {%- set ns = namespace(l=[]) -%}
+        {%- for v in [c.get('solaire', ''), c.get('solaires', [])] -%}
+          {%- set ns.l = ns.l + ([v] if v is string else ((v | list) if v else [])) -%}
+        {%- endfor -%}
+        {{ ns.l | select('string') | reject('eq', '') | unique | list }}
+      productions_choisies: >-
+        {%- set ns = namespace(l=[]) -%}
+        {%- for v in [c.get('production', ''), c.get('productions', [])] -%}
+          {%- set ns.l = ns.l + ([v] if v is string else ((v | list) if v else [])) -%}
+        {%- endfor -%}
+        {{ ns.l | select('string') | reject('eq', '') | unique | list }}
+      # Les compteurs qui existent : seuls eux sont demandés au recorder.
+      productions: >-
+        {%- set ns = namespace(l=[]) -%}
+        {%- for p in productions_choisies if states[p] is not none -%}
+          {%- set ns.l = ns.l + [p] -%}
+        {%- endfor -%}
+        {{ ns.l }}
       # Capteurs dont un changement relance l'instantané.
       suivis: >-
-        {{ [c.get('solaire'), c.get('reseau'), c.get('reseau_export'), c.get('maison'), c.get('production'),
-            c.get('batterie'), c.get('batterie_puissance'), c.get('batterie_temperature')]
-           | select('string') | reject('eq', '') | list }}
+        {{ (solaires + [c.get('reseau'), c.get('reseau_export'), c.get('maison')] + productions_choisies
+            + [c.get('batterie'), c.get('batterie_puissance'), c.get('batterie_temperature')])
+           | select('string') | reject('eq', '') | unique | list }}
       debut: "{{ now().timestamp() }}"
       # L'« Écran courant » se met à jour toutes les 5 s : à l'ouverture, il dit encore
       # l'écran d'avant pendant ce temps. Il ne compte qu'après cette grâce.
@@ -94,12 +121,12 @@ script:
             # Statistiques de 5 minutes du jour : production du jour et vue des heures.
             # Toujours appelée, au même niveau que ce qui la lit (une variable posée dans
             # un if n'en sort pas) : sans capteur d'énergie, sur un autre capteur choisi,
-            # et rien ne lit la réponse (lignes5 est vide sans production).
+            # et rien ne lit la réponse (lignes5 est vide sans production). Tous les
+            # compteurs en une demande ; units convertit chacun en kWh.
             - action: recorder.get_statistics
               data:
                 start_time: "{{ minuit }}"
-                statistic_ids:
-                  - "{{ production if production else (suivis | first | default('')) }}"
+                statistic_ids: "{{ productions if productions else [suivis | first | default('')] }}"
                 period: 5minute
                 types:
                   - change
@@ -109,24 +136,38 @@ script:
               response_variable: cinq
               continue_on_error: true
             - variables:
+                # Lignes de 5 minutes de TOUS les compteurs, à la suite : les sommes par
+                # heure (et celle du jour) additionnent les compteurs ; une heure où un
+                # seul compteur a une ligne garde sa barre, l'autre y compte pour 0.
                 lignes5: >-
-                  {{ (cinq.statistics.get(production, []) if cinq is defined and cinq is mapping
-                      and cinq.statistics is defined else []) if production else [] }}
-                # Production depuis la dernière ligne de 5 minutes (état actuel en kWh −
-                # dernier « state » ; compteur remis à zéro entre-temps : l'état actuel).
+                  {%- set stats = cinq.statistics if cinq is defined and cinq is mapping
+                        and cinq.statistics is defined else {} -%}
+                  {%- set ns = namespace(l=[]) -%}
+                  {%- for p in productions -%}
+                    {%- set ns.l = ns.l + (stats.get(p, []) | list) -%}
+                  {%- endfor -%}
+                  {{ ns.l }}
+                # Production depuis la dernière ligne de 5 minutes, compteur par compteur
+                # (état actuel en kWh − son dernier « state » ; compteur remis à zéro
+                # entre-temps : l'état actuel), puis additionnée.
                 partiel: >-
-                  {%- set u = (state_attr(production, 'unit_of_measurement') or 'kWh') | string if production else 'kWh' -%}
-                  {%- set k = {'Wh': 0.001, 'kWh': 1, 'MWh': 1000}.get(u, 1) -%}
-                  {%- set actuel = (states(production) | float(none)) if production else none -%}
-                  {%- set dernier = (lignes5 | last).get('state') if lignes5 else none -%}
-                  {%- if actuel is none or dernier is none -%}
-                    {{ 0 }}
-                  {%- else -%}
-                    {%- set d = actuel * k - (dernier | float(0)) -%}
-                    {{ d if d >= 0 else actuel * k }}
-                  {%- endif -%}
+                  {%- set stats = cinq.statistics if cinq is defined and cinq is mapping
+                        and cinq.statistics is defined else {} -%}
+                  {%- set ns = namespace(s=0) -%}
+                  {%- for p in productions -%}
+                    {%- set lignes = stats.get(p, []) | list -%}
+                    {%- set u = (state_attr(p, 'unit_of_measurement') or 'kWh') | string -%}
+                    {%- set k = {'Wh': 0.001, 'kWh': 1, 'MWh': 1000}.get(u, 1) -%}
+                    {%- set actuel = states(p) | float(none) -%}
+                    {%- set dernier = (lignes | last).get('state') if lignes else none -%}
+                    {%- if actuel is not none and dernier is not none -%}
+                      {%- set d = actuel * k - (dernier | float(0)) -%}
+                      {%- set ns.s = ns.s + (d if d >= 0 else actuel * k) -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+                  {{ ns.s }}
                 jour: >-
-                  {%- if not production -%}
+                  {%- if not productions -%}
                     {{ '' }}
                   {%- elif cinq is not defined -%}
                     {{ 'nan' }}
@@ -149,7 +190,16 @@ script:
                     {%- else -%}{{- states(x) | float | round(1) -}}
                     {%- endif -%}
                   {%- endmacro -%}
-                  {%- set solaire = watts(c.get('solaire', '')) -%}
+                  {#- Solaire : somme des sources qui ont une valeur (un onduleur
+                      « unavailable » la nuit est ignoré) ; aucune = « nan », aucune
+                      choisie = vide. Chaque capteur converti en W selon son unité. -#}
+                  {%- set ns_s = namespace(w=0, n=0) -%}
+                  {%- for x in solaires if states[x] is not none and (states(x) | float(none)) is not none -%}
+                    {%- set u = (state_attr(x, 'unit_of_measurement') or 'W') | string -%}
+                    {%- set ns_s.w = ns_s.w + states(x) | float * {'W': 1, 'kW': 1000, 'MW': 1000000}.get(u, 1) -%}
+                    {%- set ns_s.n = ns_s.n + 1 -%}
+                  {%- endfor -%}
+                  {%- set solaire = '' if not solaires else ('nan' if ns_s.n == 0 else (ns_s.w | round(0) | int | string)) -%}
                   {%- if c.get('reseau_export') -%}
                     {%- set achat = watts(c.get('reseau', '')) -%}
                     {%- set vente = watts(c.get('reseau_export', '')) -%}
@@ -189,7 +239,7 @@ script:
             # Historique : la vue demandée au premier passage ; ensuite les heures seulement
             # (les lignes de 5 minutes sont déjà là). Jours et mois repartent à la demande
             # suivante (bouton de vue, réouverture).
-            - if: "{{ production != '' and (repeat.index == 1 or vue_demandee == 'heures') }}"
+            - if: "{{ productions | count > 0 and (repeat.index == 1 or vue_demandee == 'heures') }}"
               then:
                 - if: "{{ vue_demandee == 'heures' }}"
                   then:
@@ -231,8 +281,7 @@ script:
                     - action: recorder.get_statistics
                       data:
                         start_time: "{{ premier }}"
-                        statistic_ids:
-                          - "{{ production }}"
+                        statistic_ids: "{{ productions }}"
                         period: "{{ 'day' if jours else 'month' }}"
                         types:
                           - change
@@ -245,14 +294,18 @@ script:
                         vue: "{{ vue_demandee }}"
                         debut: "{{ premier[:10] }}"
                         valeurs: >-
-                            {%- set lignes = longues.statistics.get(production, []) if longues is defined and longues is mapping and longues.statistics is defined else [] -%}
+                            {%- set stats = longues.statistics if longues is defined and longues is mapping and longues.statistics is defined else {} -%}
                             {%- set p = as_datetime(premier) -%}
                             {%- set n = now() -%}
+                            {#- Somme des compteurs, période par période : une période où un
+                                seul compteur a une ligne garde sa barre. -#}
                             {%- set ns = namespace(d={}) -%}
-                            {%- for r in lignes -%}
-                              {%- set s = as_local(as_datetime(r.start)) -%}
-                              {%- set i = ((s.date() - p.date()).days if jours else (s.year * 12 + s.month) - (p.year * 12 + p.month)) | string -%}
-                              {%- set ns.d = dict(ns.d, **{i: r.get('change') | float(0)}) -%}
+                            {%- for prod in productions -%}
+                              {%- for r in stats.get(prod, []) -%}
+                                {%- set s = as_local(as_datetime(r.start)) -%}
+                                {%- set i = ((s.date() - p.date()).days if jours else (s.year * 12 + s.month) - (p.year * 12 + p.month)) | string -%}
+                                {%- set ns.d = dict(ns.d, **{i: ns.d.get(i, 0) + (r.get('change') | float(0))}) -%}
+                              {%- endfor -%}
                             {%- endfor -%}
                             {%- set nb = 30 if jours else 12 -%}
                             {#- Jour ou mois en cours : la production du jour (jours) ; le mois des

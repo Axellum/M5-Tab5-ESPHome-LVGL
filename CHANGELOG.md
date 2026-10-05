@@ -4,6 +4,28 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Énergie : plusieurs sources solaires additionnées
+
+Demandé par husyildiz ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) :
+une installation à plusieurs onduleurs ou chaînes de panneaux (« pv1 + pv2 + … »).
+Côté Home Assistant seulement, firmware et contrat inchangés
+([ADR-0028](docs/decisions/0028-solar-energy-popup.md), amendement du 05/10).
+- Section « Énergie » du blueprint : deux champs en liste, **Autres puissances solaires** et
+  **Autres énergies solaires produites**, à côté des champs d'avant qui restent une seule
+  entité (une automatisation déjà créée y a une chaîne, que l'éditeur de HA n'afficherait
+  plus si le champ passait en liste).
+- Puissance solaire = somme des sources qui ont une valeur, chacune convertie en W ; un
+  onduleur indisponible la nuit est ignoré, toutes indisponibles = inconnu. Elle sert à la
+  carte Solaire, à la maison calculée et à l'icône du bandeau (la crête est alors celle de
+  tous les panneaux).
+- Énergie produite = somme des compteurs (kWh ou Wh), période par période : total du jour,
+  barres des heures, des jours et des mois ; un compteur sans donnée sur une période y
+  compte pour 0. Une tuile de n'importe laquelle de ces sources ouvre le popup Énergie.
+- Rien ne change avec une seule source ; un package `tab5_energie` plus ancien prend la
+  première source sans erreur. Non essayé sur une vraie installation à plusieurs onduleurs.
+- `tests/test_energie.py`, `tests/test_solaire.py` : sommes, sources indisponibles,
+  compteurs à trous, ancien format identique.
+
 ### 2026-10-05 — Tableau de bord HA dans les sept langues de l'écran
 
 Demandé par Axel après les vues Réglages et Santé : leurs explications n'existaient qu'en
