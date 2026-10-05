@@ -1,0 +1,103 @@
+# Home screen
+
+## English · [Français](#version-française)
+
+---
+
+The top of the screen never changes: voice, clock, buttons, temperatures, climate and plants. The numbers are those of the [overview](README.md).
+
+## Voice: Domo, microphone, Discu, Ok Nabu (1 to 4)
+
+![Home screen in conversation mode: the robot button is lit](../images/notice/accueil-mode-discussion-en.webp)
+
+- **Domo** (house) and **Discu** (robot): the two voice modes. A tap picks one; the lit button is the current mode. Domo sends what you say to Home Assistant's assistant, which runs commands (« turn on the living room »). Discu sends it to your conversation assistant, for questions and chat. How to set them up: [the two voice modes](../installation/settings.md#voice-assistant-the-two-modes).
+- **Microphone**: a tap listens right away, without the wake word. While the tablet answers, a tap cuts the answer and listens again. A **long press** opens the [voice assistant window](voice.md). Its colour gives the state: grey, waiting; green, listening; orange, thinking; blue, answering; red, error.
+- **Ok Nabu: ON / OFF**: a tap turns the wake word on or off. Off, the tablet only listens when you tap the microphone.
+
+Without a conversation assistant (« Tab5 · pipeline de discussion » set to « Aucun »), Domo and Discu are not shown and the tablet stays in Domo mode.
+
+## Clock and date (5)
+
+- **Tap**: the [alarm clock](alarm.md).
+- **Long press**: the [calendar](calendar.md).
+
+The date changes colour with the day's weather warnings (yellow, orange, red). In the status row, top left, the bell of the alarm is green when it will ring, amber when it is on but no day qualifies, struck through when it is off.
+
+## The three buttons, top right (6 to 8)
+
+- **Home Assistant** (house): the bottom row shows your **devices** instead of the weather; tap again for the weather. It is lit while it shows the devices. Not shown when no room has a device. Details: [bottom row and rooms](tiles.md).
+- **Snowflake**: the [system console](console.md).
+- **Computer**: the [TV remote](tv.md). Not shown without a TV; the two other buttons then move one column right.
+
+## Temperatures and climate (9, 10)
+
+- The two temperatures: the room (sofa) and a second sensor (greenhouse). A **tap on the second one** opens the [Arcade](arcade.md); without a second sensor, a gamepad stands in its place and does the same.
+- **Target temperature**: a tap opens the [climate window](climate.md).
+- **−** and **+**: one step down or up. The new target shows at once; quick taps add up and leave as one command when you stop.
+
+## Plants (11)
+
+Four icons, one per pot, coloured by soil moisture (red: to water, green: fine, blue: too wet). A **long press** opens the [plant details](plants.md). Without plant sensors, the area stays empty.
+
+## Central card (12)
+
+It changes every 8 seconds between the day's schedule, the rain in the next hour, the weather warnings, a message and the alerts sent by Home Assistant.
+
+![Central card showing the rain of the next hour and an orange warning](../images/notice/2-pluie-alerte-orange-en.webp)
+
+- **Tap** on the schedule, the rain or the warnings: the next panel at once.
+- **Tap** on a message or an alert: it is dismissed and does not come back, until Home Assistant sends a new one.
+
+It also shows, for a moment, the tablet's spoken answer, a day's schedule (when you tap that day's temperatures, see [bottom row](tiles.md)), the dates of another forecast page, or the name of the room in device mode.
+
+---
+
+## Version Française
+
+---
+
+Le haut de l'écran ne change jamais : voix, horloge, boutons, températures, clim et plantes. Les numéros sont ceux de la [vue d'ensemble](README.md#version-française).
+
+## Voix : Domo, micro, Discu, Ok Nabu (1 à 4)
+
+![L'écran d'accueil en mode discussion : le bouton du robot est allumé](../images/notice/accueil-mode-discussion-fr.webp)
+
+- **Domo** (maison) et **Discu** (robot) : les deux modes vocaux. Un tap en choisit un ; le bouton allumé est le mode en cours. Domo envoie ce que vous dites à l'assistant de Home Assistant, qui exécute les commandes (« allume le salon »). Discu l'envoie à votre assistant de discussion, pour les questions et la conversation. Pour les régler : [les deux modes vocaux](../installation/settings.md#assistant-vocal--les-deux-modes).
+- **Micro** : un tap écoute tout de suite, sans le mot de réveil. Pendant que la tablette répond, un tap coupe la réponse et réécoute. Un **appui long** ouvre la [fenêtre de l'assistant vocal](voice.md#version-française). Sa couleur donne l'état : gris, en attente ; vert, écoute ; orange, réflexion ; bleu, réponse ; rouge, erreur.
+- **Ok Nabu : ON / OFF** : un tap active ou coupe le mot de réveil. Coupé, la tablette n'écoute que si vous touchez le micro.
+
+Sans assistant de discussion (« Tab5 · pipeline de discussion » sur « Aucun »), Domo et Discu ne s'affichent pas et la tablette reste en mode Domo.
+
+## Horloge et date (5)
+
+- **Tap** : le [réveil](alarm.md#version-française).
+- **Appui long** : le [calendrier](calendar.md#version-française).
+
+La date change de couleur avec les vigilances météo du jour (jaune, orange, rouge). Dans la ligne d'état, en haut à gauche, la cloche du réveil est verte quand il sonnera, ambre quand il est activé mais qu'aucun jour ne convient, barrée quand il est éteint.
+
+## Les trois boutons, en haut à droite (6 à 8)
+
+- **Home Assistant** (maison) : la rangée du bas montre vos **appareils** au lieu de la météo ; un nouveau tap revient à la météo. Il est allumé tant qu'il montre les appareils. Absent quand aucune pièce n'a d'appareil. Le détail : [rangée du bas et pièces](tiles.md#version-française).
+- **Flocon** : la [console système](console.md#version-française).
+- **Ordinateur** : la [télécommande TV](tv.md#version-française). Absent sans TV ; les deux autres boutons glissent alors d'une colonne vers la droite.
+
+## Températures et clim (9, 10)
+
+- Les deux températures : la pièce (canapé) et une seconde sonde (serre). Un **tap sur la seconde** ouvre l'[Arcade](arcade.md#version-française) ; sans seconde sonde, une manette prend sa place et fait de même.
+- **Consigne** : un tap ouvre la [fenêtre de la clim](climate.md#version-française).
+- **−** et **+** : un pas de moins ou de plus. La nouvelle consigne s'affiche tout de suite ; des taps rapides s'additionnent et partent en une seule commande quand vous vous arrêtez.
+
+## Plantes (11)
+
+Quatre icônes, une par pot, colorées selon l'humidité de la terre (rouge : à arroser, vert : bien, bleu : trop humide). Un **appui long** ouvre le [détail des plantes](plants.md#version-française). Sans capteurs de plantes, la zone reste vide.
+
+## Carte centrale (12)
+
+Elle passe toutes les 8 secondes du planning du jour à la pluie de l'heure qui vient, aux vigilances météo, à un message et aux alertes envoyées par Home Assistant.
+
+![La carte centrale montre la pluie de l'heure qui vient et une vigilance orange](../images/notice/2-pluie-alerte-orange-fr.webp)
+
+- **Tap** sur le planning, la pluie ou les vigilances : le panneau suivant, tout de suite.
+- **Tap** sur un message ou une alerte : il est écarté et ne revient pas, jusqu'à ce que Home Assistant en envoie un nouveau.
+
+Elle montre aussi, un moment, la réponse parlée de la tablette, le planning d'un jour (quand vous touchez les températures de ce jour, voir la [rangée du bas](tiles.md#version-française)), les dates d'une autre page de prévisions, ou le nom de la pièce en mode appareils.

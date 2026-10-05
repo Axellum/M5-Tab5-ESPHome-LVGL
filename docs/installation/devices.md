@@ -39,7 +39,7 @@ Your devices — lights, shutters, climate, plants, TV, sensors — are picked i
 
 **What you don't have disappears**, with its buttons: leave its slot empty ([other zones](adapt-to-your-home.md#other-zones)).
 
-How to use the tiles on the screen (tap, long press, swipe): [screens](../screens.md).
+How to use the tiles on the screen (tap, long press, swipe): [user manual, bottom row](../notice/tiles.md).
 
 **Next (optional): [step 7, a dashboard](dashboard.md).**
 
@@ -84,6 +84,6 @@ Vos appareils — lumières, volets, clim, plantes, TV, capteurs — se choisiss
 
 **Ce que vous n'avez pas disparaît**, avec ses boutons : laissez son emplacement vide ([autres zones](adapt-to-your-home.md#autres-zones)).
 
-Se servir des tuiles à l'écran (appui, appui long, glissement) : [écrans](../screens.md#version-française).
+Se servir des tuiles à l'écran (appui, appui long, glissement) : [notice, rangée du bas](../notice/tiles.md#version-française).
 
 **Ensuite (facultatif) : [étape 7, un tableau de bord](dashboard.md#version-française).**

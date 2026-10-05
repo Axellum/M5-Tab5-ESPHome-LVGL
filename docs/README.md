@@ -14,7 +14,8 @@ Firmware that turns the M5Stack Tab5 into a Home Assistant wall screen, built wi
 | set it up: theme, language, alarm clock, my rooms | [Tablet settings](installation/settings.md), [Adapt to your home](installation/adapt-to-your-home.md), [Weather providers](installation/weather.md) |
 | update it | [Updates](installation/updates.md) |
 | see it running before installing Home Assistant files | [Demo mode](demo_mode.md) |
-| know what each part of the screen does | [Screens and features](screens.md) |
+| use it: every tap and long press | [User manual](notice/README.md) |
+| know how each part of the screen works | [Screens and features](screens.md) |
 | talk to it | [Voice assistant](voice_assistant.md) |
 | choose the icon of a tile | [Tile icons](tiles_icons.md) |
 | fix something that went wrong | [Known incidents](troubleshooting.md), then [Debugging](debugging.md) |
@@ -38,7 +39,8 @@ Un firmware qui fait de la M5Stack Tab5 un écran mural Home Assistant, construi
 | la régler : thème, langue, réveil, mes pièces | [Réglages de la tablette](installation/settings.md#version-française), [Adapter à sa maison](installation/adapt-to-your-home.md#version-française), [Fournisseurs météo](installation/weather.md#version-française) |
 | la mettre à jour | [Mises à jour](installation/updates.md#version-française) |
 | le voir tourner avant d'installer les fichiers de Home Assistant | [Mode démo](demo_mode.md#version-française) |
-| savoir ce que fait chaque partie de l'écran | [Écrans et fonctions](screens.md#version-française) |
+| m'en servir : chaque tap et appui long | [Notice d'utilisation](notice/README.md#version-française) |
+| savoir comment marche chaque partie de l'écran | [Écrans et fonctions](screens.md#version-française) |
 | lui parler | [Assistant vocal](voice_assistant.md#version-française) |
 | choisir l'icône d'une tuile | [Icônes des tuiles](tiles_icons.md#version-française) |
 | réparer ce qui ne marche pas | [Incidents connus](troubleshooting.md#version-française), puis [Diagnostiquer](debugging.md#version-française) |

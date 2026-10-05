@@ -11,6 +11,24 @@ météo au choix, tableau de bord), puis
 [v3.7.0-rc.2](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.7.0-rc.2)
 le 05/10/2026, qui ajoute le popup du volet (#333) et la doc des deux modes vocaux (#334).
 
+### 2026-10-05 — Notice d'utilisation : chaque tap et appui long, zone par zone
+
+Lot 3 du site de documentation : une notice pour se servir de la tablette, dans le menu
+« Utiliser la tablette » du site, en anglais et en français. Doc seulement, firmware inchangé.
+- `docs/notice/` : une page par zone (accueil, rangée du bas et pièces, lumières, volets, clim,
+  télécommande TV, calendrier, réveil, voix, énergie, plantes, console système, arcade), chaque
+  tap, appui long et glissement dans un tableau ou une liste ; l'accueil est montré numéroté
+  (14 repères, avec leur légende).
+- Les images sont les captures du rendu hors tablette (FR et EN), recadrées et allégées en WebP
+  par `tools/site/images_notice.py` (42 images, 1,7 Mo) : rien n'est photographié chez l'auteur.
+- `tests/test_notice.py` : un appui long ajouté au YAML, un geste de plus ou une nouvelle fenêtre
+  dans le rendu fait échouer `pytest` tant que la notice ne les décrit pas ; une page ne cite
+  qu'une image présente, et aucune image ne reste sans page.
+- `docs/screens.md` garde le détail technique et renvoie à la notice pour les gestes. Erreurs
+  corrigées en l'écrivant : glisser vers la gauche fait le tour des fenêtres des jours et revient
+  à l'accueil, vers la droite celui des heures (la page disait que le balayage ne bouclait pas) ; la croix des popups fait 80×44, pas 96×64 ; la disposition de la
+  télécommande TV ; les sections françaises en double (assistant, calendrier, plantes) retirées.
+
 ### 2026-10-05 — Les captures de Home Assistant du guide, prises par la CI
 
 Suite du guide d'installation (lot 2b) : les écrans de Home Assistant des étapes 4 à 7 sont

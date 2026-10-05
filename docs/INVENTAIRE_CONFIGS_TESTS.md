@@ -128,6 +128,8 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_render_ha_config.py` | `tests/` | Unitaire | Copie des fichiers HA publics, détection de fuite d'identifiants réels et de placeholder restant (`tools/render_ha_config.py`) ; aucun placeholder dans le dépôt. |
 | `test_tableau_de_bord.py` | `tests/` | Contenu + rendu | Tableau de bord HA de la tablette (`custom_templates/tab5_dashboard.jinja`) : chaque entité cherchée existe dans le firmware et chaque entité du firmware a sa carte (sauf exceptions motivées), entités et automatisations de package citées définies ; rendu Jinja avec une fausse maison (préfixes mélangés, selects de HA dans une autre langue, sans package, sans tablette, deux tablettes) : YAML valide, chaque entité citée présente. |
 | `test_installation_ha.py` | `tests/` | Unitaire + contenu | Job « installation dans un HA neuf » sans conteneur : `preparer_config.py` écrit une installation complète (ligne des packages, tous les packages, blueprint identique), ni placeholder ni `!secret` installés, optionnels seulement sur demande, chaque entité `…tab5_…` lue par un package définie par un package, entrées du blueprint et « Zones masquées » attendues, tablette virtuelle au nom de la vraie, mêmes chemins sur `main` et en PR ; fonctions pures de `verifier_installation.py` (clé, traces, journal de HA). |
+| `test_site_doc.py` | `tests/` | Contenu + construction | Site de documentation (ADR-0030) : chaque fichier de `docs/` est dans `tools/site/menu.yml` ou écarté exprès (`HORS_SITE`), chaque page dans les deux langues, liens vers le dépôt et ancres de l'autre langue réécrits, puis le site `en/` et `fr/` est construit en mode strict (`tools/site/construire.py`). |
+| `test_notice.py` | `tests/` | Contenu | Notice d'utilisation (`docs/notice/`) : chaque appui long du YAML et le seul glissement décrits dans les deux langues, chaque fenêtre du rendu (`tools/rendu/ecrans.py`) montrée ou écartée avec sa raison, mêmes images dans les deux moitiés, aucune image citée absente ni orpheline, légende de l'accueil annoté = repères de `tools/site/images_notice.py`. |
 | `test_guards.py` | `tests/` | Contenu | Joue les 8 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, registre, règles de code, salles Marble, niveaux Lode, niveaux d'Arcanoïde, questions de Trial Poursuite, comptes de la cartographie). |
 | `__init__.py` | `tests/` | — | Marqueur de package. |
 
@@ -191,7 +193,9 @@ python tools/demo/demo_pusher.py --dry-run
 ├── tests/
 │   ├── __init__.py
 │   ├── test_guards.py
+│   ├── test_notice.py
 │   ├── test_render_ha_config.py
+│   ├── test_site_doc.py
 │   └── test_verifier_secrets_config.py
 ├── tools/
 │   ├── demo/
