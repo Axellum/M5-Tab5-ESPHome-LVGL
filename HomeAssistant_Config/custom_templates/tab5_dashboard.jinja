@@ -910,6 +910,10 @@ views:
               columns: 12
 {%- endif %}
 {%- endfor %}
+          - type: markdown
+            text_only: true
+            content: |-
+              {{ t("**Domo** : l'assistant préféré de Home Assistant (agent « Home Assistant » pour commander la maison). **Discu** : l'assistant choisi dans la liste ci-dessus, avec n'importe quel agent de conversation (IA en ligne, Ollama en local…). « Mode en cours » suit les boutons de l'écran : ne le changez pas à la main.", '**Domo**: the preferred assistant of Home Assistant (the « Home Assistant » agent to control the home). **Discu**: the assistant picked in the list above, with any conversation agent (online AI, local Ollama…). « Current mode » follows the screen buttons: do not change it by hand.') }} [{{ t('Les deux modes vocaux', 'The two voice modes') }}]({{ doc('installation/settings.md', 'assistant-vocal--les-deux-modes', 'voice-assistant-the-two-modes') }})
 {%- if T.reveil %}
       - type: grid
         cards:
@@ -2192,6 +2196,18 @@ views:
     'es': 'Fin del habla',
     'it': 'Fine del parlato',
     'tr': 'Konuşma sonu'},
+  "**Domo** : l'assistant préféré de Home Assistant (agent « Home Assistant » pour commander la maison). **Discu** : l'assistant choisi dans la liste ci-dessus, avec n'importe quel agent de conversation (IA en ligne, Ollama en local…). « Mode en cours » suit les boutons de l'écran : ne le changez pas à la main.": {
+    'de': '**Domo**: der bevorzugte Assistent von Home Assistant (Agent „Home Assistant“, um das Haus zu steuern). **Discu**: der in der Liste oben gewählte Assistent, mit beliebigem Konversationsagenten (Online-KI, lokales Ollama…). „Aktueller Modus“ folgt den Tasten des Bildschirms: nicht von Hand ändern.',
+    'nl': '**Domo**: de voorkeursassistent van Home Assistant (agent “Home Assistant” om het huis te bedienen). **Discu**: de assistent gekozen in de lijst hierboven, met elke gespreksagent (online AI, lokale Ollama…). “Huidige modus” volgt de knoppen van het scherm: niet met de hand wijzigen.',
+    'es': '**Domo**: el asistente preferido de Home Assistant (agente «Home Assistant» para controlar la casa). **Discu**: el asistente elegido en la lista de arriba, con cualquier agente de conversación (IA en línea, Ollama local…). «Modo actual» sigue los botones de la pantalla: no lo cambie a mano.',
+    'it': '**Domo**: l’assistente preferito di Home Assistant (agente «Home Assistant» per comandare la casa). **Discu**: l’assistente scelto nell’elenco sopra, con qualsiasi agente di conversazione (IA online, Ollama in locale…). «Modalità attuale» segue i pulsanti dello schermo: non cambiarla a mano.',
+    'tr': '**Domo**: Home Assistant’ın tercih edilen asistanı (evi yönetmek için “Home Assistant” ajanı). **Discu**: yukarıdaki listede seçilen asistan, herhangi bir konuşma ajanıyla (çevrimiçi yapay zekâ, yerel Ollama…). “Geçerli mod” ekrandaki düğmeleri izler: elle değiştirmeyin.'},
+  'Les deux modes vocaux': {
+    'de': 'Die zwei Sprachmodi',
+    'nl': 'De twee spraakmodi',
+    'es': 'Los dos modos de voz',
+    'it': 'Le due modalità vocali',
+    'tr': 'İki ses modu'},
   'Sonnerie': {
     'de': 'Klingelton',
     'nl': 'Wekgeluid',

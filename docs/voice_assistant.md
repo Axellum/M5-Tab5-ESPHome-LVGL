@@ -10,13 +10,7 @@ The Tab5 functions as a local voice satellite for Home Assistant. It runs wake-w
 
 The pipeline involves these stages in sequence: local wake-word model → I2S audio capture → Home Assistant Voice pipeline (Wyoming STT → conversation agent → Wyoming TTS) → ES8388 DAC playback.
 
-Optionally, the conversation agent is a custom HA integration that calls **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** (Steam Deck / LAN host in this install). The engine then:
-
-- Matches short home-automation phrases locally / deterministically and executes HA services
-- Routes open chat to a light “Discussion” LLM path (TTS-friendly, multi-turn when the HA agent keeps the session open)
-- Can classify specialist work (web, calendar, files…) via a host/classifier — still evolving
-
-The dashboard push UI works without the engine. The engine is what makes voice *interesting* beyond stock Assist.
+The conversation agent is the one of the Home Assistant voice assistant in use: two modes of the screen, Domo and Discu, pick which assistant answers ([Assistant mode selection](#assistant-mode-selection)). Any conversation agent of Home Assistant will do.
 
 ---
 
@@ -101,12 +95,21 @@ ESPHome's voice assistant component fires callbacks (`on_listening`, `on_stt_end
 
 ## Assistant mode selection
 
-The device supports two assistant modes, selectable from the UI:
+Two buttons, on the home page and in the assistant popup, pick the Home Assistant voice assistant that answers:
 
-1. **Home Assistant mode** — uses the standard Home Assistant conversation agent (controls devices, queries sensors, triggers automations)
-2. **Discussion / LLM mode** — routes to a HA pipeline whose conversation agent talks to [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) (fast chat path + optional specialists), not the full heavy coding pipeline
+1. **Domo** (Home Assistant icon) — Home Assistant's preferred assistant. To control the home, its conversation agent is « Home Assistant » (devices, sensors, automations).
+2. **Discu** (robot icon) — the assistant picked in « Tab5 · pipeline de discussion », with any conversation agent: a language model online, a local Ollama, another integration. In this mode, each request opens the assistant popup.
 
-The mode is stored in the `conversation_mode` global bool. A toggle button on the main screen switches between them and updates the mode icon (🏠 vs 🤖). On the HA side, the tablet's pipeline select (`select.m5stack_tab5_home_assistant_hmi_assistant` with the default device name) reflects and controls which pipeline is selected. The tablet does not set it itself: it sends an `esphome.tab5_mode_assistant` event (option `preferred` or `Discussion LLM`, also at each start), and `packages/tab5_evenements.yaml` selects on the select of **that** tablet the preferred pipeline, or for Discussion the one chosen in « Tab5 · pipeline de discussion » (« Aucun » = the preferred one; up to 3.2, a pipeline named exactly « Discussion LLM »), only if it exists ([ADR-0025](decisions/0025-events-only.md)). The same package stops the tablet's media player when a reply is interrupted (`esphome.tab5_voix_stop`) and speaks the announcements (`esphome.tab5_annonce`: appointments, « Volet arrêté »). No « allow Home Assistant actions » option is needed.
+Setting them up in Home Assistant: [Tablet settings → Voice assistant: the two modes](installation/settings.md#voice-assistant-the-two-modes).
+
+**The author's Discu** goes through his own engine, [vromvrom-engine](https://github.com/Axellum/vromvrom-engine), for three reasons:
+- a fast home shortcut: short home commands are recognised and run directly, without going through an LLM;
+- an LLM with dedicated agents depending on the request (specialists);
+- replacing the chosen LLM when it is unavailable, or for a smarter one for instance, local or in the cloud.
+
+This engine is still a rough draft, which the author manages only through AI: it is not a prerequisite, nor something he can recommend. Any Home Assistant conversation agent will do.
+
+How it works: the mode is stored in the `conversation_mode` global bool (kept across restarts); both pairs of buttons show it with a coloured border. On the HA side, the tablet's pipeline select (« Assistant », `select.m5stack_tab5_home_assistant_hmi_assistant` with the default device name) holds the pipeline in use. The tablet does not set it itself: it sends an `esphome.tab5_mode_assistant` event (option `preferred` or `Discussion LLM`) on each tap, and at each start once Home Assistant is connected, and `packages/tab5_evenements.yaml` selects on the select of **that** tablet the preferred pipeline, or for Discussion the one chosen in « Tab5 · pipeline de discussion » (up to 3.2, a pipeline named exactly « Discussion LLM »), only if it exists ([ADR-0025](decisions/0025-events-only.md)). That is why a hand change of « Assistant » does not last. « Aucun » in the list selects the preferred pipeline, and the screen slots automation then reports the « discussion » zone as absent: the buttons are hidden and the tablet goes back to Domo (`tab5-zones.yaml`). The same package stops the tablet's media player when a reply is interrupted (`esphome.tab5_voix_stop`) and speaks the announcements (`esphome.tab5_annonce`: appointments, « Volet arrêté »). No « allow Home Assistant actions » option is needed.
 
 → Broader context: [`related_projects.md`](related_projects.md)
 
@@ -124,13 +127,7 @@ Le Tab5 fonctionne comme un satellite vocal local pour Home Assistant. Il exécu
 
 Le pipeline enchaîne : modèle de wake-word local → capture audio I2S → pipeline Voice Home Assistant (Wyoming STT → agent conversation → Wyoming TTS) → lecture DAC ES8388.
 
-Optionnellement, l’agent de conversation est une intégration HA custom qui appelle **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** (hôte Steam Deck / LAN dans cette install). Le moteur :
-
-- Matche les phrases domotiques courtes en local / déterministe et exécute les services HA
-- Route le chat libre vers un chemin « Discussion » LLM léger (adapté TTS, multi-tour si l’agent HA garde la session ouverte)
-- Peut classifier des spécialistes (web, calendrier, fichiers…) via un host/classifieur — encore en évolution
-
-Le tableau de bord push fonctionne sans le moteur. C’est le moteur qui rend la voix intéressante au-delà d’Assist stock.
+L'agent de conversation est celui de l'assistant vocal de Home Assistant utilisé : deux modes de l'écran, Domo et Discu, choisissent quel assistant répond ([Sélection du mode assistant](#sélection-du-mode-assistant)). N'importe quel agent de conversation de Home Assistant convient.
 
 ---
 
@@ -215,11 +212,20 @@ Les callbacks du composant assistant vocal ESPHome (`on_listening`, `on_stt_end`
 
 ## Sélection du mode assistant
 
-L'appareil supporte deux modes assistant, sélectionnables depuis l'UI :
+Deux boutons, sur l'accueil et dans le popup assistant, choisissent l'assistant vocal de Home Assistant qui répond :
 
-1. **Mode Home Assistant** — utilise l'agent de conversation standard de Home Assistant (contrôle les appareils, interroge les capteurs, déclenche les automations)
-2. **Mode Discussion / LLM** — route vers un pipeline HA dont l’agent parle à [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) (chemin chat rapide + spécialistes optionnels), pas le pipeline lourd de codage
+1. **Domo** (icône Home Assistant) — l'assistant préféré de Home Assistant. Pour commander la maison, son agent de conversation est « Home Assistant » (appareils, capteurs, automatisations).
+2. **Discu** (icône robot) — l'assistant choisi dans « Tab5 · pipeline de discussion », avec n'importe quel agent de conversation : un modèle de langage en ligne, un Ollama local, une autre intégration. Dans ce mode, chaque demande ouvre le popup assistant.
 
-Le mode est stocké dans la globale booléenne `conversation_mode`. Un bouton toggle sur l'écran principal bascule entre les deux et met à jour l'icône de mode (🏠 vs 🤖). Côté HA, le select de pipeline de la tablette (`select.m5stack_tab5_home_assistant_hmi_assistant` avec le nom d'appareil par défaut) reflète et contrôle quel pipeline est sélectionné. La tablette ne le règle pas elle-même : elle envoie un événement `esphome.tab5_mode_assistant` (option `preferred` ou `Discussion LLM`, aussi à chaque démarrage), et `packages/tab5_evenements.yaml` choisit dans le select de **cette** tablette le pipeline préféré, ou pour Discussion celui de « Tab5 · pipeline de discussion » (« Aucun » = le préféré ; jusqu'à la 3.2, un pipeline nommé exactement « Discussion LLM »), seulement s'il existe ([ADR-0025](decisions/0025-events-only.md)). Le même package arrête le lecteur de la tablette quand une réponse est interrompue (`esphome.tab5_voix_stop`) et prononce les annonces (`esphome.tab5_annonce` : rendez-vous, « Volet arrêté »). Aucune option « autoriser les actions Home Assistant » n'est nécessaire.
+Les régler dans Home Assistant : [Réglages de la tablette → Assistant vocal : les deux modes](installation/settings.md#assistant-vocal--les-deux-modes).
+
+**Le Discu de l'auteur** passe par son propre moteur, [vromvrom-engine](https://github.com/Axellum/vromvrom-engine), pour trois raisons :
+- un raccourci domotique rapide : les commandes courtes de la maison sont reconnues et exécutées directement, sans passer par un LLM ;
+- un LLM avec des agents dédiés selon la demande (spécialistes) ;
+- le remplacement du LLM choisi s'il n'est pas disponible, ou par exemple pour une meilleure intelligence, en local ou dans le cloud.
+
+Ce moteur reste un gros brouillon, que l'auteur gère uniquement par l'IA : ce n'est pas un prérequis, ni quelque chose qu'il peut conseiller. N'importe quel agent de conversation de Home Assistant convient.
+
+Fonctionnement : le mode est stocké dans la globale booléenne `conversation_mode` (gardée d'un démarrage à l'autre) ; les deux paires de boutons le montrent par une bordure colorée. Côté HA, le select de pipeline de la tablette (« Assistant », `select.m5stack_tab5_home_assistant_hmi_assistant` avec le nom d'appareil par défaut) porte le pipeline utilisé. La tablette ne le règle pas elle-même : elle envoie un événement `esphome.tab5_mode_assistant` (option `preferred` ou `Discussion LLM`) à chaque appui, et à chaque démarrage une fois Home Assistant connecté, et `packages/tab5_evenements.yaml` choisit dans le select de **cette** tablette le pipeline préféré, ou pour Discussion celui de « Tab5 · pipeline de discussion » (jusqu'à la 3.2, un pipeline nommé exactement « Discussion LLM »), seulement s'il existe ([ADR-0025](decisions/0025-events-only.md)). C'est pourquoi un changement d'« Assistant » à la main ne tient pas. « Aucun » dans la liste choisit le pipeline préféré, et l'automatisation des emplacements signale alors la zone « discussion » absente : les boutons sont masqués et la tablette repasse en Domo (`tab5-zones.yaml`). Le même package arrête le lecteur de la tablette quand une réponse est interrompue (`esphome.tab5_voix_stop`) et prononce les annonces (`esphome.tab5_annonce` : rendez-vous, « Volet arrêté »). Aucune option « autoriser les actions Home Assistant » n'est nécessaire.
 
 → Contexte plus large : [`related_projects.md`](related_projects.md)

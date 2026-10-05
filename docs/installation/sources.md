@@ -29,7 +29,7 @@ Each list has a two-language name, « français · english » (« Tab5 · agenda
 | Tab5 · téléphone | screen on when you come home, off when you leave | the only phone of the companion app |
 | Tab5 · capteur de présence | screen on at presence, off after 15 min without | nothing |
 | Tab5 · TV Samsung, Tab5 · adresse de la TV | app buttons of the TV popup (Samsung Tizen) | the only Samsung Smart TV; the address given by a router tracker when it reports one, otherwise type its IP |
-| Tab5 · pipeline de discussion | the Assist pipeline of the screen's « Discu » mode | nothing: the Domo / Discu buttons are then hidden |
+| Tab5 · pipeline de discussion | the voice assistant of the screen's « Discu » mode ([the two modes](settings.md#voice-assistant-the-two-modes)) | nothing: the Domo / Discu buttons are then hidden |
 
 Outside France, or for another rain or warning source: [weather providers](weather.md). The weather sources can also be set in the blueprint of step 6 (its « Météo · Weather » section): filled, it writes its choice into these lists and wins over them.
 
@@ -76,7 +76,7 @@ Chaque liste porte un nom en deux langues, « français · english » (« Tab5 �
 | Tab5 · téléphone | écran allumé à votre retour, éteint à votre départ | le seul téléphone de l'application mobile |
 | Tab5 · capteur de présence | écran allumé à la présence, éteint après 15 min sans | rien |
 | Tab5 · TV Samsung, Tab5 · adresse de la TV | boutons d'applications du popup TV (Samsung Tizen) | la seule TV Samsung Smart TV ; l'adresse donnée par un suivi du routeur s'il la connaît, sinon tapez son IP |
-| Tab5 · pipeline de discussion | le pipeline Assist du mode « Discu » de l'écran | rien : les boutons Domo / Discu sont alors masqués |
+| Tab5 · pipeline de discussion | l'assistant vocal du mode « Discu » de l'écran ([les deux modes](settings.md#assistant-vocal--les-deux-modes)) | rien : les boutons Domo / Discu sont alors masqués |
 
 Hors de France, ou pour une autre source de pluie ou de vigilances : [fournisseurs météo](weather.md#version-française). Les sources météo se règlent aussi dans le blueprint de l'étape 6 (sa section « Météo · Weather ») : remplie, elle écrit son choix dans ces listes et prime sur elles.
 
