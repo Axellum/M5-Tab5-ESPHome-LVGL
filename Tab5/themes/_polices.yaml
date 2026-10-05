@@ -1,7 +1,8 @@
 # Écrit par tools/police_theme.py — ne pas modifier à la main (ADR-0029, lot 3).
 # Métriques en unités de police (fontTools, fichier de Google Fonts) ; tailles et
 # positions en px. chiffres : caractère → [avance, xMin, xMax, yMin, yMax].
-# encre : encre visible des chiffres à la taille de l'horloge (FreeType, bpp 2).
+# encre : encre visible des chiffres à la taille de l'horloge (FreeType, bpp 2) ;
+# date.jambage : px d'encre visible sous la ligne de base de « gjpqy ».
 # tests/test_polices_themes.py refait la géométrie de l'horloge depuis ces valeurs.
 Roboto@700:
   sha256: 35757eaa996b3359
@@ -14,7 +15,7 @@ Roboto@700:
     bas: 122
     gauche: [6, 10, 4, 4, 3, 6, 6, 4, 6, 5]
     droite: [69, 51, 70, 69, 71, 69, 70, 69, 69, 68]
-  date: {taille: 45, y: 135}
+  date: {taille: 45, y: 135, jambage: 9}
   titre: {taille: 32}
   chiffres:
     '0': [1175, 95, 1080, -20, 1476]
@@ -39,7 +40,7 @@ Anton@400:
     bas: 133
     gauche: [12, 20, 13, 12, 11, 12, 13, 14, 12, 13]
     droite: [63, 53, 64, 63, 65, 64, 64, 63, 63, 64]
-  date: {taille: 45, y: 124}
+  date: {taille: 45, y: 124, jambage: 5}
   titre: {taille: 32}
   chiffres:
     '0': [1012, 40, 972, -16, 1776]
@@ -64,7 +65,7 @@ Barlow Condensed@800:
     bas: 131
     gauche: [11, 19, 10, 10, 5, 11, 11, 11, 11, 10]
     droite: [65, 53, 65, 63, 69, 64, 64, 64, 63, 63]
-  date: {taille: 45, y: 132}
+  date: {taille: 45, y: 132, jambage: 9}
   titre: {taille: 32}
   chiffres:
     '0': [456, 23, 433, -12, 712]
@@ -89,7 +90,7 @@ Barlow Semi Condensed@700:
     bas: 131
     gauche: [9, 20, 9, 9, 5, 11, 11, 10, 9, 8]
     droite: [66, 53, 66, 65, 69, 66, 66, 65, 65, 64]
-  date: {taille: 45, y: 132}
+  date: {taille: 45, y: 132, jambage: 10}
   titre: {taille: 32}
   chiffres:
     '0': [511, 38, 473, -11, 710]
@@ -114,7 +115,7 @@ Bodoni Moda@700:
     bas: 136
     gauche: [3, 14, 6, 6, 3, 6, 7, 10, 6, 4]
     droite: [73, 62, 69, 67, 75, 66, 71, 69, 68, 68]
-  date: {taille: 45, y: 126}
+  date: {taille: 45, y: 126, jambage: 12}
   titre: {taille: 28}
   chiffres:
     '0': [1319, 80, 1240, -20, 1520]
@@ -139,7 +140,7 @@ Familjen Grotesk@700:
     bas: 136
     gauche: [3, 9, 6, 4, 4, 5, 5, 6, 4, 5]
     droite: [70, 65, 68, 68, 70, 69, 69, 67, 70, 68]
-  date: {taille: 45, y: 130}
+  date: {taille: 45, y: 130, jambage: 8}
   titre: {taille: 32}
   chiffres:
     '0': [680, 34, 646, -14, 794]
@@ -164,7 +165,7 @@ Figtree@700:
     bas: 124
     gauche: [0, 16, 3, 7, 0, 6, 4, 6, 3, 4]
     droite: [75, 52, 69, 69, 74, 70, 71, 70, 71, 70]
-  date: {taille: 45, y: 134}
+  date: {taille: 45, y: 134, jambage: 10}
   titre: {taille: 31}
   chiffres:
     '0': [648, 35, 613, -12, 712]
@@ -189,7 +190,7 @@ Fraunces@700:
     bas: 116
     gauche: [1, 13, 4, 7, 1, 7, 4, 9, 4, 4]
     droite: [75, 62, 72, 69, 71, 68, 71, 70, 71, 71]
-  date: {taille: 45, y: 132}
+  date: {taille: 45, y: 132, jambage: 11}
   titre: {taille: 28}
   chiffres:
     '0': [1404, 68, 1336, -36, 1435]
@@ -214,7 +215,7 @@ Fredoka@700:
     bas: 130
     gauche: [3, 14, 2, 3, 1, 5, 5, 3, 4, 5]
     droite: [73, 59, 73, 73, 69, 68, 69, 70, 71, 69]
-  date: {taille: 45, y: 133}
+  date: {taille: 45, y: 133, jambage: 11}
   titre: {taille: 32}
   chiffres:
     '0': [565, 14, 551, -22, 701]
@@ -239,7 +240,7 @@ Gloock@400:
     bas: 123
     gauche: [0, 15, 5, 6, 0, 6, 3, 9, 2, 2]
     droite: [74, 57, 65, 66, 71, 66, 71, 71, 71, 71]
-  date: {taille: 45, y: 133}
+  date: {taille: 45, y: 133, jambage: 11}
   titre: {taille: 30}
   chiffres:
     '0': [657, 35, 622, -14, 764]
@@ -264,7 +265,7 @@ IBM Plex Serif@700:
     bas: 136
     gauche: [2, 5, 3, 3, 1, 3, 3, 6, 2, 3]
     droite: [72, 71, 68, 69, 72, 69, 71, 69, 72, 71]
-  date: {taille: 45, y: 130}
+  date: {taille: 45, y: 130, jambage: 9}
   titre: {taille: 29}
   chiffres:
     '0': [600, 34, 566, -12, 710]
@@ -289,7 +290,7 @@ Jersey 10@400:
     bas: 105
     gauche: [13, 23, 9, 9, 13, 13, 9, 13, 9, 9]
     droite: [55, 44, 58, 58, 55, 55, 58, 55, 58, 58]
-  date: {taille: 45, y: 140}
+  date: {taille: 45, y: 140, jambage: 5}
   titre: {taille: 32}
   chiffres:
     '0': [525, 0, 450, 0, 750]
@@ -314,7 +315,7 @@ Manrope@700:
     bas: 141
     gauche: [3, 17, 5, 4, 4, 6, 6, 8, 5, 4]
     droite: [71, 51, 70, 67, 71, 69, 71, 66, 69, 69]
-  date: {taille: 45, y: 129}
+  date: {taille: 45, y: 129, jambage: 12}
   titre: {taille: 31}
   chiffres:
     '0': [1316, 140, 1176, -30, 1470]
@@ -339,7 +340,7 @@ Murecho@300:
     bas: 153
     gauche: [7, 19, 8, 10, 3, 9, 7, 9, 7, 7]
     droite: [68, 46, 65, 65, 68, 64, 68, 63, 68, 68]
-  date: {taille: 45, y: 124}
+  date: {taille: 45, y: 124, jambage: 11}
   titre: {taille: 32}
   chiffres:
     '0': [573, 55, 518, -11, 705]
@@ -364,7 +365,7 @@ Murecho@400:
     bas: 153
     gauche: [5, 16, 7, 9, 3, 9, 6, 8, 6, 6]
     droite: [68, 48, 66, 66, 70, 66, 69, 65, 69, 68]
-  date: {taille: 45, y: 124}
+  date: {taille: 45, y: 124, jambage: 11}
   titre: {taille: 32}
   chiffres:
     '0': [583, 51, 532, -11, 705]
@@ -389,7 +390,7 @@ Nunito@800:
     bas: 134
     gauche: [3, 9, 4, 3, 1, 6, 4, 3, 2, 2]
     droite: [71, 72, 71, 69, 75, 72, 72, 71, 72, 70]
-  date: {taille: 45, y: 131}
+  date: {taille: 45, y: 131, jambage: 9}
   titre: {taille: 29}
   chiffres:
     '0': [600, 37, 563, -11, 716]
@@ -414,7 +415,7 @@ Overpass@700:
     bas: 111
     gauche: [6, 17, 8, 6, 0, 7, 6, 7, 7, 5]
     droite: [69, 47, 67, 66, 71, 68, 68, 66, 69, 68]
-  date: {taille: 45, y: 137}
+  date: {taille: 45, y: 137, jambage: 10}
   titre: {taille: 31}
   chiffres:
     '0': [1315, 145, 1170, -24, 1424]
@@ -439,7 +440,7 @@ Overpass@800:
     bas: 108
     gauche: [6, 17, 8, 8, 0, 8, 7, 8, 6, 5]
     droite: [69, 47, 66, 66, 70, 66, 68, 65, 67, 67]
-  date: {taille: 45, y: 137}
+  date: {taille: 45, y: 137, jambage: 10}
   titre: {taille: 31}
   chiffres:
     '0': [1326, 142, 1183, -24, 1424]
@@ -464,7 +465,7 @@ Oxanium@700:
     bas: 103
     gauche: [7, 10, 7, 8, 7, 5, 7, 7, 7, 7]
     droite: [69, 67, 69, 69, 69, 69, 69, 69, 69, 69]
-  date: {taille: 45, y: 141}
+  date: {taille: 45, y: 141, jambage: 9}
   titre: {taille: 31}
   chiffres:
     '0': [578, 52, 526, 0, 690]
@@ -489,7 +490,7 @@ Pacifico@400:
     bas: 172
     gauche: [8, 20, 7, 6, 6, 10, 8, 11, 9, 7]
     droite: [68, 56, 69, 66, 72, 69, 69, 73, 68, 68]
-  date: {taille: 45, y: 118}
+  date: {taille: 45, y: 118, jambage: 20}
   titre: {taille: 26}
   chiffres:
     '0': [543, 51, 507, -5, 584]
@@ -514,7 +515,7 @@ Quicksand@700:
     bas: 132
     gauche: [2, 14, 7, 7, 0, 8, 7, 9, 7, 6]
     droite: [72, 52, 67, 66, 72, 67, 69, 70, 68, 68]
-  date: {taille: 45, y: 132}
+  date: {taille: 45, y: 132, jambage: 9}
   titre: {taille: 31}
   chiffres:
     '0': [614, 40, 574, -10, 710]

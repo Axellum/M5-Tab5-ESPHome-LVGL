@@ -576,7 +576,7 @@ def rendre_polices(themes: list[Theme], mesures: dict | None = None, jeux: dict[
     for t in themes:
         rangee = {}
         geo = {"y": None}
-        y_date = None
+        y_date = jambage = None
         for role in ROLES_POLICE:
             cle = t.polices.get(role)
             if cle is None:
@@ -603,15 +603,17 @@ def rendre_polices(themes: list[Theme], mesures: dict | None = None, jeux: dict[
             if role == "horloge":
                 geo = m["horloge"]
             elif role == "date":
-                y_date = m["date"]["y"]
+                y_date, jambage = m["date"]["y"], m["date"]["jambage"]
         if geo["y"] is None or y_date is None:
             if "horloge" not in mesures.get(REFERENCE_POLICE, {}):
                 raise ErreurTheme(f"{REFERENCE_POLICE} absente de _polices.yaml (lancer `python tools/police_theme.py`)")
             if geo["y"] is None:
                 geo = mesures[REFERENCE_POLICE]["horloge"]
             if y_date is None:
-                y_date = mesures[REFERENCE_POLICE]["date"]["y"]
-        table.append((t, rangee, {**geo, "y_date": y_date}))
+                y_date, jambage = (mesures[REFERENCE_POLICE]["date"][k] for k in ("y", "jambage"))
+        # L'horloge remonte du jambage de SA police de date (marge du haut = bas des
+        # jambages de la date → bas de la tuile), _police_theme().avec_jambage().
+        table.append((t, rangee, {**_police_theme().avec_jambage(geo, jambage), "y_date": y_date}))
     font_yaml = []
     if fontes:
         font_yaml = ["font:"]

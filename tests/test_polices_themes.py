@@ -39,9 +39,12 @@ def test_roboto_redonne_la_geometrie_du_yaml():
     cadre_y = re.search(r"^  y: (\d+)\n  width: 75\n", rouleau, re.M)
     assert ys and dp and date and cadre_y, "le motif ne lit plus la géométrie de l'horloge"
     assert int(cadre_y.group(1)) == police_theme.CADRE_Y, "CADRE_Y ≠ y du cadre de clock_roller.yaml"
-    assert m["horloge"] == {"taille": 130, "y": ys.pop(), "cadre_y": police_theme.CADRE_Y, "dx": 0,
-                            "x_deux_points": int(dp.group(1)), "y_deux_points": int(dp.group(2))}
-    assert m["date"] == {"taille": 45, "y": int(date.group(1))} and m["titre"]["taille"] == 32
+    # Le YAML est l'état compilé du thème Ardoise : géométrie de Roboto remontée du jambage
+    # de sa date (gen_themes.py fait de même pour chaque thème).
+    geo = police_theme.avec_jambage(m["horloge"], m["date"]["jambage"])
+    assert geo == {"taille": 130, "y": ys.pop(), "cadre_y": police_theme.CADRE_Y, "dx": 0,
+                   "x_deux_points": int(dp.group(1)), "y_deux_points": int(dp.group(2))}
+    assert (m["date"]["taille"], m["date"]["y"]) == (45, int(date.group(1))) and m["titre"]["taille"] == 32
     # kCadreX de tab5_theme.cpp (généré depuis X_CADRES) repose ces x : ce sont ceux du YAML.
     xs = tuple(int(x) for x in re.findall(r"file: ui_components/clock_roller\.yaml, vars: \{ d: \w+, x: (\d+) \}", lvgl))
     assert xs == police_theme.X_CADRES, f"X_CADRES {police_theme.X_CADRES} ≠ x des rouleaux de tab5-lvgl.yaml {xs}"
@@ -91,6 +94,30 @@ def test_marges_egales_dans_la_tuile_horloge():
         # Le chiffre qui arrive traverse tout le cadre : il reste au-dessus de l'encre de
         # la date (au plus 40 px au-dessus de sa ligne de base, à 45 px).
         assert 0 <= h["cadre_y"] and h["cadre_y"] + police_theme.CADRE_H <= police_theme.DATE_BASE - 40, cle
+
+
+def test_horloge_a_la_marge_des_jambages_de_la_date_dans_chaque_theme():
+    """Demande d'Axel (05/10/2026) : la marge du haut de l'horloge (encre visible des
+    chiffres) égale celle du bas des jambages de la date (g, j, p, q, y) au bas de la
+    tuile ; la date ne bouge pas, l'horloge monte d'autant. Lu dans la table générée
+    (tab5_theme.cpp), avec la police d'heure et la police de date de chaque thème, qui ne
+    sont pas toujours les mêmes."""
+    cpp = (REPO / "Tab5" / "tab5_theme.cpp").read_text(encoding="utf-8")
+    rangees = re.findall(r"^    \{(-?\d+(?:, -?\d+){8})\},  // (\w+)$", cpp, re.M)
+    themes = {t.fichier: t for t in gen_themes.charger()}
+    assert [f for _, f in rangees] == list(themes), "table kPolices pas dans l'ordre des thèmes"
+    mesures = _mesures()
+    for valeurs, fichier in rangees:
+        _, _, _, y, _, y_dp, _, cadre_y, _ = (int(v) for v in valeurs.split(", "))
+        polices = themes[fichier].polices
+        heure = mesures[polices.get("horloge", police_theme.REFERENCE)]
+        date = mesures[polices.get("date", police_theme.REFERENCE)]
+        haut = 1 + cadre_y + y + heure["encre"]["haut"]
+        bas = 210 - (1 + police_theme.DATE_BASE + date["date"]["jambage"])
+        assert haut == bas, f"{fichier} : {haut} px au-dessus de l'heure, {bas} px sous les jambages de la date"
+        assert y_dp == cadre_y + y, f"{fichier} : « : » pas à la hauteur des chiffres"
+        # Le cadre peut mordre sur la bordure (Pacifico : jambages de 20 px), pas en sortir.
+        assert cadre_y >= -1, fichier
 
 
 def test_ligne_de_base_de_la_date_au_meme_endroit_pour_chaque_police():
@@ -158,6 +185,7 @@ def test_polices_generees_sans_glyphe_absent():
     assert "police_essai_sans_700_30" in lambda_yaml[2]
     assert lambda_yaml[-1].endswith(", horloge, id(lbl_date));")
     # Ardoise : les trois Roboto (0, 1, 2) ; l'essai : ses polices, la date en Roboto (son y).
-    assert cpp[-3].startswith("    {0, 1, 2, -23, 181, 3, 135, 26, 0},")
-    assert cpp[-2].startswith("    {3, 1, 4, -20, 182, 13, 135, 25, 1},")
+    # Les cadres et le « : » remontent du jambage de la date (Roboto 45 : 9 px).
+    assert cpp[-3].startswith("    {0, 1, 2, -23, 181, -6, 135, 17, 0},")
+    assert cpp[-2].startswith("    {3, 1, 4, -20, 182, 4, 135, 16, 1},")
     assert "static constexpr int16_t kCadreX[] = {27, 102, 222, 297};" in cpp

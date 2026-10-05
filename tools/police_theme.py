@@ -17,12 +17,17 @@ métriques avec fontTools et calcule, pour chaque rôle, la taille et la positio
     dans le cadre de 75 × 104 du rouleau, centré, avec 2 px d'air en haut et en bas, et
     dont le « : » tient entre les deux groupes ; le label est remonté pour centrer
     l'encre dans le cadre ; le « : » est centré entre les heures et les minutes. Les
-    cadres sont posés pour que l'encre des chiffres tombe à MARGE px du haut de la tuile
-    et que HH:MM soit centré à l'encre près (marges égales, 05/10/2026) ;
+    cadres sont posés pour que HH:MM soit centré à l'encre près, et que l'encre des
+    chiffres tombe à la même distance du haut de la tuile que le bas des jambages de la
+    date (g, j, p, q, y) du bas de la tuile (demande d'Axel du 05/10/2026 : l'horloge
+    plus haute, l'espace entre l'horloge et la date plus grand) ;
   - date : la plus grande taille (≤ 45 px) dont la date la plus large, dans les 7 langues,
     tient dans la tuile de l'horloge avec 16 px de marge de chaque côté ; le label est posé
-    pour que la ligne de base tombe à DATE_BASE, à la même distance du bas de la tuile
-    que l'encre des chiffres de son haut (marges égales, 05/10/2026) ;
+    pour que la ligne de base tombe à DATE_BASE, à MARGE px du bas de la tuile ; `jambage`
+    (jambage_visible()) : les px d'encre sous la ligne de base. La marge de l'horloge,
+    en haut comme en bas, vaut donc MARGE - jambage : geometrie_horloge() pose les cadres
+    pour MARGE, tools/gen_themes.py retranche le jambage de la police de date du thème
+    (avec_jambage() ; la police de la date n'est pas toujours celle de l'heure) ;
   - titre : la plus grande taille (≤ 32 px) pour laquelle le plus long des titres de
     popup, dans les 7 langues, n'est pas plus large que le plus long en Roboto 32.
 
@@ -46,8 +51,8 @@ peut ne border qu'un côté, pour garder MARGE px depuis le bord extérieur de l
 Il écrit `Tab5/themes/_polices.yaml` : les métriques des chiffres et du « : » (pour que
 pytest refasse la géométrie de l'horloge hors ligne, tests/test_polices_themes.py), les
 caractères absents et les tailles retenues. Roboto 700 y figure comme référence : ses
-valeurs doivent redonner la géométrie actuelle (130 px, y -23, cadres à y 26, « : » à 181 ;
-date 45 à y 135 ; titres 32). tools/gen_themes.py lit ce fichier. À relancer après l'ajout d'une police à
+valeurs doivent redonner la géométrie actuelle (130 px, y -23, cadres à y 26 avant le
+jambage de la date, « : » à 181 ; date 45 à y 135 ; titres 32). tools/gen_themes.py lit ce fichier. À relancer après l'ajout d'une police à
 un thème (pytest le signale) ou d'un titre de popup nettement plus long.
 
     python tools/police_theme.py   # réseau : télécharge les polices absentes du cache
@@ -76,8 +81,11 @@ REFERENCE = "Roboto@700"
 
 # Géométrie de la tuile horloge (tab5-lvgl.yaml, clock_roller.yaml ; tests/test_horloge.py).
 CADRE_L, CADRE_H = 75, 104
-CADRE_Y = 26                    # y du cadre en Roboto : encre visible des chiffres à MARGE du haut
-MARGE = 32                      # bord extérieur de la tuile → encre des chiffres, ligne de base de la date
+CADRE_Y = 17                    # y du cadre en Roboto (clock_roller.yaml) : 26 pour MARGE, - jambage 9
+MARGE = 32                      # bord extérieur de la tuile → ligne de base de la date (bas)
+# Jambages de la date : le bas de leur encre est le bas de la ligne de la date ; la marge
+# de l'horloge (haut et bas) vaut MARGE - le jambage de la police de date du thème.
+JAMBAGES = "gjpqy"
 MARGE_MIN = 2
 X_CADRES = (27, 102, 222, 297)  # x des rouleaux h10, h1, m10, m1 (tab5-lvgl.yaml)
 X_H1, X_M10 = X_CADRES[1], X_CADRES[2]  # le « : » vit entre les deux
@@ -270,6 +278,28 @@ def encre_visible(chemin: Path, taille: int, bpp: int = 2) -> dict:
     return {"haut": haut, "bas": bas, "gauche": gauche, "droite": droite}
 
 
+def jambage_visible(chemin: Path, taille: int, bpp: int = 2) -> int:
+    """Px d'encre visible sous la ligne de base des jambages (JAMBAGES) à `taille` px,
+    rendus comme ESPHome (FreeType, pixels de couverture < 256 / 2^bpp vidés) : la plus
+    basse rangée d'encre, ligne de base = 0."""
+    import freetype
+
+    face = freetype.Face(str(chemin))
+    face.set_pixel_sizes(taille, 0)
+    seuil = 256 // (1 << bpp)
+    bas = 0
+    for c in JAMBAGES:
+        if not face.get_char_index(c):
+            continue
+        face.load_char(c, freetype.FT_LOAD_RENDER | freetype.FT_LOAD_NO_BITMAP)
+        g = face.glyph
+        bm, pas = g.bitmap, g.bitmap.pitch
+        lignes = [y for y in range(bm.rows) if max(bm.buffer[y * pas:y * pas + bm.width], default=0) >= seuil]
+        if lignes:
+            bas = max(bas, lignes[-1] + 1 - g.bitmap_top)
+    return bas
+
+
 # --- Calculs (repris tels quels par tests/test_polices_themes.py) -------------------
 
 def geometrie_horloge(m: dict, taille: int, visible: dict | None = None) -> dict | None:
@@ -279,7 +309,8 @@ def geometrie_horloge(m: dict, taille: int, visible: dict | None = None) -> dict
 
     y : le label dans son cadre (encre centrée) ; cadre_y : le cadre dans la tuile, l'encre
     visible des chiffres (`visible`, encre_visible() ; à défaut, celle des métriques) à MARGE
-    px de son bord extérieur (bordure de 1 px) ; dx : décalage des cadres et du « : » qui
+    px de son bord extérieur (bordure de 1 px ; avec_jambage() remonte ensuite le tout du
+    jambage de la date) ; dx : décalage des cadres et du « : » qui
     centre l'encre de HH:MM. L'écart gauche / droite dépend des chiffres affichés (un « 1 »
     est étroit) : avec `visible`, dx rend minimal l'écart moyen sur les heures possibles
     (dizaine d'heures 0 à 2, minute 0 à 9) ; sans, il centre les chiffres extrêmes."""
@@ -313,6 +344,13 @@ def geometrie_horloge(m: dict, taille: int, visible: dict | None = None) -> dict
     return {"taille": taille, "y": y, "cadre_y": cadre_y, "dx": dx,
             "x_deux_points": X_H1 + CADRE_L + (fente - avance_dp + 1) // 2 + dx,
             "y_deux_points": cadre_y + y}
+
+
+def avec_jambage(geo: dict, jambage: int) -> dict:
+    """Géométrie de l'horloge d'un thème : cadres et « : » remontés du jambage de sa police
+    de date, pour que l'encre des chiffres tombe à MARGE - jambage du haut de la tuile,
+    autant que le bas des jambages de la date au-dessus du bas de la tuile."""
+    return {**geo, "cadre_y": geo["cadre_y"] - jambage, "y_deux_points": geo["y_deux_points"] - jambage}
 
 
 def ecart_horizontal(visible: dict, dx: int) -> float:
@@ -354,7 +392,8 @@ def tailles(m: dict, ref: dict, liste_dates: list[str], liste_titres: list[str],
             break
     for t in range(MAX_TAILLE["date"], MIN_TAILLE["date"] - 1, -1):
         if max(largeur(m, d, t, ref) for d in liste_dates) <= TUILE_UTILE - 2 * MARGE_DATE:
-            out["date"] = {"taille": t, "y": y_date(m, t)}
+            out["date"] = {"taille": t, "y": y_date(m, t),
+                           "jambage": jambage_visible(chemin, t) if chemin is not None else 0}
             break
     plus_long = max(largeur(ref, s, MAX_TAILLE["titre"]) for s in liste_titres)
     for t in range(MAX_TAILLE["titre"], MIN_TAILLE["titre"] - 1, -1):
@@ -405,7 +444,8 @@ def main() -> int:
     entete = ("# Écrit par tools/police_theme.py — ne pas modifier à la main (ADR-0029, lot 3).\n"
               "# Métriques en unités de police (fontTools, fichier de Google Fonts) ; tailles et\n"
               "# positions en px. chiffres : caractère → [avance, xMin, xMax, yMin, yMax].\n"
-              "# encre : encre visible des chiffres à la taille de l'horloge (FreeType, bpp 2).\n"
+              "# encre : encre visible des chiffres à la taille de l'horloge (FreeType, bpp 2) ;\n"
+              "# date.jambage : px d'encre visible sous la ligne de base de « gjpqy ».\n"
               "# tests/test_polices_themes.py refait la géométrie de l'horloge depuis ces valeurs.\n")
     texte = yaml.safe_dump(sortie, allow_unicode=True, sort_keys=False, width=110,
                            default_flow_style=None)

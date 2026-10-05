@@ -69,7 +69,7 @@ struct PolicesTheme {
     int16_t x_deux_points;
     int16_t y_deux_points;
     int16_t y_date;   // ligne de base de la date au même endroit pour toutes les polices
-    int16_t cadre_y;  // y des cadres des rouleaux : l'encre des chiffres à 32 px du haut
+    int16_t cadre_y;  // y des cadres : encre des chiffres à la marge du bas des jambages de la date
     int8_t dx;        // décalage des cadres et du « : » qui centre l'encre de HH:MM
 };
 
@@ -2312,27 +2312,27 @@ static constexpr Forme kFormes[] = {
 static constexpr int kNbPolices = 48;
 static constexpr int16_t kCadreX[] = {27, 102, 222, 297};
 static constexpr PolicesTheme kPolices[] = {
-    {0, 1, 2, -23, 181, 3, 135, 26, 0},  // ardoise
-    {3, 4, 5, -34, 183, -8, 131, 26, 0},  // relief_doux
-    {0, 1, 2, -23, 181, 3, 135, 26, 0},  // relief_plat
-    {0, 1, 2, -23, 181, 3, 135, 26, 0},  // graphite
-    {6, 7, 8, -36, 181, -11, 130, 25, 1},  // almanach_imprime
-    {0, 1, 2, -23, 181, 3, 135, 26, 0},  // ardoise_douce
-    {3, 4, 5, -34, 183, -8, 131, 26, 0},  // terre_cuite
-    {0, 1, 2, -23, 181, 3, 135, 26, 0},  // craie_et_ardoise
-    {9, 10, 11, -21, 182, 2, 132, 23, 0},  // almanach
-    {12, 13, 14, -32, 180, -7, 132, 25, 0},  // beton_brut
-    {15, 16, 17, -6, 181, 18, 141, 24, -1},  // neon_calme
-    {18, 19, 20, -54, 186, -28, 124, 26, 0},  // zen_sumi
-    {21, 22, 23, -40, 180, -17, 130, 23, 0},  // bento
-    {24, 25, 26, -22, 185, 6, 133, 28, 0},  // obsidienne
-    {27, 28, 29, -36, 184, -7, 129, 29, 0},  // platine_et_or
-    {30, 31, 32, -12, 185, 10, 137, 22, 0},  // signalisation
-    {33, 34, 35, -30, 185, -4, 133, 26, 0},  // capsule
-    {36, 37, 38, -18, 192, -4, 140, 14, 3},  // pixel
-    {39, 40, 41, -81, 182, -62, 118, 19, -1},  // bonbon
-    {42, 43, 44, -32, 182, -6, 132, 26, 0},  // sorbet
-    {45, 46, 47, -32, 185, -4, 124, 28, -1},  // ultraviolet
+    {0, 1, 2, -23, 181, -6, 135, 17, 0},  // ardoise
+    {3, 4, 5, -34, 183, -17, 131, 17, 0},  // relief_doux
+    {0, 1, 2, -23, 181, -6, 135, 17, 0},  // relief_plat
+    {0, 1, 2, -23, 181, -6, 135, 17, 0},  // graphite
+    {6, 7, 8, -36, 181, -20, 130, 16, 1},  // almanach_imprime
+    {0, 1, 2, -23, 181, -6, 135, 17, 0},  // ardoise_douce
+    {3, 4, 5, -34, 183, -17, 131, 17, 0},  // terre_cuite
+    {0, 1, 2, -23, 181, -6, 135, 17, 0},  // craie_et_ardoise
+    {9, 10, 11, -21, 182, -9, 132, 12, 0},  // almanach
+    {12, 13, 14, -32, 180, -17, 132, 15, 0},  // beton_brut
+    {15, 16, 17, -6, 181, 9, 141, 15, -1},  // neon_calme
+    {18, 19, 20, -54, 186, -39, 124, 15, 0},  // zen_sumi
+    {21, 22, 23, -40, 180, -25, 130, 15, 0},  // bento
+    {24, 25, 26, -22, 185, -5, 133, 17, 0},  // obsidienne
+    {27, 28, 29, -36, 184, -19, 129, 17, 0},  // platine_et_or
+    {30, 31, 32, -12, 185, 0, 137, 12, 0},  // signalisation
+    {33, 34, 35, -30, 185, -15, 133, 15, 0},  // capsule
+    {36, 37, 38, -18, 192, -9, 140, 9, 3},  // pixel
+    {39, 40, 41, -81, 182, -82, 118, -1, -1},  // bonbon
+    {42, 43, 44, -32, 182, -15, 132, 17, 0},  // sorbet
+    {45, 46, 47, -32, 185, -9, 124, 23, -1},  // ultraviolet
 };
 // <<< formes
 
@@ -2385,9 +2385,10 @@ void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_t
         lv_style_set_text_font(styles[role], police->get_lv_font());
         lv_obj_report_style_change(styles[role]);
     }
-    // Marges égales dans la tuile horloge (05/10/2026) : 32 px entre son bord extérieur
-    // et l'encre des chiffres en haut, la ligne de base de la date en bas, l'encre de HH:MM
-    // centrée entre la gauche et la droite (tools/police_theme.py, tests/test_polices_themes.py).
+    // Marges égales dans la tuile horloge (05/10/2026) : autant d'air entre son bord
+    // extérieur et l'encre des chiffres en haut qu'entre le bas des jambages de la date
+    // (g, j, p, q, y) et le bas ; l'encre de HH:MM centrée entre la gauche et la droite
+    // (tools/police_theme.py, tests/test_polices_themes.py).
     // La table suppose une bordure de 1 px sur chaque côté (Ardoise) ; celle du thème va de
     // 0 à 4 px et ne borde parfois qu'un côté (Relief doux : haut et gauche). Elle déplace le
     // contenu de la tuile : on la retranche. `space_*` = bordure si son côté est tracé + pad,
