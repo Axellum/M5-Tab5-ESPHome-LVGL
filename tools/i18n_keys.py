@@ -37,9 +37,9 @@ VARS_TEXTE = ("title", "name", "state_text", "label_text", "subtitle", "day_labe
 FICHIERS_UI = ("tab5-lvgl.yaml",)
 # Textes YAML jamais traduits : marques, unités, symboles, valeurs d'exemple.
 NON_TRADUITS = {
-    "Ok Nabu: ON", "Ok Nabu : ON", "Ok Nabu: OFF", "Ok Nabu : OFF", "Home Assistant",
-    "Netflix", "Prime", "YouTube", "CANAL+", "Boost", "Flash", "Sys", "LEDs",
-    "On / Off", "Menu", "Source", "HA", "PC", "TV", "OK", "SRAM", "PSRAM", "Wi-Fi", "MIN",
+    "Ok Nabu: ON", "Ok Nabu : ON", "Home Assistant",
+    "Netflix", "Prime", "YouTube", "CANAL+", "Boost", "Flash", "LEDs",
+    "On / Off", "Menu", "Source", "PC", "OK", "SRAM", "PSRAM", "Wi-Fi", "MIN",
     # Noms des consoles : des noms propres, et le libellé « Écran courant » que lit HA
     # (GameRegistry, tab5_registry.cpp). « ARCADE » s'écrit pareil dans les deux langues.
     "Fil d'Or", "Arcanoïde", "Coureur d'Or", "Go Tab", "Trial Poursuite", "Dames Tab",
