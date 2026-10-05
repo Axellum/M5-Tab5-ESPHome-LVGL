@@ -4,6 +4,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Tableau de bord HA : la vue « Santé » explique quoi faire
+
+Même traitement que la vue Réglages, demandé par Axel.
+- **Quand quelque chose cloche** (en tête) : que vérifier par symptôme (écran figé, tablette
+  déconnectée ou écran noir après une mise à jour, redémarrages, fichiers HA en retard, zone
+  absente), avec les cas déjà diagnostiqués de `docs/troubleshooting.md` ; liens vers la page
+  de la tablette, le journal et les réparations de HA, la page de dépannage.
+- **En bref** : liaison, push HA, date et raison du dernier démarrage, firmware (et mise à
+  jour disponible), fichiers HA (et en retard), entités indisponibles, signal Wi-Fi, alertes
+  de santé coupées ; ce qui demande une action est en orange.
+- Une courte explication sous État, Performances (lire la forme des courbes, lien vers les
+  mesures de référence), Réseau, Poussées et Alertes de santé (notifications, à couper
+  pendant une mise à jour).
+- La macro `doc()` prend le fichier de `docs/` ; `tests/test_tableau_de_bord.py` vérifie les
+  ancres de chaque fichier cité, et les liens et le tableau « En bref » de la vue Santé.
+
 ### 2026-10-05 — Tableau de bord HA : tout pour régler la tablette dans « Réglages »
 
 Remarque d'Axel : dans la vue Réglages, rien ne disait où brancher ses panneaux solaires
