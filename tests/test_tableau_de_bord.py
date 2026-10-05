@@ -252,6 +252,7 @@ def _rendre(maison, **variables):
         integration_entities=lambda domaine: list(modeles) if domaine == "esphome" else [],
         device_attr=lambda e, nom: modeles.get(e) if nom == "model" else None,
         device_id=lambda e: appareils.get(e),
+        config_entry_id=lambda e: f"entree_{appareils[e]}" if e in appareils else None,
         device_entities=lambda appareil: [e for e, a in appareils.items() if a == appareil],
     )
     env.tests.update(match=lambda v, motif, ignorecase=False: bool(re.match(motif, str(v), re.I if ignorecase else 0)))
@@ -304,6 +305,13 @@ def test_rendu_complet(langue):
     assert _cartes(tableau) > 120
     # L'automatisation du blueprint : sa tuile, et le lien vers son éditeur.
     assert "automation.ecran_du_bureau" in references and "/config/automation/edit/1700000000001" in chemins
+    # Réglages : la page de la tablette et sa connexion ESPHome, l'énergie solaire et ses liens.
+    assert {"/config/devices/device/tab5", "/config/integrations/integration/esphome#config_entry=entree_tab5",
+            "/config/energy", "/config/voice-assistants/assistants"} <= set(chemins), chemins
+    reglages = yaml.safe_dump(tableau["views"][1], allow_unicode=True)
+    assert ("Énergie solaire" if langue == "Français" else "Solar energy") in reglages
+    assert "Puissance crête" in reglages if langue == "Français" else "Panel peak power" in reglages
+    assert "tab5_energie" not in reglages, "package présent : pas d'avertissement"
     # Chaque tuile ou raccourci écrit sa largeur, sauf une tuile à commande en ligne
     # (12 colonnes au minimum) : sans elle, le frontend lui donne 6 colonnes sur 12.
     sans_largeur = [c.get("entity") or c.get("label") for c in _toutes_les_cartes(tableau)
@@ -326,6 +334,25 @@ def test_tablette_seule_sans_package():
     assert not any("tab5_" in e and APPAREIL not in e for e in references), "carte d'un package absent"
     assert "annonce_vocale" not in str(tableau)
     assert "/config/blueprint/dashboard" in str(tableau), "sans automatisation du blueprint, le lien va aux blueprints"
+    assert "Package tab5_energie absent" in str(tableau), "sans le package, la section Énergie le dit"
+    assert "pas encore créés" in str(tableau), "« En bref » dit que les emplacements manquent"
+
+
+def _ancre_github(titre: str) -> str:
+    """Ancre d'un titre Markdown sur GitHub : minuscules, ponctuation retirée (lettres
+    accentuées gardées), espaces en tirets."""
+    return re.sub(r"[^\w\- ]", "", titre.strip().lower()).replace(" ", "-")
+
+
+def test_liens_de_la_doc_vers_des_titres_existants():
+    """Chaque lien du tableau de bord vers docs/installation.md vise un titre qui existe,
+    en français comme en anglais : un titre renommé casserait le lien sans bruit."""
+    doc = (REPO / "docs" / "installation.md").read_text(encoding="utf-8")
+    ancres = {_ancre_github(m) for m in re.findall(r"^#{1,4} (.+)$", doc, re.M)}
+    liens = re.findall(r"doc\('([^']+)', '([^']+)'\)", _texte())
+    assert len(liens) >= 4, liens
+    manquantes = sorted({a for paire in liens for a in paire} - ancres)
+    assert not manquantes, manquantes
 
 
 def test_sans_tablette():

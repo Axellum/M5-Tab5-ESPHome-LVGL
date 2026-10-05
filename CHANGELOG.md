@@ -4,6 +4,26 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Tableau de bord HA : tout pour régler la tablette dans « Réglages »
+
+Remarque d'Axel : dans la vue Réglages, rien ne disait où brancher ses panneaux solaires
+ni où donner leur puissance crête (l'icône du bandeau) ; même chose pour les capteurs.
+- **Régler la tablette** (en tête) : les trois endroits où tout se règle, et des liens vers
+  la page de la tablette (intégration ESPHome : réglages, diagnostic, mises à jour), sa
+  connexion ESPHome, l'automatisation des emplacements et la documentation.
+- **Ce que l'écran affiche** : chaque section du blueprint « Tab5 — emplacements » (pièces,
+  TV et téléphone, températures, clim, plantes, planning, météo, énergie), ce qu'on y
+  choisit et ce qui apparaît à l'écran, puis le lien et « Zones masquées ». Aucun modèle
+  de HA ne lit les choix d'un blueprint : la vue les explique, elle ne peut pas les montrer.
+- **Énergie solaire** : puissance solaire, puissance crête (kWc, 0 = pas d'icône), popup
+  Énergie, pas à pas ; liens vers les emplacements et le tableau Énergie de HA ;
+  avertissement si le package `tab5_energie` manque.
+- « En bref » dit si l'automatisation des emplacements existe et tourne, et les zones
+  masquées ; courtes explications et liens pour la météo, la maison (téléphone, présence),
+  les agendas (ajouter une intégration) et la voix (assistants vocaux de HA).
+- `tests/test_tableau_de_bord.py` : les nouveaux liens, l'avertissement sans le package, et
+  chaque lien vers `docs/installation.md` vise un titre qui existe (français et anglais).
+
 ## [3.6.0] — 2026-10-05
 
 De `v3.5.0` à aujourd'hui : vingt-huit pull requests (#296 → #319, #321 → #325), dont sept nées
