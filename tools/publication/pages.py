@@ -8,6 +8,7 @@ remplace donc jamais la version stable.
 
     <site>/index.html                 la vitrine (dossier web/)
     <site>/install/index.html         la page de flashage
+    <site>/en/, <site>/fr/, 404.html  la documentation (docs/, tools/site/construire.py, ADR-0030)
     <site>/images/                    images de docs/images/ sous un nom parlant (IMAGES)
     <site>/sitemap.xml                pages et images, pour les moteurs de recherche
     <site>/versions.json              ce que la page de flashage affiche
@@ -26,8 +27,9 @@ Les images sont servies par le site et non par github.com, dont le robots.txt in
 Usage (dans .github/workflows/site.yml) :
     gh release list --json tagName,isPrerelease,isDraft,publishedAt > releases.json
     python tools/publication/pages.py choisir --releases releases.json   # stable=… beta=…
+    python tools/site/construire.py --sortie doc
     python tools/publication/pages.py assembler --web web --assets assets --images docs/images \\
-        --stable v3.0.0 --beta v3.1.0-rc.1 --sortie site
+        --doc doc --stable v3.0.0 --beta v3.1.0-rc.1 --sortie site
 """
 from __future__ import annotations
 
@@ -37,6 +39,7 @@ import re
 import shutil
 import sys
 from pathlib import Path
+from urllib.parse import urljoin
 from xml.sax.saxutils import escape
 
 ECRANS = ("st7123", "st7121", "ili9881c")
@@ -79,6 +82,8 @@ IMAGES = {
     "m5stack-tab5-lvgl-screen-day-off-plants-fr.png": "rendu/3-jour-de-repos-plantes-a-surveiller.png",
 }
 IMAGE_DE_PAGE = re.compile(r'<img\b[^>]*\bsrc="((?:\.\./)*images/[^"]+)"')
+# Dossiers de la documentation (tools/site/construire.py, ADR-0030) : une langue chacun.
+LANGUES_DOC = ("en", "fr")
 
 
 def fichiers_joints(fichiers: set[str]) -> bool:
@@ -158,13 +163,15 @@ def plan_du_site(site: Path) -> str:
               ' xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">']
     for page in sorted(site.rglob("*.html")):
         relatif = page.relative_to(site).as_posix()
-        if relatif.rsplit("/", 1)[-1].startswith("google"):  # fichier de vérification de Search Console
+        nom = relatif.rsplit("/", 1)[-1]
+        if nom.startswith("google") or nom == "404.html":  # vérification de Search Console, page d'erreur
             continue
         dossier = relatif.removesuffix("index.html")
         lignes.append(f"  <url><loc>{escape(SITE + dossier)}</loc>")
         vues = []
         for src in IMAGE_DE_PAGE.findall(page.read_text(encoding="utf-8")):
-            image = SITE + "images/" + src.rsplit("images/", 1)[1]
+            # Relative à la page : images/ de la vitrine, en/images/ ou fr/images/ de la doc.
+            image = urljoin(SITE + dossier, src)
             if image not in vues:
                 vues.append(image)
                 lignes.append(f"    <image:image><image:loc>{escape(image)}</image:loc></image:image>")
@@ -174,13 +181,28 @@ def plan_du_site(site: Path) -> str:
 
 
 def assembler(web: Path, assets: Path, stable: str | None, beta: str | None, sortie: Path,
-              images: Path | None = None) -> dict:
-    """Écrit le site complet dans `sortie` ; renvoie le contenu de versions.json."""
+              images: Path | None = None, doc: Path | None = None) -> dict:
+    """Écrit le site complet dans `sortie` ; renvoie le contenu de versions.json.
+
+    `doc` : la documentation construite (en/, fr/, 404.html), copiée à la racine du site.
+    Elle ne doit rien remplacer de la vitrine, ni les canaux que lisent les firmwares."""
     if sortie.exists():
         shutil.rmtree(sortie)
     shutil.copytree(web, sortie)
     if images is not None:
         _images(images, sortie / "images")
+    if doc is not None:
+        attendus = {*LANGUES_DOC, "404.html"}
+        presents = {p.name for p in doc.iterdir()}
+        if presents != attendus:
+            raise SystemExit(f"documentation : {sorted(presents)} au lieu de {sorted(attendus)}")
+        for nom in sorted(presents):
+            if (sortie / nom).exists():
+                raise SystemExit(f"documentation : {nom} existe déjà dans le site")
+            if (doc / nom).is_dir():
+                shutil.copytree(doc / nom, sortie / nom)
+            else:
+                shutil.copyfile(doc / nom, sortie / nom)
     versions = {canal: _canal(assets, tag, sortie / canal) if tag else None
                 for canal, tag in (("stable", stable), ("beta", beta))}
     (sortie / "versions.json").write_text(json.dumps(versions, indent=2) + "\n", encoding="utf-8")
@@ -197,6 +219,7 @@ def main() -> int:
     p.add_argument("--web", type=Path, required=True)
     p.add_argument("--assets", type=Path, required=True, help="un sous-dossier par tag")
     p.add_argument("--images", type=Path, help="docs/images (images de la vitrine)")
+    p.add_argument("--doc", type=Path, help="documentation construite par tools/site/construire.py")
     p.add_argument("--stable", default="")
     p.add_argument("--beta", default="")
     p.add_argument("--sortie", type=Path, required=True)
@@ -208,7 +231,7 @@ def main() -> int:
             print(f"{canal}={tag or ''}")
         return 0
     versions = assembler(args.web, args.assets, args.stable or None, args.beta or None, args.sortie,
-                         args.images)
+                         args.images, args.doc)
     print(json.dumps(versions, indent=2))
     return 0
 

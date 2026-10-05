@@ -1,0 +1,34 @@
+/* Site de documentation (ADR-0030) : les couleurs de la vitrine (web/index.html). */
+:root, [data-md-color-scheme="default"] {
+  --md-primary-fg-color: #f6f7f9;
+  --md-primary-fg-color--light: #ffffff;
+  --md-primary-fg-color--dark: #eceff4;
+  --md-primary-bg-color: #1d2330;
+  --md-primary-bg-color--light: #5b6475;
+  --md-accent-fg-color: #0b6bcb;
+  --md-accent-fg-color--transparent: #e3eefb;
+  --md-typeset-a-color: #0b6bcb;
+  --md-default-bg-color: #ffffff;
+}
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #161b23;
+  --md-primary-fg-color--light: #1a2029;
+  --md-primary-fg-color--dark: #11151c;
+  --md-primary-bg-color: #e6e9ef;
+  --md-primary-bg-color--light: #9aa3b2;
+  --md-accent-fg-color: #4ea1f3;
+  --md-accent-fg-color--transparent: #16283d;
+  --md-typeset-a-color: #4ea1f3;
+  --md-default-bg-color: #11151c;
+  --md-hue: 215;
+}
+
+/* Barre du haut claire, comme la vitrine : un filet plutôt qu'une ombre. */
+.md-header { border-bottom: 1px solid var(--md-default-fg-color--lightest); box-shadow: none; }
+.md-header[data-md-state="shadow"], .md-header--shadow { box-shadow: none; }
+.md-search__input { background-color: var(--md-default-fg-color--lightest); color: var(--md-default-fg-color); }
+.md-search__input::placeholder, .md-search__icon { color: var(--md-default-fg-color--light); }
+
+/* Photos et captures : coins arrondis, jamais plus larges que le texte. */
+.md-typeset img { border-radius: 8px; max-width: 100%; height: auto; }
+.md-typeset table img { border-radius: 4px; }

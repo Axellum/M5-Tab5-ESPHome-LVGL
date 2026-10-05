@@ -4,6 +4,27 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Un site de documentation, construit depuis docs/
+
+Demandé par Axel : « un vrai site », des pages, un menu à gauche avec des sous-menus, sans
+maintenir deux fois les mêmes textes ([ADR-0030](docs/decisions/0030-documentation-site.md)).
+- **La documentation devient un site** : `/en/` et `/fr/` à côté de la vitrine et de la page
+  d'installation, avec un menu à gauche et ses sous-menus, une recherche, le mode sombre, un
+  menu repliable sur téléphone et un sélecteur de langue qui garde la page.
+- **Une seule source** : les fichiers de `docs/` ne bougent pas et restent lisibles sur GitHub.
+  `tools/site/construire.py` coupe chaque fichier bilingue à « ## Version Française », réécrit
+  les liens (page du site, image copiée, sinon github.com), traduit l'ancre d'un titre de
+  l'autre langue, puis MkDocs + Material (figés avec empreintes, sans autre plugin que la
+  recherche) construisent en mode strict. Menu unique : `tools/site/menu.yml`.
+- **Nouvelle page d'accueil de la documentation**, `docs/README.md`, lue aussi sur GitHub en
+  ouvrant `docs/`.
+- `site.yml` construit la documentation et `pages.py assembler --doc` la pose sans rien
+  remplacer d'autre (les firmwares lisent leurs mises à jour dans `stable/` et `beta/`) ; un
+  seul `sitemap.xml`, images comprises ; une page 404. La vitrine et la page d'installation
+  mènent aux pages du site, dans la langue choisie.
+- `tests/test_site_doc.py` reconstruit tout le site (~3 s) : lien ou ancre cassés dans `docs/`,
+  page oubliée du menu, balises de référencement, liens de la vitrine, empreintes des paquets.
+
 ### 2026-10-05 — Un popup pour les volets (appui long)
 
 Demandé dans la [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) :

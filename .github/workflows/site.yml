@@ -3,7 +3,8 @@ name: Site (vitrine et page de flashage)
 # ADR-0022, révisée le 28/09/2026. Reconstruit le site GitHub Pages sans rien compiler :
 # la vitrine et la page de flashage (web/, branche par défaut), leurs images (docs/images/,
 # sous un nom parlant) et les fichiers des releases retenues pour les canaux stable et
-# bêta (tools/publication/pages.py). Lancé :
+# bêta (tools/publication/pages.py), et la documentation en/ et fr/, construite depuis docs/
+# par MkDocs (tools/site/construire.py, ADR-0030). Lancé :
 #   - par publication.yml, une fois les fichiers joints à une release ;
 #   - à chaque push sur main qui touche le site ;
 #   - à la main (workflow_dispatch).
@@ -17,8 +18,9 @@ on:
     branches: [main]
     paths:
       - 'web/**'
-      - 'docs/images/**'
+      - 'docs/**'
       - 'tools/publication/pages.py'
+      - 'tools/site/**'
       - '.github/workflows/site.yml'
 
 permissions:
@@ -57,6 +59,13 @@ jobs:
             isPrerelease: .prerelease, isDraft: .draft, publishedAt: .published_at,
             assets: [.assets[] | select(.state == "uploaded") | .name]}]' > releases.json
           python tools/publication/pages.py choisir --releases releases.json | tee -a "$GITHUB_OUTPUT"
+      # Ce job peut écrire le site public : versions et empreintes figées, roues seulement.
+      - name: MkDocs et Material, versions et empreintes figées
+        run: |
+          bash tools/ci/pip_reessai.sh --require-hashes --only-binary :all: -r tools/site/requirements.txt
+      # Mode strict : un lien ou une ancre cassés dans docs/ arrêtent le déploiement.
+      - name: Documentation
+        run: python tools/site/construire.py --sortie doc
       - name: Fichiers des releases retenues
         env:
           GH_TOKEN: ${{ github.token }}
@@ -70,7 +79,7 @@ jobs:
           done
       - name: Site
         run: |
-          python tools/publication/pages.py assembler --web web --assets assets --images docs/images \
+          python tools/publication/pages.py assembler --web web --assets assets --images docs/images --doc doc \
             --stable "${{ steps.canaux.outputs.stable }}" --beta "${{ steps.canaux.outputs.beta }}" \
             --sortie site | tee -a "$GITHUB_STEP_SUMMARY"
       # GitHub Pages garde UN déploiement par commit (actions/deploy-pages lui donne
