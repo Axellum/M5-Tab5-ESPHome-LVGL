@@ -210,6 +210,35 @@ def test_chaque_mode_reste_lisible():
     assert not trop_faibles, "\n".join(trop_faibles)
 
 
+def test_console_lisible_dans_chaque_mode():
+    """Retour d'Axel (05/10/2026) : en clair, la console système gardait les valeurs
+    blanches et les libellés gris de la console sombre sur le verre clair du popup, et ses
+    encadrés de confirmation restaient noirs sous un texte foncé. Libellés 4,5:1 et valeurs
+    7:1 sur le verre des popups en clair ; dans les deux modes, le texte des encadrés
+    (TEXT_SOFT, TEXT_DIM) se lit sur CONSOLE_BG."""
+    trop_faibles = []
+    for theme in gen_themes.charger():
+        for mode, p in theme.modes.items():
+            exigences = [("TEXT_SOFT", "CONSOLE_BG", 7.0), ("TEXT_DIM", "CONSOLE_BG", 4.5)]
+            if mode == "clair":
+                exigences += [(r, s, m) for s in ("GLASS_HI_MODAL", "GLASS_LO_MODAL")
+                              for r, m in (("CONSOLE_LABEL", 4.5), ("CONSOLE_VALUE", 7.0))]
+            for role, surface, minimum in exigences:
+                r = _contraste(p[role], p[surface])
+                if r < minimum:
+                    trop_faibles.append(f"{theme.nom} ({mode}) : {role} sur {surface} = {r:.2f} < {minimum}")
+    assert not trop_faibles, "\n".join(trop_faibles)
+
+
+def test_renvoi_de_role_pris_dans_le_theme_qui_herite():
+    """`CONSOLE_VALUE: TEXT_PRIMARY` (ardoise.yaml, clair) : chaque thème clair y met son
+    propre TEXT_PRIMARY, pas celui d'Ardoise."""
+    for theme in gen_themes.charger():
+        p = theme.modes["clair"]
+        assert p["CONSOLE_VALUE"] == p["TEXT_PRIMARY"] and p["CONSOLE_LABEL"] == p["TEXT_DIM"], theme.nom
+        assert p["CONSOLE_BG"] == p["GLASS_HI_MODAL"], theme.nom
+
+
 def test_texte_sur_l_accent_lisible_en_clair():
     """Les pastilles accent pleines (Tester, Parler, OK) : en sombre, le texte d'avant ce
     rôle (choix d'origine de l'écran) ; en clair, 4,5:1 au moins."""
