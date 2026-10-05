@@ -305,6 +305,31 @@ def test_nombre_de_langues(chemin, motif):
     assert set(_nombres_ecrits(chemin, motif)) == {len(_langues())}
 
 
+# ─── Les thèmes de l'écran (05/10/2026) ──────────────────────────────────────
+# Écrit dans le README, le site, docs/screens.md et docs/installation.md pour la 3.6.0 :
+# le nombre se compte dans Tab5/themes/ (un fichier par thème ; `_polices.yaml`, généré,
+# n'en est pas un).
+
+def _themes():
+    return sorted(f for f in (REPO / "Tab5" / "themes").glob("*.yaml") if not f.name.startswith("_"))
+
+
+@pytest.mark.parametrize("chemin, motif", [
+    (README, r"(\w+) themes, light or dark"),
+    (README, r"([\w-]+) thèmes, clairs ou sombres"),
+    (SITE, r'lang="en">(\w+) themes(?:, light or dark)?</span>'),
+    (SITE, r'lang="fr">([\w-]+) thèmes(?:, clairs ou sombres)?</span>'),
+    (REPO / "docs" / "screens.md", r"(\w+) themes, each with a dark and a light mode"),
+    (REPO / "docs" / "screens.md", r"([\w-]+) thèmes, chacun en sombre et en clair"),
+    (REPO / "docs" / "installation.md", r"\| Thème \| (\d+) themes"),
+    (REPO / "docs" / "installation.md", r"\| Thème \| (\d+) thèmes"),
+], ids=["readme-en", "readme-fr", "site-en", "site-fr", "ecrans-en", "ecrans-fr",
+        "installation-en", "installation-fr"])
+def test_nombre_de_themes(chemin, motif):
+    assert len(_themes()) > 10, "Tab5/themes/ ne contient plus les fichiers de thème"
+    assert set(_nombres_ecrits(chemin, motif)) == {len(_themes())}
+
+
 # ─── Le contrat HA ↔ tablette (audit du 30/09/2026, lot D) ───────────────────
 # Constatés faux ce jour-là : « 11 champs » de vigilance (le parseur en lit jusqu'à 13),
 # « 10 dashboard push services » et « 6 other services » dans AGENTS.md (la démo en

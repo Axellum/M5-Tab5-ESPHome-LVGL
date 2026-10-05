@@ -4,6 +4,31 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Documentation : thèmes, réglages de la tablette, captures de Home Assistant
+
+Demande d'Axel pour la release : docs et descriptifs à jour, quelques captures des thèmes
+et de Home Assistant, l'installation et les options bien expliquées.
+- **README** (EN, FR) : les dix-huit thèmes dans l'accroche, « Pourquoi celui-ci » et
+  « Ce que ça fait » ; une planche de six thèmes (rendus de la CI) ; la vue Tab5 du
+  tableau de bord de Home Assistant ; après l'installation, liens vers le tableau de bord
+  et les réglages.
+- **`docs/installation.md`** : nouvelle section « Réglages et options de la tablette »
+  (thème, clair ou sombre, nuit, langue, écran, son, réseau, batterie, « Aller à
+  l'écran », réveil, rendez-vous, voix, et où les trouver) ; captures de Home Assistant :
+  listes « Tab5 · », vues Tab5 et Santé du tableau de bord, colonne « Tablette » des
+  réglages, carte Configuration de l'appareil (recadrées, sans donnée personnelle).
+- **Site** : étiquette et carte « 18 thèmes », section Thèmes avec la planche, étape
+  « tableau de bord et réglages » avec sa capture ; « Home Assistant d'abord » ne parle
+  plus du dépôt ni de Python (inutiles depuis l'ADR-0024, le site disait encore le
+  contraire) ; sources de la pluie et des vigilances à jour (Buienradar, DWD, Met.no,
+  Open-Meteo, CAP Alerts).
+- `docs/screens.md`, `docs/ui_design.md` (thèmes ; la couleur des horaires vient de la
+  palette, plus de « logique de couleur côté Home Assistant »),
+  `HomeAssistant_Config/README.md` (automatisation « Tab5 — thème jour/nuit »),
+  `Tab5/README.md` et l'inventaire (plus de « thème Slate »).
+- `tests/test_doc_comptes.py` : le nombre de thèmes écrit dans le README, le site,
+  `docs/screens.md` et `docs/installation.md` est compté dans `Tab5/themes/`.
+
 ### 2026-10-05 — Thèmes : horaires du planning lisibles en mode clair
 
 Le bandeau du planning écrivait « Auj. » et les horaires en blanc, en dur : en mode
