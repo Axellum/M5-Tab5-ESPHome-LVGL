@@ -169,7 +169,7 @@ script:
           id(system_muted) = false;
           ui_sync_volume_widgets(id(slider_volume), id(lbl_sys_vol_val),
                                  id(slider_assist_volume), v);
-          ui_sync_mute_icons(id(icon_mute), id(icon_assist_mute), false);
+          ui_sync_mute_icon(id(icon_assist_mute), false);
           // Horodate AVANT le debounce : le haut-parleur va rester en retard
           // sur `system_volume` pendant tout le geste (le volume_set ne part
           // qu'à l'immobilité). Sans cette marque, le rattrapage de 5 s

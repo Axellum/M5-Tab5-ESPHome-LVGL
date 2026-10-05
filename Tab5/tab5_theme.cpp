@@ -67,6 +67,7 @@ struct PolicesTheme {
     int8_t y;
     int16_t x_deux_points;
     int16_t y_deux_points;
+    int16_t y_date;  // ligne de base de la date au même endroit pour toutes les polices
 };
 
 // >>> formes (généré par tools/gen_themes.py depuis Tab5/themes/ et tab5-styles.yaml, ne pas éditer)
@@ -1990,27 +1991,27 @@ static constexpr Forme kFormes[] = {
 };
 // Polices de chaque thème : index dans le tableau `polices` que passe
 // tab5_theme_repeindre (0-2 = les Roboto compilées), puis la géométrie de l'horloge
-// (y des labels des rouleaux, position du « : »), tools/police_theme.py.
+// (y des labels des rouleaux, position du « : », y de la date), tools/police_theme.py.
 static constexpr int kNbPolices = 39;
 static constexpr PolicesTheme kPolices[] = {
-    {0, 1, 2, -23, 181, 10},  // ardoise
-    {3, 4, 5, -34, 183, -1},  // relief_doux
-    {0, 1, 2, -23, 181, 10},  // relief_plat
-    {0, 1, 2, -23, 181, 10},  // graphite
-    {6, 7, 8, -36, 180, -3},  // almanach_imprime
-    {0, 1, 2, -23, 181, 10},  // ardoise_douce
-    {3, 4, 5, -34, 183, -1},  // terre_cuite
-    {0, 1, 2, -23, 181, 10},  // craie_et_ardoise
-    {9, 10, 11, -21, 182, 12},  // almanach
-    {12, 13, 14, -32, 180, 1},  // beton_brut
-    {15, 16, 17, -6, 182, 27},  // neon_calme
-    {18, 19, 20, -54, 186, -21},  // zen_sumi
-    {21, 22, 23, -40, 180, -7},  // bento
-    {24, 25, 26, -22, 185, 11},  // obsidienne
-    {27, 28, 29, -36, 184, -3},  // platine_et_or
-    {30, 31, 32, -12, 185, 21},  // signalisation
-    {33, 34, 35, -30, 185, 3},  // capsule
-    {36, 37, 38, -18, 189, 15},  // pixel
+    {0, 1, 2, -23, 181, 4, 135},  // ardoise
+    {3, 4, 5, -34, 183, -7, 131},  // relief_doux
+    {0, 1, 2, -23, 181, 4, 135},  // relief_plat
+    {0, 1, 2, -23, 181, 4, 135},  // graphite
+    {6, 7, 8, -36, 180, -9, 130},  // almanach_imprime
+    {0, 1, 2, -23, 181, 4, 135},  // ardoise_douce
+    {3, 4, 5, -34, 183, -7, 131},  // terre_cuite
+    {0, 1, 2, -23, 181, 4, 135},  // craie_et_ardoise
+    {9, 10, 11, -21, 182, 6, 132},  // almanach
+    {12, 13, 14, -32, 180, -5, 132},  // beton_brut
+    {15, 16, 17, -6, 182, 21, 141},  // neon_calme
+    {18, 19, 20, -54, 186, -27, 124},  // zen_sumi
+    {21, 22, 23, -40, 180, -13, 130},  // bento
+    {24, 25, 26, -22, 185, 5, 133},  // obsidienne
+    {27, 28, 29, -36, 184, -9, 129},  // platine_et_or
+    {30, 31, 32, -12, 185, 15, 137},  // signalisation
+    {33, 34, 35, -30, 185, -3, 133},  // capsule
+    {36, 37, 38, -18, 189, 9, 140},  // pixel
 };
 // <<< formes
 
@@ -2046,7 +2047,7 @@ void theme_formes(lv_style_t* const styles[], int n) {
 
 // --- Polices d'affichage ------------------------------------------------------
 void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_titre,
-    esphome::font::Font* const polices[], int n, lv_obj_t* const horloge[9]) {
+    esphome::font::Font* const polices[], int n, lv_obj_t* const horloge[9], lv_obj_t* date) {
     if (n != kNbPolices) {
         ESP_LOGE("tab5.theme", "theme_polices : %d polices reçues, %d attendues (tables périmées)", n, kNbPolices);
         return;
@@ -2069,6 +2070,9 @@ void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_t
         if (horloge[i] != nullptr) lv_obj_set_y(horloge[i], p.y);
     }
     if (horloge[8] != nullptr) lv_obj_set_pos(horloge[8], p.x_deux_points, p.y_deux_points);
+    // Date : sa ligne de base à 32 px du bas de la tuile, la marge du haut et des côtés
+    // (tools/police_theme.py, DATE_BASE) ; l'ascendante change d'une police à l'autre.
+    if (date != nullptr) lv_obj_set_y(date, p.y_date);
 }
 
 void theme_console_libelles(lv_obj_t* lbl_theme, lv_obj_t* lbl_mode, int theme, int mode) {

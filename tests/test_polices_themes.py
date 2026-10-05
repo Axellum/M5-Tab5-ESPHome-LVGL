@@ -33,10 +33,21 @@ def test_roboto_redonne_la_geometrie_du_yaml():
     lvgl = (REPO / "Tab5" / "tab5-lvgl.yaml").read_text(encoding="utf-8")
     ys = {int(y) for y in re.findall(r"^\s+y: (-?\d+)\n\s+styles: \[style_police_horloge", rouleau, re.M)}
     dp = re.search(r"id: lbl_time_colon, text: \":\", align: TOP_LEFT, x: (\d+), y: (-?\d+)", lvgl)
-    assert ys and dp, "le motif ne lit plus la géométrie de l'horloge"
+    date = re.search(r"id: lbl_date, text: \"\", align: TOP_MID, y: (\d+)", lvgl)
+    assert ys and dp and date, "le motif ne lit plus la géométrie de l'horloge"
     assert m["horloge"] == {"taille": 130, "y": ys.pop(), "x_deux_points": int(dp.group(1)),
                             "y_deux_points": int(dp.group(2))}
-    assert m["date"]["taille"] == 45 and m["titre"]["taille"] == 32
+    assert m["date"] == {"taille": 45, "y": int(date.group(1))} and m["titre"]["taille"] == 32
+    cadre_y = re.search(r"^  y: (\d+)\n  width: 75\n", rouleau, re.M)
+    assert cadre_y and int(cadre_y.group(1)) == police_theme.CADRE_Y, "CADRE_Y ≠ y du cadre de clock_roller.yaml"
+
+
+def test_ligne_de_base_de_la_date_au_meme_endroit_pour_chaque_police():
+    # Marges égales dans la tuile horloge (05/10/2026) : quelle que soit l'ascendante de
+    # la police (de 40 à 53 px à 45 px), la ligne de base reste à DATE_BASE.
+    for cle, m in _mesures().items():
+        d = m["date"]
+        assert d["y"] == police_theme.y_date(_metriques(m), d["taille"]), cle
 
 
 def test_geometrie_de_l_horloge_recalculee_pour_chaque_police():
@@ -87,6 +98,7 @@ def test_polices_generees_sans_glyphe_absent():
     assert "ğ" not in texte and "ş" not in texte
     assert "glyphs: '0123456789:'" in texte
     assert "police_essai_sans_700_30" in lambda_yaml[2]
-    # Ardoise : les trois Roboto (0, 1, 2) ; l'essai : ses polices, la date en Roboto.
-    assert cpp[-3].startswith("    {0, 1, 2, -23, 181, 10},")
-    assert cpp[-2].startswith("    {3, 1, 4, -20, 182, 13},")
+    assert lambda_yaml[-1].endswith(", horloge, id(lbl_date));")
+    # Ardoise : les trois Roboto (0, 1, 2) ; l'essai : ses polices, la date en Roboto (son y).
+    assert cpp[-3].startswith("    {0, 1, 2, -23, 181, 4, 135},")
+    assert cpp[-2].startswith("    {3, 1, 4, -20, 182, 13, 135},")

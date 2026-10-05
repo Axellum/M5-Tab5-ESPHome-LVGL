@@ -713,7 +713,7 @@ void sort_and_update_moisture_slots(float values[5], const char* icons_utf8[5],
 
     // Garde de securite contre les pointeurs nuls si LVGL n'est pas encore initialise
     for (int s = 0; s < 4; s++) {
-        if (slots[s].icon_lbl == nullptr || slots[s].val_lbl == nullptr) {
+        if (slots[s].icon_lbl == nullptr) {
             return;
         }
     }
@@ -764,7 +764,7 @@ void moisture_slots_refresh() {
 
     // 3) Deux façons de remplir les emplacements :
     //    - résumé, avec 5 pots dont au moins 4 valides : le plus sec, le 2e plus sec,
-    //      la médiane (« Moy: ») et le plus humide ;
+    //      la médiane et le plus humide ;
     //    - sinon, un emplacement par pot : les valides du plus sec au plus humide, puis
     //      les hors ligne en gris. Plus de pot répété sur deux emplacements.
     const bool resume = (n_presents == 5 && n_valid >= 4);
@@ -793,21 +793,12 @@ void moisture_slots_refresh() {
             pot = hors_ligne[s - n_valid];
             val = NAN;
         }
-        // Icone du capteur d'origine
+        // Icone du capteur d'origine, seule depuis le 05/10/2026 (plus de « Pot X » /
+        // « Moy: » dessous) : le nom et la valeur sont dans le popup « Mes Plantes ».
         ui_text(slots[s].icon_lbl, icons_utf8[pot]);
-
-        // Texte sous l'icone : "Pot X" ou "Moy:"
-        if (resume && s == 2) {
-            ui_text(slots[s].val_lbl, tr("Moy:"));
-        } else {
-            char buf[16];
-            snprintf(buf, sizeof(buf), tr("Pot %d"), pot + 1);
-            ui_text(slots[s].val_lbl, buf);
-        }
 
         // Couleur colorimetrique (grise hors ligne)
         ui_text_color(slots[s].icon_lbl, std::isnan(val) ? UIColor.INACTIVE : get_humidity_color(val));
-        ui_text_color(slots[s].val_lbl, UIColor.TEXT_DIM);
     }
 }
 

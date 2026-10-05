@@ -75,8 +75,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Home screen, forecast, central card --------------------------------------
 "Synchronisation...": "Synchroniseren..."
-"Domo": "Huis"
-"Discu": "Chat"
 "Journee": "Vandaag"
 "Demain": "Morgen"
 "2 Jours": "2 dagen"
@@ -140,9 +138,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Actif": "Actief"
 "Inactif": "Inactief"
 "Confirmer ?": "Bevestigen?"
-"Moy:": "Gem:"
-"Pot %d": "Pot %d"
-"Pot -": "Pot -"
 "Hors ligne": "Offline"
 "À arroser !": "Water geven!"
 "Bientôt sec": "Bijna droog"

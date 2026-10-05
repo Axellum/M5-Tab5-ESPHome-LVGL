@@ -15,7 +15,9 @@ métriques avec fontTools et calcule, pour chaque rôle, la taille et la positio
     dont le « : » tient entre les deux groupes ; le label est remonté pour centrer
     l'encre dans le cadre ; le « : » est centré entre les heures et les minutes ;
   - date : la plus grande taille (≤ 45 px) dont la date la plus large, dans les 7 langues,
-    tient dans la tuile de l'horloge avec 16 px de marge de chaque côté ;
+    tient dans la tuile de l'horloge avec 16 px de marge de chaque côté ; le label est posé
+    pour que la ligne de base tombe à DATE_BASE, à la même distance du bas de la tuile
+    que l'encre des chiffres de son haut (marges égales, 05/10/2026) ;
   - titre : la plus grande taille (≤ 32 px) pour laquelle le plus long des titres de
     popup, dans les 7 langues, n'est pas plus large que le plus long en Roboto 32.
 
@@ -29,7 +31,7 @@ glyphe absent). Les chiffres et le « : » de l'horloge doivent exister dans la 
 Il écrit `Tab5/themes/_polices.yaml` : les métriques des chiffres et du « : » (pour que
 pytest refasse la géométrie de l'horloge hors ligne, tests/test_polices_themes.py), les
 caractères absents et les tailles retenues. Roboto 700 y figure comme référence : ses
-valeurs doivent redonner la géométrie actuelle (130 px, y -23, « : » à 181 ; date 45 ;
+valeurs doivent redonner la géométrie actuelle (130 px, y -23, « : » à 181 ; date 45 à y 135 ;
 titres 32). tools/gen_themes.py lit ce fichier. À relancer après l'ajout d'une police à
 un thème (pytest le signale) ou d'un titre de popup nettement plus long.
 
@@ -59,11 +61,12 @@ REFERENCE = "Roboto@700"
 
 # Géométrie de la tuile horloge (tab5-lvgl.yaml, clock_roller.yaml ; tests/test_horloge.py).
 CADRE_L, CADRE_H = 75, 104
-CADRE_Y = 33
+CADRE_Y = 27                    # encre des chiffres (4 px dans le cadre) à 32 px du haut de la tuile
 MARGE_MIN = 2
 X_H1, X_M10 = 102, 222          # x des rouleaux h1 et m10 : le « : » vit entre les deux
 TUILE_UTILE = 399               # 401 - 2 × bordure
 MARGE_DATE = 16
+DATE_BASE = 177                 # ligne de base de la date : 210 (tuile) - 32 (marge) - 1 (bordure)
 MAX_TAILLE = {"horloge": 130, "date": 45, "titre": 32}
 MIN_TAILLE = {"horloge": 80, "date": 30, "titre": 22}
 CHIFFRES = "0123456789"
@@ -233,6 +236,12 @@ def geometrie_horloge(m: dict, taille: int) -> dict | None:
             "y_deux_points": CADRE_Y + y}
 
 
+def y_date(m: dict, taille: int) -> int:
+    """y du label de la date (TOP_MID dans la tuile) : sa ligne de base, à l'ascendante
+    arrondie au pixel supérieur comme FreeType, tombe à DATE_BASE."""
+    return DATE_BASE - math.ceil(m["ascendante"] * taille / m["unites_em"])
+
+
 def largeur(m: dict, texte: str, taille: int, ref: dict | None = None) -> int:
     """Somme des avances arrondies ; un caractère absent compte avec celle de Roboto
     (`ref`), qui le dessinera (repli de la police)."""
@@ -254,7 +263,7 @@ def tailles(m: dict, ref: dict, liste_dates: list[str], liste_titres: list[str])
             break
     for t in range(MAX_TAILLE["date"], MIN_TAILLE["date"] - 1, -1):
         if max(largeur(m, d, t, ref) for d in liste_dates) <= TUILE_UTILE - 2 * MARGE_DATE:
-            out["date"] = {"taille": t}
+            out["date"] = {"taille": t, "y": y_date(m, t)}
             break
     plus_long = max(largeur(ref, s, MAX_TAILLE["titre"]) for s in liste_titres)
     for t in range(MAX_TAILLE["titre"], MIN_TAILLE["titre"] - 1, -1):

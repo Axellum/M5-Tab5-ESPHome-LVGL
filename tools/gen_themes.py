@@ -135,6 +135,9 @@ REFERENCE_POLICE = "Roboto@700"
 # Labels de l'horloge que theme_polices() place (rouleaux puis « : »), tab5-lvgl.yaml.
 LABELS_HORLOGE = tuple(f"lbl_time_{d}_{ab}" for d in ("h10", "h1", "m10", "m1") for ab in ("a", "b")) \
     + ("lbl_time_colon",)
+# Date sous l'horloge : theme_polices() pose aussi son y (ligne de base au même endroit
+# quelle que soit la police, 05/10/2026).
+LABEL_DATE = "lbl_date"
 
 
 class ErreurTheme(Exception):
@@ -573,6 +576,7 @@ def rendre_polices(themes: list[Theme], mesures: dict | None = None, jeux: dict[
     for t in themes:
         rangee = {}
         geo = {"y": None}
+        y_date = None
         for role in ROLES_POLICE:
             cle = t.polices.get(role)
             if cle is None:
@@ -598,11 +602,16 @@ def rendre_polices(themes: list[Theme], mesures: dict | None = None, jeux: dict[
                 rangee[role] = ids.index(f["id"])
             if role == "horloge":
                 geo = m["horloge"]
-        if geo["y"] is None:
+            elif role == "date":
+                y_date = m["date"]["y"]
+        if geo["y"] is None or y_date is None:
             if "horloge" not in mesures.get(REFERENCE_POLICE, {}):
                 raise ErreurTheme(f"{REFERENCE_POLICE} absente de _polices.yaml (lancer `python tools/police_theme.py`)")
-            geo = mesures[REFERENCE_POLICE]["horloge"]
-        table.append((t, rangee, geo))
+            if geo["y"] is None:
+                geo = mesures[REFERENCE_POLICE]["horloge"]
+            if y_date is None:
+                y_date = mesures[REFERENCE_POLICE]["date"]["y"]
+        table.append((t, rangee, {**geo, "y_date": y_date}))
     font_yaml = []
     if fontes:
         font_yaml = ["font:"]
@@ -618,16 +627,17 @@ def rendre_polices(themes: list[Theme], mesures: dict | None = None, jeux: dict[
         "    // Polices d'affichage du thème (`polices:`), géométrie de l'horloge comprise.",
         "    esphome::font::Font* const polices[] = {" + ", ".join(f"id({i})" for i in ids) + "};",
         "    lv_obj_t* const horloge[] = {" + ", ".join(f"id({i})" for i in LABELS_HORLOGE) + "};",
-        "    theme_polices(id(" + "), id(".join(STYLES_POLICE[r] for r in ROLES_POLICE) + f"), polices, {len(ids)}, horloge);",
+        "    theme_polices(id(" + "), id(".join(STYLES_POLICE[r] for r in ROLES_POLICE)
+        + f"), polices, {len(ids)}, horloge, id({LABEL_DATE}));",
     ]
     cpp = ["// Polices de chaque thème : index dans le tableau `polices` que passe",
            "// tab5_theme_repeindre (0-2 = les Roboto compilées), puis la géométrie de l'horloge",
-           "// (y des labels des rouleaux, position du « : »), tools/police_theme.py.",
+           "// (y des labels des rouleaux, position du « : », y de la date), tools/police_theme.py.",
            f"static constexpr int kNbPolices = {len(ids)};",
            "static constexpr PolicesTheme kPolices[] = {"]
     for t, rangee, geo in table:
         cpp.append(f"    {{{rangee['horloge']}, {rangee['date']}, {rangee['titre']}, {geo['y']}, "
-                   f"{geo['x_deux_points']}, {geo['y_deux_points']}}},  // {t.fichier}")
+                   f"{geo['x_deux_points']}, {geo['y_deux_points']}, {geo['y_date']}}},  // {t.fichier}")
     cpp.append("};")
     return font_yaml, lambda_yaml, cpp
 

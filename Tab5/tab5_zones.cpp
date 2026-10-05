@@ -362,10 +362,11 @@ void zones_apply_ui() {
     solaire_peindre();
 
     // Rangée HA / Sys / TV (haut droite) : sans TV, HA et Sys glissent d'une colonne.
+    // Mêmes x que tab5-lvgl.yaml (855 / 995 / 1135, bord droit à 1260).
     const bool sans_tv = zone_absente(Zone::TV);
     ui_hidden(u.btn_tv, sans_tv);
-    ui_x(u.btn_ha, sans_tv ? 999 : 855);
-    ui_x(u.btn_sys, sans_tv ? 1143 : 999);
+    ui_x(u.btn_ha, sans_tv ? 995 : 855);
+    ui_x(u.btn_sys, sans_tv ? 1135 : 995);
 
     // Tuiles (épaules, boutons) et calque « HA » : ce sont les tuiles de la pièce de la
     // page (ADR-0023) — tuiles_appliquer_ui(), en fin de fonction ; en mode héritage,

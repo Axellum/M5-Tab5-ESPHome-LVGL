@@ -13,14 +13,15 @@
 # tests/test_horloge.py. La hauteur du cadre EST la course du rouleau (lue par le C++).
 # Police par style (style_police_horloge) : un thème peut la changer, theme_polices()
 # (tab5_theme.cpp) repose alors le y des labels (tools/police_theme.py) ; le cadre
-# ne bouge pas.
+# ne bouge pas. Cadre à y 27 (05/10/2026, CADRE_Y de tools/police_theme.py) : l'encre
+# des chiffres à 32 px du haut de la tuile, la marge des côtés et du bas.
 # Sorti de tab5-lvgl.yaml le 01/10/2026 (audit des conteneurs, règle 5) : 4 copies.
 # ═══════════════════════════════════════════════════════
 obj:
   id: clock_roll_${d}
   align: TOP_LEFT
   x: ${x}
-  y: 33
+  y: 27
   width: 75
   height: 104
   styles: style_transparent

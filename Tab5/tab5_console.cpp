@@ -85,16 +85,12 @@ void ui_sync_volume_widgets(lv_obj_t* slider_console, lv_obj_t* lbl_console_pct,
     }
 }
 
-// Muet : deux icones peignent le meme `system_muted` (barre du dashboard et
-// popup assistant). Un seul endroit les met d'accord.
-void ui_sync_mute_icons(lv_obj_t* icon_main, lv_obj_t* icon_assist, bool muted) {
-    const char* glyph = muted ? "\U000F0581" : "\U000F057E";
-    const uint32_t color = muted ? UIColor.ERROR : UIColor.TEXT_SOFT;
-    for (lv_obj_t* icon : {icon_main, icon_assist}) {
-        if (icon == nullptr) continue;
-        ui_text(icon, glyph);
-        ui_text_color(icon, color);
-    }
+// Muet : l'icone du popup assistant peint `system_muted` (le bouton Muet de
+// l'accueil est retire depuis le 05/10/2026). Un seul endroit la pose.
+void ui_sync_mute_icon(lv_obj_t* icon_assist, bool muted) {
+    if (icon_assist == nullptr) return;
+    ui_text(icon_assist, muted ? "\U000F0581" : "\U000F057E");
+    ui_text_color(icon_assist, muted ? UIColor.ERROR : UIColor.TEXT_SOFT);
 }
 
 // Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).

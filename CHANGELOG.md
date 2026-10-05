@@ -4,6 +4,31 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Accueil : grille du haut alignée, boutons à icône seule
+
+Demande d'Axel : aligner l'horloge sur les boutons de droite, des marges égales autour
+de l'heure et de la date, des boutons sans texte avec de grandes icônes, les pots sans
+texte, la clim et « Ok Nabu » descendus, le bouton muet retiré, « un joli ensemble bien
+propre ».
+- **Trois colonnes** à 20 px des bords de l'écran, comme le bandeau central : gauche
+  (Domo, micro, Discu, Ok Nabu), horloge, droite (HA, Sys, TV, températures, clim) ;
+  15 px entre les boutons, 14 et 15 px de part et d'autre de l'horloge. Hauts alignés
+  (horloge et HA / Sys / TV à y 20), bas alignés à y 308 (Ok Nabu, pied des icônes des pots, tuile clim) : 25 px
+  au-dessus du bandeau central, l'écart qui sépare le bandeau des titres des cartes météo.
+- **Horloge** : tuile de 401 × 210, 32 px d'air entre son bord et l'encre des chiffres en
+  haut, la ligne de base de la date en bas, à peu près autant sur les côtés. La date est
+  recalée pour chaque police de thème (`theme_polices()`, `tools/police_theme.py`) : leurs
+  ascendantes vont de 40 à 53 px et la déplaçaient de 17 px d'un thème à l'autre.
+- **Boutons** Domo, Discu, HA, Sys, TV : icône seule, tous en 125 × 90 avec une icône de
+  70 px (16 px d'air au-dessus et au-dessous). **Pots** : icône seule, même taille, sur la
+  largeur de l'horloge ; le nom et la valeur de chaque pot restent dans le popup « Mes
+  Plantes » (appui long). Une seule police d'icônes pour les deux (`mdi_font_70`, déjà là).
+- **Clim** : la tuile − / consigne / + prend toute la colonne de droite (405 × 90, − et +
+  à 14 px des quatre bords) ; les températures salon / serre sont centrées entre les
+  boutons et la tuile. **Ok Nabu** : même place que la tuile clim, en miroir, texte à la
+  taille de la date (45 px). **Bouton muet retiré** de l'accueil : le son se coupe depuis
+  le popup Assistant vocal.
+
 ### 2026-10-05 — Thèmes : les dix-sept thèmes de la galerie, Relief doux par défaut
 
 Demande d'Axel : « mets tous les thèmes qu'on a faits ce soir », Relief doux par défaut.
