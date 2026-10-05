@@ -1,0 +1,54 @@
+# Base commune des deux langues du site de documentation (ADR-0030).
+#
+# Ne pas lancer mkdocs ici : tools/site/construire.py prépare les pages de chaque langue
+# (docs/ coupé à « ## Version Française », liens réécrits), puis écrit un mkdocs.yml qui
+# hérite de celui-ci (INHERIT) et y ajoute l'adresse, la langue, le menu (menu.yml) et
+# les dossiers. Aucun plugin hors de la recherche de Material : tout le travail est dans
+# construire.py, pour qu'un autre générateur qui lit mkdocs.yml puisse prendre la suite.
+site_name: M5Stack Tab5 · Home Assistant
+site_author: Axellum
+repo_url: https://github.com/Axellum/M5-Tab5-ESPHome-LVGL
+repo_name: M5-Tab5-ESPHome-LVGL
+edit_uri: ""            # pas de bouton « modifier » : une page française n'est pas un fichier
+
+theme:
+  name: material
+  font: false           # polices du système, comme la vitrine : aucune requête à Google Fonts
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.indexes     # le titre d'une section ouvre sa page d'accueil
+    - navigation.footer      # « Précédent / Suivant » en bas de page
+    - navigation.top
+    - navigation.tracking
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+
+markdown_extensions:
+  - toc:
+      permalink: true
+      # Ancres comme celles de GitHub (accents gardés) : les liens de docs/ visent les
+      # mêmes titres sur GitHub et sur le site.
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+
+# Mode strict (construire.py) : un lien ou une ancre cassés font échouer la construction.
+validation:
+  omitted_files: warn
+  absolute_links: info
+  unrecognized_links: warn
+  anchors: warn
+
+extra_css:
+  - assets/site.css

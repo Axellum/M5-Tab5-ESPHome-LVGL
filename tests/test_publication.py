@@ -309,7 +309,7 @@ def test_site_deploye_sans_compiler():
     flux = yaml.safe_load(texte)
     declencheurs = flux[True]  # « on: » lu comme un booléen par YAML 1.1
     assert "workflow_call" in declencheurs and "workflow_dispatch" in declencheurs
-    for chemin in ("web/**", "docs/images/**", "tools/publication/pages.py"):
+    for chemin in ("web/**", "docs/**", "tools/publication/pages.py", "tools/site/**"):
         assert chemin in declencheurs["push"]["paths"]
     assert "build-action" not in texte and "release upload" not in texte
     assert "--images docs/images" in texte

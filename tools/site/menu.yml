@@ -1,0 +1,93 @@
+# Menu du site de documentation (ADR-0030) : la seule liste des pages publiées, titres
+# anglais et français côte à côte. tools/site/construire.py en tire le menu de gauche
+# des deux langues.
+#
+# Chaque entrée a `en` et `fr` (titres du menu), puis l'un de :
+#   page:    fichier du dépôt (docs/…), une page du site ;
+#   lien:    adresse absolue (vitrine, page d'installation, GitHub) ;
+#   pages:   un sous-menu (liste d'entrées) ;
+#   dossier: chaque .md du dossier (sauf README.md), dans l'ordre des noms, titre lu
+#            dans son « # » ; avec `page`, celle-ci ouvre la section.
+# `langue: en` ou `langue: fr` : page écrite dans une seule langue, reprise sur l'autre
+# site avec un encart qui le dit. Sinon le fichier est coupé à « ## Version Française ».
+# Un fichier de docs/ absent d'ici n'est pas publié : tests/test_site_doc.py liste ceux
+# qui restent hors du site exprès (HORS_SITE).
+
+- en: Project home
+  fr: Accueil du projet
+  lien: https://axellum.github.io/M5-Tab5-ESPHome-LVGL/
+
+- en: Documentation
+  fr: Documentation
+  page: docs/README.md
+
+- en: Install
+  fr: Installer
+  pages:
+    - en: Install from the browser
+      fr: Installer depuis le navigateur
+      lien: https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/
+    - en: Installation and configuration
+      fr: Installation et configuration
+      page: docs/installation.md
+    - en: Demo mode
+      fr: Mode démo
+      page: docs/demo_mode.md
+
+- en: Use the tablet
+  fr: Utiliser la tablette
+  pages:
+    - en: Screens and features
+      fr: Écrans et fonctions
+      page: docs/screens.md
+    - en: Voice assistant
+      fr: Assistant vocal
+      page: docs/voice_assistant.md
+    - en: Tile icons
+      fr: Icônes des tuiles
+      page: docs/tiles_icons.md
+    - en: Arcade
+      fr: Arcade
+      page: docs/arcade.md
+      langue: fr
+
+- en: Troubleshooting
+  fr: Dépannage
+  pages:
+    - en: Known incidents
+      fr: Incidents connus
+      page: docs/troubleshooting.md
+    - en: Debugging
+      fr: Diagnostiquer
+      page: docs/debugging.md
+
+- en: Under the hood
+  fr: Comprendre le projet
+  pages:
+    - en: Architecture
+      fr: Architecture
+      page: docs/architecture.md
+    - en: Hardware
+      fr: Matériel
+      page: docs/hardware.md
+    - en: User interface (LVGL)
+      fr: Interface (LVGL)
+      page: docs/ui_design.md
+    - en: Performance
+      fr: Performances
+      page: docs/performance.md
+    - en: Screen languages
+      fr: Langues de l'écran
+      page: docs/translations.md
+    - en: Related projects
+      fr: Projets voisins
+      page: docs/related_projects.md
+    - en: Design decisions
+      fr: Décisions d'architecture
+      page: docs/decisions/README.md
+      dossier: docs/decisions
+      langue: en
+
+- en: Releases
+  fr: Versions
+  lien: https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases
