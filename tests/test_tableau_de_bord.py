@@ -312,6 +312,11 @@ def test_rendu_complet(langue):
     assert ("Énergie solaire" if langue == "Français" else "Solar energy") in reglages
     assert "Puissance crête" in reglages if langue == "Français" else "Panel peak power" in reglages
     assert "tab5_energie" not in reglages, "package présent : pas d'avertissement"
+    # Santé : guide par symptôme, liens de HA, « En bref » avec les gardes de santé.
+    sante = sortie[sortie.index("path: tab5-sante"):]
+    assert {"/config/logs", "/config/repairs"} <= set(chemins), chemins
+    assert ("Quand quelque chose cloche" if langue == "Français" else "When something is wrong") in sante
+    assert re.search(r"\['automation\.[^']+'(, 'automation\.[^']+'){5}\] \| select\('is_state', 'off'\)", sante)
     # Chaque tuile ou raccourci écrit sa largeur, sauf une tuile à commande en ligne
     # (12 colonnes au minimum) : sans elle, le frontend lui donne 6 colonnes sur 12.
     sans_largeur = [c.get("entity") or c.get("label") for c in _toutes_les_cartes(tableau)
@@ -345,13 +350,15 @@ def _ancre_github(titre: str) -> str:
 
 
 def test_liens_de_la_doc_vers_des_titres_existants():
-    """Chaque lien du tableau de bord vers docs/installation.md vise un titre qui existe,
+    """Chaque lien du tableau de bord vers docs/ vise un fichier et un titre qui existent,
     en français comme en anglais : un titre renommé casserait le lien sans bruit."""
-    doc = (REPO / "docs" / "installation.md").read_text(encoding="utf-8")
-    ancres = {_ancre_github(m) for m in re.findall(r"^#{1,4} (.+)$", doc, re.M)}
-    liens = re.findall(r"doc\('([^']+)', '([^']+)'\)", _texte())
-    assert len(liens) >= 4, liens
-    manquantes = sorted({a for paire in liens for a in paire} - ancres)
+    liens = re.findall(r"doc\('([^']+)', '([^']*)', '([^']*)'\)", _texte())
+    assert len(liens) >= 8 and {"installation.md", "troubleshooting.md", "performance.md"} <= {f for f, *_ in liens}, liens
+    manquantes = []
+    for fichier, *ancres_du_lien in liens:
+        doc = (REPO / "docs" / fichier).read_text(encoding="utf-8")
+        ancres = {_ancre_github(m) for m in re.findall(r"^#{1,4} (.+)$", doc, re.M)}
+        manquantes += [f"{fichier}#{a}" for a in ancres_du_lien if a and a not in ancres]
     assert not manquantes, manquantes
 
 

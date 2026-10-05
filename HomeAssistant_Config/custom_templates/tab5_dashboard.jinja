@@ -146,10 +146,13 @@
 {#- `langue` (« Français », « English »…) force la langue des libellés ; vide = celle de l'écran. -#}
 {%- set fr = (langue or (states(T.langue) if T.langue else 'Français')) in ['Français', 'unknown', 'unavailable'] -%}
 {%- macro t(francais, anglais) -%}{{ francais if fr else anglais }}{%- endmacro -%}
-{#- Documentation du dépôt public, ancre de la section française ou anglaise (titres de
-    docs/installation.md, vérifiés par tests/test_tableau_de_bord.py). -#}
-{%- set DOC = 'https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md#' -%}
-{%- macro doc(francais, anglais) -%}{{ DOC ~ (francais if fr else anglais) }}{%- endmacro -%}
+{#- Documentation du dépôt public : un fichier de docs/ et l'ancre d'un de ses titres, en
+    français ou en anglais (vide = le haut du fichier, en anglais) ; chaque ancre est vérifiée
+    par tests/test_tableau_de_bord.py. -#}
+{%- set DOC = 'https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/' -%}
+{%- macro doc(fichier, francais, anglais) -%}
+{%- set ancre = francais if fr else anglais -%}{{ DOC ~ fichier ~ ('#' ~ ancre if ancre else '') }}
+{%- endmacro -%}
 {#- Tuile d'un bouton de la tablette : un appui (sur la tuile ou son icône) le presse. -#}
 {%- macro bouton(entite, icone) -%}
 {%- for action in ['tap_action', 'icon_tap_action'] %}
@@ -160,6 +163,11 @@
                 entity_id: {{ entite }}
 {%- endfor %}
             icon: {{ icone }}
+{%- endmacro -%}
+{#- Case d'un tableau « En bref », rendue par la carte : `oui` si l'entité est allumée, sinon `non`
+    en orange (ni l'un ni l'autre ne contient d'apostrophe droite). -#}
+{%- macro allume(entite, oui, non) -%}
+{% raw %}{{ '{% endraw %}{{ oui }}{% raw %}' if is_state('{% endraw %}{{ entite }}{% raw %}', 'on') else '<font color="#ff9800">{% endraw %}{{ non }}{% raw %}</font>' }}{% endraw %}
 {%- endmacro -%}
 
 {%- if not ns.api -%}
@@ -249,7 +257,7 @@ views:
               columns: 6
           - type: shortcut
             label: "{{ t('Santé', 'Health') }}"
-            description: "{{ t('Diagnostic, poussées, alertes', 'Diagnostics, pushes, alerts') }}"
+            description: "{{ t('Dépannage, diagnostic, alertes', 'Troubleshooting, diagnostics, alerts') }}"
             icon: mdi:heart-pulse
             color: red
             tap_action:
@@ -538,7 +546,7 @@ views:
             icon: mdi:book-open-variant
             tap_action:
               action: url
-              url_path: {{ doc('réglages-et-options-de-la-tablette', 'tablet-settings-and-options') }}
+              url_path: {{ doc('installation.md', 'réglages-et-options-de-la-tablette', 'tablet-settings-and-options') }}
             grid_options:
               columns: 6
           - type: heading
@@ -582,7 +590,7 @@ views:
 {%- endif %}
 {%- endfor %}
 {%- if ns.e %}
-              | {{ t("Emplacements de l'écran", 'Screen slots') }} | {% raw %}{{ '{% endraw %}{{ t('automatisation active', 'automation on') }}{% raw %}' if is_state('{% endraw %}{{ ns.e }}{% raw %}', 'on') else '<font color="#ff9800">{% endraw %}{{ t('automatisation désactivée', 'automation off') }}{% raw %}</font>' }}{% endraw %} |
+              | {{ t("Emplacements de l'écran", 'Screen slots') }} | {{ allume(ns.e, t('automatisation active', 'automation on'), t('automatisation désactivée', 'automation off')) }} |
 {%- else %}
               | {{ t("Emplacements de l'écran", 'Screen slots') }} | <font color="#ff9800">{{ t('pas encore créés (bouton ci-dessus)', 'not created yet (button above)') }}</font> |
 {%- endif %}
@@ -607,7 +615,7 @@ views:
               - **{{ t('Météo', 'Weather') }}**{{ t(' : facultatif, prime sur les listes « Météo » plus bas.', ': optional, wins over the « Weather » lists below.') }}
               - **{{ t('Énergie', 'Energy') }}**{{ t(' : voir « Énergie solaire ».', ': see « Solar energy ».') }}
 
-              {{ t("Un champ vide disparaît de l'écran avec ses boutons, et « Zones masquées » le dit. Un changement part tout de suite, sans redémarrer.", 'An empty field leaves the screen with its buttons, and « Hidden zones » says so. A change is sent at once, without restarting.') }} [{{ t('Adapter à sa maison', 'Adapt to your home') }}]({{ doc('adapter-à-sa-maison', 'adapt-to-your-home') }})
+              {{ t("Un champ vide disparaît de l'écran avec ses boutons, et « Zones masquées » le dit. Un changement part tout de suite, sans redémarrer.", 'An empty field leaves the screen with its buttons, and « Hidden zones » says so. A change is sent at once, without restarting.') }} [{{ t('Adapter à sa maison', 'Adapt to your home') }}]({{ doc('installation.md', 'adapter-à-sa-maison', 'adapt-to-your-home') }})
           - type: shortcut
             label: "{{ t('Choisir appareils et capteurs', 'Pick devices and sensors') if ns.e_id else t('Créer les emplacements', 'Create the screen slots') }}"
             description: "{{ t("Tab5 — emplacements de l'écran", "Tab5 — emplacements de l'écran (screen slots)") }}"
@@ -641,7 +649,7 @@ views:
               <font color="#ff9800">{{ t('Package tab5_energie absent : le popup reste « En attente de Home Assistant ».', 'tab5_energie package missing: the popup stays on « Waiting for Home Assistant ».') }}</font>
 {%- endif %}
 
-              [{{ t('Énergie solaire, pas à pas', 'Solar energy, step by step') }}]({{ doc('énergie-solaire-facultatif', 'solar-energy-optional') }})
+              [{{ t('Énergie solaire, pas à pas', 'Solar energy, step by step') }}]({{ doc('installation.md', 'énergie-solaire-facultatif', 'solar-energy-optional') }})
           - type: shortcut
             label: "{{ t('Régler les panneaux', 'Set up the panels') }}"
             description: "{{ t('Section « Énergie »', 'Energy section') }}"
@@ -757,7 +765,7 @@ views:
           - type: markdown
             text_only: true
             content: |-
-              {{ t("Prévisions : n'importe quelle entité météo (Met.no vient avec Home Assistant). Pluie dans l'heure et vigilances : facultatives, la source dépend du pays.", 'Forecasts: any weather entity (Met.no comes with Home Assistant). Next-hour rain and weather warnings: optional, the source depends on the country.') }} [{{ t('Fournisseurs météo', 'Weather providers') }}]({{ doc('fournisseurs-météo', 'weather-providers') }})
+              {{ t("Prévisions : n'importe quelle entité météo (Met.no vient avec Home Assistant). Pluie dans l'heure et vigilances : facultatives, la source dépend du pays.", 'Forecasts: any weather entity (Met.no comes with Home Assistant). Next-hour rain and weather warnings: optional, the source depends on the country.') }} [{{ t('Fournisseurs météo', 'Weather providers') }}]({{ doc('installation.md', 'fournisseurs-météo', 'weather-providers') }})
           - type: heading
             heading: "{{ t('Maison', 'Home') }}"
             icon: mdi:home-account
@@ -946,8 +954,97 @@ views:
       - type: grid
         cards:
           - type: heading
+            heading: "{{ t('Quand quelque chose cloche', 'When something is wrong') }}"
+            icon: mdi:stethoscope
+          - type: markdown
+            text_only: true
+            content: |-
+              - **{{ t('Écran figé, données anciennes', 'Frozen screen, old data') }}**{{ t(" : « Push HA actif » doit être allumé, sinon Home Assistant n'envoie plus rien à l'écran ; puis « MAJ écran ».", ': « HA push on » must be on, otherwise Home Assistant sends nothing to the screen; then « Refresh screen ».') }} [{{ t('Cas déjà vu', 'Known case') }}]({{ doc('troubleshooting.md', 'météo--planning--clim-absents-alors-que-lappareil-est-en-ligne', 'weather--planning--climate-data-missing-but-the-device-is-online') }})
+              - **{{ t('Tablette déconnectée', 'Tablet disconnected') }}**{{ t(" : alimentation et Wi-Fi. Écran noir et tablette absente du réseau après une mise à jour : une vraie coupure (appui long, USB débranché 15 s).", ': power and Wi-Fi. Black screen and tablet off the network after an update: a real power cut (long press, USB unplugged for 15 s).') }} [{{ t('Détail', 'Details') }}]({{ doc('troubleshooting.md', 'écran-noir--appareil-absent-du-réseau-après-une-ota--le-co-processeur-wifi-nest-pas-remonté', 'black-screen--device-off-the-network-after-an-ota--the-wi-fi-co-processor-never-came-up') }})
+              - **{{ t('Redémarrages', 'Restarts') }}**{{ t(' : « Raison du dernier démarrage » ci-dessous ; un redémarrage inattendu et le journal envoyé par la tablette arrivent en notification.', ': « Last start reason » below; an unexpected restart and the log sent by the tablet arrive as notifications.') }}
+              - **{{ t('Fichiers HA en retard', 'HA files out of date') }}**{{ t(" : remplacez-les par ceux de l'archive tab5_home_assistant.zip de la même version que la tablette.", ': replace them with those of the tab5_home_assistant.zip archive of the same version as the tablet.') }}
+              - **{{ t("Une zone manque à l'écran", 'A zone is missing on screen') }}**{{ t(' : « Zones masquées », vue Réglages.', ': « Hidden zones », Settings view.') }}
+          - type: shortcut
+            label: "{{ t('Page de la tablette', 'Tablet page') }}"
+            description: "{{ t('Capteurs et diagnostic', 'Sensors and diagnostics') }}"
+            icon: mdi:tablet-cellphone
+            tap_action:
+              action: navigate
+              navigation_path: /config/devices/device/{{ device_id(ns.api) }}
+            grid_options:
+              columns: 12
+          - type: shortcut
+            label: "{{ t('Journal de HA', 'HA logs') }}"
+            description: "{{ t('Erreurs et avertissements', 'Errors and warnings') }}"
+            icon: mdi:math-log
+            tap_action:
+              action: navigate
+              navigation_path: /config/logs
+            grid_options:
+              columns: 6
+          - type: shortcut
+            label: "{{ t('Réparations', 'Repairs') }}"
+            description: "{{ t('Ce que HA signale', 'What HA reports') }}"
+            icon: mdi:wrench-outline
+            tap_action:
+              action: navigate
+              navigation_path: /config/repairs
+            grid_options:
+              columns: 6
+          - type: shortcut
+            label: "{{ t('Dépannage', 'Troubleshooting') }}"
+            description: "{{ t('Pannes déjà diagnostiquées', 'Incidents already diagnosed') }}"
+            icon: mdi:book-open-variant
+            tap_action:
+              action: url
+              url_path: {{ doc('troubleshooting.md', 'version-française', '') }}
+            grid_options:
+              columns: 12
+          - type: heading
+            heading: "{{ t('En bref', 'At a glance') }}"
+            icon: mdi:clipboard-pulse-outline
+          - type: markdown
+            content: |-
+              | {{ t('Point', 'Item') }} | {{ t('État', 'Status') }} |
+              |:--|:--|
+              | {{ t('Liaison avec HA', 'Link with HA') }} | {{ allume(T.api, t('connectée', 'connected'), t('coupée', 'lost')) }} |
+{%- if 'input_boolean.is_primary_active' in present %}
+              | {{ t('Push HA', 'HA push') }} | {{ allume('input_boolean.is_primary_active', t('actif', 'on'), t('coupé : l’écran ne reçoit plus rien', 'off: the screen gets nothing')) }} |
+{%- endif %}
+{%- if T.uptime %}
+              | {{ t('Démarrée le', 'Started on') }} | {% raw %}{% set d = as_timestamp(states('{% endraw %}{{ T.uptime }}{% raw %}'), none) %}{{ d | timestamp_custom('%d/%m %H:%M') if d else '—' }}{% endraw %} |
+{%- endif %}
+{%- if T.raison %}
+              | {{ t('Raison du démarrage', 'Start reason') }} | {% raw %}{{ states('{% endraw %}{{ T.raison }}{% raw %}') }}{% endraw %} |
+{%- endif %}
+{%- if T.firmware %}
+              | Firmware | {% raw %}{{ state_attr('{% endraw %}{{ T.firmware }}{% raw %}', 'installed_version') }}{{ (' · <font color="#ff9800">' ~ state_attr('{% endraw %}{{ T.firmware }}{% raw %}', 'latest_version') ~ ' {% endraw %}{{ t('disponible', 'available') }}{% raw %}</font>') if is_state('{% endraw %}{{ T.firmware }}{% raw %}', 'on') else '' }}{% endraw %} |
+{%- endif %}
+{%- if 'sensor.tab5_version_des_fichiers_ha' in present %}
+              | {{ t('Fichiers HA', 'HA files') }} | {% raw %}{{ states('sensor.tab5_version_des_fichiers_ha') }}{% endraw %}
+{%- if 'binary_sensor.tab5_fichiers_ha_en_retard' in present %}{% raw %}{{ ' · <font color="#ff9800">{% endraw %}{{ t('en retard', 'out of date') }}{% raw %}</font>' if is_state('binary_sensor.tab5_fichiers_ha_en_retard', 'on') else '' }}{% endraw %}{%- endif %} |
+{%- endif %}
+{%- if 'sensor.tab5_unavailable_count' in present %}
+              | {{ t('Entités HA indisponibles', 'Unavailable HA entities') }} | {% raw %}{{ states('sensor.tab5_unavailable_count') }}{% endraw %} |
+{%- endif %}
+{%- if T.wifi %}
+              | {{ t('Signal Wi-Fi', 'Wi-Fi signal') }} | {% raw %}{{ states('{% endraw %}{{ T.wifi }}{% raw %}') }}{% endraw %} dBm |
+{%- endif %}
+{#- Gardes de santé présentes ; « coupées » = interrupteur sur off (normal pendant une OTA). #}
+{%- set gardes = [A.tab5_health_api_off_2min, A.tab5_health_primary_off_5min, A.tab5_health_unexpected_reboot,
+                  A.tab5_health_template_error, A.tab5_health_fichiers_ha, A.tab5_health_journal] | select | list %}
+{%- if gardes %}
+              | {{ t('Alertes de santé', 'Health alerts') }} | {% raw %}{% set n = {% endraw %}{{ gardes }}{% raw %} | select('is_state', 'off') | list | count %}{{ '{% endraw %}{{ t('toutes actives', 'all on') }}{% raw %}' if n == 0 else '<font color="#ff9800">' ~ n ~ ' {% endraw %}{{ t('coupée(s)', 'off') }}{% raw %}</font>' }}{% endraw %} |
+{%- endif %}
+      - type: grid
+        cards:
+          - type: heading
             heading: "{{ t('État', 'Status') }}"
             icon: mdi:heart-pulse
+          - type: markdown
+            text_only: true
+            content: |-
+              {{ t("« Raison du dernier démarrage » dit si c'était une mise à jour, une coupure ou un plantage. « Fichiers HA » vaut « dépôt » pour des fichiers pris dans le dépôt plutôt que dans une archive de version. « Entités HA indispo » compte toute la maison, pas seulement la tablette.", '« Last start reason » tells an update, a power cut or a crash apart. « HA files » reads « dépôt » for files taken from the repository rather than from a release archive. « Unavailable HA entities » counts the whole home, not only the tablet.') }}
 {%- for ent, fr_, en_, icone, largeur in [
       (T.api, 'Liaison avec HA', 'Link with HA', '', 6),
       (T.uptime, 'Démarrée', 'Started', 'mdi:timer-outline', 6),
@@ -990,6 +1087,10 @@ views:
           - type: heading
             heading: "{{ t('Performances (24 h)', 'Performance (24 h)') }}"
             icon: mdi:speedometer
+          - type: markdown
+            text_only: true
+            content: |-
+              {{ t("Ce qui compte, c'est la forme des courbes : plates sur 24 h. Une mémoire libre qui descend sans remonter ou une pile qui fond annoncent un redémarrage ; un temps de boucle qui grimpe, un écran qui rame.", 'What matters is the shape of the curves: flat over 24 h. Free memory that goes down and never comes back, or a shrinking stack, announce a restart; a rising loop time, a sluggish screen.') }} [{{ t('Mesures de référence', 'Reference measurements') }}]({{ doc('performance.md', 'résultats', 'results') }})
 {%- for ent, fr_, en_, icone in [(T.boucle, 'Temps de boucle', 'Loop time', 'mdi:speedometer'),
                                  (T.ram, 'Mémoire libre', 'Free memory', 'mdi:memory'),
                                  (T.temperature, 'Température du processeur', 'Processor temperature', 'mdi:thermometer'),
@@ -1011,6 +1112,11 @@ views:
           - type: heading
             heading: "{{ t('Réseau', 'Network') }}"
             icon: mdi:wifi
+          - type: markdown
+            text_only: true
+            content: |-
+              {{ t("Le signal est en dBm : plus il est proche de 0, mieux c'est (−40 excellent, −80 faible).", 'The signal is in dBm: the closer to 0, the better (−40 excellent, −80 weak).') }}
+{%- if T.antenne %}{{ t(' Une antenne externe se choisit dans « Antenne Wi-Fi », vue Réglages.', ' An external antenna is chosen in « Wi-Fi antenna », Settings view.') }}{%- endif %}
 {%- if T.wifi %}
           - type: tile
             entity: {{ T.wifi }}
@@ -1044,7 +1150,7 @@ views:
               columns: 6
 {%- endif %}
 {#- Batterie : entités désactivées par défaut dans HA (à activer), cartes visibles seulement
-    quand « Batterie montée » est allumé. #}
+    quand « Batterie montée » est allumé. #}
 {%- for ent, fr_, en_ in [(T.batterie, 'Batterie', 'Battery'), (T.tension, 'Tension', 'Voltage'), (T.en_charge, 'En charge', 'Charging')] %}
 {%- if ent %}
           - type: tile
@@ -1065,6 +1171,10 @@ views:
           - type: heading
             heading: "{{ t('Poussées HA → tablette', 'HA → tablet pushes') }}"
             icon: mdi:upload-network
+          - type: markdown
+            text_only: true
+            content: |-
+              {{ t("La tablette ne demande rien : Home Assistant lui envoie tout. Une automatisation coupée ici laisse son morceau d'écran figé, sans message d'erreur. « MAJ écran » renvoie tout d'un coup.", 'The tablet asks for nothing: Home Assistant sends it everything. An automation turned off here leaves its part of the screen frozen, with no error message. « Refresh screen » sends everything at once.') }}
 {%- if 'input_boolean.is_primary_active' in present %}
           - type: tile
             entity: input_boolean.is_primary_active
@@ -1120,6 +1230,10 @@ views:
           - type: heading
             heading: "{{ t('Alertes de santé', 'Health alerts') }}"
             icon: mdi:bell-alert-outline
+          - type: markdown
+            text_only: true
+            content: |-
+              {{ t("Chaque garde envoie une notification dans Home Assistant, la plupart aussi sur le téléphone. Pendant une mise à jour de la tablette, coupez-les pour éviter de fausses alertes, puis rallumez-les.", 'Each guard sends a notification in Home Assistant, most of them to the phone too. During a tablet update, turn them off to avoid false alerts, then turn them back on.') }}
           - type: heading
             heading: "{{ t('À couper pendant une OTA', 'Turn off during an OTA') }}"
             heading_style: subtitle
