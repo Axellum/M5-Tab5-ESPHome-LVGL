@@ -4,6 +4,30 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Batterie de la tablette : une prise quand il n'y en a pas
+
+Demandé par husyildiz ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) :
+sans batterie, l'icône devient une prise.
+- **Détection d'après la tension** : une batterie 2S en état de marche ne lit pas sous
+  6 V ; une lecture de l'INA226 sous **6,0 V** dans les **10 dernières minutes** = pas de
+  batterie, dix minutes sans = une batterie. Relevés : batterie d'origine ~7,2 V et sans
+  batterie 4,2 V (husyildiz, 05/10) ; chez l'auteur, sans batterie, 4,2 ↔ 8,39 V toutes
+  les 1 à 3 min (03/10) puis 5,71 V stable (04/10). La fenêtre couvre l'alternance.
+  Fonction pure `batterie_lecture()` (`tab5_core.h`), testée par
+  `tools/test_alarm_clock.cpp` (CI) ; chaque lecture passe par `on_raw_value`, avant le
+  filtre de 50 mV.
+- **Nouvelle entité « Tab5 Batterie détectée »** (diagnostic, activée par défaut) : la
+  décision, inconnue avant la première lecture. Carte dans la vue Santé du tableau de bord
+  (`custom_templates/tab5_dashboard.jinja`, sept langues).
+- **« Tab5 Batterie »** vaut inconnu tant que la batterie n'est pas détectée (avant : 100 %
+  avec 8,39 V, 0 % avec 5,71 V).
+- **Icône** (interrupteur « Tab5 Batterie montée » allumé, inchangé) : prise `power-plug`
+  (plus lisible à 26 px que le symbole USB), couleur du texte du thème, repeinte avec le
+  thème ; sinon les paliers, l'éclair et les couleurs d'avant. Rendu hors tablette :
+  capture `accueil-batterie-prise`, l'action `rendu_batterie` prend la tension.
+- `docs/hardware.md` (les trois relevés datés au lieu du seul « 8,39 V, 100 % »),
+  `docs/installation.md`, `docs/screens.md`, `Tab5/README.md`. Non testé sur une tablette.
+
 ### 2026-10-05 — Appareils des pièces sur la météo : au choix
 
 Retour d'un utilisateur ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) :

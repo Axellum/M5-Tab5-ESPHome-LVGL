@@ -285,10 +285,11 @@ select:
 
 switch:
   # Batterie de la tablette montée (04/10/2026) : montre son icône dans le bandeau
-  # d'état, en dernier (niveau et charge : tab5-sensors-diagnostics.yaml). Un réglage
-  # et pas une détection : sans batterie, le chargeur dit « en charge » et 8,39 V,
-  # soit 100 % (tablette de l'auteur, 03/10/2026) ; rien de mesuré ne distingue
-  # encore les deux cas. Éteint par défaut, gardé en mémoire d'un démarrage à l'autre.
+  # d'état, en dernier (niveau, charge et tension : tab5-sensors-diagnostics.yaml).
+  # Un réglage : montrer l'icône ou pas. Allumé, l'icône devient une prise quand la
+  # tension dit qu'il n'y a pas de batterie (« Tab5 Batterie détectée », 05/10/2026 ;
+  # sans batterie, le chargeur dit pourtant « en charge »). Éteint par défaut, gardé en
+  # mémoire d'un démarrage à l'autre.
   # Ici avec les autres réglages de l'écran : le rendu hors tablette, qui charge ce
   # fichier mais pas celui des diagnostics, peut ainsi montrer l'icône.
   - platform: template

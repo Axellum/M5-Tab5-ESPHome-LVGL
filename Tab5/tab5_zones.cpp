@@ -10,7 +10,8 @@
  *       Et le bandeau d'état du haut gauche (bandeau_apply_ui : une table d'icônes,
  *       BandeauIcone dans tab5_custom.h), dont l'icône de la batterie de la tablette
  *       (04/10/2026), qui ne dépend pas de HA mais de l'interrupteur « Tab5 Batterie
- *       montée ».
+ *       montée » ; une prise quand la tension dit qu'il n'y a pas de batterie
+ *       (batterie_tension_ui, discussion #278, 05/10/2026).
  * @architecture_constraint Rien ne disparaît sans réponse de HA : la tablette seule ne
  *       sait pas distinguer une entité absente d'une entité pas encore transmise. Une
  *       donnée reçue fait toujours réapparaître sa zone (zone_vue), même si HA l'a
@@ -73,9 +74,10 @@ Zone zone_lumiere(int i) { return static_cast<Zone>(static_cast<int>(Zone::LUMIE
 
 // Batterie de la tablette : dernier état reçu (tab5_custom.h, batterie_*_ui).
 struct EtatBatterie {
-    bool montee = false;
+    bool montee = false;  // interrupteur « Tab5 Batterie montée »
     float niveau = NAN;
     bool en_charge = false;
+    DetectionBatterie detection;  // d'après la tension (batterie_lecture, tab5_core.h)
 };
 EtatBatterie s_batterie;
 
@@ -109,11 +111,15 @@ void bandeau_apply_ui() {
     }
 }
 
-// Glyphe de la batterie : quatre paliers alignés sur les seuils de couleur de
-// get_battery_color() (> 80, > 40, ≥ 20, en dessous), un éclair pendant la charge
-// (le niveau, estimé d'après la tension, lit trop haut pendant la charge : un seul
-// glyphe plutôt que des paliers trompeurs), un point d'interrogation sans mesure.
-const char* batterie_glyphe(float niveau, bool en_charge) {
+// Glyphe de la batterie : une prise quand la tension dit qu'il n'y a pas de batterie
+// (discussion #278, 05/10/2026 : la tablette vit sur l'USB ; power-plug plein, plus
+// lisible à 26 px en bpp 1 que le trident usb ou la prise usb-c), sinon quatre paliers
+// alignés sur les seuils de couleur de get_battery_color() (> 80, > 40, ≥ 20, en
+// dessous), un éclair pendant la charge (le niveau, estimé d'après la tension, lit trop
+// haut pendant la charge : un seul glyphe plutôt que des paliers trompeurs), un point
+// d'interrogation sans mesure.
+const char* batterie_glyphe(PresenceBatterie presence, float niveau, bool en_charge) {
+    if (presence == PresenceBatterie::ABSENTE) return "\U000F06A5";  // power-plug
     if (std::isnan(niveau)) return "\U000F0091";   // battery-unknown
     if (en_charge) return "\U000F0084";            // battery-charging
     if (niveau > 80.0f) return "\U000F0079";       // battery
@@ -125,8 +131,12 @@ const char* batterie_glyphe(float niveau, bool en_charge) {
 void batterie_peindre() {
     lv_obj_t* const icone = g_zones_ui.bandeau[BANDEAU_BATTERIE];
     if (icone == nullptr) return;
-    ui_text(icone, batterie_glyphe(s_batterie.niveau, s_batterie.en_charge));
-    ui_text_color(icone, get_battery_color(s_batterie.niveau));
+    const PresenceBatterie presence = s_batterie.detection.presence;
+    ui_text(icone, batterie_glyphe(presence, s_batterie.niveau, s_batterie.en_charge));
+    // La prise n'est ni une alerte ni un niveau : couleur du texte du thème, relue à
+    // chaque peinture (zones_rejouer_theme, ADR-0029).
+    ui_text_color(icone, presence == PresenceBatterie::ABSENTE ? UIColor.TEXT_SOFT
+                                                               : get_battery_color(s_batterie.niveau));
 }
 
 // Production solaire : le panneau seul à tous les paliers, c'est la couleur qui donne la
@@ -335,6 +345,18 @@ void batterie_charge_ui(bool en_charge) {
     s_batterie.en_charge = en_charge;
     batterie_peindre();
 }
+
+bool batterie_tension_ui(float tension, uint32_t maintenant_ms) {
+    const PresenceBatterie avant = s_batterie.detection.presence;
+    const PresenceBatterie apres = batterie_lecture(s_batterie.detection, tension, maintenant_ms);
+    if (apres == avant) return false;
+    ESP_LOGI("TAB5", "Batterie detectee : %s (%.2f V)",
+             apres == PresenceBatterie::PRESENTE ? "oui" : "non", tension);
+    batterie_peindre();
+    return true;
+}
+
+bool batterie_presente() { return s_batterie.detection.presence == PresenceBatterie::PRESENTE; }
 
 // Thèmes (ADR-0029) : icônes de la batterie (montée) et du solaire (valeur reçue).
 void zones_rejouer_theme() {
