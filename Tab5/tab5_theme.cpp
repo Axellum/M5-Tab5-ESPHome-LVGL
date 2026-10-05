@@ -2091,4 +2091,5 @@ void theme_rejouer_ui() {
     zones_rejouer_theme();
     assist_rejouer_theme();
     cal_detail_rejouer();
+    planning_rejouer_theme();
 }

@@ -865,9 +865,12 @@ static std::string get_day_planning_display_text(int jour) {
     if (label.empty()) label = tr("Jour");
 
     if (!h.empty()) {
-        // Recolor early (< 9h) en orange EARLY — le reste en blanc
+        // Embauche tôt (< 9 h) : rôle EARLY de la palette du bandeau (recolor LVGL,
+        // « RRGGBB ») ; le reste dans la couleur du libellé.
         if (cal_is_early_shift(h)) {
-            return tr_fill("{jour} : #fb923c {horaire}#", {{"jour", label}, {"horaire", h}});
+            char couleur[8];
+            snprintf(couleur, sizeof(couleur), "%06X", static_cast<unsigned>(UIBandeau.EARLY & 0xFFFFFFu));
+            return tr_fill("{jour} : #{couleur} {horaire}#", {{"jour", label}, {"couleur", couleur}, {"horaire", h}});
         }
         return tr_fill("{jour} : {horaire}", {{"jour", label}, {"horaire", h}});
     }
@@ -895,6 +898,12 @@ static TempPlanningCtx s_temp_planning;
 // Seule source de « planning du tap affiché » : son timer de 6 s tourne. Le global
 // ESPHome is_showing_temp_planning, qui recopiait ce timer, est retiré (28/09/2026).
 bool temp_planning_active() { return s_temp_planning.restore_timer != nullptr; }
+
+void planning_temporaire_lignes(const std::string& l1, const std::string& l2) {
+    if (s_temp_planning.restore_timer == nullptr) return;
+    s_temp_planning.plan_l1 = l1;
+    s_temp_planning.plan_l2 = l2;
+}
 
 // Termine le planning temporaire en cours : supprime le timer, rend le texte normal
 // du bandeau et le panneau d'origine. Ne décide PAS de la visibilité — l'appelant
