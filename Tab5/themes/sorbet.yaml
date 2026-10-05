@@ -1,0 +1,149 @@
+# Thème « Sorbet » : une vitrine de confiseur : cartes en coque de macaron lilas, boutons
+# menthe, onglets blancs, toutes cerclées d'un bord blanc de 2 px, sans ombre, heure, date et
+# titres en Quicksand ; encres poudrées mais foncées, et un bandeau indigo nuit, seul aplat
+# sombre du jour, qui porte les vigilances (FFFF00, FF0000).
+#
+# Esquisse « Sorbet » du 04/10/2026 (Claude Fable 5.1, galerie audit_tab5/themes_2026-10-04
+# hors dépôt), convertie au lot 3 des thèmes (ADR-0029) : couleurs, formes (`formes:`) et
+# polices d'affichage (heure, date, titres) ; le reste du texte reste en Roboto. Les rôles
+# absents héritent d'Ardoise (même mode).
+#
+# Écarts à l'esquisse, pour les contrastes de tests/test_themes.py (texte 7:1, sémantique
+# 3:1 sur les cartes) : TEXT_PRIMARY violet poudré assombri le jour (5B4E9E -> 4B4082),
+# GOLD assombri le jour (B8860B -> A87A0A).
+#
+# Non repris : le dégradé vertical de toute la page (rose dragée -> bleu layette, jeton
+# color_bg_lo) : le fond des pages n'est pas un style de `formes:` (STYLES_FORMES), la page
+# reste à plat sur BG ; le texte du bandeau prend le texte courant de la palette sombre
+# (zone sombre), pas color_banner_text.
+nom: Sorbet
+ordre: 20
+herite: ardoise
+zones_sombres: [bandeau]
+polices:
+  horloge: "Quicksand@700"
+  date: "Quicksand@700"
+  titre: "Quicksand@700"
+
+formes:
+  style_meteo_card_page:
+    radius: 26
+    border_width: 2
+    clair: {border_opa: 255, border_color: 0xFFFFFF}
+  style_bandeau_page:
+    bg_grad_dir: NONE
+    sombre: {bg_color: 0x1C1A2E}
+    clair: {bg_color: 0x332D55}
+  style_onglet_jour_page:
+    radius: 23
+    bg_grad_dir: NONE
+    sombre: {bg_color: 0x4A4670}
+    clair: {bg_color: 0xFFFFFF}
+  style_onglet_temp_page:
+    radius: 23
+    bg_grad_dir: NONE
+    sombre: {bg_color: 0x4A4670}
+    clair: {bg_color: 0xFFFFFF}
+  style_clim_btn:
+    radius: 20
+    border_width: 2
+    sombre: {bg_color: 0x3C4F52, bg_grad_color: 0x324345}
+    clair: {border_opa: 255, bg_color: 0xEAF7F0, bg_grad_color: 0xD8EFE3}
+  style_clim_btn_page:
+    sombre: {bg_color: 0x3C4F52, bg_grad_color: 0x324345}
+    clair: {bg_color: 0xEAF7F0, bg_grad_color: 0xD8EFE3}
+  style_modal_card:
+    radius: 32
+    clair: {border_opa: 255}
+  style_glass_card:
+    radius: 26
+    clair: {border_opa: 255}
+
+sombre:
+  BG: 0x2A2740
+  GLASS_HI: 0x403D62
+  GLASS_LO: 0x343152
+  GLASS_HI_PAGE: 0x3A3758
+  GLASS_LO_PAGE: 0x302D4B
+  GLASS_HI_MODAL: 0x363354
+  GLASS_LO_MODAL: 0x272541
+  GLASS_RIM: 0xCFC4F0
+  MODAL_SCRIM: 0x15131F
+  ARC_TRACK: 0x5A567A
+  TEXT_SOFT: 0xEDE8F7
+  TEXT_PRIMARY: 0xD9CCFF
+  TEXT_DIM: 0xB3ABCF
+  ICON_MUTED: 0x5E5A7C
+  TEXT_ON_ACCENT: 0x2A2740
+  SUCCESS: 0x9FE3BC
+  WARNING: 0xF6CC7E
+  ERROR: 0xFF7F7F
+  INFO: 0x9CC8FF
+  GOLD: 0xF3D58A
+  INACTIVE: 0x4A4766
+  BAR_INACTIVE: 0x4A4766
+  ACCENT: 0xB9A3FF
+  ACCENT_ALT: 0xF2A6D8
+  EARLY: 0xFFB070
+  PAST: 0x9A93B8
+  RAIN_VALUE: 0xFFB070
+  CLIM_COOL_ACTIVE: 0x8FB8FF
+  CLIM_HEAT_ACTIVE: 0xFF6B6B
+  CLIM_HEAT_INACTIVE: 0xC498A4
+  CLIM_OFF_ACTIVE: 0xFFBE7A
+  CLIM_ECO: 0x9FE3BC
+  METEO_CELESTIAL: 0xFFDF8A
+  METEO_CLOUD: 0xECE7F8
+  METEO_PRECIP: 0xA3CAFF
+  HUMIDITY_WET: 0xA3CAFF
+  TEMP_GRAD_0_POS: 0xA3CAFF
+  TEMP_GRAD_14: 0xEDE8F7
+  TEMP_GRAD_24: 0xF2A6D8
+  TEMP_GRAD_35: 0xFF7F7F
+  HUM_GRAD_14: 0xFF7F7F
+  HUM_GRAD_22: 0xF6CC7E
+  HUM_GRAD_30: 0xEDE8F7
+
+clair:
+  BG: 0xFBE3EC
+  GLASS_HI: 0xFFFFFF
+  GLASS_LO: 0xF4EEFB
+  GLASS_HI_PAGE: 0xF3EEFB
+  GLASS_LO_PAGE: 0xE9E1F6
+  GLASS_HI_MODAL: 0xFBF8FE
+  GLASS_LO_MODAL: 0xF1EBF9
+  GLASS_RIM: 0xFFFFFF
+  MODAL_SCRIM: 0xD9CFEC
+  ARC_TRACK: 0xD3C9E8
+  TEXT_SOFT: 0x3F3A5A
+  TEXT_PRIMARY: 0x4B4082
+  TEXT_DIM: 0x656080
+  ICON_MUTED: 0xB9B2CE
+  SUCCESS: 0x1B6E44
+  WARNING: 0xB86F00
+  ERROR: 0xCF3B3B
+  INFO: 0x3D7BE0
+  GOLD: 0xA87A0A
+  INACTIVE: 0xD9D2EC
+  BAR_INACTIVE: 0xD9D2EC
+  ACCENT: 0x6D4FE0
+  ACCENT_ALT: 0xB04A9E
+  EARLY: 0xD15D18
+  PAST: 0x7E779E
+  RAIN_VALUE: 0xD15D18
+  CLIM_COOL_ACTIVE: 0x2F6FD6
+  CLIM_HEAT_ACTIVE: 0xD64545
+  CLIM_HEAT_INACTIVE: 0x996B79
+  CLIM_OFF_ACTIVE: 0xD15D18
+  CLIM_ECO: 0x1B6E44
+  METEO_CELESTIAL: 0xC96200
+  METEO_CLOUD: 0x80769F
+  METEO_PRECIP: 0x3D7BE0
+  HUMIDITY_WET: 0x2F6FD6
+  TEMP_GRAD_0_POS: 0x2F6FD6
+  TEMP_GRAD_14: 0x3F3A5A
+  TEMP_GRAD_24: 0xB04A9E
+  TEMP_GRAD_35: 0xCF3B3B
+  HUM_GRAD_14: 0xCF3B3B
+  HUM_GRAD_22: 0xB86F00
+  HUM_GRAD_30: 0x3F3A5A
