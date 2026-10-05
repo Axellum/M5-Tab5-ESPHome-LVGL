@@ -108,7 +108,12 @@ def test_liens_reecrits(plan):
     assert en.cible("images/tab5_photo_home.jpg", source, True) == "../images/tab5_photo_home.jpg"
     assert en.cible("installation/README.md", source, True) == "../installation/"
     assert en.cible("../screens.md", "docs/installation/flash.md", True) == "../../screens/"
-    assert en.cible("README.md", source, True) == "../"
+    # docs/README.md est la page « documentation/ » ; le README du dépôt, l'accueil.
+    assert en.cible("README.md", source, True) == "../documentation/"
+    assert en.cible("../README.md", source, True) == "../"
+    assert en.cible("../README.md#note-on-ai", "docs/story.md", False) == "index.md#note-on-ai"
+    assert en.cible("docs/notice/README.md", construire.ACCUEIL, False) == "notice/index.md"
+    assert en.cible("docs/images/tab5_hero_4x3.jpg", construire.ACCUEIL, False) == "images/tab5_hero_4x3.jpg"
 
 
 def test_ancre_de_l_autre_langue_traduite_par_rang():
@@ -188,7 +193,7 @@ def test_site_construit_dans_les_deux_langues(site, plan):
 @pytest.mark.parametrize("langue", construire.LANGUES)
 def test_pages_referencables(site, langue):
     """Langue, titre, description, adresse canonique, même page dans l'autre langue, image
-    de partage publiée par la vitrine."""
+    de partage publiée à la racine du site."""
     for page in _pages_html(site, langue):
         chemin = page.relative_to(site / langue).as_posix().removesuffix("index.html")
         texte = page.read_text(encoding="utf-8")
@@ -227,10 +232,9 @@ def test_assemblage_avec_la_documentation(site, tmp_path):
         assert (sortie / url.removeprefix(pages.SITE)).is_file(), url
 
 
-def test_liens_de_la_vitrine_vers_la_documentation(site):
-    """La vitrine et la page d'installation mènent à une page construite, et à une ancre qui
-    y existe ; les liens `data-doc` (basculés en fr/ par la vitrine) existent dans les deux
-    langues."""
+def test_liens_de_web_vers_la_documentation(site):
+    """La racine et la page d'installation mènent à une page construite, et à une ancre qui
+    y existe."""
     from urllib.parse import unquote
     vus = 0
     for page in sorted((REPO / "web").rglob("*.html")):
@@ -244,10 +248,27 @@ def test_liens_de_la_vitrine_vers_la_documentation(site):
             if ancre:
                 assert f'id="{unquote(ancre)}"' in cible.read_text(encoding="utf-8"), f"{page.name} : {href}"
             vus += 1
-        for doc in re.findall(r'data-doc="([^"]*)"', texte):
-            for langue in construire.LANGUES:
-                assert (site / langue / doc / "index.html").is_file(), f"{page.name} : data-doc {doc}"
-    assert vus > 20
+    assert vus > 10
+
+
+def test_accueil_du_site_est_le_readme(plan, site):
+    """L'accueil des deux langues est le README du dépôt (un seul texte, sur GitHub et sur le
+    site), avec son titre et la fiche JSON-LD du projet, sans ce qui ne sert que sur GitHub.
+    La racine du site renvoie vers en/ ou fr/, et garde les deux liens sans JavaScript."""
+    assert next(iter(plan.pages)) == construire.ACCUEIL, "premier du menu : l'accueil"
+    assert construire.chemin_site(construire.ACCUEIL) == "index.md"
+    assert construire.chemin_site(construire.SOMMAIRE) == "documentation.md"
+    for langue in construire.LANGUES:
+        texte = (site / langue / "index.html").read_text(encoding="utf-8")
+        assert f"<title>{construire.TITRES_ACCUEIL[langue]}</title>" in texte
+        assert '"@type": "SoftwareSourceCode"' in texte
+        assert f'hreflang="x-default" href="{construire.SITE}"' in texte
+        assert "img.shields.io" not in texte, "badges : hors-site"
+    racine = (REPO / "web" / "index.html").read_text(encoding="utf-8")
+    assert 'location.replace(code + "/"' in racine
+    for langue in construire.LANGUES:
+        assert f'href="{langue}/"' in racine
+        assert f'hreflang="{langue}" href="{construire.SITE}{langue}/"' in racine
 
 
 def test_assemblage_refuse_une_doc_qui_ecraserait_le_site(tmp_path):

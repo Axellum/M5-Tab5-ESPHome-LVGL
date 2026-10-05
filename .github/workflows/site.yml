@@ -1,10 +1,12 @@
 name: Site (vitrine et page de flashage)
 
 # ADR-0022, révisée le 28/09/2026. Reconstruit le site GitHub Pages sans rien compiler :
-# la vitrine et la page de flashage (web/, branche par défaut), leurs images (docs/images/,
-# sous un nom parlant) et les fichiers des releases retenues pour les canaux stable et
-# bêta (tools/publication/pages.py), et la documentation en/ et fr/, construite depuis docs/
-# par MkDocs (tools/site/construire.py, ADR-0030). Lancé :
+# la racine et la page de flashage (web/, branche par défaut), l'image de partage
+# (docs/images/, sous un nom parlant) et les fichiers des releases retenues pour les canaux
+# stable et bêta (tools/publication/pages.py), et la documentation en/ et fr/, construite
+# depuis README.md et docs/ par MkDocs (tools/site/construire.py, ADR-0030). Le nom du
+# workflow date de la vitrine (remplacée par l'accueil de la documentation le 05/10/2026) :
+# gardé, des recettes le cherchent. Lancé :
 #   - par publication.yml, une fois les fichiers joints à une release ;
 #   - à chaque push sur main qui touche le site ;
 #   - à la main (workflow_dispatch).
@@ -19,6 +21,7 @@ on:
     paths:
       - 'web/**'
       - 'docs/**'
+      - 'README.md'
       - 'tools/publication/pages.py'
       - 'tools/site/**'
       - '.github/workflows/site.yml'

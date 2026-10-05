@@ -104,4 +104,4 @@ Not enforced by a test, but every change is judged against them on the real scre
 
 ## Full documentation map
 
-See the table in [`README.md`](README.md#documentation) for the complete list of `docs/*.md` files (architecture, hardware, UI design, voice assistant, installation, screens).
+See [`docs/README.md`](docs/README.md) for the complete list of `docs/*.md` files (installation, user manual, architecture, hardware, UI design, voice assistant, screens). The same pages, with a menu and a search, are the website ([ADR-0030](docs/decisions/0030-documentation-site.md)); its home page is the root `README.md`.

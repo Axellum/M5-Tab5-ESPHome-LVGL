@@ -3,7 +3,7 @@
 ## English · [Français](#version-française)
 
 <!-- hors-site -->
-> These pages are also a website, with a menu and a search: **[axellum.github.io/M5-Tab5-ESPHome-LVGL/en/](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/en/)**.
+> These pages are also a website, with a menu and a search: **[axellum.github.io/M5-Tab5-ESPHome-LVGL/en/documentation/](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/en/documentation/)**.
 <!-- /hors-site -->
 
 Firmware that turns the M5Stack Tab5 into a Home Assistant wall screen, built with ESPHome and LVGL. Home Assistant pushes what changed and the tablet draws it itself.
@@ -28,7 +28,7 @@ The source code, the issues and the discussions are on [GitHub](https://github.c
 ## Version Française
 
 <!-- hors-site -->
-> Ces pages sont aussi un site, avec un menu et une recherche : **[axellum.github.io/M5-Tab5-ESPHome-LVGL/fr/](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/fr/)**.
+> Ces pages sont aussi un site, avec un menu et une recherche : **[axellum.github.io/M5-Tab5-ESPHome-LVGL/fr/documentation/](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/fr/documentation/)**.
 <!-- /hors-site -->
 
 Un firmware qui fait de la M5Stack Tab5 un écran mural Home Assistant, construit avec ESPHome et LVGL. Home Assistant pousse ce qui a changé et la tablette le dessine elle-même.

@@ -1,5 +1,6 @@
 # M5Stack Tab5 — Home Assistant wall screen with ESPHome and LVGL
 
+<!-- hors-site -->
 <div align="center">
 
 [![ESPHome](https://img.shields.io/badge/ESPHome-≥2026.9.0-blue)](https://esphome.io)
@@ -11,7 +12,8 @@
 
 </div>
 
-> *A personal project exploring what's possible when AI writes all the code. Built with Antigravity, DeepSeek, MiniMax, Z.ai, Claude, and Cursor — not a single line typed by hand. I am more the architect than the author.*
+> **This page is also the home page of the website**, with a menu, a search and every page in English or French: **[axellum.github.io/M5-Tab5-ESPHome-LVGL](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/)**.
+<!-- /hors-site -->
 
 ---
 
@@ -19,13 +21,13 @@
 
 ---
 
-**A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen redraws only that, in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, solar energy, TV remote, alarm clock — and 8 offline games, in seven languages. Twenty-one themes, light or dark, chosen from Home Assistant.
+**A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen redraws only that, in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, solar energy, TV remote, alarm clock — and 8 offline games, in seven languages. Twenty-one themes, light or dark, chosen from Home Assistant. It is my everyday screen, shared in case it is useful to someone.
 
-![Animated tour of the M5Stack Tab5 Home Assistant screen: home, devices, plants, climate, lights, TV remote and console](docs/images/tab5_ui_tour.gif)
+![The author's M5Stack Tab5 on a stand, showing a Home Assistant screen with the time, a climate setpoint, work hours and a 5-day weather forecast](docs/images/tab5_hero_4x3.jpg)
 
-**[Website](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/)** · **[Install](#quick-start)** · **[Try it without Home Assistant](docs/demo_mode.md)** · **[Hardware compatibility](#hardware-compatibility)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)** · **[The story behind it](#a-short-personal-note)**
+**[Install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Installation guide](docs/installation/README.md)** · **[User manual](docs/notice/README.md)** · **[Try it without Home Assistant](docs/demo_mode.md)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
 
----
+> *A personal project exploring what's possible when AI writes all the code. Built with Antigravity, DeepSeek, MiniMax, Z.ai, Claude, and Cursor — not a single line typed by hand. I am more the architect than the author.*
 
 ## Why this one
 
@@ -37,41 +39,61 @@
 - **Documented and tested like a product.** 30 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome.
 - **Runs on the ST7123 revision, and builds for the ST7121 and the original ILI9881C**, while most published Tab5 examples only cover the original one.
 
+## What it does
+
+A single 1280×720 page: windows open with a tap, a long press or a swipe — each of them is in the [user manual](docs/notice/README.md).
+
+- **Weather** — rain in the next hour, hourly and 15-day forecast, weather warnings ([below](#rain-in-the-next-hour-weather-warnings)).
+- **Central card** — every 8 s: work hours, rain graph, warnings, a 3-day calendar recap and up to 4 banners pushed by Home Assistant; a tap dismisses a banner ([home screen](docs/notice/home.md)).
+- **Rooms** — the bottom row: up to 5 rooms of 5 devices (lights, switches, shutters, media players, scenes, sensors), with their names and icons taken from Home Assistant ([bottom row and rooms](docs/notice/tiles.md)).
+- **Climate** — modes, a thermostat arc, presets and airflow; the controls are dimmed, not hidden, when the unit is off ([climate](docs/notice/climate.md)).
+- **Lights** — the room's lights (up to 5): brightness arc with shortcuts, 3 whites and 12 colours ([lights](docs/notice/lights.md)).
+- **Shutters** — open, close or a position; while it moves, "Stop" said aloud halts it at once ([shutters](docs/notice/shutters.md)).
+- **Plants** — up to 5 BLE sensors, coloured by soil moisture; a long press shows fertility, light, temperature and battery ([plants](docs/notice/plants.md)).
+- **TV remote** — a full-screen Samsung remote: power, pad, volume, channels, playback, mute, through Home Assistant ([TV remote](docs/notice/tv.md)).
+- **Voice** — "Okay Nabu" detected on the tablet, or a tap on the microphone; two assistants chosen from the screen, home control or a conversation ([voice](docs/notice/voice.md)).
+- **Calendar and alarm clock** — a monthly calendar computed on the tablet, with work hours, holidays and appointments; an alarm clock with a spoken briefing ([calendar](docs/notice/calendar.md), [alarm clock](docs/notice/alarm.md)).
+- **Solar energy** (optional) — solar, home, grid and home battery right now, and the production per hour, day and month ([energy](docs/notice/energy.md)).
+- **Diagnostics console** — memory, Wi-Fi, uptime, volume, theme; reload automations, restart Home Assistant or the tablet behind a confirmation ([system console](docs/notice/console.md)).
+- **8 offline games** — experimental: chess, draughts, Go, breakout, pinball, Lode Runner, a marble roguelite and a quiz ([Arcade](docs/notice/arcade.md)).
+
+## Rain in the next hour, weather warnings
+
+What the screen was first made for: seeing at a glance whether rain is coming before leaving. Both panels join the rotation of the central card only when there is something to show. Renders of the firmware with demo data: moderate rain in 10 minutes, an orange warning.
+
+![M5Stack Tab5 screen in English: nine rain bars for the next hour and the sentence Moderate rain in 10 min, the date in orange](docs/images/site/pluie-dans-l-heure-en.png)
+
+- **9 bars, the whole next hour**: one every 5 minutes for half an hour, then one every 10 minutes. The taller and darker the bar, the heavier the rain. The sentence is written by the tablet, in its language, and counts the minutes down by itself.
+- Source, chosen in Home Assistant: Météo-France in France; the Buienradar, DWD or Met.no radars; OpenWeatherMap; Open-Meteo everywhere, with no key, used by itself when there is no Météo-France; or none, and the panel goes away ([weather providers](docs/installation/weather.md)).
+
+![M5Stack Tab5 screen in English with two weather warning icons, a yellow thunderstorm and an orange rain-flood, and the date in orange](docs/images/site/vigilances-en.png)
+
+- **One icon per warning in force**, up to 4, each in the colour of its own level. The date under the clock takes the colour of the day's overall level.
+- Source: Météo-France for your department; elsewhere MeteoAlarm, the DWD or CAP Alerts. Apart from Météo-France, the warnings were only tried with simulated data.
+
 ## Before you start
 
-- A Tab5: the **ST7123** display chip is the one tested daily; the ST7121 and the original ILI9881C compile but are untested — see [hardware compatibility](#hardware-compatibility).
-- Home Assistant. Since 3.0 a ready-made, signed firmware installs from the browser; to build your own, ESPHome **≥ 2026.9.0**.
-- The screen speaks **French, English, German, Dutch, Spanish, Italian or Turkish**, switchable from Home Assistant ([translations](docs/translations.md); all written by an AI like the rest of the project, the French checked by the author, the others not reviewed yet), games and texts sent by Home Assistant included (rain sentence, banners); only the quiz questions stay in French. The documentation is bilingual. The forecasts come from any weather entity of Home Assistant (Météo-France, Met.no, OpenWeatherMap…). The one-hour rain graph comes from **Météo-France**, or by itself from **Open-Meteo** (no key, worldwide) when Home Assistant has no Météo-France; OpenWeatherMap, Buienradar, DWD or the Nordic Met.no radar can be chosen instead. Weather warnings: Météo-France, MeteoAlarm, DWD or CAP Alerts, chosen from Home Assistant. Météo-France and OpenWeatherMap were tried on the author's installation; the others with real answers read by the same templates, or with simulated data ([weather providers](docs/installation/weather.md)).
-- The layout started from the author's home (one air conditioner, up to 5 BLE plant sensors, a Samsung TV). Since 3.0 you pick your devices in Home Assistant with the mouse (a blueprint), and what you don't have disappears from the screen. Since 3.2 the tiles at the bottom are rooms: up to 5 rooms of 5 devices (lights, switches, covers, media players, scenes, sensors…), with their names and icons taken from Home Assistant (see [Adapt to your home](docs/installation/adapt-to-your-home.md)). Outside the rooms, the other zones have a single place each: the climate card of the home page, the TV, the phone, two temperatures, up to 5 plants.
-
----
+- A Tab5: the **ST7123** display chip is the one used every day; the ST7121 and the original ILI9881C are built but untested — see [hardware compatibility](#hardware-compatibility).
+- Home Assistant 2026.8 or later. A ready-made, signed firmware installs from the browser; to build your own, ESPHome **≥ 2026.9.0**.
+- The screen speaks French, English, German, Dutch, Spanish, Italian or Turkish, switched from Home Assistant — all written by an AI like the rest of the project; the author checked the French, the others are not reviewed yet. Only the quiz questions stay in French ([translations](docs/translations.md)).
+- The layout started from the author's home. You pick your devices in Home Assistant with the mouse (a blueprint), and what you don't have disappears from the screen. The tiles at the bottom are rooms; the other zones have a single place each: the climate card, the TV, the phone, two temperatures, up to 5 plants ([adapt to your home](docs/installation/adapt-to-your-home.md)).
+- The rain graph and the warnings are made for France first (Météo-France); elsewhere the rain comes from Open-Meteo by itself, and other services are picked in Home Assistant ([weather providers](docs/installation/weather.md)).
 
 ## Quick start
 
-**No compiling (3.0 and later):** [install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome or Edge, USB-C cable). Set up the Home Assistant packages and the blueprint, pick your display revision, flash, set the Wi-Fi, add the tablet in Home Assistant: the five steps, and what to do if the page cannot reach the tablet, are in [Without compiling](docs/installation/README.md). Updates then show up in Home Assistant.
+Without compiling, since 3.0: a Tab5, a USB-C cable that carries data, Chrome or Edge on a computer, and Home Assistant. The [installation guide](docs/installation/README.md) takes you through seven steps:
 
-**Then:** a ready-made Home Assistant dashboard for the tablet ([Step 7](docs/installation/dashboard.md)), and every setting — theme, light or dark, language, alarm clock, screen to show — in [Tablet settings and options](docs/installation/settings.md).
+1. [Home Assistant files](docs/installation/home-assistant-files.md): unzip the archive attached to each release into the `config` folder of Home Assistant, add one line to `configuration.yaml`, restart.
+2. [Install the firmware](docs/installation/flash.md) from the [install page](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/): your display revision, the Stable channel, *Connect and install*.
+3. [Wi-Fi](docs/installation/wifi.md): from the same window, over USB, or with a phone on the open "Tab5 Fallback AP" network.
+4. [Add it to Home Assistant](docs/installation/add-to-home-assistant.md): the ESPHome device is discovered, *Configure*; Home Assistant gives it its key.
+5. [Your sources](docs/installation/sources.md): weather and calendars, picked in the « Tab5 · » lists with the mouse.
+6. [Your devices](docs/installation/devices.md): the automation made from the blueprint, with the mouse; changing a device needs no flash.
+7. [A dashboard](docs/installation/dashboard.md) (optional): one line in the template tool of Home Assistant writes a dashboard for the tablet, with its settings and its health.
 
-**Or build your own firmware:**
+Updates then show up in Home Assistant; over the air, the tablet only accepts a firmware signed with the project key. Every setting — theme, light or dark, language, alarm clock, screen to show: [tablet settings](docs/installation/settings.md). To change the firmware yourself: [build your own](docs/installation/build.md).
 
-```bash
-# Clone the repo
-git clone https://github.com/Axellum/M5-Tab5-ESPHome-LVGL.git
-
-# Copy local config files (gitignored), then edit with your values
-cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-# Create the firmware signing key (no secrets.yaml since 3.0) — see docs/installation/build.md
-python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem
-
-# Compile via ESPHome dashboard or CLI:
-# esphome run tab5-ha-hmi.yaml
-```
-
-Full step-by-step: [`docs/installation/`](docs/installation/README.md)
-
-Just want to see it running before setting up Home Assistant? → [`docs/demo_mode.md`](docs/demo_mode.md) pushes synthetic data to a flashed device with a small standalone script — no HA install, nothing left to clean up.
-
----
+Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes demo data to a flashed tablet with a small script: no Home Assistant, nothing left to clean up.
 
 ## Hardware compatibility
 
@@ -81,234 +103,59 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 | **ST7121** | from 28 Apr 2026 | 🧪 Compiles, untested here (same display and touch settings reported working by another user) — add `tab5_ecran: st7121` to `Tab5/user_entities.yaml` |
 | **ILI9881C** + GT911 touch | 9 May 2025 → 14 Oct 2025 | 🧪 Compiles, untested — add `tab5_ecran: ili9881c` to `Tab5/user_entities.yaml` |
 
-"Compiles, untested": the CI builds these two variants on every display change, but this firmware has not been run on those chips yet. Details, how to identify your unit, and the ST7121 report: [`docs/hardware.md`](docs/hardware.md#hardware-revisions). Tried one? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
-
----
+"Compiles, untested": the CI builds these two variants on every display change, and the install page offers them, but this firmware has not been run on those chips yet. How to identify your unit, and the ST7121 report: [hardware revisions](docs/hardware.md#hardware-revisions). Tried one? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
 
 ## See it in action
 
-**Demo video** (voice, touch UI, TV remote, climate — provisional cut, July 2026):
+**[▶ Demo video on YouTube](https://www.youtube.com/watch?v=ygNhgtMffu4)** (voice, touch, TV remote, climate — provisional cut, July 2026), and an animated tour of the screens:
 
-[![Watch the Tab5 demo on YouTube](https://img.youtube.com/vi/ygNhgtMffu4/hqdefault.jpg)](https://www.youtube.com/watch?v=ygNhgtMffu4)
+![Animated tour of the M5Stack Tab5 Home Assistant screen: home, devices, plants, climate, lights, TV remote and console](docs/images/tab5_ui_tour_hq.webp)
 
-**Main dashboard, in daily use:**
+**Twenty-one themes**, each light or dark: colours, shapes (radius, borders, shadows) and the fonts of the clock, the date and the titles. Six of them, drawn by the firmware itself on a PC, with demo data:
 
-![M5Stack Tab5 dashboard in daily use: clock, climate, work hours and 5-day forecast](docs/images/tab5_photo_home.jpg)
+![Six themes of the M5Stack Tab5 screen drawn by the firmware: Relief doux in dark and light, Almanach imprimé, Néon calme, Béton brut and Zen Sumi](docs/images/tab5_themes.jpg)
 
-**Themes** — six of the twenty-one, drawn by the firmware itself (rendered on a PC by the CI, demo data):
+**Solar energy** (optional): solar, home, grid and home battery right now, and the production of the last 30 days, from the sensors picked in the blueprint ([solar energy](docs/installation/adapt-to-your-home.md#solar-energy-optional)). Render with demo data; not tried with a real solar installation yet.
 
-![Six themes of the Tab5 screen drawn by the firmware itself: Relief doux in dark and light, Almanach imprimé, Néon calme, Béton brut and Zen Sumi](docs/images/tab5_themes.jpg)
+![Energy popup of the M5Stack Tab5: solar, home, grid and battery cards, and the solar production of the last 30 days as bars](docs/images/tab5_energie_en.png)
 
-**The tablet in Home Assistant** — the dashboard written for your entities by the macro of [Step 7](docs/installation/dashboard.md):
+**The tablet in Home Assistant** — the dashboard written for your entities by [step 7](docs/installation/dashboard.md):
 
 ![Tab5 view of the Home Assistant dashboard: brightness, volume and screen of the tablet, alarm clock, appointments and voice assistant](docs/images/ha_tableau_tab5.png)
 
-**Solar energy** (optional) — the Energy popup, from the sensors picked in the blueprint ([solar energy](docs/installation/adapt-to-your-home.md#solar-energy-optional); CI render, demo data):
+**On the tablet** — photos of the author's tablet (July 2026, French interface):
 
-![Energy popup of the Tab5: solar, home, grid and battery right now, and the solar production of the last 30 days as bars](docs/images/tab5_energie_en.png)
-
----
-
-## What this is
-
-A Home Assistant smart-home dashboard running natively on a **M5Stack Tab5 V2** (ESP32-P4), built with ESPHome and LVGL 9.5.
-
-The interface is compiled in C++ and embedded in the device firmware. It does not run a web browser, does not poll for data, and does not depend on a live network connection to stay functional. When Home Assistant has something new to show, it pushes the update directly to the screen.
-
-![How Home Assistant and the Tab5 talk: HA pushes data with the tab5_maj_* actions, the tablet answers with esphome.tab5_* events](docs/images/flux_ha_tab5_en.svg)
-
----
-
-## What it does
-
-A single 1280×720 page organized in functional areas, all driven by Home Assistant push events (see [ADR-0002](docs/decisions/0002-single-page-swipe-navigation.md) — there is no multi-screen tab bar):
-
-- **Home area** — time, indoor temp/humidity, quick-action buttons, microphone icon with pipeline state; the date recolors with the active weather-alert level
-- **Weather** — **5-window swipeable forecast** in the bottom region: windows 1–2 show hourly weather for the next 15 time slots (time, temperature color-coded, rainfall in mm, condition icon); windows 3–5 show the **15-day daily forecast** (5 days/window) with color-coded day names, dual-layer condition icons, and max/min temperatures
-- **Central rotating card** — cycles every 8 s between planning, short-term rain graph, weather-warning icons (Météo-France or MeteoAlarm), an info panel (3-day calendar recap or weather-alert banner), and up to **4 Home Assistant alert / info banners** pushed live from HA
-- **Tap to dismiss** — tapping an info banner or an HA alert removes it immediately from the rotator (local dismiss list so a re-push of the same id stays hidden until HA sends a new one)
-- **TV remote** — fullscreen Samsung IR remote popup (power, pad, volume, channels, playback, mute…) opened from the UI; commands go through Home Assistant `remote.*` services
-- **Climate** — compact card + near-fullscreen popup in 3 glass cards: stacked mode buttons (cool / heat / dry / fan / off), a 320 px arc thermostat with optimistic target and debounced updates, presets (eco / boost / quiet) and airflow control (swing / Daikin "Brise" `windnice`); controls are dimmed (not hidden) when the AC is off
-- **Lights** — near-fullscreen popup in 3 glass cards: selector of the room's lights (up to 5; switch lights without closing the popup), live-% brightness arc (debounced) with 10/35/65/100 % shortcuts, 3 named whites + 12 round color swatches
-- **Plants** — soil moisture card for up to 5 BLE plant sensors, dynamically sorted, color-coded by level (red = dry, green = optimal, blue = too wet); a long press opens a 5-card detail popup (moisture + watering status, fertility, light, temperature, sensor battery)
-- **Console** — diagnostics + HA management overlay (RAM/PSRAM, Wi-Fi, uptime, volume, re-push screen, reload automations, restart HA / reboot tablet behind confirm), opened via its dedicated button
-- **Themes** — 21 themes (colours, shapes, fonts of the clock, the date and the titles), each light or dark, switched at once from Home Assistant (« Thème », « Clair ou sombre ») or from a row of the console; « Auto » follows the sun through the « Tab5 — thème jour/nuit » automation. The games keep their own dark colours ([settings](docs/installation/settings.md))
-- **Energy** (optional) — popup for a solar installation: solar, home, grid and home battery right now, and the production per hour, day and month from Home Assistant's statistics; an icon of the status strip shows by its colour the production as a share of the panels' peak power. The tablet's original battery gets its own icon, behind the « Tab5 Batterie montée » switch ([solar energy](docs/installation/adapt-to-your-home.md#solar-energy-optional))
-- **Arcade** — 8 fullscreen game consoles (experimental prototypes — first-pass AI-generated code to test what's possible on an ESP32-P4): **Fil d'Or** (marble roguelite, tilt-controlled), **Arcanoïde** (Breakout clone), **Neon Apron** (pinball, portrait), **Coureur d'Or** (Lode Runner), **Go Tab** (Go 9×9/13×13/19×19), **Trial Poursuite** (trivia quiz), **Dames Tab** (draughts 10×10), **Roi Noir** (FIDE chess with embedded AI). All 100% local, zero HA/network dependency, NVS persistence. Opened via a 4×2 selector grid triggered by tapping the greenhouse temperature
-- **Popup Assistant** — near-fullscreen modal showing the STT transcription ("Your request") and the LLM reply rendered as Markdown (tables, bold, code, images downloaded on demand); left panel = settings (brain selector Domotique/Discussion, Ok Nabu toggle, volume, text size A-/A+)
-- **Popup Calendar** — monthly 7×6 grid computed locally from SNTP; work hours inside cells, color-coded markers (public holidays, school holidays, appointments, birthdays); tap a day for a detail sub-popup; HA enriches on demand
-- **Popup Plant Details** — 5 fixed glass cards (one per BLE sensor) showing soil moisture %, watering status, fertility (EC µS/cm), light (lx), temperature, battery — opened by long-press on the dashboard moisture slots
-
-**Voice assistant** — runs `okay_nabu` wake-word detection locally on the ESP32-P4. The microphone icon changes color to show the pipeline state in real time: grey (idle) → green (listening) → orange (processing) → blue (speaking) → red (error). Wake-word detection can be toggled on/off from the UI; tapping the mic icon triggers push-to-talk. A second on-device wake word — **"Stop"** — is armed only while the roller shutter is moving and halts it instantly, with no wake phrase and no pipeline round-trip; tapping the mic while the assistant is speaking interrupts the reply and re-opens listening. Two modes selectable from the UI: standard Home Assistant agent, or a **Discussion** pipeline backed by [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) (local STT/TTS via Wyoming, engine routing for deterministic HA commands vs LLM chat).
-
-**Roller shutters** — script buttons on the home screen send open/close/position commands to Home Assistant cover entities.
-
-→ Full screen-by-screen description: [`docs/screens.md`](docs/screens.md)
-
----
-
-## Arcade — 8 game consoles (experimental)
-
-> **Status: early prototypes.** These are first-pass, AI-generated games built to test what LVGL + C++ can do on an ESP32-P4. They are functional but not polished — think "proof of concept" rather than "finished product." The goal was to see how far AI code generation can go on embedded hardware, not to ship retail-quality games.
-
-All 8 consoles share the same architecture: each one is its **own fullscreen LVGL page** (`page_marble`, `page_chess`… declared `skip: true` so swipe navigation can't reach them), not an overlay stacked on the dashboard — the only documented exception to the modal chrome rule (ADR-0009). YAML reduced to empty containers, all content built in C++, `lv_timer` created on open / destroyed on close, NVS persistence, **zero Home Assistant or network dependency**.
-
-| # | Console | Type | Controls |
-|---|---------|------|----------|
-| 1 | **Fil d'Or** | Marble roguelite (6 rooms, Dark Souls-style progression) | Tilt (BMI270) |
-| 2 | **Arcanoïde** | Breakout / Arkanoid (8 levels, power-ups) | Tilt + touch |
-| 3 | **Neon Apron** | Pinball — **portrait**, switches the screen to 720×1280 | Touch zones + IMU nudge |
-| 4 | **Coureur d'Or** | Lode Runner (10 levels, dig & climb) | Touch D-pad |
-| 5 | **Go Tab** | Go 9×9 / 13×13 / 19×19 (Chinese scoring, komi 6.5) | Touch |
-| 6 | **Trial Poursuite** | Trivia quiz (1–6 teams, retro living-room style) | Touch |
-| 7 | **Dames Tab** | Draughts 10×10 (international rules, embedded AI) | Touch |
-| 8 | **Roi Noir** | FIDE chess (full rules, 5 AI levels, perft-validated) | Touch |
-
-![Arcade selector with the 8 offline games on the M5Stack Tab5](docs/images/tab5_photo_arcade_selector.jpg)
-
-| Roi Noir (chess) | Arcanoïde (breakout) |
+| Device buttons, one tap each | Plant sensors |
 |:-:|:-:|
-| ![Roi Noir chess game running on the M5Stack Tab5](docs/images/tab5_photo_chess.jpg) | ![Arcanoïde breakout game on the M5Stack Tab5, played by tilting it](docs/images/tab5_photo_arkanoid.jpg) |
+| <img src="docs/images/tab5_photo_domo.jpg" width="400" loading="lazy" alt="M5Stack Tab5 Home Assistant screen with buttons for a desk PC, a roller shutter, bedroom and living-room lights and LEDs"> | <img src="docs/images/tab5_photo_plants.jpg" width="400" loading="lazy" alt="M5Stack Tab5 popup with five BLE plant sensors: soil moisture, fertility, light, temperature and battery"> |
 
-| Coureur d'Or (Lode Runner) | Calendar popup |
+| Climate | Lights |
 |:-:|:-:|
-| ![Coureur d'Or, a Lode Runner style game on the M5Stack Tab5](docs/images/tab5_photo_lode_runner.jpg) | ![Monthly calendar popup with work hours on the M5Stack Tab5](docs/images/tab5_photo_calendar.jpg) |
+| <img src="docs/images/tab5_photo_climate_popup_v2.jpg" width="400" loading="lazy" alt="M5Stack Tab5 climate popup with modes, a thermostat arc set to 23 °C, presets and airflow options"> | <img src="docs/images/tab5_photo_light_popup_v2.jpg" width="400" loading="lazy" alt="M5Stack Tab5 light popup with a light selector, a brightness arc at 100 % and colour swatches"> |
 
-| Assistant popup (Discussion mode) |
-|:-:|
-| ![Voice assistant popup on the M5Stack Tab5: the spoken request and its reply](docs/images/tab5_photo_assistant_popup.jpg) |
+| TV remote | Diagnostics console |
+|:-:|:-:|
+| <img src="docs/images/tab5_photo_tv_remote.jpg" width="400" loading="lazy" alt="M5Stack Tab5 showing a Samsung TV remote with power, source, direction pad, volume and playback buttons"> | <img src="docs/images/tab5_photo_console_v2.jpg" width="400" loading="lazy" alt="M5Stack Tab5 diagnostics console with memory, Wi-Fi, uptime, CPU temperature and Home Assistant actions"> |
 
-→ Full technical details per game: [`docs/arcade.md`](docs/arcade.md)
+| Monthly calendar | Voice assistant |
+|:-:|:-:|
+| <img src="docs/images/tab5_photo_calendar.jpg" width="400" loading="lazy" alt="M5Stack Tab5 monthly calendar with work hours, public holidays, school holidays and appointments"> | <img src="docs/images/tab5_photo_assistant_popup.jpg" width="400" loading="lazy" alt="M5Stack Tab5 voice assistant popup showing the spoken request and a formatted reply"> |
 
----
+| Arcade: the game menu | Roi Noir: chess with an engine on the tablet |
+|:-:|:-:|
+| <img src="docs/images/tab5_photo_arcade_selector.jpg" width="400" loading="lazy" alt="M5Stack Tab5 arcade menu with eight offline games drawn with LVGL"> | <img src="docs/images/tab5_photo_chess.jpg" width="400" loading="lazy" alt="Chess game Roi Noir running on the M5Stack Tab5 ESP32-P4 with its embedded engine"> |
 
-## Key design decisions
+| Coureur d'Or: Lode Runner style | Arcanoïde: a breakout played by tilting |
+|:-:|:-:|
+| <img src="docs/images/tab5_photo_lode_runner.jpg" width="400" loading="lazy" alt="Coureur d'Or, a Lode Runner style platform game, running on the M5Stack Tab5"> | <img src="docs/images/tab5_photo_arkanoid.jpg" width="400" loading="lazy" alt="Arcanoïde, a breakout game on the M5Stack Tab5, played by tilting the tablet"> |
 
-- **Push-only, zero polling.** The device never requests state from Home Assistant. Automations on the HA side detect changes and push data to the screen via native ESPHome service calls. In the other direction the tablet sends events, never Home Assistant actions ([ADR-0025](docs/decisions/0025-events-only.md)). CPU stays near zero when nothing changes.
-- **Modular YAML.** The ESPHome configuration is split across twenty-one files by concern (tokens, hardware, screen revision, publication channel, diagnostics sensors, home-automation sensors, API logic, styles, globals, scripts, UI, arcade, calendar, voice assistant, IMU, HA controls, alarm clock, rooms and tiles, energy popup, zones, themes), each independently readable. Most stay under 500 lines; only the largest (`tab5-alarm.yaml`, `tab5-styles.yaml`, `tab5-lvgl.yaml`, `tab5-api-logic.yaml`, `tab5-sensors-diagnostics.yaml`, `tab5-themes.yaml`) go beyond, and the UI is further split into 52 reusable `ui_components/*.yaml`.
-- **Native LVGL, no web stack.** LVGL refreshes up to 60 times a second from a framebuffer in the ESP32-P4's PSRAM and redraws only what changed. Measured on the tablet (firmware 3.2.0, 2026-09-28): a changed value or the clock's minute redraws in under 10 ms, the rotating panel in the middle in 15-21 ms per frame, the whole screen in 133 ms, and a popup opens in 126-197 ms. Vector fonts (Material Design Icons) replace image files entirely.
-- **Data packing.** Complex payloads (15-day forecast, hourly forecast, weather alerts) are serialized as delimited strings on the HA side and parsed in C++ on the device — one network call, zero subsequent requests.
-- **Offline resilience.** All C++ lambdas check `api.connected()` and `has_state()` before touching the UI. If HA restarts, the last known state stays on screen — and the device stays usable on its own (clock, arcade, diagnostics console). It only reboots itself after a full hour without any API client (`api: reboot_timeout: 60min`), a deliberate anti-"zombie" safety net rather than a reaction to a short HA outage.
-
----
-
-## Voice assistant & engine
-
-The Tab5 is an **Assist Satellite**: it does not “understand” French itself. It captures audio, shows pipeline state, and plays the reply.
-
-| Step | Where | What happens |
-|------|--------|----------------|
-| 1. Wake word | Tab5 (on-device) | `okay_nabu` via micro_wake_word / TensorFlow Lite — idle listening stays local |
-| 2. STT | Home Assistant (Wyoming Whisper, local) | Speech → text |
-| 3. Intent / reply | HA conversation agent → optional **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** | Domotics: fast local / deterministic match → HA action. Discussion: light LLM path (local and/or cloud). Specialists (web, calendar…) when classified by the engine host |
-| 4. TTS | Home Assistant (Wyoming Piper, local) | Text → speech |
-| 5. Playback | Tab5 (ES8388 DAC + amp) | Reply on the built-in speaker |
-
-Audio is captured at 16 kHz / 16-bit over I2S and streamed to Home Assistant only after wake-word detection — nothing goes over the network before that. Boot sequencing avoids the hardware pop if the amp enable line fires before the I2S clock is stable.
-
-The engine is optional for the screen UI (push dashboard works without it). It is what makes the **voice + conversation** path interesting: local for short HA commands, semi-local / cloud only when a real chat answer is needed.
-
-→ Full details: [`docs/voice_assistant.md`](docs/voice_assistant.md) · Engine repo: [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) · Context: [`docs/related_projects.md`](docs/related_projects.md)
-
----
+The games are experimental, first-pass code written by AI to see what LVGL and C++ can do on an ESP32-P4: they work, they are not polished ([the eight consoles](docs/arcade.md), in French).
 
 ## Documentation
 
-| Page | Contents |
-|------|----------|
-| [`AGENTS.md`](AGENTS.md) | Entry point for AI coding agents — read order, build/verify commands, boundaries |
-| [`CARTOGRAPHIE_TAB5.md`](CARTOGRAPHIE_TAB5.md) | Full dependency graph and file-by-file inventory, with known technical debt |
-| [`docs/screens.md`](docs/screens.md) | Screen-by-screen feature description |
-| [`docs/architecture.md`](docs/architecture.md) | Modular YAML structure, push paradigm, data packing, boot guards |
-| [`docs/hardware.md`](docs/hardware.md) | Tab5 hardware revisions (which ones are supported), ESP32-P4 specs, GPIO mapping, ES8388 DAC, PSRAM, power |
-| [`docs/ui_design.md`](docs/ui_design.md) | LVGL rendering, vector fonts, dynamic color, CPU optimizations |
-| [`docs/performance.md`](docs/performance.md) | Measured frame times, popup openings, restart, RAM — and how they were measured |
-| [`docs/voice_assistant.md`](docs/voice_assistant.md) | Wake word pipeline, audio chain, visual feedback states |
-| [`docs/installation/`](docs/installation/README.md) | Install in seven steps (Home Assistant files, install page, Wi-Fi, sources, devices, dashboard), tablet settings, adapting to your home, weather providers, updates, building your own |
-| [`docs/translations.md`](docs/translations.md) | Screen language (French, English, German, Dutch, Spanish, Italian, Turkish), adding a language |
-| [`docs/tiles_icons.md`](docs/tiles_icons.md) | Icons of the room tiles: the palette, how an icon is chosen, asking for one |
-| [`docs/demo_mode.md`](docs/demo_mode.md) | Try it in minutes, no Home Assistant required |
-| [`docs/troubleshooting.md`](docs/troubleshooting.md) | Symptom → root cause → fix log for incidents already diagnosed |
-| [`docs/debugging.md`](docs/debugging.md) | How to observe/diagnose the device (logs, console overlay, marker technique) |
-| [`docs/decisions/`](docs/decisions/README.md) | Architecture decision records — the "why" behind non-obvious choices |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | PR workflow, compile gate, files never to commit |
-| [`CHANGELOG.md`](CHANGELOG.md) | Version history |
-| [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | Home Assistant packages: push automations, scripts, helpers (what runs on the author's HA) |
-| [`Tab5/README.md`](Tab5/README.md) | ESPHome file-by-file description |
-| [`docs/related_projects.md`](docs/related_projects.md) | Linked projects, AI experiment context |
-| [`docs/arcade.md`](docs/arcade.md) | The 8 game consoles — shared architecture, adding a 9th, one section per game (in French) |
-| [`docs/press/`](docs/press/hackster.md) | Publication kit — Hackster.io / M5Stack contest story, BOM, build steps |
+Every page is in English and French: [install](docs/installation/README.md), [use](docs/notice/README.md), [set up](docs/installation/settings.md), [fix](docs/troubleshooting.md), [understand how it is built](docs/architecture.md) — the full list is on the [documentation page](docs/README.md).
 
----
-
-## Repository layout
-
-```
-.
-├── tab5-ha-hmi.yaml          # Entry point — includes user_entities + packages
-├── Tab5/
-│   ├── user_entities.example.yaml  # Public template (copy → user_entities.yaml)
-│   ├── tab5-ui-tokens.yaml   # Shared dimensional tokens (modal sizes)
-│   ├── tab5-hardware.yaml    # Display (MIPI-DSI), touch, I2C, audio, OTA
-│   ├── tab5-sensors-diagnostics.yaml  # System entities (Wi-Fi, power, uptime, RAM)
-│   ├── tab5-sensors-domotique.yaml    # HA entities (plants, lights, temps, audio)
-│   ├── pot_sensors.yaml      # Parameterized package: 4 plant-detail sensors, included ×5
-│   ├── tab5-api-logic.yaml   # HA service handlers + C++ lambdas
-│   ├── tab5-styles.yaml      # Global LVGL style definitions
-│   ├── tab5-lvgl.yaml        # UI layout — screens, widgets, icons, game includes
-│   ├── tab5-globals.yaml     # Shared global variables
-│   ├── tab5-scripts.yaml     # Cross-cutting scripts (modal registry, volume, debounces, rotator)
-│   ├── tab5-arcade.yaml      # Game scripts (close all, open each console, arcade page)
-│   ├── tab5-calendar.yaml    # Calendar popup scripts
-│   ├── tab5-assist.yaml      # Voice assistant: wake words, pipeline, reply image, assistant popup
-│   ├── tab5-imu.yaml         # BMI270 IMU — adaptive polling + tap-to-wake
-│   ├── tab5-ha-controls.yaml # HA-facing entities — volume, current screen, go-to-screen
-│   ├── tab5-alarm.yaml       # Alarm clock + appointment reminders (entities, ring, tick)
-│   ├── ui_components/        # 45 reusable LVGL components and templates (popups, cards, games)
-│   ├── tab5_custom.h         # C++ declarations (HMI logic) — the single public header
-│   ├── tab5_custom.cpp       # Shared globals + map of the C++ units
-│   ├── tab5_internal.h       # Helpers shared between units (not part of the YAML contract)
-│   ├── tab5_registry.h/.cpp  # Single registry of consoles and modal windows (ADR-0013)
-│   ├── game_common.h         # Helpers shared by the 8 consoles (bare widgets, xorshift32, NvsSlot<T>)
-│   ├── tab5_text/forecast/central/services/assist/cards/console/anim/calendar.cpp  # One unit per responsibility
-│   ├── tab5_tokens.h         # Design tokens (UIColor/UIAnim/UIIdle) — no dependency
-│   ├── tab5_core.h/.cpp      # Pure logic shared by HMI and alarm (dates, calendar data) — builds on a PC
-│   ├── alarm_clock.h/.cpp    # Alarm engine — next-ring maths, calendar rules, RDV list (pure, host-tested)
-│   ├── alarm_render.h/.cpp   # Alarm LVGL rendering (settings popup, ring overlay, status icon)
-│   ├── marble_game.h/.cpp    # Game: Fil d'Or (marble roguelite)
-│   ├── arkanoid_game.h/.cpp  # Game: Arcanoïde (breakout)
-│   ├── pinball_game.h/.cpp   # Game: Neon Apron (pinball, portrait)
-│   ├── lode_game.h/.cpp      # Game: Coureur d'Or (Lode Runner)
-│   ├── go_engine/ai/game.*   # Game: Go Tab (Go)
-│   ├── trivia_game.h/.cpp    # Game: Trial Poursuite (quiz)
-│   ├── draughts_ai/game.*    # Game: Dames Tab (draughts)
-│   └── chess_ai/game.*       # Game: Roi Noir (chess)
-├── HomeAssistant_Config/     # HA packages, no placeholder (choices made in HA) — what runs on the author's HA, zipped in each release
-├── tests/                    # pytest: secrets checker, HA leak guard and install, content guards
-├── tools/
-│   ├── demo/                 # Standalone demo pusher (no HA required)
-│   ├── check_*.py            # Content guards read the real C++/YAML (modal chrome, registry, code rules, Marble, Lode)
-│   ├── cartographie_counts.py  # Line counts of CARTOGRAPHIE_TAB5.md (check / --write)
-│   ├── render_ha_config.py   # Copies the public HA files to rendered/ (--check: no real ID, no placeholder leaked)
-│   ├── verifier_secrets_config.py  # No secret in any tracked file (pre-commit + CI)
-│   ├── test_go_engine.py/.cpp  # Host tests: Go rules (Python mirror locally, real C++ with g++ in CI)
-│   ├── test_alarm_clock.cpp  # Host tests: alarm engine, simulated clock, Europe/Paris DST (g++ in CI)
-│   ├── test_chess_perft.py   # Host tests: chess move generator vs the perft suite
-│   ├── test_draughts_engine.py  # Host tests: draughts move generator vs reference perft (10×10 and 8×8)
-│   └── make_chess_font.py    # Builds ChessPieces.ttf
-├── .pre-commit-config.yaml   # yamllint, BOM, secrets, HA leak guard — replayed by CI
-├── pyproject.toml            # pytest config (testpaths: tests, tools)
-├── web/                      # GitHub Pages site: showcase page and web installer (install/), built by tools/publication/pages.py
-└── docs/                     # Extended documentation — arcade.md (games), decisions/ (ADR), press/ (publication kit)
-```
-
-Everything runs on a plain PC, no device needed:
-
-```bash
-python tools/test_go_engine.py && python tools/test_chess_perft.py && python tools/test_draughts_engine.py && python tools/demo/demo_pusher.py --dry-run
-```
-
----
+In this repository: [`AGENTS.md`](AGENTS.md) for AI coding agents, [`CARTOGRAPHIE_TAB5.md`](CARTOGRAPHIE_TAB5.md) (every file and dependency), [`Tab5/README.md`](Tab5/README.md) (the ESPHome files and the Home Assistant services), [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) (the packages), [`CONTRIBUTING.md`](CONTRIBUTING.md) and the [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Community
 
@@ -321,51 +168,9 @@ python tools/test_go_engine.py && python tools/test_chess_perft.py && python too
 
 English or French, both are welcome.
 
----
-
 ## A short personal note
 
-Having heard a lot about AI — especially for coding — a few months ago I wanted to see for myself what it could actually do. I needed a project, and my old Nextion screen (mostly weather, still on ESPHome and Météo-France) was starting to feel dated. So I decided to replace it — this time with a much more ambitious home-automation setup, on a far more capable display, driven by AI from end to end.
-
-One thing led to another: I added a voice assistant to the screen, then a local “engine” to handle voice home-automation on-device / on-LAN, and semi-local or cloud paths for open conversation. That engine is still a work in progress (of course 🙂) — I put a lot (too much) into it to experiment and better understand how LLMs work: RAG, scoring, multi-LLM routing, MCP, and more. I share it mostly for information: I use it day-to-day with this screen, but not yet for coding, nor for everything I tried to pack in — some of which works more or less well.
-
-I started with Antigravity, then leaned on various models (DeepSeek, MiniMax, Z.ai). Next I tried Claude, which also did a lot of the work, then Cursor more recently. In short: this is my everyday screen project — I am more its architect than its creator — born from my first steps into the world of AI.
-
-**So, why a screen, though?**
-
-After five years with the Nextion, I wanted to give my mostly-weather screen a facelift, keeping at least the same core goals:
-
-- Be a clock.
-- Warn me at a glance if rain is coming within the hour — do I leave 15 minutes early so I don't show up soaked at the office? Do I grab an umbrella?
-- Show the forecast for the next few days, so I have a conversation topic for the rare occasions I decide to be social.
-- Do all that on reasonable power, always on (well, whenever I'm actually in front of it), with total freedom over layout, design and logic — not just the stock Home Assistant dashboard — with all the upsides that come with it... and the downsides.
-
-Then home-automation ambitions crept in:
-
-- A direct readout of the soil moisture in my plant pots / veggie patch.
-- Turn the TV and PC on without lifting my butt off the chair.
-- Control the three living-room spotlights and the bedroom light.
-
-Then, little by little...
-
-- Control my AC.
-- Operate the roller shutter — again, without getting up.
-- Add "Ok Nabu" wake-word support, so I don't even have to lean over to grab the screen anymore 🙂
-- Polish the voice assistant: a conversation mode, a choice of LLM (local or not), and home commands that are as fast as possible and actually understand me.
-- Display my work schedule so I can read my shift hours at a glance.
-- Get a network remote for my TV — it can always come in handy. (Funny story: Claude Fable 5 completely blew me away on that one — it built the whole thing in two prompts flat. Naturally, I then let it loose redoing *every single popup* in the project… at the cost of roughly 50% of my 5-hour usage cap per popup, on the Pro plan. Worth it.)
-
-All of that with these design goals in mind. My very first sessions with Gemini, rewriting the old Nextion code, were honestly humbling — it rethought how the data got sent and cut the codebase to a third of its size. So this time I wanted lightness and much better optimization than anything I'd hand-rolled myself:
-
-- No images anywhere — as light and optimized for the tablet as it gets.
-- Data pushes on the Home Assistant side as gentle as possible (my HA runs on a Freebox box, so I have to stay lean).
-- A fast boot with no display lag — something that just *feels* smooth.
-
-I also aimed for a modern-feeling interface (I'm in my fifties — don't expect miracles): no separate pages, just popups, everything reachable via a button, a long-press, or a swipe. Heavy color-coding gives at-a-glance readability from a few meters away, even though the screen is really meant to be read from under a meter for the fine print. And I tried to pack the maximum info/controls onto something that stays reasonably clean — yes, I know, "clean" is the part I'm worst at. End goal: a screen that looks decent to the eye, even though deep down I'm way more about function than form.
-
-Companion backend (optional, work-in-progress): **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** — multi-agent orchestrator used for voice routing and conversation.
-
----
+Having heard a lot about AI for coding, I wanted to see for myself what it could do. My old Nextion screen (mostly weather, already on ESPHome and Météo-France) was starting to feel dated, so I replaced it: a lot more home automation, on a far more capable display, with AI writing the code from end to end. Why a screen, what it had to do, and how it grew: [the story](docs/story.md).
 
 ## Note on AI
 
@@ -377,17 +182,21 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 ---
 
----
-
 ## Version Française
 
 ---
 
-**Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran ne redessine que ça, en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, énergie solaire, télécommande TV, réveil — et 8 jeux hors ligne, en sept langues. Vingt et un thèmes, clairs ou sombres, au choix depuis Home Assistant.
+<!-- hors-site -->
+> **Cette page est aussi l'accueil du site**, avec un menu, une recherche et chaque page en français ou en anglais : **[axellum.github.io/M5-Tab5-ESPHome-LVGL/fr/](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/fr/)**.
+<!-- /hors-site -->
 
-**[Site](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/)** · **[Installer](#démarrage-rapide)** · **[Essayer sans Home Assistant](docs/demo_mode.md)** · **[Compatibilité matérielle](#compatibilité-matérielle)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)** · **[L'histoire du projet](#note-personnelle)**
+**Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran ne redessine que ça, en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, énergie solaire, télécommande TV, réveil — et 8 jeux hors ligne, en sept langues. Vingt et un thèmes, clairs ou sombres, au choix depuis Home Assistant. C'est mon écran de tous les jours, partagé au cas où il serve à quelqu'un.
 
----
+![La M5Stack Tab5 de l'auteur sur son support, avec un écran Home Assistant : l'heure, la consigne de la clim, les horaires de travail et les prévisions à 5 jours](docs/images/tab5_hero_4x3.jpg)
+
+**[Installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Guide d'installation](docs/installation/README.md#version-française)** · **[Notice d'utilisation](docs/notice/README.md#version-française)** · **[Essayer sans Home Assistant](docs/demo_mode.md#version-française)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
+
+> *Un projet personnel pour voir ce que donne l'IA quand elle écrit tout le code. Construit avec Antigravity, DeepSeek, MiniMax, Z.ai, Claude et Cursor — pas une ligne tapée à la main. J'en suis plus l'architecte que l'auteur.*
 
 ## Pourquoi celui-ci
 
@@ -399,41 +208,61 @@ If something in the code is weird, it might be an AI quirk. If something works s
 - **Documenté et testé comme un produit.** 30 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome.
 - **Tourne sur la révision ST7123, et compile pour la ST7121 et l'ILI9881C d'origine**, alors que la plupart des exemples Tab5 publiés ne couvrent que celle d'origine.
 
+## Ce que ça fait
+
+Une seule page de 1280×720 : les fenêtres s'ouvrent d'un appui, d'un appui long ou d'un glissement — chacune est dans la [notice d'utilisation](docs/notice/README.md#version-française).
+
+- **Météo** — pluie dans l'heure, prévisions horaires et à 15 jours, vigilances ([plus bas](#pluie-dans-lheure-vigilances)).
+- **Carte centrale** — toutes les 8 s : horaires, graphe de pluie, vigilances, récap du calendrier sur 3 jours et jusqu'à 4 bandeaux poussés par Home Assistant ; un appui masque un bandeau ([écran d'accueil](docs/notice/home.md#version-française)).
+- **Pièces** — la rangée du bas : jusqu'à 5 pièces de 5 appareils (lumières, interrupteurs, volets, lecteurs multimédia, scènes, capteurs), avec leurs noms et icônes pris dans Home Assistant ([rangée du bas et pièces](docs/notice/tiles.md#version-française)).
+- **Clim** — modes, arc de thermostat, préréglages et flux d'air ; les commandes sont grisées, pas masquées, quand la clim est éteinte ([clim](docs/notice/climate.md#version-française)).
+- **Lumières** — les lumières de la pièce (5 au plus) : arc de luminosité avec raccourcis, 3 blancs et 12 couleurs ([lumières](docs/notice/lights.md#version-française)).
+- **Volets** — ouvrir, fermer ou une position ; pendant qu'il bouge, « Stop » dit à voix haute l'arrête tout de suite ([volets](docs/notice/shutters.md#version-française)).
+- **Plantes** — jusqu'à 5 capteurs BLE, colorés selon l'humidité du sol ; un appui long montre fertilité, lumière, température et batterie ([plantes](docs/notice/plants.md#version-française)).
+- **Télécommande TV** — une télécommande Samsung plein écran : marche, croix, volume, chaînes, lecture, muet, par Home Assistant ([télécommande TV](docs/notice/tv.md#version-française)).
+- **Voix** — « Okay Nabu » détecté sur la tablette, ou un appui sur le micro ; deux assistants au choix depuis l'écran, la domotique ou la discussion ([voix](docs/notice/voice.md#version-française)).
+- **Calendrier et réveil** — un calendrier du mois calculé sur la tablette, avec horaires, fériés, vacances et rendez-vous ; un réveil avec un briefing parlé ([calendrier](docs/notice/calendar.md#version-française), [réveil](docs/notice/alarm.md#version-française)).
+- **Énergie solaire** (facultatif) — solaire, maison, réseau et batterie de la maison en direct, et la production par heure, jour et mois ([énergie](docs/notice/energy.md#version-française)).
+- **Console de diagnostic** — mémoire, Wi-Fi, temps de marche, volume, thème ; recharger les automatisations, redémarrer Home Assistant ou la tablette, après confirmation ([console système](docs/notice/console.md#version-française)).
+- **8 jeux hors ligne** — expérimentaux : échecs, dames, go, casse-briques, flipper, Lode Runner, un roguelite de bille et un quiz ([Arcade](docs/notice/arcade.md#version-française)).
+
+## Pluie dans l'heure, vigilances
+
+Ce pour quoi l'écran a d'abord été fait : voir d'un coup d'œil s'il va pleuvoir avant de partir. Les deux panneaux n'entrent dans la rotation de la carte centrale que s'il y a quelque chose à montrer. Rendus du firmware avec des données de démonstration : pluie modérée dans 10 minutes, vigilance orange.
+
+![Écran de la M5Stack Tab5 en français : neuf barres de pluie pour l'heure qui vient et la phrase Pluie modérée dans 10 mn, la date en orange](docs/images/site/pluie-dans-l-heure.png)
+
+- **9 barres, toute l'heure qui vient** : une toutes les 5 minutes pendant une demi-heure, puis une toutes les 10 minutes. Plus la barre est haute et foncée, plus la pluie est forte. La phrase est écrite par la tablette, dans sa langue, et décompte les minutes toute seule.
+- Source, choisie dans Home Assistant : Météo-France en France ; les radars Buienradar, DWD ou Met.no ; OpenWeatherMap ; Open-Meteo partout, sans clé, pris tout seul quand il n'y a pas Météo-France ; ou aucune, et le panneau disparaît ([fournisseurs météo](docs/installation/weather.md#version-française)).
+
+![Écran de la M5Stack Tab5 en français avec deux icônes de vigilance, orages en jaune et pluie-inondation en orange, et la date en orange](docs/images/site/vigilances.png)
+
+- **Une icône par vigilance en cours**, 4 au plus, chacune de la couleur de son niveau. La date sous l'horloge prend la couleur du niveau global de la journée.
+- Source : Météo-France pour votre département ; ailleurs MeteoAlarm, le DWD ou CAP Alerts. Hors Météo-France, les vigilances n'ont été essayées qu'avec des données simulées.
+
 ## Avant de commencer
 
-- Un Tab5 : la puce écran **ST7123** est celle testée tous les jours ; la ST7121 et l'ILI9881C d'origine compilent mais ne sont pas testées — voir la [compatibilité matérielle](#compatibilité-matérielle).
-- Home Assistant. Depuis la 3.0, un firmware prêt à l'emploi et signé s'installe depuis le navigateur ; pour compiler le vôtre, ESPHome **≥ 2026.9.0**.
-- L'écran parle **français, anglais, allemand, néerlandais, espagnol, italien ou turc**, au choix depuis Home Assistant ([traductions](docs/translations.md#version-française) ; toutes écrites par une IA comme le reste du projet, le français relu par l'auteur, les autres pas encore relues), jeux et textes envoyés par Home Assistant compris (phrase de pluie, bandeaux) ; seules les questions du quiz restent en français. La documentation est bilingue. Les prévisions viennent de n'importe quelle entité météo de Home Assistant (Météo-France, Met.no, OpenWeatherMap…). Le graphe de pluie dans l'heure vient de **Météo-France**, ou tout seul d'**Open-Meteo** (sans clé, partout) quand Home Assistant n'a pas Météo-France ; OpenWeatherMap, Buienradar, le DWD ou le radar nordique de Met.no peuvent le remplacer. Vigilances : Météo-France, MeteoAlarm, DWD ou CAP Alerts, au choix depuis Home Assistant. Météo-France et OpenWeatherMap ont été essayés sur l'installation de l'auteur ; les autres avec de vraies réponses lues par les mêmes modèles, ou des données simulées ([fournisseurs météo](docs/installation/weather.md#version-française)).
-- La disposition est partie de la maison de l'auteur (une clim, jusqu'à 5 capteurs de plantes BLE, une TV Samsung). Depuis la 3.0, vous choisissez vos appareils dans Home Assistant, à la souris (un blueprint), et ce que vous n'avez pas disparaît de l'écran. Depuis la 3.2, les tuiles du bas sont des pièces : jusqu'à 5 pièces de 5 appareils (lumières, interrupteurs, volets, lecteurs multimédia, scènes, capteurs…), avec leurs noms et icônes pris dans Home Assistant (voir [Adapter à sa maison](docs/installation/adapt-to-your-home.md#version-française)). Hors des pièces, les autres zones ont une seule place chacune : la carte clim de l'accueil, la TV, le téléphone, deux températures, jusqu'à 5 plantes.
-
----
+- Une Tab5 : la puce écran **ST7123** est celle utilisée tous les jours ; la ST7121 et l'ILI9881C d'origine sont compilées mais pas essayées — voir la [compatibilité matérielle](#compatibilité-matérielle).
+- Home Assistant 2026.8 ou plus récent. Un firmware prêt à l'emploi et signé s'installe depuis le navigateur ; pour compiler le vôtre, ESPHome **≥ 2026.9.0**.
+- L'écran parle français, anglais, allemand, néerlandais, espagnol, italien ou turc, au choix depuis Home Assistant — toutes écrites par une IA comme le reste du projet ; l'auteur a relu le français, les autres ne sont pas encore relues. Seules les questions du quiz restent en français ([traductions](docs/translations.md#version-française)).
+- La disposition est partie de la maison de l'auteur. Vous choisissez vos appareils dans Home Assistant, à la souris (un blueprint), et ce que vous n'avez pas disparaît de l'écran. Les tuiles du bas sont des pièces ; les autres zones ont une seule place chacune : la carte clim, la TV, le téléphone, deux températures, jusqu'à 5 plantes ([adapter à sa maison](docs/installation/adapt-to-your-home.md#version-française)).
+- Le graphe de pluie et les vigilances sont d'abord faits pour la France (Météo-France) ; ailleurs, la pluie vient toute seule d'Open-Meteo, et d'autres services se choisissent dans Home Assistant ([fournisseurs météo](docs/installation/weather.md#version-française)).
 
 ## Démarrage rapide
 
-**Sans compiler (3.0 et suivantes) :** [installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome ou Edge, câble USB-C). Installez les packages Home Assistant et le blueprint, choisissez votre révision d'écran, flashez, réglez le Wi-Fi, ajoutez la tablette dans Home Assistant : les cinq étapes, et que faire si la page n'atteint pas la tablette, sont dans [Sans compiler](docs/installation/README.md#version-française). Les mises à jour arrivent ensuite dans Home Assistant.
+Sans compiler, depuis la 3.0 : une Tab5, un câble USB-C qui transmet les données, Chrome ou Edge sur un ordinateur, et Home Assistant. Le [guide d'installation](docs/installation/README.md#version-française) tient en sept étapes :
 
-**Ensuite :** un tableau de bord Home Assistant tout prêt pour la tablette ([étape 7](docs/installation/dashboard.md#version-française)), et chaque réglage — thème, clair ou sombre, langue, réveil, écran à afficher — dans [Réglages et options de la tablette](docs/installation/settings.md#version-française).
+1. [Fichiers Home Assistant](docs/installation/home-assistant-files.md#version-française) : décompressez l'archive jointe à chaque release dans le dossier `config` de Home Assistant, ajoutez une ligne à `configuration.yaml`, redémarrez.
+2. [Installer le firmware](docs/installation/flash.md#version-française) depuis la [page d'installation](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) : votre révision d'écran, le canal Stable, *Connecter et installer*.
+3. [Wi-Fi](docs/installation/wifi.md#version-française) : depuis la même fenêtre, par l'USB, ou avec un téléphone sur le réseau ouvert « Tab5 Fallback AP ».
+4. [L'ajouter à Home Assistant](docs/installation/add-to-home-assistant.md#version-française) : l'appareil ESPHome est découvert, *Configurer* ; Home Assistant lui donne sa clé.
+5. [Vos sources](docs/installation/sources.md#version-française) : météo et agendas, choisis dans les listes « Tab5 · » à la souris.
+6. [Vos appareils](docs/installation/devices.md#version-française) : l'automatisation créée depuis le blueprint, à la souris ; changer d'appareil ne demande pas de flash.
+7. [Un tableau de bord](docs/installation/dashboard.md#version-française) (facultatif) : une ligne dans l'outil Modèle de Home Assistant écrit un tableau de bord pour la tablette, avec ses réglages et sa santé.
 
-**Ou compiler votre propre firmware :**
+Les mises à jour arrivent ensuite dans Home Assistant ; par le réseau, la tablette n'accepte qu'un firmware signé par la clé du projet. Chaque réglage — thème, clair ou sombre, langue, réveil, écran à afficher : [réglages de la tablette](docs/installation/settings.md#version-française). Pour modifier le firmware vous-même : [compiler le vôtre](docs/installation/build.md#version-française).
 
-```bash
-# Cloner le dépôt
-git clone https://github.com/Axellum/M5-Tab5-ESPHome-LVGL.git
-
-# Copier les fichiers de config locaux (gitignorés), puis y mettre vos valeurs
-cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-# Créer la clé de signature du firmware (plus de secrets.yaml depuis la 3.0) — voir docs/installation/build.md
-python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem
-
-# Compiler via le dashboard ESPHome ou la CLI :
-# esphome run tab5-ha-hmi.yaml
-```
-
-Pas à pas complet : [`docs/installation/`](docs/installation/README.md#version-française)
-
-Envie de le voir tourner avant de configurer Home Assistant ? → [`docs/demo_mode.md`](docs/demo_mode.md) pousse des données de démonstration vers une tablette flashée avec un petit script autonome — sans installer HA, rien à nettoyer ensuite.
-
----
+Envie de le voir tourner d'abord ? Le [mode démo](docs/demo_mode.md#version-française) pousse des données de démonstration vers une tablette flashée avec un petit script : sans Home Assistant, rien à nettoyer ensuite.
 
 ## Compatibilité matérielle
 
@@ -443,151 +272,59 @@ Envie de le voir tourner avant de configurer Home Assistant ? → [`docs/demo_mo
 | **ST7121** | depuis le 28/04/2026 | 🧪 Compile, non testée ici (mêmes réglages d'écran et de tactile signalés fonctionnels par un autre utilisateur) — ajouter `tab5_ecran: st7121` dans `Tab5/user_entities.yaml` |
 | **ILI9881C** + tactile GT911 | du 09/05/2025 au 14/10/2025 | 🧪 Compile, non testée — ajouter `tab5_ecran: ili9881c` dans `Tab5/user_entities.yaml` |
 
-« Compile, non testée » : la CI compile ces deux variantes à chaque changement de l'écran, mais ce firmware n'a encore tourné sur aucune de ces puces. Détails, comment identifier votre appareil, et le retour sur la ST7121 : [`docs/hardware.md`](docs/hardware.md#révisions-matérielles). Vous en avez essayé une ? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
+« Compile, non testée » : la CI compile ces deux variantes à chaque changement de l'écran, et la page d'installation les propose, mais ce firmware n'a encore tourné sur aucune de ces puces. Comment identifier votre appareil, et le retour sur la ST7121 : [révisions matérielles](docs/hardware.md#révisions-matérielles). Vous en avez essayé une ? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
 
----
+## En images
 
-## C'est quoi
+**[▶ Vidéo de démo sur YouTube](https://www.youtube.com/watch?v=ygNhgtMffu4)** (voix, tactile, télécommande TV, clim — version provisoire, juillet 2026), et un tour animé des écrans :
 
-Un tableau de bord domotique Home Assistant qui tourne nativement sur un **M5Stack Tab5 V2** (ESP32-P4), construit avec ESPHome et LVGL 9.5.
+![Tour animé de l'écran Home Assistant de la M5Stack Tab5 : accueil, appareils, plantes, clim, lumières, télécommande TV et console](docs/images/tab5_ui_tour_hq.webp)
 
-L'interface est compilée en C++ et embarquée dans le firmware de l'appareil. Elle ne fait pas tourner de navigateur web, ne poll pas les données, et ne dépend pas d'une connexion réseau active pour rester fonctionnelle. Quand Home Assistant a quelque chose de nouveau à afficher, il pousse directement la mise à jour vers l'écran.
+**Vingt et un thèmes**, chacun clair ou sombre : couleurs, formes (rayons, bordures, ombres) et polices de l'heure, de la date et des titres. Six d'entre eux, dessinés par le firmware lui-même sur un PC, avec des données de démonstration :
 
-![Comment Home Assistant et la Tab5 se parlent : HA pousse les données par les actions tab5_maj_*, la tablette répond par des événements esphome.tab5_*](docs/images/flux_ha_tab5.svg)
+![Six thèmes de l'écran de la M5Stack Tab5 dessinés par le firmware : Relief doux en sombre et en clair, Almanach imprimé, Néon calme, Béton brut et Zen Sumi](docs/images/tab5_themes.jpg)
 
-**Vidéo de démo** (voix, tactile, télécommande TV, clim — version provisoire, juillet 2026) :
+**Énergie solaire** (facultatif) : solaire, maison, réseau et batterie de la maison en direct, et la production des 30 derniers jours, d'après les capteurs choisis dans le blueprint ([énergie solaire](docs/installation/adapt-to-your-home.md#énergie-solaire-facultatif)). Rendu avec des données de démonstration ; pas encore essayé avec une vraie installation solaire.
 
-[![Voir la démo Tab5 sur YouTube](https://img.youtube.com/vi/ygNhgtMffu4/hqdefault.jpg)](https://www.youtube.com/watch?v=ygNhgtMffu4)
+![Popup Énergie de la M5Stack Tab5 : solaire, maison, réseau et batterie en direct, et la production solaire des 30 derniers jours en barres](docs/images/tab5_energie.png)
 
-**Aperçu animé** — accueil, domotique, plantes, clim, lumières, TV, console :
-
-![Tour animé de l'écran Home Assistant de la M5Stack Tab5 : accueil, appareils, plantes, clim, lumières, télécommande TV et console](docs/images/tab5_ui_tour.gif)
-
-**Le tableau de bord, au quotidien :**
-
-![Tableau de bord de la M5Stack Tab5 au quotidien : horloge, clim, horaires et prévisions à 5 jours](docs/images/tab5_photo_home.jpg)
-
-**Les thèmes** — six des vingt et un, dessinés par le firmware lui-même (rendu sur PC par la CI, données de démonstration) :
-
-![Six thèmes de l'écran du Tab5 dessinés par le firmware lui-même : Relief doux en sombre et en clair, Almanach imprimé, Néon calme, Béton brut et Zen Sumi](docs/images/tab5_themes.jpg)
-
-**La tablette dans Home Assistant** — le tableau de bord écrit pour vos entités par la macro de l'[étape 7](docs/installation/dashboard.md#version-française) :
+**La tablette dans Home Assistant** — le tableau de bord écrit pour vos entités par l'[étape 7](docs/installation/dashboard.md#version-française) :
 
 ![Vue Tab5 du tableau de bord de Home Assistant : luminosité, volume et écran de la tablette, réveil, rendez-vous et assistant vocal](docs/images/ha_tableau_tab5.png)
 
-**Énergie solaire** (facultatif) — le popup Énergie, d'après les capteurs choisis dans le blueprint ([énergie solaire](docs/installation/adapt-to-your-home.md#énergie-solaire-facultatif) ; rendu de la CI, données de démonstration) :
+**Sur la tablette** — photos de la tablette de l'auteur (juillet 2026) :
 
-![Popup Énergie du Tab5 : solaire, maison, réseau et batterie en direct, et la production solaire des 30 derniers jours en barres](docs/images/tab5_energie.png)
+| Les boutons des appareils, un appui chacun | Capteurs de plantes |
+|:-:|:-:|
+| <img src="docs/images/tab5_photo_domo.jpg" width="400" loading="lazy" alt="Écran Home Assistant de la M5Stack Tab5 avec les boutons d'un PC de bureau, d'un volet roulant, des lumières de la chambre et du salon et de LED"> | <img src="docs/images/tab5_photo_plants.jpg" width="400" loading="lazy" alt="Popup de la M5Stack Tab5 avec cinq capteurs de plantes BLE : humidité du sol, fertilité, lumière, température et batterie"> |
 
----
+| Clim | Lumières |
+|:-:|:-:|
+| <img src="docs/images/tab5_photo_climate_popup_v2.jpg" width="400" loading="lazy" alt="Popup clim de la M5Stack Tab5 : modes, arc de thermostat réglé à 23 °C, préréglages et flux d'air"> | <img src="docs/images/tab5_photo_light_popup_v2.jpg" width="400" loading="lazy" alt="Popup lumières de la M5Stack Tab5 : choix de la lumière, arc de luminosité à 100 % et pastilles de couleur"> |
 
-## Choix de conception
+| Télécommande TV | Console de diagnostic |
+|:-:|:-:|
+| <img src="docs/images/tab5_photo_tv_remote.jpg" width="400" loading="lazy" alt="Télécommande TV Samsung sur la M5Stack Tab5 : marche, source, croix, volume et lecture"> | <img src="docs/images/tab5_photo_console_v2.jpg" width="400" loading="lazy" alt="Console de diagnostic de la M5Stack Tab5 : mémoire, Wi-Fi, temps de marche, température du processeur et actions Home Assistant"> |
 
-- **Push uniquement, zéro polling.** L'appareil ne demande jamais son état à Home Assistant. Les automations côté HA détectent les changements et poussent les données vers l'écran via des appels de service ESPHome natifs. Dans l'autre sens, la tablette émet des événements, jamais des actions Home Assistant ([ADR-0025](docs/decisions/0025-events-only.md)). Le CPU reste proche de zéro quand rien ne change.
-- **YAML modulaire.** La configuration ESPHome est découpée en vingt et un fichiers par domaine (tokens, hardware, révision d'écran, canal de publication, capteurs diagnostics, capteurs domotique, logique API, styles, globales, scripts, UI, arcade, calendrier, assistant vocal, IMU, entités HA, réveil, pièces et tuiles, popup Énergie, zones, thèmes), chacun lisible indépendamment. La plupart tiennent sous 500 lignes ; seuls les plus gros (`tab5-alarm.yaml`, `tab5-styles.yaml`, `tab5-lvgl.yaml`, `tab5-api-logic.yaml`, `tab5-sensors-diagnostics.yaml`, `tab5-themes.yaml`) dépassent, et l'UI est encore découpée en 52 `ui_components/*.yaml` réutilisables.
-- **LVGL natif, pas de stack web.** LVGL rafraîchit jusqu'à 60 fois par seconde, depuis un framebuffer en PSRAM, et ne redessine que ce qui a changé. Mesuré sur la tablette (firmware 3.2.0, 28/09/2026) : une valeur ou la minute de l'horloge se redessine en moins de 10 ms, le panneau tournant du centre en 15 à 21 ms par image, l'écran entier en 133 ms, et un popup s'ouvre en 126 à 197 ms. Les polices vectorielles (Material Design Icons) remplacent complètement les fichiers image.
-- **Compression de données.** Les payloads complexes (prévisions 15 jours, prévisions horaires, alertes météo) sont sérialisés en chaînes délimitées côté HA et parsés en C++ sur l'appareil — un seul appel réseau, zéro requête suivante.
-- **Résilience hors-ligne.** Toutes les lambdas C++ vérifient `api.connected()` et `has_state()` avant de toucher l'UI. Si HA redémarre, le dernier état connu reste affiché — et l'appareil reste utilisable seul (horloge, arcade, console diag). Il ne se redémarre de lui-même qu'après une heure entière sans aucun client API (`api: reboot_timeout: 60min`), un filet anti-« zombie » assumé, pas une réaction à une coupure HA passagère.
+| Calendrier du mois | Assistant vocal |
+|:-:|:-:|
+| <img src="docs/images/tab5_photo_calendar.jpg" width="400" loading="lazy" alt="Calendrier du mois de la M5Stack Tab5 avec horaires de travail, jours fériés, vacances scolaires et rendez-vous"> | <img src="docs/images/tab5_photo_assistant_popup.jpg" width="400" loading="lazy" alt="Popup de l'assistant vocal de la M5Stack Tab5 : la demande dite à voix haute et une réponse mise en forme"> |
 
----
+| Arcade : le menu des jeux | Roi Noir : des échecs avec un moteur sur la tablette |
+|:-:|:-:|
+| <img src="docs/images/tab5_photo_arcade_selector.jpg" width="400" loading="lazy" alt="Menu Arcade de la M5Stack Tab5 avec huit jeux hors ligne dessinés avec LVGL"> | <img src="docs/images/tab5_photo_chess.jpg" width="400" loading="lazy" alt="Jeu d'échecs Roi Noir sur la M5Stack Tab5 ESP32-P4, avec son moteur embarqué"> |
 
-## Ce que ça fait
+| Coureur d'Or : façon Lode Runner | Arcanoïde : un casse-briques joué en inclinant la tablette |
+|:-:|:-:|
+| <img src="docs/images/tab5_photo_lode_runner.jpg" width="400" loading="lazy" alt="Coureur d'Or, un jeu de plateformes façon Lode Runner, sur la M5Stack Tab5"> | <img src="docs/images/tab5_photo_arkanoid.jpg" width="400" loading="lazy" alt="Arcanoïde, un casse-briques sur la M5Stack Tab5, joué en inclinant la tablette"> |
 
-Une page unique 1280×720 organisée en zones fonctionnelles, toutes alimentées par des événements push Home Assistant (voir [ADR-0002](docs/decisions/0002-single-page-swipe-navigation.md) — il n'y a pas de barre d'onglets multi-écrans) :
-
-- **Zone d'accueil** — heure, temp/humidité intérieure, boutons d'action rapide, icône microphone avec état du pipeline ; la date se recolore selon le niveau d'alerte météo actif
-- **Météo** — **prévisions par swipe en 5 fenêtres** dans la zone du bas : fenêtres 1–2 = météo horaire pour les 15 prochaines tranches (heure, température avec code couleur, pluie en mm, icône condition) ; fenêtres 3–5 = **prévisions journalières 15 jours** (5 jours/fenêtre) avec noms de jours en code couleur, icônes double couche, temp max/min
-- **Carte centrale rotative** — alterne toutes les 8 s entre planning, graphe de pluie court terme, icônes de vigilance (Météo-France ou MeteoAlarm), un panneau info (récap calendrier 3 jours ou bannière d’alerte météo), et jusqu’à **4 bandeaux d’infos / alertes Home Assistant** poussés en live
-- **Tap pour masquer** — un tap sur un bandeau info ou une alerte HA la retire tout de suite du rotateur (liste de dismiss locale : le même id ne réapparaît pas tant que HA n’envoie pas une nouvelle alerte)
-- **Télécommande TV** — popup plein écran Samsung (power, pad, volume, chaînes, lecture, muet…) ouverte depuis l’UI ; commandes via les services Home Assistant `remote.*`
-- **Clim** — carte compacte + popup quasi plein écran en 3 cartes de verre : modes empilés (froid / chaud / sec / ventilation / arrêt), arc thermostat 320 px avec cible optimiste et envois débouncés, presets (éco / boost / silence) et flux d'air (oscillation / « Brise » Daikin `windnice`) ; les contrôles sont estompés (non cachés) quand la clim est éteinte
-- **Lumières** — popup quasi plein écran en 3 cartes de verre : sélecteur des lumières de la pièce (5 au plus ; changer de lumière sans fermer le popup), arc de luminosité avec % en direct (débouncé) et raccourcis 10/35/65/100 %, 3 blancs nommés + 12 pastilles couleur rondes
-- **Plantes** — carte d'humidité du sol pour jusqu'à 5 capteurs BLE, triés dynamiquement, code couleur par niveau (rouge = sec, vert = optimal, bleu = trop humide) ; un appui long ouvre un popup détail à 5 cartes (humidité + statut d'arrosage, fertilité, lumière, température, batterie du capteur)
-- **Console** — overlay diagnostics + gestion HA (RAM/PSRAM, Wi-Fi, uptime, volume, re-pousse écran, reload automations, restart HA / reboot tablette derrière confirmation), ouvert via son bouton dédié
-- **Thèmes** — 21 thèmes (couleurs, formes, polices de l'heure, de la date et des titres), chacun clair ou sombre, changés aussitôt depuis Home Assistant (« Thème », « Clair ou sombre ») ou depuis une rangée de la console ; « Auto » suit le soleil par l'automatisation « Tab5 — thème jour/nuit ». Les jeux gardent leurs couleurs sombres ([réglages](docs/installation/settings.md#version-française))
-- **Énergie** (facultatif) — popup pour une installation solaire : solaire, maison, réseau et batterie de la maison en direct, et la production par heure, jour et mois tirée des statistiques de Home Assistant ; une icône du bandeau d'état montre par sa couleur la production rapportée à la puissance crête des panneaux. La batterie d'origine de la tablette a aussi son icône, derrière l'interrupteur « Tab5 Batterie montée » ([énergie solaire](docs/installation/adapt-to-your-home.md#énergie-solaire-facultatif))
-- **Arcade** — 8 consoles de jeu plein écran (prototypes expérimentaux — premier jet généré par IA pour tester ce qu'un ESP32-P4 peut faire) : **Fil d'Or** (roguelite de bille, pilotage inclinaison), **Arcanoïde** (casse-briques), **Neon Apron** (flipper, portrait), **Coureur d'Or** (Lode Runner), **Go Tab** (Go 9×9/13×13/19×19), **Trial Poursuite** (quiz), **Dames Tab** (dames 10×10), **Roi Noir** (échecs FIDE avec IA embarquée). Tous 100 % locaux, zéro dépendance HA/réseau, persistance NVS. Ouverts via une grille sélecteur 4×2 déclenchée par tap sur la température serre
-- **Popup Assistant** — modal quasi plein écran affichant la transcription STT (« Votre demande ») et la réponse LLM rendue en Markdown (tableaux, gras, code, images téléchargées à la demande) ; panneau gauche = réglages (sélecteur cerveau Domotique/Discussion, Ok Nabu ON/OFF, volume, taille texte A-/A+)
-- **Popup Calendrier** — grille mensuelle 7×6 calculée localement depuis SNTP ; heures de travail dans les cases, marqueurs colorés (fériés, vacances scolaires, RDV, anniversaires) ; tap sur un jour = sous-popup détail ; HA enrichit à la demande
-- **Popup Détails Plantes** — 5 cartes de verre fixes (une par capteur BLE) : humidité sol %, statut arrosage, fertilité (EC µS/cm), lumière (lx), température, batterie — ouvert par appui long sur les slots humidité du dashboard
-
-**Assistant vocal** — détection wake-word `okay_nabu` en local sur l’ESP32-P4. L’icône micro change de couleur : gris (repos) → vert (écoute) → orange (traitement) → bleu (synthèse) → rouge (erreur). Wake-word on/off depuis l’UI ; tap micro = push-to-talk. Un second wake word local — **« Stop »** — n’est armé que pendant que le volet bouge et l’arrête instantanément, sans phrase d’activation ni aller-retour pipeline ; un tap sur le micro pendant que l’assistant parle interrompt la réponse et relance l’écoute. Deux modes : agent Home Assistant standard, ou pipeline **Discussion** branché sur [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) (STT/TTS locaux Wyoming, routage moteur pour commandes HA déterministes vs chat LLM).
-
-**Volets roulants** — des boutons de script sur l'écran d'accueil envoient des commandes ouvrir/fermer/position aux entités cover de Home Assistant.
-
-→ Description écran par écran : [`docs/screens.md`](docs/screens.md)
-
----
-
-## Arcade — 8 consoles de jeu (expérimental)
-
-> **Statut : prototypes précoces.** Ce sont des jeux générés par IA en premier jet, construits pour tester ce que LVGL + C++ peut faire sur un ESP32-P4. Ils sont fonctionnels mais non finalisés — pensez « preuve de concept » plutôt que « produit fini ». L'objectif était de voir jusqu'où la génération de code par IA peut aller sur du hardware embarqué, pas de livrer des jeux qualité retail.
-
-Les 8 consoles partagent la même architecture : chacune est sa **propre page LVGL plein écran** (`page_marble`, `page_chess`… déclarées `skip: true` pour que le swipe ne puisse pas y naviguer), et non un overlay empilé sur le dashboard — seule exception documentée à la règle du chrome modal (ADR-0009). YAML réduit à des conteneurs vides, tout le contenu construit en C++, `lv_timer` créé à l'ouverture / détruit à la fermeture, persistance NVS, **zéro dépendance Home Assistant ou réseau**.
-
-| # | Console | Type | Contrôles |
-|---|---------|------|----------|
-| 1 | **Fil d'Or** | Roguelite de bille (6 salles, progression façon Dark Souls) | Inclinaison (BMI270) |
-| 2 | **Arcanoïde** | Casse-briques / Arkanoid (8 niveaux, power-ups) | Inclinaison + tactile |
-| 3 | **Neon Apron** | Flipper — **portrait**, bascule l’écran en 720×1280 | Zones tactiles + nudge IMU |
-| 4 | **Coureur d'Or** | Lode Runner (10 niveaux, creuser & grimper) | D-pad tactile |
-| 5 | **Go Tab** | Go 9×9 / 13×13 / 19×19 (score chinois, komi 6,5) | Tactile |
-| 6 | **Trial Poursuite** | Quiz rétro-salon (1 à 6 équipes) | Tactile |
-| 7 | **Dames Tab** | Dames 10×10 (règles internationales, IA embarquée) | Tactile |
-| 8 | **Roi Noir** | Échecs FIDE (règles complètes, 5 niveaux d'IA, validé perft) | Tactile |
-
-→ Détails techniques par jeu : [`docs/arcade.md`](docs/arcade.md)
-
----
-
-## Assistant vocal & moteur
-
-Le Tab5 est un **Assist Satellite** : il ne « comprend » pas le français lui-même. Il capte l’audio, affiche l’état du pipeline, et joue la réponse.
-
-| Étape | Où | Quoi |
-|-------|-----|------|
-| 1. Wake word | Tab5 (embarqué) | `okay_nabu` via micro_wake_word / TensorFlow Lite — l’écoute passive reste locale |
-| 2. STT | Home Assistant (Wyoming Whisper, local) | Parole → texte |
-| 3. Intention / réponse | Agent conversation HA → optionnel **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** | Domotique : match local / déterministe → action HA. Discussion : chemin LLM léger (local et/ou cloud). Spécialistes (web, calendrier…) selon le classifieur du moteur |
-| 4. TTS | Home Assistant (Wyoming Piper, local) | Texte → parole |
-| 5. Lecture | Tab5 (DAC ES8388 + ampli) | Réponse sur le haut-parleur intégré |
-
-L’audio est capturé en 16 kHz / 16-bit sur I2S et streamé vers HA uniquement après le wake-word. Le séquencement au boot évite le pop hardware si l’ampli s’active avant que l’horloge I2S soit stable.
-
-Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui). C’est lui qui rend le chemin **voix + conversation** intéressant : local pour les commandes HA courtes, semi-local / cloud seulement quand il faut vraiment discuter.
-
-→ Détail : [`docs/voice_assistant.md`](docs/voice_assistant.md) · Moteur : [vromvrom-engine](https://github.com/Axellum/vromvrom-engine) · Contexte : [`docs/related_projects.md`](docs/related_projects.md)
-
----
+Les jeux sont expérimentaux, un premier jet écrit par l'IA pour voir ce que LVGL et le C++ peuvent faire sur un ESP32-P4 : ils marchent, sans être finis ([les huit consoles](docs/arcade.md)).
 
 ## Documentation
 
-| Page | Contenu |
-|------|---------|
-| [`AGENTS.md`](AGENTS.md) | Point d'entrée pour les agents IA — ordre de lecture, commandes build/vérif, frontières (en anglais) |
-| [`CARTOGRAPHIE_TAB5.md`](CARTOGRAPHIE_TAB5.md) | Graphe de dépendances complet et inventaire fichier par fichier, dette technique connue |
-| [`docs/screens.md`](docs/screens.md) | Description fonctionnelle écran par écran |
-| [`docs/architecture.md`](docs/architecture.md) | Structure YAML modulaire, paradigme push, data packing, boot guards |
-| [`docs/hardware.md`](docs/hardware.md) | Révisions matérielles du Tab5 (lesquelles sont prises en charge), specs ESP32-P4, mapping GPIO, DAC ES8388, PSRAM, alimentation |
-| [`docs/ui_design.md`](docs/ui_design.md) | Rendu LVGL, polices vectorielles, couleur dynamique, optimisations CPU |
-| [`docs/performance.md`](docs/performance.md#version-française) | Temps d'image, ouvertures des popups, redémarrage, RAM, mesurés — et comment |
-| [`docs/voice_assistant.md`](docs/voice_assistant.md) | Pipeline wake-word, chaîne audio, états de retour visuel |
-| [`docs/installation/`](docs/installation/README.md#version-française) | Installer en sept étapes (fichiers Home Assistant, page d'installation, Wi-Fi, sources, appareils, tableau de bord), réglages de la tablette, adapter à sa maison, fournisseurs météo, mises à jour, compiler le sien |
-| [`docs/translations.md`](docs/translations.md#version-française) | Langue de l'écran (français, anglais, allemand, néerlandais, espagnol, italien, turc), ajouter une langue |
-| [`docs/tiles_icons.md`](docs/tiles_icons.md#version-française) | Icônes des tuiles de pièce : la palette, le choix d'une icône, en demander une |
-| [`docs/demo_mode.md`](docs/demo_mode.md) | Tester en quelques minutes, sans Home Assistant |
-| [`docs/troubleshooting.md`](docs/troubleshooting.md) | Journal symptôme → cause racine → correctif des incidents déjà diagnostiqués |
-| [`docs/debugging.md`](docs/debugging.md) | Comment observer/diagnostiquer l'appareil (logs, overlay console, technique des marqueurs) |
-| [`docs/decisions/`](docs/decisions/README.md) | Décisions d'architecture (ADR) — le "pourquoi" des choix non-évidents (en anglais) |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Workflow PR, gate compile, fichiers à ne jamais committer |
-| [`CHANGELOG.md`](CHANGELOG.md) | Historique des versions |
-| [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) | Packages Home Assistant : automatisations de poussée, scripts, helpers (ce qui tourne chez l'auteur) |
-| [`Tab5/README.md`](Tab5/README.md) | Description fichier par fichier ESPHome |
-| [`docs/related_projects.md`](docs/related_projects.md) | Projets liés, contexte expérimentation IA |
-| [`docs/arcade.md`](docs/arcade.md) | Les 8 consoles de jeu — architecture commune, ajouter une 9ᵉ, une section par jeu |
-| [`docs/press/`](docs/press/hackster.md) | Kit de publication — story Hackster.io / concours M5Stack, BOM, étapes de build |
+Chaque page est en français et en anglais : [installer](docs/installation/README.md#version-française), [se servir de la tablette](docs/notice/README.md#version-française), [la régler](docs/installation/settings.md#version-française), [réparer](docs/troubleshooting.md#version-française), [comprendre comment elle est faite](docs/architecture.md#version-française) — la liste complète est sur la [page de la documentation](docs/README.md#version-française).
 
----
+Dans ce dépôt : [`AGENTS.md`](AGENTS.md) pour les agents de code IA (en anglais), [`CARTOGRAPHIE_TAB5.md`](CARTOGRAPHIE_TAB5.md) (chaque fichier et ses dépendances), [`Tab5/README.md`](Tab5/README.md) (les fichiers ESPHome et les services Home Assistant), [`HomeAssistant_Config/README.md`](HomeAssistant_Config/README.md) (les packages), [`CONTRIBUTING.md`](CONTRIBUTING.md#version-française) et le [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Communauté
 
@@ -600,47 +337,9 @@ Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui
 
 Anglais ou français, les deux sont bienvenus.
 
----
-
 ## Note personnelle
 
-Ayant beaucoup entendu parler de l’IA, et notamment en codage, il y a quelques mois de ça j’ai voulu voir par moi-même ce que cela donnait. Il me fallait un projet, et comme mon vieux écran Nextion (plutôt météo, toujours avec ESPHome et Météo-France) commençait à dater, j’ai opté pour le renouveler — mais cette fois avec un aspect domotique bien plus poussé, sur un écran bien plus qualitatif et puissant, le tout piloté par l’IA.
-
-De fil en aiguille, j’ai complété l’écran avec un assistant vocal, puis par un « moteur » pour gérer en local la partie domotique vocale, et en semi-local ou cloud la partie conversations. Le moteur est un projet en cours (lui aussi 🙂) où j’ai posé beaucoup (trop) de choses pour expérimenter et mieux comprendre comment marchent les LLMs : RAG, notations, gestion multi-LLM, MCP, et j’en passe. Je le partage donc surtout dans un but informatif : je l’utilise de façon fonctionnelle pour l’écran, mais pas encore pour le codage ni pour tout ce que j’ai voulu y implémenter — qui fonctionne plus ou moins bien.
-
-Dans mon périple, j’ai commencé avec Antigravity, puis je l’ai aidé par différents modèles (DeepSeek, MiniMax, Z.ai). Ensuite, j’ai testé Claude, qui a fait lui aussi beaucoup de travail, puis Cursor récemment. Bref, je vous partage le projet de mon écran, fait pour mon usage quotidien, dont je suis plus l’architecte que le créateur — issu de mes débuts d’aventure dans le monde de l’IA.
-
-**Bref, pourquoi un écran ?**
-
-Après 5 ans avec le Nextion, je souhaitais donner un coup de jeune à mon écran plutôt axé météo, en gardant a minima les mêmes objectifs :
-
-- faire office d’horloge ;
-- voir au premier coup d’œil si des averses sont prévues dans l’heure : je pars 15 min en avance pour ne pas arriver trempé au boulot ? Je prévois le parapluie ?
-- avoir la prévision météo sur quelques jours, histoire d’avoir un sujet de conversation si je décide de me sociabiliser ;
-- le tout pour une consommation raisonnable et toujours allumé (enfin, quand je suis devant), avec une liberté totale sur les positionnements, designs et logiques — pas juste l’affichage HA standard — avec les avantages... et les inconvénients que ça implique.
-
-Avec un esprit domotique plus poussé : un retour direct de l’humidité de mes pots / de mon potager, allumer la TV et l’ordi sans bouger mes fesses de ma chaise, et gérer les trois spots du salon et la lumière de la chambre.
-
-Puis, petit à petit :
-
-- gérer ma clim ;
-- avoir la main sur mon volet roulant, toujours sans me lever ;
-- intégrer « Ok Nabu », plus besoin de me pencher pour attraper l’écran :) ;
-- peaufiner l’intégration de l’assistant vocal : mode conversation, choix du LLM (local ou pas), domotique la plus rapide possible et qui me comprend ;
-- afficher mon planning avec une lisibilité rapide de mes heures d’embauche ;
-- avoir une télécommande réseau pour ma TV, ça peut toujours dépanner (pour la petite histoire, Claude Fable 5 m’a bluffé sur ce coup : il m’a fait ça en 2 prompts, du coup je l’ai laissé reprendre tous les popups, au prix de 50 % de ma limite des 5h par popup, sur le forfait Pro...).
-
-Le tout avec, en termes de conception, les objectifs suivants. Vu que mes premières sessions avec Gemini sur le code du Nextion m’ont littéralement humilié — il a révolutionné l’envoi des données et divisé le code par trois — je voulais cette fois de la légèreté et de bien meilleures optimisations que ce que j’avais fait à la main :
-
-- pas d’images, le plus léger et optimisé possible pour la tablette ;
-- une gestion des envois de données côté HA robuste et la plus douce possible (mon Home Assistant tourne sur une Freebox, je reste léger) ;
-- un démarrage rapide, pas de lenteur d’affichage, quelque chose de fluide, quoi.
-
-J’ai aussi essayé d’avoir une interface moderne (j’ai la cinquantaine, ne m’en demandez pas trop) : pas de pages, mais des popups, tout accessible directement depuis l’écran d’accueil par bouton, toucher long ou swipe. Beaucoup de code couleur pour une lisibilité même à quelques mètres, tout en ayant un écran pensé pour être lu à moins d’un mètre si on veut voir toutes les données correctement. Et j’ai essayé de caser un maximum d’infos et de commandes sur une interface relativement épurée — oui, je sais, le plus dur pour moi. Objectif final : un écran à peu près correct visuellement, même si je reste plus axé pratique dans l’absolu.
-
-Backend compagnon (optionnel, en cours) : **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** — orchestrateur multi-agents utilisé pour le routage vocal et la conversation.
-
----
+Ayant beaucoup entendu parler de l'IA pour le codage, j'ai voulu voir par moi-même ce qu'elle donnait. Mon vieil écran Nextion (plutôt météo, déjà avec ESPHome et Météo-France) commençait à dater : je l'ai renouvelé, avec bien plus de domotique, sur un écran bien plus puissant, et avec l'IA qui écrit le code de bout en bout. Pourquoi un écran, ce qu'il devait faire, et comment il a grandi : [l'histoire](docs/story.md#version-française).
 
 ## Note sur l'IA
 

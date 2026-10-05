@@ -2,7 +2,8 @@
 """tools/site/construire.py — Documentation du site GitHub Pages, en anglais et en français (ADR-0030).
 
 Les fichiers de docs/ restent la seule source : lus tels quels sur GitHub, ils deviennent
-aussi les pages du site, sous en/ et fr/. Ce script prépare les pages de chaque langue,
+aussi les pages du site, sous en/ et fr/. Le README du dépôt en est la page d'accueil (la
+racine du site renvoie vers en/ ou fr/). Ce script prépare les pages de chaque langue,
 puis MkDocs (thème Material, sans autre plugin que sa recherche) les met en page :
 
   1. menu : tools/site/menu.yml, titres anglais et français côte à côte ;
@@ -47,7 +48,17 @@ SITE = "https://axellum.github.io/M5-Tab5-ESPHome-LVGL/"
 DEPOT = "https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/"
 LANGUES = ("en", "fr")
 NOMS_LANGUES = {"en": "English", "fr": "Français"}
-# Image de partage de la vitrine (pages.py la publie sous ce nom).
+# Page d'accueil du site : le README du dépôt, le même texte sur GitHub et sur le site
+# (la racine du site, web/index.html, renvoie vers en/ ou fr/).
+# docs/README.md (le sommaire de la documentation) devient la page « documentation/ ».
+ACCUEIL = "README.md"
+SOMMAIRE = "docs/README.md"
+# <title> des pages d'accueil (les autres : « titre de la page - nom du site »).
+TITRES_ACCUEIL = {
+    "en": "M5Stack Tab5 Home Assistant wall screen — ESPHome and LVGL firmware",
+    "fr": "M5Stack Tab5, écran mural Home Assistant — firmware ESPHome et LVGL",
+}
+# Image de partage du site (pages.py la publie sous ce nom).
 IMAGE_PARTAGE = "images/m5stack-tab5-home-assistant-screen-card.jpg"
 
 MARQUE_FR = re.compile(r"^## Version [Ff]ran[çc]aise[ \t]*\r?$", re.M)
@@ -103,6 +114,7 @@ class Page:
     source: str               # chemin dans le dépôt, « docs/installation.md »
     titres: dict              # {"en": …, "fr": …} : titres du menu
     langue: str | None = None  # None = bilingue ; "en" / "fr" = une seule langue
+    h1_fr: str | None = None   # titre de la page française, s'il diffère de celui du menu
 
 
 @dataclass
@@ -124,21 +136,21 @@ def _titre_h1(chemin: Path) -> str:
 def lire_menu(fichier: Path = ICI / "menu.yml") -> Plan:
     plan = Plan(arbre=yaml.safe_load(fichier.read_text(encoding="utf-8")))
 
-    def ajouter(source: str, titres: dict, langue: str | None) -> None:
+    def ajouter(source: str, titres: dict, langue: str | None, h1_fr: str | None = None) -> None:
         if source in plan.pages:
             raise ErreurSite(f"{source} : deux fois dans le menu")
         if not (RACINE / source).is_file():
             raise ErreurSite(f"{source} : fichier absent")
-        if not source.startswith("docs/"):
-            raise ErreurSite(f"{source} : seules les pages de docs/ sont publiées")
-        plan.pages[source] = Page(source, titres, langue)
+        if not source.startswith("docs/") and source != ACCUEIL:
+            raise ErreurSite(f"{source} : seules les pages de docs/ et le README sont publiés")
+        plan.pages[source] = Page(source, titres, langue, h1_fr)
 
     def parcourir(entrees: list) -> None:
         for e in entrees:
             if not all(e.get(lg) for lg in LANGUES):
                 raise ErreurSite(f"entrée du menu sans titre anglais ou français : {e}")
             if "page" in e:
-                ajouter(e["page"], {lg: e[lg] for lg in LANGUES}, e.get("langue"))
+                ajouter(e["page"], {lg: e[lg] for lg in LANGUES}, e.get("langue"), e.get("h1_fr"))
             if "dossier" in e:
                 for f in sorted((RACINE / e["dossier"]).glob("*.md")):
                     if f.name != "README.md":
@@ -152,7 +164,12 @@ def lire_menu(fichier: Path = ICI / "menu.yml") -> Plan:
 
 
 def chemin_site(source: str) -> str:
-    """docs/installation.md → installation.md ; docs/README.md → index.md."""
+    """docs/installation.md → installation.md ; README.md (le dépôt) → index.md ;
+    docs/README.md → documentation.md ; docs/installation/README.md → installation/index.md."""
+    if source == ACCUEIL:
+        return "index.md"
+    if source == SOMMAIRE:
+        return "documentation.md"
     relatif = posixpath.relpath(source, "docs")
     dossier, nom = posixpath.split(relatif)
     if nom == "README.md":
@@ -395,7 +412,7 @@ def contenu(page: Page, langue: str) -> str:
     if not parties:
         raise ErreurSite(f"{page.source} : ni « ## Version Française » ni `langue:` dans le menu")
     if langue == "fr":
-        return alertes(f"# {page.titres['fr']}\n\n" + parties["fr"], langue)
+        return alertes(f"# {page.h1_fr or page.titres['fr']}\n\n" + parties["fr"], langue)
     return alertes(parties["en"], langue)
 
 
@@ -460,6 +477,9 @@ def configuration(plan: Plan, langue: str, sources: Path, sortie: Path, adresse:
         "plugins": [{"search": {"lang": [langue]}}],
         "nav": nav(plan, langue),
         "extra": {
+            "titre_accueil": TITRES_ACCUEIL[langue],
+            "depot": DEPOT,
+            "racine": adresse,
             "image_partage": SITE + IMAGE_PARTAGE,
             "alternate": [{"name": NOMS_LANGUES[lg], "link": adresse + lg + "/", "lang": lg} for lg in LANGUES],
         },
