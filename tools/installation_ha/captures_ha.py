@@ -23,7 +23,10 @@ from typing import Any
 
 # Langues du site (ADR-0030).
 LANGUES = ("en", "fr")
-LARGEUR = 1280
+# Mise en page « étroite » du frontend (870 px et moins) : une colonne, encore lisible une
+# fois réduite dans la page du site ; noms entiers dans la table des entités, ligne du
+# modèle entière dans son éditeur (à 1280 px, l'une et l'autre sont coupées).
+LARGEUR = 860
 # Laisse le frontend finir de dessiner après le chargement (panneaux chargés à la demande,
 # rendu du modèle par le serveur).
 POSE_MS = 2000
@@ -67,15 +70,17 @@ async def capture_appareil(page, base: str, cible: dict[str, Any]) -> str:
 
 
 async def capture_listes(page, base: str, _cible: dict[str, Any]) -> str:
-    """Étape 5 : les listes « Tab5 · … » dans la table des entités."""
+    """Étape 5 : les listes « Tab5 · … » dans la table des entités. La recherche porte aussi
+    sur l'entity_id : « select.tab5_ » garde les select et les input_select des packages,
+    sans les capteurs « Tab5 · » qui ne se règlent pas."""
     await ouvrir(page, f"{base}/config/entities")
     champ = page.locator("hass-tabs-subpage-data-table input").filter(visible=True).first
-    await champ.fill("Tab5 ·")
+    await champ.fill("select.tab5_")
     await page.wait_for_timeout(POSE_MS)
     n = await textes_visibles(page, "Tab5 ·")
-    if n < 5:
-        raise RuntimeError(f"{n} entités « Tab5 · » affichées après la recherche")
-    return f"{n} entités « Tab5 · » dans la table"
+    if n < 10:
+        raise RuntimeError(f"{n} listes « Tab5 · » affichées après la recherche")
+    return f"{n} listes « Tab5 · » dans la table"
 
 
 async def capture_blueprint(page, base: str, cible: dict[str, Any]) -> str:
@@ -95,6 +100,7 @@ async def capture_modele(page, base: str, cible: dict[str, Any]) -> str:
     await editeur.click()
     await page.keyboard.press("Control+A")
     await page.keyboard.insert_text(cible["modele"])
+    await page.keyboard.press("Home")  # la ligne vue depuis son début
     await page.wait_for_timeout(POSE_MS * 2)
     tape = (await editeur.inner_text()).strip()
     if tape != cible["modele"]:
@@ -106,8 +112,8 @@ async def capture_modele(page, base: str, cible: dict[str, Any]) -> str:
 
 # (nom du fichier, hauteur de la fenêtre, capture)
 CAPTURES = (
-    ("appareil", 1000, capture_appareil),
-    ("listes", 1000, capture_listes),
+    ("appareil", 1100, capture_appareil),
+    ("listes", 1150, capture_listes),
     ("blueprint", 1300, capture_blueprint),
     ("modele", 1000, capture_modele),
 )
