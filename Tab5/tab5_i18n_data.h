@@ -8,9 +8,14 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 967;
+static const uint16_t kI18nKeyCount = 972;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1185,6 +1190,7 @@ static const char* const kI18nKeys[] = {
     "Btn",
     "CATÉGORIE AU CHOIX",
     "CLASSEMENT",
+    "COMMANDES",
     "COMMENCER LA PARTIE",
     "CONFIRMER",
     "CONSOLE SYSTÈME",
@@ -1315,6 +1321,7 @@ static const char* const kI18nKeys[] = {
     "Emplacement %d : %s",
     "Emplacement %d : vide",
     "En attente de Home Assistant",
+    "En mouvement",
     "Erreur",
     "Escalier",
     "Eval %+.1f",
@@ -1549,6 +1556,7 @@ static const char* const kI18nKeys[] = {
     "PARTIE TERMINÉE",
     "PAUSE",
     "PC Bureau",
+    "POSITION",
     "PROCHAINE SONNERIE",
     "PROMOTION",
     "PV %d/%d%s",
@@ -1562,6 +1570,7 @@ static const char* const kI18nKeys[] = {
     "Partie nulle",
     "Partie reprise",
     "Partie reprise.",
+    "Partiel",
     "Pas après",
     "Pas avant",
     "Pas de données",
@@ -1757,6 +1766,7 @@ static const char* const kI18nKeys[] = {
     "Sports",
     "Sports & Loisirs",
     "Statistiques",
+    "Stop",
     "Synchronisation...",
     "TEMPS DE RÉPONSE",
     "TEMPÉRATURE",
@@ -2156,6 +2166,7 @@ static const char* const kI18n_en[] = {
     "Btn",  // "Btn"
     "CHOOSE A CATEGORY",  // "CATÉGORIE AU CHOIX"
     "LEADERBOARD",  // "CLASSEMENT"
+    "CONTROLS",  // "COMMANDES"
     "START THE GAME",  // "COMMENCER LA PARTIE"
     "CONFIRM",  // "CONFIRMER"
     "SYSTEM CONSOLE",  // "CONSOLE SYSTÈME"
@@ -2286,6 +2297,7 @@ static const char* const kI18n_en[] = {
     "Slot %d: %s",  // "Emplacement %d : %s"
     "Slot %d: empty",  // "Emplacement %d : vide"
     "Waiting for Home Assistant",  // "En attente de Home Assistant"
+    "Moving",  // "En mouvement"
     "Error",  // "Erreur"
     "Staircase",  // "Escalier"
     "Eval %+.1f",  // "Eval %+.1f"
@@ -2520,6 +2532,7 @@ static const char* const kI18n_en[] = {
     "GAME OVER",  // "PARTIE TERMINÉE"
     "PAUSED",  // "PAUSE"
     "Office PC",  // "PC Bureau"
+    "POSITION",  // "POSITION"
     "NEXT ALARM",  // "PROCHAINE SONNERIE"
     "PROMOTION",  // "PROMOTION"
     "HP %d/%d%s",  // "PV %d/%d%s"
@@ -2533,6 +2546,7 @@ static const char* const kI18n_en[] = {
     "Draw",  // "Partie nulle"
     "Game resumed",  // "Partie reprise"
     "Game resumed.",  // "Partie reprise."
+    "Partly open",  // "Partiel"
     "Not after",  // "Pas après"
     "Not before",  // "Pas avant"
     "No data",  // "Pas de données"
@@ -2728,6 +2742,7 @@ static const char* const kI18n_en[] = {
     "Sports",  // "Sports"
     "Sports & Leisure",  // "Sports & Loisirs"
     "Statistics",  // "Statistiques"
+    "Stop",  // "Stop"
     "Syncing...",  // "Synchronisation..."
     "ANSWER TIME",  // "TEMPS DE RÉPONSE"
     "TEMPERATURE",  // "TEMPÉRATURE"
@@ -3127,6 +3142,7 @@ static const char* const kI18n_de[] = {
     "Tasten",  // "Btn"
     "FREIE KATEGORIE",  // "CATÉGORIE AU CHOIX"
     "BESTENLISTE",  // "CLASSEMENT"
+    "STEUERUNG",  // "COMMANDES"
     "SPIEL STARTEN",  // "COMMENCER LA PARTIE"
     "BESTÄTIGEN",  // "CONFIRMER"
     "SYSTEMKONSOLE",  // "CONSOLE SYSTÈME"
@@ -3257,6 +3273,7 @@ static const char* const kI18n_de[] = {
     "Platz %d: %s",  // "Emplacement %d : %s"
     "Platz %d: leer",  // "Emplacement %d : vide"
     "Warte auf Home Assistant",  // "En attente de Home Assistant"
+    "In Bewegung",  // "En mouvement"
     "Fehler",  // "Erreur"
     "Treppe",  // "Escalier"
     "Eval %+.1f",  // "Eval %+.1f"
@@ -3491,6 +3508,7 @@ static const char* const kI18n_de[] = {
     "SPIEL VORBEI",  // "PARTIE TERMINÉE"
     "PAUSE",  // "PAUSE"
     "Büro-PC",  // "PC Bureau"
+    "POSITION",  // "POSITION"
     "NÄCHSTER WECKRUF",  // "PROCHAINE SONNERIE"
     "UMWANDLUNG",  // "PROMOTION"
     "LP %d/%d%s",  // "PV %d/%d%s"
@@ -3504,6 +3522,7 @@ static const char* const kI18n_de[] = {
     "Remis",  // "Partie nulle"
     "Spiel fortgesetzt",  // "Partie reprise"
     "Spiel fortgesetzt.",  // "Partie reprise."
+    "Teilweise",  // "Partiel"
     "Nicht nach",  // "Pas après"
     "Nicht vor",  // "Pas avant"
     "Keine Daten",  // "Pas de données"
@@ -3699,6 +3718,7 @@ static const char* const kI18n_de[] = {
     "Sport",  // "Sports"
     "Sport & Freizeit",  // "Sports & Loisirs"
     "Statistik",  // "Statistiques"
+    "Stopp",  // "Stop"
     "Synchronisiere...",  // "Synchronisation..."
     "ANTWORTZEIT",  // "TEMPS DE RÉPONSE"
     "TEMPERATUR",  // "TEMPÉRATURE"
@@ -4098,6 +4118,7 @@ static const char* const kI18n_nl[] = {
     "Knp",  // "Btn"
     "KIES EEN CATEGORIE",  // "CATÉGORIE AU CHOIX"
     "RANGLIJST",  // "CLASSEMENT"
+    "BEDIENING",  // "COMMANDES"
     "SPEL STARTEN",  // "COMMENCER LA PARTIE"
     "BEVESTIGEN",  // "CONFIRMER"
     "SYSTEEMCONSOLE",  // "CONSOLE SYSTÈME"
@@ -4228,6 +4249,7 @@ static const char* const kI18n_nl[] = {
     "Vak %d: %s",  // "Emplacement %d : %s"
     "Vak %d: leeg",  // "Emplacement %d : vide"
     "Wachten op Home Assistant",  // "En attente de Home Assistant"
+    "In beweging",  // "En mouvement"
     "Fout",  // "Erreur"
     "Trap",  // "Escalier"
     "Eval %+.1f",  // "Eval %+.1f"
@@ -4462,6 +4484,7 @@ static const char* const kI18n_nl[] = {
     "SPEL VOORBIJ",  // "PARTIE TERMINÉE"
     "PAUZE",  // "PAUSE"
     "Bureau-pc",  // "PC Bureau"
+    "POSITIE",  // "POSITION"
     "VOLGEND ALARM",  // "PROCHAINE SONNERIE"
     "PROMOTIE",  // "PROMOTION"
     "HP %d/%d%s",  // "PV %d/%d%s"
@@ -4475,6 +4498,7 @@ static const char* const kI18n_nl[] = {
     "Remise",  // "Partie nulle"
     "Partij hervat",  // "Partie reprise"
     "Spel hervat.",  // "Partie reprise."
+    "Half open",  // "Partiel"
     "Niet na",  // "Pas après"
     "Niet vóór",  // "Pas avant"
     "Geen gegevens",  // "Pas de données"
@@ -4670,6 +4694,7 @@ static const char* const kI18n_nl[] = {
     "Sport",  // "Sports"
     "Sport & Ontspanning",  // "Sports & Loisirs"
     "Statistieken",  // "Statistiques"
+    "Stop",  // "Stop"
     "Synchroniseren...",  // "Synchronisation..."
     "ANTWOORDTIJD",  // "TEMPS DE RÉPONSE"
     "TEMPERATUUR",  // "TEMPÉRATURE"
@@ -5069,6 +5094,7 @@ static const char* const kI18n_es[] = {
     "Botones",  // "Btn"
     "CATEGORÍA A ELEGIR",  // "CATÉGORIE AU CHOIX"
     "CLASIFICACIÓN",  // "CLASSEMENT"
+    "CONTROLES",  // "COMMANDES"
     "EMPEZAR LA PARTIDA",  // "COMMENCER LA PARTIE"
     "CONFIRMAR",  // "CONFIRMER"
     "CONSOLA DEL SISTEMA",  // "CONSOLE SYSTÈME"
@@ -5199,6 +5225,7 @@ static const char* const kI18n_es[] = {
     "Ranura %d: %s",  // "Emplacement %d : %s"
     "Ranura %d: vacía",  // "Emplacement %d : vide"
     "Esperando a Home Assistant",  // "En attente de Home Assistant"
+    "En movimiento",  // "En mouvement"
     "Error",  // "Erreur"
     "Escalera",  // "Escalier"
     "Eval %+.1f",  // "Eval %+.1f"
@@ -5433,6 +5460,7 @@ static const char* const kI18n_es[] = {
     "FIN DE PARTIDA",  // "PARTIE TERMINÉE"
     "PAUSA",  // "PAUSE"
     "PC oficina",  // "PC Bureau"
+    "POSICIÓN",  // "POSITION"
     "PRÓXIMA ALARMA",  // "PROCHAINE SONNERIE"
     "CORONACIÓN",  // "PROMOTION"
     "PV %d/%d%s",  // "PV %d/%d%s"
@@ -5446,6 +5474,7 @@ static const char* const kI18n_es[] = {
     "Empate",  // "Partie nulle"
     "Partida reanudada",  // "Partie reprise"
     "Partida reanudada.",  // "Partie reprise."
+    "Entreabierta",  // "Partiel"
     "No después",  // "Pas après"
     "No antes",  // "Pas avant"
     "Sin datos",  // "Pas de données"
@@ -5641,6 +5670,7 @@ static const char* const kI18n_es[] = {
     "Deportes",  // "Sports"
     "Deportes y Ocio",  // "Sports & Loisirs"
     "Estadísticas",  // "Statistiques"
+    "Parar",  // "Stop"
     "Sincronizando...",  // "Synchronisation..."
     "TIEMPO DE RESPUESTA",  // "TEMPS DE RÉPONSE"
     "TEMPERATURA",  // "TEMPÉRATURE"
@@ -6040,6 +6070,7 @@ static const char* const kI18n_it[] = {
     "Pulsanti",  // "Btn"
     "CATEGORIA A SCELTA",  // "CATÉGORIE AU CHOIX"
     "CLASSIFICA",  // "CLASSEMENT"
+    "COMANDI",  // "COMMANDES"
     "INIZIA LA PARTITA",  // "COMMENCER LA PARTIE"
     "CONFERMA",  // "CONFIRMER"
     "CONSOLE SISTEMA",  // "CONSOLE SYSTÈME"
@@ -6170,6 +6201,7 @@ static const char* const kI18n_it[] = {
     "Slot %d: %s",  // "Emplacement %d : %s"
     "Slot %d: vuoto",  // "Emplacement %d : vide"
     "In attesa di Home Assistant",  // "En attente de Home Assistant"
+    "In movimento",  // "En mouvement"
     "Errore",  // "Erreur"
     "Scala",  // "Escalier"
     "Val %+.1f",  // "Eval %+.1f"
@@ -6404,6 +6436,7 @@ static const char* const kI18n_it[] = {
     "PARTITA FINITA",  // "PARTIE TERMINÉE"
     "PAUSA",  // "PAUSE"
     "PC Studio",  // "PC Bureau"
+    "POSIZIONE",  // "POSITION"
     "PROSSIMA SVEGLIA",  // "PROCHAINE SONNERIE"
     "PROMOZIONE",  // "PROMOTION"
     "PV %d/%d%s",  // "PV %d/%d%s"
@@ -6417,6 +6450,7 @@ static const char* const kI18n_it[] = {
     "Pareggio",  // "Partie nulle"
     "Partita ripresa",  // "Partie reprise"
     "Partita ripresa.",  // "Partie reprise."
+    "Socchiusa",  // "Partiel"
     "Non dopo",  // "Pas après"
     "Non prima",  // "Pas avant"
     "Nessun dato",  // "Pas de données"
@@ -6612,6 +6646,7 @@ static const char* const kI18n_it[] = {
     "Sport",  // "Sports"
     "Sport & Tempo libero",  // "Sports & Loisirs"
     "Statistiche",  // "Statistiques"
+    "Stop",  // "Stop"
     "Sincronizzo...",  // "Synchronisation..."
     "TEMPO DI RISPOSTA",  // "TEMPS DE RÉPONSE"
     "TEMPERATURA",  // "TEMPÉRATURE"
@@ -7011,6 +7046,7 @@ static const char* const kI18n_tr[] = {
     "Düğme",  // "Btn"
     "KATEGORİ SEÇ",  // "CATÉGORIE AU CHOIX"
     "SIRALAMA",  // "CLASSEMENT"
+    "KOMUTLAR",  // "COMMANDES"
     "OYUNA BAŞLA",  // "COMMENCER LA PARTIE"
     "ONAYLA",  // "CONFIRMER"
     "SİSTEM KONSOLU",  // "CONSOLE SYSTÈME"
@@ -7141,6 +7177,7 @@ static const char* const kI18n_tr[] = {
     "Yuva %d: %s",  // "Emplacement %d : %s"
     "Yuva %d: boş",  // "Emplacement %d : vide"
     "Home Assistant bekleniyor",  // "En attente de Home Assistant"
+    "Hareket ediyor",  // "En mouvement"
     "Hata",  // "Erreur"
     "Merdiven",  // "Escalier"
     "Değ. %+.1f",  // "Eval %+.1f"
@@ -7375,6 +7412,7 @@ static const char* const kI18n_tr[] = {
     "OYUN BİTTİ",  // "PARTIE TERMINÉE"
     "DURAKLATILDI",  // "PAUSE"
     "Ofis PC",  // "PC Bureau"
+    "KONUM",  // "POSITION"
     "SONRAKİ ALARM",  // "PROCHAINE SONNERIE"
     "TERFİ",  // "PROMOTION"
     "Can %d/%d%s",  // "PV %d/%d%s"
@@ -7388,6 +7426,7 @@ static const char* const kI18n_tr[] = {
     "Berabere",  // "Partie nulle"
     "Oyuna devam edildi",  // "Partie reprise"
     "Oyuna devam edildi.",  // "Partie reprise."
+    "Kısmen açık",  // "Partiel"
     "En geç",  // "Pas après"
     "En erken",  // "Pas avant"
     "Veri yok",  // "Pas de données"
@@ -7583,6 +7622,7 @@ static const char* const kI18n_tr[] = {
     "Spor",  // "Sports"
     "Spor & Hobi",  // "Sports & Loisirs"
     "İstatistikler",  // "Statistiques"
+    "Dur",  // "Stop"
     "Eşitleniyor...",  // "Synchronisation..."
     "YANIT SÜRESİ",  // "TEMPS DE RÉPONSE"
     "SICAKLIK",  // "TEMPÉRATURE"

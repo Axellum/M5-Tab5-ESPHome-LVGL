@@ -2528,6 +2528,23 @@ actions:
                       - action: "{{ t_domaine }}.{{ sens }}_{{ t_domaine }}"
                         target:
                           entity_id: "{{ t_entite }}"
+              # Popup du volet (05/10/2026, discussion #278) : le curseur envoie la position
+              # 0-100 au relâcher (un nombre, sinon rien : jamais « 0 » = fermer par défaut).
+              # Seulement à une entité qui sait la régler (bit 4, SET_POSITION, des
+              # supported_features de cover comme de valve) ; jamais au volet à course
+              # simulée du package (il n'a pas de position : la tablette n'a pas de curseur
+              # pour lui, voir etats_tuiles).
+              - alias: "Tuile : position 0-100 (vol, popup du volet)"
+                conditions: >-
+                  {{ t_commande == 'position' and t_domaine in ['cover', 'valve'] and t_entite != volet_suivi
+                     and valeur is match('^[0-9]{1,3}$')
+                     and (state_attr(t_entite, 'supported_features') | int(0)) // 4 % 2 == 1 }}
+                sequence:
+                  - action: "{{ t_domaine }}.set_{{ t_domaine }}_position"
+                    target:
+                      entity_id: "{{ t_entite }}"
+                    data:
+                      position: "{{ [valeur | int(0), 100] | min }}"
               - alias: "Tuile : lancer (act)"
                 conditions: "{{ t_commande == 'lancer' and t_domaine in ['scene', 'script', 'button', 'input_button'] }}"
                 sequence:
@@ -2765,9 +2782,12 @@ actions:
               {%- set st = states[t.e] -%}
               {%- if t.e == volet_suivi -%}
                 {%- set etat = {'En_mouvement': 'opening', 'Ouvert': 'open', 'Ferme': 'closed', 'Partiel': 'open'}.get(states('input_text.volet_serre_etat'), st.state) -%}
-                {#- Position pour la flèche de la tablette : au bout (100 / 0), le sens repart
-                    dans l'autre ; « Partiel » (-1, arrêté en route) garde le sens choisi. -#}
-                {%- set v = {'Ouvert': 100, 'Ferme': 0, 'Partiel': -1}.get(states('input_text.volet_serre_etat'), 'nan') -%}
+                {#- Pas de vraie position (course simulée) : nan au bout de la course, où la
+                    flèche de la tablette repart dans l'autre sens comme à 100 / 0 ; -1 pour
+                    « Partiel » (arrêté en route), qui garde le sens choisi. nan plutôt que
+                    100 / 0 depuis le 05/10/2026 : le popup du volet n'offre un curseur qu'à
+                    une position connue, et ce volet ne sait pas en régler une. -#}
+                {%- set v = {'Partiel': -1}.get(states('input_text.volet_serre_etat'), 'nan') -%}
               {%- else -%}
                 {%- set etat = st.state -%}
                 {%- set brut = st.attributes.get('brightness') if t.type == 'lum'

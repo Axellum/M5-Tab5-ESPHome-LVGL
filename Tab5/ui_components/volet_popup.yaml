@@ -1,0 +1,144 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file volet_popup.yaml
+# @role Popup d'un volet (05/10/2026, discussion #278 : « la position du volet, dans une
+#       fenêtre, et les boutons aussi »). Ouvert par l'appui long d'une tuile vol (tuile
+#       météo ou carte du mode HA, tuile_appui → popup_volet_ouvrir, tab5_tuiles.cpp),
+#       sur ce volet. Deux cartes de verre :
+#       - POSITION : la position en grand (« 45 », chiffres de l'horloge, « % » de la
+#         date), l'état en mots dessous (« Partiel », « En mouvement »…) et un curseur
+#         0-100 % qui n'envoie qu'au relâcher. Position inconnue (NaN, -1 du volet à
+#         course simulée, volet qui ne la donne pas) : l'état en mots seul, sans curseur ;
+#       - COMMANDES : Ouvrir / Stop / Fermer (gabarit volet_btn.yaml).
+#       Titre = nom de la tuile. Tout est repeint par tab5_tuiles.cpp quand l'état ou la
+#       position du volet change, popup ouvert (popup_volet_etat).
+# @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
+#       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Volet » dans
+#       tab5_modal_registry_init). Commandes : celles des tuiles (ouvrir, fermer, arreter)
+#       et « position » (0-100), événement esphome.tab5_action, emplacement tRT ; le
+#       blueprint « Tab5 — emplacements » les applique à l'entité de CETTE tuile.
+#       Corps : x 24..1226, y 72..670 (cartes de 800 et 386 px, 16 px d'écart).
+#       Ne pas renommer volet_popup / volet_popup_titre / volet_nombre / volet_position /
+#       volet_etat / volet_curseur_cadre / volet_curseur : posés dans g_tuiles_ui
+#       (tab5-tuiles.yaml). Le curseur n'a pas d'on_value ici : ses événements (glisser,
+#       relâcher) sont branchés en C++ (tuiles_brancher_popup_volet), qui seul sait
+#       ignorer un relâcher sans glissement et un PRESS_LOST.
+# @ai_instruction `scrollable: false` partout — NE PAS retirer. Le label volet_nombre est
+#       dans la police de l'horloge (chiffres et « : » seulement) : n'y écrire que des
+#       chiffres. Un texte de plus = sa ligne dans Tab5/lang/*.yaml (gen_i18n.py).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: volet_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(volet_popup));" } }
+
+    # Carte modale — 15 px des bords écran (1280×720)
+    - obj:
+        align: CENTER
+        width: ${modal_card_w}
+        height: ${modal_card_h}
+        styles: style_modal_card
+        scrollable: false
+        widgets:
+
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
+          # Titre : le nom de la tuile, posé par popup_volet_peindre().
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F111E", icon_style: "style_text_accent", title: "Volet", title_id: "volet_popup_titre", close_btn_id: "btn_volet_close", close_lambda: "animate_popup_close(id(volet_popup));" } }
+
+          # ═══ CARTE POSITION (gauche) : position en grand, état, curseur ═══
+          - obj:
+              align: TOP_LEFT
+              x: 24
+              y: ${modal_body_y}
+              width: 800
+              height: 598
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                - label: { text: "POSITION", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+
+                # « 45 % » : chiffres dans la police de l'horloge, « % » dans celle de la
+                # date, posés côte à côte (flex), le « % » remonté sur la ligne de base.
+                - obj:
+                    id: volet_position
+                    align: TOP_MID
+                    y: 74
+                    width: SIZE_CONTENT
+                    height: SIZE_CONTENT
+                    styles: style_transparent
+                    scrollable: false
+                    hidden: true
+                    layout:
+                      type: FLEX
+                      flex_flow: ROW
+                      flex_align_main: CENTER
+                      flex_align_cross: END
+                      pad_column: 10
+                    widgets:
+                      - label: { id: volet_nombre, text: "0", styles: style_police_horloge }
+                      - label: { text: "%", styles: style_police_date, pad_bottom: 24 }
+
+                # État en mots : sous la position (y posé par tab5_tuiles.cpp), ou seul,
+                # au milieu de la carte, quand la position n'est pas connue.
+                - label:
+                    id: volet_etat
+                    text: "--"
+                    align: TOP_MID
+                    y: 272
+                    styles: style_police_date
+
+                # Curseur 0-100 % (gauche fermé, droite ouvert) : seulement si la position
+                # est connue ; envoie « position » au relâcher (tab5_tuiles.cpp).
+                - obj:
+                    id: volet_curseur_cadre
+                    align: TOP_MID
+                    y: 396
+                    width: 760
+                    height: 136
+                    styles: style_transparent
+                    scrollable: false
+                    hidden: true
+                    widgets:
+                      - slider:
+                          id: volet_curseur
+                          align: TOP_MID
+                          y: 24
+                          width: 680
+                          height: 40
+                          min_value: 0
+                          max_value: 100
+                          value: 0
+                          styles: style_bg_arc_track
+                          # Piste opaque : le thème ne donne au fond du curseur qu'une
+                          # opacité réduite, la partie vide disparaissait en thème sombre.
+                          bg_opa: COVER
+                          radius: 20
+                          indicator:
+                            styles: style_bg_accent
+                            radius: 20
+                          knob:
+                            styles: style_bg_soft
+                            pad_all: 8
+                      - label: { text: "Fermé", align: TOP_LEFT, x: 40, y: 84, styles: style_text_dim }
+                      - label: { text: "Ouvert", align: TOP_RIGHT, x: -40, y: 84, styles: style_text_dim }
+
+          # ═══ CARTE COMMANDES (droite) : Ouvrir / Stop / Fermer ═══
+          - obj:
+              align: TOP_LEFT
+              x: 840
+              y: ${modal_body_y}
+              width: 386
+              height: 598
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                - label: { text: "COMMANDES", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+                - !include { file: volet_btn.yaml, vars: { y: 56, commande: ouvrir, icon: "\U000F005D", icon_style: style_text_accent, text: "Ouvrir" } }
+                - !include { file: volet_btn.yaml, vars: { y: 232, commande: arreter, icon: "\U000F04DB", icon_style: style_text_warning, text: "Stop" } }
+                - !include { file: volet_btn.yaml, vars: { y: 408, commande: fermer, icon: "\U000F0045", icon_style: style_text_accent, text: "Fermer" } }

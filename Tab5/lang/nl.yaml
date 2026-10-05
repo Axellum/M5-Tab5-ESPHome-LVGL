@@ -123,6 +123,12 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Fermé": "Dicht"
 "Mouvement": "Beweegt"
 "Volet arrêté.": "Rolluik gestopt."
+# Shutter popup (long press of a shutter tile, 2026-10-05)
+"POSITION": "POSITIE"
+"COMMANDES": "BEDIENING"
+"Stop": "Stop"
+"En mouvement": "In beweging"
+"Partiel": "Half open"
 # Rooms and tiles (ADR-0023): room title, state lines of the HA cards
 "Pièce %d/%d": "Kamer %d/%d"
 "Aucun appareil": "Geen apparaat"

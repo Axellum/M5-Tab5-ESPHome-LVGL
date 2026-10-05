@@ -292,3 +292,64 @@ def test_mode_ha_seule_source_et_swipe_par_piece():
     assert "if (g_central_ctx.ha_mode) return;" in _lire("Tab5", "tab5-scripts.yaml")
     assert "if (i == 1) tuiles_mode_ha(false);" in _lire("Tab5", "tab5-ha-controls.yaml")
     assert "tuiles_mode_ha(!g_central_ctx.ha_mode);" in _lire("Tab5", "tab5-lvgl.yaml")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Popup du volet (05/10/2026, discussion #278)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_appui_long_d_un_volet_ouvre_son_popup_sauf_avec_k():
+    """L'appui long d'une tuile vol ouvre le popup du volet ; avec l'option k, l'ancien
+    appui long (l'autre sens, confirmé) : le popup ne contourne jamais la confirmation.
+    L'option r n'arrive pas jusque-là (type_agit), le mode héritage non plus."""
+    appui = _fonction(_cpp(), "tuile_appui")
+    vol = appui.split("case Type::VOL:", 1)[1].split("case Type::MED:", 1)[0]
+    assert "if (long_appui && !(d.options & OPT_K)) {" in vol and "popup_volet_ouvrir(r, t);" in vol
+    assert vol.index("popup_volet_ouvrir(r, t);") < vol.index("action = long_appui ? vol_appui_long(e) : vol_appui(e);")
+    assert appui.index("appui_heritage(t, long_appui);") < appui.index("case Type::VOL:")
+    assert appui.index("if (!type_agit(") < appui.index("case Type::VOL:")
+    long_adr = _types_de_l_adr()["vol"][1]
+    assert "shutter popup" in long_adr and "with `k`" in long_adr
+
+
+def test_commandes_du_popup_du_volet_dans_le_contrat():
+    cpp = _cpp()
+    adr = _commandes_de_l_adr()
+    # Boutons : les commandes de tuile d'un volet, rien d'autre.
+    popup = _lire("Tab5", "ui_components", "volet_popup.yaml")
+    boutons = re.findall(r"file: volet_btn\.yaml, vars: \{[^}]*commande: (\w+)", popup)
+    assert sorted(boutons) == ["arreter", "fermer", "ouvrir"]
+    assert "popup_volet_commande(\"${commande}\");" in _lire("Tab5", "ui_components", "volet_btn.yaml")
+    assert "envoyer_tuile(s_pv.piece, s_pv.tuile, action);" in _fonction(cpp, "popup_volet_commande")
+    # Curseur : « position » (dans le tableau de l'ADR), au relâcher seulement.
+    envoi = _fonction(cpp, "popup_volet_envoyer_position")
+    assert 'u.envoyer(cle, "position", valeur);' in envoi and "position" in adr
+    rappel = _fonction(cpp, "volet_curseur_rappel")
+    glisse = rappel.split("case LV_EVENT_VALUE_CHANGED:", 1)[1].split("break;", 1)[0]
+    assert "envoyer" not in glisse, "le glissement ne doit rien envoyer"
+    # Un toucher du bouton sans glisser n'envoie rien : seul VALUE_CHANGED (le doigt) arme.
+    appui = rappel.split("case LV_EVENT_PRESSED:", 1)[1].split("break;", 1)[0]
+    assert "s_pv.glisse = false;" in appui and "s_pv.glisse = true;" in glisse
+    relache = rappel.split("case LV_EVENT_PRESS_LOST:", 1)[1].split("default:", 1)[0]
+    assert "popup_volet_envoyer_position();" in relache and "if (!s_pv.glisse) break;" in relache
+    # Pas de curseur sans position connue (NaN, -1 du volet à course simulée).
+    connue = _fonction(cpp, "vol_position_connue")
+    assert "!std::isnan(e.valeur) && e.valeur >= 0.0f && e.valeur <= 100.0f" in connue
+    peindre = _fonction(cpp, "popup_volet_peindre")
+    assert "ui_hidden(u.vol_curseur_cadre, !connue);" in peindre
+    assert "!lv_obj_has_state(u.vol_curseur, LV_STATE_PRESSED)" in peindre, "jamais sous le doigt"
+
+
+def test_popup_du_volet_inscrit_et_branche():
+    scripts = _lire("Tab5", "tab5-scripts.yaml")
+    assert re.search(r'ModalRegistry::add\(id\(volet_popup\),\s+"Volet",\s+ModalRegistry::POPUP\);', scripts)
+    assert "- !include ui_components/volet_popup.yaml" in _lire("Tab5", "tab5-lvgl.yaml")
+    tuiles = _lire("Tab5", "tab5-tuiles.yaml")
+    for champ, widget in (("vol_popup", "volet_popup"), ("vol_titre", "volet_popup_titre"),
+                          ("vol_position", "volet_position"), ("vol_nombre", "volet_nombre"),
+                          ("vol_etat", "volet_etat"), ("vol_curseur_cadre", "volet_curseur_cadre"),
+                          ("vol_curseur", "volet_curseur")):
+        assert f"u.{champ} = id({widget});" in tuiles
+    assert tuiles.index("u.vol_curseur = id(volet_curseur);") < tuiles.index("tuiles_brancher_popup_volet();")
+    # Mis à jour en direct : chaque tuile repeinte repeint le popup s'il la montre.
+    assert "popup_volet_etat(r, t);" in _fonction(_cpp(), "peindre_tuile")

@@ -127,6 +127,12 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Fermé": "Zu"
 "Mouvement": "Fährt"
 "Volet arrêté.": "Rollladen gestoppt."
+# Shutter popup (long press of a shutter tile, 2026-10-05)
+"POSITION": "POSITION"
+"COMMANDES": "STEUERUNG"
+"Stop": "Stopp"
+"En mouvement": "In Bewegung"
+"Partiel": "Teilweise"
 # Rooms and tiles (ADR-0023): room title, state lines of the HA cards
 "Pièce %d/%d": "Raum %d/%d"
 "Aucun appareil": "Kein Gerät"

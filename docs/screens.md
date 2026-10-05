@@ -89,7 +89,7 @@ The `btn_control_ha` button (top right, Home Assistant icon) toggles the region 
 |------|-----|------------|
 | `lum` light | toggle (`allumer` with option `o`) | light popup, on this light |
 | `int` switch, fan… | toggle (`allumer` with `o`) | — |
-| `vol` cover, valve | moving → stop; open → close; else open | the other of open / close |
+| `vol` cover, valve | moving → stop; open → close; else open | shutter popup, on this shutter (with option `k`: the other of open / close) |
 | `med` media player | toggle | TV remote (option `t`) |
 | `act` scene, script, button | run — the state line shows « OK » for 1 s | — |
 | `cap` sensor, `bin` binary sensor | read only | — |
@@ -303,7 +303,12 @@ The theme, the mode (Sombre, Clair, Auto) and the « Nuit (thème auto) » switc
 
 ## Roller shutter control
 
-Since 3.2 every `vol` tile is a shutter or a valve of its own (tap: stop while it moves, else close if open, open otherwise; long press: the other of open / close; the right shoulder shows the arrow of the next move). In legacy mode, the 3.x shutter (`tab5_maj_volet_etat`) is tile 1 of the home page: its weather card has both the direction flip (tap the title) and the action button (tap the icon) described above, and its HA-mode card shares the same `script.tab5_volet_tap`.
+Since 3.2 every `vol` tile is a shutter or a valve of its own (tap: stop while it moves, else close if open, open otherwise; the right shoulder shows the arrow of the next move).
+
+**Shutter popup — long press** (2026-10-05, asked in [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278); [ADR-0023](decisions/0023-rooms-generic-tiles.md), update of 2026-10-05). A long press on a `vol` tile — its weather shoulders or its HA-mode card — opens a near-fullscreen modal (`volet_popup.yaml`, the shared chrome of ADR-0009) titled with the tile's name, in two glass cards:
+- **POSITION** (left): the position in large digits (« 45 % ») and the state in words below (« Ouvert », « Fermé », « Partiel », « En mouvement », « Hors ligne »); a 0-100 % slider (closed on the left, open on the right) that sends the position **on release only** (`position`, `cover.set_cover_position` / `valve.set_valve_position` on that tile's entity, when it can set one). A shutter that does not report its position (or the simulated shutter of `optionnel/volet_serre_tracking.yaml`) shows the state in words alone, without a slider.
+- **COMMANDES** (right): **Ouvrir**, **Stop** and **Fermer**, the tile's own commands.
+- The popup follows the shutter while it is open (position, state), never under the finger. With option `k` the long press keeps sending the other of open / close (confirmed by a second press); option `r`: nothing. In legacy mode, the 3.x shutter (`tab5_maj_volet_etat`) is tile 1 of the home page: its weather card has both the direction flip (tap the title) and the action button (tap the icon) described above, and its HA-mode card shares the same `script.tab5_volet_tap`.
 
 ---
 
@@ -424,7 +429,7 @@ Le bouton `btn_control_ha` (en haut à droite, icône Home Assistant) bascule la
 |------|-------------|------------|
 | `lum` lumière | bascule (`allumer` avec l'option `o`) | popup lumière, sur cette lumière |
 | `int` interrupteur, ventilateur… | bascule (`allumer` avec `o`) | — |
-| `vol` volet, vanne | en mouvement → arrêter ; ouvert → fermer ; sinon ouvrir | l'autre de ouvrir / fermer |
+| `vol` volet, vanne | en mouvement → arrêter ; ouvert → fermer ; sinon ouvrir | popup du volet, sur ce volet (avec l'option `k` : l'autre de ouvrir / fermer) |
 | `med` lecteur multimédia | bascule | télécommande TV (option `t`) |
 | `act` scène, script, bouton | lancer — la ligne d'état montre « OK » 1 s | — |
 | `cap` capteur, `bin` capteur binaire | lecture seule | — |
@@ -638,7 +643,12 @@ Le thème, le mode (Sombre, Clair, Auto) et l'interrupteur « Nuit (thème auto)
 
 ## Contrôle du volet roulant
 
-Depuis la 3.2, chaque tuile `vol` est un volet ou une vanne à elle seule (appui court : arrêter s'il bouge, sinon fermer s'il est ouvert, ouvrir sinon ; appui long : l'autre de ouvrir / fermer ; l'épaule droite montre la flèche du prochain mouvement). En mode héritage, le volet 3.x (`tab5_maj_volet_etat`) est la tuile 1 de l'accueil : sa carte météo a l'inversion de sens (tap sur le titre) et le bouton d'action (tap sur l'icône) décrits plus haut, et sa carte du mode HA partage le même `script.tab5_volet_tap`.
+Depuis la 3.2, chaque tuile `vol` est un volet ou une vanne à elle seule (appui court : arrêter s'il bouge, sinon fermer s'il est ouvert, ouvrir sinon ; l'épaule droite montre la flèche du prochain mouvement).
+
+**Popup du volet — appui long** (05/10/2026, demandé dans la [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) ; [ADR-0023](decisions/0023-rooms-generic-tiles.md), mise à jour du 05/10/2026). Un appui long sur une tuile `vol` — ses épaules météo ou sa carte du mode HA — ouvre un modal quasi plein écran (`volet_popup.yaml`, chrome partagé de l'ADR-0009) au nom de la tuile, en deux cartes de verre :
+- **POSITION** (gauche) : la position en grand (« 45 % ») et l'état en mots dessous (« Ouvert », « Fermé », « Partiel », « En mouvement », « Hors ligne ») ; un curseur 0-100 % (fermé à gauche, ouvert à droite) qui n'envoie la position **qu'au relâcher** (`position`, `cover.set_cover_position` / `valve.set_valve_position` sur l'entité de cette tuile, si elle sait en régler une). Un volet qui ne donne pas sa position (ou le volet à course simulée de `optionnel/volet_serre_tracking.yaml`) montre l'état en mots seul, sans curseur.
+- **COMMANDES** (droite) : **Ouvrir**, **Stop** et **Fermer**, les commandes de la tuile.
+- Le popup suit le volet tant qu'il est ouvert (position, état), jamais sous le doigt. Avec l'option `k`, l'appui long envoie toujours l'autre de ouvrir / fermer (confirmé par un second appui) ; option `r` : rien. En mode héritage, le volet 3.x (`tab5_maj_volet_etat`) est la tuile 1 de l'accueil : sa carte météo a l'inversion de sens (tap sur le titre) et le bouton d'action (tap sur l'icône) décrits plus haut, et sa carte du mode HA partage le même `script.tab5_volet_tap`.
 
 ---
 

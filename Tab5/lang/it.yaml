@@ -134,6 +134,12 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Fermé": "Chiusa"
 "Mouvement": "In moto"
 "Volet arrêté.": "Tapparella fermata."
+# Shutter popup (long press of a shutter tile, 2026-10-05)
+"POSITION": "POSIZIONE"
+"COMMANDES": "COMANDI"
+"Stop": "Stop"
+"En mouvement": "In movimento"
+"Partiel": "Socchiusa"
 # Rooms and tiles (ADR-0023): room title, state lines of the HA cards
 "Pièce %d/%d": "Stanza %d/%d"
 "Aucun appareil": "Nessun dispositivo"

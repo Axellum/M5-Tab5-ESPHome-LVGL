@@ -989,6 +989,14 @@ struct TuilesUI {
     lv_obj_t* lum_arc = nullptr;          // arc_light_brightness
     lv_obj_t* lum_pct = nullptr;          // lbl_light_brightness_val
     std::string* lum_cle = nullptr;       // &id(current_light_slot) : cible des commandes
+    // Popup du volet (volet_popup.yaml, 05/10/2026) : ouvert par l'appui long d'une tuile vol.
+    lv_obj_t* vol_popup = nullptr;        // volet_popup
+    lv_obj_t* vol_titre = nullptr;        // volet_popup_titre
+    lv_obj_t* vol_position = nullptr;     // volet_position : rangée « 45 % »
+    lv_obj_t* vol_nombre = nullptr;       // volet_nombre : chiffres (police de l'horloge)
+    lv_obj_t* vol_etat = nullptr;         // volet_etat : l'état en mots
+    lv_obj_t* vol_curseur_cadre = nullptr;  // volet_curseur_cadre : curseur et ses bornes
+    lv_obj_t* vol_curseur = nullptr;      // volet_curseur : position 0-100
     // Volet 3.x (mode héritage) : sens de la prochaine commande.
     bool* volet_sens = nullptr;           // &id(volet_target_open)
     // Commandes, posées par le script (lambdas sans capture) : événement
@@ -1079,6 +1087,14 @@ bool tuiles_heritage_volet(const std::string& etat_physique);
 // Bouton btn_j1_dir (haut de la tuile du volet, mode héritage) : inverse le sens de la
 // prochaine commande (volet_target_open) et repeint la flèche.
 void tuiles_heritage_volet_sens();
+
+// Popup du volet (volet_popup.yaml, ouvert par l'appui long d'une tuile vol sans
+// l'option k, 05/10/2026, discussion #278). Boutons Ouvrir / Stop / Fermer : la commande
+// `action` (ouvrir, arreter, fermer) à la tuile du popup, comme son appui.
+void popup_volet_commande(const char* action);
+// Branche les événements du curseur (glisser : le nombre suit ; relâcher : « position »
+// part). Une fois, depuis tab5_tuiles_ui.
+void tuiles_brancher_popup_volet();
 
 // Popup lumière (ouvert par l'appui long d'une tuile lum) : ses lignes sont les lumières
 // de la pièce, dans l'ordre des tuiles. Choisit la ligne `idx` (script

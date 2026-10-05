@@ -164,6 +164,12 @@ TUILE_J1_TEMP = (390, 684)    # court : planning de ce jour, 6 s
 # Long : Lumières. Avec les pièces (ADR-0023), les lampes T2 et T3 de la pièce de
 # l'accueil (tools/demo/scenarios.py) : le popup liste les lumières de la pièce.
 TUILES = {"chambre": (640, 572), "salon": (890, 572)}
+# Long : le popup du volet (05/10/2026), sur le volet T1 de la même pièce (« Volet du
+# salon », en train de s'ouvrir, 45 %). Sans position : un état poussé comme le ferait
+# le blueprint (position nan), puis celui de la démo remis en place.
+TUILE_VOLET = (390, 572)
+VOLET_SANS_POSITION = Service("tab5_maj_emplacements", (("payload", "t01|closing|nan|;"),))
+VOLET_DE_LA_DEMO = Service("tab5_maj_emplacements", (("payload", "t01|opening|45|;"),))
 
 # Gestes sur les prévisions (mode météo) : départ et arrivée entre deux tuiles, pas sur
 # un bouton (un bouton garde l'appui et se déclencherait au relâché).
@@ -382,6 +388,8 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("calendrier-jour", (Long(*HORLOGE), Toucher(*CAL_JOUR_18))),
     Ecran("lumieres-chambre", (Long(*TUILES["chambre"]),)),
     Ecran("lumieres-salon", (Long(*TUILES["salon"]),)),
+    Ecran("volet", (Long(*TUILE_VOLET),)),
+    Ecran("volet-sans-position", (VOLET_SANS_POSITION, Long(*TUILE_VOLET)), (VOLET_DE_LA_DEMO,)),
     Ecran("climatisation", (Toucher(*CONSIGNE_CLIM),)),
     Ecran("plantes", (Long(*POTS),)),
     # Énergie (ADR-0028) : ouvert par la tuile solaire de la démo (vue des heures), puis

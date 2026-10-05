@@ -282,7 +282,8 @@ def _maison():
              brightness=255, rgb_color=None),
         Etat("switch.prise_pc", "on", "Bureau", friendly_name="Prise PC"),
         Etat("media_player.tele", "playing", "Salon", friendly_name="Télé du salon"),
-        Etat("cover.store", "open", "Salon", friendly_name="Store salon", current_position=45),
+        Etat("cover.store", "open", "Salon", friendly_name="Store salon", current_position=45,
+             supported_features=15),
         Etat("cover.volet_serre", "unknown", friendly_name="Volet serre", device_class="curtain"),
         Etat("sensor.temp_salon", "21.4", "Salon", friendly_name="Température salon",
              unit_of_measurement="°C", device_class="temperature"),
@@ -398,7 +399,7 @@ def test_chaque_commande_de_l_adr_a_sa_branche():
     texte = _lire(BLUEPRINT)
     commandes = _commandes_de_l_adr()
     assert commandes == {"basculer", "allumer", "eteindre", "ouvrir", "fermer", "arreter", "lancer",
-                         "luminosite", "luminosite_pct", "couleur"}
+                         "luminosite", "luminosite_pct", "couleur", "position"}
     for c in commandes:
         assert re.search(rf"t_commande (== |in \[[^\]]*)'{c}'", texte), f"commande {c} sans branche de tuile"
     assert "emplacement is match('^p[0-4]$') and commande == 'eteindre'" in texte
@@ -910,3 +911,77 @@ def test_piece_tout_eteindre():
     assert lampes == ["light.chevet", "light.plafond"]
     p = _commande("p3", "eteindre")
     assert _rendre(p.env, p.aiguillage()[1][0]["variables"]["lampes"], p.ctx) == []
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Popup du volet (05/10/2026, discussion #278) : « position » au relâcher du curseur
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _position(emplacement, valeur, entrees=ENTREES, etats=None):
+    """(action, entité, position) de la commande « position », ou None si rien ne part."""
+    p = _passage(_evenement("action", emplacement=emplacement, action="position", valeur=valeur),
+                 entrees=entrees, etats=etats)
+    alias, sequence = p.aiguillage()
+    if alias is None:
+        return None
+    assert alias.startswith("Tuile : position"), alias
+    action, cible = _action_rendue(p, sequence)
+    return action, cible, p.modele(sequence[0]["data"]["position"])
+
+
+@pytest.mark.parametrize("valeur, attendu", [("45", 45), ("0", 0), ("100", 100), ("128", 100)])
+def test_position_du_volet_bornee_et_sur_l_entite_de_la_tuile(valeur, attendu):
+    assert _position("t04", valeur) == ("cover.set_cover_position", "cover.store", attendu)
+
+
+@pytest.mark.parametrize("valeur", ["-5", "abc", "", "45.5", "1000", "4 5"])
+def test_position_qui_n_est_pas_un_nombre_ne_ferme_rien(valeur):
+    """Pas de « 0 » par défaut : une valeur illisible fermerait le volet."""
+    assert _position("t04", valeur) is None
+
+
+def test_position_d_une_vanne():
+    etats = [e for e in _maison() if e.entity_id != "valve.arrosage"]
+    etats.append(Etat("valve.arrosage", "open", friendly_name="Arrosage", current_position=30, supported_features=7))
+    assert _position("t00", "60", entrees={"piece_1_tuiles": ["valve.arrosage"]}, etats=etats) == (
+        "valve.set_valve_position", "valve.arrosage", 60)
+
+
+def test_position_jamais_hors_de_la_liste_blanche():
+    # Une lumière, un capteur, une tuile vide, une clé 3.x, un emplacement inventé : rien.
+    for emplacement in ("t00", "t12", "t44", "volet", "t9", "cover.store"):
+        assert _position(emplacement, "50") is None, emplacement
+    # Le volet à course simulée du package : pas de position réglable.
+    assert _position("t41", "50") is None
+    # Un store sans SET_POSITION (ouvrir, fermer, arrêter seulement) : rien, plutôt
+    # qu'une erreur « does not support this service » qui arrêterait l'automatisation.
+    etats = [e for e in _maison() if e.entity_id != "cover.store"]
+    etats.append(Etat("cover.store", "open", "Salon", friendly_name="Store salon", supported_features=11))
+    assert _position("t04", "50", etats=etats) is None
+    # Lecture seule : rien (la tablette n'envoie déjà rien, ceci en est la garde côté HA).
+    perso = ENTREES["personnalisation"] + [{"entite": "cover.store", "comportement": "lecture_seule"}]
+    assert _position("t04", "50", entrees={**ENTREES, "personnalisation": perso}) is None
+
+
+def test_position_derriere_la_garde_d_origine():
+    """La branche est dans « Commande d'un bouton de l'écran », que seule une tablette
+    déclenche (trigger action, garde du modèle tab5-ha-hmi)."""
+    bp = _blueprint()
+    garde = bp["conditions"][0]["value_template"]
+    assert "'action'" in garde and "device_attr(d, 'model') == 'tab5-ha-hmi'" in garde
+    commande = _chercher(bp["actions"], lambda d: d.get("alias") == "Commande d'un bouton de l'écran")
+    assert commande and "trigger.id == 'action'" in commande["conditions"]
+    assert _chercher(commande, lambda d: (d.get("alias") or "").startswith("Tuile : position"))
+
+
+def test_volet_simule_sans_position_hors_de_la_course():
+    """Le volet du package n'a pas de vraie position : nan au bout de la course (la
+    tablette ne lui donne pas de curseur ; sa flèche repart dans l'autre sens comme à
+    100 / 0), -1 pour « Partiel » (arrêté en route, le sens choisi reste)."""
+    for etat_package, attendu in (("Ouvert", ["open", "nan", ""]), ("Ferme", ["closed", "nan", ""]),
+                                  ("Partiel", ["open", "-1", ""]), ("En_mouvement", ["opening", "nan", ""])):
+        etats = [e for e in _maison() if e.entity_id != "input_text.volet_serre_etat"]
+        etats.append(Etat("input_text.volet_serre_etat", etat_package))
+        p = _passage(_evenement("connexion"), etats=etats)
+        assert {e[0]: e[1:] for e in _defs(p.etats_tuiles())}["t41"] == attendu, etat_package

@@ -14,6 +14,9 @@
  *         - Mode héritage : tant qu'aucune définition n'est arrivée (drapeau en NVS), la
  *           pièce 0 est construite depuis les emplacements 3.x (PC/TV, volet, trois
  *           lumières), avec leurs noms, icônes, comportements et commandes 3.x.
+ *         - Popups des tuiles : lumière (appui long d'une lum) et volet (appui long d'une
+ *           vol sans l'option k, 05/10/2026 : position, curseur envoyé au relâcher,
+ *           Ouvrir / Stop / Fermer), repeints quand l'état de leur tuile change.
  * @architecture_constraint Pièce R ↔ page du bas dans l'ordre où un swipe les atteint depuis
  *       l'accueil : R0 = page 2 (accueil), R1 = 3, R2 = 4, R3 = 1, R4 = 0. Tuile T = position
  *       visuelle, 0 = gauche (sur les pages horaires, l'objet h(4−T)).
@@ -854,11 +857,13 @@ void peindre_meteo() {
 }
 
 void popup_lumiere_etat(int r, int t);
+void popup_volet_etat(int r, int t);
 
 // Une tuile a changé (état, minuterie) : la repeindre là où elle est affichée.
 void peindre_tuile(int r, int t) {
     if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return;
     popup_lumiere_etat(r, t);
+    popup_volet_etat(r, t);
     if (r != piece_courante()) return;
     if (g_central_ctx.ha_mode) {
         if (tuile_presente(r, t)) peindre_carte(r, t);
@@ -1050,6 +1055,149 @@ void ouvrir_popup(lv_obj_t* popup) {
     if (popup != nullptr) animate_popup_open(popup);
 }
 
+// ─── Popup du volet (05/10/2026, discussion #278) ───────────────────────────────────
+//
+// Appui long d'une tuile vol sans l'option k : la position en grand, l'état en mots, un
+// curseur 0-100 % (position connue seulement, envoyée au relâcher : action « position »)
+// et Ouvrir / Stop / Fermer (les commandes de la tuile). Tant qu'il est ouvert, il suit
+// l'état de SA tuile (peindre_tuile → popup_volet_etat).
+
+struct PopupVolet {
+    int piece = -1;
+    int tuile = -1;
+    bool glisse = false;  // le curseur a été pressé : son relâcher envoie la position
+};
+PopupVolet s_pv;
+
+// Géométrie (volet_popup.yaml) : l'état sous la position, ou seul au milieu de la carte
+// (598 px de haut, 53 px de texte) ; titre : la barre d'en-tête moins l'icône et la croix.
+constexpr int32_t kVoletEtatSous = 250;
+constexpr int32_t kVoletEtatSeul = 272;
+constexpr int32_t kVoletTitreLargeur = 1000;
+
+bool popup_volet_ouvert() {
+    const lv_obj_t* p = g_tuiles_ui.vol_popup;
+    return p != nullptr && !lv_obj_has_flag(p, LV_OBJ_FLAG_HIDDEN);
+}
+
+// La tuile du popup est-elle toujours un volet pilotable ? (les définitions peuvent
+// changer popup ouvert ; le mode héritage n'ouvre jamais ce popup.)
+bool popup_volet_valide() {
+    const int r = s_pv.piece, t = s_pv.tuile;
+    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles || heritage()) return false;
+    const Def& d = s_m.tuiles[r][t];
+    return d.type == static_cast<uint8_t>(Type::VOL) && !(d.options & OPT_R);
+}
+
+// Position 0-100 connue : un état en ligne et une valeur dans les bornes. NaN : le volet
+// n'en donne pas ; -1 : « Partiel » du volet à course simulée (arrêté en route).
+bool vol_position_connue(const Etat& e) {
+    if (!e.recu || est(e.brut, "unavailable") || est(e.brut, "unknown")) return false;
+    return !std::isnan(e.valeur) && e.valeur >= 0.0f && e.valeur <= 100.0f;
+}
+
+// L'état en mots, dans les couleurs de la tuile. Ouvert mais arrêté en route (-1 du
+// volet à course simulée, ou une position entre les deux bouts) : « Partiel ».
+const char* vol_etat_mots(const Etat& e, uint32_t& couleur) {
+    couleur = UIColor.INACTIVE;
+    if (!e.recu) return "--";
+    if (est(e.brut, "unavailable") || est(e.brut, "unknown")) return tr("Hors ligne");
+    if (vol_mouvement(e.brut)) {
+        couleur = UIColor.INFO;
+        return tr("En mouvement");
+    }
+    if (est(e.brut, "closed")) {
+        couleur = UIColor.TEXT_DIM;
+        return tr("Fermé");
+    }
+    couleur = UIColor.SUCCESS;
+    if (e.valeur < 0.0f || (e.valeur > 0.0f && e.valeur < 100.0f)) return tr("Partiel");
+    return tr("Ouvert");
+}
+
+void popup_volet_nombre(int pos) {
+    char buf[8];
+    snprintf(buf, sizeof(buf), "%d", pos);
+    ui_text(g_tuiles_ui.vol_nombre, buf);
+}
+
+// Titre, position (rangée « 45 % » et curseur, ou rien), état en mots.
+void popup_volet_peindre() {
+    const TuilesUI& u = g_tuiles_ui;
+    if (u.vol_popup == nullptr || !popup_volet_valide()) return;
+    const int r = s_pv.piece, t = s_pv.tuile;
+    const Etat& e = s_etats[r][t];
+    ui_texte_coupe(u.vol_titre, s_m.tuiles[r][t].nom, kVoletTitreLargeur);
+    const bool connue = vol_position_connue(e);
+    ui_hidden(u.vol_position, !connue);
+    ui_hidden(u.vol_curseur_cadre, !connue);
+    // Pas pendant un glissement : le retour de HA ferait sauter le curseur sous le doigt
+    // (le nombre suit alors le doigt, volet_curseur_rappel).
+    if (connue && u.vol_curseur != nullptr && !lv_obj_has_state(u.vol_curseur, LV_STATE_PRESSED)) {
+        const int pos = tab5_float_vers_int(e.valeur, 0, 100, 0);
+        lv_slider_set_value(u.vol_curseur, pos, LV_ANIM_OFF);
+        popup_volet_nombre(pos);
+    }
+    uint32_t couleur = UIColor.INACTIVE;
+    ui_text(u.vol_etat, vol_etat_mots(e, couleur));
+    ui_text_color(u.vol_etat, couleur);
+    ui_y(u.vol_etat, connue ? kVoletEtatSous : kVoletEtatSeul);
+}
+
+void popup_volet_ouvrir(int r, int t) {
+    const TuilesUI& u = g_tuiles_ui;
+    if (u.vol_popup == nullptr) return;
+    s_pv = PopupVolet{};
+    s_pv.piece = r;
+    s_pv.tuile = t;
+    popup_volet_peindre();
+    animate_popup_open(u.vol_popup);
+}
+
+// Un état a changé : le popup, s'il montre cette tuile.
+void popup_volet_etat(int r, int t) {
+    if (popup_volet_ouvert() && r == s_pv.piece && t == s_pv.tuile) popup_volet_peindre();
+}
+
+// Relâcher du curseur : « position » + 0-100 à la tuile du popup (événement
+// esphome.tab5_action ; le blueprint la passe à cover / valve.set_…_position de l'entité
+// de CETTE tuile, quand elle sait le faire).
+void popup_volet_envoyer_position() {
+    const TuilesUI& u = g_tuiles_ui;
+    if (!popup_volet_valide() || u.envoyer == nullptr || u.vol_curseur == nullptr) return;
+    char valeur[8];
+    snprintf(valeur, sizeof(valeur), "%d", static_cast<int>(lv_slider_get_value(u.vol_curseur)));
+    const char cle[4] = {'t', static_cast<char>('0' + s_pv.piece), static_cast<char>('0' + s_pv.tuile), '\0'};
+    u.envoyer(cle, "position", valeur);
+}
+
+// Curseur : le nombre suit le doigt ; seul le relâcher envoie (un seul set_position par
+// geste), et seulement si la valeur a bougé : un toucher du bouton sans glisser ne donne
+// pas d'ordre de plus à un volet en route. VALUE_CHANGED ne vient que du doigt
+// (lv_slider_set_value du repeint ne l'émet pas). PRESS_LOST aussi : un doigt qui
+// glisse hors du curseur le relâche ailleurs.
+void volet_curseur_rappel(lv_event_t* ev) {
+    lv_obj_t* c = g_tuiles_ui.vol_curseur;
+    if (c == nullptr) return;
+    switch (lv_event_get_code(ev)) {
+        case LV_EVENT_PRESSED:
+            s_pv.glisse = false;
+            break;
+        case LV_EVENT_VALUE_CHANGED:
+            s_pv.glisse = true;
+            popup_volet_nombre(static_cast<int>(lv_slider_get_value(c)));
+            break;
+        case LV_EVENT_RELEASED:
+        case LV_EVENT_PRESS_LOST:
+            if (!s_pv.glisse) break;
+            s_pv.glisse = false;
+            popup_volet_envoyer_position();
+            break;
+        default:
+            break;
+    }
+}
+
 // Mode héritage : les gestes de la 3.1 (tuile 0 PC + télécommande, 1 volet, 2-4 lumières).
 void appui_heritage(int t, bool long_appui) {
     switch (t) {
@@ -1112,6 +1260,11 @@ bool tuiles_definir(const std::string& payload) {
     minuterie_arreter(s_confirmation);
     minuterie_arreter(s_ok);
     minuterie_arreter(s_sens);
+    // Popup du volet ouvert sur une tuile qui n'est plus un volet pilotable : refermé.
+    if (popup_volet_ouvert()) {
+        if (popup_volet_valide()) popup_volet_peindre();
+        else animate_popup_close(g_tuiles_ui.vol_popup);
+    }
     tuiles_appliquer_ui();
     return true;
 }
@@ -1177,13 +1330,14 @@ void tuiles_peindre_meteo() {
     peindre_meteo();
 }
 
-// Thèmes (ADR-0029) : tuiles, cartes, bouton « HA » (sa garde au changement forcée) et
-// popup lumière, depuis le dernier état ; rien avant le premier dessin des tuiles.
+// Thèmes (ADR-0029) : tuiles, cartes, bouton « HA » (sa garde au changement forcée),
+// popups lumière et volet, depuis le dernier état ; rien avant le premier dessin des tuiles.
 void tuiles_rejouer_theme() {
     if (!s_charge) return;
     s_bouton_actif = !g_central_ctx.ha_mode;
     tuiles_appliquer_ui();
     if (s_pl.n > 0) popup_lumiere_peindre();
+    if (popup_volet_ouvert()) popup_volet_peindre();
 }
 
 void tuiles_repeindre(int r, int t) {
@@ -1338,6 +1492,13 @@ void tuile_appui(int t, bool long_appui) {
             action = (d.options & OPT_O) ? "allumer" : "basculer";
             break;
         case Type::VOL:
+            // Appui long (05/10/2026, discussion #278) : le popup du volet. Avec l'option
+            // k, l'ancien appui long (l'autre sens, confirmé) : le popup ne doit jamais
+            // contourner la confirmation.
+            if (long_appui && !(d.options & OPT_K)) {
+                popup_volet_ouvrir(r, t);
+                return;
+            }
             action = long_appui ? vol_appui_long(e) : vol_appui(e);
             break;
         case Type::MED:
@@ -1414,6 +1575,21 @@ void popup_lumiere_choisir(int idx) {
     if (u.lum_cle != nullptr) lumiere_cle(s_pl.piece, s_pl.tuiles[idx], *u.lum_cle);
     popup_lumiere_peindre();
     if (!popup_ouvert()) animate_popup_open(u.lum_popup);
+}
+
+void popup_volet_commande(const char* action) {
+    charger();
+    if (action == nullptr || !popup_volet_valide()) return;
+    envoyer_tuile(s_pv.piece, s_pv.tuile, action);
+}
+
+void tuiles_brancher_popup_volet() {
+    static bool fait = false;
+    lv_obj_t* curseur = g_tuiles_ui.vol_curseur;
+    if (fait || curseur == nullptr) return;
+    fait = true;
+    for (lv_event_code_t code : {LV_EVENT_PRESSED, LV_EVENT_VALUE_CHANGED, LV_EVENT_RELEASED, LV_EVENT_PRESS_LOST})
+        lv_obj_add_event_cb(curseur, volet_curseur_rappel, code, nullptr);
 }
 
 void popup_lumiere_tout_eteindre() {
