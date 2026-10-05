@@ -188,7 +188,7 @@ Every setting of the tablet is an entity of its device in Home Assistant, and th
 
 | Entity | Values | What it does |
 |---|---|---|
-| Thème | 18 themes, from « Ardoise » to « Pixel »; a new tablet starts in « Relief doux » | colours, shapes (radius, borders, shadows) and the fonts of the clock, the date and the titles. The screen repaints at once, without a restart; the games keep their own dark colours |
+| Thème | 21 themes, from « Ardoise » to « Ultraviolet »; a new tablet starts in « Relief doux » | colours, shapes (radius, borders, shadows) and the fonts of the clock, the date and the titles. The screen repaints at once, without a restart; the games keep their own dark colours |
 | Clair ou sombre | Sombre, Clair, Auto | the mode of the theme. **Auto**: light by day, dark at night, following « Nuit (thème auto) » |
 | Nuit (thème auto) | on / off | read only in Auto mode. The automation « Tab5 — thème jour/nuit » (`packages/tab5_push.yaml`) turns it on when the sun sets and off when it rises (`sun.sun`, so the location of Home Assistant). To decide yourself (a light sensor, bedtime…), turn that automation off and switch it from your own. Without Home Assistant, Auto keeps the last state received |
 
@@ -568,7 +568,7 @@ Chaque réglage de la tablette est une entité de son appareil dans Home Assista
 
 | Entité | Valeurs | Ce qu'elle fait |
 |---|---|---|
-| Thème | 18 thèmes, d'« Ardoise » à « Pixel » ; une tablette neuve démarre en « Relief doux » | couleurs, formes (rayons, bordures, ombres) et polices de l'heure, de la date et des titres. L'écran se repeint aussitôt, sans redémarrer ; les jeux gardent leurs couleurs sombres |
+| Thème | 21 thèmes, d'« Ardoise » à « Ultraviolet » ; une tablette neuve démarre en « Relief doux » | couleurs, formes (rayons, bordures, ombres) et polices de l'heure, de la date et des titres. L'écran se repeint aussitôt, sans redémarrer ; les jeux gardent leurs couleurs sombres |
 | Clair ou sombre | Sombre, Clair, Auto | le mode du thème. **Auto** : clair le jour, sombre la nuit, d'après « Nuit (thème auto) » |
 | Nuit (thème auto) | allumé / éteint | lu seulement en mode Auto. L'automatisation « Tab5 — thème jour/nuit » (`packages/tab5_push.yaml`) l'allume au coucher du soleil et l'éteint à son lever (`sun.sun`, donc le lieu de Home Assistant). Pour décider vous-même (capteur de luminosité, heure du coucher…), coupez cette automatisation et pilotez l'interrupteur depuis la vôtre. Sans Home Assistant, Auto garde le dernier état reçu |
 

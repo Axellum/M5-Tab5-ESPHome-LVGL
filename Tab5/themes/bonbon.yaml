@@ -1,0 +1,167 @@
+# Thème « Bonbon » : un mur rose bonbon où chaque carte et chaque bouton est un sticker :
+# bord blanc de 3 px, ombre dure framboise décalée de 5 px vers le bas, coins de 24 à 36,
+# boutons blancs (mûre la nuit), onglets rose dragée, heure, date et titres en Pacifico ;
+# le bandeau prune noire porte les vigilances (FFFF00, FF0000) dans les deux modes.
+#
+# Esquisse « Bonbon » du 04/10/2026 (Claude Fable 5.1, galerie audit_tab5/themes_2026-10-04
+# hors dépôt), convertie au lot 3 des thèmes (ADR-0029) : couleurs, formes (`formes:`) et
+# polices d'affichage (heure, date, titres) ; le reste du texte reste en Roboto. Les rôles
+# absents héritent d'Ardoise (même mode).
+#
+# Écarts à l'esquisse, pour les contrastes de tests/test_themes.py (texte 7:1, sémantique
+# 3:1 sur les cartes) : TEXT_PRIMARY framboise assombri le jour (D4126F -> 970D4F) et rose
+# éclairci la nuit (FF6EB4 -> FF91C6), GOLD assombri le jour (C98A00 -> B47B00).
+#
+# Ombres : celles de l'esquisse (cartes du tableau de bord, horloge, clim, bandeau, boutons),
+# aucune sur le cadre des popups ni sur les cartes internes (style_meteo_card à 0). L'esquisse
+# les estimait à ≈ 512 000 px ombrés sur la page, soit ≈ 50 ms au pire par redessin complet,
+# et ≈ 294 000 px (≈ 29 ms) à l'ouverture du popup clim ; rien au repos ni sur le carrousel.
+#
+# Non repris : l'état « bouton choisi » (bordure d'accent de 3 px au lieu de 2) ; le texte du
+# bandeau prend le texte courant de la palette sombre (zone sombre), pas color_banner_text.
+nom: Bonbon
+ordre: 19
+herite: ardoise
+zones_sombres: [bandeau]
+polices:
+  horloge: "Pacifico@400"
+  date: "Pacifico@400"
+  titre: "Pacifico@400"
+
+formes:
+  style_meteo_card_page:
+    radius: 28
+    border_width: 3
+    shadow_width: 1
+    shadow_ofs_y: 5
+    shadow_opa: 255
+    sombre: {border_opa: 127, shadow_color: 0xFF5EAE}
+    clair: {border_opa: 255, border_color: 0xFFFFFF, shadow_color: 0xD4126F}
+  style_bandeau_page:
+    bg_grad_dir: NONE
+    sombre: {bg_color: 0x16050F}
+    clair: {bg_color: 0x1C0614}
+  style_onglet_jour_page:
+    radius: 23
+    bg_grad_dir: NONE
+    shadow_width: 0
+    sombre: {bg_color: 0x5E1A4B}
+    clair: {bg_color: 0xFFD9E7}
+  style_onglet_temp_page:
+    radius: 23
+    bg_grad_dir: NONE
+    shadow_width: 0
+    sombre: {bg_color: 0x5E1A4B}
+    clair: {bg_color: 0xFFD9E7}
+  style_meteo_card:
+    shadow_width: 0
+  style_clim_btn:
+    radius: 24
+    border_width: 3
+    shadow_width: 1
+    shadow_ofs_y: 5
+    shadow_opa: 255
+    sombre: {border_opa: 127, bg_color: 0x5E1849, bg_grad_color: 0x47123A, shadow_color: 0xFF5EAE}
+    clair: {border_opa: 255, bg_grad_color: 0xFFE9F1, shadow_color: 0xD4126F}
+  style_clim_btn_page:
+    sombre: {bg_color: 0x5E1849, bg_grad_color: 0x47123A}
+    clair: {bg_color: 0xFFFFFF, bg_grad_color: 0xFFE9F1}
+  style_modal_card:
+    radius: 36
+    border_width: 3
+    sombre: {border_opa: 127}
+    clair: {border_opa: 255}
+  style_glass_card:
+    radius: 28
+    border_width: 3
+    sombre: {border_opa: 127}
+    clair: {border_opa: 255}
+
+sombre:
+  BG: 0x26081C
+  GLASS_HI: 0x4C1339
+  GLASS_LO: 0x3B0E2E
+  GLASS_HI_PAGE: 0x4A1239
+  GLASS_LO_PAGE: 0x350C29
+  GLASS_HI_MODAL: 0x45113A
+  GLASS_LO_MODAL: 0x2E0A24
+  GLASS_RIM: 0xFFB3D9
+  MODAL_SCRIM: 0x16050F
+  ARC_TRACK: 0x6B2A55
+  TEXT_SOFT: 0xFFE4F1
+  TEXT_PRIMARY: 0xFF91C6
+  TEXT_DIM: 0xD59BBF
+  ICON_MUTED: 0x7A4668
+  TEXT_ON_ACCENT: 0x26081C
+  SUCCESS: 0x45D68A
+  WARNING: 0xFFB020
+  ERROR: 0xFF5A5A
+  INFO: 0x7AB3FF
+  GOLD: 0xFFD166
+  INACTIVE: 0x5A1F47
+  BAR_INACTIVE: 0x5A1F47
+  ACCENT: 0xFF5EAE
+  ACCENT_ALT: 0xC084FC
+  EARLY: 0xFF8A3D
+  PAST: 0xB98AA8
+  RAIN_VALUE: 0xFF8A3D
+  CLIM_COOL_ACTIVE: 0x5FA8FF
+  CLIM_HEAT_ACTIVE: 0xFF5C5C
+  CLIM_HEAT_INACTIVE: 0xB47C8E
+  CLIM_OFF_ACTIVE: 0xFFA64D
+  CLIM_ECO: 0x45D68A
+  METEO_CELESTIAL: 0xFFC43D
+  METEO_CLOUD: 0xFFD9EA
+  METEO_PRECIP: 0x8CC2FF
+  HUMIDITY_WET: 0x7CC4FF
+  TEMP_GRAD_0_POS: 0x7CC4FF
+  TEMP_GRAD_14: 0xFFE4F1
+  TEMP_GRAD_24: 0xFF6EB4
+  TEMP_GRAD_35: 0xFF5A5A
+  HUM_GRAD_14: 0xFF5A5A
+  HUM_GRAD_22: 0xFFB020
+  HUM_GRAD_30: 0xFFE4F1
+
+clair:
+  BG: 0xFFD5E9
+  GLASS_HI: 0xFFFFFF
+  GLASS_LO: 0xFFEEF5
+  GLASS_HI_PAGE: 0xFFF3F8
+  GLASS_LO_PAGE: 0xFFE3EE
+  GLASS_HI_MODAL: 0xFFF6FA
+  GLASS_LO_MODAL: 0xFFE6F0
+  GLASS_RIM: 0xFFFFFF
+  MODAL_SCRIM: 0xF7A3C8
+  ARC_TRACK: 0xF9C2D9
+  TEXT_SOFT: 0x4A0D35
+  TEXT_PRIMARY: 0x970D4F
+  TEXT_DIM: 0x8A3F68
+  ICON_MUTED: 0xD98FB3
+  SUCCESS: 0x0E7A4E
+  WARNING: 0xC25E00
+  ERROR: 0xD7263D
+  INFO: 0x2E6BE6
+  GOLD: 0xB47B00
+  INACTIVE: 0xF6A9CF
+  BAR_INACTIVE: 0xF6A9CF
+  ACCENT: 0xBE0A78
+  ACCENT_ALT: 0x7C3AED
+  EARLY: 0xC2410C
+  PAST: 0x8E5A78
+  RAIN_VALUE: 0xC2410C
+  CLIM_COOL_ACTIVE: 0x1F6FEB
+  CLIM_HEAT_ACTIVE: 0xE0263C
+  CLIM_HEAT_INACTIVE: 0xB07A86
+  CLIM_OFF_ACTIVE: 0xD9480F
+  CLIM_ECO: 0x0E7A4E
+  METEO_CELESTIAL: 0xDC5522
+  METEO_CLOUD: 0x9C6B8E
+  METEO_PRECIP: 0x2E6BE6
+  HUMIDITY_WET: 0x1F6FEB
+  TEMP_GRAD_0_POS: 0x1F6FEB
+  TEMP_GRAD_14: 0x4A0D35
+  TEMP_GRAD_24: 0xD4126F
+  TEMP_GRAD_35: 0xC1121F
+  HUM_GRAD_14: 0xC1121F
+  HUM_GRAD_22: 0xC25E00
+  HUM_GRAD_30: 0x4A0D35

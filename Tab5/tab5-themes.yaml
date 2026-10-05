@@ -32,6 +32,21 @@
 
 # >>> polices (généré par tools/gen_themes.py depuis Tab5/themes/ et _polices.yaml, ne pas éditer)
 font:
+  - file: gfonts://Anton@400
+    id: police_anton_400_112
+    size: 112
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://Anton@400
+    id: police_anton_400_32
+    size: 32
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+  - file: gfonts://Anton@400
+    id: police_anton_400_45
+    size: 45
+    bpp: 2
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: gfonts://Barlow Condensed@800
     id: police_barlow_condensed_800_130
     size: 130
@@ -212,6 +227,36 @@ font:
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
+  - file: gfonts://Pacifico@400
+    id: police_pacifico_400_130
+    size: 130
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://Pacifico@400
+    id: police_pacifico_400_26
+    size: 26
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+  - file: gfonts://Pacifico@400
+    id: police_pacifico_400_45
+    size: 45
+    bpp: 2
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
+  - file: gfonts://Quicksand@700
+    id: police_quicksand_700_130
+    size: 130
+    bpp: 2
+    glyphs: '0123456789:'
+  - file: gfonts://Quicksand@700
+    id: police_quicksand_700_31
+    size: 31
+    bpp: 2
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+  - file: gfonts://Quicksand@700
+    id: police_quicksand_700_45
+    size: 45
+    bpp: 2
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
 # <<< polices
 
 select:
@@ -244,6 +289,9 @@ select:
       - "Signalisation"
       - "Capsule"
       - "Pixel"
+      - "Bonbon"
+      - "Sorbet"
+      - "Ultraviolet"
       # <<< themes
     on_value:
       - script.execute: tab5_theme_choisir
@@ -452,9 +500,9 @@ script:
           theme_formes(styles, 12);
       - lambda: |-
           // Polices d'affichage du thème (`polices:`), géométrie de l'horloge comprise.
-          esphome::font::Font* const polices[] = {id(roboto_130_b), id(roboto_45_b), id(roboto_32_b), id(police_nunito_800_130), id(police_nunito_800_45), id(police_nunito_800_29), id(police_ibm_plex_serif_700_130), id(police_ibm_plex_serif_700_45), id(police_ibm_plex_serif_700_29), id(police_fraunces_700_116), id(police_fraunces_700_45), id(police_figtree_700_31), id(police_barlow_condensed_800_130), id(police_barlow_semi_condensed_700_45), id(police_barlow_semi_condensed_700_32), id(police_oxanium_700_130), id(police_oxanium_700_45), id(police_oxanium_700_31), id(police_murecho_300_130), id(police_murecho_400_45), id(police_murecho_400_32), id(police_familjen_grotesk_700_130), id(police_familjen_grotesk_700_45), id(police_familjen_grotesk_700_32), id(police_gloock_400_125), id(police_gloock_400_45), id(police_gloock_400_30), id(police_bodoni_moda_700_120), id(police_manrope_700_45), id(police_manrope_700_31), id(police_overpass_800_119), id(police_overpass_700_45), id(police_overpass_700_31), id(police_fredoka_700_130), id(police_fredoka_700_45), id(police_fredoka_700_32), id(police_jersey_10_400_130), id(police_jersey_10_400_45), id(police_jersey_10_400_32)};
+          esphome::font::Font* const polices[] = {id(roboto_130_b), id(roboto_45_b), id(roboto_32_b), id(police_nunito_800_130), id(police_nunito_800_45), id(police_nunito_800_29), id(police_ibm_plex_serif_700_130), id(police_ibm_plex_serif_700_45), id(police_ibm_plex_serif_700_29), id(police_fraunces_700_116), id(police_fraunces_700_45), id(police_figtree_700_31), id(police_barlow_condensed_800_130), id(police_barlow_semi_condensed_700_45), id(police_barlow_semi_condensed_700_32), id(police_oxanium_700_130), id(police_oxanium_700_45), id(police_oxanium_700_31), id(police_murecho_300_130), id(police_murecho_400_45), id(police_murecho_400_32), id(police_familjen_grotesk_700_130), id(police_familjen_grotesk_700_45), id(police_familjen_grotesk_700_32), id(police_gloock_400_125), id(police_gloock_400_45), id(police_gloock_400_30), id(police_bodoni_moda_700_120), id(police_manrope_700_45), id(police_manrope_700_31), id(police_overpass_800_119), id(police_overpass_700_45), id(police_overpass_700_31), id(police_fredoka_700_130), id(police_fredoka_700_45), id(police_fredoka_700_32), id(police_jersey_10_400_130), id(police_jersey_10_400_45), id(police_jersey_10_400_32), id(police_pacifico_400_130), id(police_pacifico_400_45), id(police_pacifico_400_26), id(police_quicksand_700_130), id(police_quicksand_700_45), id(police_quicksand_700_31), id(police_anton_400_112), id(police_anton_400_45), id(police_anton_400_32)};
           lv_obj_t* const horloge[] = {id(lbl_time_h10_a), id(lbl_time_h10_b), id(lbl_time_h1_a), id(lbl_time_h1_b), id(lbl_time_m10_a), id(lbl_time_m10_b), id(lbl_time_m1_a), id(lbl_time_m1_b), id(lbl_time_colon)};
-          theme_polices(id(style_police_horloge), id(style_police_date), id(style_police_titre), polices, 39, horloge, id(lbl_date));
+          theme_polices(id(style_police_horloge), id(style_police_date), id(style_police_titre), polices, 48, horloge, id(lbl_date));
       # <<< styles
       - lambda: |-
           // Fond de la page principale (les pages des jeux restent sombres) et styles
