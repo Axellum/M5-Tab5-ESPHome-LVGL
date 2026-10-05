@@ -39,6 +39,9 @@ SANS_CARTE = {
 HORS_PACKAGES = {"input_text.tab5_annonce_vocale", "script.tab5_annonce_vocale"}
 
 APPAREIL = "m5stack_tab5_home_assistant_hmi"
+# Langues de l'écran (option du select « Langue ») traduites par la table TRADUCTIONS du modèle.
+LANGUES = {"Deutsch": "de", "Nederlands": "nl", "Español": "es", "Italiano": "it", "Türkçe": "tr"}
+DEFINITION_DE_T = "{%- macro t(francais, anglais) -%}"
 
 
 class _Chargeur(yaml.SafeLoader):
@@ -239,14 +242,21 @@ def _maison(tablettes, packages=True, aides=False, langue="Français"):
     return Etats(etats), tablettes
 
 
-def _rendre(maison, **variables):
+def _rendre(maison, noter=None, **variables):
+    """Rend la macro dans la maison donnée. `noter(français, anglais)`, s'il est donné, reçoit
+    chaque appel de t() (la ligne de définition de t() est complétée à la volée)."""
     etats, tablettes = maison
     appareils = {e.entity_id: nom for nom, liste in tablettes.items() for e in liste}
     modeles = {**{e: "tab5-ha-hmi" for e in appareils}, "binary_sensor.autre_esp_ha_api_status": "esp32-autre"}
+    texte = _texte()
+    if noter:
+        assert texte.count(DEFINITION_DE_T) == 1, "définition de t() changée : mettre DEFINITION_DE_T à jour"
+        texte = texte.replace(DEFINITION_DE_T, DEFINITION_DE_T + "{{ noter(francais, anglais) }}")
     # custom_templates/ de HA : la macro s'importe par son nom de fichier.
     env = ImmutableSandboxedEnvironment(extensions=["jinja2.ext.loopcontrols", "jinja2.ext.do"],
                                         undefined=jinja2.StrictUndefined,
-                                        loader=jinja2.FunctionLoader(lambda nom: _texte() if nom == MODELE.name else None))
+                                        loader=jinja2.FunctionLoader(lambda nom: texte if nom == MODELE.name else None))
+    env.globals["noter"] = noter or (lambda *_: "")
     env.globals.update(
         states=etats, state_attr=etats.attr, is_state=lambda e, s: etats(e) == s,
         integration_entities=lambda domaine: list(modeles) if domaine == "esphome" else [],
@@ -275,8 +285,13 @@ def _cartes(noeud):
     return 0
 
 
-@pytest.mark.parametrize("langue", ["Français", "English"])
+@pytest.mark.parametrize("langue", ["Français", "English", *LANGUES])
 def test_rendu_complet(langue):
+    table = _traductions()
+
+    def tr(francais, anglais):
+        return francais if langue == "Français" else anglais if langue == "English" else table[francais][LANGUES[langue]]
+
     maison = _maison(_tablette(), aides=True, langue=langue)
     sortie = _rendre(maison, adresse="ma-tablette")
     tableau = yaml.safe_load(sortie)
@@ -300,8 +315,7 @@ def test_rendu_complet(langue):
     chemins = re.findall(r"navigation_path: (\S+)", sortie) + re.findall(r"back_path: (\S+)", sortie)
     assert chemins and all(c.startswith(("/ma-tablette/", "/config/")) for c in chemins), chemins
     titres = [v["title"] for v in tableau["views"]]
-    assert titres == (["Tab5", "Réglages Tab5", "Santé Tab5"] if langue == "Français"
-                      else ["Tab5", "Tab5 settings", "Tab5 health"])
+    assert titres == ["Tab5", tr("Réglages Tab5", "Tab5 settings"), tr("Santé Tab5", "Tab5 health")]
     assert _cartes(tableau) > 120
     # L'automatisation du blueprint : sa tuile, et le lien vers son éditeur.
     assert "automation.ecran_du_bureau" in references and "/config/automation/edit/1700000000001" in chemins
@@ -309,13 +323,13 @@ def test_rendu_complet(langue):
     assert {"/config/devices/device/tab5", "/config/integrations/integration/esphome#config_entry=entree_tab5",
             "/config/energy", "/config/voice-assistants/assistants"} <= set(chemins), chemins
     reglages = yaml.safe_dump(tableau["views"][1], allow_unicode=True)
-    assert ("Énergie solaire" if langue == "Français" else "Solar energy") in reglages
-    assert "Puissance crête" in reglages if langue == "Français" else "Panel peak power" in reglages
+    assert tr("Énergie solaire", "Solar energy") in reglages
+    assert tr("Puissance crête des panneaux", "Panel peak power") in reglages
     assert "tab5_energie" not in reglages, "package présent : pas d'avertissement"
     # Santé : guide par symptôme, liens de HA, « En bref » avec les gardes de santé.
     sante = sortie[sortie.index("path: tab5-sante"):]
     assert {"/config/logs", "/config/repairs"} <= set(chemins), chemins
-    assert ("Quand quelque chose cloche" if langue == "Français" else "When something is wrong") in sante
+    assert tr("Quand quelque chose cloche", "When something is wrong") in sante
     assert re.search(r"\['automation\.[^']+'(, 'automation\.[^']+'){5}\] \| select\('is_state', 'off'\)", sante)
     # Chaque tuile ou raccourci écrit sa largeur, sauf une tuile à commande en ligne
     # (12 colonnes au minimum) : sans elle, le frontend lui donne 6 colonnes sur 12.
@@ -375,3 +389,66 @@ def test_deux_tablettes_celle_qui_est_connectee():
     references = verifier.entites_du_tableau(tableau)
     assert any(e.startswith("binary_sensor.") and "_deux_" in e for e in references)
     assert not any(APPAREIL in e and "_deux_" not in e for e in references)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Langues : allemand, néerlandais, espagnol, italien et turc par la table TRADUCTIONS
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _traductions():
+    """Table TRADUCTIONS du modèle (fin du fichier), lue sur le module sans appeler la macro."""
+    env = jinja2.Environment(loader=jinja2.FunctionLoader(lambda nom: _texte()))
+    return env.get_template(MODELE.name).module.TRADUCTIONS
+
+
+def _textes_de_t():
+    """{français : anglais} de chaque appel de t(), dans des maisons qui passent par toutes les
+    branches : complète, sans package, sans tablette, deux tablettes."""
+    vus = {}
+
+    def noter(francais, anglais):
+        vus[francais] = anglais
+        return ""
+
+    for maison in (_maison(_tablette(), aides=True), _maison(_tablette(), packages=False), _maison({}),
+                   _maison({**_tablette("tab5", connectee=False), **_tablette("deux")})):
+        _rendre(maison, noter=noter, adresse="ma-tablette")
+    return vus
+
+
+def test_chaque_texte_a_ses_cinq_traductions():
+    """Un texte ajouté avec t() sans son entrée dans TRADUCTIONS s'afficherait en anglais ; une
+    entrée dont le français a changé ne servirait plus."""
+    textes, table = _textes_de_t(), _traductions()
+    # Un appel littéral jamais rendu par les fausses maisons échapperait au contrôle.
+    corps = _texte()[:_texte().index("{%- set TRADUCTIONS")]
+    litteraux = {a or b for a, b in re.findall(r"""\bt\((?:'([^']*)'|"([^"]*)"),""", corps)}
+    assert litteraux <= set(textes), sorted(litteraux - set(textes))
+    incompletes = sorted(f for f in textes if set(table.get(f, {})) != set(LANGUES.values()))
+    assert not incompletes, incompletes
+    orphelines = sorted(set(table) - set(textes))
+    assert not orphelines, orphelines
+
+
+def test_traductions_sures_dans_le_yaml_et_le_jinja():
+    """Certaines traductions finissent dans une chaîne Jinja entre apostrophes (cases « En bref »)
+    ou dans du YAML entre guillemets ; d'autres sont des morceaux de phrase collés à leur voisin :
+    leurs espaces de début et de fin suivent l'anglais."""
+    textes = _textes_de_t()
+    erreurs = []
+    for francais, par_langue in _traductions().items():
+        anglais = textes[francais]
+        forme = (anglais.startswith(" "), anglais.endswith(" "), anglais == "")
+        for code, v in par_langue.items():
+            if any(c in v for c in ("'", '"', "|", "{{", "{%", "\n")):
+                erreurs.append(f"{code} : caractère interdit dans {v!r}")
+            if (v.startswith(" "), v.endswith(" "), v == "") != forme:
+                erreurs.append(f"{code} : espaces de {v!r} ≠ anglais {anglais!r}")
+    assert not erreurs, erreurs
+
+
+@pytest.mark.parametrize("langue", ["Klingon", "unknown"])
+def test_langue_inconnue(langue):
+    """Une langue sans traduction donne l'anglais ; un select pas encore connu, le français."""
+    sortie = _rendre(_maison(_tablette(), langue=langue))
+    assert ('"Tab5 settings"' if langue == "Klingon" else '"Réglages Tab5"') in sortie

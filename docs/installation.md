@@ -165,7 +165,7 @@ Every setting of the tablet in one Home Assistant dashboard: a **Tab5** view for
    ```jinja
    {% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}
    ```
-   Another address: `tab5_dashboard('dashboard-xxx')`. The labels follow the tablet's screen language (French, otherwise English); `tab5_dashboard(langue='English')` forces English.
+   Another address: `tab5_dashboard('dashboard-xxx')`. The labels and explanations follow the tablet's screen language (French, English, German, Dutch, Spanish, Italian or Turkish; English for any other); `tab5_dashboard(langue='English')` forces a language.
 3. Open the Tab5 dashboard → pencil → ⋮ → *Raw configuration editor*: replace everything with the result, *Save*.
 
 ![Tab5 view of the dashboard: brightness, volume and screen of the tablet, alarm clock, appointments and voice assistant](images/ha_tableau_tab5.png)
@@ -545,7 +545,7 @@ Tous les réglages de la tablette dans un tableau de bord Home Assistant : une v
    ```jinja
    {% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}
    ```
-   Autre adresse : `tab5_dashboard('dashboard-xxx')`. Les libellés suivent la langue de l'écran de la tablette (français, sinon anglais) ; `tab5_dashboard(langue='English')` force l'anglais.
+   Autre adresse : `tab5_dashboard('dashboard-xxx')`. Les libellés et les explications suivent la langue de l'écran de la tablette (français, anglais, allemand, néerlandais, espagnol, italien ou turc ; l'anglais pour une autre) ; `tab5_dashboard(langue='English')` force une langue.
 3. Ouvrez le tableau de bord Tab5 → crayon → ⋮ → *Éditeur de configuration brute* : remplacez tout par le résultat, *Enregistrer*.
 
 ![Vue Tab5 du tableau de bord : luminosité, volume et écran de la tablette, réveil, rendez-vous et assistant vocal](images/ha_tableau_tab5.png)
