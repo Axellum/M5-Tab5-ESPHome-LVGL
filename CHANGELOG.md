@@ -4,6 +4,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Documentation : énergie solaire, nouveautés du site, merci à husyildiz
+
+Demande d'Axel avant la release : l'énergie solaire manquait au README et au site, et un
+remerciement à @husyildiz.
+- **README** (EN, FR) : énergie solaire dans l'accroche et dans « Ce que ça fait » (popup,
+  icône du bandeau, batterie d'origine), avec une capture du popup Énergie (vue Jours,
+  rendu de la CI, données de démonstration) ; même capture dans `docs/installation.md`
+  (section « Énergie solaire ») et `docs/screens.md`.
+- **Merci** à [@husyildiz](https://github.com/husyildiz) dans la section Communauté du
+  README et sur le site : ses idées, essais et retours de la discussion #278 ont amené la
+  page d'installation pas à pas, l'écran en turc, la météo hors de France, la batterie
+  d'origine, le popup Énergie et la météo choisie dans le blueprint.
+- **Site** : carte et section « Énergie solaire », « Thèmes » et « Énergie solaire » dans
+  le sommaire ; « Nouveautés » s'arrêtait à la 3.1 : cartes 3.6, 3.5 et 3.4 à la place de
+  3.1, 3.0.1 et 3.0 (toujours dans les releases et ce journal) ; « À savoir » ne cite
+  plus OpenWeatherMap et MeteoAlarm comme seules sources hors de France.
+
 ### 2026-10-05 — Documentation : thèmes, réglages de la tablette, captures de Home Assistant
 
 Demande d'Axel pour la release : docs et descriptifs à jour, quelques captures des thèmes

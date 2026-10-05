@@ -340,6 +340,8 @@ A solar installation gets its own popup ([ADR-0028](decisions/0028-solar-energy-
 2. Place one of these sensors in a room (the solar power, for instance): its tile shows the value and opens the popup on tap. The option « Énergie » of the tablet's « Aller à l'écran » select, in Home Assistant, opens it too.
 3. The `tab5_energie.yaml` package (in the archive of Step 4) pushes the values while the popup is open. Without it, the popup says « En attente de Home Assistant ».
 
+![Energy popup of the Tab5, Days view: solar, home, grid and battery right now, and the production of the last 30 days (CI render, demo data)](images/tab5_energie_en.png)
+
 Section left empty: nothing changes on the screen.
 
 ### Other zones
@@ -717,6 +719,8 @@ Une installation solaire a son propre popup ([ADR-0028](decisions/0028-solar-ene
 1. Dans l'automatisation « Tab5 — emplacements », ouvrez la section repliée **« Énergie · Energy »** et choisissez ce que vous avez : puissance solaire, énergie solaire produite (le compteur en kWh du tableau Énergie de HA : le total du jour et les barres viennent de ses statistiques), puissance du réseau, consommation de la maison, niveau, puissance et température de la batterie. Tous les champs sont facultatifs. La puissance du réseau est positive quand la maison achète : cochez « Inverser » si votre compteur dit l'inverse, ou donnez la vente dans son propre champ si votre compteur les sépare. La puissance de la batterie est positive en charge (même case « Inverser »). Laissée vide, la consommation de la maison est calculée (solaire + réseau − charge de la batterie). Donnez aussi la **puissance crête** des panneaux (kWc) : une icône du bandeau d'état, en haut à gauche, montre la production en part de cette crête par sa couleur (panneau gris la nuit) ; 0 = pas d'icône.
 2. Placez l'un de ces capteurs dans une pièce (la puissance solaire, par exemple) : sa tuile montre la valeur et ouvre le popup au toucher. L'option « Énergie » de la liste « Aller à l'écran » de la tablette, dans Home Assistant, l'ouvre aussi.
 3. Le package `tab5_energie.yaml` (dans l'archive de l'étape 4) pousse les valeurs tant que le popup est ouvert. Sans lui, le popup affiche « En attente de Home Assistant ».
+
+![Popup Énergie du Tab5, vue Jours : solaire, maison, réseau et batterie en direct, et la production des 30 derniers jours (rendu de la CI, données de démonstration)](images/tab5_energie.png)
 
 Section laissée vide : rien ne change à l'écran.
 
