@@ -74,6 +74,49 @@
 - en: Use the tablet
   fr: Utiliser la tablette
   pages:
+    - en: User manual
+      fr: Notice d'utilisation
+      page: docs/notice/README.md
+      pages:
+        - en: Home screen
+          fr: Écran d'accueil
+          page: docs/notice/home.md
+        - en: Bottom row and rooms
+          fr: Rangée du bas et pièces
+          page: docs/notice/tiles.md
+        - en: Lights
+          fr: Lumières
+          page: docs/notice/lights.md
+        - en: Shutters
+          fr: Volets
+          page: docs/notice/shutters.md
+        - en: Climate
+          fr: Clim
+          page: docs/notice/climate.md
+        - en: TV remote
+          fr: Télécommande TV
+          page: docs/notice/tv.md
+        - en: Calendar
+          fr: Calendrier
+          page: docs/notice/calendar.md
+        - en: Alarm clock
+          fr: Réveil
+          page: docs/notice/alarm.md
+        - en: Voice
+          fr: Voix
+          page: docs/notice/voice.md
+        - en: Energy
+          fr: Énergie
+          page: docs/notice/energy.md
+        - en: Plants
+          fr: Plantes
+          page: docs/notice/plants.md
+        - en: System console
+          fr: Console système
+          page: docs/notice/console.md
+        - en: Arcade
+          fr: Arcade
+          page: docs/notice/arcade.md
     - en: Screens and features
       fr: Écrans et fonctions
       page: docs/screens.md
@@ -83,8 +126,8 @@
     - en: Tile icons
       fr: Icônes des tuiles
       page: docs/tiles_icons.md
-    - en: Arcade
-      fr: Arcade
+    - en: Arcade, the eight consoles
+      fr: Arcade, les huit consoles
       page: docs/arcade.md
       langue: fr
 

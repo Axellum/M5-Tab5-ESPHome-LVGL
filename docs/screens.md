@@ -18,7 +18,7 @@ There is a **single 1280×720 page** (`page_main`), not a tab-navigated set of s
 
 ![The single main page on the real device (July 2026)](images/tab5_photo_home.jpg)
 
-Overlays that open fullscreen on top of this: the **climate popup** (tap the compact climate card), the **light popup** (long-press a light shortcut), the **TV remote popup** (`tv_remote_popup.yaml` — Samsung IR pad via HA `remote.*`), the **assistant popup** (long-press on the mic zone — STT transcription + LLM reply in Markdown), the **calendar popup** (long-press on the clock — monthly grid with work hours), the **plant details popup** (long-press on moisture slots — 5 sensor cards), and the **Arcade selector** (tap on the greenhouse temperature — 4×2 grid of 8 game consoles). A **system console** (memory/network/system diagnostics, volume, plus an HA management card: screen re-push, automation reload, HA restart and device reboot behind confirm overlays) opens via the console button (`btn_control_console`, top right) — not by swipe since the 14/07/2026 gesture rework.
+Windows open on top of this page — lights, shutter, climate, TV remote, voice assistant, calendar, alarm clock, plants, energy and the system console — and the Arcade's games on pages of their own. Which touch opens each one and what every button does: the [user manual](notice/README.md); this page explains how each part works. The console opens with its button (`btn_control_console`, top right), not by swipe since the 14/07/2026 gesture rework.
 
 ---
 
@@ -62,7 +62,7 @@ A single card rotates automatically every 8 seconds (script `tab5_central_rotato
 
 If neither rain, MF alerts, info nor HA alert slots are active, the rotation just keeps planning on screen (and leaves the card empty without planning).
 
-**Temporary override:** tapping the max/min temperature on any of the 5 bottom forecast cards interrupts the rotation for **6 seconds** to show that specific day's opening-hours text in the central card, then automatically restores the previously active panel (`show_temporary_planning()`, `tab5_*.cpp` — this used to be an ESPHome script in `tab5-scripts.yaml`, moved to C++ in the 12/07 reboot fix).
+**Temporary override:** tapping the max/min temperature of a daily forecast card (not the hourly ones) interrupts the rotation for **6 seconds** to show that specific day's opening-hours text in the central card, then automatically restores the previously active panel (`show_temporary_planning()`, `tab5_*.cpp` — this used to be an ESPHome script in `tab5-scripts.yaml`, moved to C++ in the 12/07 reboot fix).
 
 ---
 
@@ -74,7 +74,7 @@ The `btn_control_ha` button (top right, Home Assistant icon) toggles the region 
 
 ### Weather mode (default)
 
-5 cards, navigated by **left/right swipe**, in 5 windows: 2 hourly + 3 daily (non-wrapping — swiping past the last window does not loop back to the first; see the [false positives note](troubleshooting.md#false-positives-worth-knowing-about-dont-fix-these-again) in `docs/troubleshooting.md`).
+5 cards, navigated by **left/right swipe** (from y 333: the central card and the bottom row), in 5 windows: 2 hourly + 3 daily. The order is deliberate (`forecast_page_suivante()`, `tab5_central.cpp`): a left swipe moves forward through the three daily windows and loops on them (from the last one back to the home window); a right swipe moves back, through the two hourly windows, and from the last hourly window back to the home window. See the [false positives note](troubleshooting.md#false-positives-worth-knowing-about-dont-fix-these-again) in `docs/troubleshooting.md`; what the user sees: [user manual, bottom row](notice/tiles.md).
 
 **Hourly windows (2):** the next 15 time slots, 5 per window. Each card shows a time label, a two-layer weather condition icon (`IconeMeteo.ttf`), a color-coded temperature, and rainfall in mm (or `-` if dry). There is no separate wind-speed reading — "windy" is one of the possible weather *condition* icons (alongside sun/cloud/rain/snow/fog), not a distinct data field.
 
@@ -85,23 +85,13 @@ The `btn_control_ha` button (top right, Home Assistant icon) toggles the region 
 
 **Device shoulders and quick action.** On every page, a tile that holds a device of that page's room shows it in its two « shoulders », left and right of the title tab — left: the device's icon ([palette](tiles_icons.md)) coloured by its state; right: a bulb (light) or the arrow of a shutter's next move (pause while it moves), nothing for the other types — and an invisible button over the weather icon (`btn_jN_action` on the daily pages, `btn_hN_action` on the hourly ones) sends the tile's command; the weather keeps showing. A page without devices looks as before 3.2. With the device switch **Tab5 Appareils sur la météo** off (on by default; discussion #278), every page looks like a page without devices: the forecast cards show the weather only, and the devices stay in HA mode.
 
-| Type | Tap | Long press |
-|------|-----|------------|
-| `lum` light | toggle (`allumer` with option `o`) | light popup, on this light |
-| `int` switch, fan… | toggle (`allumer` with `o`) | — |
-| `vol` cover, valve | moving → stop; open → close; else open | shutter popup, on this shutter (with option `k`: the other of open / close) |
-| `med` media player | toggle | TV remote (option `t`) |
-| `act` scene, script, button | run — the state line shows « OK » for 1 s | — |
-| `cap` sensor, `bin` binary sensor | read only | — |
-| `cli` climate | climate popup: the blueprint's climate (option `m`), else the tile's own ([ADR-0027](decisions/0027-climate-per-tile.md)) | — |
-
-Option `k` asks for a second tap within 3 s (the state line asks « Confirmer ? », the icon turns amber); option `r` makes the tile read only.
+Tap and long press for each kind of device, and the blueprint's « on only », « confirm » and « read only » behaviours: [user manual, bottom row](notice/tiles.md#tap-and-long-press-by-device). In the firmware, `tuile_appui()` (`tab5_tuiles.cpp`) applies the table of [ADR-0023](decisions/0023-rooms-generic-tiles.md) to the tile's type (`lum`, `int`, `vol`, `med`, `act`, `cap`, `bin`, `cli`) and options (`o` on only, `k` a second tap within 3 s, `r` read only, `t` TV remote, `m` the blueprint's climate, `e` energy popup).
 
 **Legacy mode (3.x blueprint).** Until the first definitions arrive (a firmware updated before its blueprint), room 0 is built from the 3.x slots and looks as in 3.1: card 1 PC/TV (shoulder = TV state, or PC state without a TV; long press = TV remote), card 2 the shutter, cards 3-5 the bedroom, living room and LED lights (long press = light popup), with the 3.x commands. On the shutter card, tapping the **title** flips the direction the next tap will send (the arrow in the top-right corner shows it); tapping the icon sends stop while the shutter moves, else open or close.
 
 ### HA mode
 
-The 5 cards (`switches_card.yaml`) show the room of the current page: icon from the palette (70 px), name (title tab, cut with « … »), a state line translated by the tablet — « 60 % », « Allumé » / « Éteint », « Mouvement » / « 45 % » / « Ouvert » / « Fermé », « Lecture » / « Pause », « Lancer », a sensor's value and unit, « Détecté » / « Présent » / « Verrouillé »… by device class, a climate's room temperature; « Hors ligne », greyed, when the entity is unavailable — and a colour by type and state (a light's own colour when it reports one). Empty tiles are hidden and the others centred. The central card shows « Pièce n/N » above the room's name; the rotator pauses. Tap and long press as in the table above.
+The 5 cards (`switches_card.yaml`) show the room of the current page: icon from the palette (70 px), name (title tab, cut with « … »), a state line translated by the tablet — « 60 % », « Allumé » / « Éteint », « Mouvement » / « 45 % » / « Ouvert » / « Fermé », « Lecture » / « Pause », « Lancer », a sensor's value and unit, « Détecté » / « Présent » / « Verrouillé »… by device class, a climate's room temperature; « Hors ligne », greyed, when the entity is unavailable — and a colour by type and state (a light's own colour when it reports one). Empty tiles are hidden and the others centred. The central card shows « Pièce n/N » above the room's name; the rotator pauses. Tap and long press: [user manual](notice/tiles.md#tap-and-long-press-by-device).
 
 **Swipe in HA mode** goes to the next / previous room that has a device, in the order of the weather pages (same wrap); the weather layers stay hidden and the pagination dots follow. With one room only, a swipe does nothing. Entering HA mode on a page without devices jumps to the nearest room that has some; leaving it shows the weather of the current page.
 
@@ -120,7 +110,7 @@ Two levels of control. The compact card drives the blueprint's `climate` entity 
   - **OPTIONS**: Éco / Boost presets (toggle), Silence (fan quiet), and airflow **Oscillation** / **Brise** (`windnice`, a Daikin Onecta mode previously unreachable from the screen)
   - **Any brand** ([ADR-0026](decisions/0026-climate-from-device.md)): the blueprint sends the unit's settings (key `climr`: `min_temp`/`max_temp`, `target_temp_step`, °C or °F, the modes it has, its name). The title becomes the unit's name, the arc and the ± buttons follow its bounds and step, and a button the unit cannot do disappears — an OPTIONS section left without a button disappears with its title and the others move up. The buttons still send the Daikin names (Éco = `away`, Silence = `quiet`, `swing` / `stop`), and the blueprint translates them to the unit's own (`eco`, `low`, `off`, `vertical`…), or sends nothing when the unit has no equivalent.
   - **Any climate tile** ([ADR-0027](decisions/0027-climate-per-tile.md)): a `cli` tile of a room opens the popup on its own unit — its settings (key `crRT`, same fields as `climr`) and its state (key `ceRT`) come with the tiles, and its buttons send the same commands with `emplacement: tRT`, translated by the blueprint the same way. Its target and mode reach the popup at once, its fan / swing / preset and room temperature within 5 minutes (with the measurements). A tile with option `m` is the blueprint's climate. Until Home Assistant sent the tile's settings (older blueprint), tapping it does nothing. The compact card keeps showing the blueprint's climate meanwhile, and closing the popup brings it back to that one.
-  - Tapping the dark overlay or the × button (a real 96×64 glass button) closes the modal. 6 of the 10 buttons are factorized templates (cool/heat/fan/dry, eco/boost); the remaining 4 (off/swing/windnice/quiet) and the ± buttons are deliberately left as individual YAML — see [ADR-0007](decisions/0007-climate-popup-not-factorized.md).
+  - Tapping the dark overlay or the × button (the shared 80×44 glass button of `modal_header.yaml`) closes the modal. 6 of the 10 buttons are factorized templates (cool/heat/fan/dry, eco/boost); the remaining 4 (off/swing/windnice/quiet) and the ± buttons are deliberately left as individual YAML — see [ADR-0007](decisions/0007-climate-popup-not-factorized.md).
 
 The controls are dimmed (not hidden) when the AC is off, so the layout stays stable.
 
@@ -142,7 +132,7 @@ A **long press anywhere on the moisture card** opens a near-fullscreen modal (12
 - the soil-moisture % (large) and a watering status: **OK** (green), **Bientôt sec** (≤ 20 %, amber), **À arroser !** (≤ 14 %, red — aligned with the `get_humidity_color()` red zone) or **Hors ligne** (sensor unavailable)
 - four metric rows: **Fertility** (EC conductivity, µS/cm), **Light** (lx), **Temperature** (°C, `get_temperature_color()` gradient) and sensor **Battery** (%, `get_battery_color()` scale)
 
-Values are pushed continuously by the `pot*_ec/lux/temp/bat` HA sensors (`update_pot_metric_ui()`, `tab5_*.cpp`) — the popup needs no sync on open. Tapping the dark overlay or the × button (real 96×64 glass button) closes it. Components: `pots_popup.yaml` + `pot_detail_card.yaml` (5 instances).
+Values are pushed continuously by the `pot*_ec/lux/temp/bat` HA sensors (`update_pot_metric_ui()`, `tab5_*.cpp`) — the popup needs no sync on open. Tapping the dark overlay or the × button (the shared 80×44 glass button) closes it. Components: `pots_popup.yaml` + `pot_detail_card.yaml` (5 instances).
 
 ![Plant details popup on the real device (Pot 5 offline)](images/tab5_photo_plants.jpg)
 
@@ -159,7 +149,9 @@ Home Assistant then enriches each viewed month **on demand** (`script.tab5_calen
 - **school holidays** — soft violet cell background, from the calendar chosen in « Tab5 · agenda des vacances scolaires » (in France, the ministry's ICS file of your zone; until 2026-09-29, a static Zone A table)
 - **appointments** (gold dot) and **birthdays** (pink dot) from the family/birthday calendars
 
-**Tapping a day** opens a 780×540 detail sub-popup (`script.tab5_calendrier_jour`): "Mardi 21 Juillet" title and up to 6 typed lines with colored MDI icons — holiday name, school-holiday label, work hours, timed appointments, birthdays, civil observances — with "Chargement...", "Rien de prévu ce jour" and "Home Assistant hors ligne" states. Closing follows the v2 popup recipe (real 96×64 glass × buttons, `scrollable: false` everywhere). Components: `calendar_popup.yaml` + `cal_grid_build()` (42 cells built in C++) + HA package `HomeAssistant_Config/packages/tab5_calendar.yaml`.
+**Tapping a day** opens a 780×540 detail sub-popup (`script.tab5_calendrier_jour`): "Mardi 21 Juillet" title and up to 6 typed lines with colored MDI icons — holiday name, school-holiday label, work hours, timed appointments, birthdays, civil observances — with "Chargement...", "Rien de prévu ce jour" and "Home Assistant hors ligne" states. Closing follows the v2 popup recipe (the shared 80×44 glass × buttons, `scrollable: false` everywhere). Components: `calendar_popup.yaml` + `cal_grid_build()` (42 cells built in C++) + HA package `HomeAssistant_Config/packages/tab5_calendar.yaml`.
+
+![Calendar popup on the real device](images/tab5_photo_calendar.jpg)
 
 ---
 
@@ -181,7 +173,7 @@ The **closing time is used too**, through the **"repos mini"** (minimum rest) se
 
 **Stopping it: voice or touch.** Touching anywhere on the ring screen stops the alarm; "Répéter" (snooze) stays a separate button. For voice, the microWakeWord **"Stop" model was already on board** (it only served to stop the roller shutter): it is armed while ringing, and any wake word cuts the alarm. The wake-word engine is started even if "Ok Nabu" is off — otherwise the promise wouldn't hold for anyone who mutes the mic at night. Each melody pass is followed by **2.5 s of silence**: that is the window where the mic has a chance to hear you.
 
-Other settings: 4 melodies (tap to audition), a **dedicated alarm volume** (independent of the system volume), fade-in, snooze length, maximum ring duration, and a spoken wake-up briefing (time, today's shift, next appointment, temperature).
+Other settings: 4 melodies (‹ › picks one and plays it), a **dedicated alarm volume** (independent of the system volume), fade-in, snooze length, maximum ring duration, and a spoken wake-up briefing (time, today's shift, next appointment, temperature).
 
 **Appointment reminders**, N minutes ahead (0–120, configurable). HA pushes the list of timed appointments every 5 minutes; **the firmware runs the countdown**, so an HA outage between the push and the deadline doesn't miss anything. Components: `alarm_popup.yaml` + `alarm_ring_overlay.yaml` + `Tab5/tab5-alarm.yaml` + `Tab5/alarm_clock.h/.cpp` + HA package `HomeAssistant_Config/packages/tab5_reveil.yaml`.
 
@@ -189,22 +181,7 @@ Other settings: 4 melodies (tap to audition), a **dedicated alarm volume** (inde
 
 ## Voice assistant
 
-The microphone icon on the home screen is the visual interface for the voice assistant. It changes color to reflect the current pipeline state:
-
-| Icon color | State | What's happening |
-|-----------|-------|-----------------|
-| **Dim grey** | Standby | Wake-word listening is disabled |
-| **Grey** | Idle | Listening for "Ok Nabu" in the background |
-| **Green** | Listening | Wake word detected — recording your speech |
-| **Orange** | Processing | HA pipeline is running STT + intent recognition |
-| **Blue** | Speaking | TTS response is playing through the speaker |
-| **Red** | Error | Pipeline failed or command not understood |
-
-**Wake-word toggle:** a button on the home screen activates or deactivates "Ok Nabu" wake-word detection. When off, you can still activate the voice assistant by tapping the microphone icon directly (push-to-talk).
-
-**Mode selector:** a small button next to the microphone toggles between two modes:
-- **Home Assistant mode** — commands go to the standard HA conversation agent
-- **Conversation mode** — commands go to an LLM-backed pipeline for free-form conversation
+The microphone icon on the home screen is the visual interface for the voice assistant; its colour follows the pipeline state (`assist_set_pipeline_state()`): standby (wake word off), idle, listening, processing (STT + intent), speaking (TTS), error. The colours, the wake-word button, the two mode buttons (Home Assistant's conversation agent, or an LLM-backed conversation pipeline) and the microphone's tap and long press: [user manual, voice](notice/voice.md).
 
 When the list « Tab5 · pipeline de discussion » is set to « Aucun » (no conversation pipeline), the two mode buttons (home screen and assistant popup) disappear and the tablet stays in Home Assistant mode (zone `discussion`, [installation](installation/adapt-to-your-home.md#other-zones)).
 
@@ -213,6 +190,10 @@ The mode is saved across reboots via the HA `select` entity (`select.m5stack_tab
 **Second on-device wake word — "Stop":** a second microWakeWord model (`Stop`) is armed only while the roller shutter is moving (`volet_en_mouvement` global) and disarmed as soon as it stops. Saying "Stop" then halts the shutter directly from the device (`script.tab5_volet_action`) — no "Okay Nabu", no pipeline round-trip.
 
 **Interrupting a reply:** tapping the microphone icon while the assistant is speaking (blue) stops the current reply (pipeline stop, which Home Assistant follows, + the speaker) and immediately re-opens listening (`tab5_vocal_interrupt_and_listen`) — the reliable way to cut a long Discussion answer short, since the wake word is inactive while the pipeline is in its responding phase.
+
+**Assistant popup** (long press on the microphone, `btn_assist_trigger`; its buttons: [user manual](notice/voice.md#the-voice-assistant-window)). In conversation mode a voice request opens it by itself (`on_stt_end` → `tab5_assist_on_request`); in Home Assistant mode the central card's 8 s banner stays the quick feedback. The answer is rendered from Markdown (tables re-aligned approximately — proportional font since 26/09/2026 —, bold, code, bullets), plus an image downloaded on demand (`online_image`, PNG → RGB565, 760×360). The engine can push a rich answer through the `tab5_assist_reponse` service (variables `texte` = Markdown, `image_url` = optional PNG).
+
+![Voice assistant popup on the real device](images/tab5_photo_assistant_popup.jpg)
 
 ---
 
@@ -236,7 +217,7 @@ Long-pressing a light tile — its weather shoulders or its HA-mode card — (in
 - **AMPOULE** (left): a selector listing **the lights of the room** (up to 5, in tile order, rows tightened beyond three; icons colored by on/off state, cyan border on the selection, the pressed light selected) to switch lights without closing the popup, a large **On/Off** button and **Tout éteindre** (every light of the room, `pR / eteindre`; in legacy mode the three 3.x lights)
 - **LUMINOSITÉ** (center): a **320 px brightness arc** (0–255) with the **% value shown live** in the center — synced from the HA `brightness` attribute at open time and live (never during a drag), debounced 200 ms so one drag sends a single `light.turn_on` — plus 4 shortcuts 10/35/65/100 %
 - **COULEURS** (right): 3 named whites (Chaud/Crème/Froid) and a 4×3 grid of **12 round color swatches** (each sends `light.turn_on` with the matching `color_name`, factorized via `light_color_preset_btn.yaml`)
-- Tapping the dark overlay or the × button (a real 96×64 glass button) closes the modal
+- Tapping the dark overlay or the × button (the shared 80×44 glass button of `modal_header.yaml`) closes the modal
 
 The popup is context-aware: the long press opens it on the pressed light, and the selector goes through `script.tab5_light_popup_show(light_idx)` (`popup_lumiere_choisir()`, `tab5_tuiles.cpp`), which sets the `current_light_slot` global to the tile's key (`tRT`, or `lumiere_N` in legacy mode) and syncs the title, selector, power icon and arc — one popup for every light of every room.
 
@@ -246,7 +227,7 @@ The popup is context-aware: the long press opens it on the pressed light, and th
 
 ## TV remote popup
 
-A near-fullscreen Samsung TV remote (`tv_remote_popup.yaml`, 1250×690 card — the shared modal tokens of ADR-0009, 15 px from the screen edges): power, navigation pad, volume and channel columns, and a bottom row (Play/Pause · Retour · Accueil · Muet). Opened by long-pressing a media tile with the TV option (`t`; the PC card in legacy mode) or via the TV button (`btn_control_tv`); every key sends `remote.send_command` (or `remote.toggle` for power) to the `${entity_tv_remote}` Home Assistant entity — the Tab5 carries no IR hardware, HA's Samsung integration does the work. Tapping the dark overlay closes it.
+A near-fullscreen Samsung TV remote (`tv_remote_popup.yaml`, 1250×690 card — the shared modal tokens of ADR-0009, 15 px from the screen edges): power, source and menu keys, a round navigation pad with OK, a volume column with mute, the Play · Pause · Back · Home keys and a row of app buttons (Netflix, Prime, YouTube, CANAL+, PC). Opened by long-pressing a media tile with the TV option (`t`; the PC card in legacy mode) or via the TV button (`btn_control_tv`); every key emits a `tab5_action` event (`emplacement: tv`, [ADR-0025](decisions/0025-events-only.md)) that the blueprint automation sends to the remote picked in « Télécommande de la TV » (`remote.send_command`), the app buttons through `script.tab5_tv_app` (`tab5_tv.yaml`) — the Tab5 carries no IR hardware, HA's Samsung integration does the work. Tapping the dark overlay closes it.
 
 ![TV remote popup on the real device](images/tab5_photo_tv_remote.jpg)
 
@@ -358,7 +339,7 @@ Il y a une **page unique 1280×720** (`page_main`), pas un jeu d'écrans navigu�
 
 ![La page unique sur l'appareil réel (juillet 2026)](images/tab5_photo_home.jpg)
 
-Overlays plein écran par-dessus : le **popup clim** (tap sur la carte clim compacte), le **popup lumière** (appui long sur un raccourci lumière), et la **télécommande TV** (`tv_remote_popup.yaml` — pad IR Samsung via `remote.*` HA, ouverte depuis le contrôle UI qui retire `LV_OBJ_FLAG_HIDDEN` sur `tv_remote_popup`). Une **Console Système** (diagnostics mémoire/réseau/système, volume, plus une carte gestion HA : MAJ écran, reload automations, redémarrage HA et reboot tablette derrière un overlay de confirmation) s'ouvre via le bouton console (`btn_control_console`, en haut à droite) — plus par swipe depuis la refonte gestuelle du 14/07/2026.
+Des fenêtres s'ouvrent par-dessus cette page — lumières, volet, clim, télécommande TV, assistant vocal, calendrier, réveil, plantes, énergie et console système — et les jeux de l'Arcade sur des pages à eux. Quel toucher ouvre chacune et ce que fait chaque bouton : la [notice d'utilisation](notice/README.md#version-française) ; cette page explique comment marche chaque partie. La console s'ouvre par son bouton (`btn_control_console`, en haut à droite), plus par swipe depuis la refonte gestuelle du 14/07/2026.
 
 ---
 
@@ -402,7 +383,7 @@ Une seule carte alterne automatiquement toutes les 8 secondes (script `tab5_cent
 
 Si ni pluie, ni alertes MF, ni info, ni slots HA ne sont actifs, la rotation garde simplement le planning à l'écran (et laisse la carte vide sans planning).
 
-**Bascule temporaire :** taper sur la température max/min de l'une des 5 cartes prévisions du bas interrompt la rotation pendant **6 secondes** pour afficher le texte des horaires de ce jour précis dans la carte centrale, puis restaure automatiquement le panneau qui était actif (`show_temporary_planning()`, `tab5_*.cpp` — anciennement un script ESPHome de `tab5-scripts.yaml`, passé en C++ lors du fix reboot du 12/07).
+**Bascule temporaire :** taper sur la température max/min d'une carte de prévision journalière (pas les horaires) interrompt la rotation pendant **6 secondes** pour afficher le texte des horaires de ce jour précis dans la carte centrale, puis restaure automatiquement le panneau qui était actif (`show_temporary_planning()`, `tab5_*.cpp` — anciennement un script ESPHome de `tab5-scripts.yaml`, passé en C++ lors du fix reboot du 12/07).
 
 ---
 
@@ -414,7 +395,7 @@ Le bouton `btn_control_ha` (en haut à droite, icône Home Assistant) bascule la
 
 ### Mode météo (par défaut)
 
-5 cartes, navigables par **swipe gauche/droite**, sur 5 fenêtres : 2 horaires + 3 journalières (sans bouclage — swiper au-delà de la dernière fenêtre ne revient pas à la première ; voir la [note faux positifs](troubleshooting.md#false-positives-worth-knowing-about-dont-fix-these-again) dans `docs/troubleshooting.md`).
+5 cartes, navigables par **swipe gauche/droite** (à partir de y 333 : la carte centrale et la rangée du bas), sur 5 fenêtres : 2 horaires + 3 journalières. L'ordre est voulu (`forecast_page_suivante()`, `tab5_central.cpp`) : un swipe vers la gauche avance dans les trois fenêtres journalières et boucle sur elles (de la dernière à la fenêtre d'accueil) ; un swipe vers la droite recule, à travers les deux fenêtres horaires, et de la dernière fenêtre horaire revient à la fenêtre d'accueil. Voir la [note faux positifs](troubleshooting.md#false-positives-worth-knowing-about-dont-fix-these-again) dans `docs/troubleshooting.md` ; ce que l'utilisateur voit : [notice, rangée du bas](notice/tiles.md#version-française).
 
 **Fenêtres horaires (2) :** les 15 prochaines tranches horaires, 5 par fenêtre. Chaque carte affiche une heure, une icône météo double couche (`IconeMeteo.ttf`), une température avec code couleur, et la pluie en mm (ou `-` si sec). Il n'y a pas de donnée de vitesse de vent séparée — "venteux" est l'une des icônes de *condition* météo possibles (à côté de soleil/nuage/pluie/neige/brouillard), pas un champ de donnée distinct.
 
@@ -425,23 +406,13 @@ Le bouton `btn_control_ha` (en haut à droite, icône Home Assistant) bascule la
 
 **Épaules et action rapide.** Sur chaque page, une tuile qui porte un appareil de la pièce de la page le montre dans ses deux « épaules », de part et d'autre de l'onglet titre — à gauche l'icône de l'appareil ([palette](tiles_icons.md)) colorée par son état ; à droite une ampoule (lumière) ou la flèche du prochain mouvement d'un volet (pause pendant la course), rien pour les autres types — et un bouton invisible sur l'icône météo (`btn_jN_action` sur les pages journalières, `btn_hN_action` sur les horaires) envoie la commande de la tuile ; la météo reste affichée. Une page sans appareil est comme avant la 3.2. Avec l'interrupteur de l'appareil **Tab5 Appareils sur la météo** éteint (allumé par défaut ; discussion #278), chaque page ressemble à une page sans appareil : les cartes de prévisions montrent la météo seule, et les appareils restent dans le mode HA.
 
-| Type | Appui court | Appui long |
-|------|-------------|------------|
-| `lum` lumière | bascule (`allumer` avec l'option `o`) | popup lumière, sur cette lumière |
-| `int` interrupteur, ventilateur… | bascule (`allumer` avec `o`) | — |
-| `vol` volet, vanne | en mouvement → arrêter ; ouvert → fermer ; sinon ouvrir | popup du volet, sur ce volet (avec l'option `k` : l'autre de ouvrir / fermer) |
-| `med` lecteur multimédia | bascule | télécommande TV (option `t`) |
-| `act` scène, script, bouton | lancer — la ligne d'état montre « OK » 1 s | — |
-| `cap` capteur, `bin` capteur binaire | lecture seule | — |
-| `cli` climatisation | popup clim : la clim du blueprint (option `m`), sinon celle de la tuile ([ADR-0027](decisions/0027-climate-per-tile.md)) | — |
-
-L'option `k` demande un second appui dans les 3 s (la ligne d'état demande « Confirmer ? », l'icône passe à l'ambre) ; l'option `r` met la tuile en lecture seule.
+Appui court et appui long pour chaque sorte d'appareil, et les comportements « allumer seulement », « confirmer » et « lecture seule » du blueprint : [notice, rangée du bas](notice/tiles.md#tap-et-appui-long-par-appareil). Dans le firmware, `tuile_appui()` (`tab5_tuiles.cpp`) applique le tableau de l'[ADR-0023](decisions/0023-rooms-generic-tiles.md) au type de la tuile (`lum`, `int`, `vol`, `med`, `act`, `cap`, `bin`, `cli`) et à ses options (`o` allumer seulement, `k` second appui dans les 3 s, `r` lecture seule, `t` télécommande TV, `m` la clim du blueprint, `e` popup Énergie).
 
 **Mode héritage (blueprint 3.x).** Tant qu'aucune définition n'est arrivée (firmware mis à jour avant son blueprint), la pièce 0 est construite depuis les emplacements 3.x et ressemble à la 3.1 : carte 1 PC/TV (épaule = état de la TV, ou du PC sans TV ; appui long = télécommande), carte 2 le volet, cartes 3 à 5 les lumières chambre, salon et LEDs (appui long = popup lumière), avec les commandes 3.x. Sur la carte du volet, taper le **titre** inverse le sens que le prochain appui enverra (la flèche en haut à droite le montre) ; taper l'icône envoie « arrêter » si le volet bouge, sinon ouvrir ou fermer.
 
 ### Mode HA
 
-Les 5 cartes (`switches_card.yaml`) montrent la pièce de la page courante : icône de la palette (70 px), nom (onglet titre, coupé avec « … »), ligne d'état traduite par la tablette — « 60 % », « Allumé » / « Éteint », « Mouvement » / « 45 % » / « Ouvert » / « Fermé », « Lecture » / « Pause », « Lancer », la valeur et l'unité d'un capteur, « Détecté » / « Présent » / « Verrouillé »… selon la classe d'appareil, la température de la pièce d'une clim ; « Hors ligne », grisé, quand l'entité est indisponible — et une couleur selon le type et l'état (la couleur propre d'une lumière quand elle en donne une). Les tuiles vides sont masquées et les autres centrées. La carte centrale affiche « Pièce n/N » au-dessus du nom de la pièce ; le rotateur est en pause. Appui court et long comme dans le tableau ci-dessus.
+Les 5 cartes (`switches_card.yaml`) montrent la pièce de la page courante : icône de la palette (70 px), nom (onglet titre, coupé avec « … »), ligne d'état traduite par la tablette — « 60 % », « Allumé » / « Éteint », « Mouvement » / « 45 % » / « Ouvert » / « Fermé », « Lecture » / « Pause », « Lancer », la valeur et l'unité d'un capteur, « Détecté » / « Présent » / « Verrouillé »… selon la classe d'appareil, la température de la pièce d'une clim ; « Hors ligne », grisé, quand l'entité est indisponible — et une couleur selon le type et l'état (la couleur propre d'une lumière quand elle en donne une). Les tuiles vides sont masquées et les autres centrées. La carte centrale affiche « Pièce n/N » au-dessus du nom de la pièce ; le rotateur est en pause. Appui court et long : [notice](notice/tiles.md#tap-et-appui-long-par-appareil).
 
 **Swipe en mode HA** : pièce suivante / précédente qui a un appareil, dans l'ordre des pages météo (même bouclage) ; les calques météo restent masqués et les pastilles suivent. Avec une seule pièce, un swipe ne fait rien. Entrer en mode HA sur une page sans appareil saute à la pièce la plus proche qui en a ; en sortir montre la météo de la page courante.
 
@@ -460,7 +431,7 @@ Deux niveaux de contrôle. La carte compacte pilote l'entité `climate` du bluep
   - **OPTIONS** : presets Éco / Boost (toggle), Silence (fan quiet), et flux d'air **Oscillation** / **Brise** (`windnice`, mode Daikin Onecta auparavant inaccessible depuis l'écran)
   - **Toutes marques** ([ADR-0026](decisions/0026-climate-from-device.md)) : le blueprint envoie les réglages de l'appareil (clé `climr` : `min_temp`/`max_temp`, `target_temp_step`, °C ou °F, les modes qu'il a, son nom). Le titre devient le nom de l'appareil, l'arc et les boutons ± suivent ses bornes et son pas, et un bouton que l'appareil ne sait pas faire disparaît — une section OPTIONS restée sans bouton disparaît avec son titre, les autres remontent. Les boutons envoient toujours les noms de la Daikin (Éco = `away`, Silence = `quiet`, `swing` / `stop`), et le blueprint les traduit vers ceux de l'appareil (`eco`, `low`, `off`, `vertical`…), ou n'envoie rien quand l'appareil n'a pas d'équivalent.
   - **Toute tuile de clim** ([ADR-0027](decisions/0027-climate-per-tile.md)) : une tuile `cli` d'une pièce ouvre le popup sur son propre appareil — ses réglages (clé `crRT`, les champs de `climr`) et son état (clé `ceRT`) arrivent avec les tuiles, et ses boutons envoient les mêmes commandes avec `emplacement: tRT`, que le blueprint traduit de la même façon. Sa consigne et son mode arrivent tout de suite dans le popup, sa ventilation, son oscillation, son préréglage et la température de la pièce en 5 minutes au plus (avec les mesures). Une tuile avec l'option `m` est la clim du blueprint. Tant que Home Assistant n'a pas envoyé les réglages de la tuile (blueprint plus ancien), la toucher ne fait rien. Pendant ce temps la carte compacte montre toujours la clim du blueprint, et fermer le popup y revient.
-  - Taper l'overlay sombre ou le bouton × (vrai bouton de verre 96×64) ferme le modal. 6 des 10 boutons sont des templates factorisés (froid/chaud/ventil/sec, éco/boost) ; les 4 restants (éteint/oscill/brise/silence) et les boutons ± sont volontairement laissés en YAML individuel — voir [ADR-0007](decisions/0007-climate-popup-not-factorized.md).
+  - Taper l'overlay sombre ou le bouton × (le bouton de verre partagé 80×44 de `modal_header.yaml`) ferme le modal. 6 des 10 boutons sont des templates factorisés (froid/chaud/ventil/sec, éco/boost) ; les 4 restants (éteint/oscill/brise/silence) et les boutons ± sont volontairement laissés en YAML individuel — voir [ADR-0007](decisions/0007-climate-popup-not-factorized.md).
 
 Les contrôles sont estompés (non cachés) quand le clim est éteint, pour garder la mise en page stable.
 
@@ -482,7 +453,7 @@ Un **appui long n'importe où sur la carte des pots** ouvre un modal quasi plein
 - le % d'humidité du sol (en grand) et un statut d'arrosage : **OK** (vert), **Bientôt sec** (≤ 20 %, ambre), **À arroser !** (≤ 14 %, rouge — aligné sur la zone rouge de `get_humidity_color()`) ou **Hors ligne** (capteur indisponible)
 - quatre lignes de métriques : **Fertilité** (conductivité EC, µS/cm), **Lumière** (lx), **Température** (°C, gradient `get_temperature_color()`) et **Batterie** du capteur (%, échelle `get_battery_color()`)
 
-Les valeurs sont poussées en continu par les capteurs HA `pot*_ec/lux/temp/bat` (`update_pot_metric_ui()`, `tab5_*.cpp`) — le popup n'a besoin d'aucune synchro à l'ouverture. Taper l'overlay sombre ou le bouton × (vrai bouton de verre 96×64) le ferme. Composants : `pots_popup.yaml` + `pot_detail_card.yaml` (5 instances).
+Les valeurs sont poussées en continu par les capteurs HA `pot*_ec/lux/temp/bat` (`update_pot_metric_ui()`, `tab5_*.cpp`) — le popup n'a besoin d'aucune synchro à l'ouverture. Taper l'overlay sombre ou le bouton × (le bouton de verre partagé 80×44 de `modal_header.yaml`) le ferme. Composants : `pots_popup.yaml` + `pot_detail_card.yaml` (5 instances).
 
 ![Popup détails plantes sur l'appareil réel (Pot 5 hors ligne)](images/tab5_photo_plants.jpg)
 
@@ -499,7 +470,9 @@ Home Assistant enrichit ensuite chaque mois consulté **à la demande** (`script
 - **vacances scolaires** — fond de case violet doux, depuis l'agenda choisi dans « Tab5 · agenda des vacances scolaires » (en France, le fichier ICS du ministère pour votre zone ; jusqu'au 29/09/2026, une table fixe de la zone A)
 - **RDV** (pastille dorée) et **anniversaires** (pastille rose) depuis les calendriers famille/anniversaires
 
-**Taper un jour** ouvre un sous-popup détail 780×540 (`script.tab5_calendrier_jour`) : titre « Mardi 21 Juillet » et jusqu'à 6 lignes typées avec icônes MDI colorées — nom du férié, libellé des vacances scolaires, horaires de travail, RDV horodatés, anniversaires, fêtes civiles — avec les états « Chargement... », « Rien de prévu ce jour » et « Home Assistant hors ligne ». La fermeture suit la recette popups v2 (croix = vrais boutons de verre 96×64, `scrollable: false` partout). Composants : `calendar_popup.yaml` + `cal_grid_build()` (42 cellules construites en C++) + package HA `HomeAssistant_Config/packages/tab5_calendar.yaml`.
+**Taper un jour** ouvre un sous-popup détail 780×540 (`script.tab5_calendrier_jour`) : titre « Mardi 21 Juillet » et jusqu'à 6 lignes typées avec icônes MDI colorées — nom du férié, libellé des vacances scolaires, horaires de travail, RDV horodatés, anniversaires, fêtes civiles — avec les états « Chargement... », « Rien de prévu ce jour » et « Home Assistant hors ligne ». La fermeture suit la recette popups v2 (croix = boutons de verre partagés 80×44, `scrollable: false` partout). Composants : `calendar_popup.yaml` + `cal_grid_build()` (42 cellules construites en C++) + package HA `HomeAssistant_Config/packages/tab5_calendar.yaml`.
+
+![Popup Calendrier sur l'appareil réel](images/tab5_photo_calendar.jpg)
 
 ---
 
@@ -521,7 +494,7 @@ Un **tap court sur la tuile horloge/date** ouvre les réglages du réveil (carte
 
 **Arrêt à la voix ou au toucher.** Toucher n'importe où sur l'écran de sonnerie arrête le réveil ; « Répéter » reste un bouton distinct. Côté voix, le modèle microWakeWord **« Stop » était déjà embarqué** (il ne servait qu'à arrêter le volet) : il est armé pendant la sonnerie, et n'importe quel mot de réveil coupe l'alarme. Le moteur de mots de réveil est démarré même si « Ok Nabu » est désactivé — sinon la promesse ne tiendrait pas pour qui coupe le micro la nuit. Chaque passage de mélodie est suivi de **2,5 s de silence** : c'est la fenêtre où le micro a une chance d'entendre quelque chose.
 
-Autres réglages : 4 mélodies (écoutables d'un tap), un **volume dédié au réveil** (indépendant du volume système), volume progressif, durée de répétition, durée maximale de sonnerie, et un briefing parlé au réveil (heure, horaires du jour, prochain rendez-vous, température).
+Autres réglages : 4 mélodies (‹ › en choisit une et la joue), un **volume dédié au réveil** (indépendant du volume système), volume progressif, durée de répétition, durée maximale de sonnerie, et un briefing parlé au réveil (heure, horaires du jour, prochain rendez-vous, température).
 
 **Annonce des rendez-vous**, N minutes avant (0–120, réglable). HA pousse la liste des rendez-vous horodatés toutes les 5 minutes ; **c'est le firmware qui tient le compte à rebours**, donc une coupure HA entre la poussée et l'échéance ne fait rien rater. Composants : `alarm_popup.yaml` + `alarm_ring_overlay.yaml` + `Tab5/tab5-alarm.yaml` + `Tab5/alarm_clock.h/.cpp` + package HA `HomeAssistant_Config/packages/tab5_reveil.yaml`.
 
@@ -529,22 +502,7 @@ Autres réglages : 4 mélodies (écoutables d'un tap), un **volume dédié au r�
 
 ## Assistant vocal
 
-L'icône microphone sur l'écran d'accueil est l'interface visuelle de l'assistant vocal. Elle change de couleur pour refléter l'état courant du pipeline :
-
-| Couleur de l'icône | État | Ce qui se passe |
-|-------------------|------|----------------|
-| **Gris sombre** | En veille | Écoute wake-word désactivée |
-| **Gris** | Repos | Écoute "Ok Nabu" en arrière-plan |
-| **Vert** | Écoute | Wake word détecté — enregistrement en cours |
-| **Orange** | Traitement | Pipeline HA exécute STT + reconnaissance d'intention |
-| **Bleu** | Synthèse | Réponse TTS en lecture sur le haut-parleur |
-| **Rouge** | Erreur | Pipeline échoué ou commande non comprise |
-
-**Bascule wake-word :** un bouton sur l'écran d'accueil active ou désactive la détection "Ok Nabu". Quand désactivé, on peut toujours activer l'assistant en tapant directement sur l'icône microphone (push-to-talk).
-
-**Sélecteur de mode :** un petit bouton à côté du microphone bascule entre deux modes :
-- **Mode Home Assistant** — les commandes vont vers l'agent de conversation standard de HA
-- **Mode Conversation** — les commandes vont vers un pipeline basé sur un LLM
+L'icône microphone sur l'écran d'accueil est l'interface visuelle de l'assistant vocal ; sa couleur suit l'état du pipeline (`assist_set_pipeline_state()`) : veille (mot de réveil coupé), repos, écoute, traitement (STT + intention), synthèse (TTS), erreur. Les couleurs, le bouton du mot de réveil, les deux boutons de mode (agent de conversation de Home Assistant, ou pipeline de discussion basé sur un LLM) et le tap et l'appui long du micro : [notice, voix](notice/voice.md#version-française).
 
 Quand la liste « Tab5 · pipeline de discussion » vaut « Aucun » (pas de pipeline de discussion), les deux boutons de mode (accueil et popup assistant) disparaissent et la tablette reste en mode Home Assistant (zone `discussion`, [installation](installation/adapt-to-your-home.md#autres-zones)).
 
@@ -553,6 +511,10 @@ Le mode est sauvegardé entre les redémarrages via l'entité HA `select` (`sele
 **Second wake word local — « Stop » :** un second modèle microWakeWord (`Stop`) n'est armé que pendant que le volet est en mouvement (globale `volet_en_mouvement`) et désarmé dès l'arrêt. Dire « Stop » arrête alors le volet directement depuis l'appareil (`script.tab5_volet_action`) — sans « Okay Nabu », sans aller-retour pipeline.
 
 **Interrompre une réponse :** taper l'icône micro pendant que l'assistant parle (bleu) coupe la réponse en cours (arrêt du pipeline, que Home Assistant suit, + le haut-parleur) et relance immédiatement l'écoute (`tab5_vocal_interrupt_and_listen`) — le moyen fiable d'écourter une longue réponse Discussion, le wake word étant inactif pendant la phase de réponse du pipeline.
+
+**Popup assistant** (appui long sur le micro, `btn_assist_trigger` ; ses boutons : [notice](notice/voice.md#version-française)). En mode Discussion, une demande vocale l'ouvre seule (`on_stt_end` → `tab5_assist_on_request`) ; en mode Domotique, le bandeau de 8 s de la carte centrale reste le retour rapide. La réponse est rendue depuis du Markdown (tableaux ré-alignés approximativement — police proportionnelle depuis le 26/09/2026 —, gras, code, puces), plus une image téléchargée à la demande (`online_image`, PNG → RGB565, 760×360). Le moteur peut pousser une réponse riche par le service `tab5_assist_reponse` (variables `texte` = Markdown, `image_url` = PNG optionnel).
+
+![Popup Assistant vocal sur l'appareil réel](images/tab5_photo_assistant_popup.jpg)
 
 ---
 
@@ -576,7 +538,7 @@ Un appui long sur une tuile lumière — ses épaules météo ou sa carte du mod
 - **AMPOULE** (gauche) : sélecteur des **lumières de la pièce** (5 au plus, dans l'ordre des tuiles, lignes resserrées au-delà de trois ; icônes colorées selon l'état on/off, bordure cyan sur la sélection, la lumière appuyée sélectionnée) pour changer de lumière sans fermer le popup, gros bouton **On/Off** et **Tout éteindre** (toutes les lumières de la pièce, `pR / eteindre` ; en mode héritage, les trois lumières 3.x)
 - **LUMINOSITÉ** (centre) : **arc 320 px** (0–255) avec la valeur **% affichée en direct** au centre — synchronisée depuis l'attribut `brightness` HA à l'ouverture et en live (jamais pendant un drag), débouncée 200 ms pour qu'un glissement n'envoie qu'un seul `light.turn_on` — plus 4 raccourcis 10/35/65/100 %
 - **COULEURS** (droite) : 3 blancs nommés (Chaud/Crème/Froid) et une grille 4×3 de **12 pastilles rondes** (chaque pastille envoie `light.turn_on` avec le `color_name` correspondant, factorisées via `light_color_preset_btn.yaml`)
-- Taper l'overlay sombre ou le bouton × (vrai bouton de verre 96×64) ferme le modal
+- Taper l'overlay sombre ou le bouton × (le bouton de verre partagé 80×44 de `modal_header.yaml`) ferme le modal
 
 Le popup est contextuel : l'appui long l'ouvre sur la lumière appuyée, et le sélecteur passe par `script.tab5_light_popup_show(light_idx)` (`popup_lumiere_choisir()`, `tab5_tuiles.cpp`) qui règle la globale `current_light_slot` sur la clé de la tuile (`tRT`, ou `lumiere_N` en mode héritage) et synchronise titre, sélecteur, icône power et arc — un seul popup pour toutes les lumières de toutes les pièces.
 
@@ -586,7 +548,7 @@ Le popup est contextuel : l'appui long l'ouvre sur la lumière appuyée, et le s
 
 ## Popup télécommande TV
 
-Une télécommande Samsung quasi plein écran (`tv_remote_popup.yaml`, carte 1250×690 — les tokens modaux partagés de l'ADR-0009, 15 px des bords) : power, pad de navigation, colonnes volume et chaînes, et une rangée basse (Play/Pause · Retour · Accueil · Muet). Ouverte par appui long sur une tuile multimédia avec l'option TV (`t` ; la carte PC en mode héritage) ou via le bouton TV (`btn_control_tv`) ; chaque touche envoie `remote.send_command` (ou `remote.toggle` pour le power) à l'entité Home Assistant `${entity_tv_remote}` — le Tab5 n'a aucun matériel IR, c'est l'intégration Samsung de HA qui fait le travail. Taper l'overlay sombre ferme le popup.
+Une télécommande Samsung quasi plein écran (`tv_remote_popup.yaml`, carte 1250×690 — les tokens modaux partagés de l'ADR-0009, 15 px des bords) : touches marche, source et menu, pad de navigation rond avec OK, colonne du volume avec muet, touches Lecture · Pause · Retour · Accueil et une rangée de boutons d'applications (Netflix, Prime, YouTube, CANAL+, PC). Ouverte par appui long sur une tuile multimédia avec l'option TV (`t` ; la carte PC en mode héritage) ou via le bouton TV (`btn_control_tv`) ; chaque touche émet un événement `tab5_action` (`emplacement: tv`, [ADR-0025](decisions/0025-events-only.md)) que l'automatisation du blueprint envoie à la télécommande choisie dans « Télécommande de la TV » (`remote.send_command`), les boutons d'applications par `script.tab5_tv_app` (`tab5_tv.yaml`) — le Tab5 n'a aucun matériel IR, c'est l'intégration Samsung de HA qui fait le travail. Taper l'overlay sombre ferme le popup.
 
 ![Popup télécommande TV sur l'appareil réel](images/tab5_photo_tv_remote.jpg)
 
@@ -649,49 +611,6 @@ Depuis la 3.2, chaque tuile `vol` est un volet ou une vanne à elle seule (appui
 - **POSITION** (gauche) : la position en grand (« 45 % ») et l'état en mots dessous (« Ouvert », « Fermé », « Partiel », « En mouvement », « Hors ligne ») ; un curseur 0-100 % (fermé à gauche, ouvert à droite) qui n'envoie la position **qu'au relâcher** (`position`, `cover.set_cover_position` / `valve.set_valve_position` sur l'entité de cette tuile, si elle sait en régler une). Un volet qui ne donne pas sa position (ou le volet à course simulée de `optionnel/volet_serre_tracking.yaml`) montre l'état en mots seul, sans curseur.
 - **COMMANDES** (droite) : **Ouvrir**, **Stop** et **Fermer**, les commandes de la tuile.
 - Le popup suit le volet tant qu'il est ouvert (position, état), jamais sous le doigt. Avec l'option `k`, l'appui long envoie toujours l'autre de ouvrir / fermer (confirmé par un second appui) ; option `r` : rien. En mode héritage, le volet 3.x (`tab5_maj_volet_etat`) est la tuile 1 de l'accueil : sa carte météo a l'inversion de sens (tap sur le titre) et le bouton d'action (tap sur l'icône) décrits plus haut, et sa carte du mode HA partage le même `script.tab5_volet_tap`.
-
----
-
-## Popup Assistant vocal
-
-Ouvert par **appui long sur la zone micro** (`btn_assist_trigger`). Carte modale quasi plein écran (1250×690) organisée en deux colonnes :
-
-- **Gauche — Réglages** : sélecteur cerveau/pipeline (Domotique ↔ Discussion), toggle Ok Nabu ON/OFF, bouton Muet, slider Volume, taille de texte A-/A+ (persistée ; roboto_32_b / police de la date du thème)
-- **Droite — Conversation** : zone « VOTRE DEMANDE » (transcription STT) + zone « RÉPONSE » défilante avec rendu Markdown (tableaux ré-alignés approximativement — police proportionnelle depuis le 26/09/2026 —, gras, code, puces) + image téléchargée à la demande (`online_image`, PNG→RGB565, 760×360)
-
-En mode Discussion, une demande vocale ouvre automatiquement le popup (`on_stt_end` → `tab5_assist_on_request`). En mode Domotique, le bandeau central 8 s reste le retour rapide. Le moteur peut pousser une réponse riche via le service HA `tab5_assist_reponse` (variables `texte` = Markdown, `image_url` = PNG optionnel).
-
-Boutons bas : « Parler » (push-to-talk), Stop (carré rose), « Fermer ».
-
-![Popup Assistant vocal sur l'appareil réel](images/tab5_photo_assistant_popup.jpg)
-
----
-
-## Popup Calendrier
-
-Ouvert par **appui long sur l'horloge/date** (`btn_clock_calendar_zone`, zone tactile invisible sur `clock_tile`). Carte modale 1250×690 :
-
-- **En-tête** : icône calendrier + titre « Calendrier », navigation ◀ mois ▶, bouton « Aujourd'hui », croix de fermeture
-- **Grille mensuelle 7×6** (lundi en tête) : 42 cellules construites en C++ (`cal_grid_build()`, à la première ouverture) avec numéro du jour, **heures de travail** affichées dans la case, pastilles colorées (dorée = RDV, rose = anniversaire), fond violet doux = vacances scolaires, numéro rose = férié, bordure cyan = aujourd'hui
-- **Légende** en bas : Aujourd'hui / Travail / Férié / Vac. scolaires / RDV / Anniv.
-- **Tap sur un jour** → sous-popup détail 780×540 : titre « Mardi 21 Juillet », lignes typées (férié, vacances scolaires, horaires travail, RDV, anniversaire, fête civile) avec icônes MDI colorées
-
-La grille est calculée **localement** depuis SNTP (algorithme de Sakamoto). HA enrichit chaque mois à la demande via `tab5_maj_calendrier_mois` (bitmask 2 hex/jour + 31 champs d'heures) avec cache par mois.
-
-![Popup Calendrier sur l'appareil réel](images/tab5_photo_calendar.jpg)
-
----
-
-## Popup Détails Plantes
-
-Ouvert par **appui long** sur les 4 slots pots du dashboard (`btn_pots_detail_zone`). Carte modale 1250×690 avec 5 cartes de verre **fixes** (carte N = capteur `moisture_N`) :
-
-- Nom du capteur + icône colorée par l'humidité
-- % humidité dans la police de la date du thème (`style_police_date`)
-- Statut : OK / Bientôt sec / À arroser ! / Hors ligne
-- 4 métriques : Fertilité (EC µS/cm), Lumière (lx), Température (°C, gradient), Batterie (échelle couleur)
-
-Valeurs poussées en continu par `update_pots_popup_moisture_ui()` / `update_pot_metric_ui()` — aucune synchro à l'ouverture.
 
 ---
 
