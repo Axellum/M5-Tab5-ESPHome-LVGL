@@ -115,7 +115,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Aucun travail de prévu": "Planlı iş yok"
 "Jour": "Gün"
 "{jour} : {horaire}": "{jour}: {horaire}"
-"{jour} : #fb923c {horaire}#": "{jour}: #fb923c {horaire}#"
+"{jour} : #{couleur} {horaire}#": "{jour}: #{couleur} {horaire}#"
 "{jour} : repos": "{jour}: izin"
 "{jour} : pas d'horaire": "{jour}: saat yok"
 "Alerte Météo Rouge en cours ! Restez prudent.": "Kırmızı hava uyarısı sürüyor! Dikkatli ol."

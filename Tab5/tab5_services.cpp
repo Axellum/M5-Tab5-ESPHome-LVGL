@@ -302,18 +302,27 @@ void rain_predict_rejouer() {
 // réglages de la clim qui fixent le format de la cible et l'unité ; devenue
 // clim_blueprint_recu() le même jour (clims des tuiles, ADR-0027).
 
+// Bandeau planning, retenu à sa première écriture pour planning_rejouer_theme().
+static lv_obj_t* s_planning_lbl = nullptr;
+static std::string* s_plan_ligne_1 = nullptr;
+static std::string* s_plan_ligne_2 = nullptr;
+
+static std::string sans_numero(const std::string& s) {
+    if (s.rfind("1/ ", 0) == 0) return s.substr(3);
+    if (s.rfind("2/ ", 0) == 0) return s.substr(3);
+    if (s.rfind("1/", 0) == 0) return s.substr(2);
+    if (s.rfind("2/", 0) == 0) return s.substr(2);
+    return s;
+}
+
 void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::string& l2,
     std::string& plan_ligne_1, std::string& plan_ligne_2) {
     if (!lbl) return;
-    auto strip_prefix = [](const std::string& s) -> std::string {
-        if (s.rfind("1/ ", 0) == 0) return s.substr(3);
-        if (s.rfind("2/ ", 0) == 0) return s.substr(3);
-        if (s.rfind("1/", 0) == 0) return s.substr(2);
-        if (s.rfind("2/", 0) == 0) return s.substr(2);
-        return s;
-    };
-    std::string line1 = strip_prefix(l1);
-    std::string line2 = strip_prefix(l2);
+    s_planning_lbl = lbl;
+    s_plan_ligne_1 = &plan_ligne_1;
+    s_plan_ligne_2 = &plan_ligne_2;
+    std::string line1 = sans_numero(l1);
+    std::string line2 = sans_numero(l2);
     plan_ligne_1 = line1;
     plan_ligne_2 = line2;
     std::string combined = line1;
@@ -324,9 +333,20 @@ void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::st
     set_label_text_utf8(lbl, combined.c_str());
 }
 
-// Bandeau planning vide, en gris (recolor LVGL « #aaaaaa …# »).
+// Couleurs du balisage recolor de LVGL (« #RRGGBB texte# ») : un rôle de la palette du
+// bandeau (UIBandeau), jamais une valeur en dur. Thèmes (05/10/2026) : le blanc écrit
+// en dur rendait « Auj. » et les horaires invisibles sur le bandeau clair des thèmes
+// sans `zones_sombres:` (Ardoise, Bento, Graphite… en mode clair). Le texte est
+// recalculé au changement de thème (planning_rejouer_theme).
+static std::string couleur_recolor(uint32_t c) {
+    char hex[8];
+    snprintf(hex, sizeof(hex), "%06X", static_cast<unsigned>(c & 0xFFFFFFu));
+    return hex;
+}
+
+// Bandeau planning vide, dans le texte atténué du bandeau.
 static std::string planning_vide() {
-    return std::string("#aaaaaa ") + tr("Aucun travail de prévu") + "#";
+    return "#" + couleur_recolor(UIBandeau.TEXT_DIM) + " " + tr("Aucun travail de prévu") + "#";
 }
 
 void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
@@ -375,14 +395,15 @@ void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
             j_name = std::string(day_short_utf8(day_tm.tm_wday)) + ".";   // « Dim. »
         }
 
+        // Embauche tôt : EARLY ; sinon le texte du bandeau ; « Dem. » : INFO.
         const bool early = cal_is_early_shift(h);
-        const char* hex = early ? "fb923c" : "ffffff";
+        const std::string hex = couleur_recolor(early ? UIBandeau.EARLY : UIBandeau.TEXT_PRIMARY);
         std::string j_colored;
-        if (jour == 1) j_colored = "#44aaff " + j_name + "#";
-        else j_colored = std::string("#") + hex + " " + j_name + "#";
+        if (jour == 1) j_colored = "#" + couleur_recolor(UIBandeau.INFO) + " " + j_name + "#";
+        else j_colored = "#" + hex + " " + j_name + "#";
 
         char line[96];
-        snprintf(line, sizeof(line), "%d/ %s : #%s %s#", n + 1, j_colored.c_str(), hex, h.c_str());
+        snprintf(line, sizeof(line), "%d/ %s : #%s %s#", n + 1, j_colored.c_str(), hex.c_str(), h.c_str());
         lines[n++] = line;
     }
 
@@ -391,6 +412,23 @@ void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
         out_l1 = lines[0];
         if (n > 1) out_l2 = lines[1];
     }
+}
+
+// Thème changé : les couleurs sont dans le texte, il est recalculé avec la nouvelle
+// palette. Pendant le planning du tap (6 s), seules les lignes à rendre changent. Un
+// texte venu de l'ancien service tab5_maj_planning (compatibilité) est remplacé par
+// celui des prévisions, comme à leur prochaine poussée.
+void planning_rejouer_theme() {
+    if (s_planning_lbl == nullptr || s_plan_ligne_1 == nullptr || s_plan_ligne_2 == nullptr) return;
+    std::string l1, l2;
+    build_planning_lines_from_jours(l1, l2);
+    if (temp_planning_active()) {
+        *s_plan_ligne_1 = sans_numero(l1);
+        *s_plan_ligne_2 = sans_numero(l2);
+        planning_temporaire_lignes(*s_plan_ligne_1, *s_plan_ligne_2);
+        return;
+    }
+    update_planning_text_ui(s_planning_lbl, l1, l2, *s_plan_ligne_1, *s_plan_ligne_2);
 }
 
 // -----------------------------------------------------------------------------

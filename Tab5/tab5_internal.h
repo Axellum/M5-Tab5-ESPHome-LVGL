@@ -179,3 +179,8 @@ void energie_rejouer_theme();
 void zones_rejouer_theme();
 void assist_rejouer_theme();
 void cal_detail_rejouer();
+// Bandeau planning (tab5_services.cpp) : ses couleurs sont dans son texte, recalculé.
+void planning_rejouer_theme();
+// Planning du tap affiché (tab5_central.cpp) : remplace les lignes rendues à la fin
+// des 6 s ; sans effet hors du planning du tap.
+void planning_temporaire_lignes(const std::string& l1, const std::string& l2);

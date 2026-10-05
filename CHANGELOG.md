@@ -4,6 +4,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Thèmes : horaires du planning lisibles en mode clair
+
+Le bandeau du planning écrivait « Auj. » et les horaires en blanc, en dur : en mode
+clair, sur le bandeau clair des thèmes qui ne le gardent pas sombre (Ardoise, Almanach
+imprimé, Ardoise douce, Bento, Graphite, Terre cuite), on ne les voyait presque plus.
+Les couleurs du planning (horaires, embauche tôt, « Dem. », « Aucun travail de prévu »)
+et celle de l'embauche tôt du jour touché viennent désormais de la palette du bandeau,
+et le texte est recalculé au changement de thème. Vu sur la galerie des thèmes du rendu
+hors tablette.
+
 ### 2026-10-05 — Thèmes : les dix-sept thèmes de la galerie, Relief doux par défaut
 
 Demande d'Axel : « mets tous les thèmes qu'on a faits ce soir », Relief doux par défaut.

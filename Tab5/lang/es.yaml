@@ -107,7 +107,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Aucun travail de prévu": "Sin trabajo previsto"
 "Jour": "Día"
 "{jour} : {horaire}": "{jour}: {horaire}"
-"{jour} : #fb923c {horaire}#": "{jour}: #fb923c {horaire}#"
+"{jour} : #{couleur} {horaire}#": "{jour}: #{couleur} {horaire}#"
 "{jour} : repos": "{jour}: libre"
 "{jour} : pas d'horaire": "{jour}: sin horario"
 "Alerte Météo Rouge en cours ! Restez prudent.": "¡Alerta meteorológica roja! Ten cuidado."
