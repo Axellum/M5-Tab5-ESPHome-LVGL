@@ -3,7 +3,8 @@
  * @file tab5_core.h
  * @role Logique PURE partagée par le HMI et le réveil : données calendrier /
  *       prévisions poussées par HA, dates locales (J+n, numéro de jour civil),
- *       jours et mois en toutes lettres.
+ *       jours et mois en toutes lettres. Et la décision « batterie montée ou
+ *       pas » d'après la tension (batterie_lecture, 05/10/2026).
  * @architecture_constraint Aucune dépendance ESPHome ni LVGL : ce fichier et
  *       tab5_core.cpp se compilent sur PC (tools/test_alarm_clock.cpp, g++ en CI).
  *       C'est ce qui permet de tester le moteur du réveil sans l'appareil — audit
@@ -130,3 +131,32 @@ float tab5_fini_ou_nan(float v);
 // Partie entière de `v` (troncature, comme un cast) bornée à [bas, haut] ; `defaut`
 // si `v` n'est pas fini. Toute valeur de HA convertie en entier passe par ici.
 int tab5_float_vers_int(float v, int bas, int haut, int defaut);
+
+// ─── Batterie de la tablette : montée ou pas ? (discussion #278, 05/10/2026) ───
+// Le chargeur dit « en charge » avec ou sans batterie : seule la tension de l'INA226
+// (lue toutes les 60 s) les distingue. Une batterie 2S en état de marche ne lit pas sous
+// ~6 V (6,0 V = 0 % de l'échelle du niveau) ; sans batterie, l'INA226 lit le chargeur ou
+// l'USB. Mesures : batterie d'origine montée ~7,2 V, sans batterie 4,2 V (husyildiz,
+// ST7121, 05/10) ; sans batterie chez l'auteur, 4,2 ↔ 8,39 V toutes les 1 à 3 min
+// (03/10 au soir) puis 5,71 V stable (04/10). L'oscillation repasse au-dessus du seuil :
+// une seule lecture basse marque donc la batterie absente pour toute la fenêtre.
+constexpr float kBatterieTensionMin = 6.0f;               // V : en dessous, pas de batterie
+constexpr uint32_t kBatterieFenetreMs = 10u * 60u * 1000u;  // 10 min, soit 10 lectures
+
+enum class PresenceBatterie : uint8_t {
+    INCONNUE,  // aucune lecture valable depuis le démarrage
+    ABSENTE,   // une lecture < kBatterieTensionMin dans les kBatterieFenetreMs dernières
+    PRESENTE,  // aucune lecture basse dans la fenêtre (depuis le démarrage compris)
+};
+
+struct DetectionBatterie {
+    PresenceBatterie presence = PresenceBatterie::INCONNUE;
+    bool basse_vue = false;  // une lecture basse dans la fenêtre
+    uint32_t basse_ms = 0;   // instant de la dernière lecture basse (si basse_vue)
+};
+
+// Une lecture de la tension (V) à l'instant `maintenant_ms` (millis() sur la tablette,
+// qui reboucle en 49 jours : seules des différences sont calculées). Une lecture non
+// finie (INA226 muet) ne change rien. Met `d` à jour et renvoie la présence décidée.
+// Pure (ni ESPHome ni LVGL) : testée par tools/test_alarm_clock.cpp.
+PresenceBatterie batterie_lecture(DetectionBatterie& d, float tension, uint32_t maintenant_ms);

@@ -177,10 +177,19 @@ HA_VERS_LA_GAUCHE = Glisser(1265, 520, 15, 520)   # pièce suivante (page + 1)
 HA_VERS_LA_DROITE = Glisser(15, 520, 1265, 520)   # pièce précédente (page − 1)
 
 
-def _batterie(montee: bool, niveau: float = float("nan"), en_charge: bool = False) -> Service:
+# Tensions lues par l'INA226 : une batterie 2S (détectée) et la tablette sans batterie,
+# sur l'USB (5,71 V relevé chez l'auteur le 04/10/2026 ; sous 6,0 V = pas de batterie).
+TENSION_BATTERIE = 7.6
+TENSION_SANS_BATTERIE = 5.71
+
+
+def _batterie(montee: bool, niveau: float = float("nan"), en_charge: bool = False,
+              tension: float = TENSION_BATTERIE) -> Service:
     """rendu_batterie (Tab5/rendu/bouchons.yaml) : interrupteur « Tab5 Batterie montée »,
-    niveau en % et état de charge de la batterie de la tablette (icône du bandeau)."""
-    return Service("rendu_batterie", (("montee", montee), ("niveau", niveau), ("en_charge", en_charge)))
+    niveau en %, état de charge et tension (V) de la batterie de la tablette (icône du
+    bandeau ; une prise si la tension dit qu'il n'y a pas de batterie)."""
+    return Service("rendu_batterie", (("montee", montee), ("niveau", niveau), ("en_charge", en_charge),
+                                      ("tension", tension)))
 
 
 # Retour à l'état par défaut (interrupteur éteint, aucune mesure) : les autres écrans
@@ -348,6 +357,10 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-batterie-pleine", (_batterie(True, 95.0),), SANS_BATTERIE),
     Ecran("accueil-batterie-faible", (_batterie(True, 12.0),), SANS_BATTERIE),
     Ecran("accueil-batterie-en-charge", (_batterie(True, 60.0, True),), SANS_BATTERIE),
+    # Sans batterie, sur l'USB (discussion #278, 05/10/2026) : une prise, niveau inconnu
+    # (« Tab5 Batterie » ne vaut rien sans batterie) et le chargeur qui dit « en charge ».
+    Ecran("accueil-batterie-prise", (_batterie(True, en_charge=True, tension=TENSION_SANS_BATTERIE),),
+          SANS_BATTERIE),
     # Production solaire (clé solaire, % de la crête) : icône avant la batterie, couleur
     # du barème des batteries, panneau gris à 0 % (la nuit). Un écran par palier, puis
     # les deux icônes ensemble pour l'alignement.

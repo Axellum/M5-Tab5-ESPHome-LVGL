@@ -578,7 +578,7 @@ font:
       - "\U000F036C"  # microphone
 
   # 26 px — barre d'état (réveil, Wi-Fi, PC, production solaire, batterie de la
-  # tablette) et pluie des cartes horaires.
+  # tablette, ou une prise sans batterie) et pluie des cartes horaires.
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_26
     size: 26
@@ -594,6 +594,7 @@ font:
       - "\U000F0379"  # monitor
       - "\U000F0596"  # weather-pouring
       - "\U000F05A9"  # wifi
+      - "\U000F06A5"  # power-plug (tablette sans batterie détectée)
       - "\U000F0D9B"  # solar-panel (production solaire du bandeau, tous les paliers)
       - "\U000F12A1"  # battery-low (20 à 40 %)
       - "\U000F12A2"  # battery-medium (41 à 80 %)

@@ -106,6 +106,7 @@
   ('wifi', 'sensor', 'tab5_wifi_signal'), ('ssid', 'sensor', 'tab5_ssid'), ('ip', 'sensor', 'tab5_ip'),
   ('casque', 'binary_sensor', 'headphone_detect'), ('batterie', 'sensor', 'tab5_batterie'),
   ('tension', 'sensor', 'tab5_tension_batterie'), ('en_charge', 'binary_sensor', 'tab5_batterie_en_charge'),
+  ('batterie_detectee', 'binary_sensor', 'tab5_batterie_detectee'),
 ] -%}
 {%- for cle, domaine, fin in ENTITES -%}
   {%- set motif = domaine ~ '[.]' ~ ('.*_' ~ fin ~ '$' if fin else '') -%}
@@ -1169,7 +1170,16 @@ views:
             grid_options:
               columns: 6
 {%- endif %}
-{#- Batterie : entités désactivées par défaut dans HA (à activer), cartes visibles seulement
+{#- Batterie détectée (firmware du 05/10/2026, d'après la tension) : toujours montrée, c'est
+    elle qui dit s'il vaut la peine d'allumer « Batterie montée ». #}
+{%- if T.batterie_detectee %}
+          - type: tile
+            entity: {{ T.batterie_detectee }}
+            name: "{{ t('Batterie détectée', 'Battery detected') }}"
+            grid_options:
+              columns: 6
+{%- endif %}
+{#- Batterie: entités désactivées par défaut dans HA (à activer), cartes visibles seulement
     quand « Batterie montée » est allumé. #}
 {%- for ent, fr_, en_ in [(T.batterie, 'Batterie', 'Battery'), (T.tension, 'Tension', 'Voltage'), (T.en_charge, 'En charge', 'Charging')] %}
 {%- if ent %}
@@ -2626,6 +2636,12 @@ views:
     'es': 'Batería',
     'it': 'Batteria',
     'tr': 'Pil'},
+  'Batterie détectée': {
+    'de': 'Batterie erkannt',
+    'nl': 'Batterij gedetecteerd',
+    'es': 'Batería detectada',
+    'it': 'Batteria rilevata',
+    'tr': 'Pil algılandı'},
   'Tension': {
     'de': 'Spannung',
     'nl': 'Spanning',

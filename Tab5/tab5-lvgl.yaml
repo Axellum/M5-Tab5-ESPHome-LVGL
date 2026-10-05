@@ -212,7 +212,8 @@ lvgl:
         # Batterie de la tablette (04/10/2026), en dernier comme sur un téléphone : la
         # montrer ou la cacher (interrupteur « Tab5 Batterie montée », tab5-ha-controls.yaml)
         # ne déplace aucune autre icône. Cachée jusqu'au premier tab5_zones_apply ;
-        # glyphe et couleur posés par batterie_peindre() (tab5_zones.cpp). Ordre et pas
+        # glyphe et couleur posés par batterie_peindre() (tab5_zones.cpp) : une prise
+        # quand la batterie n'est pas détectée (05/10/2026). Ordre et pas
         # de 35 px : BandeauIcone (tab5_custom.h).
         - label: { id: icon_batterie, text: "\U000F0091", align: TOP_LEFT, x: 185, y: 10, text_font: mdi_font_26, styles: style_text_inactive, hidden: true }
 

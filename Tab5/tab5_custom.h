@@ -881,15 +881,24 @@ void zones_apply_ui();
 
 // Batterie de la tablette, icône du bandeau d'état (tab5_zones.cpp). L'icône n'est
 // visible que si l'interrupteur « Tab5 Batterie montée » est allumé
-// (tab5-ha-controls.yaml) : sans batterie, le chargeur dit « en charge, 100 % »
-// (relevé le 03/10/2026), la tablette ne peut donc pas savoir seule qu'il n'y en a
-// pas. Glyphe selon le niveau (et « en charge »), couleur de get_battery_color(),
-// la même échelle que le téléphone. Chaque appel garde sa valeur : appelés avant le
-// premier zones_apply_ui() (restauration de l'interrupteur au setup), ils ne
-// dessinent rien, et zones_apply_ui() peint ensuite l'état gardé.
+// (tab5-ha-controls.yaml, éteint par défaut). Allumé : une prise (couleur du texte du
+// thème) quand la tension dit qu'il n'y a pas de batterie (batterie_lecture,
+// tab5_core.h : une lecture sous 6,0 V dans les 10 dernières minutes, 05/10/2026) ;
+// sinon le glyphe suit le niveau (et « en charge »), couleur de get_battery_color(),
+// la même échelle que le téléphone ; « ? » avant la première lecture. Chaque appel
+// garde sa valeur : appelés avant le premier zones_apply_ui() (restauration de
+// l'interrupteur au setup), ils ne dessinent rien, et zones_apply_ui() peint ensuite
+// l'état gardé.
 void batterie_montee_ui(bool montee);   // on_state de l'interrupteur
 void batterie_niveau_ui(float niveau);  // % de batterie_niveau, NAN = inconnu
 void batterie_charge_ui(bool en_charge);  // batterie_en_charge (CHG_STAT)
+// Chaque lecture de l'INA226 (on_raw_value de batterie_tension, V) à l'instant
+// `maintenant_ms` (millis()). Vrai si la décision « batterie détectée » vient de changer :
+// le YAML publie alors « Tab5 Batterie détectée » et recalcule « Tab5 Batterie ».
+bool batterie_tension_ui(float tension, uint32_t maintenant_ms);
+// Vrai si une batterie est détectée (faux tant qu'aucune lecture n'a décidé) : le
+// niveau « Tab5 Batterie » vaut inconnu sans elle.
+bool batterie_presente();
 // Tuile i (0 à 4) de l'accueil : son appareil est-il absent ?
 bool zone_tuile_absente(int tuile);
 // Nombre de pots présents (0 à 5).

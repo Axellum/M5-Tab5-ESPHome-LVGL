@@ -10,7 +10,8 @@
  * arrêt, fenêtre de grâce au démarrage, mode embauche (délai, bornes, repos
  * minimum), calendrier daté par son jour d'ancrage (bug §2.2 de l'audit),
  * changements d'heure, rendez-vous. Aussi les conversions des nombres reçus de HA
- * (tab5_float_vers_int : « inf » ou « 1e30 » → entier borné, lot A de l'audit du 30/09).
+ * (tab5_float_vers_int : « inf » ou « 1e30 » → entier borné, lot A de l'audit du 30/09),
+ * et la décision « batterie de la tablette montée ou pas » (batterie_lecture, 05/10).
  *
  * Build & run (CI, job `python`) :
  *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5 -o test_alarm_clock \
@@ -471,6 +472,51 @@ static void test_nombres_de_ha() {
     expect(tab5_float_vers_int(0.0f, 0, 255, 9) == 0, "borne basse atteinte (pas le défaut)");
 }
 
+// Batterie de la tablette montée ou pas (discussion #278, 05/10/2026) : une lecture sous
+// 6 V marque la batterie absente pendant 10 min. Cas mesurés : batterie ~7,2 V, sans
+// batterie 4,2 V, 5,71 V stable ou 4,2 ↔ 8,39 V toutes les 1 à 3 min.
+static void test_batterie_presence() {
+    constexpr uint32_t MIN = 60u * 1000u;
+    using P = PresenceBatterie;
+    {
+        DetectionBatterie d;
+        expect(d.presence == P::INCONNUE, "batterie : inconnue avant la première lecture");
+        expect(batterie_lecture(d, NAN, 0) == P::INCONNUE, "batterie : lecture ratée, toujours inconnue");
+        expect(batterie_lecture(d, 7.2f, MIN) == P::PRESENTE, "batterie montée (7,2 V) : présente dès la 1re lecture");
+        expect(batterie_lecture(d, 6.0f, 2 * MIN) == P::PRESENTE, "6,0 V pile : encore une batterie (0 %)");
+        expect(batterie_lecture(d, NAN, 3 * MIN) == P::PRESENTE, "lecture ratée : décision gardée");
+    }
+    {
+        DetectionBatterie d;
+        expect(batterie_lecture(d, 5.71f, 0) == P::ABSENTE, "5,71 V stable : absente");
+        for (uint32_t m = 1; m <= 30; m++)
+            batterie_lecture(d, 5.71f, m * MIN);
+        expect(d.presence == P::ABSENTE, "5,71 V pendant 30 min : toujours absente");
+        expect(batterie_lecture(d, 4.2f, 31 * MIN) == P::ABSENTE, "4,2 V (USB) : absente");
+    }
+    {
+        // Oscillation 4,2 ↔ 8,39 V : les lectures hautes ne suffisent pas à la faire revenir.
+        DetectionBatterie d;
+        const float lectures[] = {8.39f, 4.2f, 8.39f, 8.39f, 4.2f, 8.39f, 8.39f, 8.39f, 4.2f, 8.39f};
+        expect(batterie_lecture(d, lectures[0], 0) == P::PRESENTE, "oscillation : 8,39 V d'abord, rien de bas vu");
+        for (uint32_t m = 1; m < 10; m++)
+            batterie_lecture(d, lectures[m], m * MIN);
+        expect(d.presence == P::ABSENTE, "oscillation 4,2 ↔ 8,39 V : absente");
+        expect(batterie_lecture(d, 8.39f, (8 + 9) * MIN) == P::ABSENTE, "9 min après la dernière basse : absente");
+        expect(batterie_lecture(d, 8.39f, (8 + 10) * MIN) == P::PRESENTE, "10 min sans lecture basse : présente");
+        expect(batterie_lecture(d, 5.9f, 19 * MIN) == P::ABSENTE, "une seule lecture basse suffit");
+    }
+    {
+        // millis() reboucle après 49 jours : la fenêtre se compte quand même.
+        DetectionBatterie d;
+        const uint32_t avant = 0xFFFFFFFFu - 2 * MIN;
+        batterie_lecture(d, 4.2f, avant);
+        expect(batterie_lecture(d, 7.5f, avant + 5 * MIN) == P::ABSENTE, "rebouclage : 5 min après, absente");
+        expect(batterie_lecture(d, 7.5f, avant + 10 * MIN) == P::PRESENTE, "rebouclage : 10 min après, présente");
+    }
+    expect(kBatterieTensionMin == 6.0f && kBatterieFenetreMs == 10u * MIN, "seuil 6,0 V, fenêtre 10 min");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -491,6 +537,7 @@ int main() {
     test_prereglages_et_volume();
     test_langue();
     test_nombres_de_ha();
+    test_batterie_presence();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;

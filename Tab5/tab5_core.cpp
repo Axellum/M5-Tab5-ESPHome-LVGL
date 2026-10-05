@@ -193,3 +193,17 @@ int tab5_float_vers_int(float v, int bas, int haut, int defaut) {
     if (v >= static_cast<float>(haut)) return haut;
     return static_cast<int>(v);
 }
+
+// ─── Batterie de la tablette montée ou pas (discussion #278, 05/10/2026) ───
+
+PresenceBatterie batterie_lecture(DetectionBatterie& d, float tension, uint32_t maintenant_ms) {
+    if (!std::isfinite(tension)) return d.presence;
+    if (tension < kBatterieTensionMin) {
+        d.basse_vue = true;
+        d.basse_ms = maintenant_ms;
+    } else if (d.basse_vue && maintenant_ms - d.basse_ms >= kBatterieFenetreMs) {
+        d.basse_vue = false;  // différence non signée : juste après le rebouclage de millis()
+    }
+    d.presence = d.basse_vue ? PresenceBatterie::ABSENTE : PresenceBatterie::PRESENTE;
+    return d.presence;
+}

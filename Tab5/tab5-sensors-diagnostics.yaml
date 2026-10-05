@@ -7,11 +7,19 @@
 #       température coeur, horloge SNTP et intervals de la console système.
 # @batterie Batterie d'origine (discussion #278, 03/10/2026) : CHG_EN (pi4ioe2 P7) mis à 1,
 #           charge rapide (P5) à l'arrêt, état CHG_STAT (P6) lu toutes les 10 s, INA226
-#           en 0x41 (0x40 = ES7210). Non testé avec une batterie (l'auteur n'en a pas) ;
-#           sans batterie les entités disent « en charge, 100 % » : désactivées par défaut.
-#           Icône du bandeau d'état (04/10/2026) : niveau et charge passés au C++
-#           (batterie_niveau_ui, batterie_charge_ui), affichée seulement si
-#           l'interrupteur « Tab5 Batterie montée » (tab5-ha-controls.yaml) est allumé.
+#           en 0x41 (0x40 = ES7210). Testé par husyildiz avec la batterie d'origine
+#           (~7,2 V, la charge suit la réalité) ; l'auteur n'en a pas. Sans batterie, le
+#           chargeur dit « en charge » et la tension oscille ou reste sous 6 V : les
+#           entités de charge, tension et niveau sont désactivées par défaut.
+#           Batterie détectée (05/10/2026) : chaque lecture de l'INA226 passe par
+#           batterie_tension_ui (on_raw_value) ; une lecture sous 6,0 V dans les 10
+#           dernières minutes = pas de batterie (règle et mesures : tab5_core.h). Publié
+#           par « Tab5 Batterie détectée » (activée par défaut) ; « Tab5 Batterie » vaut
+#           alors inconnu.
+#           Icône du bandeau d'état (04/10/2026) : niveau, charge et tension passés au C++
+#           (batterie_niveau_ui, batterie_charge_ui, batterie_tension_ui), affichée
+#           seulement si l'interrupteur « Tab5 Batterie montée » (tab5-ha-controls.yaml)
+#           est allumé ; une prise quand la batterie n'est pas détectée.
 # @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
 #                         Les blocs on_value: doivent se contenter d'appeler des fonctions
 #                         C++ depuis tab5_custom.cpp (ex: update_console_diagnostics_ui(...) ).
@@ -138,6 +146,17 @@ binary_sensor:
     # si l'interrupteur « Tab5 Batterie montée » est allumé (tab5-ha-controls.yaml).
     on_state:
       - lambda: 'batterie_charge_ui(x);'
+
+  # Batterie détectée (discussion #278, 05/10/2026) : la décision de la tablette, d'après
+  # la tension (batterie_tension_ui, on_raw_value de batterie_tension plus bas ; règle
+  # dans tab5_core.h). Publiée à chaque changement ; inconnue avant la première lecture
+  # de l'INA226. Activée par défaut : c'est elle qui dit, sans batterie, que la tension
+  # et le niveau ne veulent rien dire.
+  - platform: template
+    id: batterie_detectee
+    name: "Tab5 Batterie détectée"
+    icon: mdi:battery-check
+    entity_category: diagnostic
 
   - platform: status
     name: "HA API Status"
@@ -292,8 +311,9 @@ sensor:
   # Tension de la batterie (INA226, présent en 0x41 sur la tablette de l'auteur le
   # 26/09/2026 ; 0x40, défaut d'ESPHome, est l'ES7210). Shunt et max_current de la
   # config de référence ESPHome, utiles au seul courant (non publié). Publiée à 50 mV
-  # près (≈ 2 %) ou toutes les 15 min. Sans batterie, elle lit la tension du chargeur :
-  # 8,39 V, donc « 100 % » (tablette de l'auteur, 03/10/2026) ; d'où disabled_by_default.
+  # près (≈ 2 %) ou toutes les 15 min. Sans batterie, elle lit le chargeur ou l'USB :
+  # 4,2 V (husyildiz), 4,2 ↔ 8,39 V ou 5,71 V stable (tablette de l'auteur, 03 et
+  # 04/10/2026) ; d'où disabled_by_default, et « Tab5 Batterie détectée ».
   - platform: ina226
     i2c_id: bsp_bus
     address: 0x41
@@ -311,10 +331,22 @@ sensor:
         - or:
             - throttle: 15min
             - delta: 0.05
+      # Chaque lecture (toutes les 60 s, avant les filtres : une oscillation sous le seuil
+      # ne doit pas échapper au delta) décide si la batterie est là (tab5_core.h). Au
+      # changement : « Tab5 Batterie détectée », et le niveau recalculé depuis cette
+      # lecture (sinon, tension stable, il attendrait jusqu'à 15 min la suivante publiée).
+      on_raw_value:
+        - lambda: |-
+            if (batterie_tension_ui(x, millis())) {
+              id(batterie_detectee).publish_state(batterie_presente());
+              id(batterie_niveau).publish_state(x);
+            }
 
   # Niveau d'après la tension, droite de battery-percentage.yaml (référence ESPHome) :
-  # 6,0 V = 0 %, 8,23 V = 100 % ; trop haut pendant la charge. Sous 5 V (pas de
-  # batterie 2S en état de marche) : inconnu plutôt que 0 %.
+  # 6,0 V = 0 %, 8,23 V = 100 % ; trop haut pendant la charge. Inconnu (pas 0 ni 100 %)
+  # tant que la batterie n'est pas détectée (05/10/2026 : une lecture sous 6,0 V dans
+  # les 10 dernières minutes ; tab5_core.h) : sans batterie, le 8,39 V du chargeur
+  # donnait 100 % et le 5,71 V 0 %.
   - platform: copy
     source_id: batterie_tension
     id: batterie_niveau
@@ -326,11 +358,12 @@ sensor:
     disabled_by_default: true
     filters:
       - lambda: |-
-          if (std::isnan(x) || x < 5.0f) return NAN;
+          if (std::isnan(x) || !batterie_presente()) return NAN;
           const float p = (x - 6.0f) / (8.23f - 6.0f) * 100.0f;
           return p < 0.0f ? 0.0f : (p > 100.0f ? 100.0f : p);
     # Glyphe et couleur de l'icône du bandeau (même échelle que le téléphone,
-    # get_battery_color) ; NAN = point d'interrogation gris.
+    # get_battery_color) ; NAN = point d'interrogation gris, ou la prise si la batterie
+    # n'est pas détectée (batterie_peindre lit la décision, pas ce niveau).
     on_value:
       - lambda: 'batterie_niveau_ui(x);'
 
