@@ -80,8 +80,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "2 Jours": "2 dagen"
 "3 Jours": "3 dagen"
 "4 Jours": "4 dagen"
-"Prévisions journalières · %d/3": "Verwachting per dag · %d/3"
-"Prévisions horaires · %d/2": "Verwachting per uur · %d/2"
 "Du %s au %s": "Van %s tot %s"
 "De %s à %s%s": "Van %s tot %s%s"
 " le lendemain": " de dag erna"

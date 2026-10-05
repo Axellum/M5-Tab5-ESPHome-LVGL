@@ -8,11 +8,9 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 969;
+static const uint16_t kI18nKeyCount = 967;
 
 static const char* const kI18nCtx[] = {
-    "",
-    "",
     "",
     "",
     "",
@@ -1609,8 +1607,6 @@ static const char* const kI18nKeys[] = {
     "Progressif",
     "Proposer nulle",
     "Présent",
-    "Prévisions horaires · %d/2",
-    "Prévisions journalières · %d/3",
     "Prêt",
     "Purement cosmétique",
     "Pyramide",
@@ -2582,8 +2578,6 @@ static const char* const kI18n_en[] = {
     "Gradual",  // "Progressif"
     "Offer a draw",  // "Proposer nulle"
     "Home",  // "Présent"
-    "Hourly forecast · %d/2",  // "Prévisions horaires · %d/2"
-    "Daily forecast · %d/3",  // "Prévisions journalières · %d/3"
     "Ready",  // "Prêt"
     "Purely cosmetic",  // "Purement cosmétique"
     "Pyramid",  // "Pyramide"
@@ -3555,8 +3549,6 @@ static const char* const kI18n_de[] = {
     "Ansteigend",  // "Progressif"
     "Remis anbieten",  // "Proposer nulle"
     "Anwesend",  // "Présent"
-    "Stundenvorhersage · %d/2",  // "Prévisions horaires · %d/2"
-    "Tagesvorhersage · %d/3",  // "Prévisions journalières · %d/3"
     "Bereit",  // "Prêt"
     "Rein kosmetisch",  // "Purement cosmétique"
     "Pyramide",  // "Pyramide"
@@ -4528,8 +4520,6 @@ static const char* const kI18n_nl[] = {
     "Oplopend",  // "Progressif"
     "Remise aanbieden",  // "Proposer nulle"
     "Aanwezig",  // "Présent"
-    "Verwachting per uur · %d/2",  // "Prévisions horaires · %d/2"
-    "Verwachting per dag · %d/3",  // "Prévisions journalières · %d/3"
     "Klaar",  // "Prêt"
     "Puur cosmetisch",  // "Purement cosmétique"
     "Piramide",  // "Pyramide"
@@ -5501,8 +5491,6 @@ static const char* const kI18n_es[] = {
     "Progresivo",  // "Progressif"
     "Ofrecer tablas",  // "Proposer nulle"
     "Presente",  // "Présent"
-    "Previsión por horas · %d/2",  // "Prévisions horaires · %d/2"
-    "Previsión diaria · %d/3",  // "Prévisions journalières · %d/3"
     "Listo",  // "Prêt"
     "Puramente estético",  // "Purement cosmétique"
     "Pirámide",  // "Pyramide"
@@ -6474,8 +6462,6 @@ static const char* const kI18n_it[] = {
     "Progressivo",  // "Progressif"
     "Proponi patta",  // "Proposer nulle"
     "Presente",  // "Présent"
-    "Previsioni orarie · %d/2",  // "Prévisions horaires · %d/2"
-    "Previsioni giornaliere · %d/3",  // "Prévisions journalières · %d/3"
     "Pronto",  // "Prêt"
     "Puramente estetico",  // "Purement cosmétique"
     "Piramide",  // "Pyramide"
@@ -7447,8 +7433,6 @@ static const char* const kI18n_tr[] = {
     "Kademeli",  // "Progressif"
     "Beraberlik öner",  // "Proposer nulle"
     "Evde",  // "Présent"
-    "Saatlik tahmin · %d/2",  // "Prévisions horaires · %d/2"
-    "Günlük tahmin · %d/3",  // "Prévisions journalières · %d/3"
     "Hazır",  // "Prêt"
     "Tamamen kozmetik",  // "Purement cosmétique"
     "Piramit",  // "Pyramide"

@@ -90,8 +90,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "2 Jours": "2 días"
 "3 Jours": "3 días"
 "4 Jours": "4 días"
-"Prévisions journalières · %d/3": "Previsión diaria · %d/3"
-"Prévisions horaires · %d/2": "Previsión por horas · %d/2"
 "Du %s au %s": "Del %s al %s"
 "De %s à %s%s": "De %s a %s%s"
 " le lendemain": " del día siguiente"

@@ -4,6 +4,45 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Accueil : une seule police de 45 px, marges de l'horloge égales
+
+Demande d'Axel : égaliser les marges de l'horloge ; la police de la date pour les
+températures salon / serre, la consigne de la clim, « Ok Nabu » et les textes de la carte
+centrale ; les titres des pages de prévisions sans « Prévisions horaires 1/2 » ni
+« Prévisions journalières 2/3 », dans la police de la date ; les popups qui avaient une
+autre police de la même taille ; les polices et les textes de langue devenus inutiles.
+- **Horloge** : autant d'air entre le haut de la tuile et l'encre des chiffres qu'entre
+  le bas des jambages de la date (g, j, p, q, y) et le bas de la tuile, dans les 21 thèmes
+  (2e demande d'Axel : l'horloge plus haute, plus d'espace entre l'horloge et la date) ;
+  23 px en Roboto, de 12 px (Pacifico, aux longs jambages) à 27 px ; la date ne bouge pas,
+  sa ligne de base reste à 32 px du bas. HH:MM centré en moyenne sur les heures possibles
+  (l'écart gauche / droite dépend des chiffres : un « 1 » est étroit).
+  `theme_polices()` pose maintenant les cadres des rouleaux pour chaque police et retranche
+  la bordure du thème (0 à 4 px, parfois d'un seul côté : Relief doux, Obsidienne, Terre
+  cuite…), qui décalait l'heure : Relief doux mesurait 34 px en haut pour 30 en bas.
+  L'encre se mesure telle qu'elle s'affiche : en bpp 2, ESPHome vide la 1re rangée des
+  chiffres ronds de Roboto ou de Nunito (`tools/police_theme.py` les rend avec FreeType
+  comme lui), les jambages aussi (`jambage_visible()`) ; les cadres Roboto passent de
+  y 27 à 17.
+- **Police de la date du thème** (`style_police_date`) sur les températures et la consigne
+  de la clim (avant 32 et 55 px), « Ok Nabu », les textes de la carte centrale (planning,
+  pluie, alertes, réponse vocale, info sur une ligne ; sur deux lignes, l'info reste en
+  32 px pour tenir) et le titre des prévisions, qui ne garde
+  que la plage (« Du mercredi 5 août au dimanche 9 août ») : les points sous la carte
+  disent la page. Popups : valeurs de la lumière, de l'énergie et des pots, prochain réveil,
+  sonnerie, « OK » de la télécommande, A+ de l'assistant (avant roboto_45_b en dur).
+  Un changement de thème change donc tous ces textes.
+- **Coût** : les 15 polices de date des thèmes passent de 58 à 151 glyphes (146 pour
+  Fredoka ; ASCII et caractères des 7 langues, le reste est dessiné par roboto_45_b) :
+  +263 536 o de flash (+257 Ko, 49,6 → 52,9 %), RAM inchangée (40,5 %), mesurés par la
+  compilation `build-min` de la CI (ESPHome 2026.9.0) avant et après. Aucune police ne disparaît : roboto_45_b reste
+  la police de date des thèmes Roboto et le repli des autres, roboto_55_b sert encore au
+  réveil, au popup clim et au flipper.
+- **Langues** : les deux titres retirés sortent des 6 fichiers de langue ; `Sys`, `HA`,
+  `TV`, `Ok Nabu: OFF` et `Ok Nabu : OFF`, textes YAML disparus, sortent de la liste des
+  textes non traduits (`tools/i18n_keys.py`). Aucune autre clé morte (recherche stricte,
+  commentaires exclus).
+
 ### 2026-10-05 — Trois thèmes de plus : Bonbon, Sorbet, Ultraviolet
 
 Demande d'Axel : « ajoute les trois nouveaux thèmes au choix possible pour le Tab ». Les

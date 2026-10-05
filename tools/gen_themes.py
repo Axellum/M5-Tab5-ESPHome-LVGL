@@ -576,7 +576,7 @@ def rendre_polices(themes: list[Theme], mesures: dict | None = None, jeux: dict[
     for t in themes:
         rangee = {}
         geo = {"y": None}
-        y_date = None
+        y_date = jambage = None
         for role in ROLES_POLICE:
             cle = t.polices.get(role)
             if cle is None:
@@ -603,15 +603,17 @@ def rendre_polices(themes: list[Theme], mesures: dict | None = None, jeux: dict[
             if role == "horloge":
                 geo = m["horloge"]
             elif role == "date":
-                y_date = m["date"]["y"]
+                y_date, jambage = m["date"]["y"], m["date"]["jambage"]
         if geo["y"] is None or y_date is None:
             if "horloge" not in mesures.get(REFERENCE_POLICE, {}):
                 raise ErreurTheme(f"{REFERENCE_POLICE} absente de _polices.yaml (lancer `python tools/police_theme.py`)")
             if geo["y"] is None:
                 geo = mesures[REFERENCE_POLICE]["horloge"]
             if y_date is None:
-                y_date = mesures[REFERENCE_POLICE]["date"]["y"]
-        table.append((t, rangee, {**geo, "y_date": y_date}))
+                y_date, jambage = (mesures[REFERENCE_POLICE]["date"][k] for k in ("y", "jambage"))
+        # L'horloge remonte du jambage de SA police de date (marge du haut = bas des
+        # jambages de la date → bas de la tuile), _police_theme().avec_jambage().
+        table.append((t, rangee, {**_police_theme().avec_jambage(geo, jambage), "y_date": y_date}))
     font_yaml = []
     if fontes:
         font_yaml = ["font:"]
@@ -630,14 +632,18 @@ def rendre_polices(themes: list[Theme], mesures: dict | None = None, jeux: dict[
         "    theme_polices(id(" + "), id(".join(STYLES_POLICE[r] for r in ROLES_POLICE)
         + f"), polices, {len(ids)}, horloge, id({LABEL_DATE}));",
     ]
+    pt = _police_theme()
     cpp = ["// Polices de chaque thème : index dans le tableau `polices` que passe",
            "// tab5_theme_repeindre (0-2 = les Roboto compilées), puis la géométrie de l'horloge",
-           "// (y des labels des rouleaux, position du « : », y de la date), tools/police_theme.py.",
+           "// (y des labels des rouleaux, position du « : », y de la date, y et décalage des",
+           "// cadres), tools/police_theme.py. kCadreX : x des cadres h10, h1, m10, m1 (tab5-lvgl.yaml).",
            f"static constexpr int kNbPolices = {len(ids)};",
+           "static constexpr int16_t kCadreX[] = {" + ", ".join(str(x) for x in pt.X_CADRES) + "};",
            "static constexpr PolicesTheme kPolices[] = {"]
     for t, rangee, geo in table:
         cpp.append(f"    {{{rangee['horloge']}, {rangee['date']}, {rangee['titre']}, {geo['y']}, "
-                   f"{geo['x_deux_points']}, {geo['y_deux_points']}, {geo['y_date']}}},  // {t.fichier}")
+                   f"{geo['x_deux_points']}, {geo['y_deux_points']}, {geo['y_date']}, "
+                   f"{geo['cadre_y']}, {geo['dx']}}},  // {t.fichier}")
     cpp.append("};")
     return font_yaml, lambda_yaml, cpp
 

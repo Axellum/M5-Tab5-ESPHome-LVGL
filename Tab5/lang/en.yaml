@@ -78,8 +78,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "2 Jours": "2 Days"
 "3 Jours": "3 Days"
 "4 Jours": "4 Days"
-"Prévisions journalières · %d/3": "Daily forecast · %d/3"
-"Prévisions horaires · %d/2": "Hourly forecast · %d/2"
 "Du %s au %s": "From %s to %s"
 "De %s à %s%s": "From %s to %s%s"
 " le lendemain": " the next day"
