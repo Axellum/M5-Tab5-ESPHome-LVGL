@@ -61,6 +61,14 @@ Asked by the author on 2026-10-04 after a gallery of sixteen sketches: the theme
 - **Glass buttons.** `apply_pressed_scale_to_tree()` (on_boot, 2 s after setup) recognises a glass button by its radius of 18, which a theme restored during setup may already have changed. `tab5_theme_repeindre` marks those buttons once (`LV_OBJ_FLAG_USER_1`, `boutons_verre_marquer()`) before any shape; the scan keeps the marked ones. The `on_boot` sequence is unchanged.
 - **Calendar.** `cal_fond_case()` reads the gradient of the popup card to blend its cells; with `bg_grad_dir: NONE` it uses the plain background.
 
+### Catalogue (lot 3, second pull request)
+
+- The seventeen sketches of the gallery (2026-10-04, `audit_tab5/themes_2026-10-04`, outside the repository) became seventeen theme files, converted by a script kept outside the repository: sketch keys mapped to palette roles (the rest inherited from Ardoise, same mode), sketch styles mapped onto `STYLES_FORMES` (each sketch named its own new styles: « creux », « plaque », « cadran », « bandeau central »…), every shape that changes nothing on screen removed (checked with `formes_resolues()`), `zones_sombres` where the light banner or clock is dark. The surfaces of the contrast test are the real backgrounds of the cards (page and popup), and every mode passed without a correction.
+- Display fonts were chosen per theme among the sketch's fonts (the clock and date font, the title font); the sketches that kept Roboto have none. Relief doux is the default of a new tablet (`initial_option`); a saved choice is kept.
+- Not taken: the « active button » state drawn by three sketches (inset background or ring): `highlight_button_border()` sets local border properties, a later lot can give it a shared style.
+- Shadows are clipped by the parent of the object: the five cells of the daily forecast are `overflow_visible`.
+- The render task « galerie » (`rendu-host.yml`) captures the home screen and the climate popup of every theme in both modes, switched live one after the other, then after a cold start in each; the two series must be identical to the pixel (a difference = a shape, a font or a colour that a theme leaves to the next).
+
 ### Proof (lot 3)
 
 - Ardoise is the compiled state: the dark render of the seven languages and the light render stay identical to `main` (job `comparer` of `rendu-host.yml`).
@@ -72,5 +80,5 @@ Asked by the author on 2026-10-04 after a gallery of sixteen sketches: the theme
 - Lot 2 adds a palette: a struct instance, plus the glass pre-mix recomputed for its background (formula in `tab5_tokens.h`), and contrast choices (the vigilance yellow on a light background, `couleur_lisible()` darkening instead of lightening, the pressed opacity).
 - What lot 2 still has to repaint on a switch without a restart (lot 3): the colours set by the C++ (local properties, set at each push), the calendar's C++ styles, and the pages' background (local). With a restart, nothing: everything is created from the active palette. Also for lot 3: `ui_text_color()` (`tab5_internal.h`) compares the new colour with the local property only, so the first push of a colour equal to the role style's sets a local property and the widget stops following its role style; compare the effective colour (`lv_obj_get_style_text_color`) instead.
 - `UIColor.X` costs a load instead of an immediate; the palette is 220 bytes of RAM.
-- Lot 3: shapes cost a table of a few hundred bytes per theme; a display font costs its glyphs in flash, and a theme with shadows costs drawing time; both are measured with the themes that use them.
+- Lot 3: shapes cost a table of a few hundred bytes per theme; a display font costs its glyphs in flash. Shadows cost drawing time: measured on the tablet on 2026-10-04 with the shadows of Relief plat (day cards 30 px, buttons 15 px, popup frame 50 px; median of 5), a full-screen redraw went from 134 to 169 ms and the climate popup from 163 to 203 ms; the rotating central card did not change.
 - Lot 2: each theme adds two palettes of 268 bytes to the flash (`THEMES[]`, `constexpr`); the active palette stays the only one in RAM. `ui_text_color()` was left as it is: the replays set the local colours again from the active palette, so a widget that left its role style still follows the theme.

@@ -1,0 +1,113 @@
+# Thème « Graphite » : le thème actuel en plus calme : des aplats neutres à la place du
+# verre ardoise, un seul accent bleu et des couleurs réservées aux états (vert, ambre,
+# rouge), avec la police et la géométrie du firmware inchangées.
+#
+# Esquisse « Graphite » du 04/10/2026 (Claude Sonnet 5.5, galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), convertie au lot 3 des thèmes (ADR-0029) :
+# couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
+# texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
+nom: Graphite
+ordre: 4
+herite: ardoise
+
+formes:
+  style_meteo_card_page:
+    bg_grad_dir: NONE
+    sombre: {border_opa: 76}
+  style_clim_btn:
+    bg_grad_dir: NONE
+    sombre: {bg_color: 0x181B20, border_opa: 76}
+    clair: {bg_color: 0xFFFFFF}
+  style_modal_card:
+    bg_grad_dir: NONE
+    sombre: {border_opa: 127}
+  style_glass_card:
+    bg_grad_dir: NONE
+    sombre: {border_opa: 114}
+
+sombre:
+  BG: 0x0F1114
+  GLASS_HI: 0x292E36
+  GLASS_LO: 0x292E36
+  GLASS_HI_PAGE: 0x181B20
+  GLASS_LO_PAGE: 0x181B20
+  GLASS_HI_MODAL: 0x1F2329
+  GLASS_LO_MODAL: 0x1F2329
+  GLASS_RIM: 0x8C95A5
+  MODAL_SCRIM: 0x07080A
+  ARC_TRACK: 0x3A4049
+  TEXT_SOFT: 0xE4E7EC
+  TEXT_DIM: 0x9DA5B3
+  ICON_MUTED: 0x666E7B
+  TEXT_ON_ACCENT: 0x0F1114
+  SUCCESS: 0x5FCB8B
+  WARNING: 0xE8B84F
+  ERROR: 0xF27C86
+  INFO: 0x6AB0FF
+  GOLD: 0xE8C46A
+  INACTIVE: 0x3A4049
+  BAR_INACTIVE: 0x3A4049
+  ACCENT: 0x6AB0FF
+  ACCENT_ALT: 0xA9B6CE
+  EARLY: 0xF0954A
+  PAST: 0x7B8494
+  RAIN_VALUE: 0xF0954A
+  CLIM_COOL_ACTIVE: 0x5DA2FF
+  CLIM_HEAT_ACTIVE: 0xFF6F61
+  CLIM_HEAT_INACTIVE: 0xA8827F
+  CLIM_OFF_ACTIVE: 0xF5A63D
+  CLIM_ECO: 0x5FCB8B
+  METEO_CELESTIAL: 0xF5C542
+  METEO_CLOUD: 0xDCE1E8
+  METEO_PRECIP: 0x7DB4FF
+  HUMIDITY_WET: 0x5DA2FF
+  TEMP_GRAD_0_POS: 0x5DA2FF
+  TEMP_GRAD_14: 0xE4E7EC
+  TEMP_GRAD_24: 0xF0A05A
+  TEMP_GRAD_35: 0xFF6F61
+  HUM_GRAD_14: 0xFF6F61
+  HUM_GRAD_22: 0xE8B84F
+  HUM_GRAD_30: 0xE4E7EC
+
+clair:
+  BG: 0xE8EBF0
+  GLASS_HI: 0xEEF1F5
+  GLASS_LO: 0xEEF1F5
+  GLASS_LO_PAGE: 0xFFFFFF
+  GLASS_HI_MODAL: 0xFFFFFF
+  GLASS_LO_MODAL: 0xFFFFFF
+  GLASS_RIM: 0x6B7686
+  MODAL_SCRIM: 0xB4BCC8
+  ARC_TRACK: 0xC9CFD9
+  TEXT_SOFT: 0x1C2431
+  TEXT_PRIMARY: 0x0B111A
+  TEXT_DIM: 0x566173
+  ICON_MUTED: 0x7A8494
+  SUCCESS: 0x1E7B4A
+  WARNING: 0x94610A
+  ERROR: 0xB4283C
+  INFO: 0x1D5FC4
+  GOLD: 0x8E6A0B
+  INACTIVE: 0xB7BEC9
+  BAR_INACTIVE: 0xB7BEC9
+  ACCENT: 0x1D5FC4
+  ACCENT_ALT: 0x5C6B8A
+  EARLY: 0xC0560D
+  PAST: 0x667085
+  RAIN_VALUE: 0xC0560D
+  CLIM_COOL_ACTIVE: 0x1C62D9
+  CLIM_HEAT_ACTIVE: 0xC9302A
+  CLIM_HEAT_INACTIVE: 0x9A5F5B
+  CLIM_OFF_ACTIVE: 0xB45A00
+  CLIM_ECO: 0x1C8A3E
+  METEO_CELESTIAL: 0xD27A00
+  METEO_CLOUD: 0x6F7E94
+  METEO_PRECIP: 0x2A68CC
+  HUMIDITY_WET: 0x1C62D9
+  TEMP_GRAD_0_POS: 0x1C62D9
+  TEMP_GRAD_14: 0x3E4858
+  TEMP_GRAD_24: 0xD2531C
+  TEMP_GRAD_35: 0xC9302A
+  HUM_GRAD_14: 0xC9302A
+  HUM_GRAD_22: 0xA06500
+  HUM_GRAD_30: 0x3E4858

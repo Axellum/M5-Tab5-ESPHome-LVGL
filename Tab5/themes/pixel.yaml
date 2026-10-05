@@ -1,0 +1,137 @@
+# Thème « Pixel » : l'écran d'un jeu 8 bits : boîtes de dialogue cadrées de 4 px, coins
+# presque droits, aplats sans dégradé, police pixel Jersey 10, palette Sweetie 16 la nuit
+# (indigo, cyan, lime) et PICO-8 le jour (pêche, encre marine, prune).
+#
+# Esquisse « Pixel » du 04/10/2026 (Claude Fable 5.1, galerie audit_tab5/themes_2026-10-04
+# hors dépôt), convertie au lot 3 des thèmes (ADR-0029) : couleurs, formes (`formes:`) et
+# polices d'affichage (heure, date, titres) ; le reste du texte reste en Roboto. Les rôles
+# absents héritent d'Ardoise (même mode).
+nom: Pixel
+ordre: 18
+herite: ardoise
+zones_sombres: [bandeau]
+polices:
+  horloge: "Jersey 10@400"
+  date: "Jersey 10@400"
+  titre: "Jersey 10@400"
+
+formes:
+  style_meteo_card_page:
+    bg_grad_dir: NONE
+    radius: 6
+    border_width: 4
+    border_opa: 255
+  style_bandeau_page:
+    sombre: {bg_color: 0x0A0B16}
+    clair: {bg_color: 0x14162A, border_color: 0x5F574F}
+  style_onglet_jour_page:
+    radius: 4
+    sombre: {bg_color: 0x29366F}
+    clair: {bg_color: 0xEADFD0}
+  style_onglet_temp_page:
+    radius: 4
+    sombre: {bg_color: 0x29366F}
+    clair: {bg_color: 0xEADFD0}
+  style_clim_btn:
+    bg_grad_dir: NONE
+    radius: 6
+    border_width: 4
+    border_opa: 255
+    sombre: {bg_color: 0x333C57, border_color: 0x566C86}
+    clair: {bg_color: 0xDDE6F4}
+  style_modal_card:
+    bg_grad_dir: NONE
+    radius: 8
+    border_width: 4
+    border_opa: 255
+  style_glass_card:
+    bg_grad_dir: NONE
+    radius: 6
+    border_width: 4
+    border_opa: 255
+
+sombre:
+  BG: 0x1A1C2C
+  GLASS_HI: 0x11132A
+  GLASS_LO: 0x11132A
+  GLASS_HI_PAGE: 0x11132A
+  GLASS_LO_PAGE: 0x11132A
+  GLASS_HI_MODAL: 0x171A33
+  GLASS_LO_MODAL: 0x171A33
+  GLASS_RIM: 0x94B0C2
+  MODAL_SCRIM: 0x0C0D18
+  ARC_TRACK: 0x333C57
+  TEXT_SOFT: 0xF4F4F4
+  TEXT_DIM: 0x94B0C2
+  ICON_MUTED: 0x566C86
+  TEXT_ON_ACCENT: 0x1A1C2C
+  SUCCESS: 0xA7F070
+  WARNING: 0xFFCD75
+  ERROR: 0xFF6B81
+  INFO: 0x41A6F6
+  GOLD: 0xFFCD75
+  INACTIVE: 0x333C57
+  BAR_INACTIVE: 0x333C57
+  ACCENT: 0x73EFF7
+  ACCENT_ALT: 0xC77DFF
+  EARLY: 0xEF7D57
+  PAST: 0x7D93AD
+  RAIN_VALUE: 0xEF7D57
+  CLIM_COOL_ACTIVE: 0x41A6F6
+  CLIM_HEAT_ACTIVE: 0xFF5A5A
+  CLIM_HEAT_INACTIVE: 0xAA8894
+  CLIM_OFF_ACTIVE: 0xFFA64D
+  CLIM_ECO: 0xA7F070
+  METEO_CELESTIAL: 0xFFCD75
+  METEO_CLOUD: 0xF4F4F4
+  METEO_PRECIP: 0x73EFF7
+  HUMIDITY_WET: 0x5B8CFF
+  TEMP_GRAD_0_POS: 0x41A6F6
+  TEMP_GRAD_14: 0xF4F4F4
+  TEMP_GRAD_24: 0xEF7D57
+  TEMP_GRAD_35: 0xFF3B5C
+  HUM_GRAD_14: 0xFF3B5C
+  HUM_GRAD_22: 0xFFCD75
+  HUM_GRAD_30: 0xF4F4F4
+
+clair:
+  BG: 0xFFF1E8
+  GLASS_LO: 0xFFFFFF
+  GLASS_LO_PAGE: 0xFFFFFF
+  GLASS_HI_MODAL: 0xFFF8F0
+  GLASS_LO_MODAL: 0xFFF8F0
+  GLASS_RIM: 0x5F574F
+  MODAL_SCRIM: 0xC2C3C7
+  ARC_TRACK: 0xC2C3C7
+  TEXT_SOFT: 0x1D2B53
+  TEXT_PRIMARY: 0x121B36
+  TEXT_DIM: 0x5F574F
+  ICON_MUTED: 0xA9A4A0
+  SUCCESS: 0x0B5D34
+  WARNING: 0xA85D00
+  ERROR: 0xE4003A
+  INFO: 0x1E6FD9
+  GOLD: 0xA85D00
+  INACTIVE: 0xC2C3C7
+  BAR_INACTIVE: 0xC2C3C7
+  ACCENT: 0x7E2553
+  ACCENT_ALT: 0xAB5236
+  EARLY: 0xC85A00
+  PAST: 0x83769C
+  RAIN_VALUE: 0xC85A00
+  CLIM_COOL_ACTIVE: 0x1E6FD9
+  CLIM_HEAT_ACTIVE: 0xD7263D
+  CLIM_HEAT_INACTIVE: 0x9A6B74
+  CLIM_OFF_ACTIVE: 0xC85A00
+  CLIM_ECO: 0x0B5D34
+  METEO_CELESTIAL: 0xC27C00
+  METEO_CLOUD: 0x83769C
+  METEO_PRECIP: 0x1E6FD9
+  HUMIDITY_WET: 0x1E6FD9
+  TEMP_GRAD_0_POS: 0x1E6FD9
+  TEMP_GRAD_14: 0x1D2B53
+  TEMP_GRAD_24: 0xC85A00
+  TEMP_GRAD_35: 0xE4003A
+  HUM_GRAD_14: 0xE4003A
+  HUM_GRAD_22: 0xA85D00
+  HUM_GRAD_30: 0x1D2B53

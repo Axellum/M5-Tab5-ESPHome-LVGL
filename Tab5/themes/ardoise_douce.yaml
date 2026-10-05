@@ -1,0 +1,73 @@
+# Thème « Ardoise douce » : le verre ardoise d'aujourd'hui avec une teinte de moins : gris
+# neutres, accents désaturés au même niveau de clarté, et un mode clair « craie » (cartes
+# blanches sur gris clair, encre ardoise) qui garde la même matière, la même police et la
+# même géométrie.
+#
+# Esquisse « Craie et ardoise » du 04/10/2026 (Claude Opus 5.5 (effort extra), galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), convertie au lot 3 des thèmes (ADR-0029) :
+# couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
+# texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
+nom: Ardoise douce
+ordre: 6
+herite: ardoise
+
+formes:
+  style_meteo_card_page:
+    sombre: {border_opa: 76}
+    clair: {border_opa: 114}
+  style_clim_btn:
+    sombre: {bg_color: 0x1B222D, bg_grad_color: 0x131921, border_opa: 76}
+    clair: {bg_grad_color: 0xF3F5F8, border_opa: 114}
+  style_modal_card:
+    sombre: {border_opa: 127}
+    clair: {border_opa: 140}
+  style_glass_card:
+    sombre: {border_opa: 114}
+    clair: {border_opa: 127}
+
+sombre:
+  BG: 0x0C1118
+  GLASS_HI: 0x29333F
+  GLASS_LO: 0x151B25
+  GLASS_HI_PAGE: 0x1B222D
+  GLASS_LO_PAGE: 0x131921
+  GLASS_HI_MODAL: 0x232C39
+  GLASS_LO_MODAL: 0x121821
+  GLASS_RIM: 0x8E9AAD
+  MODAL_SCRIM: 0x06090D
+  ARC_TRACK: 0x3A4451
+  TEXT_SOFT: 0xE7ECF2
+  TEXT_PRIMARY: 0xF8FAFC
+  TEXT_DIM: 0x9AA5B4
+  ICON_MUTED: 0x5A626E
+  TEXT_ON_ACCENT: 0x0C1118
+  SUCCESS: 0x5FCB9B
+  WARNING: 0xF0BF4C
+  ERROR: 0xF38A96
+  INFO: 0x7DB6F6
+  GOLD: 0xF3CF5A
+  INACTIVE: 0x2E3846
+  BAR_INACTIVE: 0x2E3846
+  ACCENT: 0x6CC4D6
+  ACCENT_ALT: 0xB3A3F2
+  EARLY: 0xF5A25C
+  PAST: 0x78849A
+  RAIN_VALUE: 0xF5A25C
+  CLIM_COOL_ACTIVE: 0x5E9DFF
+  CLIM_HEAT_ACTIVE: 0xFF6B6B
+  CLIM_HEAT_INACTIVE: 0xA87474
+  CLIM_OFF_ACTIVE: 0xFFAE4D
+  CLIM_ECO: 0x5CD47A
+  METEO_CELESTIAL: 0xFFD24A
+  METEO_CLOUD: 0xE7ECF2
+  HUMIDITY_WET: 0x6693F7
+  TEMP_GRAD_0_POS: 0x6EA8FF
+  TEMP_GRAD_14: 0xE7ECF2
+  TEMP_GRAD_24: 0xF3A25E
+  TEMP_GRAD_35: 0xF5585A
+  HUM_GRAD_14: 0xF5585A
+  HUM_GRAD_22: 0xF2C14E
+  HUM_GRAD_30: 0xE7ECF2
+
+clair:
+  INACTIVE: 0xC3CBD5

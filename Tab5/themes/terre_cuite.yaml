@@ -1,0 +1,137 @@
+# Thème « Terre cuite » : une maison du Sud plutôt qu'une salle de serveurs : murs à la
+# chaux (ou veillée brun chaud la nuit), carreaux émaillés posés à plat avec une lèvre de
+# terre cuite en bas, bleu canard des volets pour ce qui est choisi, lavande pour le
+# salon, chiffres ronds et gras en Nunito.
+#
+# Esquisse « Terre cuite » du 04/10/2026 (Claude Opus 5.5 (effort extra), galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), convertie au lot 3 des thèmes (ADR-0029) :
+# couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
+# texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
+nom: Terre cuite
+ordre: 7
+herite: ardoise
+polices:
+  horloge: "Nunito@800"
+  date: "Nunito@800"
+  titre: "Nunito@800"
+
+formes:
+  style_meteo_card_page:
+    bg_grad_dir: NONE
+    radius: 14
+    border_width: 3
+    border_opa: 255
+    border_side: BOTTOM
+  style_onglet_jour_page:
+    sombre: {bg_color: 0x3B2E25}
+    clair: {bg_color: 0xE6D5BF}
+  style_onglet_temp_page:
+    sombre: {bg_color: 0x3B2E25}
+    clair: {bg_color: 0xE6D5BF}
+  style_clim_btn:
+    bg_grad_dir: NONE
+    radius: 14
+    border_width: 3
+    border_opa: 255
+    border_side: BOTTOM
+    sombre: {bg_color: 0x2B221C}
+    clair: {bg_color: 0xFCF8F2}
+  style_modal_card:
+    bg_grad_dir: NONE
+    radius: 22
+    border_opa: 255
+    border_side: FULL
+  style_glass_card:
+    bg_grad_dir: NONE
+    radius: 16
+    border_width: 0
+    border_opa: 0
+
+sombre:
+  BG: 0x15100D
+  GLASS_HI: 0x1A1411
+  GLASS_LO: 0x1A1411
+  GLASS_HI_PAGE: 0x2B221C
+  GLASS_LO_PAGE: 0x2B221C
+  GLASS_HI_MODAL: 0x221B16
+  GLASS_LO_MODAL: 0x221B16
+  GLASS_RIM: 0xA4532F
+  MODAL_SCRIM: 0x0C0806
+  ARC_TRACK: 0x44362D
+  TEXT_SOFT: 0xF2E7D8
+  TEXT_PRIMARY: 0xFFF8EE
+  TEXT_DIM: 0xBBA894
+  ICON_MUTED: 0x6B5D50
+  TEXT_ON_ACCENT: 0x15100D
+  SUCCESS: 0x9CCB7B
+  WARNING: 0xF0B54A
+  ERROR: 0xF47D70
+  INFO: 0x7DB5EE
+  GOLD: 0xF2CC5B
+  INACTIVE: 0x3E3129
+  BAR_INACTIVE: 0x3E3129
+  ACCENT: 0x5FC0C4
+  ACCENT_ALT: 0xB9A6E8
+  EARLY: 0xF59A4E
+  PAST: 0x93806C
+  RAIN_VALUE: 0xF59A4E
+  CLIM_COOL_ACTIVE: 0x6AA8FF
+  CLIM_HEAT_ACTIVE: 0xFF6E5E
+  CLIM_HEAT_INACTIVE: 0xAD7F72
+  CLIM_OFF_ACTIVE: 0xF5A040
+  CLIM_ECO: 0x7ED07E
+  METEO_CELESTIAL: 0xF7C64A
+  METEO_CLOUD: 0xF2E7D8
+  METEO_PRECIP: 0x8DB6F2
+  HUMIDITY_WET: 0x6E9CFF
+  TEMP_GRAD_0_POS: 0x6EA8FF
+  TEMP_GRAD_14: 0xF2E7D8
+  TEMP_GRAD_24: 0xF08A50
+  TEMP_GRAD_35: 0xFF5A4E
+  HUM_GRAD_14: 0xFF5A4E
+  HUM_GRAD_22: 0xF0C24A
+  HUM_GRAD_30: 0xF2E7D8
+
+clair:
+  BG: 0xE9DDCB
+  GLASS_HI: 0xEEE3D3
+  GLASS_LO: 0xEEE3D3
+  GLASS_HI_PAGE: 0xFCF8F2
+  GLASS_LO_PAGE: 0xFCF8F2
+  GLASS_HI_MODAL: 0xF7F1E7
+  GLASS_LO_MODAL: 0xF7F1E7
+  GLASS_RIM: 0xC0643C
+  MODAL_SCRIM: 0xC9B497
+  ARC_TRACK: 0xD4BFA4
+  TEXT_SOFT: 0x3A2A1E
+  TEXT_PRIMARY: 0x24170E
+  TEXT_DIM: 0x6A5443
+  ICON_MUTED: 0xA6978A
+  SUCCESS: 0x3C7230
+  WARNING: 0x965700
+  ERROR: 0xB0281F
+  INFO: 0x1F5DAA
+  GOLD: 0x8A6300
+  INACTIVE: 0xD3C0A7
+  BAR_INACTIVE: 0xD3C0A7
+  ACCENT: 0x1D6B78
+  ACCENT_ALT: 0x6B52A6
+  EARLY: 0xB44E0B
+  PAST: 0x85705D
+  RAIN_VALUE: 0xB44E0B
+  CLIM_COOL_ACTIVE: 0x1F60C0
+  CLIM_HEAT_ACTIVE: 0xC2352B
+  CLIM_HEAT_INACTIVE: 0x9C6B5B
+  CLIM_OFF_ACTIVE: 0xB05C00
+  CLIM_ECO: 0x357F32
+  METEO_CELESTIAL: 0xD46400
+  METEO_CLOUD: 0x85766A
+  METEO_PRECIP: 0x2D68B8
+  HUMIDITY_WET: 0x1F4FB0
+  TEMP_GRAD_0_POS: 0x2058C0
+  TEMP_GRAD_14: 0x3A2A1E
+  TEMP_GRAD_24: 0xB4501C
+  TEMP_GRAD_35: 0xB3221B
+  HUM_GRAD_14: 0xB3221B
+  HUM_GRAD_22: 0x946000
+  HUM_GRAD_30: 0x3A2A1E

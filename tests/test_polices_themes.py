@@ -62,6 +62,10 @@ def test_les_textes_d_affichage_sont_dans_le_jeu_mesure():
     assert not hors, f"élargir UNIVERS (tools/police_theme.py) : {''.join(sorted(hors))!r}"
 
 
+def test_la_date_a_les_dix_chiffres():
+    assert set(police_theme.CHIFFRES) <= set(police_theme.jeux_par_role()["date"])
+
+
 def test_polices_generees_sans_glyphe_absent():
     """ESPHome refuse un glyphe absent du fichier : le générateur les retire (la Roboto
     du rôle les dessine)."""
@@ -71,11 +75,13 @@ def test_polices_generees_sans_glyphe_absent():
                                                           "y_deux_points": 13},
                            "date": {"taille": 40}, "titre": {"taille": 30}},
     }
-    themes = gen_themes.charger()
-    essai = gen_themes.Theme("essai", "Essai", len(themes) + 1, themes[0].modes,
+    # Ardoise (l'état compilé) et un thème d'essai seulement : les index des polices
+    # ci-dessous ne dépendent pas du catalogue.
+    ardoise = gen_themes.charger()[0]
+    essai = gen_themes.Theme("essai", "Essai", 2, ardoise.modes,
                              polices={"horloge": "Essai Sans@700", "titre": "Essai Sans@700"})
     jeux = {"horloge": "0123456789:", "date": "Lun 08 Oct", "titre": "Météo ğş"}
-    font_yaml, lambda_yaml, cpp = gen_themes.rendre_polices(themes + [essai], mesures, jeux)
+    font_yaml, lambda_yaml, cpp = gen_themes.rendre_polices([ardoise, essai], mesures, jeux)
     texte = "\n".join(font_yaml)
     assert "id: police_essai_sans_700_120" in texte and "id: police_essai_sans_700_30" in texte
     assert "ğ" not in texte and "ş" not in texte

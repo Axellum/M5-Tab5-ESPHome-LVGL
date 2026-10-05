@@ -1,0 +1,115 @@
+# Thème « Craie et ardoise » : une évolution calme du verre ardoise actuel : neutres
+# froids, un seul accent sarcelle, les mêmes surfaces et la même police, avec un mode
+# clair « craie » où le neutre des dégradés devient l'encre au lieu du blanc.
+#
+# Esquisse « Craie et ardoise » du 04/10/2026 (Claude Fable 5.1, galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), convertie au lot 3 des thèmes (ADR-0029) :
+# couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
+# texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
+nom: Craie et ardoise
+ordre: 8
+herite: ardoise
+zones_sombres: [bandeau]
+
+formes:
+  style_meteo_card_page:
+    sombre: {border_opa: 76}
+  style_bandeau_page:
+    clair: {bg_color: 0x242E3E, bg_grad_color: 0x1A2230, border_opa: 63}
+  style_clim_btn:
+    sombre: {border_opa: 76}
+  style_modal_card:
+    sombre: {border_opa: 127}
+    clair: {border_opa: 114}
+  style_glass_card:
+    sombre: {border_opa: 114}
+    clair: {border_opa: 102}
+
+sombre:
+  BG: 0x0F141B
+  GLASS_HI: 0x283345
+  GLASS_LO: 0x161E2B
+  GLASS_HI_PAGE: 0x1B2331
+  GLASS_LO_PAGE: 0x121924
+  GLASS_HI_MODAL: 0x232D3C
+  GLASS_LO_MODAL: 0x141B26
+  GLASS_RIM: 0x8FA0B6
+  MODAL_SCRIM: 0x080B10
+  ARC_TRACK: 0x2A3240
+  TEXT_SOFT: 0xE7ECF2
+  TEXT_PRIMARY: 0xF7F9FC
+  TEXT_DIM: 0x9AA7B8
+  ICON_MUTED: 0x566274
+  TEXT_ON_ACCENT: 0x0F141B
+  SUCCESS: 0x5CD39A
+  WARNING: 0xF3B73B
+  ERROR: 0xF47C8E
+  INFO: 0x7CC4F5
+  GOLD: 0xF2CE63
+  INACTIVE: 0x2B3442
+  BAR_INACTIVE: 0x2B3442
+  ACCENT: 0x5CD3E3
+  ACCENT_ALT: 0xB4A6F0
+  EARLY: 0xF79A55
+  PAST: 0x7D8CA0
+  RAIN_VALUE: 0xF79A55
+  CLIM_COOL_ACTIVE: 0x5E9BFF
+  CLIM_HEAT_ACTIVE: 0xFF6B5E
+  CLIM_HEAT_INACTIVE: 0x8F6B6B
+  CLIM_OFF_ACTIVE: 0xF5A33B
+  CLIM_ECO: 0x62D37A
+  METEO_CELESTIAL: 0xF5C842
+  METEO_CLOUD: 0xF7F9FC
+  METEO_PRECIP: 0x8DB8FF
+  HUMIDITY_WET: 0x5E9BFF
+  TEMP_GRAD_0_POS: 0x5E9BFF
+  TEMP_GRAD_14: 0xE7ECF2
+  TEMP_GRAD_24: 0xF28BC2
+  TEMP_GRAD_35: 0xFF6B5E
+  HUM_GRAD_14: 0xFF6B5E
+  HUM_GRAD_22: 0xF3B73B
+  HUM_GRAD_30: 0xE7ECF2
+
+clair:
+  BG: 0xE3E8EE
+  GLASS_HI: 0xF4F7FA
+  GLASS_LO: 0xE8EDF3
+  GLASS_HI_PAGE: 0xFBFCFD
+  GLASS_LO_PAGE: 0xF1F4F8
+  GLASS_HI_MODAL: 0xFCFDFE
+  GLASS_LO_MODAL: 0xEFF3F7
+  GLASS_RIM: 0x4F6078
+  MODAL_SCRIM: 0xD5DCE5
+  ARC_TRACK: 0xC9D2DD
+  TEXT_SOFT: 0x1F2A3A
+  TEXT_PRIMARY: 0x0F1826
+  TEXT_DIM: 0x51607A
+  ICON_MUTED: 0x98A4B5
+  SUCCESS: 0x19793F
+  WARNING: 0xC27208
+  ERROR: 0xB8213F
+  INFO: 0x1D5FA6
+  GOLD: 0xA36B0B
+  INACTIVE: 0xAEB9C8
+  BAR_INACTIVE: 0xAEB9C8
+  ACCENT: 0x0C6B7C
+  ACCENT_ALT: 0x6B5BC7
+  EARLY: 0xC24A0E
+  PAST: 0x66758A
+  RAIN_VALUE: 0xC24A0E
+  CLIM_COOL_ACTIVE: 0x1E55C8
+  CLIM_HEAT_ACTIVE: 0xC62B22
+  CLIM_HEAT_INACTIVE: 0x9E7F7F
+  CLIM_OFF_ACTIVE: 0xB85E07
+  CLIM_ECO: 0x2E8A47
+  METEO_CELESTIAL: 0xB86E04
+  METEO_CLOUD: 0x647388
+  METEO_PRECIP: 0x2160C4
+  HUMIDITY_WET: 0x1E55C8
+  TEMP_GRAD_0_POS: 0x1E55C8
+  TEMP_GRAD_14: 0x2E3A4E
+  TEMP_GRAD_24: 0xB0287A
+  TEMP_GRAD_35: 0xB8211B
+  HUM_GRAD_14: 0xB8211B
+  HUM_GRAD_22: 0xB4570B
+  HUM_GRAD_30: 0x2E3A4E

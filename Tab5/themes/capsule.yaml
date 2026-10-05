@@ -1,0 +1,139 @@
+# Thème « Capsule » : du plastique moulé des années 70 : tout est capsule (cartes à 36 px,
+# boutons en pilule), un dégradé vertical doux pour le brillant, une seule arête épaisse
+# en bas (tan sur les cartes, orange sur ce qui se touche), Fredoka ronde et grasse,
+# crème, chocolat, teal et avocat le jour, salon chocolat et orange la nuit.
+#
+# Esquisse « Capsule » du 04/10/2026 (Claude Fable 5.1, galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), convertie au lot 3 des thèmes (ADR-0029) :
+# couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
+# texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
+nom: Capsule
+ordre: 17
+herite: ardoise
+zones_sombres: [bandeau]
+polices:
+  horloge: "Fredoka@700"
+  date: "Fredoka@700"
+  titre: "Fredoka@700"
+
+formes:
+  style_meteo_card_page:
+    radius: 36
+    border_width: 4
+    border_opa: 255
+    border_side: BOTTOM
+    clair: {bg_grad_color: 0xF7ECD6}
+  style_bandeau_page:
+    bg_grad_dir: NONE
+    sombre: {bg_color: 0x120907, border_color: 0xFF7A33}
+    clair: {bg_color: 0x2A1810, border_color: 0xE8571A}
+  style_onglet_jour_page:
+    radius: 23
+  style_onglet_temp_page:
+    radius: 23
+  style_clim_btn:
+    radius: 999
+    border_width: 4
+    border_opa: 255
+    border_side: BOTTOM
+    sombre: {bg_color: 0x553424, bg_grad_color: 0x42281B, border_color: 0xFF7A33}
+    clair: {bg_color: 0xFFFFFF, bg_grad_color: 0xFBF3E4, border_color: 0xE8571A}
+  style_modal_card:
+    radius: 40
+    border_width: 5
+    border_opa: 255
+    border_side: BOTTOM
+  style_glass_card:
+    radius: 32
+    border_width: 5
+    border_opa: 255
+    border_side: BOTTOM
+
+sombre:
+  BG: 0x24150F
+  GLASS_HI: 0x4E3022
+  GLASS_LO: 0x3A2317
+  GLASS_HI_PAGE: 0x45291B
+  GLASS_LO_PAGE: 0x341E13
+  GLASS_HI_MODAL: 0x42281B
+  GLASS_LO_MODAL: 0x2E1A11
+  GLASS_RIM: 0x6B4630
+  MODAL_SCRIM: 0x160C08
+  ARC_TRACK: 0x6B4833
+  TEXT_SOFT: 0xF7E9CF
+  TEXT_PRIMARY: 0xFFF6E6
+  TEXT_DIM: 0xC9AE8F
+  ICON_MUTED: 0x6A5140
+  TEXT_ON_ACCENT: 0x24150F
+  SUCCESS: 0x9BE15D
+  WARNING: 0xF5B301
+  ERROR: 0xFF6B57
+  INFO: 0x6EB5FF
+  GOLD: 0xF8C96A
+  INACTIVE: 0x4A3324
+  BAR_INACTIVE: 0x4A3324
+  ACCENT: 0x2DD4BF
+  ACCENT_ALT: 0xBFD35A
+  EARLY: 0xFF7A33
+  PAST: 0xA98B70
+  RAIN_VALUE: 0xFF7A33
+  CLIM_COOL_ACTIVE: 0x5AA7FF
+  CLIM_HEAT_ACTIVE: 0xFF5A5A
+  CLIM_HEAT_INACTIVE: 0xB08080
+  CLIM_OFF_ACTIVE: 0xFFA64D
+  CLIM_ECO: 0x9BE15D
+  METEO_CELESTIAL: 0xFFB020
+  METEO_CLOUD: 0xF2E6CF
+  METEO_PRECIP: 0x7CC4FF
+  HUMIDITY_WET: 0x7CC4FF
+  TEMP_GRAD_0_POS: 0x7CC4FF
+  TEMP_GRAD_14: 0xFFF6E6
+  TEMP_GRAD_24: 0xFF9A5C
+  TEMP_GRAD_35: 0xFF5A5A
+  HUM_GRAD_14: 0xFF5A5A
+  HUM_GRAD_22: 0xF5B301
+  HUM_GRAD_30: 0xFFF6E6
+
+clair:
+  BG: 0xF1E4C8
+  GLASS_HI: 0xFFF7E8
+  GLASS_LO: 0xF7EBD5
+  GLASS_HI_PAGE: 0xFFFBF3
+  GLASS_LO_PAGE: 0xF7ECD6
+  GLASS_HI_MODAL: 0xFFFBF3
+  GLASS_LO_MODAL: 0xF5E9D0
+  GLASS_RIM: 0xD9B98A
+  MODAL_SCRIM: 0xD8C6A4
+  ARC_TRACK: 0xD9C49C
+  TEXT_SOFT: 0x3B2314
+  TEXT_PRIMARY: 0x2A170B
+  TEXT_DIM: 0x7A5A43
+  ICON_MUTED: 0xB9A58A
+  SUCCESS: 0x3F6212
+  WARNING: 0xA16207
+  ERROR: 0xB42318
+  INFO: 0x2F7BDE
+  GOLD: 0xB45309
+  INACTIVE: 0xD9C7A6
+  BAR_INACTIVE: 0xD9C7A6
+  ACCENT: 0x0D6B64
+  ACCENT_ALT: 0x6B7A1E
+  EARLY: 0xC2410C
+  PAST: 0x8C7355
+  RAIN_VALUE: 0xC2410C
+  CLIM_COOL_ACTIVE: 0x1D6FD0
+  CLIM_HEAT_ACTIVE: 0xC8102E
+  CLIM_HEAT_INACTIVE: 0x9C6B73
+  CLIM_OFF_ACTIVE: 0xC2410C
+  CLIM_ECO: 0x3F6212
+  METEO_CELESTIAL: 0xCA6A05
+  METEO_CLOUD: 0x8C7355
+  METEO_PRECIP: 0x2F7BDE
+  HUMIDITY_WET: 0x1D6FD0
+  TEMP_GRAD_0_POS: 0x1D6FD0
+  TEMP_GRAD_14: 0x3B2314
+  TEMP_GRAD_24: 0xC2410C
+  TEMP_GRAD_35: 0xB42318
+  HUM_GRAD_14: 0xB42318
+  HUM_GRAD_22: 0xA16207
+  HUM_GRAD_30: 0x3B2314
