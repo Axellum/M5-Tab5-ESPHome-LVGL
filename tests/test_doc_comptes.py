@@ -311,7 +311,7 @@ def test_nombre_de_langues(chemin, motif):
 
 
 # ─── Les thèmes de l'écran (05/10/2026) ──────────────────────────────────────
-# Écrit dans le README, le site, docs/screens.md et docs/installation.md pour la 3.6.0 :
+# Écrit dans le README, le site, docs/screens.md et docs/installation/settings.md pour la 3.6.0 :
 # le nombre se compte dans Tab5/themes/ (un fichier par thème ; `_polices.yaml`, généré,
 # n'en est pas un).
 
@@ -328,8 +328,8 @@ def _themes():
     (SITE, r'lang="fr">([\w-]+(?: et un)?) thèmes(?:, clairs ou sombres)?</span>'),
     (REPO / "docs" / "screens.md", r"([\w-]+) themes, each with a dark and a light mode"),
     (REPO / "docs" / "screens.md", r"([\w-]+(?: et un)?) thèmes, chacun en sombre et en clair"),
-    (REPO / "docs" / "installation.md", r"\| Thème \| (\d+) themes"),
-    (REPO / "docs" / "installation.md", r"\| Thème \| (\d+) thèmes"),
+    (REPO / "docs" / "installation" / "settings.md", r"\| Thème \| (\d+) themes"),
+    (REPO / "docs" / "installation" / "settings.md", r"\| Thème \| (\d+) thèmes"),
 ], ids=["readme-en", "readme-fr", "site-en", "site-fr", "ecrans-en", "ecrans-fr",
         "installation-en", "installation-fr"])
 def test_nombre_de_themes(chemin, motif):

@@ -10,7 +10,9 @@ Firmware that turns the M5Stack Tab5 into a Home Assistant wall screen, built wi
 
 | I want to… | Read |
 |---|---|
-| install it without compiling | the [install page](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/), then [Installation and configuration](installation.md) |
+| install it without compiling | the [installation guide](installation/README.md): seven steps, with the [install page](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) |
+| set it up: theme, language, alarm clock, my rooms | [Tablet settings](installation/settings.md), [Adapt to your home](installation/adapt-to-your-home.md), [Weather providers](installation/weather.md) |
+| update it | [Updates](installation/updates.md) |
 | see it running before installing Home Assistant files | [Demo mode](demo_mode.md) |
 | know what each part of the screen does | [Screens and features](screens.md) |
 | talk to it | [Voice assistant](voice_assistant.md) |
@@ -32,7 +34,9 @@ Un firmware qui fait de la M5Stack Tab5 un écran mural Home Assistant, construi
 
 | Je veux… | À lire |
 |---|---|
-| l'installer sans compiler | la [page d'installation](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/), puis [Installation et configuration](installation.md#version-française) |
+| l'installer sans compiler | le [guide d'installation](installation/README.md#version-française) : sept étapes, avec la [page d'installation](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) |
+| la régler : thème, langue, réveil, mes pièces | [Réglages de la tablette](installation/settings.md#version-française), [Adapter à sa maison](installation/adapt-to-your-home.md#version-française), [Fournisseurs météo](installation/weather.md#version-française) |
+| la mettre à jour | [Mises à jour](installation/updates.md#version-française) |
 | le voir tourner avant d'installer les fichiers de Home Assistant | [Mode démo](demo_mode.md#version-française) |
 | savoir ce que fait chaque partie de l'écran | [Écrans et fonctions](screens.md#version-française) |
 | lui parler | [Assistant vocal](voice_assistant.md#version-française) |

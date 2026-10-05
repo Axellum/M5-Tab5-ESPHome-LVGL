@@ -27,9 +27,46 @@
     - en: Install from the browser
       fr: Installer depuis le navigateur
       lien: https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/
-    - en: Installation and configuration
-      fr: Installation et configuration
-      page: docs/installation.md
+    - en: Installation guide
+      fr: Guide d'installation
+      page: docs/installation/README.md
+      pages:
+        - en: 1. Home Assistant files
+          fr: 1. Fichiers Home Assistant
+          page: docs/installation/home-assistant-files.md
+        - en: 2. Install the firmware
+          fr: 2. Installer le firmware
+          page: docs/installation/flash.md
+        - en: 3. Wi-Fi
+          fr: 3. Wi-Fi
+          page: docs/installation/wifi.md
+        - en: 4. Add to Home Assistant
+          fr: 4. Ajouter à Home Assistant
+          page: docs/installation/add-to-home-assistant.md
+        - en: 5. Your sources
+          fr: 5. Vos sources
+          page: docs/installation/sources.md
+        - en: 6. Your devices
+          fr: 6. Vos appareils
+          page: docs/installation/devices.md
+        - en: 7. A dashboard (optional)
+          fr: 7. Un tableau de bord (facultatif)
+          page: docs/installation/dashboard.md
+    - en: Tablet settings
+      fr: Réglages de la tablette
+      page: docs/installation/settings.md
+    - en: Adapt to your home
+      fr: Adapter à sa maison
+      page: docs/installation/adapt-to-your-home.md
+    - en: Weather providers
+      fr: Fournisseurs météo
+      page: docs/installation/weather.md
+    - en: Updates
+      fr: Mises à jour
+      page: docs/installation/updates.md
+    - en: Build your own firmware
+      fr: Compiler son propre firmware
+      page: docs/installation/build.md
     - en: Demo mode
       fr: Mode démo
       page: docs/demo_mode.md

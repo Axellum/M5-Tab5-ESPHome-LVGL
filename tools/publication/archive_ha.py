@@ -5,7 +5,7 @@ Depuis le 28/09/2026 (ADR-0024), les fichiers Home Assistant du dépôt n'ont pl
 placeholder : ils s'installent tels quels. Cette archive les rassemble dans l'arborescence
 du dossier `config/` de Home Assistant, pour une installation sans dépôt ni Python :
 décompresser dans `config/`, ajouter la ligne des packages à configuration.yaml,
-redémarrer, puis choisir ses sources dans les listes « Tab5 · … » (docs/installation.md).
+redémarrer, puis choisir ses sources dans les listes « Tab5 · … » (docs/installation/).
 
     packages/*.yaml                                 (HomeAssistant_Config/packages/)
     custom_templates/*.jinja                        (HomeAssistant_Config/custom_templates/)
@@ -57,7 +57,8 @@ DATE = (2026, 1, 1, 0, 0, 0)
 
 TEXTE_LISEZMOI = """\
 M5Stack Tab5 — Home Assistant, version {version}
-https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md
+Guide : https://axellum.github.io/M5-Tab5-ESPHome-LVGL/fr/installation/
+Guide: https://axellum.github.io/M5-Tab5-ESPHome-LVGL/en/installation/
 
 FRANÇAIS
 1. Décompressez cette archive dans le dossier config/ de Home Assistant (celui de

@@ -12,7 +12,8 @@ puis MkDocs (thème Material, sans autre plugin que sa recherche) les met en pag
   3. liens : une page publiée → sa page sur le site, avec son ancre ; une image de docs/ →
      copiée avec la page ; tout autre fichier du dépôt → github.com (blob/main). Un lien
      vers un fichier absent fait échouer la construction ;
-  4. description de la page (premier paragraphe), pour les moteurs de recherche ;
+  4. alertes de GitHub (« > [!WARNING] ») → encarts de Material, titrés dans la langue ;
+     description de la page (premier paragraphe), pour les moteurs de recherche ;
   5. mkdocs.yml de la langue, qui hérite de tools/site/mkdocs.yml, puis construction en
      mode strict : un lien ou une ancre cassés font échouer.
 
@@ -72,6 +73,16 @@ ENCART = {
     # (langue du site, langue de la page) → encart en tête de page
     ("en", "fr"): '!!! note "Page in French"\n    This page is only written in French.\n',
     ("fr", "en"): '!!! note "Page en anglais"\n    Cette page n\'existe qu\'en anglais.\n',
+}
+# Alerte de GitHub (« > [!WARNING] » puis des lignes « > … ») → encart de Material, titré
+# dans la langue du site : un encadré sur GitHub comme sur le site.
+ALERTE = re.compile(r"^> \[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][ \t]*$")
+ALERTES = {
+    "NOTE": ("note", {"en": "Note", "fr": "Note"}),
+    "TIP": ("tip", {"en": "Tip", "fr": "Astuce"}),
+    "IMPORTANT": ("info", {"en": "Important", "fr": "Important"}),
+    "WARNING": ("warning", {"en": "Warning", "fr": "Attention"}),
+    "CAUTION": ("danger", {"en": "Caution", "fr": "Prudence"}),
 }
 THEME = {
     "en": ("Switch to dark mode", "Switch to light mode"),
@@ -379,13 +390,34 @@ def contenu(page: Page, langue: str) -> str:
             rang = next((i for i, l in enumerate(lignes) if l.startswith("# ")), -1)
             lignes[rang + 1:rang + 1] = ["", encart]
             texte = "\n".join(lignes)
-        return texte
+        return alertes(texte, langue)
     parties = separer(texte)
     if not parties:
         raise ErreurSite(f"{page.source} : ni « ## Version Française » ni `langue:` dans le menu")
     if langue == "fr":
-        return f"# {page.titres['fr']}\n\n" + parties["fr"]
-    return parties["en"]
+        return alertes(f"# {page.titres['fr']}\n\n" + parties["fr"], langue)
+    return alertes(parties["en"], langue)
+
+
+def alertes(texte: str, langue: str) -> str:
+    """« > [!WARNING] » (alerte de GitHub) → « !!! warning "Attention" » (encart de Material)."""
+    sortie, lignes, i, dans_bloc = [], texte.split("\n"), 0, False
+    while i < len(lignes):
+        ligne = lignes[i]
+        i += 1
+        if CLOTURE.match(ligne):
+            dans_bloc = not dans_bloc
+        m = None if dans_bloc else ALERTE.match(ligne)
+        if not m:
+            sortie.append(ligne)
+            continue
+        genre, titres = ALERTES[m.group(1)]
+        sortie.append(f'!!! {genre} "{titres[langue]}"')
+        while i < len(lignes) and lignes[i].startswith(">"):
+            corps = lignes[i][1:].removeprefix(" ")
+            sortie.append(f"    {corps}" if corps else "")
+            i += 1
+    return "\n".join(sortie)
 
 
 def preparer_langue(plan: Plan, langue: str, sources: Path, adresse: str) -> set[str]:

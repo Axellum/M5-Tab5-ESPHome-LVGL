@@ -32,7 +32,7 @@
 - **Push-only, zero polling.** Home Assistant sends only what changed; the tablet never asks for anything ([ADR-0001](docs/decisions/0001-push-only-zero-polling.md)).
 - **Voice starts on the device.** "Okay Nabu" and a "Stop" word for the roller shutter are detected on the tablet; audio leaves it only after the wake word.
 - **Seven languages, down to the details.** French, English, German, Dutch, Spanish, Italian and Turkish, switched from Home Assistant: menus, games, dates, the texts Home Assistant sends and the spoken alarm briefing. Translated by an AI; the author only checked the French ([translations](docs/translations.md)).
-- **Twenty-one themes, light or dark.** Colours, shapes and the fonts of the clock change at once, without a restart, from Home Assistant or the tablet's console; « Auto » turns light at sunrise and dark at sunset ([themes](docs/installation.md#theme-light-or-dark)).
+- **Twenty-one themes, light or dark.** Colours, shapes and the fonts of the clock change at once, without a restart, from Home Assistant or the tablet's console; « Auto » turns light at sunrise and dark at sunset ([themes](docs/installation/settings.md#theme-light-or-dark)).
 - **Keeps working when Home Assistant doesn't.** Clock, alarm clock, games and the diagnostics console stay usable on their own.
 - **Documented and tested like a product.** 30 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome.
 - **Runs on the ST7123 revision, and builds for the ST7121 and the original ILI9881C**, while most published Tab5 examples only cover the original one.
@@ -41,16 +41,16 @@
 
 - A Tab5: the **ST7123** display chip is the one tested daily; the ST7121 and the original ILI9881C compile but are untested — see [hardware compatibility](#hardware-compatibility).
 - Home Assistant. Since 3.0 a ready-made, signed firmware installs from the browser; to build your own, ESPHome **≥ 2026.9.0**.
-- The screen speaks **French, English, German, Dutch, Spanish, Italian or Turkish**, switchable from Home Assistant ([translations](docs/translations.md); all written by an AI like the rest of the project, the French checked by the author, the others not reviewed yet), games and texts sent by Home Assistant included (rain sentence, banners); only the quiz questions stay in French. The documentation is bilingual. The forecasts come from any weather entity of Home Assistant (Météo-France, Met.no, OpenWeatherMap…). The one-hour rain graph comes from **Météo-France**, or by itself from **Open-Meteo** (no key, worldwide) when Home Assistant has no Météo-France; OpenWeatherMap, Buienradar, DWD or the Nordic Met.no radar can be chosen instead. Weather warnings: Météo-France, MeteoAlarm, DWD or CAP Alerts, chosen from Home Assistant. Météo-France and OpenWeatherMap were tried on the author's installation; the others with real answers read by the same templates, or with simulated data ([weather providers](docs/installation.md#weather-providers)).
-- The layout started from the author's home (one air conditioner, up to 5 BLE plant sensors, a Samsung TV). Since 3.0 you pick your devices in Home Assistant with the mouse (a blueprint), and what you don't have disappears from the screen. Since 3.2 the tiles at the bottom are rooms: up to 5 rooms of 5 devices (lights, switches, covers, media players, scenes, sensors…), with their names and icons taken from Home Assistant (see [Adapt to your home](docs/installation.md#adapt-to-your-home)). Outside the rooms, the other zones have a single place each: the climate card of the home page, the TV, the phone, two temperatures, up to 5 plants.
+- The screen speaks **French, English, German, Dutch, Spanish, Italian or Turkish**, switchable from Home Assistant ([translations](docs/translations.md); all written by an AI like the rest of the project, the French checked by the author, the others not reviewed yet), games and texts sent by Home Assistant included (rain sentence, banners); only the quiz questions stay in French. The documentation is bilingual. The forecasts come from any weather entity of Home Assistant (Météo-France, Met.no, OpenWeatherMap…). The one-hour rain graph comes from **Météo-France**, or by itself from **Open-Meteo** (no key, worldwide) when Home Assistant has no Météo-France; OpenWeatherMap, Buienradar, DWD or the Nordic Met.no radar can be chosen instead. Weather warnings: Météo-France, MeteoAlarm, DWD or CAP Alerts, chosen from Home Assistant. Météo-France and OpenWeatherMap were tried on the author's installation; the others with real answers read by the same templates, or with simulated data ([weather providers](docs/installation/weather.md)).
+- The layout started from the author's home (one air conditioner, up to 5 BLE plant sensors, a Samsung TV). Since 3.0 you pick your devices in Home Assistant with the mouse (a blueprint), and what you don't have disappears from the screen. Since 3.2 the tiles at the bottom are rooms: up to 5 rooms of 5 devices (lights, switches, covers, media players, scenes, sensors…), with their names and icons taken from Home Assistant (see [Adapt to your home](docs/installation/adapt-to-your-home.md)). Outside the rooms, the other zones have a single place each: the climate card of the home page, the TV, the phone, two temperatures, up to 5 plants.
 
 ---
 
 ## Quick start
 
-**No compiling (3.0 and later):** [install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome or Edge, USB-C cable). Set up the Home Assistant packages and the blueprint, pick your display revision, flash, set the Wi-Fi, add the tablet in Home Assistant: the five steps, and what to do if the page cannot reach the tablet, are in [Without compiling](docs/installation.md#without-compiling-install-page). Updates then show up in Home Assistant.
+**No compiling (3.0 and later):** [install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome or Edge, USB-C cable). Set up the Home Assistant packages and the blueprint, pick your display revision, flash, set the Wi-Fi, add the tablet in Home Assistant: the five steps, and what to do if the page cannot reach the tablet, are in [Without compiling](docs/installation/README.md). Updates then show up in Home Assistant.
 
-**Then:** a ready-made Home Assistant dashboard for the tablet ([Step 7](docs/installation.md#step-7--a-home-assistant-dashboard-for-the-tablet-optional)), and every setting — theme, light or dark, language, alarm clock, screen to show — in [Tablet settings and options](docs/installation.md#tablet-settings-and-options).
+**Then:** a ready-made Home Assistant dashboard for the tablet ([Step 7](docs/installation/dashboard.md)), and every setting — theme, light or dark, language, alarm clock, screen to show — in [Tablet settings and options](docs/installation/settings.md).
 
 **Or build your own firmware:**
 
@@ -60,14 +60,14 @@ git clone https://github.com/Axellum/M5-Tab5-ESPHome-LVGL.git
 
 # Copy local config files (gitignored), then edit with your values
 cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-# Create the firmware signing key (no secrets.yaml since 3.0) — see docs/installation.md
+# Create the firmware signing key (no secrets.yaml since 3.0) — see docs/installation/build.md
 python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem
 
 # Compile via ESPHome dashboard or CLI:
 # esphome run tab5-ha-hmi.yaml
 ```
 
-Full step-by-step: [`docs/installation.md`](docs/installation.md)
+Full step-by-step: [`docs/installation/`](docs/installation/README.md)
 
 Just want to see it running before setting up Home Assistant? → [`docs/demo_mode.md`](docs/demo_mode.md) pushes synthetic data to a flashed device with a small standalone script — no HA install, nothing left to clean up.
 
@@ -99,11 +99,11 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 
 ![Six themes of the Tab5 screen drawn by the firmware itself: Relief doux in dark and light, Almanach imprimé, Néon calme, Béton brut and Zen Sumi](docs/images/tab5_themes.jpg)
 
-**The tablet in Home Assistant** — the dashboard written for your entities by the macro of [Step 7](docs/installation.md#step-7--a-home-assistant-dashboard-for-the-tablet-optional):
+**The tablet in Home Assistant** — the dashboard written for your entities by the macro of [Step 7](docs/installation/dashboard.md):
 
 ![Tab5 view of the Home Assistant dashboard: brightness, volume and screen of the tablet, alarm clock, appointments and voice assistant](docs/images/ha_tableau_tab5.png)
 
-**Solar energy** (optional) — the Energy popup, from the sensors picked in the blueprint ([solar energy](docs/installation.md#solar-energy-optional); CI render, demo data):
+**Solar energy** (optional) — the Energy popup, from the sensors picked in the blueprint ([solar energy](docs/installation/adapt-to-your-home.md#solar-energy-optional); CI render, demo data):
 
 ![Energy popup of the Tab5: solar, home, grid and battery right now, and the solar production of the last 30 days as bars](docs/images/tab5_energie_en.png)
 
@@ -132,8 +132,8 @@ A single 1280×720 page organized in functional areas, all driven by Home Assist
 - **Lights** — near-fullscreen popup in 3 glass cards: selector of the room's lights (up to 5; switch lights without closing the popup), live-% brightness arc (debounced) with 10/35/65/100 % shortcuts, 3 named whites + 12 round color swatches
 - **Plants** — soil moisture card for up to 5 BLE plant sensors, dynamically sorted, color-coded by level (red = dry, green = optimal, blue = too wet); a long press opens a 5-card detail popup (moisture + watering status, fertility, light, temperature, sensor battery)
 - **Console** — diagnostics + HA management overlay (RAM/PSRAM, Wi-Fi, uptime, volume, re-push screen, reload automations, restart HA / reboot tablet behind confirm), opened via its dedicated button
-- **Themes** — 21 themes (colours, shapes, fonts of the clock, the date and the titles), each light or dark, switched at once from Home Assistant (« Thème », « Clair ou sombre ») or from a row of the console; « Auto » follows the sun through the « Tab5 — thème jour/nuit » automation. The games keep their own dark colours ([settings](docs/installation.md#tablet-settings-and-options))
-- **Energy** (optional) — popup for a solar installation: solar, home, grid and home battery right now, and the production per hour, day and month from Home Assistant's statistics; an icon of the status strip shows by its colour the production as a share of the panels' peak power. The tablet's original battery gets its own icon, behind the « Tab5 Batterie montée » switch ([solar energy](docs/installation.md#solar-energy-optional))
+- **Themes** — 21 themes (colours, shapes, fonts of the clock, the date and the titles), each light or dark, switched at once from Home Assistant (« Thème », « Clair ou sombre ») or from a row of the console; « Auto » follows the sun through the « Tab5 — thème jour/nuit » automation. The games keep their own dark colours ([settings](docs/installation/settings.md))
+- **Energy** (optional) — popup for a solar installation: solar, home, grid and home battery right now, and the production per hour, day and month from Home Assistant's statistics; an icon of the status strip shows by its colour the production as a share of the panels' peak power. The tablet's original battery gets its own icon, behind the « Tab5 Batterie montée » switch ([solar energy](docs/installation/adapt-to-your-home.md#solar-energy-optional))
 - **Arcade** — 8 fullscreen game consoles (experimental prototypes — first-pass AI-generated code to test what's possible on an ESP32-P4): **Fil d'Or** (marble roguelite, tilt-controlled), **Arcanoïde** (Breakout clone), **Neon Apron** (pinball, portrait), **Coureur d'Or** (Lode Runner), **Go Tab** (Go 9×9/13×13/19×19), **Trial Poursuite** (trivia quiz), **Dames Tab** (draughts 10×10), **Roi Noir** (FIDE chess with embedded AI). All 100% local, zero HA/network dependency, NVS persistence. Opened via a 4×2 selector grid triggered by tapping the greenhouse temperature
 - **Popup Assistant** — near-fullscreen modal showing the STT transcription ("Your request") and the LLM reply rendered as Markdown (tables, bold, code, images downloaded on demand); left panel = settings (brain selector Domotique/Discussion, Ok Nabu toggle, volume, text size A-/A+)
 - **Popup Calendar** — monthly 7×6 grid computed locally from SNTP; work hours inside cells, color-coded markers (public holidays, school holidays, appointments, birthdays); tap a day for a detail sub-popup; HA enriches on demand
@@ -224,7 +224,7 @@ The engine is optional for the screen UI (push dashboard works without it). It i
 | [`docs/ui_design.md`](docs/ui_design.md) | LVGL rendering, vector fonts, dynamic color, CPU optimizations |
 | [`docs/performance.md`](docs/performance.md) | Measured frame times, popup openings, restart, RAM — and how they were measured |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Wake word pipeline, audio chain, visual feedback states |
-| [`docs/installation.md`](docs/installation.md) | Prerequisites, web flasher or build, signing key, Home Assistant, updates, upgrading from 2.x |
+| [`docs/installation/`](docs/installation/README.md) | Install in seven steps (Home Assistant files, install page, Wi-Fi, sources, devices, dashboard), tablet settings, adapting to your home, weather providers, updates, building your own |
 | [`docs/translations.md`](docs/translations.md) | Screen language (French, English, German, Dutch, Spanish, Italian, Turkish), adding a language |
 | [`docs/tiles_icons.md`](docs/tiles_icons.md) | Icons of the room tiles: the palette, how an icon is chosen, asking for one |
 | [`docs/demo_mode.md`](docs/demo_mode.md) | Try it in minutes, no Home Assistant required |
@@ -394,7 +394,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 - **Push uniquement, zéro polling.** Home Assistant n'envoie que ce qui a changé ; la tablette ne demande jamais rien ([ADR-0001](docs/decisions/0001-push-only-zero-polling.md)).
 - **La voix démarre sur l'appareil.** « Okay Nabu » et un mot « Stop » pour le volet roulant sont détectés sur la tablette ; l'audio n'en sort qu'après le mot d'activation.
 - **Sept langues, jusque dans les détails.** Français, anglais, allemand, néerlandais, espagnol, italien et turc, au choix depuis Home Assistant : menus, jeux, dates, textes envoyés par Home Assistant et briefing parlé du réveil. Traduites par une IA ; l'auteur n'a relu que le français ([traductions](docs/translations.md#version-française)).
-- **Vingt et un thèmes, clairs ou sombres.** Couleurs, formes et polices de l'horloge changent aussitôt, sans redémarrer, depuis Home Assistant ou la console de la tablette ; « Auto » passe en clair au lever du soleil et en sombre à son coucher ([thèmes](docs/installation.md#thème-clair-ou-sombre)).
+- **Vingt et un thèmes, clairs ou sombres.** Couleurs, formes et polices de l'horloge changent aussitôt, sans redémarrer, depuis Home Assistant ou la console de la tablette ; « Auto » passe en clair au lever du soleil et en sombre à son coucher ([thèmes](docs/installation/settings.md#thème-clair-ou-sombre)).
 - **Continue de marcher quand Home Assistant ne marche plus.** Horloge, réveil, jeux et console de diagnostic restent utilisables seuls.
 - **Documenté et testé comme un produit.** 30 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome.
 - **Tourne sur la révision ST7123, et compile pour la ST7121 et l'ILI9881C d'origine**, alors que la plupart des exemples Tab5 publiés ne couvrent que celle d'origine.
@@ -403,16 +403,16 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 - Un Tab5 : la puce écran **ST7123** est celle testée tous les jours ; la ST7121 et l'ILI9881C d'origine compilent mais ne sont pas testées — voir la [compatibilité matérielle](#compatibilité-matérielle).
 - Home Assistant. Depuis la 3.0, un firmware prêt à l'emploi et signé s'installe depuis le navigateur ; pour compiler le vôtre, ESPHome **≥ 2026.9.0**.
-- L'écran parle **français, anglais, allemand, néerlandais, espagnol, italien ou turc**, au choix depuis Home Assistant ([traductions](docs/translations.md#version-française) ; toutes écrites par une IA comme le reste du projet, le français relu par l'auteur, les autres pas encore relues), jeux et textes envoyés par Home Assistant compris (phrase de pluie, bandeaux) ; seules les questions du quiz restent en français. La documentation est bilingue. Les prévisions viennent de n'importe quelle entité météo de Home Assistant (Météo-France, Met.no, OpenWeatherMap…). Le graphe de pluie dans l'heure vient de **Météo-France**, ou tout seul d'**Open-Meteo** (sans clé, partout) quand Home Assistant n'a pas Météo-France ; OpenWeatherMap, Buienradar, le DWD ou le radar nordique de Met.no peuvent le remplacer. Vigilances : Météo-France, MeteoAlarm, DWD ou CAP Alerts, au choix depuis Home Assistant. Météo-France et OpenWeatherMap ont été essayés sur l'installation de l'auteur ; les autres avec de vraies réponses lues par les mêmes modèles, ou des données simulées ([fournisseurs météo](docs/installation.md#fournisseurs-météo)).
-- La disposition est partie de la maison de l'auteur (une clim, jusqu'à 5 capteurs de plantes BLE, une TV Samsung). Depuis la 3.0, vous choisissez vos appareils dans Home Assistant, à la souris (un blueprint), et ce que vous n'avez pas disparaît de l'écran. Depuis la 3.2, les tuiles du bas sont des pièces : jusqu'à 5 pièces de 5 appareils (lumières, interrupteurs, volets, lecteurs multimédia, scènes, capteurs…), avec leurs noms et icônes pris dans Home Assistant (voir [Adapter à sa maison](docs/installation.md#adapter-à-sa-maison)). Hors des pièces, les autres zones ont une seule place chacune : la carte clim de l'accueil, la TV, le téléphone, deux températures, jusqu'à 5 plantes.
+- L'écran parle **français, anglais, allemand, néerlandais, espagnol, italien ou turc**, au choix depuis Home Assistant ([traductions](docs/translations.md#version-française) ; toutes écrites par une IA comme le reste du projet, le français relu par l'auteur, les autres pas encore relues), jeux et textes envoyés par Home Assistant compris (phrase de pluie, bandeaux) ; seules les questions du quiz restent en français. La documentation est bilingue. Les prévisions viennent de n'importe quelle entité météo de Home Assistant (Météo-France, Met.no, OpenWeatherMap…). Le graphe de pluie dans l'heure vient de **Météo-France**, ou tout seul d'**Open-Meteo** (sans clé, partout) quand Home Assistant n'a pas Météo-France ; OpenWeatherMap, Buienradar, le DWD ou le radar nordique de Met.no peuvent le remplacer. Vigilances : Météo-France, MeteoAlarm, DWD ou CAP Alerts, au choix depuis Home Assistant. Météo-France et OpenWeatherMap ont été essayés sur l'installation de l'auteur ; les autres avec de vraies réponses lues par les mêmes modèles, ou des données simulées ([fournisseurs météo](docs/installation/weather.md#version-française)).
+- La disposition est partie de la maison de l'auteur (une clim, jusqu'à 5 capteurs de plantes BLE, une TV Samsung). Depuis la 3.0, vous choisissez vos appareils dans Home Assistant, à la souris (un blueprint), et ce que vous n'avez pas disparaît de l'écran. Depuis la 3.2, les tuiles du bas sont des pièces : jusqu'à 5 pièces de 5 appareils (lumières, interrupteurs, volets, lecteurs multimédia, scènes, capteurs…), avec leurs noms et icônes pris dans Home Assistant (voir [Adapter à sa maison](docs/installation/adapt-to-your-home.md#version-française)). Hors des pièces, les autres zones ont une seule place chacune : la carte clim de l'accueil, la TV, le téléphone, deux températures, jusqu'à 5 plantes.
 
 ---
 
 ## Démarrage rapide
 
-**Sans compiler (3.0 et suivantes) :** [installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome ou Edge, câble USB-C). Installez les packages Home Assistant et le blueprint, choisissez votre révision d'écran, flashez, réglez le Wi-Fi, ajoutez la tablette dans Home Assistant : les cinq étapes, et que faire si la page n'atteint pas la tablette, sont dans [Sans compiler](docs/installation.md#sans-compiler-page-dinstallation). Les mises à jour arrivent ensuite dans Home Assistant.
+**Sans compiler (3.0 et suivantes) :** [installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) (Chrome ou Edge, câble USB-C). Installez les packages Home Assistant et le blueprint, choisissez votre révision d'écran, flashez, réglez le Wi-Fi, ajoutez la tablette dans Home Assistant : les cinq étapes, et que faire si la page n'atteint pas la tablette, sont dans [Sans compiler](docs/installation/README.md#version-française). Les mises à jour arrivent ensuite dans Home Assistant.
 
-**Ensuite :** un tableau de bord Home Assistant tout prêt pour la tablette ([étape 7](docs/installation.md#étape-7--un-tableau-de-bord-home-assistant-pour-la-tablette-facultatif)), et chaque réglage — thème, clair ou sombre, langue, réveil, écran à afficher — dans [Réglages et options de la tablette](docs/installation.md#réglages-et-options-de-la-tablette).
+**Ensuite :** un tableau de bord Home Assistant tout prêt pour la tablette ([étape 7](docs/installation/dashboard.md#version-française)), et chaque réglage — thème, clair ou sombre, langue, réveil, écran à afficher — dans [Réglages et options de la tablette](docs/installation/settings.md#version-française).
 
 **Ou compiler votre propre firmware :**
 
@@ -422,14 +422,14 @@ git clone https://github.com/Axellum/M5-Tab5-ESPHome-LVGL.git
 
 # Copier les fichiers de config locaux (gitignorés), puis y mettre vos valeurs
 cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-# Créer la clé de signature du firmware (plus de secrets.yaml depuis la 3.0) — voir docs/installation.md
+# Créer la clé de signature du firmware (plus de secrets.yaml depuis la 3.0) — voir docs/installation/build.md
 python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem
 
 # Compiler via le dashboard ESPHome ou la CLI :
 # esphome run tab5-ha-hmi.yaml
 ```
 
-Pas à pas complet : [`docs/installation.md`](docs/installation.md#version-française)
+Pas à pas complet : [`docs/installation/`](docs/installation/README.md#version-française)
 
 Envie de le voir tourner avant de configurer Home Assistant ? → [`docs/demo_mode.md`](docs/demo_mode.md) pousse des données de démonstration vers une tablette flashée avec un petit script autonome — sans installer HA, rien à nettoyer ensuite.
 
@@ -471,11 +471,11 @@ L'interface est compilée en C++ et embarquée dans le firmware de l'appareil. E
 
 ![Six thèmes de l'écran du Tab5 dessinés par le firmware lui-même : Relief doux en sombre et en clair, Almanach imprimé, Néon calme, Béton brut et Zen Sumi](docs/images/tab5_themes.jpg)
 
-**La tablette dans Home Assistant** — le tableau de bord écrit pour vos entités par la macro de l'[étape 7](docs/installation.md#étape-7--un-tableau-de-bord-home-assistant-pour-la-tablette-facultatif) :
+**La tablette dans Home Assistant** — le tableau de bord écrit pour vos entités par la macro de l'[étape 7](docs/installation/dashboard.md#version-française) :
 
 ![Vue Tab5 du tableau de bord de Home Assistant : luminosité, volume et écran de la tablette, réveil, rendez-vous et assistant vocal](docs/images/ha_tableau_tab5.png)
 
-**Énergie solaire** (facultatif) — le popup Énergie, d'après les capteurs choisis dans le blueprint ([énergie solaire](docs/installation.md#énergie-solaire-facultatif) ; rendu de la CI, données de démonstration) :
+**Énergie solaire** (facultatif) — le popup Énergie, d'après les capteurs choisis dans le blueprint ([énergie solaire](docs/installation/adapt-to-your-home.md#énergie-solaire-facultatif) ; rendu de la CI, données de démonstration) :
 
 ![Popup Énergie du Tab5 : solaire, maison, réseau et batterie en direct, et la production solaire des 30 derniers jours en barres](docs/images/tab5_energie.png)
 
@@ -504,8 +504,8 @@ Une page unique 1280×720 organisée en zones fonctionnelles, toutes alimentées
 - **Lumières** — popup quasi plein écran en 3 cartes de verre : sélecteur des lumières de la pièce (5 au plus ; changer de lumière sans fermer le popup), arc de luminosité avec % en direct (débouncé) et raccourcis 10/35/65/100 %, 3 blancs nommés + 12 pastilles couleur rondes
 - **Plantes** — carte d'humidité du sol pour jusqu'à 5 capteurs BLE, triés dynamiquement, code couleur par niveau (rouge = sec, vert = optimal, bleu = trop humide) ; un appui long ouvre un popup détail à 5 cartes (humidité + statut d'arrosage, fertilité, lumière, température, batterie du capteur)
 - **Console** — overlay diagnostics + gestion HA (RAM/PSRAM, Wi-Fi, uptime, volume, re-pousse écran, reload automations, restart HA / reboot tablette derrière confirmation), ouvert via son bouton dédié
-- **Thèmes** — 21 thèmes (couleurs, formes, polices de l'heure, de la date et des titres), chacun clair ou sombre, changés aussitôt depuis Home Assistant (« Thème », « Clair ou sombre ») ou depuis une rangée de la console ; « Auto » suit le soleil par l'automatisation « Tab5 — thème jour/nuit ». Les jeux gardent leurs couleurs sombres ([réglages](docs/installation.md#réglages-et-options-de-la-tablette))
-- **Énergie** (facultatif) — popup pour une installation solaire : solaire, maison, réseau et batterie de la maison en direct, et la production par heure, jour et mois tirée des statistiques de Home Assistant ; une icône du bandeau d'état montre par sa couleur la production rapportée à la puissance crête des panneaux. La batterie d'origine de la tablette a aussi son icône, derrière l'interrupteur « Tab5 Batterie montée » ([énergie solaire](docs/installation.md#énergie-solaire-facultatif))
+- **Thèmes** — 21 thèmes (couleurs, formes, polices de l'heure, de la date et des titres), chacun clair ou sombre, changés aussitôt depuis Home Assistant (« Thème », « Clair ou sombre ») ou depuis une rangée de la console ; « Auto » suit le soleil par l'automatisation « Tab5 — thème jour/nuit ». Les jeux gardent leurs couleurs sombres ([réglages](docs/installation/settings.md#version-française))
+- **Énergie** (facultatif) — popup pour une installation solaire : solaire, maison, réseau et batterie de la maison en direct, et la production par heure, jour et mois tirée des statistiques de Home Assistant ; une icône du bandeau d'état montre par sa couleur la production rapportée à la puissance crête des panneaux. La batterie d'origine de la tablette a aussi son icône, derrière l'interrupteur « Tab5 Batterie montée » ([énergie solaire](docs/installation/adapt-to-your-home.md#énergie-solaire-facultatif))
 - **Arcade** — 8 consoles de jeu plein écran (prototypes expérimentaux — premier jet généré par IA pour tester ce qu'un ESP32-P4 peut faire) : **Fil d'Or** (roguelite de bille, pilotage inclinaison), **Arcanoïde** (casse-briques), **Neon Apron** (flipper, portrait), **Coureur d'Or** (Lode Runner), **Go Tab** (Go 9×9/13×13/19×19), **Trial Poursuite** (quiz), **Dames Tab** (dames 10×10), **Roi Noir** (échecs FIDE avec IA embarquée). Tous 100 % locaux, zéro dépendance HA/réseau, persistance NVS. Ouverts via une grille sélecteur 4×2 déclenchée par tap sur la température serre
 - **Popup Assistant** — modal quasi plein écran affichant la transcription STT (« Votre demande ») et la réponse LLM rendue en Markdown (tableaux, gras, code, images téléchargées à la demande) ; panneau gauche = réglages (sélecteur cerveau Domotique/Discussion, Ok Nabu ON/OFF, volume, taille texte A-/A+)
 - **Popup Calendrier** — grille mensuelle 7×6 calculée localement depuis SNTP ; heures de travail dans les cases, marqueurs colorés (fériés, vacances scolaires, RDV, anniversaires) ; tap sur un jour = sous-popup détail ; HA enrichit à la demande
@@ -572,7 +572,7 @@ Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui
 | [`docs/ui_design.md`](docs/ui_design.md) | Rendu LVGL, polices vectorielles, couleur dynamique, optimisations CPU |
 | [`docs/performance.md`](docs/performance.md#version-française) | Temps d'image, ouvertures des popups, redémarrage, RAM, mesurés — et comment |
 | [`docs/voice_assistant.md`](docs/voice_assistant.md) | Pipeline wake-word, chaîne audio, états de retour visuel |
-| [`docs/installation.md`](docs/installation.md) | Prérequis, page de flashage ou compilation, clé de signature, Home Assistant, mises à jour, passage à la 3.0 |
+| [`docs/installation/`](docs/installation/README.md#version-française) | Installer en sept étapes (fichiers Home Assistant, page d'installation, Wi-Fi, sources, appareils, tableau de bord), réglages de la tablette, adapter à sa maison, fournisseurs météo, mises à jour, compiler le sien |
 | [`docs/translations.md`](docs/translations.md#version-française) | Langue de l'écran (français, anglais, allemand, néerlandais, espagnol, italien, turc), ajouter une langue |
 | [`docs/tiles_icons.md`](docs/tiles_icons.md#version-française) | Icônes des tuiles de pièce : la palette, le choix d'une icône, en demander une |
 | [`docs/demo_mode.md`](docs/demo_mode.md) | Tester en quelques minutes, sans Home Assistant |

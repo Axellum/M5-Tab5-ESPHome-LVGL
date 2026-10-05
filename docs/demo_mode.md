@@ -6,7 +6,7 @@
 
 ## Why this exists
 
-The full install (see [`installation.md`](installation.md)) assumes you already run Home Assistant with a weather integration, Google Calendar, a climate entity, BLE plant sensors... That's a lot to set up just to see whether the dashboard is worth the effort.
+The full install (see [`installation.md`](installation/README.md)) assumes you already run Home Assistant with a weather integration, Google Calendar, a climate entity, BLE plant sensors... That's a lot to set up just to see whether the dashboard is worth the effort.
 
 The firmware is **push-only** ([ADR-0001](decisions/0001-push-only-zero-polling.md)): it never asks Home Assistant for anything, it only reacts to ESPHome native API calls. That means anything that can speak the ESPHome API protocol can drive the screen — including a small script that isn't Home Assistant at all.
 
@@ -18,7 +18,7 @@ Nothing in `Tab5/*.yaml`, `Tab5/*.cpp/.h`, `Tab5/user_entities.yaml`, or `HomeAs
 
 ## Steps
 
-1. **Flash normally**, but leave `Tab5/user_entities.example.yaml` as-is (copy it to `Tab5/user_entities.yaml` unmodified — you don't need real Home Assistant entities behind these placeholder IDs for the demo). You still need the signing key and the Wi-Fi of [`installation.md`](installation.md) steps 3 and 5.
+1. **Flash normally**, but leave `Tab5/user_entities.example.yaml` as-is (copy it to `Tab5/user_entities.yaml` unmodified — you don't need real Home Assistant entities behind these placeholder IDs for the demo). You still need the signing key and the Wi-Fi of [`installation.md`](installation/README.md) steps 3 and 5.
 2. **Note the device's IP** once it's on your Wi-Fi (your router, or the page of « Tab5 Fallback AP » right after you picked the network).
 3. **Install the one dependency** and run the script from your PC (same Wi-Fi network as the device):
    ```bash
@@ -89,7 +89,7 @@ Source of the exact payload contract: `Tab5/tab5-api-logic.yaml` and `Tab5/tab5_
 
 ## Pourquoi ce mode existe
 
-L'installation complète (voir [`installation.md`](installation.md)) suppose que vous avez déjà Home Assistant avec une intégration météo, Google Calendar, une entité climatisation, des capteurs BLE plantes... Beaucoup de travail juste pour voir si le tableau de bord vaut le coup.
+L'installation complète (voir [`installation.md`](installation/README.md)) suppose que vous avez déjà Home Assistant avec une intégration météo, Google Calendar, une entité climatisation, des capteurs BLE plantes... Beaucoup de travail juste pour voir si le tableau de bord vaut le coup.
 
 Le firmware est **push-only** ([ADR-0001](decisions/0001-push-only-zero-polling.md)) : il ne demande jamais rien à Home Assistant, il réagit seulement aux appels de l'API native ESPHome. N'importe quel client qui parle ce protocole peut donc piloter l'écran — y compris un petit script qui n'est pas du tout Home Assistant.
 
@@ -101,7 +101,7 @@ Rien dans `Tab5/*.yaml`, `Tab5/*.cpp/.h`, `Tab5/user_entities.yaml` ou `HomeAssi
 
 ## Étapes
 
-1. **Flashez normalement**, mais laissez `Tab5/user_entities.example.yaml` tel quel (copiez-le vers `Tab5/user_entities.yaml` sans le modifier — pas besoin de vraies entités Home Assistant derrière ces IDs placeholder pour la démo). Il vous faut quand même la clé de signature et le Wi-Fi des étapes 3 et 5 d'[`installation.md`](installation.md#version-française).
+1. **Flashez normalement**, mais laissez `Tab5/user_entities.example.yaml` tel quel (copiez-le vers `Tab5/user_entities.yaml` sans le modifier — pas besoin de vraies entités Home Assistant derrière ces IDs placeholder pour la démo). Il vous faut quand même la clé de signature et le Wi-Fi des étapes 3 et 5 d'[`installation.md`](installation/README.md#version-française).
 2. **Notez l'IP de l'appareil** une fois connecté au Wi-Fi (votre routeur, ou la page de « Tab5 Fallback AP » juste après le choix du réseau).
 3. **Installez l'unique dépendance** et lancez le script depuis votre PC (même réseau Wi-Fi que l'appareil) :
    ```bash

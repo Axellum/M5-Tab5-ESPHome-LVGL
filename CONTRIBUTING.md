@@ -17,7 +17,7 @@ Thanks for looking at this project. It is a personal firmware repo, but issues a
 2. Copy config templates if needed:
    ```bash
    cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-   # firmware signing key (no secrets.yaml since 3.0) — see docs/installation.md, Step 3
+   # firmware signing key (no secrets.yaml since 3.0) — see docs/installation/build.md
    python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem
    ```
 3. **Compile must pass:**
@@ -61,7 +61,7 @@ Merci de vous intéresser à ce projet. C'est un firmware personnel, mais issues
 2. Copier les modèles de config si besoin :
    ```bash
    cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-   # clé de signature du firmware (plus de secrets.yaml depuis la 3.0) — voir docs/installation.md, étape 3
+   # clé de signature du firmware (plus de secrets.yaml depuis la 3.0) — voir docs/installation/build.md
    python -m espsecure generate-signing-key --version 2 --scheme rsa3072 tab5_signature.pem
    ```
 3. **La compilation doit passer :**

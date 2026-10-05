@@ -20,7 +20,7 @@ Device events need no such option: HA's ESPHome `manager.py` fires any `esphome.
 ## Consequences
 
 - One installation step less; the option can be unticked, which closes « any action » to the device.
-- **Order of update**: package first (idle with a 3.1 tablet, which emits none of these events), then firmware, then untick the option. A new firmware without the package loses its requests silently (no crash, no log): calendar grid only, no announcements, console buttons inert — documented in `docs/installation.md`.
+- **Order of update**: package first (idle with a 3.1 tablet, which emits none of these events), then firmware, then untick the option. A new firmware without the package loses its requests silently (no crash, no log): calendar grid only, no announcements, console buttons inert — documented in [`docs/installation/updates.md`](../installation/updates.md#upgrading-from-31).
 - Pipeline: the option is selected only if the tablet's pipeline select offers it (no more error at each boot for a missing « Discussion LLM »). Since HA 2025.10 there are two pipeline selects; the first by entity id is the one the firmware used to target.
 - **Known limit**: `manager.py` merges the device's data **after** `device_id`, so another ESPHome device already added to HA could send its own `device_id` field and pass for the tablet. The firmware never sends that field. This is still far narrower than the option it replaces.
 - Some scripts called by the package still name the satellite themselves (`tab5_reveil_annonce` in `tab5_reveil.yaml`); passing the tablet's satellite to them is a possible follow-up.
