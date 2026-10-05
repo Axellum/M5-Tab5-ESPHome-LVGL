@@ -146,7 +146,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | Fichier | Emplacement | Type | Rôle |
 |---|---|---|---|
 | `tools/demo/demo_pusher.py` | `tools/demo/` | Intégration (dry-run) | Valide chaque payload push contre le contrat firmware. |
-| `tools/installation_ha/` | `tools/installation_ha/` | Intégration (CI) | Installation dans un Home Assistant neuf, sans matériel (`.github/workflows/installation-ha.yml`) : `preparer_config.py` (dossier `config/` d'une installation neuve : `configuration.yaml`, fichiers de l'archive `tab5_home_assistant.zip` tels quels, `donnees_test.yaml`), `verifier_installation.py` (ordre « Sans compiler » : onboarding, sources choisies dans les listes « Tab5 · … », ajout ESPHome de la tablette virtuelle, clé API, option « actions HA » laissée décochée (ADR-0025), automatisation du blueprint, redémarrage ; traces, zones, captures demandées par HA, demandes de la tablette par événements, tableau de bord de la tablette rendu par HA et enregistré, journal de HA). |
+| `tools/installation_ha/` | `tools/installation_ha/` | Intégration (CI) | Installation dans un Home Assistant neuf, sans matériel (`.github/workflows/installation-ha.yml`) : `preparer_config.py` (dossier `config/` d'une installation neuve : `configuration.yaml`, fichiers de l'archive `tab5_home_assistant.zip` tels quels, `donnees_test.yaml`), `verifier_installation.py` (ordre « Sans compiler » : onboarding, sources choisies dans les listes « Tab5 · … », ajout ESPHome de la tablette virtuelle, clé API, option « actions HA » laissée décochée (ADR-0025), automatisation du blueprint, redémarrage ; traces, zones, captures demandées par HA, demandes de la tablette par événements, tableau de bord de la tablette rendu par HA et enregistré, journal de HA) ; `captures_ha.py` (captures de l'interface de HA du guide d'installation, anglais et français, par Playwright). |
 | `tools/sanitizers/` | `tools/sanitizers/` | Intégration (CI) | Tablette virtuelle sous ASan + UBSan (`.github/workflows/sanitizers.yml`) : `variante.py` + `pio_drapeaux.py` (compilation instrumentée), `fuzz_services.py` (19 services), `cibles_ub.py` (conversions hors bornes, fenêtres ouvertes), `rapports.py` (rapports lus dans le journal de la tablette), `temoin.cpp` (témoin positif). |
 | `tools/verifier_secrets_config.py` | `tools/` | Outil | Analyse les fichiers suivis par git (`.yaml`, `.yml`, `.example`, `.jinja`, `.md`) pour détecter des secrets en clair. |
 | `tools/render_ha_config.py` | `tools/` | Outil | Copie les fichiers HA publics dans `rendered/` ; `--check` = garde-fou de fuite (valeurs réelles, placeholders). |
@@ -199,6 +199,7 @@ python tools/demo/demo_pusher.py --dry-run
 │   │   ├── requirements.txt
 │   │   └── scenarios.py
 │   ├── installation_ha/   (job « installation dans un HA neuf »)
+│   │   ├── captures_ha.py
 │   │   ├── configuration.yaml
 │   │   ├── donnees_test.yaml
 │   │   ├── preparer_config.py
