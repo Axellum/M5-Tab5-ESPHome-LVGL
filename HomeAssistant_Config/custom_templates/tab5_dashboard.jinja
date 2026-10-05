@@ -578,7 +578,7 @@ views:
                         ('select.tab5_volet_a_course_simulee', 'Volet', 'Shutter'),
                         ('select.tab5_pipeline_de_discussion', 'Mode « Discu »', 'Discu mode')] %}
 {%- if e in present %}
-              | {{ t(fr_, en_) }} | {% raw %}{{ choix('{% endraw %}{{ e }}{% raw %}') }}{% endraw %}{%- if e == 'select.tab5_agenda_de_travail' and 'input_text.tab5_mot_travail' in present %} ({{ t('mot « ', 'keyword: ') }}{% raw %}{{ states('input_text.tab5_mot_travail') or '{% endraw %}{{ t('tous', 'all') }}{% raw %}' }}{% endraw %}{{ t(' »', '') }}){%- endif %} |
+              | {{ t(fr_, en_) }} | {% raw %}{{ choix('{% endraw %}{{ e }}{% raw %}') }}{% endraw %}{%- if e == 'select.tab5_agenda_de_travail' and 'input_text.tab5_mot_travail' in present %} ({{ t('mot « ', 'keyword: ') }}{% raw %}{{ states('input_text.tab5_mot_travail') or '{% endraw %}{{ t('tous', 'all') }}{% raw %}' }}{% endraw %}{{ t(' »', '') }}){%- endif %} |
 {%- endif %}
 {%- endfor %}
 {%- if ns.e %}
@@ -603,11 +603,11 @@ views:
               - **{{ t('Températures', 'Temperatures') }}**{{ t(" : température et humidité de la pièce, une seconde température (serre), sur l'accueil.", ': room temperature and humidity, a second temperature (greenhouse), on the home page.') }}
               - **{{ t('Climatisation', 'Climate') }}**{{ t(" : − / consigne / + de l'accueil et le popup clim.", ': − / setpoint / + on the home page and the climate popup.') }}
               - **{{ t('Plantes', 'Plants') }}**{{ t(" : le capteur d'humidité de chaque pot (Flower Care et semblables) ; le reste est lu sur le même appareil.",': the moisture sensor of each pot (Flower Care and the like); the rest is read from the same device.') }}
-              - **{{ t('Planning de travail', 'Work schedule') }}**{{ t(' : un agenda ; vide, celui de la liste « Agenda de travail » plus bas.', ': a calendar; empty, the one of the « Work » list below.') }}
-              - **{{ t('Météo', 'Weather') }}**{{ t(' : facultatif, prime sur les listes « Météo » plus bas.', ': optional, wins over the « Weather » lists below.') }}
-              - **{{ t('Énergie', 'Energy') }}**{{ t(' : voir « Énergie solaire ».', ': see « Solar energy ».') }}
+              - **{{ t('Planning de travail', 'Work schedule') }}**{{ t(' : un agenda ; vide, celui de la liste « Agenda de travail » plus bas.', ': a calendar; empty, the one of the « Work » list below.') }}
+              - **{{ t('Météo', 'Weather') }}**{{ t(' : facultatif, prime sur les listes « Météo » plus bas.', ': optional, wins over the « Weather » lists below.') }}
+              - **{{ t('Énergie', 'Energy') }}**{{ t(' : voir « Énergie solaire ».', ': see « Solar energy ».') }}
 
-              {{ t("Un champ vide disparaît de l'écran avec ses boutons, et « Zones masquées » le dit. Un changement part tout de suite, sans redémarrer.", 'An empty field leaves the screen with its buttons, and « Hidden zones » says so. A change is sent at once, without restarting.') }} [{{ t('Adapter à sa maison', 'Adapt to your home') }}]({{ doc('adapter-à-sa-maison', 'adapt-to-your-home') }})
+              {{ t("Un champ vide disparaît de l'écran avec ses boutons, et « Zones masquées » le dit. Un changement part tout de suite, sans redémarrer.", 'An empty field leaves the screen with its buttons, and « Hidden zones » says so. A change is sent at once, without restarting.') }} [{{ t('Adapter à sa maison', 'Adapt to your home') }}]({{ doc('adapter-à-sa-maison', 'adapt-to-your-home') }})
           - type: shortcut
             label: "{{ t('Choisir appareils et capteurs', 'Pick devices and sensors') if ns.e_id else t('Créer les emplacements', 'Create the screen slots') }}"
             description: "{{ t("Tab5 — emplacements de l'écran", "Tab5 — emplacements de l'écran (screen slots)") }}"
@@ -631,14 +631,14 @@ views:
           - type: markdown
             text_only: true
             content: |-
-              {{ t("Facultatif. Dans l'automatisation des emplacements, ouvrez la section repliée **« Énergie · Energy »** :", 'Optional. In the screen slots automation, open the collapsed **« Énergie · Energy »** section:') }}
+              {{ t("Facultatif. Dans l'automatisation des emplacements, ouvrez la section repliée **« Énergie · Energy »** :", 'Optional. In the screen slots automation, open the collapsed **« Énergie · Energy »** section:') }}
               1. **{{ t('Puissance solaire', 'Solar power') }}**{{ t(' : ce que produisent les panneaux en ce moment (W ou kW).', ': what the panels produce right now (W or kW).') }}
               2. **{{ t('Puissance crête des panneaux', 'Panel peak power') }}**{{ t(" (kWc, sur la facture ou l'onduleur) : avec la puissance solaire, une icône du bandeau d'état, en haut à gauche, montre la production par sa couleur (gris la nuit, puis rouge, ambre, bleu, vert). 0 : pas d'icône.", ' (kWp, on the invoice or the inverter): with the solar power, an icon of the status strip, top left, shows the production by its colour (grey at night, then red, amber, blue, green). 0: no icon.') }}
               3. **{{ t('Popup Énergie', 'Energy popup') }}**{{ t(' : énergie produite (le compteur en kWh du tableau Énergie de Home Assistant), réseau, maison, batterie, tous facultatifs.', ': energy produced (the kWh meter of the Home Assistant Energy dashboard), grid, home, battery, all optional.') }}
               4. {{ t('Placez la puissance solaire dans une pièce : sa tuile ouvre le popup au toucher.', 'Put the solar power in a room: its tile opens the popup on tap.') }}
 {%- if 'script.tab5_energie' not in present %}
 
-              <font color="#ff9800">{{ t('Package tab5_energie absent : le popup reste « En attente de Home Assistant ».', 'tab5_energie package missing: the popup stays on « Waiting for Home Assistant ».') }}</font>
+              <font color="#ff9800">{{ t('Package tab5_energie absent : le popup reste « En attente de Home Assistant ».', 'tab5_energie package missing: the popup stays on « Waiting for Home Assistant ».') }}</font>
 {%- endif %}
 
               [{{ t('Énergie solaire, pas à pas', 'Solar energy, step by step') }}]({{ doc('énergie-solaire-facultatif', 'solar-energy-optional') }})
