@@ -4,6 +4,95 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [3.6.0] — 2026-10-05
+
+De `v3.5.0` à aujourd'hui : vingt-huit pull requests (#296 → #319, #321 → #325), dont sept nées
+des idées et des retours de @husyildiz (discussion #278 : #302 à #305, #308 à #310) — merci
+à @husyildiz —, et celle de la release (#320).
+- **Vingt et un thèmes, chacun clair ou sombre** (#312, #314 à #318, #324, #325, [ADR-0029](docs/decisions/0029-themes-palette.md)) :
+  couleurs, formes (rayons, bordures, ombres) et polices de l'heure, de la date et des
+  titres. Choisis dans Home Assistant (« Thème », « Clair ou sombre ») ou depuis la
+  console ; l'écran se repeint sans redémarrer. « Auto » passe en clair le jour et en
+  sombre la nuit (automatisation « Tab5 — thème jour/nuit »). Une tablette neuve démarre
+  en « Relief doux » ; un thème déjà choisi reste.
+- **Accueil redessiné** (#322, #323) : trois colonnes alignées autour de l'horloge, boutons
+  et pots à icône seule (le nom et la valeur des pots restent dans « Mes Plantes »), tuile
+  clim et « Ok Nabu » en bas des colonnes ; le bouton muet quitte l'accueil (le son se
+  coupe depuis le popup Assistant vocal). La police de la date du thème sert aussi aux
+  températures, à la consigne, à « Ok Nabu », aux textes de la carte centrale et aux
+  titres des prévisions, qui perdent « Prévisions horaires 1/2 » et « Prévisions
+  journalières 2/3 ». Horloge : autant d'air au-dessus de l'heure que sous les jambages
+  de la date, dans tous les thèmes.
+- **Tableau de bord Home Assistant de la tablette** (#313) : la macro
+  `custom_templates/tab5_dashboard.jinja` écrit trois vues (Tab5, Réglages, Santé) avec
+  vos entités.
+- **Énergie solaire** (#308, #310, [ADR-0028](docs/decisions/0028-solar-energy-popup.md)) : popup Énergie (installation en direct,
+  production par heure, jour et mois) et icône de la production dans le bandeau d'état,
+  depuis une section facultative du blueprint.
+- **Batterie d'origine** (#303, #309) : la charge est activée au démarrage ; trois entités
+  de diagnostic (désactivées par défaut) ; une icône dans le bandeau, montrée seulement si
+  l'interrupteur « Tab5 Batterie montée » est allumé.
+- **Météo choisie dans le blueprint** (#305), section facultative.
+- **Corrigé** : console système lisible en mode clair (#325), prévisions horaires de
+  gauche à droite (#304), icônes de nuit (#302), noms des plantes plus rognés (#301),
+  accent d'Arcanoïde (#300), classement d'Arcanoïde borné (#299).
+- **Documentation** (#296, #306, #319, #321) : réglages et options de la tablette, captures
+  des thèmes, du popup Énergie et de Home Assistant, énergie solaire dans le README et sur le
+  site, nouveautés du site à jour.
+
+**Compatible dans les deux sens** (lu dans le code, pas essayé) : un firmware 3.6.0 avec les
+fichiers HA de la 3.5.0 marche, thèmes compris, mais « Auto » ne bascule jamais (rien
+n'allume « Nuit (thème auto) ») et le popup Énergie reste vide ; un firmware 3.5.0 avec les
+fichiers de la 3.6.0 ignore l'automatisation des thèmes, qui ne trouve pas d'interrupteur.
+
+### À faire en mettant à jour depuis 3.5.0
+
+1. **Home Assistant d'abord** : remplacer les fichiers par ceux de
+   `tab5_home_assistant.zip` (les packages, dont le nouveau `tab5_energie.yaml`, le
+   blueprint et `custom_templates/`), puis recharger toute la configuration YAML (Outils de
+   développement → YAML) et les modèles Jinja personnalisés (action
+   `homeassistant.reload_custom_templates`, ou un redémarrage). Sans cela, la notification
+   « Tab5 : fichiers Home Assistant à mettre à jour » le rappelle (3.6 contre 3.5).
+2. **Firmware** : entité « Firmware » dans Home Assistant. Une tablette qui n'avait jamais
+   choisi de thème passe en « Relief doux ».
+3. **Quand vous voulez** : le tableau de bord (étape 7 du guide d'installation, à refaire
+   après chaque mise à jour qui ajoute des entités), le thème et « Clair ou sombre », les
+   sections « Énergie » et « Météo » du blueprint ; avec une batterie montée, « Tab5
+   Batterie montée » et les trois entités de la batterie.
+
+### Mesures de la version
+
+- Image du firmware : +917 504 o par rapport à la 3.5.0 publiée (compilation
+  `build-min` de la CI, ESPHome 2026.9.0 comme les binaires publiés : 4 329 472 o contre
+  3 411 968 o) ; thèmes (palettes, formes, polices), popup Énergie et batterie compris,
+  dont 263 536 o pour les polices de date complètes de #323 (ASCII et caractères des
+  sept langues). RAM statique : 180 200 o (40,5 %).
+- Sur la tablette de l'auteur : le code des thèmes (`main` à 544d4b2) a tourné du 05/10
+  à 6 h 24 jusqu'au flash suivant sans redémarrer, temps de boucle lu dans Home Assistant
+  39 ms en « Relief doux », contre 16 ms avant les ombres ; le code de cette version
+  (build local avec #323 et #325, même code hors numéro de version) y tourne depuis le
+  05/10 à 10 h 53, écran rallumé seul après le flash. Le dessin d'un écran entier passe de
+  134 à 169 ms avec les ombres de « Relief plat » (mesuré le 04/10) ; la carte centrale
+  qui tourne n'a pas ralenti.
+- Rendu hors tablette (CI) : les vingt et un thèmes dans les deux modes, bascule à chaud
+  identique au démarrage à froid, au pixel près ; marge du haut de l'horloge mesurée sur
+  les 42 captures de la galerie : au pixel près dans vingt thèmes, 1 px de plus en Capsule.
+- Compilations requises de la CI (dernière ESPHome et 2026.9.0) : vertes sur `main`.
+
+### Problèmes connus
+
+Ceux de la 3.5.0, et :
+- en mode clair, quelques couleurs d'accent (or, avertissement, pluie) restent entre
+  3:1 et 3,7:1 sur le verre des popups selon le thème : lisibles, mais sous les 4,5:1
+  visés pour le petit texte ;
+- les ombres de certains thèmes ralentissent le dessin d'un écran entier (voir les mesures) ;
+- trois esquisses avaient un état « bouton actif » propre, pas repris ; les jeux restent
+  sombres ; un caractère absent d'une police de thème est dessiné en Roboto ;
+- batterie et énergie solaire jamais essayées avec une vraie batterie ni une vraie
+  installation solaire (le niveau est estimé depuis la tension) ;
+- les nouveaux textes en allemand, néerlandais, espagnol, italien et turc sont traduits
+  par une IA, pas encore relus.
+
 ### 2026-10-05 — Mode clair : console système lisible
 
 Retour d'Axel sur la tablette : « beaucoup de texte blanc sur fond clair, illisible, dans
