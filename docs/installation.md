@@ -19,10 +19,11 @@ Since 3.0, a ready-made, signed firmware installs from the browser. In this orde
    - Firmware 3.1 or older only: also tick « Allow the device to perform Home Assistant actions » (*ESPHome → Configure*), which voice, calendar and alarm clock need there.
 5. **Your devices**: create the automation from the blueprint ([Step 4](#step-4--set-up-the-home-assistant-packages), item 5).
 6. **A dashboard for the tablet** (optional): [Step 7](#step-7--a-home-assistant-dashboard-for-the-tablet-optional).
+7. **Theme, language, alarm clock…**: every setting of the tablet is described in [Tablet settings and options](#tablet-settings-and-options).
 
 Updates then show up in Home Assistant (« Firmware » entity), on the channel you installed; to switch channels, install again from the page without erasing. Over the air, the tablet only accepts a firmware signed with the project key: to switch to your own builds (your own key), flash once over USB.
 
-The steps below are for building your own firmware; Steps 4, 6 and 7 are for everyone.
+The steps below are for building your own firmware; Steps 4, 6 and 7 and the [tablet settings](#tablet-settings-and-options) are for everyone.
 
 ## Prerequisites
 
@@ -114,6 +115,8 @@ The whole Home Assistant side is one archive, **`tab5_home_assistant.zip`**, att
 
    Each list has a two-language name, « français · english » (« Tab5 · agenda de travail · work calendar »), and keeps its entity id. Left on « Aucun », a feature simply stays off, without errors.
 
+   ![The « Tab5 · » lists in the entity table of Home Assistant: calendars, presence sensor, chat pipeline, weather sources, phone, TV and shutter](images/ha_listes_tab5.png)
+
    - **Which events are work**: the text « Tab5 · mot des événements de travail · work event keyword » holds the words that make an event of the work calendar a work shift, comma-separated, in any case, looked for in the title. **Empty = every event of the work calendar**, for a calendar that holds only your shifts. The author's work calendar also holds his appointments: he types `Travail`.
    - **School holidays**: any calendar of yours. In France, the ministry publishes one ICS file per zone: *Settings → Devices & services → Add integration → Remote Calendar*, name « Calendrier scolaire » (the list then picks it by itself), URL `https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-A.ics` (`Zone-B.ics`, `Zone-C.ics` for the other zones; checked on 2026-09-29, until summer 2028). The weather providers' own entities (Météo-France rain and warning sensors, OpenWeatherMap, MeteoAlarm, DWD, CAP Alerts) and the tablet's entities (screen, alarm, microphone…) are found by themselves; the tablet by its device model, whatever you named it.
 5. **Choose your devices**: *Settings → Automations & scenes → Blueprints*, « Tab5 — emplacements de l'écran · screen slots » (unzipped with the rest; or *Import blueprint* with
@@ -165,7 +168,56 @@ Every setting of the tablet in one Home Assistant dashboard: a **Tab5** view for
    Another address: `tab5_dashboard('dashboard-xxx')`. The labels follow the tablet's screen language (French, otherwise English); `tab5_dashboard(langue='English')` forces English.
 3. Open the Tab5 dashboard → pencil → ⋮ → *Raw configuration editor*: replace everything with the result, *Save*.
 
+![Tab5 view of the dashboard: brightness, volume and screen of the tablet, alarm clock, appointments and voice assistant](images/ha_tableau_tab5.png)
+
+![Health view of the dashboard: connection to Home Assistant, boot reason, Home Assistant files, loop time, free memory and processor temperature over 24 h](images/ha_sante.png)
+
 A card only appears when its entity exists (TV, shutter, battery…); the battery entities are disabled by default, enable them if a battery is fitted. The rooms and tiles are set in the blueprint automation (a link in Settings). Two settings stay on the tablet only: the text size of the assistant popup and a custom choice of alarm days. After an update that adds entities, do items 2 and 3 again. « TemplateNotFound: tab5_dashboard.jinja »: the macro is loaded when Home Assistant starts; restart it, or run the action `homeassistant.reload_custom_templates`.
+
+## Tablet settings and options
+
+Every setting of the tablet is an entity of its device in Home Assistant, and the tablet keeps it across restarts. Three places show them, all equivalent:
+
+- the **Settings** view of the [tablet's dashboard](#step-7--a-home-assistant-dashboard-for-the-tablet-optional), left below: its « Tablette » column;
+- the device page, right below: *Settings → Devices & services → ESPHome →* your tablet, cards **Controls** and **Configuration**;
+- for the theme, the tablet itself: the system console (« Sys » button) has a row with the current theme and mode, and a tap moves to the next one.
+
+<p><img src="images/ha_reglages_tablette.png" width="57%" alt="« Tablette » column of the Settings view: screen language, theme, light or dark, wake with a tap, battery fitted, night switch, audio output, Wi-Fi antenna"> <img src="images/ha_appareil_configuration.png" width="40%" alt="Configuration card of the tablet's device page in Home Assistant: screen to show, voice settings, light or dark, language, night switch, theme, volume"></p>
+
+### Theme, light or dark
+
+| Entity | Values | What it does |
+|---|---|---|
+| Thème | 18 themes, from « Ardoise » to « Pixel »; a new tablet starts in « Relief doux » | colours, shapes (radius, borders, shadows) and the fonts of the clock, the date and the titles. The screen repaints at once, without a restart; the games keep their own dark colours |
+| Clair ou sombre | Sombre, Clair, Auto | the mode of the theme. **Auto**: light by day, dark at night, following « Nuit (thème auto) » |
+| Nuit (thème auto) | on / off | read only in Auto mode. The automation « Tab5 — thème jour/nuit » (`packages/tab5_push.yaml`) turns it on when the sun sets and off when it rises (`sun.sun`, so the location of Home Assistant). To decide yourself (a light sensor, bedtime…), turn that automation off and switch it from your own. Without Home Assistant, Auto keeps the last state received |
+
+The theme names stay as they are in every language: they are names. Six of them:
+
+![Six themes of the Tab5 screen drawn by the firmware itself: Relief doux in dark and light, Almanach imprimé, Néon calme, Béton brut and Zen Sumi](images/tab5_themes.jpg)
+
+### Screen, sound and network
+
+| Entity (name on the dashboard) | Values | What it does |
+|---|---|---|
+| Langue (Langue de l'écran) | Français, English, Deutsch, Nederlands, Español, Italiano, Türkçe | screen, games, dates and the spoken alarm briefing. **The tablet restarts** to apply it. The names and states Home Assistant sees stay in French |
+| Display Backlight (Luminosité) | on / off, brightness | the screen backlight |
+| Tab5 Tap-to-Wake (Rallumer l'écran d'une tape) | on / off, on by default | a tap on the tablet lights the screen up again when it is off |
+| Volume | 0 to 100 % | speaker volume; also in the console and the assistant popup |
+| Speaker Enable (Haut-parleur) | on / off | turns the speaker on or off (a line of the IO expander) |
+| Tab5 DAC Output (Sortie audio) | LINE1, LINE2, BOTH | output of the ES8388 audio chip; the author's tablet uses LINE1 |
+| WiFi Antenna (Antenne Wi-Fi) | Internal, External | the internal antenna, or one on the external connector |
+| Tab5 Batterie montée (Batterie montée) | on / off, off by default | shows the battery icon in the status strip. A setting, not a detection: without a battery, the charger reports a full one |
+| Aller à l'écran (Afficher) | —, Accueil, Assistant vocal, Calendrier, Réveil, Climatisation, Plantes, Télécommande TV, Console système, Énergie | opens that screen or popup, from the dashboard or an automation, then goes back to « — ». A game in progress is closed first |
+| Recharger le calendrier | button | asks Home Assistant again for this month and the next, when a new appointment is not on screen yet |
+
+### Alarm clock, appointments, voice
+
+- **Alarm clock**: « Réveil » (armed or not), « Réveil : mode » (Heure fixe, Jours travaillés, Avant l'ouverture), the fixed time and its days, « jamais avant » / « jamais après », lead before the shift, minimum rest, snooze, maximum duration, ring tone, its own volume, fade-in and the spoken briefing. How the three modes compute the time: [alarm clock](screens.md#alarm-clock--short-tap-on-the-clock).
+- **Appointments**: « Annonce des rendez-vous » and « Rendez-vous : annoncer avant » (minutes): the tablet announces a timed appointment of « Tab5 · agenda des rendez-vous » that long before it; it counts down by itself, so a Home Assistant outage in between misses nothing.
+- **Voice**: « Mot d'activation », « Assistant », « Assistant 2 », « Mot de réveil 2 » and « Détection de fin de la parole » are the Assist satellite settings Home Assistant adds to the device. The Domo / Discu modes of the screen and their pipelines: [voice assistant](voice_assistant.md).
+
+Two settings stay on the tablet only: the text size of the assistant popup and a custom choice of alarm days. What applies to the whole home (sources, calendars, phone, presence: the « Tab5 · » lists of [Step 4](#step-4--set-up-the-home-assistant-packages)) and the rooms and tiles (the blueprint automation) are set in Home Assistant; the Settings view groups them too.
 
 ---
 
@@ -347,10 +399,11 @@ Depuis la 3.0, un firmware prêt à l'emploi et signé s'installe depuis le navi
    - Firmware 3.1 ou plus ancien seulement : cochez aussi « Autoriser l'appareil à effectuer des actions Home Assistant » (*ESPHome → Configurer*), dont la voix, le calendrier et le réveil ont besoin sur ces versions.
 5. **Vos appareils** : créez l'automatisation depuis le blueprint ([étape 4](#étape-4--installer-les-packages-home-assistant), point 5).
 6. **Un tableau de bord pour la tablette** (facultatif) : [étape 7](#étape-7--un-tableau-de-bord-home-assistant-pour-la-tablette-facultatif).
+7. **Thème, langue, réveil…** : chaque réglage de la tablette est décrit dans [Réglages et options de la tablette](#réglages-et-options-de-la-tablette).
 
 Les mises à jour arrivent ensuite dans Home Assistant (entité « Firmware »), sur le canal installé ; pour changer de canal, réinstallez depuis la page sans effacer. Par le réseau, la tablette n'accepte qu'un firmware signé par la clé du projet : pour passer à vos propres compilations (votre clé), flashez une fois par USB.
 
-Les étapes suivantes servent à compiler son propre firmware ; les étapes 4, 6 et 7 concernent tout le monde.
+Les étapes suivantes servent à compiler son propre firmware ; les étapes 4, 6 et 7 et les [réglages de la tablette](#réglages-et-options-de-la-tablette) concernent tout le monde.
 
 ## Prérequis
 
@@ -440,6 +493,8 @@ Tout le côté Home Assistant tient dans une archive, **`tab5_home_assistant.zip
 
    Chaque liste porte un nom en deux langues, « français · english » (« Tab5 · agenda de travail · work calendar »), et garde son identifiant d'entité. Laissée sur « Aucun », une fonction reste simplement éteinte, sans erreur.
 
+   ![Les listes « Tab5 · » dans la table des entités de Home Assistant : agendas, capteur de présence, pipeline de discussion, sources météo, téléphone, TV et volet](images/ha_listes_tab5.png)
+
    - **Quels événements sont du travail** : le texte « Tab5 · mot des événements de travail · work event keyword » contient les mots qui font d'un événement de l'agenda de travail un poste, séparés par des virgules, sans tenir compte des majuscules, cherchés dans le titre. **Vide = tous les événements de l'agenda de travail**, pour un agenda qui ne contient que vos postes. L'agenda de travail de l'auteur contient aussi ses rendez-vous : il y tape `Travail`.
    - **Vacances scolaires** : n'importe quel agenda. En France, le ministère publie un fichier ICS par zone : *Paramètres → Appareils et services → Ajouter une intégration → Remote Calendar*, nom « Calendrier scolaire » (la liste le prend alors seule), URL `https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-A.ics` (`Zone-B.ics`, `Zone-C.ics` pour les autres zones ; vérifié le 29/09/2026, jusqu'à l'été 2028). Les entités des fournisseurs météo (capteurs de pluie et de vigilance Météo-France, OpenWeatherMap, MeteoAlarm, DWD, CAP Alerts) et celles de la tablette (écran, réveil, micro…) sont trouvées seules ; la tablette par le modèle de son appareil, quel que soit le nom que vous lui avez donné.
 5. **Choisissez vos appareils** : *Paramètres → Automatisations et scènes → Blueprints*, « Tab5 — emplacements de l'écran · screen slots » (décompressé avec le reste ; ou *Importer un blueprint* avec
@@ -491,7 +546,56 @@ Tous les réglages de la tablette dans un tableau de bord Home Assistant : une v
    Autre adresse : `tab5_dashboard('dashboard-xxx')`. Les libellés suivent la langue de l'écran de la tablette (français, sinon anglais) ; `tab5_dashboard(langue='English')` force l'anglais.
 3. Ouvrez le tableau de bord Tab5 → crayon → ⋮ → *Éditeur de configuration brute* : remplacez tout par le résultat, *Enregistrer*.
 
+![Vue Tab5 du tableau de bord : luminosité, volume et écran de la tablette, réveil, rendez-vous et assistant vocal](images/ha_tableau_tab5.png)
+
+![Vue Santé du tableau de bord : liaison avec Home Assistant, raison du démarrage, fichiers Home Assistant, temps de boucle, mémoire libre et température du processeur sur 24 h](images/ha_sante.png)
+
 Une carte n'apparaît que si son entité existe (TV, volet, batterie…) ; les entités de la batterie sont désactivées par défaut, activez-les si une batterie est montée. Les pièces et les tuiles se règlent dans l'automatisation du blueprint (un lien dans Réglages). Deux réglages restent sur la tablette seulement : la taille du texte du popup de l'assistant et un choix personnalisé des jours du réveil. Après une mise à jour qui ajoute des entités, refaites les points 2 et 3. « TemplateNotFound: tab5_dashboard.jinja » : la macro est chargée au démarrage de Home Assistant ; redémarrez-le, ou lancez l'action `homeassistant.reload_custom_templates`.
+
+## Réglages et options de la tablette
+
+Chaque réglage de la tablette est une entité de son appareil dans Home Assistant, et la tablette le garde d'un démarrage à l'autre. Trois endroits les montrent, au choix :
+
+- la vue **Réglages** du [tableau de bord de la tablette](#étape-7--un-tableau-de-bord-home-assistant-pour-la-tablette-facultatif), à gauche ci-dessous : sa colonne « Tablette » ;
+- la page de l'appareil, à droite ci-dessous : *Paramètres → Appareils et services → ESPHome →* votre tablette, cartes **Contrôles** et **Configuration** ;
+- pour le thème, la tablette elle-même : la console système (bouton « Sys ») a une rangée avec le thème et le mode en cours, un appui passe au suivant.
+
+<p><img src="images/ha_reglages_tablette.png" width="57%" alt="Colonne « Tablette » de la vue Réglages : langue de l'écran, thème, clair ou sombre, rallumer d'une tape, batterie montée, nuit, sortie audio, antenne Wi-Fi"> <img src="images/ha_appareil_configuration.png" width="40%" alt="Carte Configuration de la page de la tablette dans Home Assistant : écran à afficher, réglages de la voix, clair ou sombre, langue, nuit, thème, volume"></p>
+
+### Thème, clair ou sombre
+
+| Entité | Valeurs | Ce qu'elle fait |
+|---|---|---|
+| Thème | 18 thèmes, d'« Ardoise » à « Pixel » ; une tablette neuve démarre en « Relief doux » | couleurs, formes (rayons, bordures, ombres) et polices de l'heure, de la date et des titres. L'écran se repeint aussitôt, sans redémarrer ; les jeux gardent leurs couleurs sombres |
+| Clair ou sombre | Sombre, Clair, Auto | le mode du thème. **Auto** : clair le jour, sombre la nuit, d'après « Nuit (thème auto) » |
+| Nuit (thème auto) | allumé / éteint | lu seulement en mode Auto. L'automatisation « Tab5 — thème jour/nuit » (`packages/tab5_push.yaml`) l'allume au coucher du soleil et l'éteint à son lever (`sun.sun`, donc le lieu de Home Assistant). Pour décider vous-même (capteur de luminosité, heure du coucher…), coupez cette automatisation et pilotez l'interrupteur depuis la vôtre. Sans Home Assistant, Auto garde le dernier état reçu |
+
+Les noms des thèmes restent les mêmes dans toutes les langues : ce sont des noms. Six d'entre eux :
+
+![Six thèmes de l'écran du Tab5 dessinés par le firmware lui-même : Relief doux en sombre et en clair, Almanach imprimé, Néon calme, Béton brut et Zen Sumi](images/tab5_themes.jpg)
+
+### Écran, son et réseau
+
+| Entité (nom sur le tableau de bord) | Valeurs | Ce qu'elle fait |
+|---|---|---|
+| Langue (Langue de l'écran) | Français, English, Deutsch, Nederlands, Español, Italiano, Türkçe | écran, jeux, dates et briefing parlé du réveil. **La tablette redémarre** pour l'appliquer. Les noms et états que voit Home Assistant restent en français |
+| Display Backlight (Luminosité) | allumé / éteint, luminosité | le rétroéclairage de l'écran |
+| Tab5 Tap-to-Wake (Rallumer l'écran d'une tape) | allumé / éteint, allumé par défaut | une tape sur la tablette rallume l'écran éteint |
+| Volume | 0 à 100 % | volume du haut-parleur ; aussi dans la console et le popup de l'assistant |
+| Speaker Enable (Haut-parleur) | allumé / éteint | allume ou coupe le haut-parleur (une ligne de l'expandeur d'E/S) |
+| Tab5 DAC Output (Sortie audio) | LINE1, LINE2, BOTH | sortie de la puce audio ES8388 ; la tablette de l'auteur est sur LINE1 |
+| WiFi Antenna (Antenne Wi-Fi) | Internal, External | l'antenne interne, ou une antenne sur le connecteur externe |
+| Tab5 Batterie montée (Batterie montée) | allumé / éteint, éteint par défaut | montre l'icône de batterie dans le bandeau d'état. Un réglage et pas une détection : sans batterie, le chargeur annonce une batterie pleine |
+| Aller à l'écran (Afficher) | —, Accueil, Assistant vocal, Calendrier, Réveil, Climatisation, Plantes, Télécommande TV, Console système, Énergie | ouvre cet écran ou ce popup, depuis le tableau de bord ou une automatisation, puis revient à « — ». Un jeu en cours est d'abord fermé |
+| Recharger le calendrier | bouton | redemande à Home Assistant le mois en cours et le suivant, quand un nouveau rendez-vous n'est pas encore à l'écran |
+
+### Réveil, rendez-vous, voix
+
+- **Réveil** : « Réveil » (armé ou non), « Réveil : mode » (Heure fixe, Jours travaillés, Avant l'ouverture), l'heure fixe et ses jours, « jamais avant » / « jamais après », l'avance sur le poste, le repos minimum, la répétition, la durée maximale, la sonnerie, son volume propre, la montée progressive et le briefing parlé. Comment les trois modes calculent l'heure : [réveil](screens.md#réveil--tap-court-sur-lhorloge).
+- **Rendez-vous** : « Annonce des rendez-vous » et « Rendez-vous : annoncer avant » (minutes) : la tablette annonce un rendez-vous à heure fixe de « Tab5 · agenda des rendez-vous » ce temps avant ; elle décompte elle-même, une coupure de Home Assistant entre-temps ne fait rien manquer.
+- **Voix** : « Mot d'activation », « Assistant », « Assistant 2 », « Mot de réveil 2 » et « Détection de fin de la parole » sont les réglages de satellite Assist que Home Assistant ajoute à l'appareil. Les modes Domo / Discu de l'écran et leurs pipelines : [assistant vocal](voice_assistant.md).
+
+Deux réglages restent sur la tablette seulement : la taille du texte du popup de l'assistant et un choix personnalisé des jours du réveil. Ce qui vaut pour toute la maison (sources, agendas, téléphone, présence : les listes « Tab5 · » de l'[étape 4](#étape-4--installer-les-packages-home-assistant)) et les pièces et tuiles (l'automatisation du blueprint) se règlent dans Home Assistant ; la vue Réglages les regroupe aussi.
 
 ---
 

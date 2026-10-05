@@ -275,6 +275,7 @@
       <li>ESPHome</li>
       <li>LVGL 9.5</li>
       <li><span lang="en">7 languages</span><span lang="fr">7 langues</span></li>
+      <li><span lang="en">18 themes</span><span lang="fr">18 thèmes</span></li>
       <li><span lang="en">MIT licence</span><span lang="fr">Licence MIT</span></li>
     </ul>
     <div class="actions">
@@ -332,7 +333,7 @@
     <ol class="etapes">
       <li>
         <h3><span lang="en">Home Assistant first</span><span lang="fr">Home Assistant d'abord</span></h3>
-        <p><span lang="en">Set up the project's packages and its blueprint. For now this still needs the repository and Python, once, to fill in your city, calendar and so on.</span><span lang="fr">Installez les packages du projet et son blueprint. Pour l'instant, cela demande encore le dépôt et Python, une fois, pour renseigner votre ville, votre agenda, etc.</span></p>
+        <p><span lang="en">Unzip the project's archive, attached to each release, into the <code>config</code> folder of Home Assistant, add one line to <code>configuration.yaml</code> and restart. Then pick your weather sources and calendars in the “Tab5 ·” lists, with the mouse. No repository, no Python, nothing to fill in.</span><span lang="fr">Décompressez l'archive du projet, jointe à chaque release, dans le dossier <code>config</code> de Home Assistant, ajoutez une ligne à <code>configuration.yaml</code> et redémarrez. Choisissez ensuite vos sources météo et vos agendas dans les listes «&nbsp;Tab5 ·&nbsp;», à la souris. Ni dépôt, ni Python, rien à remplir.</span></p>
       </li>
       <li>
         <h3><span lang="en">Flash from the browser</span><span lang="fr">Flasher depuis le navigateur</span></h3>
@@ -350,7 +351,18 @@
         <h3><span lang="en">Pick your devices</span><span lang="fr">Choisir vos appareils</span></h3>
         <p><span lang="en">Create the automation from the blueprint, with the mouse. What you don't have disappears from the screen; changing a device needs no flash.</span><span lang="fr">Créez l'automatisation depuis le blueprint, à la souris. Ce que vous n'avez pas disparaît de l'écran&nbsp;; changer d'appareil ne demande pas de flash.</span></p>
       </li>
+      <li>
+        <h3><span lang="en">A dashboard, the settings</span><span lang="fr">Un tableau de bord, les réglages</span></h3>
+        <p><span lang="en">Optional: one line in the template tool of Home Assistant writes a dashboard for your tablet, with its daily controls, its settings (theme, light or dark, language, sources, alarm clock) and its health (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md#tablet-settings-and-options">every setting</a>).</span><span lang="fr">Facultatif&nbsp;: une ligne dans l'outil Modèle de Home Assistant écrit un tableau de bord pour votre tablette, avec ses commandes de tous les jours, ses réglages (thème, clair ou sombre, langue, sources, réveil) et sa santé (<a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md#réglages-et-options-de-la-tablette">chaque réglage</a>).</span></p>
+      </li>
     </ol>
+    <div class="vue">
+      <figure>
+        <a class="agrandir" href="images/m5stack-tab5-home-assistant-dashboard.png"><img src="images/m5stack-tab5-home-assistant-dashboard.png" width="1800" height="468" loading="lazy"
+          alt="Tab5 view of the Home Assistant dashboard written for the tablet: brightness, volume and screen, alarm clock, appointments and voice assistant"></a>
+        <figcaption><span lang="en">The Tab5 view of that dashboard, on the author's Home Assistant.</span><span lang="fr">La vue Tab5 de ce tableau de bord, sur le Home Assistant de l'auteur.</span></figcaption>
+      </figure>
+    </div>
     <p class="suite">
       <span lang="en">Updates then show up in Home Assistant (“Firmware” entity). Over the air, the tablet only accepts a firmware signed with the project key.</span>
       <span lang="fr">Les mises à jour arrivent ensuite dans Home Assistant (entité «&nbsp;Firmware&nbsp;»). Par le réseau, la tablette n'accepte qu'un firmware signé par la clé du projet.</span>
@@ -371,7 +383,7 @@
     <div class="grille">
       <div class="carte">
         <h3><span lang="en">Weather</span><span lang="fr">Météo</span></h3>
-        <p><span lang="en">Rain in the next hour, hourly and 15-day forecast, weather warnings. Météo-France by default; OpenWeatherMap, MeteoAlarm or any Home Assistant weather entity can be chosen instead (<a href="#weather">below</a>).</span><span lang="fr">Pluie dans l'heure, prévisions horaires et à 15 jours, vigilances. Météo-France par défaut&nbsp;; OpenWeatherMap, MeteoAlarm ou n'importe quelle entité météo de Home Assistant au choix (<a href="#weather">plus bas</a>).</span></p>
+        <p><span lang="en">Rain in the next hour, hourly and 15-day forecast, weather warnings. Forecasts from any weather entity of Home Assistant; rain and warnings from Météo-France by default, or another service chosen in Home Assistant (<a href="#weather">below</a>).</span><span lang="fr">Pluie dans l'heure, prévisions horaires et à 15 jours, vigilances. Prévisions de n'importe quelle entité météo de Home Assistant&nbsp;; pluie et vigilances de Météo-France par défaut, ou d'un autre service choisi dans Home Assistant (<a href="#weather">plus bas</a>).</span></p>
       </div>
       <div class="carte">
         <h3><span lang="en">Central card</span><span lang="fr">Carte centrale</span></h3>
@@ -417,6 +429,10 @@
         <h3><span lang="en">Seven languages</span><span lang="fr">Sept langues</span></h3>
         <p><span lang="en">French, English, German, Dutch, Spanish, Italian or Turkish, switched from Home Assistant. All written by an AI, like the rest of the project; the author checked the French, the others are not reviewed yet.</span><span lang="fr">Français, anglais, allemand, néerlandais, espagnol, italien ou turc, au choix depuis Home Assistant. Toutes écrites par une IA, comme le reste du projet&nbsp;; l'auteur a relu le français, les autres ne sont pas encore relues.</span></p>
       </div>
+      <div class="carte">
+        <h3><span lang="en">Eighteen themes</span><span lang="fr">Dix-huit thèmes</span></h3>
+        <p><span lang="en">Each light or dark: colours, shapes and the fonts of the clock change at once, from Home Assistant or the console. “Auto” follows the sun (<a href="#themes">below</a>).</span><span lang="fr">Chacun clair ou sombre&nbsp;: couleurs, formes et polices de l'horloge changent aussitôt, depuis Home Assistant ou la console. «&nbsp;Auto&nbsp;» suit le soleil (<a href="#themes">plus bas</a>).</span></p>
+      </div>
     </div>
   </section>
 
@@ -440,7 +456,7 @@
         <li><span lang="en"><b>9 bars, the whole next hour</b>: one every 5 minutes for half an hour, then one every 10 minutes.</span><span lang="fr"><b>9 barres, toute l'heure qui vient</b>&nbsp;: une toutes les 5 minutes pendant une demi-heure, puis une toutes les 10 minutes.</span></li>
         <li><span lang="en">The taller and darker the bar, the heavier the rain; an empty bar is dry.</span><span lang="fr">Plus la barre est haute et foncée, plus la pluie est forte&nbsp;; une barre vide, c'est sec.</span></li>
         <li><span lang="en">The sentence is written by the tablet, in its language, and counts the minutes down by itself.</span><span lang="fr">La phrase est écrite par la tablette, dans sa langue, et décompte les minutes toute seule.</span></li>
-        <li><span lang="en">Source: Météo-France in France; elsewhere OpenWeatherMap (One Call subscription, with a free tier); or none, and the panel goes away.</span><span lang="fr">Source&nbsp;: Météo-France en France&nbsp;; ailleurs OpenWeatherMap (abonnement One Call, avec un palier gratuit)&nbsp;; ou aucune, et le panneau disparaît.</span></li>
+        <li><span lang="en">Source, chosen in Home Assistant: Météo-France in France; the Buienradar, DWD or Met.no radars around the Netherlands, Germany and the Nordic countries; OpenWeatherMap (One Call subscription, with a free tier); Open-Meteo everywhere, a weather model with no key, used by itself when there is no Météo-France; or none, and the panel goes away.</span><span lang="fr">Source, choisie dans Home Assistant&nbsp;: Météo-France en France&nbsp;; les radars Buienradar, DWD ou Met.no autour des Pays-Bas, de l'Allemagne et des pays nordiques&nbsp;; OpenWeatherMap (abonnement One Call, avec un palier gratuit)&nbsp;; Open-Meteo partout, un modèle météo sans clé, pris tout seul quand il n'y a pas Météo-France&nbsp;; ou aucune, et le panneau disparaît.</span></li>
       </ul>
       <div class="ecran-mini">
         <div class="barres">
@@ -471,7 +487,7 @@
       <ul class="sans-marge">
         <li><span lang="en"><b>One icon per warning in force</b>, up to 4: wind, rain-flood, thunderstorms, floods, snow-ice, extreme cold, heatwave, avalanches, waves-flooding; fog and forest fires with MeteoAlarm.</span><span lang="fr"><b>Une icône par vigilance en cours</b>, 4 au plus&nbsp;: vent, pluie-inondation, orages, crues, neige-verglas, grand froid, canicule, avalanches, vagues-submersion&nbsp;; brouillard et feux de forêt avec MeteoAlarm.</span></li>
         <li><span lang="en">Each icon has the colour of its own level. The date under the clock takes the colour of the day's overall level, even while another panel is shown.</span><span lang="fr">Chaque icône a la couleur de son propre niveau. La date sous l'horloge prend la couleur du niveau global de la journée, même quand un autre panneau est affiché.</span></li>
-        <li><span lang="en">Source: Météo-France for your department; elsewhere in Europe MeteoAlarm (39 countries, one warning at a time, tried with simulated data only); or none.</span><span lang="fr">Source&nbsp;: Météo-France pour votre département&nbsp;; ailleurs en Europe MeteoAlarm (39 pays, une vigilance à la fois, essayé seulement avec des données simulées)&nbsp;; ou aucune.</span></li>
+        <li><span lang="en">Source: Météo-France for your department; elsewhere MeteoAlarm (39 European countries, one warning at a time), the DWD in Germany, or CAP Alerts (MeteoAlarm, NWS, Environment Canada and about 100 national services); or none. Apart from Météo-France, the warnings themselves were tried with simulated data only.</span><span lang="fr">Source&nbsp;: Météo-France pour votre département&nbsp;; ailleurs MeteoAlarm (39 pays européens, une vigilance à la fois), le DWD en Allemagne, ou CAP Alerts (MeteoAlarm, NWS, Environnement Canada et une centaine de services nationaux)&nbsp;; ou aucune. Hors Météo-France, les vigilances elles-mêmes n'ont été essayées qu'avec des données simulées.</span></li>
       </ul>
       <div class="ecran-mini">
         <p><span lang="en">Icons</span><span lang="fr">Icônes</span></p>
@@ -488,6 +504,17 @@
           <li><b style="color:#f1948a"><span lang="en">Tue 16 Jun</span><span lang="fr">Mar 16 Juin</span></b><span lang="en">red</span><span lang="fr">rouge</span></li>
         </ul>
       </div>
+    </div>
+  </section>
+
+  <section class="bloc" id="themes">
+    <h2><span lang="en">Eighteen themes, light or dark</span><span lang="fr">Dix-huit thèmes, clairs ou sombres</span></h2>
+    <p class="intro"><span lang="en">A theme changes the colours, the shapes (radius, borders, shadows) and the fonts of the clock, the date and the titles; the screen repaints at once, without a restart. Pick it in Home Assistant or from a row of the console; “Auto” turns light at sunrise and dark at sunset. The games keep their own dark colours. Six of them, drawn by the firmware itself on a PC, with demo data:</span><span lang="fr">Un thème change les couleurs, les formes (rayons, bordures, ombres) et les polices de l'heure, de la date et des titres&nbsp;; l'écran se repeint aussitôt, sans redémarrer. Il se choisit dans Home Assistant ou depuis une rangée de la console&nbsp;; «&nbsp;Auto&nbsp;» passe en clair au lever du soleil et en sombre à son coucher. Les jeux gardent leurs couleurs sombres. Six d'entre eux, dessinés par le firmware lui-même sur un PC, avec des données de démonstration&nbsp;:</span></p>
+    <div class="vue">
+      <figure>
+        <a class="agrandir" href="images/m5stack-tab5-themes-light-dark.jpg"><img src="images/m5stack-tab5-themes-light-dark.jpg" width="1980" height="842" loading="lazy"
+          alt="Six themes of the M5Stack Tab5 screen drawn by the firmware: Relief doux in dark and light, Almanach imprimé, Néon calme, Béton brut and Zen Sumi"></a>
+      </figure>
     </div>
   </section>
 
