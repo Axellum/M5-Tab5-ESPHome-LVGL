@@ -47,6 +47,10 @@ inline void ui_x(lv_obj_t* obj, int32_t x) {
 inline void ui_y(lv_obj_t* obj, int32_t y) {
     if (obj != nullptr && lv_obj_get_y_aligned(obj) != y) lv_obj_set_y(obj, y);
 }
+// Police d'un texte : `f` en style local, ou nullptr pour rendre la main aux styles du
+// label (style_police_date : la police de la date du thème, qui suit un changement de
+// thème ; ADR-0029). Défini dans tab5_central.cpp.
+void ui_police(lv_obj_t* obj, esphome::font::Font* f);
 
 // --- tab5_text.cpp ---
 // Normalise un texte venu de HA (Latin-1 / mojibake) en UTF-8 valide pour LVGL.

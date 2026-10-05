@@ -21,6 +21,6 @@ obj:
   widgets:
     - label: { id: "energie_nom_${n}", text: "", align: TOP_LEFT, x: 22, y: 16, styles: style_text_accent }
     - label: { id: "energie_icone_${n}", text: "", align: TOP_RIGHT, x: -18, y: 12, text_font: mdi_font_45, styles: style_text_dim }
-    - label: { id: "energie_valeur_${n}", text: "--", align: TOP_LEFT, x: 22, y: 58, text_font: roboto_45_b }
+    - label: { id: "energie_valeur_${n}", text: "--", align: TOP_LEFT, x: 22, y: 58, styles: style_police_date }
     - label: { id: "energie_ligne1_${n}", text: "", align: TOP_LEFT, x: 22, y: 126, styles: style_text_dim }
     - label: { id: "energie_ligne2_${n}", text: "", align: TOP_LEFT, x: 22, y: 162, styles: style_text_dim }

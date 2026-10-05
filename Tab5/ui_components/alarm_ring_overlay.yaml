@@ -48,7 +48,7 @@ obj:
 
     - label: { id: icon_alarm_ring, text: "\U000F0020", align: CENTER, y: -230, text_font: mdi_font_70, styles: style_text_accent }
     - label: { id: lbl_alarm_ring_time, text: "00:00", align: CENTER, y: -90, styles: style_police_horloge }
-    - label: { id: lbl_alarm_ring_title, text: "Réveil", align: CENTER, y: 20, text_font: roboto_45_b, styles: style_text_accent }
+    - label: { id: lbl_alarm_ring_title, text: "Réveil", align: CENTER, y: 20, styles: [style_police_date, style_text_accent] }
     - label: { id: lbl_alarm_ring_sub, text: "", align: CENTER, y: 75, width: 1100, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
 
     # ARRÊTER — action franche, glyphe teinté « erreur » pour être reconnue sans
@@ -68,7 +68,7 @@ obj:
           - script.execute: tab5_alarm_stop
         widgets:
           - label: { text: "\U000F04DB", align: LEFT_MID, x: 40, text_font: mdi_font_45, styles: style_text_error }
-          - label: { text: "Arrêter", align: CENTER, x: 30, text_font: roboto_45_b }
+          - label: { text: "Arrêter", align: CENTER, x: 30, styles: style_police_date }
 
     # RÉPÉTER — le libellé porte la durée réelle (réécrit par
     # alarm_ring_refresh), sinon il faudrait aller la chercher dans les réglages.

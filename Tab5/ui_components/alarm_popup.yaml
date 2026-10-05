@@ -227,7 +227,7 @@ obj:
               widgets:
                 - label: { text: "\U000F0021", align: TOP_LEFT, x: 16, y: 20, text_font: mdi_font_45, styles: style_text_accent }
                 - label: { text: "PROCHAINE SONNERIE", align: TOP_LEFT, x: 76, y: 20, styles: style_text_dim }
-                - label: { id: lbl_alarm_next, text: "", align: TOP_LEFT, x: 76, y: 52, width: 497, text_font: roboto_45_b }
+                - label: { id: lbl_alarm_next, text: "", align: TOP_LEFT, x: 76, y: 52, width: 497, styles: style_police_date }
                 - label: { id: lbl_alarm_next_sub, text: "", align: TOP_LEFT, x: 76, y: 112, width: 497, styles: style_text_dim }
 
                 # Bascule « jours de repos » : posée ici parce qu'elle explique

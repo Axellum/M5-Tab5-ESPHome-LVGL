@@ -43,6 +43,16 @@ static constexpr int FORECAST_MAIN_PAGE = 2;
 // (temp_planning_active() est déclarée dans tab5_custom.h, les scripts la lisent).
 static void end_temporary_planning(CentralPanelCtx& ctx);
 
+// Police locale ou celle des styles du label (tab5_internal.h).
+void ui_police(lv_obj_t* obj, esphome::font::Font* f) {
+    if (obj == nullptr) return;
+    if (f != nullptr) {
+        esphome::lvgl::lv_obj_set_style_text_font(obj, f, LV_PART_MAIN);
+    } else {
+        lv_obj_remove_local_style_prop(obj, LV_STYLE_TEXT_FONT, LV_PART_MAIN);
+    }
+}
+
 // Qui occupe la carte centrale (enfants de central_card, tab5-lvgl.yaml) :
 //   - planning du tap : planning_wrap avec le texte du jour, 6 s (temp_planning_active()) ;
 //   - réponse vocale : vocal_wrap, 8 s, accueil seulement (ctx.vocal_shown) ;
@@ -66,25 +76,24 @@ static bool rotator_owns_card(const CentralPanelCtx& ctx) {
            !ctx.ha_mode;
 }
 
-// Titre de la carte centrale sur les pages de previsions autres que l'accueil.
-//   chapeau : famille de page + rang, ex "Pr\xC3\xA9visions journali\xC3\xA8res \xC2\xB7 2/3"
-//   plage   : bornes reelles des 5 tuiles visibles, ex
-//             "Du mercredi 5 ao\xC3\xBBt au dimanche 9 ao\xC3\xBBt" ou "De 14:00 \xC3\xA0 18:00"
+// Titre de la carte centrale sur les pages de previsions autres que l'accueil : les
+// bornes reelles des 5 tuiles visibles, ex
+// "Du mercredi 5 ao\xC3\xBBt au dimanche 9 ao\xC3\xBBt" ou "De 14:00 \xC3\xA0 18:00", sur une
+// ligne, dans la police de la date (demande d'Axel du 05/10/2026 : le chapeau
+// « Previsions horaires · 1/2 » / « Previsions journalieres · 2/3 » est retire, les
+// points de pagination sous la carte disent deja la page).
 // Renvoie false quand la page n'a pas de titre (page 2 = accueil : la carte
-// centrale y reprend son rotateur planning/pluie/alertes).
+// centrale y reprend son rotateur planning/pluie/alertes) ou que les bornes manquent
+// (donnees HA pas encore recues et SNTP muet) : la carte reste alors vide.
 // Les bornes sont toujours donnees dans l'ordre chronologique (la plus tot ->
 // la plus tard), y compris sur les pages horaires ou les tuiles sont affichees
 // dans l'ordre inverse (cf. forecast_hourly.yaml).
-static bool forecast_page_title_parts(int page, std::string& chapeau, std::string& plage) {
-    chapeau.clear();
+static bool forecast_page_title_parts(int page, std::string& plage) {
     plage.clear();
     char buf[96];
 
     if (page == 3 || page == 4) {
         const int daily_pi = page - 2;                  // 1 = J5-J9, 2 = J10-J14
-        snprintf(buf, sizeof(buf), tr("Pr\xC3\xA9visions journali\xC3\xA8res \xC2\xB7 %d/3"), daily_pi + 1);
-        chapeau = buf;
-
         const int premier = daily_pi * 5;
         const int dernier = premier + 4;
         std::string debut = format_long_day_label(premier);
@@ -99,16 +108,13 @@ static bool forecast_page_title_parts(int page, std::string& chapeau, std::strin
             snprintf(buf, sizeof(buf), tr("Du %s au %s"), debut.c_str(), fin.c_str());
             plage = buf;
         }
-        return true;
+        return !plage.empty();
     }
 
     if (page == 0 || page == 1) {
         // Pages horaires : l'index UI est inverse par rapport aux donnees
         // (apply_forecast_page appelle refresh_hourly_forecast(..., 1 - page)).
         const int hourly_pi = 1 - page;                 // 0 = 5 prochaines heures, 1 = les 5 suivantes
-        snprintf(buf, sizeof(buf), tr("Pr\xC3\xA9visions horaires \xC2\xB7 %d/2"), hourly_pi + 1);
-        chapeau = buf;
-
         const std::string& debut = cal_heures_data[hourly_pi * 5].heure_texte;
         const std::string& fin   = cal_heures_data[hourly_pi * 5 + 4].heure_texte;
         if (!debut.empty() && !fin.empty()) {
@@ -119,7 +125,7 @@ static bool forecast_page_title_parts(int page, std::string& chapeau, std::strin
                      lendemain ? tr(" le lendemain") : "");
             plage = buf;
         }
-        return true;
+        return !plage.empty();
     }
 
     return false;
@@ -422,26 +428,26 @@ void dismiss_ha_alert_slot_immediate(int slot_idx, lv_obj_t* wrap, lv_obj_t* lbl
     retirer_panneau(kHaAlertPanelBase + slot_idx, lbl, wrap, ctx);
 }
 
-// Pose les deux lignes du titre sans rien decider de la visibilite : chapeau
-// discret (roboto_22 attenue) + plage en gras dessous. Si les bornes manquent
-// (donnees HA pas encore recues et SNTP muet), le chapeau prend la ligne
-// principale et se recentre verticalement.
+// Pose le titre sans rien decider de la visibilite, dans la police de la date
+// (style_police_date, tab5-lvgl.yaml). Pages de previsions : une ligne, la plage des
+// tuiles. Mode HA : chapeau discret (roboto_22 attenue, « Pièce n/N ») + nom de la
+// piece dessous ; sans nom, le chapeau prend la ligne principale et se recentre.
 // Renvoie false quand la page n'a pas de titre (accueil) : rien n'est ecrit.
 static bool set_forecast_page_title_text(int forecast_page, lv_obj_t* lbl_page_title,
                                          CentralPanelCtx& ctx) {
     std::string chapeau, plage;
     // Mode HA : « Pièce n/N » et le nom de la pièce (tab5_tuiles.cpp), sur toutes les pages.
     const bool a_titre = ctx.ha_mode ? tuiles_titre_piece(chapeau, plage)
-                                     : forecast_page_title_parts(forecast_page, chapeau, plage);
+                                     : forecast_page_title_parts(forecast_page, plage);
     if (!a_titre) return false;
 
-    const bool deux_lignes = !plage.empty();
+    const bool deux_lignes = !chapeau.empty() && !plage.empty();
     if (ctx.page_title_sub) {
         lv_label_set_recolor(ctx.page_title_sub, false);
         lv_label_set_text(ctx.page_title_sub, deux_lignes ? chapeau.c_str() : "");
     }
     lv_label_set_recolor(lbl_page_title, false);
-    lv_label_set_text(lbl_page_title, deux_lignes ? plage.c_str() : chapeau.c_str());
+    lv_label_set_text(lbl_page_title, plage.empty() ? chapeau.c_str() : plage.c_str());
     lv_obj_align(lbl_page_title, LV_ALIGN_CENTER, 0, deux_lignes ? 13 : 0);
     return true;
 }
@@ -543,7 +549,7 @@ static std::string compose_info_code(const std::string& code, const std::string&
 void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
     const std::string& texte, const std::string& couleur, const std::string& meteo_id,
     std::string& dismissed_local, CentralPanelCtx& ctx,
-    esphome::font::Font* font_small, esphome::font::Font* font_large) {
+    esphome::font::Font* font_small) {
 
     if (!lbl_info) return;
 
@@ -588,10 +594,9 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
 
     bool multi_ligne = t.find('\n') != std::string::npos;
     bool has_recolor_markup = has_lvgl_recolor_markup(t);
-    esphome::font::Font* font = multi_ligne ? font_small : font_large;
-    if (font) {
-        esphome::lvgl::lv_obj_set_style_text_font(lbl_info, font, LV_PART_MAIN);
-    }
+    // Une ligne : la police de la date du thème (style_police_date du label) ; deux
+    // lignes ne tiennent qu'en 32 px.
+    ui_police(lbl_info, multi_ligne ? font_small : nullptr);
 
     // Même règle de couleur que les bandeaux d'alertes HA (Rouge, Orange, sinon blanc).
     colorer_niveau(kHaAlertSlotCount, lbl_info, couleur);
@@ -1003,8 +1008,7 @@ void show_temporary_planning(int tuile, lv_obj_t* lbl_planning,
 
 void show_vocal_response_ui(const std::string& texte,
     lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal,
-    lv_obj_t* page_title_wrap, CentralPanelCtx& ctx,
-    esphome::font::Font* font) {
+    lv_obj_t* page_title_wrap, CentralPanelCtx& ctx) {
 
     if (!vocal_wrap || !lbl_vocal) return;
 
@@ -1014,9 +1018,7 @@ void show_vocal_response_ui(const std::string& texte,
     lv_anim_delete(vocal_wrap, nullptr);
     prendre_carte(page_title_wrap, ctx, nullptr);
 
-    if (font) {
-        esphome::lvgl::lv_obj_set_style_text_font(lbl_vocal, font, LV_PART_MAIN);
-    }
+    // Police : celle de la date du thème, portée par le style du label (tab5-lvgl.yaml).
     lv_obj_set_style_text_color(lbl_vocal, lv_color_hex(UIBandeau.TEXT_PRIMARY), LV_PART_MAIN);
     s_lbl_vocal = lbl_vocal;
     lv_label_set_recolor(lbl_vocal, false);
