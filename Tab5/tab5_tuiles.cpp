@@ -17,7 +17,10 @@
  * @architecture_constraint Pièce R ↔ page du bas dans l'ordre où un swipe les atteint depuis
  *       l'accueil : R0 = page 2 (accueil), R1 = 3, R2 = 4, R3 = 1, R4 = 0. Tuile T = position
  *       visuelle, 0 = gauche (sur les pages horaires, l'objet h(4−T)).
- * @ai_instruction Les types, options, clés et commandes sont un contrat avec le blueprint :
+ * @ai_instruction Interrupteur « Tab5 Appareils sur la météo » (05/10/2026) : éteint, le
+ *       mode météo ne montre aucun appareil (s_appareils_meteo, lu par peindre_epaules,
+ *       tuile_appui et tuile_titre_appui) ; le mode HA ne le lit pas.
+ *       Les types, options, clés et commandes sont un contrat avec le blueprint :
  *       tests/test_tuiles_firmware.py les compare aux tableaux de l'ADR-0023. Un texte
  *       affiché passe par tr() ; un nom venu de HA s'affiche tel quel, filtré aux glyphes
  *       des polices (Latin-1 + cp1252 + lettres turques, table kHorsLatin1).
@@ -102,6 +105,11 @@ EXT_RAM_BSS_ATTR Modele s_m;
 EXT_RAM_BSS_ATTR Etat s_etats[kPieces][kTuiles];
 bool s_charge = false;
 esphome::ESPPreferenceObject s_pref;
+// Interrupteur « Tab5 Appareils sur la météo » (tab5-ha-controls.yaml, 05/10/2026,
+// discussion #278) : éteint, le mode météo montre les prévisions seules — ni épaules, ni
+// bouton d'action, ni bascule du sens d'un volet par le titre. Le mode HA ne change pas.
+// Allumé par défaut (comportement de l'ADR-0023) ; l'interrupteur le garde en mémoire.
+bool s_appareils_meteo = true;
 
 void etat_vider(Etat& e) {
     e = Etat{};
@@ -800,10 +808,11 @@ void peindre_cartes() {
     }
 }
 
-// Mode météo : les épaules et le bouton d'une tuile (masqués sans appareil ; bouton
-// masqué aussi quand un appui ne ferait rien : cap, bin, option r).
+// Mode météo : les épaules et le bouton d'une tuile (masqués sans appareil, ou tous
+// quand « Tab5 Appareils sur la météo » est éteint ; bouton masqué aussi quand un appui
+// ne ferait rien : cap, bin, option r).
 void peindre_epaules(int r, int t, lv_obj_t* gauche, lv_obj_t* droite, lv_obj_t* bouton) {
-    const bool presente = tuile_presente(r, t);
+    const bool presente = s_appareils_meteo && tuile_presente(r, t);
     Vue v;
     if (presente) vue(r, t, v);
     ui_hidden(bouton, !presente || !v.agit);
@@ -841,7 +850,7 @@ void peindre_meteo() {
         peindre_epaules(r, t, g, d, b);
     }
     // Sens du volet 3.x : tuile 1 de l'accueil, mode héritage seulement.
-    ui_hidden(g_tuiles_ui.jour_sens, !(heritage() && r == 0 && tuile_presente(0, 1)));
+    ui_hidden(g_tuiles_ui.jour_sens, !(s_appareils_meteo && heritage() && r == 0 && tuile_presente(0, 1)));
 }
 
 void popup_lumiere_etat(int r, int t);
@@ -1182,6 +1191,15 @@ void tuiles_repeindre(int r, int t) {
     if (!heritage()) peindre_tuile(r, t);
 }
 
+void tuiles_appareils_meteo(bool montres) {
+    if (montres == s_appareils_meteo) return;
+    s_appareils_meteo = montres;
+    ESP_LOGI("tab5.tuiles", "Appareils sur la météo : %s", montres ? "oui" : "non");
+    // Restauré au setup, avant le premier dessin : tuiles_appliquer_ui() lira le réglage.
+    // Ensuite, tout de suite : les épaules de la page courante (rien en mode HA).
+    if (s_charge) peindre_meteo();
+}
+
 void tuiles_mode_ha(bool actif) {
     charger();
     CentralPanelCtx& ctx = g_central_ctx;
@@ -1252,6 +1270,8 @@ bool tuiles_titre_piece(std::string& chapeau, std::string& titre) {
 // l'onglet du nom) : bascule le sens d'un volet, comme le bouton de titre de la 3.1.
 void tuile_titre_appui(int t) {
     charger();
+    // Mode météo sans appareils : un titre de prévision ne fait rien.
+    if (!g_central_ctx.ha_mode && !s_appareils_meteo) return;
     const int r = piece_courante();
     if (heritage()) {
         if (r == 0 && t == 1 && tuile_presente(0, 1)) tuiles_heritage_volet_sens();
@@ -1290,6 +1310,8 @@ void tuiles_brancher_titres() {
 
 void tuile_appui(int t, bool long_appui) {
     charger();
+    // Mode météo sans appareils : boutons masqués ; pas d'appui non plus par une autre voie.
+    if (!g_central_ctx.ha_mode && !s_appareils_meteo) return;
     const int r = piece_courante();
     if (!tuile_presente(r, t)) return;
     if (heritage()) {

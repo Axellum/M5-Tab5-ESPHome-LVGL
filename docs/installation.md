@@ -208,6 +208,7 @@ The theme names stay as they are in every language: they are names. Six of them:
 | Tab5 DAC Output (Sortie audio) | LINE1, LINE2, BOTH | output of the ES8388 audio chip; the author's tablet uses LINE1 |
 | WiFi Antenna (Antenne Wi-Fi) | Internal, External | the internal antenna, or one on the external connector |
 | Tab5 Batterie montée (Batterie montée) | on / off, off by default | shows the battery icon in the status strip. A setting, not a detection: without a battery, the charger reports a full one |
+| Tab5 Appareils sur la météo (Appareils sur la météo) | on / off, on by default | shows the rooms' devices on the forecast cards (icons and touch actions). Off, the forecast cards show the weather only; the « HA » button still shows the rooms and their devices |
 | Aller à l'écran (Afficher) | —, Accueil, Assistant vocal, Calendrier, Réveil, Climatisation, Plantes, Télécommande TV, Console système, Énergie | opens that screen or popup, from the dashboard or an automation, then goes back to « — ». A game in progress is closed first |
 | Recharger le calendrier | button | asks Home Assistant again for this month and the next, when a new appointment is not on screen yet |
 
@@ -588,6 +589,7 @@ Les noms des thèmes restent les mêmes dans toutes les langues : ce sont des no
 | Tab5 DAC Output (Sortie audio) | LINE1, LINE2, BOTH | sortie de la puce audio ES8388 ; la tablette de l'auteur est sur LINE1 |
 | WiFi Antenna (Antenne Wi-Fi) | Internal, External | l'antenne interne, ou une antenne sur le connecteur externe |
 | Tab5 Batterie montée (Batterie montée) | allumé / éteint, éteint par défaut | montre l'icône de batterie dans le bandeau d'état. Un réglage et pas une détection : sans batterie, le chargeur annonce une batterie pleine |
+| Tab5 Appareils sur la météo (Appareils sur la météo) | allumé / éteint, allumé par défaut | montre les appareils des pièces sur les cartes de prévisions (icônes et appuis). Éteint, les cartes de prévisions montrent la météo seule ; le bouton « HA » montre toujours les pièces et leurs appareils |
 | Aller à l'écran (Afficher) | —, Accueil, Assistant vocal, Calendrier, Réveil, Climatisation, Plantes, Télécommande TV, Console système, Énergie | ouvre cet écran ou ce popup, depuis le tableau de bord ou une automatisation, puis revient à « — ». Un jeu en cours est d'abord fermé |
 | Recharger le calendrier | bouton | redemande à Home Assistant le mois en cours et le suivant, quand un nouveau rendez-vous n'est pas encore à l'écran |
 

@@ -209,6 +209,20 @@ api:
               - switch.turn_on: tab5_batterie_montee
             else:
               - switch.turn_off: tab5_batterie_montee
+    # Appareils des pièces sur les prévisions (05/10/2026, discussion #278) : actionne le
+    # vrai interrupteur « Tab5 Appareils sur la météo » (tab5-ha-controls.yaml).
+    - service: rendu_appareils_meteo
+      description: "Rendu hors tablette : appareils des pièces montrés ou non sur les prévisions."
+      variables:
+        montres: bool
+      then:
+        - if:
+            condition:
+              lambda: 'return montres;'
+            then:
+              - switch.turn_on: tab5_appareils_meteo
+            else:
+              - switch.turn_off: tab5_appareils_meteo
     # Thèmes (ADR-0029) : la tablette écrit ses préférences toutes les minutes, le rendu
     # arrêté par `kill` jamais. tools/rendu/capturer.py (--puis-mode-theme) enregistre
     # ainsi le mode choisi avant l'arrêt : le lancement suivant démarre dans ce mode.

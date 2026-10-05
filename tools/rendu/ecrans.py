@@ -198,6 +198,16 @@ def _solaire(pourcent: str) -> Service:
 SANS_SOLAIRE = (_solaire("nan"),)
 
 
+def _appareils_meteo(montres: bool) -> Service:
+    """rendu_appareils_meteo (Tab5/rendu/bouchons.yaml) : interrupteur « Tab5 Appareils sur
+    la météo » (discussion #278). Éteint, les prévisions ne montrent pas les appareils."""
+    return Service("rendu_appareils_meteo", (("montres", montres),))
+
+
+# Retour à l'état par défaut (allumé) : les autres écrans montrent les appareils.
+AVEC_APPAREILS = (_appareils_meteo(True),)
+
+
 def ecrans_des_pieces(pieces: dict) -> tuple:
     """Le mode HA sur chaque pièce de la démo (ADR-0023) : « HA » depuis l'accueil (pièce
     0, page 2), puis un geste par pièce occupée jusqu'à la bonne (le mode HA saute les
@@ -312,6 +322,11 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-previsions-jours-3", (VERS_LA_GAUCHE, VERS_LA_GAUCHE), (VERS_LA_DROITE, VERS_LA_DROITE)),
     Ecran("accueil-previsions-heures-1", (VERS_LA_DROITE,), (VERS_LA_GAUCHE,)),
     Ecran("accueil-previsions-heures-2", (VERS_LA_DROITE, VERS_LA_DROITE), (VERS_LA_GAUCHE, VERS_LA_GAUCHE)),
+    # Interrupteur « Tab5 Appareils sur la météo » éteint : l'accueil (pièce de la démo
+    # avec ses appareils) montre les prévisions seules ; puis une page horaire.
+    Ecran("accueil-sans-appareils", (_appareils_meteo(False),), AVEC_APPAREILS),
+    Ecran("accueil-sans-appareils-heures-1", (_appareils_meteo(False), VERS_LA_DROITE),
+          AVEC_APPAREILS + (VERS_LA_GAUCHE,)),
     # Mode HA : les cartes de chaque pièce (remplace « accueil-interrupteurs », les cinq
     # cartes fixes d'avant la 3.2, devenu « accueil-ha-piece-1 »).
     *ecrans_des_pieces(PIECES),

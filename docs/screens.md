@@ -83,7 +83,7 @@ The `btn_control_ha` button (top right, Home Assistant icon) toggles the region 
 - Weather condition icon (same two-layer system)
 - Max and min temperature, individually color-coded — **tapping this shows that day's schedule in the central card for 6 seconds** (see above)
 
-**Device shoulders and quick action.** On every page, a tile that holds a device of that page's room shows it in its two « shoulders », left and right of the title tab — left: the device's icon ([palette](tiles_icons.md)) coloured by its state; right: a bulb (light) or the arrow of a shutter's next move (pause while it moves), nothing for the other types — and an invisible button over the weather icon (`btn_jN_action` on the daily pages, `btn_hN_action` on the hourly ones) sends the tile's command; the weather keeps showing. A page without devices looks as before 3.2.
+**Device shoulders and quick action.** On every page, a tile that holds a device of that page's room shows it in its two « shoulders », left and right of the title tab — left: the device's icon ([palette](tiles_icons.md)) coloured by its state; right: a bulb (light) or the arrow of a shutter's next move (pause while it moves), nothing for the other types — and an invisible button over the weather icon (`btn_jN_action` on the daily pages, `btn_hN_action` on the hourly ones) sends the tile's command; the weather keeps showing. A page without devices looks as before 3.2. With the device switch **Tab5 Appareils sur la météo** off (on by default; discussion #278), every page looks like a page without devices: the forecast cards show the weather only, and the devices stay in HA mode.
 
 | Type | Tap | Long press |
 |------|-----|------------|
@@ -418,7 +418,7 @@ Le bouton `btn_control_ha` (en haut à droite, icône Home Assistant) bascule la
 - Icône météo (même système double couche)
 - Températures max et min, chacune avec code couleur — **taper dessus affiche le planning de ce jour dans la carte centrale pendant 6 secondes** (voir ci-dessus)
 
-**Épaules et action rapide.** Sur chaque page, une tuile qui porte un appareil de la pièce de la page le montre dans ses deux « épaules », de part et d'autre de l'onglet titre — à gauche l'icône de l'appareil ([palette](tiles_icons.md)) colorée par son état ; à droite une ampoule (lumière) ou la flèche du prochain mouvement d'un volet (pause pendant la course), rien pour les autres types — et un bouton invisible sur l'icône météo (`btn_jN_action` sur les pages journalières, `btn_hN_action` sur les horaires) envoie la commande de la tuile ; la météo reste affichée. Une page sans appareil est comme avant la 3.2.
+**Épaules et action rapide.** Sur chaque page, une tuile qui porte un appareil de la pièce de la page le montre dans ses deux « épaules », de part et d'autre de l'onglet titre — à gauche l'icône de l'appareil ([palette](tiles_icons.md)) colorée par son état ; à droite une ampoule (lumière) ou la flèche du prochain mouvement d'un volet (pause pendant la course), rien pour les autres types — et un bouton invisible sur l'icône météo (`btn_jN_action` sur les pages journalières, `btn_hN_action` sur les horaires) envoie la commande de la tuile ; la météo reste affichée. Une page sans appareil est comme avant la 3.2. Avec l'interrupteur de l'appareil **Tab5 Appareils sur la météo** éteint (allumé par défaut ; discussion #278), chaque page ressemble à une page sans appareil : les cartes de prévisions montrent la météo seule, et les appareils restent dans le mode HA.
 
 | Type | Appui court | Appui long |
 |------|-------------|------------|
