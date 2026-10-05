@@ -4,6 +4,27 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Le guide d'installation en pages, étape par étape
+
+Suite du site de documentation (lot 2 du plan validé par Axel) : le long `docs/installation.md`
+devient un guide de pages courtes, `docs/installation/`, une page par étape, dans le menu du site
+« Installer → Guide d'installation ».
+- **Sept étapes, dans l'ordre** : fichiers Home Assistant, installer le firmware, Wi-Fi, ajouter
+  la tablette à Home Assistant, vos sources (listes « Tab5 · »), vos appareils (blueprint), un
+  tableau de bord. Chaque page dit ce qu'il faut faire, à quoi on voit que c'est bon, et les
+  pièges déjà rencontrés (pas de bouton BOOT, même version = pas de bouton *Install*, fenêtre de
+  30 minutes, archive décompressée dans un sous-dossier, tablette non découverte : son IP et le
+  port 6053, effacement = réglages d'usine). Puis : réglages de la tablette, adapter à sa
+  maison, fournisseurs météo, mises à jour (et passage depuis une ancienne version), compiler
+  son propre firmware.
+- **Aucun lien cassé** : `docs/installation.md` garde chacun de ses anciens titres, avec un lien
+  vers sa nouvelle place (tableau de bord HA déjà installé, notifications, forums). README,
+  vitrine, page d'installation, `docs/` et l'archive HA (`LISEZMOI-Tab5.txt`, adresse du guide
+  sur le site) visent directement les nouvelles pages ; un test refuse une page publiée qui
+  viserait encore l'ancien fichier.
+- Les alertes de GitHub (`> [!WARNING]`) deviennent des encarts sur le site, titrés dans la
+  langue de la page.
+
 ### 2026-10-05 — Un site de documentation, construit depuis docs/
 
 Demandé par Axel : « un vrai site », des pages, un menu à gauche avec des sous-menus, sans

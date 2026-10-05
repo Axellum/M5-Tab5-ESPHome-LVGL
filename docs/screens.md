@@ -206,7 +206,7 @@ The microphone icon on the home screen is the visual interface for the voice ass
 - **Home Assistant mode** — commands go to the standard HA conversation agent
 - **Conversation mode** — commands go to an LLM-backed pipeline for free-form conversation
 
-When the list « Tab5 · pipeline de discussion » is set to « Aucun » (no conversation pipeline), the two mode buttons (home screen and assistant popup) disappear and the tablet stays in Home Assistant mode (zone `discussion`, [installation](installation.md#other-zones)).
+When the list « Tab5 · pipeline de discussion » is set to « Aucun » (no conversation pipeline), the two mode buttons (home screen and assistant popup) disappear and the tablet stays in Home Assistant mode (zone `discussion`, [installation](installation/adapt-to-your-home.md#other-zones)).
 
 The mode is saved across reboots via the HA `select` entity (`select.m5stack_tab5_home_assistant_hmi_assistant`).
 
@@ -297,7 +297,7 @@ All interface colours live in one palette, `struct Palette` in `tab5_tokens.h` (
 
 ![Six themes of the Tab5 screen drawn by the firmware itself: Relief doux in dark and light, Almanach imprimé, Néon calme, Béton brut and Zen Sumi](images/tab5_themes.jpg)
 
-The theme, the mode (Sombre, Clair, Auto) and the « Nuit (thème auto) » switch are entities of the tablet: [Tablet settings](installation.md#theme-light-or-dark).
+The theme, the mode (Sombre, Clair, Auto) and the « Nuit (thème auto) » switch are entities of the tablet: [Tablet settings](installation/settings.md#theme-light-or-dark).
 
 ---
 
@@ -546,7 +546,7 @@ L'icône microphone sur l'écran d'accueil est l'interface visuelle de l'assista
 - **Mode Home Assistant** — les commandes vont vers l'agent de conversation standard de HA
 - **Mode Conversation** — les commandes vont vers un pipeline basé sur un LLM
 
-Quand la liste « Tab5 · pipeline de discussion » vaut « Aucun » (pas de pipeline de discussion), les deux boutons de mode (accueil et popup assistant) disparaissent et la tablette reste en mode Home Assistant (zone `discussion`, [installation](installation.md#autres-zones)).
+Quand la liste « Tab5 · pipeline de discussion » vaut « Aucun » (pas de pipeline de discussion), les deux boutons de mode (accueil et popup assistant) disparaissent et la tablette reste en mode Home Assistant (zone `discussion`, [installation](installation/adapt-to-your-home.md#autres-zones)).
 
 Le mode est sauvegardé entre les redémarrages via l'entité HA `select` (`select.m5stack_tab5_home_assistant_hmi_assistant`).
 
@@ -637,7 +637,7 @@ Toutes les couleurs de l'interface vivent dans une palette, `struct Palette` de 
 
 ![Six thèmes de l'écran du Tab5 dessinés par le firmware lui-même : Relief doux en sombre et en clair, Almanach imprimé, Néon calme, Béton brut et Zen Sumi](images/tab5_themes.jpg)
 
-Le thème, le mode (Sombre, Clair, Auto) et l'interrupteur « Nuit (thème auto) » sont des entités de la tablette : [réglages de la tablette](installation.md#thème-clair-ou-sombre).
+Le thème, le mode (Sombre, Clair, Auto) et l'interrupteur « Nuit (thème auto) » sont des entités de la tablette : [réglages de la tablette](installation/settings.md#thème-clair-ou-sombre).
 
 ---
 

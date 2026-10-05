@@ -302,7 +302,8 @@ def test_plus_d_option_actions_ha():
     verif = _lire("tools", "installation_ha", "verifier_installation.py")
     assert '"allow_service_calls": True' not in verif and "verifier_option_decochee(" in verif
     assert "demandes_de_la_tablette(ha, ws, rapport)" in verif
-    guide = _lire("docs", "installation.md")
+    guide = _lire("docs", "installation.md") + "".join(
+        _lire("docs", "installation", f) for f in sorted(os.listdir(os.path.join(REPO, "docs", "installation"))))
     for etape in ("**Allow Home Assistant actions**", "**Autoriser les actions Home Assistant**"):
         assert etape not in guide, etape
     # Les événements écoutés par le vérificateur sont bien émis par le firmware.

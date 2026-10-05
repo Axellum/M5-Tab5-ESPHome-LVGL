@@ -7,6 +7,7 @@ déploiement du site ne s'arrête sur main.
 """
 from __future__ import annotations
 
+import posixpath
 import re
 import sys
 from pathlib import Path
@@ -24,6 +25,7 @@ import pages  # noqa: E402
 # Fichiers de docs/ qui restent hors du site, exprès.
 HORS_SITE = {
     "docs/INVENTAIRE_CONFIGS_TESTS.md": "inventaire interne des configurations de test",
+    "docs/installation.md": "renvoi des anciens titres vers docs/installation/ (liens déjà publiés)",
     "docs/changelog/CHANGELOG-1.x.md": "historique des versions 1.x",
     "docs/press/forum_ha_en.md": "brouillon de message de forum",
     "docs/press/hackster.md": "brouillon d'article",
@@ -84,7 +86,7 @@ def test_liens_reecrits(plan):
     fr = construire.Liens(plan, "fr", construire.SITE)
     source = "docs/screens.md"
     # Une autre page publiée : chemin relatif entre pages du site, ancre gardée.
-    assert en.cible("installation.md#ota-updates", source, False) == "installation.md#ota-updates"
+    assert en.cible("installation/updates.md#upgrading-from-31", source, False) ==         "installation/updates.md#upgrading-from-31"
     # Une page de docs/decisions/ depuis docs/ et l'inverse.
     assert en.cible("decisions/0002-single-page-swipe-navigation.md", source, False) == \
         "decisions/0002-single-page-swipe-navigation.md"
@@ -100,11 +102,12 @@ def test_liens_reecrits(plan):
     assert en.cible("https://esphome.io/", source, False) == "https://esphome.io/"
     # « Version française » : la page française, sur l'autre site depuis l'anglais.
     assert en.cible("#version-française", source, False) == construire.SITE + "fr/screens/"
-    assert en.cible("installation.md#version-française", source, False) == construire.SITE + "fr/installation/"
-    assert fr.cible("installation.md#version-française", source, False) == "installation.md"
+    assert en.cible("installation/README.md#version-française", source, False) == construire.SITE + "fr/installation/"
+    assert fr.cible("installation/README.md#version-française", source, False) == "installation/index.md"
     # HTML brut (non réécrit par MkDocs) : adresse relative à la page finale.
     assert en.cible("images/tab5_photo_home.jpg", source, True) == "../images/tab5_photo_home.jpg"
-    assert en.cible("installation.md", source, True) == "../installation/"
+    assert en.cible("installation/README.md", source, True) == "../installation/"
+    assert en.cible("../screens.md", "docs/installation/flash.md", True) == "../../screens/"
     assert en.cible("README.md", source, True) == "../"
 
 
@@ -130,6 +133,28 @@ def test_bloc_hors_site_retire(plan):
     for langue in construire.LANGUES:
         texte = construire.contenu(page, langue)
         assert "hors-site" not in texte and "aussi un site" not in texte and "also a website" not in texte
+
+
+def test_alerte_github_devient_un_encart():
+    """« > [!WARNING] » s'affiche en encadré sur GitHub ; sur le site, encart de Material
+    titré dans la langue de la page. Dans un bloc de code, rien ne change."""
+    texte = "> [!WARNING]\n> **Titre.** texte\n>\n> suite\n\nfin\n```\n> [!NOTE]\n```"
+    assert construire.alertes(texte, "fr").split("\n") == [
+        '!!! warning "Attention"', "    **Titre.** texte", "", "    suite", "", "fin", "```", "> [!NOTE]", "```"]
+    assert construire.alertes("> [!TIP]\n> a", "en") == '!!! tip "Tip"\n    a'
+
+
+def test_aucune_page_ne_renvoie_a_l_ancien_guide(plan):
+    """docs/installation.md ne garde que des titres de renvoi, hors du site : une page publiée
+    vise directement la page de docs/installation/ (sinon un aller-retour par GitHub)."""
+    for page in plan.pages.values():
+        texte = (REPO / page.source).read_text(encoding="utf-8")
+        dossier = Path(page.source).parent
+        for _, cible in construire.LIEN_MD.findall(texte):
+            chemin = cible.strip("<>").split("#")[0]
+            if chemin and not construire.ABSOLU.match(chemin):
+                assert posixpath.normpath((dossier / chemin).as_posix()) != "docs/installation.md", \
+                    f"{page.source} → {cible}"
 
 
 def test_description_sans_markdown():
