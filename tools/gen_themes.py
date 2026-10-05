@@ -279,8 +279,14 @@ def charger(dossier: Path = THEMES_DIR, tokens: Path = TOKENS) -> list[Theme]:
             for role, valeur in propres.items():
                 if role not in connus:
                     raise ErreurTheme(f"{stem}.yaml, {mode} : rôle inconnu `{role}` (struct Palette)")
-                if isinstance(valeur, bool) or not isinstance(valeur, int) or not 0 <= valeur <= 0xFFFFFF:
-                    raise ErreurTheme(f"{stem}.yaml, {mode}.{role} : couleur 0xRRGGBB attendue, lu {valeur!r}")
+                if isinstance(valeur, str):
+                    # Renvoi à un autre rôle du même mode (« CONSOLE_VALUE: TEXT_PRIMARY ») :
+                    # résolu après l'héritage, donc avec la valeur du thème qui hérite.
+                    if valeur not in connus or valeur == role:
+                        raise ErreurTheme(f"{stem}.yaml, {mode}.{role} : rôle inconnu `{valeur}` (struct Palette)")
+                elif isinstance(valeur, bool) or not isinstance(valeur, int) or not 0 <= valeur <= 0xFFFFFF:
+                    raise ErreurTheme(f"{stem}.yaml, {mode}.{role} : couleur 0xRRGGBB ou nom de rôle "
+                                      f"attendu, lu {valeur!r}")
             modes[mode] = {**base[mode], **propres}
         return modes
 
@@ -299,7 +305,17 @@ def charger(dossier: Path = THEMES_DIR, tokens: Path = TOKENS) -> list[Theme]:
             valeurs = modes[mode]
             for role, (verre, fond, opa) in DERIVES.items():
                 if role not in valeurs and verre in valeurs and fond in valeurs:
+                    if isinstance(valeurs[verre], str) or isinstance(valeurs[fond], str):
+                        raise ErreurTheme(f"{stem}.yaml, {mode} : `{verre}` et `{fond}` (verre calculé) "
+                                          "doivent être des couleurs, pas des renvois")
                     valeurs[role] = melange(valeurs[verre], valeurs[fond], opa)
+            for role, valeur in list(valeurs.items()):
+                if isinstance(valeur, str):
+                    cible = valeurs.get(valeur)
+                    if not isinstance(cible, int):
+                        raise ErreurTheme(f"{stem}.yaml, {mode}.{role} : `{valeur}` doit être une couleur "
+                                          f"(un seul renvoi), lu {cible!r}")
+                    valeurs[role] = cible
             manquants = [r for r in liste_roles if r not in valeurs]
             if manquants:
                 raise ErreurTheme(f"{stem}.yaml, {mode} : rôle(s) manquant(s) {manquants}")

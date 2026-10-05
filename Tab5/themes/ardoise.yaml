@@ -98,14 +98,17 @@ clair:
   GLASS_LO_MODAL: 0xEAEEF3
   GLASS_RIM: 0x8D99AA
   MODAL_SCRIM: 0xC5CDD8
-  CONSOLE_BG: 0x0A0E16         # la console système reste sombre
+  CONSOLE_BG: GLASS_HI_MODAL   # encadrés de confirmation de la console : le verre du popup
   ARC_TRACK: 0xD3DAE3
   # --- Texte : encre ardoise ---
   TEXT_SOFT: 0x1E2733
   TEXT_PRIMARY: 0x0E141B
   TEXT_DIM: 0x4F5A69
-  CONSOLE_LABEL: 0x8595AD      # console sombre
-  CONSOLE_VALUE: 0xFFFFFF      # console sombre
+  # Console système en clair : l'encre du thème (renvois résolus après l'héritage, chaque
+  # thème clair y met son TEXT_DIM / TEXT_PRIMARY). Avant le 05/10/2026 : gris 8595AD et
+  # blanc de la console sombre, illisibles sur le verre clair (retour d'Axel).
+  CONSOLE_LABEL: TEXT_DIM
+  CONSOLE_VALUE: TEXT_PRIMARY
   ICON_MUTED: 0x98A1AD
   TEXT_ON_ACCENT: 0xFFFFFF
   # --- Sémantiques : mêmes teintes, assombries pour se lire sur du blanc ---

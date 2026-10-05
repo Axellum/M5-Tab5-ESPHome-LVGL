@@ -4,6 +4,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Mode clair : console système lisible
+
+Retour d'Axel sur la tablette : « beaucoup de texte blanc sur fond clair, illisible, dans
+les popups en mode clair ».
+- **Console système** : en clair, les 21 thèmes gardaient les couleurs de la console
+  sombre, des valeurs blanches et des libellés gris-bleu sur le verre clair du popup, et
+  des encadrés de confirmation noirs (« Redémarrer la tablette ? ») sous un texte foncé.
+  Elle prend maintenant l'encre de chaque thème : valeurs en `TEXT_PRIMARY`, libellés en
+  `TEXT_DIM`, encadrés sur le verre du popup.
+- **Un rôle de la palette peut renvoyer à un autre** (`CONSOLE_VALUE: TEXT_PRIMARY`,
+  `tools/gen_themes.py`) : résolu après l'héritage, chaque thème y met sa propre couleur ;
+  Ardoise le fait en clair, les vingt autres en héritent.
+- `tests/test_themes.py` : console lisible dans chaque mode (libellés 4,5:1, valeurs 7:1
+  sur le verre des popups en clair ; texte des encadrés 7:1 sur leur fond).
+
 ### 2026-10-05 — Trois thèmes de plus : Bonbon, Sorbet, Ultraviolet
 
 Demande d'Axel : « ajoute les trois nouveaux thèmes au choix possible pour le Tab ». Les
