@@ -3,9 +3,14 @@
 @file custom_templates/tab5_dashboard.jinja
 @role Tableau de bord Home Assistant de la tablette (04/10/2026) : une vue « Tab5 » pour
       l'usage courant (écran, son, réveil, rendez-vous, assistant vocal), une sous-vue
-      « Réglages » (langue, météo, agendas, maison, voix, réveil) et une sous-vue « Santé »
-      (diagnostic, poussées, alertes). La macro tab5_dashboard() ÉCRIT ce tableau de bord
-      (YAML) avec les entités de la maison ; on colle le résultat dans un tableau de bord.
+      « Réglages » (mode d'emploi et liens utiles, ce que l'écran affiche, énergie solaire,
+      langue, météo, agendas, maison, voix, réveil) et une sous-vue « Santé » (diagnostic,
+      poussées, alertes). La macro tab5_dashboard() ÉCRIT ce tableau de bord (YAML) avec
+      les entités de la maison ; on colle le résultat dans un tableau de bord.
+@limite Les choix du blueprint « Tab5 — emplacements » (capteurs, pièces, crête des
+      panneaux…) ne sont lisibles par aucun modèle de HA : la vue Réglages explique chaque
+      section et ouvre l'automatisation, elle ne peut pas montrer ce qui y est choisi
+      (seul le capteur « Zones masquées » de la tablette dit ce qui manque).
 @pourquoi Les entity_id de la tablette changent d'une maison à l'autre : Home Assistant
       les forme avec la pièce, le nom de l'appareil et le nom de l'entité (vérifié dans
       le code de HA 2026.9.4, entity_registry.async_generate_entity_id), et une entité
@@ -136,10 +141,15 @@
     {%- set ns.e_id = a.attributes.id -%}
   {%- endif -%}
 {%- endfor -%}
+{%- set emplacements = '/config/automation/edit/' ~ ns.e_id if ns.e_id else '/config/blueprint/dashboard' -%}
 
 {#- `langue` (« Français », « English »…) force la langue des libellés ; vide = celle de l'écran. -#}
 {%- set fr = (langue or (states(T.langue) if T.langue else 'Français')) in ['Français', 'unknown', 'unavailable'] -%}
 {%- macro t(francais, anglais) -%}{{ francais if fr else anglais }}{%- endmacro -%}
+{#- Documentation du dépôt public, ancre de la section française ou anglaise (titres de
+    docs/installation.md, vérifiés par tests/test_tableau_de_bord.py). -#}
+{%- set DOC = 'https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation.md#' -%}
+{%- macro doc(francais, anglais) -%}{{ DOC ~ (francais if fr else anglais) }}{%- endmacro -%}
 {#- Tuile d'un bouton de la tablette : un appui (sur la tuile ou son icône) le presse. -#}
 {%- macro bouton(entite, icone) -%}
 {%- for action in ['tap_action', 'icon_tap_action'] %}
@@ -230,7 +240,7 @@ views:
 {%- endif %}
           - type: shortcut
             label: "{{ t('Réglages', 'Settings') }}"
-            description: "{{ t('Langue, météo, agendas, maison, voix, réveil', 'Language, weather, calendars, home, voice, alarm') }}"
+            description: "{{ t('Écran, capteurs, énergie, météo, agendas, voix', 'Screen, sensors, energy, weather, calendars, voice') }}"
             icon: mdi:cog
             tap_action:
               action: navigate
@@ -486,6 +496,52 @@ views:
       - type: grid
         cards:
           - type: heading
+            heading: "{{ t('Régler la tablette', 'Setting up the tablet') }}"
+            icon: mdi:tune-variant
+          - type: markdown
+            text_only: true
+            content: |-
+              {{ t('Tout se règle depuis Home Assistant, sans recompiler la tablette, à trois endroits :', 'Everything is set from Home Assistant, without rebuilding the tablet, in three places:') }}
+              1. **{{ t('Cette page', 'This page') }}**{{ t(' : ce qui vaut pour toute la maison (météo, agendas, téléphone, présence, voix) et les réglages de la tablette.', ': what applies to the whole home (weather, calendars, phone, presence, voice) and the tablet settings.') }}
+              2. **{{ t("Les emplacements de l'écran", 'The screen slots') }}**{{ t(" : ce que l'écran montre, appareil par appareil et capteur par capteur (pièces, températures, clim, plantes, énergie solaire, planning).", ': what the screen shows, device by device and sensor by sensor (rooms, temperatures, climate, plants, solar energy, schedule).') }}
+              3. **{{ t('La page de la tablette', 'The tablet page') }}**{{ t(" : toutes ses entités dans l'intégration ESPHome, son diagnostic et ses mises à jour.", ': all its entities in the ESPHome integration, its diagnostics and updates.') }}
+          - type: shortcut
+            label: "{{ t('Page de la tablette', 'Tablet page') }}"
+            description: "{{ t('ESPHome : réglages, diagnostic, mises à jour', 'ESPHome: settings, diagnostics, updates') }}"
+            icon: mdi:tablet-cellphone
+            tap_action:
+              action: navigate
+              navigation_path: /config/devices/device/{{ device_id(ns.api) }}
+            grid_options:
+              columns: 12
+          - type: shortcut
+            label: "{{ t("Emplacements de l'écran", 'Screen slots') if ns.e_id else t('Créer les emplacements', 'Create the screen slots') }}"
+            description: "{{ t('Pièces, capteurs, clim, plantes, énergie', 'Rooms, sensors, climate, plants, energy') if ns.e_id else "Blueprint « Tab5 — emplacements de l'écran »" }}"
+            icon: mdi:view-dashboard-edit
+            tap_action:
+              action: navigate
+              navigation_path: {{ emplacements }}
+            grid_options:
+              columns: 12
+          - type: shortcut
+            label: "{{ t('Connexion ESPHome', 'ESPHome connection') }}"
+            description: "{{ t('Adresse, clé, options', 'Address, key, options') }}"
+            icon: mdi:lan-connect
+            tap_action:
+              action: navigate
+              navigation_path: /config/integrations/integration/esphome{{ ('#config_entry=' ~ config_entry_id(ns.api)) if config_entry_id(ns.api) else '' }}
+            grid_options:
+              columns: 6
+          - type: shortcut
+            label: Documentation
+            description: "{{ t('Réglages et options', 'Settings and options') }}"
+            icon: mdi:book-open-variant
+            tap_action:
+              action: url
+              url_path: {{ doc('réglages-et-options-de-la-tablette', 'tablet-settings-and-options') }}
+            grid_options:
+              columns: 6
+          - type: heading
             heading: "{{ t('En bref', 'At a glance') }}"
             icon: mdi:clipboard-text-outline
           - type: heading
@@ -522,9 +578,88 @@ views:
                         ('select.tab5_volet_a_course_simulee', 'Volet', 'Shutter'),
                         ('select.tab5_pipeline_de_discussion', 'Mode « Discu »', 'Discu mode')] %}
 {%- if e in present %}
-              | {{ t(fr_, en_) }} | {% raw %}{{ choix('{% endraw %}{{ e }}{% raw %}') }}{% endraw %}{%- if e == 'select.tab5_agenda_de_travail' and 'input_text.tab5_mot_travail' in present %} ({{ t('mot « ', 'keyword: ') }}{% raw %}{{ states('input_text.tab5_mot_travail') or '{% endraw %}{{ t('tous', 'all') }}{% raw %}' }}{% endraw %}{{ t(' »', '') }}){%- endif %} |
+              | {{ t(fr_, en_) }} | {% raw %}{{ choix('{% endraw %}{{ e }}{% raw %}') }}{% endraw %}{%- if e == 'select.tab5_agenda_de_travail' and 'input_text.tab5_mot_travail' in present %} ({{ t('mot « ', 'keyword: ') }}{% raw %}{{ states('input_text.tab5_mot_travail') or '{% endraw %}{{ t('tous', 'all') }}{% raw %}' }}{% endraw %}{{ t(' »', '') }}){%- endif %} |
 {%- endif %}
 {%- endfor %}
+{%- if ns.e %}
+              | {{ t("Emplacements de l'écran", 'Screen slots') }} | {% raw %}{{ '{% endraw %}{{ t('automatisation active', 'automation on') }}{% raw %}' if is_state('{% endraw %}{{ ns.e }}{% raw %}', 'on') else '<font color="#ff9800">{% endraw %}{{ t('automatisation désactivée', 'automation off') }}{% raw %}</font>' }}{% endraw %} |
+{%- else %}
+              | {{ t("Emplacements de l'écran", 'Screen slots') }} | <font color="#ff9800">{{ t('pas encore créés (bouton ci-dessus)', 'not created yet (button above)') }}</font> |
+{%- endif %}
+{%- if T.zones %}
+              | {{ t('Zones masquées', 'Hidden zones') }} | {% raw %}{{ states('{% endraw %}{{ T.zones }}{% raw %}') }}{% endraw %} |
+{%- endif %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t("Ce que l'écran affiche", 'What the screen shows') }}"
+            icon: mdi:view-grid-plus
+          - type: markdown
+            text_only: true
+            content: |-
+              {{ t("Appareils et capteurs se choisissent dans l'automatisation des emplacements, section par section :", 'Devices and sensors are picked in the screen slots automation, section by section:') }}
+              - **{{ t('Pièce 1 à 5', 'Room 1 to 5') }}**{{ t(' : cinq appareils par pièce au plus (lumières, prises, volets, clim, scènes, capteurs…), les tuiles du bas, une pièce par page.', ': up to five devices per room (lights, plugs, shutters, climate, scenes, sensors…), the bottom tiles, one room per page.') }}
+              - **{{ t('TV, téléphone', 'TV, phone') }}**{{ t(" : la TV et sa télécommande, la batterie du téléphone (icône d'état).", ': the TV and its remote, the phone battery (status icon).') }}
+              - **{{ t('Températures', 'Temperatures') }}**{{ t(" : température et humidité de la pièce, une seconde température (serre), sur l'accueil.", ': room temperature and humidity, a second temperature (greenhouse), on the home page.') }}
+              - **{{ t('Climatisation', 'Climate') }}**{{ t(" : − / consigne / + de l'accueil et le popup clim.", ': − / setpoint / + on the home page and the climate popup.') }}
+              - **{{ t('Plantes', 'Plants') }}**{{ t(" : le capteur d'humidité de chaque pot (Flower Care et semblables) ; le reste est lu sur le même appareil.",': the moisture sensor of each pot (Flower Care and the like); the rest is read from the same device.') }}
+              - **{{ t('Planning de travail', 'Work schedule') }}**{{ t(' : un agenda ; vide, celui de la liste « Agenda de travail » plus bas.', ': a calendar; empty, the one of the « Work » list below.') }}
+              - **{{ t('Météo', 'Weather') }}**{{ t(' : facultatif, prime sur les listes « Météo » plus bas.', ': optional, wins over the « Weather » lists below.') }}
+              - **{{ t('Énergie', 'Energy') }}**{{ t(' : voir « Énergie solaire ».', ': see « Solar energy ».') }}
+
+              {{ t("Un champ vide disparaît de l'écran avec ses boutons, et « Zones masquées » le dit. Un changement part tout de suite, sans redémarrer.", 'An empty field leaves the screen with its buttons, and « Hidden zones » says so. A change is sent at once, without restarting.') }} [{{ t('Adapter à sa maison', 'Adapt to your home') }}]({{ doc('adapter-à-sa-maison', 'adapt-to-your-home') }})
+          - type: shortcut
+            label: "{{ t('Choisir appareils et capteurs', 'Pick devices and sensors') if ns.e_id else t('Créer les emplacements', 'Create the screen slots') }}"
+            description: "{{ t("Tab5 — emplacements de l'écran", "Tab5 — emplacements de l'écran (screen slots)") }}"
+            icon: mdi:pencil
+            tap_action:
+              action: navigate
+              navigation_path: {{ emplacements }}
+            grid_options:
+              columns: 12
+{%- if T.zones %}
+          - type: tile
+            entity: {{ T.zones }}
+            name: "{{ t('Zones masquées', 'Hidden zones') }}"
+            icon: mdi:eye-off-outline
+            grid_options:
+              columns: 12
+{%- endif %}
+          - type: heading
+            heading: "{{ t('Énergie solaire', 'Solar energy') }}"
+            icon: mdi:solar-power
+          - type: markdown
+            text_only: true
+            content: |-
+              {{ t("Facultatif. Dans l'automatisation des emplacements, ouvrez la section repliée **« Énergie · Energy »** :", 'Optional. In the screen slots automation, open the collapsed **« Énergie · Energy »** section:') }}
+              1. **{{ t('Puissance solaire', 'Solar power') }}**{{ t(' : ce que produisent les panneaux en ce moment (W ou kW).', ': what the panels produce right now (W or kW).') }}
+              2. **{{ t('Puissance crête des panneaux', 'Panel peak power') }}**{{ t(" (kWc, sur la facture ou l'onduleur) : avec la puissance solaire, une icône du bandeau d'état, en haut à gauche, montre la production par sa couleur (gris la nuit, puis rouge, ambre, bleu, vert). 0 : pas d'icône.", ' (kWp, on the invoice or the inverter): with the solar power, an icon of the status strip, top left, shows the production by its colour (grey at night, then red, amber, blue, green). 0: no icon.') }}
+              3. **{{ t('Popup Énergie', 'Energy popup') }}**{{ t(' : énergie produite (le compteur en kWh du tableau Énergie de Home Assistant), réseau, maison, batterie, tous facultatifs.', ': energy produced (the kWh meter of the Home Assistant Energy dashboard), grid, home, battery, all optional.') }}
+              4. {{ t('Placez la puissance solaire dans une pièce : sa tuile ouvre le popup au toucher.', 'Put the solar power in a room: its tile opens the popup on tap.') }}
+{%- if 'script.tab5_energie' not in present %}
+
+              <font color="#ff9800">{{ t('Package tab5_energie absent : le popup reste « En attente de Home Assistant ».', 'tab5_energie package missing: the popup stays on « Waiting for Home Assistant ».') }}</font>
+{%- endif %}
+
+              [{{ t('Énergie solaire, pas à pas', 'Solar energy, step by step') }}]({{ doc('énergie-solaire-facultatif', 'solar-energy-optional') }})
+          - type: shortcut
+            label: "{{ t('Régler les panneaux', 'Set up the panels') }}"
+            description: "{{ t('Section « Énergie »', 'Energy section') }}"
+            icon: mdi:solar-panel
+            tap_action:
+              action: navigate
+              navigation_path: {{ emplacements }}
+            grid_options:
+              columns: 6
+          - type: shortcut
+            label: "{{ t('Tableau Énergie', 'Energy dashboard') }}"
+            description: "{{ t('Compteur de production', 'Production meter') }}"
+            icon: mdi:lightning-bolt
+            tap_action:
+              action: navigate
+              navigation_path: /config/energy
+            grid_options:
+              columns: 6
       - type: grid
         cards:
           - type: heading
@@ -585,29 +720,6 @@ views:
                 style: dropdown
 {%- endif %}
 {%- endfor %}
-          - type: heading
-            heading: "{{ t('Pièces et tuiles', 'Rooms and tiles') }}"
-            icon: mdi:view-grid-plus
-          - type: heading
-            heading: "{{ t('Pièces, tuiles, clim, plantes, énergie, météo : automatisation du blueprint', 'Rooms, tiles, climate, plants, energy, weather: the blueprint automation') }}"
-            heading_style: subtitle
-          - type: shortcut
-            label: "{{ t('Ouvrir les emplacements', 'Open the screen slots') if ns.e_id else t('Ouvrir les blueprints', 'Open the blueprints') }}"
-            description: "{{ t("Tab5 — emplacements de l'écran", "Tab5 — emplacements de l'écran (screen slots)") }}"
-            icon: mdi:pencil
-            tap_action:
-              action: navigate
-              navigation_path: {{ '/config/automation/edit/' ~ ns.e_id if ns.e_id else '/config/blueprint/dashboard' }}
-            grid_options:
-              columns: 12
-{%- if T.zones %}
-          - type: tile
-            entity: {{ T.zones }}
-            name: "{{ t('Zones masquées', 'Hidden zones') }}"
-            icon: mdi:eye-off-outline
-            grid_options:
-              columns: 12
-{%- endif %}
       - type: grid
         cards:
           - type: heading
@@ -642,6 +754,10 @@ views:
             grid_options:
               columns: 12
 {%- endif %}
+          - type: markdown
+            text_only: true
+            content: |-
+              {{ t("Prévisions : n'importe quelle entité météo (Met.no vient avec Home Assistant). Pluie dans l'heure et vigilances : facultatives, la source dépend du pays.", 'Forecasts: any weather entity (Met.no comes with Home Assistant). Next-hour rain and weather warnings: optional, the source depends on the country.') }} [{{ t('Fournisseurs météo', 'Weather providers') }}]({{ doc('fournisseurs-météo', 'weather-providers') }})
           - type: heading
             heading: "{{ t('Maison', 'Home') }}"
             icon: mdi:home-account
@@ -667,6 +783,12 @@ views:
               columns: 12
 {%- endif %}
 {%- endfor %}
+{%- if 'select.tab5_telephone' in present or 'select.tab5_capteur_de_presence' in present %}
+          - type: markdown
+            text_only: true
+            content: |-
+              {{ t("**Téléphone** (application mobile de Home Assistant) : son retour allume l'écran, son départ l'éteint. **Capteur de présence** : une présence allume l'écran, 15 min sans présence l'éteignent, sauf pendant le réveil.", "**Phone** (Home Assistant mobile app): its return turns the screen on, its departure turns it off. **Presence sensor**: presence turns the screen on, 15 min without presence turn it off, except while the alarm rings.") }}
+{%- endif %}
       - type: grid
         cards:
           - type: heading
@@ -710,11 +832,33 @@ views:
               columns: 12
 {%- endif %}
 {%- endfor %}
+          - type: markdown
+            text_only: true
+            content: |-
+              {{ t("Un agenda vient d'une intégration de Home Assistant (Google Agenda, CalDAV, calendrier local…). Une liste vide n'affiche rien.", 'A calendar comes from a Home Assistant integration (Google Calendar, CalDAV, local calendar…). An empty list shows nothing.') }}
+          - type: shortcut
+            label: "{{ t('Ajouter une intégration', 'Add an integration') }}"
+            description: "{{ t('Agenda, météo, capteurs…', 'Calendar, weather, sensors…') }}"
+            icon: mdi:puzzle-plus-outline
+            tap_action:
+              action: navigate
+              navigation_path: /config/integrations/dashboard
+            grid_options:
+              columns: 12
       - type: grid
         cards:
           - type: heading
             heading: "{{ t('Assistant vocal', 'Voice assistant') }}"
             icon: mdi:account-voice
+          - type: shortcut
+            label: "{{ t('Assistants vocaux de HA', 'HA voice assistants') }}"
+            description: "{{ t('Pipelines : reconnaissance, agent, voix', 'Pipelines: speech-to-text, agent, voice') }}"
+            icon: mdi:microphone-settings
+            tap_action:
+              action: navigate
+              navigation_path: /config/voice-assistants/assistants
+            grid_options:
+              columns: 12
 {%- for cle, e, fr_, en_, icone, ligne in [('pipeline', '', 'Mode en cours', 'Current mode', 'mdi:robot', false),
                                            ('', 'select.tab5_pipeline_de_discussion', 'Pipeline du mode « Discu » (Aucun = boutons masqués)', 'Discu mode pipeline (Aucun = buttons hidden)', 'mdi:chat-processing-outline', false),
                                            ('mot', '', "Mot d'activation", 'Wake word', 'mdi:account-voice', false),
