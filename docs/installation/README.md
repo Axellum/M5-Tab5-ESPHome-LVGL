@@ -29,6 +29,8 @@ Seven steps, in this order: nothing to compile, the firmware installs from the b
 
 **Why Home Assistant first:** the tablet gets everything it shows from these files, and asks them for the rest through events. Without them it does not crash, but nothing of your home reaches the screen.
 
+The screenshots of Home Assistant's own pages (device page, entity table, automation and template editors) come from the project's fresh-install test: a new Home Assistant with test devices, where these steps are run for real whenever the Home Assistant files or the tablet's API change.
+
 ## After the installation
 
 - [Tablet settings](settings.md): theme, language, alarm clock, sound…
@@ -69,6 +71,8 @@ Sept étapes, dans cet ordre : rien à compiler, le firmware s'installe depuis l
 | [7. Un tableau de bord](dashboard.md#version-française) (facultatif) | Home Assistant | tous les réglages de la tablette dans un tableau de bord |
 
 **Pourquoi Home Assistant d'abord :** la tablette reçoit de ces fichiers tout ce qu'elle affiche, et leur demande le reste par des événements. Sans eux elle ne plante pas, mais rien de votre maison n'arrive à l'écran.
+
+Les captures des pages de Home Assistant lui-même (page de l'appareil, table des entités, éditeurs d'automatisation et de modèle) viennent du test d'installation à neuf du projet : un Home Assistant neuf avec des appareils de test, où ces étapes sont rejouées pour de vrai à chaque changement des fichiers Home Assistant ou de l'API de la tablette.
 
 ## Après l'installation
 

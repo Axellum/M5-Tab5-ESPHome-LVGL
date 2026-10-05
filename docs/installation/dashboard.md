@@ -17,11 +17,14 @@ Every setting of the tablet in one Home Assistant dashboard, written for your ho
 ## Create it
 
 1. *Settings → Dashboards → Add dashboard → New dashboard from scratch*, title **Tab5** (its address becomes `/dashboard-tab5`).
-2. *Developer tools → Template*: replace the editor content with this line, then copy the result shown on the right.
+2. *Developer tools → Template*: replace the editor content with this line, then copy the whole *Result*.
    ```jinja
    {% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}
    ```
    Another address: `tab5_dashboard('dashboard-xxx')`. The labels and explanations follow the tablet's screen language (French, English, German, Dutch, Spanish, Italian or Turkish; English for any other); `tab5_dashboard(langue='English')` forces a language.
+
+    ![The line typed in Developer tools → Template, and its Result: the YAML of the dashboard, starting with views:](../images/installation/ha_modele_en.png)
+
 3. Open the Tab5 dashboard → pencil → ⋮ → *Raw configuration editor*: replace everything with the result, *Save*.
 
 ![Health view of the dashboard: connection to Home Assistant, boot reason, Home Assistant files, loop time, free memory and processor temperature over 24 h](../images/ha_sante.png)
@@ -55,11 +58,14 @@ Tous les réglages de la tablette dans un tableau de bord Home Assistant, écrit
 ## Le créer
 
 1. *Paramètres → Tableaux de bord → Ajouter un tableau de bord → Nouveau tableau de bord à partir de zéro*, titre **Tab5** (son adresse devient `/dashboard-tab5`).
-2. *Outils de développement → Modèle* : remplacez le contenu de l'éditeur par cette ligne, puis copiez le résultat affiché à droite.
+2. *Outils de développement → Modèle* : remplacez le contenu de l'éditeur par cette ligne, puis copiez tout le *Résultat*.
    ```jinja
    {% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}
    ```
    Autre adresse : `tab5_dashboard('dashboard-xxx')`. Les libellés et les explications suivent la langue de l'écran de la tablette (français, anglais, allemand, néerlandais, espagnol, italien ou turc ; l'anglais pour une autre) ; `tab5_dashboard(langue='English')` force une langue.
+
+    ![La ligne tapée dans Outils de développement → Modèle, et son Résultat : le YAML du tableau de bord, qui commence par views:](../images/installation/ha_modele_fr.png)
+
 3. Ouvrez le tableau de bord Tab5 → crayon → ⋮ → *Éditeur de configuration brute* : remplacez tout par le résultat, *Enregistrer*.
 
 ![Vue Santé du tableau de bord : liaison avec Home Assistant, raison du démarrage, fichiers Home Assistant, temps de boucle, mémoire libre et température du processeur sur 24 h](../images/ha_sante.png)

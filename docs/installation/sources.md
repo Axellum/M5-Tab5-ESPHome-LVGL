@@ -8,9 +8,9 @@ What applies to the whole home — weather, calendars, phone, presence, TV, voic
 
 ## Open the lists
 
-*Settings → Devices & services → Entities*, search **« Tab5 · »**, open a list and choose.
+*Settings → Devices & services → Entities*, search **select.tab5_** for the lists alone (**« Tab5 · »** also shows the texts and sensors of the packages), open a list and choose.
 
-![The « Tab5 · » lists in the entity table of Home Assistant: calendars, presence sensor, chat pipeline, weather sources, phone, TV and shutter](../images/ha_listes_tab5.png)
+![The « Tab5 · » lists in the entity table of Home Assistant, searched with select.tab5_: calendars, presence sensor, chat pipeline, weather sources, phone and TV](../images/installation/ha_listes_en.png)
 
 Each list has a two-language name, « français · english » (« Tab5 · agenda de travail · work calendar »), and keeps its entity id. **Left on « Aucun » (none), a feature simply stays off**, without errors: set only what you have.
 
@@ -55,9 +55,9 @@ Ce qui vaut pour toute la maison — météo, agendas, téléphone, présence, T
 
 ## Ouvrir les listes
 
-*Paramètres → Appareils et services → Entités*, cherchez **« Tab5 · »**, ouvrez une liste et choisissez.
+*Paramètres → Appareils et services → Entités*, cherchez **select.tab5_** pour les listes seules (**« Tab5 · »** montre aussi les textes et les capteurs des packages), ouvrez une liste et choisissez.
 
-![Les listes « Tab5 · » dans la table des entités de Home Assistant : agendas, capteur de présence, pipeline de discussion, sources météo, téléphone, TV et volet](../images/ha_listes_tab5.png)
+![Les listes « Tab5 · » dans la table des entités de Home Assistant, cherchées avec select.tab5_ : agendas, capteur de présence, pipeline de discussion, sources météo, téléphone et TV](../images/installation/ha_listes_fr.png)
 
 Chaque liste porte un nom en deux langues, « français · english » (« Tab5 · agenda de travail · work calendar »), et garde son identifiant d'entité. **Laissée sur « Aucun », une fonction reste simplement éteinte**, sans erreur : réglez seulement ce que vous avez.
 

@@ -4,6 +4,26 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Les captures de Home Assistant du guide, prises par la CI
+
+Suite du guide d'installation (lot 2b) : les écrans de Home Assistant des étapes 4 à 7 sont
+photographiés par le test « HA neuf » (`.github/workflows/installation-ha.yml`), en anglais et en
+français, sur un Home Assistant neuf avec des données de test : rien de personnel, et la même
+capture se refait quand l'interface de Home Assistant change.
+- `tools/installation_ha/captures_ha.py`, à la fin du test : Chromium (Playwright) ouvre
+  l'interface avec le compte de la CI et photographie la page de l'appareil de la tablette, les
+  listes « Tab5 · », l'automatisation du blueprint et la ligne du tableau de bord dans l'éditeur
+  de modèle. Chaque capture vérifie la langue de la page et ce qu'elle doit montrer ; une
+  capture ratée fait échouer le job (non requis). Mise en page étroite de Home Assistant
+  (860 px) : une colonne, lisible une fois réduite dans la page.
+- Dans le guide (`docs/images/installation/`, une image par langue) : la page de l'appareil
+  (étape 4), les listes (étape 5, à la place de la capture précédente), l'automatisation du
+  blueprint (étape 6), la ligne du tableau de bord et son résultat (étape 7). Les vues du
+  tableau de bord et des réglages restent celles de #319.
+- Étape 5 : chercher **select.tab5_** montre les listes seules (« Tab5 · » montre aussi les
+  textes et les capteurs des packages).
+- L'automatisation de la CI porte un nom de vraie maison, « Tab5 — emplacements de l'écran ».
+
 ### 2026-10-05 — Le guide d'installation en pages, étape par étape
 
 Suite du site de documentation (lot 2 du plan validé par Axel) : le long `docs/installation.md`
