@@ -163,7 +163,7 @@ obj:
                                 on_short_click:
                                   - script.execute: { id: tab5_tv_key, touche: "KEY_ENTER" }
                                 widgets:
-                                  - label: { text: "OK", align: CENTER, text_font: roboto_45_b, styles: style_text_on_accent }
+                                  - label: { text: "OK", align: CENTER, styles: [style_police_date, style_text_on_accent] }
 
                       # ── Rangee transport, alignee SOUS la raquette ──
                       # [AI-WARNING] Gabarit exact, ne pas bricoler au pixel :

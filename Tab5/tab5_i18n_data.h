@@ -8,16 +8,9 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 974;
+static const uint16_t kI18nKeyCount = 967;
 
 static const char* const kI18nCtx[] = {
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
     "",
     "",
     "",
@@ -1287,10 +1280,8 @@ static const char* const kI18nKeys[] = {
     "Difficulté : %s",
     "Difficulté, mode dieu, teinte, calibration",
     "Dim",
-    "Discu",
     "Divertis.",
     "Divertissement",
-    "Domo",
     "Douce",
     "Du %s au %s",
     "Duel local",
@@ -1501,7 +1492,6 @@ static const char* const kI18nKeys[] = {
     "Mode entraînement",
     "Mois",
     "Mouvement",
-    "Moy:",
     "Moyen",
     "Moyennes + difficiles",
     "Mur plein",
@@ -1602,8 +1592,6 @@ static const char* const kI18nKeys[] = {
     "Poser la tablette puis appuyer",
     "Position répétée 3 fois",
     "Position sauvegardée",
-    "Pot %d",
-    "Pot -",
     "Pot 1",
     "Pot 2",
     "Pot 3",
@@ -1619,8 +1607,6 @@ static const char* const kI18nKeys[] = {
     "Progressif",
     "Proposer nulle",
     "Présent",
-    "Prévisions horaires · %d/2",
-    "Prévisions journalières · %d/3",
     "Prêt",
     "Purement cosmétique",
     "Pyramide",
@@ -2265,10 +2251,8 @@ static const char* const kI18n_en[] = {
     "Difficulty: %s",  // "Difficulté : %s"
     "Difficulty, god mode, color, calibration",  // "Difficulté, mode dieu, teinte, calibration"
     "Sun",  // "Dim"
-    "Chat",  // "Discu"
     "Entertain.",  // "Divertis."
     "Entertainment",  // "Divertissement"
-    "Home",  // "Domo"
     "Gentle",  // "Douce"
     "From %s to %s",  // "Du %s au %s"
     "Local duel",  // "Duel local"
@@ -2479,7 +2463,6 @@ static const char* const kI18n_en[] = {
     "Training mode",  // "Mode entraînement"
     "Months",  // "Mois"
     "Moving",  // "Mouvement"
-    "Avg:",  // "Moy:"
     "Medium",  // "Moyen"
     "Medium + hard",  // "Moyennes + difficiles"
     "Solid wall",  // "Mur plein"
@@ -2580,8 +2563,6 @@ static const char* const kI18n_en[] = {
     "Lay the tablet flat, then tap",  // "Poser la tablette puis appuyer"
     "Position repeated 3 times",  // "Position répétée 3 fois"
     "Saved position",  // "Position sauvegardée"
-    "Pot %d",  // "Pot %d"
-    "Pot -",  // "Pot -"
     "Pot 1",  // "Pot 1"
     "Pot 2",  // "Pot 2"
     "Pot 3",  // "Pot 3"
@@ -2597,8 +2578,6 @@ static const char* const kI18n_en[] = {
     "Gradual",  // "Progressif"
     "Offer a draw",  // "Proposer nulle"
     "Home",  // "Présent"
-    "Hourly forecast · %d/2",  // "Prévisions horaires · %d/2"
-    "Daily forecast · %d/3",  // "Prévisions journalières · %d/3"
     "Ready",  // "Prêt"
     "Purely cosmetic",  // "Purement cosmétique"
     "Pyramid",  // "Pyramide"
@@ -3243,10 +3222,8 @@ static const char* const kI18n_de[] = {
     "Schwierigkeit: %s",  // "Difficulté : %s"
     "Schwierigkeit, Gottmodus, Farbe, Kalibrierung",  // "Difficulté, mode dieu, teinte, calibration"
     "So",  // "Dim"
-    "Chat",  // "Discu"
     "Unterh.",  // "Divertis."
     "Unterhaltung",  // "Divertissement"
-    "Haus",  // "Domo"
     "Sanft",  // "Douce"
     "Von %s bis %s",  // "Du %s au %s"
     "Duell lokal",  // "Duel local"
@@ -3457,7 +3434,6 @@ static const char* const kI18n_de[] = {
     "Trainingsmodus",  // "Mode entraînement"
     "Monate",  // "Mois"
     "Fährt",  // "Mouvement"
-    "Ø:",  // "Moy:"
     "Mittel",  // "Moyen"
     "Mittel + schwer",  // "Moyennes + difficiles"
     "Volle Mauer",  // "Mur plein"
@@ -3558,8 +3534,6 @@ static const char* const kI18n_de[] = {
     "Tablet hinlegen, dann tippen",  // "Poser la tablette puis appuyer"
     "Stellung 3-mal wiederholt",  // "Position répétée 3 fois"
     "Gespeicherte Stellung",  // "Position sauvegardée"
-    "Topf %d",  // "Pot %d"
-    "Topf -",  // "Pot -"
     "Topf 1",  // "Pot 1"
     "Topf 2",  // "Pot 2"
     "Topf 3",  // "Pot 3"
@@ -3575,8 +3549,6 @@ static const char* const kI18n_de[] = {
     "Ansteigend",  // "Progressif"
     "Remis anbieten",  // "Proposer nulle"
     "Anwesend",  // "Présent"
-    "Stundenvorhersage · %d/2",  // "Prévisions horaires · %d/2"
-    "Tagesvorhersage · %d/3",  // "Prévisions journalières · %d/3"
     "Bereit",  // "Prêt"
     "Rein kosmetisch",  // "Purement cosmétique"
     "Pyramide",  // "Pyramide"
@@ -4221,10 +4193,8 @@ static const char* const kI18n_nl[] = {
     "Moeilijkheid: %s",  // "Difficulté : %s"
     "Moeilijkheid, godmodus, kleur, kalibratie",  // "Difficulté, mode dieu, teinte, calibration"
     "Zo",  // "Dim"
-    "Chat",  // "Discu"
     "Amusement",  // "Divertis."
     "Amusement",  // "Divertissement"
-    "Huis",  // "Domo"
     "Zacht",  // "Douce"
     "Van %s tot %s",  // "Du %s au %s"
     "Lokaal duel",  // "Duel local"
@@ -4435,7 +4405,6 @@ static const char* const kI18n_nl[] = {
     "Oefenmodus",  // "Mode entraînement"
     "Maanden",  // "Mois"
     "Beweegt",  // "Mouvement"
-    "Gem:",  // "Moy:"
     "Normaal",  // "Moyen"
     "Normaal + moeilijk",  // "Moyennes + difficiles"
     "Volle muur",  // "Mur plein"
@@ -4536,8 +4505,6 @@ static const char* const kI18n_nl[] = {
     "Leg de tablet plat en tik",  // "Poser la tablette puis appuyer"
     "Stand 3 keer herhaald",  // "Position répétée 3 fois"
     "Opgeslagen stand",  // "Position sauvegardée"
-    "Pot %d",  // "Pot %d"
-    "Pot -",  // "Pot -"
     "Pot 1",  // "Pot 1"
     "Pot 2",  // "Pot 2"
     "Pot 3",  // "Pot 3"
@@ -4553,8 +4520,6 @@ static const char* const kI18n_nl[] = {
     "Oplopend",  // "Progressif"
     "Remise aanbieden",  // "Proposer nulle"
     "Aanwezig",  // "Présent"
-    "Verwachting per uur · %d/2",  // "Prévisions horaires · %d/2"
-    "Verwachting per dag · %d/3",  // "Prévisions journalières · %d/3"
     "Klaar",  // "Prêt"
     "Puur cosmetisch",  // "Purement cosmétique"
     "Piramide",  // "Pyramide"
@@ -5199,10 +5164,8 @@ static const char* const kI18n_es[] = {
     "Dificultad: %s",  // "Difficulté : %s"
     "Dificultad, modo dios, color, calibración",  // "Difficulté, mode dieu, teinte, calibration"
     "Dom",  // "Dim"
-    "Chat",  // "Discu"
     "Espect.",  // "Divertis."
     "Espectáculos",  // "Divertissement"
-    "Casa",  // "Domo"
     "Suave",  // "Douce"
     "Del %s al %s",  // "Du %s au %s"
     "Duelo local",  // "Duel local"
@@ -5413,7 +5376,6 @@ static const char* const kI18n_es[] = {
     "Modo entrenamiento",  // "Mode entraînement"
     "Meses",  // "Mois"
     "Moviendo",  // "Mouvement"
-    "Media:",  // "Moy:"
     "Media",  // "Moyen"
     "Medias + difíciles",  // "Moyennes + difficiles"
     "Muro sólido",  // "Mur plein"
@@ -5514,8 +5476,6 @@ static const char* const kI18n_es[] = {
     "Apoya la tableta y toca",  // "Poser la tablette puis appuyer"
     "Posición repetida 3 veces",  // "Position répétée 3 fois"
     "Posición guardada",  // "Position sauvegardée"
-    "Planta %d",  // "Pot %d"
-    "Planta -",  // "Pot -"
     "Planta 1",  // "Pot 1"
     "Planta 2",  // "Pot 2"
     "Planta 3",  // "Pot 3"
@@ -5531,8 +5491,6 @@ static const char* const kI18n_es[] = {
     "Progresivo",  // "Progressif"
     "Ofrecer tablas",  // "Proposer nulle"
     "Presente",  // "Présent"
-    "Previsión por horas · %d/2",  // "Prévisions horaires · %d/2"
-    "Previsión diaria · %d/3",  // "Prévisions journalières · %d/3"
     "Listo",  // "Prêt"
     "Puramente estético",  // "Purement cosmétique"
     "Pirámide",  // "Pyramide"
@@ -6177,10 +6135,8 @@ static const char* const kI18n_it[] = {
     "Difficoltà: %s",  // "Difficulté : %s"
     "Difficoltà, modalità Dio, colore, calibrazione",  // "Difficulté, mode dieu, teinte, calibration"
     "Dom",  // "Dim"
-    "Chat",  // "Discu"
     "Spettacolo",  // "Divertis."
     "Spettacolo",  // "Divertissement"
-    "Casa",  // "Domo"
     "Dolce",  // "Douce"
     "Da %s a %s",  // "Du %s au %s"
     "Duello locale",  // "Duel local"
@@ -6391,7 +6347,6 @@ static const char* const kI18n_it[] = {
     "Modalità allenamento",  // "Mode entraînement"
     "Mesi",  // "Mois"
     "In moto",  // "Mouvement"
-    "Media:",  // "Moy:"
     "Medio",  // "Moyen"
     "Medie + difficili",  // "Moyennes + difficiles"
     "Muro pieno",  // "Mur plein"
@@ -6492,8 +6447,6 @@ static const char* const kI18n_it[] = {
     "Appoggia il tablet, poi tocca",  // "Poser la tablette puis appuyer"
     "Posizione ripetuta 3 volte",  // "Position répétée 3 fois"
     "Posizione salvata",  // "Position sauvegardée"
-    "Vaso %d",  // "Pot %d"
-    "Vaso -",  // "Pot -"
     "Vaso 1",  // "Pot 1"
     "Vaso 2",  // "Pot 2"
     "Vaso 3",  // "Pot 3"
@@ -6509,8 +6462,6 @@ static const char* const kI18n_it[] = {
     "Progressivo",  // "Progressif"
     "Proponi patta",  // "Proposer nulle"
     "Presente",  // "Présent"
-    "Previsioni orarie · %d/2",  // "Prévisions horaires · %d/2"
-    "Previsioni giornaliere · %d/3",  // "Prévisions journalières · %d/3"
     "Pronto",  // "Prêt"
     "Puramente estetico",  // "Purement cosmétique"
     "Piramide",  // "Pyramide"
@@ -7155,10 +7106,8 @@ static const char* const kI18n_tr[] = {
     "Zorluk: %s",  // "Difficulté : %s"
     "Zorluk, tanrı modu, renk, kalibrasyon",  // "Difficulté, mode dieu, teinte, calibration"
     "Paz",  // "Dim"
-    "Sohbet",  // "Discu"
     "Eğlence",  // "Divertis."
     "Eğlence",  // "Divertissement"
-    "Ev",  // "Domo"
     "Yumuşak",  // "Douce"
     "%s – %s arası",  // "Du %s au %s"
     "Yerel düello",  // "Duel local"
@@ -7369,7 +7318,6 @@ static const char* const kI18n_tr[] = {
     "Antrenman modu",  // "Mode entraînement"
     "Aylar",  // "Mois"
     "Hareket",  // "Mouvement"
-    "Ort:",  // "Moy:"
     "Orta",  // "Moyen"
     "Orta + zor",  // "Moyennes + difficiles"
     "Düz duvar",  // "Mur plein"
@@ -7470,8 +7418,6 @@ static const char* const kI18n_tr[] = {
     "Tableti yatır, sonra dokun",  // "Poser la tablette puis appuyer"
     "Konum 3 kez tekrarlandı",  // "Position répétée 3 fois"
     "Kayıtlı konum",  // "Position sauvegardée"
-    "Saksı %d",  // "Pot %d"
-    "Saksı -",  // "Pot -"
     "Saksı 1",  // "Pot 1"
     "Saksı 2",  // "Pot 2"
     "Saksı 3",  // "Pot 3"
@@ -7487,8 +7433,6 @@ static const char* const kI18n_tr[] = {
     "Kademeli",  // "Progressif"
     "Beraberlik öner",  // "Proposer nulle"
     "Evde",  // "Présent"
-    "Saatlik tahmin · %d/2",  // "Prévisions horaires · %d/2"
-    "Günlük tahmin · %d/3",  // "Prévisions journalières · %d/3"
     "Hazır",  // "Prêt"
     "Tamamen kozmetik",  // "Purement cosmétique"
     "Piramit",  // "Pyramide"

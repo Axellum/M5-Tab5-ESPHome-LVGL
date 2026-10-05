@@ -93,15 +93,11 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Home screen, forecast, central card --------------------------------------
 "Synchronisation...": "Eşitleniyor..."
-"Domo": "Ev"
-"Discu": "Sohbet"
 "Journee": "Bugün"
 "Demain": "Yarın"
 "2 Jours": "2 Gün"
 "3 Jours": "3 Gün"
 "4 Jours": "4 Gün"
-"Prévisions journalières · %d/3": "Günlük tahmin · %d/3"
-"Prévisions horaires · %d/2": "Saatlik tahmin · %d/2"
 # Titre de période : « 2 Ekim Perşembe – 3 Ekim Cuma arası » ; l'horaire s'écrit
 # « 08:00 – 16:00 » et « ertesi gün » (le lendemain) s'ajoute en suffixe.
 "Du %s au %s": "%s – %s arası"
@@ -160,9 +156,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Actif": "Etkin"
 "Inactif": "Pasif"
 "Confirmer ?": "Onayla?"
-"Moy:": "Ort:"
-"Pot %d": "Saksı %d"
-"Pot -": "Saksı -"
 "Hors ligne": "Çevrimdışı"
 "À arroser !": "Sulanmalı!"
 "Bientôt sec": "Kurumak üzere"

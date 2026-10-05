@@ -179,7 +179,7 @@ struct CentralPanelCtx {
     lv_obj_t* alert_cont = nullptr;
     lv_obj_t* info_wrap = nullptr;
     lv_obj_t* ha_wrap[4] = {};
-    // Ligne "chapeau" du titre de page previsions (lbl_page_title_sub) : logee ici
+    // Ligne "chapeau" du titre de page en mode pieces de HA (lbl_page_title_sub) : logee ici
     // plutot qu'ajoutee aux signatures deja passees en parametre (page_title_wrap /
     // lbl_page_title), qui traversent 3 fonctions et 2 sites d'appel YAML.
     lv_obj_t* page_title_sub = nullptr;
@@ -253,7 +253,7 @@ void refresh_forecast_page_title_ui(int forecast_page,
 void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
     const std::string& texte, const std::string& couleur, const std::string& meteo_id,
     std::string& dismissed_local, CentralPanelCtx& ctx,
-    esphome::font::Font* font_small, esphome::font::Font* font_large);
+    esphome::font::Font* font_small);
 
 // Phrase pluie (lot 4c, 27/09/2026) : HA envoie un code « @niveau,début » ; la
 // tablette compose la phrase dans sa langue et décompte « dans N mn ». Appelée à
@@ -276,7 +276,7 @@ struct HaAlertSlotUI {
     std::string* id_store;
 };
 
-// La police des bandeaux est celle du YAML (ha_alert_panel.yaml, roboto_45_b) :
+// La police des bandeaux est celle du YAML (ha_alert_panel.yaml, police de la date) :
 // la reposer à chaque push relançait la mise en page pour rien (audit 26/09, lot 3).
 void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI slots[4],
     CentralPanelCtx& ctx, std::string& dismissed_local);
@@ -369,13 +369,11 @@ void refresh_console_status_row_ui(lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_
 void ui_sync_volume_widgets(lv_obj_t* slider_console, lv_obj_t* lbl_console_pct,
     lv_obj_t* slider_assist, float volume);
 
-// Repose l'etat muet/non-muet sur les DEUX icones qui le representent : celle
-// de la barre du dashboard (`icon_mute`) et celle du popup assistant
-// (`icon_assist_mute`). Elles peignent le meme `system_muted` : chaque endroit
-// qui le change doit passer par ici, sinon l'une des deux ment (couper le son
-// depuis le popup laissait l'icone du dashboard sur « son actif », et
-// inversement).
-void ui_sync_mute_icons(lv_obj_t* icon_main, lv_obj_t* icon_assist, bool muted);
+// Repose l'etat muet/non-muet sur l'icone qui le represente : celle du popup
+// assistant (`icon_assist_mute`), seule depuis le retrait du bouton Muet de
+// l'accueil (05/10/2026). Chaque endroit qui change `system_muted` passe par ici,
+// sinon l'icone ment jusqu'a la prochaine ouverture du popup.
+void ui_sync_mute_icon(lv_obj_t* icon_assist, bool muted);
 
 // Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).
 // Factorise depuis l'interval 2s de tab5-sensors-diagnostics.yaml (Phase 3, #T164).
@@ -409,10 +407,10 @@ namespace MeteoIcon {
     static constexpr const char* CLOUD        = "\xEF\x80\x95"; // cloudy / default
 }
 
-// Structure pour les 4 slots UI d'humidite plantes (triés dynamiquement)
+// Structure pour les 4 slots UI d'humidite plantes (triés dynamiquement) : l'icône
+// seule depuis le 05/10/2026 (plus de libellé « Pot X » / « Moy: » dessous).
 struct MoistureSlotUI {
     lv_obj_t* icon_lbl;
-    lv_obj_t* val_lbl;
 };
 
 // Tri dynamique : prend 5 valeurs, affiche les 2 plus secs + médiane + plus humide
@@ -595,8 +593,7 @@ bool temp_planning_active();
 // Réponse vocale IA : carte centrale dédiée (8s), défilement si phrase longue.
 void show_vocal_response_ui(const std::string& texte,
     lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal,
-    lv_obj_t* page_title_wrap, CentralPanelCtx& ctx,
-    esphome::font::Font* font);
+    lv_obj_t* page_title_wrap, CentralPanelCtx& ctx);
 
 void hide_vocal_response_ui(lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal, CentralPanelCtx& ctx);
 
@@ -682,18 +679,20 @@ const char* action_name(Action a);  // libellé pour les logs
 void assist_set_request(lv_obj_t* lbl_request, const std::string& texte);
 
 // Renseigne la zone "Réponse" : normalise + format_assist_markdown + applique la
-// police (monospace) puis le texte. Le retour à la ligne LVGL est géré par le YAML.
+// police (nullptr : celle de la date du thème, portée par le style du label) puis le
+// texte. Le retour à la ligne LVGL est géré par le YAML.
 void assist_set_response(lv_obj_t* lbl_response, const std::string& texte,
     esphome::font::Font* font);
 
-// Police de la réponse pour la taille `assist_text_size` : 2 → L, toute autre
-// valeur → S (dont le 1 de l'ancien M, essai D8 du 26/09/2026).
-esphome::font::Font* assist_font(int size_idx, esphome::font::Font* f_s, esphome::font::Font* f_l);
+// Police de la réponse pour la taille `assist_text_size` : 2 → L (nullptr : la police
+// de la date du thème, style_police_date du label), toute autre valeur → S (dont le 1
+// de l'ancien M, essai D8 du 26/09/2026).
+esphome::font::Font* assist_font(int size_idx, esphome::font::Font* f_s);
 
 // Applique la taille de police de la réponse (0=S 2=L) SANS perdre le texte déjà
 // affiché (relit lv_label_get_text). Met aussi à jour les 2 boutons A- / A+.
 void assist_apply_text_size(lv_obj_t* lbl_response, int size_idx,
-    esphome::font::Font* f_s, esphome::font::Font* f_l, lv_obj_t* btn_s, lv_obj_t* btn_l);
+    esphome::font::Font* f_s, lv_obj_t* btn_s, lv_obj_t* btn_l);
 
 // =============================================================================
 // Popup calendrier mensuel (calendar_popup.yaml, appui long sur l'horloge)
@@ -1010,7 +1009,7 @@ struct EnergieUI {
     lv_obj_t* carte[4] = {};              // energie_carte_N
     lv_obj_t* nom[4] = {};                // energie_nom_N
     lv_obj_t* icone[4] = {};            // energie_icone_N (mdi_font_45)
-    lv_obj_t* valeur[4] = {};             // energie_valeur_N (roboto_45_b)
+    lv_obj_t* valeur[4] = {};             // energie_valeur_N (police de la date du thème)
     lv_obj_t* ligne1[4] = {};             // energie_ligne1_N
     lv_obj_t* ligne2[4] = {};             // energie_ligne2_N
     lv_obj_t* graphique = nullptr;        // energie_graphique : carte du bas
@@ -1089,9 +1088,10 @@ void theme_formes(lv_style_t* const styles[], int n);
 // Polices d'affichage du thème choisi (`polices:`) sur les styles style_police_horloge,
 // style_police_date et style_police_titre, et géométrie de l'horloge : `polices` = les
 // polices compilées (0-2 : les Roboto des trois rôles, puis celles des thèmes), `horloge`
-// = les 8 labels des rouleaux puis le « : ».
+// = les 8 labels des rouleaux (leurs parents sont les cadres) puis le « : », `date` = la
+// date sous l'horloge (son parent est la tuile, dont la bordure est retranchée).
 void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_titre,
-    esphome::font::Font* const polices[], int n, lv_obj_t* const horloge[9]);
+    esphome::font::Font* const polices[], int n, lv_obj_t* const horloge[9], lv_obj_t* date);
 // Vrai une fois le démarrage fini (tous les setup et les on_boot synchrones) : les
 // modules ont leurs widgets et peuvent repeindre.
 bool theme_ui_pret();

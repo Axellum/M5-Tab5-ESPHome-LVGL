@@ -140,9 +140,10 @@ font:
     bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
              # bitmaps divisés par deux, validé à l'œil par Axel
     glyphs: '0123456789:'
-  # Heure du réveil, consigne et température de la clim, score du flipper. Le
+  # Heure du réveil, consigne et température du popup clim, score du flipper. Le
   # tiret sert au « -- » de la consigne quand elle est inconnue (au boot, jusqu'au
-  # 1er push de HA, ou consigne absente) : sans lui, le label restait vide.
+  # 1er push de HA, ou consigne absente) : sans lui, le label restait vide. La
+  # consigne de l'accueil est dans la police de la date depuis le 05/10/2026.
   - file: gfonts://Roboto@700
     id: roboto_55_b
     size: 55
@@ -166,8 +167,8 @@ font:
     glyphs: *latin1
 
   # Plus de police MONOSPACE depuis l'essai D8 du 26/09/2026 (−83 Ko) : à la
-  # demande d'Axel, l'assistant vocal réutilise roboto_32_b (A-) et roboto_45_b
-  # (A+), le Go et le flipper roboto_22. Les tableaux Markdown des réponses ne sont
+  # demande d'Axel, l'assistant vocal réutilise roboto_32_b (A-) et la police de la
+  # date du thème (A+, roboto_45_b en Roboto), le Go et le flipper roboto_22. Les tableaux Markdown des réponses ne sont
   # plus alignés qu'approximativement (format_assist_markdown, tab5_assist.cpp).
 
   # --- Icônes Material Design (Tab5/materialdesignicons-webfont.ttf) ----------
@@ -175,8 +176,10 @@ font:
   # lourds qu'en bpp 4. Ajouter une icône à l'écran = l'ajouter à la police de son
   # widget ; la retirer de l'écran = la retirer d'ici (règle 7, sinon pytest échoue).
 
-  # 70 px — icônes des 5 interrupteurs (switches_card.yaml) et cloche de la sonnerie
-  # (alarm_ring_overlay.yaml). S'appelait mdi_font_80 (l'id mentait), renommé le 08/09/2026.
+  # 70 px — icônes des 5 interrupteurs (switches_card.yaml), cloche de la sonnerie
+  # (alarm_ring_overlay.yaml) et, depuis le 05/10/2026, boutons de l'accueil (Domo,
+  # Discu, HA, Sys, TV : icône seule, encre de 58 px dans 90 px de haut) et rangée des
+  # pots, à la même taille. S'appelait mdi_font_80 (l'id mentait), renommé le 08/09/2026.
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_70
     size: 70
@@ -184,8 +187,16 @@ font:
     glyphs:
       - "\U000F0020"  # alarm
       - "\U000F02E3"  # bed
+      - "\U000F02E5"  # pot
       - "\U000F0379"  # monitor
       - "\U000F04B9"  # sofa
+      - "\U000F06A9"  # robot
+      - "\U000F0717"  # snowflake
+      - "\U000F07C0"  # desktop-classic
+      - "\U000F07D0"  # home-assistant
+      - "\U000F09F1"  # flower-tulip
+      - "\U000F0D08"  # flower-poppy
+      - "\U000F0E66"  # sprout
       - "\U000F1051"  # led-strip-variant
       - "\U000F111E"  # window-shutter-open
       # >>> tuiles
@@ -290,7 +301,8 @@ font:
       - "\U000F0238"  # fire (feux de forêt, alertes MeteoAlarm — lot 4c)
 
   # 45 px — boutons des popups : télécommande TV, clim (modes, préréglages), lumière,
-  # réveil, rangée des plantes, en-tête de la sélection des consoles, cartes du popup Énergie.
+  # réveil, en-tête de la sélection des consoles, cartes du popup Énergie ; températures
+  # de l'accueil (salon, serre).
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_45
     size: 45
@@ -310,7 +322,6 @@ font:
       - "\U000F0297"  # gamepad-variant
       - "\U000F02DC"  # home
       - "\U000F02E3"  # bed
-      - "\U000F02E5"  # pot
       - "\U000F032A"  # leaf
       - "\U000F035C"  # menu
       - "\U000F0374"  # minus
@@ -327,12 +338,7 @@ font:
       - "\U000F059D"  # weather-windy
       - "\U000F068E"  # alarm-snooze
       - "\U000F0717"  # snowflake
-      - "\U000F07C0"  # desktop-classic
-      - "\U000F07D0"  # home-assistant
-      - "\U000F09F1"  # flower-tulip
-      - "\U000F0D08"  # flower-poppy
       - "\U000F0D3E"  # transmission-tower (popup Énergie, réseau sans échange)
-      - "\U000F0E66"  # sprout
       - "\U000F0E79"  # arrow-up-down
       - "\U000F1051"  # led-strip-variant
       - "\U000F146D"  # fan-chevron-down
@@ -480,7 +486,6 @@ font:
       - "\U000F0581"  # volume-off
       - "\U000F05A9"  # wifi
       - "\U000F05CB"  # account-voice
-      - "\U000F06A9"  # robot
       - "\U000F06E8"  # lightbulb-on
       - "\U000F0717"  # snowflake
       - "\U000F07C0"  # desktop-classic
@@ -1007,10 +1012,13 @@ lvgl:
 
     # --- Polices d'affichage (thèmes, lot 3) -----------------------------------
     # L'heure (rouleaux, « : » et écran de sonnerie), la date sous l'horloge, les
-    # titres (en-tête des popups, titre de la carte centrale) : un thème peut changer
-    # leur police (`polices:`, theme_polices() dans tab5_theme.cpp). Ici, celles de
-    # l'état compilé ; la géométrie de l'horloge (y des rouleaux, place du « : »)
-    # reste posée sur ses labels (tab5-lvgl.yaml, clock_roller.yaml).
+    # titres (en-tête des popups) : un thème peut changer leur police (`polices:`,
+    # theme_polices() dans tab5_theme.cpp). Ici, celles de l'état compilé ; la
+    # géométrie de l'horloge (y des rouleaux, place du « : ») reste posée sur ses
+    # labels (tab5-lvgl.yaml, clock_roller.yaml). style_police_date sert aussi, depuis
+    # le 05/10/2026 (demande d'Axel), aux textes de 45 px de l'accueil (températures et
+    # consigne de la clim, « Ok Nabu », carte centrale et titres des prévisions) et à
+    # quelques valeurs des popups : une seule police de 45 px à l'écran par thème.
     - id: style_police_horloge
       text_font: roboto_130_b
     - id: style_police_date

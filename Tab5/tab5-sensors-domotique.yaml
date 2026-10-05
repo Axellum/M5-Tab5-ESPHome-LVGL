@@ -205,10 +205,10 @@ sensor:
           float vals[5] = {id(moisture_1).state, id(moisture_2).state, id(moisture_3).state, id(moisture_4).state, id(moisture_5).state};
           const char* icons[5] = {"\U000F0E66", "\U000F09F1", "\U000F0D08", "\U000F024A", "\U000F02E5"};
           MoistureSlotUI slots[4] = {
-              {id(icon_pot_s0), id(val_pot_s0)},
-              {id(icon_pot_s1), id(val_pot_s1)},
-              {id(icon_pot_s2), id(val_pot_s2)},
-              {id(icon_pot_s3), id(val_pot_s3)}
+              {id(icon_pot_s0)},
+              {id(icon_pot_s1)},
+              {id(icon_pot_s2)},
+              {id(icon_pot_s3)}
           };
           sort_and_update_moisture_slots(vals, icons, slots);
           // Popup details pots : humidite + statut des 5 cartes FIXES (carte N = capteur N)

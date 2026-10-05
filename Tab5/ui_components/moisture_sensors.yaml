@@ -2,28 +2,32 @@
 # [AI-CONTEXT]
 # @file moisture_sensors.yaml
 # @role 4 slots UI fixes affichant un sous-ensemble dynamique de 5 capteurs d'humidité BLE
-#       (plantes). Slot 0 = le plus sec, 1 = 2e plus sec, 2 = médiane ("Moy:"), 3 = le plus
-#       humide — PAS un mapping fixe capteur→slot.
-# @architecture_constraint Les 4 slots (`icon_pot_sN`/`val_pot_sN`) sont remplis par
-#                          `sort_and_update_moisture_slots()` (tab5_custom.cpp), appelée à
+#       (plantes). Slot 0 = le plus sec, 1 = 2e plus sec, 2 = médiane, 3 = le plus
+#       humide — PAS un mapping fixe capteur→slot. Icône seule depuis le 05/10/2026 (le
+#       texte « Pot N » / « Moy: » est retiré) : sa couleur dit l'humidité, le nom et la
+#       valeur de chaque pot sont dans le popup « Mes Plantes » (appui long).
+# @architecture_constraint Les 4 slots (`icon_pot_sN`) sont remplis par
+#                          `sort_and_update_moisture_slots()` (tab5_cards.cpp), appelée à
 #                          chaque mise à jour de n'importe lequel des 5 capteurs
 #                          (`moisture_1`..`moisture_5`, ancre YAML `&moisture_on_value` dans
-#                          tab5-sensors-domotique.yaml). Ne jamais assigner icône/texte/couleur ici :
+#                          tab5-sensors-domotique.yaml). Ne jamais assigner icône/couleur ici :
 #                          quel capteur physique tombe dans quel slot change à chaque update.
-# @architecture_constraint La carte contient ses 4 slots : 375 px = 4 × 90 + 5 × 3 (SPACE_EVENLY,
-#                          pad_column à 0). Jusqu'au 03/10/2026 elle faisait 350 px pour
-#                          4 × 90 + 3 × 11 (pad_column du thème : 14 px à 130 dpi) : les slots
-#                          du bord dépassaient de 8 et 11 px et la carte rognait leur texte
-#                          (« Planta 2 » en espagnol). Garder la zone d'appui long
-#                          `btn_pots_detail_zone` (tab5-lvgl.yaml) de la même largeur.
+# @architecture_constraint Grille du haut (tab5-lvgl.yaml) : la rangée a la largeur de
+#                          l'horloge (401 px) et le pied de l'encre des icônes à y 308, la
+#                          ligne du bas d'Ok Nabu et de la tuile clim (icônes de 70 px, encre
+#                          à 6-64 px du haut du slot ; ligne de la police = 70 px pile, d'où
+#                          scrollable: false sur chaque slot). 4 × 70 = 280 px ≤ 401 (SPACE_EVENLY,
+#                          pad_column à 0 : sans lui le thème ajoute 14 px entre les slots,
+#                          vu le 03/10/2026 avec « Planta 2 » rogné). Garder la zone d'appui
+#                          long `btn_pots_detail_zone` (tab5-lvgl.yaml) de la même géométrie.
 # ============================================================================
 obj:
   id: moisture_sensors_card
   align: TOP_MID
   x: 0
-  y: 230
-  width: 375
-  height: 80
+  y: 244
+  width: 401
+  height: 70
   styles: style_transparent
   scrollbar_mode: "OFF"
   layout:
@@ -36,36 +40,36 @@ obj:
   widgets:
     # Slot 0 : Plus sec (rempli dynamiquement par sort_and_update_moisture_slots)
     - obj:
-        width: 90
-        height: 80
+        width: 70
+        height: 70
         styles: style_transparent
+        scrollable: false
         widgets:
-          - label: { id: icon_pot_s0, text: "\U000F024A", align: TOP_MID, text_font: mdi_font_45, styles: style_text_dim }
-          - label: { id: val_pot_s0, text: "Pot -", align: BOTTOM_MID, y: -5, styles: style_text_dim }
+          - label: { id: icon_pot_s0, text: "\U000F024A", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
 
     # Slot 1 : 2e plus sec
     - obj:
-        width: 90
-        height: 80
+        width: 70
+        height: 70
         styles: style_transparent
+        scrollable: false
         widgets:
-          - label: { id: icon_pot_s1, text: "\U000F0E66", align: TOP_MID, text_font: mdi_font_45, styles: style_text_dim }
-          - label: { id: val_pot_s1, text: "Pot -", align: BOTTOM_MID, y: -5, styles: style_text_dim }
+          - label: { id: icon_pot_s1, text: "\U000F0E66", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
 
-    # Slot 2 : Moyenne
+    # Slot 2 : Médiane
     - obj:
-        width: 90
-        height: 80
+        width: 70
+        height: 70
         styles: style_transparent
+        scrollable: false
         widgets:
-          - label: { id: icon_pot_s2, text: "\U000F02E5", align: TOP_MID, text_font: mdi_font_45, styles: style_text_dim }
-          - label: { id: val_pot_s2, text: "Moy:", align: BOTTOM_MID, y: -5, styles: style_text_dim }
+          - label: { id: icon_pot_s2, text: "\U000F02E5", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
 
     # Slot 3 : Plus humide
     - obj:
-        width: 90
-        height: 80
+        width: 70
+        height: 70
         styles: style_transparent
+        scrollable: false
         widgets:
-          - label: { id: icon_pot_s3, text: "\U000F09F1", align: TOP_MID, text_font: mdi_font_45, styles: style_text_dim }
-          - label: { id: val_pot_s3, text: "Pot -", align: BOTTOM_MID, y: -5, styles: style_text_dim }
+          - label: { id: icon_pot_s3, text: "\U000F09F1", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }

@@ -6,15 +6,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [3.6.0] — 2026-10-05
 
-De `v3.5.0` à aujourd'hui : vingt-quatre pull requests (#296 → #319 et #321), dont sept nées
+De `v3.5.0` à aujourd'hui : vingt-huit pull requests (#296 → #319, #321 → #325), dont sept nées
 des idées et des retours de @husyildiz (discussion #278 : #302 à #305, #308 à #310) — merci
 à @husyildiz —, et celle de la release (#320).
-- **Dix-huit thèmes, chacun clair ou sombre** (#312, #314 à #318, [ADR-0029](docs/decisions/0029-themes-palette.md)) :
+- **Vingt et un thèmes, chacun clair ou sombre** (#312, #314 à #318, #324, #325, [ADR-0029](docs/decisions/0029-themes-palette.md)) :
   couleurs, formes (rayons, bordures, ombres) et polices de l'heure, de la date et des
   titres. Choisis dans Home Assistant (« Thème », « Clair ou sombre ») ou depuis la
   console ; l'écran se repeint sans redémarrer. « Auto » passe en clair le jour et en
   sombre la nuit (automatisation « Tab5 — thème jour/nuit »). Une tablette neuve démarre
   en « Relief doux » ; un thème déjà choisi reste.
+- **Accueil redessiné** (#322, #323) : trois colonnes alignées autour de l'horloge, boutons
+  et pots à icône seule (le nom et la valeur des pots restent dans « Mes Plantes »), tuile
+  clim et « Ok Nabu » en bas des colonnes ; le bouton muet quitte l'accueil (le son se
+  coupe depuis le popup Assistant vocal). La police de la date du thème sert aussi aux
+  températures, à la consigne, à « Ok Nabu », aux textes de la carte centrale et aux
+  titres des prévisions, qui perdent « Prévisions horaires 1/2 » et « Prévisions
+  journalières 2/3 ». Horloge : autant d'air au-dessus de l'heure que sous les jambages
+  de la date, dans tous les thèmes.
 - **Tableau de bord Home Assistant de la tablette** (#313) : la macro
   `custom_templates/tab5_dashboard.jinja` écrit trois vues (Tab5, Réglages, Santé) avec
   vos entités.
@@ -25,9 +33,9 @@ des idées et des retours de @husyildiz (discussion #278 : #302 à #305, #308 à
   de diagnostic (désactivées par défaut) ; une icône dans le bandeau, montrée seulement si
   l'interrupteur « Tab5 Batterie montée » est allumé.
 - **Météo choisie dans le blueprint** (#305), section facultative.
-- **Corrigé** : prévisions horaires de gauche à droite (#304), icônes de nuit (#302), noms
-  des plantes plus rognés (#301), accent d'Arcanoïde (#300), classement d'Arcanoïde borné
-  (#299).
+- **Corrigé** : console système lisible en mode clair (#325), prévisions horaires de
+  gauche à droite (#304), icônes de nuit (#302), noms des plantes plus rognés (#301),
+  accent d'Arcanoïde (#300), classement d'Arcanoïde borné (#299).
 - **Documentation** (#296, #306, #319, #321) : réglages et options de la tablette, captures
   des thèmes, du popup Énergie et de Home Assistant, énergie solaire dans le README et sur le
   site, nouveautés du site à jour.
@@ -54,25 +62,29 @@ fichiers de la 3.6.0 ignore l'automatisation des thèmes, qui ne trouve pas d'in
 
 ### Mesures de la version
 
-- Image du firmware : +524 288 o par rapport à la 3.5.0 publiée (build local de `main`
-  avec le correctif du planning, ESPHome 2026.9 : 3 936 256 o contre 3 411 968 o) ;
-  thèmes (palettes, formes, polices), popup Énergie et batterie compris. RAM statique :
-  179 688 o (40,3 %).
-- Sur la tablette de l'auteur, le code des thèmes (`main` à 544d4b2, sans le correctif
-  du planning #318) tourne depuis le 05/10 à 6 h 24 (heure de démarrage lue dans Home
-  Assistant), sans redémarrage depuis ; temps de boucle lu dans Home Assistant : 39 ms en
-  « Relief doux », contre 16 ms avant les ombres. Le dessin d'un écran entier passe de
+- Image du firmware : +917 504 o par rapport à la 3.5.0 publiée (compilation
+  `build-min` de la CI, ESPHome 2026.9.0 comme les binaires publiés : 4 329 472 o contre
+  3 411 968 o) ; thèmes (palettes, formes, polices), popup Énergie et batterie compris,
+  dont 263 536 o pour les polices de date complètes de #323 (ASCII et caractères des
+  sept langues). RAM statique : 180 200 o (40,5 %).
+- Sur la tablette de l'auteur : le code des thèmes (`main` à 544d4b2) a tourné du 05/10
+  à 6 h 24 jusqu'au flash suivant sans redémarrer, temps de boucle lu dans Home Assistant
+  39 ms en « Relief doux », contre 16 ms avant les ombres ; le code de cette version
+  (build local avec #323 et #325, même code hors numéro de version) y tourne depuis le
+  05/10 à 10 h 53, écran rallumé seul après le flash. Le dessin d'un écran entier passe de
   134 à 169 ms avec les ombres de « Relief plat » (mesuré le 04/10) ; la carte centrale
   qui tourne n'a pas ralenti.
-- Rendu hors tablette (CI) : les dix-huit thèmes dans les deux modes, bascule à chaud
-  identique au démarrage à froid, au pixel près.
+- Rendu hors tablette (CI) : les vingt et un thèmes dans les deux modes, bascule à chaud
+  identique au démarrage à froid, au pixel près ; marge du haut de l'horloge mesurée sur
+  les 42 captures de la galerie : au pixel près dans vingt thèmes, 1 px de plus en Capsule.
 - Compilations requises de la CI (dernière ESPHome et 2026.9.0) : vertes sur `main`.
 
 ### Problèmes connus
 
 Ceux de la 3.5.0, et :
-- le correctif des horaires du planning en mode clair (#318) n'est vu que dans le rendu,
-  pas encore sur la tablette ;
+- en mode clair, quelques couleurs d'accent (or, avertissement, pluie) restent entre
+  3:1 et 3,7:1 sur le verre des popups selon le thème : lisibles, mais sous les 4,5:1
+  visés pour le petit texte ;
 - les ombres de certains thèmes ralentissent le dessin d'un écran entier (voir les mesures) ;
 - trois esquisses avaient un état « bouton actif » propre, pas repris ; les jeux restent
   sombres ; un caractère absent d'une police de thème est dessiné en Roboto ;
@@ -80,6 +92,112 @@ Ceux de la 3.5.0, et :
   installation solaire (le niveau est estimé depuis la tension) ;
 - les nouveaux textes en allemand, néerlandais, espagnol, italien et turc sont traduits
   par une IA, pas encore relus.
+
+### 2026-10-05 — Mode clair : console système lisible
+
+Retour d'Axel sur la tablette : « beaucoup de texte blanc sur fond clair, illisible, dans
+les popups en mode clair ».
+- **Console système** : en clair, les 21 thèmes gardaient les couleurs de la console
+  sombre, des valeurs blanches et des libellés gris-bleu sur le verre clair du popup, et
+  des encadrés de confirmation noirs (« Redémarrer la tablette ? ») sous un texte foncé.
+  Elle prend maintenant l'encre de chaque thème : valeurs en `TEXT_PRIMARY`, libellés en
+  `TEXT_DIM`, encadrés sur le verre du popup.
+- **Un rôle de la palette peut renvoyer à un autre** (`CONSOLE_VALUE: TEXT_PRIMARY`,
+  `tools/gen_themes.py`) : résolu après l'héritage, chaque thème y met sa propre couleur ;
+  Ardoise le fait en clair, les vingt autres en héritent.
+- `tests/test_themes.py` : console lisible dans chaque mode (libellés 4,5:1, valeurs 7:1
+  sur le verre des popups en clair ; texte des encadrés 7:1 sur leur fond).
+
+### 2026-10-05 — Accueil : une seule police de 45 px, marges de l'horloge égales
+
+Demande d'Axel : égaliser les marges de l'horloge ; la police de la date pour les
+températures salon / serre, la consigne de la clim, « Ok Nabu » et les textes de la carte
+centrale ; les titres des pages de prévisions sans « Prévisions horaires 1/2 » ni
+« Prévisions journalières 2/3 », dans la police de la date ; les popups qui avaient une
+autre police de la même taille ; les polices et les textes de langue devenus inutiles.
+- **Horloge** : autant d'air entre le haut de la tuile et l'encre des chiffres qu'entre
+  le bas des jambages de la date (g, j, p, q, y) et le bas de la tuile, dans les 21 thèmes
+  (2e demande d'Axel : l'horloge plus haute, plus d'espace entre l'horloge et la date) ;
+  23 px en Roboto, de 12 px (Pacifico, aux longs jambages) à 27 px ; la date ne bouge pas,
+  sa ligne de base reste à 32 px du bas. HH:MM centré en moyenne sur les heures possibles
+  (l'écart gauche / droite dépend des chiffres : un « 1 » est étroit).
+  `theme_polices()` pose maintenant les cadres des rouleaux pour chaque police et retranche
+  la bordure du thème (0 à 4 px, parfois d'un seul côté : Relief doux, Obsidienne, Terre
+  cuite…), qui décalait l'heure : Relief doux mesurait 34 px en haut pour 30 en bas.
+  L'encre se mesure telle qu'elle s'affiche : en bpp 2, ESPHome vide la 1re rangée des
+  chiffres ronds de Roboto ou de Nunito (`tools/police_theme.py` les rend avec FreeType
+  comme lui), les jambages aussi (`jambage_visible()`) ; les cadres Roboto passent de
+  y 27 à 17.
+- **Police de la date du thème** (`style_police_date`) sur les températures et la consigne
+  de la clim (avant 32 et 55 px), « Ok Nabu », les textes de la carte centrale (planning,
+  pluie, alertes, réponse vocale, info sur une ligne ; sur deux lignes, l'info reste en
+  32 px pour tenir) et le titre des prévisions, qui ne garde
+  que la plage (« Du mercredi 5 août au dimanche 9 août ») : les points sous la carte
+  disent la page. Popups : valeurs de la lumière, de l'énergie et des pots, prochain réveil,
+  sonnerie, « OK » de la télécommande, A+ de l'assistant (avant roboto_45_b en dur).
+  Un changement de thème change donc tous ces textes.
+- **Coût** : les 15 polices de date des thèmes passent de 58 à 151 glyphes (146 pour
+  Fredoka ; ASCII et caractères des 7 langues, le reste est dessiné par roboto_45_b) :
+  +263 536 o de flash (+257 Ko, 49,6 → 52,9 %), RAM inchangée (40,5 %), mesurés par la
+  compilation `build-min` de la CI (ESPHome 2026.9.0) avant et après. Aucune police ne disparaît : roboto_45_b reste
+  la police de date des thèmes Roboto et le repli des autres, roboto_55_b sert encore au
+  réveil, au popup clim et au flipper.
+- **Langues** : les deux titres retirés sortent des 6 fichiers de langue ; `Sys`, `HA`,
+  `TV`, `Ok Nabu: OFF` et `Ok Nabu : OFF`, textes YAML disparus, sortent de la liste des
+  textes non traduits (`tools/i18n_keys.py`). Aucune autre clé morte (recherche stricte,
+  commentaires exclus).
+
+### 2026-10-05 — Trois thèmes de plus : Bonbon, Sorbet, Ultraviolet
+
+Demande d'Axel : « ajoute les trois nouveaux thèmes au choix possible pour le Tab ». Les
+trois dernières esquisses de la galerie du 04/10/2026 (Claude Fable 5.1) deviennent des
+thèmes, convertis comme les dix-sept de #316 ; ils s'ajoutent à la fin du select
+« Thème » (`ordre:` 19 à 21), un choix déjà enregistré ne bouge pas.
+- **Bonbon** : stickers rose bonbon, bord blanc de 3 px, ombre dure framboise décalée de
+  5 px, boutons blancs (mûre la nuit), onglets rose dragée, Pacifico pour l'heure, la date
+  et les titres. Les ombres sont les plus lourdes du catalogue : l'esquisse les estimait à
+  ≈ 512 000 px ombrés sur l'accueil (≈ 50 ms au pire par redessin complet) et ≈ 29 ms à
+  l'ouverture du popup clim ; aucune sur le cadre des popups ni sur les cartes internes.
+- **Sorbet** : coques de macaron lilas, boutons menthe, onglets blancs, bord blanc de
+  2 px, sans ombre, Quicksand. Non repris : le dégradé rose → bleu de toute la page (le
+  fond des pages n'est pas un style de `formes:`).
+- **Ultraviolet** (l'esquisse s'appelait « Obsidienne », nom déjà pris) : noir pur, filets
+  de 1 px, coins courts, Anton. Non repris : la lueur violette du bouton choisi (état
+  « bouton actif », propriétés locales posées par le C++) et l'interlettrage d'Anton.
+- Bandeau central sombre en clair dans les trois (`zones_sombres: [bandeau]`) : il garde
+  lisibles les icônes de vigilance FFFF00 et FF0000. Les boutons de l'accueil prennent la
+  matière des boutons de l'esquisse (`style_clim_btn_page`), comme ceux des popups.
+- Écarts à l'esquisse pour les contrastes de `tests/test_themes.py` : Bonbon, le texte
+  principal framboise assombri le jour et éclairci la nuit, l'or assombri le jour ;
+  Sorbet, le texte principal violet et l'or assombris le jour.
+- `tests/test_doc_comptes.py` lit les nombres en lettres jusqu'à 59 (« Twenty-one »,
+  « Vingt et un ») ; README, site, `docs/installation.md`, `docs/screens.md` et
+  `docs/ui_design.md` disent vingt et un thèmes.
+
+### 2026-10-05 — Accueil : grille du haut alignée, boutons à icône seule
+
+Demande d'Axel : aligner l'horloge sur les boutons de droite, des marges égales autour
+de l'heure et de la date, des boutons sans texte avec de grandes icônes, les pots sans
+texte, la clim et « Ok Nabu » descendus, le bouton muet retiré, « un joli ensemble bien
+propre ».
+- **Trois colonnes** à 20 px des bords de l'écran, comme le bandeau central : gauche
+  (Domo, micro, Discu, Ok Nabu), horloge, droite (HA, Sys, TV, températures, clim) ;
+  15 px entre les boutons, 14 et 15 px de part et d'autre de l'horloge. Hauts alignés
+  (horloge et HA / Sys / TV à y 20), bas alignés à y 308 (Ok Nabu, pied des icônes des pots, tuile clim) : 25 px
+  au-dessus du bandeau central, l'écart qui sépare le bandeau des titres des cartes météo.
+- **Horloge** : tuile de 401 × 210, 32 px d'air entre son bord et l'encre des chiffres en
+  haut, la ligne de base de la date en bas, à peu près autant sur les côtés. La date est
+  recalée pour chaque police de thème (`theme_polices()`, `tools/police_theme.py`) : leurs
+  ascendantes vont de 40 à 53 px et la déplaçaient de 17 px d'un thème à l'autre.
+- **Boutons** Domo, Discu, HA, Sys, TV : icône seule, tous en 125 × 90 avec une icône de
+  70 px (16 px d'air au-dessus et au-dessous). **Pots** : icône seule, même taille, sur la
+  largeur de l'horloge ; le nom et la valeur de chaque pot restent dans le popup « Mes
+  Plantes » (appui long). Une seule police d'icônes pour les deux (`mdi_font_70`, déjà là).
+- **Clim** : la tuile − / consigne / + prend toute la colonne de droite (405 × 90, − et +
+  à 14 px des quatre bords) ; les températures salon / serre sont centrées entre les
+  boutons et la tuile. **Ok Nabu** : même place que la tuile clim, en miroir, texte à la
+  taille de la date (45 px). **Bouton muet retiré** de l'accueil : le son se coupe depuis
+  le popup Assistant vocal.
 
 ### 2026-10-05 — Documentation : énergie solaire, nouveautés du site, merci à husyildiz
 

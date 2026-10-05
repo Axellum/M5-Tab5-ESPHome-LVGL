@@ -135,6 +135,9 @@ REFERENCE_POLICE = "Roboto@700"
 # Labels de l'horloge que theme_polices() place (rouleaux puis « : »), tab5-lvgl.yaml.
 LABELS_HORLOGE = tuple(f"lbl_time_{d}_{ab}" for d in ("h10", "h1", "m10", "m1") for ab in ("a", "b")) \
     + ("lbl_time_colon",)
+# Date sous l'horloge : theme_polices() pose aussi son y (ligne de base au même endroit
+# quelle que soit la police, 05/10/2026).
+LABEL_DATE = "lbl_date"
 
 
 class ErreurTheme(Exception):
@@ -276,8 +279,14 @@ def charger(dossier: Path = THEMES_DIR, tokens: Path = TOKENS) -> list[Theme]:
             for role, valeur in propres.items():
                 if role not in connus:
                     raise ErreurTheme(f"{stem}.yaml, {mode} : rôle inconnu `{role}` (struct Palette)")
-                if isinstance(valeur, bool) or not isinstance(valeur, int) or not 0 <= valeur <= 0xFFFFFF:
-                    raise ErreurTheme(f"{stem}.yaml, {mode}.{role} : couleur 0xRRGGBB attendue, lu {valeur!r}")
+                if isinstance(valeur, str):
+                    # Renvoi à un autre rôle du même mode (« CONSOLE_VALUE: TEXT_PRIMARY ») :
+                    # résolu après l'héritage, donc avec la valeur du thème qui hérite.
+                    if valeur not in connus or valeur == role:
+                        raise ErreurTheme(f"{stem}.yaml, {mode}.{role} : rôle inconnu `{valeur}` (struct Palette)")
+                elif isinstance(valeur, bool) or not isinstance(valeur, int) or not 0 <= valeur <= 0xFFFFFF:
+                    raise ErreurTheme(f"{stem}.yaml, {mode}.{role} : couleur 0xRRGGBB ou nom de rôle "
+                                      f"attendu, lu {valeur!r}")
             modes[mode] = {**base[mode], **propres}
         return modes
 
@@ -296,7 +305,17 @@ def charger(dossier: Path = THEMES_DIR, tokens: Path = TOKENS) -> list[Theme]:
             valeurs = modes[mode]
             for role, (verre, fond, opa) in DERIVES.items():
                 if role not in valeurs and verre in valeurs and fond in valeurs:
+                    if isinstance(valeurs[verre], str) or isinstance(valeurs[fond], str):
+                        raise ErreurTheme(f"{stem}.yaml, {mode} : `{verre}` et `{fond}` (verre calculé) "
+                                          "doivent être des couleurs, pas des renvois")
                     valeurs[role] = melange(valeurs[verre], valeurs[fond], opa)
+            for role, valeur in list(valeurs.items()):
+                if isinstance(valeur, str):
+                    cible = valeurs.get(valeur)
+                    if not isinstance(cible, int):
+                        raise ErreurTheme(f"{stem}.yaml, {mode}.{role} : `{valeur}` doit être une couleur "
+                                          f"(un seul renvoi), lu {cible!r}")
+                    valeurs[role] = cible
             manquants = [r for r in liste_roles if r not in valeurs]
             if manquants:
                 raise ErreurTheme(f"{stem}.yaml, {mode} : rôle(s) manquant(s) {manquants}")
@@ -573,6 +592,7 @@ def rendre_polices(themes: list[Theme], mesures: dict | None = None, jeux: dict[
     for t in themes:
         rangee = {}
         geo = {"y": None}
+        y_date = jambage = None
         for role in ROLES_POLICE:
             cle = t.polices.get(role)
             if cle is None:
@@ -598,11 +618,18 @@ def rendre_polices(themes: list[Theme], mesures: dict | None = None, jeux: dict[
                 rangee[role] = ids.index(f["id"])
             if role == "horloge":
                 geo = m["horloge"]
-        if geo["y"] is None:
+            elif role == "date":
+                y_date, jambage = m["date"]["y"], m["date"]["jambage"]
+        if geo["y"] is None or y_date is None:
             if "horloge" not in mesures.get(REFERENCE_POLICE, {}):
                 raise ErreurTheme(f"{REFERENCE_POLICE} absente de _polices.yaml (lancer `python tools/police_theme.py`)")
-            geo = mesures[REFERENCE_POLICE]["horloge"]
-        table.append((t, rangee, geo))
+            if geo["y"] is None:
+                geo = mesures[REFERENCE_POLICE]["horloge"]
+            if y_date is None:
+                y_date, jambage = (mesures[REFERENCE_POLICE]["date"][k] for k in ("y", "jambage"))
+        # L'horloge remonte du jambage de SA police de date (marge du haut = bas des
+        # jambages de la date → bas de la tuile), _police_theme().avec_jambage().
+        table.append((t, rangee, {**_police_theme().avec_jambage(geo, jambage), "y_date": y_date}))
     font_yaml = []
     if fontes:
         font_yaml = ["font:"]
@@ -618,16 +645,21 @@ def rendre_polices(themes: list[Theme], mesures: dict | None = None, jeux: dict[
         "    // Polices d'affichage du thème (`polices:`), géométrie de l'horloge comprise.",
         "    esphome::font::Font* const polices[] = {" + ", ".join(f"id({i})" for i in ids) + "};",
         "    lv_obj_t* const horloge[] = {" + ", ".join(f"id({i})" for i in LABELS_HORLOGE) + "};",
-        "    theme_polices(id(" + "), id(".join(STYLES_POLICE[r] for r in ROLES_POLICE) + f"), polices, {len(ids)}, horloge);",
+        "    theme_polices(id(" + "), id(".join(STYLES_POLICE[r] for r in ROLES_POLICE)
+        + f"), polices, {len(ids)}, horloge, id({LABEL_DATE}));",
     ]
+    pt = _police_theme()
     cpp = ["// Polices de chaque thème : index dans le tableau `polices` que passe",
            "// tab5_theme_repeindre (0-2 = les Roboto compilées), puis la géométrie de l'horloge",
-           "// (y des labels des rouleaux, position du « : »), tools/police_theme.py.",
+           "// (y des labels des rouleaux, position du « : », y de la date, y et décalage des",
+           "// cadres), tools/police_theme.py. kCadreX : x des cadres h10, h1, m10, m1 (tab5-lvgl.yaml).",
            f"static constexpr int kNbPolices = {len(ids)};",
+           "static constexpr int16_t kCadreX[] = {" + ", ".join(str(x) for x in pt.X_CADRES) + "};",
            "static constexpr PolicesTheme kPolices[] = {"]
     for t, rangee, geo in table:
         cpp.append(f"    {{{rangee['horloge']}, {rangee['date']}, {rangee['titre']}, {geo['y']}, "
-                   f"{geo['x_deux_points']}, {geo['y_deux_points']}}},  // {t.fichier}")
+                   f"{geo['x_deux_points']}, {geo['y_deux_points']}, {geo['y_date']}, "
+                   f"{geo['cadre_y']}, {geo['dx']}}},  // {t.fichier}")
     cpp.append("};")
     return font_yaml, lambda_yaml, cpp
 

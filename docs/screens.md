@@ -40,7 +40,8 @@ Always-visible content at the top of the screen:
 - **Status icons**, top left, from left to right: PC (green when on), phone (colour of its battery), Wi-Fi, alarm, **solar production** when the Energy section of the blueprint has a solar power sensor and the panels' peak power (its colour gives the production as a share of the peak, on the battery scale: green above 80 %, blue, amber, red below 20 %; a grey panel at 0 %, at night), and the **tablet's own battery** when the device switch **Tab5 Batterie montée** is on (off by default: without a battery the charger reads "charging, 100 %"). The battery glyph follows the level (full above 80 %, half, low, "!" below 20 %, a bolt while charging, "?" with no reading), in the same colours as the phone. A hidden icon leaves no gap: the others close up.
 - Current time and date
 - Indoor temperature and humidity
-- Microphone icon with pipeline state color (see Voice assistant below), and a mode toggle (Home Assistant agent vs. conversation/LLM pipeline)
+- Microphone icon with pipeline state color (see Voice assistant below), between the two voice-mode buttons (Home Assistant agent vs. conversation/LLM pipeline), and under them the wide **Ok Nabu: ON / OFF** wake-word button (the mute button is in the assistant popup since 2026-10-05)
+- **HA**, **Sys** and **TV** buttons, top right. The home buttons show their icon only, all at the same size (125 × 90, icons of 70 px); the three columns of the top area sit 20 px from the screen edges like the central card, with their tops aligned at y 20 and their bottoms at y 308, 25 px above the central card
 - **Compact climate card** — current temperature (living room + greenhouse/serre sensors) and the target temperature with +/− buttons; tapping the target opens the climate popup (see Climate below)
 - **Plant moisture card** — 4 slots for up to 5 BLE soil moisture sensors (see Plant moisture below)
 
@@ -48,7 +49,7 @@ Always-visible content at the top of the screen:
 
 ## Central card — planning / rain / alerts / info
 
-A single card rotates automatically every 8 seconds (script `tab5_central_rotator_auto`, `tab5-scripts.yaml`; not while the screen is off or a popup is open) between up to eight panels: planning, rain, weather alerts, info and up to four HA alert slots. The rotation only runs on the default forecast window — swiping to another forecast window replaces the central card with a page-title overlay (`page_title_wrapper`) and pauses the rotation until you swipe back. That overlay is two lines built in `forecast_page_title_parts()` (`tab5_*.cpp`): a dim kicker naming the family and rank of the window (`Prévisions journalières · 2/3`) above the actual span of the 5 visible tiles — `Du mercredi 5 août au dimanche 9 août` for daily windows (day names/dates from SNTP, `1er` for the first of the month), `De 14:00 à 18:00` for hourly ones, always oldest → newest even though the hourly tiles are laid out right-to-left. If the dates aren't available yet (SNTP not synced and no HA payload), the kicker takes the main line on its own. Tapping a forecast card's temperature (see below) can also interrupt the rotation for a few seconds to show a specific day's schedule.
+A single card rotates automatically every 8 seconds (script `tab5_central_rotator_auto`, `tab5-scripts.yaml`; not while the screen is off or a popup is open) between up to eight panels: planning, rain, weather alerts, info and up to four HA alert slots. The rotation only runs on the default forecast window — swiping to another forecast window replaces the central card with a page-title overlay (`page_title_wrapper`) and pauses the rotation until you swipe back. That overlay is one line built in `forecast_page_title_parts()` (`tab5_central.cpp`), in the theme's date font: the actual span of the 5 visible tiles — `Du mercredi 5 août au dimanche 9 août` for daily windows (day names/dates from SNTP, `1er` for the first of the month), `De 14:00 à 18:00` for hourly ones, always oldest → newest even though the hourly tiles are laid out right-to-left. The pagination dots under the card show which window is open (the « Prévisions journalières · 2/3 » kicker was removed on 2026-10-05). If the dates aren't available yet (SNTP not synced and no HA payload), the card stays empty. Tapping a forecast card's temperature (see below) can also interrupt the rotation for a few seconds to show a specific day's schedule.
 
 - **Planning** — part of the rotation unless Home Assistant has no work calendar (optional zone, lot 5). Shows the day's schedule.
 - **Rain forecast** — only rotated in if `has_rain` is true. A short-term rain graph: one data point every 5 minutes for the first 30 minutes, then every 10 minutes for the following 30 minutes (9 points total, 1-hour window), sourced from Météo-France via the `tab5_maj_pluie_1h_bulk` API service (the 9 bars in one call).
@@ -69,7 +70,7 @@ If neither rain, MF alerts, info nor HA alert slots are active, the rotation jus
 
 Since 3.2 ([ADR-0023](decisions/0023-rooms-generic-tiles.md)) each of the 5 pages of the bottom row is also a **room** of up to 5 devices, described by Home Assistant (blueprint « Tab5 — emplacements », action `tab5_maj_tuiles`; states through `tab5_maj_emplacements`, keys `tRT`). Room 0 is the home page (days 0-4), rooms 1 and 2 the next daily pages (swipe left), rooms 3 and 4 the hourly pages (swipe right); tile T is the visual position, 0 = left. The definitions are kept in NVS, so the rooms are drawn before HA answers; the states are not (greyed « -- » until the first push). Model and drawing: `tab5_tuiles.cpp`.
 
-The `btn_control_ha` button (top right, « HA ») toggles the region between the **weather mode** and the **HA mode** (`tuiles_mode_ha()`, flag `g_central_ctx.ha_mode`). It shows an accent border and icon while HA mode is on, and is hidden when no room has a device. « Aller à l'écran → Accueil » (the Home Assistant select) leaves HA mode.
+The `btn_control_ha` button (top right, Home Assistant icon) toggles the region between the **weather mode** and the **HA mode** (`tuiles_mode_ha()`, flag `g_central_ctx.ha_mode`). It shows an accent border and icon while HA mode is on, and is hidden when no room has a device. « Aller à l'écran → Accueil » (the Home Assistant select) leaves HA mode.
 
 ### Weather mode (default)
 
@@ -129,9 +130,9 @@ The controls are dimmed (not hidden) when the AC is off, so the layout stays sta
 
 ## Plant moisture card
 
-Monitors up to 5 BLE soil moisture sensors, but only **4 slots are shown** (`sort_and_update_moisture_slots()`, `tab5_*.cpp`). The sensors are sorted by moisture level (driest to wettest) each update, then mapped to slots as: driest, 2nd-driest, **the median-ranked sensor** (labeled `Moy:` — this shows that one sensor's raw reading, it is not a computed arithmetic average of all 5), and wettest. Because the mapping is by rank rather than by fixed sensor identity, *which* physical pot number appears in which slot changes over time as moisture levels shift — a photo taken today showing "Pot 2 / Pot 4 / Moy / Pot 3" is not a fixed layout.
+Monitors up to 5 BLE soil moisture sensors, but only **4 slots are shown** (`sort_and_update_moisture_slots()`, `tab5_*.cpp`). The sensors are sorted by moisture level (driest to wettest) each update, then mapped to slots as: driest, 2nd-driest, **the median-ranked sensor** (it shows that one sensor's raw reading, it is not a computed arithmetic average of all 5), and wettest. Because the mapping is by rank rather than by fixed sensor identity, *which* physical pot appears in which slot changes over time as moisture levels shift.
 
-Each slot shows the sensor's icon and moisture-level color (see Color coding below) plus its physical pot number (or `Moy:` for the median slot).
+Each slot shows the sensor's icon only, in its moisture-level color (see Color coding below), at the size of the home buttons; the pot names and readings are in the plant details popup (long press). The "Pot N" / "Moy:" caption under each icon was removed on 2026-10-05.
 
 ### Plant details popup — long press
 
@@ -292,7 +293,7 @@ Color is used consistently as a primary information channel — to let you read 
 
 **Microphone icon:** see Voice assistant above.
 
-All interface colours live in one palette, `struct Palette` in `tab5_tokens.h` (included by `tab5_custom.h`); `UIColor` is the active one. The YAML takes them through the role styles of `tab5-styles.yaml` (`style_text_dim`…), the games keep their own dark palettes ([ADR-0029](decisions/0029-themes-palette.md)). Eighteen themes, each with a dark and a light mode, change the colours, the shapes (radius, borders, shadows) and the fonts of the time, the date and the titles; a new tablet starts in « Relief doux ».
+All interface colours live in one palette, `struct Palette` in `tab5_tokens.h` (included by `tab5_custom.h`); `UIColor` is the active one. The YAML takes them through the role styles of `tab5-styles.yaml` (`style_text_dim`…), the games keep their own dark palettes ([ADR-0029](decisions/0029-themes-palette.md)). Twenty-one themes, each with a dark and a light mode, change the colours, the shapes (radius, borders, shadows) and the fonts of the time, the date and the titles; a new tablet starts in « Relief doux ».
 
 ![Six themes of the Tab5 screen drawn by the firmware itself: Relief doux in dark and light, Almanach imprimé, Néon calme, Béton brut and Zen Sumi](images/tab5_themes.jpg)
 
@@ -374,7 +375,8 @@ Contenu toujours visible en haut de l'écran :
 - **Icônes d'état**, en haut à gauche, de gauche à droite : PC (vert allumé), téléphone (couleur de sa batterie), Wi-Fi, réveil, la **production solaire** quand la section Énergie du blueprint a un capteur de puissance solaire et la puissance crête des panneaux (sa couleur donne la production en part de la crête, avec le barème des batteries : vert au-dessus de 80 %, bleu, ambre, rouge sous 20 % ; un panneau gris à 0 %, la nuit), et la **batterie de la tablette** quand l'interrupteur de l'appareil **Tab5 Batterie montée** est allumé (éteint par défaut : sans batterie, le chargeur dit « en charge, 100 % »). Le glyphe suit le niveau (pleine au-dessus de 80 %, moitié, basse, « ! » sous 20 %, un éclair pendant la charge, « ? » sans mesure), avec les couleurs du téléphone. Une icône masquée ne laisse pas de trou : les autres se resserrent.
 - Heure et date actuelles
 - Température et humidité intérieure
-- Icône microphone avec couleur d'état du pipeline (voir Assistant vocal ci-dessous), et un bouton de bascule de mode (agent Home Assistant vs pipeline conversation/LLM)
+- Icône microphone avec couleur d'état du pipeline (voir Assistant vocal ci-dessous), entre les deux boutons de mode vocal (agent Home Assistant vs pipeline conversation/LLM), et dessous le large bouton **Ok Nabu: ON / OFF** du mot de réveil (le bouton muet est dans le popup assistant depuis le 05/10/2026)
+- Boutons **HA**, **Sys** et **TV**, en haut à droite. Les boutons de l'accueil n'affichent que leur icône, tous à la même taille (125 × 90, icônes de 70 px) ; les trois colonnes du haut sont à 20 px des bords de l'écran comme la carte centrale, hauts alignés à y 20 et bas à y 308, 25 px au-dessus de la carte centrale
 - **Carte clim compacte** — température actuelle (capteurs salon + serre) et température cible avec boutons +/− ; taper sur la cible ouvre le popup clim (voir Climatisation ci-dessous)
 - **Carte humidité plantes** — 4 emplacements pour jusqu'à 5 capteurs BLE d'humidité du sol (voir Humidité des plantes ci-dessous)
 
@@ -382,7 +384,7 @@ Contenu toujours visible en haut de l'écran :
 
 ## Carte centrale — planning / pluie / alertes / info
 
-Une seule carte alterne automatiquement toutes les 8 secondes (script `tab5_central_rotator_auto`, `tab5-scripts.yaml` ; pas écran éteint ni sous un popup ouvert) entre jusqu'à huit panneaux : planning, pluie, alertes météo, info et jusqu'à quatre bandeaux d'alertes HA. La rotation ne tourne que sur la fenêtre prévisions par défaut — swiper vers une autre fenêtre remplace la carte centrale par un overlay de titre de page (`page_title_wrapper`) et met la rotation en pause. Cet overlay tient sur deux lignes, construites par `forecast_page_title_parts()` (`tab5_*.cpp`) : un chapeau atténué qui nomme la famille et le rang de la fenêtre (`Prévisions journalières · 2/3`), puis la plage réellement couverte par les 5 tuiles visibles — `Du mercredi 5 août au dimanche 9 août` en journalier (jours et quantièmes via SNTP, `1er` pour le premier du mois), `De 14:00 à 18:00` en horaire, toujours de la plus ancienne à la plus récente même si les tuiles horaires sont rangées de droite à gauche. Si les dates ne sont pas encore disponibles (SNTP non synchronisé et aucun payload HA reçu), le chapeau prend seul la ligne principale. Taper sur la température d'une carte prévision (voir plus bas) peut aussi interrompre la rotation quelques secondes pour montrer le planning d'un jour précis.
+Une seule carte alterne automatiquement toutes les 8 secondes (script `tab5_central_rotator_auto`, `tab5-scripts.yaml` ; pas écran éteint ni sous un popup ouvert) entre jusqu'à huit panneaux : planning, pluie, alertes météo, info et jusqu'à quatre bandeaux d'alertes HA. La rotation ne tourne que sur la fenêtre prévisions par défaut — swiper vers une autre fenêtre remplace la carte centrale par un overlay de titre de page (`page_title_wrapper`) et met la rotation en pause. Cet overlay tient sur une ligne, construite par `forecast_page_title_parts()` (`tab5_central.cpp`), dans la police de la date du thème : la plage réellement couverte par les 5 tuiles visibles — `Du mercredi 5 août au dimanche 9 août` en journalier (jours et quantièmes via SNTP, `1er` pour le premier du mois), `De 14:00 à 18:00` en horaire, toujours de la plus ancienne à la plus récente même si les tuiles horaires sont rangées de droite à gauche. Les points de pagination sous la carte disent quelle fenêtre est ouverte (le chapeau « Prévisions journalières · 2/3 » est retiré depuis le 05/10/2026). Si les dates ne sont pas encore disponibles (SNTP non synchronisé et aucun payload HA reçu), la carte reste vide. Taper sur la température d'une carte prévision (voir plus bas) peut aussi interrompre la rotation quelques secondes pour montrer le planning d'un jour précis.
 
 - **Planning** — dans la rotation, sauf si Home Assistant n'a pas d'agenda de travail (zone optionnelle, lot 5). Affiche le planning du jour.
 - **Prévision de pluie** — intégrée à la rotation seulement si `has_rain` est vrai. Un graphique de pluie à court terme : un point toutes les 5 minutes pour la première demi-heure, puis toutes les 10 minutes pour la demi-heure suivante (9 points au total, fenêtre d'1 heure), fourni par Météo-France via le service API `tab5_maj_pluie_1h_bulk` (les 9 barres en un appel).
@@ -403,7 +405,7 @@ Si ni pluie, ni alertes MF, ni info, ni slots HA ne sont actifs, la rotation gar
 
 Depuis la 3.2 ([ADR-0023](decisions/0023-rooms-generic-tiles.md)), chacune des 5 pages du bas est aussi une **pièce** de 5 appareils au plus, décrite par Home Assistant (blueprint « Tab5 — emplacements », action `tab5_maj_tuiles` ; états par `tab5_maj_emplacements`, clés `tRT`). La pièce 0 est l'accueil (jours 0-4), les pièces 1 et 2 les pages journalières suivantes (swipe vers la gauche), les pièces 3 et 4 les pages horaires (swipe vers la droite) ; la tuile T est la position visuelle, 0 = gauche. Les définitions sont gardées en NVS : les pièces se dessinent avant que HA réponde ; pas les états (« -- » grisé jusqu'à la première poussée). Modèle et dessin : `tab5_tuiles.cpp`.
 
-Le bouton `btn_control_ha` (en haut à droite, « HA ») bascule la zone entre le **mode météo** et le **mode HA** (`tuiles_mode_ha()`, drapeau `g_central_ctx.ha_mode`). Il prend une bordure et une icône d'accent quand le mode HA est actif, et disparaît quand aucune pièce n'a d'appareil. « Aller à l'écran → Accueil » (le select de Home Assistant) quitte le mode HA.
+Le bouton `btn_control_ha` (en haut à droite, icône Home Assistant) bascule la zone entre le **mode météo** et le **mode HA** (`tuiles_mode_ha()`, drapeau `g_central_ctx.ha_mode`). Il prend une bordure et une icône d'accent quand le mode HA est actif, et disparaît quand aucune pièce n'a d'appareil. « Aller à l'écran → Accueil » (le select de Home Assistant) quitte le mode HA.
 
 ### Mode météo (par défaut)
 
@@ -463,9 +465,9 @@ Les contrôles sont estompés (non cachés) quand le clim est éteint, pour gard
 
 ## Carte humidité des plantes
 
-Surveille jusqu'à 5 capteurs BLE d'humidité du sol, mais seuls **4 emplacements sont affichés** (`sort_and_update_moisture_slots()`, `tab5_*.cpp`). Les capteurs sont triés par niveau d'humidité (du plus sec au plus humide) à chaque mise à jour, puis mappés sur les emplacements ainsi : le plus sec, le 2e plus sec, **le capteur de rang médian** (étiqueté `Moy:` — ça affiche la lecture brute de ce capteur précis, ce n'est pas une moyenne arithmétique calculée sur les 5), et le plus humide. Comme le mapping se fait par rang plutôt que par identité fixe du capteur, *quel* numéro de pot physique apparaît dans quel emplacement change dans le temps selon l'évolution de l'humidité — une photo prise aujourd'hui montrant "Pot 2 / Pot 4 / Moy / Pot 3" n'est pas une disposition figée.
+Surveille jusqu'à 5 capteurs BLE d'humidité du sol, mais seuls **4 emplacements sont affichés** (`sort_and_update_moisture_slots()`, `tab5_*.cpp`). Les capteurs sont triés par niveau d'humidité (du plus sec au plus humide) à chaque mise à jour, puis mappés sur les emplacements ainsi : le plus sec, le 2e plus sec, **le capteur de rang médian** (ça affiche la lecture brute de ce capteur précis, ce n'est pas une moyenne arithmétique calculée sur les 5), et le plus humide. Comme le mapping se fait par rang plutôt que par identité fixe du capteur, *quel* pot apparaît dans quel emplacement change dans le temps selon l'évolution de l'humidité.
 
-Chaque emplacement affiche l'icône du capteur et sa couleur de niveau d'humidité (voir Coloration ci-dessous) plus son numéro de pot physique (ou `Moy:` pour l'emplacement médian).
+Chaque emplacement n'affiche que l'icône du capteur, dans sa couleur de niveau d'humidité (voir Coloration ci-dessous), à la taille des boutons de l'accueil ; le nom et la valeur de chaque pot sont dans le popup détails plantes (appui long). Le libellé « Pot N » / « Moy: » sous chaque icône est retiré depuis le 05/10/2026.
 
 ### Popup détails plantes — appui long
 
@@ -626,7 +628,7 @@ La couleur est utilisée de façon systématique comme canal d'information prima
 
 **Icône microphone :** voir Assistant vocal ci-dessus.
 
-Toutes les couleurs de l'interface vivent dans une palette, `struct Palette` de `tab5_tokens.h` (inclus par `tab5_custom.h`) ; `UIColor` est la palette active. Le YAML les prend par les styles de rôle de `tab5-styles.yaml` (`style_text_dim`…), les jeux gardent leurs palettes sombres ([ADR-0029](decisions/0029-themes-palette.md)). Dix-huit thèmes, chacun en sombre et en clair, changent les couleurs, les formes (rayons, bordures, ombres) et les polices de l'heure, de la date et des titres ; une tablette neuve démarre en « Relief doux ».
+Toutes les couleurs de l'interface vivent dans une palette, `struct Palette` de `tab5_tokens.h` (inclus par `tab5_custom.h`) ; `UIColor` est la palette active. Le YAML les prend par les styles de rôle de `tab5-styles.yaml` (`style_text_dim`…), les jeux gardent leurs palettes sombres ([ADR-0029](decisions/0029-themes-palette.md)). Vingt et un thèmes, chacun en sombre et en clair, changent les couleurs, les formes (rayons, bordures, ombres) et les polices de l'heure, de la date et des titres ; une tablette neuve démarre en « Relief doux ».
 
 ![Six thèmes de l'écran du Tab5 dessinés par le firmware lui-même : Relief doux en sombre et en clair, Almanach imprimé, Néon calme, Béton brut et Zen Sumi](images/tab5_themes.jpg)
 
@@ -644,7 +646,7 @@ Depuis la 3.2, chaque tuile `vol` est un volet ou une vanne à elle seule (appui
 
 Ouvert par **appui long sur la zone micro** (`btn_assist_trigger`). Carte modale quasi plein écran (1250×690) organisée en deux colonnes :
 
-- **Gauche — Réglages** : sélecteur cerveau/pipeline (Domotique ↔ Discussion), toggle Ok Nabu ON/OFF, bouton Muet, slider Volume, taille de texte A-/A+ (persistée ; roboto_32_b / roboto_45_b)
+- **Gauche — Réglages** : sélecteur cerveau/pipeline (Domotique ↔ Discussion), toggle Ok Nabu ON/OFF, bouton Muet, slider Volume, taille de texte A-/A+ (persistée ; roboto_32_b / police de la date du thème)
 - **Droite — Conversation** : zone « VOTRE DEMANDE » (transcription STT) + zone « RÉPONSE » défilante avec rendu Markdown (tableaux ré-alignés approximativement — police proportionnelle depuis le 26/09/2026 —, gras, code, puces) + image téléchargée à la demande (`online_image`, PNG→RGB565, 760×360)
 
 En mode Discussion, une demande vocale ouvre automatiquement le popup (`on_stt_end` → `tab5_assist_on_request`). En mode Domotique, le bandeau central 8 s reste le retour rapide. Le moteur peut pousser une réponse riche via le service HA `tab5_assist_reponse` (variables `texte` = Markdown, `image_url` = PNG optionnel).
@@ -675,7 +677,7 @@ La grille est calculée **localement** depuis SNTP (algorithme de Sakamoto). HA 
 Ouvert par **appui long** sur les 4 slots pots du dashboard (`btn_pots_detail_zone`). Carte modale 1250×690 avec 5 cartes de verre **fixes** (carte N = capteur `moisture_N`) :
 
 - Nom du capteur + icône colorée par l'humidité
-- % humidité en `roboto_45_b`
+- % humidité dans la police de la date du thème (`style_police_date`)
 - Statut : OK / Bientôt sec / À arroser ! / Hors ligne
 - 4 métriques : Fertilité (EC µS/cm), Lumière (lx), Température (°C, gradient), Batterie (échelle couleur)
 

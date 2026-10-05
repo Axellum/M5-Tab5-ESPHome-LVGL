@@ -44,13 +44,26 @@ lvgl:
 
         # --- Top Left: Status Icons (Moved lower) ---
 
+        # --- Grille du haut (05/10/2026) ---
+        # Trois colonnes à 20 px des bords de l'écran, comme le bandeau central : gauche
+        # 20-425 (Domo, micro, Discu, Ok Nabu), horloge 440-841, droite 855-1260 (HA,
+        # Sys, TV, températures, clim) ; 15 px entre les boutons, 15 px à gauche de
+        # l'horloge et 14 px à droite (1280 − 2 × 20 − 2 × 405 = 430 = 401 + 29 : LVGL
+        # centre la tuile à 640 − 401 / 2 = 440, mesuré sur le rendu du 05/10/2026).
+        # Hauts alignés à y 20 (horloge, HA / Sys / TV) ; bas alignés à y 308 (Ok Nabu,
+        # pied des icônes des pots, tuile clim), 25 px au-dessus du bandeau central :
+        # le même écart qu'entre le bandeau et les titres des cartes météo (417 → 442).
+        # Boutons 125 × 90 et icônes MDI de 70 px (mdi_font_70, encre de 58 px) : 16 px
+        # d'air au-dessus et au-dessous de l'icône dans chaque bouton.
+
         # --- Voice Assistant Panel (Left) ---
-        - label: { id: icon_mic_status, text: "\U000F036C", align: TOP_LEFT, x: 146, y: 85, text_font: mdi_font_120, styles: style_text_dim }
+        # Micro au milieu de la colonne (160-285, encre centrée sur la rangée Domo / Discu).
+        - label: { id: icon_mic_status, text: "\U000F036C", align: TOP_LEFT, x: 162, y: 69, text_font: mdi_font_120, styles: style_text_dim }
         - button:
             id: btn_assist_trigger
             align: TOP_LEFT
-            x: 146
-            y: 85
+            x: 162
+            y: 69
             width: 120
             height: 120
             styles: style_invisible
@@ -62,95 +75,69 @@ lvgl:
 
         # Bouton Domo (et Discu ci-dessous) : masqués sans pipeline de discussion dans HA
         # (zone « discussion », zones_apply_ui) ; le micro reste au milieu.
+        # Icône seule (05/10/2026). Rangée centrée entre le bandeau d'état (encre jusqu'à
+        # y 34) et Ok Nabu (y 218) : 47 px d'air au-dessus, 47 au-dessous.
         - button:
             id: btn_mode_domo
             align: TOP_LEFT
-            x: 30
-            y: 120
-            width: 85
-            height: 60
+            x: 20
+            y: 81
+            width: 125
+            height: 90
             styles: style_clim_btn_page
             on_short_click:
               - script.execute:
                   id: tab5_set_assist_mode
                   discussion: false
             widgets:
-              - label: { text: "\U000F07D0", align: CENTER, y: -10, text_font: mdi_font_32 }
-              - label: { text: "Domo", align: CENTER, y: 15 }
+              - label: { text: "\U000F07D0", align: CENTER, text_font: mdi_font_70 }
 
         # Bouton Discu
         - button:
             id: btn_mode_discu
             align: TOP_LEFT
-            x: 298
-            y: 120
-            width: 85
-            height: 60
+            x: 300
+            y: 81
+            width: 125
+            height: 90
             styles: style_clim_btn_page
             on_short_click:
               - script.execute:
                   id: tab5_set_assist_mode
                   discussion: true
             widgets:
-              - label: { text: "\U000F06A9", align: CENTER, y: -10, text_font: mdi_font_32 }
-              - label: { text: "Discu", align: CENTER, y: 15 }
+              - label: { text: "\U000F06A9", align: CENTER, text_font: mdi_font_70 }
 
-        # Bouton Mute
-        - button:
-            id: btn_mute
-            align: TOP_LEFT
-            x: 30
-            y: 220
-            width: 85
-            height: 50
-            styles: style_clim_btn_page
-            on_short_click:
-              - if:
-                  condition:
-                    lambda: 'return id(system_muted);'
-                  then:
-                    - globals.set:
-                        id: system_muted
-                        value: 'false'
-                    - media_player.volume_set:
-                        id: speaker_player
-                        volume: !lambda 'return id(system_volume);'
-                    # Les DEUX icones du meme etat (barre + popup assistant),
-                    # sinon celle du popup ment jusqu'a sa prochaine ouverture.
-                    - lambda: 'ui_sync_mute_icons(id(icon_mute), id(icon_assist_mute), false);'
-                  else:
-                    - globals.set:
-                        id: system_muted
-                        value: 'true'
-                    - media_player.volume_set:
-                        id: speaker_player
-                        volume: 0.0
-                    - lambda: 'ui_sync_mute_icons(id(icon_mute), id(icon_assist_mute), true);'
-            widgets:
-              - label: { id: icon_mute, text: "\U000F057E", align: CENTER, text_font: mdi_font_32 }
-
-        # Bouton OK Nabu
+        # Bouton OK Nabu : même place que la tuile clim, en miroir (toute la colonne,
+        # 90 px de haut, bas à y 308), texte à la taille de la date (45 px). Le bouton
+        # Muet qui le précédait est retiré le 05/10/2026 : le son se coupe depuis le
+        # popup Assistant vocal (btn_assist_mute).
         - button:
             id: btn_ok_nabu
             align: TOP_LEFT
-            x: 126
-            y: 220
-            width: 160
-            height: 50
+            x: 20
+            y: 218
+            width: 405
+            height: 90
             styles: style_clim_btn_page
             on_short_click:
               - switch.toggle: tab5_wake_word_active
             widgets:
-              - label: { id: lbl_ok_nabu, text: "Ok Nabu: ON", align: CENTER, styles: style_text_success }
+              - label: { id: lbl_ok_nabu, text: "Ok Nabu: ON", align: CENTER, styles: [style_police_date, style_text_success] }
 
-        # --- Centre: Horloge (−6px/côté, −10px haut, remontée 5px) ---
+        # --- Centre: Horloge ---
+        # Marges égales (05/10/2026, demande d'Axel) : autant d'air entre le haut de la
+        # tuile et l'encre des chiffres qu'entre le bas des jambages de la date et le bas
+        # de la tuile (23 px en Roboto) ; sur les côtés, l'encre de HH:MM est centrée.
+        # Valeurs pour Roboto et une bordure de 1 px : theme_polices() (tab5_theme.cpp)
+        # repose cadres, « : » et date pour la police et la bordure du thème (05/10/2026).
         - obj:
             id: clock_tile
             align: TOP_MID
             x: 0
-            y: 5
+            y: 20
             width: 401
-            height: 200
+            height: 210
             styles: style_horloge_page
             scrollbar_mode: "OFF"
             widgets:
@@ -163,14 +150,19 @@ lvgl:
               # 27 à 123 px) pendant ~1,5 s au démarrage. Valeurs de roboto_130_b
               # (Roboto 700, 130 px) : chiffre 75 px de large (tabulaire), « : »
               # 37 px, encre des chiffres à 27-123 px du haut du label.
-              #   - cadre 75 × 104 (clock_roller.yaml, gabarit des 4 rouleaux) : l'encre
-              #     + 4 px de marge en haut et en bas. Plus
+              #   - cadre 75 × 104 à y 17 (clock_roller.yaml, gabarit des 4 rouleaux) :
+              #     l'encre + 3 px de marge en haut et 5 en bas ; l'encre visible (bpp 2 :
+              #     la 1re rangée des chiffres ronds est vide) à 23 px du haut de la tuile
+              #     (bordure 1 px), autant que sous le bas des jambages de la date. Plus
               #     court que le label (152 px), sinon le chiffre qui arrive, posé
               #     un cadre plus bas, déborderait sur la date ;
-              #   - label à y -23 : remonte l'encre dans le cadre (même place à
-              #     l'écran que l'ancien label à y 10) ;
+              #   - label à y -23 : remonte l'encre dans le cadre ;
               #   - x : HH:MM centré dans les 399 px de la tuile (bordure 1 px),
-              #     4 px de respiration de chaque côté du « : ».
+              #     4 px de respiration de chaque côté du « : » ;
+              #   - date : ligne de base à y 177, 32 px au-dessus du bas de la tuile,
+              #     jambages jusqu'à 23 px ; label à y 135 en Roboto 45 (ascendante
+              #     42 px). Une police de thème repose ce y, et les cadres selon ses
+              #     jambages (theme_polices(), tools/police_theme.py).
               # La hauteur du cadre EST la course du rouleau (lue par le C++).
               # tests/test_horloge.py refait ces calculs depuis la police : changer
               # la taille de police ou une valeur ici sans les autres le fait échouer.
@@ -178,10 +170,10 @@ lvgl:
               # 8 labels via g_clock_roller.
               - !include { file: ui_components/clock_roller.yaml, vars: { d: h10, x: 27 } }
               - !include { file: ui_components/clock_roller.yaml, vars: { d: h1, x: 102 } }
-              - label: { id: lbl_time_colon, text: ":", align: TOP_LEFT, x: 181, y: 10, styles: [style_police_horloge, style_horloge_text_soft] }
+              - label: { id: lbl_time_colon, text: ":", align: TOP_LEFT, x: 181, y: -6, styles: [style_police_horloge, style_horloge_text_soft] }
               - !include { file: ui_components/clock_roller.yaml, vars: { d: m10, x: 222 } }
               - !include { file: ui_components/clock_roller.yaml, vars: { d: m1, x: 297 } }
-              - label: { id: lbl_date, text: "", align: TOP_MID, y: 140, styles: [style_police_date, style_horloge_text_soft] }
+              - label: { id: lbl_date, text: "", align: TOP_MID, y: 135, styles: [style_police_date, style_horloge_text_soft] }
 
         # Zone tactile invisible par-dessus l'horloge/date. Deux gestes sur la
         # même tuile, dans l'ordre qui va de soi quand on regarde une horloge :
@@ -193,9 +185,9 @@ lvgl:
             id: btn_clock_calendar_zone
             align: TOP_MID
             x: 0
-            y: 5
+            y: 20
             width: 401
-            height: 200
+            height: 210
             styles: style_invisible
             on_short_click:
               - script.execute: tab5_alarm_open
@@ -225,6 +217,9 @@ lvgl:
         - label: { id: icon_batterie, text: "\U000F0091", align: TOP_LEFT, x: 185, y: 10, text_font: mdi_font_26, styles: style_text_inactive, hidden: true }
 
         # --- Top Right Buttons (même habillage verre que Domo/Discu) ---
+        # Icône seule (05/10/2026). x 855 / 995 / 1135 : bord droit à 1260 comme le
+        # bandeau central ; sans TV, zones_apply_ui() (tab5_zones.cpp) glisse HA et Sys
+        # d'une colonne avec ces mêmes x.
         - button:
             id: btn_control_ha
             align: TOP_LEFT
@@ -241,13 +236,12 @@ lvgl:
               # aucun appareil. Tout est dans tuiles_mode_ha() (tab5_tuiles.cpp).
               - lambda: 'tuiles_mode_ha(!g_central_ctx.ha_mode);'
             widgets:
-              - label: { id: icon_ha, text: "\U000F07D0", align: CENTER, y: -12, text_font: mdi_font_45 }
-              - label: { text: "HA", align: CENTER, y: 22 }
+              - label: { id: icon_ha, text: "\U000F07D0", align: CENTER, text_font: mdi_font_70 }
 
         - button:
             id: btn_control_console
             align: TOP_LEFT
-            x: 999
+            x: 995
             y: 20
             width: 125
             height: 90
@@ -271,13 +265,12 @@ lvgl:
               # Rangée « Thème » (tab5-themes.yaml), dans la langue de l'écran.
               - script.execute: tab5_theme_console
             widgets:
-              - label: { text: "\U000F0717", align: CENTER, y: -12, text_font: mdi_font_45 }
-              - label: { text: "Sys", align: CENTER, y: 22 }
+              - label: { text: "\U000F0717", align: CENTER, text_font: mdi_font_70 }
 
         - button:
             id: btn_control_tv
             align: TOP_LEFT
-            x: 1143
+            x: 1135
             y: 20
             width: 125
             height: 90
@@ -287,8 +280,7 @@ lvgl:
               - lambda: |-
                   animate_popup_open(id(tv_remote_popup));
             widgets:
-              - label: { text: "\U000F07C0", align: CENTER, y: -12, text_font: mdi_font_45 }
-              - label: { text: "TV", align: CENTER, y: 22 }
+              - label: { text: "\U000F07C0", align: CENTER, text_font: mdi_font_70 }
 
         # ==================== MOISTURE SENSORS ====================
         - !include ui_components/moisture_sensors.yaml
@@ -300,9 +292,9 @@ lvgl:
             id: btn_pots_detail_zone
             align: TOP_MID
             x: 0
-            y: 230
-            width: 375
-            height: 80
+            y: 244
+            width: 401
+            height: 70
             styles: style_invisible
             on_long_press:
               - lambda: |-
@@ -411,9 +403,9 @@ lvgl:
                                 flex_align_cross: END
                                 pad_column: 6
                               widgets:
-                                - label: { id: lbl_proc_pluie, text: "Synchronisation...", text_font: roboto_45_b, styles: style_bandeau_text_soft, pad_bottom: 15 }
-                                - label: { id: lbl_pluie_val, text: "", text_font: roboto_45_b, styles: style_bandeau_text_rain_value, pad_bottom: 10 }
-                                - label: { id: lbl_pluie_unit, text: "", text_font: roboto_45_b, styles: style_bandeau_text_soft, pad_bottom: 15 }
+                                - label: { id: lbl_proc_pluie, text: "Synchronisation...", styles: [style_police_date, style_bandeau_text_soft], pad_bottom: 15 }
+                                - label: { id: lbl_pluie_val, text: "", styles: [style_police_date, style_bandeau_text_rain_value], pad_bottom: 10 }
+                                - label: { id: lbl_pluie_unit, text: "", styles: [style_police_date, style_bandeau_text_soft], pad_bottom: 15 }
                     - button:
                         id: btn_rain_tap
                         align: CENTER
@@ -438,7 +430,7 @@ lvgl:
                         y: 0
                         width: ${central_w}
                         text: ""
-                        text_font: roboto_45_b
+                        styles: style_police_date
 
               # Planning Wrapper
               - obj:
@@ -449,7 +441,7 @@ lvgl:
                   styles: style_transparent
                   scrollbar_mode: "OFF"  # le texte déborde en glissant (transition_widgets)
                   widgets:
-                    - label: { id: lbl_planning_text, text: "", align: CENTER, y: 0, text_font: roboto_45_b, styles: style_bandeau_text_soft }
+                    - label: { id: lbl_planning_text, text: "", align: CENTER, y: 0, styles: [style_police_date, style_bandeau_text_soft] }
                     - button:
                         id: btn_planning_tap
                         align: CENTER
@@ -459,11 +451,12 @@ lvgl:
                         on_short_click:
                           - script.execute: tab5_central_panel_next
 
-              # Titre de page previsions (pages horaires / journalieres 2-3, masque sur accueil).
-              # Deux lignes remplies par update_central_forecast_page_ui() (tab5_custom.cpp) :
-              # chapeau "Previsions journalieres · 2/3" + plage "Du mercredi 5 aout au dimanche
-              # 9 aout". Les y (-19 / +13) empilent 26 px (roboto_22) + 38 px (roboto_32_b)
-              # centres dans les 84 px de la carte.
+              # Titre de page previsions (pages horaires / journalieres, masque sur accueil),
+              # rempli par update_central_forecast_page_ui() (tab5_central.cpp) : une ligne,
+              # la plage "Du mercredi 5 aout au dimanche 9 aout", centree, dans la police de
+              # la date (05/10/2026 : plus de chapeau « Previsions journalieres · 2/3 »).
+              # Mode pieces de HA : chapeau « Piece n/N » (roboto_22) + nom de la piece, a
+              # y -26 / +13 : 26 px + 53 px (ligne de Roboto 45) dans les 82 px de la carte.
               # [AI-WARNING] Ce panneau doit rester structurellement IDENTIQUE a ses freres de
               # central_card (planning / pluie / alertes / info) : wrapper SIZE_CONTENT + bouton
               # invisible ${central_w}x80 pose en dernier. Le bouton n'est pas decoratif — c'est lui qui
@@ -479,8 +472,8 @@ lvgl:
                   styles: style_transparent
                   hidden: true
                   widgets:
-                    - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: -19, styles: style_bandeau_text_dim }
-                    - label: { id: lbl_page_title, text: "", align: CENTER, y: 13, styles: [style_police_titre, style_bandeau_text_soft] }
+                    - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: -26, styles: style_bandeau_text_dim }
+                    - label: { id: lbl_page_title, text: "", align: CENTER, y: 0, styles: [style_police_date, style_bandeau_text_soft] }
                     - button:
                         id: btn_page_title_tap
                         align: CENTER
@@ -498,7 +491,7 @@ lvgl:
                   scrollbar_mode: "OFF"  # le texte déborde en glissant (transition_widgets)
                   hidden: true
                   widgets:
-                    - label: { id: lbl_info_text, text: "", align: CENTER, text_font: roboto_45_b, styles: style_bandeau_text_soft }
+                    - label: { id: lbl_info_text, text: "", align: CENTER, styles: [style_police_date, style_bandeau_text_soft] }
                     - button:
                         id: btn_info_tap
                         align: CENTER

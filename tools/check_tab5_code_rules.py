@@ -320,7 +320,7 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("alarm_render.cpp", "alarm_ring_show"): ("icon_alarm_ring",),
     ("alarm_render.cpp", "alarm_render_status_icon"): ("icon_alarm_status",),
     ("tab5_calendar.cpp", "cal_detail_type_style"): ("cal_det_icon_*",),
-    ("tab5_console.cpp", "ui_sync_mute_icons"): ("icon_mute", "icon_assist_mute"),
+    ("tab5_console.cpp", "ui_sync_mute_icon"): ("icon_assist_mute",),
     # Popup Énergie (ADR-0028) : icônes des quatre cartes (energie_carte.yaml, mdi_font_45).
     ("tab5_energie.cpp", "glyphe_carte"): ("energie_icone_*",),
     # Pièces (ADR-0023) : icônes 3.1 du mode héritage (cartes du mode HA, épaules gauches

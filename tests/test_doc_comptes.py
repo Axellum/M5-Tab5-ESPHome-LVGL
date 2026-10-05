@@ -275,17 +275,22 @@ def _langues():
 
 
 def _nombres_ecrits(chemin, motif):
-    """Comme _nombres, mais « 7 », « seven », « Sept »… valent tous un nombre."""
+    """Comme _nombres, mais « 7 », « seven », « Sept », « Twenty-one », « Vingt et un »…
+    valent tous un nombre (jusqu'à 59, _en_lettres)."""
     trouves = re.findall(motif, _lire(chemin))
     assert trouves, f"{chemin.name} : plus rien ne correspond à {motif!r}, adapter le motif"
+    en_lettres = {}
+    for n in range(60):
+        for mot in _en_lettres(n):
+            en_lettres[mot] = n
     nombres = []
     for mot in trouves:
         mot = mot.lower()
         if mot.isdigit():
             nombres.append(int(mot))
         else:
-            assert mot in _UNITES_EN or mot in _UNITES_FR, f"{chemin.name} : nombre inconnu {mot!r}"
-            nombres.append(_UNITES_EN.index(mot) if mot in _UNITES_EN else _UNITES_FR.index(mot))
+            assert mot in en_lettres, f"{chemin.name} : nombre inconnu {mot!r}"
+            nombres.append(en_lettres[mot])
     return nombres
 
 
@@ -314,13 +319,15 @@ def _themes():
     return sorted(f for f in (REPO / "Tab5" / "themes").glob("*.yaml") if not f.name.startswith("_"))
 
 
+# Un nombre en lettres peut avoir un trait d'union (« Twenty-one », « Dix-huit ») ou
+# « et un » (« Vingt et un ») : `(\w+)` n'en lirait que la fin (« one », « un »).
 @pytest.mark.parametrize("chemin, motif", [
-    (README, r"(\w+) themes, light or dark"),
-    (README, r"([\w-]+) thèmes, clairs ou sombres"),
-    (SITE, r'lang="en">(\w+) themes(?:, light or dark)?</span>'),
-    (SITE, r'lang="fr">([\w-]+) thèmes(?:, clairs ou sombres)?</span>'),
-    (REPO / "docs" / "screens.md", r"(\w+) themes, each with a dark and a light mode"),
-    (REPO / "docs" / "screens.md", r"([\w-]+) thèmes, chacun en sombre et en clair"),
+    (README, r"([\w-]+) themes, light or dark"),
+    (README, r"([\w-]+(?: et un)?) thèmes, clairs ou sombres"),
+    (SITE, r'lang="en">([\w-]+) themes(?:, light or dark)?</span>'),
+    (SITE, r'lang="fr">([\w-]+(?: et un)?) thèmes(?:, clairs ou sombres)?</span>'),
+    (REPO / "docs" / "screens.md", r"([\w-]+) themes, each with a dark and a light mode"),
+    (REPO / "docs" / "screens.md", r"([\w-]+(?: et un)?) thèmes, chacun en sombre et en clair"),
     (REPO / "docs" / "installation.md", r"\| Thème \| (\d+) themes"),
     (REPO / "docs" / "installation.md", r"\| Thème \| (\d+) thèmes"),
 ], ids=["readme-en", "readme-fr", "site-en", "site-fr", "ecrans-en", "ecrans-fr",

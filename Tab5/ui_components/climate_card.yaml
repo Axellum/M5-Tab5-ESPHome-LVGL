@@ -1,9 +1,16 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file climate_card.yaml
-# @role Zone clim dashboard : températures Salon/Serre hors carte (même
-#       place absolue), verre `style_meteo_card` uniquement autour de
-#       − / température cible / +.
+# @role Zone clim dashboard : températures Salon/Serre hors carte, verre
+#       `style_clim_carte_page` uniquement autour de − / température cible / +.
+# @architecture_constraint Grille du haut (tab5-lvgl.yaml, 05/10/2026) : la carte occupe la
+#                          colonne de droite sous HA / Sys / TV (855-1260, bord droit
+#                          aligné sur le bandeau central). Tuile verre 405 × 90, bas à y 308
+#                          (25 px au-dessus du bandeau, comme bandeau → titres météo),
+#                          − et + de 62 px à 14 px des quatre bords. Températures centrées
+#                          entre les boutons du haut (y 110) et la tuile (y 218), alignées
+#                          sur le bord gauche du − et le bord droit du +. Valeurs et consigne
+#                          dans la police de la date du thème (style_police_date).
 # @architecture_constraint `current_serre`/`val_temp_salon` sont mis à jour par les services
 #                          `tab5_maj_clim`/helpers C++ (tab5-api-logic.yaml,
 #                          tab5-sensors-domotique.yaml). `clim_target` est aussi poussé par
@@ -20,38 +27,68 @@
 obj:
   id: climate_card
   x: 855
-  y: 125
-  width: 413
-  height: 180
+  y: 110
+  width: 405
+  height: 198
   styles: style_transparent
   scrollbar_mode: "OFF"
   pad_all: 0
   widgets:
 
-    # ═══ Températures pièces — même place, HORS zone verre ═══
-    - label: { id: icon_salon, text: "\U000F04B9", align: TOP_LEFT, x: 18, y: 12, text_font: mdi_font_45, styles: style_text_dim }
-    - label: { id: val_temp_salon, text: "-- °", align: TOP_LEFT, x: 85, y: 17, text_font: roboto_32_b, styles: style_text_temp_max }
-    - label: { id: icon_serre, text: "\U000F002D", align: TOP_RIGHT, x: -124, y: 12, text_font: mdi_font_45, styles: style_text_dim }
-    - label: { id: current_serre, text: "-- °", align: TOP_RIGHT, x: -18, y: 17, text_font: roboto_32_b, styles: style_text_temp_max }
+    # ═══ Températures pièces — HORS zone verre ═══
+    # Icône de 45 px + valeur dans la police de la date du thème (style_police_date,
+    # demande d'Axel du 05/10/2026), en rangées flex : l'icône suit la largeur du texte,
+    # qui change avec la police (« -12.5 ° » : 97 à 145 px selon le thème). Rangées
+    # centrées à y 54 de la carte (164 sur l'écran, milieu de 110-218), alignées sur le
+    # bord gauche du − et le bord droit du + ; 8 px entre icône et valeur : au pire
+    # (police la plus large, serre à -12.5 °) salon 14..192 et serre 193..391 ne se
+    # touchent pas. Une valeur masquée (zones_apply_ui) sort de la rangée (flex).
+    - obj:
+        align: LEFT_MID
+        x: 14
+        y: -45
+        width: SIZE_CONTENT
+        height: SIZE_CONTENT
+        styles: style_transparent
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_cross: CENTER
+          pad_column: 8
+        widgets:
+          - label: { id: icon_salon, text: "\U000F04B9", text_font: mdi_font_45, styles: style_text_dim }
+          - label: { id: val_temp_salon, text: "-- °", styles: [style_police_date, style_text_temp_max] }
+    - obj:
+        align: RIGHT_MID
+        x: -14
+        y: -45
+        width: SIZE_CONTENT
+        height: SIZE_CONTENT
+        styles: style_transparent
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_cross: CENTER
+          pad_column: 8
+        widgets:
+          - label: { id: icon_serre, text: "\U000F002D", text_font: mdi_font_45, styles: style_text_dim }
+          - label: { id: current_serre, text: "-- °", styles: [style_police_date, style_text_temp_max] }
     # Zone tactile sur la température serre → ouvre le sélecteur de jeux Arcade.
     # [26/07/2026] FIX : la zone était posée à côté de ce qu'elle est censée
-    # couvrir. Arithmétique (carte large de 413, alignement TOP_RIGHT donc les
-    # offsets x sont comptés depuis le bord DROIT de la carte) :
-    #   icon_serre     x=-124, police 45  -> occupe ~244..289
-    #   current_serre  x=-18,  police 32b -> occupe ~315..395
-    #   ancienne zone  x=-130, largeur 125 -> couvrait 158..283
-    # => elle ne touchait QUE l'icône, jamais la valeur affichée : taper la
-    # température ne déclenchait rien. La zone couvre désormais 231..403,
-    # c'est-à-dire l'icône ET la valeur, avec une marge de 8 px.
-    # Ne pas l'agrandir davantage : au-delà de 403 on mord sur le bord de la
-    # carte, et sous y=60 on entre dans climate_controls_zone (± et cible).
+    # couvrir (elle ne touchait QUE l'icône, jamais la valeur affichée : taper la
+    # température ne déclenchait rien). Depuis le 05/10/2026 (rangée de 45 px) : la
+    # rangée serre occupe au plus 193..391 et y 24..85 (texte jusqu'à 61 px de haut) ;
+    # la zone couvre 199..399 et y 22..86, sans toucher la rangée salon (≤ 192 dans la
+    # police la plus large) ni climate_controls_zone (± et cible, dès y 108).
     - button:
         id: btn_serre_games
         align: TOP_RIGHT
-        x: -10
-        y: 6
-        width: 172
-        height: 54
+        x: -6
+        y: 22
+        width: 200
+        height: 64
         styles: style_invisible
         on_short_click:
           - script.execute: tab5_arcade_open
@@ -60,9 +97,9 @@ obj:
     - obj:
         id: climate_controls_zone
         align: BOTTOM_MID
-        y: -10
-        width: 340
-        height: 88
+        y: 0
+        width: 405
+        height: 90
         styles: style_clim_carte_page
         scrollbar_mode: "OFF"
         # − et + en verre plein (style_clim_btn, opaque depuis le 01/10/2026) : ils sont
@@ -72,7 +109,8 @@ obj:
               id: clim_target
               text: ""
               align: CENTER
-              text_font: roboto_55_b
+              # Police de la date du thème (05/10/2026, avant roboto_55_b).
+              styles: style_police_date
 
           - button:
               id: btn_clim_target_click
@@ -90,7 +128,7 @@ obj:
           - button:
               id: btn_clim_minus
               align: LEFT_MID
-              x: 14
+              x: 13  # + bordure 1 px de la tuile = 14 px du bord, comme en haut et en bas
               width: 62
               height: 62
               radius: 12
@@ -115,7 +153,7 @@ obj:
           - button:
               id: btn_clim_plus
               align: RIGHT_MID
-              x: -14
+              x: -13
               width: 62
               height: 62
               radius: 12

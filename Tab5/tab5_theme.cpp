@@ -61,12 +61,16 @@ struct Forme {
     int32_t valeur;        // nombre, 0xRRGGBB, ou index dans kRolesFormes
 };
 // Polices d'un thème : index des polices de l'heure, de la date et des titres, puis la
-// géométrie de l'horloge (y des labels des rouleaux, position du « : »).
+// géométrie de l'horloge (y des labels des rouleaux, position du « : », cadres), pour une
+// tuile à bordure de 1 px sur chaque côté (theme_polices() retranche celle du thème).
 struct PolicesTheme {
     uint8_t horloge, date, titre;
     int8_t y;
     int16_t x_deux_points;
     int16_t y_deux_points;
+    int16_t y_date;   // ligne de base de la date au même endroit pour toutes les polices
+    int16_t cadre_y;  // y des cadres : encre des chiffres à la marge du bas des jambages de la date
+    int8_t dx;        // décalage des cadres et du « : » qui centre l'encre de HH:MM
 };
 
 // >>> formes (généré par tools/gen_themes.py depuis Tab5/themes/ et tab5-styles.yaml, ne pas éditer)
@@ -77,7 +81,7 @@ static const Palette* const kPaletteStyle[] = {&UIColor, &UIHorloge, &UIBandeau,
 static constexpr uint32_t Palette::* kRolesFormes[] = {&Palette::GLASS_HI, &Palette::GLASS_HI_PAGE, &Palette::GLASS_LO, &Palette::GLASS_LO_PAGE, &Palette::GLASS_RIM};
 // État compilé (tab5-styles.yaml) de chaque propriété qu'un thème change, reposé avant
 // les formes du thème choisi.
-static constexpr int kNbFormesDefaut = 171;
+static constexpr int kNbFormesDefaut = 172;
 static constexpr Forme kFormesDefaut[] = {
     {0, LV_STYLE_RADIUS, FORME_NOMBRE, 18},  // style_meteo_card_page
     {0, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 1},  // style_meteo_card_page
@@ -210,6 +214,7 @@ static constexpr Forme kFormesDefaut[] = {
     {8, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 89},  // style_clim_btn_page
     {8, LV_STYLE_BORDER_COLOR, FORME_ROLE, 4},  // style_clim_btn_page
     {8, LV_STYLE_BG_COLOR, FORME_ROLE, 1},  // style_clim_btn_page
+    {8, LV_STYLE_BG_GRAD_COLOR, FORME_ROLE, 3},  // style_clim_btn_page
     {8, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_VER},  // style_clim_btn_page
     {8, LV_STYLE_BG_MAIN_STOP, FORME_RETIRE, 0},  // style_clim_btn_page
     {8, LV_STYLE_BG_GRAD_STOP, FORME_RETIRE, 0},  // style_clim_btn_page
@@ -254,7 +259,7 @@ static constexpr Forme kFormesDefaut[] = {
 };
 // Formes de chaque thème, mode sombre puis clair : kFormes[kFormesDebut[2 t + clair] ..
 // kFormesDebut[2 t + clair + 1][.
-static constexpr uint16_t kFormesDebut[] = {0, 0, 0, 99, 198, 324, 450, 475, 488, 530, 573, 587, 600, 658, 716, 728, 734, 760, 786, 872, 969, 1024, 1078, 1130, 1187, 1233, 1279, 1322, 1366, 1393, 1424, 1469, 1515, 1568, 1627, 1679, 1730};
+static constexpr uint16_t kFormesDebut[] = {0, 0, 0, 99, 198, 324, 450, 475, 488, 530, 573, 587, 600, 658, 716, 728, 734, 760, 786, 872, 969, 1024, 1078, 1130, 1187, 1233, 1279, 1322, 1366, 1393, 1424, 1469, 1515, 1568, 1627, 1679, 1730, 1807, 1890, 1919, 1967, 2000, 2042};
 static constexpr Forme kFormes[] = {
     {0, LV_STYLE_RADIUS, FORME_NOMBRE, 24},  // style_meteo_card_page relief_doux (sombre)
     {0, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_meteo_card_page relief_doux (sombre)
@@ -1986,31 +1991,348 @@ static constexpr Forme kFormes[] = {
     {11, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 4},  // style_glass_card pixel (clair)
     {11, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_glass_card pixel (clair)
     {11, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_glass_card pixel (clair)
+    {0, LV_STYLE_RADIUS, FORME_NOMBRE, 28},  // style_meteo_card_page bonbon (sombre)
+    {0, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_meteo_card_page bonbon (sombre)
+    {0, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_meteo_card_page bonbon (sombre)
+    {0, LV_STYLE_SHADOW_WIDTH, FORME_NOMBRE, 1},  // style_meteo_card_page bonbon (sombre)
+    {0, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_meteo_card_page bonbon (sombre)
+    {0, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xFF5EAE},  // style_meteo_card_page bonbon (sombre)
+    {0, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_meteo_card_page bonbon (sombre)
+    {1, LV_STYLE_RADIUS, FORME_NOMBRE, 28},  // style_horloge_page bonbon (sombre)
+    {1, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_horloge_page bonbon (sombre)
+    {1, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_horloge_page bonbon (sombre)
+    {1, LV_STYLE_SHADOW_WIDTH, FORME_NOMBRE, 1},  // style_horloge_page bonbon (sombre)
+    {1, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_horloge_page bonbon (sombre)
+    {1, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xFF5EAE},  // style_horloge_page bonbon (sombre)
+    {1, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_horloge_page bonbon (sombre)
+    {2, LV_STYLE_RADIUS, FORME_NOMBRE, 28},  // style_bandeau_page bonbon (sombre)
+    {2, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_bandeau_page bonbon (sombre)
+    {2, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_bandeau_page bonbon (sombre)
+    {2, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x16050F},  // style_bandeau_page bonbon (sombre)
+    {2, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_bandeau_page bonbon (sombre)
+    {2, LV_STYLE_SHADOW_WIDTH, FORME_NOMBRE, 1},  // style_bandeau_page bonbon (sombre)
+    {2, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_bandeau_page bonbon (sombre)
+    {2, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xFF5EAE},  // style_bandeau_page bonbon (sombre)
+    {2, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_bandeau_page bonbon (sombre)
+    {3, LV_STYLE_RADIUS, FORME_NOMBRE, 28},  // style_clim_carte_page bonbon (sombre)
+    {3, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_clim_carte_page bonbon (sombre)
+    {3, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_clim_carte_page bonbon (sombre)
+    {3, LV_STYLE_SHADOW_WIDTH, FORME_NOMBRE, 1},  // style_clim_carte_page bonbon (sombre)
+    {3, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_clim_carte_page bonbon (sombre)
+    {3, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xFF5EAE},  // style_clim_carte_page bonbon (sombre)
+    {3, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_clim_carte_page bonbon (sombre)
+    {4, LV_STYLE_RADIUS, FORME_NOMBRE, 23},  // style_onglet_jour_page bonbon (sombre)
+    {4, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_onglet_jour_page bonbon (sombre)
+    {4, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x5E1A4B},  // style_onglet_jour_page bonbon (sombre)
+    {4, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_onglet_jour_page bonbon (sombre)
+    {4, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_onglet_jour_page bonbon (sombre)
+    {4, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xFF5EAE},  // style_onglet_jour_page bonbon (sombre)
+    {4, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_onglet_jour_page bonbon (sombre)
+    {5, LV_STYLE_RADIUS, FORME_NOMBRE, 23},  // style_onglet_temp_page bonbon (sombre)
+    {5, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_onglet_temp_page bonbon (sombre)
+    {5, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x5E1A4B},  // style_onglet_temp_page bonbon (sombre)
+    {5, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_onglet_temp_page bonbon (sombre)
+    {5, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_onglet_temp_page bonbon (sombre)
+    {5, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xFF5EAE},  // style_onglet_temp_page bonbon (sombre)
+    {5, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_onglet_temp_page bonbon (sombre)
+    {6, LV_STYLE_RADIUS, FORME_NOMBRE, 28},  // style_meteo_card bonbon (sombre)
+    {6, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_meteo_card bonbon (sombre)
+    {6, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_meteo_card bonbon (sombre)
+    {6, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_meteo_card bonbon (sombre)
+    {6, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xFF5EAE},  // style_meteo_card bonbon (sombre)
+    {6, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_meteo_card bonbon (sombre)
+    {7, LV_STYLE_RADIUS, FORME_NOMBRE, 24},  // style_clim_btn bonbon (sombre)
+    {7, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_clim_btn bonbon (sombre)
+    {7, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_clim_btn bonbon (sombre)
+    {7, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x5E1849},  // style_clim_btn bonbon (sombre)
+    {7, LV_STYLE_BG_GRAD_COLOR, FORME_COULEUR, 0x47123A},  // style_clim_btn bonbon (sombre)
+    {7, LV_STYLE_SHADOW_WIDTH, FORME_NOMBRE, 1},  // style_clim_btn bonbon (sombre)
+    {7, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_clim_btn bonbon (sombre)
+    {7, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xFF5EAE},  // style_clim_btn bonbon (sombre)
+    {7, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_clim_btn bonbon (sombre)
+    {8, LV_STYLE_RADIUS, FORME_NOMBRE, 24},  // style_clim_btn_page bonbon (sombre)
+    {8, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_clim_btn_page bonbon (sombre)
+    {8, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_clim_btn_page bonbon (sombre)
+    {8, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x5E1849},  // style_clim_btn_page bonbon (sombre)
+    {8, LV_STYLE_BG_GRAD_COLOR, FORME_COULEUR, 0x47123A},  // style_clim_btn_page bonbon (sombre)
+    {8, LV_STYLE_SHADOW_WIDTH, FORME_NOMBRE, 1},  // style_clim_btn_page bonbon (sombre)
+    {8, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_clim_btn_page bonbon (sombre)
+    {8, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xFF5EAE},  // style_clim_btn_page bonbon (sombre)
+    {8, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_clim_btn_page bonbon (sombre)
+    {9, LV_STYLE_RADIUS, FORME_NOMBRE, 36},  // style_modal_card bonbon (sombre)
+    {9, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_modal_card bonbon (sombre)
+    {9, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_modal_card bonbon (sombre)
+    {10, LV_STYLE_RADIUS, FORME_NOMBRE, 36},  // style_modal_card_verre bonbon (sombre)
+    {10, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_modal_card_verre bonbon (sombre)
+    {10, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_modal_card_verre bonbon (sombre)
+    {11, LV_STYLE_RADIUS, FORME_NOMBRE, 28},  // style_glass_card bonbon (sombre)
+    {11, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_glass_card bonbon (sombre)
+    {11, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_glass_card bonbon (sombre)
+    {0, LV_STYLE_RADIUS, FORME_NOMBRE, 28},  // style_meteo_card_page bonbon (clair)
+    {0, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_meteo_card_page bonbon (clair)
+    {0, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_meteo_card_page bonbon (clair)
+    {0, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_meteo_card_page bonbon (clair)
+    {0, LV_STYLE_SHADOW_WIDTH, FORME_NOMBRE, 1},  // style_meteo_card_page bonbon (clair)
+    {0, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_meteo_card_page bonbon (clair)
+    {0, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xD4126F},  // style_meteo_card_page bonbon (clair)
+    {0, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_meteo_card_page bonbon (clair)
+    {1, LV_STYLE_RADIUS, FORME_NOMBRE, 28},  // style_horloge_page bonbon (clair)
+    {1, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_horloge_page bonbon (clair)
+    {1, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_horloge_page bonbon (clair)
+    {1, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_horloge_page bonbon (clair)
+    {1, LV_STYLE_SHADOW_WIDTH, FORME_NOMBRE, 1},  // style_horloge_page bonbon (clair)
+    {1, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_horloge_page bonbon (clair)
+    {1, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xD4126F},  // style_horloge_page bonbon (clair)
+    {1, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_horloge_page bonbon (clair)
+    {2, LV_STYLE_RADIUS, FORME_NOMBRE, 28},  // style_bandeau_page bonbon (clair)
+    {2, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_bandeau_page bonbon (clair)
+    {2, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_bandeau_page bonbon (clair)
+    {2, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_bandeau_page bonbon (clair)
+    {2, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x1C0614},  // style_bandeau_page bonbon (clair)
+    {2, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_bandeau_page bonbon (clair)
+    {2, LV_STYLE_SHADOW_WIDTH, FORME_NOMBRE, 1},  // style_bandeau_page bonbon (clair)
+    {2, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_bandeau_page bonbon (clair)
+    {2, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xD4126F},  // style_bandeau_page bonbon (clair)
+    {2, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_bandeau_page bonbon (clair)
+    {3, LV_STYLE_RADIUS, FORME_NOMBRE, 28},  // style_clim_carte_page bonbon (clair)
+    {3, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_clim_carte_page bonbon (clair)
+    {3, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_clim_carte_page bonbon (clair)
+    {3, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_clim_carte_page bonbon (clair)
+    {3, LV_STYLE_SHADOW_WIDTH, FORME_NOMBRE, 1},  // style_clim_carte_page bonbon (clair)
+    {3, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_clim_carte_page bonbon (clair)
+    {3, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xD4126F},  // style_clim_carte_page bonbon (clair)
+    {3, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_clim_carte_page bonbon (clair)
+    {4, LV_STYLE_RADIUS, FORME_NOMBRE, 23},  // style_onglet_jour_page bonbon (clair)
+    {4, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_onglet_jour_page bonbon (clair)
+    {4, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_onglet_jour_page bonbon (clair)
+    {4, LV_STYLE_BG_COLOR, FORME_COULEUR, 0xFFD9E7},  // style_onglet_jour_page bonbon (clair)
+    {4, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_onglet_jour_page bonbon (clair)
+    {4, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_onglet_jour_page bonbon (clair)
+    {4, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xD4126F},  // style_onglet_jour_page bonbon (clair)
+    {4, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_onglet_jour_page bonbon (clair)
+    {5, LV_STYLE_RADIUS, FORME_NOMBRE, 23},  // style_onglet_temp_page bonbon (clair)
+    {5, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_onglet_temp_page bonbon (clair)
+    {5, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_onglet_temp_page bonbon (clair)
+    {5, LV_STYLE_BG_COLOR, FORME_COULEUR, 0xFFD9E7},  // style_onglet_temp_page bonbon (clair)
+    {5, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_onglet_temp_page bonbon (clair)
+    {5, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_onglet_temp_page bonbon (clair)
+    {5, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xD4126F},  // style_onglet_temp_page bonbon (clair)
+    {5, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_onglet_temp_page bonbon (clair)
+    {6, LV_STYLE_RADIUS, FORME_NOMBRE, 28},  // style_meteo_card bonbon (clair)
+    {6, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_meteo_card bonbon (clair)
+    {6, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_meteo_card bonbon (clair)
+    {6, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_meteo_card bonbon (clair)
+    {6, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_meteo_card bonbon (clair)
+    {6, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xD4126F},  // style_meteo_card bonbon (clair)
+    {6, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_meteo_card bonbon (clair)
+    {7, LV_STYLE_RADIUS, FORME_NOMBRE, 24},  // style_clim_btn bonbon (clair)
+    {7, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_clim_btn bonbon (clair)
+    {7, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_clim_btn bonbon (clair)
+    {7, LV_STYLE_BG_GRAD_COLOR, FORME_COULEUR, 0xFFE9F1},  // style_clim_btn bonbon (clair)
+    {7, LV_STYLE_SHADOW_WIDTH, FORME_NOMBRE, 1},  // style_clim_btn bonbon (clair)
+    {7, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_clim_btn bonbon (clair)
+    {7, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xD4126F},  // style_clim_btn bonbon (clair)
+    {7, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_clim_btn bonbon (clair)
+    {8, LV_STYLE_RADIUS, FORME_NOMBRE, 24},  // style_clim_btn_page bonbon (clair)
+    {8, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_clim_btn_page bonbon (clair)
+    {8, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_clim_btn_page bonbon (clair)
+    {8, LV_STYLE_BG_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_clim_btn_page bonbon (clair)
+    {8, LV_STYLE_BG_GRAD_COLOR, FORME_COULEUR, 0xFFE9F1},  // style_clim_btn_page bonbon (clair)
+    {8, LV_STYLE_SHADOW_WIDTH, FORME_NOMBRE, 1},  // style_clim_btn_page bonbon (clair)
+    {8, LV_STYLE_SHADOW_OFFSET_Y, FORME_NOMBRE, 5},  // style_clim_btn_page bonbon (clair)
+    {8, LV_STYLE_SHADOW_COLOR, FORME_COULEUR, 0xD4126F},  // style_clim_btn_page bonbon (clair)
+    {8, LV_STYLE_SHADOW_OPA, FORME_NOMBRE, 255},  // style_clim_btn_page bonbon (clair)
+    {9, LV_STYLE_RADIUS, FORME_NOMBRE, 36},  // style_modal_card bonbon (clair)
+    {9, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_modal_card bonbon (clair)
+    {9, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_modal_card bonbon (clair)
+    {10, LV_STYLE_RADIUS, FORME_NOMBRE, 36},  // style_modal_card_verre bonbon (clair)
+    {10, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_modal_card_verre bonbon (clair)
+    {10, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_modal_card_verre bonbon (clair)
+    {11, LV_STYLE_RADIUS, FORME_NOMBRE, 28},  // style_glass_card bonbon (clair)
+    {11, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 3},  // style_glass_card bonbon (clair)
+    {11, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_glass_card bonbon (clair)
+    {0, LV_STYLE_RADIUS, FORME_NOMBRE, 26},  // style_meteo_card_page sorbet (sombre)
+    {0, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_meteo_card_page sorbet (sombre)
+    {1, LV_STYLE_RADIUS, FORME_NOMBRE, 26},  // style_horloge_page sorbet (sombre)
+    {1, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_horloge_page sorbet (sombre)
+    {2, LV_STYLE_RADIUS, FORME_NOMBRE, 26},  // style_bandeau_page sorbet (sombre)
+    {2, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_bandeau_page sorbet (sombre)
+    {2, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x1C1A2E},  // style_bandeau_page sorbet (sombre)
+    {2, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_bandeau_page sorbet (sombre)
+    {3, LV_STYLE_RADIUS, FORME_NOMBRE, 26},  // style_clim_carte_page sorbet (sombre)
+    {3, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_clim_carte_page sorbet (sombre)
+    {4, LV_STYLE_RADIUS, FORME_NOMBRE, 23},  // style_onglet_jour_page sorbet (sombre)
+    {4, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x4A4670},  // style_onglet_jour_page sorbet (sombre)
+    {4, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_onglet_jour_page sorbet (sombre)
+    {5, LV_STYLE_RADIUS, FORME_NOMBRE, 23},  // style_onglet_temp_page sorbet (sombre)
+    {5, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x4A4670},  // style_onglet_temp_page sorbet (sombre)
+    {5, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_onglet_temp_page sorbet (sombre)
+    {6, LV_STYLE_RADIUS, FORME_NOMBRE, 26},  // style_meteo_card sorbet (sombre)
+    {6, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_meteo_card sorbet (sombre)
+    {7, LV_STYLE_RADIUS, FORME_NOMBRE, 20},  // style_clim_btn sorbet (sombre)
+    {7, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_clim_btn sorbet (sombre)
+    {7, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x3C4F52},  // style_clim_btn sorbet (sombre)
+    {7, LV_STYLE_BG_GRAD_COLOR, FORME_COULEUR, 0x324345},  // style_clim_btn sorbet (sombre)
+    {8, LV_STYLE_RADIUS, FORME_NOMBRE, 20},  // style_clim_btn_page sorbet (sombre)
+    {8, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_clim_btn_page sorbet (sombre)
+    {8, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x3C4F52},  // style_clim_btn_page sorbet (sombre)
+    {8, LV_STYLE_BG_GRAD_COLOR, FORME_COULEUR, 0x324345},  // style_clim_btn_page sorbet (sombre)
+    {9, LV_STYLE_RADIUS, FORME_NOMBRE, 32},  // style_modal_card sorbet (sombre)
+    {10, LV_STYLE_RADIUS, FORME_NOMBRE, 32},  // style_modal_card_verre sorbet (sombre)
+    {11, LV_STYLE_RADIUS, FORME_NOMBRE, 26},  // style_glass_card sorbet (sombre)
+    {0, LV_STYLE_RADIUS, FORME_NOMBRE, 26},  // style_meteo_card_page sorbet (clair)
+    {0, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_meteo_card_page sorbet (clair)
+    {0, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_meteo_card_page sorbet (clair)
+    {0, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_meteo_card_page sorbet (clair)
+    {1, LV_STYLE_RADIUS, FORME_NOMBRE, 26},  // style_horloge_page sorbet (clair)
+    {1, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_horloge_page sorbet (clair)
+    {1, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_horloge_page sorbet (clair)
+    {1, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_horloge_page sorbet (clair)
+    {2, LV_STYLE_RADIUS, FORME_NOMBRE, 26},  // style_bandeau_page sorbet (clair)
+    {2, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_bandeau_page sorbet (clair)
+    {2, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_bandeau_page sorbet (clair)
+    {2, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_bandeau_page sorbet (clair)
+    {2, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x332D55},  // style_bandeau_page sorbet (clair)
+    {2, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_bandeau_page sorbet (clair)
+    {3, LV_STYLE_RADIUS, FORME_NOMBRE, 26},  // style_clim_carte_page sorbet (clair)
+    {3, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_clim_carte_page sorbet (clair)
+    {3, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_clim_carte_page sorbet (clair)
+    {3, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_clim_carte_page sorbet (clair)
+    {4, LV_STYLE_RADIUS, FORME_NOMBRE, 23},  // style_onglet_jour_page sorbet (clair)
+    {4, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_onglet_jour_page sorbet (clair)
+    {4, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_onglet_jour_page sorbet (clair)
+    {4, LV_STYLE_BG_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_onglet_jour_page sorbet (clair)
+    {4, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_onglet_jour_page sorbet (clair)
+    {5, LV_STYLE_RADIUS, FORME_NOMBRE, 23},  // style_onglet_temp_page sorbet (clair)
+    {5, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_onglet_temp_page sorbet (clair)
+    {5, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_onglet_temp_page sorbet (clair)
+    {5, LV_STYLE_BG_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_onglet_temp_page sorbet (clair)
+    {5, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_onglet_temp_page sorbet (clair)
+    {6, LV_STYLE_RADIUS, FORME_NOMBRE, 26},  // style_meteo_card sorbet (clair)
+    {6, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_meteo_card sorbet (clair)
+    {6, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_meteo_card sorbet (clair)
+    {6, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_meteo_card sorbet (clair)
+    {7, LV_STYLE_RADIUS, FORME_NOMBRE, 20},  // style_clim_btn sorbet (clair)
+    {7, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_clim_btn sorbet (clair)
+    {7, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_clim_btn sorbet (clair)
+    {7, LV_STYLE_BG_COLOR, FORME_COULEUR, 0xEAF7F0},  // style_clim_btn sorbet (clair)
+    {7, LV_STYLE_BG_GRAD_COLOR, FORME_COULEUR, 0xD8EFE3},  // style_clim_btn sorbet (clair)
+    {8, LV_STYLE_RADIUS, FORME_NOMBRE, 20},  // style_clim_btn_page sorbet (clair)
+    {8, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_clim_btn_page sorbet (clair)
+    {8, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_clim_btn_page sorbet (clair)
+    {8, LV_STYLE_BG_COLOR, FORME_COULEUR, 0xEAF7F0},  // style_clim_btn_page sorbet (clair)
+    {8, LV_STYLE_BG_GRAD_COLOR, FORME_COULEUR, 0xD8EFE3},  // style_clim_btn_page sorbet (clair)
+    {9, LV_STYLE_RADIUS, FORME_NOMBRE, 32},  // style_modal_card sorbet (clair)
+    {9, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_modal_card sorbet (clair)
+    {10, LV_STYLE_RADIUS, FORME_NOMBRE, 32},  // style_modal_card_verre sorbet (clair)
+    {10, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_modal_card_verre sorbet (clair)
+    {11, LV_STYLE_RADIUS, FORME_NOMBRE, 26},  // style_glass_card sorbet (clair)
+    {11, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_glass_card sorbet (clair)
+    {0, LV_STYLE_RADIUS, FORME_NOMBRE, 10},  // style_meteo_card_page ultraviolet (sombre)
+    {0, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_meteo_card_page ultraviolet (sombre)
+    {1, LV_STYLE_RADIUS, FORME_NOMBRE, 10},  // style_horloge_page ultraviolet (sombre)
+    {1, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_horloge_page ultraviolet (sombre)
+    {2, LV_STYLE_RADIUS, FORME_NOMBRE, 10},  // style_bandeau_page ultraviolet (sombre)
+    {2, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_bandeau_page ultraviolet (sombre)
+    {2, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x0B0A10},  // style_bandeau_page ultraviolet (sombre)
+    {2, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_bandeau_page ultraviolet (sombre)
+    {3, LV_STYLE_RADIUS, FORME_NOMBRE, 10},  // style_clim_carte_page ultraviolet (sombre)
+    {3, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_clim_carte_page ultraviolet (sombre)
+    {4, LV_STYLE_RADIUS, FORME_NOMBRE, 10},  // style_onglet_jour_page ultraviolet (sombre)
+    {4, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_onglet_jour_page ultraviolet (sombre)
+    {4, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x1C1924},  // style_onglet_jour_page ultraviolet (sombre)
+    {4, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_onglet_jour_page ultraviolet (sombre)
+    {5, LV_STYLE_RADIUS, FORME_NOMBRE, 10},  // style_onglet_temp_page ultraviolet (sombre)
+    {5, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_onglet_temp_page ultraviolet (sombre)
+    {5, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x1C1924},  // style_onglet_temp_page ultraviolet (sombre)
+    {5, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_onglet_temp_page ultraviolet (sombre)
+    {6, LV_STYLE_RADIUS, FORME_NOMBRE, 10},  // style_meteo_card ultraviolet (sombre)
+    {6, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_meteo_card ultraviolet (sombre)
+    {7, LV_STYLE_RADIUS, FORME_NOMBRE, 8},  // style_clim_btn ultraviolet (sombre)
+    {7, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_clim_btn ultraviolet (sombre)
+    {7, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x141218},  // style_clim_btn ultraviolet (sombre)
+    {7, LV_STYLE_BG_GRAD_COLOR, FORME_COULEUR, 0x0C0B10},  // style_clim_btn ultraviolet (sombre)
+    {8, LV_STYLE_RADIUS, FORME_NOMBRE, 8},  // style_clim_btn_page ultraviolet (sombre)
+    {8, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_clim_btn_page ultraviolet (sombre)
+    {9, LV_STYLE_RADIUS, FORME_NOMBRE, 14},  // style_modal_card ultraviolet (sombre)
+    {9, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 1},  // style_modal_card ultraviolet (sombre)
+    {10, LV_STYLE_RADIUS, FORME_NOMBRE, 14},  // style_modal_card_verre ultraviolet (sombre)
+    {10, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 1},  // style_modal_card_verre ultraviolet (sombre)
+    {11, LV_STYLE_RADIUS, FORME_NOMBRE, 12},  // style_glass_card ultraviolet (sombre)
+    {11, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 1},  // style_glass_card ultraviolet (sombre)
+    {11, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 127},  // style_glass_card ultraviolet (sombre)
+    {0, LV_STYLE_RADIUS, FORME_NOMBRE, 10},  // style_meteo_card_page ultraviolet (clair)
+    {0, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_meteo_card_page ultraviolet (clair)
+    {0, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0x15121F},  // style_meteo_card_page ultraviolet (clair)
+    {1, LV_STYLE_RADIUS, FORME_NOMBRE, 10},  // style_horloge_page ultraviolet (clair)
+    {1, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_horloge_page ultraviolet (clair)
+    {1, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0x15121F},  // style_horloge_page ultraviolet (clair)
+    {2, LV_STYLE_RADIUS, FORME_NOMBRE, 10},  // style_bandeau_page ultraviolet (clair)
+    {2, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_bandeau_page ultraviolet (clair)
+    {2, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0x15121F},  // style_bandeau_page ultraviolet (clair)
+    {2, LV_STYLE_BG_COLOR, FORME_COULEUR, 0x0B0A10},  // style_bandeau_page ultraviolet (clair)
+    {2, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_bandeau_page ultraviolet (clair)
+    {3, LV_STYLE_RADIUS, FORME_NOMBRE, 10},  // style_clim_carte_page ultraviolet (clair)
+    {3, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_clim_carte_page ultraviolet (clair)
+    {3, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0x15121F},  // style_clim_carte_page ultraviolet (clair)
+    {4, LV_STYLE_RADIUS, FORME_NOMBRE, 10},  // style_onglet_jour_page ultraviolet (clair)
+    {4, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_onglet_jour_page ultraviolet (clair)
+    {4, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0x15121F},  // style_onglet_jour_page ultraviolet (clair)
+    {4, LV_STYLE_BG_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_onglet_jour_page ultraviolet (clair)
+    {4, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_onglet_jour_page ultraviolet (clair)
+    {5, LV_STYLE_RADIUS, FORME_NOMBRE, 10},  // style_onglet_temp_page ultraviolet (clair)
+    {5, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_onglet_temp_page ultraviolet (clair)
+    {5, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0x15121F},  // style_onglet_temp_page ultraviolet (clair)
+    {5, LV_STYLE_BG_COLOR, FORME_COULEUR, 0xFFFFFF},  // style_onglet_temp_page ultraviolet (clair)
+    {5, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_NONE},  // style_onglet_temp_page ultraviolet (clair)
+    {6, LV_STYLE_RADIUS, FORME_NOMBRE, 10},  // style_meteo_card ultraviolet (clair)
+    {6, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_meteo_card ultraviolet (clair)
+    {6, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0x15121F},  // style_meteo_card ultraviolet (clair)
+    {7, LV_STYLE_RADIUS, FORME_NOMBRE, 8},  // style_clim_btn ultraviolet (clair)
+    {7, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_clim_btn ultraviolet (clair)
+    {7, LV_STYLE_BG_COLOR, FORME_COULEUR, 0xF7F6FA},  // style_clim_btn ultraviolet (clair)
+    {7, LV_STYLE_BG_GRAD_COLOR, FORME_COULEUR, 0xECEAF2},  // style_clim_btn ultraviolet (clair)
+    {8, LV_STYLE_RADIUS, FORME_NOMBRE, 8},  // style_clim_btn_page ultraviolet (clair)
+    {8, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_clim_btn_page ultraviolet (clair)
+    {9, LV_STYLE_RADIUS, FORME_NOMBRE, 14},  // style_modal_card ultraviolet (clair)
+    {9, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 1},  // style_modal_card ultraviolet (clair)
+    {9, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_modal_card ultraviolet (clair)
+    {10, LV_STYLE_RADIUS, FORME_NOMBRE, 14},  // style_modal_card_verre ultraviolet (clair)
+    {10, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 1},  // style_modal_card_verre ultraviolet (clair)
+    {10, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_modal_card_verre ultraviolet (clair)
+    {11, LV_STYLE_RADIUS, FORME_NOMBRE, 12},  // style_glass_card ultraviolet (clair)
+    {11, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 1},  // style_glass_card ultraviolet (clair)
+    {11, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_glass_card ultraviolet (clair)
     {0, 0, FORME_RETIRE, 0},  // (fin)
 };
 // Polices de chaque thème : index dans le tableau `polices` que passe
 // tab5_theme_repeindre (0-2 = les Roboto compilées), puis la géométrie de l'horloge
-// (y des labels des rouleaux, position du « : »), tools/police_theme.py.
-static constexpr int kNbPolices = 39;
+// (y des labels des rouleaux, position du « : », y de la date, y et décalage des
+// cadres), tools/police_theme.py. kCadreX : x des cadres h10, h1, m10, m1 (tab5-lvgl.yaml).
+static constexpr int kNbPolices = 48;
+static constexpr int16_t kCadreX[] = {27, 102, 222, 297};
 static constexpr PolicesTheme kPolices[] = {
-    {0, 1, 2, -23, 181, 10},  // ardoise
-    {3, 4, 5, -34, 183, -1},  // relief_doux
-    {0, 1, 2, -23, 181, 10},  // relief_plat
-    {0, 1, 2, -23, 181, 10},  // graphite
-    {6, 7, 8, -36, 180, -3},  // almanach_imprime
-    {0, 1, 2, -23, 181, 10},  // ardoise_douce
-    {3, 4, 5, -34, 183, -1},  // terre_cuite
-    {0, 1, 2, -23, 181, 10},  // craie_et_ardoise
-    {9, 10, 11, -21, 182, 12},  // almanach
-    {12, 13, 14, -32, 180, 1},  // beton_brut
-    {15, 16, 17, -6, 182, 27},  // neon_calme
-    {18, 19, 20, -54, 186, -21},  // zen_sumi
-    {21, 22, 23, -40, 180, -7},  // bento
-    {24, 25, 26, -22, 185, 11},  // obsidienne
-    {27, 28, 29, -36, 184, -3},  // platine_et_or
-    {30, 31, 32, -12, 185, 21},  // signalisation
-    {33, 34, 35, -30, 185, 3},  // capsule
-    {36, 37, 38, -18, 189, 15},  // pixel
+    {0, 1, 2, -23, 181, -6, 135, 17, 0},  // ardoise
+    {3, 4, 5, -34, 183, -17, 131, 17, 0},  // relief_doux
+    {0, 1, 2, -23, 181, -6, 135, 17, 0},  // relief_plat
+    {0, 1, 2, -23, 181, -6, 135, 17, 0},  // graphite
+    {6, 7, 8, -36, 181, -20, 130, 16, 1},  // almanach_imprime
+    {0, 1, 2, -23, 181, -6, 135, 17, 0},  // ardoise_douce
+    {3, 4, 5, -34, 183, -17, 131, 17, 0},  // terre_cuite
+    {0, 1, 2, -23, 181, -6, 135, 17, 0},  // craie_et_ardoise
+    {9, 10, 11, -21, 182, -9, 132, 12, 0},  // almanach
+    {12, 13, 14, -32, 180, -17, 132, 15, 0},  // beton_brut
+    {15, 16, 17, -6, 181, 9, 141, 15, -1},  // neon_calme
+    {18, 19, 20, -54, 186, -39, 124, 15, 0},  // zen_sumi
+    {21, 22, 23, -40, 180, -25, 130, 15, 0},  // bento
+    {24, 25, 26, -22, 185, -5, 133, 17, 0},  // obsidienne
+    {27, 28, 29, -36, 184, -19, 129, 17, 0},  // platine_et_or
+    {30, 31, 32, -12, 185, 0, 137, 12, 0},  // signalisation
+    {33, 34, 35, -30, 185, -15, 133, 15, 0},  // capsule
+    {36, 37, 38, -18, 192, -9, 140, 9, 3},  // pixel
+    {39, 40, 41, -81, 182, -82, 118, -1, -1},  // bonbon
+    {42, 43, 44, -32, 182, -15, 132, 17, 0},  // sorbet
+    {45, 46, 47, -32, 185, -9, 124, 23, -1},  // ultraviolet
 };
 // <<< formes
 
@@ -2046,7 +2368,7 @@ void theme_formes(lv_style_t* const styles[], int n) {
 
 // --- Polices d'affichage ------------------------------------------------------
 void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_titre,
-    esphome::font::Font* const polices[], int n, lv_obj_t* const horloge[9]) {
+    esphome::font::Font* const polices[], int n, lv_obj_t* const horloge[9], lv_obj_t* date) {
     if (n != kNbPolices) {
         ESP_LOGE("tab5.theme", "theme_polices : %d polices reçues, %d attendues (tables périmées)", n, kNbPolices);
         return;
@@ -2063,12 +2385,32 @@ void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_t
         lv_style_set_text_font(styles[role], police->get_lv_font());
         lv_obj_report_style_change(styles[role]);
     }
-    // Rouleaux : l'encre des chiffres centrée dans le cadre de 75 × 104 ; « : » centré
-    // entre les heures et les minutes (tools/police_theme.py, tests/test_polices_themes.py).
+    // Marges égales dans la tuile horloge (05/10/2026) : autant d'air entre son bord
+    // extérieur et l'encre des chiffres en haut qu'entre le bas des jambages de la date
+    // (g, j, p, q, y) et le bas ; l'encre de HH:MM centrée entre la gauche et la droite
+    // (tools/police_theme.py, tests/test_polices_themes.py).
+    // La table suppose une bordure de 1 px sur chaque côté (Ardoise) ; celle du thème va de
+    // 0 à 4 px et ne borde parfois qu'un côté (Relief doux : haut et gauche). Elle déplace le
+    // contenu de la tuile : on la retranche. `space_*` = bordure si son côté est tracé + pad,
+    // la mesure avec laquelle LVGL place les enfants. Appelé après theme_formes() : les
+    // styles de la tuile sont déjà ceux du thème et du mode.
+    lv_obj_t* const tuile = date != nullptr ? lv_obj_get_parent(date) : nullptr;
+    const int32_t dg = tuile ? 1 - lv_obj_get_style_space_left(tuile, LV_PART_MAIN) : 0;
+    const int32_t dh = tuile ? 1 - lv_obj_get_style_space_top(tuile, LV_PART_MAIN) : 0;
+    const int32_t dd = tuile ? 1 - lv_obj_get_style_space_right(tuile, LV_PART_MAIN) : 0;
+    // Rouleaux : l'encre des chiffres centrée dans le cadre de 75 × 104 (y du label), le
+    // cadre (parent du label) posé dans la tuile ; « : » centré entre heures et minutes.
     for (int i = 0; i < 8; i++) {
         if (horloge[i] != nullptr) lv_obj_set_y(horloge[i], p.y);
     }
-    if (horloge[8] != nullptr) lv_obj_set_pos(horloge[8], p.x_deux_points, p.y_deux_points);
+    for (int i = 0; i < 4; i++) {
+        if (horloge[2 * i] == nullptr) continue;
+        lv_obj_set_pos(lv_obj_get_parent(horloge[2 * i]), kCadreX[i] + p.dx + dg, p.cadre_y + dh);
+    }
+    if (horloge[8] != nullptr) lv_obj_set_pos(horloge[8], p.x_deux_points + dg, p.y_deux_points + dh);
+    // Date : centrée sur la tuile (TOP_MID se règle sur le contenu, décalé par une bordure
+    // d'un seul côté), ligne de base à 32 px du bas ; l'ascendante change d'une police à l'autre.
+    if (date != nullptr) lv_obj_align(date, LV_ALIGN_TOP_MID, (dg - dd) / 2, p.y_date + dh);
 }
 
 void theme_console_libelles(lv_obj_t* lbl_theme, lv_obj_t* lbl_mode, int theme, int mode) {

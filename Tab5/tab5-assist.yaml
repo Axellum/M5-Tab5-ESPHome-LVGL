@@ -113,7 +113,7 @@ voice_assistant:
     # version riche (tableaux + image) via le service HA tab5_assist_reponse.
     - lambda: |-
         assist_set_response(id(lbl_assist_response), x, assist_font(id(assist_text_size),
-            id(roboto_32_b), id(roboto_45_b)));
+            id(roboto_32_b)));
   on_end:
     - logger.log: "DEBUG: VOICE_ASSISTANT on_end"
     - lambda: 'assist_set_pipeline_state(id(icon_mic_status), id(lbl_assist_status), AssistState::IDLE);'
@@ -336,8 +336,7 @@ script:
             - lambda: |-
                 show_vocal_response_ui(texte,
                     id(vocal_wrapper), id(lbl_vocal_text),
-                    id(page_title_wrapper), g_central_ctx,
-                    id(roboto_45_b));
+                    id(page_title_wrapper), g_central_ctx);
             - delay: 8s
             - script.execute: tab5_vocal_response_end
 
@@ -389,7 +388,7 @@ script:
     then:
       - lambda: |-
           assist_set_response(id(lbl_assist_response), std::string(tr("Reflexion...")),
-              assist_font(id(assist_text_size), id(roboto_32_b), id(roboto_45_b)));
+              assist_font(id(assist_text_size), id(roboto_32_b)));
           assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::NONE);
       - if:
           condition:
@@ -411,7 +410,7 @@ script:
             lv_obj_set_style_text_color(id(lbl_assist_wake),
                 lv_color_hex(wake ? UIColor.SUCCESS : UIColor.TEXT_DIM), LV_PART_MAIN);
           }
-          ui_sync_mute_icons(id(icon_mute), id(icon_assist_mute), id(system_muted));
+          ui_sync_mute_icon(id(icon_assist_mute), id(system_muted));
           // Même helper que script.tab5_volume_apply : à l'ouverture du popup,
           // les deux sliders et le label % de la console repartent tous de
           // `system_volume` (qui peut avoir bougé depuis HA entre-temps).
@@ -419,7 +418,7 @@ script:
                                  id(slider_assist_volume), id(system_volume));
       - lambda: |-
           assist_apply_text_size(id(lbl_assist_response), id(assist_text_size),
-              id(roboto_32_b), id(roboto_45_b), id(btn_assist_size_s), id(btn_assist_size_l));
+              id(roboto_32_b), id(btn_assist_size_s), id(btn_assist_size_l));
 
   # Choix du cerveau (pipeline HA). discussion=true => LLM libre, false => domotique.
   # Centralise la mise à jour des boutons du dashboard ET du popup (source unique).
@@ -457,4 +456,4 @@ script:
           value: !lambda 'return size;'
       - lambda: |-
           assist_apply_text_size(id(lbl_assist_response), size,
-              id(roboto_32_b), id(roboto_45_b), id(btn_assist_size_s), id(btn_assist_size_l));
+              id(roboto_32_b), id(btn_assist_size_s), id(btn_assist_size_l));

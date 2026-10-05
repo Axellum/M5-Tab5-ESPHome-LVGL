@@ -3,8 +3,11 @@
 
 [AI-CONTEXT] Un thème peut changer la police de trois textes d'affichage : l'heure
 (horloge à rouleaux et écran de sonnerie), la date sous l'horloge et les titres (en-tête
-des popups, titre de la carte centrale). Le reste du texte reste en Roboto : les libellés
-ont été calés en Roboto dans 7 langues.
+des popups). Depuis le 05/10/2026 (demande d'Axel), la police de la date sert aussi aux
+textes de 45 px de l'accueil (températures et consigne de la clim, « Ok Nabu », carte
+centrale et titres des prévisions) et à quelques valeurs des popups : son jeu de glyphes
+couvre l'ASCII et les caractères des 7 langues (jeu_texte()). Le reste du texte reste en
+Roboto : les libellés ont été calés en Roboto dans 7 langues.
 
 Ce script lit les familles citées par `Tab5/themes/*.yaml` (bloc `polices:`), télécharge
 chaque fichier comme ESPHome (API CSS2 de Google Fonts, format truetype), relève ses
@@ -13,9 +16,18 @@ métriques avec fontTools et calcule, pour chaque rôle, la taille et la positio
   - horloge : la plus grande taille (≤ 130 px, celle de Roboto) dont chaque chiffre tient
     dans le cadre de 75 × 104 du rouleau, centré, avec 2 px d'air en haut et en bas, et
     dont le « : » tient entre les deux groupes ; le label est remonté pour centrer
-    l'encre dans le cadre ; le « : » est centré entre les heures et les minutes ;
+    l'encre dans le cadre ; le « : » est centré entre les heures et les minutes. Les
+    cadres sont posés pour que HH:MM soit centré à l'encre près, et que l'encre des
+    chiffres tombe à la même distance du haut de la tuile que le bas des jambages de la
+    date (g, j, p, q, y) du bas de la tuile (demande d'Axel du 05/10/2026 : l'horloge
+    plus haute, l'espace entre l'horloge et la date plus grand) ;
   - date : la plus grande taille (≤ 45 px) dont la date la plus large, dans les 7 langues,
-    tient dans la tuile de l'horloge avec 16 px de marge de chaque côté ;
+    tient dans la tuile de l'horloge avec 16 px de marge de chaque côté ; le label est posé
+    pour que la ligne de base tombe à DATE_BASE, à MARGE px du bas de la tuile ; `jambage`
+    (jambage_visible()) : les px d'encre sous la ligne de base. La marge de l'horloge,
+    en haut comme en bas, vaut donc MARGE - jambage : geometrie_horloge() pose les cadres
+    pour MARGE, tools/gen_themes.py retranche le jambage de la police de date du thème
+    (avec_jambage() ; la police de la date n'est pas toujours celle de l'heure) ;
   - titre : la plus grande taille (≤ 32 px) pour laquelle le plus long des titres de
     popup, dans les 7 langues, n'est pas plus large que le plus long en Roboto 32.
 
@@ -26,11 +38,21 @@ sur un jeu fixe (UNIVERS : Latin-1, Latin étendu A, ponctuation typographique),
 tools/gen_themes.py ne demande à ESPHome que les glyphes présents (ESPHome refuse un
 glyphe absent). Les chiffres et le « : » de l'horloge doivent exister dans la police.
 
+Les marges se mesurent à l'encre VISIBLE : ESPHome compile les polices en bpp 2 et vide
+tout pixel de couverture < 64/255 (esphome/components/font, glyph_to_glyphinfo), si bien
+que la 1re rangée des chiffres ronds de certaines polices disparaît (Roboto, Nunito : 1 px).
+encre_visible() rend les chiffres avec FreeType comme ESPHome pour la situer ; vérifié sur
+la galerie de la CI du 05/10/2026 (17 thèmes sur 17 mesurables au pixel près).
+
+La géométrie est calculée pour une tuile à bordure de 1 px sur chaque côté (Ardoise) :
+theme_polices() (tab5_theme.cpp) retranche la bordure du thème, qui va de 0 à 4 px et
+peut ne border qu'un côté, pour garder MARGE px depuis le bord extérieur de la tuile.
+
 Il écrit `Tab5/themes/_polices.yaml` : les métriques des chiffres et du « : » (pour que
 pytest refasse la géométrie de l'horloge hors ligne, tests/test_polices_themes.py), les
 caractères absents et les tailles retenues. Roboto 700 y figure comme référence : ses
-valeurs doivent redonner la géométrie actuelle (130 px, y -23, « : » à 181 ; date 45 ;
-titres 32). tools/gen_themes.py lit ce fichier. À relancer après l'ajout d'une police à
+valeurs doivent redonner la géométrie actuelle (130 px, y -23, cadres à y 26 avant le
+jambage de la date, « : » à 181 ; date 45 à y 135 ; titres 32). tools/gen_themes.py lit ce fichier. À relancer après l'ajout d'une police à
 un thème (pytest le signale) ou d'un titre de popup nettement plus long.
 
     python tools/police_theme.py   # réseau : télécharge les polices absentes du cache
@@ -59,11 +81,17 @@ REFERENCE = "Roboto@700"
 
 # Géométrie de la tuile horloge (tab5-lvgl.yaml, clock_roller.yaml ; tests/test_horloge.py).
 CADRE_L, CADRE_H = 75, 104
-CADRE_Y = 33
+CADRE_Y = 17                    # y du cadre en Roboto (clock_roller.yaml) : 26 pour MARGE, - jambage 9
+MARGE = 32                      # bord extérieur de la tuile → ligne de base de la date (bas)
+# Jambages de la date : le bas de leur encre est le bas de la ligne de la date ; la marge
+# de l'horloge (haut et bas) vaut MARGE - le jambage de la police de date du thème.
+JAMBAGES = "gjpqy"
 MARGE_MIN = 2
-X_H1, X_M10 = 102, 222          # x des rouleaux h1 et m10 : le « : » vit entre les deux
+X_CADRES = (27, 102, 222, 297)  # x des rouleaux h10, h1, m10, m1 (tab5-lvgl.yaml)
+X_H1, X_M10 = X_CADRES[1], X_CADRES[2]  # le « : » vit entre les deux
 TUILE_UTILE = 399               # 401 - 2 × bordure
 MARGE_DATE = 16
+DATE_BASE = 177                 # ligne de base de la date : 210 (tuile) - MARGE - 1 (bordure)
 MAX_TAILLE = {"horloge": 130, "date": 45, "titre": 32}
 MIN_TAILLE = {"horloge": 80, "date": 30, "titre": 22}
 CHIFFRES = "0123456789"
@@ -71,6 +99,10 @@ CHIFFRES = "0123456789"
 # (dates et titres dans les 7 langues) doit s'y trouver (tools/gen_themes.py le vérifie).
 UNIVERS = ("".join(chr(c) for c in range(0x20, 0x7F)) + "".join(chr(c) for c in range(0xA0, 0x180))
            + "‘’‚“”„–—…€•")
+# Textes en police de date hors de la date (05/10/2026) : l'ASCII imprimable, « ° » et les
+# caractères des 7 langues (Tab5/lang/*.yaml, clés françaises comprises) qui sont dans
+# UNIVERS. Un texte poussé par HA hors de ce jeu est dessiné par roboto_45_b (repli).
+JEU_TEXTE_BASE = "".join(chr(c) for c in range(0x20, 0x7F)) + "°"
 # Titres posés par le C++ (nom d'une pièce, jour du calendrier…) : lettres et chiffres
 # courants en plus des titres connus, pour qu'ils restent dans la police du thème.
 TITRE_BASE = ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !'(),-./:?%°’«»–—…"
@@ -163,15 +195,27 @@ def titres() -> list[str]:
     return sorted(out)
 
 
-def jeux_par_role(liste_dates: list[str] | None = None, liste_titres: list[str] | None = None) -> dict[str, str]:
+def jeu_texte() -> str:
+    """Caractères des textes de 45 px passés dans la police de la date (JEU_TEXTE_BASE)."""
+    vus = set(JEU_TEXTE_BASE)
+    for trad in langues():
+        for cle, valeur in trad.items():
+            vus |= set(str(cle)) | set(str(valeur))
+    return "".join(sorted(vus & set(UNIVERS)))
+
+
+def jeux_par_role(liste_dates: list[str] | None = None, liste_titres: list[str] | None = None,
+                  texte: str | None = None) -> dict[str, str]:
     """Caractères que chaque rôle peut afficher (avant de retirer ceux absents d'une police)."""
     liste_dates = dates() if liste_dates is None else liste_dates
     liste_titres = titres() if liste_titres is None else liste_titres
+    texte = jeu_texte() if texte is None else texte
     return {
         "horloge": CHIFFRES + ":",
         # Les dates d'essai ne prennent que les quantièmes les plus larges : les dix
-        # chiffres s'ajoutent (le 15 ne doit pas être à moitié en Roboto).
-        "date": "".join(sorted(set("".join(liste_dates)) | set(CHIFFRES))),
+        # chiffres s'ajoutent (le 15 ne doit pas être à moitié en Roboto). Puis les
+        # textes de l'accueil et des popups passés dans cette police (jeu_texte()).
+        "date": "".join(sorted(set("".join(liste_dates)) | set(CHIFFRES) | set(texte))),
         "titre": "".join(sorted(set("".join(liste_titres)) | set(TITRE_BASE))),
     }
 
@@ -206,12 +250,70 @@ def mesurer(chemin: Path, caracteres: str) -> dict:
     }
 
 
+def encre_visible(chemin: Path, taille: int, bpp: int = 2) -> dict:
+    """Encre des chiffres telle qu'ESPHome la compile : FreeType à `taille` px, pixels de
+    couverture < 256 / 2^bpp vidés (glyph_to_glyphinfo). Haut et bas des dix chiffres dans
+    le label (depuis sa ligne du haut : ascendante arrondie au pixel supérieur - bitmap_top) ;
+    gauche et droite de chaque chiffre (0 à 9) dans le cadre de CADRE_L px où le label est
+    centré."""
+    import freetype
+
+    face = freetype.Face(str(chemin))
+    face.set_pixel_sizes(taille, 0)
+    asc = -(-face.size.ascender // 64)
+    seuil = 256 // (1 << bpp)
+    haut, bas, gauche, droite = 10 ** 6, -1, [], []
+    for c in CHIFFRES:
+        face.load_char(c, freetype.FT_LOAD_RENDER | freetype.FT_LOAD_NO_BITMAP)
+        g = face.glyph
+        bm, pas = g.bitmap, g.bitmap.pitch
+        pixels = [bm.buffer[y * pas:y * pas + bm.width] for y in range(bm.rows)]
+        lignes = [y for y, r in enumerate(pixels) if max(r, default=0) >= seuil]
+        colonnes = [x for x in range(bm.width) if any(r[x] >= seuil for r in pixels)]
+        x0 = (CADRE_L - (-(-g.metrics.horiAdvance // 64))) // 2
+        haut = min(haut, asc - g.bitmap_top + lignes[0])
+        bas = max(bas, asc - g.bitmap_top + lignes[-1] + 1)
+        gauche.append(x0 + g.bitmap_left + colonnes[0])
+        droite.append(x0 + g.bitmap_left + colonnes[-1] + 1)
+    return {"haut": haut, "bas": bas, "gauche": gauche, "droite": droite}
+
+
+def jambage_visible(chemin: Path, taille: int, bpp: int = 2) -> int:
+    """Px d'encre visible sous la ligne de base des jambages (JAMBAGES) à `taille` px,
+    rendus comme ESPHome (FreeType, pixels de couverture < 256 / 2^bpp vidés) : la plus
+    basse rangée d'encre, ligne de base = 0."""
+    import freetype
+
+    face = freetype.Face(str(chemin))
+    face.set_pixel_sizes(taille, 0)
+    seuil = 256 // (1 << bpp)
+    bas = 0
+    for c in JAMBAGES:
+        if not face.get_char_index(c):
+            continue
+        face.load_char(c, freetype.FT_LOAD_RENDER | freetype.FT_LOAD_NO_BITMAP)
+        g = face.glyph
+        bm, pas = g.bitmap, g.bitmap.pitch
+        lignes = [y for y in range(bm.rows) if max(bm.buffer[y * pas:y * pas + bm.width], default=0) >= seuil]
+        if lignes:
+            bas = max(bas, lignes[-1] + 1 - g.bitmap_top)
+    return bas
+
+
 # --- Calculs (repris tels quels par tests/test_polices_themes.py) -------------------
 
-def geometrie_horloge(m: dict, taille: int) -> dict | None:
+def geometrie_horloge(m: dict, taille: int, visible: dict | None = None) -> dict | None:
     """Arrondis de FreeType, ceux d'ESPHome (tests/test_horloge.py) : ascendante et haut de
     l'encre au pixel supérieur, bas de l'encre au pixel inférieur, avance au plus proche.
-    None si un chiffre ou le « : » ne tient pas."""
+    None si un chiffre ou le « : » ne tient pas.
+
+    y : le label dans son cadre (encre centrée) ; cadre_y : le cadre dans la tuile, l'encre
+    visible des chiffres (`visible`, encre_visible() ; à défaut, celle des métriques) à MARGE
+    px de son bord extérieur (bordure de 1 px ; avec_jambage() remonte ensuite le tout du
+    jambage de la date) ; dx : décalage des cadres et du « : » qui
+    centre l'encre de HH:MM. L'écart gauche / droite dépend des chiffres affichés (un « 1 »
+    est étroit) : avec `visible`, dx rend minimal l'écart moyen sur les heures possibles
+    (dizaine d'heures 0 à 2, minute 0 à 9) ; sans, il centre les chiffres extrêmes."""
     e = taille / m["unites_em"]
     asc = math.ceil(m["ascendante"] * e)
     g = m["glyphes"]
@@ -219,18 +321,51 @@ def geometrie_horloge(m: dict, taille: int) -> dict | None:
     bas = max(asc - math.floor(g[c][3] * e) for c in CHIFFRES)
     if bas - haut > CADRE_H - 2 * MARGE_MIN:
         return None
+    gauche, droite = CADRE_L, 0
     for c in CHIFFRES:
         avance = round(g[c][0] * e)
         x0 = (CADRE_L - avance) // 2          # label centré (TOP_MID) dans le cadre
-        if x0 + math.floor(g[c][1] * e) < 0 or x0 + math.ceil(g[c][2] * e) > CADRE_L:
-            return None
+        gauche = min(gauche, x0 + math.floor(g[c][1] * e))
+        droite = max(droite, x0 + math.ceil(g[c][2] * e))
+    if gauche < 0 or droite > CADRE_L:
+        return None
     fente = X_M10 - (X_H1 + CADRE_L)          # entre les heures et les minutes
     avance_dp = round(g[":"][0] * e)
     if avance_dp > fente:
         return None
     y = round((CADRE_H - (haut + bas)) / 2)
-    return {"taille": taille, "y": y, "x_deux_points": X_H1 + CADRE_L + (fente - avance_dp + 1) // 2,
-            "y_deux_points": CADRE_Y + y}
+    # Encre à gauche : X_CADRES[0] + dx + gauche ; à droite : TUILE_UTILE - (X_CADRES[3] + dx + droite).
+    dx = (TUILE_UTILE - X_CADRES[3] - droite - X_CADRES[0] - gauche) // 2
+    if visible is not None:
+        haut = visible["haut"]
+        dx = min(range(-CADRE_L // 4, CADRE_L // 4 + 1),
+                 key=lambda d: (ecart_horizontal(visible, d), abs(d), d))
+    cadre_y = (MARGE - 1) - (y + haut)
+    return {"taille": taille, "y": y, "cadre_y": cadre_y, "dx": dx,
+            "x_deux_points": X_H1 + CADRE_L + (fente - avance_dp + 1) // 2 + dx,
+            "y_deux_points": cadre_y + y}
+
+
+def avec_jambage(geo: dict, jambage: int) -> dict:
+    """Géométrie de l'horloge d'un thème : cadres et « : » remontés du jambage de sa police
+    de date, pour que l'encre des chiffres tombe à MARGE - jambage du haut de la tuile,
+    autant que le bas des jambages de la date au-dessus du bas de la tuile."""
+    return {**geo, "cadre_y": geo["cadre_y"] - jambage, "y_deux_points": geo["y_deux_points"] - jambage}
+
+
+def ecart_horizontal(visible: dict, dx: int) -> float:
+    """Écart moyen entre la marge gauche et la marge droite de l'encre de HH:MM, sur les
+    dizaines d'heures 0 à 2 et les minutes 0 à 9 (encre_visible(), cadres décalés de dx)."""
+    ecarts = [abs((X_CADRES[0] + dx + visible["gauche"][a])
+                  - (TUILE_UTILE - (X_CADRES[3] + dx + visible["droite"][b])))
+              for a in range(3) for b in range(10)]
+    return sum(ecarts) / len(ecarts)
+
+
+def y_date(m: dict, taille: int) -> int:
+    """y du label de la date (TOP_MID dans la tuile) : sa ligne de base, à l'ascendante
+    arrondie au pixel supérieur comme FreeType, tombe à DATE_BASE."""
+    return DATE_BASE - math.ceil(m["ascendante"] * taille / m["unites_em"])
 
 
 def largeur(m: dict, texte: str, taille: int, ref: dict | None = None) -> int:
@@ -245,16 +380,20 @@ def largeur(m: dict, texte: str, taille: int, ref: dict | None = None) -> int:
     return total
 
 
-def tailles(m: dict, ref: dict, liste_dates: list[str], liste_titres: list[str]) -> dict:
+def tailles(m: dict, ref: dict, liste_dates: list[str], liste_titres: list[str],
+            chemin: Path | None = None) -> dict:
     out = {}
     for t in range(MAX_TAILLE["horloge"], MIN_TAILLE["horloge"] - 1, -1):
-        geo = geometrie_horloge(m, t)
-        if geo:
-            out["horloge"] = geo
+        if geometrie_horloge(m, t):
+            visible = encre_visible(chemin, t) if chemin is not None else None
+            out["horloge"] = geometrie_horloge(m, t, visible)
+            if visible is not None:
+                out["encre"] = visible
             break
     for t in range(MAX_TAILLE["date"], MIN_TAILLE["date"] - 1, -1):
         if max(largeur(m, d, t, ref) for d in liste_dates) <= TUILE_UTILE - 2 * MARGE_DATE:
-            out["date"] = {"taille": t}
+            out["date"] = {"taille": t, "y": y_date(m, t),
+                           "jambage": jambage_visible(chemin, t) if chemin is not None else 0}
             break
     plus_long = max(largeur(ref, s, MAX_TAILLE["titre"]) for s in liste_titres)
     for t in range(MAX_TAILLE["titre"], MIN_TAILLE["titre"] - 1, -1):
@@ -277,21 +416,22 @@ def familles_citees() -> list[str]:
 
 def main() -> int:
     liste_dates, liste_titres = dates(), titres()
-    hors_univers = sorted(set("".join(jeux_par_role(liste_dates, liste_titres).values())) - set(UNIVERS))
+    hors_univers = sorted(set("".join(jeux_par_role(liste_dates, liste_titres, "").values())) - set(UNIVERS))
     if hors_univers:
         print(f"[KO] caractères d'affichage hors du jeu mesuré (UNIVERS) : {''.join(hors_univers)!r}")
         return 1
-    mesures = {}
+    mesures, fichiers = {}, {}
     for cle in familles_citees():
         famille, graisse = cle.rsplit("@", 1)
-        mesures[cle] = mesurer(telecharger(famille, int(graisse)), UNIVERS)
+        fichiers[cle] = telecharger(famille, int(graisse))
+        mesures[cle] = mesurer(fichiers[cle], UNIVERS)
     ref = mesures[REFERENCE]
     sortie = {}
     for cle, m in mesures.items():
         if set(CHIFFRES + ":") & set(m["manquants"]):
             print(f"[KO] {cle} : chiffres ou « : » absents ({m['manquants']!r}), pas d'horloge possible")
             return 1
-        r = tailles(m, ref, liste_dates, liste_titres)
+        r = tailles(m, ref, liste_dates, liste_titres, fichiers[cle])
         sortie[cle] = {
             "sha256": m["sha256"], "unites_em": m["unites_em"], "ascendante": m["ascendante"],
             # Absents du fichier (dans UNIVERS) : dessinés par la Roboto du même rôle.
@@ -299,11 +439,13 @@ def main() -> int:
             **r,
             "chiffres": {c: m["glyphes"][c] for c in CHIFFRES + ":"},
         }
-        print(f"[OK] {cle} : " + ", ".join(f"{k} {v['taille']}" for k, v in r.items())
+        print(f"[OK] {cle} : " + ", ".join(f"{k} {v['taille']}" for k, v in r.items() if "taille" in v)
               + (f" ; absents : {m['manquants']!r}" if m["manquants"] else ""))
     entete = ("# Écrit par tools/police_theme.py — ne pas modifier à la main (ADR-0029, lot 3).\n"
               "# Métriques en unités de police (fontTools, fichier de Google Fonts) ; tailles et\n"
               "# positions en px. chiffres : caractère → [avance, xMin, xMax, yMin, yMax].\n"
+              "# encre : encre visible des chiffres à la taille de l'horloge (FreeType, bpp 2) ;\n"
+              "# date.jambage : px d'encre visible sous la ligne de base de « gjpqy ».\n"
               "# tests/test_polices_themes.py refait la géométrie de l'horloge depuis ces valeurs.\n")
     texte = yaml.safe_dump(sortie, allow_unicode=True, sort_keys=False, width=110,
                            default_flow_style=None)

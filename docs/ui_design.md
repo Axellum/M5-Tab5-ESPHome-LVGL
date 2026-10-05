@@ -51,7 +51,7 @@ Why this matters on an ESP32-P4 with 768 KB of internal SRAM:
 
 In practice, moving from inline to global styles freed roughly 40 KB of PSRAM in this project.
 
-**Themes.** Every shared style reads the active palette (`UIColor`) through a lambda, and the eighteen themes swap the palette, the shapes (radius, borders, shadows) and three display fonts while the screen runs ([ADR-0029](decisions/0029-themes-palette.md)). That is why a widget never carries a colour of its own: ESPHome would freeze it at compile time and no theme could change it.
+**Themes.** Every shared style reads the active palette (`UIColor`) through a lambda, and the twenty-one themes swap the palette, the shapes (radius, borders, shadows) and three display fonts while the screen runs ([ADR-0029](decisions/0029-themes-palette.md)). That is why a widget never carries a colour of its own: ESPHome would freeze it at compile time and no theme could change it.
 
 ---
 
@@ -149,7 +149,7 @@ Pourquoi ça compte sur un ESP32-P4 avec 768 KB de SRAM interne :
 
 En pratique, le passage des styles inline aux styles globaux a libéré environ 40 KB de PSRAM dans ce projet.
 
-**Thèmes.** Chaque style partagé lit la palette active (`UIColor`) par une lambda, et les dix-huit thèmes changent la palette, les formes (rayons, bordures, ombres) et trois polices d'affichage pendant que l'écran tourne ([ADR-0029](decisions/0029-themes-palette.md)). C'est pourquoi un widget ne porte jamais de couleur à lui : ESPHome la figerait à la compilation et aucun thème ne pourrait la changer.
+**Thèmes.** Chaque style partagé lit la palette active (`UIColor`) par une lambda, et les vingt et un thèmes changent la palette, les formes (rayons, bordures, ombres) et trois polices d'affichage pendant que l'écran tourne ([ADR-0029](decisions/0029-themes-palette.md)). C'est pourquoi un widget ne porte jamais de couleur à lui : ESPHome la figerait à la compilation et aucun thème ne pourrait la changer.
 
 ---
 

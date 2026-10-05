@@ -1,0 +1,144 @@
+# Thème « Ultraviolet » : noir pur, cartes à peine plus claires que le noir, filets de
+# 1 px, coins courts (8 à 14), texte courant volontairement atténué : seuls l'heure (Anton,
+# condensée et lourde) et les grandes valeurs sont blanches ; le jour garde l'identité, gris
+# lavande froid, cartes blanches à filet d'encre et bandeau noir.
+#
+# Esquisse « Obsidienne » du 04/10/2026 (Claude Fable 5.1, galerie
+# audit_tab5/themes_2026-10-04 hors dépôt), renommée « Ultraviolet » : le nom « Obsidienne »
+# est déjà celui d'un autre thème (esquisse de Claude Sonnet 5.5, obsidienne.yaml). Convertie
+# au lot 3 des thèmes (ADR-0029) : couleurs, formes (`formes:`) et polices d'affichage
+# (heure, date, titres) ; le reste du texte reste en Roboto. Les rôles absents héritent
+# d'Ardoise (même mode).
+#
+# Non repris : la lueur violette du bouton choisi (ombre de 18 px couleur color_glow, la
+# seule ombre de l'esquisse) : highlight_button_border() pose des propriétés locales, il
+# faudrait du C++ ; ces boutons gardent la bordure d'accent de l'interface. L'interlettrage
+# d'Anton (text_letter_space 2 à 3 px) : `polices:` ne le règle pas. Le texte du bandeau
+# prend le texte courant de la palette sombre (zone sombre), pas color_banner_text.
+nom: Ultraviolet
+ordre: 21
+herite: ardoise
+zones_sombres: [bandeau]
+polices:
+  horloge: "Anton@400"
+  date: "Anton@400"
+  titre: "Anton@400"
+
+formes:
+  style_meteo_card_page:
+    radius: 10
+    sombre: {border_opa: 127}
+    clair: {border_opa: 255, border_color: 0x15121F}
+  style_bandeau_page:
+    bg_color: 0x0B0A10
+    bg_grad_dir: NONE
+  style_onglet_jour_page:
+    bg_grad_dir: NONE
+    sombre: {bg_color: 0x1C1924}
+    clair: {bg_color: 0xFFFFFF}
+  style_onglet_temp_page:
+    bg_grad_dir: NONE
+    sombre: {bg_color: 0x1C1924}
+    clair: {bg_color: 0xFFFFFF}
+  style_clim_btn:
+    radius: 8
+    sombre: {border_opa: 127, bg_color: 0x141218, bg_grad_color: 0x0C0B10}
+    clair: {border_opa: 255, bg_color: 0xF7F6FA, bg_grad_color: 0xECEAF2}
+  style_modal_card:
+    radius: 14
+    border_width: 1
+    clair: {border_opa: 255}
+  style_glass_card:
+    radius: 12
+    border_width: 1
+    sombre: {border_opa: 127}
+    clair: {border_opa: 255}
+
+sombre:
+  BG: 0x000000
+  GLASS_HI: 0x1C1924
+  GLASS_LO: 0x121017
+  GLASS_HI_PAGE: 0x141218
+  GLASS_LO_PAGE: 0x0C0B10
+  GLASS_HI_MODAL: 0x16141C
+  GLASS_LO_MODAL: 0x0E0D12
+  GLASS_RIM: 0x4A4460
+  MODAL_SCRIM: 0x000000
+  ARC_TRACK: 0x343040
+  TEXT_SOFT: 0xCFCBDA
+  TEXT_PRIMARY: 0xF1EEF8
+  TEXT_DIM: 0x8C87A0
+  ICON_MUTED: 0x3A3744
+  TEXT_ON_ACCENT: 0x000000
+  SUCCESS: 0x3DDC84
+  WARNING: 0xFFB224
+  ERROR: 0xFF5468
+  INFO: 0x4FB3FF
+  GOLD: 0xE8C15A
+  INACTIVE: 0x26232F
+  BAR_INACTIVE: 0x26232F
+  ACCENT: 0xA277FF
+  ACCENT_ALT: 0x6F8CFF
+  EARLY: 0xFF8A3D
+  PAST: 0x6F6A80
+  RAIN_VALUE: 0xFF8A3D
+  CLIM_COOL_ACTIVE: 0x4D94FF
+  CLIM_HEAT_ACTIVE: 0xFF4D4D
+  CLIM_HEAT_INACTIVE: 0x8F6060
+  CLIM_OFF_ACTIVE: 0xFFA500
+  CLIM_ECO: 0x4CD964
+  METEO_CELESTIAL: 0xFFC83D
+  METEO_CLOUD: 0xD8D4E4
+  METEO_PRECIP: 0x7FB2FF
+  HUMIDITY_WET: 0x4D94FF
+  TEMP_GRAD_0_POS: 0x4D94FF
+  TEMP_GRAD_14: 0xF1EEF8
+  TEMP_GRAD_24: 0xFF4FC3
+  TEMP_GRAD_35: 0xFF4D4D
+  HUM_GRAD_14: 0xFF4D4D
+  HUM_GRAD_22: 0xFFB224
+  HUM_GRAD_30: 0xF1EEF8
+
+clair:
+  BG: 0xE6E4EC
+  GLASS_HI: 0xFFFFFF
+  GLASS_LO: 0xF3F1F8
+  GLASS_HI_PAGE: 0xF7F6FA
+  GLASS_LO_PAGE: 0xECEAF2
+  GLASS_HI_MODAL: 0xFBFAFD
+  GLASS_LO_MODAL: 0xEFEDF4
+  GLASS_RIM: 0x15121F
+  MODAL_SCRIM: 0xC9C5D6
+  ARC_TRACK: 0xD5D1E0
+  TEXT_SOFT: 0x1A1724
+  TEXT_PRIMARY: 0x0E0B16
+  TEXT_DIM: 0x5B5670
+  ICON_MUTED: 0xB2ADC2
+  SUCCESS: 0x117A48
+  WARNING: 0xA85F00
+  ERROR: 0xC8102E
+  INFO: 0x2F6FE0
+  GOLD: 0x9A6B00
+  INACTIVE: 0xC9C5D6
+  BAR_INACTIVE: 0xC9C5D6
+  ACCENT: 0x5B2EE6
+  ACCENT_ALT: 0x3B55D6
+  EARLY: 0xC2410C
+  PAST: 0x6E6886
+  RAIN_VALUE: 0xC2410C
+  CLIM_COOL_ACTIVE: 0x1E5FD6
+  CLIM_HEAT_ACTIVE: 0xD1203A
+  CLIM_HEAT_INACTIVE: 0x9C7480
+  CLIM_OFF_ACTIVE: 0xC2410C
+  CLIM_ECO: 0x117A48
+  METEO_CELESTIAL: 0xC25E00
+  METEO_CLOUD: 0x5F5A74
+  METEO_PRECIP: 0x2F6FE0
+  HUMIDITY_WET: 0x1E5FD6
+  TEMP_GRAD_0_POS: 0x1E5FD6
+  TEMP_GRAD_14: 0x1A1724
+  TEMP_GRAD_24: 0xB5179E
+  TEMP_GRAD_35: 0xC8102E
+  HUM_GRAD_14: 0xC8102E
+  HUM_GRAD_22: 0xA85F00
+  HUM_GRAD_30: 0x1A1724
