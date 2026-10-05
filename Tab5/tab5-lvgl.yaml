@@ -46,10 +46,10 @@ lvgl:
 
         # --- Grille du haut (05/10/2026) ---
         # Trois colonnes à 20 px des bords de l'écran, comme le bandeau central : gauche
-        # 20-425 (Domo, micro, Discu, Ok Nabu), horloge 439-840, droite 855-1260 (HA,
-        # Sys, TV, températures, clim) ; 15 px entre les boutons, 14 px à gauche de
-        # l'horloge et 15 px à droite (1280 − 2 × 20 − 2 × 405 = 430 = 401 + 29 : la
-        # tuile centrée tombe à x 439).
+        # 20-425 (Domo, micro, Discu, Ok Nabu), horloge 440-841, droite 855-1260 (HA,
+        # Sys, TV, températures, clim) ; 15 px entre les boutons, 15 px à gauche de
+        # l'horloge et 14 px à droite (1280 − 2 × 20 − 2 × 405 = 430 = 401 + 29 : LVGL
+        # centre la tuile à 640 − 401 / 2 = 440, mesuré sur le rendu du 05/10/2026).
         # Hauts alignés à y 20 (horloge, HA / Sys / TV) ; bas alignés à y 308 (Ok Nabu,
         # pied des icônes des pots, tuile clim), 25 px au-dessus du bandeau central :
         # le même écart qu'entre le bandeau et les titres des cartes météo (417 → 442).
