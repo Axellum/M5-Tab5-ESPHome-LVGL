@@ -201,3 +201,27 @@ def test_deux_points_a_la_hauteur_des_chiffres():
     rouleaux, deux_points, _ = _enfants(_tuile())
     y_label = rouleaux[0]["widgets"][0]["label"]["y"]
     assert deux_points["y"] == rouleaux[0]["y"] + y_label
+
+
+ASCENDANTE_45 = 42         # Roboto 700 à 45 px (lbl_date) : ceil(1900 × 45 / 2048)
+CHIFFRE_0_X = (95, 1080)   # xMin, xMax du « 0 » (Tab5/themes/_polices.yaml)
+
+
+def test_marges_egales_dans_la_tuile():
+    # 05/10/2026 : autant d'air au-dessus de l'encre des chiffres que sous la ligne de
+    # base de la date, et à peu près autant sur les côtés (l'encre de HH:MM dépend des
+    # chiffres et de la police : 30 à 34 px pour « 00:00 » en Nunito ou en Roboto).
+    px = _px()
+    tuile = _tuile()
+    rouleaux, _, date = _enfants(tuile)
+    _, styles = _styles()
+    bordure = styles[tuile["styles"]]["border_width"]
+    y_label = rouleaux[0]["widgets"][0]["label"]["y"]
+    haut = bordure + rouleaux[0]["y"] + y_label + px["encre_haut"]
+    bas = tuile["height"] - (bordure + date["y"] + ASCENDANTE_45)
+    assert haut == bas, f"marges inégales : {haut} px en haut, {bas} px en bas"
+    e = _styles()[0]["roboto_130_b"]["size"] / UNITES_EM
+    gauche = bordure + rouleaux[0]["x"] + math.floor(CHIFFRE_0_X[0] * e)
+    droite = tuile["width"] - (bordure + rouleaux[3]["x"] + math.ceil(CHIFFRE_0_X[1] * e))
+    for cote, marge in (("gauche", gauche), ("droite", droite)):
+        assert abs(marge - haut) <= 2, f"marge {cote} de {marge} px pour {haut} px en haut et en bas"

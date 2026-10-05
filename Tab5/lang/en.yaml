@@ -73,8 +73,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Home screen, forecast, central card --------------------------------------
 "Synchronisation...": "Syncing..."
-"Domo": "Home"
-"Discu": "Chat"
 "Journee": "Today"
 "Demain": "Tomorrow"
 "2 Jours": "2 Days"
@@ -138,9 +136,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Actif": "Active"
 "Inactif": "Inactive"
 "Confirmer ?": "Confirm?"
-"Moy:": "Avg:"
-"Pot %d": "Pot %d"
-"Pot -": "Pot -"
 "Hors ligne": "Offline"
 "À arroser !": "Needs water!"
 "Bientôt sec": "Drying soon"

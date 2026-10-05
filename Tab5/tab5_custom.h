@@ -369,13 +369,11 @@ void refresh_console_status_row_ui(lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_
 void ui_sync_volume_widgets(lv_obj_t* slider_console, lv_obj_t* lbl_console_pct,
     lv_obj_t* slider_assist, float volume);
 
-// Repose l'etat muet/non-muet sur les DEUX icones qui le representent : celle
-// de la barre du dashboard (`icon_mute`) et celle du popup assistant
-// (`icon_assist_mute`). Elles peignent le meme `system_muted` : chaque endroit
-// qui le change doit passer par ici, sinon l'une des deux ment (couper le son
-// depuis le popup laissait l'icone du dashboard sur « son actif », et
-// inversement).
-void ui_sync_mute_icons(lv_obj_t* icon_main, lv_obj_t* icon_assist, bool muted);
+// Repose l'etat muet/non-muet sur l'icone qui le represente : celle du popup
+// assistant (`icon_assist_mute`), seule depuis le retrait du bouton Muet de
+// l'accueil (05/10/2026). Chaque endroit qui change `system_muted` passe par ici,
+// sinon l'icone ment jusqu'a la prochaine ouverture du popup.
+void ui_sync_mute_icon(lv_obj_t* icon_assist, bool muted);
 
 // Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).
 // Factorise depuis l'interval 2s de tab5-sensors-diagnostics.yaml (Phase 3, #T164).
@@ -409,10 +407,10 @@ namespace MeteoIcon {
     static constexpr const char* CLOUD        = "\xEF\x80\x95"; // cloudy / default
 }
 
-// Structure pour les 4 slots UI d'humidite plantes (triés dynamiquement)
+// Structure pour les 4 slots UI d'humidite plantes (triés dynamiquement) : l'icône
+// seule depuis le 05/10/2026 (plus de libellé « Pot X » / « Moy: » dessous).
 struct MoistureSlotUI {
     lv_obj_t* icon_lbl;
-    lv_obj_t* val_lbl;
 };
 
 // Tri dynamique : prend 5 valeurs, affiche les 2 plus secs + médiane + plus humide
@@ -1089,9 +1087,9 @@ void theme_formes(lv_style_t* const styles[], int n);
 // Polices d'affichage du thème choisi (`polices:`) sur les styles style_police_horloge,
 // style_police_date et style_police_titre, et géométrie de l'horloge : `polices` = les
 // polices compilées (0-2 : les Roboto des trois rôles, puis celles des thèmes), `horloge`
-// = les 8 labels des rouleaux puis le « : ».
+// = les 8 labels des rouleaux puis le « : », `date` = la date sous l'horloge.
 void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_titre,
-    esphome::font::Font* const polices[], int n, lv_obj_t* const horloge[9]);
+    esphome::font::Font* const polices[], int n, lv_obj_t* const horloge[9], lv_obj_t* date);
 // Vrai une fois le démarrage fini (tous les setup et les on_boot synchrones) : les
 // modules ont leurs widgets et peuvent repeindre.
 bool theme_ui_pret();

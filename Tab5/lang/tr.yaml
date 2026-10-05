@@ -93,8 +93,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Home screen, forecast, central card --------------------------------------
 "Synchronisation...": "Eşitleniyor..."
-"Domo": "Ev"
-"Discu": "Sohbet"
 "Journee": "Bugün"
 "Demain": "Yarın"
 "2 Jours": "2 Gün"
@@ -160,9 +158,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Actif": "Etkin"
 "Inactif": "Pasif"
 "Confirmer ?": "Onayla?"
-"Moy:": "Ort:"
-"Pot %d": "Saksı %d"
-"Pot -": "Saksı -"
 "Hors ligne": "Çevrimdışı"
 "À arroser !": "Sulanmalı!"
 "Bientôt sec": "Kurumak üzere"

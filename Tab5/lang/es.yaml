@@ -85,8 +85,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Home screen, forecast, central card --------------------------------------
 "Synchronisation...": "Sincronizando..."
-"Domo": "Casa"
-"Discu": "Chat"
 "Journee": "Hoy"
 "Demain": "Mañana"
 "2 Jours": "2 días"
@@ -138,9 +136,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # comme le « Ok Nabu : ON » de l'assistant ; « Apagado » (128 px) tenait tout juste.
 # « Ouvert » / « Fermé » ne servent qu'au volet (la persiana) : féminin. « Moviendo »
 # (141 px) reste plus étroit que le « Mouvement » français (171 px) du même onglet.
-# « Pot %d » : case de 90 px en roboto_22 (moisture_sensors.yaml) où « Maceta 5 »
-# (91 px) déborde ; « Planta 5 » (81 px) y tient (dans les 4 cases depuis le 03/10/2026 :
-# la carte rognait avant de 8 et 11 px les cases du bord).
 "PC Bureau": "PC oficina"
 "Volet": "Persiana"
 "Chambre": "Dormitorio"
@@ -164,9 +159,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Actif": "Activo"
 "Inactif": "Inactivo"
 "Confirmer ?": "¿Confirmar?"
-"Moy:": "Media:"
-"Pot %d": "Planta %d"
-"Pot -": "Planta -"
 "Hors ligne": "Sin conexión"
 "À arroser !": "¡Regar!"
 "Bientôt sec": "Casi seca"

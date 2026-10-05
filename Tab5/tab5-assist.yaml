@@ -411,7 +411,7 @@ script:
             lv_obj_set_style_text_color(id(lbl_assist_wake),
                 lv_color_hex(wake ? UIColor.SUCCESS : UIColor.TEXT_DIM), LV_PART_MAIN);
           }
-          ui_sync_mute_icons(id(icon_mute), id(icon_assist_mute), id(system_muted));
+          ui_sync_mute_icon(id(icon_assist_mute), id(system_muted));
           // Même helper que script.tab5_volume_apply : à l'ouverture du popup,
           // les deux sliders et le label % de la console repartent tous de
           // `system_volume` (qui peut avoir bougé depuis HA entre-temps).

@@ -175,8 +175,10 @@ font:
   # lourds qu'en bpp 4. Ajouter une icône à l'écran = l'ajouter à la police de son
   # widget ; la retirer de l'écran = la retirer d'ici (règle 7, sinon pytest échoue).
 
-  # 70 px — icônes des 5 interrupteurs (switches_card.yaml) et cloche de la sonnerie
-  # (alarm_ring_overlay.yaml). S'appelait mdi_font_80 (l'id mentait), renommé le 08/09/2026.
+  # 70 px — icônes des 5 interrupteurs (switches_card.yaml), cloche de la sonnerie
+  # (alarm_ring_overlay.yaml) et, depuis le 05/10/2026, boutons de l'accueil (Domo,
+  # Discu, HA, Sys, TV : icône seule, encre de 58 px dans 90 px de haut) et rangée des
+  # pots, à la même taille. S'appelait mdi_font_80 (l'id mentait), renommé le 08/09/2026.
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_70
     size: 70
@@ -184,8 +186,16 @@ font:
     glyphs:
       - "\U000F0020"  # alarm
       - "\U000F02E3"  # bed
+      - "\U000F02E5"  # pot
       - "\U000F0379"  # monitor
       - "\U000F04B9"  # sofa
+      - "\U000F06A9"  # robot
+      - "\U000F0717"  # snowflake
+      - "\U000F07C0"  # desktop-classic
+      - "\U000F07D0"  # home-assistant
+      - "\U000F09F1"  # flower-tulip
+      - "\U000F0D08"  # flower-poppy
+      - "\U000F0E66"  # sprout
       - "\U000F1051"  # led-strip-variant
       - "\U000F111E"  # window-shutter-open
       # >>> tuiles
@@ -290,7 +300,8 @@ font:
       - "\U000F0238"  # fire (feux de forêt, alertes MeteoAlarm — lot 4c)
 
   # 45 px — boutons des popups : télécommande TV, clim (modes, préréglages), lumière,
-  # réveil, rangée des plantes, en-tête de la sélection des consoles, cartes du popup Énergie.
+  # réveil, en-tête de la sélection des consoles, cartes du popup Énergie ; températures
+  # de l'accueil (salon, serre).
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_45
     size: 45
@@ -310,7 +321,6 @@ font:
       - "\U000F0297"  # gamepad-variant
       - "\U000F02DC"  # home
       - "\U000F02E3"  # bed
-      - "\U000F02E5"  # pot
       - "\U000F032A"  # leaf
       - "\U000F035C"  # menu
       - "\U000F0374"  # minus
@@ -327,12 +337,7 @@ font:
       - "\U000F059D"  # weather-windy
       - "\U000F068E"  # alarm-snooze
       - "\U000F0717"  # snowflake
-      - "\U000F07C0"  # desktop-classic
-      - "\U000F07D0"  # home-assistant
-      - "\U000F09F1"  # flower-tulip
-      - "\U000F0D08"  # flower-poppy
       - "\U000F0D3E"  # transmission-tower (popup Énergie, réseau sans échange)
-      - "\U000F0E66"  # sprout
       - "\U000F0E79"  # arrow-up-down
       - "\U000F1051"  # led-strip-variant
       - "\U000F146D"  # fan-chevron-down
@@ -480,7 +485,6 @@ font:
       - "\U000F0581"  # volume-off
       - "\U000F05A9"  # wifi
       - "\U000F05CB"  # account-voice
-      - "\U000F06A9"  # robot
       - "\U000F06E8"  # lightbulb-on
       - "\U000F0717"  # snowflake
       - "\U000F07C0"  # desktop-classic

@@ -83,8 +83,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # --- Home screen, forecast, central card --------------------------------------
 # « Dem. » : pas de « Dom. » (déjà domenica + « . » dans la même liste) : « Domani ».
 "Synchronisation...": "Sincronizzo..."
-"Domo": "Casa"
-"Discu": "Chat"
 "Journee": "Oggi"
 "Demain": "Domani"
 "2 Jours": "2 giorni"
@@ -151,9 +149,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Actif": "Attivo"
 "Inactif": "Inattivo"
 "Confirmer ?": "Confermare?"
-"Moy:": "Media:"
-"Pot %d": "Vaso %d"
-"Pot -": "Vaso -"
 "Hors ligne": "Offline"
 "À arroser !": "Da annaffiare!"
 "Bientôt sec": "Quasi secco"
