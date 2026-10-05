@@ -1,0 +1,22 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 3× par volet_popup.yaml :
+# un bouton de la carte COMMANDES du popup du volet (Ouvrir, Stop, Fermer), qui envoie
+# sa commande à la tuile du popup par popup_volet_commande() (tab5_tuiles.cpp).
+# vars : y (position dans la carte), commande (ouvrir, arreter ou fermer : commandes de
+#        tuile de l'ADR-0023, rien d'autre), icon (glyphe MDI en mdi_font_45 : il doit
+#        figurer dans la liste `glyphs` de mdi_font_45), icon_style (style de rôle
+#        style_text_*, la couleur suit le thème), text (le mot, traduit au démarrage).
+# Créé le 05/10/2026 (popup du volet, discussion #278).
+# ═══════════════════════════════════════════════════════
+button:
+  align: TOP_LEFT
+  x: 22
+  y: ${y}
+  width: 342
+  height: 158
+  styles: style_clim_btn
+  on_short_click:
+    - lambda: 'popup_volet_commande("${commande}");'
+  widgets:
+    - label: { text: "${icon}", align: LEFT_MID, x: 36, text_font: mdi_font_45, styles: "${icon_style}" }
+    - label: { text: "${text}", align: LEFT_MID, x: 110, text_font: roboto_32_b }

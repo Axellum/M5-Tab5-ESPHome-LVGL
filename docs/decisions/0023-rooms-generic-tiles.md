@@ -49,7 +49,7 @@ In every text field `|` becomes `/` and `;` becomes `,` (as today).
 |---|---|---|---|
 | `lum` | `light` | `basculer` | light popup (the room's `lum` tiles) |
 | `int` | `switch`, `input_boolean`, `fan`, `humidifier`, `automation` | `basculer` (`allumer` only, with `o`) | — |
-| `vol` | `cover`, `valve` | moving → `arreter` (pause); else the chosen direction (`ouvrir` / `fermer`, see below) | the other one of `ouvrir`/`fermer` |
+| `vol` | `cover`, `valve` | moving → `arreter` (pause); else the chosen direction (`ouvrir` / `fermer`, see below) | shutter popup (update 2026-10-05, below); with `k`, the other one of `ouvrir`/`fermer` |
 | `med` | `media_player` | `basculer` | TV remote, with `t` |
 | `act` | `scene`, `script`, `button`, `input_button` | `lancer` | — |
 | `cap` | `sensor`, `number`, `input_number` | — (read only) | — |
@@ -77,6 +77,7 @@ All tiles after the definitions; one tile when its entity changes (state, bright
 |---|---|---|
 | `basculer`, `allumer`, `eteindre` | '' | `lum`, `int`, `med` |
 | `ouvrir`, `fermer`, `arreter` | '' | `vol` |
+| `position` | 0-100 | `vol` (shutter popup: the slider, on release) |
 | `lancer` | '' | `act` |
 | `luminosite` / `luminosite_pct` / `couleur` | 0-255 / 10-100 / colour name | `lum` (popup) |
 | `pR` + `eteindre` | '' | every `lum` tile of room `R` (popup « Tout éteindre ») |
@@ -127,3 +128,12 @@ A `cli` tile without `m` used to do nothing on tap. [ADR-0027](0027-climate-per-
 ## Update — 2026-10-05: devices on the forecast become optional
 
 A user found the shoulders above the weather icons unnecessary ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)). A device setting, the switch **Tab5 Appareils sur la météo** (`tab5-ha-controls.yaml`, `entity_category: config`, `RESTORE_DEFAULT_ON`), chooses. On (the default), nothing changes. Off, weather mode draws every page as a page without devices: no shoulders, no invisible action button, no shutter-direction flip by the tile's title, no 3.x shutter-direction button. HA mode does not read the setting: the « HA » button still shows the rooms and their cards, and a card's title still flips its shutter. The switch takes effect at once (`tuiles_appareils_meteo()`, `tab5_tuiles.cpp`) and survives reboots; the themes (ADR-0029) repaint through the same path, so they keep it. The setting is the tablet's, not the blueprint's: HA keeps pushing the states either way.
+
+## Update — 2026-10-05: the shutter popup (long press)
+
+Asked in [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) (« the level of the blinds should be in a popup window, and the buttons too »). The long press of a `vol` tile used to send the other one of `ouvrir` / `fermer`, with nothing on screen saying where the shutter stood.
+
+- **Gesture.** The long press of a `vol` tile (weather shoulders or HA-mode card) opens the **shutter popup** on that tile. With option `k` it keeps the old long press (the other direction, confirmed by a second press): the popup never bypasses a confirmation. Option `r`: nothing, as before. Legacy mode (3.x shutter): unchanged. The tap and the title flip are unchanged.
+- **Popup** (`ui_components/volet_popup.yaml`, `tab5_tuiles.cpp`, registered as « Volet », shared chrome of [ADR-0009](0009-modal-shell-header.md)): title = the tile's name; left card, the position in large digits (« 45 % ») and the state in words below; right card, **Ouvrir / Stop / Fermer**, which send the tile's own `ouvrir` / `arreter` / `fermer`. A 0-100 % slider shows only when the position is known (a value 0-100 with an online state): it sends **`position`** with the value **on release only**, never while dragging. Unknown position (`nan`: a shutter that does not report one; `-1`: the simulated shutter's « Partiel ») shows the state alone, in words: « Ouvert », « Fermé », « Partiel » (stopped half-way), « En mouvement », « Hors ligne ». The popup follows its tile's pushes while it is open (never under the finger).
+- **Home Assistant.** The blueprint's « Tuile : position » branch calls `cover.set_cover_position` / `valve.set_valve_position` on the entity of **that tile only** (the same whitelist as the other tile commands, behind the same origin guard), when the entity can set a position (`supported_features` bit 4, `SET_POSITION`), with the value clamped to 0-100. The simulated shutter of `optionnel/volet_serre_tracking.yaml` has no real position: its states now push `nan` at both ends of the course instead of 100 / 0 (the arrow flips the same way), so the tablet gives it no slider, and the branch skips it.
+- **Compatibility.** An older blueprint has no branch for `position`: the slider then does nothing (the buttons still work). An older firmware never sends it.

@@ -4,6 +4,30 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Un popup pour les volets (appui long)
+
+Demandé dans la [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) :
+la position d'un volet et ses boutons, dans une fenêtre.
+- **Appui long d'une tuile volet** (épaules météo ou carte du mode HA) : un popup au nom de
+  la tuile, au lieu d'envoyer l'autre sens. À gauche, la position en grand (« 45 % ») et
+  l'état en mots (« Ouvert », « Fermé », « Partiel », « En mouvement », « Hors ligne ») ; un
+  curseur 0-100 %, seulement si la position est connue, qui n'envoie qu'au relâcher. À
+  droite, **Ouvrir / Stop / Fermer**. Le popup suit le volet tant qu'il est ouvert. Avec
+  l'option « Confirmer » (`k`), l'appui long garde l'ancien geste (la confirmation n'est
+  jamais contournée) ; « Lecture seule » : rien ; mode héritage 3.x : inchangé.
+- **Home Assistant** : nouvelle commande de tuile `position` (0-100), que le blueprint
+  « Tab5 — emplacements » passe à `cover.set_cover_position` / `valve.set_valve_position`
+  sur l'entité de **cette tuile** seulement, si elle sait régler une position ; une valeur
+  illisible ne part pas. **Réimporter le blueprint** : l'ancien ignore `position` (le curseur
+  ne ferait rien, les boutons marchent). Le volet à course simulée
+  (`optionnel/volet_serre_tracking.yaml`) pousse désormais `nan` au bout de sa course au
+  lieu de 100 / 0 (même flèche) : pas de curseur pour lui, il ne sait pas régler une position.
+- Textes de l'écran dans les sept langues (traductions faites par une IA, non relues).
+- ADR-0023 (mise à jour du 05/10/2026), `docs/screens.md`, `Tab5/README.md` ; tests du
+  geste, des commandes et de la branche du blueprint (`tests/test_tuiles_firmware.py`,
+  `tests/test_tuiles_blueprint.py`) ; deux captures du rendu hors tablette (`volet`,
+  `volet-sans-position`).
+
 ### 2026-10-05 — Batterie de la tablette : une prise quand il n'y en a pas
 
 Demandé par husyildiz ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) :
