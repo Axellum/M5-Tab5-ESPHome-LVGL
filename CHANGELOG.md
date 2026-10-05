@@ -62,16 +62,19 @@ fichiers de la 3.6.0 ignore l'automatisation des thèmes, qui ne trouve pas d'in
 
 ### Mesures de la version
 
-- Image du firmware : +917 504 o par rapport à la 3.5.0 publiée (compilation
-  `build-min` de la CI, ESPHome 2026.9.0 comme les binaires publiés : 4 329 472 o contre
-  3 411 968 o) ; thèmes (palettes, formes, polices), popup Énergie et batterie compris,
-  dont 263 536 o pour les polices de date complètes de #323 (ASCII et caractères des
-  sept langues). RAM statique : 180 200 o (40,5 %).
+- Image du firmware : +983 040 o par rapport à la 3.5.0 (binaires OTA publiés, `st7123` :
+  4 395 008 o contre 3 411 968 o) ; thèmes (palettes, formes, polices), popup Énergie et
+  batterie compris, dont 263 536 o pour les polices de date complètes de #323 (ASCII et
+  caractères des sept langues). RAM statique : 180 720 o (40,6 %), lue dans le journal de
+  la publication. Corrigé après le tag : le CHANGELOG de `v3.6.0` donne +917 504 o et
+  180 200 o, ceux de la compilation `build-min` de la CI, sans le composant de mise à jour
+  des binaires publiés.
 - Sur la tablette de l'auteur : le code des thèmes (`main` à 544d4b2) a tourné du 05/10
   à 6 h 24 jusqu'au flash suivant sans redémarrer, temps de boucle lu dans Home Assistant
   39 ms en « Relief doux », contre 16 ms avant les ombres ; le code de cette version
   (build local avec #323 et #325, même code hors numéro de version) y tourne depuis le
-  05/10 à 10 h 53, écran rallumé seul après le flash. Le dessin d'un écran entier passe de
+  05/10 à 10 h 53, écran rallumé seul après le flash ; la 3.6.0 publiée y est installée
+  depuis le 05/10 à 12 h 01 (OTA, version lue par l'API). Le dessin d'un écran entier passe de
   134 à 169 ms avec les ombres de « Relief plat » (mesuré le 04/10) ; la carte centrale
   qui tourne n'a pas ralenti.
 - Rendu hors tablette (CI) : les vingt et un thèmes dans les deux modes, bascule à chaud
