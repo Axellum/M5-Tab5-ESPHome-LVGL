@@ -142,7 +142,7 @@ obj:
                     text: "-- %"
                     align: TOP_MID
                     y: 192
-                    text_font: roboto_45_b
+                    styles: style_police_date
 
                 # Raccourcis de niveau (gabarit light_level_btn.yaml : arc = pct × 255 / 100, arrondi)
                 - !include { file: light_level_btn.yaml, vars: { x: 22, pct: "10", arc: 26 } }

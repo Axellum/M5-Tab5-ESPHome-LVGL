@@ -61,13 +61,16 @@ struct Forme {
     int32_t valeur;        // nombre, 0xRRGGBB, ou index dans kRolesFormes
 };
 // Polices d'un thème : index des polices de l'heure, de la date et des titres, puis la
-// géométrie de l'horloge (y des labels des rouleaux, position du « : »).
+// géométrie de l'horloge (y des labels des rouleaux, position du « : », cadres), pour une
+// tuile à bordure de 1 px sur chaque côté (theme_polices() retranche celle du thème).
 struct PolicesTheme {
     uint8_t horloge, date, titre;
     int8_t y;
     int16_t x_deux_points;
     int16_t y_deux_points;
-    int16_t y_date;  // ligne de base de la date au même endroit pour toutes les polices
+    int16_t y_date;   // ligne de base de la date au même endroit pour toutes les polices
+    int16_t cadre_y;  // y des cadres des rouleaux : l'encre des chiffres à 32 px du haut
+    int8_t dx;        // décalage des cadres et du « : » qui centre l'encre de HH:MM
 };
 
 // >>> formes (généré par tools/gen_themes.py depuis Tab5/themes/ et tab5-styles.yaml, ne pas éditer)
@@ -1991,27 +1994,29 @@ static constexpr Forme kFormes[] = {
 };
 // Polices de chaque thème : index dans le tableau `polices` que passe
 // tab5_theme_repeindre (0-2 = les Roboto compilées), puis la géométrie de l'horloge
-// (y des labels des rouleaux, position du « : », y de la date), tools/police_theme.py.
+// (y des labels des rouleaux, position du « : », y de la date, y et décalage des
+// cadres), tools/police_theme.py. kCadreX : x des cadres h10, h1, m10, m1 (tab5-lvgl.yaml).
 static constexpr int kNbPolices = 39;
+static constexpr int16_t kCadreX[] = {27, 102, 222, 297};
 static constexpr PolicesTheme kPolices[] = {
-    {0, 1, 2, -23, 181, 4, 135},  // ardoise
-    {3, 4, 5, -34, 183, -7, 131},  // relief_doux
-    {0, 1, 2, -23, 181, 4, 135},  // relief_plat
-    {0, 1, 2, -23, 181, 4, 135},  // graphite
-    {6, 7, 8, -36, 180, -9, 130},  // almanach_imprime
-    {0, 1, 2, -23, 181, 4, 135},  // ardoise_douce
-    {3, 4, 5, -34, 183, -7, 131},  // terre_cuite
-    {0, 1, 2, -23, 181, 4, 135},  // craie_et_ardoise
-    {9, 10, 11, -21, 182, 6, 132},  // almanach
-    {12, 13, 14, -32, 180, -5, 132},  // beton_brut
-    {15, 16, 17, -6, 182, 21, 141},  // neon_calme
-    {18, 19, 20, -54, 186, -27, 124},  // zen_sumi
-    {21, 22, 23, -40, 180, -13, 130},  // bento
-    {24, 25, 26, -22, 185, 5, 133},  // obsidienne
-    {27, 28, 29, -36, 184, -9, 129},  // platine_et_or
-    {30, 31, 32, -12, 185, 15, 137},  // signalisation
-    {33, 34, 35, -30, 185, -3, 133},  // capsule
-    {36, 37, 38, -18, 189, 9, 140},  // pixel
+    {0, 1, 2, -23, 181, 4, 135, 27, 0},  // ardoise
+    {3, 4, 5, -34, 182, -7, 131, 27, -1},  // relief_doux
+    {0, 1, 2, -23, 181, 4, 135, 27, 0},  // relief_plat
+    {0, 1, 2, -23, 181, 4, 135, 27, 0},  // graphite
+    {6, 7, 8, -36, 181, -10, 130, 26, 1},  // almanach_imprime
+    {0, 1, 2, -23, 181, 4, 135, 27, 0},  // ardoise_douce
+    {3, 4, 5, -34, 182, -7, 131, 27, -1},  // terre_cuite
+    {0, 1, 2, -23, 181, 4, 135, 27, 0},  // craie_et_ardoise
+    {9, 10, 11, -21, 182, 2, 132, 23, 0},  // almanach
+    {12, 13, 14, -32, 180, -6, 132, 26, 0},  // beton_brut
+    {15, 16, 17, -6, 182, 18, 141, 24, 0},  // neon_calme
+    {18, 19, 20, -54, 187, -28, 124, 26, 1},  // zen_sumi
+    {21, 22, 23, -40, 181, -16, 130, 24, 1},  // bento
+    {24, 25, 26, -22, 185, 6, 133, 28, 0},  // obsidienne
+    {27, 28, 29, -36, 183, -7, 129, 29, -1},  // platine_et_or
+    {30, 31, 32, -12, 187, 10, 137, 22, 2},  // signalisation
+    {33, 34, 35, -30, 185, -4, 133, 26, 0},  // capsule
+    {36, 37, 38, -18, 193, -4, 140, 14, 4},  // pixel
 };
 // <<< formes
 
@@ -2064,15 +2069,31 @@ void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_t
         lv_style_set_text_font(styles[role], police->get_lv_font());
         lv_obj_report_style_change(styles[role]);
     }
-    // Rouleaux : l'encre des chiffres centrée dans le cadre de 75 × 104 ; « : » centré
-    // entre les heures et les minutes (tools/police_theme.py, tests/test_polices_themes.py).
+    // Marges égales dans la tuile horloge (05/10/2026) : 32 px entre son bord extérieur
+    // et l'encre des chiffres en haut, la ligne de base de la date en bas, l'encre de HH:MM
+    // centrée entre la gauche et la droite (tools/police_theme.py, tests/test_polices_themes.py).
+    // La table suppose une bordure de 1 px sur chaque côté (Ardoise) ; celle du thème va de
+    // 0 à 4 px et ne borde parfois qu'un côté (Relief doux : haut et gauche). Elle déplace le
+    // contenu de la tuile : on la retranche. `space_*` = bordure si son côté est tracé + pad,
+    // la mesure avec laquelle LVGL place les enfants. Appelé après theme_formes() : les
+    // styles de la tuile sont déjà ceux du thème et du mode.
+    lv_obj_t* const tuile = date != nullptr ? lv_obj_get_parent(date) : nullptr;
+    const int32_t dg = tuile ? 1 - lv_obj_get_style_space_left(tuile, LV_PART_MAIN) : 0;
+    const int32_t dh = tuile ? 1 - lv_obj_get_style_space_top(tuile, LV_PART_MAIN) : 0;
+    const int32_t dd = tuile ? 1 - lv_obj_get_style_space_right(tuile, LV_PART_MAIN) : 0;
+    // Rouleaux : l'encre des chiffres centrée dans le cadre de 75 × 104 (y du label), le
+    // cadre (parent du label) posé dans la tuile ; « : » centré entre heures et minutes.
     for (int i = 0; i < 8; i++) {
         if (horloge[i] != nullptr) lv_obj_set_y(horloge[i], p.y);
     }
-    if (horloge[8] != nullptr) lv_obj_set_pos(horloge[8], p.x_deux_points, p.y_deux_points);
-    // Date : sa ligne de base à 32 px du bas de la tuile, la marge du haut et des côtés
-    // (tools/police_theme.py, DATE_BASE) ; l'ascendante change d'une police à l'autre.
-    if (date != nullptr) lv_obj_set_y(date, p.y_date);
+    for (int i = 0; i < 4; i++) {
+        if (horloge[2 * i] == nullptr) continue;
+        lv_obj_set_pos(lv_obj_get_parent(horloge[2 * i]), kCadreX[i] + p.dx + dg, p.cadre_y + dh);
+    }
+    if (horloge[8] != nullptr) lv_obj_set_pos(horloge[8], p.x_deux_points + dg, p.y_deux_points + dh);
+    // Date : centrée sur la tuile (TOP_MID se règle sur le contenu, décalé par une bordure
+    // d'un seul côté), ligne de base à 32 px du bas ; l'ascendante change d'une police à l'autre.
+    if (date != nullptr) lv_obj_align(date, LV_ALIGN_TOP_MID, (dg - dd) / 2, p.y_date + dh);
 }
 
 void theme_console_libelles(lv_obj_t* lbl_theme, lv_obj_t* lbl_mode, int theme, int mode) {

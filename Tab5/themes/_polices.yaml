@@ -7,7 +7,7 @@ Roboto@700:
   unites_em: 2048
   ascendante: 1900
   manquants: ''
-  horloge: {taille: 130, y: -23, x_deux_points: 181, y_deux_points: 4}
+  horloge: {taille: 130, y: -23, cadre_y: 27, dx: 0, x_deux_points: 181, y_deux_points: 4}
   date: {taille: 45, y: 135}
   titre: {taille: 32}
   chiffres:
@@ -27,7 +27,7 @@ Barlow Condensed@800:
   unites_em: 1000
   ascendante: 1000
   manquants: ĔĕĬĲĸĿŉŎſ
-  horloge: {taille: 130, y: -32, x_deux_points: 180, y_deux_points: -5}
+  horloge: {taille: 130, y: -32, cadre_y: 26, dx: 0, x_deux_points: 180, y_deux_points: -6}
   date: {taille: 45, y: 132}
   titre: {taille: 32}
   chiffres:
@@ -47,7 +47,7 @@ Barlow Semi Condensed@700:
   unites_em: 1000
   ascendante: 1000
   manquants: ĔĕĬĲĸĿŉŎſ
-  horloge: {taille: 130, y: -32, x_deux_points: 179, y_deux_points: -5}
+  horloge: {taille: 130, y: -32, cadre_y: 26, dx: 1, x_deux_points: 180, y_deux_points: -6}
   date: {taille: 45, y: 132}
   titre: {taille: 32}
   chiffres:
@@ -67,7 +67,7 @@ Bodoni Moda@700:
   unites_em: 2000
   ascendante: 2250
   manquants: ­
-  horloge: {taille: 120, y: -36, x_deux_points: 184, y_deux_points: -9}
+  horloge: {taille: 120, y: -36, cadre_y: 29, dx: -1, x_deux_points: 183, y_deux_points: -7}
   date: {taille: 45, y: 126}
   titre: {taille: 28}
   chiffres:
@@ -87,7 +87,7 @@ Familjen Grotesk@700:
   unites_em: 1200
   ascendante: 1230
   manquants: Ĳĳŉſ
-  horloge: {taille: 130, y: -40, x_deux_points: 180, y_deux_points: -13}
+  horloge: {taille: 130, y: -40, cadre_y: 24, dx: 1, x_deux_points: 181, y_deux_points: -16}
   date: {taille: 45, y: 130}
   titre: {taille: 32}
   chiffres:
@@ -107,7 +107,7 @@ Figtree@700:
   unites_em: 1000
   ascendante: 950
   manquants: ­ĔĕĨĩĬĭĸĿŀŉŎŏŢţŦŧŨũſ
-  horloge: {taille: 128, y: -25, x_deux_points: 180, y_deux_points: 2}
+  horloge: {taille: 128, y: -25, cadre_y: 26, dx: 0, x_deux_points: 180, y_deux_points: 1}
   date: {taille: 45, y: 134}
   titre: {taille: 31}
   chiffres:
@@ -127,7 +127,7 @@ Fraunces@700:
   unites_em: 2000
   ascendante: 1956
   manquants: ŉſ
-  horloge: {taille: 116, y: -21, x_deux_points: 182, y_deux_points: 6}
+  horloge: {taille: 116, y: -21, cadre_y: 23, dx: 0, x_deux_points: 182, y_deux_points: 2}
   date: {taille: 45, y: 132}
   titre: {taille: 28}
   chiffres:
@@ -147,7 +147,7 @@ Fredoka@700:
   unites_em: 1000
   ascendante: 974
   manquants: ­ĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĦħĨĩĪīĬĭĮįİĲĳĴĵĶķĸĹĺĻļĽľĿŀŃńŅņŇňŉŊŋŌōŎŏŐőŔŕŖŗŘřŚśŜŝŞşŢţŤťŦŧŨũŪūŬŭŮůŰűŲųŴŵŶŷŹźŻżſ
-  horloge: {taille: 130, y: -30, x_deux_points: 185, y_deux_points: -3}
+  horloge: {taille: 130, y: -30, cadre_y: 26, dx: 0, x_deux_points: 185, y_deux_points: -4}
   date: {taille: 45, y: 133}
   titre: {taille: 32}
   chiffres:
@@ -167,7 +167,7 @@ Gloock@400:
   unites_em: 1000
   ascendante: 975
   manquants: ­ĈĉĔĕĜĝĤĥĨĩĬĭĴĵĸĿŀŉŎŏŜŝŢţŦŧŨũſ
-  horloge: {taille: 125, y: -22, x_deux_points: 185, y_deux_points: 5}
+  horloge: {taille: 125, y: -22, cadre_y: 28, dx: 0, x_deux_points: 185, y_deux_points: 6}
   date: {taille: 45, y: 133}
   titre: {taille: 30}
   chiffres:
@@ -187,7 +187,7 @@ IBM Plex Serif@700:
   unites_em: 1000
   ascendante: 1025
   manquants: ſ
-  horloge: {taille: 130, y: -36, x_deux_points: 180, y_deux_points: -9}
+  horloge: {taille: 130, y: -36, cadre_y: 26, dx: 1, x_deux_points: 181, y_deux_points: -10}
   date: {taille: 45, y: 130}
   titre: {taille: 29}
   chiffres:
@@ -207,7 +207,7 @@ Jersey 10@400:
   unites_em: 1400
   ascendante: 1125
   manquants: ¤¦¬­±²³µ¹¼½¾ĈĉĔĕĜĝĤĥĨĩĬĭĴĵĸĿŀŉŎŏŜŝŢţŦŧŨũſ
-  horloge: {taille: 130, y: -18, x_deux_points: 189, y_deux_points: 9}
+  horloge: {taille: 130, y: -18, cadre_y: 14, dx: 4, x_deux_points: 193, y_deux_points: -4}
   date: {taille: 45, y: 140}
   titre: {taille: 32}
   chiffres:
@@ -227,7 +227,7 @@ Manrope@700:
   unites_em: 2000
   ascendante: 2132
   manquants: ĔĕĬĭĲĳĸĿŀŉŎŏſ
-  horloge: {taille: 130, y: -40, x_deux_points: 177, y_deux_points: -13}
+  horloge: {taille: 130, y: -40, cadre_y: 28, dx: 0, x_deux_points: 177, y_deux_points: -12}
   date: {taille: 45, y: 129}
   titre: {taille: 31}
   chiffres:
@@ -247,7 +247,7 @@ Murecho@300:
   unites_em: 1000
   ascendante: 1160
   manquants: ĬĳĴŉŬſ
-  horloge: {taille: 130, y: -54, x_deux_points: 186, y_deux_points: -27}
+  horloge: {taille: 130, y: -54, cadre_y: 26, dx: 1, x_deux_points: 187, y_deux_points: -28}
   date: {taille: 45, y: 124}
   titre: {taille: 32}
   chiffres:
@@ -267,7 +267,7 @@ Murecho@400:
   unites_em: 1000
   ascendante: 1160
   manquants: ĬĳĴŉŬſ
-  horloge: {taille: 130, y: -54, x_deux_points: 185, y_deux_points: -27}
+  horloge: {taille: 130, y: -54, cadre_y: 26, dx: 1, x_deux_points: 186, y_deux_points: -28}
   date: {taille: 45, y: 124}
   titre: {taille: 32}
   chiffres:
@@ -287,7 +287,7 @@ Nunito@800:
   unites_em: 1000
   ascendante: 1011
   manquants: ĳſ
-  horloge: {taille: 130, y: -34, x_deux_points: 183, y_deux_points: -7}
+  horloge: {taille: 130, y: -34, cadre_y: 27, dx: -1, x_deux_points: 182, y_deux_points: -7}
   date: {taille: 45, y: 131}
   titre: {taille: 29}
   chiffres:
@@ -307,7 +307,7 @@ Overpass@700:
   unites_em: 2000
   ascendante: 1766
   manquants: ''
-  horloge: {taille: 123, y: -14, x_deux_points: 185, y_deux_points: 13}
+  horloge: {taille: 123, y: -14, cadre_y: 24, dx: 2, x_deux_points: 187, y_deux_points: 10}
   date: {taille: 45, y: 137}
   titre: {taille: 31}
   chiffres:
@@ -327,7 +327,7 @@ Overpass@800:
   unites_em: 2000
   ascendante: 1766
   manquants: ''
-  horloge: {taille: 119, y: -12, x_deux_points: 185, y_deux_points: 15}
+  horloge: {taille: 119, y: -12, cadre_y: 22, dx: 2, x_deux_points: 187, y_deux_points: 10}
   date: {taille: 45, y: 137}
   titre: {taille: 31}
   chiffres:
@@ -347,7 +347,7 @@ Oxanium@700:
   unites_em: 1000
   ascendante: 790
   manquants: ĈĉĊċĔĕĜĝĠġĤĥĦħĨĩĬĭĲĳĴĵĸĿŀŉŊŋŎŏŜŝŦŧŨũŬŭŴŵŶŷſ
-  horloge: {taille: 130, y: -6, x_deux_points: 182, y_deux_points: 21}
+  horloge: {taille: 130, y: -6, cadre_y: 24, dx: 0, x_deux_points: 182, y_deux_points: 18}
   date: {taille: 45, y: 141}
   titre: {taille: 31}
   chiffres:

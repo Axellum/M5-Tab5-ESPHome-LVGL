@@ -116,7 +116,8 @@ obj:
                 # --- Taille du texte de réponse (remontee : la barre de son est
                 # maintenant ancree au bas du panneau, voir plus bas) ---
                 # Deux tailles depuis l'essai D8 du 26/09/2026 : A- (roboto_32_b) et A+
-                # (roboto_45_b), qui reprennent la largeur de l'ancienne rangée A- / A / A+.
+                # (police de la date du thème, 45 px, depuis le 05/10/2026), qui reprennent
+                # la largeur de l'ancienne rangée A- / A / A+.
                 - label: { text: "Taille du texte", align: TOP_LEFT, x: 16, y: 276, styles: style_text_dim }
                 - button:
                     id: btn_assist_size_s
@@ -262,7 +263,10 @@ obj:
                           id: lbl_assist_response
                           width: 100%
                           text: ""
+                          # A- : roboto_32_b posée par le C++ ; A+ : la police de la date
+                          # du thème, par ce style (assist_font(), tab5_assist.cpp).
                           text_font: roboto_32_b
+                          styles: style_police_date
                       - image:
                           id: assist_img_widget
                           src: assist_response_image

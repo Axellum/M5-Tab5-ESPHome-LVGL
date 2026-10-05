@@ -23,7 +23,7 @@ obj:
     - label: { id: "icon_pot_d${pot_idx}", text: "${icon}", align: TOP_MID, y: 58, text_font: mdi_font_56, styles: style_text_dim }
 
     # Humidité du sol (grande valeur) + statut arrosage (OK / Bientôt sec / À arroser / Hors ligne)
-    - label: { id: "lbl_pot_d${pot_idx}_moist", text: "--", align: TOP_MID, y: 130, text_font: roboto_45_b, styles: style_text_dim }
+    - label: { id: "lbl_pot_d${pot_idx}_moist", text: "--", align: TOP_MID, y: 130, styles: [style_police_date, style_text_dim] }
     - label: { id: "lbl_pot_d${pot_idx}_status", text: "", align: TOP_MID, y: 188, styles: style_text_dim }
 
     # ─── Fertilité (conductivité EC, µS/cm) ───

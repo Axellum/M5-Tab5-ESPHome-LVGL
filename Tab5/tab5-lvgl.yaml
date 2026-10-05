@@ -123,12 +123,14 @@ lvgl:
             on_short_click:
               - switch.toggle: tab5_wake_word_active
             widgets:
-              - label: { id: lbl_ok_nabu, text: "Ok Nabu: ON", align: CENTER, text_font: roboto_45_b, styles: style_text_success }
+              - label: { id: lbl_ok_nabu, text: "Ok Nabu: ON", align: CENTER, styles: [style_police_date, style_text_success] }
 
         # --- Centre: Horloge ---
         # Marges égales (05/10/2026) : 32 px entre le bord de la tuile et l'encre des
         # chiffres en haut, la ligne de base de la date en bas ; sur les côtés, l'encre
-        # de HH:MM tombe à 30-34 px du bord selon la police et les chiffres.
+        # de HH:MM est centrée (à 28-40 px du bord selon la police et les chiffres).
+        # Valeurs pour Roboto et une bordure de 1 px : theme_polices() (tab5_theme.cpp)
+        # repose cadres, « : » et date pour la police et la bordure du thème (05/10/2026).
         - obj:
             id: clock_tile
             align: TOP_MID
@@ -399,9 +401,9 @@ lvgl:
                                 flex_align_cross: END
                                 pad_column: 6
                               widgets:
-                                - label: { id: lbl_proc_pluie, text: "Synchronisation...", text_font: roboto_45_b, styles: style_bandeau_text_soft, pad_bottom: 15 }
-                                - label: { id: lbl_pluie_val, text: "", text_font: roboto_45_b, styles: style_bandeau_text_rain_value, pad_bottom: 10 }
-                                - label: { id: lbl_pluie_unit, text: "", text_font: roboto_45_b, styles: style_bandeau_text_soft, pad_bottom: 15 }
+                                - label: { id: lbl_proc_pluie, text: "Synchronisation...", styles: [style_police_date, style_bandeau_text_soft], pad_bottom: 15 }
+                                - label: { id: lbl_pluie_val, text: "", styles: [style_police_date, style_bandeau_text_rain_value], pad_bottom: 10 }
+                                - label: { id: lbl_pluie_unit, text: "", styles: [style_police_date, style_bandeau_text_soft], pad_bottom: 15 }
                     - button:
                         id: btn_rain_tap
                         align: CENTER
@@ -426,7 +428,7 @@ lvgl:
                         y: 0
                         width: ${central_w}
                         text: ""
-                        text_font: roboto_45_b
+                        styles: style_police_date
 
               # Planning Wrapper
               - obj:
@@ -437,7 +439,7 @@ lvgl:
                   styles: style_transparent
                   scrollbar_mode: "OFF"  # le texte déborde en glissant (transition_widgets)
                   widgets:
-                    - label: { id: lbl_planning_text, text: "", align: CENTER, y: 0, text_font: roboto_45_b, styles: style_bandeau_text_soft }
+                    - label: { id: lbl_planning_text, text: "", align: CENTER, y: 0, styles: [style_police_date, style_bandeau_text_soft] }
                     - button:
                         id: btn_planning_tap
                         align: CENTER
@@ -447,11 +449,12 @@ lvgl:
                         on_short_click:
                           - script.execute: tab5_central_panel_next
 
-              # Titre de page previsions (pages horaires / journalieres 2-3, masque sur accueil).
-              # Deux lignes remplies par update_central_forecast_page_ui() (tab5_custom.cpp) :
-              # chapeau "Previsions journalieres · 2/3" + plage "Du mercredi 5 aout au dimanche
-              # 9 aout". Les y (-19 / +13) empilent 26 px (roboto_22) + 38 px (roboto_32_b)
-              # centres dans les 84 px de la carte.
+              # Titre de page previsions (pages horaires / journalieres, masque sur accueil),
+              # rempli par update_central_forecast_page_ui() (tab5_central.cpp) : une ligne,
+              # la plage "Du mercredi 5 aout au dimanche 9 aout", centree, dans la police de
+              # la date (05/10/2026 : plus de chapeau « Previsions journalieres · 2/3 »).
+              # Mode pieces de HA : chapeau « Piece n/N » (roboto_22) + nom de la piece, a
+              # y -26 / +13 : 26 px + 53 px (ligne de Roboto 45) dans les 82 px de la carte.
               # [AI-WARNING] Ce panneau doit rester structurellement IDENTIQUE a ses freres de
               # central_card (planning / pluie / alertes / info) : wrapper SIZE_CONTENT + bouton
               # invisible ${central_w}x80 pose en dernier. Le bouton n'est pas decoratif — c'est lui qui
@@ -467,8 +470,8 @@ lvgl:
                   styles: style_transparent
                   hidden: true
                   widgets:
-                    - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: -19, styles: style_bandeau_text_dim }
-                    - label: { id: lbl_page_title, text: "", align: CENTER, y: 13, styles: [style_police_titre, style_bandeau_text_soft] }
+                    - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: -26, styles: style_bandeau_text_dim }
+                    - label: { id: lbl_page_title, text: "", align: CENTER, y: 0, styles: [style_police_date, style_bandeau_text_soft] }
                     - button:
                         id: btn_page_title_tap
                         align: CENTER
@@ -486,7 +489,7 @@ lvgl:
                   scrollbar_mode: "OFF"  # le texte déborde en glissant (transition_widgets)
                   hidden: true
                   widgets:
-                    - label: { id: lbl_info_text, text: "", align: CENTER, text_font: roboto_45_b, styles: style_bandeau_text_soft }
+                    - label: { id: lbl_info_text, text: "", align: CENTER, styles: [style_police_date, style_bandeau_text_soft] }
                     - button:
                         id: btn_info_tap
                         align: CENTER

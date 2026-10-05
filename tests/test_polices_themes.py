@@ -4,10 +4,12 @@ tools/police_theme.py mesure chaque police citée par un thème (fichier de Goog
 fontTools) et choisit sa taille et la géométrie de l'horloge ; tools/gen_themes.py en
 tire les polices compilées et la table kPolices de tab5_theme.cpp. Ce test refait la
 géométrie de l'horloge depuis les métriques gardées dans le fichier, hors ligne, et
-vérifie que Roboto, la police de l'état compilé, redonne les valeurs du YAML.
+vérifie que Roboto, la police de l'état compilé, redonne les valeurs du YAML, et que
+chaque police laisse les mêmes marges dans la tuile (05/10/2026).
 """
 from __future__ import annotations
 
+import math
 import re
 import sys
 from pathlib import Path
@@ -34,12 +36,48 @@ def test_roboto_redonne_la_geometrie_du_yaml():
     ys = {int(y) for y in re.findall(r"^\s+y: (-?\d+)\n\s+styles: \[style_police_horloge", rouleau, re.M)}
     dp = re.search(r"id: lbl_time_colon, text: \":\", align: TOP_LEFT, x: (\d+), y: (-?\d+)", lvgl)
     date = re.search(r"id: lbl_date, text: \"\", align: TOP_MID, y: (\d+)", lvgl)
-    assert ys and dp and date, "le motif ne lit plus la géométrie de l'horloge"
-    assert m["horloge"] == {"taille": 130, "y": ys.pop(), "x_deux_points": int(dp.group(1)),
-                            "y_deux_points": int(dp.group(2))}
-    assert m["date"] == {"taille": 45, "y": int(date.group(1))} and m["titre"]["taille"] == 32
     cadre_y = re.search(r"^  y: (\d+)\n  width: 75\n", rouleau, re.M)
-    assert cadre_y and int(cadre_y.group(1)) == police_theme.CADRE_Y, "CADRE_Y ≠ y du cadre de clock_roller.yaml"
+    assert ys and dp and date and cadre_y, "le motif ne lit plus la géométrie de l'horloge"
+    assert int(cadre_y.group(1)) == police_theme.CADRE_Y, "CADRE_Y ≠ y du cadre de clock_roller.yaml"
+    assert m["horloge"] == {"taille": 130, "y": ys.pop(), "cadre_y": police_theme.CADRE_Y, "dx": 0,
+                            "x_deux_points": int(dp.group(1)), "y_deux_points": int(dp.group(2))}
+    assert m["date"] == {"taille": 45, "y": int(date.group(1))} and m["titre"]["taille"] == 32
+    # kCadreX de tab5_theme.cpp (généré depuis X_CADRES) repose ces x : ce sont ceux du YAML.
+    xs = tuple(int(x) for x in re.findall(r"file: ui_components/clock_roller\.yaml, vars: \{ d: \w+, x: (\d+) \}", lvgl))
+    assert xs == police_theme.X_CADRES, f"X_CADRES {police_theme.X_CADRES} ≠ x des rouleaux de tab5-lvgl.yaml {xs}"
+
+
+def _encre(m: dict) -> tuple[int, int, int]:
+    """Haut de l'encre des chiffres dans le label, encre la plus à gauche et la plus à
+    droite dans le cadre (mêmes arrondis que police_theme.geometrie_horloge)."""
+    t = m["horloge"]["taille"]
+    e = t / m["unites_em"]
+    asc = math.ceil(m["ascendante"] * e)
+    g = m["chiffres"]
+    haut = min(asc - math.ceil(g[c][4] * e) for c in police_theme.CHIFFRES)
+    x0 = {c: (police_theme.CADRE_L - round(g[c][0] * e)) // 2 for c in police_theme.CHIFFRES}
+    gauche = min(x0[c] + math.floor(g[c][1] * e) for c in police_theme.CHIFFRES)
+    droite = max(x0[c] + math.ceil(g[c][2] * e) for c in police_theme.CHIFFRES)
+    return haut, gauche, droite
+
+
+def test_marges_egales_dans_la_tuile_horloge():
+    """Demande d'Axel (05/10/2026) : la même marge en haut (encre des chiffres) et en bas
+    (ligne de base de la date), l'encre de HH:MM centrée entre la gauche et la droite,
+    quelle que soit la police. Tuile de 401 × 210 à bordure de 1 px : theme_polices()
+    retranche la bordure réelle du thème."""
+    marge, x_cadres = police_theme.MARGE, police_theme.X_CADRES
+    for cle, m in _mesures().items():
+        h = m["horloge"]
+        haut, gauche, droite = _encre(m)
+        assert 1 + h["cadre_y"] + h["y"] + haut == marge, f"{cle} : encre des chiffres pas à {marge} px du haut"
+        assert 1 + police_theme.DATE_BASE == 210 - marge, "ligne de base de la date pas à MARGE px du bas"
+        a_gauche = 1 + x_cadres[0] + h["dx"] + gauche
+        a_droite = 401 - (1 + x_cadres[3] + h["dx"] + droite)
+        assert 0 <= a_droite - a_gauche <= 1, f"{cle} : HH:MM pas centré ({a_gauche} / {a_droite} px)"
+        # Le chiffre qui arrive traverse tout le cadre : il reste au-dessus de l'encre de
+        # la date (au plus 40 px au-dessus de sa ligne de base, à 45 px).
+        assert 0 <= h["cadre_y"] and h["cadre_y"] + police_theme.CADRE_H <= police_theme.DATE_BASE - 40, cle
 
 
 def test_ligne_de_base_de_la_date_au_meme_endroit_pour_chaque_police():
@@ -77,13 +115,20 @@ def test_la_date_a_les_dix_chiffres():
     assert set(police_theme.CHIFFRES) <= set(police_theme.jeux_par_role()["date"])
 
 
+def test_la_police_de_date_couvre_les_textes_de_l_accueil():
+    """Températures, consigne, « Ok Nabu », carte centrale et titres des prévisions sont
+    dans la police de la date depuis le 05/10/2026 : l'ASCII et « ° » au moins, dans
+    chaque police de thème (ce qui manque au fichier est dessiné par roboto_45_b)."""
+    assert set(police_theme.JEU_TEXTE_BASE) <= set(police_theme.jeux_par_role()["date"])
+
+
 def test_polices_generees_sans_glyphe_absent():
     """ESPHome refuse un glyphe absent du fichier : le générateur les retire (la Roboto
     du rôle les dessine)."""
     mesures = {
         "Roboto@700": _mesures()["Roboto@700"],
-        "Essai Sans@700": {"manquants": "ğş", "horloge": {"taille": 120, "y": -20, "x_deux_points": 182,
-                                                          "y_deux_points": 13},
+        "Essai Sans@700": {"manquants": "ğş", "horloge": {"taille": 120, "y": -20, "cadre_y": 25, "dx": 1,
+                                                          "x_deux_points": 182, "y_deux_points": 13},
                            "date": {"taille": 40}, "titre": {"taille": 30}},
     }
     # Ardoise (l'état compilé) et un thème d'essai seulement : les index des polices
@@ -100,5 +145,6 @@ def test_polices_generees_sans_glyphe_absent():
     assert "police_essai_sans_700_30" in lambda_yaml[2]
     assert lambda_yaml[-1].endswith(", horloge, id(lbl_date));")
     # Ardoise : les trois Roboto (0, 1, 2) ; l'essai : ses polices, la date en Roboto (son y).
-    assert cpp[-3].startswith("    {0, 1, 2, -23, 181, 4, 135},")
-    assert cpp[-2].startswith("    {3, 1, 4, -20, 182, 13, 135},")
+    assert cpp[-3].startswith("    {0, 1, 2, -23, 181, 4, 135, 27, 0},")
+    assert cpp[-2].startswith("    {3, 1, 4, -20, 182, 13, 135, 25, 1},")
+    assert "static constexpr int16_t kCadreX[] = {27, 102, 222, 297};" in cpp

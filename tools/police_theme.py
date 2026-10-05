@@ -3,8 +3,11 @@
 
 [AI-CONTEXT] Un thème peut changer la police de trois textes d'affichage : l'heure
 (horloge à rouleaux et écran de sonnerie), la date sous l'horloge et les titres (en-tête
-des popups, titre de la carte centrale). Le reste du texte reste en Roboto : les libellés
-ont été calés en Roboto dans 7 langues.
+des popups). Depuis le 05/10/2026 (demande d'Axel), la police de la date sert aussi aux
+textes de 45 px de l'accueil (températures et consigne de la clim, « Ok Nabu », carte
+centrale et titres des prévisions) et à quelques valeurs des popups : son jeu de glyphes
+couvre l'ASCII et les caractères des 7 langues (jeu_texte()). Le reste du texte reste en
+Roboto : les libellés ont été calés en Roboto dans 7 langues.
 
 Ce script lit les familles citées par `Tab5/themes/*.yaml` (bloc `polices:`), télécharge
 chaque fichier comme ESPHome (API CSS2 de Google Fonts, format truetype), relève ses
@@ -13,7 +16,9 @@ métriques avec fontTools et calcule, pour chaque rôle, la taille et la positio
   - horloge : la plus grande taille (≤ 130 px, celle de Roboto) dont chaque chiffre tient
     dans le cadre de 75 × 104 du rouleau, centré, avec 2 px d'air en haut et en bas, et
     dont le « : » tient entre les deux groupes ; le label est remonté pour centrer
-    l'encre dans le cadre ; le « : » est centré entre les heures et les minutes ;
+    l'encre dans le cadre ; le « : » est centré entre les heures et les minutes. Les
+    cadres sont posés pour que l'encre des chiffres tombe à MARGE px du haut de la tuile
+    et que HH:MM soit centré à l'encre près (marges égales, 05/10/2026) ;
   - date : la plus grande taille (≤ 45 px) dont la date la plus large, dans les 7 langues,
     tient dans la tuile de l'horloge avec 16 px de marge de chaque côté ; le label est posé
     pour que la ligne de base tombe à DATE_BASE, à la même distance du bas de la tuile
@@ -28,11 +33,15 @@ sur un jeu fixe (UNIVERS : Latin-1, Latin étendu A, ponctuation typographique),
 tools/gen_themes.py ne demande à ESPHome que les glyphes présents (ESPHome refuse un
 glyphe absent). Les chiffres et le « : » de l'horloge doivent exister dans la police.
 
+La géométrie est calculée pour une tuile à bordure de 1 px sur chaque côté (Ardoise) :
+theme_polices() (tab5_theme.cpp) retranche la bordure du thème, qui va de 0 à 4 px et
+peut ne border qu'un côté, pour garder MARGE px depuis le bord extérieur de la tuile.
+
 Il écrit `Tab5/themes/_polices.yaml` : les métriques des chiffres et du « : » (pour que
 pytest refasse la géométrie de l'horloge hors ligne, tests/test_polices_themes.py), les
 caractères absents et les tailles retenues. Roboto 700 y figure comme référence : ses
-valeurs doivent redonner la géométrie actuelle (130 px, y -23, « : » à 181 ; date 45 à y 135 ;
-titres 32). tools/gen_themes.py lit ce fichier. À relancer après l'ajout d'une police à
+valeurs doivent redonner la géométrie actuelle (130 px, y -23, cadres à y 27, « : » à 181 ;
+date 45 à y 135 ; titres 32). tools/gen_themes.py lit ce fichier. À relancer après l'ajout d'une police à
 un thème (pytest le signale) ou d'un titre de popup nettement plus long.
 
     python tools/police_theme.py   # réseau : télécharge les polices absentes du cache
@@ -61,12 +70,14 @@ REFERENCE = "Roboto@700"
 
 # Géométrie de la tuile horloge (tab5-lvgl.yaml, clock_roller.yaml ; tests/test_horloge.py).
 CADRE_L, CADRE_H = 75, 104
-CADRE_Y = 27                    # encre des chiffres (4 px dans le cadre) à 32 px du haut de la tuile
+CADRE_Y = 27                    # y du cadre en Roboto : encre des chiffres (4 px dans le cadre) à MARGE
+MARGE = 32                      # bord extérieur de la tuile → encre des chiffres, ligne de base de la date
 MARGE_MIN = 2
-X_H1, X_M10 = 102, 222          # x des rouleaux h1 et m10 : le « : » vit entre les deux
+X_CADRES = (27, 102, 222, 297)  # x des rouleaux h10, h1, m10, m1 (tab5-lvgl.yaml)
+X_H1, X_M10 = X_CADRES[1], X_CADRES[2]  # le « : » vit entre les deux
 TUILE_UTILE = 399               # 401 - 2 × bordure
 MARGE_DATE = 16
-DATE_BASE = 177                 # ligne de base de la date : 210 (tuile) - 32 (marge) - 1 (bordure)
+DATE_BASE = 177                 # ligne de base de la date : 210 (tuile) - MARGE - 1 (bordure)
 MAX_TAILLE = {"horloge": 130, "date": 45, "titre": 32}
 MIN_TAILLE = {"horloge": 80, "date": 30, "titre": 22}
 CHIFFRES = "0123456789"
@@ -74,6 +85,10 @@ CHIFFRES = "0123456789"
 # (dates et titres dans les 7 langues) doit s'y trouver (tools/gen_themes.py le vérifie).
 UNIVERS = ("".join(chr(c) for c in range(0x20, 0x7F)) + "".join(chr(c) for c in range(0xA0, 0x180))
            + "‘’‚“”„–—…€•")
+# Textes en police de date hors de la date (05/10/2026) : l'ASCII imprimable, « ° » et les
+# caractères des 7 langues (Tab5/lang/*.yaml, clés françaises comprises) qui sont dans
+# UNIVERS. Un texte poussé par HA hors de ce jeu est dessiné par roboto_45_b (repli).
+JEU_TEXTE_BASE = "".join(chr(c) for c in range(0x20, 0x7F)) + "°"
 # Titres posés par le C++ (nom d'une pièce, jour du calendrier…) : lettres et chiffres
 # courants en plus des titres connus, pour qu'ils restent dans la police du thème.
 TITRE_BASE = ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !'(),-./:?%°’«»–—…"
@@ -166,15 +181,27 @@ def titres() -> list[str]:
     return sorted(out)
 
 
-def jeux_par_role(liste_dates: list[str] | None = None, liste_titres: list[str] | None = None) -> dict[str, str]:
+def jeu_texte() -> str:
+    """Caractères des textes de 45 px passés dans la police de la date (JEU_TEXTE_BASE)."""
+    vus = set(JEU_TEXTE_BASE)
+    for trad in langues():
+        for cle, valeur in trad.items():
+            vus |= set(str(cle)) | set(str(valeur))
+    return "".join(sorted(vus & set(UNIVERS)))
+
+
+def jeux_par_role(liste_dates: list[str] | None = None, liste_titres: list[str] | None = None,
+                  texte: str | None = None) -> dict[str, str]:
     """Caractères que chaque rôle peut afficher (avant de retirer ceux absents d'une police)."""
     liste_dates = dates() if liste_dates is None else liste_dates
     liste_titres = titres() if liste_titres is None else liste_titres
+    texte = jeu_texte() if texte is None else texte
     return {
         "horloge": CHIFFRES + ":",
         # Les dates d'essai ne prennent que les quantièmes les plus larges : les dix
-        # chiffres s'ajoutent (le 15 ne doit pas être à moitié en Roboto).
-        "date": "".join(sorted(set("".join(liste_dates)) | set(CHIFFRES))),
+        # chiffres s'ajoutent (le 15 ne doit pas être à moitié en Roboto). Puis les
+        # textes de l'accueil et des popups passés dans cette police (jeu_texte()).
+        "date": "".join(sorted(set("".join(liste_dates)) | set(CHIFFRES) | set(texte))),
         "titre": "".join(sorted(set("".join(liste_titres)) | set(TITRE_BASE))),
     }
 
@@ -214,7 +241,12 @@ def mesurer(chemin: Path, caracteres: str) -> dict:
 def geometrie_horloge(m: dict, taille: int) -> dict | None:
     """Arrondis de FreeType, ceux d'ESPHome (tests/test_horloge.py) : ascendante et haut de
     l'encre au pixel supérieur, bas de l'encre au pixel inférieur, avance au plus proche.
-    None si un chiffre ou le « : » ne tient pas."""
+    None si un chiffre ou le « : » ne tient pas.
+
+    y : le label dans son cadre (encre centrée) ; cadre_y : le cadre dans la tuile, l'encre
+    des chiffres à MARGE px de son bord extérieur (bordure de 1 px) ; dx : décalage des
+    cadres et du « : » qui centre l'encre de HH:MM (chiffre le plus à gauche dans son cadre
+    contre le plus à droite), le pixel impair à droite."""
     e = taille / m["unites_em"]
     asc = math.ceil(m["ascendante"] * e)
     g = m["glyphes"]
@@ -222,18 +254,25 @@ def geometrie_horloge(m: dict, taille: int) -> dict | None:
     bas = max(asc - math.floor(g[c][3] * e) for c in CHIFFRES)
     if bas - haut > CADRE_H - 2 * MARGE_MIN:
         return None
+    gauche, droite = CADRE_L, 0
     for c in CHIFFRES:
         avance = round(g[c][0] * e)
         x0 = (CADRE_L - avance) // 2          # label centré (TOP_MID) dans le cadre
-        if x0 + math.floor(g[c][1] * e) < 0 or x0 + math.ceil(g[c][2] * e) > CADRE_L:
-            return None
+        gauche = min(gauche, x0 + math.floor(g[c][1] * e))
+        droite = max(droite, x0 + math.ceil(g[c][2] * e))
+    if gauche < 0 or droite > CADRE_L:
+        return None
     fente = X_M10 - (X_H1 + CADRE_L)          # entre les heures et les minutes
     avance_dp = round(g[":"][0] * e)
     if avance_dp > fente:
         return None
     y = round((CADRE_H - (haut + bas)) / 2)
-    return {"taille": taille, "y": y, "x_deux_points": X_H1 + CADRE_L + (fente - avance_dp + 1) // 2,
-            "y_deux_points": CADRE_Y + y}
+    cadre_y = (MARGE - 1) - (y + haut)
+    # Encre à gauche : X_CADRES[0] + dx + gauche ; à droite : TUILE_UTILE - (X_CADRES[3] + dx + droite).
+    dx = (TUILE_UTILE - X_CADRES[3] - droite - X_CADRES[0] - gauche) // 2
+    return {"taille": taille, "y": y, "cadre_y": cadre_y, "dx": dx,
+            "x_deux_points": X_H1 + CADRE_L + (fente - avance_dp + 1) // 2 + dx,
+            "y_deux_points": cadre_y + y}
 
 
 def y_date(m: dict, taille: int) -> int:
@@ -286,7 +325,7 @@ def familles_citees() -> list[str]:
 
 def main() -> int:
     liste_dates, liste_titres = dates(), titres()
-    hors_univers = sorted(set("".join(jeux_par_role(liste_dates, liste_titres).values())) - set(UNIVERS))
+    hors_univers = sorted(set("".join(jeux_par_role(liste_dates, liste_titres, "").values())) - set(UNIVERS))
     if hors_univers:
         print(f"[KO] caractères d'affichage hors du jeu mesuré (UNIVERS) : {''.join(hors_univers)!r}")
         return 1

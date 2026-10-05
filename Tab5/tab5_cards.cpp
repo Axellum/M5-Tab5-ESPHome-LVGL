@@ -209,7 +209,7 @@ const char* clim_unite(const ClimReglages& r) {
 }
 
 // Consigne inconnue (capteur HA indisponible = NaN) : « -- », comme au boot — "%.1f"
-// écrirait « nan », sans glyphe dans roboto_55_b.
+// écrirait « nan », sans glyphe dans roboto_55_b (popup clim).
 void clim_format_consigne(const ClimReglages& r, char* buf, size_t n, float t) {
     if (std::isnan(t)) snprintf(buf, n, "--");
     else snprintf(buf, n, clim_pas_entier(r) ? "%.0f" : "%.1f", t);

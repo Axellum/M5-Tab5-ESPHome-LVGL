@@ -337,7 +337,7 @@ api:
             if (push_unchanged(PushChannel::INFO, cle)) return;
             update_info_text_ui(id(lbl_info_text), id(info_wrapper), id(planning_wrapper),
                 texte, couleur, meteo_id, id(tab5_dismissed_local), g_central_ctx,
-                id(roboto_32_b), id(roboto_45_b));
+                id(roboto_32_b));
 
     - service: tab5_maj_reponse_vocale
       description: "Réponse vocale courte, affichée sous l'assistant sur l'écran d'accueil."
@@ -369,7 +369,7 @@ api:
       then:
         - lambda: |-
             assist_set_response(id(lbl_assist_response), texte,
-                assist_font(id(assist_text_size), id(roboto_32_b), id(roboto_45_b)));
+                assist_font(id(assist_text_size), id(roboto_32_b)));
         - if:
             condition:
               lambda: 'return !image_url.empty();'

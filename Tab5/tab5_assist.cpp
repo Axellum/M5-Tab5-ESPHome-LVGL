@@ -77,7 +77,7 @@ static std::vector<std::string> assist_split_cells(const std::string& row) {
 
 // Nettoie un texte Markdown "léger" pour affichage LVGL. [AI-WARNING] Écrit pour
 // une police à chasse fixe : depuis l'essai D8 du 26/09/2026, la réponse est en
-// roboto_32_b / roboto_45_b (proportionnelles), l'alignement des tableaux par
+// roboto_32_b / police de la date du thème (proportionnelles), l'alignement des tableaux par
 // espaces n'est donc plus qu'approximatif.
 //  - retire les marqueurs **gras**, __gras__, `code`, les # de titres ;
 //  - convertit les puces "- " / "* " en "• " ;
@@ -175,7 +175,7 @@ void assist_set_response(lv_obj_t* lbl_response, const std::string& texte,
         src += "\n[...]";
     }
     std::string t = format_assist_markdown(src);
-    if (font) esphome::lvgl::lv_obj_set_style_text_font(lbl_response, font, LV_PART_MAIN);
+    ui_police(lbl_response, font);
     lv_label_set_recolor(lbl_response, false);
     lv_label_set_text(lbl_response, t.c_str());
 }
@@ -183,16 +183,17 @@ void assist_set_response(lv_obj_t* lbl_response, const std::string& texte,
 // Même table que le ternaire qu'elle remplace dans tab5-assist.yaml (lot 7.3 de
 // l'audit du 26/09/2026). Deux tailles depuis l'essai D8 (même date) : 2 → L,
 // toute autre valeur → S — le 1 de l'ancien M, encore restauré chez qui l'avait
-// choisi, retombe sur S. Même règle dans assist_apply_text_size().
-esphome::font::Font* assist_font(int size_idx, esphome::font::Font* f_s, esphome::font::Font* f_l) {
-    return size_idx >= 2 ? f_l : f_s;
+// choisi, retombe sur S. Même règle dans assist_apply_text_size(). L : nullptr, la
+// police de la date du thème que porte le style du label (assistant_popup.yaml,
+// 05/10/2026), au lieu de roboto_45_b.
+esphome::font::Font* assist_font(int size_idx, esphome::font::Font* f_s) {
+    return size_idx >= 2 ? nullptr : f_s;
 }
 
 void assist_apply_text_size(lv_obj_t* lbl_response, int size_idx,
-    esphome::font::Font* f_s, esphome::font::Font* f_l, lv_obj_t* btn_s, lv_obj_t* btn_l) {
+    esphome::font::Font* f_s, lv_obj_t* btn_s, lv_obj_t* btn_l) {
     const bool large = size_idx >= 2;
-    esphome::font::Font* f = assist_font(size_idx, f_s, f_l);
-    if (lbl_response && f) esphome::lvgl::lv_obj_set_style_text_font(lbl_response, f, LV_PART_MAIN);
+    ui_police(lbl_response, assist_font(size_idx, f_s));
     // Bouton de la taille active : bordure INFO 2 px (dessinée à l'intérieur du
     // widget, la position ne bouge pas).
     highlight_button_border(btn_s, !large, UIColor.INFO);

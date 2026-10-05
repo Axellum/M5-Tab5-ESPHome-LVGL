@@ -46,7 +46,7 @@ font:
     id: police_barlow_semi_condensed_700_45
     size: 45
     bpp: 2
-    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: gfonts://Bodoni Moda@700
     id: police_bodoni_moda_700_120
     size: 120
@@ -66,7 +66,7 @@ font:
     id: police_familjen_grotesk_700_45
     size: 45
     bpp: 2
-    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: gfonts://Figtree@700
     id: police_figtree_700_31
     size: 31
@@ -81,7 +81,7 @@ font:
     id: police_fraunces_700_45
     size: 45
     bpp: 2
-    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: gfonts://Fredoka@700
     id: police_fredoka_700_130
     size: 130
@@ -96,7 +96,7 @@ font:
     id: police_fredoka_700_45
     size: 45
     bpp: 2
-    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéû'
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüıŒœ–—“”„…'
   - file: gfonts://Gloock@400
     id: police_gloock_400_125
     size: 125
@@ -111,7 +111,7 @@ font:
     id: police_gloock_400_45
     size: 45
     bpp: 2
-    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: gfonts://IBM Plex Serif@700
     id: police_ibm_plex_serif_700_130
     size: 130
@@ -126,7 +126,7 @@ font:
     id: police_ibm_plex_serif_700_45
     size: 45
     bpp: 2
-    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: gfonts://Jersey 10@400
     id: police_jersey_10_400_130
     size: 130
@@ -141,7 +141,7 @@ font:
     id: police_jersey_10_400_45
     size: 45
     bpp: 2
-    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: gfonts://Manrope@700
     id: police_manrope_700_31
     size: 31
@@ -151,7 +151,7 @@ font:
     id: police_manrope_700_45
     size: 45
     bpp: 2
-    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: gfonts://Murecho@300
     id: police_murecho_300_130
     size: 130
@@ -166,7 +166,7 @@ font:
     id: police_murecho_400_45
     size: 45
     bpp: 2
-    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: gfonts://Nunito@800
     id: police_nunito_800_130
     size: 130
@@ -181,7 +181,7 @@ font:
     id: police_nunito_800_45
     size: 45
     bpp: 2
-    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: gfonts://Overpass@700
     id: police_overpass_700_31
     size: 31
@@ -191,7 +191,7 @@ font:
     id: police_overpass_700_45
     size: 45
     bpp: 2
-    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: gfonts://Overpass@800
     id: police_overpass_800_119
     size: 119
@@ -211,7 +211,7 @@ font:
     id: police_oxanium_700_45
     size: 45
     bpp: 2
-    glyphs: ' 0123456789ACDEFGHJKLMNOPSTVWZabcdeghiklmnoprstuvyzÇáäéûğŞ'
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
 # <<< polices
 
 select:
