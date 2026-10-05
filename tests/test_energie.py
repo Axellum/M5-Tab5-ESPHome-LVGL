@@ -507,6 +507,153 @@ def test_get_statistics_en_echec_jour_inconnu():
     assert p["jour"] == "nan" and _champs(p)[7] == "nan"
 
 
+# ─── Package : plusieurs sources solaires (discussion #278, 05/10/2026) ──────
+# « pv1 + pv2 + … » : le blueprint envoie solaire / production (la première entité, ce
+# que lit un package plus ancien) et solaires / productions (toutes). Valeurs attendues
+# écrites à la main.
+
+PV2 = "sensor.pv2_puissance"
+PV3 = "sensor.pv3_puissance"
+
+
+def _avec_sources(*solaires, **autres):
+    """Capteurs au format du blueprint actuel : solaire = la première, solaires = toutes."""
+    return dict(CAPTEURS, solaire=solaires[0] if solaires else "", solaires=list(solaires),
+                productions=[PROD], **autres)
+
+
+@pytest.mark.parametrize("etats, solaire, maison", [
+    # 1450 W (1.45 kW) + 850 W = 2300 W ; maison = 2300 − 430 − 400 = 1470.
+    ({PV2: EtatHA(PV2, "850", unit_of_measurement="W")}, "2300", "1470"),
+    # 1450 W + 0.35 kW = 1800 W ; maison = 1800 − 430 − 400 = 970.
+    ({PV2: EtatHA(PV2, "0.35", unit_of_measurement="kW")}, "1800", "970"),
+    # Un onduleur éteint la nuit : ignoré, 1450 seul ; maison = 620 comme avec une source.
+    ({PV2: EtatHA(PV2, "unavailable")}, "1450", "620"),
+    ({PV2: EtatHA(PV2, "unknown", unit_of_measurement="W")}, "1450", "620"),
+])
+def test_deux_puissances_additionnees(etats, solaire, maison):
+    p = Passe(_avec_sources("sensor.solaire_puissance", PV2), _maison(**etats), cinq=_reponse(_lignes_5min()))
+    obtenu = dict(zip(scenarios.ENERGIE_CHAMPS, _champs(p)))
+    assert (obtenu["solaire"], obtenu["maison"]) == (solaire, maison)
+    scenarios.build_energie_payload(obtenu)
+
+
+def test_trois_puissances_dont_une_absente_de_ha():
+    # 1450 + 200 = 1650 W ; PV3 n'existe pas (supprimée) : ignorée comme une indisponible.
+    etats = _maison(**{PV2: EtatHA(PV2, "0.2", unit_of_measurement="kW")})
+    p = Passe(_avec_sources("sensor.solaire_puissance", PV2, PV3), etats, cinq=_reponse(_lignes_5min()))
+    assert _champs(p)[0] == "1650"
+
+
+def test_toutes_les_puissances_indisponibles_inconnu():
+    etats = _maison(**{"sensor.solaire_puissance": EtatHA("sensor.solaire_puissance", "unavailable"),
+                       PV2: EtatHA(PV2, "unknown")})
+    p = Passe(_avec_sources("sensor.solaire_puissance", PV2), etats, cinq=_reponse(_lignes_5min()))
+    s, m = _champs(p)[:2]
+    assert (s, m) == ("nan", "nan"), "toutes indisponibles : inconnu, comme avec une seule source"
+
+
+@pytest.mark.parametrize("capteurs", [
+    # Blueprint d'avant : une chaîne dans solaire, ni solaires ni productions.
+    CAPTEURS,
+    # Blueprint actuel avec une seule source.
+    dict(CAPTEURS, solaires=["sensor.solaire_puissance"], productions=[PROD]),
+    # Listes seules, ou une liste dans le champ d'une entité (script appelé à la main).
+    dict(CAPTEURS, solaire="", production="", solaires=["sensor.solaire_puissance"], productions=[PROD]),
+    dict(CAPTEURS, solaire=["sensor.solaire_puissance"], production=[PROD]),
+    # Listes vides à côté de la chaîne.
+    dict(CAPTEURS, solaires=[], productions=[]),
+])
+def test_une_seule_source_meme_resultat_qu_avant(capteurs):
+    lignes = _lignes_5min()
+    p = Passe(capteurs, _maison(), cinq=_reponse(lignes))
+    s, m, r, b, bp, t, u, j = _champs(p)
+    # Les valeurs de test_instantane_complet, d'avant les sources multiples.
+    assert (s, m, r, b, bp, t, u) == ("1450", "620", "-430", "64.0", "400", "21.5", "°C")
+    assert abs(float(j) - _attendu_jour(lignes, lignes[-1]["state"] + PARTIEL)) < 0.002
+    assert p.demandes_statistiques()[0]["statistic_ids"] == [PROD]
+    _, _, valeurs = p.historique()
+    _proche(valeurs, _attendu_heures(lignes, lignes[-1]["state"] + PARTIEL))
+
+
+# Deux compteurs, peu de lignes, tout à la main. HA convertit les statistiques en kWh
+# (units: energy: kWh) : les lignes du compteur en Wh arrivent en kWh, son ÉTAT reste en
+# Wh (le partiel le convertit).
+PROD2 = "sensor.pv2_energie"
+
+
+def _ligne(h, m, change, state):
+    debut = MAINTENANT.replace(hour=h, minute=m, second=0, microsecond=0).astimezone(dt.timezone.utc)
+    return {"start": debut.isoformat(), "end": (debut + dt.timedelta(minutes=5)).isoformat(),
+            "change": change, "state": state}
+
+
+def _deux_compteurs(vue="heures", longues=None):
+    cinq = {"statistics": {
+        # Compteur 1 (kWh, parti de 1000) : 08:00, 08:05, 09:00 ; dernier state 1000.6.
+        PROD: [_ligne(8, 0, 0.10, 1000.1), _ligne(8, 5, 0.20, 1000.3), _ligne(9, 0, 0.30, 1000.6)],
+        # Compteur 2 (Wh, lignes en kWh, parti de 50) : 08:00 et 10:00, rien à 9 h ; dernier state 50.45.
+        PROD2: [_ligne(8, 0, 0.05, 50.05), _ligne(10, 0, 0.40, 50.45)],
+    }}
+    etats = _maison(**{PROD: EtatHA(PROD, "1000.65", unit_of_measurement="kWh"),
+                       PROD2: EtatHA(PROD2, "50500", unit_of_measurement="Wh")})
+    capteurs = dict(CAPTEURS, solaires=["sensor.solaire_puissance"], productions=[PROD, PROD2])
+    return Passe(capteurs, etats, vue=vue, cinq=cinq, longues=longues)
+
+
+def test_deux_compteurs_kwh_et_wh_heure_par_heure():
+    p = _deux_compteurs()
+    assert p.demandes_statistiques()[0]["statistic_ids"] == [PROD, PROD2]
+    # Partiel : (1000.65 − 1000.6) + (50500 Wh = 50.5 − 50.45) = 0.05 + 0.05 = 0.10.
+    assert abs(p["partiel"] - 0.10) < 1e-6
+    # Jour : 0.10 + 0.20 + 0.30 + 0.05 + 0.40 + 0.10 = 1.15.
+    assert abs(p["jour"] - 1.15) < 1e-6 and abs(float(_champs(p)[7]) - 1.15) < 1e-6
+    vue, _, valeurs = p.historique()
+    attendu = [None] * 24
+    attendu[8] = 0.35    # 0.10 + 0.20 + 0.05
+    attendu[9] = 0.30    # compteur 1 seul : le 2 n'a pas de ligne, il compte pour 0
+    attendu[10] = 0.40   # compteur 2 seul
+    attendu[14] = 0.10   # heure en cours : le partiel des deux
+    assert vue == "heures"
+    _proche(valeurs, attendu)
+
+
+def test_deux_compteurs_jour_par_jour():
+    premier = MAINTENANT.replace(hour=0, minute=0, second=0, microsecond=0) - dt.timedelta(days=29)
+    jour = lambda i: (premier + dt.timedelta(days=i)).astimezone(dt.timezone.utc).isoformat()  # noqa: E731
+    longues = {"statistics": {
+        PROD: [{"start": jour(0), "change": 10.0}, {"start": jour(5), "change": 12.0}],
+        PROD2: [{"start": jour(5), "change": 3.0}, {"start": jour(7), "change": 4.0}],
+    }}
+    p = _deux_compteurs("jours", longues)
+    _, debut, valeurs = p.historique()
+    attendu = [None] * 30
+    attendu[0] = 10.0     # compteur 1 seul
+    attendu[5] = 15.0     # 12 + 3
+    attendu[7] = 4.0      # compteur 2 seul
+    attendu[29] = 1.15    # aujourd'hui : la production du jour des deux
+    assert debut == "2026-05-18"
+    _proche(valeurs, attendu)
+    assert p.demandes_statistiques()[1]["statistic_ids"] == [PROD, PROD2]
+
+
+def test_deux_compteurs_mois_par_mois():
+    mois = lambda a, m: dt.datetime(a, m, 1, tzinfo=PARIS).astimezone(dt.timezone.utc).isoformat()  # noqa: E731
+    longues = {"statistics": {
+        PROD: [{"start": mois(2025, 7), "change": 400.0}, {"start": mois(2026, 6), "change": 200.0}],
+        PROD2: [{"start": mois(2025, 7), "change": 100.0}, {"start": mois(2025, 10), "change": 50.0}],
+    }}
+    p = _deux_compteurs("mois", longues)
+    _, debut, valeurs = p.historique()
+    attendu = [None] * 12
+    attendu[0] = 500.0    # juillet 2025 : 400 + 100
+    attendu[3] = 50.0     # octobre 2025 : compteur 2 seul
+    # Juin 2026 (en cours) : 200 + aucune ligne de 5 minutes depuis 14:00 + partiel 0.10.
+    attendu[11] = 200.10
+    assert debut == "2025-07-01"
+    _proche(valeurs, attendu)
+
+
 # ─── Package : fin de la boucle ──────────────────────────────────────────────
 
 @pytest.mark.parametrize("ecran, age, attendu", [
@@ -589,12 +736,71 @@ def test_blueprint_section_remplie():
     capteurs = variables["capteurs"]
     assert capteurs["solaire"] == "sensor.solaire_puissance" and capteurs["production"] == PROD
     assert capteurs["reseau"] == "" and capteurs["reseau_inverse"] is True and capteurs["batterie_inverse"] is False
-    assert set(capteurs) == set(CAPTEURS), "le script et le blueprint ne parlent pas des mêmes capteurs"
+    # solaires / productions : toutes les sources (une ici) ; solaire / production restent
+    # la première, pour un package tab5_energie plus ancien.
+    assert capteurs["solaires"] == ["sensor.solaire_puissance"] and capteurs["productions"] == [PROD]
+    assert set(capteurs) == set(CAPTEURS) | {"solaires", "productions"}, \
+        "le script et le blueprint ne parlent pas des mêmes capteurs"
 
 
 def test_blueprint_sans_le_package_ne_lance_rien():
     p = Passage(REMPLIE, _maison_bp(), _evenement("energie", vue="heures"))
     assert p.modele(_branche_energie(p)["sequence"][0]["else"][0]["if"]) is False
+
+
+def _capteurs_envoyes(p):
+    turn_on = _branche_energie(p)["sequence"][0]["else"][0]["then"][0]
+    p.env.filters["bool"] = lambda v, defaut=None: v if isinstance(v, bool) else defaut
+    return p.modele(turn_on["data"]["variables"]["capteurs"])
+
+
+def _maison_bp_pv():
+    return _maison_bp() + [
+        Etat("sensor.pv2_puissance", "800", "Garage", friendly_name="Onduleur 2",
+             unit_of_measurement="W", device_class="power"),
+        Etat("sensor.pv2_energie", "512.3", friendly_name="Énergie onduleur 2",
+             unit_of_measurement="kWh", device_class="energy"),
+    ]
+
+
+def test_blueprint_plusieurs_sources():
+    """Les autres sources : option e et icône solaire sur leur tuile, toutes envoyées au
+    script, la première restant dans solaire / production (package plus ancien)."""
+    entrees = dict(REMPLIE, piece_1_tuiles=["sensor.solaire_puissance", "sensor.temp_bureau", "sensor.pv2_puissance"],
+                   energie_solaire_autres=["sensor.pv2_puissance"], energie_production_autres=["sensor.pv2_energie"])
+    p = Passage(entrees, _maison_bp_pv(), _evenement("energie", vue="heures", device_id="tablette_1"))
+    assert p["energie_solaires"] == ["sensor.solaire_puissance", "sensor.pv2_puissance"]
+    assert p["energie_productions"] == [PROD, "sensor.pv2_energie"]
+    assert sorted(p["energie_capteurs"]) == sorted(["sensor.solaire_puissance", PROD, "sensor.pv2_puissance",
+                                                    "sensor.pv2_energie"])
+    tuiles = _tuiles(p)
+    assert "e" in tuiles["t02"][3] and tuiles["t02"][2] == "solaire", "la tuile de la 2e source ouvre le popup"
+    assert "e" in tuiles["t00"][3] and "e" not in tuiles["t01"][3]
+    p.etats.d["script.tab5_energie"] = Etat("script.tab5_energie", "off")
+    capteurs = _capteurs_envoyes(p)
+    assert capteurs["solaire"] == "sensor.solaire_puissance" and capteurs["production"] == PROD
+    assert capteurs["solaires"] == ["sensor.solaire_puissance", "sensor.pv2_puissance"]
+    assert capteurs["productions"] == [PROD, "sensor.pv2_energie"]
+
+
+@pytest.mark.parametrize("entrees, solaires, principal", [
+    # Automatisation d'avant : une chaîne, pas de champ « autres » (défaut []).
+    ({"energie_solaire": "sensor.solaire_puissance"}, ["sensor.solaire_puissance"], "sensor.solaire_puissance"),
+    # Champ vide, autres seuls.
+    ({"energie_solaire_autres": ["sensor.pv2_puissance"]}, ["sensor.pv2_puissance"], ""),
+    # Une liste dans le champ principal (YAML écrit à la main), doublon avec « autres ».
+    ({"energie_solaire": ["sensor.solaire_puissance", "sensor.pv2_puissance"],
+      "energie_solaire_autres": ["sensor.pv2_puissance"]}, ["sensor.solaire_puissance", "sensor.pv2_puissance"],
+     "sensor.solaire_puissance"),
+    # Une chaîne dans « autres ».
+    ({"energie_solaire": "sensor.solaire_puissance", "energie_solaire_autres": "sensor.pv2_puissance"},
+     ["sensor.solaire_puissance", "sensor.pv2_puissance"], "sensor.solaire_puissance"),
+    ({}, [], ""),
+])
+def test_blueprint_chaine_liste_ou_vide(entrees, solaires, principal):
+    p = Passage(dict(PIECE, **entrees), _maison_bp_pv(), _evenement("energie", vue="heures"))
+    assert p["energie_solaires"] == solaires
+    assert p["energie"]["solaire"] == principal
 
 
 def test_blueprint_ecoute_l_evenement():

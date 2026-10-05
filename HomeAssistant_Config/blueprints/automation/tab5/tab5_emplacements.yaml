@@ -40,6 +40,9 @@
 #         Avec la puissance crête (energie_crete, kWc), la production en % de la crête part
 #         dans tab5_maj_emplacements (clé solaire, icône du bandeau d'état) : avec tous les
 #         états, puis avec les mesures lentes si le capteur a changé ; « nan » sinon.
+#         Plusieurs sources (05/10/2026, discussion #278) : energie_solaire_autres et
+#         energie_production_autres s'ajoutent aux champs principaux ; puissances et
+#         compteurs sont additionnés (energie_solaires, energie_productions).
 # @architecture_constraint Aucun placeholder : ce fichier est générique, il s'importe tel
 #       quel. Les clés d'emplacement et les commandes sont celles du firmware
 #       (tab5-api-logic.yaml, script tab5_action) ; tests/test_emplacements.py et
@@ -642,19 +645,44 @@ blueprint:
               filter:
                 - domain: sensor
                   device_class: power
+        # Plusieurs sources (discussion #278, 05/10/2026 : pv1 + pv2 + …) : un champ à part,
+        # en liste, plutôt que energie_solaire en multiple: true. Une automatisation déjà
+        # créée garde une CHAÎNE dans energie_solaire, et l'éditeur de HA ne convertit pas
+        # une chaîne quand le sélecteur passe en liste (ha-entities-picker fait value.map) :
+        # le champ ne s'afficherait plus. Les modèles additionnent les deux champs, et
+        # acceptent chaîne, liste ou vide dans chacun.
+        energie_solaire_autres:
+          name: Autres puissances solaires · Other solar power
+          description: >-
+            Plusieurs onduleurs ou plusieurs chaînes de panneaux (pv1, pv2…) : mettez ici
+            les autres capteurs, ils sont additionnés à la puissance solaire (un capteur
+            indisponible, la nuit par exemple, est ignoré tant qu'un autre a une valeur).
+
+
+            Several inverters or several panel strings (pv1, pv2…): put the other sensors
+            here, they are added to the solar power (an unavailable sensor, at night for
+            instance, is skipped as long as another one has a value).
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: sensor
+                  device_class: power
         energie_crete:
           name: Puissance crête des panneaux · Panel peak power
           description: >-
             En kWc (kilowatts-crête, sur la facture ou l'onduleur). Remplie avec la puissance
             solaire : une icône du bandeau d'état, en haut à gauche, montre la production en
             pourcentage de cette crête, par sa couleur (gris la nuit, puis rouge, ambre,
-            bleu, vert). 0 : pas d'icône.
+            bleu, vert). Avec plusieurs sources : la crête de tous les panneaux. 0 : pas
+            d'icône.
 
 
             In kWp (kilowatt-peak, on the invoice or the inverter). Filled together with the
             solar power: an icon of the status strip, top left, shows the production as a
             percentage of this peak, by its colour (grey at night, then red, amber, blue,
-            green). 0: no icon.
+            green). With several sources: the peak of all the panels. 0: no icon.
           default: 0
           selector:
             number:
@@ -676,6 +704,24 @@ blueprint:
           default: []
           selector:
             entity:
+              filter:
+                - domain: sensor
+                  device_class: energy
+        energie_production_autres:
+          name: Autres énergies solaires produites · Other solar energy produced
+          description: >-
+            Un compteur par onduleur : mettez ici les autres (kWh ou Wh, avec des
+            statistiques). Le total du jour et chaque barre sont la somme de tous les
+            compteurs ; un compteur sans donnée sur une période y compte pour 0.
+
+
+            One meter per inverter: put the other ones here (kWh or Wh, with statistics).
+            The day total and each bar are the sum of all the meters; a meter without data
+            for a period counts as 0 in it.
+          default: []
+          selector:
+            entity:
+              multiple: true
               filter:
                 - domain: sensor
                   device_class: energy
@@ -1603,21 +1649,45 @@ variables:
       {%- set ns.d = dict(ns.d, **{cle: (v if v is string else (v | first if v else ''))}) -%}
     {%- endfor -%}
     {{ ns.d }}
-  energie_capteurs: "{{ energie.values() | select | list }}"
+  # Plusieurs sources solaires (discussion #278) : toutes les puissances et tous les
+  # compteurs, le champ principal d'abord puis les « autres ». Chaque champ peut être une
+  # chaîne (automatisation d'avant), une liste ou vide. energie garde, lui, la première
+  # entité de chaque champ : un package tab5_energie plus ancien lit encore solaire et
+  # production (la première source seulement), le nouveau lit solaires et productions.
+  energie_solaire_autres: !input energie_solaire_autres
+  energie_production_autres: !input energie_production_autres
+  energie_solaires: >-
+    {%- set ns = namespace(l=[]) -%}
+    {%- for v in [energie_choix.solaire, energie_solaire_autres] -%}
+      {%- set ns.l = ns.l + ([v] if v is string else ((v | list) if v else [])) -%}
+    {%- endfor -%}
+    {{ ns.l | select('string') | reject('eq', '') | unique | list }}
+  energie_productions: >-
+    {%- set ns = namespace(l=[]) -%}
+    {%- for v in [energie_choix.production, energie_production_autres] -%}
+      {%- set ns.l = ns.l + ([v] if v is string else ((v | list) if v else [])) -%}
+    {%- endfor -%}
+    {{ ns.l | select('string') | reject('eq', '') | unique | list }}
+  energie_capteurs: "{{ ((energie.values() | select | list) + energie_solaires + energie_productions) | unique | list }}"
   energie_reseau_inverse: !input energie_reseau_inverse
   energie_batterie_inverse: !input energie_batterie_inverse
   # Icône solaire du bandeau d'état (clé solaire de tab5_maj_emplacements) : puissance
   # des panneaux en % de leur crête (energie_crete, kWc), arrondie et bornée 0-100 (un
-  # onduleur qui lit -3 W la nuit donne 0). « nan » sans capteur, sans crête ou sans
-  # valeur : l'icône disparaît. Unité lue sur le capteur (W, kW ou MW ; W sinon).
+  # onduleur qui lit -3 W la nuit donne 0). Plusieurs sources : la somme de celles qui
+  # ont une valeur (un onduleur « unavailable » la nuit est ignoré). « nan » sans
+  # capteur, sans crête ou sans aucune valeur : l'icône disparaît. Unité lue sur chaque
+  # capteur (W, kW ou MW ; W sinon).
   energie_crete: !input energie_crete
   solaire_pourcent: >-
-    {%- set x = energie.solaire -%}
     {%- set crete = energie_crete | float(0) -%}
-    {%- if x and crete > 0 and states(x) | is_number -%}
+    {%- set ns = namespace(w=0, n=0) -%}
+    {%- for x in energie_solaires if states(x) | is_number -%}
       {%- set u = state_attr(x, 'unit_of_measurement') | default('W', true) | string -%}
-      {%- set w = states(x) | float * {'kW': 1000, 'MW': 1000000}.get(u, 1) -%}
-      {{ [[(w / (crete * 1000) * 100) | round(0) | int, 0] | max, 100] | min }}
+      {%- set ns.w = ns.w + states(x) | float * {'kW': 1000, 'MW': 1000000}.get(u, 1) -%}
+      {%- set ns.n = ns.n + 1 -%}
+    {%- endfor -%}
+    {%- if crete > 0 and ns.n > 0 -%}
+      {{ [[(ns.w / (crete * 1000) * 100) | round(0) | int, 0] | max, 100] | min }}
     {%- else -%}
       nan
     {%- endif -%}
@@ -1630,10 +1700,13 @@ variables:
   # façon. Filtrer sur le palier demanderait de retenir le dernier envoyé (une entrée de
   # plus dans un package) : 5 minutes de retard au plus sur une couleur ont suffi.
   solaire_a_pousser: >-
-    {%- set x = energie.solaire -%}
+    {%- set ns = namespace(change=false) -%}
+    {%- for x in energie_solaires if states[x] is not none
+          and (now() - states[x].last_changed).total_seconds() < fenetre_mesures -%}
+      {%- set ns.change = true -%}
+    {%- endfor -%}
     {{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha']
-       or (trigger.id == 'mesures' and x != '' and energie_crete | float(0) > 0 and states[x] is not none
-           and (now() - states[x].last_changed).total_seconds() < fenetre_mesures) }}
+       or (trigger.id == 'mesures' and energie_crete | float(0) > 0 and ns.change) }}
 
 triggers:
   - trigger: event
@@ -2132,7 +2205,8 @@ actions:
                         tablette: "{{ tablette }}"
                         vue: "{{ trigger.event.data.vue | default('heures', true) }}"
                         capteurs: >-
-                          {{ dict(energie, reseau_inverse=energie_reseau_inverse | bool(false),
+                          {{ dict(energie, solaires=energie_solaires, productions=energie_productions,
+                                  reseau_inverse=energie_reseau_inverse | bool(false),
                                   batterie_inverse=energie_batterie_inverse | bool(false)) }}
 
       - alias: "La tablette demande quelles zones sont absentes"
@@ -2620,8 +2694,8 @@ actions:
                   {#- Tuile PC du réglage 3.x : l'écran d'ordinateur de la 3.1, pas l'icône
                       générique d'un interrupteur. -#}
                   {%- set defaut = 'ordinateur' if t.s == 'pc' else defaut -%}
-                  {#- Capteur solaire de la section « Énergie » : le panneau (ADR-0028). -#}
-                  {%- set defaut = 'solaire' if t.e == energie.solaire else defaut -%}
+                  {#- Capteurs solaires de la section « Énergie » : le panneau (ADR-0028). -#}
+                  {%- set defaut = 'solaire' if t.e in energie_solaires else defaut -%}
                   {%- set mdi = (p.get('icone') or state_attr(t.e, 'icon') or '') | string -%}
                   {%- set icone = icones_mdi.get(mdi, defaut) if mdi else defaut -%}
                   {#- Options : d (luminosité) et c (couleur) des modes de couleur ; o, k, r

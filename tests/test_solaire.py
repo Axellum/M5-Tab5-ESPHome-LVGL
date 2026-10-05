@@ -162,8 +162,63 @@ def test_pas_avec_les_autres_declencheurs():
     assert "solaire|" not in p.variables_du_bloc("payload")
 
 
+# ─── Plusieurs sources (discussion #278, 05/10/2026) ─────────────────────────
+
+PV2 = "sensor.pv2_puissance"
+
+
+def _passage_pv(trigger, etat1="2000", etat2="1.0", unite2="kW", crete=6, age1=3600, age2=3600, autres=None):
+    entrees = {"energie_crete": crete, "energie_solaire": CAPTEUR,
+               "energie_solaire_autres": [PV2] if autres is None else autres}
+    etats = [Etat(CAPTEUR, etat1, age=age1, unit_of_measurement="W", device_class="power"),
+             Etat(PV2, etat2, age=age2, unit_of_measurement=unite2, device_class="power")]
+    return Passage(entrees, etats, trigger)
+
+
+@pytest.mark.parametrize("etat1, etat2, unite2, attendu", [
+    ("2000", "1.0", "kW", "50"),          # 2000 W + 1 kW = 3000 W sur 6 kWc
+    ("2000", "1000", "W", "50"),
+    ("2000", "unavailable", "W", "33"),   # onduleur 2 éteint : 2000 / 6000 = 33 %
+    ("unknown", "1.5", "kW", "25"),       # onduleur 1 sans valeur : 1500 / 6000
+    ("unavailable", "unavailable", "W", "nan"),
+    ("5000", "4", "kW", "100"),           # 9 kW sur 6 kWc : borné
+])
+def test_pourcentage_somme_des_sources(etat1, etat2, unite2, attendu):
+    p = _passage_pv(_evenement("connexion"), etat1, etat2, unite2)
+    assert str(p["solaire_pourcent"]) == attendu
+    assert f"solaire|{attendu};" in p.variables_du_bloc("payload")
+
+
+def test_une_seule_source_chaine_comme_avant():
+    # Champ « autres » laissé vide : 2000 W seuls, comme avant (2000 / 6000 = 33 %).
+    p = _passage_pv(_evenement("connexion"), autres=[])
+    assert str(p["solaire_pourcent"]) == "33"
+
+
+@pytest.mark.parametrize("age1, age2, attendu", [
+    (3600, 60, True),      # seule la 2e source a changé : le passage part
+    (60, 3600, True),
+    (3600, 3600, False),   # aucune n'a changé
+])
+def test_mesures_une_des_sources_a_change(age1, age2, attendu):
+    p = _passage_pv(MESURES, age1=age1, age2=age2)
+    assert p["solaire_a_pousser"] is attendu
+
+
 def test_entree_facultative_dans_la_section_energie():
     from tests.test_tuiles_blueprint import _blueprint
     entree = _blueprint()["blueprint"]["input"]["energie"]["input"]["energie_crete"]
     assert entree["default"] == 0
     assert entree["selector"]["number"]["unit_of_measurement"] == "kWc"
+
+
+def test_champs_principaux_restent_une_entite():
+    """Une automatisation déjà créée a une CHAÎNE dans energie_solaire et
+    energie_production : passés en multiple: true, l'éditeur de HA (ha-entities-picker,
+    value.map) ne les afficherait plus. Les autres sources ont leurs propres champs."""
+    from tests.test_tuiles_blueprint import _blueprint
+    section = _blueprint()["blueprint"]["input"]["energie"]["input"]
+    for nom in ("energie_solaire", "energie_production"):
+        assert not section[nom]["selector"]["entity"].get("multiple"), nom
+    for nom in ("energie_solaire_autres", "energie_production_autres"):
+        assert section[nom]["selector"]["entity"]["multiple"] is True and section[nom]["default"] == [], nom
