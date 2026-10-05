@@ -4,6 +4,33 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Trois thèmes de plus : Bonbon, Sorbet, Ultraviolet
+
+Demande d'Axel : « ajoute les trois nouveaux thèmes au choix possible pour le Tab ». Les
+trois dernières esquisses de la galerie du 04/10/2026 (Claude Fable 5.1) deviennent des
+thèmes, convertis comme les dix-sept de #316 ; ils s'ajoutent à la fin du select
+« Thème » (`ordre:` 19 à 21), un choix déjà enregistré ne bouge pas.
+- **Bonbon** : stickers rose bonbon, bord blanc de 3 px, ombre dure framboise décalée de
+  5 px, boutons blancs (mûre la nuit), onglets rose dragée, Pacifico pour l'heure, la date
+  et les titres. Les ombres sont les plus lourdes du catalogue : l'esquisse les estimait à
+  ≈ 512 000 px ombrés sur l'accueil (≈ 50 ms au pire par redessin complet) et ≈ 29 ms à
+  l'ouverture du popup clim ; aucune sur le cadre des popups ni sur les cartes internes.
+- **Sorbet** : coques de macaron lilas, boutons menthe, onglets blancs, bord blanc de
+  2 px, sans ombre, Quicksand. Non repris : le dégradé rose → bleu de toute la page (le
+  fond des pages n'est pas un style de `formes:`).
+- **Ultraviolet** (l'esquisse s'appelait « Obsidienne », nom déjà pris) : noir pur, filets
+  de 1 px, coins courts, Anton. Non repris : la lueur violette du bouton choisi (état
+  « bouton actif », propriétés locales posées par le C++) et l'interlettrage d'Anton.
+- Bandeau central sombre en clair dans les trois (`zones_sombres: [bandeau]`) : il garde
+  lisibles les icônes de vigilance FFFF00 et FF0000. Les boutons de l'accueil prennent la
+  matière des boutons de l'esquisse (`style_clim_btn_page`), comme ceux des popups.
+- Écarts à l'esquisse pour les contrastes de `tests/test_themes.py` : Bonbon, le texte
+  principal framboise assombri le jour et éclairci la nuit, l'or assombri le jour ;
+  Sorbet, le texte principal violet et l'or assombris le jour.
+- `tests/test_doc_comptes.py` lit les nombres en lettres jusqu'à 59 (« Twenty-one »,
+  « Vingt et un ») ; README, site, `docs/installation.md`, `docs/screens.md` et
+  `docs/ui_design.md` disent vingt et un thèmes.
+
 ### 2026-10-05 — Accueil : grille du haut alignée, boutons à icône seule
 
 Demande d'Axel : aligner l'horloge sur les boutons de droite, des marges égales autour
