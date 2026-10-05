@@ -15,6 +15,8 @@ That is all. Home Assistant creates the key, gives it to the tablet and keeps it
 
 **It worked if** the tablet is listed under *Settings → Devices & services → ESPHome*, and its device page shows its controls, sensors and configuration. That page is where every [tablet setting](settings.md) lives.
 
+![The tablet's device page in Home Assistant: device info, controls, sensors, activity and the Configuration card (screen to show, light or dark, language…)](../images/installation/ha_appareil_en.png)
+
 ## If it does not work
 
 | What you see | What to do |
@@ -46,6 +48,8 @@ Home Assistant donne sa clé de chiffrement à la tablette, et la garde : rien �
 C'est tout. Home Assistant crée la clé, la donne à la tablette et la garde. Une tablette que Home Assistant connaît déjà (après « Erase User Data », par exemple) reçoit une nouvelle clé toute seule, rien à confirmer (vérifié le 28/09/2026).
 
 **C'est bon si** la tablette est listée dans *Paramètres → Appareils et services → ESPHome*, et que la page de son appareil montre ses contrôles, ses capteurs et sa configuration. C'est sur cette page que vivent tous les [réglages de la tablette](settings.md#version-française).
+
+![La page de l'appareil de la tablette dans Home Assistant : informations, contrôles, capteurs, activité et la carte Configuration (écran à afficher, clair ou sombre, langue…)](../images/installation/ha_appareil_fr.png)
 
 ## Si ça ne marche pas
 

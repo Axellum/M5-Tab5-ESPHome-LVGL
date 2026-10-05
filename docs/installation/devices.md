@@ -14,6 +14,8 @@ Your devices — lights, shutters, climate, plants, TV, sensors — are picked i
 2. *Create automation*.
 3. Fill the sections you need (every field is optional; the labels are in French and English), then *Save*.
 
+![The screen slots automation in the Home Assistant editor: the blueprint, its description and its sections, Room 1 open, Rooms 2 to 5 and Customise tiles folded](../images/installation/ha_blueprint_en.png)
+
 **One automation per tablet.** As soon as it is saved, the tablet receives your devices.
 
 **It worked if** the tiles at the bottom of the screen show your devices. The tablet's diagnostic sensor « Zones masquées » lists what is hidden: a slot you left empty, or an entity that does not exist.
@@ -56,6 +58,8 @@ Vos appareils — lumières, volets, clim, plantes, TV, capteurs — se choisiss
    `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml`
 2. *Créer une automatisation*.
 3. Remplissez les sections utiles (tous les champs sont facultatifs ; les libellés sont en français et en anglais), puis *Enregistrer*.
+
+![L'automatisation des emplacements dans l'éditeur de Home Assistant : le blueprint, sa description et ses sections, Pièce 1 ouverte, Pièces 2 à 5 et Personnaliser des tuiles repliées](../images/installation/ha_blueprint_fr.png)
 
 **Une automatisation par tablette.** Dès qu'elle est enregistrée, la tablette reçoit vos appareils.
 

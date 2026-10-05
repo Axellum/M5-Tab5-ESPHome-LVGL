@@ -43,7 +43,8 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
       le tableau de bord de la tablette (custom_templates/tab5_dashboard.jinja) rendu par HA, ses
       entités toutes présentes, enregistré et relu ; journal de HA sans erreur Tab5. Ce que
       montre l'écran entre la création de l'automatisation et le redémarrage est
-      rapporté (capture 1), sans faire échouer.
+      rapporté (capture 1), sans faire échouer. Avec --interface, en dernier : les
+      captures de l'interface de HA du guide d'installation (captures_ha.py).
 @contraintes Le mot de passe du compte est tiré au hasard ici et n'est jamais affiché ;
       la clé API est lue dans .storage par `docker exec` (fichiers de root dans le
       conteneur) et n'est jamais affichée non plus, seulement sa longueur.
@@ -54,7 +55,8 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
 
 Usage (voir le workflow) :
     python tools/installation_ha/verifier_installation.py --programme .esphome/build/tab5-ha-hmi/.../program \\
-        --prefs "$RUNNER_TEMP/prefs" --captures captures --conteneur homeassistant
+        --prefs "$RUNNER_TEMP/prefs" --captures captures --conteneur homeassistant \\
+        --interface captures/interface
 """
 from __future__ import annotations
 
@@ -140,6 +142,8 @@ CODE_RELEVE = re.compile(r"^@[0-4],\d+$")
 # entités de l'intégration demo et de donnees_test.yaml. Pots 4 et 5 laissés vides :
 # la tablette doit les masquer (ZONES_ABSENTES).
 ID_AUTOMATISATION = "tab5_emplacements_ci"
+# Nom montré par la capture de l'éditeur (captures_ha.py) : celui d'une vraie maison.
+ALIAS_AUTOMATISATION = "Tab5 — emplacements de l'écran"
 CHEMIN_BLUEPRINT = "tab5/tab5_emplacements.yaml"
 EMPLACEMENTS = {
     "lumiere_1": "light.bed_light",
@@ -609,6 +613,7 @@ class HA:
         self.base = base.rstrip("/")
         self.conteneur = conteneur
         self.jeton: str | None = None
+        self.rafraichissement = ""  # jeton de rafraîchissement, pour l'interface (captures_ha.py)
         self.ws: WS | None = None
 
     @property
@@ -652,7 +657,9 @@ class HA:
         }) as r:
             if r.status != 200:
                 raise Echec(f"/auth/token : HTTP {r.status}")
-            self.jeton = (await r.json())["access_token"]
+            jetons = await r.json()
+            self.jeton = jetons["access_token"]
+            self.rafraichissement = jetons.get("refresh_token", "")
 
     async def terminer_onboarding(self) -> None:
         """Les écrans suivants de l'onboarding (lieu, statistiques, intégrations)."""
@@ -1310,8 +1317,7 @@ async def enregistrer_automatisation(ha: HA, entrees: dict[str, Any]) -> None:
     """L'automatisation du blueprint enregistrée de nouveau avec ces entrées (ce que fait
     « Enregistrer » dans l'éditeur ; HA recharge les automatisations)."""
     await ha.post(f"/api/config/automation/config/{ID_AUTOMATISATION}", {
-        "alias": "Tab5 — emplacements (CI)",
-        "description": "Créée par tools/installation_ha/verifier_installation.py",
+        "alias": ALIAS_AUTOMATISATION,
         "use_blueprint": {"path": CHEMIN_BLUEPRINT, "input": entrees},
     })
 
@@ -1574,6 +1580,15 @@ async def scenario(args, rapport: Rapport) -> None:
             # Tableau de bord de la tablette, rendu par HA et enregistré (custom_templates/).
             await verifier_tableau_de_bord(ha, ws, rapport)
             await journal_ha(ha, connexion, deconnexions, rapport)
+            # Captures de l'interface pour le guide (docs/installation/), après le journal
+            # jugé juste avant : tout est installé, la tablette tourne encore.
+            if args.interface:
+                import captures_ha
+
+                await captures_ha.capturer_interface(
+                    ha, rapport, args.interface, client_id=CLIENT_ID,
+                    entite_tablette=f"binary_sensor.{PREFIXE_ENTITES}_ha_api_status",
+                    automatisation=ID_AUTOMATISATION, alias=ALIAS_AUTOMATISATION, modele=APPEL_TABLEAU)
     finally:
         await tablette.arreter()
 
@@ -1586,6 +1601,8 @@ def main() -> int:
     parser.add_argument("--captures", type=Path, required=True, help="dossier des captures et journaux")
     parser.add_argument("--conteneur", default="homeassistant", help="nom du conteneur Home Assistant")
     parser.add_argument("--ha", default=URL_HA, help=f"adresse de HA (défaut {URL_HA})")
+    parser.add_argument("--interface", type=Path,
+                        help="dossier des captures de l'interface de HA pour le guide (Playwright, captures_ha.py)")
     args = parser.parse_args()
 
     rapport = Rapport()
