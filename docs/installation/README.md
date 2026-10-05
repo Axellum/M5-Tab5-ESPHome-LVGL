@@ -13,7 +13,7 @@ Seven steps, in this order: nothing to compile, the firmware installs from the b
 - An **M5Stack Tab5**, and the name of its **display chip**: it is printed on the sticker on the back, above the Espressif logo (ST7123, ST7121 or ILI9881C, see [hardware revisions](../hardware.md#hardware-revisions)).
 - A **computer with Chrome or Edge** (the install page talks to the tablet through Web Serial) and a **USB-C cable that carries data**: with a charge-only cable, no port shows up.
 - **Home Assistant 2026.8 or newer**, any installation method, and a way to copy files into its `config/` folder: Samba share, or the File editor or Studio Code Server add-on.
-- Optional: a weather integration (Met.no comes with Home Assistant), your calendars, a voice pipeline (Assist).
+- Optional: a weather integration (Met.no comes with Home Assistant), your calendars, a Home Assistant voice assistant (see [the two voice modes](settings.md#voice-assistant-the-two-modes)).
 
 ## The seven steps
 
@@ -56,7 +56,7 @@ Sept étapes, dans cet ordre : rien à compiler, le firmware s'installe depuis l
 - Un **M5Stack Tab5**, et le nom de sa **puce d'écran** : il est écrit sur l'autocollant au dos, au-dessus du logo Espressif (ST7123, ST7121 ou ILI9881C, voir les [révisions matérielles](../hardware.md#révisions-matérielles)).
 - Un **ordinateur avec Chrome ou Edge** (la page d'installation parle à la tablette par Web Serial) et un **câble USB-C qui transmet les données** : avec un câble de charge seule, aucun port n'apparaît.
 - **Home Assistant 2026.8 ou plus récent**, toute méthode d'installation, et un moyen de copier des fichiers dans son dossier `config/` : partage Samba, ou le module File editor ou Studio Code Server.
-- Facultatif : une intégration météo (Met.no vient avec Home Assistant), vos agendas, un pipeline vocal (Assist).
+- Facultatif : une intégration météo (Met.no vient avec Home Assistant), vos agendas, un assistant vocal Home Assistant (voir [les deux modes vocaux](settings.md#assistant-vocal--les-deux-modes)).
 
 ## Les sept étapes
 

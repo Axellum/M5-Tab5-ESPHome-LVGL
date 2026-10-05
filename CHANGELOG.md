@@ -4,6 +4,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+Pré-releases tirées de cette section, sur le canal bêta :
+[v3.7.0-rc.1](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.7.0-rc.1)
+le 05/10/2026 sur `52a0dba` (batterie ou USB, plusieurs sources solaires, appareils sur la
+météo au choix, tableau de bord), puis
+[v3.7.0-rc.2](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.7.0-rc.2)
+le 05/10/2026, qui ajoute le popup du volet (#333) et la doc des deux modes vocaux (#334).
+
 ### 2026-10-05 — Les captures de Home Assistant du guide, prises par la CI
 
 Suite du guide d'installation (lot 2b) : les écrans de Home Assistant des étapes 4 à 7 sont
@@ -23,6 +30,24 @@ capture se refait quand l'interface de Home Assistant change.
 - Étape 5 : chercher **select.tab5_** montre les listes seules (« Tab5 · » montre aussi les
   textes et les capteurs des packages).
 - L'automatisation de la CI porte un nom de vraie maison, « Tab5 — emplacements de l'écran ».
+
+### 2026-10-05 — Documentation : régler les deux modes vocaux
+
+Question d'un utilisateur ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) :
+comment avoir un assistant vocal avec une IA locale. La doc ne disait nulle part, côté
+utilisateur, comment monter les deux assistants. Doc et tableau de bord seulement, firmware
+et packages inchangés.
+- `docs/installation/settings.md` (EN et FR) : section « Assistant vocal : les deux modes » — Domo =
+  l'assistant préféré de HA, Discu = celui de « Tab5 · pipeline de discussion », « Aucun »
+  masque les boutons, la liste « Assistant » de l'appareil suit les boutons ; option tout en
+  local (Ollama, Whisper ou Speech-to-Phrase, Piper, Home LLM), avec les pages officielles ;
+  mot d'activation et second mot. Liée depuis « Ce qu'il faut », la liste « Tab5 · pipeline
+  de discussion » (étape 5) et les réglages Voix.
+- `docs/voice_assistant.md` (EN et FR) : n'importe quel agent de conversation convient ;
+  vromvrom-engine est le moteur de l'auteur (pourquoi il l'a, et pourquoi il ne le conseille
+  pas : un gros brouillon géré par l'IA) ; il n'est plus présenté comme un passage obligé.
+- Tableau de bord HA, vue Réglages, section « Assistant vocal » : une explication et un lien
+  vers la doc, dans les sept langues (traductions écrites par une IA, non relues).
 
 ### 2026-10-05 — Le guide d'installation en pages, étape par étape
 
