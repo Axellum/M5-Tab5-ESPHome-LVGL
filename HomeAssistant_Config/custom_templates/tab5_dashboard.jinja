@@ -79,6 +79,7 @@
   ('theme', 'select', 'theme'), ('theme_mode', 'select', 'clair_ou_sombre'),
   ('theme_nuit', 'switch', 'nuit_theme_auto'),
   ('tape', 'switch', 'tap_to_wake'), ('batterie_montee', 'switch', 'tab5_batterie_montee'),
+  ('appareils_meteo', 'switch', 'tab5_appareils_sur_la_meteo'),
   ('dac', 'select', 'tab5_dac_output'), ('antenne', 'select', 'wifi_antenna'),
   ('zones', 'sensor', 'zones_masquees'),
   ('reveil_en_cours', 'binary_sensor', 'reveil_en_cours'), ('prochain_reveil', 'sensor', 'prochain_reveil'),
@@ -701,7 +702,8 @@ views:
 {%- endif %}
 {%- endfor %}
 {%- for cle, fr_, en_, icone in [('tape', "Rallumer l'écran d'une tape", 'Wake the screen with a tap', 'mdi:gesture-tap'),
-                                  ('batterie_montee', 'Batterie montée', 'Battery fitted', 'mdi:battery')] %}
+                                  ('batterie_montee', 'Batterie montée', 'Battery fitted', 'mdi:battery'),
+                                  ('appareils_meteo', 'Appareils sur la météo', 'Devices on the forecast', 'mdi:lightbulb-outline')] %}
 {%- if T[cle] %}
           - type: tile
             entity: {{ T[cle] }}
@@ -715,6 +717,11 @@ views:
 {%- if T.batterie_montee %}
           - type: heading
             heading: "{{ t("Allumée, l'icône de batterie apparaît dans le bandeau", 'On: the battery icon shows in the status strip') }}"
+            heading_style: subtitle
+{%- endif %}
+{%- if T.appareils_meteo %}
+          - type: heading
+            heading: "{{ t('Éteint, les prévisions montrent la météo seule ; le bouton HA garde les appareils', 'Off: the forecast cards show the weather only; the HA button still shows the devices') }}"
             heading_style: subtitle
 {%- endif %}
 {%- if T.theme_nuit %}
@@ -1989,6 +1996,18 @@ views:
     'es': 'Activado: el icono de batería aparece en la barra de estado',
     'it': 'Attiva: l’icona della batteria compare nella barra di stato',
     'tr': 'Açıkken pil simgesi durum şeridinde görünür'},
+  'Appareils sur la météo': {
+    'de': 'Geräte auf der Vorhersage',
+    'nl': 'Apparaten op de verwachting',
+    'es': 'Dispositivos en la previsión',
+    'it': 'Dispositivi sulle previsioni',
+    'tr': 'Tahminde cihazlar'},
+  'Éteint, les prévisions montrent la météo seule ; le bouton HA garde les appareils': {
+    'de': 'Aus: Die Vorhersagekarten zeigen nur das Wetter; die HA-Taste zeigt weiter die Geräte',
+    'nl': 'Uit: de verwachtingskaarten tonen alleen het weer; de HA-knop toont de apparaten nog',
+    'es': 'Desactivado: las tarjetas de previsión solo muestran el tiempo; el botón HA sigue mostrando los dispositivos',
+    'it': 'Disattivo: le schede delle previsioni mostrano solo il meteo; il pulsante HA mostra ancora i dispositivi',
+    'tr': 'Kapalıyken tahmin kartları yalnızca havayı gösterir; HA düğmesi cihazları göstermeye devam eder'},
   'Nuit (thème auto)': {
     'de': 'Nacht (Auto-Design)',
     'nl': 'Nacht (auto-thema)',

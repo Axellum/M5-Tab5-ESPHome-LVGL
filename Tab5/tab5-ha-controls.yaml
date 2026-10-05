@@ -3,7 +3,9 @@
 # @file tab5-ha-controls.yaml
 # @role Entités ESPHome supplémentaires exposées à Home Assistant pour observer
 #       et piloter l'écran depuis un dashboard HA (« Console Tab5 »), sans être
-#       devant la dalle.
+#       devant la dalle. Aussi des réglages de l'écran gardés en mémoire (langue,
+#       interrupteurs « Tab5 Batterie montée » et « Tab5 Appareils sur la météo »),
+#       qui passent chacun par une fonction C++ nommée (règle 2).
 # @architecture_constraint Ce fichier ne construit AUCUN widget LVGL. Il se
 #       contente (a) de lire l'état de l'UI et (b) de rejouer exactement les
 #       mêmes chemins d'ouverture que les boutons de l'écran — pour que l'état
@@ -298,6 +300,21 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     on_state:
       - lambda: 'batterie_montee_ui(x);'
+
+  # Appareils des pièces sur les prévisions (05/10/2026, discussion #278 : un
+  # utilisateur préfère des cartes météo seules). Éteint, le mode météo ne montre plus
+  # les épaules ni le bouton d'action des tuiles, et le titre d'une tuile de volet ne
+  # bascule plus son sens ; le mode HA (bouton « HA ») montre toujours les pièces.
+  # Allumé par défaut (ADR-0023), gardé en mémoire, appliqué sans redémarrage.
+  - platform: template
+    id: tab5_appareils_meteo
+    name: "Tab5 Appareils sur la météo"
+    icon: mdi:lightbulb-outline
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_state:
+      - lambda: 'tuiles_appareils_meteo(x);'
 
 button:
   # Recharge le mois courant + M+1 du calendrier (même script que le pré-fetch

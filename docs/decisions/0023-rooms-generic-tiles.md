@@ -123,3 +123,7 @@ Per room `n` = 1..5 (section « Pièce n — … », room 1 open, the others fol
 ## Update — 2026-09-29: every climate tile has its popup
 
 A `cli` tile without `m` used to do nothing on tap. [ADR-0027](0027-climate-per-tile.md): the blueprint pushes its unit's settings (`crRT`) and state (`ceRT`) with the tiles, and the tap opens the climate popup on that unit; its commands go with `emplacement: tRT`, translated by the same « Clim : … » branches as the blueprint's climate.
+
+## Update — 2026-10-05: devices on the forecast become optional
+
+A user found the shoulders above the weather icons unnecessary ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)). A device setting, the switch **Tab5 Appareils sur la météo** (`tab5-ha-controls.yaml`, `entity_category: config`, `RESTORE_DEFAULT_ON`), chooses. On (the default), nothing changes. Off, weather mode draws every page as a page without devices: no shoulders, no invisible action button, no shutter-direction flip by the tile's title, no 3.x shutter-direction button. HA mode does not read the setting: the « HA » button still shows the rooms and their cards, and a card's title still flips its shutter. The switch takes effect at once (`tuiles_appareils_meteo()`, `tab5_tuiles.cpp`) and survives reboots; the themes (ADR-0029) repaint through the same path, so they keep it. The setting is the tablet's, not the blueprint's: HA keeps pushing the states either way.

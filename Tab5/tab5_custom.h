@@ -1051,6 +1051,12 @@ void tuiles_brancher_titres();
 // centrale ; en sortant, la météo de la page courante.
 void tuiles_mode_ha(bool actif);
 
+// Interrupteur « Tab5 Appareils sur la météo » (tab5-ha-controls.yaml, 05/10/2026) :
+// éteint, les prévisions du mode météo ne montrent plus les appareils des pièces (ni
+// épaules, ni bouton d'action, ni sens du volet par le titre) ; le mode HA ne change
+// pas. Repeint tout de suite ; appelé au setup (restauration), il ne dessine rien.
+void tuiles_appareils_meteo(bool montres);
+
 // Mode héritage (blueprint 3.x) : les emplacements 3.x forment la pièce 0 — PC/TV
 // (tuile 0), volet (1), lumiere_1..3 (2-4). Appelés par leurs capteurs
 // (tab5-sensors-domotique.yaml) et par tab5_maj_volet_etat, quel que soit le mode.

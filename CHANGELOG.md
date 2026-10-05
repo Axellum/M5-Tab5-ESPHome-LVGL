@@ -4,6 +4,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Appareils des pièces sur la météo : au choix
+
+Retour d'un utilisateur ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) :
+les icônes des appareils au-dessus des prévisions ne lui servent pas.
+- **Interrupteur « Tab5 Appareils sur la météo »** (réglage de l'appareil dans Home Assistant,
+  `tab5-ha-controls.yaml`), allumé par défaut : rien ne change pour qui n'y touche pas. Éteint,
+  les cartes de prévisions ressemblent à une page sans appareil : ni épaules, ni bouton d'action
+  invisible, ni bascule du sens d'un volet par le titre. Le bouton « HA » montre toujours les
+  pièces et leurs appareils. Pris en compte tout de suite, gardé d'un démarrage à l'autre
+  (`tuiles_appareils_meteo()`, `tab5_tuiles.cpp` ; amendement du 05/10 de l'ADR-0023).
+- Tableau de bord HA : l'interrupteur et une ligne d'explication dans la vue Réglages, dans les
+  sept langues (traductions écrites par une IA, non relues).
+- Rendu hors tablette : `accueil-sans-appareils` et `accueil-sans-appareils-heures-1` (action
+  `rendu_appareils_meteo`). Non testé sur la tablette.
+
 ### 2026-10-05 — Énergie : plusieurs sources solaires additionnées
 
 Demandé par husyildiz ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) :
