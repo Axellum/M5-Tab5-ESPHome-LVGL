@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-"""tools/publication/pages.py — Site GitHub Pages : vitrine, page de flashage et manifestes
+"""tools/publication/pages.py — Site GitHub Pages : racine, page de flashage et manifestes
 de mise à jour (lot 6c, ADR-0022).
 
 Le site est reconstruit en entier à chaque déploiement (.github/workflows/site.yml), à
 partir des fichiers des releases (pas des artefacts d'un run) : une pre-release ne
 remplace donc jamais la version stable.
 
-    <site>/index.html                 la vitrine (dossier web/)
+    <site>/index.html                 renvoi vers en/ ou fr/ (dossier web/)
     <site>/install/index.html         la page de flashage
     <site>/en/, <site>/fr/, 404.html  la documentation (docs/, tools/site/construire.py, ADR-0030)
-    <site>/images/                    images de docs/images/ sous un nom parlant (IMAGES)
+    <site>/images/                    image de partage, sous un nom parlant (IMAGES)
     <site>/sitemap.xml                pages et images, pour les moteurs de recherche
     <site>/versions.json              ce que la page de flashage affiche
     <site>/stable/<écran>/            dernière release 3.x non « pre-release »
@@ -50,36 +50,10 @@ SITE = "https://axellum.github.io/M5-Tab5-ESPHome-LVGL/"
 # Nom publié (site/images/) → fichier de docs/images/. Un nom parlant aide les moteurs
 # de recherche ; les fichiers du dépôt gardent le leur (README, docs, kit de presse).
 IMAGES = {
+    # Image de partage (og:image) de la racine, de la page d'installation et de chaque
+    # page de la documentation (tools/site/construire.py, IMAGE_PARTAGE). Les autres images
+    # du site sont celles des pages de la documentation, sous en/images/ et fr/images/.
     "m5stack-tab5-home-assistant-screen-card.jpg": "tab5_social_preview.jpg",
-    "m5stack-tab5-home-assistant-wall-screen.jpg": "tab5_hero_4x3.jpg",
-    "m5stack-tab5-home-assistant-ui-tour.webp": "tab5_ui_tour_hq.webp",
-    "m5stack-tab5-home-assistant-device-buttons.jpg": "tab5_photo_domo.jpg",
-    "m5stack-tab5-plant-sensors-soil-moisture.jpg": "tab5_photo_plants.jpg",
-    "m5stack-tab5-home-assistant-climate-control.jpg": "tab5_photo_climate_popup_v2.jpg",
-    "m5stack-tab5-home-assistant-light-control.jpg": "tab5_photo_light_popup_v2.jpg",
-    "m5stack-tab5-samsung-tv-remote.jpg": "tab5_photo_tv_remote.jpg",
-    "m5stack-tab5-esphome-diagnostics-console.jpg": "tab5_photo_console_v2.jpg",
-    "m5stack-tab5-calendar-work-hours.jpg": "tab5_photo_calendar.jpg",
-    "m5stack-tab5-voice-assistant-reply.jpg": "tab5_photo_assistant_popup.jpg",
-    "m5stack-tab5-arcade-games-lvgl.jpg": "tab5_photo_arcade_selector.jpg",
-    "m5stack-tab5-themes-light-dark.jpg": "tab5_themes.jpg",
-    "m5stack-tab5-home-assistant-dashboard.png": "ha_tableau_tab5.png",
-    "m5stack-tab5-solar-energy-popup.png": "tab5_energie_en.png",
-    "m5stack-tab5-chess-game-esp32-p4.jpg": "tab5_photo_chess.jpg",
-    "m5stack-tab5-lode-runner-game.jpg": "tab5_photo_lode_runner.jpg",
-    "m5stack-tab5-breakout-game-tilt.jpg": "tab5_photo_arkanoid.jpg",
-    # Recadrages de rendus de la CI (scène « pluie + vigilance orange »), propres au site :
-    # hors de docs/images/rendu/, que tools/rendu/maj_references.py vide à chaque mise à jour.
-    "m5stack-tab5-rain-next-hour-fr.png": "site/pluie-dans-l-heure.png",
-    "m5stack-tab5-rain-next-hour-en.png": "site/pluie-dans-l-heure-en.png",
-    "m5stack-tab5-weather-warnings-fr.png": "site/vigilances.png",
-    "m5stack-tab5-weather-warnings-en.png": "site/vigilances-en.png",
-    "m5stack-tab5-lvgl-screen-sunny-day-en.png": "rendu/1-journee-ensoleillee-en.png",
-    "m5stack-tab5-lvgl-screen-sunny-day-fr.png": "rendu/1-journee-ensoleillee.png",
-    "m5stack-tab5-lvgl-screen-rain-warning-en.png": "rendu/2-pluie-alerte-orange-en.png",
-    "m5stack-tab5-lvgl-screen-rain-warning-fr.png": "rendu/2-pluie-alerte-orange.png",
-    "m5stack-tab5-lvgl-screen-day-off-plants-en.png": "rendu/3-jour-de-repos-plantes-a-surveiller-en.png",
-    "m5stack-tab5-lvgl-screen-day-off-plants-fr.png": "rendu/3-jour-de-repos-plantes-a-surveiller.png",
 }
 IMAGE_DE_PAGE = re.compile(r'<img\b[^>]*\bsrc="((?:\.\./)*images/[^"]+)"')
 # Dossiers de la documentation (tools/site/construire.py, ADR-0030) : une langue chacun.
@@ -170,7 +144,7 @@ def plan_du_site(site: Path) -> str:
         lignes.append(f"  <url><loc>{escape(SITE + dossier)}</loc>")
         vues = []
         for src in IMAGE_DE_PAGE.findall(page.read_text(encoding="utf-8")):
-            # Relative à la page : images/ de la vitrine, en/images/ ou fr/images/ de la doc.
+            # Relative à la page : images/ de la racine, en/images/ ou fr/images/ de la doc.
             image = urljoin(SITE + dossier, src)
             if image not in vues:
                 vues.append(image)
@@ -185,7 +159,7 @@ def assembler(web: Path, assets: Path, stable: str | None, beta: str | None, sor
     """Écrit le site complet dans `sortie` ; renvoie le contenu de versions.json.
 
     `doc` : la documentation construite (en/, fr/, 404.html), copiée à la racine du site.
-    Elle ne doit rien remplacer de la vitrine, ni les canaux que lisent les firmwares."""
+    Elle ne doit rien remplacer de web/, ni les canaux que lisent les firmwares."""
     if sortie.exists():
         shutil.rmtree(sortie)
     shutil.copytree(web, sortie)
@@ -218,7 +192,7 @@ def main() -> int:
     p = sous.add_parser("assembler", help="construit le site")
     p.add_argument("--web", type=Path, required=True)
     p.add_argument("--assets", type=Path, required=True, help="un sous-dossier par tag")
-    p.add_argument("--images", type=Path, help="docs/images (images de la vitrine)")
+    p.add_argument("--images", type=Path, help="docs/images (image de partage)")
     p.add_argument("--doc", type=Path, help="documentation construite par tools/site/construire.py")
     p.add_argument("--stable", default="")
     p.add_argument("--beta", default="")

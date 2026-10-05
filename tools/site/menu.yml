@@ -3,19 +3,22 @@
 # des deux langues.
 #
 # Chaque entrée a `en` et `fr` (titres du menu), puis l'un de :
-#   page:    fichier du dépôt (docs/…), une page du site ;
-#   lien:    adresse absolue (vitrine, page d'installation, GitHub) ;
+#   page:    fichier du dépôt (docs/…, ou README.md : la page d'accueil), une page du site ;
+#   lien:    adresse absolue (page d'installation, GitHub) ;
 #   pages:   un sous-menu (liste d'entrées) ;
 #   dossier: chaque .md du dossier (sauf README.md), dans l'ordre des noms, titre lu
 #            dans son « # » ; avec `page`, celle-ci ouvre la section.
 # `langue: en` ou `langue: fr` : page écrite dans une seule langue, reprise sur l'autre
 # site avec un encart qui le dit. Sinon le fichier est coupé à « ## Version Française ».
+# `h1_fr:` titre de la page française quand il diffère de celui du menu (la partie
+# française d'un fichier n'a pas de « # » : c'est le titre du menu qui le donne).
 # Un fichier de docs/ absent d'ici n'est pas publié : tests/test_site_doc.py liste ceux
 # qui restent hors du site exprès (HORS_SITE).
 
-- en: Project home
-  fr: Accueil du projet
-  lien: https://axellum.github.io/M5-Tab5-ESPHome-LVGL/
+- en: Home
+  fr: Accueil
+  page: README.md
+  h1_fr: M5Stack Tab5 — écran mural Home Assistant avec ESPHome et LVGL
 
 - en: Documentation
   fr: Documentation
@@ -167,6 +170,10 @@
       page: docs/decisions/README.md
       dossier: docs/decisions
       langue: en
+
+- en: The story
+  fr: L'histoire
+  page: docs/story.md
 
 - en: Releases
   fr: Versions

@@ -13,7 +13,7 @@ edit_uri: ""            # pas de bouton « modifier » : une page française n'e
 
 theme:
   name: material
-  font: false           # polices du système, comme la vitrine : aucune requête à Google Fonts
+  font: false           # polices du système, comme la page d'installation : aucune requête à Google Fonts
   icon:
     repo: fontawesome/brands/github
   features:

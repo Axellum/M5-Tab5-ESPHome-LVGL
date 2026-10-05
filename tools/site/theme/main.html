@@ -2,10 +2,18 @@
   Site de documentation (ADR-0030) : l'en-tête de Material 9.7 (bloc site_meta), sauf les
   liens hreflang, qui mènent ici à la même page dans l'autre langue (les deux arbres ont
   les mêmes chemins) plutôt qu'à l'accueil de l'autre site ; plus l'image et les balises
-  de partage, comme sur la vitrine. La description vient du premier paragraphe de la page
-  (construire.py).
+  de partage. La description vient du premier paragraphe de la page (construire.py).
+  La page d'accueil (le README du dépôt) a son propre <title> et la fiche JSON-LD du
+  projet, reprises de l'ancienne vitrine.
 -#}
 {% extends "base.html" %}
+{% block htmltitle %}
+  {%- if page and page.is_homepage %}
+  <title>{{ config.extra.titre_accueil }}</title>
+  {%- else %}
+  {{ super() }}
+  {%- endif %}
+{% endblock %}
 {% block site_meta %}
   {%- set chemin = page.url if page and page.url else "" -%}
   {%- if page and page.meta and page.meta.description -%}
@@ -29,7 +37,12 @@
   {%- for alt in config.extra.alternate %}
   <link rel="alternate" hreflang="{{ alt.lang }}" href="{{ alt.link }}{{ chemin }}">
   {%- endfor %}
+  {#- L'accueil : la racine du site, qui choisit la langue (web/index.html). -#}
+  {%- if page and page.is_homepage %}
+  <link rel="alternate" hreflang="x-default" href="{{ config.extra.racine }}">
+  {%- else %}
   <link rel="alternate" hreflang="x-default" href="{{ config.extra.alternate[0].link }}{{ chemin }}">
+  {%- endif %}
   <link rel="icon" href="{{ config.theme.favicon | url }}">
   <meta name="generator" content="mkdocs-{{ mkdocs_version }}, mkdocs-material">
 {% endblock %}
@@ -37,7 +50,7 @@
   {%- if page and page.title and not page.is_homepage -%}
     {%- set titre = (page.title | striptags) ~ " - " ~ config.site_name -%}
   {%- else -%}
-    {%- set titre = config.site_name -%}
+    {%- set titre = config.extra.titre_accueil -%}
   {%- endif %}
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="{{ config.site_name }}">
@@ -50,4 +63,22 @@
   <meta property="og:image:width" content="1280">
   <meta property="og:image:height" content="640">
   <meta name="twitter:card" content="summary_large_image">
+  {%- if page and page.is_homepage %}
+  <script type="application/ld+json">
+  {{ {
+    "@context": "https://schema.org",
+    "@type": "SoftwareSourceCode",
+    "name": "M5Stack Tab5 Home Assistant wall screen (tab5-ha-hmi)",
+    "description": (page.meta.description if page.meta and page.meta.description else config.site_description),
+    "url": page.canonical_url,
+    "inLanguage": config.theme.language,
+    "codeRepository": config.extra.depot,
+    "programmingLanguage": ["C++", "YAML"],
+    "runtimePlatform": "ESPHome",
+    "license": "https://opensource.org/licenses/MIT",
+    "image": config.extra.image_partage,
+    "author": {"@type": "Person", "name": "Axellum", "url": "https://github.com/Axellum"}
+  } | tojson }}
+  </script>
+  {%- endif %}
 {% endblock %}

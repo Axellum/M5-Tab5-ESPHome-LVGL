@@ -239,7 +239,7 @@ jobs:
           ls -l publie
           gh release upload "$TAG" publie/* --clobber --repo "$GITHUB_REPOSITORY"
 
-  # Le site (vitrine, page de flashage, canaux) est reconstruit par site.yml, qui sert aussi
+  # Le site (documentation, page de flashage, canaux) est reconstruit par site.yml, qui sert aussi
   # à le redéployer seul, sans recompiler ni remplacer les fichiers de la release.
   pages:
     needs: release

@@ -8,11 +8,12 @@ Tab5/tab5-api-logic.yaml), « 25 décisions d'architecture » sur le site et dan
 README (26 dans docs/decisions/). Là où un nombre reste écrit, ce test vérifie :
 
 - les packages de `tab5-ha-hmi.yaml` : la liste recopiée dans docs/architecture.md
-  (mêmes clés, mêmes fichiers, même ordre), leur nombre en toutes lettres dans le
-  README (EN et FR) et en chiffres dans la cartographie ;
+  (mêmes clés, mêmes fichiers, même ordre), leur nombre en toutes lettres dans ses
+  « Key design decisions » (EN et FR ; dans le README jusqu'au 05/10/2026) et en
+  chiffres dans la cartographie ;
 - les actions (`- service:`) de `Tab5/tab5-api-logic.yaml` : leur nombre dans la
   cartographie, et la table de Tab5/README.md, qui les liste chacune une fois ;
-- les ADR de docs/decisions/ : leur nombre dans le README, le site et la cartographie.
+- les ADR de docs/decisions/ : leur nombre dans le README et la cartographie.
 
 Ajouté le même jour (schéma de la cartographie) : le schéma Mermaid n'avait pas de nœud
 pour quatre packages de l'entrée et pas d'arête pour trois autres, annonçait 40
@@ -22,7 +23,7 @@ pas de section pour sept packages, et le README comptait « quatre » fichiers d
 
 - un nœud et une arête `ENTRY -->|packages:|` par package de l'entrée, dans son ordre ;
 - une section « ### `fichier` » par package dans « Package roles » et « Rôles des packages » ;
-- les fichiers de plus de 500 lignes nommés par le README (EN et FR) ;
+- les fichiers de plus de 500 lignes nommés par docs/architecture.md (EN et FR) ;
 - le nombre de `ui_components/*.yaml`, et de ceux que `tab5-lvgl.yaml` inclut lui-même.
 
 Ajouté le 30/09/2026 (lot D de l'audit, contrat HA ↔ tablette) : le nombre de champs
@@ -30,7 +31,10 @@ de la vigilance, les services appelés ou non par la démo (AGENTS.md, docs/demo
 et la table des événements de Tab5/README.md (données émises, consommateurs).
 
 Ajouté le 02/10/2026 (après le turc) : le nombre de langues de Tab5/lang/ dans le README
-(EN et FR) et sur le site, titres, étiquette et descriptions compris.
+(EN et FR) et sur la racine du site.
+
+Le 05/10/2026, la vitrine (web/index.html) est devenue un renvoi vers l'accueil de la
+documentation, qui est le README : ses comptes ne sont plus vérifiés qu'une fois.
 
 Un texte qui n'a pas besoin du nombre l'omet (vue d'ensemble d'architecture.md) : il
 ne se périme plus. Un motif qui ne trouve plus rien fait échouer le test : le texte a
@@ -53,7 +57,7 @@ INVENTAIRE = REPO / "docs" / "INVENTAIRE_CONFIGS_TESTS.md"
 SITE = REPO / "web" / "index.html"
 LVGL = REPO / "Tab5" / "tab5-lvgl.yaml"
 UI = REPO / "Tab5" / "ui_components"
-GROS = 500   # « Most stay under 500 lines » (README)
+GROS = 500   # « Most stay under 500 lines » (docs/architecture.md)
 
 _UNITES_EN = ("zero one two three four five six seven eight nine ten eleven twelve thirteen "
               "fourteen fifteen sixteen seventeen eighteen nineteen").split()
@@ -137,14 +141,14 @@ def test_architecture_recopie_les_packages_de_l_entree():
         "recopier le bloc `packages:` de tab5-ha-hmi.yaml dans docs/architecture.md, § 1"
 
 
-def test_readme_nombre_de_packages():
+def test_choix_de_conception_nombre_de_packages():
     en, fr = _en_lettres(len(_packages(_lire(ENTREE))))
-    texte = _lire(README)
+    texte = _lire(ARCHITECTURE)
     for motif, attendu in ((r"split across ([a-z-]+(?: et un)?) files by concern", en),
                            (r"découpée en ([a-zé-]+(?: et un)?) fichiers par domaine", fr)):
         trouve = re.search(motif, texte)
-        assert trouve, f"README.md : plus rien ne correspond à {motif!r}, adapter le motif"
-        assert trouve.group(1) == attendu, f"README.md : « {trouve.group(1)} », attendu « {attendu} »"
+        assert trouve, f"architecture.md : plus rien ne correspond à {motif!r}, adapter le motif"
+        assert trouve.group(1) == attendu, f"architecture.md : « {trouve.group(1)} », attendu « {attendu} »"
 
 
 # Les motifs de la cartographie visent les phrases qui décrivent l'état actuel : son
@@ -173,18 +177,18 @@ def test_architecture_une_section_par_package():
         assert len(titres) == 2, f"docs/architecture.md : « ### `{nom}` » {len(titres)} fois, attendu EN + FR"
 
 
-def test_readme_fichiers_de_plus_de_500_lignes():
+def test_choix_de_conception_fichiers_de_plus_de_500_lignes():
     gros = set()
     for _, fichier in _packages(_lire(ENTREE)):
         for chemin in (REPO / fichier).parent.glob(_nom(fichier)):
             with chemin.open(encoding="utf-8") as f:
                 if sum(1 for _ in f) > GROS:
                     gros.add(chemin.name)
-    assert gros, "plus aucun package de plus de 500 lignes : réécrire la phrase du README"
-    texte = _lire(README)
+    assert gros, "plus aucun package de plus de 500 lignes : réécrire la phrase de docs/architecture.md"
+    texte = _lire(ARCHITECTURE)
     for motif in (r"only the largest \(([^)]*)\) go beyond", r"seuls les plus gros \(([^)]*)\) dépassent"):
         trouve = re.search(motif, texte)
-        assert trouve, f"README.md : plus rien ne correspond à {motif!r}, adapter le motif"
+        assert trouve, f"architecture.md : plus rien ne correspond à {motif!r}, adapter le motif"
         assert set(re.findall(r"`([^`]+)`", trouve.group(1))) == gros
 
 
@@ -208,13 +212,13 @@ def _ui_directs():
     (ARCHITECTURE, r"for (\d+) component files in total", _ui_total),
     (ARCHITECTURE, r"`!include` directement (\d+) fichiers `ui_components", _ui_directs),
     (ARCHITECTURE, r"soit (\d+) fichiers de composants au total", _ui_total),
-    (README, r"split into (\d+) reusable `ui_components", _ui_total),
-    (README, r"découpée en (\d+) `ui_components/\*\.yaml` réutilisables", _ui_total),
+    (ARCHITECTURE, r"split into (\d+) reusable `ui_components", _ui_total),
+    (ARCHITECTURE, r"découpée en (\d+) `ui_components/\*\.yaml` réutilisables", _ui_total),
     (README_TAB5, r"Les (\d+) composants et templates LVGL", _ui_total),
     (INVENTAIRE, r"\((\d+) composants UI dont", _ui_total),
     (INVENTAIRE, r"composants UI dont (\d+) inclus par", _ui_directs),
 ], ids=["schema-total", "schema-directs", "carto-total", "carto-directs", "archi-en-directs",
-        "archi-en-total", "archi-fr-directs", "archi-fr-total", "readme-en", "readme-fr",
+        "archi-en-total", "archi-fr-directs", "archi-fr-total", "archi-en-choix", "archi-fr-choix",
         "readme-tab5", "inventaire-total", "inventaire-directs"])
 def test_nombre_de_composants_ui(chemin, motif, compte):
     assert _ui_directs() > 10, "le motif ne reconnaît plus les !include de tab5-lvgl.yaml"
@@ -256,10 +260,8 @@ def test_table_des_services_du_readme_tab5():
 @pytest.mark.parametrize("chemin, motif", [
     (README, r"\b(\d+) \[architecture decision records\]"),
     (README, r"\b(\d+) \[décisions d'architecture\]"),
-    (SITE, r'lang="en">(\d+) architecture decision records'),
-    (SITE, r'lang="fr">(\d+) décisions d\'architecture'),
     (CARTOGRAPHIE, r"\((\d+) ADR\)"),
-], ids=["readme-en", "readme-fr", "site-en", "site-fr", "cartographie"])
+], ids=["readme-en", "readme-fr", "cartographie"])
 def test_nombre_d_adr(chemin, motif):
     assert len(_adr()) > 20, "docs/decisions/ ne contient plus les ADR numérotés"
     assert set(_nombres(chemin, motif)) == {len(_adr())}
@@ -299,19 +301,16 @@ def _nombres_ecrits(chemin, motif):
     (README, r"\*\*(\w+) languages, down to the details"),
     (README, r"en (\w+) langues\."),
     (README, r"\*\*(\w+) langues, jusque dans les détails"),
-    (SITE, r'lang="en">(\w+) languages</span>'),
-    (SITE, r'lang="fr">(\w+) langues</span>'),
-    (SITE, r"(\w+) languages, web installer"),
     (SITE, r'in (\w+) languages\.">'),
 ], ids=["readme-en-accroche", "readme-en-pourquoi", "readme-fr-accroche", "readme-fr-pourquoi",
-        "site-en", "site-fr", "site-description", "site-apercu"])
+        "site-apercu"])
 def test_nombre_de_langues(chemin, motif):
     assert len(_langues()) > 5, "Tab5/lang/ ne contient plus les fichiers de langue"
     assert set(_nombres_ecrits(chemin, motif)) == {len(_langues())}
 
 
 # ─── Les thèmes de l'écran (05/10/2026) ──────────────────────────────────────
-# Écrit dans le README, le site, docs/screens.md et docs/installation/settings.md pour la 3.6.0 :
+# Écrit dans le README, docs/screens.md et docs/installation/settings.md pour la 3.6.0 :
 # le nombre se compte dans Tab5/themes/ (un fichier par thème ; `_polices.yaml`, généré,
 # n'en est pas un).
 
@@ -324,14 +323,11 @@ def _themes():
 @pytest.mark.parametrize("chemin, motif", [
     (README, r"([\w-]+) themes, light or dark"),
     (README, r"([\w-]+(?: et un)?) thèmes, clairs ou sombres"),
-    (SITE, r'lang="en">([\w-]+) themes(?:, light or dark)?</span>'),
-    (SITE, r'lang="fr">([\w-]+(?: et un)?) thèmes(?:, clairs ou sombres)?</span>'),
     (REPO / "docs" / "screens.md", r"([\w-]+) themes, each with a dark and a light mode"),
     (REPO / "docs" / "screens.md", r"([\w-]+(?: et un)?) thèmes, chacun en sombre et en clair"),
     (REPO / "docs" / "installation" / "settings.md", r"\| Thème \| (\d+) themes"),
     (REPO / "docs" / "installation" / "settings.md", r"\| Thème \| (\d+) thèmes"),
-], ids=["readme-en", "readme-fr", "site-en", "site-fr", "ecrans-en", "ecrans-fr",
-        "installation-en", "installation-fr"])
+], ids=["readme-en", "readme-fr", "ecrans-en", "ecrans-fr", "installation-en", "installation-fr"])
 def test_nombre_de_themes(chemin, motif):
     assert len(_themes()) > 10, "Tab5/themes/ ne contient plus les fichiers de thème"
     assert set(_nombres_ecrits(chemin, motif)) == {len(_themes())}

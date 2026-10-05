@@ -11,6 +11,30 @@ météo au choix, tableau de bord), puis
 [v3.7.0-rc.2](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.7.0-rc.2)
 le 05/10/2026, qui ajoute le popup du volet (#333) et la doc des deux modes vocaux (#334).
 
+### 2026-10-05 — Le site s'ouvre sur l'accueil avec menu, et c'est le README
+
+Lot 4 du site de documentation (ADR-0030, amendement du 05/10) : l'adresse du site ouvrait encore
+l'ancienne vitrine, sans menu. Doc et site seulement, firmware inchangé.
+- **La racine du site renvoie vers `en/` ou `fr/`** selon la langue du navigateur (les deux liens
+  restent sans JavaScript). La page d'installation renvoie à l'accueil de sa langue.
+- **Le README est la page d'accueil du site**, en anglais et en français : un seul texte pour
+  GitHub et le site, au lieu de la vitrine recopiée à la main. Il reprend l'essentiel de la
+  vitrine, en plus court : accroche et photo, liens (installer, guide, notice, mode démo), ce que
+  fait l'écran avec un lien vers chaque page de la notice, pluie dans l'heure et vigilances,
+  démarrage rapide en sept étapes, compatibilité matérielle, vidéo (un simple lien vers YouTube),
+  tour animé, thèmes, énergie, galerie de photos. Titre et fiche JSON-LD de l'accueil gardés.
+- **Sorti du README** : la longue liste des fonctions (dans `docs/screens.md` et la notice), le
+  tableau de l'Arcade (`docs/arcade.md`), les choix de conception (`docs/architecture.md`), la
+  section vocale (`docs/voice_assistant.md`), l'arborescence du dépôt (`CARTOGRAPHIE_TAB5.md` ;
+  celle du README comptait encore 45 composants) et la note personnelle entière, devenue la page
+  « L'histoire » (`docs/story.md`).
+- `docs/README.md`, le sommaire de la documentation, devient la page « Documentation » du site.
+  Seule l'image de partage garde un nom parlant sous `images/` ; les autres sont celles de la
+  documentation, toujours listées dans `sitemap.xml`.
+- `tests/test_doc_comptes.py` lit désormais dans `docs/architecture.md` les comptes déménagés
+  (packages, fichiers de plus de 500 lignes, composants) ; `tests/test_site_doc.py` vérifie que
+  l'accueil est le README et que la racine mène aux deux langues.
+
 ### 2026-10-05 — Notice d'utilisation : chaque tap et appui long, zone par zone
 
 Lot 3 du site de documentation : une notice pour se servir de la tablette, dans le menu

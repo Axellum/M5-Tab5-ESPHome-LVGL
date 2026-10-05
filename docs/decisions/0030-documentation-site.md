@@ -40,3 +40,13 @@ Checked on 2026-10-05:
 - **More commits of `main` are deployed** (`site.yml` now runs for `docs/**` and `tools/site/**`). GitHub Pages keeps one deployment per commit (ADR-0022): a release must still target a commit that was never deployed, usually the merge of its `chore(release)` pull request, which does not touch `docs/`.
 - A new page: write it in `docs/` (English, then « ## Version Française »), add it to `menu.yml`.
 - Material's maintenance ends around November 2026 without a promise after: the versions stay pinned, and the switch is a configuration change, not a rewrite.
+
+## Amendment (2026-10-05): the README is the home page, the showcase is gone
+
+Asked by the author the same day: the site's address still opened the showcase, without the menu.
+
+- **The root of the site sends to `en/` or `fr/`**, after the browser's language (`web/index.html`, `location.replace`); without JavaScript it shows both links. It keeps its title, description, `canonical`, Open Graph and the `hreflang` of both languages, with itself as `x-default`.
+- **`README.md` is the home page of both languages** (`page: README.md` in `menu.yml`, written as `index.md`): one text, read on GitHub and on the site. The showcase was a second copy of it, kept in step by hand. The README took its content, shorter: pitch, install links, what the screen does with a link to each page of the user manual, rain and warnings, gallery. Badges and « this page is also a website » are `hors-site`. Its `<title>` (`TITRES_ACCUEIL` in `construire.py`) and the JSON-LD `SoftwareSourceCode` come from the theme override. `docs/README.md`, the contents of the documentation, becomes `documentation/`.
+- **What left the README**: the long feature list (in `docs/screens.md` and the user manual), the arcade table (`docs/arcade.md`), the key design decisions (`docs/architecture.md`, whose counts `tests/test_doc_comptes.py` now reads there), the voice section (`docs/voice_assistant.md`), the repository layout (`CARTOGRAPHIE_TAB5.md`; the README's copy still counted 45 UI components) and the full personal note (`docs/story.md`).
+- **Pictures**: only the sharing image keeps a descriptive name under `images/` (`IMAGES`); the others are the documentation's own, under `en/images/` and `fr/images/`, listed in `sitemap.xml` with their page. The demo video is a plain link: no thumbnail is loaded from YouTube.
+- `site.yml` also runs for `README.md`. `tests/test_site_doc.py` checks that the menu starts with the README, the home page's title and JSON-LD, and the root's links.

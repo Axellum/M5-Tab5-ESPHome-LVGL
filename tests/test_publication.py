@@ -244,7 +244,7 @@ def test_page_suit_le_manifeste_du_site():
     assert 'fetch("../versions.json"' in page
 
 
-# --- Site : vitrine, images et référencement (révision de l'ADR-0022, 28/09/2026) ---
+# --- Site : racine, page d'installation et référencement (révision de l'ADR-0022) ---
 
 # Les fichiers google*.html sont ceux de vérification de Google Search Console, pas des pages.
 PAGES_WEB = sorted(p for p in (REPO / "web").rglob("*.html") if not p.name.startswith("google"))
@@ -296,7 +296,6 @@ def test_plan_du_site_avec_les_images(tmp_path):
     assert pages.SITE in locs and pages.SITE + "install/" in locs
     assert not any("google" in url for url in locs), "fichier de vérification hors du plan"
     images = re.findall(r"<image:loc>([^<]+)</image:loc>", plan)
-    assert pages.SITE + "images/m5stack-tab5-home-assistant-wall-screen.jpg" in images
     for url in images:
         assert (tmp_path / "site" / url.removeprefix(pages.SITE)).is_file(), url
     assert json.loads((tmp_path / "site" / "versions.json").read_text(encoding="utf-8")) == {"stable": None, "beta": None}
@@ -309,7 +308,7 @@ def test_site_deploye_sans_compiler():
     flux = yaml.safe_load(texte)
     declencheurs = flux[True]  # « on: » lu comme un booléen par YAML 1.1
     assert "workflow_call" in declencheurs and "workflow_dispatch" in declencheurs
-    for chemin in ("web/**", "docs/**", "tools/publication/pages.py", "tools/site/**"):
+    for chemin in ("web/**", "docs/**", "README.md", "tools/publication/pages.py", "tools/site/**"):
         assert chemin in declencheurs["push"]["paths"]
     assert "build-action" not in texte and "release upload" not in texte
     assert "--images docs/images" in texte
