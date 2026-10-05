@@ -115,6 +115,9 @@ obj:
                           max_value: 100
                           value: 0
                           styles: style_bg_arc_track
+                          # Piste opaque : le thème ne donne au fond du curseur qu'une
+                          # opacité réduite, la partie vide disparaissait en thème sombre.
+                          bg_opa: COVER
                           radius: 20
                           indicator:
                             styles: style_bg_accent
